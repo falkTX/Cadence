@@ -3,7 +3,7 @@
 
 # JACK, A2J, LASH and LADISH Logs Viewer
 # Copyright (C) 2012 Filipe Coelho <falktx@gmail.com>
-
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
@@ -286,7 +286,7 @@ class LogsW(QDialog, ui_logs.Ui_LogsW):
         # Init file read thread
 
         self.m_readThread = LogsReadThread(self)
-        self.m_readThread.start()
+        self.m_readThread.start(QThread.IdlePriority)
 
         # -------------------------------------------------------------
         # Set-up connections
