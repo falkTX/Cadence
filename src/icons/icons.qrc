@@ -1,0 +1,6 @@
+<RCC version="1.0">
+        <qresource prefix="/">
+            <file>16x16/edit-delete.png</file>
+            <file>16x16/window-close.png</file>
+        </qresource>
+</RCC>
