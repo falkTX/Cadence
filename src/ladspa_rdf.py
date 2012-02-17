@@ -322,8 +322,6 @@ def get_c_unit_type(value):
 # -------------------------------------------------------------------------------
 #  Global objects
 
-import os
-
 global LADSPA_RDF_PATH, LADSPA_Plugins
 LADSPA_RDF_PATH = ("/usr/share/ladspa/rdf", "/usr/local/share/ladspa/rdf")
 LADSPA_Plugins  = []
@@ -678,7 +676,9 @@ def parse_rdf_file(filename):
 # -------------------------------------------------------------------------------
 #  LADSPA_RDF main methods
 
-# Main function - check all bundles for information about lv2 plugins
+import os
+
+# Main function - check all rdfs for information about ladspa plugins
 def recheck_all_plugins(qobject=None):
   global LADSPA_RDF_PATH, LADSPA_Plugins
 
