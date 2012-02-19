@@ -18,7 +18,7 @@
 
 # Imports (Global)
 import os, sys
-from PyQt4.QtCore import pyqtSlot, qWarning, SIGNAL, SLOT
+from PyQt4.QtCore import qWarning, SIGNAL, SLOT
 from PyQt4.QtGui import QIcon, QMessageBox, QFileDialog
 
 # Set Platform
@@ -34,6 +34,12 @@ else:
 
 if (WINDOWS == False):
   from signal import signal, SIGINT, SIGTERM, SIGUSR1, SIGUSR2
+
+# Set Version
+VERSION = "0.5.0"
+
+# Set Debug mode
+DEBUG = False
 
 # Small integrity tests
 HOME = os.getenv("HOME")
