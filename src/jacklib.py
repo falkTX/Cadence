@@ -781,7 +781,6 @@ def midi_get_lost_event_count(port_buffer):
 
 # Session
 
-
 def set_timebase_callback(client, session_callback, arg):
   jacklib.jack_set_timebase_callback.argtypes = [POINTER(jack_client_t), JackSessionCallback, c_void_p]
   jacklib.jack_set_timebase_callback.restype = c_int

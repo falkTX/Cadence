@@ -215,7 +215,7 @@ class LogsReadThread(QThread):
         if (self.LOG_FILE_LADISH):
           self.log_ladish_file.close()
 
-# Class Window
+# Logs Window
 class LogsW(QDialog, ui_logs.Ui_LogsW):
 
     LOG_PATH = os.path.join(HOME, ".log")

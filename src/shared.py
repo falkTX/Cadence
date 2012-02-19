@@ -19,7 +19,7 @@
 # Imports (Global)
 import os
 from PyQt4.QtCore import qDebug, qWarning
-from PyQt4.QtGui import QIcon
+from PyQt4.QtGui import QIcon, QMessageBox, QFileDialog
 
 # Small integrity tests
 HOME = os.getenv("HOME")
@@ -41,3 +41,10 @@ else:
 # Get Icon from user theme, using our own as backup (Oxygen)
 def getIcon(icon, size=16):
   return QIcon.fromTheme(icon, QIcon(":/%ix%i/%s.png" % (size, size, icon)))
+
+# QLineEdit and QPushButtom combo
+def getAndSetPath(self, currentPath, lineEdit):
+    newPath = QFileDialog.getExistingDirectory(self, self.tr("Set Path"), currentPath, QFileDialog.ShowDirsOnly)
+    if (newPath):
+      lineEdit.setText(newPath)
+    return newPath
