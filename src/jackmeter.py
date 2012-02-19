@@ -86,11 +86,11 @@ class MeterW(DigitalPeakMeter):
         self.displayMeter(1, x_port1)
         self.displayMeter(2, x_port2)
 
-        self.setRefreshRate(30)
-        self.peakTimer = self.startTimer(60)
+        self.setRefreshRate(25)
+        self.m_peakTimerId = self.startTimer(50)
 
     def timerEvent(self, event):
-        if (event.timerId() == self.peakTimer):
+        if (event.timerId() == self.m_peakTimerId):
           global x_port1, x_port2, need_reconnect
           self.displayMeter(1, x_port1)
           self.displayMeter(2, x_port2)
