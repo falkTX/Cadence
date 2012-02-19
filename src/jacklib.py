@@ -72,6 +72,8 @@ jack_unique_t = c_uint64
 jack_position_bits_t = c_enum # Optional struct jack_position_t fields.
 jack_transport_bits_t = c_enum # Optional struct jack_transport_info_t fields
 jack_midi_data_t = c_uchar
+jack_session_event_type_t = c_enum # JackSessionEventType
+jack_session_flags_t = c_enum # JackSessionFlags
 
 # enum JackOptions
 JackNullOption    = 0x00
@@ -131,6 +133,15 @@ JackTransportPosition = 0x2
 JackTransportLoop     = 0x4
 JackTransportSMPTE    = 0x8
 JackTransportBBT      = 0x10
+
+# enum JackSessionEventType
+JackSessionSave         = 1
+JackSessionSaveAndQuit  = 2
+JackSessionSaveTemplate = 3
+
+# enum JackSessionFlags
+JackSessionSaveError    = 0x01
+JackSessionNeedTerminal = 0x02
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Structs
@@ -192,6 +203,45 @@ class jack_midi_event_t(Structure):
     ("size", c_size_t),
     ("buffer", POINTER(jack_midi_data_t))
   ]
+
+class jack_session_event_t(Structure):
+  _fields_ = [
+    ("type", jack_session_event_type_t),
+    ("session_dir", c_char_p),
+    ("client_uuid", c_char_p),
+    ("command_line", c_char_p),
+    ("flags", jack_session_flags_t),
+    ("future", c_uint32)
+  ]
+
+class jack_session_command_t(Structure):
+  _fields_ = [
+    ("uuid", c_char_p),
+    ("client_name", c_char_p),
+    ("command", c_char_p),
+    ("flags", jack_session_flags_t)
+  ]
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Callbacks
+
+JackLatencyCallback = CFUNCTYPE(None, jack_latency_callback_mode_t, c_void_p)
+JackProcessCallback = CFUNCTYPE(c_int, jack_nframes_t, c_void_p)
+JackThreadInitCallback = CFUNCTYPE(None, c_void_p)
+JackGraphOrderCallback = CFUNCTYPE(c_int, c_void_p)
+JackXRunCallback = CFUNCTYPE(c_int, c_void_p)
+JackBufferSizeCallback = CFUNCTYPE(c_int, jack_nframes_t, c_void_p)
+JackSampleRateCallback = CFUNCTYPE(c_int, jack_nframes_t, c_void_p)
+JackPortRegistrationCallback = CFUNCTYPE(None, jack_port_id_t, c_int, c_void_p)
+JackClientRegistrationCallback = CFUNCTYPE(None, c_char_p, c_int, c_void_p)
+JackPortConnectCallback = CFUNCTYPE(None, jack_port_id_t, jack_port_id_t, c_int, c_void_p)
+JackFreewheelCallback = CFUNCTYPE(None, c_int, c_void_p)
+JackThreadCallback = CFUNCTYPE(c_void_p, c_void_p)
+JackShutdownCallback = CFUNCTYPE(None, c_void_p)
+JackInfoShutdownCallback = CFUNCTYPE(None, jack_status_t, c_char_p, c_void_p)
+JackSyncCallback = CFUNCTYPE(c_int, jack_transport_state_t, POINTER(jack_position_t), c_void_p)
+JackTimebaseCallback = CFUNCTYPE(None, jack_transport_state_t, jack_nframes_t, POINTER(jack_position_t), c_int, c_void_p)
+JackSessionCallback = CFUNCTYPE(None, jack_session_event_t, c_void_p)
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Functions
@@ -269,14 +319,78 @@ def cycle_signal(client, status):
   jacklib.jack_cycle_signal.restype = None
   jacklib.jack_cycle_signal(client, status)
 
-#def set_process_thread(client, thread_callback, arg=None):
-  #global ThreadCallback
-  #ThreadCallback = CFUNCTYPE(c_int, c_void_p)(thread_callback)
-  #jacklib.jack_set_process_thread.restype = c_int
-  #return jacklib.jack_set_process_thread(client)
+def set_process_thread(client, thread_callback, arg):
+  jacklib.jack_set_process_thread.argtypes = [POINTER(jack_client_t), JackThreadCallback, c_void_p]
+  jacklib.jack_set_process_thread.restype = c_int
+  return jacklib.jack_set_process_thread(client, JackThreadCallback(thread_callback), arg)
 
 
 # Client Callbacks
+
+def set_thread_init_callback(client, thread_init_callback, arg):
+  jacklib.jack_set_thread_init_callback.argtypes = [POINTER(jack_client_t), JackThreadInitCallback, c_void_p]
+  jacklib.jack_set_thread_init_callback.restype = c_int
+  return jacklib.jack_set_thread_init_callback(client, JackThreadInitCallback(thread_init_callback), arg)
+
+def on_shutdown(client, function, arg):
+  jacklib.jack_on_shutdown.argtypes = [POINTER(jack_client_t), JackShutdownCallback, c_void_p]
+  jacklib.jack_on_shutdown.restype = None
+  jacklib.jack_on_shutdown(client, JackShutdownCallback(function), arg)
+
+def on_info_shutdown(client, function, arg):
+  jacklib.jack_on_info_shutdown.argtypes = [POINTER(jack_client_t), JackInfoShutdownCallback, c_void_p]
+  jacklib.jack_on_info_shutdown.restype = None
+  jacklib.jack_on_info_shutdown(client, JackInfoShutdownCallback(function), arg)
+
+def set_process_callback(client, process_callback, arg):
+  jacklib.jack_set_process_callback.argtypes = [POINTER(jack_client_t), JackProcessCallback, c_void_p]
+  jacklib.jack_set_process_callback.restype = c_int
+  return jacklib.jack_set_process_callback(client, JackProcessCallback(process_callback), arg)
+
+def set_freewheel_callback(client, freewheel_callback, arg):
+  jacklib.jack_set_freewheel_callback.argtypes = [POINTER(jack_client_t), JackFreewheelCallback, c_void_p]
+  jacklib.jack_set_freewheel_callback.restype = c_int
+  return jacklib.jack_set_freewheel_callback(client, JackFreewheelCallback(freewheel_callback), arg)
+
+def set_buffer_size_callback(client, bufsize_callback, arg):
+  jacklib.jack_set_buffer_size_callback.argtypes = [POINTER(jack_client_t), JackBufferSizeCallback, c_void_p]
+  jacklib.jack_set_buffer_size_callback.restype = c_int
+  return jacklib.jack_set_buffer_size_callback(client, JackBufferSizeCallback(bufsize_callback), arg)
+
+def set_sample_rate_callback(client, srate_callback, arg):
+  jacklib.jack_set_sample_rate_callback.argtypes = [POINTER(jack_client_t), JackSampleRateCallback, c_void_p]
+  jacklib.jack_set_sample_rate_callback.restype = c_int
+  return jacklib.jack_set_sample_rate_callback(client, JackSampleRateCallback(srate_callback), arg)
+
+def set_client_registration_callback(client, registration_callback, arg):
+  jacklib.jack_set_client_registration_callback.argtypes = [POINTER(jack_client_t), JackClientRegistrationCallback, c_void_p]
+  jacklib.jack_set_client_registration_callback.restype = c_int
+  return jacklib.jack_set_client_registration_callback(client, JackClientRegistrationCallback(registration_callback), arg)
+
+def set_port_registration_callback(client, registration_callback, arg):
+  jacklib.jack_set_port_registration_callback.argtypes = [POINTER(jack_client_t), JackPortRegistrationCallback, c_void_p]
+  jacklib.jack_set_port_registration_callback.restype = c_int
+  return jacklib.jack_set_port_registration_callback(client, JackPortRegistrationCallback(registration_callback), arg)
+
+def set_port_connect_callback(client, connect_callback, arg):
+  jacklib.jack_set_port_connect_callback.argtypes = [POINTER(jack_client_t), JackPortConnectCallback, c_void_p]
+  jacklib.jack_set_port_connect_callback.restype = c_int
+  return jacklib.jack_set_port_connect_callback(client, JackPortConnectCallback(connect_callback), arg)
+
+def set_graph_order_callback(client, graph_callback, arg):
+  jacklib.jack_set_graph_order_callback.argtypes = [POINTER(jack_client_t), JackGraphOrderCallback, c_void_p]
+  jacklib.jack_set_graph_order_callback.restype = c_int
+  return jacklib.jack_set_graph_order_callback(client, JackGraphOrderCallback(graph_callback), arg)
+
+def set_xrun_callback(client, xrun_callback, arg):
+  jacklib.jack_set_xrun_callback.argtypes = [POINTER(jack_client_t), JackXRunCallback, c_void_p]
+  jacklib.jack_set_xrun_callback.restype = c_int
+  return jacklib.jack_set_xrun_callback(client, JackXRunCallback(xrun_callback), arg)
+
+def set_latency_callback(client, latency_callback, arg):
+  jacklib.jack_set_latency_callback.argtypes = [POINTER(jack_client_t), JackLatencyCallback, c_void_p]
+  jacklib.jack_set_latency_callback.restype = c_int
+  return jacklib.jack_set_latency_callback(client, JackLatencyCallback(latency_callback), arg)
 
 
 # Server Control
@@ -563,83 +677,157 @@ def free(ptr):
   jacklib.jack_free.restype = None
   return jacklib.jack_free(ptr)
 
-#int jack_release_timebase (jack_client_t *client) JACK_OPTIONAL_WEAK_EXPORT;
-#int jack_set_sync_callback (jack_client_t *client,
-#JackSyncCallback sync_callback,
-#void *arg) JACK_OPTIONAL_WEAK_EXPORT;
-#int jack_set_sync_timeout (jack_client_t *client,
-#jack_time_t timeout) JACK_OPTIONAL_WEAK_EXPORT;
-#int jack_set_timebase_callback (jack_client_t *client,
-#int conditional,
-#JackTimebaseCallback timebase_callback,
-#void *arg) JACK_OPTIONAL_WEAK_EXPORT;
-#int jack_transport_locate (jack_client_t *client,
-#jack_nframes_t frame) JACK_OPTIONAL_WEAK_EXPORT;
-#jack_transport_state_t jack_transport_query (const jack_client_t *client,
-#jack_position_t *pos) JACK_OPTIONAL_WEAK_EXPORT;
-#jack_nframes_t jack_get_current_transport_frame (const jack_client_t *client) JACK_OPTIONAL_WEAK_EXPORT;
-#int jack_transport_reposition (jack_client_t *client,
-#const jack_position_t *pos) JACK_OPTIONAL_WEAK_EXPORT;
-#void jack_transport_start (jack_client_t *client) JACK_OPTIONAL_WEAK_EXPORT;
-#void jack_transport_stop (jack_client_t *client) JACK_OPTIONAL_WEAK_EXPORT;
-#void jack_get_transport_info (jack_client_t *client,
-#jack_transport_info_t *tinfo) JACK_OPTIONAL_WEAK_DEPRECATED_EXPORT;
-#void jack_set_transport_info (jack_client_t *client,
-#jack_transport_info_t *tinfo) JACK_OPTIONAL_WEAK_DEPRECATED_EXPORT;
 
-#jack_nframes_t
-#jack_midi_get_event_count(void* port_buffer) JACK_OPTIONAL_WEAK_EXPORT;
-#int
-#jack_midi_event_get(jack_midi_event_t *event,
-                    #void *port_buffer,
-                    #uint32_t event_index) JACK_OPTIONAL_WEAK_EXPORT;
-#void
-#jack_midi_clear_buffer(void *port_buffer) JACK_OPTIONAL_WEAK_EXPORT;
-#size_t
-#jack_midi_max_event_size(void* port_buffer) JACK_OPTIONAL_WEAK_EXPORT;
-#jack_midi_data_t*
-#jack_midi_event_reserve(void *port_buffer,
-                        #jack_nframes_t time,
-                        #size_t data_size) JACK_OPTIONAL_WEAK_EXPORT;
-#int
-#jack_midi_event_write(void *port_buffer,
-                      #jack_nframes_t time,
-                      #const jack_midi_data_t *data,
-                      #size_t data_size) JACK_OPTIONAL_WEAK_EXPORT;
-#uint32_t
-#jack_midi_get_lost_event_count(void *port_buffer) JACK_OPTIONAL_WEAK_EXPORT;
+# Transport
 
-#typedef void (*JackLatencyCallback)(jack_latency_callback_mode_t mode, void *arg);
-#typedef int (*JackProcessCallback)(jack_nframes_t nframes, void *arg);
-#typedef void (*JackThreadInitCallback)(void *arg);
-#typedef int (*JackGraphOrderCallback)(void *arg);
-#typedef int (*JackXRunCallback)(void *arg);
-#typedef int (*JackBufferSizeCallback)(jack_nframes_t nframes, void *arg);
-#typedef int (*JackSampleRateCallback)(jack_nframes_t nframes, void *arg);
-#typedef void (*JackPortRegistrationCallback)(jack_port_id_t port, int register, void *arg);
-#typedef void (*JackClientRegistrationCallback)(const char* name, int register, void *arg);
-#typedef void (*JackPortConnectCallback)(jack_port_id_t a, jack_port_id_t b, int connect, void* arg);
-#typedef void (*JackFreewheelCallback)(int starting, void *arg);
-#typedef void *(*JackThreadCallback)(void* arg);
-#typedef void (*JackShutdownCallback)(void *arg);
-#typedef void (*JackInfoShutdownCallback)(jack_status_t code, const char* reason, void *arg);
-#typedef int (*JackSyncCallback)(jack_transport_state_t state,
-#jack_position_t *pos,
-#void *arg);
-#typedef void (*JackTimebaseCallback)(jack_transport_state_t state,
-#jack_nframes_t nframes,
-#jack_position_t *pos,
-#int new_pos,
-#void *arg);
+def release_timebase(client):
+  jacklib.jack_release_timebase.argtypes = [POINTER(jack_client_t)]
+  jacklib.jack_release_timebase.restype = c_int
+  return jacklib.jack_release_timebase(client)
+
+def set_sync_callback(client, sync_callback, arg):
+  jacklib.jack_set_sync_callback.argtypes = [POINTER(jack_client_t), JackSyncCallback, c_void_p]
+  jacklib.jack_set_sync_callback.restype = c_int
+  return jacklib.jack_set_sync_callback(client, JackSyncCallback(sync_callback), arg)
+
+def set_sync_timeout(client, timeout):
+  jacklib.jack_set_sync_timeout.argtypes = [POINTER(jack_client_t), jack_time_t]
+  jacklib.jack_set_sync_timeout.restype = c_int
+  return jacklib.jack_set_sync_timeout(client, timeout)
+
+def set_timebase_callback(client, conditional, timebase_callback, arg):
+  jacklib.jack_set_timebase_callback.argtypes = [POINTER(jack_client_t), c_int, JackTimebaseCallback, c_void_p]
+  jacklib.jack_set_timebase_callback.restype = c_int
+  return jacklib.jack_set_timebase_callback(client, conditional, JackTimebaseCallback(timebase_callback), arg)
+
+def transport_locate(client, frame):
+  jacklib.jack_transport_locate.argtypes = [POINTER(jack_client_t), jack_nframes_t]
+  jacklib.jack_transport_locate.restype = c_int
+  return jacklib.jack_transport_locate(client, frame)
+
+def transport_query(client, pos):
+  jacklib.jack_transport_query.argtypes = [POINTER(jack_client_t), POINTER(jack_position_t)]
+  jacklib.jack_transport_query.restype = jack_transport_state_t
+  return jacklib.jack_transport_query(client, pos)
+
+def get_current_transport_frame(client):
+  jacklib.jack_get_current_transport_frame.argtypes = [POINTER(jack_client_t)]
+  jacklib.jack_get_current_transport_frame.restype = jack_nframes_t
+  return jacklib.jack_get_current_transport_frame(client)
+
+def transport_reposition(client, pos):
+  jacklib.jack_transport_reposition.argtypes = [POINTER(jack_client_t), POINTER(jack_position_t)]
+  jacklib.jack_transport_reposition.restype = c_int
+  return jacklib.jack_transport_reposition(client, pos)
+
+def transport_start(client):
+  jacklib.jack_transport_start.argtypes = [POINTER(jack_client_t)]
+  jacklib.jack_transport_start.restype = None
+  return jacklib.jack_transport_start(client)
+
+def transport_stop(client):
+  jacklib.jack_transport_stop.argtypes = [POINTER(jack_client_t)]
+  jacklib.jack_transport_stop.restype = None
+  return jacklib.jack_transport_stop(client)
+
+def get_transport_info(client, tinfo):
+  jacklib.jack_get_transport_info.argtypes = [POINTER(jack_client_t), POINTER(jack_transport_info_t)]
+  jacklib.jack_get_transport_info.restype = None
+  return jacklib.jack_get_transport_info(client, tinfo)
+
+def set_transport_info(client, tinfo):
+  jacklib.jack_set_transport_info.argtypes = [POINTER(jack_client_t), POINTER(jack_transport_info_t)]
+  jacklib.jack_set_transport_info.restype = None
+  return jacklib.jack_set_transport_info(client, tinfo)
 
 
+# MIDI
+
+def midi_get_event_count(port_buffer):
+  jacklib.jack_midi_get_event_count.argtypes = [c_void_p]
+  jacklib.jack_midi_get_event_count.restype = jack_nframes_t
+  return jacklib.jack_midi_get_event_count(port_buffer)
+
+def midi_event_get(event, port_buffer, event_index):
+  jacklib.jack_midi_event_get.argtypes = [POINTER(jack_midi_event_t), c_void_p, c_uint32]
+  jacklib.jack_midi_event_get.restype = c_int
+  return jacklib.jack_midi_event_get(event, port_buffer, event_index)
+
+def midi_clear_buffer(port_buffer):
+  jacklib.jack_midi_clear_buffer.argtypes = [c_void_p]
+  jacklib.jack_midi_clear_buffer.restype = None
+  return jacklib.jack_midi_clear_buffer(port_buffer)
+
+def midi_max_event_size(port_buffer):
+  jacklib.jack_midi_max_event_size.argtypes = [c_void_p]
+  jacklib.jack_midi_max_event_size.restype = c_size_t
+  return jacklib.jack_midi_max_event_size(port_buffer)
+
+def midi_event_reserve(port_buffer, time, data_size):
+  jacklib.jack_midi_event_reserve.argtypes = [c_void_p, jack_nframes_t, c_size_t]
+  jacklib.jack_midi_event_reserve.restype = POINTER(jack_midi_data_t)
+  return jacklib.jack_midi_event_reserve(port_buffer, time, data_size)
+
+def midi_event_write(port_buffer, time, data, data_size):
+  jacklib.jack_midi_event_write.argtypes = [c_void_p, jack_nframes_t, POINTER(jack_midi_data_t), c_size_t]
+  jacklib.jack_midi_event_write.restype = c_int
+  return jacklib.jack_midi_event_write(port_buffer, time, data, data_size)
+
+def midi_get_lost_event_count(port_buffer):
+  jacklib.jack_midi_get_lost_event_count.argtypes = [c_void_p]
+  jacklib.jack_midi_get_lost_event_count.restype = c_uint32
+  return jacklib.jack_midi_get_lost_event_count(port_buffer)
 
 
+# Session
 
 
+def set_timebase_callback(client, session_callback, arg):
+  jacklib.jack_set_timebase_callback.argtypes = [POINTER(jack_client_t), JackSessionCallback, c_void_p]
+  jacklib.jack_set_timebase_callback.restype = c_int
+  return jacklib.jack_set_timebase_callback(client, conditional, JackSessionCallback(session_callback), arg)
 
+def session_reply(client, event):
+  jacklib.jack_session_reply.argtypes = [POINTER(jack_client_t), POINTER(jack_session_event_t)]
+  jacklib.jack_session_reply.restype = c_int
+  return jacklib.jack_session_reply(client, event)
 
+def session_event_free(client, event):
+  jacklib.jack_session_event_free.argtypes = [POINTER(jack_client_t), POINTER(jack_session_event_t)]
+  jacklib.jack_session_event_free.restype = c_int
+  return jacklib.jack_session_event_free(client, event)
 
+def client_get_uuid(client):
+  jacklib.jack_client_get_uuid.argtypes = [POINTER(jack_client_t)]
+  jacklib.jack_client_get_uuid.restype = c_char_p
+  return jacklib.jack_client_get_uuid(client)
 
+def session_notify(client, target, type_, path):
+  jacklib.jack_session_notify.argtypes = [POINTER(jack_client_t), c_char_p, jack_session_event_type_t, c_char_p]
+  jacklib.jack_session_notify.restype = POINTER(jack_session_command_t)
+  return jacklib.jack_session_notify(client, target.encode(), type_, path.encode())
 
+def session_commands_free(cmds):
+  jacklib.jack_session_commands_free.argtypes = [POINTER(jack_session_command_t)]
+  jacklib.jack_session_commands_free.restype = None
+  return jacklib.jack_session_commands_free(cmds)
 
+def get_uuid_for_client_name(client, client_name):
+  jacklib.jack_get_uuid_for_client_name.argtypes = [POINTER(jack_client_t), c_char_p]
+  jacklib.jack_get_uuid_for_client_name.restype = c_char_p
+  return jacklib.jack_get_uuid_for_client_name(client, client_name.encode())
+
+def get_client_name_by_uuid(client, client_uuid):
+  jacklib.jack_get_client_name_by_uuid.argtypes = [POINTER(jack_client_t), c_char_p]
+  jacklib.jack_get_client_name_by_uuid.restype = c_char_p
+  return jacklib.jack_get_client_name_by_uuid(client, client_uuid.encode())
+
+def reserve_client_name(client, name, uuid):
+  jacklib.jack_reserve_client_name.argtypes = [POINTER(jack_client_t), c_char_p, c_char_p]
+  jacklib.jack_reserve_client_name.restype = c_int
+  return jacklib.jack_reserve_client_name(client, name.encode(), uuid.encode())
+
+def client_has_session_callback(client, client_name):
+  jacklib.jack_client_has_session_callback.argtypes = [POINTER(jack_client_t), c_char_p]
+  jacklib.jack_client_has_session_callback.restype = c_int
+  return jacklib.jack_client_has_session_callback(client, client_name.encode())
