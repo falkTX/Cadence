@@ -1,0 +1,55 @@
+#!/usr/bin/make -f
+# Makefile for Carla-Discovery #
+# ----------------------------------------- #
+# Created by falkTX
+#
+
+CXX ?= g++
+
+BUILD_FLAGS  = -ffast-math -fomit-frame-pointer -mtune=generic -msse -O2 -Wall -I../carla-includes $(CXXFLAGS)
+BUILD_FLAGS += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
+LINK_FLAGS   = $(LDFLAGS)
+
+32BIT_FLAGS  = -m32
+64BIT_FLAGS  = -m64 #-fPIC
+
+UNIX_32BIT_FLAGS = -L/usr/lib32 -L/usr/lib/i386-linux-gnu $(32BIT_FLAGS)
+UNIX_64BIT_FLAGS = -L/usr/lib64 -L/usr/lib/x86_64-linux-gnu $(64BIT_FLAGS)
+UNIX_LINK_FLAGS  = -ldl $(LINK_FLAGS)
+
+WIN32_FLAGS = $(32BIT_FLAGS) -static
+WIN64_FLAGS = $(64BIT_FLAGS) -static
+
+ifeq ($(FLUIDSYNTH),)
+else
+BUILD_FLAGS += `pkg-config --cflags fluidsynth` -DWANT_FLUIDSYNTH
+LINK_FLAGS  += `pkg-config --libs fluidsynth`
+endif
+
+
+all:
+	@echo "Build type must be unix32, unix64, win32 or win64"
+
+unix32: carla-discovery-unix32
+
+unix64: carla-discovery-unix64
+
+win32: carla-discovery-win32.exe
+
+win64: carla-discovery-win64.exe
+
+
+carla-discovery-unix32: carla-discovery.cpp
+	$(CXX) carla-discovery.cpp $(BUILD_FLAGS) $(UNIX_32BIT_FLAGS) $(UNIX_LINK_FLAGS) -o $@
+
+carla-discovery-unix64: carla-discovery.cpp
+	$(CXX) carla-discovery.cpp $(BUILD_FLAGS) $(UNIX_64BIT_FLAGS) $(UNIX_LINK_FLAGS) -o $@
+
+carla-discovery-win32.exe: carla-discovery.cpp
+	$(CXX) carla-discovery.cpp $(BUILD_FLAGS) $(WIN32_FLAGS) $(LINK_FLAGS) -o $@
+
+carla-discovery-win64.exe: carla-discovery.cpp
+	$(CXX) carla-discovery.cpp $(BUILD_FLAGS) $(WIN64_FLAGS) $(LINK_FLAGS) -o $@
+
+clean:
+	rm -f carla-discovery-*

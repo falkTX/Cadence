@@ -695,7 +695,6 @@ def recheck_all_plugins(qobject=None):
   # Parse all RDF files
   for i in range(len(rdf_files)):
     rdf_file = rdf_files[i]
-    print(rdf_file)
 
     # Tell GUI we're parsing this bundle
     if (qobject):
