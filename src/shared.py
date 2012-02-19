@@ -17,9 +17,23 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
-import os
-from PyQt4.QtCore import qDebug, qWarning
+import os, sys
+from PyQt4.QtCore import pyqtSlot, qWarning, SIGNAL, SLOT
 from PyQt4.QtGui import QIcon, QMessageBox, QFileDialog
+
+# Set Platform
+if ("linux" in sys.platform):
+  LINUX   = True
+  WINDOWS = False
+elif ("win" in sys.platform):
+  LINUX   = False
+  WINDOWS = True
+else:
+  LINUX   = False
+  WINDOWS = False
+
+if (WINDOWS == False):
+  from signal import signal, SIGINT, SIGTERM, SIGUSR1, SIGUSR2
 
 # Small integrity tests
 HOME = os.getenv("HOME")
@@ -48,3 +62,43 @@ def getAndSetPath(self, currentPath, lineEdit):
     if (newPath):
       lineEdit.setText(newPath)
     return newPath
+
+# Custom MessageBox
+def CustomMessageBox(self, icon, title, text, extra_text="", buttons=QMessageBox.Yes|QMessageBox.No, defButton=QMessageBox.No):
+    msgBox = QMessageBox(self)
+    msgBox.setIcon(icon)
+    msgBox.setWindowTitle(title)
+    msgBox.setText(text)
+    msgBox.setInformativeText(extra_text)
+    msgBox.setStandardButtons(buttons)
+    msgBox.setDefaultButton(defButton)
+    return msgBox.exec_()
+
+# signal handler for unix systems
+def set_up_signals(_gui):
+  if (WINDOWS == False):
+    from signal import signal, SIGINT, SIGTERM, SIGUSR1, SIGUSR2
+    global x_gui
+    x_gui = _gui
+    signal(SIGINT,  signal_handler)
+    signal(SIGTERM, signal_handler)
+    signal(SIGUSR1, signal_handler)
+    signal(SIGUSR2, signal_handler)
+
+    x_gui.connect(x_gui, SIGNAL("SIGUSR2()"), lambda gui=x_gui: showWindow(gui))
+    x_gui.connect(x_gui, SIGNAL("SIGTERM()"), SLOT("close()"))
+
+def signal_handler(sig=0, frame=0):
+  global x_gui
+  if (sig in (SIGINT, SIGTERM)):
+    x_gui.emit(SIGNAL("SIGTERM()"))
+  elif (sig == SIGUSR1):
+    x_gui.emit(SIGNAL("SIGUSR1()"))
+  elif (sig == SIGUSR2):
+    x_gui.emit(SIGNAL("SIGUSR2()"))
+
+def showWindow(self):
+  if (self.isMaximized()):
+    self.showMaximized()
+  else:
+    self.showNormal()

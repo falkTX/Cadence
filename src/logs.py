@@ -17,7 +17,7 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
-from PyQt4.QtCore import pyqtSlot, Qt, QFile, QIODevice, QTextStream, QThread, SIGNAL, SLOT
+from PyQt4.QtCore import pyqtSlot, Qt, QFile, QIODevice, QTextStream, QThread
 from PyQt4.QtGui import QDialog, QPalette, QSyntaxHighlighter
 
 # Imports (Custom Stuff)
@@ -352,7 +352,6 @@ class LogsW(QDialog, ui_logs.Ui_LogsW):
 if __name__ == '__main__':
 
     # Additional imports
-    import sys
     from PyQt4.QtGui import QApplication
 
     # App initialization
@@ -361,6 +360,8 @@ if __name__ == '__main__':
     # Show GUI
     gui = LogsW(None, Qt.WindowFlags())
     gui.show()
+
+    set_up_signals(gui)
 
     # App-Loop
     sys.exit(app.exec_())

@@ -53,3 +53,26 @@ def get_jack_status_error_string(c_status):
     error_string = error_string.strip().rsplit(";", 1)[0]+"."
 
   return error_string
+
+# C char** -> Python list conversion
+def c_char_p_p_to_list(c_char_p_p):
+  i = 0
+  final_list = []
+
+  if (not c_char_p_p):
+    return final_list
+
+  while (True):
+    new_char_p = c_char_p_p[i]
+    if (new_char_p):
+      final_list.append(str(new_char_p, encoding="ascii"))
+    else:
+      break
+    i += 1
+
+  jacklib.free(c_char_p_p)
+  return final_list
+
+# C cast void* -> jack_default_audio_sample_t*
+def translate_audio_port_buffer(void_p):
+  return jacklib.cast(void_p, jacklib.POINTER(jacklib.jack_default_audio_sample_t))

@@ -17,7 +17,7 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
-from PyQt4.QtCore import pyqtSlot, Qt, QProcess, QTime, QTimer, SIGNAL, SLOT
+from PyQt4.QtCore import pyqtSlot, Qt, QProcess, QTime, QTimer
 from PyQt4.QtGui import QDialog
 from time import sleep
 
@@ -270,7 +270,6 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
 if __name__ == '__main__':
 
     # Additional imports
-    import sys
     from PyQt4.QtGui import QApplication
 
     # App initialization
