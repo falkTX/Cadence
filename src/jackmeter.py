@@ -86,8 +86,9 @@ class MeterW(DigitalPeakMeter):
         self.displayMeter(1, 0.0)
         self.displayMeter(2, 0.0)
 
-        self.setRefreshRate(25)
-        self.m_peakTimerId = self.startTimer(50)
+        refresh = float(jacklib.get_buffer_size(client))/jacklib.get_sample_rate(client)*1000
+        self.setRefreshRate(refresh if (refresh > 25) else 25)
+        self.m_peakTimerId = self.startTimer(refresh if (refresh > 50) else 50)
 
     def timerEvent(self, event):
         if (event.timerId() == self.m_peakTimerId):
