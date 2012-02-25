@@ -83,8 +83,8 @@ class MeterW(DigitalPeakMeter):
         self.setOrientation(self.VERTICAL)
         self.setSmoothRelease(1)
 
-        self.displayMeter(1, x_port1)
-        self.displayMeter(2, x_port2)
+        self.displayMeter(1, 0.0)
+        self.displayMeter(2, 0.0)
 
         self.setRefreshRate(25)
         self.m_peakTimerId = self.startTimer(50)
