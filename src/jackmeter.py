@@ -29,7 +29,10 @@ global x_port1, x_port2, need_reconnect
 x_port1 = 0.0
 x_port2 = 0.0
 need_reconnect = False
+
 client = None
+port_1 = None
+port_2 = None
 
 def process_callback(nframes, arg):
   global x_port1, x_port2
@@ -60,12 +63,12 @@ def reconnect_inputs():
 
   for port in list_port_1:
     this_port = jacklib.port_by_name(client, port)
-    if not jacklib.port_is_mine(client, this_port):
+    if (bool(jacklib.port_is_mine(client, this_port)) == False and bool(jacklib.port_connected_to(port_1, port)) == False):
       jacklib.connect(client, port, "%s:in1" % (client_name))
 
   for port in list_port_2:
     this_port = jacklib.port_by_name(client, port)
-    if not jacklib.port_is_mine(client, this_port):
+    if (bool(jacklib.port_is_mine(client, this_port)) == False and bool(jacklib.port_connected_to(port_2, port)) == False):
       jacklib.connect(client, port, "%s:in2" % (client_name))
 
   global need_reconnect

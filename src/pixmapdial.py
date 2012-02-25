@@ -58,6 +58,9 @@ class PixmapDial(QDial):
 
         self.updateSizes()
 
+    def getSize(self):
+        return self.p_size
+
     def setEnabled(self, enabled):
         if (self.isEnabled() != enabled):
           self.m_pixmap.load(":/bitmaps/dial_%s%s.png" % (self.m_pixmap_n_str, "" if enabled else "d"))
@@ -99,9 +102,6 @@ class PixmapDial(QDial):
 
         self.updateSizes()
         self.update()
-
-    def getSize(self):
-        return self.p_size
 
     def minimumSizeHint(self):
         return QSize(self.p_size, self.p_size)

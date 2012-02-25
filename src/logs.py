@@ -229,7 +229,7 @@ class LogsW(QDialog, ui_logs.Ui_LogsW):
         QDialog.__init__(self, parent, flags)
         self.setupUi(self)
 
-        self.b_close.setIcon(getIcon("dialog-close"))
+        self.b_close.setIcon(getIcon("window-close"))
         self.b_purge.setIcon(getIcon("user-trash"))
 
         self.m_firstRun = True
@@ -308,10 +308,6 @@ class LogsW(QDialog, ui_logs.Ui_LogsW):
           self.pte_lash.clear()
           self.pte_ladish.clear()
 
-        if (self.LOG_FILE_JACK):
-          if (self.m_text_jack):
-            self.pte_jack.appendPlainText(self.m_text_jack)
-
         if (self.LOG_FILE_A2J):
           if (self.m_text_a2j):
             self.pte_a2j.appendPlainText(self.m_text_a2j)
@@ -323,6 +319,12 @@ class LogsW(QDialog, ui_logs.Ui_LogsW):
         if (self.LOG_FILE_LADISH):
           if (self.m_text_ladish):
             self.pte_ladish.appendPlainText(self.m_text_ladish)
+
+        # Somehow appending the whole jack log breaks this call?
+        # Set it here in last for now
+        if (self.LOG_FILE_JACK):
+          if (self.m_text_jack):
+            self.pte_jack.appendPlainText(self.m_text_jack)
 
         if (self.m_firstRun):
           self.pte_jack.horizontalScrollBar().setValue(0)

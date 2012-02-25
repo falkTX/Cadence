@@ -46,29 +46,6 @@ class DigitalPeakMeter(QWidget):
         self.m_paintTimer.timeout.connect(self.update)
         self.m_paintTimer.start()
 
-    def minimumSizeHint(self):
-        return QSize(30, 30)
-
-    def sizeHint(self):
-        return QSize(self.m_width, self.m_height)
-
-    def checkSizes(self):
-        self.m_width = self.width()
-        self.m_height = self.height()
-        self.m_sizeMeter = 0
-
-        if (self.m_orientation == self.HORIZONTAL):
-          self.m_gradientMeter.setFinalStop(self.m_width, 0)
-          if (self.m_channels > 0):
-            self.m_sizeMeter = self.m_height/self.m_channels
-
-        elif (self.m_orientation == self.VERTICAL):
-          self.m_gradientMeter.setFinalStop(0, self.m_height)
-          if (self.m_channels > 0):
-            self.m_sizeMeter = self.m_width/self.m_channels
-
-        self.update()
-
     def displayMeter(self, meter_n, level):
         if (meter_n < 0 or meter_n > self.m_channels):
           qCritical("DigitalPeakMeter::displayMeter(%i, %f) - Invalid meter number", meter_n, level)
@@ -121,7 +98,7 @@ class DigitalPeakMeter(QWidget):
           self.m_gradientMeter.setColorAt(0.8, self.m_colorBase)
           self.m_gradientMeter.setColorAt(1.0, self.m_colorBase)
 
-        self.checkSizes()
+        self.updateSizes()
 
     def setRefreshRate(self, rate):
         self.m_paintTimer.stop()
@@ -134,6 +111,29 @@ class DigitalPeakMeter(QWidget):
         elif (value > 5):
           value = 5
         self.m_smoothMultiplier = value
+
+    def updateSizes(self):
+        self.m_width = self.width()
+        self.m_height = self.height()
+        self.m_sizeMeter = 0
+
+        if (self.m_orientation == self.HORIZONTAL):
+          self.m_gradientMeter.setFinalStop(self.m_width, 0)
+          if (self.m_channels > 0):
+            self.m_sizeMeter = self.m_height/self.m_channels
+
+        elif (self.m_orientation == self.VERTICAL):
+          self.m_gradientMeter.setFinalStop(0, self.m_height)
+          if (self.m_channels > 0):
+            self.m_sizeMeter = self.m_width/self.m_channels
+
+        self.update()
+
+    def minimumSizeHint(self):
+        return QSize(30, 30)
+
+    def sizeHint(self):
+        return QSize(self.m_width, self.m_height)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -224,5 +224,5 @@ class DigitalPeakMeter(QWidget):
           painter.drawLine(1, lsmall-(lsmall/1.04), lfull, lsmall-(lsmall/1.04))
 
     def resizeEvent(self, event):
-        self.checkSizes()
+        self.updateSizes()
         QWidget.resizeEvent(self, event)
