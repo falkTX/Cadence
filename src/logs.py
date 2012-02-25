@@ -347,7 +347,7 @@ class LogsW(QDialog, ui_logs.Ui_LogsW):
 
     def closeEvent(self, event):
         self.m_readThread.quit()
-        return QDialog.closeEvent(self, event)
+        QDialog.closeEvent(self, event)
 
 # -------------------------------------------------------------
 # Allow to use this as a standalone app

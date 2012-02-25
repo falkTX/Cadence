@@ -76,3 +76,17 @@ def c_char_p_p_to_list(c_char_p_p):
 # C cast void* -> jack_default_audio_sample_t*
 def translate_audio_port_buffer(void_p):
   return jacklib.cast(void_p, jacklib.POINTER(jacklib.jack_default_audio_sample_t))
+
+def translate_midi_event_buffer(void_p, size):
+  if (not void_p):
+    return list()
+  elif (size == 1):
+    return (void_p[0],)
+  elif (size == 2):
+    return (void_p[0], void_p[1])
+  elif (size == 3):
+    return (void_p[0], void_p[1], void_p[2])
+  elif (size == 4):
+    return (void_p[0], void_p[1], void_p[2], void_p[3])
+  else:
+    return list()
