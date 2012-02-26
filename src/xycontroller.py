@@ -93,21 +93,39 @@ class XYGraphicsScene(QGraphicsScene):
     def setSmooth(self, smooth):
         self.m_smooth = smooth
 
+    def setSmoothValues(self, x, y):
+        self.m_smooth_x = x*(self.p_size.x()+self.p_size.width())
+        self.m_smooth_y = y*(self.p_size.y()+self.p_size.height())
+
     def handleCC(self, param, value):
+        sendUpdate = False
+
         if (param == self.cc_x):
-          xp = (float(value)/63)-1.025
+          sendUpdate = True
+          xp = (float(value)/63)-1.0
           yp = self.m_cursor.y()/(self.p_size.y()+self.p_size.height())
+
+          if (xp < -1.0):
+            xp = -1.0
+          elif (xp > 1.0):
+            xp = 1.0
+
           self.setPosX(xp, False)
 
-        elif (param == self.cc_y):
+        if (param == self.cc_y):
+          sendUpdate = True
           xp = self.m_cursor.x()/(self.p_size.x()+self.p_size.width())
-          yp = (float(value)/63)-1.025
+          yp = (float(value)/63)-1.0
+
+          if (yp < -1.0):
+            yp = -1.0
+          elif (yp > 1.0):
+            yp = 1.0
+
           self.setPosY(yp, False)
 
-        else:
-          return
-
-        self.emit(SIGNAL("cursorMoved(float, float)"), xp, yp)
+        if (sendUpdate):
+          self.emit(SIGNAL("cursorMoved(float, float)"), xp, yp)
 
     def handleMousePos(self, pos):
         if (not self.p_size.contains(pos)):
@@ -274,8 +292,11 @@ class XYControllerW(QMainWindow, ui_xycontroller.Ui_XYControllerW):
         self.scene.updateSize(self.graphicsView.size())
         self.graphicsView.centerOn(0, 0)
 
-        self.slot_updateSceneX(self.dial_x.value())
-        self.slot_updateSceneY(self.dial_y.value())
+        dial_x = self.dial_x.value()
+        dial_y = self.dial_y.value()
+        self.slot_updateSceneX(dial_x)
+        self.slot_updateSceneY(dial_y)
+        self.scene.setSmoothValues(float(dial_x)/100, float(dial_y)/100)
 
     @pyqtSlot(int)
     def slot_noteOn(self, note):
@@ -291,11 +312,11 @@ class XYControllerW(QMainWindow, ui_xycontroller.Ui_XYControllerW):
 
     @pyqtSlot(int)
     def slot_updateSceneX(self, x):
-        self.scene.setPosX(float(x)/100)
+        self.scene.setPosX(float(x)/100, not self.dial_x.isSliderDown())
 
     @pyqtSlot(int)
     def slot_updateSceneY(self, y):
-        self.scene.setPosY(float(y)/100)
+        self.scene.setPosY(float(y)/100, not self.dial_y.isSliderDown())
 
     @pyqtSlot(str)
     def slot_checkCC_X(self, text):
@@ -408,8 +429,12 @@ class XYControllerW(QMainWindow, ui_xycontroller.Ui_XYControllerW):
 
         self.dial_x.setValue(self.settings.value("DialX", 50, type=int))
         self.dial_y.setValue(self.settings.value("DialY", 50, type=int))
+
         self.cc_x = self.settings.value("ControlX", 1, type=int)
         self.cc_y = self.settings.value("ControlY", 2, type=int)
+        self.scene.setControlX(self.cc_x)
+        self.scene.setControlY(self.cc_y)
+
         self.m_channels = toList(self.settings.value("Channels", [1]))
 
         for i in range(len(self.m_channels)):
@@ -554,7 +579,7 @@ if __name__ == '__main__':
     jack_client = jacklib.client_open("XY-Controller", jacklib.JackNullOption, jacklib.pointer(jack_status))
 
     if not jack_client:
-      QMessageBox.critical(None, app.translate("RenderW", "Error"), app.translate("RenderW", "Could not connect to JACK, possible errors:\n%s" % (get_jack_status_error_string(jack_status))))
+      QMessageBox.critical(None, app.translate("XYControllerW", "Error"), app.translate("XYControllerW", "Could not connect to JACK, possible errors:\n%s" % (get_jack_status_error_string(jack_status))))
       sys.exit(1)
 
     jack_midi_in_port = jacklib.port_register(jack_client, "midi_in", jacklib.JACK_DEFAULT_MIDI_TYPE, jacklib.JackPortIsInput, 0)
