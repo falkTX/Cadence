@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # JACK, A2J, LASH and LADISH Logs Viewer
@@ -360,7 +360,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     # Show GUI
-    gui = LogsW(None, Qt.WindowFlags())
+    gui = LogsW(None)
     gui.show()
 
     set_up_signals(gui)

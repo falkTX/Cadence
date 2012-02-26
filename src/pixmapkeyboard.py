@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Pixmap Keyboard, a custom Qt4 widget
@@ -92,7 +92,7 @@ class PixmapKeyboard(QWidget):
     VERTICAL = 1
 
     def __init__(self, parent):
-        super(PixmapKeyboard, self).__init__(parent)
+        QWidget.__init__(self, parent)
 
         self.m_octaves = 6
         self.m_lastMouseNote = -1

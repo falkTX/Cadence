@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # JACK-Capture frontend, with freewheel and transport support
@@ -17,7 +17,7 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
-from PyQt4.QtCore import pyqtSlot, Qt, QProcess, QTime, QTimer
+from PyQt4.QtCore import pyqtSlot, QProcess, QTime, QTimer
 from PyQt4.QtGui import QDialog
 from time import sleep
 
@@ -31,8 +31,8 @@ jack_client = None
 
 # Render Window
 class RenderW(QDialog, ui_render.Ui_RenderW):
-    def __init__(self, parent, flags):
-        QDialog.__init__(self, parent, flags)
+    def __init__(self, parent):
+        QDialog.__init__(self, parent)
         self.setupUi(self)
 
         # -------------------------------------------------------------
@@ -290,7 +290,7 @@ if __name__ == '__main__':
       sys.exit(1)
 
     # Show GUI
-    gui = RenderW(None, Qt.WindowFlags())
+    gui = RenderW(None)
     gui.setWindowIcon(getIcon("media-record", 48))
     gui.show()
 

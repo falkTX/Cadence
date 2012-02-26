@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Simple JACK Audio Meter
@@ -75,7 +75,7 @@ def reconnect_inputs():
   need_reconnect = False
 
 class MeterW(DigitalPeakMeter):
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         DigitalPeakMeter.__init__(self, parent)
 
         client_name = str(jacklib.get_client_name(client), encoding="ascii")
@@ -125,7 +125,7 @@ if __name__ == '__main__':
     reconnect_inputs()
 
     # Show GUI
-    gui = MeterW(None)
+    gui = MeterW()
     gui.resize(70, 600)
     gui.show()
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Common/Shared code
@@ -56,7 +56,7 @@ if (PATH_env == None):
   PATH = ("/bin", "/sbin", "/usr/local/bin", "/usr/local/sbin", "/usr/bin", "/usr/sbin", "/usr/games")
 else:
   PATH = PATH_env.split(os.pathsep)
-  del PATH_env
+del PATH_env
 
 MIDI_CC_LIST = (
   #"0x00 Bank Select",
@@ -151,6 +151,15 @@ MIDI_CC_LIST = (
   "0x5F FX 5 Depth [Phaser]"
   )
 
+# Convert a value to a list
+def toList(value):
+    if value is None:
+        return []
+    elif not isinstance(value, list):
+        return [value]
+    else:
+        return value
+
 # Get Icon from user theme, using our own as backup (Oxygen)
 def getIcon(icon, size=16):
   return QIcon.fromTheme(icon, QIcon(":/%ix%i/%s.png" % (size, size, icon)))
@@ -163,12 +172,12 @@ def getAndSetPath(self, currentPath, lineEdit):
     return newPath
 
 # Custom MessageBox
-def CustomMessageBox(self, icon, title, text, extra_text="", buttons=QMessageBox.Yes|QMessageBox.No, defButton=QMessageBox.No):
+def CustomMessageBox(self, icon, title, text, extraText="", buttons=QMessageBox.Yes|QMessageBox.No, defButton=QMessageBox.No):
     msgBox = QMessageBox(self)
     msgBox.setIcon(icon)
     msgBox.setWindowTitle(title)
     msgBox.setText(text)
-    msgBox.setInformativeText(extra_text)
+    msgBox.setInformativeText(extraText)
     msgBox.setStandardButtons(buttons)
     msgBox.setDefaultButton(defButton)
     return msgBox.exec_()
