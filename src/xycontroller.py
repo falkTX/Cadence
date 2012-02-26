@@ -488,19 +488,20 @@ class XYControllerW(QMainWindow, ui_xycontroller.Ui_XYControllerW):
           if (jack_midi_in_data.empty() == False):
             while (True):
               try:
-                mode, note, velo = jack_midi_in_data.get_nowait()
+                data1, data2, data3 = jack_midi_in_data.get_nowait()
               except QuequeEmpty:
                 break
 
-              # TODO - filter by channel here
-              #channel = mode - 0xB0+1
-              #if (channel in self.m_channels):
-              if (0x80 <= mode and mode <= 0x8F):
-                self.keyboard.noteOff(note, False)
-              elif (0x90 <= mode and mode < 0x9F):
-                self.keyboard.noteOn(note, False)
-              elif (0xB0 <= mode and mode < 0xBF):
-                self.scene.handleCC(note, velo)
+              channel = (data1 & 0x0F)+1
+              mode    =  data1 & 0xF0
+
+              if (channel in self.m_channels):
+                if (mode == 0x80):
+                  self.keyboard.noteOff(data2, False)
+                elif (mode == 0x90):
+                  self.keyboard.noteOn(data2, False)
+                elif (mode == 0xB0):
+                  self.scene.handleCC(data2, data3)
 
               jack_midi_in_data.task_done()
 
