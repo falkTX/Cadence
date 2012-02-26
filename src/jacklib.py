@@ -249,12 +249,12 @@ JackSessionCallback = CFUNCTYPE(None, jack_session_event_t, c_void_p)
 def client_open(client_name, options, status):
   jacklib.jack_client_open.argtypes = [c_char_p, jack_options_t, POINTER(jack_status_t)]
   jacklib.jack_client_open.restype = POINTER(jack_client_t)
-  return jacklib.jack_client_open(client_name.encode(), options, status)
+  return jacklib.jack_client_open(client_name.encode("ascii"), options, status)
 
 def client_new(client_name):
   jacklib.jack_client_new.argtypes = [c_char_p]
   jacklib.jack_client_new.restype = POINTER(jack_client_t)
-  return jacklib.jack_client_new(client_name.encode())
+  return jacklib.jack_client_new(client_name.encode("ascii"))
 
 def client_close(client):
   jacklib.jack_client_close.argtypes = [POINTER(jack_client_t)]
@@ -274,12 +274,12 @@ def get_client_name(client):
 def internal_client_new(client_name, load_name, load_init):
   jacklib.jack_internal_client_new.argtypes = [c_char_p, c_char_p, c_char_p]
   jacklib.jack_internal_client_new.restype = c_int
-  return jacklib.jack_internal_client_new(client_name.encode(), load_name.encode(), load_init.encode())
+  return jacklib.jack_internal_client_new(client_name.encode("ascii"), load_name.encode("ascii"), load_init.encode("ascii"))
 
 def internal_client_close(client_name):
   jacklib.jack_internal_client_close.argtypes = [c_char_p]
   jacklib.jack_internal_client_close.restype = None
-  jacklib.jack_internal_client_close(client_name.encode())
+  jacklib.jack_internal_client_close(client_name.encode("ascii"))
 
 def activate(client):
   jacklib.jack_activate.argtypes = [POINTER(jack_client_t)]
@@ -459,7 +459,7 @@ def cpu_load(client):
 def port_register(client, port_name, port_type, flags, buffer_size):
   jacklib.jack_port_register.argtypes = [POINTER(jack_client_t), c_char_p, c_char_p, c_ulong, c_ulong]
   jacklib.jack_port_register.restype = POINTER(jack_port_t)
-  return jacklib.jack_port_register(client, port_name.encode(), port_type.encode(), flags, buffer_size)
+  return jacklib.jack_port_register(client, port_name.encode("ascii"), port_type.encode("ascii"), flags, buffer_size)
 
 def port_unregister(client, port):
   jacklib.jack_port_unregister.argtypes = [POINTER(jack_client_t), POINTER(jack_port_t)]
@@ -504,7 +504,7 @@ def port_connected(port):
 def port_connected_to(port, port_name):
   jacklib.jack_port_connected_to.argtypes = [POINTER(jack_port_t), c_char_p]
   jacklib.jack_port_connected_to.restype = c_int
-  return jacklib.jack_port_connected_to(port, port_name.encode())
+  return jacklib.jack_port_connected_to(port, port_name.encode("ascii"))
 
 def port_get_connections(port):
   jacklib.jack_port_get_connections.argtypes = [POINTER(jack_port_t)]
@@ -529,17 +529,17 @@ def port_untie(port):
 def port_set_name(port, port_name):
   jacklib.jack_port_set_name.argtypes = [POINTER(jack_port_t), c_char_p]
   jacklib.jack_port_set_name.restype = c_int
-  return jacklib.jack_port_set_name(port, port_name.encode())
+  return jacklib.jack_port_set_name(port, port_name.encode("ascii"))
 
 def port_set_alias(port, alias):
   jacklib.jack_port_set_alias.argtypes = [POINTER(jack_port_t), c_char_p]
   jacklib.jack_port_set_alias.restype = c_int
-  return jacklib.jack_port_set_alias(port, alias.encode())
+  return jacklib.jack_port_set_alias(port, alias.encode("ascii"))
 
 def port_unset_alias(port, alias):
   jacklib.jack_port_unset_alias.argtypes = [POINTER(jack_port_t), c_char_p]
   jacklib.jack_port_unset_alias.restype = c_int
-  return jacklib.jack_port_unset_alias(port, alias.encode())
+  return jacklib.jack_port_unset_alias(port, alias.encode("ascii"))
 
 def port_get_aliases(port):
   # NOTE - this function has no 2nd argument in jacklib
@@ -562,7 +562,7 @@ def port_request_monitor(port, onoff):
 def port_request_monitor_by_name(client, port_name, onoff):
   jacklib.jack_port_request_monitor_by_name.argtypes = [POINTER(jack_client_t), c_char_p, c_int]
   jacklib.jack_port_request_monitor_by_name.restype = c_int
-  return jacklib.jack_port_request_monitor_by_name(client, port_name.encode(), onoff)
+  return jacklib.jack_port_request_monitor_by_name(client, port_name.encode("ascii"), onoff)
 
 def port_ensure_monitor(port, onoff):
   jacklib.jack_port_ensure_monitor.argtypes = [POINTER(jack_port_t), c_int]
@@ -577,12 +577,12 @@ def port_monitoring_input(port):
 def connect(client, source_port, destination_port):
   jacklib.jack_connect.argtypes = [POINTER(jack_client_t), c_char_p, c_char_p]
   jacklib.jack_connect.restype = c_int
-  return jacklib.jack_connect(client, source_port.encode(), destination_port.encode())
+  return jacklib.jack_connect(client, source_port.encode("ascii"), destination_port.encode("ascii"))
 
 def disconnect(client, source_port, destination_port):
   jacklib.jack_disconnect.argtypes = [POINTER(jack_client_t), c_char_p, c_char_p]
   jacklib.jack_disconnect.restype = c_int
-  return jacklib.jack_disconnect(client, source_port.encode(), destination_port.encode())
+  return jacklib.jack_disconnect(client, source_port.encode("ascii"), destination_port.encode("ascii"))
 
 def port_disconnect(client, port):
   jacklib.jack_port_disconnect.argtypes = [POINTER(jack_client_t), POINTER(jack_port_t)]
@@ -602,7 +602,7 @@ def port_type_size():
 def port_type_get_buffer_size(client, port_type):
   jacklib.jack_port_type_get_buffer_size.argtypes = [POINTER(jack_client_t), c_char_p]
   jacklib.jack_port_type_get_buffer_size.restype = c_size_t
-  return jacklib.jack_port_type_get_buffer_size(client, port_type.encode())
+  return jacklib.jack_port_type_get_buffer_size(client, port_type.encode("ascii"))
 
 
 # Latency Functions
@@ -648,12 +648,12 @@ def recompute_total_latency(client, port):
 def get_ports(client, port_name_pattern, type_name_pattern, flags):
   jacklib.jack_get_ports.argtypes = [POINTER(jack_client_t), c_char_p, c_char_p, c_ulong]
   jacklib.jack_get_ports.restype = POINTER(c_char_p)
-  return jacklib.jack_get_ports(client, port_name_pattern.encode(), type_name_pattern.encode(), flags)
+  return jacklib.jack_get_ports(client, port_name_pattern.encode("ascii"), type_name_pattern.encode("ascii"), flags)
 
 def port_by_name(client, port_name):
   jacklib.jack_port_by_name.argtypes = [POINTER(jack_client_t), c_char_p]
   jacklib.jack_port_by_name.restype = POINTER(jack_port_t)
-  return jacklib.jack_port_by_name(client, port_name.encode())
+  return jacklib.jack_port_by_name(client, port_name.encode("ascii"))
 
 def port_by_id(client, port_id):
   jacklib.jack_port_by_id.argtypes = [POINTER(jack_client_t), jack_port_id_t]
@@ -838,7 +838,7 @@ def client_get_uuid(client):
 def session_notify(client, target, type_, path):
   jacklib.jack_session_notify.argtypes = [POINTER(jack_client_t), c_char_p, jack_session_event_type_t, c_char_p]
   jacklib.jack_session_notify.restype = POINTER(jack_session_command_t)
-  return jacklib.jack_session_notify(client, target.encode(), type_, path.encode())
+  return jacklib.jack_session_notify(client, target.encode("ascii"), type_, path.encode("ascii"))
 
 def session_commands_free(cmds):
   jacklib.jack_session_commands_free.argtypes = [POINTER(jack_session_command_t)]
@@ -848,19 +848,19 @@ def session_commands_free(cmds):
 def get_uuid_for_client_name(client, client_name):
   jacklib.jack_get_uuid_for_client_name.argtypes = [POINTER(jack_client_t), c_char_p]
   jacklib.jack_get_uuid_for_client_name.restype = c_char_p
-  return jacklib.jack_get_uuid_for_client_name(client, client_name.encode())
+  return jacklib.jack_get_uuid_for_client_name(client, client_name.encode("ascii"))
 
 def get_client_name_by_uuid(client, client_uuid):
   jacklib.jack_get_client_name_by_uuid.argtypes = [POINTER(jack_client_t), c_char_p]
   jacklib.jack_get_client_name_by_uuid.restype = c_char_p
-  return jacklib.jack_get_client_name_by_uuid(client, client_uuid.encode())
+  return jacklib.jack_get_client_name_by_uuid(client, client_uuid.encode("ascii"))
 
 def reserve_client_name(client, name, uuid):
   jacklib.jack_reserve_client_name.argtypes = [POINTER(jack_client_t), c_char_p, c_char_p]
   jacklib.jack_reserve_client_name.restype = c_int
-  return jacklib.jack_reserve_client_name(client, name.encode(), uuid.encode())
+  return jacklib.jack_reserve_client_name(client, name.encode("ascii"), uuid.encode("ascii"))
 
 def client_has_session_callback(client, client_name):
   jacklib.jack_client_has_session_callback.argtypes = [POINTER(jack_client_t), c_char_p]
   jacklib.jack_client_has_session_callback.restype = c_int
-  return jacklib.jack_client_has_session_callback(client, client_name.encode())
+  return jacklib.jack_client_has_session_callback(client, client_name.encode("ascii"))

@@ -14,7 +14,8 @@ build: UI RES LANG
 UI: tools
 
 tools: \
-	src/ui_logs.py src/ui_render.py src/ui_xycontroller.py
+	src/ui_logs.py src/ui_render.py src/ui_xycontroller.py \
+	src/ui_settings_jack.py
 
 src/ui_logs.py: src/ui/logs.ui
 	$(PYUIC) -o src/ui_logs.py $<
@@ -24,6 +25,9 @@ src/ui_render.py: src/ui/render.ui
 
 src/ui_xycontroller.py: src/ui/xycontroller.ui
 	$(PYUIC) -o src/ui_xycontroller.py $<
+
+src/ui_settings_jack.py: src/ui/settings_jack.ui
+	$(PYUIC) -o src/ui_settings_jack.py $<
 
 RES: src/icons_rc.py
 
