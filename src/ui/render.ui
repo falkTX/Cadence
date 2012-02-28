@@ -380,7 +380,7 @@
       <item row="2" column="2">
        <widget class="QRadioButton" name="rb_outro">
         <property name="text">
-         <string>Outro:</string>
+         <string>Other:</string>
         </property>
        </widget>
       </item>

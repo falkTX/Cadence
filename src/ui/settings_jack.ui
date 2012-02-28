@@ -606,7 +606,7 @@
              <bool>false</bool>
             </property>
             <property name="toolTip">
-             <string>Wherether to provide input/capture ports.
+             <string>Whether to provide input/capture ports.
 On ALSA you can here set an alternate device for capture</string>
             </property>
             <property name="text">
@@ -623,7 +623,7 @@ On ALSA you can here set an alternate device for capture</string>
              <bool>false</bool>
             </property>
             <property name="toolTip">
-             <string>Wherether to provide input/capture ports.
+             <string>Whether to provide input/capture ports.
 On ALSA you can here set an alternate device for capture</string>
             </property>
             <property name="editable">
@@ -637,7 +637,7 @@ On ALSA you can here set an alternate device for capture</string>
              <bool>false</bool>
             </property>
             <property name="toolTip">
-             <string>Wherether to provide output/playback ports.
+             <string>Whether to provide output/playback ports.
 On ALSA you can here set an alternate device for playback</string>
             </property>
             <property name="text">
@@ -654,7 +654,7 @@ On ALSA you can here set an alternate device for playback</string>
              <bool>false</bool>
             </property>
             <property name="toolTip">
-             <string>Wherether to provide output/playback ports.
+             <string>Whether to provide output/playback ports.
 On ALSA you can here set an alternate device for playback</string>
             </property>
             <property name="editable">
@@ -762,7 +762,7 @@ On ALSA you can here set an alternate device for playback</string>
              <bool>false</bool>
             </property>
             <property name="toolTip">
-             <string>Enable harware monitoring of capture ports</string>
+             <string>Enable hardware monitoring of capture ports</string>
             </property>
             <property name="text">
              <string>Hardware Monitoring</string>
@@ -1055,7 +1055,7 @@ Also known as buffer size</string>
                <string>Try 16-bit samples before 32-bit</string>
               </property>
               <property name="text">
-               <string>Force 16bit</string>
+               <string>Force 16-bit</string>
               </property>
              </widget>
             </item>
@@ -1175,7 +1175,7 @@ Also known as buffer size</string>
                 </item>
                 <item>
                  <property name="text">
-                  <string>ALSA RawMIDI</string>
+                  <string>ALSA Raw-MIDI</string>
                  </property>
                 </item>
                </widget>
@@ -1325,7 +1325,7 @@ Also known as buffer size</string>
                  <string>Maximum number of loopback ports</string>
                 </property>
                 <property name="text">
-                 <string>Maxmium Loopback Ports:</string>
+                 <string>Maximum Loopback Ports:</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
