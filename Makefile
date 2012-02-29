@@ -11,11 +11,43 @@ all: build
 
 build: UI RES LANG
 
-UI: tools
+UI: catarina tools
+
+catarina: src/ui_catarina.py \
+	src/ui_catarina_addgroup.py src/ui_catarina_removegroup.py src/ui_catarina_renamegroup.py \
+	src/ui_catarina_addport.py src/ui_catarina_removeport.py src/ui_catarina_renameport.py \
+	src/ui_catarina_connectports.py src/ui_catarina_disconnectports.py
 
 tools: \
 	src/ui_logs.py src/ui_render.py src/ui_xycontroller.py \
 	src/ui_settings_jack.py
+
+src/ui_catarina.py: src/ui/catarina.ui
+	$(PYUIC) -o src/ui_catarina.py $<
+
+src/ui_catarina_addgroup.py: src/ui/catarina_addgroup.ui
+	$(PYUIC) -o src/ui_catarina_addgroup.py $<
+
+src/ui_catarina_removegroup.py: src/ui/catarina_removegroup.ui
+	$(PYUIC) -o src/ui_catarina_removegroup.py $<
+
+src/ui_catarina_renamegroup.py: src/ui/catarina_renamegroup.ui
+	$(PYUIC) -o src/ui_catarina_renamegroup.py $<
+
+src/ui_catarina_addport.py: src/ui/catarina_addport.ui
+	$(PYUIC) -o src/ui_catarina_addport.py $<
+
+src/ui_catarina_removeport.py: src/ui/catarina_removeport.ui
+	$(PYUIC) -o src/ui_catarina_removeport.py $<
+
+src/ui_catarina_renameport.py: src/ui/catarina_renameport.ui
+	$(PYUIC) -o src/ui_catarina_renameport.py $<
+
+src/ui_catarina_connectports.py: src/ui/catarina_connectports.ui
+	$(PYUIC) -o src/ui_catarina_connectports.py $<
+
+src/ui_catarina_disconnectports.py: src/ui/catarina_disconnectports.ui
+	$(PYUIC) -o src/ui_catarina_disconnectports.py $<
 
 src/ui_logs.py: src/ui/logs.ui
 	$(PYUIC) -o src/ui_logs.py $<

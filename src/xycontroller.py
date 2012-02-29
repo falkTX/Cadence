@@ -208,7 +208,7 @@ class XYGraphicsScene(QGraphicsScene):
 
 # XY Controller Window
 class XYControllerW(QMainWindow, ui_xycontroller.Ui_XYControllerW):
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         QMainWindow.__init__(self, parent)
         self.setupUi(self)
 
@@ -589,7 +589,7 @@ if __name__ == '__main__':
     jacklib.activate(jack_client)
 
     # Show GUI
-    gui = XYControllerW(None)
+    gui = XYControllerW()
     gui.show()
 
     # Set-up custom signal handling

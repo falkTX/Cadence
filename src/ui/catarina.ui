@@ -1,0 +1,798 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CatarinaMainW</class>
+ <widget class="QMainWindow" name="CatarinaMainW">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>651</width>
+    <height>487</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Catarina</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QFrame" name="frame_toolbar">
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <property name="spacing">
+        <number>4</number>
+       </property>
+       <property name="margin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QGroupBox" name="group_project">
+         <property name="title">
+          <string>Project</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QPushButton" name="b_project_new">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>New Project</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/document-new.png</normaloff>:/16x16/document-new.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_project_open">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Open Project</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_project_save">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Save Project</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/document-save.png</normaloff>:/16x16/document-save.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_project_save_as">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Save Project As</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/document-save-as.png</normaloff>:/16x16/document-save-as.png</iconset>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="group_patchbay">
+         <property name="title">
+          <string>Patchbay</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QPushButton" name="b_group_add">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Add Group</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/list-add.png</normaloff>:/16x16/list-add.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_group_remove">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Remove Group</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/edit-delete.png</normaloff>:/16x16/edit-delete.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_group_rename">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Rename Group</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/edit-rename.png</normaloff>:/16x16/edit-rename.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="Line" name="line">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_port_add">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Add Port</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/list-add.png</normaloff>:/16x16/list-add.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_port_remove">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Remove Port</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/list-remove.png</normaloff>:/16x16/list-remove.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_port_rename">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Rename Port</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/edit-rename.png</normaloff>:/16x16/edit-rename.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="Line" name="line_2">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_ports_connect">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Connect Ports</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/network-connect.png</normaloff>:/16x16/network-connect.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_ports_disconnect">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Disconnect Ports</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/network-disconnect.png</normaloff>:/16x16/network-disconnect.png</iconset>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="group_canvas">
+         <property name="title">
+          <string>Canvas</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QPushButton" name="b_canvas_zoom_fit">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Zoom Auto-Fit</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/zoom-fit-best.png</normaloff>:/16x16/zoom-fit-best.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_canvas_zoom_in">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Zoom In</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/zoom-in.png</normaloff>:/16x16/zoom-in.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_canvas_zoom_out">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Zoom Out</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/zoom-out.png</normaloff>:/16x16/zoom-out.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_canvas_zoom_100">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Zoom 100%</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/zoom-original.png</normaloff>:/16x16/zoom-original.png</iconset>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>163</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGraphicsView" name="graphicsView">
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOn</enum>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOn</enum>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>651</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu_File">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="act_project_new"/>
+    <addaction name="act_project_open"/>
+    <addaction name="separator"/>
+    <addaction name="act_project_save"/>
+    <addaction name="act_project_save_as"/>
+    <addaction name="separator"/>
+    <addaction name="act_quit"/>
+   </widget>
+   <widget class="QMenu" name="menu_Patchbay">
+    <property name="title">
+     <string>&amp;Patchbay</string>
+    </property>
+    <addaction name="act_patchbay_add_group"/>
+    <addaction name="act_patchbay_remove_group"/>
+    <addaction name="act_patchbay_rename_group"/>
+    <addaction name="separator"/>
+    <addaction name="act_patchbay_add_port"/>
+    <addaction name="act_patchbay_remove_port"/>
+    <addaction name="act_patchbay_rename_port"/>
+    <addaction name="separator"/>
+    <addaction name="act_patchbay_connect_ports"/>
+    <addaction name="act_patchbay_disconnect_ports"/>
+   </widget>
+   <widget class="QMenu" name="menu_Settings">
+    <property name="title">
+     <string>&amp;Settings</string>
+    </property>
+    <addaction name="act_settings_show_toolbar"/>
+    <addaction name="separator"/>
+    <addaction name="act_settings_configure"/>
+   </widget>
+   <widget class="QMenu" name="menu_About">
+    <property name="title">
+     <string>&amp;About</string>
+    </property>
+    <addaction name="act_help_about"/>
+    <addaction name="act_help_about_qt"/>
+   </widget>
+   <widget class="QMenu" name="menu_Canvas">
+    <property name="title">
+     <string>&amp;Canvas</string>
+    </property>
+    <widget class="QMenu" name="menu_Zoom">
+     <property name="title">
+      <string>Zoom</string>
+     </property>
+     <addaction name="act_canvas_zoom_fit"/>
+     <addaction name="separator"/>
+     <addaction name="act_canvas_zoom_in"/>
+     <addaction name="act_canvas_zoom_out"/>
+     <addaction name="act_canvas_zoom_100"/>
+    </widget>
+    <addaction name="act_canvas_arrange"/>
+    <addaction name="act_canvas_refresh"/>
+    <addaction name="separator"/>
+    <addaction name="menu_Zoom"/>
+    <addaction name="separator"/>
+    <addaction name="act_canvas_print"/>
+    <addaction name="act_canvas_save_image"/>
+   </widget>
+   <addaction name="menu_File"/>
+   <addaction name="menu_Patchbay"/>
+   <addaction name="menu_Canvas"/>
+   <addaction name="menu_Settings"/>
+   <addaction name="menu_About"/>
+  </widget>
+  <action name="act_save">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/document-save.png</normaloff>:/16x16/document-save.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Save Positions</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="act_quit">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/application-exit.png</normaloff>:/16x16/application-exit.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Quit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="act_patchbay_add_group">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/list-add.png</normaloff>:/16x16/list-add.png</iconset>
+   </property>
+   <property name="text">
+    <string>Add Group...</string>
+   </property>
+  </action>
+  <action name="act_patchbay_remove_group">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/edit-delete.png</normaloff>:/16x16/edit-delete.png</iconset>
+   </property>
+   <property name="text">
+    <string>Remove Group...</string>
+   </property>
+  </action>
+  <action name="act_patchbay_add_port">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/list-add.png</normaloff>:/16x16/list-add.png</iconset>
+   </property>
+   <property name="text">
+    <string>Add Port...</string>
+   </property>
+  </action>
+  <action name="act_patchbay_remove_port">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/list-remove.png</normaloff>:/16x16/list-remove.png</iconset>
+   </property>
+   <property name="text">
+    <string>Remove Port...</string>
+   </property>
+  </action>
+  <action name="act_patchbay_rename_port">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/edit-rename.png</normaloff>:/16x16/edit-rename.png</iconset>
+   </property>
+   <property name="text">
+    <string>Rename Port...</string>
+   </property>
+  </action>
+  <action name="act_patchbay_connect_ports">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/network-connect.png</normaloff>:/16x16/network-connect.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Connect Ports...</string>
+   </property>
+  </action>
+  <action name="act_patchbay_disconnect_ports">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/network-disconnect.png</normaloff>:/16x16/network-disconnect.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Disconnect Ports...</string>
+   </property>
+  </action>
+  <action name="act_canvas_refresh">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/view-refresh.png</normaloff>:/16x16/view-refresh.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Refresh</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
+   </property>
+  </action>
+  <action name="act_canvas_zoom_fit">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/zoom-fit-best.png</normaloff>:/16x16/zoom-fit-best.png</iconset>
+   </property>
+   <property name="text">
+    <string>Auto-Fit</string>
+   </property>
+  </action>
+  <action name="act_canvas_zoom_100">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/zoom-original.png</normaloff>:/16x16/zoom-original.png</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom 100%</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+1</string>
+   </property>
+  </action>
+  <action name="act_canvas_zoom_out">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/zoom-out.png</normaloff>:/16x16/zoom-out.png</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom Out</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+-</string>
+   </property>
+  </action>
+  <action name="act_canvas_zoom_in">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/zoom-in.png</normaloff>:/16x16/zoom-in.png</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom In</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl++</string>
+   </property>
+  </action>
+  <action name="act_settings_show_toolbar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Toolbar</string>
+   </property>
+  </action>
+  <action name="act_help_about_qt">
+   <property name="text">
+    <string>About Qt</string>
+   </property>
+  </action>
+  <action name="act_help_about">
+   <property name="text">
+    <string>About Catarina</string>
+   </property>
+  </action>
+  <action name="act_show_patchbay_toolbar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Patchbay Toolbar</string>
+   </property>
+  </action>
+  <action name="act_canvas_arrange">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/view-sort-ascending.png</normaloff>:/16x16/view-sort-ascending.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Arrange</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+G</string>
+   </property>
+  </action>
+  <action name="act_canvas_print">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/document-print.png</normaloff>:/16x16/document-print.png</iconset>
+   </property>
+   <property name="text">
+    <string>Print...</string>
+   </property>
+  </action>
+  <action name="act_canvas_save_image">
+   <property name="text">
+    <string>Save Image...</string>
+   </property>
+  </action>
+  <action name="act_settings_configure">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/configure.png</normaloff>:/16x16/configure.png</iconset>
+   </property>
+   <property name="text">
+    <string>Configure Catarina</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
+  </action>
+  <action name="act_project_new">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/document-new.png</normaloff>:/16x16/document-new.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;New</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="act_project_open">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Open...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="act_project_save">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/document-save.png</normaloff>:/16x16/document-save.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="act_project_save_as">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/document-save-as.png</normaloff>:/16x16/document-save-as.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save &amp;As...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+S</string>
+   </property>
+  </action>
+  <action name="act_patchbay_rename_group">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/edit-rename.png</normaloff>:/16x16/edit-rename.png</iconset>
+   </property>
+   <property name="text">
+    <string>Rename Group...</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="../icons/icons.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>act_quit</sender>
+   <signal>triggered()</signal>
+   <receiver>CatarinaMainW</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>325</x>
+     <y>243</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>act_settings_show_toolbar</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>frame_toolbar</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>325</x>
+     <y>60</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
