@@ -20,5 +20,12 @@
             <file>bitmaps/kbd_h_orange.png</file>
             <file>bitmaps/kbd_v_classic.png</file>
             <file>bitmaps/kbd_v_orange.png</file>
+            <file>bitmaps/led_off.png</file>
+            <file>bitmaps/led_blue.png</file>
+            <file>bitmaps/led_green.png</file>
+            <file>bitmaps/led_red.png</file>
+            <file>bitmaps/led_yellow.png</file>
+            <file>bitmaps/led-big_on.png</file>
+            <file>bitmaps/led-big_off.png</file>
         </qresource>
 </RCC>

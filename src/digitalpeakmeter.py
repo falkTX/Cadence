@@ -48,7 +48,7 @@ class DigitalPeakMeter(QWidget):
 
     def displayMeter(self, meter_n, level):
         if (meter_n < 0 or meter_n > self.m_channels):
-          qCritical("DigitalPeakMeter::displayMeter(%i, %f) - Invalid meter number", meter_n, level)
+          qCritical("DigitalPeakMeter::displayMeter(%i, %f) - Invalid meter number" % (meter_n, level))
           return
 
         if (level < 0.0):

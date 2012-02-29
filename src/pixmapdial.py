@@ -25,6 +25,7 @@ import icons_rc
 
 # Widget Class
 class PixmapDial(QDial):
+
     HORIZONTAL = 0
     VERTICAL   = 1
 

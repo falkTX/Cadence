@@ -142,7 +142,7 @@ class PixmapKeyboard(QWidget):
         elif (color == self.COLOR_ORANGE):
           self.m_colorStr = "orange"
         else:
-          qCritical("PixmapKeyboard::setMode(%i, %i) - Invalid keyboard color", mode, color)
+          qCritical("PixmapKeyboard::setMode(%i, %i) - Invalid keyboard color" % (mode, color))
           self.setMode(mode)
           return
 
@@ -159,7 +159,7 @@ class PixmapKeyboard(QWidget):
           self.p_width = self.m_pixmap.width()/2
           self.p_height = self.m_pixmap.height()
         else:
-          qCritical("PixmapKeyboard::setMode(%i, %i) - Invalid keyboard mode", mode, color)
+          qCritical("PixmapKeyboard::setMode(%i, %i) - Invalid keyboard mode" % (mode, color))
           self.setMode(self.HORIZONTAL)
           return
 
