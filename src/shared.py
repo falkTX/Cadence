@@ -210,3 +210,40 @@ def showWindow(self):
     self.showMaximized()
   else:
     self.showNormal()
+
+# Shared Icons
+def setIcons(self, modes):
+  if ("canvas" in modes):
+    self.act_canvas_arrange.setIcon(getIcon("view-sort-ascending"))
+    self.act_canvas_refresh.setIcon(getIcon("view-refresh"))
+    self.act_canvas_zoom_fit.setIcon(getIcon("zoom-fit-best"))
+    self.act_canvas_zoom_in.setIcon(getIcon("zoom-in"))
+    self.act_canvas_zoom_out.setIcon(getIcon("zoom-out"))
+    self.act_canvas_zoom_100.setIcon(getIcon("zoom-original"))
+    self.act_canvas_print.setIcon(getIcon("document-print"))
+    self.b_canvas_zoom_fit.setIcon(getIcon("zoom-fit-best"))
+    self.b_canvas_zoom_in.setIcon(getIcon("zoom-in"))
+    self.b_canvas_zoom_out.setIcon(getIcon("zoom-out"))
+    self.b_canvas_zoom_100.setIcon(getIcon("zoom-original"))
+
+  if ("jack" in modes):
+    self.act_jack_clear_xruns.setIcon(getIcon("edit-clear"))
+    self.act_jack_configure.setIcon(getIcon("configure"))
+    self.act_jack_render.setIcon(getIcon("media-record"))
+    self.b_jack_clear_xruns.setIcon(getIcon("edit-clear"))
+    self.b_jack_configure.setIcon(getIcon("configure"))
+    self.b_jack_render.setIcon(getIcon("media-record"))
+
+  if ("transport" in modes):
+    self.act_transport_play.setIcon(getIcon("media-playback-start"))
+    self.act_transport_stop.setIcon(getIcon("media-playback-stop"))
+    self.act_transport_backwards.setIcon(getIcon("media-seek-backward"))
+    self.act_transport_forwards.setIcon(getIcon("media-seek-forward"))
+    self.b_transport_play.setIcon(getIcon("media-playback-start"))
+    self.b_transport_stop.setIcon(getIcon("media-playback-stop"))
+    self.b_transport_backwards.setIcon(getIcon("media-seek-backward"))
+    self.b_transport_forwards.setIcon(getIcon("media-seek-forward"))
+
+  if ("misc" in modes):
+    self.act_quit.setIcon(getIcon("application-exit"))
+    self.act_configure.setIcon(getIcon("configure"))
