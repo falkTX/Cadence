@@ -18,7 +18,7 @@
 
 # Imports (Global)
 from PyQt4.QtCore import pyqtSlot, qDebug, qCritical, qFatal, Qt, QObject, SIGNAL, SLOT
-from PyQt4.QtCore import QPointF, QRectF, QSettings
+from PyQt4.QtCore import QPointF, QRectF, QSettings, QTimer
 from PyQt4.QtGui import QGraphicsScene, QGraphicsItem
 
 # Imports (Theme)
@@ -184,6 +184,26 @@ features.handle_group_pos = False
 def bool2str(check):
   return "True" if check else "False"
 
+def split2str(split):
+  if (split == SPLIT_UNDEF):
+    return "SPLIT_UNDEF"
+  elif (split == SPLIT_NO):
+    return "SPLIT_NO"
+  elif (split == SPLIT_YES):
+    return "SPLIT_YES"
+  else:
+    return "SPLIT_???"
+
+def icon2str(icon):
+  if (icon == ICON_HARDWARE):
+    return "ICON_HARDWARE"
+  elif (ICON_APPLICATION):
+    return "ICON_APPLICATION"
+  elif (ICON_LADISH_ROOM):
+    return "ICON_LADISH_ROOM"
+  else:
+    return "ICON_???"
+
 # PatchCanvas API
 def set_options(new_options):
   if (canvas.initiated): return
@@ -266,7 +286,7 @@ def clear():
     disconnectPorts(idx)
 
   for idx in port_list_ids:
-    removePort(tmp_port_list[i])
+    removePort(idx)
 
   for idx in group_list_ids:
     removeGroup(idx)
@@ -297,6 +317,605 @@ def setCanvasSize(x, y, width, height):
   canvas.size_rect.setY(y)
   canvas.size_rect.setWidth(width)
   canvas.size_rect.setHeight(height)
+
+def addGroup(group_id, group_name, split=SPLIT_UNDEF, icon=ICON_APPLICATION):
+  if (canvas.debug):
+    qDebug("patchcanvas::addGroup(%i, %s, %s, %s)" % (group_id, group_name, split2str(split), icon2str(icon)))
+
+  #if (split == SPLIT_UNDEF and features.handle_group_pos):
+    #split = canvas.settings.value("CanvasPositions/%s_SPLIT" % (group_name), split, type=int)
+
+  #group_box = CanvasBox(group_id, group_name, icon)
+
+  #group_dict = group_dict_t()
+  #group_dict.group_id   = group_id
+  #group_dict.group_name = group_name
+  #group_dict.split = bool(split == SPLIT_YES)
+  #group_dict.icon  = icon
+  #group_dict.widgets = (group_box, None)
+
+  #if (split == SPLIT_YES):
+    #group_box.setSplit(True, PORT_MODE_OUTPUT)
+
+    #if (features.handle_group_pos):
+      #group_box.setPos(canvas.settings.value(QString("CanvasPositions/%1_o").arg(group_name), CanvasGetNewGroupPos()).toPointF())
+    #else:
+      #group_box.setPos(CanvasGetNewGroupPos())
+
+    #group_sbox = CanvasBox(group_id, group_name, icon)
+    #group_sbox.setSplit(True, PORT_MODE_INPUT)
+
+    #group_dict.widgets[1] = group_sbox
+
+    #if (features.handle_group_pos):
+      #group_sbox.setPos(canvas.settings.value(QString("CanvasPositions/%1_i").arg(group_name), CanvasGetNewGroupPos(True)).toPointF())
+    #else:
+      #group_sbox.setPos(CanvasGetNewGroupPos(True))
+
+    #if (not options.auto_hide_groups and options.fancy_eyecandy):
+      #ItemFX(group_sbox, True)
+
+    #canvas.last_z_value += 1
+    #group_sbox.setZValue(canvas.last_z_value)
+
+  #else:
+    #group_box.setSplit(False)
+
+    #if (features.handle_group_pos):
+      #group_box.setPos(canvas.settings.value(QString("CanvasPositions/%1").arg(group_name), CanvasGetNewGroupPos()).toPointF())
+    #else:
+      ## Special ladish fake-split groups
+      #horizontal = (icon == ICON_HARDWARE or icon == ICON_LADISH_ROOM)
+      #group_box.setPos(CanvasGetNewGroupPos(horizontal))
+
+  #if (not options.auto_hide_groups and options.fancy_eyecandy):
+    #ItemFX(group_box, True)
+
+  #canvas.last_z_value += 1
+  #group_box.setZValue(canvas.last_z_value)
+
+  #canvas.group_list.append(group_dict)
+
+  #QTimer.singleShot(0, canvas.scene, SLOT("update()"))
+
+def removeGroup(group_id):
+  if (canvas.debug):
+    qDebug("patchcanvas::removeGroup(%i)" % (group_id))
+
+  #if (CanvasGetGroupPortCount(group_id) > 0):
+    #if (canvas.debug):
+      #qDebug("patchcanvas::removeGroup() - This group still has ports, postpone it's removal")
+    #canvas.postponed_groups.append(group_id)
+    #QTimer.singleShot(100, canvas.qobject, SLOT("CanvasPostponedGroups()"))
+    #return
+
+  #for i in range(len(canvas.group_list)):
+    #if (canvas.group_list[i].group_id == group_id):
+      #item = canvas.group_list[i].widgets[0]
+      #group_name = canvas.group_list[i].group_name
+
+      #if (canvas.group_list[i].split):
+        #s_item = canvas.group_list[i].widgets[1]
+
+        #if (features.handle_group_pos):
+          #canvas.settings.setValue(QString("CanvasPositions/%1_o").arg(group_name), item.pos())
+          #canvas.settings.setValue(QString("CanvasPositions/%1_i").arg(group_name), s_item.pos())
+          #canvas.settings.setValue(QString("CanvasPositions/%1_s").arg(group_name), SPLIT_YES)
+
+        #if (options.fancy_eyecandy and s_item.isVisible()):
+          #ItemFX(s_item, False)
+        #else:
+          #s_item.removeIconFromScene()
+          #canvas.scene.removeItem(s_item)
+
+      #else:
+        #if (features.handle_group_pos):
+          #canvas.settings.setValue(QString("CanvasPositions/%1").arg(group_name), item.pos())
+          #canvas.settings.setValue(QString("CanvasPositions/%1_s").arg(group_name), SPLIT_NO)
+
+      #if (options.fancy_eyecandy and item.isVisible()):
+        #ItemFX(item, False)
+      #else:
+        #item.removeIconFromScene()
+        #canvas.scene.removeItem(item)
+
+      #canvas.group_list.pop(i)
+
+      #QTimer.singleShot(0, canvas.scene, SIGNAL("update()"))
+      #return
+
+  #qCritical("patchcanvas::removeGroup() - Unable to find group to remove")
+
+def renameGroup(group_id, new_group_name):
+  if (canvas.debug):
+    qDebug("patchcanvas::renameGroup(%i, %s)" % (group_id, new_group_name))
+
+  #for i in range(len(canvas.group_list)):
+    #if (canvas.group_list[i].group_id == group_id):
+      #canvas.group_list[i].widgets[0].setGroupName(new_group_name)
+      #canvas.group_list[i].group_name = new_group_name
+
+      #if (canvas.group_list[i].split):
+        #canvas.group_list[i].widgets[1].setGroupName(new_group_name)
+
+      #QTimer.singleShot(0, canvas.scene, SIGNAL("update()"))
+      #return
+
+  #qCritical("patchcanvas::renameGroup() - Unable to find group to rename")
+
+def splitGroup(group_id):
+  if (canvas.debug):
+    qDebug("patchcanvas::splitGroup(%i)" % (group_id))
+
+  #item = None
+  #group_name = ""
+  #group_icon = ICON_APPLICATION
+  #ports_data = []
+  #conns_data = []
+
+  ## Step 1 - Store all Item data
+  #for i in range(len(canvas.group_list)):
+    #if (canvas.group_list[i].group_id == group_id):
+      #if (canvas.group_list[i].split):
+        #qCritical("patchcanvas::splitGroup() - group is already splitted")
+        #return
+
+      #item = canvas.group_list[i].widgets[0]
+      #group_name = canvas.group_list[i].group_name
+      #group_icon = canvas.group_list[i].icon
+      #break
+
+  #if (not item):
+    #qCritical("PatchCanvas::splitGroup() - Unable to find group to split")
+    #return
+
+  #port_list_ids = list(item.getPortList())
+
+  #for i in range(len(canvas.port_list)):
+    #if (canvas.port_list[i].port_id in port_list_ids):
+      #port_dict = port_dict_t()
+      #port_dict.group_id  = canvas.port_list[i].group_id
+      #port_dict.port_id   = canvas.port_list[i].port_id
+      #port_dict.port_name = canvas.port_list[i].port_name
+      #port_dict.port_mode = canvas.port_list[i].port_mode
+      #port_dict.port_type = canvas.port_list[i].port_type
+      #port_dict.widget    = None
+      #ports_data.append(port_dict)
+
+  #for i in range(len(canvas.connection_list)):
+    #if (canvas.connection_list[i].port_out_id in port_list_ids or canvas.connection_list[i].port_in_id in port_list_ids):
+      #conns_data.append(canvas.connection_list[i])
+
+  ## Step 2 - Remove Item and Children
+  #for i in range(len(conns_data)):
+    #disconnectPorts(conns_data[i].connection_id)
+
+  #for i in range(len(port_list_ids)):
+    #removePort(port_list_ids[i])
+
+  #removeGroup(group_id)
+
+  ## Step 3 - Re-create Item, now splitted
+  #addGroup(group_id, group_name, SPLIT_YES, group_icon)
+
+  #for i in range(len(ports_data)):
+    #addPort(group_id, ports_data[i].port_id, ports_data[i].port_name, ports_data[i].port_mode, ports_data[i].port_type)
+
+  #for i in range(len(conns_data)):
+    #connectPorts(conns_data[i].connection_id, conns_data[i].port_out_id, conns_data[i].port_in_id)
+
+  #QTimer.singleShot(0, canvas.scene, SIGNAL("update()"))
+
+def joinGroup(group_id):
+  if (canvas.debug):
+    qDebug("patchcanvas::joinGroup(%i)" % (group_id))
+
+  #item = None
+  #s_item = None
+  #group_name = ""
+  #group_icon = ICON_APPLICATION
+  #ports_data = []
+  #conns_data = []
+
+  ## Step 1 - Store all Item data
+  #for i in range(len(canvas.group_list)):
+    #if (canvas.group_list[i].group_id == group_id):
+      #if (not canvas.group_list[i].split):
+        #qCritical("patchcanvas::joinGroup() - group is not splitted")
+        #return
+
+      #item   = canvas.group_list[i].widgets[0]
+      #s_item = canvas.group_list[i].widgets[1]
+      #group_name = canvas.group_list[i].group_name
+      #group_icon = canvas.group_list[i].icon
+      #break
+  #else:
+    #qCritical("patchcanvas::joinGroup() - Unable to find groups to join")
+    #return
+
+  #port_list_ids = list(item.getPortList())
+  #port_list_idss = s_item.getPortList()
+  #for i in range(len(port_list_idss)):
+    #if (port_list_idss[i] not in port_list_ids):
+      #port_list_ids.append(port_list_idss[i])
+
+  #for i in range(len(canvas.port_list)):
+    #if (canvas.port_list[i].port_id in port_list_ids):
+      #port_dict = port_dict_t()
+      #port_dict.group_id  = canvas.port_list[i].group_id
+      #port_dict.port_id   = canvas.port_list[i].port_id
+      #port_dict.port_name = canvas.port_list[i].port_name
+      #port_dict.port_mode = canvas.port_list[i].port_mode
+      #port_dict.port_type = canvas.port_list[i].port_type
+      #port_dict.widget    = None
+      #ports_data.append(port_dict)
+
+  #for i in range(len(canvas.connection_list)):
+    #if (canvas.connection_list[i].port_out_id in port_list_ids or canvas.connection_list[i].port_in_id in port_list_ids):
+      #conns_data.append(canvas.connection_list[i])
+
+  ## Step 2 - Remove Item and Children
+  #for i in range(len(conns_data)):
+    #disconnectPorts(conns_data[i].connection_id)
+
+  #for i in range(len(port_list_ids)):
+    #removePort(port_list_ids[i])
+
+  #removeGroup(group_id)
+
+  ## Step 3 - Re-create Item, now together
+  #addGroup(group_id, group_name, SPLIT_NO, group_icon)
+
+  #for i in range(len(ports_data)):
+    #addPort(group_id, ports_data[i].port_id, ports_data[i].port_name, ports_data[i].port_mode, ports_data[i].port_type)
+
+  #for i in range(len(conns_data)):
+    #connectPorts(conns_data[i].connection_id, conns_data[i].port_out_id, conns_data[i].port_in_id)
+
+  #QTimer.singleShot(0, canvas.scene, SIGNAL("update()"))
+
+def getGroupPos(group_id, port_mode=PORT_MODE_OUTPUT):
+  if (canvas.debug):
+    qDebug("patchcanvas::getGroupPos(%i, %i)" % (group_id, port_mode))
+
+  #for i in range(len(canvas.group_list)):
+    #if (canvas.group_list[i].group_id == group_id):
+      #if (canvas.group_list[i].split):
+        #if (port_mode == PORT_MODE_OUTPUT):
+          #return canvas.group_list[i].widgets[0].pos()
+        #elif (port_mode == PORT_MODE_INPUT):
+          #return canvas.group_list[i].widgets[1].pos()
+        #else:
+          #return QPointF(0,0)
+      #else:
+        #return canvas.group_list[i].widgets[0].pos()
+
+  #qCritical("patchcanvas::getGroupPos() - Unable to find group")
+
+def setGroupPos(group_id, group_pos_x, group_pos_y):
+  setGroupPos(group_id, group_pos_x, group_pos_y, group_pos_x, group_pos_y)
+
+def setGroupPos(group_id, group_pos_x_o, group_pos_y_o, group_pos_x_i, group_pos_y_i):
+  if (canvas.debug):
+    qDebug("patchcanvas::setGroupPos(%i, %i, %i, %i, %i)" % (group_id, group_pos_x_o, group_pos_y_o, group_pos_x_i, group_pos_y_i))
+
+  #for i in range(len(canvas.group_list)):
+    #if (canvas.group_list[i].group_id == group_id):
+      #canvas.group_list[i].widgets[0].setPos(group_pos_x_o, group_pos_y_o)
+
+      #if (canvas.group_list[i].split):
+        #canvas.group_list[i].widgets[1].setPos(group_pos_x_i, group_pos_y_i)
+
+      #QTimer.singleShot(0, canvas.scene, SIGNAL("update()"))
+      #return
+
+  #qCritical("patchcanvas::setGroupPos() - Unable to find group to reposition")
+
+def setGroupIcon(group_id, icon):
+  if (canvas.debug):
+    qDebug("patchcanvas::setGroupIcon(%i, %s)" % (group_id, icon2str(icon)))
+
+  #for i in range(len(canvas.group_list)):
+    #if (canvas.group_list[i].group_id == group_id):
+      #canvas.group_list[i].icon = icon
+      #canvas.group_list[i].widgets[0].setIcon(icon)
+
+      #if (canvas.group_list[i].split):
+        #canvas.group_list[i].widgets[1].setIcon(icon)
+
+      #QTimer.singleShot(0, canvas.scene, SIGNAL("update()"))
+      #return
+
+  #qCritical("patchcanvas::setGroupIcon() - Unable to find group to change icon")
+
+def addPort(group_id, port_id, port_name, port_mode, port_type):
+  if (canvas.debug):
+    qDebug("patchcanvas::addPort(%i, %i, %s, %i, %i)" % (group_id, port_id, port_name, port_mode, port_type))
+
+  #box_widget = None
+  #port_widget = None
+
+  #for i in range(len(canvas.group_list)):
+    #if (canvas.group_list[i].group_id == group_id):
+      #n_widget = 0
+      #if (canvas.group_list[i].split and canvas.group_list[i].widgets[0].getSplittedMode() != port_mode):
+        #n_widget = 1
+      #box_widget = canvas.group_list[i].widgets[n_widget]
+      #port_widget = box_widget.addPortFromGroup(port_id, port_mode, port_type, port_name)
+      #break
+
+  #if (not box_widget or not port_widget):
+    #qCritical("patchcanvas::addPort() - Unable to find parent group")
+    #return
+
+  #if (options.fancy_eyecandy):
+    #ItemFX(port_widget, True)
+
+  #port_dict = port_dict_t()
+  #port_dict.group_id  = group_id
+  #port_dict.port_id   = port_id
+  #port_dict.port_name = port_name
+  #port_dict.port_mode = port_mode
+  #port_dict.port_type = port_type
+  #port_dict.widget    = port_widget
+  #canvas.port_list.append(port_dict)
+
+  #box_widget.updatePositions()
+
+  #QTimer.singleShot(0, canvas.scene, SIGNAL("update()"))
+
+def removePort(port_id):
+  if (canvas.debug):
+    qDebug("patchcanvas::removePort(%i)" % (port_id))
+
+  #for i in range(len(canvas.port_list)):
+    #if (canvas.port_list[i].port_id == port_id):
+      #item = canvas.port_list[i].widget
+      #item.parentItem().removePortFromGroup(port_id)
+      #if (options.fancy_eyecandy):
+        #ItemFX(item, False, True)
+      #else:
+        #canvas.scene.removeItem(item)
+      #canvas.port_list.pop(i)
+
+      #QTimer.singleShot(0, canvas.scene, SIGNAL("update()"))
+      #return
+
+  #qCritical("patchcanvas::removePort() - Unable to find port to remove")
+
+def renamePort(port_id, new_port_name):
+  if (canvas.debug):
+    qDebug("patchcanvas::renamePort(%i, %s)" % (port_id, new_port_name))
+
+  #for i in range(len(canvas.port_list)):
+    #if (canvas.port_list[i].port_id == port_id):
+      #canvas.port_list[i].port_name = new_port_name
+      #canvas.port_list[i].widget.setPortName(new_port_name)
+      #canvas.port_list[i].widget.parentItem().updatePositions()
+
+      #QTimer.singleShot(0, canvas.scene, SIGNAL("update()"))
+      #return
+
+  #qCritical("patchcanvas::renamePort() - Unable to find port to rename")
+
+def connectPorts(connection_id, port_out_id, port_in_id):
+  if (canvas.debug):
+    qDebug("patchcanvas::connectPorts(%i, %i, %i)" % (connection_id, port_out_id, port_in_id))
+
+  #port_out = None
+  #port_in  = None
+  #port_out_parent = None
+  #port_in_parent  = None
+
+  #for i in range(len(canvas.port_list)):
+    #if (canvas.port_list[i].port_id == port_out_id):
+      #port_out = canvas.port_list[i].widget
+      #port_out_parent = port_out.parentItem()
+    #elif (canvas.port_list[i].port_id == port_in_id):
+      #port_in = canvas.port_list[i].widget
+      #port_in_parent = port_in.parentItem()
+
+  #if (not port_out or not port_in):
+    #qCritical("patchcanvas::connectPorts() - Unable to find ports to connect")
+    #return
+
+  #connection_dict = connection_dict_t()
+  #connection_dict.connection_id = connection_id
+  #connection_dict.port_out_id = port_out_id
+  #connection_dict.port_in_id  = port_in_id
+
+  #if (options.bezier_lines):
+    #connection_dict.widget = CanvasBezierLine(port_out, port_in, None)
+  #else:
+    #connection_dict.widget = CanvasLine(port_out, port_in, None)
+
+  #port_out_parent.addLineFromGroup(connection_dict.widget, connection_id)
+  #port_in_parent.addLineFromGroup(connection_dict.widget, connection_id)
+
+  #canvas.last_z_value += 1
+  #port_out_parent.setZValue(canvas.last_z_value)
+  #port_in_parent.setZValue(canvas.last_z_value)
+
+  #canvas.last_z_value += 1
+  #connection_dict.widget.setZValue(canvas.last_z_value)
+
+  #canvas.connection_list.append(connection_dict)
+
+  #if (options.fancy_eyecandy):
+    #ItemFX(connection_dict.widget, True)
+
+  #QTimer.singleShot(0, canvas.scene, SIGNAL("update()"))
+
+def disconnectPorts(connection_id):
+  if (canvas.debug):
+    qDebug("patchcanvas::disconnectPorts(%i)" % (connection_id))
+
+  #port_1_id = port_2_id = 0
+  #line  = None
+  #item1 = None
+  #item2 = None
+
+  #for i in range(len(canvas.connection_list)):
+    #if (canvas.connection_list[i].connection_id == connection_id):
+      #port_1_id = canvas.connection_list[i].port_out_id
+      #port_2_id = canvas.connection_list[i].port_in_id
+      #line = canvas.connection_list[i].widget
+      #canvas.connection_list.pop(i)
+      #break
+
+  #if (not line):
+    #qCritical("patchcanvas::disconnectPorts - Unable to find connection ports")
+    #return
+
+  #for i in range(len(canvas.port_list)):
+    #if (canvas.port_list[i].port_id == port_1_id):
+      #item1 = canvas.port_list[i].widget
+      #break
+  #else:
+    #qCritical("patchcanvas::disconnectPorts - Unable to find output port")
+    #return
+
+  #for i in range(len(canvas.port_list)):
+    #if (canvas.port_list[i].port_id == port_2_id):
+      #item2 = canvas.port_list[i].widget
+      #break
+  #else:
+    #qCritical("patchcanvas::disconnectPorts - Unable to find input port")
+    #return
+
+  #item1.parentItem().removeLineFromGroup(connection_id)
+  #item2.parentItem().removeLineFromGroup(connection_id)
+
+  #if (options.fancy_eyecandy):
+    #ItemFX(line, False, True)
+  #else:
+    #canvas.scene.removeItem(line)
+
+  #QTimer.singleShot(0, canvas.scene, SIGNAL("update()"))
+
+def Arrange():
+  if (canvas.debug):
+    qDebug("PatchCanvas::Arrange()")
+
+# Extra Internal functions
+
+def CanvasGetGroupName(group_id):
+  if (canvas.debug):
+    qDebug("PatchCanvas::CanvasGetGroupName(%i)", group_id)
+
+  #for i in range(len(canvas.group_list)):
+    #if (canvas.group_list[i].group_id == group_id):
+      #return canvas.group_list[i].group_name
+
+  #qCritical("PatchCanvas::CanvasGetGroupName() - unable to find group")
+  return ""
+
+def CanvasGetGroupPortCount(group_id):
+  if (canvas.debug):
+    qDebug("patchcanvas::CanvasGetGroupPortCount(%i)" % (group_id))
+
+  port_count = 0
+  #for i in range(len(canvas.port_list)):
+    #if (canvas.port_list[i].group_id == group_id):
+      #port_count += 1
+
+  return port_count
+
+def CanvasGetNewGroupPos(horizontal=False):
+  if (canvas.debug):
+    qDebug("patchcanvas::CanvasGetNewGroupPos(%s)" % (bool2str(horizontal)))
+
+  new_pos = QPointF(canvas.initial_pos.x(), canvas.initial_pos.y())
+  #items = canvas.scene.items()
+
+  #break_loop = False
+  #while (not break_loop):
+    #break_for = False
+    #for i in range(len(items)):
+      #if (items[i].type() == CanvasBoxType):
+        #if (items[i].sceneBoundingRect().contains(new_pos)):
+          #if (horizontal):
+            #new_pos += QPointF(items[i].boundingRect().width()+15, 0)
+          #else:
+            #new_pos += QPointF(0, items[i].boundingRect().height()+15)
+          #break_for = True
+          #break
+
+      #if (i >= len(items)-1 and not break_for):
+        #break_loop = True
+
+  return new_pos
+
+def CanvasGetPortName(port_id):
+  if (canvas.debug):
+    qDebug("PatchCanvas::CanvasGetPortName(%i)" % (port_id))
+
+  #for i in range(len(canvas.port_list)):
+    #if (canvas.port_list[i].port_id == port_id):
+      #group_id = canvas.port_list[i].group_id
+      #for j in range(len(canvas.group_list)):
+        #if (canvas.group_list[j].group_id == group_id):
+          #return canvas.group_list[j].group_name + ":" + canvas.port_list[i].port_name
+      #break
+
+  #qCritical("PatchCanvas::CanvasGetPortName() - unable to find port")
+  return ""
+
+def CanvasGetPortConnectionList(port_id):
+  if (canvas.debug):
+    qDebug("patchcanvas::CanvasGetPortConnectionList(%i)" % (port_id))
+
+  port_con_list = []
+
+  #for i in range(len(canvas.connection_list)):
+    #if (canvas.connection_list[i].port_out_id == port_id or canvas.connection_list[i].port_in_id == port_id):
+      #port_con_list.append(canvas.connection_list[i].connection_id)
+
+  return port_con_list
+
+def CanvasGetConnectedPort(connection_id, port_id):
+  if (canvas.debug):
+    qDebug("PatchCanvas::CanvasGetConnectedPort(%i, %i)" % (connection_id, port_id))
+
+  #for i in range(len(canvas.connection_list)):
+    #if (canvas.connection_list[i].connection_id == connection_id):
+      #if (canvas.connection_list[i].port_out_id == port_id):
+        #return canvas.connection_list[i].port_in_id
+      #else:
+        #return canvas.connection_list[i].port_out_id
+
+  #qCritical("PatchCanvas::CanvasGetConnectedPort() - unable to find connection")
+  return 0
+
+def CanvasPostponedGroups():
+  if (canvas.debug):
+    qDebug("patchcanvas::CanvasPostponedGroups()")
+
+  #for i in range(len(canvas.postponed_groups)):
+    #group_id = canvas.postponed_groups[i]
+
+    #for j in range(len(canvas.group_list)):
+      #if (canvas.group_list[j].group_id == group_id):
+        #item = canvas.group_list[j].widgets[0]
+        #s_item = None
+
+        #if (canvas.group_list[j].split):
+          #s_item = canvas.group_list[j].widgets[1]
+
+        #if (item.getPortCount() == 0 and (not s_item or s_item.getPortCount() == 0)):
+          #removeGroup(group_id)
+          #canvas.postponed_groups.pop(i)
+
+        #break
+
+  #if (len(canvas.postponed_groups) > 0):
+    #QTimer.singleShot(100, canvas.qobject, SLOT("CanvasPostponedGroups()"));
+
+def CanvasCallback(action, value1, value2, value_str):
+  if (canvas.debug):
+    qDebug("PatchCanvas::CanvasCallback(%i, %i, %i, %s)" % (action, value1, value2, QStringStr(value_str)))
+
+  canvas.callback(action, value1, value2, value_str);
 
 # ------------------------------------------------------------------------------
 # patchscene.cpp

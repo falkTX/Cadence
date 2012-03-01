@@ -39,7 +39,7 @@ if (WINDOWS == False):
 VERSION = "0.5.0"
 
 # Set Debug mode
-DEBUG = False
+DEBUG = True
 
 # Small integrity tests
 HOME = os.getenv("HOME")
