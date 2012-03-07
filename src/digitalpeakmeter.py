@@ -22,6 +22,7 @@ from PyQt4.QtGui import QColor, QLinearGradient, QPainter, QWidget
 
 # Widget Class
 class DigitalPeakMeter(QWidget):
+
     HORIZONTAL = 1
     VERTICAL   = 2
 

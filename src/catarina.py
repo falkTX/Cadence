@@ -18,8 +18,8 @@
 
 # Imports (Global)
 from PyQt4.QtCore import pyqtSlot, Qt, QSettings
-from PyQt4.QtGui import QApplication, QDialog, QDialogButtonBox, QMainWindow, QTableWidgetItem
-from PyQt4.QtGui import QPainter
+from PyQt4.QtGui import QApplication, QDialog, QDialogButtonBox, QMainWindow, QPainter, QTableWidgetItem
+from PyQt4.QtXml import QDomDocument
 
 # Imports (Custom Stuff)
 import patchcanvas
@@ -171,10 +171,10 @@ class CatarinaAddPortW(QDialog, ui_catarina_addport.Ui_CatarinaAddPortW):
         self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
         self.connect(self.le_port_name, SIGNAL("textChanged(QString)"), SLOT("slot_checkText(QString)"))
 
-        self.ret_group_id = -1
-        self.ret_new_port_name = ""
-        self.ret_new_port_mode = patchcanvas.PORT_MODE_NULL
-        self.ret_new_port_type = patchcanvas.PORT_TYPE_NULL
+        self.ret_group_id  = -1
+        self.ret_port_name = ""
+        self.ret_port_mode = patchcanvas.PORT_MODE_NULL
+        self.ret_port_type = patchcanvas.PORT_TYPE_NULL
 
     @pyqtSlot(str)
     def slot_checkText(self, text):
@@ -184,10 +184,10 @@ class CatarinaAddPortW(QDialog, ui_catarina_addport.Ui_CatarinaAddPortW):
     @pyqtSlot()
     def slot_setReturn(self):
         if (self.cb_group.count() > 0):
-          self.ret_group_id = int(self.cb_group.currentText().split(" ", 1)[0])
-          self.ret_new_port_name = self.le_port_name.text()
-          self.ret_new_port_mode = patchcanvas.PORT_MODE_INPUT if (self.rb_flags_input.isChecked()) else patchcanvas.PORT_MODE_OUTPUT
-          self.ret_new_port_type = self.cb_port_type.currentIndex()+1 # 1, 2, 3 or 4 for patchcanvas types
+          self.ret_group_id  = int(self.cb_group.currentText().split(" ", 1)[0])
+          self.ret_port_name = self.le_port_name.text()
+          self.ret_port_mode = patchcanvas.PORT_MODE_INPUT if (self.rb_flags_input.isChecked()) else patchcanvas.PORT_MODE_OUTPUT
+          self.ret_port_type = self.cb_port_type.currentIndex()+1 # 1, 2, 3 or 4 for patchcanvas types
 
 # Remove Port Dialog
 class CatarinaRemovePortW(QDialog, ui_catarina_removeport.Ui_CatarinaRemovePortW):
@@ -246,9 +246,9 @@ class CatarinaRemovePortW(QDialog, ui_catarina_removeport.Ui_CatarinaRemovePortW
             index += 1
 
     def findPortGroupName(self, group_id):
-      for i in range(len(self.group_list)):
-        if (self.group_list[i][iGroupId] == group_id):
-          return self.group_list[i][iGroupName]
+      for group in self.m_group_list:
+        if (group[iGroupId] == group_id):
+          return group[iGroupName]
       return ""
 
     @pyqtSlot()
@@ -256,13 +256,14 @@ class CatarinaRemovePortW(QDialog, ui_catarina_removeport.Ui_CatarinaRemovePortW
         self.reAddPorts()
 
     @pyqtSlot(int)
-    def checkCell(self, row):
+    def slot_checkCell(self, row):
         check = bool(row >= 0)
         self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(check)
 
     @pyqtSlot()
-    def setReturn(self):
-        self.ret_port_id = int(self.tw_port_list.item(self.tw_port_list.currentRow(), 0).text())
+    def slot_setReturn(self):
+        if (self.tw_port_list.rowCount() > 0):
+          self.ret_port_id = int(self.tw_port_list.item(self.tw_port_list.currentRow(), 0).text())
 
 # Rename Port Dialog
 class CatarinaRenamePortW(QDialog, ui_catarina_renameport.Ui_CatarinaRenamePortW):
@@ -591,13 +592,13 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
         patchcanvas.init(self.scene, self.canvasCallback, DEBUG)
 
         self.connect(self.act_project_new, SIGNAL("triggered()"), SLOT("slot_projectNew()"))
-        #self.connect(self.act_project_open, SIGNAL("triggered()"), SLOT("slot_projectOpen()"))
-        #self.connect(self.act_project_save, SIGNAL("triggered()"), SLOT("slot_projectSave()"))
-        #self.connect(self.act_project_save_as, SIGNAL("triggered()"), SLOT("slot_projectSaveAs()"))
+        self.connect(self.act_project_open, SIGNAL("triggered()"), SLOT("slot_projectOpen()"))
+        self.connect(self.act_project_save, SIGNAL("triggered()"), SLOT("slot_projectSave()"))
+        self.connect(self.act_project_save_as, SIGNAL("triggered()"), SLOT("slot_projectSaveAs()"))
         self.connect(self.b_project_new, SIGNAL("clicked()"), SLOT("slot_projectNew()"))
-        #self.connect(self.b_project_open, SIGNAL("clicked()"), SLOT("slot_projectOpen()"))
-        #self.connect(self.b_project_save, SIGNAL("clicked()"), SLOT("slot_projectSave()"))
-        #self.connect(self.b_project_save_as, SIGNAL("clicked()"), SLOT("slot_projectSaveAs()"))
+        self.connect(self.b_project_open, SIGNAL("clicked()"), SLOT("slot_projectOpen()"))
+        self.connect(self.b_project_save, SIGNAL("clicked()"), SLOT("slot_projectSave()"))
+        self.connect(self.b_project_save_as, SIGNAL("clicked()"), SLOT("slot_projectSaveAs()"))
         self.connect(self.act_patchbay_add_group, SIGNAL("triggered()"), SLOT("slot_groupAdd()"))
         self.connect(self.act_patchbay_remove_group, SIGNAL("triggered()"), SLOT("slot_groupRemove()"))
         self.connect(self.act_patchbay_rename_group, SIGNAL("triggered()"), SLOT("slot_groupRename()"))
@@ -622,7 +623,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
         self.connect(self.act_help_about, SIGNAL("triggered()"), SLOT("slot_aboutCatarina()"))
         self.connect(self.act_help_about_qt, SIGNAL("triggered()"), app, SLOT("aboutQt()"))
 
-        #self.connect(self, SIGNAL("SIGUSR1()"), SLOT("slot_projectSave()"))
+        self.connect(self, SIGNAL("SIGUSR1()"), SLOT("slot_projectSave()"))
 
         # Dummy timer to keep events active
         self.m_updateTimer = self.startTimer(500)
@@ -632,6 +633,188 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
 
     def canvasCallback(self, action, value1, value2, value_str):
         print(action, value1, value2, value_str)
+
+    def saveFile(self, path):
+        content = ("<?xml version='1.0' encoding='UTF-8'?>\n"
+                   "<!DOCTYPE CATARINA>\n"
+                   "<CATARINA VERSION='%s'>\n") % (VERSION)
+
+        content += " <Groups>\n"
+        for i in range(len(self.m_group_list)):
+          group       = self.m_group_list[i]
+          group_id    = group[iGroupId]
+          group_name  = group[iGroupName]
+          group_split = group[iGroupSplit]
+          group_icon  = group[iGroupIcon]
+          group_pos_i = patchcanvas.getGroupPos(group_id, patchcanvas.PORT_MODE_INPUT)
+          group_pos_o = patchcanvas.getGroupPos(group_id, patchcanvas.PORT_MODE_OUTPUT)
+          content += "  <g%i> <name>%s</name> <data>%i:%i:%i:%f:%f:%f:%f</data> </g%i>\n" % (i, group_name, group_id, group_split, group_icon, group_pos_o.x(), group_pos_o.y(), group_pos_i.x(), group_pos_i.y(), i)
+        content += " </Groups>\n"
+
+        content += " <Ports>\n"
+        for i in range(len(self.m_port_list)):
+          port = self.m_port_list[i]
+          content += "  <p%i> <name>%s</name> <data>%i:%i:%i:%i</data> </p%i>\n" % (i, port[iPortName], port[iPortGroup], port[iPortId], port[iPortMode], port[iPortType], i)
+        content += " </Ports>\n"
+
+        content += " <Connections>\n"
+        for i in range(len(self.m_connection_list)):
+          connection = self.m_connection_list[i]
+          content += "  <c%i>%i:%i:%i</c%i>\n" % (i, connection[iConnId], connection[iConnOutput], connection[iConnInput], i)
+        content += " </Connections>\n"
+
+        content += "</CATARINA>\n"
+
+        try:
+          if (open(path, "w").write(content) == False):
+            raiseError
+        except:
+          QMessageBox.critical(self, self.tr("Error"), self.tr("Failed to save file"))
+
+    def loadFile(self, path):
+        if (os.path.exists(path) == False):
+          QMessageBox.critical(self, self.tr("Error"), self.tr("The file '%s' does not exist" % (path)))
+          self.m_save_path = None
+          return
+
+        try:
+          read = open(path, "r").read()
+          if (not read):
+            raiseError
+        except:
+          QMessageBox.critical(self, self.tr("Error"), self.tr("Failed to load file"))
+          self.m_save_path = None
+          return
+
+        self.m_save_path = path
+        self.m_group_list = []
+        self.m_group_list_pos = []
+        self.m_port_list = []
+        self.m_connection_list = []
+        self.m_last_group_id = 1
+        self.m_last_port_id = 1
+        self.m_last_connection_id = 1
+
+        xml = QDomDocument()
+        xml.setContent(read)
+
+        content = xml.documentElement()
+        if (content.tagName() != "CATARINA"):
+          QMessageBox.critical(self, self.tr("Error"), self.tr("Not a valid Catarina file"))
+          return
+
+        # Get values from XML - the big code
+        node = content.firstChild()
+        while not node.isNull():
+          if (node.toElement().tagName() == "Groups"):
+            group_name = ""
+            groups = node.toElement().firstChild()
+            while not groups.isNull():
+              group = groups.toElement().firstChild()
+              while not group.isNull():
+                tag  = group.toElement().tagName()
+                text = group.toElement().text()
+                if (tag == "name"):
+                  group_name = text
+                elif (tag == "data"):
+                  group_data   = text.split(":")
+
+                  group_obj = [None, None, None, None]
+                  group_obj[iGroupId]    = int(group_data[0])
+                  group_obj[iGroupName]  = group_name
+                  group_obj[iGroupSplit] = int(group_data[1])
+                  group_obj[iGroupIcon]  = int(group_data[2])
+
+                  group_pos_obj = [None, None, None, None, None]
+                  group_pos_obj[iGroupPosId]  = int(group_data[0])
+                  group_pos_obj[iGroupPosX_o] = float(group_data[3])
+                  group_pos_obj[iGroupPosY_o] = float(group_data[4])
+                  group_pos_obj[iGroupPosX_i] = float(group_data[5])
+                  group_pos_obj[iGroupPosY_i] = float(group_data[6])
+
+                  self.m_group_list.append(group_obj)
+                  self.m_group_list_pos.append(group_pos_obj)
+
+                  group_id = group_obj[iGroupId]
+                  if (group_id > self.m_last_group_id):
+                    self.m_last_group_id = group_id+1
+
+                group = group.nextSibling()
+              groups = groups.nextSibling()
+
+          elif (node.toElement().tagName() == "Ports"):
+            port_id   = 0
+            port_name = ""
+            ports = node.toElement().firstChild()
+            while not ports.isNull():
+              port = ports.toElement().firstChild()
+              while not port.isNull():
+                tag  = port.toElement().tagName()
+                text = port.toElement().text()
+                if (tag == "name"):
+                  port_name = text
+                elif (tag == "data"):
+                  port_data = text.split(":")
+                  new_port  = [None, None, None, None, None]
+                  new_port[iPortGroup] = int(port_data[0])
+                  new_port[iPortId]    = int(port_data[1])
+                  new_port[iPortName]  = port_name
+                  new_port[iPortMode]  = int(port_data[2])
+                  new_port[iPortType]  = int(port_data[3])
+
+                  port_id = new_port[iPortId]
+                  self.m_port_list.append(new_port)
+
+                  if (port_id > self.m_last_port_id):
+                    self.m_last_port_id = port_id+1
+
+                port = port.nextSibling()
+              ports = ports.nextSibling()
+
+          elif (node.toElement().tagName() == "Connections"):
+            conns = node.toElement().firstChild()
+            while not conns.isNull():
+              conn_data = conns.toElement().text().split(":")
+              if (conn_data[0].isdigit() == False):
+                conns = conns.nextSibling()
+                continue
+
+              conn_obj = [None, None, None]
+              conn_obj[iConnId]     = int(conn_data[0])
+              conn_obj[iConnOutput] = int(conn_data[1])
+              conn_obj[iConnInput]  = int(conn_data[2])
+
+              connection_id = conn_obj[iConnId]
+              self.m_connection_list.append(conn_obj)
+
+              if (connection_id >= self.m_last_connection_id):
+                self.m_last_connection_id = connection_id+1
+
+              conns = conns.nextSibling()
+          node = node.nextSibling()
+
+        self.m_last_group_id += 1
+        self.m_last_port_id += 1
+        self.m_last_connection_id += 1
+
+        patchcanvas.clear()
+
+        for group in self.m_group_list:
+          patchcanvas.addGroup(group[iGroupId], group[iGroupName], patchcanvas.SPLIT_YES if (group[iGroupSplit]) else patchcanvas.SPLIT_NO, group[iGroupIcon])
+
+        for group_pos in self.m_group_list_pos:
+          patchcanvas.setGroupPos(group_pos[iGroupPosId], group_pos[iGroupPosX_o], group_pos[iGroupPosY_o], group_pos[iGroupPosX_i], group_pos[iGroupPosY_i])
+
+        for port in self.m_port_list:
+          patchcanvas.addPort(port[iPortGroup], port[iPortId], port[iPortName], port[iPortMode], port[iPortType])
+
+        for connection in self.m_connection_list:
+          patchcanvas.connectPorts(connection[iConnId], connection[iConnOutput], connection[iConnInput])
+
+        self.m_group_list_pos = []
+
+        #self.scene.zoom_fit()
+        #self.scene.zoom_reset()
 
     @pyqtSlot()
     def slot_projectNew(self):
@@ -644,6 +827,26 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
         self.m_last_connection_id = 1
         self.m_save_path = None
         patchcanvas.clear()
+
+    @pyqtSlot()
+    def slot_projectOpen(self):
+        path = QFileDialog.getOpenFileName(self, self.tr("Load State"), filter=self.tr("Catarina XML Document (*.xml)"))
+        if (path):
+          self.loadFile(path)
+
+    @pyqtSlot()
+    def slot_projectSave(self):
+        if (self.m_save_path):
+          self.saveFile(self.m_save_path)
+        else:
+          self.slot_projectSaveAs()
+
+    @pyqtSlot()
+    def slot_projectSaveAs(self):
+        path = QFileDialog.getSaveFileName(self, self.tr("Save State"), filter=self.tr("Catarina XML Document (*.xml)"))
+        if (path):
+          self.m_save_path = path
+          self.saveFile(path)
 
     @pyqtSlot()
     def slot_groupAdd(self):
@@ -682,11 +885,8 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
                     patchcanvas.disconnectPorts(connection[iConnId])
                     self.m_connection_list.remove(connection)
 
-            # TODO - test this
-            #for port in self.m_port_list:
-              #if (port[iPortGroup] == group_id):
                 patchcanvas.removePort(port[iPortId])
-                self.port_list.remove(port)
+                self.m_port_list.remove(port)
 
             # Now remove group
             patchcanvas.removeGroup(group_id)
@@ -719,23 +919,23 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
     @pyqtSlot()
     def slot_portAdd(self):
         if (len(self.m_group_list) > 0):
-          dialog = CatarinaAddPortW(self, self.group_list, self.last_port_id)
+          dialog = CatarinaAddPortW(self, self.m_group_list, self.m_last_port_id)
           if (dialog.exec_()):
-            group_id = dialog.ret_group_id
-            new_port_name = dialog.ret_new_port_name
-            new_port_mode = dialog.ret_new_port_mode
-            new_port_type = dialog.ret_new_port_type
-            patchcanvas.addPort(group_id, self.last_port_id, new_port_name, new_port_mode, new_port_type)
+            group_id  = dialog.ret_group_id
+            port_name = dialog.ret_port_name
+            port_mode = dialog.ret_port_mode
+            port_type = dialog.ret_port_type
+            patchcanvas.addPort(group_id, self.m_last_port_id, port_name, port_mode, port_type)
 
             new_port = [None, None, None, None, None]
             new_port[iPortGroup] = group_id
-            new_port[iPortId]    = self.last_port_id
+            new_port[iPortId]    = self.m_last_port_id
             new_port[iPortName]  = new_port_name
             new_port[iPortMode]  = new_port_mode
             new_port[iPortType]  = new_port_type
 
-            self.port_list.append(new_port)
-            self.last_port_id += 1
+            self.m_port_list.append(new_port)
+            self.m_last_port_id += 1
 
         else:
           QMessageBox.warning(self, self.tr("Warning"), self.tr("Please add a Group first!"))
@@ -743,22 +943,20 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
     @pyqtSlot()
     def slot_portRemove(self):
         if (len(self.m_port_list) > 0):
-          dialog = CatarinaRemovePortW(self, self.group_list, self.port_list)
+          dialog = CatarinaRemovePortW(self, self.m_group_list, self.m_port_list)
           if (dialog.exec_()):
             port_id = dialog.ret_port_id
 
-            h = 0
-            for i in range(len(self.connection_list)):
-              if (self.connection_list[i-h][iConnOutput] == port_id or self.connection_list[i-h][iConnInput] == port_id):
-                patchcanvas.disconnectPorts(self.connection_list[i-h][iConnId])
-                self.connection_list.pop(i-h)
-                h += 1
+            for connection in self.m_connection_list:
+              if (connection[iConnOutput] == port_id or connection[iConnInput] == port_id):
+                patchcanvas.disconnectPorts(self.m_connection_list[i-h][iConnId])
+                self.m_connection_list.remove(connection)
 
             patchcanvas.removePort(port_id)
 
-            for i in range(len(self.port_list)):
-              if (self.port_list[i][iPortId] == port_id):
-                self.port_list.pop(i)
+            for port in range(len(self.m_port_list)):
+              if (port[iPortId] == port_id):
+                self.m_port_list.remove(port)
                 break
 
         else:
@@ -767,15 +965,15 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
     @pyqtSlot()
     def slot_portRename(self):
         if (len(self.m_port_list) > 0):
-          dialog = CatarinaRenamePortW(self, self.group_list, self.port_list)
+          dialog = CatarinaRenamePortW(self, self.m_group_list, self.m_port_list)
           if (dialog.exec_()):
             port_id       = dialog.ret_port_id
             new_port_name = dialog.ret_new_port_name
             patchcanvas.renamePort(port_id, new_port_name)
 
-            for i in range(len(self.port_list)):
-              if (self.port_list[i][iPortId] == port_id):
-                self.port_list[i][iPortName] = new_port_name
+            for port in self.m_port_list:
+              if (port[iPortId] == port_id):
+                port[iPortName] = new_port_name
                 break
 
         else:
@@ -784,14 +982,14 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
     @pyqtSlot()
     def slot_connectPorts(self):
         if (len(self.m_port_list) > 0):
-          dialog = CatarinaConnectPortsW(self, self.group_list, self.port_list)
+          dialog = CatarinaConnectPortsW(self, self.m_group_list, self.m_port_list)
           if (dialog.exec_()):
-            connection_id = self.last_connection_id
+            connection_id = self.m_last_connection_id
             port_out_id   = dialog.ret_port_out_id
             port_in_id    = dialog.ret_port_in_id
 
-            for i in range(len(self.connection_list)):
-              if (self.connection_list[i][iConnOutput] == port_out_id and self.connection_list[i][iConnInput] == port_in_id):
+            for connection in range(len(self.m_connection_list)):
+              if (connection[iConnOutput] == port_out_id and connection[iConnInput] == port_in_id):
                 QMessageBox.warning(self, self.tr("Warning"), self.tr("Ports already connected!"))
                 return
 
@@ -802,8 +1000,8 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
             conn_obj[iConnOutput] = port_out_id
             conn_obj[iConnInput]  = port_in_id
 
-            self.connection_list.append(conn_obj)
-            self.last_connection_id += 1
+            self.m_connection_list.append(conn_obj)
+            self.m_last_connection_id += 1
 
         else:
           QMessageBox.warning(self, self.tr("Warning"), self.tr("Please add some Ports first!"))
@@ -811,16 +1009,15 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
     @pyqtSlot()
     def slot_disconnectPorts(self):
         if (len(self.m_connection_list) > 0):
-          dialog = CatarinaDisconnectPortsW(self, self.group_list, self.port_list, self.connection_list)
+          dialog = CatarinaDisconnectPortsW(self, self.m_group_list, self.m_port_list, self.m_connection_list)
           if (dialog.exec_()):
             connection_id = 0
             port_out_id   = dialog.ret_port_out_id
             port_in_id    = dialog.ret_port_in_id
 
-            for i in range(len(self.connection_list)):
-              if (self.connection_list[i][iConnOutput] == port_out_id and self.connection_list[i][iConnInput] == port_in_id):
-                connection_id = self.connection_list[i][iConnId]
-                self.connection_list.pop(i)
+            for connection in range(len(self.m_connection_list)):
+              if (connection[iConnOutput] == port_out_id and connection[iConnInput] == port_in_id):
+                self.m_connection_list.remove(connection)
                 break
 
             patchcanvas.disconnectPorts(connection_id)
@@ -882,11 +1079,10 @@ if __name__ == '__main__':
     # Set-up custom signal handling
     set_up_signals(gui)
 
-    #if (app.arguments().count() > 1):
-      #gui.save_path = QStringStr(app.arguments()[1])
-      #gui.prepareToloadFile()
-
     gui.show()
+
+    if (len(app .arguments()) > 1):
+      gui.loadFile(app.arguments()[1])
 
     # App-Loop
     sys.exit(app.exec_())

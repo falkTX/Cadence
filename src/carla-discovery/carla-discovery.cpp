@@ -687,7 +687,7 @@ void do_vst_check(void* lib_handle)
             
             midiEvents[1].type = kVstMidiType;
             midiEvents[1].byteSize = sizeof(VstMidiEvent);
-            midiEvents[1].midiData[0] = 0x90;
+            midiEvents[1].midiData[0] = 0x80;
             midiEvents[1].midiData[1] = 64;
             midiEvents[1].deltaFrames = bufferSize/2;
             

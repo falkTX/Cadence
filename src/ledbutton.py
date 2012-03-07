@@ -43,9 +43,6 @@ class LEDButton(QPushButton):
 
         self.setColor(self.BLUE)
 
-        from PyQt4.QtCore import QTimer
-        QTimer.singleShot(3000, self.close)
-
     def setColor(self, color):
         self.m_color = color
 

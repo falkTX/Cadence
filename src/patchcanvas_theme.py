@@ -35,7 +35,7 @@ class Theme(object):
 
         if (idx == self.THEME_MODERN_DARK):
           # Name this theme
-          self.m_name = "Modern Dark"
+          self.name = "Modern Dark"
 
           # Canvas
           self.canvas_bg = QColor(0,0,0)
@@ -96,7 +96,7 @@ class Theme(object):
 
         elif (idx == self.THEME_CLASSIC_DARK):
           # Name this theme
-          self.m_name = "Classic Dark"
+          self.name = "Classic Dark"
 
           # Canvas
           self.canvas_bg = QColor(0,0,0)
@@ -165,3 +165,6 @@ def getThemeName(idx):
     return "Classic Dark"
   else:
     return ""
+
+def getDefaultThemeName():
+  return "Modern Dark"
