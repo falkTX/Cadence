@@ -66,9 +66,9 @@ def c_char_p_p_to_list(c_char_p_p):
     new_char_p = c_char_p_p[i]
     if (new_char_p):
       final_list.append(str(new_char_p, encoding="ascii"))
+      i += 1
     else:
       break
-    i += 1
 
   jacklib.free(c_char_p_p)
   return final_list

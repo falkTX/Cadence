@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Patchbay Canvas Themes
-# Copyright (C) 2012 Filipe Coelho <falktx@gmail.com>
+# Copyright (C) 2010-2012 Filipe Coelho <falktx@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ class Theme(object):
     THEME_MAX = 2
 
     def __init__(self, idx):
-        super(Theme, self).__init__()
+        object.__init__(self)
 
         if (idx == self.THEME_MODERN_DARK):
           # Name this theme

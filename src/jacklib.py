@@ -22,7 +22,7 @@ from sys import platform
 
 # Load JACK shared library
 try:
-  if (platform == "win32" or platform == "win64"):
+  if (platform in ("win32", "win64")):
     jacklib = cdll.LoadLibrary("libjack.dll")
   else:
     jacklib = cdll.LoadLibrary("libjack.so.0")
