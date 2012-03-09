@@ -28,7 +28,7 @@ from PyQt4.QtSvg import QGraphicsSvgItem, QSvgRenderer
 # Imports (Theme)
 from patchcanvas_theme import *
 
-PATCHCANVAS_ORGANISATION_NAME = "Cadence"
+PATCHCANVAS_ORGANISATION_NAME = "PatchCanvas"
 
 # ------------------------------------------------------------------------------
 # patchcanvas-api.h
@@ -65,19 +65,24 @@ SPLIT_UNDEF = 0
 SPLIT_NO    = 1
 SPLIT_YES   = 2
 
-# AntialiasingOption
+# Antialiasing Option
 ANTIALIASING_NONE  = 0
 ANTIALIASING_SMALL = 1
 ANTIALIASING_FULL  = 2
+
+# Eye-Candy Option
+EYECANDY_NONE  = 0
+EYECANDY_SMALL = 1
+EYECANDY_FULL  = 2
 
 # Canvas options
 class options_t(object):
   __slots__ = [
     'theme_name',
-    'bezier_lines',
-    'antialiasing',
     'auto_hide_groups',
-    'fancy_eyecandy'
+    'use_bezier_lines',
+    'antialiasing',
+    'eyecandy'
   ]
 
 # Canvas features
@@ -139,14 +144,13 @@ class Canvas(object):
     'last_z_value',
     'last_connection_id',
     'initial_pos',
+    'size_rect',
     'group_list',
     'port_list',
     'connection_list',
-    'postponed_groups',
     'qobject',
     'settings',
     'theme',
-    'size_rect',
     'initiated'
   ]
 
@@ -154,7 +158,7 @@ class Canvas(object):
 # patchcanvas.cpp
 
 class CanvasObject(QObject):
-  def __init__(self, parent):
+  def __init__(self, parent=None):
     QObject.__init__(self, parent)
 
   @pyqtSlot()
@@ -163,6 +167,7 @@ class CanvasObject(QObject):
 
   @pyqtSlot()
   def PortContextMenuDisconnect(self):
+    # FIXME
     connection_id_try = self.sender().data().toInt()
     if (connection_id_try[1]):
       CanvasCallback(ACTION_PORTS_DISCONNECT, connection_id_try[0], 0, "")
@@ -175,42 +180,22 @@ canvas.theme     = None
 canvas.initiated = False
 
 options = options_t()
-options.theme_name        = getThemeName(getDefaultTheme())
-options.bezier_lines      = True
-options.antialiasing      = Qt.PartiallyChecked
-options.auto_hide_groups  = True
-options.fancy_eyecandy    = False
+options.theme_name       = getDefaultThemeName()
+options.auto_hide_groups = False
+options.use_bezier_lines = True
+options.antialiasing     = ANTIALIASING_SMALL
+options.eyecandy         = EYECANDY_SMALL
 
 features = features_t()
 features.group_info       = False
-features.group_rename     = True
+features.group_rename     = False
 features.port_info        = False
-features.port_rename      = True
+features.port_rename      = False
 features.handle_group_pos = False
 
 # Internal functions
 def bool2str(check):
   return "True" if check else "False"
-
-def split2str(split):
-  if (split == SPLIT_UNDEF):
-    return "SPLIT_UNDEF"
-  elif (split == SPLIT_NO):
-    return "SPLIT_NO"
-  elif (split == SPLIT_YES):
-    return "SPLIT_YES"
-  else:
-    return "SPLIT_???"
-
-def icon2str(icon):
-  if (icon == ICON_HARDWARE):
-    return "ICON_HARDWARE"
-  elif (ICON_APPLICATION):
-    return "ICON_APPLICATION"
-  elif (ICON_LADISH_ROOM):
-    return "ICON_LADISH_ROOM"
-  else:
-    return "ICON_???"
 
 def port_mode2str(port_mode):
   if (port_mode == PORT_MODE_NULL):
@@ -236,16 +221,36 @@ def port_type2str(port_type):
   else:
     return "PORT_TYPE_???"
 
+def icon2str(icon):
+  if (icon == ICON_HARDWARE):
+    return "ICON_HARDWARE"
+  elif (ICON_APPLICATION):
+    return "ICON_APPLICATION"
+  elif (ICON_LADISH_ROOM):
+    return "ICON_LADISH_ROOM"
+  else:
+    return "ICON_???"
+
+def split2str(split):
+  if (split == SPLIT_UNDEF):
+    return "SPLIT_UNDEF"
+  elif (split == SPLIT_NO):
+    return "SPLIT_NO"
+  elif (split == SPLIT_YES):
+    return "SPLIT_YES"
+  else:
+    return "SPLIT_???"
+
 # PatchCanvas API
-def set_options(new_options):
+def setOptions(new_options):
   if (canvas.initiated): return
   options.theme_name        = new_options.theme_name
-  options.bezier_lines      = new_options.bezier_lines
-  options.antialiasing      = new_options.antialiasing
   options.auto_hide_groups  = new_options.auto_hide_groups
-  options.fancy_eyecandy    = new_options.fancy_eyecandy
+  options.use_bezier_lines  = new_options.use_bezier_lines
+  options.antialiasing      = new_options.antialiasing
+  options.eyecandy          = new_options.eyecandy
 
-def set_features(new_features):
+def setFeatures(new_features):
   if (canvas.initiated): return
   features.group_info       = new_features.group_info
   features.group_rename     = new_features.group_rename
@@ -272,27 +277,27 @@ def init(scene, callback, debug=False):
   canvas.last_z_value = 0
   canvas.last_connection_id = 0
   canvas.initial_pos = QPointF(0, 0)
+  canvas.size_rect = QRectF()
 
   canvas.group_list = []
   canvas.port_list = []
   canvas.connection_list = []
-  canvas.postponed_groups = []
 
-  if (not canvas.qobject): canvas.qobject = CanvasObject(None)
+  if (not canvas.qobject): canvas.qobject = CanvasObject()
   if (not canvas.settings): canvas.settings = QSettings(PATCHCANVAS_ORGANISATION_NAME, "PatchCanvas")
+
+  canvas.theme = None
 
   for i in range(Theme.THEME_MAX):
     this_theme_name = getThemeName(i)
     if (this_theme_name == options.theme_name):
       canvas.theme = Theme(i)
       break
-  else:
+
+  if (not canvas.theme):
     canvas.theme = Theme(getDefaultTheme())
 
-  canvas.size_rect = QRectF()
-
-  canvas.scene.rubberbandByTheme()
-  canvas.scene.setBackgroundBrush(canvas.theme.canvas_bg)
+  canvas.scene.updateTheme()
 
   canvas.initiated = True
 
@@ -304,14 +309,14 @@ def clear():
   port_list_ids  = []
   connection_list_ids = []
 
-  for i in range(len(canvas.group_list)):
-    group_list_ids.append(canvas.group_list[i].group_id)
+  for group in canvas.group_list:
+    group_list_ids.append(group.group_id)
 
-  for i in range(len(canvas.port_list)):
-    port_list_ids.append(canvas.port_list[i].port_id)
+  for port in canvas.port_list:
+    port_list_ids.append(port.port_id)
 
-  for i in range(len(canvas.connection_list)):
-    connection_list_ids.append(canvas.connection_list[i].connection_id)
+  for connection in canvas.connection_list:
+    connection_list_ids.append(connection.connection_id)
 
   for idx in connection_list_ids:
     disconnectPorts(idx)
@@ -328,7 +333,6 @@ def clear():
   canvas.group_list = []
   canvas.port_list = []
   canvas.connection_list = []
-  canvas.postponed_groups = []
 
   canvas.initiated = False
 
@@ -382,9 +386,6 @@ def addGroup(group_id, group_name, split=SPLIT_UNDEF, icon=ICON_APPLICATION):
     else:
       group_sbox.setPos(CanvasGetNewGroupPos(True))
 
-    #if (not options.auto_hide_groups and options.fancy_eyecandy):
-      #ItemFX(group_sbox, True)
-
     canvas.last_z_value += 1
     group_sbox.setZValue(canvas.last_z_value)
 
@@ -398,9 +399,6 @@ def addGroup(group_id, group_name, split=SPLIT_UNDEF, icon=ICON_APPLICATION):
       horizontal = bool(icon == ICON_HARDWARE or icon == ICON_LADISH_ROOM)
       group_box.setPos(CanvasGetNewGroupPos(horizontal))
 
-  #if (not options.auto_hide_groups and options.fancy_eyecandy):
-    #ItemFX(group_box, True)
-
   canvas.last_z_value += 1
   group_box.setZValue(canvas.last_z_value)
 
@@ -411,13 +409,6 @@ def addGroup(group_id, group_name, split=SPLIT_UNDEF, icon=ICON_APPLICATION):
 def removeGroup(group_id):
   if (canvas.debug):
     qDebug("PatchCanvas::removeGroup(%i)" % (group_id))
-
-  #if (CanvasGetGroupPortCount(group_id) > 0):
-    #if (canvas.debug):
-      #qDebug("PatchCanvas::removeGroup() - This group still has ports, postpone it's removal")
-    #canvas.postponed_groups.append(group_id)
-    #QTimer.singleShot(100, canvas.qobject, SLOT("CanvasPostponedGroups()"))
-    #return
 
   for group in canvas.group_list:
     if (group.group_id == group_id):
@@ -432,9 +423,6 @@ def removeGroup(group_id):
           canvas.settings.setValue("CanvasPositions/%s_INPUT" % (group_name), s_item.pos())
           canvas.settings.setValue("CanvasPositions/%s_SPLIT" % (group_name), SPLIT_YES)
 
-        #if (options.fancy_eyecandy and s_item.isVisible()):
-          #ItemFX(s_item, False)
-        #else:
         s_item.removeIconFromScene()
         canvas.scene.removeItem(s_item)
 
@@ -443,9 +431,6 @@ def removeGroup(group_id):
           canvas.settings.setValue("CanvasPositions/%s" % (group_name), item.pos())
           canvas.settings.setValue("CanvasPositions/%s_SPLIT" % (group_name), SPLIT_NO)
 
-      #if (options.fancy_eyecandy and item.isVisible()):
-        #ItemFX(item, False)
-      #else:
       item.removeIconFromScene()
       canvas.scene.removeItem(item)
 
@@ -465,7 +450,7 @@ def renameGroup(group_id, new_group_name):
       group.group_name = new_group_name
       group.widgets[0].setGroupName(new_group_name)
 
-      if (group.split):
+      if (group.split and group.widgets[1]):
         group.widgets[1].setGroupName(new_group_name)
 
       QTimer.singleShot(0, canvas.scene, SLOT("update()"))
@@ -499,7 +484,7 @@ def splitGroup(group_id):
     qCritical("PatchCanvas::splitGroup(%i) - unable to find group to split" % (group_id))
     return
 
-  port_list_ids = [] #list(item.getPortList()) # TODO
+  port_list_ids = list(item.getPortList())
 
   for port in canvas.port_list:
     if (port.port_id in port_list_ids):
@@ -514,7 +499,12 @@ def splitGroup(group_id):
 
   for connection in canvas.connection_list:
     if (connection.port_out_id in port_list_ids or connection.port_in_id in port_list_ids):
-      conns_data.append(connection)
+      connection_dict = connection_dict_t()
+      connection_dict.connection_id = connection.connection_id
+      connection_dict.port_in_id    = connection.port_in_id
+      connection_dict.port_out_id   = connection.port_out_id
+      connection_dict.widget        = None
+      conns_data.append(connection_dict)
 
   # Step 2 - Remove Item and Children
   for conn in conns_data:
@@ -529,7 +519,7 @@ def splitGroup(group_id):
   addGroup(group_id, group_name, SPLIT_YES, group_icon)
 
   for port in ports_data:
-    addPort(group_id, ports_data[i].port_id, ports_data[i].port_name, ports_data[i].port_mode, ports_data[i].port_type)
+    addPort(group_id, port.port_id, port.port_name, port.port_mode, port.port_type)
 
   for conn in conns_data:
     connectPorts(conn.connection_id, conn.port_out_id, conn.port_in_id)
@@ -559,12 +549,13 @@ def joinGroup(group_id):
       group_name = group.group_name
       group_icon = group.icon
       break
-  else:
+
+  if (not item or not s_item):
     qCritical("PatchCanvas::joinGroup(%i) - unable to find groups to join" % (group_id))
     return
 
-  port_list_ids  = [] #list(item.getPortList()) # TODO
-  port_list_idss = [] #s_item.getPortList() # TODO
+  port_list_ids  = list(item.getPortList())
+  port_list_idss = s_item.getPortList()
 
   for port_id in port_list_idss:
     if (port_id not in port_list_ids):
@@ -583,7 +574,12 @@ def joinGroup(group_id):
 
   for connection in canvas.connection_list:
     if (connection.port_out_id in port_list_ids or connection.port_in_id in port_list_ids):
-      conns_data.append(connection)
+      connection_dict = connection_dict_t()
+      connection_dict.connection_id = connection.connection_id
+      connection_dict.port_in_id    = connection.port_in_id
+      connection_dict.port_out_id   = connection.port_out_id
+      connection_dict.widget        = None
+      conns_data.append(connection_dict)
 
   # Step 2 - Remove Item and Children
   for conn in conns_data:
@@ -607,7 +603,7 @@ def joinGroup(group_id):
 
 def getGroupPos(group_id, port_mode=PORT_MODE_OUTPUT):
   if (canvas.debug):
-    qDebug("PatchCanvas::getGroupPos(%i, %i)" % (group_id, port_mode))
+    qDebug("PatchCanvas::getGroupPos(%i, %s)" % (group_id, port_mode2str(port_mode)))
 
   for group in canvas.group_list:
     if (group.group_id == group_id):
@@ -621,7 +617,8 @@ def getGroupPos(group_id, port_mode=PORT_MODE_OUTPUT):
       else:
         return group.widgets[0].pos()
 
-  qCritical("PatchCanvas::getGroupPos(%i, %i) - unable to find group" % (group_id, port_mode))
+  qCritical("PatchCanvas::getGroupPos(%i, %s) - unable to find group" % (group_id, port_mode2str(port_mode)))
+  return QPointF(0,0)
 
 def setGroupPos(group_id, group_pos_x, group_pos_y):
   setGroupPos(group_id, group_pos_x, group_pos_y, group_pos_x, group_pos_y)
@@ -634,7 +631,7 @@ def setGroupPos(group_id, group_pos_x_o, group_pos_y_o, group_pos_x_i, group_pos
     if (group.group_id == group_id):
       group.widgets[0].setPos(group_pos_x_o, group_pos_y_o)
 
-      if (group.split):
+      if (group.split and group.widgets[1]):
         group.widgets[1].setPos(group_pos_x_i, group_pos_y_i)
 
       QTimer.singleShot(0, canvas.scene, SLOT("update()"))
@@ -651,7 +648,7 @@ def setGroupIcon(group_id, icon):
       group.icon = icon
       group.widgets[0].setIcon(icon)
 
-      if (group.split):
+      if (group.split and group.widgets[1]):
         group.widgets[1].setIcon(icon)
 
       QTimer.singleShot(0, canvas.scene, SLOT("update()"))
@@ -668,7 +665,7 @@ def addPort(group_id, port_id, port_name, port_mode, port_type):
 
   for group in canvas.group_list:
     if (group.group_id == group_id):
-      if (group.split and group.widgets[0].getSplittedMode() != port_mode):
+      if (group.split and group.widgets[0].getSplittedMode() != port_mode and group.widgets[1]):
         n = 1
       else:
         n = 0
@@ -679,9 +676,6 @@ def addPort(group_id, port_id, port_name, port_mode, port_type):
   if (not box_widget or not port_widget):
     qCritical("patchcanvas::addPort(%i, %i, %s, %s, %s) - Unable to find parent group" % (group_id, port_id, port_name.encode(), port_mode2str(port_mode), port_type2str(port_type)))
     return
-
-  #if (options.fancy_eyecandy):
-    #ItemFX(port_widget, True)
 
   port_dict = port_dict_t()
   port_dict.group_id  = group_id
@@ -700,35 +694,32 @@ def removePort(port_id):
   if (canvas.debug):
     qDebug("PatchCanvas::removePort(%i)" % (port_id))
 
-  for i in range(len(canvas.port_list)):
-    if (canvas.port_list[i].port_id == port_id):
-      item = canvas.port_list[i].widget
+  for port in canvas.port_list:
+    if (port.port_id == port_id):
+      item = port.widget
       item.parentItem().removePortFromGroup(port_id)
-      if (options.fancy_eyecandy):
-        ItemFX(item, False, True)
-      else:
-        canvas.scene.removeItem(item)
-      canvas.port_list.pop(i)
+      canvas.scene.removeItem(item)
+      canvas.port_list.remove(port)
 
       QTimer.singleShot(0, canvas.scene, SLOT("update()"))
       return
 
-  qCritical("patchcanvas::removePort() - Unable to find port to remove")
+  qCritical("patchcanvas::removePort(%i) - Unable to find port to remove" % (port_id))
 
 def renamePort(port_id, new_port_name):
   if (canvas.debug):
-    qDebug("PatchCanvas::renamePort(%i, %s)" % (port_id, new_port_name))
+    qDebug("PatchCanvas::renamePort(%i, %s)" % (port_id, new_port_name.encode()))
 
-  for i in range(len(canvas.port_list)):
-    if (canvas.port_list[i].port_id == port_id):
-      canvas.port_list[i].port_name = new_port_name
-      canvas.port_list[i].widget.setPortName(new_port_name)
-      canvas.port_list[i].widget.parentItem().updatePositions()
+  for port in canvas.port_list:
+    if (port.port_id == port_id):
+      port.port_name = new_port_name
+      port.widget.setPortName(new_port_name)
+      port.widget.parentItem().updatePositions()
 
-      QTimer.singleShot(0, canvas.scene, SIGNAL("update()"))
+      QTimer.singleShot(0, canvas.scene, SLOT("update()"))
       return
 
-  qCritical("patchcanvas::renamePort() - Unable to find port to rename")
+  qCritical("patchcanvas::renamePort(%i, %s) - Unable to find port to rename" % (port_id, new_port_name.encode()))
 
 def connectPorts(connection_id, port_out_id, port_in_id):
   if (canvas.debug):
@@ -739,16 +730,16 @@ def connectPorts(connection_id, port_out_id, port_in_id):
   port_out_parent = None
   port_in_parent  = None
 
-  for i in range(len(canvas.port_list)):
-    if (canvas.port_list[i].port_id == port_out_id):
-      port_out = canvas.port_list[i].widget
+  for port in canvas.port_list:
+    if (port.port_id == port_out_id):
+      port_out = port.widget
       port_out_parent = port_out.parentItem()
-    elif (canvas.port_list[i].port_id == port_in_id):
-      port_in = canvas.port_list[i].widget
+    elif (port.port_id == port_in_id):
+      port_in = port.widget
       port_in_parent = port_in.parentItem()
 
   if (not port_out or not port_in):
-    qCritical("patchcanvas::connectPorts() - Unable to find ports to connect")
+    qCritical("PatchCanvas::connectPorts(%i, %i, %i) - unable to find ports to connect" % (connection_id, port_out_id, port_in_id))
     return
 
   connection_dict = connection_dict_t()
@@ -756,7 +747,7 @@ def connectPorts(connection_id, port_out_id, port_in_id):
   connection_dict.port_out_id = port_out_id
   connection_dict.port_in_id  = port_in_id
 
-  if (options.bezier_lines):
+  if (options.use_bezier_lines):
     connection_dict.widget = CanvasBezierLine(port_out, port_in, None)
   else:
     connection_dict.widget = CanvasLine(port_out, port_in, None)
@@ -773,9 +764,6 @@ def connectPorts(connection_id, port_out_id, port_in_id):
 
   canvas.connection_list.append(connection_dict)
 
-  #if (options.fancy_eyecandy):
-    #ItemFX(connection_dict.widget, True)
-
   QTimer.singleShot(0, canvas.scene, SLOT("update()"))
 
 def disconnectPorts(connection_id):
@@ -787,43 +775,42 @@ def disconnectPorts(connection_id):
   item1 = None
   item2 = None
 
-  for i in range(len(canvas.connection_list)):
-    if (canvas.connection_list[i].connection_id == connection_id):
-      port_1_id = canvas.connection_list[i].port_out_id
-      port_2_id = canvas.connection_list[i].port_in_id
-      line = canvas.connection_list[i].widget
-      canvas.connection_list.pop(i)
+  for connection in canvas.connection_list:
+    if (connection.connection_id == connection_id):
+      port_1_id = connection.port_out_id
+      port_2_id = connection.port_in_id
+      line = connection.widget
+      canvas.connection_list.remove(connection)
       break
 
   if (not line):
-    qCritical("patchcanvas::disconnectPorts - Unable to find connection ports")
+    qCritical("PatchCanvas::disconnectPorts(%i) - unable to find connection ports" % (connection_id))
     return
 
-  for i in range(len(canvas.port_list)):
-    if (canvas.port_list[i].port_id == port_1_id):
-      item1 = canvas.port_list[i].widget
+  for port in canvas.port_list:
+    if (port.port_id == port_1_id):
+      item1 = port.widget
       break
-  else:
-    qCritical("patchcanvas::disconnectPorts - Unable to find output port")
+
+  if (not item1):
+    qCritical("PatchCanvas::disconnectPorts(%i) - unable to find output port" % (connection_id))
     return
 
-  for i in range(len(canvas.port_list)):
-    if (canvas.port_list[i].port_id == port_2_id):
-      item2 = canvas.port_list[i].widget
+  for port in canvas.port_list:
+    if (port.port_id == port_2_id):
+      item2 = port.widget
       break
-  else:
-    qCritical("patchcanvas::disconnectPorts - Unable to find input port")
+
+  if (not item2):
+    qCritical("PatchCanvas::disconnectPorts(%i) - unable to find input port" % (connection_id))
     return
 
   item1.parentItem().removeLineFromGroup(connection_id)
   item2.parentItem().removeLineFromGroup(connection_id)
 
-  if (options.fancy_eyecandy):
-    ItemFX(line, False, True)
-  else:
-    canvas.scene.removeItem(line)
+  canvas.scene.removeItem(line)
 
-  QTimer.singleShot(0, canvas.scene, SIGNAL("update()"))
+  QTimer.singleShot(0, canvas.scene, SLOT("update()"))
 
 def Arrange():
   if (canvas.debug):
@@ -839,7 +826,7 @@ def CanvasGetGroupName(group_id):
     if (group.group_id == group_id):
       return group.group_name
 
-  qCritical("PatchCanvas::CanvasGetGroupName(%i) - Unable to find group" % (group_id))
+  qCritical("PatchCanvas::CanvasGetGroupName(%i) - unable to find group" % (group_id))
   return ""
 
 def CanvasGetGroupPortCount(group_id):
@@ -861,47 +848,48 @@ def CanvasGetNewGroupPos(horizontal=False):
   items = canvas.scene.items()
 
   break_loop = False
-  while (not break_loop):
+  while (break_loop == False):
     break_for = False
     for i in range(len(items)):
-      if (items[i].type() == CanvasBoxType):
-        if (items[i].sceneBoundingRect().contains(new_pos)):
+      item = items[i]
+      if (item and item.type() == CanvasBoxType):
+        if (item.sceneBoundingRect().contains(new_pos)):
           if (horizontal):
-            new_pos += QPointF(items[i].boundingRect().width()+15, 0)
+            new_pos += QPointF(item.boundingRect().width()+15, 0)
           else:
-            new_pos += QPointF(0, items[i].boundingRect().height()+15)
+            new_pos += QPointF(0, item.boundingRect().height()+15)
           break_for = True
           break
 
-      if (i >= len(items)-1 and not break_for):
+      if (i >= len(items)-1 and break_for == False):
         break_loop = True
 
   return new_pos
 
-def CanvasGetPortName(port_id):
+def CanvasGetFullPortName(port_id):
   if (canvas.debug):
-    qDebug("PatchCanvas::CanvasGetPortName(%i)" % (port_id))
+    qDebug("PatchCanvas::CanvasGetFullPortName(%i)" % (port_id))
 
-  for i in range(len(canvas.port_list)):
-    if (canvas.port_list[i].port_id == port_id):
-      group_id = canvas.port_list[i].group_id
-      for j in range(len(canvas.group_list)):
-        if (canvas.group_list[j].group_id == group_id):
-          return canvas.group_list[j].group_name + ":" + canvas.port_list[i].port_name
+  for port in canvas.port_list:
+    if (port.port_id == port_id):
+      group_id = port.group_id
+      for group in canvas.group_list:
+        if (group.group_id == group_id):
+          return group.group_name + ":" + port.port_name
       break
 
-  qCritical("PatchCanvas::CanvasGetPortName() - unable to find port")
+  qCritical("PatchCanvas::CanvasGetFullPortName(%i) - unable to find port" % (port_id))
   return ""
 
 def CanvasGetPortConnectionList(port_id):
   if (canvas.debug):
-    qDebug("patchcanvas::CanvasGetPortConnectionList(%i)" % (port_id))
+    qDebug("PatchCanvas::CanvasGetPortConnectionList(%i)" % (port_id))
 
   port_con_list = []
 
-  for i in range(len(canvas.connection_list)):
-    if (canvas.connection_list[i].port_out_id == port_id or canvas.connection_list[i].port_in_id == port_id):
-      port_con_list.append(canvas.connection_list[i].connection_id)
+  for connection in canvas.connection_list:
+    if (connection.port_out_id == port_id or connection.port_in_id == port_id):
+      port_con_list.append(connection.connection_id)
 
   return port_con_list
 
@@ -909,43 +897,23 @@ def CanvasGetConnectedPort(connection_id, port_id):
   if (canvas.debug):
     qDebug("PatchCanvas::CanvasGetConnectedPort(%i, %i)" % (connection_id, port_id))
 
-  for i in range(len(canvas.connection_list)):
-    if (canvas.connection_list[i].connection_id == connection_id):
-      if (canvas.connection_list[i].port_out_id == port_id):
-        return canvas.connection_list[i].port_in_id
+  for connection in canvas.connection_list:
+    if (connection.connection_id == connection_id):
+      if (connection.port_out_id == port_id):
+        return connection.port_in_id
       else:
-        return canvas.connection_list[i].port_out_id
+        return connection.port_out_id
 
-  qCritical("PatchCanvas::CanvasGetConnectedPort() - unable to find connection")
+  qCritical("PatchCanvas::CanvasGetConnectedPort(%i, %i) - unable to find connection" % (connection_id, port_id))
   return 0
 
 def CanvasPostponedGroups():
   if (canvas.debug):
     qDebug("PatchCanvas::CanvasPostponedGroups()")
 
-  #for i in range(len(canvas.postponed_groups)):
-    #group_id = canvas.postponed_groups[i]
-
-    #for j in range(len(canvas.group_list)):
-      #if (canvas.group_list[j].group_id == group_id):
-        #item = canvas.group_list[j].widgets[0]
-        #s_item = None
-
-        #if (canvas.group_list[j].split):
-          #s_item = canvas.group_list[j].widgets[1]
-
-        #if (item.getPortCount() == 0 and (not s_item or s_item.getPortCount() == 0)):
-          #removeGroup(group_id)
-          #canvas.postponed_groups.pop(i)
-
-        #break
-
-  #if (len(canvas.postponed_groups) > 0):
-    #QTimer.singleShot(100, canvas.qobject, SLOT("CanvasPostponedGroups()"));
-
 def CanvasCallback(action, value1, value2, value_str):
   if (canvas.debug):
-    qDebug("PatchCanvas::CanvasCallback(%i, %i, %i, %s)" % (action, value1, value2, QStringStr(value_str)))
+    qDebug("PatchCanvas::CanvasCallback(%i, %i, %i, %s)" % (action, value1, value2, value_str.encode()))
 
   canvas.callback(action, value1, value2, value_str);
 
@@ -980,7 +948,8 @@ class PatchScene(QGraphicsScene):
           self.m_view.scale(0.2, 0.2)
         self.emit(SIGNAL("scaleChanged(double)"), self.m_view.transform().m11())
 
-    def rubberbandByTheme(self):
+    def updateTheme(self):
+        self.setBackgroundBrush(canvas.theme.canvas_bg)
         self.m_rubberband.setPen(canvas.theme.rubberband_pen)
         self.m_rubberband.setBrush(canvas.theme.rubberband_brush)
 
@@ -1177,7 +1146,7 @@ class CanvasLine(QGraphicsLineItem):
         if (self.m_locked):
           return
 
-        if (options.fancy_eyecandy):
+        if (options.eyecandy):
           if (yesno):
             self.setGraphicsEffect(CanvasPortGlow(self.item1.getPortType(), self.toGraphicsObject()))
           else:
@@ -1265,7 +1234,7 @@ class CanvasBezierLine(QGraphicsPathItem):
         if (self.m_locked):
           return
 
-        if (options.fancy_eyecandy):
+        if (options.eyecandy):
           if (yesno):
             self.setGraphicsEffect(CanvasPortGlow(self.item1.getPortType(), self.toGraphicsObject()))
           else:
@@ -1538,7 +1507,7 @@ class CanvasPort(QGraphicsItem):
                 connection.widget.setLocked(True)
 
           if (not self.m_line_mov):
-            if (options.bezier_lines):
+            if (options.use_bezier_lines):
               new_mov_line = CanvasBezierLineMov(self.m_port_mode, self.m_port_type, self)
               new_mov_line.setZValue(canvas.last_z_value)
               self.m_line_mov = new_mov_line
@@ -1629,7 +1598,7 @@ class CanvasPort(QGraphicsItem):
         if (len(port_con_list) > 0):
           for i in range(len(port_con_list)):
             port_con_id = CanvasGetConnectedPort(port_con_list[i], self.m_port_id)
-            act_x_disc = discMenu.addAction(CanvasGetPortName(port_con_id))
+            act_x_disc = discMenu.addAction(CanvasGetFullPortName(port_con_id))
             act_x_disc.setData(port_con_list[i])
             QObject.connect(act_x_disc, SIGNAL("triggered()"), canvas.qobject, SLOT("PortContextMenuDisconnect()"))
         else:
@@ -1795,7 +1764,7 @@ class CanvasBox(QGraphicsItem):
         self.icon_svg = CanvasIcon(icon, self.m_group_name, self)
 
         # Shadow
-        if (options.fancy_eyecandy):
+        if (options.eyecandy):
           self.shadow = CanvasBoxShadow(self.toGraphicsObject())
           self.shadow.setFakeParent(self)
           self.setGraphicsEffect(self.shadow)
@@ -1806,7 +1775,7 @@ class CanvasBox(QGraphicsItem):
         self.setFlags(QGraphicsItem.ItemIsMovable|QGraphicsItem.ItemIsSelectable)
 
         # Wait for at least 1 port
-        if (options.auto_hide_groups): # or options.fancy_eyecandy):
+        if (options.auto_hide_groups): # or options.eyecandy):
           self.setVisible(False)
 
         self.updatePositions()
@@ -1842,7 +1811,7 @@ class CanvasBox(QGraphicsItem):
 
     def addPortFromGroup(self, port_id, port_mode, port_type, port_name):
         if (len(self.m_port_list_ids) == 0):
-          #if (options.fancy_eyecandy):
+          #if (options.eyecandy):
             #ItemFX(self, True)
           if (options.auto_hide_groups):
             self.setVisible(True)
@@ -1871,7 +1840,7 @@ class CanvasBox(QGraphicsItem):
         if (len(self.m_port_list_ids) > 0):
           self.updatePositions()
         elif (self.isVisible()):
-          #if (options.fancy_eyecandy):
+          #if (options.eyecandy):
             #ItemFX(self, False, False)
           #el
           if (options.auto_hide_groups):
@@ -2125,7 +2094,7 @@ class CanvasBox(QGraphicsItem):
         if (len(port_con_list) > 0):
           for i in range(len(port_con_list)):
             port_con_id = CanvasGetConnectedPort(port_con_list[i], port_con_list_ids[i])
-            act_x_disc = discMenu.addAction(CanvasGetPortName(port_con_id))
+            act_x_disc = discMenu.addAction(CanvasGetFullPortName(port_con_id))
             act_x_disc.setData(port_con_list[i])
             QObject.connect(act_x_disc, SIGNAL("triggered()"), canvas.qobject, SLOT("PortContextMenuDisconnect()"))
         else:

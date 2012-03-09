@@ -575,10 +575,10 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
 
         p_options = patchcanvas.options_t()
         p_options.theme_name       = self.m_savedSettings["Canvas/Theme"]
-        p_options.bezier_lines     = self.m_savedSettings["Canvas/BezierLines"]
-        p_options.antialiasing     = self.m_savedSettings["Canvas/Antialiasing"]
         p_options.auto_hide_groups = self.m_savedSettings["Canvas/AutoHideGroups"]
-        p_options.fancy_eyecandy   = self.m_savedSettings["Canvas/FancyEyeCandy"]
+        p_options.use_bezier_lines = self.m_savedSettings["Canvas/UseBezierLines"]
+        p_options.antialiasing     = self.m_savedSettings["Canvas/Antialiasing"]
+        p_options.eyecandy         = self.m_savedSettings["Canvas/EyeCandy"]
 
         p_features = patchcanvas.features_t()
         p_features.group_info       = False
@@ -587,8 +587,8 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
         p_features.port_rename      = True
         p_features.handle_group_pos = False
 
-        patchcanvas.set_options(p_options)
-        patchcanvas.set_features(p_features)
+        patchcanvas.setOptions(p_options)
+        patchcanvas.setFeatures(p_features)
         patchcanvas.init(self.scene, self.canvasCallback, DEBUG)
 
         self.connect(self.act_project_new, SIGNAL("triggered()"), SLOT("slot_projectNew()"))
@@ -633,6 +633,24 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
 
     def canvasCallback(self, action, value1, value2, value_str):
         print(action, value1, value2, value_str)
+
+        if (action == patchcanvas.ACTION_GROUP_SPLIT):
+          group_id = value1
+          patchcanvas.splitGroup(group_id)
+
+          for group in self.m_group_list:
+            if (group[iGroupId] == group_id):
+              group[iGroupSplit] = True
+              break
+
+        elif (action == patchcanvas.ACTION_GROUP_JOIN):
+          group_id = value1
+          patchcanvas.joinGroup(group_id)
+
+          for group in self.m_group_list:
+            if (group[iGroupId] == group_id):
+              group[iGroupSplit] = False
+              break
 
     def saveFile(self, path):
         content = ("<?xml version='1.0' encoding='UTF-8'?>\n"
@@ -1045,11 +1063,11 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
 
         self.m_savedSettings = {
           "Canvas/Theme": self.settings.value("Canvas/Theme", patchcanvas.getThemeName(patchcanvas.getDefaultTheme), type=str),
-          "Canvas/BezierLines": self.settings.value("Canvas/BezierLines", True, type=bool),
           "Canvas/AutoHideGroups": self.settings.value("Canvas/AutoHideGroups", False, type=bool),
-          "Canvas/FancyEyeCandy": self.settings.value("Canvas/FancyEyeCandy", False, type=bool),
+          "Canvas/UseBezierLines": self.settings.value("Canvas/UseBezierLines", True, type=bool),
+          "Canvas/EyeCandy": self.settings.value("Canvas/EyeCandy", patchcanvas.EYECANDY_SMALL, type=int),
           "Canvas/UseOpenGL": self.settings.value("Canvas/UseOpenGL", False, type=bool),
-          "Canvas/Antialiasing": self.settings.value("Canvas/Antialiasing", Qt.PartiallyChecked, type=int),
+          "Canvas/Antialiasing": self.settings.value("Canvas/Antialiasing", patchcanvas.ANTIALIASING_SMALL, type=int),
           "Canvas/TextAntialiasing": self.settings.value("Canvas/TextAntialiasing", True, type=bool),
           "Canvas/HighQualityAntialiasing": self.settings.value("Canvas/HighQualityAntialiasing", False, type=bool)
         }
