@@ -585,7 +585,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
         p_features.group_rename     = True
         p_features.port_info        = True
         p_features.port_rename      = True
-        p_features.handle_group_pos = False
+        p_features.handle_group_pos = True
 
         patchcanvas.setOptions(p_options)
         patchcanvas.setFeatures(p_features)
@@ -632,9 +632,21 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
         self.slot_projectNew()
 
     def canvasCallback(self, action, value1, value2, value_str):
-        print(action, value1, value2, value_str)
+        if (action == patchcanvas.ACTION_GROUP_INFO):
+          pass
 
-        if (action == patchcanvas.ACTION_GROUP_SPLIT):
+        elif (action == patchcanvas.ACTION_GROUP_RENAME):
+          # TODO - check if can be renamed, if not display warning
+          group_id = value1
+          new_group_name = value_str
+          patchcanvas.renameGroup(group_id, new_group_name)
+
+          for group in self.m_group_list:
+            if (group[iGroupId] == group_id):
+              group[iGroupName] = new_group_name
+              break
+
+        elif (action == patchcanvas.ACTION_GROUP_SPLIT):
           group_id = value1
           patchcanvas.splitGroup(group_id)
 
@@ -650,6 +662,96 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
           for group in self.m_group_list:
             if (group[iGroupId] == group_id):
               group[iGroupSplit] = False
+              break
+
+        elif (action == patchcanvas.ACTION_PORT_INFO):
+          port_id = value1
+
+          group_id   = 0
+          group_name = ""
+          port_name  = ""
+          port_mode  = patchcanvas.PORT_MODE_NULL
+          port_type  = patchcanvas.PORT_TYPE_NULL
+
+          for port in self.m_port_list:
+            if (port[iPortId] == port_id):
+              group_id  = port[iPortGroup]
+              port_name = port[iPortName]
+              port_mode = port[iPortMode]
+              port_type = port[iPortType]
+              break
+
+          for group in self.m_group_list:
+            if (group[iGroupId] == group_id):
+              group_name = group[iGroupName]
+              break
+
+          if (port_mode == patchcanvas.PORT_MODE_INPUT):
+            mode_text = self.tr("Input")
+          elif (port_mode == patchcanvas.PORT_MODE_OUTPUT):
+            mode_text = self.tr("Output")
+          else:
+            mode_text = self.tr("Unknown")
+
+          if (port_type == patchcanvas.PORT_TYPE_AUDIO_JACK):
+            type_text = self.tr("JACK Audio")
+          elif (port_type == patchcanvas.PORT_TYPE_MIDI_JACK):
+            type_text = self.tr("JACK MIDI")
+          elif (port_type == patchcanvas.PORT_TYPE_MIDI_A2J):
+            type_text = self.tr("A2J MIDI")
+          elif (port_type == patchcanvas.PORT_TYPE_MIDI_ALSA):
+            type_text = self.tr("ALSA MIDI")
+          else:
+            type_text = self.tr("Unknown")
+
+          port_full_name = group_name+":"+port_name
+
+          info = self.tr(""
+                  "<table>"
+                  "<tr><td align='right'><b>Group Name:</b></td><td>&nbsp;%1</td></tr>"
+                  "<tr><td align='right'><b>Group ID:</b></td><td>&nbsp;%2</td></tr>"
+                  "<tr><td align='right'><b>Port Name:</b></td><td>&nbsp;%3</td></tr>"
+                  "<tr><td align='right'><b>Port ID:</b></td><td>&nbsp;%4</i></td></tr>"
+                  "<tr><td align='right'><b>Full Port Name:</b></td><td>&nbsp;%5</td></tr>"
+                  "<tr><td colspan='2'>&nbsp;</td></tr>"
+                  "<tr><td align='right'><b>Port Mode:</b></td><td>&nbsp;%6</td></tr>"
+                  "<tr><td align='right'><b>Port Type:</b></td><td>&nbsp;%7</td></tr>"
+                  "</table>"
+                  ).arg(group_name).arg(group_id).arg(port_name).arg(port_id).arg(port_full_name).arg(mode_text).arg(type_text)
+
+          QMessageBox.information(self, self.tr("Port Information"), info)
+
+        elif (action == patchcanvas.ACTION_PORT_RENAME):
+          port_id = value1
+          new_port_name = value_str
+          patchcanvas.renamePort(port_id, new_port_name)
+
+          for port in self.m_port_list:
+            if (port[iPortId] == port_id):
+              port[iPortName] = new_port_name
+              break
+
+        elif (action == patchcanvas.ACTION_PORTS_CONNECT):
+          connection_id = self.m_last_connection_id
+          port_out_id   = value1
+          port_in_id    = value2
+          patchcanvas.connectPorts(connection_id, port_out_id, port_in_id)
+
+          conn_obj = [None, None, None]
+          conn_obj[iConnId]     = connection_id
+          conn_obj[iConnOutput] = port_out_id
+          conn_obj[iConnInput]  = port_in_id
+
+          self.m_connection_list.append(conn_obj)
+          self.m_last_connection_id += 1
+
+        elif (action == patchcanvas.ACTION_PORTS_DISCONNECT):
+          connection_id = value1
+          patchcanvas.disconnectPorts(connection_id)
+
+          for connection in self.m_connection_list:
+            if (connection[iConnId] == connection_id):
+              self.m_connection_list.remove(connection)
               break
 
     def saveFile(self, path):

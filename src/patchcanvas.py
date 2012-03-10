@@ -167,10 +167,13 @@ class CanvasObject(QObject):
 
   @pyqtSlot()
   def PortContextMenuDisconnect(self):
-    # FIXME
-    connection_id_try = self.sender().data().toInt()
-    if (connection_id_try[1]):
-      CanvasCallback(ACTION_PORTS_DISCONNECT, connection_id_try[0], 0, "")
+    try:
+      connection_id = int(self.sender().data())
+    except:
+      connection_id = None
+
+    if (connection_id != None):
+      CanvasCallback(ACTION_PORTS_DISCONNECT, connection_id, 0, "")
 
 # Global objects
 canvas = Canvas()
@@ -286,7 +289,9 @@ def init(scene, callback, debug=False):
   if (not canvas.qobject): canvas.qobject = CanvasObject()
   if (not canvas.settings): canvas.settings = QSettings(PATCHCANVAS_ORGANISATION_NAME, "PatchCanvas")
 
-  canvas.theme = None
+  if (canvas.theme):
+    del canvas.theme
+    canvas.theme = None
 
   for i in range(Theme.THEME_MAX):
     this_theme_name = getThemeName(i)
@@ -425,6 +430,7 @@ def removeGroup(group_id):
 
         s_item.removeIconFromScene()
         canvas.scene.removeItem(s_item)
+        del s_item
 
       else:
         if (features.handle_group_pos):
@@ -433,6 +439,7 @@ def removeGroup(group_id):
 
       item.removeIconFromScene()
       canvas.scene.removeItem(item)
+      del item
 
       canvas.group_list.remove(group)
 
@@ -699,6 +706,8 @@ def removePort(port_id):
       item = port.widget
       item.parentItem().removePortFromGroup(port_id)
       canvas.scene.removeItem(item)
+      del item
+
       canvas.port_list.remove(port)
 
       QTimer.singleShot(0, canvas.scene, SLOT("update()"))
@@ -808,7 +817,7 @@ def disconnectPorts(connection_id):
   item1.parentItem().removeLineFromGroup(connection_id)
   item2.parentItem().removeLineFromGroup(connection_id)
 
-  canvas.scene.removeItem(line)
+  line.deleteFromScene()
 
   QTimer.singleShot(0, canvas.scene, SLOT("update()"))
 
@@ -936,7 +945,7 @@ class PatchScene(QGraphicsScene):
 
         self.m_view = view
         if (not self.m_view):
-          qFatal("PatchCanvas::PatchScene() - Invalid view")
+          qFatal("PatchCanvas::PatchScene() - invalid view")
 
     def fixScaleFactor(self):
         scale = self.m_view.transform().m11()
@@ -955,6 +964,8 @@ class PatchScene(QGraphicsScene):
 
     def zoom_fit(self):
       min_x = min_y = max_x = max_y = None
+      first_value = True
+
       items_list = self.items()
 
       if (len(items_list) > 0):
@@ -963,25 +974,27 @@ class PatchScene(QGraphicsScene):
             pos  = item.scenePos()
             rect = item.boundingRect()
 
-            if (min_x == None):
+            if (first_value):
               min_x = pos.x()
             elif (pos.x() < min_x):
               min_x = pos.x()
 
-            if (min_y == None):
+            if (first_value):
               min_y = pos.y()
             elif (pos.y() < min_y):
               min_y = pos.y()
 
-            if (max_x == None):
+            if (first_value):
               max_x = pos.x()+rect.width()
             elif (pos.x()+rect.width() > max_x):
               max_x = pos.x()+rect.width()
 
-            if (max_y == None):
+            if (first_value):
               max_y = pos.y()+rect.height()
             elif (pos.y()+rect.height() > max_y):
               max_y = pos.y()+rect.height()
+
+            first_value = False
 
         self.m_view.fitInView(min_x, min_y, abs(max_x-min_x), abs(max_y-min_y), Qt.KeepAspectRatio)
         self.fixScaleFactor()
@@ -1002,31 +1015,27 @@ class PatchScene(QGraphicsScene):
 
     def keyPressEvent(self, event):
         if (not self.m_view):
-          event.ignore()
-          return
+          return event.ignore()
 
         if (event.key() == Qt.Key_Control):
           self.m_ctrl_down = True
 
         elif (event.key() == Qt.Key_Home):
           self.zoom_fit()
-          event.accept()
+          return event.accept()
 
         elif (self.m_ctrl_down):
           if (event.key() == Qt.Key_Plus):
             self.zoom_in()
-            event.accept()
+            return event.accept()
           elif (event.key() == Qt.Key_Minus):
             self.zoom_out()
-            event.accept()
+            return event.accept()
           elif (event.key() == Qt.Key_1):
             self.zoom_reset()
-            event.accept()
-          else:
-            QGraphicsScene.keyPressEvent(self, event)
+            return event.accept()
 
-        else:
-          QGraphicsScene.keyPressEvent(self, event)
+        QGraphicsScene.keyPressEvent(self, event)
 
     def keyReleaseEvent(self, event):
         if (event.key() == Qt.Key_Control):
@@ -1034,17 +1043,14 @@ class PatchScene(QGraphicsScene):
         QGraphicsScene.keyReleaseEvent(self, event)
 
     def mousePressEvent(self, event):
-        if (event.button() == Qt.LeftButton):
-          self.m_mouse_down_init = True
-        else:
-          self.m_mouse_down_init = False
+        self.m_mouse_down_init  = bool(event.button() == Qt.LeftButton)
         self.m_mouse_rubberband = False
         QGraphicsScene.mousePressEvent(self, event)
 
     def mouseMoveEvent(self, event):
         if (self.m_mouse_down_init):
-          self.m_mouse_rubberband = bool(len(self.selectedItems()) == 0)
           self.m_mouse_down_init  = False
+          self.m_mouse_rubberband = bool(len(self.selectedItems()) == 0)
 
         if (self.m_mouse_rubberband):
           if (self.m_rubberband_selection == False):
@@ -1065,11 +1071,9 @@ class PatchScene(QGraphicsScene):
             y = pos.y()
 
           self.m_rubberband.setRect(x, y, abs(pos.x()-self.m_rubberband_orig_point.x()), abs(pos.y()-self.m_rubberband_orig_point.y()))
+          return event.accept()
 
-          event.accept()
-
-        else:
-          QGraphicsScene.mouseMoveEvent(self, event)
+        QGraphicsScene.mouseMoveEvent(self, event)
 
     def mouseReleaseEvent(self, event):
         if (self.m_rubberband_selection):
@@ -1104,18 +1108,45 @@ class PatchScene(QGraphicsScene):
 
     def wheelEvent(self, event):
         if (not self.m_view):
-          event.ignore()
-          return
+          return event.ignore()
 
         if (self.m_ctrl_down):
           factor = 1.41 ** (event.delta()/240.0)
           self.m_view.scale(factor, factor)
 
           self.fixScaleFactor()
-          event.accept()
+          return event.accept()
 
-        else:
-          QGraphicsScene.wheelEvent(self, event)
+        QGraphicsScene.wheelEvent(self, event)
+
+# ------------------------------------------------------------------------------
+# abstractcanvasline.h
+# NOTE - unused
+
+class AbstractCanvasLine(object):
+    def __init__(self):
+        object.__init__(self)
+
+    def deleteFromScene(self):
+        pass
+
+    def isLocked(self):
+        return False
+
+    def setLocked(self, yesno):
+        pass
+
+    def isLineSelected(self):
+        return False
+
+    def setLineSelected(self, yesno):
+        pass
+
+    def updateLinePos(self):
+        pass
+
+    def setZValue(self, z):
+        pass
 
 # ------------------------------------------------------------------------------
 # canvasline.cpp
@@ -1132,6 +1163,10 @@ class CanvasLine(QGraphicsLineItem):
 
         self.setGraphicsEffect(None)
         self.updateLinePos()
+
+    def deleteFromScene(self):
+        canvas.scene.removeItem(self)
+        del self
 
     def isLocked(self):
         return self.m_locked
@@ -1162,6 +1197,9 @@ class CanvasLine(QGraphicsLineItem):
 
           self.m_lineSelected = False
           self.updateLineGradient()
+
+    def type(self):
+        return CanvasLineType
 
     def updateLineGradient(self):
         pos_top = self.boundingRect().top()
@@ -1197,9 +1235,6 @@ class CanvasLine(QGraphicsLineItem):
 
         self.setPen(QPen(port_gradient, 2))
 
-    def type(self):
-        return CanvasLineType
-
     def paint(self, painter, option, widget):
         painter.setRenderHint(QPainter.Antialiasing, bool(options.antialiasing))
         QGraphicsLineItem.paint(self, painter, option, widget)
@@ -1220,6 +1255,10 @@ class CanvasBezierLine(QGraphicsPathItem):
         self.setBrush(QColor(0,0,0,0))
         self.setGraphicsEffect(None)
         self.updateLinePos()
+
+    def deleteFromScene(self):
+        canvas.scene.removeItem(self)
+        del self
 
     def isLocked(self):
         return self.m_locked
@@ -1264,6 +1303,9 @@ class CanvasBezierLine(QGraphicsPathItem):
           self.m_lineSelected = False
           self.updateLineGradient()
 
+    def type(self):
+        return CanvasBezierLineType
+
     def updateLineGradient(self):
         pos_top = self.boundingRect().top()
         pos_bot = self.boundingRect().bottom()
@@ -1298,9 +1340,6 @@ class CanvasBezierLine(QGraphicsPathItem):
 
         self.setPen(QPen(port_gradient, 2))
 
-    def type(self):
-        return CanvasBezierLineType
-
     def paint(self, painter, option, widget):
         painter.setRenderHint(QPainter.Antialiasing, bool(options.antialiasing))
         QGraphicsPathItem.paint(self, painter, option, widget)
@@ -1329,11 +1368,14 @@ class CanvasLineMov(QGraphicsLineItem):
         elif (port_type == PORT_TYPE_MIDI_ALSA):
           pen = QPen(canvas.theme.line_midi_alsa, 2)
         else:
-          qWarning("PatchCanvas::CanvasLineMov(%i, %i, %s) - invalid port type" % (port_mode, port_type, parent))
+          qWarning("PatchCanvas::CanvasLineMov(%s, %s, %s) - invalid port type" % (port_mode2str(port_mode), port_type2str(port_type), parent))
           pen = QPen(Qt.black)
 
         self.setPen(pen)
-        self.update()
+
+    def deleteFromScene(self):
+        canvas.scene.removeItem(self)
+        del self
 
     def updateLinePos(self, scenePos):
         item_pos = [0, 0]
@@ -1381,12 +1423,15 @@ class CanvasBezierLineMov(QGraphicsPathItem):
         elif (port_type == PORT_TYPE_MIDI_ALSA):
           pen = QPen(canvas.theme.line_midi_alsa, 2)
         else:
-          qWarning("PatchCanvas::CanvasBezierLineMov(%i, %i, %s) - invalid port type" % (port_mode, port_type, parent))
+          qWarning("PatchCanvas::CanvasBezierLineMov(%s, %s, %s) - invalid port type" % (port_mode2str(port_mode), port_type2str(port_type), parent))
           pen = QPen(Qt.black)
 
         self.setBrush(QColor(0,0,0,0))
         self.setPen(pen)
-        self.update()
+
+    def deleteFromScene(self):
+        canvas.scene.removeItem(self)
+        del self
 
     def updateLinePos(self, scenePos):
         if (self.m_port_mode == PORT_MODE_INPUT):
@@ -1508,24 +1553,21 @@ class CanvasPort(QGraphicsItem):
 
           if (not self.m_line_mov):
             if (options.use_bezier_lines):
-              new_mov_line = CanvasBezierLineMov(self.m_port_mode, self.m_port_type, self)
-              new_mov_line.setZValue(canvas.last_z_value)
-              self.m_line_mov = new_mov_line
+              self.m_line_mov = CanvasBezierLineMov(self.m_port_mode, self.m_port_type, self)
             else:
-              new_mov_line = CanvasLineMov(self.m_port_mode, self.m_port_type, self)
-              new_mov_line.setZValue(canvas.last_z_value)
-              self.m_line_mov = new_mov_line
+              self.m_line_mov = CanvasLineMov(self.m_port_mode, self.m_port_type, self)
 
             canvas.last_z_value += 1
-            self.parentItem().setZValue(canvas.last_z_value)
+            self.m_line_mov.setZValue(canvas.last_z_value)
             canvas.last_z_value += 1
+            self.parentItem().setZValue(canvas.last_z_value)
 
           item = None
           items = canvas.scene.items(event.scenePos(), Qt.ContainsItemShape, Qt.AscendingOrder)
           for i in range(len(items)):
             if (items[i].type() == CanvasPortType):
               if (items[i] != self):
-                if not item:
+                if (not item):
                   item = items[i]
                 elif (items[i].parentItem().zValue() > item.parentItem().zValue()):
                   item = items[i]
@@ -1534,7 +1576,7 @@ class CanvasPort(QGraphicsItem):
             self.m_hover_item.setSelected(False)
 
           if (item):
-            a2j_connection = (item.getPortType() == PORT_TYPE_MIDI_JACK and self.m_port_type == PORT_TYPE_MIDI_A2J) or (item.getPortType() == PORT_TYPE_MIDI_A2J and self.m_port_type == PORT_TYPE_MIDI_JACK)
+            a2j_connection = bool(item.getPortType() == PORT_TYPE_MIDI_JACK and self.m_port_type == PORT_TYPE_MIDI_A2J) or (item.getPortType() == PORT_TYPE_MIDI_A2J and self.m_port_type == PORT_TYPE_MIDI_JACK)
             if (item.getPortMode() != self.m_port_mode and (item.getPortType() == self.m_port_type or a2j_connection)):
               item.setSelected(True)
               self.m_hover_item = item
@@ -1544,16 +1586,15 @@ class CanvasPort(QGraphicsItem):
             self.m_hover_item = None
 
           self.m_line_mov.updateLinePos(event.scenePos())
-          event.accept()
+          return event.accept()
 
-        else:
-          QGraphicsItem.mouseMoveEvent(self, event)
+        QGraphicsItem.mouseMoveEvent(self, event)
 
     def mouseReleaseEvent(self, event):
         if (self.m_mouse_down):
 
           if (self.m_line_mov):
-            canvas.scene.removeItem(self.m_line_mov)
+            self.m_line_mov.deleteFromScene()
             self.m_line_mov = None
 
           for connection in canvas.connection_list:
@@ -1583,7 +1624,6 @@ class CanvasPort(QGraphicsItem):
         self.m_hover_item = None
         self.m_mouse_down = False
         self.m_cursor_moving = False
-
         QGraphicsItem.mouseReleaseEvent(self, event)
 
     def contextMenuEvent(self, event):
@@ -1596,10 +1636,10 @@ class CanvasPort(QGraphicsItem):
         port_con_list = CanvasGetPortConnectionList(self.m_port_id)
 
         if (len(port_con_list) > 0):
-          for i in range(len(port_con_list)):
-            port_con_id = CanvasGetConnectedPort(port_con_list[i], self.m_port_id)
+          for port_id in port_con_list:
+            port_con_id = CanvasGetConnectedPort(port_id, self.m_port_id)
             act_x_disc = discMenu.addAction(CanvasGetFullPortName(port_con_id))
-            act_x_disc.setData(port_con_list[i])
+            act_x_disc.setData(port_id)
             QObject.connect(act_x_disc, SIGNAL("triggered()"), canvas.qobject, SLOT("PortContextMenuDisconnect()"))
         else:
           act_x_disc = discMenu.addAction("No connections")
@@ -1623,15 +1663,15 @@ class CanvasPort(QGraphicsItem):
         act_selected = menu.exec_(event.screenPos())
 
         if (act_selected == act_x_disc_all):
-          for i in range(len(port_con_list)):
-            canvas.callback(ACTION_PORTS_DISCONNECT, port_con_list[i], 0, "")
+          for port_id in port_con_list:
+            canvas.callback(ACTION_PORTS_DISCONNECT, port_id, 0, "")
 
         elif (act_selected == act_x_info):
           canvas.callback(ACTION_PORT_INFO, self.m_port_id, 0, "")
 
         elif (act_selected == act_x_rename):
           new_name_try = QInputDialog.getText(None, "Rename Port", "New name:", QLineEdit.Normal, self.m_port_name)
-          if (new_name_try[1] and new_name_try[0]):
+          if (new_name_try[1] and new_name_try[0]): # 1 - book ok, 0 - return text
             canvas.callback(ACTION_PORT_RENAME, self.m_port_id, 0, new_name_try[0])
 
         event.accept()
@@ -1640,7 +1680,7 @@ class CanvasPort(QGraphicsItem):
         return QRectF(0, 0, self.m_port_width+12, self.m_port_height)
 
     def paint(self, painter, option, widget):
-        painter.setRenderHint(QPainter.Antialiasing, (options.antialiasing == Qt.Checked))
+        painter.setRenderHint(QPainter.Antialiasing, (options.antialiasing == ANTIALIASING_FULL))
 
         poly_locx = [0, 0, 0, 0, 0]
 
@@ -1660,7 +1700,7 @@ class CanvasPort(QGraphicsItem):
             poly_locx[3] = self.m_port_width+5
             poly_locx[4] = 0
           else:
-            qCritical("PatchCanvas::CanvasPort.paint() - invalid theme port mode")
+            qCritical("PatchCanvas::CanvasPort.paint() - invalid theme port mode '%s'" % (canvas.theme.port_mode))
             return
 
         elif (self.m_port_mode == PORT_MODE_OUTPUT):
@@ -1679,11 +1719,11 @@ class CanvasPort(QGraphicsItem):
             poly_locx[3] = 5
             poly_locx[4] = self.m_port_width+12
           else:
-            qCritical("PatchCanvas::CanvasPort.paint() - invalid theme port mode")
+            qCritical("PatchCanvas::CanvasPort.paint() - invalid theme port mode '%s'" % (canvas.theme.port_mode))
             return
 
         else:
-          qCritical("PatchCanvas::CanvasPort.paint() - invalid port mode")
+          qCritical("PatchCanvas::CanvasPort.paint() - invalid port mode '%s'" % (port_mode2str(self.m_port_mode)))
           return
 
         if (self.m_port_type == PORT_TYPE_AUDIO_JACK):
@@ -1699,7 +1739,7 @@ class CanvasPort(QGraphicsItem):
           poly_color = canvas.theme.port_midi_alsa_bg_sel if (self.isSelected()) else canvas.theme.port_midi_alsa_bg
           poly_pen = canvas.theme.port_midi_alsa_pen_sel if (self.isSelected()) else canvas.theme.port_midi_alsa_pen
         else:
-          qCritical("PatchCanvas::CanvasPort.paint() - invalid port type")
+          qCritical("PatchCanvas::CanvasPort.paint() - invalid port type '%s'" % (port_type2str(m_port_type)))
           return
 
         polygon = QPolygonF()
@@ -1750,8 +1790,8 @@ class CanvasBox(QGraphicsItem):
         self.m_splitted_mode = PORT_MODE_NULL
 
         self.m_cursor_moving = False
-        self.m_mouse_down    = False
         self.m_forced_split  = False
+        self.m_mouse_down    = False
 
         self.m_port_list_ids = []
         self.m_connection_lines = []
@@ -1775,7 +1815,7 @@ class CanvasBox(QGraphicsItem):
         self.setFlags(QGraphicsItem.ItemIsMovable|QGraphicsItem.ItemIsSelectable)
 
         # Wait for at least 1 port
-        if (options.auto_hide_groups): # or options.eyecandy):
+        if (options.auto_hide_groups):
           self.setVisible(False)
 
         self.updatePositions()
@@ -1811,8 +1851,6 @@ class CanvasBox(QGraphicsItem):
 
     def addPortFromGroup(self, port_id, port_mode, port_type, port_name):
         if (len(self.m_port_list_ids) == 0):
-          #if (options.eyecandy):
-            #ItemFX(self, True)
           if (options.auto_hide_groups):
             self.setVisible(True)
 
@@ -1840,9 +1878,6 @@ class CanvasBox(QGraphicsItem):
         if (len(self.m_port_list_ids) > 0):
           self.updatePositions()
         elif (self.isVisible()):
-          #if (options.eyecandy):
-            #ItemFX(self, False, False)
-          #el
           if (options.auto_hide_groups):
             self.setVisible(False)
 
@@ -1853,11 +1888,11 @@ class CanvasBox(QGraphicsItem):
         self.m_connection_lines.append(new_cbline)
 
     def removeLineFromGroup(self, connection_id):
-        for i in range(len(self.m_connection_lines)):
-          if (self.m_connection_lines[i].connection_id == connection_id):
-            self.m_connection_lines.pop(i)
+        for connection in self.m_connection_lines:
+          if (connection.connection_id == connection_id):
+            self.m_connection_lines.remove(connection)
             return
-        qCritical("PatchCanvas::CanvasBox.removeLineFromGroup(%i) - Unable to find line to remove" % (connection_id))
+        qCritical("PatchCanvas::CanvasBox.removeLineFromGroup(%i) - unable to find line to remove" % (connection_id))
 
     def checkItemPos(self):
         if (canvas.size_rect.isNull() == False):
@@ -1867,6 +1902,7 @@ class CanvasBox(QGraphicsItem):
               self.setPos(canvas.size_rect.x(), pos.y())
             elif (pos.x()+self.p_width > canvas.size_rect.width()):
               self.setPos(canvas.size_rect.width()-self.p_width, pos.y())
+
             pos = self.scenePos()
             if (pos.y() < canvas.size_rect.y()):
               self.setPos(pos.x(), canvas.size_rect.y())
@@ -2055,24 +2091,24 @@ class CanvasBox(QGraphicsItem):
               last_out_pos += 18
               last_out_type = port.port_type
 
-        #self.repaintLines(True)
+        self.repaintLines(True)
         self.update()
 
     def repaintLines(self, forced=False):
         if (self.pos() != self.m_last_pos or forced):
-          for i in range(len(self.m_connection_lines)):
-            self.m_connection_lines[i].line.updateLinePos()
+          for connection in self.m_connection_lines:
+            connection.line.updateLinePos()
 
         self.m_last_pos = self.pos()
 
     def resetLinesZValue(self):
-        for i in range(len(canvas.connection_list)):
-          if (canvas.connection_list[i].port_out_id in self.m_port_list_ids and canvas.connection_list[i].port_in_id in self.m_port_list_ids):
+        for connection in canvas.connection_list:
+          if (connection.port_out_id in self.m_port_list_ids and connection.port_in_id in self.m_port_list_ids):
             z_value = canvas.last_z_value
           else:
             z_value = canvas.last_z_value-1
 
-          canvas.connection_list[i].widget.setZValue(z_value)
+          connection.widget.setZValue(z_value)
 
     def type(self):
         return CanvasBoxType
@@ -2084,12 +2120,12 @@ class CanvasBox(QGraphicsItem):
         port_con_list     = []
         port_con_list_ids = []
 
-        for i in range(len(self.m_port_list_ids)):
-          tmp_port_con_list = CanvasGetPortConnectionList(self.m_port_list_ids[i])
-          for j in range(len(tmp_port_con_list)):
-            if (tmp_port_con_list[j] not in port_con_list):
-              port_con_list.append(tmp_port_con_list[j])
-              port_con_list_ids.append(self.m_port_list_ids[i])
+        for port_id in self.m_port_list_ids:
+          tmp_port_con_list = CanvasGetPortConnectionList(port_id)
+          for port_con_id in tmp_port_con_list:
+            if (port_con_id not in port_con_list):
+              port_con_list.append(port_con_id)
+              port_con_list_ids.append(port_id)
 
         if (len(port_con_list) > 0):
           for i in range(len(port_con_list)):
@@ -2109,39 +2145,39 @@ class CanvasBox(QGraphicsItem):
         act_x_sep2       = menu.addSeparator()
         act_x_split_join = menu.addAction("Join" if self.m_splitted else "Split")
 
-        if (not features.group_info):
+        if (features.group_info == False):
           act_x_info.setVisible(False)
 
-        if (not features.group_rename):
+        if (features.group_rename == False):
           act_x_rename.setVisible(False)
 
-        if (not features.group_info and not features.group_rename):
+        if (features.group_info == False and features.group_rename == False):
           act_x_sep1.setVisible(False)
 
         haveIns = haveOuts = False
-        for i in range(len(canvas.port_list)):
-          if (canvas.port_list[i].port_id in self.m_port_list_ids):
-            if (canvas.port_list[i].port_mode == PORT_MODE_INPUT):
+        for port in canvas.port_list:
+          if (port.port_id in self.m_port_list_ids):
+            if (port.port_mode == PORT_MODE_INPUT):
               haveIns = True
-            elif (canvas.port_list[i].port_mode == PORT_MODE_OUTPUT):
+            elif (port.port_mode == PORT_MODE_OUTPUT):
               haveOuts = True
 
-        if (self.m_splitted == False and not (haveIns and haveOuts)):
+        if (self.m_splitted == False and bool(haveIns and haveOuts) == False):
           act_x_sep2.setVisible(False)
           act_x_split_join.setVisible(False)
 
         act_selected = menu.exec_(event.screenPos())
 
         if (act_selected == act_x_disc_all):
-          for i in range(len(port_con_list)):
-            canvas.callback(ACTION_PORTS_DISCONNECT, port_con_list[i], 0, "")
+          for port_id in port_con_list:
+            canvas.callback(ACTION_PORTS_DISCONNECT, port_id, 0, "")
 
         elif (act_selected == act_x_info):
           canvas.callback(ACTION_GROUP_INFO, self.m_group_id, 0, "")
 
         elif (act_selected == act_x_rename):
           new_name_try = QInputDialog.getText(None, "Rename Group", "New name:", QLineEdit.Normal, self.m_group_name)
-          if (new_name_try[1] and not new_name_try[0].isEmpty()):
+          if (new_name_try[1] and new_name_try[0]): # 1 - book ok, 0 - return text
             canvas.callback(ACTION_GROUP_RENAME, self.m_group_id, 0, new_name_try[0])
 
         elif (act_selected == act_x_split_join):
@@ -2162,8 +2198,7 @@ class CanvasBox(QGraphicsItem):
           canvas.scene.clearSelection()
           self.setSelected(True)
           self.m_mouse_down = False
-          event.accept()
-          return
+          return event.accept()
 
         elif (event.button() == Qt.LeftButton):
           if (self.sceneBoundingRect().contains(event.scenePos())):
@@ -2171,8 +2206,7 @@ class CanvasBox(QGraphicsItem):
           else:
              # Fix a weird Qt behaviour with right-click mouseMove
             self.m_mouse_down = False
-            event.ignore()
-            return
+            return event.ignore()
 
         else:
           self.m_mouse_down = False
@@ -2227,8 +2261,8 @@ class CanvasIcon(QGraphicsSvgItem):
     def __init__(self, icon, name, parent):
         QGraphicsSvgItem.__init__(self, parent)
 
-        self.p_size     = QRectF(0, 0, 0, 0)
         self.m_renderer = None
+        self.p_size = QRectF(0, 0, 0, 0)
 
         self.m_colorFX = QGraphicsColorizeEffect(self)
         self.m_colorFX.setColor(canvas.theme.box_text.color())
@@ -2274,7 +2308,7 @@ class CanvasIcon(QGraphicsSvgItem):
 
         else:
           self.p_size = QRectF(0, 0, 0, 0)
-          qCritical("PatchCanvas::CanvasIcon.setIcon(%i, %s) - Unsupported Icon requested" % (icon, name))
+          qCritical("PatchCanvas::CanvasIcon.setIcon(%s, %s) - unsupported icon requested" % (icon2str(icon), name.encode()))
           return
 
         self.m_renderer = QSvgRenderer(icon_path, canvas.scene)
@@ -2285,13 +2319,13 @@ class CanvasIcon(QGraphicsSvgItem):
         return CanvasIconType
 
     def boundingRect(self):
-        return QRectF(self.p_size)
+        return self.p_size
 
     def paint(self, painter, option, widget):
         if (self.m_renderer):
           painter.setRenderHint(QPainter.Antialiasing, False)
           painter.setRenderHint(QPainter.TextAntialiasing, False)
-          self.m_renderer.render(painter, QRectF(self.p_size))
+          self.m_renderer.render(painter, self.p_size)
         else:
           QGraphicsSvgItem.paint(self, painter, option, widget)
 
@@ -2330,7 +2364,7 @@ class CanvasBoxShadow(QGraphicsDropShadowEffect):
     def setFakeParent(self, fakeParent):
         self.m_fakeParent = fakeParent
 
-    #def draw(self, painter):
-        #if (self.m_fakeParent):
-         #self.m_fakeParent.repaintLines()
-        #return QGraphicsDropShadowEffect.draw(self, painter)
+    def draw(self, painter):
+        if (self.m_fakeParent):
+         self.m_fakeParent.repaintLines()
+        QGraphicsDropShadowEffect.draw(self, painter)
