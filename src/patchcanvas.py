@@ -18,7 +18,7 @@
 
 # Imports (Global)
 from PyQt4.QtCore import pyqtSlot, qDebug, qCritical, qFatal, Qt, QObject, SIGNAL, SLOT
-from PyQt4.QtCore import QLineF, QPointF, QRectF, QSettings, QTimer
+from PyQt4.QtCore import QAbstractAnimation, QLineF, QPointF, QRectF, QSettings, QTimer
 from PyQt4.QtGui import QColor, QLinearGradient, QPen, QPolygonF, QPainter, QPainterPath
 from PyQt4.QtGui import QCursor, QFont, QFontMetrics, QInputDialog, QLineEdit, QMenu
 from PyQt4.QtGui import QGraphicsScene, QGraphicsItem, QGraphicsLineItem, QGraphicsPathItem
@@ -1120,32 +1120,41 @@ class PatchScene(QGraphicsScene):
         QGraphicsScene.wheelEvent(self, event)
 
 # ------------------------------------------------------------------------------
-# abstractcanvasline.h
-# NOTE - unused
+# canvasfadeanimation.cpp
 
-class AbstractCanvasLine(object):
-    def __init__(self):
-        object.__init__(self)
+class CanvasFadeAnimation(QAbstractAnimation):
+    def __init__(self, item, show, parent=None):
+        QAbstractAnimation.__init__(self, parent)
 
-    def deleteFromScene(self):
+        self.m_show = show
+        self.m_duration = 0
+        self.m_item = item
+
+    def setDuration(self, time):
+        if (self.m_show == False and self.m_item.opacity() == 0):
+          self._duration = 0
+        else:
+          self.m_item.show()
+          self.m_duration = time
+
+    def duration(self):
+        return self.m_duration
+
+    def updateCurrentTime(self, time):
+        if (self.m_duration == 0):
+          return
+
+        if (self.m_show):
+          value = float(time)/self.m_duration
+        else:
+          value = 1.0-(float(time)/self.m_duration)
+
+        self.m_item.setOpacity(value)
+
+    def updateDirection(self, direction):
         pass
 
-    def isLocked(self):
-        return False
-
-    def setLocked(self, yesno):
-        pass
-
-    def isLineSelected(self):
-        return False
-
-    def setLineSelected(self, yesno):
-        pass
-
-    def updateLinePos(self):
-        pass
-
-    def setZValue(self, z):
+    def updateState(self, oldState, newState):
         pass
 
 # ------------------------------------------------------------------------------
