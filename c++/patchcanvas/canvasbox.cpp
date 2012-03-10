@@ -141,7 +141,11 @@ CanvasPort* CanvasBox::addPortFromGroup(int port_id, QString port_name, PortMode
     if (m_port_list_ids.count() == 0)
     {
         if (options.auto_hide_groups)
+        {
+            if (options.eyecandy)
+                CanvasItemFX(this, true);
             setVisible(true);
+        }
     }
 
     CanvasPort* new_widget = new CanvasPort(port_id, port_name, port_mode, port_type, this);
@@ -178,7 +182,12 @@ void CanvasBox::removePortFromGroup(int port_id)
     else if (isVisible())
     {
         if (options.auto_hide_groups)
-            setVisible(false);
+        {
+            if (options.eyecandy)
+                CanvasItemFX(this, false);
+            else
+                setVisible(false);
+        }
     }
 }
 

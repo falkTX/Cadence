@@ -29,6 +29,11 @@ CanvasFadeAnimation::CanvasFadeAnimation(QGraphicsItem* item, bool show, QObject
     m_item = item;
 }
 
+QGraphicsItem* CanvasFadeAnimation::item()
+{
+    return m_item;
+}
+
 void CanvasFadeAnimation::setDuration(int time)
 {
     if (m_show == false && m_item->opacity() == 0.0)

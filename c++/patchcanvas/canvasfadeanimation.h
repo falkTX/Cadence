@@ -31,6 +31,7 @@ class CanvasFadeAnimation : public QAbstractAnimation
 public:
     CanvasFadeAnimation(QGraphicsItem* item, bool show, QObject* parent=0);
 
+    QGraphicsItem* item();
     void setDuration(int time);
 
     virtual int duration() const;

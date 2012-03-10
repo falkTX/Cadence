@@ -35,6 +35,9 @@ public:
     CanvasObject(QObject* parent=0);
 
 public slots:
+    void AnimationIdle();
+    void AnimationHide();
+    void AnimationDestroy();
     void CanvasPostponedGroups();
     void PortContextMenuDisconnect();
 };
@@ -42,6 +45,7 @@ public slots:
 START_NAMESPACE_PATCHCANVAS
 
 class AbstractCanvasLine;
+class CanvasFadeAnimation;
 class CanvasBox;
 class CanvasPort;
 class Theme;
@@ -82,6 +86,11 @@ struct connection_dict_t {
     AbstractCanvasLine* widget;
 };
 
+struct animation_dict_t {
+    CanvasFadeAnimation* animation;
+    QGraphicsItem* item;
+};
+
 // Main Canvas object
 class Canvas {
 public:
@@ -98,6 +107,7 @@ public:
     QList<group_dict_t> group_list;
     QList<port_dict_t> port_list;
     QList<connection_dict_t> connection_list;
+    QList<animation_dict_t> animation_list;
     CanvasObject* qobject;
     QSettings* settings;
     Theme* theme;
@@ -116,8 +126,11 @@ QPointF CanvasGetNewGroupPos(bool horizontal=false);
 QString CanvasGetFullPortName(int port_id);
 QList<int> CanvasGetPortConnectionList(int port_id);
 int CanvasGetConnectedPort(int connection_id, int port_id);
+void CanvasRemoveAnimation(CanvasFadeAnimation* f_animation);
 void CanvasPostponedGroups();
 void CanvasCallback(CallbackAction action, int value1, int value2, QString value_str);
+void CanvasItemFX(QGraphicsItem* item, bool show, bool destroy=false);
+void CanvasRemoveItemFX(QGraphicsItem* item);
 
 // global objects
 extern Canvas canvas;

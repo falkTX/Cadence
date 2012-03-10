@@ -21,13 +21,42 @@
 #include <QtCore/QTimer>
 #include <QtGui/QAction>
 
-#include "abstractcanvasline.h"
-#include "canvasbox.h"
-#include "canvasport.h"
+#include "canvasfadeanimation.h"
 #include "canvasline.h"
 #include "canvasbezierline.h"
+#include "canvasport.h"
+#include "canvasbox.h"
 
 CanvasObject::CanvasObject(QObject* parent) : QObject(parent) {}
+
+void CanvasObject::AnimationIdle()
+{
+    PatchCanvas::CanvasFadeAnimation* animation = (PatchCanvas::CanvasFadeAnimation*)sender();
+    if (animation)
+        PatchCanvas::CanvasRemoveAnimation(animation);
+}
+
+void CanvasObject::AnimationHide()
+{
+    PatchCanvas::CanvasFadeAnimation* animation = (PatchCanvas::CanvasFadeAnimation*)sender();
+    if (animation)
+    {
+        if (animation->item())
+            animation->item()->hide();
+        PatchCanvas::CanvasRemoveAnimation(animation);
+    }
+}
+
+void CanvasObject::AnimationDestroy()
+{
+    PatchCanvas::CanvasFadeAnimation* animation = (PatchCanvas::CanvasFadeAnimation*)sender();
+    if (animation)
+    {
+        if (animation->item())
+            PatchCanvas::CanvasRemoveItemFX(animation->item());
+        PatchCanvas::CanvasRemoveAnimation(animation);
+    }
+}
 
 void CanvasObject::CanvasPostponedGroups()
 {
@@ -190,6 +219,7 @@ void init(PatchScene* scene, Callback callback, bool debug)
     canvas.group_list.clear();
     canvas.port_list.clear();
     canvas.connection_list.clear();
+    canvas.animation_list.clear();
 
     if (!canvas.qobject) canvas.qobject = new CanvasObject();
     if (!canvas.settings) canvas.settings = new QSettings(PATCHCANVAS_ORGANISATION_NAME, "PatchCanvas");
@@ -314,6 +344,9 @@ void addGroup(int group_id, QString group_name, SplitOption split, Icon icon)
 
         canvas.last_z_value += 1;
         group_sbox->setZValue(canvas.last_z_value);
+
+        if (options.auto_hide_groups == false && options.eyecandy)
+            CanvasItemFX(group_sbox, true);
     }
     else
     {
@@ -333,6 +366,9 @@ void addGroup(int group_id, QString group_name, SplitOption split, Icon icon)
     group_box->setZValue(canvas.last_z_value);
 
     canvas.group_list.append(group_dict);
+
+    if (options.auto_hide_groups == false && options.eyecandy)
+        CanvasItemFX(group_box, true);
 
     QTimer::singleShot(0, canvas.scene, SLOT(update()));
 }
@@ -358,9 +394,16 @@ void removeGroup(int group_id)
                     canvas.settings->setValue(QString("CanvasPositions/%1_SPLIT").arg(group_name), SPLIT_YES);
                 }
 
-                s_item->removeIconFromScene();
-                canvas.scene->removeItem(s_item);
-                delete s_item;
+                if (options.eyecandy)
+                {
+                    CanvasItemFX(s_item, false, true);
+                }
+                else
+                {
+                    s_item->removeIconFromScene();
+                    canvas.scene->removeItem(s_item);
+                    delete s_item;
+                }
             }
             else
             {
@@ -371,9 +414,16 @@ void removeGroup(int group_id)
                 }
             }
 
-            item->removeIconFromScene();
-            canvas.scene->removeItem(item);
-            delete item;
+            if (options.eyecandy)
+            {
+                CanvasItemFX(item, false, true);
+            }
+            else
+            {
+                item->removeIconFromScene();
+                canvas.scene->removeItem(item);
+                delete item;
+            }
 
             canvas.group_list.takeAt(i);
 
@@ -695,6 +745,9 @@ void addPort(int group_id, int port_id, QString port_name, PortMode port_mode, P
         return;
     }
 
+    if (options.eyecandy)
+        CanvasItemFX(port_widget, true);
+
     port_dict_t port_dict;
     port_dict.group_id  = group_id;
     port_dict.port_id   = port_id;
@@ -804,6 +857,12 @@ void connectPorts(int connection_id, int port_out_id, int port_in_id)
 
     canvas.connection_list.append(connection_dict);
 
+    if (options.eyecandy)
+    {
+        QGraphicsItem* item = (options.use_bezier_lines) ? (QGraphicsItem*)(CanvasBezierLine*)connection_dict.widget : (QGraphicsItem*)(CanvasLine*)connection_dict.widget;
+        CanvasItemFX(item, true);
+    }
+
     QTimer::singleShot(0, canvas.scene, SLOT(update()));
 }
 
@@ -867,7 +926,13 @@ void disconnectPorts(int connection_id)
     ((CanvasBox*)item1->parentItem())->removeLineFromGroup(connection_id);
     ((CanvasBox*)item2->parentItem())->removeLineFromGroup(connection_id);
 
-    line->deleteFromScene();
+    if (options.eyecandy)
+    {
+        QGraphicsItem* item = (options.use_bezier_lines) ? (QGraphicsItem*)(CanvasBezierLine*)line : (QGraphicsItem*)(CanvasLine*)line;
+        CanvasItemFX(item, false, true);
+    }
+    else
+        line->deleteFromScene();
 
     QTimer::singleShot(0, canvas.scene, SLOT(update()));
 }
@@ -1003,6 +1068,21 @@ int CanvasGetConnectedPort(int connection_id, int port_id)
     return 0;
 }
 
+void CanvasRemoveAnimation(CanvasFadeAnimation* f_animation)
+{
+    if (canvas.debug)
+        qDebug("PatchCanvas::CanvasRemoveAnimation(%p)", f_animation);
+
+    foreach2 (const animation_dict_t& animation, canvas.animation_list)
+        if (animation.animation == f_animation)
+        {
+            delete animation.animation;
+            canvas.animation_list.takeAt(i);
+            break;
+        }
+    }
+}
+
 void CanvasPostponedGroups()
 {
     if (canvas.debug)
@@ -1015,6 +1095,79 @@ void CanvasCallback(CallbackAction action, int value1, int value2, QString value
         qDebug("PatchCanvas::CanvasCallback(%i, %i, %i, %s)", action, value1, value2, value_str.toStdString().data());
 
     canvas.callback(action, value1, value2, value_str);
+}
+
+void CanvasItemFX(QGraphicsItem* item, bool show, bool destroy)
+{
+    if (canvas.debug)
+        qDebug("PatchCanvas::CanvasItemFX(%p, %s, %s)", item, bool2str(show), bool2str(destroy));
+
+    // Check if item already has an animationItemFX
+    foreach2 (const animation_dict_t& animation, canvas.animation_list)
+        if (animation.item == item)
+        {
+            if (animation.animation)
+            {
+                animation.animation->stop();
+                delete animation.animation;
+            }
+            canvas.animation_list.takeAt(i);
+            break;
+        }
+    }
+
+    CanvasFadeAnimation* animation = new CanvasFadeAnimation(item, show);
+    animation->setDuration(show ? 750 : 500);
+
+    animation_dict_t animation_dict;
+    animation_dict.animation = animation;
+    animation_dict.item = item;
+    canvas.animation_list.append(animation_dict);
+
+    if (show)
+    {
+        QObject::connect(animation, SIGNAL(finished()), canvas.qobject, SLOT(AnimationIdle()));
+    }
+    else
+    {
+        if (destroy)
+            QObject::connect(animation, SIGNAL(finished()), canvas.qobject, SLOT(AnimationDestroy()));
+        else
+            QObject::connect(animation, SIGNAL(finished()), canvas.qobject, SLOT(AnimationHide()));
+    }
+
+    animation->start();
+}
+
+void CanvasRemoveItemFX(QGraphicsItem* item)
+{
+    if (canvas.debug)
+      qDebug("PatchCanvas::CanvasRemoveItemFX(%p)", item);
+
+    switch (item->type())
+    {
+    case CanvasBoxType:
+    {
+        CanvasBox* box = (CanvasBox*)item;
+        box->removeIconFromScene();
+        canvas.scene->removeItem(box);
+        delete box;
+    }
+    case CanvasPortType:
+    {
+        CanvasPort* port = (CanvasPort*)item;
+        canvas.scene->removeItem(port);
+        delete port;
+    }
+    case CanvasLineType:
+    case CanvasBezierLineType:
+    {
+        AbstractCanvasLine* line = (AbstractCanvasLine*)item;
+        line->deleteFromScene();
+    }
+    default:
+        break;
+    }
 }
 
 END_NAMESPACE_PATCHCANVAS

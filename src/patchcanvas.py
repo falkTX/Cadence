@@ -135,6 +135,12 @@ class connection_dict_t(object):
     'widget'
   ]
 
+class animation_dict_t(object):
+  __slots__ = [
+    'animation',
+    'item'
+  ]
+
 # Main Canvas object
 class Canvas(object):
   __slots__ = [
@@ -148,6 +154,7 @@ class Canvas(object):
     'group_list',
     'port_list',
     'connection_list',
+    'animation_list',
     'qobject',
     'settings',
     'theme',
@@ -160,6 +167,28 @@ class Canvas(object):
 class CanvasObject(QObject):
   def __init__(self, parent=None):
     QObject.__init__(self, parent)
+
+  @pyqtSlot()
+  def AnimationIdle(self):
+    animation = self.sender()
+    if (animation):
+      CanvasRemoveAnimation(animation)
+
+  @pyqtSlot()
+  def AnimationHide(self):
+    animation = self.sender()
+    if (animation):
+      if (animation.item()):
+        animation.item().hide()
+      CanvasRemoveAnimation(animation)
+
+  @pyqtSlot()
+  def AnimationDestroy(self):
+    animation = self.sender()
+    if (animation):
+      if (animation.item()):
+        CanvasRemoveItemFX(animation.item())
+      CanvasRemoveAnimation(animation)
 
   @pyqtSlot()
   def CanvasPostponedGroups(self):
@@ -285,6 +314,7 @@ def init(scene, callback, debug=False):
   canvas.group_list = []
   canvas.port_list = []
   canvas.connection_list = []
+  canvas.animation_list = []
 
   if (not canvas.qobject): canvas.qobject = CanvasObject()
   if (not canvas.settings): canvas.settings = QSettings(PATCHCANVAS_ORGANISATION_NAME, "PatchCanvas")
@@ -394,6 +424,9 @@ def addGroup(group_id, group_name, split=SPLIT_UNDEF, icon=ICON_APPLICATION):
     canvas.last_z_value += 1
     group_sbox.setZValue(canvas.last_z_value)
 
+    if (options.auto_hide_groups == False and options.eyecandy):
+      CanvasItemFX(group_sbox, True)
+
   else:
     group_box.setSplit(False)
 
@@ -408,6 +441,9 @@ def addGroup(group_id, group_name, split=SPLIT_UNDEF, icon=ICON_APPLICATION):
   group_box.setZValue(canvas.last_z_value)
 
   canvas.group_list.append(group_dict)
+
+  if (options.auto_hide_groups == False and options.eyecandy):
+    CanvasItemFX(group_box, True)
 
   QTimer.singleShot(0, canvas.scene, SLOT("update()"))
 
@@ -428,18 +464,24 @@ def removeGroup(group_id):
           canvas.settings.setValue("CanvasPositions/%s_INPUT" % (group_name), s_item.pos())
           canvas.settings.setValue("CanvasPositions/%s_SPLIT" % (group_name), SPLIT_YES)
 
-        s_item.removeIconFromScene()
-        canvas.scene.removeItem(s_item)
-        del s_item
+        if (options.eyecandy):
+          CanvasItemFX(s_item, False, True)
+        else:
+          s_item.removeIconFromScene()
+          canvas.scene.removeItem(s_item)
+          del s_item
 
       else:
         if (features.handle_group_pos):
           canvas.settings.setValue("CanvasPositions/%s" % (group_name), item.pos())
           canvas.settings.setValue("CanvasPositions/%s_SPLIT" % (group_name), SPLIT_NO)
 
-      item.removeIconFromScene()
-      canvas.scene.removeItem(item)
-      del item
+      if (options.eyecandy):
+          CanvasItemFX(item, False, True)
+      else:
+        item.removeIconFromScene()
+        canvas.scene.removeItem(item)
+        del item
 
       canvas.group_list.remove(group)
 
@@ -684,6 +726,9 @@ def addPort(group_id, port_id, port_name, port_mode, port_type):
     qCritical("patchcanvas::addPort(%i, %i, %s, %s, %s) - Unable to find parent group" % (group_id, port_id, port_name.encode(), port_mode2str(port_mode), port_type2str(port_type)))
     return
 
+  if (options.eyecandy):
+    CanvasItemFX(port_widget, True)
+
   port_dict = port_dict_t()
   port_dict.group_id  = group_id
   port_dict.port_id   = port_id
@@ -773,6 +818,10 @@ def connectPorts(connection_id, port_out_id, port_in_id):
 
   canvas.connection_list.append(connection_dict)
 
+  if (options.eyecandy):
+    item = connection_dict.widget
+    CanvasItemFX(item, True)
+
   QTimer.singleShot(0, canvas.scene, SLOT("update()"))
 
 def disconnectPorts(connection_id):
@@ -817,7 +866,10 @@ def disconnectPorts(connection_id):
   item1.parentItem().removeLineFromGroup(connection_id)
   item2.parentItem().removeLineFromGroup(connection_id)
 
-  line.deleteFromScene()
+  if (options.eyecandy):
+    CanvasItemFX(line, False, True)
+  else:
+    line.deleteFromScene()
 
   QTimer.singleShot(0, canvas.scene, SLOT("update()"))
 
@@ -916,6 +968,16 @@ def CanvasGetConnectedPort(connection_id, port_id):
   qCritical("PatchCanvas::CanvasGetConnectedPort(%i, %i) - unable to find connection" % (connection_id, port_id))
   return 0
 
+def CanvasRemoveAnimation(f_animation):
+  if (canvas.debug):
+    qDebug("PatchCanvas::CanvasRemoveAnimation(%s)" % (f_animation))
+
+  for animation in canvas.animation_list:
+    if (animation.animation == f_animation):
+      del animation.animation
+      canvas.animation_list.remove(animation)
+      break
+
 def CanvasPostponedGroups():
   if (canvas.debug):
     qDebug("PatchCanvas::CanvasPostponedGroups()")
@@ -925,6 +987,52 @@ def CanvasCallback(action, value1, value2, value_str):
     qDebug("PatchCanvas::CanvasCallback(%i, %i, %i, %s)" % (action, value1, value2, value_str.encode()))
 
   canvas.callback(action, value1, value2, value_str);
+
+def CanvasItemFX(item, show, destroy=False):
+  if (canvas.debug):
+    qDebug("PatchCanvas::CanvasItemFX(%s, %s, %s)" % (item, bool2str(show), bool2str(destroy)))
+
+  # Check if item already has an animationItemFX
+  for animation in canvas.animation_list:
+    if (animation.item == item):
+      animation.animation.stop()
+      del animation.animation
+      canvas.animation_list.remove(animation)
+      break
+
+  animation = CanvasFadeAnimation(item, show)
+  animation.setDuration(750 if (show) else 500)
+
+  animation_dict = animation_dict_t()
+  animation_dict.animation = animation
+  animation_dict.item = item
+  canvas.animation_list.append(animation_dict)
+
+  if (show):
+    QObject.connect(animation, SIGNAL("finished()"), canvas.qobject, SLOT("AnimationIdle()"))
+  else:
+    if (destroy):
+      QObject.connect(animation, SIGNAL("finished()"), canvas.qobject, SLOT("AnimationDestroy()"))
+    else:
+      QObject.connect(animation, SIGNAL("finished()"), canvas.qobject, SLOT("AnimationHide()"))
+
+  animation.start()
+
+def CanvasRemoveItemFX(item):
+  if (canvas.debug):
+    qDebug("PatchCanvas::CanvasRemoveItemFX(%s)" % (item))
+
+  if (item.type() == CanvasBoxType):
+    item.removeIconFromScene()
+    canvas.scene.removeItem(item)
+    del item
+
+  elif (item.type() == CanvasBoxType):
+    canvas.scene.removeItem(item)
+    del item
+
+  elif (item.type() in (CanvasLineType,CanvasBezierLineType)):
+    item.deleteFromScene()
 
 # ------------------------------------------------------------------------------
 # patchscene.cpp
@@ -1129,6 +1237,9 @@ class CanvasFadeAnimation(QAbstractAnimation):
         self.m_show = show
         self.m_duration = 0
         self.m_item = item
+
+    def item(self):
+        return self.m_item
 
     def setDuration(self, time):
         if (self.m_show == False and self.m_item.opacity() == 0):
@@ -1861,6 +1972,8 @@ class CanvasBox(QGraphicsItem):
     def addPortFromGroup(self, port_id, port_mode, port_type, port_name):
         if (len(self.m_port_list_ids) == 0):
           if (options.auto_hide_groups):
+            if (options.eyecandy):
+              CanvasItemFX(self, True)
             self.setVisible(True)
 
         new_widget = CanvasPort(port_id, port_name, port_mode, port_type, self)
@@ -1888,7 +2001,10 @@ class CanvasBox(QGraphicsItem):
           self.updatePositions()
         elif (self.isVisible()):
           if (options.auto_hide_groups):
-            self.setVisible(False)
+            if (options.eyecandy):
+              CanvasItemFX(self, False)
+            else:
+              self.setVisible(False)
 
     def addLineFromGroup(self, line, connection_id):
         new_cbline = cb_line_t()

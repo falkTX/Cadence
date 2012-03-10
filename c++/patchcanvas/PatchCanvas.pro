@@ -14,22 +14,23 @@ SOURCES = main.cpp canvastestapp.cpp \
     patchcanvas.cpp \
     patchcanvas-theme.cpp \
     patchscene.cpp \
-    canvasbox.cpp \
-    canvasportglow.cpp \
-    canvasboxshadow.cpp \
-    canvasicon.cpp \
     canvasfadeanimation.cpp \
     canvasline.cpp \
-    canvasport.cpp \
     canvasbezierline.cpp \
     canvaslinemov.cpp \
-    canvasbezierlinemov.cpp
+    canvasbezierlinemov.cpp \
+    canvasport.cpp \
+    canvasbox.cpp \
+    canvasicon.cpp \
+    canvasboxshadow.cpp \
+    canvasportglow.cpp
 
 HEADERS = canvastestapp.h \
     patchcanvas.h \
     patchcanvas-api.h \
     patchcanvas-theme.h \
     patchscene.h \
+    canvasfadeanimation.h \
     abstractcanvasline.h \
     canvasline.h \
     canvasbezierline.h \
@@ -39,8 +40,7 @@ HEADERS = canvastestapp.h \
     canvasbox.h \
     canvasicon.h \
     canvasboxshadow.h \
-    canvasportglow.h \
-    canvasfadeanimation.h
+    canvasportglow.h
 
 FORMS = canvastestapp.ui
 
