@@ -17,17 +17,17 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
-from PyQt4.QtCore import pyqtSlot, Qt, QSettings
-from PyQt4.QtGui import QApplication, QDialog, QDialogButtonBox, QMainWindow, QPainter, QTableWidgetItem
+from PyQt4.QtCore import pyqtSlot, QSettings
+from PyQt4.QtGui import QApplication, QDialog, QDialogButtonBox, QMainWindow, QTableWidgetItem
 from PyQt4.QtXml import QDomDocument
 
 # Imports (Custom Stuff)
-import patchcanvas
 import ui_catarina, icons_rc
 import ui_catarina_addgroup, ui_catarina_removegroup, ui_catarina_renamegroup
 import ui_catarina_addport, ui_catarina_removeport, ui_catarina_renameport
 import ui_catarina_connectports, ui_catarina_disconnectports
 from shared import *
+from shared_canvas import *
 
 try:
   from PyQt4.QtOpenGL import QGLWidget
@@ -616,7 +616,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
         self.connect(self.b_ports_connect, SIGNAL("clicked()"), SLOT("slot_connectPorts()"))
         self.connect(self.b_ports_disconnect, SIGNAL("clicked()"), SLOT("slot_disconnectPorts()"))
 
-        #setCanvasConnections(self)
+        setCanvasConnections(self)
 
         #self.connect(self.act_settings_configure, SIGNAL("triggered()"), self.configureCatarina)
 
@@ -753,6 +753,24 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
             if (connection[iConnId] == connection_id):
               self.m_connection_list.remove(connection)
               break
+
+    def init_ports_prepare(self):
+        pass
+
+    def init_ports(self):
+        for group in self.m_group_list:
+          patchcanvas.addGroup(group[iGroupId], group[iGroupName], patchcanvas.SPLIT_YES if (group[iGroupSplit]) else patchcanvas.SPLIT_NO, group[iGroupIcon])
+
+        for group_pos in self.m_group_list_pos:
+          patchcanvas.setGroupPos(group_pos[iGroupPosId], group_pos[iGroupPosX_o], group_pos[iGroupPosY_o], group_pos[iGroupPosX_i], group_pos[iGroupPosY_i])
+
+        for port in self.m_port_list:
+          patchcanvas.addPort(port[iPortGroup], port[iPortId], port[iPortName], port[iPortMode], port[iPortType])
+
+        for connection in self.m_connection_list:
+          patchcanvas.connectPorts(connection[iConnId], connection[iConnOutput], connection[iConnInput])
+
+        self.m_group_list_pos = []
 
     def saveFile(self, path):
         content = ("<?xml version='1.0' encoding='UTF-8'?>\n"
@@ -918,23 +936,10 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
         self.m_last_connection_id += 1
 
         patchcanvas.clear()
+        self.init_ports()
 
-        for group in self.m_group_list:
-          patchcanvas.addGroup(group[iGroupId], group[iGroupName], patchcanvas.SPLIT_YES if (group[iGroupSplit]) else patchcanvas.SPLIT_NO, group[iGroupIcon])
-
-        for group_pos in self.m_group_list_pos:
-          patchcanvas.setGroupPos(group_pos[iGroupPosId], group_pos[iGroupPosX_o], group_pos[iGroupPosY_o], group_pos[iGroupPosX_i], group_pos[iGroupPosY_i])
-
-        for port in self.m_port_list:
-          patchcanvas.addPort(port[iPortGroup], port[iPortId], port[iPortName], port[iPortMode], port[iPortType])
-
-        for connection in self.m_connection_list:
-          patchcanvas.connectPorts(connection[iConnId], connection[iConnOutput], connection[iConnInput])
-
-        self.m_group_list_pos = []
-
-        #self.scene.zoom_fit()
-        #self.scene.zoom_reset()
+        self.scene.zoom_fit()
+        self.scene.zoom_reset()
 
     @pyqtSlot()
     def slot_projectNew(self):

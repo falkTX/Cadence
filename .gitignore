@@ -9,6 +9,8 @@
 *.so
 *.dll
 
+*.pro.user
+
 *.pyc
 ui_*.py
 icons_rc.py
