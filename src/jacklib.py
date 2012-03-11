@@ -813,12 +813,12 @@ def midi_get_lost_event_count(port_buffer):
 
 # Session
 
-def set_timebase_callback(client, session_callback, arg):
+def set_session_callback(client, session_callback, arg):
   global _session_callback
   _session_callback = JackSessionCallback(session_callback)
-  jacklib.jack_set_timebase_callback.argtypes = [POINTER(jack_client_t), JackSessionCallback, c_void_p]
-  jacklib.jack_set_timebase_callback.restype = c_int
-  return jacklib.jack_set_timebase_callback(client, _session_callback, arg)
+  jacklib.jack_set_session_callback.argtypes = [POINTER(jack_client_t), JackSessionCallback, c_void_p]
+  jacklib.jack_set_session_callback.restype = c_int
+  return jacklib.jack_set_session_callback(client, _session_callback, arg)
 
 def session_reply(client, event):
   jacklib.jack_session_reply.argtypes = [POINTER(jack_client_t), POINTER(jack_session_event_t)]

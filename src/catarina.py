@@ -771,6 +771,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
           patchcanvas.connectPorts(connection[iConnId], connection[iConnOutput], connection[iConnInput])
 
         self.m_group_list_pos = []
+        patchcanvas.updateZValues()
 
     def saveFile(self, path):
         content = ("<?xml version='1.0' encoding='UTF-8'?>\n"
@@ -1055,9 +1056,9 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
             new_port = [None, None, None, None, None]
             new_port[iPortGroup] = group_id
             new_port[iPortId]    = self.m_last_port_id
-            new_port[iPortName]  = new_port_name
-            new_port[iPortMode]  = new_port_mode
-            new_port[iPortType]  = new_port_type
+            new_port[iPortName]  = port_name
+            new_port[iPortMode]  = port_mode
+            new_port[iPortType]  = port_type
 
             self.m_port_list.append(new_port)
             self.m_last_port_id += 1
@@ -1074,12 +1075,12 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
 
             for connection in self.m_connection_list:
               if (connection[iConnOutput] == port_id or connection[iConnInput] == port_id):
-                patchcanvas.disconnectPorts(self.m_connection_list[i-h][iConnId])
+                patchcanvas.disconnectPorts(connection[iConnId])
                 self.m_connection_list.remove(connection)
 
             patchcanvas.removePort(port_id)
 
-            for port in range(len(self.m_port_list)):
+            for port in self.m_port_list:
               if (port[iPortId] == port_id):
                 self.m_port_list.remove(port)
                 break
@@ -1113,7 +1114,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
             port_out_id   = dialog.ret_port_out_id
             port_in_id    = dialog.ret_port_in_id
 
-            for connection in range(len(self.m_connection_list)):
+            for connection in self.m_connection_list:
               if (connection[iConnOutput] == port_out_id and connection[iConnInput] == port_in_id):
                 QMessageBox.warning(self, self.tr("Warning"), self.tr("Ports already connected!"))
                 return
@@ -1136,12 +1137,13 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
         if (len(self.m_connection_list) > 0):
           dialog = CatarinaDisconnectPortsW(self, self.m_group_list, self.m_port_list, self.m_connection_list)
           if (dialog.exec_()):
-            connection_id = 0
+            connection_id = -1
             port_out_id   = dialog.ret_port_out_id
             port_in_id    = dialog.ret_port_in_id
 
-            for connection in range(len(self.m_connection_list)):
+            for connection in self.m_connection_list:
               if (connection[iConnOutput] == port_out_id and connection[iConnInput] == port_in_id):
+                connection_id = connection[iConnId]
                 self.m_connection_list.remove(connection)
                 break
 

@@ -17,7 +17,6 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
-import os
 from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import QFileDialog, QImage, QPainter, QPrinter, QPrintDialog
 
@@ -26,7 +25,7 @@ import patchcanvas
 
 # Shared Canvas code
 def canvas_arrange(self):
-    patchcanvas.Arrange()
+    patchcanvas.arrange()
 
 def canvas_refresh(self):
     self.init_ports_prepare()

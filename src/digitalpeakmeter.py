@@ -64,7 +64,7 @@ class DigitalPeakMeter(QWidget):
         self.m_channels_data = []
         self.m_lastValueData = []
 
-        for i in range(channels):
+        for x in range(channels):
           self.m_channels_data.append(0.0)
           self.m_lastValueData.append(0.0)
 

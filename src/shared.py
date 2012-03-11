@@ -41,6 +41,10 @@ VERSION = "0.5.0"
 # Set Debug mode
 DEBUG = True
 
+# Global variables
+global x_gui
+x_gui = None
+
 # Small integrity tests
 HOME = os.getenv("HOME")
 if (HOME == None):
@@ -184,8 +188,6 @@ def CustomMessageBox(self, icon, title, text, extraText="", buttons=QMessageBox.
 
 # signal handler for unix systems
 def set_up_signals(_gui):
-  if (WINDOWS == False):
-    from signal import signal, SIGINT, SIGTERM, SIGUSR1, SIGUSR2
     global x_gui
     x_gui = _gui
     signal(SIGINT,  signal_handler)

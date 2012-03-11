@@ -17,7 +17,7 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
-from PyQt4.QtCore import pyqtSlot, qDebug, qCritical, qFatal, Qt, QObject, SIGNAL, SLOT
+from PyQt4.QtCore import pyqtSlot, qDebug, qCritical, qFatal, qWarning, Qt, QObject, SIGNAL, SLOT
 from PyQt4.QtCore import QAbstractAnimation, QLineF, QPointF, QRectF, QSettings, QTimer
 from PyQt4.QtGui import QColor, QLinearGradient, QPen, QPolygonF, QPainter, QPainterPath
 from PyQt4.QtGui import QCursor, QFont, QFontMetrics, QInputDialog, QLineEdit, QMenu
@@ -873,9 +873,19 @@ def disconnectPorts(connection_id):
 
   QTimer.singleShot(0, canvas.scene, SLOT("update()"))
 
-def Arrange():
+def arrange():
   if (canvas.debug):
-    qDebug("PatchCanvas::Arrange()")
+    qDebug("PatchCanvas::arrange()")
+
+def updateZValues():
+  if (canvas.debug):
+    qDebug("PatchCanvas::updateZValues()")
+
+  for group in canvas.group_list:
+        group.widgets[0].resetLinesZValue()
+
+        if (group.split and group.widgets[1]):
+          group.widgets[1].resetLinesZValue()
 
 # Extra Internal functions
 
@@ -1726,7 +1736,7 @@ class CanvasPort(QGraphicsItem):
             for connection in canvas.connection_list:
               if ( (connection.port_out_id == self.m_port_id and connection.port_in_id == self.m_hover_item.getPortId()) or
                    (connection.port_out_id == self.m_hover_item.getPortId() and connection.port_in_id == self.m_port_id) ):
-                canvas.callback(ACTION_PORTS_DISCONNECT, canvas.connection_list[i].connection_id, 0, "")
+                canvas.callback(ACTION_PORTS_DISCONNECT, connection.connection_id, 0, "")
                 check = True
                 break
 
@@ -1778,7 +1788,7 @@ class CanvasPort(QGraphicsItem):
           act_x_rename.setVisible(False)
 
         if (features.port_info == False and features.port_rename == False):
-          act_x_sep1.setVisible(False)
+          act_x_sep_1.setVisible(False)
 
         act_selected = menu.exec_(event.screenPos())
 
@@ -1859,7 +1869,7 @@ class CanvasPort(QGraphicsItem):
           poly_color = canvas.theme.port_midi_alsa_bg_sel if (self.isSelected()) else canvas.theme.port_midi_alsa_bg
           poly_pen = canvas.theme.port_midi_alsa_pen_sel if (self.isSelected()) else canvas.theme.port_midi_alsa_pen
         else:
-          qCritical("PatchCanvas::CanvasPort.paint() - invalid port type '%s'" % (port_type2str(m_port_type)))
+          qCritical("PatchCanvas::CanvasPort.paint() - invalid port type '%s'" % (port_type2str(self.m_port_type)))
           return
 
         polygon = QPolygonF()

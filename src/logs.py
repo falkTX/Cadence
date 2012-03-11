@@ -225,8 +225,8 @@ class LogsW(QDialog, ui_logs.Ui_LogsW):
     LOG_FILE_LASH   = os.path.join(LOG_PATH, "lash", "lash.log")
     LOG_FILE_LADISH = os.path.join(LOG_PATH, "ladish", "ladish.log")
 
-    def __init__(self, parent, flags):
-        QDialog.__init__(self, parent, flags)
+    def __init__(self, parent):
+        QDialog.__init__(self, parent)
         self.setupUi(self)
 
         self.b_close.setIcon(getIcon("window-close"))
