@@ -110,8 +110,11 @@ void PatchScene::zoom_fit()
             }
         }
 
-        m_view->fitInView(min_x, min_y, abs(max_x-min_x), abs(max_y-min_y), Qt::KeepAspectRatio);
-        fixScaleFactor();
+        if (first_value == false)
+        {
+            m_view->fitInView(min_x, min_y, abs(max_x-min_x), abs(max_y-min_y), Qt::KeepAspectRatio);
+            fixScaleFactor();
+        }
     }
 }
 

@@ -862,27 +862,27 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
                   group_name = text
                 elif (tag == "data"):
                   group_data   = text.split(":")
+                  if (len(group_data) == 7 and group_data[0].isdigit() and group_data[1].isdigit() and group_data[2].isdigit() and
+                      is_number(group_data[3]) and is_number(group_data[4]) and is_number(group_data[5]) and is_number(group_data[6])):
+                    group_obj = [None, None, None, None]
+                    group_obj[iGroupId]    = int(group_data[0])
+                    group_obj[iGroupName]  = group_name
+                    group_obj[iGroupSplit] = int(group_data[1])
+                    group_obj[iGroupIcon]  = int(group_data[2])
 
-                  group_obj = [None, None, None, None]
-                  group_obj[iGroupId]    = int(group_data[0])
-                  group_obj[iGroupName]  = group_name
-                  group_obj[iGroupSplit] = int(group_data[1])
-                  group_obj[iGroupIcon]  = int(group_data[2])
+                    group_pos_obj = [None, None, None, None, None]
+                    group_pos_obj[iGroupPosId]  = int(group_data[0])
+                    group_pos_obj[iGroupPosX_o] = float(group_data[3])
+                    group_pos_obj[iGroupPosY_o] = float(group_data[4])
+                    group_pos_obj[iGroupPosX_i] = float(group_data[5])
+                    group_pos_obj[iGroupPosY_i] = float(group_data[6])
 
-                  group_pos_obj = [None, None, None, None, None]
-                  group_pos_obj[iGroupPosId]  = int(group_data[0])
-                  group_pos_obj[iGroupPosX_o] = float(group_data[3])
-                  group_pos_obj[iGroupPosY_o] = float(group_data[4])
-                  group_pos_obj[iGroupPosX_i] = float(group_data[5])
-                  group_pos_obj[iGroupPosY_i] = float(group_data[6])
+                    self.m_group_list.append(group_obj)
+                    self.m_group_list_pos.append(group_pos_obj)
 
-                  self.m_group_list.append(group_obj)
-                  self.m_group_list_pos.append(group_pos_obj)
-
-                  group_id = group_obj[iGroupId]
-                  if (group_id > self.m_last_group_id):
-                    self.m_last_group_id = group_id+1
-
+                    group_id = group_obj[iGroupId]
+                    if (group_id > self.m_last_group_id):
+                      self.m_last_group_id = group_id+1
                 group = group.nextSibling()
               groups = groups.nextSibling()
 
@@ -899,19 +899,19 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
                   port_name = text
                 elif (tag == "data"):
                   port_data = text.split(":")
-                  new_port  = [None, None, None, None, None]
-                  new_port[iPortGroup] = int(port_data[0])
-                  new_port[iPortId]    = int(port_data[1])
-                  new_port[iPortName]  = port_name
-                  new_port[iPortMode]  = int(port_data[2])
-                  new_port[iPortType]  = int(port_data[3])
+                  if (len(port_data) == 4 and port_data[0].isdigit() and port_data[1].isdigit() and port_data[2].isdigit() and port_data[3].isdigit()):
+                    new_port  = [None, None, None, None, None]
+                    new_port[iPortGroup] = int(port_data[0])
+                    new_port[iPortId]    = int(port_data[1])
+                    new_port[iPortName]  = port_name
+                    new_port[iPortMode]  = int(port_data[2])
+                    new_port[iPortType]  = int(port_data[3])
 
-                  port_id = new_port[iPortId]
-                  self.m_port_list.append(new_port)
+                    port_id = new_port[iPortId]
+                    self.m_port_list.append(new_port)
 
-                  if (port_id > self.m_last_port_id):
-                    self.m_last_port_id = port_id+1
-
+                    if (port_id > self.m_last_port_id):
+                      self.m_last_port_id = port_id+1
                 port = port.nextSibling()
               ports = ports.nextSibling()
 
@@ -919,21 +919,17 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
             conns = node.toElement().firstChild()
             while not conns.isNull():
               conn_data = conns.toElement().text().split(":")
-              if (conn_data[0].isdigit() == False):
-                conns = conns.nextSibling()
-                continue
+              if (len(conn_data) == 3 and conn_data[0].isdigit() and conn_data[1].isdigit() and conn_data[2].isdigit()):
+                conn_obj = [None, None, None]
+                conn_obj[iConnId]     = int(conn_data[0])
+                conn_obj[iConnOutput] = int(conn_data[1])
+                conn_obj[iConnInput]  = int(conn_data[2])
 
-              conn_obj = [None, None, None]
-              conn_obj[iConnId]     = int(conn_data[0])
-              conn_obj[iConnOutput] = int(conn_data[1])
-              conn_obj[iConnInput]  = int(conn_data[2])
+                connection_id = conn_obj[iConnId]
+                self.m_connection_list.append(conn_obj)
 
-              connection_id = conn_obj[iConnId]
-              self.m_connection_list.append(conn_obj)
-
-              if (connection_id >= self.m_last_connection_id):
-                self.m_last_connection_id = connection_id+1
-
+                if (connection_id >= self.m_last_connection_id):
+                  self.m_last_connection_id = connection_id+1
               conns = conns.nextSibling()
           node = node.nextSibling()
 

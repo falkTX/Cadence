@@ -1113,8 +1113,9 @@ class PatchScene(QGraphicsScene):
 
             first_value = False
 
-        self.m_view.fitInView(min_x, min_y, abs(max_x-min_x), abs(max_y-min_y), Qt.KeepAspectRatio)
-        self.fixScaleFactor()
+        if (first_value == False):
+          self.m_view.fitInView(min_x, min_y, abs(max_x-min_x), abs(max_y-min_y), Qt.KeepAspectRatio)
+          self.fixScaleFactor()
 
     def zoom_in(self):
         if (self.m_view.transform().m11() < 3.0):
