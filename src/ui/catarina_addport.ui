@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>273</width>
-    <height>424</height>
+    <height>307</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -123,34 +123,6 @@
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QCheckBox" name="cb_flags_physical">
-        <property name="text">
-         <string>Physical</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="checkBox_2">
-        <property name="text">
-         <string>Can Monitor</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="checkBox_3">
-        <property name="text">
-         <string>Terminal</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="checkBox_4">
-        <property name="text">
-         <string>Active</string>
-        </property>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>
@@ -171,10 +143,6 @@
   <tabstop>cb_port_type</tabstop>
   <tabstop>rb_flags_input</tabstop>
   <tabstop>rb_flags_output</tabstop>
-  <tabstop>cb_flags_physical</tabstop>
-  <tabstop>checkBox_2</tabstop>
-  <tabstop>checkBox_3</tabstop>
-  <tabstop>checkBox_4</tabstop>
   <tabstop>cb_group</tabstop>
   <tabstop>sb_port_id</tabstop>
   <tabstop>buttonBox</tabstop>

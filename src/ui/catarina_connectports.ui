@@ -57,7 +57,7 @@
       <item>
        <widget class="QRadioButton" name="rb_audio_jack">
         <property name="text">
-         <string>Audio</string>
+         <string>JACK Audio</string>
         </property>
         <property name="checked">
          <bool>true</bool>

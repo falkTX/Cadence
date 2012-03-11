@@ -200,7 +200,6 @@ class CatarinaRemovePortW(QDialog, ui_catarina_removeport.Ui_CatarinaRemovePortW
 
         self.m_group_list = group_list
         self.m_port_list  = port_list
-        self.reAddPorts()
 
         self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
         self.connect(self.tw_port_list, SIGNAL("cellDoubleClicked(int, int)"), SLOT("accept()"))
@@ -213,6 +212,7 @@ class CatarinaRemovePortW(QDialog, ui_catarina_removeport.Ui_CatarinaRemovePortW
         self.connect(self.rb_midi_alsa, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
 
         self.ret_port_id = -1
+        self.reAddPorts()
 
     def reAddPorts(self):
         self.tw_port_list.clearContents()
@@ -274,77 +274,81 @@ class CatarinaRenamePortW(QDialog, ui_catarina_renameport.Ui_CatarinaRenamePortW
         self.tw_port_list.setColumnWidth(0, 25)
         self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
 
-        #self.group_list = group_list
-        #self.port_list = port_list
-        #self.reAddPorts()
+        self.m_group_list = group_list
+        self.m_port_list  = port_list
 
-        #self.connect(self, SIGNAL("accepted()"), self.setReturn)
-        #self.connect(self.tw_port_list, SIGNAL("currentCellChanged(int, int, int, int)"), self.checkCell)
-        #self.connect(self.le_new_name, SIGNAL("textChanged(QString)"), self.checkText)
+        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
+        self.connect(self.tw_port_list, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkCell()"))
+        self.connect(self.le_new_name, SIGNAL("textChanged(QString)"), SLOT("slot_checkText(QString)"))
 
-        #self.connect(self.rb_input, SIGNAL("clicked()"), self.reAddPorts)
-        #self.connect(self.rb_output, SIGNAL("clicked()"), self.reAddPorts)
-        #self.connect(self.rb_audio, SIGNAL("clicked()"), self.reAddPorts)
-        #self.connect(self.rb_midi, SIGNAL("clicked()"), self.reAddPorts)
-        #self.connect(self.rb_outro, SIGNAL("clicked()"), self.reAddPorts)
+        self.connect(self.rb_input, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
+        self.connect(self.rb_output, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
+        self.connect(self.rb_audio_jack, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
+        self.connect(self.rb_midi_jack, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
+        self.connect(self.rb_midi_a2j, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
+        self.connect(self.rb_midi_alsa, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
 
-        #self.ret_port_id = -1
-        #self.ret_new_port_name = ""
+        self.ret_port_id = -1
+        self.ret_new_port_name = ""
+        self.reAddPorts()
 
-    #def reAddPorts(self):
-        #self.tw_port_list.clearContents()
-        #for i in range(self.tw_port_list.rowCount()):
-          #self.tw_port_list.removeRow(0)
+    def reAddPorts(self):
+        self.tw_port_list.clearContents()
+        for i in range(self.tw_port_list.rowCount()):
+          self.tw_port_list.removeRow(0)
 
-        #port_mode = patchcanvas.PORT_MODE_INPUT if (self.rb_input.isChecked()) else patchcanvas.PORT_MODE_OUTPUT
+        port_mode = patchcanvas.PORT_MODE_INPUT if (self.rb_input.isChecked()) else patchcanvas.PORT_MODE_OUTPUT
 
-        #if (self.rb_audio_jack.isChecked()):
-          #port_type = patchcanvas.PORT_TYPE_AUDIO_JACK
-        #elif (self.rb_midi_jack.isChecked()):
-          #port_type = patchcanvas.PORT_TYPE_MIDI_JACK
-        #elif (self.rb_midi_a2j.isChecked()):
-          #port_type = patchcanvas.PORT_TYPE_MIDI_A2J
-        #elif (self.rb_midi_alsa.isChecked()):
-          #port_type = patchcanvas.PORT_TYPE_MIDI_ALSA
-        #else:
-          #print "CatarinaRenamePortW::reAddPorts() - Invalid port type"
-          #return
+        if (self.rb_audio_jack.isChecked()):
+          port_type = patchcanvas.PORT_TYPE_AUDIO_JACK
+        elif (self.rb_midi_jack.isChecked()):
+          port_type = patchcanvas.PORT_TYPE_MIDI_JACK
+        elif (self.rb_midi_a2j.isChecked()):
+          port_type = patchcanvas.PORT_TYPE_MIDI_A2J
+        elif (self.rb_midi_alsa.isChecked()):
+          port_type = patchcanvas.PORT_TYPE_MIDI_ALSA
+        else:
+          print("CatarinaRenamePortW::reAddPorts() - Invalid port type")
+          return
 
-        #index = 0
-        #for i in range(len(self.port_list)):
-          #if (self.port_list[i][iPortMode] == port_mode and self.port_list[i][iPortType] == port_type):
-            #port_id    = self.port_list[i][iPortId]
-            #port_name  = self.port_list[i][iPortName]
-            #group_name = self.findPortGroupName(self.port_list[i][iPortGroup])
-            #tw_port_id   = QTableWidgetItem(str(port_id))
-            #tw_port_name = QTableWidgetItem(group_name+":"+port_name)
-            #self.tw_port_list.insertRow(index)
-            #self.tw_port_list.setItem(index, 0, tw_port_id)
-            #self.tw_port_list.setItem(index, 1, tw_port_name)
-            #index += 1
+        index = 0
+        for port in self.m_port_list:
+          if (port[iPortMode] == port_mode and port[iPortType] == port_type):
+            port_name  = port[iPortName]
+            group_name = self.findPortGroupName(port[iPortGroup])
+            tw_port_id   = QTableWidgetItem(str(port[iPortId]))
+            tw_port_name = QTableWidgetItem("%s:%s" % (group_name, port_name))
+            self.tw_port_list.insertRow(index)
+            self.tw_port_list.setItem(index, 0, tw_port_id)
+            self.tw_port_list.setItem(index, 1, tw_port_name)
+            index += 1
 
-        #self.tw_port_list.setCurrentCell(0, 0)
+        self.tw_port_list.setCurrentCell(0, 0)
 
-    #def findPortGroupName(self, group_id):
-      #for i in range(len(self.group_list)):
-        #if (group_id == self.group_list[i][iGroupId]):
-          #return self.group_list[i][iGroupName]
-      #return ""
+    def findPortGroupName(self, group_id):
+      for group in self.m_group_list:
+        if (group[iGroupId] == group_id):
+          return group[iGroupName]
+      return ""
 
-    #def setReturn(self):
-        #ret_try = self.tw_port_list.item(self.tw_port_list.currentRow(), 0).text().toInt()
-        #if (ret_try[1]):
-          #self.ret_port_id = ret_try[0]
-        #else:
-          #print "CatarinaRenamePortW::setReturn() - failed to get port_id"
-        #self.ret_new_port_name = self.le_new_name.text()
+    @pyqtSlot()
+    def slot_reAddPorts(self):
+        self.reAddPorts()
 
-    #def checkCell(self):
-        #self.checkText(self.le_new_name.text())
+    @pyqtSlot()
+    def slot_checkCell(self):
+        self.slot_checkText(self.le_new_name.text())
 
-    #def checkText(self, text=QString("")):
-        #item = self.tw_port_list.item(self.tw_port_list.currentRow(), 0)
-        #self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(item and not text.isEmpty())
+    @pyqtSlot(str)
+    def slot_checkText(self, text):
+        check = bool(text and self.tw_port_list.currentRow() >= 0)
+        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(check)
+
+    @pyqtSlot()
+    def slot_setReturn(self):
+        if (self.tw_port_list.rowCount() > 0):
+          self.ret_port_id = int(self.tw_port_list.item(self.tw_port_list.currentRow(), 0).text())
+          self.ret_new_port_name = self.le_new_name.text()
 
 # Connect Ports Dialog
 class CatarinaConnectPortsW(QDialog, ui_catarina_connectports.Ui_CatarinaConnectPortsW):
@@ -354,84 +358,83 @@ class CatarinaConnectPortsW(QDialog, ui_catarina_connectports.Ui_CatarinaConnect
 
         self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
 
-        #self.ports_audio_jack = []
-        #self.ports_midi_jack  = []
-        #self.ports_midi_a2j   = []
-        #self.ports_midi_alsa  = []
-        #self.group_list = group_list
-        #self.port_list  = port_list
+        self.m_group_list = group_list
+        self.m_port_list  = port_list
+        self.m_ports_audio_jack = []
+        self.m_ports_midi_jack  = []
+        self.m_ports_midi_a2j   = []
+        self.m_ports_midi_alsa  = []
 
-        #for i in range(len(self.port_list)):
-          #if (self.port_list[i][iPortType] == patchcanvas.PORT_TYPE_AUDIO_JACK):
-            #self.ports_audio_jack.append(self.port_list[i])
-          #elif (self.port_list[i][iPortType] == patchcanvas.PORT_TYPE_MIDI_JACK):
-            #self.ports_midi_jack.append(self.port_list[i])
-          #elif (self.port_list[i][iPortType] == patchcanvas.PORT_TYPE_MIDI_A2J):
-            #self.ports_midi_a2j.append(self.port_list[i])
-          #elif (self.port_list[i][iPortType] == patchcanvas.PORT_TYPE_MIDI_ALSA):
-            #self.ports_midi_alsa.append(self.port_list[i])
+        for port in self.m_port_list:
+          if (port[iPortType] == patchcanvas.PORT_TYPE_AUDIO_JACK):
+            self.m_ports_audio_jack.append(port)
+          elif (port[iPortType] == patchcanvas.PORT_TYPE_MIDI_JACK):
+            self.m_ports_midi_jack.append(port)
+          elif (port[iPortType] == patchcanvas.PORT_TYPE_MIDI_A2J):
+            self.m_ports_midi_a2j.append(port)
+          elif (port[iPortType] == patchcanvas.PORT_TYPE_MIDI_ALSA):
+            self.m_ports_midi_alsa.append(port)
 
-        #self.portTypeChanged()
+        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
+        self.connect(self.rb_audio_jack, SIGNAL("clicked()"), SLOT("slot_portTypeChanged()"))
+        self.connect(self.rb_midi_jack, SIGNAL("clicked()"), SLOT("slot_portTypeChanged()"))
+        self.connect(self.rb_midi_a2j, SIGNAL("clicked()"), SLOT("slot_portTypeChanged()"))
+        self.connect(self.rb_midi_alsa, SIGNAL("clicked()"), SLOT("slot_portTypeChanged()"))
+        self.connect(self.lw_outputs, SIGNAL("currentRowChanged(int)"), SLOT("slot_checkOutSelection(int)"))
+        self.connect(self.lw_inputs, SIGNAL("currentRowChanged(int)"), SLOT("slot_checkInSelection(int)"))
 
-        #self.connect(self, SIGNAL("accepted()"), self.setReturn)
-        #self.connect(self.rb_audio, SIGNAL("clicked()"), self.portTypeChanged)
-        #self.connect(self.rb_midi, SIGNAL("clicked()"), self.portTypeChanged)
-        #self.connect(self.rb_outro, SIGNAL("clicked()"), self.portTypeChanged)
-        #self.connect(self.lw_outputs, SIGNAL("currentRowChanged(int)"), self.checkOutSelection)
-        #self.connect(self.lw_inputs, SIGNAL("currentRowChanged(int)"), self.checkInSelection)
+        self.ret_port_out_id = -1
+        self.ret_port_in_id  = -1
+        self.slot_portTypeChanged()
 
-        #self.ret_port_out_id = -1
-        #self.ret_port_in_id  = -1
+    def showPorts(self, ports):
+        self.lw_outputs.clear()
+        self.lw_inputs.clear()
 
-    #def portTypeChanged(self):
-        #if (self.rb_audio.isChecked()):
-          #ports = self.ports_audio
-        #elif (self.rb_midi.isChecked()):
-          #ports = self.ports_midi
-        #elif (self.rb_outro.isChecked()):
-          #ports = self.ports_outro
-        #else:
-          #print "CatarinaConnectPortstW::portTypeChanged() - Invalid port type"
-          #return
-        #self.showPorts(ports)
+        for port in ports:
+          if (port[iPortMode] == patchcanvas.PORT_MODE_INPUT):
+            self.lw_inputs.addItem("%i - %s:%s" % (port[iPortId], self.findPortGroupName(port[iPortGroup]), port[iPortName]))
+          elif (port[iPortMode] == patchcanvas.PORT_MODE_OUTPUT):
+            self.lw_outputs.addItem("%i - %s:%s" % (port[iPortId], self.findPortGroupName(port[iPortGroup]), port[iPortName]))
 
-    #def showPorts(self, ports):
-        #self.lw_outputs.clear()
-        #self.lw_inputs.clear()
+    def findPortGroupName(self, group_id):
+      for group in self.m_group_list:
+        if (group[iGroupId] == group_id):
+          return group[iGroupName]
+      return ""
 
-        #for i in range(len(ports)):
-          #if (ports[i][iPortMode] == patchcanvas.PORT_MODE_INPUT):
-            #self.lw_inputs.addItem(str(ports[i][iPortId])+" - '"+self.findGroupName(ports[i][iPortGroup])+":"+ports[i][iPortName]+"'")
-          #elif (ports[i][iPortMode] == patchcanvas.PORT_MODE_OUTPUT):
-            #self.lw_outputs.addItem(str(ports[i][iPortId])+" - '"+self.findGroupName(ports[i][iPortGroup])+":"+ports[i][iPortName]+"'")
+    def checkSelection(self, out_row, in_row):
+        check = bool(out_row >= 0 and in_row >= 0)
+        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(check)
 
-    #def findGroupName(self, group_id):
-        #for i in range(len(self.group_list)):
-          #if (self.group_list[i][iGroupId] == group_id):
-            #return self.group_list[i][iGroupName]
-        #return ""
+    @pyqtSlot()
+    def slot_portTypeChanged(self):
+        if (self.rb_audio_jack.isChecked()):
+          ports = self.m_ports_audio_jack
+        elif (self.rb_midi_jack.isChecked()):
+          ports = self.m_ports_midi_jack
+        elif (self.rb_midi_a2j.isChecked()):
+          ports = self.m_ports_midi_a2j
+        elif (self.rb_midi_alsa.isChecked()):
+          ports = self.m_ports_midi_alsa
+        else:
+          print("CatarinaConnectPortstW::portTypeChanged() - Invalid port type")
+          return
+        self.showPorts(ports)
 
-    #def setReturn(self):
-        #ret_try = self.lw_outputs.currentItem().text().split(" - ", 1)[0].toInt()
-        #if (ret_try[1]):
-          #self.ret_port_out_id = ret_try[0]
-        #else:
-          #print "CatarinaConnectPortsW::setReturn() - failed to get port_out_id"
+    @pyqtSlot(int)
+    def slot_checkOutSelection(self, row):
+        self.checkSelection(row, self.lw_inputs.currentRow())
 
-        #ret_try = self.lw_inputs.currentItem().text().split(" - ", 1)[0].toInt()
-        #if (ret_try[1]):
-          #self.ret_port_in_id = ret_try[0]
-        #else:
-          #print "CatarinaConnectPortsW::setReturn() - failed to get port_in_id"
+    @pyqtSlot(int)
+    def slot_checkInSelection(self, row):
+        self.checkSelection(self.lw_outputs.currentRow(), row)
 
-    #def checkOutSelection(self, row):
-        #self.checkSelection(row, self.lw_inputs.currentRow())
-
-    #def checkInSelection(self, row):
-        #self.checkSelection(self.lw_outputs.currentRow(), row)
-
-    #def checkSelection(self, out_row, in_row):
-        #self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(True if (out_row >= 0 and in_row >= 0) else False)
+    @pyqtSlot()
+    def slot_setReturn(self):
+        if (self.lw_outputs.currentRow() >= 0 and self.lw_inputs.currentRow() >= 0):
+          self.ret_port_out_id = int(self.lw_outputs.currentItem().text().split(" - ", 1)[0])
+          self.ret_port_in_id  = int(self.lw_inputs.currentItem().text().split(" - ", 1)[0])
 
 # Disconnect Ports Dialog
 class CatarinaDisconnectPortsW(QDialog, ui_catarina_disconnectports.Ui_CatarinaDisconnectPortsW):
@@ -442,91 +445,87 @@ class CatarinaDisconnectPortsW(QDialog, ui_catarina_disconnectports.Ui_CatarinaD
         self.tw_connections.setColumnWidth(0, 225)
         self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
 
-        #self.group_list = group_list
-        #self.port_list  = port_list
-        #self.connection_list = connection_list
+        self.m_group_list = group_list
+        self.m_port_list  = port_list
+        self.m_connection_list = connection_list
 
-        #self.portTypeChanged()
+        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
+        self.connect(self.tw_connections, SIGNAL("cellDoubleClicked(int, int)"), SLOT("accept()"))
+        self.connect(self.tw_connections, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelection(int)"))
+        self.connect(self.rb_audio_jack, SIGNAL("clicked()"), SLOT("slot_portTypeChanged()"))
+        self.connect(self.rb_midi_jack, SIGNAL("clicked()"), SLOT("slot_portTypeChanged()"))
+        self.connect(self.rb_midi_a2j, SIGNAL("clicked()"), SLOT("slot_portTypeChanged()"))
+        self.connect(self.rb_midi_alsa, SIGNAL("clicked()"), SLOT("slot_portTypeChanged()"))
 
-        #self.connect(self, SIGNAL("accepted()"), self.setReturn)
-        #self.connect(self.rb_audio, SIGNAL("clicked()"), self.portTypeChanged)
-        #self.connect(self.rb_midi, SIGNAL("clicked()"), self.portTypeChanged)
-        #self.connect(self.rb_outro, SIGNAL("clicked()"), self.portTypeChanged)
-        #self.connect(self.tw_connections, SIGNAL("currentCellChanged(int, int, int, int)"), self.checkSelection)
-        #self.connect(self.tw_connections, SIGNAL("cellDoubleClicked(int, int)"), self.accept)
+        self.ret_port_out_id = -1
+        self.ret_port_in_id  = -1
+        self.slot_portTypeChanged()
 
-        #self.ret_port_out_id = -1
-        #self.ret_port_in_id  = -1
+    def showPorts(self, ptype):
+        self.tw_connections.clearContents()
+        for i in range(self.tw_connections.rowCount()):
+          self.tw_connections.removeRow(0)
 
-    #def portTypeChanged(self):
-        #if (self.rb_audio_jack.isChecked()):
-          #ptype = patchcanvas.PORT_TYPE_AUDIO_JACK
-        #elif (self.rb_midi_jack.isChecked()):
-          #ptype = patchcanvas.PORT_TYPE_MIDI_JACK
-        #elif (self.rb_midi_a2j.isChecked()):
-          #ptype = patchcanvas.PORT_TYPE_MIDI_A2J
-        #elif (self.rb_midi_alsa.isChecked()):
-          #ptype = patchcanvas.PORT_TYPE_MIDI_ALSA
-        #else:
-          #print "CatarinaDisconnectPortstW::portTypeChanged() - Invalid port type"
-          #return
-        #self.showPorts(ptype)
+        index = 0
+        for connection in self.m_connection_list:
+          if (self.findPortType(connection[iConnOutput]) == ptype):
+            port_out_id   = connection[iConnOutput]
+            port_out_name = self.findPortName(port_out_id)
 
-    #def showPorts(self, ptype):
-        #self.tw_connections.clearContents()
-        #for i in range(self.tw_connections.rowCount()):
-          #self.tw_connections.removeRow(0)
+            port_in_id    = connection[iConnInput]
+            port_in_name  = self.findPortName(port_in_id)
 
-        #index = 0
-        #for i in range(len(self.connection_list)):
-          #if (self.findPortType(self.connection_list[i][iConnOutput]) == ptype):
-            #port_out_id   = self.connection_list[i][iConnOutput]
-            #port_out_name = self.findPortName(port_out_id)
+            tw_port_out = QTableWidgetItem("%i - %s" % (port_out_id, port_out_name))
+            tw_port_in  = QTableWidgetItem("%i - %s" % (port_in_id, port_in_name))
 
-            #port_in_id    = self.connection_list[i][iConnInput]
-            #port_in_name  = self.findPortName(port_in_id)
+            self.tw_connections.insertRow(index)
+            self.tw_connections.setItem(index, 0, tw_port_out)
+            self.tw_connections.setItem(index, 1, tw_port_in)
+            index += 1
 
-            #tw_port_out = QTableWidgetItem(str(port_out_id)+" - '"+port_out_name+"'")
-            #tw_port_in  = QTableWidgetItem(str(port_in_id)+" - '"+port_in_name+"'")
+    def findPortName(self, port_id):
+        for port in self.m_port_list:
+          if (port[iPortId] == port_id):
+            return "%s:%s" % (self.findPortGroupName(port[iPortGroup]), port[iPortName])
+        return ""
 
-            #self.tw_connections.insertRow(index)
-            #self.tw_connections.setItem(index, 0, tw_port_out)
-            #self.tw_connections.setItem(index, 1, tw_port_in)
-            #index += 1
+    def findPortType(self, port_id):
+        for port in self.m_port_list:
+          if (port[iPortId] == port_id):
+            return port[iPortType]
+        return patchcanvas.PORT_TYPE_NULL
 
-    #def findPortName(self, port_id):
-        #for i in range(len(self.port_list)):
-          #if (self.port_list[i][iPortId] == port_id):
-            #return self.findGroupName(self.port_list[i][iPortGroup])+":"+self.port_list[i][iPortName]
-        #return ""
+    def findPortGroupName(self, group_id):
+      for group in self.m_group_list:
+        if (group[iGroupId] == group_id):
+          return group[iGroupName]
+      return ""
 
-    #def findPortType(self, port_id):
-        #for i in range(len(self.port_list)):
-          #if (self.port_list[i][iPortId] == port_id):
-            #return self.port_list[i][iPortType]
-        #return -1
+    @pyqtSlot()
+    def slot_portTypeChanged(self):
+        if (self.rb_audio_jack.isChecked()):
+          ptype = patchcanvas.PORT_TYPE_AUDIO_JACK
+        elif (self.rb_midi_jack.isChecked()):
+          ptype = patchcanvas.PORT_TYPE_MIDI_JACK
+        elif (self.rb_midi_a2j.isChecked()):
+          ptype = patchcanvas.PORT_TYPE_MIDI_A2J
+        elif (self.rb_midi_alsa.isChecked()):
+          ptype = patchcanvas.PORT_TYPE_MIDI_ALSA
+        else:
+          print("CatarinaDisconnectPortstW::portTypeChanged() - Invalid port type")
+          return
+        self.showPorts(ptype)
 
-    #def findGroupName(self, group_id):
-        #for i in range(len(self.group_list)):
-          #if (self.group_list[i][iGroupId] == group_id):
-            #return self.group_list[i][iGroupName]
-        #return -1
+    @pyqtSlot(int)
+    def slot_checkSelection(self, row):
+        check = bool(row >= 0)
+        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(check)
 
-    #def setReturn(self):
-        #ret_try = self.tw_connections.item(self.tw_connections.currentRow(), 0).text().split(" - ", 1)[0].toInt()
-        #if (ret_try[1]):
-          #self.ret_port_out_id = ret_try[0]
-        #else:
-          #print "CatarinaDisconnectPortsW::setReturn() - failed to get port_out_id"
-
-        #ret_try = self.tw_connections.item(self.tw_connections.currentRow(), 1).text().split(" - ", 1)[0].toInt()
-        #if (ret_try[1]):
-          #self.ret_port_in_id = ret_try[0]
-        #else:
-          #print "CatarinaDisconnectPortsW::setReturn() - failed to get port_in_id"
-
-    #def checkSelection(self, row, column, prev_row, prev_column):
-        #self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(True if (row >= 0) else False)
+    @pyqtSlot()
+    def slot_setReturn(self):
+        if (self.tw_connections.currentRow() >= 0):
+          self.ret_port_out_id = int(self.tw_connections.item(self.tw_connections.currentRow(), 0).text().split(" - ", 1)[0])
+          self.ret_port_in_id  = int(self.tw_connections.item(self.tw_connections.currentRow(), 1).text().split(" - ", 1)[0])
 
 # Main Window
 class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
@@ -636,9 +635,14 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
           pass
 
         elif (action == patchcanvas.ACTION_GROUP_RENAME):
-          # TODO - check if can be renamed, if not display warning
           group_id = value1
           new_group_name = value_str
+
+          for group in self.m_group_list:
+            if (group[iGroupName] == new_group_name):
+              QMessageBox.warning(self, self.tr("Warning"), self.tr("There is already a group with this name"))
+              return
+
           patchcanvas.renameGroup(group_id, new_group_name)
 
           for group in self.m_group_list:

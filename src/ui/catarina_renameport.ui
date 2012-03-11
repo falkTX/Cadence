@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>303</width>
-    <height>471</height>
+    <width>357</width>
+    <height>475</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -47,9 +47,9 @@
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
-       <widget class="QRadioButton" name="rb_audio">
+       <widget class="QRadioButton" name="rb_audio_jack">
         <property name="text">
-         <string>Audio</string>
+         <string>JACK Audio</string>
         </property>
         <property name="checked">
          <bool>true</bool>
@@ -57,16 +57,23 @@
        </widget>
       </item>
       <item>
-       <widget class="QRadioButton" name="rb_midi">
+       <widget class="QRadioButton" name="rb_midi_jack">
         <property name="text">
-         <string>MIDI</string>
+         <string>JACK MIDI</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QRadioButton" name="rb_outro">
+       <widget class="QRadioButton" name="rb_midi_a2j">
         <property name="text">
-         <string>Outro</string>
+         <string>A2J MIDI</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rb_midi_alsa">
+        <property name="text">
+         <string>ALSA MIDI</string>
         </property>
        </widget>
       </item>
