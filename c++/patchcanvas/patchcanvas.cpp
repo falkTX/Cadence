@@ -340,7 +340,7 @@ void addGroup(int group_id, QString group_name, SplitOption split, Icon icon)
         canvas.last_z_value += 1;
         group_sbox->setZValue(canvas.last_z_value);
 
-        if (options.auto_hide_groups == false && options.eyecandy)
+        if (options.auto_hide_groups == false && options.eyecandy == EYECANDY_FULL)
             CanvasItemFX(group_sbox, true);
     }
     else
@@ -362,7 +362,7 @@ void addGroup(int group_id, QString group_name, SplitOption split, Icon icon)
 
     canvas.group_list.append(group_dict);
 
-    if (options.auto_hide_groups == false && options.eyecandy)
+    if (options.auto_hide_groups == false && options.eyecandy == EYECANDY_FULL)
         CanvasItemFX(group_box, true);
 
     QTimer::singleShot(0, canvas.scene, SLOT(update()));
@@ -389,7 +389,7 @@ void removeGroup(int group_id)
                     canvas.settings->setValue(QString("CanvasPositions/%1_SPLIT").arg(group_name), SPLIT_YES);
                 }
 
-                if (options.eyecandy)
+                if (options.eyecandy == EYECANDY_FULL)
                 {
                     CanvasItemFX(s_item, false, true);
                 }
@@ -409,7 +409,7 @@ void removeGroup(int group_id)
                 }
             }
 
-            if (options.eyecandy)
+            if (options.eyecandy == EYECANDY_FULL)
             {
                 CanvasItemFX(item, false, true);
             }
@@ -740,7 +740,7 @@ void addPort(int group_id, int port_id, QString port_name, PortMode port_mode, P
         return;
     }
 
-    if (options.eyecandy)
+    if (options.eyecandy == EYECANDY_FULL)
         CanvasItemFX(port_widget, true);
 
     port_dict_t port_dict;
@@ -852,7 +852,7 @@ void connectPorts(int connection_id, int port_out_id, int port_in_id)
 
     canvas.connection_list.append(connection_dict);
 
-    if (options.eyecandy)
+    if (options.eyecandy == EYECANDY_FULL)
     {
         QGraphicsItem* item = (options.use_bezier_lines) ? (QGraphicsItem*)(CanvasBezierLine*)connection_dict.widget : (QGraphicsItem*)(CanvasLine*)connection_dict.widget;
         CanvasItemFX(item, true);
@@ -921,7 +921,7 @@ void disconnectPorts(int connection_id)
     ((CanvasBox*)item1->parentItem())->removeLineFromGroup(connection_id);
     ((CanvasBox*)item2->parentItem())->removeLineFromGroup(connection_id);
 
-    if (options.eyecandy)
+    if (options.eyecandy == EYECANDY_FULL)
     {
         QGraphicsItem* item = (options.use_bezier_lines) ? (QGraphicsItem*)(CanvasBezierLine*)line : (QGraphicsItem*)(CanvasLine*)line;
         CanvasItemFX(item, false, true);
@@ -932,7 +932,7 @@ void disconnectPorts(int connection_id)
     QTimer::singleShot(0, canvas.scene, SLOT(update()));
 }
 
-void Arrange()
+void arrange()
 {
     if (canvas.debug)
         qDebug("PatchCanvas::Arrange()");

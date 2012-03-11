@@ -423,7 +423,7 @@ def addGroup(group_id, group_name, split=SPLIT_UNDEF, icon=ICON_APPLICATION):
     canvas.last_z_value += 1
     group_sbox.setZValue(canvas.last_z_value)
 
-    if (options.auto_hide_groups == False and options.eyecandy):
+    if (options.auto_hide_groups == False and options.eyecandy == EYECANDY_FULL):
       CanvasItemFX(group_sbox, True)
 
   else:
@@ -441,7 +441,7 @@ def addGroup(group_id, group_name, split=SPLIT_UNDEF, icon=ICON_APPLICATION):
 
   canvas.group_list.append(group_dict)
 
-  if (options.auto_hide_groups == False and options.eyecandy):
+  if (options.auto_hide_groups == False and options.eyecandy == EYECANDY_FULL):
     CanvasItemFX(group_box, True)
 
   QTimer.singleShot(0, canvas.scene, SLOT("update()"))
@@ -463,7 +463,7 @@ def removeGroup(group_id):
           canvas.settings.setValue("CanvasPositions/%s_INPUT" % (group_name), s_item.pos())
           canvas.settings.setValue("CanvasPositions/%s_SPLIT" % (group_name), SPLIT_YES)
 
-        if (options.eyecandy):
+        if (options.eyecandy == EYECANDY_FULL):
           CanvasItemFX(s_item, False, True)
         else:
           s_item.removeIconFromScene()
@@ -475,7 +475,7 @@ def removeGroup(group_id):
           canvas.settings.setValue("CanvasPositions/%s" % (group_name), item.pos())
           canvas.settings.setValue("CanvasPositions/%s_SPLIT" % (group_name), SPLIT_NO)
 
-      if (options.eyecandy):
+      if (options.eyecandy == EYECANDY_FULL):
           CanvasItemFX(item, False, True)
       else:
         item.removeIconFromScene()
@@ -725,7 +725,7 @@ def addPort(group_id, port_id, port_name, port_mode, port_type):
     qCritical("patchcanvas::addPort(%i, %i, %s, %s, %s) - Unable to find parent group" % (group_id, port_id, port_name.encode(), port_mode2str(port_mode), port_type2str(port_type)))
     return
 
-  if (options.eyecandy):
+  if (options.eyecandy == EYECANDY_FULL):
     CanvasItemFX(port_widget, True)
 
   port_dict = port_dict_t()
@@ -817,7 +817,7 @@ def connectPorts(connection_id, port_out_id, port_in_id):
 
   canvas.connection_list.append(connection_dict)
 
-  if (options.eyecandy):
+  if (options.eyecandy == EYECANDY_FULL):
     item = connection_dict.widget
     CanvasItemFX(item, True)
 
@@ -865,7 +865,7 @@ def disconnectPorts(connection_id):
   item1.parentItem().removeLineFromGroup(connection_id)
   item2.parentItem().removeLineFromGroup(connection_id)
 
-  if (options.eyecandy):
+  if (options.eyecandy == EYECANDY_FULL):
     CanvasItemFX(line, False, True)
   else:
     line.deleteFromScene()
@@ -1310,7 +1310,7 @@ class CanvasLine(QGraphicsLineItem):
         if (self.m_locked):
           return
 
-        if (options.eyecandy):
+        if (options.eyecandy == EYECANDY_FULL):
           if (yesno):
             self.setGraphicsEffect(CanvasPortGlow(self.item1.getPortType(), self.toGraphicsObject()))
           else:
@@ -1402,7 +1402,7 @@ class CanvasBezierLine(QGraphicsPathItem):
         if (self.m_locked):
           return
 
-        if (options.eyecandy):
+        if (options.eyecandy == EYECANDY_FULL):
           if (yesno):
             self.setGraphicsEffect(CanvasPortGlow(self.item1.getPortType(), self.toGraphicsObject()))
           else:
@@ -1809,7 +1809,7 @@ class CanvasPort(QGraphicsItem):
         return QRectF(0, 0, self.m_port_width+12, self.m_port_height)
 
     def paint(self, painter, option, widget):
-        painter.setRenderHint(QPainter.Antialiasing, (options.antialiasing == ANTIALIASING_FULL))
+        painter.setRenderHint(QPainter.Antialiasing, bool(options.antialiasing == ANTIALIASING_FULL))
 
         poly_locx = [0, 0, 0, 0, 0]
 
@@ -1981,7 +1981,7 @@ class CanvasBox(QGraphicsItem):
     def addPortFromGroup(self, port_id, port_mode, port_type, port_name):
         if (len(self.m_port_list_ids) == 0):
           if (options.auto_hide_groups):
-            if (options.eyecandy):
+            if (options.eyecandy == EYECANDY_FULL):
               CanvasItemFX(self, True)
             self.setVisible(True)
 
@@ -2010,7 +2010,7 @@ class CanvasBox(QGraphicsItem):
           self.updatePositions()
         elif (self.isVisible()):
           if (options.auto_hide_groups):
-            if (options.eyecandy):
+            if (options.eyecandy == EYECANDY_FULL):
               CanvasItemFX(self, False)
             else:
               self.setVisible(False)

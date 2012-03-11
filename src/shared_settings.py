@@ -58,7 +58,7 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
     def loadSettings(self):
         self.cb_canvas_hide_groups.setChecked(self.settings.value("Canvas/AutoHideGroups", self.ms_AutoHideGroups, type=bool))
         self.cb_canvas_bezier_lines.setChecked(self.settings.value("Canvas/UseBezierLines", True, type=bool))
-        self.cb_canvas_eyecandy.setChecked(self.settings.value("Canvas/EyeCandy", CANVAS_EYECANDY_SMALL, type=int))
+        self.cb_canvas_eyecandy.setCheckState(self.settings.value("Canvas/EyeCandy", CANVAS_EYECANDY_SMALL, type=int))
         self.cb_canvas_use_opengl.setChecked(self.settings.value("Canvas/UseOpenGL", False, type=bool))
         self.cb_canvas_render_aa.setCheckState(self.settings.value("Canvas/Antialiasing", CANVAS_ANTIALIASING_SMALL, type=int))
         self.cb_canvas_render_text_aa.setChecked(self.settings.value("Canvas/TextAntialiasing", True, type=bool))

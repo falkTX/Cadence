@@ -127,7 +127,7 @@ void renamePort(int port_id, QString new_port_name);
 void connectPorts(int connection_id, int port_out_id, int port_in_id);
 void disconnectPorts(int connection_id);
 
-void Arrange();
+void arrange();
 
 END_NAMESPACE_PATCHCANVAS
 

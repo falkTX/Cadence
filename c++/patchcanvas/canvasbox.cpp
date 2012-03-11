@@ -142,7 +142,7 @@ CanvasPort* CanvasBox::addPortFromGroup(int port_id, QString port_name, PortMode
     {
         if (options.auto_hide_groups)
         {
-            if (options.eyecandy)
+            if (options.eyecandy == EYECANDY_FULL)
                 CanvasItemFX(this, true);
             setVisible(true);
         }
@@ -183,7 +183,7 @@ void CanvasBox::removePortFromGroup(int port_id)
     {
         if (options.auto_hide_groups)
         {
-            if (options.eyecandy)
+            if (options.eyecandy == EYECANDY_FULL)
                 CanvasItemFX(this, false);
             else
                 setVisible(false);

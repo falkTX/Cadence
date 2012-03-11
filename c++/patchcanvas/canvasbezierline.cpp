@@ -69,7 +69,7 @@ void CanvasBezierLine::setLineSelected(bool yesno)
     if (m_locked)
         return;
 
-    if (options.eyecandy)
+    if (options.eyecandy == EYECANDY_FULL)
     {
         if (yesno)
             setGraphicsEffect(new CanvasPortGlow(item1->getPortType(), toGraphicsObject()));
