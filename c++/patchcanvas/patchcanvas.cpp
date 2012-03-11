@@ -216,11 +216,6 @@ void init(PatchScene* scene, Callback callback, bool debug)
     canvas.initial_pos = QPointF(0, 0);
     canvas.size_rect = QRectF();
 
-    canvas.group_list.clear();
-    canvas.port_list.clear();
-    canvas.connection_list.clear();
-    canvas.animation_list.clear();
-
     if (!canvas.qobject) canvas.qobject = new CanvasObject();
     if (!canvas.settings) canvas.settings = new QSettings(PATCHCANVAS_ORGANISATION_NAME, "PatchCanvas");
 

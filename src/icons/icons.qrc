@@ -28,6 +28,11 @@
             <file>16x16/zoom-original.png</file>
             <file>16x16/zoom-out.png</file>
 
+            <file>48x48/catarina.png</file>
+            <file>48x48/canvas.png</file>
+            <file>48x48/exec.png</file>
+            <file>48x48/jack.png</file>
+            <file>48x48/ladish.png</file>
             <file>48x48/media-record.png</file>
 
             <file>scalable/catarina.svg</file>

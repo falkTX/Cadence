@@ -210,6 +210,10 @@ canvas.qobject   = None
 canvas.settings  = None
 canvas.theme     = None
 canvas.initiated = False
+canvas.group_list = []
+canvas.port_list  = []
+canvas.connection_list = []
+canvas.animation_list  = []
 
 options = options_t()
 options.theme_name       = getDefaultThemeName()
@@ -310,11 +314,6 @@ def init(scene, callback, debug=False):
   canvas.last_connection_id = 0
   canvas.initial_pos = QPointF(0, 0)
   canvas.size_rect = QRectF()
-
-  canvas.group_list = []
-  canvas.port_list = []
-  canvas.connection_list = []
-  canvas.animation_list = []
 
   if (not canvas.qobject): canvas.qobject = CanvasObject()
   if (not canvas.settings): canvas.settings = QSettings(PATCHCANVAS_ORGANISATION_NAME, "PatchCanvas")

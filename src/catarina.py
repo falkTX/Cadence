@@ -28,6 +28,7 @@ import ui_catarina_addport, ui_catarina_removeport, ui_catarina_renameport
 import ui_catarina_connectports, ui_catarina_disconnectports
 from shared import *
 from shared_canvas import *
+from shared_settings import *
 
 try:
   from PyQt4.QtOpenGL import QGLWidget
@@ -534,7 +535,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
         self.setupUi(self)
 
         self.settings = QSettings("Cadence", "Catarina")
-        self.loadSettings()
+        self.loadSettings(True)
 
         self.act_project_new.setIcon(getIcon("document-new"))
         self.act_project_open.setIcon(getIcon("document-open"))
@@ -617,7 +618,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
 
         setCanvasConnections(self)
 
-        #self.connect(self.act_settings_configure, SIGNAL("triggered()"), self.configureCatarina)
+        self.connect(self.act_settings_configure, SIGNAL("triggered()"), SLOT("slot_configureCatarina()"))
 
         self.connect(self.act_help_about, SIGNAL("triggered()"), SLOT("slot_aboutCatarina()"))
         self.connect(self.act_help_about_qt, SIGNAL("triggered()"), app, SLOT("aboutQt()"))
@@ -1157,6 +1158,29 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
           QMessageBox.warning(self, self.tr("Warning"), self.tr("Please make some Connections first!"))
 
     @pyqtSlot()
+    def slot_configureCatarina(self):
+        dialog = SettingsW(self, "catarina", hasGL)
+        dialog.hideRow(0)
+        dialog.hideRow(2)
+        dialog.hideRow(3)
+        dialog.setCurrentRow(1)
+        if (dialog.exec_()):
+          self.loadSettings(False)
+          patchcanvas.clear()
+
+          p_options = patchcanvas.options_t()
+          p_options.theme_name       = self.m_savedSettings["Canvas/Theme"]
+          p_options.auto_hide_groups = self.m_savedSettings["Canvas/AutoHideGroups"]
+          p_options.use_bezier_lines = self.m_savedSettings["Canvas/UseBezierLines"]
+          p_options.antialiasing     = self.m_savedSettings["Canvas/Antialiasing"]
+          p_options.eyecandy         = self.m_savedSettings["Canvas/EyeCandy"]
+
+          patchcanvas.setOptions(p_options)
+          patchcanvas.init(self.scene, self.canvasCallback, DEBUG)
+
+          self.init_ports()
+
+    @pyqtSlot()
     def slot_aboutCatarina(self):
         QMessageBox.about(self, self.tr("About Catarina"), self.tr("<h3>Catarina</h3>"
             "<br>Version %s"
@@ -1167,15 +1191,16 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
         self.settings.setValue("Geometry", self.saveGeometry())
         self.settings.setValue("ShowToolbar", self.frame_toolbar.isVisible())
 
-    def loadSettings(self):
-        self.restoreGeometry(self.settings.value("Geometry", ""))
+    def loadSettings(self, geometry):
+        if (geometry):
+          self.restoreGeometry(self.settings.value("Geometry", ""))
 
-        show_toolbar = self.settings.value("ShowToolbar", True, type=bool)
-        self.act_settings_show_toolbar.setChecked(show_toolbar)
-        self.frame_toolbar.setVisible(show_toolbar)
+          show_toolbar = self.settings.value("ShowToolbar", True, type=bool)
+          self.act_settings_show_toolbar.setChecked(show_toolbar)
+          self.frame_toolbar.setVisible(show_toolbar)
 
         self.m_savedSettings = {
-          "Canvas/Theme": self.settings.value("Canvas/Theme", patchcanvas.getThemeName(patchcanvas.getDefaultTheme), type=str),
+          "Canvas/Theme": self.settings.value("Canvas/Theme", patchcanvas.getDefaultThemeName(), type=str),
           "Canvas/AutoHideGroups": self.settings.value("Canvas/AutoHideGroups", False, type=bool),
           "Canvas/UseBezierLines": self.settings.value("Canvas/UseBezierLines", True, type=bool),
           "Canvas/EyeCandy": self.settings.value("Canvas/EyeCandy", patchcanvas.EYECANDY_SMALL, type=int),

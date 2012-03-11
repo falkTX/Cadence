@@ -20,7 +20,7 @@ catarina: src/ui_catarina.py \
 
 tools: \
 	src/ui_logs.py src/ui_render.py src/ui_xycontroller.py \
-	src/ui_settings_jack.py
+	src/ui_settings_app.py src/ui_settings_jack.py
 
 src/ui_catarina.py: src/ui/catarina.ui
 	$(PYUIC) -o src/ui_catarina.py $<
@@ -57,6 +57,9 @@ src/ui_render.py: src/ui/render.ui
 
 src/ui_xycontroller.py: src/ui/xycontroller.ui
 	$(PYUIC) -o src/ui_xycontroller.py $<
+
+src/ui_settings_app.py: src/ui/settings_app.ui
+	$(PYUIC) -o src/ui_settings_app.py $<
 
 src/ui_settings_jack.py: src/ui/settings_jack.ui
 	$(PYUIC) -o src/ui_settings_jack.py $<
