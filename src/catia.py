@@ -559,13 +559,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         else:
           self.canvas_remove_group(group_name)
 
-    #def canvas_rename_port(self, port_id, port_short_name):
-        #patchcanvas.renamePort(port_id, port_short_name)
-
-        #for port in self.m_port_list:
-          #if (port[iPortNameR] == old_name):
-            #port_id = port[iPortId]
-            #port[iPortNameR] = new_name
+    def canvas_rename_port(self, port_id, port_short_name):
+        patchcanvas.renamePort(port_id, port_short_name)
 
     def canvas_connect_ports(self, port_out_name, port_in_name):
         port_out_id = -1
@@ -845,14 +840,25 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
     @pyqtSlot(int, str, str)
     def slot_PortRenameCallback(self, port_id_jack, old_name, new_name):
-        print(port_id_jack, old_name, new_name)
-        #for port in self.m_port_list:
-          #if (port[iPortNameR] == old_name):
-            #port_id = port[iPortId]
-        #else:
-          #return
+        port_ptr = jacklib.port_by_id(jack.client, port_id_jack)
+        port_short_name = str(jacklib.port_short_name(port_ptr), encoding="ascii")
 
-        #self.canvas_rename_port(port_id, new_name)
+        for port in self.m_port_list:
+          if (port[iPortNameR] == old_name):
+            port_id = port[iPortId]
+            port[iPortNameR] = new_name
+            break
+        else:
+          return
+
+        # Only set new name in canvas if no alias is active for this port
+        aliases = jacklib.port_get_aliases(port_ptr)
+        if (aliases[0] == 1 and self.m_savedSettings["Main/JackPortAlias"] == 1):
+          pass
+        elif (aliases[0] == 2 and self.m_savedSettings["Main/JackPortAlias"] == 2):
+          pass
+        else:
+          self.canvas_rename_port(port_id, port_short_name)
 
     @pyqtSlot()
     def slot_ShutdownCallback(self):
