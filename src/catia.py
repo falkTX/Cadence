@@ -17,7 +17,7 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
-from PyQt4.QtCore import pyqtSlot, QSettings
+from PyQt4.QtCore import QSettings
 from PyQt4.QtGui import QApplication, QMainWindow
 
 # Imports (Custom Stuff)
@@ -73,6 +73,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.m_last_port_id  = 1
         self.m_last_connection_id = 1
 
+        self.m_xruns = 0
         self.m_buffer_size = 0
         self.m_sample_rate = 0
         self.m_last_buffer_size = 0
@@ -157,11 +158,11 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
         self.cb_sample_rate.setEnabled(bool(DBus.jack != None))
 
-        #self.m_timer120 = self.startTimer(self.saved_settings["Main/RefreshInterval"])
-        #self.m_timer600 = self.startTimer(self.saved_settings["Main/RefreshInterval"]*5)
+        self.m_timer120 = self.startTimer(self.m_savedSettings["Main/RefreshInterval"])
+        self.m_timer600 = self.startTimer(self.m_savedSettings["Main/RefreshInterval"]*5)
 
         setCanvasConnections(self)
-        #setJackConnections(self, ["jack", "buffer-size", "transport", "misc"])
+        setJackConnections(self, ["jack", "buffer-size", "transport", "misc"])
 
         self.connect(self.act_tools_jack_start, SIGNAL("triggered()"), SLOT("slot_JackServerStart()"))
         self.connect(self.act_tools_jack_stop, SIGNAL("triggered()"), SLOT("slot_JackServerStop()"))
@@ -174,14 +175,13 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.connect(self.act_help_about, SIGNAL("triggered()"), SLOT("slot_aboutCatia()"))
         self.connect(self.act_help_about_qt, SIGNAL("triggered()"), app, SLOT("aboutQt()"))
 
-        #self.connect(self, SIGNAL("XRunCallback"), self._XRunCallback)
-        #self.connect(self, SIGNAL("BufferSizeCallback"), self._BufferSizeCallback)
-        #self.connect(self, SIGNAL("SampleRateCallback"), self._SampleRateCallback)
-        #self.connect(self, SIGNAL("ClientRegistrationCallback"), self._ClientRegistrationCallback)
+        self.connect(self, SIGNAL("XRunCallback()"), SLOT("slot_XRunCallback()"))
+        self.connect(self, SIGNAL("BufferSizeCallback(int)"), SLOT("slot_BufferSizeCallback(int)"))
+        self.connect(self, SIGNAL("SampleRateCallback(int)"), SLOT("slot_SampleRateCallback(int)"))
         self.connect(self, SIGNAL("PortRegistrationCallback(int, bool)"), SLOT("slot_PortRegistrationCallback(int, bool)"))
         self.connect(self, SIGNAL("PortConnectCallback(int, int, bool)"), SLOT("slot_PortConnectCallback(int, int, bool)"))
-        #self.connect(self, SIGNAL("PortRenameCallback"), self._PortRenameCallback)
-        #self.connect(self, SIGNAL("ShutdownCallback"), self._ShutdownCallback)
+        self.connect(self, SIGNAL("PortRenameCallback(int, QString, QString)"), SLOT("slot_PortRenameCallback(int, QString, QString)"))
+        self.connect(self, SIGNAL("ShutdownCallback()"), SLOT("slot_ShutdownCallback()"))
 
         if (DBus.jack or DBus.a2j):
           DBus.bus.add_signal_receiver(self.DBusSignalReceiver, destination_keyword='dest', path_keyword='path',
@@ -191,26 +191,185 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         if (action == patchcanvas.ACTION_GROUP_INFO):
           pass
 
+        elif (action == patchcanvas.ACTION_GROUP_RENAME):
+          pass
+
+        elif (action == patchcanvas.ACTION_GROUP_SPLIT):
+          group_id = value1
+          patchcanvas.splitGroup(group_id)
+
+        elif (action == patchcanvas.ACTION_GROUP_JOIN):
+          group_id = value1
+          patchcanvas.joinGroup(group_id)
+
+        elif (action == patchcanvas.ACTION_PORT_INFO):
+          port_id = value1
+
+          for port in self.m_port_list:
+            if (port[iPortId] == port_id):
+              port_nameR = port[iPortNameR]
+              break
+          else:
+            return
+
+          port_ptr   = jacklib.port_by_name(jack.client, port_nameR)
+          port_flags = jacklib.port_flags(port_ptr)
+          group_name = port_nameR.split(":", 1)[0]
+
+          port_short_name = str(jacklib.port_short_name(port_ptr), encoding="ascii")
+
+          port_type_str = str(jacklib.port_type(port_ptr), encoding="ascii")
+          if (port_type_str == jacklib.JACK_DEFAULT_AUDIO_TYPE):
+            type_text = self.tr("JACK Audio")
+          elif (port_type_str == jacklib.JACK_DEFAULT_MIDI_TYPE):
+            type_text = self.tr("JACK MIDI")
+          else:
+            type_text = self.tr("Unknown")
+
+          aliases = jacklib.port_get_aliases(port_ptr)
+          if (aliases[0] == 1):
+            alias1text = aliases[1]
+            alias2text = "(none)"
+          elif (aliases[0] == 2):
+            alias1text = aliases[1]
+            alias2text = aliases[2]
+          else:
+            alias1text = "(none)"
+            alias2text = "(none)"
+
+          flags = []
+          if (port_flags & jacklib.JackPortIsInput):
+            flags.append(self.tr("Input"))
+          if (port_flags & jacklib.JackPortIsOutput):
+            flags.append(self.tr("Output"))
+          if (port_flags & jacklib.JackPortIsPhysical):
+            flags.append(self.tr("Physical"))
+          if (port_flags & jacklib.JackPortCanMonitor):
+            flags.append(self.tr("Can Monitor"))
+          if (port_flags & jacklib.JackPortIsTerminal):
+            flags.append(self.tr("Terminal"))
+
+          flags_text = ""
+          for flag in flags:
+            if (flags_text):
+              flags_text += " | "
+            flags_text += flag
+
+          port_latency = jacklib.port_get_latency(port_ptr)
+          port_total_latency = jacklib.port_get_total_latency(jack.client, port_ptr)
+
+          latency_text = self.tr("%.1f ms (%i frames)" % (port_latency*1000/self.m_sample_rate, port_latency))
+          latency_total_text = self.tr("%.1f ms (%i frames)"  % (port_total_latency*1000/self.m_sample_rate, port_total_latency))
+
+          info = self.tr("" 
+                  "<table>"
+                  "<tr><td align='right'><b>Group Name:</b></td><td>&nbsp;%s</td></tr>"
+                  "<tr><td align='right'><b>Port Name:</b></td><td>&nbsp;%s</td></tr>"
+                  "<tr><td align='right'><b>Full Port Name:</b></td><td>&nbsp;%s</td></tr>"
+                  "<tr><td align='right'><b>Port Alias #1:</b></td><td>&nbsp;%s</td></tr>"
+                  "<tr><td align='right'><b>Port Alias #2:</b></td><td>&nbsp;%s</td></tr>"
+                  "<tr><td colspan='2'>&nbsp;</td></tr>"
+                  "<tr><td align='right'><b>Port Flags:</b></td><td>&nbsp;%s</td></tr>"
+                  "<tr><td align='right'><b>Port Type:</b></td><td>&nbsp;%s</td></tr>"
+                  "<tr><td colspan='2'>&nbsp;</td></tr>"
+                  "<tr><td align='right'><b>Port Latency:</b></td><td>&nbsp;%s</td></tr>"
+                  "<tr><td align='right'><b>Total Port Latency:</b></td><td>&nbsp;%s</td></tr>"
+                  "</table>"
+                  % (group_name, port_short_name, port_nameR, alias1text, alias1text, flags_text, type_text, latency_text, latency_total_text))
+
+          QMessageBox.information(self, self.tr("Port Information"), info)
+
+        elif (action == patchcanvas.ACTION_PORT_RENAME):
+          port_id  = value1
+          new_name = value_str
+
+          for port in self.m_port_list:
+            if (port[iPortId] == port_id):
+              port_nameR = port[iPortNameR]
+              break
+          else:
+            return
+
+          port_ptr = jacklib.port_by_name(jack.client, port_nameR)
+          aliases  = jacklib.port_get_aliases(port_ptr)
+
+          if (aliases[0] == 2):
+            # JACK only allows 2 aliases, remove 2nd
+            jacklib.port_unset_alias(port_ptr, aliases[2])
+
+            # If we're going for 1st alias, unset it too
+            if (self.m_savedSettings["Main/JackPortAlias"] == 1):
+              jacklib.port_unset_alias(port_ptr, aliases[1])
+
+          elif (aliases[0] == 1 and self.m_savedSettings["Main/JackPortAlias"] == 1):
+            jacklib.port_unset_alias(port_ptr, aliases[1])
+
+          elif (aliases[0] == 0 and self.m_savedSettings["Main/JackPortAlias"] == 2):
+            # If 2nd alias is enabled and port had no previous aliases, set the 1st alias now
+            jacklib.port_set_alias(port_ptr, new_name)
+
+          if (jacklib.port_set_alias(port_ptr, new_name) == 0):
+            patchcanvas.renamePort(port_id, new_name)
+
+        elif (action == patchcanvas.ACTION_PORTS_CONNECT):
+          port_a_id = value1
+          port_b_id = value2
+          port_a_nameR = ""
+          port_b_nameR = ""
+
+          for port in self.m_port_list:
+            if (port[iPortId] == port_a_id):
+              port_a_nameR = port[iPortNameR]
+            if (port[iPortId] == port_b_id):
+              port_b_nameR = port[iPortNameR]
+
+          if (port_a_nameR and port_b_nameR):
+            jacklib.connect(jack.client, port_a_nameR, port_b_nameR)
+
+        elif (action == patchcanvas.ACTION_PORTS_DISCONNECT):
+          connection_id = value1
+
+          for connection in self.m_connection_list:
+            if (connection[iConnId] == connection_id):
+              port_a_id = connection[iConnOutput]
+              port_b_id = connection[iConnInput]
+              break
+          else:
+            return
+
+          port_a_nameR = ""
+          port_b_nameR = ""
+
+          for port in self.m_port_list:
+            if (port[iPortId] == port_a_id):
+              port_a_nameR = port[iPortNameR]
+            if (port[iPortId] == port_b_id):
+              port_b_nameR = port[iPortNameR]
+
+          if (port_a_nameR and port_b_nameR):
+            jacklib.disconnect(jack.client, port_a_nameR, port_b_nameR)
+
     def init_jack(self):
         if (not jack.client): # Jack Crash/Bug ?
           self.menu_Transport.setEnabled(False)
           self.group_transport.setEnabled(False)
           return
 
-        #buffer_size = int(jacklib.get_buffer_size(jack.client))
-        #realtime = int(jacklib.is_realtime(jack.client))
-        #sample_rate = int(jacklib.get_sample_rate(jack.client))
-        #self.xruns = 0
-        self.last_bpm = None
-        self.last_transport_state = None
+        self.m_xruns = 0
+        self.m_last_bpm = None
+        self.m_last_transport_state = None
 
-        #setBufferSize(self, buffer_size)
-        #setRealTime(self, realtime)
-        #setSampleRate(self, sample_rate)
-        #setXruns(self, self.xruns)
+        buffer_size = int(jacklib.get_buffer_size(jack.client))
+        sample_rate = int(jacklib.get_sample_rate(jack.client))
+        realtime    = bool(int(jacklib.is_realtime(jack.client)))
 
-        #refreshDSPLoad(self)
-        #refreshTransport(self)
+        setBufferSize(self, buffer_size)
+        setRealTime(self, realtime)
+        setSampleRate(self, sample_rate)
+        setXruns(self, 0)
+
+        refreshDSPLoad(self)
+        refreshTransport(self)
 
         self.init_callbacks()
         self.init_ports()
@@ -223,17 +382,15 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         if (not jack.client):
           return
 
-        #jacklib.set_buffer_size_callback(jack.client, self.JackBufferSizeCallback)
-        #jacklib.set_sample_rate_callback(jack.client, self.JackSampleRateCallback)
-        #jacklib.set_xrun_callback(jack.client, self.JackXRunCallback)
-
-        #jacklib.set_client_registration_callback(jack.client, self.JackClientRegistrationCallback)
+        jacklib.set_buffer_size_callback(jack.client, self.JackBufferSizeCallback, None)
+        jacklib.set_sample_rate_callback(jack.client, self.JackSampleRateCallback, None)
+        jacklib.set_xrun_callback(jack.client, self.JackXRunCallback, None)
         jacklib.set_port_registration_callback(jack.client, self.JackPortRegistrationCallback, None)
         jacklib.set_port_connect_callback(jack.client, self.JackPortConnectCallback, None)
-        #jacklib.on_shutdown(jack.client, self.JackShutdownCallback)
+        jacklib.on_shutdown(jack.client, self.JackShutdownCallback, None)
 
         #if (JACK2):
-          #jacklib.set_port_rename_callback(jack.client, self.JackPortRenameCallback)
+          #jacklib.set_port_rename_callback(jack.client, self.JackPortRenameCallback, None)
 
     def init_ports_prepare(self):
         pass
@@ -329,7 +486,11 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             port_name = aliases[1]
 
         port_flags = jacklib.port_flags(port_ptr)
-        group_name = port_name.split(":")[0]
+
+        if (":" in port_name):
+          group_name = port_name.split(":")[0]
+        else:
+          group_name = port_nameR.split(":")[0]
 
         if (port_flags & jacklib.JackPortIsInput):
           port_mode = patchcanvas.PORT_MODE_INPUT
@@ -347,7 +508,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
         else:
           haveA2J = False
-          port_short_name = port_name.split(":", 1)[1]
+          port_short_name = port_name.replace("%s:" % (group_name), "", 1)
 
           port_type_str = str(jacklib.port_type(port_ptr), encoding="ascii")
           if (port_type_str == jacklib.JACK_DEFAULT_AUDIO_TYPE):
@@ -478,8 +639,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         if (DBus.jack):
           self.cb_sample_rate.setEnabled(True)
 
-        self.pb_dsp_load.setValue(0)
         self.pb_dsp_load.setMaximum(100)
+        self.pb_dsp_load.setValue(0)
         self.pb_dsp_load.update()
 
         self.init_jack()
@@ -488,9 +649,20 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         if (haveDBus):
           self.DBusReconnect()
 
-        if (jack.client):
-          # client already closed
-          jack.client = None
+        # client already closed
+        jack.client = None
+
+        if (DBus.jack):
+          if (self.cb_buffer_size.isEnabled()):
+            setBufferSize(self, jacksettings.getBufferSize())
+          if (self.cb_sample_rate.isEnabled()):
+            setSampleRate(self, jacksettings.getSampleRate())
+          setRealTime(self, jacksettings.isRealtime())
+          setXruns(self, -1)
+        else:
+          self.cb_buffer_size.setEnabled(False)
+          self.cb_sample_rate.setEnabled(False)
+          self.menu_Jack_Buffer_Size.setEnabled(False)
 
         self.act_jack_render.setEnabled(False)
         self.b_jack_render.setEnabled(False)
@@ -498,22 +670,12 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.group_transport.setEnabled(False)
         self.menuJackServer(False)
 
-        #if (DBus.jack):
-          #setBufferSize(self, jacksettings.getBufferSize())
-          #setSampleRate(self, jacksettings.getSampleRate())
-          #setRealTime(self, jacksettings.isRealtime())
-          #setXruns(self, -1)
-        #else:
-          #self.cb_buffer_size.setEnabled(False)
-          #self.cb_sample_rate.setEnabled(False)
-          #self.menu_Jack_Buffer_Size.setEnabled(False)
-
-        #if (self.selected_transport_view == TRANSPORT_VIEW_HMS):
-          #self.label_time.setText("00:00:00")
-        #elif (self.selected_transport_view == TRANSPORT_VIEW_BBT):
-          #self.label_time.setText("000|0|0000")
-        #elif (self.selected_transport_view == TRANSPORT_VIEW_FRAMES):
-          #self.label_time.setText("000'000'000")
+        if (self.m_selected_transport_view == TRANSPORT_VIEW_HMS):
+          self.label_time.setText("00:00:00")
+        elif (self.m_selected_transport_view == TRANSPORT_VIEW_BBT):
+          self.label_time.setText("000|0|0000")
+        elif (self.m_selected_transport_view == TRANSPORT_VIEW_FRAMES):
+          self.label_time.setText("000'000'000")
 
         self.pb_dsp_load.setValue(0)
         self.pb_dsp_load.setMaximum(0)
@@ -570,45 +732,41 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
           DBus.a2j = None
           a2j_client_name = None
 
-    #def JackBufferSizeCallback(self, buffer_size, arg=None):
-        #if (DEBUG): print("JackBufferSizeCallback", buffer_size)
-        #self.emit(SIGNAL("BufferSizeCallback"), buffer_size)
-        #return 0
+    def JackBufferSizeCallback(self, buffer_size, arg):
+        if (DEBUG): print("JackBufferSizeCallback(%i)" % (buffer_size))
+        self.emit(SIGNAL("BufferSizeCallback(int)"), buffer_size)
+        return 0
 
-    #def JackSampleRateCallback(self, sample_rate, arg=None):
-        #if (DEBUG): print("JackSampleRateCallback", sample_rate)
-        #self.emit(SIGNAL("SampleRateCallback"), sample_rate)
-        #return 0
+    def JackSampleRateCallback(self, sample_rate, arg):
+        if (DEBUG): print("JackSampleRateCallback(%i)" % (sample_rate))
+        self.emit(SIGNAL("SampleRateCallback(int)"), sample_rate)
+        return 0
 
-    #def JackXRunCallback(self, arg=None):
-        #if (DEBUG): print("JackXRunCallback", self.xruns+1)
-        #self.emit(SIGNAL("XRunCallback"))
-        #return 0
-
-    #def JackClientRegistrationCallback(self, client_name, register_yesno, arg=None):
-        #if (DEBUG): print("JackClientRegistrationCallback", client_name, register_yesno)
-        #self.emit(SIGNAL("ClientRegistrationCallback"), client_name, register_yesno)
-        #return 0
+    def JackXRunCallback(self, arg):
+        if (DEBUG): print("JackXRunCallback()")
+        self.emit(SIGNAL("XRunCallback()"))
+        return 0
 
     def JackPortRegistrationCallback(self, port_id, register_yesno, arg):
-        if (DEBUG): print("JackPortRegistrationCallback", port_id, register_yesno)
+        if (DEBUG): print("JackPortRegistrationCallback(%i, %i)"  % (port_id, register_yesno))
         self.emit(SIGNAL("PortRegistrationCallback(int, bool)"), port_id, bool(register_yesno))
         return 0
 
     def JackPortConnectCallback(self, port_a, port_b, connect_yesno, arg):
-        if (DEBUG): print("JackPortConnectCallback", port_a, port_b, connect_yesno)
+        if (DEBUG): print("JackPortConnectCallback(%i, %i, %i)" % (port_a, port_b, connect_yesno))
         self.emit(SIGNAL("PortConnectCallback(int, int, bool)"), port_a, port_b, bool(connect_yesno))
         return 0
 
-    #def JackPortRenameCallback(self, port_id, old_name, new_name, arg=None):
-        #if (DEBUG): print("JackPortRenameCallback", port_id, old_name, new_name)
-        #self.emit(SIGNAL("PortRenameCallback"), port_id, old_name, new_name)
-        #return 0
+    def JackPortRenameCallback(self, port_id, old_name, new_name, arg=None):
+        # FIXME - check string args
+        if (DEBUG): print("JackPortRenameCallback(%i, %s, %s)" % (port_id, old_name, new_name))
+        self.emit(SIGNAL("PortRenameCallback(int, QString, QString)"), port_id, old_name, new_name)
+        return 0
 
-    #def JackShutdownCallback(self, arg=None):
-        #if (DEBUG): print("JackShutdownCallback")
-        #self.emit(SIGNAL("ShutdownCallback"))
-        #return 0
+    def JackShutdownCallback(self, arg=None):
+        if (DEBUG): print("JackShutdownCallback()")
+        self.emit(SIGNAL("ShutdownCallback()"))
+        return 0
 
     @pyqtSlot()
     def slot_JackServerStart(self):
@@ -623,6 +781,11 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
           return DBus.jack.StopServer()
         else:
           return False
+
+    @pyqtSlot()
+    def slot_JackClearXruns(self):
+        self.m_xruns = 0
+        setXruns(self, 0)
 
     @pyqtSlot()
     def slot_A2JBridgeStart(self):
@@ -648,21 +811,18 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
           elif (ask == QMessageBox.No):
             DBus.a2j.set_hw_export(False)
 
-    #def _BufferSizeCallback(self, buffer_size):
-        #setBufferSize(self, buffer_size)
+    @pyqtSlot()
+    def slot_XRunCallback(self):
+        self.m_xruns += 1
+        setXruns(self, self.m_xruns)
 
-    #def _SampleRateCallback(self, sample_rate):
-        #setSampleRate(self, sample_rate)
+    @pyqtSlot(int)
+    def slot_BufferSizeCallback(self, buffer_size):
+        setBufferSize(self, buffer_size)
 
-    #def _XRunCallback(self):
-        #self.xruns += 1
-        #setXruns(self, self.xruns)
-
-    #def _ClientRegistrationCallback(self, client_name, register_yesno):
-        #if (register_yesno):
-          #self.canvas_add_group(client_name)
-        #else:
-          #self.canvas_remove_group(client_name)
+    @pyqtSlot(int)
+    def slot_SampleRateCallback(self, sample_rate):
+        setSampleRate(self, sample_rate)
 
     @pyqtSlot(int, bool)
     def slot_PortRegistrationCallback(self, port_id_jack, register_yesno):
@@ -693,12 +853,15 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         else:
           self.canvas_disconnect_ports(port_a_nameR, port_b_nameR)
 
-    #def _PortRenameCallback(self, port_id, old_name, new_name):
+    @pyqtSlot(int, str, str)
+    def slot_PortRenameCallback(self, port_id, old_name, new_name):
+        pass
         #self.canvas_rename_port(port_id, new_name)
 
-    #def _ShutdownCallback(self):
-        #self.jackStopped()
-        #jack.client = None
+    @pyqtSlot()
+    def slot_ShutdownCallback(self):
+        self.jackStopped()
+        jack.client = None
 
     @pyqtSlot()
     def slot_configureCatia(self):
@@ -714,7 +877,15 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
           p_options.antialiasing     = self.m_savedSettings["Canvas/Antialiasing"]
           p_options.eyecandy         = self.m_savedSettings["Canvas/EyeCandy"]
 
+          p_features = patchcanvas.features_t()
+          p_features.group_info       = False
+          p_features.group_rename     = False
+          p_features.port_info        = True
+          p_features.port_rename      = bool(self.m_savedSettings["Main/JackPortAlias"] > 0)
+          p_features.handle_group_pos = True
+
           patchcanvas.setOptions(p_options)
+          patchcanvas.setFeatures(p_features)
           patchcanvas.init(self.scene, self.canvasCallback, DEBUG)
 
           self.init_ports()
@@ -730,7 +901,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.settings.setValue("Geometry", self.saveGeometry())
         self.settings.setValue("ShowToolbar", self.frame_toolbar.isVisible())
         self.settings.setValue("ShowStatusbar", self.frame_statusbar.isVisible())
-        #self.settings.setValue("TransportView", self.selected_transport_view)
+        self.settings.setValue("TransportView", self.m_selected_transport_view)
 
     def loadSettings(self, geometry):
         if (geometry):
@@ -744,7 +915,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
           self.act_settings_show_statusbar.setChecked(show_statusbar)
           self.frame_statusbar.setVisible(show_statusbar)
 
-          #transport_set_view(self, self.settings.value("TransportView", TRANSPORT_VIEW_HMS, type=int))
+          transport_set_view(self, self.settings.value("TransportView", TRANSPORT_VIEW_HMS, type=int))
 
         self.m_savedSettings = {
           "Main/RefreshInterval": self.settings.value("Main/RefreshInterval", 100, type=int),
@@ -758,6 +929,17 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
           "Canvas/TextAntialiasing": self.settings.value("Canvas/TextAntialiasing", True, type=bool),
           "Canvas/HighQualityAntialiasing": self.settings.value("Canvas/HighQualityAntialiasing", False, type=bool)
         }
+
+    def timerEvent(self, event):
+        if (event.timerId() == self.m_timer120):
+          if (jack.client):
+            refreshTransport(self)
+        elif (event.timerId() == self.m_timer600):
+          if (jack.client):
+            refreshDSPLoad(self)
+          else:
+            self.update()
+        QMainWindow.timerEvent(self, event)
 
     def closeEvent(self, event):
         self.saveSettings()
