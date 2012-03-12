@@ -62,6 +62,7 @@ jack_intclient_t = c_uint64
 jack_port_t = _jack_port
 jack_client_t = _jack_client
 jack_port_id_t = c_uint32
+jack_port_type_id_t = c_uint32 # JACK2 only
 jack_native_thread_t = pthread_t
 jack_options_t = c_enum # JackOptions
 jack_status_t = c_enum # JackStatus
@@ -235,6 +236,7 @@ JackSampleRateCallback = CFUNCTYPE(c_int, jack_nframes_t, c_void_p)
 JackPortRegistrationCallback = CFUNCTYPE(None, jack_port_id_t, c_int, c_void_p)
 JackClientRegistrationCallback = CFUNCTYPE(None, c_char_p, c_int, c_void_p)
 JackPortConnectCallback = CFUNCTYPE(None, jack_port_id_t, jack_port_id_t, c_int, c_void_p)
+JackPortRenameCallback = CFUNCTYPE(c_int, jack_port_id_t, c_char_p, c_char_p, c_void_p)
 JackFreewheelCallback = CFUNCTYPE(None, c_int, c_void_p)
 JackThreadCallback = CFUNCTYPE(c_void_p, c_void_p)
 JackShutdownCallback = CFUNCTYPE(None, c_void_p)
@@ -245,6 +247,11 @@ JackSessionCallback = CFUNCTYPE(None, jack_session_event_t, c_void_p)
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Functions
+
+def get_version_string(): # JACK2 only
+  jacklib.jack_get_version_string.argtypes = None
+  jacklib.jack_get_version_string.restype = c_char_p
+  return jacklib.jack_get_version_string()
 
 def client_open(client_name, options, status):
   jacklib.jack_client_open.argtypes = [c_char_p, jack_options_t, POINTER(jack_status_t)]
@@ -290,6 +297,11 @@ def deactivate(client):
   jacklib.jack_deactivate.argtypes = [POINTER(jack_client_t)]
   jacklib.jack_deactivate.restype = c_int
   return jacklib.jack_deactivate(client)
+
+def get_client_pid(name): # JACK2 only
+  jacklib.jack_get_client_pid.argtypes = [c_char_p]
+  jacklib.jack_get_client_pid.restype = c_int
+  return jacklib.jack_get_client_pid(name.encode("ascii"))
 
 def client_thread_id(client):
   jacklib.jack_client_thread_id.argtypes = [POINTER(jack_client_t)]
@@ -399,6 +411,13 @@ def set_port_connect_callback(client, connect_callback, arg):
   jacklib.jack_set_port_connect_callback.restype = c_int
   return jacklib.jack_set_port_connect_callback(client, _connect_callback, arg)
 
+def set_port_rename_callback(client, rename_callback, arg):
+  global _rename_callback
+  _rename_callback = JackPortRenameCallback(rename_callback)
+  jacklib.jack_set_port_rename_callback.argtypes = [POINTER(jack_client_t), JackPortRenameCallback, c_void_p]
+  jacklib.jack_set_port_rename_callback.restype = c_int
+  return jacklib.jack_set_port_rename_callback(client, _rename_callback, arg)
+
 def set_graph_order_callback(client, graph_callback, arg):
   global _graph_callback
   _graph_callback = JackGraphOrderCallback(graph_callback)
@@ -490,6 +509,11 @@ def port_type(port):
   jacklib.jack_port_type.argtypes = [POINTER(jack_port_t)]
   jacklib.jack_port_type.restype = c_char_p
   return jacklib.jack_port_type(port)
+
+def port_type_id(port): # JACK2 only
+  jacklib.jack_port_type_id.argtypes = [POINTER(jack_port_t)]
+  jacklib.jack_port_type_id.restype = jack_port_type_id_t
+  return jacklib.jack_port_type_id(port)
 
 def port_is_mine(client, port):
   jacklib.jack_port_is_mine.argtypes = [POINTER(jack_client_t), POINTER(jack_port_t)]

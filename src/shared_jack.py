@@ -27,8 +27,9 @@ from jacklib_helpers import *
 
 # Have JACK2 ?
 try:
-  jacklib.get_version_string()
   JACK2 = True
+  version_str = str(jacklib.get_version_string(), encoding="ascii")
+  print("Using JACK2, version %s" % (version_str))
 except:
   JACK2 = False
 

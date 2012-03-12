@@ -392,8 +392,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         jacklib.set_port_connect_callback(jack.client, self.JackPortConnectCallback, None)
         jacklib.on_shutdown(jack.client, self.JackShutdownCallback, None)
 
-        #if (JACK2):
-          #jacklib.set_port_rename_callback(jack.client, self.JackPortRenameCallback, None)
+        if (JACK2):
+          jacklib.set_port_rename_callback(jack.client, self.JackPortRenameCallback, None)
 
     def init_ports_prepare(self):
         pass
@@ -559,8 +559,13 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         else:
           self.canvas_remove_group(group_name)
 
-    #def canvas_rename_port(self, port_id, port_name):
-        #patchcanvas.renamePort(port_id, port_name.split(":")[-1])
+    #def canvas_rename_port(self, port_id, port_short_name):
+        #patchcanvas.renamePort(port_id, port_short_name)
+
+        #for port in self.m_port_list:
+          #if (port[iPortNameR] == old_name):
+            #port_id = port[iPortId]
+            #port[iPortNameR] = new_name
 
     def canvas_connect_ports(self, port_out_name, port_in_name):
         port_out_id = -1
@@ -744,9 +749,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         return 0
 
     def JackPortRenameCallback(self, port_id, old_name, new_name, arg=None):
-        # FIXME - check string args
         if (DEBUG): print("JackPortRenameCallback(%i, %s, %s)" % (port_id, old_name, new_name))
-        self.emit(SIGNAL("PortRenameCallback(int, QString, QString)"), port_id, old_name, new_name)
+        self.emit(SIGNAL("PortRenameCallback(int, QString, QString)"), port_id, str(old_name, encoding="ascii"), str(new_name, encoding="ascii"))
         return 0
 
     def JackShutdownCallback(self, arg=None):
@@ -840,8 +844,14 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
           self.canvas_disconnect_ports(port_a_nameR, port_b_nameR)
 
     @pyqtSlot(int, str, str)
-    def slot_PortRenameCallback(self, port_id, old_name, new_name):
-        pass
+    def slot_PortRenameCallback(self, port_id_jack, old_name, new_name):
+        print(port_id_jack, old_name, new_name)
+        #for port in self.m_port_list:
+          #if (port[iPortNameR] == old_name):
+            #port_id = port[iPortId]
+        #else:
+          #return
+
         #self.canvas_rename_port(port_id, new_name)
 
     @pyqtSlot()
@@ -960,7 +970,7 @@ if __name__ == '__main__':
         a2j_client_name = None
 
       if (DBus.jack or DBus.a2j):
-        string = "Catia - using DBus for "
+        string = "Using DBus for "
         if (DBus.jack):
           string += "JACK"
           if (DBus.a2j):
