@@ -11,12 +11,14 @@ all: build
 
 build: UI RES LANG
 
-UI: catarina tools
+UI: catarina catia tools
 
 catarina: src/ui_catarina.py \
 	src/ui_catarina_addgroup.py src/ui_catarina_removegroup.py src/ui_catarina_renamegroup.py \
 	src/ui_catarina_addport.py src/ui_catarina_removeport.py src/ui_catarina_renameport.py \
 	src/ui_catarina_connectports.py src/ui_catarina_disconnectports.py
+
+catia: src/ui_catia.py
 
 tools: \
 	src/ui_logs.py src/ui_render.py src/ui_xycontroller.py \
@@ -48,6 +50,9 @@ src/ui_catarina_connectports.py: src/ui/catarina_connectports.ui
 
 src/ui_catarina_disconnectports.py: src/ui/catarina_disconnectports.ui
 	$(PYUIC) -o src/ui_catarina_disconnectports.py $<
+
+src/ui_catia.py: src/ui/catia.ui
+	$(PYUIC) -o src/ui_catia.py $<
 
 src/ui_logs.py: src/ui/logs.ui
 	$(PYUIC) -o src/ui_logs.py $<

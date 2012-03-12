@@ -1,0 +1,1062 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CatiaMainW</class>
+ <widget class="QMainWindow" name="CatiaMainW">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>702</width>
+    <height>583</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Catia</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QFrame" name="frame_toolbar">
+      <layout class="QHBoxLayout" name="horizontalLayout_6">
+       <property name="spacing">
+        <number>4</number>
+       </property>
+       <property name="margin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QGroupBox" name="group_transport">
+         <property name="title">
+          <string>Transport</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QPushButton" name="b_transport_play">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Transport Play/Pause</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/media-playback-start.png</normaloff>:/16x16/media-playback-start.png</iconset>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_transport_stop">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Transport Stop</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/media-playback-stop.png</normaloff>:/16x16/media-playback-stop.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_transport_backwards">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Transport Backwards</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/media-seek-backward.png</normaloff>:/16x16/media-seek-backward.png</iconset>
+            </property>
+            <property name="autoRepeat">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_transport_forwards">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Transport Forwards</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/media-seek-forward.png</normaloff>:/16x16/media-seek-forward.png</iconset>
+            </property>
+            <property name="autoRepeat">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="Line" name="line">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_time">
+            <property name="font">
+             <font>
+              <family>DejaVu Sans Mono</family>
+              <pointsize>9</pointsize>
+             </font>
+            </property>
+            <property name="contextMenuPolicy">
+             <enum>Qt::CustomContextMenu</enum>
+            </property>
+            <property name="text">
+             <string>??:??:??</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="sb_bpm">
+            <property name="toolTip">
+             <string>Beats per Minute</string>
+            </property>
+            <property name="decimals">
+             <number>2</number>
+            </property>
+            <property name="maximum">
+             <double>999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>120.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="group_canvas">
+         <property name="title">
+          <string>Canvas</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QPushButton" name="b_canvas_zoom_fit">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Zoom Auto-Fit</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/zoom-fit-best.png</normaloff>:/16x16/zoom-fit-best.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_canvas_zoom_in">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Zoom In</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/zoom-in.png</normaloff>:/16x16/zoom-in.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_canvas_zoom_out">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Zoom Out</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/zoom-out.png</normaloff>:/16x16/zoom-out.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_canvas_zoom_100">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Zoom 100%</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/zoom-original.png</normaloff>:/16x16/zoom-original.png</iconset>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="group_tools">
+         <property name="title">
+          <string>Tools</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <widget class="QPushButton" name="b_jack_clear_xruns">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Clear Xruns</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/edit-clear.png</normaloff>:/16x16/edit-clear.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_jack_configure">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Configure JACK</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/configure.png</normaloff>:/16x16/configure.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_jack_render">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>JACK Render</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../icons/icons.qrc">
+              <normaloff>:/16x16/media-record.png</normaloff>:/16x16/media-record.png</iconset>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGraphicsView" name="graphicsView">
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOn</enum>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOn</enum>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QFrame" name="frame_statusbar">
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Sunken</enum>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <property name="margin">
+        <number>2</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="label_buffer_size">
+         <property name="text">
+          <string>Buffer Size:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="cb_buffer_size"/>
+       </item>
+       <item>
+        <widget class="Line" name="line_1">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_sample_rate">
+         <property name="text">
+          <string>Sample Rate:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="cb_sample_rate"/>
+       </item>
+       <item>
+        <widget class="Line" name="line_2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_realtime">
+         <property name="text">
+          <string> RT </string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line_3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="b_xruns">
+         <property name="text">
+          <string>? Xruns</string>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line_4">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QProgressBar" name="pb_dsp_load">
+         <property name="value">
+          <number>0</number>
+         </property>
+         <property name="format">
+          <string>DSP Load: %p%</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>702</width>
+     <height>18</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu_File">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="act_quit"/>
+   </widget>
+   <widget class="QMenu" name="menu_Help">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="act_help_about"/>
+    <addaction name="act_help_about_qt"/>
+   </widget>
+   <widget class="QMenu" name="menu_Transport">
+    <property name="title">
+     <string>&amp;Transport</string>
+    </property>
+    <addaction name="act_transport_play"/>
+    <addaction name="act_transport_stop"/>
+    <addaction name="act_transport_backwards"/>
+    <addaction name="act_transport_forwards"/>
+   </widget>
+   <widget class="QMenu" name="menu_Canvas">
+    <property name="title">
+     <string>&amp;Canvas</string>
+    </property>
+    <widget class="QMenu" name="menu_Canvas_Zoom">
+     <property name="title">
+      <string>Zoom</string>
+     </property>
+     <addaction name="act_canvas_zoom_fit"/>
+     <addaction name="separator"/>
+     <addaction name="act_canvas_zoom_in"/>
+     <addaction name="act_canvas_zoom_out"/>
+     <addaction name="act_canvas_zoom_100"/>
+    </widget>
+    <addaction name="act_canvas_arrange"/>
+    <addaction name="act_canvas_refresh"/>
+    <addaction name="menu_Canvas_Zoom"/>
+    <addaction name="separator"/>
+    <addaction name="act_canvas_print"/>
+    <addaction name="act_canvas_save_image"/>
+   </widget>
+   <widget class="QMenu" name="menu_Tools">
+    <property name="title">
+     <string>&amp;Tools</string>
+    </property>
+    <widget class="QMenu" name="menu_Jack_Server">
+     <property name="title">
+      <string>&amp;JACK Server</string>
+     </property>
+     <widget class="QMenu" name="menu_Jack_Buffer_Size">
+      <property name="title">
+       <string>Set Buffer Size</string>
+      </property>
+      <addaction name="act_jack_bf_16"/>
+      <addaction name="act_jack_bf_32"/>
+      <addaction name="act_jack_bf_64"/>
+      <addaction name="act_jack_bf_128"/>
+      <addaction name="act_jack_bf_256"/>
+      <addaction name="act_jack_bf_512"/>
+      <addaction name="act_jack_bf_1024"/>
+      <addaction name="act_jack_bf_2048"/>
+      <addaction name="act_jack_bf_4096"/>
+      <addaction name="act_jack_bf_8192"/>
+     </widget>
+     <addaction name="act_tools_jack_start"/>
+     <addaction name="act_tools_jack_stop"/>
+     <addaction name="menu_Jack_Buffer_Size"/>
+     <addaction name="separator"/>
+     <addaction name="act_jack_configure"/>
+    </widget>
+    <widget class="QMenu" name="menu_A2J_Bridge">
+     <property name="title">
+      <string>&amp;A2J Bridge</string>
+     </property>
+     <addaction name="act_tools_a2j_start"/>
+     <addaction name="act_tools_a2j_stop"/>
+     <addaction name="act_tools_a2j_export_hw"/>
+    </widget>
+    <addaction name="menu_Jack_Server"/>
+    <addaction name="menu_A2J_Bridge"/>
+    <addaction name="separator"/>
+    <addaction name="act_jack_render"/>
+    <addaction name="act_show_logs"/>
+    <addaction name="separator"/>
+    <addaction name="act_jack_clear_xruns"/>
+   </widget>
+   <widget class="QMenu" name="menu_Settings">
+    <property name="title">
+     <string>S&amp;ettings</string>
+    </property>
+    <addaction name="act_settings_show_toolbar"/>
+    <addaction name="act_settings_show_statusbar"/>
+    <addaction name="separator"/>
+    <addaction name="act_configure"/>
+   </widget>
+   <addaction name="menu_File"/>
+   <addaction name="menu_Transport"/>
+   <addaction name="menu_Canvas"/>
+   <addaction name="menu_Tools"/>
+   <addaction name="menu_Settings"/>
+   <addaction name="menu_Help"/>
+  </widget>
+  <action name="act_quit">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/application-exit.png</normaloff>:/16x16/application-exit.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Quit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="act_session_new">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/document-new.png</normaloff>:/16x16/document-new.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;New...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="act_session_open">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Open...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="act_session_save">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/document-save.png</normaloff>:/16x16/document-save.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="act_session_save_as">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/document-save-as.png</normaloff>:/16x16/document-save-as.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save &amp;As...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+S</string>
+   </property>
+  </action>
+  <action name="action1">
+   <property name="text">
+    <string>1</string>
+   </property>
+  </action>
+  <action name="act_help_about">
+   <property name="text">
+    <string>&amp;About Catia</string>
+   </property>
+  </action>
+  <action name="act_transport_play">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/media-playback-start.png</normaloff>:/16x16/media-playback-start.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Play</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+P</string>
+   </property>
+  </action>
+  <action name="act_transport_stop">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/media-playback-stop.png</normaloff>:/16x16/media-playback-stop.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Stop</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+X</string>
+   </property>
+  </action>
+  <action name="act_transport_backwards">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/media-seek-backward.png</normaloff>:/16x16/media-seek-backward.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Backwards</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+B</string>
+   </property>
+  </action>
+  <action name="act_transport_forwards">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/media-seek-forward.png</normaloff>:/16x16/media-seek-forward.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Forwards</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+F</string>
+   </property>
+  </action>
+  <action name="act_canvas_refresh">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/view-refresh.png</normaloff>:/16x16/view-refresh.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Refresh</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
+   </property>
+  </action>
+  <action name="act_canvas_arrange">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/view-sort-ascending.png</normaloff>:/16x16/view-sort-ascending.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Arrange</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+G</string>
+   </property>
+  </action>
+  <action name="act_canvas_zoom_fit">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/zoom-fit-best.png</normaloff>:/16x16/zoom-fit-best.png</iconset>
+   </property>
+   <property name="text">
+    <string>Auto-Fit</string>
+   </property>
+  </action>
+  <action name="act_canvas_zoom_in">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/zoom-in.png</normaloff>:/16x16/zoom-in.png</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom In</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl++</string>
+   </property>
+  </action>
+  <action name="act_canvas_zoom_out">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/zoom-out.png</normaloff>:/16x16/zoom-out.png</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom Out</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+-</string>
+   </property>
+  </action>
+  <action name="act_canvas_zoom_100">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/zoom-original.png</normaloff>:/16x16/zoom-original.png</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom 100%</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+1</string>
+   </property>
+  </action>
+  <action name="act_jack_clear_xruns">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/edit-clear.png</normaloff>:/16x16/edit-clear.png</iconset>
+   </property>
+   <property name="text">
+    <string>Clear &amp;Xruns</string>
+   </property>
+  </action>
+  <action name="act_jack_configure">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/configure.png</normaloff>:/16x16/configure.png</iconset>
+   </property>
+   <property name="text">
+    <string>Configure JACK</string>
+   </property>
+  </action>
+  <action name="actionConfigure_Canvas">
+   <property name="text">
+    <string>Configure Canvas</string>
+   </property>
+  </action>
+  <action name="act_settings_show_toolbar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Toolbar</string>
+   </property>
+  </action>
+  <action name="act_settings_show_statusbar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Statusbar</string>
+   </property>
+  </action>
+  <action name="act_configure">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/configure.png</normaloff>:/16x16/configure.png</iconset>
+   </property>
+   <property name="text">
+    <string>Configure Catia</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
+  </action>
+  <action name="act_tools_jack_start">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/media-playback-start.png</normaloff>:/16x16/media-playback-start.png</iconset>
+   </property>
+   <property name="text">
+    <string>Start JACK Server</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
+  </action>
+  <action name="act_tools_jack_stop">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/media-playback-stop.png</normaloff>:/16x16/media-playback-stop.png</iconset>
+   </property>
+   <property name="text">
+    <string>Stop JACK Server</string>
+   </property>
+   <property name="shortcut">
+    <string>F6</string>
+   </property>
+  </action>
+  <action name="act_jack_bf_32">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>32</string>
+   </property>
+  </action>
+  <action name="act_jack_bf_64">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>64</string>
+   </property>
+  </action>
+  <action name="act_jack_bf_128">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>128</string>
+   </property>
+  </action>
+  <action name="act_jack_bf_256">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>256</string>
+   </property>
+  </action>
+  <action name="act_jack_bf_512">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>512</string>
+   </property>
+  </action>
+  <action name="act_jack_bf_1024">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>1024</string>
+   </property>
+  </action>
+  <action name="act_jack_bf_2048">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>2048</string>
+   </property>
+  </action>
+  <action name="act_jack_bf_4096">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>4096</string>
+   </property>
+  </action>
+  <action name="act_jack_bf_8192">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>8192</string>
+   </property>
+  </action>
+  <action name="act_tools_a2j_start">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/media-playback-start.png</normaloff>:/16x16/media-playback-start.png</iconset>
+   </property>
+   <property name="text">
+    <string>Start A2J Bridge</string>
+   </property>
+   <property name="shortcut">
+    <string>F7</string>
+   </property>
+  </action>
+  <action name="act_tools_a2j_stop">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/media-playback-stop.png</normaloff>:/16x16/media-playback-stop.png</iconset>
+   </property>
+   <property name="text">
+    <string>Stop A2J Bridge</string>
+   </property>
+   <property name="shortcut">
+    <string>F8</string>
+   </property>
+  </action>
+  <action name="act_tools_a2j_export_hw">
+   <property name="text">
+    <string>Export Hardware Ports...</string>
+   </property>
+  </action>
+  <action name="act_session_save_as_template">
+   <property name="text">
+    <string>Save As &amp;Template...</string>
+   </property>
+  </action>
+  <action name="act_canvas_print">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/document-print.png</normaloff>:/16x16/document-print.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Print...</string>
+   </property>
+  </action>
+  <action name="act_canvas_save_image">
+   <property name="text">
+    <string>Save &amp;Image...</string>
+   </property>
+  </action>
+  <action name="act_canvas_undo">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/16x16/edit-undo.png</normaloff>:/16x16/edit-undo.png</iconset>
+   </property>
+   <property name="text">
+    <string>Undo</string>
+   </property>
+  </action>
+  <action name="act_canvas_redo">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/16x16/edit-redo.png</normaloff>:/16x16/edit-redo.png</iconset>
+   </property>
+   <property name="text">
+    <string>Redo</string>
+   </property>
+  </action>
+  <action name="act_help_about_qt">
+   <property name="text">
+    <string>About Qt</string>
+   </property>
+  </action>
+  <action name="act_canvas_configure">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/configure.png</normaloff>:/16x16/configure.png</iconset>
+   </property>
+   <property name="text">
+    <string>Configure Canvas</string>
+   </property>
+  </action>
+  <action name="actionSync_Now">
+   <property name="text">
+    <string>Sync Now</string>
+   </property>
+  </action>
+  <action name="action_session_recent_none">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>(none)</string>
+   </property>
+  </action>
+  <action name="act_jack_render">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/media-record.png</normaloff>:/16x16/media-record.png</iconset>
+   </property>
+   <property name="text">
+    <string>JACK &amp;Render</string>
+   </property>
+  </action>
+  <action name="act_show_logs">
+   <property name="text">
+    <string>&amp;Logs</string>
+   </property>
+  </action>
+  <action name="act_jack_bf_16">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>16</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="../icons/icons.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>act_quit</sender>
+   <signal>triggered()</signal>
+   <receiver>CatiaMainW</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>336</x>
+     <y>291</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>act_settings_show_toolbar</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>frame_toolbar</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>336</x>
+     <y>60</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>act_settings_show_statusbar</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>frame_statusbar</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>336</x>
+     <y>563</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

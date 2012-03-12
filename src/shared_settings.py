@@ -34,7 +34,21 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
-        self.ms_AutoHideGroups = bool(appName == "catarina")
+        # Load app-specific settings
+        self.ms_AutoHideGroups = True
+
+        if (appName == "catarina"):
+          self.ms_AutoHideGroups = False
+          self.lw_page.hideRow(0)
+          self.lw_page.hideRow(2)
+          self.lw_page.hideRow(3)
+          self.lw_page.setCurrentCell(1, 0)
+
+        elif (appName == "catia"):
+          self.group_main_paths.setVisible(False)
+          self.lw_page.hideRow(2)
+          self.lw_page.hideRow(3)
+          self.lw_page.setCurrentCell(0, 0)
 
         self.settings = self.parent().settings
         self.loadSettings()
@@ -49,13 +63,14 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         self.connect(self.buttonBox.button(QDialogButtonBox.Reset), SIGNAL("clicked()"), SLOT("slot_resetSettings()"))
         self.connect(self, SIGNAL("accepted()"), SLOT("slot_saveSettings()"))
 
-    def hideRow(self, row):
-        self.lw_page.hideRow(row)
-
-    def setCurrentRow(self, row):
-        self.lw_page.setCurrentCell(row, 0)
-
     def loadSettings(self):
+        # ------------------------
+        # Page 0
+        self.sb_gui_refresh.setValue(self.settings.value("Main/RefreshInterval", 120, type=int))
+        self.cb_jack_port_alias.setCurrentIndex(self.settings.value("Main/JackPortAlias", 2, type=int))
+
+        # ------------------------
+        # Page 1
         self.cb_canvas_hide_groups.setChecked(self.settings.value("Canvas/AutoHideGroups", self.ms_AutoHideGroups, type=bool))
         self.cb_canvas_bezier_lines.setChecked(self.settings.value("Canvas/UseBezierLines", True, type=bool))
         self.cb_canvas_eyecandy.setCheckState(self.settings.value("Canvas/EyeCandy", CANVAS_EYECANDY_SMALL, type=int))
@@ -74,6 +89,13 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
 
     @pyqtSlot()
     def slot_saveSettings(self):
+        # ------------------------
+        # Page 0
+        self.settings.setValue("Main/RefreshInterval", self.sb_gui_refresh.value())
+        self.settings.setValue("Main/JackPortAlias", self.cb_jack_port_alias.currentIndex())
+
+        # ------------------------
+        # Page 1
         self.settings.setValue("Canvas/Theme", self.cb_canvas_theme.currentText())
         self.settings.setValue("Canvas/AutoHideGroups", self.cb_canvas_hide_groups.isChecked())
         self.settings.setValue("Canvas/UseBezierLines", self.cb_canvas_bezier_lines.isChecked())
@@ -87,6 +109,8 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
 
     @pyqtSlot()
     def slot_resetSettings(self):
+        self.sb_gui_refresh.setValue(120)
+        self.cb_jack_port_alias.setCurrentIndex(1)
         self.cb_canvas_theme.setCurrentIndex(0)
         self.cb_canvas_hide_groups.setChecked(self.ms_AutoHideGroups)
         self.cb_canvas_bezier_lines.setChecked(True)

@@ -546,13 +546,13 @@ def port_get_aliases(port):
   # Instead, aliases will be passed in return value, in form of (int ret, str alias1, str alias2)
   name_size = port_name_size()
   alias_type = c_char_p*2
-  aliases = alias_type(" "*name_size, " "*name_size)
+  aliases = alias_type(" ".encode("ascii")*name_size, " ".encode("ascii")*name_size)
 
   jacklib.jack_port_get_aliases.argtypes = [POINTER(jack_port_t), POINTER(ARRAY(c_char_p, 2))]
   jacklib.jack_port_get_aliases.restype = c_int
 
   ret = jacklib.jack_port_get_aliases(port, pointer(aliases))
-  return (ret, aliases[0], aliases[1])
+  return (ret, str(aliases[0], encoding="ascii"), str(aliases[1], encoding="ascii"))
 
 def port_request_monitor(port, onoff):
   jacklib.jack_port_request_monitor.argtypes = [POINTER(jack_port_t), c_int]

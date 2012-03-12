@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # PatchCanvas test application
-# Copyright (C) 2012 Filipe Coelho <falktx@gmail.com>
+# Copyright (C) 2010-2012 Filipe Coelho <falktx@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -567,7 +567,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
 
         self.scene = patchcanvas.PatchScene(self, self.graphicsView)
         self.graphicsView.setScene(self.scene)
-        self.graphicsView.setRenderHint(QPainter.Antialiasing, bool(self.m_savedSettings["Canvas/Antialiasing"] == Qt.Checked))
+        self.graphicsView.setRenderHint(QPainter.Antialiasing, bool(self.m_savedSettings["Canvas/Antialiasing"] == patchcanvas.ANTIALIASING_FULL))
         self.graphicsView.setRenderHint(QPainter.TextAntialiasing, self.m_savedSettings["Canvas/TextAntialiasing"])
         if (self.m_savedSettings["Canvas/UseOpenGL"] and hasGL):
           self.graphicsView.setViewport(QGLWidget(self.graphicsView))
@@ -1156,10 +1156,6 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
     @pyqtSlot()
     def slot_configureCatarina(self):
         dialog = SettingsW(self, "catarina", hasGL)
-        dialog.hideRow(0)
-        dialog.hideRow(2)
-        dialog.hideRow(3)
-        dialog.setCurrentRow(1)
         if (dialog.exec_()):
           self.loadSettings(False)
           patchcanvas.clear()
@@ -1222,7 +1218,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setApplicationName("Catarina")
     app.setApplicationVersion(VERSION)
-    app.setOrganizationName("falkTX")
+    app.setOrganizationName("Cadence")
     app.setWindowIcon(QIcon(":/scalable/catarina.svg"))
 
     # Show GUI

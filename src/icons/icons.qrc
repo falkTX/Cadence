@@ -29,6 +29,7 @@
             <file>16x16/zoom-out.png</file>
 
             <file>48x48/catarina.png</file>
+            <file>48x48/catia.png</file>
             <file>48x48/canvas.png</file>
             <file>48x48/exec.png</file>
             <file>48x48/jack.png</file>
@@ -36,6 +37,7 @@
             <file>48x48/media-record.png</file>
 
             <file>scalable/catarina.svg</file>
+            <file>scalable/catia.svg</file>
             <file>scalable/jack.svg</file>
             <file>scalable/pb_generic.svg</file>
             <file>scalable/pb_hardware.svg</file>
