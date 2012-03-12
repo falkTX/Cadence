@@ -76,8 +76,6 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.m_xruns = 0
         self.m_buffer_size = 0
         self.m_sample_rate = 0
-        self.m_last_buffer_size = 0
-        self.m_last_sample_rate = 0
         self.m_next_sample_rate = 0
 
         self.m_last_bpm = None
@@ -275,17 +273,22 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
                   "<tr><td align='right'><b>Port Latency:</b></td><td>&nbsp;%s</td></tr>"
                   "<tr><td align='right'><b>Total Port Latency:</b></td><td>&nbsp;%s</td></tr>"
                   "</table>"
-                  % (group_name, port_short_name, port_nameR, alias1text, alias1text, flags_text, type_text, latency_text, latency_total_text))
+                  % (group_name, port_short_name, port_nameR, alias1text, alias2text, flags_text, type_text, latency_text, latency_total_text))
 
           QMessageBox.information(self, self.tr("Port Information"), info)
 
         elif (action == patchcanvas.ACTION_PORT_RENAME):
-          port_id  = value1
-          new_name = value_str
+          port_id = value1
+          port_short_name = unicode2ascii(value_str)
 
           for port in self.m_port_list:
             if (port[iPortId] == port_id):
               port_nameR = port[iPortNameR]
+              if (port_nameR.split(":", 1)[0] == a2j_client_name):
+                a2j_split = port_nameR.split(":", 3)
+                port_name = "%s:%s: %s" % (a2j_split[0], a2j_split[1], port_short_name)
+              else:
+                port_name = "%s:%s" % (port[iPortGroupName], port_short_name)
               break
           else:
             return
@@ -304,12 +307,12 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
           elif (aliases[0] == 1 and self.m_savedSettings["Main/JackPortAlias"] == 1):
             jacklib.port_unset_alias(port_ptr, aliases[1])
 
-          elif (aliases[0] == 0 and self.m_savedSettings["Main/JackPortAlias"] == 2):
+          if (aliases[0] == 0 and self.m_savedSettings["Main/JackPortAlias"] == 2):
             # If 2nd alias is enabled and port had no previous aliases, set the 1st alias now
-            jacklib.port_set_alias(port_ptr, new_name)
+            jacklib.port_set_alias(port_ptr, port_name)
 
-          if (jacklib.port_set_alias(port_ptr, new_name) == 0):
-            patchcanvas.renamePort(port_id, new_name)
+          if (jacklib.port_set_alias(port_ptr, port_name) == 0):
+            patchcanvas.renamePort(port_id, port_short_name)
 
         elif (action == patchcanvas.ACTION_PORTS_CONNECT):
           port_a_id = value1
@@ -474,7 +477,6 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         port_id  = self.m_last_port_id
         group_id = -1
 
-        # Use the real port_name on m_port_list
         port_nameR = port_name
 
         alias_n = self.m_savedSettings["Main/JackPortAlias"]
@@ -486,11 +488,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             port_name = aliases[1]
 
         port_flags = jacklib.port_flags(port_ptr)
-
-        if (":" in port_name):
-          group_name = port_name.split(":")[0]
-        else:
-          group_name = port_nameR.split(":")[0]
+        group_name = port_name.split(":", 1)[0]
 
         if (port_flags & jacklib.JackPortIsInput):
           port_mode = patchcanvas.PORT_MODE_INPUT
@@ -501,9 +499,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
         if (group_name == a2j_client_name):
           haveA2J    = True
-          port_name  = str(jacklib.port_short_name(port_ptr), encoding="ascii")
           port_type  = patchcanvas.PORT_TYPE_MIDI_A2J
-          group_name = port_name.split(" [", 1)[0]
+          group_name = port_name.replace("%s:" % (a2j_client_name), "", 1).split(" [", 1)[0]
           port_short_name = port_name.split("): ", 1)[1]
 
         else:
@@ -519,17 +516,6 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             port_type = patchcanvas.PORT_TYPE_NULL
 
         for group in self.m_group_list:
-          #if (haveA2J):
-            #if (" VST" in group_name and group_name[0].isdigit()):
-              #group_name = group_name.replace(group_name[0], "", 1) # <- TESTING (useful for vsthost/dssi-vst)
-
-            #if (group_name.lower() == group[1].lower() or # <- TESTING (useful for LMMS)
-                #group_name.split(" ")[0].lower() == group[1].split(" ")[0].lower() or # <- TESTING (useful for Renoise and Loomer plugins)
-                #"vst_"+group_name.rsplit(" ",1)[0].replace(" ","").lower() == group[1] # <- TESTING (useful for vsthost/dssi-vst)
-                #):
-              #group_id = group[0]
-              #break
-
           if (group[iGroupName] == group_name):
             group_id = group[iGroupId]
             break
@@ -681,8 +667,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.pb_dsp_load.setMaximum(0)
         self.pb_dsp_load.update()
 
-        #if (self.next_sample_rate):
-          #jack_sample_rate(self, self.next_sample_rate)
+        if (self.m_next_sample_rate):
+          jack_sample_rate(self, self.m_next_sample_rate)
 
         patchcanvas.clear()
 
@@ -915,7 +901,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
           self.act_settings_show_statusbar.setChecked(show_statusbar)
           self.frame_statusbar.setVisible(show_statusbar)
 
-          transport_set_view(self, self.settings.value("TransportView", TRANSPORT_VIEW_HMS, type=int))
+          setTransportView(self, self.settings.value("TransportView", TRANSPORT_VIEW_HMS, type=int))
 
         self.m_savedSettings = {
           "Main/RefreshInterval": self.settings.value("Main/RefreshInterval", 100, type=int),

@@ -18,6 +18,7 @@
 
 # Imports (Global)
 import os, sys
+from unicodedata import normalize
 from PyQt4.QtCore import qWarning, SIGNAL, SLOT
 from PyQt4.QtGui import QIcon, QMessageBox, QFileDialog
 
@@ -155,8 +156,8 @@ MIDI_CC_LIST = (
   "0x5F FX 5 Depth [Phaser]"
   )
 
-# Check if a string is a number (floats support)
-def is_number(string):
+# Check if a string is a number (float support)
+def isNumber(string):
   if (string):
     if (string.startswith("-")):
       string = string.replace("-", "", 1)
@@ -178,6 +179,10 @@ def toList(value):
         return [value]
     else:
         return value
+
+# Remove/convert non-ascii chars from a string
+def unicode2ascii(string):
+  return normalize('NFKD', string).encode("ascii", "ignore").decode("utf-8")
 
 # Get Icon from user theme, using our own as backup (Oxygen)
 def getIcon(icon, size=16):

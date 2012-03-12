@@ -863,7 +863,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
                 elif (tag == "data"):
                   group_data   = text.split(":")
                   if (len(group_data) == 7 and group_data[0].isdigit() and group_data[1].isdigit() and group_data[2].isdigit() and
-                      is_number(group_data[3]) and is_number(group_data[4]) and is_number(group_data[5]) and is_number(group_data[6])):
+                      isNumber(group_data[3]) and isNumber(group_data[4]) and isNumber(group_data[5]) and isNumber(group_data[6])):
                     group_obj = [None, None, None, None]
                     group_obj[iGroupId]    = int(group_data[0])
                     group_obj[iGroupName]  = group_name

@@ -90,93 +90,44 @@ jack.client = None
 # -------------------------------------------------------------
 # Property change calls
 
-#def jack_buffer_size(self, buffer_size):
-    #if (buffer_size != self.buffer_size):
-      #if (jack.client):
-        #jacklib.set_buffer_size(jack.client, buffer_size)
-      #else:
-        #jacksettings.setBufferSize(buffer_size)
+def jack_buffer_size(self, buffer_size):
+    if (self.m_buffer_size != buffer_size):
+      if (jack.client):
+        failed = bool(jacklib.set_buffer_size(jack.client, buffer_size) != 0)
+      else:
+        failed = bool(jacksettings.setBufferSize(buffer_size))
 
-    #else:
-      ## Make GUIs show previous value
-      #if ("setBufferSize" in dir(self)):
-        #QTimer.singleShot(100, lambda bf=buffer_size: self.setBufferSize(bf))
-      #else:
-        #QTimer.singleShot(100, lambda parent=self, bf=buffer_size: setBufferSize(parent, bf))
+      if (failed):
+        print("Failed to change buffer-size as %i, reset to %i" % (buffer_size, self.m_buffer_size))
+        setBufferSize(self, self.m_buffer_size, True)
 
-#def jack_sample_rate(self, sample_rate):
-    #if (jack.client):
-      #setSampleRate(self, sample_rate, True)
-    #else:
-      #jacksettings.setSampleRate(sample_rate)
-      #setSampleRate(self, sample_rate)
+def jack_sample_rate(self, sample_rate):
+    if (jack.client):
+      setSampleRate(self, sample_rate, True)
+    else:
+      if (jacksettings.setSampleRate(sample_rate)):
+        setSampleRate(self, sample_rate)
 
-#def jack_buffer_size_cb(self, text):
-    #if (text.isEmpty()): return
-    #jack_buffer_size(self, int(QStringStr(text).replace("*","")))
+@pyqtSlot(str)
+def slot_jackBufferSize_ComboBox(self, text):
+    if (not text or text.isdigit() == False):
+      return
+    jack_buffer_size(self, int(text))
 
-#def jack_buffer_size_m(self, buffer_size):
-    #jack_buffer_size(self, buffer_size)
+@pyqtSlot(int)
+def slot_jackBufferSize_Menu(self, buffer_size):
+    jack_buffer_size(self, buffer_size)
 
-#def jack_sample_rate_cb(self, text):
-    #if (text.isEmpty()): return
-    #jack_sample_rate(self, int(QStringStr(text).replace("*","")))
+@pyqtSlot(str)
+def slot_jackSampleRate_ComboBox(self, text):
+    if (not text or text.isdigit() == False):
+      return
+    jack_sample_rate(self, int(text))
 
 # -------------------------------------------------------------
 # Transport calls
 
-#def transport_playpause(self, play):
-    #if (not jack.client): return
-    #if (play):
-      #jacklib.transport_start(jack.client)
-    #else:
-      #jacklib.transport_stop(jack.client)
-    #refreshTransport(self)
-
-#def transport_stop(self):
-    #if (not jack.client): return
-    #jacklib.transport_stop(jack.client)
-    #jacklib.transport_locate(jack.client, 0)
-    #refreshTransport(self)
-
-#def transport_backwards(self):
-    #if (not jack.client): return
-    #new_frame = int(jacklib.get_current_transport_frame(jack.client))-100000
-    #if (new_frame < 0): new_frame = 0
-    #jacklib.transport_locate(jack.client, new_frame)
-
-#def transport_forwards(self):
-    #if (not jack.client): return
-    #new_frame = int(jacklib.get_current_transport_frame(jack.client))+100000
-    #jacklib.transport_locate(jack.client, new_frame)
-
-#def transport_view_menu(self):
-    #menu = QMenu(self)
-    #act_t_hms = menu.addAction("Hours:Minutes:Seconds")
-    #act_t_bbt = menu.addAction("Beat:Bar:Tick")
-    #act_t_fr  = menu.addAction("Frames")
-
-    #act_t_hms.setCheckable(True)
-    #act_t_bbt.setCheckable(True)
-    #act_t_fr.setCheckable(True)
-
-    #if (self.selected_transport_view == TRANSPORT_VIEW_HMS):
-      #act_t_hms.setChecked(True)
-    #elif (self.selected_transport_view == TRANSPORT_VIEW_BBT):
-      #act_t_bbt.setChecked(True)
-    #elif (self.selected_transport_view == TRANSPORT_VIEW_FRAMES):
-      #act_t_fr.setChecked(True)
-
-    #act_selected = menu.exec_(QCursor().pos())
-
-    #if (act_selected == act_t_hms):
-      #transport_set_view(self, TRANSPORT_VIEW_HMS)
-    #elif (act_selected == act_t_bbt):
-      #transport_set_view(self, TRANSPORT_VIEW_BBT)
-    #elif (act_selected == act_t_fr):
-      #transport_set_view(self, TRANSPORT_VIEW_FRAMES)
-
-def transport_set_view(self, view):
+def setTransportView(self, view):
     if (view == TRANSPORT_VIEW_HMS):
       self.m_selected_transport_view = TRANSPORT_VIEW_HMS
       self.label_time.setMinimumWidth(QFontMetrics(self.label_time.font()).width("00:00:00")+3)
@@ -189,50 +140,64 @@ def transport_set_view(self, view):
     else:
       self.m_selected_transport_view = None
 
-#def transport_bpm_set(self, bpm):
-    #if (not jack.client): return
-    #if (self.last_bpm != bpm):
-      #pos = jacklib.jack_position_t
-      #pos.valid = 0
-      #state = jacklib.transport_query(jack.client, pos)
+@pyqtSlot(bool)
+def slot_transportPlayPause(self, play):
+    if (not jack.client): return
+    if (play):
+      jacklib.transport_start(jack.client)
+    else:
+      jacklib.transport_stop(jack.client)
+    refreshTransport(self)
 
-      #pos.beats_per_minute = bpm
+@pyqtSlot()
+def slot_transportStop(self):
+    if (not jack.client): return
+    jacklib.transport_stop(jack.client)
+    jacklib.transport_locate(jack.client, 0)
+    refreshTransport(self)
 
-      #if (state > jacklib.TransportStopped):
-        #pos.frame += self.buffer_size
+@pyqtSlot()
+def slot_transportBackwards(self):
+    if (not jack.client): return
+    new_frame = jacklib.get_current_transport_frame(jack.client)-100000
+    if (new_frame < 0): new_frame = 0
+    jacklib.transport_locate(jack.client, new_frame)
 
-      #if (not pos.valid & jacklib.PositionBBT):
-        #pos.bar = 1
-        #pos.beat = 1
-        #pos.tick = 0
-        #pos.valid = jacklib.PositionBBT
-        #QTimer.singleShot(self.buffer_size, transport_fix)
+@pyqtSlot()
+def slot_transportForwards(self):
+    if (not jack.client): return
+    new_frame = jacklib.get_current_transport_frame(jack.client)+100000
+    jacklib.transport_locate(jack.client, new_frame)
 
-      #jacklib.transport_reposition(jack.client, pos)
+@pyqtSlot()
+def slot_transportViewMenu(self):
+    menu = QMenu(self)
+    act_t_hms = menu.addAction("Hours:Minutes:Seconds")
+    act_t_bbt = menu.addAction("Beat:Bar:Tick")
+    act_t_fr  = menu.addAction("Frames")
 
-      #self.last_bpm = bpm
+    act_t_hms.setCheckable(True)
+    act_t_bbt.setCheckable(True)
+    act_t_fr.setCheckable(True)
 
-#def transport_fix():
-    #pos = jacklib.jack_position_t
-    #pos.valid = 0
-    #jacklib.transport_query(jack.client, pos)
-    #pos.frame += jacklib.get_buffer_size(jack.client)
-    #jacklib.transport_reposition(jack.client, pos)
+    if (self.m_selected_transport_view == TRANSPORT_VIEW_HMS):
+      act_t_hms.setChecked(True)
+    elif (self.m_selected_transport_view == TRANSPORT_VIEW_BBT):
+      act_t_bbt.setChecked(True)
+    elif (self.m_selected_transport_view == TRANSPORT_VIEW_FRAMES):
+      act_t_fr.setChecked(True)
+
+    act_selected = menu.exec_(QCursor().pos())
+
+    if (act_selected == act_t_hms):
+      setTransportView(self, TRANSPORT_VIEW_HMS)
+    elif (act_selected == act_t_bbt):
+      setTransportView(self, TRANSPORT_VIEW_BBT)
+    elif (act_selected == act_t_fr):
+      setTransportView(self, TRANSPORT_VIEW_FRAMES)
 
 # -------------------------------------------------------------
 # Refresh GUI stuff
-
-#def refreshBufferSize(self):
-    #if (self.last_buffer_size != self.buffer_size):
-      #setBufferSize(self, self.buffer_size)
-
-    #self.last_buffer_size = self.buffer_size
-
-#def refreshSampleRate(self):
-    #if (self.last_sample_rate != self.sample_rate):
-      #setSampleRate(self, self.sample_rate)
-
-    #self.last_sample_rate = self.sample_rate
 
 def refreshDSPLoad(self):
     if (not jack.client): return
@@ -250,44 +215,26 @@ def refreshTransport(self):
       secs  = time % 60
       mins  = (time / 60) % 60
       hrs   = (time / 3600) % 60
-      secH  = minH = hrsH = ""
-      if secs < 10: secH = "0"
-      if mins < 10: minH = "0"
-      if hrs  < 10: hrsH = "0"
-      self.label_time.setText("%s%i:%s%i:%s%i" % (hrsH, hrs, minH, mins, secH, secs))
+      self.label_time.setText("%02i:%02i:%02i" % (hrs, mins, secs))
 
-    #elif (self.m_selected_transport_view == TRANSPORT_VIEW_BBT):
-      #if (pos.valid & jacklib.PositionBBT):
-        #bar  = pos.bar
-        #beat = pos.beat
-        #tick = pos.tick
-        #barH = beatH = tickH = ""
-        #if (bar == 0):
-          #beat = 0
-          #tick = 0
-          #barH = "00"
-        #elif bar < 10: barH = "00"
-        #elif bar < 100: barH = "0"
-        #if tick < 10: tickH = "000"
-        #elif tick < 100: tickH = "00"
-        #elif tick < 1000: tickH = "0"
-        #self.label_time.setText(barH+str(bar)+"|"+beatH+str(beat)+"|"+tickH+str(tick))
-      #else:
-        #self.label_time.setText("000|00|0000")
+    elif (self.m_selected_transport_view == TRANSPORT_VIEW_BBT):
+      if (pos.valid & jacklib.JackPositionBBT):
+        bar  = pos.bar
+        beat = pos.beat
+        tick = pos.tick
+        if (bar == 0):
+          beat = 0
+          tick = 0
+        self.label_time.setText("%03i|%02i|%04i" % (bar, beat, tick))
+      else:
+        self.label_time.setText("000|00|0000")
 
-    #elif (self.m_selected_transport_view == TRANSPORT_VIEW_FRAMES):
-      #frame  = pos.frame
-      #frame1 = pos.frame % 1000
-      #frame2 = (pos.frame / 1000) % 1000
-      #frame3 = (pos.frame / 1000000) % 1000
-      #frame1h = frame2h = frame3h = ""
-      #if frame1 < 10: frame1h = "00"
-      #elif frame1 < 100: frame1h = "0"
-      #if frame2 < 10: frame2h = "00"
-      #elif frame2 < 100: frame2h = "0"
-      #if frame3 < 10: frame3h = "00"
-      #elif frame3 < 100: frame3h = "0"
-      #self.label_time.setText(frame3h+str(frame3)+"'"+frame2h+str(frame2)+"'"+frame1h+str(frame1))
+    elif (self.m_selected_transport_view == TRANSPORT_VIEW_FRAMES):
+      frame  = pos.frame
+      frame1 = pos.frame % 1000
+      frame2 = (pos.frame / 1000) % 1000
+      frame3 = (pos.frame / 1000000) % 1000
+      self.label_time.setText("%03i'%03i'%03i" % (frame3, frame2, frame1))
 
     if (pos.valid & jacklib.JackPositionBBT):
       if (self.m_last_bpm != pos.beats_per_minute):
@@ -320,8 +267,8 @@ def refreshTransport(self):
 # -------------------------------------------------------------
 # Set GUI stuff
 
-def setBufferSize(self, buffer_size):
-    if (self.m_buffer_size == buffer_size):
+def setBufferSize(self, buffer_size, forced=False):
+    if (self.m_buffer_size == buffer_size and not forced):
       return
 
     self.m_buffer_size = buffer_size
@@ -354,7 +301,7 @@ def setBufferSize(self, buffer_size):
       for act_bf in self.act_jack_bf_list:
         act_bf.setEnabled(True)
         if (act_bf.text().replace("&","") == str(buffer_size)):
-          #if (act_bf.isChecked() == False):
+          if (act_bf.isChecked() == False):
             act_bf.setChecked(True)
         else:
           if (act_bf.isChecked()):
@@ -371,13 +318,13 @@ def setSampleRate(self, sample_rate, future=False):
 
     if (future):
       pass
-      #if (self.sender() == self.cb_sample_rate): # Changed using GUI
-        #ask = QMessageBox.question(self, self.tr("Change Sample Rate"), self.tr("It's not possible to change Sample Rate while JACK is running.\n"
-                                      #"Do you want to change as soon as JACK stops?"), QMessageBox.Ok|QMessageBox.Cancel)
-        #if (ask == QMessageBox.Ok):
-          #self.next_sample_rate = sample_rate
-        #else:
-          #self.next_sample_rate = 0
+      if (self.sender() == self.cb_sample_rate): # Changed using GUI
+        ask = QMessageBox.question(self, self.tr("Change Sample Rate"), self.tr("It's not possible to change Sample Rate while JACK is running.\n"
+                                      "Do you want to change as soon as JACK stops?"), QMessageBox.Ok|QMessageBox.Cancel)
+        if (ask == QMessageBox.Ok):
+          self.m_next_sample_rate = sample_rate
+        else:
+          self.m_next_sample_rate = 0
 
     # not future
     else:
@@ -387,9 +334,6 @@ def setSampleRate(self, sample_rate, future=False):
     for i in range(len(sample_rates)):
       sample_rate = sample_rates[i]
       sample_rate_str = str(sample_rate)
-
-      #if (self.m_next_sample_rate != 0 and self.m_next_sample_rate != self.m_sample_rate and self.m_sample_rate == sample_rate):
-        #text += "*"
 
       self.cb_sample_rate.setItemText(i, sample_rate_str)
 
@@ -404,7 +348,7 @@ def setDSPLoad(self, dsp_load):
     self.pb_dsp_load.setValue(dsp_load)
 
 def setXruns(self, xruns):
-    self.b_xruns.setText("%s Xrun%s" % ((str(xruns) if (xruns >= 0) else "--"), ("" if (xruns == 1) else "s")))
+    self.b_xruns.setText("%s Xrun%s" % (str(xruns) if (xruns >= 0) else "--", "" if (xruns == 1) else "s"))
 
 # -------------------------------------------------------------
 # External Dialogs
@@ -433,33 +377,32 @@ def setJackConnections(self, modes):
     self.connect(self.b_jack_clear_xruns, SIGNAL("clicked()"), SLOT("slot_JackClearXruns()"))
     self.connect(self.b_jack_configure, SIGNAL("clicked()"), lambda: slot_showJackSettings(self))
     self.connect(self.b_jack_render, SIGNAL("clicked()"), lambda: slot_showRender(self))
-    #self.connect(self.cb_buffer_size, SIGNAL("currentIndexChanged(QString)"), lambda: jack_buffer_size_cb(self, self.cb_buffer_size.currentText()))
-    #self.connect(self.cb_sample_rate, SIGNAL("currentIndexChanged(QString)"), lambda: jack_sample_rate_cb(self, self.cb_sample_rate.currentText()))
+    self.connect(self.cb_buffer_size, SIGNAL("currentIndexChanged(QString)"), lambda: slot_jackBufferSize_ComboBox(self, self.cb_buffer_size.currentText()))
+    self.connect(self.cb_sample_rate, SIGNAL("currentIndexChanged(QString)"), lambda: slot_jackSampleRate_ComboBox(self, self.cb_sample_rate.currentText()))
     self.connect(self.b_xruns, SIGNAL("clicked()"), SLOT("slot_JackClearXruns()"))
 
-  #if ("buffer-size" in modes):
-    #self.connect(self.act_jack_bf_16, SIGNAL("triggered(bool)"), lambda: jack_buffer_size_m(self, 16))
-    #self.connect(self.act_jack_bf_32, SIGNAL("triggered(bool)"), lambda: jack_buffer_size_m(self, 32))
-    #self.connect(self.act_jack_bf_64, SIGNAL("triggered(bool)"), lambda: jack_buffer_size_m(self, 64))
-    #self.connect(self.act_jack_bf_128, SIGNAL("triggered(bool)"), lambda: jack_buffer_size_m(self, 128))
-    #self.connect(self.act_jack_bf_256, SIGNAL("triggered(bool)"), lambda: jack_buffer_size_m(self, 256))
-    #self.connect(self.act_jack_bf_512, SIGNAL("triggered(bool)"), lambda: jack_buffer_size_m(self, 512))
-    #self.connect(self.act_jack_bf_1024, SIGNAL("triggered(bool)"), lambda: jack_buffer_size_m(self, 1024))
-    #self.connect(self.act_jack_bf_2048, SIGNAL("triggered(bool)"), lambda: jack_buffer_size_m(self, 2048))
-    #self.connect(self.act_jack_bf_4096, SIGNAL("triggered(bool)"), lambda: jack_buffer_size_m(self, 4096))
-    #self.connect(self.act_jack_bf_8192, SIGNAL("triggered(bool)"), lambda: jack_buffer_size_m(self, 8192))
+  if ("buffer-size" in modes):
+    self.connect(self.act_jack_bf_16, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self, 16))
+    self.connect(self.act_jack_bf_32, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self, 32))
+    self.connect(self.act_jack_bf_64, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self, 64))
+    self.connect(self.act_jack_bf_128, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self, 128))
+    self.connect(self.act_jack_bf_256, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self, 256))
+    self.connect(self.act_jack_bf_512, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self, 512))
+    self.connect(self.act_jack_bf_1024, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self, 1024))
+    self.connect(self.act_jack_bf_2048, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self, 2048))
+    self.connect(self.act_jack_bf_4096, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self, 4096))
+    self.connect(self.act_jack_bf_8192, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self, 8192))
 
-  #if ("transport" in modes):
-    #self.connect(self.act_transport_play, SIGNAL("triggered(bool)"), lambda: transport_playpause(self, self.act_transport_play.isChecked()))
-    #self.connect(self.act_transport_stop, SIGNAL("triggered()"), lambda: transport_stop(self))
-    #self.connect(self.act_transport_backwards, SIGNAL("triggered()"), lambda: transport_backwards(self))
-    #self.connect(self.act_transport_forwards, SIGNAL("triggered()"), lambda: transport_forwards(self))
-    #self.connect(self.b_transport_play, SIGNAL("clicked(bool)"), lambda: transport_playpause(self, self.b_transport_play.isChecked()))
-    #self.connect(self.b_transport_stop, SIGNAL("clicked()"), lambda: transport_stop(self))
-    #self.connect(self.b_transport_backwards, SIGNAL("clicked()"), lambda: transport_backwards(self))
-    #self.connect(self.b_transport_forwards, SIGNAL("clicked()"), lambda: transport_forwards(self))
-    #self.connect(self.sb_bpm, SIGNAL("valueChanged(double)"), lambda: transport_bpm_set(self, self.sb_bpm.value()))
-    #self.connect(self.label_time, SIGNAL("customContextMenuRequested(QPoint)"), lambda: transport_view_menu(self))
+  if ("transport" in modes):
+    self.connect(self.act_transport_play, SIGNAL("triggered(bool)"),  lambda: slot_transportPlayPause(self, self.act_transport_play.isChecked()))
+    self.connect(self.act_transport_stop, SIGNAL("triggered()"),      lambda: slot_transportStop(self))
+    self.connect(self.act_transport_backwards, SIGNAL("triggered()"), lambda: slot_transportBackwards(self))
+    self.connect(self.act_transport_forwards, SIGNAL("triggered()"),  lambda: slot_transportForwards(self))
+    self.connect(self.b_transport_play, SIGNAL("clicked(bool)"),  lambda: slot_transportPlayPause(self, self.b_transport_play.isChecked()))
+    self.connect(self.b_transport_stop, SIGNAL("clicked()"),      lambda: slot_transportStop(self))
+    self.connect(self.b_transport_backwards, SIGNAL("clicked()"), lambda: slot_transportBackwards(self))
+    self.connect(self.b_transport_forwards, SIGNAL("clicked()"),  lambda: slot_transportForwards(self))
+    self.connect(self.label_time, SIGNAL("customContextMenuRequested(QPoint)"), lambda: slot_transportViewMenu(self))
 
   if ("misc" in modes):
     if (LINUX):
