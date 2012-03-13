@@ -564,6 +564,22 @@ def jack_process_callback(nframes, arg):
 
     return 0
 
+def jack_session_callback(event, arg):
+  if (WINDOWS):
+    filepath = os.path.join(sys.argv[0])
+  else:
+    if (sys.argv[0].startswith("/")):
+      filepath = "jack_xycontroller"
+    else:
+      filepath = os.path.join(sys.path[0], "xycontroller.py")
+
+  event.command_line = str(filepath).encode("ascii")
+  jacklib.session_reply(jack_client, event)
+
+  if (event.type == jacklib.JackSessionSaveAndQuit):
+    app.quit()
+
+  #jacklib.session_event_free(event)
 
 #--------------- main ------------------
 if __name__ == '__main__':
@@ -577,7 +593,7 @@ if __name__ == '__main__':
 
     # Start jack
     jack_status = jacklib.jack_status_t(0)
-    jack_client = jacklib.client_open("XY-Controller", jacklib.JackNullOption, jacklib.pointer(jack_status))
+    jack_client = jacklib.client_open_uuid("XY-Controller", jacklib.JackSessionID, jacklib.pointer(jack_status), "")
 
     if not jack_client:
       QMessageBox.critical(None, app.translate("XYControllerW", "Error"), app.translate("XYControllerW", "Could not connect to JACK, possible errors:\n%s" % (get_jack_status_error_string(jack_status))))
@@ -585,6 +601,7 @@ if __name__ == '__main__':
 
     jack_midi_in_port = jacklib.port_register(jack_client, "midi_in", jacklib.JACK_DEFAULT_MIDI_TYPE, jacklib.JackPortIsInput, 0)
     jack_midi_out_port = jacklib.port_register(jack_client, "midi_out", jacklib.JACK_DEFAULT_MIDI_TYPE, jacklib.JackPortIsOutput, 0)
+    jacklib.set_session_callback(jack_client, jack_session_callback, None)
     jacklib.set_process_callback(jack_client, jack_process_callback, None)
     jacklib.activate(jack_client)
 

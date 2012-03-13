@@ -390,6 +390,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         jacklib.set_xrun_callback(jack.client, self.JackXRunCallback, None)
         jacklib.set_port_registration_callback(jack.client, self.JackPortRegistrationCallback, None)
         jacklib.set_port_connect_callback(jack.client, self.JackPortConnectCallback, None)
+        jacklib.set_session_callback(jack.client, self.JackSessionCallback, None)
         jacklib.on_shutdown(jack.client, self.JackShutdownCallback, None)
 
         if (JACK2):
@@ -611,7 +612,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
     def jackStarted(self, autoStop=False):
         if (not jack.client):
-          jack.client = jacklib.client_open("catia", jacklib.JackNoStartServer, None)
+          jack.client = jacklib.client_open_uuid("catia", jacklib.JackNoStartServer, None, "")
           if (autoStop and not jack.client):
             self.jackStopped()
             return
@@ -747,6 +748,23 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         if (DEBUG): print("JackPortRenameCallback(%i, %s, %s)" % (port_id, old_name, new_name))
         self.emit(SIGNAL("PortRenameCallback(int, QString, QString)"), port_id, str(old_name, encoding="ascii"), str(new_name, encoding="ascii"))
         return 0
+
+    def JackSessionCallback(self, event, arg):
+        if (WINDOWS):
+          filepath = os.path.join(sys.argv[0])
+        else:
+          if (sys.argv[0].startswith("/")):
+            filepath = "catia"
+          else:
+            filepath = os.path.join(sys.path[0], "catia.py")
+
+        event.command_line = str(filepath).encode("ascii")
+        jacklib.session_reply(jack.client, event)
+
+        if (event.type == jacklib.JackSessionSaveAndQuit):
+          app.quit()
+
+        #jacklib.session_event_free(event)
 
     def JackShutdownCallback(self, arg=None):
         if (DEBUG): print("JackShutdownCallback()")

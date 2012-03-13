@@ -54,6 +54,23 @@ def port_callback(port_a, port_b, connect_yesno, arg):
   need_reconnect = True
   return 0
 
+def session_callback(event, arg):
+  if (WINDOWS):
+    filepath = os.path.join(sys.argv[0])
+  else:
+    if (sys.argv[0].startswith("/")):
+      filepath = "jack_meter"
+    else:
+      filepath = os.path.join(sys.path[0], "jackmeter.py")
+
+  event.command_line = str(filepath).encode("ascii")
+  jacklib.session_reply(client, event)
+
+  if (event.type == jacklib.JackSessionSaveAndQuit):
+    app.quit()
+
+  #jacklib.session_event_free(event)
+
 def reconnect_inputs():
   play_port_1 = jacklib.port_by_name(client, "system:playback_1")
   play_port_2 = jacklib.port_by_name(client, "system:playback_2")
@@ -113,13 +130,19 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     # JACK initialization
-    client = jacklib.client_open("M", jacklib.JackNullOption, None)
+    jack_status = jacklib.jack_status_t(0)
+    client = jacklib.client_open_uuid("M", jacklib.JackSessionID, jacklib.pointer(jack_status), "")
+
+    if not client:
+      QMessageBox.critical(None, app.translate("XYControllerW", "Error"), app.translate("XYControllerW", "Could not connect to JACK, possible errors:\n%s" % (get_jack_status_error_string(jack_status))))
+      sys.exit(1)
 
     port_1 = jacklib.port_register(client, "in1", jacklib.JACK_DEFAULT_AUDIO_TYPE, jacklib.JackPortIsInput, 0)
     port_2 = jacklib.port_register(client, "in2", jacklib.JACK_DEFAULT_AUDIO_TYPE, jacklib.JackPortIsInput, 0)
 
     jacklib.set_process_callback(client, process_callback, None)
     jacklib.set_port_connect_callback(client, port_callback, None)
+    jacklib.set_session_callback(client, session_callback, None)
     jacklib.activate(client)
 
     reconnect_inputs()

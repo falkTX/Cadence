@@ -236,7 +236,7 @@ JackSampleRateCallback = CFUNCTYPE(c_int, jack_nframes_t, c_void_p)
 JackPortRegistrationCallback = CFUNCTYPE(None, jack_port_id_t, c_int, c_void_p)
 JackClientRegistrationCallback = CFUNCTYPE(None, c_char_p, c_int, c_void_p)
 JackPortConnectCallback = CFUNCTYPE(None, jack_port_id_t, jack_port_id_t, c_int, c_void_p)
-JackPortRenameCallback = CFUNCTYPE(c_int, jack_port_id_t, c_char_p, c_char_p, c_void_p)
+JackPortRenameCallback = CFUNCTYPE(c_int, jack_port_id_t, c_char_p, c_char_p, c_void_p) # JACK2 only
 JackFreewheelCallback = CFUNCTYPE(None, c_int, c_void_p)
 JackThreadCallback = CFUNCTYPE(c_void_p, c_void_p)
 JackShutdownCallback = CFUNCTYPE(None, c_void_p)
@@ -257,6 +257,11 @@ def client_open(client_name, options, status):
   jacklib.jack_client_open.argtypes = [c_char_p, jack_options_t, POINTER(jack_status_t)]
   jacklib.jack_client_open.restype = POINTER(jack_client_t)
   return jacklib.jack_client_open(client_name.encode("ascii"), options, status)
+
+def client_open_uuid(client_name, options, status, uuid): # Extra function for jack-session support
+  jacklib.jack_client_open.argtypes = [c_char_p, jack_options_t, POINTER(jack_status_t), c_char_p]
+  jacklib.jack_client_open.restype = POINTER(jack_client_t)
+  return jacklib.jack_client_open(client_name.encode("ascii"), options, status, uuid.encode("ascii"))
 
 def client_new(client_name):
   jacklib.jack_client_new.argtypes = [c_char_p]
@@ -411,7 +416,7 @@ def set_port_connect_callback(client, connect_callback, arg):
   jacklib.jack_set_port_connect_callback.restype = c_int
   return jacklib.jack_set_port_connect_callback(client, _connect_callback, arg)
 
-def set_port_rename_callback(client, rename_callback, arg):
+def set_port_rename_callback(client, rename_callback, arg): # JACK2 only
   global _rename_callback
   _rename_callback = JackPortRenameCallback(rename_callback)
   jacklib.jack_set_port_rename_callback.argtypes = [POINTER(jack_client_t), JackPortRenameCallback, c_void_p]
@@ -849,10 +854,10 @@ def session_reply(client, event):
   jacklib.jack_session_reply.restype = c_int
   return jacklib.jack_session_reply(client, event)
 
-def session_event_free(client, event):
-  jacklib.jack_session_event_free.argtypes = [POINTER(jack_client_t), POINTER(jack_session_event_t)]
+def session_event_free(event):
+  jacklib.jack_session_event_free.argtypes = [POINTER(jack_session_event_t)]
   jacklib.jack_session_event_free.restype = c_int
-  return jacklib.jack_session_event_free(client, event)
+  return jacklib.jack_session_event_free(event)
 
 def client_get_uuid(client):
   jacklib.jack_client_get_uuid.argtypes = [POINTER(jack_client_t)]
