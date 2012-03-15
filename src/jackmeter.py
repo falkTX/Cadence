@@ -134,7 +134,7 @@ if __name__ == '__main__':
     client = jacklib.client_open_uuid("M", jacklib.JackSessionID, jacklib.pointer(jack_status), "")
 
     if not client:
-      QMessageBox.critical(None, app.translate("XYControllerW", "Error"), app.translate("XYControllerW", "Could not connect to JACK, possible errors:\n%s" % (get_jack_status_error_string(jack_status))))
+      QMessageBox.critical(None, app.translate("MeterW", "Error"), app.translate("MeterW", "Could not connect to JACK, possible errors:\n%s" % (get_jack_status_error_string(jack_status))))
       sys.exit(1)
 
     port_1 = jacklib.port_register(client, "in1", jacklib.JACK_DEFAULT_AUDIO_TYPE, jacklib.JackPortIsInput, 0)

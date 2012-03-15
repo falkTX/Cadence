@@ -118,7 +118,8 @@ class CatarinaRemoveGroupW(QDialog, ui_catarina_removegroup.Ui_CatarinaRemoveGro
 
     @pyqtSlot()
     def slot_setReturn(self):
-        self.ret_group_id = int(self.tw_group_list.item(self.tw_group_list.currentRow(), 0).text())
+        if (self.tw_group_list.rowCount() >= 0):
+          self.ret_group_id = int(self.tw_group_list.item(self.tw_group_list.currentRow(), 0).text())
 
 # Rename Group Dialog
 class CatarinaRenameGroupW(QDialog, ui_catarina_renamegroup.Ui_CatarinaRenameGroupW):
@@ -759,9 +760,6 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
               self.m_connection_list.remove(connection)
               break
 
-    def init_ports_prepare(self):
-        pass
-
     def init_ports(self):
         for group in self.m_group_list:
           patchcanvas.addGroup(group[iGroupId], group[iGroupName], patchcanvas.SPLIT_YES if (group[iGroupSplit]) else patchcanvas.SPLIT_NO, group[iGroupIcon])
@@ -1209,6 +1207,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
 
     def closeEvent(self, event):
         self.saveSettings()
+        patchcanvas.clear()
         QMainWindow.closeEvent(self, event)
 
 #--------------- main ------------------

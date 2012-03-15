@@ -487,7 +487,7 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
           setDriverParameter("snoop", value, True)
 
         if (self.obj_driver_channels.isEnabled()):
-          value = dbus.UInt32(self.obj_driver_channels.value())
+          value = dbus.Int32(self.obj_driver_channels.value())
           setDriverParameter("channels", value, True)
 
     def loadDriverSettings(self, reset=False, forceReset=False):

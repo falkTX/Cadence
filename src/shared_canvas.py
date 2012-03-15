@@ -28,7 +28,6 @@ def canvas_arrange(self):
     patchcanvas.arrange()
 
 def canvas_refresh(self):
-    self.init_ports_prepare()
     patchcanvas.clear()
     self.init_ports()
 

@@ -295,18 +295,18 @@ def setBufferSize(self, buffer_size, forced=False):
       elif (buffer_size == 8192):
         self.cb_buffer_size.setCurrentIndex(9)
       else:
-        QMessageBox.warning(self, self.tr("Warning"), self.tr("Invalid JACK buffer-size requested"))
+        QMessageBox.warning(self, self.tr("Warning"), self.tr("Invalid JACK buffer-size requested: %i" % (buffer_size)))
 
-    #if ("act_jack_bf_list" in dir(self)):
-    if (buffer_size):
-      for act_bf in self.act_jack_bf_list:
-        act_bf.setEnabled(True)
-        if (act_bf.text().replace("&","") == str(buffer_size)):
-          if (act_bf.isChecked() == False):
-            act_bf.setChecked(True)
-        else:
-          if (act_bf.isChecked()):
-            act_bf.setChecked(False)
+    if ("act_jack_bf_list" in dir(self)):
+      if (buffer_size):
+        for act_bf in self.act_jack_bf_list:
+          act_bf.setEnabled(True)
+          if (act_bf.text().replace("&","") == str(buffer_size)):
+            if (act_bf.isChecked() == False):
+              act_bf.setChecked(True)
+          else:
+            if (act_bf.isChecked()):
+              act_bf.setChecked(False)
       #else:
         #for i in range(len(self.act_jack_bf_list)):
           #self.act_jack_bf_list[i].setEnabled(False)
@@ -357,6 +357,10 @@ def setXruns(self, xruns):
 @pyqtSlot()
 def slot_showJackSettings(self):
     jacksettings.JackSettingsW(self).exec_()
+
+    if (not jack.client):
+      # Force update of gui widgets
+      self.jackStopped()
 
 @pyqtSlot()
 def slot_showLogs(self):

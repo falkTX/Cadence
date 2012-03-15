@@ -11,7 +11,7 @@ all: build
 
 build: UI RES LANG
 
-UI: catarina catia tools
+UI: catarina catia claudia tools
 
 catarina: src/ui_catarina.py \
 	src/ui_catarina_addgroup.py src/ui_catarina_removegroup.py src/ui_catarina_renamegroup.py \
@@ -19,6 +19,12 @@ catarina: src/ui_catarina.py \
 	src/ui_catarina_connectports.py src/ui_catarina_disconnectports.py
 
 catia: src/ui_catia.py
+
+claudia: src/ui_claudia.py \
+	src/ui_claudia_studioname.py src/ui_claudia_studiolist.py
+# 	src/ui_claudia_createroom.py src/ui_claudia_addnew.py src/ui_claudia_addnew_klaudia.py \
+# 	src/ui_claudia_runcustom.py src/ui_claudia_saveproject.py src/ui_claudia_projectproperties.py \
+# 	src/ui_claudia_studiolist.py src/ui_claudia_studioname.py
 
 tools: \
 	src/ui_logs.py src/ui_render.py src/ui_xycontroller.py \
@@ -53,6 +59,15 @@ src/ui_catarina_disconnectports.py: src/ui/catarina_disconnectports.ui
 
 src/ui_catia.py: src/ui/catia.ui
 	$(PYUIC) -o src/ui_catia.py $<
+
+src/ui_claudia.py: src/ui/claudia.ui
+	$(PYUIC) -o src/ui_claudia.py $<
+
+src/ui_claudia_studioname.py: src/ui/claudia_studioname.ui
+	$(PYUIC) -o src/ui_claudia_studioname.py $<
+
+src/ui_claudia_studiolist.py: src/ui/claudia_studiolist.ui
+	$(PYUIC) -o src/ui_claudia_studiolist.py $<
 
 src/ui_logs.py: src/ui/logs.ui
 	$(PYUIC) -o src/ui_logs.py $<
