@@ -145,6 +145,9 @@ if __name__ == '__main__':
     jacklib.set_session_callback(client, session_callback, None)
     jacklib.activate(client)
 
+    #jacklib.port_set_name(port_1, "in111")
+    #jacklib.port_set_name(port_1, "in1")
+
     reconnect_inputs()
 
     # Show GUI

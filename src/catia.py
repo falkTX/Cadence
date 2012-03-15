@@ -214,14 +214,6 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
           port_short_name = str(jacklib.port_short_name(port_ptr), encoding="ascii")
 
-          port_type_str = str(jacklib.port_type(port_ptr), encoding="ascii")
-          if (port_type_str == jacklib.JACK_DEFAULT_AUDIO_TYPE):
-            type_text = self.tr("JACK Audio")
-          elif (port_type_str == jacklib.JACK_DEFAULT_MIDI_TYPE):
-            type_text = self.tr("JACK MIDI")
-          else:
-            type_text = self.tr("Unknown")
-
           aliases = jacklib.port_get_aliases(port_ptr)
           if (aliases[0] == 1):
             alias1text = aliases[1]
@@ -251,13 +243,21 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
               flags_text += " | "
             flags_text += flag
 
+          port_type_str = str(jacklib.port_type(port_ptr), encoding="ascii")
+          if (port_type_str == jacklib.JACK_DEFAULT_AUDIO_TYPE):
+            type_text = self.tr("JACK Audio")
+          elif (port_type_str == jacklib.JACK_DEFAULT_MIDI_TYPE):
+            type_text = self.tr("JACK MIDI")
+          else:
+            type_text = self.tr("Unknown")
+
           port_latency = jacklib.port_get_latency(port_ptr)
           port_total_latency = jacklib.port_get_total_latency(jack.client, port_ptr)
 
           latency_text = self.tr("%.1f ms (%i frames)" % (port_latency*1000/self.m_sample_rate, port_latency))
           latency_total_text = self.tr("%.1f ms (%i frames)"  % (port_total_latency*1000/self.m_sample_rate, port_total_latency))
 
-          info = self.tr("" 
+          info = self.tr(""
                   "<table>"
                   "<tr><td align='right'><b>Group Name:</b></td><td>&nbsp;%s</td></tr>"
                   "<tr><td align='right'><b>Port Name:</b></td><td>&nbsp;%s</td></tr>"
@@ -613,7 +613,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.menuJackServer(True)
 
         self.cb_buffer_size.setEnabled(True)
-        self.cb_sample_rate.setEnabled(True) # DBus.jack and jacksettings.getSampleRate() != -1
+        self.cb_sample_rate.setEnabled(bool(DBus.jack)) # DBus.jack and jacksettings.getSampleRate() != -1
         self.menu_Jack_Buffer_Size.setEnabled(True)
 
         self.pb_dsp_load.setMaximum(100)
@@ -781,7 +781,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             return ret
           except:
             QMessageBox.warning(self, self.tr("Warning"), self.tr("Failed to start JACK, please check the logs for more information."))
-            self.jackStopped()
+            #self.jackStopped()
         return False
 
     @pyqtSlot()

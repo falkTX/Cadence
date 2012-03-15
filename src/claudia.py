@@ -36,13 +36,12 @@ try:
 except:
   hasGL = False
 
-# internal defines
-ITEM_TYPE_STUDIO     = 0
-ITEM_TYPE_STUDIO_APP = 1
-ITEM_TYPE_ROOM       = 2
-ITEM_TYPE_ROOM_APP   = 3
+# internal indexes
+iConnId     = 0
+iConnOutput = 1
+iConnInput  = 2
 
-# jackdbus defines
+# jackdbus indexes
 iGraphVersion    = 0
 iJackClientId    = 1
 iJackClientName  = 2
@@ -60,22 +59,34 @@ iTargetClientId   = 5
 iTargetClientName = 6
 iTargetPortId     = 7
 iTargetPortName   = 8
+iJackConnId       = 9
 
-# ladish defines
+# ladish indexes
 iStudioListName = 0
 iStudioListDict = 1
 
 iStudioRenamedName = 0
 
-DEFAULT_CANVAS_WIDTH  = 3100
-DEFAULT_CANVAS_HEIGHT = 2400
+# internal defines
+ITEM_TYPE_STUDIO     = 0
+ITEM_TYPE_STUDIO_APP = 1
+ITEM_TYPE_ROOM       = 2
+ITEM_TYPE_ROOM_APP   = 3
+
+# C defines
+JACKDBUS_PORT_FLAG_INPUT       = 0x00000001
+JACKDBUS_PORT_FLAG_OUTPUT      = 0x00000002
+JACKDBUS_PORT_FLAG_PHYSICAL    = 0x00000004
+JACKDBUS_PORT_FLAG_CAN_MONITOR = 0x00000008
+JACKDBUS_PORT_FLAG_TERMINAL    = 0x00000010
+
+JACKDBUS_PORT_TYPE_AUDIO = 0
+JACKDBUS_PORT_TYPE_MIDI  = 1
 
 GRAPH_DICT_OBJECT_TYPE_GRAPH  = 0
 GRAPH_DICT_OBJECT_TYPE_CLIENT = 1
 GRAPH_DICT_OBJECT_TYPE_PORT   = 2
 GRAPH_DICT_OBJECT_TYPE_CONNECTION = 3
-
-RECENT_PROJECTS_STORE_MAX_ITEMS = 50
 
 URI_A2J_PORT       = "http://ladish.org/ns/a2j"
 URI_CANVAS_WIDTH   = "http://ladish.org/ns/canvas/width"
@@ -85,6 +96,11 @@ URI_CANVAS_Y       = "http://ladish.org/ns/canvas/y"
 URI_CANVAS_SPLIT   = "http://kxstudio.sourceforge.net/ns/canvas/split"
 URI_CANVAS_X_SPLIT = "http://kxstudio.sourceforge.net/ns/canvas/x_split"
 URI_CANVAS_Y_SPLIT = "http://kxstudio.sourceforge.net/ns/canvas/y_split"
+
+DEFAULT_CANVAS_WIDTH  = 3100
+DEFAULT_CANVAS_HEIGHT = 2400
+
+RECENT_PROJECTS_STORE_MAX_ITEMS = 50
 
 # set default project folder
 DEFAULT_PROJECT_FOLDER = os.path.join(HOME, "ladish-projects")
@@ -229,11 +245,6 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         #self.systray = None
 
-        #self.m_group_list = []
-        #self.m_group_split_list = []
-        #self.m_connection_list = []
-        #self.m_last_connection_id = 1
-
         self.m_xruns = -1
         self.m_buffer_size = 0
         self.m_sample_rate = 0
@@ -370,8 +381,8 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.connect(self, SIGNAL("DBusPortAppearedCallback(int, int, QString, int, int)"), SLOT("slot_DBusPortAppearedCallback(int, int, QString, int, int)"))
         self.connect(self, SIGNAL("DBusPortDisppearedCallback(int)"), SLOT("slot_DBusPortDisppearedCallback(int)"))
         self.connect(self, SIGNAL("DBusPortRenamedCallback(int, QString)"), SLOT("slot_DBusPortRenamedCallback(int, QString)"))
-        self.connect(self, SIGNAL("DBusPortsConnectedCallback(int, int)"), SLOT("slot_DBusPortsConnectedCallback(int, int)"))
-        self.connect(self, SIGNAL("DBusPortsDisconnectedCallback(int, int)"), SLOT("slot_DBusPortsDisconnectedCallback(int, int)"))
+        self.connect(self, SIGNAL("DBusPortsConnectedCallback(int, int, int)"), SLOT("slot_DBusPortsConnectedCallback(int, int, int)"))
+        self.connect(self, SIGNAL("DBusPortsDisconnectedCallback(int)"), SLOT("slot_DBusPortsDisconnectedCallback(int)"))
 
         # org.ladish.Control
         self.connect(self, SIGNAL("DBusStudioAppearedCallback()"), SLOT("slot_DBusStudioAppearedCallback()"))
@@ -419,97 +430,81 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
           patchcanvas.joinGroup(group_id)
           self.miniCanvasPreview.update()
 
-        #elif (action == patchcanvas.ACTION_PORT_INFO):
-          #this_port_id = value1
+        elif (action == patchcanvas.ACTION_PORT_INFO):
+          this_port_id = value1
+          breakNow = False
 
-          #graph_dump = DBus.patchbay.GetGraph(0)
-          #graph_version = graph_dump[0]
-          #graph_ports = graph_dump[1]
-          #graph_conns = graph_dump[2]
+          version, groups, conns = DBus.patchbay.GetGraph(0)
 
-          ## Graph Ports
-          #for i in range(len(graph_ports)):
-            #group_id    = graph_ports[i][0]
-            #group_name  = graph_ports[i][1]
-            #group_ports = graph_ports[i][2]
+          for group in groups:
+            group_id, group_name, ports = group
 
-            #for j in range(len(group_ports)):
-              #port_id    = group_ports[j][0]
-              #port_name  = group_ports[j][1]
-              #port_flags = group_ports[j][2]
-              #port_type  = group_ports[j][3]
-              #if (this_port_id == port_id):
-                #break
+            for port in ports:
+              port_id, port_name, port_flags, port_type_jack = port
 
-            #if (this_port_id == port_id):
-              #break
+              if (this_port_id == port_id):
+                breakNow = True
+                break
 
-          #if (DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_PORT, this_port_id, URI_A2J_PORT) == "yes"):
-            #port_flags_ = self.get_real_a2j_port_flags(group_name, port_name, jacklib.PortIsInput if (port_flags & jacklib.PortIsInput) else jacklib.PortIsOutput)
-            #if (port_flags_ != 0):
-              #port_flags = port_flags_
+            if (breakNow):
+              break
 
-          #flags = []
-          #if (port_flags & jacklib.PortIsInput):
-            #flags.append(self.tr("Input"))
-          #if (port_flags & jacklib.PortIsOutput):
-            #flags.append(self.tr("Output"))
-          #if (port_flags & jacklib.PortIsPhysical):
-            #flags.append(self.tr("Physical"))
-          #if (port_flags & jacklib.PortCanMonitor):
-            #flags.append(self.tr("Can Monitor"))
-          #if (port_flags & jacklib.PortIsTerminal):
-            #flags.append(self.tr("Terminal"))
+          else:
+            return
 
-          #flags_text = ""
-          #for i in range(len(flags)):
-            #if (flags_text): flags_text+= " | "
-            #flags_text += flags[i]
+          flags = []
+          if (port_flags & JACKDBUS_PORT_FLAG_INPUT):
+            flags.append(self.tr("Input"))
+          if (port_flags & JACKDBUS_PORT_FLAG_OUTPUT):
+            flags.append(self.tr("Output"))
+          if (port_flags & JACKDBUS_PORT_FLAG_PHYSICAL):
+            flags.append(self.tr("Physical"))
+          if (port_flags & JACKDBUS_PORT_FLAG_CAN_MONITOR):
+            flags.append(self.tr("Can Monitor"))
+          if (port_flags & JACKDBUS_PORT_FLAG_TERMINAL):
+            flags.append(self.tr("Terminal"))
 
-          #if (port_type == jacklib.AUDIO):
-            #type_text = self.tr("Audio")
-          #elif (port_type == jacklib.MIDI):
-            #type_text = self.tr("MIDI")
-          #else:
-            #type_text = self.tr("Unknown")
+          flags_text = ""
+          for flag in flags:
+            if (flags_text):
+              flags_text += " | "
+            flags_text += flag
 
-          #port_full_name = group_name+":"+port_name
+          if (port_type_jack == JACKDBUS_PORT_TYPE_AUDIO):
+            type_text = self.tr("Audio")
+          elif (port_type_jack == JACKDBUS_PORT_TYPE_MIDI):
+            type_text = self.tr("MIDI")
+          else:
+            type_text = self.tr("Unknown")
 
-          #info = self.tr(""
-                  #"<table>"
-                  #"<tr><td align='right'><b>Group Name:</b></td><td>&nbsp;%1</td></tr>"
-                  #"<tr><td align='right'><b>Group ID:</b></td><td>&nbsp;%2</td></tr>"
-                  #"<tr><td align='right'><b>Port Name:</b></td><td>&nbsp;%3</td></tr>"
-                  #"<tr><td align='right'><b>Port ID:</b></td><td>&nbsp;%4</i></td></tr>"
-                  #"<tr><td align='right'><b>Full Port Name:</b></td><td>&nbsp;%5</td></tr>"
-                  #"<tr><td colspan='2'>&nbsp;</td></tr>"
-                  #"<tr><td align='right'><b>Port Flags:</b></td><td>&nbsp;%6</td></tr>"
-                  #"<tr><td align='right'><b>Port Type:</b></td><td>&nbsp;%7</td></tr>"
-                  #"</table>"
-                  #).arg(group_name).arg(group_id).arg(port_name).arg(port_id).arg(port_full_name).arg(flags_text).arg(type_text)
+          port_full_name = "%s:%s" % (group_name, port_name)
 
-          #QMessageBox.information(self, self.tr("Port Information"), info)
+          info = self.tr(""
+                  "<table>"
+                  "<tr><td align='right'><b>Group ID:</b></td><td>&nbsp;%i</td></tr>"
+                  "<tr><td align='right'><b>Group Name:</b></td><td>&nbsp;%s</td></tr>"
+                  "<tr><td align='right'><b>Port ID:</b></td><td>&nbsp;%i</i></td></tr>"
+                  "<tr><td align='right'><b>Port Name:</b></td><td>&nbsp;%s</td></tr>"
+                  "<tr><td align='right'><b>Full Port Name:</b></td><td>&nbsp;%s</td></tr>"
+                  "<tr><td colspan='2'>&nbsp;</td></tr>"
+                  "<tr><td align='right'><b>Port Flags:</b></td><td>&nbsp;%s</td></tr>"
+                  "<tr><td align='right'><b>Port Type:</b></td><td>&nbsp;%s</td></tr>"
+                  "</table>"
+                  % (group_id, group_name, port_id, port_name, port_full_name, flags_text, type_text))
 
-        #elif (action == patchcanvas.ACTION_PORT_RENAME):
-          #pass
+          QMessageBox.information(self, self.tr("Port Information"), info)
 
-        #elif (action == patchcanvas.ACTION_PORTS_CONNECT):
-          #port_a = value1
-          #port_b = value2
-          #DBus.patchbay.ConnectPortsByID(port_a, port_b)
+        elif (action == patchcanvas.ACTION_PORT_RENAME):
+          pass
 
-        #elif (action == patchcanvas.ACTION_PORTS_DISCONNECT):
-          #connection_id = value1
+        elif (action == patchcanvas.ACTION_PORTS_CONNECT):
+          port_a = value1
+          port_b = value2
+          DBus.patchbay.ConnectPortsByID(port_a, port_b)
 
-          #for i in range(len(self.connection_list)):
-            #if (connection_id == self.connection_list[i][0]):
-              #port_a = self.connection_list[i][1]
-              #port_b = self.connection_list[i][2]
-              #break
-          #else:
-            #return
-
-          #DBus.patchbay.DisconnectPortsByID(port_a, port_b)
+        elif (action == patchcanvas.ACTION_PORTS_DISCONNECT):
+          connection_id = value1
+          DBus.patchbay.DisconnectPortsByConnectionID(connection_id)
 
     def init_jack(self):
         self.m_xruns = -1
@@ -553,16 +548,48 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.init_apps()
 
     def init_apps(self):
-        pass
+        studio_iface = dbus.Interface(DBus.ladish_studio, 'org.ladish.AppSupervisor')
+        studio_item = self.treeWidget.topLevelItem(0)
+
+        graph_version, app_list = DBus.ladish_app_iface.GetAll2()
+
+        for app in app_list:
+          number, name, active, terminal, level = app
+          text = "[L%s]%s %s" % (level, "" if (active) else " (inactive)", name)
+
+          item = QTreeWidgetItem(ITEM_TYPE_STUDIO_APP)
+          item.setText(0, text)
+          #item.properties = [number, name, active, terminal, level]
+          studio_item.addChild(item)
+
+        #room_list_dump = DBus.ladish_studio.GetRoomList()
+        #for i in range(len(room_list_dump)):
+          #room_path = room_list_dump[i][0]
+          #ladish_room = DBus.bus.get_object("org.ladish", room_path)
+          #room_name = ladish_room.GetName()
+
+          #room_iface = dbus.Interface(ladish_room, 'org.ladish.AppSupervisor')
+          #room_app_list_dump = room_iface.GetAll()
+          #room_item = self.addNewRoom(room_path, room_name)
+
+          #room_graph_version = studio_app_list_dump[0]
+          #for j in range(len(room_app_list_dump[1])):
+            #number   = room_app_list_dump[1][j][0]
+            #name     = room_app_list_dump[1][j][1]
+            #active   = room_app_list_dump[1][j][2]
+            #terminal = room_app_list_dump[1][j][3]
+            #level    = room_app_list_dump[1][j][4]
+            #text = QString("[L%1]%2 %3").arg(level).arg("" if (active) else " (inactive)").arg(name)
+            #item = QTreeWidgetItem(ITEM_TYPE_ROOM_APP)
+            #item.setText(0, text)
+            #item.properties = [number, name, active, terminal, level]
+            #room_item.addChild(item)
+
+        self.treeWidget.expandAll()
 
     def init_ports(self):
         if (not jack.client or not DBus.patchbay):
           return
-
-        #self.last_connection_id = 1
-        #self.group_list = []
-        #self.group_split_list = []
-        #self.connection_list = []
 
         version, groups, conns = DBus.patchbay.GetGraph(0)
 
@@ -574,16 +601,16 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
           for port in ports:
             port_id, port_name, port_flags, port_type_jack = port
 
-            if (port_flags & jacklib.JackPortIsInput):
+            if (port_flags & JACKDBUS_PORT_FLAG_INPUT):
               port_mode = patchcanvas.PORT_MODE_INPUT
-            elif (port_flags & jacklib.JackPortIsOutput):
+            elif (port_flags & JACKDBUS_PORT_FLAG_OUTPUT):
               port_mode = patchcanvas.PORT_MODE_OUTPUT
             else:
               port_mode = patchcanvas.PORT_MODE_NULL
 
-            if (port_type_jack == 0):   # Audio
+            if (port_type_jack == JACKDBUS_PORT_TYPE_AUDIO):
               port_type = patchcanvas.PORT_TYPE_AUDIO_JACK
-            elif (port_type_jack == 1): # MIDI
+            elif (port_type_jack == JACKDBUS_PORT_TYPE_MIDI):
               if (DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_PORT, port_id, URI_A2J_PORT) == "yes"):
                 port_type = patchcanvas.PORT_TYPE_MIDI_A2J
               else:
@@ -594,35 +621,15 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             self.canvas_add_port(int(group_id), int(port_id), str(port_name), port_mode, port_type)
 
         ## Graph Connections
-        #for i in range(len(graph_conns)):
-          #conn_source_id   = int(graph_conns[i][0])
-          #conn_source_name = QStringStr(graph_conns[i][1])
-          #conn_source_port_id   = int(graph_conns[i][2])
-          #conn_source_port_name = QStringStr(graph_conns[i][3])
-          #conn_target_id   = int(graph_conns[i][4])
-          #conn_target_name = QStringStr(graph_conns[i][5])
-          #conn_target_port_id   = int(graph_conns[i][6])
-          #conn_target_port_name = QStringStr(graph_conns[i][7])
+        for conn in conns:
+          print(conn)
+          source_group_id, source_group_name, source_port_id, source_port_name, target_group_id, target_group_name, target_port_id, target_port_name, conn_id = conn
+          self.canvas_connect_ports(int(conn_id), int(source_port_id), int(target_port_id))
 
-          #self.canvas_connect_ports(conn_source_port_id, conn_target_port_id)
-
-        ## Recheck all group positions
-        #for i in range(len(self.group_list)):
-          #group_id = self.group_list[i][0]
-
-          #x  = DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_X)
-          #y  = DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_Y)
-          #x2 = DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_X_SPLIT)
-          #y2 = DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_Y_SPLIT)
-
-          #if (x != None and y != None):
-            #if (x2 == None): x2 = float(x)+50
-            #if (y2 == None): y2 = float(y)+50
-            #patchcanvas.setGroupPos(group_id, float(x), float(y), float(x2), float(y2))
-
-        #QTimer.singleShot(1000 if (self.saved_settings['Canvas/FancyEyeCandy']) else 0, self.miniCanvasPreview.update)
+        QTimer.singleShot(1000 if (self.m_savedSettings['Canvas/EyeCandy']) else 0, self.miniCanvasPreview, SLOT("update()"))
 
     def canvas_add_group(self, group_id, group_name):
+        # TODO - get room list names, but not if we're inside a room
         room_list_names = [] #self.get_room_list_names()
 
         if (group_name in ("Hardware Playback", "Hardware Capture")):
@@ -643,7 +650,6 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             split = patchcanvas.SPLIT_UNDEF
 
         patchcanvas.addGroup(group_id, group_name, split, icon)
-        #self.group_list.append([group_id, group_name])
 
         x  = DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_X)
         y  = DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_Y)
@@ -657,35 +663,29 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         QTimer.singleShot(0, self.miniCanvasPreview, SLOT("update()"))
 
-    def canvas_add_port(self, group_id, port_id, port_name, port_mode, port_type): # , group_id, group_name, split, do_pos=True
-        #for i in range(len(self.group_list)):
-          #if (group_id == self.group_list[i][0]):
-            #break
-        #else: #Hack for clients started with no ports
-          #self.canvas_add_group(group_id, group_name, do_pos)
-
-        #if (DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_PORT, port_id, URI_A2J_PORT) == "yes"):
-          #port_type = patchcanvas.PORT_TYPE_MIDI_A2J
-
-          #flags = self.get_real_a2j_port_flags(group_name, port_name, port_mode)
-          #if (flags & jacklib.PortIsPhysical):
-            #split = True
-
-        patchcanvas.addPort(group_id, port_id, port_name, port_mode, port_type)
-
+    def canvas_remove_group(self, group_id):
+        patchcanvas.removeGroup(group_id)
         QTimer.singleShot(0, self.miniCanvasPreview, SLOT("update()"))
 
-        #if not group_id in self.group_split_list:
-          #if (split):
-            #patchcanvas.splitGroup(group_id)
-            #patchcanvas.setGroupIcon(group_id, patchcanvas.ICON_HARDWARE)
-          #elif ( group_name == "Hardware Capture" or
-                 #group_name == "Hardware Playback" or
-                 #group_name == "Capture" or
-                 #group_name == "Playback"
-               #):
-            #patchcanvas.setGroupIcon(group_id, patchcanvas.ICON_HARDWARE)
-          #self.group_split_list.append(group_id)
+    def canvas_add_port(self, group_id, port_id, port_name, port_mode, port_type):
+        patchcanvas.addPort(group_id, port_id, port_name, port_mode, port_type)
+        QTimer.singleShot(0, self.miniCanvasPreview, SLOT("update()"))
+
+    def canvas_remove_port(self, port_id):
+        patchcanvas.removePort(port_id)
+        QTimer.singleShot(0, self.miniCanvasPreview, SLOT("update()"))
+
+    def canvas_rename_port(self, port_id, new_port_name):
+        patchcanvas.renamePort(port_id, new_port_name)
+        QTimer.singleShot(0, self.miniCanvasPreview, SLOT("update()"))
+
+    def canvas_connect_ports(self, connection_id, port_a, port_b):
+        patchcanvas.connectPorts(connection_id, port_a, port_b)
+        QTimer.singleShot(0, self.miniCanvasPreview, SLOT("update()"))
+
+    def canvas_disconnect_ports(self, connection_id):
+        patchcanvas.disconnectPorts(connection_id)
+        QTimer.singleShot(0, self.miniCanvasPreview, SLOT("update()"))
 
     def jackStarted(self):
         #self.DBusReconnect()
@@ -875,9 +875,10 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             elif (kwds['member'] == "PortRenamed"):
               self.emit(SIGNAL("DBusPortRenamedCallback(int, QString)"), args[iJackPortId], args[iJackPortNewName])
             elif (kwds['member'] == "PortsConnected"):
-              self.emit(SIGNAL("DBusPortsConnectedCallback(int, int)"), args[iSourcePortId], args[iTargetPortId])
+              self.emit(SIGNAL("DBusPortsConnectedCallback(int, int, int)"), args[iJackConnId], args[iSourcePortId], args[iTargetPortId])
             elif (kwds['member'] == "PortsDisconnected"):
-              self.emit(SIGNAL("DBusPortsDisconnectedCallback(int, int)"), args[iSourcePortId], args[iTargetPortId])
+              self.emit(SIGNAL("DBusPortsDisconnectedCallback(int)"), args[iJackConnId])
+              print(args)
 
         elif (kwds['interface'] == "org.ladish.Control"):
           if (DEBUG): print("DBus signal @org.ladish.Control,", kwds['member'])
@@ -1063,21 +1064,21 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.canvas_add_group(group_id, group_name)
 
     @pyqtSlot(int)
-    def slot_DBusClientDisappearedCallback(self):
-        pass
+    def slot_DBusClientDisappearedCallback(self, group_id):
+        self.canvas_remove_group(group_id)
 
     @pyqtSlot(int, int, str, int, int)
     def slot_DBusPortAppearedCallback(self, group_id, port_id, port_name, port_flags, port_type_jack):
-        if (port_flags & jacklib.JackPortIsInput):
+        if (port_flags & JACKDBUS_PORT_FLAG_INPUT):
           port_mode = patchcanvas.PORT_MODE_INPUT
-        elif (port_flags & jacklib.JackPortIsOutput):
+        elif (port_flags & JACKDBUS_PORT_FLAG_OUTPUT):
           port_mode = patchcanvas.PORT_MODE_OUTPUT
         else:
           port_mode = patchcanvas.PORT_MODE_NULL
 
-        if (port_type_jack == 0):   # Audio
+        if (port_type_jack == JACKDBUS_PORT_TYPE_AUDIO):
           port_type = patchcanvas.PORT_TYPE_AUDIO_JACK
-        elif (port_type_jack == 1): # MIDI
+        elif (port_type_jack == JACKDBUS_PORT_TYPE_MIDI):
           if (DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_PORT, port_id, URI_A2J_PORT) == "yes"):
             port_type = patchcanvas.PORT_TYPE_MIDI_A2J
           else:
@@ -1089,19 +1090,19 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
     @pyqtSlot(int)
     def slot_DBusPortDisppearedCallback(self, port_id):
-        pass
+        self.canvas_remove_port(port_id)
 
     @pyqtSlot(int, str)
     def slot_DBusPortRenamedCallback(self, port_id, new_port_name):
-        pass
+        self.canvas_rename_port(port_id, new_port_name)
 
-    @pyqtSlot(int, int)
-    def slot_DBusPortsConnectedCallback(self, source_port_id, target_port_id):
-        pass
+    @pyqtSlot(int, int, int)
+    def slot_DBusPortsConnectedCallback(self, connection_id, source_port_id, target_port_id):
+        self.canvas_connect_ports(connection_id, source_port_id, target_port_id)
 
-    @pyqtSlot(int, int)
-    def slot_DBusPortsDisconnectedCallback(self, source_port_id, target_port_id):
-        pass
+    @pyqtSlot(int)
+    def slot_DBusPortsDisconnectedCallback(self, connection_id):
+        self.canvas_disconnect_ports(connection_id)
 
     @pyqtSlot()
     def slot_DBusStudioAppearedCallback(self):
