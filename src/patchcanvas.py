@@ -16,6 +16,8 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# TODO - apply last changes to c++
+
 # Imports (Global)
 from PyQt4.QtCore import pyqtSlot, qDebug, qCritical, qFatal, qWarning, Qt, QObject, SIGNAL, SLOT
 from PyQt4.QtCore import QAbstractAnimation, QLineF, QPointF, QRectF, QSettings, QTimer
@@ -1272,6 +1274,9 @@ class CanvasFadeAnimation(QAbstractAnimation):
 
         self.m_item.setOpacity(value)
 
+        if (self.m_item.type() == CanvasBoxType):
+          self.m_item.setShadowOpacity(value)
+
     def updateDirection(self, direction):
         pass
 
@@ -1979,6 +1984,10 @@ class CanvasBox(QGraphicsItem):
         self.m_group_name = group_name
         self.updatePositions()
 
+    def setShadowOpacity(self, opacity):
+        if (self.shadow):
+          self.shadow.setOpacity(opacity)
+
     def addPortFromGroup(self, port_id, port_mode, port_type, port_name):
         if (len(self.m_port_list_ids) == 0):
           if (options.auto_hide_groups):
@@ -2498,6 +2507,11 @@ class CanvasBoxShadow(QGraphicsDropShadowEffect):
 
     def setFakeParent(self, fakeParent):
         self.m_fakeParent = fakeParent
+
+    def setOpacity(self, opacity):
+        color = QColor(canvas.theme.box_shadow)
+        color.setAlphaF(opacity)
+        self.setColor(color)
 
     def draw(self, painter):
         if (self.m_fakeParent):

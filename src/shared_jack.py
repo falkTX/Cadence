@@ -60,6 +60,7 @@ class DBusObject(object):
       'ladish_studio',
       'ladish_room',
       'ladish_graph',
+      'ladish_manager',
       'ladish_app_iface',
       'ladish_app_daemon',
       'patchbay'

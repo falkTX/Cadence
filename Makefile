@@ -21,7 +21,8 @@ catarina: src/ui_catarina.py \
 catia: src/ui_catia.py
 
 claudia: src/ui_claudia.py \
-	src/ui_claudia_studioname.py src/ui_claudia_studiolist.py
+	src/ui_claudia_studioname.py src/ui_claudia_studiolist.py \
+	src/ui_claudia_createroom.py
 # 	src/ui_claudia_createroom.py src/ui_claudia_addnew.py src/ui_claudia_addnew_klaudia.py \
 # 	src/ui_claudia_runcustom.py src/ui_claudia_saveproject.py src/ui_claudia_projectproperties.py \
 # 	src/ui_claudia_studiolist.py src/ui_claudia_studioname.py
@@ -68,6 +69,9 @@ src/ui_claudia_studioname.py: src/ui/claudia_studioname.ui
 
 src/ui_claudia_studiolist.py: src/ui/claudia_studiolist.ui
 	$(PYUIC) -o src/ui_claudia_studiolist.py $<
+
+src/ui_claudia_createroom.py: src/ui/claudia_createroom.ui
+	$(PYUIC) -o src/ui_claudia_createroom.py $<
 
 src/ui_logs.py: src/ui/logs.ui
 	$(PYUIC) -o src/ui_logs.py $<
