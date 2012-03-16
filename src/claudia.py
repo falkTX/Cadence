@@ -21,7 +21,7 @@ import dbus
 from dbus.mainloop.qt import DBusQtMainLoop
 from time import ctime
 from PyQt4.QtCore import QPointF, QSettings
-from PyQt4.QtGui import QApplication, QMainWindow, QTableWidgetItem, QTreeWidgetItem
+from PyQt4.QtGui import QAction, QApplication, QMainWindow, QTableWidgetItem, QTreeWidgetItem
 
 # Imports (Custom Stuff)
 import ui_claudia
@@ -380,8 +380,11 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.connect(self.b_studio_load, SIGNAL("clicked()"), SLOT("slot_studio_load_b()"))
         self.connect(self.b_studio_save, SIGNAL("clicked()"), SLOT("slot_studio_save()"))
         self.connect(self.b_studio_save_as, SIGNAL("clicked()"), SLOT("slot_studio_save_as()"))
+        self.connect(self.menu_studio_load, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuStudioList_Load()"))
+        self.connect(self.menu_studio_delete, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuStudioList_Delete()"))
 
         self.connect(self.act_room_create, SIGNAL("triggered()"), SLOT("slot_room_create()"))
+        self.connect(self.menu_room_delete, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuRoomList()"))
 
         #self.connect(self.act_project_new, SIGNAL("triggered()"), self.func_project_new)
         #self.connect(self.act_project_save, SIGNAL("triggered()"), self.func_project_save)
@@ -392,16 +395,10 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         #self.connect(self.b_project_load, SIGNAL("clicked()"), self.func_project_load)
         #self.connect(self.b_project_save, SIGNAL("clicked()"), self.func_project_save)
         #self.connect(self.b_project_save_as, SIGNAL("clicked()"), self.func_project_save_as)
+        #self.connect(self.menu_project_load, SIGNAL("aboutToShow()"), self.updateMenuProjectList)
 
         #self.connect(self.act_app_add_new, SIGNAL("triggered()"), self.func_app_add_new)
         #self.connect(self.act_app_run_custom, SIGNAL("triggered()"), self.func_app_run_custom)
-
-        #self.connect(self.menu_studio_load, SIGNAL("aboutToShow()"), lambda menu=self.menu_studio_load,
-                     #function=self.func_studio_load_m: self.updateMenuStudioList(menu, function))
-        #self.connect(self.menu_studio_delete, SIGNAL("aboutToShow()"), lambda menu=self.menu_studio_delete,
-                     #function=self.func_studio_delete_m: self.updateMenuStudioList(menu, function))
-        #self.connect(self.menu_room_delete, SIGNAL("aboutToShow()"), self.updateMenuRoomList)
-        #self.connect(self.menu_project_load, SIGNAL("aboutToShow()"), self.updateMenuProjectList)
 
         self.connect(self.treeWidget, SIGNAL("itemSelectionChanged()"), SLOT("slot_checkCurrentRoom()"))
         ##self.connect(self.treeWidget, SIGNAL("itemPressed(QTreeWidgetItem*, int)"), self.checkCurrentRoom)
@@ -447,7 +444,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.connect(self, SIGNAL("DBusStudioRenamedCallback(QString)"), SLOT("slot_DBusStudioRenamedCallback(QString)"))
         self.connect(self, SIGNAL("DBusStudioCrashedCallback()"), SLOT("slot_DBusStudioCrashedCallback()"))
         self.connect(self, SIGNAL("DBusRoomAppearedCallback(QString, QString)"), SLOT("slot_DBusRoomAppearedCallback(QString, QString)"))
-        self.connect(self, SIGNAL("DBusRoomDisappearedCallback(int)"), SLOT("slot_DBusRoomDisappearedCallback(int)"))
+        self.connect(self, SIGNAL("DBusRoomDisappearedCallback(QString)"), SLOT("slot_DBusRoomDisappearedCallback(QString)"))
         self.connect(self, SIGNAL("DBusRoomChangedCallback()"), SLOT("slot_DBusRoomChangedCallback()"))
 
         #self.connect(self, SIGNAL("DBus()"), SLOT("slot_DBus()"))
@@ -673,6 +670,46 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         self.treeWidget.expandAll()
 
+    def init_ports(self):
+        if (not jack.client or not DBus.patchbay):
+          return
+
+        version, groups, conns = DBus.patchbay.GetGraph(0)
+
+        # Graph Ports
+        for group in groups:
+          group_id, group_name, ports = group
+          self.canvas_add_group(int(group_id), str(group_name))
+
+          for port in ports:
+            port_id, port_name, port_flags, port_type_jack = port
+
+            if (port_flags & JACKDBUS_PORT_FLAG_INPUT):
+              port_mode = patchcanvas.PORT_MODE_INPUT
+            elif (port_flags & JACKDBUS_PORT_FLAG_OUTPUT):
+              port_mode = patchcanvas.PORT_MODE_OUTPUT
+            else:
+              port_mode = patchcanvas.PORT_MODE_NULL
+
+            if (port_type_jack == JACKDBUS_PORT_TYPE_AUDIO):
+              port_type = patchcanvas.PORT_TYPE_AUDIO_JACK
+            elif (port_type_jack == JACKDBUS_PORT_TYPE_MIDI):
+              if (DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_PORT, port_id, URI_A2J_PORT) == "yes"):
+                port_type = patchcanvas.PORT_TYPE_MIDI_A2J
+              else:
+                port_type = patchcanvas.PORT_TYPE_MIDI_JACK
+            else:
+              port_type = patchcanvas.PORT_TYPE_NULL
+
+            self.canvas_add_port(int(group_id), int(port_id), str(port_name), port_mode, port_type)
+
+        # Graph Connections
+        for conn in conns:
+          source_group_id, source_group_name, source_port_id, source_port_name, target_group_id, target_group_name, target_port_id, target_port_name, conn_id = conn
+          self.canvas_connect_ports(int(conn_id), int(source_port_id), int(target_port_id))
+
+        QTimer.singleShot(1000 if (self.m_savedSettings['Canvas/EyeCandy']) else 0, self.miniCanvasPreview, SLOT("update()"))
+
     def room_add(self, room_path, room_name):
         room_index  = int(room_path.replace("/org/ladish/Room",""))
         room_object = DBus.bus.get_object("org.ladish", room_path)
@@ -713,46 +750,6 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         self.treeWidget.insertTopLevelItem(room_index, item)
         return item
-
-    def init_ports(self):
-        if (not jack.client or not DBus.patchbay):
-          return
-
-        version, groups, conns = DBus.patchbay.GetGraph(0)
-
-        # Graph Ports
-        for group in groups:
-          group_id, group_name, ports = group
-          self.canvas_add_group(int(group_id), str(group_name))
-
-          for port in ports:
-            port_id, port_name, port_flags, port_type_jack = port
-
-            if (port_flags & JACKDBUS_PORT_FLAG_INPUT):
-              port_mode = patchcanvas.PORT_MODE_INPUT
-            elif (port_flags & JACKDBUS_PORT_FLAG_OUTPUT):
-              port_mode = patchcanvas.PORT_MODE_OUTPUT
-            else:
-              port_mode = patchcanvas.PORT_MODE_NULL
-
-            if (port_type_jack == JACKDBUS_PORT_TYPE_AUDIO):
-              port_type = patchcanvas.PORT_TYPE_AUDIO_JACK
-            elif (port_type_jack == JACKDBUS_PORT_TYPE_MIDI):
-              if (DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_PORT, port_id, URI_A2J_PORT) == "yes"):
-                port_type = patchcanvas.PORT_TYPE_MIDI_A2J
-              else:
-                port_type = patchcanvas.PORT_TYPE_MIDI_JACK
-            else:
-              port_type = patchcanvas.PORT_TYPE_NULL
-
-            self.canvas_add_port(int(group_id), int(port_id), str(port_name), port_mode, port_type)
-
-        ## Graph Connections
-        for conn in conns:
-          source_group_id, source_group_name, source_port_id, source_port_name, target_group_id, target_group_name, target_port_id, target_port_name, conn_id = conn
-          self.canvas_connect_ports(int(conn_id), int(source_port_id), int(target_port_id))
-
-        QTimer.singleShot(1000 if (self.m_savedSettings['Canvas/EyeCandy']) else 0, self.miniCanvasPreview, SLOT("update()"))
 
     def canvas_add_group(self, group_id, group_name):
         # TODO - get room list names, but not if we're inside a room
@@ -1037,8 +1034,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
           elif (kwds['member'] == "RoomAppeared"):
             self.emit(SIGNAL("DBusRoomAppearedCallback(QString, QString)"), args[iRoomAppearedPath], args[iRoomAppearedDict]['name'])
           elif (kwds['member'] == "RoomDisappeared"):
-            print(args)
-            #self.emit(SIGNAL("DBusRoomDisappearedCallback(int)"))
+            self.emit(SIGNAL("DBusRoomDisappearedCallback(QString)"), args[iRoomAppearedPath])
           elif (kwds['member'] == "RoomChanged"):
             self.emit(SIGNAL("DBusRoomChangedCallback()"))
             print(args)
@@ -1087,16 +1083,19 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
     def slot_studio_new(self):
         dialog = StudioNameW(self, StudioNameW.NEW)
         if (dialog.exec_()):
-          DBus.ladish_control.NewStudio(dbus.String(dialog.ret_studio_name))
-
-    #def func_studio_load_m(self, studio_name):
-        #DBus.ladish_control.LoadStudio(studio_name)
+          DBus.ladish_control.NewStudio(dialog.ret_studio_name)
 
     @pyqtSlot()
     def slot_studio_load_b(self):
         dialog = StudioListW(self)
         if (dialog.exec_()):
-          DBus.ladish_control.LoadStudio(dbus.String(dialog.ret_studio_name))
+          DBus.ladish_control.LoadStudio(dialog.ret_studio_name)
+
+    @pyqtSlot()
+    def slot_studio_load_m(self):
+        studio_name = self.sender().text()
+        if (studio_name):
+          DBus.ladish_control.LoadStudio(studio_name)
 
     @pyqtSlot()
     def slot_studio_start(self):
@@ -1110,7 +1109,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
     def slot_studio_rename(self):
         dialog = StudioNameW(self, StudioNameW.RENAME)
         if (dialog.exec_()):
-          DBus.ladish_studio.Rename(dbus.String(dialog.ret_studio_name))
+          DBus.ladish_studio.Rename(dialog.ret_studio_name)
 
     @pyqtSlot()
     def slot_studio_save(self):
@@ -1120,14 +1119,17 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
     def slot_studio_save_as(self):
         dialog = StudioNameW(self, StudioNameW.SAVE_AS)
         if (dialog.exec_()):
-          DBus.ladish_studio.SaveAs(dbus.String(dialog.ret_studio_name))
+          DBus.ladish_studio.SaveAs(dialog.ret_studio_name)
 
     @pyqtSlot()
     def slot_studio_unload(self):
         DBus.ladish_studio.Unload()
 
-    #def func_studio_delete_m(self, studio_name):
-        #DBus.ladish_control.DeleteStudio(dbus.String(studio_name))
+    @pyqtSlot()
+    def slot_studio_delete_m(self):
+        studio_name = self.sender().text()
+        if (studio_name):
+          DBus.ladish_control.DeleteStudio(studio_name)
 
     @pyqtSlot()
     def slot_room_create(self):
@@ -1135,8 +1137,11 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         if (dialog.exec_()):
           DBus.ladish_studio.CreateRoom(dialog.ret_room_name, dialog.ret_room_template)
 
-    #def func_room_delete_m(self, room_name):
-        #DBus.ladish_studio.DeleteRoom(dbus.String(room_name))
+    @pyqtSlot()
+    def slot_room_delete_m(self):
+        room_name = self.sender().text()
+        if (room_name):
+          DBus.ladish_studio.DeleteRoom(room_name)
 
     @pyqtSlot()
     def slot_checkCurrentRoom(self):
@@ -1200,6 +1205,60 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         self.m_last_item_type = ITEM_TYPE
         self.m_last_room_path = room_path
+
+    @pyqtSlot()
+    def slot_updateMenuStudioList_Load(self):
+        self.menu_studio_load.clear()
+
+        studio_list = DBus.ladish_control.GetStudioList()
+        if (len(studio_list) == 0):
+            act_no_studio = QAction(self.tr("Empty studio list"), self.menu_studio_load)
+            act_no_studio.setEnabled(False)
+            self.menu_studio_load.addAction(act_no_studio)
+        else:
+          for studio in studio_list:
+            studio_name  = str(studio[iStudioListName])
+            act_x_studio = QAction(studio_name, self.menu_studio_load)
+            self.menu_studio_load.addAction(act_x_studio)
+            self.connect(act_x_studio, SIGNAL("triggered()"), SLOT("slot_studio_load_m()"))
+
+    @pyqtSlot()
+    def slot_updateMenuStudioList_Delete(self):
+        self.menu_studio_delete.clear()
+
+        studio_list = DBus.ladish_control.GetStudioList()
+        if (len(studio_list) == 0):
+            act_no_studio = QAction(self.tr("Empty studio list"), self.menu_studio_delete)
+            act_no_studio.setEnabled(False)
+            self.menu_studio_delete.addAction(act_no_studio)
+        else:
+          for studio in studio_list:
+            studio_name  = str(studio[iStudioListName])
+            act_x_studio = QAction(studio_name, self.menu_studio_delete)
+            self.menu_studio_delete.addAction(act_x_studio)
+            self.connect(act_x_studio, SIGNAL("triggered()"), SLOT("slot_studio_delete_m()"))
+
+    @pyqtSlot()
+    def slot_updateMenuRoomList(self):
+        self.menu_room_delete.clear()
+        if (DBus.ladish_control.IsStudioLoaded()):
+          room_list = DBus.ladish_studio.GetRoomList()
+          if (len(room_list) == 0):
+            self.createEmptyMenuRoomActon()
+          else:
+            for room_path, room_dict in room_list:
+              ladish_room = DBus.bus.get_object("org.ladish", room_path)
+              room_name = ladish_room.GetName()
+              act_x_room = QAction(room_name, self.menu_room_delete)
+              self.menu_room_delete.addAction(act_x_room)
+              self.connect(act_x_room, SIGNAL("triggered()"), SLOT("slot_room_delete_m()"))
+        else:
+          self.createEmptyMenuRoomActon()
+
+    def createEmptyMenuRoomActon(self):
+        act_no_room = QAction(self.tr("Empty room list"), self.menu_room_delete)
+        act_no_room.setEnabled(False)
+        self.menu_room_delete.addAction(act_no_room)
 
     @pyqtSlot(float)
     def slot_canvasScaleChanged(self, scale):
@@ -1374,9 +1433,38 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
     def slot_DBusRoomAppearedCallback(self, room_path, room_name):
         self.room_add(room_path, room_name)
 
-    @pyqtSlot(int)
-    def slot_DBusRoomDisappearedCallback(self, room_index):
-        pass # TODO
+    @pyqtSlot(str)
+    def slot_DBusRoomDisappearedCallback(self, room_path):
+        for i in range(self.treeWidget.topLevelItemCount()):
+          item = self.treeWidget.topLevelItem(i)
+          print(i, item, item.type() if item else None)
+
+          if (i == 0):
+            continue
+
+          if (item and item.type() == ITEM_TYPE_ROOM and item.properties[iItemPropRoomPath] == room_path):
+            for j in range(item.childCount()):
+              top_level_item.takeChild(j)
+
+            self.treeWidget.takeTopLevelItem(i)
+            break
+
+        else:
+          print("Claudia - room delete failed")
+
+        #room_index = int(room_path.replace("/org/ladish/Room",""))
+
+        #top_level_item = self.treeWidget.topLevelItem(room_index)
+
+        #if not top_level_item:
+          #while (True):
+            #room_index -= 1
+            #top_level_item = self.treeWidget.topLevelItem(room_index)
+            #if (top_level_item != None):
+              #break
+
+        #if (top_level_item):
+        
 
     @pyqtSlot()
     def slot_DBusRoomChangedCallback(self):
