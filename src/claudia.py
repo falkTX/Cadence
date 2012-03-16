@@ -27,6 +27,7 @@ from PyQt4.QtGui import QAction, QApplication, QMainWindow, QTableWidgetItem, QT
 import ui_claudia
 import ui_claudia_studioname, ui_claudia_studiolist
 import ui_claudia_createroom
+import ui_claudia_runcustom
 from shared_jack import *
 from shared_canvas import *
 from shared_settings import *
@@ -41,6 +42,12 @@ except:
 iConnId     = 0
 iConnOutput = 1
 iConnInput  = 2
+
+iAppCommand  = 0
+iAppName     = 1
+iAppTerminal = 2
+iAppLevel    = 3
+iAppActive   = 4
 
 iItemPropNumber   = 0
 iItemPropName     = 1
@@ -83,6 +90,12 @@ iStudioRenamedName = 0
 
 iRoomAppearedPath = 0
 iRoomAppearedDict = 1
+
+iAppChangedNumber   = 1
+iAppChangedName     = 2
+iAppChangedActive   = 3
+iAppChangedTerminal = 4
+iAppChangedLevel    = 5
 
 # internal defines
 ITEM_TYPE_NULL       = 0
@@ -247,6 +260,75 @@ class CreateRoomW(QDialog, ui_claudia_createroom.Ui_CreateRoomW):
           self.ret_room_name = self.le_name.text()
           self.ret_room_template = self.lw_templates.currentItem().text()
 
+# Run Custom App Dialog
+class RunCustomW(QDialog, ui_claudia_runcustom.Ui_RunCustomW):
+    def __init__(self, parent, isRoom, app_obj=None):
+        QDialog.__init__(self, parent)
+        self.setupUi(self)
+
+        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(bool(app_obj))
+
+        if (app_obj):
+          pass
+        #self.le_command.setText(command)
+        #self.le_name.setText(name)
+        #self.cb_terminal.setChecked(terminal)
+
+        #if (level == 0):
+          #self.rb_level_0.setChecked(True)
+        #elif (level == 1):
+          #self.rb_level_1.setChecked(True)
+        #elif (level == 2):
+          #self.rb_level_2.setChecked(True)
+        #elif (level == 3):
+          #self.rb_level_3.setChecked(True)
+        #else:
+          #self.rb_level_0.setChecked(True)
+
+        #if (active):
+          #self.le_command.setEnabled(False)
+          #self.cb_terminal.setEnabled(False)
+          #self.rb_level_0.setEnabled(False)
+          #self.rb_level_1.setEnabled(False)
+          #self.rb_level_2.setEnabled(False)
+          #self.rb_level_3.setEnabled(False)
+        else:
+          self.rb_level_0.setChecked(True)
+
+        if (isRoom == False):
+          self.rb_level_lash.setEnabled(False)
+          self.rb_level_js.setEnabled(False)
+
+        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
+        self.connect(self.le_command, SIGNAL("textChanged(QString)"), SLOT("slot_checkText(QString)"))
+
+        self.ret_app_obj = None
+
+    @pyqtSlot(str)
+    def slot_checkText(self, text):
+        check = bool(text)
+        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(check)
+
+    @pyqtSlot()
+    def slot_setReturn(self):
+        if (self.rb_level_0.isChecked()):
+          level = "0"
+        elif (self.rb_level_1.isChecked()):
+          level = "1"
+        elif (self.rb_level_lash.isChecked()):
+          level = "LASH"
+        elif (self.rb_level_js.isChecked()):
+          level = "JS"
+        else:
+          return
+
+        self.ret_app_obj = [None, None, None, None, None]
+        self.ret_app_obj[iAppCommand]  = self.le_command.text()
+        self.ret_app_obj[iAppName]     = self.le_name.text()
+        self.ret_app_obj[iAppTerminal] = self.cb_terminal.isChecked()
+        self.ret_app_obj[iAppLevel]    = level
+        self.ret_app_obj[iAppActive]   = False
+
 # Main Window
 class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
     def __init__(self, parent=None):
@@ -398,7 +480,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         #self.connect(self.menu_project_load, SIGNAL("aboutToShow()"), self.updateMenuProjectList)
 
         #self.connect(self.act_app_add_new, SIGNAL("triggered()"), self.func_app_add_new)
-        #self.connect(self.act_app_run_custom, SIGNAL("triggered()"), self.func_app_run_custom)
+        self.connect(self.act_app_run_custom, SIGNAL("triggered()"), SLOT("slot_app_run_custom()"))
 
         self.connect(self.treeWidget, SIGNAL("itemSelectionChanged()"), SLOT("slot_checkCurrentRoom()"))
         ##self.connect(self.treeWidget, SIGNAL("itemPressed(QTreeWidgetItem*, int)"), self.checkCurrentRoom)
@@ -445,7 +527,12 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.connect(self, SIGNAL("DBusStudioCrashedCallback()"), SLOT("slot_DBusStudioCrashedCallback()"))
         self.connect(self, SIGNAL("DBusRoomAppearedCallback(QString, QString)"), SLOT("slot_DBusRoomAppearedCallback(QString, QString)"))
         self.connect(self, SIGNAL("DBusRoomDisappearedCallback(QString)"), SLOT("slot_DBusRoomDisappearedCallback(QString)"))
-        self.connect(self, SIGNAL("DBusRoomChangedCallback()"), SLOT("slot_DBusRoomChangedCallback()"))
+        #self.connect(self, SIGNAL("DBusRoomChangedCallback()"), SLOT("slot_DBusRoomChangedCallback()"))
+
+        # org.ladish.AppSupervisor
+        self.connect(self, SIGNAL("DBusAppAdded2Callback(QString, int, QString, bool, bool, QString)"), SLOT("slot_DBusAppAdded2Callback(QString, int, QString, bool, bool, QString)"))
+        self.connect(self, SIGNAL("DBusAppRemovedCallback(QString, int)"), SLOT("slot_DBusAppRemovedCallback(QString, int)"))
+        self.connect(self, SIGNAL("DBusAppStateChanged2Callback(QString, int, QString, bool, bool, QString)"), SLOT("slot_DBusAppStateChanged2Callback(QString, int, QString, bool, bool, QString)"))
 
         #self.connect(self, SIGNAL("DBus()"), SLOT("slot_DBus()"))
 
@@ -1037,7 +1124,6 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             self.emit(SIGNAL("DBusRoomDisappearedCallback(QString)"), args[iRoomAppearedPath])
           elif (kwds['member'] == "RoomChanged"):
             self.emit(SIGNAL("DBusRoomChangedCallback()"))
-            print(args)
 
         elif (kwds['interface'] == "org.ladish.Room"):
           if (DEBUG): print("DBus signal @org.ladish.Room,", kwds['member'])
@@ -1046,12 +1132,12 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         elif (kwds['interface'] == "org.ladish.AppSupervisor"):
           if (DEBUG): print("DBus signal @org.ladish.AppSupervisor,", kwds['member'])
-          #if (kwds['member'] == "AppAdded"):
-            #self.signal_AppAdded(kwds['path'], args)
-          #elif (kwds['member'] == "AppRemoved"):
-            #self.signal_AppRemoved(kwds['path'], args)
-          #elif (kwds['member'] == "AppStateChanged"):
-            #self.signal_AppStateChanged(kwds['path'], args)
+          if (kwds['member'] == "AppAdded2"):
+            self.emit(SIGNAL("DBusAppAdded2Callback(QString, int, QString, bool, bool, QString)"), kwds['path'], args[iAppChangedNumber], args[iAppChangedName], args[iAppChangedActive], args[iAppChangedTerminal], args[iAppChangedLevel])
+          elif (kwds['member'] == "AppRemoved"):
+            self.emit(SIGNAL("DBusAppRemovedCallback(QString, int)"), kwds['path'], args[iAppChangedNumber])
+          elif (kwds['member'] == "AppStateChanged2"):
+            self.emit(SIGNAL("DBusAppStateChanged2Callback(QString, int, QString, bool, bool, QString)"), kwds['path'], args[iAppChangedNumber], args[iAppChangedName], args[iAppChangedActive], args[iAppChangedTerminal], args[iAppChangedLevel])
 
     #def DBusReconnect(self):
         #DBus.bus  = dbus.SessionBus(mainloop=DBus.loop)
@@ -1142,6 +1228,14 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         room_name = self.sender().text()
         if (room_name):
           DBus.ladish_studio.DeleteRoom(room_name)
+
+    @pyqtSlot()
+    def slot_app_run_custom(self):
+        dialog = RunCustomW(self, bool(self.m_last_item_type in (ITEM_TYPE_ROOM, ITEM_TYPE_ROOM_APP)))
+        if (dialog.exec_()):
+          if (dialog.ret_app_obj):
+            app_obj = dialog.ret_app_obj
+            DBus.ladish_app_iface.RunCustom2(app_obj[iAppTerminal], app_obj[iAppCommand], app_obj[iAppName], app_obj[iAppLevel])
 
     @pyqtSlot()
     def slot_checkCurrentRoom(self):
@@ -1452,23 +1546,108 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         else:
           print("Claudia - room delete failed")
 
-        #room_index = int(room_path.replace("/org/ladish/Room",""))
-
-        #top_level_item = self.treeWidget.topLevelItem(room_index)
-
-        #if not top_level_item:
-          #while (True):
-            #room_index -= 1
-            #top_level_item = self.treeWidget.topLevelItem(room_index)
-            #if (top_level_item != None):
-              #break
-
-        #if (top_level_item):
-        
-
     @pyqtSlot()
     def slot_DBusRoomChangedCallback(self):
-        pass # TODO
+        # Unused in ladish v1.0
+        return
+
+    @pyqtSlot(str, int, str, bool, bool, str)
+    def slot_DBusAppAdded2Callback(self, path, number, name, active, terminal, level):
+        if (path == "/org/ladish/Studio"):
+          ITEM_TYPE = ITEM_TYPE_STUDIO_APP
+          top_level_item = self.treeWidget.topLevelItem(0)
+        else:
+          ITEM_TYPE = ITEM_TYPE_ROOM_APP
+          for i in range(self.treeWidget.topLevelItemCount()):
+            if (i == 0):
+              continue
+            top_level_item = self.treeWidget.topLevelItem(i)
+            if (top_level_item and top_level_item.type() == ITEM_TYPE_ROOM and top_level_item.properties[iItemPropRoomPath] == path):
+              break
+          else:
+            return
+
+        for i in range(top_level_item.childCount()):
+          if (top_level_item.child(i).properties[iItemPropNumber] == number):
+            # App was added before, probably during reload/init
+            return
+
+        prop_obj = [None, None, None, None, None]
+        prop_obj[iItemPropNumber]   = number
+        prop_obj[iItemPropName]     = name
+        prop_obj[iItemPropActive]   = active
+        prop_obj[iItemPropTerminal] = terminal
+        prop_obj[iItemPropLevel]    = level
+
+        text = "["
+        if (level.isdigit()):
+          text += "L"
+        text += level.upper()
+        text += "] "
+        if (active == False):
+          text += "(inactive) "
+        text += name
+
+        item = QTreeWidgetItem(ITEM_TYPE)
+        item.properties = prop_obj
+        item.setText(0, text)
+        top_level_item.addChild(item)
+
+    @pyqtSlot(str, int)
+    def slot_DBusAppRemovedCallback(self, path, number):
+        if (path == "/org/ladish/Studio"):
+          top_level_item = self.treeWidget.topLevelItem(0)
+        else:
+          for i in range(self.treeWidget.topLevelItemCount()):
+            if (i == 0):
+              continue
+            top_level_item = self.treeWidget.topLevelItem(i)
+            if (top_level_item and top_level_item.type() == ITEM_TYPE_ROOM and top_level_item.properties[iItemPropRoomPath] == path):
+              break
+          else:
+            return
+
+        for i in range(top_level_item.childCount()):
+          if (top_level_item.child(i).properties[iItemPropNumber] == number):
+            top_level_item.takeChild(i)
+            break
+
+    @pyqtSlot(str, int, str, bool, bool, str)
+    def slot_DBusAppStateChanged2Callback(self, path, number, name, active, terminal, level):
+        if (path == "/org/ladish/Studio"):
+          top_level_item = self.treeWidget.topLevelItem(0)
+        else:
+          for i in range(self.treeWidget.topLevelItemCount()):
+            if (i == 0):
+              continue
+            top_level_item = self.treeWidget.topLevelItem(i)
+            if (top_level_item and top_level_item.type() == ITEM_TYPE_ROOM and top_level_item.properties[iItemPropRoomPath] == path):
+              break
+          else:
+            return
+
+        prop_obj = [None, None, None, None, None]
+        prop_obj[iItemPropNumber]   = number
+        prop_obj[iItemPropName]     = name
+        prop_obj[iItemPropActive]   = active
+        prop_obj[iItemPropTerminal] = terminal
+        prop_obj[iItemPropLevel]    = level
+
+        text = "["
+        if (level.isdigit()):
+          text += "L"
+        text += level.upper()
+        text += "] "
+        if (active == False):
+          text += "(inactive) "
+        text += name
+
+        for i in range(top_level_item.childCount()):
+          item = top_level_item.child(i)
+          if (item.properties[iItemPropNumber] == number):
+            item.properties = prop_obj
+            item.setText(0, text)
+            break
 
     #@pyqtSlot()
     #def slot_DBus(self):
