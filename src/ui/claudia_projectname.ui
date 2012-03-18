@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>SaveProjectW</class>
- <widget class="QDialog" name="SaveProjectW">
+ <class>ProjectNameW</class>
+ <widget class="QDialog" name="ProjectNameW">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>292</width>
-    <height>119</height>
+    <width>423</width>
+    <height>102</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -76,7 +76,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>SaveProjectW</receiver>
+   <receiver>ProjectNameW</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -92,7 +92,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>SaveProjectW</receiver>
+   <receiver>ProjectNameW</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

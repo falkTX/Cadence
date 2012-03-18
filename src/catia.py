@@ -16,6 +16,8 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# TODO - reconnect DBus stuff on JackShutdownCallback
+
 # Imports (Global)
 from PyQt4.QtCore import QSettings
 from PyQt4.QtGui import QApplication, QMainWindow

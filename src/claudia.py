@@ -26,7 +26,7 @@ from PyQt4.QtGui import QAction, QApplication, QMainWindow, QTableWidgetItem, QT
 # Imports (Custom Stuff)
 import ui_claudia
 import ui_claudia_studioname, ui_claudia_studiolist
-import ui_claudia_createroom
+import ui_claudia_createroom, ui_claudia_projectname, ui_claudia_projectproperties
 import ui_claudia_runcustom
 from shared_jack import *
 from shared_canvas import *
@@ -260,6 +260,107 @@ class CreateRoomW(QDialog, ui_claudia_createroom.Ui_CreateRoomW):
           self.ret_room_name = self.le_name.text()
           self.ret_room_template = self.lw_templates.currentItem().text()
 
+# Project Name Dialog
+class ProjectNameW(QDialog, ui_claudia_projectname.Ui_ProjectNameW):
+
+    NEW     = 1
+    SAVE_AS = 2
+
+    def __init__(self, parent, mode, proj_folder, path="", name=""):
+        QDialog.__init__(self, parent)
+        self.setupUi(self)
+
+        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
+
+        if (mode == self.NEW):
+          self.setWindowTitle(self.tr("New project"))
+        elif (mode == self.SAVE_AS):
+          self.setWindowTitle(self.tr("Save project as"))
+          self.le_path.setText(path)
+          self.le_name.setText(name)
+          self.checkText(path, name)
+
+        self.m_proj_folder = proj_folder
+
+        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
+        self.connect(self.b_open, SIGNAL("clicked()"), SLOT("slot_checkFolder()"))
+        self.connect(self.le_path, SIGNAL("textChanged(QString)"), SLOT("slot_checkText_path(QString)"))
+        self.connect(self.le_name, SIGNAL("textChanged(QString)"), SLOT("slot_checkText_name(QString)"))
+
+        self.ret_project_name = ""
+        self.ret_project_path = ""
+
+    def checkText(self, name, path):
+        check = bool(name and path and os.path.exists(path) and os.path.isdir(path))
+        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(check)
+
+    @pyqtSlot()
+    def slot_checkFolder(self):
+        # Create default project folder if the project has not been set yet 
+        if (not self.le_path.text()):
+          if (os.path.exists(self.m_proj_folder) == False):
+            os.mkdir(self.m_proj_folder)
+
+        if (self.le_path.text()):
+          proj_path = self.le_path.text()
+        else:
+          proj_path = self.m_proj_folder
+
+        getAndSetPath(self, proj_path, self.le_path)
+
+    @pyqtSlot(str)
+    def slot_checkText_name(self, text):
+        self.checkText(text, self.le_path.text())
+
+    @pyqtSlot(str)
+    def slot_checkText_path(self, text):
+        self.checkText(self.le_name.text(), text)
+
+    @pyqtSlot()
+    def slot_setReturn(self):
+        self.ret_project_name = self.le_name.text()
+        self.ret_project_path = self.le_path.text()
+
+# Project Properties Dialog
+class ProjectPropertiesW(QDialog, ui_claudia_projectproperties.Ui_ProjectPropertiesW):
+    def __init__(self, parent, name, description, notes):
+        QDialog.__init__(self, parent)
+        self.setupUi(self)
+
+        #self.default_name = name
+        #self.last_name = name
+        #self.data_to_return = [False, name, description, notes]
+        #self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(True)
+
+        #self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
+        #self.connect(self.le_name, SIGNAL("textChanged(QString)"), self.checkText_name)
+        #self.connect(self.cb_save_now, SIGNAL("clicked(bool)"), self.checkSaveNow)
+
+        self.le_name.setText(name)
+        self.le_description.setText(description)
+        self.le_notes.setPlainText(notes)
+
+        #self.ret_obj = [name, description, notes, False]
+
+    #def checkSaveNow(self, save):
+        #if (save):
+          #self.le_name.setText(self.last_name)
+        #else:
+          #self.last_name = self.le_name.text()
+          #self.le_name.setText(self.default_name)
+
+    #def checkText_name(self, text):
+        #self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(not text.isEmpty())
+
+    #@pyqtSlot()
+    #def slot_setReturn(self):
+        #if ("toPlainText" in dir(self.le_notes)): #PyQt Bug
+          #notes = self.le_notes.toPlainText()
+        #else:
+          #notes = self.le_notes.plainText()
+
+        #self.data_to_return = [self.cb_save_now.isChecked(), self.le_name.text(), self.le_description.text(), notes]
+
 # Run Custom App Dialog
 class RunCustomW(QDialog, ui_claudia_runcustom.Ui_RunCustomW):
     def __init__(self, parent, isRoom, app_obj=None):
@@ -468,23 +569,23 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.connect(self.act_room_create, SIGNAL("triggered()"), SLOT("slot_room_create()"))
         self.connect(self.menu_room_delete, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuRoomList()"))
 
-        #self.connect(self.act_project_new, SIGNAL("triggered()"), self.func_project_new)
-        #self.connect(self.act_project_save, SIGNAL("triggered()"), self.func_project_save)
-        #self.connect(self.act_project_save_as, SIGNAL("triggered()"), self.func_project_save_as)
-        #self.connect(self.act_project_unload, SIGNAL("triggered()"), self.func_project_unload)
-        #self.connect(self.act_project_properties, SIGNAL("triggered()"), self.func_project_properties)
-        #self.connect(self.b_project_new, SIGNAL("clicked()"), self.func_project_new)
-        #self.connect(self.b_project_load, SIGNAL("clicked()"), self.func_project_load)
-        #self.connect(self.b_project_save, SIGNAL("clicked()"), self.func_project_save)
-        #self.connect(self.b_project_save_as, SIGNAL("clicked()"), self.func_project_save_as)
-        #self.connect(self.menu_project_load, SIGNAL("aboutToShow()"), self.updateMenuProjectList)
+        self.connect(self.act_project_new, SIGNAL("triggered()"), SLOT("slot_project_new()"))
+        self.connect(self.act_project_save, SIGNAL("triggered()"), SLOT("slot_project_save()"))
+        self.connect(self.act_project_save_as, SIGNAL("triggered()"), SLOT("slot_project_save_as()"))
+        self.connect(self.act_project_unload, SIGNAL("triggered()"), SLOT("slot_project_unload()"))
+        self.connect(self.act_project_properties, SIGNAL("triggered()"), SLOT("slot_project_properties()"))
+        self.connect(self.b_project_new, SIGNAL("clicked()"), SLOT("slot_project_new()"))
+        self.connect(self.b_project_load, SIGNAL("clicked()"), SLOT("slot_project_load()"))
+        self.connect(self.b_project_save, SIGNAL("clicked()"), SLOT("slot_project_save()"))
+        self.connect(self.b_project_save_as, SIGNAL("clicked()"), SLOT("slot_project_save_as()"))
+        self.connect(self.menu_project_load, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuProjectList()"))
 
         #self.connect(self.act_app_add_new, SIGNAL("triggered()"), self.func_app_add_new)
         self.connect(self.act_app_run_custom, SIGNAL("triggered()"), SLOT("slot_app_run_custom()"))
 
         self.connect(self.treeWidget, SIGNAL("itemSelectionChanged()"), SLOT("slot_checkCurrentRoom()"))
-        ##self.connect(self.treeWidget, SIGNAL("itemPressed(QTreeWidgetItem*, int)"), self.checkCurrentRoom)
-        #self.connect(self.treeWidget, SIGNAL("itemDoubleClicked(QTreeWidgetItem*, int)"), self.doubleClickedAppList)
+        #self.connect(self.treeWidget, SIGNAL("itemPressed(QTreeWidgetItem*, int)"), self.checkCurrentRoom)
+        self.connect(self.treeWidget, SIGNAL("itemDoubleClicked(QTreeWidgetItem*, int)"), SLOT("slot_doubleClickedAppList(QTreeWidgetItem*, int)"))
         #self.connect(self.treeWidget, SIGNAL("customContextMenuRequested(QPoint)"), self.showAppListCustomMenu)
 
         self.connect(self.miniCanvasPreview, SIGNAL("miniCanvasMoved(double, double)"), SLOT("slot_miniCanvasMoved(double, double)"))
@@ -1122,8 +1223,8 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             self.emit(SIGNAL("DBusRoomAppearedCallback(QString, QString)"), args[iRoomAppearedPath], args[iRoomAppearedDict]['name'])
           elif (kwds['member'] == "RoomDisappeared"):
             self.emit(SIGNAL("DBusRoomDisappearedCallback(QString)"), args[iRoomAppearedPath])
-          elif (kwds['member'] == "RoomChanged"):
-            self.emit(SIGNAL("DBusRoomChangedCallback()"))
+          #elif (kwds['member'] == "RoomChanged"):
+            #self.emit(SIGNAL("DBusRoomChangedCallback()"))
 
         elif (kwds['interface'] == "org.ladish.Room"):
           if (DEBUG): print("DBus signal @org.ladish.Room,", kwds['member'])
@@ -1230,6 +1331,93 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
           DBus.ladish_studio.DeleteRoom(room_name)
 
     @pyqtSlot()
+    def slot_project_new(self):
+        dialog = ProjectNameW(self, ProjectNameW.NEW, self.m_savedSettings["Main/DefaultProjectFolder"])
+        if (dialog.exec_()):
+          # Check if a project is already loaded, if yes unload it first
+          project_graph_version, project_properties = DBus.ladish_room.GetProjectProperties()
+          if (len(project_properties) > 0):
+            DBus.ladish_room.UnloadProject()
+          DBus.ladish_room.SaveProject(dialog.ret_project_path, dialog.ret_project_name)
+
+    @pyqtSlot()
+    def slot_project_load(self):
+        project_path = QFileDialog.getExistingDirectory(self, self.tr("Open Project"), self.m_savedSettings["Main/DefaultProjectFolder"])
+        if (project_path):
+          if (os.path.exists(os.path.join(project_path, "ladish-project.xml"))):
+            DBus.ladish_room.LoadProject(project_path)
+          else:
+            QMessageBox.warning(self, self.tr("Warning"), self.tr("The selected folder does not contain a ladish project"))
+
+    @pyqtSlot()
+    def slot_project_load_m(self):
+        act_x_text = self.sender().text()
+        if (act_x_text):
+          proj_path = "/" + act_x_text.rsplit("[/", 1)[-1].rsplit("]", 1)[0]
+          DBus.ladish_room.LoadProject(proj_path)
+
+    @pyqtSlot()
+    def slot_project_save(self):
+        project_graph_version, project_properties = DBus.ladish_room.GetProjectProperties()
+        if (len(project_properties) > 0):
+          path = dbus.String(project_properties['dir'])
+          name = dbus.String(project_properties['name'])
+          DBus.ladish_room.SaveProject(path, name)
+        else:
+          self.slot_project_new()
+
+    @pyqtSlot()
+    def slot_project_save_as(self):
+        project_graph_version, project_properties = DBus.ladish_room.GetProjectProperties()
+
+        if (len(project_properties) > 0):
+          path = str(project_properties['dir'])
+          name = str(project_properties['name'])
+          dialog = ProjectNameW(self, ProjectNameW.SAVE_AS, self.m_savedSettings["Main/DefaultProjectFolder"], path, name)
+
+          if (dialog.exec_()):
+            DBus.ladish_room.SaveProject(dialog.ret_project_path, dialog.ret_project_name)
+
+        else:
+          self.slot_project_new()
+
+    @pyqtSlot()
+    def slot_project_unload(self):
+        DBus.ladish_room.UnloadProject()
+
+    @pyqtSlot()
+    def slot_project_properties(self):
+        project_graph_version, project_properties = DBus.ladish_room.GetProjectProperties()
+
+        path = str(project_properties['dir'])
+        name = str(project_properties['name'])
+
+        #if ("description" in project_properties.keys()):
+          #description = project_properties[u'description']
+        #else:
+        description = ""
+
+        #if ("notes" in project_properties.keys()):
+          #notes = project_properties[u'notes']
+        #else:
+        notes = ""
+
+        dialog = ProjectPropertiesW(self, name, description, notes)
+
+        if (dialog.exec_()):
+          pass
+          #save_now = dialog.data_to_return[0]
+          #new_name = dbus.String(dialog.data_to_return[1])
+          #description = dbus.String(dialog.data_to_return[2])
+          #notes = dbus.String(dialog.data_to_return[3])
+
+          #DBus.ladish_room.SetProjectDescription(description)
+          #DBus.ladish_room.SetProjectNotes(notes)
+
+          #if (save_now):
+            #DBus.ladish_room.SaveProject(dbus.String(dir_), new_name)
+
+    @pyqtSlot()
     def slot_app_run_custom(self):
         dialog = RunCustomW(self, bool(self.m_last_item_type in (ITEM_TYPE_ROOM, ITEM_TYPE_ROOM_APP)))
         if (dialog.exec_()):
@@ -1300,6 +1488,15 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.m_last_item_type = ITEM_TYPE
         self.m_last_room_path = room_path
 
+    @pyqtSlot(QTreeWidgetItem, int)
+    def slot_doubleClickedAppList(self, item, row):
+        print(item, row)
+        if (item.type() in (ITEM_TYPE_STUDIO_APP, ITEM_TYPE_ROOM_APP)):
+          if (item.properties[iItemPropActive]):
+            DBus.ladish_app_iface.StopApp(item.properties[iItemPropNumber])
+          else:
+            DBus.ladish_app_iface.StartApp(item.properties[iItemPropNumber])
+
     @pyqtSlot()
     def slot_updateMenuStudioList_Load(self):
         self.menu_studio_load.clear()
@@ -1353,6 +1550,29 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         act_no_room = QAction(self.tr("Empty room list"), self.menu_room_delete)
         act_no_room.setEnabled(False)
         self.menu_room_delete.addAction(act_no_room)
+
+    @pyqtSlot()
+    def slot_updateMenuProjectList(self):
+        self.menu_project_load.clear()
+        act_project_load = QAction(self.tr("Load from folder..."), self.menu_project_load)
+        self.menu_project_load.addAction(act_project_load)
+        self.connect(act_project_load, SIGNAL("triggered()"), SLOT("slot_project_load()"))
+
+        ladish_recent_iface = dbus.Interface(DBus.ladish_room, "org.ladish.RecentItems")
+        proj_list = ladish_recent_iface.get(RECENT_PROJECTS_STORE_MAX_ITEMS)
+
+        if (len(proj_list) > 0):
+          self.menu_project_load.addSeparator()
+          for proj_path, proj_dict in proj_list:
+            if ("name" in proj_dict.keys()):
+              proj_name = proj_dict['name']
+            else:
+              continue
+
+            act_x_text = "%s [%s]" % (proj_name, proj_path)
+            act_x_proj = QAction(act_x_text, self.menu_project_load)
+            self.menu_project_load.addAction(act_x_proj)
+            self.connect(act_x_proj, SIGNAL("triggered()"), SLOT("slot_project_load_m()"))
 
     @pyqtSlot(float)
     def slot_canvasScaleChanged(self, scale):
