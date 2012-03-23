@@ -1424,7 +1424,6 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         path = str(project_properties['dir'])
         name = str(project_properties['name'])
-        print(project_properties)
 
         if ("description" in project_properties.keys()):
           description = str(project_properties['description'])
@@ -1518,7 +1517,6 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
     @pyqtSlot(QTreeWidgetItem, int)
     def slot_doubleClickedAppList(self, item, row):
-        print(item, row)
         if (item.type() in (ITEM_TYPE_STUDIO_APP, ITEM_TYPE_ROOM_APP)):
           if (item.properties[iItemPropActive]):
             DBus.ladish_app_iface.StopApp(item.properties[iItemPropNumber])
@@ -1928,7 +1926,6 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
     def slot_DBusRoomDisappearedCallback(self, room_path):
         for i in range(self.treeWidget.topLevelItemCount()):
           item = self.treeWidget.topLevelItem(i)
-          print(i, item, item.type() if item else None)
 
           if (i == 0):
             continue
