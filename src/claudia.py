@@ -1278,6 +1278,8 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         except:
           DBus.ladish_app_daemon = None
 
+        jacksettings.initBus(DBus.bus)
+
     def refreshXruns(self):
         xruns = int(DBus.jack.GetXruns())
         if (self.m_xruns != xruns):

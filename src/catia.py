@@ -16,8 +16,6 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
-# TODO - reconnect DBus stuff on JackShutdownCallback
-
 # Imports (Global)
 from PyQt4.QtCore import QSettings
 from PyQt4.QtGui import QApplication, QMainWindow
@@ -625,8 +623,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.init_jack()
 
     def jackStopped(self):
-        #if (haveDBus):
-          #self.DBusReconnect()
+        if (haveDBus):
+          self.DBusReconnect()
 
         # client already closed
         jack.client = None
@@ -699,7 +697,17 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
           self.act_tools_a2j_stop.setEnabled(False)
 
     def DBusSignalReceiver(self, *args, **kwds):
-        if (kwds['interface'] == "org.jackaudio.JackControl"):
+        if (kwds['interface'] == "org.freedesktop.DBus" and kwds['path'] == "/org/freedesktop/DBus" and kwds['member'] == "NameOwnerChanged"):
+          appInterface, appId, newId = args
+
+          if (not newId):
+            # Something crashed
+            if (appInterface == "org.gna.home.a2jmidid"):
+              QTimer.singleShot(0, self, SLOT("slot_handleCrash_a2j()"))
+            elif (appInterface == "org.jackaudio.service"):
+              QTimer.singleShot(0, self, SLOT("slot_handleCrash_jack()"))
+
+        elif (kwds['interface'] == "org.jackaudio.JackControl"):
           if (kwds['member'] == "ServerStarted"):
             self.jackStarted()
           elif (kwds['member'] == "ServerStopped"):
@@ -711,14 +719,15 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             self.a2jStopped()
 
     def DBusReconnect(self):
-        DBus.bus = dbus.SessionBus(mainloop=DBus.loop)
         try:
           DBus.jack = DBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
+          jacksettings.initBus(DBus.bus)
         except:
           DBus.jack = None
+
         try:
           DBus.a2j = dbus.Interface(DBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
-          a2j_client_name = DBus.a2j.get_jack_client_name()
+          a2j_client_name = str(DBus.a2j.get_jack_client_name())
         except:
           DBus.a2j = None
           a2j_client_name = None
@@ -889,6 +898,52 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
     @pyqtSlot()
     def slot_ShutdownCallback(self):
+        self.jackStopped()
+
+    @pyqtSlot()
+    def slot_handleCrash_a2j(self):
+        try:
+          DBus.a2j = dbus.Interface(DBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
+          a2j_client_name = str(DBus.a2j.get_jack_client_name())
+        except:
+          DBus.a2j = None
+          a2j_client_name = None
+
+        if (DBus.a2j):
+          if (DBus.a2j.is_started()):
+            self.a2jStarted()
+          else:
+            self.a2jStopped()
+        else:
+          self.act_tools_a2j_start.setEnabled(False)
+          self.act_tools_a2j_stop.setEnabled(False)
+          self.act_tools_a2j_export_hw.setEnabled(False)
+          self.menu_A2J_Bridge.setEnabled(False)
+
+    @pyqtSlot()
+    def slot_handleCrash_jack(self):
+        self.DBusReconnect()
+
+        if (DBus.jack):
+          self.act_jack_configure.setEnabled(True)
+          self.b_jack_configure.setEnabled(True)
+        else:
+          self.act_tools_jack_start.setEnabled(False)
+          self.act_tools_jack_stop.setEnabled(False)
+          self.act_jack_configure.setEnabled(False)
+          self.b_jack_configure.setEnabled(False)
+
+        if (DBus.a2j):
+          if (DBus.a2j.is_started()):
+            self.a2jStarted()
+          else:
+            self.a2jStopped()
+        else:
+          self.act_tools_a2j_start.setEnabled(False)
+          self.act_tools_a2j_stop.setEnabled(False)
+          self.act_tools_a2j_export_hw.setEnabled(False)
+          self.menu_A2J_Bridge.setEnabled(False)
+
         self.jackStopped()
 
     @pyqtSlot()
