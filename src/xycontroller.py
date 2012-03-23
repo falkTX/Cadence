@@ -125,7 +125,7 @@ class XYGraphicsScene(QGraphicsScene):
           self.setPosY(yp, False)
 
         if (sendUpdate):
-          self.emit(SIGNAL("cursorMoved(float, float)"), xp, yp)
+          self.emit(SIGNAL("cursorMoved(double, double)"), xp, yp)
 
     def handleMousePos(self, pos):
         if (not self.p_size.contains(pos)):
@@ -151,7 +151,7 @@ class XYGraphicsScene(QGraphicsScene):
           yp = pos.y()/(self.p_size.y()+self.p_size.height())
 
           self.sendMIDI(xp, yp)
-          self.emit(SIGNAL("cursorMoved(float, float)"), xp, yp)
+          self.emit(SIGNAL("cursorMoved(double, double)"), xp, yp)
 
     def sendMIDI(self, xp=None, yp=None):
         global jack_midi_out_data
@@ -185,7 +185,7 @@ class XYGraphicsScene(QGraphicsScene):
             yp = pos.y()/(self.p_size.y()+self.p_size.height())
 
             self.sendMIDI(xp, yp)
-            self.emit(SIGNAL("cursorMoved(float, float)"), xp, yp)
+            self.emit(SIGNAL("cursorMoved(double, double)"), xp, yp)
 
     def keyPressEvent(self, event):
         event.accept()
@@ -256,9 +256,7 @@ class XYControllerW(QMainWindow, ui_xycontroller.Ui_XYControllerW):
         self.connect(self.cb_control_x, SIGNAL("currentIndexChanged(QString)"), SLOT("slot_checkCC_X(QString)"))
         self.connect(self.cb_control_y, SIGNAL("currentIndexChanged(QString)"), SLOT("slot_checkCC_Y(QString)"))
 
-        # FIXME
-        self.connect(self.scene, SIGNAL("cursorMoved(float, float)"), self.slot_sceneCursorMoved)
-        #self.connect(self.scene, SIGNAL("cursorMoved(float, float)"), SLOT("slot_sceneCursorMoved(float, float)"))
+        self.connect(self.scene, SIGNAL("cursorMoved(double, double)"), SLOT("slot_sceneCursorMoved(double, double)"))
 
         self.connect(self.act_ch_01, SIGNAL("triggered(bool)"), SLOT("slot_checkChannel(bool)"))
         self.connect(self.act_ch_02, SIGNAL("triggered(bool)"), SLOT("slot_checkChannel(bool)"))
