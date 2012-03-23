@@ -49,6 +49,11 @@ iAppTerminal = 2
 iAppLevel    = 3
 iAppActive   = 4
 
+iAppPropName        = 0
+iAppPropDescription = 1
+iAppPropNotes       = 2
+iAppPropSaveNow     = 3
+
 iItemPropNumber   = 0
 iItemPropName     = 1
 iItemPropActive   = 2
@@ -90,6 +95,9 @@ iStudioRenamedName = 0
 
 iRoomAppearedPath = 0
 iRoomAppearedDict = 1
+
+iProjChangedId   = 0
+iProjChangedDict = 1
 
 iAppChangedNumber   = 1
 iAppChangedName     = 2
@@ -327,39 +335,39 @@ class ProjectPropertiesW(QDialog, ui_claudia_projectproperties.Ui_ProjectPropert
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
-        #self.default_name = name
-        #self.last_name = name
-        #self.data_to_return = [False, name, description, notes]
-        #self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(True)
+        self.m_default_name = name
+        self.m_last_name = name
 
-        #self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
-        #self.connect(self.le_name, SIGNAL("textChanged(QString)"), self.checkText_name)
-        #self.connect(self.cb_save_now, SIGNAL("clicked(bool)"), self.checkSaveNow)
+        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
+        self.connect(self.le_name, SIGNAL("textChanged(QString)"), SLOT("slot_checkText_name(QString)"))
+        self.connect(self.cb_save_now, SIGNAL("clicked(bool)"), SLOT("slot_checkSaveNow(bool)"))
 
         self.le_name.setText(name)
         self.le_description.setText(description)
         self.le_notes.setPlainText(notes)
 
-        #self.ret_obj = [name, description, notes, False]
+        self.ret_obj = None
 
-    #def checkSaveNow(self, save):
-        #if (save):
-          #self.le_name.setText(self.last_name)
-        #else:
-          #self.last_name = self.le_name.text()
-          #self.le_name.setText(self.default_name)
+    @pyqtSlot()
+    def slot_setReturn(self):
+        self.ret_obj = [None, None, None, None]
+        self.ret_obj[iAppPropName]        = self.le_name.text()
+        self.ret_obj[iAppPropDescription] = self.le_description.text()
+        self.ret_obj[iAppPropNotes]       = self.le_notes.toPlainText() # plainText()
+        self.ret_obj[iAppPropSaveNow]     = self.cb_save_now.isChecked()
 
-    #def checkText_name(self, text):
-        #self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(not text.isEmpty())
+    @pyqtSlot(bool)
+    def slot_checkSaveNow(self, save):
+        if (save):
+          self.le_name.setText(self.m_last_name)
+        else:
+          self.m_last_name = self.le_name.text()
+          self.le_name.setText(self.m_default_name)
 
-    #@pyqtSlot()
-    #def slot_setReturn(self):
-        #if ("toPlainText" in dir(self.le_notes)): #PyQt Bug
-          #notes = self.le_notes.toPlainText()
-        #else:
-          #notes = self.le_notes.plainText()
-
-        #self.data_to_return = [self.cb_save_now.isChecked(), self.le_name.text(), self.le_description.text(), notes]
+    @pyqtSlot(str)
+    def slot_checkText_name(self, text):
+        check = bool(text)
+        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(check)
 
 # Run Custom App Dialog
 class RunCustomW(QDialog, ui_claudia_runcustom.Ui_RunCustomW):
@@ -370,29 +378,29 @@ class RunCustomW(QDialog, ui_claudia_runcustom.Ui_RunCustomW):
         self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(bool(app_obj))
 
         if (app_obj):
-          pass
-        #self.le_command.setText(command)
-        #self.le_name.setText(name)
-        #self.cb_terminal.setChecked(terminal)
+          self.le_command.setText(app_obj[iAppCommand])
+          self.le_name.setText(app_obj[iAppName])
+          self.cb_terminal.setChecked(app_obj[iAppTerminal])
 
-        #if (level == 0):
-          #self.rb_level_0.setChecked(True)
-        #elif (level == 1):
-          #self.rb_level_1.setChecked(True)
-        #elif (level == 2):
-          #self.rb_level_2.setChecked(True)
-        #elif (level == 3):
-          #self.rb_level_3.setChecked(True)
-        #else:
-          #self.rb_level_0.setChecked(True)
+          level = app_obj[iAppLevel]
+          if (level == "0"):
+            self.rb_level_0.setChecked(True)
+          elif (level == "1"):
+            self.rb_level_1.setChecked(True)
+          elif (level == "LASH"):
+            self.rb_level_lash.setChecked(True)
+          elif (level == "JS"):
+            self.rb_level_js.setChecked(True)
+          else:
+            self.rb_level_0.setChecked(True)
 
-        #if (active):
-          #self.le_command.setEnabled(False)
-          #self.cb_terminal.setEnabled(False)
-          #self.rb_level_0.setEnabled(False)
-          #self.rb_level_1.setEnabled(False)
-          #self.rb_level_2.setEnabled(False)
-          #self.rb_level_3.setEnabled(False)
+          if (app_obj[iAppActive]):
+            self.le_command.setEnabled(False)
+            self.cb_terminal.setEnabled(False)
+            self.rb_level_0.setEnabled(False)
+            self.rb_level_1.setEnabled(False)
+            self.rb_level_lash.setEnabled(False)
+            self.rb_level_js.setEnabled(False)
         else:
           self.rb_level_0.setChecked(True)
 
@@ -584,9 +592,9 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.connect(self.act_app_run_custom, SIGNAL("triggered()"), SLOT("slot_app_run_custom()"))
 
         self.connect(self.treeWidget, SIGNAL("itemSelectionChanged()"), SLOT("slot_checkCurrentRoom()"))
-        #self.connect(self.treeWidget, SIGNAL("itemPressed(QTreeWidgetItem*, int)"), self.checkCurrentRoom)
+        #self.connect(self.treeWidget, SIGNAL("itemPressed(QTreeWidgetItem*, int)"), SLOT("slot_checkCurrentRoom()"))
         self.connect(self.treeWidget, SIGNAL("itemDoubleClicked(QTreeWidgetItem*, int)"), SLOT("slot_doubleClickedAppList(QTreeWidgetItem*, int)"))
-        #self.connect(self.treeWidget, SIGNAL("customContextMenuRequested(QPoint)"), self.showAppListCustomMenu)
+        self.connect(self.treeWidget, SIGNAL("customContextMenuRequested(QPoint)"), SLOT("slot_showAppListCustomMenu()"))
 
         self.connect(self.miniCanvasPreview, SIGNAL("miniCanvasMoved(double, double)"), SLOT("slot_miniCanvasMoved(double, double)"))
 
@@ -600,6 +608,9 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         self.connect(self.act_help_about, SIGNAL("triggered()"), SLOT("slot_aboutClaudia()"))
         self.connect(self.act_help_about_qt, SIGNAL("triggered()"), app, SLOT("aboutQt()"))
+
+        # org.freedesktop.DBus
+        self.connect(self, SIGNAL("DBusCrashCallback(QString)"), SLOT("slot_DBusCrashCallback(QString)"))
 
         # org.jackaudio.JackControl
         self.connect(self, SIGNAL("DBusServerStartedCallback()"), SLOT("slot_DBusServerStartedCallback()"))
@@ -630,12 +641,13 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.connect(self, SIGNAL("DBusRoomDisappearedCallback(QString)"), SLOT("slot_DBusRoomDisappearedCallback(QString)"))
         #self.connect(self, SIGNAL("DBusRoomChangedCallback()"), SLOT("slot_DBusRoomChangedCallback()"))
 
+        # org.ladish.Room
+        self.connect(self, SIGNAL("DBusProjectPropertiesChanged(QString, QString)"), SLOT("slot_DBusProjectPropertiesChanged(QString, QString)"))
+
         # org.ladish.AppSupervisor
         self.connect(self, SIGNAL("DBusAppAdded2Callback(QString, int, QString, bool, bool, QString)"), SLOT("slot_DBusAppAdded2Callback(QString, int, QString, bool, bool, QString)"))
         self.connect(self, SIGNAL("DBusAppRemovedCallback(QString, int)"), SLOT("slot_DBusAppRemovedCallback(QString, int)"))
         self.connect(self, SIGNAL("DBusAppStateChanged2Callback(QString, int, QString, bool, bool, QString)"), SLOT("slot_DBusAppStateChanged2Callback(QString, int, QString, bool, bool, QString)"))
-
-        #self.connect(self, SIGNAL("DBus()"), SLOT("slot_DBus()"))
 
         # JACK
         self.connect(self, SIGNAL("JackBufferSizeCallback(int)"), SLOT("slot_JackBufferSizeCallback(int)"))
@@ -905,10 +917,8 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         # Remove old unused item if needed
         iItem = self.treeWidget.topLevelItem(room_index)
-        if (iItem != None):
-          if (iItem.isVisible() == False):
-            self.treeWidget.takeTopLevelItem(room_index)
-          #return
+        if (iItem and iItem.isVisible() == False):
+          self.treeWidget.takeTopLevelItem(room_index)
 
         # Insert padding of items if needed
         for i in range(room_index):
@@ -922,7 +932,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         if (len(project_properties) > 0):
           project_path = str(project_properties['dir'])
           project_name = str(project_properties['name'])
-          item_string  = "(%s)" % (project_name)
+          item_string  = " (%s)" % (project_name)
         else:
           project_path = None
           project_name = None
@@ -934,31 +944,32 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         item = QTreeWidgetItem(ITEM_TYPE_ROOM)
         item.properties = prop_obj
-        item.setText(0, "%s %s" % (room_name, item_string))
+        item.setText(0, "%s%s" % (room_name, item_string))
 
         self.treeWidget.insertTopLevelItem(room_index, item)
+        self.treeWidget.expandItem(item)
+
         return item
 
     def canvas_add_group(self, group_id, group_name):
-        # TODO - get room list names, but not if we're inside a room
-        room_list_names = [] #self.get_room_list_names()
+        # TODO - request ladish client type
 
-        if (group_name in ("Hardware Playback", "Hardware Capture")):
-          icon  = patchcanvas.ICON_HARDWARE
-          split = patchcanvas.SPLIT_NO
-        elif (group_name in room_list_names or group_name in ("Capture", "Playback")):
-          icon  = patchcanvas.ICON_LADISH_ROOM
+        #if (False):
+          #icon  = patchcanvas.ICON_HARDWARE
+          #split = patchcanvas.SPLIT_NO
+        #elif (False):
+          #icon  = patchcanvas.ICON_LADISH_ROOM
+          #split = patchcanvas.SPLIT_NO
+        #else:
+        icon  = patchcanvas.ICON_APPLICATION
+
+        split_try = DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_SPLIT)
+        if (split_try == "true"):
+          split = patchcanvas.SPLIT_YES
+        elif (split_try == "false"):
           split = patchcanvas.SPLIT_NO
         else:
-          icon  = patchcanvas.ICON_APPLICATION
-
-          split_try = DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_SPLIT)
-          if (split_try == "true"):
-            split = patchcanvas.SPLIT_YES
-          elif (split_try == "false"):
-            split = patchcanvas.SPLIT_NO
-          else:
-            split = patchcanvas.SPLIT_UNDEF
+          split = patchcanvas.SPLIT_UNDEF
 
         patchcanvas.addGroup(group_id, group_name, split, icon)
 
@@ -1171,7 +1182,16 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         patchcanvas.clear()
 
     def DBusSignalReceiver(self, *args, **kwds):
-        if (kwds['interface'] == "org.jackaudio.JackControl"):
+        if (kwds['interface'] == "org.freedesktop.DBus" and kwds['path'] == "/org/freedesktop/DBus" and kwds['member'] == "NameOwnerChanged"):
+          appInterface, appId, newId = args
+          print("appInterface crashed", appInterface)
+
+          if (not newId):
+            # Something crashed
+            if (appInterface in ("org.jackaudio.service", "org.ladish")):
+              self.emit(SIGNAL("DBusCrashCallback(QString)"), appInterface)
+
+        elif (kwds['interface'] == "org.jackaudio.JackControl"):
           if (DEBUG): print("DBus signal @org.jackaudio.JackControl,", kwds['member'])
           if (kwds['member'] == "ServerStarted"):
             self.emit(SIGNAL("DBusServerStartedCallback()"))
@@ -1179,7 +1199,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             self.emit(SIGNAL("DBusServerStoppedCallback()"))
 
         elif (kwds['interface'] == "org.jackaudio.JackPatchbay"):
-          if (kwds['path'] == DBus.patchbay.object_path):
+          if (DBus.patchbay and kwds['path'] == DBus.patchbay.object_path):
             if (DEBUG): print("DBus signal @org.jackaudio.JackPatchbay,", kwds['member'])
             if (kwds['member'] == "ClientAppeared"):
               self.emit(SIGNAL("DBusClientAppearedCallback(int, QString)"), args[iJackClientId], args[iJackClientName])
@@ -1228,8 +1248,11 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         elif (kwds['interface'] == "org.ladish.Room"):
           if (DEBUG): print("DBus signal @org.ladish.Room,", kwds['member'])
-          #if (kwds['member'] == "ProjectPropertiesChanged"):
-            #self.signal_ProjectPropertiesChanged(kwds['path'], args)
+          if (kwds['member'] == "ProjectPropertiesChanged"):
+            if ("name" in args[iProjChangedDict].keys()):
+              self.emit(SIGNAL("DBusProjectPropertiesChanged(QString, QString)"), kwds['path'], args[iProjChangedDict]['name'])
+            else:
+              self.emit(SIGNAL("DBusProjectPropertiesChanged(QString, QString)"), kwds['path'], "")
 
         elif (kwds['interface'] == "org.ladish.AppSupervisor"):
           if (DEBUG): print("DBus signal @org.ladish.AppSupervisor,", kwds['member'])
@@ -1240,10 +1263,20 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
           elif (kwds['member'] == "AppStateChanged2"):
             self.emit(SIGNAL("DBusAppStateChanged2Callback(QString, int, QString, bool, bool, QString)"), kwds['path'], args[iAppChangedNumber], args[iAppChangedName], args[iAppChangedActive], args[iAppChangedTerminal], args[iAppChangedLevel])
 
-    #def DBusReconnect(self):
-        #DBus.bus  = dbus.SessionBus(mainloop=DBus.loop)
-        #DBus.jack = DBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
-        #DBus.ladish_control = DBus.bus.get_object("org.ladish", "/org/ladish/Control")
+    def DBusReconnect(self):
+        DBus.jack = DBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
+        DBus.ladish_control = DBus.bus.get_object("org.ladish", "/org/ladish/Control")
+        DBus.ladish_studio  = None
+        DBus.ladish_room    = None
+        DBus.ladish_graph   = None
+        DBus.ladish_manager = None
+        DBus.ladish_app_iface = None
+        DBus.patchbay = None
+
+        try:
+          DBus.ladish_app_daemon = DBus.bus.get_object("org.ladish.appdb", "/")
+        except:
+          DBus.ladish_app_daemon = None
 
     def refreshXruns(self):
         xruns = int(DBus.jack.GetXruns())
@@ -1391,31 +1424,26 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         path = str(project_properties['dir'])
         name = str(project_properties['name'])
+        print(project_properties)
 
-        #if ("description" in project_properties.keys()):
-          #description = project_properties[u'description']
-        #else:
-        description = ""
+        if ("description" in project_properties.keys()):
+          description = str(project_properties['description'])
+        else:
+          description = ""
 
-        #if ("notes" in project_properties.keys()):
-          #notes = project_properties[u'notes']
-        #else:
-        notes = ""
+        if ("notes" in project_properties.keys()):
+          notes = str(project_properties['notes'])
+        else:
+          notes = ""
 
         dialog = ProjectPropertiesW(self, name, description, notes)
 
         if (dialog.exec_()):
-          pass
-          #save_now = dialog.data_to_return[0]
-          #new_name = dbus.String(dialog.data_to_return[1])
-          #description = dbus.String(dialog.data_to_return[2])
-          #notes = dbus.String(dialog.data_to_return[3])
+          DBus.ladish_room.SetProjectDescription(dialog.ret_obj[iAppPropDescription])
+          DBus.ladish_room.SetProjectNotes(dialog.ret_obj[iAppPropNotes])
 
-          #DBus.ladish_room.SetProjectDescription(description)
-          #DBus.ladish_room.SetProjectNotes(notes)
-
-          #if (save_now):
-            #DBus.ladish_room.SaveProject(dbus.String(dir_), new_name)
+          if (dialog.ret_obj[iAppPropSaveNow]):
+            DBus.ladish_room.SaveProject(path, dialog.ret_obj[iAppPropName])
 
     @pyqtSlot()
     def slot_app_run_custom(self):
@@ -1574,6 +1602,131 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             self.menu_project_load.addAction(act_x_proj)
             self.connect(act_x_proj, SIGNAL("triggered()"), SLOT("slot_project_load_m()"))
 
+    @pyqtSlot()
+    def slot_showAppListCustomMenu(self):
+        item = self.treeWidget.currentItem()
+        if (item):
+          cMenu = QMenu()
+          if (item.type() == ITEM_TYPE_STUDIO):
+            act_x_add_new = cMenu.addAction(self.tr("Add New..."))
+            act_x_run_custom = cMenu.addAction(self.tr("Run Custom..."))
+            cMenu.addSeparator()
+            act_x_create_room = cMenu.addAction(self.tr("Create Room..."))
+
+            act_x_add_new.setIcon(QIcon.fromTheme("list-add", QIcon(":/16x16/list-add.png")))
+            act_x_run_custom.setIcon(QIcon.fromTheme("system-run", QIcon(":/16x16/system-run.png")))
+            act_x_create_room.setIcon(QIcon.fromTheme("list-add", QIcon(":/16x16/list-add.png")))
+            act_x_add_new.setEnabled(self.act_app_add_new.isEnabled())
+
+          elif (item.type() == ITEM_TYPE_ROOM):
+            act_x_add_new = cMenu.addAction(self.tr("Add New..."))
+            act_x_run_custom = cMenu.addAction(self.tr("Run Custom..."))
+            cMenu.addSeparator()
+            act_x_new = cMenu.addAction(self.tr("New Project..."))
+            cMenu.addMenu(self.menu_project_load)
+            act_x_save = cMenu.addAction(self.tr("Save Project"))
+            act_x_save_as = cMenu.addAction(self.tr("Save Project As..."))
+            act_x_unload = cMenu.addAction(self.tr("Unload Project"))
+            cMenu.addSeparator()
+            act_x_properties = cMenu.addAction(self.tr("Project Properties..."))
+            cMenu.addSeparator()
+            act_x_delete_room = cMenu.addAction(self.tr("Delete Room"))
+
+            act_x_add_new.setIcon(QIcon.fromTheme("list-add", QIcon(":/16x16/list-add.png")))
+            act_x_run_custom.setIcon(QIcon.fromTheme("system-run", QIcon(":/16x16/system-run.png")))
+            act_x_new.setIcon(QIcon.fromTheme("document-new", QIcon(":/16x16/document-new.png")))
+            act_x_save.setIcon(QIcon.fromTheme("document-save", QIcon(":/16x16/document-save.png")))
+            act_x_save_as.setIcon(QIcon.fromTheme("document-save-as", QIcon(":/16x16/document-save-as.png")))
+            act_x_unload.setIcon(QIcon.fromTheme("window-close", QIcon(":/16x16/dialog-close.png")))
+            act_x_properties.setIcon(QIcon.fromTheme("edit-rename", QIcon(":/16x16/edit-rename.png")))
+            act_x_delete_room.setIcon(QIcon.fromTheme("edit-delete", QIcon(":/16x16/edit-delete.png")))
+
+            act_x_add_new.setEnabled(self.menu_Application.isEnabled() and self.act_app_add_new.isEnabled())
+
+            project_graph_version, project_properties = DBus.ladish_room.GetProjectProperties()
+            if (len(project_properties) == 0):
+              act_x_run_custom.setEnabled(False)
+              act_x_save.setEnabled(False)
+              act_x_save_as.setEnabled(False)
+              act_x_unload.setEnabled(False)
+              act_x_properties.setEnabled(False)
+
+          elif (item.type() in (ITEM_TYPE_STUDIO_APP, ITEM_TYPE_ROOM_APP)):
+            if (item.properties[iItemPropActive]):
+              act_x_start = None
+              act_x_stop  = cMenu.addAction(self.tr("Stop"))
+              act_x_kill  = cMenu.addAction(self.tr("Kill"))
+              act_x_stop.setIcon(QIcon.fromTheme("media-playback-stop", QIcon(":/16x16/media-playback-stop.png")))
+              act_x_kill.setIcon(QIcon.fromTheme("dialog-close", QIcon(":/16x16/dialog-close.png")))
+            else:
+              act_x_start = cMenu.addAction(self.tr("Start"))
+              act_x_stop  = None
+              act_x_kill  = None
+              act_x_start.setIcon(QIcon.fromTheme("media-playback-start", QIcon(":/16x16/media-playback-start.png")))
+            act_x_properties = cMenu.addAction(self.tr("Properties"))
+            cMenu.addSeparator()
+            act_x_remove = cMenu.addAction(self.tr("Remove"))
+            act_x_properties.setIcon(QIcon.fromTheme("edit-rename", QIcon(":/16x16/edit-rename.png")))
+            act_x_remove.setIcon(QIcon.fromTheme("edit-delete", QIcon(":/16x16/edit-delete.png")))
+
+        act_x_sel = cMenu.exec_(QCursor.pos())
+
+        if (act_x_sel):
+          if (item.type() == ITEM_TYPE_STUDIO):
+            if (act_x_sel == act_x_add_new):
+              pass #self.slot_app_add_new()
+            elif (act_x_sel == act_x_run_custom):
+              self.slot_app_run_custom()
+            elif (act_x_sel == act_x_create_room):
+              self.slot_room_create()
+
+          elif (item.type() == ITEM_TYPE_ROOM):
+            if (act_x_sel == act_x_add_new):
+              pass # self.slot_app_add_new
+            elif (act_x_sel == act_x_run_custom):
+              self.slot_app_run_custom()
+            elif (act_x_sel == act_x_new):
+              self.slot_project_new()
+            elif (act_x_sel == act_x_save):
+              self.slot_project_save()
+            elif (act_x_sel == act_x_save_as):
+              self.slot_project_save_as()
+            elif (act_x_sel == act_x_unload):
+              self.slot_project_unload()
+            elif (act_x_sel == act_x_properties):
+              self.slot_project_properties()
+            elif (act_x_sel == act_x_delete_room):
+              room_name = DBus.ladish_room.GetName()
+              DBus.ladish_studio.DeleteRoom(room_name)
+
+          elif (item.type() in (ITEM_TYPE_STUDIO_APP, ITEM_TYPE_ROOM_APP)):
+            number = item.properties[iItemPropNumber]
+
+            if (act_x_sel == act_x_start):
+              DBus.ladish_app_iface.StartApp(number)
+            elif (act_x_sel == act_x_stop):
+              DBus.ladish_app_iface.StopApp(number)
+            elif (act_x_sel == act_x_kill):
+              DBus.ladish_app_iface.KillApp(number)
+            elif (act_x_sel == act_x_properties):
+              name, command, active, terminal, level = DBus.ladish_app_iface.GetAppProperties2(number)
+
+              app_obj = [None, None, None, None, None]
+              app_obj[iAppCommand]  = str(command)
+              app_obj[iAppName]     = str(name)
+              app_obj[iAppTerminal] = bool(terminal)
+              app_obj[iAppLevel]    = str(level)
+              app_obj[iAppActive]   = bool(active)
+
+              dialog = RunCustomW(self, bool(item.type() == ITEM_TYPE_ROOM_APP), app_obj)
+              dialog.setWindowTitle(self.tr("App properties"))
+              if (dialog.exec_()):
+                app_obj = dialog.ret_app_obj
+                DBus.ladish_app_iface.SetAppProperties2(number, app_obj[iAppName], app_obj[iAppCommand], app_obj[iAppTerminal], app_obj[iAppLevel])
+
+            elif (act_x_sel == act_x_remove):
+              DBus.ladish_app_iface.RemoveApp(number)
+
     @pyqtSlot(float)
     def slot_canvasScaleChanged(self, scale):
         self.miniCanvasPreview.setViewScale(scale)
@@ -1629,6 +1782,30 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
     @pyqtSlot()
     def slot_miniCanvasCheckSize(self):
         self.miniCanvasPreview.setViewSize(float(self.graphicsView.width())/DEFAULT_CANVAS_WIDTH, float(self.graphicsView.height())/DEFAULT_CANVAS_HEIGHT)
+
+    @pyqtSlot()
+    def slot_handleCrash_jack(self):
+        patchcanvas.clear()
+        self.DBusReconnect()
+        self.studioUnloaded()
+
+    @pyqtSlot()
+    def slot_handleCrash_ladish(self):
+        QMessageBox.warning(self, self.tr("Error"), self.tr("ladish daemon has crashed"))
+        self.treeWidget.clear()
+        patchcanvas.clear()
+        self.DBusReconnect()
+
+    @pyqtSlot()
+    def slot_handleCrash_studio(self):
+        QMessageBox.warning(self, self.tr("Error"), self.tr("jackdbus has crashed"))
+
+    @pyqtSlot(str)
+    def slot_DBusCrashCallback(self, appInterface):
+        if (appInterface == "org.jackaudio.service"):
+          QTimer.singleShot(0, self, SLOT("slot_handleCrash_jack()"))
+        elif (appInterface == "org.ladish"):
+          QTimer.singleShot(0, self, SLOT("slot_handleCrash_ladish()"))
 
     @pyqtSlot()
     def slot_DBusServerStartedCallback(self):
@@ -1741,7 +1918,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
     @pyqtSlot()
     def slot_DBusStudioCrashedCallback(self):
-        pass # TODO
+        QTimer.singleShot(0, self, SLOT("slot_handleCrash_studio()"))
 
     @pyqtSlot(str, str)
     def slot_DBusRoomAppearedCallback(self, room_path, room_name):
@@ -1770,6 +1947,38 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
     def slot_DBusRoomChangedCallback(self):
         # Unused in ladish v1.0
         return
+
+    @pyqtSlot(str, str)
+    def slot_DBusProjectPropertiesChanged(self, path, name):
+        has_project = bool(name)
+
+        if (has_project):
+          item_string  = " (%s)" % (name)
+        else:
+          item_string  = ""
+
+        self.act_project_save.setEnabled(has_project)
+        self.act_project_save_as.setEnabled(has_project)
+        self.act_project_unload.setEnabled(has_project)
+        self.act_project_properties.setEnabled(has_project)
+        self.b_project_save.setEnabled(has_project)
+        self.b_project_save_as.setEnabled(has_project)
+        self.menu_Application.setEnabled(has_project)
+
+        if (path == "/org/ladish/Studio"):
+          top_level_item = self.treeWidget.topLevelItem(0)
+        else:
+          for i in range(self.treeWidget.topLevelItemCount()):
+            if (i == 0):
+              continue
+            top_level_item = self.treeWidget.topLevelItem(i)
+            if (top_level_item and top_level_item.type() == ITEM_TYPE_ROOM and top_level_item.properties[iItemPropRoomPath] == path):
+              room_name = top_level_item.properties[iItemPropRoomName]
+              break
+          else:
+            return
+
+        top_level_item.setText(0, "%s%s" % (room_name, item_string))
 
     @pyqtSlot(str, int, str, bool, bool, str)
     def slot_DBusAppAdded2Callback(self, path, number, name, active, terminal, level):
@@ -1869,10 +2078,6 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             item.setText(0, text)
             break
 
-    #@pyqtSlot()
-    #def slot_DBus(self):
-        
-
     @pyqtSlot()
     def slot_JackClearXruns(self):
         if (jack.client):
@@ -1892,6 +2097,21 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
     @pyqtSlot()
     def slot_configureClaudia(self):
+        # Save groups position now
+        if (DBus.patchbay):
+          version, groups, conns = DBus.patchbay.GetGraph(0)
+
+          for group in groups:
+            group_id, group_name, ports = group
+
+            group_pos_i = patchcanvas.getGroupPos(group_id, patchcanvas.PORT_MODE_OUTPUT)
+            group_pos_o = patchcanvas.getGroupPos(group_id, patchcanvas.PORT_MODE_INPUT)
+
+            DBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_X, str(group_pos_o.x()))
+            DBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_Y, str(group_pos_o.y()))
+            DBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_X_SPLIT, str(group_pos_i.x()))
+            DBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_Y_SPLIT, str(group_pos_i.y()))
+
         try:
           ladish_config = DBus.bus.get_object("org.ladish.conf", "/org/ladish/conf")
         except:
@@ -2062,11 +2282,6 @@ if __name__ == '__main__':
     DBus.bus  = dbus.SessionBus(mainloop=DBus.loop)
     DBus.jack = DBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
     DBus.ladish_control = DBus.bus.get_object("org.ladish", "/org/ladish/Control")
-
-    try:
-      DBus.a2j = dbus.Interface(DBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
-    except:
-      DBus.a2j = None
 
     try:
       DBus.ladish_app_daemon = DBus.bus.get_object("org.ladish.appdb", "/")

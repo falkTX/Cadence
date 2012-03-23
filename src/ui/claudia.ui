@@ -1352,7 +1352,7 @@
      <normaloff>:/16x16/edit-rename.png</normaloff>:/16x16/edit-rename.png</iconset>
    </property>
    <property name="text">
-    <string>Project Properties..</string>
+    <string>Project Properties...</string>
    </property>
   </action>
  </widget>

@@ -78,6 +78,7 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         elif (appName == "claudia"):
           self.cb_jack_port_alias.setVisible(False)
           self.label_jack_port_alias.setVisible(False)
+          self.lw_page.hideRow(3) # TODO
           self.lw_page.setCurrentCell(0, 0)
 
         self.settings = self.parent().settings
@@ -196,7 +197,7 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         self.cb_tray_enable.setChecked(self.ms_UseSystemTray)
         self.cb_tray_close_to.setChecked(self.ms_CloseToTray)
         self.sb_gui_refresh.setValue(120)
-        self.cb_jack_port_alias.setCurrentIndex(1)
+        self.cb_jack_port_alias.setCurrentIndex(2)
         self.cb_ladish_notify.setChecked(LADISH_CONF_KEY_DAEMON_NOTIFY_DEFAULT)
         self.cb_ladish_studio_autostart.setChecked(LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART_DEFAULT)
         self.le_ladish_shell.setText(LADISH_CONF_KEY_DAEMON_SHELL_DEFAULT)

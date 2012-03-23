@@ -16,7 +16,7 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
-# TODO - apply last changes to c++
+# TODO - apply last changes to c++ (2 commits)
 
 # Imports (Global)
 from PyQt4.QtCore import pyqtSlot, qDebug, qCritical, qFatal, qWarning, Qt, QObject, SIGNAL, SLOT
@@ -392,6 +392,11 @@ def addGroup(group_id, group_name, split=SPLIT_UNDEF, icon=ICON_APPLICATION):
   if (canvas.debug):
     qDebug("PatchCanvas::addGroup(%i, %s, %s, %s)" % (group_id, group_name.encode(), split2str(split), icon2str(icon)))
 
+  for group in canvas.group_list:
+    if (group.group_id == group_id):
+      qWarning("PatchCanvas::addGroup(%i, %s, %s, %s) - group already exists" % (group_id, group_name.encode(), split2str(split), icon2str(icon)))
+      return
+
   if (split == SPLIT_UNDEF and features.handle_group_pos):
     split = canvas.settings.value("CanvasPositions/%s_SPLIT" % (group_name), split, type=int)
 
@@ -709,6 +714,11 @@ def setGroupIcon(group_id, icon):
 def addPort(group_id, port_id, port_name, port_mode, port_type):
   if (canvas.debug):
     qDebug("PatchCanvas::addPort(%i, %i, %s, %s, %s)" % (group_id, port_id, port_name.encode(), port_mode2str(port_mode), port_type2str(port_type)))
+
+  for port in canvas.port_list:
+    if (port.group_id == group_id and port.port_id == port_id):
+      qWarning("PatchCanvas::addPort(%i, %i, %s, %s, %s) - port already exists" % (group_id, port_id, port_name.encode(), port_mode2str(port_mode), port_type2str(port_type)))
+      return
 
   box_widget = None
   port_widget = None
