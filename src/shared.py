@@ -23,7 +23,12 @@ from PyQt4.QtCore import qWarning, SIGNAL, SLOT
 from PyQt4.QtGui import QIcon, QMessageBox, QFileDialog
 
 # Set Platform
-if ("linux" in sys.platform):
+if (sys.platform == "darwin"):
+  from PyQt4.QtGui import qt_mac_set_menubar_icons
+  qt_mac_set_menubar_icons(False)
+  LINUX   = False
+  WINDOWS = False
+elif ("linux" in sys.platform):
   LINUX   = True
   WINDOWS = False
 elif ("win" in sys.platform):
