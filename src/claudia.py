@@ -24,6 +24,7 @@ from PyQt4.QtCore import QPointF, QSettings
 from PyQt4.QtGui import QAction, QApplication, QMainWindow, QTableWidgetItem, QTreeWidgetItem
 
 # Imports (Custom Stuff)
+import systray
 import ui_claudia
 import ui_claudia_studioname, ui_claudia_studiolist
 import ui_claudia_createroom, ui_claudia_projectname, ui_claudia_projectproperties
@@ -484,7 +485,65 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.act_quit.setIcon(getIcon("application-exit"))
         self.act_settings_configure.setIcon(getIcon("configure"))
 
-        #self.systray = None
+        # Global Systray
+        if (self.m_savedSettings["Main/UseSystemTray"]):
+          self.systray = systray.GlobalSysTray("Claudia", "claudia")
+          self.systray.setQtParent(self)
+
+          self.systray.addAction("studio_new", self.tr("New Studio..."))
+          self.systray.addSeparator("sep1")
+          self.systray.addAction("studio_start", self.tr("Start Studio"))
+          self.systray.addAction("studio_stop", self.tr("Stop Studio"))
+          self.systray.addSeparator("sep2")
+          self.systray.addAction("studio_save", self.tr("Save Studio"))
+          self.systray.addAction("studio_save_as", self.tr("Save Studio As..."))
+          self.systray.addAction("studio_rename", self.tr("Rename Studio..."))
+          self.systray.addAction("studio_unload", self.tr("Unload Studio"))
+          self.systray.addSeparator("sep3")
+          self.systray.addMenu("tools", self.tr("Tools"))
+          self.systray.addMenuAction("tools", "tools_configure_jack", self.tr("Configure JACK"))
+          self.systray.addMenuAction("tools", "tools_render", self.tr("JACK Render"))
+          self.systray.addMenuAction("tools", "tools_logs", self.tr("Logs"))
+          self.systray.addMenuSeparator("tools", "tools_sep")
+          self.systray.addMenuAction("tools", "tools_clear_xruns", self.tr("Clear Xruns"))
+          self.systray.addAction("configure", self.tr("Configure Claudia"))
+          self.systray.addSeparator("sep4")
+          self.systray.addAction("show", self.tr("Hide"))
+          self.systray.addAction("quit", self.tr("Quit"))
+
+          self.systray.setActionIcon("studio_new", "document-new")
+          self.systray.setActionIcon("studio_start", "media-playback-start")
+          self.systray.setActionIcon("studio_stop", "media-playback-stop")
+          self.systray.setActionIcon("studio_save", "document-save")
+          self.systray.setActionIcon("studio_save_as", "document-save-as")
+          self.systray.setActionIcon("studio_rename", "edit-rename")
+          self.systray.setActionIcon("studio_unload", "dialog-close")
+          self.systray.setActionIcon("tools_configure_jack", "configure")
+          self.systray.setActionIcon("tools_render", "media-record")
+          self.systray.setActionIcon("tools_clear_xruns", "edit-clear")
+          self.systray.setActionIcon("configure", "configure")
+          self.systray.setActionIcon("quit", "application-exit")
+
+          self.systray.connect("show", self.systray_clicked_callback)
+          self.systray.connect("studio_new", self.slot_studio_new)
+          self.systray.connect("studio_start", self.slot_studio_start)
+          self.systray.connect("studio_stop", self.slot_studio_stop)
+          self.systray.connect("studio_save", self.slot_studio_save)
+          self.systray.connect("studio_save_as", self.slot_studio_save_as)
+          self.systray.connect("studio_rename", self.slot_studio_rename)
+          self.systray.connect("studio_unload", self.slot_studio_unload)
+          self.systray.connect("tools_configure_jack", lambda: slot_showJackSettings(self))
+          self.systray.connect("tools_render", lambda: slot_showRender(self))
+          self.systray.connect("tools_logs", lambda: slot_showLogs(self))
+          self.systray.connect("tools_clear_xruns", self.slot_JackClearXruns)
+          self.systray.connect("configure", self.slot_configureClaudia)
+          self.systray.connect("quit", self.systray_closed)
+
+          self.systray.setToolTip("LADISH Frontend")
+          self.systray.show()
+
+        else:
+          self.systray = None
 
         self.m_xruns = -1
         self.m_buffer_size = 0
@@ -1029,8 +1088,8 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.cb_buffer_size.setEnabled(True)
         self.cb_sample_rate.setEnabled(True) # jacksettings.getSampleRate() != -1
 
-        #if (self.systray):
-          #self.systray.setActionEnabled("tools_render", canRender)
+        if (self.systray):
+          self.systray.setActionEnabled("tools_render", canRender)
 
         self.pb_dsp_load.setMaximum(100)
         self.pb_dsp_load.setValue(0)
@@ -1069,8 +1128,8 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.menu_Transport.setEnabled(False)
         self.group_transport.setEnabled(False)
 
-        #if (self.systray):
-          #self.systray.setActionEnabled("tools_render", False)
+        if (self.systray):
+          self.systray.setActionEnabled("tools_render", False)
 
         if (self.m_selected_transport_view == TRANSPORT_VIEW_HMS):
           self.label_time.setText("00:00:00")
@@ -1092,11 +1151,11 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.b_studio_save.setEnabled(True)
         self.b_studio_save_as.setEnabled(True)
 
-        #if (self.systray):
-          #self.systray.setActionEnabled("studio_start", False)
-          #self.systray.setActionEnabled("studio_stop", True)
-          #self.systray.setActionEnabled("studio_save", True)
-          #self.systray.setActionEnabled("studio_save_as", True)
+        if (self.systray):
+          self.systray.setActionEnabled("studio_start", False)
+          self.systray.setActionEnabled("studio_stop", True)
+          self.systray.setActionEnabled("studio_save", True)
+          self.systray.setActionEnabled("studio_save_as", True)
 
     def studioStopped(self):
         self.act_studio_start.setEnabled(True)
@@ -1107,11 +1166,11 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.b_studio_save.setEnabled(False)
         self.b_studio_save_as.setEnabled(False)
 
-        #if (self.systray):
-          #self.systray.setActionEnabled("studio_start", True)
-          #self.systray.setActionEnabled("studio_stop", False)
-          #self.systray.setActionEnabled("studio_save", False)
-          #self.systray.setActionEnabled("studio_save_as", False)
+        if (self.systray):
+          self.systray.setActionEnabled("studio_start", True)
+          self.systray.setActionEnabled("studio_stop", False)
+          self.systray.setActionEnabled("studio_save", False)
+          self.systray.setActionEnabled("studio_save_as", False)
 
     def studioLoaded(self):
         DBus.ladish_studio  = DBus.bus.get_object("org.ladish", "/org/ladish/Studio")
@@ -1134,9 +1193,9 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.act_studio_rename.setEnabled(True)
         self.act_studio_unload.setEnabled(True)
 
-        #if (self.systray):
-          #self.systray.setActionEnabled("studio_rename", True)
-          #self.systray.setActionEnabled("studio_unload", True)
+        if (self.systray):
+          self.systray.setActionEnabled("studio_rename", True)
+          self.systray.setActionEnabled("studio_unload", True)
 
         self.init_studio()
 
@@ -1169,17 +1228,29 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.b_studio_save.setEnabled(False)
         self.b_studio_save_as.setEnabled(False)
 
-        #if (self.systray):
-          #self.systray.setActionEnabled("studio_start", False)
-          #self.systray.setActionEnabled("studio_stop", False)
-          #self.systray.setActionEnabled("studio_rename", False)
-          #self.systray.setActionEnabled("studio_save", False)
-          #self.systray.setActionEnabled("studio_save_as", False)
-          #self.systray.setActionEnabled("studio_unload", False)
+        if (self.systray):
+          self.systray.setActionEnabled("studio_start", False)
+          self.systray.setActionEnabled("studio_stop", False)
+          self.systray.setActionEnabled("studio_rename", False)
+          self.systray.setActionEnabled("studio_save", False)
+          self.systray.setActionEnabled("studio_save_as", False)
+          self.systray.setActionEnabled("studio_unload", False)
 
         self.treeWidget.clear()
 
         patchcanvas.clear()
+
+    def systray_closed(self):
+        self.hide()
+        self.close()
+
+    def systray_clicked_callback(self):
+        if (self.isVisible()):
+          self.systray.setActionText("show", self.tr("Restore"))
+          self.hide()
+        else:
+          self.systray.setActionText("show", self.tr("Hide"))
+          showWindow(self)
 
     def DBusSignalReceiver(self, *args, **kwds):
         if (kwds['interface'] == "org.freedesktop.DBus" and kwds['path'] == "/org/freedesktop/DBus" and kwds['member'] == "NameOwnerChanged"):
@@ -2257,13 +2328,13 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
     def closeEvent(self, event):
         self.saveSettings()
-        #if (self.systray):
+        if (self.systray):
           #if (self.saved_settings["Main/CloseToTray"] and self.systray.isTrayAvailable() and self.isVisible()):
             #self.hide()
             #self.systray.setActionText("show", QStringStr(gui.tr("Restore")))
             #event.ignore()
             #return
-          #self.systray.close()
+          self.systray.close()
         patchcanvas.clear()
         QMainWindow.closeEvent(self, event)
 
@@ -2302,10 +2373,10 @@ if __name__ == '__main__':
     set_up_signals(gui)
 
     # App-Loop
-    #if (gui.systray):
-      #ret = gui.systray.exec_(app)
-    #else:
-    ret = app.exec_()
+    if (gui.systray):
+      ret = gui.systray.exec_(app)
+    else:
+      ret = app.exec_()
 
     # Close Jack
     if (jack.client):
