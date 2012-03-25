@@ -6,19 +6,22 @@
 
 CXX ?= g++
 
-BUILD_FLAGS  = -ffast-math -fomit-frame-pointer -mtune=generic -msse -O2 -Wall -I../carla-includes $(CXXFLAGS)
+BUILD_FLAGS  = -std=c++0x -ffast-math -fomit-frame-pointer -mtune=generic -msse -O2 -Wall -I../carla-includes $(CXXFLAGS)
 BUILD_FLAGS += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
 LINK_FLAGS   = $(LDFLAGS)
 
 32BIT_FLAGS  = -m32
-64BIT_FLAGS  = -m64 #-fPIC
+64BIT_FLAGS  = -m64
 
+UNIX_BUILD_FLAGS = $(BUILD_FLAGS)
+UNIX_LINK_FLAGS  = -ldl $(LINK_FLAGS)
 UNIX_32BIT_FLAGS = -L/usr/lib32 -L/usr/lib/i386-linux-gnu $(32BIT_FLAGS)
 UNIX_64BIT_FLAGS = -L/usr/lib64 -L/usr/lib/x86_64-linux-gnu $(64BIT_FLAGS)
-UNIX_LINK_FLAGS  = -ldl $(LINK_FLAGS)
 
-WIN32_FLAGS = $(32BIT_FLAGS) -static
-WIN64_FLAGS = $(64BIT_FLAGS) -static
+WIN_BUILD_FLAGS = $(BUILD_FLAGS)
+WIN_LINK_FLAGS  = -static $(LINK_FLAGS)
+WIN_32BIT_FLAGS = $(32BIT_FLAGS)
+WIN_64BIT_FLAGS = $(64BIT_FLAGS)
 
 ifeq ($(FLUIDSYNTH),)
 else
@@ -40,16 +43,16 @@ win64: carla-discovery-win64.exe
 
 
 carla-discovery-unix32: carla-discovery.cpp
-	$(CXX) carla-discovery.cpp $(BUILD_FLAGS) $(UNIX_32BIT_FLAGS) $(UNIX_LINK_FLAGS) -o $@
+	$(CXX) carla-discovery.cpp $(UNIX_BUILD_FLAGS) $(UNIX_32BIT_FLAGS) $(UNIX_LINK_FLAGS) -DBUILD_UNIX32 -o $@
 
 carla-discovery-unix64: carla-discovery.cpp
-	$(CXX) carla-discovery.cpp $(BUILD_FLAGS) $(UNIX_64BIT_FLAGS) $(UNIX_LINK_FLAGS) -o $@
+	$(CXX) carla-discovery.cpp $(UNIX_BUILD_FLAGS) $(UNIX_64BIT_FLAGS) $(UNIX_LINK_FLAGS) -DBUILD_UNIX64 -o $@
 
 carla-discovery-win32.exe: carla-discovery.cpp
-	$(CXX) carla-discovery.cpp $(BUILD_FLAGS) $(WIN32_FLAGS) $(LINK_FLAGS) -o $@
+	$(CXX) carla-discovery.cpp $(WIN_BUILD_FLAGS) $(WIN_32BIT_FLAGS) $(WIN_LINK_FLAGS) -DBUILD_WIN32 -o $@
 
 carla-discovery-win64.exe: carla-discovery.cpp
-	$(CXX) carla-discovery.cpp $(BUILD_FLAGS) $(WIN64_FLAGS) $(LINK_FLAGS) -o $@
+	$(CXX) carla-discovery.cpp $(WIN_BUILD_FLAGS) $(WIN_64BIT_FLAGS) $(WIN_LINK_FLAGS) -DBUILD_WIN64 -o $@
 
 clean:
 	rm -f carla-discovery-*

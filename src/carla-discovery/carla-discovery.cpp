@@ -1,6 +1,6 @@
-/* 
+/*
  * Carla Plugin discovery code
- * Copyright (C) 2012 Filipe Coelho <falktx@gmail.com>
+ * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,23 +15,10 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef nullptr
-const class {
-public:
-    template<class T> operator T*() const
-    {
-        return 0;
-    }
-
-    template<class C, class T> operator T C::*() const
-    {
-        return 0;
-    }
-
-private:
-    void operator&() const;
-} nullptr_ = {};
-#define nullptr nullptr_
+#if defined (__GXX_EXPERIMENTAL_CXX0X__) && defined (__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+// nullptr is available
+#else
+#define nullptr (0)
 #endif
 
 #if defined(__WIN32__) || defined(__WIN64__)
@@ -45,8 +32,6 @@ private:
 #define __cdecl
 #endif
 #endif
-
-#include <stdint.h>
 
 #include <cmath>
 #include <cstdio>
@@ -84,8 +69,6 @@ private:
 #include <fluidsynth.h>
 #endif
 
-#define DEBUG 1
-
 #define DISCOVERY_OUT(x, y) std::cout << "\ncarla-discovery::" << x << "::" << y << std::endl;
 
 // fake values to test plugins with
@@ -93,6 +76,7 @@ const unsigned int bufferSize = 512;
 const unsigned int sampleRate = 44100;
 
 // ------------------------------ Carla main defs ------------------------------
+
 // plugin hints
 const unsigned int PLUGIN_HAS_GUI     = 0x01;
 const unsigned int PLUGIN_IS_BRIDGE   = 0x02;
@@ -101,6 +85,13 @@ const unsigned int PLUGIN_USES_CHUNKS = 0x08;
 const unsigned int PLUGIN_CAN_DRYWET  = 0x10;
 const unsigned int PLUGIN_CAN_VOL     = 0x20;
 const unsigned int PLUGIN_CAN_BALANCE = 0x40;
+
+enum BinaryType {
+    BINARY_UNIX32 = 1,
+    BINARY_UNIX64 = 2,
+    BINARY_WIN32  = 3,
+    BINARY_WIN64  = 4
+};
 
 enum PluginType {
     PLUGIN_NONE   = 0,
@@ -111,7 +102,7 @@ enum PluginType {
     PLUGIN_SF2    = 5
 };
 
-enum PluginInfoCategory {
+enum PluginCategory {
     PLUGIN_CATEGORY_NONE      = 0,
     PLUGIN_CATEGORY_SYNTH     = 1,
     PLUGIN_CATEGORY_DELAY     = 2, // also Reverb
@@ -122,6 +113,18 @@ enum PluginInfoCategory {
     PLUGIN_CATEGORY_UTILITY   = 7, // Analyzer, Converter, Mixer
     PLUGIN_CATEGORY_OUTRO     = 8  // used to check if a plugin has a category
 };
+
+#if BUILD_UNIX32
+#define BINARY_TYPE BINARY_UNIX32
+#elif  BUILD_UNIX64
+#define BINARY_TYPE BINARY_UNIX64
+#elif  BUILD_WIN32
+#define BINARY_TYPE BINARY_WIN32
+#elif  BUILD_WIN64
+#define BINARY_TYPE BINARY_WIN64
+#else
+#error Invalid build type
+#endif
 
 // ------------------------------ library functions ------------------------------
 void* lib_open(const char* filename)
@@ -196,7 +199,7 @@ intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_
 
     case audioMasterVersion:
         return kVstVersion;
-        
+
     case audioMasterCurrentId:
         return VstCurrentUniqueId;
 
@@ -251,7 +254,7 @@ intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_
         else if (strcmp((char*)ptr, "sizeWindow") == 0)
             return 1;
         else if (strcmp((char*)ptr, "offline") == 0)
-            return 1;
+            return -1;
         else if (strcmp((char*)ptr, "openFileSelector") == 0)
             return -1;
         else if (strcmp((char*)ptr, "closeFileSelector") == 0)
@@ -305,7 +308,7 @@ void do_ladspa_check(void* lib_handle)
             DISCOVERY_OUT("id", descriptor->UniqueID);
 
             int hints = 0;
-            PluginInfoCategory category = PLUGIN_CATEGORY_NONE;
+            PluginCategory category = PLUGIN_CATEGORY_NONE;
 
             int audio_ins = 0;
             int audio_outs = 0;
@@ -483,10 +486,11 @@ void do_ladspa_check(void* lib_handle)
             DISCOVERY_OUT("parameters.outs", parameters_outs);
             DISCOVERY_OUT("parameters.total", parameters_total);
             DISCOVERY_OUT("programs.total", programs_total);
-            DISCOVERY_OUT("end", "------------");
 
             if (descriptor->cleanup)
                 descriptor->cleanup(handle);
+
+            DISCOVERY_OUT("end", "------------");
         }
         else
             DISCOVERY_OUT("error", "Failed to init LADSPA plugin");
@@ -522,7 +526,7 @@ void do_dssi_check(void* lib_handle)
             DISCOVERY_OUT("id", ldescriptor->UniqueID);
 
             int hints = 0;
-            PluginInfoCategory category = PLUGIN_CATEGORY_NONE;
+            PluginCategory category = PLUGIN_CATEGORY_NONE;
 
             int audio_ins = 0;
             int audio_outs = 0;
@@ -739,10 +743,11 @@ void do_dssi_check(void* lib_handle)
             DISCOVERY_OUT("parameters.outs", parameters_outs);
             DISCOVERY_OUT("parameters.total", parameters_total);
             DISCOVERY_OUT("programs.total", programs_total);
-            DISCOVERY_OUT("end", "------------");
 
             if (ldescriptor->cleanup)
                 ldescriptor->cleanup(handle);
+
+            DISCOVERY_OUT("end", "------------");
         }
         else
             DISCOVERY_OUT("error", "Failed to init DSSI plugin");
@@ -758,13 +763,13 @@ void do_lv2_check(const char* bundle)
 void do_vst_check(void* lib_handle)
 {
     VST_Function vstfn = (VST_Function)lib_symbol(lib_handle, "VSTPluginMain");
-    
+
     if (vstfn == nullptr)
     {
         if (vstfn == nullptr)
         {
 #ifdef TARGET_API_MAC_CARBON
-            
+
             vstfn = (VST_Function)lib_symbol(lib_handle, "main_macho");
             if (vstfn == nullptr)
 #endif
@@ -789,7 +794,7 @@ void do_vst_check(void* lib_handle)
 
         effect->dispatcher(effect, effGetEffectName, 0, 0, buf_str, 0.0f);
         c_name = strdup((buf_str[0] != 0) ? buf_str : "");
-        
+
         buf_str[0] = 0;
         effect->dispatcher(effect, effGetProductString, 0, 0, buf_str, 0.0f);
         c_product = strdup((buf_str[0] != 0) ? buf_str : "");
@@ -797,7 +802,7 @@ void do_vst_check(void* lib_handle)
         buf_str[0] = 0;
         effect->dispatcher(effect, effGetVendorString, 0, 0, buf_str, 0.0f);
         c_vendor = strdup((buf_str[0] != 0) ? buf_str : "");
-        
+
         VstCurrentUniqueId = effect->uniqueID;
         intptr_t VstCategory = effect->dispatcher(effect, effGetPlugCategory, 0, 0, nullptr, 0.0f);
 
@@ -805,16 +810,16 @@ void do_vst_check(void* lib_handle)
         {
             DISCOVERY_OUT("init", "-----------");
             effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
-            
+
             DISCOVERY_OUT("name", c_name);
             DISCOVERY_OUT("label", c_product);
             DISCOVERY_OUT("maker", c_vendor);
             DISCOVERY_OUT("copyright", c_vendor);
             DISCOVERY_OUT("id", VstCurrentUniqueId);
-            
+
             int hints = 0;
-            PluginInfoCategory category = PLUGIN_CATEGORY_NONE;
-            
+            PluginCategory category = PLUGIN_CATEGORY_NONE;
+
             switch (VstCategory)
             {
             case kPlugCategUnknown:
@@ -841,18 +846,18 @@ void do_vst_check(void* lib_handle)
             default:
                 category = PLUGIN_CATEGORY_OUTRO;
             }
-            
+
             if (effect->flags & effFlagsHasEditor)
                 hints |= PLUGIN_HAS_GUI;
-            
+
             if (effect->flags & effFlagsIsSynth)
             {
                 hints |= PLUGIN_IS_SYNTH;
-                
+
                 if (category == PLUGIN_CATEGORY_NONE)
                     category = PLUGIN_CATEGORY_SYNTH;
             }
-            
+
             int audio_ins = effect->numInputs;
             int audio_outs = effect->numOutputs;
             int audio_total = audio_ins + audio_outs;
@@ -863,15 +868,15 @@ void do_vst_check(void* lib_handle)
             int parameters_outs = 0;
             int parameters_total = parameters_ins;
             int programs_total = effect->numPrograms;
-            
+
             if (VstPluginCanDo(effect, "receiveVstEvents") || VstPluginCanDo(effect, "receiveVstMidiEvent") || effect->flags & effFlagsIsSynth)
                 midi_ins = 1;
-            
+
             if (VstPluginCanDo(effect, "sendVstEvents") || VstPluginCanDo(effect, "sendVstMidiEvent"))
                 midi_outs = 1;
-            
+
             midi_total = midi_ins + midi_outs;
-            
+
             // small crash-free plugin test
             float** bufferAudioIn = new float* [audio_ins];
             for (int j=0; j < audio_ins; j++)
@@ -879,14 +884,14 @@ void do_vst_check(void* lib_handle)
                 bufferAudioIn[j] = new float [bufferSize];
                 memset(bufferAudioIn[j], 0, sizeof(float)*bufferSize);
             }
-            
+
             float** bufferAudioOut = new float* [audio_outs];
             for (int j=0; j < audio_outs; j++)
             {
                 bufferAudioOut[j] = new float [bufferSize];
                 memset(bufferAudioOut[j], 0, sizeof(float)*bufferSize);
             }
-            
+
             struct {
                 int32_t numEvents;
                 intptr_t reserved;
@@ -894,54 +899,54 @@ void do_vst_check(void* lib_handle)
             } events;
             VstMidiEvent midiEvents[2];
             memset(&midiEvents, 0, sizeof(VstMidiEvent)*2);
-            
+
             midiEvents[0].type = kVstMidiType;
             midiEvents[0].byteSize = sizeof(VstMidiEvent);
             midiEvents[0].midiData[0] = 0x90;
             midiEvents[0].midiData[1] = 64;
             midiEvents[0].midiData[2] = 100;
-            
+
             midiEvents[1].type = kVstMidiType;
             midiEvents[1].byteSize = sizeof(VstMidiEvent);
             midiEvents[1].midiData[0] = 0x80;
             midiEvents[1].midiData[1] = 64;
             midiEvents[1].deltaFrames = bufferSize/2;
-            
+
             events.numEvents = 2;
             events.reserved  = 0;
             events.data[0] = (VstEvent*)&midiEvents[0];
             events.data[1] = (VstEvent*)&midiEvents[1];
-            
+
 #if !VST_FORCE_DEPRECATED
             effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, bufferSize, nullptr, sampleRate);
 #endif
             effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, sampleRate);
             effect->dispatcher(effect, effSetBlockSize, 0, bufferSize, nullptr, 0.0f);
             effect->dispatcher(effect, effSetProcessPrecision, 0, kVstProcessPrecision32, nullptr, 0.0f);
-            
+
             effect->dispatcher(effect, effMainsChanged, 0, 1, nullptr, 0.0f);
             effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
-            
+
             if (midi_ins == 1)
                 effect->dispatcher(effect, effProcessEvents, 0, 0, &events, 0.0f);
-            
+
             if (effect->flags & effFlagsCanReplacing)
                 effect->processReplacing(effect, bufferAudioIn, bufferAudioOut, bufferSize);
 #if !VST_FORCE_DEPRECATED
             else
                 effect->process(effect, bufferAudioIn, bufferAudioOut, bufferSize);
 #endif
-            
+
             effect->dispatcher(effect, effStopProcess, 0, 0, nullptr, 0.0f);
             effect->dispatcher(effect, effMainsChanged, 0, 0, nullptr, 0.0f);
-            
+
             for (int j=0; j < audio_ins; j++)
                 delete[] bufferAudioIn[j];
             for (int j=0; j < audio_outs; j++)
                 delete[] bufferAudioOut[j];
             delete[] bufferAudioIn;
             delete[] bufferAudioOut;
-            
+
             DISCOVERY_OUT("hints", hints);
             DISCOVERY_OUT("category", category);
             DISCOVERY_OUT("audio.ins", audio_ins);
@@ -957,12 +962,12 @@ void do_vst_check(void* lib_handle)
 
             effect->dispatcher(effect, effClose, 0, 0, nullptr, 0.0f);
             DISCOVERY_OUT("end", "------------");
-            
+
             if (VstCategory == kPlugCategShell)
             {
                 buf_str[0] = 0;
                 VstCurrentUniqueId = effect->dispatcher(effect, effShellGetNextPlugin, 0, 0, buf_str, 0.0f);
-                
+
                 if (VstCurrentUniqueId != 0)
                 {
                     free((void*)c_name);
@@ -974,7 +979,7 @@ void do_vst_check(void* lib_handle)
             else
                 break;
         }
-        
+
         free((void*)c_name);
         free((void*)c_product);
         free((void*)c_vendor);
