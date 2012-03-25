@@ -246,7 +246,6 @@ class SearchPluginsThread(QThread):
         QThread.__init__(self, parent)
 
         self.settings_db = self.parent().settings_db
-        #self.disccover_skip_kill = ""
 
         self.check_ladspa = True
         self.check_dssi   = True
@@ -258,7 +257,7 @@ class SearchPluginsThread(QThread):
         self.check_bins   = []
 
     def skipPlugin(self):
-        #if (self.disccover_skip_kill):
+        # TODO - windows support
         os.system("killall -KILL carla-discovery carla-discovery-unix32 carla-discovery-unix64 carla-discovery-win32.exe carla-discovery-win64.exe")
 
     def pluginLook(self, percent, plugin):
@@ -350,7 +349,7 @@ class SearchPluginsThread(QThread):
         if (self.check_ladspa):
 
           if (check_native):
-            ladspa_binaries   = []
+            ladspa_binaries = []
 
             for PATH in LADSPA_PATH:
               binaries = findBinaries(PATH, OS)
@@ -415,43 +414,63 @@ class SearchPluginsThread(QThread):
               self.pluginLook(start_value, "LADSPA RDFs...")
               ladspa_rdf_info = ladspa_rdf.recheck_all_plugins(self, start_value, percent_value, m_value)
 
-        ## ----- DSSI
-        #if (self.check_dssi):
-          ## Check PATH
-          #dssi_binaries   = []
-          #dssi_binaries_w = []
+        # ----- DSSI
+        if (self.check_dssi):
 
-          #for PATH in DSSI_PATH:
-            #binaries = findBinaries(PATH, OS)
-            #for binary in binaries:
-              #if (binary not in dssi_binaries):
-                #dssi_binaries.append(binary)
+          if (check_native):
+            dssi_binaries = []
 
-          #if (len(bins_w) > 0):
-            #for PATH in DSSI_PATH:
-              #binaries = findBinaries(PATH, "WINDOWS")
-              #for binary in binaries:
-                #if (binary not in dssi_binaries_w):
-                  #dssi_binaries_w.append(binary)
+            for PATH in DSSI_PATH:
+              binaries = findBinaries(PATH, OS)
+              for binary in binaries:
+                if (binary not in dssi_binaries):
+                  dssi_binaries.append(binary)
 
-          #dssi_binaries.sort()
-          #dssi_binaries_w.sort()
+            dssi_binaries.sort()
 
-          #for i in range(len(dssi_binaries)):
-            #dssi = dssi_binaries[i]
-            #if (getShortFileName(dssi) in blacklist):
-              #print("plugin %s is blacklisted, skip it" % (dssi))
-              #continue
-            #else:
-              #percent = (( float(i) / len(dssi_binaries) ) * percent_value)
-              #self.pluginLook(percent + last_value, dssi)
-              #self.setLastLoadedBinary(dssi)
-              #for bin_ in bins:
-                #plugins = checkPluginDSSI(dssi, bin_)
-                #if (plugins != None):
-                  #dssi_plugins.append(plugins)
+            for i in range(len(dssi_binaries)):
+              dssi = dssi_binaries[i]
+              if (getShortFileName(dssi) in blacklist):
+                print("plugin %s is blacklisted, skip it" % (dssi))
+                continue
+              else:
+                percent = ( float(i) / len(dssi_binaries) ) * percent_value
+                self.pluginLook(last_value + percent, dssi)
+                self.setLastLoadedBinary(dssi)
+                for bin_ in bins:
+                  plugins = checkPluginDSSI(dssi, bin_)
+                  if (plugins != None):
+                    dssi_plugins.append(plugins)
 
-          #last_value += percent_value
+            last_value += percent_value
+
+          if (check_wine):
+            dssi_binaries_w = []
+
+            for PATH in DSSI_PATH:
+              binaries = findBinaries(PATH, "WINDOWS")
+              for binary in binaries:
+                if (binary not in dssi_binaries_w):
+                  dssi_binaries_w.append(binary)
+
+            dssi_binaries_w.sort()
+
+            # Check binaries, wine
+            for i in range(len(dssi_binaries_w)):
+              dssi_w = dssi_binaries_w[i]
+              if (getShortFileName(dssi_w) in blacklist):
+                print("plugin %s is blacklisted, skip it" % (dssi_w))
+                continue
+              else:
+                percent = ( float(i) / len(dssi_binaries_w) ) * percent_value
+                self.pluginLook(last_value + percent, dssi_w)
+                self.setLastLoadedBinary(dssi_w)
+                for bin_w in bins_w:
+                  plugins_w = checkPluginDSSI(dssi_w, bin_w, True)
+                  if (plugins_w != None):
+                    dssi_plugins.append(plugins_w)
+
+            last_value += percent_value
 
         ## ----- LV2
         #if (self.check_lv2 and haveRDF):
@@ -465,90 +484,117 @@ class SearchPluginsThread(QThread):
 
           #self.last_value += self.percent_value
 
-        ## ----- VST
-        #if (self.check_vst):
-          ## Check PATH
-          #vst_binaries = []
-          #for i in range(len(VST_PATH)):
-            #binaries = findBinaries(VST_PATH[i])
-            #for j in range(len(binaries)):
-              #if (binaries[j] not in vst_binaries):
-                #vst_binaries.append(binaries[j])
+        # ----- VST
+        if (self.check_vst):
 
-          #self.disccover_skip_kill = "carla-discovery carla-discovery-native"
-          #for i in range(len(vst_binaries)):
-            #if (getShortFileName(vst_binaries[i]) in blacklist):
-              #print("plugin %s is blacklisted, skip it" % (vst_binaries[i]))
-              #continue
-            #else:
-              #percent = (( float(i) / len(vst_binaries) ) * self.percent_value)
-              #self.pluginLook(percent + self.last_value, vst_binaries[i])
-              #self.setLastLoadedBinary(vst_binaries[i])
-              #plugins = checkPluginVST(vst_binaries[i])
-              #if (plugins != None):
-                #vst_plugins.append(plugins)
+          if (check_native):
+            vst_binaries = []
 
-          #self.last_value += self.percent_value
+            for PATH in VST_PATH:
+              binaries = findBinaries(PATH, OS)
+              for binary in binaries:
+                if (binary not in vst_binaries):
+                  vst_binaries.append(binary)
 
-        ## ----- SF2
-        #if (self.check_sf2):
-          ## Check PATH
-          #sf2_files = []
-          #for i in range(len(SF2_PATH)):
-            #files = findSoundFonts(SF2_PATH[i])
-            #for j in range(len(files)):
-              #if (files[j] not in sf2_files):
-                #sf2_files.append(files[j])
+            vst_binaries.sort()
 
-          #self.disccover_skip_kill = "carla-discovery carla-discovery-native"
-          #for i in range(len(sf2_files)):
-            #if (getShortFileName(sf2_files[i]) in blacklist):
-              #print("soundfont %s is blacklisted, skip it" % (sf2_files[i]))
-              #continue
-            #else:
-              #percent = (( float(i) / len(sf2_files) ) * self.percent_value)
-              #self.pluginLook(percent + self.last_value, sf2_files[i])
-              #self.setLastLoadedBinary(sf2_files[i])
-              #soundfont_ = checkPluginSF2(sf2_files[i])
-              #if (soundfont_):
-                #soundfonts.append(soundfont_[0])
+            for i in range(len(vst_binaries)):
+              vst = vst_binaries[i]
+              if (getShortFileName(vst) in blacklist):
+                print("plugin %s is blacklisted, skip it" % (vst))
+                continue
+              else:
+                percent = ( float(i) / len(vst_binaries) ) * percent_value
+                self.pluginLook(last_value + percent, vst)
+                self.setLastLoadedBinary(vst)
+                for bin_ in bins:
+                  plugins = checkPluginVST(vst, bin_)
+                  if (plugins != None):
+                    vst_plugins.append(plugins)
 
-          #self.last_value += self.percent_value
+            last_value += percent_value
 
-        #self.disccover_skip_kill = ""
+          if (check_wine):
+            vst_binaries_w = []
+
+            for PATH in VST_PATH:
+              binaries = findBinaries(PATH, "WINDOWS")
+              for binary in binaries:
+                if (binary not in vst_binaries_w):
+                  vst_binaries_w.append(binary)
+
+            vst_binaries_w.sort()
+
+            # Check binaries, wine
+            for i in range(len(vst_binaries_w)):
+              vst_w = vst_binaries_w[i]
+              if (getShortFileName(vst_w) in blacklist):
+                print("plugin %s is blacklisted, skip it" % (vst_w))
+                continue
+              else:
+                percent = ( float(i) / len(vst_binaries_w) ) * percent_value
+                self.pluginLook(last_value + percent, vst_w)
+                self.setLastLoadedBinary(vst_w)
+                for bin_w in bins_w:
+                  plugins_w = checkPluginVST(vst_w, bin_w, True)
+                  if (plugins_w != None):
+                    vst_plugins.append(plugins_w)
+
+            last_value += percent_value
+
+        # ----- SF2
+        if (self.check_sf2):
+
+          sf2_files = []
+          for PATH in SF2_PATH:
+            files = findSoundFonts(PATH)
+            for file_ in files:
+              if (file_ not in sf2_files):
+                sf2_files.append(file_)
+
+          for i in range(len(sf2_files)):
+            sf2 = sf2_files[i]
+            if (getShortFileName(sf2) in blacklist):
+              print("soundfont %s is blacklisted, skip it" % (sf2))
+              continue
+            else:
+              percent = (( float(i) / len(sf2_files) ) * percent_value)
+              self.pluginLook(last_value + percent, sf2)
+              self.setLastLoadedBinary(sf2)
+              soundfont = checkPluginSF2(sf2, self.check_native)
+              if (soundfont):
+                soundfonts.append(soundfont)
+
         self.setLastLoadedBinary("")
 
         # Save plugins to database
         self.pluginLook(100, "Database...")
 
-        #if (self.check_ladspa):
-          #self.settings_db.setValue("Plugins/LADSPA", QVariant(ladspa_plugins))
+        if (self.check_ladspa):
+          self.settings_db.setValue("Plugins/LADSPA", ladspa_plugins)
 
-        #if (self.check_dssi):
-          #self.settings_db.setValue("Plugins/DSSI", QVariant(dssi_plugins))
+        if (self.check_dssi):
+          self.settings_db.setValue("Plugins/DSSI", dssi_plugins)
 
-        #if (self.check_lv2):
-          #self.settings_db.setValue("Plugins/LV2", QVariant(lv2_plugins))
+        if (self.check_lv2):
+          self.settings_db.setValue("Plugins/LV2", lv2_plugins)
 
-        #if (self.check_vst):
-          #self.settings_db.setValue("Plugins/VST", QVariant(vst_plugins))
+        if (self.check_vst):
+          self.settings_db.setValue("Plugins/VST", vst_plugins)
 
-        #if (self.check_winvst):
-          #self.settings_db.setValue("Plugins/WinVST", QVariant(winvst_plugins))
+        if (self.check_sf2):
+          self.settings_db.setValue("Plugins/SF2", soundfonts)
 
-        #if (self.check_sf2):
-          #self.settings_db.setValue("Plugins/SF2", QVariant(soundfonts))
+        self.settings_db.sync()
 
-        #self.settings_db.sync()
+        if (haveRDF):
+          SettingsDir = os.path.join(HOME, ".config", "Cadence")
 
-        #if (haveRDF):
-          #SettingsDir = os.path.join(HOME, ".config", "Cadence")
-
-          #if (self.check_ladspa):
-            #f_ladspa = open(os.path.join(SettingsDir, "ladspa_rdf.db"), 'w')
-            #if (f_ladspa):
-              #json.dump(ladspa_rdf_info, f_ladspa)
-              #f_ladspa.close()
+          if (self.check_ladspa):
+            f_ladspa = open(os.path.join(SettingsDir, "ladspa_rdf.db"), 'w')
+            if (f_ladspa):
+              json.dump(ladspa_rdf_info, f_ladspa)
+              f_ladspa.close()
 
           #if (self.check_lv2):
             #f_lv2 = open(os.path.join(SettingsDir, "lv2_rdf.db"), 'w')
@@ -569,14 +615,14 @@ class PluginRefreshW(QDialog, ui_carla_refresh.Ui_PluginRefreshW):
 
         self.pThread = SearchPluginsThread(self)
 
-        if (carla_discovery_unix32):
+        if (carla_discovery_unix32 and not WINDOWS):
           self.ico_unix32.setPixmap(getIcon("dialog-ok-apply").pixmap(16, 16))
         else:
           self.ico_unix32.setPixmap(getIcon("dialog-error").pixmap(16, 16))
           self.ch_unix32.setChecked(False)
           self.ch_unix32.setEnabled(False)
 
-        if (carla_discovery_unix64):
+        if (carla_discovery_unix64 and not WINDOWS):
           self.ico_unix64.setPixmap(getIcon("dialog-ok-apply").pixmap(16, 16))
         else:
           self.ico_unix64.setPixmap(getIcon("dialog-error").pixmap(16, 16))

@@ -321,16 +321,16 @@ def findBinaries(PATH, OS):
 
   return binaries
 
-#def findSoundFonts(PATH):
-  #soundfonts = []
+def findSoundFonts(PATH):
+  soundfonts = []
 
-  #extensions = (".sf2", ".sF2", ".SF2", ".Sf2")
+  extensions = (".sf2", ".sF2", ".SF2", ".Sf2")
 
-  #for root, dirs, files in os.walk(PATH):
-    #for name in [name for name in files if name.endswith(extensions)]:
-      #soundfonts.append(os.path.join(root, name))
+  for root, dirs, files in os.walk(PATH):
+    for name in [name for name in files if name.endswith(extensions)]:
+      soundfonts.append(os.path.join(root, name))
 
-  #return soundfonts
+  return soundfonts
 
 #def findLV2Bundles(PATH):
   #bundles = []
@@ -415,8 +415,8 @@ def runCarlaDiscovery(itype, stype, filename, tool, isWine=False):
   except:
     output = []
 
-  #for line in output:
-    #print(line)
+  for line in output:
+    print(line)
     #if (line == "carla-discovery::init::-----------"):
       #pinfo = deepcopy(PyPluginInfo)
       #pinfo['type'] = itype
