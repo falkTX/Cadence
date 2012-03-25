@@ -2,6 +2,8 @@
         <qresource prefix="/">
             <file>16x16/application-exit.png</file>
             <file>16x16/configure.png</file>
+            <file>16x16/dialog-error.png</file>
+            <file>16x16/dialog-ok-apply.png</file>
             <file>16x16/document-new.png</file>
             <file>16x16/document-open.png</file>
             <file>16x16/document-print.png</file>
@@ -33,6 +35,7 @@
             <file>48x48/catarina.png</file>
             <file>48x48/catia.png</file>
             <file>48x48/claudia.png</file>
+            <file>48x48/carla.png</file>
             <file>48x48/canvas.png</file>
             <file>48x48/exec.png</file>
             <file>48x48/jack.png</file>
@@ -42,6 +45,7 @@
             <file>scalable/catarina.svg</file>
             <file>scalable/catia.svg</file>
             <file>scalable/claudia.svg</file>
+            <file>scalable/carla.svg</file>
             <file>scalable/jack.svg</file>
             <file>scalable/pb_generic.svg</file>
             <file>scalable/pb_hardware.svg</file>
@@ -66,5 +70,6 @@
             <file>bitmaps/led_yellow.png</file>
             <file>bitmaps/led-big_on.png</file>
             <file>bitmaps/led-big_off.png</file>
+            <file>bitmaps/carla_about.png</file>
         </qresource>
 </RCC>

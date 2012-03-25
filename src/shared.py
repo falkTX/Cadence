@@ -213,6 +213,9 @@ def CustomMessageBox(self, icon, title, text, extraText="", buttons=QMessageBox.
 
 # signal handler for unix systems
 def set_up_signals(_gui):
+    if (WINDOWS):
+      return
+
     global x_gui
     x_gui = _gui
     signal(SIGINT,  signal_handler)

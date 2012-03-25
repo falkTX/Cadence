@@ -679,7 +679,7 @@ def parse_rdf_file(filename):
 import os
 
 # Main function - check all rdfs for information about ladspa plugins
-def recheck_all_plugins(qobject=None):
+def recheck_all_plugins(qobject, start_value, percent_value, m_value):
   global LADSPA_RDF_PATH, LADSPA_Plugins
 
   LADSPA_Plugins = []
@@ -698,8 +698,8 @@ def recheck_all_plugins(qobject=None):
 
     # Tell GUI we're parsing this bundle
     if (qobject):
-      percent = (qobject.percent_value * 0.80) + ( (float(i) / len(rdf_files) ) * qobject.percent_value * 0.20 )
-      qobject.pluginLook(percent, rdf_file)
+      percent = (float(i) / len(rdf_files) ) * percent_value
+      qobject.pluginLook(start_value + (percent * m_value), rdf_file)
 
     # Parse RDF
     parse_rdf_file(rdf_file)
@@ -781,7 +781,7 @@ def get_c_ladspa_rdfs(PyPluginList):
 
 #if __name__ == '__main__':
     #set_rdf_path(["/home/falktx/Personal/FOSS/GIT/Cadence/lrdf/"])
-    #plugins = recheck_all_plugins()
+    #plugins = recheck_all_plugins(None, 0)
     #for plugin in LADSPA_Plugins:
       #print("----------------------")
       #print("Type:     0x%X" % (plugin["Type"]))

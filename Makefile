@@ -11,7 +11,7 @@ all: build
 
 build: UI RES LANG
 
-UI: catarina catia claudia tools
+UI: catarina catia claudia carla tools
 
 catarina: src/ui_catarina.py \
 	src/ui_catarina_addgroup.py src/ui_catarina_removegroup.py src/ui_catarina_renamegroup.py \
@@ -25,6 +25,21 @@ claudia: src/ui_claudia.py \
 	src/ui_claudia_createroom.py src/ui_claudia_projectname.py src/ui_claudia_projectproperties.py \
 	src/ui_claudia_runcustom.py
 # 	src/ui_claudia_addnew.py src/ui_claudia_addnew_klaudia.py
+
+carla: carla_backend carla_bridges carla_discovery carla_gui
+
+carla_backend:
+# 	$(MAKE) -C src/carla
+
+carla_bridges:
+# 	$(MAKE) native$(_arch_n) -C src/carla-bridges
+
+carla_discovery:
+# 	$(MAKE) native$(_arch_n) -C src/carla-discovery
+
+carla_gui: src/ui_carla.py src/ui_carla_control.py \
+	src/ui_carla_about.py src/ui_carla_database.py src/ui_carla_edit.py src/ui_carla_parameter.py src/ui_carla_plugin.py src/ui_carla_refresh.py \
+	src/ui_inputdialog_value.py
 
 tools: \
 	src/ui_logs.py src/ui_render.py src/ui_xycontroller.py \
@@ -81,6 +96,30 @@ src/ui_claudia_projectproperties.py: src/ui/claudia_projectproperties.ui
 src/ui_claudia_runcustom.py: src/ui/claudia_runcustom.ui
 	$(PYUIC) -o src/ui_claudia_runcustom.py $<
 
+src/ui_carla.py: src/ui/carla.ui
+	$(PYUIC) -o src/ui_carla.py $<
+
+src/ui_carla_control.py: src/ui/carla_control.ui
+	$(PYUIC) -o src/ui_carla_control.py $<
+
+src/ui_carla_about.py: src/ui/carla_about.ui
+	$(PYUIC) -o src/ui_carla_about.py $<
+
+src/ui_carla_database.py: src/ui/carla_database.ui
+	$(PYUIC) -o src/ui_carla_database.py $<
+
+src/ui_carla_edit.py: src/ui/carla_edit.ui
+	$(PYUIC) -o src/ui_carla_edit.py $<
+
+src/ui_carla_parameter.py: src/ui/carla_parameter.ui
+	$(PYUIC) -o src/ui_carla_parameter.py $<
+
+src/ui_carla_plugin.py: src/ui/carla_plugin.ui
+	$(PYUIC) -o src/ui_carla_plugin.py $<
+
+src/ui_carla_refresh.py: src/ui/carla_refresh.ui
+	$(PYUIC) -o src/ui_carla_refresh.py $<
+
 src/ui_logs.py: src/ui/logs.ui
 	$(PYUIC) -o src/ui_logs.py $<
 
@@ -95,6 +134,9 @@ src/ui_settings_app.py: src/ui/settings_app.ui
 
 src/ui_settings_jack.py: src/ui/settings_jack.ui
 	$(PYUIC) -o src/ui_settings_jack.py $<
+
+src/ui_inputdialog_value.py: src/ui/inputdialog_value.ui
+	$(PYUIC) -o src/ui_inputdialog_value.py $<
 
 RES: src/icons_rc.py
 
