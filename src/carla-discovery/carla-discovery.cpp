@@ -87,6 +87,7 @@ const unsigned int PLUGIN_CAN_VOL     = 0x20;
 const unsigned int PLUGIN_CAN_BALANCE = 0x40;
 
 enum BinaryType {
+    BINARY_NONE   = 0,
     BINARY_UNIX32 = 1,
     BINARY_UNIX64 = 2,
     BINARY_WIN32  = 3,

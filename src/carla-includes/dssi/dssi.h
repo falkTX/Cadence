@@ -378,12 +378,16 @@ typedef struct _DSSI_Descriptor {
     /**
      * set_custom_data()
      */
-    int (*set_custom_data)(LADSPA_Handle Instance, void *Data, unsigned long DataLength);
+    int (*set_custom_data)(LADSPA_Handle Instance,
+                           void         *Data,
+                           unsigned long DataLength);
 
     /**
      * get_custom_data()
      */
-    int (*get_custom_data)(LADSPA_Handle Instance, void **Data, unsigned long *DataLength);
+    int (*get_custom_data)(LADSPA_Handle  Instance,
+                           void         **Data,
+                           unsigned long *DataLength);
 
 } DSSI_Descriptor;
 

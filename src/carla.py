@@ -20,11 +20,11 @@
 import json, os, sys
 #from PyQt4.QtCore import Qt, QSettings, QThread, QTimer, QVariant, SIGNAL, SLOT
 #from PyQt4.QtGui import QApplication, QColor, QCursor, QFileDialog, QFontMetrics, QInputDialog, QMenu, QPainter, QPixmap, QVBoxLayout
-#from PyQt4.QtXml import QDomDocument
 from time import sleep
 #from sip import unwrapinstance
 from PyQt4.QtCore import pyqtSlot, Qt, QSettings, QThread
 from PyQt4.QtGui import QApplication, QDialog, QFrame, QMainWindow, QTableWidgetItem, QWidget
+from PyQt4.QtXml import QDomDocument
 
 # Imports (Custom Stuff)
 import ui_carla, ui_carla_about, ui_carla_database, ui_carla_edit, ui_carla_parameter, ui_carla_plugin, ui_carla_refresh
@@ -77,7 +77,7 @@ save_state_parameter = {
 }
 
 save_state_custom_data = {
-  'type': CUSTOM_DATA_INVALID,
+  'type': "",
   'key': "",
   'value': ""
 }
@@ -2668,7 +2668,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.settings_db = QSettings("Cadence", "Carla-Database")
         self.loadSettings()
 
-        #self.loadRDFs()
+        self.loadRDFs()
 
         self.setStyleSheet("""
           QWidget#centralwidget {
@@ -2761,11 +2761,9 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         #elif (action == CALLBACK_QUIT):
           #self.emit(SIGNAL("QuitCallback()"))
 
-        #return 0
-
-    #def handleSIGUSR1(self):
-        #print "Got SIGUSR1 -> Saving project now"
-        #self.func_file_save()
+    def handleSIGUSR1(self):
+        print("Got SIGUSR1 -> Saving project now")
+        QTimer.singleShot(0, self, SLOT("slot_file_save()"))
 
     #def handleDebugCallback(self, plugin_id, value1, value2, value3):
         #print "DEBUG ::", plugin_id, value1, value2, value3
@@ -2857,12 +2855,12 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         #CustomMessageBox(self, QMessageBox.Warning, self.tr("Warning"), self.tr("JACK has been stopped or crashed.\nPlease start JACK and restart Carla"),
                                               #"You may want to save your session now...", QMessageBox.Ok, QMessageBox.Ok)
 
-    #def func_add_plugin(self, ptype, filename, label, extra_stuff, activate):
-        #new_plugin_id = NativeHost.add_plugin(ptype, filename, label, extra_stuff)
+    def add_plugin(self, btype, ptype, filename, label, extra_stuff, activate):
+        new_plugin_id = NativeHost.add_plugin(btype, ptype, filename, label, extra_stuff)
 
-        #if (new_plugin_id < 0):
-          #CustomMessageBox(self, QMessageBox.Critical, self.tr("Error"), self.tr("Failed to load plugin"),
-                                              #NativeHost.get_last_error(), QMessageBox.Ok, QMessageBox.Ok)
+        if (new_plugin_id < 0):
+          CustomMessageBox(self, QMessageBox.Critical, self.tr("Error"), self.tr("Failed to load plugin"),
+                                              NativeHost.get_last_error(), QMessageBox.Ok, QMessageBox.Ok)
         #else:
           #pwidget = PluginWidget(self, new_plugin_id)
           #self.w_plugins.layout().addWidget(pwidget)
@@ -2872,7 +2870,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
           #if (activate):
             #pwidget.set_active(True, True)
 
-        #return new_plugin_id
+        return new_plugin_id
 
     def remove_plugin(self, plugin_id, showError):
         pwidget = self.m_plugin_list[plugin_id]
@@ -2899,22 +2897,22 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         else:
           self.act_plugin_remove_all.setEnabled(False)
 
-    #def get_extra_stuff(self, plugin):
-        #ptype = plugin['type']
+    def get_extra_stuff(self, plugin):
+        ptype = plugin['type']
 
-        #if (ptype == PLUGIN_LADSPA):
-          #p_id = long(plugin['id'])
-          #for rdf_item in self.ladspa_rdf_list:
-            #if (rdf_item.UniqueID == p_id):
-              #return pointer(rdf_item)
-          #else:
-            #return c_nullptr
+        if (ptype == PLUGIN_LADSPA):
+          unique_id = plugin['unique_id']
+          for rdf_item in self.ladspa_rdf_list:
+            if (rdf_item.UniqueID == unique_id):
+              return pointer(rdf_item)
+          else:
+            return c_nullptr
 
-        #elif (ptype == PLUGIN_DSSI):
-          #if (plugin['hints'] & PLUGIN_HAS_GUI):
-            #return findDSSIGUI(plugin['binary'], plugin['name'], plugin['label'])
-          #else:
-            #return c_nullptr
+        elif (ptype == PLUGIN_DSSI):
+          if (plugin['hints'] & PLUGIN_HAS_GUI):
+            return findDSSIGUI(plugin['binary'], plugin['name'], plugin['label'])
+          else:
+            return c_nullptr
 
         #elif (ptype == PLUGIN_LV2):
           #p_uri = plugin['label']
@@ -2937,8 +2935,8 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
           #self.winvst_info.aouts     = plugin['audio.outs']
           #return pointer(self.winvst_info)
 
-        #else:
-          #return c_nullptr
+        else:
+          return c_nullptr
 
     def save_project(self):
         content = ("<?xml version='1.0' encoding='UTF-8'?>\n"
@@ -2975,13 +2973,13 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
           QMessageBox.critical(self, self.tr("Error"), self.tr("Failed to load project file"))
           return
 
-        #xml = QDomDocument()
-        #xml.setContent(project_read)
+        xml = QDomDocument()
+        xml.setContent(project_read)
 
-        #xml_node = xml.documentElement()
-        #if (xml_node.tagName() != "CARLA-PROJECT"):
-          #QMessageBox.critical(self, self.tr("Error"), self.tr("Not a valid Carla project file"))
-          #return
+        xml_node = xml.documentElement()
+        if (xml_node.tagName() != "CARLA-PROJECT"):
+          QMessageBox.critical(self, self.tr("Error"), self.tr("Not a valid Carla project file"))
+          return
 
         #failed_plugins = []
         #x_save_state_dicts = []
@@ -3095,20 +3093,20 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
           #print "----------- FAILED TO LOAD!! ->", failed_plugins
           ## TODO - display error
 
-    #def loadRDFs(self):
-        ## Save RDF info for later
-        #if (haveRDF):
-          #SettingsDir = os.path.join(HOME, ".config", "Cadence")
+    def loadRDFs(self):
+        # Save RDF info for later
+        if (haveRDF):
+          SettingsDir = os.path.join(HOME, ".config", "Cadence")
 
-          #fr_ladspa_file = os.path.join(SettingsDir, "ladspa_rdf.db")
-          #if (os.path.exists(fr_ladspa_file)):
-            #fr_ladspa = open(fr_ladspa_file, 'r')
-            #if (fr_ladspa):
-              #try:
-                #self.ladspa_rdf_list = ladspa_rdf.get_c_ladspa_rdfs(json.load(fr_ladspa))
-              #except:
-                #self.ladspa_rdf_list = []
-              #fr_ladspa.close()
+          fr_ladspa_file = os.path.join(SettingsDir, "ladspa_rdf.db")
+          if (os.path.exists(fr_ladspa_file)):
+            fr_ladspa = open(fr_ladspa_file, 'r')
+            if (fr_ladspa):
+              try:
+                self.ladspa_rdf_list = ladspa_rdf.get_c_ladspa_rdfs(json.load(fr_ladspa))
+              except:
+                self.ladspa_rdf_list = []
+              fr_ladspa.close()
 
           #fr_lv2_file = os.path.join(SettingsDir, "lv2_rdf.db")
           #if (os.path.exists(fr_lv2_file)):
@@ -3120,8 +3118,8 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
                 #self.lv2_rdf_list = []
               #fr_lv2.close()
 
-        #else:
-          #self.ladspa_rdf_list = []
+        else:
+          self.ladspa_rdf_list = []
           #self.lv2_rdf_list = []
 
     @pyqtSlot()
@@ -3163,13 +3161,12 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
     def slot_plugin_add(self):
         dialog = PluginDatabaseW(self)
         if (dialog.exec_()):
-          pass
-          #plugin = dialog.plugin_to_add
-          #fname  = plugin['binary']
-          #label  = plugin['label']
-          #ptype  = plugin['type']
-          #extra_stuff = self.get_extra_stuff(plugin)
-          #self.func_add_plugin(ptype, fname, label, extra_stuff, True)
+          btype    = dialog.ret_plugin['build']
+          ptype    = dialog.ret_plugin['type']
+          filename = dialog.ret_plugin['binary']
+          label    = dialog.ret_plugin['label']
+          extra_stuff = self.get_extra_stuff(dialog.ret_plugin)
+          self.add_plugin(btype, ptype, filename, label, extra_stuff, True)
 
     @pyqtSlot()
     def slot_remove_all(self):
