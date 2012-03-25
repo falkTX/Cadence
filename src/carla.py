@@ -3202,8 +3202,7 @@ if __name__ == '__main__':
     #style = app.style().metaObject().className()
     #force_parameters_style = (style in ("Bespin::Style",))
 
-    PWD = sys.path[0]
-    NativeHost = Host(PWD)
+    NativeHost = Host()
     #NativeHost.set_option(OPTION_GLOBAL_JACK_CLIENT, 0, "")
     #NativeHost.set_option(OPTION_BRIDGE_PATH_LV2_GTK2, 0, carla_bridge_lv2_gtk2)
     #NativeHost.set_option(OPTION_BRIDGE_PATH_LV2_QT4, 0, carla_bridge_lv2_qt4)

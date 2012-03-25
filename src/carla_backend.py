@@ -755,8 +755,8 @@ else:
 # Backend C++ -> Python object
 
 class Host(object):
-    def __init__(self, cwd):
-        super(Host, self).__init__()
+    def __init__(self):
+        object.__init__(self)
 
         if (WINDOWS):
           libname = "carla_backend.dll"
@@ -767,290 +767,318 @@ class Host(object):
 
         self.lib = cdll.LoadLibrary(os.path.join("carla", libname))
 
+        #self.lib.carla_init.argtypes = [c_char_p]
+        #self.lib.carla_init.restype = c_bool
+
+        #self.lib.carla_close.argtypes = None
+        #self.lib.carla_close.restype = c_bool
+
+        #self.lib.carla_is_engine_running.argtypes = None
+        #self.lib.carla_is_engine_running.restype = c_bool
+
+        #self.lib.add_plugin.argtypes = [c_enum, c_enum, c_char_p, c_char_p, c_void_p]
+        #self.lib.add_plugin.restype = c_short
+
+        #self.lib.remove_plugin.argtypes = [c_ushort]
+        #self.lib.remove_plugin.restype = c_bool
+
+        #self.lib.get_plugin_info.argtypes = [c_ushort]
+        #self.lib.get_plugin_info.restype = POINTER(PluginInfo)
+
+        #self.lib.get_audio_port_count_info.argtypes = [c_ushort]
+        #self.lib.get_audio_port_count_info.restype = POINTER(PortCountInfo)
+
+        #self.lib.get_midi_port_count_info.argtypes = [c_ushort]
+        #self.lib.get_midi_port_count_info.restype = POINTER(PortCountInfo)
+
+        #self.lib.get_parameter_count_info.argtypes = [c_ushort]
+        #self.lib.get_parameter_count_info.restype = POINTER(PortCountInfo)
+
+        #self.lib.get_parameter_info.argtypes = [c_ushort, c_uint32]
+        #self.lib.get_parameter_info.restype = POINTER(ParameterInfo)
+
+        #self.lib.get_scalepoint_info.argtypes = [c_ushort, c_uint32, c_uint32]
+        #self.lib.get_scalepoint_info.restype = POINTER(ScalePointInfo)
+
+        #self.lib.get_midi_program_info.argtypes = [c_ushort, c_uint32]
+        #self.lib.get_midi_program_info.restype = POINTER(MidiProgramInfo)
+
+        #self.lib.get_parameter_data.argtypes = [c_ushort, c_uint32]
+        #self.lib.get_parameter_data.restype = POINTER(ParameterData)
+
+        #self.lib.get_parameter_ranges.argtypes = [c_ushort, c_uint32]
+        #self.lib.get_parameter_ranges.restype = POINTER(ParameterRanges)
+
+        #self.lib.get_custom_data.argtypes = [c_ushort, c_uint32]
+        #self.lib.get_custom_data.restype = POINTER(CustomData)
+
+        #self.lib.get_chunk_data.argtypes = [c_ushort]
+        #self.lib.get_chunk_data.restype = c_char_p
+
+        #self.lib.get_gui_data.argtypes = [c_ushort]
+        #self.lib.get_gui_data.restype = POINTER(GuiData)
+
+        #self.lib.get_parameter_count.argtypes = [c_ushort]
+        #self.lib.get_parameter_count.restype = c_uint32
+
+        #self.lib.get_program_count.argtypes = [c_ushort]
+        #self.lib.get_program_count.restype = c_uint32
+
+        #self.lib.get_midi_program_count.argtypes = [c_ushort]
+        #self.lib.get_midi_program_count.restype = c_uint32
+
+        #self.lib.get_custom_data_count.argtypes = [c_ushort]
+        #self.lib.get_custom_data_count.restype = c_uint32
+
+        #self.lib.get_program_name.argtypes = [c_ushort, c_uint32]
+        #self.lib.get_program_name.restype = c_char_p
+
+        #self.lib.get_midi_program_name.argtypes = [c_ushort, c_uint32]
+        #self.lib.get_midi_program_name.restype = c_char_p
+
+        #self.lib.get_real_plugin_name.argtypes = [c_ushort]
+        #self.lib.get_real_plugin_name.restype = c_char_p
+
+        #self.lib.get_current_program_index.argtypes = [c_ushort]
+        #self.lib.get_current_program_index.restype = c_int32
+
+        #self.lib.get_current_midi_program_index.argtypes = [c_ushort]
+        #self.lib.get_current_midi_program_index.restype = c_int32
+
+        #self.lib.get_default_parameter_value.argtypes = [c_ushort, c_uint32]
+        #self.lib.get_default_parameter_value.restype = c_double
+
+        #self.lib.get_current_parameter_value.argtypes = [c_ushort, c_uint32]
+        #self.lib.get_current_parameter_value.restype = c_double
+
+        #self.lib.get_input_peak_value.argtypes = [c_ushort, c_ushort]
+        #self.lib.get_input_peak_value.restype = c_double
+
+        #self.lib.get_output_peak_value.argtypes = [c_ushort, c_ushort]
+        #self.lib.get_output_peak_value.restype = c_double
+
+        #self.lib.set_active.argtypes = [c_ushort, c_bool]
+        #self.lib.set_active.restype = None
+
+        #self.lib.set_drywet.argtypes = [c_ushort, c_double]
+        #self.lib.set_drywet.restype = None
+
+        #self.lib.set_volume.argtypes = [c_ushort, c_double]
+        #self.lib.set_volume.restype = None
+
+        #self.lib.set_balance_left.argtypes = [c_ushort, c_double]
+        #self.lib.set_balance_left.restype = None
+
+        #self.lib.set_balance_right.argtypes = [c_ushort, c_double]
+        #self.lib.set_balance_right.restype = None
+
+        #self.lib.set_parameter_value.argtypes = [c_ushort, c_uint32, c_double]
+        #self.lib.set_parameter_value.restype = None
+
+        #self.lib.set_parameter_midi_channel.argtypes = [c_ushort, c_uint32, c_uint8]
+        #self.lib.set_parameter_midi_channel.restype = None
+
+        #self.lib.set_parameter_midi_cc.argtypes = [c_ushort, c_uint32, c_int16]
+        #self.lib.set_parameter_midi_cc.restype = None
+
+        #self.lib.set_program.argtypes = [c_ushort, c_uint32]
+        #self.lib.set_program.restype = None
+
+        #self.lib.set_midi_program.argtypes = [c_ushort, c_uint32]
+        #self.lib.set_midi_program.restype = None
+
+        #self.lib.set_custom_data.argtypes = [c_ushort, c_char_p, c_char_p, c_char_p]
+        #self.lib.set_custom_data.restype = None
+
+        #self.lib.set_chunk_data.argtypes = [c_ushort, c_char_p]
+        #self.lib.set_chunk_data.restype = None
+
+        #self.lib.set_gui_data.argtypes = [c_ushort, c_int, c_intptr]
+        #self.lib.set_gui_data.restype = None
+
+        #self.lib.show_gui.argtypes = [c_ushort, c_bool]
+        #self.lib.show_gui.restype = None
+
+        #self.lib.idle_gui.argtypes = [c_ushort]
+        #self.lib.idle_gui.restype = None
+
+        #self.lib.send_midi_note.argtypes = [c_ushort, c_bool, c_uint8, c_uint8]
+        #self.lib.send_midi_note.restype = None
+
+        #self.lib.prepare_for_save.argtypes = [c_ushort]
+        #self.lib.prepare_for_save.restype = None
+
+        #self.lib.set_callback_function.argtypes = [CallbackFunc]
+        #self.lib.set_callback_function.restype = None
+
+        #self.lib.set_option.argtypes = [c_enum, c_int, c_char_p]
+        #self.lib.set_option.restype = None
+
+        #self.lib.get_last_error.argtypes = None
+        #self.lib.get_last_error.restype = c_char_p
+
+        #self.lib.get_host_client_name.argtypes = None
+        #self.lib.get_host_client_name.restype = c_char_p
+
+        #self.lib.get_host_osc_url.argtypes = None
+        #self.lib.get_host_osc_url.restype = c_char_p
+
+        #self.lib.get_buffer_size.argtypes = None
+        #self.lib.get_buffer_size.restype = c_uint32
+
+        #self.lib.get_sample_rate.argtypes = None
+        #self.lib.get_sample_rate.restype = c_double
+
+        #self.lib.get_latency.argtypes = None
+        #self.lib.get_latency.restype = c_double
+
     # bool carla_init(const char* client_name); - FIXME
     def carla_init(self, client_name):
         return True
-        self.lib.carla_init.argtypes = [c_char_p]
-        self.lib.carla_init.restype = c_bool
         return self.lib.carla_init(client_name)
 
     # bool carla_close(); - FIXME
     def carla_close(self):
         return True
-        self.lib.carla_close.argtypes = None
-        self.lib.carla_close.restype = c_bool
         return self.lib.carla_close()
 
     # bool carla_is_engine_running(); - FIXME
     def carla_is_engine_running(self):
         return False
-        self.lib.carla_is_engine_running.argtypes = None
-        self.lib.carla_is_engine_running.restype = c_bool
         return self.lib.carla_is_engine_running()
 
     # short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const char* label, void* extra_stuff); - FIXME
     def add_plugin(self, btype, ptype, filename, label, extra_stuff):
         return -1
-        self.lib.add_plugin.argtypes = [c_enum, c_enum, c_char_p, c_char_p, c_void_p]
-        self.lib.add_plugin.restype = c_short
         return self.lib.add_plugin(btype, ptype, filename, label, cast(extra_stuff, c_void_p))
 
-    # bool remove_plugin(unsigned short plugin_id);
     def remove_plugin(self, plugin_id):
-        self.lib.remove_plugin.argtypes = [c_ushort]
-        self.lib.remove_plugin.restype = c_bool
         return self.lib.remove_plugin(plugin_id)
 
-    # PluginInfo* get_plugin_info(unsigned short plugin_id);
     def get_plugin_info(self, plugin_id):
-        self.lib.get_plugin_info.argtypes = [c_ushort]
-        self.lib.get_plugin_info.restype = POINTER(PluginInfo)
         return struct_to_dict(self.lib.get_plugin_info(plugin_id).contents)
 
-    # PortCountInfo* get_audio_port_count_info(unsigned short plugin_id);
     def get_audio_port_count_info(self, plugin_id):
-        self.lib.get_audio_port_count_info.argtypes = [c_ushort]
-        self.lib.get_audio_port_count_info.restype = POINTER(PortCountInfo)
         return struct_to_dict(self.lib.get_audio_port_count_info(plugin_id).contents)
 
-    # PortCountInfo* get_midi_port_count_info(unsigned short plugin_id);
     def get_midi_port_count_info(self, plugin_id):
-        self.lib.get_midi_port_count_info.argtypes = [c_ushort]
-        self.lib.get_midi_port_count_info.restype = POINTER(PortCountInfo)
         return struct_to_dict(self.lib.get_midi_port_count_info(plugin_id).contents)
 
-    # PortCountInfo* get_parameter_count_info(unsigned short plugin_id);
     def get_parameter_count_info(self, plugin_id):
-        self.lib.get_parameter_count_info.argtypes = [c_ushort]
-        self.lib.get_parameter_count_info.restype = POINTER(PortCountInfo)
         return struct_to_dict(self.lib.get_parameter_count_info(plugin_id).contents)
 
-    # ParameterInfo* get_parameter_info(unsigned short plugin_id, uint32_t parameter_id);
     def get_parameter_info(self, plugin_id, parameter_id):
-        self.lib.get_parameter_info.argtypes = [c_ushort, c_uint32]
-        self.lib.get_parameter_info.restype = POINTER(ParameterInfo)
         return struct_to_dict(self.lib.get_parameter_info(plugin_id, parameter_id).contents)
 
-    # ScalePointInfo* get_scalepoint_info(unsigned short plugin_id, uint32_t parameter_id, uint32_t scalepoint_id);
     def get_scalepoint_info(self, plugin_id, parameter_id, scalepoint_id):
-        self.lib.get_scalepoint_info.argtypes = [c_ushort, c_uint32, c_uint32]
-        self.lib.get_scalepoint_info.restype = POINTER(ScalePointInfo)
         return struct_to_dict(self.lib.get_scalepoint_info(plugin_id, parameter_id, scalepoint_id).contents)
 
-    # MidiProgramInfo* get_midi_program_info(unsigned short plugin_id, uint32_t midi_program_id);
     def get_midi_program_info(self, plugin_id, midi_program_id):
-        self.lib.get_midi_program_info.argtypes = [c_ushort, c_uint32]
-        self.lib.get_midi_program_info.restype = POINTER(MidiProgramInfo)
         return struct_to_dict(self.lib.get_midi_program_info(plugin_id, midi_program_id).contents)
 
-    # ParameterData* get_parameter_data(unsigned short plugin_id, uint32_t parameter_id);
     def get_parameter_data(self, plugin_id, parameter_id):
-        self.lib.get_parameter_data.argtypes = [c_ushort, c_uint32]
-        self.lib.get_parameter_data.restype = POINTER(ParameterData)
         return struct_to_dict(self.lib.get_parameter_data(plugin_id, parameter_id).contents)
 
-    # ParameterRanges* get_parameter_ranges(unsigned short plugin_id, uint32_t parameter_id);
     def get_parameter_ranges(self, plugin_id, parameter_id):
-        self.lib.get_parameter_ranges.argtypes = [c_ushort, c_uint32]
-        self.lib.get_parameter_ranges.restype = POINTER(ParameterRanges)
         return struct_to_dict(self.lib.get_parameter_ranges(plugin_id, parameter_id).contents)
 
-    # CustomData* get_custom_data(unsigned short plugin_id, uint32_t custom_data_id);
     def get_custom_data(self, plugin_id, custom_data_id):
-        self.lib.get_custom_data.argtypes = [c_ushort, c_uint32]
-        self.lib.get_custom_data.restype = POINTER(CustomData)
         return struct_to_dict(self.lib.get_custom_data(plugin_id, custom_data_id).contents)
 
-    # const char* get_chunk_data(unsigned short plugin_id);
     def get_chunk_data(self, plugin_id):
-        self.lib.get_chunk_data.argtypes = [c_ushort]
-        self.lib.get_chunk_data.restype = c_char_p
         return self.lib.get_chunk_data(plugin_id)
 
-    # GuiData* get_gui_data(unsigned short plugin_id);
     def get_gui_data(self, plugin_id):
-        self.lib.get_gui_data.argtypes = [c_ushort]
-        self.lib.get_gui_data.restype = POINTER(GuiData)
         return struct_to_dict(self.lib.get_gui_data(plugin_id).contents)
 
-    # uint32_t get_parameter_count(unsigned short plugin_id);
     def get_parameter_count(self, plugin_id):
-        self.lib.get_parameter_count.argtypes = [c_ushort]
-        self.lib.get_parameter_count.restype = c_uint32
         return self.lib.get_parameter_count(plugin_id)
 
-    # uint32_t get_program_count(unsigned short plugin_id);
     def get_program_count(self, plugin_id):
-        self.lib.get_program_count.argtypes = [c_ushort]
-        self.lib.get_program_count.restype = c_uint32
         return self.lib.get_program_count(plugin_id)
 
-    # uint32_t get_midi_program_count(unsigned short plugin_id);
     def get_midi_program_count(self, plugin_id):
-        self.lib.get_midi_program_count.argtypes = [c_ushort]
-        self.lib.get_midi_program_count.restype = c_uint32
         return self.lib.get_midi_program_count(plugin_id)
 
-    # uint32_t get_custom_data_count(unsigned short plugin_id);
     def get_custom_data_count(self, plugin_id):
-        self.lib.get_custom_data_count.argtypes = [c_ushort]
-        self.lib.get_custom_data_count.restype = c_uint32
         return self.lib.get_custom_data_count(plugin_id)
 
-    # const char* get_program_name(unsigned short plugin_id, uint32_t program_id);
     def get_program_name(self, plugin_id, program_id):
-        self.lib.get_program_name.argtypes = [c_ushort, c_uint32]
-        self.lib.get_program_name.restype = c_char_p
         return self.lib.get_program_name(plugin_id, program_id)
 
-    # const char* get_midi_program_name(unsigned short plugin_id, uint32_t midi_program_id);
     def get_midi_program_name(self, plugin_id, midi_program_id):
-        self.lib.get_midi_program_name.argtypes = [c_ushort, c_uint32]
-        self.lib.get_midi_program_name.restype = c_char_p
         return self.lib.get_midi_program_name(plugin_id, midi_program_id)
 
-    # const char* get_real_plugin_name(unsigned short plugin_id);
     def get_real_plugin_name(self, plugin_id):
-        self.lib.get_real_plugin_name.argtypes = [c_ushort]
-        self.lib.get_real_plugin_name.restype = c_char_p
         return self.lib.get_real_plugin_name(plugin_id)
 
-    # int32_t get_current_program_index(unsigned short plugin_id);
     def get_current_program_index(self, plugin_id):
-        self.lib.get_current_program_index.argtypes = [c_ushort]
-        self.lib.get_current_program_index.restype = c_int32
         return self.lib.get_current_program_index(plugin_id)
 
-    # int32_t get_current_midi_program_index(unsigned short plugin_id);
     def get_current_midi_program_index(self, plugin_id):
-        self.lib.get_current_midi_program_index.argtypes = [c_ushort]
-        self.lib.get_current_midi_program_index.restype = c_int32
         return self.lib.get_current_midi_program_index(plugin_id)
 
-    # double get_default_parameter_value(unsigned short plugin_id, uint32_t parameter_id);
     def get_default_parameter_value(self, plugin_id, parameter_id):
-        self.lib.get_default_parameter_value.argtypes = [c_ushort, c_uint32]
-        self.lib.get_default_parameter_value.restype = c_double
         return self.lib.get_default_parameter_value(plugin_id, parameter_id)
 
-    # double get_current_parameter_value(unsigned short plugin_id, uint32_t parameter_id);
     def get_current_parameter_value(self, plugin_id, parameter_id):
-        self.lib.get_current_parameter_value.argtypes = [c_ushort, c_uint32]
-        self.lib.get_current_parameter_value.restype = c_double
         return self.lib.get_current_parameter_value(plugin_id, parameter_id)
 
-    # double get_input_peak_value(unsigned short plugin_id, unsigned short port_id);
     def get_input_peak_value(self, plugin_id, port_id):
-        self.lib.get_input_peak_value.argtypes = [c_ushort, c_ushort]
-        self.lib.get_input_peak_value.restype = c_double
         return self.lib.get_input_peak_value(plugin_id, port_id)
 
-    # double get_output_peak_value(unsigned short plugin_id, unsigned short port_id);
     def get_output_peak_value(self, plugin_id, port_id):
-        self.lib.get_output_peak_value.argtypes = [c_ushort, c_ushort]
-        self.lib.get_output_peak_value.restype = c_double
         return self.lib.get_output_peak_value(plugin_id, port_id)
 
-    # void set_active(unsigned short plugin_id, bool onoff);
     def set_active(self, plugin_id, onoff):
-        self.lib.set_active.argtypes = [c_ushort, c_bool]
-        self.lib.set_active.restype = None
         self.lib.set_active(plugin_id, onoff)
 
-    # void set_drywet(unsigned short plugin_id, double value);
     def set_drywet(self, plugin_id, value):
-        self.lib.set_drywet.argtypes = [c_ushort, c_double]
-        self.lib.set_drywet.restype = None
         self.lib.set_drywet(plugin_id, value)
 
-    # void set_volume(unsigned short plugin_id, double value);
     def set_volume(self, plugin_id, value):
-        self.lib.set_volume.argtypes = [c_ushort, c_double]
-        self.lib.set_volume.restype = None
         self.lib.set_volume(plugin_id, value)
 
-    # void set_balance_left(unsigned short plugin_id, double value);
     def set_balance_left(self, plugin_id, value):
-        self.lib.set_balance_left.argtypes = [c_ushort, c_double]
-        self.lib.set_balance_left.restype = None
         self.lib.set_balance_left(plugin_id, value)
 
-    # void set_balance_right(unsigned short plugin_id, double value);
     def set_balance_right(self, plugin_id, value):
-        self.lib.set_balance_right.argtypes = [c_ushort, c_double]
-        self.lib.set_balance_right.restype = None
         self.lib.set_balance_right(plugin_id, value)
 
-    # void set_parameter_value(unsigned short plugin_id, uint32_t parameter_id, double value);
     def set_parameter_value(self, plugin_id, parameter_id, value):
-        self.lib.set_parameter_value.argtypes = [c_ushort, c_uint32, c_double]
-        self.lib.set_parameter_value.restype = None
         self.lib.set_parameter_value(plugin_id, parameter_id, value)
 
-    # void set_parameter_midi_channel(unsigned short plugin_id, uint32_t parameter_id, uint8_t channel);
     def set_parameter_midi_channel(self, plugin_id, parameter_id, channel):
-        self.lib.set_parameter_midi_channel.argtypes = [c_ushort, c_uint32, c_uint8]
-        self.lib.set_parameter_midi_channel.restype = None
         self.lib.set_parameter_midi_channel(plugin_id, parameter_id, channel)
 
-    # void set_parameter_midi_cc(unsigned short plugin_id, uint32_t parameter_id, int16_t midi_cc);
     def set_parameter_midi_cc(self, plugin_id, parameter_id, midi_cc):
-        self.lib.set_parameter_midi_cc.argtypes = [c_ushort, c_uint32, c_int16]
-        self.lib.set_parameter_midi_cc.restype = None
         self.lib.set_parameter_midi_cc(plugin_id, parameter_id, midi_cc)
 
-    # void set_program(unsigned short plugin_id, uint32_t program_id);
     def set_program(self, plugin_id, program_id):
-        self.lib.set_program.argtypes = [c_ushort, c_uint32]
-        self.lib.set_program.restype = None
         self.lib.set_program(plugin_id, program_id)
 
-    # void set_midi_program(unsigned short plugin_id, uint32_t midi_program_id);
     def set_midi_program(self, plugin_id, midi_program_id):
-        self.lib.set_midi_program.argtypes = [c_ushort, c_uint32]
-        self.lib.set_midi_program.restype = None
         self.lib.set_midi_program(plugin_id, midi_program_id)
 
-    # void set_custom_data(unsigned short plugin_id, const char* type, const char* key, const char* value);
     def set_custom_data(self, plugin_id, dtype, key, value):
-        self.lib.set_custom_data.argtypes = [c_ushort, c_char_p, c_char_p, c_char_p]
-        self.lib.set_custom_data.restype = None
         return self.lib.set_custom_data(plugin_id, dtype, key, value)
 
-    # void set_chunk_data(unsigned short plugin_id, const char* chunk_data);
     def set_chunk_data(self, plugin_id, chunk_data):
-        self.lib.set_chunk_data.argtypes = [c_ushort, c_char_p]
-        self.lib.set_chunk_data.restype = None
         self.lib.set_chunk_data(plugin_id, chunk_data)
 
-    # void set_gui_data(unsigned short plugin_id, int data, intptr_t gui_addr);
     def set_gui_data(self, plugin_id, data, gui_addr):
-        self.lib.set_gui_data.argtypes = [c_ushort, c_int, c_intptr]
-        self.lib.set_gui_data.restype = None
         self.lib.set_gui_data(plugin_id, data, gui_addr)
 
-    # void show_gui(unsigned short plugin_id, bool yesno);
     def show_gui(self, plugin_id, yesno):
-        self.lib.show_gui.argtypes = [c_ushort, c_bool]
-        self.lib.show_gui.restype = None
         self.lib.show_gui(plugin_id, yesno)
 
-    # void idle_gui(unsigned short plugin_id);
     def idle_gui(self, plugin_id):
-        self.lib.idle_gui.argtypes = [c_ushort]
-        self.lib.idle_gui.restype = None
         self.lib.idle_gui(plugin_id)
 
-    # void send_midi_note(unsigned short plugin_id, bool onoff, uint8_t note, uint8_t velocity);
     def send_midi_note(self, plugin_id, onoff, note, velocity):
-        self.lib.send_midi_note.argtypes = [c_ushort, c_bool, c_uint8, c_uint8]
-        self.lib.send_midi_note.restype = None
         self.lib.send_midi_note(plugin_id, onoff, note, velocity)
 
-    # void prepare_for_save(unsigned short plugin_id);
     def prepare_for_save(self, plugin_id):
-        self.lib.prepare_for_save.argtypes = [c_ushort]
-        self.lib.prepare_for_save.restype = None
         self.lib.prepare_for_save(plugin_id)
 
     # void set_callback_function(CallbackFunc func); - FIXME
@@ -1058,53 +1086,33 @@ class Host(object):
         return
         global Callback
         Callback = CallbackFunc(func)
-        self.lib.set_callback_function.argtypes = [CallbackFunc]
-        self.lib.set_callback_function.restype = None
         self.lib.set_callback_function(Callback)
 
-    # void set_option(OptionsType option, int value, const char* value_str);
     def set_option(self, option, value, value_str):
-        self.lib.set_option.argtypes = [c_enum, c_int, c_char_p]
-        self.lib.set_option.restype = None
         self.lib.set_option(option, value, value_str)
 
     # const char* get_last_error(); - FIXME
     def get_last_error(self):
         return ""
-        self.lib.get_last_error.argtypes = None
-        self.lib.get_last_error.restype = c_char_p
         return self.lib.get_last_error()
 
     # const char* get_host_client_name(); - FIXME
     def get_host_client_name(self):
         return ""
-        self.lib.get_host_client_name.argtypes = None
-        self.lib.get_host_client_name.restype = c_char_p
         return self.lib.get_host_client_name()
 
     # const char* get_host_osc_url(); - FIXME
     def get_host_osc_url(self):
         return ""
-        self.lib.get_host_osc_url.argtypes = None
-        self.lib.get_host_osc_url.restype = c_char_p
         return self.lib.get_host_osc_url()
 
-    # uint32_t get_buffer_size();
     def get_buffer_size(self):
-        self.lib.get_buffer_size.argtypes = None
-        self.lib.get_buffer_size.restype = c_uint32
         return self.lib.get_buffer_size()
 
-    # double get_sample_rate();
     def get_sample_rate(self):
-        self.lib.get_sample_rate.argtypes = None
-        self.lib.get_sample_rate.restype = c_double
         return self.lib.get_sample_rate()
 
-    # double get_latency();
     def get_latency(self):
-        self.lib.get_latency.argtypes = None
-        self.lib.get_latency.restype = c_double
         return self.lib.get_latency()
 
 # ------------------------------------------------------------------------------------------------
