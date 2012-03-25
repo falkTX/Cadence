@@ -46,10 +46,12 @@ private:
 #endif
 #endif
 
-#include <stdio.h>
 #include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 
 #include "ladspa/ladspa.h"
@@ -81,6 +83,8 @@ private:
 #ifdef WANT_FLUIDSYNTH
 #include <fluidsynth.h>
 #endif
+
+#define DEBUG 1
 
 #define DISCOVERY_OUT(x, y) std::cout << "\ncarla-discovery::" << x << "::" << y << std::endl;
 
@@ -345,13 +349,118 @@ void do_ladspa_check(void* lib_handle)
             float bufferParams[parameters_total];
             memset(&bufferParams, 0, sizeof(float)*parameters_total);
 
+            float min, max, def;
+
             for (unsigned long j=0, iA=0, iP=0; j < descriptor->PortCount; j++)
             {
-                const LADSPA_PortDescriptor PortDescriptor = descriptor->PortDescriptors[j];
-                if (PortDescriptor & LADSPA_PORT_AUDIO)
+                const LADSPA_PortDescriptor PortType = descriptor->PortDescriptors[j];
+                const LADSPA_PortRangeHint  PortHint = descriptor->PortRangeHints[j];
+
+                if (PortType & LADSPA_PORT_AUDIO)
+                {
                     descriptor->connect_port(handle, j, bufferAudio[iA++]);
-                else if (PortDescriptor & LADSPA_PORT_CONTROL)
+                }
+                else if (PortType & LADSPA_PORT_CONTROL)
+                {
+                    // min value
+                    if (LADSPA_IS_HINT_BOUNDED_BELOW(PortHint.HintDescriptor))
+                        min = PortHint.LowerBound;
+                    else
+                        min = 0.0;
+
+                    // max value
+                    if (LADSPA_IS_HINT_BOUNDED_ABOVE(PortHint.HintDescriptor))
+                        max = PortHint.UpperBound;
+                    else
+                        max = 1.0;
+
+                    if (min > max)
+                        max = min;
+                    else if (max < min)
+                        min = max;
+
+                    // default value
+                    if (LADSPA_IS_HINT_HAS_DEFAULT(PortHint.HintDescriptor))
+                    {
+                        switch (PortHint.HintDescriptor & LADSPA_HINT_DEFAULT_MASK)
+                        {
+                        case LADSPA_HINT_DEFAULT_MINIMUM:
+                            def = min;
+                            break;
+                        case LADSPA_HINT_DEFAULT_MAXIMUM:
+                            def = max;
+                            break;
+                        case LADSPA_HINT_DEFAULT_0:
+                            def = 0.0;
+                            break;
+                        case LADSPA_HINT_DEFAULT_1:
+                            def = 1.0;
+                            break;
+                        case LADSPA_HINT_DEFAULT_100:
+                            def = 100.0;
+                            break;
+                        case LADSPA_HINT_DEFAULT_440:
+                            def = 440.0;
+                            break;
+                        case LADSPA_HINT_DEFAULT_LOW:
+                            if (LADSPA_IS_HINT_LOGARITHMIC(PortHint.HintDescriptor))
+                                def = exp((log(min)*0.75) + (log(max)*0.25));
+                            else
+                                def = (min*0.75) + (max*0.25);
+                            break;
+                        case LADSPA_HINT_DEFAULT_MIDDLE:
+                            if (LADSPA_IS_HINT_LOGARITHMIC(PortHint.HintDescriptor))
+                                def = sqrt(min*max);
+                            else
+                                def = (min+max)/2;
+                            break;
+                        case LADSPA_HINT_DEFAULT_HIGH:
+                            if (LADSPA_IS_HINT_LOGARITHMIC(PortHint.HintDescriptor))
+                                def = exp((log(min)*0.25) + (log(max)*0.75));
+                            else
+                                def = (min*0.25) + (max*0.75);
+                            break;
+                        default:
+                            if (min < 0.0 && max > 0.0)
+                                def = 0.0;
+                            else
+                                def = min;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        // no default value
+                        if (min < 0.0 && max > 0.0)
+                            def = 0.0;
+                        else
+                            def = min;
+                    }
+
+                    if (LADSPA_IS_PORT_OUTPUT(PortType) && (strcmp(descriptor->PortNames[i], "latency") == 0 || strcmp(descriptor->PortNames[i], "_latency") == 0))
+                    {
+                        // latency parameter
+                        min = 0;
+                        max = sampleRate;
+                        def = 0;
+                    }
+
+                    if (def < min)
+                        def = min;
+                    else if (def > max)
+                        def = max;
+
+                    if (LADSPA_IS_HINT_SAMPLE_RATE(PortHint.HintDescriptor))
+                    {
+                        min *= sampleRate;
+                        max *= sampleRate;
+                        def *= sampleRate;
+                    }
+
+                    bufferParams[iP] = def;
+
                     descriptor->connect_port(handle, j, &bufferParams[iP++]);
+                }
             }
 
             if (descriptor->activate)
@@ -472,6 +581,120 @@ void do_dssi_check(void* lib_handle)
             float bufferParams[parameters_total];
             memset(&bufferParams, 0, sizeof(float)*parameters_total);
 
+            float min, max, def;
+
+            for (unsigned long j=0, iA=0, iP=0; j < ldescriptor->PortCount; j++)
+            {
+                const LADSPA_PortDescriptor PortType = ldescriptor->PortDescriptors[j];
+                const LADSPA_PortRangeHint  PortHint = ldescriptor->PortRangeHints[j];
+
+                if (PortType & LADSPA_PORT_AUDIO)
+                {
+                    ldescriptor->connect_port(handle, j, bufferAudio[iA++]);
+                }
+                else if (PortType & LADSPA_PORT_CONTROL)
+                {
+                    // min value
+                    if (LADSPA_IS_HINT_BOUNDED_BELOW(PortHint.HintDescriptor))
+                        min = PortHint.LowerBound;
+                    else
+                        min = 0.0;
+
+                    // max value
+                    if (LADSPA_IS_HINT_BOUNDED_ABOVE(PortHint.HintDescriptor))
+                        max = PortHint.UpperBound;
+                    else
+                        max = 1.0;
+
+                    if (min > max)
+                        max = min;
+                    else if (max < min)
+                        min = max;
+
+                    // default value
+                    if (LADSPA_IS_HINT_HAS_DEFAULT(PortHint.HintDescriptor))
+                    {
+                        switch (PortHint.HintDescriptor & LADSPA_HINT_DEFAULT_MASK)
+                        {
+                        case LADSPA_HINT_DEFAULT_MINIMUM:
+                            def = min;
+                            break;
+                        case LADSPA_HINT_DEFAULT_MAXIMUM:
+                            def = max;
+                            break;
+                        case LADSPA_HINT_DEFAULT_0:
+                            def = 0.0;
+                            break;
+                        case LADSPA_HINT_DEFAULT_1:
+                            def = 1.0;
+                            break;
+                        case LADSPA_HINT_DEFAULT_100:
+                            def = 100.0;
+                            break;
+                        case LADSPA_HINT_DEFAULT_440:
+                            def = 440.0;
+                            break;
+                        case LADSPA_HINT_DEFAULT_LOW:
+                            if (LADSPA_IS_HINT_LOGARITHMIC(PortHint.HintDescriptor))
+                                def = exp((log(min)*0.75) + (log(max)*0.25));
+                            else
+                                def = (min*0.75) + (max*0.25);
+                            break;
+                        case LADSPA_HINT_DEFAULT_MIDDLE:
+                            if (LADSPA_IS_HINT_LOGARITHMIC(PortHint.HintDescriptor))
+                                def = sqrt(min*max);
+                            else
+                                def = (min+max)/2;
+                            break;
+                        case LADSPA_HINT_DEFAULT_HIGH:
+                            if (LADSPA_IS_HINT_LOGARITHMIC(PortHint.HintDescriptor))
+                                def = exp((log(min)*0.25) + (log(max)*0.75));
+                            else
+                                def = (min*0.25) + (max*0.75);
+                            break;
+                        default:
+                            if (min < 0.0 && max > 0.0)
+                                def = 0.0;
+                            else
+                                def = min;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        // no default value
+                        if (min < 0.0 && max > 0.0)
+                            def = 0.0;
+                        else
+                            def = min;
+                    }
+
+                    if (LADSPA_IS_PORT_OUTPUT(PortType) && (strcmp(ldescriptor->PortNames[i], "latency") == 0 || strcmp(ldescriptor->PortNames[i], "_latency") == 0))
+                    {
+                        // latency parameter
+                        min = 0;
+                        max = sampleRate;
+                        def = 0;
+                    }
+
+                    if (def < min)
+                        def = min;
+                    else if (def > max)
+                        def = max;
+
+                    if (LADSPA_IS_HINT_SAMPLE_RATE(PortHint.HintDescriptor))
+                    {
+                        min *= sampleRate;
+                        max *= sampleRate;
+                        def *= sampleRate;
+                    }
+
+                    bufferParams[iP] = def;
+
+                    ldescriptor->connect_port(handle, j, &bufferParams[iP++]);
+                }
+            }
+
             snd_seq_event_t midiEvents[2];
             memset(&midiEvents, 0, sizeof(snd_seq_event_t)*2);
 
@@ -486,20 +709,13 @@ void do_dssi_check(void* lib_handle)
             midiEvents[1].data.note.velocity = 0;
             midiEvents[1].time.tick = bufferSize/2;
 
-            for (unsigned long j=0, iA=0, iP=0; j < ldescriptor->PortCount; j++)
-            {
-                const LADSPA_PortDescriptor PortDescriptor = ldescriptor->PortDescriptors[j];
-                if (PortDescriptor & LADSPA_PORT_AUDIO)
-                    ldescriptor->connect_port(handle, j, bufferAudio[iA++]);
-                else if (PortDescriptor & LADSPA_PORT_CONTROL)
-                    ldescriptor->connect_port(handle, j, &bufferParams[iP++]);
-            }
-
             if (ldescriptor->activate)
                 ldescriptor->activate(handle);
 
             if (descriptor->run_synth)
+            {
                 descriptor->run_synth(handle, bufferSize, midiEvents, midiEventCount);
+            }
             else if (descriptor->run_multiple_synths)
             {
                 snd_seq_event_t* midiEventsPtr[] = { midiEvents, nullptr };
