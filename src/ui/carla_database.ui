@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>779</width>
-    <height>465</height>
+    <width>929</width>
+    <height>565</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -132,9 +132,9 @@
        </widget>
       </item>
       <item row="1" column="2">
-       <widget class="QCheckBox" name="ch_bridged_32bit">
+       <widget class="QCheckBox" name="ch_bridged">
         <property name="text">
-         <string>Bridged (32bit)</string>
+         <string>Bridged</string>
         </property>
        </widget>
       </item>
@@ -235,16 +235,6 @@
      </column>
      <column>
       <property name="text">
-       <string>MIDI Ins</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>MIDI Outs</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
        <string>Param Ins</string>
       </property>
      </column>
@@ -266,6 +256,11 @@
      <column>
       <property name="text">
        <string>Is Synth</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Is Bridged</string>
       </property>
      </column>
      <column>

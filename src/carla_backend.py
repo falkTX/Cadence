@@ -371,27 +371,28 @@ def findSoundFonts(PATH):
 # ------------------------------------------------------------------------------------------------
 # Plugin Query
 
-#PyPluginInfo = {
-  #'type': 0,
-  #'category': 0,
-  #'hints': 0,
-  #'binary': "",
-  #'name': "",
-  #'label': "",
-  #'maker': "",
-  #'copyright': "",
-  #'id': "",
-  #'audio.ins': 0,
-  #'audio.outs': 0,
-  #'audio.totals': 0,
-  #'midi.ins': 0,
-  #'midi.outs': 0,
-  #'midi.totals': 0,
-  #'parameters.ins': 0,
-  #'parameters.outs': 0,
-  #'parameters.total': 0,
-  #'programs.total': 0
-#}
+PyPluginInfo = {
+  'build':     0, # BINARY_NONE
+  'type':      0, # PLUGIN_NONE,
+  'category':  0, # PLUGIN_CATEGORY_NONE
+  'hints':     0x0,
+  'binary':    "",
+  'name':      "",
+  'label':     "",
+  'maker':     "",
+  'copyright': "",
+  'unique_id': 0,
+  'audio.ins':    0,
+  'audio.outs':   0,
+  'audio.totals': 0,
+  'midi.ins':     0,
+  'midi.outs':    0,
+  'midi.totals':  0,
+  'parameters.ins':   0,
+  'parameters.outs':  0,
+  'parameters.total': 0,
+  'programs.total': 0
+}
 
 def runCarlaDiscovery(itype, stype, filename, tool, isWine=False):
   short_name = getShortFileName(filename).rsplit(".", 1)[0]
@@ -402,13 +403,10 @@ def runCarlaDiscovery(itype, stype, filename, tool, isWine=False):
 
   if (LINUX or MACOS):
     command += "env LANG=C "
-
-  if (isWine):
-    command += "WINEDEBUG=-all "
+    if (isWine):
+      command += "WINEDEBUG=-all "
 
   command += "%s %s \"%s\"" % (tool, stype, filename)
-
-  print(command)
 
   try:
     output = getoutput(command).split("\n")
@@ -416,106 +414,71 @@ def runCarlaDiscovery(itype, stype, filename, tool, isWine=False):
     output = []
 
   for line in output:
-    print(line)
-    #if (line == "carla-discovery::init::-----------"):
-      #pinfo = deepcopy(PyPluginInfo)
-      #pinfo['type'] = itype
-      #pinfo['category'] = PLUGIN_CATEGORY_NONE
-      #pinfo['hints'] = 0
-      #pinfo['binary'] = filename
-      #pinfo['name'] = ""
-      #pinfo['label'] = ""
-      #pinfo['maker'] = ""
-      #pinfo['copyright'] = ""
-      #pinfo['id'] = ""
-      #pinfo['audio.ins'] = 0
-      #pinfo['audio.outs'] = 0
-      #pinfo['audio.total'] = 0
-      #pinfo['midi.ins'] = 0
-      #pinfo['midi.outs'] = 0
-      #pinfo['midi.total'] = 0
-      #pinfo['parameters.ins'] = 0
-      #pinfo['parameters.outs'] = 0
-      #pinfo['parameters.total'] = 0
-      #pinfo['programs.total'] = 0
+    if (line == "carla-discovery::init::-----------"):
+      pinfo = deepcopy(PyPluginInfo)
+      pinfo['type']   = itype
+      pinfo['binary'] = filename
 
-    #elif (line == "carla-discovery::end::------------"):
-      #if (pinfo != None):
-        #plugins.append(pinfo)
+    elif (line == "carla-discovery::end::------------"):
+      if (pinfo != None):
+        plugins.append(pinfo)
+        pinfo = None
 
-    #elif (line == "Segmentation fault"):
-      #print "carla-discovery::crash::%s crashed during discovery" % (filename)
+    elif (line == "Segmentation fault"):
+      print("carla-discovery::crash::%s crashed during discovery" % (filename))
 
-    #elif line.startswith("err:module:import_dll Library"):
-      #print line
+    elif line.startswith("err:module:import_dll Library"):
+      print(line)
 
-    #elif line.startswith("carla-discovery::error::"):
-      #print line, "-", filename
+    elif line.startswith("carla-discovery::error::"):
+      print("%s - %s" % (line, filename))
 
-    #elif line.startswith("carla-discovery::"):
-      #if (pinfo == None): continue
-      #prop, value = line.replace("carla-discovery::","").split("::", 1)
+    elif line.startswith("carla-discovery::"):
+      if (pinfo == None):
+        continue
 
-      #if (prop == "category"):
-        #if value.isdigit():
-          #pinfo['category'] = int(value)
-      #elif (prop == "name"):
-        #if (value):
-          #pinfo['name'] = value
-        #else:
-          #pinfo['name'] = short_name
-      #elif (prop == "label"):
-        #if (value):
-          #pinfo['label'] = value
-        #else:
-          #pinfo['label'] = short_name
-      #elif (prop == "maker"):
-        #pinfo['maker'] = value
-      #elif (prop == "copyright"):
-        #pinfo['copyright'] = value
-      #elif (prop == "id"):
-        #pinfo['id'] = value
-      #elif (prop == "hints"):
-        #if value.isdigit():
-          #pinfo['hints'] = int(value)
-      #elif (prop == "audio.ins"):
-        #if value.isdigit():
-          #pinfo['audio.ins'] = int(value)
-      #elif (prop == "audio.outs"):
-        #if value.isdigit():
-          #pinfo['audio.outs'] = int(value)
-      #elif (prop == "audio.total"):
-        #if value.isdigit():
-          #pinfo['audio.total'] = int(value)
-      #elif (prop == "midi.ins"):
-        #if value.isdigit():
-          #pinfo['midi.ins'] = int(value)
-      #elif (prop == "midi.outs"):
-        #if value.isdigit():
-          #pinfo['midi.outs'] = int(value)
-      #elif (prop == "midi.total"):
-        #if value.isdigit():
-          #pinfo['midi.total'] = int(value)
-      #elif (prop == "parameters.ins"):
-        #if value.isdigit():
-          #pinfo['parameters.ins'] = int(value)
-      #elif (prop == "parameters.outs"):
-        #if value.isdigit():
-          #pinfo['parameters.outs'] = int(value)
-      #elif (prop == "parameters.total"):
-        #if value.isdigit():
-          #pinfo['parameters.total'] = int(value)
-      #elif (prop == "programs.total"):
-        #if value.isdigit():
-          #pinfo['programs.total'] = int(value)
+      prop, value = line.replace("carla-discovery::","").split("::", 1)
 
-  ## Additional checks
+      if (prop == "name"):
+        pinfo['name'] = value if (value) else short_name
+      elif (prop == "label"):
+        pinfo['label'] = value if (value) else short_name
+      elif (prop == "maker"):
+        pinfo['maker'] = value
+      elif (prop == "copyright"):
+        pinfo['copyright'] = value
+      elif (prop == "unique_id"):
+        if value.isdigit(): pinfo['unique_id'] = int(value)
+      elif (prop == "hints"):
+        if value.isdigit(): pinfo['hints'] = int(value)
+      elif (prop == "category"):
+        if value.isdigit(): pinfo['category'] = int(value)
+      elif (prop == "audio.ins"):
+        if value.isdigit(): pinfo['audio.ins'] = int(value)
+      elif (prop == "audio.outs"):
+        if value.isdigit(): pinfo['audio.outs'] = int(value)
+      elif (prop == "audio.total"):
+        if value.isdigit(): pinfo['audio.total'] = int(value)
+      elif (prop == "midi.ins"):
+        if value.isdigit(): pinfo['midi.ins'] = int(value)
+      elif (prop == "midi.outs"):
+        if value.isdigit(): pinfo['midi.outs'] = int(value)
+      elif (prop == "midi.total"):
+        if value.isdigit(): pinfo['midi.total'] = int(value)
+      elif (prop == "parameters.ins"):
+        if value.isdigit(): pinfo['parameters.ins'] = int(value)
+      elif (prop == "parameters.outs"):
+        if value.isdigit(): pinfo['parameters.outs'] = int(value)
+      elif (prop == "parameters.total"):
+        if value.isdigit(): pinfo['parameters.total'] = int(value)
+      elif (prop == "programs.total"):
+        if value.isdigit(): pinfo['programs.total'] = int(value)
+      elif (prop == "build"):
+        if value.isdigit(): pinfo['build'] = int(value)
+
+  # Additional checks
   #for pinfo in plugins:
-    #if (itype == PLUGIN_LADSPA):
-      ## TODO - find category using ladspa_rdf
-      #pass
-
-    #elif (itype == PLUGIN_DSSI):
+    #if (itype == PLUGIN_DSSI):
       #if (findDSSIGUI(pinfo['binary'], pinfo['name'], pinfo['label'])):
         #pinfo['hints'] |= PLUGIN_HAS_GUI
 
@@ -623,6 +586,7 @@ PARAMETER_USES_SCALEPOINTS  = 0x08
 PARAMETER_USES_SAMPLERATE   = 0x10
 
 # enum BinaryType
+BINARY_NONE   = 0
 BINARY_UNIX32 = 1
 BINARY_UNIX64 = 2
 BINARY_WIN32  = 3
@@ -789,6 +753,13 @@ class WinVstBaseInfo(Structure):
     ("ains", c_uint32),
     ("aouts", c_uint32)
   ]
+
+if (LINUX or MACOS):
+  BINARY_NATIVE = BINARY_UNIX64 if (is64bit) else BINARY_UNIX32
+elif (WINDOWS):
+  BINARY_NATIVE = BINARY_WIN64 if (is64bit) else BINARY_WIN32
+else:
+  BINARY_NATIVE = BINARY_NONE
 
 # ------------------------------------------------------------------------------------------------
 # Backend C++ -> Python object

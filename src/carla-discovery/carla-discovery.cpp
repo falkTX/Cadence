@@ -300,13 +300,6 @@ void do_ladspa_check(void* lib_handle)
 
         if (handle)
         {
-            DISCOVERY_OUT("init", "-----------");
-            DISCOVERY_OUT("name", descriptor->Name);
-            DISCOVERY_OUT("label", descriptor->Label);
-            DISCOVERY_OUT("maker", descriptor->Maker);
-            DISCOVERY_OUT("copyright", descriptor->Copyright);
-            DISCOVERY_OUT("id", descriptor->UniqueID);
-
             int hints = 0;
             PluginCategory category = PLUGIN_CATEGORY_NONE;
 
@@ -440,7 +433,7 @@ void do_ladspa_check(void* lib_handle)
                             def = min;
                     }
 
-                    if (LADSPA_IS_PORT_OUTPUT(PortType) && (strcmp(descriptor->PortNames[i], "latency") == 0 || strcmp(descriptor->PortNames[i], "_latency") == 0))
+                    if (LADSPA_IS_PORT_OUTPUT(PortType) && (strcmp(descriptor->PortNames[j], "latency") == 0 || strcmp(descriptor->PortNames[j], "_latency") == 0))
                     {
                         // latency parameter
                         min = 0;
@@ -474,6 +467,12 @@ void do_ladspa_check(void* lib_handle)
             if (descriptor->deactivate)
                 descriptor->deactivate(handle);
 
+            DISCOVERY_OUT("init", "-----------");
+            DISCOVERY_OUT("name", descriptor->Name);
+            DISCOVERY_OUT("label", descriptor->Label);
+            DISCOVERY_OUT("maker", descriptor->Maker);
+            DISCOVERY_OUT("copyright", descriptor->Copyright);
+            DISCOVERY_OUT("unique_id", descriptor->UniqueID);
             DISCOVERY_OUT("hints", hints);
             DISCOVERY_OUT("category", category);
             DISCOVERY_OUT("audio.ins", audio_ins);
@@ -490,6 +489,7 @@ void do_ladspa_check(void* lib_handle)
             if (descriptor->cleanup)
                 descriptor->cleanup(handle);
 
+            DISCOVERY_OUT("build", BINARY_TYPE);
             DISCOVERY_OUT("end", "------------");
         }
         else
@@ -518,13 +518,6 @@ void do_dssi_check(void* lib_handle)
 
         if (handle)
         {
-            DISCOVERY_OUT("init", "-----------");
-            DISCOVERY_OUT("name", ldescriptor->Name);
-            DISCOVERY_OUT("label", ldescriptor->Label);
-            DISCOVERY_OUT("maker", ldescriptor->Maker);
-            DISCOVERY_OUT("copyright", ldescriptor->Copyright);
-            DISCOVERY_OUT("id", ldescriptor->UniqueID);
-
             int hints = 0;
             PluginCategory category = PLUGIN_CATEGORY_NONE;
 
@@ -673,7 +666,7 @@ void do_dssi_check(void* lib_handle)
                             def = min;
                     }
 
-                    if (LADSPA_IS_PORT_OUTPUT(PortType) && (strcmp(ldescriptor->PortNames[i], "latency") == 0 || strcmp(ldescriptor->PortNames[i], "_latency") == 0))
+                    if (LADSPA_IS_PORT_OUTPUT(PortType) && (strcmp(ldescriptor->PortNames[j], "latency") == 0 || strcmp(ldescriptor->PortNames[j], "_latency") == 0))
                     {
                         // latency parameter
                         min = 0;
@@ -731,6 +724,12 @@ void do_dssi_check(void* lib_handle)
             if (ldescriptor->deactivate)
                 ldescriptor->deactivate(handle);
 
+            DISCOVERY_OUT("init", "-----------");
+            DISCOVERY_OUT("name", ldescriptor->Name);
+            DISCOVERY_OUT("label", ldescriptor->Label);
+            DISCOVERY_OUT("maker", ldescriptor->Maker);
+            DISCOVERY_OUT("copyright", ldescriptor->Copyright);
+            DISCOVERY_OUT("unique_id", ldescriptor->UniqueID);
             DISCOVERY_OUT("hints", hints);
             DISCOVERY_OUT("category", category);
             DISCOVERY_OUT("audio.ins", audio_ins);
@@ -747,6 +746,7 @@ void do_dssi_check(void* lib_handle)
             if (ldescriptor->cleanup)
                 ldescriptor->cleanup(handle);
 
+            DISCOVERY_OUT("build", BINARY_TYPE);
             DISCOVERY_OUT("end", "------------");
         }
         else
@@ -808,14 +808,7 @@ void do_vst_check(void* lib_handle)
 
         while (true)
         {
-            DISCOVERY_OUT("init", "-----------");
             effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
-
-            DISCOVERY_OUT("name", c_name);
-            DISCOVERY_OUT("label", c_product);
-            DISCOVERY_OUT("maker", c_vendor);
-            DISCOVERY_OUT("copyright", c_vendor);
-            DISCOVERY_OUT("id", VstCurrentUniqueId);
 
             int hints = 0;
             PluginCategory category = PLUGIN_CATEGORY_NONE;
@@ -947,6 +940,12 @@ void do_vst_check(void* lib_handle)
             delete[] bufferAudioIn;
             delete[] bufferAudioOut;
 
+            DISCOVERY_OUT("init", "-----------");
+            DISCOVERY_OUT("name", c_name);
+            DISCOVERY_OUT("label", c_product);
+            DISCOVERY_OUT("maker", c_vendor);
+            DISCOVERY_OUT("copyright", c_vendor);
+            DISCOVERY_OUT("id", VstCurrentUniqueId);
             DISCOVERY_OUT("hints", hints);
             DISCOVERY_OUT("category", category);
             DISCOVERY_OUT("audio.ins", audio_ins);
@@ -961,6 +960,8 @@ void do_vst_check(void* lib_handle)
             DISCOVERY_OUT("programs.total", programs_total);
 
             effect->dispatcher(effect, effClose, 0, 0, nullptr, 0.0f);
+
+            DISCOVERY_OUT("build", BINARY_TYPE);
             DISCOVERY_OUT("end", "------------");
 
             if (VstCategory == kPlugCategShell)
@@ -1032,6 +1033,7 @@ void do_sf2_check(const char* filename)
             DISCOVERY_OUT("parameters.outs", 1);
             DISCOVERY_OUT("parameters.total", 14);
 
+            DISCOVERY_OUT("build", BINARY_TYPE);
             DISCOVERY_OUT("end", "------------");
         }
         else
@@ -1100,7 +1102,7 @@ int main(int argc, char* argv[])
         {
             const char* error = lib_error(filename);
             // Since discovery can find multi-architecture binaries, don't print ELF related errors
-            if (error && (strstr(error, "wrong ELF class") == nullptr || strstr(error, "Bad EXE format") == nullptr))
+            if (error && strstr(error, "wrong ELF class") == nullptr && strstr(error, "Bad EXE format") == 0)
                 DISCOVERY_OUT("error", error);
             return 1;
         }

@@ -19,12 +19,12 @@
 # Imports (Global)
 import json, os, sys
 #from PyQt4.QtCore import Qt, QSettings, QThread, QTimer, QVariant, SIGNAL, SLOT
-#from PyQt4.QtGui import QApplication, QColor, QCursor, QFileDialog, QFontMetrics, QInputDialog, QMenu, QPainter, QPixmap, QTableWidgetItem, QVBoxLayout
+#from PyQt4.QtGui import QApplication, QColor, QCursor, QFileDialog, QFontMetrics, QInputDialog, QMenu, QPainter, QPixmap, QVBoxLayout
 #from PyQt4.QtXml import QDomDocument
 from time import sleep
 #from sip import unwrapinstance
 from PyQt4.QtCore import pyqtSlot, Qt, QSettings, QThread
-from PyQt4.QtGui import QApplication, QDialog, QFrame, QMainWindow, QWidget
+from PyQt4.QtGui import QApplication, QDialog, QFrame, QMainWindow, QTableWidgetItem, QWidget
 
 # Imports (Custom Stuff)
 import ui_carla, ui_carla_about, ui_carla_database, ui_carla_edit, ui_carla_parameter, ui_carla_plugin, ui_carla_refresh
@@ -261,7 +261,6 @@ class SearchPluginsThread(QThread):
         os.system("killall -KILL carla-discovery carla-discovery-unix32 carla-discovery-unix64 carla-discovery-win32.exe carla-discovery-win64.exe")
 
     def pluginLook(self, percent, plugin):
-        print("pluginLook %.1f - %s" % (percent, plugin))
         self.emit(SIGNAL("PluginLook(int, QString)"), percent, plugin)
 
     def setSearchBins(self, bins):
@@ -609,6 +608,14 @@ class PluginRefreshW(QDialog, ui_carla_refresh.Ui_PluginRefreshW):
         self.setupUi(self)
 
         self.b_skip.setVisible(False)
+
+        if (LINUX):
+          self.ch_unix32.setText("Linux 32bit")
+          self.ch_unix64.setText("Linux 64bit")
+        elif (MACOS):
+          self.ch_unix32.setText("MacOS 32bit")
+          self.ch_unix64.setText("MacOS 64bit")
+
         self.settings = self.parent().settings
         self.settings_db = self.parent().settings_db
         self.loadSettings()
@@ -771,9 +778,18 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
 
         self.b_add.setEnabled(False)
 
+        if (BINARY_NATIVE in (BINARY_UNIX32, BINARY_WIN32)):
+          self.ch_bridged.setText(self.tr("Bridged (64bit)"))
+        else:
+          self.ch_bridged.setText(self.tr("Bridged (32bit)"))
+
         self.settings = self.parent().settings
         self.settings_db = self.parent().settings_db
         self.loadSettings()
+
+        if (bool(LINUX or MACOS) == False):
+          self.ch_bridged_wine.setChecked(False)
+          self.ch_bridged_wine.setEnabled(False)
 
         # Blacklist plugins
         if not self.settings_db.contains("Plugins/Blacklisted"):
@@ -784,6 +800,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
           blacklist.append("liteon_biquad-vst_64bit.so")
           blacklist.append("fx_blur-vst.so")
           blacklist.append("fx_blur-vst_64bit.so")
+          blacklist.append("fx_tempodelay-vst.so")
           blacklist.append("Scrubby_64bit.so")
           blacklist.append("Skidder_64bit.so")
           blacklist.append("libwormhole2_64bit.so")
@@ -807,6 +824,9 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.connect(self.ch_dssi, SIGNAL("clicked()"), SLOT("slot_checkFilters()"))
         self.connect(self.ch_lv2, SIGNAL("clicked()"), SLOT("slot_checkFilters()"))
         self.connect(self.ch_vst, SIGNAL("clicked()"), SLOT("slot_checkFilters()"))
+        self.connect(self.ch_native, SIGNAL("clicked()"), SLOT("slot_checkFilters()"))
+        self.connect(self.ch_bridged, SIGNAL("clicked()"), SLOT("slot_checkFilters()"))
+        self.connect(self.ch_bridged_wine, SIGNAL("clicked()"), SLOT("slot_checkFilters()"))
         self.connect(self.ch_gui, SIGNAL("clicked()"), SLOT("slot_checkFilters()"))
         self.connect(self.ch_stereo, SIGNAL("clicked()"), SLOT("slot_checkFilters()"))
 
@@ -821,95 +841,102 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.tb_filters.setArrowType(arrow)
         self.frame.setVisible(yesno)
 
-    #def reAddPlugins(self):
-        #self.last_table_index = 0
-        #self.tableWidget.setSortingEnabled(False)
+    def reAddPlugins(self):
+        row_count = self.tableWidget.rowCount()
+        for i in range(row_count):
+          self.tableWidget.removeRow(0)
 
-        #row_count = self.tableWidget.rowCount()
-        #for i in range(row_count):
-          #self.tableWidget.removeRow(0)
+        self.last_table_index = 0
+        self.tableWidget.setSortingEnabled(False)
 
-        #ladspa_plugins = QVariantPyObjectList(self.settings_db.value("Plugins/LADSPA").toList())
-        #dssi_plugins   = QVariantPyObjectList(self.settings_db.value("Plugins/DSSI").toList())
-        #lv2_plugins    = QVariantPyObjectList(self.settings_db.value("Plugins/LV2").toList())
-        #vst_plugins    = QVariantPyObjectList(self.settings_db.value("Plugins/VST").toList())
-        #winvst_plugins = QVariantPyObjectList(self.settings_db.value("Plugins/WinVST").toList())
-        #soundfonts     = QVariantPyObjectList(self.settings_db.value("Plugins/SF2").toList())
+        ladspa_plugins = toList(self.settings_db.value("Plugins/LADSPA", []))
+        dssi_plugins   = toList(self.settings_db.value("Plugins/DSSI", []))
+        lv2_plugins    = toList(self.settings_db.value("Plugins/LV2", []))
+        vst_plugins    = toList(self.settings_db.value("Plugins/VST", []))
+        soundfonts     = toList(self.settings_db.value("Plugins/SF2", []))
 
-        #ladspa_count = 0
-        #dssi_count   = 0
-        #lv2_count    = 0
-        #vst_count    = 0
-        #winvst_count = 0
-        #sf2_count    = 0
+        ladspa_count = 0
+        dssi_count   = 0
+        lv2_count    = 0
+        vst_count    = 0
+        sf2_count    = 0
 
-        #for plugins in ladspa_plugins:
-          #for plugin_ in plugins:
-            #plugin = strPyPluginInfo(plugin_)
-            #self.addPluginToTable(plugin, "LADSPA")
-            #ladspa_count += 1
+        for plugins in ladspa_plugins:
+          for plugin in plugins:
+            self.addPluginToTable(plugin, "LADSPA")
+            ladspa_count += 1
 
-        #for plugins in dssi_plugins:
-          #for plugin_ in plugins:
-            #plugin = strPyPluginInfo(plugin_)
-            #self.addPluginToTable(plugin, "DSSI")
-            #dssi_count += 1
+        for plugins in dssi_plugins:
+          for plugin in plugins:
+            self.addPluginToTable(plugin, "DSSI")
+            dssi_count += 1
 
-        #for plugins in lv2_plugins:
-          #for plugin_ in plugins:
-            #plugin = strPyPluginInfo(plugin_)
-            #self.addPluginToTable(plugin, "LV2")
-            #lv2_count += 1
+        for plugins in lv2_plugins:
+          for plugin in plugins:
+            self.addPluginToTable(plugin, "LV2")
+            lv2_count += 1
 
-        #for plugins in vst_plugins:
-          #for plugin_ in plugins:
-            #plugin = strPyPluginInfo(plugin_)
-            #self.addPluginToTable(plugin, "VST")
-            #vst_count += 1
+        for plugins in vst_plugins:
+          for plugin in plugins:
+            self.addPluginToTable(plugin, "VST")
+            vst_count += 1
 
-        #for plugins in winvst_plugins:
-          #for plugin_ in plugins:
-            #plugin = strPyPluginInfo(plugin_)
-            #self.addPluginToTable(plugin, "WinVST")
-            #winvst_count += 1
+        for soundfonts_i in soundfonts:
+          for soundfont in soundfonts_i:
+            self.addPluginToTable(plugin, "SF2")
+            sf2_count += 1
 
-        #for soundfont in soundfonts:
-          #plugin = strPyPluginInfo(soundfont)
-          #self.addPluginToTable(plugin, "SF2")
-          #sf2_count += 1
+        self.slot_checkFilters()
+        self.tableWidget.setSortingEnabled(True)
+        self.tableWidget.sortByColumn(0, Qt.AscendingOrder)
 
-        #self.checkFilters()
-        #self.tableWidget.setSortingEnabled(True)
-        #self.tableWidget.sortByColumn(0, Qt.AscendingOrder)
+        self.label.setText(self.tr("Have %i LADSPA, %i DSSI, %i LV2, %i VST and %i SoundFonts" % (ladspa_count, dssi_count, lv2_count, vst_count, sf2_count)))
 
-        #self.label.setText(self.tr("Have %1 LADSPA, %2 DSSI, %3 LV2, %4 VST, %5 Windows VST and %6 SoundFonts"
-                                    #).arg(ladspa_count).arg(dssi_count).arg(lv2_count).arg(vst_count).arg(winvst_count).arg(sf2_count))
+    def addPluginToTable(self, plugin, ptype):
+        index = self.last_table_index
 
-    #def addPluginToTable(self, plugin, ptype):
-        #index = self.last_table_index
-        #self.tableWidget.insertRow(index)
-        #self.tableWidget.setItem(index, 0, QTableWidgetItem(plugin['name']))
-        #self.tableWidget.setItem(index, 1, QTableWidgetItem(plugin['label']))
-        #self.tableWidget.setItem(index, 2, QTableWidgetItem(plugin['maker']))
-        #self.tableWidget.setItem(index, 3, QTableWidgetItem(plugin['id']))
-        #self.tableWidget.setItem(index, 4, QTableWidgetItem(str(plugin['audio.ins'])))
-        #self.tableWidget.setItem(index, 5, QTableWidgetItem(str(plugin['audio.outs'])))
-        #self.tableWidget.setItem(index, 6, QTableWidgetItem(str(plugin['midi.ins'])))
-        #self.tableWidget.setItem(index, 7, QTableWidgetItem(str(plugin['midi.outs'])))
-        #self.tableWidget.setItem(index, 8, QTableWidgetItem(str(plugin['parameters.ins'])))
-        #self.tableWidget.setItem(index, 9, QTableWidgetItem(str(plugin['parameters.outs'])))
-        #self.tableWidget.setItem(index, 10, QTableWidgetItem(str(plugin['programs.total'])))
-        #self.tableWidget.setItem(index, 11, QTableWidgetItem(self.tr("Yes") if (plugin['hints'] & PLUGIN_HAS_GUI) else self.tr("No")))
-        #self.tableWidget.setItem(index, 12, QTableWidgetItem(self.tr("Yes") if (plugin['hints'] & PLUGIN_IS_SYNTH) else self.tr("No")))
-        #self.tableWidget.setItem(index, 13, QTableWidgetItem(ptype))
-        #self.tableWidget.setItem(index, 14, QTableWidgetItem(plugin['binary']))
-        #self.tableWidget.item(self.last_table_index, 0).plugin = plugin
-        #self.last_table_index += 1
+        if (plugin['build'] == BINARY_NATIVE):
+          bridge_text = self.tr("No")
+        else:
+          type_text = self.tr("Unknown")
+          if (LINUX or MAC):
+            if (plugin['build'] == BINARY_UNIX32):
+              type_text = "32bit"
+            elif (plugin['build'] == BINARY_UNIX64):
+              type_text = "64bit"
+            elif (plugin['build'] == BINARY_WIN32):
+              type_text = "Windows 32bit"
+            elif (plugin['build'] == BINARY_WIN64):
+              type_text = "Windows 64bit"
+          elif (WINDOWS):
+            if (plugin['build'] == BINARY_WIN32):
+              type_text = "32bit"
+            elif (plugin['build'] == BINARY_WIN64):
+              type_text = "64bit"
+          bridge_text = self.tr("Yes (%s)" % (type_text))
+
+        self.tableWidget.insertRow(index)
+        self.tableWidget.setItem(index, 0, QTableWidgetItem(plugin['name']))
+        self.tableWidget.setItem(index, 1, QTableWidgetItem(plugin['label']))
+        self.tableWidget.setItem(index, 2, QTableWidgetItem(plugin['maker']))
+        self.tableWidget.setItem(index, 3, QTableWidgetItem(str(plugin['unique_id'])))
+        self.tableWidget.setItem(index, 4, QTableWidgetItem(str(plugin['audio.ins'])))
+        self.tableWidget.setItem(index, 5, QTableWidgetItem(str(plugin['audio.outs'])))
+        self.tableWidget.setItem(index, 6, QTableWidgetItem(str(plugin['parameters.ins'])))
+        self.tableWidget.setItem(index, 7, QTableWidgetItem(str(plugin['parameters.outs'])))
+        self.tableWidget.setItem(index, 8, QTableWidgetItem(str(plugin['programs.total'])))
+        self.tableWidget.setItem(index, 9, QTableWidgetItem(self.tr("Yes") if (plugin['hints'] & PLUGIN_HAS_GUI) else self.tr("No")))
+        self.tableWidget.setItem(index, 10, QTableWidgetItem(self.tr("Yes") if (plugin['hints'] & PLUGIN_IS_SYNTH) else self.tr("No")))
+        self.tableWidget.setItem(index, 11, QTableWidgetItem(bridge_text))
+        self.tableWidget.setItem(index, 12, QTableWidgetItem(ptype))
+        self.tableWidget.setItem(index, 13, QTableWidgetItem(plugin['binary']))
+        self.tableWidget.item(self.last_table_index, 0).plugin_data = plugin
+        self.last_table_index += 1
 
     @pyqtSlot()
     def slot_add_plugin(self):
         if (self.tableWidget.currentRow() >= 0):
-          self.plugin_to_add = self.tableWidget.item(self.tableWidget.currentRow(), 0).plugin
+          self.ret_plugin = self.tableWidget.item(self.tableWidget.currentRow(), 0).plugin_data
           self.accept()
         else:
           self.reject()
@@ -931,7 +958,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.label.setText(self.tr("Looking for plugins..."))
         PluginRefreshW(self).exec_()
 
-        #self.reAddPlugins()
+        self.reAddPlugins()
         #self.parent().loadRDFs()
 
     @pyqtSlot()
@@ -954,57 +981,80 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         hide_lv2 = not self.ch_lv2.isChecked()
         hide_vst = not self.ch_vst.isChecked()
         hide_sf2 = not self.ch_sf2.isChecked()
+        hide_native  = not self.ch_native.isChecked()
+        hide_bridged = not self.ch_bridged.isChecked()
+        hide_bridged_wine = not self.ch_bridged_wine.isChecked()
         hide_non_gui = self.ch_gui.isChecked()
         hide_non_stereo = self.ch_stereo.isChecked()
 
-        #row_count = self.tableWidget.rowCount()
-        #for i in range(row_count):
-          #self.tableWidget.showRow(i)
-          #ains  = self.tableWidget.item(i, 4).text().toInt()[0]
-          #aouts = self.tableWidget.item(i, 5).text().toInt()[0]
-          #mins  = self.tableWidget.item(i, 6).text().toInt()[0]
-          #mouts = self.tableWidget.item(i, 7).text().toInt()[0]
-          #ptype = self.tableWidget.item(i, 13).text()
-          #is_synth  = (self.tableWidget.item(i, 12).text() == self.tr("Yes"))
-          #is_effect = (ains > 0 and aouts > 0 and not is_synth)
-          #is_midi   = (ains == 0 and aouts == 0 and mins > 0 and mouts > 0)
-          #is_sf2    = (ptype == "SF2")
-          #is_outro  = (not (is_effect or is_synth or is_midi or is_sf2))
-          #is_stereo = (ains == 2 and aouts == 2) or (is_synth and aouts == 2)
-          #has_gui = (self.tableWidget.item(i, 11).text() == self.tr("Yes"))
+        if (LINUX or MACOS):
+          native_bins = [BINARY_UNIX32, BINARY_UNIX64]
+          wine_bins   = [BINARY_WIN32, BINARY_WIN64]
+        elif (WINDOWS):
+          native_bins = [BINARY_WIN32, BINARY_WIN64]
+          wine_bins   = []
+        else:
+          native_bins = []
+          wine_bins   = []
 
-          #if (hide_effects and is_effect):
-            #self.tableWidget.hideRow(i)
-          #elif (hide_instruments and is_synth):
-            #self.tableWidget.hideRow(i)
-          #elif (hide_midi and is_midi):
-            #self.tableWidget.hideRow(i)
-          #elif (hide_outro and is_outro):
-            #self.tableWidget.hideRow(i)
-          #elif (hide_sf2 and is_sf2):
-            #self.tableWidget.hideRow(i)
-          #elif (hide_ladspa and ptype == "LADSPA"):
-            #self.tableWidget.hideRow(i)
-          #elif (hide_dssi and ptype == "DSSI"):
-            #self.tableWidget.hideRow(i)
-          #elif (hide_lv2 and ptype == "LV2"):
-            #self.tableWidget.hideRow(i)
-          #elif (hide_vst and ptype == "VST"):
-            #self.tableWidget.hideRow(i)
-          #elif (hide_winvst and ptype == "WinVST"):
-            #self.tableWidget.hideRow(i)
-          #elif (hide_non_gui and not has_gui):
-            #self.tableWidget.hideRow(i)
-          #elif (hide_non_stereo and not is_stereo):
-            #self.tableWidget.hideRow(i)
-          #elif (not text.isEmpty() and not (
-                    #text in self.tableWidget.item(i, 0).text().toLower() or
-                    #text in self.tableWidget.item(i, 1).text().toLower() or
-                    #text in self.tableWidget.item(i, 2).text().toLower() or
-                    #text in self.tableWidget.item(i, 3).text().toLower() or
-                    #text in self.tableWidget.item(i, 14).text().toLower())
-               #):
-            #self.tableWidget.hideRow(i)
+        row_count = self.tableWidget.rowCount()
+        for i in range(row_count):
+          self.tableWidget.showRow(i)
+
+          plugin = self.tableWidget.item(i, 0).plugin_data
+          ains   = plugin['audio.ins']
+          aouts  = plugin['audio.outs']
+          mins   = plugin['midi.ins']
+          mouts  = plugin['midi.outs']
+          ptype  = self.tableWidget.item(i, 12).text()
+          is_synth  = bool(plugin['hints'] & PLUGIN_IS_SYNTH)
+          is_effect = bool(ains > 0 and aouts > 0 and not is_synth)
+          is_midi   = bool(ains == 0 and aouts == 0 and mins > 0 and mouts > 0)
+          is_sf2    = bool(ptype == "SF2")
+          is_other  = bool(not (is_effect or is_synth or is_midi or is_sf2))
+          is_native = bool(plugin['build'] == BINARY_NATIVE)
+          is_stereo = bool(ains == 2 and aouts == 2) or (is_synth and aouts == 2)
+          has_gui   = bool(plugin['hints'] & PLUGIN_HAS_GUI)
+
+          is_bridged = bool(not is_native and plugin['build'] in native_bins)
+          is_bridged_wine = bool(not is_native and plugin['build'] in wine_bins)
+
+          if (hide_effects and is_effect):
+            self.tableWidget.hideRow(i)
+          elif (hide_instruments and is_synth):
+            self.tableWidget.hideRow(i)
+          elif (hide_midi and is_midi):
+            self.tableWidget.hideRow(i)
+          elif (hide_other and is_other):
+            self.tableWidget.hideRow(i)
+          elif (hide_sf2 and is_sf2):
+            self.tableWidget.hideRow(i)
+          elif (hide_ladspa and ptype == "LADSPA"):
+            self.tableWidget.hideRow(i)
+          elif (hide_dssi and ptype == "DSSI"):
+            self.tableWidget.hideRow(i)
+          elif (hide_lv2 and ptype == "LV2"):
+            self.tableWidget.hideRow(i)
+          elif (hide_vst and ptype == "VST"):
+            self.tableWidget.hideRow(i)
+          elif (hide_native and is_native):
+            self.tableWidget.hideRow(i)
+          elif (hide_bridged and is_bridged):
+            self.tableWidget.hideRow(i)
+          elif (hide_bridged_wine and is_bridged_wine):
+            self.tableWidget.hideRow(i)
+          elif (hide_non_gui and not has_gui):
+            self.tableWidget.hideRow(i)
+          elif (hide_non_stereo and not is_stereo):
+            self.tableWidget.hideRow(i)
+          elif (text and not (
+                    text in self.tableWidget.item(i, 0).text().toLower() or
+                    text in self.tableWidget.item(i, 1).text().toLower() or
+                    text in self.tableWidget.item(i, 2).text().toLower() or
+                    text in self.tableWidget.item(i, 3).text().toLower() or
+                    text in self.tableWidget.item(i, 14).text().toLower())
+               ):
+            self.tableWidget.hideRow(i)
 
     def saveSettings(self):
         self.settings.setValue("PluginDatabase/Geometry", self.saveGeometry())
@@ -1019,6 +1069,9 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.settings.setValue("PluginDatabase/ShowLV2", self.ch_lv2.isChecked())
         self.settings.setValue("PluginDatabase/ShowVST", self.ch_vst.isChecked())
         self.settings.setValue("PluginDatabase/ShowSF2", self.ch_sf2.isChecked())
+        self.settings.setValue("PluginDatabase/ShowNative", self.ch_native.isChecked())
+        self.settings.setValue("PluginDatabase/ShowBridged", self.ch_bridged.isChecked())
+        self.settings.setValue("PluginDatabase/ShowBridgedWine", self.ch_bridged_wine.isChecked())
         self.settings.setValue("PluginDatabase/ShowHasGUI", self.ch_gui.isChecked())
         self.settings.setValue("PluginDatabase/ShowStereoOnly", self.ch_stereo.isChecked())
 
@@ -1035,9 +1088,12 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.ch_lv2.setChecked(self.settings.value("PluginDatabase/ShowLV2", True, type=bool))
         self.ch_vst.setChecked(self.settings.value("PluginDatabase/ShowVST", True, type=bool))
         self.ch_sf2.setChecked(self.settings.value("PluginDatabase/ShowSF2", True, type=bool))
+        self.ch_native.setChecked(self.settings.value("PluginDatabase/ShowNative", True, type=bool))
+        self.ch_bridged.setChecked(self.settings.value("PluginDatabase/ShowBridged", True, type=bool))
+        self.ch_bridged_wine.setChecked(self.settings.value("PluginDatabase/ShowBridgedWine", True, type=bool))
         self.ch_gui.setChecked(self.settings.value("PluginDatabase/ShowHasGUI", False, type=bool))
         self.ch_stereo.setChecked(self.settings.value("PluginDatabase/ShowStereoOnly", False, type=bool))
-        #self.reAddPlugins()
+        self.reAddPlugins()
 
     def closeEvent(self, event):
         self.saveSettings()
