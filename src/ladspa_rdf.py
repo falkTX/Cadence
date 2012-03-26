@@ -709,7 +709,7 @@ def recheck_all_plugins(qobject, start_value, percent_value, m_value):
 # Convert PyLADSPA_Plugins into ctype structs
 def get_c_ladspa_rdfs(PyPluginList):
   C_LADSPA_Plugins = []
-  c_unicode_error_str = "(unicode error)".encode("ascii")
+  c_unicode_error_str = "(unicode error)".encode("utf-8")
 
   for plugin in PyPluginList:
     # Sort the ports by index
@@ -721,12 +721,18 @@ def get_c_ladspa_rdfs(PyPluginList):
     desc.UniqueID  = plugin['UniqueID']
 
     try:
-      desc.Title   = plugin['Title'].encode("ascii")
+      if (plugin['Title'])
+        desc.Title = plugin['Title'].encode("utf-8")
+      else:
+        desc.Title = None
     except:
       desc.Title   = c_unicode_error_str
 
     try:
-      desc.Creator = plugin['Creator'].encode("ascii")
+      if (plugin['Creator'])
+        desc.Creator = plugin['Creator'].encode("utf-8")
+      else:
+        desc.Creator = None
     except:
       desc.Creator = c_unicode_error_str
 
@@ -744,7 +750,7 @@ def get_c_ladspa_rdfs(PyPluginList):
       port.Hints   = py_port['Hints']
 
       try:
-        port.Label = py_port['Label'].encode("ascii")
+        port.Label = py_port['Label'].encode("utf-8")
       except:
         port.Label = c_unicode_error_str
 
@@ -762,7 +768,7 @@ def get_c_ladspa_rdfs(PyPluginList):
         py_scalepoint = py_port['ScalePoints'][j]
 
         try:
-          scalepoint.Label = py_scalepoint['Label'].encode("ascii")
+          scalepoint.Label = py_scalepoint['Label'].encode("utf-8")
         except:
           scalepoint.Label = c_unicode_error_str
 

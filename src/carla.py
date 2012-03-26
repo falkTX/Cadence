@@ -18,12 +18,12 @@
 
 # Imports (Global)
 import json, os, sys
-#from PyQt4.QtCore import Qt, QSettings, QThread, QTimer, QVariant, SIGNAL, SLOT
-#from PyQt4.QtGui import QApplication, QColor, QCursor, QFileDialog, QFontMetrics, QInputDialog, QMenu, QPainter, QPixmap, QVBoxLayout
+#from PyQt4.QtCore import QTimer
+#from PyQt4.QtGui import QCursor, QFontMetrics, QInputDialog, QMenu, QPixmap, QVBoxLayout
 from time import sleep
 #from sip import unwrapinstance
 from PyQt4.QtCore import pyqtSlot, Qt, QSettings, QThread
-from PyQt4.QtGui import QApplication, QDialog, QFrame, QMainWindow, QTableWidgetItem, QWidget
+from PyQt4.QtGui import QApplication, QColor, QDialog, QFrame, QMainWindow, QPainter, QTableWidgetItem, QWidget
 from PyQt4.QtXml import QDomDocument
 
 # Imports (Custom Stuff)
@@ -1048,11 +1048,11 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
           elif (hide_non_stereo and not is_stereo):
             self.tableWidget.hideRow(i)
           elif (text and not (
-                    text in self.tableWidget.item(i, 0).text().toLower() or
-                    text in self.tableWidget.item(i, 1).text().toLower() or
-                    text in self.tableWidget.item(i, 2).text().toLower() or
-                    text in self.tableWidget.item(i, 3).text().toLower() or
-                    text in self.tableWidget.item(i, 14).text().toLower())
+                    text in self.tableWidget.item(i, 0).text().lower() or
+                    text in self.tableWidget.item(i, 1).text().lower() or
+                    text in self.tableWidget.item(i, 2).text().lower() or
+                    text in self.tableWidget.item(i, 3).text().lower() or
+                    text in self.tableWidget.item(i, 13).text().lower())
                ):
             self.tableWidget.hideRow(i)
 
@@ -1904,7 +1904,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 # (New) Plugin Widget
 class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
     def __init__(self, parent, plugin_id):
-        super(PluginWidget, self).__init__(parent)
+        QFrame.__init__(self, parent)
         self.setupUi(self)
 
         self.plugin_id = plugin_id
@@ -1949,7 +1949,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.peak_out.setColor(self.peak_in.BLUE)
         self.peak_out.setOrientation(self.peak_out.HORIZONTAL)
 
-        audio_count = NativeHost.get_audio_port_count_info(self.plugin_id)
+        audio_count = CarlaHost.get_audio_port_count_info(self.plugin_id)
         if (not audio_count['valid']):
           audio_count['ins']   = 0
           audio_count['outs']  = 0
@@ -1967,7 +1967,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.peak_in.setChannels(self.peaks_in)
         self.peak_out.setChannels(self.peaks_out)
 
-        self.pinfo = NativeHost.get_plugin_info(self.plugin_id)
+        self.pinfo = CarlaHost.get_plugin_info(self.plugin_id)
         if (not self.pinfo['valid']):
           self.pinfo["type"]      = PLUGIN_NONE
           self.pinfo["category"]  = PLUGIN_CATEGORY_NONE
@@ -1989,7 +1989,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         if (self.pinfo['type'] == PLUGIN_NONE or audio_count['total'] == 0):
           self.stackedWidget.setCurrentIndex(1)
 
-        self.label_name.setText(self.pinfo['name'])
+        self.label_name.setText(self.pinfo['name'].decode("utf-8"))
 
         self.dial_drywet.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_DRYWET)
         self.dial_vol.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_VOL)
@@ -1999,177 +1999,76 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
         # Colorify
         if (self.pinfo['category'] == PLUGIN_CATEGORY_SYNTH):
-          self.set_plugin_widget_color(PALETTE_COLOR_WHITE)
+          self.setWidgetColor(PALETTE_COLOR_WHITE)
         elif (self.pinfo['category'] == PLUGIN_CATEGORY_DELAY):
-          self.set_plugin_widget_color(PALETTE_COLOR_ORANGE)
+          self.setWidgetColor(PALETTE_COLOR_ORANGE)
         elif (self.pinfo['category'] == PLUGIN_CATEGORY_EQ):
-          self.set_plugin_widget_color(PALETTE_COLOR_GREEN)
+          self.setWidgetColor(PALETTE_COLOR_GREEN)
         elif (self.pinfo['category'] == PLUGIN_CATEGORY_FILTER):
-          self.set_plugin_widget_color(PALETTE_COLOR_BLUE)
+          self.setWidgetColor(PALETTE_COLOR_BLUE)
         elif (self.pinfo['category'] == PLUGIN_CATEGORY_DYNAMICS):
-          self.set_plugin_widget_color(PALETTE_COLOR_PINK)
+          self.setWidgetColor(PALETTE_COLOR_PINK)
         elif (self.pinfo['category'] == PLUGIN_CATEGORY_MODULATOR):
-          self.set_plugin_widget_color(PALETTE_COLOR_RED)
+          self.setWidgetColor(PALETTE_COLOR_RED)
         elif (self.pinfo['category'] == PLUGIN_CATEGORY_UTILITY):
-          self.set_plugin_widget_color(PALETTE_COLOR_YELLOW)
+          self.setWidgetColor(PALETTE_COLOR_YELLOW)
         elif (self.pinfo['category'] == PLUGIN_CATEGORY_OUTRO):
-          self.set_plugin_widget_color(PALETTE_COLOR_BROWN)
+          self.setWidgetColor(PALETTE_COLOR_BROWN)
         else:
-          self.set_plugin_widget_color(PALETTE_COLOR_NONE)
+          self.setWidgetColor(PALETTE_COLOR_NONE)
 
         if (self.pinfo['hints'] & PLUGIN_IS_SYNTH):
           self.led_audio_in.setVisible(False)
         else:
           self.led_midi.setVisible(False)
 
-        self.edit_dialog = PluginEdit(self, self.plugin_id)
-        self.edit_dialog.hide()
-        self.edit_dialog_geometry = QVariant(self.edit_dialog.saveGeometry())
+        #self.edit_dialog = PluginEdit(self, self.plugin_id)
+        #self.edit_dialog.hide()
+        #self.edit_dialog_geometry = QVariant(self.edit_dialog.saveGeometry())
 
-        if (self.pinfo['hints'] & PLUGIN_HAS_GUI):
-          gui_data = NativeHost.get_gui_data(self.plugin_id)
-          self.gui_dialog_type = gui_data['type']
+        #if (self.pinfo['hints'] & PLUGIN_HAS_GUI):
+          #gui_data = NativeHost.get_gui_data(self.plugin_id)
+          #self.gui_dialog_type = gui_data['type']
 
-          if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_X11)):
-            self.gui_dialog = PluginGUI(self, self.pinfo['name'], gui_data)
-            self.gui_dialog.hide()
-            self.gui_dialog_geometry = QVariant(self.gui_dialog.saveGeometry())
-            self.connect(self.gui_dialog, SIGNAL("finished(int)"), self.gui_dialog_closed)
+          #if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_X11)):
+            #self.gui_dialog = PluginGUI(self, self.pinfo['name'], gui_data)
+            #self.gui_dialog.hide()
+            #self.gui_dialog_geometry = QVariant(self.gui_dialog.saveGeometry())
+            #self.connect(self.gui_dialog, SIGNAL("finished(int)"), self.gui_dialog_closed)
 
-            NativeHost.set_gui_data(self.plugin_id, Display, unwrapinstance(self.gui_dialog))
+            #NativeHost.set_gui_data(self.plugin_id, Display, unwrapinstance(self.gui_dialog))
 
-          elif (self.gui_dialog_type in (GUI_EXTERNAL_OSC, GUI_EXTERNAL_LV2)):
-            self.gui_dialog = None
+          #elif (self.gui_dialog_type in (GUI_EXTERNAL_OSC, GUI_EXTERNAL_LV2)):
+            #self.gui_dialog = None
 
-          else:
-            self.gui_dialog = None
-            self.b_gui.setEnabled(False)
+          #else:
+            #self.gui_dialog = None
+            #self.b_gui.setEnabled(False)
 
-        else:
-          self.gui_dialog = None
-          self.gui_dialog_type = GUI_NONE
+        #else:
+        self.gui_dialog = None
+        self.gui_dialog_type = GUI_NONE
 
-        self.connect(self.led_enable, SIGNAL("clicked(bool)"), self.set_active)
-        self.connect(self.dial_drywet, SIGNAL("sliderMoved(int)"), self.set_drywet)
-        self.connect(self.dial_vol, SIGNAL("sliderMoved(int)"), self.set_vol)
-        self.connect(self.dial_b_left, SIGNAL("sliderMoved(int)"), self.set_balance_left)
-        self.connect(self.dial_b_right, SIGNAL("sliderMoved(int)"), self.set_balance_right)
-        self.connect(self.b_gui, SIGNAL("clicked(bool)"), self.handleShowGUI)
-        self.connect(self.b_edit, SIGNAL("clicked(bool)"), self.handleEdit)
-        self.connect(self.b_remove, SIGNAL("clicked()"), self.handleRemove)
+        #self.connect(self.led_enable, SIGNAL("clicked(bool)"), self.set_active)
+        #self.connect(self.dial_drywet, SIGNAL("sliderMoved(int)"), self.set_drywet)
+        #self.connect(self.dial_vol, SIGNAL("sliderMoved(int)"), self.set_vol)
+        #self.connect(self.dial_b_left, SIGNAL("sliderMoved(int)"), self.set_balance_left)
+        #self.connect(self.dial_b_right, SIGNAL("sliderMoved(int)"), self.set_balance_right)
+        #self.connect(self.b_gui, SIGNAL("clicked(bool)"), self.handleShowGUI)
+        #self.connect(self.b_edit, SIGNAL("clicked(bool)"), self.handleEdit)
+        #self.connect(self.b_remove, SIGNAL("clicked()"), self.handleRemove)
 
-        self.connect(self.dial_drywet, SIGNAL("customContextMenuRequested(QPoint)"), self.showCustomDialMenu)
-        self.connect(self.dial_vol, SIGNAL("customContextMenuRequested(QPoint)"), self.showCustomDialMenu)
-        self.connect(self.dial_b_left, SIGNAL("customContextMenuRequested(QPoint)"), self.showCustomDialMenu)
-        self.connect(self.dial_b_right, SIGNAL("customContextMenuRequested(QPoint)"), self.showCustomDialMenu)
+        #self.connect(self.dial_drywet, SIGNAL("customContextMenuRequested(QPoint)"), self.showCustomDialMenu)
+        #self.connect(self.dial_vol, SIGNAL("customContextMenuRequested(QPoint)"), self.showCustomDialMenu)
+        #self.connect(self.dial_b_left, SIGNAL("customContextMenuRequested(QPoint)"), self.showCustomDialMenu)
+        #self.connect(self.dial_b_right, SIGNAL("customContextMenuRequested(QPoint)"), self.showCustomDialMenu)
 
-        self.connect(self.edit_dialog, SIGNAL("finished(int)"), self.edit_dialog_closed)
+        #self.connect(self.edit_dialog, SIGNAL("finished(int)"), self.edit_dialog_closed)
 
         #self.check_gui_stuff()
-        self.TIMER_GUI_STUFF = self.startTimer(50)
+        #self.TIMER_GUI_STUFF = self.startTimer(50)
 
-    def recheck_hints(self, hints):
-        self.pinfo['hints'] = hints
-        self.dial_drywet.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_DRYWET)
-        self.dial_vol.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_VOL)
-        self.dial_b_left.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_BALANCE)
-        self.dial_b_right.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_BALANCE)
-        self.b_gui.setEnabled(self.pinfo['hints'] & PLUGIN_HAS_GUI)
-
-    def set_active(self, active, gui_send=False, callback_send=True):
-        if (gui_send): self.led_enable.setChecked(active)
-        if (callback_send): NativeHost.set_active(self.plugin_id, active)
-
-    def set_drywet(self, value, gui_send=False, callback_send=True):
-        if (gui_send): self.dial_drywet.setValue(value)
-        if (callback_send): NativeHost.set_drywet(self.plugin_id, float(value)/1000)
-
-        message = self.tr("Output dry/wet (%1%)").arg(value/10)
-        self.dial_drywet.setStatusTip(message)
-        gui.statusBar().showMessage(message)
-
-    def set_vol(self, value, gui_send=False, callback_send=True):
-        if (gui_send): self.dial_vol.setValue(value)
-        if (callback_send): NativeHost.set_vol(self.plugin_id, float(value)/1000)
-
-        message = self.tr("Output volume (%1%)").arg(value/10)
-        self.dial_vol.setStatusTip(message)
-        gui.statusBar().showMessage(message)
-
-    def set_balance_left(self, value, gui_send=False, callback_send=True):
-        if (gui_send): self.dial_b_left.setValue(value)
-        if (callback_send): NativeHost.set_balance_left(self.plugin_id, float(value)/1000)
-
-        if (value == 0):
-          message = self.tr("Left Panning (Center)")
-        elif (value < 0):
-          message = self.tr("Left Panning (%1% Left)").arg(-value/10)
-        else:
-          message = self.tr("Left Panning (%1% Right)").arg(value/10)
-
-        self.dial_b_left.setStatusTip(message)
-        gui.statusBar().showMessage(message)
-
-    def set_balance_right(self, value, gui_send=False, callback_send=True):
-        if (gui_send): self.dial_b_right.setValue(value)
-        if (callback_send): NativeHost.set_balance_right(self.plugin_id, float(value)/1000)
-
-        if (value == 0):
-          message = self.tr("Right Panning (Center)")
-        elif (value < 0):
-          message = self.tr("Right Panning (%1%) Left").arg(-value/10)
-        else:
-          message = self.tr("Right Panning (%1% Right)").arg(value/10)
-
-        self.dial_b_right.setStatusTip(message)
-        gui.statusBar().showMessage(message)
-
-    def gui_dialog_closed(self):
-        self.b_gui.setChecked(False)
-
-    def edit_dialog_closed(self):
-        self.b_edit.setChecked(False)
-
-    def check_gui_stuff(self):
-        # Input peaks
-        if (self.peaks_in > 0):
-          if (self.peaks_in > 1):
-            peak1 = NativeHost.get_input_peak_value(self.plugin_id, 1)
-            peak2 = NativeHost.get_input_peak_value(self.plugin_id, 2)
-            self.peak_in.displayMeter(1, peak1)
-            self.peak_in.displayMeter(2, peak2)
-            self.led_audio_in.setChecked((peak1 != 0.0 or peak2 != 0.0))
-
-          else:
-            peak = NativeHost.get_input_peak_value(self.plugin_id, 1)
-            self.peak_in.displayMeter(1, peak)
-            self.led_audio_in.setChecked((peak != 0.0))
-
-        # Output peaks
-        if (self.peaks_out > 0):
-          if (self.peaks_out > 1):
-            peak1 = NativeHost.get_output_peak_value(self.plugin_id, 1)
-            peak2 = NativeHost.get_output_peak_value(self.plugin_id, 2)
-            self.peak_out.displayMeter(1, peak1)
-            self.peak_out.displayMeter(2, peak2)
-            self.led_audio_out.setChecked((peak1 != 0.0 or peak2 != 0.0))
-
-          else:
-            peak = NativeHost.get_output_peak_value(self.plugin_id, 1)
-            self.peak_out.displayMeter(1, peak)
-            self.led_audio_out.setChecked((peak != 0.0))
-
-        # Parameter Activity LED
-        if (self.parameter_activity_timer == ICON_STATE_ON):
-          self.led_control.setChecked(True)
-          self.parameter_activity_timer = ICON_STATE_WAIT
-        elif (self.parameter_activity_timer == ICON_STATE_WAIT):
-          self.parameter_activity_timer = ICON_STATE_OFF
-        elif (self.parameter_activity_timer == ICON_STATE_OFF):
-          self.led_control.setChecked(False)
-          self.parameter_activity_timer = None
-
-    def set_plugin_widget_color(self, color):
+    def setWidgetColor(self, color):
       if (color == PALETTE_COLOR_WHITE):
         r = 110
         g = 110
@@ -2245,399 +2144,495 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         }
       """ % (texture, r, g, b, r, g, b))
 
-    def handleShowGUI(self, show):
-        if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_X11)):
-          if (show):
-            self.gui_dialog.restoreGeometry(self.gui_dialog_geometry.toByteArray())
-          else:
-            self.gui_dialog_geometry = QVariant(self.gui_dialog.saveGeometry())
-          self.gui_dialog.setVisible(show)
-        NativeHost.show_gui(self.plugin_id, show)
-
-    def handleEdit(self, show):
-        if (show):
-          self.edit_dialog.restoreGeometry(self.edit_dialog_geometry.toByteArray())
-        else:
-          self.edit_dialog_geometry = QVariant(self.edit_dialog.saveGeometry())
-        self.edit_dialog.setVisible(show)
-
-    def handleRemove(self):
-        gui.func_remove_plugin(self.plugin_id, True)
-
-    def showCustomDialMenu(self, pos):
-        dial_name = QStringStr(self.sender().objectName())
-        if (dial_name == "dial_drywet"):
-          minimum = 0
-          maximum = 100
-          default = 100
-          label = "Dry/Wet"
-        elif (dial_name == "dial_vol"):
-          minimum = 0
-          maximum = 127
-          default = 100
-          label = "Volume"
-        elif (dial_name == "dial_b_left"):
-          minimum = -100
-          maximum = 100
-          default = -100
-          label = "Balance-Left"
-        elif (dial_name == "dial_b_right"):
-          minimum = -100
-          maximum = 100
-          default = 100
-          label = "Balance-Right"
-        else:
-          minimum = 0
-          maximum = 100
-          default = 100
-          label = "Unknown"
-
-        current = self.sender().value()/10
-
-        menu = QMenu(self)
-        act_x_reset = menu.addAction(self.tr("Reset (%1%)").arg(default))
-        menu.addSeparator()
-        act_x_min = menu.addAction(self.tr("Set to Minimum (%1%)").arg(minimum))
-        act_x_cen = menu.addAction(self.tr("Set to Center"))
-        act_x_max = menu.addAction(self.tr("Set to Maximum (%1%)").arg(maximum))
-        menu.addSeparator()
-        act_x_set = menu.addAction(self.tr("Set value..."))
-
-        if (label not in ("Balance-Left", "Balance-Right")):
-          menu.removeAction(act_x_cen)
-
-        act_x_sel = menu.exec_(QCursor.pos())
-
-        if (act_x_sel == act_x_set):
-          value_try = QInputDialog.getInteger(self, self.tr("Set value"), label, current, minimum, maximum, 1)
-          if (value_try[1]):
-            value = value_try[0]*10
-          else:
-            value = None
-
-        elif (act_x_sel == act_x_min):
-          value = minimum*10
-        elif (act_x_sel == act_x_max):
-          value = maximum*10
-        elif (act_x_sel == act_x_reset):
-          value = default*10
-        elif (act_x_sel == act_x_cen):
-          value = 0
-        else:
-          value = None
-
-        if (value != None):
-          if (label == "Dry/Wet"):
-            self.set_drywet(value, True, True)
-          elif (label == "Volume"):
-            self.set_vol(value, True, True)
-          elif (label == "Balance-Left"):
-            self.set_balance_left(value, True, True)
-          elif (label == "Balance-Right"):
-            self.set_balance_right(value, True, True)
-
-    def getSaveXMLContent(self):
-        NativeHost.prepare_for_save(self.plugin_id)
-
-        if (self.pinfo['type'] == PLUGIN_LADSPA):
-          type_str = "LADSPA"
-        elif (self.pinfo['type'] == PLUGIN_DSSI):
-          type_str = "DSSI"
-        elif (self.pinfo['type'] == PLUGIN_LV2):
-          type_str = "LV2"
-        elif (self.pinfo['type'] == PLUGIN_VST):
-          type_str = "VST"
-        elif (self.pinfo['type'] == PLUGIN_WINVST):
-          type_str = "Windows VST"
-        elif (self.pinfo['type'] == PLUGIN_SF2):
-          type_str = "SoundFont"
-        else:
-          type_str = "Unknown"
-
-        real_plugin_name = NativeHost.get_real_plugin_name(self.plugin_id)
-        if not real_plugin_name: real_plugin_name = ""
-
-        x_save_state_dict = deepcopy(save_state_dict)
-
-        # ----------------------------
-        # Basic info
-
-        x_save_state_dict['Type']   = type_str
-        x_save_state_dict['Name']   = real_plugin_name
-        x_save_state_dict['Label']  = self.pinfo['label']
-        x_save_state_dict['Binary'] = self.pinfo['binary']
-        x_save_state_dict['UniqueID'] = self.pinfo['unique_id']
-
-        # ----------------------------
-        # Internals
-
-        x_save_state_dict['Active'] = self.led_enable.isChecked()
-        x_save_state_dict['DryWet'] = float(self.dial_drywet.value())/1000
-        x_save_state_dict['Vol']    = float(self.dial_vol.value())/1000
-        x_save_state_dict['Balance-Left']  = float(self.dial_b_left.value())/1000
-        x_save_state_dict['Balance-Right'] = float(self.dial_b_right.value())/1000
-
-        # ----------------------------
-        # Programs
-
-        if (self.edit_dialog.cb_programs.currentIndex() >= 0):
-          x_save_state_dict['ProgramIndex'] = self.edit_dialog.cb_programs.currentIndex()
-          x_save_state_dict['ProgramName']  = QStringStr(self.edit_dialog.cb_programs.currentText())
-
-        # ----------------------------
-        # MIDI Programs
-
-        if (self.edit_dialog.cb_midi_programs.currentIndex() >= 0):
-          midi_program_info = NativeHost.get_midi_program_info(self.plugin_id, self.edit_dialog.cb_midi_programs.currentIndex())
-          x_save_state_dict['MidiBank']    = midi_program_info['bank']
-          x_save_state_dict['MidiProgram'] = midi_program_info['program']
-
-        # ----------------------------
-        # Parameters
-
-        parameter_count = NativeHost.get_parameter_count(self.plugin_id)
-
-        for i in range(parameter_count):
-          parameter_info = NativeHost.get_parameter_info(self.plugin_id, i)
-          parameter_data = NativeHost.get_parameter_data(self.plugin_id, i)
-
-          if (not parameter_info['valid'] or parameter_data['type'] != PARAMETER_INPUT):
-            continue
-
-          # Save from null values
-          if not parameter_info['name']:   parameter_info['name']   = ""
-          if not parameter_info['symbol']: parameter_info['symbol'] = ""
-          if not parameter_info['label']:  parameter_info['label']  = ""
-
-          x_save_state_parameter = deepcopy(save_state_parameter)
-
-          x_save_state_parameter['index']  = parameter_data['index']
-          x_save_state_parameter['rindex'] = parameter_data['rindex']
-          x_save_state_parameter['name']   = parameter_info['name']
-          x_save_state_parameter['symbol'] = parameter_info['symbol']
-          x_save_state_parameter['value']  = NativeHost.get_current_parameter_value(self.plugin_id, parameter_data['index'])
-          x_save_state_parameter['midi_channel'] = parameter_data['midi_channel']+1
-          x_save_state_parameter['midi_cc'] = parameter_data['midi_cc']
-
-          if (parameter_data['hints'] & PARAMETER_USES_SAMPLERATE):
-            x_save_state_parameter['value'] /= NativeHost.get_sample_rate()
-
-          x_save_state_dict['Parameters'].append(x_save_state_parameter)
-
-        # ----------------------------
-        # Custom Data
-
-        custom_data_count = NativeHost.get_custom_data_count(self.plugin_id)
-
-        for i in range(custom_data_count):
-          custom_data = NativeHost.get_custom_data(self.plugin_id, i)
-
-          if (custom_data['type'] == CUSTOM_DATA_INVALID):
-            continue
-
-          # Save from null values
-          if not custom_data['key']:   custom_data['key'] = ""
-          if not custom_data['value']: custom_data['value'] = ""
-
-          x_save_state_custom_data = deepcopy(save_state_custom_data)
-
-          x_save_state_custom_data['type']  = custom_data['type']
-          x_save_state_custom_data['key']   = custom_data['key']
-          x_save_state_custom_data['value'] = custom_data['value']
-
-          x_save_state_dict['CustomData'].append(x_save_state_custom_data)
-
-        # ----------------------------
-        # Chunk
-
-        if (self.pinfo['hints'] & PLUGIN_USES_CHUNKS):
-          chunk_data = NativeHost.get_chunk_data(self.plugin_id)
-          if chunk_data:
-            x_save_state_dict['Chunk'] = chunk_data
-
-        # ----------------------------
-        # Generate XML for this plugin
-
-        content  = ""
-
-        content += "  <Info>\n"
-        content += "   <Type>%s</Type>\n" % (x_save_state_dict['Type'])
-        content += "   <Name>%s</Name>\n" % (x_save_state_dict['Name'])
-        content += "   <Label>%s</Label>\n" % (x_save_state_dict['Label'])
-        content += "   <Binary>%s</Binary>\n" % (x_save_state_dict['Binary'])
-        content += "   <UniqueID>%li</UniqueID>\n" % (x_save_state_dict['UniqueID'])
-        content += "  </Info>\n"
-
-        content += "\n"
-        content += "  <Data>\n"
-        content += "   <Active>%s</Active>\n" % ("Yes" if x_save_state_dict['Active'] else "No")
-        content += "   <DryWet>%f</DryWet>\n" % (x_save_state_dict['DryWet'])
-        content += "   <Vol>%f</Vol>\n" % (x_save_state_dict['Vol'])
-        content += "   <Balance-Left>%f</Balance-Left>\n" % (x_save_state_dict['Balance-Left'])
-        content += "   <Balance-Right>%f</Balance-Right>\n" % (x_save_state_dict['Balance-Right'])
-
-        for parameter in x_save_state_dict['Parameters']:
-          content += "\n"
-          content += "   <Parameter>\n"
-          content += "    <index>%i</index>\n" % (parameter['index'])
-          content += "    <rindex>%i</rindex>\n" % (parameter['rindex'])
-          content += "    <name>%s</name>\n" % (parameter['name'])
-          content += "    <symbol>%s</symbol>\n" % (parameter['symbol'])
-          content += "    <value>%f</value>\n" % (parameter['value'])
-          content += "    <midi_channel>%i</midi_channel>\n" % (parameter['midi_channel'])
-          content += "    <midi_cc>%i</midi_cc>\n" % (parameter['midi_cc'])
-          content += "   </Parameter>\n"
-
-        if (x_save_state_dict['ProgramIndex'] >= 0):
-          content += "\n"
-          content += "   <ProgramIndex>%i</ProgramIndex>\n" % (x_save_state_dict['ProgramIndex'])
-          content += "   <ProgramName>%s</ProgramName>\n" % (x_save_state_dict['ProgramName'])
-
-        if (x_save_state_dict['MidiBank'] >= 0 and x_save_state_dict['MidiProgram'] >= 0):
-          content += "\n"
-          content += "   <MidiBank>%i</MidiBank>\n" % (x_save_state_dict['MidiBank'])
-          content += "   <MidiProgram>%i</MidiProgram>\n" % (x_save_state_dict['MidiProgram'])
-
-        for custom_data in x_save_state_dict['CustomData']:
-          if (not custom_data['value'].endswith("\n")):
-            custom_data['value'] += "\n"
-          content += "\n"
-          content += "   <CustomData>\n"
-          content += "    <type>%i</type>\n" % (custom_data['type'])
-          content += "    <key>%s</key>\n" % (custom_data['key'])
-          content += "    <value>\n"
-          content += "%s" % (Qt.escape(custom_data['value']))
-          content += "    </value>\n"
-          content += "   </CustomData>\n"
-
-        if (x_save_state_dict['Chunk']):
-          if (not x_save_state_dict['Chunk'].endswith("\n")):
-            x_save_state_dict['Chunk'] += "\n"
-          content += "\n"
-          content += "   <Chunk>\n"
-          content += "%s" % (x_save_state_dict['Chunk'])
-          content += "   </Chunk>\n"
-
-        content += "  </Data>\n"
-
-        return content
-
-    def load_save_state_dict(self, content):
-
-        # Part 1 - set custom data
-        for custom_data in content['CustomData']:
-          NativeHost.set_custom_data(self.plugin_id, custom_data['type'], custom_data['key'], custom_data['value'])
-
-        # Part 2 - set program (carefully)
-        program_id = -1
-        program_count = NativeHost.get_program_count(self.plugin_id)
-
-        if (content['ProgramName']):
-          test_pname = NativeHost.get_program_name(self.plugin_id, content['ProgramIndex'])
-
-          if (content['ProgramName'] == test_pname):
-            program_id = content['ProgramIndex']
-          else:
-            for i in range(program_count):
-              new_test_pname = NativeHost.get_program_name(self.plugin_id, i)
-              if (content['ProgramName'] == new_test_pname):
-                program_id = i
-                break
-            else:
-              if (content['ProgramIndex'] < program_count):
-                program_id = content['ProgramIndex']
-        else:
-          if (content['ProgramIndex'] < program_count):
-            program_id = content['ProgramIndex']
-
-        if (program_id >= 0):
-          NativeHost.set_program(self.plugin_id, program_id)
-          self.edit_dialog.set_program(program_id)
-
-        # Part 3 - set midi program
-        if (content['MidiBank'] >= 0 and content['MidiProgram'] >= 0):
-          midi_program_count = NativeHost.get_midi_program_count(self.plugin_id)
-
-          for i in range(midi_program_count):
-            program_info = NativeHost.get_midi_program_info(self.plugin_id, i)
-            if (program_info['bank'] == content['MidiBank'] and program_info['program'] == content['MidiProgram']):
-              NativeHost.set_midi_program(self.plugin_id, i)
-              self.edit_dialog.set_midi_program(i)
-              break
-
-        # Part 4a - store symbol values, for ladspa and lv2
-        param_symbols = [] # (index, symbol)
-
-        for parameter in content['Parameters']:
-          if (parameter['symbol']):
-            param_info = NativeHost.get_parameter_info(self.plugin_id, parameter['index'])
-
-            if (param_info['valid'] and param_info['symbol']):
-              param_symbols.append((parameter['index'], param_info['symbol']))
-
-        # Part 4b - set parameter values (carefully)
-        for parameter in content['Parameters']:
-          index = -1
-
-          if (content['Type'] == "LADSPA"):
-            # Try to set by symbol, otherwise use index
-            if (parameter['symbol'] != None and parameter['symbol'] != ""):
-              for param_symbol in param_symbols:
-                if (param_symbol[1] == parameter['symbol']):
-                  index = param_symbol[0]
-                  break
-              else:
-                index = parameter['index']
-            else:
-              index = parameter['index']
-
-          elif (content['Type'] == "LV2"):
-            # Symbol only
-            if (parameter['symbol'] != None and parameter['symbol'] != ""):
-              for param_symbol in param_symbols:
-                if (param_symbol[1] == parameter['symbol']):
-                  index = param_symbol[0]
-                  break
-              else:
-                print("Failed to find LV2 parameter symbol for", parameter['index'], "->", parameter['name'])
-            else:
-              print("LV2 Plugin parameter", parameter['index'], "has no symbol ->", parameter['name'])
-
-          else:
-            # Index only
-            index = parameter['index']
-
-          if (index >= 0):
-            param_data = NativeHost.get_parameter_data(self.plugin_id, parameter['index'])
-            if (param_data['hints'] & PARAMETER_USES_SAMPLERATE):
-              parameter['value'] *= NativeHost.get_sample_rate()
-
-            NativeHost.set_parameter_value(self.plugin_id, index, parameter['value'])
-            NativeHost.set_parameter_midi_channel(self.plugin_id, index, parameter['midi_channel']-1)
-            NativeHost.set_parameter_midi_cc(self.plugin_id, index, parameter['midi_cc'])
-          else:
-            print("Could not set parameter data for", parameter['index'], "->", parameter['name'])
-
-        # Part 5 - set chunk data
-        if (content['Chunk']):
-          NativeHost.set_chunk_data(self.plugin_id, content['Chunk'])
-
-        # Part 6 - set internal stuff
-        self.set_drywet(content['DryWet']*1000, True, True)
-        self.set_vol(content['Vol']*1000, True, True)
-        self.set_balance_left(content['Balance-Left']*1000, True, True)
-        self.set_balance_right(content['Balance-Right']*1000, True, True)
-        self.edit_dialog.do_reload_all()
-
-        self.set_active(content['Active'], True, True)
-
-        # Done!
-        gui.statusBar().showMessage("State File Loaded Sucessfully!")
-
-    def timerEvent(self, event):
-        if (event.timerId() == self.TIMER_GUI_STUFF):
-          self.check_gui_stuff()
-        return QFrame.timerEvent(self, event)
+    #def recheck_hints(self, hints):
+        #self.pinfo['hints'] = hints
+        #self.dial_drywet.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_DRYWET)
+        #self.dial_vol.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_VOL)
+        #self.dial_b_left.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_BALANCE)
+        #self.dial_b_right.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_BALANCE)
+        #self.b_gui.setEnabled(self.pinfo['hints'] & PLUGIN_HAS_GUI)
+
+    #def set_active(self, active, gui_send=False, callback_send=True):
+        #if (gui_send): self.led_enable.setChecked(active)
+        #if (callback_send): NativeHost.set_active(self.plugin_id, active)
+
+    #def set_drywet(self, value, gui_send=False, callback_send=True):
+        #if (gui_send): self.dial_drywet.setValue(value)
+        #if (callback_send): NativeHost.set_drywet(self.plugin_id, float(value)/1000)
+
+        #message = self.tr("Output dry/wet (%1%)").arg(value/10)
+        #self.dial_drywet.setStatusTip(message)
+        #gui.statusBar().showMessage(message)
+
+    #def set_vol(self, value, gui_send=False, callback_send=True):
+        #if (gui_send): self.dial_vol.setValue(value)
+        #if (callback_send): NativeHost.set_vol(self.plugin_id, float(value)/1000)
+
+        #message = self.tr("Output volume (%1%)").arg(value/10)
+        #self.dial_vol.setStatusTip(message)
+        #gui.statusBar().showMessage(message)
+
+    #def set_balance_left(self, value, gui_send=False, callback_send=True):
+        #if (gui_send): self.dial_b_left.setValue(value)
+        #if (callback_send): NativeHost.set_balance_left(self.plugin_id, float(value)/1000)
+
+        #if (value == 0):
+          #message = self.tr("Left Panning (Center)")
+        #elif (value < 0):
+          #message = self.tr("Left Panning (%1% Left)").arg(-value/10)
+        #else:
+          #message = self.tr("Left Panning (%1% Right)").arg(value/10)
+
+        #self.dial_b_left.setStatusTip(message)
+        #gui.statusBar().showMessage(message)
+
+    #def set_balance_right(self, value, gui_send=False, callback_send=True):
+        #if (gui_send): self.dial_b_right.setValue(value)
+        #if (callback_send): NativeHost.set_balance_right(self.plugin_id, float(value)/1000)
+
+        #if (value == 0):
+          #message = self.tr("Right Panning (Center)")
+        #elif (value < 0):
+          #message = self.tr("Right Panning (%1%) Left").arg(-value/10)
+        #else:
+          #message = self.tr("Right Panning (%1% Right)").arg(value/10)
+
+        #self.dial_b_right.setStatusTip(message)
+        #gui.statusBar().showMessage(message)
+
+    #def gui_dialog_closed(self):
+        #self.b_gui.setChecked(False)
+
+    #def edit_dialog_closed(self):
+        #self.b_edit.setChecked(False)
+
+    #def check_gui_stuff(self):
+        ## Input peaks
+        #if (self.peaks_in > 0):
+          #if (self.peaks_in > 1):
+            #peak1 = NativeHost.get_input_peak_value(self.plugin_id, 1)
+            #peak2 = NativeHost.get_input_peak_value(self.plugin_id, 2)
+            #self.peak_in.displayMeter(1, peak1)
+            #self.peak_in.displayMeter(2, peak2)
+            #self.led_audio_in.setChecked((peak1 != 0.0 or peak2 != 0.0))
+
+          #else:
+            #peak = NativeHost.get_input_peak_value(self.plugin_id, 1)
+            #self.peak_in.displayMeter(1, peak)
+            #self.led_audio_in.setChecked((peak != 0.0))
+
+        ## Output peaks
+        #if (self.peaks_out > 0):
+          #if (self.peaks_out > 1):
+            #peak1 = NativeHost.get_output_peak_value(self.plugin_id, 1)
+            #peak2 = NativeHost.get_output_peak_value(self.plugin_id, 2)
+            #self.peak_out.displayMeter(1, peak1)
+            #self.peak_out.displayMeter(2, peak2)
+            #self.led_audio_out.setChecked((peak1 != 0.0 or peak2 != 0.0))
+
+          #else:
+            #peak = NativeHost.get_output_peak_value(self.plugin_id, 1)
+            #self.peak_out.displayMeter(1, peak)
+            #self.led_audio_out.setChecked((peak != 0.0))
+
+        ## Parameter Activity LED
+        #if (self.parameter_activity_timer == ICON_STATE_ON):
+          #self.led_control.setChecked(True)
+          #self.parameter_activity_timer = ICON_STATE_WAIT
+        #elif (self.parameter_activity_timer == ICON_STATE_WAIT):
+          #self.parameter_activity_timer = ICON_STATE_OFF
+        #elif (self.parameter_activity_timer == ICON_STATE_OFF):
+          #self.led_control.setChecked(False)
+          #self.parameter_activity_timer = None
+
+    #def handleShowGUI(self, show):
+        #if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_X11)):
+          #if (show):
+            #self.gui_dialog.restoreGeometry(self.gui_dialog_geometry.toByteArray())
+          #else:
+            #self.gui_dialog_geometry = QVariant(self.gui_dialog.saveGeometry())
+          #self.gui_dialog.setVisible(show)
+        #NativeHost.show_gui(self.plugin_id, show)
+
+    #def handleEdit(self, show):
+        #if (show):
+          #self.edit_dialog.restoreGeometry(self.edit_dialog_geometry.toByteArray())
+        #else:
+          #self.edit_dialog_geometry = QVariant(self.edit_dialog.saveGeometry())
+        #self.edit_dialog.setVisible(show)
+
+    #def handleRemove(self):
+        #gui.func_remove_plugin(self.plugin_id, True)
+
+    #def showCustomDialMenu(self, pos):
+        #dial_name = QStringStr(self.sender().objectName())
+        #if (dial_name == "dial_drywet"):
+          #minimum = 0
+          #maximum = 100
+          #default = 100
+          #label = "Dry/Wet"
+        #elif (dial_name == "dial_vol"):
+          #minimum = 0
+          #maximum = 127
+          #default = 100
+          #label = "Volume"
+        #elif (dial_name == "dial_b_left"):
+          #minimum = -100
+          #maximum = 100
+          #default = -100
+          #label = "Balance-Left"
+        #elif (dial_name == "dial_b_right"):
+          #minimum = -100
+          #maximum = 100
+          #default = 100
+          #label = "Balance-Right"
+        #else:
+          #minimum = 0
+          #maximum = 100
+          #default = 100
+          #label = "Unknown"
+
+        #current = self.sender().value()/10
+
+        #menu = QMenu(self)
+        #act_x_reset = menu.addAction(self.tr("Reset (%1%)").arg(default))
+        #menu.addSeparator()
+        #act_x_min = menu.addAction(self.tr("Set to Minimum (%1%)").arg(minimum))
+        #act_x_cen = menu.addAction(self.tr("Set to Center"))
+        #act_x_max = menu.addAction(self.tr("Set to Maximum (%1%)").arg(maximum))
+        #menu.addSeparator()
+        #act_x_set = menu.addAction(self.tr("Set value..."))
+
+        #if (label not in ("Balance-Left", "Balance-Right")):
+          #menu.removeAction(act_x_cen)
+
+        #act_x_sel = menu.exec_(QCursor.pos())
+
+        #if (act_x_sel == act_x_set):
+          #value_try = QInputDialog.getInteger(self, self.tr("Set value"), label, current, minimum, maximum, 1)
+          #if (value_try[1]):
+            #value = value_try[0]*10
+          #else:
+            #value = None
+
+        #elif (act_x_sel == act_x_min):
+          #value = minimum*10
+        #elif (act_x_sel == act_x_max):
+          #value = maximum*10
+        #elif (act_x_sel == act_x_reset):
+          #value = default*10
+        #elif (act_x_sel == act_x_cen):
+          #value = 0
+        #else:
+          #value = None
+
+        #if (value != None):
+          #if (label == "Dry/Wet"):
+            #self.set_drywet(value, True, True)
+          #elif (label == "Volume"):
+            #self.set_vol(value, True, True)
+          #elif (label == "Balance-Left"):
+            #self.set_balance_left(value, True, True)
+          #elif (label == "Balance-Right"):
+            #self.set_balance_right(value, True, True)
+
+    #def getSaveXMLContent(self):
+        #NativeHost.prepare_for_save(self.plugin_id)
+
+        #if (self.pinfo['type'] == PLUGIN_LADSPA):
+          #type_str = "LADSPA"
+        #elif (self.pinfo['type'] == PLUGIN_DSSI):
+          #type_str = "DSSI"
+        #elif (self.pinfo['type'] == PLUGIN_LV2):
+          #type_str = "LV2"
+        #elif (self.pinfo['type'] == PLUGIN_VST):
+          #type_str = "VST"
+        #elif (self.pinfo['type'] == PLUGIN_WINVST):
+          #type_str = "Windows VST"
+        #elif (self.pinfo['type'] == PLUGIN_SF2):
+          #type_str = "SoundFont"
+        #else:
+          #type_str = "Unknown"
+
+        #real_plugin_name = NativeHost.get_real_plugin_name(self.plugin_id)
+        #if not real_plugin_name: real_plugin_name = ""
+
+        #x_save_state_dict = deepcopy(save_state_dict)
+
+        ## ----------------------------
+        ## Basic info
+
+        #x_save_state_dict['Type']   = type_str
+        #x_save_state_dict['Name']   = real_plugin_name
+        #x_save_state_dict['Label']  = self.pinfo['label']
+        #x_save_state_dict['Binary'] = self.pinfo['binary']
+        #x_save_state_dict['UniqueID'] = self.pinfo['unique_id']
+
+        ## ----------------------------
+        ## Internals
+
+        #x_save_state_dict['Active'] = self.led_enable.isChecked()
+        #x_save_state_dict['DryWet'] = float(self.dial_drywet.value())/1000
+        #x_save_state_dict['Vol']    = float(self.dial_vol.value())/1000
+        #x_save_state_dict['Balance-Left']  = float(self.dial_b_left.value())/1000
+        #x_save_state_dict['Balance-Right'] = float(self.dial_b_right.value())/1000
+
+        ## ----------------------------
+        ## Programs
+
+        #if (self.edit_dialog.cb_programs.currentIndex() >= 0):
+          #x_save_state_dict['ProgramIndex'] = self.edit_dialog.cb_programs.currentIndex()
+          #x_save_state_dict['ProgramName']  = QStringStr(self.edit_dialog.cb_programs.currentText())
+
+        ## ----------------------------
+        ## MIDI Programs
+
+        #if (self.edit_dialog.cb_midi_programs.currentIndex() >= 0):
+          #midi_program_info = NativeHost.get_midi_program_info(self.plugin_id, self.edit_dialog.cb_midi_programs.currentIndex())
+          #x_save_state_dict['MidiBank']    = midi_program_info['bank']
+          #x_save_state_dict['MidiProgram'] = midi_program_info['program']
+
+        ## ----------------------------
+        ## Parameters
+
+        #parameter_count = NativeHost.get_parameter_count(self.plugin_id)
+
+        #for i in range(parameter_count):
+          #parameter_info = NativeHost.get_parameter_info(self.plugin_id, i)
+          #parameter_data = NativeHost.get_parameter_data(self.plugin_id, i)
+
+          #if (not parameter_info['valid'] or parameter_data['type'] != PARAMETER_INPUT):
+            #continue
+
+          ## Save from null values
+          #if not parameter_info['name']:   parameter_info['name']   = ""
+          #if not parameter_info['symbol']: parameter_info['symbol'] = ""
+          #if not parameter_info['label']:  parameter_info['label']  = ""
+
+          #x_save_state_parameter = deepcopy(save_state_parameter)
+
+          #x_save_state_parameter['index']  = parameter_data['index']
+          #x_save_state_parameter['rindex'] = parameter_data['rindex']
+          #x_save_state_parameter['name']   = parameter_info['name']
+          #x_save_state_parameter['symbol'] = parameter_info['symbol']
+          #x_save_state_parameter['value']  = NativeHost.get_current_parameter_value(self.plugin_id, parameter_data['index'])
+          #x_save_state_parameter['midi_channel'] = parameter_data['midi_channel']+1
+          #x_save_state_parameter['midi_cc'] = parameter_data['midi_cc']
+
+          #if (parameter_data['hints'] & PARAMETER_USES_SAMPLERATE):
+            #x_save_state_parameter['value'] /= NativeHost.get_sample_rate()
+
+          #x_save_state_dict['Parameters'].append(x_save_state_parameter)
+
+        ## ----------------------------
+        ## Custom Data
+
+        #custom_data_count = NativeHost.get_custom_data_count(self.plugin_id)
+
+        #for i in range(custom_data_count):
+          #custom_data = NativeHost.get_custom_data(self.plugin_id, i)
+
+          #if (custom_data['type'] == CUSTOM_DATA_INVALID):
+            #continue
+
+          ## Save from null values
+          #if not custom_data['key']:   custom_data['key'] = ""
+          #if not custom_data['value']: custom_data['value'] = ""
+
+          #x_save_state_custom_data = deepcopy(save_state_custom_data)
+
+          #x_save_state_custom_data['type']  = custom_data['type']
+          #x_save_state_custom_data['key']   = custom_data['key']
+          #x_save_state_custom_data['value'] = custom_data['value']
+
+          #x_save_state_dict['CustomData'].append(x_save_state_custom_data)
+
+        ## ----------------------------
+        ## Chunk
+
+        #if (self.pinfo['hints'] & PLUGIN_USES_CHUNKS):
+          #chunk_data = NativeHost.get_chunk_data(self.plugin_id)
+          #if chunk_data:
+            #x_save_state_dict['Chunk'] = chunk_data
+
+        ## ----------------------------
+        ## Generate XML for this plugin
+
+        #content  = ""
+
+        #content += "  <Info>\n"
+        #content += "   <Type>%s</Type>\n" % (x_save_state_dict['Type'])
+        #content += "   <Name>%s</Name>\n" % (x_save_state_dict['Name'])
+        #content += "   <Label>%s</Label>\n" % (x_save_state_dict['Label'])
+        #content += "   <Binary>%s</Binary>\n" % (x_save_state_dict['Binary'])
+        #content += "   <UniqueID>%li</UniqueID>\n" % (x_save_state_dict['UniqueID'])
+        #content += "  </Info>\n"
+
+        #content += "\n"
+        #content += "  <Data>\n"
+        #content += "   <Active>%s</Active>\n" % ("Yes" if x_save_state_dict['Active'] else "No")
+        #content += "   <DryWet>%f</DryWet>\n" % (x_save_state_dict['DryWet'])
+        #content += "   <Vol>%f</Vol>\n" % (x_save_state_dict['Vol'])
+        #content += "   <Balance-Left>%f</Balance-Left>\n" % (x_save_state_dict['Balance-Left'])
+        #content += "   <Balance-Right>%f</Balance-Right>\n" % (x_save_state_dict['Balance-Right'])
+
+        #for parameter in x_save_state_dict['Parameters']:
+          #content += "\n"
+          #content += "   <Parameter>\n"
+          #content += "    <index>%i</index>\n" % (parameter['index'])
+          #content += "    <rindex>%i</rindex>\n" % (parameter['rindex'])
+          #content += "    <name>%s</name>\n" % (parameter['name'])
+          #content += "    <symbol>%s</symbol>\n" % (parameter['symbol'])
+          #content += "    <value>%f</value>\n" % (parameter['value'])
+          #content += "    <midi_channel>%i</midi_channel>\n" % (parameter['midi_channel'])
+          #content += "    <midi_cc>%i</midi_cc>\n" % (parameter['midi_cc'])
+          #content += "   </Parameter>\n"
+
+        #if (x_save_state_dict['ProgramIndex'] >= 0):
+          #content += "\n"
+          #content += "   <ProgramIndex>%i</ProgramIndex>\n" % (x_save_state_dict['ProgramIndex'])
+          #content += "   <ProgramName>%s</ProgramName>\n" % (x_save_state_dict['ProgramName'])
+
+        #if (x_save_state_dict['MidiBank'] >= 0 and x_save_state_dict['MidiProgram'] >= 0):
+          #content += "\n"
+          #content += "   <MidiBank>%i</MidiBank>\n" % (x_save_state_dict['MidiBank'])
+          #content += "   <MidiProgram>%i</MidiProgram>\n" % (x_save_state_dict['MidiProgram'])
+
+        #for custom_data in x_save_state_dict['CustomData']:
+          #if (not custom_data['value'].endswith("\n")):
+            #custom_data['value'] += "\n"
+          #content += "\n"
+          #content += "   <CustomData>\n"
+          #content += "    <type>%i</type>\n" % (custom_data['type'])
+          #content += "    <key>%s</key>\n" % (custom_data['key'])
+          #content += "    <value>\n"
+          #content += "%s" % (Qt.escape(custom_data['value']))
+          #content += "    </value>\n"
+          #content += "   </CustomData>\n"
+
+        #if (x_save_state_dict['Chunk']):
+          #if (not x_save_state_dict['Chunk'].endswith("\n")):
+            #x_save_state_dict['Chunk'] += "\n"
+          #content += "\n"
+          #content += "   <Chunk>\n"
+          #content += "%s" % (x_save_state_dict['Chunk'])
+          #content += "   </Chunk>\n"
+
+        #content += "  </Data>\n"
+
+        #return content
+
+    #def load_save_state_dict(self, content):
+
+        ## Part 1 - set custom data
+        #for custom_data in content['CustomData']:
+          #NativeHost.set_custom_data(self.plugin_id, custom_data['type'], custom_data['key'], custom_data['value'])
+
+        ## Part 2 - set program (carefully)
+        #program_id = -1
+        #program_count = NativeHost.get_program_count(self.plugin_id)
+
+        #if (content['ProgramName']):
+          #test_pname = NativeHost.get_program_name(self.plugin_id, content['ProgramIndex'])
+
+          #if (content['ProgramName'] == test_pname):
+            #program_id = content['ProgramIndex']
+          #else:
+            #for i in range(program_count):
+              #new_test_pname = NativeHost.get_program_name(self.plugin_id, i)
+              #if (content['ProgramName'] == new_test_pname):
+                #program_id = i
+                #break
+            #else:
+              #if (content['ProgramIndex'] < program_count):
+                #program_id = content['ProgramIndex']
+        #else:
+          #if (content['ProgramIndex'] < program_count):
+            #program_id = content['ProgramIndex']
+
+        #if (program_id >= 0):
+          #NativeHost.set_program(self.plugin_id, program_id)
+          #self.edit_dialog.set_program(program_id)
+
+        ## Part 3 - set midi program
+        #if (content['MidiBank'] >= 0 and content['MidiProgram'] >= 0):
+          #midi_program_count = NativeHost.get_midi_program_count(self.plugin_id)
+
+          #for i in range(midi_program_count):
+            #program_info = NativeHost.get_midi_program_info(self.plugin_id, i)
+            #if (program_info['bank'] == content['MidiBank'] and program_info['program'] == content['MidiProgram']):
+              #NativeHost.set_midi_program(self.plugin_id, i)
+              #self.edit_dialog.set_midi_program(i)
+              #break
+
+        ## Part 4a - store symbol values, for ladspa and lv2
+        #param_symbols = [] # (index, symbol)
+
+        #for parameter in content['Parameters']:
+          #if (parameter['symbol']):
+            #param_info = NativeHost.get_parameter_info(self.plugin_id, parameter['index'])
+
+            #if (param_info['valid'] and param_info['symbol']):
+              #param_symbols.append((parameter['index'], param_info['symbol']))
+
+        ## Part 4b - set parameter values (carefully)
+        #for parameter in content['Parameters']:
+          #index = -1
+
+          #if (content['Type'] == "LADSPA"):
+            ## Try to set by symbol, otherwise use index
+            #if (parameter['symbol'] != None and parameter['symbol'] != ""):
+              #for param_symbol in param_symbols:
+                #if (param_symbol[1] == parameter['symbol']):
+                  #index = param_symbol[0]
+                  #break
+              #else:
+                #index = parameter['index']
+            #else:
+              #index = parameter['index']
+
+          #elif (content['Type'] == "LV2"):
+            ## Symbol only
+            #if (parameter['symbol'] != None and parameter['symbol'] != ""):
+              #for param_symbol in param_symbols:
+                #if (param_symbol[1] == parameter['symbol']):
+                  #index = param_symbol[0]
+                  #break
+              #else:
+                #print("Failed to find LV2 parameter symbol for", parameter['index'], "->", parameter['name'])
+            #else:
+              #print("LV2 Plugin parameter", parameter['index'], "has no symbol ->", parameter['name'])
+
+          #else:
+            ## Index only
+            #index = parameter['index']
+
+          #if (index >= 0):
+            #param_data = NativeHost.get_parameter_data(self.plugin_id, parameter['index'])
+            #if (param_data['hints'] & PARAMETER_USES_SAMPLERATE):
+              #parameter['value'] *= NativeHost.get_sample_rate()
+
+            #NativeHost.set_parameter_value(self.plugin_id, index, parameter['value'])
+            #NativeHost.set_parameter_midi_channel(self.plugin_id, index, parameter['midi_channel']-1)
+            #NativeHost.set_parameter_midi_cc(self.plugin_id, index, parameter['midi_cc'])
+          #else:
+            #print("Could not set parameter data for", parameter['index'], "->", parameter['name'])
+
+        ## Part 5 - set chunk data
+        #if (content['Chunk']):
+          #NativeHost.set_chunk_data(self.plugin_id, content['Chunk'])
+
+        ## Part 6 - set internal stuff
+        #self.set_drywet(content['DryWet']*1000, True, True)
+        #self.set_vol(content['Vol']*1000, True, True)
+        #self.set_balance_left(content['Balance-Left']*1000, True, True)
+        #self.set_balance_right(content['Balance-Right']*1000, True, True)
+        #self.edit_dialog.do_reload_all()
+
+        #self.set_active(content['Active'], True, True)
+
+        ## Done!
+        #gui.statusBar().showMessage("State File Loaded Sucessfully!")
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -2690,7 +2685,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
         self.m_project_filename = None
 
-        NativeHost.set_callback_function(self.callback_function)
+        CarlaHost.set_callback_function(self.callback_function)
 
         # -------------------------------------------------------------
         # Set-up GUI stuff
@@ -2856,16 +2851,16 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
                                               #"You may want to save your session now...", QMessageBox.Ok, QMessageBox.Ok)
 
     def add_plugin(self, btype, ptype, filename, label, extra_stuff, activate):
-        new_plugin_id = NativeHost.add_plugin(btype, ptype, filename, label, extra_stuff)
+        new_plugin_id = CarlaHost.add_plugin(btype, ptype, filename, label, extra_stuff)
 
         if (new_plugin_id < 0):
           CustomMessageBox(self, QMessageBox.Critical, self.tr("Error"), self.tr("Failed to load plugin"),
-                                              NativeHost.get_last_error(), QMessageBox.Ok, QMessageBox.Ok)
-        #else:
-          #pwidget = PluginWidget(self, new_plugin_id)
-          #self.w_plugins.layout().addWidget(pwidget)
-          #self.plugin_list[new_plugin_id] = pwidget
-          #self.act_plugin_remove_all.setEnabled(True)
+                                              CarlaHost.get_last_error(), QMessageBox.Ok, QMessageBox.Ok)
+        else:
+          pwidget = PluginWidget(self, new_plugin_id)
+          self.w_plugins.layout().addWidget(pwidget)
+          self.m_plugin_list[new_plugin_id] = pwidget
+          self.act_plugin_remove_all.setEnabled(True)
 
           #if (activate):
             #pwidget.set_active(True, True)
@@ -2879,16 +2874,16 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         #if (pwidget.gui_dialog):
           #pwidget.gui_dialog.close()
 
-        #if (NativeHost.remove_plugin(plugin_id)):
-          #pwidget.close()
-          #pwidget.deleteLater()
-          #self.w_plugins.layout().removeWidget(pwidget)
-          #self.plugin_list[plugin_id] = None
+        if (CarlaHost.remove_plugin(plugin_id)):
+          pwidget.close()
+          pwidget.deleteLater()
+          self.w_plugins.layout().removeWidget(pwidget)
+          self.m_plugin_list[plugin_id] = None
 
-        #else:
-          #if (showError):
-            #CustomMessageBox(self, QMessageBox.Critical, self.tr("Error"), self.tr("Failed to remove plugin"),
-                                                  #NativeHost.get_last_error(), QMessageBox.Ok, QMessageBox.Ok)
+        else:
+          if (showError):
+            CustomMessageBox(self, QMessageBox.Critical, self.tr("Error"), self.tr("Failed to remove plugin"),
+                                                  CarlaHost.get_last_error(), QMessageBox.Ok, QMessageBox.Ok)
 
         for i in range(MAX_PLUGINS):
           if (self.m_plugin_list[i] != None):
@@ -3184,6 +3179,11 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
     def loadSettings(self):
         self.restoreGeometry(self.settings.value("Geometry", ""))
 
+    def timerEvent(self, event):
+        #if (event.timerId() == self.TIMER_GUI_STUFF):
+          #self.check_gui_stuff()
+        QMainWindow.timerEvent(self, event)
+
     def closeEvent(self, event):
         self.saveSettings()
         self.slot_remove_all()
@@ -3202,28 +3202,13 @@ if __name__ == '__main__':
     #style = app.style().metaObject().className()
     #force_parameters_style = (style in ("Bespin::Style",))
 
-    NativeHost = Host()
-    #NativeHost.set_option(OPTION_GLOBAL_JACK_CLIENT, 0, "")
-    #NativeHost.set_option(OPTION_BRIDGE_PATH_LV2_GTK2, 0, carla_bridge_lv2_gtk2)
-    #NativeHost.set_option(OPTION_BRIDGE_PATH_LV2_QT4, 0, carla_bridge_lv2_qt4)
-    #NativeHost.set_option(OPTION_BRIDGE_PATH_LV2_X11, 0, carla_bridge_lv2_x11)
-    #NativeHost.set_option(OPTION_BRIDGE_PATH_VST_QT4, 0, carla_bridge_vst_qt4)
-    #NativeHost.set_option(OPTION_BRIDGE_PATH_WINVST, 0, carla_bridge_winvst)
+    CarlaHost = Host()
+    #CarlaHost.set_option(OPTION_GLOBAL_JACK_CLIENT, 1, "")
 
-    if (not NativeHost.carla_init("Carla")):
+    if (not CarlaHost.carla_init("Carla")):
       CustomMessageBox(None, QMessageBox.Critical, "Error", "Could not connect to JACK",
-                            NativeHost.get_last_error(), QMessageBox.Ok, QMessageBox.Ok)
+                            CarlaHost.get_last_error(), QMessageBox.Ok, QMessageBox.Ok)
       sys.exit(1)
-
-    ## X11 Display
-    #Display = 0
-    #if (LINUX):
-      #Display_env = os.getenv("DISPLAY")
-      #if (Display_env != None):
-        #try:
-          #Display = int(float(Display_env.replace(":","")))
-        #except:
-          #Display = 0
 
     # Show GUI
     gui = CarlaMainW()
@@ -3244,9 +3229,9 @@ if __name__ == '__main__':
     ret = app.exec_()
 
     # Close Host
-    if (NativeHost.carla_is_engine_running()):
-      if (not NativeHost.carla_close()):
-        print(NativeHost.get_last_error())
+    if (CarlaHost.carla_is_engine_running()):
+      if (not CarlaHost.carla_close()):
+        print(CarlaHost.get_last_error().decode("utf-8"))
 
     # Exit properly
     sys.exit(ret)

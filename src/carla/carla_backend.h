@@ -210,6 +210,8 @@ typedef void (*CallbackFunc)(CallbackType action, unsigned short plugin_id, int 
 // -----------------------------------------------------
 // Exported symbols (API)
 
+class CarlaPlugin;
+
 CARLA_EXPORT bool carla_init(const char* client_name);
 CARLA_EXPORT bool carla_close();
 CARLA_EXPORT bool carla_is_engine_running();
@@ -285,19 +287,26 @@ CARLA_EXPORT double get_latency();
 // End of exported symbols
 // -----------------------------------------------------
 
-#if 0
 // Helper functions
 short get_new_plugin_id();
 const char* get_unique_name(const char* name);
 void* get_pointer(intptr_t ptr_addr);
 void set_last_error(const char* error);
-void callback_action(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3);
 void carla_proc_lock();
-bool carla_proc_trylock();
 void carla_proc_unlock();
 void carla_midi_lock();
 void carla_midi_unlock();
+void callback_action(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3);
 void send_plugin_midi_note(unsigned short plugin_id, bool onoff, uint8_t note, uint8_t velo, bool gui_send, bool osc_send, bool callback_send);
-#endif
+
+// Global variables (shared)
+extern const char* unique_names[MAX_PLUGINS];
+extern CarlaPlugin* CarlaPlugins[MAX_PLUGINS];
+
+extern volatile double ains_peak[MAX_PLUGINS*2];
+extern volatile double aouts_peak[MAX_PLUGINS*2];
+
+// Global options
+extern carla_options_t carla_options;
 
 #endif // CARLA_BACKEND_H
