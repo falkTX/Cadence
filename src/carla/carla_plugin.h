@@ -89,6 +89,12 @@ public:
     {
         qDebug("CarlaPlugin::~CarlaPlugin()");
 
+        // Unregister jack ports
+        remove_from_jack();
+
+        // Delete data
+        delete_buffers();
+
         lib_close();
 
         if (m_name)
@@ -131,9 +137,19 @@ public:
         return param.count;
     }
 
-    void set_id(short id)
+    uint32_t midiprog_count()
     {
-        m_id = id;
+        return 0;
+    }
+
+    ParameterData* param_data(uint32_t index)
+    {
+        return &param.data[index];
+    }
+
+    ParameterRanges* param_ranges(uint32_t index)
+    {
+        return &param.ranges[index];
     }
 
     void get_audio_port_count_info(PortCountInfo* info)
@@ -163,6 +179,122 @@ public:
             else if (param.data[i].type == PARAMETER_OUTPUT)
                 info->outs += 1;
         }
+    }
+
+    void get_midi_program_info(MidiProgramInfo* info)
+    {
+        info->bank = 0;
+        info->program = 0;
+        info->label = nullptr;
+        //info.bank    = plugin->midiprog.data[midi_program_id].bank;
+        //info.program = plugin->midiprog.data[midi_program_id].program;
+        //info.label   = plugin->midiprog.names[midi_program_id];
+    }
+
+    void set_id(short id)
+    {
+        m_id = id;
+    }
+
+    void set_active(bool active, bool osc_send, bool callback_send)
+    {
+        m_active = active;
+        double value = active ? 1.0 : 0.0;
+
+        if (osc_send)
+        {
+            //osc_send_set_parameter_value(&global_osc_data, id, PARAMETER_ACTIVE, value);
+
+            //if (hints & PLUGIN_IS_BRIDGE)
+            //    osc_send_control(&osc.data, PARAMETER_ACTIVE, value);
+        }
+
+        if (callback_send)
+            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_ACTIVE, 0, value);
+    }
+
+    void set_drywet(double value, bool osc_send, bool callback_send)
+    {
+        if (value < 0.0)
+            value = 0.0;
+        else if (value > 1.0)
+            value = 1.0;
+
+        x_drywet = value;
+
+        if (osc_send)
+        {
+            //osc_send_set_parameter_value(&global_osc_data, id, PARAMETER_DRYWET, value);
+
+            //if (hints & PLUGIN_IS_BRIDGE)
+            //    osc_send_control(&osc.data, PARAMETER_DRYWET, value);
+        }
+
+        if (callback_send)
+            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_DRYWET, 0, value);
+    }
+
+    void set_volume(double value, bool osc_send, bool callback_send)
+    {
+        if (value < 0.0)
+            value = 0.0;
+        else if (value > 1.27)
+            value = 1.27;
+
+        x_vol = value;
+
+        if (osc_send)
+        {
+            //osc_send_set_parameter_value(&global_osc_data, id, PARAMETER_VOLUME, value);
+
+            //if (hints & PLUGIN_IS_BRIDGE)
+            //    osc_send_control(&osc.data, PARAMETER_VOLUME, value);
+        }
+
+        if (callback_send)
+            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_VOLUME, 0, value);
+    }
+
+    void set_balance_left(double value, bool osc_send, bool callback_send)
+    {
+        if (value < -1.0)
+            value = -1.0;
+        else if (value > 1.0)
+            value = 1.0;
+
+        x_bal_left = value;
+
+        if (osc_send)
+        {
+            //osc_send_set_parameter_value(&global_osc_data, id, PARAMETER_BALANCE_LEFT, value);
+
+            //if (hints & PLUGIN_IS_BRIDGE)
+            //    osc_send_control(&osc.data, PARAMETER_BALANCE_LEFT, value);
+        }
+
+        if (callback_send)
+            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_BALANCE_LEFT, 0, value);
+    }
+
+    void set_balance_right(double value, bool osc_send, bool callback_send)
+    {
+        if (value < -1.0)
+            value = -1.0;
+        else if (value > 1.0)
+            value = 1.0;
+
+        x_bal_right = value;
+
+        if (osc_send)
+        {
+            //osc_send_set_parameter_value(&global_osc_data, id, PARAMETER_BALANCE_RIGHT, value);
+
+            //if (hints & PLUGIN_IS_BRIDGE)
+            //    osc_send_control(&osc.data, PARAMETER_BALANCE_RIGHT, value);
+        }
+
+        if (callback_send)
+            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_BALANCE_RIGHT, 0, value);
     }
 
     virtual PluginCategory category() = 0;

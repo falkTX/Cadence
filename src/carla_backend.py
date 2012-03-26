@@ -1056,7 +1056,7 @@ class Host(object):
         return self.lib.set_custom_data(plugin_id, dtype, key, value)
 
     def set_chunk_data(self, plugin_id, chunk_data):
-        self.lib.set_chunk_data(plugin_id, chunk_data)
+        self.lib.set_chunk_data(plugin_id, chunk_data.encode("utf-8"))
 
     def set_gui_data(self, plugin_id, data, gui_addr):
         self.lib.set_gui_data(plugin_id, data, gui_addr)
@@ -1079,7 +1079,7 @@ class Host(object):
         self.lib.set_callback_function(Callback)
 
     def set_option(self, option, value, value_str):
-        self.lib.set_option(option, value, value_str)
+        self.lib.set_option(option, value, value_str.encode("utf-8"))
 
     def get_last_error(self):
         return self.lib.get_last_error()

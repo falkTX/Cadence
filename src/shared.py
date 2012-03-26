@@ -179,11 +179,18 @@ def isNumber(string):
 # Convert a value to a list
 def toList(value):
     if value is None:
-        return []
+      return []
     elif not isinstance(value, list):
-        return [value]
+      return [value]
     else:
-        return value
+      return value
+
+# Convert a ctypes char_p to a string
+def toString(value):
+    if (value):
+      return value.decode("utf-8")
+    else:
+      return ""
 
 # Remove/convert non-ascii chars from a string
 def unicode2ascii(string):

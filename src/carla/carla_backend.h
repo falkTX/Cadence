@@ -288,6 +288,7 @@ CARLA_EXPORT double get_latency();
 // -----------------------------------------------------
 
 // Helper functions
+const char* bool2str(bool yesno);
 short get_new_plugin_id();
 const char* get_unique_name(const char* name);
 void* get_pointer(intptr_t ptr_addr);

@@ -176,8 +176,8 @@ bool carla_close()
     get_plugin_info(0);
     get_parameter_info(0, 0);
     get_scalepoint_info(0, 0, 0);
-    //get_chunk_data(0);
-    //get_real_plugin_name(0);
+    get_chunk_data(0);
+    get_real_plugin_name(0);
 
     return closed;
 }
@@ -461,15 +461,13 @@ MidiProgramInfo* get_midi_program_info(unsigned short plugin_id, uint32_t midi_p
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-//            if (midi_program_id < plugin->midiprog.count)
-//            {
-//                info.valid   = true;
-//                info.bank    = plugin->midiprog.data[midi_program_id].bank;
-//                info.program = plugin->midiprog.data[midi_program_id].program;
-//                info.label   = plugin->midiprog.names[midi_program_id];
-//            }
-//            else
-//                qCritical("get_midi_program_info(%i, %i) - midi_program_id out of bounds", plugin_id, midi_program_id);
+            if (midi_program_id < plugin->midiprog_count())
+            {
+                info.valid   = true;
+                plugin->get_midi_program_info(&info);
+            }
+            else
+                qCritical("get_midi_program_info(%i, %i) - midi_program_id out of bounds", plugin_id, midi_program_id);
 
             return &info;
         }
@@ -490,10 +488,10 @@ ParameterData* get_parameter_data(unsigned short plugin_id, uint32_t parameter_i
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-//            if (parameter_id < plugin->param_count())
-//                return &plugin->param.data[parameter_id];
-//            else
-//                qCritical("get_parameter_data(%i, %i) - parameter_id out of bounds", plugin_id, parameter_id);
+            if (parameter_id < plugin->param_count())
+                return plugin->param_data(parameter_id);
+            else
+                qCritical("get_parameter_data(%i, %i) - parameter_id out of bounds", plugin_id, parameter_id);
 
             return &data;
         }
@@ -514,10 +512,10 @@ ParameterRanges* get_parameter_ranges(unsigned short plugin_id, uint32_t paramet
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-//            if (parameter_id < plugin->param.count)
-//                return &plugin->param.ranges[parameter_id];
-//            else
-//                qCritical("get_parameter_ranges(%i, %i) - parameter_id out of bounds", plugin_id, parameter_id);
+            if (parameter_id < plugin->param_count())
+                return plugin->param_ranges(parameter_id);
+            else
+                qCritical("get_parameter_ranges(%i, %i) - parameter_id out of bounds", plugin_id, parameter_id);
 
             return &ranges;
         }
@@ -616,9 +614,9 @@ uint32_t get_parameter_count(unsigned short plugin_id)
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
-//        CarlaPlugin* plugin = CarlaPlugins[i];
-//        if (plugin && plugin->id() == plugin_id)
-//            return plugin->param_count;
+        CarlaPlugin* plugin = CarlaPlugins[i];
+        if (plugin && plugin->id() == plugin_id)
+            return plugin->param_count();
     }
 
     qCritical("get_parameter_count(%i) - could not find plugin", plugin_id);
@@ -730,12 +728,12 @@ const char* get_real_plugin_name(unsigned short plugin_id)
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-//            char buf_str[STR_MAX] = { 0 };
+            char buf_str[STR_MAX] = { 0 };
 
-//            plugin->get_real_name(buf_str);
-//            real_plugin_name = strdup(buf_str);
+            plugin->get_real_name(buf_str);
+            real_plugin_name = strdup(buf_str);
 
-//            return real_plugin_name;
+            return real_plugin_name;
         }
     }
 
@@ -844,16 +842,16 @@ double get_output_peak_value(unsigned short plugin_id, unsigned short port_id)
 
 void set_active(unsigned short plugin_id, bool onoff)
 {
-//    qDebug("set_active(%i, %s)", plugin_id, bool2str(onoff));
+    qDebug("set_active(%i, %s)", plugin_id, bool2str(onoff));
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
-//        CarlaPlugin* plugin = CarlaPlugins[i];
-//        if (plugin && plugin->id() == plugin_id)
-//            return plugin->set_active(onoff, true, false);
+        CarlaPlugin* plugin = CarlaPlugins[i];
+        if (plugin && plugin->id() == plugin_id)
+            return plugin->set_active(onoff, true, false);
     }
 
-//    qCritical("set_active(%i, %s) - could not find plugin", plugin_id, bool2str(onoff));
+    qCritical("set_active(%i, %s) - could not find plugin", plugin_id, bool2str(onoff));
 }
 
 void set_drywet(unsigned short plugin_id, double value)
@@ -862,9 +860,9 @@ void set_drywet(unsigned short plugin_id, double value)
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
-//        CarlaPlugin* plugin = CarlaPlugins[i];
-//        if (plugin && plugin->id() == plugin_id)
-//            return plugin->set_drywet(value, true, false);
+        CarlaPlugin* plugin = CarlaPlugins[i];
+        if (plugin && plugin->id() == plugin_id)
+            return plugin->set_drywet(value, true, false);
     }
 
     qCritical("set_drywet(%i, %f) - could not find plugin", plugin_id, value);
@@ -876,9 +874,9 @@ void set_volume(unsigned short plugin_id, double value)
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
-//        CarlaPlugin* plugin = CarlaPlugins[i];
-//        if (plugin && plugin->id() == plugin_id)
-//            return plugin->set_vol(value, true, false);
+        CarlaPlugin* plugin = CarlaPlugins[i];
+        if (plugin && plugin->id() == plugin_id)
+            return plugin->set_volume(value, true, false);
     }
 
     qCritical("set_vol(%i, %f) - could not find plugin", plugin_id, value);
@@ -890,9 +888,9 @@ void set_balance_left(unsigned short plugin_id, double value)
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
-//        CarlaPlugin* plugin = CarlaPlugins[i];
-//        if (plugin && plugin->id() == plugin_id)
-//            return plugin->set_balance_left(value, true, false);
+        CarlaPlugin* plugin = CarlaPlugins[i];
+        if (plugin && plugin->id() == plugin_id)
+            return plugin->set_balance_left(value, true, false);
     }
 
     qCritical("set_balance_left(%i, %f) - could not find plugin", plugin_id, value);
@@ -904,9 +902,9 @@ void set_balance_right(unsigned short plugin_id, double value)
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
-//        CarlaPlugin* plugin = CarlaPlugins[i];
-//        if (plugin && plugin->id() == plugin_id)
-//            return plugin->set_balance_right(value, true, false);
+        CarlaPlugin* plugin = CarlaPlugins[i];
+        if (plugin && plugin->id() == plugin_id)
+            return plugin->set_balance_right(value, true, false);
     }
 
     qCritical("set_balance_right(%i, %f) - could not find plugin", plugin_id, value);
@@ -1101,7 +1099,7 @@ void set_gui_data(unsigned short plugin_id, int data, intptr_t gui_addr)
 
 void show_gui(unsigned short plugin_id, bool yesno)
 {
-//    qDebug("show_gui(%i, %s)", plugin_id, bool2str(yesno));
+    qDebug("show_gui(%i, %s)", plugin_id, bool2str(yesno));
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
@@ -1113,7 +1111,7 @@ void show_gui(unsigned short plugin_id, bool yesno)
         }
     }
 
-//    qCritical("show_gui(%i, %s) - could not find plugin", plugin_id, bool2str(yesno));
+    qCritical("show_gui(%i, %s) - could not find plugin", plugin_id, bool2str(yesno));
 }
 
 void idle_gui(unsigned short plugin_id)
@@ -1135,7 +1133,7 @@ void idle_gui(unsigned short plugin_id)
 
 void send_midi_note(unsigned short plugin_id, bool onoff, uint8_t note, uint8_t velocity)
 {
-//    qDebug("send_midi_note(%i, %s, %i, %i)", plugin_id, bool2str(onoff), note, velocity);
+    qDebug("send_midi_note(%i, %s, %i, %i)", plugin_id, bool2str(onoff), note, velocity);
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
@@ -1144,7 +1142,7 @@ void send_midi_note(unsigned short plugin_id, bool onoff, uint8_t note, uint8_t 
 //            return send_plugin_midi_note(plugin_id, onoff, note, velocity, true, true, false);
     }
 
-//    qCritical("send_midi_note(%i, %s, %i, %i) - could not find plugin", plugin_id, bool2str(onoff), note, velocity);
+    qCritical("send_midi_note(%i, %s, %i, %i) - could not find plugin", plugin_id, bool2str(onoff), note, velocity);
 }
 
 void prepare_for_save(unsigned short plugin_id)
@@ -1226,6 +1224,14 @@ double get_latency()
 // -------------------------------------------------------------------------------------------------------------------
 // Helper functions
 
+const char* bool2str(bool yesno)
+{
+    if (yesno)
+        return "true";
+    else
+        return "false";
+}
+
 short get_new_plugin_id()
 {
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
@@ -1251,7 +1257,7 @@ const char* get_unique_name(const char* name)
         qname = "(No name)";
 
     qname.truncate(max);
-    qname.replace(":", "."); // ":" is used in JACK to split client/port names
+    //qname.replace(":", "."); // ":" is used in JACK to split client/port names
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {

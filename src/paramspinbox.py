@@ -123,7 +123,7 @@ class ParamProgressBar(QProgressBar):
         return QProgressBar.mouseReleaseEvent(self, event)
 
     def paintEvent(self, event):
-        self.setFormat(QString("%1 %2 %3").arg(self._pre_label).arg(self._rvalue).arg(self._label))
+        self.setFormat("%s %f %s" % (self._pre_label, self._rvalue, self._label))
         return QProgressBar.paintEvent(self, event)
 
 # Special SpinBox used for parameters
