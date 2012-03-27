@@ -595,14 +595,6 @@ public:
             jack_activate(jack_client);
     }
 
-    virtual void reload_programs(bool)
-    {
-    }
-
-    virtual void prepare_for_save()
-    {
-    }
-
     virtual void process(jack_nframes_t nframes)
     {
         uint32_t i, k;
@@ -873,10 +865,6 @@ public:
         aouts_peak[(plugin_id*2)+1] = aouts_peak_tmp[1];
 
         m_active_before = m_active;
-    }
-
-    virtual void buffer_size_changed(jack_nframes_t)
-    {
     }
 
     bool init(const char* filename, const char* label, void* extra_stuff)

@@ -205,8 +205,11 @@ inline void ladspa_rdf_free(const LADSPA_RDF_Descriptor* rdf_descriptor)
 {
     unsigned long i, j;
 
-    free((void*)rdf_descriptor->Title);
-    free((void*)rdf_descriptor->Creator);
+    if (rdf_descriptor->Title)
+        free((void*)rdf_descriptor->Title);
+
+    if (rdf_descriptor->Creator)
+        free((void*)rdf_descriptor->Creator);
 
     if (rdf_descriptor->PortCount > 0)
     {
