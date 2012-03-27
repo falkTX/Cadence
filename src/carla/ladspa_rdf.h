@@ -155,8 +155,15 @@ inline const LADSPA_RDF_Descriptor* ladspa_rdf_dup(const LADSPA_RDF_Descriptor* 
     new_descriptor->UniqueID = rdf_descriptor->UniqueID;
     new_descriptor->PortCount = rdf_descriptor->PortCount;
 
-    new_descriptor->Title = strdup(rdf_descriptor->Title);
-    new_descriptor->Creator = strdup(rdf_descriptor->Creator);
+    if (rdf_descriptor->Title)
+        new_descriptor->Title = strdup(rdf_descriptor->Title);
+    else
+        new_descriptor->Title = nullptr;
+
+    if (rdf_descriptor->Creator)
+        new_descriptor->Creator = strdup(rdf_descriptor->Creator);
+    else
+        new_descriptor->Creator = nullptr;
 
     if (new_descriptor->PortCount > 0)
     {

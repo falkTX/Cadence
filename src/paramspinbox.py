@@ -228,7 +228,7 @@ class ParamSpinBox(QAbstractSpinBox):
             self.updateBarGeometry()
 
             for scalepoint in scalepoints:
-              self.box.addItem(QString("%1 - %2").arg(scalepoint['value']).arg(scalepoint['label']))
+              self.box.addItem("%f - %s" % (scalepoint['value'], scalepoint['label']))
 
             self.set_scalepoint_value(self._value)
 
@@ -240,7 +240,7 @@ class ParamSpinBox(QAbstractSpinBox):
     def set_scalepoint_value(self, value):
         value = self.get_nearest_scalepoint(value)
         for i in range(self.box.count()):
-          if (self.box.itemText(i).split(" - ")[0].toFloat()[0] == value):
+          if (float(self.box.itemText(i).split(" - ", 1)[0]) == value):
             self.box.setCurrentIndex(i)
             break
 
@@ -270,7 +270,7 @@ class ParamSpinBox(QAbstractSpinBox):
     def handleValueChangedFromBox(self, box_text):
         if (self._read_only): return
 
-        value = box_text.split(" - ")[0].toFloat()[0]
+        value = float(box_text.split(" - ", 1)[0])
         last_scale_value = self._scalepoints[len(self._scalepoints)-1]['value']
 
         if (value == last_scale_value):
@@ -280,11 +280,11 @@ class ParamSpinBox(QAbstractSpinBox):
 
     def showCustomMenu(self, pos):
         menu = QMenu(self)
-        act_x_reset = menu.addAction(self.tr("Reset (%1)").arg(self._default))
+        act_x_reset = menu.addAction(self.tr("Reset (%f)" % (self._default)))
         menu.addSeparator()
-        act_x_copy = menu.addAction(self.tr("Copy (%1)").arg(self._value))
+        act_x_copy = menu.addAction(self.tr("Copy (%f)"% (self._value)))
         if (False and not self._read_only):
-          act_x_paste = menu.addAction(self.tr("Paste (%1)").arg("TODO"))
+          act_x_paste = menu.addAction(self.tr("Paste (%s)" % ("TODO")))
         else:
           act_x_paste = menu.addAction(self.tr("Paste"))
           act_x_paste.setEnabled(False)

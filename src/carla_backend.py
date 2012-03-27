@@ -23,12 +23,12 @@ from copy import deepcopy
 from subprocess import getoutput
 
 # Imports (Custom)
-try:
-  import ladspa_rdf
-  haveRDF = True
-except:
-  print("RDF Support not available (LADSPA-RDF and LV2 will be disabled)")
-  haveRDF = False
+#try:
+import ladspa_rdf
+haveRDF = True
+#except:
+  #print("RDF Support not available (LADSPA-RDF and LV2 will be disabled)")
+  #haveRDF = False
 
 # Set Platform and Architecture
 is64bit = False

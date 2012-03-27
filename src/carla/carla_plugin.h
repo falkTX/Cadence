@@ -37,6 +37,11 @@ struct PluginAudioData {
     jack_port_t** ports;
 };
 
+struct PluginMidiData {
+    uint32_t count;
+    jack_port_t** ports;
+};
+
 struct PluginParameterData {
     uint32_t count;
     ParameterData* data;
@@ -78,6 +83,12 @@ public:
         aout.ports = nullptr;
         aout.rindexes = nullptr;
 
+        min.count = 0;
+        min.ports = nullptr;
+
+        mout.count = 0;
+        mout.ports = nullptr;
+
         param.count    = 0;
         param.data     = nullptr;
         param.ranges   = nullptr;
@@ -112,6 +123,11 @@ public:
         return m_type;
     }
 
+    virtual PluginCategory category()
+    {
+        return PLUGIN_CATEGORY_NONE;
+    }
+
     short id()
     {
         return m_id;
@@ -132,14 +148,14 @@ public:
         return m_filename;
     }
 
+    virtual long unique_id()
+    {
+        return 0;
+    }
+
     uint32_t param_count()
     {
         return param.count;
-    }
-
-    uint32_t midiprog_count()
-    {
-        return 0;
     }
 
     ParameterData* param_data(uint32_t index)
@@ -152,6 +168,74 @@ public:
         return &param.ranges[index];
     }
 
+    virtual uint32_t param_scalepoint_count(uint32_t index)
+    {
+        Q_UNUSED(index);
+        return 0;
+    }
+
+    virtual double param_scalepoint_value(uint32_t pindex, uint32_t index)
+    {
+        Q_UNUSED(index);
+        Q_UNUSED(pindex);
+        return 0.0;
+    }
+
+    virtual uint32_t prog_count()
+    {
+        return 0;
+    }
+
+    virtual uint32_t midiprog_count()
+    {
+        return 0;
+    }
+
+    virtual void get_label(char* buf_str)
+    {
+        *buf_str = 0;
+    }
+
+    virtual void get_maker(char* buf_str)
+    {
+        *buf_str = 0;
+    }
+
+    virtual void get_copyright(char* buf_str)
+    {
+        *buf_str = 0;
+    }
+
+    virtual void get_real_name(char* buf_str)
+    {
+        *buf_str = 0;
+    }
+
+    virtual void get_parameter_name(uint32_t index, char* buf_str)
+    {
+        *buf_str = 0;
+        Q_UNUSED(index);
+    }
+
+    virtual void get_parameter_symbol(uint32_t index, char* buf_str)
+    {
+        *buf_str = 0;
+        Q_UNUSED(index);
+    }
+
+    virtual void get_parameter_label(uint32_t index, char* buf_str)
+    {
+        *buf_str = 0;
+        Q_UNUSED(index);
+    }
+
+    virtual void get_parameter_scalepoint_label(uint32_t pindex, uint32_t index, char* buf_str)
+    {
+        *buf_str = 0;
+        Q_UNUSED(index);
+        Q_UNUSED(pindex);
+    }
+
     void get_audio_port_count_info(PortCountInfo* info)
     {
         info->ins   = ain.count;
@@ -161,9 +245,9 @@ public:
 
     void get_midi_port_count_info(PortCountInfo* info)
     {
-        info->ins   = 0; //min.count;
-        info->outs  = 0; //mout.count;
-        info->total = 0; //min.count + mout.count;
+        info->ins   = min.count;
+        info->outs  = mout.count;
+        info->total = min.count + mout.count;
     }
 
     void get_parameter_count_info(PortCountInfo* info)
@@ -181,14 +265,17 @@ public:
         }
     }
 
-    void get_midi_program_info(MidiProgramInfo* info)
+    virtual void get_midi_program_info(MidiProgramInfo* info)
     {
         info->bank = 0;
         info->program = 0;
         info->label = nullptr;
-        //info.bank    = plugin->midiprog.data[midi_program_id].bank;
-        //info.program = plugin->midiprog.data[midi_program_id].program;
-        //info.label   = plugin->midiprog.names[midi_program_id];
+    }
+
+    virtual int32_t get_chunk_data(void** data_ptr)
+    {
+        Q_UNUSED(data_ptr);
+        return 0;
     }
 
     void set_id(short id)
@@ -297,44 +384,84 @@ public:
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_BALANCE_RIGHT, 0, value);
     }
 
-    virtual PluginCategory category() = 0;
-    virtual long unique_id() = 0;
+    double get_default_parameter_value(uint32_t index)
+    {
+        return param.ranges[index].def;
+    }
 
-    virtual uint32_t param_scalepoint_count(uint32_t index) = 0;
-    virtual double param_scalepoint_value(uint32_t pindex, uint32_t index) = 0;
+    virtual double get_current_parameter_value(uint32_t index)
+    {
+        //if (plugin->param.data[parameter_id].hints & PARAMETER_HAS_STRICT_BOUNDS)
+        //    plugin->fix_parameter_value(value, plugin->param.ranges[parameter_id]);
+        Q_UNUSED(index);
+        return 0.0;
+    }
 
-    virtual void get_label(char* buf_str) = 0;
-    virtual void get_maker(char* buf_str) = 0;
-    virtual void get_copyright(char* buf_str) = 0;
-    virtual void get_real_name(char* buf_str) = 0;
+    virtual void set_parameter_value(uint32_t index, double value, bool gui_send, bool osc_send, bool callback_send)
+    {
+        //fix_parameter_value(value, param.ranges[parameter_id]);
 
-    virtual void get_parameter_name(uint32_t index, char* buf_str) = 0;
-    virtual void get_parameter_symbol(uint32_t index, char* buf_str) = 0;
-    virtual void get_parameter_label(uint32_t index, char* buf_str) = 0;
+        if (osc_send)
+        {
+            //osc_send_set_parameter_value(&global_osc_data, id, parameter_id, value);
 
-    virtual void get_parameter_scalepoint_label(uint32_t pindex, uint32_t index, char* buf_str) = 0;
+            //if (hints & PLUGIN_IS_BRIDGE)
+            //    osc_send_control(&osc.data, parameter_id, value);
+        }
+
+        if (callback_send)
+            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, index, 0, value);
+
+        Q_UNUSED(gui_send);
+        //x_set_parameter_value(parameter_id, value, gui_send);
+    }
+
+    virtual void set_chunk_data(const char* string_data)
+    {
+        Q_UNUSED(string_data);
+    }
+
+    virtual void set_gui_data(int data, void* ptr)
+    {
+        Q_UNUSED(data);
+        Q_UNUSED(ptr);
+    }
+
+    virtual void show_gui(bool yesno)
+    {
+        Q_UNUSED(yesno);
+    }
+
+    virtual void idle_gui()
+    {
+    }
+
+    virtual void reload()
+    {
+    }
+
+    virtual void reload_programs(bool init)
+    {
+        Q_UNUSED(init);
+    }
+
+    virtual void prepare_for_save()
+    {
+    }
+
+    virtual void process(jack_nframes_t nframes) = 0;
+
+    virtual void buffer_size_changed(jack_nframes_t new_buffer_size)
+    {
+        Q_UNUSED(new_buffer_size);
+    }
 
 //    virtual int set_osc_bridge_info(PluginOscBridgeInfoType, lo_arg**) = 0;
-
-//    virtual int32_t get_chunk_data(void** data_ptr) = 0;
 
 //    virtual void x_set_parameter_value(uint32_t parameter_id, double value, bool gui_send) = 0;
 //    virtual void x_set_program(uint32_t program_id, bool gui_send, bool block) = 0;
 //    virtual void x_set_midi_program(uint32_t midi_program_id, bool gui_send, bool block) = 0;
 //    virtual void x_set_custom_data(CustomDataType dtype, const char* key, const char* value, bool gui_send) = 0;
-
-//    virtual void set_chunk_data(const char* string_data) = 0;
-//    virtual void set_gui_data(int data, void* ptr) = 0;
-
-//    virtual void show_gui(bool yesno) = 0;
-//    virtual void idle_gui() = 0;
-
-    virtual void reload() = 0;
-    virtual void reload_programs(bool init) = 0;
-    virtual void prepare_for_save() = 0;
-
-    virtual void process(jack_nframes_t nframes) = 0;
-    virtual void buffer_size_changed(jack_nframes_t new_buffer_size) = 0;
 
     void remove_from_jack()
     {
@@ -351,11 +478,11 @@ public:
         for (i=0; i < aout.count; i++)
             jack_port_unregister(jack_client, aout.ports[i]);
 
-        //for (i=0; i < min.count; i++)
-        //    jack_port_unregister(jack_client, min.ports[i]);
+        for (i=0; i < min.count; i++)
+            jack_port_unregister(jack_client, min.ports[i]);
 
-        //for (i=0; i < mout.count; i++)
-        //    jack_port_unregister(jack_client, mout.ports[i]);
+        for (i=0; i < mout.count; i++)
+            jack_port_unregister(jack_client, mout.ports[i]);
 
         if (param.port_cin)
             jack_port_unregister(jack_client, param.port_cin);
@@ -382,15 +509,15 @@ public:
             delete[] aout.rindexes;
         }
 
-        //if (min.count > 0)
-        //{
-        //    delete[] min.ports;
-        //}
+        if (min.count > 0)
+        {
+            delete[] min.ports;
+        }
 
-        //if (mout.count > 0)
-        //{
-        //    delete[] mout.ports;
-        //}
+        if (mout.count > 0)
+        {
+            delete[] mout.ports;
+        }
 
         if (param.count > 0)
         {
@@ -406,11 +533,11 @@ public:
         aout.ports = nullptr;
         aout.rindexes = nullptr;
 
-        //min.count = 0;
-        //min.ports = nullptr;
+        min.count = 0;
+        min.ports = nullptr;
 
-        //mout.count = 0;
-        //mout.ports = nullptr;
+        mout.count = 0;
+        mout.ports = nullptr;
 
         param.count    = 0;
         param.data     = nullptr;
@@ -492,6 +619,8 @@ protected:
     // Storage Data
     PluginAudioData ain;
     PluginAudioData aout;
+    PluginMidiData min;
+    PluginMidiData mout;
     PluginParameterData param;
 };
 

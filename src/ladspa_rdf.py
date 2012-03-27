@@ -721,7 +721,7 @@ def get_c_ladspa_rdfs(PyPluginList):
     desc.UniqueID  = plugin['UniqueID']
 
     try:
-      if (plugin['Title'])
+      if (plugin['Title']):
         desc.Title = plugin['Title'].encode("utf-8")
       else:
         desc.Title = None
@@ -729,7 +729,7 @@ def get_c_ladspa_rdfs(PyPluginList):
       desc.Title   = c_unicode_error_str
 
     try:
-      if (plugin['Creator'])
+      if (plugin['Creator']):
         desc.Creator = plugin['Creator'].encode("utf-8")
       else:
         desc.Creator = None

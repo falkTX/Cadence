@@ -251,6 +251,18 @@ public:
             *buf_str = 0;
     }
 
+    virtual double get_current_parameter_value(uint32_t index)
+    {
+        return param_buffers[index];
+    }
+
+    virtual void set_parameter_value(uint32_t index, double value, bool gui_send, bool osc_send, bool callback_send)
+    {
+        param_buffers[index] = value;
+
+        CarlaPlugin::set_parameter_value(index, value, gui_send, osc_send, callback_send);
+    }
+
     virtual void reload()
     {
         qDebug("LadspaPlugin::reload()");

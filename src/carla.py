@@ -1239,7 +1239,7 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
         self.set_MIDI_CC_in_ComboBox(cc_index)
 
     def handleValueChanged(self, value):
-        self.emit(SIGNAL("valueChanged(int, float)"), self.parameter_id, value)
+        self.emit(SIGNAL("valueChanged(int, double)"), self.parameter_id, value)
 
     def handleMidiChannelChanged(self, channel):
         if (self.midi_channel != channel):
@@ -1350,8 +1350,6 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.b_reload_midi_program.setEnabled(False)
 
         self.do_reload_all()
-
-        #self.TIMER_GUI_STUFF = self.startTimer(100)
 
     #def do_update(self):
         #self.checkInputControlParameters()
@@ -1516,7 +1514,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
             for j in range(param_info['scalepoint_count']):
               scalepoint = CarlaHost.get_scalepoint_info(self.plugin_id, i, j)
-              parameter['scalepoints'].append(scalepoint)
+              parameter['scalepoints'].append({'value': scalepoint['value'], 'label': toString(scalepoint['label'])})
 
             # -----------------------------------------------------------------
             # Get width values, in packs of 10
@@ -1701,9 +1699,6 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         #self.cb_midi_programs.setCurrentIndex(midi_program_id)
         #QTimer.singleShot(0, self.checkInputControlParameters)
 
-    #def handleParameterValueChanged(self, parameter_id, value):
-        #CarlaHost.set_parameter_value(self.plugin_id, parameter_id, value)
-
     #def handleParameterMidiChannelChanged(self, parameter_id, channel):
         #CarlaHost.set_parameter_midi_channel(self.plugin_id, parameter_id, channel-1)
 
@@ -1816,8 +1811,8 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
               self.parameter_list.append((ptype, p_list[j]['index'], pwidget))
 
-              #if (ptype == PARAMETER_INPUT):
-                #self.connect(pwidget, SIGNAL("valueChanged(int, float)"),  self.handleParameterValueChanged)
+              if (ptype == PARAMETER_INPUT):
+                self.connect(pwidget, SIGNAL("valueChanged(int, double)"),  SLOT("slot_parameterValueChanged(int, double)"))
 
               #self.connect(pwidget, SIGNAL("midiChannelChanged(int, int)"),  self.handleParameterMidiChannelChanged)
               #self.connect(pwidget, SIGNAL("midiCcChanged(int, int)"),  self.handleParameterMidiCcChanged)
@@ -1831,6 +1826,10 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
               self.tab_icon_timers.append(ICON_STATE_OFF)
             else:
               self.tab_icon_timers.append(None)
+
+    @pyqtSlot(int, float)
+    def slot_parameterValueChanged(self, parameter_id, value):
+        CarlaHost.set_parameter_value(self.plugin_id, parameter_id, value)
 
     #def animateTab(self, index):
         #if (self.tab_icon_timers[index-1] == None):
@@ -1884,12 +1883,10 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         #for i in self.parameter_list_to_update:
           #self.parameter_list_to_update.pop(0)
 
-    #def timerEvent(self, event):
-        #if (event.timerId() == self.TIMER_GUI_STUFF):
-          #self.checkOutputControlParameters()
-          #self.checkTabIcons()
-          #self.checkUpdatedParameters()
-        #return QDialog.timerEvent(self, event)
+    #def check_gui_stuff(self):
+        #self.checkOutputControlParameters()
+        #self.checkTabIcons()
+        #self.checkUpdatedParameters()
 
 # (New) Plugin Widget
 class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
@@ -2880,7 +2877,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
     def remove_plugin(self, plugin_id, showError):
         pwidget = self.m_plugin_list[plugin_id]
-        #pwidget.edit_dialog.close()
+        pwidget.edit_dialog.close()
 
         if (pwidget.gui_dialog):
           pwidget.gui_dialog.close()
@@ -2908,7 +2905,9 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
         if (ptype == PLUGIN_LADSPA):
           unique_id = plugin['unique_id']
+          print(unique_id, type(unique_id), len(self.ladspa_rdf_list))
           for rdf_item in self.ladspa_rdf_list:
+            print(rdf_item.UniqueID, type(rdf_item.UniqueID))
             if (rdf_item.UniqueID == unique_id):
               return pointer(rdf_item)
           else:
@@ -3108,10 +3107,10 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
           if (os.path.exists(fr_ladspa_file)):
             fr_ladspa = open(fr_ladspa_file, 'r')
             if (fr_ladspa):
-              try:
-                self.ladspa_rdf_list = ladspa_rdf.get_c_ladspa_rdfs(json.load(fr_ladspa))
-              except:
-                self.ladspa_rdf_list = []
+              #try:
+              self.ladspa_rdf_list = ladspa_rdf.get_c_ladspa_rdfs(json.load(fr_ladspa))
+              #except:
+                #self.ladspa_rdf_list = []
               fr_ladspa.close()
 
           #fr_lv2_file = os.path.join(SettingsDir, "lv2_rdf.db")
