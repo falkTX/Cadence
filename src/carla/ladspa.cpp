@@ -900,15 +900,8 @@ public:
                         else
                             m_name = get_unique_name(descriptor->Name);
 
-                        //if (carla_options.global_jack_client)
-                        jack_client = carla_jack_client;
-                        //else
-                        //    carla_jack_register_plugin(plugin);
-
-                        if (jack_client)
-                        {
+                        if (register_jack_plugin())
                             return true;
-                        }
                         else
                             set_last_error("Failed to register plugin in JACK");
                     }

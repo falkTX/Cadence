@@ -28,12 +28,15 @@
 
 #include <QtCore/QMutex>
 
-#define CARLA_PROCESS_CONTINUE_CHECK if (m_id != plugin_id) { return callback_action(CALLBACK_DEBUG, plugin_id, m_id, 0, 0.0f); }
+#define CARLA_PROCESS_CONTINUE_CHECK if (m_id != plugin_id) { return callback_action(CALLBACK_DEBUG, plugin_id, m_id, 0, 0.0); }
+
+const unsigned short MAX_POSTEVENTS = 128;
 
 // Global JACK client
 extern jack_client_t* carla_jack_client;
 
-const unsigned short MAX_POSTEVENTS = 128;
+// jack.cpp
+int carla_jack_process_callback(jack_nframes_t nframes, void* arg);
 
 enum PluginPostEventType {
     PostEventDebug,
@@ -616,6 +619,26 @@ public:
         param.port_cout = nullptr;
 
         qDebug("CarlaPlugin::delete_buffers() - end");
+    }
+
+    bool register_jack_plugin()
+    {
+        if (carla_options.global_jack_client)
+        {
+            jack_client = carla_jack_client;
+            return true;
+        }
+        else
+        {
+            jack_client = jack_client_open(m_name, JackNullOption, nullptr);
+
+            if (jack_client)
+            {
+                jack_set_process_callback(jack_client, carla_jack_process_callback, this);
+                return true;
+            }
+            return false;
+        }
     }
 
     bool lib_open(const char* filename)

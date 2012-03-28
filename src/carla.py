@@ -27,7 +27,7 @@ from PyQt4.QtXml import QDomDocument
 # Imports (Custom Stuff)
 import ui_carla, ui_carla_about, ui_carla_database, ui_carla_edit, ui_carla_parameter, ui_carla_plugin, ui_carla_refresh
 from carla_backend import *
-from shared import *
+from shared_settings import *
 
 ICON_STATE_NULL = 0
 ICON_STATE_WAIT = 1
@@ -80,6 +80,10 @@ save_state_custom_data = {
   'key':  "",
   'value': ""
 }
+
+# set default project folder
+DEFAULT_PROJECT_FOLDER = HOME
+setDefaultProjectFolder(DEFAULT_PROJECT_FOLDER)
 
 def getStateDictFromXML(xml_node):
     x_save_state_dict = deepcopy(save_state_dict)
@@ -1913,11 +1917,9 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
         self.peak_in.setColor(self.peak_in.GREEN)
         self.peak_in.setOrientation(self.peak_in.HORIZONTAL)
-        #self.peak_in.setRefreshRate(30)
 
         self.peak_out.setColor(self.peak_in.BLUE)
         self.peak_out.setOrientation(self.peak_out.HORIZONTAL)
-        #self.peak_in.setRefreshRate(30)
 
         audio_count = CarlaHost.get_audio_port_count_info(self.plugin_id)
         if (not audio_count['valid']):
@@ -2127,7 +2129,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         r = 35
         g = 35
         b = 35
-        texture = 4
+        texture = 9
 
       self.setStyleSheet("""
         QFrame#PluginWidget {
@@ -2140,7 +2142,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         }
         QFrame#frame_name {
           background-image: url(:/bitmaps/glass.png);
-          background-color: rgba(%i, %i, %i);
+          background-color: rgb(%i, %i, %i);
           border: 2px outset;
           border-color: rgb(%i, %i, %i);
         }
@@ -2153,7 +2155,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         QFrame#frame_peaks {
           background-color: rgba(30, 30, 30, 200);
           border: 2px outset;
-          border-color: rgba(30, 30, 30, 255);
+          border-color: rgba(30, 30, 30, 225);
         }
       """ % (texture, r, g, b, r, g, b))
 
@@ -2456,7 +2458,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
           else:
             peak = CarlaHost.get_input_peak_value(self.plugin_id, 1)
-            led_ain_state = bool(peak1 != 0.0)
+            led_ain_state = bool(peak != 0.0)
 
             self.peak_in.displayMeter(1, peak)
 
@@ -2477,7 +2479,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
           else:
             peak = CarlaHost.get_output_peak_value(self.plugin_id, 1)
-            led_aout_state = bool(peak1 != 0.0)
+            led_aout_state = bool(peak != 0.0)
 
             self.peak_out.displayMeter(1, peak)
 
@@ -2652,7 +2654,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
         self.settings = QSettings("Cadence", "Carla")
         self.settings_db = QSettings("Cadence", "Carla-Database")
-        self.loadSettings()
+        self.loadSettings(True)
 
         self.loadRDFs()
 
@@ -2695,6 +2697,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.connect(self.act_plugin_add, SIGNAL("triggered()"), SLOT("slot_plugin_add()"))
         self.connect(self.act_plugin_remove_all, SIGNAL("triggered()"), SLOT("slot_remove_all()"))
 
+        self.connect(self.act_settings_configure, SIGNAL("triggered()"), SLOT("slot_configureCarla()"))
         self.connect(self.act_help_about, SIGNAL("triggered()"), SLOT("slot_aboutCarla()"))
         self.connect(self.act_help_about_qt, SIGNAL("triggered()"), app, SLOT("aboutQt()"))
 
@@ -2714,8 +2717,8 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.connect(self, SIGNAL("ReloadAllCallback(int)"), SLOT("slot_handleReloadAllCallback(int)"))
         self.connect(self, SIGNAL("QuitCallback()"), SLOT("slot_handleQuitCallback()"))
 
-        self.TIMER_GUI_STUFF  = self.startTimer(50)   # Peaks
-        self.TIMER_GUI_STUFF2 = self.startTimer(50*2) # LEDs and edit dialog
+        self.TIMER_GUI_STUFF  = self.startTimer(self.m_savedSettings["Main/RefreshInterval"])   # Peaks
+        self.TIMER_GUI_STUFF2 = self.startTimer(self.m_savedSettings["Main/RefreshInterval"]*2) # LEDs and edit dialog
 
     def callback_function(self, action, plugin_id, value1, value2, value3):
         if (plugin_id < 0 or plugin_id >= MAX_PLUGINS):
@@ -2870,6 +2873,9 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
           self.w_plugins.layout().addWidget(pwidget)
           self.m_plugin_list[new_plugin_id] = pwidget
           self.act_plugin_remove_all.setEnabled(True)
+
+          pwidget.peak_in.setRefreshRate(self.m_savedSettings["Main/RefreshInterval"])
+          pwidget.peak_out.setRefreshRate(self.m_savedSettings["Main/RefreshInterval"])
 
           if (activate):
             pwidget.set_active(True, True, True)
@@ -3193,7 +3199,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
     @pyqtSlot()
     def slot_file_open(self):
         file_filter = self.tr("Carla Project File (*.carxp)")
-        filename    = QFileDialog.getOpenFileName(self, self.tr("Open Carla Project File"), filter=file_filter)
+        filename    = QFileDialog.getOpenFileName(self, self.tr("Open Carla Project File"), self.m_savedSettings["Main/DefaultProjectFolder"], filter=file_filter)
 
         if (filename):
           self.m_project_filename = filename
@@ -3205,7 +3211,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
     def slot_file_save(self, saveAs=False):
        if (self.m_project_filename == None or saveAs):
           file_filter = self.tr("Carla Project File (*.carxp)")
-          filename    = QFileDialog.getSaveFileName(self, self.tr("Save Carla Project File"), filter=file_filter)
+          filename    = QFileDialog.getSaveFileName(self, self.tr("Save Carla Project File"), self.m_savedSettings["Main/DefaultProjectFolder"], filter=file_filter)
 
           if (filename):
             self.m_project_filename = filename
@@ -3233,8 +3239,19 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
     @pyqtSlot()
     def slot_remove_all(self):
         for i in range(MAX_PLUGINS):
-          if (self.m_plugin_list[i] != None):
+          if (self.m_plugin_list[i]):
             self.remove_plugin(i, False)
+
+    @pyqtSlot()
+    def slot_configureCarla(self):
+        dialog = SettingsW(self, "carla")
+        if (dialog.exec_()):
+          self.loadSettings(False)
+
+          for pwidget in self.m_plugin_list:
+            if (pwidget):
+              pwidget.peak_in.setRefreshRate(self.m_savedSettings["Main/RefreshInterval"])
+              pwidget.peak_out.setRefreshRate(self.m_savedSettings["Main/RefreshInterval"])
 
     @pyqtSlot()
     def slot_aboutCarla(self):
@@ -3242,9 +3259,20 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
     def saveSettings(self):
         self.settings.setValue("Geometry", self.saveGeometry())
+        self.settings.setValue("ShowToolbar", self.toolBar.isVisible())
 
-    def loadSettings(self):
-        self.restoreGeometry(self.settings.value("Geometry", ""))
+    def loadSettings(self, geometry):
+        if (geometry):
+          self.restoreGeometry(self.settings.value("Geometry", ""))
+
+          show_toolbar = self.settings.value("ShowToolbar", True, type=bool)
+          self.act_settings_show_toolbar.setChecked(show_toolbar)
+          self.toolBar.setVisible(show_toolbar)
+
+        self.m_savedSettings = {
+          "Main/DefaultProjectFolder": self.settings.value("Main/DefaultProjectFolder", DEFAULT_PROJECT_FOLDER, type=str),
+          "Main/RefreshInterval": self.settings.value("Main/RefreshInterval", 120, type=int)
+        }
 
     def timerEvent(self, event):
         if (event.timerId() == self.TIMER_GUI_STUFF):
@@ -3274,19 +3302,23 @@ if __name__ == '__main__':
     #force_parameters_style = (style in ("Bespin::Style",))
 
     CarlaHost = Host()
-    CarlaHost.set_option(OPTION_GLOBAL_JACK_CLIENT, 1, "")
+
+    # Create GUI and read settings
+    gui = CarlaMainW()
+
+    # Init backend
+    CarlaHost.set_option(OPTION_GLOBAL_JACK_CLIENT, 0, "")
 
     if (not CarlaHost.carla_init("Carla")):
       CustomMessageBox(None, QMessageBox.Critical, "Error", "Could not connect to JACK",
                             toString(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
       sys.exit(1)
 
-    # Show GUI
-    gui = CarlaMainW()
-    gui.show()
-
     # Set-up custom signal handling
     set_up_signals(gui)
+
+    # Show GUI
+    gui.show()
 
     for i in range(len(app.arguments())):
       if (i == 0): continue

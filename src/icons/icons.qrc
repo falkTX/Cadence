@@ -81,5 +81,6 @@
             <file>bitmaps/textures/metal_6-512px.jpg</file>
             <file>bitmaps/textures/metal_7-512px.jpg</file>
             <file>bitmaps/textures/metal_8-512px.jpg</file>
+            <file>bitmaps/textures/metal_9-512px.jpg</file>
         </qresource>
 </RCC>

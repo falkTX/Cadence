@@ -52,14 +52,15 @@ def setDefaultProjectFolder(folder):
 
 # Settings Dialog
 class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
-    def __init__(self, parent, appName, hasOpenGL):
+    def __init__(self, parent, appName, hasOpenGL=False):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
         # Load app-specific settings
-        self.ms_AutoHideGroups = True
-        self.ms_UseSystemTray  = True
-        self.ms_CloseToTray    = False
+        self.ms_RefreshInterval = 120
+        self.ms_AutoHideGroups  = True
+        self.ms_UseSystemTray   = True
+        self.ms_CloseToTray     = False
 
         if (appName == "catarina"):
           self.ms_AutoHideGroups = False
@@ -70,15 +71,31 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
 
         elif (appName == "catia"):
           self.ms_UseSystemTray = False
+          self.group_main_paths.setEnabled(False)
           self.group_main_paths.setVisible(False)
           self.lw_page.hideRow(2)
           self.lw_page.hideRow(3)
           self.lw_page.setCurrentCell(0, 0)
 
         elif (appName == "claudia"):
+          self.cb_jack_port_alias.setEnabled(False)
           self.cb_jack_port_alias.setVisible(False)
+          self.label_jack_port_alias.setEnabled(False)
           self.label_jack_port_alias.setVisible(False)
           self.lw_page.hideRow(3) # TODO
+          self.lw_page.setCurrentCell(0, 0)
+
+        elif (appName == "carla"):
+          self.ms_RefreshInterval = 60
+          self.cb_jack_port_alias.setEnabled(False)
+          self.cb_jack_port_alias.setVisible(False)
+          self.label_jack_port_alias.setEnabled(False)
+          self.label_jack_port_alias.setVisible(False)
+          self.group_tray.setEnabled(False)
+          self.group_tray.setVisible(False)
+          self.lw_page.hideRow(1)
+          self.lw_page.hideRow(2)
+          self.lw_page.hideRow(3)
           self.lw_page.setCurrentCell(0, 0)
 
         self.settings = self.parent().settings
@@ -103,7 +120,7 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         self.le_main_def_folder.setText(self.settings.value("Main/DefaultProjectFolder", SETTINGS_DEFAULT_PROJECT_FOLDER, type=str))
         self.cb_tray_enable.setChecked(self.settings.value("Main/UseSystemTray", self.ms_UseSystemTray, type=bool))
         self.cb_tray_close_to.setChecked(self.settings.value("Main/CloseToTray", self.ms_CloseToTray, type=bool))
-        self.sb_gui_refresh.setValue(self.settings.value("Main/RefreshInterval", 120, type=int))
+        self.sb_gui_refresh.setValue(self.settings.value("Main/RefreshInterval", self.ms_RefreshInterval, type=int))
         self.cb_jack_port_alias.setCurrentIndex(self.settings.value("Main/JackPortAlias", 2, type=int))
 
         # ------------------------
@@ -153,14 +170,16 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         # ------------------------
         # Page 0
 
-        self.settings.setValue("Main/UseSystemTray", self.cb_tray_enable.isChecked())
-        self.settings.setValue("Main/CloseToTray", self.cb_tray_close_to.isChecked())
         self.settings.setValue("Main/RefreshInterval", self.sb_gui_refresh.value())
 
-        if (self.group_main_paths.isVisible()):
+        if (self.group_tray.isEnabled()):
+          self.settings.setValue("Main/UseSystemTray", self.cb_tray_enable.isChecked())
+          self.settings.setValue("Main/CloseToTray", self.cb_tray_close_to.isChecked())
+
+        if (self.group_main_paths.isEnabled()):
           self.settings.setValue("Main/DefaultProjectFolder", self.le_main_def_folder.text())
 
-        if (self.cb_jack_port_alias.isVisible()):
+        if (self.cb_jack_port_alias.isEnabled()):
           self.settings.setValue("Main/JackPortAlias", self.cb_jack_port_alias.currentIndex())
 
         # ------------------------
@@ -196,7 +215,7 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         self.le_main_def_folder.setText(SETTINGS_DEFAULT_PROJECT_FOLDER)
         self.cb_tray_enable.setChecked(self.ms_UseSystemTray)
         self.cb_tray_close_to.setChecked(self.ms_CloseToTray)
-        self.sb_gui_refresh.setValue(120)
+        self.sb_gui_refresh.setValue(self.ms_RefreshInterval)
         self.cb_jack_port_alias.setCurrentIndex(2)
         self.cb_ladish_notify.setChecked(LADISH_CONF_KEY_DAEMON_NOTIFY_DEFAULT)
         self.cb_ladish_studio_autostart.setChecked(LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART_DEFAULT)

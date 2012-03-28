@@ -82,11 +82,3 @@ void carla_jack_shutdown_callback(void*)
     carla_jack_client = nullptr;
     callback_action(CALLBACK_QUIT, 0, 0, 0, 0.0f);
 }
-
-//void carla_jack_register_plugin(CarlaPlugin* plugin)
-//{
-    //plugin->jack_client = jack_client_open(plugin->name, JackNullOption, 0);
-
-    //if (plugin->jack_client)
-    //    jack_set_process_callback(plugin->jack_client, carla_jack_process_callback, plugin);
-//}

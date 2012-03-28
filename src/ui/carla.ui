@@ -80,8 +80,17 @@
     <addaction name="act_help_about"/>
     <addaction name="act_help_about_qt"/>
    </widget>
+   <widget class="QMenu" name="menu_Settings">
+    <property name="title">
+     <string>&amp;Settings</string>
+    </property>
+    <addaction name="act_settings_show_toolbar"/>
+    <addaction name="separator"/>
+    <addaction name="act_settings_configure"/>
+   </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_Plugin"/>
+   <addaction name="menu_Settings"/>
    <addaction name="menu_Help"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -185,6 +194,23 @@
     <string>&amp;Add New...</string>
    </property>
   </action>
+  <action name="act_settings_show_toolbar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show &amp;Toolbar</string>
+   </property>
+  </action>
+  <action name="act_settings_configure">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/16x16/configure.png</normaloff>:/16x16/configure.png</iconset>
+   </property>
+   <property name="text">
+    <string>Configure Carla</string>
+   </property>
+  </action>
  </widget>
  <resources>
   <include location="../icons/icons.qrc"/>
@@ -203,6 +229,22 @@
     <hint type="destinationlabel">
      <x>189</x>
      <y>34</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>act_settings_show_toolbar</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>toolBar</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>354</x>
+     <y>35</y>
     </hint>
    </hints>
   </connection>
