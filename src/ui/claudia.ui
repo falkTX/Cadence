@@ -1416,5 +1416,37 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>act_settings_show_toolbar</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>frame_toolbar</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>438</x>
+     <y>52</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>act_settings_show_statusbar</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>frame_statusbar</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>438</x>
+     <y>546</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
 </ui>

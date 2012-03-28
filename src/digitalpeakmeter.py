@@ -224,6 +224,8 @@ class DigitalPeakMeter(QWidget):
           painter.setPen(QColor(110, 15, 15, 100))
           painter.drawLine(1, lsmall-(lsmall/1.04), lfull, lsmall-(lsmall/1.04))
 
+        QWidget.paintEvent(self, event)
+
     def resizeEvent(self, event):
         self.updateSizes()
         QWidget.resizeEvent(self, event)

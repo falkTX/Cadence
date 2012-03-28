@@ -243,22 +243,22 @@ class LogsW(QDialog, ui_logs.Ui_LogsW):
 
         tab_index = 0
 
-        if (os.path.exists(self.LOG_FILE_JACK) == False):
+        if (not os.path.exists(self.LOG_FILE_JACK)):
           self.LOG_FILE_JACK = None
           self.tabWidget.removeTab(0-tab_index)
           tab_index += 1
 
-        if (os.path.exists(self.LOG_FILE_A2J) == False):
+        if (not os.path.exists(self.LOG_FILE_A2J)):
           self.LOG_FILE_A2J = None
           self.tabWidget.removeTab(1-tab_index)
           tab_index += 1
 
-        if (os.path.exists(self.LOG_FILE_LASH) == False):
+        if (not os.path.exists(self.LOG_FILE_LASH)):
           self.LOG_FILE_LASH = None
           self.tabWidget.removeTab(2-tab_index)
           tab_index += 1
 
-        if (os.path.exists(self.LOG_FILE_LADISH) == False):
+        if (not os.path.exists(self.LOG_FILE_LADISH)):
           self.LOG_FILE_LADISH = None
           self.tabWidget.removeTab(3-tab_index)
           tab_index += 1

@@ -22,7 +22,7 @@ from PyQt4.QtGui import QApplication, QDialog, QDialogButtonBox, QMainWindow, QT
 from PyQt4.QtXml import QDomDocument
 
 # Imports (Custom Stuff)
-import ui_catarina, icons_rc
+import ui_catarina
 import ui_catarina_addgroup, ui_catarina_removegroup, ui_catarina_renamegroup
 import ui_catarina_addport, ui_catarina_removeport, ui_catarina_renameport
 import ui_catarina_connectports, ui_catarina_disconnectports
@@ -808,21 +808,18 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
         content += "</CATARINA>\n"
 
         try:
-          if (open(path, "w").write(content) == False):
-            raiseError
+          open(path, "w").write(content)
         except:
           QMessageBox.critical(self, self.tr("Error"), self.tr("Failed to save file"))
 
     def loadFile(self, path):
-        if (os.path.exists(path) == False):
+        if (not os.path.exists(path)):
           QMessageBox.critical(self, self.tr("Error"), self.tr("The file '%s' does not exist" % (path)))
           self.m_save_path = None
           return
 
         try:
           read = open(path, "r").read()
-          if (not read):
-            raiseError
         except:
           QMessageBox.critical(self, self.tr("Error"), self.tr("Failed to load file"))
           self.m_save_path = None

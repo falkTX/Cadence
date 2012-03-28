@@ -86,13 +86,13 @@ def engineHasFeature(feature):
   return bool(dbus.String(feature) in feature_list)
 
 def getEngineParameter(parameter, error):
-    if (engineHasFeature(parameter) == False):
+    if (not engineHasFeature(parameter)):
       return error
     else:
       return jackctl.GetParameterValue(["engine",parameter])[2]
 
 def setEngineParameter(parameter, value, optional=True):
-    if (engineHasFeature(parameter) == False):
+    if (not engineHasFeature(parameter)):
       return False
     elif (optional):
       if (value != jackctl.GetParameterValue(["engine",parameter])[2]):
@@ -110,13 +110,13 @@ def driverHasFeature(feature):
     return bool(dbus.String(feature) in feature_list)
 
 def getDriverParameter(parameter, error):
-    if (driverHasFeature(parameter) == False):
+    if (not driverHasFeature(parameter)):
       return error
     else:
       return jackctl.GetParameterValue(["driver",parameter])[2]
 
 def setDriverParameter(parameter, value, optional=True):
-    if (driverHasFeature(parameter) == False):
+    if (not driverHasFeature(parameter)):
       return False
     elif (optional):
       if (value != jackctl.GetParameterValue(["driver",parameter])[2]):
@@ -157,7 +157,7 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
         self.connect(self.buttonBox.button(QDialogButtonBox.Reset), SIGNAL("clicked()"), SLOT("slot_resetJackSettings()"))
 
         self.connect(self.obj_driver_duplex, SIGNAL("clicked(bool)"), SLOT("slot_checkDuplexSelection(bool)"))
-        self.connect(self.obj_server_driver, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkDriverSelection(int, int, int, int)"))
+        self.connect(self.obj_server_driver, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkDriverSelection(int)"))
 
         self.connect(self.obj_driver_capture, SIGNAL("currentIndexChanged(int)"), SLOT("slot_checkALSASelection()"))
         self.connect(self.obj_driver_playback, SIGNAL("currentIndexChanged(int)"), SLOT("slot_checkALSASelection()"))
@@ -201,7 +201,7 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
         self.obj_server_self_connect_mode.setEnabled(engineHasFeature("self-connect-mode"))
 
         # Disable clock-source if not on Linux
-        if (LINUX == False):
+        if (not LINUX):
           self.obj_server_clock_source.setEnabled(False)
 
     # -------------------------------------------------------------
@@ -232,7 +232,7 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
           value = dbus.Int32(int(self.obj_server_client_timeout.currentText()))
           setEngineParameter("client-timeout", value, True)
 
-        if (self.obj_server_clock_source.isEnabled() or 1):
+        if (self.obj_server_clock_source.isEnabled()):
           value = None
           if (self.obj_server_clock_source_system.isChecked()):
             if (self.m_server_clock_source_broken):
@@ -472,7 +472,10 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
             print("JackSettings::saveDriverSettings() - Cannot save midi-driver value")
 
           if (value != None):
-            setDriverParameter("midi-driver", value, True)
+            if (driverHasFeature("midi")):
+              setDriverParameter("midi", value, True)
+            else:
+              setDriverParameter("midi-driver", value, True)
 
         if (self.obj_driver_wait.isEnabled()):
           value = dbus.UInt32(self.obj_driver_wait.value())
@@ -553,7 +556,7 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
             self.obj_driver_input_latency.setValue(int(value))
           elif (attribute == "output-latency"):
             self.obj_driver_output_latency.setValue(int(value))
-          elif (attribute == "midi-driver"):
+          elif (attribute in ("midi", "midi-driver")):
             value = str(value)
             if (value == "none"):
               self.obj_driver_midi_driver.setCurrentIndex(0)
@@ -611,8 +614,8 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
 
         self.slot_checkALSASelection()
 
-    @pyqtSlot(int, int, int, int)
-    def slot_checkDriverSelection(self, row, column, prev_row, prev_column):
+    @pyqtSlot(int)
+    def slot_checkDriverSelection(self, row):
         # Save previous settings
         self.saveDriverSettings()
 
@@ -681,8 +684,8 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
         self.obj_driver_input_latency_label.setEnabled(driverHasFeature("input-latency"))
         self.obj_driver_output_latency.setEnabled(driverHasFeature("output-latency"))
         self.obj_driver_output_latency_label.setEnabled(driverHasFeature("output-latency"))
-        self.obj_driver_midi_driver.setEnabled(driverHasFeature("midi-driver"))
-        self.obj_driver_midi_driver_label.setEnabled(driverHasFeature("midi-driver"))
+        self.obj_driver_midi_driver.setEnabled(driverHasFeature("midi") or driverHasFeature("midi-driver"))
+        self.obj_driver_midi_driver_label.setEnabled(driverHasFeature("midi") or driverHasFeature("midi-driver"))
         self.obj_driver_wait.setEnabled(driverHasFeature("wait"))
         self.obj_driver_wait_label.setEnabled(driverHasFeature("wait"))
         self.obj_driver_verbose.setEnabled(driverHasFeature("verbose"))
@@ -737,20 +740,21 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
 if __name__ == '__main__':
 
     # Additional imports
-    import sys, icons_rc
+    import icons_rc
+    from sys import argv as sys_argv, exit as sys_exit
     from PyQt4.QtGui import QApplication, QIcon
 
     # App initialization
-    app = QApplication(sys.argv)
+    app = QApplication(sys_argv)
 
     # Connect to DBus
     if (dbus):
       if (initBus(dbus.SessionBus())):
         QMessageBox.critical(None, app.translate("JackSettingsW", "Error"), app.translate("JackSettingsW", "jackdbus is not available!\nIs not possible to configure JACK at this point."))
-        sys.exit(1)
+        sys_exit(1)
     else:
       QMessageBox.critical(None, app.translate("JackSettingsW", "Error"), app.translate("JackSettingsW", "DBus is not available, cannot continue."))
-      sys.exit(1)
+      sys_exit(1)
 
     # Show GUI
     gui = JackSettingsW(None)
@@ -758,4 +762,4 @@ if __name__ == '__main__':
     gui.show()
 
     # App-Loop
-    sys.exit(app.exec_())
+    sys_exit(app.exec_())

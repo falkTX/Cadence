@@ -52,7 +52,7 @@ def setDefaultProjectFolder(folder):
 
 # Settings Dialog
 class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
-    def __init__(self, parent, appName, hasGL):
+    def __init__(self, parent, appName, hasOpenGL):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
@@ -84,7 +84,7 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         self.settings = self.parent().settings
         self.loadSettings()
 
-        if not hasGL:
+        if (not hasOpenGL):
           self.cb_canvas_use_opengl.setChecked(False)
           self.cb_canvas_use_opengl.setEnabled(False)
 

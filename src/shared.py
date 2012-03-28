@@ -38,7 +38,7 @@ else:
   LINUX   = False
   WINDOWS = False
 
-if (WINDOWS == False):
+if (not WINDOWS):
   from signal import signal, SIGINT, SIGTERM, SIGUSR1, SIGUSR2
 
 # Set Version
@@ -56,7 +56,7 @@ HOME = os.getenv("HOME")
 if (HOME == None):
   qWarning("HOME variable not set")
   HOME = "/tmp"
-elif (os.path.exists(HOME) == False):
+elif (not os.path.exists(HOME)):
   qWarning("HOME variable set but not valid")
   HOME = "/tmp"
 
@@ -201,15 +201,15 @@ def getIcon(icon, size=16):
   return QIcon.fromTheme(icon, QIcon(":/%ix%i/%s.png" % (size, size, icon)))
 
 # QLineEdit and QPushButtom combo
-def getAndSetPath(self, currentPath, lineEdit):
-    newPath = QFileDialog.getExistingDirectory(self, self.tr("Set Path"), currentPath, QFileDialog.ShowDirsOnly)
+def getAndSetPath(self_, currentPath, lineEdit):
+    newPath = QFileDialog.getExistingDirectory(self_, self_.tr("Set Path"), currentPath, QFileDialog.ShowDirsOnly)
     if (newPath):
       lineEdit.setText(newPath)
     return newPath
 
 # Custom MessageBox
-def CustomMessageBox(self, icon, title, text, extraText="", buttons=QMessageBox.Yes|QMessageBox.No, defButton=QMessageBox.No):
-    msgBox = QMessageBox(self)
+def CustomMessageBox(self_, icon, title, text, extraText="", buttons=QMessageBox.Yes|QMessageBox.No, defButton=QMessageBox.No):
+    msgBox = QMessageBox(self_)
     msgBox.setIcon(icon)
     msgBox.setWindowTitle(title)
     msgBox.setText(text)
@@ -233,7 +233,7 @@ def set_up_signals(_gui):
     x_gui.connect(x_gui, SIGNAL("SIGUSR2()"), lambda gui=x_gui: showWindow(gui))
     x_gui.connect(x_gui, SIGNAL("SIGTERM()"), SLOT("close()"))
 
-def signal_handler(sig=0, frame=0):
+def signal_handler(sig):
   global x_gui
   if (sig in (SIGINT, SIGTERM)):
     x_gui.emit(SIGNAL("SIGTERM()"))
@@ -242,45 +242,45 @@ def signal_handler(sig=0, frame=0):
   elif (sig == SIGUSR2):
     x_gui.emit(SIGNAL("SIGUSR2()"))
 
-def showWindow(self):
-  if (self.isMaximized()):
-    self.showMaximized()
+def showWindow(self_):
+  if (self_.isMaximized()):
+    self_.showMaximized()
   else:
-    self.showNormal()
+    self_.showNormal()
 
 # Shared Icons
-def setIcons(self, modes):
+def setIcons(self_, modes):
   if ("canvas" in modes):
-    self.act_canvas_arrange.setIcon(getIcon("view-sort-ascending"))
-    self.act_canvas_refresh.setIcon(getIcon("view-refresh"))
-    self.act_canvas_zoom_fit.setIcon(getIcon("zoom-fit-best"))
-    self.act_canvas_zoom_in.setIcon(getIcon("zoom-in"))
-    self.act_canvas_zoom_out.setIcon(getIcon("zoom-out"))
-    self.act_canvas_zoom_100.setIcon(getIcon("zoom-original"))
-    self.act_canvas_print.setIcon(getIcon("document-print"))
-    self.b_canvas_zoom_fit.setIcon(getIcon("zoom-fit-best"))
-    self.b_canvas_zoom_in.setIcon(getIcon("zoom-in"))
-    self.b_canvas_zoom_out.setIcon(getIcon("zoom-out"))
-    self.b_canvas_zoom_100.setIcon(getIcon("zoom-original"))
+    self_.act_canvas_arrange.setIcon(getIcon("view-sort-ascending"))
+    self_.act_canvas_refresh.setIcon(getIcon("view-refresh"))
+    self_.act_canvas_zoom_fit.setIcon(getIcon("zoom-fit-best"))
+    self_.act_canvas_zoom_in.setIcon(getIcon("zoom-in"))
+    self_.act_canvas_zoom_out.setIcon(getIcon("zoom-out"))
+    self_.act_canvas_zoom_100.setIcon(getIcon("zoom-original"))
+    self_.act_canvas_print.setIcon(getIcon("document-print"))
+    self_.b_canvas_zoom_fit.setIcon(getIcon("zoom-fit-best"))
+    self_.b_canvas_zoom_in.setIcon(getIcon("zoom-in"))
+    self_.b_canvas_zoom_out.setIcon(getIcon("zoom-out"))
+    self_.b_canvas_zoom_100.setIcon(getIcon("zoom-original"))
 
   if ("jack" in modes):
-    self.act_jack_clear_xruns.setIcon(getIcon("edit-clear"))
-    self.act_jack_configure.setIcon(getIcon("configure"))
-    self.act_jack_render.setIcon(getIcon("media-record"))
-    self.b_jack_clear_xruns.setIcon(getIcon("edit-clear"))
-    self.b_jack_configure.setIcon(getIcon("configure"))
-    self.b_jack_render.setIcon(getIcon("media-record"))
+    self_.act_jack_clear_xruns.setIcon(getIcon("edit-clear"))
+    self_.act_jack_configure.setIcon(getIcon("configure"))
+    self_.act_jack_render.setIcon(getIcon("media-record"))
+    self_.b_jack_clear_xruns.setIcon(getIcon("edit-clear"))
+    self_.b_jack_configure.setIcon(getIcon("configure"))
+    self_.b_jack_render.setIcon(getIcon("media-record"))
 
   if ("transport" in modes):
-    self.act_transport_play.setIcon(getIcon("media-playback-start"))
-    self.act_transport_stop.setIcon(getIcon("media-playback-stop"))
-    self.act_transport_backwards.setIcon(getIcon("media-seek-backward"))
-    self.act_transport_forwards.setIcon(getIcon("media-seek-forward"))
-    self.b_transport_play.setIcon(getIcon("media-playback-start"))
-    self.b_transport_stop.setIcon(getIcon("media-playback-stop"))
-    self.b_transport_backwards.setIcon(getIcon("media-seek-backward"))
-    self.b_transport_forwards.setIcon(getIcon("media-seek-forward"))
+    self_.act_transport_play.setIcon(getIcon("media-playback-start"))
+    self_.act_transport_stop.setIcon(getIcon("media-playback-stop"))
+    self_.act_transport_backwards.setIcon(getIcon("media-seek-backward"))
+    self_.act_transport_forwards.setIcon(getIcon("media-seek-forward"))
+    self_.b_transport_play.setIcon(getIcon("media-playback-start"))
+    self_.b_transport_stop.setIcon(getIcon("media-playback-stop"))
+    self_.b_transport_backwards.setIcon(getIcon("media-seek-backward"))
+    self_.b_transport_forwards.setIcon(getIcon("media-seek-forward"))
 
   if ("misc" in modes):
-    self.act_quit.setIcon(getIcon("application-exit"))
-    self.act_configure.setIcon(getIcon("configure"))
+    self_.act_quit.setIcon(getIcon("application-exit"))
+    self_.act_configure.setIcon(getIcon("configure"))

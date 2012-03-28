@@ -307,7 +307,7 @@ class ProjectNameW(QDialog, ui_claudia_projectname.Ui_ProjectNameW):
     def slot_checkFolder(self):
         # Create default project folder if the project has not been set yet 
         if (not self.le_path.text()):
-          if (os.path.exists(self.m_proj_folder) == False):
+          if (not os.path.exists(self.m_proj_folder)):
             os.mkdir(self.m_proj_folder)
 
         if (self.le_path.text()):
@@ -405,7 +405,7 @@ class RunCustomW(QDialog, ui_claudia_runcustom.Ui_RunCustomW):
         else:
           self.rb_level_0.setChecked(True)
 
-        if (isRoom == False):
+        if (not isRoom):
           self.rb_level_lash.setEnabled(False)
           self.rb_level_js.setEnabled(False)
 
@@ -865,7 +865,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         studio_iface = dbus.Interface(DBus.ladish_studio, 'org.ladish.AppSupervisor')
         studio_item  = self.treeWidget.topLevelItem(0)
 
-        graph_version, app_list = DBus.ladish_app_iface.GetAll2()
+        graph_version, app_list = studio_iface.GetAll2()
 
         for app in app_list:
           number, name, active, terminal, level = app
@@ -882,7 +882,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             text += "L"
           text += level.upper()
           text += "] "
-          if (active == False):
+          if (not active):
             text += "(inactive) "
           text += name
 
@@ -918,7 +918,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
               text += "L"
             text += level.upper()
             text += "] "
-            if (active == False):
+            if (not active):
               text += "(inactive) "
             text += name
 
@@ -976,7 +976,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         # Remove old unused item if needed
         iItem = self.treeWidget.topLevelItem(room_index)
-        if (iItem and iItem.isVisible() == False):
+        if (iItem and not iItem.isVisible()):
           self.treeWidget.takeTopLevelItem(room_index)
 
         # Insert padding of items if needed
@@ -989,12 +989,8 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         graph_version, project_properties = room_project_properties
 
         if (len(project_properties) > 0):
-          project_path = str(project_properties['dir'])
-          project_name = str(project_properties['name'])
-          item_string  = " (%s)" % (project_name)
+          item_string  = " (%s)" % (project_properties['name'])
         else:
-          project_path = None
-          project_name = None
           item_string  = ""
 
         prop_obj = [None, None]
@@ -2005,7 +2001,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
           if (item and item.type() == ITEM_TYPE_ROOM and item.properties[iItemPropRoomPath] == room_path):
             for j in range(item.childCount()):
-              top_level_item.takeChild(j)
+              item.takeChild(j)
 
             self.treeWidget.takeTopLevelItem(i)
             break
@@ -2083,7 +2079,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
           text += "L"
         text += level.upper()
         text += "] "
-        if (active == False):
+        if (not active):
           text += "(inactive) "
         text += name
 
@@ -2137,7 +2133,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
           text += "L"
         text += level.upper()
         text += "] "
-        if (active == False):
+        if (not active):
           text += "(inactive) "
         text += name
 
@@ -2266,8 +2262,8 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
     def saveSettings(self):
         self.settings.setValue("Geometry", self.saveGeometry())
         self.settings.setValue("SplitterSizes", self.splitter.saveState())
-        self.settings.setValue("ShowToolbar", self.frame_toolbar.isVisible())
-        self.settings.setValue("ShowStatusbar", self.frame_statusbar.isVisible())
+        self.settings.setValue("ShowToolbar", self.frame_toolbar.isEnabled())
+        self.settings.setValue("ShowStatusbar", self.frame_statusbar.isEnabled())
         self.settings.setValue("TransportView", self.m_selected_transport_view)
         self.settings.setValue("HorizontalScrollBarValue", self.graphicsView.horizontalScrollBar().value())
         self.settings.setValue("VerticalScrollBarValue", self.graphicsView.verticalScrollBar().value())

@@ -24,41 +24,41 @@ from PyQt4.QtGui import QFileDialog, QImage, QPainter, QPrinter, QPrintDialog
 import patchcanvas
 
 # Shared Canvas code
-def canvas_arrange(self):
+def canvas_arrange():
     patchcanvas.arrange()
 
-def canvas_refresh(self):
+def canvas_refresh(self_):
     patchcanvas.clear()
-    self.init_ports()
+    self_.init_ports()
 
-def canvas_zoom_fit(self):
-    self.scene.zoom_fit()
+def canvas_zoom_fit(self_):
+    self_.scene.zoom_fit()
 
-def canvas_zoom_in(self):
-    self.scene.zoom_in()
+def canvas_zoom_in(self_):
+    self_.scene.zoom_in()
 
-def canvas_zoom_out(self):
-    self.scene.zoom_out()
+def canvas_zoom_out(self_):
+    self_.scene.zoom_out()
 
-def canvas_zoom_reset(self):
-    self.scene.zoom_reset()
+def canvas_zoom_reset(self_):
+    self_.scene.zoom_reset()
 
-def canvas_print(self):
-    self.scene.clearSelection()
-    self.m_export_printer = QPrinter()
-    dialog = QPrintDialog(self.m_export_printer, self)
+def canvas_print(self_):
+    self_.scene.clearSelection()
+    self_.m_export_printer = QPrinter()
+    dialog = QPrintDialog(self_.m_export_printer, self_)
     if (dialog.exec_()):
-      painter = QPainter(self.m_export_printer)
+      painter = QPainter(self_.m_export_printer)
       painter.setRenderHint(QPainter.Antialiasing)
       painter.setRenderHint(QPainter.TextAntialiasing)
-      self.scene.render(painter)
+      self_.scene.render(painter)
 
-def canvas_save_image(self):
-    newPath = QFileDialog.getSaveFileName(self, self.tr("Save Image"), filter=self.tr("PNG Image (*.png);;JPEG Image (*.jpg)"))
+def canvas_save_image(self_):
+    newPath = QFileDialog.getSaveFileName(self_, self_.tr("Save Image"), filter=self_.tr("PNG Image (*.png);;JPEG Image (*.jpg)"))
     print(newPath)
 
     if (newPath):
-      self.scene.clearSelection()
+      self_.scene.clearSelection()
       if (newPath.endswith((".jpg", ".jpG", ".jPG", ".JPG", ".JPg", ".Jpg"))):
         img_format = "JPG"
       elif (newPath.endswith((".png", ".pnG", ".pNG", ".PNG", ".PNg", ".Png"))):
@@ -68,25 +68,25 @@ def canvas_save_image(self):
         img_format = "PNG"
         newPath   += ".png"
 
-      self.m_export_image = QImage(self.scene.sceneRect().width(), self.scene.sceneRect().height(), QImage.Format_RGB32)
-      painter = QPainter(self.m_export_image)
+      self_.m_export_image = QImage(self_.scene.sceneRect().width(), self_.scene.sceneRect().height(), QImage.Format_RGB32)
+      painter = QPainter(self_.m_export_image)
       painter.setRenderHint(QPainter.Antialiasing)
       painter.setRenderHint(QPainter.TextAntialiasing)
-      self.scene.render(painter)
-      self.m_export_image.save(newPath, img_format, 100)
+      self_.scene.render(painter)
+      self_.m_export_image.save(newPath, img_format, 100)
 
 # Shared Connections
-def setCanvasConnections(self):
-  self.act_canvas_arrange.setEnabled(False)
-  self.connect(self.act_canvas_arrange, SIGNAL("triggered()"), lambda: canvas_arrange(self))
-  self.connect(self.act_canvas_refresh, SIGNAL("triggered()"), lambda: canvas_refresh(self))
-  self.connect(self.act_canvas_zoom_fit, SIGNAL("triggered()"), lambda: canvas_zoom_fit(self))
-  self.connect(self.act_canvas_zoom_in, SIGNAL("triggered()"), lambda: canvas_zoom_in(self))
-  self.connect(self.act_canvas_zoom_out, SIGNAL("triggered()"), lambda: canvas_zoom_out(self))
-  self.connect(self.act_canvas_zoom_100, SIGNAL("triggered()"), lambda: canvas_zoom_reset(self))
-  self.connect(self.act_canvas_print, SIGNAL("triggered()"), lambda: canvas_print(self))
-  self.connect(self.act_canvas_save_image, SIGNAL("triggered()"), lambda: canvas_save_image(self))
-  self.connect(self.b_canvas_zoom_fit, SIGNAL("clicked()"), lambda: canvas_zoom_fit(self))
-  self.connect(self.b_canvas_zoom_in, SIGNAL("clicked()"), lambda: canvas_zoom_in(self))
-  self.connect(self.b_canvas_zoom_out, SIGNAL("clicked()"), lambda: canvas_zoom_out(self))
-  self.connect(self.b_canvas_zoom_100, SIGNAL("clicked()"), lambda: canvas_zoom_reset(self))
+def setCanvasConnections(self_):
+  self_.act_canvas_arrange.setEnabled(False)
+  self_.connect(self_.act_canvas_arrange, SIGNAL("triggered()"), lambda: canvas_arrange())
+  self_.connect(self_.act_canvas_refresh, SIGNAL("triggered()"), lambda: canvas_refresh(self_))
+  self_.connect(self_.act_canvas_zoom_fit, SIGNAL("triggered()"), lambda: canvas_zoom_fit(self_))
+  self_.connect(self_.act_canvas_zoom_in, SIGNAL("triggered()"), lambda: canvas_zoom_in(self_))
+  self_.connect(self_.act_canvas_zoom_out, SIGNAL("triggered()"), lambda: canvas_zoom_out(self_))
+  self_.connect(self_.act_canvas_zoom_100, SIGNAL("triggered()"), lambda: canvas_zoom_reset(self_))
+  self_.connect(self_.act_canvas_print, SIGNAL("triggered()"), lambda: canvas_print(self_))
+  self_.connect(self_.act_canvas_save_image, SIGNAL("triggered()"), lambda: canvas_save_image(self_))
+  self_.connect(self_.b_canvas_zoom_fit, SIGNAL("clicked()"), lambda: canvas_zoom_fit(self_))
+  self_.connect(self_.b_canvas_zoom_in, SIGNAL("clicked()"), lambda: canvas_zoom_in(self_))
+  self_.connect(self_.b_canvas_zoom_out, SIGNAL("clicked()"), lambda: canvas_zoom_out(self_))
+  self_.connect(self_.b_canvas_zoom_100, SIGNAL("clicked()"), lambda: canvas_zoom_reset(self_))

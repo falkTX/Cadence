@@ -591,7 +591,7 @@ if __name__ == '__main__':
 
     # Start jack
     jack_status = jacklib.jack_status_t(0)
-    jack_client = jacklib.client_open_uuid("XY-Controller", jacklib.JackSessionID, jacklib.pointer(jack_status), "")
+    jack_client = jacklib.client_open("XY-Controller", jacklib.JackSessionID, jacklib.pointer(jack_status))
 
     if not jack_client:
       QMessageBox.critical(None, app.translate("XYControllerW", "Error"), app.translate("XYControllerW", "Could not connect to JACK, possible errors:\n%s" % (get_jack_status_error_string(jack_status))))

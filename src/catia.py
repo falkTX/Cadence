@@ -39,6 +39,9 @@ try:
 except:
   haveDBus = False
 
+global a2j_client_name
+a2j_client_name = None
+
 iGroupId   = 0
 iGroupName = 1
 
@@ -276,6 +279,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
           QMessageBox.information(self, self.tr("Port Information"), info)
 
         elif (action == patchcanvas.ACTION_PORT_RENAME):
+          global a2j_client_name
+
           port_id = value1
           port_short_name = unicode2ascii(value_str)
 
@@ -386,7 +391,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         jacklib.set_session_callback(jack.client, self.JackSessionCallback, None)
         jacklib.on_shutdown(jack.client, self.JackShutdownCallback, None)
 
-        if (JACK2):
+        if (jacklib.JACK2):
           jacklib.set_port_rename_callback(jack.client, self.JackPortRenameCallback, None)
 
     def init_ports(self):
@@ -405,6 +410,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         a2j_name_list  = []
         port_name_list = c_char_p_p_to_list(jacklib.get_ports(jack.client, "", "", 0))
 
+        global a2j_client_name
+
         h = 0
         for i in range(len(port_name_list)):
           if (port_name_list[i-h].split(":")[0] == a2j_client_name):
@@ -416,8 +423,6 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
           port_name_list.append(a2j_name)
 
         del a2j_name_list
-
-        import hashlib
 
         # Add ports
         for port_name in port_name_list:
@@ -435,7 +440,6 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
           port_connection_names = c_char_p_p_to_list(jacklib.port_get_all_connections(jack.client, port_ptr))
 
           for port_con_name in port_connection_names:
-            port_con_ptr = jacklib.port_by_name(jack.client, port_con_name)
             self.canvas_connect_ports(port_name, port_con_name)
 
     def canvas_add_group(self, group_name):
@@ -465,6 +469,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         patchcanvas.removeGroup(group_id)
 
     def canvas_add_port(self, port_ptr, port_name):
+        global a2j_client_name
+
         port_id  = self.m_last_port_id
         group_id = -1
 
@@ -489,13 +495,11 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
           port_mode = patchcanvas.PORT_MODE_NULL
 
         if (group_name == a2j_client_name):
-          haveA2J    = True
           port_type  = patchcanvas.PORT_TYPE_MIDI_A2J
           group_name = port_name.replace("%s:" % (a2j_client_name), "", 1).split(" [", 1)[0]
           port_short_name = port_name.split("): ", 1)[1]
 
         else:
-          haveA2J = False
           port_short_name = port_name.replace("%s:" % (group_name), "", 1)
 
           port_type_str = str(jacklib.port_type(port_ptr), encoding="ascii")
@@ -602,7 +606,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
     def jackStarted(self):
         if (not jack.client):
-          jack.client = jacklib.client_open_uuid("catia", jacklib.JackNoStartServer|jacklib.JackSessionID, None, "")
+          jack.client = jacklib.client_open("catia", jacklib.JackNoStartServer|jacklib.JackSessionID, None)
           if (not jack.client):
             return self.jackStopped()
 
@@ -719,6 +723,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             self.a2jStopped()
 
     def DBusReconnect(self):
+        global a2j_client_name
+
         try:
           DBus.jack = DBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
           jacksettings.initBus(DBus.bus)
@@ -902,6 +908,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
     @pyqtSlot()
     def slot_handleCrash_a2j(self):
+        global a2j_client_name
+
         try:
           DBus.a2j = dbus.Interface(DBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
           a2j_client_name = str(DBus.a2j.get_jack_client_name())

@@ -105,7 +105,7 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
 
     @pyqtSlot()
     def slot_renderStart(self):
-        if (os.path.exists(self.le_folder.text()) == False):
+        if (not os.path.exists(self.le_folder.text())):
           QMessageBox.warning(self, self.tr("Warning"), self.tr("The selected directory does not exist. Please choose a valid one."))
           return
 
@@ -255,7 +255,7 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
         time = jacklib.get_current_transport_frame(self.m_jack_client)/self.m_sample_rate
         self.progressBar.setValue(time)
 
-        if (time > self.m_max_time or (self.m_last_time > time and self.m_freewheel == False)):
+        if (time > self.m_max_time or (self.m_last_time > time and not self.m_freewheel)):
           self.slot_renderStop()
 
         self.m_last_time = time
