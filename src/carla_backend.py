@@ -305,7 +305,7 @@ print("SF2    ->", DEFAULT_SF2_PATH)
 # ------------------------------------------------------------------------------------------------
 # Plugin Query (helper functions)
 
-def findBinaries(PATH, OS):
+def findBinaries(bPATH, OS):
   binaries = []
 
   if (OS == "WINDOWS"):
@@ -315,32 +315,32 @@ def findBinaries(PATH, OS):
   else:
     extensions = (".so", ".sO", ".SO", ".So")
 
-  for root, dirs, files in os.walk(PATH):
+  for root, dirs, files in os.walk(bPATH):
     for name in [name for name in files if name.endswith(extensions)]:
       binaries.append(os.path.join(root, name))
 
   return binaries
 
-def findSoundFonts(PATH):
+def findSoundFonts(bPATH):
   soundfonts = []
 
   extensions = (".sf2", ".sF2", ".SF2", ".Sf2")
 
-  for root, dirs, files in os.walk(PATH):
+  for root, dirs, files in os.walk(bPATH):
     for name in [name for name in files if name.endswith(extensions)]:
       soundfonts.append(os.path.join(root, name))
 
   return soundfonts
 
-#def findLV2Bundles(PATH):
-  #bundles = []
-  #extensions = (".lv2", ".lV2", ".LV2", ".Lv2")
+def findLV2Bundles(bPATH):
+  bundles = []
+  extensions = (".lv2", ".lV2", ".LV2", ".Lv2")
 
-  #for root, dirs, files in os.walk(PATH):
-    #for dir_ in [dir_ for dir_ in dirs if dir_.endswith(extensions)]:
-      #bundles.append(os.path.join(root, dir_))
+  for root, dirs, files in os.walk(bPATH):
+    for dir_ in [dir_ for dir_ in dirs if dir_.endswith(extensions)]:
+      bundles.append(os.path.join(root, dir_))
 
-  #return bundles
+  return bundles
 
 def findDSSIGUI(filename, name, label):
   plugin_dir = filename.rsplit(".", 1)[0]

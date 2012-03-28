@@ -16,12 +16,12 @@
  */
 
 #include "carla_backend.h"
+#include "carla_threads.h"
 #include "carla_plugin.h"
 
 #include <cstring>
 #include <ostream>
 
-#include <QtCore/QMutex>
 #include <QtCore/QString>
 
 // Global variables
@@ -31,6 +31,7 @@ const char* carla_client_name = nullptr;
 
 QMutex carla_proc_lock_var;
 QMutex carla_midi_lock_var;
+CarlaCheckThread carla_check_thread;
 
 // Global variables (shared)
 const char* unique_names[MAX_PLUGINS]  = { nullptr };
@@ -123,7 +124,7 @@ bool carla_init(const char* client_name)
 
         //osc_init();
 
-        //check_thread.start();
+        carla_check_thread.start(QThread::HighPriority);
 
         set_last_error("no error");
     }
@@ -158,10 +159,10 @@ bool carla_close()
             remove_plugin(i);
     }
 
-    //check_thread.quit();
+    carla_check_thread.quit();
 
-    //if (!check_thread.wait(1000000)) // 1 sec
-    //    qWarning("Failed to properly stop global check thread");
+    if (carla_check_thread.wait(2000)) // 2 secs
+        qWarning("Failed to properly stop global check thread");
 
     //osc_send_exit(&global_osc_data);
     //osc_close();
@@ -659,9 +660,9 @@ uint32_t get_custom_data_count(unsigned short plugin_id)
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
-//        CarlaPlugin* plugin = CarlaPlugins[i];
-//        if (plugin && plugin->id() == plugin_id)
-//            return plugin->custom.count();
+        CarlaPlugin* plugin = CarlaPlugins[i];
+        if (plugin && plugin->id() == plugin_id)
+            return 0; //plugin->custom.count();
     }
 
     qCritical("get_custom_data_count(%i) - could not find plugin", plugin_id);
@@ -916,7 +917,6 @@ void set_parameter_value(unsigned short plugin_id, uint32_t parameter_id, double
                 plugin->set_parameter_value(parameter_id, value, true, true, false);
             else
                 qCritical("set_parameter_value(%i, %i, %f) - parameter_id out of bounds", plugin_id, parameter_id, value);
-
             return;
         }
     }
@@ -939,16 +939,10 @@ void set_parameter_midi_channel(unsigned short plugin_id, uint32_t parameter_id,
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-//            if (parameter_id < plugin->param.count)
-//            {
-//                plugin->param.data[parameter_id].midi_channel = channel;
-
-//                if (plugin->hints & PLUGIN_IS_BRIDGE)
-//                    osc_send_set_parameter_midi_channel(&plugin->osc.data, plugin->id, parameter_id, channel);
-//            }
-//            else
-//                qCritical("set_parameter_midi_channel(%i, %i, %i) - parameter_id out of bounds", plugin_id, parameter_id, channel);
-
+            if (parameter_id < plugin->param_count())
+                plugin->set_parameter_midi_channel(parameter_id, channel);
+            else
+                qCritical("set_parameter_midi_channel(%i, %i, %i) - parameter_id out of bounds", plugin_id, parameter_id, channel);
             return;
         }
     }
@@ -975,16 +969,10 @@ void set_parameter_midi_cc(unsigned short plugin_id, uint32_t parameter_id, int1
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-//            if (parameter_id < plugin->param.count)
-//            {
-//                plugin->param.data[parameter_id].midi_cc = midi_cc;
-
-//                if (plugin->hints & PLUGIN_IS_BRIDGE)
-//                    osc_send_set_parameter_midi_cc(&plugin->osc.data, plugin->id, parameter_id, midi_cc);
-//            }
-//            else
-//                qCritical("set_parameter_midi_cc(%i, %i, %i) - parameter_id out of bounds", plugin_id, parameter_id, midi_cc);
-
+            if (parameter_id < plugin->param_count())
+                plugin->set_parameter_midi_cc(parameter_id, midi_cc);
+            else
+                qCritical("set_parameter_midi_cc(%i, %i, %i) - parameter_id out of bounds", plugin_id, parameter_id, midi_cc);
             return;
         }
     }
@@ -1377,17 +1365,6 @@ void send_plugin_midi_note(unsigned short /*plugin_id*/, bool /*onoff*/, uint8_t
 // -------------------------------------------------------------------------------------------------------------------
 
 #if 0
-
-#include "misc.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-#include <QtGui/QApplication>
-
-QMutex carla_midi_lock_var;
-CarlaCheckThread check_thread;
 
 // Global OSC stuff
 lo_server_thread global_osc_server_thread = nullptr;

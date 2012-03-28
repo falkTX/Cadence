@@ -26,10 +26,23 @@
 #include <jack/jack.h>
 #include <jack/midiport.h>
 
+#include <QtCore/QMutex>
+
 #define CARLA_PROCESS_CONTINUE_CHECK if (m_id != plugin_id) { return callback_action(CALLBACK_DEBUG, plugin_id, m_id, 0, 0.0f); }
 
 // Global JACK client
 extern jack_client_t* carla_jack_client;
+
+const unsigned short MAX_POSTEVENTS = 128;
+
+enum PluginPostEventType {
+    PostEventDebug,
+    PostEventParameterChange,
+    PostEventProgramChange,
+    PostEventMidiProgramChange,
+    PostEventNoteOn,
+    PostEventNoteOff
+};
 
 struct PluginAudioData {
     uint32_t count;
@@ -50,6 +63,13 @@ struct PluginParameterData {
     jack_port_t* port_cout;
 };
 
+struct PluginPostEvent {
+    bool valid;
+    PluginPostEventType type;
+    int32_t index;
+    double value;
+};
+
 class CarlaPlugin
 {
 public:
@@ -57,8 +77,8 @@ public:
     {
         qDebug("CarlaPlugin::CarlaPlugin()");
 
-        m_type  = PLUGIN_NONE;
-        m_id    = -1;
+        m_type = PLUGIN_NONE;
+        m_id   = -1;
         m_hints = 0;
 
         m_active = false;
@@ -94,6 +114,9 @@ public:
         param.ranges   = nullptr;
         param.port_cin  = nullptr;
         param.port_cout = nullptr;
+
+        for (unsigned short i=0; i < MAX_POSTEVENTS; i++)
+            post_events.data[i].valid = false;
     }
 
     virtual ~CarlaPlugin()
@@ -416,6 +439,22 @@ public:
         //x_set_parameter_value(parameter_id, value, gui_send);
     }
 
+    void set_parameter_midi_channel(uint32_t index, uint8_t channel)
+    {
+        param.data[index].midi_channel = channel;
+
+        //if (plugin->hints & PLUGIN_IS_BRIDGE)
+        //    osc_send_set_parameter_midi_channel(&plugin->osc.data, plugin->id, parameter_id, channel);
+    }
+
+    void set_parameter_midi_cc(uint32_t index, int16_t midi_cc)
+    {
+        param.data[index].midi_cc = midi_cc;
+
+        //if (plugin->hints & PLUGIN_IS_BRIDGE)
+        //    osc_send_set_parameter_midi_cc(&plugin->osc.data, plugin->id, parameter_id, midi_cc);
+    }
+
     virtual void set_chunk_data(const char* string_data)
     {
         Q_UNUSED(string_data);
@@ -462,6 +501,37 @@ public:
 //    virtual void x_set_program(uint32_t program_id, bool gui_send, bool block) = 0;
 //    virtual void x_set_midi_program(uint32_t midi_program_id, bool gui_send, bool block) = 0;
 //    virtual void x_set_custom_data(CustomDataType dtype, const char* key, const char* value, bool gui_send) = 0;
+
+    void postpone_event(PluginPostEventType type, int32_t index, double value)
+    {
+        post_events.lock.lock();
+
+        for (unsigned short i=0; i<MAX_POSTEVENTS; i++)
+        {
+            if (post_events.data[i].valid == false)
+            {
+                post_events.data[i].valid = true;
+                post_events.data[i].type  = type;
+                post_events.data[i].index = index;
+                post_events.data[i].value = value;
+                break;
+            }
+        }
+
+        post_events.lock.unlock();
+    }
+
+    void post_events_copy(PluginPostEvent* post_events_dst)
+    {
+        post_events.lock.lock();
+
+        memcpy(post_events_dst, post_events.data, sizeof(PluginPostEvent)*MAX_POSTEVENTS);
+
+        for (unsigned short i=0; i < MAX_POSTEVENTS; i++)
+            post_events.data[i].valid = false;
+
+        post_events.lock.unlock();
+    }
 
     void remove_from_jack()
     {
@@ -622,6 +692,12 @@ protected:
     PluginMidiData min;
     PluginMidiData mout;
     PluginParameterData param;
+
+    // Extra
+    struct {
+        QMutex lock;
+        PluginPostEvent data[MAX_POSTEVENTS];
+    } post_events;
 };
 
 #endif // CARLA_PLUGIN_H

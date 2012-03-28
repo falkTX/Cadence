@@ -652,8 +652,8 @@ public:
                 if (mode == 0xB0)
                 {
                     unsigned char status  = pin_event.buffer[1] & 0x7F;
-                    //unsigned char velo    = pin_event.buffer[2] & 0x7F;
-                    //double value, velo_per = double(velo)/127;
+                    unsigned char velo    = pin_event.buffer[2] & 0x7F;
+                    double value, velo_per = double(velo)/127;
 
                     // Control GUI stuff (channel 0 only)
                     if (channel == 0)
@@ -661,49 +661,49 @@ public:
                         if (status == 0x78)
                         {
                             // All Sound Off
-                            //set_active(false, false, false);
-                            //postpone_event(PostEventParameter, PARAMETER_ACTIVE, 0.0);
+                            set_active(false, false, false);
+                            postpone_event(PostEventParameterChange, PARAMETER_ACTIVE, 0.0);
                             break;
                         }
                         else if (status == 0x09 && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
                             // Dry/Wet (using '0x09', undefined)
-                            //set_drywet(velo_per, false, false);
-                            //postpone_event(PostEventParameter, PARAMETER_DRYWET, velo_per);
+                            set_drywet(velo_per, false, false);
+                            postpone_event(PostEventParameterChange, PARAMETER_DRYWET, velo_per);
                         }
                         else if (status == 0x07 && (m_hints & PLUGIN_CAN_VOL) > 0)
                         {
                             // Volume
-                            //value = double(velo)/100;
-                            //set_vol(value, false, false);
-                            //postpone_event(PostEventParameter, PARAMETER_VOLUME, value);
+                            value = double(velo)/100;
+                            set_volume(value, false, false);
+                            postpone_event(PostEventParameterChange, PARAMETER_VOLUME, value);
                         }
                         else if (status == 0x08 && (m_hints & PLUGIN_CAN_BALANCE) > 0)
                         {
                             // Balance
-//                            double left, right;
-//                            value = (double(velo)-63.5)/63.5;
+                            double left, right;
+                            value = (double(velo)-63.5)/63.5;
 
-//                            if (value < 0)
-//                            {
-//                                left  = -1.0;
-//                                right = (value*2)+1.0;
-//                            }
-//                            else if (value > 0)
-//                            {
-//                                left  = (value*2)-1.0;
-//                                right = 1.0;
-//                            }
-//                            else
-//                            {
-//                                left  = -1.0;
-//                                right = 1.0;
-//                            }
+                            if (value < 0)
+                            {
+                                left  = -1.0;
+                                right = (value*2)+1.0;
+                            }
+                            else if (value > 0)
+                            {
+                                left  = (value*2)-1.0;
+                                right = 1.0;
+                            }
+                            else
+                            {
+                                left  = -1.0;
+                                right = 1.0;
+                            }
 
-                            //set_balance_left(left, false, false);
-                            //set_balance_right(right, false, false);
-                            //postpone_event(PostEventParameter, PARAMETER_BALANCE_LEFT, left);
-                            //postpone_event(PostEventParameter, PARAMETER_BALANCE_RIGHT, right);
+                            set_balance_left(left, false, false);
+                            set_balance_right(right, false, false);
+                            postpone_event(PostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
+                            postpone_event(PostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
                         }
                     }
 
@@ -713,9 +713,9 @@ public:
                         if (param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0 &&
                                 param.data[k].midi_channel == channel && param.data[k].midi_cc == status)
                         {
-                            //value = (velo_per * (param.ranges[k].max - param.ranges[k].min)) + param.ranges[k].min;
-                            //set_parameter_value(k, value, false, false, false);
-                            //postpone_event(PostEventParameter, k, value);
+                            value = (velo_per * (param.ranges[k].max - param.ranges[k].min)) + param.ranges[k].min;
+                            set_parameter_value(k, value, false, false, false);
+                            postpone_event(PostEventParameterChange, k, value);
                         }
                     }
                 }
