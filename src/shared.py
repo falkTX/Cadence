@@ -233,7 +233,7 @@ def set_up_signals(_gui):
     x_gui.connect(x_gui, SIGNAL("SIGUSR2()"), lambda gui=x_gui: showWindow(gui))
     x_gui.connect(x_gui, SIGNAL("SIGTERM()"), SLOT("close()"))
 
-def signal_handler(sig):
+def signal_handler(sig, frame):
   global x_gui
   if (sig in (SIGINT, SIGTERM)):
     x_gui.emit(SIGNAL("SIGTERM()"))

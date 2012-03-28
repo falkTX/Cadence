@@ -81,9 +81,10 @@ save_state_custom_data = {
   'value': ""
 }
 
-# set default project folder
+# set defaults
 DEFAULT_PROJECT_FOLDER = HOME
 setDefaultProjectFolder(DEFAULT_PROJECT_FOLDER)
+setDefaultPluginsPaths(LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, SF2_PATH)
 
 def getStateDictFromXML(xml_node):
     x_save_state_dict = deepcopy(save_state_dict)
@@ -3273,6 +3274,13 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
           "Main/DefaultProjectFolder": self.settings.value("Main/DefaultProjectFolder", DEFAULT_PROJECT_FOLDER, type=str),
           "Main/RefreshInterval": self.settings.value("Main/RefreshInterval", 120, type=int)
         }
+
+        global LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, SF2_PATH
+        LADSPA_PATH = toList(self.settings.value("Paths/LADSPA", LADSPA_PATH))
+        DSSI_PATH = toList(self.settings.value("Paths/DSSI", DSSI_PATH))
+        LV2_PATH = toList(self.settings.value("Paths/LV2", LV2_PATH))
+        VST_PATH = toList(self.settings.value("Paths/VST", VST_PATH))
+        SF2_PATH = toList(self.settings.value("Paths/SF2", SF2_PATH))
 
     def timerEvent(self, event):
         if (event.timerId() == self.TIMER_GUI_STUFF):

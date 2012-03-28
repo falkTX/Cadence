@@ -44,11 +44,22 @@ LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY_DEFAULT    = 0
 
 # Internal defines
 global SETTINGS_DEFAULT_PROJECT_FOLDER
+global SETTINGS_DEFAULT_PLUGINS_PATHS
+
 SETTINGS_DEFAULT_PROJECT_FOLDER = "/tmp"
+SETTINGS_DEFAULT_PLUGINS_PATHS  = [None, None, None, None, None]
 
 def setDefaultProjectFolder(folder):
   global SETTINGS_DEFAULT_PROJECT_FOLDER
   SETTINGS_DEFAULT_PROJECT_FOLDER = folder
+
+def setDefaultPluginsPaths(ladspas, dssis, lv2s, vsts, sf2s):
+  global SETTINGS_DEFAULT_PLUGINS_PATHS
+  SETTINGS_DEFAULT_PLUGINS_PATHS[0] = ladspas
+  SETTINGS_DEFAULT_PLUGINS_PATHS[1] = dssis
+  SETTINGS_DEFAULT_PLUGINS_PATHS[2] = lv2s
+  SETTINGS_DEFAULT_PLUGINS_PATHS[3] = vsts
+  SETTINGS_DEFAULT_PLUGINS_PATHS[4] = sf2s
 
 # Settings Dialog
 class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
@@ -67,6 +78,8 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
           self.lw_page.hideRow(0)
           self.lw_page.hideRow(2)
           self.lw_page.hideRow(3)
+          self.lw_page.hideRow(4)
+          self.lw_page.hideRow(5)
           self.lw_page.setCurrentCell(1, 0)
 
         elif (appName == "catia"):
@@ -75,6 +88,8 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
           self.group_main_paths.setVisible(False)
           self.lw_page.hideRow(2)
           self.lw_page.hideRow(3)
+          self.lw_page.hideRow(4)
+          self.lw_page.hideRow(5)
           self.lw_page.setCurrentCell(0, 0)
 
         elif (appName == "claudia"):
@@ -83,6 +98,8 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
           self.label_jack_port_alias.setEnabled(False)
           self.label_jack_port_alias.setVisible(False)
           self.lw_page.hideRow(3) # TODO
+          self.lw_page.hideRow(4)
+          self.lw_page.hideRow(5)
           self.lw_page.setCurrentCell(0, 0)
 
         elif (appName == "carla"):
@@ -110,8 +127,24 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         self.lw_page.item(3, 0).setIcon(QIcon.fromTheme("application-x-executable", QIcon(":/48x48/exec.png")))
 
         self.connect(self, SIGNAL("accepted()"), SLOT("slot_saveSettings()"))
-        self.connect(self.b_main_def_folder_open, SIGNAL("clicked()"), SLOT("slot_getAndSetPath()"))
+        self.connect(self.b_main_def_folder_open, SIGNAL("clicked()"), SLOT("slot_getAndSetPath_project()"))
+        self.connect(self.b_paths_add, SIGNAL("clicked()"), SLOT("slot_addPath()"))
+        self.connect(self.b_paths_remove, SIGNAL("clicked()"), SLOT("slot_removePath()"))
+        self.connect(self.b_paths_change, SIGNAL("clicked()"), SLOT("slot_changePath()"))
+        self.connect(self.tw_paths, SIGNAL("currentChanged(int)"), SLOT("slot_pathTabChanged(int)"))
+        self.connect(self.lw_ladspa, SIGNAL("currentRowChanged(int)"), SLOT("slot_pathRowChanged(int)"))
+        self.connect(self.lw_dssi, SIGNAL("currentRowChanged(int)"), SLOT("slot_pathRowChanged(int)"))
+        self.connect(self.lw_lv2, SIGNAL("currentRowChanged(int)"), SLOT("slot_pathRowChanged(int)"))
+        self.connect(self.lw_vst, SIGNAL("currentRowChanged(int)"), SLOT("slot_pathRowChanged(int)"))
+        self.connect(self.lw_sf2, SIGNAL("currentRowChanged(int)"), SLOT("slot_pathRowChanged(int)"))
         self.connect(self.buttonBox.button(QDialogButtonBox.Reset), SIGNAL("clicked()"), SLOT("slot_resetSettings()"))
+
+        self.lw_ladspa.setCurrentRow(0)
+        self.lw_dssi.setCurrentRow(0)
+        self.lw_lv2.setCurrentRow(0)
+        self.lw_vst.setCurrentRow(0)
+        self.lw_sf2.setCurrentRow(0)
+        self.slot_pathTabChanged(self.tw_paths.currentIndex())
 
     def loadSettings(self):
         # ------------------------
@@ -160,9 +193,127 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         elif (database == "Klaudia"):
           self.rb_database_kxstudio.setChecked(True)
 
+        # ------------------------
+        # Page 4
+
+        self.ch_engine_global_client.setChecked(self.settings.value("Engine/GlobalClient", False, type=bool))
+        self.ch_engine_dssi_chunks.setChecked(self.settings.value("Engine/DSSIChunks", False, type=bool))
+        self.ch_engine_prefer_bridges.setChecked(self.settings.value("Engine/PreferBridges", True, type=bool))
+
+        # ------------------------
+        # Page 5
+
+        ladspas = toList(self.settings.value("Paths/LADSPA", SETTINGS_DEFAULT_PLUGINS_PATHS[0]))
+        dssis = toList(self.settings.value("Paths/DSSI", SETTINGS_DEFAULT_PLUGINS_PATHS[1]))
+        lv2s = toList(self.settings.value("Paths/LV2", SETTINGS_DEFAULT_PLUGINS_PATHS[2]))
+        vsts = toList(self.settings.value("Paths/VST", SETTINGS_DEFAULT_PLUGINS_PATHS[3]))
+        sf2s = toList(self.settings.value("Paths/SF2", SETTINGS_DEFAULT_PLUGINS_PATHS[4]))
+
+        ladspas.sort()
+        dssis.sort()
+        lv2s.sort()
+        vsts.sort()
+        sf2s.sort()
+
+        for ladspa in ladspas:
+          self.lw_ladspa.addItem(ladspa)
+
+        for dssi in dssis:
+          self.lw_dssi.addItem(dssi)
+
+        for lv2 in lv2s:
+          self.lw_lv2.addItem(lv2)
+
+        for vst in vsts:
+          self.lw_vst.addItem(vst)
+
+        for sf2 in sf2s:
+          self.lw_sf2.addItem(sf2)
+
     @pyqtSlot()
-    def slot_getAndSetPath(self):
+    def slot_getAndSetPath_project(self):
         getAndSetPath(self, self.le_main_def_folder.text(), self.le_main_def_folder)
+
+    @pyqtSlot()
+    def slot_addPath(self):
+        newPath = QFileDialog.getExistingDirectory(self, self.tr("Add Path"), "", QFileDialog.ShowDirsOnly)
+        if (newPath):
+          if (self.tw_paths.currentIndex() == 0):
+            self.lw_ladspa.addItem(newPath)
+          elif (self.tw_paths.currentIndex() == 1):
+            self.lw_dssi.addItem(newPath)
+          elif (self.tw_paths.currentIndex() == 2):
+            self.lw_lv2.addItem(newPath)
+          elif (self.tw_paths.currentIndex() == 3):
+            self.lw_vst.addItem(newPath)
+          elif (self.tw_paths.currentIndex() == 4):
+            self.lw_sf2.addItem(newPath)
+
+    @pyqtSlot()
+    def slot_removePath(self):
+        if (self.tw_paths.currentIndex() == 0):
+          self.lw_ladspa.takeItem(self.lw_ladspa.currentRow())
+        elif (self.tw_paths.currentIndex() == 1):
+          self.lw_dssi.takeItem(self.lw_dssi.currentRow())
+        elif (self.tw_paths.currentIndex() == 2):
+          self.lw_lv2.takeItem(self.lw_lv2.currentRow())
+        elif (self.tw_paths.currentIndex() == 3):
+          self.lw_vst.takeItem(self.lw_vst.currentRow())
+        elif (self.tw_paths.currentIndex() == 4):
+          self.lw_sf2.takeItem(self.lw_sf2.currentRow())
+
+    @pyqtSlot()
+    def slot_changePath(self):
+        if (self.tw_paths.currentIndex() == 0):
+          currentPath = self.lw_ladspa.currentItem().text()
+        elif (self.tw_paths.currentIndex() == 1):
+          currentPath = self.lw_dssi.currentItem().text()
+        elif (self.tw_paths.currentIndex() == 2):
+          currentPath = self.lw_lv2.currentItem().text()
+        elif (self.tw_paths.currentIndex() == 3):
+          currentPath = self.lw_vst.currentItem().text()
+        elif (self.tw_paths.currentIndex() == 4):
+          currentPath = self.lw_sf2.currentItem().text()
+        else:
+          currentPath = ""
+
+        newPath = QFileDialog.getExistingDirectory(self, self.tr("Add Path"), currentPath, QFileDialog.ShowDirsOnly)
+        if (newPath):
+          if (self.tw_paths.currentIndex() == 0):
+            self.lw_ladspa.currentItem().setText(newPath)
+          elif (self.tw_paths.currentIndex() == 1):
+            self.lw_dssi.currentItem().setText(newPath)
+          elif (self.tw_paths.currentIndex() == 2):
+            self.lw_lv2.currentItem().setText(newPath)
+          elif (self.tw_paths.currentIndex() == 3):
+            self.lw_vst.currentItem().setText(newPath)
+          elif (self.tw_paths.currentIndex() == 4):
+            self.lw_sf2.currentItem().setText(newPath)
+
+    @pyqtSlot(int)
+    def slot_pathTabChanged(self, index):
+        if (index == 0):
+          row = self.lw_ladspa.currentRow()
+        elif (index == 1):
+          row = self.lw_dssi.currentRow()
+        elif (index == 2):
+          row = self.lw_lv2.currentRow()
+        elif (index == 3):
+          row = self.lw_vst.currentRow()
+        elif (index == 4):
+          row = self.lw_sf2.currentRow()
+        else:
+          row = -1
+
+        check = bool(row >= 0)
+        self.b_paths_remove.setEnabled(check)
+        self.b_paths_change.setEnabled(check)
+
+    @pyqtSlot(int)
+    def slot_pathRowChanged(self, row):
+        check = bool(row >= 0)
+        self.b_paths_remove.setEnabled(check)
+        self.b_paths_change.setEnabled(check)
 
     @pyqtSlot()
     def slot_saveSettings(self):
@@ -210,6 +361,43 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
 
         self.settings.setValue("Apps/Database", "LADISH" if self.rb_database_ladish.isChecked() else "Klaudia")
 
+        # ------------------------
+        # Page 4
+
+        self.settings.setValue("Engine/GlobalClient", self.ch_engine_global_client.isChecked())
+        self.settings.setValue("Engine/DSSIChunks", self.ch_engine_dssi_chunks.isChecked())
+        self.settings.setValue("Engine/PreferBridges", self.ch_engine_prefer_bridges.isChecked())
+
+        # ------------------------
+        # Page 5
+
+        ladspas = []
+        dssis = []
+        lv2s = []
+        vsts = []
+        sf2s = []
+
+        for i in range(self.lw_ladspa.count()):
+          ladspas.append(self.lw_ladspa.item(i).text())
+
+        for i in range(self.lw_dssi.count()):
+          dssis.append(self.lw_dssi.item(i).text())
+
+        for i in range(self.lw_lv2.count()):
+          lv2s.append(self.lw_lv2.item(i).text())
+
+        for i in range(self.lw_vst.count()):
+          vsts.append(self.lw_vst.item(i).text())
+
+        for i in range(self.lw_sf2.count()):
+          sf2s.append(self.lw_sf2.item(i).text())
+
+        self.settings.setValue("Paths/LADSPA", ladspas)
+        self.settings.setValue("Paths/DSSI", dssis)
+        self.settings.setValue("Paths/LV2", lv2s)
+        self.settings.setValue("Paths/VST", vsts)
+        self.settings.setValue("Paths/SF2", sf2s)
+
     @pyqtSlot()
     def slot_resetSettings(self):
         self.le_main_def_folder.setText(SETTINGS_DEFAULT_PROJECT_FOLDER)
@@ -230,3 +418,35 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         self.cb_canvas_render_text_aa.setChecked(True)
         self.cb_canvas_render_hq_aa.setChecked(False)
         self.rb_database_ladish.setChecked(True)
+        self.ch_engine_global_client.setChecked(False)
+        self.ch_engine_dssi_chunks.setChecked(False)
+        self.ch_engine_prefer_bridges.setChecked(True)
+
+        ladspas, dssis, lv2s, vsts, sf2s = SETTINGS_DEFAULT_PLUGINS_PATHS
+
+        ladspas.sort()
+        dssis.sort()
+        lv2s.sort()
+        vsts.sort()
+        sf2s.sort()
+
+        self.lw_ladspa.clear()
+        self.lw_dssi.clear()
+        self.lw_lv2.clear()
+        self.lw_vst.clear()
+        self.lw_sf2.clear()
+
+        for ladspa in ladspas:
+          self.lw_ladspa.addItem(ladspa)
+
+        for dssi in dssis:
+          self.lw_dssi.addItem(dssi)
+
+        for lv2 in lv2s:
+          self.lw_lv2.addItem(lv2)
+
+        for vst in vsts:
+          self.lw_vst.addItem(vst)
+
+        for sf2 in sf2s:
+          self.lw_sf2.addItem(sf2)
