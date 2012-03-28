@@ -104,7 +104,7 @@ enum CallbackType {
     CALLBACK_PROGRAM_CHANGED      = 2, // program_id, 0, 0
     CALLBACK_MIDI_PROGRAM_CHANGED = 3, // bank_id, program_id, 0
     CALLBACK_NOTE_ON              = 4, // key, velocity, 0
-    CALLBACK_NOTE_OFF             = 5, // key, velocity, 0
+    CALLBACK_NOTE_OFF             = 5, // key, 0, 0
     CALLBACK_SHOW_GUI             = 6, // show? (0|1, -1=quit), 0, 0
     CALLBACK_RESIZE_GUI           = 7, // width, height, 0
     CALLBACK_UPDATE               = 8,

@@ -106,11 +106,11 @@ void CarlaCheckThread::run()
                             break;
 
                         case PostEventNoteOff:
-                            //osc_send_note_off(&global_osc_data, plugin->id, post_events[j].index, post_events[j].value);
-                            callback_action(CALLBACK_NOTE_OFF, plugin->id(), post_events[j].index, post_events[j].value, 0.0);
+                            //osc_send_note_off(&global_osc_data, plugin->id, post_events[j].index, 0);
+                            callback_action(CALLBACK_NOTE_OFF, plugin->id(), post_events[j].index, 0, 0.0);
 
                             //if (plugin->hints & PLUGIN_IS_BRIDGE)
-                            //    osc_send_note_off(&plugin->osc.data, plugin->id, post_events[j].index, post_events[j].value);
+                            //    osc_send_note_off(&plugin->osc.data, plugin->id, post_events[j].index, 0);
 
                             break;
 

@@ -221,8 +221,16 @@ class SearchPluginsThread(QThread):
         self.check_bins   = []
 
     def skipPlugin(self):
-        # TODO - windows support
-        os.system("killall -KILL carla-discovery carla-discovery-unix32 carla-discovery-unix64 carla-discovery-win32.exe carla-discovery-win64.exe")
+        # TODO - windows and mac support
+        apps  = ""
+        apps += " carla-discovery"
+        apps += " carla-discovery-unix32"
+        apps += " carla-discovery-unix64"
+        apps += " carla-discovery-win32.exe"
+        apps += " carla-discovery-win64.exe"
+
+        if (LINUX):
+          os.system("killall -KILL %s" % (apps))
 
     def pluginLook(self, percent, plugin):
         self.emit(SIGNAL("PluginLook(int, QString)"), percent, plugin)
@@ -244,6 +252,8 @@ class SearchPluginsThread(QThread):
         self.settings_db.setValue("Plugins/LastLoadedBinary", binary)
 
     def run(self):
+        # TODO - split across several fuctions
+
         blacklist = toList(self.settings_db.value("Plugins/Blacklisted", []))
         bins   = []
         bins_w = []
@@ -314,8 +324,8 @@ class SearchPluginsThread(QThread):
           if (check_native):
             ladspa_binaries = []
 
-            for PATH in LADSPA_PATH:
-              binaries = findBinaries(PATH, OS)
+            for iPATH in LADSPA_PATH:
+              binaries = findBinaries(iPATH, OS)
               for binary in binaries:
                 if (binary not in ladspa_binaries):
                   ladspa_binaries.append(binary)
@@ -341,8 +351,8 @@ class SearchPluginsThread(QThread):
           if (check_wine):
             ladspa_binaries_w = []
 
-            for PATH in LADSPA_PATH:
-              binaries = findBinaries(PATH, "WINDOWS")
+            for iPATH in LADSPA_PATH:
+              binaries = findBinaries(iPATH, "WINDOWS")
               for binary in binaries:
                 if (binary not in ladspa_binaries_w):
                   ladspa_binaries_w.append(binary)
@@ -383,8 +393,8 @@ class SearchPluginsThread(QThread):
           if (check_native):
             dssi_binaries = []
 
-            for PATH in DSSI_PATH:
-              binaries = findBinaries(PATH, OS)
+            for iPATH in DSSI_PATH:
+              binaries = findBinaries(iPATH, OS)
               for binary in binaries:
                 if (binary not in dssi_binaries):
                   dssi_binaries.append(binary)
@@ -410,8 +420,8 @@ class SearchPluginsThread(QThread):
           if (check_wine):
             dssi_binaries_w = []
 
-            for PATH in DSSI_PATH:
-              binaries = findBinaries(PATH, "WINDOWS")
+            for iPATH in DSSI_PATH:
+              binaries = findBinaries(iPATH, "WINDOWS")
               for binary in binaries:
                 if (binary not in dssi_binaries_w):
                   dssi_binaries_w.append(binary)
@@ -453,8 +463,8 @@ class SearchPluginsThread(QThread):
           if (check_native):
             vst_binaries = []
 
-            for PATH in VST_PATH:
-              binaries = findBinaries(PATH, OS)
+            for iPATH in VST_PATH:
+              binaries = findBinaries(iPATH, OS)
               for binary in binaries:
                 if (binary not in vst_binaries):
                   vst_binaries.append(binary)
@@ -480,8 +490,8 @@ class SearchPluginsThread(QThread):
           if (check_wine):
             vst_binaries_w = []
 
-            for PATH in VST_PATH:
-              binaries = findBinaries(PATH, "WINDOWS")
+            for iPATH in VST_PATH:
+              binaries = findBinaries(iPATH, "WINDOWS")
               for binary in binaries:
                 if (binary not in vst_binaries_w):
                   vst_binaries_w.append(binary)
@@ -509,8 +519,8 @@ class SearchPluginsThread(QThread):
         if (self.check_sf2):
 
           sf2_files = []
-          for PATH in SF2_PATH:
-            files = findSoundFonts(PATH)
+          for iPATH in SF2_PATH:
+            files = findSoundFonts(iPATH)
             for file_ in files:
               if (file_ not in sf2_files):
                 sf2_files.append(file_)
@@ -751,7 +761,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.settings_db = self.parent().settings_db
         self.loadSettings()
 
-        if (bool(LINUX or MACOS) == False):
+        if (not (LINUX or MACOS)):
           self.ch_bridged_wine.setChecked(False)
           self.ch_bridged_wine.setEnabled(False)
 
@@ -807,7 +817,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
 
     def reAddPlugins(self):
         row_count = self.tableWidget.rowCount()
-        for i in range(row_count):
+        for x in range(row_count):
           self.tableWidget.removeRow(0)
 
         self.last_table_index = 0
@@ -847,7 +857,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
 
         for soundfonts_i in soundfonts:
           for soundfont in soundfonts_i:
-            self.addPluginToTable(plugin, "SF2")
+            self.addPluginToTable(soundfont, "SF2")
             sf2_count += 1
 
         self.slot_checkFilters()
@@ -1124,8 +1134,8 @@ class AboutW(QDialog, ui_carla_about.Ui_AboutW):
 
 # Single Plugin Parameter
 class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
-    def __init__(self, parent=None, pinfo=None, plugin_id=-1):
-        super(PluginParameter, self).__init__(parent)
+    def __init__(self, parent, pinfo, plugin_id):
+        QWidget.__init__(self, parent)
         self.setupUi(self)
 
         self.ptype = pinfo['type']
@@ -1151,12 +1161,12 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
           self.widget.set_step_large(pinfo['step_large'])
           self.widget.set_scalepoints(pinfo['scalepoints'], (pinfo['hints'] & PARAMETER_USES_SCALEPOINTS))
 
-          if (not self.hints & PARAMETER_IS_AUTOMABLE):
+          if (not self.hints & PARAMETER_IS_ENABLED):
+            self.widget.set_read_only(True)
             self.combo.setEnabled(False)
             self.sb_channel.setEnabled(False)
 
-          if (not self.hints & PARAMETER_IS_ENABLED):
-            self.widget.set_read_only(True)
+          elif (not self.hints & PARAMETER_IS_AUTOMABLE):
             self.combo.setEnabled(False)
             self.sb_channel.setEnabled(False)
 
@@ -1179,9 +1189,9 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
         self.set_parameter_midi_channel(pinfo['midi_channel'])
         self.set_parameter_midi_cc(pinfo['midi_cc'])
 
-        self.connect(self.widget, SIGNAL("valueChanged(float)"), self.handleValueChanged)
-        self.connect(self.sb_channel, SIGNAL("valueChanged(int)"), self.handleMidiChannelChanged)
-        self.connect(self.combo, SIGNAL("currentIndexChanged(int)"), self.handleMidiCcChanged)
+        self.connect(self.widget, SIGNAL("valueChanged(double)"), SLOT("slot_valueChanged(double)"))
+        self.connect(self.sb_channel, SIGNAL("valueChanged(int)"), SLOT("slot_midiChannelChanged(int)"))
+        self.connect(self.combo, SIGNAL("currentIndexChanged(int)"), SLOT("slot_midiCcChanged(int)"))
 
         #if force_parameters_style:
           #self.widget.force_plastique_style()
@@ -1202,25 +1212,6 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
         self.midi_cc = cc_index
         self.set_MIDI_CC_in_ComboBox(cc_index)
 
-    def handleValueChanged(self, value):
-        self.emit(SIGNAL("valueChanged(int, double)"), self.parameter_id, value)
-
-    def handleMidiChannelChanged(self, channel):
-        if (self.midi_channel != channel):
-          self.emit(SIGNAL("midiChannelChanged(int, int)"), self.parameter_id, channel)
-        self.midi_channel = channel
-
-    def handleMidiCcChanged(self, cc_index):
-        if (cc_index <= 0):
-          midi_cc = -1
-        else:
-          midi_cc_text = MIDI_CC_LIST[cc_index-1].split(" ")[0]
-          midi_cc = int(midi_cc_text, 16)
-
-        if (self.midi_cc != midi_cc):
-          self.emit(SIGNAL("midiCcChanged(int, int)"), self.parameter_id, midi_cc)
-        self.midi_cc = midi_cc
-
     def add_MIDI_CCs_to_ComboBox(self):
         for MIDI_CC in MIDI_CC_LIST:
           self.combo.addItem(MIDI_CC)
@@ -1237,37 +1228,60 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
         cc_index += 1
         self.combo.setCurrentIndex(cc_index)
 
+    @pyqtSlot(float)
+    def slot_valueChanged(self, value):
+        self.emit(SIGNAL("valueChanged(int, double)"), self.parameter_id, value)
+
+    @pyqtSlot(int)
+    def slot_midiChannelChanged(self, channel):
+        if (self.midi_channel != channel):
+          self.emit(SIGNAL("midiChannelChanged(int, int)"), self.parameter_id, channel)
+        self.midi_channel = channel
+
+    @pyqtSlot(int)
+    def slot_midiCcChanged(self, cc_index):
+        if (cc_index <= 0):
+          midi_cc = -1
+        else:
+          midi_cc_text = MIDI_CC_LIST[cc_index-1].split(" ")[0]
+          midi_cc = int(midi_cc_text, 16)
+
+        if (self.midi_cc != midi_cc):
+          self.emit(SIGNAL("midiCcChanged(int, int)"), self.parameter_id, midi_cc)
+        self.midi_cc = midi_cc
+
 # Plugin GUI
 class PluginGUI(QDialog):
     def __init__(self, parent, plugin_name, gui_data):
         super(PluginGUI, self).__init__(parent)
 
-        #self.myLayout = QVBoxLayout(self)
-        #self.myLayout.setContentsMargins(0, 0, 0, 0)
-        #self.setLayout(self.myLayout)
+        self.myLayout = QVBoxLayout(self)
+        self.myLayout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.myLayout)
 
-        #self.resizable = gui_data['resizable']
-        #self.set_new_size(gui_data['width'], gui_data['height'])
+        self.resizable = gui_data['resizable']
+        self.setNewSize(gui_data['width'], gui_data['height'])
 
-        #if (not plugin_name):
-          #plugin_name = "Plugin"
+        if (not plugin_name):
+          plugin_name = "Plugin"
 
-        #self.setWindowTitle(plugin_name+" (GUI)")
+        self.setWindowTitle("%s (GUI)" % (plugin_name))
 
-    #def set_new_size(self, width, height):
-        #if (width < 30):
-          #width = 30
-        #if (height < 30):
-          #height = 30
+    def setNewSize(self, width, height):
+        if (width < 30):
+          width = 30
+        if (height < 30):
+          height = 30
 
-        #if (self.resizable):
-          #self.resize(width, height)
-        #else:
-          #self.setFixedSize(width, height)
+        if (self.resizable):
+          self.resize(width, height)
+        else:
+          self.setFixedSize(width, height)
 
-    #def hideEvent(self, event):
-        #event.accept()
-        #self.close()
+    def hideEvent(self, event):
+        # FIXME
+        event.accept()
+        self.close()
 
 # Plugin Editor (Built-in)
 class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
@@ -1314,7 +1328,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
         self.do_reload_all()
 
-    def set_parameter_value(self, parameter_id, value):
+    def set_parameter_to_update(self, parameter_id):
         if (parameter_id not in self.parameter_list_to_update):
           self.parameter_list_to_update.append(parameter_id)
 
@@ -1350,7 +1364,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         # Update current midi program text
         if (self.cb_midi_programs.count() > 0):
           mpindex = self.cb_midi_programs.currentIndex()
-          mpname  = "%s %s" % (self.cb_midi_programs.currentText().split(" ", 1)[0], toString(CarlaHost.get_midi_program_name(self.plugin_id, pindex)))
+          mpname  = "%s %s" % (self.cb_midi_programs.currentText().split(" ", 1)[0], toString(CarlaHost.get_midi_program_name(self.plugin_id, mpindex)))
           self.cb_midi_programs.setItemText(pindex, mpname)
 
         QTimer.singleShot(0, self, SLOT("slot_checkInputControlParameters()"))
@@ -2083,7 +2097,6 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         r = 15
         g = 110
         b = 15
-        w = 15
         texture = 6
       elif (color == PALETTE_COLOR_BLUE):
         r = 15
@@ -2690,8 +2703,8 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.connect(self, SIGNAL("ParameterCallback(int, int, double)"), SLOT("slot_handleParameterCallback(int, int, double)"))
         self.connect(self, SIGNAL("ProgramCallback(int, int)"), SLOT("slot_handleProgramCallback(int, int)"))
         self.connect(self, SIGNAL("MidiProgramCallback(int, int)"), SLOT("slot_handleMidiProgramCallback(int, int)"))
-        self.connect(self, SIGNAL("NoteOnCallback(int, int, int)"), SLOT("slot_handleNoteOnCallback(int, int, int)"))
-        self.connect(self, SIGNAL("NoteOffCallback(int, int, int)"), SLOT("slot_handleNoteOffCallback(int, int, int)"))
+        self.connect(self, SIGNAL("NoteOnCallback(int, int, int)"), SLOT("slot_handleNoteOnCallback(int, int)"))
+        self.connect(self, SIGNAL("NoteOffCallback(int, int)"), SLOT("slot_handleNoteOffCallback(int, int)"))
         self.connect(self, SIGNAL("ShowGuiCallback(int, int)"), SLOT("slot_handleShowGuiCallback(int, int)"))
         self.connect(self, SIGNAL("ResizeGuiCallback(int, int, int)"), SLOT("slot_handleResizeGuiCallback(int, int, int)"))
         self.connect(self, SIGNAL("UpdateCallback(int)"), SLOT("slot_handleUpdateCallback(int)"))
@@ -2719,7 +2732,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         elif (action == CALLBACK_NOTE_ON):
           self.emit(SIGNAL("NoteOnCallback(int, int, int)"), plugin_id, value1, value2)
         elif (action == CALLBACK_NOTE_OFF):
-          self.emit(SIGNAL("NoteOffCallback(int, int, int)"), plugin_id, value1, value2)
+          self.emit(SIGNAL("NoteOffCallback(int, int)"), plugin_id, value1)
         elif (action == CALLBACK_SHOW_GUI):
           self.emit(SIGNAL("ShowGuiCallback(int, int)"), plugin_id, value1)
         elif (action == CALLBACK_RESIZE_GUI):
@@ -2763,7 +2776,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
           elif (parameter_id == PARAMETER_BALANCE_RIGHT):
             pwidget.set_balance_right(value*1000, True, False)
           elif (parameter_id >= 0):
-            pwidget.edit_dialog.set_parameter_value(parameter_id, value)
+            pwidget.edit_dialog.set_parameter_to_update(parameter_id)
 
     @pyqtSlot(int, int)
     def slot_handleProgramCallback(self, plugin_id, program_id):
@@ -2777,14 +2790,14 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         if (pwidget):
           pwidget.edit_dialog.set_midi_program(midi_program_id)
 
-    @pyqtSlot(int, int, int)
-    def slot_handleNoteOnCallback(self, plugin_id, note, velo):
+    @pyqtSlot(int, int)
+    def slot_handleNoteOnCallback(self, plugin_id, note):
         pwidget = self.m_plugin_list[plugin_id]
         if (pwidget):
           pwidget.edit_dialog.keyboard.noteOn(note, False)
 
-    @pyqtSlot(int, int, int)
-    def slot_handleNoteOffCallback(self, plugin_id, note, velo):
+    @pyqtSlot(int, int)
+    def slot_handleNoteOffCallback(self, plugin_id, note):
         pwidget = self.m_plugin_list[plugin_id]
         if (pwidget):
           pwidget.edit_dialog.keyboard.noteOff(note, False)
@@ -2938,7 +2951,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
         for pwidget in self.m_plugin_list:
           if (pwidget):
-            if (first_plugin == False):
+            if (not first_plugin):
               content += "\n"
 
             content += " <Plugin>\n"
@@ -3081,7 +3094,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             plugin_lB = None
             plugin_lb = None
             plugin_l = None
-            plugin_b = None
+            plugin_B = None
 
           # SoundFonts use binaries
           elif (ptype == "SF2"):
