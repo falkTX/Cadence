@@ -491,7 +491,10 @@ public:
     {
     }
 
-    virtual void process(jack_nframes_t nframes) = 0;
+    virtual void process(jack_nframes_t nframes)
+    {
+        Q_UNUSED(nframes);
+    }
 
     virtual void buffer_size_changed(jack_nframes_t new_buffer_size)
     {

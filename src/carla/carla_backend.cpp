@@ -60,10 +60,11 @@ void carla_jack_shutdown_callback(void* arg);
 
 // plugin specific
 short add_plugin_ladspa(const char* filename, const char* label, void* extra_stuff);
-//short add_plugin_dssi(const char* filename, const char* label, void* extra_stuff);
-//short add_plugin_lv2(const char* filename, const char* label, void* extra_stuff);
-//short add_plugin_vst(const char* filename, const char* label);
-//short add_plugin_sf2(const char* filename, const char* label);
+short add_plugin_dssi(const char* filename, const char* label, void* extra_stuff);
+short add_plugin_lv2(const char* filename, const char* label, void* extra_stuff);
+short add_plugin_vst(const char* filename, const char* label);
+short add_plugin_sf2(const char* filename, const char* label);
+short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename, const char* label, void* extra_stuff);
 
 // -------------------------------------------------------------------------------------------------------------------
 // Exported symbols (API)
@@ -192,13 +193,21 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
 {
     qDebug("add_plugin(%i, %i, %s, %s, %p)", btype, ptype, filename, label, extra_stuff);
 
-    // TODO - check for bridge type
+    if (btype != BINARY_NATIVE)
+    {
+        if (carla_options.global_jack_client)
+        {
+            set_last_error("Cannot use bridged plugins while in global client mode");
+            return -1;
+        }
+        else
+            return add_plugin_bridge(btype, ptype, filename, label, extra_stuff);
+    }
 
     switch (ptype)
     {
     case PLUGIN_LADSPA:
         return add_plugin_ladspa(filename, label, extra_stuff);
-#if 0
     case PLUGIN_DSSI:
         return add_plugin_dssi(filename, label, extra_stuff);
     case PLUGIN_LV2:
@@ -207,7 +216,6 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
         return add_plugin_vst(filename, label);
     case PLUGIN_SF2:
         return add_plugin_sf2(filename, label);
-#endif
     default:
         set_last_error("Unknown plugin type");
         return -1;
