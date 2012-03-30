@@ -225,13 +225,15 @@ struct LV2_RDF_PresetPort {
 #define LV2_PRESET_STATE_BOOL            0x1
 #define LV2_PRESET_STATE_INT             0x2
 #define LV2_PRESET_STATE_LONG            0x3
-#define LV2_PRESET_STATE_STRING          0x4
-#define LV2_PRESET_STATE_BINARY          0x5
+#define LV2_PRESET_STATE_FLOAT           0x4
+#define LV2_PRESET_STATE_STRING          0x5
+#define LV2_PRESET_STATE_BINARY          0x6
 
 #define LV2_IS_PRESET_STATE_NULL(x)      ((x) == LV2_PRESET_STATE_NULL)
 #define LV2_IS_PRESET_STATE_BOOL(x)      ((x) == LV2_PRESET_STATE_BOOL)
 #define LV2_IS_PRESET_STATE_INT(x)       ((x) == LV2_PRESET_STATE_INT)
 #define LV2_IS_PRESET_STATE_LONG(x)      ((x) == LV2_PRESET_STATE_LONG)
+#define LV2_IS_PRESET_STATE_FLOAT(x)     ((x) == LV2_PRESET_STATE_FLOAT)
 #define LV2_IS_PRESET_STATE_STRING(x)    ((x) == LV2_PRESET_STATE_STRING)
 #define LV2_IS_PRESET_STATE_BINARY(x)    ((x) == LV2_PRESET_STATE_BINARY)
 
@@ -240,6 +242,7 @@ union LV2_RDF_PresetStateValue {
     bool b;
     int i;
     long li;
+    float f;
     const char* s;
 };
 
@@ -508,8 +511,32 @@ inline const LV2_RDF_Descriptor* lv2_rdf_dup(LV2_RDF_Descriptor* rdf_descriptor)
 
                 for (j=0; j < Preset->StateCount; j++)
                 {
+                    Preset->States[j].Type  = rdf_descriptor->Presets[i].States[j].Type;
                     Preset->States[j].Key   = strdup(rdf_descriptor->Presets[i].States[j].Key);
-                    Preset->States[j].Value = strdup(rdf_descriptor->Presets[i].States[j].Value);
+
+                    switch (Preset->States[j].Type)
+                    {
+                    case LV2_PRESET_STATE_BOOL:
+                        Preset->States[j].Value.b = rdf_descriptor->Presets[i].States[j].Value.b;
+                        break;
+                    case LV2_PRESET_STATE_INT:
+                        Preset->States[j].Value.i = rdf_descriptor->Presets[i].States[j].Value.i;
+                        break;
+                    case LV2_PRESET_STATE_LONG:
+                        Preset->States[j].Value.li = rdf_descriptor->Presets[i].States[j].Value.li;
+                        break;
+                    case LV2_PRESET_STATE_FLOAT:
+                        Preset->States[j].Value.f = rdf_descriptor->Presets[i].States[j].Value.f;
+                        break;
+                    case LV2_PRESET_STATE_STRING:
+                    case LV2_PRESET_STATE_BINARY:
+                        Preset->States[j].Value.s = strdup(rdf_descriptor->Presets[i].States[j].Value.s);
+                        break;
+                    default:
+                        // Invalid type
+                        Preset->States[j].Type = LV2_PRESET_STATE_NULL;
+                        break;
+                    }
                 }
             }
             else
@@ -657,7 +684,9 @@ inline void lv2_rdf_free(const LV2_RDF_Descriptor* rdf_descriptor)
             for (j=0; j < Preset->StateCount; j++)
             {
                 free((void*)Preset->States[j].Key);
-                free((void*)Preset->States[j].Value);
+
+                if (Preset->States[j].Type == LV2_PRESET_STATE_STRING || Preset->States[j].Type == LV2_PRESET_STATE_BINARY)
+                    free((void*)Preset->States[j].Value.s);
             }
         }
         delete[] rdf_descriptor->Presets;
@@ -711,73 +740,73 @@ inline void lv2_rdf_free(const LV2_RDF_Descriptor* rdf_descriptor)
     delete rdf_descriptor;
 }
 
-inline bool is_lv2_feature_supported(const char *uri)
+inline bool is_lv2_feature_supported(const char* /*uri*/)
 {
-    if (strcmp(uri, "http://lv2plug.in/ns/lv2core#hardRTCapable") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#inPlaceBroken") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#isLive") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/event") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#makePath") == 0)
-        return false; // TODO
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#mapPath") == 0)
-        return false; // TODO
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/uri-map") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#map") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#unmap") == 0)
-        return true;
-    else if (strcmp(uri, "http://home.gna.org/lv2dynparam/rtmempool/v1") == 0)
-        return true;
-    else
+//    if (strcmp(uri, "http://lv2plug.in/ns/lv2core#hardRTCapable") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#inPlaceBroken") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#isLive") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/event") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#makePath") == 0)
+//        return false; // TODO
+//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#mapPath") == 0)
+//        return false; // TODO
+//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/uri-map") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#map") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#unmap") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://home.gna.org/lv2dynparam/rtmempool/v1") == 0)
+//        return true;
+//    else
         return false;
 }
 
-inline bool is_lv2_ui_feature_supported(const char *uri)
+inline bool is_lv2_ui_feature_supported(const char */*uri*/)
 {
-    if (strcmp(uri, "http://lv2plug.in/ns/lv2core#hardRTCapable") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#inPlaceBroken") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#isLive") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/event") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#makePath") == 0)
-        return false; // TODO
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#mapPath") == 0)
-        return false; // TODO
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/uri-map") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#map") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#unmap") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/data-access") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/instance-access") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/ui-resize") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#Events") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#makeResident") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#makeSONameResident") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#noUserResize") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#fixedSize") == 0)
-        return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#external") == 0)
-        return true;
-    else if (strcmp(uri, "http://nedko.arnaudov.name/lv2/external_ui/") == 0)
-        return true;
-    else
+//    if (strcmp(uri, "http://lv2plug.in/ns/lv2core#hardRTCapable") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#inPlaceBroken") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#isLive") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/event") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#makePath") == 0)
+//        return false; // TODO
+//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#mapPath") == 0)
+//        return false; // TODO
+//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/uri-map") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#map") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#unmap") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/data-access") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/instance-access") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/ui-resize") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#Events") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#makeResident") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#makeSONameResident") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#noUserResize") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#fixedSize") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#external") == 0)
+//        return true;
+//    else if (strcmp(uri, "http://nedko.arnaudov.name/lv2/external_ui/") == 0)
+//        return true;
+//    else
         return false;
 }
 

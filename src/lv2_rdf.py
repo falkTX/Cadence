@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------------------
@@ -38,8 +38,6 @@ LV2_RTSAFE_MEMORY_POOL_URI     = "http://home.gna.org/lv2dynparam/rtmempool/v1"
 LV2_EXTERNAL_UI_URI            = "http://nedko.arnaudov.name/lv2/external_ui/"
 
 LV2_RDF_Supported_Features_URI = (
-  LV2_ATOM_URI,
-  LV2_CV_PORT_URI,
   LV2_DATA_ACCESS_URI,
   LV2_EVENT_URI,
   LV2_HOST_INFO_URI,
@@ -48,7 +46,6 @@ LV2_RDF_Supported_Features_URI = (
   LV2_PORT_PROPS_URI,
   LV2_PRESETS_URI,
   LV2_STATE_URI,
-  LV2_TIME_URI,
   LV2_UI_RESIZE_URI,
   LV2_URI_MAP_URI,
   LV2_URID_URI,
@@ -210,8 +207,9 @@ LV2_PRESET_STATE_NULL          = 0x0
 LV2_PRESET_STATE_BOOL          = 0x1
 LV2_PRESET_STATE_INT           = 0x2
 LV2_PRESET_STATE_LONG          = 0x3
-LV2_PRESET_STATE_STRING        = 0x4
-LV2_PRESET_STATE_BINARY        = 0x5
+LV2_PRESET_STATE_FLOAT         = 0x4
+LV2_PRESET_STATE_STRING        = 0x5
+LV2_PRESET_STATE_BINARY        = 0x6
 
 # A Preset State Value
 class LV2_RDF_PresetStateValue(Union):
@@ -219,6 +217,7 @@ class LV2_RDF_PresetStateValue(Union):
     ("b", c_bool),
     ("i", c_int),
     ("li", c_long),
+    ("f", c_float),
     ("s", c_char_p)
   ]
 
@@ -528,7 +527,9 @@ rdf_prefix = {
   'lv2:requiredFeature':     NS_lv2+"requiredFeature",
 
   # LV2 Atom
+  'lv2atom:MessagePort':     NS_lv2atom+"MessagePort",
   'lv2atom:String':          NS_lv2atom+"String",
+  'lv2atom:ValuePort':       NS_lv2atom+"ValuePort",
 
   # LV2 CV
   'lv2cv:CVPort':            NS_lv2cv+"CVPort",
@@ -701,10 +702,16 @@ def get_c_port_type(value):
     return LV2_PORT_CONTROL
   elif (value_str == "AudioPort"):
     return LV2_PORT_AUDIO
+  elif (value == rdf_prefix['lv2atom:MessagePort']):
+    return LV2_PORT_ATOM_MESSAGE
+  elif (value == rdf_prefix['lv2atom:ValuePort']):
+    return LV2_PORT_ATOM_VALUE
   elif (value == rdf_prefix['lv2cv:CVPort']):
     return LV2_PORT_CV
   elif (value == rdf_prefix['lv2ev:EventPort']):
     return LV2_PORT_EVENT
+  elif (value == "http://ll-plugins.nongnu.org/lv2/ext/MidiPort"):
+    return LV2_PORT_MIDI_LL
   else:
     print("LV2_RDF - Got an unknown port type '%s'" % value_str)
     return 0
@@ -712,8 +719,8 @@ def get_c_port_type(value):
 def get_c_port_event_type(value):
   if (value == "http://lv2plug.in/ns/ext/midi#MidiEvent"):
     return LV2_PORT_EVENT_MIDI
-  elif (value == "http://lv2plug.in/ns/ext/time#Position"):
-    return LV2_PORT_EVENT_TIME
+  #elif (value == "http://lv2plug.in/ns/ext/time#Position"):
+    #return LV2_PORT_EVENT_TIME
   else:
     print("LV2_RDF - Got an unknown port event type '%s'" % value)
     return 0
@@ -732,7 +739,7 @@ def get_c_port_midi_map_type(value):
 def get_c_port_property(value):
   # Fix old plugins
   if (value.startswith("http://lv2plug.in/ns/dev/extportinfo#")):
-    value = value.replace("http://lv2plug.in/ns/dev/extportinfo#", NS_lv2, 1)
+    value = value.replace("http://lv2plug.in/ns/dev/extportinfo#", NS_lv2pprops, 1)
 
   value_str = value.replace(NS_lv2, "", 1).replace(NS_lv2pprops, "", 1)
 
@@ -870,51 +877,50 @@ def set_rdf_path(PATH):
 # -------------------------------------------------------------------------------
 #  Helper methods
 
-def to_string(string):
-  try:
-    return str(unicode(string).encode('utf-8'))
-  except:
-    return "(unicode error)"
+from re import match as re_match
+from base64 import decodestring as base64_decodestring
+from sys import maxsize
 
 def to_local_name(uri):
   # TODO - Windows support?
   return uri.replace("file://", "")
 
-def to_short_name(uri, bundle_path):
-  if (bundle_path.endswith((".ttl", ".ttL", ".tTL", ".TTL", ".TTl", ".Ttl")) and os.sep in bundle_path):
-    bundle_path = bundle_path.rsplit(os.sep, 1)[0]
-  if (bundle_path.endswith((".lv2", ".lV2", ".LV2", ".Lv2")) and os.sep in bundle_path):
-    bundle_path = bundle_path.rsplit(os.sep, 1)[0]
-  return to_local_name(uri).replace(CWD, bundle_path)
+#def to_short_name(uri, bundle_path):
+  #if (bundle_path.endswith((".ttl", ".ttL", ".tTL", ".TTL", ".TTl", ".Ttl")) and os.sep in bundle_path):
+    #bundle_path = bundle_path.rsplit(os.sep, 1)[0]
+  #if (bundle_path.endswith((".lv2", ".lV2", ".LV2", ".Lv2")) and os.sep in bundle_path):
+    #bundle_path = bundle_path.rsplit(os.sep, 1)[0]
+  #return to_local_name(uri).replace(CWD, bundle_path)
 
-def get_real_bundle_path(bundle_path):
-  if (bundle_path[-1] == os.sep):
-    # Remove trailing separator, for endswith comparison
-    real_bundle_path = bundle_path[0:-1]
-  else:
-    real_bundle_path = bundle_path
+#def get_real_bundle_path(bundle_path):
+  #if (bundle_path[-1] == os.sep):
+    ## Remove trailing separator, for endswith comparison
+    #real_bundle_path = bundle_path[0:-1]
+  #else:
+    #real_bundle_path = bundle_path
 
-  if (real_bundle_path.endswith((".lv2", ".lV2", ".LV2", ".Lv2"))):
-    return real_bundle_path+os.sep
-  elif (real_bundle_path.endswith((".ttl", ".ttL", ".tTL", ".TTL", ".TTl", ".Ttl"))):
-    return real_bundle_path.rsplit(os.sep, 1)[0]+os.sep
-  else:
-    return real_bundle_path+os.sep
+  #if (real_bundle_path.endswith((".lv2", ".lV2", ".LV2", ".Lv2"))):
+    #return real_bundle_path+os.sep
+  #elif (real_bundle_path.endswith((".ttl", ".ttL", ".tTL", ".TTL", ".TTl", ".Ttl"))):
+    #return real_bundle_path.rsplit(os.sep, 1)[0]+os.sep
+  #else:
+    #return real_bundle_path+os.sep
 
 def is_number(value):
-  string = to_string(value)
-  if (string != "" and string != "(unicode error)"):
-    if (string.startswith("-")):
-      string = string.replace("-", "", 1)
-    sstring = string.split(".")
-    if (len(sstring) == 1 and sstring[0].isdigit()):
-      return True
-    elif (len(sstring) == 2 and sstring[0].isdigit() and sstring[1].isdigit()):
-      return True
-    else:
-      return False
-  else:
+  try:
+    float(value)
+    return True
+  except:
     return False
+
+def is_base64(s):
+  if ((len(s) % 4 == 0) and re_match("^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$", s)):
+    try:
+      base64_decodestring(s.encode("utf-8")).decode("utf-8")
+      return True
+    except:
+      return False
+  return False
 
 def append_and_sort(vlist, value):
   if (len(vlist) == 0):
@@ -943,6 +949,11 @@ def get_node_property(uri, nodes, prop, default):
   for node in nodes:
     if (node[iNodeURI] == uri and node[iNodeProp] == prop):
       return node[iNodeValue]
+    #else:
+      #if (type(node[iNodeURI]) != type(uri)):
+        #print(type(node[iNodeURI]), type(uri))
+      #elif (type(node[iNodeProp]) != type(prop)):
+        #print(type(node[iNodeProp]), type(prop))
   else:
     return default
 
@@ -962,7 +973,7 @@ def get_all_node_properties(uri, nodes):
 
 def append_seeAlso_value(seeAlso):
   global seeAlso_list
-  if (not seeAlso in seeAlso_list):
+  if (seeAlso not in seeAlso_list):
     seeAlso_list.append(seeAlso)
 
 # LV2_Plugins
@@ -1109,7 +1120,7 @@ def append_ui_value(uri, key, value):
 def SORT_PyLV2_RDF_Ports(old_dict_list):
   new_dict_list = []
 
-  for i in old_dict_list:
+  for x in old_dict_list:
     new_dict_list.append(deepcopy(PyLV2_RDF_Port))
 
   for old_dict in old_dict_list:
@@ -1150,21 +1161,22 @@ from rdflib import ConjunctiveGraph, URIRef, Literal, BNode
 # Fill the actual information
 def fill_information(parse, bundle_path):
 
-  # Initial parse to get all Plugin, Preset and UI URIs on this bundle
-  for i in range(len(parse)):
-    uri, prop, value = parse[i]
+  # Initial parse to get all Plugin, Preset and UI URIs on this file
+  for _subject, _predicate, _object in parse:
 
-    if (type(prop) == URIRef and type(uri) == URIRef and type(value) in (URIRef, Literal)):
-      uri   = to_string(uri)
-      prop  = to_string(prop)
-      value = to_string(value)
+    if (isinstance(_subject, URIRef) and isinstance(_predicate, URIRef) and isinstance(_object, (URIRef, Literal))):
+      s_predicate = str(_predicate)
+      s_object    = str(_object)
+      uri = str(_subject)
 
-      if (prop == rdf_prefix['rdf:type']):
-        if (value.startswith(NS_lv2)):
+      if (s_predicate == rdf_prefix['rdf:type']):
+        if (s_object.startswith(NS_lv2)):
           maybe_add_plugin_uri(uri)
-        elif (value == rdf_prefix['lv2pset:Preset']):
+
+        elif (s_object == rdf_prefix['lv2pset:Preset']):
           maybe_add_preset_uri(uri)
-        elif (value.startswith(NS_lv2ui) or value == LV2_EXTERNAL_UI_URI):
+
+        elif (s_object.startswith(NS_lv2ui) or s_object == LV2_EXTERNAL_UI_URI):
           maybe_add_ui_uri(uri)
 
   # Save for later use
@@ -1172,278 +1184,283 @@ def fill_information(parse, bundle_path):
   nodes_list = [] # the actual data
 
   # Real parse, for each parameter
-  for i in range(len(parse)):
-    uri, prop, value = parse[i]
+  for _subject, _predicate, _object in parse:
+    if (isinstance(_predicate, URIRef)):
+      s_predicate = str(_predicate)
+      uri = str(_subject)
 
-    if (type(prop) == URIRef):
-      prop = to_string(prop)
+      if (isinstance(_subject, URIRef)):
 
-      if (type(uri) == URIRef):
-        if (type(value) in (URIRef, Literal)):
-          uri   = to_string(uri)
-          value = to_string(value)
+        if (isinstance(_object, (URIRef, Literal))):
+          s_object = str(_object)
 
           # Fix broken or old plugins
-          if (value.startswith("http://lv2plug.in/ns/dev/")):
-            value = value.replace("http://lv2plug.in/ns/dev/", "http://lv2plug.in/ns/ext/", 1)
-          if (prop.startswith("http://lv2plug.in/ns/dev/")):
-            prop = prop.replace("http://lv2plug.in/ns/dev/", "http://lv2plug.in/ns/ext/", 1)
 
-          if (prop == "http://lv2plug.in/ns/ext/presets#hasPreset"):
-            prop = rdf_prefix['rdfs:seeAlso']
-          elif (prop == "http://dublincore.org/documents/dcmi-namespace/replaces"):
-            prop = rdf_prefix['dc:replaces']
-          elif (prop in (NS_lv2+"property", NS_lv2+"pluginProperty")):
-            prop = rdf_prefix['lv2:optionalFeature']
+          if (s_predicate.startswith("http://lv2plug.in/ns/dev/")):
+            s_predicate = s_predicate.replace("http://lv2plug.in/ns/dev/", "http://lv2plug.in/ns/ext/", 1)
+
+          if (s_object.startswith("http://lv2plug.in/ns/dev/")):
+            s_object = s_object.replace("http://lv2plug.in/ns/dev/", "http://lv2plug.in/ns/ext/", 1)
+
+          if (s_predicate == "http://lv2plug.in/ns/ext/presets#hasPreset"):
+            s_predicate = rdf_prefix['rdfs:seeAlso']
+          elif (s_predicate == "http://dublincore.org/documents/dcmi-namespace/replaces"):
+            s_predicate = rdf_prefix['dc:replaces']
+          elif (s_predicate in (NS_lv2+"property", NS_lv2+"pluginProperty")):
+            s_predicate = rdf_prefix['lv2:optionalFeature']
 
           # Skip specification
-          if (uri == "http://lv2plug.in/ns/lv2core" or uri.startswith("http://lv2plug.in/ns/ext") or value == rdf_prefix['rdfs:Class'] or prop == rdf_prefix['rdfs:subClassOf']):
+
+          if (uri == "http://lv2plug.in/ns/lv2core" or uri.startswith("http://lv2plug.in/ns/ext") or s_object == rdf_prefix['rdfs:Class'] or s_predicate == rdf_prefix['rdfs:subClassOf']):
             continue
 
-          # Type --start
-          if (prop == rdf_prefix['rdf:type']):
+          # Type ----------------start
+
+          elif (s_predicate == rdf_prefix['rdf:type']):
 
             # Plugin
-            if (value.startswith(NS_lv2)):
-              c_class = get_c_plugin_class(value)
+            if (s_object.startswith(NS_lv2)):
+              c_class = get_c_plugin_class(s_object)
               or_plugin_value(uri, 'Type', c_class)
 
             # DynManifest, ignored
-            elif (value.startswith(NS_lv2dyn)):
+            elif (s_object.startswith(NS_lv2dyn)):
               pass
 
             # Host Info, ignored
-            elif (value.startswith(NS_lv2hi)):
+            elif (s_object.startswith(NS_lv2hi)):
               pass
 
             # Port Groups, ignored
-            elif (value.startswith(NS_lv2pg) or value.startswith("http://ll-plugins.nongnu.org/lv2/ext/portgroups#")):
+            elif (s_object.startswith(NS_lv2pg) or s_object.startswith("http://ll-plugins.nongnu.org/lv2/ext/portgroups#")):
               pass
 
             # Preset
-            elif (value.startswith(NS_lv2pset)):
+            elif (s_object.startswith(NS_lv2pset)):
               # Already handled before
               pass
 
             # UI
-            elif (value.startswith(NS_lv2ui) or value == LV2_EXTERNAL_UI_URI):
-              c_ui_type = get_c_ui_type(value)
+            elif (s_object.startswith(NS_lv2ui) or s_object == LV2_EXTERNAL_UI_URI):
+              c_ui_type = get_c_ui_type(s_object)
               set_ui_value(uri, 'Type', c_ui_type)
 
             # Special Types
-            elif (value == rdf_prefix['llplug:MathConstantPlugin']):
+            elif (s_object == rdf_prefix['llplug:MathConstantPlugin']):
               or_plugin_value(uri, 'Type', LV2_CLASS_CONSTANT)
 
-            elif (value == rdf_prefix['llplug:MathFunctionPlugin']):
+            elif (s_object == rdf_prefix['llplug:MathFunctionPlugin']):
               or_plugin_value(uri, 'Type', LV2_CLASS_FUNCTION)
 
-            elif (value == "http://foltman.com/ns/BooleanPlugin"):
+            elif (s_object == "http://foltman.com/ns/BooleanPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_FUNCTION)
 
-            elif (value == "http://foltman.com/ns/IntegerPlugin"):
+            elif (s_object == "http://foltman.com/ns/IntegerPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_FUNCTION)
 
-            elif (value == "http://foltman.com/ns/MathOperatorPlugin"):
+            elif (s_object == "http://foltman.com/ns/MathOperatorPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_FUNCTION)
 
-            elif (value == "http://foltman.com/ns/MIDIPlugin"):
+            elif (s_object == "http://foltman.com/ns/MIDIPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_GENERATOR)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspChEQMonoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspChEQMonoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspChEQStereoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspChEQStereoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspChEQBMonoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspChEQBMonoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspChEQBStereoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspChEQBStereoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspChorusPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspChorusPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_CHORUS)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspDistPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspDistPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_DISTORTION)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspGrEQStereoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspGrEQStereoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspMkiiGraEQMonoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMkiiGraEQMonoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspMkiiGraEQStereoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMkiiGraEQStereoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspMBCStereoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMBCStereoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspMBCBStereoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMBCBStereoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspMxEQMonoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMxEQMonoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspMxEQStereoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMxEQStereoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspMxDYNMonoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMxDYNMonoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_DYNAMICS)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspMxDYNStereoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMxDYNStereoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_DYNAMICS)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspPEQMonoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspPEQMonoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspPEQStereoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspPEQStereoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspPhaserPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspPhaserPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_PHASER)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspProDynMonoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProDynMonoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_DYNAMICS)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspProDynStereoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProDynStereoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_DYNAMICS)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspProEQMonoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProEQMonoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspProEQStereoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProEQStereoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspProGateMonoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProGateMonoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_GATE)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspProGateStereoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProGateStereoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_GATE)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspSRStereoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspSRStereoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_REVERB)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspSRBStereoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspSRBStereoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_REVERB)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspVCMonoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspVCMonoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspVCStereoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspVCStereoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspVCBMonoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspVCBMonoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspVCBStereoPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspVCBStereoPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
 
-            elif (value == "http://linuxdsp.co.uk/lv2/ns/linuxdspWahPlugin"):
+            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspWahPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_SIMULATOR)
 
             else:
-              print("LV2_RDF - URI Type '%s' not handled (uri: %s)" % (value, uri))
+              print("LV2_RDF - Type object '%s' not handled (uri: %s)" % (s_object, uri))
 
-          # Type --end
+          # Type ----------------end
 
-          # Preset start
-          elif (prop.startswith(NS_lv2pset)):
-            print("LV2_RDF - Preset URI Type '%s' not handled (uri: %s)" % (prop, uri))
+          ## Preset start
+          #elif (prop.startswith(NS_lv2pset)):
+            #print("LV2_RDF - Preset URI Type '%s' not handled (uri: %s)" % (prop, uri))
 
-          # UI ----start
-          elif (prop.startswith(NS_lv2ui)):
+          # UI ------------------start
 
-            if (prop == rdf_prefix['lv2ui:ui']):
-              append_ui_value(value, 'appliesTo', uri)
+          elif (s_predicate.startswith(NS_lv2ui)):
 
-            elif (prop == rdf_prefix['lv2ui:binary']):
-              ui_binary = os.path.join(bundle_path, to_short_name(value, bundle_path))
+            if (s_predicate == rdf_prefix['lv2ui:ui']):
+              append_ui_value(s_object, 'appliesTo', uri)
+
+            elif (s_predicate == rdf_prefix['lv2ui:binary']):
+              ui_binary = to_local_name(s_object)
               set_ui_value(uri, 'Binary', ui_binary)
 
-              ui_bundle_path = get_real_bundle_path(ui_binary.rsplit(os.sep, 1)[0])
+              ui_bundle_path = ui_binary.rsplit(os.sep, 1)[0]+os.sep
               set_ui_value(uri, 'Bundle', ui_bundle_path)
 
-            elif (prop == rdf_prefix['lv2ui:events']):
+            elif (s_predicate == rdf_prefix['lv2ui:events']):
               pass
 
-            elif (prop == rdf_prefix['lv2ui:portIndex']):
+            elif (s_predicate == rdf_prefix['lv2ui:portIndex']):
               pass
 
-            elif (prop == rdf_prefix['lv2ui:portNotification']):
+            elif (s_predicate == rdf_prefix['lv2ui:portNotification']):
               pass
 
-            elif (prop == rdf_prefix['lv2ui:residentSONames']):
+            elif (s_predicate == rdf_prefix['lv2ui:residentSONames']):
               pass
 
-            elif (prop == rdf_prefix['lv2ui:optionalFeature']):
+            elif (s_predicate == rdf_prefix['lv2ui:optionalFeature']):
               py_feature = deepcopy(PyLV2_RDF_Feature)
               py_feature['Type'] = LV2_FEATURE_OPTIONAL
-              py_feature['URI']  = value
+              py_feature['URI']  = s_object
 
               append_ui_value(uri, 'Features', py_feature)
               add_ui_value(uri, 'FeatureCount', 1)
 
-            elif (prop == rdf_prefix['lv2ui:requiredFeature']):
+            elif (s_predicate == rdf_prefix['lv2ui:requiredFeature']):
               py_feature = deepcopy(PyLV2_RDF_Feature)
               py_feature['Type'] = LV2_FEATURE_REQUIRED
-              py_feature['URI']  = value
+              py_feature['URI']  = s_object
 
               append_ui_value(uri, 'Features', py_feature)
               add_ui_value(uri, 'FeatureCount', 1)
 
             else:
-              print("LV2_RDF - UI URI Type '%s' not handled (uri: %s)" % (prop, uri))
+              print("LV2_RDF - UI Predicate '%s' not handled (uri: %s)" % (s_predicate, uri))
 
-          # UI ----end
+          # UI ------------------end
 
           # DynManifest, ignored
-          elif (value.startswith(NS_lv2dyn)):
+          elif (s_predicate.startswith(NS_lv2dyn)):
             pass
 
           # Contexts, ignored
-          elif (value.startswith(NS_lv2ctx)):
+          elif (s_predicate.startswith(NS_lv2ctx)):
             pass
 
           # Host Info, ignored
-          elif (value.startswith(NS_lv2hi)):
+          elif (s_predicate.startswith(NS_lv2hi)):
             pass
 
           # Port Groups, ignored
-          elif (prop.startswith(NS_lv2pg)):
+          elif (s_predicate.startswith(NS_lv2pg)):
             pass
 
-          elif (prop == rdf_prefix['lv2:appliesTo']):
+          elif (s_predicate == rdf_prefix['lv2:appliesTo']):
             if (is_preset(uri)):
-              append_preset_value(uri, 'appliesTo', value)
+              append_preset_value(uri, 'appliesTo', s_object)
 
-          elif (prop == rdf_prefix['lv2:binary']):
-            binary = os.path.join(bundle_path, to_short_name(value, bundle_path))
+          elif (s_predicate == rdf_prefix['lv2:binary']):
+            binary = to_local_name(s_object)
             set_plugin_value(uri, 'Binary', binary)
 
-            real_bundle_path = get_real_bundle_path(bundle_path)
-            set_plugin_value(uri, 'Bundle', real_bundle_path)
+            #real_bundle_path = get_real_bundle_path(bundle_path)
+            set_plugin_value(uri, 'Bundle', bundle_path)
+            # FIXME - check all bundle paths
 
-          elif (prop == rdf_prefix['lv2:documentation']):
+          elif (s_predicate == rdf_prefix['lv2:documentation']):
             pass
 
-          elif (prop == rdf_prefix['lv2:extensionData']):
+          elif (s_predicate == rdf_prefix['lv2:extensionData']):
             if (is_plugin(uri)):
-              append_plugin_value(uri, 'Extensions', value)
+              append_plugin_value(uri, 'Extensions', s_object)
               add_plugin_value(uri, 'ExtensionCount', 1)
             elif (is_ui(uri)):
-              append_ui_value(uri, 'Extensions', value)
+              append_ui_value(uri, 'Extensions', s_object)
               add_ui_value(uri, 'ExtensionCount', 1)
             else:
               print("LV2_RDF - Invalid extensionData, not for Plugin or UI")
 
-          elif (prop == rdf_prefix['lv2:symbol']):
+          elif (s_predicate == rdf_prefix['lv2:symbol']):
             pass
 
-          elif (prop == rdf_prefix['lv2:optionalFeature']):
+          elif (s_predicate == rdf_prefix['lv2:optionalFeature']):
             py_feature = deepcopy(PyLV2_RDF_Feature)
             py_feature['Type'] = LV2_FEATURE_OPTIONAL
-            py_feature['URI']  = value
+            py_feature['URI']  = s_object
 
             if (is_plugin(uri)):
               append_plugin_value(uri, 'Features', py_feature)
@@ -1454,10 +1471,10 @@ def fill_information(parse, bundle_path):
             else:
               print("LV2_RDF - Invalid feature, not for Plugin or UI")
 
-          elif (prop == rdf_prefix['lv2:requiredFeature']):
+          elif (s_predicate == rdf_prefix['lv2:requiredFeature']):
             py_feature = deepcopy(PyLV2_RDF_Feature)
             py_feature['Type'] = LV2_FEATURE_REQUIRED
-            py_feature['URI']  = value
+            py_feature['URI']  = s_object
 
             if (is_plugin(uri)):
               append_plugin_value(uri, 'Features', py_feature)
@@ -1468,8 +1485,8 @@ def fill_information(parse, bundle_path):
             else:
               print("LV2_RDF - Invalid feature, not for Plugin or UI")
 
-          elif (prop == rdf_prefix['dc:replaces']):
-            value_id_str = value.rsplit(":", 1)[-1]
+          elif (s_predicate == rdf_prefix['dc:replaces']):
+            value_id_str = s_object.rsplit(":", 1)[-1]
 
             if (value_id_str.isdigit()):
               value_id = int(value_id_str)
@@ -1478,76 +1495,76 @@ def fill_information(parse, bundle_path):
 
             set_plugin_value(uri, 'UniqueID', value_id)
 
-          elif (prop == rdf_prefix['doap:creator']):
-            set_plugin_value(uri, 'Author', value)
+          elif (s_predicate == rdf_prefix['doap:creator']):
+            set_plugin_value(uri, 'Author', s_object)
 
-          elif (prop == rdf_prefix['doap:description']):
+          elif (s_predicate == rdf_prefix['doap:description']):
             pass
 
-          elif (prop == rdf_prefix['doap:developer']):
-            set_plugin_value(uri, 'Author', value)
+          elif (s_predicate == rdf_prefix['doap:developer']):
+            set_plugin_value(uri, 'Author', s_object)
 
-          elif (prop == rdf_prefix['doap:homepage']):
+          elif (s_predicate == rdf_prefix['doap:homepage']):
             pass
 
-          elif (prop == rdf_prefix['doap:license']):
-            set_plugin_value(uri, 'License', value)
+          elif (s_predicate == rdf_prefix['doap:license']):
+            set_plugin_value(uri, 'License', s_object)
 
-          elif (prop == rdf_prefix['doap:maintainer']):
-            set_plugin_value(uri, 'Author', value)
+          elif (s_predicate == rdf_prefix['doap:maintainer']):
+            set_plugin_value(uri, 'Author', s_object)
 
-          elif (prop == rdf_prefix['doap:name']):
-            set_plugin_value(uri, 'Name', value)
+          elif (s_predicate == rdf_prefix['doap:name']):
+            set_plugin_value(uri, 'Name', s_object)
 
-          elif (prop == rdf_prefix['rdfs:comment']):
+          elif (s_predicate == rdf_prefix['rdfs:comment']):
             pass
 
-          elif (prop == rdf_prefix['rdfs:label']):
+          elif (s_predicate == rdf_prefix['rdfs:label']):
             if (is_preset(uri)):
-              set_preset_value(uri, 'Label', value)
+              set_preset_value(uri, 'Label', s_object)
 
-          elif (prop == rdf_prefix['rdfs:seeAlso']):
-            seeAlso = os.path.join(bundle_path, to_short_name(value, bundle_path))
+          elif (s_predicate == rdf_prefix['rdfs:seeAlso']):
+            seeAlso = to_local_name(s_object)
             append_seeAlso_value(seeAlso)
 
           # Special
-          elif (prop == rdf_prefix['llplug:pegName']):
+          elif (s_predicate == rdf_prefix['llplug:pegName']):
             pass
 
-          elif (prop == rdf_prefix['llplug:svgIcon']):
+          elif (s_predicate == rdf_prefix['llplug:svgIcon']):
             pass
 
-          elif (prop == "http://ll-plugins.nongnu.org/lv2/presets#presetFile"):
+          elif (s_predicate == "http://ll-plugins.nongnu.org/lv2/presets#presetFile"):
             pass
 
-          elif (prop == "http://plugin.org.uk/extensions#code"):
+          elif (s_predicate == "http://plugin.org.uk/extensions#code"):
             pass
 
-          elif (prop == "http://plugin.org.uk/extensions#createdBy"):
-            set_plugin_value(uri, 'Author', value)
+          elif (s_predicate == "http://plugin.org.uk/extensions#createdBy"):
+            set_plugin_value(uri, 'Author', s_object)
 
           else:
-            print("LV2_RDF - URI Property '%s' not handled (uri: %s)" % (prop, uri))
+            print("LV2_RDF - Predicate '%s' not handled (uri: %s)" % (s_predicate, uri))
 
-        elif (type(value) == BNode):
+        elif (isinstance(_object, BNode)):
           # Handle it later
-          nodes_info.append((to_string(uri), prop, to_string(value)))
+          nodes_info.append((uri, str(_predicate), str(_object)))
 
         else:
-          print("LV2_RDF - Don't know how to handle value '%s'" % value)
+          print("LV2_RDF - Don't know how to handle object '%s'" % _object)
 
-      elif (type(uri) == BNode):
+      elif (isinstance(_subject, BNode)):
         # Handle it later
-        if (type(value) == Literal and is_number(value)):
-          nodes_list.append((to_string(uri), prop, value))
-        else:
-          nodes_list.append((to_string(uri), prop, to_string(value)))
+        #if (isinstance(_object, Literal) and is_number(_object)):
+          #nodes_list.append((uri, str(_predicate), str(_object)))
+        #else:
+          nodes_list.append((uri, str(_predicate), _object))
 
       else:
-        print("LV2_RDF - Don't know how to handle URI", uri)
+        print("LV2_RDF - Don't know how to handle subject '%s'" % _subject)
 
     else:
-      print("LV2_RDF - Don't know how to handle property", prop)
+      print("LV2_RDF - Don't know how to handle predicate '%s'" % _predicate)
 
   if (len(nodes_info) > 0 and len(nodes_list) == 0):
     print("LV2_RDF - Got a broken plugin! (has misleading information)")
@@ -1555,24 +1572,26 @@ def fill_information(parse, bundle_path):
 
   # Process nodes
 
-  for i in range(len(nodes_info)):
-    uri, prop, value = nodes_info[i]
+  for uri, s_predicate, s_object in nodes_info:
 
     # Plugin -----start
+
     if (is_plugin(uri)):
 
       # Port -----start
-      if (prop == rdf_prefix['lv2:port']):
+
+      if (s_predicate == rdf_prefix['lv2:port']):
 
         py_port = deepcopy(PyLV2_RDF_Port)
 
         # Midi Map
 
-        midi_map_node_try = get_node_property(value, nodes_list, rdf_prefix['lv2mm:defaultMidiController'], None)
+        midi_map_node_try = get_node_property(s_object, nodes_list, rdf_prefix['lv2mm:defaultMidiController'], None)
 
         if (midi_map_node_try != None):
-          midi_map_type_try   = get_node_property(midi_map_node_try, nodes_list, rdf_prefix['lv2mm:controllerType'], None)
-          midi_map_number_try = get_node_property(midi_map_node_try, nodes_list, rdf_prefix['lv2mm:controllerNumber'], None)
+          midi_map_node       = str(midi_map_node_try)
+          midi_map_type_try   = get_node_property(midi_map_node, nodes_list, rdf_prefix['lv2mm:controllerType'], None)
+          midi_map_number_try = get_node_property(midi_map_node, nodes_list, rdf_prefix['lv2mm:controllerNumber'], None)
 
           if (midi_map_type_try != None and midi_map_number_try != None and midi_map_number_try.isdigit()):
             py_port['MidiMap']['Type']   = get_c_port_midi_map_type(midi_map_type_try)
@@ -1580,9 +1599,9 @@ def fill_information(parse, bundle_path):
 
         # Points
 
-        default_try = get_node_property(value, nodes_list, rdf_prefix['lv2:default'], None)
-        minimum_try = get_node_property(value, nodes_list, rdf_prefix['lv2:minimum'], None)
-        maximum_try = get_node_property(value, nodes_list, rdf_prefix['lv2:maximum'], None)
+        default_try = get_node_property(s_object, nodes_list, rdf_prefix['lv2:default'], None)
+        minimum_try = get_node_property(s_object, nodes_list, rdf_prefix['lv2:minimum'], None)
+        maximum_try = get_node_property(s_object, nodes_list, rdf_prefix['lv2:maximum'], None)
 
         if (default_try != None and is_number(default_try)):
           py_port['Points']['Hints']  |= LV2_PORT_POINT_DEFAULT
@@ -1598,33 +1617,36 @@ def fill_information(parse, bundle_path):
 
         # Unit
 
-        unit_try = get_node_property(value, nodes_list, rdf_prefix['lv2units:unit'], None)
+        unit_try = get_node_property(s_object, nodes_list, rdf_prefix['lv2units:unit'], None)
 
+        # TODO - check this (needs this try first?)
         if (unit_try != None):
+          unit = str(unit_try)
           py_port['Unit']['Hints'] |= LV2_PORT_UNIT
-          py_port['Unit']['Type']   = get_c_port_unit_type(unit_try)
+          py_port['Unit']['Type']   = get_c_port_unit_type(unit)
 
-          unit_name_try   = get_node_property(value, nodes_list, rdf_prefix['lv2units:name'], None)
-          unit_render_try = get_node_property(value, nodes_list, rdf_prefix['lv2units:render'], None)
-          unit_symbol_try = get_node_property(value, nodes_list, rdf_prefix['lv2units:symbol'], None)
+          unit_name_try   = get_node_property(s_object, nodes_list, rdf_prefix['lv2units:name'], None)
+          unit_render_try = get_node_property(s_object, nodes_list, rdf_prefix['lv2units:render'], None)
+          unit_symbol_try = get_node_property(s_object, nodes_list, rdf_prefix['lv2units:symbol'], None)
 
           if (unit_name_try != None):
             py_port['Unit']['Hints'] |= LV2_PORT_UNIT_NAME
-            py_port['Unit']['Name']   = unit_name_try
+            py_port['Unit']['Name']   = str(unit_name_try)
 
           if (unit_render_try != None):
             py_port['Unit']['Hints'] |= LV2_PORT_UNIT_RENDER
-            py_port['Unit']['Render'] = unit_render_try
+            py_port['Unit']['Render'] = str(unit_render_try)
 
           if (unit_symbol_try != None):
             py_port['Unit']['Hints'] |= LV2_PORT_UNIT_SYMBOL
-            py_port['Unit']['Symbol'] = unit_symbol_try
+            py_port['Unit']['Symbol'] = str(unit_symbol_try)
 
         # Scale Points
 
-        scalepoints = get_node_properties(value, nodes_list, rdf_prefix['lv2:scalePoint'])
+        _scalepoints = get_node_properties(s_object, nodes_list, rdf_prefix['lv2:scalePoint'])
 
-        for scalepoint in scalepoints:
+        for _scalepoint in _scalepoints:
+          scalepoint = str(_scalepoint)
           label_try = get_node_property(scalepoint, nodes_list, rdf_prefix['rdfs:label'], None)
           value_try = get_node_property(scalepoint, nodes_list, rdf_prefix['rdf:value'], None)
 
@@ -1641,70 +1663,79 @@ def fill_information(parse, bundle_path):
 
         # The Port
 
-        port_types  = get_node_properties(value, nodes_list, rdf_prefix['rdf:type'])
-        port_props  = get_node_properties(value, nodes_list, rdf_prefix['lv2:portProperty'])
-        port_index  = get_node_property(value, nodes_list, rdf_prefix['lv2:index'], None)
-        port_name   = get_node_property(value, nodes_list, rdf_prefix['lv2:name'], None)
-        port_symbol = get_node_property(value, nodes_list, rdf_prefix['lv2:symbol'], None)
+        _port_types  = get_node_properties(s_object, nodes_list, rdf_prefix['rdf:type'])
+        _port_props  = get_node_properties(s_object, nodes_list, rdf_prefix['lv2:portProperty'])
+        _port_index  = get_node_property(s_object, nodes_list, rdf_prefix['lv2:index'], None)
+        _port_name   = get_node_property(s_object, nodes_list, rdf_prefix['lv2:name'], None)
+        _port_symbol = get_node_property(s_object, nodes_list, rdf_prefix['lv2:symbol'], None)
 
-        if (port_index == None or port_name == None or port_symbol == None):
+        if (_port_index == None or _port_name == None or _port_symbol == None):
           print("LV2_RDF - Internal error, incomplete Port data")
           continue
 
-        for port_type in port_types:
+        for _port_type in _port_types:
+          port_type = str(_port_type)
           c_port_type = get_c_port_type(port_type)
           py_port['Type'] |= c_port_type
 
+          # TODO - atom buffer types
+
           if (c_port_type == LV2_PORT_EVENT):
-            event_type_try = get_node_property(value, nodes_list, rdf_prefix['lv2ev:supportsEvent'], None)
+            event_type_try = get_node_property(s_object, nodes_list, rdf_prefix['lv2ev:supportsEvent'], None)
 
             if (event_type_try != None):
-              py_port['Type'] |= get_c_port_event_type(event_type_try)
+              event_type = str(event_type_try)
+              py_port['Type'] |= get_c_port_event_type(event_type)
             else:
               print("LV2_RDF - Internal error, Event Port without supported Event")
 
-        for port_prop in port_props:
+        for _port_prop in _port_props:
+          port_prop = str(_port_prop)
           py_port['Properties'] |= get_c_port_property(port_prop)
 
-        py_port['index']  = int(port_index)
-        py_port['Name']   = port_name
-        py_port['Symbol'] = port_symbol
+        py_port['index']  = int(_port_index)
+        py_port['Name']   = str(_port_name)
+        py_port['Symbol'] = str(_port_symbol)
 
         append_plugin_value(uri, 'Ports', py_port)
         add_plugin_value(uri, 'PortCount', 1)
 
       # Port -----end
 
-      elif (prop == rdf_prefix['doap:creator']):
-        author = to_string(get_node_property(value, nodes_list, rdf_prefix['foaf:name'], ""))
-        if (author and author != "(unicode error)"):
+      elif (s_predicate == rdf_prefix['doap:creator']):
+        author_try = get_node_property(s_object, nodes_list, rdf_prefix['foaf:name'], None)
+        if (author_try):
+          author = str(author_try)
           set_plugin_value(uri, 'Author', author)
 
-      elif (prop == rdf_prefix['doap:developer']):
-        author = to_string(get_node_property(value, nodes_list, rdf_prefix['foaf:name'], ""))
-        if (author and author != "(unicode error)"):
+      elif (s_predicate == rdf_prefix['doap:developer']):
+        author_try = get_node_property(s_object, nodes_list, rdf_prefix['foaf:name'], None)
+        if (author_try):
+          author = str(author_try)
           set_plugin_value(uri, 'Author', author)
 
-      elif (prop == rdf_prefix['doap:maintainer']):
-        author = to_string(get_node_property(value, nodes_list, rdf_prefix['foaf:name'], ""))
-        if (author and author != "(unicode error)"):
+      elif (s_predicate == rdf_prefix['doap:maintainer']):
+        author_try = get_node_property(s_object, nodes_list, rdf_prefix['foaf:name'], None)
+        if (author_try):
+          author = str(author_try)
           set_plugin_value(uri, 'Author', author)
 
       # Special
-      elif (prop == "http://plugin.org.uk/extensions#callback"):
+      elif (s_predicate == "http://plugin.org.uk/extensions#callback"):
         pass
 
       else:
-        print("LV2_RDF - Plugin URI Property '%s' not handled (uri: %s)" % (prop, uri))
+        print("LV2_RDF - Plugin predicate '%s' not handled (uri: %s)" % (s_predicate, uri))
 
     # Plugin -----end
 
     # Preset -----start
+
     elif (is_preset(uri)):
 
-      if (prop == rdf_prefix['lv2:port']):
-        symbol_try = get_node_property(value, nodes_list, rdf_prefix['lv2:symbol'], None)
-        value_try  = get_node_property(value, nodes_list, rdf_prefix['lv2pset:value'], None)
+      if (s_predicate == rdf_prefix['lv2:port']):
+        symbol_try = get_node_property(s_object, nodes_list, rdf_prefix['lv2:symbol'], None)
+        value_try  = get_node_property(s_object, nodes_list, rdf_prefix['lv2pset:value'], None)
 
         if (symbol_try != None and value_try != None and is_number(value_try)):
           py_port = deepcopy(PyLV2_RDF_PresetPort)
@@ -1717,49 +1748,79 @@ def fill_information(parse, bundle_path):
         else:
           print("LV2_RDF - Internal error, incomplete Preset Port data")
 
-      elif (prop == rdf_prefix['lv2state:state']):
-        node_props_try = get_all_node_properties(value, nodes_list)
+      elif (s_predicate == rdf_prefix['lv2state:state']):
+        node_props_try = get_all_node_properties(s_object, nodes_list)
 
         if (len(node_props_try) == 1):
           key, value = node_props_try[0]
 
           py_state = deepcopy(PyLV2_RDF_PresetState)
-          py_state['Key']   = key
-          py_state['Value'] = value
+          py_state['Key'] = str(key)
+
+          if (isinstance(value, (URIRef, BNode))):
+            py_state['Type']  = LV2_PRESET_STATE_NULL
+            py_state['Value'] = None
+
+          elif (value.datatype == URIRef("http://www.w3.org/2001/XMLSchema#boolean")):
+            py_state['Value']  = bool(value)
+            py_state['Type']   = LV2_PRESET_STATE_BOOL
+
+          elif (value.datatype == URIRef("http://www.w3.org/2001/XMLSchema#integer")):
+            py_state['Value']  = int(value)
+            if (py_state['Value'] > maxsize):
+              py_state['Type'] = LV2_PRESET_STATE_LONG
+            else:
+              py_state['Type'] = LV2_PRESET_STATE_INT
+
+          elif (value.datatype == URIRef("http://www.w3.org/2001/XMLSchema#decimal")):
+            py_state['Value']  = float(value)
+            py_state['Type']   = LV2_PRESET_STATE_FLOAT
+
+          elif (isinstance(value.toPython(), Literal)):
+            py_state['Value']  = str(value)
+            if (is_base64(py_state['Value'])):
+              py_state['Type'] = LV2_PRESET_STATE_BINARY
+            else:
+              py_state['Type'] = LV2_PRESET_STATE_STRING
+
+          else:
+            py_state['Type']  = LV2_PRESET_STATE_NULL
+            py_state['Value'] = None
 
           append_preset_value(uri, 'States', py_state)
           add_preset_value(uri, 'StateCount', 1)
 
       else:
-        print("LV2_RDF - Preset URI Property '%s' not handled (uri: %s)" % (prop, uri))
+        print("LV2_RDF - Preset predicate '%s' not handled (uri: %s)" % (s_predicate, uri))
 
     # Preset -----end
 
     # UI ---------start
+
     elif (is_ui(uri)):
 
-      if (prop == rdf_prefix['lv2ui:events']):
+      if (s_predicate == rdf_prefix['lv2ui:events']):
         pass
 
-      elif (prop == rdf_prefix['lv2ui:portIndex']):
+      elif (s_predicate == rdf_prefix['lv2ui:portIndex']):
         pass
 
-      elif (prop == rdf_prefix['lv2ui:portNotification']):
+      elif (s_predicate == rdf_prefix['lv2ui:portNotification']):
         pass
 
-      elif (prop == rdf_prefix['lv2ui:residentSONames']):
+      elif (s_predicate == rdf_prefix['lv2ui:residentSONames']):
         pass
 
       else:
-        print("LV2_RDF - UI URI Property '%s' not handled (uri: %s)" % (prop, uri))
+        print("LV2_RDF - UI predicate '%s' not handled (uri: %s)" % (s_predicate, uri))
 
     # UI ---------end
 
-    elif (prop.startswith(NS_lv2hi)):
+    elif (s_predicate.startswith(NS_lv2hi)):
       pass
 
     else:
-      print("LV2_RDF - Don't know how to handle Node", prop)
+      print("LV2_RDF - Don't know how to handle Node '%s'", _predicate)
 
 # Parse ttl file into 'lists'
 def parse_ttl_file(filename):
@@ -1767,11 +1828,7 @@ def parse_ttl_file(filename):
   try:
     primer.parse(filename, format='n3')
   except:
-    #os.system("sed -i s/\\\r\\\n/\\\n/ %s" % (filename))
-    #try:
-      #primer.parse(filename, format='n3')
-    #except:
-    #print "LV2_RDF - Failed to parse", filename
+    print("LV2_RDF - Failed to parse %s" % filename)
     return []
 
   return [(x, y, z) for x, y, z in primer]
@@ -1785,12 +1842,15 @@ def parse_bundle(filename, bundle_path):
 #  LV2_RDF main methods
 
 # Main function - check all bundles for information about lv2 plugins
-def recheck_all_plugins(qobject=None):
+def recheck_all_plugins(qobject, start_value, percent_value):
   global LV2_PATH, LV2_Plugins, LV2_Presets, LV2_UIs, seeAlso_list
 
-  LV2_Plugins   = []
-  lv2_bundles   = []
+  LV2_Plugins  = []
+  LV2_Presets  = []
+  LV2_UIs      = []
+  seeAlso_list = []
 
+  lv2_bundles  = []
   lv2_extensions   = (".lv2", ".lV2", ".LV2", ".Lv2")
   turle_extensions = (".ttl", ".ttL", ".tTL", ".TTL", ".TTl", ".Ttl")
 
@@ -1803,13 +1863,13 @@ def recheck_all_plugins(qobject=None):
   # Parse all manifest files
   for lv2_bundle in lv2_bundles:
     for ext in turle_extensions:
-      if (os.path.exists(os.path.join(lv2_bundle, "manifest"+ext))):
+      if (os.path.exists(os.path.join(lv2_bundle, "manifest%s" % ext))):
         parse_bundle(os.path.join(lv2_bundle, "manifest"+ext), lv2_bundle)
         break
-      elif (os.path.exists(os.path.join(lv2_bundle, "Manifest"+ext))):
+      elif (os.path.exists(os.path.join(lv2_bundle, "Manifest%s" % ext))):
         parse_bundle(os.path.join(lv2_bundle, "Manifest"+ext), lv2_bundle)
         break
-      elif (os.path.exists(os.path.join(lv2_bundle, "MANIFEST"+ext))):
+      elif (os.path.exists(os.path.join(lv2_bundle, "MANIFEST%s" % ext))):
         parse_bundle(os.path.join(lv2_bundle, "MANIFEST"+ext), lv2_bundle)
         break
 
@@ -1817,13 +1877,13 @@ def recheck_all_plugins(qobject=None):
   for i in range(len(seeAlso_list)):
     seealso_file = seeAlso_list[i]
     if (seealso_file and os.path.exists(seealso_file) and os.path.isfile(seealso_file)):
-      if (os.path.getsize(seealso_file) > 1204000):
-        print("LV2_RDF - File %s is too big, will not be parsed" % (seealso_file))
-      else:
+      #if (os.path.getsize(seealso_file) > 1204000):
+        #print("LV2_RDF - File %s is too big, will not be parsed" % (seealso_file))
+      #else:
         if (qobject):
           # Tell GUI we're parsing this bundle
-          percent = qobject.last_value + ( (float(i) / len(seeAlso_list) ) * qobject.percent_value )
-          qobject.pluginLook(percent, seealso_file)
+          percent = ( float(i) / len(seeAlso_list) ) * percent_value
+          qobject.pluginLook(start_value + percent, seealso_file)
 
         # Fill the rest of the plugin information (from seeAlso file)
         bundle_path   = seealso_file.rsplit(os.sep, 1)[0]
@@ -1846,32 +1906,34 @@ def recheck_all_plugins(qobject=None):
       if (plugin['URI'] in uris):
         plugin['UIs'].append(ui)
         plugin['UICount'] += 1
+        break
 
   return LV2_Plugins
 
 # Convert PyLV2_Plugins into ctype structs
 def get_c_lv2_rdfs(PyPluginList):
   C_LV2_Plugins = []
+  c_unicode_error_str = "(unicode error)".encode("utf-8")
 
   for plugin in PyPluginList:
     c_plugin = LV2_RDF_Descriptor()
 
     c_plugin.Type           = plugin['Type']
-    c_plugin.URI            = plugin['URI']
+    c_plugin.URI            = plugin['URI'].encode("utf-8")
 
-    try:
-      c_plugin.Name         = plugin['Name']
-    except:
-      c_plugin.Name         = "(unicode error)"
+    #try:
+    c_plugin.Name         = plugin['Name'].encode("utf-8")
+    #except:
+      #c_plugin.Name         = c_unicode_error_str
 
-    try:
-      c_plugin.Author       = plugin['Author']
-    except:
-      c_plugin.Author       = "(unicode error)"
+    #try:
+    c_plugin.Author       = plugin['Author'].encode("utf-8")
+    #except:
+      #c_plugin.Author       = c_unicode_error_str
 
-    c_plugin.License        = plugin['License']
-    c_plugin.Binary         = plugin['Binary']
-    c_plugin.Bundle         = plugin['Bundle']
+    c_plugin.License        = plugin['License'].encode("utf-8")
+    c_plugin.Binary         = plugin['Binary'].encode("utf-8")
+    c_plugin.Bundle         = plugin['Bundle'].encode("utf-8")
 
     c_plugin.UniqueID       = plugin['UniqueID']
     c_plugin.PortCount      = plugin['PortCount']
@@ -1908,12 +1970,12 @@ def get_c_lv2_rdfs(PyPluginList):
       c_port.Type       = py_port['Type']
       c_port.Properties = py_port['Properties']
 
-      try:
-        c_port.Name     = py_port['Name']
-      except:
-        c_port.Name     = "(unicode error)"
+      #try:
+      c_port.Name     = py_port['Name'].encode("utf-8")
+      #except:
+        #c_port.Name     = "(unicode error)"
 
-      c_port.Symbol     = py_port['Symbol']
+      c_port.Symbol     = py_port['Symbol'].encode("utf-8")
 
       c_port.MidiMap = LV2_RDF_PortMidiMap()
       c_port.MidiMap.Type   = py_port['MidiMap']['Type']
@@ -1928,9 +1990,9 @@ def get_c_lv2_rdfs(PyPluginList):
       c_port.Unit = LV2_RDF_PortUnit()
       c_port.Unit.Type   = py_port['Unit']['Type']
       c_port.Unit.Hints  = py_port['Unit']['Hints']
-      c_port.Unit.Name   = py_port['Unit']['Name']
-      c_port.Unit.Render = py_port['Unit']['Render']
-      c_port.Unit.Symbol = py_port['Unit']['Symbol']
+      c_port.Unit.Name   = py_port['Unit']['Name'].encode("utf-8")
+      c_port.Unit.Render = py_port['Unit']['Render'].encode("utf-8")
+      c_port.Unit.Symbol = py_port['Unit']['Symbol'].encode("utf-8")
 
       c_port.ScalePointCount = py_port['ScalePointCount']
 
@@ -1944,10 +2006,10 @@ def get_c_lv2_rdfs(PyPluginList):
       for py_port_scale_point in py_port_scale_points:
         c_scale_point = LV2_RDF_PortScalePoint()
 
-        try:
-          c_scale_point.Label = py_port_scale_point['Label']
-        except:
-          c_scale_point.Label = "(unicode error)"
+        #try:
+        c_scale_point.Label = py_port_scale_point['Label'].encode("utf-8")
+        #except:
+          #c_scale_point.Label = "(unicode error)"
 
         c_scale_point.Value = py_port_scale_point['Value']
 
@@ -1963,8 +2025,8 @@ def get_c_lv2_rdfs(PyPluginList):
     for py_preset in plugin['Presets']:
       c_preset = LV2_RDF_Preset()
 
-      c_preset.URI        = py_preset['URI']
-      c_preset.Label      = py_preset['Label']
+      c_preset.URI        = py_preset['URI'].encode("utf-8")
+      c_preset.Label      = py_preset['Label'].encode("utf-8")
 
       c_preset.PortCount  = py_preset['PortCount']
       c_preset.StateCount = py_preset['StateCount']
@@ -1978,7 +2040,7 @@ def get_c_lv2_rdfs(PyPluginList):
       j = 0
       for py_preset_port in py_preset['Ports']:
         c_preset_port = LV2_RDF_PresetPort()
-        c_preset_port.Symbol = py_preset_port['Symbol']
+        c_preset_port.Symbol = py_preset_port['Symbol'].encode("utf-8")
         c_preset_port.Value  = py_preset_port['Value']
 
         c_preset.Ports[j] = c_preset_port
@@ -1987,8 +2049,21 @@ def get_c_lv2_rdfs(PyPluginList):
       j = 0
       for py_preset_state in py_preset['States']:
         c_preset_state = LV2_RDF_PresetState()
-        c_preset_state.Key   = py_preset_state['Key']
-        c_preset_state.Value = py_preset_state['Value']
+        c_preset_state.Type  = py_preset_state['Type']
+        c_preset_state.Key   = py_preset_state['Key'].encode("utf-8")
+
+        if (c_preset_state.Type == LV2_PRESET_STATE_BOOL):
+          c_preset_state.Value.b = py_preset_state['Value']
+        elif (c_preset_state.Type == LV2_PRESET_STATE_INT):
+          c_preset_state.Value.i = py_preset_state['Value']
+        elif (c_preset_state.Type == LV2_PRESET_STATE_LONG):
+          c_preset_state.Value.li = py_preset_state['Value']
+        elif (c_preset_state.Type == LV2_PRESET_STATE_FLOAT):
+          c_preset_state.Value.f = py_preset_state['Value']
+        elif (c_preset_state.Type in (LV2_PRESET_STATE_STRING, LV2_PRESET_STATE_BINARY)):
+          c_preset_state.Value.s = py_preset_state['Value'].encode("utf-8")
+        #else:
+          #c_preset_state.Value = None
 
         c_preset.States[j] = c_preset_state
         j += 1
@@ -2003,7 +2078,7 @@ def get_c_lv2_rdfs(PyPluginList):
       c_feature = LV2_RDF_Feature()
 
       c_feature.Type = py_feature['Type']
-      c_feature.URI  = py_feature['URI']
+      c_feature.URI  = py_feature['URI'].encode("utf-8")
 
       c_plugin.Features[i] = c_feature
       i += 1
@@ -2012,9 +2087,7 @@ def get_c_lv2_rdfs(PyPluginList):
 
     i = 0
     for py_extension in plugin['Extensions']:
-      c_extension = py_extension
-
-      c_plugin.Extensions[i] = c_extension
+      c_plugin.Extensions[i] = py_extension.encode("utf-8")
       i += 1
 
     # ------- UIs -------
@@ -2024,9 +2097,9 @@ def get_c_lv2_rdfs(PyPluginList):
       c_ui = LV2_RDF_UI()
 
       c_ui.Type           = py_ui['Type']
-      c_ui.URI            = py_ui['URI']
-      c_ui.Binary         = py_ui['Binary']
-      c_ui.Bundle         = py_ui['Bundle']
+      c_ui.URI            = py_ui['URI'].encode("utf-8")
+      c_ui.Binary         = py_ui['Binary'].encode("utf-8")
+      c_ui.Bundle         = py_ui['Bundle'].encode("utf-8")
       c_ui.FeatureCount   = py_ui['FeatureCount']
       c_ui.ExtensionCount = py_ui['ExtensionCount']
 
@@ -2041,16 +2114,14 @@ def get_c_lv2_rdfs(PyPluginList):
         c_feature = LV2_RDF_Feature()
 
         c_feature.Type = py_feature['Type']
-        c_feature.URI  = py_feature['URI']
+        c_feature.URI  = py_feature['URI'].encode("utf-8")
 
         c_ui.Features[j] = c_feature
         j += 1
 
       j = 0
       for py_extension in py_ui['Extensions']:
-        c_extension = py_extension
-
-        c_ui.Extensions[j] = c_extension
+        c_ui.Extensions[j] = py_extension.encode("utf-8")
         j += 1
 
       c_plugin.UIs[i] = c_ui
@@ -2064,11 +2135,12 @@ def get_c_lv2_rdfs(PyPluginList):
 #  Implementation test
 
 #if __name__ == '__main__':
-    #set_rdf_path(["/home/falktx/Personal/FOSS/GIT/distrho/bin/"])
+    #set_rdf_path(["/home/falktx/Personal/FOSS/GIT/distrho/bin"])
+    #set_rdf_path(["/usr/lib/lv2"])
     #set_rdf_path(["/home/falktx/.lv2/"])
-    #plugins = recheck_all_plugins()
+    #plugins = recheck_all_plugins(None, 0, 100)
     #for plugin in LV2_Plugins:
-      #print plugin['PresetCount'], plugin['URI']
+      #print(plugin['PresetCount'], plugin['URI'])
       #for preset in plugin['Presets']:
         #print "    ", preset['Label'], preset['PortCount']
         #for port in preset['Ports']:

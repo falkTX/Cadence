@@ -29,7 +29,7 @@ claudia: src/ui_claudia.py \
 carla: carla_backend carla_bridges carla_discovery carla_gui
 
 carla_backend:
-# 	$(MAKE) -C src/carla
+	$(MAKE) -C src/carla
 
 carla_bridges:
 # 	$(MAKE) native$(_arch_n) -C src/carla-bridges

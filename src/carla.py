@@ -258,6 +258,7 @@ class SearchPluginsThread(QThread):
 
     def run(self):
         # TODO - split across several fuctions
+        global LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, SF2_PATH
 
         blacklist = toList(self.settings_db.value("Plugins/Blacklisted", []))
         bins   = []
@@ -451,16 +452,16 @@ class SearchPluginsThread(QThread):
             last_value += percent_value
 
         ## ----- LV2
-        #if (self.check_lv2 and haveRDF):
-          #self.disccover_skip_kill = ""
-          #self.pluginLook(self.last_value, "LV2 bundles...")
-          #lv2_rdf_info = lv2_rdf.recheck_all_plugins(self)
-          #for info in lv2_rdf_info:
-            #plugins = checkPluginLV2(info)
-            #if (plugins != None):
-              #lv2_plugins.append(plugins)
+        if (self.check_lv2 and haveRDF):
+          self.pluginLook(last_value, "LV2 bundles...")
+          lv2_rdf.set_rdf_path(LV2_PATH)
+          lv2_rdf_info = lv2_rdf.recheck_all_plugins(self, last_value, percent_value)
+          for info in lv2_rdf_info:
+            plugins = checkPluginLV2(info)
+            if (plugins != None):
+              lv2_plugins.append(plugins)
 
-          #self.last_value += self.percent_value
+          last_value += percent_value
 
         # ----- VST
         if (self.check_vst):
@@ -574,11 +575,11 @@ class SearchPluginsThread(QThread):
               json.dump(ladspa_rdf_info, f_ladspa)
               f_ladspa.close()
 
-          #if (self.check_lv2):
-            #f_lv2 = open(os.path.join(SettingsDir, "lv2_rdf.db"), 'w')
-            #if (f_lv2):
-              #json.dump(lv2_rdf_info, f_lv2)
-              #f_lv2.close()
+          if (self.check_lv2):
+            f_lv2 = open(os.path.join(SettingsDir, "lv2_rdf.db"), 'w')
+            if (f_lv2):
+              json.dump(lv2_rdf_info, f_lv2)
+              f_lv2.close()
 
 # Plugin Refresh Dialog
 class PluginRefreshW(QDialog, ui_carla_refresh.Ui_PluginRefreshW):
@@ -1996,35 +1997,37 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.edit_dialog.hide()
         self.edit_dialog_geometry = None
 
-        #if (self.pinfo['hints'] & PLUGIN_HAS_GUI):
-          #gui_data = CarlaHost.get_gui_data(self.plugin_id)
-          #self.gui_dialog_type = gui_data['type']
+        if (self.pinfo['hints'] & PLUGIN_HAS_GUI):
+          gui_info = CarlaHost.get_gui_info(self.plugin_id)
+          self.gui_dialog_type = gui_info['type']
 
-          #if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_X11)):
+          if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_X11)):
+            self.gui_dialog = None
             #self.gui_dialog = PluginGUI(self, self.pinfo['name'], gui_data)
             #self.gui_dialog.hide()
-            #self.gui_dialog_geometry = None
+            self.gui_dialog_geometry = None
             #self.connect(self.gui_dialog, SIGNAL("finished(int)"), self.gui_dialog_closed)
 
             #CarlaHost.set_gui_data(self.plugin_id, Display, unwrapinstance(self.gui_dialog))
 
-          #elif (self.gui_dialog_type in (GUI_EXTERNAL_OSC, GUI_EXTERNAL_LV2)):
-            #self.gui_dialog = None
+          elif (self.gui_dialog_type in (GUI_EXTERNAL_OSC, GUI_EXTERNAL_LV2)):
+            self.gui_dialog = None
 
-          #else:
-            #self.gui_dialog = None
-            #self.b_gui.setEnabled(False)
+          else:
+            self.gui_dialog = None
+            self.gui_dialog_type = GUI_NONE
+            self.b_gui.setEnabled(False)
 
-        #else:
-        self.gui_dialog = None
-        self.gui_dialog_type = GUI_NONE
+        else:
+          self.gui_dialog = None
+          self.gui_dialog_type = GUI_NONE
 
         self.connect(self.led_enable, SIGNAL("clicked(bool)"), SLOT("slot_setActive(bool)"))
         self.connect(self.dial_drywet, SIGNAL("sliderMoved(int)"), SLOT("slot_setDryWet(int)"))
         self.connect(self.dial_vol, SIGNAL("sliderMoved(int)"), SLOT("slot_setVolume(int)"))
         self.connect(self.dial_b_left, SIGNAL("sliderMoved(int)"), SLOT("slot_setBalanceLeft(int)"))
         self.connect(self.dial_b_right, SIGNAL("sliderMoved(int)"), SLOT("slot_setBalanceRight(int)"))
-        self.connect(self.b_gui, SIGNAL("clicked(bool)"), SLOT("slot_guiClicked(bool"))
+        self.connect(self.b_gui, SIGNAL("clicked(bool)"), SLOT("slot_guiClicked(bool)"))
         self.connect(self.b_edit, SIGNAL("clicked(bool)"), SLOT("slot_editClicked(bool)"))
         self.connect(self.b_remove, SIGNAL("clicked()"), SLOT("slot_removeClicked()"))
 
@@ -2163,7 +2166,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
     def recheck_hints(self, hints):
         self.pinfo['hints'] = hints
         self.dial_drywet.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_DRYWET)
-        self.dial_vol.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_VOL)
+        self.dial_vol.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_VOLUME)
         self.dial_b_left.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_BALANCE)
         self.dial_b_right.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_BALANCE)
         self.b_gui.setEnabled(self.pinfo['hints'] & PLUGIN_HAS_GUI)
@@ -2524,20 +2527,8 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.set_balance_right(value, False, True)
 
     @pyqtSlot(bool)
-    def slot_editClicked(self, show):
-        if (show):
-          if (self.edit_dialog_geometry):
-            self.edit_dialog.restoreGeometry(self.edit_dialog_geometry)
-        else:
-          self.edit_dialog_geometry = self.edit_dialog.saveGeometry()
-        self.edit_dialog.setVisible(show)
-
-    @pyqtSlot()
-    def slot_editClosed(self):
-        self.b_edit.setChecked(False)
-
-    @pyqtSlot(bool)
     def slot_guiClicked(self, show):
+        print("slot_guiClicked", show)
         if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_X11)):
           if (show):
             if (self.gui_dialog_geometry):
@@ -2550,6 +2541,20 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
     @pyqtSlot()
     def slot_guiClosed(self):
         self.b_gui.setChecked(False)
+
+    @pyqtSlot(bool)
+    def slot_editClicked(self, show):
+        print("slot_editClicked", show)
+        if (show):
+          if (self.edit_dialog_geometry):
+            self.edit_dialog.restoreGeometry(self.edit_dialog_geometry)
+        else:
+          self.edit_dialog_geometry = self.edit_dialog.saveGeometry()
+        self.edit_dialog.setVisible(show)
+
+    @pyqtSlot()
+    def slot_editClosed(self):
+        self.b_edit.setChecked(False)
 
     @pyqtSlot()
     def slot_removeClicked(self):
@@ -2921,17 +2926,20 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
         elif (ptype == PLUGIN_DSSI):
           if (plugin['hints'] & PLUGIN_HAS_GUI):
-            return findDSSIGUI(plugin['binary'], plugin['name'], plugin['label'])
+            gui = findDSSIGUI(plugin['binary'], plugin['name'], plugin['label'])
+            if (gui):
+              return gui.encode("utf-8")
+          return c_nullptr
+
+        elif (ptype == PLUGIN_LV2):
+          p_uri = plugin['label'].encode("utf-8")
+          print("TEST", p_uri)
+          for rdf_item in self.lv2_rdf_list:
+            print(rdf_item.URI, p_uri)
+            if (rdf_item.URI == p_uri):
+              return pointer(rdf_item)
           else:
             return c_nullptr
-
-        #elif (ptype == PLUGIN_LV2):
-          #p_uri = plugin['label']
-          #for rdf_item in self.lv2_rdf_list:
-            #if (rdf_item.URI == p_uri):
-              #return pointer(rdf_item)
-          #else:
-            #return c_nullptr
 
         #elif (ptype == PLUGIN_WINVST):
           ## Store object so we can return a pointer
@@ -3177,19 +3185,19 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
                 #self.ladspa_rdf_list = []
               fr_ladspa.close()
 
-          #fr_lv2_file = os.path.join(SettingsDir, "lv2_rdf.db")
-          #if (os.path.exists(fr_lv2_file)):
-            #fr_lv2 = open(fr_lv2_file, 'r')
-            #if (fr_lv2):
+          fr_lv2_file = os.path.join(SettingsDir, "lv2_rdf.db")
+          if (os.path.exists(fr_lv2_file)):
+            fr_lv2 = open(fr_lv2_file, 'r')
+            if (fr_lv2):
               #try:
-                #self.lv2_rdf_list = lv2_rdf.get_c_lv2_rdfs(json.load(fr_lv2))
+              self.lv2_rdf_list = lv2_rdf.get_c_lv2_rdfs(json.load(fr_lv2))
               #except:
                 #self.lv2_rdf_list = []
-              #fr_lv2.close()
+              fr_lv2.close()
 
         else:
           self.ladspa_rdf_list = []
-          #self.lv2_rdf_list = []
+          self.lv2_rdf_list = []
 
     @pyqtSlot()
     def slot_file_new(self):
@@ -3281,6 +3289,8 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         LV2_PATH = toList(self.settings.value("Paths/LV2", LV2_PATH))
         VST_PATH = toList(self.settings.value("Paths/VST", VST_PATH))
         SF2_PATH = toList(self.settings.value("Paths/SF2", SF2_PATH))
+
+        print(LV2_PATH)
 
     def timerEvent(self, event):
         if (event.timerId() == self.TIMER_GUI_STUFF):

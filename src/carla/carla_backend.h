@@ -18,7 +18,7 @@
 #ifndef CARLA_BACKEND_H
 #define CARLA_BACKEND_H
 
-#include "includes.h"
+#include "carla_includes.h"
 
 #define STR_MAX 255
 
@@ -33,7 +33,7 @@ const unsigned int PLUGIN_IS_BRIDGE   = 0x02;
 const unsigned int PLUGIN_IS_SYNTH    = 0x04;
 const unsigned int PLUGIN_USES_CHUNKS = 0x08;
 const unsigned int PLUGIN_CAN_DRYWET  = 0x10;
-const unsigned int PLUGIN_CAN_VOL     = 0x20;
+const unsigned int PLUGIN_CAN_VOLUME = 0x20;
 const unsigned int PLUGIN_CAN_BALANCE = 0x40;
 
 // parameter hints
@@ -95,7 +95,9 @@ enum GuiType {
 };
 
 enum OptionsType {
-    OPTION_GLOBAL_JACK_CLIENT = 1
+    OPTION_GLOBAL_JACK_CLIENT = 1,
+    OPTION_USE_DSSI_CHUNKS    = 2,
+    OPTION_PREFER_UI_BRIDGES  = 3
 };
 
 enum CallbackType {
@@ -139,16 +141,6 @@ struct CustomData {
     const char* value;
 };
 
-struct GuiData {
-    GuiType type;
-    bool visible;
-    bool resizable;
-    unsigned int width;
-    unsigned int height;
-    const char* name; // DSSI Filename; LV2 Window Title
-    bool show_now;
-};
-
 struct PluginInfo {
   bool valid;
   PluginType type;
@@ -190,6 +182,10 @@ struct MidiProgramInfo {
     const char* label;
 };
 
+struct GuiInfo {
+    GuiType type;
+};
+
 struct PluginBridgeInfo {
     PluginCategory category;
     unsigned int hints;
@@ -203,14 +199,14 @@ struct PluginBridgeInfo {
 struct carla_options_t {
     bool initiated;
     bool global_jack_client;
+    bool use_dssi_chunks;
+    bool prefer_ui_bridges;
 };
 
 typedef void (*CallbackFunc)(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3);
 
 // -----------------------------------------------------
 // Exported symbols (API)
-
-class CarlaPlugin;
 
 CARLA_EXPORT bool carla_init(const char* client_name);
 CARLA_EXPORT bool carla_close();
@@ -226,12 +222,12 @@ CARLA_EXPORT PortCountInfo* get_parameter_count_info(unsigned short plugin_id);
 CARLA_EXPORT ParameterInfo* get_parameter_info(unsigned short plugin_id, uint32_t parameter_id);
 CARLA_EXPORT ScalePointInfo* get_scalepoint_info(unsigned short plugin_id, uint32_t parameter_id, uint32_t scalepoint_id);
 CARLA_EXPORT MidiProgramInfo* get_midi_program_info(unsigned short plugin_id, uint32_t midi_program_id);
+CARLA_EXPORT GuiInfo* get_gui_info(unsigned short plugin_id);
 
 CARLA_EXPORT ParameterData* get_parameter_data(unsigned short plugin_id, uint32_t parameter_id);
 CARLA_EXPORT ParameterRanges* get_parameter_ranges(unsigned short plugin_id, uint32_t parameter_id);
 CARLA_EXPORT CustomData* get_custom_data(unsigned short plugin_id, uint32_t custom_data_id);
 CARLA_EXPORT const char* get_chunk_data(unsigned short plugin_id);
-CARLA_EXPORT GuiData* get_gui_data(unsigned short plugin_id);
 
 CARLA_EXPORT uint32_t get_parameter_count(unsigned short plugin_id);
 CARLA_EXPORT uint32_t get_program_count(unsigned short plugin_id);
@@ -286,6 +282,8 @@ CARLA_EXPORT double get_latency();
 
 // End of exported symbols
 // -----------------------------------------------------
+
+class CarlaPlugin;
 
 // Helper functions
 const char* bool2str(bool yesno);

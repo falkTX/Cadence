@@ -161,19 +161,12 @@ MIDI_CC_LIST = (
   "0x5F FX 5 Depth [Phaser]"
   )
 
-# Check if a string is a number (float support)
-def isNumber(string):
-  if (string):
-    if (string.startswith("-")):
-      string = string.replace("-", "", 1)
-    sstring = string.split(".")
-    if (len(sstring) == 1 and sstring[0].isdigit()):
-      return True
-    elif (len(sstring) == 2 and sstring[0].isdigit() and sstring[1].isdigit()):
-      return True
-    else:
-      return False
-  else:
+# Check if an object is a number (float support)
+def isNumber(value):
+  try:
+    float(value)
+    return True
+  except:
     return False
 
 # Convert a value to a list

@@ -17,7 +17,7 @@
 
 #include "carla_plugin.h"
 
-// Global JACK client
+// Global JACK stuff
 extern jack_client_t* carla_jack_client;
 extern jack_nframes_t carla_buffer_size;
 extern jack_nframes_t carla_sample_rate;

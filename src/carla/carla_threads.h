@@ -39,14 +39,26 @@ public:
 class CarlaPluginThread : public QThread
 {
 public:
-    CarlaPluginThread(QObject* parent=0);
+    enum PluginThreadMode {
+        PLUGIN_THREAD_DSSI_GUI,
+        PLUGIN_THREAD_LV2_GUI_BRIDGE
+    };
+
+    CarlaPluginThread(CarlaPlugin* plugin, PluginThreadMode mode);
     ~CarlaPluginThread();
 
-    void set_plugin(CarlaPlugin* plugin);
-    void run();
+    void setOscData(const char* binary, const char* label);
+
+protected:
+    virtual void run();
 
 private:
     CarlaPlugin* m_plugin;
+    PluginThreadMode m_mode;
+
+    QString m_binary;
+    QString m_label;
+
     QProcess* m_process;
 };
 

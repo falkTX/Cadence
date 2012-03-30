@@ -582,7 +582,7 @@ public:
             m_hints |= PLUGIN_CAN_DRYWET;
 
         if (aouts > 0)
-            m_hints |= PLUGIN_CAN_VOL;
+            m_hints |= PLUGIN_CAN_VOLUME;
 
         if (aouts >= 2 && aouts%2 == 0)
             m_hints |= PLUGIN_CAN_BALANCE;
@@ -671,7 +671,7 @@ public:
                             set_drywet(velo_per, false, false);
                             postpone_event(PostEventParameterChange, PARAMETER_DRYWET, velo_per);
                         }
-                        else if (status == 0x07 && (m_hints & PLUGIN_CAN_VOL) > 0)
+                        else if (status == 0x07 && (m_hints & PLUGIN_CAN_VOLUME) > 0)
                         {
                             // Volume
                             value = double(velo)/100;
@@ -776,7 +776,7 @@ public:
                             aouts_buffer[i][k] = (aouts_buffer[i][k]*x_drywet)+(ains_buffer[i][k]*(1.0-x_drywet));
                     }
 
-                    if (m_hints & PLUGIN_CAN_VOL)
+                    if (m_hints & PLUGIN_CAN_VOLUME)
                         aouts_buffer[i][k] *= x_vol;
                 }
 

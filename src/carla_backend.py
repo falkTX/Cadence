@@ -24,7 +24,7 @@ from subprocess import getoutput
 
 # Imports (Custom)
 try:
-  import ladspa_rdf
+  import ladspa_rdf, lv2_rdf
   haveRDF = True
 except:
   print("RDF Support not available (LADSPA-RDF and LV2 will be disabled)")
@@ -496,65 +496,69 @@ def checkPluginVST(filename, tool, isWine=False):
 def checkPluginSF2(filename, tool):
   return runCarlaDiscovery(PLUGIN_SF2, "SF2", filename, tool)
 
-#def checkPluginLV2(rdf_info):
-  #plugins = []
+def checkPluginLV2(rdf_info):
+  plugins = []
 
-  #pinfo = deepcopy(PyPluginInfo)
-  #pinfo['type'] = PLUGIN_LV2
-  #pinfo['category'] = PLUGIN_CATEGORY_NONE # TODO
-  #pinfo['hints'] = 0
-  #pinfo['binary'] = rdf_info['Binary']
-  #pinfo['name'] = rdf_info['Name']
-  #pinfo['label'] = rdf_info['URI']
-  #pinfo['maker'] = rdf_info['Author']
-  #pinfo['copyright'] = rdf_info['License']
-  #pinfo['id'] = str(rdf_info['UniqueID'])
-  #pinfo['audio.ins'] = 0
-  #pinfo['audio.outs'] = 0
-  #pinfo['audio.total'] = 0
-  #pinfo['midi.ins'] = 0
-  #pinfo['midi.outs'] = 0
-  #pinfo['midi.total'] = 0
-  #pinfo['parameters.ins'] = 0
-  #pinfo['parameters.outs'] = 0
-  #pinfo['parameters.total'] = 0
-  #pinfo['programs.total'] = rdf_info['PresetCount']
+  pinfo = deepcopy(PyPluginInfo)
+  pinfo['type']  = PLUGIN_LV2
+  pinfo['build'] = BINARY_NATIVE
+  pinfo['category'] = PLUGIN_CATEGORY_NONE # TODO
+  pinfo['hints']  = 0
+  pinfo['binary'] = rdf_info['Binary']
+  pinfo['name']   = rdf_info['Name']
+  pinfo['label']  = rdf_info['URI']
+  pinfo['maker']  = rdf_info['Author']
+  pinfo['copyright'] = rdf_info['License']
+  pinfo['unique_id'] = rdf_info['UniqueID']
+  pinfo['audio.ins'] = 0
+  pinfo['audio.outs'] = 0
+  pinfo['audio.total'] = 0
+  pinfo['midi.ins'] = 0
+  pinfo['midi.outs'] = 0
+  pinfo['midi.total'] = 0
+  pinfo['parameters.ins'] = 0
+  pinfo['parameters.outs'] = 0
+  pinfo['parameters.total'] = 0
+  pinfo['programs.total'] = 0 #rdf_info['PresetCount']
 
-  #if (not rdf_info['Bundle'] or pinfo['binary'] == "" or pinfo['name'] == ""):
-    #return None
+  if (pinfo['binary'] == "" or pinfo['name'] == "" or not rdf_info['Bundle']):
+    return None
 
-  #for i in range(rdf_info['PortCount']):
-    #PortType = rdf_info['Ports'][i]['Type']
-    #PortProps = rdf_info['Ports'][i]['Properties']
-    #if (PortType & lv2_rdf.LV2_PORT_AUDIO):
-      #pinfo['audio.total'] += 1
-      #if (PortType & lv2_rdf.LV2_PORT_INPUT):
-        #pinfo['audio.ins'] += 1
-      #elif (PortType & lv2_rdf.LV2_PORT_OUTPUT):
-        #pinfo['audio.outs'] += 1
-    #elif (PortType & lv2_rdf.LV2_PORT_EVENT_MIDI):
-      #pinfo['midi.total'] += 1
-      #if (PortType & lv2_rdf.LV2_PORT_INPUT):
-        #pinfo['midi.ins'] += 1
-      #elif (PortType & lv2_rdf.LV2_PORT_OUTPUT):
-        #pinfo['midi.outs'] += 1
-    #elif (PortType & lv2_rdf.LV2_PORT_CONTROL):
-      #pinfo['parameters.total'] += 1
-      #if (PortType & lv2_rdf.LV2_PORT_INPUT):
-        #pinfo['parameters.ins'] += 1
-      #elif (PortType & lv2_rdf.LV2_PORT_OUTPUT):
-        #if (not PortProps & lv2_rdf.LV2_PORT_LATENCY):
-          #pinfo['parameters.outs'] += 1
+  for i in range(rdf_info['PortCount']):
+    PortType = rdf_info['Ports'][i]['Type']
+    PortProps = rdf_info['Ports'][i]['Properties']
 
-  #if (rdf_info['Type'] & lv2_rdf.LV2_GROUP_GENERATOR):
-    #pinfo['hints'] |= PLUGIN_IS_SYNTH
+    if (PortType & lv2_rdf.LV2_PORT_AUDIO):
+      pinfo['audio.total'] += 1
+      if (PortType & lv2_rdf.LV2_PORT_INPUT):
+        pinfo['audio.ins'] += 1
+      elif (PortType & lv2_rdf.LV2_PORT_OUTPUT):
+        pinfo['audio.outs'] += 1
 
-  #if (rdf_info['UICount'] > 0):
-    #pinfo['hints'] |= PLUGIN_HAS_GUI
+    elif (PortType & lv2_rdf.LV2_PORT_EVENT_MIDI):
+      pinfo['midi.total'] += 1
+      if (PortType & lv2_rdf.LV2_PORT_INPUT):
+        pinfo['midi.ins'] += 1
+      elif (PortType & lv2_rdf.LV2_PORT_OUTPUT):
+        pinfo['midi.outs'] += 1
 
-  #plugins.append(pinfo)
+    elif (PortType & lv2_rdf.LV2_PORT_CONTROL):
+      pinfo['parameters.total'] += 1
+      if (PortType & lv2_rdf.LV2_PORT_INPUT):
+        pinfo['parameters.ins'] += 1
+      elif (PortType & lv2_rdf.LV2_PORT_OUTPUT):
+        if (not PortProps & lv2_rdf.LV2_PORT_LATENCY):
+          pinfo['parameters.outs'] += 1
 
-  #return plugins
+  if (rdf_info['Type'] & lv2_rdf.LV2_GROUP_GENERATOR):
+    pinfo['hints'] |= PLUGIN_IS_SYNTH
+
+  if (rdf_info['UICount'] > 0):
+    pinfo['hints'] |= PLUGIN_HAS_GUI
+
+  plugins.append(pinfo)
+
+  return plugins
 
 # ------------------------------------------------------------------------------------------------
 # Backend C++ -> Python variables
@@ -573,7 +577,7 @@ PLUGIN_IS_BRIDGE   = 0x02
 PLUGIN_IS_SYNTH    = 0x04
 PLUGIN_USES_CHUNKS = 0x08
 PLUGIN_CAN_DRYWET  = 0x10
-PLUGIN_CAN_VOL     = 0x20
+PLUGIN_CAN_VOLUME  = 0x20
 PLUGIN_CAN_BALANCE = 0x40
 
 # parameter hints
@@ -630,6 +634,8 @@ GUI_EXTERNAL_LV2 = 4
 
 # enum OptionsType
 OPTION_GLOBAL_JACK_CLIENT = 1
+OPTION_USE_DSSI_CHUNKS    = 2
+OPTION_PREFER_UI_BRIDGES  = 3
 
 # enum CallbackType
 CALLBACK_DEBUG                = 0
@@ -672,17 +678,6 @@ class CustomData(Structure):
     ("type", c_char_p),
     ("key", c_char_p),
     ("value", c_char_p)
-  ]
-
-class GuiData(Structure):
-  _fields_ = [
-    ("type", c_enum),
-    ("visible", c_bool),
-    ("resizable", c_bool),
-    ("width", c_uint),
-    ("height", c_uint),
-    ("name", c_char_p), # DSSI Filename; LV2 Window Title
-    ("show_now", c_bool)
   ]
 
 class PluginInfo(Structure):
@@ -729,6 +724,11 @@ class MidiProgramInfo(Structure):
     ("bank", c_uint32),
     ("program", c_uint32),
     ("label", c_char_p)
+  ]
+
+class GuiInfo(Structure):
+  _fields_ = [
+    ("type", c_enum)
   ]
 
 class PluginBridgeInfo(Structure):
@@ -806,6 +806,9 @@ class Host(object):
         self.lib.get_midi_program_info.argtypes = [c_ushort, c_uint32]
         self.lib.get_midi_program_info.restype = POINTER(MidiProgramInfo)
 
+        self.lib.get_gui_info.argtypes = [c_ushort]
+        self.lib.get_gui_info.restype = POINTER(GuiInfo)
+
         self.lib.get_parameter_data.argtypes = [c_ushort, c_uint32]
         self.lib.get_parameter_data.restype = POINTER(ParameterData)
 
@@ -817,9 +820,6 @@ class Host(object):
 
         self.lib.get_chunk_data.argtypes = [c_ushort]
         self.lib.get_chunk_data.restype = c_char_p
-
-        self.lib.get_gui_data.argtypes = [c_ushort]
-        self.lib.get_gui_data.restype = POINTER(GuiData)
 
         self.lib.get_parameter_count.argtypes = [c_ushort]
         self.lib.get_parameter_count.restype = c_uint32
@@ -983,8 +983,8 @@ class Host(object):
     def get_chunk_data(self, plugin_id):
         return self.lib.get_chunk_data(plugin_id)
 
-    def get_gui_data(self, plugin_id):
-        return struct_to_dict(self.lib.get_gui_data(plugin_id).contents)
+    def get_gui_info(self, plugin_id):
+        return struct_to_dict(self.lib.get_gui_info(plugin_id).contents)
 
     def get_parameter_count(self, plugin_id):
         return self.lib.get_parameter_count(plugin_id)
@@ -1105,6 +1105,8 @@ class Host(object):
 # ------------------------------------------------------------------------------------------------
 # Default Plugin Folders (set)
 
+global LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, SF2_PATH
+
 LADSPA_PATH_env = os.getenv("LADSPA_PATH")
 DSSI_PATH_env   = os.getenv("DSSI_PATH")
 LV2_PATH_env    = os.getenv("LV2_PATH")
@@ -1141,4 +1143,4 @@ if (haveRDF):
   if (LADSPA_RDF_PATH_env):
     ladspa_rdf.set_rdf_path(LADSPA_RDF_PATH_env.split(splitter))
 
-  #lv2_rdf.set_rdf_path(LV2_PATH)
+  lv2_rdf.set_rdf_path(LV2_PATH)

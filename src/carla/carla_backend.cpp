@@ -16,8 +16,10 @@
  */
 
 #include "carla_backend.h"
-#include "carla_threads.h"
+
+#include "carla_osc.h"
 #include "carla_plugin.h"
+#include "carla_threads.h"
 
 #include <cstring>
 #include <ostream>
@@ -41,15 +43,22 @@ CarlaPlugin* CarlaPlugins[MAX_PLUGINS] = { nullptr };
 volatile double ains_peak[MAX_PLUGINS*2]  = { 0.0 };
 volatile double aouts_peak[MAX_PLUGINS*2] = { 0.0 };
 
-// Global JACK client
+// Global JACK stuff
 jack_client_t* carla_jack_client = nullptr;
 jack_nframes_t carla_buffer_size = 512;
 jack_nframes_t carla_sample_rate = 44100;
 
+// Global OSC stuff
+lo_server_thread global_osc_server_thread = nullptr;
+const char* global_osc_server_path = nullptr;
+OscData global_osc_data = { nullptr, nullptr, nullptr };
+
 // Global options
 carla_options_t carla_options = {
-  /* _initiated */           false,
-  /* global_jack_client   */ true
+  /* initiated */          false,
+  /* global_jack_client */ true,
+  /* use_dssi_chunks    */ false,
+  /* prefer_ui_bridges  */ true
 };
 
 // jack.cpp
@@ -123,10 +132,8 @@ bool carla_init(const char* client_name)
         //for (unsigned short i=0; i<MAX_MIDI_EVENTS; i++)
         //    ExternalMidiNotes[i].valid = false;
 
-        //osc_init();
-
+        osc_init();
         carla_check_thread.start(QThread::HighPriority);
-
         set_last_error("no error");
     }
 
@@ -162,11 +169,11 @@ bool carla_close()
 
     carla_check_thread.quit();
 
-    if (carla_check_thread.wait(2000)) // 2 secs
+    if (carla_check_thread.wait(2000) == false) // 2 secs
         qWarning("Failed to properly stop global check thread");
 
-    //osc_send_exit(&global_osc_data);
-    //osc_close();
+    osc_send_exit(&global_osc_data);
+    osc_close();
 
     if (carla_client_name)
         free((void*)carla_client_name);
@@ -486,6 +493,27 @@ MidiProgramInfo* get_midi_program_info(unsigned short plugin_id, uint32_t midi_p
     return &info;
 }
 
+GuiInfo* get_gui_info(unsigned short plugin_id)
+{
+    qDebug("get_gui_info(%i)", plugin_id);
+
+    static GuiInfo info = { GUI_NONE };
+    info.type = GUI_NONE;
+
+    for (unsigned short i=0; i<MAX_PLUGINS; i++)
+    {
+        CarlaPlugin* plugin = CarlaPlugins[i];
+        if (plugin && plugin->id() == plugin_id)
+        {
+            plugin->get_gui_info(&info);
+            return &info;
+        }
+    }
+
+    qCritical("get_gui_info(%i) - could not find plugin", plugin_id);
+    return &info;
+}
+
 ParameterData* get_parameter_data(unsigned short plugin_id, uint32_t parameter_id)
 {
     qDebug("get_parameter_data(%i, %i)", plugin_id, parameter_id);
@@ -598,23 +626,6 @@ const char* get_chunk_data(unsigned short plugin_id)
         qCritical("get_chunk_data(%i) - could not find plugin", plugin_id);
 
     return chunk_data;
-}
-
-GuiData* get_gui_data(unsigned short plugin_id)
-{
-    qDebug("get_gui_data(%i)", plugin_id);
-
-    static GuiData data = { GUI_NONE, false, false, 0, 0, nullptr, false };
-
-    for (unsigned short i=0; i<MAX_PLUGINS; i++)
-    {
-//        CarlaPlugin* plugin = CarlaPlugins[i];
-//        if (plugin && plugin->id() == plugin_id)
-//            return &plugin->gui;
-    }
-
-    qCritical("get_gui_data(%i) - could not find plugin", plugin_id);
-    return &data;
 }
 
 uint32_t get_parameter_count(unsigned short plugin_id)
@@ -806,7 +817,7 @@ double get_default_parameter_value(unsigned short plugin_id, uint32_t parameter_
 
 double get_current_parameter_value(unsigned short plugin_id, uint32_t parameter_id)
 {
-    qDebug("get_current_parameter_value(%i, %i)", plugin_id, parameter_id);
+    //qDebug("get_current_parameter_value(%i, %i)", plugin_id, parameter_id);
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
@@ -1186,7 +1197,7 @@ const char* get_host_client_name()
 const char* get_host_osc_url()
 {
     qDebug("get_host_osc_url()");
-    return 0; //global_osc_server_path;
+    return global_osc_server_path;
 }
 
 uint32_t get_buffer_size()
@@ -1371,12 +1382,3 @@ void send_plugin_midi_note(unsigned short /*plugin_id*/, bool /*onoff*/, uint8_t
 
 // End of helper functions
 // -------------------------------------------------------------------------------------------------------------------
-
-#if 0
-
-// Global OSC stuff
-lo_server_thread global_osc_server_thread = nullptr;
-const char* global_osc_server_path = nullptr;
-OscData global_osc_data = { nullptr, nullptr, nullptr };
-
-#endif

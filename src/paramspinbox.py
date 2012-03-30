@@ -103,7 +103,7 @@ class ParamProgressBar(QProgressBar):
         elif (value > self._maximum):
           value = self._maximum
 
-        self.emit(SIGNAL("valueChangedFromBar(float)"), value)
+        self.emit(SIGNAL("valueChangedFromBar(double)"), value)
 
     def mousePressEvent(self, event):
         if (event.button() == Qt.LeftButton):
@@ -149,7 +149,7 @@ class ParamSpinBox(QAbstractSpinBox):
 
         self.lineEdit().setVisible(False)
 
-        self.connect(self.bar, SIGNAL("valueChangedFromBar(float)"), self.handleValueChangedFromBar)
+        self.connect(self.bar, SIGNAL("valueChangedFromBar(double)"), self.handleValueChangedFromBar)
         self.connect(self, SIGNAL("customContextMenuRequested(QPoint)"), self.showCustomMenu)
 
         QTimer.singleShot(0, self.updateBarGeometry)
@@ -179,7 +179,7 @@ class ParamSpinBox(QAbstractSpinBox):
             self.set_scalepoint_value(value)
 
           if (send):
-            self.emit(SIGNAL("valueChanged(float)"), value)
+            self.emit(SIGNAL("valueChanged(double)"), value)
 
           self.update()
 
