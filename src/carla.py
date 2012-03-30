@@ -76,7 +76,7 @@ save_state_parameter = {
 }
 
 save_state_custom_data = {
-  'type': "",
+  'type': CUSTOM_DATA_INVALID,
   'key':  "",
   'value': ""
 }
@@ -85,6 +85,38 @@ save_state_custom_data = {
 DEFAULT_PROJECT_FOLDER = HOME
 setDefaultProjectFolder(DEFAULT_PROJECT_FOLDER)
 setDefaultPluginsPaths(LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, SF2_PATH)
+
+def CustomDataType2String(dtype):
+  if (dtype == CUSTOM_DATA_BOOL):
+    return "bool"
+  elif (dtype == CUSTOM_DATA_INT):
+    return "int"
+  elif (dtype == CUSTOM_DATA_LONG):
+    return "long"
+  elif (dtype == CUSTOM_DATA_FLOAT):
+    return "float"
+  elif (dtype == CUSTOM_DATA_STRING):
+    return "string"
+  elif (dtype == CUSTOM_DATA_BINARY):
+    return "binary"
+  else:
+    return "null"
+
+def CustomDataString2Type(stype):
+  if (stype == "bool"):
+    return CUSTOM_DATA_BOOL
+  elif (stype == "int"):
+    return CUSTOM_DATA_INT
+  elif (stype == "long"):
+    return CUSTOM_DATA_LONG
+  elif (stype == "float"):
+    return CUSTOM_DATA_FLOAT
+  elif (stype == "string"):
+    return CUSTOM_DATA_STRING
+  elif (stype == "binary"):
+    return CUSTOM_DATA_BINARY
+  else:
+    return CUSTOM_DATA_INVALID
 
 def getStateDictFromXML(xml_node):
     x_save_state_dict = deepcopy(save_state_dict)
@@ -193,7 +225,8 @@ def getStateDictFromXML(xml_node):
               ctext = xml_subdata.toElement().text().strip()
 
               if (ctag == "type"):
-                x_save_state_custom_data['type'] = ctext
+                print(ctext, CustomDataString2Type(ctext))
+                x_save_state_custom_data['type'] = CustomDataString2Type(ctext)
               elif (ctag == "key"):
                 x_save_state_custom_data['key'] = ctext
               elif (ctag == "value"):
@@ -1300,7 +1333,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.plugin_id = plugin_id
 
         self.parameter_count = 0
-        self.parameter_list = [] # type, id, widget
+        self.parameter_list  = [] # type, id, widget
         self.parameter_list_to_update = [] # ids
 
         self.state_filename = None
@@ -1606,77 +1639,51 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
     def do_reload_programs(self):
         # Programs
-        #old_current   = self.cur_program_index
-        #program_count = CarlaHost.get_program_count(self.plugin_id)
+        self.cb_programs.blockSignals(True)
+        self.cb_programs.clear()
 
-        #if (self.cb_programs.count() > 0):
-          #self.cur_program_index = -1
-          #self.cb_programs.setCurrentIndex(-1)
-          #self.cb_programs.clear()
+        program_count = CarlaHost.get_program_count(self.plugin_id)
 
-        #if (program_count > 0):
-          #self.cb_programs.setEnabled(True)
-          #self.cur_program_index = 0
+        if (program_count > 0):
+          self.cb_programs.setEnabled(True)
 
-          #for i in range(program_count):
-            #pname = toString(CarlaHost.get_program_name(self.plugin_id, i))
-            #self.cb_programs.addItem(pname)
+          for i in range(program_count):
+            pname = toString(CarlaHost.get_program_name(self.plugin_id, i))
+            self.cb_programs.addItem(pname)
 
-          #if (old_current < 0):
-            #old_current = 0
+          self.cur_program_index = CarlaHost.get_current_program_index(self.plugin_id)
+          self.cb_programs.setCurrentIndex(self.cur_program_index)
 
-          #self.cur_program_index = old_current
-          #self.cb_programs.setCurrentIndex(old_current)
+        else:
+          self.cb_programs.setEnabled(False)
 
-          # TODO - request for current program? need to handle this better
+        self.cb_programs.blockSignals(False)
 
-        #else:
-        self.cb_programs.setEnabled(False)
+        # MIDI Programs
+        self.cb_midi_programs.blockSignals(True)
+        self.cb_midi_programs.clear()
 
-        ## MIDI Programs
-        #old_midi_current   = self.cur_midi_program_index
-        #midi_program_count = CarlaHost.get_midi_program_count(self.plugin_id)
+        midi_program_count = CarlaHost.get_midi_program_count(self.plugin_id)
 
-        #if (self.cb_midi_programs.count() > 0):
-          #self.cur_midi_program_index = -1
-          #self.set_midi_program(-1)
-          #self.cb_midi_programs.clear()
+        if (midi_program_count > 0):
+          self.cb_midi_programs.setEnabled(True)
 
-        #if (midi_program_count > 0):
-          #self.cb_midi_programs.setEnabled(True)
-          #self.cur_midi_program_index = 0
+          for i in range(midi_program_count):
+            midip = CarlaHost.get_midi_program_info(self.plugin_id, i)
 
-          #for i in range(midi_program_count):
-            #midip = CarlaHost.get_midi_program_info(self.plugin_id, i)
-            #if (not midip['label']): midip['label'] = ""
+            bank  = int(midip['bank'])
+            prog  = int(midip['program'])
+            label = toString(midip['label'])
 
-            #bank = midip['bank']
-            #prog = midip['program']
+            self.cb_midi_programs.addItem("%03i:%03i - %s" % (bank, prog, label))
 
-            #if (bank < 10):
-              #bank_str = "00%i" % (bank)
-            #elif (bank < 100):
-              #bank_str = "0%i" % (bank)
-            #else:
-              #bank_str = "%i" % (bank)
+          self.cur_midi_program_index = CarlaHost.get_current_midi_program_index(self.plugin_id)
+          self.cb_midi_programs.setCurrentIndex(self.cur_midi_program_index)
 
-            #if (prog < 10):
-              #prog_str = "00%i" % (prog)
-            #elif (prog < 100):
-              #prog_str = "0%i" % (prog)
-            #else:
-              #prog_str = "%i" % (prog)
+        else:
+          self.cb_midi_programs.setEnabled(False)
 
-            #self.cb_midi_programs.addItem("%s:%s - %s" % (bank_str, prog_str, midip['label']))
-
-          #if (old_midi_current < 0):
-            #old_midi_current = 0
-
-          #self.cur_midi_program_index = old_midi_current
-          #self.set_midi_program(old_midi_current)
-
-        #else:
-        self.cb_midi_programs.setEnabled(False)
+        self.cb_midi_programs.blockSignals(False)
 
     def saveState_InternalFormat(self):
         content = ("<?xml version='1.0' encoding='UTF-8'?>\n"
@@ -2257,12 +2264,12 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         for i in range(custom_data_count):
           custom_data = CarlaHost.get_custom_data(self.plugin_id, i)
 
-          if (not custom_data['type'] or custom_data['type'] == "NULL"):
+          if (custom_data['type'] == CUSTOM_DATA_INVALID):
             continue
 
           x_save_state_custom_data = deepcopy(save_state_custom_data)
 
-          x_save_state_custom_data['type']  = toString(custom_data['type'])
+          x_save_state_custom_data['type']  = CustomDataType2String(custom_data['type'])
           x_save_state_custom_data['key']   = toString(custom_data['key'])
           x_save_state_custom_data['value'] = toString(custom_data['value'])
 
@@ -2371,16 +2378,16 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
           #CarlaHost.set_program(self.plugin_id, program_id)
           #self.edit_dialog.set_program(program_id)
 
-        ## Part 3 - set midi program
-        #if (content['MidiBank'] >= 0 and content['MidiProgram'] >= 0):
-          #midi_program_count = CarlaHost.get_midi_program_count(self.plugin_id)
+        # Part 3 - set midi program
+        if (content['CurrentMidiBank'] >= 0 and content['CurrentMidiProgram'] >= 0):
+          midi_program_count = CarlaHost.get_midi_program_count(self.plugin_id)
 
-          #for i in range(midi_program_count):
-            #program_info = CarlaHost.get_midi_program_info(self.plugin_id, i)
-            #if (program_info['bank'] == content['MidiBank'] and program_info['program'] == content['MidiProgram']):
-              #CarlaHost.set_midi_program(self.plugin_id, i)
-              #self.edit_dialog.set_midi_program(i)
-              #break
+          for i in range(midi_program_count):
+            program_info = CarlaHost.get_midi_program_info(self.plugin_id, i)
+            if (program_info['bank'] == content['CurrentMidiBank'] and program_info['program'] == content['CurrentMidiProgram']):
+              CarlaHost.set_midi_program(self.plugin_id, i)
+              self.edit_dialog.set_midi_program(i)
+              break
 
         # Part 4a - get plugin parameter symbols
         param_symbols = [] # (index, symbol)

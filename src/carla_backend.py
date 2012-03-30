@@ -625,6 +625,15 @@ PARAMETER_VOLUME = -3
 PARAMETER_BALANCE_LEFT  = -4
 PARAMETER_BALANCE_RIGHT = -5
 
+# enum CustomDataType
+CUSTOM_DATA_INVALID = 0
+CUSTOM_DATA_BOOL    = 1
+CUSTOM_DATA_INT     = 2
+CUSTOM_DATA_LONG    = 3
+CUSTOM_DATA_FLOAT   = 4
+CUSTOM_DATA_STRING  = 5
+CUSTOM_DATA_BINARY  = 6
+
 # enum GuiType
 GUI_NONE         = 0
 GUI_INTERNAL_QT4 = 1
@@ -675,7 +684,7 @@ class ParameterRanges(Structure):
 
 class CustomData(Structure):
   _fields_ = [
-    ("type", c_char_p),
+    ("type", c_enum),
     ("key", c_char_p),
     ("value", c_char_p)
   ]
@@ -890,7 +899,7 @@ class Host(object):
         self.lib.set_midi_program.argtypes = [c_ushort, c_uint32]
         self.lib.set_midi_program.restype = None
 
-        self.lib.set_custom_data.argtypes = [c_ushort, c_char_p, c_char_p, c_char_p]
+        self.lib.set_custom_data.argtypes = [c_ushort, c_enum, c_char_p, c_char_p]
         self.lib.set_custom_data.restype = None
 
         self.lib.set_chunk_data.argtypes = [c_ushort, c_char_p]
@@ -1056,7 +1065,7 @@ class Host(object):
         self.lib.set_midi_program(plugin_id, midi_program_id)
 
     def set_custom_data(self, plugin_id, dtype, key, value):
-        return self.lib.set_custom_data(plugin_id, dtype, key, value)
+        self.lib.set_custom_data(plugin_id, dtype, key.encode("utf-8"), value.encode("utf-8"))
 
     def set_chunk_data(self, plugin_id, chunk_data):
         self.lib.set_chunk_data(plugin_id, chunk_data.encode("utf-8"))

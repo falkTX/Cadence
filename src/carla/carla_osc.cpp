@@ -210,21 +210,21 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
             return osc_handle_configure(plugin, argv);
         else if (strcmp(method, "control") == 0)
             return osc_handle_control(plugin, argv);
-//        else if (strcmp(method, "program") == 0)
-//            return (plugin->type == PLUGIN_DSSI) ? osc_midi_program_handler(plugin, argv) : osc_program_handler(plugin, argv);
-//        else if (strcmp(method, "midi") == 0)
-//            return osc_midi_handler(plugin, argv);
-//        else if (strcmp(method, "exiting") == 0)
-//            return osc_exiting_handler(plugin);
+        //else if (strcmp(method, "program") == 0)
+        //    return (plugin->type == PLUGIN_DSSI) ? osc_midi_program_handler(plugin, argv) : osc_program_handler(plugin, argv);
+        //else if (strcmp(method, "midi") == 0)
+        //    return osc_midi_handler(plugin, argv);
+        //else if (strcmp(method, "exiting") == 0)
+        //    return osc_exiting_handler(plugin);
         else
             qWarning("osc_message_handler() - unsupported OSC method '%s'", method);
 //    }
 
     return 1;
 
-//    Q_UNUSED(types);
-//    Q_UNUSED(argc);
-//    Q_UNUSED(user_data);
+    Q_UNUSED(types);
+    Q_UNUSED(argc);
+    Q_UNUSED(user_data);
 }
 
 int osc_handle_register(lo_arg** argv, lo_address source)
@@ -409,7 +409,7 @@ int osc_handle_configure(CarlaPlugin* plugin, lo_arg** argv)
 
     const char* key   = (const char*)&argv[0]->s;
     const char* value = (const char*)&argv[1]->s;
-    plugin->set_custom_data("string", key, value, false);
+    plugin->set_custom_data(CUSTOM_DATA_STRING, key, value, false);
 
     return 0;
 }

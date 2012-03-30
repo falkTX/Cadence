@@ -28,6 +28,7 @@
 #include <jack/jack.h>
 #include <jack/midiport.h>
 
+#include <QtCore/QList>
 #include <QtCore/QMutex>
 
 #define CARLA_PROCESS_CONTINUE_CHECK if (m_id != plugin_id) { return callback_action(CALLBACK_DEBUG, plugin_id, m_id, 0, 0.0); }
@@ -54,6 +55,25 @@ enum PluginPostEventType {
     PostEventNoteOff
 };
 
+enum PluginBridgeInfoType {
+    PluginBridgeAudioCountInfo,
+    PluginBridgeMidiCountInfo,
+    PluginBridgeParameterCountInfo,
+    PluginBridgeProgramCountInfo,
+    PluginBridgeMidiProgramCountInfo,
+    PluginBridgePluginInfo,
+    PluginBridgeParameterInfo,
+    PluginBridgeParameterDataInfo,
+    PluginBridgeParameterRangesInfo,
+    PluginBridgeProgramName,
+    PluginBridgeUpdateNow
+};
+
+struct midi_program_t {
+    uint32_t bank;
+    uint32_t program;
+};
+
 struct PluginAudioData {
     uint32_t count;
     uint32_t* rindexes;
@@ -73,11 +93,31 @@ struct PluginParameterData {
     jack_port_t* port_cout;
 };
 
+struct PluginProgramData {
+    uint32_t count;
+    int32_t current;
+    const char** names;
+};
+
+struct PluginMidiProgramData {
+    uint32_t count;
+    int32_t current;
+    midi_program_t* data;
+    const char** names;
+};
+
 struct PluginPostEvent {
     bool valid;
     PluginPostEventType type;
     int32_t index;
     double value;
+};
+
+struct ExternalMidiNote {
+    bool valid;
+    bool onoff;
+    uint8_t note;
+    uint8_t velo;
 };
 
 class CarlaPlugin
@@ -125,6 +165,17 @@ public:
         param.port_cin  = nullptr;
         param.port_cout = nullptr;
 
+        prog.count   = 0;
+        prog.current = -1;
+        prog.names   = nullptr;
+
+        midiprog.count   = 0;
+        midiprog.current = -1;
+        midiprog.data    = nullptr;
+        midiprog.names   = nullptr;
+
+        custom.clear();
+
         osc.data.path = nullptr;
         osc.data.source = nullptr;
         osc.data.target = nullptr;
@@ -132,6 +183,9 @@ public:
 
         for (unsigned short i=0; i < MAX_POSTEVENTS; i++)
             post_events.data[i].valid = false;
+
+        for (unsigned short i=0; i < MAX_MIDI_EVENTS; i++)
+            external_midi[i].valid = false;
     }
 
     virtual ~CarlaPlugin()
@@ -156,6 +210,37 @@ public:
 
         if (m_filename)
             free((void*)m_filename);
+
+        if (prog.count > 0)
+        {
+            for (uint32_t i=0; i < prog.count; i++)
+                free((void*)prog.names[i]);
+
+            delete[] prog.names;
+        }
+
+        if (midiprog.count > 0)
+        {
+            for (uint32_t i=0; i < prog.count; i++)
+                free((void*)midiprog.names[i]);
+
+            delete[] midiprog.data;
+            delete[] midiprog.names;
+        }
+
+        if (custom.count() > 0)
+        {
+            for (int i=0; i < custom.count(); i++)
+            {
+                if (custom[i].key)
+                    free((void*)custom[i].key);
+
+                if (custom[i].value)
+                    free((void*)custom[i].value);
+            }
+
+            custom.clear();
+        }
 
         if (jack_client && carla_options.global_jack_client == false)
             jack_client_close(jack_client);
@@ -211,14 +296,19 @@ public:
         return param.count;
     }
 
+    uint32_t custom_count()
+    {
+        return custom.count();
+    }
+
     virtual uint32_t prog_count()
     {
-        return 0;
+        return prog.count;
     }
 
     virtual uint32_t midiprog_count()
     {
-        return 0;
+        return midiprog.count;
     }
 
     virtual uint32_t param_scalepoint_count(uint32_t)
@@ -241,9 +331,34 @@ public:
         return &param.ranges[index];
     }
 
+    CustomData* custom_data(uint32_t index)
+    {
+        return &custom[index];
+    }
+
     OscData* osc_data()
     {
         return &osc.data;
+    }
+
+    int32_t prog_current()
+    {
+        return prog.current;
+    }
+
+    int32_t midiprog_current()
+    {
+        return midiprog.current;
+    }
+
+    const char* prog_name(uint32_t index)
+    {
+        return prog.names[index];
+    }
+
+    const char* midiprog_name(uint32_t index)
+    {
+        return midiprog.names[index];
     }
 
     virtual void get_label(char* buf_str)
@@ -320,11 +435,11 @@ public:
         }
     }
 
-    virtual void get_midi_program_info(MidiProgramInfo* info)
+    void get_midi_program_info(MidiProgramInfo* info, uint32_t index)
     {
-        info->bank = 0;
-        info->program = 0;
-        info->label = nullptr;
+        info->bank    = midiprog.data[index].bank;
+        info->program = midiprog.data[index].program;
+        info->label   = midiprog.names[index];
     }
 
     virtual void get_gui_info(GuiInfo* info)
@@ -486,52 +601,140 @@ public:
             osc_send_set_parameter_midi_cc(&osc.data, m_id, index, midi_cc);
     }
 
-    virtual void set_custom_data(const char* type, const char* key, const char* value, bool gui_send)
+    virtual void set_custom_data(CustomDataType dtype, const char* key, const char* value, bool)
     {
-        //bool save_data = true;
-        //bool already_have = false;
+        bool save_data = true;
+        bool already_have = false;
 
-//        switch (dtype)
-//        {
-//        case CUSTOM_DATA_INVALID:
-//            save_data = false;
-//            break;
-//        case CUSTOM_DATA_STRING:
-//            // Ignore OSC keys
-//            if (QString(key).startsWith("OSC:", Qt::CaseSensitive))
-//                save_data = false;
-//            break;
-//        default:
-//            break;
-//        }
+        qDebug("set_custom_data()");
 
-//        if (save_data)
-//        {
+        switch (dtype)
+        {
+        case CUSTOM_DATA_INVALID:
+            save_data = false;
+            break;
+        case CUSTOM_DATA_STRING:
+            // Ignore OSC keys
+            if (strncmp(key, "OSC:", 4) == 0)
+                save_data = false;
+            break;
+        default:
+            break;
+        }
+
+        if (save_data)
+        {
             // Check if we already have this key
-            //for (int i=0; i < custom.count(); i++)
-            //{
-            //    if (strcmp(custom[i].key, key) == 0)
-            //    {
-            //        free((void*)custom[i].value);
-            //        custom[i].value = strdup(value);
-            //        already_have = true;
-            //        break;
-            //    }
-            //}
+            for (int i=0; i < custom.count(); i++)
+            {
+                if (strcmp(custom[i].key, key) == 0)
+                {
+                    free((void*)custom[i].value);
+                    custom[i].value = strdup(value);
+                    already_have = true;
+                    break;
+                }
+            }
 
-            //if (already_have == false)
-            //{
-            //    CustomData new_data;
-            //    new_data.type  = dtype;
-            //    new_data.key   = strdup(key);
-            //    new_data.value = strdup(value);
-            //    custom.append(new_data);
-            //}
-//        }
+            if (already_have == false)
+            {
+                CustomData new_data;
+                new_data.type  = dtype;
+                new_data.key   = strdup(key);
+                new_data.value = strdup(value);
+                custom.append(new_data);
+            }
+        }
     }
 
     virtual void set_chunk_data(const char*)
     {
+    }
+
+    virtual void set_program(uint32_t index, bool, bool osc_send, bool callback_send, bool)
+    {
+        prog.current = index;
+
+        // Change default value
+        for (uint32_t i=0; i < param.count; i++)
+        {
+            param.ranges[i].def = get_current_parameter_value(i);
+
+            if (osc_send)
+                osc_send_set_default_value(&global_osc_data, m_id, i, param.ranges[i].def);
+        }
+
+        if (osc_send)
+        {
+            osc_send_set_program(&global_osc_data, m_id, prog.current);
+
+            if (m_hints & PLUGIN_IS_BRIDGE)
+                osc_send_program(&osc.data, prog.current);
+        }
+
+        if (callback_send)
+            callback_action(CALLBACK_PROGRAM_CHANGED, m_id, prog.current, 0, 0.0);
+    }
+
+    virtual void set_midi_program(uint32_t index, bool, bool osc_send, bool callback_send, bool)
+    {
+        midiprog.current = index;
+
+        // Change default value
+        for (uint32_t i=0; i < param.count; i++)
+        {
+            param.ranges[i].def = get_current_parameter_value(i);
+
+            if (osc_send)
+                osc_send_set_default_value(&global_osc_data, m_id, i, param.ranges[i].def);
+        }
+
+        if (osc_send)
+        {
+            osc_send_set_midi_program(&global_osc_data, m_id, midiprog.current);
+
+            if (m_hints & PLUGIN_IS_BRIDGE)
+                osc_send_program(&osc.data, midiprog.current);
+        }
+
+        if (callback_send)
+            callback_action(CALLBACK_MIDI_PROGRAM_CHANGED, m_id, midiprog.current, 0, 0.0);
+    }
+
+    virtual void send_midi_note(bool onoff, uint8_t note, uint8_t velo, bool, bool osc_send, bool callback_send)
+    {
+        carla_midi_lock();
+        for (unsigned int i=0; i<MAX_MIDI_EVENTS; i++)
+        {
+            if (external_midi[i].valid == false)
+            {
+                external_midi[i].valid = true;
+                external_midi[i].onoff = onoff;
+                external_midi[i].note = note;
+                external_midi[i].velo = velo;
+                break;
+            }
+        }
+        carla_midi_unlock();
+
+        if (osc_send)
+        {
+            if (onoff)
+                osc_send_note_on(&global_osc_data, m_id, note, velo);
+            else
+                osc_send_note_off(&global_osc_data, m_id, note);
+
+            if (m_hints & PLUGIN_IS_BRIDGE)
+            {
+                if (onoff)
+                    osc_send_note_on(&osc.data, m_id, note, velo);
+                else
+                    osc_send_note_off(&osc.data, m_id, note);
+            }
+        }
+
+        if (callback_send)
+            callback_action(onoff ? CALLBACK_NOTE_ON : CALLBACK_NOTE_OFF, m_id, note, velo, 0.0);
     }
 
     virtual void set_gui_data(int, void*)
@@ -566,73 +769,12 @@ public:
     {
     }
 
-    void update_osc_data(lo_address source, const char* url)
+    void fix_parameter_value(double& value, const ParameterRanges& ranges)
     {
-        const char* host;
-        const char* port;
-
-        osc_clear_data(&osc.data);
-
-        host = lo_address_get_hostname(source);
-        port = lo_address_get_port(source);
-        osc.data.source = lo_address_new(host, port);
-
-        host = lo_url_get_hostname(url);
-        port = lo_url_get_port(url);
-
-        osc.data.path = lo_url_get_path(url);
-        osc.data.target = lo_address_new(host, port);
-
-        free((void*)host);
-        free((void*)port);
-
-        //for (int i=0; i < plugin->custom.count(); i++)
-        //{
-        //    if (plugin->custom[i].type == CUSTOM_DATA_STRING)
-        //        osc_send_configure(&plugin->osc.data, plugin->custom[i].key, plugin->custom[i].value);
-        //}
-
-        //if (plugin->prog.current >= 0)
-        //    osc_send_program(&plugin->osc.data, plugin->prog.current);
-
-        //if (plugin->midiprog.current >= 0)
-        //{
-        //    int32_t midi_id = plugin->midiprog.current;
-        //    osc_send_midi_program(&plugin->osc.data, plugin->midiprog.data[midi_id].bank, plugin->midiprog.data[midi_id].program);
-
-        //    if (plugin->type == PLUGIN_DSSI)
-        //        osc_send_program_as_midi(&plugin->osc.data, plugin->midiprog.data[midi_id].bank, plugin->midiprog.data[midi_id].program);
-        //}
-
-        for (uint32_t i=0; i < param.count; i++)
-            osc_send_control(&osc.data, param.data[i].rindex, get_current_parameter_value(i));
-
-        //if (plugin->hints & PLUGIN_IS_BRIDGE)
-        //{
-        //    osc_send_control(&plugin->osc.data, PARAMETER_ACTIVE, plugin->active ? 1.0 : 0.0);
-        //    osc_send_control(&plugin->osc.data, PARAMETER_DRYWET, plugin->x_drywet);
-        //    osc_send_control(&plugin->osc.data, PARAMETER_VOLUME, plugin->x_vol);
-        //    osc_send_control(&plugin->osc.data, PARAMETER_BALANCE_LEFT, plugin->x_bal_left);
-        //    osc_send_control(&plugin->osc.data, PARAMETER_BALANCE_RIGHT, plugin->x_bal_right);
-        //}
-
-    }
-
-    bool update_osc_gui()
-    {
-        // wait for UI 'update' call; 40 re-tries, 4 secs
-        for (short i=1; i<40; i++)
-        {
-            if (osc.data.target)
-            {
-                osc_send_show(&osc.data);
-                return true;
-            }
-            else
-                // 100 ms
-                usleep(100000);
-        }
-        return false;
+        if (value < ranges.min)
+            value = ranges.min;
+        else if (value > ranges.max)
+            value = ranges.max;
     }
 
     void postpone_event(PluginPostEventType type, int32_t index, double value)
@@ -664,6 +806,75 @@ public:
             post_events.data[i].valid = false;
 
         post_events.lock.unlock();
+    }
+
+    void update_osc_data(lo_address source, const char* url)
+    {
+        const char* host;
+        const char* port;
+
+        osc_clear_data(&osc.data);
+
+        host = lo_address_get_hostname(source);
+        port = lo_address_get_port(source);
+        osc.data.source = lo_address_new(host, port);
+
+        host = lo_url_get_hostname(url);
+        port = lo_url_get_port(url);
+
+        osc.data.path = lo_url_get_path(url);
+        osc.data.target = lo_address_new(host, port);
+
+        free((void*)host);
+        free((void*)port);
+
+        for (int i=0; i < custom.count(); i++)
+        {
+            //if (plugin->custom[i].type == CUSTOM_DATA_STRING)
+            osc_send_configure(&osc.data, custom.at(i).key, custom.at(i).value);
+        }
+
+        if (prog.current >= 0)
+            osc_send_program(&osc.data, prog.current);
+
+        if (midiprog.current >= 0)
+        {
+            int32_t midi_id = midiprog.current;
+
+            if (m_type == PLUGIN_DSSI)
+                osc_send_program_as_midi(&osc.data, midiprog.data[midi_id].bank, midiprog.data[midi_id].program);
+            else
+                osc_send_midi_program(&osc.data, midiprog.data[midi_id].bank, midiprog.data[midi_id].program);
+        }
+
+        for (uint32_t i=0; i < param.count; i++)
+            osc_send_control(&osc.data, param.data[i].rindex, get_current_parameter_value(i));
+
+        if (m_hints & PLUGIN_IS_BRIDGE)
+        {
+            osc_send_control(&osc.data, PARAMETER_ACTIVE, m_active ? 1.0 : 0.0);
+            osc_send_control(&osc.data, PARAMETER_DRYWET, x_drywet);
+            osc_send_control(&osc.data, PARAMETER_VOLUME, x_vol);
+            osc_send_control(&osc.data, PARAMETER_BALANCE_LEFT, x_bal_left);
+            osc_send_control(&osc.data, PARAMETER_BALANCE_RIGHT, x_bal_right);
+        }
+    }
+
+    bool update_osc_gui()
+    {
+        // wait for UI 'update' call; 40 re-tries, 4 secs
+        for (short i=1; i<40; i++)
+        {
+            if (osc.data.target)
+            {
+                osc_send_show(&osc.data);
+                return true;
+            }
+            else
+                // 100 ms
+                usleep(100000);
+        }
+        return false;
     }
 
     void remove_from_jack()
@@ -845,6 +1056,10 @@ protected:
     PluginMidiData min;
     PluginMidiData mout;
     PluginParameterData param;
+    PluginProgramData prog;
+    PluginMidiProgramData midiprog;
+
+    QList<CustomData> custom;
 
     // Extra
     struct {
@@ -856,6 +1071,8 @@ protected:
         QMutex lock;
         PluginPostEvent data[MAX_POSTEVENTS];
     } post_events;
+
+    ExternalMidiNote external_midi[MAX_MIDI_EVENTS];
 };
 
 #endif // CARLA_PLUGIN_H

@@ -86,6 +86,16 @@ enum InternalParametersIndex {
     PARAMETER_BALANCE_RIGHT = -5
 };
 
+enum CustomDataType {
+    CUSTOM_DATA_INVALID = 0,
+    CUSTOM_DATA_BOOL    = 1,
+    CUSTOM_DATA_INT     = 2,
+    CUSTOM_DATA_LONG    = 3,
+    CUSTOM_DATA_FLOAT   = 4,
+    CUSTOM_DATA_STRING  = 5,
+    CUSTOM_DATA_BINARY  = 6
+};
+
 enum GuiType {
     GUI_NONE         = 0,
     GUI_INTERNAL_QT4 = 1,
@@ -136,7 +146,7 @@ struct ParameterRanges {
 };
 
 struct CustomData {
-    const char* type;
+    CustomDataType type;
     const char* key;
     const char* value;
 };
@@ -259,7 +269,7 @@ CARLA_EXPORT void set_parameter_midi_cc(unsigned short plugin_id, uint32_t param
 CARLA_EXPORT void set_program(unsigned short plugin_id, uint32_t program_id);
 CARLA_EXPORT void set_midi_program(unsigned short plugin_id, uint32_t midi_program_id);
 
-CARLA_EXPORT void set_custom_data(unsigned short plugin_id, const char* type, const char* key, const char* value);
+CARLA_EXPORT void set_custom_data(unsigned short plugin_id, CustomDataType dtype, const char* key, const char* value);
 CARLA_EXPORT void set_chunk_data(unsigned short plugin_id, const char* chunk_data);
 CARLA_EXPORT void set_gui_data(unsigned short plugin_id, int data, intptr_t gui_addr);
 
@@ -296,7 +306,6 @@ void carla_proc_unlock();
 void carla_midi_lock();
 void carla_midi_unlock();
 void callback_action(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3);
-void send_plugin_midi_note(unsigned short plugin_id, bool onoff, uint8_t note, uint8_t velo, bool gui_send, bool osc_send, bool callback_send);
 
 // Global variables (shared)
 extern const char* unique_names[MAX_PLUGINS];

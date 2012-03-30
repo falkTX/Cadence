@@ -42,6 +42,8 @@ public:
     {
         m_filename = strdup(filename);
         m_name = get_unique_name("TODO");
+        Q_UNUSED(label);
+        Q_UNUSED(extra_stuff);
         return true;
     }
 

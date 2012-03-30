@@ -149,7 +149,7 @@ public:
         CarlaPlugin::set_parameter_value(index, value, gui_send, osc_send, callback_send);
     }
 
-    virtual void set_custom_data(const char* type, const char* key, const char* value, bool gui_send)
+    virtual void set_custom_data(CustomDataType dtype, const char* key, const char* value, bool gui_send)
     {
         descriptor->configure(handle, key, value);
 
@@ -162,44 +162,59 @@ public:
         }
         else if (strcmp(key, "names") == 0) // Not in the API!
         {
-            //if (prog.count > 0)
-            //{
-                //osc_send_set_program_count(&global_osc_data, m_id, prog.count);
+            if (midiprog.count > 0)
+            {
+                osc_send_set_program_count(&global_osc_data, m_id, midiprog.count);
 
-//                // Parse names
-//                int j, k, last_str_n = 0;
-//                int str_len = strlen(value);
-//                char name[256];
+                // Parse names
+                int j, k, last_str_n = 0;
+                int str_len = strlen(value);
+                char name[256];
 
-//                for (uint32_t i=0; i < prog.count; i++)
-//                {
-//                    for (j=0, k=last_str_n; j<256 && k+j<str_len; j++)
-//                    {
-//                        name[j] = value[k+j];
-//                        if (value[k+j] == ',')
-//                        {
-//                            name[j] = 0;
-//                            last_str_n = k+j+1;
-//                            free((void*)prog.names[i]);
-//                            prog.names[i] = strdup(name);
-//                            break;
-//                        }
-//                    }
+                for (uint32_t i=0; i < prog.count; i++)
+                {
+                    for (j=0, k=last_str_n; j < 256 && k+j < str_len; j++)
+                    {
+                        name[j] = value[k+j];
+                        if (value[k+j] == ',')
+                        {
+                            name[j] = 0;
+                            last_str_n = k+j+1;
+                            free((void*)midiprog.names[i]);
+                            midiprog.names[i] = strdup(name);
+                            break;
+                        }
+                    }
 
-//                    osc_send_set_program_name(&osc.data, id, i, prog.names[i]);
-//                }
+                    osc_send_set_program_name(&osc.data, m_id, i, midiprog.names[i]);
+                }
 
-//                callback_action(CALLBACK_RELOAD_PROGRAMS, id, 0, 0, 0.0f);
-            //}
+                callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
+            }
         }
 
-        CarlaPlugin::set_custom_data(type, key, value, gui_send);
+        CarlaPlugin::set_custom_data(dtype, key, value, gui_send);
     }
 
     virtual void set_chunk_data(const char* string_data)
     {
         QByteArray chunk = QByteArray::fromBase64(string_data);
         descriptor->set_custom_data(handle, chunk.data(), chunk.size());
+    }
+
+    virtual void set_midi_program(uint32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
+    {
+        if (! descriptor->select_program)
+            return;
+
+        if (block) carla_proc_lock();
+        descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
+        if (block) carla_proc_unlock();
+
+        if (gui_send)
+            osc_send_program_as_midi(&osc.data, midiprog.data[index].bank, midiprog.data[index].program);
+
+        CarlaPlugin::set_midi_program(index, gui_send, osc_send, callback_send, block);
     }
 
     virtual void show_gui(bool yesno)
@@ -550,7 +565,7 @@ public:
         min.count   = mins;
         param.count = params;
 
-        // reload_programs(true);
+        reload_programs(true);
 
         // plugin checks
         qDebug("Before: %i", m_hints);
@@ -583,6 +598,106 @@ public:
             jack_activate(jack_client);
     }
 
+    virtual void reload_programs(bool init)
+    {
+        qDebug("DssiPlugin::reload_programs(%s)", bool2str(init));
+        uint32_t i, old_count = midiprog.count;
+
+        // Delete old programs
+        if (midiprog.count > 0)
+        {
+            for (uint32_t i=0; i < midiprog.count; i++)
+                free((void*)midiprog.names[i]);
+
+            delete[] midiprog.data;
+            delete[] midiprog.names;
+        }
+
+        midiprog.count = 0;
+        midiprog.data  = nullptr;
+        midiprog.names = nullptr;
+
+        // Query new programs
+        if (descriptor->get_program && descriptor->select_program)
+        {
+            while (descriptor->get_program(handle, midiprog.count))
+                midiprog.count += 1;
+        }
+
+        if (midiprog.count > 0)
+        {
+            midiprog.data  = new midi_program_t [midiprog.count];
+            midiprog.names = new const char* [midiprog.count];
+        }
+
+        // Update data
+        for (i=0; i < midiprog.count; i++)
+        {
+            const DSSI_Program_Descriptor* pdesc = descriptor->get_program(handle, i);
+            if (pdesc)
+            {
+                midiprog.data[i].bank    = pdesc->Bank;
+                midiprog.data[i].program = pdesc->Program;
+                midiprog.names[i] = strdup(pdesc->Name);
+            }
+            else
+            {
+                midiprog.data[i].bank    = 0;
+                midiprog.data[i].program = 0;
+                midiprog.names[i] = strdup("(error)");
+            }
+        }
+
+        // Update OSC Names
+        osc_send_set_midi_program_count(&global_osc_data, m_id, midiprog.count);
+
+        for (i=0; i < midiprog.count; i++)
+            osc_send_set_midi_program_data(&global_osc_data, m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.names[i]);
+
+        callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
+
+        if (init)
+        {
+            if (midiprog.count > 0)
+                set_midi_program(0, false, false, false, true);
+        }
+        else
+        {
+            callback_action(CALLBACK_UPDATE, m_id, 0, 0, 0.0);
+
+            // Check if current program is invalid
+            bool program_changed = false;
+
+            if (midiprog.count == old_count+1)
+            {
+                // one midi program added, probably created by user
+                midiprog.current = old_count;
+                program_changed  = true;
+            }
+            else if (midiprog.current >= (int32_t)midiprog.count)
+            {
+                // current midi program > count
+                midiprog.current = 0;
+                program_changed  = true;
+            }
+            else if (midiprog.current < 0 && midiprog.count > 0)
+            {
+                // programs exist now, but not before
+                midiprog.current = 0;
+                program_changed  = true;
+            }
+            else if (midiprog.current >= 0 && midiprog.count == 0)
+            {
+                // programs existed before, but not anymore
+                midiprog.current = -1;
+                program_changed  = true;
+            }
+
+            if (program_changed)
+                set_midi_program(midiprog.current, true, true, true, true);
+        }
+    }
+
     virtual void process(jack_nframes_t nframes)
     {
         uint32_t i, k;
@@ -594,7 +709,7 @@ public:
 
         jack_default_audio_sample_t* ains_buffer[ain.count];
         jack_default_audio_sample_t* aouts_buffer[aout.count];
-        void* min_buffer;
+        void* min_buffer = nullptr;
 
         for (i=0; i < ain.count; i++)
             ains_buffer[i] = (jack_default_audio_sample_t*)jack_port_get_buffer(ain.ports[i], nframes);
@@ -602,7 +717,7 @@ public:
         for (i=0; i < aout.count; i++)
             aouts_buffer[i] = (jack_default_audio_sample_t*)jack_port_get_buffer(aout.ports[i], nframes);
 
-        if (min.count == 1)
+        if (min.count > 0)
             min_buffer = jack_port_get_buffer(min.ports[0], nframes);
 
         // --------------------------------------------------------------------------------------------------------
@@ -722,7 +837,109 @@ public:
 
         CARLA_PROCESS_CONTINUE_CHECK;
 
-        // TODO - Midi Input
+        // --------------------------------------------------------------------------------------------------------
+        // MIDI Input (External)
+
+        if (min.count > 0)
+        {
+            carla_midi_lock();
+
+            for (i=0; i<MAX_MIDI_EVENTS && midi_event_count < MAX_MIDI_EVENTS; i++)
+            {
+                if (external_midi[i].valid)
+                {
+                    ExternalMidiNote* enote = &external_midi[i];
+                    enote->valid = false;
+
+                    snd_seq_event_t* midi_event = &midi_events[midi_event_count];
+                    memset(midi_event, 0, sizeof(snd_seq_event_t));
+
+                    midi_event->type = enote->onoff ? SND_SEQ_EVENT_NOTEON : SND_SEQ_EVENT_NOTEOFF;
+                    midi_event->data.note.channel  = 0;
+                    midi_event->data.note.note     = enote->note;
+                    midi_event->data.note.velocity = enote->velo;
+
+                    midi_event_count += 1;
+                }
+                else
+                    break;
+            }
+
+            carla_midi_unlock();
+
+        } // End of MIDI Input (External)
+
+        CARLA_PROCESS_CONTINUE_CHECK;
+
+        // --------------------------------------------------------------------------------------------------------
+        // MIDI Input (JACK)
+
+        if (min.count > 0)
+        {
+            jack_midi_event_t min_event;
+            uint32_t n_min_events = jack_midi_get_event_count(min_buffer);
+
+            for (k=0; k < n_min_events && midi_event_count < MAX_MIDI_EVENTS; k++)
+            {
+                if (jack_midi_event_get(&min_event, min_buffer, k) != 0)
+                    break;
+
+                unsigned char channel = min_event.buffer[0] & 0x0F;
+                unsigned char mode = min_event.buffer[0] & 0xF0;
+                unsigned char note = min_event.buffer[1] & 0x7F;
+                unsigned char velo = min_event.buffer[2] & 0x7F;
+
+                // fix bad note off
+                if (mode == 0x90 && velo == 0)
+                {
+                    mode = 0x80;
+                    velo = 64;
+                }
+
+                snd_seq_event_t* midi_event = &midi_events[midi_event_count];
+                memset(midi_event, 0, sizeof(snd_seq_event_t));
+
+                if (mode == 0x80)
+                {
+                    midi_event->type = SND_SEQ_EVENT_NOTEOFF;
+                    midi_event->data.note.channel = channel;
+                    midi_event->data.note.note = note;
+                    midi_event->data.note.velocity = velo;
+                    midi_event->time.tick = min_event.time;
+                    postpone_event(PostEventNoteOff, note, velo);
+                }
+                else if (mode == 0x90)
+                {
+                    midi_event->type = SND_SEQ_EVENT_NOTEON;
+                    midi_event->data.note.channel = channel;
+                    midi_event->data.note.note = note;
+                    midi_event->data.note.velocity = velo;
+                    midi_event->time.tick = min_event.time;
+                    postpone_event(PostEventNoteOn, note, velo);
+                }
+                else if (mode == 0xB0)
+                {
+                    //midi_event->type = SND_SEQ_EVENT_CONTROLLER;
+                    //midi_event->data.control.channel = channel;
+                    //midi_event->data.control.param = note;
+                    //midi_event->data.control.value = velo;
+                    //midi_event->time.tick = min_event.time;
+                }
+                else if (mode == 0xE0)
+                {
+                    // TODO
+                    //midi_event->type = SND_SEQ_EVENT_PITCHBEND;
+                    //midi_event->data.control.channel = channel;
+                    //midi_event->data.control.param = note;
+                    //midi_event->data.control.value = (min_event.buffer[2] << 7) | min_event.buffer[1];
+                    //midi_event->time.tick = min_event.time;
+                }
+
+                midi_event_count += 1;
+            }
+        } // End of MIDI Input (JACK)
+
+        CARLA_PROCESS_CONTINUE_CHECK;
 
         // --------------------------------------------------------------------------------------------------------
         // Plugin processing
