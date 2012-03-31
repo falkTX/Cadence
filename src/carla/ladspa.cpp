@@ -128,6 +128,7 @@ public:
                 return PLUGIN_CATEGORY_SYNTH;
         }
 
+        // TODO - try to get category from label
         return PLUGIN_CATEGORY_NONE;
     }
 
@@ -576,7 +577,7 @@ public:
         param.count = params;
 
         // plugin checks
-        m_hints = 0;
+        m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
 
         if (aouts > 0 && (ains == aouts || ains == 1))
             m_hints |= PLUGIN_CAN_DRYWET;
@@ -621,10 +622,11 @@ public:
 
             for (k=0; k<nframes; k++)
             {
-                if (ains_buffer[0][k] > ains_peak_tmp[0])
-                    ains_peak_tmp[0] = ains_buffer[0][k];
-                if (ains_buffer[j2][k] > ains_peak_tmp[1])
-                    ains_peak_tmp[1] = ains_buffer[j2][k];
+                // FIXME - use abs
+                if (abs(ains_buffer[0][k]) > ains_peak_tmp[0])
+                    ains_peak_tmp[0] = abs(ains_buffer[0][k]);
+                if (abs(ains_buffer[j2][k]) > ains_peak_tmp[1])
+                    ains_peak_tmp[1] = abs(ains_buffer[j2][k]);
             }
         }
 
@@ -946,7 +948,7 @@ short add_plugin_ladspa(const char* filename, const char* label, void* extra_stu
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-            //osc_new_plugin(plugin);
+            osc_new_plugin(plugin);
         }
         else
         {

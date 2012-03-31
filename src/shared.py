@@ -181,7 +181,7 @@ def toList(value):
 # Convert a ctypes char_p to a string
 def toString(value):
     if (value):
-      return value.decode("utf-8")
+      return value.decode("utf-8", errors="ignore")
     else:
       return ""
 

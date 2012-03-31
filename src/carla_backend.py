@@ -20,7 +20,7 @@
 import os, sys
 from ctypes import *
 from copy import deepcopy
-from subprocess import getoutput
+from subprocess import Popen, PIPE
 
 # Imports (Custom)
 try:
@@ -399,19 +399,31 @@ def runCarlaDiscovery(itype, stype, filename, tool, isWine=False):
   plugins = []
   pinfo = None
 
-  command = ""
+  global VST_PATH
+  print(VST_PATH)
+
+  #env = []
+  command = []
 
   if (LINUX or MACOS):
-    command += "env LANG=C "
+    command.append("env")
+    command.append("LANG=C")
     if (isWine):
-      command += "WINEDEBUG=-all "
+      command.append("WINEDEBUG=-all")
 
-  command += "%s %s \"%s\"" % (tool, stype, filename)
+  command.append(tool)
+  command.append(stype)
+  command.append(filename)
 
-  try:
-    output = getoutput(command).split("\n")
-  except:
-    output = []
+  print(command)
+
+  #try:
+  p = Popen(command, stdout=PIPE)
+  p.wait()
+    #output = getoutput(command).split("\n")
+  output = p.stdout.read().decode("utf-8", errors="ignore").split("\n")
+  #except:
+  #output = []
 
   for line in output:
     if (line == "carla-discovery::init::-----------"):

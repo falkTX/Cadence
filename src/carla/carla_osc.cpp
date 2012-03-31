@@ -149,76 +149,79 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
     for (size_t i=mindex; i < strlen(path) && i < mindex+24; i++)
         method[i-mindex] = path[i];
 
-//    // Internal OSC Stuff
-//    if (strcmp(method, "set_active") == 0)
-//        return osc_set_active_handler(plugin, argv);
-//    else if (strcmp(method, "set_drywet") == 0)
-//        return osc_set_drywet_handler(plugin, argv);
-//    else if (strcmp(method, "set_vol") == 0)
-//        return osc_set_vol_handler(plugin, argv);
-//    else if (strcmp(method, "set_balance_left") == 0)
-//        return osc_set_balance_left_handler(plugin, argv);
-//    else if (strcmp(method, "set_balance_right") == 0)
-//        return osc_set_balance_right_handler(plugin, argv);
-//    else if (strcmp(method, "set_parameter") == 0)
-//        return osc_set_parameter_handler(plugin, argv);
-//    else if (strcmp(method, "set_program") == 0)
-//        return osc_set_program_handler(plugin, argv);
-//    else if (strcmp(method, "note_on") == 0)
-//        return osc_note_on_handler(plugin, argv);
-//    else if (strcmp(method, "note_off") == 0)
-//        return osc_note_off_handler(plugin, argv);
+    // Common OSC methods
+    if (strcmp(method, "update") == 0)
+    {
+        lo_message message = lo_message(data);
+        lo_address source  = lo_message_get_source(message);
+        return osc_handle_update(plugin, argv, source);
+    }
+    else if (strcmp(method, "configure") == 0)
+        return osc_handle_configure(plugin, argv);
+    else if (strcmp(method, "control") == 0)
+        return osc_handle_control(plugin, argv);
+    else if (strcmp(method, "program") == 0)
+        return (plugin->type() == PLUGIN_DSSI) ? osc_handle_program_as_midi(plugin, argv) : osc_handle_program(plugin, argv);
+    else if (strcmp(method, "midi") == 0)
+        return osc_handle_midi(plugin, argv);
+    else if (strcmp(method, "exiting") == 0)
+        return osc_handle_exiting(plugin);
 
-//    // Plugin Bridges
-//    else if (strcmp(method, "bridge_audio_count") == 0)
-//        return plugin->set_osc_bridge_info(OscBridgeAudioCountInfo, argv);
-//    else if (strcmp(method, "bridge_midi_count") == 0)
-//        return plugin->set_osc_bridge_info(OscBridgeMidiCountInfo, argv);
-//    else if (strcmp(method, "bridge_param_count") == 0)
-//        return plugin->set_osc_bridge_info(OscBridgeParameterCountInfo, argv);
-//    else if (strcmp(method, "bridge_program_count") == 0)
-//        return plugin->set_osc_bridge_info(OscBridgeProgramCountInfo, argv);
-//    else if (strcmp(method, "bridge_midi_program_count") == 0)
-//        return plugin->set_osc_bridge_info(OscBridgeMidiProgramCountInfo, argv);
-//    else if (strcmp(method, "bridge_plugin_info") == 0)
-//        return plugin->set_osc_bridge_info(OscBridgePluginInfo, argv);
-//    else if (strcmp(method, "bridge_param_info") == 0)
-//        return plugin->set_osc_bridge_info(OscBridgeParameterInfo, argv);
-//    else if (strcmp(method, "bridge_param_data") == 0)
-//        return plugin->set_osc_bridge_info(OscBridgeParameterDataInfo, argv);
-//    else if (strcmp(method, "bridge_param_ranges") == 0)
-//        return plugin->set_osc_bridge_info(OscBridgeParameterRangesInfo, argv);
-//    else if (strcmp(method, "bridge_program_name") == 0)
-//        return plugin->set_osc_bridge_info(OscBridgeProgramName, argv);
-//    else if (strcmp(method, "bridge_ains_peak") == 0)
-//        return osc_bridge_ains_peak_handler(plugin, argv);
-//    else if (strcmp(method, "bridge_aouts_peak") == 0)
-//        return osc_bridge_aouts_peak_handler(plugin, argv);
-//    else if (strcmp(method, "bridge_update") == 0)
-//        return plugin->set_osc_bridge_info(OscBridgeUpdateNow, argv);
+    // Plugin Bridges
+    if (plugin->hints() & PLUGIN_IS_BRIDGE)
+    {
+        if (strcmp(method, "bridge_audio_count") == 0)
+            return plugin->set_osc_bridge_info(PluginBridgeAudioCountInfo, argv);
+        else if (strcmp(method, "bridge_midi_count") == 0)
+            return plugin->set_osc_bridge_info(PluginBridgeMidiCountInfo, argv);
+        else if (strcmp(method, "bridge_param_count") == 0)
+            return plugin->set_osc_bridge_info(PluginBridgeParameterCountInfo, argv);
+        else if (strcmp(method, "bridge_program_count") == 0)
+            return plugin->set_osc_bridge_info(PluginBridgeProgramCountInfo, argv);
+        else if (strcmp(method, "bridge_midi_program_count") == 0)
+            return plugin->set_osc_bridge_info(PluginBridgeMidiProgramCountInfo, argv);
+        else if (strcmp(method, "bridge_plugin_info") == 0)
+            return plugin->set_osc_bridge_info(PluginBridgePluginInfo, argv);
+        else if (strcmp(method, "bridge_param_info") == 0)
+            return plugin->set_osc_bridge_info(PluginBridgeParameterInfo, argv);
+        else if (strcmp(method, "bridge_param_data") == 0)
+            return plugin->set_osc_bridge_info(PluginBridgeParameterDataInfo, argv);
+        else if (strcmp(method, "bridge_param_ranges") == 0)
+            return plugin->set_osc_bridge_info(PluginBridgeParameterRangesInfo, argv);
+        else if (strcmp(method, "bridge_program_name") == 0)
+            return plugin->set_osc_bridge_info(PluginBridgeProgramName, argv);
+        else if (strcmp(method, "bridge_ains_peak") == 0)
+            return osc_handle_bridge_ains_peak(plugin, argv);
+        else if (strcmp(method, "bridge_aouts_peak") == 0)
+            return osc_handle_bridge_aouts_peak(plugin, argv);
+        else if (strcmp(method, "bridge_update") == 0)
+            return plugin->set_osc_bridge_info(PluginBridgeUpdateNow, argv);
+    }
 
-//    // Misc Stuff
-//    else
-//    {
-        if (strcmp(method, "update") == 0)
-        {
-            lo_message message = lo_message(data);
-            lo_address source  = lo_message_get_source(message);
-            return osc_handle_update(plugin, argv, source);
-        }
-        else if (strcmp(method, "configure") == 0)
-            return osc_handle_configure(plugin, argv);
-        else if (strcmp(method, "control") == 0)
-            return osc_handle_control(plugin, argv);
-        //else if (strcmp(method, "program") == 0)
-        //    return (plugin->type == PLUGIN_DSSI) ? osc_midi_program_handler(plugin, argv) : osc_program_handler(plugin, argv);
-        //else if (strcmp(method, "midi") == 0)
-        //    return osc_midi_handler(plugin, argv);
-        //else if (strcmp(method, "exiting") == 0)
-        //    return osc_exiting_handler(plugin);
-        else
-            qWarning("osc_message_handler() - unsupported OSC method '%s'", method);
-//    }
+    // Internal OSC Stuff
+    if (global_osc_data.target)
+    {
+        if (strcmp(method, "set_active") == 0)
+            return osc_handle_set_active(plugin, argv);
+        else if (strcmp(method, "set_drywet") == 0)
+            return osc_handle_set_drywet(plugin, argv);
+        else if (strcmp(method, "set_vol") == 0)
+            return osc_handle_set_volume(plugin, argv);
+        else if (strcmp(method, "set_balance_left") == 0)
+            return osc_handle_set_balance_left(plugin, argv);
+        else if (strcmp(method, "set_balance_right") == 0)
+            return osc_handle_set_balance_right(plugin, argv);
+        else if (strcmp(method, "set_parameter") == 0)
+            return osc_handle_set_parameter(plugin, argv);
+        else if (strcmp(method, "set_program") == 0)
+            return osc_handle_set_program(plugin, argv);
+        else if (strcmp(method, "note_on") == 0)
+            return osc_handle_note_on(plugin, argv);
+        else if (strcmp(method, "note_off") == 0)
+            return osc_handle_note_off(plugin, argv);
+    }
+
+    qWarning("osc_message_handler() - unsupported OSC method '%s'", method);
 
     return 1;
 
@@ -254,9 +257,9 @@ int osc_handle_register(lo_arg** argv, lo_address source)
 
         for (unsigned short i=0; i<MAX_PLUGINS; i++)
         {
-            //CarlaPlugin* plugin = CarlaPlugins[i];
-            //if (plugin && plugin->id() >= 0)
-            //    osc_new_plugin(plugin);
+            CarlaPlugin* plugin = CarlaPlugins[i];
+            if (plugin && plugin->id() >= 0)
+                osc_new_plugin(plugin);
         }
 
         return 0;
@@ -282,116 +285,116 @@ int osc_handle_unregister()
     return 1;
 }
 
-//int osc_set_active_handler(AudioPlugin* plugin, lo_arg** argv)
-//{
-//    qDebug("osc_set_active_handler()");
+int osc_handle_set_active(CarlaPlugin* plugin, lo_arg** argv)
+{
+    qDebug("osc_handle_set_active()");
 
-//    bool value = (bool)argv[0]->i;
-//    plugin->set_active(value, false, true);
+    bool value = (bool)argv[0]->i;
+    plugin->set_active(value, false, true);
 
-//    return 0;
-//}
+    return 0;
+}
 
-//int osc_set_drywet_handler(AudioPlugin* plugin, lo_arg** argv)
-//{
-//    qDebug("osc_set_drywet_handler()");
+int osc_handle_set_drywet(CarlaPlugin* plugin, lo_arg** argv)
+{
+    qDebug("osc_handle_set_drywet()");
 
-//    double value = argv[0]->f;
-//    plugin->set_drywet(value, false, true);
+    double value = argv[0]->f;
+    plugin->set_drywet(value, false, true);
 
-//    return 0;
-//}
+    return 0;
+}
 
-//int osc_set_vol_handler(AudioPlugin* plugin, lo_arg** argv)
-//{
-//    qDebug("osc_set_vol_handler()");
+int osc_handle_set_volume(CarlaPlugin* plugin, lo_arg** argv)
+{
+    qDebug("osc_handle_set_volume()");
 
-//    double value = argv[0]->f;
-//    plugin->set_vol(value, false, true);
+    double value = argv[0]->f;
+    plugin->set_volume(value, false, true);
 
-//    return 0;
-//}
+    return 0;
+}
 
-//int osc_set_balance_left_handler(AudioPlugin* plugin, lo_arg** argv)
-//{
-//    qDebug("osc_set_balance_left_handler()");
+int osc_handle_set_balance_left(CarlaPlugin* plugin, lo_arg** argv)
+{
+    qDebug("osc_handle_set_balance_left()");
 
-//    double value = argv[0]->f;
-//    plugin->set_balance_left(value, false, true);
+    double value = argv[0]->f;
+    plugin->set_balance_left(value, false, true);
 
-//    return 0;
-//}
+    return 0;
+}
 
-//int osc_set_balance_right_handler(AudioPlugin* plugin, lo_arg** argv)
-//{
-//    qDebug("osc_set_balance_right_handler()");
+int osc_handle_set_balance_right(CarlaPlugin* plugin, lo_arg** argv)
+{
+    qDebug("osc_handle_set_balance_right()");
 
-//    double value = argv[0]->f;
-//    plugin->set_balance_right(value, false, true);
+    double value = argv[0]->f;
+    plugin->set_balance_right(value, false, true);
 
-//    return 0;
-//}
+    return 0;
+}
 
-//int osc_set_parameter_handler(AudioPlugin* plugin, lo_arg** argv)
-//{
-//    qDebug("osc_set_parameter_handler()");
+int osc_handle_set_parameter(CarlaPlugin* plugin, lo_arg** argv)
+{
+    qDebug("osc_handle_set_parameter()");
 
-//    uint32_t parameter_id = argv[0]->i;
-//    double value = argv[1]->f;
-//    plugin->set_parameter_value(parameter_id, value, true, false, true);
+    uint32_t parameter_id = argv[0]->i;
+    double value = argv[1]->f;
+    plugin->set_parameter_value(parameter_id, value, true, false, true);
 
-//    return 0;
-//}
+    return 0;
+}
 
-//int osc_set_program_handler(AudioPlugin* plugin, lo_arg** argv)
-//{
-//    qDebug("osc_set_program_handler()");
+int osc_handle_set_program(CarlaPlugin* plugin, lo_arg** argv)
+{
+    qDebug("osc_handle_set_program()");
 
-//    uint32_t program_id = argv[0]->i;
-//    plugin->set_program(program_id, true, false, true, true);
+    uint32_t program_id = argv[0]->i;
+    plugin->set_program(program_id, true, false, true, true);
 
-//    return 0;
-//}
+    return 0;
+}
 
-//int osc_note_on_handler(AudioPlugin* plugin, lo_arg** argv)
-//{
-//    qDebug("osc_note_on_handler()");
+int osc_handle_note_on(CarlaPlugin* plugin, lo_arg** argv)
+{
+    qDebug("osc_handle_note_on()");
 
-//    int note = argv[0]->i;
-//    int velo = argv[1]->i;
-//    send_plugin_midi_note(plugin->id, true, note, velo, true, false, true);
+    int note = argv[0]->i;
+    int velo = argv[1]->i;
+    plugin->send_midi_note(true, note, velo, true, false, true);
 
-//    return 0;
-//}
+    return 0;
+}
 
-//int osc_note_off_handler(AudioPlugin* plugin, lo_arg** argv)
-//{
-//    qDebug("osc_note_off_handler()");
+int osc_handle_note_off(CarlaPlugin* plugin, lo_arg** argv)
+{
+    qDebug("osc_handle_note_off()");
 
-//    int note = argv[0]->i;
-//    int velo = argv[1]->i;
-//    send_plugin_midi_note(plugin->id, false, note, velo, true, false, true);
+    int note = argv[0]->i;
+    int velo = argv[1]->i;
+    plugin->send_midi_note(false, note, velo, true, false, true);
 
-//    return 0;
-//}
+    return 0;
+}
 
-//int osc_bridge_ains_peak_handler(AudioPlugin* plugin, lo_arg** argv)
-//{
-//    int index    = argv[0]->i;
-//    double value = argv[1]->f;
+int osc_handle_bridge_ains_peak(CarlaPlugin* plugin, lo_arg** argv)
+{
+    int index    = argv[0]->i;
+    double value = argv[1]->f;
 
-//    ains_peak[(plugin->id*2)+index-1] = value;
-//    return 0;
-//}
+    ains_peak[(plugin->id()*2)+index-1] = value;
+    return 0;
+}
 
-//int osc_bridge_aouts_peak_handler(AudioPlugin* plugin, lo_arg** argv)
-//{
-//    int index    = argv[0]->i;
-//    double value = argv[1]->f;
+int osc_handle_bridge_aouts_peak(CarlaPlugin* plugin, lo_arg** argv)
+{
+    int index    = argv[0]->i;
+    double value = argv[1]->f;
 
-//    aouts_peak[(plugin->id*2)+index-1] = value;
-//    return 0;
-//}
+    aouts_peak[(plugin->id()*2)+index-1] = value;
+    return 0;
+}
 
 int osc_handle_update(CarlaPlugin* plugin, lo_arg** argv, lo_address source)
 {
@@ -434,6 +437,82 @@ int osc_handle_control(CarlaPlugin* plugin, lo_arg** argv)
 
     if (parameter_id >= 0)
         plugin->set_parameter_value(parameter_id, value, false, true, true);
+
+    return 0;
+}
+
+int osc_handle_program(CarlaPlugin* plugin, lo_arg** argv)
+{
+    qDebug("osc_handle_program()");
+
+    uint32_t program_id = argv[0]->i;
+
+    if (program_id < plugin->prog_count())
+    {
+        plugin->set_program(program_id, false, true, true, true);
+        return 0;
+    }
+    else
+        qCritical("osc_handle_program() - program_id '%i' out of bounds", program_id);
+
+    return 1;
+}
+
+int osc_handle_program_as_midi(CarlaPlugin* plugin, lo_arg** /*argv*/)
+{
+    qDebug("osc_handle_program_as_midi()");
+
+    //uint32_t bank_id    = argv[0]->i;
+    //uint32_t program_id = argv[1]->i;
+
+    for (uint32_t i=0; i < plugin->midiprog_count(); i++)
+    {
+        //if (plugin->midiprog_data(i).bank == bank_id && plugin->midiprog.data[i].program == program_id)
+        //{
+        //    plugin->set_midi_program(i, false, true, true, false);
+        //    return 0;
+        //}
+    }
+
+    qCritical("osc_handle_program_as_midi() - failed to find respective bank/program");
+    return 1;
+}
+
+int osc_handle_midi(CarlaPlugin *plugin, lo_arg **argv)
+{
+    qDebug("osc_handle_midi()");
+
+    //if (plugin->min_count() > 0)
+    //{
+        uint8_t* data = argv[0]->m;
+        uint8_t mode = data[1] & 0xff;
+        uint8_t note = data[2] & 0x7f;
+        uint8_t velo = data[3] & 0x7f;
+
+        // only receive notes
+        if (mode < 0x80 || mode > 0x9F)
+            return 1;
+
+        // fix bad note off
+        if (mode >= 0x90 && velo == 0)
+        {
+            mode -= 0x10;
+            velo = 0x64;
+        }
+
+        plugin->send_midi_note((mode >= 0x90), note, velo, false, true, true);
+    //}
+
+    return 0;
+}
+
+int osc_handle_exiting(CarlaPlugin* plugin)
+{
+    qDebug("osc_handle_exiting()");
+
+    // TODO - check for non-UIs (dssi-vst) and set to -1 instead
+    callback_action(CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
+    osc_clear_data(plugin->osc_data());
 
     return 0;
 }

@@ -505,11 +505,15 @@ void do_dssi_check(void* lib_handle)
     const DSSI_Descriptor* descriptor;
     DSSI_Descriptor_Function descfn = (DSSI_Descriptor_Function)lib_symbol(lib_handle, "dssi_descriptor");
 
+    DISCOVERY_OUT("TEST    TEST", "000");
+
     if (descfn == nullptr)
     {
         DISCOVERY_OUT("error", "Not a DSSI plugin");
         return;
     }
+
+    DISCOVERY_OUT("TEST    TEST", "001");
 
     unsigned long i = 0;
     while ((descriptor = descfn(i++)))
@@ -517,8 +521,12 @@ void do_dssi_check(void* lib_handle)
         ldescriptor = descriptor->LADSPA_Plugin;
         handle = ldescriptor->instantiate(ldescriptor, sampleRate);
 
+        DISCOVERY_OUT("TEST    TEST", "002");
+
         if (handle)
         {
+
+            DISCOVERY_OUT("TEST    TEST", "003");
             int hints = 0;
             PluginCategory category = PLUGIN_CATEGORY_NONE;
 
@@ -1054,8 +1062,12 @@ void do_sf2_check(const char* filename)
 // ------------------------------ main entry point ------------------------------
 int main(int argc, char* argv[])
 {
+    DISCOVERY_OUT("TEST    TEST", "STARTED MAIN");
+
     if (argc != 3)
         return 1;
+
+    DISCOVERY_OUT("TEST    TEST", "STARTED");
 
     const char* type_str = argv[1];
     const char* filename = argv[2];

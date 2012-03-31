@@ -38,25 +38,25 @@ int  osc_message_handler(const char* path, const char* types, lo_arg** argv, int
 int osc_handle_register(lo_arg** argv, lo_address source);
 int osc_handle_unregister();
 
-//int osc_set_active_handler(CarlaPlugin* plugin, lo_arg** argv);
-//int osc_set_drywet_handler(CarlaPlugin* plugin, lo_arg** argv);
-//int osc_set_volume_handler(CarlaPlugin* plugin, lo_arg** argv);
-//int osc_set_balance_left_handler(CarlaPlugin* plugin, lo_arg** argv);
-//int osc_set_balance_right_handler(CarlaPlugin* plugin, lo_arg** argv);
-//int osc_set_parameter_handler(CarlaPlugin* plugin, lo_arg** argv);
-//int osc_set_program_handler(CarlaPlugin* plugin, lo_arg** argv);
-//int osc_note_on_handler(CarlaPlugin* plugin, lo_arg** argv);
-//int osc_note_off_handler(CarlaPlugin* plugin, lo_arg** argv);
-//int osc_bridge_ains_peak_handler(CarlaPlugin* plugin, lo_arg** argv);
-//int osc_bridge_aouts_peak_handler(CarlaPlugin* plugin, lo_arg** argv);
+int osc_handle_set_active(CarlaPlugin* plugin, lo_arg** argv);
+int osc_handle_set_drywet(CarlaPlugin* plugin, lo_arg** argv);
+int osc_handle_set_volume(CarlaPlugin* plugin, lo_arg** argv);
+int osc_handle_set_balance_left(CarlaPlugin* plugin, lo_arg** argv);
+int osc_handle_set_balance_right(CarlaPlugin* plugin, lo_arg** argv);
+int osc_handle_set_parameter(CarlaPlugin* plugin, lo_arg** argv);
+int osc_handle_set_program(CarlaPlugin* plugin, lo_arg** argv);
+int osc_handle_note_on(CarlaPlugin* plugin, lo_arg** argv);
+int osc_handle_note_off(CarlaPlugin* plugin, lo_arg** argv);
+int osc_handle_bridge_ains_peak(CarlaPlugin* plugin, lo_arg** argv);
+int osc_handle_bridge_aouts_peak(CarlaPlugin* plugin, lo_arg** argv);
 
 int osc_handle_update(CarlaPlugin* plugin, lo_arg** argv, lo_address source);
 int osc_handle_configure(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_control(CarlaPlugin* plugin, lo_arg** argv);
-//int osc_program_handler(CarlaPlugin* plugin, lo_arg** argv);
-//int osc_midi_program_handler(CarlaPlugin* plugin, lo_arg** argv);
-//int osc_midi_handler(CarlaPlugin* plugin, lo_arg** argv);
-//int osc_exiting_handler(CarlaPlugin* plugin);
+int osc_handle_program(CarlaPlugin* plugin, lo_arg** argv);
+int osc_handle_program_as_midi(CarlaPlugin* plugin, lo_arg** argv);
+int osc_handle_midi(CarlaPlugin* plugin, lo_arg** argv);
+int osc_handle_exiting(CarlaPlugin* plugin);
 
 void osc_new_plugin(CarlaPlugin* plugin);
 void osc_send_add_plugin(OscData* osc_data, int plugin_id, const char* plugin_name);

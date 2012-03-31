@@ -41,7 +41,8 @@ class CarlaPluginThread : public QThread
 public:
     enum PluginThreadMode {
         PLUGIN_THREAD_DSSI_GUI,
-        PLUGIN_THREAD_LV2_GUI_BRIDGE
+        PLUGIN_THREAD_LV2_GUI,
+        PLUGIN_THREAD_BRIDGE
     };
 
     CarlaPluginThread(CarlaPlugin* plugin, PluginThreadMode mode);

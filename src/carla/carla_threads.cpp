@@ -182,10 +182,6 @@ CarlaPluginThread::CarlaPluginThread(CarlaPlugin* plugin, PluginThreadMode mode)
 {
     qDebug("CarlaPluginThread::CarlaPluginThread(%p, %i)", plugin, mode);
 
-    //m_binary = nullptr;
-    //m_label  = nullptr;
-    //m_run_now = false;
-
     m_process = new QProcess(nullptr);
 }
 
@@ -209,6 +205,15 @@ void CarlaPluginThread::run()
     case PLUGIN_THREAD_DSSI_GUI:
         arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
         arguments << m_plugin->filename();
+        arguments << m_label;
+        arguments << QString("%1 (GUI)").arg(m_plugin->name());
+        break;
+    case PLUGIN_THREAD_LV2_GUI:
+        arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
+        arguments << m_label;
+        arguments << QString("%1 (GUI)").arg(m_plugin->name());
+        break;
+    case PLUGIN_THREAD_BRIDGE:
         arguments << m_label;
         arguments << QString("%1 (GUI)").arg(m_plugin->name());
         break;

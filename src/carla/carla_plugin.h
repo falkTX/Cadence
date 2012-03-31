@@ -159,9 +159,9 @@ public:
         mout.count = 0;
         mout.ports = nullptr;
 
-        param.count    = 0;
-        param.data     = nullptr;
-        param.ranges   = nullptr;
+        param.count  = 0;
+        param.data   = nullptr;
+        param.ranges = nullptr;
         param.port_cin  = nullptr;
         param.port_cout = nullptr;
 
@@ -192,6 +192,13 @@ public:
     {
         qDebug("CarlaPlugin::~CarlaPlugin()");
 
+        m_type = PLUGIN_NONE;
+        m_id   = -1;
+        m_hints = 0;
+
+        m_active = false;
+        m_active_before = false;
+
         // Unregister jack ports
         remove_from_jack();
 
@@ -202,14 +209,6 @@ public:
         osc.data.source = nullptr;
         osc.data.target = nullptr;
         osc.thread = nullptr;
-
-        lib_close();
-
-        if (m_name)
-            free((void*)m_name);
-
-        if (m_filename)
-            free((void*)m_filename);
 
         if (prog.count > 0)
         {
@@ -228,6 +227,15 @@ public:
             delete[] midiprog.names;
         }
 
+        prog.count   = 0;
+        prog.current = -1;
+        prog.names   = nullptr;
+
+        midiprog.count   = 0;
+        midiprog.current = -1;
+        midiprog.data    = nullptr;
+        midiprog.names   = nullptr;
+
         if (custom.count() > 0)
         {
             for (int i=0; i < custom.count(); i++)
@@ -241,6 +249,14 @@ public:
 
             custom.clear();
         }
+
+        lib_close();
+
+        if (m_name)
+            free((void*)m_name);
+
+        if (m_filename)
+            free((void*)m_filename);
 
         if (jack_client && carla_options.global_jack_client == false)
             jack_client_close(jack_client);
@@ -447,9 +463,8 @@ public:
         info->type = GUI_NONE;
     }
 
-    virtual int32_t get_chunk_data(void** data_ptr)
+    virtual int32_t get_chunk_data(void**)
     {
-        Q_UNUSED(data_ptr);
         return 0;
     }
 
@@ -606,7 +621,7 @@ public:
         bool save_data = true;
         bool already_have = false;
 
-        qDebug("set_custom_data()");
+        qDebug("set_custom_data(%i, %s, %s)", dtype, key, value);
 
         switch (dtype)
         {
@@ -614,8 +629,8 @@ public:
             save_data = false;
             break;
         case CUSTOM_DATA_STRING:
-            // Ignore OSC keys
-            if (strncmp(key, "OSC:", 4) == 0)
+            // Ignore some keys
+            if (strncmp(key, "OSC:", 4) == 0 || strcmp(key, "guiVisible") == 0)
                 save_data = false;
             break;
         default:
@@ -767,14 +782,6 @@ public:
 
     virtual void buffer_size_changed(jack_nframes_t)
     {
-    }
-
-    void fix_parameter_value(double& value, const ParameterRanges& ranges)
-    {
-        if (value < ranges.min)
-            value = ranges.min;
-        else if (value > ranges.max)
-            value = ranges.max;
     }
 
     void postpone_event(PluginPostEventType type, int32_t index, double value)
@@ -982,6 +989,11 @@ public:
         }
     }
 
+    virtual int set_osc_bridge_info(PluginBridgeInfoType, lo_arg**)
+    {
+        return 1;
+    }
+
     bool lib_open(const char* filename)
     {
 #ifdef Q_OS_WIN
@@ -1033,6 +1045,20 @@ public:
 #else
         return dlerror();
 #endif
+    }
+
+    // utilities
+    void fix_parameter_value(double& value, const ParameterRanges& ranges)
+    {
+        if (value < ranges.min)
+            value = ranges.min;
+        else if (value > ranges.max)
+            value = ranges.max;
+    }
+
+    double abs_d(const double& value)
+    {
+        return (value < 0.0) ? -value : value;
     }
 
 protected:

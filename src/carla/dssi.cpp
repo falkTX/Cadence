@@ -47,7 +47,7 @@ public:
         // close UI
         if (m_hints & PLUGIN_HAS_GUI)
         {
-            if (osc.data.path)
+            if (osc.data.target)
             {
                 osc_send_hide(&osc.data);
                 osc_send_quit(&osc.data);
@@ -55,6 +55,7 @@ public:
 
             if (osc.thread)
             {
+                // FIXME - wait a bit first, then kill
                 if (osc.thread->isRunning())
                 {
                     osc.thread->quit();
@@ -84,6 +85,8 @@ public:
     {
         if (min.count > 0 && aout.count > 0)
             return PLUGIN_CATEGORY_SYNTH;
+
+        // TODO - try to get category from label
         return PLUGIN_CATEGORY_NONE;
     }
 
@@ -207,6 +210,7 @@ public:
         if (! descriptor->select_program)
             return;
 
+        // TODO - go for id -1 so we don't block audio
         if (block) carla_proc_lock();
         descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
         if (block) carla_proc_unlock();
@@ -568,14 +572,12 @@ public:
         reload_programs(true);
 
         // plugin checks
-        qDebug("Before: %i", m_hints);
         m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
-        qDebug("After:  %i", m_hints);
 
         if (min.count > 0 && aout.count > 0)
             m_hints |= PLUGIN_IS_SYNTH;
 
-        if (/*carla_options.use_dssi_chunks &&*/ QString(ldescriptor->Name).endsWith(" VST", Qt::CaseSensitive))
+        if (carla_options.use_dssi_chunks && QString(m_filename).endsWith("dssi-vst.so", Qt::CaseInsensitive))
         {
             if (descriptor->get_custom_data && descriptor->set_custom_data)
                 m_hints |= PLUGIN_USES_CHUNKS;
@@ -729,6 +731,7 @@ public:
 
             for (k=0; k<nframes; k++)
             {
+                // FIXME - use abs
                 if (ains_buffer[0][k] > ains_peak_tmp[0])
                     ains_peak_tmp[0] = ains_buffer[0][k];
                 if (ains_buffer[j2][k] > ains_peak_tmp[1])
@@ -844,7 +847,7 @@ public:
         {
             carla_midi_lock();
 
-            for (i=0; i<MAX_MIDI_EVENTS && midi_event_count < MAX_MIDI_EVENTS; i++)
+            for (i=0; i < MAX_MIDI_EVENTS && midi_event_count < MAX_MIDI_EVENTS; i++)
             {
                 if (external_midi[i].valid)
                 {
@@ -919,6 +922,7 @@ public:
                 }
                 else if (mode == 0xB0)
                 {
+                    // FIXME
                     //midi_event->type = SND_SEQ_EVENT_CONTROLLER;
                     //midi_event->data.control.channel = channel;
                     //midi_event->data.control.param = note;
@@ -1178,7 +1182,7 @@ short add_plugin_dssi(const char* filename, const char* label, void* extra_stuff
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-            //osc_new_plugin(plugin);
+            osc_new_plugin(plugin);
         }
         else
         {

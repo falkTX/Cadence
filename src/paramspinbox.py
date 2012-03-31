@@ -134,7 +134,7 @@ class ParamSpinBox(QAbstractSpinBox):
         self._minimum = 0.0
         self._maximum = 1.0
         self._default = 0.0
-        self._value = None
+        self._value = 0.0
         self._step = 0.0
         self._step_small = 0.0
         self._step_large = 0.0
