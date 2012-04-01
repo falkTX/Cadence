@@ -297,28 +297,4 @@ CARLA_EXPORT double get_latency();
 // End of exported symbols
 // -----------------------------------------------------
 
-class CarlaPlugin;
-
-// Helper functions
-const char* bool2str(bool yesno);
-short get_new_plugin_id();
-const char* get_unique_name(const char* name);
-void* get_pointer(intptr_t ptr_addr);
-void set_last_error(const char* error);
-void carla_proc_lock();
-void carla_proc_unlock();
-void carla_midi_lock();
-void carla_midi_unlock();
-void callback_action(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3);
-
-// Global variables (shared)
-extern const char* unique_names[MAX_PLUGINS];
-extern CarlaPlugin* CarlaPlugins[MAX_PLUGINS];
-
-extern volatile double ains_peak[MAX_PLUGINS*2];
-extern volatile double aouts_peak[MAX_PLUGINS*2];
-
-// Global options
-extern carla_options_t carla_options;
-
 #endif // CARLA_BACKEND_H

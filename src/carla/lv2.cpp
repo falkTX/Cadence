@@ -312,7 +312,7 @@ public:
 
                             rdf_descriptor = lv2_rdf_dup(rdf_descriptor_);
 
-                            if (register_jack_plugin())
+                            if (carla_jack_register_plugin(this, &jack_client))
                                 return true;
                             else
                                 set_last_error("Failed to register plugin in JACK");

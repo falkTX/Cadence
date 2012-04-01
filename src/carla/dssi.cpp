@@ -16,13 +16,11 @@
  */
 
 #include "carla_plugin.h"
-#include "carla_osc.h"
 #include "carla_threads.h"
 
 #include "dssi/dssi.h"
 
 #include <QtCore/QByteArray>
-#include <QtCore/QString>
 
 class DssiPlugin : public CarlaPlugin
 {
@@ -167,7 +165,7 @@ public:
         {
             if (midiprog.count > 0)
             {
-                osc_send_set_program_count(&global_osc_data, m_id, midiprog.count);
+                //osc_send_set_program_count(&global_osc_data, m_id, midiprog.count);
 
                 // Parse names
                 int j, k, last_str_n = 0;
@@ -189,7 +187,7 @@ public:
                         }
                     }
 
-                    osc_send_set_program_name(&osc.data, m_id, i, midiprog.names[i]);
+                    //osc_send_set_program_name(&osc.data, m_id, i, midiprog.names[i]);
                 }
 
                 callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
@@ -651,10 +649,10 @@ public:
         }
 
         // Update OSC Names
-        osc_send_set_midi_program_count(&global_osc_data, m_id, midiprog.count);
+        //osc_send_set_midi_program_count(&global_osc_data, m_id, midiprog.count);
 
-        for (i=0; i < midiprog.count; i++)
-            osc_send_set_midi_program_data(&global_osc_data, m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.names[i]);
+        //for (i=0; i < midiprog.count; i++)
+        //    osc_send_set_midi_program_data(&global_osc_data, m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.names[i]);
 
         callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
 
@@ -1122,7 +1120,7 @@ public:
                         m_filename = strdup(filename);
                         m_name = get_unique_name(ldescriptor->Name);
 
-                        if (register_jack_plugin())
+                        if (carla_jack_register_plugin(this, &jack_client))
                         {
                             if (extra_stuff)
                             {
@@ -1182,7 +1180,7 @@ short add_plugin_dssi(const char* filename, const char* label, void* extra_stuff
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-            osc_new_plugin(plugin);
+            //osc_new_plugin(plugin);
         }
         else
         {

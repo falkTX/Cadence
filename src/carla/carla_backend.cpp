@@ -15,56 +15,11 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_backend.h"
-
-#include "carla_osc.h"
 #include "carla_plugin.h"
 #include "carla_threads.h"
 
-#include <cstring>
-#include <ostream>
-
-#include <QtCore/QString>
-
-// Global variables
-CallbackFunc Callback = nullptr;
-const char* last_error = nullptr;
-const char* carla_client_name = nullptr;
-
-QMutex carla_proc_lock_var;
-QMutex carla_midi_lock_var;
-CarlaCheckThread carla_check_thread;
-
-// Global variables (shared)
-const char* unique_names[MAX_PLUGINS]  = { nullptr };
-CarlaPlugin* CarlaPlugins[MAX_PLUGINS] = { nullptr };
-
-volatile double ains_peak[MAX_PLUGINS*2]  = { 0.0 };
-volatile double aouts_peak[MAX_PLUGINS*2] = { 0.0 };
-
-// Global JACK stuff
-jack_client_t* carla_jack_client = nullptr;
-jack_nframes_t carla_buffer_size = 512;
-jack_nframes_t carla_sample_rate = 44100;
-
-// Global OSC stuff
-lo_server_thread global_osc_server_thread = nullptr;
-const char* global_osc_server_path = nullptr;
-OscData global_osc_data = { nullptr, nullptr, nullptr };
-
-// Global options
-carla_options_t carla_options = {
-  /* initiated */          false,
-  /* global_jack_client */ true,
-  /* use_dssi_chunks    */ false,
-  /* prefer_ui_bridges  */ true
-};
-
-// jack.cpp
-int carla_jack_process_callback(jack_nframes_t nframes, void* arg);
-int carla_jack_bufsize_callback(jack_nframes_t new_buffer_size, void* arg);
-int carla_jack_srate_callback(jack_nframes_t new_sample_rate, void* arg);
-void carla_jack_shutdown_callback(void* arg);
+//#include <cstring>
+//#include <ostream>
 
 // plugin specific
 short add_plugin_ladspa(const char* filename, const char* label, void* extra_stuff);
@@ -73,6 +28,8 @@ short add_plugin_lv2(const char* filename, const char* label, void* extra_stuff)
 short add_plugin_vst(const char* filename, const char* label);
 short add_plugin_sf2(const char* filename, const char* label);
 short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename, const char* label, void* extra_stuff);
+
+CarlaCheckThread carla_check_thread;
 
 // -------------------------------------------------------------------------------------------------------------------
 // Exported symbols (API)
@@ -83,50 +40,10 @@ bool carla_init(const char* client_name)
 
     carla_options.initiated = true;
 
-    bool started = false;
-    carla_jack_client = jack_client_open(client_name, JackNullOption, nullptr);
-
-    if (carla_jack_client)
-    {
-        carla_buffer_size = jack_get_buffer_size(carla_jack_client);
-        carla_sample_rate = jack_get_sample_rate(carla_jack_client);
-
-        if (carla_options.global_jack_client)
-            jack_set_process_callback(carla_jack_client, carla_jack_process_callback, nullptr);
-
-        jack_set_buffer_size_callback(carla_jack_client, carla_jack_bufsize_callback, nullptr);
-        jack_set_sample_rate_callback(carla_jack_client, carla_jack_srate_callback, nullptr);
-        jack_on_shutdown(carla_jack_client, carla_jack_shutdown_callback, nullptr);
-
-        if (jack_activate(carla_jack_client))
-        {
-            set_last_error("Failed to activate the JACK client");
-            carla_jack_client = nullptr;
-        }
-        else
-            started = true;
-    }
-    else
-    {
-        set_last_error("Failed to create new JACK client");
-        carla_jack_client = nullptr;
-    }
+    bool started = carla_jack_init(client_name);
 
     if (started)
     {
-        const char* real_client_name = jack_get_client_name(carla_jack_client);
-
-        // Fix name for OSC usage
-        char* fixed_name = strdup(real_client_name);
-        for (size_t i=0; i < strlen(fixed_name); i++)
-        {
-            if (std::isalpha(fixed_name[i]) == false && std::isdigit(fixed_name[i]) == false)
-                fixed_name[i] = '_';
-        }
-
-        carla_client_name = strdup(fixed_name);
-        free((void*)fixed_name);
-
         osc_init();
         carla_check_thread.start(QThread::HighPriority);
         set_last_error("no error");
@@ -139,21 +56,7 @@ bool carla_close()
 {
     qDebug("carla_close()");
 
-    bool closed = false;
-
-    if (jack_deactivate(carla_jack_client))
-    {
-        set_last_error("Failed to deactivate the JACK client");
-    }
-    else
-    {
-        if (jack_client_close(carla_jack_client))
-            set_last_error("Failed to close the JACK client");
-        else
-            closed = true;
-    }
-
-    carla_jack_client = nullptr;
+    bool closed = carla_jack_close();
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
@@ -167,14 +70,8 @@ bool carla_close()
     if (carla_check_thread.wait(2000) == false) // 2 secs
         qWarning("Failed to properly stop global check thread");
 
-    osc_send_exit(&global_osc_data);
+    //osc_send_exit(&global_osc_data);
     osc_close();
-
-    if (carla_client_name)
-        free((void*)carla_client_name);
-
-    if (last_error)
-        free((void*)last_error);
 
     // cleanup static data
     get_plugin_info(0);
@@ -182,13 +79,9 @@ bool carla_close()
     get_scalepoint_info(0, 0, 0);
     get_chunk_data(0);
     get_real_plugin_name(0);
+    set_last_error(nullptr);
 
     return closed;
-}
-
-bool carla_is_engine_running()
-{
-    return bool(carla_jack_client);
 }
 
 short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const char* label, void* extra_stuff)
@@ -197,10 +90,6 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
 
     if (btype != BINARY_NATIVE)
     {
-#ifdef BUILD_BRIDGE
-        set_last_error("Wrong binary type");
-        return -1;
-#else
         if (carla_options.global_jack_client)
         {
             set_last_error("Cannot use bridged plugins while in global client mode");
@@ -208,14 +97,12 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
         }
         else
             return add_plugin_bridge(btype, ptype, filename, label, extra_stuff);
-#endif
     }
 
     switch (ptype)
     {
     case PLUGIN_LADSPA:
         return add_plugin_ladspa(filename, label, extra_stuff);
-#ifndef BUILD_BRIDGE
     case PLUGIN_DSSI:
         return add_plugin_dssi(filename, label, extra_stuff);
     case PLUGIN_LV2:
@@ -224,7 +111,6 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
         return add_plugin_vst(filename, label);
     case PLUGIN_SF2:
         return add_plugin_sf2(filename, label);
-#endif
     default:
         set_last_error("Unknown plugin type");
         return -1;
@@ -240,7 +126,7 @@ bool remove_plugin(unsigned short plugin_id)
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            osc_send_remove_plugin(&global_osc_data, plugin->id());
+            //osc_send_remove_plugin(&global_osc_data, plugin->id());
 
             carla_proc_lock();
             plugin->set_id(-1);
@@ -1164,12 +1050,6 @@ void prepare_for_save(unsigned short plugin_id)
     qCritical("prepare_for_save(%i) - could not find plugin", plugin_id);
 }
 
-void set_callback_function(CallbackFunc func)
-{
-    qDebug("set_callback_function(%p)", func);
-    Callback = func;
-}
-
 void set_option(OptionsType option, int value, const char* value_str)
 {
     qDebug("set_option(%i, %i, %s)", option, value, value_str);
@@ -1187,169 +1067,5 @@ void set_option(OptionsType option, int value, const char* value_str)
     }
 }
 
-const char* get_last_error()
-{
-    qDebug("get_last_error()");
-    return last_error;
-}
-
-const char* get_host_client_name()
-{
-    qDebug("get_host_client_name()");
-    return carla_client_name;
-}
-
-const char* get_host_osc_url()
-{
-    qDebug("get_host_osc_url()");
-    return global_osc_server_path;
-}
-
-uint32_t get_buffer_size()
-{
-    qDebug("get_buffer_size()");
-    return carla_buffer_size;
-}
-
-double get_sample_rate()
-{
-    qDebug("get_sample_rate()");
-    return carla_sample_rate;
-}
-
-double get_latency()
-{
-    qDebug("get_latency()");
-    return double(carla_buffer_size)/carla_sample_rate*1000;
-}
-
 // End of exported symbols (API)
-// -------------------------------------------------------------------------------------------------------------------
-
-// -------------------------------------------------------------------------------------------------------------------
-// Helper functions
-
-const char* bool2str(bool yesno)
-{
-    if (yesno)
-        return "true";
-    else
-        return "false";
-}
-
-short get_new_plugin_id()
-{
-    for (unsigned short i=0; i<MAX_PLUGINS; i++)
-    {
-        if (CarlaPlugins[i] == nullptr)
-            return i;
-    }
-
-    return -1;
-}
-
-const char* get_unique_name(const char* name)
-{
-    int max = jack_port_name_size()/2 - 5;
-    if (carla_options.global_jack_client)
-        max -= strlen(carla_client_name);
-
-    qDebug("get_unique_name(%s) - truncated to %i", name, max);
-
-    QString qname(name);
-
-    if (qname.isEmpty())
-        qname = "(No name)";
-
-    qname.truncate(max);
-    //qname.replace(":", "."); // ":" is used in JACK to split client/port names
-
-    for (unsigned short i=0; i<MAX_PLUGINS; i++)
-    {
-        // Check if unique name already exists
-        if (unique_names[i] && qname == unique_names[i])
-        {
-            // Check if string has already been modified
-            uint len = qname.size();
-
-            if (qname.at(len-3) == QChar('(') && qname.at(len-2).isDigit() && qname.at(len-1) == QChar(')'))
-            {
-                int number = qname.at(len-2).toAscii()-'0';
-
-                if (number == 9)
-                    // next number is 10, 2 digits
-                    qname.replace(" (9)", " (10)");
-                else
-                    qname[len-2] = QChar('0'+number+1);
-
-                continue;
-            }
-            else if (qname.at(len-4) == QChar('(') && qname.at(len-3).isDigit() && qname.at(len-2).isDigit() && qname.at(len-1) == QChar(')'))
-            {
-                QChar n2 = qname.at(len-2); // (1x)
-                QChar n3 = qname.at(len-3); // (x0)
-
-                if (n2 == QChar('9'))
-                {
-                    n2 = QChar('0');
-                    n3 = QChar(n3.toAscii()+1);
-                }
-                else
-                    n2 = QChar(n2.toAscii()+1);
-
-                qname[len-2] = n2;
-                qname[len-3] = n3;
-
-                continue;
-            }
-
-            // Modify string if not
-            qname += " (2)";
-        }
-    }
-
-    return strdup(qname.toUtf8().constData());
-}
-
-void* get_pointer(intptr_t ptr_addr)
-{
-    intptr_t* ptr = (intptr_t*)ptr_addr;
-    return (void*)ptr;
-}
-
-void set_last_error(const char* error)
-{
-    if (last_error)
-        free((void*)last_error);
-
-    last_error = strdup(error);
-}
-
-void carla_proc_lock()
-{
-    carla_proc_lock_var.lock();
-}
-
-void carla_proc_unlock()
-{
-    carla_proc_lock_var.unlock();
-}
-
-void carla_midi_lock()
-{
-    carla_midi_lock_var.lock();
-}
-
-void carla_midi_unlock()
-{
-    carla_midi_lock_var.unlock();
-}
-
-void callback_action(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3)
-{
-    if (Callback)
-        Callback(action, plugin_id, value1, value2, value3);
-}
-
-// End of helper functions
 // -------------------------------------------------------------------------------------------------------------------

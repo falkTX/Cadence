@@ -19,18 +19,18 @@
 #define CARLA_OSC_H
 
 #include "carla_includes.h"
+
 #include <lo/lo.h>
 
 class CarlaPlugin;
 
 struct OscData {
     char* path;
-    lo_address source;
+    lo_address source; // unused
     lo_address target;
 };
 
-// public ---------------------------------------------------------------------------
-void osc_init(const char* plugin_name, const char* osc_url);
+void osc_init(const char* osc_name, const char* osc_url);
 void osc_close();
 void osc_clear_data(OscData* osc_data);
 
@@ -45,5 +45,9 @@ void osc_send_midi_program(OscData* osc_data, int bank, int program);
 void osc_send_show(OscData* osc_data);
 void osc_send_hide(OscData* osc_data);
 void osc_send_quit(OscData* osc_data);
+
+void osc_send_update();
+void osc_send_bridge_ains_peak(int index, double value);
+void osc_send_bridge_aouts_peak(int index, double value);
 
 #endif // CARLA_OSC_H

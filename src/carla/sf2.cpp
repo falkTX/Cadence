@@ -599,7 +599,7 @@ public:
 #endif
     }
 
-    virtual void reload_programs(bool init)
+    virtual void reload_programs(bool /*init*/)
     {
 #if 0
         qDebug("Sf2AudioPlugin::reload_programs(%s)", bool2str(init));
@@ -666,7 +666,7 @@ public:
 #endif
     }
 
-    virtual void process(jack_nframes_t nframes)
+    virtual void process(jack_nframes_t /*nframes*/)
     {
 #if 0
         uint32_t i, k;
@@ -1014,7 +1014,7 @@ public:
             m_label = strdup(label);
             m_name  = get_unique_name(label);
 
-            if (register_jack_plugin())
+            if (carla_jack_register_plugin(this, &jack_client))
                 return true;
             else
                 set_last_error("Failed to register plugin in JACK");
@@ -1072,7 +1072,7 @@ short add_plugin_sf2(const char* filename, const char* label)
                 unique_names[id] = plugin->name();
                 CarlaPlugins[id] = plugin;
 
-                osc_new_plugin(plugin);
+                //osc_new_plugin(plugin);
             }
             else
             {

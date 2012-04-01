@@ -72,7 +72,7 @@
 #  error Invalid build type
 #endif
 
-// don't export symbols if using bridge mode
+// don't export symbols if in bridge mode
 #if defined(BUILD_BRIDGE)
 #  define CARLA_EXPORT
 #else

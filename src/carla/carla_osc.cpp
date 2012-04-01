@@ -18,22 +18,28 @@
 #include "carla_osc.h"
 #include "carla_plugin.h"
 
-// FIXME - check for std::isdigit() elsewhere
-#include <iostream>
+size_t client_name_len = 0;
+const char* global_osc_server_path = nullptr;
+lo_server_thread global_osc_server_thread = nullptr;
+OscData global_osc_data = { nullptr, nullptr, nullptr };
 
-// Global variables
-extern const char* carla_client_name;
-size_t client_name_len;
+// -------------------------------------------------------------------------------------------------------------------
+// Exported symbols (API)
 
-// Global OSC stuff
-extern lo_server_thread global_osc_server_thread;
-extern const char* global_osc_server_path;
-extern OscData global_osc_data;
+const char* get_host_osc_url()
+{
+    qDebug("get_host_osc_url()");
+    return global_osc_server_path;
+}
+
+// End of exported symbols (API)
+// -------------------------------------------------------------------------------------------------------------------
 
 void osc_init()
 {
     qDebug("osc_init()");
-    client_name_len = strlen(carla_client_name);
+    const char* host_client_name = get_host_client_name();
+    client_name_len = strlen(host_client_name);
 
     // create new OSC thread
     global_osc_server_thread = lo_server_thread_new(nullptr, osc_error_handler);
@@ -43,7 +49,7 @@ void osc_init()
 
     char osc_path_tmp[strlen(osc_thread_path) + client_name_len + 1];
     strcpy(osc_path_tmp, osc_thread_path);
-    strcat(osc_path_tmp, carla_client_name);
+    strcat(osc_path_tmp, host_client_name);
     free(osc_thread_path);
 
     global_osc_server_path = strdup(osc_path_tmp);
@@ -88,6 +94,8 @@ void osc_clear_data(OscData* osc_data)
     osc_data->target = nullptr;
 }
 
+// -------------------------------------------------------------------------------------------------------------------
+
 void osc_error_handler(int num, const char* msg, const char* path)
 {
     qCritical("osc_error_handler(%i, %s, %s)", num, msg, path);
@@ -95,7 +103,7 @@ void osc_error_handler(int num, const char* msg, const char* path)
 
 int osc_message_handler(const char* path, const char* types, lo_arg** argv, int argc, void* data, void* user_data)
 {
-    //qDebug("osc_message_handler(%s, %s, %p, %i, %p, %p)", path, types, argv, argc, data, user_data);
+    qDebug("osc_message_handler(%s, %s, %p, %i, %p, %p)", path, types, argv, argc, data, user_data);
 
     // Initial path check
     if (strcmp(path, "register") == 0)
@@ -111,9 +119,9 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
     else
     {
         // Check if message is for this client
-        if (strncmp(path+1, carla_client_name, client_name_len) != 0 && path[client_name_len+1] == '/')
+        if (strncmp(path+1, get_host_client_name(), client_name_len) != 0 && path[client_name_len+1] == '/')
         {
-            qWarning("osc_message_handler() - message not for this client -> '%s'' != '/%s/'", path, carla_client_name);
+            qWarning("osc_message_handler() - message not for this client -> '%s'' != '/%s/'", path, get_host_client_name());
             return 1;
         }
     }
@@ -230,6 +238,8 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
     Q_UNUSED(user_data);
 }
 
+// -------------------------------------------------------------------------------------------------------------------
+
 int osc_handle_register(lo_arg** argv, lo_address source)
 {
     qDebug("osc_handle_register()");
@@ -257,9 +267,9 @@ int osc_handle_register(lo_arg** argv, lo_address source)
 
         for (unsigned short i=0; i<MAX_PLUGINS; i++)
         {
-            CarlaPlugin* plugin = CarlaPlugins[i];
-            if (plugin && plugin->id() >= 0)
-                osc_new_plugin(plugin);
+            //CarlaPlugin* plugin = CarlaPlugins[i];
+            //if (plugin && plugin->id() >= 0)
+            //    osc_new_plugin(plugin);
         }
 
         return 0;
@@ -284,6 +294,131 @@ int osc_handle_unregister()
 
     return 1;
 }
+
+// -------------------------------------------------------------------------------------------------------------------
+
+int osc_handle_update(CarlaPlugin* plugin, lo_arg** argv, lo_address source)
+{
+    qDebug("osc_handle_update()");
+
+    const char* url = (const char*)&argv[0]->s;
+    plugin->update_osc_data(source, url);
+
+    return 0;
+}
+
+int osc_handle_configure(CarlaPlugin* plugin, lo_arg** argv)
+{
+    qDebug("osc_handle_configure()");
+
+    const char* key   = (const char*)&argv[0]->s;
+    const char* value = (const char*)&argv[1]->s;
+    plugin->set_custom_data(CUSTOM_DATA_STRING, key, value, false);
+
+    return 0;
+}
+
+int osc_handle_control(CarlaPlugin* plugin, lo_arg** argv)
+{
+    qDebug("osc_handle_control()");
+
+    int32_t rindex = argv[0]->i;
+    double value   = argv[1]->f;
+
+    int32_t parameter_id = -1;
+
+    for (uint32_t i=0; i < plugin->param_count(); i++)
+    {
+        if (plugin->param_data(i)->rindex == rindex)
+        {
+            parameter_id = i;
+            break;
+        }
+    }
+
+    if (parameter_id >= 0)
+        plugin->set_parameter_value(parameter_id, value, false, true, true);
+
+    return 0;
+}
+
+int osc_handle_program(CarlaPlugin* plugin, lo_arg** argv)
+{
+    qDebug("osc_handle_program()");
+
+    uint32_t program_id = argv[0]->i;
+
+    if (program_id < plugin->prog_count())
+    {
+        plugin->set_program(program_id, false, true, true, true);
+        return 0;
+    }
+    else
+        qCritical("osc_handle_program() - program_id '%i' out of bounds", program_id);
+
+    return 1;
+}
+
+int osc_handle_program_as_midi(CarlaPlugin* plugin, lo_arg** /*argv*/)
+{
+    qDebug("osc_handle_program_as_midi()");
+
+    //uint32_t bank_id    = argv[0]->i;
+    //uint32_t program_id = argv[1]->i;
+
+    for (uint32_t i=0; i < plugin->midiprog_count(); i++)
+    {
+        //if (plugin->midiprog_data(i).bank == bank_id && plugin->midiprog.data[i].program == program_id)
+        //{
+        //    plugin->set_midi_program(i, false, true, true, false);
+        //    return 0;
+        //}
+    }
+
+    qCritical("osc_handle_program_as_midi() - failed to find respective bank/program");
+    return 1;
+}
+
+int osc_handle_midi(CarlaPlugin *plugin, lo_arg **argv)
+{
+    qDebug("osc_handle_midi()");
+
+    //if (plugin->min_count() > 0)
+    //{
+        uint8_t* data = argv[0]->m;
+        uint8_t mode = data[1] & 0xff;
+        uint8_t note = data[2] & 0x7f;
+        uint8_t velo = data[3] & 0x7f;
+
+        // only receive notes
+        if (mode < 0x80 || mode > 0x9F)
+            return 1;
+
+        // fix bad note off
+        if (mode >= 0x90 && velo == 0)
+        {
+            mode -= 0x10;
+            velo = 0x64;
+        }
+
+        plugin->send_midi_note((mode >= 0x90), note, velo, false, true, true);
+    //}
+
+    return 0;
+}
+
+int osc_handle_exiting(CarlaPlugin* plugin)
+{
+    qDebug("osc_handle_exiting()");
+
+    // TODO - check for non-UIs (dssi-vst) and set to -1 instead
+    callback_action(CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
+    osc_clear_data(plugin->osc_data());
+
+    return 0;
+}
+
+// -------------------------------------------------------------------------------------------------------------------
 
 int osc_handle_set_active(CarlaPlugin* plugin, lo_arg** argv)
 {
@@ -396,148 +531,127 @@ int osc_handle_bridge_aouts_peak(CarlaPlugin* plugin, lo_arg** argv)
     return 0;
 }
 
-int osc_handle_update(CarlaPlugin* plugin, lo_arg** argv, lo_address source)
+// -------------------------------------------------------------------------------------------------------------------
+
+void osc_send_configure(OscData* osc_data, const char* key, const char* value)
 {
-    qDebug("osc_handle_update()");
-
-    const char* url = (const char*)&argv[0]->s;
-    plugin->update_osc_data(source, url);
-
-    return 0;
-}
-
-int osc_handle_configure(CarlaPlugin* plugin, lo_arg** argv)
-{
-    //qDebug("osc_handle_configure()");
-
-    const char* key   = (const char*)&argv[0]->s;
-    const char* value = (const char*)&argv[1]->s;
-    plugin->set_custom_data(CUSTOM_DATA_STRING, key, value, false);
-
-    return 0;
-}
-
-int osc_handle_control(CarlaPlugin* plugin, lo_arg** argv)
-{
-    qDebug("osc_handle_control()");
-
-    int32_t rindex = argv[0]->i;
-    double value   = argv[1]->f;
-
-    int32_t parameter_id = -1;
-
-    for (uint32_t i=0; i < plugin->param_count(); i++)
+    qDebug("osc_send_configure(%s, %s)", key, value);
+    if (osc_data->target)
     {
-        if (plugin->param_data(i)->rindex == rindex)
-        {
-            parameter_id = i;
-            break;
-        }
+        char target_path[strlen(osc_data->path)+11];
+        strcpy(target_path, osc_data->path);
+        strcat(target_path, "/configure");
+        lo_send(osc_data->target, target_path, "ss", key, value);
     }
-
-    if (parameter_id >= 0)
-        plugin->set_parameter_value(parameter_id, value, false, true, true);
-
-    return 0;
 }
 
-int osc_handle_program(CarlaPlugin* plugin, lo_arg** argv)
+void osc_send_control(OscData* osc_data, int param, double value)
 {
-    qDebug("osc_handle_program()");
-
-    uint32_t program_id = argv[0]->i;
-
-    if (program_id < plugin->prog_count())
+    qDebug("osc_send_control(%i, %f)", param, value);
+    if (osc_data->target)
     {
-        plugin->set_program(program_id, false, true, true, true);
-        return 0;
+        char target_path[strlen(osc_data->path)+9];
+        strcpy(target_path, osc_data->path);
+        strcat(target_path, "/control");
+        lo_send(osc_data->target, target_path, "if", param, value);
     }
-    else
-        qCritical("osc_handle_program() - program_id '%i' out of bounds", program_id);
-
-    return 1;
 }
 
-int osc_handle_program_as_midi(CarlaPlugin* plugin, lo_arg** /*argv*/)
+void osc_send_program(OscData* osc_data, int program_id)
 {
-    qDebug("osc_handle_program_as_midi()");
-
-    //uint32_t bank_id    = argv[0]->i;
-    //uint32_t program_id = argv[1]->i;
-
-    for (uint32_t i=0; i < plugin->midiprog_count(); i++)
+    qDebug("osc_send_program(%i)", program_id);
+    if (osc_data->target)
     {
-        //if (plugin->midiprog_data(i).bank == bank_id && plugin->midiprog.data[i].program == program_id)
-        //{
-        //    plugin->set_midi_program(i, false, true, true, false);
-        //    return 0;
-        //}
+        char target_path[strlen(osc_data->path)+9];
+        strcpy(target_path, osc_data->path);
+        strcat(target_path, "/program");
+        lo_send(osc_data->target, target_path, "i", program_id);
     }
-
-    qCritical("osc_handle_program_as_midi() - failed to find respective bank/program");
-    return 1;
 }
 
-int osc_handle_midi(CarlaPlugin *plugin, lo_arg **argv)
+void osc_send_program_as_midi(OscData* osc_data, int bank, int program)
 {
-    qDebug("osc_handle_midi()");
-
-    //if (plugin->min_count() > 0)
-    //{
-        uint8_t* data = argv[0]->m;
-        uint8_t mode = data[1] & 0xff;
-        uint8_t note = data[2] & 0x7f;
-        uint8_t velo = data[3] & 0x7f;
-
-        // only receive notes
-        if (mode < 0x80 || mode > 0x9F)
-            return 1;
-
-        // fix bad note off
-        if (mode >= 0x90 && velo == 0)
-        {
-            mode -= 0x10;
-            velo = 0x64;
-        }
-
-        plugin->send_midi_note((mode >= 0x90), note, velo, false, true, true);
-    //}
-
-    return 0;
+    qDebug("osc_send_program_as_midi(%i, %i)", bank, program);
+    if (osc_data->target)
+    {
+        char target_path[strlen(osc_data->path)+9];
+        strcpy(target_path, osc_data->path);
+        strcat(target_path, "/program");
+        lo_send(osc_data->target, target_path, "ii", bank, program);
+    }
 }
 
-int osc_handle_exiting(CarlaPlugin* plugin)
+void osc_send_midi_program(OscData* osc_data, int bank, int program)
 {
-    qDebug("osc_handle_exiting()");
-
-    // TODO - check for non-UIs (dssi-vst) and set to -1 instead
-    callback_action(CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
-    osc_clear_data(plugin->osc_data());
-
-    return 0;
+    qDebug("osc_send_midi_program(%i, %i)", bank, program);
+    if (osc_data->target)
+    {
+        char target_path[strlen(osc_data->path)+9];
+        strcpy(target_path, osc_data->path);
+        strcat(target_path, "/midi_program");
+        lo_send(osc_data->target, target_path, "ii", bank, program);
+    }
 }
 
-void osc_new_plugin(CarlaPlugin* plugin)
+void osc_send_show(OscData* osc_data)
+{
+    qDebug("osc_send_show()");
+    if (osc_data->target)
+    {
+        char target_path[strlen(osc_data->path)+6];
+        strcpy(target_path, osc_data->path);
+        strcat(target_path, "/show");
+        lo_send(osc_data->target, target_path, "");
+    }
+}
+
+void osc_send_hide(OscData* osc_data)
+{
+    qDebug("osc_send_hide()");
+    if (osc_data->target)
+    {
+        char target_path[strlen(osc_data->path)+6];
+        strcpy(target_path, osc_data->path);
+        strcat(target_path, "/hide");
+        lo_send(osc_data->target, target_path, "");
+    }
+}
+
+void osc_send_quit(OscData* osc_data)
+{
+    qDebug("osc_send_quit()");
+    if (osc_data->target)
+    {
+        char target_path[strlen(osc_data->path)+6];
+        strcpy(target_path, osc_data->path);
+        strcat(target_path, "/quit");
+        lo_send(osc_data->target, target_path, "");
+    }
+}
+
+// -------------------------------------------------------------------------------------------------------------------
+
+void osc_new_plugin(CarlaPlugin* /*plugin*/)
 {
     qDebug("osc_new_plugin()");
 
     if (global_osc_data.target)
     {
-        osc_send_add_plugin(&global_osc_data, plugin->id(), plugin->name());
+        //osc_send_add_plugin(&global_osc_data, plugin->id(), plugin->name());
 
-        PluginInfo* info = get_plugin_info(plugin->id());
+        //PluginInfo* info = get_plugin_info(plugin->id());
 
-        PortCountInfo* audio_info = get_audio_port_count_info(plugin->id());
-        PortCountInfo* midi_info  = get_midi_port_count_info(plugin->id());
-        PortCountInfo* param_info = get_parameter_count_info(plugin->id());
+        //PortCountInfo* audio_info = get_audio_port_count_info(plugin->id());
+        //PortCountInfo* midi_info  = get_midi_port_count_info(plugin->id());
+        //PortCountInfo* param_info = get_parameter_count_info(plugin->id());
 
-        osc_send_set_plugin_data(&global_osc_data, plugin->id(), info->type, info->category, info->hints,
-                                 get_real_plugin_name(plugin->id()), info->label, info->maker, info->copyright, info->unique_id);
+        //osc_send_set_plugin_data(&global_osc_data, plugin->id(), info->type, info->category, info->hints,
+        //                         get_real_plugin_name(plugin->id()), info->label, info->maker, info->copyright, info->unique_id);
 
-        osc_send_set_plugin_ports(&global_osc_data, plugin->id(),
-                                  audio_info->ins, audio_info->outs,
-                                  midi_info->ins, midi_info->outs,
-                                  param_info->ins, param_info->outs, param_info->total);
+        //osc_send_set_plugin_ports(&global_osc_data, plugin->id(),
+        //                          audio_info->ins, audio_info->outs,
+        //                          midi_info->ins, midi_info->outs,
+        //                          param_info->ins, param_info->outs, param_info->total);
 
         //osc_send_set_parameter_value(&global_osc_data, plugin->id, PARAMETER_ACTIVE, plugin->active ? 1.0f : 0.0f);
         //osc_send_set_parameter_value(&global_osc_data, plugin->id, PARAMETER_DRYWET, plugin->x_drywet);
@@ -545,32 +659,32 @@ void osc_new_plugin(CarlaPlugin* plugin)
         //osc_send_set_parameter_value(&global_osc_data, plugin->id, PARAMETER_BALANCE_LEFT, plugin->x_bal_left);
         //osc_send_set_parameter_value(&global_osc_data, plugin->id, PARAMETER_BALANCE_RIGHT, plugin->x_bal_right);
 
-        uint32_t i;
+//        uint32_t i;
 
-        if (plugin->param_count() > 0 && plugin->param_count() < 200)
-        {
-            for (i=0; i < plugin->param_count(); i++)
-            {
-                ParameterInfo* info     = get_parameter_info(plugin->id(), i);
-                ParameterData* data     = plugin->param_data(i);
-                ParameterRanges* ranges = plugin->param_ranges(i);
+//        if (plugin->param_count() > 0 && plugin->param_count() < 200)
+//        {
+//            for (i=0; i < plugin->param_count(); i++)
+//            {
+//                ParameterInfo* info     = get_parameter_info(plugin->id(), i);
+//                ParameterData* data     = plugin->param_data(i);
+//                ParameterRanges* ranges = plugin->param_ranges(i);
 
-                osc_send_set_parameter_data(&global_osc_data, plugin->id(), i, data->type, data->hints,
-                                            info->name, info->label,
-                                            plugin->get_current_parameter_value(i),
-                                            ranges->min, ranges->max, ranges->def,
-                                            ranges->step, ranges->step_small, ranges->step_large);
-            }
-        }
+//                osc_send_set_parameter_data(&global_osc_data, plugin->id(), i, data->type, data->hints,
+//                                            info->name, info->label,
+//                                            plugin->get_current_parameter_value(i),
+//                                            ranges->min, ranges->max, ranges->def,
+//                                            ranges->step, ranges->step_small, ranges->step_large);
+//            }
+//        }
 
-        osc_send_set_program_count(&global_osc_data, plugin->id(), plugin->prog_count());
+        //osc_send_set_program_count(&global_osc_data, plugin->id(), plugin->prog_count());
 
         //for (i=0; i < plugin->prog_count(); i++)
         //    osc_send_set_program_name(&global_osc_data, plugin->id, i, plugin->prog.names[i]);
 
         //osc_send_set_program(&global_osc_data, plugin->id, plugin->prog.current);
 
-        osc_send_set_midi_program_count(&global_osc_data, plugin->id(), plugin->midiprog_count());
+        //osc_send_set_midi_program_count(&global_osc_data, plugin->id(), plugin->midiprog_count());
 
         //for (i=0; i < plugin->midiprog.count; i++)
         //    osc_send_set_program_name(&global_osc_data, plugin->id, i, plugin->midiprog.names[i]);
@@ -629,7 +743,7 @@ void osc_send_set_plugin_ports(OscData* osc_data, int plugin_id, int ains, int a
 
 void osc_send_set_parameter_value(OscData* osc_data, int plugin_id, int param_id, double value)
 {
-    //qDebug("osc_send_set_parameter_value(%i, %i, %f)", plugin_id, param_id, value);
+    qDebug("osc_send_set_parameter_value(%i, %i, %f)", plugin_id, param_id, value);
     if (osc_data->target)
     {
         char target_path[strlen(osc_data->path)+21];
@@ -815,102 +929,6 @@ void osc_send_exit(OscData* osc_data)
         char target_path[strlen(osc_data->path)+6];
         strcpy(target_path, osc_data->path);
         strcat(target_path, "/exit");
-        lo_send(osc_data->target, target_path, "");
-    }
-}
-
-void osc_send_configure(OscData* osc_data, const char* key, const char* value)
-{
-    qDebug("osc_send_configure(%s, %s)", key, value);
-    if (osc_data->target)
-    {
-        char target_path[strlen(osc_data->path)+11];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/configure");
-        lo_send(osc_data->target, target_path, "ss", key, value);
-    }
-}
-
-void osc_send_control(OscData* osc_data, int param, double value)
-{
-    //qDebug("osc_send_control(%i, %f)", param, value);
-    if (osc_data->target)
-    {
-        char target_path[strlen(osc_data->path)+9];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/control");
-        lo_send(osc_data->target, target_path, "if", param, value);
-    }
-}
-
-void osc_send_program(OscData* osc_data, int program_id)
-{
-    qDebug("osc_send_program(%i)", program_id);
-    if (osc_data->target)
-    {
-        char target_path[strlen(osc_data->path)+9];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/program");
-        lo_send(osc_data->target, target_path, "i", program_id);
-    }
-}
-
-void osc_send_program_as_midi(OscData* osc_data, int bank, int program)
-{
-    qDebug("osc_send_program_as_midi(%i, %i)", bank, program);
-    if (osc_data->target)
-    {
-        char target_path[strlen(osc_data->path)+9];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/program");
-        lo_send(osc_data->target, target_path, "ii", bank, program);
-    }
-}
-
-void osc_send_midi_program(OscData* osc_data, int bank, int program)
-{
-    qDebug("osc_send_midi_program(%i, %i)", bank, program);
-    if (osc_data->target)
-    {
-        char target_path[strlen(osc_data->path)+9];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/midi_program");
-        lo_send(osc_data->target, target_path, "ii", bank, program);
-    }
-}
-
-void osc_send_show(OscData* osc_data)
-{
-    qDebug("osc_send_show()");
-    if (osc_data->target)
-    {
-        char target_path[strlen(osc_data->path)+6];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/show");
-        lo_send(osc_data->target, target_path, "");
-    }
-}
-
-void osc_send_hide(OscData* osc_data)
-{
-    qDebug("osc_send_hide()");
-    if (osc_data->target)
-    {
-        char target_path[strlen(osc_data->path)+6];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/hide");
-        lo_send(osc_data->target, target_path, "");
-    }
-}
-
-void osc_send_quit(OscData* osc_data)
-{
-    qDebug("osc_send_quit()");
-    if (osc_data->target)
-    {
-        char target_path[strlen(osc_data->path)+6];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/quit");
         lo_send(osc_data->target, target_path, "");
     }
 }

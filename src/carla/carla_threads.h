@@ -19,6 +19,7 @@
 #define CARLA_THREADS_H
 
 #include "carla_includes.h"
+
 #include <QtCore/QThread>
 
 class QProcess;
@@ -49,7 +50,7 @@ public:
     CarlaPluginThread(CarlaPlugin* plugin, PluginThreadMode mode);
     ~CarlaPluginThread();
 
-    void setOscData(const char* binary, const char* label);
+    void setOscData(const char* binary, const char* label, const char* data1="");
 
 protected:
     virtual void run();
@@ -60,6 +61,7 @@ private:
 
     QString m_binary;
     QString m_label;
+    QString m_data1;
 
     QProcess* m_process;
 };

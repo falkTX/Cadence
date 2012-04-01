@@ -24,31 +24,140 @@ public:
     BridgePlugin(PluginType type) : CarlaPlugin()
     {
         qDebug("BridgePlugin::BridgePlugin()");
-        m_type = type;
+        m_type  = type;
+        m_hints = PLUGIN_IS_BRIDGE;
+        m_label = nullptr;
+
+        m_info.category  = PLUGIN_CATEGORY_NONE;
+        m_info.hints     = 0;
+        m_info.unique_id = 0;
+        m_info.ains  = 0;
+        m_info.aouts = 0;
+
+        m_info.name  = nullptr;
+        m_info.maker = nullptr;
+
+        m_thread = new CarlaPluginThread(this, CarlaPluginThread::PLUGIN_THREAD_BRIDGE);
     }
 
     virtual ~BridgePlugin()
     {
         qDebug("BridgePlugin::~BridgePlugin()");
+
+        if (m_label)
+            free((void*)m_label);
+
+        if (m_info.name)
+            free((void*)m_info.name);
+
+        if (m_info.maker)
+            free((void*)m_info.maker);
+
+        if (m_thread->isRunning())
+            m_thread->quit();
+
+        delete m_thread;
+    }
+
+    virtual PluginCategory category()
+    {
+        return m_info.category;
+    }
+
+    virtual long unique_id()
+    {
+        return m_info.unique_id;
+    }
+
+    virtual uint32_t ain_count()
+    {
+        return m_info.ains;
+    }
+
+    virtual uint32_t aout_count()
+    {
+        return m_info.aouts;
+    }
+
+    virtual void get_label(char* buf_str)
+    {
+        strncpy(buf_str, m_label, STR_MAX);
+    }
+
+    virtual void get_maker(char* buf_str)
+    {
+        strncpy(buf_str, m_info.maker, STR_MAX);
+    }
+
+    virtual void get_copyright(char* buf_str)
+    {
+        strncpy(buf_str, m_info.maker, STR_MAX);
+    }
+
+    virtual void get_real_name(char* buf_str)
+    {
+        strncpy(buf_str, m_info.name, STR_MAX);
+    }
+
+    virtual void get_audio_port_count_info(PortCountInfo* info)
+    {
+        info->ins   = m_info.ains;
+        info->outs  = m_info.aouts;
+        info->total = m_info.ains + m_info.aouts;
     }
 
     virtual void reload()
     {
-        m_hints = 0;
-        m_hints |= PLUGIN_IS_BRIDGE;
+        // plugin checks
+        m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
+
+        if (m_info.aouts > 0 && (m_info.ains == m_info.aouts || m_info.ains == 1))
+            m_hints |= PLUGIN_CAN_DRYWET;
+
+        if (m_info.aouts > 0)
+            m_hints |= PLUGIN_CAN_VOLUME;
+
+        if (m_info.aouts >= 2 && m_info.aouts % 2 == 0)
+            m_hints |= PLUGIN_CAN_BALANCE;
+
+        m_hints |= m_info.hints;
     }
 
     bool init(const char* filename, const char* label, void* extra_stuff)
     {
+        if (extra_stuff == nullptr)
+        {
+            set_last_error("Invalid bridge info, cannot continue");
+            return false;
+        }
+
+        set_last_error("Valid bridge info");
+
+        PluginBridgeInfo* info = (PluginBridgeInfo*)extra_stuff;
+        m_info.category  = info->category;
+        m_info.hints     = info->hints;
+        m_info.unique_id = info->unique_id;
+        m_info.ains  = info->ains;
+        m_info.aouts = info->aouts;
+
+        m_info.name  = strdup(info->name);
+        m_info.maker = strdup(info->maker);
+
+        m_label = strdup(label);
+        m_name  = get_unique_name(info->name);
         m_filename = strdup(filename);
-        m_name = get_unique_name("TODO");
-        Q_UNUSED(label);
-        Q_UNUSED(extra_stuff);
+
+        // TODO - get bridge binary here
+        m_thread->setOscData("/home/falktx/Personal/FOSS/GIT/Cadence/src/carla-bridge/carla-bridge-win32.exe", label, plugintype2str(m_type));
+        m_thread->start();
+
         return true;
     }
 
-//private:
-    //CarlaPluginThread m_thread;
+private:
+    const char* m_label;
+    PluginBridgeInfo m_info;
+    CarlaPluginThread* m_thread;
 };
 
 short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename, const char* label, void* extra_stuff)

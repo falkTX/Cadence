@@ -1940,8 +1940,8 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
           audio_count['outs']  = 0
           audio_count['total'] = 0
 
-        self.peaks_in  = audio_count['ins']
-        self.peaks_out = audio_count['outs']
+        self.peaks_in  = int(audio_count['ins'])
+        self.peaks_out = int(audio_count['outs'])
 
         if (self.peaks_in > 2):
           self.peaks_in = 2
@@ -2689,11 +2689,12 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         # -------------------------------------------------------------
         # Internal stuff
 
+        self.m_bridge_info = None
+        self.m_project_filename = None
+
         self.m_plugin_list = []
         for x in range(MAX_PLUGINS):
           self.m_plugin_list.append(None)
-
-        self.m_project_filename = None
 
         CarlaHost.set_callback_function(self.callback_function)
 
@@ -2925,9 +2926,25 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
           self.act_plugin_remove_all.setEnabled(False)
 
     def get_extra_stuff(self, plugin):
+        build = plugin['build']
         ptype = plugin['type']
 
-        if (ptype == PLUGIN_LADSPA):
+        print(ptype, plugin['type'])
+
+        if (build != BINARY_NATIVE):
+          # Store object so we can return a pointer
+          if (self.m_bridge_info == None):
+            self.m_bridge_info = PluginBridgeInfo()
+          self.m_bridge_info.category  = plugin['category']
+          self.m_bridge_info.hints     = plugin['hints']
+          self.m_bridge_info.name      = plugin['name'].encode("utf-8")
+          self.m_bridge_info.maker     = plugin['maker'].encode("utf-8")
+          self.m_bridge_info.unique_id = plugin['unique_id']
+          self.m_bridge_info.ains      = plugin['audio.ins']
+          self.m_bridge_info.aouts     = plugin['audio.outs']
+          return pointer(self.m_bridge_info)
+
+        elif (ptype == PLUGIN_LADSPA):
           unique_id = plugin['unique_id']
           for rdf_item in self.ladspa_rdf_list:
             if (rdf_item.UniqueID == unique_id):
@@ -2951,19 +2968,6 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
               return pointer(rdf_item)
           else:
             return c_nullptr
-
-        #elif (ptype == PLUGIN_WINVST):
-          ## Store object so we can return a pointer
-          #if (self.winvst_info == None):
-            #self.winvst_info = WinVstBaseInfo()
-          #self.winvst_info.category  = plugin['category']
-          #self.winvst_info.hints     = plugin['hints']
-          #self.winvst_info.name      = plugin['name']
-          #self.winvst_info.maker     = plugin['maker']
-          #self.winvst_info.unique_id = long(plugin['id'])
-          #self.winvst_info.ains      = plugin['audio.ins']
-          #self.winvst_info.aouts     = plugin['audio.outs']
-          #return pointer(self.winvst_info)
 
         else:
           return c_nullptr

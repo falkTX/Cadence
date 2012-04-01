@@ -63,7 +63,7 @@ void CarlaCheckThread::run()
                             break;
 
                         case PostEventParameterChange:
-                            osc_send_set_parameter_value(&global_osc_data, plugin->id(), post_events[j].index, post_events[j].value);
+                            //osc_send_set_parameter_value(&global_osc_data, plugin->id(), post_events[j].index, post_events[j].value);
                             callback_action(CALLBACK_PARAMETER_CHANGED, plugin->id(), post_events[j].index, 0, post_events[j].value);
 
                             // FIXME - can this happen?
@@ -73,20 +73,20 @@ void CarlaCheckThread::run()
                             break;
 
                         case PostEventProgramChange:
-                            osc_send_set_program(&global_osc_data, plugin->id(), post_events[j].index);
+                            //osc_send_set_program(&global_osc_data, plugin->id(), post_events[j].index);
                             callback_action(CALLBACK_PROGRAM_CHANGED, plugin->id(), post_events[j].index, 0, 0.0);
 
                             // FIXME - can this happen?
                             //if (plugin->hints() & PLUGIN_IS_BRIDGE)
                             //    osc_send_program(plugin->osc_data(), post_events[j].index);
 
-                            for (uint32_t k=0; k < plugin->param_count(); k++)
-                                osc_send_set_default_value(&global_osc_data, plugin->id(), k, plugin->param_ranges(k)->def);
+                            //for (uint32_t k=0; k < plugin->param_count(); k++)
+                            //    osc_send_set_default_value(&global_osc_data, plugin->id(), k, plugin->param_ranges(k)->def);
 
                             break;
 
                         case PostEventMidiProgramChange:
-                            osc_send_set_midi_program(&global_osc_data, plugin->id(), post_events[j].index);
+                            //osc_send_set_midi_program(&global_osc_data, plugin->id(), post_events[j].index);
                             callback_action(CALLBACK_MIDI_PROGRAM_CHANGED, plugin->id(), post_events[j].index, 0, 0.0);
 
                             //if (plugin->type() == PLUGIN_DSSI)
@@ -96,13 +96,13 @@ void CarlaCheckThread::run()
                             //if (plugin->hints & PLUGIN_IS_BRIDGE)
                             //    osc_send_midi_program(&plugin->osc.data, plugin->midiprog.data[post_events[j].index].bank, plugin->midiprog.data[post_events[j].index].program);
 
-                            for (uint32_t k=0; k < plugin->param_count(); k++)
-                                osc_send_set_default_value(&global_osc_data, plugin->id(), k, plugin->param_ranges(k)->def);
+                            //for (uint32_t k=0; k < plugin->param_count(); k++)
+                            //    osc_send_set_default_value(&global_osc_data, plugin->id(), k, plugin->param_ranges(k)->def);
 
                             break;
 
                         case PostEventNoteOn:
-                            osc_send_note_on(&global_osc_data, plugin->id(), post_events[j].index, post_events[j].value);
+                            //osc_send_note_on(&global_osc_data, plugin->id(), post_events[j].index, post_events[j].value);
                             callback_action(CALLBACK_NOTE_ON, plugin->id(), post_events[j].index, post_events[j].value, 0.0);
 
                             // FIXME - can this happen?
@@ -112,7 +112,7 @@ void CarlaCheckThread::run()
                             break;
 
                         case PostEventNoteOff:
-                            osc_send_note_off(&global_osc_data, plugin->id(), post_events[j].index);
+                            //osc_send_note_off(&global_osc_data, plugin->id(), post_events[j].index);
                             callback_action(CALLBACK_NOTE_OFF, plugin->id(), post_events[j].index, 0, 0.0);
 
                             // FIXME - can this happen?
@@ -146,7 +146,7 @@ void CarlaCheckThread::run()
                         if (update_ports_gui)
                             osc_send_control(plugin->osc_data(), plugin->param_data(j)->rindex, value);
 
-                        osc_send_set_parameter_value(&global_osc_data, plugin->id(), j, value);
+                        //osc_send_set_parameter_value(&global_osc_data, plugin->id(), j, value);
                     }
                 }
 
@@ -157,13 +157,13 @@ void CarlaCheckThread::run()
                 {
                     if (plugin->ain_count() > 0)
                     {
-                        osc_send_set_input_peak_value(&global_osc_data, plugin->id(), 1, ains_peak[ (plugin->id() * 2) + 0 ]);
-                        osc_send_set_input_peak_value(&global_osc_data, plugin->id(), 2, ains_peak[ (plugin->id() * 2) + 1 ]);
+                        //osc_send_set_input_peak_value(&global_osc_data, plugin->id(), 1, ains_peak[ (plugin->id() * 2) + 0 ]);
+                        //osc_send_set_input_peak_value(&global_osc_data, plugin->id(), 2, ains_peak[ (plugin->id() * 2) + 1 ]);
                     }
                     if (plugin->aout_count() > 0)
                     {
-                        osc_send_set_output_peak_value(&global_osc_data, plugin->id(), 1, aouts_peak[ (plugin->id() * 2) + 0 ]);
-                        osc_send_set_output_peak_value(&global_osc_data, plugin->id(), 2, aouts_peak[ (plugin->id() * 2) + 1 ]);
+                        //osc_send_set_output_peak_value(&global_osc_data, plugin->id(), 1, aouts_peak[ (plugin->id() * 2) + 0 ]);
+                        //osc_send_set_output_peak_value(&global_osc_data, plugin->id(), 2, aouts_peak[ (plugin->id() * 2) + 1 ]);
                     }
                 }
             }
@@ -190,10 +190,11 @@ CarlaPluginThread::~CarlaPluginThread()
     delete m_process;
 }
 
-void CarlaPluginThread::setOscData(const char* binary, const char* label)
+void CarlaPluginThread::setOscData(const char* binary, const char* label, const char* data1)
 {
     m_binary = QString(binary);
     m_label  = QString(label);
+    m_data1  = QString(data1);
 }
 
 void CarlaPluginThread::run()
@@ -203,19 +204,23 @@ void CarlaPluginThread::run()
     switch (m_mode)
     {
     case PLUGIN_THREAD_DSSI_GUI:
-        arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
-        arguments << m_plugin->filename();
-        arguments << m_label;
-        arguments << QString("%1 (GUI)").arg(m_plugin->name());
+        /* osc_url  */ arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
+        /* filename */ arguments << m_plugin->filename();
+        /* label    */ arguments << m_label;
+        /* ui-title */ arguments << QString("%1 (GUI)").arg(m_plugin->name());
         break;
+
     case PLUGIN_THREAD_LV2_GUI:
-        arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
-        arguments << m_label;
-        arguments << QString("%1 (GUI)").arg(m_plugin->name());
+        //arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
+        //arguments << m_label;
+        //arguments << QString("%1 (GUI)").arg(m_plugin->name());
         break;
+
     case PLUGIN_THREAD_BRIDGE:
-        arguments << m_label;
-        arguments << QString("%1 (GUI)").arg(m_plugin->name());
+        /* osc_url  */ arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
+        /* stype    */ arguments << m_data1;
+        /* filename */ arguments << m_plugin->filename();
+        /* label    */ arguments << m_label;
         break;
     default:
         break;
@@ -250,6 +255,18 @@ void CarlaPluginThread::run()
             qDebug("CarlaPluginThread::run() - GUI timeout");
             callback_action(CALLBACK_SHOW_GUI, m_plugin->id(), 0, 0, 0.0);
         }
+
+        break;
+
+    case PLUGIN_THREAD_BRIDGE:
+        m_process->waitForFinished(-1);
+
+        if (m_process->exitCode() == 0)
+            qDebug("CarlaPluginThread::run() - bridge closed");
+        else
+            qDebug("CarlaPluginThread::run() - bridge crashed");
+
+        qDebug("%s", QString(m_process->readAllStandardOutput()).toUtf8().constData());
 
         break;
 

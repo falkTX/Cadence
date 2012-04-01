@@ -16,20 +16,19 @@
  */
 
 #include "carla_osc.h"
+#include "carla_plugin.h"
 
-// Global variables
-const char* plugin_name;
-size_t plugin_name_len;
+size_t plugin_name_len = 0;
+const char* plugin_name = nullptr;
 
-// Global OSC stuff
-extern lo_server_thread global_osc_server_thread;
-extern const char* global_osc_server_path;
-extern OscData global_osc_data;
+const char* global_osc_server_path = nullptr;
+lo_server_thread global_osc_server_thread = nullptr;
+OscData global_osc_data = { nullptr, nullptr, nullptr };
 
-void osc_init(const char* plugin_name_, const char* osc_url)
+void osc_init(const char* osc_name, const char* osc_url)
 {
-    qDebug("osc_init()");
-    plugin_name = plugin_name_;
+    qDebug("osc_init(%s, %s)", osc_name, osc_url);
+    plugin_name = osc_name;
     plugin_name_len = strlen(plugin_name);
 
     const char* host = lo_url_get_hostname(osc_url);
@@ -133,4 +132,37 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
 //        std::cerr << "Got unsupported OSC method '" << method << "' on '" << path << "'" << std::endl;
 
     return 1;
+}
+
+void osc_send_update()
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+8];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/update");
+        lo_send(global_osc_data.target, target_path, "s", global_osc_server_path);
+    }
+}
+
+void osc_send_bridge_ains_peak(int index, double value)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+18];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/bridge_ains_peak");
+        lo_send(global_osc_data.target, target_path, "if", index, value);
+    }
+}
+
+void osc_send_bridge_aouts_peak(int index, double value)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+19];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/bridge_aouts_peak");
+        lo_send(global_osc_data.target, target_path, "if", index, value);
+    }
 }
