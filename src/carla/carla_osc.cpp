@@ -41,7 +41,7 @@ void osc_init()
     // get our full OSC server path
     char* osc_thread_path = lo_server_thread_get_url(global_osc_server_thread);
 
-    char osc_path_tmp[strlen(osc_thread_path) + strlen(carla_client_name) + 1];
+    char osc_path_tmp[strlen(osc_thread_path) + client_name_len + 1];
     strcpy(osc_path_tmp, osc_thread_path);
     strcat(osc_path_tmp, carla_client_name);
     free(osc_thread_path);

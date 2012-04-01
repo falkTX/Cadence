@@ -51,7 +51,7 @@ int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
     return 0;
 }
 
-int carla_jack_bufsize_callback(jack_nframes_t new_buffer_size, void*)
+int carla_jack_bufsize_callback(jack_nframes_t new_buffer_size, void* arg)
 {
     carla_buffer_size = new_buffer_size;
 

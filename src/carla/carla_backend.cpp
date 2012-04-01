@@ -38,7 +38,6 @@ CarlaCheckThread carla_check_thread;
 // Global variables (shared)
 const char* unique_names[MAX_PLUGINS]  = { nullptr };
 CarlaPlugin* CarlaPlugins[MAX_PLUGINS] = { nullptr };
-//ExternalMidiNote ExternalMidiNotes[MAX_MIDI_EVENTS];
 
 volatile double ains_peak[MAX_PLUGINS*2]  = { 0.0 };
 volatile double aouts_peak[MAX_PLUGINS*2] = { 0.0 };
@@ -82,7 +81,6 @@ bool carla_init(const char* client_name)
 {
     qDebug("carla_init(%s)", client_name);
 
-    // todo - check this in python
     carla_options.initiated = true;
 
     bool started = false;
@@ -128,9 +126,6 @@ bool carla_init(const char* client_name)
 
         carla_client_name = strdup(fixed_name);
         free((void*)fixed_name);
-
-        //for (unsigned short i=0; i<MAX_MIDI_EVENTS; i++)
-        //    ExternalMidiNotes[i].valid = false;
 
         osc_init();
         carla_check_thread.start(QThread::HighPriority);
@@ -202,6 +197,10 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
 
     if (btype != BINARY_NATIVE)
     {
+#ifdef BUILD_BRIDGE
+        set_last_error("Wrong binary type");
+        return -1;
+#else
         if (carla_options.global_jack_client)
         {
             set_last_error("Cannot use bridged plugins while in global client mode");
@@ -209,12 +208,14 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
         }
         else
             return add_plugin_bridge(btype, ptype, filename, label, extra_stuff);
+#endif
     }
 
     switch (ptype)
     {
     case PLUGIN_LADSPA:
         return add_plugin_ladspa(filename, label, extra_stuff);
+#ifndef BUILD_BRIDGE
     case PLUGIN_DSSI:
         return add_plugin_dssi(filename, label, extra_stuff);
     case PLUGIN_LV2:
@@ -223,6 +224,7 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
         return add_plugin_vst(filename, label);
     case PLUGIN_SF2:
         return add_plugin_sf2(filename, label);
+#endif
     default:
         set_last_error("Unknown plugin type");
         return -1;

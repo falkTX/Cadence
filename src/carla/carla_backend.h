@@ -23,7 +23,11 @@
 #define STR_MAX 255
 
 // static max values
+#ifdef BUILD_BRIDGE
+const unsigned short MAX_PLUGINS   = 1;
+#else
 const unsigned short MAX_PLUGINS   = 99;
+#endif
 const unsigned int MAX_PARAMETERS  = 200;
 const unsigned int MAX_MIDI_EVENTS = 512;
 

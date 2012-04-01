@@ -16,6 +16,10 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# TODO - options:
+# - max parameters
+# - osc gui timeout
+
 # Imports (Global)
 import json, os, sys
 from time import sleep

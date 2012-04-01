@@ -18,6 +18,16 @@
 #ifndef CARLA_INCLUDES_H
 #define CARLA_INCLUDES_H
 
+#ifdef __WINE__
+#define __socklen_t_defined
+#define __WINE_WINSOCK2__
+#define HRESULT LONG
+#define Q_CORE_EXPORT
+#define Q_GUI_EXPORT
+#define QT_NO_STL
+//#define _WIN32_X11_
+#endif
+
 #include <stdint.h>
 #include <Qt>
 
@@ -62,10 +72,15 @@
 #  error Invalid build type
 #endif
 
-#ifdef Q_OS_WIN
-#  define CARLA_EXPORT extern "C" __declspec (dllexport)
+// don't export symbols if using bridge mode
+#if defined(BUILD_BRIDGE)
+#  define CARLA_EXPORT
 #else
-#  define CARLA_EXPORT extern "C" __attribute__ ((visibility("default")))
+#  ifdef Q_OS_WIN
+#    define CARLA_EXPORT extern "C" __declspec (dllexport)
+#  else
+#    define CARLA_EXPORT extern "C" __attribute__ ((visibility("default")))
+#  endif
 #endif
 
 #endif // CARLA_INCLUDES_H

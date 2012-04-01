@@ -18,6 +18,7 @@
 #ifndef CARLA_OSC_H
 #define CARLA_OSC_H
 
+#include "carla_includes.h"
 #include <lo/lo.h>
 
 class CarlaPlugin;

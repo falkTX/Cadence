@@ -932,9 +932,13 @@ private:
 
 short add_plugin_ladspa(const char* filename, const char* label, void* extra_stuff)
 {
+    qWarning("HERE 00X");
+
     qDebug("add_plugin_ladspa(%s, %s, %p)", filename, label, extra_stuff);
 
     short id = get_new_plugin_id();
+
+    qWarning("HERE 00X %i", id);
 
     if (id >= 0)
     {
@@ -948,7 +952,9 @@ short add_plugin_ladspa(const char* filename, const char* label, void* extra_stu
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
+#ifndef BUILD_BRIDGE
             osc_new_plugin(plugin);
+#endif
         }
         else
         {
