@@ -36,7 +36,7 @@ void CarlaCheckThread::run()
 
     uint32_t j;
     double value;
-    PluginPostEvent post_events[MAX_POSTEVENTS];
+    PluginPostEvent post_events[MAX_POST_EVENTS];
 
     while (carla_is_engine_running())
     {
@@ -52,7 +52,7 @@ void CarlaCheckThread::run()
                 plugin->post_events_copy(post_events);
 
                 // Process events now
-                for (j=0; j < MAX_POSTEVENTS; j++)
+                for (j=0; j < MAX_POST_EVENTS; j++)
                 {
                     if (post_events[j].valid)
                     {
@@ -133,15 +133,15 @@ void CarlaCheckThread::run()
                 // Check if it needs update
                 bool update_ports_gui = (plugin->osc_data()->target != nullptr);
 
-                if (global_osc_data.target == nullptr && update_ports_gui == false)
-                    continue;
+                //if (global_osc_data.target == nullptr && update_ports_gui == false)
+                //    continue;
 
                 // Update
                 for (j=0; j < plugin->param_count(); j++)
                 {
                     if (plugin->param_data(j)->type == PARAMETER_OUTPUT && (plugin->param_data(j)->hints & PARAMETER_IS_AUTOMABLE) > 0)
                     {
-                        value = plugin->get_current_parameter_value(j);
+                        value = plugin->get_parameter_value(j);
 
                         if (update_ports_gui)
                             osc_send_control(plugin->osc_data(), plugin->param_data(j)->rindex, value);
@@ -153,7 +153,7 @@ void CarlaCheckThread::run()
                 // --------------------------------------------------------------------------------------------------------
                 // Send peak values (OSC)
 
-                if (global_osc_data.target)
+                //if (global_osc_data.target)
                 {
                     if (plugin->ain_count() > 0)
                     {

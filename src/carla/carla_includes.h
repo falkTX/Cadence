@@ -39,13 +39,15 @@
 
 #ifdef Q_OS_WIN
 #  include <windows.h>
-#  define sleep(t)  Sleep(t * 1000)
-#  define msleep(t) Sleep(t)
-#  define usleep(t) Sleep(t / 1000)
+#  define carla_sleep(t)  Sleep(t * 1000)
+#  define carla_msleep(t) Sleep(t)
+#  define carla_usleep(t) Sleep(t / 1000)
 #else
 #  include <dlfcn.h>
 #  include <unistd.h>
-#  define msleep(t) usleep(t * 1000)
+#  define carla_sleep(t)  sleep(t)
+#  define carla_msleep(t) usleep(t * 1000)
+#  define carla_usleep(t) usleep(t)
 #  ifndef __cdecl
 #    define __cdecl
 #  endif
@@ -77,11 +79,11 @@
 #  error Invalid build type
 #endif
 
-// don't export symbols if in bridge mode
+// export symbols if needed
 #ifdef BUILD_BRIDGE
 #  define CARLA_EXPORT
 #else
-#  ifdef Q_OS_WIN
+#  if defined(Q_OS_WIN) && !defined(__WINE__)
 #    define CARLA_EXPORT extern "C" __declspec (dllexport)
 #  else
 #    define CARLA_EXPORT extern "C" __attribute__ ((visibility("default")))

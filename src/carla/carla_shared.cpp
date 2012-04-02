@@ -29,19 +29,19 @@ volatile double aouts_peak[MAX_PLUGINS*2] = { 0.0 };
 
 // Global options
 carla_options_t carla_options = {
-  /* initiated */          false,
-#ifdef BUILD_BRIDGE
-  /* global_jack_client */ false,
-  /* use_dssi_chunks    */ false,
-  /* prefer_ui_bridges  */ false
-#else
-  /* global_jack_client */ true,
-  /* use_dssi_chunks    */ false,
-  /* prefer_ui_bridges  */ true
-#endif
+    /* initiated */          false,
+    #ifdef BUILD_BRIDGE
+    /* global_jack_client */ false,
+    /* use_dssi_chunks    */ false,
+    /* prefer_ui_bridges  */ false
+    #else
+    /* global_jack_client */ true,
+    /* use_dssi_chunks    */ false,
+    /* prefer_ui_bridges  */ true
+    #endif
 };
 
-CallbackFunc Callback = nullptr;
+CallbackFunc Callback  = nullptr;
 const char* last_error = nullptr;
 
 QMutex carla_proc_lock_var;
@@ -76,6 +76,24 @@ const char* bool2str(bool yesno)
         return "false";
 }
 
+const char* binarytype2str(BinaryType type)
+{
+    // TODO - use global options
+    switch (type)
+    {
+    case BINARY_UNIX32:
+        return "/home/falktx/Personal/FOSS/GIT/Cadence/src/carla-bridge/carla-bridge-win32.exe";
+    case BINARY_UNIX64:
+        return "/home/falktx/Personal/FOSS/GIT/Cadence/src/carla-bridge/carla-bridge-win32.exe";
+    case BINARY_WIN32:
+        return "/home/falktx/Personal/FOSS/GIT/Cadence/src/carla-bridge/carla-bridge-win32.exe";
+    case BINARY_WIN64:
+        return "/home/falktx/Personal/FOSS/GIT/Cadence/src/carla-bridge/carla-bridge-win32.exe";
+    default:
+        return "";
+    }
+}
+
 const char* plugintype2str(PluginType type)
 {
     switch (type)
@@ -94,6 +112,8 @@ const char* plugintype2str(PluginType type)
         return "Unknown";
     }
 }
+
+// -------------------------------------------------------------------------------------------------------------------
 
 short get_new_plugin_id()
 {
@@ -144,8 +164,8 @@ const char* get_unique_name(const char* name)
             }
             else if (qname.at(len-4) == QChar('(') && qname.at(len-3).isDigit() && qname.at(len-2).isDigit() && qname.at(len-1) == QChar(')'))
             {
-                QChar n2 = qname.at(len-2); // (1x)
-                QChar n3 = qname.at(len-3); // (x0)
+                QChar n2 = qname.at(len-2);
+                QChar n3 = qname.at(len-3);
 
                 if (n2 == QChar('9'))
                 {

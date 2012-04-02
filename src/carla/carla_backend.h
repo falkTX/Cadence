@@ -156,16 +156,16 @@ struct CustomData {
 };
 
 struct PluginInfo {
-  bool valid;
-  PluginType type;
-  PluginCategory category;
-  unsigned int hints;
-  const char* binary;
-  const char* name;
-  const char* label;
-  const char* maker;
-  const char* copyright;
-  long unique_id;
+    bool valid;
+    PluginType type;
+    PluginCategory category;
+    unsigned int hints;
+    const char* binary;
+    const char* name;
+    const char* label;
+    const char* maker;
+    const char* copyright;
+    long unique_id;
 };
 
 struct PortCountInfo {

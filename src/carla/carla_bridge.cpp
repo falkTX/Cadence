@@ -16,26 +16,25 @@
  */
 
 #include "carla_plugin.h"
-#include "carla_threads.h"
 
 class BridgePlugin : public CarlaPlugin
 {
 public:
-    BridgePlugin(PluginType type) : CarlaPlugin()
+    BridgePlugin(BinaryType btype, PluginType ptype) : CarlaPlugin(),
+        m_binary(btype)
     {
         qDebug("BridgePlugin::BridgePlugin()");
-        m_type  = type;
-        m_hints = PLUGIN_IS_BRIDGE;
-        m_label = nullptr;
+        m_type   = ptype;
+        m_hints  = PLUGIN_IS_BRIDGE;
+        m_label  = nullptr;
 
         m_info.category  = PLUGIN_CATEGORY_NONE;
         m_info.hints     = 0;
+        m_info.name      = nullptr;
+        m_info.maker     = nullptr;
         m_info.unique_id = 0;
         m_info.ains  = 0;
         m_info.aouts = 0;
-
-        m_info.name  = nullptr;
-        m_info.maker = nullptr;
 
         m_thread = new CarlaPluginThread(this, CarlaPluginThread::PLUGIN_THREAD_BRIDGE);
     }
@@ -77,6 +76,18 @@ public:
     virtual uint32_t aout_count()
     {
         return m_info.aouts;
+    }
+
+    virtual uint32_t min_count()
+    {
+        // TODO - add this to pluginbridgeinfo
+        return 0; //m_info.mins;
+    }
+
+    virtual uint32_t mout_count()
+    {
+        // TODO - add this to pluginbridgeinfo
+        return 0; //m_info.mouts;
     }
 
     virtual void get_label(char* buf_str)
@@ -148,7 +159,7 @@ public:
         m_filename = strdup(filename);
 
         // TODO - get bridge binary here
-        m_thread->setOscData("/home/falktx/Personal/FOSS/GIT/Cadence/src/carla-bridge/carla-bridge-win32.exe", label, plugintype2str(m_type));
+        m_thread->setOscData(binarytype2str(m_binary), label, plugintype2str(m_type));
         m_thread->start();
 
         return true;
@@ -156,6 +167,7 @@ public:
 
 private:
     const char* m_label;
+    const BinaryType m_binary;
     PluginBridgeInfo m_info;
     CarlaPluginThread* m_thread;
 };
@@ -168,7 +180,7 @@ short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename
 
     if (id >= 0)
     {
-        BridgePlugin* plugin = new BridgePlugin(ptype);
+        BridgePlugin* plugin = new BridgePlugin(btype, ptype);
 
         if (plugin->init(filename, label, extra_stuff))
         {

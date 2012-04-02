@@ -17,19 +17,12 @@
 
 #include "carla_plugin.h"
 
-#ifndef BUILD_BRIDGE
-#include "carla_threads.h"
-#endif
-
 #include "dssi/dssi.h"
-
-#include <QtCore/QByteArray>
 
 class DssiPlugin : public CarlaPlugin
 {
 public:
-    DssiPlugin() :
-        CarlaPlugin()
+    DssiPlugin() : CarlaPlugin()
     {
         qDebug("DssiPlugin::DssiPlugin()");
         m_type = PLUGIN_DSSI;
@@ -38,7 +31,8 @@ public:
         descriptor = nullptr;
         ldescriptor = nullptr;
 
-        memset(&midi_events, 0, sizeof(snd_seq_event_t)*MAX_MIDI_EVENTS);
+        // FIXME?
+        memset(midi_events, 0, sizeof(snd_seq_event_t)*MAX_MIDI_EVENTS);
     }
 
     virtual ~DssiPlugin()
@@ -86,7 +80,7 @@ public:
 
     virtual PluginCategory category()
     {
-        if (min.count > 0 && aout.count > 0)
+        if (midi.port_min && aout.count > 0)
             return PLUGIN_CATEGORY_SYNTH;
 
         // TODO - try to get category from label
@@ -96,6 +90,14 @@ public:
     virtual long unique_id()
     {
         return ldescriptor->UniqueID;
+    }
+
+    virtual int32_t chunk_data(void** data_ptr)
+    {
+        unsigned long long_data_size = 0;
+        if (descriptor->get_custom_data(handle, data_ptr, &long_data_size))
+            return long_data_size;
+        return 0;
     }
 
     virtual void get_label(char* buf_str)
@@ -130,14 +132,6 @@ public:
             info->type = GUI_EXTERNAL_OSC;
         else
             info->type = GUI_NONE;
-    }
-
-    virtual int32_t get_chunk_data(void** data_ptr)
-    {
-        unsigned long long_data_size = 0;
-        if (descriptor->get_custom_data(handle, data_ptr, &long_data_size))
-            return long_data_size;
-        return 0;
     }
 
     virtual double get_current_parameter_value(uint32_t index)
@@ -190,8 +184,8 @@ public:
                         {
                             name[j] = 0;
                             last_str_n = k+j+1;
-                            free((void*)midiprog.names[i]);
-                            midiprog.names[i] = strdup(name);
+                            free((void*)midiprog.data[i].name);
+                            midiprog.data[i].name = strdup(name);
                             break;
                         }
                     }
@@ -258,11 +252,9 @@ public:
         m_id = -1;
         carla_proc_unlock();
 
-        if (carla_options.global_jack_client == false && _id >= 0)
-            jack_deactivate(jack_client);
-
-        // Unregister previous jack ports
-        remove_from_jack();
+        // Unregister previous jack ports if needed
+        if (_id >= 0)
+            remove_from_jack();
 
         // Delete old data
         delete_buffers();
@@ -291,19 +283,14 @@ public:
 
         if (ains > 0)
         {
-            ain.rindexes = new uint32_t[ains];
             ain.ports    = new jack_port_t*[ains];
+            ain_rindexes = new uint32_t[ains];
         }
 
         if (aouts > 0)
         {
-            aout.rindexes = new uint32_t[aouts];
             aout.ports    = new jack_port_t*[aouts];
-        }
-
-        if (mins > 0)
-        {
-            min.ports = new jack_port_t*[mins];
+            aout_rindexes = new uint32_t[aouts];
         }
 
         if (params > 0)
@@ -338,13 +325,13 @@ public:
                 {
                     j = ain.count++;
                     ain.ports[j] = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
-                    ain.rindexes[j] = i;
+                    ain_rindexes[j] = i;
                 }
                 else if (LADSPA_IS_PORT_OUTPUT(PortType))
                 {
                     j = aout.count++;
                     aout.ports[j] = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-                    aout.rindexes[j] = i;
+                    aout_rindexes[j] = i;
                     needs_cin = true;
                 }
                 else
@@ -574,12 +561,11 @@ public:
             else
                 strcpy(port_name, "midi-in");
 
-            min.ports[0] = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+            midi.port_min = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
         }
 
         ain.count   = ains;
         aout.count  = aouts;
-        min.count   = mins;
         param.count = params;
 
         reload_programs(true);
@@ -587,7 +573,7 @@ public:
         // plugin checks
         m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
 
-        if (min.count > 0 && aout.count > 0)
+        if (midi.port_min > 0 && aout.count > 0)
             m_hints |= PLUGIN_IS_SYNTH;
 
 #ifndef BUILD_BRIDGE
@@ -624,15 +610,13 @@ public:
         if (midiprog.count > 0)
         {
             for (uint32_t i=0; i < midiprog.count; i++)
-                free((void*)midiprog.names[i]);
+                free((void*)midiprog.data[i].name);
 
             delete[] midiprog.data;
-            delete[] midiprog.names;
         }
 
         midiprog.count = 0;
         midiprog.data  = nullptr;
-        midiprog.names = nullptr;
 
         // Query new programs
         if (descriptor->get_program && descriptor->select_program)
@@ -642,10 +626,7 @@ public:
         }
 
         if (midiprog.count > 0)
-        {
             midiprog.data  = new midi_program_t [midiprog.count];
-            midiprog.names = new const char* [midiprog.count];
-        }
 
         // Update data
         for (i=0; i < midiprog.count; i++)
@@ -655,13 +636,13 @@ public:
             {
                 midiprog.data[i].bank    = pdesc->Bank;
                 midiprog.data[i].program = pdesc->Program;
-                midiprog.names[i] = strdup(pdesc->Name);
+                midiprog.data[i].name    = strdup(pdesc->Name);
             }
             else
             {
                 midiprog.data[i].bank    = 0;
                 midiprog.data[i].program = 0;
-                midiprog.names[i] = strdup("(error)");
+                midiprog.data[i].name    = strdup("(error)");
             }
         }
 
@@ -734,8 +715,8 @@ public:
         for (i=0; i < aout.count; i++)
             aouts_buffer[i] = (jack_default_audio_sample_t*)jack_port_get_buffer(aout.ports[i], nframes);
 
-        if (min.count > 0)
-            min_buffer = jack_port_get_buffer(min.ports[0], nframes);
+        if (midi.port_min > 0)
+            min_buffer = jack_port_get_buffer(midi.port_min, nframes);
 
         // --------------------------------------------------------------------------------------------------------
         // Input VU
@@ -858,15 +839,15 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // MIDI Input (External)
 
-        if (min.count > 0)
+        if (midi.port_min)
         {
             carla_midi_lock();
 
             for (i=0; i < MAX_MIDI_EVENTS && midi_event_count < MAX_MIDI_EVENTS; i++)
             {
-                if (external_midi[i].valid)
+                if (ext_midi_notes[i].valid)
                 {
-                    ExternalMidiNote* enote = &external_midi[i];
+                    ExternalMidiNote* enote = &ext_midi_notes[i];
                     enote->valid = false;
 
                     snd_seq_event_t* midi_event = &midi_events[midi_event_count];
@@ -892,7 +873,7 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // MIDI Input (JACK)
 
-        if (min.count > 0)
+        if (midi.port_min)
         {
             jack_midi_event_t min_event;
             uint32_t n_min_events = jack_midi_get_event_count(min_buffer);
@@ -972,10 +953,10 @@ public:
             }
 
             for (i=0; i < ain.count; i++)
-                ldescriptor->connect_port(handle, ain.rindexes[i], ains_buffer[i]);
+                ldescriptor->connect_port(handle, ain_rindexes[i], ains_buffer[i]);
 
             for (i=0; i < aout.count; i++)
-                ldescriptor->connect_port(handle, aout.rindexes[i], aouts_buffer[i]);
+                ldescriptor->connect_port(handle, aout_rindexes[i], aouts_buffer[i]);
 
             if (descriptor->run_synth)
             {
@@ -1178,9 +1159,11 @@ private:
     LADSPA_Handle handle;
     const LADSPA_Descriptor* ldescriptor;
     const DSSI_Descriptor* descriptor;
+    snd_seq_event_t midi_events[MAX_MIDI_EVENTS];
 
     float* param_buffers;
-    snd_seq_event_t midi_events[MAX_MIDI_EVENTS];
+    uint32_t* ain_rindexes;
+    uint32_t* aout_rindexes;
 };
 
 short add_plugin_dssi(const char* filename, const char* label, void* extra_stuff)

@@ -22,9 +22,9 @@
 
 class CarlaPlugin;
 
-int  carla_jack_bufsize_callback(jack_nframes_t new_buffer_size, void* arg);
-int  carla_jack_srate_callback(jack_nframes_t new_sample_rate, void* arg);
-int  carla_jack_process_callback(jack_nframes_t nframes, void* arg);
+int carla_jack_bufsize_callback(jack_nframes_t new_buffer_size, void* arg);
+int carla_jack_srate_callback(jack_nframes_t new_sample_rate, void* arg);
+int carla_jack_process_callback(jack_nframes_t nframes, void* arg);
 void carla_jack_shutdown_callback(void* arg);
 
 #ifndef BUILD_BRIDGE

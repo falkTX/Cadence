@@ -227,13 +227,11 @@ bool carla_jack_register_plugin(CarlaPlugin* plugin, jack_client_t** client)
         jack_set_sample_rate_callback(*client, carla_jack_srate_callback, nullptr);
         jack_set_process_callback(*client, carla_jack_process_callback, nullptr);
         jack_on_shutdown(*client, carla_jack_shutdown_callback, nullptr);
-
-        if (jack_activate(*client) == 0)
-            return true;
 #else
         jack_set_process_callback(*client, carla_jack_process_callback, plugin);
-        return true;
 #endif
+        //if (jack_activate(*client) == 0)
+        return true;
     }
 
     return false;

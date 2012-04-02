@@ -22,8 +22,7 @@
 class Sf2Plugin : public CarlaPlugin
 {
 public:
-    Sf2Plugin() :
-        CarlaPlugin()
+    Sf2Plugin() : CarlaPlugin()
     {
         qDebug("Sf2Plugin::Sf2Plugin()");
         m_type = PLUGIN_SF2;
@@ -54,9 +53,9 @@ public:
         return PLUGIN_CATEGORY_SYNTH;
     }
 
-    virtual uint32_t param_scalepoint_count(uint32_t index)
+    virtual uint32_t param_scalepoint_count(uint32_t param_id)
     {
-        switch (index)
+        switch (param_id)
         {
         case Sf2ChorusType:
             return 2;
@@ -67,12 +66,12 @@ public:
         }
     }
 
-    virtual double param_scalepoint_value(uint32_t pindex, uint32_t index)
+    virtual double get_parameter_scalepoint_value(uint32_t param_id, uint32_t scalepoint_id)
     {
-        switch (pindex)
+        switch (param_id)
         {
         case Sf2ChorusType:
-            switch (index)
+            switch (scalepoint_id)
             {
             case 0:
                 return FLUID_CHORUS_MOD_SINE;
@@ -82,7 +81,7 @@ public:
                 return FLUID_CHORUS_DEFAULT_TYPE;
             }
         case Sf2Interpolation:
-            switch (index)
+            switch (scalepoint_id)
             {
             case 0:
                 return FLUID_INTERP_NONE;
@@ -901,7 +900,7 @@ public:
 
             if (nframes > offset)
             {
-              fluid_synth_write_float(f_synth, nframes - offset, aouts_buffer[0] + offset, 0, 1, aouts_buffer[1] + offset, 0, 1);
+                fluid_synth_write_float(f_synth, nframes - offset, aouts_buffer[0] + offset, 0, 1, aouts_buffer[1] + offset, 0, 1);
             }
         } // End of MIDI Input (JACK)
 
@@ -1048,7 +1047,7 @@ private:
     fluid_synth_t* f_synth;
     int f_id;
 
-    float* param_buffers;
+    double* param_buffers;
     const char* m_label;
 };
 

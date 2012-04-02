@@ -32,8 +32,8 @@ int main(int argc, char* argv[])
 {
     if (argc != 5)
     {
-       qWarning("%s :: bad arguments", argv[0]);
-       return 1;
+        qWarning("%s :: bad arguments", argv[0]);
+        return 1;
     }
 
     const char* osc_url  = argv[1];
@@ -78,8 +78,8 @@ int main(int argc, char* argv[])
         break;
     }
 
-     if (id >= 0)
-     {
+    if (id >= 0)
+    {
         CarlaPlugin* plugin = CarlaPlugins[0];
 
         if (plugin && plugin->id() >= 0)
@@ -116,12 +116,12 @@ int main(int argc, char* argv[])
 
             delete plugin;
         }
-     }
-     else
-     {
-       qWarning("Plugin failed to load, error was:\n%s", get_last_error());
-       return 1;
-     }
+    }
+    else
+    {
+        qWarning("Plugin failed to load, error was:\n%s", get_last_error());
+        return 1;
+    }
 
     osc_close();
 

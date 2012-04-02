@@ -23,6 +23,7 @@
 class CarlaPlugin;
 
 const char* bool2str(bool yesno);
+const char* binarytype2str(BinaryType type);
 const char* plugintype2str(PluginType type);
 
 short get_new_plugin_id();

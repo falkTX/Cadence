@@ -64,8 +64,7 @@ bool is_ladspa_rdf_descriptor_valid(const LADSPA_RDF_Descriptor* rdf_descriptor,
 class LadspaPlugin : public CarlaPlugin
 {
 public:
-    LadspaPlugin() :
-        CarlaPlugin()
+    LadspaPlugin() : CarlaPlugin()
     {
         qDebug("LadspaPlugin::LadspaPlugin()");
         m_type = PLUGIN_LADSPA;
@@ -137,9 +136,9 @@ public:
         return descriptor->UniqueID;
     }
 
-    virtual uint32_t param_scalepoint_count(uint32_t index)
+    virtual uint32_t param_scalepoint_count(uint32_t param_id)
     {
-        int32_t rindex = param.data[index].rindex;
+        int32_t rindex = param.data[param_id].rindex;
 
         bool HasPortRDF = (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount);
         if (HasPortRDF)
@@ -148,13 +147,13 @@ public:
             return 0;
     }
 
-    virtual double param_scalepoint_value(uint32_t pindex, uint32_t index)
+    virtual double get_parameter_scalepoint_value(uint32_t param_id, uint32_t scalepoint_id)
     {
-        int32_t prindex = param.data[pindex].rindex;
+        int32_t param_rindex = param.data[param_id].rindex;
 
-        bool HasPortRDF = (rdf_descriptor && prindex < (int32_t)rdf_descriptor->PortCount);
+        bool HasPortRDF = (rdf_descriptor && param_rindex < (int32_t)rdf_descriptor->PortCount);
         if (HasPortRDF)
-            return rdf_descriptor->Ports[prindex].ScalePoints[index].Value;
+            return rdf_descriptor->Ports[param_rindex].ScalePoints[scalepoint_id].Value;
         else
             return 0.0;
     }
@@ -274,11 +273,9 @@ public:
         m_id = -1;
         carla_proc_unlock();
 
-        if (carla_options.global_jack_client == false && _id >= 0)
-            jack_deactivate(jack_client);
-
-        // Unregister previous jack ports
-        remove_from_jack();
+        // Unregister previous jack ports if needed
+        if (_id >= 0)
+            remove_from_jack();
 
         // Delete old data
         delete_buffers();
@@ -304,14 +301,14 @@ public:
 
         if (ains > 0)
         {
-            ain.rindexes = new uint32_t[ains];
             ain.ports    = new jack_port_t*[ains];
+            ain_rindexes = new uint32_t[ains];
         }
 
         if (aouts > 0)
         {
-            aout.rindexes = new uint32_t[aouts];
             aout.ports    = new jack_port_t*[aouts];
+            aout_rindexes = new uint32_t[aouts];
         }
 
         if (params > 0)
@@ -347,13 +344,13 @@ public:
                 {
                     j = ain.count++;
                     ain.ports[j] = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
-                    ain.rindexes[j] = i;
+                    ain_rindexes[j] = i;
                 }
                 else if (LADSPA_IS_PORT_OUTPUT(PortType))
                 {
                     j = aout.count++;
                     aout.ports[j] = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-                    aout.rindexes[j] = i;
+                    aout_rindexes[j] = i;
                     needs_cin = true;
                 }
                 else
@@ -738,10 +735,10 @@ public:
             }
 
             for (i=0; i < ain.count; i++)
-                descriptor->connect_port(handle, ain.rindexes[i], ains_buffer[i]);
+                descriptor->connect_port(handle, ain_rindexes[i], ains_buffer[i]);
 
             for (i=0; i < aout.count; i++)
-                descriptor->connect_port(handle, aout.rindexes[i], aouts_buffer[i]);
+                descriptor->connect_port(handle, aout_rindexes[i], aouts_buffer[i]);
 
             if (descriptor->run)
                 descriptor->run(handle, nframes);
@@ -928,6 +925,8 @@ private:
     const LADSPA_RDF_Descriptor* rdf_descriptor;
 
     float* param_buffers;
+    uint32_t* ain_rindexes;
+    uint32_t* aout_rindexes;
 };
 
 short add_plugin_ladspa(const char* filename, const char* label, void* extra_stuff)

@@ -22,20 +22,20 @@
 #include "carla_osc.h"
 #include "carla_shared.h"
 
+#ifndef BUILD_BRIDGE
+#include "carla_threads.h"
+#endif
+
+// common includes
 #include <cmath>
-#include <cstring>
 
 #include <QtCore/QList>
 #include <QtCore/QMutex>
+#include <QtCore/QString>
 
 #define CARLA_PROCESS_CONTINUE_CHECK if (m_id != plugin_id) { return callback_action(CALLBACK_DEBUG, plugin_id, m_id, 0, 0.0); }
 
-class CarlaPluginThread;
-
-const unsigned short MAX_POSTEVENTS = 128;
-
-// Global OSC stuff
-extern OscData global_osc_data;
+const unsigned short MAX_POST_EVENTS = 128;
 
 enum PluginPostEventType {
     PostEventDebug,
@@ -63,17 +63,17 @@ enum PluginBridgeInfoType {
 struct midi_program_t {
     uint32_t bank;
     uint32_t program;
+    const char* name;
 };
 
 struct PluginAudioData {
     uint32_t count;
-    uint32_t* rindexes;
     jack_port_t** ports;
 };
 
 struct PluginMidiData {
-    uint32_t count;
-    jack_port_t** ports;
+    jack_port_t* port_min;
+    jack_port_t* port_mout;
 };
 
 struct PluginParameterData {
@@ -94,7 +94,6 @@ struct PluginMidiProgramData {
     uint32_t count;
     int32_t current;
     midi_program_t* data;
-    const char** names;
 };
 
 struct PluginPostEvent {
@@ -138,17 +137,12 @@ public:
 
         ain.count = 0;
         ain.ports = nullptr;
-        ain.rindexes = nullptr;
 
         aout.count = 0;
         aout.ports = nullptr;
-        aout.rindexes = nullptr;
 
-        min.count = 0;
-        min.ports = nullptr;
-
-        mout.count = 0;
-        mout.ports = nullptr;
+        midi.port_min  = nullptr;
+        midi.port_mout = nullptr;
 
         param.count  = 0;
         param.data   = nullptr;
@@ -163,43 +157,34 @@ public:
         midiprog.count   = 0;
         midiprog.current = -1;
         midiprog.data    = nullptr;
-        midiprog.names   = nullptr;
 
         custom.clear();
 
+#ifndef BUILD_BRIDGE
         osc.data.path = nullptr;
         osc.data.source = nullptr;
         osc.data.target = nullptr;
         osc.thread = nullptr;
+#endif
 
-        for (unsigned short i=0; i < MAX_POSTEVENTS; i++)
+        for (unsigned short i=0; i < MAX_POST_EVENTS; i++)
             post_events.data[i].valid = false;
 
         for (unsigned short i=0; i < MAX_MIDI_EVENTS; i++)
-            external_midi[i].valid = false;
+            ext_midi_notes[i].valid = false;
     }
 
     virtual ~CarlaPlugin()
     {
         qDebug("CarlaPlugin::~CarlaPlugin()");
 
-        m_type = PLUGIN_NONE;
-        m_id   = -1;
-        m_hints = 0;
+        // FIXME - reorder these calls?
 
-        m_active = false;
-        m_active_before = false;
-
-        // Unregister jack ports
+        // Unregister jack client and ports
         remove_from_jack();
 
         // Delete data
         delete_buffers();
-
-        osc.data.path = nullptr;
-        osc.data.source = nullptr;
-        osc.data.target = nullptr;
-        osc.thread = nullptr;
 
         if (prog.count > 0)
         {
@@ -212,20 +197,10 @@ public:
         if (midiprog.count > 0)
         {
             for (uint32_t i=0; i < prog.count; i++)
-                free((void*)midiprog.names[i]);
+                free((void*)midiprog.data[i].name);
 
             delete[] midiprog.data;
-            delete[] midiprog.names;
         }
-
-        prog.count   = 0;
-        prog.current = -1;
-        prog.names   = nullptr;
-
-        midiprog.count   = 0;
-        midiprog.current = -1;
-        midiprog.data    = nullptr;
-        midiprog.names   = nullptr;
 
         if (custom.count() > 0)
         {
@@ -258,11 +233,6 @@ public:
         return m_type;
     }
 
-    virtual PluginCategory category()
-    {
-        return PLUGIN_CATEGORY_NONE;
-    }
-
     short id()
     {
         return m_id;
@@ -283,6 +253,11 @@ public:
         return m_filename;
     }
 
+    virtual PluginCategory category()
+    {
+        return PLUGIN_CATEGORY_NONE;
+    }
+
     virtual long unique_id()
     {
         return 0;
@@ -298,9 +273,24 @@ public:
         return aout.count;
     }
 
+    virtual uint32_t min_count()
+    {
+        return (midi.port_min) ? 1 : 0;
+    }
+
+    virtual uint32_t mout_count()
+    {
+        return (midi.port_mout) ? 1 : 0;
+    }
+
     uint32_t param_count()
     {
         return param.count;
+    }
+
+    virtual uint32_t param_scalepoint_count(uint32_t /*param_id*/)
+    {
+        return 0;
     }
 
     uint32_t custom_count()
@@ -308,24 +298,24 @@ public:
         return custom.count();
     }
 
-    virtual uint32_t prog_count()
+    uint32_t prog_count()
     {
         return prog.count;
     }
 
-    virtual uint32_t midiprog_count()
+    uint32_t midiprog_count()
     {
         return midiprog.count;
     }
 
-    virtual uint32_t param_scalepoint_count(uint32_t)
+    int32_t prog_current()
     {
-        return 0;
+        return prog.current;
     }
 
-    virtual double param_scalepoint_value(uint32_t, uint32_t)
+    int32_t midiprog_current()
     {
-        return 0.0;
+        return midiprog.current;
     }
 
     ParameterData* param_data(uint32_t index)
@@ -343,29 +333,32 @@ public:
         return &custom[index];
     }
 
+    virtual int32_t chunk_data(void** /*data_ptr*/)
+    {
+        return 0;
+    }
+
+#ifndef BUILD_BRIDGE
     OscData* osc_data()
     {
         return &osc.data;
     }
+#endif
 
-    int32_t prog_current()
+    virtual double get_parameter_value(uint32_t /*param_id*/)
     {
-        return prog.current;
+        return 0.0;
     }
 
-    int32_t midiprog_current()
+    virtual double get_parameter_scalepoint_value(uint32_t /*param_id*/, uint32_t /*scalepoint_id*/)
     {
-        return midiprog.current;
+        return 0.0;
     }
 
-    const char* prog_name(uint32_t index)
+    // FIXME - remove this?
+    double get_default_parameter_value(uint32_t param_id)
     {
-        return prog.names[index];
-    }
-
-    const char* midiprog_name(uint32_t index)
-    {
-        return midiprog.names[index];
+        return param.ranges[param_id].def;
     }
 
     virtual void get_label(char* buf_str)
@@ -388,43 +381,34 @@ public:
         *buf_str = 0;
     }
 
-    virtual void get_parameter_name(uint32_t index, char* buf_str)
+    virtual void get_parameter_name(uint32_t /*index*/, char* buf_str)
     {
         *buf_str = 0;
-        Q_UNUSED(index);
     }
 
-    virtual void get_parameter_symbol(uint32_t index, char* buf_str)
+    virtual void get_parameter_symbol(uint32_t /*index*/, char* buf_str)
     {
         *buf_str = 0;
-        Q_UNUSED(index);
     }
 
-    virtual void get_parameter_label(uint32_t index, char* buf_str)
+    virtual void get_parameter_label(uint32_t /*index*/, char* buf_str)
     {
         *buf_str = 0;
-        Q_UNUSED(index);
     }
 
-    virtual void get_parameter_scalepoint_label(uint32_t pindex, uint32_t index, char* buf_str)
+    virtual void get_parameter_scalepoint_label(uint32_t /*pindex*/, uint32_t /*index*/, char* buf_str)
     {
         *buf_str = 0;
-        Q_UNUSED(index);
-        Q_UNUSED(pindex);
     }
 
-    virtual void get_audio_port_count_info(PortCountInfo* info)
+    const char* prog_name(uint32_t index)
     {
-        info->ins   = ain.count;
-        info->outs  = aout.count;
-        info->total = ain.count + aout.count;
+        return prog.names[index];
     }
 
-    void get_midi_port_count_info(PortCountInfo* info)
+    const char* midiprog_name(uint32_t index)
     {
-        info->ins   = min.count;
-        info->outs  = mout.count;
-        info->total = min.count + mout.count;
+        return midiprog.data[index].name;
     }
 
     void get_parameter_count_info(PortCountInfo* info)
@@ -446,17 +430,12 @@ public:
     {
         info->bank    = midiprog.data[index].bank;
         info->program = midiprog.data[index].program;
-        info->label   = midiprog.names[index];
+        info->label   = midiprog.data[index].name;
     }
 
     virtual void get_gui_info(GuiInfo* info)
     {
         info->type = GUI_NONE;
-    }
-
-    virtual int32_t get_chunk_data(void**)
-    {
-        return 0;
     }
 
     void set_id(short id)
@@ -585,16 +564,6 @@ public:
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_BALANCE_RIGHT, 0, value);
     }
 
-    double get_default_parameter_value(uint32_t index)
-    {
-        return param.ranges[index].def;
-    }
-
-    virtual double get_current_parameter_value(uint32_t)
-    {
-        return 0.0;
-    }
-
     virtual void set_parameter_value(uint32_t index, double value, bool gui_send, bool osc_send, bool callback_send)
     {
 #ifndef BUILD_BRIDGE
@@ -692,7 +661,7 @@ public:
         // Change default value
         for (uint32_t i=0; i < param.count; i++)
         {
-            param.ranges[i].def = get_current_parameter_value(i);
+            param.ranges[i].def = get_parameter_value(i);
 
 #ifndef BUILD_BRIDGE
             //if (osc_send)
@@ -723,7 +692,7 @@ public:
         // Change default value
         for (uint32_t i=0; i < param.count; i++)
         {
-            param.ranges[i].def = get_current_parameter_value(i);
+            param.ranges[i].def = get_parameter_value(i);
 
 #ifndef BUILD_BRIDGE
             //if (osc_send)
@@ -752,12 +721,12 @@ public:
         carla_midi_lock();
         for (unsigned int i=0; i<MAX_MIDI_EVENTS; i++)
         {
-            if (external_midi[i].valid == false)
+            if (ext_midi_notes[i].valid == false)
             {
-                external_midi[i].valid = true;
-                external_midi[i].onoff = onoff;
-                external_midi[i].note = note;
-                external_midi[i].velo = velo;
+                ext_midi_notes[i].valid = true;
+                ext_midi_notes[i].onoff = onoff;
+                ext_midi_notes[i].note = note;
+                ext_midi_notes[i].velo = velo;
                 break;
             }
         }
@@ -823,7 +792,7 @@ public:
     {
         post_events.lock.lock();
 
-        for (unsigned short i=0; i<MAX_POSTEVENTS; i++)
+        for (unsigned short i=0; i<MAX_POST_EVENTS; i++)
         {
             if (post_events.data[i].valid == false)
             {
@@ -842,9 +811,10 @@ public:
     {
         post_events.lock.lock();
 
-        memcpy(post_events_dst, post_events.data, sizeof(PluginPostEvent)*MAX_POSTEVENTS);
+        // FIXME?
+        memcpy(post_events_dst, post_events.data, sizeof(PluginPostEvent)*MAX_POST_EVENTS);
 
-        for (unsigned short i=0; i < MAX_POSTEVENTS; i++)
+        for (unsigned short i=0; i < MAX_POST_EVENTS; i++)
             post_events.data[i].valid = false;
 
         post_events.lock.unlock();
@@ -891,7 +861,7 @@ public:
         }
 
         for (uint32_t i=0; i < param.count; i++)
-            osc_send_control(&osc.data, param.data[i].rindex, get_current_parameter_value(i));
+            osc_send_control(&osc.data, param.data[i].rindex, get_parameter_value(i));
 
         if (m_hints & PLUGIN_IS_BRIDGE)
         {
@@ -913,10 +883,8 @@ public:
                 osc_send_show(&osc.data);
                 return true;
             }
-            //else
-                // 100 ms
-                // FIXME
-                //usleep(100000);
+            else
+                carla_msleep(100);
         }
         return false;
     }
@@ -924,24 +892,25 @@ public:
 
     void remove_from_jack()
     {
-        qDebug("CarlaPlugin::remove_from_jack()");
+        qDebug("CarlaPlugin::remove_from_jack() - start");
 
         if (jack_client == nullptr)
             return;
 
-        uint32_t i;
+        if (carla_options.global_jack_client == false)
+            jack_deactivate(jack_client);
 
-        for (i=0; i < ain.count; i++)
+        for (uint32_t i=0; i < ain.count; i++)
             jack_port_unregister(jack_client, ain.ports[i]);
 
-        for (i=0; i < aout.count; i++)
+        for (uint32_t i=0; i < aout.count; i++)
             jack_port_unregister(jack_client, aout.ports[i]);
 
-        for (i=0; i < min.count; i++)
-            jack_port_unregister(jack_client, min.ports[i]);
+        if (midi.port_min)
+            jack_port_unregister(jack_client, midi.port_min);
 
-        for (i=0; i < mout.count; i++)
-            jack_port_unregister(jack_client, mout.ports[i]);
+        if (midi.port_mout)
+            jack_port_unregister(jack_client, midi.port_mout);
 
         if (param.port_cin)
             jack_port_unregister(jack_client, param.port_cin);
@@ -954,29 +923,13 @@ public:
 
     void delete_buffers()
     {
-        qDebug("CarlaPlugin::delete_buffers()");
+        qDebug("CarlaPlugin::delete_buffers() - start");
 
         if (ain.count > 0)
-        {
             delete[] ain.ports;
-            delete[] ain.rindexes;
-        }
 
         if (aout.count > 0)
-        {
             delete[] aout.ports;
-            delete[] aout.rindexes;
-        }
-
-        if (min.count > 0)
-        {
-            delete[] min.ports;
-        }
-
-        if (mout.count > 0)
-        {
-            delete[] mout.ports;
-        }
 
         if (param.count > 0)
         {
@@ -986,17 +939,12 @@ public:
 
         ain.count = 0;
         ain.ports = nullptr;
-        ain.rindexes = nullptr;
 
         aout.count = 0;
         aout.ports = nullptr;
-        aout.rindexes = nullptr;
 
-        min.count = 0;
-        min.ports = nullptr;
-
-        mout.count = 0;
-        mout.ports = nullptr;
+        midi.port_min  = nullptr;
+        midi.port_mout = nullptr;
 
         param.count    = 0;
         param.data     = nullptr;
@@ -1056,7 +1004,7 @@ public:
         DWORD  winErrorCode = GetLastError();
         FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |  FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, winErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&winErrorString, 0, nullptr);
 
-        snprintf(libError, 2048, "%s: error code " P_INTPTR ": %s", m_filename, winErrorCode, (const char*)winErrorString);
+        snprintf(libError, 2048, "%s: error code %i: %s", m_filename, winErrorCode, (const char*)winErrorString);
         LocalFree(winErrorString);
 
         return libError;
@@ -1066,7 +1014,7 @@ public:
     }
 
     // utilities
-    void fix_parameter_value(double& value, const ParameterRanges& ranges)
+    static void fix_parameter_value(double& value, const ParameterRanges& ranges)
     {
         if (value < ranges.min)
             value = ranges.min;
@@ -1074,7 +1022,7 @@ public:
             value = ranges.max;
     }
 
-    double abs_d(const double& value)
+    static double abs_d(const double& value)
     {
         return (value < 0.0) ? -value : value;
     }
@@ -1097,26 +1045,26 @@ protected:
     // Storage Data
     PluginAudioData ain;
     PluginAudioData aout;
-    PluginMidiData min;
-    PluginMidiData mout;
+    PluginMidiData midi;
     PluginParameterData param;
     PluginProgramData prog;
     PluginMidiProgramData midiprog;
-
     QList<CustomData> custom;
 
     // Extra
+#ifndef BUILD_BRIDGE
     struct {
         OscData data;
         CarlaPluginThread* thread;
     } osc;
+#endif
 
     struct {
         QMutex lock;
-        PluginPostEvent data[MAX_POSTEVENTS];
+        PluginPostEvent data[MAX_POST_EVENTS];
     } post_events;
 
-    ExternalMidiNote external_midi[MAX_MIDI_EVENTS];
+    ExternalMidiNote ext_midi_notes[MAX_MIDI_EVENTS];
 };
 
 #endif // CARLA_PLUGIN_H

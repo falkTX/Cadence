@@ -207,7 +207,9 @@ PortCountInfo* get_audio_port_count_info(unsigned short plugin_id)
         if (plugin && plugin->id() == plugin_id)
         {
             info.valid = true;
-            plugin->get_audio_port_count_info(&info);
+            info.ins   = plugin->ain_count();
+            info.outs  = plugin->aout_count();
+            info.total = info.ins + info.outs;
             return &info;
         }
     }
@@ -229,7 +231,9 @@ PortCountInfo* get_midi_port_count_info(unsigned short plugin_id)
         if (plugin && plugin->id() == plugin_id)
         {
             info.valid = true;
-            plugin->get_midi_port_count_info(&info);
+            info.ins   = plugin->min_count();
+            info.outs  = plugin->mout_count();
+            info.total = info.ins + info.outs;
             return &info;
         }
     }
@@ -332,7 +336,7 @@ ScalePointInfo* get_scalepoint_info(unsigned short plugin_id, uint32_t parameter
                     char buf_str[STR_MAX] = { 0 };
 
                     info.valid = true;
-                    info.value = plugin->param_scalepoint_value(parameter_id, scalepoint_id);
+                    info.value = plugin->get_parameter_scalepoint_value(parameter_id, scalepoint_id);
 
                     plugin->get_parameter_scalepoint_label(parameter_id, scalepoint_id, buf_str);
                     info.label = strdup(buf_str);
@@ -493,7 +497,7 @@ const char* get_chunk_data(unsigned short plugin_id)
             if (plugin->hints() & PLUGIN_USES_CHUNKS)
             {
                 void* data = nullptr;
-                int32_t data_size = plugin->get_chunk_data(&data);
+                int32_t data_size = plugin->chunk_data(&data);
 
                 if (data && data_size >= 4)
                 {
@@ -713,7 +717,7 @@ double get_current_parameter_value(unsigned short plugin_id, uint32_t parameter_
         if (plugin && plugin->id() == plugin_id)
         {
             if (parameter_id < plugin->param_count())
-                return plugin->get_current_parameter_value(parameter_id);
+                return plugin->get_parameter_value(parameter_id);
             else
                 qCritical("get_current_parameter_value(%i, %i) - parameter_id out of bounds", plugin_id, parameter_id);
 

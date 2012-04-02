@@ -35,4 +35,4 @@ INCLUDEPATH = \
 #     vestige \
     ../../carla-includes
 
-LIBS += -ljack -llo -lpthread
+LIBS += -ljack -llo
