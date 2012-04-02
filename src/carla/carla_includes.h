@@ -38,12 +38,17 @@
 #endif
 
 #ifdef Q_OS_WIN
-#include <windows.h>
+#  include <windows.h>
+#  define sleep(t)  Sleep(t * 1000)
+#  define msleep(t) Sleep(t)
+#  define usleep(t) Sleep(t / 1000)
 #else
-#include <dlfcn.h>
-#ifndef __cdecl
-#define __cdecl
-#endif
+#  include <dlfcn.h>
+#  include <unistd.h>
+#  define msleep(t) usleep(t * 1000)
+#  ifndef __cdecl
+#    define __cdecl
+#  endif
 #endif
 
 // needed for qDebug/Warning/Critical sections
@@ -73,7 +78,7 @@
 #endif
 
 // don't export symbols if in bridge mode
-#if defined(BUILD_BRIDGE)
+#ifdef BUILD_BRIDGE
 #  define CARLA_EXPORT
 #else
 #  ifdef Q_OS_WIN

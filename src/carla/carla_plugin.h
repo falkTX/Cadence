@@ -24,7 +24,6 @@
 
 #include <cmath>
 #include <cstring>
-//#include <unistd.h>
 
 #include <QtCore/QList>
 #include <QtCore/QMutex>
@@ -478,6 +477,8 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_ACTIVE, value);
         }
+#else
+        Q_UNUSED(osc_send);
 #endif
 
         if (callback_send)
@@ -501,6 +502,8 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_DRYWET, value);
         }
+#else
+        Q_UNUSED(osc_send);
 #endif
 
         if (callback_send)
@@ -524,6 +527,8 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_VOLUME, value);
         }
+#else
+        Q_UNUSED(osc_send);
 #endif
 
         if (callback_send)
@@ -547,6 +552,8 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_BALANCE_LEFT, value);
         }
+#else
+        Q_UNUSED(osc_send);
 #endif
 
         if (callback_send)
@@ -570,6 +577,8 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_BALANCE_RIGHT, value);
         }
+#else
+        Q_UNUSED(osc_send);
 #endif
 
         if (callback_send)
@@ -596,6 +605,8 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, index, value);
         }
+#else
+        Q_UNUSED(osc_send);
 #endif
 
         if (callback_send)
@@ -697,6 +708,8 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_program(&osc.data, prog.current);
         }
+#else
+        Q_UNUSED(osc_send);
 #endif
 
         if (callback_send)
@@ -726,6 +739,8 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_program(&osc.data, midiprog.current);
         }
+#else
+        Q_UNUSED(osc_send);
 #endif
 
         if (callback_send)
@@ -764,6 +779,8 @@ public:
             //        osc_send_note_off(&osc.data, m_id, note);
             //}
         }
+#else
+        Q_UNUSED(osc_send);
 #endif
 
         if (callback_send)
@@ -833,6 +850,7 @@ public:
         post_events.lock.unlock();
     }
 
+#ifndef BUILD_BRIDGE
     void update_osc_data(lo_address source, const char* url)
     {
         const char* host;
@@ -902,6 +920,7 @@ public:
         }
         return false;
     }
+#endif
 
     void remove_from_jack()
     {
@@ -1037,7 +1056,7 @@ public:
         DWORD  winErrorCode = GetLastError();
         FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |  FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, winErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&winErrorString, 0, nullptr);
 
-        snprintf(libError, 2048, "%s: error code %li: %s", m_filename, winErrorCode, (const char*)winErrorString);
+        snprintf(libError, 2048, "%s: error code " P_INTPTR ": %s", m_filename, winErrorCode, (const char*)winErrorString);
         LocalFree(winErrorString);
 
         return libError;

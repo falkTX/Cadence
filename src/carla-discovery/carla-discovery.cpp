@@ -83,7 +83,7 @@ const unsigned int PLUGIN_IS_BRIDGE   = 0x02;
 const unsigned int PLUGIN_IS_SYNTH    = 0x04;
 const unsigned int PLUGIN_USES_CHUNKS = 0x08;
 const unsigned int PLUGIN_CAN_DRYWET  = 0x10;
-const unsigned int PLUGIN_CAN_VOL     = 0x20;
+const unsigned int PLUGIN_CAN_VOLUME  = 0x20;
 const unsigned int PLUGIN_CAN_BALANCE = 0x40;
 
 enum BinaryType {

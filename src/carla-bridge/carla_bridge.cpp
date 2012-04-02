@@ -74,6 +74,7 @@ int main(int argc, char* argv[])
         id = add_plugin_vst(filename, label);
         break;
     default:
+        id = -1;
         break;
     }
 
@@ -110,13 +111,11 @@ int main(int argc, char* argv[])
 
                 if (close_now) break;
 
-                // FIXME
-                //usleep(50000); // 50 ms
+                msleep(50);
             }
 
             delete plugin;
         }
-
      }
      else
      {

@@ -37,7 +37,7 @@ endif
 
 
 all:
-	@echo "Build type must be unix32, unix64, win32 or win64"
+	@echo "Build type must be unix32, unix64, win[e]32 or win[e]64"
 
 unix32: carla-discovery-unix32
 

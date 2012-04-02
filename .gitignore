@@ -1,8 +1,8 @@
 .directory
 .fuse-*
 .*.kate-swp
-*~
 
+*~
 *.o
 *.a
 *.exe
@@ -22,8 +22,9 @@ ui_*.h
 
 carla-bridge-*
 carla-discovery-*
+c++/patchcanvas/PatchCanvas
 
 c++/*/Makefile
-c++/patchcanvas/PatchCanvas
+src/carla*/qtcreator/Makefile
 src/carla-includes/aeffect.h
 src/carla-includes/aeffectx.h

@@ -103,6 +103,8 @@ int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
         }
         return 0;
     }
+#else
+        Q_UNUSED(arg);
 #endif
 
 #ifdef BUILD_BRIDGE
@@ -135,6 +137,7 @@ void carla_jack_shutdown_callback(void*)
 
 // -------------------------------------------------------------------------------------------------------------------
 
+#ifndef BUILD_BRIDGE
 bool carla_jack_init(const char* client_name)
 {
     carla_jack_client = jack_client_open(client_name, JackNullOption, nullptr);
@@ -200,6 +203,7 @@ bool carla_jack_close()
     carla_jack_client = nullptr;
     return false;
 }
+#endif
 
 bool carla_jack_register_plugin(CarlaPlugin* plugin, jack_client_t** client)
 {
@@ -233,4 +237,9 @@ bool carla_jack_register_plugin(CarlaPlugin* plugin, jack_client_t** client)
     }
 
     return false;
+}
+
+int carla_jack_port_name_size()
+{
+    return jack_port_name_size();
 }

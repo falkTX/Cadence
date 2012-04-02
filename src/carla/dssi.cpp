@@ -1150,6 +1150,8 @@ public:
 
                                 m_hints |= PLUGIN_HAS_GUI;
                             }
+#else
+                            Q_UNUSED(extra_stuff);
 #endif
 
                             return true;
