@@ -16,7 +16,10 @@
  */
 
 #include "carla_plugin.h"
+
+#ifndef BUILD_BRIDGE
 #include "carla_threads.h"
+#endif
 
 #include "dssi/dssi.h"
 
@@ -42,6 +45,7 @@ public:
     {
         qDebug("DssiPlugin::~DssiPlugin()");
 
+#ifndef BUILD_BRIDGE
         // close UI
         if (m_hints & PLUGIN_HAS_GUI)
         {
@@ -67,6 +71,7 @@ public:
 
             osc_clear_data(&osc.data);
         }
+#endif
 
         if (handle && ldescriptor->deactivate && m_active_before)
             ldescriptor->deactivate(handle);
@@ -144,8 +149,10 @@ public:
     {
         param_buffers[index] = value;
 
+#ifndef BUILD_BRIDGE
         if (gui_send)
             osc_send_control(&osc.data, param.data[index].rindex, value);
+#endif
 
         CarlaPlugin::set_parameter_value(index, value, gui_send, osc_send, callback_send);
     }
@@ -154,8 +161,10 @@ public:
     {
         descriptor->configure(handle, key, value);
 
+#ifndef BUILD_BRIDGE
         if (gui_send)
             osc_send_configure(&osc.data, key, value);
+#endif
 
         if (strcmp(key, "reloadprograms") == 0 || strcmp(key, "load") == 0 || strncmp(key, "patches", 7) == 0)
         {
@@ -213,14 +222,17 @@ public:
         descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
         if (block) carla_proc_unlock();
 
+#ifndef BUILD_BRIDGE
         if (gui_send)
             osc_send_program_as_midi(&osc.data, midiprog.data[index].bank, midiprog.data[index].program);
+#endif
 
         CarlaPlugin::set_midi_program(index, gui_send, osc_send, callback_send, block);
     }
 
     virtual void show_gui(bool yesno)
     {
+#ifndef BUILD_BRIDGE
         if (yesno)
         {
             osc.thread->start();
@@ -231,6 +243,9 @@ public:
             osc_send_quit(&osc.data);
             osc_clear_data(&osc.data);
         }
+#else
+        Q_UNUSED(yesno);
+#endif
     }
 
     virtual void reload()
@@ -575,11 +590,13 @@ public:
         if (min.count > 0 && aout.count > 0)
             m_hints |= PLUGIN_IS_SYNTH;
 
+#ifndef BUILD_BRIDGE
         if (carla_options.use_dssi_chunks && QString(m_filename).endsWith("dssi-vst.so", Qt::CaseInsensitive))
         {
             if (descriptor->get_custom_data && descriptor->set_custom_data)
                 m_hints |= PLUGIN_USES_CHUNKS;
         }
+#endif
 
         if (aouts > 0 && (ains == aouts || ains == 1))
             m_hints |= PLUGIN_CAN_DRYWET;
@@ -1122,6 +1139,7 @@ public:
 
                         if (carla_jack_register_plugin(this, &jack_client))
                         {
+#ifndef BUILD_BRIDGE
                             if (extra_stuff)
                             {
                                 // GUI Stuff
@@ -1132,6 +1150,7 @@ public:
 
                                 m_hints |= PLUGIN_HAS_GUI;
                             }
+#endif
 
                             return true;
                         }

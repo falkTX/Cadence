@@ -895,9 +895,10 @@ public:
                 osc_send_show(&osc.data);
                 return true;
             }
-            else
+            //else
                 // 100 ms
-                usleep(100000);
+                // FIXME
+                //usleep(100000);
         }
         return false;
     }

@@ -35,8 +35,8 @@
 
 #include <cmath>
 #include <cstdio>
-#include <cstdlib>
-#include <cstring>
+//#include <cstdlib>
+//#include <cstring>
 #include <iostream>
 
 #include "ladspa/ladspa.h"
@@ -165,7 +165,11 @@ const char* lib_error(const char* filename)
     DWORD  winErrorCode = GetLastError();
     FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |  FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, winErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&winErrorString, 0, nullptr);
 
+#ifdef __WINE__
+    snprintf(libError, 2048, "%s: error code %i: %s", filename, winErrorCode, (const char*)winErrorString);
+#else
     snprintf(libError, 2048, "%s: error code %li: %s", filename, winErrorCode, (const char*)winErrorString);
+#endif
     LocalFree(winErrorString);
 
     return libError;
@@ -505,15 +509,11 @@ void do_dssi_check(void* lib_handle)
     const DSSI_Descriptor* descriptor;
     DSSI_Descriptor_Function descfn = (DSSI_Descriptor_Function)lib_symbol(lib_handle, "dssi_descriptor");
 
-    DISCOVERY_OUT("TEST    TEST", "000");
-
     if (descfn == nullptr)
     {
         DISCOVERY_OUT("error", "Not a DSSI plugin");
         return;
     }
-
-    DISCOVERY_OUT("TEST    TEST", "001");
 
     unsigned long i = 0;
     while ((descriptor = descfn(i++)))
@@ -521,12 +521,8 @@ void do_dssi_check(void* lib_handle)
         ldescriptor = descriptor->LADSPA_Plugin;
         handle = ldescriptor->instantiate(ldescriptor, sampleRate);
 
-        DISCOVERY_OUT("TEST    TEST", "002");
-
         if (handle)
         {
-
-            DISCOVERY_OUT("TEST    TEST", "003");
             int hints = 0;
             PluginCategory category = PLUGIN_CATEGORY_NONE;
 
@@ -761,12 +757,6 @@ void do_dssi_check(void* lib_handle)
         else
             DISCOVERY_OUT("error", "Failed to init DSSI plugin");
     }
-}
-
-void do_lv2_check(const char* bundle)
-{
-    // TODO
-    (void)bundle;
 }
 
 void do_vst_check(void* lib_handle)
@@ -1062,12 +1052,8 @@ void do_sf2_check(const char* filename)
 // ------------------------------ main entry point ------------------------------
 int main(int argc, char* argv[])
 {
-    DISCOVERY_OUT("TEST    TEST", "STARTED MAIN");
-
     if (argc != 3)
         return 1;
-
-    DISCOVERY_OUT("TEST    TEST", "STARTED");
 
     const char* type_str = argv[1];
     const char* filename = argv[2];
@@ -1086,11 +1072,6 @@ int main(int argc, char* argv[])
         open_lib = true;
         type = PLUGIN_DSSI;
     }
-    else if (strcmp(type_str, "LV2") == 0)
-    {
-        open_lib = false;
-        type = PLUGIN_LV2;
-    }
     else if (strcmp(type_str, "VST") == 0)
     {
         open_lib = true;
@@ -1103,8 +1084,8 @@ int main(int argc, char* argv[])
     }
     else
     {
-        open_lib = false;
-        type = PLUGIN_NONE;
+        DISCOVERY_OUT("error", "Invalid plugin type");
+        return 1;
     }
 
     if (open_lib)
@@ -1115,7 +1096,7 @@ int main(int argc, char* argv[])
         {
             const char* error = lib_error(filename);
             // Since discovery can find multi-architecture binaries, don't print ELF related errors
-            if (error && strstr(error, "wrong ELF class") == nullptr && strstr(error, "Bad EXE format") == 0)
+            if (error && strstr(error, "wrong ELF class") == nullptr && strstr(error, "Bad EXE format") == nullptr)
                 DISCOVERY_OUT("error", error);
             return 1;
         }
@@ -1128,9 +1109,6 @@ int main(int argc, char* argv[])
         break;
     case PLUGIN_DSSI:
         do_dssi_check(handle);
-        break;
-    case PLUGIN_LV2:
-        do_lv2_check(filename);
         break;
     case PLUGIN_VST:
         do_vst_check(handle);

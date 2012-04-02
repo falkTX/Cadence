@@ -31,8 +31,7 @@ WINE_LINK_FLAGS  = $(LINK_FLAGS)
 WINE_32BIT_FLAGS = -L/usr/lib32/wine -L/usr/lib/i386-linux-gnu/wine $(32BIT_FLAGS)
 WINE_64BIT_FLAGS = -L/usr/lib64/wine -L/usr/lib/x86_64-linux-gnu/wine $(64BIT_FLAGS)
 
-SOURCES = carla_bridge.cpp carla_osc.cpp ../carla/carla_jack.cpp ../carla/carla_shared.cpp ../carla/ladspa.cpp
-#../carla/dssi.cpp ../carla/vst.cpp
+SOURCES = carla_bridge.cpp carla_osc.cpp ../carla/carla_jack.cpp ../carla/carla_shared.cpp ../carla/ladspa.cpp ../carla/dssi.cpp ../carla/vst.cpp
 
 
 all:

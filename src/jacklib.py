@@ -21,6 +21,7 @@ from ctypes import *
 from sys import platform
 
 # Load JACK shared library
+# FIXME - either quit importing this file when failing to find lib, or remove 'try:' field
 try:
   if (platform == "darwin"):
     jacklib = cdll.LoadLibrary("libjack.dylib")

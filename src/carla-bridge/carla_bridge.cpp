@@ -67,12 +67,12 @@ int main(int argc, char* argv[])
     case PLUGIN_LADSPA:
         id = add_plugin_ladspa(filename, label, nullptr);
         break;
-//     case PLUGIN_DSSI:
-//         id = add_plugin_dssi(filename, label, nullptr);
-//         break;
-//     case PLUGIN_VST:
-//         id = add_plugin_vst(filename, label);
-//         break;
+    case PLUGIN_DSSI:
+        id = add_plugin_dssi(filename, label, nullptr);
+        break;
+    case PLUGIN_VST:
+        id = add_plugin_vst(filename, label);
+        break;
     default:
         break;
     }
@@ -110,7 +110,8 @@ int main(int argc, char* argv[])
 
                 if (close_now) break;
 
-                usleep(50000); // 50 ms
+                // FIXME
+                //usleep(50000); // 50 ms
             }
 
             delete plugin;
