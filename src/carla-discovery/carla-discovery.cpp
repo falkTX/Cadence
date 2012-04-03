@@ -1008,6 +1008,7 @@ void do_sf2_check(const char* filename)
 
             DISCOVERY_OUT("init", "-----------");
             DISCOVERY_OUT("name", "");
+            //DISCOVERY_OUT("name", f_sfont->get_name(f_sfont));
             DISCOVERY_OUT("label", "");
             DISCOVERY_OUT("maker", "");
             DISCOVERY_OUT("copyright", "");

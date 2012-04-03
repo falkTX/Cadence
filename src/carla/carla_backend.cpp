@@ -78,6 +78,8 @@ bool carla_close()
     get_parameter_info(0, 0);
     get_scalepoint_info(0, 0, 0);
     get_chunk_data(0);
+    get_program_name(0, 0);
+    get_midi_program_name(0, 0);
     get_real_plugin_name(0);
     set_last_error(nullptr);
 
@@ -624,7 +626,8 @@ const char* get_program_name(unsigned short plugin_id, uint32_t program_id)
         }
     }
 
-    qCritical("get_program_name(%i, %i) - could not find plugin", plugin_id, program_id);
+    if (carla_is_engine_running())
+        qCritical("get_program_name(%i, %i) - could not find plugin", plugin_id, program_id);
     return nullptr;
 }
 
@@ -660,7 +663,8 @@ const char* get_midi_program_name(unsigned short plugin_id, uint32_t midi_progra
         }
     }
 
-    qCritical("get_midi_program_name(%i, %i) - could not find plugin", plugin_id, midi_program_id);
+    if (carla_is_engine_running())
+        qCritical("get_midi_program_name(%i, %i) - could not find plugin", plugin_id, midi_program_id);
     return nullptr;
 }
 

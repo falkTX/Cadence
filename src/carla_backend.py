@@ -179,7 +179,7 @@ else:
   ]
 
   DEFAULT_SF2_PATH = [
-    os.path.join(HOME, ".sf2"),
+    os.path.join(HOME, ".sounds"),
     os.path.join("/", "usr", "share", "sounds", "sf2")
   ]
 
@@ -438,10 +438,6 @@ def runCarlaDiscovery(itype, stype, filename, tool, isWine=False):
   plugins = []
   pinfo = None
 
-  global VST_PATH
-  print(VST_PATH)
-
-  #env = []
   command = []
 
   if (LINUX or MACOS):
@@ -454,15 +450,9 @@ def runCarlaDiscovery(itype, stype, filename, tool, isWine=False):
   command.append(stype)
   command.append(filename)
 
-  print(command)
-
-  #try:
   p = Popen(command, stdout=PIPE)
   p.wait()
-    #output = getoutput(command).split("\n")
   output = p.stdout.read().decode("utf-8", errors="ignore").split("\n")
-  #except:
-  #output = []
 
   for line in output:
     if (line == "carla-discovery::init::-----------"):

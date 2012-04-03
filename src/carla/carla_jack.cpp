@@ -236,8 +236,3 @@ bool carla_jack_register_plugin(CarlaPlugin* plugin, jack_client_t** client)
 
     return false;
 }
-
-int carla_jack_port_name_size()
-{
-    return jack_port_name_size();
-}

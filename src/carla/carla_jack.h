@@ -31,6 +31,4 @@ void carla_jack_shutdown_callback(void* arg);
 bool carla_jack_init(const char* client_name);
 bool carla_jack_close();
 #endif
-
 bool carla_jack_register_plugin(CarlaPlugin* plugin, jack_client_t** client);
-int carla_jack_port_name_size();

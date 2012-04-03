@@ -142,16 +142,16 @@ public:
             info->type = GUI_NONE;
     }
 
-    virtual void set_parameter_value(uint32_t index, double value, bool gui_send, bool osc_send, bool callback_send)
+    virtual void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
-        param_buffers[index] = value;
+        param_buffers[param_id] = value;
 
 #ifndef BUILD_BRIDGE
         if (gui_send)
-            osc_send_control(&osc.data, param.data[index].rindex, value);
+            osc_send_control(&osc.data, param.data[param_id].rindex, value);
 #endif
 
-        CarlaPlugin::set_parameter_value(index, value, gui_send, osc_send, callback_send);
+        CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
     }
 
     virtual void set_custom_data(CustomDataType dtype, const char* key, const char* value, bool gui_send)
@@ -193,7 +193,7 @@ public:
                         }
                     }
 
-                    //osc_send_set_program_name(&osc.data, m_id, i, midiprog.names[i]);
+                    //osc_send_set_program_name(&global_osc_data, m_id, i, midiprog.names[i]);
                 }
 
                 callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
@@ -227,9 +227,9 @@ public:
         CarlaPlugin::set_midi_program(index, gui_send, osc_send, callback_send, block);
     }
 
+#ifndef BUILD_BRIDGE
     virtual void show_gui(bool yesno)
     {
-#ifndef BUILD_BRIDGE
         if (yesno)
         {
             osc.thread->start();
@@ -240,10 +240,8 @@ public:
             osc_send_quit(&osc.data);
             osc_clear_data(&osc.data);
         }
-#else
-        Q_UNUSED(yesno);
-#endif
     }
+#endif
 
     virtual void reload()
     {
@@ -269,7 +267,7 @@ public:
 
         for (unsigned long i=0; i<PortCount; i++)
         {
-            LADSPA_PortDescriptor PortType = ldescriptor->PortDescriptors[i];
+            const LADSPA_PortDescriptor PortType = ldescriptor->PortDescriptors[i];
             if (LADSPA_IS_PORT_AUDIO(PortType))
             {
                 if (LADSPA_IS_PORT_INPUT(PortType))
@@ -310,8 +308,8 @@ public:
 
         for (unsigned long i=0; i<PortCount; i++)
         {
-            LADSPA_PortDescriptor PortType = ldescriptor->PortDescriptors[i];
-            LADSPA_PortRangeHint PortHint  = ldescriptor->PortRangeHints[i];
+            const LADSPA_PortDescriptor PortType = ldescriptor->PortDescriptors[i];
+            const LADSPA_PortRangeHint PortHint  = ldescriptor->PortRangeHints[i];
 
             if (LADSPA_IS_PORT_AUDIO(PortType))
             {
@@ -730,11 +728,10 @@ public:
 
             for (k=0; k<nframes; k++)
             {
-                // FIXME - use abs
-                if (ains_buffer[0][k] > ains_peak_tmp[0])
-                    ains_peak_tmp[0] = ains_buffer[0][k];
-                if (ains_buffer[j2][k] > ains_peak_tmp[1])
-                    ains_peak_tmp[1] = ains_buffer[j2][k];
+                if (abs_d(ains_buffer[0][k]) > ains_peak_tmp[0])
+                    ains_peak_tmp[0] = abs_d(ains_buffer[0][k]);
+                if (abs_d(ains_buffer[j2][k]) > ains_peak_tmp[1])
+                    ains_peak_tmp[1] = abs_d(ains_buffer[j2][k]);
             }
         }
 
@@ -885,6 +882,9 @@ public:
             {
                 if (jack_midi_event_get(&min_event, min_buffer, k) != 0)
                     break;
+
+                if (min_event.size != 3)
+                    continue;
 
                 unsigned char channel = min_event.buffer[0] & 0x0F;
                 unsigned char mode = min_event.buffer[0] & 0xF0;
@@ -1040,8 +1040,8 @@ public:
                 {
                     for (k=0; k<nframes; k++)
                     {
-                        if (aouts_buffer[i][k] > aouts_peak_tmp[i])
-                            aouts_peak_tmp[i] = aouts_buffer[i][k];
+                        if (abs_d(aouts_buffer[i][k]) > aouts_peak_tmp[i])
+                            aouts_peak_tmp[i] = abs_d(aouts_buffer[i][k]);
                     }
                 }
             }
@@ -1157,7 +1157,6 @@ public:
 #else
                             Q_UNUSED(extra_stuff);
 #endif
-
                             return true;
                         }
                         else
@@ -1207,7 +1206,9 @@ short add_plugin_dssi(const char* filename, const char* label, void* extra_stuff
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
+#ifndef BUILD_BRIDGE
             //osc_new_plugin(plugin);
+#endif
         }
         else
         {

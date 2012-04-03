@@ -51,8 +51,7 @@ const char* last_error = nullptr;
 QMutex carla_proc_lock_var;
 QMutex carla_midi_lock_var;
 
-// carla_jack.cpp
-int carla_jack_port_name_size();
+const unsigned short max_client_name_size = 32 - 5; // 32 = jack1 max name; 5 = strlen(" (10)")
 
 // -------------------------------------------------------------------------------------------------------------------
 // Exported symbols (API)
@@ -131,18 +130,12 @@ short get_new_plugin_id()
 
 const char* get_unique_name(const char* name)
 {
-    int max = carla_jack_port_name_size()/2 - 5;
-    if (carla_options.global_jack_client)
-        max -= strlen(get_host_client_name());
-
-    qDebug("get_unique_name(%s) - truncated to %i", name, max);
-
     QString qname(name);
 
     if (qname.isEmpty())
         qname = "(No name)";
 
-    qname.truncate(max);
+    qname.truncate(max_client_name_size);
     //qname.replace(":", "."); // ":" is used in JACK to split client/port names
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)

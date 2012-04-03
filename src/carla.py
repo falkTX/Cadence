@@ -787,6 +787,10 @@ class PluginRefreshW(QDialog, ui_carla_refresh.Ui_PluginRefreshW):
         self.saveSettings()
         QDialog.closeEvent(self, event)
 
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
+
 # Plugin Database Dialog
 class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
     def __init__(self, parent):
@@ -1115,6 +1119,10 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
     def closeEvent(self, event):
         self.saveSettings()
         QDialog.closeEvent(self, event)
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
 
 # About Carla Dialog
 class AboutW(QDialog, ui_carla_about.Ui_AboutW):

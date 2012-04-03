@@ -206,14 +206,14 @@ public:
         strncpy(buf_str, rdf_descriptor->Name, STR_MAX);
     }
 
-    virtual void get_parameter_name(uint32_t index, char* buf_str)
+    virtual void get_parameter_name(uint32_t param_id, char* buf_str)
     {
-        strncpy(buf_str, rdf_descriptor->Ports[index].Name, STR_MAX);
+        strncpy(buf_str, rdf_descriptor->Ports[param_id].Name, STR_MAX);
     }
 
-    virtual void get_parameter_symbol(uint32_t index, char* buf_str)
+    virtual void get_parameter_symbol(uint32_t param_id, char* buf_str)
     {
-        strncpy(buf_str, rdf_descriptor->Ports[index].Symbol, STR_MAX);
+        strncpy(buf_str, rdf_descriptor->Ports[param_id].Symbol, STR_MAX);
     }
 
     uint32_t get_custom_uri_id(const char* uri)

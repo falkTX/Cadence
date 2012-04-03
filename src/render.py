@@ -265,6 +265,10 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
           jacklib.client_close(self.m_jack_client)
         QDialog.closeEvent(self, event)
 
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
+
 # -------------------------------------------------------------
 # Allow to use this as a standalone app
 if __name__ == '__main__':

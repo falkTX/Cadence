@@ -260,11 +260,11 @@ public:
             *buf_str = 0;
     }
 
-    virtual void set_parameter_value(uint32_t index, double value, bool gui_send, bool osc_send, bool callback_send)
+    virtual void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
-        param_buffers[index] = value;
+        param_buffers[param_id] = value;
 
-        CarlaPlugin::set_parameter_value(index, value, gui_send, osc_send, callback_send);
+        CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
     }
 
     virtual void reload()
@@ -291,7 +291,7 @@ public:
 
         for (unsigned long i=0; i<PortCount; i++)
         {
-            LADSPA_PortDescriptor PortType = descriptor->PortDescriptors[i];
+            const LADSPA_PortDescriptor PortType = descriptor->PortDescriptors[i];
             if (LADSPA_IS_PORT_AUDIO(PortType))
             {
                 if (LADSPA_IS_PORT_INPUT(PortType))
@@ -329,8 +329,8 @@ public:
 
         for (unsigned long i=0; i<PortCount; i++)
         {
-            LADSPA_PortDescriptor PortType = descriptor->PortDescriptors[i];
-            LADSPA_PortRangeHint PortHint  = descriptor->PortRangeHints[i];
+            const LADSPA_PortDescriptor PortType = descriptor->PortDescriptors[i];
+            const LADSPA_PortRangeHint PortHint  = descriptor->PortRangeHints[i];
             bool HasPortRDF = (rdf_descriptor && i < rdf_descriptor->PortCount);
 
             if (LADSPA_IS_PORT_AUDIO(PortType))
@@ -623,11 +623,10 @@ public:
 
             for (k=0; k<nframes; k++)
             {
-                // FIXME - use abs
-                if (abs(ains_buffer[0][k]) > ains_peak_tmp[0])
-                    ains_peak_tmp[0] = abs(ains_buffer[0][k]);
-                if (abs(ains_buffer[j2][k]) > ains_peak_tmp[1])
-                    ains_peak_tmp[1] = abs(ains_buffer[j2][k]);
+                if (abs_d(ains_buffer[0][k]) > ains_peak_tmp[0])
+                    ains_peak_tmp[0] = abs_d(ains_buffer[0][k]);
+                if (abs_d(ains_buffer[j2][k]) > ains_peak_tmp[1])
+                    ains_peak_tmp[1] = abs_d(ains_buffer[j2][k]);
             }
         }
 
@@ -814,8 +813,8 @@ public:
                 {
                     for (k=0; k<nframes; k++)
                     {
-                        if (aouts_buffer[i][k] > aouts_peak_tmp[i])
-                            aouts_peak_tmp[i] = aouts_buffer[i][k];
+                        if (abs_d(aouts_buffer[i][k]) > aouts_peak_tmp[i])
+                            aouts_peak_tmp[i] = abs_d(aouts_buffer[i][k]);
                     }
                 }
             }

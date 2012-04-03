@@ -564,7 +564,7 @@ public:
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_BALANCE_RIGHT, 0, value);
     }
 
-    virtual void set_parameter_value(uint32_t index, double value, bool gui_send, bool osc_send, bool callback_send)
+    virtual void set_parameter_value(uint32_t param_id, double value, bool /*gui_send*/, bool osc_send, bool callback_send)
     {
 #ifndef BUILD_BRIDGE
         if (osc_send)
@@ -572,16 +572,14 @@ public:
             //osc_send_set_parameter_value(&global_osc_data, m_id, index, value);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
-                osc_send_control(&osc.data, index, value);
+                osc_send_control(&osc.data, param_id, value);
         }
 #else
         Q_UNUSED(osc_send);
 #endif
 
         if (callback_send)
-            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, index, 0, value);
-
-        Q_UNUSED(gui_send);
+            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, param_id, 0, value);
     }
 
     void set_parameter_midi_channel(uint32_t index, uint8_t channel)
