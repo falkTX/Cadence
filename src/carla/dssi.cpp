@@ -173,6 +173,8 @@ public:
             {
                 //osc_send_set_program_count(&global_osc_data, m_id, midiprog.count);
 
+                // FIXME
+
                 // Parse names
                 int j, k, last_str_n = 0;
                 int str_len = strlen(value);
@@ -747,6 +749,10 @@ public:
             jack_midi_event_t pin_event;
             uint32_t n_pin_events = jack_midi_get_event_count(pin_buffer);
 
+            unsigned char next_bank_id = 0;
+            if (midiprog.current > 0 && midiprog.count > 0)
+                next_bank_id = midiprog.data[midiprog.current].bank;
+
             for (i=0; i<n_pin_events; i++)
             {
                 if (jack_midi_event_get(&pin_event, pin_buffer, i) != 0)
@@ -761,6 +767,13 @@ public:
                     unsigned char status  = pin_event.buffer[1] & 0x7F;
                     unsigned char velo    = pin_event.buffer[2] & 0x7F;
                     double value, velo_per = double(velo)/127;
+
+                    // Bank Select
+                    if (status == 0x00)
+                    {
+                        next_bank_id = velo;
+                        continue;
+                    }
 
                     // Control GUI stuff (channel 0 only)
                     if (channel == 0)
@@ -829,7 +842,18 @@ public:
                 // Program change
                 else if (mode == 0xC0)
                 {
-                    // TODO
+                    uint32_t mbank_id = next_bank_id;
+                    uint32_t mprog_id = pin_event.buffer[1] & 0x7F;
+
+                    for (k=0; k < midiprog.count; k++)
+                    {
+                        if (midiprog.data[k].bank == mbank_id && midiprog.data[k].program == mprog_id)
+                        {
+                            set_midi_program(k, false, false, false, false);
+                            postpone_event(PostEventMidiProgramChange, k, 0.0);
+                            break;
+                        }
+                    }
                 }
             }
         } // End of Parameters Input
@@ -904,8 +928,8 @@ public:
                 if (mode == 0x80)
                 {
                     midi_event->type = SND_SEQ_EVENT_NOTEOFF;
-                    midi_event->data.note.channel = channel;
-                    midi_event->data.note.note = note;
+                    midi_event->data.note.channel  = channel;
+                    midi_event->data.note.note     = note;
                     midi_event->data.note.velocity = velo;
                     midi_event->time.tick = min_event.time;
                     postpone_event(PostEventNoteOff, note, velo);
@@ -913,8 +937,8 @@ public:
                 else if (mode == 0x90)
                 {
                     midi_event->type = SND_SEQ_EVENT_NOTEON;
-                    midi_event->data.note.channel = channel;
-                    midi_event->data.note.note = note;
+                    midi_event->data.note.channel  = channel;
+                    midi_event->data.note.note     = note;
                     midi_event->data.note.velocity = velo;
                     midi_event->time.tick = min_event.time;
                     postpone_event(PostEventNoteOn, note, velo);
