@@ -2942,6 +2942,8 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
           self.m_bridge_info.unique_id = plugin['unique_id']
           self.m_bridge_info.ains      = plugin['audio.ins']
           self.m_bridge_info.aouts     = plugin['audio.outs']
+          self.m_bridge_info.mins      = plugin['midi.ins']
+          self.m_bridge_info.mouts     = plugin['midi.outs']
           return pointer(self.m_bridge_info)
 
         elif (ptype == PLUGIN_LADSPA):
@@ -3340,7 +3342,21 @@ if __name__ == '__main__':
     gui = CarlaMainW()
 
     # Init backend
-    CarlaHost.set_option(OPTION_GLOBAL_JACK_CLIENT, 0, "")
+    CarlaHost.set_option(OPTION_GLOBAL_JACK_CLIENT, gui.settings.value("Engine/GlobalClient", False, type=bool), "")
+    CarlaHost.set_option(OPTION_USE_DSSI_CHUNKS, gui.settings.value("Engine/DSSIChunks", False, type=bool), "")
+    CarlaHost.set_option(OPTION_PREFER_UI_BRIDGES, gui.settings.value("Engine/PreferBridges", True, type=bool), "")
+
+    if (carla_bridge_unix32):
+      CarlaHost.set_option(OPTION_PATH_BRIDGE_UNIX32, 0, carla_bridge_unix32)
+
+    if (carla_bridge_unix32):
+      CarlaHost.set_option(OPTION_PATH_BRIDGE_UNIX64, 0, carla_bridge_unix64)
+
+    if (carla_bridge_win32):
+      CarlaHost.set_option(OPTION_PATH_BRIDGE_WIN32, 0, carla_bridge_win32)
+
+    if (carla_bridge_win64):
+      CarlaHost.set_option(OPTION_PATH_BRIDGE_WIN64, 0, carla_bridge_win64)
 
     if (not CarlaHost.carla_init("Carla")):
       CustomMessageBox(None, QMessageBox.Critical, "Error", "Could not connect to JACK",

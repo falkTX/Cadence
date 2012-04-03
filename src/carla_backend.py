@@ -191,6 +191,11 @@ carla_discovery_unix64 = ""
 carla_discovery_win32  = ""
 carla_discovery_win64  = ""
 
+carla_bridge_unix32 = ""
+carla_bridge_unix64 = ""
+carla_bridge_win32  = ""
+carla_bridge_win64  = ""
+
 #carla_bridge_lv2_gtk2  = ""
 #carla_bridge_lv2_qt4   = ""
 #carla_bridge_lv2_x11   = ""
@@ -246,6 +251,42 @@ else:
       carla_discovery_win64 = os.path.join(p, "carla-discovery-win64.exe")
       break
 
+# bridge-unix32
+if (os.path.exists(os.path.join(CWD, "carla-bridge", "carla-bridge-unix32"))):
+  carla_bridge_unix32 = os.path.join(CWD, "carla-bridge", "carla-bridge-unix32")
+else:
+  for p in PATH:
+    if (os.path.exists(os.path.join(p, "carla-bridge-unix32"))):
+      carla_bridge_unix32 = os.path.join(p, "carla-bridge-unix32")
+      break
+
+# bridge-unix64
+if (os.path.exists(os.path.join(CWD, "carla-bridge", "carla-bridge-unix64"))):
+  carla_bridge_unix64 = os.path.join(CWD, "carla-bridge", "carla-bridge-unix64")
+else:
+  for p in PATH:
+    if (os.path.exists(os.path.join(p, "carla-bridge-unix64"))):
+      carla_bridge_unix64 = os.path.join(p, "carla-bridge-unix64")
+      break
+
+# bridge-win32
+if (os.path.exists(os.path.join(CWD, "carla-bridge", "carla-bridge-win32.exe"))):
+  carla_bridge_win32 = os.path.join(CWD, "carla-bridge", "carla-bridge-win32.exe")
+else:
+  for p in PATH:
+    if (os.path.exists(os.path.join(p, "carla-bridge-wine32.exe"))):
+      carla_bridge_win32 = os.path.join(p, "carla-bridge-win32.exe")
+      break
+
+# bridge-win64
+if (os.path.exists(os.path.join(CWD, "carla-bridge", "carla-bridge-win64.exe"))):
+  carla_bridge_win64 = os.path.join(CWD, "carla-bridge", "carla-bridge-win64.exe")
+else:
+  for p in PATH:
+    if (os.path.exists(os.path.join(p, "carla-bridge-win64.exe"))):
+      carla_bridge_win64 = os.path.join(p, "carla-bridge-win64.exe")
+      break
+
   ## lv2-gtk2
   #if (os.path.exists(os.path.join(CWD, "carla-bridges", "carla-bridge-lv2-gtk2"))):
     #carla_bridge_lv2_gtk2 = os.path.join(CWD, "carla-bridges", "carla-bridge-lv2-gtk2")
@@ -295,12 +336,10 @@ print("carla_discovery_unix32 ->", carla_discovery_unix32)
 print("carla_discovery_unix64 ->", carla_discovery_unix64)
 print("carla_discovery_win32  ->", carla_discovery_win32)
 print("carla_discovery_win64  ->", carla_discovery_win64)
-
-print("LADSPA ->", DEFAULT_LADSPA_PATH)
-print("DSSI   ->", DEFAULT_DSSI_PATH)
-print("LV2    ->", DEFAULT_LV2_PATH)
-print("VST    ->", DEFAULT_VST_PATH)
-print("SF2    ->", DEFAULT_SF2_PATH)
+print("carla_bridge_unix32 ->", carla_bridge_unix32)
+print("carla_bridge_unix64 ->", carla_bridge_unix64)
+print("carla_bridge_win32  ->", carla_bridge_win32)
+print("carla_bridge_win64  ->", carla_bridge_win64)
 
 # ------------------------------------------------------------------------------------------------
 # Plugin Query (helper functions)
@@ -657,6 +696,10 @@ GUI_EXTERNAL_LV2 = 4
 OPTION_GLOBAL_JACK_CLIENT = 1
 OPTION_USE_DSSI_CHUNKS    = 2
 OPTION_PREFER_UI_BRIDGES  = 3
+OPTION_PATH_BRIDGE_UNIX32 = 4
+OPTION_PATH_BRIDGE_UNIX64 = 5
+OPTION_PATH_BRIDGE_WIN32  = 6
+OPTION_PATH_BRIDGE_WIN64  = 7
 
 # enum CallbackType
 CALLBACK_DEBUG                = 0
@@ -760,7 +803,9 @@ class PluginBridgeInfo(Structure):
     ("maker", c_char_p),
     ("unique_id", c_long),
     ("ains", c_uint32),
-    ("aouts", c_uint32)
+    ("aouts", c_uint32),
+    ("mins", c_uint32),
+    ("mouts", c_uint32)
   ]
 
 CallbackFunc = CFUNCTYPE(None, c_enum, c_ushort, c_int, c_int, c_double)

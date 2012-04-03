@@ -78,6 +78,7 @@ public:
         }
     }
 
+#if 0
     virtual PluginCategory category()
     {
         intptr_t VstCategory = effect->dispatcher(effect, effGetPlugCategory, 0, 0, nullptr, 0.0f);
@@ -129,6 +130,7 @@ public:
     {
         effect->dispatcher(effect, effGetEffectName, 0, 0, buf_str, 0.0f);
     }
+#endif
 
 private:
     AEffect* effect;

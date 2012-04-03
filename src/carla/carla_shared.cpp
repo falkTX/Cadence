@@ -33,12 +33,16 @@ carla_options_t carla_options = {
     #ifdef BUILD_BRIDGE
     /* global_jack_client */ false,
     /* use_dssi_chunks    */ false,
-    /* prefer_ui_bridges  */ false
+    /* prefer_ui_bridges  */ false,
     #else
     /* global_jack_client */ true,
     /* use_dssi_chunks    */ false,
-    /* prefer_ui_bridges  */ true
+    /* prefer_ui_bridges  */ true,
     #endif
+    /* bridge_unix32 */ nullptr,
+    /* bridge_unix64 */ nullptr,
+    /* bridge_win32  */ nullptr,
+    /* bridge_win64  */ nullptr
 };
 
 CallbackFunc Callback  = nullptr;
@@ -78,19 +82,18 @@ const char* bool2str(bool yesno)
 
 const char* binarytype2str(BinaryType type)
 {
-    // TODO - use global options
     switch (type)
     {
     case BINARY_UNIX32:
-        return "/home/falktx/Personal/FOSS/GIT/Cadence/src/carla-bridge/carla-bridge-win32.exe";
+        return carla_options.bridge_unix32;
     case BINARY_UNIX64:
-        return "/home/falktx/Personal/FOSS/GIT/Cadence/src/carla-bridge/carla-bridge-win32.exe";
+        return carla_options.bridge_unix64;
     case BINARY_WIN32:
-        return "/home/falktx/Personal/FOSS/GIT/Cadence/src/carla-bridge/carla-bridge-win32.exe";
+        return carla_options.bridge_win32;
     case BINARY_WIN64:
-        return "/home/falktx/Personal/FOSS/GIT/Cadence/src/carla-bridge/carla-bridge-win32.exe";
+        return carla_options.bridge_win64;
     default:
-        return "";
+        return nullptr;
     }
 }
 

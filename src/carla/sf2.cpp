@@ -48,6 +48,7 @@ public:
         delete_fluid_settings(f_settings);
     }
 
+#if 0
     virtual PluginCategory category()
     {
         return PLUGIN_CATEGORY_SYNTH;
@@ -1002,6 +1003,7 @@ public:
         active_before = active;
 #endif
     }
+#endif
 
     bool init(const char* filename, const char* label)
     {

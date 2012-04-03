@@ -120,6 +120,7 @@ public:
         custom_uri_ids.clear();
     }
 
+#if 0
     virtual PluginCategory category()
     {
         LV2_Property Category = rdf_descriptor->Type;
@@ -287,6 +288,7 @@ public:
 
         qDebug("Lv2Plugin::lv2_delete_buffers() - end");
     }
+#endif
 
     bool init(const char* filename, const char* URI, void* extra_stuff)
     {

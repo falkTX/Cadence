@@ -356,10 +356,10 @@ public:
     }
 
     // FIXME - remove this?
-    double get_default_parameter_value(uint32_t param_id)
-    {
-        return param.ranges[param_id].def;
-    }
+//    double get_default_parameter_value(uint32_t param_id)
+//    {
+//        return param.ranges[param_id].def;
+//    }
 
     virtual void get_label(char* buf_str)
     {
@@ -381,34 +381,34 @@ public:
         *buf_str = 0;
     }
 
-    virtual void get_parameter_name(uint32_t /*index*/, char* buf_str)
+    virtual void get_parameter_name(uint32_t /*param_id*/, char* buf_str)
     {
         *buf_str = 0;
     }
 
-    virtual void get_parameter_symbol(uint32_t /*index*/, char* buf_str)
+    virtual void get_parameter_symbol(uint32_t /*param_id*/, char* buf_str)
     {
         *buf_str = 0;
     }
 
-    virtual void get_parameter_label(uint32_t /*index*/, char* buf_str)
+    virtual void get_parameter_label(uint32_t /*param_id*/, char* buf_str)
     {
         *buf_str = 0;
     }
 
-    virtual void get_parameter_scalepoint_label(uint32_t /*pindex*/, uint32_t /*index*/, char* buf_str)
+    virtual void get_parameter_scalepoint_label(uint32_t /*param_id*/, uint32_t /*scalepoint_id*/, char* buf_str)
     {
         *buf_str = 0;
     }
 
-    const char* prog_name(uint32_t index)
+    void get_program_name(uint32_t program_id, char* buf_str)
     {
-        return prog.names[index];
+        strncpy(buf_str, prog.names[program_id], STR_MAX);
     }
 
-    const char* midiprog_name(uint32_t index)
+    void get_midi_program_name(uint32_t midiprogram_id, char* buf_str)
     {
-        return midiprog.data[index].name;
+        strncpy(buf_str, midiprog.data[midiprogram_id].name, STR_MAX);
     }
 
     void get_parameter_count_info(PortCountInfo* info)
@@ -606,10 +606,10 @@ public:
 
     virtual void set_custom_data(CustomDataType dtype, const char* key, const char* value, bool)
     {
+        qDebug("set_custom_data(%i, %s, %s)", dtype, key, value);
+
         bool save_data = true;
         bool already_have = false;
-
-        qDebug("set_custom_data(%i, %s, %s)", dtype, key, value);
 
         switch (dtype)
         {
@@ -716,7 +716,7 @@ public:
             callback_action(CALLBACK_MIDI_PROGRAM_CHANGED, m_id, midiprog.current, 0, 0.0);
     }
 
-    virtual void send_midi_note(bool onoff, uint8_t note, uint8_t velo, bool, bool osc_send, bool callback_send)
+    void send_midi_note(bool onoff, uint8_t note, uint8_t velo, bool, bool osc_send, bool callback_send)
     {
         carla_midi_lock();
         for (unsigned int i=0; i<MAX_MIDI_EVENTS; i++)
@@ -820,6 +820,11 @@ public:
         post_events.lock.unlock();
     }
 
+    virtual int set_osc_bridge_info(PluginBridgeInfoType, lo_arg**)
+    {
+        return 1;
+    }
+
 #ifndef BUILD_BRIDGE
     void update_osc_data(lo_address source, const char* url)
     {
@@ -921,7 +926,7 @@ public:
         qDebug("CarlaPlugin::remove_from_jack() - end");
     }
 
-    void delete_buffers()
+    virtual void delete_buffers()
     {
         qDebug("CarlaPlugin::delete_buffers() - start");
 
@@ -953,11 +958,6 @@ public:
         param.port_cout = nullptr;
 
         qDebug("CarlaPlugin::delete_buffers() - end");
-    }
-
-    virtual int set_osc_bridge_info(PluginBridgeInfoType, lo_arg**)
-    {
-        return 1;
     }
 
     bool lib_open(const char* filename)

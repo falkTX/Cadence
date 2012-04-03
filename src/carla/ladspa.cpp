@@ -72,6 +72,10 @@ public:
         handle = nullptr;
         descriptor = nullptr;
         rdf_descriptor = nullptr;
+
+        ain_rindexes  = nullptr;
+        aout_rindexes = nullptr;
+        param_buffers = nullptr;
     }
 
     virtual ~LadspaPlugin()
@@ -147,6 +151,11 @@ public:
             return 0;
     }
 
+    virtual double get_parameter_value(uint32_t param_id)
+    {
+        return param_buffers[param_id];
+    }
+
     virtual double get_parameter_scalepoint_value(uint32_t param_id, uint32_t scalepoint_id)
     {
         int32_t param_rindex = param.data[param_id].rindex;
@@ -181,15 +190,15 @@ public:
             strncpy(buf_str, descriptor->Name, STR_MAX);
     }
 
-    virtual void get_parameter_name(uint32_t index, char* buf_str)
+    virtual void get_parameter_name(uint32_t param_id, char* buf_str)
     {
-        int32_t rindex = param.data[index].rindex;
+        int32_t rindex = param.data[param_id].rindex;
         strncpy(buf_str, descriptor->PortNames[rindex], STR_MAX);
     }
 
-    virtual void get_parameter_symbol(uint32_t index, char* buf_str)
+    virtual void get_parameter_symbol(uint32_t param_id, char* buf_str)
     {
-        int32_t rindex = param.data[index].rindex;
+        int32_t rindex = param.data[param_id].rindex;
 
         bool HasPortRDF = (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount);
         if (HasPortRDF)
@@ -204,9 +213,9 @@ public:
         *buf_str = 0;
     }
 
-    virtual void get_parameter_label(uint32_t index, char* buf_str)
+    virtual void get_parameter_label(uint32_t param_id, char* buf_str)
     {
-        int32_t rindex = param.data[index].rindex;
+        int32_t rindex = param.data[param_id].rindex;
 
         bool HasPortRDF = (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount);
         if (HasPortRDF)
@@ -240,20 +249,15 @@ public:
         *buf_str = 0;
     }
 
-    virtual void get_parameter_scalepoint_label(uint32_t pindex, uint32_t index, char* buf_str)
+    virtual void get_parameter_scalepoint_label(uint32_t param_id, uint32_t scalepoint_id, char* buf_str)
     {
-        int32_t prindex = param.data[pindex].rindex;
+        int32_t param_rindex = param.data[param_id].rindex;
 
-        bool HasPortRDF = (rdf_descriptor && prindex < (int32_t)rdf_descriptor->PortCount);
+        bool HasPortRDF = (rdf_descriptor && param_rindex < (int32_t)rdf_descriptor->PortCount);
         if (HasPortRDF)
-            strncpy(buf_str, rdf_descriptor->Ports[prindex].ScalePoints[index].Label, STR_MAX);
+            strncpy(buf_str, rdf_descriptor->Ports[param_rindex].ScalePoints[scalepoint_id].Label, STR_MAX);
         else
             *buf_str = 0;
-    }
-
-    virtual double get_current_parameter_value(uint32_t index)
-    {
-        return param_buffers[index];
     }
 
     virtual void set_parameter_value(uint32_t index, double value, bool gui_send, bool osc_send, bool callback_send)
@@ -864,6 +868,26 @@ public:
         aouts_peak[(plugin_id*2)+1] = aouts_peak_tmp[1];
 
         m_active_before = m_active;
+    }
+
+    virtual void delete_buffers()
+    {
+        qDebug("LadspaPlugin::delete_buffers() - start");
+
+        if (ain.count > 0)
+            delete[] ain_rindexes;
+
+        if (aout.count > 0)
+            delete[] aout_rindexes;
+
+        if (param.count > 0)
+            delete[] param_buffers;
+
+        ain_rindexes  = nullptr;
+        aout_rindexes = nullptr;
+        param_buffers = nullptr;
+
+        qDebug("LadspaPlugin::delete_buffers() - end");
     }
 
     bool init(const char* filename, const char* label, void* extra_stuff)

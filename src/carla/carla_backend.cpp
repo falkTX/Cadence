@@ -81,6 +81,18 @@ bool carla_close()
     get_real_plugin_name(0);
     set_last_error(nullptr);
 
+    if (carla_options.bridge_unix32)
+        free((void*)carla_options.bridge_unix32);
+
+    if (carla_options.bridge_unix64)
+        free((void*)carla_options.bridge_unix64);
+
+    if (carla_options.bridge_win32)
+        free((void*)carla_options.bridge_win32);
+
+    if (carla_options.bridge_win64)
+        free((void*)carla_options.bridge_win64);
+
     return closed;
 }
 
@@ -584,13 +596,27 @@ const char* get_program_name(unsigned short plugin_id, uint32_t program_id)
 {
     qDebug("get_program_name(%i, %i)", plugin_id, program_id);
 
+    static const char* program_name = nullptr;
+
+    if (program_name)
+        free((void*)program_name);
+
+    program_name = nullptr;
+
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
             if (program_id < plugin->prog_count())
-                return plugin->prog_name(program_id);
+            {
+                char buf_str[STR_MAX] = { 0 };
+
+                plugin->get_program_name(program_id, buf_str);
+                program_name = strdup(buf_str);
+
+                return program_name;
+            }
             else
                 qCritical("get_program_name(%i, %i) - program_id out of bounds", plugin_id, program_id);
 
@@ -606,13 +632,27 @@ const char* get_midi_program_name(unsigned short plugin_id, uint32_t midi_progra
 {
     qDebug("get_midi_program_name(%i, %i)", plugin_id, midi_program_id);
 
+    static const char* midi_program_name = nullptr;
+
+    if (midi_program_name)
+        free((void*)midi_program_name);
+
+    midi_program_name = nullptr;
+
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
             if (midi_program_id < plugin->midiprog_count())
-                return plugin->midiprog_name(midi_program_id);
+            {
+                char buf_str[STR_MAX] = { 0 };
+
+                plugin->get_midi_program_name(midi_program_id, buf_str);
+                midi_program_name = strdup(buf_str);
+
+                return midi_program_name;
+            }
             else
                 qCritical("get_midi_program_name(%i, %i) - program_id out of bounds", plugin_id, midi_program_id);
 
@@ -695,7 +735,8 @@ double get_default_parameter_value(unsigned short plugin_id, uint32_t parameter_
         if (plugin && plugin->id() == plugin_id)
         {
             if (parameter_id < plugin->param_count())
-                return plugin->get_default_parameter_value(parameter_id);
+                return plugin->param_ranges(parameter_id)->def;
+                //return plugin->get_default_parameter_value(parameter_id);
             else
                 qCritical("get_default_parameter_value(%i, %i) - parameter_id out of bounds", plugin_id, parameter_id);
 
@@ -1065,6 +1106,24 @@ void set_option(OptionsType option, int value, const char* value_str)
     {
     case OPTION_GLOBAL_JACK_CLIENT:
         carla_options.global_jack_client = value;
+        break;
+    case OPTION_USE_DSSI_CHUNKS:
+        carla_options.use_dssi_chunks = value;
+        break;
+    case OPTION_PREFER_UI_BRIDGES:
+        carla_options.prefer_ui_bridges = value;
+        break;
+    case OPTION_PATH_BRIDGE_UNIX32:
+        carla_options.bridge_unix32 = strdup(value_str);
+        break;
+    case OPTION_PATH_BRIDGE_UNIX64:
+        carla_options.bridge_unix64 = strdup(value_str);
+        break;
+    case OPTION_PATH_BRIDGE_WIN32:
+        carla_options.bridge_win32 = strdup(value_str);
+        break;
+    case OPTION_PATH_BRIDGE_WIN64:
+        carla_options.bridge_win64 = strdup(value_str);
         break;
     default:
         break;

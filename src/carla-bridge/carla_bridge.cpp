@@ -111,7 +111,7 @@ int main(int argc, char* argv[])
 
                 if (close_now) break;
 
-                msleep(50);
+                carla_msleep(50);
             }
 
             delete plugin;

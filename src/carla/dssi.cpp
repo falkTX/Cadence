@@ -31,7 +31,10 @@ public:
         descriptor = nullptr;
         ldescriptor = nullptr;
 
-        // FIXME?
+        ain_rindexes  = nullptr;
+        aout_rindexes = nullptr;
+        param_buffers = nullptr;
+
         memset(midi_events, 0, sizeof(snd_seq_event_t)*MAX_MIDI_EVENTS);
     }
 
@@ -100,6 +103,11 @@ public:
         return 0;
     }
 
+    virtual double get_parameter_value(uint32_t param_id)
+    {
+        return param_buffers[param_id];
+    }
+
     virtual void get_label(char* buf_str)
     {
         strncpy(buf_str, ldescriptor->Label, STR_MAX);
@@ -120,9 +128,9 @@ public:
         strncpy(buf_str, ldescriptor->Name, STR_MAX);
     }
 
-    virtual void get_parameter_name(uint32_t index, char* buf_str)
+    virtual void get_parameter_name(uint32_t param_id, char* buf_str)
     {
-        int32_t rindex = param.data[index].rindex;
+        int32_t rindex = param.data[param_id].rindex;
         strncpy(buf_str, ldescriptor->PortNames[rindex], STR_MAX);
     }
 
@@ -132,11 +140,6 @@ public:
             info->type = GUI_EXTERNAL_OSC;
         else
             info->type = GUI_NONE;
-    }
-
-    virtual double get_current_parameter_value(uint32_t index)
-    {
-        return param_buffers[index];
     }
 
     virtual void set_parameter_value(uint32_t index, double value, bool gui_send, bool osc_send, bool callback_send)
@@ -1091,6 +1094,26 @@ public:
         aouts_peak[(plugin_id*2)+1] = aouts_peak_tmp[1];
 
         m_active_before = m_active;
+    }
+
+    virtual void delete_buffers()
+    {
+        qDebug("DssiPlugin::delete_buffers() - start");
+
+        if (ain.count > 0)
+            delete[] ain_rindexes;
+
+        if (aout.count > 0)
+            delete[] aout_rindexes;
+
+        if (param.count > 0)
+            delete[] param_buffers;
+
+        ain_rindexes  = nullptr;
+        aout_rindexes = nullptr;
+        param_buffers = nullptr;
+
+        qDebug("DssiPlugin::delete_buffers() - end");
     }
 
     bool init(const char* filename, const char* label, void* extra_stuff)

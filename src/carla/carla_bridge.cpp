@@ -58,6 +58,7 @@ public:
         delete m_thread;
     }
 
+#if 0
     virtual PluginCategory category()
     {
         return m_info.category;
@@ -80,14 +81,12 @@ public:
 
     virtual uint32_t min_count()
     {
-        // TODO - add this to pluginbridgeinfo
-        return 0; //m_info.mins;
+        return m_info.mins;
     }
 
     virtual uint32_t mout_count()
     {
-        // TODO - add this to pluginbridgeinfo
-        return 0; //m_info.mouts;
+        return m_info.mouts;
     }
 
     virtual void get_label(char* buf_str)
@@ -110,13 +109,6 @@ public:
         strncpy(buf_str, m_info.name, STR_MAX);
     }
 
-    virtual void get_audio_port_count_info(PortCountInfo* info)
-    {
-        info->ins   = m_info.ains;
-        info->outs  = m_info.aouts;
-        info->total = m_info.ains + m_info.aouts;
-    }
-
     virtual void reload()
     {
         // plugin checks
@@ -133,6 +125,7 @@ public:
 
         m_hints |= m_info.hints;
     }
+#endif
 
     bool init(const char* filename, const char* label, void* extra_stuff)
     {
