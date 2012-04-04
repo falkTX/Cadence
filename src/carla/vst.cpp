@@ -1054,6 +1054,8 @@ public:
 
     static intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
     {
+        // TODO - completely verify all calls
+
         qDebug("VstHostCallback() - code: %02i, index: %02i, value: " P_INTPTR ", opt: %03f", opcode, index, value, opt);
 
         VstPlugin* plugin = (effect && effect->user) ? (VstPlugin*)effect->user : nullptr;
@@ -1073,11 +1075,167 @@ public:
             //case audioMasterCurrentId:
             //    return VstCurrentUniqueId;
 
+        case audioMasterIdle:
+            if (effect)
+                effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
+            return 1; // FIXME?
+
+        case audioMasterWantMidi:
+            // Deprecated in VST SDK 2.4
+#if 0
+            if (plugin && plugin->jack_client && plugin->min.count == 0)
+            {
+                i = plugin->id;
+                bool unlock = carla_proc_trylock();
+                plugin->id = -1;
+                if (unlock) carla_proc_unlock();
+
+                const int port_name_size = jack_port_name_size();
+                char port_name[port_name_size];
+
+#ifndef BRIDGE_WINVST
+                if (carla_options.global_jack_client)
+                {
+                    strncpy(port_name, plugin->name, (port_name_size/2)-2);
+                    strcat(port_name, ":midi-in");
+                }
+                else
+#endif
+                    strcpy(port_name, "midi-in");
+
+                plugin->min.count    = 1;
+                plugin->min.ports    = new jack_port_t*[1];
+                plugin->min.ports[0] = jack_port_register(plugin->jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+
+                plugin->id = i;
+#ifndef BRIDGE_WINVST
+                callback_action(CALLBACK_RELOAD_INFO, plugin->id, 0, 0, 0.0f);
+#endif
+            }
+#endif
+            return 1;
+
         case audioMasterGetTime:
             static VstTimeInfo timeInfo;
             memset(&timeInfo, 0, sizeof(VstTimeInfo));
+
             timeInfo.sampleRate = get_sample_rate();
+            timeInfo.tempo = 120.0;
+
+            if (plugin && plugin->jack_client)
+            {
+                static jack_position_t jack_pos;
+                static jack_transport_state_t jack_state;
+
+                jack_state = jack_transport_query(plugin->jack_client, &jack_pos);
+
+                if (jack_state == JackTransportRolling)
+                    timeInfo.flags |= kVstTransportChanged|kVstTransportPlaying;
+                else
+                    timeInfo.flags |= kVstTransportChanged;
+
+                if (jack_pos.unique_1 == jack_pos.unique_2)
+                {
+                    timeInfo.samplePos  = jack_pos.frame;
+                    timeInfo.sampleRate = jack_pos.frame_rate;
+
+                    if (jack_pos.valid & JackPositionBBT)
+                    {
+                        // Tempo
+                        timeInfo.tempo = jack_pos.beats_per_minute;
+                        timeInfo.timeSigNumerator = jack_pos.beats_per_bar;
+                        timeInfo.timeSigDenominator = jack_pos.beat_type;
+                        timeInfo.flags |= kVstTempoValid|kVstTimeSigValid;
+
+                        // Position
+                        double dPos = timeInfo.samplePos / timeInfo.sampleRate;
+                        timeInfo.nanoSeconds = dPos * 1000.0;
+                        timeInfo.flags |= kVstNanosValid;
+
+                        // Position
+                        timeInfo.barStartPos = 0;
+                        timeInfo.ppqPos = dPos * timeInfo.tempo / 60.0;
+                        timeInfo.flags |= kVstBarsValid|kVstPpqPosValid;
+                    }
+                }
+            }
+
             return (intptr_t)&timeInfo;
+
+        case audioMasterProcessEvents:
+#if 0
+            if (plugin && plugin->mout.count > 0 && ptr)
+            {
+                VstEvents* events = (VstEvents*)ptr;
+
+                jack_default_audio_sample_t* mout_buffer = (jack_default_audio_sample_t*)jack_port_get_buffer(plugin->mout.ports[0], get_buffer_size());
+                jack_midi_clear_buffer(mout_buffer);
+
+                for (int32_t i=0; i < events->numEvents; i++)
+                {
+                    VstMidiEvent* midi_event = (VstMidiEvent*)events->events[i];
+
+                    if (midi_event && midi_event->type == kVstMidiType)
+                    {
+                        // TODO - send event over jack rinbuffer
+                    }
+                }
+                return 1;
+            }
+            else
+                qDebug("Some MIDI Out events were ignored");
+#endif
+            return 0;
+
+        case audioMasterTempoAt:
+            // Deprecated in VST SDK 2.4
+            if (plugin && plugin->jack_client)
+            {
+                static jack_position_t jack_pos;
+                jack_transport_query(plugin->jack_client, &jack_pos);
+
+                if (jack_pos.valid & JackPositionBBT)
+                    return jack_pos.beats_per_minute;
+            }
+            return 120.0;
+
+        case audioMasterGetNumAutomatableParameters:
+            // Deprecated in VST SDK 2.4
+            return MAX_PARAMETERS; // FIXME - what exacly is this for?
+
+        case audioMasterIOChanged:
+//            if (plugin && plugin->jack_client)
+//            {
+//                i = plugin->id;
+//                bool unlock = carla_proc_trylock();
+//                plugin->id = -1;
+//                if (unlock) carla_proc_unlock();
+
+//                if (plugin->active)
+//                {
+//                    plugin->effect->dispatcher(plugin->effect, 72 /* effStopProcess */, 0, 0, nullptr, 0.0f);
+//                    plugin->effect->dispatcher(plugin->effect, effMainsChanged, 0, 0, nullptr, 0.0f);
+//                }
+
+//                plugin->reload();
+
+//                if (plugin->active)
+//                {
+//                    plugin->effect->dispatcher(plugin->effect, effMainsChanged, 0, 1, nullptr, 0.0f);
+//                    plugin->effect->dispatcher(plugin->effect, 71 /* effStartProcess */, 0, 0, nullptr, 0.0f);
+//                }
+
+//                plugin->id = i;
+//#ifndef BRIDGE_WINVST
+//                callback_action(CALLBACK_RELOAD_ALL, plugin->id, 0, 0, 0.0);
+//#endif
+//            }
+            return 1;
+
+        case audioMasterNeedIdle:
+            // Deprecated in VST SDK 2.4
+            effect->dispatcher(effect, 53 /* effIdle */, 0, 0, nullptr, 0.0f);
+            return 1;
 
         case audioMasterSizeWindow:
             if (plugin)
@@ -1141,7 +1299,7 @@ public:
             else if (strcmp((char*)ptr, "startStopProcess") == 0)
                 return 1;
             else if (strcmp((char*)ptr, "shellCategory") == 0)
-                return 1;
+                return -1;
             else if (strcmp((char*)ptr, "sendVstMidiEventFlagIsRealtime") == 0)
                 return -1;
             else
@@ -1152,6 +1310,26 @@ public:
 
         case audioMasterGetLanguage:
             return kVstLangEnglish;
+
+        case audioMasterUpdateDisplay:
+            if (plugin)
+            {
+                // Update current program name
+                if (plugin->prog.current >= 0 && plugin->prog.count > 0)
+                {
+                    char buf_str[STR_MAX] = { 0 };
+
+                    if (plugin->effect->dispatcher(plugin->effect, effGetProgramNameIndexed, plugin->prog.current, 0, buf_str, 0.0f) != 1)
+                        plugin->effect->dispatcher(plugin->effect, effGetProgramName, 0, 0, buf_str, 0.0f);
+
+                    if (plugin->prog.names[plugin->prog.current])
+                        free((void*)plugin->prog.names[plugin->prog.current]);
+
+                    plugin->prog.names[plugin->prog.current] = strdup(buf_str);
+                }
+                callback_action(CALLBACK_UPDATE, plugin->id(), 0, 0, 0.0);
+            }
+            return 1;
 
         default:
             break;

@@ -940,7 +940,7 @@ void do_vst_check(void* lib_handle)
             DISCOVERY_OUT("label", c_product);
             DISCOVERY_OUT("maker", c_vendor);
             DISCOVERY_OUT("copyright", c_vendor);
-            DISCOVERY_OUT("id", VstCurrentUniqueId);
+            DISCOVERY_OUT("unique_id", VstCurrentUniqueId);
             DISCOVERY_OUT("hints", hints);
             DISCOVERY_OUT("category", category);
             DISCOVERY_OUT("audio.ins", audio_ins);
@@ -1012,7 +1012,7 @@ void do_sf2_check(const char* filename)
             DISCOVERY_OUT("label", "");
             DISCOVERY_OUT("maker", "");
             DISCOVERY_OUT("copyright", "");
-            DISCOVERY_OUT("id", 0);
+            DISCOVERY_OUT("unique_id", 0);
 
             DISCOVERY_OUT("hints", 0);
             DISCOVERY_OUT("category", PLUGIN_CATEGORY_SYNTH);
