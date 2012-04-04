@@ -23,7 +23,7 @@
 # Imports (Global)
 import json, os, sys
 from time import sleep
-#from sip import unwrapinstance
+from sip import unwrapinstance
 from PyQt4.QtCore import pyqtSlot, Qt, QSettings, QTimer, QThread
 from PyQt4.QtGui import QApplication, QColor, QCursor, QDialog, QFontMetrics, QInputDialog, QFrame, QMainWindow, QMenu, QPainter, QTableWidgetItem, QVBoxLayout, QWidget
 from PyQt4.QtXml import QDomDocument
@@ -1303,18 +1303,18 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
 
 # Plugin GUI
 class PluginGUI(QDialog):
-    def __init__(self, parent, plugin_name, gui_data):
-        super(PluginGUI, self).__init__(parent)
+    def __init__(self, parent, plugin_name):
+        QDialog.__init__(self, parent)
 
         self.myLayout = QVBoxLayout(self)
         self.myLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.myLayout)
 
-        self.resizable = gui_data['resizable']
-        self.setNewSize(gui_data['width'], gui_data['height'])
+        self.resizable = False #gui_data['resizable']
+        self.setNewSize(300, 300)
 
-        if (not plugin_name):
-          plugin_name = "Plugin"
+        #if (not plugin_name):
+          #plugin_name = "Plugin"
 
         self.setWindowTitle("%s (GUI)" % (plugin_name))
 
@@ -1332,6 +1332,10 @@ class PluginGUI(QDialog):
     def hideEvent(self, event):
         # FIXME
         event.accept()
+        self.close()
+
+    def done(self, r):
+        QDialog.done(self, r)
         self.close()
 
 # Plugin Editor (Built-in)
@@ -2017,17 +2021,20 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.edit_dialog_geometry = None
 
         if (self.pinfo['hints'] & PLUGIN_HAS_GUI):
+          print("Has UI")
           gui_info = CarlaHost.get_gui_info(self.plugin_id)
           self.gui_dialog_type = gui_info['type']
 
           if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_X11)):
+            print("Has Qt4 UI")
             self.gui_dialog = None
-            #self.gui_dialog = PluginGUI(self, self.pinfo['name'], gui_data)
-            #self.gui_dialog.hide()
+            self.gui_dialog = PluginGUI(self, self.pinfo['name'])
+            self.gui_dialog.hide()
             self.gui_dialog_geometry = None
-            #self.connect(self.gui_dialog, SIGNAL("finished(int)"), self.gui_dialog_closed)
+            self.connect(self.gui_dialog, SIGNAL("finished(int)"), SLOT("slot_guiClosed()"))
 
-            #CarlaHost.set_gui_data(self.plugin_id, Display, unwrapinstance(self.gui_dialog))
+            # TODO - display
+            CarlaHost.set_gui_data(self.plugin_id, 0, unwrapinstance(self.gui_dialog))
 
           elif (self.gui_dialog_type in (GUI_EXTERNAL_OSC, GUI_EXTERNAL_LV2)):
             self.gui_dialog = None
@@ -2038,6 +2045,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             self.b_gui.setEnabled(False)
 
         else:
+          print("NOT UI")
           self.gui_dialog = None
           self.gui_dialog_type = GUI_NONE
 
@@ -2851,7 +2859,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         if (pwidget):
           gui_dialog = pwidget.gui_dialog
           if (gui_dialog):
-            gui_dialog.set_new_size(width, height)
+            gui_dialog.setNewSize(width, height)
 
     @pyqtSlot(int)
     def slot_handleUpdateCallback(self, plugin_id):

@@ -61,6 +61,10 @@ public:
         events.numEvents = 0;
         events.reserved  = 0;
 
+        gui.visible = false;
+        gui.width  = 0;
+        gui.height = 0;
+
         // FIXME?
         memset(midi_events, 0, sizeof(VstMidiEvent)*MAX_MIDI_EVENTS);
 
@@ -218,9 +222,8 @@ public:
                     return;
                 }
 
-                // TODO
-                //gui.width  = width;
-                //gui.height = height;
+                gui.width  = width;
+                gui.height = height;
             }
             else
                 qCritical("Failed to get Plugin Window size");
@@ -235,24 +238,21 @@ public:
         }
     }
 
-    virtual void show_gui(bool /*yesno*/)
+    virtual void show_gui(bool yesno)
     {
-        // TODO
-#if 0
         gui.visible = yesno;
 
         if (gui.visible && gui.width > 0 && gui.height > 0)
-            callback_action(CALLBACK_RESIZE_GUI, id, gui.width, gui.height, 0.0);
-#endif
+            callback_action(CALLBACK_RESIZE_GUI, m_id, gui.width, gui.height, 0.0);
     }
 
     virtual void idle_gui()
     {
         //effect->dispatcher(effect, effIdle, 0, 0, nullptr, 0.0f);
 
-        // TODO
-        //if (gui.visible)
-        effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
+        // FIXME
+        if (gui.visible)
+            effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
     }
 
     virtual void reload()
@@ -1030,7 +1030,13 @@ public:
                     effect->user = this;
 
                     if (carla_jack_register_plugin(this, &jack_client))
+                    {
+                        // GUI Stuff
+                        if (effect->flags & effFlagsHasEditor)
+                            m_hints |= PLUGIN_HAS_GUI;
+
                         return true;
+                    }
                     else
                         set_last_error("Failed to register plugin in JACK");
                 }
@@ -1050,10 +1056,14 @@ public:
     {
         qDebug("VstHostCallback() - code: %02i, index: %02i, value: " P_INTPTR ", opt: %03f", opcode, index, value, opt);
 
+        VstPlugin* plugin = (effect && effect->user) ? (VstPlugin*)effect->user : nullptr;
+
         switch (opcode)
         {
         case audioMasterAutomate:
-            if (effect)
+            if (plugin)
+                plugin->set_parameter_value(index, opt, false, true, true);
+            else if (effect)
                 effect->setParameter(effect, index, opt);
             break;
 
@@ -1068,6 +1078,15 @@ public:
             memset(&timeInfo, 0, sizeof(VstTimeInfo));
             timeInfo.sampleRate = get_sample_rate();
             return (intptr_t)&timeInfo;
+
+        case audioMasterSizeWindow:
+            if (plugin)
+            {
+                plugin->gui.width  = index;
+                plugin->gui.height = value;
+                callback_action(CALLBACK_RESIZE_GUI, plugin->id(), index, value, 0.0);
+            }
+            return 1;
 
         case audioMasterGetSampleRate:
             return get_sample_rate();
@@ -1149,6 +1168,12 @@ private:
         VstEvent* data[MAX_MIDI_EVENTS];
     } events;
     VstMidiEvent midi_events[MAX_MIDI_EVENTS];
+
+    struct {
+        bool visible;
+        int width;
+        int height;
+    } gui;
 };
 
 short add_plugin_vst(const char* filename, const char* label)
