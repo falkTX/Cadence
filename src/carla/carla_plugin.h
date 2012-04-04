@@ -715,6 +715,38 @@ public:
             callback_action(CALLBACK_MIDI_PROGRAM_CHANGED, m_id, midiprog.current, 0, 0.0);
     }
 
+    virtual void set_gui_data(int /*data*/, void* /*ptr*/)
+    {
+    }
+
+    virtual void show_gui(bool /*yesno*/)
+    {
+    }
+
+    virtual void idle_gui()
+    {
+    }
+
+    virtual void reload()
+    {
+    }
+
+    virtual void reload_programs(bool)
+    {
+    }
+
+    virtual void prepare_for_save()
+    {
+    }
+
+    virtual void process(jack_nframes_t)
+    {
+    }
+
+    virtual void buffer_size_changed(jack_nframes_t)
+    {
+    }
+
     void send_midi_note(bool onoff, uint8_t note, uint8_t velo, bool, bool osc_send, bool callback_send)
     {
         carla_midi_lock();
@@ -753,38 +785,6 @@ public:
 
         if (callback_send)
             callback_action(onoff ? CALLBACK_NOTE_ON : CALLBACK_NOTE_OFF, m_id, note, velo, 0.0);
-    }
-
-    virtual void set_gui_data(int /*data*/, void* /*ptr*/)
-    {
-    }
-
-    virtual void show_gui(bool /*yesno*/)
-    {
-    }
-
-    virtual void idle_gui()
-    {
-    }
-
-    virtual void reload()
-    {
-    }
-
-    virtual void reload_programs(bool)
-    {
-    }
-
-    virtual void prepare_for_save()
-    {
-    }
-
-    virtual void process(jack_nframes_t)
-    {
-    }
-
-    virtual void buffer_size_changed(jack_nframes_t)
-    {
     }
 
     void postpone_event(PluginPostEventType type, int32_t index, double value)
