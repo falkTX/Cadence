@@ -211,20 +211,23 @@ public:
         descriptor->set_custom_data(handle, chunk.data(), chunk.size());
     }
 
-    virtual void set_midi_program(uint32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
+    virtual void set_midi_program(int32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
     {
         if (! descriptor->select_program)
             return;
 
-        // TODO - go for id -1 so we don't block audio
-        if (block) carla_proc_lock();
-        descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
-        if (block) carla_proc_unlock();
+        if (index >= 0)
+        {
+            // TODO - go for id -1 so we don't block audio
+            if (block) carla_proc_lock();
+            descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
+            if (block) carla_proc_unlock();
 
 #ifndef BUILD_BRIDGE
-        if (gui_send)
-            osc_send_program_as_midi(&osc.data, midiprog.data[index].bank, midiprog.data[index].program);
+            if (gui_send)
+                osc_send_program_as_midi(&osc.data, midiprog.data[index].bank, midiprog.data[index].program);
 #endif
+        }
 
         CarlaPlugin::set_midi_program(index, gui_send, osc_send, callback_send, block);
     }
@@ -315,6 +318,7 @@ public:
 
             if (LADSPA_IS_PORT_AUDIO(PortType))
             {
+#ifndef BUILD_BRIDGE
                 if (carla_options.global_jack_client)
                 {
                     strcpy(port_name, m_name);
@@ -322,6 +326,7 @@ public:
                     strncat(port_name, ldescriptor->PortNames[i], port_name_size/2);
                 }
                 else
+#endif
                     strncpy(port_name, ldescriptor->PortNames[i], port_name_size/2);
 
                 if (LADSPA_IS_PORT_INPUT(PortType))
@@ -530,12 +535,14 @@ public:
 
         if (needs_cin)
         {
+#ifndef BUILD_BRIDGE
             if (carla_options.global_jack_client)
             {
                 strcpy(port_name, m_name);
                 strcat(port_name, ":control-in");
             }
             else
+#endif
                 strcpy(port_name, "control-in");
 
             param.port_cin = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
@@ -543,12 +550,14 @@ public:
 
         if (needs_cout)
         {
+#ifndef BUILD_BRIDGE
             if (carla_options.global_jack_client)
             {
                 strcpy(port_name, m_name);
                 strcat(port_name, ":control-out");
             }
             else
+#endif
                 strcpy(port_name, "control-out");
 
             param.port_cout = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
@@ -556,12 +565,14 @@ public:
 
         if (mins == 1)
         {
+#ifndef BUILD_BRIDGE
             if (carla_options.global_jack_client)
             {
                 strcpy(port_name, m_name);
                 strcat(port_name, ":midi-in");
             }
             else
+#endif
                 strcpy(port_name, "midi-in");
 
             midi.port_min = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);

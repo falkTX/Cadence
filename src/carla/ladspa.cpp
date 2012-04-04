@@ -335,6 +335,7 @@ public:
 
             if (LADSPA_IS_PORT_AUDIO(PortType))
             {
+#ifndef BUILD_BRIDGE
                 if (carla_options.global_jack_client)
                 {
                     strcpy(port_name, m_name);
@@ -342,6 +343,7 @@ public:
                     strncat(port_name, descriptor->PortNames[i], port_name_size/2);
                 }
                 else
+#endif
                     strncpy(port_name, descriptor->PortNames[i], port_name_size/2);
 
                 if (LADSPA_IS_PORT_INPUT(PortType))
@@ -549,12 +551,14 @@ public:
 
         if (needs_cin)
         {
+#ifndef BUILD_BRIDGE
             if (carla_options.global_jack_client)
             {
                 strcpy(port_name, m_name);
                 strcat(port_name, ":control-in");
             }
             else
+#endif
                 strcpy(port_name, "control-in");
 
             param.port_cin = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
@@ -562,12 +566,14 @@ public:
 
         if (needs_cout)
         {
+#ifndef BUILD_BRIDGE
             if (carla_options.global_jack_client)
             {
                 strcpy(port_name, m_name);
                 strcat(port_name, ":control-out");
             }
             else
+#endif
                 strcpy(port_name, "control-out");
 
             param.port_cout = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);

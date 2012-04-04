@@ -33,6 +33,8 @@
 #include <QtCore/QMutex>
 #include <QtCore/QString>
 
+// TODO - check and try '#ifndef BUILD_BRIDGE' in all global_jack_client
+
 #define CARLA_PROCESS_CONTINUE_CHECK if (m_id != plugin_id) { return callback_action(CALLBACK_DEBUG, plugin_id, m_id, 0, 0.0); }
 
 const unsigned short MAX_POST_EVENTS = 128;
@@ -652,7 +654,7 @@ public:
     {
     }
 
-    virtual void set_program(uint32_t index, bool, bool osc_send, bool callback_send, bool)
+    virtual void set_program(int32_t index, bool, bool osc_send, bool callback_send, bool)
     {
         prog.current = index;
 
@@ -683,7 +685,7 @@ public:
             callback_action(CALLBACK_PROGRAM_CHANGED, m_id, prog.current, 0, 0.0);
     }
 
-    virtual void set_midi_program(uint32_t index, bool, bool osc_send, bool callback_send, bool)
+    virtual void set_midi_program(int32_t index, bool, bool osc_send, bool callback_send, bool)
     {
         midiprog.current = index;
 
@@ -754,11 +756,11 @@ public:
             callback_action(onoff ? CALLBACK_NOTE_ON : CALLBACK_NOTE_OFF, m_id, note, velo, 0.0);
     }
 
-    virtual void set_gui_data(int, void*)
+    virtual void set_gui_data(int /*data*/, void* /*ptr*/)
     {
     }
 
-    virtual void show_gui(bool)
+    virtual void show_gui(bool /*yesno*/)
     {
     }
 

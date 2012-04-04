@@ -15,6 +15,10 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
+#ifdef BUILD_BRIDGE
+#error You should not use bridge for soundfonts
+#endif
+
 #include "carla_plugin.h"
 
 #include <fluidsynth.h>
@@ -261,9 +265,10 @@ public:
         CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
     }
 
-    virtual void set_midi_program(uint32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
+    virtual void set_midi_program(int32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
     {
-        fluid_synth_program_select(f_synth, 0, f_id, midiprog.data[index].bank, midiprog.data[index].program);
+        if (index >= 0)
+            fluid_synth_program_select(f_synth, 0, f_id, midiprog.data[index].bank, midiprog.data[index].program);
 
         CarlaPlugin::set_midi_program(index, gui_send, osc_send, callback_send, block);
     }
@@ -1031,6 +1036,18 @@ public:
         aouts_peak[(plugin_id*2)+1] = aouts_peak_tmp[1];
 
         m_active_before = m_active;
+    }
+
+    virtual void delete_buffers()
+    {
+        qDebug("Sf2Plugin::delete_buffers() - start");
+
+        if (param.count > 0)
+            delete[] param_buffers;
+
+        param_buffers = nullptr;
+
+        qDebug("Sf2Plugin::delete_buffers() - end");
     }
 
     bool init(const char* filename, const char* label)
