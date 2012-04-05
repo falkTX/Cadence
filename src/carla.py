@@ -2021,12 +2021,10 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.edit_dialog_geometry = None
 
         if (self.pinfo['hints'] & PLUGIN_HAS_GUI):
-          print("Has UI")
           gui_info = CarlaHost.get_gui_info(self.plugin_id)
           self.gui_dialog_type = gui_info['type']
 
           if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_X11)):
-            print("Has Qt4 UI")
             self.gui_dialog = None
             self.gui_dialog = PluginGUI(self, self.pinfo['name'])
             self.gui_dialog.hide()
@@ -2045,7 +2043,6 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             self.b_gui.setEnabled(False)
 
         else:
-          print("NOT UI")
           self.gui_dialog = None
           self.gui_dialog_type = GUI_NONE
 
@@ -2560,7 +2557,6 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
     @pyqtSlot(bool)
     def slot_guiClicked(self, show):
-        print("slot_guiClicked", show)
         if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_X11)):
           if (show):
             if (self.gui_dialog_geometry):
@@ -2576,7 +2572,6 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
     @pyqtSlot(bool)
     def slot_editClicked(self, show):
-        print("slot_editClicked", show)
         if (show):
           if (self.edit_dialog_geometry):
             self.edit_dialog.restoreGeometry(self.edit_dialog_geometry)
@@ -2950,8 +2945,6 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         build = plugin['build']
         ptype = plugin['type']
 
-        print(ptype, plugin['type'])
-
         if (build != BINARY_NATIVE):
           # Store object so we can return a pointer
           if (self.m_bridge_info == None):
@@ -2984,9 +2977,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
         elif (ptype == PLUGIN_LV2):
           p_uri = plugin['label'].encode("utf-8")
-          print("TEST", p_uri)
           for rdf_item in self.lv2_rdf_list:
-            print(rdf_item.URI, p_uri)
             if (rdf_item.URI == p_uri):
               return pointer(rdf_item)
           else:
@@ -3327,8 +3318,6 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         LV2_PATH = toList(self.settings.value("Paths/LV2", LV2_PATH))
         VST_PATH = toList(self.settings.value("Paths/VST", VST_PATH))
         SF2_PATH = toList(self.settings.value("Paths/SF2", SF2_PATH))
-
-        print(LV2_PATH)
 
     def timerEvent(self, event):
         if (event.timerId() == self.TIMER_GUI_STUFF):

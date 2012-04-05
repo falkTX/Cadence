@@ -740,29 +740,29 @@ inline void lv2_rdf_free(const LV2_RDF_Descriptor* rdf_descriptor)
     delete rdf_descriptor;
 }
 
-inline bool is_lv2_feature_supported(const char* /*uri*/)
+inline bool is_lv2_feature_supported(const char* uri)
 {
-//    if (strcmp(uri, "http://lv2plug.in/ns/lv2core#hardRTCapable") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#inPlaceBroken") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#isLive") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/event") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#makePath") == 0)
-//        return false; // TODO
-//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#mapPath") == 0)
-//        return false; // TODO
-//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/uri-map") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#map") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#unmap") == 0)
-//        return true;
+    if (strcmp(uri, "http://lv2plug.in/ns/lv2core#hardRTCapable") == 0)
+        return true;
+    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#inPlaceBroken") == 0)
+        return true;
+    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#isLive") == 0)
+        return true;
+    else if (strcmp(uri, "http://lv2plug.in/ns/ext/event") == 0)
+        return true;
+    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#makePath") == 0)
+        return false; // TODO
+    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#mapPath") == 0)
+        return false; // TODO
+    else if (strcmp(uri, "http://lv2plug.in/ns/ext/uri-map") == 0)
+        return true;
+    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#map") == 0)
+        return true;
+    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#unmap") == 0)
+        return true;
 //    else if (strcmp(uri, "http://home.gna.org/lv2dynparam/rtmempool/v1") == 0)
 //        return true;
-//    else
+    else
         return false;
 }
 

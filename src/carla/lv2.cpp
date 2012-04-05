@@ -22,6 +22,7 @@
 #include "carla_plugin.h"
 
 #include "lv2/lv2.h"
+#include "lv2/atom.h"
 #include "lv2/event.h"
 #include "lv2/event-helpers.h"
 #include "lv2/uri-map.h"
@@ -60,9 +61,10 @@ const uint32_t CARLA_URI_MAP_ID_EVENT_MIDI  = 2;
 const uint32_t CARLA_URI_MAP_ID_EVENT_TIME  = 3;
 const uint32_t CARLA_URI_MAP_ID_COUNT       = 4;
 
-//enum CarlaLv2ParameterType {
-//    LV2_PARAMETER_CONTROL
-//};
+enum Lv2ParameterDataType {
+    LV2_PARAMETER_TYPE_CONTROL,
+    LV2_PARAMETER_TYPE_SOMETHING_ELSE_HERE
+};
 
 struct EventData {
     unsigned int types;
@@ -76,7 +78,7 @@ struct PluginEventData {
 };
 
 struct Lv2ParameterData {
-    //PluginLV2ParameterType type;
+    Lv2ParameterDataType type;
     union {
         float control;
     };
@@ -125,6 +127,10 @@ public:
 
         if (rdf_descriptor)
             lv2_rdf_free(rdf_descriptor);
+
+        handle = nullptr;
+        descriptor = nullptr;
+        rdf_descriptor = nullptr;
 
         if (features[lv2_feature_id_uri_map] && features[lv2_feature_id_uri_map]->data)
             delete (LV2_URI_Map_Feature*)features[lv2_feature_id_uri_map]->data;
@@ -226,8 +232,13 @@ public:
 
     virtual double get_parameter_value(uint32_t param_id)
     {
-        //switch (lv2param[param_id])
-        return lv2param[param_id].control;
+        switch (lv2param[param_id].type)
+        {
+        case LV2_PARAMETER_TYPE_CONTROL:
+            return lv2param[param_id].control;
+        default:
+            return 0.0;
+        }
     }
 
     virtual double get_parameter_scalepoint_value(uint32_t param_id, uint32_t scalepoint_id)
@@ -368,8 +379,14 @@ public:
 
     virtual void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
-        //switch (lv2param[param_id])
-        lv2param[param_id].control = value;
+        switch (lv2param[param_id].type)
+        {
+        case LV2_PARAMETER_TYPE_CONTROL:
+            lv2param[param_id].control = value;
+            break;
+        default:
+            break;
+        }
 
 //        if (gui_send && gui.visible)
 //        {
@@ -666,8 +683,6 @@ public:
         for (uint32_t i=0; i < PortCount; i++)
         {
             const LV2_Property PortType  = rdf_descriptor->Ports[i].Type;
-            const LV2_Property PortProps = rdf_descriptor->Ports[i].Properties;
-            //const LV2_RDF_PortPoints PortPoints = rdf_descriptor->Ports[i].Points;
 
             if (LV2_IS_PORT_AUDIO(PortType) || LV2_IS_PORT_CV(PortType) || LV2_IS_PORT_EVENT(PortType))
             {
@@ -700,6 +715,21 @@ public:
                 }
                 else
                     qWarning("WARNING - Got a broken Port (Audio, but not input or output)");
+            }
+            else if (LV2_IS_PORT_CV(PortType))
+            {
+                if (LV2_IS_PORT_INPUT(PortType))
+                {
+                    qWarning("WARNING - CV Ports are not supported yet");
+                }
+                else if (LV2_IS_PORT_OUTPUT(PortType))
+                {
+                    qWarning("WARNING - CV Ports are not supported yet");
+                }
+                else
+                    qWarning("WARNING - Got a broken Port (CV, but not input or output)");
+
+                descriptor->connect_port(handle, i, nullptr);
             }
             else if (LV2_IS_PORT_EVENT(PortType))
             {
@@ -737,54 +767,666 @@ public:
                 else
                     qWarning("WARNING - Got a broken Port (Event, but not input or output)");
             }
+            else if (LV2_IS_PORT_CONTROL(PortType))
+            {
+                const LV2_Property PortProps = rdf_descriptor->Ports[i].Properties;
+                const LV2_RDF_PortPoints PortPoints = rdf_descriptor->Ports[i].Points;
+
+                j = param.count++;
+                param.data[j].index  = j;
+                param.data[j].rindex = i;
+                param.data[j].hints  = 0;
+                param.data[j].midi_channel = 0;
+                param.data[j].midi_cc = -1;
+
+                double min, max, def, step, step_small, step_large;
+
+                // min value
+                if (LV2_HAVE_MINIMUM_PORT_POINT(PortPoints.Hints))
+                    min = PortPoints.Minimum;
+                else
+                    min = 0.0;
+
+                // max value
+                if (LV2_HAVE_MAXIMUM_PORT_POINT(PortPoints.Hints))
+                    max = PortPoints.Maximum;
+                else
+                    max = 1.0;
+
+                if (min > max)
+                    max = min;
+                else if (max < min)
+                    min = max;
+
+                // default value
+                if (LV2_HAVE_DEFAULT_PORT_POINT(PortPoints.Hints))
+                    def = PortPoints.Default;
+                else
+                {
+                    // no default value
+                    if (min < 0.0 && max > 0.0)
+                        def = 0.0;
+                    else
+                        def = min;
+                }
+
+                if (def < min)
+                    def = min;
+                else if (def > max)
+                    def = max;
+
+                if (max - min <= 0.0)
+                {
+                    qWarning("Broken plugin parameter -> max - min <= 0");
+                    max = min + 0.1;
+                }
+
+                if (LV2_IS_PORT_SAMPLE_RATE(PortProps))
+                {
+                    double sample_rate = get_sample_rate();
+                    min *= sample_rate;
+                    max *= sample_rate;
+                    def *= sample_rate;
+                    param.data[j].hints |= PARAMETER_USES_SAMPLERATE;
+                }
+
+                if (LV2_IS_PORT_INTEGER(PortProps))
+                {
+                    step = 1.0;
+                    step_small = 1.0;
+                    step_large = 10.0;
+                }
+                else if (LV2_IS_PORT_TOGGLED(PortProps))
+                {
+                    step = max - min;
+                    step_small = step;
+                    step_large = step;
+                }
+                else
+                {
+                    double range = max - min;
+                    step = range/100.0;
+                    step_small = range/1000.0;
+                    step_large = range/10.0;
+                }
+
+                if (LV2_IS_PORT_INPUT(PortType))
+                {
+                    param.data[j].type = PARAMETER_INPUT;
+                    param.data[j].hints |= PARAMETER_IS_ENABLED;
+                    param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
+                    needs_cin = true;
+
+                    // MIDI CC value
+                    LV2_RDF_PortMidiMap* PortMidiMap = &rdf_descriptor->Ports[i].MidiMap;
+                    if (LV2_IS_PORT_MIDI_MAP_CC(PortMidiMap->Type))
+                        param.data[j].midi_cc = PortMidiMap->Number;
+                }
+                else if (LV2_IS_PORT_OUTPUT(PortType))
+                {
+                    param.data[j].type = PARAMETER_OUTPUT;
+                    param.data[j].hints |= PARAMETER_IS_ENABLED;
+
+                    if (LV2_IS_PORT_LATENCY(PortProps) == false)
+                    {
+                        param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
+                        needs_cout = true;
+                    }
+                    else
+                    {
+                        // latency parameter
+                        min = 0;
+                        max = get_sample_rate();
+                        def = 0;
+                        step = 1;
+                        step_small = 1;
+                        step_large = 1;
+                    }
+                }
+                else
+                {
+                    param.data[j].type = PARAMETER_UNKNOWN;
+                    qWarning("WARNING - Got a broken Port (Control, but not input or output)");
+                }
+
+                // extra parameter hints
+                if (LV2_IS_PORT_ENUMERATION(PortProps))
+                    param.data[j].hints |= PARAMETER_USES_SCALEPOINTS;
+
+                if (LV2_IS_PORT_HAS_STRICT_BOUNDS(PortProps) /*|| (force_strict_bounds && LV2_IS_PORT_OUTPUT(PortType))*/)
+                    param.data[j].hints |= PARAMETER_HAS_STRICT_BOUNDS;
+
+                // check if parameter is not enabled or automable
+                if (LV2_IS_PORT_NOT_AUTOMATIC(PortProps) || LV2_IS_PORT_NOT_ON_GUI(PortProps))
+                    param.data[j].hints &= ~PARAMETER_IS_ENABLED;
+
+                if (LV2_IS_PORT_CAUSES_ARTIFACTS(PortProps) || LV2_IS_PORT_EXPENSIVE(PortProps))
+                    param.data[j].hints &= ~PARAMETER_IS_AUTOMABLE;
+
+                param.ranges[j].min = min;
+                param.ranges[j].max = max;
+                param.ranges[j].def = def;
+                param.ranges[j].step = step;
+                param.ranges[j].step_small = step_small;
+                param.ranges[j].step_large = step_large;
+
+                // Set LV2 params as needed
+                lv2param[j].type = LV2_PARAMETER_TYPE_CONTROL;
+                lv2param[j].control = def;
+
+                descriptor->connect_port(handle, i, &lv2param[j].control);
+            }
+            else
+                // Port Type not supported, but it's optional anyway
+                descriptor->connect_port(handle, i, nullptr);
         }
-    }
 
-#if 0
-    uint32_t get_custom_uri_id(const char* uri)
-    {
-        qDebug("Lv2Plugin::get_custom_uri_id(%s)", uri);
-
-        for (int i=0; i < custom_uri_ids.count(); i++)
+        if (needs_cin)
         {
-            if (custom_uri_ids[i] && strcmp(custom_uri_ids[i], uri) == 0)
-                return i;
-        }
-
-        custom_uri_ids.append(strdup(uri));
-        return custom_uri_ids.count()-1;
-    }
-
-    const char* get_custom_uri_string(int uri_id)
-    {
-        qDebug("Lv2Plugin::get_custom_uri_string(%i)", uri_id);
-
-        if (uri_id < custom_uri_ids.count())
-            return custom_uri_ids.at(uri_id);
-        else
-            return nullptr;
-    }
-
-    // FIXME - resolve jack deactivate
-    void lv2_remove_from_jack()
-    {
-        qDebug("Lv2Plugin::lv2_remove_from_jack() - start");
-
-        for (uint32_t i=0; i < evin.count; i++)
-        {
-            if (evin.data[i].port)
-                jack_port_unregister(jack_client, evin.data[i].port);
-        }
-
-        for (uint32_t i=0; i < evout.count; i++)
-        {
-            if (evout.data[i].port)
-                jack_port_unregister(jack_client, evout.data[i].port);
-        }
-
-        qDebug("Lv2Plugin::lv2_remove_from_jack() - end");
-    }
+#ifndef BUILD_BRIDGE
+            if (carla_options.global_jack_client)
+            {
+                strcpy(port_name, m_name);
+                strcat(port_name, ":control-in");
+            }
+            else
 #endif
+                strcpy(port_name, "control-in");
+
+            param.port_cin = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+        }
+
+        if (needs_cout)
+        {
+#ifndef BUILD_BRIDGE
+            if (carla_options.global_jack_client)
+            {
+                strcpy(port_name, m_name);
+                strcat(port_name, ":control-out");
+            }
+            else
+#endif
+                strcpy(port_name, "control-out");
+
+            param.port_cout = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
+        }
+
+        ain.count   = ains;
+        aout.count  = aouts;
+        evin.count  = ev_ins;
+        evout.count = ev_outs;
+        param.count = params;
+
+        reload_programs(true);
+
+        // plugin checks
+        m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
+
+        if (LV2_IS_GENERATOR(rdf_descriptor->Type))
+            m_hints |= PLUGIN_IS_SYNTH;
+
+        if (aouts > 0 && (ains == aouts || ains == 1))
+            m_hints |= PLUGIN_CAN_DRYWET;
+
+        if (aouts > 0)
+            m_hints |= PLUGIN_CAN_VOLUME;
+
+        if (aouts >= 2 && aouts%2 == 0)
+            m_hints |= PLUGIN_CAN_BALANCE;
+
+        carla_proc_lock();
+        m_id = _id;
+        carla_proc_unlock();
+
+        if (carla_options.global_jack_client == false)
+            jack_activate(jack_client);
+    }
+
+    virtual void process(jack_nframes_t nframes)
+    {
+        uint32_t i, k;
+        unsigned short plugin_id = m_id;
+
+        uint32_t midi_event_count = 0;
+        LV2_Event_Iterator evin_iters[evin.count];
+
+        double ains_peak_tmp[2]  = { 0.0 };
+        double aouts_peak_tmp[2] = { 0.0 };
+
+        jack_default_audio_sample_t* ains_buffer[ain.count];
+        jack_default_audio_sample_t* aouts_buffer[aout.count];
+        jack_default_audio_sample_t* evins_buffer[evin.count];
+        jack_default_audio_sample_t* evouts_buffer[evout.count];
+
+        for (i=0; i < ain.count; i++)
+            ains_buffer[i] = (jack_default_audio_sample_t*)jack_port_get_buffer(ain.ports[i], nframes);
+
+        for (i=0; i < aout.count; i++)
+            aouts_buffer[i] = (jack_default_audio_sample_t*)jack_port_get_buffer(aout.ports[i], nframes);
+
+        for (i=0; i < evin.count; i++)
+        {
+            lv2_event_buffer_reset(evin.data[i].buffer, LV2_EVENT_AUDIO_STAMP, (uint8_t*)(evin.data[i].buffer + 1));
+            lv2_event_begin(&evin_iters[i], evin.data[i].buffer);
+
+            if (evin.data[i].port)
+                evins_buffer[i] = (jack_default_audio_sample_t*)jack_port_get_buffer(evin.data[i].port, nframes);
+            else
+                evins_buffer[i] = nullptr;
+        }
+
+        for (i=0; i < evout.count; i++)
+        {
+            lv2_event_buffer_reset(evout.data[i].buffer, LV2_EVENT_AUDIO_STAMP, (uint8_t*)(evout.data[i].buffer + 1));
+
+            if (evout.data[i].port)
+                evouts_buffer[i] = (jack_default_audio_sample_t*)jack_port_get_buffer(evout.data[i].port, nframes);
+            else
+                evouts_buffer[i] = nullptr;
+        }
+
+        // --------------------------------------------------------------------------------------------------------
+        // Input VU
+
+        if (ain.count > 0)
+        {
+            short j2 = (ain.count == 1) ? 0 : 1;
+
+            for (k=0; k<nframes; k++)
+            {
+                if (abs_d(ains_buffer[0][k]) > ains_peak_tmp[0])
+                    ains_peak_tmp[0] = abs_d(ains_buffer[0][k]);
+                if (abs_d(ains_buffer[j2][k]) > ains_peak_tmp[1])
+                    ains_peak_tmp[1] = abs_d(ains_buffer[j2][k]);
+            }
+        }
+
+        CARLA_PROCESS_CONTINUE_CHECK;
+
+        // --------------------------------------------------------------------------------------------------------
+        // Parameters Input [Automation]
+
+        if (param.port_cin)
+        {
+            jack_default_audio_sample_t* pin_buffer = (jack_default_audio_sample_t*)jack_port_get_buffer(param.port_cin, nframes);
+
+            jack_midi_event_t pin_event;
+            uint32_t n_pin_events = jack_midi_get_event_count(pin_buffer);
+
+            for (i=0; i<n_pin_events; i++)
+            {
+                if (jack_midi_event_get(&pin_event, pin_buffer, i) != 0)
+                    break;
+
+                unsigned char channel = pin_event.buffer[0] & 0x0F;
+                unsigned char mode    = pin_event.buffer[0] & 0xF0;
+
+                // Status change
+                if (mode == 0xB0)
+                {
+                    unsigned char status  = pin_event.buffer[1] & 0x7F;
+                    unsigned char velo    = pin_event.buffer[2] & 0x7F;
+                    double value, velo_per = double(velo)/127;
+
+                    // Control GUI stuff (channel 0 only)
+                    if (channel == 0)
+                    {
+                        if (status == 0x78)
+                        {
+                            // All Sound Off
+                            set_active(false, false, false);
+                            postpone_event(PostEventParameterChange, PARAMETER_ACTIVE, 0.0);
+                            break;
+                        }
+                        else if (status == 0x09 && (m_hints & PLUGIN_CAN_DRYWET) > 0)
+                        {
+                            // Dry/Wet (using '0x09', undefined)
+                            set_drywet(velo_per, false, false);
+                            postpone_event(PostEventParameterChange, PARAMETER_DRYWET, velo_per);
+                        }
+                        else if (status == 0x07 && (m_hints & PLUGIN_CAN_VOLUME) > 0)
+                        {
+                            // Volume
+                            value = double(velo)/100;
+                            set_volume(value, false, false);
+                            postpone_event(PostEventParameterChange, PARAMETER_VOLUME, value);
+                        }
+                        else if (status == 0x08 && (m_hints & PLUGIN_CAN_BALANCE) > 0)
+                        {
+                            // Balance
+                            double left, right;
+                            value = (double(velo)-63.5)/63.5;
+
+                            if (value < 0)
+                            {
+                                left  = -1.0;
+                                right = (value*2)+1.0;
+                            }
+                            else if (value > 0)
+                            {
+                                left  = (value*2)-1.0;
+                                right = 1.0;
+                            }
+                            else
+                            {
+                                left  = -1.0;
+                                right = 1.0;
+                            }
+
+                            set_balance_left(left, false, false);
+                            set_balance_right(right, false, false);
+                            postpone_event(PostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
+                            postpone_event(PostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
+                        }
+                    }
+
+                    // Control plugin parameters
+                    for (k=0; k < param.count; k++)
+                    {
+                        if (param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0 &&
+                                param.data[k].midi_channel == channel && param.data[k].midi_cc == status)
+                        {
+                            value = (velo_per * (param.ranges[k].max - param.ranges[k].min)) + param.ranges[k].min;
+                            set_parameter_value(k, value, false, false, false);
+                            postpone_event(PostEventParameterChange, k, value);
+                        }
+                    }
+                }
+                // Program change
+                else if (mode == 0xC0)
+                {
+                    // TODO
+//                    unsigned char program = pin_event.buffer[1] & 0x7F;
+
+//                    if (program < prog.count)
+//                    {
+//                        set_program(program, false, false, false, false);
+//                        postpone_event(PostEventProgram, program, 0.0);
+//                    }
+                }
+            }
+        } // End of Parameters Input
+
+        CARLA_PROCESS_CONTINUE_CHECK;
+
+        // --------------------------------------------------------------------------------------------------------
+        // MIDI Input (External)
+
+        if (evin.count > 0)
+        {
+            carla_midi_lock();
+
+            for (i=0; i < MAX_MIDI_EVENTS && midi_event_count < MAX_MIDI_EVENTS; i++)
+            {
+                if (ext_midi_notes[i].valid)
+                {
+                    ExternalMidiNote* enote = &ext_midi_notes[i];
+                    enote->valid = false;
+
+                    for (i=0; i < evin.count; i++)
+                    {
+                        if (evin.data[i].types & CARLA_EVENT_TYPE_MIDI)
+                        {
+                            uint8_t* midi_event = lv2_event_reserve(&evin_iters[i], 0, 0, CARLA_URI_MAP_ID_EVENT_MIDI, 3);
+
+                            if (midi_event)
+                            {
+                                midi_event[0] = enote->onoff ? 0x90 : 0x80;
+                                midi_event[1] = enote->note;
+                                midi_event[2] = enote->velo;
+                            }
+                        }
+                    }
+
+                    midi_event_count += 1;
+                }
+                else
+                    break;
+            }
+
+            carla_midi_unlock();
+
+        } // End of MIDI Input (External)
+
+        CARLA_PROCESS_CONTINUE_CHECK;
+
+        // --------------------------------------------------------------------------------------------------------
+        // MIDI Input (JACK)
+
+        for (i=0; i < evin.count; i++)
+        {
+            if (evins_buffer[i] == nullptr || (evin.data[i].types & CARLA_EVENT_TYPE_MIDI) == 0)
+                continue;
+
+            jack_midi_event_t min_event;
+            uint32_t n_min_events = jack_midi_get_event_count(evins_buffer[i]);
+
+            for (k=0; k < n_min_events && midi_event_count < MAX_MIDI_EVENTS; k++)
+            {
+                if (jack_midi_event_get(&min_event, evins_buffer[i], k) != 0)
+                    break;
+
+                if (min_event.size != 3)
+                    continue;
+
+                unsigned char channel = min_event.buffer[0] & 0x0F;
+                unsigned char mode = min_event.buffer[0] & 0xF0;
+                unsigned char note = min_event.buffer[1] & 0x7F;
+                unsigned char velo = min_event.buffer[2] & 0x7F;
+
+                // fix bad note off
+                if (mode == 0x90 && velo == 0)
+                {
+                    mode = 0x80;
+                    velo = 64;
+                }
+
+                uint8_t* midi_event = lv2_event_reserve(&evin_iters[i], min_event.time, 0, CARLA_URI_MAP_ID_EVENT_MIDI, 3);
+
+                if (! midi_event)
+                    break;
+
+                if (mode == 0x80)
+                {
+                    midi_event[0] = mode + channel;
+                    midi_event[1] = note;
+                    midi_event[2] = velo;
+                    postpone_event(PostEventNoteOff, note, velo);
+                }
+                else if (mode == 0x90)
+                {
+                    midi_event[0] = mode + channel;
+                    midi_event[1] = note;
+                    midi_event[2] = velo;
+                    postpone_event(PostEventNoteOn, note, velo);
+                }
+
+                midi_event_count += 1;
+            }
+        } // End of MIDI Input (JACK)
+
+        CARLA_PROCESS_CONTINUE_CHECK;
+
+        // --------------------------------------------------------------------------------------------------------
+        // Plugin processing
+
+        if (m_active)
+        {
+            if (m_active_before == false)
+            {
+                if (descriptor->activate)
+                    descriptor->activate(handle);
+            }
+
+            for (i=0; i < ain.count; i++)
+                descriptor->connect_port(handle, ain_rindexes[i], ains_buffer[i]);
+
+            for (i=0; i < aout.count; i++)
+                descriptor->connect_port(handle, aout_rindexes[i], aouts_buffer[i]);
+
+            if (descriptor->run)
+                descriptor->run(handle, nframes);
+        }
+        else
+        {
+            if (m_active_before)
+            {
+                if (descriptor->deactivate)
+                    descriptor->deactivate(handle);
+            }
+        }
+
+        CARLA_PROCESS_CONTINUE_CHECK;
+
+        // --------------------------------------------------------------------------------------------------------
+        // Post-processing (dry/wet, volume and balance)
+
+        if (m_active)
+        {
+            double bal_rangeL, bal_rangeR;
+            jack_default_audio_sample_t old_bal_left[nframes];
+
+            for (i=0; i < aout.count; i++)
+            {
+                // Dry/Wet and Volume
+                for (k=0; k<nframes; k++)
+                {
+                    if ((m_hints & PLUGIN_CAN_DRYWET) > 0 && x_drywet != 1.0)
+                    {
+                        if (aout.count == 1)
+                            aouts_buffer[i][k] = (aouts_buffer[i][k]*x_drywet)+(ains_buffer[0][k]*(1.0-x_drywet));
+                        else
+                            aouts_buffer[i][k] = (aouts_buffer[i][k]*x_drywet)+(ains_buffer[i][k]*(1.0-x_drywet));
+                    }
+
+                    if (m_hints & PLUGIN_CAN_VOLUME)
+                        aouts_buffer[i][k] *= x_vol;
+                }
+
+                // Balance
+                if (m_hints & PLUGIN_CAN_BALANCE)
+                {
+                    if (i%2 == 0)
+                        memcpy(&old_bal_left, aouts_buffer[i], sizeof(jack_default_audio_sample_t)*nframes);
+
+                    bal_rangeL = (x_bal_left+1.0)/2;
+                    bal_rangeR = (x_bal_right+1.0)/2;
+
+                    for (k=0; k<nframes; k++)
+                    {
+                        if (i%2 == 0)
+                        {
+                            // left output
+                            aouts_buffer[i][k]  = old_bal_left[k]*(1.0-bal_rangeL);
+                            aouts_buffer[i][k] += aouts_buffer[i+1][k]*(1.0-bal_rangeR);
+                        }
+                        else
+                        {
+                            // right
+                            aouts_buffer[i][k]  = aouts_buffer[i][k]*bal_rangeR;
+                            aouts_buffer[i][k] += old_bal_left[k]*bal_rangeL;
+                        }
+                    }
+                }
+
+                // Output VU
+                if (i < 2)
+                {
+                    for (k=0; k<nframes; k++)
+                    {
+                        if (abs_d(aouts_buffer[i][k]) > aouts_peak_tmp[i])
+                            aouts_peak_tmp[i] = abs_d(aouts_buffer[i][k]);
+                    }
+                }
+            }
+        }
+        else
+        {
+            // disable any output sound if not active
+            for (i=0; i < aout.count; i++)
+                memset(aouts_buffer[i], 0.0f, sizeof(jack_default_audio_sample_t)*nframes);
+
+            aouts_peak_tmp[0] = 0.0;
+            aouts_peak_tmp[1] = 0.0;
+
+        } // End of Post-processing
+
+        CARLA_PROCESS_CONTINUE_CHECK;
+
+        // --------------------------------------------------------------------------------------------------------
+        // Control Output
+
+        if (param.port_cout)
+        {
+            jack_default_audio_sample_t* cout_buffer = (jack_default_audio_sample_t*)jack_port_get_buffer(param.port_cout, nframes);
+            jack_midi_clear_buffer(cout_buffer);
+
+            double value, value_per;
+
+            for (k=0; k < param.count; k++)
+            {
+                if (param.data[k].type == PARAMETER_OUTPUT && param.data[k].midi_cc >= 0)
+                {
+                    switch (lv2param[k].type)
+                    {
+                    case LV2_PARAMETER_TYPE_CONTROL:
+                        value = lv2param[k].control;
+                        break;
+                    default:
+                        value = param.ranges[k].min;
+                        break;
+                    }
+
+                    value_per = (value - param.ranges[k].min)/(param.ranges[k].max - param.ranges[k].min);
+
+                    jack_midi_data_t* event_buffer = jack_midi_event_reserve(cout_buffer, 0, 3);
+                    event_buffer[0] = 0xB0 + param.data[k].midi_channel;
+                    event_buffer[1] = param.data[k].midi_cc;
+                    event_buffer[2] = 127*value_per;
+                }
+            }
+        } // End of Control Output
+
+        CARLA_PROCESS_CONTINUE_CHECK;
+
+        // --------------------------------------------------------------------------------------------------------
+        // MIDI Output
+
+        for (i=0; i < evout.count; i++)
+        {
+            if (evouts_buffer[i] == nullptr || (evout.data[i].types & CARLA_EVENT_TYPE_MIDI) == 0)
+                continue;
+
+            jack_midi_clear_buffer(evouts_buffer[i]);
+
+            LV2_Event* ev;
+            uint8_t* data;
+
+            LV2_Event_Iterator iter;
+            lv2_event_begin(&iter, evout.data[i].buffer);
+
+            for (k=0; k < iter.buf->event_count; k++)
+            {
+                ev = lv2_event_get(&iter, &data);
+                if (ev && data)
+                    jack_midi_event_write(evouts_buffer[i], ev->frames, data, ev->size);
+
+                lv2_event_increment(&iter);
+            }
+        } // End of MIDI Output
+
+        CARLA_PROCESS_CONTINUE_CHECK;
+
+        // --------------------------------------------------------------------------------------------------------
+        // Peak Values
+
+        ains_peak[(plugin_id*2)+0]  = ains_peak_tmp[0];
+        ains_peak[(plugin_id*2)+1]  = ains_peak_tmp[1];
+        aouts_peak[(plugin_id*2)+0] = aouts_peak_tmp[0];
+        aouts_peak[(plugin_id*2)+1] = aouts_peak_tmp[1];
+
+        m_active_before = m_active;
+    }
 
     virtual void delete_buffers()
     {
@@ -826,13 +1468,61 @@ public:
         qDebug("Lv2Plugin::delete_buffers() - end");
     }
 
+    uint32_t get_custom_uri_id(const char* uri)
+    {
+        qDebug("Lv2Plugin::get_custom_uri_id(%s)", uri);
+
+        for (int i=0; i < custom_uri_ids.count(); i++)
+        {
+            if (custom_uri_ids[i] && strcmp(custom_uri_ids[i], uri) == 0)
+                return i;
+        }
+
+        custom_uri_ids.append(strdup(uri));
+        return custom_uri_ids.count()-1;
+    }
+
+    const char* get_custom_uri_string(int uri_id)
+    {
+        qDebug("Lv2Plugin::get_custom_uri_string(%i)", uri_id);
+
+        if (uri_id < custom_uri_ids.count())
+            return custom_uri_ids.at(uri_id);
+        else
+            return nullptr;
+    }
+
+#if 0
+    // FIXME - resolve jack deactivate
+    void lv2_remove_from_jack()
+    {
+        qDebug("Lv2Plugin::lv2_remove_from_jack() - start");
+
+        for (uint32_t i=0; i < evin.count; i++)
+        {
+            if (evin.data[i].port)
+                jack_port_unregister(jack_client, evin.data[i].port);
+        }
+
+        for (uint32_t i=0; i < evout.count; i++)
+        {
+            if (evout.data[i].port)
+                jack_port_unregister(jack_client, evout.data[i].port);
+        }
+
+        qDebug("Lv2Plugin::lv2_remove_from_jack() - end");
+    }
+#endif
+
     bool init(const char* filename, const char* URI, void* extra_stuff)
     {
         LV2_RDF_Descriptor* rdf_descriptor_ = (LV2_RDF_Descriptor*)extra_stuff;
 
         if (rdf_descriptor_)
         {
-            if (lib_open(rdf_descriptor_->Binary))
+            rdf_descriptor = lv2_rdf_dup(rdf_descriptor_);
+
+            if (lib_open(rdf_descriptor->Binary))
             {
                 LV2_Descriptor_Function descfn = (LV2_Descriptor_Function)lib_symbol("lv2_descriptor");
 
@@ -848,24 +1538,100 @@ public:
 
                     if (descriptor)
                     {
-                        // TODO - can continue
+                        bool can_continue = true;
 
-                        handle = descriptor->instantiate(descriptor, get_sample_rate(), rdf_descriptor_->Bundle, features);
-
-                        if (handle)
+                        // Check supported ports
+                        for (i=0; i < rdf_descriptor->PortCount; i++)
                         {
-                            m_filename = strdup(filename);
-                            m_name = get_unique_name(rdf_descriptor_->Name);
-
-                            rdf_descriptor = lv2_rdf_dup(rdf_descriptor_);
-
-                            if (carla_jack_register_plugin(this, &jack_client))
-                                return true;
-                            else
-                                set_last_error("Failed to register plugin in JACK");
+                            LV2_Property PortType = rdf_descriptor->Ports[i].Type;
+                            if (bool(LV2_IS_PORT_AUDIO(PortType) || LV2_IS_PORT_CONTROL(PortType) || LV2_IS_PORT_EVENT(PortType)) == false)
+                            {
+                                if (! LV2_IS_PORT_OPTIONAL(rdf_descriptor->Ports[i].Properties))
+                                {
+                                    set_last_error("Plugin requires a port that is not currently supported");
+                                    can_continue = false;
+                                    break;
+                                }
+                            }
                         }
-                        else
-                            set_last_error("Plugin failed to initialize");
+
+                        // Check supported features
+                        for (i=0; i < rdf_descriptor->FeatureCount; i++)
+                        {
+                            if (LV2_IS_FEATURE_REQUIRED(rdf_descriptor->Features[i].Type) && is_lv2_feature_supported(rdf_descriptor->Features[i].URI) == false)
+                            {
+                                QString msg = QString("Plugin requires a feature that is not supported:\n%1").arg(rdf_descriptor->Features[i].URI);
+                                set_last_error(msg.toUtf8().constData());
+                                can_continue = false;
+                                break;
+                            }
+                            else
+                                qDebug("Plugin wants a feature that is not supported:\n%s", rdf_descriptor->Features[i].URI);
+                        }
+
+                        // Check extensions (...)
+                        for (i=0; i < rdf_descriptor->ExtensionCount; i++)
+                        {
+                            //if (strcmp(rdf_descriptor->Extensions[i], LV2_STATE_INTERFACE_URI) == 0)
+                            //    plugin->hints |= PLUGIN_HAS_EXTENSION_STATE;
+                            //else if (strcmp(rdf_descriptor->Extensions[i], LV2DYNPARAM_URI) == 0)
+                            //    plugin->hints |= PLUGIN_HAS_EXTENSION_DYNPARAM;
+                            //else
+                            qDebug("Plugin has non-supported extension: '%s'", rdf_descriptor->Extensions[i]);
+                        }
+
+                        if (can_continue)
+                        {
+                            // Initialize features
+                            LV2_URI_Map_Feature* URI_Map_Feature = new LV2_URI_Map_Feature;
+                            URI_Map_Feature->callback_data       = this;
+                            URI_Map_Feature->uri_to_id           = carla_lv2_uri_to_id;
+
+                            LV2_URID_Map* URID_Map_Feature       = new LV2_URID_Map;
+                            URID_Map_Feature->handle             = this;
+                            URID_Map_Feature->map                = carla_lv2_urid_map;
+
+                            LV2_URID_Unmap* URID_Unmap_Feature   = new LV2_URID_Unmap;
+                            URID_Unmap_Feature->handle           = this;
+                            URID_Unmap_Feature->unmap            = carla_lv2_urid_unmap;
+
+                            LV2_Event_Feature* Event_Feature     = new LV2_Event_Feature;
+                            Event_Feature->callback_data         = this;
+                            Event_Feature->lv2_event_ref         = carla_lv2_event_ref;
+                            Event_Feature->lv2_event_unref       = carla_lv2_event_unref;
+
+                            features[lv2_feature_id_uri_map]          = new LV2_Feature;
+                            features[lv2_feature_id_uri_map]->URI     = LV2_URI_MAP_URI;
+                            features[lv2_feature_id_uri_map]->data    = URI_Map_Feature;
+
+                            features[lv2_feature_id_urid_map]         = new LV2_Feature;
+                            features[lv2_feature_id_urid_map]->URI    = LV2_URID_MAP_URI;
+                            features[lv2_feature_id_urid_map]->data   = URID_Map_Feature;
+
+                            features[lv2_feature_id_urid_unmap]       = new LV2_Feature;
+                            features[lv2_feature_id_urid_unmap]->URI  = LV2_URID_UNMAP_URI;
+                            features[lv2_feature_id_urid_unmap]->data = URID_Unmap_Feature;
+
+                            features[lv2_feature_id_event]            = new LV2_Feature;
+                            features[lv2_feature_id_event]->URI       = LV2_EVENT_URI;
+                            features[lv2_feature_id_event]->data      = Event_Feature;
+
+                            handle = descriptor->instantiate(descriptor, get_sample_rate(), rdf_descriptor->Bundle, features);
+
+                            if (handle)
+                            {
+                                m_filename = strdup(filename);
+                                m_name = get_unique_name(rdf_descriptor->Name);
+
+                                if (carla_jack_register_plugin(this, &jack_client))
+                                    return true;
+                                else
+                                    set_last_error("Failed to register plugin in JACK");
+                            }
+                            else
+                                set_last_error("Plugin failed to initialize");
+                        }
+                        // error already set
                     }
                     else
                         set_last_error("Could not find the requested plugin URI in the plugin library");
@@ -880,6 +1646,94 @@ public:
             set_last_error("Failed to find the requested plugin in the LV2 Bundle");
 
         return false;
+    }
+
+    // ----------------- URI-Map Feature -------------------------------------------------
+    static uint32_t carla_lv2_uri_to_id(LV2_URI_Map_Callback_Data data, const char* map, const char* uri)
+    {
+        qDebug("Lv2AudioPlugin::carla_lv2_uri_to_id(%p, %s, %s)", data, map, uri);
+
+        if (map && strcmp(map, LV2_EVENT_URI) == 0)
+        {
+            // Event types
+            if (strcmp(uri, "http://lv2plug.in/ns/ext/midi#MidiEvent") == 0)
+                return CARLA_URI_MAP_ID_EVENT_MIDI;
+            else if (strcmp(uri, "http://lv2plug.in/ns/ext/time#Position") == 0)
+                return CARLA_URI_MAP_ID_EVENT_TIME;
+        }
+        else if (strcmp(uri, LV2_ATOM__String) == 0)
+        {
+            return CARLA_URI_MAP_ID_ATOM_STRING;
+        }
+
+        // Custom types
+        if (data)
+        {
+            Lv2Plugin* plugin = (Lv2Plugin*)data;
+            return plugin->get_custom_uri_id(uri);
+        }
+
+        return 0;
+    }
+
+    // ----------------- URID Feature ----------------------------------------------------
+    static LV2_URID carla_lv2_urid_map(LV2_URID_Map_Handle handle, const char* uri)
+    {
+        qDebug("Lv2AudioPlugin::carla_lv2_urid_map(%p, %s)", handle, uri);
+
+        if (strcmp(uri, "http://lv2plug.in/ns/ext/midi#MidiEvent") == 0)
+            return CARLA_URI_MAP_ID_EVENT_MIDI;
+        else if (strcmp(uri, "http://lv2plug.in/ns/ext/time#Position") == 0)
+            return CARLA_URI_MAP_ID_EVENT_TIME;
+        else if (strcmp(uri, LV2_ATOM__String) == 0)
+            return CARLA_URI_MAP_ID_ATOM_STRING;
+
+        // Custom types
+        if (handle)
+        {
+            Lv2Plugin* plugin = (Lv2Plugin*)handle;
+            return plugin->get_custom_uri_id(uri);
+        }
+
+        return 0;
+    }
+
+    static const char* carla_lv2_urid_unmap(LV2_URID_Map_Handle handle, LV2_URID urid)
+    {
+        qDebug("Lv2AudioPlugin::carla_lv2_urid_unmap(%p, %i)", handle, urid);
+
+        if (urid == CARLA_URI_MAP_ID_EVENT_MIDI)
+            return "http://lv2plug.in/ns/ext/midi#MidiEvent";
+        else if (urid == CARLA_URI_MAP_ID_EVENT_TIME)
+            return "http://lv2plug.in/ns/ext/time#Position";
+        else if (urid == CARLA_URI_MAP_ID_ATOM_STRING)
+            return LV2_ATOM__String;
+
+        // Custom types
+        if (handle)
+        {
+            Lv2Plugin* plugin = (Lv2Plugin*)handle;
+            return plugin->get_custom_uri_string(urid);
+        }
+
+        return nullptr;
+    }
+
+    // ----------------- Event Feature ---------------------------------------------------
+    static uint32_t carla_lv2_event_ref(LV2_Event_Callback_Data data, LV2_Event* event)
+    {
+        qDebug("Lv2AudioPlugin::carla_lv2_event_ref(%p, %p)", data, event);
+
+        // TODO
+        return 0;
+    }
+
+    static uint32_t carla_lv2_event_unref(LV2_Event_Callback_Data data, LV2_Event* event)
+    {
+        qDebug("Lv2AudioPlugin::carla_lv2_event_unref(%p, %p)", data, event);
+
+        // TODO
+        return 0;
     }
 
 private:
@@ -922,7 +1776,9 @@ short add_plugin_lv2(const char* filename, const char* label, void* extra_stuff)
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
+#ifndef BUILD_BRIDGE
             //osc_new_plugin(plugin);
+#endif
         }
         else
         {
