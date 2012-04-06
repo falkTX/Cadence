@@ -30,8 +30,13 @@
 #include "lv2/ui.h"
 #include "lv2_rdf.h"
 
-#include "lv2/lv2-midiport.h"
+#include "lv2/lv2-miditype.h"
 #include "lv2/lv2-midifunctions.h"
+#include "lv2/lv2_rtmempool.h"
+
+extern "C" {
+#include "lv2-rtmempool/rtmempool.h"
+}
 
 // static max values
 const unsigned int MAX_EVENT_BUFFER = 8192; // 0x7FFF; // 32767
@@ -156,6 +161,9 @@ public:
 
         if (features[lv2_feature_id_event] && features[lv2_feature_id_event]->data)
             delete (LV2_Event_Feature*)features[lv2_feature_id_event]->data;
+
+        if (features[lv2_feature_id_rtmempool] && features[lv2_feature_id_rtmempool]->data)
+            delete (lv2_rtsafe_memory_pool_provider*)features[lv2_feature_id_rtmempool]->data;
 
         for (uint32_t i=0; i < lv2_feature_count; i++)
         {
@@ -1315,7 +1323,9 @@ public:
                             else if (evin.data[k].types & CARLA_EVENT_DATA_EVENT)
                                 lv2_event_write(&evin_iters[k], 0, 0, CARLA_URI_MAP_ID_EVENT_MIDI, 3, midi_event);
                             else if (evin.data[k].types & CARLA_EVENT_DATA_MIDI_LL)
+                            {
                                 lv2midi_put_event(&evin_states[k], 0, 3, midi_event);
+                            }
                         }
                     }
 
@@ -1777,6 +1787,9 @@ public:
                             Event_Feature->lv2_event_ref         = nullptr;
                             Event_Feature->lv2_event_unref       = nullptr;
 
+                            lv2_rtsafe_memory_pool_provider* RT_MemPool_Feature = new lv2_rtsafe_memory_pool_provider;
+                            rtmempool_allocator_init(RT_MemPool_Feature);
+
                             features[lv2_feature_id_uri_map]          = new LV2_Feature;
                             features[lv2_feature_id_uri_map]->URI     = LV2_URI_MAP_URI;
                             features[lv2_feature_id_uri_map]->data    = URI_Map_Feature;
@@ -1792,6 +1805,10 @@ public:
                             features[lv2_feature_id_event]            = new LV2_Feature;
                             features[lv2_feature_id_event]->URI       = LV2_EVENT_URI;
                             features[lv2_feature_id_event]->data      = Event_Feature;
+
+                            features[lv2_feature_id_rtmempool]        = new LV2_Feature;
+                            features[lv2_feature_id_rtmempool]->URI   = LV2_RTSAFE_MEMORY_POOL_URI;
+                            features[lv2_feature_id_rtmempool]->data  = RT_MemPool_Feature;
 
                             handle = descriptor->instantiate(descriptor, get_sample_rate(), rdf_descriptor->Bundle, features);
 

@@ -12,8 +12,7 @@ CARLA_BUILD_FLAGS  = -Wall -std=c++0x -fPIC -I. -I../carla-includes `pkg-config 
 CARLA_BUILD_FLAGS += -DDEBUG -O0 -g
 CARLA_LINK_FLAGS   = -shared -fPIC -ldl `pkg-config --libs jack fluidsynth liblo QtCore QtGui` $(LDFLAGS)
 
-OBJS = carla_backend.o carla_bridge.o carla_jack.o carla_osc.o carla_shared.o carla_threads.o ladspa.o dssi.o lv2.o vst.o sf2.o
-# lv2-rtmempool/rtmempool.o
+OBJS = carla_backend.o carla_bridge.o carla_jack.o carla_osc.o carla_shared.o carla_threads.o ladspa.o dssi.o lv2.o vst.o sf2.o lv2-rtmempool/rtmempool.o
 
 
 all: carla_backend.so
@@ -31,6 +30,4 @@ carla_backend.dll: $(OBJS) windows.def
 	$(CXX) -c $< $(CARLA_BUILD_FLAGS) -o $@
 
 clean:
-	rm -f *.o *.so *.dll
-# lv2-rtmempool/*.o
-
+	rm -f *.o lv2-rtmempool/*.o *.so *.dll

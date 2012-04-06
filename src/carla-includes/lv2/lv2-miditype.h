@@ -1,6 +1,6 @@
 /****************************************************************************
     
-    lv2-midiport.h - header file for using MIDI in LV2 plugins
+    lv2-miditype.h - header file for using MIDI in LV2 plugins
     
     Copyright (C) 2006  Lars Luthman <lars.luthman@gmail.com>
     
@@ -20,17 +20,13 @@
 
 ****************************************************************************/
 
-/** @file
-    This file contains the specification for an LV2 MIDI port extension.
-*/
-
-#ifndef LV2_MIDIPORT_H
-#define LV2_MIDIPORT_H
+#ifndef LV2_MIDITYPE_H
+#define LV2_MIDITYPE_H
 
 
 /** This data structure is used to contain the MIDI events for one run() 
-    cycle. The port buffer for an LV2 port of the type
-    <http://ll-plugins.nongnu.org/lv2/ext/MidiPort> should be a pointer 
+    cycle. The port buffer for a LV2 port that has the datatype 
+    <http://ll-plugins.nongnu.org/lv2/ext/miditype> should be a pointer 
     to an instance of this struct. 
 
     To store two Note On events on MIDI channel 0 in a buffer, with timestamps
@@ -38,11 +34,11 @@
     midi_data is a variable of type LV2_MIDI):
     @code
     
-      uint32_t buffer_offset = 0;
+      size_t buffer_offset = 0;
       *(double*)(midi_data->data + buffer_offset) = 12;
       buffer_offset += sizeof(double);
-      *(uint32_t*)(midi_data->data + buffer_offset) = 3;
-      buffer_offset += sizeof(uint32_t);
+      *(size_t*)(midi_data->data + buffer_offset) = 3;
+      buffer_offset += sizeof(size_t);
       midi_data->data[buffer_offset++] = 0x90;
       midi_data->data[buffer_offset++] = 0x48;
       midi_data->data[buffer_offset++] = 0x64;
@@ -50,8 +46,8 @@
       
       *(double*)(midi_data->data + buffer_offset) = 35.5;
       buffer_offset += sizeof(double);
-      *(uint32_t*)(midi_data->data + buffer_offset) = 3;
-      buffer_offset += sizeof(uint32_t);
+      *(size_t*)(midi_data->data + buffer_offset) = 3;
+      buffer_offset += sizeof(size_t);
       midi_data->data[buffer_offset++] = 0x90;
       midi_data->data[buffer_offset++] = 0x55;
       midi_data->data[buffer_offset++] = 0x64;
@@ -68,23 +64,19 @@
     To read events from a buffer, you could do something like this:
     @code
     
-      uint32_t buffer_offset = 0;
+      size_t buffer_offset = 0;
       uint32_t i;
       for (i = 0; i < midi_data->event_count; ++i) {
         double timestamp = *(double*)(midi_data->data + buffer_offset);
         buffer_offset += sizeof(double);
-        uint32_t size = *(uint32_t*)(midi_data->data + buffer_offset);
-        buffer_offset += sizeof(uint32_t);
+        size_t size = *(size_t*)(midi_data->data + buffer_offset);
+        buffer_offset += sizeof(size_t);
         do_something_with_event(timestamp, size, 
                                 midi_data->data + buffer_offset);
         buffer_offset += size;
       }
         
     @endcode
-    
-    If you think this looks like too much code to simply read and write MIDI 
-    events, take a look at the helper functions in lv2-midifunctions.h. They
-    are not an official part of this extension, but they can be convenient.
 */
 typedef struct {
 
@@ -131,7 +123,7 @@ typedef struct {
       must be stored after an event with a timestamp of 65.0.
       
       The second part of the event is a size field, which should have the type
-      "uint32_t" (as defined in the standard C header stddef.h). It should 
+      "size_t" (as defined in the standard C header stddef.h). It should 
       contain the size of the MIDI data for this event, i.e. the number of 
       bytes used to store the actual MIDI event. The bytes used by the 
       timestamp and the size field should not be counted.
@@ -161,8 +153,9 @@ typedef struct {
         events to the buffer, and the MIDI reader (plugin or host) can assume
         that all events are valid.
         
-      On a platform where double is 8 bytes the data buffer layout for a 
-      3-byte event followed by a 4-byte event may look something like this:
+      On a platform where double is 8 bytes and size_t is 4 bytes, the data 
+      buffer layout for a 3-byte event followed by a 4-byte event may look 
+      something like this:
       _______________________________________________________________
       | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | ...
       |TIMESTAMP 1    |SIZE 1 |DATA |TIMESTAMP 2    |SIZE 2 |DATA   | ...

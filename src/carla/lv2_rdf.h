@@ -760,8 +760,8 @@ inline bool is_lv2_feature_supported(const char* uri)
         return true;
     else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#unmap") == 0)
         return true;
-//    else if (strcmp(uri, "http://home.gna.org/lv2dynparam/rtmempool/v1") == 0)
-//        return true;
+    else if (strcmp(uri, "http://home.gna.org/lv2dynparam/rtmempool/v1") == 0)
+        return true;
     else
         return false;
 }
