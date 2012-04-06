@@ -742,25 +742,25 @@ inline void lv2_rdf_free(const LV2_RDF_Descriptor* rdf_descriptor)
 
 inline bool is_lv2_feature_supported(const char* uri)
 {
-    if (strcmp(uri, "http://lv2plug.in/ns/lv2core#hardRTCapable") == 0)
+    if (strcmp(uri, LV2_CORE__hardRTCapable) == 0)
         return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#inPlaceBroken") == 0)
+    else if (strcmp(uri, LV2_CORE__inPlaceBroken) == 0)
         return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#isLive") == 0)
+    else if (strcmp(uri, LV2_CORE__isLive) == 0)
         return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/event") == 0)
+    else if (strcmp(uri, LV2_EVENT_URI) == 0)
         return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#makePath") == 0)
+    else if (strcmp(uri, LV2_STATE__makePath) == 0)
         return false; // TODO
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#mapPath") == 0)
+    else if (strcmp(uri, LV2_STATE__mapPath) == 0)
         return false; // TODO
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/uri-map") == 0)
+    else if (strcmp(uri, LV2_URI_MAP_URI) == 0)
         return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#map") == 0)
+    else if (strcmp(uri, LV2_URID__map) == 0)
         return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#unmap") == 0)
+    else if (strcmp(uri, LV2_URID__unmap) == 0)
         return true;
-    else if (strcmp(uri, "http://home.gna.org/lv2dynparam/rtmempool/v1") == 0)
+    else if (strcmp(uri, LV2_RTSAFE_MEMORY_POOL_URI) == 0)
         return true;
     else
         return false;
@@ -768,63 +768,70 @@ inline bool is_lv2_feature_supported(const char* uri)
 
 inline bool is_lv2_ui_feature_supported(const char* uri)
 {
-    if (strcmp(uri, "http://lv2plug.in/ns/lv2core#hardRTCapable") == 0)
+    if (strcmp(uri, LV2_CORE__hardRTCapable) == 0)
         return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#inPlaceBroken") == 0)
+    else if (strcmp(uri, LV2_CORE__inPlaceBroken) == 0)
         return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#isLive") == 0)
+    else if (strcmp(uri, LV2_CORE__isLive) == 0)
         return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/event") == 0)
+    else if (strcmp(uri, LV2_EVENT_URI) == 0)
         return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#makePath") == 0)
+    else if (strcmp(uri, LV2_STATE__makePath) == 0)
         return false; // TODO
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#mapPath") == 0)
+    else if (strcmp(uri, LV2_STATE__mapPath) == 0)
         return false; // TODO
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/uri-map") == 0)
+    else if (strcmp(uri, LV2_URI_MAP_URI) == 0)
         return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#map") == 0)
+    else if (strcmp(uri, LV2_URID__map) == 0)
         return true;
-    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#unmap") == 0)
+    else if (strcmp(uri, LV2_URID__unmap) == 0)
         return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/data-access") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/instance-access") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/ui-resize") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#Events") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#makeResident") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#makeSONameResident") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#noUserResize") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#fixedSize") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#external") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://nedko.arnaudov.name/lv2/external_ui/") == 0)
-//        return true;
+    else if (strcmp(uri, LV2_RTSAFE_MEMORY_POOL_URI) == 0)
+        return true;
+    else if (strcmp(uri, LV2_DATA_ACCESS_URI) == 0)
+        return true;
+    else if (strcmp(uri, LV2_INSTANCE_ACCESS_URI) == 0)
+        return true;
+    else if (strcmp(uri, LV2_UI__noUserResize) == 0)
+        return true;
+    else if (strcmp(uri, LV2_UI__fixedSize) == 0)
+        return true;
+    else if (strcmp(uri, LV2_UI__parent) == 0)
+        return true;
+    else if (strcmp(uri, LV2_UI__portMap) == 0)
+        return false; // TODO
+    else if (strcmp(uri, LV2_UI__portSubscribe) == 0)
+        return false; // TODO
+    else if (strcmp(uri, LV2_UI__touch) == 0)
+        return false; // TODO
+    //else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#Events") == 0)
+        //return true;
+    //else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#makeResident") == 0)
+        //return true;
+    //else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#makeSONameResident") == 0)
+        //return true;
+    else if (strcmp(uri, LV2_EXTERNAL_UI_URI) == 0)
+        return true;
+    else if (strcmp(uri, LV2_EXTERNAL_UI_DEPRECATED_URI) == 0)
+        return true;
     else
         return false;
 }
 
 inline const char* lv2_get_ui_uri(int UiType)
 {
-#define NS_LV2UI "http://lv2plug.in/ns/extensions/ui#"
     switch(UiType)
     {
     case LV2_UI_X11:
-        return NS_LV2UI "X11UI";
+        return LV2_UI__X11UI;
     case LV2_UI_GTK2:
-        return NS_LV2UI "GtkUI";
+        return LV2_UI__GtkUI;
     case LV2_UI_QT4:
-        return NS_LV2UI "Qt4UI";
+        return LV2_UI__Qt4UI;
     case LV2_UI_EXTERNAL:
-        return "http://nedko.arnaudov.name/lv2/external_ui/";
+        return LV2_EXTERNAL_UI_URI;
     case LV2_UI_OLD_EXTERNAL:
-        return NS_LV2UI "external";
+        return LV2_EXTERNAL_UI_DEPRECATED_URI;
     default:
         return "UI URI Type Not Supported in LV2_RDF";
     }

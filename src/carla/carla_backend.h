@@ -287,7 +287,7 @@ CARLA_EXPORT void set_chunk_data(unsigned short plugin_id, const char* chunk_dat
 CARLA_EXPORT void set_gui_data(unsigned short plugin_id, int data, intptr_t gui_addr);
 
 CARLA_EXPORT void show_gui(unsigned short plugin_id, bool yesno);
-CARLA_EXPORT void idle_gui(unsigned short plugin_id);
+CARLA_EXPORT void idle_guis();
 
 CARLA_EXPORT void send_midi_note(unsigned short plugin_id, bool onoff, uint8_t note, uint8_t velocity);
 CARLA_EXPORT void prepare_for_save(unsigned short plugin_id);

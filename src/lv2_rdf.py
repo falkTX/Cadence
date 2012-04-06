@@ -1898,7 +1898,6 @@ def recheck_all_plugins(qobject, start_value, percent_value):
       if (plugin['URI'] in uris):
         plugin['Presets'].append(preset)
         plugin['PresetCount'] += 1
-        break
 
   for ui in LV2_UIs:
     uris = ui['appliesTo']
@@ -1906,7 +1905,6 @@ def recheck_all_plugins(qobject, start_value, percent_value):
       if (plugin['URI'] in uris):
         plugin['UIs'].append(ui)
         plugin['UICount'] += 1
-        break
 
   return LV2_Plugins
 

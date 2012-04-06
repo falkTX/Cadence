@@ -76,7 +76,6 @@ static void lv2midi_put_event(LV2_MIDIState* state,
   
   if (state->midi->size + sizeof(double) + sizeof(size_t) + size < state->midi->capacity)
   {
-    /* write LV2 MIDI event */
     *((double*)(state->midi->data + state->midi->size)) = timestamp;
     state->midi->size += sizeof(double);
     *((size_t*)(state->midi->data + state->midi->size)) = size;

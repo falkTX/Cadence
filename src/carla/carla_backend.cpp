@@ -1051,21 +1051,14 @@ void show_gui(unsigned short plugin_id, bool yesno)
     qCritical("show_gui(%i, %s) - could not find plugin", plugin_id, bool2str(yesno));
 }
 
-void idle_gui(unsigned short plugin_id)
+void idle_guis()
 {
-    qDebug("idle_gui(%i)", plugin_id);
-
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
-        if (plugin && plugin->id() == plugin_id)
-        {
+        if (plugin && plugin->id() >= 0)
             plugin->idle_gui();
-            return;
-        }
     }
-
-    qCritical("idle_gui(%i) - could not find plugin", plugin_id);
 }
 
 void send_midi_note(unsigned short plugin_id, bool onoff, uint8_t note, uint8_t velocity)

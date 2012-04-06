@@ -2023,6 +2023,8 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
         if (self.pinfo['hints'] & PLUGIN_HAS_GUI):
           gui_info = CarlaHost.get_gui_info(self.plugin_id)
+          print("--------------------------------------------------------------------")
+          print(gui_info)
           self.gui_dialog_type = gui_info['type']
 
           if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_X11)):
@@ -2420,7 +2422,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             param_info = CarlaHost.get_parameter_info(self.plugin_id, parameter['index'])
 
             if (param_info['valid'] and param_info['symbol']):
-              param_symbols.append((parameter['index'], param_info['symbol']))
+              param_symbols.append((parameter['index'], toString(param_info['symbol'])))
 
         # Part 4b - set parameter values (carefully)
         for parameter in content['Parameters']:
@@ -2446,7 +2448,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
                   index = param_symbol[0]
                   break
               else:
-                print("Failed to find LV2 parameter symbol for %i -> %s" % (parameter['index'], parameter['name']))
+                print("Failed to find LV2 parameter symbol for %i -> %s" % (parameter['index'], parameter['symbol']))
             else:
               print("LV2 Plugin parameter #%i, '%s', has no symbol" % (parameter['index'], parameter['name']))
 
@@ -3324,6 +3326,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         if (event.timerId() == self.TIMER_GUI_STUFF):
           for pwidget in self.m_plugin_list:
             if (pwidget): pwidget.check_gui_stuff()
+          CarlaHost.idle_guis()
         elif (event.timerId() == self.TIMER_GUI_STUFF2):
           for pwidget in self.m_plugin_list:
             if (pwidget): pwidget.check_gui_stuff2()

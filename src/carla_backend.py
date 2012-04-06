@@ -957,8 +957,8 @@ class Host(object):
         self.lib.show_gui.argtypes = [c_ushort, c_bool]
         self.lib.show_gui.restype = None
 
-        self.lib.idle_gui.argtypes = [c_ushort]
-        self.lib.idle_gui.restype = None
+        self.lib.idle_guis.argtypes = None
+        self.lib.idle_guis.restype = None
 
         self.lib.send_midi_note.argtypes = [c_ushort, c_bool, c_uint8, c_uint8]
         self.lib.send_midi_note.restype = None
@@ -1122,8 +1122,8 @@ class Host(object):
     def show_gui(self, plugin_id, yesno):
         self.lib.show_gui(plugin_id, yesno)
 
-    def idle_gui(self, plugin_id):
-        self.lib.idle_gui(plugin_id)
+    def idle_guis(self):
+        self.lib.idle_guis()
 
     def send_midi_note(self, plugin_id, onoff, note, velocity):
         self.lib.send_midi_note(plugin_id, onoff, note, velocity)

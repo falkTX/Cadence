@@ -23,16 +23,21 @@
 
 #include "lv2/lv2.h"
 #include "lv2/atom.h"
+#include "lv2/data-access.h"
 #include "lv2/event.h"
 #include "lv2/event-helpers.h"
+#include "lv2/instance-access.h"
+#include "lv2/state.h"
 #include "lv2/uri-map.h"
 #include "lv2/urid.h"
 #include "lv2/ui.h"
-#include "lv2_rdf.h"
 
 #include "lv2/lv2-miditype.h"
 #include "lv2/lv2-midifunctions.h"
 #include "lv2/lv2_rtmempool.h"
+#include "lv2/lv2_external_ui.h"
+
+#include "lv2_rdf.h"
 
 extern "C" {
 #include "lv2-rtmempool/rtmempool.h"
@@ -54,13 +59,13 @@ const uint32_t lv2_feature_id_urid_map        = 1;
 const uint32_t lv2_feature_id_urid_unmap      = 2;
 const uint32_t lv2_feature_id_event           = 3;
 const uint32_t lv2_feature_id_rtmempool       = 4;
-//const uint32_t lv2_feature_id_data_access     = 5;
-//const uint32_t lv2_feature_id_instance_access = 6;
-//const uint32_t lv2_feature_id_ui_resize       = 7;
-//const uint32_t lv2_feature_id_ui_parent       = 8;
-//const uint32_t lv2_feature_id_external_ui     = 9;
-//const uint32_t lv2_feature_id_external_ui_old = 10;
-const uint32_t lv2_feature_count              = 5;
+const uint32_t lv2_feature_id_data_access     = 5;
+const uint32_t lv2_feature_id_instance_access = 6;
+const uint32_t lv2_feature_id_ui_parent       = 7;
+const uint32_t lv2_feature_id_ui_resize       = 8;
+const uint32_t lv2_feature_id_external_ui     = 9;
+const uint32_t lv2_feature_id_external_ui_old = 10;
+const uint32_t lv2_feature_count              = 11;
 
 // event data/types
 const unsigned int CARLA_EVENT_DATA_ATOM    = 0x01;
@@ -125,6 +130,17 @@ public:
         descriptor = nullptr;
         rdf_descriptor = nullptr;
 
+        ui.lib = nullptr;
+        ui.handle = nullptr;
+        ui.descriptor = nullptr;
+        ui.rdf_descriptor = nullptr;
+
+        gui.type = GUI_NONE;
+        gui.visible = false;
+        gui.resizable = false;
+        gui.width = 0;
+        gui.height = 0;
+
         // Fill pre-set URI keys
         for (uint32_t i=0; i < CARLA_URI_MAP_ID_COUNT; i++)
             custom_uri_ids.append(nullptr);
@@ -136,6 +152,67 @@ public:
     virtual ~Lv2Plugin()
     {
         qDebug("Lv2Plugin::~Lv2Plugin()");
+
+        // close UI
+        if (m_hints & PLUGIN_HAS_GUI)
+        {
+            switch(gui.type)
+            {
+            case GUI_INTERNAL_QT4:
+            case GUI_INTERNAL_X11:
+                break;
+
+            case GUI_EXTERNAL_OSC:
+                // FIXME - fix dssi first, then copy
+
+//                if (gui.visible)
+//                    osc_send_hide(&osc.data);
+
+//                osc_send_quit(&osc.data);
+
+//                if (osc.thread)
+//                {
+//                    osc.thread->quit();
+
+//                    if (!osc.thread->wait(3000)) // 3 sec
+//                        qWarning("Failed to properly stop LV2 OSC GUI thread");
+
+//                    delete osc.thread;
+//                }
+
+//                osc_clear_data(&osc.data);
+
+                break;
+
+            case GUI_EXTERNAL_LV2:
+                if (gui.visible && ui.widget)
+                    LV2_EXTERNAL_UI_HIDE((lv2_external_ui*)ui.widget);
+
+                break;
+
+            default:
+                break;
+            }
+
+            if (ui.handle && ui.descriptor && ui.descriptor->cleanup)
+                ui.descriptor->cleanup(ui.handle);
+
+            ui.lib = nullptr;
+            ui.handle = nullptr;
+            ui.descriptor = nullptr;
+            ui.rdf_descriptor = nullptr;
+
+            if (features[lv2_feature_id_data_access] && features[lv2_feature_id_data_access]->data)
+                delete (LV2_Extension_Data_Feature*)features[lv2_feature_id_data_access]->data;
+
+            if (features[lv2_feature_id_ui_resize] && features[lv2_feature_id_ui_resize]->data)
+                delete (LV2UI_Resize*)features[lv2_feature_id_ui_resize]->data;
+
+            if (features[lv2_feature_id_external_ui] && features[lv2_feature_id_external_ui]->data)
+                delete (lv2_external_ui_host*)features[lv2_feature_id_external_ui]->data;
+
+            ui_lib_close();
+        }
 
         if (handle && descriptor->deactivate && m_active_before)
             descriptor->deactivate(handle);
@@ -395,7 +472,7 @@ public:
 
     virtual void get_gui_info(GuiInfo* info)
     {
-        info->type = GUI_NONE;
+        info->type = gui.type;
     }
 
     virtual void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
@@ -409,28 +486,28 @@ public:
             break;
         }
 
-//        if (gui_send && gui.visible)
-//        {
-//            switch(gui.type)
-//            {
-//            case GUI_INTERNAL_QT4:
-//            case GUI_INTERNAL_X11:
-//            case GUI_EXTERNAL_LV2:
-//                if (ui.descriptor->port_event)
-//                {
-//                    float fvalue = value;
-//                    ui.descriptor->port_event(ui.handle, param.data[parameter_id].rindex, sizeof(float), 0, &fvalue);
-//                }
-//                break;
+        if (gui_send && gui.visible)
+        {
+            switch (gui.type)
+            {
+            case GUI_INTERNAL_QT4:
+            case GUI_INTERNAL_X11:
+            case GUI_EXTERNAL_LV2:
+                if (ui.descriptor->port_event)
+                {
+                    float fvalue = value;
+                    ui.descriptor->port_event(ui.handle, param.data[param_id].rindex, sizeof(float), 0, &fvalue);
+                }
+                break;
 
-//            case GUI_EXTERNAL_OSC:
-//                osc_send_control(&osc.data, param.data[parameter_id].rindex, value);
-//                break;
+            case GUI_EXTERNAL_OSC:
+                //osc_send_control(&osc.data, param.data[parameter_id].rindex, value);
+                break;
 
-//            default:
-//                break;
-//            }
-//        }
+            default:
+                break;
+            }
+        }
 
         CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
     }
@@ -439,10 +516,10 @@ public:
     {
         if ((m_hints & PLUGIN_HAS_EXTENSION_STATE) > 0 && descriptor->extension_data)
         {
-            //LV2_State_Interface* state = (LV2_State_Interface*)descriptor->extension_data(LV2_STATE_INTERFACE_URI);
+            LV2_State_Interface* state = (LV2_State_Interface*)descriptor->extension_data(LV2_STATE__interface);
 
-            //if (state)
-            //    state->restore(handle, carla_lv2_state_retrieve, this, 0, features);
+            if (state)
+                state->restore(handle, carla_lv2_state_retrieve, this, 0, features);
         }
 
         CarlaPlugin::set_custom_data(dtype, key, value, gui_send);
@@ -488,21 +565,21 @@ public:
 //        }
     }
 
-    virtual void show_gui(bool /*yesno*/)
+    virtual void show_gui(bool yesno)
     {
-//        switch(gui.type)
-//        {
-//        case GUI_INTERNAL_QT4:
-//            gui.visible = yesno;
-//            break;
+        switch(gui.type)
+        {
+        case GUI_INTERNAL_QT4:
+            gui.visible = yesno;
+            break;
 
-//        case GUI_INTERNAL_X11:
-//            gui.visible = yesno;
+        case GUI_INTERNAL_X11:
+            gui.visible = yesno;
 
-//            if (gui.visible && gui.width > 0 && gui.height > 0)
-//                callback_action(CALLBACK_RESIZE_GUI, id, gui.width, gui.height, 0.0);
+            if (gui.visible && gui.width > 0 && gui.height > 0)
+                callback_action(CALLBACK_RESIZE_GUI, m_id, gui.width, gui.height, 0.0);
 
-//            break;
+            break;
 
 //        case GUI_EXTERNAL_OSC:
 //            if (yesno)
@@ -535,65 +612,70 @@ public:
 //            }
 //            break;
 
-//        case GUI_EXTERNAL_LV2:
-//            if (!ui.handle)
-//                reinit_external_ui();
+        case GUI_EXTERNAL_LV2:
+            if (ui.handle == nullptr)
+                reinit_external_ui();
 
-//            if (ui.handle && ui.widget)
-//            {
-//                if (yesno)
-//                {
-//                    LV2_EXTERNAL_UI_SHOW((lv2_external_ui*)ui.widget);
-//                    gui.visible = true;
-//                }
-//                else
-//                {
-//                    LV2_EXTERNAL_UI_HIDE((lv2_external_ui*)ui.widget);
-//                    gui.visible = false;
+            if (ui.handle && ui.widget)
+            {
+                if (yesno)
+                {
+                    LV2_EXTERNAL_UI_SHOW((lv2_external_ui*)ui.widget);
+                    gui.visible = true;
+                }
+                else
+                {
+                    LV2_EXTERNAL_UI_HIDE((lv2_external_ui*)ui.widget);
+                    gui.visible = false;
 
-//                    if (ui.descriptor->cleanup)
-//                        ui.descriptor->cleanup(ui.handle);
+                    if (ui.descriptor->cleanup)
+                        ui.descriptor->cleanup(ui.handle);
 
-//                    ui.handle = nullptr;
-//                }
-//            }
-//            else
-//            {
-//                // failed to init UI
-//                gui.visible = false;
-//                callback_action(CALLBACK_SHOW_GUI, id, -1, 0, 0.0);
-//            }
-//            break;
+                    ui.handle = nullptr;
+                }
+            }
+            else
+            {
+                // failed to init UI
+                gui.visible = false;
+                callback_action(CALLBACK_SHOW_GUI, m_id, -1, 0, 0.0);
+            }
+            break;
 
-//        default:
-//            break;
-//        }
+        default:
+            break;
+        }
     }
 
     virtual void idle_gui()
     {
-//        switch(gui.type)
-//        {
-//        case GUI_INTERNAL_QT4:
-//        case GUI_INTERNAL_X11:
-//        case GUI_EXTERNAL_LV2:
-//            if (ui.descriptor->port_event)
-//            {
-//                for (uint32_t i=0; i < param.count; i++)
-//                {
-//                    if (param.data[i].type == PARAMETER_OUTPUT && (param.data[i].hints & PARAMETER_IS_AUTOMABLE) > 0)
-//                        ui.descriptor->port_event(ui.handle, param.data[i].rindex, sizeof(float), 0, &param.buffers[i]);
-//                }
-//            }
+        switch(gui.type)
+        {
+        case GUI_INTERNAL_QT4:
+        case GUI_INTERNAL_X11:
+        case GUI_EXTERNAL_LV2:
+            if (ui.handle && ui.descriptor)
+            {
+                if (ui.descriptor->port_event)
+                {
+                    for (uint32_t i=0; i < param.count; i++)
+                    {
+                        if (param.data[i].type == PARAMETER_OUTPUT && (param.data[i].hints & PARAMETER_IS_AUTOMABLE) > 0)
+                        {
+                            float value = get_parameter_value(i);
+                            ui.descriptor->port_event(ui.handle, param.data[i].rindex, sizeof(float), 0, &value);
+                        }
+                    }
+                }
 
-//            if (gui.type == GUI_EXTERNAL_LV2)
-//                LV2_EXTERNAL_UI_RUN((lv2_external_ui*)ui.widget);
+                if (gui.type == GUI_EXTERNAL_LV2)
+                    LV2_EXTERNAL_UI_RUN((lv2_external_ui*)ui.widget);
+            }
+            break;
 
-//            break;
-
-//        default:
-//            break;
-//        }
+        default:
+            break;
+        }
     }
 
     virtual void reload()
@@ -1072,6 +1154,17 @@ public:
             jack_activate(jack_client);
     }
 
+    virtual void prepare_for_save()
+    {
+        if ((m_hints & PLUGIN_HAS_EXTENSION_STATE) > 0 && descriptor->extension_data)
+        {
+            LV2_State_Interface* state = (LV2_State_Interface*)descriptor->extension_data(LV2_STATE__interface);
+
+            if (state)
+                state->save(handle, carla_lv2_state_store, this, 0, features);
+        }
+    }
+
     virtual void process(jack_nframes_t nframes)
     {
         uint32_t i, k;
@@ -1323,9 +1416,7 @@ public:
                             else if (evin.data[k].types & CARLA_EVENT_DATA_EVENT)
                                 lv2_event_write(&evin_iters[k], 0, 0, CARLA_URI_MAP_ID_EVENT_MIDI, 3, midi_event);
                             else if (evin.data[k].types & CARLA_EVENT_DATA_MIDI_LL)
-                            {
                                 lv2midi_put_event(&evin_states[k], 0, 3, midi_event);
-                            }
                         }
                     }
 
@@ -1680,6 +1771,69 @@ public:
             return nullptr;
     }
 
+    bool is_ui_resizable()
+    {
+        if (ui.rdf_descriptor)
+        {
+            for (uint32_t i=0; i < ui.rdf_descriptor->FeatureCount; i++)
+            {
+                if (strcmp(ui.rdf_descriptor->Features[i].URI, LV2_UI__fixedSize) == 0 || strcmp(ui.rdf_descriptor->Features[i].URI, LV2_UI__noUserResize) == 0)
+                    return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    bool is_ui_bridgeable(uint32_t ui_id)
+    {
+        LV2_RDF_UI* rdf_ui = &rdf_descriptor->UIs[ui_id];
+
+        for (uint32_t i=0; i < rdf_ui->FeatureCount; i++)
+        {
+            if (strcmp(rdf_ui->Features[i].URI, LV2_INSTANCE_ACCESS_URI) == 0 || strcmp(rdf_ui->Features[i].URI, LV2_DATA_ACCESS_URI) == 0)
+                return false;
+        }
+
+        return true;
+    }
+
+    void reinit_external_ui()
+    {
+        qDebug("Lv2Plugin::reinit_external_ui()");
+
+        ui.widget = nullptr;
+        ui.handle = ui.descriptor->instantiate(ui.descriptor, descriptor->URI, ui.rdf_descriptor->Bundle, carla_lv2_ui_write_function, this, &ui.widget, features);
+
+        if (ui.handle && ui.widget)
+        {
+            update_ui_ports();
+        }
+        else
+        {
+            qDebug("Lv2Plugin::reinit_external_ui() - Failed to re-initiate external UI");
+
+            ui.handle = nullptr;
+            ui.widget = nullptr;
+            callback_action(CALLBACK_SHOW_GUI, m_id, -1, 0, 0.0);
+        }
+    }
+
+    void update_ui_ports()
+    {
+        qDebug("Lv2Plugin::update_ui_ports()");
+
+        if (ui.handle && ui.descriptor && ui.descriptor->port_event)
+        {
+            float value;
+            for (uint32_t i=0; i < param.count; i++)
+            {
+                value = get_parameter_value(i);
+                ui.descriptor->port_event(ui.handle, param.data[i].rindex, sizeof(float), 0, &value);
+            }
+        }
+    }
+
 #if 0
     // FIXME - resolve jack deactivate
     void lv2_remove_from_jack()
@@ -1759,12 +1913,12 @@ public:
                         // Check extensions (...)
                         for (i=0; i < rdf_descriptor->ExtensionCount; i++)
                         {
-                            //if (strcmp(rdf_descriptor->Extensions[i], LV2_STATE_INTERFACE_URI) == 0)
-                            //    plugin->hints |= PLUGIN_HAS_EXTENSION_STATE;
+                            if (strcmp(rdf_descriptor->Extensions[i], LV2_STATE__interface) == 0)
+                                m_hints |= PLUGIN_HAS_EXTENSION_STATE;
                             //else if (strcmp(rdf_descriptor->Extensions[i], LV2DYNPARAM_URI) == 0)
                             //    plugin->hints |= PLUGIN_HAS_EXTENSION_DYNPARAM;
-                            //else
-                            qDebug("Plugin has non-supported extension: '%s'", rdf_descriptor->Extensions[i]);
+                            else
+                                qDebug("Plugin has non-supported extension: '%s'", rdf_descriptor->Extensions[i]);
                         }
 
                         if (can_continue)
@@ -1818,7 +1972,236 @@ public:
                                 m_name = get_unique_name(rdf_descriptor->Name);
 
                                 if (carla_jack_register_plugin(this, &jack_client))
+                                {
+                                    // ----------------- GUI Stuff -------------------------------------------------------
+
+                                    uint32_t UICount = rdf_descriptor->UICount;
+
+                                    if (UICount > 0)
+                                    {
+                                        // Find more appropriate UI (Qt4 -> X11 -> Gtk2 -> External, use bridges whenever possible)
+                                        int eQt4, eX11, eGtk2, iX11, iQt4, iExt, iFinal;
+                                        eQt4 = eX11 = eGtk2 = iQt4 = iX11 = iExt = iFinal = -1;
+
+                                        for (i=0; i < UICount; i++)
+                                        {
+                                            switch (rdf_descriptor->UIs[i].Type)
+                                            {
+                                            case LV2_UI_QT4:
+                                                if (is_ui_bridgeable(i))
+                                                    eQt4 = i;
+                                                else
+                                                    iQt4 = i;
+                                                break;
+
+                                            case LV2_UI_X11:
+                                                if (is_ui_bridgeable(i))
+                                                    eX11 = i;
+                                                else
+                                                    iX11 = i;
+                                                break;
+
+                                            case LV2_UI_GTK2:
+                                                eGtk2 = i;
+                                                break;
+
+                                            case LV2_UI_EXTERNAL:
+                                            case LV2_UI_OLD_EXTERNAL:
+                                                iExt = i;
+                                                break;
+
+                                            default:
+                                                break;
+                                            }
+                                        }
+
+                                        if (eQt4 >= 0)
+                                            iFinal = eQt4;
+                                        else if (eX11 >= 0)
+                                            iFinal = eX11;
+                                        else if (eGtk2 >= 0)
+                                            iFinal = eGtk2;
+                                        else if (iQt4 >= 0)
+                                            iFinal = iQt4;
+                                        else if (iX11 >= 0)
+                                            iFinal = iX11;
+                                        else if (iExt >= 0)
+                                            iFinal = iExt;
+
+                                        bool is_bridged = (iFinal == eQt4 || iFinal == eX11 || iFinal == eGtk2);
+
+                                        // Use proper UI now
+                                        if (iFinal >= 0)
+                                        {
+                                            ui.rdf_descriptor = &rdf_descriptor->UIs[iFinal];
+
+                                            // Check supported UI features
+                                            can_continue = true;
+
+                                            for (i=0; i < ui.rdf_descriptor->FeatureCount; i++)
+                                            {
+                                                if (LV2_IS_FEATURE_REQUIRED(ui.rdf_descriptor->Features[i].Type) && is_lv2_ui_feature_supported(ui.rdf_descriptor->Features[i].URI) == false)
+                                                {
+                                                    qCritical("Plugin UI requires a feature that is not supported:\n%s", ui.rdf_descriptor->Features[i].URI);
+                                                    can_continue = false;
+                                                    break;
+                                                }
+                                            }
+
+                                            if (can_continue)
+                                            {
+                                                if (ui_lib_open(ui.rdf_descriptor->Binary))
+                                                {
+                                                    LV2UI_DescriptorFunction ui_descfn = (LV2UI_DescriptorFunction)ui_lib_symbol("lv2ui_descriptor");
+
+                                                    if (ui_descfn)
+                                                    {
+                                                        i = 0;
+                                                        while ((ui.descriptor = ui_descfn(i++)))
+                                                        {
+                                                            if (strcmp(ui.descriptor->URI, ui.rdf_descriptor->URI) == 0)
+                                                                break;
+                                                        }
+
+                                                        if (ui.descriptor)
+                                                        {
+                                                            // UI Window Title
+                                                            QString gui_title = QString("%1 (GUI)").arg(m_name);
+
+                                                            LV2_Property UiType = ui.rdf_descriptor->Type;
+
+                                                            if (is_bridged)
+                                                            {
+                                                                gui.type = GUI_EXTERNAL_OSC;
+                                                                //osc.thread = lv2_thread;
+                                                                //CarlaPluginThread* lv2ui_thread = new Lv2OscGuiThread();
+                                                                //lv2_thread->set_plugin_id(plugin->id);
+                                                                //lv2_thread->set_ui_type(UiType);
+                                                                //lv2_thread->start();
+
+                                                                switch (UiType)
+                                                                {
+                                                                case LV2_UI_QT4:
+                                                                    qDebug("Will use LV2 Qt4 UI, bridged");
+                                                                    break;
+
+                                                                case LV2_UI_X11:
+                                                                    qDebug("Will use LV2 X11 UI, bridged");
+                                                                    break;
+
+                                                                case LV2_UI_GTK2:
+                                                                    qDebug("Will use LV2 Gtk2 UI, bridged");
+                                                                    break;
+
+                                                                default:
+                                                                    qDebug("Will use LV2 Unknown UI, bridged");
+                                                                    break;
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                // Initialize UI features
+                                                                LV2_Extension_Data_Feature* UI_Data_Feature = new LV2_Extension_Data_Feature;
+                                                                UI_Data_Feature->data_access                = descriptor->extension_data;
+
+                                                                lv2_external_ui_host* External_UI_Feature   = new lv2_external_ui_host;
+                                                                External_UI_Feature->ui_closed              = carla_lv2_external_ui_closed;
+                                                                External_UI_Feature->plugin_human_id        = strdup(gui_title.toUtf8().constData()); // NOTE
+
+                                                                LV2UI_Resize* UI_Resize_Feature             = new LV2UI_Resize;
+                                                                UI_Resize_Feature->handle                   = this;
+                                                                UI_Resize_Feature->ui_resize                = carla_lv2_ui_resize;
+
+                                                                features[lv2_feature_id_data_access]           = new LV2_Feature;
+                                                                features[lv2_feature_id_data_access]->URI      = LV2_DATA_ACCESS_URI;
+                                                                features[lv2_feature_id_data_access]->data     = UI_Data_Feature;
+
+                                                                features[lv2_feature_id_instance_access]       = new LV2_Feature;
+                                                                features[lv2_feature_id_instance_access]->URI  = LV2_INSTANCE_ACCESS_URI;
+                                                                features[lv2_feature_id_instance_access]->data = handle;
+
+                                                                features[lv2_feature_id_ui_parent]             = new LV2_Feature;
+                                                                features[lv2_feature_id_ui_parent]->URI        = LV2_UI__parent;
+                                                                features[lv2_feature_id_ui_parent]->data       = nullptr;
+
+                                                                features[lv2_feature_id_ui_resize]             = new LV2_Feature;
+                                                                features[lv2_feature_id_ui_resize]->URI        = LV2_UI__resize;
+                                                                features[lv2_feature_id_ui_resize]->data       = UI_Resize_Feature;
+
+                                                                features[lv2_feature_id_external_ui]           = new LV2_Feature;
+                                                                features[lv2_feature_id_external_ui]->URI      = LV2_EXTERNAL_UI_URI;
+                                                                features[lv2_feature_id_external_ui]->data     = External_UI_Feature;
+
+                                                                features[lv2_feature_id_external_ui_old]       = new LV2_Feature;
+                                                                features[lv2_feature_id_external_ui_old]->URI  = LV2_EXTERNAL_UI_DEPRECATED_URI;
+                                                                features[lv2_feature_id_external_ui_old]->data = External_UI_Feature;
+
+                                                                switch (UiType)
+                                                                {
+                                                                case LV2_UI_QT4:
+                                                                    qDebug("Will use LV2 Qt4 UI");
+                                                                    gui.type      = GUI_INTERNAL_QT4;
+                                                                    gui.resizable = is_ui_resizable();
+
+                                                                    ui.handle = ui.descriptor->instantiate(ui.descriptor, descriptor->URI, ui.rdf_descriptor->Bundle, carla_lv2_ui_write_function, this, &ui.widget, features);
+                                                                    update_ui_ports();
+
+                                                                    break;
+
+                                                                case LV2_UI_X11:
+                                                                    qDebug("Will use LV2 X11 UI");
+                                                                    gui.type      = GUI_INTERNAL_X11;
+                                                                    gui.resizable = is_ui_resizable();
+                                                                    break;
+
+                                                                case LV2_UI_GTK2:
+                                                                    qDebug("Will use LV2 Gtk2 UI, NOT!");
+                                                                    break;
+
+                                                                case LV2_UI_EXTERNAL:
+                                                                case LV2_UI_OLD_EXTERNAL:
+                                                                    qDebug("Will use LV2 External UI");
+                                                                    gui.type = GUI_EXTERNAL_LV2;
+                                                                    break;
+
+                                                                default:
+                                                                    break;
+                                                                }
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            qCritical("Could not find the requested GUI in the plugin UI library");
+                                                            ui_lib_close();
+                                                            ui.lib = nullptr;
+                                                            ui.rdf_descriptor = nullptr;
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        qCritical("Could not find the LV2UI Descriptor in the UI library");
+                                                        ui_lib_close();
+                                                        ui.lib = nullptr;
+                                                        ui.rdf_descriptor = nullptr;
+                                                    }
+                                                }
+                                                else
+                                                    qCritical("Could not load UI library, error was:\n%s", ui_lib_error());
+                                            }
+                                            else
+                                                // cannot continue, UI Feature not supported
+                                                ui.rdf_descriptor = nullptr;
+                                        }
+                                        else
+                                            qWarning("Failed to find an appropriate LV2 UI for this plugin");
+
+                                    } // End of GUI Stuff
+
+                                    if (gui.type != GUI_NONE)
+                                        m_hints |= PLUGIN_HAS_GUI;
+
                                     return true;
+                                }
                                 else
                                     set_last_error("Failed to register plugin in JACK");
                             }
@@ -1840,6 +2223,59 @@ public:
             set_last_error("Failed to find the requested plugin in the LV2 Bundle");
 
         return false;
+    }
+
+    bool ui_lib_open(const char* filename)
+    {
+#ifdef Q_OS_WIN
+        ui.lib = LoadLibraryA(filename);
+#else
+        ui.lib = dlopen(filename, RTLD_LAZY);
+#endif
+        return bool(ui.lib);
+    }
+
+    bool ui_lib_close()
+    {
+        if (ui.lib)
+#ifdef Q_OS_WIN
+            return FreeLibrary((HMODULE)ui.lib) != 0;
+#else
+            return dlclose(ui.lib) != 0;
+#endif
+        else
+            return false;
+    }
+
+    void* ui_lib_symbol(const char* symbol)
+    {
+        if (ui.lib)
+#ifdef Q_OS_WIN
+            return (void*)GetProcAddress((HMODULE)ui.lib, symbol);
+#else
+            return dlsym(ui.lib, symbol);
+#endif
+        else
+            return nullptr;
+    }
+
+    const char* ui_lib_error()
+    {
+#ifdef Q_OS_WIN
+        static char libError[2048];
+        memset(libError, 0, sizeof(char)*2048);
+
+        LPVOID winErrorString;
+        DWORD  winErrorCode = GetLastError();
+        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |  FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, winErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&winErrorString, 0, nullptr);
+
+        snprintf(libError, 2048, "%s: error code %i: %s", m_filename, winErrorCode, (const char*)winErrorString);
+        LocalFree(winErrorString);
+
+        return libError;
+#else
+        return dlerror();
+#endif
     }
 
     // ----------------- URI-Map Feature -------------------------------------------------
@@ -1913,19 +2349,230 @@ public:
         return nullptr;
     }
 
+    // ----------------- State Feature ---------------------------------------------------
+    static LV2_State_Status carla_lv2_state_store(LV2_State_Handle handle, uint32_t key, const void* value, size_t size, uint32_t type, uint32_t flags)
+    {
+        qDebug("Lv2AudioPlugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i)", handle, key, value, size, type, flags);
+
+        if (handle)
+        {
+            Lv2Plugin* plugin = (Lv2Plugin*)handle;
+            const char* uri_key = plugin->get_custom_uri_string(key);
+
+            if (uri_key > 0 && (flags & LV2_STATE_IS_POD) > 0)
+            {
+                qDebug("Lv2AudioPlugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i) - Got uri_key and flags", handle, key, value, size, type, flags);
+
+                CustomDataType dtype;
+
+                if (type == CARLA_URI_MAP_ID_ATOM_STRING)
+                    dtype = CUSTOM_DATA_STRING;
+                else if (type >= CARLA_URI_MAP_ID_COUNT)
+                    dtype = CUSTOM_DATA_BINARY;
+                else
+                    dtype = CUSTOM_DATA_INVALID;
+
+                if (value && dtype != CUSTOM_DATA_INVALID)
+                {
+                    // Check if we already have this key
+                    for (int i=0; i < plugin->custom.count(); i++)
+                    {
+                        if (strcmp(plugin->custom[i].key, uri_key) == 0)
+                        {
+                            free((void*)plugin->custom[i].value);
+
+                            if (dtype == CUSTOM_DATA_STRING)
+                                plugin->custom[i].value = strdup((const char*)value);
+                            else
+                            {
+                                QByteArray chunk((const char*)value, size);
+                                plugin->custom[i].value = strdup(chunk.toBase64().constData());
+                            }
+
+                            return LV2_STATE_SUCCESS;
+                        }
+                    }
+
+                    // Add a new one then
+                    CustomData new_data;
+                    new_data.type = dtype;
+                    new_data.key  = strdup(uri_key);
+
+                    if (dtype == CUSTOM_DATA_STRING)
+                        new_data.value = strdup((const char*)value);
+                    else
+                    {
+                        QByteArray chunk((const char*)value, size);
+                        new_data.value = strdup(chunk.toBase64().constData());
+                    }
+
+                    plugin->custom.append(new_data);
+
+                    return LV2_STATE_SUCCESS;
+                }
+                else
+                {
+                    qCritical("Lv2AudioPlugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i) - Invalid type", handle, key, value, size, type, flags);
+                    return LV2_STATE_ERR_BAD_TYPE;
+                }
+            }
+            else
+            {
+                qWarning("Lv2AudioPlugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i) - Invalid attributes", handle, key, value, size, type, flags);
+                return LV2_STATE_ERR_BAD_FLAGS;
+            }
+        }
+        else
+        {
+            qCritical("Lv2AudioPlugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i) - Invalid handle", handle, key, value, size, type, flags);
+            return LV2_STATE_ERR_UNKNOWN;
+        }
+    }
+
+    static const void* carla_lv2_state_retrieve(LV2_State_Handle handle, uint32_t key, size_t* size, uint32_t* type, uint32_t* flags)
+    {
+        qDebug("Lv2AudioPlugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p)", handle, key, size, type, flags);
+
+        if (handle)
+        {
+            Lv2Plugin* plugin = (Lv2Plugin*)handle;
+            const char* uri_key = plugin->get_custom_uri_string(key);
+
+            if (uri_key)
+            {
+                const char* string_data = nullptr;
+                CustomDataType dtype = CUSTOM_DATA_INVALID;
+
+                for (int i=0; i < plugin->custom.count(); i++)
+                {
+                    if (strcmp(plugin->custom[i].key, uri_key) == 0)
+                    {
+                        dtype = plugin->custom[i].type;
+                        string_data = plugin->custom[i].value;
+                        break;
+                    }
+                }
+
+                if (string_data)
+                {
+                    *size  = 0;
+                    *type  = 0;
+                    *flags = 0;
+
+                    if (dtype == CUSTOM_DATA_STRING)
+                    {
+                        *type = CARLA_URI_MAP_ID_ATOM_STRING;
+                        return string_data;
+                    }
+                    else if (dtype == CUSTOM_DATA_BINARY)
+                    {
+                        static QByteArray chunk;
+                        chunk = QByteArray::fromBase64(string_data);
+
+                        *size = chunk.size();
+                        *type = key;
+                        return chunk.constData();
+                    }
+                    else
+                        qCritical("Lv2AudioPlugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p) - Invalid key type", handle, key, size, type, flags);
+                }
+                else
+                    qCritical("Lv2AudioPlugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p) - Invalid key", handle, key, size, type, flags);
+            }
+            else
+                qCritical("Lv2AudioPlugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p) - Failed to find key", handle, key, size, type, flags);
+        }
+        else
+            qCritical("Lv2AudioPlugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p) - Invalid handle", handle, key, size, type, flags);
+
+        return nullptr;
+    }
+
+    // ----------------- External UI Feature ---------------------------------------------
+    static void carla_lv2_external_ui_closed(LV2UI_Controller controller)
+    {
+        qDebug("Lv2AudioPlugin::carla_lv2_external_ui_closed(%p)", controller);
+
+        if (controller)
+        {
+            Lv2Plugin* plugin = (Lv2Plugin*)controller;
+            plugin->gui.visible = false;
+
+            if (plugin->ui.descriptor->cleanup)
+                plugin->ui.descriptor->cleanup(plugin->ui.handle);
+
+            plugin->ui.handle = nullptr;
+            callback_action(CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
+        }
+    }
+
+    // ----------------- UI Resize Feature -----------------------------------------------
+    static int carla_lv2_ui_resize(LV2UI_Feature_Handle data, int width, int height)
+    {
+        qDebug("Lv2AudioPlugin::carla_lv2_ui_resized(%p, %i, %i)", data, width, height);
+
+        if (data)
+        {
+            Lv2Plugin* plugin = (Lv2Plugin*)data;
+            plugin->gui.width  = width;
+            plugin->gui.height = height;
+            callback_action(CALLBACK_RESIZE_GUI, plugin->id(), width, height, 0.0);
+            return 0;
+        }
+
+        return 1;
+    }
+
+    // ----------------- UI Extension ----------------------------------------------------
+    static void carla_lv2_ui_write_function(LV2UI_Controller controller, uint32_t port_index, uint32_t buffer_size, uint32_t format, const void* buffer)
+    {
+        qDebug("Lv2AudioPlugin::carla_lv2_ui_write_function(%p, %i, %i, %i, %p)", controller, port_index, buffer_size, format, buffer);
+
+        if (controller)
+        {
+            Lv2Plugin* plugin = (Lv2Plugin*)controller;
+
+            if (format == 0 && buffer_size == sizeof(float))
+            {
+                int32_t param_id = -1;
+                float value = *(float*)buffer;
+
+                for (uint32_t i=0; i < plugin->param.count; i++)
+                {
+                    if (plugin->param.data[i].rindex == (int32_t)port_index)
+                    {
+                        param_id = i; //plugin->param.data[i].index;
+                        break;
+                    }
+                }
+
+                if (param_id > -1) // && plugin->ctrl.data[param_id].type == PARAMETER_INPUT
+                    plugin->set_parameter_value(param_id, value, false, true, true);
+            }
+        }
+    }
+
 private:
     LV2_Handle handle;
     const LV2_Descriptor* descriptor;
     const LV2_RDF_Descriptor* rdf_descriptor;
     LV2_Feature* features[lv2_feature_count+1];
 
-    //    struct {
-    //        void* lib;
-    //        LV2UI_Handle handle;
-    //        LV2UI_Widget widget;
-    //        const LV2UI_Descriptor* descriptor;
-    //        const LV2_RDF_UI* rdf_descriptor;
-    //    } ui;
+    struct {
+        void* lib;
+        LV2UI_Handle handle;
+        LV2UI_Widget widget;
+        const LV2UI_Descriptor* descriptor;
+        const LV2_RDF_UI* rdf_descriptor;
+    } ui;
+
+    struct {
+        GuiType type;
+        bool visible;
+        bool resizable;
+        int width;
+        int height;
+    } gui;
 
     uint32_t* ain_rindexes;
     uint32_t* aout_rindexes;
