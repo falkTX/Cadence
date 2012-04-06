@@ -196,7 +196,6 @@ lv2_event_reserve(LV2_Event_Iterator* iter,
 		  uint16_t type,
 		  uint16_t size)
 {
-	size = lv2_event_pad_size(size);
 	if (iter->buf->capacity - iter->buf->size < sizeof(LV2_Event) + size)
 		return NULL;
 

@@ -1886,7 +1886,8 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
     def slot_checkInputControlParameters(self):
         for ptype, pid, pwidget in self.parameter_list:
           if (ptype == PARAMETER_INPUT):
-            pwidget.set_default_value(CarlaHost.get_default_parameter_value(self.plugin_id, pid))
+            if (self.pinfo["type"] != PLUGIN_SF2):
+              pwidget.set_default_value(CarlaHost.get_default_parameter_value(self.plugin_id, pid))
             pwidget.set_parameter_value(CarlaHost.get_current_parameter_value(self.plugin_id, pid), False)
 
     @pyqtSlot()

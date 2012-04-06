@@ -15,6 +15,9 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
+#ifndef CARLA_JACK_H
+#define CARLA_JACK_H
+
 #include "carla_includes.h"
 
 #include <jack/jack.h>
@@ -32,3 +35,5 @@ bool carla_jack_init(const char* client_name);
 bool carla_jack_close();
 #endif
 bool carla_jack_register_plugin(CarlaPlugin* plugin, jack_client_t** client);
+
+#endif // CARLA_JACK_H

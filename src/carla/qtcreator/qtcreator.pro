@@ -22,6 +22,7 @@ HEADERS = \
     ../carla_includes.h \
     ../carla_backend.h \
     ../carla_jack.h \
+    ../carla_midi.h \
     ../carla_osc.h \
     ../carla_plugin.h \
     ../carla_shared.h \

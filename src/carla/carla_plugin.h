@@ -19,6 +19,7 @@
 #define CARLA_PLUGIN_H
 
 #include "carla_jack.h"
+#include "carla_midi.h"
 #include "carla_osc.h"
 #include "carla_shared.h"
 
@@ -36,7 +37,7 @@
 
 #define CARLA_PROCESS_CONTINUE_CHECK if (m_id != plugin_id) { return callback_action(CALLBACK_DEBUG, plugin_id, m_id, 0, 0.0); }
 
-const unsigned short MAX_POST_EVENTS = 128;
+const unsigned short MAX_POST_EVENTS = 152;
 
 enum PluginPostEventType {
     PostEventDebug,
@@ -688,15 +689,18 @@ public:
     {
         midiprog.current = index;
 
-        // Change default value
-        for (uint32_t i=0; i < param.count; i++)
+        // Change default value (if needed)
+        if (m_type != PLUGIN_SF2)
         {
-            param.ranges[i].def = get_parameter_value(i);
+            for (uint32_t i=0; i < param.count; i++)
+            {
+                param.ranges[i].def = get_parameter_value(i);
 
 #ifndef BUILD_BRIDGE
-            //if (osc_send)
-            //    osc_send_set_default_value(&global_osc_data, m_id, i, param.ranges[i].def);
+                //if (osc_send)
+                //    osc_send_set_default_value(&global_osc_data, m_id, i, param.ranges[i].def);
 #endif
+            }
         }
 
 #ifndef BUILD_BRIDGE
@@ -785,6 +789,48 @@ public:
 
         if (callback_send)
             callback_action(onoff ? CALLBACK_NOTE_ON : CALLBACK_NOTE_OFF, m_id, note, velo, 0.0);
+    }
+
+    void send_midi_all_notes_off(bool notes_off = true)
+    {
+        carla_midi_lock();
+        post_events.lock.lock();
+
+        unsigned short pe_pad = 0;
+
+        for (unsigned short i=0; i < MAX_POST_EVENTS; i++)
+        {
+            if (post_events.data[i].valid == false)
+            {
+                pe_pad = i;
+                break;
+            }
+            else if (i + MAX_MIDI_EVENTS == MAX_POST_EVENTS)
+            {
+                qWarning("post-events buffer full, making room for all notes off now");
+                pe_pad = i - 1;
+                break;
+            }
+        }
+
+        for (unsigned short i=0; i < 128 && i < MAX_MIDI_EVENTS && i < MAX_POST_EVENTS; i++)
+        {
+            if (notes_off)
+            {
+                ext_midi_notes[i].valid = true;
+                ext_midi_notes[i].onoff = false;
+                ext_midi_notes[i].note  = i;
+                ext_midi_notes[i].velo  = 0;
+            }
+
+            post_events.data[i+pe_pad].valid = true;
+            post_events.data[i+pe_pad].type  = PostEventNoteOff;
+            post_events.data[i+pe_pad].index = i;
+            post_events.data[i+pe_pad].value = 0.0;
+        }
+
+        post_events.lock.unlock();
+        carla_midi_unlock();
     }
 
     void postpone_event(PluginPostEventType type, int32_t index, double value)

@@ -648,49 +648,43 @@ public:
             jack_midi_event_t pin_event;
             uint32_t n_pin_events = jack_midi_get_event_count(pin_buffer);
 
-            for (i=0; i<n_pin_events; i++)
+            for (i=0; i < n_pin_events; i++)
             {
                 if (jack_midi_event_get(&pin_event, pin_buffer, i) != 0)
                     break;
 
-                unsigned char channel = pin_event.buffer[0] & 0x0F;
-                unsigned char mode    = pin_event.buffer[0] & 0xF0;
+                jack_midi_data_t status = pin_event.buffer[0];
+                unsigned char channel   = status & 0x0F;
 
-                // Status change
-                if (mode == 0xB0)
+                // Control change
+                if (MIDI_IS_STATUS_CONTROL_CHANGE(status))
                 {
-                    unsigned char status  = pin_event.buffer[1] & 0x7F;
-                    unsigned char velo    = pin_event.buffer[2] & 0x7F;
-                    double value, velo_per = double(velo)/127;
+                    jack_midi_data_t control = pin_event.buffer[1];
+                    jack_midi_data_t c_value = pin_event.buffer[2];
+
+                    double value;
 
                     // Control GUI stuff (channel 0 only)
                     if (channel == 0)
                     {
-                        if (status == 0x78)
+                        if (MIDI_IS_CONTROL_BREATH_CONTROLLER(control) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
-                            // All Sound Off
-                            set_active(false, false, false);
-                            postpone_event(PostEventParameterChange, PARAMETER_ACTIVE, 0.0);
-                            break;
+                            value = double(c_value)/127;
+                            set_drywet(value, false, false);
+                            postpone_event(PostEventParameterChange, PARAMETER_DRYWET, value);
+                            continue;
                         }
-                        else if (status == 0x09 && (m_hints & PLUGIN_CAN_DRYWET) > 0)
+                        else if (MIDI_IS_CONTROL_CHANNEL_VOLUME(control) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
                         {
-                            // Dry/Wet (using '0x09', undefined)
-                            set_drywet(velo_per, false, false);
-                            postpone_event(PostEventParameterChange, PARAMETER_DRYWET, velo_per);
-                        }
-                        else if (status == 0x07 && (m_hints & PLUGIN_CAN_VOLUME) > 0)
-                        {
-                            // Volume
-                            value = double(velo)/100;
+                            value = double(c_value)/100;
                             set_volume(value, false, false);
                             postpone_event(PostEventParameterChange, PARAMETER_VOLUME, value);
+                            continue;
                         }
-                        else if (status == 0x08 && (m_hints & PLUGIN_CAN_BALANCE) > 0)
+                        else if (MIDI_IS_CONTROL_BALANCE(control) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
                         {
-                            // Balance
                             double left, right;
-                            value = (double(velo)-63.5)/63.5;
+                            value = (double(c_value)-63.5)/63.5;
 
                             if (value < 0)
                             {
@@ -712,16 +706,27 @@ public:
                             set_balance_right(right, false, false);
                             postpone_event(PostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
                             postpone_event(PostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
+                            continue;
+                        }
+                        else if (control == MIDI_CONTROL_ALL_SOUND_OFF)
+                        {
+                            if (m_active && m_active_before)
+                            {
+                                if (descriptor->deactivate)
+                                    descriptor->deactivate(handle);
+
+                                m_active_before = false;
+                            }
+                            continue;
                         }
                     }
 
                     // Control plugin parameters
                     for (k=0; k < param.count; k++)
                     {
-                        if (param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0 &&
-                                param.data[k].midi_channel == channel && param.data[k].midi_cc == status)
+                        if (param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0 && param.data[k].midi_channel == channel && param.data[k].midi_cc == control)
                         {
-                            value = (velo_per * (param.ranges[k].max - param.ranges[k].min)) + param.ranges[k].min;
+                            value = (double(c_value) / 127 * (param.ranges[k].max - param.ranges[k].min)) + param.ranges[k].min;
                             set_parameter_value(k, value, false, false, false);
                             postpone_event(PostEventParameterChange, k, value);
                         }
@@ -846,18 +851,18 @@ public:
             jack_default_audio_sample_t* cout_buffer = (jack_default_audio_sample_t*)jack_port_get_buffer(param.port_cout, nframes);
             jack_midi_clear_buffer(cout_buffer);
 
-            double value_per;
+            double value;
 
             for (k=0; k < param.count; k++)
             {
-                if (param.data[k].type == PARAMETER_OUTPUT && param.data[k].midi_cc >= 0)
+                if (param.data[k].type == PARAMETER_OUTPUT && param.data[k].midi_cc > 0)
                 {
-                    value_per = (param_buffers[k] - param.ranges[k].min)/(param.ranges[k].max - param.ranges[k].min);
+                    value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min) * 127;
 
                     jack_midi_data_t* event_buffer = jack_midi_event_reserve(cout_buffer, 0, 3);
                     event_buffer[0] = 0xB0 + param.data[k].midi_channel;
                     event_buffer[1] = param.data[k].midi_cc;
-                    event_buffer[2] = 127*value_per;
+                    event_buffer[2] = value;
                 }
             }
         } // End of Control Output

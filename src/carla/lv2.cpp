@@ -56,6 +56,7 @@ const unsigned int CARLA_EVENT_TYPE_MIDI = 0x1;
 const unsigned int CARLA_EVENT_TYPE_TIME = 0x2;
 
 // pre-set uri[d] map ids
+const uint32_t CARLA_URI_MAP_ID_NULL        = 0;
 const uint32_t CARLA_URI_MAP_ID_ATOM_STRING = 1;
 const uint32_t CARLA_URI_MAP_ID_EVENT_MIDI  = 2;
 const uint32_t CARLA_URI_MAP_ID_EVENT_TIME  = 3;
@@ -860,7 +861,10 @@ public:
                     // MIDI CC value
                     LV2_RDF_PortMidiMap* PortMidiMap = &rdf_descriptor->Ports[i].MidiMap;
                     if (LV2_IS_PORT_MIDI_MAP_CC(PortMidiMap->Type))
-                        param.data[j].midi_cc = PortMidiMap->Number;
+                    {
+                        if (! MIDI_IS_CONTROL_BANK_SELECT(PortMidiMap->Number))
+                            param.data[j].midi_cc = PortMidiMap->Number;
+                    }
                 }
                 else if (LV2_IS_PORT_OUTPUT(PortType))
                 {
@@ -986,17 +990,17 @@ public:
     {
         uint32_t i, k;
         unsigned short plugin_id = m_id;
-
         uint32_t midi_event_count = 0;
-        LV2_Event_Iterator evin_iters[evin.count];
 
         double ains_peak_tmp[2]  = { 0.0 };
         double aouts_peak_tmp[2] = { 0.0 };
 
         jack_default_audio_sample_t* ains_buffer[ain.count];
         jack_default_audio_sample_t* aouts_buffer[aout.count];
-        jack_default_audio_sample_t* evins_buffer[evin.count];
-        jack_default_audio_sample_t* evouts_buffer[evout.count];
+
+        LV2_Event_Iterator evin_iters[evin.count];
+        void* evins_buffer[evin.count];
+        void* evouts_buffer[evout.count];
 
         for (i=0; i < ain.count; i++)
             ains_buffer[i] = (jack_default_audio_sample_t*)jack_port_get_buffer(ain.ports[i], nframes);
@@ -1053,49 +1057,54 @@ public:
             jack_midi_event_t pin_event;
             uint32_t n_pin_events = jack_midi_get_event_count(pin_buffer);
 
-            for (i=0; i<n_pin_events; i++)
+            unsigned char next_bank_id = 0;
+            if (midiprog.current > 0 && midiprog.count > 0)
+                next_bank_id = midiprog.data[midiprog.current].bank;
+
+            for (i=0; i < n_pin_events; i++)
             {
                 if (jack_midi_event_get(&pin_event, pin_buffer, i) != 0)
                     break;
 
-                unsigned char channel = pin_event.buffer[0] & 0x0F;
-                unsigned char mode    = pin_event.buffer[0] & 0xF0;
+                jack_midi_data_t status = pin_event.buffer[0];
+                unsigned char channel   = status & 0x0F;
 
-                // Status change
-                if (mode == 0xB0)
+                // Control change
+                if (MIDI_IS_STATUS_CONTROL_CHANGE(status))
                 {
-                    unsigned char status  = pin_event.buffer[1] & 0x7F;
-                    unsigned char velo    = pin_event.buffer[2] & 0x7F;
-                    double value, velo_per = double(velo)/127;
+                    jack_midi_data_t control = pin_event.buffer[1];
+                    jack_midi_data_t c_value = pin_event.buffer[2];
+
+                    // Bank Select
+                    if (MIDI_IS_CONTROL_BANK_SELECT(control))
+                    {
+                        next_bank_id = c_value;
+                        continue;
+                    }
+
+                    double value;
 
                     // Control GUI stuff (channel 0 only)
                     if (channel == 0)
                     {
-                        if (status == 0x78)
+                        if (MIDI_IS_CONTROL_BREATH_CONTROLLER(control) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
-                            // All Sound Off
-                            set_active(false, false, false);
-                            postpone_event(PostEventParameterChange, PARAMETER_ACTIVE, 0.0);
-                            break;
+                            value = double(c_value)/127;
+                            set_drywet(value, false, false);
+                            postpone_event(PostEventParameterChange, PARAMETER_DRYWET, value);
+                            continue;
                         }
-                        else if (status == 0x09 && (m_hints & PLUGIN_CAN_DRYWET) > 0)
+                        else if (MIDI_IS_CONTROL_CHANNEL_VOLUME(control) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
                         {
-                            // Dry/Wet (using '0x09', undefined)
-                            set_drywet(velo_per, false, false);
-                            postpone_event(PostEventParameterChange, PARAMETER_DRYWET, velo_per);
-                        }
-                        else if (status == 0x07 && (m_hints & PLUGIN_CAN_VOLUME) > 0)
-                        {
-                            // Volume
-                            value = double(velo)/100;
+                            value = double(c_value)/100;
                             set_volume(value, false, false);
                             postpone_event(PostEventParameterChange, PARAMETER_VOLUME, value);
+                            continue;
                         }
-                        else if (status == 0x08 && (m_hints & PLUGIN_CAN_BALANCE) > 0)
+                        else if (MIDI_IS_CONTROL_BALANCE(control) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
                         {
-                            // Balance
                             double left, right;
-                            value = (double(velo)-63.5)/63.5;
+                            value = (double(c_value)-63.5)/63.5;
 
                             if (value < 0)
                             {
@@ -1117,32 +1126,58 @@ public:
                             set_balance_right(right, false, false);
                             postpone_event(PostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
                             postpone_event(PostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
+                            continue;
+                        }
+                        else if (control == MIDI_CONTROL_ALL_SOUND_OFF)
+                        {
+                            if (midi.port_min)
+                                send_midi_all_notes_off();
+
+                            if (m_active && m_active_before)
+                            {
+                                if (descriptor->deactivate)
+                                    descriptor->deactivate(handle);
+
+                                m_active_before = false;
+                            }
+                            continue;
+                        }
+                        else if (control == MIDI_CONTROL_ALL_NOTES_OFF)
+                        {
+                            if (midi.port_min)
+                                send_midi_all_notes_off();
+                            continue;
                         }
                     }
 
                     // Control plugin parameters
                     for (k=0; k < param.count; k++)
                     {
-                        if (param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0 &&
-                                param.data[k].midi_channel == channel && param.data[k].midi_cc == status)
+                        if (param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0 && param.data[k].midi_channel == channel && param.data[k].midi_cc == control)
                         {
-                            value = (velo_per * (param.ranges[k].max - param.ranges[k].min)) + param.ranges[k].min;
+                            value = (double(c_value) / 127 * (param.ranges[k].max - param.ranges[k].min)) + param.ranges[k].min;
                             set_parameter_value(k, value, false, false, false);
                             postpone_event(PostEventParameterChange, k, value);
                         }
                     }
                 }
                 // Program change
-                else if (mode == 0xC0)
+                else if (MIDI_IS_STATUS_PROGRAM_CHANGE(status))
                 {
-                    // TODO
-//                    unsigned char program = pin_event.buffer[1] & 0x7F;
+                    uint32_t mbank_id = next_bank_id;
+                    uint32_t mprog_id = pin_event.buffer[1]; // & 0x7F;
 
-//                    if (program < prog.count)
-//                    {
-//                        set_program(program, false, false, false, false);
-//                        postpone_event(PostEventProgram, program, 0.0);
-//                    }
+                    // TODO ...
+
+                    for (k=0; k < midiprog.count; k++)
+                    {
+                        if (midiprog.data[k].bank == mbank_id && midiprog.data[k].program == mprog_id)
+                        {
+                            set_midi_program(k, false, false, false, false);
+                            postpone_event(PostEventMidiProgramChange, k, 0.0);
+                            break;
+                        }
+                    }
                 }
             }
         } // End of Parameters Input
@@ -1160,24 +1195,23 @@ public:
             {
                 if (ext_midi_notes[i].valid)
                 {
-                    ExternalMidiNote* enote = &ext_midi_notes[i];
-                    enote->valid = false;
-
-                    for (i=0; i < evin.count; i++)
+                    // send to all midi inputs
+                    for (k=0; k < evin.count; k++)
                     {
-                        if (evin.data[i].types & CARLA_EVENT_TYPE_MIDI)
-                        {
-                            uint8_t* midi_event = lv2_event_reserve(&evin_iters[i], 0, 0, CARLA_URI_MAP_ID_EVENT_MIDI, 3);
+                        if (evins_buffer[k] == nullptr || (evin.data[k].types & CARLA_EVENT_TYPE_MIDI) == 0)
+                            continue;
 
-                            if (midi_event)
-                            {
-                                midi_event[0] = enote->onoff ? 0x90 : 0x80;
-                                midi_event[1] = enote->note;
-                                midi_event[2] = enote->velo;
-                            }
+                        uint8_t* midi_event = lv2_event_reserve(&evin_iters[k], 0, 0, CARLA_URI_MAP_ID_EVENT_MIDI, 3);
+
+                        if (midi_event)
+                        {
+                            midi_event[0] = ext_midi_notes[i].onoff ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF;
+                            midi_event[1] = ext_midi_notes[i].note;
+                            midi_event[2] = ext_midi_notes[i].velo;
                         }
                     }
 
+                    ext_midi_notes[i].valid = false;
                     midi_event_count += 1;
                 }
                 else
@@ -1206,39 +1240,24 @@ public:
                 if (jack_midi_event_get(&min_event, evins_buffer[i], k) != 0)
                     break;
 
-                if (min_event.size != 3)
-                    continue;
+                jack_midi_data_t status = min_event.buffer[0];
 
-                unsigned char channel = min_event.buffer[0] & 0x0F;
-                unsigned char mode = min_event.buffer[0] & 0xF0;
-                unsigned char note = min_event.buffer[1] & 0x7F;
-                unsigned char velo = min_event.buffer[2] & 0x7F;
-
-                // fix bad note off
-                if (mode == 0x90 && velo == 0)
+                // Fix bad note-off
+                if (MIDI_IS_STATUS_NOTE_ON(status) && min_event.buffer[2] == 0)
                 {
-                    mode = 0x80;
-                    velo = 64;
+                    min_event.buffer[0] -= 0x10;
+                    status = min_event.buffer[0];
                 }
 
-                uint8_t* midi_event = lv2_event_reserve(&evin_iters[i], min_event.time, 0, CARLA_URI_MAP_ID_EVENT_MIDI, 3);
-
-                if (! midi_event)
-                    break;
-
-                if (mode == 0x80)
+                // write supported status types
+                if (MIDI_IS_STATUS_NOTE_OFF(status) || MIDI_IS_STATUS_NOTE_ON(status) || MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status) || MIDI_IS_STATUS_AFTERTOUCH(status) || MIDI_IS_STATUS_PITCH_WHEEL_CONTROL(status))
                 {
-                    midi_event[0] = mode + channel;
-                    midi_event[1] = note;
-                    midi_event[2] = velo;
-                    postpone_event(PostEventNoteOff, note, velo);
-                }
-                else if (mode == 0x90)
-                {
-                    midi_event[0] = mode + channel;
-                    midi_event[1] = note;
-                    midi_event[2] = velo;
-                    postpone_event(PostEventNoteOn, note, velo);
+                    lv2_event_write(&evin_iters[i], min_event.time, 0, CARLA_URI_MAP_ID_EVENT_MIDI, min_event.size, min_event.buffer);
+
+                    if (MIDI_IS_STATUS_NOTE_OFF(status))
+                        postpone_event(PostEventNoteOff, min_event.buffer[1], 0.0);
+                    else if (MIDI_IS_STATUS_NOTE_ON(status))
+                        postpone_event(PostEventNoteOn, min_event.buffer[1], min_event.buffer[2]);
                 }
 
                 midi_event_count += 1;
@@ -1361,11 +1380,11 @@ public:
             jack_default_audio_sample_t* cout_buffer = (jack_default_audio_sample_t*)jack_port_get_buffer(param.port_cout, nframes);
             jack_midi_clear_buffer(cout_buffer);
 
-            double value, value_per;
+            double value, rvalue;
 
             for (k=0; k < param.count; k++)
             {
-                if (param.data[k].type == PARAMETER_OUTPUT && param.data[k].midi_cc >= 0)
+                if (param.data[k].type == PARAMETER_OUTPUT && param.data[k].midi_cc > 0)
                 {
                     switch (lv2param[k].type)
                     {
@@ -1377,12 +1396,12 @@ public:
                         break;
                     }
 
-                    value_per = (value - param.ranges[k].min)/(param.ranges[k].max - param.ranges[k].min);
+                    rvalue = (value - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min) * 127;
 
                     jack_midi_data_t* event_buffer = jack_midi_event_reserve(cout_buffer, 0, 3);
                     event_buffer[0] = 0xB0 + param.data[k].midi_channel;
                     event_buffer[1] = param.data[k].midi_cc;
-                    event_buffer[2] = 127*value_per;
+                    event_buffer[2] = rvalue;
                 }
             }
         } // End of Control Output
@@ -1597,8 +1616,8 @@ public:
 
                             LV2_Event_Feature* Event_Feature     = new LV2_Event_Feature;
                             Event_Feature->callback_data         = this;
-                            Event_Feature->lv2_event_ref         = carla_lv2_event_ref;
-                            Event_Feature->lv2_event_unref       = carla_lv2_event_unref;
+                            Event_Feature->lv2_event_ref         = nullptr;
+                            Event_Feature->lv2_event_unref       = nullptr;
 
                             features[lv2_feature_id_uri_map]          = new LV2_Feature;
                             features[lv2_feature_id_uri_map]->URI     = LV2_URI_MAP_URI;
@@ -1717,23 +1736,6 @@ public:
         }
 
         return nullptr;
-    }
-
-    // ----------------- Event Feature ---------------------------------------------------
-    static uint32_t carla_lv2_event_ref(LV2_Event_Callback_Data data, LV2_Event* event)
-    {
-        qDebug("Lv2AudioPlugin::carla_lv2_event_ref(%p, %p)", data, event);
-
-        // TODO
-        return 0;
-    }
-
-    static uint32_t carla_lv2_event_unref(LV2_Event_Callback_Data data, LV2_Event* event)
-    {
-        qDebug("Lv2AudioPlugin::carla_lv2_event_unref(%p, %p)", data, event);
-
-        // TODO
-        return 0;
     }
 
 private:
