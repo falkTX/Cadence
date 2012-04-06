@@ -643,7 +643,7 @@ public:
 
         if (param.port_cin)
         {
-            jack_default_audio_sample_t* pin_buffer = (jack_default_audio_sample_t*)jack_port_get_buffer(param.port_cin, nframes);
+            void* pin_buffer = jack_port_get_buffer(param.port_cin, nframes);
 
             jack_midi_event_t pin_event;
             uint32_t n_pin_events = jack_midi_get_event_count(pin_buffer);
@@ -848,7 +848,7 @@ public:
 
         if (param.port_cout)
         {
-            jack_default_audio_sample_t* cout_buffer = (jack_default_audio_sample_t*)jack_port_get_buffer(param.port_cout, nframes);
+            void* cout_buffer = jack_port_get_buffer(param.port_cout, nframes);
             jack_midi_clear_buffer(cout_buffer);
 
             double value;

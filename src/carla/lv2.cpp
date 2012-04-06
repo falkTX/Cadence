@@ -30,30 +30,39 @@
 #include "lv2/ui.h"
 #include "lv2_rdf.h"
 
+#include "lv2/lv2-midiport.h"
+#include "lv2/lv2-midifunctions.h"
+
 // static max values
-const unsigned int MAX_EVENT_BUFFER = 0x7FFF; // 32767
+const unsigned int MAX_EVENT_BUFFER = 8192; // 0x7FFF; // 32767
 
 // extra plugin hints
 const unsigned int PLUGIN_HAS_EXTENSION_STATE    = 0x1000;
 const unsigned int PLUGIN_HAS_EXTENSION_DYNPARAM = 0x2000;
+
+// parameter hints
+const unsigned int PARAMETER_HAS_STRICT_BOUNDS   = 0x100;
 
 // feature ids
 const uint32_t lv2_feature_id_uri_map         = 0;
 const uint32_t lv2_feature_id_urid_map        = 1;
 const uint32_t lv2_feature_id_urid_unmap      = 2;
 const uint32_t lv2_feature_id_event           = 3;
-//const uint32_t lv2_feature_id_rtmempool       = 4;
+const uint32_t lv2_feature_id_rtmempool       = 4;
 //const uint32_t lv2_feature_id_data_access     = 5;
 //const uint32_t lv2_feature_id_instance_access = 6;
 //const uint32_t lv2_feature_id_ui_resize       = 7;
 //const uint32_t lv2_feature_id_ui_parent       = 8;
 //const uint32_t lv2_feature_id_external_ui     = 9;
 //const uint32_t lv2_feature_id_external_ui_old = 10;
-const uint32_t lv2_feature_count              = 4;
+const uint32_t lv2_feature_count              = 5;
 
-// event types
-const unsigned int CARLA_EVENT_TYPE_MIDI = 0x1;
-const unsigned int CARLA_EVENT_TYPE_TIME = 0x2;
+// event data/types
+const unsigned int CARLA_EVENT_DATA_ATOM    = 0x01;
+const unsigned int CARLA_EVENT_DATA_EVENT   = 0x02;
+const unsigned int CARLA_EVENT_DATA_MIDI_LL = 0x04;
+const unsigned int CARLA_EVENT_TYPE_MIDI    = 0x10;
+const unsigned int CARLA_EVENT_TYPE_TIME    = 0x20;
 
 // pre-set uri[d] map ids
 const uint32_t CARLA_URI_MAP_ID_NULL        = 0;
@@ -70,7 +79,10 @@ enum Lv2ParameterDataType {
 struct EventData {
     unsigned int types;
     jack_port_t* port;
-    LV2_Event_Buffer* buffer;
+    union {
+        LV2_Event_Buffer* e;
+        LV2_MIDI* m;
+    } buffer;
 };
 
 struct PluginEventData {
@@ -428,7 +440,7 @@ public:
         CarlaPlugin::set_custom_data(dtype, key, value, gui_send);
     }
 
-    virtual void set_gui_data(int, void* ptr)
+    virtual void set_gui_data(int, void* /*ptr*/)
     {
 //        switch(gui.type)
 //        {
@@ -468,7 +480,7 @@ public:
 //        }
     }
 
-    virtual void show_gui(bool yesno)
+    virtual void show_gui(bool /*yesno*/)
     {
 //        switch(gui.type)
 //        {
@@ -597,6 +609,7 @@ public:
         ains = aouts = cv_ins = cv_outs = ev_ins = ev_outs = params = 0;
 
         const uint32_t PortCount = rdf_descriptor->PortCount;
+        unsigned int event_data_type = 0;
 
         for (uint32_t i=0; i<PortCount; i++)
         {
@@ -621,6 +634,15 @@ public:
                     ev_ins += 1;
                 else if (LV2_IS_PORT_OUTPUT(PortType))
                     ev_outs += 1;
+                event_data_type = CARLA_EVENT_DATA_EVENT;
+            }
+            else if (LV2_IS_PORT_MIDI_LL(PortType))
+            {
+                if (LV2_IS_PORT_INPUT(PortType))
+                    ev_ins += 1;
+                else if (LV2_IS_PORT_OUTPUT(PortType))
+                    ev_outs += 1;
+                event_data_type = CARLA_EVENT_DATA_MIDI_LL;
             }
             else if (LV2_IS_PORT_CONTROL(PortType))
                 params += 1;
@@ -651,9 +673,27 @@ public:
 
             for (j=0; j < ev_ins; j++)
             {
-                evin.data[j].types  = 0;
-                evin.data[j].port   = nullptr;
-                evin.data[j].buffer = lv2_event_buffer_new(MAX_EVENT_BUFFER, LV2_EVENT_AUDIO_STAMP);
+                evin.data[j].port = nullptr;
+
+                if (event_data_type == CARLA_EVENT_DATA_ATOM)
+                {
+                    evin.data[j].types = CARLA_EVENT_DATA_ATOM;
+                    // TODO
+                }
+                else if (event_data_type == CARLA_EVENT_DATA_EVENT)
+                {
+                    evin.data[j].types    = CARLA_EVENT_DATA_EVENT;
+                    evin.data[j].buffer.e = lv2_event_buffer_new(MAX_EVENT_BUFFER, LV2_EVENT_AUDIO_STAMP);
+                }
+                else if (event_data_type == CARLA_EVENT_DATA_MIDI_LL)
+                {
+                    evin.data[j].types    = CARLA_EVENT_DATA_MIDI_LL;
+                    evin.data[j].buffer.m = new LV2_MIDI;
+                    evin.data[j].buffer.m->capacity = MAX_EVENT_BUFFER;
+                    evin.data[j].buffer.m->data     = new unsigned char [MAX_EVENT_BUFFER];
+                }
+                else
+                    evin.data[j].types  = 0;
             }
         }
 
@@ -663,9 +703,27 @@ public:
 
             for (j=0; j < ev_outs; j++)
             {
-                evout.data[j].types  = 0;
-                evout.data[j].port   = nullptr;
-                evout.data[j].buffer = lv2_event_buffer_new(MAX_EVENT_BUFFER, LV2_EVENT_AUDIO_STAMP);
+                evout.data[j].port = nullptr;
+
+                if (event_data_type == CARLA_EVENT_DATA_ATOM)
+                {
+                    evout.data[j].types = CARLA_EVENT_DATA_ATOM;
+                    // TODO
+                }
+                else if (event_data_type == CARLA_EVENT_DATA_EVENT)
+                {
+                    evout.data[j].types    = CARLA_EVENT_DATA_EVENT;
+                    evout.data[j].buffer.e = lv2_event_buffer_new(MAX_EVENT_BUFFER, LV2_EVENT_AUDIO_STAMP);
+                }
+                else if (event_data_type == CARLA_EVENT_DATA_MIDI_LL)
+                {
+                    evout.data[j].types     = CARLA_EVENT_DATA_MIDI_LL;
+                    evout.data[j].buffer.m = new LV2_MIDI;
+                    evout.data[j].buffer.m->capacity = MAX_EVENT_BUFFER;
+                    evout.data[j].buffer.m->data     = new unsigned char [MAX_EVENT_BUFFER];
+                }
+                else
+                    evout.data[j].types  = 0;
             }
         }
 
@@ -685,7 +743,7 @@ public:
         {
             const LV2_Property PortType  = rdf_descriptor->Ports[i].Type;
 
-            if (LV2_IS_PORT_AUDIO(PortType) || LV2_IS_PORT_CV(PortType) || LV2_IS_PORT_EVENT(PortType))
+            if (LV2_IS_PORT_AUDIO(PortType) || LV2_IS_PORT_CV(PortType) || LV2_IS_PORT_EVENT(PortType) || LV2_IS_PORT_MIDI_LL(PortType))
             {
 #ifndef BUILD_BRIDGE
                 if (carla_options.global_jack_client)
@@ -737,7 +795,7 @@ public:
                 if (LV2_IS_PORT_INPUT(PortType))
                 {
                     j = evin.count++;
-                    descriptor->connect_port(handle, i, evin.data[j].buffer);
+                    descriptor->connect_port(handle, i, evin.data[j].buffer.e);
 
                     if (LV2_IS_PORT_EVENT_MIDI(PortType))
                     {
@@ -747,13 +805,12 @@ public:
                     if (LV2_IS_PORT_EVENT_TIME(PortType))
                     {
                         evin.data[j].types |= CARLA_EVENT_TYPE_TIME;
-                        //wants_time_pos = true;
                     }
                 }
                 else if (LV2_IS_PORT_OUTPUT(PortType))
                 {
                     j = evout.count++;
-                    descriptor->connect_port(handle, i, evout.data[j].buffer);
+                    descriptor->connect_port(handle, i, evout.data[j].buffer.e);
 
                     if (LV2_IS_PORT_EVENT_MIDI(PortType))
                     {
@@ -767,6 +824,27 @@ public:
                 }
                 else
                     qWarning("WARNING - Got a broken Port (Event, but not input or output)");
+            }
+            else if (LV2_IS_PORT_MIDI_LL(PortType))
+            {
+                if (LV2_IS_PORT_INPUT(PortType))
+                {
+                    j = evin.count++;
+                    descriptor->connect_port(handle, i, evin.data[j].buffer.m);
+
+                    evin.data[j].types |= CARLA_EVENT_TYPE_MIDI;
+                    evin.data[j].port   = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+                }
+                else if (LV2_IS_PORT_OUTPUT(PortType))
+                {
+                    j = evout.count++;
+                    descriptor->connect_port(handle, i, evout.data[j].buffer.m);
+
+                    evout.data[j].types |= CARLA_EVENT_TYPE_MIDI;
+                    evout.data[j].port   = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
+                }
+                else
+                    qWarning("WARNING - Got a broken Port (Midi, but not input or output)");
             }
             else if (LV2_IS_PORT_CONTROL(PortType))
             {
@@ -997,10 +1075,12 @@ public:
 
         jack_default_audio_sample_t* ains_buffer[ain.count];
         jack_default_audio_sample_t* aouts_buffer[aout.count];
-
-        LV2_Event_Iterator evin_iters[evin.count];
         void* evins_buffer[evin.count];
         void* evouts_buffer[evout.count];
+
+        // different midi APIs
+        LV2_MIDIState evin_states[evin.count];
+        LV2_Event_Iterator evin_iters[evin.count];
 
         for (i=0; i < ain.count; i++)
             ains_buffer[i] = (jack_default_audio_sample_t*)jack_port_get_buffer(ain.ports[i], nframes);
@@ -1010,21 +1090,46 @@ public:
 
         for (i=0; i < evin.count; i++)
         {
-            lv2_event_buffer_reset(evin.data[i].buffer, LV2_EVENT_AUDIO_STAMP, (uint8_t*)(evin.data[i].buffer + 1));
-            lv2_event_begin(&evin_iters[i], evin.data[i].buffer);
+            if (evin.data[i].types & CARLA_EVENT_DATA_ATOM)
+            {
+            }
+            else if (evin.data[i].types & CARLA_EVENT_DATA_EVENT)
+            {
+                lv2_event_buffer_reset(evin.data[i].buffer.e, LV2_EVENT_AUDIO_STAMP, (uint8_t*)(evin.data[i].buffer.e + 1));
+                lv2_event_begin(&evin_iters[i], evin.data[i].buffer.e);
+            }
+            else if (evin.data[i].types & CARLA_EVENT_DATA_MIDI_LL)
+            {
+                evin_states[i].midi = evin.data[i].buffer.m;
+                evin_states[i].frame_count = nframes;
+                evin_states[i].position = 0;
+
+                evin_states[i].midi->event_count = 0;
+                evin_states[i].midi->size = 0;
+            }
 
             if (evin.data[i].port)
-                evins_buffer[i] = (jack_default_audio_sample_t*)jack_port_get_buffer(evin.data[i].port, nframes);
+                evins_buffer[i] = jack_port_get_buffer(evin.data[i].port, nframes);
             else
                 evins_buffer[i] = nullptr;
         }
 
         for (i=0; i < evout.count; i++)
         {
-            lv2_event_buffer_reset(evout.data[i].buffer, LV2_EVENT_AUDIO_STAMP, (uint8_t*)(evout.data[i].buffer + 1));
+            if (evin.data[i].types & CARLA_EVENT_DATA_ATOM)
+            {
+            }
+            else if (evin.data[i].types & CARLA_EVENT_DATA_EVENT)
+            {
+                lv2_event_buffer_reset(evout.data[i].buffer.e, LV2_EVENT_AUDIO_STAMP, (uint8_t*)(evout.data[i].buffer.e + 1));
+            }
+            else if (evin.data[i].types & CARLA_EVENT_DATA_MIDI_LL)
+            {
+                // not needed
+            }
 
             if (evout.data[i].port)
-                evouts_buffer[i] = (jack_default_audio_sample_t*)jack_port_get_buffer(evout.data[i].port, nframes);
+                evouts_buffer[i] = jack_port_get_buffer(evout.data[i].port, nframes);
             else
                 evouts_buffer[i] = nullptr;
         }
@@ -1052,7 +1157,7 @@ public:
 
         if (param.port_cin)
         {
-            jack_default_audio_sample_t* pin_buffer = (jack_default_audio_sample_t*)jack_port_get_buffer(param.port_cin, nframes);
+            void* pin_buffer = jack_port_get_buffer(param.port_cin, nframes);
 
             jack_midi_event_t pin_event;
             uint32_t n_pin_events = jack_midi_get_event_count(pin_buffer);
@@ -1195,19 +1300,22 @@ public:
             {
                 if (ext_midi_notes[i].valid)
                 {
+                    uint8_t midi_event[4] = { 0 };
+                    midi_event[0] = ext_midi_notes[i].onoff ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF;
+                    midi_event[1] = ext_midi_notes[i].note;
+                    midi_event[2] = ext_midi_notes[i].velo;
+
                     // send to all midi inputs
                     for (k=0; k < evin.count; k++)
                     {
-                        if (evins_buffer[k] == nullptr || (evin.data[k].types & CARLA_EVENT_TYPE_MIDI) == 0)
-                            continue;
-
-                        uint8_t* midi_event = lv2_event_reserve(&evin_iters[k], 0, 0, CARLA_URI_MAP_ID_EVENT_MIDI, 3);
-
-                        if (midi_event)
+                        if (evin.data[k].types & CARLA_EVENT_TYPE_MIDI)
                         {
-                            midi_event[0] = ext_midi_notes[i].onoff ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF;
-                            midi_event[1] = ext_midi_notes[i].note;
-                            midi_event[2] = ext_midi_notes[i].velo;
+                            if (evin.data[k].types & CARLA_EVENT_DATA_ATOM)
+                                continue; // TODO
+                            else if (evin.data[k].types & CARLA_EVENT_DATA_EVENT)
+                                lv2_event_write(&evin_iters[k], 0, 0, CARLA_URI_MAP_ID_EVENT_MIDI, 3, midi_event);
+                            else if (evin.data[k].types & CARLA_EVENT_DATA_MIDI_LL)
+                                lv2midi_put_event(&evin_states[k], 0, 3, midi_event);
                         }
                     }
 
@@ -1229,7 +1337,7 @@ public:
 
         for (i=0; i < evin.count; i++)
         {
-            if (evins_buffer[i] == nullptr || (evin.data[i].types & CARLA_EVENT_TYPE_MIDI) == 0)
+            if (evins_buffer[i] == nullptr)
                 continue;
 
             jack_midi_event_t min_event;
@@ -1252,7 +1360,12 @@ public:
                 // write supported status types
                 if (MIDI_IS_STATUS_NOTE_OFF(status) || MIDI_IS_STATUS_NOTE_ON(status) || MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status) || MIDI_IS_STATUS_AFTERTOUCH(status) || MIDI_IS_STATUS_PITCH_WHEEL_CONTROL(status))
                 {
-                    lv2_event_write(&evin_iters[i], min_event.time, 0, CARLA_URI_MAP_ID_EVENT_MIDI, min_event.size, min_event.buffer);
+                    if (evin.data[i].types & CARLA_EVENT_DATA_ATOM)
+                        continue; // TODO
+                    else if (evin.data[i].types & CARLA_EVENT_DATA_EVENT)
+                        lv2_event_write(&evin_iters[i], min_event.time, 0, CARLA_URI_MAP_ID_EVENT_MIDI, min_event.size, min_event.buffer);
+                    else if (evin.data[i].types & CARLA_EVENT_DATA_MIDI_LL)
+                        lv2midi_put_event(&evin_states[i], min_event.time, min_event.size, min_event.buffer);
 
                     if (MIDI_IS_STATUS_NOTE_OFF(status))
                         postpone_event(PostEventNoteOff, min_event.buffer[1], 0.0);
@@ -1377,7 +1490,7 @@ public:
 
         if (param.port_cout)
         {
-            jack_default_audio_sample_t* cout_buffer = (jack_default_audio_sample_t*)jack_port_get_buffer(param.port_cout, nframes);
+            void* cout_buffer = jack_port_get_buffer(param.port_cout, nframes);
             jack_midi_clear_buffer(cout_buffer);
 
             double value, rvalue;
@@ -1413,24 +1526,44 @@ public:
 
         for (i=0; i < evout.count; i++)
         {
-            if (evouts_buffer[i] == nullptr || (evout.data[i].types & CARLA_EVENT_TYPE_MIDI) == 0)
+            if (evouts_buffer[i] == nullptr)
                 continue;
 
             jack_midi_clear_buffer(evouts_buffer[i]);
 
-            LV2_Event* ev;
-            uint8_t* data;
-
-            LV2_Event_Iterator iter;
-            lv2_event_begin(&iter, evout.data[i].buffer);
-
-            for (k=0; k < iter.buf->event_count; k++)
+            if (evin.data[i].types & CARLA_EVENT_DATA_ATOM)
             {
-                ev = lv2_event_get(&iter, &data);
-                if (ev && data)
-                    jack_midi_event_write(evouts_buffer[i], ev->frames, data, ev->size);
+            }
+            else if (evin.data[i].types & CARLA_EVENT_DATA_EVENT)
+            {
+                LV2_Event* ev;
+                LV2_Event_Iterator iter;
 
-                lv2_event_increment(&iter);
+                uint8_t* data;
+                lv2_event_begin(&iter, evout.data[i].buffer.e);
+
+                for (k=0; k < iter.buf->event_count; k++)
+                {
+                    ev = lv2_event_get(&iter, &data);
+                    if (ev && data)
+                        jack_midi_event_write(evouts_buffer[i], ev->frames, data, ev->size);
+
+                    lv2_event_increment(&iter);
+                }
+            }
+            else if (evin.data[i].types & CARLA_EVENT_DATA_MIDI_LL)
+            {
+                LV2_MIDIState state = { evout.data[i].buffer.m, nframes, 0 };
+
+                uint32_t event_size;
+                double event_timestamp;
+                unsigned char* event_data;
+
+                while (lv2midi_get_event(&state, &event_timestamp, &event_size, &event_data) < nframes)
+                {
+                    jack_midi_event_write(evouts_buffer[i], event_timestamp, event_data, event_size);
+                    lv2midi_step(&state);
+                }
             }
         } // End of MIDI Output
 
@@ -1463,7 +1596,20 @@ public:
         if (evin.count > 0)
         {
             for (uint32_t i=0; i < evin.count; i++)
-                free(evin.data[i].buffer);
+            {
+                if (evin.data[i].types & CARLA_EVENT_DATA_ATOM)
+                {
+                }
+                else if (evin.data[i].types & CARLA_EVENT_DATA_EVENT)
+                {
+                    free(evin.data[i].buffer.e);
+                }
+                else if (evin.data[i].types & CARLA_EVENT_DATA_MIDI_LL)
+                {
+                    delete[] evin.data[i].buffer.m->data;
+                    delete evin.data[i].buffer.m;
+                }
+            }
 
             delete[] evin.data;
         }
@@ -1471,7 +1617,20 @@ public:
         if (evout.count > 0)
         {
             for (uint32_t i=0; i < evout.count; i++)
-                free(evout.data[i].buffer);
+            {
+                if (evout.data[i].types & CARLA_EVENT_DATA_ATOM)
+                {
+                }
+                else if (evout.data[i].types & CARLA_EVENT_DATA_EVENT)
+                {
+                    free(evout.data[i].buffer.e);
+                }
+                else if (evout.data[i].types & CARLA_EVENT_DATA_MIDI_LL)
+                {
+                    delete[] evout.data[i].buffer.m->data;
+                    delete evout.data[i].buffer.m;
+                }
+            }
 
             delete[] evout.data;
         }
@@ -1550,7 +1709,6 @@ public:
                     uint32_t i = 0;
                     while ((descriptor = descfn(i++)))
                     {
-                        qDebug("%s | %s", descriptor->URI, URI);
                         if (strcmp(descriptor->URI, URI) == 0)
                             break;
                     }
@@ -1563,7 +1721,7 @@ public:
                         for (i=0; i < rdf_descriptor->PortCount; i++)
                         {
                             LV2_Property PortType = rdf_descriptor->Ports[i].Type;
-                            if (bool(LV2_IS_PORT_AUDIO(PortType) || LV2_IS_PORT_CONTROL(PortType) || LV2_IS_PORT_EVENT(PortType)) == false)
+                            if (bool(LV2_IS_PORT_AUDIO(PortType) || LV2_IS_PORT_CONTROL(PortType) || LV2_IS_PORT_EVENT(PortType) || LV2_IS_PORT_MIDI_LL(PortType)) == false)
                             {
                                 if (! LV2_IS_PORT_OPTIONAL(rdf_descriptor->Ports[i].Properties))
                                 {

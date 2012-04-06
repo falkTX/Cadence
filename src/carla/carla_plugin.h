@@ -357,12 +357,6 @@ public:
         return 0.0;
     }
 
-    // FIXME - remove this?
-//    double get_default_parameter_value(uint32_t param_id)
-//    {
-//        return param.ranges[param_id].def;
-//    }
-
     virtual void get_label(char* buf_str)
     {
         *buf_str = 0;
@@ -856,7 +850,6 @@ public:
     {
         post_events.lock.lock();
 
-        // FIXME?
         memcpy(post_events_dst, post_events.data, sizeof(PluginPostEvent)*MAX_POST_EVENTS);
 
         for (unsigned short i=0; i < MAX_POST_EVENTS; i++)

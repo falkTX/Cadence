@@ -43,9 +43,8 @@ const unsigned int PLUGIN_CAN_BALANCE = 0x40;
 // parameter hints
 const unsigned int PARAMETER_IS_ENABLED        = 0x01;
 const unsigned int PARAMETER_IS_AUTOMABLE      = 0x02;
-const unsigned int PARAMETER_HAS_STRICT_BOUNDS = 0x04;
-const unsigned int PARAMETER_USES_SCALEPOINTS  = 0x08;
-const unsigned int PARAMETER_USES_SAMPLERATE   = 0x10;
+const unsigned int PARAMETER_USES_SCALEPOINTS  = 0x04;
+const unsigned int PARAMETER_USES_SAMPLERATE   = 0x08;
 
 enum BinaryType {
     BINARY_NONE   = 0,

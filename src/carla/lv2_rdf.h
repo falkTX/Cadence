@@ -766,26 +766,26 @@ inline bool is_lv2_feature_supported(const char* uri)
         return false;
 }
 
-inline bool is_lv2_ui_feature_supported(const char */*uri*/)
+inline bool is_lv2_ui_feature_supported(const char* uri)
 {
-//    if (strcmp(uri, "http://lv2plug.in/ns/lv2core#hardRTCapable") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#inPlaceBroken") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#isLive") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/event") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#makePath") == 0)
-//        return false; // TODO
-//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#mapPath") == 0)
-//        return false; // TODO
-//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/uri-map") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#map") == 0)
-//        return true;
-//    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#unmap") == 0)
-//        return true;
+    if (strcmp(uri, "http://lv2plug.in/ns/lv2core#hardRTCapable") == 0)
+        return true;
+    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#inPlaceBroken") == 0)
+        return true;
+    else if (strcmp(uri, "http://lv2plug.in/ns/lv2core#isLive") == 0)
+        return true;
+    else if (strcmp(uri, "http://lv2plug.in/ns/ext/event") == 0)
+        return true;
+    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#makePath") == 0)
+        return false; // TODO
+    else if (strcmp(uri, "http://lv2plug.in/ns/ext/state#mapPath") == 0)
+        return false; // TODO
+    else if (strcmp(uri, "http://lv2plug.in/ns/ext/uri-map") == 0)
+        return true;
+    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#map") == 0)
+        return true;
+    else if (strcmp(uri, "http://lv2plug.in/ns/ext/urid#unmap") == 0)
+        return true;
 //    else if (strcmp(uri, "http://lv2plug.in/ns/ext/data-access") == 0)
 //        return true;
 //    else if (strcmp(uri, "http://lv2plug.in/ns/ext/instance-access") == 0)
@@ -806,7 +806,7 @@ inline bool is_lv2_ui_feature_supported(const char */*uri*/)
 //        return true;
 //    else if (strcmp(uri, "http://nedko.arnaudov.name/lv2/external_ui/") == 0)
 //        return true;
-//    else
+    else
         return false;
 }
 

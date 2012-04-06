@@ -637,7 +637,7 @@ public:
 
         if (param.port_cin)
         {
-            jack_default_audio_sample_t* pin_buffer = (jack_default_audio_sample_t*)jack_port_get_buffer(param.port_cin, nframes);
+            void* pin_buffer = jack_port_get_buffer(param.port_cin, nframes);
 
             jack_midi_event_t pin_event;
             uint32_t n_pin_events = jack_midi_get_event_count(pin_buffer);
@@ -1208,7 +1208,7 @@ public:
             {
                 VstEvents* events = (VstEvents*)ptr;
 
-                jack_default_audio_sample_t* mout_buffer = (jack_default_audio_sample_t*)jack_port_get_buffer(plugin->mout.ports[0], get_buffer_size());
+                void* mout_buffer = jack_port_get_buffer(plugin->mout.ports[0], get_buffer_size());
                 jack_midi_clear_buffer(mout_buffer);
 
                 for (int32_t i=0; i < events->numEvents; i++)

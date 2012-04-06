@@ -151,7 +151,7 @@ public:
         m_name  = get_unique_name(info->name);
         m_filename = strdup(filename);
 
-        // TODO - get bridge binary here
+        // FIXME - verify if path exists, if not return false
         m_thread->setOscData(binarytype2str(m_binary), label, plugintype2str(m_type));
         m_thread->start();
 
