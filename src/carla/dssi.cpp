@@ -19,8 +19,6 @@
 
 #include "dssi/dssi.h"
 
-#include <QtCore/QStringList>
-
 class DssiPlugin : public CarlaPlugin
 {
 public:
@@ -50,7 +48,6 @@ public:
         {
             if (osc.data.target)
             {
-                qDebug("DSSI GUI close - sending UI hide & quit");
                 osc_send_hide(&osc.data);
                 osc_send_quit(&osc.data);
             }
@@ -72,8 +69,6 @@ public:
 
                 delete osc.thread;
             }
-            else
-                qDebug("DSSI GUI close - no thread registered");
 
             osc_clear_data(&osc.data);
         }

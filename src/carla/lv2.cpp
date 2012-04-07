@@ -167,24 +167,31 @@ public:
                 break;
 
             case GUI_EXTERNAL_OSC:
-                // FIXME - fix dssi first, then copy
+                if (osc.data.target)
+                {
+                    osc_send_hide(&osc.data);
+                    osc_send_quit(&osc.data);
+                }
 
-//                if (gui.visible)
-//                    osc_send_hide(&osc.data);
+                if (osc.thread)
+                {
+                    // Wait a bit first, try safe quit else force kill
+                    if (osc.thread->isRunning())
+                    {
+                        if (osc.thread->wait(2000) == false)
+                            osc.thread->quit();
 
-//                osc_send_quit(&osc.data);
+                        if (osc.thread->isRunning() && osc.thread->wait(1000) == false)
+                        {
+                            qWarning("Failed to properly stop LV2 OSC-GUI thread");
+                            osc.thread->terminate();
+                        }
+                    }
 
-//                if (osc.thread)
-//                {
-//                    osc.thread->quit();
+                    delete osc.thread;
+                }
 
-//                    if (!osc.thread->wait(3000)) // 3 sec
-//                        qWarning("Failed to properly stop LV2 OSC GUI thread");
-
-//                    delete osc.thread;
-//                }
-
-//                osc_clear_data(&osc.data);
+                osc_clear_data(&osc.data);
 
                 break;
 
@@ -2081,30 +2088,33 @@ public:
 
                                                             if (is_bridged)
                                                             {
-                                                                gui.type = GUI_EXTERNAL_OSC;
-                                                                //osc.thread = lv2_thread;
-                                                                //CarlaPluginThread* lv2ui_thread = new Lv2OscGuiThread();
-                                                                //lv2_thread->set_plugin_id(plugin->id);
-                                                                //lv2_thread->set_ui_type(UiType);
-                                                                //lv2_thread->start();
+                                                                const char* osc_binary;
 
                                                                 switch (UiType)
                                                                 {
                                                                 case LV2_UI_QT4:
                                                                     qDebug("Will use LV2 Qt4 UI, bridged");
+                                                                    osc_binary = nullptr;
                                                                     break;
-
                                                                 case LV2_UI_X11:
                                                                     qDebug("Will use LV2 X11 UI, bridged");
+                                                                    osc_binary = nullptr;
                                                                     break;
-
                                                                 case LV2_UI_GTK2:
                                                                     qDebug("Will use LV2 Gtk2 UI, bridged");
+                                                                    osc_binary = nullptr;
                                                                     break;
-
                                                                 default:
                                                                     qDebug("Will use LV2 Unknown UI, bridged");
+                                                                    osc_binary = nullptr;
                                                                     break;
+                                                                }
+
+                                                                if (osc_binary)
+                                                                {
+                                                                    gui.type = GUI_EXTERNAL_OSC;
+                                                                    osc.thread = new CarlaPluginThread(this, CarlaPluginThread::PLUGIN_THREAD_LV2_GUI);
+                                                                    osc.thread->setOscData("lv2-gtk here", descriptor->URI, ui.descriptor->URI, ui.rdf_descriptor->Binary, ui.rdf_descriptor->Bundle);
                                                                 }
                                                             }
                                                             else

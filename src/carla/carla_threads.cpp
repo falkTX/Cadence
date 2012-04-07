@@ -203,23 +203,29 @@ CarlaPluginThread::CarlaPluginThread(CarlaPlugin* plugin, PluginThreadMode mode)
 {
     qDebug("CarlaPluginThread::CarlaPluginThread(%p, %i)", plugin, mode);
 
-    m_process = new QProcess(nullptr);
+    m_process = nullptr;
 }
 
 CarlaPluginThread::~CarlaPluginThread()
 {
-    delete m_process;
+    if (m_process)
+        delete m_process;
 }
 
-void CarlaPluginThread::setOscData(const char* binary, const char* label, const char* data1)
+void CarlaPluginThread::setOscData(const char* binary, const char* label, const char* data1, const char* data2, const char* data3)
 {
     m_binary = QString(binary);
     m_label  = QString(label);
     m_data1  = QString(data1);
+    m_data2  = QString(data2);
+    m_data3  = QString(data3);
 }
 
 void CarlaPluginThread::run()
 {
+    if (m_process == nullptr)
+        m_process = new QProcess(nullptr);
+
     QStringList arguments;
 
     switch (m_mode)
@@ -232,9 +238,12 @@ void CarlaPluginThread::run()
         break;
 
     case PLUGIN_THREAD_LV2_GUI:
-        //arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
-        //arguments << m_label;
-        //arguments << QString("%1 (GUI)").arg(m_plugin->name());
+        /* osc_url     */ arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
+        /* URI         */ arguments << m_label;
+        /* ui-URI      */ arguments << m_data1;
+        /* ui-filename */ arguments << m_data2;
+        /* ui-bundle   */ arguments << m_data3;
+        /* ui-title    */ arguments << QString("%1 (GUI)").arg(m_plugin->name());
         break;
 
     case PLUGIN_THREAD_BRIDGE:
@@ -243,6 +252,7 @@ void CarlaPluginThread::run()
         /* filename */ arguments << m_plugin->filename();
         /* label    */ arguments << m_label;
         break;
+
     default:
         break;
     }
@@ -253,6 +263,7 @@ void CarlaPluginThread::run()
     switch (m_mode)
     {
     case PLUGIN_THREAD_DSSI_GUI:
+    case PLUGIN_THREAD_LV2_GUI:
         if (m_plugin->update_osc_gui())
         {
             m_process->waitForFinished(-1);

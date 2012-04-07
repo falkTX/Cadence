@@ -387,7 +387,7 @@ rtsafe_memory_pool_create2(
 
 void
 rtmempool_allocator_init(
-  struct lv2_rtsafe_memory_pool_provider * allocator_ptr)
+  lv2_rtsafe_memory_pool_provider * allocator_ptr)
 {
   allocator_ptr->create = rtsafe_memory_pool_create2;
   allocator_ptr->destroy = rtsafe_memory_pool_destroy;

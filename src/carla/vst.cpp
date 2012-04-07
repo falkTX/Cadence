@@ -65,7 +65,6 @@ public:
         gui.width  = 0;
         gui.height = 0;
 
-        // FIXME?
         memset(midi_events, 0, sizeof(VstMidiEvent)*MAX_MIDI_EVENTS);
 
         for (unsigned short i=0; i<MAX_MIDI_EVENTS; i++)
@@ -115,8 +114,7 @@ public:
         if (effect->flags & effFlagsIsSynth)
             return PLUGIN_CATEGORY_SYNTH;
 
-        // TODO - try to get category from label
-        return PLUGIN_CATEGORY_NONE;
+        return get_category_from_name(m_name);
     }
 
     virtual long unique_id()
@@ -175,6 +173,7 @@ public:
 
     virtual void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
+        fix_parameter_value(value, param.ranges[param_id]);
         effect->setParameter(effect, param_id, value);
         CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
     }
