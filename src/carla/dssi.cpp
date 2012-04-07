@@ -50,31 +50,25 @@ public:
         {
             if (osc.data.target)
             {
+                qDebug("DSSI GUI close - sending UI hide & quit");
                 osc_send_hide(&osc.data);
                 osc_send_quit(&osc.data);
             }
 
             if (osc.thread)
             {
-                // Wait a bit first, then kill
+                // Wait a bit first, try safe quit else force kill
                 if (osc.thread->isRunning())
                 {
-                    qDebug("DSSI GUI close - running, closing now");
-                     if (osc.thread->wait(3000) == false)
-                         qDebug("DSSI GUI close - closed sucessfully");
-                     else
-                     {
-                         qDebug("DSSI GUI close - still running, closing now");
-                         osc.thread->quit();
-                     }
+                    if (osc.thread->wait(2000) == false)
+                        osc.thread->quit();
 
-                    if (osc.thread->wait(1000) == false)
+                    if (osc.thread->isRunning() && osc.thread->wait(1000) == false)
+                    {
                         qWarning("Failed to properly stop DSSI GUI thread");
-                    else
-                        qDebug("DSSI GUI close - sucess");
+                        osc.thread->terminate();
+                    }
                 }
-                else
-                    qDebug("DSSI GUI close - not running");
 
                 delete osc.thread;
             }
