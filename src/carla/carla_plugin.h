@@ -226,7 +226,11 @@ public:
         if (m_filename)
             free((void*)m_filename);
 
+#ifdef BUILD_BRIDGE
+        if (jack_client)
+#else
         if (jack_client && carla_options.global_jack_client == false)
+#endif
             jack_client_close(jack_client);
     }
 
@@ -941,7 +945,9 @@ public:
         if (jack_client == nullptr)
             return;
 
+#ifndef BUILD_BRIDGE
         if (carla_options.global_jack_client == false)
+#endif
             jack_deactivate(jack_client);
 
         for (uint32_t i=0; i < ain.count; i++)

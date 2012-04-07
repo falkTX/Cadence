@@ -310,22 +310,26 @@ public:
         // ---------------------------------------
         // Audio Outputs
 
+#ifndef BUILD_BRIDGE
         if (carla_options.global_jack_client)
         {
             strcpy(port_name, m_name);
             strcat(port_name, ":out-left");
         }
         else
+#endif
             strcpy(port_name, "out-left");
 
         aout.ports[0] = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
 
+#ifndef BUILD_BRIDGE
         if (carla_options.global_jack_client)
         {
             strcpy(port_name, m_name);
             strcat(port_name, ":out-right");
         }
         else
+#endif
             strcpy(port_name, "out-right");
 
         aout.ports[1] = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
@@ -333,12 +337,14 @@ public:
         // ---------------------------------------
         // MIDI Input
 
+#ifndef BUILD_BRIDGE
         if (carla_options.global_jack_client)
         {
             strcpy(port_name, m_name);
             strcat(port_name, ":midi-in");
         }
         else
+#endif
             strcpy(port_name, "midi-in");
 
         midi.port_min = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
@@ -346,22 +352,26 @@ public:
         // ---------------------------------------
         // Parameters
 
+#ifndef BUILD_BRIDGE
         if (carla_options.global_jack_client)
         {
             strcpy(port_name, m_name);
             strcat(port_name, ":control-in");
         }
         else
+#endif
             strcpy(port_name, "control-in");
 
         param.port_cin = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
 
+#ifndef BUILD_BRIDGE
         if (carla_options.global_jack_client)
         {
             strcpy(port_name, m_name);
             strcat(port_name, ":control-out");
         }
         else
+#endif
             strcpy(port_name, "control-out");
 
         param.port_cout = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
@@ -608,7 +618,9 @@ public:
         m_id = _id;
         carla_proc_unlock();
 
+#ifndef BUILD_BRIDGE
         if (carla_options.global_jack_client == false)
+#endif
             jack_activate(jack_client);
     }
 

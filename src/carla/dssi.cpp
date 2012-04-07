@@ -19,6 +19,8 @@
 
 #include "dssi/dssi.h"
 
+#include <QtCore/QStringList>
+
 class DssiPlugin : public CarlaPlugin
 {
 public:
@@ -54,17 +56,30 @@ public:
 
             if (osc.thread)
             {
-                // FIXME - wait a bit first, then kill
+                // Wait a bit first, then kill
                 if (osc.thread->isRunning())
                 {
-                    osc.thread->quit();
+                    qDebug("DSSI GUI close - running, closing now");
+                     if (osc.thread->wait(3000) == false)
+                         qDebug("DSSI GUI close - closed sucessfully");
+                     else
+                     {
+                         qDebug("DSSI GUI close - still running, closing now");
+                         osc.thread->quit();
+                     }
 
-                    if (osc.thread->wait(3000) == false) // 3 sec
+                    if (osc.thread->wait(1000) == false)
                         qWarning("Failed to properly stop DSSI GUI thread");
+                    else
+                        qDebug("DSSI GUI close - sucess");
                 }
+                else
+                    qDebug("DSSI GUI close - not running");
 
                 delete osc.thread;
             }
+            else
+                qDebug("DSSI GUI close - no thread registered");
 
             osc_clear_data(&osc.data);
         }
@@ -85,9 +100,7 @@ public:
     {
         if (midi.port_min && aout.count > 0)
             return PLUGIN_CATEGORY_SYNTH;
-
-        // TODO - try to get category from label
-        return PLUGIN_CATEGORY_NONE;
+        return get_category_from_name(m_name);
     }
 
     virtual long unique_id()
@@ -145,6 +158,7 @@ public:
 
     virtual void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
+        fix_parameter_value(value, param.ranges[param_id]);
         param_buffers[param_id] = value;
 
 #ifndef BUILD_BRIDGE
@@ -168,33 +182,22 @@ public:
         {
             reload_programs(false);
         }
+#if 0
         else if (strcmp(key, "names") == 0) // Not in the API!
         {
             if (midiprog.count > 0)
             {
                 //osc_send_set_program_count(&global_osc_data, m_id, midiprog.count);
 
-                // FIXME
-
                 // Parse names
-                int j, k, last_str_n = 0;
-                int str_len = strlen(value);
-                char name[256];
+                QStringList nameList = QString(value).split(",");
+                uint32_t nameCount = nameList.count();
 
-                for (uint32_t i=0; i < prog.count; i++)
+                for (uint32_t i=0; i < midiprog.count && i < nameCount; i++)
                 {
-                    for (j=0, k=last_str_n; j < 256 && k+j < str_len; j++)
-                    {
-                        name[j] = value[k+j];
-                        if (value[k+j] == ',')
-                        {
-                            name[j] = 0;
-                            last_str_n = k+j+1;
-                            free((void*)midiprog.data[i].name);
-                            midiprog.data[i].name = strdup(name);
-                            break;
-                        }
-                    }
+                    const char* name = nameList.at(i).toUtf8().constData();
+                    free((void*)midiprog.data[i].name);
+                    midiprog.data[i].name = strdup(name);
 
                     //osc_send_set_program_name(&global_osc_data, m_id, i, midiprog.names[i]);
                 }
@@ -202,6 +205,7 @@ public:
                 callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
             }
         }
+#endif
 
         CarlaPlugin::set_custom_data(dtype, key, value, gui_send);
     }
@@ -439,7 +443,7 @@ public:
 
                 if (max - min <= 0.0)
                 {
-                    qWarning("Broken plugin parameter -> max - min <= 0");
+                    qWarning("Broken plugin parameter: max - min <= 0");
                     max = min + 0.1;
                 }
 
@@ -474,9 +478,8 @@ public:
 
                 if (LADSPA_IS_PORT_INPUT(PortType))
                 {
-                    param.data[j].type = PARAMETER_INPUT;
-                    param.data[j].hints |= PARAMETER_IS_ENABLED;
-                    param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
+                    param.data[j].type   = PARAMETER_INPUT;
+                    param.data[j].hints |= (PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE);
                     needs_cin = true;
 
                     // MIDI CC value
@@ -493,23 +496,22 @@ public:
                 }
                 else if (LADSPA_IS_PORT_OUTPUT(PortType))
                 {
-                    param.data[j].type = PARAMETER_OUTPUT;
-                    param.data[j].hints |= PARAMETER_IS_ENABLED;
-
-                    if (strcmp(ldescriptor->PortNames[i], "latency") != 0 && strcmp(ldescriptor->PortNames[i], "_latency") != 0)
+                    if (strcmp(ldescriptor->PortNames[i], "latency") == 0 || strcmp(ldescriptor->PortNames[i], "_latency") == 0)
                     {
-                        param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
-                        needs_cout = true;
-                    }
-                    else
-                    {
-                        // latency parameter
+                        param.data[j].type  = PARAMETER_LATENCY;
+                        param.data[j].hints = 0;
                         min = 0;
                         max = get_sample_rate();
                         def = 0;
                         step = 1;
                         step_small = 1;
                         step_large = 1;
+                    }
+                    else
+                    {
+                        param.data[j].type   = PARAMETER_OUTPUT;
+                        param.data[j].hints |= (PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE);
+                        needs_cout = true;
                     }
                 }
                 else
@@ -616,7 +618,9 @@ public:
         m_id = _id;
         carla_proc_unlock();
 
+#ifndef BUILD_BRIDGE
         if (carla_options.global_jack_client == false)
+#endif
             jack_activate(jack_client);
     }
 
@@ -1005,6 +1009,18 @@ public:
         } // End of MIDI Input (JACK)
 
         CARLA_PROCESS_CONTINUE_CHECK;
+
+        // --------------------------------------------------------------------------------------------------------
+        // Special Parameters
+
+        for (k=0; k < param.count; k++)
+        {
+            if (param.data[k].type == PARAMETER_LATENCY)
+            {
+                // TODO
+                break;
+            }
+        }
 
         // --------------------------------------------------------------------------------------------------------
         // Plugin processing

@@ -496,7 +496,9 @@ public:
         m_id = _id;
         carla_proc_unlock();
 
+#ifndef BUILD_BRIDGE
         if (carla_options.global_jack_client == false)
+#endif
             jack_activate(jack_client);
     }
 
@@ -1134,7 +1136,7 @@ public:
                 const int port_name_size = jack_port_name_size();
                 char port_name[port_name_size];
 
-#ifndef BRIDGE_WINVST
+#ifndef BUILD_BRIDGE
                 if (carla_options.global_jack_client)
                 {
                     strncpy(port_name, plugin->name, (port_name_size/2)-2);

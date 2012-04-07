@@ -44,7 +44,7 @@ bool is_ladspa_rdf_descriptor_valid(const LADSPA_RDF_Descriptor* rdf_descriptor,
             {
                 if (is_port_good(rdf_descriptor->Ports[i].Type, descriptor->PortDescriptors[i]) == false)
                 {
-                    qWarning("WARNING - Plugin has RDF data, but invalid PortTypes - %i != %i", rdf_descriptor->Ports[i].Type, descriptor->PortDescriptors[i]);
+                    qWarning("WARNING - Plugin has RDF data, but invalid PortTypes: %i != %i", rdf_descriptor->Ports[i].Type, descriptor->PortDescriptors[i]);
                     return false;
                 }
             }
@@ -52,7 +52,7 @@ bool is_ladspa_rdf_descriptor_valid(const LADSPA_RDF_Descriptor* rdf_descriptor,
         }
         else
         {
-            qWarning("WARNING - Plugin has RDF data, but invalid PortCount -> %li > %li", rdf_descriptor->PortCount, descriptor->PortCount);
+            qWarning("WARNING - Plugin has RDF data, but invalid PortCount: %li > %li", rdf_descriptor->PortCount, descriptor->PortCount);
             return false;
         }
     }
@@ -131,8 +131,7 @@ public:
                 return PLUGIN_CATEGORY_SYNTH;
         }
 
-        // TODO - try to get category from label
-        return PLUGIN_CATEGORY_NONE;
+        return get_category_from_name(m_name);
     }
 
     virtual long unique_id()
@@ -262,6 +261,7 @@ public:
 
     virtual void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
+        fix_parameter_value(value, param.ranges[param_id]);
         param_buffers[param_id] = value;
 
         CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
@@ -458,7 +458,7 @@ public:
 
                 if (max - min <= 0.0)
                 {
-                    qWarning("Broken plugin parameter -> max - min <= 0");
+                    qWarning("Broken plugin parameter: max - min <= 0");
                     max = min + 0.1;
                 }
 
@@ -493,30 +493,28 @@ public:
 
                 if (LADSPA_IS_PORT_INPUT(PortType))
                 {
-                    param.data[j].type = PARAMETER_INPUT;
-                    param.data[j].hints |= PARAMETER_IS_ENABLED;
-                    param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
+                    param.data[j].type   = PARAMETER_INPUT;
+                    param.data[j].hints |= (PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE);
                     needs_cin = true;
                 }
                 else if (LADSPA_IS_PORT_OUTPUT(PortType))
                 {
-                    param.data[j].type = PARAMETER_OUTPUT;
-                    param.data[j].hints |= PARAMETER_IS_ENABLED;
-
-                    if (strcmp(descriptor->PortNames[i], "latency") != 0 && strcmp(descriptor->PortNames[i], "_latency") != 0)
+                    if (strcmp(descriptor->PortNames[i], "latency") == 0 || strcmp(descriptor->PortNames[i], "_latency") == 0)
                     {
-                        param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
-                        needs_cout = true;
-                    }
-                    else
-                    {
-                        // latency parameter
+                        param.data[j].type  = PARAMETER_LATENCY;
+                        param.data[j].hints = 0;
                         min = 0;
                         max = get_sample_rate();
                         def = 0;
                         step = 1;
                         step_small = 1;
                         step_large = 1;
+                    }
+                    else
+                    {
+                        param.data[j].type   = PARAMETER_OUTPUT;
+                        param.data[j].hints |= (PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE);
+                        needs_cout = true;
                     }
                 }
                 else
@@ -599,7 +597,9 @@ public:
         m_id = _id;
         carla_proc_unlock();
 
+#ifndef BUILD_BRIDGE
         if (carla_options.global_jack_client == false)
+#endif
             jack_activate(jack_client);
     }
 
@@ -736,6 +736,18 @@ public:
         } // End of Parameters Input
 
         CARLA_PROCESS_CONTINUE_CHECK;
+
+        // --------------------------------------------------------------------------------------------------------
+        // Special Parameters
+
+        for (k=0; k < param.count; k++)
+        {
+            if (param.data[k].type == PARAMETER_LATENCY)
+            {
+                // TODO
+                break;
+            }
+        }
 
         // --------------------------------------------------------------------------------------------------------
         // Plugin processing
@@ -934,7 +946,9 @@ public:
                             m_name = get_unique_name(descriptor->Name);
 
                         if (carla_jack_register_plugin(this, &jack_client))
+                        {
                             return true;
+                        }
                         else
                             set_last_error("Failed to register plugin in JACK");
                     }

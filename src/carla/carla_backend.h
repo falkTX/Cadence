@@ -78,7 +78,9 @@ enum PluginCategory {
 enum ParameterType {
     PARAMETER_UNKNOWN = 0,
     PARAMETER_INPUT   = 1,
-    PARAMETER_OUTPUT  = 2
+    PARAMETER_OUTPUT  = 2,
+    PARAMETER_LATENCY = 3,
+    PARAMETER_BPM     = 4
 };
 
 enum InternalParametersIndex {

@@ -185,6 +185,74 @@ const char* get_unique_name(const char* name)
     return strdup(qname.toUtf8().constData());
 }
 
+PluginCategory get_category_from_name(const char* name)
+{
+    QString qname(name);
+
+    if (qname.isEmpty())
+        return PLUGIN_CATEGORY_NONE;
+    else
+        qname = qname.toLower();
+
+    // generic tags first
+    if (qname.contains("delay", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_DELAY;
+    if (qname.contains("reverb", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_DELAY;
+
+    if (qname.contains("filter", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_FILTER;
+
+    if (qname.contains("dynamics", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_DYNAMICS;
+    if (qname.contains("amplifier", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_DYNAMICS;
+    if (qname.contains("compressor", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_DYNAMICS;
+    if (qname.contains("enhancer", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_DYNAMICS;
+    if (qname.contains("exciter", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_DYNAMICS;
+    if (qname.contains("gate", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_DYNAMICS;
+    if (qname.contains("limiter", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_DYNAMICS;
+
+    if (qname.contains("modulator", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_MODULATOR;
+    if (qname.contains("chorus", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_MODULATOR;
+    if (qname.contains("flanger", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_MODULATOR;
+    if (qname.contains("phaser", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_MODULATOR;
+    if (qname.contains("saturator", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_MODULATOR;
+
+    if (qname.contains("utility", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_UTILITY;
+    if (qname.contains("analyzer", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_UTILITY;
+    if (qname.contains("converter", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_UTILITY;
+    if (qname.contains("deesser", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_UTILITY;
+    if (qname.contains("mixer", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_UTILITY;
+
+    // common tags
+    if (qname.contains("verb", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_DELAY;
+
+    if (qname.contains("eq", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_EQ;
+
+    if (qname.contains("tool", Qt::CaseSensitive))
+        return PLUGIN_CATEGORY_UTILITY;
+
+    return PLUGIN_CATEGORY_NONE;
+}
+
 void* get_pointer(intptr_t ptr_addr)
 {
     intptr_t* ptr = (intptr_t*)ptr_addr;

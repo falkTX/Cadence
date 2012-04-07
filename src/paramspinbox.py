@@ -134,7 +134,7 @@ class ParamSpinBox(QAbstractSpinBox):
         self._minimum = 0.0
         self._maximum = 1.0
         self._default = 0.0
-        self._value = 0.0
+        self._value = None
         self._step = 0.0
         self._step_small = 0.0
         self._step_large = 0.0
@@ -230,7 +230,8 @@ class ParamSpinBox(QAbstractSpinBox):
             for scalepoint in scalepoints:
               self.box.addItem("%f - %s" % (scalepoint['value'], scalepoint['label']))
 
-            self.set_scalepoint_value(self._value)
+            if (self._value != None):
+              self.set_scalepoint_value(self._value)
 
             self.connect(self.box, SIGNAL("currentIndexChanged(QString)"), self.handleValueChangedFromBox)
 
@@ -317,7 +318,7 @@ class ParamSpinBox(QAbstractSpinBox):
           self.set_value(self._default)
 
     def stepBy(self, steps):
-        if (steps == 0):
+        if (steps == 0 or self._value == None):
           return
 
         value = self._value+(steps*self._step)
@@ -330,7 +331,7 @@ class ParamSpinBox(QAbstractSpinBox):
         self.set_value(value)
 
     def stepEnabled(self):
-        if (self._read_only):
+        if (self._read_only or self._value == None):
           return QAbstractSpinBox.StepNone
         elif (self._value <= self._minimum):
           return QAbstractSpinBox.StepUpEnabled

@@ -54,7 +54,8 @@ const unsigned int PLUGIN_HAS_EXTENSION_STATE    = 0x1000;
 const unsigned int PLUGIN_HAS_EXTENSION_DYNPARAM = 0x2000;
 
 // parameter hints
-const unsigned int PARAMETER_HAS_STRICT_BOUNDS   = 0x100;
+const unsigned int PARAMETER_IS_TRIGGER          = 0x100;
+const unsigned int PARAMETER_HAS_STRICT_BOUNDS   = 0x200;
 
 // feature ids
 const uint32_t lv2_feature_id_uri_map         = 0;
@@ -1156,7 +1157,9 @@ public:
         m_id = _id;
         carla_proc_unlock();
 
+#ifndef BUILD_BRIDGE
         if (carla_options.global_jack_client == false)
+#endif
             jack_activate(jack_client);
     }
 

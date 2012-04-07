@@ -36,6 +36,7 @@ void CarlaCheckThread::run()
 
     uint32_t j;
     double value;
+    ParameterData* param_data;
     PluginPostEvent post_events[MAX_POST_EVENTS];
 
     while (carla_is_engine_running())
@@ -51,6 +52,8 @@ void CarlaCheckThread::run()
                 // Make a safe copy of events, and clear them
                 plugin->post_events_copy(post_events);
 
+                OscData* osc_data = plugin->osc_data();
+
                 // Process events now
                 for (j=0; j < MAX_POST_EVENTS; j++)
                 {
@@ -63,61 +66,77 @@ void CarlaCheckThread::run()
                             break;
 
                         case PostEventParameterChange:
-                            //osc_send_set_parameter_value(&global_osc_data, plugin->id(), post_events[j].index, post_events[j].value);
-                            callback_action(CALLBACK_PARAMETER_CHANGED, plugin->id(), post_events[j].index, 0, post_events[j].value);
+                            // Update OSC based UIs
+                            osc_send_control(osc_data, post_events[j].index, post_events[j].value);
 
-                            // FIXME - can this happen?
-                            //if (plugin->hints() & PLUGIN_IS_BRIDGE)
-                            //    osc_send_control(plugin->osc_data(), post_events[j].index, post_events[j].value);
+                            // Update OSC control client
+                            //osc_send_set_parameter_value(&global_osc_data, plugin->id(), post_events[j].index, post_events[j].value);
+
+                            // Update Host
+                            callback_action(CALLBACK_PARAMETER_CHANGED, plugin->id(), post_events[j].index, 0, post_events[j].value);
 
                             break;
 
                         case PostEventProgramChange:
+                            // Update OSC based UIs
+                            osc_send_program(osc_data, post_events[j].index);
+
+                            // Update OSC control client
                             //osc_send_set_program(&global_osc_data, plugin->id(), post_events[j].index);
-                            callback_action(CALLBACK_PROGRAM_CHANGED, plugin->id(), post_events[j].index, 0, 0.0);
-
-                            // FIXME - can this happen?
-                            //if (plugin->hints() & PLUGIN_IS_BRIDGE)
-                            //    osc_send_program(plugin->osc_data(), post_events[j].index);
-
                             //for (uint32_t k=0; k < plugin->param_count(); k++)
                             //    osc_send_set_default_value(&global_osc_data, plugin->id(), k, plugin->param_ranges(k)->def);
+
+                            // Update Host
+                            callback_action(CALLBACK_PROGRAM_CHANGED, plugin->id(), post_events[j].index, 0, 0.0);
 
                             break;
 
                         case PostEventMidiProgramChange:
-                            //osc_send_set_midi_program(&global_osc_data, plugin->id(), post_events[j].index);
-                            callback_action(CALLBACK_MIDI_PROGRAM_CHANGED, plugin->id(), post_events[j].index, 0, 0.0);
+                            if (post_events[j].index < (int32_t)plugin->midiprog_count())
+                            {
+                                MidiProgramInfo midiprog = { false, 0, 0, nullptr };
+                                plugin->get_midi_program_info(&midiprog, post_events[j].index);
 
-                            //if (plugin->type() == PLUGIN_DSSI)
-                            //    osc_send_program_as_midi(plugin->osc_data(), plugin->midiprog.data[post_events[j].index].bank, plugin->midiprog.data[post_events[j].index].program);
+                                // Update OSC based UIs
+                                if (plugin->type() == PLUGIN_DSSI)
+                                    osc_send_program_as_midi(osc_data,  midiprog.bank, midiprog.program);
+                                else
+                                    osc_send_midi_program(osc_data, midiprog.bank, midiprog.program);
 
-                            // FIXME - can this happen?
-                            //if (plugin->hints & PLUGIN_IS_BRIDGE)
-                            //    osc_send_midi_program(&plugin->osc.data, plugin->midiprog.data[post_events[j].index].bank, plugin->midiprog.data[post_events[j].index].program);
+                                // Update OSC control client
+                                //osc_send_set_midi_program(&global_osc_data, plugin->id(), post_events[j].index);
+                                //for (uint32_t k=0; k < plugin->param_count(); k++)
+                                //    osc_send_set_default_value(&global_osc_data, plugin->id(), k, plugin->param_ranges(k)->def);
 
-                            //for (uint32_t k=0; k < plugin->param_count(); k++)
-                            //    osc_send_set_default_value(&global_osc_data, plugin->id(), k, plugin->param_ranges(k)->def);
+                                // Update Host
+                                callback_action(CALLBACK_MIDI_PROGRAM_CHANGED, plugin->id(), post_events[j].index, 0, 0.0);
+                            }
 
                             break;
 
                         case PostEventNoteOn:
-                            //osc_send_note_on(&global_osc_data, plugin->id(), post_events[j].index, post_events[j].value);
-                            callback_action(CALLBACK_NOTE_ON, plugin->id(), post_events[j].index, post_events[j].value, 0.0);
+                            // Update OSC based UIs
+                            //if (plugin->type() == PLUGIN_LV2)
+                            //    osc_send_note_on(osc_data, plugin->id(), post_events[j].index, post_events[j].value);
 
-                            // FIXME - can this happen?
-                            //if (plugin->hints & PLUGIN_IS_BRIDGE)
-                            //    osc_send_note_on(&plugin->osc.data, plugin->id, post_events[j].index, post_events[j].value);
+                            // Update OSC control client
+                            //osc_send_note_on(&global_osc_data, plugin->id(), post_events[j].index, post_events[j].value);
+
+                            // Update Host
+                            callback_action(CALLBACK_NOTE_ON, plugin->id(), post_events[j].index, post_events[j].value, 0.0);
 
                             break;
 
                         case PostEventNoteOff:
-                            //osc_send_note_off(&global_osc_data, plugin->id(), post_events[j].index);
-                            callback_action(CALLBACK_NOTE_OFF, plugin->id(), post_events[j].index, 0, 0.0);
+                            // Update OSC based UIs
+                            //if (plugin->type() == PLUGIN_LV2)
+                            //    osc_send_note_off(osc_data, plugin->id(), post_events[j].index, 0);
 
-                            // FIXME - can this happen?
-                            //if (plugin->hints & PLUGIN_IS_BRIDGE)
-                            //    osc_send_note_off(&plugin->osc.data, plugin->id, post_events[j].index, 0);
+                            // Update OSC control client
+                            //osc_send_note_off(&global_osc_data, plugin->id(), post_events[j].index);
+
+                            // Update Host
+                            callback_action(CALLBACK_NOTE_OFF, plugin->id(), post_events[j].index, 0, 0.0);
 
                             break;
 
@@ -131,7 +150,7 @@ void CarlaCheckThread::run()
                 // Update ports
 
                 // Check if it needs update
-                bool update_ports_gui = (plugin->osc_data()->target != nullptr);
+                bool update_ports_gui = (osc_data->target != nullptr);
 
                 //if (global_osc_data.target == nullptr && update_ports_gui == false)
                 //    continue;
@@ -139,12 +158,14 @@ void CarlaCheckThread::run()
                 // Update
                 for (j=0; j < plugin->param_count(); j++)
                 {
-                    if (plugin->param_data(j)->type == PARAMETER_OUTPUT && (plugin->param_data(j)->hints & PARAMETER_IS_AUTOMABLE) > 0)
+                    param_data = plugin->param_data(j);
+
+                    if (param_data->type == PARAMETER_OUTPUT && (param_data->hints & PARAMETER_IS_AUTOMABLE) > 0)
                     {
                         value = plugin->get_parameter_value(j);
 
                         if (update_ports_gui)
-                            osc_send_control(plugin->osc_data(), plugin->param_data(j)->rindex, value);
+                            osc_send_control(osc_data, param_data->rindex, value);
 
                         //osc_send_set_parameter_value(&global_osc_data, plugin->id(), j, value);
                     }

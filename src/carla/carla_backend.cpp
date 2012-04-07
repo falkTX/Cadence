@@ -102,6 +102,7 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
 {
     qDebug("add_plugin(%i, %i, %s, %s, %p)", btype, ptype, filename, label, extra_stuff);
 
+#ifndef BUILD_BRIDGE
     if (btype != BINARY_NATIVE)
     {
         if (carla_options.global_jack_client)
@@ -112,6 +113,7 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
         else
             return add_plugin_bridge(btype, ptype, filename, label, extra_stuff);
     }
+#endif
 
     switch (ptype)
     {

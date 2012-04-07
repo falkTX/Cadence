@@ -138,7 +138,7 @@ def getStateDictFromXML(xml_node):
             x_save_state_dict['Type'] = text
           elif (tag == "Name"):
             x_save_state_dict['Name'] = text
-          elif (tag == "Label"):
+          elif (tag in ("Label", "URI")):
             x_save_state_dict['Label'] = text
           elif (tag == "Binary"):
             x_save_state_dict['Binary'] = text
@@ -2306,9 +2306,13 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         content += "  <Info>\n"
         content += "   <Type>%s</Type>\n" % (x_save_state_dict['Type'])
         content += "   <Name>%s</Name>\n" % (x_save_state_dict['Name'])
-        content += "   <Label>%s</Label>\n" % (x_save_state_dict['Label'])
-        content += "   <Binary>%s</Binary>\n" % (x_save_state_dict['Binary'])
-        content += "   <UniqueID>%li</UniqueID>\n" % (x_save_state_dict['UniqueID'])
+        if (self.pinfo['type'] == PLUGIN_LV2):
+          content += "   <URI>%s</URI>\n" % (x_save_state_dict['Label'])
+        else:
+          content += "   <Label>%s</Label>\n" % (x_save_state_dict['Label'])
+          content += "   <Binary>%s</Binary>\n" % (x_save_state_dict['Binary'])
+          if (x_save_state_dict['UniqueID'] != 0):
+            content += "   <UniqueID>%li</UniqueID>\n" % (x_save_state_dict['UniqueID'])
         content += "  </Info>\n"
 
         content += "\n"
