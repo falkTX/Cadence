@@ -43,6 +43,9 @@ extern "C" {
 #include "lv2-rtmempool/rtmempool.h"
 }
 
+#include <QtGui/QDialog>
+#include <QtGui/QLayout>
+
 // static max values
 const unsigned int MAX_EVENT_BUFFER = 8192; // 0x7FFF; // 32767
 
@@ -209,7 +212,10 @@ public:
                 delete (LV2UI_Resize*)features[lv2_feature_id_ui_resize]->data;
 
             if (features[lv2_feature_id_external_ui] && features[lv2_feature_id_external_ui]->data)
+            {
+                free((void*)((lv2_external_ui_host*)features[lv2_feature_id_external_ui]->data)->plugin_human_id);
                 delete (lv2_external_ui_host*)features[lv2_feature_id_external_ui]->data;
+            }
 
             ui_lib_close();
         }
@@ -472,7 +478,8 @@ public:
 
     virtual void get_gui_info(GuiInfo* info)
     {
-        info->type = gui.type;
+        info->type      = gui.type;
+        info->resizable = gui.resizable;
     }
 
     virtual void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
@@ -525,44 +532,43 @@ public:
         CarlaPlugin::set_custom_data(dtype, key, value, gui_send);
     }
 
-    virtual void set_gui_data(int, void* /*ptr*/)
+    virtual void set_gui_data(int, void* ptr)
     {
-//        switch(gui.type)
-//        {
-//        case GUI_INTERNAL_QT4:
-//            if (ui.widget)
-//            {
-//                QDialog* qtPtr  = (QDialog*)ptr;
-//                QWidget* widget = (QWidget*)ui.widget;
+        switch(gui.type)
+        {
+        case GUI_INTERNAL_QT4:
+            if (ui.widget)
+            {
+                QDialog* qtPtr  = (QDialog*)ptr;
+                QWidget* widget = (QWidget*)ui.widget;
 
-//                qtPtr->layout()->addWidget(widget);
-//                widget->setParent(qtPtr);
-//                widget->show();
-//            }
-//            break;
+                qtPtr->layout()->addWidget(widget);
+                widget->adjustSize();
+                widget->setParent(qtPtr);
+                widget->show();
+            }
+            break;
 
-//        case GUI_INTERNAL_X11:
-//            if (ui.descriptor)
-//            {
-//                QDialog* qtPtr  = (QDialog*)ptr;
-//                features[lv2_feature_id_ui_parent]->data = (void*)qtPtr->winId();
+        case GUI_INTERNAL_X11:
+            if (ui.descriptor)
+            {
+                QDialog* qtPtr  = (QDialog*)ptr;
+                features[lv2_feature_id_ui_parent]->data = (void*)qtPtr->winId();
 
-//                ui.handle = ui.descriptor->instantiate(ui.descriptor,
-//                                                       descriptor->URI,
-//                                                       ui.rdf_descriptor->Bundle,
-//                                                       carla_lv2_ui_write_function,
-//                                                       this,
-//                                                       &ui.widget,
-//                                                       features);
+                ui.handle = ui.descriptor->instantiate(ui.descriptor,
+                                                       descriptor->URI,
+                                                       ui.rdf_descriptor->Bundle,
+                                                       carla_lv2_ui_write_function,
+                                                       this,
+                                                       &ui.widget,
+                                                       features);
+                update_ui_ports();
+            }
+            break;
 
-//                if (ui.handle && ui.descriptor->port_event)
-//                    update_ui_ports();
-//            }
-//            break;
-
-//        default:
-//            break;
-//        }
+        default:
+            break;
+        }
     }
 
     virtual void show_gui(bool yesno)
@@ -2028,7 +2034,7 @@ public:
                                         else if (iExt >= 0)
                                             iFinal = iExt;
 
-                                        bool is_bridged = (iFinal == eQt4 || iFinal == eX11 || iFinal == eGtk2);
+                                        bool is_bridged = false; //(iFinal == eQt4 || iFinal == eX11 || iFinal == eGtk2);
 
                                         // Use proper UI now
                                         if (iFinal >= 0)

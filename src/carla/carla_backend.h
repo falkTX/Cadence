@@ -201,6 +201,7 @@ struct MidiProgramInfo {
 
 struct GuiInfo {
     GuiType type;
+    bool resizable;
 };
 
 struct PluginBridgeInfo {

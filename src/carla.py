@@ -1303,18 +1303,15 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
 
 # Plugin GUI
 class PluginGUI(QDialog):
-    def __init__(self, parent, plugin_name):
+    def __init__(self, parent, plugin_name, resizable):
         QDialog.__init__(self, parent)
 
         self.myLayout = QVBoxLayout(self)
         self.myLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.myLayout)
 
-        self.resizable = False #gui_data['resizable']
+        self.resizable = resizable
         self.setNewSize(300, 300)
-
-        #if (not plugin_name):
-          #plugin_name = "Plugin"
 
         self.setWindowTitle("%s (GUI)" % (plugin_name))
 
@@ -2023,13 +2020,11 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
         if (self.pinfo['hints'] & PLUGIN_HAS_GUI):
           gui_info = CarlaHost.get_gui_info(self.plugin_id)
-          print("--------------------------------------------------------------------")
-          print(gui_info)
           self.gui_dialog_type = gui_info['type']
 
           if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_X11)):
             self.gui_dialog = None
-            self.gui_dialog = PluginGUI(self, self.pinfo['name'])
+            self.gui_dialog = PluginGUI(self, self.pinfo['name'], gui_info['resizable'])
             self.gui_dialog.hide()
             self.gui_dialog_geometry = None
             self.connect(self.gui_dialog, SIGNAL("finished(int)"), SLOT("slot_guiClosed()"))

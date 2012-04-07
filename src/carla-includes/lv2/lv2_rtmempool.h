@@ -37,7 +37,7 @@ typedef struct { /** fake */ int unused; } * lv2_rtsafe_memory_pool_handle;
 #define LV2_RTSAFE_MEMORY_POOL_NAME_MAX 128
 
 /** structure, pointer to which is to be supplied as @c data member of ::LV2_Feature */
-struct lv2_rtsafe_memory_pool_provider
+typedef struct
 {
   /**
    * This function is called when plugin wants to create memory pool
@@ -112,7 +112,7 @@ struct lv2_rtsafe_memory_pool_provider
   (*deallocate)(
     lv2_rtsafe_memory_pool_handle pool,
     void * memory_ptr);
-};
+} lv2_rtsafe_memory_pool_provider;
 
 #if 0
 { /* Adjust editor indent */

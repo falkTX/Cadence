@@ -432,6 +432,7 @@ public:
     virtual void get_gui_info(GuiInfo* info)
     {
         info->type = GUI_NONE;
+        info->resizable = false;
     }
 
     void set_id(short id)

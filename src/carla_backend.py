@@ -781,7 +781,8 @@ class MidiProgramInfo(Structure):
 
 class GuiInfo(Structure):
   _fields_ = [
-    ("type", c_enum)
+    ("type", c_enum),
+    ("resizable", c_bool),
   ]
 
 class PluginBridgeInfo(Structure):

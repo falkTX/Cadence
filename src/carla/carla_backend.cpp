@@ -403,7 +403,7 @@ GuiInfo* get_gui_info(unsigned short plugin_id)
 {
     qDebug("get_gui_info(%i)", plugin_id);
 
-    static GuiInfo info = { GUI_NONE };
+    static GuiInfo info = { GUI_NONE, false };
     info.type = GUI_NONE;
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)

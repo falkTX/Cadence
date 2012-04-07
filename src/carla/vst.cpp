@@ -170,6 +170,7 @@ public:
             info->type = GUI_INTERNAL_QT4;
         else
             info->type = GUI_NONE;
+        info->resizable = false;
     }
 
     virtual void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
