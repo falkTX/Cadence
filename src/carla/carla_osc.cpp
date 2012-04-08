@@ -178,7 +178,11 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
     // Plugin Bridges
     if (plugin->hints() & PLUGIN_IS_BRIDGE)
     {
-        if (strcmp(method, "bridge_audio_count") == 0)
+        if (strcmp(method, "bridge_ains_peak") == 0)
+            return osc_handle_bridge_ains_peak(plugin, argv);
+        else if (strcmp(method, "bridge_aouts_peak") == 0)
+            return osc_handle_bridge_aouts_peak(plugin, argv);
+        else if (strcmp(method, "bridge_audio_count") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeAudioCountInfo, argv);
         else if (strcmp(method, "bridge_midi_count") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeMidiCountInfo, argv);
@@ -198,10 +202,6 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
             return plugin->set_osc_bridge_info(PluginBridgeParameterRangesInfo, argv);
         else if (strcmp(method, "bridge_program_name") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeProgramName, argv);
-        else if (strcmp(method, "bridge_ains_peak") == 0)
-            return osc_handle_bridge_ains_peak(plugin, argv);
-        else if (strcmp(method, "bridge_aouts_peak") == 0)
-            return osc_handle_bridge_aouts_peak(plugin, argv);
         else if (strcmp(method, "bridge_update") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeUpdateNow, argv);
     }
@@ -275,7 +275,7 @@ int osc_handle_register(lo_arg** argv, lo_address source)
         return 0;
     }
     else
-        qCritical("osc_handle_register() - OSC backend already registered to %s", global_osc_data.path);
+        qWarning("osc_handle_register() - OSC backend already registered to %s", global_osc_data.path);
 
     return 1;
 }
@@ -290,7 +290,7 @@ int osc_handle_unregister()
         return 0;
     }
     else
-        qCritical("osc_handle_unregister() - OSC backend is not registered yet");
+        qWarning("osc_handle_unregister() - OSC backend is not registered yet");
 
     return 1;
 }
@@ -359,23 +359,26 @@ int osc_handle_program(CarlaPlugin* plugin, lo_arg** argv)
     return 1;
 }
 
-int osc_handle_program_as_midi(CarlaPlugin* plugin, lo_arg** /*argv*/)
+int osc_handle_program_as_midi(CarlaPlugin* plugin, lo_arg** argv)
 {
     qDebug("osc_handle_program_as_midi()");
 
-    //uint32_t bank_id    = argv[0]->i;
-    //uint32_t program_id = argv[1]->i;
+    uint32_t bank_id    = argv[0]->i;
+    uint32_t program_id = argv[1]->i;
+
+    MidiProgramInfo midiprog = { false, 0, 0, nullptr };
 
     for (uint32_t i=0; i < plugin->midiprog_count(); i++)
     {
-        //if (plugin->midiprog_data(i).bank == bank_id && plugin->midiprog.data[i].program == program_id)
-        //{
-        //    plugin->set_midi_program(i, false, true, true, false);
-        //    return 0;
-        //}
+        plugin->get_midi_program_info(&midiprog, i);
+        if (midiprog.bank == bank_id && midiprog.program == program_id)
+        {
+            plugin->set_midi_program(i, false, true, true, true);
+            return 0;
+        }
     }
 
-    qCritical("osc_handle_program_as_midi() - failed to find respective bank/program");
+    qCritical("osc_handle_program_as_midi() - failed to find respective bank/program '%i', '%i'", bank_id, program_id);
     return 1;
 }
 
@@ -383,8 +386,10 @@ int osc_handle_midi(CarlaPlugin *plugin, lo_arg **argv)
 {
     qDebug("osc_handle_midi()");
 
-    //if (plugin->min_count() > 0)
-    //{
+    // FIXME - verify this midi stuff when sure about the bytes
+
+    if (plugin->min_count() > 0)
+    {
         uint8_t* data = argv[0]->m;
         uint8_t mode = data[1] & 0xff;
         uint8_t note = data[2] & 0x7f;
@@ -402,9 +407,12 @@ int osc_handle_midi(CarlaPlugin *plugin, lo_arg **argv)
         }
 
         plugin->send_midi_note((mode >= 0x90), note, velo, false, true, true);
-    //}
 
-    return 0;
+        return 0;
+    }
+
+    qWarning("osc_handle_midi() - recived midi when plugin has no midi inputs");
+    return 1;
 }
 
 int osc_handle_exiting(CarlaPlugin* plugin)
@@ -631,304 +639,247 @@ void osc_send_quit(OscData* osc_data)
 
 // -------------------------------------------------------------------------------------------------------------------
 
-void osc_new_plugin(CarlaPlugin* /*plugin*/)
+bool osc_global_registered()
 {
-    qDebug("osc_new_plugin()");
+    return bool(global_osc_data.target);
+}
 
+void osc_global_send_add_plugin(int plugin_id, const char* plugin_name)
+{
+    qDebug("osc_global_send_add_plugin(%i, %s)", plugin_id, plugin_name);
     if (global_osc_data.target)
     {
-        //osc_send_add_plugin(&global_osc_data, plugin->id(), plugin->name());
-
-        //PluginInfo* info = get_plugin_info(plugin->id());
-
-        //PortCountInfo* audio_info = get_audio_port_count_info(plugin->id());
-        //PortCountInfo* midi_info  = get_midi_port_count_info(plugin->id());
-        //PortCountInfo* param_info = get_parameter_count_info(plugin->id());
-
-        //osc_send_set_plugin_data(&global_osc_data, plugin->id(), info->type, info->category, info->hints,
-        //                         get_real_plugin_name(plugin->id()), info->label, info->maker, info->copyright, info->unique_id);
-
-        //osc_send_set_plugin_ports(&global_osc_data, plugin->id(),
-        //                          audio_info->ins, audio_info->outs,
-        //                          midi_info->ins, midi_info->outs,
-        //                          param_info->ins, param_info->outs, param_info->total);
-
-        //osc_send_set_parameter_value(&global_osc_data, plugin->id, PARAMETER_ACTIVE, plugin->active ? 1.0f : 0.0f);
-        //osc_send_set_parameter_value(&global_osc_data, plugin->id, PARAMETER_DRYWET, plugin->x_drywet);
-        //osc_send_set_parameter_value(&global_osc_data, plugin->id, PARAMETER_VOLUME, plugin->x_vol);
-        //osc_send_set_parameter_value(&global_osc_data, plugin->id, PARAMETER_BALANCE_LEFT, plugin->x_bal_left);
-        //osc_send_set_parameter_value(&global_osc_data, plugin->id, PARAMETER_BALANCE_RIGHT, plugin->x_bal_right);
-
-//        uint32_t i;
-
-//        if (plugin->param_count() > 0 && plugin->param_count() < 200)
-//        {
-//            for (i=0; i < plugin->param_count(); i++)
-//            {
-//                ParameterInfo* info     = get_parameter_info(plugin->id(), i);
-//                ParameterData* data     = plugin->param_data(i);
-//                ParameterRanges* ranges = plugin->param_ranges(i);
-
-//                osc_send_set_parameter_data(&global_osc_data, plugin->id(), i, data->type, data->hints,
-//                                            info->name, info->label,
-//                                            plugin->get_current_parameter_value(i),
-//                                            ranges->min, ranges->max, ranges->def,
-//                                            ranges->step, ranges->step_small, ranges->step_large);
-//            }
-//        }
-
-        //osc_send_set_program_count(&global_osc_data, plugin->id(), plugin->prog_count());
-
-        //for (i=0; i < plugin->prog_count(); i++)
-        //    osc_send_set_program_name(&global_osc_data, plugin->id, i, plugin->prog.names[i]);
-
-        //osc_send_set_program(&global_osc_data, plugin->id, plugin->prog.current);
-
-        //osc_send_set_midi_program_count(&global_osc_data, plugin->id(), plugin->midiprog_count());
-
-        //for (i=0; i < plugin->midiprog.count; i++)
-        //    osc_send_set_program_name(&global_osc_data, plugin->id, i, plugin->midiprog.names[i]);
-
-        //osc_send_set_midi_program(&global_osc_data, plugin->id, plugin->midiprog.current);
-    }
-}
-
-void osc_send_add_plugin(OscData* osc_data, int plugin_id, const char* plugin_name)
-{
-    qDebug("osc_send_add_plugin(%i, %s)", plugin_id, plugin_name);
-    if (osc_data->target)
-    {
-        char target_path[strlen(osc_data->path)+12];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+12];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/add_plugin");
-        lo_send(osc_data->target, target_path, "is", plugin_id, plugin_name);
+        lo_send(global_osc_data.target, target_path, "is", plugin_id, plugin_name);
     }
 }
 
-void osc_send_remove_plugin(OscData* osc_data, int plugin_id)
+void osc_global_send_remove_plugin(int plugin_id)
 {
-    qDebug("osc_send_remove_plugin(%i)", plugin_id);
-    if (osc_data->target)
+    qDebug("osc_global_send_remove_plugin(%i)", plugin_id);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+15];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+15];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/remove_plugin");
-        lo_send(osc_data->target, target_path, "i", plugin_id);
+        lo_send(global_osc_data.target, target_path, "i", plugin_id);
     }
 }
 
-void osc_send_set_plugin_data(OscData* osc_data, int plugin_id, int type, int category, int hints, const char* name, const char* label, const char* maker, const char* copyright, long unique_id)
+void osc_global_send_set_plugin_data(int plugin_id, int type, int category, int hints, const char* name, const char* label, const char* maker, const char* copyright, long unique_id)
 {
-    qDebug("osc_send_set_plugin_data(%i, %i, %i, %i, %s, %s, %s, %s, %li)", plugin_id, type, category, hints, name, label, maker, copyright, unique_id);
-    if (osc_data->target)
+    qDebug("osc_global_send_set_plugin_data(%i, %i, %i, %i, %s, %s, %s, %s, %li)", plugin_id, type, category, hints, name, label, maker, copyright, unique_id);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+17];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+17];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/set_plugin_data");
-        lo_send(osc_data->target, target_path, "iiiissssi", plugin_id, type, category, hints, name, label, maker, copyright, unique_id);
+        lo_send(global_osc_data.target, target_path, "iiiissssi", plugin_id, type, category, hints, name, label, maker, copyright, unique_id);
     }
 }
 
-void osc_send_set_plugin_ports(OscData* osc_data, int plugin_id, int ains, int aouts, int mins, int mouts, int cins, int couts, int ctotals)
+void osc_global_send_set_plugin_ports(int plugin_id, int ains, int aouts, int mins, int mouts, int cins, int couts, int ctotals)
 {
-    qDebug("osc_send_set_plugin_ports(%i, %i, %i, %i, %i, %i, %i, %i)", plugin_id, ains, aouts, mins, mouts, cins, couts, ctotals);
-    if (osc_data->target)
+    qDebug("osc_global_send_set_plugin_ports(%i, %i, %i, %i, %i, %i, %i, %i)", plugin_id, ains, aouts, mins, mouts, cins, couts, ctotals);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+18];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+18];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/set_plugin_ports");
-        lo_send(osc_data->target, target_path, "iiiiiiii", plugin_id, ains, aouts, mins, mouts, cins, couts, ctotals);
+        lo_send(global_osc_data.target, target_path, "iiiiiiii", plugin_id, ains, aouts, mins, mouts, cins, couts, ctotals);
     }
 }
 
-void osc_send_set_parameter_value(OscData* osc_data, int plugin_id, int param_id, double value)
+void osc_global_send_set_parameter_value(int plugin_id, int param_id, double value)
 {
-    qDebug("osc_send_set_parameter_value(%i, %i, %f)", plugin_id, param_id, value);
-    if (osc_data->target)
+    qDebug("osc_global_send_set_parameter_value(%i, %i, %f)", plugin_id, param_id, value);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+21];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+21];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/set_parameter_value");
-        lo_send(osc_data->target, target_path, "iif", plugin_id, param_id, value);
+        lo_send(global_osc_data.target, target_path, "iif", plugin_id, param_id, value);
     }
 }
 
-void osc_send_set_parameter_data(OscData* osc_data, int plugin_id, int param_id, int ptype, int hints, const char* name, const char* label, double current, double x_min, double x_max, double x_def, double x_step, double x_step_small, double x_step_large)
+void osc_global_send_set_parameter_data(int plugin_id, int param_id, int ptype, int hints, const char* name, const char* label, double current, double x_min, double x_max, double x_def, double x_step, double x_step_small, double x_step_large)
 {
-    qDebug("osc_send_set_parameter_data(%i, %i, %i, %i, %s, %s, %f, %f, %f, %f, %f, %f, %f)", plugin_id, param_id, ptype, hints, name, label, current, x_min, x_max, x_def, x_step, x_step_small, x_step_large);
-    if (osc_data->target)
+    qDebug("osc_global_send_set_parameter_data(%i, %i, %i, %i, %s, %s, %f, %f, %f, %f, %f, %f, %f)", plugin_id, param_id, ptype, hints, name, label, current, x_min, x_max, x_def, x_step, x_step_small, x_step_large);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+20];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+20];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/set_parameter_data");
-        lo_send(osc_data->target, target_path, "iiiissfffffff", plugin_id, param_id, ptype, hints, name, label, current, x_min, x_max, x_def, x_step, x_step_small, x_step_large);
+        lo_send(global_osc_data.target, target_path, "iiiissfffffff", plugin_id, param_id, ptype, hints, name, label, current, x_min, x_max, x_def, x_step, x_step_small, x_step_large);
     }
 }
 
-void osc_send_set_parameter_midi_channel(OscData* osc_data, int plugin_id, int parameter_id, int midi_channel)
+void osc_global_send_set_parameter_midi_channel(int plugin_id, int parameter_id, int midi_channel)
 {
-    qDebug("osc_send_set_parameter_midi_channel(%i, %i, %i)", plugin_id, parameter_id, midi_channel);
-    if (osc_data->target)
+    qDebug("osc_global_send_set_parameter_midi_channel(%i, %i, %i)", plugin_id, parameter_id, midi_channel);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+28];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+28];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/set_parameter_midi_channel");
-        lo_send(osc_data->target, target_path, "iii", plugin_id, parameter_id, midi_channel);
+        lo_send(global_osc_data.target, target_path, "iii", plugin_id, parameter_id, midi_channel);
     }
 }
 
-void osc_send_set_parameter_midi_cc(OscData* osc_data, int plugin_id, int parameter_id, int midi_cc)
+void osc_global_send_set_parameter_midi_cc(int plugin_id, int parameter_id, int midi_cc)
 {
-    qDebug("osc_send_set_parameter_midi_cc(%i, %i, %i)", plugin_id, parameter_id, midi_cc);
-    if (osc_data->target)
+    qDebug("osc_global_send_set_parameter_midi_cc(%i, %i, %i)", plugin_id, parameter_id, midi_cc);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+23];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+23];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/set_parameter_midi_cc");
-        lo_send(osc_data->target, target_path, "iii", plugin_id, parameter_id, midi_cc);
+        lo_send(global_osc_data.target, target_path, "iii", plugin_id, parameter_id, midi_cc);
     }
 }
 
-void osc_send_set_default_value(OscData* osc_data, int plugin_id, int param_id, double value)
+void osc_global_send_set_default_value(int plugin_id, int param_id, double value)
 {
-    qDebug("osc_send_set_default_value(%i, %i, %f)", plugin_id, param_id, value);
-    if (osc_data->target)
+    qDebug("osc_global_send_set_default_value(%i, %i, %f)", plugin_id, param_id, value);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+19];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+19];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/set_default_value");
-        lo_send(osc_data->target, target_path, "iif", plugin_id, param_id, value);
+        lo_send(global_osc_data.target, target_path, "iif", plugin_id, param_id, value);
     }
 }
 
-void osc_send_set_input_peak_value(OscData* osc_data, int plugin_id, int port_id, double value)
+void osc_global_send_set_input_peak_value(int plugin_id, int port_id, double value)
 {
-    qDebug("osc_send_set_input_peak_value(%i, %i, %f)", plugin_id, port_id, value);
-    if (osc_data->target)
+    qDebug("osc_global_send_set_input_peak_value(%i, %i, %f)", plugin_id, port_id, value);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+22];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+22];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/set_input_peak_value");
-        lo_send(osc_data->target, target_path, "iif", plugin_id, port_id, value);
+        lo_send(global_osc_data.target, target_path, "iif", plugin_id, port_id, value);
     }
 }
 
-void osc_send_set_output_peak_value(OscData* osc_data, int plugin_id, int port_id, double value)
+void osc_global_send_set_output_peak_value(int plugin_id, int port_id, double value)
 {
-    qDebug("osc_send_set_output_peak_value(%i, %i, %f)", plugin_id, port_id, value);
-    if (osc_data->target)
+    qDebug("osc_global_send_set_output_peak_value(%i, %i, %f)", plugin_id, port_id, value);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+23];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+23];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/set_output_peak_value");
-        lo_send(osc_data->target, target_path, "iif", plugin_id, port_id, value);
+        lo_send(global_osc_data.target, target_path, "iif", plugin_id, port_id, value);
     }
 }
 
-void osc_send_set_program(OscData* osc_data, int plugin_id, int program_id)
+void osc_global_send_set_program(int plugin_id, int program_id)
 {
-    qDebug("osc_send_set_program(%i, %i)", plugin_id, program_id);
-    if (osc_data->target)
+    qDebug("osc_global_send_set_program(%i, %i)", plugin_id, program_id);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+13];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+13];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/set_program");
-        lo_send(osc_data->target, target_path, "ii", plugin_id, program_id);
+        lo_send(global_osc_data.target, target_path, "ii", plugin_id, program_id);
     }
 }
 
-void osc_send_set_program_count(OscData* osc_data, int plugin_id, int program_count)
+void osc_global_send_set_program_count(int plugin_id, int program_count)
 {
-    qDebug("osc_send_set_program_count(%i, %i)", plugin_id, program_count);
-    if (osc_data->target)
+    qDebug("osc_global_send_set_program_count(%i, %i)", plugin_id, program_count);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+19];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+19];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/set_program_count");
-        lo_send(osc_data->target, target_path, "ii", plugin_id, program_count);
+        lo_send(global_osc_data.target, target_path, "ii", plugin_id, program_count);
     }
 }
 
-void osc_send_set_program_name(OscData* osc_data, int plugin_id, int program_id, const char* program_name)
+void osc_global_send_set_program_name(int plugin_id, int program_id, const char* program_name)
 {
-    qDebug("osc_send_set_program_name(%i, %i, %s)", plugin_id, program_id, program_name);
-    if (osc_data->target)
+    qDebug("osc_global_send_set_program_name(%i, %i, %s)", plugin_id, program_id, program_name);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+18];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+18];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/set_program_name");
-        lo_send(osc_data->target, target_path, "iis", plugin_id, program_id, program_name);
+        lo_send(global_osc_data.target, target_path, "iis", plugin_id, program_id, program_name);
     }
 }
 
-void osc_send_set_midi_program(OscData* osc_data, int plugin_id, int midi_program_id)
+void osc_global_send_set_midi_program(int plugin_id, int midi_program_id)
 {
-    qDebug("osc_send_set_midi_program(%i, %i)", plugin_id, midi_program_id);
-    if (osc_data->target)
+    qDebug("osc_global_send_set_midi_program(%i, %i)", plugin_id, midi_program_id);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+18];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+18];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/set_midi_program");
-        lo_send(osc_data->target, target_path, "ii", plugin_id, midi_program_id);
+        lo_send(global_osc_data.target, target_path, "ii", plugin_id, midi_program_id);
     }
 }
 
-void osc_send_set_midi_program_count(OscData* osc_data, int plugin_id, int midi_program_count)
+void osc_global_send_set_midi_program_count(int plugin_id, int midi_program_count)
 {
-    qDebug("osc_send_set_midi_program_count(%i, %i)", plugin_id, midi_program_count);
-    if (osc_data->target)
+    qDebug("osc_global_send_set_midi_program_count(%i, %i)", plugin_id, midi_program_count);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+24];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+24];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/set_midi_program_count");
-        lo_send(osc_data->target, target_path, "ii", plugin_id, midi_program_count);
+        lo_send(global_osc_data.target, target_path, "ii", plugin_id, midi_program_count);
     }
 }
 
-void osc_send_set_midi_program_data(OscData* osc_data, int plugin_id, int midi_program_id, int bank_id, int program_id, const char* midi_program_name)
+void osc_global_send_set_midi_program_data(int plugin_id, int midi_program_id, int bank_id, int program_id, const char* midi_program_name)
 {
-    qDebug("osc_send_set_midi_program_data(%i, %i, %i, %i, %s)", plugin_id, midi_program_id, bank_id, program_id, midi_program_name);
-    if (osc_data->target)
+    qDebug("osc_global_send_set_midi_program_data(%i, %i, %i, %i, %s)", plugin_id, midi_program_id, bank_id, program_id, midi_program_name);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+23];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+23];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/set_midi_program_data");
-        lo_send(osc_data->target, target_path, "iiiis", plugin_id, midi_program_id, bank_id, program_id, midi_program_name);
+        lo_send(global_osc_data.target, target_path, "iiiis", plugin_id, midi_program_id, bank_id, program_id, midi_program_name);
     }
 }
 
-void osc_send_note_on(OscData* osc_data, int plugin_id, int note, int velo)
+void osc_global_send_note_on(int plugin_id, int note, int velo)
 {
-    qDebug("osc_send_note_on(%i, %i, %i)", plugin_id, note, velo);
-    if (osc_data->target)
+    qDebug("osc_global_send_note_on(%i, %i, %i)", plugin_id, note, velo);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+9];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+9];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/note_on");
-        lo_send(osc_data->target, target_path, "iii", plugin_id, note, velo);
+        lo_send(global_osc_data.target, target_path, "iii", plugin_id, note, velo);
     }
 }
 
-void osc_send_note_off(OscData* osc_data, int plugin_id, int note)
+void osc_global_send_note_off(int plugin_id, int note)
 {
-    qDebug("osc_send_note_off(%i, %i)", plugin_id, note);
-    if (osc_data->target)
+    qDebug("osc_global_send_note_off(%i, %i)", plugin_id, note);
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+10];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+10];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/note_off");
-        lo_send(osc_data->target, target_path, "ii", plugin_id, note);
+        lo_send(global_osc_data.target, target_path, "ii", plugin_id, note);
     }
 }
 
-void osc_send_exit(OscData* osc_data)
+void osc_global_send_exit()
 {
-    qDebug("osc_send_exit()");
-    if (osc_data->target)
+    qDebug("osc_global_send_exit()");
+    if (global_osc_data.target)
     {
-        char target_path[strlen(osc_data->path)+6];
-        strcpy(target_path, osc_data->path);
+        char target_path[strlen(global_osc_data.path)+6];
+        strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/exit");
-        lo_send(osc_data->target, target_path, "");
+        lo_send(global_osc_data.target, target_path, "");
     }
 }

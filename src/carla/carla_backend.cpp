@@ -70,7 +70,7 @@ bool carla_close()
     if (carla_check_thread.wait(2000) == false) // 2 secs
         qWarning("Failed to properly stop global check thread");
 
-    //osc_send_exit(&global_osc_data);
+    osc_global_send_exit();
     osc_close();
 
     // cleanup static data
@@ -142,7 +142,7 @@ bool remove_plugin(unsigned short plugin_id)
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            //osc_send_remove_plugin(&global_osc_data, plugin->id());
+            osc_global_send_remove_plugin(plugin->id());
 
             carla_proc_lock();
             plugin->set_id(-1);

@@ -806,8 +806,8 @@ inline bool is_lv2_ui_feature_supported(const char* uri)
         return false; // TODO
     //else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#Events") == 0)
         //return true;
-    //else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#makeResident") == 0)
-        //return true;
+    else if (strcmp(uri, LV2_UI_PREFIX "makeResident") == 0)
+        return true;
     //else if (strcmp(uri, "http://lv2plug.in/ns/extensions/ui#makeSONameResident") == 0)
         //return true;
     else if (strcmp(uri, LV2_EXTERNAL_UI_URI) == 0)

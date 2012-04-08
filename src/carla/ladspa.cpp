@@ -996,7 +996,7 @@ short add_plugin_ladspa(const char* filename, const char* label, void* extra_stu
             CarlaPlugins[id] = plugin;
 
 #ifndef BUILD_BRIDGE
-            //osc_new_plugin(plugin);
+            plugin->osc_global_register_new();
 #endif
         }
         else

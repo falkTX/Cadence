@@ -176,7 +176,7 @@ public:
         {
             if (midiprog.count > 0)
             {
-                //osc_send_set_program_count(&global_osc_data, m_id, midiprog.count);
+                //osc_send_set_midi_program_count(m_id, midiprog.count);
 
                 // Parse names
                 QStringList nameList = QString(value).split(",");
@@ -659,10 +659,10 @@ public:
         }
 
         // Update OSC Names
-        //osc_send_set_midi_program_count(&global_osc_data, m_id, midiprog.count);
+        osc_global_send_set_midi_program_count(m_id, midiprog.count);
 
-        //for (i=0; i < midiprog.count; i++)
-        //    osc_send_set_midi_program_data(&global_osc_data, m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.names[i]);
+        for (i=0; i < midiprog.count; i++)
+            osc_global_send_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
 
         callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
 
@@ -1274,7 +1274,7 @@ short add_plugin_dssi(const char* filename, const char* label, void* extra_stuff
             CarlaPlugins[id] = plugin;
 
 #ifndef BUILD_BRIDGE
-            //osc_new_plugin(plugin);
+            plugin->osc_global_register_new();
 #endif
         }
         else

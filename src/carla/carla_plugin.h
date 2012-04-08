@@ -33,8 +33,6 @@
 #include <QtCore/QMutex>
 #include <QtCore/QString>
 
-// TODO - check and try '#ifndef BUILD_BRIDGE' in all global_jack_client
-
 #define CARLA_PROCESS_CONTINUE_CHECK if (m_id != plugin_id) { return callback_action(CALLBACK_DEBUG, plugin_id, m_id, 0, 0.0); }
 
 const unsigned short MAX_POST_EVENTS = 152;
@@ -452,7 +450,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (osc_send)
         {
-            //osc_send_set_parameter_value(&global_osc_data, m_id, PARAMETER_ACTIVE, value);
+            osc_global_send_set_parameter_value(m_id, PARAMETER_ACTIVE, value);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_ACTIVE, value);
@@ -477,7 +475,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (osc_send)
         {
-            //osc_send_set_parameter_value(&global_osc_data, m_id, PARAMETER_DRYWET, value);
+            osc_global_send_set_parameter_value(m_id, PARAMETER_DRYWET, value);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_DRYWET, value);
@@ -502,7 +500,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (osc_send)
         {
-            //osc_send_set_parameter_value(&global_osc_data, m_id, PARAMETER_VOLUME, value);
+            osc_global_send_set_parameter_value(m_id, PARAMETER_VOLUME, value);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_VOLUME, value);
@@ -527,7 +525,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (osc_send)
         {
-            //osc_send_set_parameter_value(&global_osc_data, m_id, PARAMETER_BALANCE_LEFT, value);
+            osc_global_send_set_parameter_value(m_id, PARAMETER_BALANCE_LEFT, value);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_BALANCE_LEFT, value);
@@ -552,7 +550,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (osc_send)
         {
-            //osc_send_set_parameter_value(&global_osc_data, m_id, PARAMETER_BALANCE_RIGHT, value);
+            osc_global_send_set_parameter_value(m_id, PARAMETER_BALANCE_RIGHT, value);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_BALANCE_RIGHT, value);
@@ -570,7 +568,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (osc_send)
         {
-            //osc_send_set_parameter_value(&global_osc_data, m_id, index, value);
+            osc_global_send_set_parameter_value(m_id, param_id, value);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, param_id, value);
@@ -588,6 +586,7 @@ public:
         param.data[index].midi_channel = channel;
 
 #ifndef BUILD_BRIDGE
+        // FIXME
         //if (m_hints & PLUGIN_IS_BRIDGE)
         //    osc_send_set_parameter_midi_channel(&osc.data, m_id, index, channel);
 #endif
@@ -598,12 +597,13 @@ public:
         param.data[index].midi_cc = midi_cc;
 
 #ifndef BUILD_BRIDGE
+        // FIXME
         //if (m_hints & PLUGIN_IS_BRIDGE)
         //    osc_send_set_parameter_midi_cc(&osc.data, m_id, index, midi_cc);
 #endif
     }
 
-    virtual void set_custom_data(CustomDataType dtype, const char* key, const char* value, bool)
+    virtual void set_custom_data(CustomDataType dtype, const char* key, const char* value, bool /*gui_send*/)
     {
         qDebug("set_custom_data(%i, %s, %s)", dtype, key, value);
 
@@ -653,7 +653,7 @@ public:
     {
     }
 
-    virtual void set_program(int32_t index, bool, bool osc_send, bool callback_send, bool)
+    virtual void set_program(int32_t index, bool /*gui_send*/, bool osc_send, bool callback_send, bool /*block*/)
     {
         prog.current = index;
 
@@ -663,15 +663,15 @@ public:
             param.ranges[i].def = get_parameter_value(i);
 
 #ifndef BUILD_BRIDGE
-            //if (osc_send)
-            //    osc_send_set_default_value(&global_osc_data, m_id, i, param.ranges[i].def);
+            if (osc_send)
+                osc_global_send_set_default_value(m_id, i, param.ranges[i].def);
 #endif
         }
 
 #ifndef BUILD_BRIDGE
         if (osc_send)
         {
-            //osc_send_set_program(&global_osc_data, m_id, prog.current);
+            osc_global_send_set_program(m_id, prog.current);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_program(&osc.data, prog.current);
@@ -684,7 +684,7 @@ public:
             callback_action(CALLBACK_PROGRAM_CHANGED, m_id, prog.current, 0, 0.0);
     }
 
-    virtual void set_midi_program(int32_t index, bool, bool osc_send, bool callback_send, bool)
+    virtual void set_midi_program(int32_t index, bool /*gui_send*/, bool osc_send, bool callback_send, bool /*block*/)
     {
         midiprog.current = index;
 
@@ -696,8 +696,8 @@ public:
                 param.ranges[i].def = get_parameter_value(i);
 
 #ifndef BUILD_BRIDGE
-                //if (osc_send)
-                //    osc_send_set_default_value(&global_osc_data, m_id, i, param.ranges[i].def);
+                if (osc_send)
+                    osc_global_send_set_default_value(m_id, i, param.ranges[i].def);
 #endif
             }
         }
@@ -705,7 +705,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (osc_send)
         {
-            //osc_send_set_midi_program(&global_osc_data, m_id, midiprog.current);
+            osc_global_send_set_midi_program(m_id, midiprog.current);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_program(&osc.data, midiprog.current);
@@ -734,7 +734,7 @@ public:
     {
     }
 
-    virtual void reload_programs(bool)
+    virtual void reload_programs(bool /*init*/)
     {
     }
 
@@ -750,7 +750,8 @@ public:
     {
     }
 
-    void send_midi_note(bool onoff, uint8_t note, uint8_t velo, bool, bool osc_send, bool callback_send)
+    // TODO - virtual for gui_send
+    void send_midi_note(bool onoff, uint8_t note, uint8_t velo, bool /*gui_send*/, bool osc_send, bool callback_send)
     {
         carla_midi_lock();
         for (unsigned int i=0; i<MAX_MIDI_EVENTS; i++)
@@ -769,11 +770,12 @@ public:
 #ifndef BUILD_BRIDGE
         if (osc_send)
         {
-            //if (onoff)
-            //    osc_send_note_on(&global_osc_data, m_id, note, velo);
-            //else
-            //    osc_send_note_off(&global_osc_data, m_id, note);
+            if (onoff)
+                osc_global_send_note_on(m_id, note, velo);
+            else
+                osc_global_send_note_off(m_id, note);
 
+            // FIXME
             //if (m_hints & PLUGIN_IS_BRIDGE)
             //{
             //    if (onoff)
@@ -869,6 +871,59 @@ public:
     }
 
 #ifndef BUILD_BRIDGE
+    void osc_global_register_new()
+    {
+        if (osc_global_registered())
+        {
+            // Base data
+            osc_global_send_add_plugin(m_id, m_name);
+
+            PluginInfo* info = get_plugin_info(m_id);
+            osc_global_send_set_plugin_data(m_id, m_type, category(), m_hints, get_real_plugin_name(m_id), info->label, info->maker, info->copyright, unique_id());
+
+            PortCountInfo param_info = { false, 0, 0, 0 };
+            get_parameter_count_info(&param_info);
+            osc_global_send_set_plugin_ports(m_id, ain.count, aout.count, min_count(), mout_count(), param_info.ins, param_info.outs, param_info.total);
+
+            // Parameters
+            osc_global_send_set_parameter_value(m_id, PARAMETER_ACTIVE, m_active ? 1.0f : 0.0f);
+            osc_global_send_set_parameter_value(m_id, PARAMETER_DRYWET, x_drywet);
+            osc_global_send_set_parameter_value(m_id, PARAMETER_VOLUME, x_vol);
+            osc_global_send_set_parameter_value(m_id, PARAMETER_BALANCE_LEFT, x_bal_left);
+            osc_global_send_set_parameter_value(m_id, PARAMETER_BALANCE_RIGHT, x_bal_right);
+
+            uint32_t i;
+
+            if (param.count > 0 && param.count < MAX_PARAMETERS)
+            {
+                for (i=0; i < param.count; i++)
+                {
+                    ParameterInfo* info     = get_parameter_info(m_id, i);
+
+                    // FIXME - split data and ranges into 2 calls
+                    osc_global_send_set_parameter_data(m_id, i, param.data[i].type, param.data[i].hints, info->name, info->label, get_parameter_value(i),
+                                                       param.ranges[i].min, param.ranges[i].max, param.ranges[i].def, param.ranges[i].step, param.ranges[i].step_small, param.ranges[i].step_large);
+                }
+            }
+
+            // Programs
+            osc_global_send_set_program_count(m_id, prog.count);
+
+            for (i=0; i < prog.count; i++)
+                osc_global_send_set_program_name(m_id, i, prog.names[i]);
+
+            osc_global_send_set_program(m_id, prog.current);
+
+            // MIDI Programs
+            osc_global_send_set_midi_program_count(m_id, midiprog.count);
+
+            for (i=0; i < midiprog.count; i++)
+                osc_global_send_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
+
+            osc_global_send_set_midi_program(m_id, midiprog.current);
+        }
+    }
+
     void update_osc_data(lo_address source, const char* url)
     {
         const char* host;

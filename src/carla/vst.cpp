@@ -1415,7 +1415,7 @@ short add_plugin_vst(const char* filename, const char* label)
             CarlaPlugins[id] = plugin;
 
 #ifndef BUILD_BRIDGE
-            //osc_new_plugin(plugin);
+            plugin->osc_global_register_new();
 #endif
         }
         else

@@ -347,7 +347,12 @@ public:
         switch (lv2param[param_id].type)
         {
         case LV2_PARAMETER_TYPE_CONTROL:
-            return lv2param[param_id].control;
+        {
+            double value = lv2param[param_id].control;
+            if (1) // FIXME - only if output and strict bounds
+                fix_parameter_value(value, param.ranges[param_id]);
+            return value;
+        }
         default:
             return 0.0;
         }
@@ -495,20 +500,21 @@ public:
         switch (lv2param[param_id].type)
         {
         case LV2_PARAMETER_TYPE_CONTROL:
+            fix_parameter_value(value, param.ranges[param_id]);
             lv2param[param_id].control = value;
             break;
         default:
             break;
         }
 
-        if (gui_send && gui.visible)
+        if (gui_send /*&& gui.visible*/)
         {
             switch (gui.type)
             {
             case GUI_INTERNAL_QT4:
             case GUI_INTERNAL_X11:
             case GUI_EXTERNAL_LV2:
-                if (ui.descriptor->port_event)
+                if (ui.handle && ui.descriptor && ui.descriptor->port_event)
                 {
                     float fvalue = value;
                     ui.descriptor->port_event(ui.handle, param.data[param_id].rindex, sizeof(float), 0, &fvalue);
@@ -516,7 +522,7 @@ public:
                 break;
 
             case GUI_EXTERNAL_OSC:
-                //osc_send_control(&osc.data, param.data[parameter_id].rindex, value);
+                osc_send_control(&osc.data, param.data[param_id].rindex, value);
                 break;
 
             default:
@@ -581,6 +587,7 @@ public:
 
     virtual void show_gui(bool yesno)
     {
+        // FIXME - is gui.visible needed at all?
         switch(gui.type)
         {
         case GUI_INTERNAL_QT4:
@@ -595,36 +602,18 @@ public:
 
             break;
 
-//        case GUI_EXTERNAL_OSC:
-//            if (yesno)
-//            {
-//                gui.show_now = true;
-
-//                // 40 re-tries, 4 secs
-//                for (int j=1; j<40 && gui.show_now; j++)
-//                {
-//                    if (osc.data.target)
-//                    {
-//                        osc_send_show(&osc.data);
-//                        gui.visible = true;
-//                        return;
-//                    }
-//                    else
-//                        // 100 ms
-//                        usleep(100000);
-//                }
-
-//                qDebug("Lv2AudioPlugin::show_gui() - GUI timeout");
-//                callback_action(CALLBACK_SHOW_GUI, id, 0, 0, 0.0);
-//            }
-//            else
-//            {
-//                gui.visible = false;
-//                osc_send_hide(&osc.data);
-//                osc_send_quit(&osc.data);
-//                osc_clear_data(&osc.data);
-//            }
-//            break;
+        case GUI_EXTERNAL_OSC:
+            if (yesno)
+            {
+                osc.thread->start();
+            }
+            else
+            {
+                osc_send_hide(&osc.data);
+                osc_send_quit(&osc.data);
+                osc_clear_data(&osc.data);
+            }
+            break;
 
         case GUI_EXTERNAL_LV2:
             if (ui.handle == nullptr)
@@ -2044,7 +2033,7 @@ public:
                                         else if (iExt >= 0)
                                             iFinal = iExt;
 
-                                        bool is_bridged = false; //(iFinal == eQt4 || iFinal == eX11 || iFinal == eGtk2);
+                                        bool is_bridged = (iFinal == eQt4 || iFinal == eX11 || iFinal == eGtk2);
 
                                         // Use proper UI now
                                         if (iFinal >= 0)
@@ -2083,7 +2072,6 @@ public:
                                                         {
                                                             // UI Window Title
                                                             QString gui_title = QString("%1 (GUI)").arg(m_name);
-
                                                             LV2_Property UiType = ui.rdf_descriptor->Type;
 
                                                             if (is_bridged)
@@ -2110,11 +2098,12 @@ public:
                                                                     break;
                                                                 }
 
-                                                                if (osc_binary)
+                                                                if (/*osc_binary*/ 1)
                                                                 {
                                                                     gui.type = GUI_EXTERNAL_OSC;
                                                                     osc.thread = new CarlaPluginThread(this, CarlaPluginThread::PLUGIN_THREAD_LV2_GUI);
-                                                                    osc.thread->setOscData("lv2-gtk here", descriptor->URI, ui.descriptor->URI, ui.rdf_descriptor->Binary, ui.rdf_descriptor->Bundle);
+                                                                    osc.thread->setOscData("carla-bridge-lv2-gtk2", descriptor->URI, ui.descriptor->URI, ui.rdf_descriptor->Binary, ui.rdf_descriptor->Bundle);
+                                                                    // TODO ^
                                                                 }
                                                             }
                                                             else
@@ -2620,7 +2609,7 @@ short add_plugin_lv2(const char* filename, const char* label, void* extra_stuff)
             CarlaPlugins[id] = plugin;
 
 #ifndef BUILD_BRIDGE
-            //osc_new_plugin(plugin);
+            plugin->osc_global_register_new();
 #endif
         }
         else
