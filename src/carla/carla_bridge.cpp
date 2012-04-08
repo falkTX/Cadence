@@ -43,6 +43,29 @@ public:
     {
         qDebug("BridgePlugin::~BridgePlugin()");
 
+        if (osc.data.target)
+        {
+            osc_send_hide(&osc.data);
+            osc_send_quit(&osc.data);
+        }
+
+        // Wait a bit first, try safe quit else force kill
+        if (m_thread->isRunning())
+        {
+            if (m_thread->wait(2000) == false)
+                m_thread->quit();
+
+            if (m_thread->isRunning() && m_thread->wait(1000) == false)
+            {
+                qWarning("Failed to properly stop Bridge thread");
+                m_thread->terminate();
+            }
+        }
+
+        delete m_thread;
+
+        osc_clear_data(&osc.data);
+
         if (m_label)
             free((void*)m_label);
 
@@ -54,8 +77,6 @@ public:
 
         if (m_thread->isRunning())
             m_thread->quit();
-
-        delete m_thread;
     }
 
 #if 0
@@ -183,7 +204,9 @@ short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-            //osc_new_plugin(plugin);
+#ifndef BUILD_BRIDGE
+            plugin->osc_global_register_new();
+#endif
         }
         else
         {

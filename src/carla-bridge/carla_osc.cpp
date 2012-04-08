@@ -16,7 +16,14 @@
  */
 
 #include "carla_osc.h"
+
+#ifdef BUILD_BRIDGE_UI
+#include "carla_bridge_ui.h"
+#else
 #include "carla_plugin.h"
+#endif
+
+#include <cstring>
 
 size_t plugin_name_len = 0;
 const char* plugin_name = nullptr;
@@ -24,6 +31,8 @@ const char* plugin_name = nullptr;
 const char* global_osc_server_path = nullptr;
 lo_server_thread global_osc_server_thread = nullptr;
 OscData global_osc_data = { nullptr, nullptr, nullptr };
+
+// -------------------------------------------------------------------------
 
 void osc_init(const char* osc_name, const char* osc_url)
 {
@@ -79,15 +88,17 @@ void osc_clear_data(OscData* osc_data)
 {
     qDebug("osc_clear_data(%p)", osc_data);
 
-    if (osc_data->path)
-        free((void*)osc_data->path);
+    if (global_osc_data.path)
+        free((void*)global_osc_data.path);
 
-    if (osc_data->target)
-        lo_address_free(osc_data->target);
+    if (global_osc_data.target)
+        lo_address_free(global_osc_data.target);
 
-    osc_data->path = nullptr;
-    osc_data->target = nullptr;
+    global_osc_data.path = nullptr;
+    global_osc_data.target = nullptr;
 }
+
+// -------------------------------------------------------------------------
 
 void osc_error_handler(int num, const char* msg, const char* path)
 {
@@ -98,50 +109,122 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
 {
     qDebug("osc_message_handler(%s, %s, %p, %i, %p, %p)", path, types, argv, argc, data, user_data);
 
-//    char method[32];
-//    memset(method, 0, sizeof(char)*24);
+    char method[32];
+    memset(method, 0, sizeof(char)*24);
 
-//    unsigned int mindex = strlen(plugin_name)+2;
+    unsigned int mindex = strlen(plugin_name)+2;
 
-//    for (unsigned int i=mindex; i<strlen(path) && i-mindex<24; i++)
-//        method[i-mindex] = path[i];
+    for (unsigned int i=mindex; i < strlen(path) && i-mindex < 24; i++)
+        method[i-mindex] = path[i];
 
-//    if (strcmp(method, "control") == 0)
-//        return osc_control_handler(argv);
-//    else if (strcmp(method, "program") == 0)
-//        return osc_program_handler(argv);
+    if (strcmp(method, "control") == 0)
+        return osc_handle_control(argv);
+    else if (strcmp(method, "program") == 0)
+        return osc_handle_program(argv);
 //    else if (strcmp(method, "midi_program") == 0)
 //        return osc_midi_program_handler(argv);
 //    else if (strcmp(method, "note_on") == 0)
 //        return osc_note_on_handler(argv);
 //    else if (strcmp(method, "note_off") == 0)
 //        return osc_note_off_handler(argv);
-//    else if (strcmp(method, "show") == 0)
-//        return osc_show_handler();
-//    else if (strcmp(method, "hide") == 0)
-//        return osc_hide_handler();
-//    else if (strcmp(method, "quit") == 0)
-//        return osc_quit_handler();
-//#ifdef WANT_EXTRA_OSC_SUPPORT
-//    else if (strcmp(method, "set_parameter_midi_channel") == 0)
-//        return osc_set_parameter_midi_channel_handler(argv);
-//    else if (strcmp(method, "set_parameter_midi_cc") == 0)
-//        return osc_set_parameter_midi_channel_handler(argv);
-//#endif
-//    else
-//        std::cerr << "Got unsupported OSC method '" << method << "' on '" << path << "'" << std::endl;
+    else if (strcmp(method, "show") == 0)
+        return osc_handle_show();
+    else if (strcmp(method, "hide") == 0)
+        return osc_handle_hide();
+    else if (strcmp(method, "quit") == 0)
+        return osc_handle_quit();
+#ifdef WANT_EXTRA_OSC_SUPPORT
+    else if (strcmp(method, "set_parameter_midi_channel") == 0)
+        return osc_set_parameter_midi_channel_handler(argv);
+    else if (strcmp(method, "set_parameter_midi_cc") == 0)
+        return osc_set_parameter_midi_channel_handler(argv);
+#endif
+    else
+        qWarning("Got unsupported OSC method '%s' on '%s'", method, path);
 
     return 1;
 }
 
+// -------------------------------------------------------------------------
+
+int osc_handle_control(lo_arg** argv)
+{
+    int index    = argv[0]->i;
+    double value = argv[1]->f;
+
+#ifdef BUILD_BRIDGE_UI
+    if (ui)
+        ui->queque_message(BRIDGE_MESSAGE_PARAMETER, index, 0, value);
+#endif
+
+    return 0;
+}
+
+int osc_handle_program(lo_arg** argv)
+{
+    int index = argv[0]->i;
+
+#ifdef BUILD_BRIDGE_UI
+    if (ui && index >= 0)
+        ui->queque_message(BRIDGE_MESSAGE_PROGRAM, index, 0, 0.0);
+#endif
+
+    return 0;
+}
+
+int osc_handle_show()
+{
+#ifdef BUILD_BRIDGE_UI
+    if (ui)
+        ui->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 1, 0, 0.0);
+#endif
+
+    return 0;
+}
+
+int osc_handle_hide()
+{
+#ifdef BUILD_BRIDGE_UI
+    if (ui)
+        ui->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 0, 0, 0.0);
+#endif
+
+    return 0;
+}
+
+int osc_handle_quit()
+{
+#ifdef BUILD_BRIDGE_UI
+    if (ui)
+        ui->queque_message(BRIDGE_MESSAGE_QUIT, 0, 0, 0.0);
+#endif
+
+    return 0;
+}
+
+// -------------------------------------------------------------------------
+
 void osc_send_update()
 {
+    qDebug("osc_send_update()");
     if (global_osc_data.target)
     {
         char target_path[strlen(global_osc_data.path)+8];
         strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/update");
         lo_send(global_osc_data.target, target_path, "s", global_osc_server_path);
+    }
+}
+
+void osc_send_exiting()
+{
+    qDebug("osc_send_exiting()");
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+9];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/exiting");
+        lo_send(global_osc_data.target, target_path, "");
     }
 }
 
@@ -164,5 +247,43 @@ void osc_send_bridge_aouts_peak(int index, double value)
         strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/bridge_aouts_peak");
         lo_send(global_osc_data.target, target_path, "if", index, value);
+    }
+}
+
+// -------------------------------------------------------------------------
+
+void osc_send_configure(OscData*, const char* key, const char* value)
+{
+    qDebug("osc_send_configure(%s, %s)", key, value);
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+11];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/configure");
+        lo_send(global_osc_data.target, target_path, "ss", key, value);
+    }
+}
+
+void osc_send_control(OscData*, int param, double value)
+{
+    qDebug("osc_send_control(%i, %f)", param, value);
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+9];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/control");
+        lo_send(global_osc_data.target, target_path, "if", param, value);
+    }
+}
+
+void osc_send_program(OscData*, int program_id)
+{
+    qDebug("osc_send_program(%i)", program_id);
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+9];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/program");
+        lo_send(global_osc_data.target, target_path, "i", program_id);
     }
 }

@@ -658,11 +658,13 @@ public:
             }
         }
 
+#ifndef BUILD_BRIDGE
         // Update OSC Names
         osc_global_send_set_midi_program_count(m_id, midiprog.count);
 
         for (i=0; i < midiprog.count; i++)
             osc_global_send_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
+#endif
 
         callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
 

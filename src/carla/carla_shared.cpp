@@ -27,6 +27,8 @@ CarlaPlugin* CarlaPlugins[MAX_PLUGINS] = { nullptr };
 volatile double ains_peak[MAX_PLUGINS*2]  = { 0.0 };
 volatile double aouts_peak[MAX_PLUGINS*2] = { 0.0 };
 
+
+#ifndef BUILD_BRIDGE
 // Global options
 carla_options_t carla_options = {
     /* initiated */          false,
@@ -44,6 +46,7 @@ carla_options_t carla_options = {
     /* bridge_win32  */ nullptr,
     /* bridge_win64  */ nullptr
 };
+#endif
 
 CallbackFunc Callback  = nullptr;
 const char* last_error = nullptr;
@@ -79,23 +82,6 @@ const char* bool2str(bool yesno)
         return "false";
 }
 
-const char* binarytype2str(BinaryType type)
-{
-    switch (type)
-    {
-    case BINARY_UNIX32:
-        return carla_options.bridge_unix32;
-    case BINARY_UNIX64:
-        return carla_options.bridge_unix64;
-    case BINARY_WIN32:
-        return carla_options.bridge_win32;
-    case BINARY_WIN64:
-        return carla_options.bridge_win64;
-    default:
-        return nullptr;
-    }
-}
-
 const char* plugintype2str(PluginType type)
 {
     switch (type)
@@ -114,6 +100,25 @@ const char* plugintype2str(PluginType type)
         return "Unknown";
     }
 }
+
+#ifndef BUILD_BRIDGE
+const char* binarytype2str(BinaryType type)
+{
+    switch (type)
+    {
+    case BINARY_UNIX32:
+        return carla_options.bridge_unix32;
+    case BINARY_UNIX64:
+        return carla_options.bridge_unix64;
+    case BINARY_WIN32:
+        return carla_options.bridge_win32;
+    case BINARY_WIN64:
+        return carla_options.bridge_win64;
+    default:
+        return nullptr;
+    }
+}
+#endif
 
 // -------------------------------------------------------------------------------------------------------------------
 

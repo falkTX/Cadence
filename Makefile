@@ -148,6 +148,10 @@ LANG:
 #	lrelease src/lang/lang.pro
 
 clean:
+	$(MAKE) clean -C src/carla
+	$(MAKE) clean -C src/carla-bridge
+	$(MAKE) clean -C src/carla-bridge-ui
+	$(MAKE) clean -C src/carla-discovery
 	rm -f *~ src/*~ src/*.pyc src/*.dll src/*.so src/ui_*.py src/icons_rc.py
 
 distclean: clean

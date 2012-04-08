@@ -19,7 +19,6 @@ SOURCES = \
     ../sf2.cpp
 
 HEADERS = \
-    ../carla_includes.h \
     ../carla_backend.h \
     ../carla_jack.h \
     ../carla_midi.h \
@@ -28,12 +27,13 @@ HEADERS = \
     ../carla_shared.h \
     ../carla_threads.h \
     ../ladspa_rdf.h \
-    ../lv2_rdf.h
+    ../lv2_rdf.h \
+    ../../carla-includes/carla_includes.h
 
 TARGET = carla_backend
 
 INCLUDEPATH = \
-#     vestige \
     ../../carla-includes
+#   ../../carla-includes/vestige
 
 LIBS += -ljack -llo

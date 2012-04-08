@@ -2311,7 +2311,7 @@ public:
             return plugin->get_custom_uri_id(uri);
         }
 
-        return 0;
+        return CARLA_URI_MAP_ID_NULL;
     }
 
     // ----------------- URID Feature ----------------------------------------------------
@@ -2333,7 +2333,7 @@ public:
             return plugin->get_custom_uri_id(uri);
         }
 
-        return 0;
+        return CARLA_URI_MAP_ID_NULL;
     }
 
     static const char* carla_lv2_urid_unmap(LV2_URID_Map_Handle handle, LV2_URID urid)

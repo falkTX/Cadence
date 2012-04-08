@@ -116,15 +116,15 @@ enum PluginCategory {
 };
 
 #if BUILD_UNIX32
-#define BINARY_TYPE BINARY_UNIX32
+#  define BINARY_TYPE BINARY_UNIX32
 #elif  BUILD_UNIX64
-#define BINARY_TYPE BINARY_UNIX64
+#  define BINARY_TYPE BINARY_UNIX64
 #elif  BUILD_WIN32
-#define BINARY_TYPE BINARY_WIN32
+#  define BINARY_TYPE BINARY_WIN32
 #elif  BUILD_WIN64
-#define BINARY_TYPE BINARY_WIN64
+#  define BINARY_TYPE BINARY_WIN64
 #else
-#error Invalid build type
+#  error Invalid build type
 #endif
 
 // ------------------------------ library functions ------------------------------

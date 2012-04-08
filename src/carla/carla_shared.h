@@ -23,8 +23,10 @@
 class CarlaPlugin;
 
 const char* bool2str(bool yesno);
-const char* binarytype2str(BinaryType type);
 const char* plugintype2str(PluginType type);
+#ifndef BUILD_BRIDGE
+const char* binarytype2str(BinaryType type);
+#endif
 
 short get_new_plugin_id();
 const char* get_unique_name(const char* name);
@@ -44,7 +46,9 @@ extern CarlaPlugin* CarlaPlugins[MAX_PLUGINS];
 extern volatile double ains_peak[MAX_PLUGINS*2];
 extern volatile double aouts_peak[MAX_PLUGINS*2];
 
+#ifndef BUILD_BRIDGE
 // Global options
 extern carla_options_t carla_options;
+#endif
 
 #endif // CARLA_SHARED_H
