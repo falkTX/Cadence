@@ -30,10 +30,12 @@ HEADERS = \
     ../lv2_rdf.h \
     ../../carla-includes/carla_includes.h
 
-TARGET = carla_backend
+INCLUDEPATH = .. \
+    ../../carla-includes \
+    ../../carla-includes/vestige
 
-INCLUDEPATH = \
-    ../../carla-includes
-#   ../../carla-includes/vestige
+TARGET  = carla_backend
 
-LIBS += -ljack -llo
+DEFINES = VESTIGE_HEADER
+
+LIBS += -ldl -ljack -llo

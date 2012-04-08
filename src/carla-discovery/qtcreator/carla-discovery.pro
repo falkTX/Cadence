@@ -3,15 +3,17 @@
 CONFIG = warn_on qt release
 
 TEMPLATE = app
-VERSION = 0.5
+VERSION = 0.5.0
 
-TARGET = carla-discovery-qtcreator
+SOURCES = \
+    ../carla-discovery.cpp
 
-SOURCES = ../carla-discovery.cpp
+INCLUDEPATH = .. \
+    ../../carla-includes \
+    ../../carla-includes/vestige
 
-INCLUDEPATH = ../../carla-includes
-#../../carla-includes/vestige
+TARGET  = carla-discovery-qtcreator
+
+DEFINES = VESTIGE_HEADER BUILD_UNIX64
 
 LIBS += -ldl
-
-DEFINES = BUILD_UNIX64

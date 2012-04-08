@@ -21,6 +21,7 @@
 #include "carla_bridge_ui.h"
 #else
 #include "carla_plugin.h"
+extern void close_bridge_now();
 #endif
 
 #include <cstring>
@@ -155,6 +156,9 @@ int osc_handle_control(lo_arg** argv)
 #ifdef BUILD_BRIDGE_UI
     if (ui)
         ui->queque_message(BRIDGE_MESSAGE_PARAMETER, index, 0, value);
+#else
+    if (CarlaPlugins[0])
+        CarlaPlugins[0]->set_parameter_value_rindex(index, value, false, true, true);
 #endif
 
     return 0;
@@ -167,6 +171,9 @@ int osc_handle_program(lo_arg** argv)
 #ifdef BUILD_BRIDGE_UI
     if (ui && index >= 0)
         ui->queque_message(BRIDGE_MESSAGE_PROGRAM, index, 0, 0.0);
+#else
+    if (CarlaPlugins[0])
+        CarlaPlugins[0]->set_program(index, false, true, true, true);
 #endif
 
     return 0;
@@ -177,6 +184,9 @@ int osc_handle_show()
 #ifdef BUILD_BRIDGE_UI
     if (ui)
         ui->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 1, 0, 0.0);
+#else
+    if (CarlaPlugins[0])
+        CarlaPlugins[0]->show_gui(true);
 #endif
 
     return 0;
@@ -187,6 +197,9 @@ int osc_handle_hide()
 #ifdef BUILD_BRIDGE_UI
     if (ui)
         ui->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 0, 0, 0.0);
+#else
+    if (CarlaPlugins[0])
+        CarlaPlugins[0]->show_gui(false);
 #endif
 
     return 0;
@@ -197,6 +210,8 @@ int osc_handle_quit()
 #ifdef BUILD_BRIDGE_UI
     if (ui)
         ui->queque_message(BRIDGE_MESSAGE_QUIT, 0, 0, 0.0);
+#else
+    close_bridge_now();
 #endif
 
     return 0;

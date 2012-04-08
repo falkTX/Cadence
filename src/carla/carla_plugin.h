@@ -581,6 +581,15 @@ public:
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, param_id, 0, value);
     }
 
+    void set_parameter_value_rindex(int32_t rindex, double value, bool gui_send, bool osc_send, bool callback_send)
+    {
+        for (uint32_t i=0; i < param.count; i++)
+        {
+            if (param.data[i].rindex == rindex)
+                set_parameter_value(i, value, gui_send, osc_send, callback_send);
+        }
+    }
+
     void set_parameter_midi_channel(uint32_t index, uint8_t channel)
     {
         param.data[index].midi_channel = channel;

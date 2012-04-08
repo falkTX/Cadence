@@ -278,7 +278,10 @@ intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_
     default:
         break;
     }
+
     return 0;
+
+    (void)value;
 }
 
 // ------------------------------ Plugin Check ------------------------------

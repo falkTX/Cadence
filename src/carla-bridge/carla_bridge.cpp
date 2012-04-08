@@ -28,6 +28,11 @@ short add_plugin_ladspa(const char* filename, const char* label, void* extra_stu
 short add_plugin_dssi(const char* filename, const char* label, void* extra_stuff);
 short add_plugin_vst(const char* filename, const char* label);
 
+void close_bridge_now()
+{
+    close_now = true;
+}
+
 int main(int argc, char* argv[])
 {
     if (argc != 5)
