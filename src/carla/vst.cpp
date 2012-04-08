@@ -26,6 +26,12 @@
 #if VESTIGE_HEADER
 #warning Using vestige header
 #define kVstVersion 2400
+#define effFlagsProgramChunks (1 << 5)
+#define effGetParamLabel 6
+#define effGetChunk 23
+#define effSetChunk 24
+#define effCanBeAutomated 26
+#define effGetProgramNameIndexed 29
 #define effGetPlugCategory 35
 #define effSetBlockSizeAndSampleRate 43
 #define effShellGetNextPlugin 70
@@ -33,6 +39,7 @@
 #define effStopProcess 72
 #define effSetProcessPrecision 77
 #define kVstProcessPrecision32 0
+#define kVstTransportChanged 1
 #define kPlugCategSynth 2
 #define kPlugCategAnalysis 3
 #define kPlugCategMastering 4
@@ -40,6 +47,12 @@
 #define kPlugCategRestoration 8
 #define kPlugCategShell 10
 #define kPlugCategGenerator 11
+struct VstTimeInfo_R {
+    double samplePos, sampleRate, nanoSeconds, ppqPos, tempo, barStartPos, cycleStartPos, cycleEndPos;
+    int32_t timeSigNumerator, timeSigDenominator, smpteOffset, smpteFrameRate, samplesToNextClock, flags;
+};
+#else
+typedef VstTimeInfo VstTimeInfo_R;
 #endif
 
 typedef AEffect* (*VST_Function)(audioMasterCallback);
@@ -1158,8 +1171,8 @@ public:
             return 1;
 
         case audioMasterGetTime:
-            static VstTimeInfo timeInfo;
-            memset(&timeInfo, 0, sizeof(VstTimeInfo));
+            static VstTimeInfo_R timeInfo;
+            memset(&timeInfo, 0, sizeof(VstTimeInfo_R));
 
             timeInfo.sampleRate = get_sample_rate();
             timeInfo.tempo = 120.0;

@@ -7,9 +7,9 @@
 PYUIC = pyuic4 --pyqt3-wrapper
 PYRCC = pyrcc4 -py3
 
-all: build
 
-build: UI RES LANG
+all: UI RES LANG
+
 
 UI: catarina catia claudia carla tools
 
@@ -33,6 +33,7 @@ carla_backend:
 
 carla_bridges:
 # 	$(MAKE) native$(_arch_n) -C src/carla-bridges
+# 	$(MAKE) -C src/carla-bridge-ui
 
 carla_discovery:
 # 	$(MAKE) native$(_arch_n) -C src/carla-discovery
@@ -138,14 +139,17 @@ src/ui_settings_jack.py: src/ui/settings_jack.ui
 src/ui_inputdialog_value.py: src/ui/inputdialog_value.ui
 	$(PYUIC) -o src/ui_inputdialog_value.py $<
 
+
 RES: src/icons_rc.py
 
 src/icons_rc.py: src/icons/icons.qrc
 	$(PYRCC) -o src/icons_rc.py $<
 
+
 LANG:
 #	pylupdate4 -verbose src/lang/lang.pro
 #	lrelease src/lang/lang.pro
+
 
 clean:
 	$(MAKE) clean -C src/carla
