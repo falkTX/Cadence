@@ -79,7 +79,6 @@ public:
             m_thread->quit();
     }
 
-#if 0
     virtual PluginCategory category()
     {
         return m_info.category;
@@ -130,6 +129,21 @@ public:
         strncpy(buf_str, m_info.name, STR_MAX);
     }
 
+    virtual void get_gui_info(GuiInfo* info)
+    {
+        // FIXME
+        info->type = GUI_EXTERNAL_OSC;
+        info->resizable = false;
+    }
+
+    virtual void show_gui(bool yesno)
+    {
+        if (yesno)
+            osc_send_show(&osc.data);
+        else
+            osc_send_hide(&osc.data);
+    }
+
     virtual void reload()
     {
         // plugin checks
@@ -146,7 +160,6 @@ public:
 
         m_hints |= m_info.hints;
     }
-#endif
 
     bool init(const char* filename, const char* label, void* extra_stuff)
     {

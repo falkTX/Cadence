@@ -111,6 +111,21 @@ struct Lv2ParameterData {
     };
 };
 
+const char* lv2bridge2str(LV2_Property type)
+{
+    switch (type)
+    {
+    case LV2_UI_GTK2:
+        return carla_options.bridge_lv2gtk2;
+    case LV2_UI_QT4:
+        return carla_options.bridge_lv2qt4;
+    case LV2_UI_X11:
+        return carla_options.bridge_lv2x11;
+    default:
+        return nullptr;
+    }
+}
+
 class Lv2Plugin : public CarlaPlugin
 {
 public:
@@ -2076,34 +2091,13 @@ public:
 
                                                             if (is_bridged)
                                                             {
-                                                                const char* osc_binary;
+                                                                const char* osc_binary = lv2bridge2str(UiType);
 
-                                                                switch (UiType)
-                                                                {
-                                                                case LV2_UI_QT4:
-                                                                    qDebug("Will use LV2 Qt4 UI, bridged");
-                                                                    osc_binary = nullptr;
-                                                                    break;
-                                                                case LV2_UI_X11:
-                                                                    qDebug("Will use LV2 X11 UI, bridged");
-                                                                    osc_binary = nullptr;
-                                                                    break;
-                                                                case LV2_UI_GTK2:
-                                                                    qDebug("Will use LV2 Gtk2 UI, bridged");
-                                                                    osc_binary = nullptr;
-                                                                    break;
-                                                                default:
-                                                                    qDebug("Will use LV2 Unknown UI, bridged");
-                                                                    osc_binary = nullptr;
-                                                                    break;
-                                                                }
-
-                                                                if (/*osc_binary*/ 1)
+                                                                if (osc_binary)
                                                                 {
                                                                     gui.type = GUI_EXTERNAL_OSC;
                                                                     osc.thread = new CarlaPluginThread(this, CarlaPluginThread::PLUGIN_THREAD_LV2_GUI);
-                                                                    osc.thread->setOscData("carla-bridge-lv2-gtk2", descriptor->URI, ui.descriptor->URI, ui.rdf_descriptor->Binary, ui.rdf_descriptor->Bundle);
-                                                                    // TODO ^
+                                                                    osc.thread->setOscData(osc_binary, descriptor->URI, ui.descriptor->URI, ui.rdf_descriptor->Binary, ui.rdf_descriptor->Bundle);
                                                                 }
                                                             }
                                                             else

@@ -3371,6 +3371,15 @@ if __name__ == '__main__':
     if (carla_bridge_win64):
       CarlaHost.set_option(OPTION_PATH_BRIDGE_WIN64, 0, carla_bridge_win64)
 
+    if (carla_bridge_lv2_gtk2):
+      CarlaHost.set_option(OPTION_PATH_BRIDGE_LV2_GTK2, 0, carla_bridge_lv2_gtk2)
+
+    if (carla_bridge_lv2_qt4):
+      CarlaHost.set_option(OPTION_PATH_BRIDGE_LV2_QT4, 0, carla_bridge_lv2_qt4)
+
+    if (carla_bridge_lv2_x11):
+      CarlaHost.set_option(OPTION_PATH_BRIDGE_LV2_X11, 0, carla_bridge_lv2_x11)
+
     if (not CarlaHost.carla_init("Carla")):
       CustomMessageBox(None, QMessageBox.Critical, "Error", "Could not connect to JACK",
                             toString(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)

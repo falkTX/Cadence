@@ -16,7 +16,7 @@
  */
 
 #include "carla_bridge_ui.h"
-#include "../carla-bridge/carla_osc.h"
+#include "carla_osc.h"
 
 #include "lv2/lv2.h"
 #include "lv2/atom.h"

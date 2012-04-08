@@ -220,6 +220,7 @@ bool carla_jack_register_plugin(CarlaPlugin* plugin, jack_client_t** client)
     if (*client)
     {
 #ifdef BUILD_BRIDGE
+        qDebug("HERE 001");
         carla_buffer_size = jack_get_buffer_size(*client);
         carla_sample_rate = jack_get_sample_rate(*client);
 

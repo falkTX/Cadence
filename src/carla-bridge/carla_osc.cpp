@@ -21,7 +21,8 @@
 #include "carla_bridge_ui.h"
 #else
 #include "carla_plugin.h"
-extern void close_bridge_now();
+extern void plugin_bridge_show_gui(bool yesno);
+extern void plugin_bridge_quit();
 #endif
 
 #include <cstring>
@@ -185,8 +186,7 @@ int osc_handle_show()
     if (ui)
         ui->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 1, 0, 0.0);
 #else
-    if (CarlaPlugins[0])
-        CarlaPlugins[0]->show_gui(true);
+    plugin_bridge_show_gui(true);
 #endif
 
     return 0;
@@ -198,8 +198,7 @@ int osc_handle_hide()
     if (ui)
         ui->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 0, 0, 0.0);
 #else
-    if (CarlaPlugins[0])
-        CarlaPlugins[0]->show_gui(false);
+    plugin_bridge_show_gui(false);
 #endif
 
     return 0;
@@ -211,7 +210,7 @@ int osc_handle_quit()
     if (ui)
         ui->queque_message(BRIDGE_MESSAGE_QUIT, 0, 0, 0.0);
 #else
-    close_bridge_now();
+    plugin_bridge_quit();
 #endif
 
     return 0;

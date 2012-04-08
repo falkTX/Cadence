@@ -8,8 +8,8 @@ CXX     ?= g++
 WINECXX ?= wineg++
 
 BUILD_FLAGS  = -DBUILD_BRIDGE -Wall -std=c++0x -I. -I../carla-includes -I../carla `pkg-config --cflags jack liblo QtCore QtGui` $(CXXFLAGS)
-BUILD_FLAGS += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse
-# BUILD_FLAGS += -DDEBUG -O0 -g
+# BUILD_FLAGS += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse
+BUILD_FLAGS += -DDEBUG -O0 -g
 BUILD_FLAGS += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
 LINK_FLAGS   = `pkg-config --libs jack liblo QtCore QtGui` $(LDFLAGS)
 
@@ -31,7 +31,8 @@ WINE_LINK_FLAGS  = $(LINK_FLAGS)
 WINE_32BIT_FLAGS = -L/usr/lib32/wine -L/usr/lib/i386-linux-gnu/wine $(32BIT_FLAGS)
 WINE_64BIT_FLAGS = -L/usr/lib64/wine -L/usr/lib/x86_64-linux-gnu/wine $(64BIT_FLAGS)
 
-SOURCES = carla_bridge.cpp carla_osc.cpp ../carla/carla_jack.cpp ../carla/carla_shared.cpp ../carla/ladspa.cpp ../carla/dssi.cpp ../carla/vst.cpp
+SOURCES = carla_bridge.cpp carla_osc.cpp ../carla/carla_jack.cpp ../carla/carla_shared.cpp ../carla/vst.cpp
+#../carla/ladspa.cpp ../carla/dssi.cpp
 
 
 all:

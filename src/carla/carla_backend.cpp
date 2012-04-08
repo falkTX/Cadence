@@ -95,6 +95,15 @@ bool carla_close()
     if (carla_options.bridge_win64)
         free((void*)carla_options.bridge_win64);
 
+    if (carla_options.bridge_lv2gtk2)
+        free((void*)carla_options.bridge_lv2gtk2);
+
+    if (carla_options.bridge_lv2qt4)
+        free((void*)carla_options.bridge_lv2qt4);
+
+    if (carla_options.bridge_lv2x11)
+        free((void*)carla_options.bridge_lv2x11);
+
     return closed;
 }
 
@@ -1123,6 +1132,15 @@ void set_option(OptionsType option, int value, const char* value_str)
         break;
     case OPTION_PATH_BRIDGE_WIN64:
         carla_options.bridge_win64 = strdup(value_str);
+        break;
+    case OPTION_PATH_BRIDGE_LV2_GTK2:
+        carla_options.bridge_lv2gtk2 = strdup(value_str);
+        break;
+    case OPTION_PATH_BRIDGE_LV2_QT4:
+        carla_options.bridge_lv2qt4 = strdup(value_str);
+        break;
+    case OPTION_PATH_BRIDGE_LV2_X11:
+        carla_options.bridge_lv2x11 = strdup(value_str);
         break;
     default:
         break;

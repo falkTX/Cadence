@@ -237,6 +237,7 @@ public:
 
                 gui.width  = width;
                 gui.height = height;
+                ((QDialog*)ptr)->resize(width, height); // FIXME
             }
             else
                 qCritical("Failed to get Plugin Window size");

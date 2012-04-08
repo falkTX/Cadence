@@ -41,10 +41,13 @@ carla_options_t carla_options = {
     /* use_dssi_chunks    */ false,
     /* prefer_ui_bridges  */ true,
     #endif
-    /* bridge_unix32 */ nullptr,
-    /* bridge_unix64 */ nullptr,
-    /* bridge_win32  */ nullptr,
-    /* bridge_win64  */ nullptr
+    /* bridge_unix32  */ nullptr,
+    /* bridge_unix64  */ nullptr,
+    /* bridge_win32   */ nullptr,
+    /* bridge_win64   */ nullptr,
+    /* bridge_lv2gtk2 */ nullptr,
+    /* bridge_lv2qt4  */ nullptr,
+    /* bridge_lv2x11  */ nullptr
 };
 #endif
 

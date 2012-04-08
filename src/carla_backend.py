@@ -196,11 +196,9 @@ carla_bridge_unix64 = ""
 carla_bridge_win32  = ""
 carla_bridge_win64  = ""
 
-#carla_bridge_lv2_gtk2  = ""
-#carla_bridge_lv2_qt4   = ""
-#carla_bridge_lv2_x11   = ""
-#carla_bridge_vst_qt4   = ""
-#carla_bridge_winvst    = ""
+carla_bridge_lv2_gtk2 = ""
+carla_bridge_lv2_qt4  = ""
+carla_bridge_lv2_x11  = ""
 
 if (WINDOWS):
   PATH = (os.path.join(PROGRAMFILES, "Cadence", "carla"),)
@@ -287,59 +285,32 @@ else:
       carla_bridge_win64 = os.path.join(p, "carla-bridge-win64.exe")
       break
 
-  ## lv2-gtk2
-  #if (os.path.exists(os.path.join(CWD, "carla-bridges", "carla-bridge-lv2-gtk2"))):
-    #carla_bridge_lv2_gtk2 = os.path.join(CWD, "carla-bridges", "carla-bridge-lv2-gtk2")
-  #else:
-    #for p in PATH:
-      #if (os.path.exists(os.path.join(p, "carla-bridge-lv2-gtk2"))):
-        #carla_bridge_lv2_gtk2 = os.path.join(p, "carla-bridge-lv2-gtk2")
-        #break
+# bridge-lv2-gtk2
+if (os.path.exists(os.path.join(CWD, "carla-bridge-ui", "carla-bridge-lv2-gtk2"))):
+  carla_bridge_lv2_gtk2 = os.path.join(CWD, "carla-bridge-ui", "carla-bridge-lv2-gtk2")
+else:
+  for p in PATH:
+    if (os.path.exists(os.path.join(p, "carla-bridge-lv2-gtk2"))):
+      carla_bridge_lv2_gtk2 = os.path.join(p, "carla-bridge-lv2-gtk2")
+      break
 
-  ## lv2-qt4
-  #if (os.path.exists(os.path.join(CWD, "carla-bridges", "carla-bridge-lv2-qt4"))):
-    #carla_bridge_lv2_qt4 = os.path.join(CWD, "carla-bridges", "carla-bridge-lv2-qt4")
-  #else:
-    #for p in PATH:
-      #if (os.path.exists(os.path.join(p, "carla-bridge-lv2-qt4"))):
-        #carla_bridge_lv2_qt4 = os.path.join(p, "carla-bridge-lv2-qt4")
-        #break
+# bridge-lv2-qt4
+if (os.path.exists(os.path.join(CWD, "carla-bridge-ui", "carla-bridge-lv2-qt4"))):
+  carla_bridge_lv2_qt4 = os.path.join(CWD, "carla-bridge-ui", "carla-bridge-lv2-qt4")
+else:
+  for p in PATH:
+    if (os.path.exists(os.path.join(p, "carla-bridge-lv2-qt4"))):
+      carla_bridge_lv2_qt4 = os.path.join(p, "carla-bridge-lv2-qt4")
+      break
 
-  ## lv2-x11
-  #if (os.path.exists(os.path.join(CWD, "carla-bridges", "carla-bridge-lv2-x11"))):
-    #carla_bridge_lv2_x11 = os.path.join(CWD, "carla-bridges", "carla-bridge-lv2-x11")
-  #else:
-    #for p in PATH:
-      #if (os.path.exists(os.path.join(p, "carla-bridge-lv2-x11"))):
-        #carla_bridge_lv2_x11 = os.path.join(p, "carla-bridge-lv2-x11")
-        #break
-
-  ## vst-qt4
-  #if (os.path.exists(os.path.join(CWD, "carla-bridges", "carla-bridge-vst-qt4"))):
-    #carla_bridge_vst_qt4 = os.path.join(CWD, "carla-bridges", "carla-bridge-vst-qt4")
-  #else:
-    #for p in PATH:
-      #if (os.path.exists(os.path.join(p, "carla-bridge-vst-qt4"))):
-        #carla_bridge_vst_qt4 = os.path.join(p, "carla-bridge-vst-qt4")
-        #break
-
-  ## winvst
-  #if (os.path.exists(os.path.join(CWD, "carla-bridges", "carla-bridge-winvst.exe"))):
-    #carla_bridge_winvst = os.path.join(CWD, "carla-bridges", "carla-bridge-winvst.exe")
-  #else:
-    #for p in PATH:
-      #if (os.path.exists(os.path.join(p, "carla-bridge-winvst.exe"))):
-        #carla_bridge_winvst = os.path.join(p, "carla-bridge-winvst.exe")
-        #break
-
-print("carla_discovery_unix32 ->", carla_discovery_unix32)
-print("carla_discovery_unix64 ->", carla_discovery_unix64)
-print("carla_discovery_win32  ->", carla_discovery_win32)
-print("carla_discovery_win64  ->", carla_discovery_win64)
-print("carla_bridge_unix32 ->", carla_bridge_unix32)
-print("carla_bridge_unix64 ->", carla_bridge_unix64)
-print("carla_bridge_win32  ->", carla_bridge_win32)
-print("carla_bridge_win64  ->", carla_bridge_win64)
+# bridge-lv2-x11
+if (os.path.exists(os.path.join(CWD, "carla-bridge-ui", "carla-bridge-lv2-x11"))):
+  carla_bridge_lv2_x11 = os.path.join(CWD, "carla-bridge-ui", "carla-bridge-lv2-x11")
+else:
+  for p in PATH:
+    if (os.path.exists(os.path.join(p, "carla-bridge-lv2-x11"))):
+      carla_bridge_lv2_x11 = os.path.join(p, "carla-bridge-lv2-x11")
+      break
 
 # ------------------------------------------------------------------------------------------------
 # Plugin Query (helper functions)
@@ -682,13 +653,16 @@ GUI_EXTERNAL_OSC = 3
 GUI_EXTERNAL_LV2 = 4
 
 # enum OptionsType
-OPTION_GLOBAL_JACK_CLIENT = 1
-OPTION_USE_DSSI_CHUNKS    = 2
-OPTION_PREFER_UI_BRIDGES  = 3
-OPTION_PATH_BRIDGE_UNIX32 = 4
-OPTION_PATH_BRIDGE_UNIX64 = 5
-OPTION_PATH_BRIDGE_WIN32  = 6
-OPTION_PATH_BRIDGE_WIN64  = 7
+OPTION_GLOBAL_JACK_CLIENT   = 1
+OPTION_USE_DSSI_CHUNKS      = 2
+OPTION_PREFER_UI_BRIDGES    = 3
+OPTION_PATH_BRIDGE_UNIX32   = 4
+OPTION_PATH_BRIDGE_UNIX64   = 5
+OPTION_PATH_BRIDGE_WIN32    = 6
+OPTION_PATH_BRIDGE_WIN64    = 7
+OPTION_PATH_BRIDGE_LV2_GTK2 = 8
+OPTION_PATH_BRIDGE_LV2_QT4  = 9
+OPTION_PATH_BRIDGE_LV2_X11  = 10
 
 # enum CallbackType
 CALLBACK_DEBUG                = 0

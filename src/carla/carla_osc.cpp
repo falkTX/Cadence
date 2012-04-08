@@ -103,7 +103,7 @@ void osc_error_handler(int num, const char* msg, const char* path)
 
 int osc_message_handler(const char* path, const char* types, lo_arg** argv, int argc, void* data, void* user_data)
 {
-    qDebug("osc_message_handler(%s, %s, %p, %i, %p, %p)", path, types, argv, argc, data, user_data);
+    //qDebug("osc_message_handler(%s, %s, %p, %i, %p, %p)", path, types, argv, argc, data, user_data);
 
     // Initial path check
     if (strcmp(path, "register") == 0)

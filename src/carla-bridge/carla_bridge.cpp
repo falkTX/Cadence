@@ -19,16 +19,25 @@
 #include "carla_plugin.h"
 
 #include <QtGui/QApplication>
-
-// global check
-bool close_now = false;
+#include <QtGui/QDialog>
 
 // plugin specific
 short add_plugin_ladspa(const char* filename, const char* label, void* extra_stuff);
 short add_plugin_dssi(const char* filename, const char* label, void* extra_stuff);
 short add_plugin_vst(const char* filename, const char* label);
 
-void close_bridge_now()
+// global variables
+QDialog* dialog = nullptr;
+bool close_now = false;
+
+void plugin_bridge_show_gui(bool yesno)
+{
+    //if (CarlaPlugins[0])
+    //    CarlaPlugins[0]->show_gui(yesno);
+    //dialog->setVisible(yesno);
+}
+
+void plugin_bridge_quit()
 {
     close_now = true;
 }
@@ -70,10 +79,10 @@ int main(int argc, char* argv[])
     switch (itype)
     {
     case PLUGIN_LADSPA:
-        id = add_plugin_ladspa(filename, label, nullptr);
+        //id = add_plugin_ladspa(filename, label, nullptr);
         break;
     case PLUGIN_DSSI:
-        id = add_plugin_dssi(filename, label, nullptr);
+        //id = add_plugin_dssi(filename, label, nullptr);
         break;
     case PLUGIN_VST:
         id = add_plugin_vst(filename, label);
@@ -85,17 +94,31 @@ int main(int argc, char* argv[])
 
     if (id >= 0)
     {
-        CarlaPlugin* plugin = CarlaPlugins[0];
+        qDebug("HERE 00 -> %i", id);
+        CarlaPlugin* plugin = CarlaPlugins[id];
 
         if (plugin && plugin->id() >= 0)
         {
-            osc_send_update();
+            //osc_send_update();
+
+            //if (itype == PLUGIN_VST)
+            //{
+                dialog = new QDialog(nullptr);
+                //dialog->resize(300, 300);
+                plugin->set_gui_data(0, dialog);
+                dialog->show();
+            //}
 
             // FIXME
             plugin->set_active(true, false, false);
 
+            qDebug("HERE exec");
+            //app.exec();
+//            qDebug("HERE after!");
+
             while (close_now == false)
             {
+                plugin->idle_gui();
                 app.processEvents();
 
                 if (close_now) break;
@@ -120,6 +143,9 @@ int main(int argc, char* argv[])
             }
 
             delete plugin;
+
+            if (dialog)
+                delete dialog;
         }
     }
     else

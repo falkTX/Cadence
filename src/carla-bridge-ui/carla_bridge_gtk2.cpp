@@ -19,6 +19,7 @@
 #include "../carla-bridge/carla_osc.h"
 
 #include <gtk/gtk.h>
+#include <QtCore/QSettings>
 
 static GtkWidget* window;
 

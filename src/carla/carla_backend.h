@@ -110,13 +110,16 @@ enum GuiType {
 };
 
 enum OptionsType {
-    OPTION_GLOBAL_JACK_CLIENT = 1,
-    OPTION_USE_DSSI_CHUNKS    = 2,
-    OPTION_PREFER_UI_BRIDGES  = 3,
-    OPTION_PATH_BRIDGE_UNIX32 = 4,
-    OPTION_PATH_BRIDGE_UNIX64 = 5,
-    OPTION_PATH_BRIDGE_WIN32  = 6,
-    OPTION_PATH_BRIDGE_WIN64  = 7
+    OPTION_GLOBAL_JACK_CLIENT   = 1,
+    OPTION_USE_DSSI_CHUNKS      = 2,
+    OPTION_PREFER_UI_BRIDGES    = 3,
+    OPTION_PATH_BRIDGE_UNIX32   = 4,
+    OPTION_PATH_BRIDGE_UNIX64   = 5,
+    OPTION_PATH_BRIDGE_WIN32    = 6,
+    OPTION_PATH_BRIDGE_WIN64    = 7,
+    OPTION_PATH_BRIDGE_LV2_GTK2 = 8,
+    OPTION_PATH_BRIDGE_LV2_QT4  = 9,
+    OPTION_PATH_BRIDGE_LV2_X11  = 10
 };
 
 enum CallbackType {
@@ -227,6 +230,9 @@ struct carla_options_t {
     const char* bridge_unix64;
     const char* bridge_win32;
     const char* bridge_win64;
+    const char* bridge_lv2gtk2;
+    const char* bridge_lv2qt4;
+    const char* bridge_lv2x11;
 };
 
 typedef void (*CallbackFunc)(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3);
