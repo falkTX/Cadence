@@ -44,7 +44,7 @@ void toolkit_init()
     gtk_init(&argc, &argv);
 }
 
-void toolkit_loop(const char* plugin_name, bool reparent)
+void toolkit_loop(const char* ui_title, bool reparent)
 {
     if (reparent)
     {
@@ -60,7 +60,7 @@ void toolkit_loop(const char* plugin_name, bool reparent)
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_ui_destroy), nullptr);
 
     gtk_window_set_resizable(GTK_WINDOW(window), ui->is_resizable());
-    gtk_window_set_title(GTK_WINDOW(window), plugin_name);
+    gtk_window_set_title(GTK_WINDOW(window), ui_title);
 
     osc_send_update();
 

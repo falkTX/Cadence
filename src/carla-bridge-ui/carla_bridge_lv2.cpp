@@ -27,6 +27,8 @@
 
 #include <cstring>
 
+UiData* ui = nullptr;
+
 // -------------------------------------------------------------------------
 
 // feature ids
@@ -291,19 +293,18 @@ private:
 
 int main(int argc, char* argv[])
 {
-    if (argc != 8)
+    if (argc != 7)
     {
-       //std::cerr << argv[0] << " :: bad arguments" << std::endl;
+       qCritical("%s: bad arguments", argv[0]);
        return 1;
     }
 
-    const char* plugin_uri  = argv[1];
-    const char* plugin_name = argv[2];
+    const char* osc_url     = argv[1];
+    const char* plugin_uri  = argv[2];
     const char* ui_uri      = argv[3];
     const char* ui_binary   = argv[4];
     const char* ui_bundle   = argv[5];
-    const char* osc_url     = argv[6];
-    const char* resizable   = argv[7];
+    const char* ui_title    = argv[6];
 
     // Init LV2
     ui = new Lv2UiData;
@@ -312,11 +313,11 @@ int main(int argc, char* argv[])
     toolkit_init();
 
     // Init OSC
-    osc_init("osc_name", "osc_url");
+    osc_init("lv2-ui-bridge", osc_url);
 
     if (ui->lib_open(ui_binary))
     {
-        if (ui->init(plugin_uri, ui_uri, ui_bundle, (strcmp(resizable, "true") == 0)) == false)
+        if (ui->init(plugin_uri, ui_uri, ui_bundle, false) == false) // (strcmp(resizable, "true") == 0)
         {
             qCritical("Failed to load LV2 UI");
             ui->lib_close();
@@ -331,12 +332,13 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    toolkit_loop(plugin_name,
 #ifdef BRIDGE_LV2_X11
-                 false);
+    bool reparent = false;
 #else
-                 true);
+    bool reparent = true;
 #endif
+
+    toolkit_loop(ui_title, reparent);
 
     ui->close();
     ui->lib_close();

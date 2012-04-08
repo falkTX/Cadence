@@ -23,7 +23,7 @@
 #include <pthread.h>
 
 void toolkit_init();
-void toolkit_loop(const char* plugin_name, bool reparent);
+void toolkit_loop(const char* ui_title, bool reparent);
 void toolkit_quit();
 void toolkit_window_show();
 void toolkit_window_hide();
@@ -222,6 +222,6 @@ private:
 
 // -------------------------------------------------------------------------
 
-static UiData* ui = nullptr;
+extern UiData* ui;
 
 #endif // CARLA_BRIDGE_UI_H

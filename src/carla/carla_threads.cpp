@@ -223,6 +223,8 @@ void CarlaPluginThread::setOscData(const char* binary, const char* label, const 
     m_data3  = QString(data3);
 }
 
+#include <QDebug>
+
 void CarlaPluginThread::run()
 {
     if (m_process == nullptr)
@@ -240,16 +242,6 @@ void CarlaPluginThread::run()
         break;
 
     case PLUGIN_THREAD_LV2_GUI:
-        /* Plugin URI  */ arguments << m_label;
-        /* Plugin Name */ arguments << m_plugin->name();
-        /* ui-URI      */ arguments << m_data1;
-        /* ui-filename */ arguments << m_data2;
-        /* ui-bundle   */ arguments << m_data3;
-        /* osc_url     */ arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
-        /* ui-title    */ arguments << "true";
-        break;
-#if 0
-    case PLUGIN_THREAD_LV2_GUI:
         /* osc_url     */ arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
         /* URI         */ arguments << m_label;
         /* ui-URI      */ arguments << m_data1;
@@ -257,7 +249,7 @@ void CarlaPluginThread::run()
         /* ui-bundle   */ arguments << m_data3;
         /* ui-title    */ arguments << QString("%1 (GUI)").arg(m_plugin->name());
         break;
-#endif
+
     case PLUGIN_THREAD_BRIDGE:
         /* osc_url  */ arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
         /* stype    */ arguments << m_data1;
@@ -268,6 +260,9 @@ void CarlaPluginThread::run()
     default:
         break;
     }
+
+    qWarning() << m_binary;
+    qWarning() << arguments;
 
     m_process->start(m_binary, arguments);
     m_process->waitForStarted();
