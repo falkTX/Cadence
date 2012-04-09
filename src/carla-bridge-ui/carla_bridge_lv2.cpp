@@ -27,6 +27,10 @@
 
 #include <cstring>
 
+#ifdef BRIDGE_LV2_X11
+#include <QtGui/QDialog>
+#endif
+
 UiData* ui = nullptr;
 
 // -------------------------------------------------------------------------
@@ -36,8 +40,8 @@ const uint32_t lv2_feature_id_uri_map         = 0;
 const uint32_t lv2_feature_id_urid_map        = 1;
 const uint32_t lv2_feature_id_urid_unmap      = 2;
 const uint32_t lv2_feature_id_event           = 3;
-const uint32_t lv2_feature_id_ui_parent       = 4;
-const uint32_t lv2_feature_id_ui_resize       = 5;
+const uint32_t lv2_feature_id_ui_resize       = 4;
+const uint32_t lv2_feature_id_ui_parent       = 5;
 const uint32_t lv2_feature_count              = 6;
 
 // pre-set uri[d] map ids
@@ -141,7 +145,7 @@ public:
         descriptor = nullptr;
 
 #ifdef BRIDGE_LV2_X11
-        x11_widget = new QDialog();
+        x11_widget = new QDialog(nullptr);
 #endif
 
         // Initialize features
@@ -182,13 +186,17 @@ public:
         features[lv2_feature_id_event]->URI       = LV2_EVENT_URI;
         features[lv2_feature_id_event]->data      = Event_Feature;
 
-        features[lv2_feature_id_ui_parent]        = new LV2_Feature;
-        features[lv2_feature_id_ui_parent]->URI   = LV2_UI__parent;
-        features[lv2_feature_id_ui_parent]->data  = nullptr;
-
         features[lv2_feature_id_ui_resize]        = new LV2_Feature;
         features[lv2_feature_id_ui_resize]->URI   = LV2_UI__resize;
         features[lv2_feature_id_ui_resize]->data  = UI_Resize_Feature;
+
+#ifdef BRIDGE_LV2_X11
+        features[lv2_feature_id_ui_parent]        = new LV2_Feature;
+        features[lv2_feature_id_ui_parent]->URI   = LV2_UI__parent;
+        features[lv2_feature_id_ui_parent]->data  = (void*)x11_widget->winId();
+#else
+        features[lv2_feature_id_ui_parent] = nullptr;
+#endif
 
         features[lv2_feature_count] = nullptr;
 
@@ -287,7 +295,7 @@ private:
     bool resizable;
 
 #ifdef BRIDGE_LV2_X11
-    LV2UI_Widget x11_widget;
+    QDialog* x11_widget;
 #endif
 };
 
@@ -306,11 +314,11 @@ int main(int argc, char* argv[])
     const char* ui_bundle   = argv[5];
     const char* ui_title    = argv[6];
 
-    // Init LV2
-    ui = new Lv2UiData;
-
     // Init toolkit
     toolkit_init();
+
+    // Init LV2
+    ui = new Lv2UiData;
 
     // Init OSC
     osc_init("lv2-ui-bridge", osc_url);

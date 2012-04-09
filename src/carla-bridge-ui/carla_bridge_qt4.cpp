@@ -29,6 +29,9 @@ static QDialog* window;
 
 // -------------------------------------------------------------------------
 
+// Static QApplication
+static int argc = 0;
+static char* argv[] = { nullptr };
 static QApplication* app = nullptr;
 
 class MessageChecker : public QTimer
@@ -47,12 +50,7 @@ public:
 
 void toolkit_init()
 {
-    int argc = 0;
-    char** argv = nullptr;
-    //char* argv[] = { nullptr };
-    //static QApplication* app = nullptr;
     app = new QApplication(argc, argv, true);
-    //static QApplication* app = new QApplication(argc, argv, true);
 }
 
 void toolkit_loop(const char* ui_title, bool reparent)
@@ -76,8 +74,8 @@ void toolkit_loop(const char* ui_title, bool reparent)
     checker.start(50);
     QObject::connect(window, SIGNAL(finished(int)), app, SLOT(quit()));
 
-    QSettings settings("Cadence", "CarlaBridges");
-    window->restoreGeometry(settings.value(ui_title).toByteArray());
+    //QSettings settings("Cadence", "CarlaBridges");
+    //window->restoreGeometry(settings.value(ui_title).toByteArray());
 
     if (ui->is_resizable() == false)
         window->setFixedSize(window->width(), window->height());

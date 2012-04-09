@@ -266,7 +266,6 @@ void CarlaPluginThread::run()
 
     m_process->start(m_binary, arguments);
     m_process->waitForStarted();
-
     switch (m_mode)
     {
     case PLUGIN_THREAD_DSSI_GUI:
