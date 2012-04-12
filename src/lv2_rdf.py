@@ -13,16 +13,14 @@ LV2_HOST_INFO_URI              = "http://lv2plug.in/ns/ext/host-info"
 LV2_INSTANCE_ACCESS_URI        = "http://lv2plug.in/ns/ext/instance-access"
 LV2_LOG_URI                    = "http://lv2plug.in/ns/ext/log"
 LV2_MIDI_URI                   = "http://lv2plug.in/ns/ext/midi"
+LV2_PARAMETERS_URI             = "http://lv2plug.in/ns/ext/parameters" # FIXME?
 LV2_PATCH_URI                  = "http://lv2plug.in/ns/ext/patch"
 LV2_PORT_GROUPS_URI            = "http://lv2plug.in/ns/ext/port-groups"
 LV2_PORT_PROPS_URI             = "http://lv2plug.in/ns/ext/port-props"
 LV2_PRESETS_URI                = "http://lv2plug.in/ns/ext/presets"
-LV2_PUI_URI                    = "http://lv2plug.in/ns/ext/pui"
-LV2_REFERENCE_URI              = "http://lv2plug.in/ns/ext/reference"
 LV2_RESIZE_PORT_URI            = "http://lv2plug.in/ns/ext/resize-port"
 LV2_STATE_URI                  = "http://lv2plug.in/ns/ext/state"
 LV2_TIME_URI                   = "http://lv2plug.in/ns/ext/time"
-LV2_UI_RESIZE_URI              = "http://lv2plug.in/ns/ext/ui-resize"
 LV2_URI_MAP_URI                = "http://lv2plug.in/ns/ext/uri-map"
 LV2_URID_URI                   = "http://lv2plug.in/ns/ext/urid"
 LV2_WORKER_URI                 = "http://lv2plug.in/ns/ext/worker"
@@ -38,6 +36,7 @@ LV2_RTSAFE_MEMORY_POOL_URI     = "http://home.gna.org/lv2dynparam/rtmempool/v1"
 LV2_EXTERNAL_UI_URI            = "http://nedko.arnaudov.name/lv2/external_ui/"
 
 LV2_RDF_Supported_Features_URI = (
+  LV2_ATOM_URI,
   LV2_DATA_ACCESS_URI,
   LV2_EVENT_URI,
   LV2_HOST_INFO_URI,
@@ -46,7 +45,6 @@ LV2_RDF_Supported_Features_URI = (
   LV2_PORT_PROPS_URI,
   LV2_PRESETS_URI,
   LV2_STATE_URI,
-  LV2_UI_RESIZE_URI,
   LV2_URI_MAP_URI,
   LV2_URID_URI,
   LV2_UI_URI,
@@ -147,17 +145,15 @@ LV2_PORT_INPUT                 = 0x01
 LV2_PORT_OUTPUT                = 0x02
 LV2_PORT_CONTROL               = 0x04
 LV2_PORT_AUDIO                 = 0x08
-LV2_PORT_ATOM_MESSAGE          = 0x10
-LV2_PORT_ATOM_VALUE            = 0x20
+LV2_PORT_ATOM                  = 0x10
+LV2_PORT_ATOM_SEQUENCE         = 0x20 | LV2_PORT_ATOM
 LV2_PORT_CV                    = 0x40
 LV2_PORT_EVENT                 = 0x80
 LV2_PORT_MIDI_LL               = 0x100
 
-# TODO - Port Atom types
-
-# Port Event types
-LV2_PORT_EVENT_MIDI            = 0x1000
-LV2_PORT_EVENT_TIME            = 0x2000
+# Port Support Types
+LV2_PORT_SUPPORTS_MIDI         = 0x1000
+LV2_PORT_SUPPORTS_TIME         = 0x2000
 
 # Port Properties
 LV2_PORT_OPTIONAL              = 0x00001
@@ -470,20 +466,28 @@ NS_rdfs = "http://www.w3.org/2000/01/rdf-schema#"
 
 NS_lv2       = "http://lv2plug.in/ns/lv2core#"
 NS_lv2atom   = "http://lv2plug.in/ns/ext/atom#"
-NS_lv2ctx    = "http://lv2plug.in/ns/ext/contexts#"
 NS_lv2cv     = "http://lv2plug.in/ns/ext/cv-port#"
-NS_lv2dyn    = "http://lv2plug.in/ns/ext/dynmanifest#"
+NS_lv2da     = "http://lv2plug.in/ns/ext/data-access#"
+NS_lv2dman   = "http://lv2plug.in/ns/ext/dynmanifest#"
 NS_lv2ev     = "http://lv2plug.in/ns/ext/event#"
 NS_lv2hi     = "http://lv2plug.in/ns/ext/host-info#"
+NS_lv2ia     = "http://lv2plug.in/ns/ext/instance-access#"
+NS_lv2log    = "http://lv2plug.in/ns/ext/log#"
+NS_lv2param  = "http://lv2plug.in/ns/ext/parameters#"
+NS_lv2patch  = "http://lv2plug.in/ns/ext/patch#"
 NS_lv2pg     = "http://lv2plug.in/ns/ext/port-groups#"
 NS_lv2pprops = "http://lv2plug.in/ns/ext/port-props#"
 NS_lv2pset   = "http://lv2plug.in/ns/ext/presets#"
+NS_lv2rsz    = "http://lv2plug.in/ns/ext/resize-port#"
 NS_lv2state  = "http://lv2plug.in/ns/ext/state#"
+NS_lv2umap   = "http://lv2plug.in/ns/ext/uri-map#"
+NS_lv2urid   = "http://lv2plug.in/ns/ext/urid#"
+NS_lv2work   = "http://lv2plug.in/ns/ext/worker#"
 NS_lv2ui     = "http://lv2plug.in/ns/extensions/ui#"
 NS_lv2units  = "http://lv2plug.in/ns/extensions/units#"
 #NS_llext     = "http://ll-plugins.nongnu.org/lv2/ext/"
-NS_lv2mm     = "http://ll-plugins.nongnu.org/lv2/ext/midimap#"
-NS_llplug    = "http://ll-plugins.nongnu.org/lv2/namespace#"
+NS_lv2mm     = "http://ll-plugins.nongnu.org/lv2/ext/midimap#" # FIXME?
+NS_llplug    = "http://ll-plugins.nongnu.org/lv2/namespace#" # FIXME?
 
 # Prefixes (sorted alphabetically and by type)
 rdf_prefix = {
@@ -496,8 +500,6 @@ rdf_prefix = {
   'doap:license':     NS_doap+"license",
   'doap:maintainer':  NS_doap+"maintainer",
   'doap:name':        NS_doap+"name",
-  #'foaf:homepage':   "http://xmlns.com/foaf/0.1/homepage",
-  #'foaf:mbox':       "http://xmlns.com/foaf/0.1/mbox",
   'foaf:name':        NS_foaf+"name",
   'rdf:type':         NS_rdf+"type",
   'rdf:value':        NS_rdf+"value",
@@ -513,39 +515,44 @@ rdf_prefix = {
   'lv2:default':             NS_lv2+"default",
   'lv2:documentation':       NS_lv2+"documentation",
   'lv2:extensionData':       NS_lv2+"extensionData",
+  'lv2:freeWheeling':        NS_lv2+"freeWheeling",
+  'lv2:hasParameter':        NS_lv2+"hasParameter",
   'lv2:index':               NS_lv2+"index",
+  'lv2:isParameter':         NS_lv2+"isParameter",
+  'lv2:latency':             NS_lv2+"latency",
   'lv2:maximum':             NS_lv2+"maximum",
   'lv2:minimum':             NS_lv2+"minimum",
   'lv2:name':                NS_lv2+"name",
   'lv2:port':                NS_lv2+"port",
   'lv2:portProperty':        NS_lv2+"portProperty",
-  'lv2:property':            NS_lv2+"property",
   'lv2:scalePoint':          NS_lv2+"scalePoint",
   'lv2:symbol':              NS_lv2+"symbol",
 
   'lv2:optionalFeature':     NS_lv2+"optionalFeature",
   'lv2:requiredFeature':     NS_lv2+"requiredFeature",
 
-  # LV2 Atom
-  'lv2atom:MessagePort':     NS_lv2atom+"MessagePort",
+  # LV2 Atom - TODO, incomplete
+  'lv2atom:AtomPort':        NS_lv2atom+"AtomPort",
+  'lv2atom:bufferType':      NS_lv2atom+"bufferType",
+  'lv2atom:Sequence':        NS_lv2atom+"Sequence",
   'lv2atom:String':          NS_lv2atom+"String",
-  'lv2atom:ValuePort':       NS_lv2atom+"ValuePort",
+  'lv2atom:supports':        NS_lv2atom+"supports",
 
   # LV2 CV
   'lv2cv:CVPort':            NS_lv2cv+"CVPort",
 
-  # LV2 Event
+  # LV2 Event - TODO, incomplete
   'lv2ev:EventPort':         NS_lv2ev+"EventPort",
   'lv2ev:supportsEvent':     NS_lv2ev+"supportsEvent",
 
-  # LV2 Presets
+  # LV2 Presets - FIXME appliesTo ?, see when new lv2 gets released
   'lv2pset:Preset':          NS_lv2pset+"Preset",
   'lv2pset:value':           NS_lv2pset+"value",
 
-  # LV2 State
+  # LV2 State - TODO, incomplete
   'lv2state:state':          NS_lv2state+"state",
 
-  # LV2 UI
+  # LV2 UI - TODO, incomplete
   'lv2ui:ui':                NS_lv2ui+"ui",
   'lv2ui:binary':            NS_lv2ui+"binary",
   'lv2ui:events':            NS_lv2ui+"events",
@@ -556,11 +563,13 @@ rdf_prefix = {
   'lv2ui:optionalFeature':   NS_lv2ui+"optionalFeature",
   'lv2ui:requiredFeature':   NS_lv2ui+"requiredFeature",
 
-  # LV2 Units
+  # LV2 Units - TODO, incomplete
   'lv2units:unit':           NS_lv2units+"unit",
   'lv2units:name':           NS_lv2units+"name",
   'lv2units:render':         NS_lv2units+"render",
   'lv2units:symbol':         NS_lv2units+"symbol",
+
+  # FIXME ?
 
   # LV2 Midi Map
   'lv2mm:defaultMidiController': NS_lv2mm+"defaultMidiController",
@@ -702,10 +711,8 @@ def get_c_port_type(value):
     return LV2_PORT_CONTROL
   elif (value_str == "AudioPort"):
     return LV2_PORT_AUDIO
-  elif (value == rdf_prefix['lv2atom:MessagePort']):
-    return LV2_PORT_ATOM_MESSAGE
-  elif (value == rdf_prefix['lv2atom:ValuePort']):
-    return LV2_PORT_ATOM_VALUE
+  elif (value == rdf_prefix['lv2atom:AtomPort']):
+    return LV2_PORT_ATOM
   elif (value == rdf_prefix['lv2cv:CVPort']):
     return LV2_PORT_CV
   elif (value == rdf_prefix['lv2ev:EventPort']):
@@ -716,13 +723,13 @@ def get_c_port_type(value):
     print("LV2_RDF - Got an unknown port type '%s'" % value_str)
     return 0
 
-def get_c_port_event_type(value):
+def get_c_port_supported_type(value):
   if (value == "http://lv2plug.in/ns/ext/midi#MidiEvent"):
-    return LV2_PORT_EVENT_MIDI
-  #elif (value == "http://lv2plug.in/ns/ext/time#Position"):
-    #return LV2_PORT_EVENT_TIME
+    return LV2_PORT_SUPPORTS_MIDI
+  elif (value == "http://lv2plug.in/ns/ext/time#Position"):
+    return LV2_PORT_SUPPORTS_TIME
   else:
-    print("LV2_RDF - Got an unknown port event type '%s'" % value)
+    print("LV2_RDF - Got an unknown port supported type '%s'" % value)
     return 0
 
 def get_c_port_midi_map_type(value):
@@ -835,7 +842,7 @@ def get_c_port_unit_type(value):
   elif (value_str == "semitone12TET"):
     return LV2_UNIT_SEMITONE
   else:
-    print("LV2_RDF - Got an unknown Unit type '%s'" % value_str)
+    print("LV2_RDF - Got an unknown unit type '%s'" % value_str)
     return 0
 
 def get_c_ui_type(value):
@@ -852,7 +859,7 @@ def get_c_ui_type(value):
   elif (value == LV2_EXTERNAL_UI_URI):
     return LV2_UI_EXTERNAL
   else:
-    print("LV2_RDF - Got an unknown UI type '%s'" % value_str)
+    print("LV2_RDF - Got an unknown ui type '%s'" % value_str)
     return 0
 
 # -------------------------------------------------------------------------------
@@ -1224,7 +1231,7 @@ def fill_information(parse, bundle_path):
               or_plugin_value(uri, 'Type', c_class)
 
             # DynManifest, ignored
-            elif (s_object.startswith(NS_lv2dyn)):
+            elif (s_object.startswith(NS_lv2dman)):
               pass
 
             # Host Info, ignored
@@ -1414,11 +1421,7 @@ def fill_information(parse, bundle_path):
           # UI ------------------end
 
           # DynManifest, ignored
-          elif (s_predicate.startswith(NS_lv2dyn)):
-            pass
-
-          # Contexts, ignored
-          elif (s_predicate.startswith(NS_lv2ctx)):
+          elif (s_predicate.startswith(NS_lv2dman)):
             pass
 
           # Host Info, ignored
@@ -1678,14 +1681,34 @@ def fill_information(parse, bundle_path):
           c_port_type = get_c_port_type(port_type)
           py_port['Type'] |= c_port_type
 
-          # TODO - atom buffer types
+          if (c_port_type == LV2_PORT_ATOM):
+            buffer_type_try = get_node_property(s_object, nodes_list, rdf_prefix['lv2atom:bufferType'], None)
 
-          if (c_port_type == LV2_PORT_EVENT):
+            if (buffer_type_try != None):
+              buffer_type = str(buffer_type_try)
+
+              if (buffer_type == rdf_prefix['lv2atom:Sequence']):
+                py_port['Type'] |= LV2_PORT_ATOM_SEQUENCE
+              else:
+                print("LV2_RDF - Got an unknown atom buffer type '%s'" % buffer_type)
+
+              supported_type_try = get_node_property(s_object, nodes_list, rdf_prefix['lv2atom:supports'], None)
+
+              if (supported_type_try != None):
+                supported_type = str(supported_type_try)
+                py_port['Type'] |= get_c_port_supported_type(supported_type)
+              else:
+                print("LV2_RDF - Internal error, Atom Port without supported type")
+
+            else:
+              print("LV2_RDF - Internal error, Atom Port without buffer type")
+
+          elif (c_port_type == LV2_PORT_EVENT):
             event_type_try = get_node_property(s_object, nodes_list, rdf_prefix['lv2ev:supportsEvent'], None)
 
             if (event_type_try != None):
               event_type = str(event_type_try)
-              py_port['Type'] |= get_c_port_event_type(event_type)
+              py_port['Type'] |= get_c_port_supported_type(event_type)
             else:
               print("LV2_RDF - Internal error, Event Port without supported Event")
 

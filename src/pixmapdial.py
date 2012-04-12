@@ -42,7 +42,7 @@ class PixmapDial(QDial):
 
         self.m_label = ""
         self.m_label_pos = QPointF(0.0, 0.0)
-        self.m_label_width = 0
+        self.m_label_width  = 0
         self.m_label_height = 0
         self.m_label_gradient = QLinearGradient(0, 0, 0, 1)
 
@@ -52,7 +52,7 @@ class PixmapDial(QDial):
           self.m_color2 = QColor(0, 0, 0, 0)
           self.m_colorT = [self.palette().text().color(), self.palette().mid().color()]
         else:
-          ## Dark background
+          # Dark background
           self.m_color1 = QColor(0, 0, 0, 255)
           self.m_color2 = QColor(0, 0, 0, 0)
           self.m_colorT = [Qt.white, Qt.darkGray]
@@ -111,7 +111,7 @@ class PixmapDial(QDial):
         return QSize(self.p_size, self.p_size)
 
     def updateSizes(self):
-        self.p_width = self.m_pixmap.width()
+        self.p_width  = self.m_pixmap.width()
         self.p_height = self.m_pixmap.height()
 
         if (self.p_width < 1):
@@ -127,8 +127,8 @@ class PixmapDial(QDial):
           self.p_size = self.p_width
           self.p_count = self.p_height/self.p_width
 
-        self.setMinimumSize(self.p_size, self.p_size+self.m_label_height+5)
-        self.setMaximumSize(self.p_size, self.p_size+self.m_label_height+5)
+        self.setMinimumSize(self.p_size, self.p_size + self.m_label_height + 5)
+        self.setMaximumSize(self.p_size, self.p_size + self.m_label_height + 5)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -168,4 +168,4 @@ class PixmapDial(QDial):
 
     def resizeEvent(self, event):
         self.updateSizes()
-        return QDial.resizeEvent(self, event)
+        QDial.resizeEvent(self, event)

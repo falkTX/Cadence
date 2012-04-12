@@ -184,7 +184,9 @@ else:
   ]
 
 # ------------------------------------------------------------------------------------------------
-# Carla command-line tools
+# Search for Carla library and tools
+
+carla_library_path = ""
 
 carla_discovery_unix32 = ""
 carla_discovery_unix64 = ""
@@ -201,6 +203,13 @@ carla_bridge_lv2_qt4  = ""
 carla_bridge_lv2_x11  = ""
 
 if (WINDOWS):
+  carla_libname = "carla_backend.dll"
+elif (MACOS):
+  carla_libname = "carla_backend.dylib"
+else:
+  carla_libname = "carla_backend.so"
+
+if (WINDOWS):
   PATH = (os.path.join(PROGRAMFILES, "Cadence", "carla"),)
 
 else:
@@ -212,6 +221,23 @@ else:
     PATH = ("/usr/bin", "/usr/local/bin")
 
 CWD = sys.path[0]
+
+# carla-backend
+if (os.path.exists(os.path.join(CWD, "carla", carla_libname))):
+  carla_library_path = os.path.join(CWD, "carla", carla_libname)
+else:
+  if (WINDOWS):
+    CARLA_PATH = (os.path.join(PROGRAMFILES, "Cadence"),)
+  elif (MACOS):
+    CARLA_PATH = ("/usr/lib", "/usr/local/lib/") # FIXME
+  else:
+    CARLA_PATH = ("/usr/lib", "/usr/local/lib/")
+  for p in CARLA_PATH:
+    if (os.path.exists(os.path.join(p, "carla", carla_libname))):
+      carla_library_path = os.path.join(p, "carla", carla_libname)
+      break
+
+print(carla_library_path)
 
 # discovery-unix32
 if (os.path.exists(os.path.join(CWD, "carla-discovery", "carla-discovery-unix32"))):
@@ -547,7 +573,7 @@ def checkPluginLV2(rdf_info):
       elif (PortType & lv2_rdf.LV2_PORT_OUTPUT):
         pinfo['audio.outs'] += 1
 
-    elif (PortType & lv2_rdf.LV2_PORT_EVENT_MIDI):
+    elif (PortType & lv2_rdf.LV2_PORT_SUPPORTS_MIDI):
       pinfo['midi.total'] += 1
       if (PortType & lv2_rdf.LV2_PORT_INPUT):
         pinfo['midi.ins'] += 1
@@ -791,14 +817,7 @@ class Host(object):
     def __init__(self):
         object.__init__(self)
 
-        if (WINDOWS):
-          libname = "carla_backend.dll"
-        elif (MACOS):
-          libname = "carla_backend.dylib"
-        else:
-          libname = "carla_backend.so"
-
-        self.lib = cdll.LoadLibrary(os.path.join("carla", libname))
+        self.lib = cdll.LoadLibrary(carla_library_path)
 
         self.lib.carla_init.argtypes = [c_char_p]
         self.lib.carla_init.restype = c_bool

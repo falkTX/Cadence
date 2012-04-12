@@ -113,8 +113,14 @@ class DigitalPeakMeter(QWidget):
           value = 5
         self.m_smoothMultiplier = value
 
+    def minimumSizeHint(self):
+        return QSize(30, 30)
+
+    def sizeHint(self):
+        return QSize(self.m_width, self.m_height)
+
     def updateSizes(self):
-        self.m_width = self.width()
+        self.m_width  = self.width()
         self.m_height = self.height()
         self.m_sizeMeter = 0
 
@@ -129,12 +135,6 @@ class DigitalPeakMeter(QWidget):
             self.m_sizeMeter = self.m_width/self.m_channels
 
         self.update()
-
-    def minimumSizeHint(self):
-        return QSize(30, 30)
-
-    def sizeHint(self):
-        return QSize(self.m_width, self.m_height)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -152,14 +152,14 @@ class DigitalPeakMeter(QWidget):
             continue
 
           if (self.m_orientation == self.HORIZONTAL):
-            value = self.m_width*level
+            value = level*self.m_width
           elif (self.m_orientation == self.VERTICAL):
-            value = self.m_height-(self.m_height*level)
+            value = float(self.m_height)-(level*self.m_height)
           else:
-            value = 0
+            value = 0.0
 
-          if (value < 0):
-            value = 0
+          if (value < 0.0):
+            value = 0.0
 
           # Don't bounce the meter so much
           if (self.m_smoothMultiplier > 0):
@@ -224,7 +224,7 @@ class DigitalPeakMeter(QWidget):
           painter.setPen(QColor(110, 15, 15, 100))
           painter.drawLine(1, lsmall-(lsmall/1.04), lfull, lsmall-(lsmall/1.04))
 
-        QWidget.paintEvent(self, event)
+        #QWidget.paintEvent(self, event)
 
     def resizeEvent(self, event):
         self.updateSizes()
