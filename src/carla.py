@@ -100,10 +100,8 @@ def CustomDataType2String(dtype):
   elif (dtype == CUSTOM_DATA_FLOAT):
     return "float"
   elif (dtype == CUSTOM_DATA_STRING):
-    print("Carla requiested type save - string", dtype)
     return "string"
   elif (dtype == CUSTOM_DATA_BINARY):
-    print("Carla requiested type save - binary", dtype)
     return "binary"
   else:
     return "null"

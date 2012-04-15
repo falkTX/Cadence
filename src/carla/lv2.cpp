@@ -1986,7 +1986,7 @@ public:
                         for (i=0; i < rdf_descriptor->PortCount; i++)
                         {
                             LV2_Property PortType = rdf_descriptor->Ports[i].Type;
-                            if (bool(LV2_IS_PORT_AUDIO(PortType) || LV2_IS_PORT_CONTROL(PortType) || LV2_IS_PORT_EVENT(PortType) || LV2_IS_PORT_MIDI_LL(PortType)) == false)
+                            if (bool(LV2_IS_PORT_AUDIO(PortType) || LV2_IS_PORT_CONTROL(PortType) || LV2_IS_PORT_ATOM_SEQUENCE(PortType) || LV2_IS_PORT_EVENT(PortType) || LV2_IS_PORT_MIDI_LL(PortType)) == false)
                             {
                                 qCritical("Got unsupported port -> %i", PortType);
                                 if (! LV2_IS_PORT_OPTIONAL(rdf_descriptor->Ports[i].Properties))
