@@ -2090,17 +2090,17 @@ public:
                                             switch (rdf_descriptor->UIs[i].Type)
                                             {
                                             case LV2_UI_QT4:
-                                                //if (is_ui_bridgeable(i))
-                                                //    eQt4 = i;
-                                                //else
-                                                iQt4 = i;
+                                                if (is_ui_bridgeable(i))
+                                                    eQt4 = i;
+                                                else
+                                                    iQt4 = i;
                                                 break;
 
                                             case LV2_UI_X11:
-                                                //if (is_ui_bridgeable(i))
-                                                //    eX11 = i;
-                                                //else
-                                                iX11 = i;
+                                                if (is_ui_bridgeable(i))
+                                                    eX11 = i;
+                                                else
+                                                    iX11 = i;
                                                 break;
 
                                             case LV2_UI_GTK2:

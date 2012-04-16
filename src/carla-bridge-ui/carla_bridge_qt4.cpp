@@ -58,10 +58,12 @@ void toolkit_loop(const char* ui_title, bool reparent)
     if (reparent)
     {
         window = new QDialog();
+	window->resize(50, 50);
         window->setLayout(new QVBoxLayout(window));
 
         QWidget* widget = (QWidget*)ui->get_widget();
         window->layout()->addWidget(widget);
+	window->adjustSize();
         widget->setParent(window);
         widget->show();
     }

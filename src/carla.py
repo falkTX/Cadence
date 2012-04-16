@@ -1311,7 +1311,7 @@ class PluginGUI(QDialog):
         self.setLayout(self.myLayout)
 
         self.resizable = resizable
-        self.setNewSize(300, 300)
+        self.setNewSize(50, 50)
 
         self.setWindowTitle("%s (GUI)" % (plugin_name))
 

@@ -33,7 +33,7 @@ carla_backend:
 
 carla_bridges:
 # 	$(MAKE) native$(_arch_n) -C src/carla-bridges
-# 	$(MAKE) -C src/carla-bridge-ui
+	$(MAKE) -C src/carla-bridge-ui
 
 carla_discovery:
 # 	$(MAKE) native$(_arch_n) -C src/carla-discovery
