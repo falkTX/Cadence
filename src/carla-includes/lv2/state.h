@@ -54,7 +54,6 @@ typedef void* LV2_State_Make_Path_Handle;
    (de-)serialise the value data, or whether it is even possible to do so.
 */
 typedef enum {
-
 	/**
 	   Plain Old Data.
 
@@ -90,7 +89,6 @@ typedef enum {
 	   and portability.
 	*/
 	LV2_STATE_IS_NATIVE = 1 << 2
-
 } LV2_State_Flags;
 
 /** A status code for state functions. */
@@ -188,7 +186,6 @@ typedef const void* (*LV2_State_Retrieve_Function)(
    with meaningful types to avoid such problems in the future.
 */
 typedef struct _LV2_State_Interface {
-
 	/**
 	   Save plugin state using a host-provided @p store callback.
 
@@ -261,14 +258,12 @@ typedef struct _LV2_State_Interface {
 	                            LV2_State_Handle            handle,
 	                            uint32_t                    flags,
 	                            const LV2_Feature *const *  features);
-
 } LV2_State_Interface;
 
 /**
    Feature data for state:mapPath (LV2_STATE__mapPath).
 */
 typedef struct {
-
 	/**
 	   Opaque host data.
 	*/
@@ -311,14 +306,12 @@ typedef struct {
 	*/
 	char* (*absolute_path)(LV2_State_Map_Path_Handle handle,
 	                       const char*               abstract_path);
-
 } LV2_State_Map_Path;
 
 /**
    Feature data for state:makePath (@ref LV2_STATE__makePath).
 */
 typedef struct {
-
 	/**
 	   Opaque host data.
 	*/
@@ -349,7 +342,6 @@ typedef struct {
 	*/
 	char* (*path)(LV2_State_Make_Path_Handle handle,
 	              const char*                path);
-
 } LV2_State_Make_Path;
 
 #ifdef __cplusplus

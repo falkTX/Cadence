@@ -30,8 +30,6 @@
 
 #define LV2_ATOM__Atom          LV2_ATOM_PREFIX "Atom"
 #define LV2_ATOM__AtomPort      LV2_ATOM_PREFIX "AtomPort"
-#define LV2_ATOM__AudioFrames   LV2_ATOM_PREFIX "AudioFrames"
-#define LV2_ATOM__Beats         LV2_ATOM_PREFIX "Beats"
 #define LV2_ATOM__Blank         LV2_ATOM_PREFIX "Blank"
 #define LV2_ATOM__Bool          LV2_ATOM_PREFIX "Bool"
 #define LV2_ATOM__Chunk         LV2_ATOM_PREFIX "Chunk"
@@ -39,8 +37,8 @@
 #define LV2_ATOM__Event         LV2_ATOM_PREFIX "Event"
 #define LV2_ATOM__Float         LV2_ATOM_PREFIX "Float"
 #define LV2_ATOM__Int           LV2_ATOM_PREFIX "Int"
-#define LV2_ATOM__Long          LV2_ATOM_PREFIX "Long"
 #define LV2_ATOM__Literal       LV2_ATOM_PREFIX "Literal"
+#define LV2_ATOM__Long          LV2_ATOM_PREFIX "Long"
 #define LV2_ATOM__Number        LV2_ATOM_PREFIX "Number"
 #define LV2_ATOM__Object        LV2_ATOM_PREFIX "Object"
 #define LV2_ATOM__Path          LV2_ATOM_PREFIX "Path"
@@ -49,11 +47,11 @@
 #define LV2_ATOM__Sequence      LV2_ATOM_PREFIX "Sequence"
 #define LV2_ATOM__Sound         LV2_ATOM_PREFIX "Sound"
 #define LV2_ATOM__String        LV2_ATOM_PREFIX "String"
-#define LV2_ATOM__TimeUnit      LV2_ATOM_PREFIX "TimeUnit"
 #define LV2_ATOM__Tuple         LV2_ATOM_PREFIX "Tuple"
 #define LV2_ATOM__URI           LV2_ATOM_PREFIX "URI"
 #define LV2_ATOM__URID          LV2_ATOM_PREFIX "URID"
 #define LV2_ATOM__Vector        LV2_ATOM_PREFIX "Vector"
+#define LV2_ATOM__atomTransfer  LV2_ATOM_PREFIX "atomTransfer"
 #define LV2_ATOM__beatTime      LV2_ATOM_PREFIX "beatTime"
 #define LV2_ATOM__bufferType    LV2_ATOM_PREFIX "bufferType"
 #define LV2_ATOM__childType     LV2_ATOM_PREFIX "childType"
@@ -207,8 +205,7 @@ typedef struct {
 
    The unit field is either a URID that described an appropriate time stamp
    type, or may be 0 where a default stamp type is known.  For
-   LV2_Descriptor::run(), the default stamp type is atom:AudioFrames, i.e.
-   LV2_Atom_Audio_Time.
+   LV2_Descriptor::run(), the default stamp type is audio frames.
 
    The contents of a sequence is a series of LV2_Atom_Event, each aligned
    to 64-bits, e.g.:

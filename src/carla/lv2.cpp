@@ -28,10 +28,12 @@
 #include "lv2/event.h"
 #include "lv2/event-helpers.h"
 #include "lv2/instance-access.h"
+#include "lv2/midi.h"
 #include "lv2/state.h"
+#include "lv2/time.h"
+#include "lv2/ui.h"
 #include "lv2/uri-map.h"
 #include "lv2/urid.h"
-#include "lv2/ui.h"
 
 #include "lv2/lv2-miditype.h"
 #include "lv2/lv2-midifunctions.h"
