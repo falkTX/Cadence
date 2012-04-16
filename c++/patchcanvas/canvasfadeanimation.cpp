@@ -17,7 +17,7 @@
 
 #include "canvasfadeanimation.h"
 
-#include <QGraphicsItem>
+#include "canvasbox.h"
 
 START_NAMESPACE_PATCHCANVAS
 
@@ -63,6 +63,9 @@ void CanvasFadeAnimation::updateCurrentTime(int time)
       value = 1.0-(float(time)/m_duration);
 
     m_item->setOpacity(value);
+
+    if (m_item->type() == CanvasBoxType)
+        ((CanvasBox*)m_item)->setShadowOpacity(value);
 }
 
 void CanvasFadeAnimation::updateState(QAbstractAnimation::State /*newState*/, QAbstractAnimation::State /*oldState*/)

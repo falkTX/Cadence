@@ -136,6 +136,12 @@ void CanvasBox::setGroupName(QString group_name)
     updatePositions();
 }
 
+void CanvasBox::setShadowOpacity(float opacity)
+{
+    if (shadow)
+        shadow->setOpacity(opacity);
+}
+
 CanvasPort* CanvasBox::addPortFromGroup(int port_id, QString port_name, PortMode port_mode, PortType port_type)
 {
     if (m_port_list_ids.count() == 0)

@@ -54,6 +54,8 @@ public:
     void setSplit(bool split, PortMode mode=PORT_MODE_NULL);
     void setGroupName(QString group_name);
 
+    void setShadowOpacity(float opacity);
+
     CanvasPort* addPortFromGroup(int port_id, QString port_name, PortMode port_mode, PortType port_type);
     void removePortFromGroup(int port_id);
     void addLineFromGroup(AbstractCanvasLine* line, int connection_id);

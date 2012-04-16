@@ -31,6 +31,7 @@ class CanvasBoxShadow : public QGraphicsDropShadowEffect
 public:
     CanvasBoxShadow(QObject* parent);
     void setFakeParent(CanvasBox* fakeParent);
+    void setOpacity(float opacity);
 
 protected:
     virtual void draw(QPainter* painter);

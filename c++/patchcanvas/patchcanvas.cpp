@@ -305,6 +305,15 @@ void addGroup(int group_id, QString group_name, SplitOption split, Icon icon)
     if (canvas.debug)
         qDebug("PatchCanvas::addGroup(%i, %s, %s, %s)", group_id, group_name.toUtf8().constData(), split2str(split), icon2str(icon));
 
+    foreach (const group_dict_t& group, canvas.group_list)
+    {
+        if (group.group_id == group_id)
+        {
+            qWarning("PatchCanvas::addGroup(%i, %s, %s, %s) - group already exists", group_id, group_name.toUtf8().constData(), split2str(split), icon2str(icon));
+            return;
+        }
+    }
+
     if (split == SPLIT_UNDEF && features.handle_group_pos)
         split = static_cast<SplitOption>(canvas.settings->value(QString("CanvasPositions/%1_SPLIT").arg(group_name), split).toInt());
 
@@ -716,6 +725,15 @@ void addPort(int group_id, int port_id, QString port_name, PortMode port_mode, P
     if (canvas.debug)
         qDebug("PatchCanvas::addPort(%i, %i, %s, %s, %s)", group_id, port_id, port_name.toUtf8().constData(), port_mode2str(port_mode), port_type2str(port_type));
 
+    foreach (const port_dict_t& port, canvas.port_list)
+    {
+        if (port.group_id == group_id and port.port_id == port_id)
+        {
+            qWarning("PatchCanvas::addPort(%i, %i, %s, %s, %s) - port already exists" , group_id, port_id, port_name.toUtf8().constData(), port_mode2str(port_mode), port_type2str(port_type));
+            return;
+        }
+    }
+
     CanvasBox* box_widget = 0;
     CanvasPort* port_widget = 0;
 
@@ -936,6 +954,21 @@ void arrange()
 {
     if (canvas.debug)
         qDebug("PatchCanvas::Arrange()");
+}
+
+void updateZValues()
+{
+    if (canvas.debug)
+        qDebug("PatchCanvas::updateZValues()");
+
+
+    foreach (const group_dict_t& group, canvas.group_list)
+    {
+        group.widgets[0]->resetLinesZValue();
+
+        if (group.split and group.widgets[1])
+            group.widgets[1]->resetLinesZValue();
+    }
 }
 
 /* Extra Internal functions */

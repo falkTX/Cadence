@@ -128,6 +128,7 @@ void connectPorts(int connection_id, int port_out_id, int port_in_id);
 void disconnectPorts(int connection_id);
 
 void arrange();
+void updateZValues();
 
 END_NAMESPACE_PATCHCANVAS
 

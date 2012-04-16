@@ -156,7 +156,7 @@ CanvasTestApp::CanvasTestApp(QWidget *parent) :
     options.auto_hide_groups = false;
     options.use_bezier_lines = true;
     options.antialiasing = PatchCanvas::ANTIALIASING_SMALL;
-    options.eyecandy = PatchCanvas::EYECANDY_FULL;
+    options.eyecandy = PatchCanvas::EYECANDY_SMALL;
     options.theme_name = PatchCanvas::getDefaultThemeName();
 
     PatchCanvas::features_t features;

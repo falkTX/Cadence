@@ -36,6 +36,13 @@ void CanvasBoxShadow::setFakeParent(CanvasBox* fakeParent)
     m_fakeParent = fakeParent;
 }
 
+void CanvasBoxShadow::setOpacity(float opacity)
+{
+        QColor color(canvas.theme->box_shadow);
+        color.setAlphaF(opacity);
+        setColor(color);
+}
+
 void CanvasBoxShadow::draw(QPainter* painter)
 {
     if (m_fakeParent)
