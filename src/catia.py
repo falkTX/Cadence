@@ -612,9 +612,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
         self.act_jack_render.setEnabled(canRender)
         self.b_jack_render.setEnabled(canRender)
-        self.menu_Transport.setEnabled(True)
-        self.group_transport.setEnabled(True)
         self.menuJackServer(True)
+        self.menuJackTransport(True)
 
         self.cb_buffer_size.setEnabled(True)
         self.cb_sample_rate.setEnabled(bool(DBus.jack)) # DBus.jack and jacksettings.getSampleRate() != -1
@@ -662,9 +661,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
         self.act_jack_render.setEnabled(False)
         self.b_jack_render.setEnabled(False)
-        self.menu_Transport.setEnabled(False)
-        self.group_transport.setEnabled(False)
         self.menuJackServer(False)
+        self.menuJackTransport(False)
 
         if (self.m_selected_transport_view == TRANSPORT_VIEW_HMS):
           self.label_time.setText("00:00:00")
@@ -691,14 +689,22 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
           self.act_tools_jack_stop.setEnabled(started)
           self.menuA2JBridge(False)
 
+    def menuJackTransport(self, enabled):
+        self.act_transport_play.setEnabled(enabled)
+        self.act_transport_stop.setEnabled(enabled)
+        self.act_transport_backwards.setEnabled(enabled)
+        self.act_transport_forwards.setEnabled(enabled)
+        self.menu_Transport.setEnabled(enabled)
+        self.group_transport.setEnabled(enabled)
+
     def menuA2JBridge(self, started):
-        if (DBus.jack and DBus.jack.IsStarted()):
+        if (DBus.jack and not DBus.jack.IsStarted()):
+          self.act_tools_a2j_start.setEnabled(False)
+          self.act_tools_a2j_stop.setEnabled(False)
+        else:
           self.act_tools_a2j_start.setEnabled(not started)
           self.act_tools_a2j_stop.setEnabled(started)
           self.act_tools_a2j_export_hw.setEnabled(not started)
-        else:
-          self.act_tools_a2j_start.setEnabled(False)
-          self.act_tools_a2j_stop.setEnabled(False)
 
     def DBusSignalReceiver(self, *args, **kwds):
         if (kwds['interface'] == "org.freedesktop.DBus" and kwds['path'] == "/org/freedesktop/DBus" and kwds['member'] == "NameOwnerChanged"):

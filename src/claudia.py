@@ -1078,8 +1078,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         self.act_jack_render.setEnabled(canRender)
         self.b_jack_render.setEnabled(canRender)
-        self.menu_Transport.setEnabled(True)
-        self.group_transport.setEnabled(True)
+        self.menuJackTransport(True)
 
         self.cb_buffer_size.setEnabled(True)
         self.cb_sample_rate.setEnabled(True) # jacksettings.getSampleRate() != -1
@@ -1121,8 +1120,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         self.act_jack_render.setEnabled(False)
         self.b_jack_render.setEnabled(False)
-        self.menu_Transport.setEnabled(False)
-        self.group_transport.setEnabled(False)
+        self.menuJackTransport(False)
 
         if (self.systray):
           self.systray.setActionEnabled("tools_render", False)
@@ -1236,6 +1234,14 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         patchcanvas.clear()
 
+    def menuJackTransport(self, enabled):
+        self.act_transport_play.setEnabled(enabled)
+        self.act_transport_stop.setEnabled(enabled)
+        self.act_transport_backwards.setEnabled(enabled)
+        self.act_transport_forwards.setEnabled(enabled)
+        self.menu_Transport.setEnabled(enabled)
+        self.group_transport.setEnabled(enabled)
+
     def systray_closed(self):
         self.hide()
         self.close()
@@ -1251,7 +1257,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
     def DBusSignalReceiver(self, *args, **kwds):
         if (kwds['interface'] == "org.freedesktop.DBus" and kwds['path'] == "/org/freedesktop/DBus" and kwds['member'] == "NameOwnerChanged"):
           appInterface, appId, newId = args
-          print("appInterface crashed", appInterface)
+          #print("appInterface crashed", appInterface)
 
           if (not newId):
             # Something crashed
