@@ -136,9 +136,9 @@ struct LV2_RDF_PortScalePoint {
 #define LV2_PORT_OUTPUT                  0x02
 #define LV2_PORT_CONTROL                 0x04
 #define LV2_PORT_AUDIO                   0x08
-#define LV2_PORT_ATOM                    0x10
-#define LV2_PORT_ATOM_SEQUENCE          (0x20 | LV2_PORT_ATOM)
-#define LV2_PORT_CV                      0x40
+#define LV2_PORT_CV                      0x10
+#define LV2_PORT_ATOM                    0x20
+#define LV2_PORT_ATOM_SEQUENCE          (0x40 | LV2_PORT_ATOM)
 #define LV2_PORT_EVENT                   0x80
 #define LV2_PORT_MIDI_LL                 0x100
 

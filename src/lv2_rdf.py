@@ -5,15 +5,13 @@
 #  LV2 URIs
 
 LV2_ATOM_URI                   = "http://lv2plug.in/ns/ext/atom"
-LV2_CV_PORT_URI                = "http://lv2plug.in/ns/ext/cv-port"
 LV2_DATA_ACCESS_URI            = "http://lv2plug.in/ns/ext/data-access"
 LV2_DYN_MANIFEST_URI           = "http://lv2plug.in/ns/ext/dynmanifest"
 LV2_EVENT_URI                  = "http://lv2plug.in/ns/ext/event"
-LV2_HOST_INFO_URI              = "http://lv2plug.in/ns/ext/host-info"
 LV2_INSTANCE_ACCESS_URI        = "http://lv2plug.in/ns/ext/instance-access"
 LV2_LOG_URI                    = "http://lv2plug.in/ns/ext/log"
 LV2_MIDI_URI                   = "http://lv2plug.in/ns/ext/midi"
-LV2_PARAMETERS_URI             = "http://lv2plug.in/ns/ext/parameters" # FIXME?
+LV2_PARAMETERS_URI             = "http://lv2plug.in/ns/ext/parameters"
 LV2_PATCH_URI                  = "http://lv2plug.in/ns/ext/patch"
 LV2_PORT_GROUPS_URI            = "http://lv2plug.in/ns/ext/port-groups"
 LV2_PORT_PROPS_URI             = "http://lv2plug.in/ns/ext/port-props"
@@ -39,12 +37,12 @@ LV2_RDF_Supported_Features_URI = (
   LV2_ATOM_URI,
   LV2_DATA_ACCESS_URI,
   LV2_EVENT_URI,
-  LV2_HOST_INFO_URI,
   LV2_INSTANCE_ACCESS_URI,
   LV2_MIDI_URI,
   LV2_PORT_PROPS_URI,
   LV2_PRESETS_URI,
   LV2_STATE_URI,
+  LV2_TIME_URI,
   LV2_URI_MAP_URI,
   LV2_URID_URI,
   LV2_UI_URI,
@@ -145,9 +143,9 @@ LV2_PORT_INPUT                 = 0x01
 LV2_PORT_OUTPUT                = 0x02
 LV2_PORT_CONTROL               = 0x04
 LV2_PORT_AUDIO                 = 0x08
-LV2_PORT_ATOM                  = 0x10
-LV2_PORT_ATOM_SEQUENCE         = 0x20 | LV2_PORT_ATOM
-LV2_PORT_CV                    = 0x40
+LV2_PORT_CV                    = 0x10
+LV2_PORT_ATOM                  = 0x20
+LV2_PORT_ATOM_SEQUENCE         = 0x40 | LV2_PORT_ATOM
 LV2_PORT_EVENT                 = 0x80
 LV2_PORT_MIDI_LL               = 0x100
 
@@ -458,7 +456,7 @@ PyLV2_RDF_Descriptor = {
 #  RDF data and conversions
 
 # Namespaces
-NS_dc   = "http://purl.org/dc/terms/"
+NS_dct  = "http://purl.org/dc/terms/"
 NS_doap = "http://usefulinc.com/ns/doap#"
 NS_foaf = "http://xmlns.com/foaf/0.1/"
 NS_rdf  = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -466,13 +464,12 @@ NS_rdfs = "http://www.w3.org/2000/01/rdf-schema#"
 
 NS_lv2       = "http://lv2plug.in/ns/lv2core#"
 NS_lv2atom   = "http://lv2plug.in/ns/ext/atom#"
-NS_lv2cv     = "http://lv2plug.in/ns/ext/cv-port#"
 NS_lv2da     = "http://lv2plug.in/ns/ext/data-access#"
 NS_lv2dman   = "http://lv2plug.in/ns/ext/dynmanifest#"
 NS_lv2ev     = "http://lv2plug.in/ns/ext/event#"
-NS_lv2hi     = "http://lv2plug.in/ns/ext/host-info#"
 NS_lv2ia     = "http://lv2plug.in/ns/ext/instance-access#"
 NS_lv2log    = "http://lv2plug.in/ns/ext/log#"
+NS_lv2midi   = "http://lv2plug.in/ns/ext/midi#"
 NS_lv2param  = "http://lv2plug.in/ns/ext/parameters#"
 NS_lv2patch  = "http://lv2plug.in/ns/ext/patch#"
 NS_lv2pg     = "http://lv2plug.in/ns/ext/port-groups#"
@@ -480,19 +477,21 @@ NS_lv2pprops = "http://lv2plug.in/ns/ext/port-props#"
 NS_lv2pset   = "http://lv2plug.in/ns/ext/presets#"
 NS_lv2rsz    = "http://lv2plug.in/ns/ext/resize-port#"
 NS_lv2state  = "http://lv2plug.in/ns/ext/state#"
+NS_lv2time   = "http://lv2plug.in/ns/ext/time#"
 NS_lv2umap   = "http://lv2plug.in/ns/ext/uri-map#"
 NS_lv2urid   = "http://lv2plug.in/ns/ext/urid#"
 NS_lv2work   = "http://lv2plug.in/ns/ext/worker#"
 NS_lv2ui     = "http://lv2plug.in/ns/extensions/ui#"
 NS_lv2units  = "http://lv2plug.in/ns/extensions/units#"
+NS_lv2mm     = "http://ll-plugins.nongnu.org/lv2/ext/midimap#"
 #NS_llext     = "http://ll-plugins.nongnu.org/lv2/ext/"
-NS_lv2mm     = "http://ll-plugins.nongnu.org/lv2/ext/midimap#" # FIXME?
-NS_llplug    = "http://ll-plugins.nongnu.org/lv2/namespace#" # FIXME?
+#NS_llplug    = "http://ll-plugins.nongnu.org/lv2/namespace#" # FIXME?
 
 # Prefixes (sorted alphabetically and by type)
 rdf_prefix = {
   # Base types
-  'dc:replaces':      NS_dc+"replaces",
+  'dct:replaces':     NS_dct+"replaces",
+
   'doap:creator':     NS_doap+"creator",
   'doap:description': NS_doap+"description",
   'doap:developer':   NS_doap+"developer",
@@ -500,7 +499,9 @@ rdf_prefix = {
   'doap:license':     NS_doap+"license",
   'doap:maintainer':  NS_doap+"maintainer",
   'doap:name':        NS_doap+"name",
+
   'foaf:name':        NS_foaf+"name",
+
   'rdf:type':         NS_rdf+"type",
   'rdf:value':        NS_rdf+"value",
   'rdfs:Class':       NS_rdfs+"Class",
@@ -513,192 +514,232 @@ rdf_prefix = {
   'lv2:appliesTo':           NS_lv2+"appliesTo",
   'lv2:binary':              NS_lv2+"binary",
   'lv2:default':             NS_lv2+"default",
+  'lv2:designation':         NS_lv2+"designation",
   'lv2:documentation':       NS_lv2+"documentation",
   'lv2:extensionData':       NS_lv2+"extensionData",
   'lv2:freeWheeling':        NS_lv2+"freeWheeling",
-  'lv2:hasParameter':        NS_lv2+"hasParameter",
   'lv2:index':               NS_lv2+"index",
-  'lv2:isParameter':         NS_lv2+"isParameter",
   'lv2:latency':             NS_lv2+"latency",
   'lv2:maximum':             NS_lv2+"maximum",
   'lv2:minimum':             NS_lv2+"minimum",
   'lv2:name':                NS_lv2+"name",
+  'lv2:optionalFeature':     NS_lv2+"optionalFeature",
   'lv2:port':                NS_lv2+"port",
   'lv2:portProperty':        NS_lv2+"portProperty",
   'lv2:scalePoint':          NS_lv2+"scalePoint",
+  'lv2:requiredFeature':     NS_lv2+"requiredFeature",
   'lv2:symbol':              NS_lv2+"symbol",
 
-  'lv2:optionalFeature':     NS_lv2+"optionalFeature",
-  'lv2:requiredFeature':     NS_lv2+"requiredFeature",
-
-  # LV2 Atom - TODO, incomplete
+  # LV2 Atom
   'lv2atom:AtomPort':        NS_lv2atom+"AtomPort",
+  'lv2atom:beatTime':        NS_lv2atom+"beatTime",
   'lv2atom:bufferType':      NS_lv2atom+"bufferType",
-  'lv2atom:Sequence':        NS_lv2atom+"Sequence",
-  'lv2atom:String':          NS_lv2atom+"String",
+  #'lv2atom:cType':           NS_lv2atom+"cType",
+  'lv2atom:childType':       NS_lv2atom+"childType",
+  'lv2atom:frameTime':       NS_lv2atom+"frameTime",
+  #'lv2atom:stringType':      NS_lv2atom+"stringType",
   'lv2atom:supports':        NS_lv2atom+"supports",
 
-  # LV2 CV
-  'lv2cv:CVPort':            NS_lv2cv+"CVPort",
+  # LV2 Event
+  'lv2ev:EventPort':          NS_lv2ev+"EventPort",
+  'lv2ev:generatesTimeStamp': NS_lv2ev+"generatesTimeStamp",
+  'lv2ev:inheritsEvent':      NS_lv2ev+"inheritsEvent",
+  'lv2ev:inheritsTimeStamp':  NS_lv2ev+"inheritsTimeStamp",
+  'lv2ev:supportsEvent':      NS_lv2ev+"supportsEvent",
+  'lv2ev:supportsTimeStamp':  NS_lv2ev+"supportsTimeStamp",
 
-  # LV2 Event - TODO, incomplete
-  'lv2ev:EventPort':         NS_lv2ev+"EventPort",
-  'lv2ev:supportsEvent':     NS_lv2ev+"supportsEvent",
+  # LV2 MIDI
+  'lv2midi:MidiEvent':        NS_lv2midi+"MidiEvent",
+  'lv2midi:benderValue':      NS_lv2midi+"benderValue",
+  'lv2midi:byteNumber':       NS_lv2midi+"byteNumber",
+  'lv2midi:chunk':            NS_lv2midi+"chunk",
+  'lv2midi:controllerNumber': NS_lv2midi+"controllerNumber",
+  'lv2midi:controllerValue':  NS_lv2midi+"controllerValue",
+  'lv2midi:noteNumber':       NS_lv2midi+"noteNumber",
+  'lv2midi:pressure':         NS_lv2midi+"pressure",
+  'lv2midi:programNumber':    NS_lv2midi+"programNumber",
+  'lv2midi:property':         NS_lv2midi+"property",
+  'lv2midi:songNumber':       NS_lv2midi+"songNumber",
+  'lv2midi:songPosition':     NS_lv2midi+"songPosition",
+  'lv2midi:status':           NS_lv2midi+"status",
+  'lv2midi:statusMask':       NS_lv2midi+"statusMask",
+  'lv2midi:velocity':         NS_lv2midi+"velocity",
 
-  # LV2 Presets - FIXME appliesTo ?, see when new lv2 gets released
+  # LV2 Presets
   'lv2pset:Preset':          NS_lv2pset+"Preset",
+  'lv2pset:preset':          NS_lv2pset+"preset",
   'lv2pset:value':           NS_lv2pset+"value",
 
-  # LV2 State - TODO, incomplete
+  # LV2 State
   'lv2state:state':          NS_lv2state+"state",
 
-  # LV2 UI - TODO, incomplete
+  # LV2 Time
+  'lv2time:Position':        NS_lv2time+"Position",
+  'lv2time:barBeat':         NS_lv2time+"barBeat",
+  'lv2time:bar':             NS_lv2time+"bar",
+  'lv2time:beat':            NS_lv2time+"beat",
+  'lv2time:beatUnit':        NS_lv2time+"beatUnit",
+  'lv2time:beatsPerBar':     NS_lv2time+"beatsPerBar",
+  'lv2time:beatsPerMinute':  NS_lv2time+"beatsPerMinute",
+  'lv2time:frame':           NS_lv2time+"frame",
+  'lv2time:framesPerSecond': NS_lv2time+"framesPerSecond",
+  'lv2time:position':        NS_lv2time+"position",
+  'lv2time:speed':           NS_lv2time+"speed",
+
+  # LV2 UI
   'lv2ui:ui':                NS_lv2ui+"ui",
   'lv2ui:binary':            NS_lv2ui+"binary",
-  'lv2ui:events':            NS_lv2ui+"events",
+  'lv2ui:notifyType':        NS_lv2ui+"notifyType",
   'lv2ui:portIndex':         NS_lv2ui+"portIndex",
+  'lv2ui:plugin':            NS_lv2ui+"plugin",
   'lv2ui:portNotification':  NS_lv2ui+"portNotification",
-  'lv2ui:residentSONames':   NS_lv2ui+"residentSONames",
+  'lv2ui:protocol':          NS_lv2ui+"protocol",
 
-  'lv2ui:optionalFeature':   NS_lv2ui+"optionalFeature",
-  'lv2ui:requiredFeature':   NS_lv2ui+"requiredFeature",
-
-  # LV2 Units - TODO, incomplete
+  # LV2 Units
   'lv2units:unit':           NS_lv2units+"unit",
+  'lv2units:conversion':     NS_lv2units+"conversion",
+  'lv2units:factor':         NS_lv2units+"factor",
   'lv2units:name':           NS_lv2units+"name",
+  'lv2units:prefixConversion': NS_lv2units+"prefixConversion",
   'lv2units:render':         NS_lv2units+"render",
   'lv2units:symbol':         NS_lv2units+"symbol",
-
-  # FIXME ?
+  'lv2units:to':             NS_lv2units+"to",
 
   # LV2 Midi Map
   'lv2mm:defaultMidiController': NS_lv2mm+"defaultMidiController",
   'lv2mm:controllerType':        NS_lv2mm+"controllerType",
-  'lv2mm:controllerNumber':      NS_lv2mm+"controllerNumber",
+  'lv2mm:controllerNumber':      NS_lv2mm+"controllerNumber"
 
   # ll-plugins
-  'llplug:MathConstantPlugin':   NS_llplug+"MathConstantPlugin",
-  'llplug:MathFunctionPlugin':   NS_llplug+"MathFunctionPlugin",
-  'llplug:pegName':              NS_llplug+"pegName",
-  'llplug:svgIcon':              NS_llplug+"svgIcon"
+  #'llplug:MathConstantPlugin':   NS_llplug+"MathConstantPlugin",
+  #'llplug:MathFunctionPlugin':   NS_llplug+"MathFunctionPlugin",
+  #'llplug:pegName':              NS_llplug+"pegName",
+  #'llplug:svgIcon':              NS_llplug+"svgIcon"
 }
 
-def get_c_plugin_class(value):
+# only show 1 error per URI
+static_old_pprops_uris     = []
+static_old_ui_feature_uris = []
+
+def get_c_plugin_class(uri, value):
   value_str = value.replace(NS_lv2, "", 1)
 
   if (value_str == "Plugin"):
     return 0
-  elif (value_str == "GeneratorPlugin"):
-    return LV2_CLASS_GENERATOR
-  elif (value_str == "InstrumentPlugin"):
-    return LV2_CLASS_INSTRUMENT
-  elif (value_str == "OscillatorPlugin"):
-    return LV2_CLASS_OSCILLATOR
-  elif (value_str == "UtilityPlugin"):
-    return LV2_CLASS_UTILITY
-  elif (value_str == "ConverterPlugin"):
-    return LV2_CLASS_CONVERTER
-  elif (value_str == "AnalyserPlugin"):
-    return LV2_CLASS_ANALYSER
-  elif (value_str == "MixerPlugin"):
-    return LV2_CLASS_MIXER
-  elif (value_str == "SimulatorPlugin"):
-    return LV2_CLASS_SIMULATOR
-  elif (value_str == "DelayPlugin"):
-    return LV2_CLASS_DELAY
-  elif (value_str == "ModulatorPlugin"):
-    return LV2_CLASS_MODULATOR
-  elif (value_str == "ReverbPlugin"):
-    return LV2_CLASS_REVERB
-  elif (value_str == "PhaserPlugin"):
-    return LV2_CLASS_PHASER
-  elif (value_str == "FlangerPlugin"):
-    return LV2_CLASS_FLANGER
-  elif (value_str == "ChorusPlugin"):
-    return LV2_CLASS_CHORUS
-  elif (value_str == "FilterPlugin"):
-    return LV2_CLASS_FILTER
-  elif (value_str == "LowpassPlugin"):
-    return LV2_CLASS_LOWPASS
-  elif (value_str == "BandpassPlugin"):
-    return LV2_CLASS_BANDPASS
-  elif (value_str == "HighpassPlugin"):
-    return LV2_CLASS_HIGHPASS
-  elif (value_str == "CombPlugin"):
-    return LV2_CLASS_COMB
   elif (value_str == "AllpassPlugin"):
     return LV2_CLASS_ALLPASS
+  elif (value_str == "AmplifierPlugin"):
+    return LV2_CLASS_AMPLIFIER
+  elif (value_str == "AnalyserPlugin"):
+    return LV2_CLASS_ANALYSER
+  elif (value_str == "BandpassPlugin"):
+    return LV2_CLASS_BANDPASS
+  elif (value_str == "ChorusPlugin"):
+    return LV2_CLASS_CHORUS
+  elif (value_str == "CombPlugin"):
+    return LV2_CLASS_COMB
+  elif (value_str == "CompressorPlugin"):
+    return LV2_CLASS_COMPRESSOR
+  elif (value_str == "ConstantPlugin"):
+    return LV2_CLASS_CONSTANT
+  elif (value_str == "ConverterPlugin"):
+    return LV2_CLASS_CONVERTER
+  elif (value_str == "DelayPlugin"):
+    return LV2_CLASS_DELAY
+  elif (value_str == "DistortionPlugin"):
+    return LV2_CLASS_DISTORTION
+  elif (value_str == "DynamicsPlugin"):
+    return LV2_CLASS_DYNAMICS
   elif (value_str == "EQPlugin"):
     return LV2_CLASS_EQUALISER
-  elif (value_str == "ParaEQPlugin"):
-    return LV2_CLASS_PARAMETRIC
+  elif (value_str == "ExpanderPlugin"):
+    return LV2_CLASS_EXPANDER
+  elif (value_str == "FilterPlugin"):
+    return LV2_CLASS_FILTER
+  elif (value_str == "FlangerPlugin"):
+    return LV2_CLASS_FLANGER
+  elif (value_str == "FunctionPlugin"):
+    return LV2_CLASS_FUNCTION
+  elif (value_str == "GatePlugin"):
+    return LV2_CLASS_GATE
+  elif (value_str == "GeneratorPlugin"):
+    return LV2_CLASS_GENERATOR
+  elif (value_str == "HighpassPlugin"):
+    return LV2_CLASS_HIGHPASS
+  elif (value_str == "InstrumentPlugin"):
+    return LV2_CLASS_INSTRUMENT
+  elif (value_str == "LimiterPlugin"):
+    return LV2_CLASS_LIMITER
+  elif (value_str == "LowpassPlugin"):
+    return LV2_CLASS_LOWPASS
+  elif (value_str == "MixerPlugin"):
+    return LV2_CLASS_MIXER
+  elif (value_str == "ModulatorPlugin"):
+    return LV2_CLASS_MODULATOR
   elif (value_str == "MultiEQPlugin"):
     return LV2_CLASS_MULTIBAND
+  elif (value_str == "OscillatorPlugin"):
+    return LV2_CLASS_OSCILLATOR
+  elif (value_str == "ParaEQPlugin"):
+    return LV2_CLASS_PARAMETRIC
+  elif (value_str == "PhaserPlugin"):
+    return LV2_CLASS_PHASER
+  elif (value_str == "PitchPlugin"):
+    return LV2_CLASS_PITCH_SHIFTER
+  elif (value_str == "ReverbPlugin"):
+    return LV2_CLASS_REVERB
+  elif (value_str == "SimulatorPlugin"):
+    return LV2_CLASS_SIMULATOR
   elif (value_str == "SpatialPlugin"):
     return LV2_CLASS_SPACIAL
   elif (value_str == "SpectralPlugin"):
     return LV2_CLASS_SPECTRAL
-  elif (value_str == "PitchPlugin"):
-    return LV2_CLASS_PITCH_SHIFTER
-  elif (value_str == "AmplifierPlugin"):
-    return LV2_CLASS_AMPLIFIER
-  elif (value_str == "DistortionPlugin"):
-    return LV2_CLASS_DISTORTION
+  elif (value_str == "UtilityPlugin"):
+    return LV2_CLASS_UTILITY
   elif (value_str == "WaveshaperPlugin"):
     return LV2_CLASS_WAVESHAPER
-  elif (value_str == "DynamicsPlugin"):
-    return LV2_CLASS_DYNAMICS
-  elif (value_str == "CompressorPlugin"):
-    return LV2_CLASS_COMPRESSOR
-  elif (value_str == "ExpanderPlugin"):
-    return LV2_CLASS_EXPANDER
-  elif (value_str == "LimiterPlugin"):
-    return LV2_CLASS_LIMITER
-  elif (value_str == "GatePlugin"):
-    return LV2_CLASS_GATE
-  elif (value_str == "FunctionPlugin"):
-    return LV2_CLASS_FUNCTION
-  elif (value_str == "ConstantPlugin"):
-    return LV2_CLASS_CONSTANT
-  elif (value_str == "ADVENV"):
-    return LV2_CLASS_UTILITY
-  elif (value_str == "AMP"):
-    return LV2_CLASS_AMPLIFIER
-  elif (value_str == "ANALOGDRIVER"):
-    return LV2_CLASS_DYNAMICS
-  elif (value_str == "CVS"):
-    return 0 # FIXME?
-  elif (value_str == "DELAY"):
-    return LV2_CLASS_DELAY
-  elif (value_str == "DYNAMICWAVES"):
-    return LV2_CLASS_DYNAMICS
-  elif (value_str == "ENV"):
-    return LV2_CLASS_UTILITY
-  elif (value_str == "HZTOVC"):
-    return LV2_CLASS_CONVERTER
-  elif (value_str == "LFO"):
-    return LV2_CLASS_OSCILLATOR
-  elif (value_str == "Noise2"):
-    return LV2_CLASS_GENERATOR
-  elif (value_str == "MIXER"):
-    return LV2_CLASS_MIXER
-  elif (value_str == "SLEW"):
-    return LV2_CLASS_UTILITY
-  elif (value_str == "VCO2"):
-    return LV2_CLASS_OSCILLATOR
-  elif (value_str == "VCF"):
-    return LV2_CLASS_UTILITY
-  elif (value_str == "VCAEXP"):
-    return LV2_CLASS_UTILITY
-  elif (value_str == "VCALIN"):
-    return LV2_CLASS_UTILITY
-  elif (value_str == "VCTOHZ"):
-    return LV2_CLASS_CONVERTER
   else:
-    print("LV2_RDF - Got an unknown plugin type '%s'" % value_str)
-    return 0
+    # Non-standard types
+    print("LV2_RDF - Plugin '%s' got a non-standard type '%s'" % (uri, value))
+    if (value_str == "ADVENV"):
+      return LV2_CLASS_UTILITY
+    elif (value_str == "AMP"):
+      return LV2_CLASS_AMPLIFIER
+    elif (value_str == "ANALOGDRIVER"):
+      return LV2_CLASS_DYNAMICS
+    elif (value_str == "CVS"):
+      return 0 # FIXME?
+    elif (value_str == "DELAY"):
+      return LV2_CLASS_DELAY
+    elif (value_str == "DYNAMICWAVES"):
+      return LV2_CLASS_DYNAMICS
+    elif (value_str == "ENV"):
+      return LV2_CLASS_UTILITY
+    elif (value_str == "HZTOVC"):
+      return LV2_CLASS_CONVERTER
+    elif (value_str == "LFO"):
+      return LV2_CLASS_OSCILLATOR
+    elif (value_str == "Noise2"):
+      return LV2_CLASS_GENERATOR
+    elif (value_str == "MIXER"):
+      return LV2_CLASS_MIXER
+    elif (value_str == "SLEW"):
+      return LV2_CLASS_UTILITY
+    elif (value_str == "VCO2"):
+      return LV2_CLASS_OSCILLATOR
+    elif (value_str == "VCF"):
+      return LV2_CLASS_UTILITY
+    elif (value_str == "VCAEXP"):
+      return LV2_CLASS_UTILITY
+    elif (value_str == "VCALIN"):
+      return LV2_CLASS_UTILITY
+    elif (value_str == "VCTOHZ"):
+      return LV2_CLASS_CONVERTER
+    else:
+      print("LV2_RDF - Plugin '%s' got an unknown type '%s'" % (uri, value))
+      return 0
 
-def get_c_port_type(value):
+def get_c_port_type(uri, value):
   value_str = value.replace(NS_lv2, "", 1)
 
   if (value_str == "Port"):
@@ -711,57 +752,65 @@ def get_c_port_type(value):
     return LV2_PORT_CONTROL
   elif (value_str == "AudioPort"):
     return LV2_PORT_AUDIO
+  elif (value_str == "CVPort"):
+    return LV2_PORT_CV
   elif (value == rdf_prefix['lv2atom:AtomPort']):
     return LV2_PORT_ATOM
-  elif (value == rdf_prefix['lv2cv:CVPort']):
-    return LV2_PORT_CV
   elif (value == rdf_prefix['lv2ev:EventPort']):
     return LV2_PORT_EVENT
   elif (value == "http://ll-plugins.nongnu.org/lv2/ext/MidiPort"):
     return LV2_PORT_MIDI_LL
   else:
-    print("LV2_RDF - Got an unknown port type '%s'" % value_str)
+    print("LV2_RDF - Plugin '%s' got an unknown port type '%s'" % (uri, value))
     return 0
 
-def get_c_port_supported_type(value):
-  if (value == "http://lv2plug.in/ns/ext/midi#MidiEvent"):
+def get_c_port_supported_type(uri, value):
+  if (value == rdf_prefix['lv2midi:MidiEvent']):
     return LV2_PORT_SUPPORTS_MIDI
-  elif (value == "http://lv2plug.in/ns/ext/time#Position"):
+  elif (value == rdf_prefix['lv2time:Position']):
     return LV2_PORT_SUPPORTS_TIME
   else:
-    print("LV2_RDF - Got an unknown port supported type '%s'" % value)
+    print("LV2_RDF - Plugin '%s' got an unknown port supported type '%s'" % (uri, value))
     return 0
 
-def get_c_port_midi_map_type(value):
-  value_str = value.replace(NS_llplug, "", 1)
+def get_c_port_midi_map_type(uri, value):
+  # FIXME
+  value_str = value #.replace(NS_llplug, "", 1)
 
   if (value_str == "CC"):
     return LV2_PORT_MIDI_MAP_CC
   elif (value_str == "NRPN"):
     return LV2_PORT_MIDI_MAP_NRPN
   else:
-    print("LV2_RDF - Got an unknown midi map type '%s'" % value_str)
+    print("LV2_RDF - Plugin '%s' got an unknown midi map type '%s'" % (uri, value))
     return 0
 
-def get_c_port_property(value):
+def get_c_port_property(uri, value):
   # Fix old plugins
   if (value.startswith("http://lv2plug.in/ns/dev/extportinfo#")):
-    value = value.replace("http://lv2plug.in/ns/dev/extportinfo#", NS_lv2pprops, 1)
+    value = value.replace("http://lv2plug.in/ns/dev/extportinfo#", "", 1)
+
+    if (uri not in static_old_pprops_uris):
+      print("LV2_RDF - Plugin '%s' is using old LV2 exportinfo" % uri)
+      static_old_pprops_uris.append(uri)
 
   value_str = value.replace(NS_lv2, "", 1).replace(NS_lv2pprops, "", 1)
 
+  # LV2 core
   if (value_str == "connectionOptional"):
     return LV2_PORT_OPTIONAL
-  elif (value_str == "reportsLatency"):
-    return LV2_PORT_LATENCY
-  elif (value_str == "toggled"):
-    return LV2_PORT_TOGGLED
-  elif (value_str == "sampleRate"):
-    return LV2_PORT_SAMPLE_RATE
-  elif (value_str == "integer"):
-    return LV2_PORT_INTEGER
   elif (value_str == "enumeration"):
     return LV2_PORT_ENUMERATION
+  elif (value_str == "integer"):
+    return LV2_PORT_INTEGER
+  elif (value_str == "reportsLatency"):
+    return LV2_PORT_LATENCY
+  elif (value_str == "sampleRate"):
+    return LV2_PORT_SAMPLE_RATE
+  elif (value_str == "toggled"):
+    return LV2_PORT_TOGGLED
+
+  # LV2 Port-Props
   elif (value_str == "causesArtifacts"):
     return LV2_PORT_CAUSES_ARTIFACTS
   elif (value_str == "continuousCV"):
@@ -778,21 +827,13 @@ def get_c_port_property(value):
     return LV2_PORT_NOT_AUTOMATIC
   elif (value_str == "notOnGUI"):
     return LV2_PORT_NOT_ON_GUI
-  elif (value_str == "reportsBeatsPerBar"):
-    return LV2_PORT_REPORTS_BEATS_PER_BAR
-  elif (value_str == "reportsBeatUnit"):
-    return LV2_PORT_REPORTS_BEAT_UNIT
-  elif (value_str == "reportsBpm"):
-    return LV2_PORT_REPORTS_BPM
   elif (value_str == "trigger"):
     return LV2_PORT_TRIGGER
-  elif (value_str == "outputGain"):
-    return 0
   else:
-    print("LV2_RDF - Got an unknown port property '%s'" % value_str)
+    print("LV2_RDF - Plugin '%s' got an unknown port property '%s'" % (uri, value))
     return 0
 
-def get_c_port_unit_type(value):
+def get_c_port_unit_type(uri, value):
   value_str = value.replace(NS_lv2units, "", 1)
 
   if (value_str == "bar"):
@@ -842,10 +883,10 @@ def get_c_port_unit_type(value):
   elif (value_str == "semitone12TET"):
     return LV2_UNIT_SEMITONE
   else:
-    print("LV2_RDF - Got an unknown unit type '%s'" % value_str)
+    print("LV2_RDF - Plugin '%s' got an unknown unit type '%s'" % (uri, value))
     return 0
 
-def get_c_ui_type(value):
+def get_c_ui_type(uri, value):
   value_str = value.replace(NS_lv2ui, "", 1)
 
   if (value_str == "X11UI"):
@@ -859,7 +900,7 @@ def get_c_ui_type(value):
   elif (value == LV2_EXTERNAL_UI_URI):
     return LV2_UI_EXTERNAL
   else:
-    print("LV2_RDF - Got an unknown ui type '%s'" % value_str)
+    print("LV2_RDF - Plugin '%s' got an unknown ui type '%s'" % (uri, value))
     return 0
 
 # -------------------------------------------------------------------------------
@@ -884,8 +925,8 @@ def set_rdf_path(PATH):
 # -------------------------------------------------------------------------------
 #  Helper methods
 
-from re import match as re_match
-from base64 import decodestring as base64_decodestring
+#from re import match as re_match
+#from base64 import decodestring as base64_decodestring
 from sys import maxsize
 
 def to_local_name(uri):
@@ -920,14 +961,14 @@ def is_number(value):
   except:
     return False
 
-def is_base64(s):
-  if ((len(s) % 4 == 0) and re_match("^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$", s)):
-    try:
-      base64_decodestring(s.encode("utf-8")).decode("utf-8")
-      return True
-    except:
-      return False
-  return False
+#def is_base64(s):
+  #if ((len(s) % 4 == 0) and re_match("^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$", s)):
+    #try:
+      #base64_decodestring(s.encode("utf-8")).decode("utf-8")
+      #return True
+    #except:
+      #return False
+  #return False
 
 def append_and_sort(vlist, value):
   if (len(vlist) == 0):
@@ -1202,19 +1243,34 @@ def fill_information(parse, bundle_path):
           s_object = str(_object)
 
           # Fix broken or old plugins
+          if (s_predicate == "http://dublincore.org/documents/dcmi-namespace/replaces"):
+            s_predicate = rdf_prefix['dct:replaces']
+            print("LV2_RDF - Plugin '%s' has broken dc:replaces" % uri)
 
-          if (s_predicate.startswith("http://lv2plug.in/ns/dev/")):
-            s_predicate = s_predicate.replace("http://lv2plug.in/ns/dev/", "http://lv2plug.in/ns/ext/", 1)
-
-          if (s_object.startswith("http://lv2plug.in/ns/dev/")):
-            s_object = s_object.replace("http://lv2plug.in/ns/dev/", "http://lv2plug.in/ns/ext/", 1)
-
-          if (s_predicate == "http://lv2plug.in/ns/ext/presets#hasPreset"):
-            s_predicate = rdf_prefix['rdfs:seeAlso']
-          elif (s_predicate == "http://dublincore.org/documents/dcmi-namespace/replaces"):
-            s_predicate = rdf_prefix['dc:replaces']
-          elif (s_predicate in (NS_lv2+"property", NS_lv2+"pluginProperty")):
+          elif (s_predicate == NS_lv2ui+"optionalFeature"):
             s_predicate = rdf_prefix['lv2:optionalFeature']
+
+            if (uri not in static_old_ui_feature_uris):
+              print("LV2_RDF - UI '%s' is using old lv2ui features" % uri)
+              static_old_ui_feature_uris.append(uri)
+
+          elif (s_predicate == NS_lv2ui+"requiredFeature"):
+            s_predicate = rdf_prefix['lv2:requiredFeature']
+
+            if (uri not in static_old_ui_feature_uris):
+              print("LV2_RDF - UI '%s' is using old lv2ui features" % uri)
+              static_old_ui_feature_uris.append(uri)
+
+          #if (s_predicate.startswith("http://lv2plug.in/ns/dev/")):
+            #s_predicate = s_predicate.replace("http://lv2plug.in/ns/dev/", "http://lv2plug.in/ns/ext/", 1)
+
+          #if (s_object.startswith("http://lv2plug.in/ns/dev/")):
+            #s_object = s_object.replace("http://lv2plug.in/ns/dev/", "http://lv2plug.in/ns/ext/", 1)
+
+          #if (s_predicate == "http://lv2plug.in/ns/ext/presets#hasPreset"):
+            #s_predicate = rdf_prefix['rdfs:seeAlso']
+          #elif (s_predicate in (NS_lv2+"property", NS_lv2+"pluginProperty")):
+            #s_predicate = rdf_prefix['lv2:optionalFeature']
 
           # Skip specification
 
@@ -1223,23 +1279,19 @@ def fill_information(parse, bundle_path):
 
           # Type ----------------start
 
-          elif (s_predicate == rdf_prefix['rdf:type']):
+          if (s_predicate == rdf_prefix['rdf:type']):
 
             # Plugin
             if (s_object.startswith(NS_lv2)):
-              c_class = get_c_plugin_class(s_object)
+              c_class = get_c_plugin_class(uri, s_object)
               or_plugin_value(uri, 'Type', c_class)
 
             # DynManifest, ignored
             elif (s_object.startswith(NS_lv2dman)):
               pass
 
-            # Host Info, ignored
-            elif (s_object.startswith(NS_lv2hi)):
-              pass
-
             # Port Groups, ignored
-            elif (s_object.startswith(NS_lv2pg) or s_object.startswith("http://ll-plugins.nongnu.org/lv2/ext/portgroups#")):
+            elif (s_object.startswith(NS_lv2pg)): # or s_object.startswith("http://ll-plugins.nongnu.org/lv2/ext/portgroups#")):
               pass
 
             # Preset
@@ -1249,15 +1301,15 @@ def fill_information(parse, bundle_path):
 
             # UI
             elif (s_object.startswith(NS_lv2ui) or s_object == LV2_EXTERNAL_UI_URI):
-              c_ui_type = get_c_ui_type(s_object)
+              c_ui_type = get_c_ui_type(uri, s_object)
               set_ui_value(uri, 'Type', c_ui_type)
 
             # Special Types
-            elif (s_object == rdf_prefix['llplug:MathConstantPlugin']):
-              or_plugin_value(uri, 'Type', LV2_CLASS_CONSTANT)
+            #elif (s_object == rdf_prefix['llplug:MathConstantPlugin']):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_CONSTANT)
 
-            elif (s_object == rdf_prefix['llplug:MathFunctionPlugin']):
-              or_plugin_value(uri, 'Type', LV2_CLASS_FUNCTION)
+            #elif (s_object == rdf_prefix['llplug:MathFunctionPlugin']):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_FUNCTION)
 
             elif (s_object == "http://foltman.com/ns/BooleanPlugin"):
               or_plugin_value(uri, 'Type', LV2_CLASS_FUNCTION)
@@ -1269,100 +1321,100 @@ def fill_information(parse, bundle_path):
               or_plugin_value(uri, 'Type', LV2_CLASS_FUNCTION)
 
             elif (s_object == "http://foltman.com/ns/MIDIPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_GENERATOR)
+              or_plugin_value(uri, 'Type', LV2_CLASS_UTILITY)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspChEQMonoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspChEQMonoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspChEQStereoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspChEQStereoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspChEQBMonoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspChEQBMonoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspChEQBStereoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspChEQBStereoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspChorusPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_CHORUS)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspChorusPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_CHORUS)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspDistPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_DISTORTION)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspDistPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_DISTORTION)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspGrEQStereoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspGrEQStereoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMkiiGraEQMonoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMkiiGraEQMonoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMkiiGraEQStereoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMkiiGraEQStereoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMBCStereoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMBCStereoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMBCBStereoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMBCBStereoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMxEQMonoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMxEQMonoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMxEQStereoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMxEQStereoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMxDYNMonoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_DYNAMICS)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMxDYNMonoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_DYNAMICS)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMxDYNStereoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_DYNAMICS)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspMxDYNStereoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_DYNAMICS)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspPEQMonoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspPEQMonoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspPEQStereoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspPEQStereoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspPhaserPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_PHASER)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspPhaserPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_PHASER)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProDynMonoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_DYNAMICS)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProDynMonoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_DYNAMICS)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProDynStereoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_DYNAMICS)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProDynStereoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_DYNAMICS)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProEQMonoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProEQMonoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProEQStereoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProEQStereoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_EQUALISER)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProGateMonoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_GATE)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProGateMonoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_GATE)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProGateStereoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_GATE)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspProGateStereoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_GATE)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspSRStereoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_REVERB)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspSRStereoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_REVERB)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspSRBStereoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_REVERB)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspSRBStereoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_REVERB)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspVCMonoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspVCMonoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspVCStereoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspVCStereoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspVCBMonoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspVCBMonoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspVCBStereoPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspVCBStereoPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_COMPRESSOR)
 
-            elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspWahPlugin"):
-              or_plugin_value(uri, 'Type', LV2_CLASS_SIMULATOR)
+            #elif (s_object == "http://linuxdsp.co.uk/lv2/ns/linuxdspWahPlugin"):
+              #or_plugin_value(uri, 'Type', LV2_CLASS_SIMULATOR)
 
             else:
               print("LV2_RDF - Type object '%s' not handled (uri: %s)" % (s_object, uri))
@@ -1387,45 +1439,19 @@ def fill_information(parse, bundle_path):
               ui_bundle_path = ui_binary.rsplit(os.sep, 1)[0]+os.sep
               set_ui_value(uri, 'Bundle', ui_bundle_path)
 
-            elif (s_predicate == rdf_prefix['lv2ui:events']):
-              pass
-
-            elif (s_predicate == rdf_prefix['lv2ui:portIndex']):
-              pass
+            #elif (s_predicate == rdf_prefix['lv2ui:portIndex']):
+              #pass
 
             elif (s_predicate == rdf_prefix['lv2ui:portNotification']):
               pass
 
-            elif (s_predicate == rdf_prefix['lv2ui:residentSONames']):
-              pass
-
-            elif (s_predicate == rdf_prefix['lv2ui:optionalFeature']):
-              py_feature = deepcopy(PyLV2_RDF_Feature)
-              py_feature['Type'] = LV2_FEATURE_OPTIONAL
-              py_feature['URI']  = s_object
-
-              append_ui_value(uri, 'Features', py_feature)
-              add_ui_value(uri, 'FeatureCount', 1)
-
-            elif (s_predicate == rdf_prefix['lv2ui:requiredFeature']):
-              py_feature = deepcopy(PyLV2_RDF_Feature)
-              py_feature['Type'] = LV2_FEATURE_REQUIRED
-              py_feature['URI']  = s_object
-
-              append_ui_value(uri, 'Features', py_feature)
-              add_ui_value(uri, 'FeatureCount', 1)
-
             else:
-              print("LV2_RDF - UI Predicate '%s' not handled (uri: %s)" % (s_predicate, uri))
+              print("LV2_RDF - UI predicate '%s' not handled (uri: %s)" % (s_predicate, uri))
 
           # UI ------------------end
 
           # DynManifest, ignored
           elif (s_predicate.startswith(NS_lv2dman)):
-            pass
-
-          # Host Info, ignored
-          elif (s_predicate.startswith(NS_lv2hi)):
             pass
 
           # Port Groups, ignored
@@ -1455,7 +1481,7 @@ def fill_information(parse, bundle_path):
               append_ui_value(uri, 'Extensions', s_object)
               add_ui_value(uri, 'ExtensionCount', 1)
             else:
-              print("LV2_RDF - Invalid extensionData, not for Plugin or UI")
+              print("LV2_RDF - Invalid extensionData '%s', not for Plugin or UI (uri: %s)" % (s_object, uri))
 
           elif (s_predicate == rdf_prefix['lv2:symbol']):
             pass
@@ -1472,7 +1498,7 @@ def fill_information(parse, bundle_path):
               append_ui_value(uri, 'Features', py_feature)
               add_ui_value(uri, 'FeatureCount', 1)
             else:
-              print("LV2_RDF - Invalid feature, not for Plugin or UI")
+              print("LV2_RDF - Invalid feature '%s', not for Plugin or UI (uri: %s)" % (s_object, uri))
 
           elif (s_predicate == rdf_prefix['lv2:requiredFeature']):
             py_feature = deepcopy(PyLV2_RDF_Feature)
@@ -1486,9 +1512,9 @@ def fill_information(parse, bundle_path):
               append_ui_value(uri, 'Features', py_feature)
               add_ui_value(uri, 'FeatureCount', 1)
             else:
-              print("LV2_RDF - Invalid feature, not for Plugin or UI")
+              print("LV2_RDF - Invalid feature '%s', not for Plugin or UI (uri: %s)" % (s_object, uri))
 
-          elif (s_predicate == rdf_prefix['dc:replaces']):
+          elif (s_predicate == rdf_prefix['dct:replaces']):
             value_id_str = s_object.rsplit(":", 1)[-1]
 
             if (value_id_str.isdigit()):
@@ -1530,21 +1556,21 @@ def fill_information(parse, bundle_path):
             seeAlso = to_local_name(s_object)
             append_seeAlso_value(seeAlso)
 
-          # Special
-          elif (s_predicate == rdf_prefix['llplug:pegName']):
-            pass
+          ## Special
+          #elif (s_predicate == rdf_prefix['llplug:pegName']):
+            #pass
 
-          elif (s_predicate == rdf_prefix['llplug:svgIcon']):
-            pass
+          #elif (s_predicate == rdf_prefix['llplug:svgIcon']):
+            #pass
 
-          elif (s_predicate == "http://ll-plugins.nongnu.org/lv2/presets#presetFile"):
-            pass
+          #elif (s_predicate == "http://ll-plugins.nongnu.org/lv2/presets#presetFile"):
+            #pass
 
-          elif (s_predicate == "http://plugin.org.uk/extensions#code"):
-            pass
+          #elif (s_predicate == "http://plugin.org.uk/extensions#code"):
+            #pass
 
-          elif (s_predicate == "http://plugin.org.uk/extensions#createdBy"):
-            set_plugin_value(uri, 'Author', s_object)
+          #elif (s_predicate == "http://plugin.org.uk/extensions#createdBy"):
+            #set_plugin_value(uri, 'Author', s_object)
 
           else:
             print("LV2_RDF - Predicate '%s' not handled (uri: %s)" % (s_predicate, uri))
@@ -1597,7 +1623,7 @@ def fill_information(parse, bundle_path):
           midi_map_number_try = get_node_property(midi_map_node, nodes_list, rdf_prefix['lv2mm:controllerNumber'], None)
 
           if (midi_map_type_try != None and midi_map_number_try != None and midi_map_number_try.isdigit()):
-            py_port['MidiMap']['Type']   = get_c_port_midi_map_type(midi_map_type_try)
+            py_port['MidiMap']['Type']   = get_c_port_midi_map_type(uri, midi_map_type_try)
             py_port['MidiMap']['Number'] = int(midi_map_number_try)
 
         # Points
@@ -1626,7 +1652,7 @@ def fill_information(parse, bundle_path):
         if (unit_try != None):
           unit = str(unit_try)
           py_port['Unit']['Hints'] |= LV2_PORT_UNIT
-          py_port['Unit']['Type']   = get_c_port_unit_type(unit)
+          py_port['Unit']['Type']   = get_c_port_unit_type(uri, unit)
 
           unit_name_try   = get_node_property(s_object, nodes_list, rdf_prefix['lv2units:name'], None)
           unit_render_try = get_node_property(s_object, nodes_list, rdf_prefix['lv2units:render'], None)
@@ -1678,9 +1704,10 @@ def fill_information(parse, bundle_path):
 
         for _port_type in _port_types:
           port_type = str(_port_type)
-          c_port_type = get_c_port_type(port_type)
+          c_port_type = get_c_port_type(uri, port_type)
           py_port['Type'] |= c_port_type
 
+          # Atom port
           if (c_port_type == LV2_PORT_ATOM):
             buffer_type_try = get_node_property(s_object, nodes_list, rdf_prefix['lv2atom:bufferType'], None)
 
@@ -1696,25 +1723,26 @@ def fill_information(parse, bundle_path):
 
               if (supported_type_try != None):
                 supported_type = str(supported_type_try)
-                py_port['Type'] |= get_c_port_supported_type(supported_type)
+                py_port['Type'] |= get_c_port_supported_type(uri, supported_type)
               else:
                 print("LV2_RDF - Internal error, Atom Port without supported type")
 
             else:
               print("LV2_RDF - Internal error, Atom Port without buffer type")
 
+          # Event port
           elif (c_port_type == LV2_PORT_EVENT):
             event_type_try = get_node_property(s_object, nodes_list, rdf_prefix['lv2ev:supportsEvent'], None)
 
             if (event_type_try != None):
               event_type = str(event_type_try)
-              py_port['Type'] |= get_c_port_supported_type(event_type)
+              py_port['Type'] |= get_c_port_supported_type(uri, event_type)
             else:
               print("LV2_RDF - Internal error, Event Port without supported Event")
 
         for _port_prop in _port_props:
           port_prop = str(_port_prop)
-          py_port['Properties'] |= get_c_port_property(port_prop)
+          py_port['Properties'] |= get_c_port_property(uri, port_prop)
 
         py_port['index']  = int(_port_index)
         py_port['Name']   = str(_port_name)
@@ -1744,8 +1772,8 @@ def fill_information(parse, bundle_path):
           set_plugin_value(uri, 'Author', author)
 
       # Special
-      elif (s_predicate == "http://plugin.org.uk/extensions#callback"):
-        pass
+      #elif (s_predicate == "http://plugin.org.uk/extensions#callback"):
+        #pass
 
       else:
         print("LV2_RDF - Plugin predicate '%s' not handled (uri: %s)" % (s_predicate, uri))
@@ -1801,10 +1829,10 @@ def fill_information(parse, bundle_path):
 
           elif (isinstance(value.toPython(), Literal)):
             py_state['Value']  = str(value)
-            if (is_base64(py_state['Value'])):
-              py_state['Type'] = LV2_PRESET_STATE_BINARY
-            else:
-              py_state['Type'] = LV2_PRESET_STATE_STRING
+            #if (is_base64(py_state['Value'])):
+              #py_state['Type'] = LV2_PRESET_STATE_BINARY
+            #else:
+            py_state['Type'] = LV2_PRESET_STATE_STRING
 
           else:
             py_state['Type']  = LV2_PRESET_STATE_NULL
@@ -1822,25 +1850,16 @@ def fill_information(parse, bundle_path):
 
     elif (is_ui(uri)):
 
-      if (s_predicate == rdf_prefix['lv2ui:events']):
-        pass
+      #if (s_predicate == rdf_prefix['lv2ui:portIndex']):
+        #pass
 
-      elif (s_predicate == rdf_prefix['lv2ui:portIndex']):
-        pass
-
-      elif (s_predicate == rdf_prefix['lv2ui:portNotification']):
-        pass
-
-      elif (s_predicate == rdf_prefix['lv2ui:residentSONames']):
+      if (s_predicate == rdf_prefix['lv2ui:portNotification']):
         pass
 
       else:
         print("LV2_RDF - UI predicate '%s' not handled (uri: %s)" % (s_predicate, uri))
 
     # UI ---------end
-
-    elif (s_predicate.startswith(NS_lv2hi)):
-      pass
 
     else:
       print("LV2_RDF - Don't know how to handle Node '%s'", _predicate)
