@@ -106,6 +106,7 @@
 #define LV2_CORE__optionalFeature    LV2_CORE_PREFIX "optionalFeature"
 #define LV2_CORE__port               LV2_CORE_PREFIX "port"
 #define LV2_CORE__portProperty       LV2_CORE_PREFIX "portProperty"
+#define LV2_CORE__project            LV2_CORE_PREFIX "project"
 #define LV2_CORE__reportsLatency     LV2_CORE_PREFIX "reportsLatency"
 #define LV2_CORE__requiredFeature    LV2_CORE_PREFIX "requiredFeature"
 #define LV2_CORE__sampleRate         LV2_CORE_PREFIX "sampleRate"
