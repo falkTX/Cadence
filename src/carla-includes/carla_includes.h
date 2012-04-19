@@ -25,16 +25,14 @@
 #define Q_CORE_EXPORT
 #define Q_GUI_EXPORT
 #define QT_NO_STL
-//#define _WIN32_X11_
 #endif
 
-#include <stdint.h>
-#include <Qt>
+#include <QtCore/Qt>
 
 #if defined (__GXX_EXPERIMENTAL_CXX0X__) && defined (__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
 // nullptr is available
 #else
-#define nullptr (0)
+#  define nullptr (0)
 #endif
 
 #ifdef Q_OS_WIN

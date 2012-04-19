@@ -31,7 +31,7 @@ const char* binarytype2str(BinaryType type);
 short get_new_plugin_id();
 const char* get_unique_name(const char* name);
 PluginCategory get_category_from_name(const char* name);
-void* get_pointer(intptr_t ptr_addr);
+void* get_pointer(quintptr ptr_addr);
 void set_last_error(const char* error);
 void carla_proc_lock();
 void carla_proc_unlock();

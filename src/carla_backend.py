@@ -48,9 +48,9 @@ elif (sys.platform.startswith("win")):
     is64bit = True
 
 if (is64bit):
-  c_intptr = c_int64
+  c_uintptr = c_uint64
 else:
-  c_intptr = c_int32
+  c_uintptr = c_uint32
 
 # Get short filename from full filename (/a/b.c -> b.c)
 def getShortFileName(filename):
@@ -945,7 +945,7 @@ class Host(object):
         self.lib.set_chunk_data.argtypes = [c_ushort, c_char_p]
         self.lib.set_chunk_data.restype = None
 
-        self.lib.set_gui_data.argtypes = [c_ushort, c_int, c_intptr]
+        self.lib.set_gui_data.argtypes = [c_ushort, c_int, c_uintptr]
         self.lib.set_gui_data.restype = None
 
         self.lib.show_gui.argtypes = [c_ushort, c_bool]

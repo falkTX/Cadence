@@ -27,7 +27,6 @@ CarlaPlugin* CarlaPlugins[MAX_PLUGINS] = { nullptr };
 volatile double ains_peak[MAX_PLUGINS*2]  = { 0.0 };
 volatile double aouts_peak[MAX_PLUGINS*2] = { 0.0 };
 
-
 #ifndef BUILD_BRIDGE
 // Global options
 carla_options_t carla_options = {
@@ -261,9 +260,9 @@ PluginCategory get_category_from_name(const char* name)
     return PLUGIN_CATEGORY_NONE;
 }
 
-void* get_pointer(intptr_t ptr_addr)
+void* get_pointer(quintptr ptr_addr)
 {
-    intptr_t* ptr = (intptr_t*)ptr_addr;
+    quintptr* ptr = (quintptr*)ptr_addr;
     return (void*)ptr;
 }
 

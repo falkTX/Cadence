@@ -1,9 +1,12 @@
 # QtCreator project file
 
-CONFIG = warn_on qt release shared dll plugin
+QT = core gui
 
-TEMPLATE = lib
-VERSION = 0.5.0
+CONFIG   += warn_on qt release shared dll plugin link_pkgconfig
+PKGCONFIG = jack liblo fluidsynth
+
+TEMPLATE = app #lib
+VERSION  = 0.5.0
 
 SOURCES = \
     ../carla_backend.cpp \
@@ -37,5 +40,3 @@ INCLUDEPATH = .. \
 TARGET  = carla_backend
 
 DEFINES = VESTIGE_HEADER
-
-LIBS += -ldl -ljack -llo
