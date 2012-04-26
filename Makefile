@@ -176,7 +176,6 @@ install:
 		data/claudia \
 		data/carla \
 		data/cadence_* \
-		data/pulse2jack \
 		src/carla-bridge-ui/carla-bridge-lv2-gtk2 \
 		src/carla-bridge-ui/carla-bridge-lv2-qt4 \
 		src/carla-bridge-ui/carla-bridge-lv2-x11 \
@@ -219,7 +218,7 @@ install:
 	install -m 755 src/*.py $(DESTDIR)$(PREFIX)/share/cadence/src/
 	install -m 755 src/carla/*.so $(DESTDIR)$(PREFIX)/lib/carla/
 
-	# Install addtional stuff for Cadence
+	# Install addtional stuff
 	install -m 644 data/pulse2jack-data/* $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
 
 	# Adjust PREFIX value in script files
@@ -228,12 +227,7 @@ install:
 		$(DESTDIR)$(PREFIX)/bin/catia \
 		$(DESTDIR)$(PREFIX)/bin/claudia \
 		$(DESTDIR)$(PREFIX)/bin/carla \
-		$(DESTDIR)$(PREFIX)/bin/cadence_jackmeter \
-		$(DESTDIR)$(PREFIX)/bin/cadence_jacksettings \
-		$(DESTDIR)$(PREFIX)/bin/cadence_logs \
-		$(DESTDIR)$(PREFIX)/bin/cadence_render \
-		$(DESTDIR)$(PREFIX)/bin/cadence_xycontroller \
-		$(DESTDIR)$(PREFIX)/bin/pulse2jack
+		$(DESTDIR)$(PREFIX)/bin/cadence_*
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/cadence_*
@@ -243,7 +237,6 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/carla
 	rm -f $(DESTDIR)$(PREFIX)/bin/carla-bridge-*
 	rm -f $(DESTDIR)$(PREFIX)/bin/carla-discovery-*
-	rm -f $(DESTDIR)$(PREFIX)/bin/pulse2jack
 	rm -f $(DESTDIR)$(PREFIX)/share/applications/catarina.desktop
 	rm -f $(DESTDIR)$(PREFIX)/share/applications/catia.desktop
 	rm -f $(DESTDIR)$(PREFIX)/share/applications/claudia.desktop
