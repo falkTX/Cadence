@@ -42,6 +42,12 @@
 #include "ladspa/ladspa.h"
 #include "dssi/dssi.h"
 
+#include "lv2/atom.h"
+#include "lv2/event.h"
+#include "lv2/midi.h"
+#include "lilv/lilvmm.hpp"
+#define LV2_MIDI_LL__MidiPort "http://ll-plugins.nongnu.org/lv2/ext/MidiPort"
+
 #define VST_FORCE_DEPRECATED 0
 #include "aeffectx.h"
 
@@ -287,8 +293,6 @@ intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_
 // ------------------------------ Plugin Check ------------------------------
 void do_ladspa_check(void* lib_handle)
 {
-    LADSPA_Handle handle;
-    const LADSPA_Descriptor* descriptor;
     LADSPA_Descriptor_Function descfn = (LADSPA_Descriptor_Function)lib_symbol(lib_handle, "ladspa_descriptor");
 
     if (descfn == nullptr)
@@ -298,9 +302,11 @@ void do_ladspa_check(void* lib_handle)
     }
 
     unsigned long i = 0;
+    const LADSPA_Descriptor* descriptor;
+
     while ((descriptor = descfn(i++)))
     {
-        handle = descriptor->instantiate(descriptor, sampleRate);
+        LADSPA_Handle handle = descriptor->instantiate(descriptor, sampleRate);
 
         if (handle)
         {
@@ -503,9 +509,6 @@ void do_ladspa_check(void* lib_handle)
 
 void do_dssi_check(void* lib_handle)
 {
-    LADSPA_Handle handle;
-    const LADSPA_Descriptor* ldescriptor;
-    const DSSI_Descriptor* descriptor;
     DSSI_Descriptor_Function descfn = (DSSI_Descriptor_Function)lib_symbol(lib_handle, "dssi_descriptor");
 
     if (descfn == nullptr)
@@ -515,10 +518,12 @@ void do_dssi_check(void* lib_handle)
     }
 
     unsigned long i = 0;
+    const DSSI_Descriptor* descriptor;
+
     while ((descriptor = descfn(i++)))
     {
-        ldescriptor = descriptor->LADSPA_Plugin;
-        handle = ldescriptor->instantiate(ldescriptor, sampleRate);
+        const LADSPA_Descriptor* ldescriptor = descriptor->LADSPA_Plugin;
+        LADSPA_Handle handle = ldescriptor->instantiate(ldescriptor, sampleRate);
 
         if (handle)
         {
@@ -755,6 +760,145 @@ void do_dssi_check(void* lib_handle)
         }
         else
             DISCOVERY_OUT("error", "Failed to init DSSI plugin");
+    }
+}
+
+void do_lv2_check(const char* bundle)
+{
+    std::string sbundle;
+    sbundle += "file://";
+    sbundle += bundle;
+
+    Lilv::World World;
+    Lilv::Node Bundle(lilv_new_uri(World.me, sbundle.c_str()));
+    World.load_bundle(Bundle);
+
+    Lilv::Node AtomBufferTypes  = Lilv::Node(lilv_new_uri(World.me, LV2_ATOM__bufferType));
+    Lilv::Node EventTypeMidi    = Lilv::Node(lilv_new_uri(World.me, LV2_MIDI__MidiEvent));
+
+    Lilv::Node PortTypeInput    = Lilv::Node(lilv_new_uri(World.me, LV2_CORE__InputPort));
+    Lilv::Node PortTypeOutput   = Lilv::Node(lilv_new_uri(World.me, LV2_CORE__OutputPort));
+    Lilv::Node PortTypeAudio    = Lilv::Node(lilv_new_uri(World.me, LV2_CORE__AudioPort));
+    Lilv::Node PortTypeControl  = Lilv::Node(lilv_new_uri(World.me, LV2_CORE__ControlPort));
+    Lilv::Node PortTypeAtom     = Lilv::Node(lilv_new_uri(World.me, LV2_ATOM__AtomPort));
+    Lilv::Node PortTypeEvent    = Lilv::Node(lilv_new_uri(World.me, LV2_EVENT__EventPort));
+    Lilv::Node PortTypeMidiLL   = Lilv::Node(lilv_new_uri(World.me, LV2_MIDI_LL__MidiPort));
+
+    Lilv::Node PortPropertyLatency = Lilv::Node(lilv_new_uri(World.me, LV2_CORE__latency));
+
+    const Lilv::Plugins Plugins = World.get_all_plugins();
+
+    LILV_FOREACH(plugins, i, Plugins)
+    {
+        Lilv::Plugin p(lilv_plugins_get(Plugins, i));
+
+        //Lilv::Nodes requiredFeatures(p.get_required_features());
+        // check
+
+        const char* filename = lilv_uri_to_path(p.get_library_uri().as_string());
+
+        // test if DLL is loadable
+        void* lib_handle = lib_open(filename);
+
+        if (lib_handle == nullptr)
+        {
+            DISCOVERY_OUT("error", lib_error(filename));
+            continue;
+        }
+
+        lib_close(lib_handle);
+
+        int hints = 0;
+        PluginCategory category = PLUGIN_CATEGORY_NONE;
+
+        int audio_ins = 0;
+        int audio_outs = 0;
+        int audio_total = 0;
+        int midi_ins = 0;
+        int midi_outs = 0;
+        int midi_total = 0;
+        int parameters_ins = 0;
+        int parameters_outs = 0;
+        int parameters_total = 0;
+        int programs_total = 0;
+
+        for (unsigned j=0; j < p.get_num_ports(); j++)
+        {
+            Lilv::Port Port = p.get_port_by_index(j);
+
+            if (Port.is_a(PortTypeAudio))
+            {
+                if (Port.is_a(PortTypeInput))
+                    audio_ins += 1;
+                else if (Port.is_a(PortTypeOutput))
+                    audio_ins += 1;
+                audio_total += 1;
+            }
+            else if (Port.is_a(PortTypeControl))
+            {
+                if (Port.is_a(PortTypeInput))
+                    parameters_ins += 1;
+                else if (Port.is_a(PortTypeOutput))
+                {
+                    if (Port.has_property(PortPropertyLatency) == false)
+                        parameters_ins += 1;
+                }
+                parameters_total += 1;
+            }
+            else if (Port.is_a(PortTypeAtom))
+            {
+                Lilv::Nodes bufferTypes(Port.get_value(AtomBufferTypes));
+                if (bufferTypes.contains(EventTypeMidi))
+                {
+                    if (Port.is_a(PortTypeInput))
+                        midi_ins += 1;
+                    else if (Port.is_a(PortTypeOutput))
+                        midi_ins += 1;
+                    midi_total += 1;
+                }
+            }
+            else if (Port.is_a(PortTypeEvent))
+            {
+                if (Port.supports_event(EventTypeMidi))
+                {
+                    if (Port.is_a(PortTypeInput))
+                        midi_ins += 1;
+                    else if (Port.is_a(PortTypeOutput))
+                        midi_ins += 1;
+                    midi_total += 1;
+                }
+            }
+            else if (Port.is_a(PortTypeMidiLL))
+            {
+                if (Port.is_a(PortTypeInput))
+                    midi_ins += 1;
+                else if (Port.is_a(PortTypeOutput))
+                    midi_ins += 1;
+                midi_total += 1;
+            }
+        }
+
+        DISCOVERY_OUT("init", "-----------");
+        DISCOVERY_OUT("name", p.get_name().as_string());
+        DISCOVERY_OUT("label", p.get_uri().as_string());
+        DISCOVERY_OUT("maker", p.get_author_name().as_string());
+        //DISCOVERY_OUT("copyright", ldescriptor->Copyright);
+        //DISCOVERY_OUT("unique_id", ldescriptor->UniqueID);
+        DISCOVERY_OUT("hints", hints);
+        DISCOVERY_OUT("category", category);
+        DISCOVERY_OUT("audio.ins", audio_ins);
+        DISCOVERY_OUT("audio.outs", audio_outs);
+        DISCOVERY_OUT("audio.total", audio_total);
+        DISCOVERY_OUT("midi.ins", midi_ins);
+        DISCOVERY_OUT("midi.outs", midi_outs);
+        DISCOVERY_OUT("midi.total", midi_total);
+        DISCOVERY_OUT("parameters.ins", parameters_ins);
+        DISCOVERY_OUT("parameters.outs", parameters_outs);
+        DISCOVERY_OUT("parameters.total", parameters_total);
+        DISCOVERY_OUT("programs.total", programs_total);
+
+        DISCOVERY_OUT("build", BINARY_TYPE);
+        DISCOVERY_OUT("end", "------------");
     }
 }
 
@@ -1072,6 +1216,11 @@ int main(int argc, char* argv[])
         open_lib = true;
         type = PLUGIN_DSSI;
     }
+    else if (strcmp(type_str, "LV2") == 0)
+    {
+        open_lib = false;
+        type = PLUGIN_LV2;
+    }
     else if (strcmp(type_str, "VST") == 0)
     {
         open_lib = true;
@@ -1109,6 +1258,9 @@ int main(int argc, char* argv[])
         break;
     case PLUGIN_DSSI:
         do_dssi_check(handle);
+        break;
+    case PLUGIN_LV2:
+        do_lv2_check(filename);
         break;
     case PLUGIN_VST:
         do_vst_check(handle);

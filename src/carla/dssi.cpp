@@ -342,7 +342,7 @@ public:
             else if (LADSPA_IS_PORT_CONTROL(PortType))
             {
                 j = param.count++;
-                param.data[j].index  = j;
+                //param.data[j].index  = j;
                 param.data[j].rindex = i;
                 param.data[j].hints  = 0;
                 param.data[j].midi_channel = 0;

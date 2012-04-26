@@ -8,6 +8,9 @@ VERSION = 0.5.0
 SOURCES = \
     ../carla-discovery.cpp
 
+HEADERS = \
+    ../../carla-includes/carla_includes.h
+
 INCLUDEPATH = .. \
     ../../carla-includes \
     ../../carla-includes/vestige
@@ -16,4 +19,4 @@ TARGET  = carla-discovery-qtcreator
 
 DEFINES = VESTIGE_HEADER BUILD_UNIX64
 
-LIBS += -ldl
+LIBS   += ../../carla-lilv/carla_lilv.a -ldl

@@ -32,19 +32,22 @@ const unsigned int MAX_PARAMETERS  = 200;
 const unsigned int MAX_MIDI_EVENTS = 512;
 
 // plugin hints
-const unsigned int PLUGIN_HAS_GUI     = 0x01;
-const unsigned int PLUGIN_IS_BRIDGE   = 0x02;
-const unsigned int PLUGIN_IS_SYNTH    = 0x04;
+const unsigned int PLUGIN_IS_BRIDGE   = 0x01;
+const unsigned int PLUGIN_IS_SYNTH    = 0x02;
+const unsigned int PLUGIN_HAS_GUI     = 0x04;
 const unsigned int PLUGIN_USES_CHUNKS = 0x08;
 const unsigned int PLUGIN_CAN_DRYWET  = 0x10;
 const unsigned int PLUGIN_CAN_VOLUME  = 0x20;
 const unsigned int PLUGIN_CAN_BALANCE = 0x40;
 
 // parameter hints
-const unsigned int PARAMETER_IS_ENABLED        = 0x01;
-const unsigned int PARAMETER_IS_AUTOMABLE      = 0x02;
-const unsigned int PARAMETER_USES_SCALEPOINTS  = 0x04;
-const unsigned int PARAMETER_USES_SAMPLERATE   = 0x08;
+const unsigned int PARAMETER_IS_BOOLEAN       = 0x01;
+const unsigned int PARAMETER_IS_INTEGER       = 0x02;
+const unsigned int PARAMETER_IS_LOGARITHMIC   = 0x04;
+const unsigned int PARAMETER_IS_ENABLED       = 0x08;
+const unsigned int PARAMETER_IS_AUTOMABLE     = 0x10;
+const unsigned int PARAMETER_USES_SCALEPOINTS = 0x20;
+const unsigned int PARAMETER_USES_SAMPLERATE  = 0x40;
 
 enum BinaryType {
     BINARY_NONE   = 0,
@@ -140,7 +143,6 @@ enum CallbackType {
 
 struct ParameterData {
     ParameterType type;
-    qint32 index;
     qint32 rindex;
     qint32 hints;
     quint8 midi_channel;

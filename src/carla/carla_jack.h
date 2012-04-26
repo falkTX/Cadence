@@ -30,10 +30,8 @@ int carla_jack_srate_callback(jack_nframes_t new_sample_rate, void* arg);
 int carla_jack_process_callback(jack_nframes_t nframes, void* arg);
 void carla_jack_shutdown_callback(void* arg);
 
-#ifndef BUILD_BRIDGE
 bool carla_jack_init(const char* client_name);
 bool carla_jack_close();
-#endif
 bool carla_jack_register_plugin(CarlaPlugin* plugin, jack_client_t** client);
 
 #endif // CARLA_JACK_H

@@ -19,7 +19,8 @@ SOURCES = \
     ../dssi.cpp \
     ../lv2.cpp \
     ../vst.cpp \
-    ../sf2.cpp
+    ../sf2.cpp \
+    ../lv2-rtmempool/rtmempool.c
 
 HEADERS = \
     ../carla_backend.h \
@@ -40,3 +41,5 @@ INCLUDEPATH = .. \
 TARGET  = carla_backend
 
 DEFINES = VESTIGE_HEADER
+
+LIBS    = ../../carla-lilv/carla_lilv.a

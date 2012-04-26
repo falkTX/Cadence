@@ -35,7 +35,6 @@ bool carla_is_engine_running()
 
 const char* get_host_client_name()
 {
-    //qDebug("get_host_client_name()");
     return carla_client_name;
 }
 
@@ -104,7 +103,7 @@ int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
         return 0;
     }
 #else
-        Q_UNUSED(arg);
+    Q_UNUSED(arg);
 #endif
 
 #ifdef BUILD_BRIDGE
@@ -137,7 +136,6 @@ void carla_jack_shutdown_callback(void*)
 
 // -------------------------------------------------------------------------------------------------------------------
 
-#ifndef BUILD_BRIDGE
 bool carla_jack_init(const char* client_name)
 {
     carla_jack_client = jack_client_open(client_name, JackNullOption, nullptr);
@@ -147,6 +145,7 @@ bool carla_jack_init(const char* client_name)
         carla_buffer_size = jack_get_buffer_size(carla_jack_client);
         carla_sample_rate = jack_get_sample_rate(carla_jack_client);
 
+#ifndef BUILD_BRIDGE
         jack_set_buffer_size_callback(carla_jack_client, carla_jack_bufsize_callback, nullptr);
         jack_set_sample_rate_callback(carla_jack_client, carla_jack_srate_callback, nullptr);
         jack_set_process_callback(carla_jack_client, carla_jack_process_callback, nullptr);
@@ -172,6 +171,7 @@ bool carla_jack_init(const char* client_name)
             set_last_error("Failed to activate the JACK client");
             carla_jack_client = nullptr;
         }
+#endif
     }
     else
     {
@@ -189,6 +189,7 @@ bool carla_jack_close()
 
     if (jack_deactivate(carla_jack_client) == 0)
     {
+#ifndef BUILD_BRIDGE
         if (jack_client_close(carla_jack_client) == 0)
         {
             carla_jack_client = nullptr;
@@ -196,6 +197,7 @@ bool carla_jack_close()
         }
         else
             set_last_error("Failed to close the JACK client");
+#endif
     }
     else
         set_last_error("Failed to deactivate the JACK client");
@@ -203,7 +205,6 @@ bool carla_jack_close()
     carla_jack_client = nullptr;
     return false;
 }
-#endif
 
 bool carla_jack_register_plugin(CarlaPlugin* plugin, jack_client_t** client)
 {
@@ -220,7 +221,6 @@ bool carla_jack_register_plugin(CarlaPlugin* plugin, jack_client_t** client)
     if (*client)
     {
 #ifdef BUILD_BRIDGE
-        qDebug("HERE 001");
         carla_buffer_size = jack_get_buffer_size(*client);
         carla_sample_rate = jack_get_sample_rate(*client);
 
@@ -231,7 +231,6 @@ bool carla_jack_register_plugin(CarlaPlugin* plugin, jack_client_t** client)
 #else
         jack_set_process_callback(*client, carla_jack_process_callback, plugin);
 #endif
-        //if (jack_activate(*client) == 0)
         return true;
     }
 

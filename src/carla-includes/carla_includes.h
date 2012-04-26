@@ -53,11 +53,13 @@
 
 // needed for qDebug/Warning/Critical sections
 #if __WORDSIZE == 64
-#  define P_INTPTR "%li"
-#  define P_SIZE   "%lu"
+#  define P_INTPTR  "%li"
+#  define P_UINTPTR "%llu"
+#  define P_SIZE    "%lu"
 #else
-#  define P_INTPTR "%i"
-#  define P_SIZE   "%u"
+#  define P_INTPTR  "%i"
+#  define P_UINTPTR "%lu"
+#  define P_SIZE    "%u"
 #endif
 
 // set native binary type

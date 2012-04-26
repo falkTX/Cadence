@@ -26,16 +26,17 @@ claudia: src/ui_claudia.py \
 	src/ui_claudia_runcustom.py
 # 	src/ui_claudia_addnew.py src/ui_claudia_addnew_klaudia.py
 
-carla: carla_backend carla_bridges carla_discovery carla_gui
+carla: carla_backend carla_bridge_ui carla_discovery carla_gui
 
 carla_backend:
+	$(MAKE) -C src/carla-lilv
 	$(MAKE) -C src/carla
 
-carla_bridges:
-# 	$(MAKE) native$(_arch_n) -C src/carla-bridges
+carla_bridge_ui:
 	$(MAKE) -C src/carla-bridge-ui
 
 carla_discovery:
+	$(MAKE) -C src/carla-lilv
 # 	$(MAKE) native$(_arch_n) -C src/carla-discovery
 
 carla_gui: src/ui_carla.py src/ui_carla_control.py \

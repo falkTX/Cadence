@@ -435,7 +435,7 @@ ParameterData* get_parameter_data(unsigned short plugin_id, uint32_t parameter_i
 {
     qDebug("get_parameter_data(%i, %i)", plugin_id, parameter_id);
 
-    static ParameterData data = { PARAMETER_UNKNOWN, -1, -1, 0, 0, -1 };
+    static ParameterData data = { PARAMETER_UNKNOWN, /*-1,*/ -1, 0, 0, -1 };
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
@@ -1024,9 +1024,9 @@ void set_chunk_data(unsigned short plugin_id, const char* chunk_data)
     qCritical("set_chunk_data(%i, %s) - could not find plugin", plugin_id, chunk_data);
 }
 
-void set_gui_data(unsigned short plugin_id, int data, intptr_t gui_addr)
+void set_gui_data(unsigned short plugin_id, int data, quintptr gui_addr)
 {
-    qDebug("set_gui_data(%i, %i, " P_INTPTR ")", plugin_id, data, gui_addr);
+    qDebug("set_gui_data(%i, %i, " P_UINTPTR ")", plugin_id, data, gui_addr);
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
@@ -1042,7 +1042,7 @@ void set_gui_data(unsigned short plugin_id, int data, intptr_t gui_addr)
         }
     }
 
-    qCritical("set_gui_data(%i, %i, " P_INTPTR ") - could not find plugin", plugin_id, data, gui_addr);
+    qCritical("set_gui_data(%i, %i, " P_UINTPTR ") - could not find plugin", plugin_id, data, gui_addr);
 }
 
 void show_gui(unsigned short plugin_id, bool yesno)

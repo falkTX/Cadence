@@ -18,6 +18,8 @@
 #ifndef CARLA_MIDI_H
 #define CARLA_MIDI_H
 
+// TODO - complete this header
+
 #define MAX_MIDI_CHANNELS 16
 
 // MIDI Messages List

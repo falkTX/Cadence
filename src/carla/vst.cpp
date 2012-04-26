@@ -25,7 +25,6 @@
 
 #if VESTIGE_HEADER
 #warning Using vestige header
-#define kVstVersion 2400
 #define effFlagsProgramChunks (1 << 5)
 #define effGetParamLabel 6
 #define effGetChunk 23
@@ -38,8 +37,6 @@
 #define effStartProcess 71
 #define effStopProcess 72
 #define effSetProcessPrecision 77
-#define kVstProcessPrecision32 0
-#define kVstTransportChanged 1
 #define kPlugCategSynth 2
 #define kPlugCategAnalysis 3
 #define kPlugCategMastering 4
@@ -47,6 +44,9 @@
 #define kPlugCategRestoration 8
 #define kPlugCategShell 10
 #define kPlugCategGenerator 11
+#define kVstProcessPrecision32 0
+#define kVstTransportChanged 1
+#define kVstVersion 2400
 struct VstTimeInfo_R {
     double samplePos, sampleRate, nanoSeconds, ppqPos, tempo, barStartPos, cycleStartPos, cycleEndPos;
     int32_t timeSigNumerator, timeSigDenominator, smpteOffset, smpteFrameRate, samplesToNextClock, flags;
@@ -341,7 +341,7 @@ public:
 
         for (j=0; j<params; j++)
         {
-            param.data[j].index  = j;
+            //param.data[j].index  = j;
             param.data[j].rindex = j;
             param.data[j].hints  = 0;
             param.data[j].midi_channel = 0;

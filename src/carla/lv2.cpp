@@ -40,11 +40,52 @@
 #include "lv2/lv2_rtmempool.h"
 #include "lv2/lv2_external_ui.h"
 
+#include "lilv/lilvmm.hpp"
 #include "lv2_rdf.h"
 
 extern "C" {
 #include "lv2-rtmempool/rtmempool.h"
 }
+
+#if 0
+
+// TODO - remove me
+int main()
+{
+    Lilv::World World;
+    World.load_all();
+
+    int j = 0;
+    const Lilv::Plugins Plugins = World.get_all_plugins();
+
+    LILV_FOREACH(plugins, i, Plugins)
+    {
+        Lilv::Plugin p = Lilv::Plugin(lilv_plugins_get(Plugins, i));
+
+        LV2_RDF_Descriptor* desc = new LV2_RDF_Descriptor;
+        desc->Type = 0;
+        desc->URI  = strdup(p.get_uri().as_string());
+        desc->Name    = strdup(p.get_name().as_string());
+        desc->Author  = strdup(p.get_author_name().as_string());
+        desc->License = nullptr;
+        desc->Binary  = strdup(lilv_uri_to_path(p.get_library_uri().as_string()));
+        desc->Bundle  = strdup(lilv_uri_to_path(p.get_bundle_uri().as_string()));
+
+        desc->PortCount = 0;
+        desc->PresetCount = 0;
+        desc->FeatureCount = 0;
+        desc->ExtensionCount = 0;
+        desc->UICount = 0;
+
+        qDebug("%03i - %s", j++, lilv_uri_to_path(p.get_library_uri().as_string()));
+
+        lv2_rdf_free(desc);
+    }
+
+    return 0;
+}
+#endif
+
 
 #include <QtGui/QDialog>
 #include <QtGui/QLayout>
@@ -1019,7 +1060,7 @@ public:
                 const LV2_RDF_PortPoints PortPoints = rdf_descriptor->Ports[i].Points;
 
                 j = param.count++;
-                param.data[j].index  = j;
+                //param.data[j].index  = j;
                 param.data[j].rindex = i;
                 param.data[j].hints  = 0;
                 param.data[j].midi_channel = 0;
