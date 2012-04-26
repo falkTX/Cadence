@@ -1,0 +1,85 @@
+#!/bin/bash
+# Script to stop current pulseaudio and restart it in JACK mode
+
+INSTALL_PREFIX="X-PREFIX-X"
+
+IsPulseAudioRunning()
+{
+  PROCESS=`ps -e | grep pulseaudio`
+  if [ "$PROCESS" == "" ]; then
+      false
+  else
+      true
+  fi
+}
+
+if [ ! -d ~/.pulse ]; then
+  mkdir -p ~/.pulse
+fi
+
+if [ ! -f ~/.pulse/client.conf ]; then
+  echo "autospawn = no" > ~/.pulse/client.conf
+else
+  if (! cat ~/.pulse/client.conf | grep "autospawn = no" > /dev/null); then
+    sed -i '/autospawn =/d' ~/.pulse/client.conf
+    echo "autospawn = no" >> ~/.pulse/client.conf
+  fi
+fi
+
+if [ ! -f ~/.pulse/daemon.conf ]; then
+  echo "rlimit-rttime = -1" > ~/.pulse/daemon.conf
+else
+  if (! cat ~/.pulse/daemon.conf | grep "rlimit-rttime = -1" > /dev/null); then
+    sed -i '/rlimit-rttime =/d' ~/.pulse/daemon.conf
+    echo "rlimit-rttime = -1" >> ~/.pulse/daemon.conf
+  fi
+fi
+
+case $1 in
+  -h|--h|--help)
+echo "usage: $0 [command]
+
+  -p, --play    Playback mode only
+
+  -h, --help    Show this help menu
+
+
+NOTE:
+ When runned with no arguments, pulse2jack will
+ activate PulseAudio with both playback and record modes.
+"
+exit
+  ;;
+
+  -p|--p|--play)
+FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/play.pa
+  ;;
+
+  *)
+FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/play+rec.pa
+  ;;
+esac
+
+if (IsPulseAudioRunning); then
+{
+  echo "PulseAudio is running, stopping it..."
+  killall pulseaudio
+  env sleep 0.2
+
+  if (IsPulseAudioRunning); then
+  {
+    echo "Failed, force kill..."
+    pkill -KILL pulseaudio
+    env sleep 0.2
+  }
+  else
+    echo "Success!"
+  fi
+}
+fi
+
+if (`pulseaudio --daemonize --high-priority --realtime --disallow-module-loading --exit-idle-time=-1 --file=$FILE -n`); then
+  echo "Initiated PulseAudio successfully!"
+else
+  echo "Failed to initialize PulseAudio!"
+fi

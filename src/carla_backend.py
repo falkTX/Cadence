@@ -186,6 +186,7 @@ else:
 # ------------------------------------------------------------------------------------------------
 # Search for Carla library and tools
 
+global carla_library_path
 carla_library_path = ""
 
 carla_discovery_unix32 = ""
@@ -816,8 +817,13 @@ global Callback
 Callback = None
 
 class Host(object):
-    def __init__(self):
+    def __init__(self, lib_prefix_arg):
         object.__init__(self)
+
+        global carla_library_path
+
+        if (lib_prefix_arg):
+          carla_library_path = os.path.join(lib_prefix_arg, "lib", "carla", carla_libname)
 
         self.lib = cdll.LoadLibrary(carla_library_path)
 

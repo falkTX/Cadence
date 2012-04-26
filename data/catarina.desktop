@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Catarina
+GenericName=Catarina
+Comment=PatchCanvas Test Application
+Exec=catarina
+Icon=catarina
+Terminal=false
+Type=Application
+Categories=Utility;Qt;

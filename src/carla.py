@@ -797,6 +797,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
+        self.warning_old_shown = False
         self.b_add.setEnabled(False)
 
         if (BINARY_NATIVE in (BINARY_UNIX32, BINARY_WIN32)):
@@ -915,6 +916,12 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
 
     def addPluginToTable(self, plugin, ptype):
         index = self.last_table_index
+
+        if ("build" not in plugin.keys()):
+          if (self.warning_old_shown == False):
+            QMessageBox.warning(self, self.tr("Warning"), self.tr("You're using a Carla-Database from an old version of Carla, please update the plugins"))
+            self.warning_old_shown = True
+          return
 
         if (plugin['build'] == BINARY_NATIVE):
           bridge_text = self.tr("No")
@@ -3346,10 +3353,22 @@ if __name__ == '__main__':
     app.setOrganizationName("falkTX")
     app.setWindowIcon(QIcon(":/scalable/carla.svg"))
 
+    lib_prefix = None
+
+    for i in range(len(app.arguments())):
+      if (i == 0): continue
+      argument = app.arguments()[i]
+
+      if argument.startswith("--with-libprefix="):
+        lib_prefix = argument.replace("--with-libprefix=","")
+
+      elif (os.path.exists(argument)):
+        gui.m_project_filename = argument
+
     #style = app.style().metaObject().className()
     #force_parameters_style = (style in ("Bespin::Style",))
 
-    CarlaHost = Host()
+    CarlaHost = Host(lib_prefix)
 
     # Create GUI and read settings
     gui = CarlaMainW()
@@ -3391,13 +3410,9 @@ if __name__ == '__main__':
     # Show GUI
     gui.show()
 
-    for i in range(len(app.arguments())):
-      if (i == 0): continue
-      try_path = app.arguments()[i]
-      if (os.path.exists(try_path)):
-        gui.m_project_filename = try_path
-        gui.load_project()
-        gui.setWindowTitle("Carla - %s" % (getShortFileName(try_path)))
+    if (gui.m_project_filename):
+      gui.load_project()
+      gui.setWindowTitle("Carla - %s" % (getShortFileName(try_path)))
 
     # App-Loop
     ret = app.exec_()

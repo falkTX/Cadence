@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Claudia
+GenericName=Claudia
+Comment=LADISH Frontend
+Exec=claudia
+Icon=claudia
+Terminal=false
+Type=Application
+Categories=AudioVideo;AudioEditing;Qt;

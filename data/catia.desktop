@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Catia
+GenericName=Catia
+Comment=JACK Patchbay
+Exec=catia
+Icon=catia
+Terminal=false
+Type=Application
+Categories=AudioVideo;AudioEditing;Qt;
