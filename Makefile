@@ -152,6 +152,7 @@ clean:
 	$(MAKE) clean -C src/carla-bridge
 	$(MAKE) clean -C src/carla-bridge-ui
 	$(MAKE) clean -C src/carla-discovery
+	$(MAKE) clean -C src/carla-lilv
 	rm -f *~ src/*~ src/*.pyc src/*.dll src/*.so src/ui_*.py src/icons_rc.py
 
 
