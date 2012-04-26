@@ -1,0 +1,35 @@
+This software requires only Python to build.
+
+Like an auto* project, building has three phases:
+
+
+* Configure:       ./waf configure [OPTIONS]
+
+  Example:
+    ./waf configure --prefix=/some/where --debug --strict
+
+  If --debug is not given, the flags from the environment variables
+  CFLAGS and CXXFLAGS will be used.
+
+  The default prefix is /usr/local
+
+
+* Build:           ./waf [OPTIONS]
+
+  Example:
+    ./waf -j4
+
+
+* Install:         ./waf install [OPTIONS]
+
+  The environment variable DESTDIR can be used to add any prefix to
+  the install paths (useful for packaging).  Example:
+
+  DESTDIR=/home/drobilla/packages ./waf install
+
+
+*** IMPORTANT: You must use absolute paths everywhere
+
+
+Run './waf --help' for detailed option information.
+
