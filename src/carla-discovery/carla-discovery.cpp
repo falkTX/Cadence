@@ -42,11 +42,13 @@
 #include "ladspa/ladspa.h"
 #include "dssi/dssi.h"
 
+#ifdef WANT_LILV
 #include "lv2/atom.h"
 #include "lv2/event.h"
 #include "lv2/midi.h"
 #include "lilv/lilvmm.hpp"
 #define LV2_MIDI_LL__MidiPort "http://ll-plugins.nongnu.org/lv2/ext/MidiPort"
+#endif
 
 #define VST_FORCE_DEPRECATED 0
 #include "aeffectx.h"
@@ -765,6 +767,7 @@ void do_dssi_check(void* lib_handle)
 
 void do_lv2_check(const char* bundle)
 {
+#ifdef WANT_LILV
     std::string sbundle;
     sbundle += "file://";
     sbundle += bundle;
@@ -900,6 +903,10 @@ void do_lv2_check(const char* bundle)
         DISCOVERY_OUT("build", BINARY_TYPE);
         DISCOVERY_OUT("end", "------------");
     }
+#else
+    (void)bundle;
+    DISCOVERY_OUT("error", "LV2 support not available");
+#endif
 }
 
 void do_vst_check(void* lib_handle)

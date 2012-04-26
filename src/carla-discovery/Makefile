@@ -35,6 +35,12 @@ BUILD_FLAGS += `pkg-config --cflags fluidsynth` -DWANT_FLUIDSYNTH
 LINK_FLAGS  += `pkg-config --libs fluidsynth`
 endif
 
+ifeq ($(LILV),)
+else
+BUILD_FLAGS += -DWANT_LILV
+LINK_FLAGS  += ../carla-lilv/carla_lilv.a
+endif
+
 
 all:
 	@echo "Build type must be unix32, unix64, win[e]32 or win[e]64"
