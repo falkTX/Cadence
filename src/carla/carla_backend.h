@@ -143,6 +143,7 @@ enum CallbackType {
 
 struct ParameterData {
     ParameterType type;
+    qint32 index;
     qint32 rindex;
     qint32 hints;
     quint8 midi_channel;
@@ -271,8 +272,8 @@ CARLA_EXPORT const char* get_program_name(unsigned short plugin_id, quint32 prog
 CARLA_EXPORT const char* get_midi_program_name(unsigned short plugin_id, quint32 midi_program_id);
 CARLA_EXPORT const char* get_real_plugin_name(unsigned short plugin_id);
 
-CARLA_EXPORT int32_t get_current_program_index(unsigned short plugin_id);
-CARLA_EXPORT int32_t get_current_midi_program_index(unsigned short plugin_id);
+CARLA_EXPORT qint32 get_current_program_index(unsigned short plugin_id);
+CARLA_EXPORT qint32 get_current_midi_program_index(unsigned short plugin_id);
 
 CARLA_EXPORT double get_default_parameter_value(unsigned short plugin_id, quint32 parameter_id);
 CARLA_EXPORT double get_current_parameter_value(unsigned short plugin_id, quint32 parameter_id);

@@ -435,7 +435,7 @@ ParameterData* get_parameter_data(unsigned short plugin_id, uint32_t parameter_i
 {
     qDebug("get_parameter_data(%i, %i)", plugin_id, parameter_id);
 
-    static ParameterData data = { PARAMETER_UNKNOWN, /*-1,*/ -1, 0, 0, -1 };
+    static ParameterData data = { PARAMETER_UNKNOWN, -1, -1, 0, 0, -1 };
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
@@ -710,7 +710,7 @@ const char* get_real_plugin_name(unsigned short plugin_id)
     return real_plugin_name;
 }
 
-int32_t get_current_program_index(unsigned short plugin_id)
+qint32 get_current_program_index(unsigned short plugin_id)
 {
     qDebug("get_current_program_index(%i)", plugin_id);
 
@@ -725,7 +725,7 @@ int32_t get_current_program_index(unsigned short plugin_id)
     return -1;
 }
 
-int32_t get_current_midi_program_index(unsigned short plugin_id)
+qint32 get_current_midi_program_index(unsigned short plugin_id)
 {
     qDebug("get_current_midi_program_index(%i)", plugin_id);
 

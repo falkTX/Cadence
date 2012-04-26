@@ -341,7 +341,7 @@ public:
 
         for (j=0; j<params; j++)
         {
-            //param.data[j].index  = j;
+            param.data[j].index  = j;
             param.data[j].rindex = j;
             param.data[j].hints  = 0;
             param.data[j].midi_channel = 0;

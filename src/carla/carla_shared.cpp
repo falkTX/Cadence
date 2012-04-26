@@ -103,11 +103,11 @@ const char* plugintype2str(PluginType type)
     }
 }
 
-#ifndef BUILD_BRIDGE
 const char* binarytype2str(BinaryType type)
 {
     switch (type)
     {
+#ifndef BUILD_BRIDGE
     case BINARY_UNIX32:
         return carla_options.bridge_unix32;
     case BINARY_UNIX64:
@@ -116,11 +116,11 @@ const char* binarytype2str(BinaryType type)
         return carla_options.bridge_win32;
     case BINARY_WIN64:
         return carla_options.bridge_win64;
+#endif
     default:
         return nullptr;
     }
 }
-#endif
 
 // -------------------------------------------------------------------------------------------------------------------
 

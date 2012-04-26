@@ -24,9 +24,7 @@ class CarlaPlugin;
 
 const char* bool2str(bool yesno);
 const char* plugintype2str(PluginType type);
-#ifndef BUILD_BRIDGE
 const char* binarytype2str(BinaryType type);
-#endif
 
 short get_new_plugin_id();
 const char* get_unique_name(const char* name);

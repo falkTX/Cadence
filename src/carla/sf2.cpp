@@ -378,7 +378,7 @@ public:
 
         // ----------------------
         j = Sf2ReverbOnOff;
-        //param.data[j].index  = j;
+        param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
         param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE;
@@ -394,7 +394,7 @@ public:
 
         // ----------------------
         j = Sf2ReverbRoomSize;
-        //param.data[j].index  = j;
+        param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
         param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE;
@@ -410,7 +410,7 @@ public:
 
         // ----------------------
         j = Sf2ReverbDamp;
-        //param.data[j].index  = j;
+        param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
         param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE;
@@ -426,7 +426,7 @@ public:
 
         // ----------------------
         j = Sf2ReverbLevel;
-        //param.data[j].index  = j;
+        param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
         param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE;
@@ -442,7 +442,7 @@ public:
 
         // ----------------------
         j = Sf2ReverbWidth;
-        //param.data[j].index  = j;
+        param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
         param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE;
@@ -458,7 +458,7 @@ public:
 
         // ----------------------
         j = Sf2ChorusOnOff;
-        //param.data[j].index  = j;
+        param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
         param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE;
@@ -474,7 +474,7 @@ public:
 
         // ----------------------
         j = Sf2ChorusNr;
-        //param.data[j].index  = j;
+        param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
         param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE;
@@ -490,7 +490,7 @@ public:
 
         // ----------------------
         j = Sf2ChorusLevel;
-        //param.data[j].index  = j;
+        param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
         param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE;
@@ -506,7 +506,7 @@ public:
 
         // ----------------------
         j = Sf2ChorusSpeedHz;
-        //param.data[j].index  = j;
+        param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
         param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE;
@@ -522,7 +522,7 @@ public:
 
         // ----------------------
         j = Sf2ChorusDepthMs;
-        //param.data[j].index  = j;
+        param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
         param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE;
@@ -538,7 +538,7 @@ public:
 
         // ----------------------
         j = Sf2ChorusType;
-        //param.data[j].index  = j;
+        param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
         param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_USES_SCALEPOINTS;
@@ -554,7 +554,7 @@ public:
 
         // ----------------------
         j = Sf2Polyphony;
-        //param.data[j].index  = j;
+        param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
         param.data[j].hints  = PARAMETER_IS_ENABLED;
@@ -570,7 +570,7 @@ public:
 
         // ----------------------
         j = Sf2Interpolation;
-        //param.data[j].index  = j;
+        param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
         param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_USES_SCALEPOINTS;
@@ -586,7 +586,7 @@ public:
 
         // ----------------------
         j = Sf2VoiceCount;
-        //param.data[j].index  = j;
+        param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_OUTPUT;
         param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE;

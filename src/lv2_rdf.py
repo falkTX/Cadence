@@ -1867,11 +1867,11 @@ def fill_information(parse, bundle_path):
 # Parse ttl file into 'lists'
 def parse_ttl_file(filename):
   primer = ConjunctiveGraph()
-  #try:
-  primer.parse(filename, format='n3')
-  #except:
-    #print("LV2_RDF - Failed to parse %s" % filename)
-    #return []
+  try:
+    primer.parse(filename, format='n3')
+  except:
+    print("LV2_RDF - Failed to parse %s" % filename)
+    return []
 
   return [(x, y, z) for x, y, z in primer]
 

@@ -227,7 +227,7 @@ if (os.path.exists(os.path.join(CWD, "carla", carla_libname))):
   carla_library_path = os.path.join(CWD, "carla", carla_libname)
 else:
   if (WINDOWS):
-    CARLA_PATH = (os.path.join(PROGRAMFILES, "Cadence"),)
+    CARLA_PATH = (os.path.join(PROGRAMFILES, "Cadence", "carla"),)
   elif (MACOS):
     CARLA_PATH = ("/usr/lib", "/usr/local/lib/") # FIXME
   else:
@@ -236,8 +236,6 @@ else:
     if (os.path.exists(os.path.join(p, "carla", carla_libname))):
       carla_library_path = os.path.join(p, "carla", carla_libname)
       break
-
-print(carla_library_path)
 
 # discovery-unix32
 if (os.path.exists(os.path.join(CWD, "carla-discovery", "carla-discovery-unix32"))):
@@ -345,7 +343,7 @@ def findBinaries(bPATH, OS):
   binaries = []
 
   if (OS == "WINDOWS"):
-    extensions = (".dll", ".dlL", ".dLL", ".DLL", "DLl", "Dll")
+    extensions = (".dll",)
   elif (OS == "MACOS"):
     extensions = (".dylib", ".so")
   else:

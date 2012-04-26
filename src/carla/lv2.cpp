@@ -1060,7 +1060,7 @@ public:
                 const LV2_RDF_PortPoints PortPoints = rdf_descriptor->Ports[i].Points;
 
                 j = param.count++;
-                //param.data[j].index  = j;
+                param.data[j].index  = j;
                 param.data[j].rindex = i;
                 param.data[j].hints  = 0;
                 param.data[j].midi_channel = 0;
