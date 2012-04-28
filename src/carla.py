@@ -3354,6 +3354,7 @@ if __name__ == '__main__':
     app.setWindowIcon(QIcon(":/scalable/carla.svg"))
 
     lib_prefix = None
+    project_filename = None
 
     for i in range(len(app.arguments())):
       if (i == 0): continue
@@ -3363,7 +3364,7 @@ if __name__ == '__main__':
         lib_prefix = argument.replace("--with-libprefix=","")
 
       elif (os.path.exists(argument)):
-        gui.m_project_filename = argument
+        project_filename = argument
 
     #style = app.style().metaObject().className()
     #force_parameters_style = (style in ("Bespin::Style",))
@@ -3410,9 +3411,10 @@ if __name__ == '__main__':
     # Show GUI
     gui.show()
 
-    if (gui.m_project_filename):
+    if (project_filename):
+      gui.m_project_filename = project_filename
       gui.load_project()
-      gui.setWindowTitle("Carla - %s" % (getShortFileName(try_path)))
+      gui.setWindowTitle("Carla - %s" % (getShortFileName(project_filename)))
 
     # App-Loop
     ret = app.exec_()
