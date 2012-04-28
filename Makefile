@@ -172,11 +172,12 @@ install:
 
 	# Install script files and binaries
 	install -m 755 \
+		data/cadence_* \
+		data/cadence-aloop-daemon \
 		data/catarina \
 		data/catia \
 		data/claudia \
 		data/carla \
-		data/cadence_* \
 		src/carla-bridge-ui/carla-bridge-lv2-gtk2 \
 		src/carla-bridge-ui/carla-bridge-lv2-qt4 \
 		src/carla-bridge-ui/carla-bridge-lv2-x11 \
@@ -232,6 +233,7 @@ install:
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/cadence_*
+	rm -f $(DESTDIR)$(PREFIX)/bin/cadence-aloop-daemon
 	rm -f $(DESTDIR)$(PREFIX)/bin/catarina
 	rm -f $(DESTDIR)$(PREFIX)/bin/catia
 	rm -f $(DESTDIR)$(PREFIX)/bin/claudia
