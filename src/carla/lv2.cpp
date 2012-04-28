@@ -29,6 +29,7 @@
 #include "lv2/event-helpers.h"
 #include "lv2/instance-access.h"
 #include "lv2/midi.h"
+#include "lv2/port-props.h"
 #include "lv2/state.h"
 #include "lv2/time.h"
 #include "lv2/ui.h"
@@ -63,7 +64,7 @@ const unsigned int MAX_EVENT_BUFFER = 8192; // 0x7FFF; // 32767
 const unsigned int PLUGIN_HAS_EXTENSION_STATE    = 0x1000;
 const unsigned int PLUGIN_HAS_EXTENSION_DYNPARAM = 0x2000;
 
-// parameter hints
+// extra parameter hints
 const unsigned int PARAMETER_IS_TRIGGER          = 0x100;
 const unsigned int PARAMETER_HAS_STRICT_BOUNDS   = 0x200;
 
@@ -93,8 +94,8 @@ const uint32_t CARLA_URI_MAP_ID_NULL           = 0;
 const uint32_t CARLA_URI_MAP_ID_ATOM_CHUNK     = 1;
 const uint32_t CARLA_URI_MAP_ID_ATOM_SEQUENCE  = 2;
 const uint32_t CARLA_URI_MAP_ID_ATOM_STRING    = 3;
-const uint32_t CARLA_URI_MAP_ID_EVENT_MIDI     = 4;
-const uint32_t CARLA_URI_MAP_ID_EVENT_TIME     = 5;
+const uint32_t CARLA_URI_MAP_ID_MIDI_EVENT     = 4;
+const uint32_t CARLA_URI_MAP_ID_TIME_POSITION  = 5;
 const uint32_t CARLA_URI_MAP_ID_COUNT          = 6;
 
 enum Lv2ParameterDataType {
@@ -143,7 +144,43 @@ class Lv2WorldClass : public Lilv::World
 {
 public:
     Lv2WorldClass() : Lilv::World(),
+        class_allpass     (new_uri(LV2_CORE__AllpassPlugin)),
+        class_amplifier   (new_uri(LV2_CORE__AmplifierPlugin)),
+        class_analyzer    (new_uri(LV2_CORE__AnalyserPlugin)),
+        class_bandpass    (new_uri(LV2_CORE__BandpassPlugin)),
+        class_chorus      (new_uri(LV2_CORE__ChorusPlugin)),
+        class_comb        (new_uri(LV2_CORE__CombPlugin)),
+        class_compressor  (new_uri(LV2_CORE__CompressorPlugin)),
+        class_constant    (new_uri(LV2_CORE__ConstantPlugin)),
+        class_converter   (new_uri(LV2_CORE__ConverterPlugin)),
+        class_delay       (new_uri(LV2_CORE__DelayPlugin)),
+        class_distortion  (new_uri(LV2_CORE__DistortionPlugin)),
+        class_dynamics    (new_uri(LV2_CORE__DynamicsPlugin)),
+        class_eq          (new_uri(LV2_CORE__EQPlugin)),
+        class_expander    (new_uri(LV2_CORE__ExpanderPlugin)),
+        class_filter      (new_uri(LV2_CORE__FilterPlugin)),
+        class_flanger     (new_uri(LV2_CORE__FlangerPlugin)),
+        class_function    (new_uri(LV2_CORE__FunctionPlugin)),
+        class_gate        (new_uri(LV2_CORE__GatePlugin)),
+        class_generator   (new_uri(LV2_CORE__GeneratorPlugin)),
+        class_highpass    (new_uri(LV2_CORE__HighpassPlugin)),
         class_instrument  (new_uri(LV2_CORE__InstrumentPlugin)),
+        class_limiter     (new_uri(LV2_CORE__LimiterPlugin)),
+        class_lowpass     (new_uri(LV2_CORE__LowpassPlugin)),
+        class_mixer       (new_uri(LV2_CORE__MixerPlugin)),
+        class_modulator   (new_uri(LV2_CORE__ModulatorPlugin)),
+        class_multi_eq    (new_uri(LV2_CORE__MultiEQPlugin)),
+        class_oscillator  (new_uri(LV2_CORE__OscillatorPlugin)),
+        class_para_eq     (new_uri(LV2_CORE__ParaEQPlugin)),
+        class_phaser      (new_uri(LV2_CORE__PhaserPlugin)),
+        class_pitch       (new_uri(LV2_CORE__PitchPlugin)),
+        class_reverb      (new_uri(LV2_CORE__ReverbPlugin)),
+        class_simulator   (new_uri(LV2_CORE__SimulatorPlugin)),
+        class_spatial     (new_uri(LV2_CORE__SpatialPlugin)),
+        class_spectral    (new_uri(LV2_CORE__SpectralPlugin)),
+        class_utility     (new_uri(LV2_CORE__UtilityPlugin)),
+        class_waveshaper  (new_uri(LV2_CORE__WaveshaperPlugin)),
+
         port_input        (new_uri(LV2_CORE__InputPort)),
         port_output       (new_uri(LV2_CORE__OutputPort)),
         port_control      (new_uri(LV2_CORE__ControlPort)),
@@ -153,11 +190,20 @@ public:
         port_event        (new_uri(LV2_EVENT__EventPort)),
         port_midi_ll      (new_uri(LV2_MIDI_LL__MidiPort)),
 
-        pprop_optional    (new_uri(LV2_CORE__connectionOptional)),
-        pprop_toggled     (new_uri(LV2_CORE__toggled)),
-        pprop_sample_rate (new_uri(LV2_CORE__sampleRate)),
-        pprop_integer     (new_uri(LV2_CORE__integer)),
-        pprop_enumeration (new_uri(LV2_CORE__enumeration)),
+        pprop_optional      (new_uri(LV2_CORE__connectionOptional)),
+        pprop_enumeration   (new_uri(LV2_CORE__enumeration)),
+        pprop_integer       (new_uri(LV2_CORE__integer)),
+        pprop_sample_rate   (new_uri(LV2_CORE__sampleRate)),
+        pprop_toggled       (new_uri(LV2_CORE__toggled)),
+        pprop_artifacts     (new_uri(LV2_PORT_PROPS__causesArtifacts)),
+        pprop_continuous_cv (new_uri(LV2_PORT_PROPS__continuousCV)),
+        pprop_discrete_cv   (new_uri(LV2_PORT_PROPS__discreteCV)),
+        pprop_expensive     (new_uri(LV2_PORT_PROPS__expensive)),
+        pprop_strict_bounds (new_uri(LV2_PORT_PROPS__hasStrictBounds)),
+        pprop_logarithmic   (new_uri(LV2_PORT_PROPS__logarithmic)),
+        pprop_not_automatic (new_uri(LV2_PORT_PROPS__notAutomatic)),
+        pprop_not_on_gui    (new_uri(LV2_PORT_PROPS__notOnGUI)),
+        pprop_trigger       (new_uri(LV2_PORT_PROPS__trigger)),
 
         value_default     (new_uri(LV2_CORE__default)),
         value_minimum     (new_uri(LV2_CORE__minimum)),
@@ -169,7 +215,7 @@ public:
 
         midi_event    (new_uri(LV2_MIDI__MidiEvent)),
 
-        time_position (new_uri(LV2_TIME__position)), // FIXME?
+        time_position (new_uri(LV2_TIME__Position)),
 
         rdf_type (new_uri(LILV_NS_RDF "type"))
     {
@@ -187,7 +233,42 @@ public:
     }
 
     // Plugin Types
+    Lilv::Node class_allpass;
+    Lilv::Node class_amplifier;
+    Lilv::Node class_analyzer;
+    Lilv::Node class_bandpass;
+    Lilv::Node class_chorus;
+    Lilv::Node class_comb;
+    Lilv::Node class_compressor;
+    Lilv::Node class_constant;
+    Lilv::Node class_converter;
+    Lilv::Node class_delay;
+    Lilv::Node class_distortion;
+    Lilv::Node class_dynamics;
+    Lilv::Node class_eq;
+    Lilv::Node class_expander;
+    Lilv::Node class_filter;
+    Lilv::Node class_flanger;
+    Lilv::Node class_function;
+    Lilv::Node class_gate;
+    Lilv::Node class_generator;
+    Lilv::Node class_highpass;
     Lilv::Node class_instrument;
+    Lilv::Node class_limiter;
+    Lilv::Node class_lowpass;
+    Lilv::Node class_mixer;
+    Lilv::Node class_modulator;
+    Lilv::Node class_multi_eq;
+    Lilv::Node class_oscillator;
+    Lilv::Node class_para_eq;
+    Lilv::Node class_phaser;
+    Lilv::Node class_pitch;
+    Lilv::Node class_reverb;
+    Lilv::Node class_simulator;
+    Lilv::Node class_spatial;
+    Lilv::Node class_spectral;
+    Lilv::Node class_utility;
+    Lilv::Node class_waveshaper;
 
     // Port Types
     Lilv::Node port_input;
@@ -201,12 +282,21 @@ public:
 
     // Port Properties
     Lilv::Node pprop_optional;
-    Lilv::Node pprop_toggled;
-    Lilv::Node pprop_sample_rate;
-    Lilv::Node pprop_integer;
     Lilv::Node pprop_enumeration;
-    // TODO - check this, more
+    Lilv::Node pprop_integer;
+    Lilv::Node pprop_sample_rate;
+    Lilv::Node pprop_toggled;
+    Lilv::Node pprop_artifacts;
+    Lilv::Node pprop_continuous_cv;
+    Lilv::Node pprop_discrete_cv;
+    Lilv::Node pprop_expensive;
+    Lilv::Node pprop_strict_bounds;
+    Lilv::Node pprop_logarithmic;
+    Lilv::Node pprop_not_automatic;
+    Lilv::Node pprop_not_on_gui;
+    Lilv::Node pprop_trigger;
 
+    // LV2 stuff
     Lilv::Node value_default;
     Lilv::Node value_minimum;
     Lilv::Node value_maximum;
@@ -394,31 +484,30 @@ public:
     {
         LV2_Property Category = rdf_descriptor->Type;
 
-        // Specific Types
-        if (Category & LV2_CLASS_REVERB)
+        if (LV2_IS_DELAY(Category))
             return PLUGIN_CATEGORY_DELAY;
-
-        // Pre-set LV2 Types
-        else if (LV2_IS_GENERATOR(Category))
-            return PLUGIN_CATEGORY_SYNTH;
-        else if (LV2_IS_UTILITY(Category))
-            return PLUGIN_CATEGORY_UTILITY;
-        else if (LV2_IS_SIMULATOR(Category))
-            return PLUGIN_CATEGORY_OUTRO;
-        else if (LV2_IS_DELAY(Category))
-            return PLUGIN_CATEGORY_DELAY;
-        else if (LV2_IS_MODULATOR(Category))
-            return PLUGIN_CATEGORY_MODULATOR;
-        else if (LV2_IS_FILTER(Category))
-            return PLUGIN_CATEGORY_FILTER;
-        else if (LV2_IS_EQUALISER(Category))
-            return PLUGIN_CATEGORY_EQ;
-        else if (LV2_IS_SPECTRAL(Category))
-            return PLUGIN_CATEGORY_UTILITY;
         else if (LV2_IS_DISTORTION(Category))
             return PLUGIN_CATEGORY_OUTRO;
         else if (LV2_IS_DYNAMICS(Category))
             return PLUGIN_CATEGORY_DYNAMICS;
+        else if (LV2_IS_EQ(Category))
+            return PLUGIN_CATEGORY_EQ;
+        else if (LV2_IS_FILTER(Category))
+            return PLUGIN_CATEGORY_FILTER;
+        else if (LV2_IS_GENERATOR(Category))
+            return PLUGIN_CATEGORY_SYNTH;
+        else if (LV2_IS_MODULATOR(Category))
+            return PLUGIN_CATEGORY_MODULATOR;
+        else if (LV2_IS_REVERB(Category))
+            return PLUGIN_CATEGORY_DELAY;
+        else if (LV2_IS_SIMULATOR(Category))
+            return PLUGIN_CATEGORY_OUTRO;
+        else if (LV2_IS_SPATIAL(Category))
+            return PLUGIN_CATEGORY_OUTRO;
+        else if (LV2_IS_SPECTRAL(Category))
+            return PLUGIN_CATEGORY_UTILITY;
+        else if (LV2_IS_UTILITY(Category))
+            return PLUGIN_CATEGORY_UTILITY;
 
         return get_category_from_name(m_name);
     }
@@ -1617,7 +1706,7 @@ public:
                             {
                                 LV2_Atom_Event* aev = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evin.data[k].buffer.a) + atomSequenceOffsets[k]);
                                 aev->time.frames = 0;
-                                aev->body.type   = CARLA_URI_MAP_ID_EVENT_MIDI;
+                                aev->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
                                 aev->body.size   = 3;
                                 memcpy(LV2_ATOM_BODY(&aev->body), midi_event, 3);
 
@@ -1626,7 +1715,7 @@ public:
                                 evin.data[k].buffer.a->atom.size += size;
                             }
                             else if (evin.data[k].types & CARLA_EVENT_DATA_EVENT)
-                                lv2_event_write(&evin_iters[k], 0, 0, CARLA_URI_MAP_ID_EVENT_MIDI, 3, midi_event);
+                                lv2_event_write(&evin_iters[k], 0, 0, CARLA_URI_MAP_ID_MIDI_EVENT, 3, midi_event);
 
                             else if (evin.data[k].types & CARLA_EVENT_DATA_MIDI_LL)
                                 lv2midi_put_event(&evin_states[k], 0, 3, midi_event);
@@ -1677,7 +1766,7 @@ public:
                     if (evin.data[i].types & CARLA_EVENT_DATA_ATOM)
                         continue; // TODO
                     else if (evin.data[i].types & CARLA_EVENT_DATA_EVENT)
-                        lv2_event_write(&evin_iters[i], min_event.time, 0, CARLA_URI_MAP_ID_EVENT_MIDI, min_event.size, min_event.buffer);
+                        lv2_event_write(&evin_iters[i], min_event.time, 0, CARLA_URI_MAP_ID_MIDI_EVENT, min_event.size, min_event.buffer);
                     else if (evin.data[i].types & CARLA_EVENT_DATA_MIDI_LL)
                         lv2midi_put_event(&evin_states[i], min_event.time, min_event.size, min_event.buffer);
 
@@ -2002,7 +2091,7 @@ public:
 
     bool is_ui_bridgeable(uint32_t ui_id)
     {
-        LV2_RDF_UI* rdf_ui = &rdf_descriptor->UIs[ui_id];
+        const LV2_RDF_UI* const rdf_ui = &rdf_descriptor->UIs[ui_id];
 
         for (uint32_t i=0; i < rdf_ui->FeatureCount; i++)
         {
@@ -2169,8 +2258,6 @@ public:
                             RDF_Port->Type |= LV2_PORT_SUPPORTS_MIDI;
                         }
 
-                        qDebug("Port %i -> %x", j, RDF_Port->Type);
-
                         // ------------------------------------------
                         // Set Port Properties
 
@@ -2258,8 +2345,6 @@ public:
 
         if (rdf_descriptor)
         {
-            qDebug("x01x Port Count = %i", rdf_descriptor->PortCount);
-
             if (lib_open(rdf_descriptor->Binary))
             {
                 LV2_Descriptor_Function descfn = (LV2_Descriptor_Function)lib_symbol("lv2_descriptor");
@@ -2316,8 +2401,6 @@ public:
                                 qDebug("Plugin has non-supported extension: '%s'", rdf_descriptor->Extensions[i]);
                         }
 
-                        qDebug("x02x Port Count = %i", rdf_descriptor->PortCount);
-
                         if (can_continue)
                         {
                             // Initialize features
@@ -2362,8 +2445,6 @@ public:
                             features[lv2_feature_id_rtmempool]->data  = RT_MemPool_Feature;
 
                             handle = descriptor->instantiate(descriptor, get_sample_rate(), rdf_descriptor->Bundle, features);
-
-                            qDebug("x03x Port Count = %i", rdf_descriptor->PortCount);
 
                             if (handle)
                             {
@@ -2582,7 +2663,6 @@ public:
                                     if (gui.type != GUI_NONE)
                                         m_hints |= PLUGIN_HAS_GUI;
 #endif
-                                    qDebug("x04x Port Count = %i", rdf_descriptor->PortCount);
 
                                     return true;
                                 }
@@ -2671,9 +2751,9 @@ public:
         {
             // Event types
             if (strcmp(uri, "http://lv2plug.in/ns/ext/midi#MidiEvent") == 0)
-                return CARLA_URI_MAP_ID_EVENT_MIDI;
+                return CARLA_URI_MAP_ID_MIDI_EVENT;
             else if (strcmp(uri, "http://lv2plug.in/ns/ext/time#Position") == 0)
-                return CARLA_URI_MAP_ID_EVENT_TIME;
+                return CARLA_URI_MAP_ID_TIME_POSITION;
         }
         else if (strcmp(uri, LV2_ATOM__Chunk) == 0)
         {
@@ -2704,9 +2784,9 @@ public:
         qDebug("Lv2AudioPlugin::carla_lv2_urid_map(%p, %s)", handle, uri);
 
         if (strcmp(uri, "http://lv2plug.in/ns/ext/midi#MidiEvent") == 0)
-            return CARLA_URI_MAP_ID_EVENT_MIDI;
+            return CARLA_URI_MAP_ID_MIDI_EVENT;
         else if (strcmp(uri, "http://lv2plug.in/ns/ext/time#Position") == 0)
-            return CARLA_URI_MAP_ID_EVENT_TIME;
+            return CARLA_URI_MAP_ID_TIME_POSITION;
         else if (strcmp(uri, LV2_ATOM__Chunk) == 0)
             return CARLA_URI_MAP_ID_ATOM_CHUNK;
         else if (strcmp(uri, LV2_ATOM__Sequence) == 0)
@@ -2728,9 +2808,9 @@ public:
     {
         qDebug("Lv2AudioPlugin::carla_lv2_urid_unmap(%p, %i)", handle, urid);
 
-        if (urid == CARLA_URI_MAP_ID_EVENT_MIDI)
+        if (urid == CARLA_URI_MAP_ID_MIDI_EVENT)
             return "http://lv2plug.in/ns/ext/midi#MidiEvent";
-        else if (urid == CARLA_URI_MAP_ID_EVENT_TIME)
+        else if (urid == CARLA_URI_MAP_ID_TIME_POSITION)
             return "http://lv2plug.in/ns/ext/time#Position";
         else if (urid == CARLA_URI_MAP_ID_ATOM_CHUNK)
             return LV2_ATOM__Chunk;
