@@ -11,7 +11,7 @@ SORD_VERSION   = 0.8.0
 SRATOM_VERSION = 0.2.0
 LILV_VERSION   = 0.14.0
 
-BUILD_FLAGS  = -O2 -fvisibility=hidden -mtune=generic -std=c99
+BUILD_FLAGS  = -O2 -fvisibility=hidden -fPIC -mtune=generic -std=c99
 BUILD_FLAGS += -I. -I../carla-includes
 BUILD_FLAGS += -Iserd-$(SERD_VERSION)
 BUILD_FLAGS += -Isord-$(SORD_VERSION)

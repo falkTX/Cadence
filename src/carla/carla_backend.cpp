@@ -24,7 +24,7 @@
 // plugin specific
 short add_plugin_ladspa(const char* filename, const char* label, void* extra_stuff);
 short add_plugin_dssi(const char* filename, const char* label, void* extra_stuff);
-short add_plugin_lv2(const char* filename, const char* label, void* extra_stuff);
+short add_plugin_lv2(const char* filename, const char* label);
 short add_plugin_vst(const char* filename, const char* label);
 short add_plugin_sf2(const char* filename, const char* label);
 short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename, const char* label, void* extra_stuff);
@@ -131,7 +131,7 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
     case PLUGIN_DSSI:
         return add_plugin_dssi(filename, label, extra_stuff);
     case PLUGIN_LV2:
-        return add_plugin_lv2(filename, label, extra_stuff);
+        return add_plugin_lv2(filename, label);
     case PLUGIN_VST:
         return add_plugin_vst(filename, label);
     case PLUGIN_SF2:
@@ -1107,8 +1107,8 @@ void set_option(OptionsType option, int value, const char* value_str)
 {
     qDebug("set_option(%i, %i, %s)", option, value, value_str);
 
-    if (carla_options.initiated)
-        return;
+    //if (carla_options.initiated)
+    //    return;
 
     switch(option)
     {
@@ -1120,6 +1120,21 @@ void set_option(OptionsType option, int value, const char* value_str)
         break;
     case OPTION_PREFER_UI_BRIDGES:
         carla_options.prefer_ui_bridges = value;
+        break;
+    case OPTION_PATH_LADSPA:
+        setenv("LADSPA_PATH", value_str, 1);
+        break;
+    case OPTION_PATH_DSSI:
+        setenv("DSSI_PATH", value_str, 1);
+        break;
+    case OPTION_PATH_LV2:
+        setenv("LV2_PATH", value_str, 1);
+        break;
+    case OPTION_PATH_VST:
+        setenv("VST_PATH", value_str, 1);
+        break;
+    case OPTION_PATH_SF2:
+        setenv("SF2_PATH", value_str, 1);
         break;
     case OPTION_PATH_BRIDGE_UNIX32:
         carla_options.bridge_unix32 = strdup(value_str);

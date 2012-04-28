@@ -296,7 +296,6 @@ class SearchPluginsThread(QThread):
     def run(self):
         # TODO - split across several fuctions
         global LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, SF2_PATH
-
         os.environ['LADSPA_PATH'] = splitter.join(LADSPA_PATH)
         os.environ['DSSI_PATH'] = splitter.join(DSSI_PATH)
         os.environ['LV2_PATH'] = splitter.join(LV2_PATH)
@@ -706,8 +705,6 @@ class PluginRefreshW(QDialog, ui_carla_refresh.Ui_PluginRefreshW):
           self.ico_rdflib.setPixmap(getIcon("dialog-ok-apply").pixmap(16, 16))
         else:
           self.ico_rdflib.setPixmap(getIcon("dialog-error").pixmap(16, 16))
-          self.ch_lv2.setChecked(False)
-          self.ch_lv2.setEnabled(False)
 
         if (LINUX or MACOS):
           if (is64bit):
@@ -3249,9 +3246,9 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
               except:
                 self.ladspa_rdf_list = []
               fr_ladspa.close()
+              return
 
-        else:
-          self.ladspa_rdf_list = []
+        self.ladspa_rdf_list = []
 
     @pyqtSlot()
     def slot_file_new(self):
@@ -3343,6 +3340,12 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         LV2_PATH = toList(self.settings.value("Paths/LV2", LV2_PATH))
         VST_PATH = toList(self.settings.value("Paths/VST", VST_PATH))
         SF2_PATH = toList(self.settings.value("Paths/SF2", SF2_PATH))
+
+        CarlaHost.set_option(OPTION_PATH_LADSPA, 0, splitter.join(LADSPA_PATH))
+        CarlaHost.set_option(OPTION_PATH_DSSI, 0, splitter.join(DSSI_PATH))
+        CarlaHost.set_option(OPTION_PATH_LV2, 0, splitter.join(LV2_PATH))
+        CarlaHost.set_option(OPTION_PATH_VST, 0, splitter.join(VST_PATH))
+        CarlaHost.set_option(OPTION_PATH_SF2, 0, splitter.join(SF2_PATH))
 
     def timerEvent(self, event):
         if (event.timerId() == self.TIMER_GUI_STUFF):

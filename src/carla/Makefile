@@ -20,10 +20,10 @@ OBJS = carla_backend.o carla_bridge.o carla_jack.o carla_osc.o carla_shared.o ca
 all: carla_backend.so
 
 carla_backend.so: $(OBJS)
-	$(CXX) $(OBJS) $(CARLA_LINK_FLAGS) -o carla_backend.so
+	$(CXX) $(OBJS) ../carla-lilv/carla_lilv.a $(CARLA_LINK_FLAGS) -o carla_backend.so
 
 carla_backend.dll: $(OBJS) windows.def
-	$(CXX) $(OBJS) windows.def $(CARLA_LINK_FLAGS) -o carla_backend.dll
+	$(CXX) $(OBJS) ../carla-lilv/carla_lilv.a windows.def $(CARLA_LINK_FLAGS) -o carla_backend.dll
 
 .c.o:
 	$(CC) -c $< $(CARLA_C_FLAGS) -o $@

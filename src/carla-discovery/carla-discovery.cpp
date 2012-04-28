@@ -839,7 +839,7 @@ void do_lv2_check(const char* bundle)
                 if (Port.is_a(PortTypeInput))
                     audio_ins += 1;
                 else if (Port.is_a(PortTypeOutput))
-                    audio_ins += 1;
+                    audio_outs += 1;
                 audio_total += 1;
             }
             else if (Port.is_a(PortTypeControl))
@@ -849,7 +849,7 @@ void do_lv2_check(const char* bundle)
                 else if (Port.is_a(PortTypeOutput))
                 {
                     if (Port.has_property(PortPropertyLatency) == false)
-                        parameters_ins += 1;
+                        parameters_outs += 1;
                 }
                 parameters_total += 1;
             }
@@ -861,7 +861,7 @@ void do_lv2_check(const char* bundle)
                     if (Port.is_a(PortTypeInput))
                         midi_ins += 1;
                     else if (Port.is_a(PortTypeOutput))
-                        midi_ins += 1;
+                        midi_outs += 1;
                     midi_total += 1;
                 }
             }
@@ -872,7 +872,7 @@ void do_lv2_check(const char* bundle)
                     if (Port.is_a(PortTypeInput))
                         midi_ins += 1;
                     else if (Port.is_a(PortTypeOutput))
-                        midi_ins += 1;
+                        midi_outs += 1;
                     midi_total += 1;
                 }
             }
@@ -881,7 +881,7 @@ void do_lv2_check(const char* bundle)
                 if (Port.is_a(PortTypeInput))
                     midi_ins += 1;
                 else if (Port.is_a(PortTypeOutput))
-                    midi_ins += 1;
+                    midi_outs += 1;
                 midi_total += 1;
             }
         }

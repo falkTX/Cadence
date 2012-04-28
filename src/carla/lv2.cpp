@@ -47,45 +47,11 @@ extern "C" {
 #include "lv2-rtmempool/rtmempool.h"
 }
 
-#if 0
+#define LV2_MIDI_LL__MidiPort "http://ll-plugins.nongnu.org/lv2/ext/MidiPort"
 
-// TODO - remove me
-int main()
-{
-    Lilv::World World;
-    World.load_all();
-
-    int j = 0;
-    const Lilv::Plugins Plugins = World.get_all_plugins();
-
-    LILV_FOREACH(plugins, i, Plugins)
-    {
-        Lilv::Plugin p = Lilv::Plugin(lilv_plugins_get(Plugins, i));
-
-        LV2_RDF_Descriptor* desc = new LV2_RDF_Descriptor;
-        desc->Type = 0;
-        desc->URI  = strdup(p.get_uri().as_string());
-        desc->Name    = strdup(p.get_name().as_string());
-        desc->Author  = strdup(p.get_author_name().as_string());
-        desc->License = nullptr;
-        desc->Binary  = strdup(lilv_uri_to_path(p.get_library_uri().as_string()));
-        desc->Bundle  = strdup(lilv_uri_to_path(p.get_bundle_uri().as_string()));
-
-        desc->PortCount = 0;
-        desc->PresetCount = 0;
-        desc->FeatureCount = 0;
-        desc->ExtensionCount = 0;
-        desc->UICount = 0;
-
-        qDebug("%03i - %s", j++, lilv_uri_to_path(p.get_library_uri().as_string()));
-
-        lv2_rdf_free(desc);
-    }
-
-    return 0;
-}
+#if 1
+int main() { return 0; }
 #endif
-
 
 #include <QtGui/QDialog>
 #include <QtGui/QLayout>
@@ -173,6 +139,95 @@ const char* lv2bridge2str(LV2_Property type)
     }
 }
 
+class Lv2WorldClass : public Lilv::World
+{
+public:
+    Lv2WorldClass() : Lilv::World(),
+        class_instrument  (new_uri(LV2_CORE__InstrumentPlugin)),
+        port_input        (new_uri(LV2_CORE__InputPort)),
+        port_output       (new_uri(LV2_CORE__OutputPort)),
+        port_control      (new_uri(LV2_CORE__ControlPort)),
+        port_audio        (new_uri(LV2_CORE__AudioPort)),
+        port_cv           (new_uri(LV2_CORE__CVPort)),
+        port_atom         (new_uri(LV2_ATOM__AtomPort)),
+        port_event        (new_uri(LV2_EVENT__EventPort)),
+        port_midi_ll      (new_uri(LV2_MIDI_LL__MidiPort)),
+
+        pprop_optional    (new_uri(LV2_CORE__connectionOptional)),
+        pprop_toggled     (new_uri(LV2_CORE__toggled)),
+        pprop_sample_rate (new_uri(LV2_CORE__sampleRate)),
+        pprop_integer     (new_uri(LV2_CORE__integer)),
+        pprop_enumeration (new_uri(LV2_CORE__enumeration)),
+
+        value_default     (new_uri(LV2_CORE__default)),
+        value_minimum     (new_uri(LV2_CORE__minimum)),
+        value_maximum     (new_uri(LV2_CORE__maximum)),
+
+        atom_sequence     (new_uri(LV2_ATOM__Sequence)),
+        atom_buffer_type  (new_uri(LV2_ATOM__bufferType)),
+        atom_supports     (new_uri(LV2_ATOM__supports)),
+
+        midi_event    (new_uri(LV2_MIDI__MidiEvent)),
+
+        time_position (new_uri(LV2_TIME__position)), // FIXME?
+
+        rdf_type (new_uri(LILV_NS_RDF "type"))
+    {
+        initiated = false;
+    }
+
+    void Init()
+    {
+        if (initiated == false)
+        {
+            qDebug("Lv2World::Init()");
+            initiated = true;
+            load_all();
+        }
+    }
+
+    // Plugin Types
+    Lilv::Node class_instrument;
+
+    // Port Types
+    Lilv::Node port_input;
+    Lilv::Node port_output;
+    Lilv::Node port_control;
+    Lilv::Node port_audio;
+    Lilv::Node port_cv;
+    Lilv::Node port_atom;
+    Lilv::Node port_event;
+    Lilv::Node port_midi_ll;
+
+    // Port Properties
+    Lilv::Node pprop_optional;
+    Lilv::Node pprop_toggled;
+    Lilv::Node pprop_sample_rate;
+    Lilv::Node pprop_integer;
+    Lilv::Node pprop_enumeration;
+    // TODO - check this, more
+
+    Lilv::Node value_default;
+    Lilv::Node value_minimum;
+    Lilv::Node value_maximum;
+
+    Lilv::Node atom_sequence;
+    Lilv::Node atom_buffer_type;
+    Lilv::Node atom_supports;
+
+    Lilv::Node midi_event;
+
+    Lilv::Node time_position;
+
+    // Other
+    Lilv::Node rdf_type;
+
+private:
+    bool initiated;
+};
+
+static Lv2WorldClass Lv2World;
+
 class Lv2Plugin : public CarlaPlugin
 {
 public:
@@ -213,6 +268,8 @@ public:
 
         for (uint32_t i=0; i < lv2_feature_count+1; i++)
             features[i] = nullptr;
+
+        Lv2World.Init();
     }
 
     virtual ~Lv2Plugin()
@@ -427,22 +484,34 @@ public:
 
     virtual void get_label(char* buf_str)
     {
-        strncpy(buf_str, rdf_descriptor->URI, STR_MAX);
+        if (rdf_descriptor->URI)
+            strncpy(buf_str, rdf_descriptor->URI, STR_MAX);
+        else
+            *buf_str = 0;
     }
 
     virtual void get_maker(char* buf_str)
     {
-        strncpy(buf_str, rdf_descriptor->Author, STR_MAX);
+        if (rdf_descriptor->Author)
+            strncpy(buf_str, rdf_descriptor->Author, STR_MAX);
+        else
+            *buf_str = 0;
     }
 
     virtual void get_copyright(char* buf_str)
     {
-        strncpy(buf_str, rdf_descriptor->License, STR_MAX);
+        if (rdf_descriptor->License)
+            strncpy(buf_str, rdf_descriptor->License, STR_MAX);
+        else
+            *buf_str = 0;
     }
 
     virtual void get_real_name(char* buf_str)
     {
-        strncpy(buf_str, rdf_descriptor->Name, STR_MAX);
+        if (rdf_descriptor->Name)
+            strncpy(buf_str, rdf_descriptor->Name, STR_MAX);
+        else
+            *buf_str = 0;
     }
 
     virtual void get_parameter_name(uint32_t param_id, char* buf_str)
@@ -812,6 +881,8 @@ public:
             else
                 qDebug("Unknown port type found, index: %i, name: %s", i, rdf_descriptor->Ports[i].Name);
         }
+
+        qDebug("Lv2Plugin::reload() - %i | %i | %i", ains, aouts, params);
 
         //        if (params == 0 && (hints & PLUGIN_HAS_EXTENSION_DYNPARAM) > 0)
         //        {
@@ -2000,13 +2071,194 @@ public:
     }
 #endif
 
-    bool init(const char* filename, const char* URI, void* extra_stuff)
+    bool init(const char* bundle, const char* URI)
     {
-        LV2_RDF_Descriptor* rdf_descriptor_ = (LV2_RDF_Descriptor*)extra_stuff;
+        const Lilv::Plugins Plugins = Lv2World.get_all_plugins();
 
-        if (rdf_descriptor_)
+        LILV_FOREACH(plugins, i, Plugins)
         {
-            rdf_descriptor = lv2_rdf_dup(rdf_descriptor_);
+            Lilv::Plugin Plugin = Lilv::Plugin(lilv_plugins_get(Plugins, i));
+
+            if (strcmp(Plugin.get_uri().as_string(), URI) == 0)
+            {
+                rdf_descriptor = new LV2_RDF_Descriptor;
+
+                // --------------------------------------------------
+                // Set Plugin Type
+
+                rdf_descriptor->Type = 0x0;
+
+                Lilv::Nodes types(Plugin.get_value(Lv2World.rdf_type));
+
+                if (types.contains(Lv2World.class_instrument))
+                    rdf_descriptor->Type |= LV2_CLASS_INSTRUMENT;
+
+                // --------------------------------------------------
+                // Set Plugin Information
+
+                rdf_descriptor->URI      = strdup(URI);
+                rdf_descriptor->Name     = strdup(Plugin.get_name().as_string());
+                rdf_descriptor->Author   = strdup(Plugin.get_author_name().as_string());
+                rdf_descriptor->License  = nullptr;
+                rdf_descriptor->Binary   = strdup(lilv_uri_to_path(Plugin.get_library_uri().as_string()));
+                rdf_descriptor->Bundle   = strdup(lilv_uri_to_path(Plugin.get_bundle_uri().as_string()));
+                rdf_descriptor->UniqueID = 0;
+
+                // --------------------------------------------------
+                // Set Plugin Ports
+
+                rdf_descriptor->PortCount = Plugin.get_num_ports();
+
+                if (rdf_descriptor->PortCount > 0)
+                {
+                    rdf_descriptor->Ports = new LV2_RDF_Port [rdf_descriptor->PortCount];
+
+                    for (unsigned j = 0; j < rdf_descriptor->PortCount; j++)
+                    {
+                        Lilv::Port Port = Plugin.get_port_by_index(j);
+                        LV2_RDF_Port* RDF_Port = &rdf_descriptor->Ports[j];
+
+                        // ------------------------------------------
+                        // Set Port Type
+
+                        RDF_Port->Type = 0x0;
+
+                        if (Port.is_a(Lv2World.port_input))
+                            RDF_Port->Type |= LV2_PORT_INPUT;
+
+                        if (Port.is_a(Lv2World.port_output))
+                            RDF_Port->Type |= LV2_PORT_OUTPUT;
+
+                        if (Port.is_a(Lv2World.port_control))
+                            RDF_Port->Type |= LV2_PORT_CONTROL;
+
+                        if (Port.is_a(Lv2World.port_audio))
+                            RDF_Port->Type |= LV2_PORT_AUDIO;
+
+                        if (Port.is_a(Lv2World.port_cv))
+                            RDF_Port->Type |= LV2_PORT_CV;
+
+                        if (Port.is_a(Lv2World.port_atom))
+                        {
+                            RDF_Port->Type |= LV2_PORT_ATOM;
+
+                            Lilv::Nodes bufferTypes(Port.get_value(Lv2World.atom_buffer_type));
+                            if (bufferTypes.contains(Lv2World.atom_sequence))
+                                RDF_Port->Type |= LV2_PORT_ATOM_SEQUENCE;
+
+                            Lilv::Nodes supports(Port.get_value(Lv2World.atom_supports));
+                            if (supports.contains(Lv2World.midi_event))
+                                RDF_Port->Type |= LV2_PORT_SUPPORTS_MIDI;
+                            if (supports.contains(Lv2World.time_position))
+                                RDF_Port->Type |= LV2_PORT_SUPPORTS_TIME;
+                        }
+
+                        if (Port.is_a(Lv2World.port_event))
+                        {
+                            RDF_Port->Type |= LV2_PORT_EVENT;
+
+                            if (Port.supports_event(Lv2World.midi_event))
+                                RDF_Port->Type |= LV2_PORT_SUPPORTS_MIDI;
+                            if (Port.supports_event(Lv2World.time_position))
+                                RDF_Port->Type |= LV2_PORT_SUPPORTS_TIME;
+                        }
+
+                        if (Port.is_a(Lv2World.port_midi_ll))
+                        {
+                            RDF_Port->Type |= LV2_PORT_MIDI_LL;
+                            RDF_Port->Type |= LV2_PORT_SUPPORTS_MIDI;
+                        }
+
+                        qDebug("Port %i -> %x", j, RDF_Port->Type);
+
+                        // ------------------------------------------
+                        // Set Port Properties
+
+                        RDF_Port->Properties = 0x0;
+
+                        if (Port.has_property(Lv2World.pprop_optional))
+                            RDF_Port->Properties = LV2_PORT_OPTIONAL;
+                        if (Port.has_property(Lv2World.pprop_toggled))
+                            RDF_Port->Properties = LV2_PORT_TOGGLED;
+                        if (Port.has_property(Lv2World.pprop_sample_rate))
+                            RDF_Port->Properties = LV2_PORT_SAMPLE_RATE;
+                        if (Port.has_property(Lv2World.pprop_integer))
+                            RDF_Port->Properties = LV2_PORT_INTEGER;
+                        if (Port.has_property(Lv2World.pprop_enumeration))
+                            RDF_Port->Properties = LV2_PORT_ENUMERATION;
+
+                        // ------------------------------------------
+                        // Set Port Information
+
+                        RDF_Port->Name   = strdup(Lilv::Node(Port.get_name()).as_string());
+                        RDF_Port->Symbol = strdup(Lilv::Node(Port.get_symbol()).as_string());
+
+                        // TODO
+                        RDF_Port->MidiMap.Type   = 0x0;
+                        RDF_Port->MidiMap.Number = 0;
+
+                        // ------------------------------------------
+                        // Set Port Points
+
+                        RDF_Port->Points.Hints   = 0x0;
+                        RDF_Port->Points.Default = 0.0f;
+                        RDF_Port->Points.Minimum = 0.0f;
+                        RDF_Port->Points.Maximum = 1.0f;
+
+                        Lilv::Nodes value = Port.get_value(Lv2World.value_default);
+
+                        if (value.size() > 0)
+                        {
+                            RDF_Port->Points.Hints |= LV2_PORT_POINT_DEFAULT;
+                            RDF_Port->Points.Default = Lilv::Node(lilv_nodes_get(value, value.begin())).as_float();
+                        }
+
+                        value = Port.get_value(Lv2World.value_minimum);
+
+                        if (value.size() > 0)
+                        {
+                            RDF_Port->Points.Hints |= LV2_PORT_POINT_MINIMUM;
+                            RDF_Port->Points.Minimum = Lilv::Node(lilv_nodes_get(value, value.begin())).as_float();
+                        }
+
+                        value = Port.get_value(Lv2World.value_maximum);
+
+                        if (value.size() > 0)
+                        {
+                            RDF_Port->Points.Hints |= LV2_PORT_POINT_MAXIMUM;
+                            RDF_Port->Points.Maximum = Lilv::Node(lilv_nodes_get(value, value.begin())).as_float();
+                        }
+
+                        // ------------------------------------------
+                        // Set Port Scale Points
+
+                        RDF_Port->ScalePointCount = 0;
+                        RDF_Port->ScalePoints = nullptr;
+                    }
+
+                    // Set Latency port
+                    if (Plugin.has_latency())
+                    {
+                        unsigned int index = Plugin.get_latency_port_index();
+                        if (index < rdf_descriptor->PortCount)
+                            rdf_descriptor->Ports[index].Properties |= LV2_PORT_LATENCY;
+                    }
+                }
+                else
+                    rdf_descriptor->Ports = nullptr;
+
+                rdf_descriptor->PresetCount = 0;
+                rdf_descriptor->FeatureCount = 0;
+                rdf_descriptor->ExtensionCount = 0;
+                rdf_descriptor->UICount = 0;
+
+                break;
+            }
+        }
+
+        if (rdf_descriptor)
+        {
+            qDebug("x01x Port Count = %i", rdf_descriptor->PortCount);
 
             if (lib_open(rdf_descriptor->Binary))
             {
@@ -2064,6 +2316,8 @@ public:
                                 qDebug("Plugin has non-supported extension: '%s'", rdf_descriptor->Extensions[i]);
                         }
 
+                        qDebug("x02x Port Count = %i", rdf_descriptor->PortCount);
+
                         if (can_continue)
                         {
                             // Initialize features
@@ -2109,15 +2363,18 @@ public:
 
                             handle = descriptor->instantiate(descriptor, get_sample_rate(), rdf_descriptor->Bundle, features);
 
+                            qDebug("x03x Port Count = %i", rdf_descriptor->PortCount);
+
                             if (handle)
                             {
-                                m_filename = strdup(filename);
+                                m_filename = strdup(bundle);
                                 m_name = get_unique_name(rdf_descriptor->Name);
 
                                 if (carla_jack_register_plugin(this, &jack_client))
                                 {
                                     // ----------------- GUI Stuff -------------------------------------------------------
 
+#if 0
                                     uint32_t UICount = rdf_descriptor->UICount;
 
                                     if (UICount > 0)
@@ -2324,6 +2581,8 @@ public:
 
                                     if (gui.type != GUI_NONE)
                                         m_hints |= PLUGIN_HAS_GUI;
+#endif
+                                    qDebug("x04x Port Count = %i", rdf_descriptor->PortCount);
 
                                     return true;
                                 }
@@ -2696,7 +2955,7 @@ public:
 private:
     LV2_Handle handle;
     const LV2_Descriptor* descriptor;
-    const LV2_RDF_Descriptor* rdf_descriptor;
+    LV2_RDF_Descriptor* rdf_descriptor;
     LV2_Feature* features[lv2_feature_count+1];
 
     struct {
@@ -2723,9 +2982,9 @@ private:
     QList<const char*> custom_uri_ids;
 };
 
-short add_plugin_lv2(const char* filename, const char* label, void* extra_stuff)
+short add_plugin_lv2(const char* filename, const char* label)
 {
-    qDebug("add_plugin_lv2(%s, %s, %p)", filename, label, extra_stuff);
+    qDebug("add_plugin_lv2(%s, %s)", filename, label);
 
     short id = get_new_plugin_id();
 
@@ -2733,7 +2992,7 @@ short add_plugin_lv2(const char* filename, const char* label, void* extra_stuff)
     {
         Lv2Plugin* plugin = new Lv2Plugin;
 
-        if (plugin->init(filename, label, extra_stuff))
+        if (plugin->init(filename, label))
         {
             plugin->reload();
             plugin->set_id(id);

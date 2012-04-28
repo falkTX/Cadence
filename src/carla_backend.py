@@ -528,7 +528,7 @@ def checkPluginDSSI(filename, tool, isWine=False):
   return runCarlaDiscovery(PLUGIN_DSSI, "DSSI", filename, tool, isWine)
 
 def checkPluginLV2(filename, tool, isWine=False):
-  return runCarlaDiscovery(PLUGIN_DSSI, "LV2", filename, tool, isWine)
+  return runCarlaDiscovery(PLUGIN_LV2, "LV2", filename, tool, isWine)
 
 def checkPluginVST(filename, tool, isWine=False):
   return runCarlaDiscovery(PLUGIN_VST, "VST", filename, tool, isWine)
@@ -624,13 +624,18 @@ GUI_EXTERNAL_OSC = 4
 OPTION_GLOBAL_JACK_CLIENT   = 1
 OPTION_USE_DSSI_CHUNKS      = 2
 OPTION_PREFER_UI_BRIDGES    = 3
-OPTION_PATH_BRIDGE_UNIX32   = 4
-OPTION_PATH_BRIDGE_UNIX64   = 5
-OPTION_PATH_BRIDGE_WIN32    = 6
-OPTION_PATH_BRIDGE_WIN64    = 7
-OPTION_PATH_BRIDGE_LV2_GTK2 = 8
-OPTION_PATH_BRIDGE_LV2_QT4  = 9
-OPTION_PATH_BRIDGE_LV2_X11  = 10
+OPTION_PATH_LADSPA          = 4
+OPTION_PATH_DSSI            = 5
+OPTION_PATH_LV2             = 6
+OPTION_PATH_VST             = 7
+OPTION_PATH_SF2             = 8
+OPTION_PATH_BRIDGE_UNIX32   = 9
+OPTION_PATH_BRIDGE_UNIX64   = 10
+OPTION_PATH_BRIDGE_WIN32    = 11
+OPTION_PATH_BRIDGE_WIN64    = 12
+OPTION_PATH_BRIDGE_LV2_GTK2 = 13
+OPTION_PATH_BRIDGE_LV2_QT4  = 14
+OPTION_PATH_BRIDGE_LV2_X11  = 15
 
 # enum CallbackType
 CALLBACK_DEBUG                = 0
