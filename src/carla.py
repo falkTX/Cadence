@@ -297,6 +297,12 @@ class SearchPluginsThread(QThread):
         # TODO - split across several fuctions
         global LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, SF2_PATH
 
+        os.environ['LADSPA_PATH'] = splitter.join(LADSPA_PATH)
+        os.environ['DSSI_PATH'] = splitter.join(DSSI_PATH)
+        os.environ['LV2_PATH'] = splitter.join(LV2_PATH)
+        os.environ['VST_PATH'] = splitter.join(VST_PATH)
+        os.environ['SF2_PATH'] = splitter.join(SF2_PATH)
+
         blacklist = toList(self.settings_db.value("Plugins/Blacklisted", []))
         bins   = []
         bins_w = []
@@ -304,6 +310,7 @@ class SearchPluginsThread(QThread):
         m_count = type_count = 0
         if (self.check_ladspa): m_count += 1
         if (self.check_dssi):   m_count += 1
+        if (self.check_lv2):    m_count += 1
         if (self.check_vst):    m_count += 1
 
         check_native = check_wine = False
@@ -343,7 +350,6 @@ class SearchPluginsThread(QThread):
             if (carla_discovery_win64 in self.check_bins):
               bins.append(carla_discovery_win64)
 
-        if (self.check_lv2): type_count += 1
         if (self.check_sf2): type_count += 1
 
         if (type_count == 0):
@@ -356,7 +362,6 @@ class SearchPluginsThread(QThread):
         soundfonts      = []
 
         ladspa_rdf_info = []
-        lv2_rdf_info    = []
 
         last_value = 0
         percent_value = 100/type_count
@@ -488,17 +493,53 @@ class SearchPluginsThread(QThread):
 
             last_value += percent_value
 
-        ## ----- LV2
-        if (self.check_lv2 and haveRDF):
+        # ----- LV2
+        if (self.check_lv2):
           self.pluginLook(last_value, "LV2 bundles...")
-          lv2_rdf.set_rdf_path(LV2_PATH)
-          lv2_rdf_info = lv2_rdf.recheck_all_plugins(self, last_value, percent_value)
-          for info in lv2_rdf_info:
-            plugins = checkPluginLV2(info)
-            if (plugins != None):
-              lv2_plugins.append(plugins)
+          lv2_bundles = []
 
-          last_value += percent_value
+          for iPATH in LV2_PATH:
+            bundles = findLV2Bundles(iPATH)
+            for bundle in bundles:
+              if (bundle not in lv2_bundles):
+                lv2_bundles.append(bundle)
+
+          lv2_bundles.sort()
+
+          if (check_native):
+            for i in range(len(lv2_bundles)):
+              lv2 = lv2_bundles[i]
+              if (getShortFileName(lv2) in blacklist):
+                print("bundle %s is blacklisted, skip it" % (lv2))
+                continue
+              else:
+                percent = ( float(i) / len(lv2_bundles) ) * percent_value
+                self.pluginLook(last_value + percent, lv2)
+                self.setLastLoadedBinary(lv2)
+                for bin_ in bins:
+                  plugins = checkPluginLV2(lv2, bin_)
+                  if (plugins != None):
+                    lv2_plugins.append(plugins)
+
+            last_value += percent_value
+
+          if (check_wine):
+            # Check binaries, wine
+            for i in range(len(lv2_bundles)):
+              lv2_w = lv2_bundles[i]
+              if (getShortFileName(lv2_w) in blacklist):
+                print("bundle %s is blacklisted, skip it" % (lv2_w))
+                continue
+              else:
+                percent = ( float(i) / len(lv2_bundles) ) * percent_value
+                self.pluginLook(last_value + percent, lv2_w)
+                self.setLastLoadedBinary(lv2_w)
+                for bin_w in bins_w:
+                  plugins = checkPluginLV2(lv2_w, bin_w)
+                  if (plugins != None):
+                    lv2_plugins.append(plugins)
+
+            last_value += percent_value
 
         # ----- VST
         if (self.check_vst):
@@ -611,12 +652,6 @@ class SearchPluginsThread(QThread):
             if (f_ladspa):
               json.dump(ladspa_rdf_info, f_ladspa)
               f_ladspa.close()
-
-          if (self.check_lv2):
-            f_lv2 = open(os.path.join(SettingsDir, "lv2_rdf.db"), 'w')
-            if (f_lv2):
-              json.dump(lv2_rdf_info, f_lv2)
-              f_lv2.close()
 
 # Plugin Refresh Dialog
 class PluginRefreshW(QDialog, ui_carla_refresh.Ui_PluginRefreshW):
@@ -2984,14 +3019,6 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
               return gui.encode("utf-8")
           return c_nullptr
 
-        elif (ptype == PLUGIN_LV2):
-          p_uri = plugin['label'].encode("utf-8")
-          for rdf_item in self.lv2_rdf_list:
-            if (rdf_item.URI == p_uri):
-              return pointer(rdf_item)
-          else:
-            return c_nullptr
-
         else:
           return c_nullptr
 
@@ -3217,25 +3244,14 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
           if (os.path.exists(fr_ladspa_file)):
             fr_ladspa = open(fr_ladspa_file, 'r')
             if (fr_ladspa):
-              #try:
-              self.ladspa_rdf_list = ladspa_rdf.get_c_ladspa_rdfs(json.load(fr_ladspa))
-              #except:
-                #self.ladspa_rdf_list = []
+              try:
+                self.ladspa_rdf_list = ladspa_rdf.get_c_ladspa_rdfs(json.load(fr_ladspa))
+              except:
+                self.ladspa_rdf_list = []
               fr_ladspa.close()
-
-          fr_lv2_file = os.path.join(SettingsDir, "lv2_rdf.db")
-          if (os.path.exists(fr_lv2_file)):
-            fr_lv2 = open(fr_lv2_file, 'r')
-            if (fr_lv2):
-              #try:
-              self.lv2_rdf_list = lv2_rdf.get_c_lv2_rdfs(json.load(fr_lv2))
-              #except:
-                #self.lv2_rdf_list = []
-              fr_lv2.close()
 
         else:
           self.ladspa_rdf_list = []
-          self.lv2_rdf_list = []
 
     @pyqtSlot()
     def slot_file_new(self):

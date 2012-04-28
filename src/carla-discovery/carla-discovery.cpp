@@ -771,6 +771,11 @@ void do_lv2_check(const char* bundle)
     std::string sbundle;
     sbundle += "file://";
     sbundle += bundle;
+#ifdef __WINDOWS__
+    sbundle += "\\";
+#else
+    sbundle += "/";
+#endif
 
     Lilv::World World;
     Lilv::Node Bundle(lilv_new_uri(World.me, sbundle.c_str()));

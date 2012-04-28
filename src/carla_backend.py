@@ -24,10 +24,10 @@ from subprocess import Popen, PIPE
 
 # Imports (Custom)
 try:
-  import ladspa_rdf, lv2_rdf
+  import ladspa_rdf
   haveRDF = True
 except:
-  print("RDF Support not available (LADSPA-RDF and LV2 will be disabled)")
+  print("RDF Support not available (LADSPA-RDF will be disabled)")
   haveRDF = False
 
 # Set Platform and Architecture
@@ -527,75 +527,14 @@ def checkPluginLADSPA(filename, tool, isWine=False):
 def checkPluginDSSI(filename, tool, isWine=False):
   return runCarlaDiscovery(PLUGIN_DSSI, "DSSI", filename, tool, isWine)
 
+def checkPluginLV2(filename, tool, isWine=False):
+  return runCarlaDiscovery(PLUGIN_DSSI, "LV2", filename, tool, isWine)
+
 def checkPluginVST(filename, tool, isWine=False):
   return runCarlaDiscovery(PLUGIN_VST, "VST", filename, tool, isWine)
 
 def checkPluginSF2(filename, tool):
   return runCarlaDiscovery(PLUGIN_SF2, "SF2", filename, tool)
-
-def checkPluginLV2(rdf_info):
-  plugins = []
-
-  pinfo = deepcopy(PyPluginInfo)
-  pinfo['type']  = PLUGIN_LV2
-  pinfo['build'] = BINARY_NATIVE
-  pinfo['category'] = PLUGIN_CATEGORY_NONE # TODO
-  pinfo['hints']  = 0
-  pinfo['binary'] = rdf_info['Binary']
-  pinfo['name']   = rdf_info['Name']
-  pinfo['label']  = rdf_info['URI']
-  pinfo['maker']  = rdf_info['Author']
-  pinfo['copyright'] = rdf_info['License']
-  pinfo['unique_id'] = rdf_info['UniqueID']
-  pinfo['audio.ins'] = 0
-  pinfo['audio.outs'] = 0
-  pinfo['audio.total'] = 0
-  pinfo['midi.ins'] = 0
-  pinfo['midi.outs'] = 0
-  pinfo['midi.total'] = 0
-  pinfo['parameters.ins'] = 0
-  pinfo['parameters.outs'] = 0
-  pinfo['parameters.total'] = 0
-  pinfo['programs.total'] = 0 #rdf_info['PresetCount']
-
-  if (pinfo['binary'] == "" or pinfo['name'] == "" or not rdf_info['Bundle']):
-    return None
-
-  for i in range(rdf_info['PortCount']):
-    PortType = rdf_info['Ports'][i]['Type']
-    PortProps = rdf_info['Ports'][i]['Properties']
-
-    if (PortType & lv2_rdf.LV2_PORT_AUDIO):
-      pinfo['audio.total'] += 1
-      if (PortType & lv2_rdf.LV2_PORT_INPUT):
-        pinfo['audio.ins'] += 1
-      elif (PortType & lv2_rdf.LV2_PORT_OUTPUT):
-        pinfo['audio.outs'] += 1
-
-    elif (PortType & lv2_rdf.LV2_PORT_SUPPORTS_MIDI):
-      pinfo['midi.total'] += 1
-      if (PortType & lv2_rdf.LV2_PORT_INPUT):
-        pinfo['midi.ins'] += 1
-      elif (PortType & lv2_rdf.LV2_PORT_OUTPUT):
-        pinfo['midi.outs'] += 1
-
-    elif (PortType & lv2_rdf.LV2_PORT_CONTROL):
-      pinfo['parameters.total'] += 1
-      if (PortType & lv2_rdf.LV2_PORT_INPUT):
-        pinfo['parameters.ins'] += 1
-      elif (PortType & lv2_rdf.LV2_PORT_OUTPUT):
-        if (not PortProps & lv2_rdf.LV2_PORT_LATENCY):
-          pinfo['parameters.outs'] += 1
-
-  if (rdf_info['Type'] & lv2_rdf.LV2_GROUP_GENERATOR):
-    pinfo['hints'] |= PLUGIN_IS_SYNTH
-
-  if (rdf_info['UICount'] > 0):
-    pinfo['hints'] |= PLUGIN_HAS_GUI
-
-  plugins.append(pinfo)
-
-  return plugins
 
 # ------------------------------------------------------------------------------------------------
 # Backend C++ -> Python variables
@@ -1199,5 +1138,3 @@ if (haveRDF):
   LADSPA_RDF_PATH_env = os.getenv("LADSPA_RDF_PATH")
   if (LADSPA_RDF_PATH_env):
     ladspa_rdf.set_rdf_path(LADSPA_RDF_PATH_env.split(splitter))
-
-  lv2_rdf.set_rdf_path(LV2_PATH)
