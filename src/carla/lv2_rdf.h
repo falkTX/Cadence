@@ -26,14 +26,14 @@ typedef const char* LV2_URI;
 typedef uint32_t LV2_Property;
 typedef unsigned long long LV2_PluginType;
 
-// Port MIDI Map Types
+// Port Midi Map Types
 #define LV2_PORT_MIDI_MAP_CC             0x1
 #define LV2_PORT_MIDI_MAP_NRPN           0x2
 
 #define LV2_IS_PORT_MIDI_MAP_CC(x)       ((x) == LV2_PORT_MIDI_MAP_CC)
 #define LV2_IS_PORT_MIDI_MAP_NRPN(x)     ((x) == LV2_PORT_MIDI_MAP_NRPN)
 
-// A Port Midi Map
+// Port Midi Map
 struct LV2_RDF_PortMidiMap {
     LV2_Property Type;
     uint32_t Number;
@@ -65,21 +65,22 @@ struct LV2_RDF_PortPoints {
 #define LV2_UNIT_COEF                    0x06
 #define LV2_UNIT_DB                      0x07
 #define LV2_UNIT_DEGREE                  0x08
-#define LV2_UNIT_HZ                      0x09
-#define LV2_UNIT_INCH                    0x0A
-#define LV2_UNIT_KHZ                     0x0B
-#define LV2_UNIT_KM                      0x0C
-#define LV2_UNIT_M                       0x0D
-#define LV2_UNIT_MHZ                     0x0E
-#define LV2_UNIT_MIDINOTE                0x0F
-#define LV2_UNIT_MILE                    0x10
-#define LV2_UNIT_MIN                     0x11
-#define LV2_UNIT_MM                      0x12
-#define LV2_UNIT_MS                      0x13
-#define LV2_UNIT_OCT                     0x14
-#define LV2_UNIT_PC                      0x15
-#define LV2_UNIT_S                       0x16
-#define LV2_UNIT_SEMITONE                0x17
+#define LV2_UNIT_FRAME                   0x09
+#define LV2_UNIT_HZ                      0x0A
+#define LV2_UNIT_INCH                    0x0B
+#define LV2_UNIT_KHZ                     0x0C
+#define LV2_UNIT_KM                      0x0D
+#define LV2_UNIT_M                       0x0E
+#define LV2_UNIT_MHZ                     0x0F
+#define LV2_UNIT_MIDINOTE                0x10
+#define LV2_UNIT_MILE                    0x11
+#define LV2_UNIT_MIN                     0x12
+#define LV2_UNIT_MM                      0x13
+#define LV2_UNIT_MS                      0x14
+#define LV2_UNIT_OCT                     0x15
+#define LV2_UNIT_PC                      0x16
+#define LV2_UNIT_S                       0x17
+#define LV2_UNIT_SEMITONE                0x18
 
 #define LV2_IS_UNIT_BAR(x)               ((x) == LV2_UNIT_BAR)
 #define LV2_IS_UNIT_BEAT(x)              ((x) == LV2_UNIT_BEAT)
@@ -89,6 +90,7 @@ struct LV2_RDF_PortPoints {
 #define LV2_IS_UNIT_COEF(x)              ((x) == LV2_UNIT_COEF)
 #define LV2_IS_UNIT_DB(x)                ((x) == LV2_UNIT_DB)
 #define LV2_IS_UNIT_DEGREE(x)            ((x) == LV2_UNIT_DEGREE)
+#define LV2_IS_UNIT_FRAME(x)             ((x) == LV2_UNIT_FRAME)
 #define LV2_IS_UNIT_HZ(x)                ((x) == LV2_UNIT_HZ)
 #define LV2_IS_UNIT_INCH(x)              ((x) == LV2_UNIT_INCH)
 #define LV2_IS_UNIT_KHZ(x)               ((x) == LV2_UNIT_KHZ)
@@ -116,7 +118,7 @@ struct LV2_RDF_PortPoints {
 #define LV2_HAVE_UNIT_RENDER(x)          ((x) & LV2_PORT_UNIT_RENDER)
 #define LV2_HAVE_UNIT_SYMBOL(x)          ((x) & LV2_PORT_UNIT_SYMBOL)
 
-// A Port Unit
+// Port Unit
 struct LV2_RDF_PortUnit {
     LV2_Property Type;
     LV2_Property Hints;
@@ -125,7 +127,7 @@ struct LV2_RDF_PortUnit {
     const char* Symbol;
 };
 
-// A Port Scale Point
+// Port Scale Point
 struct LV2_RDF_PortScalePoint {
     const char* Label;
     LV2_Data Value;
@@ -156,28 +158,26 @@ struct LV2_RDF_PortScalePoint {
 #define LV2_IS_PORT_MIDI_LL(x)           ((x) & LV2_PORT_MIDI_LL)
 
 // Port Properties
-#define LV2_PORT_OPTIONAL                0x00001
-#define LV2_PORT_ENUMERATION             0x00002
-#define LV2_PORT_INTEGER                 0x00004
-#define LV2_PORT_SAMPLE_RATE             0x00008
-#define LV2_PORT_TOGGLED                 0x00010
-#define LV2_PORT_LATENCY                 0x00020
-#define LV2_PORT_CAUSES_ARTIFACTS        0x00040
-#define LV2_PORT_CONTINUOUS_CV           0x00080
-#define LV2_PORT_DISCRETE_CV             0x00100
-#define LV2_PORT_EXPENSIVE               0x00200
-#define LV2_PORT_HAS_STRICT_BOUNDS       0x00400
-#define LV2_PORT_LOGARITHMIC             0x00800
-#define LV2_PORT_NOT_AUTOMATIC           0x01000
-#define LV2_PORT_NOT_ON_GUI              0x02000
-#define LV2_PORT_TRIGGER                 0x04000
+#define LV2_PORT_OPTIONAL                0x0001
+#define LV2_PORT_ENUMERATION             0x0002
+#define LV2_PORT_INTEGER                 0x0004
+#define LV2_PORT_SAMPLE_RATE             0x0008
+#define LV2_PORT_TOGGLED                 0x0010
+#define LV2_PORT_CAUSES_ARTIFACTS        0x0020
+#define LV2_PORT_CONTINUOUS_CV           0x0040
+#define LV2_PORT_DISCRETE_CV             0x0080
+#define LV2_PORT_EXPENSIVE               0x0100
+#define LV2_PORT_HAS_STRICT_BOUNDS       0x0200
+#define LV2_PORT_LOGARITHMIC             0x0400
+#define LV2_PORT_NOT_AUTOMATIC           0x0800
+#define LV2_PORT_NOT_ON_GUI              0x1000
+#define LV2_PORT_TRIGGER                 0x2000
 
 #define LV2_IS_PORT_OPTIONAL(x)          ((x) & LV2_PORT_OPTIONAL)
 #define LV2_IS_PORT_ENUMERATION(x)       ((x) & LV2_PORT_ENUMERATION)
 #define LV2_IS_PORT_INTEGER(x)           ((x) & LV2_PORT_INTEGER)
 #define LV2_IS_PORT_SAMPLE_RATE(x)       ((x) & LV2_PORT_SAMPLE_RATE)
 #define LV2_IS_PORT_TOGGLED(x)           ((x) & LV2_PORT_TOGGLED)
-#define LV2_IS_PORT_LATENCY(x)           ((x) & LV2_PORT_LATENCY)
 #define LV2_IS_PORT_CAUSES_ARTIFACTS(x)  ((x) & LV2_PORT_CAUSES_ARTIFACTS)
 #define LV2_IS_PORT_CONTINUOUS_CV(x)     ((x) & LV2_PORT_CONTINUOUS_CV)
 #define LV2_IS_PORT_DISCRETE_CV(x)       ((x) & LV2_PORT_DISCRETE_CV)
@@ -188,10 +188,16 @@ struct LV2_RDF_PortScalePoint {
 #define LV2_IS_PORT_NOT_ON_GUI(x)        ((x) & LV2_PORT_NOT_ON_GUI)
 #define LV2_IS_PORT_TRIGGER(x)           ((x) & LV2_PORT_TRIGGER)
 
-// A Port
+// Port Designation
+#define LV2_PORT_LATENCY                0x1
+
+#define LV2_IS_PORT_LATENCY(x)          ((x) & LV2_PORT_LATENCY)
+
+// Port
 struct LV2_RDF_Port {
     LV2_Property Type;
     LV2_Property Properties;
+    LV2_Property Designation;
     const char* Name;
     const char* Symbol;
 
@@ -203,7 +209,7 @@ struct LV2_RDF_Port {
     LV2_RDF_PortScalePoint* ScalePoints;
 };
 
-// A Preset Port
+// Preset Port
 struct LV2_RDF_PresetPort {
     const char* Symbol;
     LV2_Data Value;
@@ -226,20 +232,17 @@ struct LV2_RDF_PresetPort {
 #define LV2_IS_PRESET_STATE_STRING(x)    ((x) == LV2_PRESET_STATE_STRING)
 #define LV2_IS_PRESET_STATE_BINARY(x)    ((x) == LV2_PRESET_STATE_BINARY)
 
-// A Preset State Value
-union LV2_RDF_PresetStateValue {
-    bool b;
-    int i;
-    long li;
-    float f;
-    const char* s;
-};
-
-// A Preset State
+// Preset State
 struct LV2_RDF_PresetState {
     LV2_Property Type;
     const char* Key;
-    LV2_RDF_PresetStateValue Value;
+    union {
+        bool b;
+        int i;
+        long li;
+        float f;
+        const char* s;
+    } Value;
 };
 
 // A Preset
@@ -261,7 +264,7 @@ struct LV2_RDF_Preset {
 #define LV2_IS_FEATURE_OPTIONAL(x)       ((x) == LV2_FEATURE_OPTIONAL)
 #define LV2_IS_FEATURE_REQUIRED(x)       ((x) == LV2_FEATURE_REQUIRED)
 
-// A Feature
+// Feature
 struct LV2_RDF_Feature {
     LV2_Property Type;
     LV2_URI URI;
@@ -280,7 +283,7 @@ struct LV2_RDF_Feature {
 #define LV2_IS_UI_EXTERNAL(x)            ((x) == LV2_UI_EXTERNAL)
 #define LV2_IS_UI_OLD_EXTERNAL(x)        ((x) == LV2_UI_OLD_EXTERNAL)
 
-// An UI
+// UI
 struct LV2_RDF_UI {
     LV2_Property Type;
     LV2_URI URI;
@@ -358,7 +361,7 @@ struct LV2_RDF_UI {
 #define LV2_IS_SPECTRAL(x)               ((x) & LV2_GROUP_SPECTRAL)
 #define LV2_IS_UTILITY(x)                ((x) & LV2_GROUP_UTILITY)
 
-// A Plugin
+// Plugin
 struct LV2_RDF_Descriptor {
     LV2_PluginType Type;
     LV2_URI URI;

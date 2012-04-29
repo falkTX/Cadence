@@ -161,6 +161,22 @@ struct Port {
 	const LilvPort*   me;
 };
 
+struct UI {
+    inline UI(const LilvUI* c_obj) : me(c_obj) {}
+    LILV_WRAP_CONVERSION(const LilvUI);
+
+    LILV_WRAP0(Node, ui, get_uri);
+    LILV_WRAP1(bool, ui, is_a, LilvNode*, ui_class);
+    LILV_WRAP0(Node, ui, get_bundle_uri);
+    LILV_WRAP0(Node, ui, get_binary_uri);
+
+    const LilvUI* me;
+};
+
+struct UIs {
+    LILV_WRAP_COLL(UIs, UI, uis);
+};
+
 struct Plugin {
 	inline Plugin(const LilvPlugin* c_obj) : me(c_obj) {}
 	LILV_WRAP_CONVERSION(const LilvPlugin);
@@ -184,6 +200,7 @@ struct Plugin {
 	LILV_WRAP0(Node,        plugin, get_author_email);
 	LILV_WRAP0(Node,        plugin, get_author_homepage);
 	LILV_WRAP0(bool,        plugin, is_replaced);
+    LILV_WRAP0(UIs,         plugin, get_uis);
 
 	inline Port get_port_by_index(unsigned index) {
 		return Port(me, lilv_plugin_get_port_by_index(me, index));

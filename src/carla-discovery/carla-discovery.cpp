@@ -889,7 +889,8 @@ void do_lv2_check(const char* bundle)
         DISCOVERY_OUT("init", "-----------");
         DISCOVERY_OUT("name", p.get_name().as_string());
         DISCOVERY_OUT("label", p.get_uri().as_string());
-        DISCOVERY_OUT("maker", p.get_author_name().as_string());
+        if (p.get_author_name())
+          DISCOVERY_OUT("maker", p.get_author_name().as_string());
         //DISCOVERY_OUT("copyright", ldescriptor->Copyright);
         //DISCOVERY_OUT("unique_id", ldescriptor->UniqueID);
         DISCOVERY_OUT("hints", hints);
