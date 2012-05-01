@@ -1311,7 +1311,7 @@ public:
 
         // Query new programs
         if (descriptor->extension_data)
-            programs.plugin = (LV2_Programs_Plugin_Extension*)descriptor->extension_data(LV2_PROGRAMS_URI);
+            programs.plugin = (LV2_Programs_Interface*)descriptor->extension_data(LV2_PROGRAMS__Interface);
         else
             programs.plugin = nullptr;
 
@@ -2094,7 +2094,7 @@ public:
         {
             if (ui.descriptor->extension_data)
             {
-                programs.ui = (LV2_Programs_UI_Extension*)ui.descriptor->extension_data(LV2_PROGRAMS_URI);
+                programs.ui = (LV2_Programs_UI_Interface*)ui.descriptor->extension_data(LV2_PROGRAMS__UIInterface);
 
                 if (programs.ui)
                     programs.ui->select_program(ui.handle, midiprog.data[midiprog.current].bank, midiprog.data[midiprog.current].program);
@@ -2846,8 +2846,8 @@ private:
     } ui;
 
     struct {
-        LV2_Programs_Plugin_Extension* plugin;
-        LV2_Programs_UI_Extension* ui;
+        LV2_Programs_Interface* plugin;
+        LV2_Programs_UI_Interface* ui;
     } programs;
 
     struct {
