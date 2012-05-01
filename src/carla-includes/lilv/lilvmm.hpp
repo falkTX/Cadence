@@ -165,10 +165,14 @@ struct UI {
     inline UI(const LilvUI* c_obj) : me(c_obj) {}
     LILV_WRAP_CONVERSION(const LilvUI);
 
-    LILV_WRAP0(Node, ui, get_uri);
-    LILV_WRAP1(bool, ui, is_a, LilvNode*, ui_class);
-    LILV_WRAP0(Node, ui, get_bundle_uri);
-    LILV_WRAP0(Node, ui, get_binary_uri);
+    LILV_WRAP0(Node,  ui, get_uri);
+    LILV_WRAP1(bool,  ui, is_a, LilvNode*, ui_class);
+    LILV_WRAP0(Node,  ui, get_bundle_uri);
+    LILV_WRAP0(Node,  ui, get_binary_uri);
+    LILV_WRAP0(Nodes, ui, get_supported_features);
+    LILV_WRAP0(Nodes, ui, get_required_features);
+    LILV_WRAP0(Nodes, ui, get_optional_features);
+    LILV_WRAP0(Nodes, ui, get_extension_data);
 
     const LilvUI* me;
 };
@@ -200,6 +204,8 @@ struct Plugin {
 	LILV_WRAP0(Node,        plugin, get_author_email);
 	LILV_WRAP0(Node,        plugin, get_author_homepage);
 	LILV_WRAP0(bool,        plugin, is_replaced);
+    LILV_WRAP0(Nodes,       plugin, get_extension_data);
+    LILV_WRAP1(Nodes,       plugin, get_related, Node, pred);
     LILV_WRAP0(UIs,         plugin, get_uis);
 
 	inline Port get_port_by_index(unsigned index) {
@@ -284,6 +290,7 @@ struct World {
 	LILV_WRAP2_VOID(world, set_option, const char*, uri, LilvNode*, value);
 	LILV_WRAP0_VOID(world, load_all);
 	LILV_WRAP1_VOID(world, load_bundle, LilvNode*, bundle_uri);
+    LILV_WRAP1_VOID(world, load_resource, LilvNode*, resource);
 	LILV_WRAP0(const LilvPluginClass*, world, get_plugin_class);
 	LILV_WRAP0(const LilvPluginClasses*, world, get_plugin_classes);
 	LILV_WRAP0(const Plugins, world, get_all_plugins);

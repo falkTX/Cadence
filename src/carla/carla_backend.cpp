@@ -18,9 +18,6 @@
 #include "carla_plugin.h"
 #include "carla_threads.h"
 
-//#include <cstring>
-//#include <ostream>
-
 // plugin specific
 short add_plugin_ladspa(const char* filename, const char* label, void* extra_stuff);
 short add_plugin_dssi(const char* filename, const char* label, void* extra_stuff);
@@ -28,6 +25,8 @@ short add_plugin_lv2(const char* filename, const char* label);
 short add_plugin_vst(const char* filename, const char* label);
 short add_plugin_sf2(const char* filename, const char* label);
 short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename, const char* label, void* extra_stuff);
+
+void lv2_load_all();
 
 CarlaCheckThread carla_check_thread;
 
@@ -1129,6 +1128,7 @@ void set_option(OptionsType option, int value, const char* value_str)
         break;
     case OPTION_PATH_LV2:
         setenv("LV2_PATH", value_str, 1);
+        lv2_load_all();
         break;
     case OPTION_PATH_VST:
         setenv("VST_PATH", value_str, 1);
