@@ -59,8 +59,8 @@ typedef struct _LV2_Program_Descriptor {
    Programs extension, plugin data.
 
    When the plugin's extension_data is called with argument LV2_PROGRAMS__Interface,
-   the plugin MUST return an LV2_Programs_Instance structure, which remains
-   valid for the lifetime of the plugin.
+   the plugin MUST return an LV2_Programs_Instance structure, which remains valid
+   for the lifetime of the plugin.
 */
 typedef struct _LV2_Programs_Interface {
     /**
@@ -78,7 +78,7 @@ typedef struct _LV2_Programs_Interface {
      * This function returns a LV2_Program_Descriptor pointer that is
      * guaranteed to be valid only until the next call to get_program
      * or deactivate, on the same plugin instance. This function must
-     * return NULL if passed an Index argument out of range, so that
+     * return NULL if passed an index argument out of range, so that
      * the host can use it to query the number of programs as well as
      * their properties.
      */
