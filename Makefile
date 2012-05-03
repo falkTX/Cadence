@@ -29,8 +29,7 @@ catia: src/ui_catia.py
 claudia: src/ui_claudia.py \
 	src/ui_claudia_studioname.py src/ui_claudia_studiolist.py \
 	src/ui_claudia_createroom.py src/ui_claudia_projectname.py src/ui_claudia_projectproperties.py \
-	src/ui_claudia_runcustom.py
-# 	src/ui_claudia_addnew.py src/ui_claudia_addnew_klaudia.py
+	src/ui_claudia_runcustom.py src/ui_claudia_launcher.py src/ui_claudia_launcher_app.py
 
 carla: src/ui_carla.py src/ui_carla_control.py \
 	src/ui_carla_about.py src/ui_carla_database.py src/ui_carla_edit.py src/ui_carla_parameter.py src/ui_carla_plugin.py src/ui_carla_refresh.py \
@@ -97,6 +96,12 @@ src/ui_claudia_projectproperties.py: src/ui/claudia_projectproperties.ui
 
 src/ui_claudia_runcustom.py: src/ui/claudia_runcustom.ui
 	$(PYUIC) -o src/ui_claudia_runcustom.py $<
+
+src/ui_claudia_launcher.py: src/ui/claudia_launcher.ui
+	$(PYUIC) -o src/ui_claudia_launcher.py $<
+
+src/ui_claudia_launcher_app.py: src/ui/claudia_launcher_app.ui
+	$(PYUIC) -o src/ui_claudia_launcher_app.py $<
 
 src/ui_carla.py: src/ui/carla.ui
 	$(PYUIC) -o src/ui_carla.py $<

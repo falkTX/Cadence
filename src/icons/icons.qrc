@@ -3,9 +3,12 @@
             <file>16x16/catarina.png</file>
             <file>16x16/catia.png</file>
             <file>16x16/claudia.png</file>
+            <file>16x16/claudia-launcher.png</file>
             <file>16x16/carla.png</file>
             <file>16x16/application-exit.png</file>
+            <file>16x16/arrow-right.png</file>
             <file>16x16/configure.png</file>
+            <file>16x16/dialog-cancel.png</file>
             <file>16x16/dialog-error.png</file>
             <file>16x16/dialog-ok-apply.png</file>
             <file>16x16/document-new.png</file>
@@ -39,6 +42,7 @@
             <file>48x48/catarina.png</file>
             <file>48x48/catia.png</file>
             <file>48x48/claudia.png</file>
+            <file>48x48/claudia-launcher.png</file>
             <file>48x48/carla.png</file>
             <file>48x48/canvas.png</file>
             <file>48x48/exec.png</file>
@@ -50,6 +54,7 @@
             <file>scalable/catarina.svg</file>
             <file>scalable/catia.svg</file>
             <file>scalable/claudia.svg</file>
+            <file>scalable/claudia-launcher.svg</file>
             <file>scalable/carla.svg</file>
             <file>scalable/jack.svg</file>
             <file>scalable/pb_generic.svg</file>

@@ -28,7 +28,7 @@ iHeight = 3
 # Widget Class
 class CanvasPreviewFrame(QFrame):
     def __init__(self, parent):
-        super(CanvasPreviewFrame, self).__init__(parent)
+        QFrame.__init__(self, parent)
 
         self.m_mouseDown = False
 

@@ -65,7 +65,7 @@ def c_char_p_p_to_list(c_char_p_p):
   while (True):
     new_char_p = c_char_p_p[i]
     if (new_char_p):
-      final_list.append(str(new_char_p, encoding="ascii"))
+      final_list.append(str(new_char_p, encoding="utf-8"))
       i += 1
     else:
       break

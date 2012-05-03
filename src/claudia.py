@@ -21,10 +21,11 @@ import dbus
 from dbus.mainloop.qt import DBusQtMainLoop
 from time import ctime
 from PyQt4.QtCore import QPointF, QSettings
-from PyQt4.QtGui import QAction, QApplication, QMainWindow, QTableWidgetItem, QTreeWidgetItem
+from PyQt4.QtGui import QAction, QApplication, QMainWindow, QVBoxLayout, QTableWidgetItem, QTreeWidgetItem
 
 # Imports (Custom Stuff)
 import systray
+import claudia_launcher
 import ui_claudia
 import ui_claudia_studioname, ui_claudia_studiolist
 import ui_claudia_createroom, ui_claudia_projectname, ui_claudia_projectproperties
@@ -38,6 +39,9 @@ try:
   hasGL = True
 except:
   hasGL = False
+
+# NOTE - set to true when supported
+USE_CLAUDIA_ADD_NEW = True
 
 # internal indexes
 iConnId     = 0
@@ -439,6 +443,84 @@ class RunCustomW(QDialog, ui_claudia_runcustom.Ui_RunCustomW):
         self.ret_app_obj[iAppLevel]    = level
         self.ret_app_obj[iAppActive]   = False
 
+# Add Application Dialog
+class ClaudiaLauncherW(QDialog):
+    def __init__(self, parent, appBus, proj_folder, is_room, bpm, sample_rate):
+        QDialog.__init__(self, parent)
+
+        self.launcher  = claudia_launcher.ClaudiaLauncher(self)
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel, Qt.Horizontal, self)
+
+        self.layoutR = QVBoxLayout(self)
+        self.layoutR.addWidget(self.launcher)
+        self.layoutR.addWidget(self.buttonBox)
+
+        self.settings = QSettings("Cadence", "Claudia-Launcher")
+        self.launcher.setCallbackApp(self, self.settings, True)
+        self.loadSettings()
+
+        self.m_appBus      = appBus
+        self.m_proj_folder = proj_folder
+        self.m_is_room     = is_room
+        self.m_bpm         = bpm
+        self.m_sample_rate = sample_rate
+
+        self.test_url = True
+        self.test_selected = False
+
+        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
+
+        self.connect(self.buttonBox.button(QDialogButtonBox.Ok), SIGNAL("clicked()"), SLOT("slot_addAppToLADISH()"))
+        self.connect(self.buttonBox.button(QDialogButtonBox.Cancel), SIGNAL("clicked()"), self, SLOT("reject()"))
+
+    # ----------------------------------------
+    # Callbacks
+
+    def callback_checkGUI(self, test_selected=None):
+        if (test_selected != None):
+          self.test_selected = test_selected
+
+        if (self.test_url and self.test_selected):
+          self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(True)
+        else:
+          self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
+
+    def callback_getProjectFolder(self):
+        return self.m_proj_folder
+
+    def callback_getAppBus(self):
+        return self.m_appBus
+
+    def callback_getBPM(self):
+        if (self.m_bpm < 30):
+          return 120.0
+        else:
+          return self.m_bpm
+
+    def callback_getSampleRate(self):
+        return self.m_sample_rate
+
+    def callback_isLadishRoom(self):
+        return self.m_is_room
+
+    # ----------------------------------------
+
+    @pyqtSlot()
+    def slot_addAppToLADISH(self):
+        self.launcher.addAppToLADISH()
+
+    def saveSettings(self):
+        self.settings.setValue("Geometry", self.saveGeometry())
+        self.launcher.saveSettings()
+
+    def loadSettings(self):
+        self.restoreGeometry(self.settings.value("Geometry", ""))
+        self.launcher.loadSettings()
+
+    def closeEvent(self, event):
+        self.saveSettings()
+        QDialog.closeEvent(self, event)
+
 # Main Window
 class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
     def __init__(self, parent=None):
@@ -647,7 +729,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.connect(self.b_project_save_as, SIGNAL("clicked()"), SLOT("slot_project_save_as()"))
         self.connect(self.menu_project_load, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuProjectList()"))
 
-        #self.connect(self.act_app_add_new, SIGNAL("triggered()"), self.func_app_add_new)
+        self.connect(self.act_app_add_new, SIGNAL("triggered()"), SLOT("slot_app_add_new()"))
         self.connect(self.act_app_run_custom, SIGNAL("triggered()"), SLOT("slot_app_run_custom()"))
 
         self.connect(self.treeWidget, SIGNAL("itemSelectionChanged()"), SLOT("slot_checkCurrentRoom()"))
@@ -1520,6 +1602,32 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             DBus.ladish_room.SaveProject(path, dialog.ret_obj[iAppPropName])
 
     @pyqtSlot()
+    def slot_app_add_new(self):
+        proj_folder = ""
+
+        if (self.m_last_item_type == ITEM_TYPE_STUDIO or self.m_last_item_type == ITEM_TYPE_STUDIO_APP):
+          proj_folder = self.m_savedSettings['Main/DefaultProjectFolder']
+          is_room     = False
+
+        elif (self.m_last_item_type == ITEM_TYPE_ROOM or self.m_last_item_type == ITEM_TYPE_ROOM_APP):
+          project_graph_version, project_properties = DBus.ladish_room.GetProjectProperties()
+
+          if (len(project_properties) > 0):
+            proj_folder = str(project_properties['dir'])
+            is_room     = True
+          else:
+            proj_folder = self.m_savedSettings['Main/DefaultProjectFolder']
+            is_room     = False
+
+        else:
+          print("Invalid m_last_item_type value")
+          return
+
+        print(self.m_last_bpm, self.m_sample_rate)
+        dialog = ClaudiaLauncherW(self, DBus.ladish_app_iface, proj_folder, is_room, self.m_last_bpm, self.m_sample_rate)
+        dialog.exec_()
+
+    @pyqtSlot()
     def slot_app_run_custom(self):
         dialog = RunCustomW(self, bool(self.m_last_item_type in (ITEM_TYPE_ROOM, ITEM_TYPE_ROOM_APP)))
         if (dialog.exec_()):
@@ -2310,7 +2418,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
           "Apps/Database": self.settings.value("Apps/Database", "LADISH", type=str)
         }
 
-        self.act_app_add_new.setEnabled(bool(self.m_savedSettings['Apps/Database'] == "LADISH" and DBus.ladish_app_daemon))
+        self.act_app_add_new.setEnabled(USE_CLAUDIA_ADD_NEW)
 
     def resizeEvent(self, event):
         QTimer.singleShot(0, self, SLOT("slot_miniCanvasCheckSize()"))
