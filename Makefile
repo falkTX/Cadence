@@ -192,34 +192,39 @@ install:
 	install -m 644 data/*.desktop $(DESTDIR)$(PREFIX)/share/applications/
 
 	# Install icons, 16x16
-	install -m 644 src/icons/16x16/carla.png           $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
-	install -m 644 src/icons/16x16/catarina.png        $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
-	install -m 644 src/icons/16x16/catia.png           $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
-	install -m 644 src/icons/16x16/claudia.png         $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
+	install -m 644 src/icons/16x16/carla.png               $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
+	install -m 644 src/icons/16x16/catarina.png            $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
+	install -m 644 src/icons/16x16/catia.png               $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
+	install -m 644 src/icons/16x16/claudia.png             $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
+	install -m 644 src/icons/16x16/claudia-launcher.png    $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
 
 	# Install icons, 48x48
-	install -m 644 src/icons/48x48/carla.png           $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/
-	install -m 644 src/icons/48x48/catarina.png        $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/
-	install -m 644 src/icons/48x48/catia.png           $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/
-	install -m 644 src/icons/48x48/claudia.png         $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/
+	install -m 644 src/icons/48x48/carla.png               $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/
+	install -m 644 src/icons/48x48/catarina.png            $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/
+	install -m 644 src/icons/48x48/catia.png               $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/
+	install -m 644 src/icons/48x48/claudia.png             $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/
+	install -m 644 src/icons/48x48/claudia-launcher.png    $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/
 
 	# Install icons, 128x128
-	install -m 644 src/icons/128x128/carla.png         $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
-	install -m 644 src/icons/128x128/catarina.png      $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
-	install -m 644 src/icons/128x128/catia.png         $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
-	install -m 644 src/icons/128x128/claudia.png       $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
+	install -m 644 src/icons/128x128/carla.png             $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
+	install -m 644 src/icons/128x128/catarina.png          $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
+	install -m 644 src/icons/128x128/catia.png             $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
+	install -m 644 src/icons/128x128/claudia.png           $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
+	install -m 644 src/icons/128x128/claudia-launcher.png  $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
 
 	# Install icons, 256x256
-	install -m 644 src/icons/256x256/carla.png         $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
-	install -m 644 src/icons/256x256/catarina.png      $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
-	install -m 644 src/icons/256x256/catia.png         $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
-	install -m 644 src/icons/256x256/claudia.png       $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
+	install -m 644 src/icons/256x256/carla.png             $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
+	install -m 644 src/icons/256x256/catarina.png          $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
+	install -m 644 src/icons/256x256/catia.png             $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
+	install -m 644 src/icons/256x256/claudia.png           $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
+	install -m 644 src/icons/256x256/claudia-launcher.png  $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
 
 	# Install icons, scalable
 	install -m 644 src/icons/scalable/carla.svg             $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
 	install -m 644 src/icons/scalable/catarina.svg          $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
 	install -m 644 src/icons/scalable/catia.svg             $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
 	install -m 644 src/icons/scalable/claudia.svg           $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
+	install -m 644 src/icons/scalable/claudia-launcher.svg  $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
 
 	# Install main code
 	install -m 755 src/*.py $(DESTDIR)$(PREFIX)/share/cadence/src/
@@ -233,6 +238,7 @@ install:
 		$(DESTDIR)$(PREFIX)/bin/catarina \
 		$(DESTDIR)$(PREFIX)/bin/catia \
 		$(DESTDIR)$(PREFIX)/bin/claudia \
+		$(DESTDIR)$(PREFIX)/bin/claudia-launcher \
 		$(DESTDIR)$(PREFIX)/bin/carla \
 		$(DESTDIR)$(PREFIX)/bin/cadence_*
 
@@ -242,6 +248,7 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/catarina
 	rm -f $(DESTDIR)$(PREFIX)/bin/catia
 	rm -f $(DESTDIR)$(PREFIX)/bin/claudia
+	rm -f $(DESTDIR)$(PREFIX)/bin/claudia-launcher
 	rm -f $(DESTDIR)$(PREFIX)/bin/carla
 	rm -f $(DESTDIR)$(PREFIX)/bin/carla-bridge-*
 	rm -f $(DESTDIR)$(PREFIX)/bin/carla-discovery-*

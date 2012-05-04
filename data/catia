@@ -16,7 +16,7 @@ if [ x"$PROCS" != x"" ]; then
   if [ x"$PID" != x"" ]; then
 
     # Tell user about this
-    echo "Cadence already started, showing GUI now..."
+    echo "Catia already started, showing GUI now..."
 
     # Send SIGUSR2, shows the GUI
     kill -USR2 "$PID"

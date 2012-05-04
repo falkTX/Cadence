@@ -9,7 +9,7 @@ from subprocess import getoutput
 from random import randint
 
 # Imports (Custom)
-import database
+import claudia_database as database
 import ui_claudia_launcher
 from shared import *
 
