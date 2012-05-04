@@ -392,9 +392,9 @@ class RunCustomW(QDialog, ui_claudia_runcustom.Ui_RunCustomW):
             self.rb_level_0.setChecked(True)
           elif (level == "1"):
             self.rb_level_1.setChecked(True)
-          elif (level == "LASH"):
+          elif (level == "lash"):
             self.rb_level_lash.setChecked(True)
-          elif (level == "JS"):
+          elif (level == "jacksession"):
             self.rb_level_js.setChecked(True)
           else:
             self.rb_level_0.setChecked(True)
@@ -430,9 +430,9 @@ class RunCustomW(QDialog, ui_claudia_runcustom.Ui_RunCustomW):
         elif (self.rb_level_1.isChecked()):
           level = "1"
         elif (self.rb_level_lash.isChecked()):
-          level = "LASH"
+          level = "lash"
         elif (self.rb_level_js.isChecked()):
-          level = "JS"
+          level = "jacksession"
         else:
           return
 
@@ -961,8 +961,11 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
           text = "["
           if (level.isdigit()):
-            text += "L"
-          text += level.upper()
+            text += "L%s" % level
+          elif (level == "jacksession"):
+            text += "JS"
+          else:
+            text += level.upper()
           text += "] "
           if (not active):
             text += "(inactive) "
@@ -997,8 +1000,11 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
             text = "["
             if (level.isdigit()):
-              text += "L"
-            text += level.upper()
+              text += "L%s" % level
+            elif (level == "jacksession"):
+              text += "JS"
+            else:
+              text += level.upper()
             text += "] "
             if (not active):
               text += "(inactive) "
@@ -2190,8 +2196,11 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         text = "["
         if (level.isdigit()):
-          text += "L"
-        text += level.upper()
+          text += "L%s" % level
+        elif (level == "jacksession"):
+          text += "JS"
+        else:
+          text += level.upper()
         text += "] "
         if (not active):
           text += "(inactive) "
@@ -2244,8 +2253,11 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         text = "["
         if (level.isdigit()):
-          text += "L"
-        text += level.upper()
+          text += "L%s" % level
+        elif (level == "jacksession"):
+          text += "JS"
+        else:
+          text += level.upper()
         text += "] "
         if (not active):
           text += "(inactive) "

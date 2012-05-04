@@ -92,10 +92,10 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         # For the custom icons
         self.ClaudiaIcons = XIcon()
 
-        if (os.path.exists(os.path.join(sys.path[0], "../icons"))):
-          self.ClaudiaIcons.addIconPath(os.path.join(sys.path[0], "../icons"))
-        elif (os.path.exists(os.path.join(sys.path[0], "../data/icons"))):
-          self.ClaudiaIcons.addIconPath(os.path.join(sys.path[0], "../data/icons"))
+        if (os.path.exists(os.path.join(sys.path[0], "..", "icons"))):
+          self.ClaudiaIcons.addIconPath(os.path.join(sys.path[0], "..", "icons"))
+        elif (os.path.exists(os.path.join(sys.path[0], "..", "data", "icons"))):
+          self.ClaudiaIcons.addIconPath(os.path.join(sys.path[0], "..", "data", "icons"))
 
         QIcon.setThemeName("claudia-hicolor")
 
@@ -189,11 +189,14 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         if (binary.startswith("startBristol")):
           self.createAppTemplate("bristol", app, binary)
 
-        #elif (app == "Ardour"):
-          #self.createAppTemplate("ardour2", app, binary)
+        elif (app == "Ardour 2.8"):
+          self.createAppTemplate("ardour2", app, binary)
 
-        #elif (app == "Calf Jack Host (GIT)"):
-          #self.createAppTemplate("calfjackhost", app, binary)
+        elif (app == "Ardour 3.0"):
+          self.createAppTemplate("ardour3", app, binary)
+
+        elif (app == "Calf Jack Host (GIT)"):
+          self.createAppTemplate("calfjackhost", app, binary)
 
         #elif (app in ("Hydrogen", "Hydrogen (SVN)")):
           #self.createAppTemplate("hydrogen", app, binary)
@@ -247,33 +250,22 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         proj_srate  = str(self.callback_getSampleRate())
         proj_folder = self.callback_getProjectFolder()
 
+        tmplte_dir  = None
         tmplte_file = None
         tmplte_cmd  = ""
         tmplte_lvl  = "0"
 
+        if (os.path.exists(os.path.join(sys.path[0], "..", "templates"))):
+          tmplte_dir = os.path.join(sys.path[0], "..", "templates")
+        elif (os.path.exists(os.path.join(sys.path[0], "..", "data", "templates"))):
+          tmplte_dir = os.path.join(sys.path[0], "..", "data", "templates")
+        else:
+          app = None
+          tmplte_cmd = binary
+          print("Failed to find template dir")
+
         if (not os.path.exists(proj_folder)):
           os.mkdir(proj_folder)
-
-        #if (app == "ardour2"):
-          #tmplte_folder = os.path.join(proj_folder, "Ardour2_%i" % (rand_check))
-          #tmplte_file   = os.path.join(tmplte_folder, "Ardour2_%i.ardour" % (rand_check))
-          #os.mkdir(tmplte_folder)
-
-          ## Create template
-          #os.system("cp '%s' '%s'" % (os.path.join(sys.path[0], "..", "templates", "Ardour2", "Ardour2.ardour"), tmplte_file))
-          #os.system("cp '%s' '%s'" % (os.path.join(sys.path[0], "..", "templates", "Ardour2", "instant.xml"), tmplte_folder))
-          #os.mkdir(os.path.join(tmplte_folder, "analysis"))
-          #os.mkdir(os.path.join(tmplte_folder, "dead_sounds"))
-          #os.mkdir(os.path.join(tmplte_folder, "export"))
-          #os.mkdir(os.path.join(tmplte_folder, "interchange"))
-          #os.mkdir(os.path.join(tmplte_folder, "interchange", "Ardour"))
-          #os.mkdir(os.path.join(tmplte_folder, "interchange", "Ardour", "audiofiles"))
-          #os.mkdir(os.path.join(tmplte_folder, "peaks"))
-
-          #tmplte_cmd = binary
-          #tmplte_cmd += " '%s'" % (os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder)
-
-          #tmplte_lvl = "0" # FIXME - detect this
 
         if (app == "bristol"):
           module = binary.replace("startBristol -audio jack -midi jack -", "")
@@ -283,25 +275,68 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
           if (self.callback_isLadishRoom()):
             tmplte_folder = os.path.basename(tmplte_folder)
 
-          tmplte_cmd = binary
-          tmplte_cmd += " -emulate %s"   % (module)
-          tmplte_cmd += " -cache '%s'"   % (tmplte_folder)
-          tmplte_cmd += " -memdump '%s'" % (tmplte_folder)
-          tmplte_cmd += " -import '%s'"  % (os.path.join(tmplte_folder, "memory"))
+          tmplte_cmd  = binary
+          tmplte_cmd += " -emulate %s"   % module
+          tmplte_cmd += " -cache '%s'"   % tmplte_folder
+          tmplte_cmd += " -memdump '%s'" % tmplte_folder
+          tmplte_cmd += " -import '%s'"  % os.path.join(tmplte_folder, "memory")
           tmplte_cmd += " -exec"
+          tmplte_lvl  = "1"
 
-          tmplte_lvl = "1"
+        elif (app == "ardour2"):
+          tmplte_folder = os.path.join(proj_folder, "Ardour2_%i" % rand_check)
+          tmplte_file   = os.path.join(tmplte_folder, "Ardour2_%i.ardour" % rand_check)
+          os.mkdir(tmplte_folder)
 
-        #elif (app == "calfjackhost"):
-          #tmplte_file_r = os.path.join(proj_folder, "CalfJackHost_%i" % (rand_check))
+          # Create template
+          os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Ardour2", "Ardour2.ardour"), tmplte_file))
+          os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Ardour2", "instant.xml"), tmplte_folder))
+          os.mkdir(os.path.join(tmplte_folder, "analysis"))
+          os.mkdir(os.path.join(tmplte_folder, "dead_sounds"))
+          os.mkdir(os.path.join(tmplte_folder, "export"))
+          os.mkdir(os.path.join(tmplte_folder, "interchange"))
+          os.mkdir(os.path.join(tmplte_folder, "interchange", "Ardour"))
+          os.mkdir(os.path.join(tmplte_folder, "interchange", "Ardour", "audiofiles"))
+          os.mkdir(os.path.join(tmplte_folder, "peaks"))
 
-          ## Create template
-          #os.system("cp '%s' '%s'" % (os.path.join(sys.path[0], "..", "templates", "CalfJackHost"), tmplte_file_r))
+          tmplte_cmd  = binary
+          tmplte_cmd += " '%s'" % os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder
+          tmplte_lvl  = "1"
 
-          #tmplte_cmd = binary
-          #tmplte_cmd += " --load '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
+        elif (app == "ardour3"):
+          tmplte_folder = os.path.join(proj_folder, "Ardour3_%i" % rand_check)
+          tmplte_file   = os.path.join(tmplte_folder, "Ardour3_%i.ardour" % rand_check)
+          os.mkdir(tmplte_folder)
 
-          #tmplte_lvl = "1"
+          # Create template
+          os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Ardour3", "Ardour3.ardour"), tmplte_file))
+          os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Ardour3", "instant.xml"), tmplte_folder))
+          os.mkdir(os.path.join(tmplte_folder, "analysis"))
+          os.mkdir(os.path.join(tmplte_folder, "dead"))
+          os.mkdir(os.path.join(tmplte_folder, "export"))
+          os.mkdir(os.path.join(tmplte_folder, "externals"))
+          os.mkdir(os.path.join(tmplte_folder, "interchange"))
+          os.mkdir(os.path.join(tmplte_folder, "interchange", "Ardour3"))
+          os.mkdir(os.path.join(tmplte_folder, "interchange", "Ardour3", "audiofiles"))
+          os.mkdir(os.path.join(tmplte_folder, "interchange", "Ardour3", "midifiles"))
+          os.mkdir(os.path.join(tmplte_folder, "peaks"))
+          os.mkdir(os.path.join(tmplte_folder, "plugins"))
+
+          tmplte_cmd  = binary
+          tmplte_cmd += " '%s'" % os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder
+
+          if (self.callback_isLadishRoom()):
+            tmplte_lvl  = "jacksession"
+
+        elif (app == "calfjackhost"):
+          tmplte_file = os.path.join(proj_folder, "CalfJackHost_%i" % (rand_check))
+
+          # Create template
+          os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "CalfJackHost"), tmplte_file))
+
+          tmplte_cmd  = binary
+          tmplte_cmd += " --load '%s'" % os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file
+          tmplte_lvl  = "1"
 
         #elif (app == "hydrogen"):
           #tmplte_file = os.path.join(proj_folder, "Hydrogen_%i.h2song" % (rand_check))
@@ -471,9 +506,9 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
           #return
 
         if (tmplte_file != None):
-          os.system('sed -i "s/X_SR_X-KLAUDIA-X_SR_X/%s/" "%s"' % (proj_srate, tmplte_file))
-          os.system('sed -i "s/X_BPM_X-KLAUDIA-X_BPM_X/%s/" "%s"' % (proj_bpm, tmplte_file))
-          os.system('sed -i "s/X_FOLDER_X-KLAUDIA-X_FOLDER_X/%s/" "%s"' % (proj_folder.replace("/", "\/").replace("$", "\$"), tmplte_file))
+          os.system('sed -i "s/X_SR_X-CLAUDIA-X_SR_X/%s/" "%s"' % (proj_srate, tmplte_file))
+          os.system('sed -i "s/X_BPM_X-CLAUDIA-X_BPM_X/%s/" "%s"' % (proj_bpm, tmplte_file))
+          os.system('sed -i "s/X_FOLDER_X-CLAUDIA-X_FOLDER_X/%s/" "%s"' % (proj_folder.replace("/", "\/").replace("$", "\$"), tmplte_file))
 
         appBus = self.callback_getAppBus()
         appBus.RunCustom2(False, tmplte_cmd, app_name, tmplte_lvl)
