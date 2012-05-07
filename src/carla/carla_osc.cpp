@@ -706,15 +706,27 @@ void osc_global_send_set_parameter_value(int plugin_id, int param_id, double val
     }
 }
 
-void osc_global_send_set_parameter_data(int plugin_id, int param_id, int ptype, int hints, const char* name, const char* label, double current, double x_min, double x_max, double x_def, double x_step, double x_step_small, double x_step_large)
+void osc_global_send_set_parameter_data(int plugin_id, int param_id, int ptype, int hints, const char* name, const char* label, double current)
 {
-    qDebug("osc_global_send_set_parameter_data(%i, %i, %i, %i, %s, %s, %f, %f, %f, %f, %f, %f, %f)", plugin_id, param_id, ptype, hints, name, label, current, x_min, x_max, x_def, x_step, x_step_small, x_step_large);
+    qDebug("osc_global_send_set_parameter_data(%i, %i, %i, %i, %s, %s, %f)", plugin_id, param_id, ptype, hints, name, label, current);
     if (global_osc_data.target)
     {
         char target_path[strlen(global_osc_data.path)+20];
         strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/set_parameter_data");
-        lo_send(global_osc_data.target, target_path, "iiiissfffffff", plugin_id, param_id, ptype, hints, name, label, current, x_min, x_max, x_def, x_step, x_step_small, x_step_large);
+        lo_send(global_osc_data.target, target_path, "iiiissf", plugin_id, param_id, ptype, hints, name, label, current);
+    }
+}
+
+void osc_global_send_set_parameter_ranges(int plugin_id, int param_id, double x_min, double x_max, double x_def, double x_step, double x_step_small, double x_step_large)
+{
+    qDebug("osc_global_send_set_parameter_ranges(%i, %i, %f, %f, %f, %f, %f, %f)", plugin_id, param_id, x_min, x_max, x_def, x_step, x_step_small, x_step_large);
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+22];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/set_parameter_ranges");
+        lo_send(global_osc_data.target, target_path, "iiffffff", plugin_id, param_id, x_min, x_max, x_def, x_step, x_step_small, x_step_large);
     }
 }
 

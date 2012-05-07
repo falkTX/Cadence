@@ -20,7 +20,20 @@
 #include "ladspa/ladspa.h"
 #include "ladspa_rdf.h"
 
-bool is_port_good(int Type1, int Type2)
+#if 0
+short add_plugin_dssi(const char* filename, const char* label, const void* extra_stuff);
+
+int main()
+{
+    short id = add_plugin_dssi("/usr/lib/dssi/calf.so", "eq5", nullptr);
+    set_active(id, true);
+    carla_sleep(3);
+    remove_plugin(id);
+    return 0;
+}
+#endif
+
+bool is_rdf_port_good(int Type1, int Type2)
 {
     if (LADSPA_IS_PORT_INPUT(Type1) && ! LADSPA_IS_PORT_INPUT(Type2))
         return false;
@@ -42,7 +55,7 @@ bool is_ladspa_rdf_descriptor_valid(const LADSPA_RDF_Descriptor* rdf_descriptor,
         {
             for (unsigned long i=0; i < rdf_descriptor->PortCount; i++)
             {
-                if (is_port_good(rdf_descriptor->Ports[i].Type, descriptor->PortDescriptors[i]) == false)
+                if (is_rdf_port_good(rdf_descriptor->Ports[i].Type, descriptor->PortDescriptors[i]) == false)
                 {
                     qWarning("WARNING - Plugin has RDF data, but invalid PortTypes: %i != %i", rdf_descriptor->Ports[i].Type, descriptor->PortDescriptors[i]);
                     return false;
@@ -73,12 +86,10 @@ public:
         descriptor = nullptr;
         rdf_descriptor = nullptr;
 
-        ain_rindexes  = nullptr;
-        aout_rindexes = nullptr;
         param_buffers = nullptr;
     }
 
-    virtual ~LadspaPlugin()
+    ~LadspaPlugin()
     {
         qDebug("LadspaPlugin::~LadspaPlugin()");
 
@@ -96,7 +107,7 @@ public:
         rdf_descriptor = nullptr;
     }
 
-    virtual PluginCategory category()
+    PluginCategory category()
     {
         if (rdf_descriptor)
         {
@@ -134,12 +145,12 @@ public:
         return get_category_from_name(m_name);
     }
 
-    virtual long unique_id()
+    long unique_id()
     {
         return descriptor->UniqueID;
     }
 
-    virtual uint32_t param_scalepoint_count(uint32_t param_id)
+    uint32_t param_scalepoint_count(uint32_t param_id)
     {
         int32_t rindex = param.data[param_id].rindex;
 
@@ -150,12 +161,12 @@ public:
             return 0;
     }
 
-    virtual double get_parameter_value(uint32_t param_id)
+    double get_parameter_value(uint32_t param_id)
     {
-        return param_buffers[param_id];
+        return fix_parameter_value(param_buffers[param_id], param.ranges[param_id]);
     }
 
-    virtual double get_parameter_scalepoint_value(uint32_t param_id, uint32_t scalepoint_id)
+    double get_parameter_scalepoint_value(uint32_t param_id, uint32_t scalepoint_id)
     {
         int32_t param_rindex = param.data[param_id].rindex;
 
@@ -166,22 +177,22 @@ public:
             return 0.0;
     }
 
-    virtual void get_label(char* buf_str)
+    void get_label(char* buf_str)
     {
         strncpy(buf_str, descriptor->Label, STR_MAX);
     }
 
-    virtual void get_maker(char* buf_str)
+    void get_maker(char* buf_str)
     {
         strncpy(buf_str, descriptor->Maker, STR_MAX);
     }
 
-    virtual void get_copyright(char* buf_str)
+    void get_copyright(char* buf_str)
     {
         strncpy(buf_str, descriptor->Copyright, STR_MAX);
     }
 
-    virtual void get_real_name(char* buf_str)
+    void get_real_name(char* buf_str)
     {
         if (rdf_descriptor && rdf_descriptor->Title)
             strncpy(buf_str, rdf_descriptor->Title, STR_MAX);
@@ -189,13 +200,13 @@ public:
             strncpy(buf_str, descriptor->Name, STR_MAX);
     }
 
-    virtual void get_parameter_name(uint32_t param_id, char* buf_str)
+    void get_parameter_name(uint32_t param_id, char* buf_str)
     {
         int32_t rindex = param.data[param_id].rindex;
         strncpy(buf_str, descriptor->PortNames[rindex], STR_MAX);
     }
 
-    virtual void get_parameter_symbol(uint32_t param_id, char* buf_str)
+    void get_parameter_symbol(uint32_t param_id, char* buf_str)
     {
         int32_t rindex = param.data[param_id].rindex;
 
@@ -212,7 +223,7 @@ public:
         *buf_str = 0;
     }
 
-    virtual void get_parameter_label(uint32_t param_id, char* buf_str)
+    void get_parameter_unit(uint32_t param_id, char* buf_str)
     {
         int32_t rindex = param.data[param_id].rindex;
 
@@ -248,7 +259,7 @@ public:
         *buf_str = 0;
     }
 
-    virtual void get_parameter_scalepoint_label(uint32_t param_id, uint32_t scalepoint_id, char* buf_str)
+    void get_parameter_scalepoint_label(uint32_t param_id, uint32_t scalepoint_id, char* buf_str)
     {
         int32_t param_rindex = param.data[param_id].rindex;
 
@@ -259,17 +270,16 @@ public:
             *buf_str = 0;
     }
 
-    virtual void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
+    void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
-        fix_parameter_value(value, param.ranges[param_id]);
-        param_buffers[param_id] = value;
+        param_buffers[param_id] = fix_parameter_value(value, param.ranges[param_id]);
 
         CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
     }
 
-    virtual void reload()
+    void reload()
     {
-        qDebug("LadspaPlugin::reload()");
+        qDebug("LadspaPlugin::reload() - start");
         short _id = m_id;
 
         // Safely disable plugin for reload
@@ -278,8 +288,7 @@ public:
         carla_proc_unlock();
 
         // Unregister previous jack ports if needed
-        if (_id >= 0)
-            remove_from_jack();
+        remove_from_jack(bool(_id >= 0));
 
         // Delete old data
         delete_buffers();
@@ -306,13 +315,13 @@ public:
         if (ains > 0)
         {
             ain.ports    = new jack_port_t*[ains];
-            ain_rindexes = new uint32_t[ains];
+            ain.rindexes = new uint32_t[ains];
         }
 
         if (aouts > 0)
         {
             aout.ports    = new jack_port_t*[aouts];
-            aout_rindexes = new uint32_t[aouts];
+            aout.rindexes = new uint32_t[aouts];
         }
 
         if (params > 0)
@@ -322,7 +331,7 @@ public:
             param_buffers = new float[params];
         }
 
-        const int port_name_size = jack_port_name_size();
+        const int port_name_size = jack_port_name_size() - 1;
         char port_name[port_name_size];
         bool needs_cin  = false;
         bool needs_cout = false;
@@ -344,19 +353,19 @@ public:
                 }
                 else
 #endif
-                    strncpy(port_name, descriptor->PortNames[i], port_name_size/2);
+                    strncpy(port_name, descriptor->PortNames[i], port_name_size);
 
                 if (LADSPA_IS_PORT_INPUT(PortType))
                 {
                     j = ain.count++;
                     ain.ports[j] = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
-                    ain_rindexes[j] = i;
+                    ain.rindexes[j] = i;
                 }
                 else if (LADSPA_IS_PORT_OUTPUT(PortType))
                 {
                     j = aout.count++;
                     aout.ports[j] = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-                    aout_rindexes[j] = i;
+                    aout.rindexes[j] = i;
                     needs_cin = true;
                 }
                 else
@@ -390,9 +399,15 @@ public:
                 else if (max < min)
                     min = max;
 
+                if (max - min == 0.0)
+                {
+                    qWarning("Broken plugin parameter: max - min == 0");
+                    max = min + 0.1;
+                }
+
                 // default value
-                if (HasPortRDF && LADSPA_PORT_HAS_DEFAULT(rdf_descriptor->Ports[j].Hints))
-                    def = rdf_descriptor->Ports[j].Default;
+                if (HasPortRDF && LADSPA_PORT_HAS_DEFAULT(rdf_descriptor->Ports[i].Hints))
+                    def = rdf_descriptor->Ports[i].Default;
 
                 else if (LADSPA_IS_HINT_HAS_DEFAULT(PortHint.HintDescriptor))
                 {
@@ -456,12 +471,6 @@ public:
                 else if (def > max)
                     def = max;
 
-                if (max - min <= 0.0)
-                {
-                    qWarning("Broken plugin parameter: max - min <= 0");
-                    max = min + 0.1;
-                }
-
                 if (LADSPA_IS_HINT_SAMPLE_RATE(PortHint.HintDescriptor))
                 {
                     double sample_rate = get_sample_rate();
@@ -471,17 +480,19 @@ public:
                     param.data[j].hints |= PARAMETER_USES_SAMPLERATE;
                 }
 
-                if (LADSPA_IS_HINT_INTEGER(PortHint.HintDescriptor))
-                {
-                    step = 1.0;
-                    step_small = 1.0;
-                    step_large = 10.0;
-                }
-                else if (LADSPA_IS_HINT_TOGGLED(PortHint.HintDescriptor))
+                if (LADSPA_IS_HINT_TOGGLED(PortHint.HintDescriptor))
                 {
                     step = max - min;
                     step_small = step;
                     step_large = step;
+                    param.data[j].hints |= PARAMETER_IS_BOOLEAN;
+                }
+                else if (LADSPA_IS_HINT_INTEGER(PortHint.HintDescriptor))
+                {
+                    step = 1.0;
+                    step_small = 1.0;
+                    step_large = 10.0;
+                    param.data[j].hints |= PARAMETER_IS_INTEGER;
                 }
                 else
                 {
@@ -491,29 +502,35 @@ public:
                     step_large = range/10.0;
                 }
 
+                if (LADSPA_IS_HINT_LOGARITHMIC(PortHint.HintDescriptor))
+                    param.data[j].hints |= PARAMETER_IS_LOGARITHMIC;
+
                 if (LADSPA_IS_PORT_INPUT(PortType))
                 {
                     param.data[j].type   = PARAMETER_INPUT;
-                    param.data[j].hints |= (PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE);
+                    param.data[j].hints |= PARAMETER_IS_ENABLED;
+                    param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
                     needs_cin = true;
                 }
                 else if (LADSPA_IS_PORT_OUTPUT(PortType))
                 {
                     if (strcmp(descriptor->PortNames[i], "latency") == 0 || strcmp(descriptor->PortNames[i], "_latency") == 0)
                     {
-                        param.data[j].type  = PARAMETER_LATENCY;
-                        param.data[j].hints = 0;
                         min = 0;
                         max = get_sample_rate();
                         def = 0;
                         step = 1;
                         step_small = 1;
                         step_large = 1;
+
+                        param.data[j].type  = PARAMETER_LATENCY;
+                        param.data[j].hints = 0;
                     }
                     else
                     {
                         param.data[j].type   = PARAMETER_OUTPUT;
-                        param.data[j].hints |= (PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE);
+                        param.data[j].hints |= PARAMETER_IS_ENABLED;
+                        param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
                         needs_cout = true;
                     }
                 }
@@ -601,9 +618,11 @@ public:
         if (carla_options.global_jack_client == false)
 #endif
             jack_activate(jack_client);
+
+        qDebug("LadspaPlugin::reload() - end");
     }
 
-    virtual void process(jack_nframes_t nframes)
+    void process(jack_nframes_t nframes)
     {
         uint32_t i, k;
         unsigned short plugin_id = m_id;
@@ -611,28 +630,38 @@ public:
         double ains_peak_tmp[2]  = { 0.0 };
         double aouts_peak_tmp[2] = { 0.0 };
 
-        jack_default_audio_sample_t* ains_buffer[ain.count];
-        jack_default_audio_sample_t* aouts_buffer[aout.count];
+        jack_audio_sample_t* ains_buffer[ain.count];
+        jack_audio_sample_t* aouts_buffer[aout.count];
 
         for (i=0; i < ain.count; i++)
-            ains_buffer[i] = (jack_default_audio_sample_t*)jack_port_get_buffer(ain.ports[i], nframes);
+            ains_buffer[i] = (jack_audio_sample_t*)jack_port_get_buffer(ain.ports[i], nframes);
 
         for (i=0; i < aout.count; i++)
-            aouts_buffer[i] = (jack_default_audio_sample_t*)jack_port_get_buffer(aout.ports[i], nframes);
+            aouts_buffer[i] = (jack_audio_sample_t*)jack_port_get_buffer(aout.ports[i], nframes);
 
         // --------------------------------------------------------------------------------------------------------
         // Input VU
 
         if (ain.count > 0)
         {
-            short j2 = (ain.count == 1) ? 0 : 1;
-
-            for (k=0; k<nframes; k++)
+            if (ain.count == 1)
             {
-                if (abs_d(ains_buffer[0][k]) > ains_peak_tmp[0])
-                    ains_peak_tmp[0] = abs_d(ains_buffer[0][k]);
-                if (abs_d(ains_buffer[j2][k]) > ains_peak_tmp[1])
-                    ains_peak_tmp[1] = abs_d(ains_buffer[j2][k]);
+                for (k=0; k < nframes; k++)
+                {
+                    if (abs_d(ains_buffer[0][k]) > ains_peak_tmp[0])
+                        ains_peak_tmp[0] = abs_d(ains_buffer[0][k]);
+                }
+            }
+            else if (ain.count >= 1)
+            {
+                for (k=0; k < nframes; k++)
+                {
+                    if (abs_d(ains_buffer[0][k]) > ains_peak_tmp[0])
+                        ains_peak_tmp[0] = abs_d(ains_buffer[0][k]);
+
+                    if (abs_d(ains_buffer[1][k]) > ains_peak_tmp[1])
+                        ains_peak_tmp[1] = abs_d(ains_buffer[1][k]);
+                }
             }
         }
 
@@ -653,8 +682,8 @@ public:
                 if (jack_midi_event_get(&pin_event, pin_buffer, i) != 0)
                     break;
 
-                jack_midi_data_t status = pin_event.buffer[0];
-                unsigned char channel   = status & 0x0F;
+                jack_midi_data_t status  = pin_event.buffer[0];
+                jack_midi_data_t channel = status & 0x0F;
 
                 // Control change
                 if (MIDI_IS_STATUS_CONTROL_CHANGE(status))
@@ -664,8 +693,8 @@ public:
 
                     double value;
 
-                    // Control GUI stuff (channel 0 only)
-                    if (channel == 0)
+                    // Control backend stuff
+                    if (channel == cin_channel)
                     {
                         if (MIDI_IS_CONTROL_BREATH_CONTROLLER(control) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
@@ -715,7 +744,8 @@ public:
                                 if (descriptor->deactivate)
                                     descriptor->deactivate(handle);
 
-                                m_active_before = false;
+                                if (descriptor->activate)
+                                    descriptor->activate(handle);
                             }
                             continue;
                         }
@@ -724,9 +754,20 @@ public:
                     // Control plugin parameters
                     for (k=0; k < param.count; k++)
                     {
-                        if (param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0 && param.data[k].midi_channel == channel && param.data[k].midi_cc == control)
+                        if (param.data[k].midi_channel == channel && param.data[k].midi_cc == control && param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0)
                         {
-                            value = (double(c_value) / 127 * (param.ranges[k].max - param.ranges[k].min)) + param.ranges[k].min;
+                            if (param.data[k].hints & PARAMETER_IS_BOOLEAN)
+                            {
+                                value = c_value <= 63 ? param.ranges[k].min : param.ranges[k].max;
+                            }
+                            else
+                            {
+                                value = (double(c_value) / 127 * (param.ranges[k].max - param.ranges[k].min)) + param.ranges[k].min;
+
+                                if (param.data[k].hints & PARAMETER_IS_INTEGER)
+                                    value = rint(value);
+                            }
+
                             set_parameter_value(k, value, false, false, false);
                             postpone_event(PostEventParameterChange, k, value);
                         }
@@ -740,14 +781,17 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Special Parameters
 
+#if 0
         for (k=0; k < param.count; k++)
         {
             if (param.data[k].type == PARAMETER_LATENCY)
             {
                 // TODO
-                break;
             }
         }
+
+        CARLA_PROCESS_CONTINUE_CHECK;
+#endif
 
         // --------------------------------------------------------------------------------------------------------
         // Plugin processing
@@ -761,10 +805,10 @@ public:
             }
 
             for (i=0; i < ain.count; i++)
-                descriptor->connect_port(handle, ain_rindexes[i], ains_buffer[i]);
+                descriptor->connect_port(handle, ain.rindexes[i], ains_buffer[i]);
 
             for (i=0; i < aout.count; i++)
-                descriptor->connect_port(handle, aout_rindexes[i], aouts_buffer[i]);
+                descriptor->connect_port(handle, aout.rindexes[i], aouts_buffer[i]);
 
             if (descriptor->run)
                 descriptor->run(handle, nframes);
@@ -785,31 +829,38 @@ public:
 
         if (m_active)
         {
+            bool do_drywet  = (m_hints & PLUGIN_CAN_DRYWET) > 0 && x_drywet != 1.0;
+            bool do_volume  = (m_hints & PLUGIN_CAN_VOLUME) > 0 && x_vol != 1.0;
+            bool do_balance = (m_hints & PLUGIN_CAN_BALANCE) > 0 && (x_bal_left != -1.0 || x_bal_right != 1.0);
+
             double bal_rangeL, bal_rangeR;
-            jack_default_audio_sample_t old_bal_left[nframes];
+            jack_audio_sample_t old_bal_left[do_balance ? nframes : 0];
 
             for (i=0; i < aout.count; i++)
             {
                 // Dry/Wet and Volume
-                for (k=0; k<nframes; k++)
+                if (do_drywet || do_volume)
                 {
-                    if ((m_hints & PLUGIN_CAN_DRYWET) > 0 && x_drywet != 1.0)
+                    for (k=0; k<nframes; k++)
                     {
-                        if (aout.count == 1)
-                            aouts_buffer[i][k] = (aouts_buffer[i][k]*x_drywet)+(ains_buffer[0][k]*(1.0-x_drywet));
-                        else
-                            aouts_buffer[i][k] = (aouts_buffer[i][k]*x_drywet)+(ains_buffer[i][k]*(1.0-x_drywet));
-                    }
+                        if (do_drywet)
+                        {
+                            if (aout.count == 1)
+                                aouts_buffer[i][k] = (aouts_buffer[i][k]*x_drywet)+(ains_buffer[0][k]*(1.0-x_drywet));
+                            else
+                                aouts_buffer[i][k] = (aouts_buffer[i][k]*x_drywet)+(ains_buffer[i][k]*(1.0-x_drywet));
+                        }
 
-                    if (m_hints & PLUGIN_CAN_VOLUME)
-                        aouts_buffer[i][k] *= x_vol;
+                        if (do_volume)
+                            aouts_buffer[i][k] *= x_vol;
+                    }
                 }
 
                 // Balance
-                if (m_hints & PLUGIN_CAN_BALANCE)
+                if (do_balance)
                 {
                     if (i%2 == 0)
-                        memcpy(&old_bal_left, aouts_buffer[i], sizeof(jack_default_audio_sample_t)*nframes);
+                        memcpy(&old_bal_left, aouts_buffer[i], sizeof(jack_audio_sample_t)*nframes);
 
                     bal_rangeL = (x_bal_left+1.0)/2;
                     bal_rangeR = (x_bal_right+1.0)/2;
@@ -832,13 +883,10 @@ public:
                 }
 
                 // Output VU
-                if (i < 2)
+                for (k=0; k < nframes && i < 2; k++)
                 {
-                    for (k=0; k<nframes; k++)
-                    {
-                        if (abs_d(aouts_buffer[i][k]) > aouts_peak_tmp[i])
-                            aouts_peak_tmp[i] = abs_d(aouts_buffer[i][k]);
-                    }
+                    if (abs_d(aouts_buffer[i][k]) > aouts_peak_tmp[i])
+                        aouts_peak_tmp[i] = abs_d(aouts_buffer[i][k]);
                 }
             }
         }
@@ -846,7 +894,7 @@ public:
         {
             // disable any output sound if not active
             for (i=0; i < aout.count; i++)
-                memset(aouts_buffer[i], 0.0f, sizeof(jack_default_audio_sample_t)*nframes);
+                memset(aouts_buffer[i], 0.0f, sizeof(jack_audio_sample_t)*nframes);
 
             aouts_peak_tmp[0] = 0.0;
             aouts_peak_tmp[1] = 0.0;
@@ -872,7 +920,7 @@ public:
                     value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min) * 127;
 
                     jack_midi_data_t* event_buffer = jack_midi_event_reserve(cout_buffer, 0, 3);
-                    event_buffer[0] = 0xB0 + param.data[k].midi_channel;
+                    event_buffer[0] = MIDI_STATUS_CONTROL_CHANGE + param.data[k].midi_channel;
                     event_buffer[1] = param.data[k].midi_cc;
                     event_buffer[2] = value;
                 }
@@ -896,23 +944,15 @@ public:
     {
         qDebug("LadspaPlugin::delete_buffers() - start");
 
-        if (ain.count > 0)
-            delete[] ain_rindexes;
-
-        if (aout.count > 0)
-            delete[] aout_rindexes;
-
         if (param.count > 0)
             delete[] param_buffers;
 
-        ain_rindexes  = nullptr;
-        aout_rindexes = nullptr;
         param_buffers = nullptr;
 
         qDebug("LadspaPlugin::delete_buffers() - end");
     }
 
-    bool init(const char* filename, const char* label, void* extra_stuff)
+    bool init(const char* filename, const char* label, const LADSPA_RDF_Descriptor* rdf_descriptor_)
     {
         if (lib_open(filename))
         {
@@ -934,8 +974,6 @@ public:
                     if (handle)
                     {
                         m_filename = strdup(filename);
-
-                        const LADSPA_RDF_Descriptor* rdf_descriptor_ = (LADSPA_RDF_Descriptor*)extra_stuff;
 
                         if (is_ladspa_rdf_descriptor_valid(rdf_descriptor_, descriptor))
                             rdf_descriptor = ladspa_rdf_dup(rdf_descriptor_);
@@ -973,11 +1011,9 @@ private:
     const LADSPA_RDF_Descriptor* rdf_descriptor;
 
     float* param_buffers;
-    uint32_t* ain_rindexes;
-    uint32_t* aout_rindexes;
 };
 
-short add_plugin_ladspa(const char* filename, const char* label, void* extra_stuff)
+short add_plugin_ladspa(const char* filename, const char* label, const void* extra_stuff)
 {
     qDebug("add_plugin_ladspa(%s, %s, %p)", filename, label, extra_stuff);
 
@@ -987,7 +1023,7 @@ short add_plugin_ladspa(const char* filename, const char* label, void* extra_stu
     {
         LadspaPlugin* plugin = new LadspaPlugin;
 
-        if (plugin->init(filename, label, extra_stuff))
+        if (plugin->init(filename, label, (LADSPA_RDF_Descriptor*)extra_stuff))
         {
             plugin->reload();
             plugin->set_id(id);

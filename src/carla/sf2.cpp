@@ -803,22 +803,18 @@ public:
                         else if (control == MIDI_CONTROL_ALL_SOUND_OFF)
                         {
 #ifdef FLUIDSYNTH_VERSION_113
-                            send_midi_all_notes_off(false);
                             fluid_synth_all_notes_off(f_synth, 0);
                             fluid_synth_all_sounds_off(f_synth, 0);
-#else
-                            send_midi_all_notes_off();
 #endif
+                            send_midi_all_notes_off();
                             continue;
                         }
                         else if (control == MIDI_CONTROL_ALL_NOTES_OFF)
                         {
 #ifdef FLUIDSYNTH_VERSION_113
-                            send_midi_all_notes_off(false);
                             fluid_synth_all_notes_off(f_synth, 0);
-#else
-                            send_midi_all_notes_off();
 #endif
+                            send_midi_all_notes_off();
                             continue;
                         }
                     }

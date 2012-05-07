@@ -19,8 +19,8 @@
 #include "carla_threads.h"
 
 // plugin specific
-short add_plugin_ladspa(const char* filename, const char* label, void* extra_stuff);
-short add_plugin_dssi(const char* filename, const char* label, void* extra_stuff);
+short add_plugin_ladspa(const char* filename, const char* label, const void* extra_stuff);
+short add_plugin_dssi(const char* filename, const char* label, const void* extra_stuff);
 short add_plugin_lv2(const char* filename, const char* label);
 short add_plugin_vst(const char* filename, const char* label);
 short add_plugin_sf2(const char* filename, const char* label);
@@ -169,6 +169,7 @@ bool remove_plugin(unsigned short plugin_id)
         }
     }
 
+    qCritical("remove_plugin(%i) - could not find plugin", plugin_id);
     set_last_error("Could not find plugin to remove");
     return false;
 }
@@ -302,7 +303,7 @@ ParameterInfo* get_parameter_info(unsigned short plugin_id, uint32_t parameter_i
     {
         free((void*)info.name);
         free((void*)info.symbol);
-        free((void*)info.label);
+        free((void*)info.unit);
     }
 
     info.valid = false;
@@ -325,8 +326,8 @@ ParameterInfo* get_parameter_info(unsigned short plugin_id, uint32_t parameter_i
                 plugin->get_parameter_symbol(parameter_id, buf_str);
                 info.symbol = strdup(buf_str);
 
-                plugin->get_parameter_label(parameter_id, buf_str);
-                info.label = strdup(buf_str);
+                plugin->get_parameter_unit(parameter_id, buf_str);
+                info.unit = strdup(buf_str);
             }
             else
                 qCritical("get_parameter_info(%i, %i) - parameter_id out of bounds", plugin_id, parameter_id);

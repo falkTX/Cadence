@@ -50,17 +50,6 @@ extern "C" {
 #include "lv2-rtmempool/rtmempool.h"
 }
 
-#if 1
-int main()
-{
-    Lv2World.load_all();
-
-    lv2_rdf_free(lv2_rdf_new("http://drobilla.net/plugins/mda/Piano"));
-
-    return 0;
-}
-#endif
-
 #include <QtGui/QDialog>
 #include <QtGui/QLayout>
 

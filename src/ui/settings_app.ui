@@ -89,11 +89,6 @@
        </row>
        <row>
         <property name="text">
-         <string>apps</string>
-        </property>
-       </row>
-       <row>
-        <property name="text">
          <string>engine</string>
         </property>
        </row>
@@ -166,24 +161,6 @@
        </item>
        <item row="3" column="0">
         <property name="text">
-         <string>Apps</string>
-        </property>
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="icon">
-         <iconset resource="../icons/icons.qrc">
-          <normaloff>:/48x48/exec.png</normaloff>:/48x48/exec.png</iconset>
-        </property>
-        <property name="flags">
-         <set>ItemIsSelectable|ItemIsEnabled</set>
-        </property>
-       </item>
-       <item row="4" column="0">
-        <property name="text">
          <string>Engine</string>
         </property>
         <property name="font">
@@ -200,7 +177,7 @@
          <set>ItemIsSelectable|ItemIsEnabled</set>
         </property>
        </item>
-       <item row="5" column="0">
+       <item row="4" column="0">
         <property name="text">
          <string>Paths</string>
         </property>
@@ -226,7 +203,7 @@
         <number>0</number>
        </property>
        <property name="currentIndex">
-        <number>5</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="page_main">
         <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -767,177 +744,6 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_apps">
-        <layout class="QVBoxLayout" name="verticalLayout_4">
-         <property name="margin">
-          <number>2</number>
-         </property>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_4">
-           <item>
-            <widget class="QLabel" name="label_4">
-             <property name="text">
-              <string>&lt;b&gt;Apps&lt;/b&gt;</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_2">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_5">
-             <property name="text">
-              <string notr="true"/>
-             </property>
-             <property name="pixmap">
-              <pixmap resource="../icons/icons.qrc">:/48x48/exec.png</pixmap>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignHCenter|Qt::AlignTop</set>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <widget class="QTabWidget" name="tw_apps">
-           <property name="currentIndex">
-            <number>0</number>
-           </property>
-           <widget class="QWidget" name="tab_3">
-            <attribute name="title">
-             <string>Database</string>
-            </attribute>
-            <layout class="QVBoxLayout" name="verticalLayout_14">
-             <item>
-              <widget class="QRadioButton" name="rb_database_ladish">
-               <property name="text">
-                <string>LADISH</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_13">
-               <item>
-                <spacer name="horizontalSpacer_9">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeType">
-                  <enum>QSizePolicy::Fixed</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>20</width>
-                   <height>10</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item>
-                <widget class="QLabel" name="label_7">
-                 <property name="text">
-                  <string>Use LADI's original app-daemon for the applications list. Use this method if you're not using KXStudio.</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-                 </property>
-                 <property name="wordWrap">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <spacer name="verticalSpacer_6">
-               <property name="orientation">
-                <enum>Qt::Vertical</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Fixed</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>20</width>
-                 <height>10</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QRadioButton" name="rb_database_kxstudio">
-               <property name="text">
-                <string>Klaudia (Hardcoded)</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_12">
-               <item>
-                <spacer name="horizontalSpacer_13">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeType">
-                  <enum>QSizePolicy::Fixed</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>20</width>
-                   <height>10</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item>
-                <widget class="QLabel" name="label_12">
-                 <property name="text">
-                  <string>Use an hardcoded database for the application list, based on good old 'Klaudia'.
-Only works on Debian or Arch based systems.</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-                 </property>
-                 <property name="wordWrap">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <spacer name="verticalSpacer_5">
-               <property name="orientation">
-                <enum>Qt::Vertical</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>382</width>
-                 <height>95</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
-           </widget>
-          </widget>
-         </item>
-        </layout>
-       </widget>
        <widget class="QWidget" name="page_engine">
         <layout class="QVBoxLayout" name="verticalLayout_18">
          <property name="margin">
@@ -1085,7 +891,7 @@ Only works on Debian or Arch based systems.</string>
          <item row="1" column="0">
           <widget class="QTabWidget" name="tw_paths">
            <property name="currentIndex">
-            <number>2</number>
+            <number>0</number>
            </property>
            <widget class="QWidget" name="ladspa">
             <attribute name="title">
@@ -1111,9 +917,35 @@ Only works on Debian or Arch based systems.</string>
             <attribute name="title">
              <string>LV2</string>
             </attribute>
-            <layout class="QHBoxLayout" name="horizontalLayout_7">
-             <item>
+            <layout class="QGridLayout" name="gridLayout_6">
+             <item row="0" column="0" colspan="2">
               <widget class="QListWidget" name="lw_lv2"/>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_4">
+               <property name="maximumSize">
+                <size>
+                 <width>22</width>
+                 <height>22</height>
+                </size>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="pixmap">
+                <pixmap resource="../icons/icons.qrc">:/16x16/dialog-information.png</pixmap>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="label_5">
+               <property name="text">
+                <string>Restart Carla to be able to load new found plugins</string>
+               </property>
+              </widget>
              </item>
             </layout>
            </widget>

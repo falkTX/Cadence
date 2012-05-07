@@ -193,7 +193,7 @@ struct ParameterInfo {
     bool valid;
     const char* name;
     const char* symbol;
-    const char* label;
+    const char* unit;
     quint32 scalepoint_count;
 };
 

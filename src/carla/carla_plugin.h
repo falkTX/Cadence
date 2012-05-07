@@ -39,6 +39,8 @@
 const unsigned short MAX_MIDI_EVENTS = 512;
 const unsigned short MAX_POST_EVENTS = 152;
 
+typedef jack_default_audio_sample_t jack_audio_sample_t;
+
 enum PluginPostEventType {
     PostEventDebug,
     PostEventParameterChange,
@@ -131,6 +133,8 @@ public:
         m_lib  = nullptr;
         m_name = nullptr;
         m_filename = nullptr;
+
+        cin_channel = 0;
 
         x_drywet = 1.0;
         x_vol    = 1.0;
@@ -400,7 +404,7 @@ public:
         *buf_str = 0;
     }
 
-    virtual void get_parameter_label(uint32_t /*param_id*/, char* buf_str)
+    virtual void get_parameter_unit(uint32_t /*param_id*/, char* buf_str)
     {
         *buf_str = 0;
     }
@@ -466,14 +470,11 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_ACTIVE, value);
         }
-#else
-        Q_UNUSED(osc_send);
-#endif
 
-#ifndef BUILD_BRIDGE
         if (callback_send)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_ACTIVE, 0, value);
 #else
+        Q_UNUSED(osc_send);
         Q_UNUSED(callback_send);
 #endif
     }
@@ -495,14 +496,11 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_DRYWET, value);
         }
-#else
-        Q_UNUSED(osc_send);
-#endif
 
-#ifndef BUILD_BRIDGE
         if (callback_send)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_DRYWET, 0, value);
 #else
+        Q_UNUSED(osc_send);
         Q_UNUSED(callback_send);
 #endif
     }
@@ -524,12 +522,13 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_VOLUME, value);
         }
-#else
-        Q_UNUSED(osc_send);
-#endif
 
         if (callback_send)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_VOLUME, 0, value);
+#else
+        Q_UNUSED(osc_send);
+        Q_UNUSED(callback_send);
+#endif
     }
 
     void set_balance_left(double value, bool osc_send, bool callback_send)
@@ -549,12 +548,13 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_BALANCE_LEFT, value);
         }
-#else
-        Q_UNUSED(osc_send);
-#endif
 
         if (callback_send)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_BALANCE_LEFT, 0, value);
+#else
+        Q_UNUSED(osc_send);
+        Q_UNUSED(callback_send);
+#endif
     }
 
     void set_balance_right(double value, bool osc_send, bool callback_send)
@@ -574,12 +574,13 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_BALANCE_RIGHT, value);
         }
-#else
-        Q_UNUSED(osc_send);
-#endif
 
         if (callback_send)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_BALANCE_RIGHT, 0, value);
+#else
+        Q_UNUSED(osc_send);
+        Q_UNUSED(callback_send);
+#endif
     }
 
     virtual void set_parameter_value(uint32_t param_id, double value, bool /*gui_send*/, bool osc_send, bool callback_send)
@@ -592,12 +593,15 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, param_id, value);
         }
-#else
-        Q_UNUSED(osc_send);
-#endif
 
         if (callback_send)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, param_id, 0, value);
+#else
+        Q_UNUSED(param_id);
+        Q_UNUSED(value);
+        Q_UNUSED(osc_send);
+        Q_UNUSED(callback_send);
+#endif
     }
 
     void set_parameter_value_rindex(int32_t rindex, double value, bool gui_send, bool osc_send, bool callback_send)
@@ -605,7 +609,10 @@ public:
         for (uint32_t i=0; i < param.count; i++)
         {
             if (param.data[i].rindex == rindex)
+            {
                 set_parameter_value(i, value, gui_send, osc_send, callback_send);
+                break;
+            }
         }
     }
 
@@ -636,7 +643,6 @@ public:
         qDebug("set_custom_data(%i, %s, %s)", dtype, key, value);
 
         bool save_data = true;
-        bool already_have = false;
 
         switch (dtype)
         {
@@ -655,6 +661,8 @@ public:
         if (save_data)
         {
             // Check if we already have this key
+            bool already_have = false;
+
             for (int i=0; i < custom.count(); i++)
             {
                 if (strcmp(custom[i].key, key) == 0)
@@ -677,7 +685,7 @@ public:
         }
     }
 
-    virtual void set_chunk_data(const char*)
+    virtual void set_chunk_data(const char* /*string_data*/)
     {
     }
 
@@ -704,19 +712,20 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_program(&osc.data, prog.current);
         }
-#else
-        Q_UNUSED(osc_send);
-#endif
 
         if (callback_send)
             callback_action(CALLBACK_PROGRAM_CHANGED, m_id, prog.current, 0, 0.0);
+#else
+        Q_UNUSED(osc_send);
+        Q_UNUSED(callback_send);
+#endif
     }
 
     virtual void set_midi_program(int32_t index, bool /*gui_send*/, bool osc_send, bool callback_send, bool /*block*/)
     {
         midiprog.current = index;
 
-        // Change default value (if needed)
+        // Change default value
         if (m_type != PLUGIN_SF2)
         {
             for (uint32_t i=0; i < param.count; i++)
@@ -738,12 +747,13 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_program(&osc.data, midiprog.current);
         }
-#else
-        Q_UNUSED(osc_send);
-#endif
 
         if (callback_send)
             callback_action(CALLBACK_MIDI_PROGRAM_CHANGED, m_id, midiprog.current, 0, 0.0);
+#else
+        Q_UNUSED(osc_send);
+        Q_UNUSED(callback_send);
+#endif
     }
 
     virtual void set_gui_data(int /*data*/, void* /*ptr*/)
@@ -778,8 +788,7 @@ public:
     {
     }
 
-    // TODO - virtual for gui_send
-    void send_midi_note(bool onoff, uint8_t note, uint8_t velo, bool /*gui_send*/, bool osc_send, bool callback_send)
+    virtual void send_midi_note(bool onoff, uint8_t note, uint8_t velo, bool /*gui_send*/, bool osc_send, bool callback_send)
     {
         carla_midi_lock();
         for (unsigned int i=0; i<MAX_MIDI_EVENTS; i++)
@@ -803,7 +812,7 @@ public:
             else
                 osc_global_send_note_off(m_id, note);
 
-            // FIXME
+            // FIXME, send midi
             //if (m_hints & PLUGIN_IS_BRIDGE)
             //{
             //    if (onoff)
@@ -812,15 +821,16 @@ public:
             //        osc_send_note_off(&osc.data, m_id, note);
             //}
         }
-#else
-        Q_UNUSED(osc_send);
-#endif
 
         if (callback_send)
             callback_action(onoff ? CALLBACK_NOTE_ON : CALLBACK_NOTE_OFF, m_id, note, velo, 0.0);
+#else
+        Q_UNUSED(osc_send);
+        Q_UNUSED(callback_send);
+#endif
     }
 
-    void send_midi_all_notes_off(bool notes_off = true)
+    void send_midi_all_notes_off()
     {
         carla_midi_lock();
         post_events.lock.lock();
@@ -844,13 +854,13 @@ public:
 
         for (unsigned short i=0; i < 128 && i < MAX_MIDI_EVENTS && i < MAX_POST_EVENTS; i++)
         {
-            if (notes_off)
-            {
-                ext_midi_notes[i].valid = true;
-                ext_midi_notes[i].onoff = false;
-                ext_midi_notes[i].note  = i;
-                ext_midi_notes[i].velo  = 0;
-            }
+            //if (notes_off)
+            //{
+            ext_midi_notes[i].valid = true;
+            ext_midi_notes[i].onoff = false;
+            ext_midi_notes[i].note  = i;
+            ext_midi_notes[i].velo  = 0;
+            //}
 
             post_events.data[i+pe_pad].valid = true;
             post_events.data[i+pe_pad].type  = PostEventNoteOff;
@@ -893,7 +903,7 @@ public:
         post_events.lock.unlock();
     }
 
-    virtual int set_osc_bridge_info(PluginBridgeInfoType, lo_arg**)
+    virtual int set_osc_bridge_info(PluginBridgeInfoType /*intoType*/, lo_arg** /*argv*/)
     {
         return 1;
     }
@@ -906,7 +916,7 @@ public:
             // Base data
             osc_global_send_add_plugin(m_id, m_name);
 
-            PluginInfo* info = get_plugin_info(m_id);
+            const PluginInfo* info = get_plugin_info(m_id);
             osc_global_send_set_plugin_data(m_id, m_type, category(), m_hints, get_real_plugin_name(m_id), info->label, info->maker, info->copyright, unique_id());
 
             PortCountInfo param_info = { false, 0, 0, 0 };
@@ -926,11 +936,10 @@ public:
             {
                 for (i=0; i < param.count; i++)
                 {
-                    ParameterInfo* info     = get_parameter_info(m_id, i);
+                    const ParameterInfo* info = get_parameter_info(m_id, i);
 
-                    // FIXME - split data and ranges into 2 calls
-                    osc_global_send_set_parameter_data(m_id, i, param.data[i].type, param.data[i].hints, info->name, info->label, get_parameter_value(i),
-                                                       param.ranges[i].min, param.ranges[i].max, param.ranges[i].def, param.ranges[i].step, param.ranges[i].step_small, param.ranges[i].step_large);
+                    osc_global_send_set_parameter_data(m_id, i, param.data[i].type, param.data[i].hints, info->name, info->unit, get_parameter_value(i));
+                    osc_global_send_set_parameter_ranges(m_id, i, param.ranges[i].min, param.ranges[i].max, param.ranges[i].def, param.ranges[i].step, param.ranges[i].step_small, param.ranges[i].step_large);
                 }
             }
 
@@ -1021,12 +1030,16 @@ public:
     }
 #endif
 
+    // TODO, remove = true
     virtual void remove_from_jack(bool deactivate = true)
     {
-        qDebug("CarlaPlugin::remove_from_jack() - start");
+        qDebug("CarlaPlugin::remove_from_jack(%s) - start", bool2str(deactivate));
 
         if (jack_client == nullptr)
+        {
+            qDebug("CarlaPlugin::remove_from_jack(%s) - return", bool2str(deactivate));
             return;
+        }
 
 #ifdef BUILD_BRIDGE
         if (deactivate)
@@ -1053,7 +1066,7 @@ public:
         if (param.port_cout)
             jack_port_unregister(jack_client, param.port_cout);
 
-        qDebug("CarlaPlugin::remove_from_jack() - end");
+        qDebug("CarlaPlugin::remove_from_jack(%s) - end", bool2str(deactivate));
     }
 
     virtual void delete_buffers()
@@ -1163,6 +1176,8 @@ protected:
     const char* m_name;
     const char* m_filename;
 
+    int8_t cin_channel;
+
     double x_drywet, x_vol, x_bal_left, x_bal_right;
     jack_client_t* jack_client;
 
@@ -1191,12 +1206,22 @@ protected:
     ExternalMidiNote ext_midi_notes[MAX_MIDI_EVENTS];
 
     // utilities
-    static void fix_parameter_value(double& value, const ParameterRanges& ranges)
+    static double fix_parameter_value(double& value, const ParameterRanges& ranges)
     {
         if (value < ranges.min)
             value = ranges.min;
         else if (value > ranges.max)
             value = ranges.max;
+        return value;
+    }
+
+    static float fix_parameter_value(float& value, const ParameterRanges& ranges)
+    {
+        if (value < ranges.min)
+            value = ranges.min;
+        else if (value > ranges.max)
+            value = ranges.max;
+        return value;
     }
 
     static double abs_d(const double& value)
