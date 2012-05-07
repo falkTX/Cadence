@@ -115,13 +115,13 @@ typedef unsigned long long LADSPA_PluginType;
 #define LADSPA_IS_PLUGIN_TIME(x)          ((x) & LADSPA_GROUP_TIME)
 #define LADSPA_IS_PLUGIN_GENERATOR(x)     ((x) & LADSPA_GROUP_GENERATOR)
 
-// A Scale Point
+// Scale Point
 struct LADSPA_RDF_ScalePoint {
     LADSPA_Data Value;
     const char* Label;
 };
 
-// A Port
+// Port
 struct LADSPA_RDF_Port {
     LADSPA_Property Type;
     LADSPA_Property Hints;
@@ -133,7 +133,7 @@ struct LADSPA_RDF_Port {
     LADSPA_RDF_ScalePoint* ScalePoints;
 };
 
-// The actual plugin descriptor
+// Plugin
 struct LADSPA_RDF_Descriptor {
     LADSPA_PluginType Type;
     unsigned long UniqueID;
@@ -144,6 +144,7 @@ struct LADSPA_RDF_Descriptor {
     LADSPA_RDF_Port* Ports;
 };
 
+// ------------------------------------------------------------------------------------------------
 
 // Copy RDF object
 inline const LADSPA_RDF_Descriptor* ladspa_rdf_dup(const LADSPA_RDF_Descriptor* rdf_descriptor)

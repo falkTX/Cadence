@@ -30,6 +30,8 @@ CarlaCheckThread::CarlaCheckThread(QObject *parent) :
     qDebug("CarlaCheckThread::CarlaCheckThread(%p)", parent);
 }
 
+// TODO - make sure plugin removals can't make this crash
+
 void CarlaCheckThread::run()
 {
     qDebug("CarlaCheckThread::run()");
@@ -266,6 +268,7 @@ void CarlaPluginThread::run()
 
     m_process->start(m_binary, arguments);
     m_process->waitForStarted();
+
     switch (m_mode)
     {
     case PLUGIN_THREAD_DSSI_GUI:

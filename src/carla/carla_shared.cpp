@@ -16,6 +16,7 @@
  */
 
 #include "carla_shared.h"
+#include "carla_jack.h"
 
 #include <QtCore/QMutex>
 #include <QtCore/QString>
@@ -30,23 +31,16 @@ volatile double aouts_peak[MAX_PLUGINS*2] = { 0.0 };
 #ifndef BUILD_BRIDGE
 // Global options
 carla_options_t carla_options = {
-    /* initiated */          false,
-    #ifdef BUILD_BRIDGE
-    /* global_jack_client */ false,
-    /* use_dssi_chunks    */ false,
-    /* prefer_ui_bridges  */ false,
-    #else
     /* global_jack_client */ true,
     /* use_dssi_chunks    */ false,
     /* prefer_ui_bridges  */ true,
-    #endif
-    /* bridge_unix32  */ nullptr,
-    /* bridge_unix64  */ nullptr,
-    /* bridge_win32   */ nullptr,
-    /* bridge_win64   */ nullptr,
-    /* bridge_lv2gtk2 */ nullptr,
-    /* bridge_lv2qt4  */ nullptr,
-    /* bridge_lv2x11  */ nullptr
+    /* bridge_unix32      */ nullptr,
+    /* bridge_unix64      */ nullptr,
+    /* bridge_win32       */ nullptr,
+    /* bridge_win64       */ nullptr,
+    /* bridge_lv2gtk2     */ nullptr,
+    /* bridge_lv2qt4      */ nullptr,
+    /* bridge_lv2x11      */ nullptr
 };
 #endif
 
@@ -56,7 +50,8 @@ const char* last_error = nullptr;
 QMutex carla_proc_lock_var;
 QMutex carla_midi_lock_var;
 
-const unsigned short max_client_name_size = 32 - 5; // 32 = jack1 max name; 5 = strlen(" (10)")
+// define max possible client name
+const unsigned short max_client_name_size = carla_jack_max_client_name_size() - 5; // 5 = strlen(" (10)")
 
 // -------------------------------------------------------------------------------------------------------------------
 // Exported symbols (API)
@@ -153,7 +148,8 @@ const char* get_unique_name(const char* name)
             // Check if string has already been modified
             uint len = qname.size();
 
-            if (qname.at(len-3) == QChar('(') && qname.at(len-2).isDigit() && qname.at(len-1) == QChar(')'))
+            // 1 digit, ex: " (2)"
+            if (qname.at(len-4) == QChar(' ') && qname.at(len-3) == QChar('(') && qname.at(len-2).isDigit() && qname.at(len-1) == QChar(')'))
             {
                 int number = qname.at(len-2).toAscii()-'0';
 
@@ -165,7 +161,8 @@ const char* get_unique_name(const char* name)
 
                 continue;
             }
-            else if (qname.at(len-4) == QChar('(') && qname.at(len-3).isDigit() && qname.at(len-2).isDigit() && qname.at(len-1) == QChar(')'))
+            // 2 digits, ex: " (11)"
+            else if (qname.at(len-5) == QChar(' ') && qname.at(len-4) == QChar('(') && qname.at(len-3).isDigit() && qname.at(len-2).isDigit() && qname.at(len-1) == QChar(')'))
             {
                 QChar n2 = qname.at(len-2);
                 QChar n3 = qname.at(len-3);

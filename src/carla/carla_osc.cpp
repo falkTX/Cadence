@@ -200,8 +200,10 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
             return plugin->set_osc_bridge_info(PluginBridgeParameterDataInfo, argv);
         else if (strcmp(method, "bridge_param_ranges") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeParameterRangesInfo, argv);
-        else if (strcmp(method, "bridge_program_name") == 0)
-            return plugin->set_osc_bridge_info(PluginBridgeProgramName, argv);
+        else if (strcmp(method, "bridge_program_info") == 0)
+            return plugin->set_osc_bridge_info(PluginBridgeProgramInfo, argv);
+        else if (strcmp(method, "bridge_midi_program_info") == 0)
+            return plugin->set_osc_bridge_info(PluginBridgeMidiProgramInfo, argv);
         else if (strcmp(method, "bridge_update") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeUpdateNow, argv);
     }

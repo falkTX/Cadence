@@ -29,12 +29,6 @@
 
 #include <QtCore/Qt>
 
-#if defined (__GXX_EXPERIMENTAL_CXX0X__) && defined (__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
-// nullptr is available
-#else
-#  define nullptr (0)
-#endif
-
 #ifdef Q_OS_WIN
 #  include <windows.h>
 #  define carla_sleep(t)  Sleep(t * 1000)
@@ -63,7 +57,7 @@
 #endif
 
 // set native binary type
-#if defined(Q_OS_LINUX) || defined(Q_OS_DARWIN)
+#if defined(Q_OS_UNIX)
 #  if __LP64__
 #    define BINARY_NATIVE BINARY_UNIX64
 #  else
@@ -76,7 +70,8 @@
 #    define BINARY_NATIVE BINARY_WIN32
 #   endif
 #else
-#  error Invalid build type
+#  warning Invalid build type
+#  define BINARY_NATIVE BINARY_NONE
 #endif
 
 // export symbols if needed

@@ -29,7 +29,6 @@ const unsigned short MAX_PLUGINS   = 1;
 const unsigned short MAX_PLUGINS   = 99;
 #endif
 const unsigned int MAX_PARAMETERS  = 200;
-const unsigned int MAX_MIDI_EVENTS = 512;
 
 // plugin hints
 const unsigned int PLUGIN_IS_BRIDGE   = 0x01;
@@ -46,8 +45,8 @@ const unsigned int PARAMETER_IS_INTEGER       = 0x02;
 const unsigned int PARAMETER_IS_LOGARITHMIC   = 0x04;
 const unsigned int PARAMETER_IS_ENABLED       = 0x08;
 const unsigned int PARAMETER_IS_AUTOMABLE     = 0x10;
-const unsigned int PARAMETER_USES_SCALEPOINTS = 0x20;
-const unsigned int PARAMETER_USES_SAMPLERATE  = 0x40;
+const unsigned int PARAMETER_USES_SAMPLERATE  = 0x20;
+const unsigned int PARAMETER_USES_SCALEPOINTS = 0x40;
 
 enum BinaryType {
     BINARY_NONE   = 0,
@@ -75,7 +74,7 @@ enum PluginCategory {
     PLUGIN_CATEGORY_DYNAMICS  = 5, // Amplifier, Compressor, Gate
     PLUGIN_CATEGORY_MODULATOR = 6, // Chorus, Flanger, Phaser
     PLUGIN_CATEGORY_UTILITY   = 7, // Analyzer, Converter, Mixer
-    PLUGIN_CATEGORY_OUTRO     = 8  // used to check if a plugin has a category
+    PLUGIN_CATEGORY_OTHER     = 8  // used to check if a plugin has a category
 };
 
 enum ParameterType {
@@ -104,7 +103,7 @@ enum CustomDataType {
 };
 
 enum GuiType {
-    GUI_NONE         = 0,
+    GUI_NONE = 0,
     GUI_INTERNAL_QT4 = 1,
     GUI_INTERNAL_X11 = 2,
     GUI_EXTERNAL_LV2 = 3,
@@ -226,20 +225,6 @@ struct PluginBridgeInfo {
     quint32 aouts;
     quint32 mins;
     quint32 mouts;
-};
-
-struct carla_options_t {
-    bool initiated;
-    bool global_jack_client;
-    bool use_dssi_chunks;
-    bool prefer_ui_bridges;
-    const char* bridge_unix32;
-    const char* bridge_unix64;
-    const char* bridge_win32;
-    const char* bridge_win64;
-    const char* bridge_lv2gtk2;
-    const char* bridge_lv2qt4;
-    const char* bridge_lv2x11;
 };
 
 typedef void (*CallbackFunc)(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3);

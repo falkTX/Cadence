@@ -31,7 +31,6 @@
 #include "lv2/midi.h"
 #include "lv2/port-props.h"
 #include "lv2/presets.h"
-#include "lv2/programs.h"
 #include "lv2/state.h"
 #include "lv2/time.h"
 #include "lv2/ui.h"
@@ -41,6 +40,7 @@
 
 #include "lv2/lv2-miditype.h"
 #include "lv2/lv2-midifunctions.h"
+#include "lv2/lv2_programs.h"
 #include "lv2/lv2_rtmempool.h"
 #include "lv2/lv2_external_ui.h"
 
@@ -317,7 +317,7 @@ public:
         if (LV2_IS_DELAY(Category))
             return PLUGIN_CATEGORY_DELAY;
         else if (LV2_IS_DISTORTION(Category))
-            return PLUGIN_CATEGORY_OUTRO;
+            return PLUGIN_CATEGORY_OTHER;
         else if (LV2_IS_DYNAMICS(Category))
             return PLUGIN_CATEGORY_DYNAMICS;
         else if (LV2_IS_EQ(Category))
@@ -331,9 +331,9 @@ public:
         else if (LV2_IS_REVERB(Category))
             return PLUGIN_CATEGORY_DELAY;
         else if (LV2_IS_SIMULATOR(Category))
-            return PLUGIN_CATEGORY_OUTRO;
+            return PLUGIN_CATEGORY_OTHER;
         else if (LV2_IS_SPATIAL(Category))
-            return PLUGIN_CATEGORY_OUTRO;
+            return PLUGIN_CATEGORY_OTHER;
         else if (LV2_IS_SPECTRAL(Category))
             return PLUGIN_CATEGORY_UTILITY;
         else if (LV2_IS_UTILITY(Category))

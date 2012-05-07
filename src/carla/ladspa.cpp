@@ -124,7 +124,7 @@ public:
             else if (LADSPA_IS_PLUGIN_FREQUENCY(Category))
                 return PLUGIN_CATEGORY_UTILITY;
             else if (LADSPA_IS_PLUGIN_SIMULATOR(Category))
-                return PLUGIN_CATEGORY_OUTRO;
+                return PLUGIN_CATEGORY_OTHER;
             else if (LADSPA_IS_PLUGIN_TIME(Category))
                 return PLUGIN_CATEGORY_DELAY;
             else if (LADSPA_IS_PLUGIN_GENERATOR(Category))

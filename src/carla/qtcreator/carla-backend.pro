@@ -2,7 +2,7 @@
 
 QT = core gui
 
-CONFIG   += warn_on qt release shared dll plugin link_pkgconfig
+CONFIG   += warn_on qt debug shared dll plugin link_pkgconfig
 PKGCONFIG = jack liblo fluidsynth
 
 TEMPLATE = app #lib
@@ -43,3 +43,5 @@ TARGET  = carla_backend
 DEFINES = VESTIGE_HEADER
 
 LIBS    = ../../carla-lilv/carla_lilv.a
+
+QMAKE_CXXFLAGS *= -std=c++0x

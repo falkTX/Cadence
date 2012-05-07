@@ -59,7 +59,7 @@ double get_latency()
 // End of exported symbols (API)
 // -------------------------------------------------------------------------------------------------------------------
 
-int carla_jack_bufsize_callback(jack_nframes_t new_buffer_size, void*)
+static int carla_jack_bufsize_callback(jack_nframes_t new_buffer_size, void*)
 {
     carla_buffer_size = new_buffer_size;
 
@@ -79,13 +79,13 @@ int carla_jack_bufsize_callback(jack_nframes_t new_buffer_size, void*)
     return 0;
 }
 
-int carla_jack_srate_callback(jack_nframes_t new_sample_rate, void*)
+static int carla_jack_srate_callback(jack_nframes_t new_sample_rate, void*)
 {
     carla_sample_rate = new_sample_rate;
     return 0;
 }
 
-int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
+static int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
 {
 #ifndef BUILD_BRIDGE
     if (carla_options.global_jack_client)
@@ -121,7 +121,7 @@ int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
     return 0;
 }
 
-void carla_jack_shutdown_callback(void*)
+static void carla_jack_shutdown_callback(void*)
 {
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
@@ -235,4 +235,9 @@ bool carla_jack_register_plugin(CarlaPlugin* plugin, jack_client_t** client)
     }
 
     return false;
+}
+
+int carla_jack_max_client_name_size()
+{
+    return jack_client_name_size()-1;
 }

@@ -50,11 +50,10 @@ public:
     CarlaPluginThread(CarlaPlugin* plugin, PluginThreadMode mode);
     ~CarlaPluginThread();
 
-    void startNow();
     void setOscData(const char* binary, const char* label, const char* data1="", const char* data2="", const char* data3="");
 
 protected:
-    virtual void run();
+    void run();
 
 private:
     CarlaPlugin* m_plugin;

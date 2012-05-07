@@ -29,12 +29,14 @@
 
 // common includes
 #include <cmath>
+#include <cstdint>
 #include <QtCore/QList>
 #include <QtCore/QMutex>
 #include <QtCore/QString>
 
 #define CARLA_PROCESS_CONTINUE_CHECK if (m_id != plugin_id) { return callback_action(CALLBACK_DEBUG, plugin_id, m_id, 0, 0.0); }
 
+const unsigned short MAX_MIDI_EVENTS = 512;
 const unsigned short MAX_POST_EVENTS = 152;
 
 enum PluginPostEventType {
@@ -56,7 +58,8 @@ enum PluginBridgeInfoType {
     PluginBridgeParameterInfo,
     PluginBridgeParameterDataInfo,
     PluginBridgeParameterRangesInfo,
-    PluginBridgeProgramName,
+    PluginBridgeProgramInfo,
+    PluginBridgeMidiProgramInfo,
     PluginBridgeUpdateNow
 };
 
@@ -68,6 +71,7 @@ struct midi_program_t {
 
 struct PluginAudioData {
     uint32_t count;
+    uint32_t* rindexes;
     jack_port_t** ports;
 };
 
@@ -137,9 +141,11 @@ public:
 
         ain.count = 0;
         ain.ports = nullptr;
+        ain.rindexes = nullptr;
 
         aout.count = 0;
         aout.ports = nullptr;
+        aout.rindexes = nullptr;
 
         midi.port_min  = nullptr;
         midi.port_mout = nullptr;
@@ -178,26 +184,39 @@ public:
     {
         qDebug("CarlaPlugin::~CarlaPlugin()");
 
-        // FIXME - reorder these calls?
-
         // Unregister jack client and ports
         remove_from_jack();
 
         // Delete data
         delete_buffers();
 
+        // Unload DLL
+        lib_close();
+
+        if (m_name)
+            free((void*)m_name);
+
+        if (m_filename)
+            free((void*)m_filename);
+
         if (prog.count > 0)
         {
             for (uint32_t i=0; i < prog.count; i++)
-                free((void*)prog.names[i]);
+            {
+                if (prog.names[i])
+                    free((void*)prog.names[i]);
+            }
 
             delete[] prog.names;
         }
 
         if (midiprog.count > 0)
         {
-            for (uint32_t i=0; i < prog.count; i++)
-                free((void*)midiprog.data[i].name);
+            for (uint32_t i=0; i < midiprog.count; i++)
+            {
+                if (midiprog.data[i].name)
+                    free((void*)midiprog.data[i].name);
+            }
 
             delete[] midiprog.data;
         }
@@ -215,14 +234,6 @@ public:
 
             custom.clear();
         }
-
-        lib_close();
-
-        if (m_name)
-            free((void*)m_name);
-
-        if (m_filename)
-            free((void*)m_filename);
 
 #ifdef BUILD_BRIDGE
         if (jack_client)
@@ -459,8 +470,12 @@ public:
         Q_UNUSED(osc_send);
 #endif
 
+#ifndef BUILD_BRIDGE
         if (callback_send)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_ACTIVE, 0, value);
+#else
+        Q_UNUSED(callback_send);
+#endif
     }
 
     void set_drywet(double value, bool osc_send, bool callback_send)
@@ -484,8 +499,12 @@ public:
         Q_UNUSED(osc_send);
 #endif
 
+#ifndef BUILD_BRIDGE
         if (callback_send)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_DRYWET, 0, value);
+#else
+        Q_UNUSED(callback_send);
+#endif
     }
 
     void set_volume(double value, bool osc_send, bool callback_send)
@@ -1002,15 +1021,17 @@ public:
     }
 #endif
 
-    void remove_from_jack()
+    virtual void remove_from_jack(bool deactivate = true)
     {
         qDebug("CarlaPlugin::remove_from_jack() - start");
 
         if (jack_client == nullptr)
             return;
 
-#ifndef BUILD_BRIDGE
-        if (carla_options.global_jack_client == false)
+#ifdef BUILD_BRIDGE
+        if (deactivate)
+#else
+        if (carla_options.global_jack_client == false && deactivate)
 #endif
             jack_deactivate(jack_client);
 
@@ -1040,10 +1061,16 @@ public:
         qDebug("CarlaPlugin::delete_buffers() - start");
 
         if (ain.count > 0)
+        {
             delete[] ain.ports;
+            delete[] ain.rindexes;
+        }
 
         if (aout.count > 0)
+        {
             delete[] aout.ports;
+            delete[] aout.rindexes;
+        }
 
         if (param.count > 0)
         {
@@ -1053,9 +1080,11 @@ public:
 
         ain.count = 0;
         ain.ports = nullptr;
+        ain.rindexes = nullptr;
 
         aout.count = 0;
         aout.ports = nullptr;
+        aout.rindexes = nullptr;
 
         midi.port_min  = nullptr;
         midi.port_mout = nullptr;
@@ -1122,20 +1151,6 @@ public:
 #endif
     }
 
-    // utilities
-    static void fix_parameter_value(double& value, const ParameterRanges& ranges)
-    {
-        if (value < ranges.min)
-            value = ranges.min;
-        else if (value > ranges.max)
-            value = ranges.max;
-    }
-
-    static double abs_d(const double& value)
-    {
-        return (value < 0.0) ? -value : value;
-    }
-
 protected:
     PluginType m_type;
     short m_id;
@@ -1174,6 +1189,20 @@ protected:
     } post_events;
 
     ExternalMidiNote ext_midi_notes[MAX_MIDI_EVENTS];
+
+    // utilities
+    static void fix_parameter_value(double& value, const ParameterRanges& ranges)
+    {
+        if (value < ranges.min)
+            value = ranges.min;
+        else if (value > ranges.max)
+            value = ranges.max;
+    }
+
+    static double abs_d(const double& value)
+    {
+        return (value < 0.0) ? -value : value;
+    }
 };
 
 #endif // CARLA_PLUGIN_H

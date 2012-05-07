@@ -26,8 +26,6 @@ short add_plugin_vst(const char* filename, const char* label);
 short add_plugin_sf2(const char* filename, const char* label);
 short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename, const char* label, void* extra_stuff);
 
-void lv2_load_all();
-
 CarlaCheckThread carla_check_thread;
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -36,8 +34,6 @@ CarlaCheckThread carla_check_thread;
 bool carla_init(const char* client_name)
 {
     qDebug("carla_init(%s)", client_name);
-
-    carla_options.initiated = true;
 
     bool started = carla_jack_init(client_name);
 
@@ -102,6 +98,14 @@ bool carla_close()
 
     if (carla_options.bridge_lv2x11)
         free((void*)carla_options.bridge_lv2x11);
+
+    carla_options.bridge_unix32  = nullptr;
+    carla_options.bridge_unix64  = nullptr;
+    carla_options.bridge_win32   = nullptr;
+    carla_options.bridge_win64   = nullptr;
+    carla_options.bridge_lv2gtk2 = nullptr;
+    carla_options.bridge_lv2qt4  = nullptr;
+    carla_options.bridge_lv2x11  = nullptr;
 
     return closed;
 }
@@ -1128,7 +1132,6 @@ void set_option(OptionsType option, int value, const char* value_str)
         break;
     case OPTION_PATH_LV2:
         setenv("LV2_PATH", value_str, 1);
-        lv2_load_all();
         break;
     case OPTION_PATH_VST:
         setenv("VST_PATH", value_str, 1);

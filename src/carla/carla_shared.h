@@ -46,6 +46,19 @@ extern volatile double aouts_peak[MAX_PLUGINS*2];
 
 #ifndef BUILD_BRIDGE
 // Global options
+struct carla_options_t {
+    bool global_jack_client;
+    bool use_dssi_chunks;
+    bool prefer_ui_bridges;
+    const char* bridge_unix32;
+    const char* bridge_unix64;
+    const char* bridge_win32;
+    const char* bridge_win64;
+    const char* bridge_lv2gtk2;
+    const char* bridge_lv2qt4;
+    const char* bridge_lv2x11;
+};
+
 extern carla_options_t carla_options;
 #endif
 
