@@ -66,6 +66,133 @@ bool VstPluginCanDo(AEffect* effect, const char* feature)
     return (effect->dispatcher(effect, effCanDo, 0, 0, (void*)feature, 0.0f) == 1);
 }
 
+const char* VstOpcode2str(int32_t opcode)
+{
+    switch (opcode)
+    {
+    case audioMasterAutomate:
+        return "audioMasterAutomate";
+    case audioMasterVersion:
+        return "audioMasterVersion";
+    case audioMasterCurrentId:
+        return "audioMasterCurrentId";
+    case audioMasterIdle:
+        return "audioMasterIdle";
+#if ! VST_FORCE_DEPRECATED
+    case audioMasterPinConnected:
+        return "audioMasterPinConnected";
+    case audioMasterWantMidi:
+        return "audioMasterWantMidi";
+#endif
+    case audioMasterGetTime:
+        return "audioMasterGetTime";
+    case audioMasterProcessEvents:
+        return "audioMasterProcessEvents";
+#if ! VST_FORCE_DEPRECATED
+    case audioMasterSetTime:
+        return "audioMasterSetTime";
+    case audioMasterTempoAt:
+        return "audioMasterTempoAt";
+    case audioMasterGetNumAutomatableParameters:
+        return "audioMasterGetNumAutomatableParameters";
+    case audioMasterGetParameterQuantization:
+        return "audioMasterGetParameterQuantization";
+#endif
+    case audioMasterIOChanged:
+        return "audioMasterIOChanged";
+#if ! VST_FORCE_DEPRECATED
+    case audioMasterNeedIdle:
+        return "audioMasterNeedIdle";
+#endif
+    case audioMasterSizeWindow:
+        return "audioMasterSizeWindow";
+    case audioMasterGetSampleRate:
+        return "audioMasterGetSampleRate";
+    case audioMasterGetBlockSize:
+        return "audioMasterGetBlockSize";
+    case audioMasterGetInputLatency:
+        return "audioMasterGetInputLatency";
+    case audioMasterGetOutputLatency:
+        return "audioMasterGetOutputLatency";
+#if ! VST_FORCE_DEPRECATED
+    case audioMasterGetPreviousPlug:
+        return "audioMasterGetPreviousPlug";
+    case audioMasterGetNextPlug:
+        return "audioMasterGetNextPlug";
+    case audioMasterWillReplaceOrAccumulate:
+        return "audioMasterWillReplaceOrAccumulate";
+#endif
+    case audioMasterGetCurrentProcessLevel:
+        return "audioMasterGetCurrentProcessLevel";
+    case audioMasterGetAutomationState:
+        return "audioMasterGetAutomationState";
+    case audioMasterOfflineStart:
+        return "audioMasterOfflineStart";
+    case audioMasterOfflineRead:
+        return "audioMasterOfflineRead";
+    case audioMasterOfflineWrite:
+        return "audioMasterOfflineWrite";
+    case audioMasterOfflineGetCurrentPass:
+        return "audioMasterOfflineGetCurrentPass";
+    case audioMasterOfflineGetCurrentMetaPass:
+        return "audioMasterOfflineGetCurrentMetaPass";
+#if ! VST_FORCE_DEPRECATED
+    case audioMasterSetOutputSampleRate:
+        return "audioMasterSetOutputSampleRate";
+#ifdef VESTIGE_HEADER
+    case audioMasterGetSpeakerArrangement:
+#else
+    case audioMasterGetOutputSpeakerArrangement:
+#endif
+        return "audioMasterGetOutputSpeakerArrangement";
+#endif
+    case audioMasterGetVendorString:
+        return "audioMasterGetVendorString";
+    case audioMasterGetProductString:
+        return "audioMasterGetProductString";
+    case audioMasterGetVendorVersion:
+        return "audioMasterGetVendorVersion";
+    case audioMasterVendorSpecific:
+        return "audioMasterVendorSpecific";
+#if ! VST_FORCE_DEPRECATED
+    case audioMasterSetIcon:
+        return "audioMasterSetIcon";
+#endif
+    case audioMasterCanDo:
+        return "audioMasterCanDo";
+    case audioMasterGetLanguage:
+        return "audioMasterGetLanguage";
+#if ! VST_FORCE_DEPRECATED
+    case audioMasterOpenWindow:
+        return "audioMasterOpenWindow";
+    case audioMasterCloseWindow:
+        return "audioMasterCloseWindow";
+#endif
+    case audioMasterGetDirectory:
+        return "audioMasterGetDirectory";
+    case audioMasterUpdateDisplay:
+        return "audioMasterUpdateDisplay";
+    case audioMasterBeginEdit:
+        return "audioMasterBeginEdit";
+    case audioMasterEndEdit:
+        return "audioMasterEndEdit";
+    case audioMasterOpenFileSelector:
+        return "audioMasterOpenFileSelector";
+    case audioMasterCloseFileSelector:
+        return "audioMasterCloseFileSelector";
+#if ! VST_FORCE_DEPRECATED
+    case audioMasterEditFile:
+        return "audioMasterEditFile";
+    case audioMasterGetChunkFile:
+        return "audioMasterGetChunkFile";
+    case audioMasterGetInputSpeakerArrangement:
+        return "audioMasterGetInputSpeakerArrangement";
+#endif
+    default:
+        return "unknown";
+    }
+}
+
 #if 1
 short add_plugin_vst(const char* filename, const char* label);
 
@@ -1001,6 +1128,10 @@ public:
                 effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
             }
 
+            // FIXME - make this a global option
+            // don't process if not needed
+            //if ((effect->flags & effFlagsNoSoundInStop) > 0 && ains_peak_tmp[0] == 0 && ains_peak_tmp[1] == 0 && midi_event_count == 0 && ! midi.port_mout)
+            //{
             if (effect->flags & effFlagsCanReplacing)
             {
                 effect->processReplacing(effect, ains_buffer, aouts_buffer, nframes);
@@ -1010,9 +1141,11 @@ public:
                 for (i=0; i < aout.count; i++)
                     memset(aouts_buffer[i], 0, sizeof(jack_audio_sample_t)*nframes);
 
-                // FIXME - missing macro check (??)
+#if ! VST_FORCE_DEPRECATED
                 effect->process(effect, ains_buffer, aouts_buffer, nframes);
+#endif
             }
+            //}
         }
         else
         {
@@ -1230,6 +1363,8 @@ public:
 
     static intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
     {
+        qDebug("VstHostCallback() - code: %s, index: %i, value: " P_INTPTR ", opt: %f", VstOpcode2str(opcode), index, value, opt);
+
         // Check if 'user' points to this plugin
         VstPlugin* self = nullptr;
 
@@ -1258,6 +1393,7 @@ public:
                 effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
             break;
 
+#if ! VST_FORCE_DEPRECATED
         case audioMasterWantMidi: // TODO
             // Deprecated in VST SDK 2.4
 #if 0
@@ -1292,6 +1428,7 @@ public:
             }
 #endif
             break;
+#endif
 
         case audioMasterGetTime:
         {
@@ -1357,6 +1494,15 @@ public:
 
             break;
 
+#if ! VST_FORCE_DEPRECATED
+#if 0
+        case audioMasterSetTime:
+            // Deprecated in VST SDK 2.4
+            break;
+#endif
+#endif
+
+#if ! VST_FORCE_DEPRECATED
         case audioMasterTempoAt:
             // Deprecated in VST SDK 2.4
             jack_position_t* jack_pos;
@@ -1370,6 +1516,13 @@ public:
         case audioMasterGetNumAutomatableParameters:
             // Deprecated in VST SDK 2.4
             return MAX_PARAMETERS;
+
+#if 0
+        case audioMasterGetParameterQuantization:
+            // Deprecated in VST SDK 2.4
+            break;
+#endif
+#endif
 
 #if 0
         case audioMasterIOChanged:
@@ -1403,10 +1556,9 @@ public:
             }
             break;
 
-        case audioMasterNeedIdle: // TODO
+        case audioMasterNeedIdle:
             // Deprecated in VST SDK 2.4
-            effect->dispatcher(effect, 53 /* effIdle */, 0, 0, nullptr, 0.0f);
-            return 1;
+            break;
 #endif
 
         case audioMasterSizeWindow:
@@ -1426,6 +1578,50 @@ public:
         case audioMasterGetBlockSize:
             return get_buffer_size();
 
+#if 0
+        case audioMasterGetInputLatency:
+            return 0;
+
+        case audioMasterGetOutputLatency:
+            return 0;
+
+        case audioMasterGetPreviousPlug:
+            // Deprecated in VST SDK 2.4
+            break;
+
+        case audioMasterGetNextPlug:
+            // Deprecated in VST SDK 2.4
+            break;
+
+        case audioMasterWillReplaceOrAccumulate:
+            // Deprecated in VST SDK 2.4
+            break;
+
+        case audioMasterGetCurrentProcessLevel:
+            // TODO
+            return 0;
+
+        case audioMasterGetAutomationState:
+            // TODO
+            return 0;
+
+        case audioMasterOfflineStart:
+        case audioMasterOfflineRead:
+        case audioMasterOfflineWrite:
+        case audioMasterOfflineGetCurrentPass:
+        case audioMasterOfflineGetCurrentMetaPass:
+            // TODO
+            break;
+
+        case audioMasterSetOutputSampleRate:
+            // Deprecated in VST SDK 2.4
+            break;
+
+        case audioMasterGetOutputSpeakerArrangement:
+            // Deprecated in VST SDK 2.4
+            break;
+#endif
+
         case audioMasterGetVendorString:
             strcpy((char*)ptr, "falkTX");
             break;
@@ -1436,6 +1632,15 @@ public:
 
         case audioMasterGetVendorVersion:
             return 0x05; // 0.5
+
+        case audioMasterVendorSpecific:
+            break;
+
+#if ! VST_FORCE_DEPRECATED
+        case audioMasterSetIcon:
+            // Deprecated in VST SDK 2.4
+            break;
+#endif
 
         case audioMasterCanDo:
 #if DEBUG
@@ -1484,6 +1689,17 @@ public:
         case audioMasterGetLanguage:
             return kVstLangEnglish;
 
+#if 0
+        case audioMasterOpenWindow:
+        case audioMasterCloseWindow:
+            // Deprecated in VST SDK 2.4
+            break;
+
+        case audioMasterGetDirectory:
+            // TODO
+            break;
+#endif
+
         case audioMasterUpdateDisplay:
             if (self)
             {
@@ -1509,8 +1725,32 @@ public:
             }
             break;
 
+#if 0
+        case audioMasterBeginEdit:
+        case audioMasterEndEdit:
+            // TODO
+            break;
+
+        case audioMasterOpenFileSelector:
+        case audioMasterCloseFileSelector:
+            // TODO
+            break;
+
+        case audioMasterEditFile:
+            // Deprecated in VST SDK 2.4
+            break;
+
+        case audioMasterGetChunkFile:
+            // Deprecated in VST SDK 2.4
+            break;
+
+        case audioMasterGetInputSpeakerArrangement:
+            // Deprecated in VST SDK 2.4
+            break;
+#endif
+
         default:
-            qDebug("VstHostCallback() - code: %02i, index: %02i, value: " P_INTPTR ", opt: %03f", opcode, index, value, opt);
+            //qDebug("VstHostCallback() - code: %s, index: %i, value: " P_INTPTR ", opt: %f", VstOpcode2str(opcode), index, value, opt);
             break;
         }
 

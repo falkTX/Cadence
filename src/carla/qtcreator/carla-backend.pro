@@ -35,12 +35,12 @@ HEADERS = \
     ../../carla-includes/carla_includes.h
 
 INCLUDEPATH = .. \
-    ../../carla-includes \
-    ../../carla-includes/vestige
+    ../../carla-includes
+#    ../../carla-includes/vestige
 
 TARGET  = carla_backend
 
-DEFINES = VESTIGE_HEADER
+#DEFINES = VESTIGE_HEADER
 
 LIBS    = ../../carla-lilv/carla_lilv.a
 
