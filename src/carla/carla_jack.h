@@ -28,6 +28,6 @@ class CarlaPlugin;
 bool carla_jack_init(const char* client_name);
 bool carla_jack_close();
 bool carla_jack_register_plugin(CarlaPlugin* plugin, jack_client_t** client);
-int  carla_jack_max_client_name_size();
+bool carla_jack_transport_query(jack_position_t** pos);
 
 #endif // CARLA_JACK_H

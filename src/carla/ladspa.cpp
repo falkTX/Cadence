@@ -20,19 +20,6 @@
 #include "ladspa/ladspa.h"
 #include "ladspa_rdf.h"
 
-#if 0
-short add_plugin_dssi(const char* filename, const char* label, const void* extra_stuff);
-
-int main()
-{
-    short id = add_plugin_dssi("/usr/lib/dssi/calf.so", "eq5", nullptr);
-    set_active(id, true);
-    carla_sleep(3);
-    remove_plugin(id);
-    return 0;
-}
-#endif
-
 bool is_rdf_port_good(int Type1, int Type2)
 {
     if (LADSPA_IS_PORT_INPUT(Type1) && ! LADSPA_IS_PORT_INPUT(Type2))

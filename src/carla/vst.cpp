@@ -18,7 +18,10 @@
 #include "carla_plugin.h"
 
 #include <cstdio>
+
+#ifndef __WINE__
 #include <QtGui/QDialog>
+#endif
 
 #define VST_FORCE_DEPRECATED 0
 #include "aeffectx.h"
@@ -27,6 +30,7 @@
 #warning Using vestige header
 #define effFlagsProgramChunks (1 << 5)
 #define effGetParamLabel 6
+#define effGetParamDisplay 7
 #define effGetChunk 23
 #define effSetChunk 24
 #define effCanBeAutomated 26
@@ -62,6 +66,19 @@ bool VstPluginCanDo(AEffect* effect, const char* feature)
     return (effect->dispatcher(effect, effCanDo, 0, 0, (void*)feature, 0.0f) == 1);
 }
 
+#if 1
+short add_plugin_vst(const char* filename, const char* label);
+
+int main()
+{
+    short id = add_plugin_vst("/usr/lib/vst/PingPongPan.so", "eq5");
+    set_active(id, true);
+    carla_sleep(3);
+    remove_plugin(id);
+    return 0;
+}
+#endif
+
 class VstPlugin : public CarlaPlugin
 {
 public:
@@ -78,15 +95,22 @@ public:
         gui.width  = 0;
         gui.height = 0;
 
-        memset(midi_events, 0, sizeof(VstMidiEvent)*MAX_MIDI_EVENTS);
+        memset(midi_events, 0, sizeof(VstMidiEvent)*MAX_MIDI_EVENTS*2);
 
-        for (unsigned short i=0; i<MAX_MIDI_EVENTS; i++)
+        for (unsigned short i=0; i < MAX_MIDI_EVENTS*2; i++)
             events.data[i] = (VstEvent*)&midi_events[i];
+
+        // make plugin valid
+        unique1 = unique2 = random();
     }
 
-    virtual ~VstPlugin()
+    ~VstPlugin()
     {
         qDebug("VstPlugin::~VstPlugin()");
+
+        // plugin is no longer valid
+        unique1 = 0;
+        unique2 = 1;
 
         if (effect)
         {
@@ -104,7 +128,7 @@ public:
         }
     }
 
-    virtual PluginCategory category()
+    PluginCategory category()
     {
         intptr_t VstCategory = effect->dispatcher(effect, effGetPlugCategory, 0, 0, nullptr, 0.0f);
 
@@ -130,61 +154,68 @@ public:
         return get_category_from_name(m_name);
     }
 
-    virtual long unique_id()
+    long unique_id()
     {
         return effect->uniqueID;
     }
 
-    virtual int32_t chunk_data(void** data_ptr)
+    int32_t chunk_data(void** data_ptr)
     {
         return effect->dispatcher(effect, effGetChunk, 0 /* bank */, 0, data_ptr, 0.0f);
     }
 
-    virtual double get_parameter_value(uint32_t param_id)
+    double get_parameter_value(uint32_t param_id)
     {
         return effect->getParameter(effect, param_id);
     }
 
-    virtual void get_label(char* buf_str)
+    void get_label(char* buf_str)
     {
         effect->dispatcher(effect, effGetProductString, 0, 0, buf_str, 0.0f);
     }
 
-    virtual void get_maker(char* buf_str)
+    void get_maker(char* buf_str)
     {
         effect->dispatcher(effect, effGetVendorString, 0, 0, buf_str, 0.0f);
     }
 
-    virtual void get_copyright(char* buf_str)
+    void get_copyright(char* buf_str)
     {
         effect->dispatcher(effect, effGetVendorString, 0, 0, buf_str, 0.0f);
     }
 
-    virtual void get_real_name(char* buf_str)
+    void get_real_name(char* buf_str)
     {
         effect->dispatcher(effect, effGetEffectName, 0, 0, buf_str, 0.0f);
     }
 
-    virtual void get_parameter_name(uint32_t param_id, char* buf_str)
+    void get_parameter_name(uint32_t param_id, char* buf_str)
     {
         effect->dispatcher(effect, effGetParamName, param_id, 0, buf_str, 0.0f);
     }
 
-    virtual void get_parameter_label(uint32_t param_id, char* buf_str)
+    void get_parameter_unit(uint32_t param_id, char* buf_str)
     {
         effect->dispatcher(effect, effGetParamLabel, param_id, 0, buf_str, 0.0f);
     }
 
-    virtual void get_gui_info(GuiInfo* info)
+    void get_parameter_text(uint32_t param_id, char* buf_str)
     {
+        effect->dispatcher(effect, effGetParamDisplay, param_id, 0, buf_str, 0.0f);
+    }
+
+    void get_gui_info(GuiInfo* info)
+    {
+#ifndef __WINE__
         if (effect->flags & effFlagsHasEditor)
             info->type = GUI_INTERNAL_QT4;
         else
+#endif
             info->type = GUI_NONE;
         info->resizable = false;
     }
 
-    virtual void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
+    void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
         fix_parameter_value(value, param.ranges[param_id]);
         effect->setParameter(effect, param_id, value);
@@ -193,26 +224,46 @@ public:
 
     void set_chunk_data(const char* string_data)
     {
-        QByteArray chunk = QByteArray::fromBase64(string_data);
+        static QByteArray chunk;
+        chunk = QByteArray::fromBase64(string_data);
         effect->dispatcher(effect, effSetChunk, 0 /* bank */, chunk.size(), chunk.data(), 0.0f);
     }
 
-    virtual void set_program(int32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
+    void set_program(int32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
     {
-        // TODO - go for id -1 so we don't block audio
+        // TODO - don't block when freewheeling
         if (index >= 0)
         {
-            if (block) carla_proc_lock();
+            // block plugin so we don't change programs during processReplacing()
+            short _id = m_id;
+
+            if (block)
+            {
+                carla_proc_lock();
+                m_id = -1;
+                carla_proc_unlock();
+            }
+
             effect->dispatcher(effect, effSetProgram, 0, index, nullptr, 0.0f);
-            if (block) carla_proc_unlock();
+
+            if (block)
+            {
+                carla_proc_lock();
+                m_id = _id;
+                carla_proc_unlock();
+            }
         }
 
         CarlaPlugin::set_program(index, gui_send, osc_send, callback_send, block);
     }
 
-    virtual void set_gui_data(int data, void* ptr)
+    void set_gui_data(int data, void* ptr)
     {
+#ifdef __WINE__
+        if (effect->dispatcher(effect, effEditOpen, 0, data, ptr, 0.0f) == 1)
+#else
         if (effect->dispatcher(effect, effEditOpen, 0, data, (void*)((QDialog*)ptr)->winId(), 0.0f) == 1)
+#endif
         {
 #ifndef ERect
             struct ERect {
@@ -237,7 +288,6 @@ public:
 
                 gui.width  = width;
                 gui.height = height;
-                ((QDialog*)ptr)->resize(width, height); // FIXME
             }
             else
                 qCritical("Failed to get Plugin Window size");
@@ -252,7 +302,7 @@ public:
         }
     }
 
-    virtual void show_gui(bool yesno)
+    void show_gui(bool yesno)
     {
         gui.visible = yesno;
 
@@ -260,7 +310,7 @@ public:
             callback_action(CALLBACK_RESIZE_GUI, m_id, gui.width, gui.height, 0.0);
     }
 
-    virtual void idle_gui()
+    void idle_gui()
     {
         //effect->dispatcher(effect, effIdle, 0, 0, nullptr, 0.0f);
 
@@ -269,9 +319,9 @@ public:
             effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
     }
 
-    virtual void reload()
+    void reload()
     {
-        qDebug("DssiPlugin::reload()");
+        qDebug("VstPlugin::reload() - start");
         short _id = m_id;
 
         // Safely disable plugin for reload
@@ -280,8 +330,7 @@ public:
         carla_proc_unlock();
 
         // Unregister previous jack ports if needed
-        if (_id >= 0)
-            remove_from_jack();
+        remove_from_jack(bool(_id >= 0));
 
         // Delete old data
         delete_buffers();
@@ -293,17 +342,23 @@ public:
         aouts  = effect->numOutputs;
         params = effect->numParams;
 
-        if (VstPluginCanDo(effect, "receiveVstEvents") || VstPluginCanDo(effect, "receiveVstMidiEvent") || effect->flags & effFlagsIsSynth)
+        if (VstPluginCanDo(effect, "receiveVstEvents") || VstPluginCanDo(effect, "receiveVstMidiEvent") || (effect->flags & effFlagsIsSynth) > 0)
             mins = 1;
 
         if (VstPluginCanDo(effect, "sendVstEvents") || VstPluginCanDo(effect, "sendVstMidiEvent"))
             mouts = 1;
 
         if (ains > 0)
-            ain.ports = new jack_port_t*[ains];
+        {
+            ain.ports    = new jack_port_t*[ains];
+            ain.rindexes = new uint32_t[ains];
+        }
 
         if (aouts > 0)
-            aout.ports = new jack_port_t*[aouts];
+        {
+            aout.ports    = new jack_port_t*[aouts];
+            aout.rindexes = new uint32_t[aouts];
+        }
 
         if (params > 0)
         {
@@ -311,9 +366,9 @@ public:
             param.ranges  = new ParameterRanges[params];
         }
 
-        const int port_name_size = jack_port_name_size();
+        const int port_name_size = jack_port_name_size() - 1;
         char port_name[port_name_size];
-        bool needs_cin = (aouts > 0 || params > 0); // TODO - try to apply this <- to others
+        bool needs_cin = (aouts > 0 || params > 0);
 
         for (j=0; j<ains; j++)
         {
@@ -324,7 +379,8 @@ public:
 #endif
                 sprintf(port_name, "input_%02i", j+1);
 
-            ain.ports[j] = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+            ain.ports[j]    = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+            ain.rindexes[j] = j;
         }
 
         for (j=0; j<aouts; j++)
@@ -336,11 +392,13 @@ public:
 #endif
                 sprintf(port_name, "output_%02i", j+1);
 
-            aout.ports[j] = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+            aout.ports[j]    = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+            aout.rindexes[j] = j;
         }
 
         for (j=0; j<params; j++)
         {
+            param.data[j].type   = PARAMETER_INPUT;
             param.data[j].index  = j;
             param.data[j].rindex = j;
             param.data[j].hints  = 0;
@@ -365,23 +423,25 @@ public:
                     max = 1.0;
                 }
 
-                if (prop.flags & kVstParameterUsesIntStep)
+                if (prop.flags & kVstParameterIsSwitch)
+                {
+                    step = max - min;
+                    step_small = step;
+                    step_large = step;
+                    param.data[j].hints |= PARAMETER_IS_BOOLEAN;
+                }
+                else if (prop.flags & kVstParameterUsesIntStep)
                 {
                     step = prop.stepInteger;
                     step_small = prop.stepInteger;
                     step_large = prop.largeStepInteger;
+                    param.data[j].hints |= PARAMETER_IS_INTEGER;
                 }
                 else if (prop.flags & kVstParameterUsesFloatStep)
                 {
                     step = prop.stepFloat;
                     step_small = prop.smallStepFloat;
                     step_large = prop.largeStepFloat;
-                }
-                else if (prop.flags & kVstParameterIsSwitch)
-                {
-                    step = max - min;
-                    step_small = step;
-                    step_large = step;
                 }
                 else
                 {
@@ -390,6 +450,9 @@ public:
                     step_small = range/1000.0;
                     step_large = range/10.0;
                 }
+
+                if (prop.flags & kVstParameterCanRamp)
+                    param.data[j].hints |= PARAMETER_IS_LOGARITHMIC;
             }
             else
             {
@@ -405,6 +468,12 @@ public:
             else if (max < min)
                 min = max;
 
+            if (max - min == 0.0)
+            {
+                qWarning("Broken plugin parameter: max - min == 0");
+                max = min + 0.1;
+            }
+
             // no such thing as VST default parameters
             def = effect->getParameter(effect, j);
 
@@ -413,13 +482,6 @@ public:
             else if (def > max)
                 def = max;
 
-            if (max - min == 0.0)
-            {
-                qWarning("Broken plugin parameter -> max - min == 0");
-                max = min + 0.1;
-            }
-
-            param.data[j].type = PARAMETER_INPUT;
             param.ranges[j].min = min;
             param.ranges[j].max = max;
             param.ranges[j].def = def;
@@ -427,10 +489,10 @@ public:
             param.ranges[j].step_small = step_small;
             param.ranges[j].step_large = step_large;
 
-            // hints
             param.data[j].hints |= PARAMETER_IS_ENABLED;
+            param.data[j].hints |= PARAMETER_USES_CUSTOM_TEXT;
 
-            if (effect->dispatcher(effect, effCanBeAutomated, j, 0, nullptr, 0.0f) == 1)
+            if (effect->dispatcher(effect, effCanBeAutomated, j, 0, nullptr, 0.0f) != 0)
                 param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
         }
 
@@ -470,11 +532,11 @@ public:
             if (carla_options.global_jack_client)
             {
                 strcpy(port_name, m_name);
-                strcat(port_name, ":midi-in");
+                strcat(port_name, ":midi-out");
             }
             else
 #endif
-                strcpy(port_name, "midi-in");
+                strcpy(port_name, "midi-out");
 
             midi.port_mout = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
         }
@@ -513,9 +575,11 @@ public:
         if (carla_options.global_jack_client == false)
 #endif
             jack_activate(jack_client);
+
+        qDebug("VstPlugin::reload() - end");
     }
 
-    virtual void reload_programs(bool init)
+    void reload_programs(bool init)
     {
         qDebug("VstPlugin::reload_programs(%s)", bool2str(init));
         uint32_t i, old_count = prog.count;
@@ -551,10 +615,15 @@ public:
             prog.names[i] = strdup(buf_str);
         }
 
+#ifndef BUILD_BRIDGE
         // Update OSC Names
-        // etc etc
+        osc_global_send_set_program_count(m_id, prog.count);
+
+        for (i=0; i < prog.count; i++)
+            osc_global_send_set_program_name(m_id, i, prog.names[i]);
 
         callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
+#endif
 
         if (init)
         {
@@ -594,7 +663,9 @@ public:
             }
 
             if (program_changed)
+            {
                 set_program(prog.current, true, true, true, true);
+            }
             else
             {
                 // Program was changed during update, re-set it
@@ -604,7 +675,7 @@ public:
         }
     }
 
-    virtual void process(jack_nframes_t nframes)
+    void process(jack_nframes_t nframes)
     {
         uint32_t i, k;
         unsigned short plugin_id = m_id;
@@ -613,16 +684,20 @@ public:
         double ains_peak_tmp[2]  = { 0.0 };
         double aouts_peak_tmp[2] = { 0.0 };
 
-        jack_default_audio_sample_t* ains_buffer[ain.count];
-        jack_default_audio_sample_t* aouts_buffer[aout.count];
+        jack_audio_sample_t* ains_buffer[ain.count];
+        jack_audio_sample_t* aouts_buffer[aout.count];
         void* min_buffer  = nullptr;
         void* mout_buffer = nullptr;
 
+        // reset MIDI
+        events.numEvents = 0;
+        midi_events[0].type = 0;
+
         for (i=0; i < ain.count; i++)
-            ains_buffer[i] = (jack_default_audio_sample_t*)jack_port_get_buffer(ain.ports[i], nframes);
+            ains_buffer[i] = (jack_audio_sample_t*)jack_port_get_buffer(ain.ports[i], nframes);
 
         for (i=0; i < aout.count; i++)
-            aouts_buffer[i] = (jack_default_audio_sample_t*)jack_port_get_buffer(aout.ports[i], nframes);
+            aouts_buffer[i] = (jack_audio_sample_t*)jack_port_get_buffer(aout.ports[i], nframes);
 
         if (midi.port_min > 0)
             min_buffer = jack_port_get_buffer(midi.port_min, nframes);
@@ -635,14 +710,24 @@ public:
 
         if (ain.count > 0)
         {
-            short j2 = (ain.count == 1) ? 0 : 1;
-
-            for (k=0; k<nframes; k++)
+            if (ain.count == 1)
             {
-                if (abs_d(ains_buffer[0][k]) > ains_peak_tmp[0])
-                    ains_peak_tmp[0] = abs_d(ains_buffer[0][k]);
-                if (abs_d(ains_buffer[j2][k]) > ains_peak_tmp[1])
-                    ains_peak_tmp[1] = abs_d(ains_buffer[j2][k]);
+                for (k=0; k < nframes; k++)
+                {
+                    if (abs_d(ains_buffer[0][k]) > ains_peak_tmp[0])
+                        ains_peak_tmp[0] = abs_d(ains_buffer[0][k]);
+                }
+            }
+            else if (ain.count >= 1)
+            {
+                for (k=0; k < nframes; k++)
+                {
+                    if (abs_d(ains_buffer[0][k]) > ains_peak_tmp[0])
+                        ains_peak_tmp[0] = abs_d(ains_buffer[0][k]);
+
+                    if (abs_d(ains_buffer[1][k]) > ains_peak_tmp[1])
+                        ains_peak_tmp[1] = abs_d(ains_buffer[1][k]);
+                }
             }
         }
 
@@ -663,8 +748,8 @@ public:
                 if (jack_midi_event_get(&pin_event, pin_buffer, i) != 0)
                     break;
 
-                jack_midi_data_t status = pin_event.buffer[0];
-                unsigned char channel   = status & 0x0F;
+                jack_midi_data_t status  = pin_event.buffer[0];
+                jack_midi_data_t channel = status & 0x0F;
 
                 // Control change
                 if (MIDI_IS_STATUS_CONTROL_CHANGE(status))
@@ -675,7 +760,7 @@ public:
                     double value;
 
                     // Control GUI stuff (channel 0 only)
-                    if (channel == 0)
+                    if (channel == cin_channel)
                     {
                         if (MIDI_IS_CONTROL_BREATH_CONTROLLER(control) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
@@ -728,7 +813,8 @@ public:
                                 effect->dispatcher(effect, effStopProcess, 0, 0, nullptr, 0.0f);
                                 effect->dispatcher(effect, effMainsChanged, 0, 0, nullptr, 0.0f);
 
-                                m_active_before = false;
+                                effect->dispatcher(effect, effMainsChanged, 0, 1, nullptr, 0.0f);
+                                effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
                             }
                             continue;
                         }
@@ -743,9 +829,20 @@ public:
                     // Control plugin parameters
                     for (k=0; k < param.count; k++)
                     {
-                        if (param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0 && param.data[k].midi_channel == channel && param.data[k].midi_cc == control)
+                        if (param.data[k].midi_channel == channel && param.data[k].midi_cc == control && param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0)
                         {
-                            value = (double(c_value) / 127 * (param.ranges[k].max - param.ranges[k].min)) + param.ranges[k].min;
+                            if (param.data[k].hints & PARAMETER_IS_BOOLEAN)
+                            {
+                                value = c_value <= 63 ? param.ranges[k].min : param.ranges[k].max;
+                            }
+                            else
+                            {
+                                value = (double(c_value) / 127 * (param.ranges[k].max - param.ranges[k].min)) + param.ranges[k].min;
+
+                                if (param.data[k].hints & PARAMETER_IS_INTEGER)
+                                    value = rint(value);
+                            }
+
                             set_parameter_value(k, value, false, false, false);
                             postpone_event(PostEventParameterChange, k, value);
                         }
@@ -879,11 +976,15 @@ public:
             }
         } // End of MIDI Input (JACK)
 
+        CARLA_PROCESS_CONTINUE_CHECK;
+
+        // --------------------------------------------------------------------------------------------------------
         // VST Events
+
         if (midi_event_count > 0)
         {
             events.numEvents = midi_event_count;
-            events.reserved = 0;
+            events.reserved  = 0;
             effect->dispatcher(effect, effProcessEvents, 0, 0, &events, 0.0f);
         }
 
@@ -907,9 +1008,9 @@ public:
             else
             {
                 for (i=0; i < aout.count; i++)
-                    memset(aouts_buffer[i], 0, sizeof(jack_default_audio_sample_t)*nframes);
+                    memset(aouts_buffer[i], 0, sizeof(jack_audio_sample_t)*nframes);
 
-                // FIXME - missing macro check
+                // FIXME - missing macro check (??)
                 effect->process(effect, ains_buffer, aouts_buffer, nframes);
             }
         }
@@ -929,31 +1030,38 @@ public:
 
         if (m_active)
         {
+            bool do_drywet  = (m_hints & PLUGIN_CAN_DRYWET) > 0 && x_drywet != 1.0;
+            bool do_volume  = (m_hints & PLUGIN_CAN_VOLUME) > 0 && x_vol != 1.0;
+            bool do_balance = (m_hints & PLUGIN_CAN_BALANCE) > 0 && (x_bal_left != -1.0 || x_bal_right != 1.0);
+
             double bal_rangeL, bal_rangeR;
-            jack_default_audio_sample_t old_bal_left[nframes];
+            jack_audio_sample_t old_bal_left[do_balance ? nframes : 0];
 
             for (i=0; i < aout.count; i++)
             {
                 // Dry/Wet and Volume
-                for (k=0; k<nframes; k++)
+                if (do_drywet || do_volume)
                 {
-                    if ((m_hints & PLUGIN_CAN_DRYWET) > 0 && x_drywet != 1.0)
+                    for (k=0; k<nframes; k++)
                     {
-                        if (aout.count == 1)
-                            aouts_buffer[i][k] = (aouts_buffer[i][k]*x_drywet)+(ains_buffer[0][k]*(1.0-x_drywet));
-                        else
-                            aouts_buffer[i][k] = (aouts_buffer[i][k]*x_drywet)+(ains_buffer[i][k]*(1.0-x_drywet));
-                    }
+                        if (do_drywet)
+                        {
+                            if (aout.count == 1)
+                                aouts_buffer[i][k] = (aouts_buffer[i][k]*x_drywet)+(ains_buffer[0][k]*(1.0-x_drywet));
+                            else
+                                aouts_buffer[i][k] = (aouts_buffer[i][k]*x_drywet)+(ains_buffer[i][k]*(1.0-x_drywet));
+                        }
 
-                    if (m_hints & PLUGIN_CAN_VOLUME)
-                        aouts_buffer[i][k] *= x_vol;
+                        if (do_volume)
+                            aouts_buffer[i][k] *= x_vol;
+                    }
                 }
 
                 // Balance
-                if (m_hints & PLUGIN_CAN_BALANCE)
+                if (do_balance)
                 {
                     if (i%2 == 0)
-                        memcpy(&old_bal_left, aouts_buffer[i], sizeof(jack_default_audio_sample_t)*nframes);
+                        memcpy(&old_bal_left, aouts_buffer[i], sizeof(jack_audio_sample_t)*nframes);
 
                     bal_rangeL = (x_bal_left+1.0)/2;
                     bal_rangeR = (x_bal_right+1.0)/2;
@@ -976,13 +1084,10 @@ public:
                 }
 
                 // Output VU
-                if (i < 2)
+                for (k=0; k < nframes && i < 2; k++)
                 {
-                    for (k=0; k<nframes; k++)
-                    {
-                        if (abs_d(aouts_buffer[i][k]) > aouts_peak_tmp[i])
-                            aouts_peak_tmp[i] = abs_d(aouts_buffer[i][k]);
-                    }
+                    if (abs_d(aouts_buffer[i][k]) > aouts_peak_tmp[i])
+                        aouts_peak_tmp[i] = abs_d(aouts_buffer[i][k]);
                 }
             }
         }
@@ -990,7 +1095,7 @@ public:
         {
             // disable any output sound if not active
             for (i=0; i < aout.count; i++)
-                memset(aouts_buffer[i], 0.0f, sizeof(jack_default_audio_sample_t)*nframes);
+                memset(aouts_buffer[i], 0.0f, sizeof(jack_audio_sample_t)*nframes);
 
             aouts_peak_tmp[0] = 0.0;
             aouts_peak_tmp[1] = 0.0;
@@ -1001,12 +1106,24 @@ public:
 
         // --------------------------------------------------------------------------------------------------------
         // MIDI Output
+
         if (midi.port_mout)
         {
             jack_midi_clear_buffer(mout_buffer);
 
-            // TODO - read jack ringuffer events
-            //jack_midi_event_write(mout_buffer, midi_event->deltaFrames, (unsigned char*)midi_event->midiData, midi_event->byteSize);
+            for (i = events.numEvents; i < MAX_MIDI_EVENTS*2; i++)
+            {
+                if (midi_events[i].type != kVstMidiType)
+                    break;
+
+                // Fix bad note-off
+                if (MIDI_IS_STATUS_NOTE_ON(midi_events[i].midiData[0]) && midi_events[i].midiData[2] == 0)
+                {
+                    midi_events[i].midiData[0] -= 0x10;
+                }
+
+                jack_midi_event_write(mout_buffer, midi_events[i].deltaFrames, (const jack_midi_data_t*)midi_events[i].midiData, 3);
+            }
 
         } // End of MIDI Output
 
@@ -1023,7 +1140,7 @@ public:
         m_active_before = m_active;
     }
 
-    virtual void buffer_size_changed(jack_nframes_t new_buffer_size)
+    void buffer_size_changed(jack_nframes_t new_buffer_size)
     {
         if (m_active)
         {
@@ -1031,6 +1148,9 @@ public:
             effect->dispatcher(effect, effMainsChanged, 0, 0, nullptr, 0.0f);
         }
 
+#if ! VST_FORCE_DEPRECATED
+        effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, new_buffer_size, nullptr, get_sample_rate());
+#endif
         effect->dispatcher(effect, effSetBlockSize, 0, new_buffer_size, nullptr, 0.0f);
 
         if (m_active)
@@ -1077,7 +1197,7 @@ public:
 
                     // Init plugin
                     effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
-#if !VST_FORCE_DEPRECATED
+#if ! VST_FORCE_DEPRECATED
                     effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, get_buffer_size(), nullptr, get_sample_rate());
 #endif
                     effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, get_sample_rate());
@@ -1110,33 +1230,35 @@ public:
 
     static intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
     {
-        // TODO - completely verify all calls
+        // Check if 'user' points to this plugin
+        VstPlugin* self = nullptr;
 
-        qDebug("VstHostCallback() - code: %02i, index: %02i, value: " P_INTPTR ", opt: %03f", opcode, index, value, opt);
-
-        VstPlugin* plugin = (effect && effect->user) ? (VstPlugin*)effect->user : nullptr;
+        if (effect && effect->user)
+        {
+            self = (VstPlugin*)effect->user;
+            if (self->unique1 != self->unique2)
+                self = nullptr;
+        }
 
         switch (opcode)
         {
         case audioMasterAutomate:
-            if (plugin)
-                plugin->set_parameter_value(index, opt, false, true, true);
-            else if (effect)
-                effect->setParameter(effect, index, opt);
+            if (self)
+                self->set_parameter_value(index, opt, false, true, true);
             break;
 
         case audioMasterVersion:
             return kVstVersion;
 
-            //case audioMasterCurrentId:
-            //    return VstCurrentUniqueId;
+        case audioMasterCurrentId:
+            return 0; // TODO
 
         case audioMasterIdle:
             if (effect)
                 effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
-            return 1; // FIXME?
+            break;
 
-        case audioMasterWantMidi:
+        case audioMasterWantMidi: // TODO
             // Deprecated in VST SDK 2.4
 #if 0
             if (plugin && plugin->jack_client && plugin->min.count == 0)
@@ -1169,136 +1291,132 @@ public:
 #endif
             }
 #endif
-            return 1;
+            break;
 
         case audioMasterGetTime:
+        {
             static VstTimeInfo_R timeInfo;
             memset(&timeInfo, 0, sizeof(VstTimeInfo_R));
 
-            timeInfo.sampleRate = get_sample_rate();
-            timeInfo.tempo = 120.0;
+            jack_position_t* jack_pos;
+            bool playing = carla_jack_transport_query(&jack_pos);
 
-            if (plugin && plugin->jack_client)
+            timeInfo.flags |= kVstTransportChanged;
+
+            if (playing)
+                timeInfo.flags |= kVstTransportPlaying;
+
+            if (jack_pos->unique_1 == jack_pos->unique_2)
             {
-                static jack_position_t jack_pos;
-                static jack_transport_state_t jack_state;
+                timeInfo.samplePos  = jack_pos->frame;
+                timeInfo.sampleRate = jack_pos->frame_rate;
 
-                jack_state = jack_transport_query(plugin->jack_client, &jack_pos);
-
-                if (jack_state == JackTransportRolling)
-                    timeInfo.flags |= kVstTransportChanged|kVstTransportPlaying;
-                else
-                    timeInfo.flags |= kVstTransportChanged;
-
-                if (jack_pos.unique_1 == jack_pos.unique_2)
+                if (jack_pos->valid & JackPositionBBT)
                 {
-                    timeInfo.samplePos  = jack_pos.frame;
-                    timeInfo.sampleRate = jack_pos.frame_rate;
+                    // Tempo
+                    timeInfo.tempo  = jack_pos->beats_per_minute;
+                    timeInfo.flags |= kVstTempoValid;
 
-                    if (jack_pos.valid & JackPositionBBT)
-                    {
-                        // Tempo
-                        timeInfo.tempo = jack_pos.beats_per_minute;
-                        timeInfo.timeSigNumerator = jack_pos.beats_per_bar;
-                        timeInfo.timeSigDenominator = jack_pos.beat_type;
-                        timeInfo.flags |= kVstTempoValid|kVstTimeSigValid;
+                    // Time Signature
+                    timeInfo.timeSigNumerator   = jack_pos->beats_per_bar;
+                    timeInfo.timeSigDenominator = jack_pos->beat_type;
+                    timeInfo.flags |= kVstTimeSigValid;
 
-                        // Position
-                        double dPos = timeInfo.samplePos / timeInfo.sampleRate;
-                        timeInfo.nanoSeconds = dPos * 1000.0;
-                        timeInfo.flags |= kVstNanosValid;
-
-                        // Position
-                        timeInfo.barStartPos = 0;
-                        timeInfo.ppqPos = dPos * timeInfo.tempo / 60.0;
-                        timeInfo.flags |= kVstBarsValid|kVstPpqPosValid;
-                    }
+                    // Position
+                    double dPos = timeInfo.samplePos / timeInfo.sampleRate;
+                    timeInfo.barStartPos = 0;
+                    timeInfo.nanoSeconds = dPos * 1000.0;
+                    timeInfo.ppqPos = dPos * timeInfo.tempo / 60.0;
+                    timeInfo.flags |= kVstBarsValid|kVstNanosValid|kVstPpqPosValid;
                 }
-            }
-
-            return (intptr_t)&timeInfo;
-
-        case audioMasterProcessEvents:
-#if 0
-            if (plugin && plugin->mout.count > 0 && ptr)
-            {
-                VstEvents* events = (VstEvents*)ptr;
-
-                void* mout_buffer = jack_port_get_buffer(plugin->mout.ports[0], get_buffer_size());
-                jack_midi_clear_buffer(mout_buffer);
-
-                for (int32_t i=0; i < events->numEvents; i++)
-                {
-                    VstMidiEvent* midi_event = (VstMidiEvent*)events->events[i];
-
-                    if (midi_event && midi_event->type == kVstMidiType)
-                    {
-                        // TODO - send event over jack rinbuffer
-                    }
-                }
-                return 1;
             }
             else
-                qDebug("Some MIDI Out events were ignored");
-#endif
-            return 0;
+                timeInfo.sampleRate = get_sample_rate();
+
+            return (intptr_t)&timeInfo;
+        }
+
+        case audioMasterProcessEvents:
+            if (self && self->midi.port_mout && ptr)
+            {
+                int32_t i;
+                const VstEvents* const events = (VstEvents*)ptr;
+
+                for (i=0; i < events->numEvents && self->events.numEvents+i < MAX_MIDI_EVENTS*2; i++)
+                {
+                    const VstMidiEvent* const midi_event = (VstMidiEvent*)events->events[i];
+
+                    if (midi_event && midi_event->type == kVstMidiType)
+                        memcpy(&self->midi_events[self->events.numEvents+i], midi_event, sizeof(VstMidiEvent));
+                }
+
+                self->midi_events[self->events.numEvents+i].type = 0;
+            }
+            else
+                qDebug("VstHostCallback:audioMasterProcessEvents - Some MIDI Out events were ignored");
+
+            break;
 
         case audioMasterTempoAt:
             // Deprecated in VST SDK 2.4
-            if (plugin && plugin->jack_client)
-            {
-                static jack_position_t jack_pos;
-                jack_transport_query(plugin->jack_client, &jack_pos);
+            jack_position_t* jack_pos;
+            carla_jack_transport_query(&jack_pos);
 
-                if (jack_pos.valid & JackPositionBBT)
-                    return jack_pos.beats_per_minute;
-            }
-            return 120.0;
+            if (jack_pos->unique_1 == jack_pos->unique_2 && (jack_pos->valid & JackPositionBBT) > 0)
+                return jack_pos->beats_per_minute * 10000;
+
+            return 120.0 * 10000;
 
         case audioMasterGetNumAutomatableParameters:
             // Deprecated in VST SDK 2.4
-            return MAX_PARAMETERS; // FIXME - what exacly is this for?
+            return MAX_PARAMETERS;
 
+#if 0
         case audioMasterIOChanged:
-//            if (plugin && plugin->jack_client)
-//            {
-//                i = plugin->id;
-//                bool unlock = carla_proc_trylock();
-//                plugin->id = -1;
-//                if (unlock) carla_proc_unlock();
+            if (self && self->m_id >= 0)
+            {
+                short _id = self->m_id;
 
-//                if (plugin->active)
-//                {
-//                    plugin->effect->dispatcher(plugin->effect, 72 /* effStopProcess */, 0, 0, nullptr, 0.0f);
-//                    plugin->effect->dispatcher(plugin->effect, effMainsChanged, 0, 0, nullptr, 0.0f);
-//                }
+                carla_proc_lock();
+                plugin->m_id = -1;
+                carla_proc_unlock();
 
-//                plugin->reload();
+                if (self->m_active)
+                {
+                    self->effect->dispatcher(self->effect, effStopProcess, 0, 0, nullptr, 0.0f);
+                    self->effect->dispatcher(self->effect, effMainsChanged, 0, 0, nullptr, 0.0f);
+                }
 
-//                if (plugin->active)
-//                {
-//                    plugin->effect->dispatcher(plugin->effect, effMainsChanged, 0, 1, nullptr, 0.0f);
-//                    plugin->effect->dispatcher(plugin->effect, 71 /* effStartProcess */, 0, 0, nullptr, 0.0f);
-//                }
+                self->reload();
 
-//                plugin->id = i;
-//#ifndef BRIDGE_WINVST
-//                callback_action(CALLBACK_RELOAD_ALL, plugin->id, 0, 0, 0.0);
-//#endif
-//            }
-            return 1;
+                if (self->m_active)
+                {
+                    self->effect->dispatcher(self->effect, effMainsChanged, 0, 1, nullptr, 0.0f);
+                    self->effect->dispatcher(self->effect, effStartProcess, 0, 0, nullptr, 0.0f);
+                }
 
-        case audioMasterNeedIdle:
+                self->m_id = _id;
+
+#ifndef BUILD_BRIDGE
+                callback_action(CALLBACK_RELOAD_ALL, plugin->id, 0, 0, 0.0);
+#endif
+            }
+            break;
+
+        case audioMasterNeedIdle: // TODO
             // Deprecated in VST SDK 2.4
             effect->dispatcher(effect, 53 /* effIdle */, 0, 0, nullptr, 0.0f);
             return 1;
+#endif
 
         case audioMasterSizeWindow:
-            if (plugin)
+            if (self)
             {
-                plugin->gui.width  = index;
-                plugin->gui.height = value;
-                callback_action(CALLBACK_RESIZE_GUI, plugin->id(), index, value, 0.0);
+                self->gui.width  = index;
+                self->gui.height = value;
+#ifndef BUILD_BRIDGE
+                callback_action(CALLBACK_RESIZE_GUI, self->id(), index, value, 0.0);
+#endif
             }
             return 1;
 
@@ -1309,13 +1427,11 @@ public:
             return get_buffer_size();
 
         case audioMasterGetVendorString:
-            if (ptr)
-                strcpy((char*)ptr, "falkTX");
+            strcpy((char*)ptr, "falkTX");
             break;
 
         case audioMasterGetProductString:
-            if (ptr)
-                strcpy((char*)ptr, "Carla-Discovery");
+            strcpy((char*)ptr, "Carla");
             break;
 
         case audioMasterGetVendorVersion:
@@ -1326,68 +1442,75 @@ public:
             qDebug("VstHostCallback:audioMasterCanDo - %s", (char*)ptr);
 #endif
 
+            if (strcmp((char*)ptr, "supplyIdle") == 0)
+                return 1;
             if (strcmp((char*)ptr, "sendVstEvents") == 0)
                 return 1;
-            else if (strcmp((char*)ptr, "sendVstMidiEvent") == 0)
+            if (strcmp((char*)ptr, "sendVstMidiEvent") == 0)
                 return 1;
-            else if (strcmp((char*)ptr, "sendVstTimeInfo") == 0)
-                return 1;
-            else if (strcmp((char*)ptr, "receiveVstEvents") == 0)
-                return 1;
-            else if (strcmp((char*)ptr, "receiveVstMidiEvent") == 0)
-                return 1;
-#if !VST_FORCE_DEPRECATED
-            else if (strcmp((char*)ptr, "receiveVstTimeInfo") == 0)
+            if (strcmp((char*)ptr, "sendVstMidiEventFlagIsRealtime") == 0)
                 return -1;
-#endif
-            else if (strcmp((char*)ptr, "reportConnectionChanges") == 0)
+            if (strcmp((char*)ptr, "sendVstTimeInfo") == 0)
                 return 1;
-            else if (strcmp((char*)ptr, "acceptIOChanges") == 0)
+            if (strcmp((char*)ptr, "receiveVstEvents") == 0)
                 return 1;
-            else if (strcmp((char*)ptr, "sizeWindow") == 0)
+            if (strcmp((char*)ptr, "receiveVstMidiEvent") == 0)
                 return 1;
-            else if (strcmp((char*)ptr, "offline") == 0)
+            if (strcmp((char*)ptr, "receiveVstTimeInfo") == 0)
                 return -1;
-            else if (strcmp((char*)ptr, "openFileSelector") == 0)
+            if (strcmp((char*)ptr, "reportConnectionChanges") == 0)
                 return -1;
-            else if (strcmp((char*)ptr, "closeFileSelector") == 0)
-                return -1;
-            else if (strcmp((char*)ptr, "startStopProcess") == 0)
+            if (strcmp((char*)ptr, "acceptIOChanges") == 0)
                 return 1;
-            else if (strcmp((char*)ptr, "shellCategory") == 0)
+            if (strcmp((char*)ptr, "sizeWindow") == 0)
+                return 1;
+            if (strcmp((char*)ptr, "offline") == 0)
                 return -1;
-            else if (strcmp((char*)ptr, "sendVstMidiEventFlagIsRealtime") == 0)
+            if (strcmp((char*)ptr, "openFileSelector") == 0)
                 return -1;
-            else
-            {
-                qWarning("VstHostCallback:audioMasterCanDo - Got uninplemented feature request '%s'", (char*)ptr);
-                return 0;
-            }
+            if (strcmp((char*)ptr, "closeFileSelector") == 0)
+                return -1;
+            if (strcmp((char*)ptr, "startStopProcess") == 0)
+                return 1;
+            if (strcmp((char*)ptr, "supportShell") == 0)
+                return -1;
+            if (strcmp((char*)ptr, "shellCategory") == 0)
+                return -1;
+
+            // unimplemented
+            qWarning("VstHostCallback:audioMasterCanDo - Got uninplemented feature request '%s'", (char*)ptr);
+            return 0;
 
         case audioMasterGetLanguage:
             return kVstLangEnglish;
 
         case audioMasterUpdateDisplay:
-            if (plugin)
+            if (self)
             {
                 // Update current program name
-                if (plugin->prog.current >= 0 && plugin->prog.count > 0)
+                if (self->prog.count > 0 && self->prog.current >= 0)
                 {
                     char buf_str[STR_MAX] = { 0 };
+                    self->effect->dispatcher(self->effect, effGetProgramName, 0, 0, buf_str, 0.0f);
 
-                    if (plugin->effect->dispatcher(plugin->effect, effGetProgramNameIndexed, plugin->prog.current, 0, buf_str, 0.0f) != 1)
-                        plugin->effect->dispatcher(plugin->effect, effGetProgramName, 0, 0, buf_str, 0.0f);
+                    if (buf_str[0] != 0 && !(self->prog.names[self->prog.current] && strcmp(buf_str, self->prog.names[self->prog.current]) == 0))
+                    {
+                        if (self->prog.names[self->prog.current])
+                            free((void*)self->prog.names[self->prog.current]);
 
-                    if (plugin->prog.names[plugin->prog.current])
-                        free((void*)plugin->prog.names[plugin->prog.current]);
-
-                    plugin->prog.names[plugin->prog.current] = strdup(buf_str);
+                        self->prog.names[self->prog.current] = strdup(buf_str);
+                    }
                 }
-                callback_action(CALLBACK_UPDATE, plugin->id(), 0, 0, 0.0);
+
+#ifndef BUILD_BRIDGE
+                // Tell backend to update
+                callback_action(CALLBACK_UPDATE, self->id(), 0, 0, 0.0);
+#endif
             }
-            return 1;
+            break;
 
         default:
+            qDebug("VstHostCallback() - code: %02i, index: %02i, value: " P_INTPTR ", opt: %03f", opcode, index, value, opt);
             break;
         }
 
@@ -1395,19 +1518,21 @@ public:
     }
 
 private:
+    long unique1;
     AEffect* effect;
     struct {
         int32_t numEvents;
         intptr_t reserved;
-        VstEvent* data[MAX_MIDI_EVENTS];
+        VstEvent* data[MAX_MIDI_EVENTS*2];
     } events;
-    VstMidiEvent midi_events[MAX_MIDI_EVENTS];
+    VstMidiEvent midi_events[MAX_MIDI_EVENTS*2];
 
     struct {
         bool visible;
         int width;
         int height;
     } gui;
+    long unique2;
 };
 
 short add_plugin_vst(const char* filename, const char* label)

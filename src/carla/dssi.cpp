@@ -174,7 +174,8 @@ public:
 
     void set_chunk_data(const char* string_data)
     {
-        QByteArray chunk = QByteArray::fromBase64(string_data);
+        static QByteArray chunk;
+        chunk = QByteArray::fromBase64(string_data);
         descriptor->set_custom_data(handle, chunk.data(), chunk.size());
     }
 
@@ -183,8 +184,10 @@ public:
         if (! descriptor->select_program)
             return;
 
+        // TODO - don't block when freewheeling
         if (index >= 0)
         {
+            // block plugin so we don't change programs during run()
             short _id = m_id;
 
             if (block)
@@ -659,9 +662,9 @@ public:
 
         for (i=0; i < midiprog.count; i++)
             osc_global_send_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
-#endif
 
         callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
+#endif
 
         if (init)
         {
@@ -947,8 +950,8 @@ public:
                 if (jack_midi_event_get(&min_event, min_buffer, k) != 0)
                     break;
 
-                jack_midi_data_t status = min_event.buffer[0];
-                unsigned char channel   = status & 0x0F;
+                jack_midi_data_t status  = min_event.buffer[0];
+                jack_midi_data_t channel = status & 0x0F;
 
                 // Fix bad note-off
                 if (MIDI_IS_STATUS_NOTE_ON(status) && min_event.buffer[2] == 0)

@@ -409,6 +409,11 @@ public:
         *buf_str = 0;
     }
 
+    virtual void get_parameter_text(uint32_t /*param_id*/, char* buf_str)
+    {
+        *buf_str = 0;
+    }
+
     virtual void get_parameter_scalepoint_label(uint32_t /*param_id*/, uint32_t /*scalepoint_id*/, char* buf_str)
     {
         *buf_str = 0;
@@ -693,17 +698,6 @@ public:
     {
         prog.current = index;
 
-        // Change default value
-        for (uint32_t i=0; i < param.count; i++)
-        {
-            param.ranges[i].def = get_parameter_value(i);
-
-#ifndef BUILD_BRIDGE
-            if (osc_send)
-                osc_global_send_set_default_value(m_id, i, param.ranges[i].def);
-#endif
-        }
-
 #ifndef BUILD_BRIDGE
         if (osc_send)
         {
@@ -719,25 +713,22 @@ public:
         Q_UNUSED(osc_send);
         Q_UNUSED(callback_send);
 #endif
+
+        // Change default value
+        for (uint32_t i=0; i < param.count; i++)
+        {
+            param.ranges[i].def = get_parameter_value(i);
+
+#ifndef BUILD_BRIDGE
+            if (osc_send)
+                osc_global_send_set_default_value(m_id, i, param.ranges[i].def);
+#endif
+        }
     }
 
     virtual void set_midi_program(int32_t index, bool /*gui_send*/, bool osc_send, bool callback_send, bool /*block*/)
     {
         midiprog.current = index;
-
-        // Change default value
-        if (m_type != PLUGIN_SF2)
-        {
-            for (uint32_t i=0; i < param.count; i++)
-            {
-                param.ranges[i].def = get_parameter_value(i);
-
-#ifndef BUILD_BRIDGE
-                if (osc_send)
-                    osc_global_send_set_default_value(m_id, i, param.ranges[i].def);
-#endif
-            }
-        }
 
 #ifndef BUILD_BRIDGE
         if (osc_send)
@@ -754,6 +745,21 @@ public:
         Q_UNUSED(osc_send);
         Q_UNUSED(callback_send);
 #endif
+
+        // SF2 never change defaults
+        if (m_type != PLUGIN_SF2)
+            return;
+
+        // Change default value
+        for (uint32_t i=0; i < param.count; i++)
+        {
+            param.ranges[i].def = get_parameter_value(i);
+
+#ifndef BUILD_BRIDGE
+            if (osc_send)
+                osc_global_send_set_default_value(m_id, i, param.ranges[i].def);
+#endif
+        }
     }
 
     virtual void set_gui_data(int /*data*/, void* /*ptr*/)

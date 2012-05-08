@@ -609,6 +609,30 @@ uint32_t get_custom_data_count(unsigned short plugin_id)
     return 0;
 }
 
+const char* get_parameter_text(unsigned short plugin_id, uint32_t parameter_id)
+{
+    qDebug("get_parameter_text(%i, %i)", plugin_id, parameter_id);
+
+    static char buf_text[STR_MAX] = { 0 };
+    memset(buf_text, 0, sizeof(char)*STR_MAX);
+
+    for (unsigned short i=0; i<MAX_PLUGINS; i++)
+    {
+        CarlaPlugin* plugin = CarlaPlugins[i];
+        if (plugin && plugin->id() == plugin_id)
+        {
+            if (parameter_id < plugin->param_count())
+                plugin->get_parameter_text(parameter_id, buf_text);
+            else
+                qCritical("get_parameter_text(%i, %i) - parameter_id out of bounds", plugin_id, parameter_id);
+
+            break;
+        }
+    }
+
+    return buf_text;
+}
+
 const char* get_program_name(unsigned short plugin_id, uint32_t program_id)
 {
     qDebug("get_program_name(%i, %i)", plugin_id, program_id);

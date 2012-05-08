@@ -19,9 +19,11 @@
 #include "carla_plugin.h"
 
 // Global JACK stuff
-jack_client_t* carla_jack_client = nullptr;
-jack_nframes_t carla_buffer_size = 512;
-jack_nframes_t carla_sample_rate = 44100;
+static jack_client_t* carla_jack_client = nullptr;
+static jack_nframes_t carla_buffer_size = 512;
+static jack_nframes_t carla_sample_rate = 44100;
+static jack_position_t carla_jack_pos;
+static jack_transport_state_t carla_jack_state;
 
 const char* carla_client_name = nullptr;
 
@@ -87,6 +89,10 @@ static int carla_jack_srate_callback(jack_nframes_t new_sample_rate, void*)
 
 static int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
 {
+    // request time info once (arg only null on global client)
+    if (carla_jack_client && arg == nullptr)
+        carla_jack_state = jack_transport_query(carla_jack_client, &carla_jack_pos);
+
 #ifndef BUILD_BRIDGE
     if (carla_options.global_jack_client)
     {
@@ -102,8 +108,6 @@ static int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
         }
         return 0;
     }
-#else
-    Q_UNUSED(arg);
 #endif
 
 #ifdef BUILD_BRIDGE
@@ -237,7 +241,8 @@ bool carla_jack_register_plugin(CarlaPlugin* plugin, jack_client_t** client)
     return false;
 }
 
-int carla_jack_max_client_name_size()
+bool carla_jack_transport_query(jack_position_t** pos)
 {
-    return jack_client_name_size()-1;
+    *pos = &carla_jack_pos;
+    return (carla_jack_state != JackTransportStopped);
 }

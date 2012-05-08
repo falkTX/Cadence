@@ -51,7 +51,7 @@ QMutex carla_proc_lock_var;
 QMutex carla_midi_lock_var;
 
 // define max possible client name
-const unsigned short max_client_name_size = carla_jack_max_client_name_size() - 5; // 5 = strlen(" (10)")
+const unsigned short max_client_name_size = jack_client_name_size() - 1 - 5; // 5 = strlen(" (10)")
 
 // -------------------------------------------------------------------------------------------------------------------
 // Exported symbols (API)
