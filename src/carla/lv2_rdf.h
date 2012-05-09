@@ -167,7 +167,7 @@ struct LV2_RDF_PortScalePoint {
 #define LV2_PORT_CONTINUOUS_CV           0x0040
 #define LV2_PORT_DISCRETE_CV             0x0080
 #define LV2_PORT_EXPENSIVE               0x0100
-#define LV2_PORT_HAS_STRICT_BOUNDS       0x0200
+#define LV2_PORT_STRICT_BOUNDS           0x0200
 #define LV2_PORT_LOGARITHMIC             0x0400
 #define LV2_PORT_NOT_AUTOMATIC           0x0800
 #define LV2_PORT_NOT_ON_GUI              0x1000
@@ -182,7 +182,7 @@ struct LV2_RDF_PortScalePoint {
 #define LV2_IS_PORT_CONTINUOUS_CV(x)     ((x) & LV2_PORT_CONTINUOUS_CV)
 #define LV2_IS_PORT_DISCRETE_CV(x)       ((x) & LV2_PORT_DISCRETE_CV)
 #define LV2_IS_PORT_EXPENSIVE(x)         ((x) & LV2_PORT_EXPENSIVE)
-#define LV2_IS_PORT_HAS_STRICT_BOUNDS(x) ((x) & LV2_PORT_HAS_STRICT_BOUNDS)
+#define LV2_IS_PORT_STRICT_BOUNDS(x)     ((x) & LV2_PORT_STRICT_BOUNDS)
 #define LV2_IS_PORT_LOGARITHMIC(x)       ((x) & LV2_PORT_LOGARITHMIC)
 #define LV2_IS_PORT_NOT_AUTOMATIC(x)     ((x) & LV2_PORT_NOT_AUTOMATIC)
 #define LV2_IS_PORT_NOT_ON_GUI(x)        ((x) & LV2_PORT_NOT_ON_GUI)
@@ -663,6 +663,16 @@ public:
     Lilv::Node doap_license;
     Lilv::Node rdf_type;
     Lilv::Node rdfs_label;
+
+    void init()
+    {
+        static bool need_init = true;
+        if (need_init)
+        {
+            need_init = false;
+            load_all();
+        }
+    }
 };
 
 static Lv2WorldClass Lv2World;
@@ -904,7 +914,7 @@ inline const LV2_RDF_Descriptor* lv2_rdf_new(const char* URI)
                     if (Port.has_property(Lv2World.pprop_expensive))
                         RDF_Port->Properties = LV2_PORT_EXPENSIVE;
                     if (Port.has_property(Lv2World.pprop_strict_bounds))
-                        RDF_Port->Properties = LV2_PORT_HAS_STRICT_BOUNDS;
+                        RDF_Port->Properties = LV2_PORT_STRICT_BOUNDS;
                     if (Port.has_property(Lv2World.pprop_logarithmic))
                         RDF_Port->Properties = LV2_PORT_LOGARITHMIC;
                     if (Port.has_property(Lv2World.pprop_not_automatic))

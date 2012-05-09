@@ -181,29 +181,33 @@ public:
 
     void set_midi_program(int32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
     {
-        if (! descriptor->select_program)
-            return;
-
-        // TODO - don't block when freewheeling
         if (index >= 0)
         {
-            // block plugin so we don't change programs during run()
-            short _id = m_id;
-
-            if (block)
+            if (carla_jack_on_freewheel())
             {
-                carla_proc_lock();
-                m_id = -1;
-                carla_proc_unlock();
+                if (block) carla_proc_lock();
+                descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
+                if (block) carla_proc_unlock();
             }
-
-            descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
-
-            if (block)
+            else
             {
-                carla_proc_lock();
-                m_id = _id;
-                carla_proc_unlock();
+                short _id = m_id;
+
+                if (block)
+                {
+                    carla_proc_lock();
+                    m_id = -1;
+                    carla_proc_unlock();
+                }
+
+                descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
+
+                if (block)
+                {
+                    carla_proc_lock();
+                    m_id = _id;
+                    carla_proc_unlock();
+                }
             }
 
 #ifndef BUILD_BRIDGE
@@ -888,7 +892,7 @@ public:
                 else if (MIDI_IS_STATUS_PROGRAM_CHANGE(status))
                 {
                     uint32_t mbank_id = next_bank_id;
-                    uint32_t mprog_id = pin_event.buffer[1]; // & 0x7F;
+                    uint32_t mprog_id = pin_event.buffer[1];
 
                     for (k=0; k < midiprog.count; k++)
                     {
@@ -955,10 +959,7 @@ public:
 
                 // Fix bad note-off
                 if (MIDI_IS_STATUS_NOTE_ON(status) && min_event.buffer[2] == 0)
-                {
-                    min_event.buffer[0] -= 0x10;
-                    status = min_event.buffer[0];
-                }
+                    status -= 0x10;
 
                 snd_seq_event_t* midi_event = &midi_events[midi_event_count];
                 memset(midi_event, 0, sizeof(snd_seq_event_t));

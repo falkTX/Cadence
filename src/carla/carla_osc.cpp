@@ -384,31 +384,30 @@ int osc_handle_program_as_midi(CarlaPlugin* plugin, lo_arg** argv)
     return 1;
 }
 
-int osc_handle_midi(CarlaPlugin *plugin, lo_arg **argv)
+int osc_handle_midi(CarlaPlugin* plugin, lo_arg **argv)
 {
     qDebug("osc_handle_midi()");
 
-    // FIXME - verify this midi stuff when sure about the bytes
-
     if (plugin->min_count() > 0)
     {
-        uint8_t* data = argv[0]->m;
-        uint8_t mode = data[1] & 0xff;
-        uint8_t note = data[2] & 0x7f;
-        uint8_t velo = data[3] & 0x7f;
+        uint8_t* data  = argv[0]->m;
+        uint8_t status = data[1];
 
-        // only receive notes
-        if (mode < 0x80 || mode > 0x9F)
-            return 1;
+        // Fix bad note-off
+        if (MIDI_IS_STATUS_NOTE_ON(status) && data[3] == 0)
+            status -= 0x10;
 
-        // fix bad note off
-        if (mode >= 0x90 && velo == 0)
+        if (MIDI_IS_STATUS_NOTE_OFF(status))
         {
-            mode -= 0x10;
-            velo = 0x64;
+            uint8_t note = data[2];
+            plugin->send_midi_note(false, note, 0, false, true, true);
         }
-
-        plugin->send_midi_note((mode >= 0x90), note, velo, false, true, true);
+        else if (MIDI_IS_STATUS_NOTE_ON(status))
+        {
+            uint8_t note = data[2];
+            uint8_t velo = data[3];
+            plugin->send_midi_note(true, note, velo, false, true, true);
+        }
 
         return 0;
     }

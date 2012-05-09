@@ -48,6 +48,8 @@
 #define kPlugCategRestoration 8
 #define kPlugCategShell 10
 #define kPlugCategGenerator 11
+#define kVstProcessLevelUser 1
+#define kVstProcessLevelRealtime 2
 #define kVstProcessPrecision32 0
 #define kVstTransportChanged 1
 #define kVstVersion 2400
@@ -192,19 +194,6 @@ const char* VstOpcode2str(int32_t opcode)
         return "unknown";
     }
 }
-
-#if 1
-short add_plugin_vst(const char* filename, const char* label);
-
-int main()
-{
-    short id = add_plugin_vst("/usr/lib/vst/PingPongPan.so", "eq5");
-    set_active(id, true);
-    carla_sleep(3);
-    remove_plugin(id);
-    return 0;
-}
-#endif
 
 class VstPlugin : public CarlaPlugin
 {
@@ -358,26 +347,33 @@ public:
 
     void set_program(int32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
     {
-        // TODO - don't block when freewheeling
         if (index >= 0)
         {
-            // block plugin so we don't change programs during processReplacing()
-            short _id = m_id;
-
-            if (block)
+            if (carla_jack_on_freewheel())
             {
-                carla_proc_lock();
-                m_id = -1;
-                carla_proc_unlock();
+                if (block) carla_proc_lock();
+                effect->dispatcher(effect, effSetProgram, 0, index, nullptr, 0.0f);
+                if (block) carla_proc_unlock();
             }
-
-            effect->dispatcher(effect, effSetProgram, 0, index, nullptr, 0.0f);
-
-            if (block)
+            else
             {
-                carla_proc_lock();
-                m_id = _id;
-                carla_proc_unlock();
+                short _id = m_id;
+
+                if (block)
+                {
+                    carla_proc_lock();
+                    m_id = -1;
+                    carla_proc_unlock();
+                }
+
+                effect->dispatcher(effect, effSetProgram, 0, index, nullptr, 0.0f);
+
+                if (block)
+                {
+                    carla_proc_lock();
+                    m_id = _id;
+                    carla_proc_unlock();
+                }
             }
         }
 
@@ -978,7 +974,7 @@ public:
                 // Program change
                 else if (MIDI_IS_STATUS_PROGRAM_CHANGE(status))
                 {
-                    uint32_t prog_id = pin_event.buffer[1]; // & 0x7F;
+                    uint32_t prog_id = pin_event.buffer[1];
 
                     if (prog_id < prog.count)
                     {
@@ -1041,10 +1037,7 @@ public:
 
                 // Fix bad note-off
                 if (MIDI_IS_STATUS_NOTE_ON(status) && min_event.buffer[2] == 0)
-                {
-                    min_event.buffer[0] -= 0x10;
-                    status = min_event.buffer[0];
-                }
+                    status -= 0x10;
 
                 VstMidiEvent* midi_event = &midi_events[midi_event_count];
                 memset(midi_event, 0, sizeof(VstMidiEvent));
@@ -1363,7 +1356,9 @@ public:
 
     static intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
     {
+#if DEBUG
         qDebug("VstHostCallback() - code: %s, index: %i, value: " P_INTPTR ", opt: %f", VstOpcode2str(opcode), index, value, opt);
+#endif
 
         // Check if 'user' points to this plugin
         VstPlugin* self = nullptr;
@@ -1379,7 +1374,15 @@ public:
         {
         case audioMasterAutomate:
             if (self)
-                self->set_parameter_value(index, opt, false, true, true);
+            {
+                if (carla_jack_on_audio_thread())
+                {
+                    self->set_parameter_value(index, opt, false, false, false);
+                    self->postpone_event(PostEventParameterChange, index, opt);
+                }
+                else
+                    self->set_parameter_value(index, opt, false, true, true);
+            }
             break;
 
         case audioMasterVersion:
@@ -1596,11 +1599,18 @@ public:
         case audioMasterWillReplaceOrAccumulate:
             // Deprecated in VST SDK 2.4
             break;
+#endif
 
         case audioMasterGetCurrentProcessLevel:
-            // TODO
-            return 0;
+            if (carla_jack_on_audio_thread())
+            {
+                if (carla_jack_on_freewheel())
+                    return kVstProcessLevelOffline;
+                return 	kVstProcessLevelRealtime;
+            }
+            return 	kVstProcessLevelUser;
 
+#if 0
         case audioMasterGetAutomationState:
             // TODO
             return 0;
@@ -1683,7 +1693,7 @@ public:
                 return -1;
 
             // unimplemented
-            qWarning("VstHostCallback:audioMasterCanDo - Got uninplemented feature request '%s'", (char*)ptr);
+            qWarning("VstHostCallback:audioMasterCanDo - Got unknown feature request '%s'", (char*)ptr);
             return 0;
 
         case audioMasterGetLanguage:
@@ -1750,7 +1760,7 @@ public:
 #endif
 
         default:
-            //qDebug("VstHostCallback() - code: %s, index: %i, value: " P_INTPTR ", opt: %f", VstOpcode2str(opcode), index, value, opt);
+            qDebug("VstHostCallback() - code: %s, index: %i, value: " P_INTPTR ", opt: %f", VstOpcode2str(opcode), index, value, opt);
             break;
         }
 

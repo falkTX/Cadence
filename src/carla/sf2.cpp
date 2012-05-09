@@ -47,7 +47,7 @@ public:
         param_buffers = nullptr;
     }
 
-    virtual ~Sf2Plugin()
+    ~Sf2Plugin()
     {
         qDebug("Sf2Plugin::~Sf2Plugin()");
 
@@ -58,12 +58,12 @@ public:
         delete_fluid_settings(f_settings);
     }
 
-    virtual PluginCategory category()
+    PluginCategory category()
     {
         return PLUGIN_CATEGORY_SYNTH;
     }
 
-    virtual uint32_t param_scalepoint_count(uint32_t param_id)
+    uint32_t param_scalepoint_count(uint32_t param_id)
     {
         switch (param_id)
         {
@@ -76,12 +76,12 @@ public:
         }
     }
 
-    virtual double get_parameter_value(uint32_t param_id)
+    double get_parameter_value(uint32_t param_id)
     {
         return param_buffers[param_id];
     }
 
-    virtual double get_parameter_scalepoint_value(uint32_t param_id, uint32_t scalepoint_id)
+    double get_parameter_scalepoint_value(uint32_t param_id, uint32_t scalepoint_id)
     {
         switch (param_id)
         {
@@ -114,7 +114,7 @@ public:
         }
     }
 
-    virtual void get_label(char* buf_str)
+    void get_label(char* buf_str)
     {
         strncpy(buf_str, m_label, STR_MAX);
     }
@@ -126,7 +126,7 @@ public:
 //        //f_sfont->free(f_sfont);
 //    }
 
-    virtual void get_parameter_name(uint32_t param_id, char* buf_str)
+    void get_parameter_name(uint32_t param_id, char* buf_str)
     {
         switch (param_id)
         {
@@ -178,7 +178,7 @@ public:
         }
     }
 
-    virtual void get_parameter_label(uint32_t param_id, char* buf_str)
+    void get_parameter_unit(uint32_t param_id, char* buf_str)
     {
         switch (param_id)
         {
@@ -194,7 +194,7 @@ public:
         }
     }
 
-    virtual void get_parameter_scalepoint_label(uint32_t param_id, uint32_t scalepoint_id, char* buf_str)
+    void get_parameter_scalepoint_label(uint32_t param_id, uint32_t scalepoint_id, char* buf_str)
     {
         switch (param_id)
         {
@@ -228,7 +228,7 @@ public:
         *buf_str = 0;
     }
 
-    virtual void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
+    void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
         param_buffers[param_id] = value;
 
@@ -269,17 +269,44 @@ public:
         CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
     }
 
-    virtual void set_midi_program(int32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
+    void set_midi_program(int32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
     {
         if (index >= 0)
-            fluid_synth_program_select(f_synth, 0, f_id, midiprog.data[index].bank, midiprog.data[index].program);
+        {
+            if (carla_jack_on_freewheel())
+            {
+                if (block) carla_proc_lock();
+                fluid_synth_program_select(f_synth, 0, f_id, midiprog.data[index].bank, midiprog.data[index].program);
+                if (block) carla_proc_unlock();
+            }
+            else
+            {
+                short _id = m_id;
+
+                if (block)
+                {
+                    carla_proc_lock();
+                    m_id = -1;
+                    carla_proc_unlock();
+                }
+
+                fluid_synth_program_select(f_synth, 0, f_id, midiprog.data[index].bank, midiprog.data[index].program);
+
+                if (block)
+                {
+                    carla_proc_lock();
+                    m_id = _id;
+                    carla_proc_unlock();
+                }
+            }
+        }
 
         CarlaPlugin::set_midi_program(index, gui_send, osc_send, callback_send, block);
     }
 
-    virtual void reload()
+    void reload()
     {
-        qDebug("Sf2AudioPlugin::reload()");
+        qDebug("Sf2AudioPlugin::reload() - start");
         short _id = m_id;
 
         // Safely disable plugin for reload
@@ -288,8 +315,7 @@ public:
         carla_proc_unlock();
 
         // Unregister previous jack ports if needed
-        if (_id >= 0)
-            remove_from_jack();
+        remove_from_jack(bool(_id >= 0));
 
         // Delete old data
         delete_buffers();
@@ -299,12 +325,13 @@ public:
         params = Sf2ParametersMax;
 
         aout.ports    = new jack_port_t*[aouts];
+        aout.rindexes = new uint32_t[aouts];
 
         param.data    = new ParameterData[params];
         param.ranges  = new ParameterRanges[params];
         param_buffers = new double[params];
 
-        const int port_name_size = jack_port_name_size();
+        const int port_name_size = jack_port_name_size() - 1;
         char port_name[port_name_size];
 
         // ---------------------------------------
@@ -320,7 +347,8 @@ public:
 #endif
             strcpy(port_name, "out-left");
 
-        aout.ports[0] = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+        aout.ports[0]    = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+        aout.rindexes[0] = 0;
 
 #ifndef BUILD_BRIDGE
         if (carla_options.global_jack_client)
@@ -332,7 +360,8 @@ public:
 #endif
             strcpy(port_name, "out-right");
 
-        aout.ports[1] = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+        aout.ports[1]    = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+        aout.rindexes[1] = 1;
 
         // ---------------------------------------
         // MIDI Input
@@ -381,7 +410,7 @@ public:
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
-        param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE;
+        param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE | PARAMETER_IS_BOOLEAN;
         param.data[j].midi_channel = 0;
         param.data[j].midi_cc = -1;
         param.ranges[j].min = 0.0;
@@ -461,7 +490,7 @@ public:
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
-        param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE;
+        param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE | PARAMETER_IS_BOOLEAN;
         param.data[j].midi_channel = 0;
         param.data[j].midi_cc = -1;
         param.ranges[j].min = 0.0;
@@ -477,7 +506,7 @@ public:
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
-        param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE;
+        param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE | PARAMETER_IS_INTEGER;
         param.data[j].midi_channel = 0;
         param.data[j].midi_cc = -1;
         param.ranges[j].min = 0.0;
@@ -541,7 +570,7 @@ public:
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
-        param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_USES_SCALEPOINTS;
+        param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_INTEGER | PARAMETER_USES_SCALEPOINTS;
         param.data[j].midi_channel = 0;
         param.data[j].midi_cc = -1;
         param.ranges[j].min = FLUID_CHORUS_MOD_SINE;
@@ -557,7 +586,7 @@ public:
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
-        param.data[j].hints  = PARAMETER_IS_ENABLED;
+        param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_INTEGER;
         param.data[j].midi_channel = 0;
         param.data[j].midi_cc = -1;
         param.ranges[j].min = 1;
@@ -573,7 +602,7 @@ public:
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
-        param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_USES_SCALEPOINTS;
+        param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_INTEGER | PARAMETER_USES_SCALEPOINTS;
         param.data[j].midi_channel = 0;
         param.data[j].midi_cc = -1;
         param.ranges[j].min = FLUID_INTERP_NONE;
@@ -589,7 +618,7 @@ public:
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_OUTPUT;
-        param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE;
+        param.data[j].hints  = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE | PARAMETER_IS_INTEGER;
         param.data[j].midi_channel = 0;
         param.data[j].midi_cc = -1;
         param.ranges[j].min = 0;
@@ -622,6 +651,8 @@ public:
         if (carla_options.global_jack_client == false)
 #endif
             jack_activate(jack_client);
+
+        qDebug("Sf2AudioPlugin::reload() - end");
     }
 
     virtual void reload_programs(bool init)
@@ -668,18 +699,19 @@ public:
             i++;
         }
 
+        // TODO - for xx(), rest of i < count to null
+
         //f_sfont->free(f_sfont);
 
+#ifndef BUILD_BRIDGE
         // Update OSC Names
         osc_global_send_set_midi_program_count(m_id, midiprog.count);
 
-        if (midiprog.count > 0)
-        {
-            for (i=0; i < midiprog.count; i++)
-                osc_global_send_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
-        }
+        for (i=0; i < midiprog.count; i++)
+            osc_global_send_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
 
         callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
+#endif
 
         if (init)
         {
@@ -709,11 +741,11 @@ public:
 
         double aouts_peak_tmp[2] = { 0.0 };
 
-        jack_default_audio_sample_t* aouts_buffer[aout.count];
+        jack_audio_sample_t* aouts_buffer[aout.count];
         void* min_buffer;
 
         for (i=0; i < aout.count; i++)
-            aouts_buffer[i] = (jack_default_audio_sample_t*)jack_port_get_buffer(aout.ports[i], nframes);
+            aouts_buffer[i] = (jack_audio_sample_t*)jack_port_get_buffer(aout.ports[i], nframes);
 
         min_buffer = jack_port_get_buffer(midi.port_min, nframes);
 
@@ -730,7 +762,7 @@ public:
 
             unsigned char next_bank_ids[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 0, 0, 0, 0, 0, 0 };
 
-            if (midiprog.current > 0)
+            if (midiprog.current > 0 && midiprog.count > 0)
                 next_bank_ids[0] = midiprog.data[midiprog.current].bank;
 
             for (i=0; i < n_pin_events; i++)
@@ -738,8 +770,8 @@ public:
                 if (jack_midi_event_get(&pin_event, pin_buffer, i) != 0)
                     break;
 
-                jack_midi_data_t status = pin_event.buffer[0];
-                unsigned char channel   = status & 0x0F;
+                jack_midi_data_t status  = pin_event.buffer[0];
+                jack_midi_data_t channel = status & 0x0F;
 
                 // Control change
                 if (MIDI_IS_STATUS_CONTROL_CHANGE(status))
@@ -756,8 +788,8 @@ public:
 
                     double value;
 
-                    // Control GUI stuff (channel 0 only)
-                    if (channel == 0)
+                    // Control backend stuff
+                    if (channel == cin_channel)
                     {
                         if (MIDI_IS_CONTROL_BREATH_CONTROLLER(control) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
@@ -819,7 +851,7 @@ public:
                         }
                     }
 #ifdef FLUIDSYNTH_VERSION_113
-                    else // not channel 0
+                    else // not channel for backend
                     {
                         if (control == MIDI_CONTROL_ALL_SOUND_OFF)
                         {
@@ -838,9 +870,20 @@ public:
                     // Control plugin parameters
                     for (k=0; k < param.count; k++)
                     {
-                        if (param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0 && param.data[k].midi_channel == channel && param.data[k].midi_cc == control)
+                        if (param.data[k].midi_channel == channel && param.data[k].midi_cc == control && param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0)
                         {
-                            value = (double(c_value) / 127 * (param.ranges[k].max - param.ranges[k].min)) + param.ranges[k].min;
+                            if (param.data[k].hints & PARAMETER_IS_BOOLEAN)
+                            {
+                                value = c_value <= 63 ? param.ranges[k].min : param.ranges[k].max;
+                            }
+                            else
+                            {
+                                value = (double(c_value) / 127 * (param.ranges[k].max - param.ranges[k].min)) + param.ranges[k].min;
+
+                                if (param.data[k].hints & PARAMETER_IS_INTEGER)
+                                    value = rint(value);
+                            }
+
                             set_parameter_value(k, value, false, false, false);
                             postpone_event(PostEventParameterChange, k, value);
                         }
@@ -853,13 +896,13 @@ public:
                         continue;
 
                     uint32_t mbank_id = next_bank_ids[channel];
-                    uint32_t mprog_id = pin_event.buffer[1] & 0x7F;
+                    uint32_t mprog_id = pin_event.buffer[1];
 
                     for (k=0; k < midiprog.count; k++)
                     {
                         if (midiprog.data[k].bank == mbank_id && midiprog.data[k].program == mprog_id)
                         {
-                            if (channel == 0)
+                            if (channel == cin_channel)
                             {
                                 set_midi_program(k, false, false, false, false);
                                 postpone_event(PostEventMidiProgramChange, k, 0.0);
@@ -891,8 +934,6 @@ public:
                     else
                         fluid_synth_noteoff(f_synth, 0, ext_midi_notes[i].note);
 
-                    //fluid_synth_write_float(f_synth, nframes, aouts_buffer[0], 0, 1, aouts_buffer[1], 0, 1);
-
                     ext_midi_notes[i].valid = false;
                     midi_event_count += 1;
                 }
@@ -907,10 +948,9 @@ public:
         CARLA_PROCESS_CONTINUE_CHECK;
 
         // --------------------------------------------------------------------------------------------------------
-        // MIDI Input (JACK), Plugin processing
+        // MIDI Input (JACK)
 
         {
-            //jack_nframes_t offset = 0;
             jack_midi_event_t min_event;
             uint32_t n_min_events = jack_midi_get_event_count(min_buffer);
 
@@ -919,23 +959,12 @@ public:
                 if (jack_midi_event_get(&min_event, min_buffer, k) != 0)
                     break;
 
-                //if (min_event.time > offset)
-                //{
-                    /* generate audio up to event */
-                    //fluid_synth_write_float(f_synth, min_event.time - offset, aouts_buffer[0] + offset, 0, 1, aouts_buffer[1] + offset, 0, 1);
-
-                    //offset = min_event.time;
-                //}
-
-                jack_midi_data_t status = min_event.buffer[0];
-                unsigned char channel   = status & 0x0F;
+                jack_midi_data_t status  = min_event.buffer[0];
+                jack_midi_data_t channel = status & 0x0F;
 
                 // Fix bad note-off
                 if (MIDI_IS_STATUS_NOTE_ON(status) && min_event.buffer[2] == 0)
-                {
-                    min_event.buffer[0] -= 0x10;
-                    status = min_event.buffer[0];
-                }
+                    status -= 0x10;
 
                 if (MIDI_IS_STATUS_NOTE_OFF(status))
                 {
@@ -968,12 +997,7 @@ public:
 
                 midi_event_count += 1;
             }
-
-            //if (nframes > offset)
-            //{
-            //    fluid_synth_write_float(f_synth, nframes - offset, aouts_buffer[0] + offset, 0, 1, aouts_buffer[1] + offset, 0, 1);
-            //}
-        } // End of MIDI Input (JACK), Plugin processing
+        } // End of MIDI Input (JACK)
 
         CARLA_PROCESS_CONTINUE_CHECK;
 
@@ -990,8 +1014,10 @@ public:
 
         if (m_active)
         {
+            bool do_balance = (m_hints & PLUGIN_CAN_BALANCE) > 0 && (x_bal_left != -1.0 || x_bal_right != 1.0);
+
             double bal_rangeL, bal_rangeR;
-            jack_default_audio_sample_t old_bal_left[nframes];
+            jack_audio_sample_t old_bal_left[nframes];
 
             for (i=0; i < aout.count; i++)
             {
@@ -999,10 +1025,10 @@ public:
                 fluid_synth_set_gain(f_synth, x_vol);
 
                 // Balance
-                if (m_hints & PLUGIN_CAN_BALANCE)
+                if (do_balance)
                 {
                     if (i%2 == 0)
-                        memcpy(&old_bal_left, aouts_buffer[i], sizeof(jack_default_audio_sample_t)*nframes);
+                        memcpy(&old_bal_left, aouts_buffer[i], sizeof(jack_audio_sample_t)*nframes);
 
                     bal_rangeL = (x_bal_left+1.0)/2;
                     bal_rangeR = (x_bal_right+1.0)/2;
@@ -1025,13 +1051,10 @@ public:
                 }
 
                 // Output VU
-                if (i < 2)
+                for (k=0; k < nframes && i < 2; k++)
                 {
-                    for (k=0; k<nframes; k++)
-                    {
-                        if (abs_d(aouts_buffer[i][k]) > aouts_peak_tmp[i])
-                            aouts_peak_tmp[i] = abs_d(aouts_buffer[i][k]);
-                    }
+                    if (abs_d(aouts_buffer[i][k]) > aouts_peak_tmp[i])
+                        aouts_peak_tmp[i] = abs_d(aouts_buffer[i][k]);
                 }
             }
         }
@@ -1039,7 +1062,7 @@ public:
         {
             // disable any output sound if not active
             for (i=0; i < aout.count; i++)
-                memset(aouts_buffer[i], 0.0f, sizeof(jack_default_audio_sample_t)*nframes);
+                memset(aouts_buffer[i], 0.0f, sizeof(jack_audio_sample_t)*nframes);
 
             aouts_peak_tmp[0] = 0.0;
             aouts_peak_tmp[1] = 0.0;
@@ -1056,14 +1079,14 @@ public:
             jack_midi_clear_buffer(cout_buffer);
 
             k = Sf2VoiceCount;
-            param_buffers[k] = abs(fluid_synth_get_active_voice_count(f_synth));
+            param_buffers[k] = fluid_synth_get_active_voice_count(f_synth);
 
-            if (param.data[k].midi_cc >= 0)
+            if (param.data[k].midi_cc > 0)
             {
                 double value_per = (param_buffers[k] - param.ranges[k].min)/(param.ranges[k].max - param.ranges[k].min);
 
                 jack_midi_data_t* event_buffer = jack_midi_event_reserve(cout_buffer, 0, 3);
-                event_buffer[0] = 0xB0 + param.data[k].midi_channel;
+                event_buffer[0] = MIDI_STATUS_CONTROL_CHANGE + param.data[k].midi_channel;
                 event_buffer[1] = param.data[k].midi_cc;
                 event_buffer[2] = 127*value_per;
             }

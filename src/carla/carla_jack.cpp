@@ -25,7 +25,9 @@ static jack_nframes_t carla_sample_rate = 44100;
 static jack_position_t carla_jack_pos;
 static jack_transport_state_t carla_jack_state;
 
-const char* carla_client_name = nullptr;
+static bool carla_jack_is_freewheel = false;
+static const char* carla_client_name = nullptr;
+static QThread* carla_jack_thread = nullptr;
 
 // -------------------------------------------------------------------------------------------------------------------
 // Exported symbols (API)
@@ -87,8 +89,15 @@ static int carla_jack_srate_callback(jack_nframes_t new_sample_rate, void*)
     return 0;
 }
 
+static void carla_jack_freewheel_callback(int starting, void*)
+{
+    carla_jack_is_freewheel = (starting != 0);
+}
+
 static int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
 {
+    carla_jack_thread = QThread::currentThread();
+
     // request time info once (arg only null on global client)
     if (carla_jack_client && arg == nullptr)
         carla_jack_state = jack_transport_query(carla_jack_client, &carla_jack_pos);
@@ -152,6 +161,7 @@ bool carla_jack_init(const char* client_name)
 #ifndef BUILD_BRIDGE
         jack_set_buffer_size_callback(carla_jack_client, carla_jack_bufsize_callback, nullptr);
         jack_set_sample_rate_callback(carla_jack_client, carla_jack_srate_callback, nullptr);
+        jack_set_freewheel_callback(carla_jack_client, carla_jack_freewheel_callback, nullptr);
         jack_set_process_callback(carla_jack_client, carla_jack_process_callback, nullptr);
         jack_on_shutdown(carla_jack_client, carla_jack_shutdown_callback, nullptr);
 
@@ -245,4 +255,14 @@ bool carla_jack_transport_query(jack_position_t** pos)
 {
     *pos = &carla_jack_pos;
     return (carla_jack_state != JackTransportStopped);
+}
+
+bool carla_jack_on_audio_thread()
+{
+    return (QThread::currentThread() == carla_jack_thread);
+}
+
+bool carla_jack_on_freewheel()
+{
+    return carla_jack_is_freewheel;
 }

@@ -29,5 +29,7 @@ bool carla_jack_init(const char* client_name);
 bool carla_jack_close();
 bool carla_jack_register_plugin(CarlaPlugin* plugin, jack_client_t** client);
 bool carla_jack_transport_query(jack_position_t** pos);
+bool carla_jack_on_audio_thread();
+bool carla_jack_on_freewheel();
 
 #endif // CARLA_JACK_H

@@ -35,7 +35,8 @@ HEADERS = \
     ../../carla-includes/carla_includes.h
 
 INCLUDEPATH = .. \
-    ../../carla-includes
+    ../../carla-includes \
+    ../../carla-includes/vst
 #    ../../carla-includes/vestige
 
 TARGET  = carla_backend
