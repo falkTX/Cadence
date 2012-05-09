@@ -223,12 +223,9 @@ def getStateDictFromXML(xml_node):
                         if ctag == "type":
                             x_save_state_custom_data['type'] = CustomDataString2Type(ctext)
                         elif ctag == "key":
-                            x_save_state_custom_data['key'] = ctext
+                            x_save_state_custom_data['key'] = ctext.replace("&amp;", "&").replace("&lt;","<").replace("&gt;",">").replace("&apos;","\\").replace("&quot;","\"")
                         elif ctag == "value":
-                            if (x_save_state_custom_data['type'] == CUSTOM_DATA_STRING):
-                                x_save_state_custom_data['value'] = ctext.replace("&", "&amp;").replace("<","&lt;").replace(">","&gt;").replace("\\","&apos;").replace("\"","&quot;")
-                            else:
-                                x_save_state_custom_data['value'] = ctext
+                            x_save_state_custom_data['value'] = ctext.replace("&amp;", "&").replace("&lt;","<").replace("&gt;",">").replace("&apos;","\\").replace("&quot;","\"")
 
                         xml_subdata = xml_subdata.nextSibling()
 
@@ -941,16 +938,14 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.tableWidget.setSortingEnabled(True)
         self.tableWidget.sortByColumn(0, Qt.AscendingOrder)
 
-        self.label.setText(self.tr("Have %i LADSPA, %i DSSI, %i LV2, %i VST and %i SoundFonts" % (
-            ladspa_count, dssi_count, lv2_count, vst_count, sf2_count)))
+        self.label.setText(self.tr("Have %i LADSPA, %i DSSI, %i LV2, %i VST and %i SoundFonts" % (ladspa_count, dssi_count, lv2_count, vst_count, sf2_count)))
 
     def addPluginToTable(self, plugin, ptype):
         index = self.last_table_index
 
         if ("build" not in plugin.keys()):
             if (self.warning_old_shown == False):
-                QMessageBox.warning(self, self.tr("Warning"),
-                    self.tr("You're using a Carla-Database from an old version of Carla, please update the plugins"))
+                QMessageBox.warning(self, self.tr("Warning"), self.tr("You're using a Carla-Database from an old version of Carla, please update the plugins"))
                 self.warning_old_shown = True
             return
 
@@ -984,10 +979,8 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.tableWidget.setItem(index, 6, QTableWidgetItem(str(plugin['parameters.ins'])))
         self.tableWidget.setItem(index, 7, QTableWidgetItem(str(plugin['parameters.outs'])))
         self.tableWidget.setItem(index, 8, QTableWidgetItem(str(plugin['programs.total'])))
-        self.tableWidget.setItem(index, 9,
-            QTableWidgetItem(self.tr("Yes") if (plugin['hints'] & PLUGIN_HAS_GUI) else self.tr("No")))
-        self.tableWidget.setItem(index, 10,
-            QTableWidgetItem(self.tr("Yes") if (plugin['hints'] & PLUGIN_IS_SYNTH) else self.tr("No")))
+        self.tableWidget.setItem(index, 9, QTableWidgetItem(self.tr("Yes") if (plugin['hints'] & PLUGIN_HAS_GUI) else self.tr("No")))
+        self.tableWidget.setItem(index, 10, QTableWidgetItem(self.tr("Yes") if (plugin['hints'] & PLUGIN_IS_SYNTH) else self.tr("No")))
         self.tableWidget.setItem(index, 11, QTableWidgetItem(bridge_text))
         self.tableWidget.setItem(index, 12, QTableWidgetItem(ptype))
         self.tableWidget.setItem(index, 13, QTableWidgetItem(plugin['binary']))
@@ -2271,7 +2264,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         # Basic info
 
         x_save_state_dict['Type'] = type_str
-        x_save_state_dict['Name'] = self.pinfo['name']  # c_string(CarlaHost.get_real_plugin_name(self.plugin_id))
+        x_save_state_dict['Name'] = self.pinfo['name']
         x_save_state_dict['Label'] = self.pinfo['label']
         x_save_state_dict['Binary'] = self.pinfo['binary']
         x_save_state_dict['UniqueID'] = self.pinfo['unique_id']
@@ -2341,9 +2334,9 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
             x_save_state_custom_data = deepcopy(save_state_custom_data)
 
-            x_save_state_custom_data['type'] = CustomDataType2String(custom_data['type'])
-            x_save_state_custom_data['key'] = c_string(custom_data['key'])
-            x_save_state_custom_data['value'] = c_string(custom_data['value'])
+            x_save_state_custom_data['type']  = CustomDataType2String(custom_data['type'])
+            x_save_state_custom_data['key']   = c_string(custom_data['key']).replace("&", "&amp;").replace("<","&lt;").replace(">","&gt;").replace("\\","&apos;").replace("\"","&quot;")
+            x_save_state_custom_data['value'] = c_string(custom_data['value']).replace("&", "&amp;").replace("<","&lt;").replace(">","&gt;").replace("\\","&apos;").replace("\"","&quot;")
 
             x_save_state_dict['CustomData'].append(x_save_state_custom_data)
 
@@ -2369,7 +2362,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             content += "   <Label>%s</Label>\n" % (x_save_state_dict['Label'])
             content += "   <Binary>%s</Binary>\n" % (x_save_state_dict['Binary'])
             if (x_save_state_dict['UniqueID'] != 0):
-                content += "   <UniqueID>%li</UniqueID>\n" % (x_save_state_dict['UniqueID'])
+                content += "   <UniqueID>%li</UniqueID>\n" % x_save_state_dict['UniqueID']
         content += "  </Info>\n"
 
         content += "\n"
@@ -2408,7 +2401,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             content += "   <CustomData>\n"
             content += "    <type>%s</type>\n" % (custom_data['type'])
             content += "    <key>%s</key>\n" % (custom_data['key'])
-            if (custom_data['type'] == CUSTOM_DATA_BINARY):
+            if (custom_data['type'] in ("string", "binary")):
                 content += "    <value>\n"
                 content += "%s\n" % (custom_data['value'])
                 content += "    </value>\n"
@@ -2427,36 +2420,42 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         return content
 
     def loadStateDict(self, content):
+        # ---------------------------------------------------------------------
         # Part 1 - set custom data
         for custom_data in content['CustomData']:
             CarlaHost.set_custom_data(self.plugin_id, custom_data['type'], custom_data['key'], custom_data['value'])
 
-            ## Part 2 - set program (carefully)
-            #program_id = -1
-            #program_count = CarlaHost.get_program_count(self.plugin_id)
+        # ---------------------------------------------------------------------
+        # Part 2 - set program
+        program_id = -1
+        program_count = CarlaHost.get_program_count(self.plugin_id)
 
-            #if (content['ProgramName']):
-            #test_pname = CarlaHost.get_program_name(self.plugin_id, content['ProgramIndex'])
+        if (content['CurrentProgramName']):
+            test_pname = c_string(CarlaHost.get_program_name(self.plugin_id, content['CurrentProgramIndex']))
 
-            #if (content['ProgramName'] == test_pname):
-            #program_id = content['ProgramIndex']
-            #else:
-            #for i in range(program_count):
-            #new_test_pname = CarlaHost.get_program_name(self.plugin_id, i)
-            #if (content['ProgramName'] == new_test_pname):
-            #program_id = i
-            #break
-            #else:
-            #if (content['ProgramIndex'] < program_count):
-            #program_id = content['ProgramIndex']
-            #else:
-            #if (content['ProgramIndex'] < program_count):
-            #program_id = content['ProgramIndex']
+            # Program index and name matches
+            if (content['CurrentProgramName'] == test_pname):
+                program_id = content['CurrentProgramIndex']
 
-            #if (program_id >= 0):
-            #CarlaHost.set_program(self.plugin_id, program_id)
-            #self.edit_dialog.set_program(program_id)
+            # index < count
+            elif (content['CurrentProgramIndex'] < program_count):
+                program_id = content['CurrentProgramIndex']
 
+            # index not valid, try to find by name
+            else:
+                for i in range(program_count):
+                    test_pname = c_string(CarlaHost.get_program_name(self.plugin_id, i))
+
+                    if (content['CurrentProgramName'] == test_pname):
+                        program_id = i
+                        break
+
+            # set program now, if valid
+            if (program_id >= 0):
+                CarlaHost.set_program(self.plugin_id, program_id)
+                self.edit_dialog.set_program(program_id)
+
+        # ---------------------------------------------------------------------
         # Part 3 - set midi program
         if (content['CurrentMidiBank'] >= 0 and content['CurrentMidiProgram'] >= 0):
             midi_program_count = CarlaHost.get_midi_program_count(self.plugin_id)
@@ -2469,6 +2468,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
                     self.edit_dialog.set_midi_program(i)
                     break
 
+        # ---------------------------------------------------------------------
         # Part 4a - get plugin parameter symbols
         param_symbols = [] # (index, symbol)
 
@@ -2479,6 +2479,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
                 if (param_info['valid'] and param_info['symbol']):
                     param_symbols.append((parameter['index'], c_string(param_info['symbol'])))
 
+        # ---------------------------------------------------------------------
         # Part 4b - set parameter values (carefully)
         for parameter in content['Parameters']:
             index = -1
@@ -2524,10 +2525,12 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             else:
                 print("Could not set parameter data for %i -> %s" % (parameter['index'], parameter['name']))
 
+        # ---------------------------------------------------------------------
         # Part 5 - set chunk data
         if (content['Chunk']):
             CarlaHost.set_chunk_data(self.plugin_id, content['Chunk'])
 
+        # ---------------------------------------------------------------------
         # Part 6 - set internal stuff
         self.set_drywet(content['DryWet'] * 1000, True, True)
         self.set_volume(content['Volume'] * 1000, True, True)

@@ -20,9 +20,7 @@
 import os, sys
 from ctypes import *
 from copy import deepcopy
-
-if sys.version_info > (3,0):
-    from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE
 
 # Imports (Custom)
 from shared import *
@@ -34,7 +32,7 @@ except:
     print("LRDF Support not available (LADSPA-RDF will be disabled)")
     haveLRDF = False
 
-if sys.version_info > (3,0) and sys.int_info[1] == 4:
+if sys.int_info[1] == 4:
     is64bit = True
     c_uintptr = c_uint64
 else:

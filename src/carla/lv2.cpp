@@ -2251,7 +2251,7 @@ public:
             {
                 ext.uiprograms = (LV2_Programs_UI_Interface*)ui.descriptor->extension_data(LV2_PROGRAMS__UIInterface);
 
-                if (ext.uiprograms)
+                if (ext.uiprograms && midiprog.count > 0 && midiprog.current >= 0)
                     ext.uiprograms->select_program(ui.handle, midiprog.data[midiprog.current].bank, midiprog.data[midiprog.current].program);
             }
 
