@@ -34,7 +34,7 @@
 
 #include <stdarg.h>
 
-#include "lv2/lv2plug.in/ns/ext/urid/urid.h"
+#include "urid.h"
 
 #ifdef __cplusplus
 extern "C" {
