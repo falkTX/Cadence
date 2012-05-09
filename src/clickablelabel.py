@@ -31,7 +31,7 @@ class ClickableLabel(QLabel):
         self.emit(SIGNAL("clicked()"))
         # Use busy cursor for 2 secs
         self.setCursor(Qt.WaitCursor)
-        QTimer.singleShot(2000, SLOT("slot_setNormalCursor()"))
+        QTimer.singleShot(2000, self, SLOT("slot_setNormalCursor()"))
         QLabel.mousePressEvent(self, event)
 
     @pyqtSlot()
