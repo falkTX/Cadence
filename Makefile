@@ -207,6 +207,8 @@ install:
 	install -d $(DESTDIR)$(PREFIX)/share/cadence/
 	install -d $(DESTDIR)$(PREFIX)/share/cadence/src/
 	install -d $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
+	install -d $(DESTDIR)$(PREFIX)/share/cadence/icons/
+	install -d $(DESTDIR)$(PREFIX)/share/cadence/templates/
 
 	# Install script files and binaries
 	install -m 755 \
@@ -267,6 +269,8 @@ install:
 
 	# Install addtional stuff
 	install -m 644 data/pulse2jack-data/* $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
+	cp -r data/icons/*     $(DESTDIR)$(PREFIX)/share/cadence/icons/
+	cp -r data/templates/* $(DESTDIR)$(PREFIX)/share/cadence/templates/
 
 	# Adjust PREFIX value in script files
 	sed -i "s/X-PREFIX-X/$(SED_PREFIX)/" \
