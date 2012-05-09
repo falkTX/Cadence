@@ -18,7 +18,7 @@
 #ifndef LV2_RDF_INCLUDED
 #define LV2_RDF_INCLUDED
 
-#include <stdint.h>
+#include <cstdint>
 
 // Base Types
 typedef float LV2_Data;
@@ -1144,8 +1144,6 @@ inline const LV2_RDF_Descriptor* lv2_rdf_new(const char* URI)
 
             rdf_descriptor->PresetCount = Presets.size();
 
-            qDebug("-------------------- preset count %i", rdf_descriptor->PresetCount);
-
             if (rdf_descriptor->PresetCount > 0)
             {
                 rdf_descriptor->Presets = new LV2_RDF_Preset [rdf_descriptor->PresetCount];
@@ -1172,8 +1170,6 @@ inline const LV2_RDF_Descriptor* lv2_rdf_new(const char* URI)
                         RDF_Preset->Label = strdup(Lilv::Node(lilv_nodes_get(Label, Label.begin())).as_string());
                     else
                         RDF_Preset->Label = nullptr;
-
-                    qDebug("-------------------- preset @%i -> %s | %s", h, RDF_Preset->URI, RDF_Preset->Label);
 
                     // ------------------------------------------
                     // Set Preset Ports
@@ -1204,7 +1200,7 @@ inline const LV2_RDF_Descriptor* lv2_rdf_new(const char* URI)
                         RDF_Preset->Ports = nullptr;
 
                     // ------------------------------------------
-                    // Set Preset States
+                    // Set Preset States, TODO
 
                     RDF_Preset->StateCount = 0;
                 }

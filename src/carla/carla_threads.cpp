@@ -144,6 +144,10 @@ void CarlaCheckThread::run()
 
                             break;
 
+                        case PostEventCustom:
+                            plugin->run_custom_event(&post_events[j]);
+                            break;
+
                         default:
                             break;
                         }

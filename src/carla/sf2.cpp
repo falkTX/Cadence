@@ -1014,7 +1014,7 @@ public:
 
         if (m_active)
         {
-            bool do_balance = (m_hints & PLUGIN_CAN_BALANCE) > 0 && (x_bal_left != -1.0 || x_bal_right != 1.0);
+            bool do_balance = (x_bal_left != -1.0 || x_bal_right != 1.0);
 
             double bal_rangeL, bal_rangeR;
             jack_audio_sample_t old_bal_left[nframes];

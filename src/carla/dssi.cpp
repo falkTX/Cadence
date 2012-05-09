@@ -166,7 +166,17 @@ public:
 
         if (strcmp(key, "reloadprograms") == 0 || strcmp(key, "load") == 0 || strncmp(key, "patches", 7) == 0)
         {
+            // Safely disable plugin for reload
+            carla_proc_lock();
+            short _id = m_id;
+            m_id = -1;
+            carla_proc_unlock();
+
             reload_programs(false);
+
+            carla_proc_lock();
+            m_id = _id;
+            carla_proc_unlock();
         }
 
         CarlaPlugin::set_custom_data(dtype, key, value, gui_send);

@@ -47,7 +47,8 @@ enum PluginPostEventType {
     PostEventProgramChange,
     PostEventMidiProgramChange,
     PostEventNoteOn,
-    PostEventNoteOff
+    PostEventNoteOff,
+    PostEventCustom
 };
 
 enum PluginBridgeInfoType {
@@ -107,6 +108,7 @@ struct PluginPostEvent {
     PluginPostEventType type;
     int32_t index;
     double value;
+    const void* cdata;
 };
 
 struct ExternalMidiNote {
@@ -878,7 +880,7 @@ public:
         carla_midi_unlock();
     }
 
-    void postpone_event(PluginPostEventType type, int32_t index, double value)
+    void postpone_event(PluginPostEventType type, int32_t index, double value, const void* cdata = nullptr)
     {
         post_events.lock.lock();
 
@@ -890,6 +892,7 @@ public:
                 post_events.data[i].type  = type;
                 post_events.data[i].index = index;
                 post_events.data[i].value = value;
+                post_events.data[i].cdata = cdata;
                 break;
             }
         }
@@ -907,6 +910,10 @@ public:
             post_events.data[i].valid = false;
 
         post_events.lock.unlock();
+    }
+
+    virtual void run_custom_event(PluginPostEvent* /*event*/)
+    {
     }
 
     virtual int set_osc_bridge_info(PluginBridgeInfoType /*intoType*/, lo_arg** /*argv*/)

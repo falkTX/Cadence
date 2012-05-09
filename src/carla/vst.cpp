@@ -50,6 +50,7 @@
 #define kPlugCategGenerator 11
 #define kVstProcessLevelUser 1
 #define kVstProcessLevelRealtime 2
+#define kVstProcessLevelOffline 4
 #define kVstProcessPrecision32 0
 #define kVstTransportChanged 1
 #define kVstVersion 2400
