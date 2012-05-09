@@ -20,16 +20,12 @@
 from PyQt4.QtCore import qCritical, QRectF
 from PyQt4.QtGui import QPainter, QPixmap, QPushButton
 
-# Imports (Custom Stuff)
-import icons_rc
-
 # Widget Class
 class LEDButton(QPushButton):
-
-    BLUE    = 1
-    GREEN   = 2
-    RED     = 3
-    YELLOW  = 4
+    BLUE = 1
+    GREEN = 2
+    RED = 3
+    YELLOW = 4
     BIG_RED = 5
 
     def __init__(self, parent):
@@ -46,13 +42,13 @@ class LEDButton(QPushButton):
     def setColor(self, color):
         self.m_color = color
 
-        if (color in (self.BLUE, self.GREEN, self.RED, self.YELLOW)):
-          size = 14
-        elif (color == self.BIG_RED):
-          size = 64
+        if color in (self.BLUE, self.GREEN, self.RED, self.YELLOW):
+            size = 14
+        elif color == self.BIG_RED:
+            size = 64
         else:
-          qCritical("LEDButton::setColor(%i) - Invalid color" % (color))
-          return
+            qCritical("LEDButton::setColor(%i) - Invalid color" % color)
+            return
 
         self.setPixmapSize(size)
 
@@ -67,25 +63,25 @@ class LEDButton(QPushButton):
     def paintEvent(self, event):
         painter = QPainter(self)
 
-        if (self.isChecked()):
-          if (self.m_color == self.BLUE):
-            self.m_pixmap.load(":/bitmaps/led_blue.png")
-          elif (self.m_color == self.GREEN):
-            self.m_pixmap.load(":/bitmaps/led_green.png")
-          elif (self.m_color == self.RED):
-            self.m_pixmap.load(":/bitmaps/led_red.png")
-          elif (self.m_color == self.YELLOW):
-            self.m_pixmap.load(":/bitmaps/led_yellow.png")
-          elif (self.m_color == self.BIG_RED):
-            self.m_pixmap.load(":/bitmaps/led-big_on.png")
-          else:
-            return
+        if self.isChecked():
+            if self.m_color == self.BLUE:
+                self.m_pixmap.load(":/bitmaps/led_blue.png")
+            elif self.m_color == self.GREEN:
+                self.m_pixmap.load(":/bitmaps/led_green.png")
+            elif self.m_color == self.RED:
+                self.m_pixmap.load(":/bitmaps/led_red.png")
+            elif self.m_color == self.YELLOW:
+                self.m_pixmap.load(":/bitmaps/led_yellow.png")
+            elif self.m_color == self.BIG_RED:
+                self.m_pixmap.load(":/bitmaps/led-big_on.png")
+            else:
+                return
         else:
-          if (self.m_color in (self.BLUE, self.GREEN, self.RED, self.YELLOW)):
-            self.m_pixmap.load(":/bitmaps/led_off.png")
-          elif (self.m_color == self.BIG_RED):
-            self.m_pixmap.load(":/bitmaps/led-big_off.png")
-          else:
-            return
+            if self.m_color in (self.BLUE, self.GREEN, self.RED, self.YELLOW):
+                self.m_pixmap.load(":/bitmaps/led_off.png")
+            elif self.m_color == self.BIG_RED:
+                self.m_pixmap.load(":/bitmaps/led-big_off.png")
+            else:
+                return
 
         painter.drawPixmap(self.m_pixmap_rect, self.m_pixmap, self.m_pixmap_rect)
