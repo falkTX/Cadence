@@ -12,12 +12,21 @@ SED_PREFIX = $(shell echo $(PREFIX) | sed "s/\//\\\\\\\\\//g")
 PYUIC = pyuic4 --pyqt3-wrapper
 PYRCC = pyrcc4 -py3
 
+# Detect architecture
+ifndef _arch_n
+  ARCH = $(shell uname -m)
+  ifeq ("$(ARCH)", "x86_64")
+    _arch_n = 64
+  else
+    _arch_n = 32
+  endif
+endif
 
-all: UI RES
+
+all: UI RES CPP
 
 
-UI: catarina catia claudia carla tools \
-	carla_backend
+UI: catarina catia claudia carla tools
 
 catarina: src/ui_catarina.py \
 	src/ui_catarina_addgroup.py src/ui_catarina_removegroup.py src/ui_catarina_renamegroup.py \
@@ -38,13 +47,6 @@ carla: src/ui_carla.py src/ui_carla_control.py \
 tools: \
 	src/ui_logs.py src/ui_render.py src/ui_xycontroller.py \
 	src/ui_settings_app.py src/ui_settings_jack.py
-
-carla_backend:
-	# Build static lilv first
-	$(MAKE) -C src/carla-lilv
-
-	$(MAKE) -C src/carla
-	$(MAKE) -C src/carla-bridge-ui
 
 src/ui_catarina.py: src/ui/catarina.ui
 	$(PYUIC) -o src/ui_catarina.py $<
@@ -152,6 +154,37 @@ src/icons_rc.py: src/icons/icons.qrc
 	$(PYRCC) -o src/icons_rc.py $<
 
 
+CPP: carla_backend carla_bridge_ui carla_discovery
+
+carla_backend: carla_lilv
+	$(MAKE) -C src/carla
+
+carla_bridge_ui:
+	$(MAKE) -C src/carla-bridge-ui
+
+carla_bridge_unix32:
+	$(MAKE) -C src/carla-bridge unix32
+	$(MAKE) -C src/carla-discovery unix32
+
+carla_bridge_unix64:
+	$(MAKE) -C src/carla-bridge unix64
+	$(MAKE) -C src/carla-discovery unix64
+
+carla_bridge_wine32:
+	$(MAKE) -C src/carla-bridge wine32
+	$(MAKE) -C src/carla-discovery wine32
+
+carla_bridge_wine64:
+	$(MAKE) -C src/carla-bridge wine64
+	$(MAKE) -C src/carla-discovery wine64
+
+carla_discovery: carla_lilv
+	$(MAKE) -C src/carla-discovery unix$(_arch_n) FLUIDSYNTH=1 LILV=1
+
+carla_lilv:
+	$(MAKE) -C src/carla-lilv
+
+
 clean:
 	$(MAKE) clean -C src/carla
 	$(MAKE) clean -C src/carla-bridge
@@ -187,6 +220,7 @@ install:
 		src/carla-bridge-ui/carla-bridge-lv2-gtk2 \
 		src/carla-bridge-ui/carla-bridge-lv2-qt4 \
 		src/carla-bridge-ui/carla-bridge-lv2-x11 \
+		src/carla-discovery/carla-discovery-* \
 		$(DESTDIR)$(PREFIX)/bin/
 
 	# Install desktop files
