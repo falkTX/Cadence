@@ -3011,7 +3011,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         build = plugin['build']
         ptype = plugin['type']
 
-        if (build != BINARY_NATIVE or True):
+        if (build != BINARY_NATIVE):
             # Store object so we can return a pointer
             if (self.m_bridge_info == None):
                 self.m_bridge_info = PluginBridgeInfo()
