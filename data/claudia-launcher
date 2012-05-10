@@ -37,4 +37,4 @@ fi
 
 # We only got here if not running yet
 INSTALL_PREFIX="X-PREFIX-X"
-exec $PYTHON $INSTALL_PREFIX/share/cadence/src/claudia-launcher.py "$@"
+exec $PYTHON $INSTALL_PREFIX/share/cadence/src/claudia_launcher.py "$@"
