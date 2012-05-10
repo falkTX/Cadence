@@ -322,7 +322,7 @@ int osc_handle_configure(CarlaPlugin* plugin, lo_arg** argv)
 
 int osc_handle_control(CarlaPlugin* plugin, lo_arg** argv)
 {
-    qDebug("osc_handle_control()");
+    //qDebug("osc_handle_control()");
 
     int32_t rindex = argv[0]->i;
     double value   = argv[1]->f;

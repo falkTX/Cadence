@@ -134,29 +134,18 @@ const char* lv2bridge2str(LV2_Property type)
 {
     switch (type)
     {
+#ifndef BUILD_BRIDGE
     case LV2_UI_GTK2:
         return carla_options.bridge_lv2gtk2;
     case LV2_UI_QT4:
         return carla_options.bridge_lv2qt4;
     case LV2_UI_X11:
         return carla_options.bridge_lv2x11;
+#endif
     default:
         return nullptr;
     }
 }
-
-#if 1
-short add_plugin_lv2(const char* filename, const char* label);
-
-int main()
-{
-    short id = add_plugin_lv2("/usr/lib/lv2/Bitcrusher.lv2", "urn:distrho:Bitcrusher");
-    set_active(id, true);
-    remove_plugin(id);
-    //carla_log_printf(nullptr, CARLA_URI_MAP_ID_LOG_ERROR, "%s aaa %i", "ola", 90);
-    return 0;
-}
-#endif
 
 class Lv2Plugin : public CarlaPlugin
 {
@@ -219,6 +208,7 @@ public:
             case GUI_INTERNAL_X11:
                 break;
 
+#ifndef BUILD_BRIDGE
             case GUI_EXTERNAL_OSC:
                 if (osc.data.target)
                 {
@@ -247,6 +237,7 @@ public:
                 osc_clear_data(&osc.data);
 
                 break;
+#endif
 
             case GUI_EXTERNAL_LV2:
                 if (gui.visible && ui.widget)
@@ -595,9 +586,11 @@ public:
                 }
                 break;
 
+#ifndef BUILD_BRIDGE
             case GUI_EXTERNAL_OSC:
                 osc_send_control(&osc.data, param.data[param_id].rindex, value);
                 break;
+#endif
 
             default:
                 break;
@@ -717,6 +710,7 @@ public:
 
             break;
 
+#ifndef BUILD_BRIDGE
         case GUI_EXTERNAL_OSC:
             if (yesno)
             {
@@ -729,6 +723,7 @@ public:
                 osc_clear_data(&osc.data);
             }
             break;
+#endif
 
         case GUI_EXTERNAL_LV2:
             if (ui.handle == nullptr)
@@ -2426,22 +2421,28 @@ public:
                                             switch (rdf_descriptor->UIs[i].Type)
                                             {
                                             case LV2_UI_QT4:
+#ifndef BUILD_BRIDGE
                                                 if (is_ui_bridgeable(i))
                                                     eQt4 = i;
                                                 else
+#endif
                                                     iQt4 = i;
                                                 break;
 
                                             case LV2_UI_X11:
+#ifndef BUILD_BRIDGE
                                                 if (is_ui_bridgeable(i))
                                                     eX11 = i;
                                                 else
+#endif
                                                     iX11 = i;
                                                 break;
 
+#ifndef BUILD_BRIDGE
                                             case LV2_UI_GTK2:
                                                 eGtk2 = i;
                                                 break;
+#endif
 
                                             case LV2_UI_EXTERNAL:
                                             case LV2_UI_OLD_EXTERNAL:
@@ -2466,7 +2467,9 @@ public:
                                         else if (iExt >= 0)
                                             iFinal = iExt;
 
+#ifndef BUILD_BRIDGE
                                         bool is_bridged = (iFinal == eQt4 || iFinal == eX11 || iFinal == eGtk2);
+#endif
 
                                         // Use proper UI now
                                         if (iFinal >= 0)
@@ -2507,6 +2510,7 @@ public:
                                                             QString gui_title = QString("%1 (GUI)").arg(m_name);
                                                             LV2_Property UiType = ui.rdf_descriptor->Type;
 
+#ifndef BUILD_BRIDGE
                                                             if (is_bridged)
                                                             {
                                                                 const char* osc_binary = lv2bridge2str(UiType);
@@ -2519,6 +2523,7 @@ public:
                                                                 }
                                                             }
                                                             else
+#endif
                                                             {
                                                                 // Initialize UI features
                                                                 LV2_Extension_Data_Feature* UI_Data_Feature    = new LV2_Extension_Data_Feature;
@@ -3237,9 +3242,7 @@ short add_plugin_lv2(const char* filename, const char* label)
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-#ifndef BUILD_BRIDGE
             plugin->osc_global_register_new();
-#endif
         }
         else
         {

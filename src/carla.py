@@ -3011,18 +3011,18 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         build = plugin['build']
         ptype = plugin['type']
 
-        if (build != BINARY_NATIVE):
+        if (build != BINARY_NATIVE or True):
             # Store object so we can return a pointer
             if (self.m_bridge_info == None):
                 self.m_bridge_info = PluginBridgeInfo()
-            self.m_bridge_info.category = plugin['category']
-            self.m_bridge_info.hints = plugin['hints']
-            self.m_bridge_info.name = plugin['name'].encode("utf-8")
-            self.m_bridge_info.maker = plugin['maker'].encode("utf-8")
+            self.m_bridge_info.category  = plugin['category']
+            self.m_bridge_info.hints     = plugin['hints']
+            self.m_bridge_info.name      = plugin['name'].encode("utf-8")
+            self.m_bridge_info.maker     = plugin['maker'].encode("utf-8")
             self.m_bridge_info.unique_id = plugin['unique_id']
-            self.m_bridge_info.ains = plugin['audio.ins']
+            self.m_bridge_info.ains  = plugin['audio.ins']
             self.m_bridge_info.aouts = plugin['audio.outs']
-            self.m_bridge_info.mins = plugin['midi.ins']
+            self.m_bridge_info.mins  = plugin['midi.ins']
             self.m_bridge_info.mouts = plugin['midi.outs']
             return pointer(self.m_bridge_info)
 
@@ -3437,7 +3437,7 @@ if __name__ == '__main__':
     if (carla_bridge_unix32):
         CarlaHost.set_option(OPTION_PATH_BRIDGE_UNIX32, 0, carla_bridge_unix32)
 
-    if (carla_bridge_unix32):
+    if (carla_bridge_unix64):
         CarlaHost.set_option(OPTION_PATH_BRIDGE_UNIX64, 0, carla_bridge_unix64)
 
     if (carla_bridge_win32):

@@ -123,8 +123,8 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
         return osc_handle_control(argv);
     else if (strcmp(method, "program") == 0)
         return osc_handle_program(argv);
-//    else if (strcmp(method, "midi_program") == 0)
-//        return osc_midi_program_handler(argv);
+    else if (strcmp(method, "midi_program") == 0)
+        return osc_handle_midi_program(argv);
 //    else if (strcmp(method, "note_on") == 0)
 //        return osc_note_on_handler(argv);
 //    else if (strcmp(method, "note_off") == 0)
@@ -135,7 +135,7 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
         return osc_handle_hide();
     else if (strcmp(method, "quit") == 0)
         return osc_handle_quit();
-#ifdef WANT_EXTRA_OSC_SUPPORT
+#if 0
     else if (strcmp(method, "set_parameter_midi_channel") == 0)
         return osc_set_parameter_midi_channel_handler(argv);
     else if (strcmp(method, "set_parameter_midi_cc") == 0)
@@ -175,6 +175,24 @@ int osc_handle_program(lo_arg** argv)
 #else
     if (CarlaPlugins[0])
         CarlaPlugins[0]->set_program(index, false, true, true, true);
+#endif
+
+    return 0;
+}
+
+int osc_handle_midi_program(lo_arg** argv)
+{
+    int bank    = argv[0]->i;
+    int program = argv[1]->i;
+
+#ifdef BUILD_BRIDGE_UI
+    //if (ui && index >= 0)
+    //    ui->queque_message(BRIDGE_MESSAGE_MIDI_PROGRAM, index, 0, 0.0);
+    (void)bank;
+    (void)program;
+#else
+    if (CarlaPlugins[0])
+        CarlaPlugins[0]->set_midi_program_full(bank, program, false, true, true, true);
 #endif
 
     return 0;
@@ -261,6 +279,94 @@ void osc_send_bridge_aouts_peak(int index, double value)
         strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/bridge_aouts_peak");
         lo_send(global_osc_data.target, target_path, "if", index, value);
+    }
+}
+
+void osc_send_bridge_audio_count(int ins, int outs, int total)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+20];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/bridge_audio_count");
+        lo_send(global_osc_data.target, target_path, "iii", ins, outs, total);
+    }
+}
+
+void osc_send_bridge_midi_count(int ins, int outs, int total)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+19];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/bridge_midi_count");
+        lo_send(global_osc_data.target, target_path, "iii", ins, outs, total);
+    }
+}
+
+void osc_send_bridge_param_count(int ins, int outs, int total)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+20];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/bridge_param_count");
+        lo_send(global_osc_data.target, target_path, "iii", ins, outs, total);
+    }
+}
+
+void osc_send_bridge_plugin_info(int type, int category, int hints, const char* name, const char* label, const char* maker, const char* copyright, long unique_id)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+20];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/bridge_plugin_info");
+        lo_send(global_osc_data.target, target_path, "iiissssh", type, category, hints, name, label, maker, copyright, unique_id);
+    }
+}
+
+void osc_send_bridge_param_info(int index, const char* name, const char* unit)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+19];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/bridge_param_info");
+        lo_send(global_osc_data.target, target_path, "iss", index, name, unit);
+    }
+}
+
+void osc_send_bridge_param_data(int type, int index, int rindex, int hints, int midi_channel, int midi_cc)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+19];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/bridge_param_data");
+        lo_send(global_osc_data.target, target_path, "iiiiii", type, index, rindex, hints, midi_channel, midi_cc);
+    }
+}
+
+void osc_send_bridge_param_ranges(int index, double def, double min, double max, double step, double step_small, double step_large)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+21];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/bridge_param_ranges");
+        lo_send(global_osc_data.target, target_path, "iffffff", index, def, min, max, step, step_small, step_large);
+    }
+}
+
+void osc_send_bridge_update()
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+14];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/bridge_update");
+        lo_send(global_osc_data.target, target_path, "");
     }
 }
 

@@ -1252,7 +1252,7 @@ public:
                                 m_hints |= PLUGIN_HAS_GUI;
                             }
 #else
-                            Q_UNUSED(extra_stuff);
+                            Q_UNUSED(gui_filename);
 #endif
                             return true;
                         }
@@ -1301,9 +1301,7 @@ short add_plugin_dssi(const char* filename, const char* label, const void* extra
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-#ifndef BUILD_BRIDGE
             plugin->osc_global_register_new();
-#endif
         }
         else
         {

@@ -927,7 +927,7 @@ public:
         m_active_before = m_active;
     }
 
-    virtual void delete_buffers()
+    void delete_buffers()
     {
         qDebug("LadspaPlugin::delete_buffers() - start");
 
@@ -1018,9 +1018,7 @@ short add_plugin_ladspa(const char* filename, const char* label, const void* ext
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-#ifndef BUILD_BRIDGE
             plugin->osc_global_register_new();
-#endif
         }
         else
         {

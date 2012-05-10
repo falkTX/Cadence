@@ -384,14 +384,14 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
 
     @pyqtSlot()
     def slot_resetSettings(self):
-        if self.lw_page.currentIndex() == TAB_INDEX_MAIN:
+        if self.lw_page.currentRow() == TAB_INDEX_MAIN:
             self.le_main_def_folder.setText(SETTINGS_DEFAULT_PROJECT_FOLDER)
             self.cb_tray_enable.setChecked(self.ms_UseSystemTray)
             self.cb_tray_close_to.setChecked(self.ms_CloseToTray)
             self.sb_gui_refresh.setValue(self.ms_RefreshInterval)
             self.cb_jack_port_alias.setCurrentIndex(2)
 
-        elif self.lw_page.currentIndex() == TAB_INDEX_CANVAS:
+        elif self.lw_page.currentRow() == TAB_INDEX_CANVAS:
             self.cb_canvas_theme.setCurrentIndex(0)
             self.cb_canvas_hide_groups.setChecked(self.ms_AutoHideGroups)
             self.cb_canvas_bezier_lines.setChecked(True)
@@ -401,18 +401,18 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             self.cb_canvas_render_text_aa.setChecked(True)
             self.cb_canvas_render_hq_aa.setChecked(False)
 
-        elif self.lw_page.currentIndex() == TAB_INDEX_LADISH:
+        elif self.lw_page.currentRow() == TAB_INDEX_LADISH:
             self.cb_ladish_notify.setChecked(LADISH_CONF_KEY_DAEMON_NOTIFY_DEFAULT)
             self.cb_ladish_studio_autostart.setChecked(LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART_DEFAULT)
             self.le_ladish_shell.setText(LADISH_CONF_KEY_DAEMON_SHELL_DEFAULT)
             self.le_ladish_terminal.setText(LADISH_CONF_KEY_DAEMON_TERMINAL_DEFAULT)
 
-        elif self.lw_page.currentIndex() == TAB_INDEX_CARLA_ENGINE:
+        elif self.lw_page.currentRow() == TAB_INDEX_CARLA_ENGINE:
             self.ch_engine_global_client.setChecked(False)
             self.ch_engine_dssi_chunks.setChecked(False)
             self.ch_engine_prefer_bridges.setChecked(True)
 
-        elif self.lw_page.currentIndex() == TAB_INDEX_CARLA_PATHS:
+        elif self.lw_page.currentRow() == TAB_INDEX_CARLA_PATHS:
             ladspas, dssis, lv2s, vsts, sf2s = SETTINGS_DEFAULT_PLUGINS_PATHS
 
             if self.tw_paths.currentIndex() == 0:

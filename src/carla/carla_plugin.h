@@ -20,10 +20,13 @@
 
 #include "carla_jack.h"
 #include "carla_midi.h"
-#include "carla_osc.h"
 #include "carla_shared.h"
 
-#ifndef BUILD_BRIDGE
+#ifdef BUILD_BRIDGE
+#include <QtCore/QThread>
+#include "../carla-bridge/carla_osc.h"
+#else
+#include "carla_osc.h"
 #include "carla_threads.h"
 #endif
 
@@ -467,9 +470,10 @@ public:
     void set_active(bool active, bool osc_send, bool callback_send)
     {
         m_active = active;
-        double value = active ? 1.0 : 0.0;
 
 #ifndef BUILD_BRIDGE
+        double value = active ? 1.0 : 0.0;
+
         if (osc_send)
         {
             osc_global_send_set_parameter_value(m_id, PARAMETER_ACTIVE, value);
@@ -593,7 +597,7 @@ public:
     virtual void set_parameter_value(uint32_t param_id, double value, bool /*gui_send*/, bool osc_send, bool callback_send)
     {
 #ifndef BUILD_BRIDGE
-        if (osc_send)
+        if (osc_send && param.data[param_id].type == PARAMETER_INPUT)
         {
             osc_global_send_set_parameter_value(m_id, param_id, value);
 
@@ -613,6 +617,20 @@ public:
 
     void set_parameter_value_rindex(int32_t rindex, double value, bool gui_send, bool osc_send, bool callback_send)
     {
+        if (m_hints & PLUGIN_IS_BRIDGE)
+        {
+            if (rindex == PARAMETER_ACTIVE)
+                return set_active(value > 0.0, osc_send, callback_send);
+            else if (rindex == PARAMETER_DRYWET)
+                return set_drywet(value, osc_send, callback_send);
+            else if (rindex == PARAMETER_VOLUME)
+                return set_volume(value, osc_send, callback_send);
+            else if (rindex == PARAMETER_BALANCE_LEFT)
+                return set_balance_left(value, osc_send, callback_send);
+            else if (rindex == PARAMETER_BALANCE_LEFT)
+                return set_balance_right(value, osc_send, callback_send);
+        }
+
         for (uint32_t i=0; i < param.count; i++)
         {
             if (param.data[i].rindex == rindex)
@@ -761,6 +779,15 @@ public:
             if (osc_send)
                 osc_global_send_set_default_value(m_id, i, param.ranges[i].def);
 #endif
+        }
+    }
+
+    void set_midi_program_full(uint32_t bank_id, uint32_t program_id, bool gui_send, bool osc_send, bool callback_send, bool block)
+    {
+        for (uint32_t i=0; i < midiprog.count; i++)
+        {
+            if (midiprog.data[i].bank == bank_id && midiprog.data[i].program == program_id)
+                return set_midi_program(i, gui_send, osc_send, callback_send, block);
         }
     }
 
@@ -921,9 +948,38 @@ public:
         return 1;
     }
 
-#ifndef BUILD_BRIDGE
     void osc_global_register_new()
     {
+#ifdef BUILD_BRIDGE
+        // Base data
+        //const PluginInfo* info = get_plugin_info(m_id);
+        //osc_send_bridge_plugin_info(m_type, category(), m_hints, get_real_plugin_name(m_id), info->label, info->maker, info->copyright, unique_id());
+
+        osc_send_bridge_audio_count(ain_count(), aout_count(), ain_count() + aout_count());
+        osc_send_bridge_midi_count(min_count(), mout_count(), min_count() + mout_count());
+
+        PortCountInfo param_info = { false, 0, 0, 0 };
+        get_parameter_count_info(&param_info);
+        osc_send_bridge_param_count(param_info.ins, param_info.outs, param_info.total);
+
+        // Parameters
+        uint32_t i;
+        char buf_name[STR_MAX], buf_unit[STR_MAX];
+
+        if (param.count > 0 && param.count < MAX_PARAMETERS)
+        {
+            for (i=0; i < param.count; i++)
+            {
+                get_parameter_name(i, buf_name);
+                get_parameter_unit(i, buf_unit);
+                osc_send_bridge_param_info(i, buf_name, buf_unit);
+                osc_send_bridge_param_data(param.data[i].type, i, param.data[i].rindex, param.data[i].hints, param.data[i].midi_channel, param.data[i].midi_cc);
+                osc_send_bridge_param_ranges(i, param.ranges[i].def, param.ranges[i].min, param.ranges[i].max, param.ranges[i].step, param.ranges[i].step_small, param.ranges[i].step_large);
+
+                set_parameter_value(i, param.ranges[i].def, false, false, false);
+            }
+        }
+#else
         if (osc_global_registered())
         {
             // Base data
@@ -972,8 +1028,10 @@ public:
 
             osc_global_send_set_midi_program(m_id, midiprog.current);
         }
+#endif
     }
 
+#ifndef BUILD_BRIDGE
     void update_osc_data(lo_address source, const char* url)
     {
         const char* host;

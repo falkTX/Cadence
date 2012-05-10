@@ -52,7 +52,7 @@
 #  define P_SIZE    "%lu"
 #else
 #  define P_INTPTR  "%i"
-#  define P_UINTPTR "%lu"
+#  define P_UINTPTR "%u"
 #  define P_SIZE    "%u"
 #endif
 

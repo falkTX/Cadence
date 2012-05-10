@@ -1804,9 +1804,7 @@ short add_plugin_vst(const char* filename, const char* label)
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-#ifndef BUILD_BRIDGE
             plugin->osc_global_register_new();
-#endif
         }
         else
         {

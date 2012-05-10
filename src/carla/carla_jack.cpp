@@ -240,6 +240,7 @@ bool carla_jack_register_plugin(CarlaPlugin* plugin, jack_client_t** client)
 
         jack_set_buffer_size_callback(*client, carla_jack_bufsize_callback, nullptr);
         jack_set_sample_rate_callback(*client, carla_jack_srate_callback, nullptr);
+        jack_set_freewheel_callback(*client, carla_jack_freewheel_callback, nullptr);
         jack_set_process_callback(*client, carla_jack_process_callback, nullptr);
         jack_on_shutdown(*client, carla_jack_shutdown_callback, nullptr);
 #else

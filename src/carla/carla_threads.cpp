@@ -158,7 +158,7 @@ void CarlaCheckThread::run()
                 // Update ports
 
                 // Check if it needs update
-                bool update_ports_gui = (osc_data->target != nullptr);
+                bool update_ports_gui = (osc_data->target != nullptr && (plugin->hints() != PLUGIN_IS_BRIDGE) == 0);
 
                 if (osc_global_registered() == false && update_ports_gui == false)
                     continue;

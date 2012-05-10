@@ -1,9 +1,12 @@
 # QtCreator project file
 
-CONFIG = warn_on qt release
+QT = core gui
+
+CONFIG   += warn_on qt debug link_pkgconfig
+PKGCONFIG = jack liblo fluidsynth
 
 TEMPLATE = app
-VERSION = 0.5.0
+VERSION  = 0.5.0
 
 SOURCES = \
     ../carla_bridge.cpp \
@@ -12,7 +15,9 @@ SOURCES = \
     ../../carla/carla_shared.cpp \
     ../../carla/ladspa.cpp \
     ../../carla/dssi.cpp \
-    ../../carla/vst.cpp
+    ../../carla/lv2.cpp \
+    ../../carla/vst.cpp \
+    ../../carla/lv2-rtmempool/rtmempool.c
 
 HEADERS = \
     ../carla_osc.h \
@@ -24,11 +29,14 @@ HEADERS = \
 
 INCLUDEPATH = .. \
     ../../carla-includes \
-    ../../carla-includes/vestige \
+#    ../../carla-includes/vestige \
+    ../../carla-includes/vst \
     ../../carla
 
 TARGET  = carla-bridge-qtcreator
 
-DEFINES = VESTIGE_HEADER BUILD_BRIDGE
+DEFINES = BUILD_BRIDGE
 
-LIBS += -ldl -ljack -llo
+LIBS    = ../../carla-lilv/carla_lilv.a
+
+QMAKE_CXXFLAGS *= -std=c++0x

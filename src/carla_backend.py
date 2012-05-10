@@ -65,29 +65,29 @@ if WINDOWS:
         print("COMMONPROGRAMFILES variable not set, cannot continue")
         sys.exit(1)
 
-    DEFAULT_LADSPA_PATH = (
+    DEFAULT_LADSPA_PATH = [
         os.path.join(APPDATA, "LADSPA"),
         os.path.join(PROGRAMFILES, "LADSPA")
-    )
+    ]
 
-    DEFAULT_DSSI_PATH = (
+    DEFAULT_DSSI_PATH = [
         os.path.join(APPDATA, "DSSI"),
         os.path.join(PROGRAMFILES, "DSSI")
-    )
+    ]
 
-    DEFAULT_LV2_PATH = (
+    DEFAULT_LV2_PATH = [
         os.path.join(APPDATA, "LV2"),
         os.path.join(COMMONPROGRAMFILES, "LV2")
-    )
+    ]
 
-    DEFAULT_VST_PATH = (
+    DEFAULT_VST_PATH = [
         os.path.join(PROGRAMFILES, "VstPlugins"),
         os.path.join(PROGRAMFILES, "Steinberg", "VstPlugins")
-    )
+    ]
 
-    DEFAULT_SF2_PATH = (
+    DEFAULT_SF2_PATH = [
         os.path.join(APPDATA, "SF2"),
-    )
+    ]
 
     #if (is64bit):
     # TODO
@@ -95,61 +95,61 @@ if WINDOWS:
 elif MACOS:
     splitter = ":"
 
-    DEFAULT_LADSPA_PATH = (
+    DEFAULT_LADSPA_PATH = [
         os.path.join(HOME, "Library", "Audio", "Plug-Ins", "LADSPA"),
         os.path.join("/", "Library", "Audio", "Plug-Ins", "LADSPA")
-    )
+    ]
 
-    DEFAULT_DSSI_PATH = (
+    DEFAULT_DSSI_PATH = [
         os.path.join(HOME, "Library", "Audio", "Plug-Ins", "DSSI"),
         os.path.join("/", "Library", "Audio", "Plug-Ins", "DSSI")
-    )
+    ]
 
-    DEFAULT_LV2_PATH = (
+    DEFAULT_LV2_PATH = [
         os.path.join(HOME, "Library", "Audio", "Plug-Ins", "LV2"),
         os.path.join("/", "Library", "Audio", "Plug-Ins", "LV2")
-    )
+    ]
 
-    DEFAULT_VST_PATH = (
+    DEFAULT_VST_PATH = [
         os.path.join(HOME, "Library", "Audio", "Plug-Ins", "VST"),
         os.path.join("/", "Library", "Audio", "Plug-Ins", "VST")
-    )
+    ]
 
-    DEFAULT_SF2_PATH = (
+    DEFAULT_SF2_PATH = [
         # TODO
-    )
+    ]
 
 else:
     splitter = ":"
 
-    DEFAULT_LADSPA_PATH = (
+    DEFAULT_LADSPA_PATH = [
         os.path.join(HOME, ".ladspa"),
         os.path.join("/", "usr", "lib", "ladspa"),
         os.path.join("/", "usr", "local", "lib", "ladspa")
-    )
+    ]
 
-    DEFAULT_DSSI_PATH = (
+    DEFAULT_DSSI_PATH = [
         os.path.join(HOME, ".dssi"),
         os.path.join("/", "usr", "lib", "dssi"),
         os.path.join("/", "usr", "local", "lib", "dssi")
-    )
+    ]
 
-    DEFAULT_LV2_PATH = (
+    DEFAULT_LV2_PATH = [
         os.path.join(HOME, ".lv2"),
         os.path.join("/", "usr", "lib", "lv2"),
         os.path.join("/", "usr", "local", "lib", "lv2")
-    )
+    ]
 
-    DEFAULT_VST_PATH = (
+    DEFAULT_VST_PATH = [
         os.path.join(HOME, ".vst"),
         os.path.join("/", "usr", "lib", "vst"),
         os.path.join("/", "usr", "local", "lib", "vst")
-    )
+    ]
 
-    DEFAULT_SF2_PATH = (
+    DEFAULT_SF2_PATH = [
         os.path.join(HOME, ".sounds"),
         os.path.join("/", "usr", "share", "sounds", "sf2")
-    )
+    ]
 
 # ------------------------------------------------------------------------------------------------
 # Search for Carla library and tools

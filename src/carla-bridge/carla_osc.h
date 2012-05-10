@@ -38,6 +38,7 @@ int  osc_message_handler(const char* path, const char* types, lo_arg** argv, int
 // common plugin handlers
 int osc_handle_control(lo_arg** argv);
 int osc_handle_program(lo_arg** argv);
+int osc_handle_midi_program(lo_arg** argv);
 int osc_handle_show();
 int osc_handle_hide();
 int osc_handle_quit();
@@ -47,6 +48,18 @@ void osc_send_update();
 void osc_send_exiting();
 void osc_send_bridge_ains_peak(int index, double value);
 void osc_send_bridge_aouts_peak(int index, double value);
+void osc_send_bridge_audio_count(int ins, int outs, int total);
+void osc_send_bridge_midi_count(int ins, int outs, int total);
+void osc_send_bridge_param_count(int ins, int outs, int total);
+//void osc_send_bridge_program_count();
+//void osc_send_bridge_midi_program_count();
+void osc_send_bridge_plugin_info(int type, int category, int hints, const char* name, const char* label, const char* maker, const char* copyright, long unique_id);
+void osc_send_bridge_param_info(int index, const char* name, const char* unit);
+void osc_send_bridge_param_data(int type, int index, int rindex, int hints, int midi_channel, int midi_cc);
+void osc_send_bridge_param_ranges(int index, double def, double min, double max, double step, double step_small, double step_large);
+//void osc_send_bridge_program_info();
+//void osc_send_bridge_midi_program_info();
+void osc_send_bridge_update();
 
 // common plugin calls
 void osc_send_configure(OscData* osc_data, const char* key, const char* value);

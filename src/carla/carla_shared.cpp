@@ -138,7 +138,7 @@ const char* get_unique_name(const char* name)
         qname = "(No name)";
 
     qname.truncate(max_client_name_size);
-    //qname.replace(":", "."); // ":" is used in JACK to split client/port names
+    qname.replace(":", "."); // ":" is used in JACK to split client/port names
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
