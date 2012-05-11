@@ -748,8 +748,7 @@ class PluginRefreshW(QDialog, ui_carla_refresh.Ui_PluginRefreshW):
             bins.append(carla_discovery_win64)
 
         self.pThread.setSearchBins(bins)
-        self.pThread.setSearchTypes(self.ch_ladspa.isChecked(), self.ch_dssi.isChecked(), self.ch_lv2.isChecked(),
-            self.ch_vst.isChecked(), self.ch_sf2.isChecked())
+        self.pThread.setSearchTypes(self.ch_ladspa.isChecked(), self.ch_dssi.isChecked(), self.ch_lv2.isChecked(), self.ch_vst.isChecked(), self.ch_sf2.isChecked())
         self.pThread.start()
 
     @pyqtSlot()
@@ -988,10 +987,9 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         lastLoadedPlugin = self.settings_db.value("Plugins/LastLoadedBinary", "", type=str)
         if (lastLoadedPlugin):
             lastLoadedPlugin = getShortFileName(lastLoadedPlugin)
-            ask = QMessageBox.question(self, self.tr("Warning"), self.tr(""
-                                                                         "There was an error while checking the plugin %s.\n"
-                                                                         "Do you want to blacklist it?" % (
-                lastLoadedPlugin)), QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+            ask = QMessageBox.question(self, self.tr("Warning"), self.tr("There was an error while checking the plugin %s.\n"
+                                                                         "Do you want to blacklist it?" % (lastLoadedPlugin)),
+                                                                         QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
 
             if (ask == QMessageBox.Yes):
                 blacklist = toList(self.settings_db.value("Plugins/Blacklisted", []))
@@ -1045,19 +1043,19 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
             self.tableWidget.showRow(i)
 
             plugin = self.tableWidget.item(i, 0).plugin_data
-            ains = plugin['audio.ins']
-            aouts = plugin['audio.outs']
-            mins = plugin['midi.ins']
-            mouts = plugin['midi.outs']
-            ptype = self.tableWidget.item(i, 12).text()
-            is_synth = bool(plugin['hints'] & PLUGIN_IS_SYNTH)
+            ains   = plugin['audio.ins']
+            aouts  = plugin['audio.outs']
+            mins   = plugin['midi.ins']
+            mouts  = plugin['midi.outs']
+            ptype  = self.tableWidget.item(i, 12).text()
+            is_synth  = bool(plugin['hints'] & PLUGIN_IS_SYNTH)
             is_effect = bool(ains > 0 < aouts and not is_synth)
-            is_midi = bool(ains == 0 and aouts == 0 and mins > 0 < mouts)
-            is_sf2 = bool(ptype == "SF2")
-            is_other = bool(not (is_effect or is_synth or is_midi or is_sf2))
+            is_midi   = bool(ains == 0 and aouts == 0 and mins > 0 < mouts)
+            is_sf2    = bool(ptype == "SF2")
+            is_other  = bool(not (is_effect or is_synth or is_midi or is_sf2))
             is_native = bool(plugin['build'] == BINARY_NATIVE)
             is_stereo = bool(ains == 2 and aouts == 2) or (is_synth and aouts == 2)
-            has_gui = bool(plugin['hints'] & PLUGIN_HAS_GUI)
+            has_gui   = bool(plugin['hints'] & PLUGIN_HAS_GUI)
 
             is_bridged = bool(not is_native and plugin['build'] in native_bins)
             is_bridged_wine = bool(not is_native and plugin['build'] in wine_bins)
@@ -1095,8 +1093,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
                 text in self.tableWidget.item(i, 1).text().lower() or
                 text in self.tableWidget.item(i, 2).text().lower() or
                 text in self.tableWidget.item(i, 3).text().lower() or
-                text in self.tableWidget.item(i, 13).text().lower())
-                ):
+                text in self.tableWidget.item(i, 13).text().lower())):
                 self.tableWidget.hideRow(i)
 
     def saveSettings(self):
@@ -1180,30 +1177,33 @@ class AboutW(QDialog, ui_carla_about.Ui_AboutW):
 
         self.l_ladspa.setText(self.tr("Everything! (Including LRDF)"))
         self.l_dssi.setText(self.tr("Everything! (Including CustomData/Chunks)"))
-        self.l_lv2.setText(self.tr("About 95&#37; complete (missing state files and other minor features).<br/>"
+        self.l_lv2.setText(self.tr("About 95&#37; complete (only missing minor features).<br/>"
                                    "Implemented Feature/Extensions:"
                                    "<ul>"
-        #"<li>http://lv2plug.in/ns/ext/cv-port</li>"
-        #"<li>http://lv2plug.in/ns/ext/data-access</li>"
-        #"<li>http://lv2plug.in/ns/ext/event</li>"
-        #"<li>http://lv2plug.in/ns/ext/host-info</li>"
-        #"<li>http://lv2plug.in/ns/ext/instance-access</li>"
-        #"<li>http://lv2plug.in/ns/ext/midi</li>"
-        #"<li>http://lv2plug.in/ns/ext/port-props</li>"
-        #"<li>http://lv2plug.in/ns/ext/presets</li>"
-        #"<li>http://lv2plug.in/ns/ext/state (not files)</li>"
-        #"<li>http://lv2plug.in/ns/ext/time</li>"
-        #"<li>http://lv2plug.in/ns/ext/ui-resize</li>"
-        #"<li>http://lv2plug.in/ns/ext/uri-map</li>"
-        #"<li>http://lv2plug.in/ns/ext/urid</li>"
-        #"<li>http://lv2plug.in/ns/extensions/units</li>"
-        #"<li>http://lv2plug.in/ns/extensions/ui</li>"
-        #"<li>http://ll-plugins.nongnu.org/lv2/ext/midimap</li>"
-        #"<li>http://home.gna.org/lv2dynparam/rtmempool/v1</li>"
-        #"<li>http://nedko.arnaudov.name/lv2/external_ui/</li>"
-                                   "</ul>"
-                                   "<i>(Note that Gtk2 UIs with instance-access will not work, such as IR.lv2)</i>"))
-        self.l_vst.setText(self.tr("<p>About 75&#37; complete (missing MIDI-Output and some minor stuff)</p>"))
+                                   "<li>http://lv2plug.in/ns/ext/atom</li>"
+                                   "<li>http://lv2plug.in/ns/ext/data-access</li>"
+                                   "<li>http://lv2plug.in/ns/ext/event</li>"
+                                   "<li>http://lv2plug.in/ns/ext/instance-access</li>"
+                                   "<li>http://lv2plug.in/ns/ext/log</li>"
+                                   "<li>http://lv2plug.in/ns/ext/midi</li>"
+                                   #"<li>http://lv2plug.in/ns/ext/patch</li>"
+                                   "<li>http://lv2plug.in/ns/ext/port-props</li>"
+                                   #"<li>http://lv2plug.in/ns/ext/presets</li>"
+                                   "<li>http://lv2plug.in/ns/ext/state</li>"
+                                   #"<li>http://lv2plug.in/ns/ext/time</li>"
+                                   "<li>http://lv2plug.in/ns/ext/uri-map</li>"
+                                   "<li>http://lv2plug.in/ns/ext/urid</li>"
+                                   "<li>http://lv2plug.in/ns/ext/worker</li>"
+                                   "<li>http://lv2plug.in/ns/extensions/ui</li>"
+                                   "<li>http://lv2plug.in/ns/extensions/units</li>"
+                                   #"<li>http://home.gna.org/lv2dynparam/v1</li>"
+                                   "<li>http://home.gna.org/lv2dynparam/rtmempool/v1</li>"
+                                   "<li>http://kxstudio.sf.net/ns/lv2ext/programs</li>"
+                                   #"<li>http://ll-plugins.nongnu.org/lv2/ext/midimap</li>"
+                                   "<li>http://ll-plugins.nongnu.org/lv2/ext/miditype</li>"
+                                   "<li>http://nedko.arnaudov.name/lv2/external_ui/</li>"
+                                   "</ul>"))
+        self.l_vst.setText(self.tr("<p>About 85&#37; complete (missing vst bank/presets and some minor stuff)</p>"))
 
 # Single Plugin Parameter
 class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
@@ -1597,8 +1597,10 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
                 for j in range(param_info['scalepoint_count']):
                     scalepoint = CarlaHost.get_scalepoint_info(self.plugin_id, i, j)
-                    parameter['scalepoints'].append(
-                            {'value': scalepoint['value'], 'label': c_string(scalepoint['label'])})
+                    parameter['scalepoints'].append({
+                          'value': scalepoint['value'],
+                          'label': c_string(scalepoint['label'])
+                        })
 
                 # -----------------------------------------------------------------
                 # Get width values, in packs of 10
@@ -1847,8 +1849,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
     def slot_saveState(self):
         # TODO - LV2 and VST native formats
         if (self.state_filename):
-            ask_try = QMessageBox.question(self, self.tr("Overwrite?"), self.tr("Overwrite previously created file?"),
-                QMessageBox.Ok | QMessageBox.Cancel)
+            ask_try = QMessageBox.question(self, self.tr("Overwrite?"), self.tr("Overwrite previously created file?"), QMessageBox.Ok|QMessageBox.Cancel)
 
             if (ask_try == QMessageBox.Ok):
                 self.saveState_InternalFormat()
@@ -2277,8 +2278,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         # Current MIDI Program
 
         if (self.edit_dialog.cb_midi_programs.currentIndex() >= 0):
-            midi_program_info = CarlaHost.get_midi_program_info(self.plugin_id,
-                self.edit_dialog.cb_midi_programs.currentIndex())
+            midi_program_info = CarlaHost.get_midi_program_info(self.plugin_id, self.edit_dialog.cb_midi_programs.currentIndex())
             x_save_state_dict['CurrentMidiBank'] = midi_program_info['bank']
             x_save_state_dict['CurrentMidiProgram'] = midi_program_info['program']
 
@@ -2299,8 +2299,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             x_save_state_parameter['index'] = parameter_data['index']
             x_save_state_parameter['name'] = c_string(parameter_info['name'])
             x_save_state_parameter['symbol'] = c_string(parameter_info['symbol'])
-            x_save_state_parameter['value'] = CarlaHost.get_current_parameter_value(self.plugin_id,
-                parameter_data['index'])
+            x_save_state_parameter['value'] = CarlaHost.get_current_parameter_value(self.plugin_id, parameter_data['index'])
             x_save_state_parameter['midi_channel'] = parameter_data['midi_channel'] + 1
             x_save_state_parameter['midi_cc'] = parameter_data['midi_cc']
 

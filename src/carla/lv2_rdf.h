@@ -145,8 +145,9 @@ struct LV2_RDF_PortScalePoint {
 #define LV2_PORT_MIDI_LL                 0x100
 
 // Port Support Types
-#define LV2_PORT_SUPPORTS_MIDI           0x1000
-#define LV2_PORT_SUPPORTS_TIME           0x2000
+#define LV2_PORT_SUPPORTS_MIDI_EVENT     0x1000
+#define LV2_PORT_SUPPORTS_PATCH_MESSAGE  0x2000
+//#define LV2_PORT_SUPPORTS_TIME           0x4000 // TODO
 
 #define LV2_IS_PORT_INPUT(x)             ((x) & LV2_PORT_INPUT)
 #define LV2_IS_PORT_OUTPUT(x)            ((x) & LV2_PORT_OUTPUT)
@@ -518,8 +519,7 @@ public:
         atom_supports       (new_uri(LV2_ATOM__supports)),
 
         midi_event          (new_uri(LV2_MIDI__MidiEvent)),
-
-        time_position       (new_uri(LV2_TIME__Position)),
+        patch_message       (new_uri(LV2_PATCH__Message)),
 
         mm_default_control  (new_uri(NS_llmm "defaultMidiController")),
         mm_control_type     (new_uri(NS_llmm "controllerType")),
@@ -650,10 +650,11 @@ public:
     Lilv::Node atom_buffer_type;
     Lilv::Node atom_supports;
 
+    // Event Data/Types
     Lilv::Node midi_event;
+    Lilv::Node patch_message;
 
-    Lilv::Node time_position;
-
+    // MIDI CC
     Lilv::Node mm_default_control;
     Lilv::Node mm_control_type;
     Lilv::Node mm_control_number;
@@ -868,9 +869,9 @@ inline const LV2_RDF_Descriptor* lv2_rdf_new(const char* URI)
 
                         Lilv::Nodes supports(Port.get_value(Lv2World.atom_supports));
                         if (supports.contains(Lv2World.midi_event))
-                            RDF_Port->Type |= LV2_PORT_SUPPORTS_MIDI;
-                        if (supports.contains(Lv2World.time_position))
-                            RDF_Port->Type |= LV2_PORT_SUPPORTS_TIME;
+                            RDF_Port->Type |= LV2_PORT_SUPPORTS_MIDI_EVENT;
+                        if (supports.contains(Lv2World.patch_message))
+                            RDF_Port->Type |= LV2_PORT_SUPPORTS_PATCH_MESSAGE;
                     }
 
                     if (Port.is_a(Lv2World.port_event))
@@ -878,15 +879,13 @@ inline const LV2_RDF_Descriptor* lv2_rdf_new(const char* URI)
                         RDF_Port->Type |= LV2_PORT_EVENT;
 
                         if (Port.supports_event(Lv2World.midi_event))
-                            RDF_Port->Type |= LV2_PORT_SUPPORTS_MIDI;
-                        if (Port.supports_event(Lv2World.time_position))
-                            RDF_Port->Type |= LV2_PORT_SUPPORTS_TIME;
+                            RDF_Port->Type |= LV2_PORT_SUPPORTS_MIDI_EVENT;
                     }
 
                     if (Port.is_a(Lv2World.port_midi_ll))
                     {
                         RDF_Port->Type |= LV2_PORT_MIDI_LL;
-                        RDF_Port->Type |= LV2_PORT_SUPPORTS_MIDI;
+                        RDF_Port->Type |= LV2_PORT_SUPPORTS_MIDI_EVENT;
                     }
 
                     // ------------------------------------------

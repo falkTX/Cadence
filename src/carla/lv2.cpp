@@ -26,6 +26,7 @@
 #include "lv2/instance-access.h"
 #include "lv2/log.h"
 #include "lv2/midi.h"
+#include "lv2/patch.h"
 #include "lv2/port-props.h"
 #include "lv2/presets.h"
 #include "lv2/state.h"
@@ -95,8 +96,8 @@ const uint32_t lv2_feature_count                = 17;
 const unsigned int CARLA_EVENT_DATA_ATOM    = 0x01;
 const unsigned int CARLA_EVENT_DATA_EVENT   = 0x02;
 const unsigned int CARLA_EVENT_DATA_MIDI_LL = 0x04;
-const unsigned int CARLA_EVENT_TYPE_MIDI    = 0x10;
-const unsigned int CARLA_EVENT_TYPE_TIME    = 0x20; // FIXME
+const unsigned int CARLA_EVENT_TYPE_MESSAGE = 0x10;
+const unsigned int CARLA_EVENT_TYPE_MIDI    = 0x20;
 
 // pre-set uri[d] map ids
 const uint32_t CARLA_URI_MAP_ID_NULL           = 0;
@@ -1025,14 +1026,14 @@ public:
                     j = evin.count++;
                     descriptor->connect_port(handle, i, evin.data[j].buffer.a);
 
-                    if (PortType & LV2_PORT_SUPPORTS_MIDI)
+                    if (PortType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
                         evin.data[j].types |= CARLA_EVENT_TYPE_MIDI;
                         evin.data[j].port   = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
                     }
-                    if (PortType & LV2_PORT_SUPPORTS_TIME)
+                    if (PortType & LV2_PORT_SUPPORTS_PATCH_MESSAGE)
                     {
-                        evin.data[j].types |= CARLA_EVENT_TYPE_TIME;
+                        evin.data[j].types |= CARLA_EVENT_TYPE_MESSAGE;
                     }
                 }
                 else if (LV2_IS_PORT_OUTPUT(PortType))
@@ -1040,14 +1041,14 @@ public:
                     j = evout.count++;
                     descriptor->connect_port(handle, i, evout.data[j].buffer.a);
 
-                    if (PortType & LV2_PORT_SUPPORTS_MIDI)
+                    if (PortType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
                         evout.data[j].types |= CARLA_EVENT_TYPE_MIDI;
                         evout.data[j].port   = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
                     }
-                    if (PortType & LV2_PORT_SUPPORTS_TIME)
+                    if (PortType & LV2_PORT_SUPPORTS_PATCH_MESSAGE)
                     {
-                        evout.data[j].types |= CARLA_EVENT_TYPE_TIME;
+                        evout.data[j].types |= CARLA_EVENT_TYPE_MESSAGE;
                     }
                 }
                 else
@@ -1060,14 +1061,10 @@ public:
                     j = evin.count++;
                     descriptor->connect_port(handle, i, evin.data[j].buffer.e);
 
-                    if (PortType & LV2_PORT_SUPPORTS_MIDI)
+                    if (PortType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
                         evin.data[j].types |= CARLA_EVENT_TYPE_MIDI;
                         evin.data[j].port   = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
-                    }
-                    if (PortType & LV2_PORT_SUPPORTS_TIME)
-                    {
-                        evin.data[j].types |= CARLA_EVENT_TYPE_TIME;
                     }
                 }
                 else if (LV2_IS_PORT_OUTPUT(PortType))
@@ -1075,14 +1072,10 @@ public:
                     j = evout.count++;
                     descriptor->connect_port(handle, i, evout.data[j].buffer.e);
 
-                    if (PortType & LV2_PORT_SUPPORTS_MIDI)
+                    if (PortType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
                         evout.data[j].types |= CARLA_EVENT_TYPE_MIDI;
                         evout.data[j].port   = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
-                    }
-                    if (PortType & LV2_PORT_SUPPORTS_TIME)
-                    {
-                        evout.data[j].types |= CARLA_EVENT_TYPE_TIME;
                     }
                 }
                 else
