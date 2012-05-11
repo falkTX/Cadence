@@ -2937,11 +2937,13 @@ public:
 
                     if (dtype == CUSTOM_DATA_STRING)
                     {
+                        *size = strlen(string_data);
                         *type = CARLA_URI_MAP_ID_ATOM_STRING;
                         return string_data;
                     }
                     else if (dtype == CUSTOM_DATA_PATH)
                     {
+                        *size = strlen(string_data);
                         *type = CARLA_URI_MAP_ID_ATOM_PATH;
                         return string_data;
                     }

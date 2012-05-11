@@ -89,15 +89,7 @@ setDefaultProjectFolder(DEFAULT_PROJECT_FOLDER)
 setDefaultPluginsPaths(LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, SF2_PATH)
 
 def CustomDataType2String(dtype):
-    if dtype == CUSTOM_DATA_BOOL:
-        return "bool"
-    elif dtype == CUSTOM_DATA_INT:
-        return "int"
-    elif dtype == CUSTOM_DATA_LONG:
-        return "long"
-    elif dtype == CUSTOM_DATA_FLOAT:
-        return "float"
-    elif dtype == CUSTOM_DATA_STRING:
+    if dtype == CUSTOM_DATA_STRING:
         return "string"
     elif dtype == CUSTOM_DATA_PATH:
         return "path"
@@ -107,15 +99,7 @@ def CustomDataType2String(dtype):
         return "null"
 
 def CustomDataString2Type(stype):
-    if stype == "bool":
-        return CUSTOM_DATA_BOOL
-    elif stype == "int":
-        return CUSTOM_DATA_INT
-    elif stype == "long":
-        return CUSTOM_DATA_LONG
-    elif stype == "float":
-        return CUSTOM_DATA_FLOAT
-    elif stype == "string":
+    if stype == "string":
         return CUSTOM_DATA_STRING
     elif stype == "path":
         return CUSTOM_DATA_PATH
