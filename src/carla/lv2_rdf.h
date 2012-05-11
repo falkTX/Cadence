@@ -271,15 +271,15 @@ struct LV2_RDF_Feature {
 };
 
 // UI Types
-#define LV2_UI_X11                       0x1
-#define LV2_UI_GTK2                      0x2
-#define LV2_UI_QT4                       0x3
+#define LV2_UI_GTK2                      0x1
+#define LV2_UI_QT4                       0x2
+#define LV2_UI_X11                       0x3
 #define LV2_UI_EXTERNAL                  0x4
 #define LV2_UI_OLD_EXTERNAL              0x5
 
-#define LV2_IS_UI_X11(x)                 ((x) == LV2_UI_X11)
 #define LV2_IS_UI_GTK2(x)                ((x) == LV2_UI_GTK2)
 #define LV2_IS_UI_QT4(x)                 ((x) == LV2_UI_QT4)
+#define LV2_IS_UI_X11(x)                 ((x) == LV2_UI_X11)
 #define LV2_IS_UI_EXTERNAL(x)            ((x) == LV2_UI_EXTERNAL)
 #define LV2_IS_UI_OLD_EXTERNAL(x)        ((x) == LV2_UI_OLD_EXTERNAL)
 
@@ -521,9 +521,9 @@ public:
 
         time_position       (new_uri(LV2_TIME__Position)),
 
-        mm_default_controller (new_uri(NS_llmm "defaultMidiController")),
-        mm_controller_type    (new_uri(NS_llmm "controllerType")),
-        mm_controller_number  (new_uri(NS_llmm "controllerNumber")),
+        mm_default_control  (new_uri(NS_llmm "defaultMidiController")),
+        mm_control_type     (new_uri(NS_llmm "controllerType")),
+        mm_control_number   (new_uri(NS_llmm "controllerNumber")),
 
         dct_replaces        (new_uri(NS_dct "replaces")),
         doap_license        (new_uri(NS_doap "license")),
@@ -599,7 +599,7 @@ public:
     Lilv::Node pprop_not_on_gui;
     Lilv::Node pprop_trigger;
 
-    // Port Unit
+    // Unit Hints
     Lilv::Node unit_unit;
     Lilv::Node unit_name;
     Lilv::Node unit_render;
@@ -654,9 +654,9 @@ public:
 
     Lilv::Node time_position;
 
-    Lilv::Node mm_default_controller;
-    Lilv::Node mm_controller_type;
-    Lilv::Node mm_controller_number;
+    Lilv::Node mm_default_control;
+    Lilv::Node mm_control_type;
+    Lilv::Node mm_control_number;
 
     // Other
     Lilv::Node dct_replaces;
@@ -1713,15 +1713,21 @@ inline bool is_lv2_feature_supported(const char* uri)
         return true;
     else if (strcmp(uri, LV2_EVENT_URI) == 0)
         return true;
+    else if (strcmp(uri, LV2_LOG__log) == 0)
+        return true;
     else if (strcmp(uri, LV2_STATE__makePath) == 0)
-        return false; // TODO
+        return true;
     else if (strcmp(uri, LV2_STATE__mapPath) == 0)
-        return false; // TODO
+        return true;
     else if (strcmp(uri, LV2_URI_MAP_URI) == 0)
         return true;
     else if (strcmp(uri, LV2_URID__map) == 0)
         return true;
     else if (strcmp(uri, LV2_URID__unmap) == 0)
+        return true;
+    else if (strcmp(uri, LV2_WORKER__schedule) == 0)
+        return true;
+    else if (strcmp(uri, LV2_PROGRAMS__Host) == 0)
         return true;
     else if (strcmp(uri, LV2_RTSAFE_MEMORY_POOL_URI) == 0)
         return true;
@@ -1731,25 +1737,10 @@ inline bool is_lv2_feature_supported(const char* uri)
 
 inline bool is_lv2_ui_feature_supported(const char* uri)
 {
-    if (strcmp(uri, LV2_CORE__hardRTCapable) == 0)
-        return true;
-    else if (strcmp(uri, LV2_CORE__inPlaceBroken) == 0)
-        return true;
-    else if (strcmp(uri, LV2_CORE__isLive) == 0)
-        return true;
-    else if (strcmp(uri, LV2_EVENT_URI) == 0)
-        return true;
-    else if (strcmp(uri, LV2_STATE__makePath) == 0)
-        return false; // TODO
-    else if (strcmp(uri, LV2_STATE__mapPath) == 0)
-        return false; // TODO
-    else if (strcmp(uri, LV2_URI_MAP_URI) == 0)
-        return true;
-    else if (strcmp(uri, LV2_URID__map) == 0)
-        return true;
-    else if (strcmp(uri, LV2_URID__unmap) == 0)
-        return true;
-    else if (strcmp(uri, LV2_RTSAFE_MEMORY_POOL_URI) == 0)
+#ifndef LV2_UI_PREFIX
+#define LV2_UI_PREFIX "http://lv2plug.in/ns/extensions/ui#"
+#endif
+    if (is_lv2_feature_supported(uri))
         return true;
     else if (strcmp(uri, LV2_DATA_ACCESS_URI) == 0)
         return true;
@@ -1762,9 +1753,11 @@ inline bool is_lv2_ui_feature_supported(const char* uri)
     else if (strcmp(uri, LV2_UI__parent) == 0)
         return true;
     else if (strcmp(uri, LV2_UI__portMap) == 0)
-        return false; // TODO
+        return true;
     else if (strcmp(uri, LV2_UI__portSubscribe) == 0)
         return false; // TODO
+    else if (strcmp(uri, LV2_UI__resize) == 0)
+        return true;
     else if (strcmp(uri, LV2_UI__touch) == 0)
         return false; // TODO
     else if (strcmp(uri, LV2_UI_PREFIX "makeResident") == 0)
@@ -1779,14 +1772,14 @@ inline bool is_lv2_ui_feature_supported(const char* uri)
 
 inline const char* lv2_get_ui_uri(int UiType)
 {
-    switch(UiType)
+    switch (UiType)
     {
-    case LV2_UI_X11:
-        return LV2_UI__X11UI;
     case LV2_UI_GTK2:
         return LV2_UI__GtkUI;
     case LV2_UI_QT4:
         return LV2_UI__Qt4UI;
+    case LV2_UI_X11:
+        return LV2_UI__X11UI;
     case LV2_UI_EXTERNAL:
         return LV2_EXTERNAL_UI_URI;
     case LV2_UI_OLD_EXTERNAL:

@@ -99,6 +99,8 @@ def CustomDataType2String(dtype):
         return "float"
     elif dtype == CUSTOM_DATA_STRING:
         return "string"
+    elif dtype == CUSTOM_DATA_PATH:
+        return "path"
     elif dtype == CUSTOM_DATA_BINARY:
         return "binary"
     else:
@@ -115,6 +117,8 @@ def CustomDataString2Type(stype):
         return CUSTOM_DATA_FLOAT
     elif stype == "string":
         return CUSTOM_DATA_STRING
+    elif stype == "path":
+        return CUSTOM_DATA_PATH
     elif stype == "binary":
         return CUSTOM_DATA_BINARY
     else:

@@ -100,7 +100,8 @@ enum CustomDataType {
     CUSTOM_DATA_LONG    = 3,
     CUSTOM_DATA_FLOAT   = 4,
     CUSTOM_DATA_STRING  = 5,
-    CUSTOM_DATA_BINARY  = 6
+    CUSTOM_DATA_PATH    = 6,
+    CUSTOM_DATA_BINARY  = 7
 };
 
 enum GuiType {

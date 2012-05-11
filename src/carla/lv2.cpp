@@ -52,6 +52,12 @@ extern "C" {
 #include <QtGui/QDialog>
 #include <QtGui/QLayout>
 
+#if 1
+int main()
+{
+    return 0;
+}
+#endif
 // static max values
 const unsigned int MAX_EVENT_BUFFER = 8192; // 0x2000
 
@@ -68,20 +74,22 @@ const unsigned int PARAMETER_IS_STRICT_BOUNDS    = 0x2000;
 // feature ids
 const uint32_t lv2_feature_id_event             = 0;
 const uint32_t lv2_feature_id_logs              = 1;
-const uint32_t lv2_feature_id_uri_map           = 2;
-const uint32_t lv2_feature_id_urid_map          = 3;
-const uint32_t lv2_feature_id_urid_unmap        = 4;
-const uint32_t lv2_feature_id_worker            = 5;
-const uint32_t lv2_feature_id_programs          = 6;
-const uint32_t lv2_feature_id_rtmempool         = 7;
-const uint32_t lv2_feature_id_data_access       = 8;
-const uint32_t lv2_feature_id_instance_access   = 9;
-const uint32_t lv2_feature_id_ui_parent         = 10;
-const uint32_t lv2_feature_id_ui_port_map       = 11;
-const uint32_t lv2_feature_id_ui_resize         = 12;
-const uint32_t lv2_feature_id_external_ui       = 13;
-const uint32_t lv2_feature_id_external_ui_old   = 14;
-const uint32_t lv2_feature_count                = 15;
+const uint32_t lv2_feature_id_state_make_path   = 2;
+const uint32_t lv2_feature_id_state_map_path    = 3;
+const uint32_t lv2_feature_id_uri_map           = 4;
+const uint32_t lv2_feature_id_urid_map          = 5;
+const uint32_t lv2_feature_id_urid_unmap        = 6;
+const uint32_t lv2_feature_id_worker            = 7;
+const uint32_t lv2_feature_id_programs          = 8;
+const uint32_t lv2_feature_id_rtmempool         = 9;
+const uint32_t lv2_feature_id_data_access       = 10;
+const uint32_t lv2_feature_id_instance_access   = 11;
+const uint32_t lv2_feature_id_ui_parent         = 12;
+const uint32_t lv2_feature_id_ui_port_map       = 13;
+const uint32_t lv2_feature_id_ui_resize         = 14;
+const uint32_t lv2_feature_id_external_ui       = 15;
+const uint32_t lv2_feature_id_external_ui_old   = 16;
+const uint32_t lv2_feature_count                = 17;
 
 // event data/types
 const unsigned int CARLA_EVENT_DATA_ATOM    = 0x01;
@@ -93,15 +101,16 @@ const unsigned int CARLA_EVENT_TYPE_TIME    = 0x20; // FIXME
 // pre-set uri[d] map ids
 const uint32_t CARLA_URI_MAP_ID_NULL           = 0;
 const uint32_t CARLA_URI_MAP_ID_ATOM_CHUNK     = 1;
-const uint32_t CARLA_URI_MAP_ID_ATOM_SEQUENCE  = 2;
-const uint32_t CARLA_URI_MAP_ID_ATOM_STRING    = 3;
-const uint32_t CARLA_URI_MAP_ID_LOG_ERROR      = 4;
-const uint32_t CARLA_URI_MAP_ID_LOG_NOTE       = 5;
-const uint32_t CARLA_URI_MAP_ID_LOG_TRACE      = 6;
-const uint32_t CARLA_URI_MAP_ID_LOG_WARNING    = 7;
-const uint32_t CARLA_URI_MAP_ID_MIDI_EVENT     = 8;
-const uint32_t CARLA_URI_MAP_ID_TIME_POSITION  = 9; // TODO - full timePos support
-const uint32_t CARLA_URI_MAP_ID_COUNT          = 10;
+const uint32_t CARLA_URI_MAP_ID_ATOM_PATH      = 2;
+const uint32_t CARLA_URI_MAP_ID_ATOM_SEQUENCE  = 3;
+const uint32_t CARLA_URI_MAP_ID_ATOM_STRING    = 4;
+const uint32_t CARLA_URI_MAP_ID_LOG_ERROR      = 5;
+const uint32_t CARLA_URI_MAP_ID_LOG_NOTE       = 6;
+const uint32_t CARLA_URI_MAP_ID_LOG_TRACE      = 7;
+const uint32_t CARLA_URI_MAP_ID_LOG_WARNING    = 8;
+const uint32_t CARLA_URI_MAP_ID_MIDI_EVENT     = 9;
+const uint32_t CARLA_URI_MAP_ID_TIME_POSITION  = 10; // TODO - full timePos support
+const uint32_t CARLA_URI_MAP_ID_COUNT          = 11;
 
 enum Lv2ParameterDataType {
     LV2_PARAMETER_TYPE_CONTROL,
@@ -293,6 +302,12 @@ public:
 
         if (features[lv2_feature_id_logs] && features[lv2_feature_id_logs]->data)
             delete (LV2_Log_Log*)features[lv2_feature_id_logs]->data;
+
+        if (features[lv2_feature_id_state_make_path] && features[lv2_feature_id_state_make_path]->data)
+            delete (LV2_State_Make_Path*)features[lv2_feature_id_state_make_path]->data;
+
+        if (features[lv2_feature_id_state_map_path] && features[lv2_feature_id_state_map_path]->data)
+            delete (LV2_State_Map_Path*)features[lv2_feature_id_state_map_path]->data;
 
         if (features[lv2_feature_id_uri_map] && features[lv2_feature_id_uri_map]->data)
             delete (LV2_URI_Map_Feature*)features[lv2_feature_id_uri_map]->data;
@@ -1451,7 +1466,7 @@ public:
     void prepare_for_save()
     {
         if (ext.state)
-            ext.state->save(handle, carla_lv2_state_store, this, 0, features);
+            ext.state->save(handle, carla_lv2_state_store, this, LV2_STATE_IS_POD, features);
     }
 
     void process(jack_nframes_t nframes)
@@ -2341,6 +2356,15 @@ public:
                             Log_Feature->printf                  = carla_lv2_log_printf;
                             Log_Feature->vprintf                 = carla_lv2_log_vprintf;
 
+                            LV2_State_Make_Path* State_MakePath_Feature = new LV2_State_Make_Path;
+                            State_MakePath_Feature->handle       = this;
+                            State_MakePath_Feature->path         = carla_lv2_state_make_path;
+
+                            LV2_State_Map_Path* State_MapPath_Feature = new LV2_State_Map_Path;
+                            State_MapPath_Feature->handle        = this;
+                            State_MapPath_Feature->abstract_path = carla_lv2_state_map_abstract_path;
+                            State_MapPath_Feature->absolute_path = carla_lv2_state_map_absolute_path;
+
                             LV2_URI_Map_Feature* URI_Map_Feature = new LV2_URI_Map_Feature;
                             URI_Map_Feature->callback_data       = this;
                             URI_Map_Feature->uri_to_id           = carla_lv2_uri_to_id;
@@ -2371,6 +2395,14 @@ public:
                             features[lv2_feature_id_logs]             = new LV2_Feature;
                             features[lv2_feature_id_logs]->URI        = LV2_LOG__log;
                             features[lv2_feature_id_logs]->data       = Log_Feature;
+
+                            features[lv2_feature_id_state_make_path]  = new LV2_Feature;
+                            features[lv2_feature_id_state_make_path]->URI  = LV2_STATE__makePath;
+                            features[lv2_feature_id_state_make_path]->data = State_MakePath_Feature;
+
+                            features[lv2_feature_id_state_map_path]   = new LV2_Feature;
+                            features[lv2_feature_id_state_map_path]->URI  = LV2_STATE__mapPath;
+                            features[lv2_feature_id_state_map_path]->data = State_MapPath_Feature;
 
                             features[lv2_feature_id_uri_map]          = new LV2_Feature;
                             features[lv2_feature_id_uri_map]->URI     = LV2_URI_MAP_URI;
@@ -2733,13 +2765,16 @@ public:
         char buf[8196];
         vsprintf(buf, fmt, ap);
 
+        if (buf[0] == 0)
+            return 0;
+
         switch (type)
         {
         case CARLA_URI_MAP_ID_LOG_ERROR:
             qCritical("%s", buf);
             break;
         case CARLA_URI_MAP_ID_LOG_NOTE:
-            printf("%s", buf);
+            printf("%s\n", buf);
             break;
         case CARLA_URI_MAP_ID_LOG_TRACE:
             qDebug("%s", buf);
@@ -2751,7 +2786,7 @@ public:
             break;
         }
 
-        return 0;
+        return strlen(buf);
     }
 
     static int carla_lv2_log_printf(LV2_Log_Handle handle, LV2_URID type, const char* fmt, ...)
@@ -2766,130 +2801,25 @@ public:
         return ret;
     }
 
-    // ----------------- URI-Map Feature -------------------------------------------------
-    static uint32_t carla_lv2_uri_to_id(LV2_URI_Map_Callback_Data data, const char* map, const char* uri)
-    {
-        qDebug("Lv2Plugin::carla_lv2_uri_to_id(%p, %s, %s)", data, map, uri);
-
-        // Event types
-        if (map && strcmp(map, LV2_EVENT_URI) == 0)
-        {
-            if (strcmp(uri, LV2_MIDI__MidiEvent) == 0)
-                return CARLA_URI_MAP_ID_MIDI_EVENT;
-            else if (strcmp(uri, LV2_TIME__Position) == 0)
-                return CARLA_URI_MAP_ID_TIME_POSITION;
-        }
-
-        // Atom types
-        else if (strcmp(uri, LV2_ATOM__Chunk) == 0)
-            return CARLA_URI_MAP_ID_ATOM_CHUNK;
-        else if (strcmp(uri, LV2_ATOM__Sequence) == 0)
-            return CARLA_URI_MAP_ID_ATOM_SEQUENCE;
-        else if (strcmp(uri, LV2_ATOM__String) == 0)
-            return CARLA_URI_MAP_ID_ATOM_STRING;
-
-        // Log types
-        else if (strcmp(uri, LV2_LOG__Error) == 0)
-            return CARLA_URI_MAP_ID_LOG_ERROR;
-        else if (strcmp(uri, LV2_LOG__Note) == 0)
-            return CARLA_URI_MAP_ID_LOG_NOTE;
-        else if (strcmp(uri, LV2_LOG__Trace) == 0)
-            return CARLA_URI_MAP_ID_LOG_TRACE;
-        else if (strcmp(uri, LV2_LOG__Warning) == 0)
-            return CARLA_URI_MAP_ID_LOG_WARNING;
-
-        // TODO - position types
-
-        // Custom types
-        if (data)
-        {
-            Lv2Plugin* plugin = (Lv2Plugin*)data;
-            return plugin->get_custom_uri_id(uri);
-        }
-
-        return CARLA_URI_MAP_ID_NULL;
-    }
-
-    // ----------------- URID Feature ----------------------------------------------------
-    static LV2_URID carla_lv2_urid_map(LV2_URID_Map_Handle handle, const char* uri)
-    {
-        qDebug("Lv2Plugin::carla_lv2_urid_map(%p, %s)", handle, uri);
-
-        // Event types
-        if (strcmp(uri, LV2_MIDI__MidiEvent) == 0)
-            return CARLA_URI_MAP_ID_MIDI_EVENT;
-        else if (strcmp(uri, LV2_TIME__Position) == 0)
-            return CARLA_URI_MAP_ID_TIME_POSITION;
-
-        // Atom types
-        else if (strcmp(uri, LV2_ATOM__Chunk) == 0)
-            return CARLA_URI_MAP_ID_ATOM_CHUNK;
-        else if (strcmp(uri, LV2_ATOM__Sequence) == 0)
-            return CARLA_URI_MAP_ID_ATOM_SEQUENCE;
-        else if (strcmp(uri, LV2_ATOM__String) == 0)
-            return CARLA_URI_MAP_ID_ATOM_STRING;
-
-        // Log types
-        else if (strcmp(uri, LV2_LOG__Error) == 0)
-            return CARLA_URI_MAP_ID_LOG_ERROR;
-        else if (strcmp(uri, LV2_LOG__Note) == 0)
-            return CARLA_URI_MAP_ID_LOG_NOTE;
-        else if (strcmp(uri, LV2_LOG__Trace) == 0)
-            return CARLA_URI_MAP_ID_LOG_TRACE;
-        else if (strcmp(uri, LV2_LOG__Warning) == 0)
-            return CARLA_URI_MAP_ID_LOG_WARNING;
-
-        // TODO - position types
-
-        // Custom types
-        if (handle)
-        {
-            Lv2Plugin* plugin = (Lv2Plugin*)handle;
-            return plugin->get_custom_uri_id(uri);
-        }
-
-        return CARLA_URI_MAP_ID_NULL;
-    }
-
-    static const char* carla_lv2_urid_unmap(LV2_URID_Map_Handle handle, LV2_URID urid)
-    {
-        qDebug("Lv2Plugin::carla_lv2_urid_unmap(%p, %i)", handle, urid);
-
-        // Event types
-        if (urid == CARLA_URI_MAP_ID_MIDI_EVENT)
-            return LV2_MIDI__MidiEvent;
-        else if (urid == CARLA_URI_MAP_ID_TIME_POSITION)
-            return LV2_TIME__Position;
-
-        // Atom types
-        else if (urid == CARLA_URI_MAP_ID_ATOM_CHUNK)
-            return LV2_ATOM__Chunk;
-        else if (urid == CARLA_URI_MAP_ID_ATOM_SEQUENCE)
-            return LV2_ATOM__Sequence;
-        else if (urid == CARLA_URI_MAP_ID_ATOM_STRING)
-            return LV2_ATOM__String;
-
-        // Log types
-        else if (urid == CARLA_URI_MAP_ID_LOG_ERROR)
-            return LV2_LOG__Error;
-        else if (urid == CARLA_URI_MAP_ID_LOG_NOTE)
-            return LV2_LOG__Note;
-        else if (urid == CARLA_URI_MAP_ID_LOG_TRACE)
-            return LV2_LOG__Trace;
-        else if (urid == CARLA_URI_MAP_ID_LOG_WARNING)
-            return LV2_LOG__Warning;
-
-        // Custom types
-        if (handle)
-        {
-            Lv2Plugin* plugin = (Lv2Plugin*)handle;
-            return plugin->get_custom_uri_string(urid);
-        }
-
-        return nullptr;
-    }
-
     // ----------------- State Feature ---------------------------------------------------
+    static char* carla_lv2_state_make_path(LV2_State_Make_Path_Handle handle, const char* path)
+    {
+        qDebug("Lv2Plugin::carla_lv2_state_make_path(%p, %p)", handle, path);
+        return strdup(path);
+    }
+
+    static char* carla_lv2_state_map_abstract_path(LV2_State_Map_Path_Handle handle, const char* absolute_path)
+    {
+        qDebug("Lv2Plugin::carla_lv2_state_map_abstract_path(%p, %p)", handle, absolute_path);
+        return strdup(absolute_path);
+    }
+
+    static char* carla_lv2_state_map_absolute_path(LV2_State_Map_Path_Handle handle, const char* abstract_path)
+    {
+        qDebug("Lv2Plugin::carla_lv2_state_map_absolute_path(%p, %p)", handle, abstract_path);
+        return strdup(abstract_path);
+    }
+
     static LV2_State_Status carla_lv2_state_store(LV2_State_Handle handle, uint32_t key, const void* value, size_t size, uint32_t type, uint32_t flags)
     {
         qDebug("Lv2Plugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i)", handle, key, value, size, type, flags);
@@ -2907,6 +2837,8 @@ public:
 
                 if (type == CARLA_URI_MAP_ID_ATOM_STRING)
                     dtype = CUSTOM_DATA_STRING;
+                else if (type == CARLA_URI_MAP_ID_ATOM_PATH)
+                    dtype = CUSTOM_DATA_PATH;
                 else if (type == CARLA_URI_MAP_ID_ATOM_CHUNK || type >= CARLA_URI_MAP_ID_COUNT)
                     dtype = CUSTOM_DATA_BINARY;
                 else
@@ -2921,7 +2853,7 @@ public:
                         {
                             free((void*)plugin->custom[i].value);
 
-                            if (dtype == CUSTOM_DATA_STRING)
+                            if (dtype == CUSTOM_DATA_STRING || dtype == CUSTOM_DATA_PATH)
                             {
                                 plugin->custom[i].value = strdup((const char*)value);
                             }
@@ -2940,7 +2872,7 @@ public:
                     new_data.type = dtype;
                     new_data.key  = strdup(uri_key);
 
-                    if (dtype == CUSTOM_DATA_STRING)
+                    if (dtype == CUSTOM_DATA_STRING || dtype == CUSTOM_DATA_PATH)
                     {
                         new_data.value = strdup((const char*)value);
                     }
@@ -3008,6 +2940,11 @@ public:
                         *type = CARLA_URI_MAP_ID_ATOM_STRING;
                         return string_data;
                     }
+                    else if (dtype == CUSTOM_DATA_PATH)
+                    {
+                        *type = CARLA_URI_MAP_ID_ATOM_PATH;
+                        return string_data;
+                    }
                     else if (dtype == CUSTOM_DATA_BINARY)
                     {
                         static QByteArray chunk;
@@ -3028,6 +2965,135 @@ public:
         }
         else
             qCritical("Lv2Plugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p) - Invalid handle", handle, key, size, type, flags);
+
+        return nullptr;
+    }
+
+    // ----------------- URI-Map Feature -------------------------------------------------
+    static uint32_t carla_lv2_uri_to_id(LV2_URI_Map_Callback_Data data, const char* map, const char* uri)
+    {
+        qDebug("Lv2Plugin::carla_lv2_uri_to_id(%p, %s, %s)", data, map, uri);
+
+        // Event types
+        if (map && strcmp(map, LV2_EVENT_URI) == 0)
+        {
+            if (strcmp(uri, LV2_MIDI__MidiEvent) == 0)
+                return CARLA_URI_MAP_ID_MIDI_EVENT;
+            else if (strcmp(uri, LV2_TIME__Position) == 0)
+                return CARLA_URI_MAP_ID_TIME_POSITION;
+        }
+
+        // Atom types
+        else if (strcmp(uri, LV2_ATOM__Chunk) == 0)
+            return CARLA_URI_MAP_ID_ATOM_CHUNK;
+        else if (strcmp(uri, LV2_ATOM__Path) == 0)
+            return CARLA_URI_MAP_ID_ATOM_PATH;
+        else if (strcmp(uri, LV2_ATOM__Sequence) == 0)
+            return CARLA_URI_MAP_ID_ATOM_SEQUENCE;
+        else if (strcmp(uri, LV2_ATOM__String) == 0)
+            return CARLA_URI_MAP_ID_ATOM_STRING;
+
+        // Log types
+        else if (strcmp(uri, LV2_LOG__Error) == 0)
+            return CARLA_URI_MAP_ID_LOG_ERROR;
+        else if (strcmp(uri, LV2_LOG__Note) == 0)
+            return CARLA_URI_MAP_ID_LOG_NOTE;
+        else if (strcmp(uri, LV2_LOG__Trace) == 0)
+            return CARLA_URI_MAP_ID_LOG_TRACE;
+        else if (strcmp(uri, LV2_LOG__Warning) == 0)
+            return CARLA_URI_MAP_ID_LOG_WARNING;
+
+        // TODO - position types
+
+        // Custom types
+        if (data)
+        {
+            Lv2Plugin* plugin = (Lv2Plugin*)data;
+            return plugin->get_custom_uri_id(uri);
+        }
+
+        return CARLA_URI_MAP_ID_NULL;
+    }
+
+    // ----------------- URID Feature ----------------------------------------------------
+    static LV2_URID carla_lv2_urid_map(LV2_URID_Map_Handle handle, const char* uri)
+    {
+        qDebug("Lv2Plugin::carla_lv2_urid_map(%p, %s)", handle, uri);
+
+        // Event types
+        if (strcmp(uri, LV2_MIDI__MidiEvent) == 0)
+            return CARLA_URI_MAP_ID_MIDI_EVENT;
+        else if (strcmp(uri, LV2_TIME__Position) == 0)
+            return CARLA_URI_MAP_ID_TIME_POSITION;
+
+        // Atom types
+        else if (strcmp(uri, LV2_ATOM__Chunk) == 0)
+            return CARLA_URI_MAP_ID_ATOM_CHUNK;
+        else if (strcmp(uri, LV2_ATOM__Path) == 0)
+            return CARLA_URI_MAP_ID_ATOM_PATH;
+        else if (strcmp(uri, LV2_ATOM__Sequence) == 0)
+            return CARLA_URI_MAP_ID_ATOM_SEQUENCE;
+        else if (strcmp(uri, LV2_ATOM__String) == 0)
+            return CARLA_URI_MAP_ID_ATOM_STRING;
+
+        // Log types
+        else if (strcmp(uri, LV2_LOG__Error) == 0)
+            return CARLA_URI_MAP_ID_LOG_ERROR;
+        else if (strcmp(uri, LV2_LOG__Note) == 0)
+            return CARLA_URI_MAP_ID_LOG_NOTE;
+        else if (strcmp(uri, LV2_LOG__Trace) == 0)
+            return CARLA_URI_MAP_ID_LOG_TRACE;
+        else if (strcmp(uri, LV2_LOG__Warning) == 0)
+            return CARLA_URI_MAP_ID_LOG_WARNING;
+
+        // TODO - position types
+
+        // Custom types
+        if (handle)
+        {
+            Lv2Plugin* plugin = (Lv2Plugin*)handle;
+            return plugin->get_custom_uri_id(uri);
+        }
+
+        return CARLA_URI_MAP_ID_NULL;
+    }
+
+    static const char* carla_lv2_urid_unmap(LV2_URID_Map_Handle handle, LV2_URID urid)
+    {
+        qDebug("Lv2Plugin::carla_lv2_urid_unmap(%p, %i)", handle, urid);
+
+        // Event types
+        if (urid == CARLA_URI_MAP_ID_MIDI_EVENT)
+            return LV2_MIDI__MidiEvent;
+        else if (urid == CARLA_URI_MAP_ID_TIME_POSITION)
+            return LV2_TIME__Position;
+
+        // Atom types
+        else if (urid == CARLA_URI_MAP_ID_ATOM_CHUNK)
+            return LV2_ATOM__Chunk;
+        else if (urid == CARLA_URI_MAP_ID_ATOM_PATH)
+            return LV2_ATOM__Path;
+        else if (urid == CARLA_URI_MAP_ID_ATOM_SEQUENCE)
+            return LV2_ATOM__Sequence;
+        else if (urid == CARLA_URI_MAP_ID_ATOM_STRING)
+            return LV2_ATOM__String;
+
+        // Log types
+        else if (urid == CARLA_URI_MAP_ID_LOG_ERROR)
+            return LV2_LOG__Error;
+        else if (urid == CARLA_URI_MAP_ID_LOG_NOTE)
+            return LV2_LOG__Note;
+        else if (urid == CARLA_URI_MAP_ID_LOG_TRACE)
+            return LV2_LOG__Trace;
+        else if (urid == CARLA_URI_MAP_ID_LOG_WARNING)
+            return LV2_LOG__Warning;
+
+        // Custom types
+        if (handle)
+        {
+            Lv2Plugin* plugin = (Lv2Plugin*)handle;
+            return plugin->get_custom_uri_string(urid);
+        }
 
         return nullptr;
     }

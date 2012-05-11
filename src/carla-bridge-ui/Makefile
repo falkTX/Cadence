@@ -8,8 +8,8 @@ CXX     ?= g++
 WINECXX ?= wineg++
 
 BUILD_FLAGS  = -DBUILD_BRIDGE -DBUILD_BRIDGE_UI -Wall -std=c++0x -I. -I../carla-includes -I../carla-bridge `pkg-config --cflags liblo QtCore` $(CXXFLAGS)
-BUILD_FLAGS += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse
-# BUILD_FLAGS += -DDEBUG -O0 -g
+# BUILD_FLAGS += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse
+BUILD_FLAGS += -DDEBUG -O0 -g
 BUILD_FLAGS += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
 LINK_FLAGS   = `pkg-config --cflags --libs liblo QtCore` -ldl -lpthread $(LDFLAGS)
 

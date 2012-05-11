@@ -22,8 +22,8 @@
 static jack_client_t* carla_jack_client = nullptr;
 static jack_nframes_t carla_buffer_size = 512;
 static jack_nframes_t carla_sample_rate = 44100;
+static jack_transport_state_t carla_jack_state = JackTransportStopped;
 static jack_position_t carla_jack_pos;
-static jack_transport_state_t carla_jack_state;
 
 static bool carla_jack_is_freewheel = false;
 static const char* carla_client_name = nullptr;
@@ -96,7 +96,8 @@ static void carla_jack_freewheel_callback(int starting, void*)
 
 static int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
 {
-    carla_jack_thread = QThread::currentThread();
+    if (carla_jack_thread == nullptr)
+        carla_jack_thread = QThread::currentThread();
 
     // request time info once (arg only null on global client)
     if (carla_jack_client && arg == nullptr)
@@ -144,6 +145,7 @@ static void carla_jack_shutdown_callback(void*)
         //    plugin->jack_client = nullptr;
     }
     carla_jack_client = nullptr;
+    carla_jack_thread = nullptr;
     callback_action(CALLBACK_QUIT, 0, 0, 0, 0.0);
 }
 

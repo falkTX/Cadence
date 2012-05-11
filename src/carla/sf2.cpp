@@ -851,7 +851,8 @@ public:
                         }
                     }
 #ifdef FLUIDSYNTH_VERSION_113
-                    else // not channel for backend
+                    // not channel for backend
+                    else if (channel < 16)
                     {
                         if (control == MIDI_CONTROL_ALL_SOUND_OFF)
                         {
