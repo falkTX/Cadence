@@ -97,7 +97,8 @@ enum CustomDataType {
     CUSTOM_DATA_INVALID = 0,
     CUSTOM_DATA_STRING  = 1,
     CUSTOM_DATA_PATH    = 2,
-    CUSTOM_DATA_BINARY  = 3
+    CUSTOM_DATA_CHUNK   = 3,
+    CUSTOM_DATA_BINARY  = 4
 };
 
 enum GuiType {

@@ -117,6 +117,25 @@ const char* binarytype2str(BinaryType type)
     }
 }
 
+const char* customdatatype2str(CustomDataType type)
+{
+    switch (type)
+    {
+    case CUSTOM_DATA_INVALID:
+        return "invalid";
+    case CUSTOM_DATA_STRING:
+        return "string";
+    case CUSTOM_DATA_PATH:
+        return "path";
+    case CUSTOM_DATA_CHUNK:
+        return "chunk";
+    case CUSTOM_DATA_BINARY:
+        return "binary";
+    default:
+        return "null";
+    }
+}
+
 // -------------------------------------------------------------------------------------------------------------------
 
 short get_new_plugin_id()

@@ -93,6 +93,8 @@ def CustomDataType2String(dtype):
         return "string"
     elif dtype == CUSTOM_DATA_PATH:
         return "path"
+    elif dtype == CUSTOM_DATA_CHUNK:
+        return "chunk"
     elif dtype == CUSTOM_DATA_BINARY:
         return "binary"
     else:
@@ -103,6 +105,8 @@ def CustomDataString2Type(stype):
         return CUSTOM_DATA_STRING
     elif stype == "path":
         return CUSTOM_DATA_PATH
+    elif stype == "chunk":
+        return CUSTOM_DATA_CHUNK
     elif stype == "binary":
         return CUSTOM_DATA_BINARY
     else:
