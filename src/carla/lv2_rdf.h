@@ -20,6 +20,33 @@
 
 #include <cstdint>
 
+#include "lv2/lv2.h"
+#include "lv2/atom.h"
+#include "lv2/atom-util.h"
+#include "lv2/data-access.h"
+#include "lv2/event.h"
+#include "lv2/event-helpers.h"
+#include "lv2/instance-access.h"
+#include "lv2/log.h"
+#include "lv2/midi.h"
+#include "lv2/patch.h"
+#include "lv2/port-props.h"
+#include "lv2/presets.h"
+#include "lv2/state.h"
+#include "lv2/time.h"
+#include "lv2/ui.h"
+#include "lv2/units.h"
+#include "lv2/uri-map.h"
+#include "lv2/urid.h"
+#include "lv2/worker.h"
+
+#include "lv2/lv2dynparam.h"
+#include "lv2/lv2-miditype.h"
+#include "lv2/lv2-midifunctions.h"
+#include "lv2/lv2_external_ui.h"
+#include "lv2/lv2_programs.h"
+#include "lv2/lv2_rtmempool.h"
+
 // Base Types
 typedef float LV2_Data;
 typedef const char* LV2_URI;
@@ -147,7 +174,6 @@ struct LV2_RDF_PortScalePoint {
 // Port Support Types
 #define LV2_PORT_SUPPORTS_MIDI_EVENT     0x1000
 #define LV2_PORT_SUPPORTS_PATCH_MESSAGE  0x2000
-//#define LV2_PORT_SUPPORTS_TIME           0x4000 // TODO
 
 #define LV2_IS_PORT_INPUT(x)             ((x) & LV2_PORT_INPUT)
 #define LV2_IS_PORT_OUTPUT(x)            ((x) & LV2_PORT_OUTPUT)
@@ -190,9 +216,29 @@ struct LV2_RDF_PortScalePoint {
 #define LV2_IS_PORT_TRIGGER(x)           ((x) & LV2_PORT_TRIGGER)
 
 // Port Designation
-#define LV2_PORT_LATENCY                0x1
+#define LV2_PORT_LATENCY                 0x1
+#define LV2_PORT_TIME_BAR                0x2
+#define LV2_PORT_TIME_BAR_BEAT           0x3
+#define LV2_PORT_TIME_BEAT               0x4
+#define LV2_PORT_TIME_BEAT_UNIT          0x5
+#define LV2_PORT_TIME_BEATS_PER_BAR      0x6
+#define LV2_PORT_TIME_BEATS_PER_MINUTE   0x7
+#define LV2_PORT_TIME_FRAMES             0x8
+#define LV2_PORT_TIME_FRAMES_PER_SECOND  0x9
+#define LV2_PORT_TIME_POSITION           0xA
+#define LV2_PORT_TIME_SPEED              0xB
 
-#define LV2_IS_PORT_LATENCY(x)          ((x) & LV2_PORT_LATENCY)
+#define LV2_IS_PORT_LATENCY(x)          ((x) == LV2_PORT_LATENCY)
+#define LV2_IS_PORT_TIME_BAR(x)         ((x) == LV2_PORT_TIME_BAR)
+#define LV2_IS_PORT_TIME_BAR_BEAT(x)    ((x) == LV2_PORT_TIME_BAR_BEAT)
+#define LV2_IS_PORT_TIME_BEAT(x)        ((x) == LV2_PORT_TIME_BEAT)
+#define LV2_IS_PORT_TIME_BEAT_UNIT(x)   ((x) == LV2_PORT_TIME_BEAT_UNIT)
+#define LV2_IS_PORT_TIME_BEATS_PER_BAR(x)     ((x) == LV2_PORT_TIME_BEATS_PER_BAR)
+#define LV2_IS_PORT_TIME_BEATS_PER_MINUTE(x)  ((x) == LV2_PORT_TIME_BEATS_PER_MINUTE)
+#define LV2_IS_PORT_TIME_FRAMES(x)            ((x) == LV2_PORT_TIME_FRAMES)
+#define LV2_IS_PORT_TIME_FRAMES_PER_SECOND(x) ((x) == LV2_PORT_TIME_FRAMES_PER_SECOND)
+#define LV2_IS_PORT_TIME_POSITION(x)          ((x) == LV2_PORT_TIME_POSITION)
+#define LV2_IS_PORT_TIME_SPEED(x)             ((x) == LV2_PORT_TIME_SPEED)
 
 // Port
 struct LV2_RDF_Port {
@@ -1724,12 +1770,16 @@ inline bool is_lv2_feature_supported(const char* uri)
         return true;
     else if (strcmp(uri, LV2_URID__unmap) == 0)
         return true;
+#ifndef BUILD_BRIDGE_UI
     else if (strcmp(uri, LV2_WORKER__schedule) == 0)
         return true;
+#endif
     else if (strcmp(uri, LV2_PROGRAMS__Host) == 0)
         return true;
+#ifndef BUILD_BRIDGE_UI
     else if (strcmp(uri, LV2_RTSAFE_MEMORY_POOL_URI) == 0)
         return true;
+#endif
     else
         return false;
 }
@@ -1741,10 +1791,12 @@ inline bool is_lv2_ui_feature_supported(const char* uri)
 #endif
     if (is_lv2_feature_supported(uri))
         return true;
+#ifndef BUILD_BRIDGE_UI
     else if (strcmp(uri, LV2_DATA_ACCESS_URI) == 0)
         return true;
     else if (strcmp(uri, LV2_INSTANCE_ACCESS_URI) == 0)
         return true;
+#endif
     else if (strcmp(uri, LV2_UI__noUserResize) == 0)
         return true;
     else if (strcmp(uri, LV2_UI__fixedSize) == 0)
@@ -1761,10 +1813,12 @@ inline bool is_lv2_ui_feature_supported(const char* uri)
         return false; // TODO
     else if (strcmp(uri, LV2_UI_PREFIX "makeResident") == 0)
         return true;
+#ifndef BUILD_BRIDGE_UI
     else if (strcmp(uri, LV2_EXTERNAL_UI_URI) == 0)
         return true;
     else if (strcmp(uri, LV2_EXTERNAL_UI_DEPRECATED_URI) == 0)
         return true;
+#endif
     else
         return false;
 }

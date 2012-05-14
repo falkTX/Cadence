@@ -18,24 +18,9 @@
 #ifndef CARLA_OSC_H
 #define CARLA_OSC_H
 
-#include "carla_includes.h"
-
-#include <lo/lo.h>
+#include "carla_osc_includes.h"
 
 class CarlaPlugin;
-
-struct OscData {
-    char* path;
-    lo_address source;
-    lo_address target;
-};
-
-void osc_init();
-void osc_close();
-void osc_clear_data(OscData* osc_data);
-
-void osc_error_handler(int num, const char* msg, const char* path);
-int osc_message_handler(const char* path, const char* types, lo_arg** argv, int argc, void* data, void* user_data);
 
 int osc_handle_register(lo_arg** argv, lo_address source);
 int osc_handle_unregister();
@@ -45,6 +30,7 @@ int osc_handle_configure(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_control(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_program(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_program_as_midi(CarlaPlugin* plugin, lo_arg** argv);
+int osc_handle_midi_program(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_midi(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_exiting(CarlaPlugin* plugin);
 
@@ -59,15 +45,6 @@ int osc_handle_note_on(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_note_off(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_bridge_ains_peak(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_bridge_aouts_peak(CarlaPlugin* plugin, lo_arg** argv);
-
-void osc_send_configure(OscData* osc_data, const char* key, const char* value);
-void osc_send_control(OscData* osc_data, int param_id, double value);
-void osc_send_program(OscData* osc_data, int program_id);
-void osc_send_program_as_midi(OscData* osc_data, int bank, int program);
-void osc_send_midi_program(OscData* osc_data, int bank, int program);
-void osc_send_show(OscData* osc_data);
-void osc_send_hide(OscData* osc_data);
-void osc_send_quit(OscData* osc_data);
 
 bool osc_global_registered();
 void osc_global_send_add_plugin(int plugin_id, const char* plugin_name);

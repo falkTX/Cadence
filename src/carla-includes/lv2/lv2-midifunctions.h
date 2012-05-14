@@ -33,7 +33,7 @@ typedef struct {
 } LV2_MIDIState;
 
 
-static double lv2midi_get_event(LV2_MIDIState* state,
+inline double lv2midi_get_event(LV2_MIDIState* state,
                                 double* timestamp, 
                                 uint32_t* size, 
                                 unsigned char** data) {
@@ -54,7 +54,7 @@ static double lv2midi_get_event(LV2_MIDIState* state,
 }
 
 
-static double lv2midi_step(LV2_MIDIState* state) {
+inline double lv2midi_step(LV2_MIDIState* state) {
 
   if (state->position >= state->midi->size) {
     state->position = state->midi->size;
@@ -69,7 +69,7 @@ static double lv2midi_step(LV2_MIDIState* state) {
 }
 
 
-static void lv2midi_put_event(LV2_MIDIState* state,
+inline void lv2midi_put_event(LV2_MIDIState* state,
                              double timestamp,
                              uint32_t size,
                              const unsigned char* data) {

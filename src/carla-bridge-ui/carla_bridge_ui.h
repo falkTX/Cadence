@@ -20,10 +20,11 @@
 
 #include "carla_includes.h"
 
-#include <pthread.h>
+#include <cstring>
+#include <QtCore/QMutex>
 
 void toolkit_init();
-void toolkit_loop(const char* ui_title, bool reparent);
+void toolkit_loop();
 void toolkit_quit();
 void toolkit_window_show();
 void toolkit_window_hide();
@@ -31,7 +32,7 @@ void toolkit_window_resize(int width, int height);
 
 // -------------------------------------------------------------------------
 
-const unsigned int MAX_BRIDGE_MESSAGES = 256;
+#define MAX_BRIDGE_MESSAGES 256
 
 enum BridgeMessageType {
     BRIDGE_MESSAGE_NULL         = 0,
@@ -46,7 +47,6 @@ enum BridgeMessageType {
 };
 
 struct QuequeBridgeMessage {
-    bool valid;
     BridgeMessageType type;
     int value1;
     int value2;
@@ -58,14 +58,13 @@ struct QuequeBridgeMessage {
 class UiData
 {
 public:
-    UiData()
+    UiData(const char* ui_title)
     {
-        m_lib  = nullptr;
-        pthread_mutex_init(&m_lock, nullptr);
+        m_lib = nullptr;
+        m_title = strdup(ui_title);
 
         for (unsigned int i=0; i < MAX_BRIDGE_MESSAGES; i++)
         {
-            QuequeBridgeMessages[i].valid  = false;
             QuequeBridgeMessages[i].type   = BRIDGE_MESSAGE_NULL;
             QuequeBridgeMessages[i].value1 = 0;
             QuequeBridgeMessages[i].value2 = 0;
@@ -75,17 +74,16 @@ public:
 
     ~UiData()
     {
-        pthread_mutex_destroy(&m_lock);
+        free((void*)m_title);
     }
 
     void queque_message(BridgeMessageType type, int value1, int value2, double value3)
     {
-        pthread_mutex_lock(&m_lock);
+        m_lock.lock();
         for (unsigned int i=0; i<MAX_BRIDGE_MESSAGES; i++)
         {
-            if (QuequeBridgeMessages[i].valid == false)
+            if (QuequeBridgeMessages[i].type == BRIDGE_MESSAGE_NULL)
             {
-                QuequeBridgeMessages[i].valid  = true;
                 QuequeBridgeMessages[i].type   = type;
                 QuequeBridgeMessages[i].value1 = value1;
                 QuequeBridgeMessages[i].value2 = value2;
@@ -93,36 +91,34 @@ public:
                 break;
             }
         }
-        pthread_mutex_unlock(&m_lock);
+        m_lock.unlock();
     }
 
     bool run_messages()
     {
-        pthread_mutex_lock(&m_lock);
+        m_lock.lock();
         for (unsigned int i=0; i < MAX_BRIDGE_MESSAGES; i++)
         {
-            if (QuequeBridgeMessages[i].valid)
+            if (QuequeBridgeMessages[i].type != BRIDGE_MESSAGE_NULL)
             {
-                QuequeBridgeMessage* m = &QuequeBridgeMessages[i];
+                const QuequeBridgeMessage* const m = &QuequeBridgeMessages[i];
 
                 switch (m->type)
                 {
-                case BRIDGE_MESSAGE_NULL:
-                    break;
                 case BRIDGE_MESSAGE_PARAMETER:
-                    update_parameter(m->value1, m->value3);
+                    set_parameter(m->value1, m->value3);
                     break;
                 case BRIDGE_MESSAGE_PROGRAM:
-                    update_program(m->value1);
+                    set_program(m->value1);
                     break;
                 case BRIDGE_MESSAGE_MIDI_PROGRAM:
-                    update_midi_program(m->value1, m->value2);
+                    set_midi_program(m->value1, m->value2);
                     break;
                 case BRIDGE_MESSAGE_NOTE_ON:
-                    send_note_on(m->value1, m->value2);
+                    //send_note_on(m->value1, m->value2);
                     break;
                 case BRIDGE_MESSAGE_NOTE_OFF:
-                    send_note_off(m->value1);
+                    //send_note_off(m->value1);
                     break;
                 case BRIDGE_MESSAGE_SHOW_GUI:
                     if (m->value1)
@@ -135,31 +131,45 @@ public:
                     break;
                 case BRIDGE_MESSAGE_QUIT:
                     toolkit_quit();
-                    pthread_mutex_unlock(&m_lock);
+                    m_lock.unlock();
                     return false;
                 default:
                     break;
                 }
-                m->valid = false;
+
+                QuequeBridgeMessages[i].type = BRIDGE_MESSAGE_NULL;
             }
             else
                 break;
         }
-        pthread_mutex_unlock(&m_lock);
+        m_lock.unlock();
         return true;
     }
 
-    virtual bool init(const char*, const char*, const char*, bool) = 0;
+    const char* get_title() const
+    {
+        return m_title;
+    }
+
+    // ---------------------------------------------------------------------
+
+    // initialization
+    virtual bool init(const char*, const char*) = 0;
     virtual void close() = 0;
 
-    virtual void update_parameter(int index, double value) = 0;
-    virtual void update_program(int index) = 0;
-    virtual void update_midi_program(int bank, int program) = 0;
-    virtual void send_note_on(int note, int velocity) = 0;
-    virtual void send_note_off(int note) = 0;
+    // processing
+    virtual void set_parameter(int index, double value) = 0;
+    virtual void set_program(int index) = 0;
+    virtual void set_midi_program(int bank, int program) = 0;
+    //virtual void send_note_on(int note, int velocity) = 0;
+    //virtual void send_note_off(int note) = 0;
 
-    virtual void* get_widget() = 0;
-    virtual bool is_resizable() = 0;
+    // gui
+    virtual bool has_parent() const = 0;
+    virtual bool is_resizable() const = 0;
+    virtual void* get_widget() const = 0;
+
+    // ---------------------------------------------------------------------
 
     bool lib_open(const char* filename)
     {
@@ -214,9 +224,14 @@ public:
 #endif
     }
 
+    // ---------------------------------------------------------------------
+
+protected:
+    const char* m_title;
+
 private:
     void* m_lib;
-    pthread_mutex_t m_lock;
+    QMutex m_lock;
     QuequeBridgeMessage QuequeBridgeMessages[MAX_BRIDGE_MESSAGES];
 };
 

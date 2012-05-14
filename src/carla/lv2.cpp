@@ -17,33 +17,6 @@
 
 #include "carla_plugin.h"
 
-#include "lv2/lv2.h"
-#include "lv2/atom.h"
-#include "lv2/atom-util.h"
-#include "lv2/data-access.h"
-#include "lv2/event.h"
-#include "lv2/event-helpers.h"
-#include "lv2/instance-access.h"
-#include "lv2/log.h"
-#include "lv2/midi.h"
-#include "lv2/patch.h"
-#include "lv2/port-props.h"
-#include "lv2/presets.h"
-#include "lv2/state.h"
-#include "lv2/time.h"
-#include "lv2/ui.h"
-#include "lv2/units.h"
-#include "lv2/uri-map.h"
-#include "lv2/urid.h"
-#include "lv2/worker.h"
-
-#include "lv2/lv2dynparam.h"
-#include "lv2/lv2-miditype.h"
-#include "lv2/lv2-midifunctions.h"
-#include "lv2/lv2_external_ui.h"
-#include "lv2/lv2_programs.h"
-#include "lv2/lv2_rtmempool.h"
-
 #include "lv2_rdf.h"
 
 extern "C" {
@@ -73,45 +46,44 @@ const unsigned int PARAMETER_IS_TRIGGER          = 0x1000;
 const unsigned int PARAMETER_IS_STRICT_BOUNDS    = 0x2000;
 
 // feature ids
-const uint32_t lv2_feature_id_event            = 0;
-const uint32_t lv2_feature_id_logs             = 1;
-const uint32_t lv2_feature_id_state_make_path  = 2;
-const uint32_t lv2_feature_id_state_map_path   = 3;
-const uint32_t lv2_feature_id_uri_map          = 4;
-const uint32_t lv2_feature_id_urid_map         = 5;
-const uint32_t lv2_feature_id_urid_unmap       = 6;
-const uint32_t lv2_feature_id_worker           = 7;
-const uint32_t lv2_feature_id_programs         = 8;
-const uint32_t lv2_feature_id_rtmempool        = 9;
-const uint32_t lv2_feature_id_data_access      = 10;
-const uint32_t lv2_feature_id_instance_access  = 11;
-const uint32_t lv2_feature_id_ui_parent        = 12;
-const uint32_t lv2_feature_id_ui_port_map      = 13;
-const uint32_t lv2_feature_id_ui_resize        = 14;
-const uint32_t lv2_feature_id_external_ui      = 15;
-const uint32_t lv2_feature_id_external_ui_old  = 16;
-const uint32_t lv2_feature_count               = 17;
+const uint32_t lv2_feature_id_event           = 0;
+const uint32_t lv2_feature_id_logs            = 1;
+const uint32_t lv2_feature_id_programs        = 2;
+const uint32_t lv2_feature_id_rtmempool       = 3;
+const uint32_t lv2_feature_id_state_make_path = 4;
+const uint32_t lv2_feature_id_state_map_path  = 5;
+const uint32_t lv2_feature_id_uri_map         = 6;
+const uint32_t lv2_feature_id_urid_map        = 7;
+const uint32_t lv2_feature_id_urid_unmap      = 8;
+const uint32_t lv2_feature_id_worker          = 9;
+const uint32_t lv2_feature_id_data_access     = 10;
+const uint32_t lv2_feature_id_instance_access = 11;
+const uint32_t lv2_feature_id_ui_parent       = 12;
+const uint32_t lv2_feature_id_ui_port_map     = 13;
+const uint32_t lv2_feature_id_ui_resize       = 14;
+const uint32_t lv2_feature_id_external_ui     = 15;
+const uint32_t lv2_feature_id_external_ui_old = 16;
+const uint32_t lv2_feature_count              = 17;
 
 // event data/types
-const unsigned int CARLA_EVENT_DATA_ATOM       = 0x01;
-const unsigned int CARLA_EVENT_DATA_EVENT      = 0x02;
-const unsigned int CARLA_EVENT_DATA_MIDI_LL    = 0x04;
-const unsigned int CARLA_EVENT_TYPE_MESSAGE    = 0x10;
-const unsigned int CARLA_EVENT_TYPE_MIDI       = 0x20;
+const unsigned int CARLA_EVENT_DATA_ATOM      = 0x01;
+const unsigned int CARLA_EVENT_DATA_EVENT     = 0x02;
+const unsigned int CARLA_EVENT_DATA_MIDI_LL   = 0x04;
+const unsigned int CARLA_EVENT_TYPE_MESSAGE   = 0x10;
+const unsigned int CARLA_EVENT_TYPE_MIDI      = 0x20;
 
 // pre-set uri[d] map ids
-const uint32_t CARLA_URI_MAP_ID_NULL           = 0;
-const uint32_t CARLA_URI_MAP_ID_ATOM_CHUNK     = 1;
-const uint32_t CARLA_URI_MAP_ID_ATOM_PATH      = 2;
-const uint32_t CARLA_URI_MAP_ID_ATOM_SEQUENCE  = 3;
-const uint32_t CARLA_URI_MAP_ID_ATOM_STRING    = 4;
-const uint32_t CARLA_URI_MAP_ID_LOG_ERROR      = 5;
-const uint32_t CARLA_URI_MAP_ID_LOG_NOTE       = 6;
-const uint32_t CARLA_URI_MAP_ID_LOG_TRACE      = 7;
-const uint32_t CARLA_URI_MAP_ID_LOG_WARNING    = 8;
-const uint32_t CARLA_URI_MAP_ID_MIDI_EVENT     = 9;
-const uint32_t CARLA_URI_MAP_ID_TIME_POSITION  = 10; // TODO - full timePos support
-const uint32_t CARLA_URI_MAP_ID_COUNT          = 11;
+const uint32_t CARLA_URI_MAP_ID_NULL          = 0;
+const uint32_t CARLA_URI_MAP_ID_ATOM_CHUNK    = 1;
+const uint32_t CARLA_URI_MAP_ID_ATOM_PATH     = 2;
+const uint32_t CARLA_URI_MAP_ID_ATOM_SEQUENCE = 3;
+const uint32_t CARLA_URI_MAP_ID_ATOM_STRING   = 4;
+const uint32_t CARLA_URI_MAP_ID_LOG_ERROR     = 5;
+const uint32_t CARLA_URI_MAP_ID_LOG_NOTE      = 6;
+const uint32_t CARLA_URI_MAP_ID_LOG_TRACE     = 7;
+const uint32_t CARLA_URI_MAP_ID_LOG_WARNING   = 8;
+const uint32_t CARLA_URI_MAP_ID_MIDI_EVENT    = 9;
+const uint32_t CARLA_URI_MAP_ID_COUNT         = 10;
 
 enum Lv2ParameterDataType {
     LV2_PARAMETER_TYPE_CONTROL,
@@ -2374,6 +2346,10 @@ public:
                             Log_Feature->printf                  = carla_lv2_log_printf;
                             Log_Feature->vprintf                 = carla_lv2_log_vprintf;
 
+                            LV2_Programs_Host* Programs_Feature  = new LV2_Programs_Host;
+                            Programs_Feature->handle             = this;
+                            Programs_Feature->program_changed    = carla_lv2_program_changed;
+
                             LV2_State_Make_Path* State_MakePath_Feature = new LV2_State_Make_Path;
                             State_MakePath_Feature->handle       = this;
                             State_MakePath_Feature->path         = carla_lv2_state_make_path;
@@ -2399,10 +2375,6 @@ public:
                             Worker_Feature->handle               = this;
                             Worker_Feature->schedule_work        = carla_lv2_worker_schedule;
 
-                            LV2_Programs_Host* Programs_Feature  = new LV2_Programs_Host;
-                            Programs_Feature->handle             = this;
-                            Programs_Feature->program_changed    = carla_lv2_program_changed;
-
                             lv2_rtsafe_memory_pool_provider* RT_MemPool_Feature = new lv2_rtsafe_memory_pool_provider;
                             rtmempool_allocator_init(RT_MemPool_Feature);
 
@@ -2413,6 +2385,14 @@ public:
                             features[lv2_feature_id_logs]             = new LV2_Feature;
                             features[lv2_feature_id_logs]->URI        = LV2_LOG__log;
                             features[lv2_feature_id_logs]->data       = Log_Feature;
+
+                            features[lv2_feature_id_programs]         = new LV2_Feature;
+                            features[lv2_feature_id_programs]->URI    = LV2_PROGRAMS__Host;
+                            features[lv2_feature_id_programs]->data   = Programs_Feature;
+
+                            features[lv2_feature_id_rtmempool]        = new LV2_Feature;
+                            features[lv2_feature_id_rtmempool]->URI   = LV2_RTSAFE_MEMORY_POOL_URI;
+                            features[lv2_feature_id_rtmempool]->data  = RT_MemPool_Feature;
 
                             features[lv2_feature_id_state_make_path]  = new LV2_Feature;
                             features[lv2_feature_id_state_make_path]->URI  = LV2_STATE__makePath;
@@ -2437,14 +2417,6 @@ public:
                             features[lv2_feature_id_worker]           = new LV2_Feature;
                             features[lv2_feature_id_worker]->URI      = LV2_WORKER__schedule;
                             features[lv2_feature_id_worker]->data     = Worker_Feature;
-
-                            features[lv2_feature_id_programs]         = new LV2_Feature;
-                            features[lv2_feature_id_programs]->URI    = LV2_PROGRAMS__Host;
-                            features[lv2_feature_id_programs]->data   = Programs_Feature;
-
-                            features[lv2_feature_id_rtmempool]        = new LV2_Feature;
-                            features[lv2_feature_id_rtmempool]->URI   = LV2_RTSAFE_MEMORY_POOL_URI;
-                            features[lv2_feature_id_rtmempool]->data  = RT_MemPool_Feature;
 
                             handle = descriptor->instantiate(descriptor, get_sample_rate(), rdf_descriptor->Bundle, features);
 
@@ -2762,6 +2734,9 @@ public:
 #endif
     }
 
+    // ----------------- DynParam Feature ------------------------------------------------
+    // TODO
+
     // ----------------- Event Feature ---------------------------------------------------
     static uint32_t carla_lv2_event_ref(LV2_Event_Callback_Data callback_data, LV2_Event* event)
     {
@@ -2817,6 +2792,18 @@ public:
         va_end(args);
 
         return ret;
+    }
+
+    // ----------------- Programs Feature ------------------------------------------------
+    static void carla_lv2_program_changed(LV2_Programs_Handle handle, int32_t index)
+    {
+        qDebug("Lv2Plugin::carla_lv2_program_changed(%p, %i)", handle, index);
+
+        if (handle)
+        {
+            Lv2Plugin* plugin = (Lv2Plugin*)handle;
+            plugin->update_program(index);
+        }
     }
 
     // ----------------- State Feature ---------------------------------------------------
@@ -2996,17 +2983,8 @@ public:
     {
         qDebug("Lv2Plugin::carla_lv2_uri_to_id(%p, %s, %s)", data, map, uri);
 
-        // Event types
-        if (map && strcmp(map, LV2_EVENT_URI) == 0)
-        {
-            if (strcmp(uri, LV2_MIDI__MidiEvent) == 0)
-                return CARLA_URI_MAP_ID_MIDI_EVENT;
-            else if (strcmp(uri, LV2_TIME__Position) == 0)
-                return CARLA_URI_MAP_ID_TIME_POSITION;
-        }
-
         // Atom types
-        else if (strcmp(uri, LV2_ATOM__Chunk) == 0)
+        if (strcmp(uri, LV2_ATOM__Chunk) == 0)
             return CARLA_URI_MAP_ID_ATOM_CHUNK;
         else if (strcmp(uri, LV2_ATOM__Path) == 0)
             return CARLA_URI_MAP_ID_ATOM_PATH;
@@ -3025,7 +3003,9 @@ public:
         else if (strcmp(uri, LV2_LOG__Warning) == 0)
             return CARLA_URI_MAP_ID_LOG_WARNING;
 
-        // TODO - position types
+        // Others
+        else if (strcmp(uri, LV2_MIDI__MidiEvent) == 0)
+            return CARLA_URI_MAP_ID_MIDI_EVENT;
 
         // Custom types
         if (data)
@@ -3042,14 +3022,8 @@ public:
     {
         qDebug("Lv2Plugin::carla_lv2_urid_map(%p, %s)", handle, uri);
 
-        // Event types
-        if (strcmp(uri, LV2_MIDI__MidiEvent) == 0)
-            return CARLA_URI_MAP_ID_MIDI_EVENT;
-        else if (strcmp(uri, LV2_TIME__Position) == 0)
-            return CARLA_URI_MAP_ID_TIME_POSITION;
-
         // Atom types
-        else if (strcmp(uri, LV2_ATOM__Chunk) == 0)
+        if (strcmp(uri, LV2_ATOM__Chunk) == 0)
             return CARLA_URI_MAP_ID_ATOM_CHUNK;
         else if (strcmp(uri, LV2_ATOM__Path) == 0)
             return CARLA_URI_MAP_ID_ATOM_PATH;
@@ -3068,7 +3042,9 @@ public:
         else if (strcmp(uri, LV2_LOG__Warning) == 0)
             return CARLA_URI_MAP_ID_LOG_WARNING;
 
-        // TODO - position types
+        // Others
+        else if (strcmp(uri, LV2_MIDI__MidiEvent) == 0)
+            return CARLA_URI_MAP_ID_MIDI_EVENT;
 
         // Custom types
         if (handle)
@@ -3087,8 +3063,6 @@ public:
         // Event types
         if (urid == CARLA_URI_MAP_ID_MIDI_EVENT)
             return LV2_MIDI__MidiEvent;
-        else if (urid == CARLA_URI_MAP_ID_TIME_POSITION)
-            return LV2_TIME__Position;
 
         // Atom types
         else if (urid == CARLA_URI_MAP_ID_ATOM_CHUNK)
@@ -3164,21 +3138,6 @@ public:
         }
 
         return LV2_WORKER_ERR_UNKNOWN;
-    }
-
-    // ----------------- DynParam Feature ------------------------------------------------
-    // TODO
-
-    // ----------------- Programs Feature ------------------------------------------------
-    static void carla_lv2_program_changed(LV2_Programs_Handle handle, int32_t index)
-    {
-        qDebug("Lv2Plugin::carla_lv2_program_changed(%p, %i)", handle, index);
-
-        if (handle)
-        {
-            Lv2Plugin* plugin = (Lv2Plugin*)handle;
-            plugin->update_program(index);
-        }
     }
 
     // ----------------- UI Port-Map Feature ---------------------------------------------

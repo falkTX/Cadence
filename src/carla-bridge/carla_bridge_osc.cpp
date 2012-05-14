@@ -15,20 +15,23 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_osc.h"
+#include "carla_bridge_osc.h"
+#include "carla_midi.h"
 
 #ifdef BUILD_BRIDGE_UI
 #include "carla_bridge_ui.h"
 #else
+// TODO
 #include "carla_plugin.h"
 extern void plugin_bridge_show_gui(bool yesno);
 extern void plugin_bridge_quit();
+//CarlaPlugin* plugin = CarlaPlugins[0];
 #endif
 
 #include <cstring>
 
-size_t plugin_name_len = 0;
-const char* plugin_name = nullptr;
+size_t plugin_name_len = 13;
+const char* plugin_name = "lv2-ui-bridge";
 
 const char* global_osc_server_path = nullptr;
 lo_server_thread global_osc_server_thread = nullptr;
@@ -36,11 +39,9 @@ OscData global_osc_data = { nullptr, nullptr, nullptr };
 
 // -------------------------------------------------------------------------
 
-void osc_init(const char* osc_name, const char* osc_url)
+void osc_init(const char* osc_url)
 {
-    qDebug("osc_init(%s, %s)", osc_name, osc_url);
-    plugin_name = osc_name;
-    plugin_name_len = strlen(plugin_name);
+    qDebug("osc_init(%s)", osc_url);
 
     const char* host = lo_url_get_hostname(osc_url);
     const char* port = lo_url_get_port(osc_url);
@@ -55,21 +56,18 @@ void osc_init(const char* osc_name, const char* osc_url)
     global_osc_server_thread = lo_server_thread_new(nullptr, osc_error_handler);
 
     // get our full OSC server path
-    char* osc_thread_path = lo_server_thread_get_url(global_osc_server_thread);
+    char* this_thread_path = lo_server_thread_get_url(global_osc_server_thread);
 
-    char osc_path_tmp[strlen(osc_thread_path) + plugin_name_len + 1];
-    strcpy(osc_path_tmp, osc_thread_path);
+    char osc_path_tmp[strlen(this_thread_path) + plugin_name_len + 1];
+    strcpy(osc_path_tmp, this_thread_path);
     strcat(osc_path_tmp, plugin_name);
-    free(osc_thread_path);
+    free(this_thread_path);
 
     global_osc_server_path = strdup(osc_path_tmp);
 
     // register message handler and start OSC thread
     lo_server_thread_add_method(global_osc_server_thread, nullptr, nullptr, osc_message_handler, nullptr);
     lo_server_thread_start(global_osc_server_thread);
-
-    // debug our server path just to make sure everything is ok
-    qDebug("carla-bridge OSC -> %s\n", global_osc_server_path);
 }
 
 void osc_close()
@@ -90,14 +88,16 @@ void osc_clear_data(OscData* osc_data)
 {
     qDebug("osc_clear_data(%p)", osc_data);
 
-    if (global_osc_data.path)
-        free((void*)global_osc_data.path);
+    // TODO - sync
 
-    if (global_osc_data.target)
-        lo_address_free(global_osc_data.target);
+    if (osc_data->path)
+        free((void*)osc_data->path);
 
-    global_osc_data.path = nullptr;
-    global_osc_data.target = nullptr;
+    if (osc_data->target)
+        lo_address_free(osc_data->target);
+
+    osc_data->path = nullptr;
+    osc_data->target = nullptr;
 }
 
 // -------------------------------------------------------------------------
@@ -111,24 +111,25 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
 {
     qDebug("osc_message_handler(%s, %s, %p, %i, %p, %p)", path, types, argv, argc, data, user_data);
 
-    char method[32];
-    memset(method, 0, sizeof(char)*24);
+    if (strlen(path) < plugin_name_len + 3)
+    {
+        qWarning("Got invalid OSC path '%s'", path);
+        return 1;
+    }
 
-    unsigned int mindex = strlen(plugin_name)+2;
+    char method[32] = { 0 };
+    memcpy(method, path + plugin_name_len + 2, 32);
 
-    for (unsigned int i=mindex; i < strlen(path) && i-mindex < 24; i++)
-        method[i-mindex] = path[i];
-
-    if (strcmp(method, "control") == 0)
+    if (strcmp(method, "configure") == 0)
+        return osc_handle_configure(argv);
+    else if (strcmp(method, "control") == 0)
         return osc_handle_control(argv);
     else if (strcmp(method, "program") == 0)
         return osc_handle_program(argv);
     else if (strcmp(method, "midi_program") == 0)
         return osc_handle_midi_program(argv);
-//    else if (strcmp(method, "note_on") == 0)
-//        return osc_note_on_handler(argv);
-//    else if (strcmp(method, "note_off") == 0)
-//        return osc_note_off_handler(argv);
+    else if (strcmp(method, "midi") == 0)
+        return osc_handle_midi(argv);
     else if (strcmp(method, "show") == 0)
         return osc_handle_show();
     else if (strcmp(method, "hide") == 0)
@@ -148,6 +149,23 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
 }
 
 // -------------------------------------------------------------------------
+
+int osc_handle_configure(lo_arg** argv)
+{
+    const char* key   = (const char*)&argv[0]->s;
+    const char* value = (const char*)&argv[1]->s;
+
+#ifdef BUILD_BRIDGE_UI
+    // TODO
+    (void)key;
+    (void)value;
+#else
+    if (CarlaPlugins[0])
+        CarlaPlugins[0]->set_custom_data(CUSTOM_DATA_STRING, key, value, false);
+#endif
+
+    return 0;
+}
 
 int osc_handle_control(lo_arg** argv)
 {
@@ -173,7 +191,7 @@ int osc_handle_program(lo_arg** argv)
     if (ui && index >= 0)
         ui->queque_message(BRIDGE_MESSAGE_PROGRAM, index, 0, 0.0);
 #else
-    if (CarlaPlugins[0])
+    if (CarlaPlugins[0] && index >= 0)
         CarlaPlugins[0]->set_program(index, false, true, true, true);
 #endif
 
@@ -186,14 +204,46 @@ int osc_handle_midi_program(lo_arg** argv)
     int program = argv[1]->i;
 
 #ifdef BUILD_BRIDGE_UI
-    //if (ui && index >= 0)
-    //    ui->queque_message(BRIDGE_MESSAGE_MIDI_PROGRAM, index, 0, 0.0);
-    (void)bank;
-    (void)program;
+    if (ui && bank >= 0 && program >= 0)
+        ui->queque_message(BRIDGE_MESSAGE_MIDI_PROGRAM, bank, program, 0.0);
 #else
-    if (CarlaPlugins[0])
+    if (CarlaPlugins[0] && bank >= 0 && program >= 0)
         CarlaPlugins[0]->set_midi_program_full(bank, program, false, true, true, true);
 #endif
+
+    return 0;
+}
+
+int osc_handle_midi(lo_arg** argv)
+{
+    uint8_t* data  = argv[0]->m;
+    uint8_t status = data[1];
+
+    // Fix bad note-off
+    if (MIDI_IS_STATUS_NOTE_ON(status) && data[3] == 0)
+        status -= 0x10;
+
+    if (MIDI_IS_STATUS_NOTE_OFF(status))
+    {
+        uint8_t note = data[2];
+#ifdef BUILD_BRIDGE_UI
+        if (ui)
+            ui->queque_message(BRIDGE_MESSAGE_NOTE_OFF, note, 0, 0.0);
+#else
+        plugin->send_midi_note(false, note, 0, false, true, true);
+#endif
+    }
+    else if (MIDI_IS_STATUS_NOTE_ON(status))
+    {
+        uint8_t note = data[2];
+        uint8_t velo = data[3];
+#ifdef BUILD_BRIDGE_UI
+        if (ui)
+            ui->queque_message(BRIDGE_MESSAGE_NOTE_ON, note, velo, 0.0);
+#else
+        plugin->send_midi_note(true, note, velo, false, true, true);
+#endif
+    }
 
     return 0;
 }
@@ -236,9 +286,8 @@ int osc_handle_quit()
 
 // -------------------------------------------------------------------------
 
-void osc_send_update()
+void osc_send_update(OscData*)
 {
-    qDebug("osc_send_update()");
     if (global_osc_data.target)
     {
         char target_path[strlen(global_osc_data.path)+8];
@@ -248,9 +297,63 @@ void osc_send_update()
     }
 }
 
-void osc_send_exiting()
+void osc_send_configure(OscData*, const char* key, const char* value)
 {
-    qDebug("osc_send_exiting()");
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+11];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/configure");
+        lo_send(global_osc_data.target, target_path, "ss", key, value);
+    }
+}
+
+void osc_send_control(OscData*, int param, double value)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+9];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/control");
+        lo_send(global_osc_data.target, target_path, "if", param, value);
+    }
+}
+
+void osc_send_program(OscData*, int program)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+9];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/program");
+        lo_send(global_osc_data.target, target_path, "i", program);
+    }
+}
+
+void osc_send_midi_program(OscData*, int bank, int program)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+14];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/midi_program");
+        lo_send(global_osc_data.target, target_path, "ii", bank, program);
+    }
+}
+
+void osc_send_midi(OscData*, uint8_t buf[4])
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+6];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/midi");
+        lo_send(global_osc_data.target, target_path, "m", buf);
+    }
+}
+
+void osc_send_exiting(OscData*)
+{
     if (global_osc_data.target)
     {
         char target_path[strlen(global_osc_data.path)+9];
@@ -260,6 +363,9 @@ void osc_send_exiting()
     }
 }
 
+// -------------------------------------------------------------------------
+
+#ifndef BUILD_BRIDGE_UI
 void osc_send_bridge_ains_peak(int index, double value)
 {
     if (global_osc_data.target)
@@ -315,6 +421,28 @@ void osc_send_bridge_param_count(int ins, int outs, int total)
     }
 }
 
+void osc_send_bridge_program_count(int count)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+22];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/bridge_program_count");
+        lo_send(global_osc_data.target, target_path, "i", count);
+    }
+}
+
+void osc_send_bridge_midi_program_count(int count)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+27];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/bridge_midi_program_count");
+        lo_send(global_osc_data.target, target_path, "i", count);
+    }
+}
+
 void osc_send_bridge_plugin_info(int type, int category, int hints, const char* name, const char* label, const char* maker, const char* copyright, long unique_id)
 {
     if (global_osc_data.target)
@@ -337,14 +465,14 @@ void osc_send_bridge_param_info(int index, const char* name, const char* unit)
     }
 }
 
-void osc_send_bridge_param_data(int type, int index, int rindex, int hints, int midi_channel, int midi_cc)
+void osc_send_bridge_param_data(int index, int type, int rindex, int hints, int midi_channel, int midi_cc)
 {
     if (global_osc_data.target)
     {
         char target_path[strlen(global_osc_data.path)+19];
         strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/bridge_param_data");
-        lo_send(global_osc_data.target, target_path, "iiiiii", type, index, rindex, hints, midi_channel, midi_cc);
+        lo_send(global_osc_data.target, target_path, "iiiiii", index, type, rindex, hints, midi_channel, midi_cc);
     }
 }
 
@@ -359,51 +487,36 @@ void osc_send_bridge_param_ranges(int index, double def, double min, double max,
     }
 }
 
+void osc_send_bridge_program_info(int index, const char* name)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+21];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/bridge_program_info");
+        lo_send(global_osc_data.target, target_path, "is", index, name);
+    }
+}
+
+void osc_send_bridge_midi_program_info(int index, int bank, int program, const char* label)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+26];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/bridge_midi_program_info");
+        lo_send(global_osc_data.target, target_path, "iiis", index, bank, program, label);
+    }
+}
+
 void osc_send_bridge_update()
 {
     if (global_osc_data.target)
     {
-        char target_path[strlen(global_osc_data.path)+14];
+        char target_path[strlen(global_osc_data.path)+15];
         strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/bridge_update");
         lo_send(global_osc_data.target, target_path, "");
     }
 }
-
-// -------------------------------------------------------------------------
-
-void osc_send_configure(OscData*, const char* key, const char* value)
-{
-    qDebug("osc_send_configure(%s, %s)", key, value);
-    if (global_osc_data.target)
-    {
-        char target_path[strlen(global_osc_data.path)+11];
-        strcpy(target_path, global_osc_data.path);
-        strcat(target_path, "/configure");
-        lo_send(global_osc_data.target, target_path, "ss", key, value);
-    }
-}
-
-void osc_send_control(OscData*, int param, double value)
-{
-    qDebug("osc_send_control(%i, %f)", param, value);
-    if (global_osc_data.target)
-    {
-        char target_path[strlen(global_osc_data.path)+9];
-        strcpy(target_path, global_osc_data.path);
-        strcat(target_path, "/control");
-        lo_send(global_osc_data.target, target_path, "if", param, value);
-    }
-}
-
-void osc_send_program(OscData*, int program_id)
-{
-    qDebug("osc_send_program(%i)", program_id);
-    if (global_osc_data.target)
-    {
-        char target_path[strlen(global_osc_data.path)+9];
-        strcpy(target_path, global_osc_data.path);
-        strcat(target_path, "/program");
-        lo_send(global_osc_data.target, target_path, "i", program_id);
-    }
-}
+#endif

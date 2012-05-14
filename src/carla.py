@@ -2392,7 +2392,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             content += "   <CustomData>\n"
             content += "    <type>%s</type>\n" % (custom_data['type'])
             content += "    <key>%s</key>\n" % (custom_data['key'])
-            if (custom_data['type'] in ("string", "binary")):
+            if (custom_data['type'] in ("string", "chunk", "binary")):
                 content += "    <value>\n"
                 content += "%s\n" % (custom_data['value'])
                 content += "    </value>\n"
