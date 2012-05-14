@@ -98,7 +98,6 @@ void toolkit_loop()
     }
 
     osc_send_update(nullptr);
-    toolkit_window_show();
 
     // Main loop
     app->exec();

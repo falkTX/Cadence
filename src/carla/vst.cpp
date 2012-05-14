@@ -1293,18 +1293,8 @@ public:
         {
             VST_Function vstfn = (VST_Function)lib_symbol("VSTPluginMain");
 
-            if (vstfn == nullptr)
-            {
-                if (vstfn == nullptr)
-                {
-#ifdef TARGET_API_MAC_CARBON
-
-                    vstfn = (VST_Function)lib_symbol("main_macho");
-                    if (vstfn == nullptr)
-#endif
-                        vstfn = (VST_Function)lib_symbol("main");
-                }
-            }
+            if (! vstfn)
+                vstfn = (VST_Function)lib_symbol("main");
 
             if (vstfn)
             {

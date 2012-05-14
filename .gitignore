@@ -12,6 +12,7 @@
 *.carxp
 *.carxs
 *.pro.user
+*.xml
 
 *.pyc
 ui_*.py
@@ -20,11 +21,18 @@ icons_rc.py
 moc_*.cpp
 ui_*.h
 
-carla-bridge-*
-carla-discovery-*
-c++/patchcanvas/PatchCanvas
-
 c++/*/Makefile
-src/carla*/qtcreator/Makefile
-src/carla-includes/aeffect.h
-src/carla-includes/aeffectx.h
+src/carla/qtcreator/Makefile
+src/carla/qtcreator/carla_backend
+src/carla-bridge/qtcreator/Makefile
+src/carla-bridge-ui/qtcreator/Makefile
+src/carla-discovery/qtcreator/Makefile
+src/carla-includes/vst/
+
+carla-bridge-lv2-gtk2
+carla-bridge-lv2-qt4
+carla-bridge-lv2-x11
+carla-bridge-vst-x11
+carla-discovery-unix32
+carla-discovery-unix64
+c++/patchcanvas/PatchCanvas
