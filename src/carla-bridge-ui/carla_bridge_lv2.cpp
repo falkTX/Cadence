@@ -22,7 +22,6 @@
 #include "lv2_rdf.h"
 
 #ifdef BRIDGE_LV2_X11
-// FIXME, use x11 something
 #include <QtGui/QDialog>
 #endif
 
@@ -76,6 +75,11 @@ public:
 #ifdef BRIDGE_LV2_X11
         x11_widget = new QDialog;
 #endif
+
+        m_resizable = true;
+
+        for (uint32_t i=0; i < lv2_feature_count+1; i++)
+            features[i] = nullptr;
 
         // Initialize features
         LV2_Event_Feature* Event_Feature     = new LV2_Event_Feature;
@@ -191,10 +195,6 @@ public:
 
         if (rdf_descriptor)
             lv2_rdf_free(rdf_descriptor);
-
-#ifdef WANT_X11
-        //delete x11_widget;
-#endif
     }
 
     // ---------------------------------------------------------------------
@@ -239,6 +239,17 @@ public:
                                                          &widget,
                                                          features);
 
+                        // Check if not resizable
+                        for (uint32_t i=0; i < rdf_ui_descriptor->FeatureCount; i++)
+                        {
+                            if (strcmp(rdf_ui_descriptor->Features[i].URI, LV2_UI__fixedSize) == 0 || strcmp(rdf_ui_descriptor->Features[i].URI, LV2_UI__noUserResize) == 0)
+                            {
+                                m_resizable = false;
+                                break;
+                            }
+                        }
+
+                        // Check for programs extension
                         if (handle && descriptor->extension_data)
                         {
                             for (uint32_t j=0; j < rdf_ui_descriptor->ExtensionCount; j++)
@@ -266,6 +277,11 @@ public:
             descriptor->cleanup(handle);
 
         lib_close();
+
+#ifdef BRIDGE_LV2_X11
+        //if (x11_widget)
+        //    delete x11_widget;
+#endif
     }
 
     // ---------------------------------------------------------------------
@@ -305,16 +321,7 @@ public:
 
     bool is_resizable() const
     {
-        if (rdf_ui_descriptor)
-        {
-            for (uint32_t i=0; i < rdf_ui_descriptor->FeatureCount; i++)
-            {
-                if (strcmp(rdf_ui_descriptor->Features[i].URI, LV2_UI__fixedSize) == 0 || strcmp(rdf_ui_descriptor->Features[i].URI, LV2_UI__noUserResize) == 0)
-                    return false;
-            }
-            return true;
-        }
-        return false;
+        return m_resizable;
     }
 
     void* get_widget() const
@@ -584,6 +591,8 @@ private:
 #ifdef BRIDGE_LV2_X11
     QDialog* x11_widget;
 #endif
+
+    bool m_resizable;
 };
 
 int main(int argc, char* argv[])

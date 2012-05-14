@@ -38,6 +38,7 @@ void save_window_settings()
     settings.setValue(QString("%1/pos_y").arg(ui->get_title()), last_y);
     settings.setValue(QString("%1/width").arg(ui->get_title()), last_width);
     settings.setValue(QString("%1/height").arg(ui->get_title()), last_height);
+    settings.sync();
 }
 
 // -------------------------------------------------------------------------
@@ -71,21 +72,24 @@ void toolkit_loop()
     g_timeout_add(50, gtk_ui_recheck, nullptr);
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_ui_destroy), nullptr);
 
-    gtk_window_get_position(GTK_WINDOW(window), &last_x, &last_y);
-    gtk_window_get_size(GTK_WINDOW(window), &last_width, &last_height);
-
     gtk_window_set_resizable(GTK_WINDOW(window), ui->is_resizable());
     gtk_window_set_title(GTK_WINDOW(window), ui->get_title());
+
+    gtk_window_get_position(GTK_WINDOW(window), &last_x, &last_y);
+    gtk_window_get_size(GTK_WINDOW(window), &last_width, &last_height);
 
     if (settings.contains(QString("%1/pos_x").arg(ui->get_title())))
     {
         last_x = settings.value(QString("%1/pos_x").arg(ui->get_title()), last_x).toInt();
         last_y = settings.value(QString("%1/pos_y").arg(ui->get_title()), last_y).toInt();
-        last_width  = settings.value(QString("%1/width").arg(ui->get_title()), last_width).toInt();
-        last_height = settings.value(QString("%1/height").arg(ui->get_title()), last_height).toInt();
-
         gtk_window_move(GTK_WINDOW(window), last_x, last_y);
-        gtk_window_resize(GTK_WINDOW(window), last_width, last_height);
+
+        if (ui->is_resizable())
+        {
+            last_width  = settings.value(QString("%1/width").arg(ui->get_title()), last_width).toInt();
+            last_height = settings.value(QString("%1/height").arg(ui->get_title()), last_height).toInt();
+            gtk_window_resize(GTK_WINDOW(window), last_width, last_height);
+        }
     }
 
     osc_send_update(nullptr);
