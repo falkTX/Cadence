@@ -35,7 +35,7 @@ const char* get_host_osc_url()
 // End of exported symbols (API)
 // -------------------------------------------------------------------------------------------------------------------
 
-void osc_init()
+void osc_init(const char*)
 {
     qDebug("osc_init()");
     const char* host_client_name = get_host_client_name();
@@ -578,26 +578,14 @@ void osc_send_program(OscData* osc_data, int program_id)
     }
 }
 
-void osc_send_program_as_midi(OscData* osc_data, int bank, int program)
-{
-    qDebug("osc_send_program_as_midi(%i, %i)", bank, program);
-    if (osc_data->target)
-    {
-        char target_path[strlen(osc_data->path)+9];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/program");
-        lo_send(osc_data->target, target_path, "ii", bank, program);
-    }
-}
-
-void osc_send_midi_program(OscData* osc_data, int bank, int program)
+void osc_send_midi_program(OscData* osc_data, int bank, int program, bool asProgram)
 {
     qDebug("osc_send_midi_program(%i, %i)", bank, program);
     if (osc_data->target)
     {
         char target_path[strlen(osc_data->path)+9];
         strcpy(target_path, osc_data->path);
-        strcat(target_path, "/midi_program");
+        strcat(target_path, asProgram ? "/program" : "/midi_program");
         lo_send(osc_data->target, target_path, "ii", bank, program);
     }
 }

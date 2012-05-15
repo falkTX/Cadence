@@ -101,10 +101,7 @@ void CarlaCheckThread::run()
                                 plugin->get_midi_program_info(&midiprog, post_events[j].index);
 
                                 // Update OSC based UIs
-                                if (plugin->type() == PLUGIN_DSSI)
-                                    osc_send_program_as_midi(osc_data,  midiprog.bank, midiprog.program);
-                                else
-                                    osc_send_midi_program(osc_data, midiprog.bank, midiprog.program);
+                                osc_send_midi_program(osc_data, midiprog.bank, midiprog.program, (plugin->type() == PLUGIN_DSSI));
 
                                 // Update OSC control client
                                 osc_global_send_set_midi_program(plugin->id(), post_events[j].index);

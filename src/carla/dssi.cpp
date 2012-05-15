@@ -222,7 +222,7 @@ public:
 
 #ifndef BUILD_BRIDGE
             if (gui_send)
-                osc_send_program_as_midi(&osc.data, midiprog.data[index].bank, midiprog.data[index].program);
+                osc_send_midi_program(&osc.data, midiprog.data[index].bank, midiprog.data[index].program, true);
 #endif
         }
 

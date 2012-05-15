@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# Makefile for Carla-Bridge-UI #
+# Makefile for Carla-Bridge-UIs #
 # -------------------------------------------- #
 # Created by falkTX
 #
@@ -17,7 +17,7 @@ LINK_FLAGS   = `pkg-config --cflags --libs liblo QtCore` -ldl $(LDFLAGS)
 BRIDGE_LV2_GTK2_FLAGS = $(BUILD_FLAGS) -DBRIDGE_LV2_GTK2 `pkg-config --cflags --libs gtk+-2.0` $(LINK_FLAGS)
 BRIDGE_LV2_QT4_FLAGS  = $(BUILD_FLAGS) -DBRIDGE_LV2_QT4 `pkg-config --cflags --libs QtGui` $(LINK_FLAGS)
 BRIDGE_LV2_X11_FLAGS  = $(BUILD_FLAGS) -DBRIDGE_LV2_X11 `pkg-config --cflags --libs QtGui` $(LINK_FLAGS)
-BRIDGE_VST_X11_FLAGS  = $(BUILD_FLAGS) -DBRIDGE_VST_QT4 `pkg-config --cflags --libs QtGui` $(LINK_FLAGS)
+BRIDGE_VST_X11_FLAGS  = $(BUILD_FLAGS) -DBRIDGE_VST_X11 `pkg-config --cflags --libs QtGui` $(LINK_FLAGS)
 
 
 all: carla-bridge-lv2-gtk2 carla-bridge-lv2-qt4 carla-bridge-lv2-x11 carla-bridge-vst-x11

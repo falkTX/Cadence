@@ -88,15 +88,17 @@ void osc_clear_data(OscData* osc_data)
 {
     qDebug("osc_clear_data(%p)", osc_data);
 
-    // TODO - sync
-
     if (osc_data->path)
         free((void*)osc_data->path);
+
+    if (osc_data->source)
+        lo_address_free(osc_data->source);
 
     if (osc_data->target)
         lo_address_free(osc_data->target);
 
     osc_data->path = nullptr;
+    osc_data->source = nullptr;
     osc_data->target = nullptr;
 }
 
@@ -330,7 +332,7 @@ void osc_send_program(OscData*, int program)
     }
 }
 
-void osc_send_midi_program(OscData*, int bank, int program)
+void osc_send_midi_program(OscData*, int bank, int program, bool)
 {
     if (global_osc_data.target)
     {

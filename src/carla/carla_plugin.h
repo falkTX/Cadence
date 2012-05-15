@@ -1064,11 +1064,7 @@ public:
         if (midiprog.current >= 0)
         {
             int32_t midi_id = midiprog.current;
-
-            if (m_type == PLUGIN_DSSI)
-                osc_send_program_as_midi(&osc.data, midiprog.data[midi_id].bank, midiprog.data[midi_id].program);
-            else
-                osc_send_midi_program(&osc.data, midiprog.data[midi_id].bank, midiprog.data[midi_id].program);
+            osc_send_midi_program(&osc.data, midiprog.data[midi_id].bank, midiprog.data[midi_id].program, (m_type == PLUGIN_DSSI));
         }
 
         for (uint32_t i=0; i < param.count; i++)

@@ -32,7 +32,8 @@ HEADERS = \
     ../carla_threads.h \
     ../ladspa_rdf.h \
     ../lv2_rdf.h \
-    ../../carla-includes/carla_includes.h
+    ../../carla-includes/carla_includes.h \
+    ../../carla-includes/carla_osc_includes.h
 
 INCLUDEPATH = .. \
     ../../carla-includes \

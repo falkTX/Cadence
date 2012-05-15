@@ -39,7 +39,7 @@ bool carla_init(const char* client_name)
 
     if (started)
     {
-        osc_init();
+        osc_init(nullptr);
         carla_check_thread.start(QThread::HighPriority);
         set_last_error("no error");
     }

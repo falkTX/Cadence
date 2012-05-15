@@ -694,7 +694,7 @@ public:
             {
 #ifndef BUILD_BRIDGE
                 if (gui.type == GUI_EXTERNAL_OSC)
-                    osc_send_program_as_midi(&osc.data, midiprog.data[index].bank, midiprog.data[index].program);
+                    osc_send_midi_program(&osc.data, midiprog.data[index].bank, midiprog.data[index].program, false);
                 else
 #endif
                     if (ext.uiprograms)
@@ -3060,12 +3060,8 @@ public:
     {
         qDebug("Lv2Plugin::carla_lv2_urid_unmap(%p, %i)", handle, urid);
 
-        // Event types
-        if (urid == CARLA_URI_MAP_ID_MIDI_EVENT)
-            return LV2_MIDI__MidiEvent;
-
         // Atom types
-        else if (urid == CARLA_URI_MAP_ID_ATOM_CHUNK)
+        if (urid == CARLA_URI_MAP_ID_ATOM_CHUNK)
             return LV2_ATOM__Chunk;
         else if (urid == CARLA_URI_MAP_ID_ATOM_PATH)
             return LV2_ATOM__Path;
@@ -3083,6 +3079,10 @@ public:
             return LV2_LOG__Trace;
         else if (urid == CARLA_URI_MAP_ID_LOG_WARNING)
             return LV2_LOG__Warning;
+
+        // Others
+        else if (urid == CARLA_URI_MAP_ID_MIDI_EVENT)
+            return LV2_MIDI__MidiEvent;
 
         // Custom types
         if (handle)
