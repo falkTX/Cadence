@@ -159,7 +159,7 @@ CPP: carla_backend carla_bridge_ui carla_discovery
 carla_backend: carla_lilv
 	$(MAKE) -C src/carla
 
-carla_bridge_ui:
+carla_bridge_ui: carla_lilv
 	$(MAKE) -C src/carla-bridge-ui
 
 carla_bridge_unix32:
@@ -222,6 +222,7 @@ install:
 		src/carla-bridge-ui/carla-bridge-lv2-gtk2 \
 		src/carla-bridge-ui/carla-bridge-lv2-qt4 \
 		src/carla-bridge-ui/carla-bridge-lv2-x11 \
+		src/carla-bridge-ui/carla-bridge-vst-x11 \
 		src/carla-discovery/carla-discovery-* \
 		$(DESTDIR)$(PREFIX)/bin/
 
