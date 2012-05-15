@@ -29,10 +29,12 @@ src/carla-bridge-ui/qtcreator/Makefile
 src/carla-discovery/qtcreator/Makefile
 src/carla-includes/vst/
 
+carla-bridge-qtcreator
 carla-bridge-lv2-gtk2
 carla-bridge-lv2-qt4
 carla-bridge-lv2-x11
 carla-bridge-vst-x11
+carla-discovery-qtcreator
 carla-discovery-unix32
 carla-discovery-unix64
 c++/patchcanvas/PatchCanvas
