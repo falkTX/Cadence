@@ -112,6 +112,12 @@ def CustomDataString2Type(stype):
     else:
         return CUSTOM_DATA_INVALID
 
+def xmlSafeString(string, toXml):
+    if (toXml):
+        return string.replace("&", "&amp;").replace("<","&lt;").replace(">","&gt;").replace("'","&apos;").replace("\"","&quot;")
+    else:
+        return string.replace("&amp;", "&").replace("&lt;","<").replace("&gt;",">").replace("&apos;","'").replace("&quot;","\"")
+
 def getStateDictFromXML(xml_node):
     x_save_state_dict = deepcopy(save_state_dict)
 
@@ -127,11 +133,11 @@ def getStateDictFromXML(xml_node):
                 if tag == "Type":
                     x_save_state_dict['Type'] = text
                 elif tag == "Name":
-                    x_save_state_dict['Name'] = text
+                    x_save_state_dict['Name'] = xmlSafeString(text, False)
                 elif tag in ("Label", "URI"):
-                    x_save_state_dict['Label'] = text
+                    x_save_state_dict['Label'] = xmlSafeString(text, False)
                 elif tag == "Binary":
-                    x_save_state_dict['Binary'] = text
+                    x_save_state_dict['Binary'] = xmlSafeString(text, False)
                 elif tag == "UniqueID":
                     if text.isdigit():
                         x_save_state_dict['UniqueID'] = int(text)
@@ -164,7 +170,7 @@ def getStateDictFromXML(xml_node):
                     if text.isdigit():
                         x_save_state_dict['CurrentProgramIndex'] = int(text)
                 elif tag == "CurrentProgramName":
-                    x_save_state_dict['CurrentProgramName'] = text
+                    x_save_state_dict['CurrentProgramName'] = xmlSafeString(text, False)
 
                 elif tag == "CurrentMidiBank":
                     if text.isdigit():
@@ -186,7 +192,7 @@ def getStateDictFromXML(xml_node):
                             if ptext.isdigit():
                                 x_save_state_parameter['index'] = int(ptext)
                         elif ptag == "name":
-                            x_save_state_parameter['name'] = ptext
+                            x_save_state_parameter['name'] = xmlSafeString(ptext, False)
                         elif ptag == "symbol":
                             x_save_state_parameter['symbol'] = ptext
                         elif ptag == "value":
@@ -215,9 +221,9 @@ def getStateDictFromXML(xml_node):
                         if ctag == "type":
                             x_save_state_custom_data['type'] = CustomDataString2Type(ctext)
                         elif ctag == "key":
-                            x_save_state_custom_data['key'] = ctext.replace("&amp;", "&").replace("&lt;","<").replace("&gt;",">").replace("&apos;","\\").replace("&quot;","\"")
+                            x_save_state_custom_data['key'] = xmlSafeString(ctext, False)
                         elif ctag == "value":
-                            x_save_state_custom_data['value'] = ctext.replace("&amp;", "&").replace("&lt;","<").replace("&gt;",">").replace("&apos;","\\").replace("&quot;","\"")
+                            x_save_state_custom_data['value'] = xmlSafeString(ctext, False)
 
                         xml_subdata = xml_subdata.nextSibling()
 
@@ -2295,7 +2301,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             parameter_info = CarlaHost.get_parameter_info(self.plugin_id, i)
             parameter_data = CarlaHost.get_parameter_data(self.plugin_id, i)
 
-            if (not parameter_info['valid'] or parameter_data['type'] != PARAMETER_INPUT):
+            if (not parameter_info['valid']) or parameter_data['type'] != PARAMETER_INPUT:
                 continue
 
             x_save_state_parameter = deepcopy(save_state_parameter)
@@ -2320,14 +2326,14 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         for i in range(custom_data_count):
             custom_data = CarlaHost.get_custom_data(self.plugin_id, i)
 
-            if (custom_data['type'] == CUSTOM_DATA_INVALID):
+            if custom_data['type'] == CUSTOM_DATA_INVALID:
                 continue
 
             x_save_state_custom_data = deepcopy(save_state_custom_data)
 
             x_save_state_custom_data['type']  = CustomDataType2String(custom_data['type'])
-            x_save_state_custom_data['key']   = c_string(custom_data['key']).replace("&", "&amp;").replace("<","&lt;").replace(">","&gt;").replace("\\","&apos;").replace("\"","&quot;")
-            x_save_state_custom_data['value'] = c_string(custom_data['value']).replace("&", "&amp;").replace("<","&lt;").replace(">","&gt;").replace("\\","&apos;").replace("\"","&quot;")
+            x_save_state_custom_data['key']   = c_string(custom_data['key'])
+            x_save_state_custom_data['value'] = c_string(custom_data['value'])
 
             x_save_state_dict['CustomData'].append(x_save_state_custom_data)
 
@@ -2340,70 +2346,68 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         # ----------------------------
         # Generate XML for this plugin
 
-        # TODO - convert to xml safe strings where needed
-
         content = ""
 
         content += "  <Info>\n"
-        content += "   <Type>%s</Type>\n" % (x_save_state_dict['Type'])
-        content += "   <Name>%s</Name>\n" % (x_save_state_dict['Name'])
+        content += "   <Type>%s</Type>\n" % x_save_state_dict['Type']
+        content += "   <Name>%s</Name>\n" % xmlSafeString(x_save_state_dict['Name'], True)
         if (self.pinfo['type'] == PLUGIN_LV2):
-            content += "   <URI>%s</URI>\n" % (x_save_state_dict['Label'])
+            content += "   <URI>%s</URI>\n" % xmlSafeString(x_save_state_dict['Label'], True)
         else:
-            content += "   <Label>%s</Label>\n" % (x_save_state_dict['Label'])
-            content += "   <Binary>%s</Binary>\n" % (x_save_state_dict['Binary'])
+            content += "   <Label>%s</Label>\n" % xmlSafeString(x_save_state_dict['Label'], True)
+            content += "   <Binary>%s</Binary>\n" % xmlSafeString(x_save_state_dict['Binary'], True)
             if (x_save_state_dict['UniqueID'] != 0):
                 content += "   <UniqueID>%li</UniqueID>\n" % x_save_state_dict['UniqueID']
         content += "  </Info>\n"
 
         content += "\n"
         content += "  <Data>\n"
-        content += "   <Active>%s</Active>\n" % ("Yes" if x_save_state_dict['Active'] else "No")
-        content += "   <DryWet>%f</DryWet>\n" % (x_save_state_dict['DryWet'])
-        content += "   <Volume>%f</Volume>\n" % (x_save_state_dict['Volume'])
-        content += "   <Balance-Left>%f</Balance-Left>\n" % (x_save_state_dict['Balance-Left'])
-        content += "   <Balance-Right>%f</Balance-Right>\n" % (x_save_state_dict['Balance-Right'])
+        content += "   <Active>%s</Active>\n" % "Yes" if x_save_state_dict['Active'] else "No"
+        content += "   <DryWet>%f</DryWet>\n" % x_save_state_dict['DryWet']
+        content += "   <Volume>%f</Volume>\n" % x_save_state_dict['Volume']
+        content += "   <Balance-Left>%f</Balance-Left>\n" % x_save_state_dict['Balance-Left']
+        content += "   <Balance-Right>%f</Balance-Right>\n" % x_save_state_dict['Balance-Right']
 
         for parameter in x_save_state_dict['Parameters']:
             content += "\n"
             content += "   <Parameter>\n"
-            content += "    <index>%i</index>\n" % (parameter['index'])
-            content += "    <name>%s</name>\n" % (parameter['name'])
+            content += "    <index>%i</index>\n" % parameter['index']
+            content += "    <name>%s</name>\n" % xmlSafeString(parameter['name'], True)
             if (parameter['symbol']):
-                content += "    <symbol>%s</symbol>\n" % (parameter['symbol'])
-            content += "    <value>%f</value>\n" % (parameter['value'])
+                content += "    <symbol>%s</symbol>\n" % parameter['symbol']
+            content += "    <value>%f</value>\n" % parameter['value']
             if (parameter['midi_cc'] > 0):
-                content += "    <midi_channel>%i</midi_channel>\n" % (parameter['midi_channel'])
-                content += "    <midi_cc>%i</midi_cc>\n" % (parameter['midi_cc'])
+                content += "    <midi_channel>%i</midi_channel>\n" % parameter['midi_channel']
+                content += "    <midi_cc>%i</midi_cc>\n" % parameter['midi_cc']
             content += "   </Parameter>\n"
 
         if (x_save_state_dict['CurrentProgramIndex'] >= 0):
             content += "\n"
-            content += "   <CurrentProgramIndex>%i</CurrentProgramIndex>\n" % (x_save_state_dict['CurrentProgramIndex'])
-            content += "   <CurrentProgramName>%s</CurrentProgramName>\n" % (x_save_state_dict['CurrentProgramName'])
+            content += "   <CurrentProgramIndex>%i</CurrentProgramIndex>\n" % x_save_state_dict['CurrentProgramIndex']
+            content += "   <CurrentProgramName>%s</CurrentProgramName>\n" % xmlSafeString(x_save_state_dict['CurrentProgramName'], True)
 
         if (x_save_state_dict['CurrentMidiBank'] >= 0 and x_save_state_dict['CurrentMidiProgram'] >= 0):
             content += "\n"
-            content += "   <CurrentMidiBank>%i</CurrentMidiBank>\n" % (x_save_state_dict['CurrentMidiBank'])
-            content += "   <CurrentMidiProgram>%i</CurrentMidiProgram>\n" % (x_save_state_dict['CurrentMidiProgram'])
+            content += "   <CurrentMidiBank>%i</CurrentMidiBank>\n" % x_save_state_dict['CurrentMidiBank']
+            content += "   <CurrentMidiProgram>%i</CurrentMidiProgram>\n" % x_save_state_dict['CurrentMidiProgram']
 
         for custom_data in x_save_state_dict['CustomData']:
             content += "\n"
             content += "   <CustomData>\n"
-            content += "    <type>%s</type>\n" % (custom_data['type'])
-            content += "    <key>%s</key>\n" % (custom_data['key'])
+            content += "    <type>%s</type>\n" % custom_data['type']
+            content += "    <key>%s</key>\n" % xmlSafeString(custom_data['key'], True)
             if (custom_data['type'] in ("string", "chunk", "binary")):
                 content += "    <value>\n"
-                content += "%s\n" % (custom_data['value'])
+                content += "%s\n" % xmlSafeString(custom_data['value'], True)
                 content += "    </value>\n"
             else:
-                content += "    <value>%s</value>\n" % (custom_data['value'])
+                content += "    <value>%s</value>\n" % xmlSafeString(custom_data['value'], True)
             content += "   </CustomData>\n"
 
         if (x_save_state_dict['Chunk']):
             content += "\n"
             content += "   <Chunk>\n"
-            content += "%s\n" % (x_save_state_dict['Chunk'])
+            content += "%s\n" % x_save_state_dict['Chunk']
             content += "   </Chunk>\n"
 
         content += "  </Data>\n"
