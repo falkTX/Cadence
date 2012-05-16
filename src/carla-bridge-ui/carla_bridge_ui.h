@@ -72,7 +72,7 @@ public:
         }
     }
 
-    ~UiData()
+    virtual ~UiData()
     {
         free((void*)m_title);
     }

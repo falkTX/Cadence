@@ -648,7 +648,6 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             setSampleRate(self, sample_rate)
 
           setRealTime(self, jacksettings.isRealtime())
-          setXruns(self, -1)
 
           self.cb_buffer_size.setEnabled(buffer_size_test)
           self.cb_sample_rate.setEnabled(sample_rate_test)
@@ -663,6 +662,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.b_jack_render.setEnabled(False)
         self.menuJackServer(False)
         self.menuJackTransport(False)
+        setXruns(self, -1)
 
         if (self.m_selected_transport_view == TRANSPORT_VIEW_HMS):
           self.label_time.setText("00:00:00")

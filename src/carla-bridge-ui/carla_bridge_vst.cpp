@@ -340,13 +340,13 @@ public:
                 {
                     const VstMidiEvent* const midi_event = (VstMidiEvent*)events->events[i];
 
-                    char status = midi_event->midiData[0];
+                    uint8_t status = midi_event->midiData[0];
 
                     // Fix bad note-off
                     if (MIDI_IS_STATUS_NOTE_ON(status) && midi_event->midiData[2] == 0)
                         status -= 0x10;
 
-                    uint8_t midi_buf[4] = { 0, status, midi_event->midiData[1], midi_event->midiData[2] };
+                    uint8_t midi_buf[4] = { 0, status, (uint8_t)midi_event->midiData[1], (uint8_t)midi_event->midiData[2] };
                     osc_send_midi(nullptr, midi_buf);
                 }
             }
