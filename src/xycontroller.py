@@ -69,23 +69,23 @@ class XYGraphicsScene(QGraphicsScene):
         self.m_channels = channels
 
     def setPosX(self, x, forward=True):
-        if (self.m_mouseLock == False):
+        if not self.m_mouseLock:
           pos_x = x*(self.p_size.x()+self.p_size.width())
           self.m_cursor.setPos(pos_x, self.m_cursor.y())
           self.m_lineV.setX(pos_x)
 
-          if (forward):
+          if forward:
             self.sendMIDI(pos_x/(self.p_size.x()+self.p_size.width()), None)
           else:
             self.m_smooth_x = pos_x
 
     def setPosY(self, y, forward=True):
-        if (self.m_mouseLock == False):
+        if not self.m_mouseLock:
           pos_y = y*(self.p_size.y()+self.p_size.height())
           self.m_cursor.setPos(self.m_cursor.x(), pos_y)
           self.m_lineH.setY(pos_y)
 
-          if (forward):
+          if forward:
             self.sendMIDI(None, pos_y/(self.p_size.y()+self.p_size.height()))
           else:
             self.m_smooth_y = pos_y
@@ -142,7 +142,7 @@ class XYGraphicsScene(QGraphicsScene):
         self.m_smooth_x = pos.x()
         self.m_smooth_y = pos.y()
 
-        if (self.m_smooth == False):
+        if (not self.m_smooth):
           self.m_cursor.setPos(pos)
           self.m_lineH.setY(pos.y())
           self.m_lineV.setX(pos.x())
@@ -173,6 +173,13 @@ class XYGraphicsScene(QGraphicsScene):
     def updateSmooth(self):
         if (self.m_smooth):
           if (self.m_cursor.x() != self.m_smooth_x or self.m_cursor.y() != self.m_smooth_y):
+            if (abs(self.m_cursor.x() - self.m_smooth_x) <= 0.001):
+              self.m_smooth_x = self.m_cursor.x()
+              return
+            elif (abs(self.m_cursor.y() - self.m_smooth_y) <= 0.001):
+              self.m_smooth_y = self.m_cursor.y()
+              return
+
             new_x = (self.m_smooth_x+self.m_cursor.x()*3)/4
             new_y = (self.m_smooth_y+self.m_cursor.y()*3)/4
             pos = QPointF(new_x, new_y)
@@ -385,8 +392,14 @@ class XYControllerW(QMainWindow, ui_xycontroller.Ui_XYControllerW):
 
     @pyqtSlot(float, float)
     def slot_sceneCursorMoved(self, xp, yp):
+        self.dial_x.blockSignals(True)
+        self.dial_y.blockSignals(True)
+
         self.dial_x.setValue(xp*100)
         self.dial_y.setValue(yp*100)
+
+        self.dial_x.blockSignals(False)
+        self.dial_y.blockSignals(False)
 
     @pyqtSlot(bool)
     def slot_showKeyboard(self, yesno):
@@ -495,9 +508,9 @@ class XYControllerW(QMainWindow, ui_xycontroller.Ui_XYControllerW):
 
               if (channel in self.m_channels):
                 if (mode == 0x80):
-                  self.keyboard.noteOff(data2, False)
+                  self.keyboard.sendNoteOff(data2, False)
                 elif (mode == 0x90):
-                  self.keyboard.noteOn(data2, False)
+                  self.keyboard.sendNoteOn(data2, False)
                 elif (mode == 0xB0):
                   self.scene.handleCC(data2, data3)
 

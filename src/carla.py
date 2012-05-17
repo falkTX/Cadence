@@ -2891,13 +2891,13 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
     def slot_handleNoteOnCallback(self, plugin_id, note):
         pwidget = self.m_plugin_list[plugin_id]
         if (pwidget):
-            pwidget.edit_dialog.keyboard.noteOn(note, False)
+            pwidget.edit_dialog.keyboard.sendNoteOn(note, False)
 
     @pyqtSlot(int, int)
     def slot_handleNoteOffCallback(self, plugin_id, note):
         pwidget = self.m_plugin_list[plugin_id]
         if (pwidget):
-            pwidget.edit_dialog.keyboard.noteOff(note, False)
+            pwidget.edit_dialog.keyboard.sendNoteOff(note, False)
 
     @pyqtSlot(int, int)
     def slot_handleShowGuiCallback(self, plugin_id, show):

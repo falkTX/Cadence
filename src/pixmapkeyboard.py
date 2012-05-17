@@ -101,7 +101,7 @@ class PixmapKeyboard(QWidget):
 
         self.setMode(self.HORIZONTAL)
 
-    def noteOn(self, note, sendSignal=True):
+    def sendNoteOn(self, note, sendSignal=True):
         if 0 <= note <= 127 and note not in self.m_enabledKeys:
             self.m_enabledKeys.append(note)
             if sendSignal:
@@ -113,7 +113,7 @@ class PixmapKeyboard(QWidget):
         if len(self.m_enabledKeys) == 1:
             self.emit(SIGNAL("notesOn()"))
 
-    def noteOff(self, note, sendSignal=True):
+    def sendNoteOff(self, note, sendSignal=True):
         if 0 <= note <= 127 and note in self.m_enabledKeys:
             self.m_enabledKeys.remove(note)
             if sendSignal:
@@ -125,13 +125,6 @@ class PixmapKeyboard(QWidget):
         if len(self.m_enabledKeys) == 0:
             self.emit(SIGNAL("notesOff()"))
 
-    def _isNoteBlack(self, note):
-        baseNote = note % 12
-        return bool(baseNote in (1, 3, 6, 8, 10))
-
-    def _getRectFromMidiNote(self, note):
-        return self.m_midi_map.get(str(note % 12))
-
     def setMode(self, mode, color=COLOR_ORANGE):
         if color == self.COLOR_CLASSIC:
             self.m_colorStr = "classic"
@@ -139,25 +132,23 @@ class PixmapKeyboard(QWidget):
             self.m_colorStr = "orange"
         else:
             qCritical("PixmapKeyboard::setMode(%i, %i) - Invalid keyboard color" % (mode, color))
-            self.setMode(mode)
-            return
+            return self.setMode(mode)
 
         if mode == self.HORIZONTAL:
             self.m_midi_map = midi_key2rect_map_horizontal
             self.m_pixmap.load(":/bitmaps/kbd_h_%s.png" % self.m_colorStr)
             self.m_pixmap_mode = self.HORIZONTAL
-            self.p_width = self.m_pixmap.width()
+            self.p_width  = self.m_pixmap.width()
             self.p_height = self.m_pixmap.height() / 2
         elif mode == self.VERTICAL:
             self.m_midi_map = midi_key2rect_map_vertical
             self.m_pixmap.load(":/bitmaps/kbd_v_%s.png" % self.m_colorStr)
             self.m_pixmap_mode = self.VERTICAL
-            self.p_width = self.m_pixmap.width() / 2
+            self.p_width  = self.m_pixmap.width() / 2
             self.p_height = self.m_pixmap.height()
         else:
             qCritical("PixmapKeyboard::setMode(%i, %i) - Invalid keyboard mode" % (mode, color))
-            self.setMode(self.HORIZONTAL)
-            return
+            return self.setMode(self.HORIZONTAL)
 
         self.setOctaves(self.m_octaves)
 
@@ -177,17 +168,11 @@ class PixmapKeyboard(QWidget):
 
         self.update()
 
-    @pyqtSlot()
-    def slot_updateOnce(self):
-        if self.m_needsUpdate:
-            self.update()
-            self.m_needsUpdate = False
-
     def keyPressEvent(self, event):
         qKey = str(event.key())
 
         if qKey in midi_keyboard2key_map.keys():
-            self.noteOn(midi_keyboard2key_map.get(qKey))
+            self.sendNoteOn(midi_keyboard2key_map.get(qKey))
 
         QWidget.keyPressEvent(self, event)
 
@@ -195,7 +180,7 @@ class PixmapKeyboard(QWidget):
         qKey = str(event.key())
 
         if qKey in midi_keyboard2key_map.keys():
-            self.noteOff(midi_keyboard2key_map.get(qKey))
+            self.sendNoteOff(midi_keyboard2key_map.get(qKey))
 
         QWidget.keyReleaseEvent(self, event)
 
@@ -211,7 +196,7 @@ class PixmapKeyboard(QWidget):
 
     def mouseReleaseEvent(self, event):
         if self.m_lastMouseNote != -1:
-            self.noteOff(self.m_lastMouseNote)
+            self.sendNoteOff(self.m_lastMouseNote)
             self.m_lastMouseNote = -1
         QWidget.mouseReleaseEvent(self, event)
 
@@ -261,10 +246,10 @@ class PixmapKeyboard(QWidget):
         if note != -1:
             note += octave * 12
             if self.m_lastMouseNote != note:
-                self.noteOff(self.m_lastMouseNote)
-                self.noteOn(note)
+                self.sendNoteOff(self.m_lastMouseNote)
+                self.sendNoteOn(note)
         else:
-            self.noteOff(self.m_lastMouseNote)
+            self.sendNoteOff(self.m_lastMouseNote)
 
         self.m_lastMouseNote = note
 
@@ -395,8 +380,22 @@ class PixmapKeyboard(QWidget):
         # Paint C-number note info
         painter.setFont(self.m_font)
         painter.setPen(Qt.black)
+
         for i in range(self.m_octaves):
             if self.m_pixmap_mode == self.HORIZONTAL:
-                painter.drawText(i * 144, 48, 18, 18, Qt.AlignCenter, "C%s" % (i + 2))
+                painter.drawText(i * 144, 48, 18, 18, Qt.AlignCenter, "C%i" % (i + 2))
             elif self.m_pixmap_mode == self.VERTICAL:
-                painter.drawText(45, (self.m_octaves * 144) - (i * 144) - 16, 18, 18, Qt.AlignCenter, "C%s" % (i + 2))
+                painter.drawText(45, (self.m_octaves * 144) - (i * 144) - 16, 18, 18, Qt.AlignCenter, "C%i" % (i + 2))
+
+    @pyqtSlot()
+    def slot_updateOnce(self):
+        if self.m_needsUpdate:
+            self.update()
+            self.m_needsUpdate = False
+
+    def _isNoteBlack(self, note):
+        baseNote = note % 12
+        return bool(baseNote in (1, 3, 6, 8, 10))
+
+    def _getRectFromMidiNote(self, note):
+        return self.m_midi_map.get(str(note % 12))
