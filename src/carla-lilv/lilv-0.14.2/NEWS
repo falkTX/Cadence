@@ -1,3 +1,9 @@
+lilv (0.14.2) stable;
+
+  * Fix dynmanifest support
+
+ -- David Robillard <d@drobilla.net>  Thu, 19 Apr 2012 16:11:31 -0400
+
 lilv (0.14.0) stable;
 
   * Add lilv_plugin_get_extension_data

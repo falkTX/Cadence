@@ -217,13 +217,11 @@ CarlaPluginThread::~CarlaPluginThread()
         delete m_process;
 }
 
-void CarlaPluginThread::setOscData(const char* binary, const char* label, const char* data1, const char* data2, const char* data3)
+void CarlaPluginThread::setOscData(const char* binary, const char* label, const char* data1)
 {
     m_binary = QString(binary);
     m_label  = QString(label);
     m_data1  = QString(data1);
-    m_data2  = QString(data2);
-    m_data3  = QString(data3);
 }
 
 #include <QDebug>
@@ -248,8 +246,6 @@ void CarlaPluginThread::run()
         /* osc_url     */ arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
         /* URI         */ arguments << m_label;
         /* ui-URI      */ arguments << m_data1;
-        /* ui-filename */ arguments << m_data2;
-        /* ui-bundle   */ arguments << m_data3;
         /* ui-title    */ arguments << QString("%1 (GUI)").arg(m_plugin->name());
         break;
 

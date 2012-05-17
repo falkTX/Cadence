@@ -175,6 +175,10 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
     else if (strcmp(method, "exiting") == 0)
         return osc_handle_exiting(plugin);
 
+    // Plugin-specific methods
+    else if (strcmp(method, "lv2_event_transfer") == 0)
+        return osc_handle_lv2_event_transfer(plugin, argv);
+
     // Plugin Bridges
     if (plugin->hints() & PLUGIN_IS_BRIDGE)
     {
@@ -551,6 +555,18 @@ void osc_send_configure(OscData* osc_data, const char* key, const char* value)
         strcpy(target_path, osc_data->path);
         strcat(target_path, "/configure");
         lo_send(osc_data->target, target_path, "ss", key, value);
+    }
+}
+
+void osc_send_lv2_event_transfer(OscData* osc_data, const char* type, const char* key, const char* value)
+{
+    qDebug("osc_send_lv2_event_transfer(%s, %s, %s)", type, key, value);
+    if (osc_data->target)
+    {
+        char target_path[strlen(osc_data->path)+20];
+        strcpy(target_path, osc_data->path);
+        strcat(target_path, "/lv2_event_transfer");
+        lo_send(osc_data->target, target_path, "sss", type, key, value);
     }
 }
 

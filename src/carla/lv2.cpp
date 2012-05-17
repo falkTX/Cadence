@@ -18,6 +18,7 @@
 #include "carla_plugin.h"
 
 #include "lv2_rdf.h"
+#include "sratom/sratom.h"
 
 extern "C" {
 #include "lv2-rtmempool/rtmempool.h"
@@ -78,12 +79,14 @@ const uint32_t CARLA_URI_MAP_ID_ATOM_CHUNK    = 1;
 const uint32_t CARLA_URI_MAP_ID_ATOM_PATH     = 2;
 const uint32_t CARLA_URI_MAP_ID_ATOM_SEQUENCE = 3;
 const uint32_t CARLA_URI_MAP_ID_ATOM_STRING   = 4;
-const uint32_t CARLA_URI_MAP_ID_LOG_ERROR     = 5;
-const uint32_t CARLA_URI_MAP_ID_LOG_NOTE      = 6;
-const uint32_t CARLA_URI_MAP_ID_LOG_TRACE     = 7;
-const uint32_t CARLA_URI_MAP_ID_LOG_WARNING   = 8;
-const uint32_t CARLA_URI_MAP_ID_MIDI_EVENT    = 9;
-const uint32_t CARLA_URI_MAP_ID_COUNT         = 10;
+const uint32_t CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM  = 5;
+const uint32_t CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT = 6;
+const uint32_t CARLA_URI_MAP_ID_LOG_ERROR     = 7;
+const uint32_t CARLA_URI_MAP_ID_LOG_NOTE      = 8;
+const uint32_t CARLA_URI_MAP_ID_LOG_TRACE     = 9;
+const uint32_t CARLA_URI_MAP_ID_LOG_WARNING   = 10;
+const uint32_t CARLA_URI_MAP_ID_MIDI_EVENT    = 11;
+const uint32_t CARLA_URI_MAP_ID_COUNT         = 12;
 
 enum Lv2ParameterDataType {
     LV2_PARAMETER_TYPE_CONTROL,
@@ -167,7 +170,6 @@ public:
         gui.width = 0;
         gui.height = 0;
 
-        // Fill pre-set URI keys
         for (uint32_t i=0; i < CARLA_URI_MAP_ID_COUNT; i++)
             custom_uri_ids.append(nullptr);
 
@@ -1477,7 +1479,6 @@ public:
         LV2_Event_Iterator evin_iters[evin.count];
         LV2_MIDIState evin_states[evin.count];
 
-
         for (i=0; i < ain.count; i++)
             ains_buffer[i] = (jack_audio_sample_t*)jack_port_get_buffer(ain.ports[i], nframes);
 
@@ -1743,8 +1744,8 @@ public:
                                 aev->body.size   = 3;
                                 memcpy(LV2_ATOM_BODY(&aev->body), midi_event, 3);
 
-                                uint32_t size            = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + 3);
-                                atomSequenceOffsets[k]  += size;
+                                uint32_t size           = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + 3);
+                                atomSequenceOffsets[k] += size;
                                 evin.data[k].buffer.a->atom.size += size;
                             }
                             else if (evin.data[k].type & CARLA_EVENT_DATA_EVENT)
@@ -1797,7 +1798,17 @@ public:
                 if (MIDI_IS_STATUS_NOTE_OFF(status) || MIDI_IS_STATUS_NOTE_ON(status) || MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status) || MIDI_IS_STATUS_AFTERTOUCH(status) || MIDI_IS_STATUS_PITCH_WHEEL_CONTROL(status))
                 {
                     if (evin.data[i].type & CARLA_EVENT_DATA_ATOM)
-                        continue; // TODO
+                    {
+                        LV2_Atom_Event* aev = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evin.data[i].buffer.a) + atomSequenceOffsets[i]);
+                        aev->time.frames = min_event.time;
+                        aev->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
+                        aev->body.size   = min_event.size;
+                        memcpy(LV2_ATOM_BODY(&aev->body), min_event.buffer, min_event.size);
+
+                        uint32_t size           = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + min_event.size);
+                        atomSequenceOffsets[i] += size;
+                        evin.data[i].buffer.a->atom.size += size;
+                    }
                     else if (evin.data[i].type & CARLA_EVENT_DATA_EVENT)
                         lv2_event_write(&evin_iters[i], min_event.time, 0, CARLA_URI_MAP_ID_MIDI_EVENT, min_event.size, min_event.buffer);
                     else if (evin.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
@@ -2122,10 +2133,65 @@ public:
 
     void run_custom_event(PluginPostEvent* event)
     {
-        if (ext.worker)
+        //if (ext.worker)
+        //{
+        //    ext.worker->work(handle, carla_lv2_worker_respond, this, event->index, event->cdata);
+        //    ext.worker->end_run(handle);
+        //}
+    }
+
+    void handle_event_transfer(const char* type, const char* key, const char* string_data)
+    {
+        qDebug("Lv2Plugin::handle_event_transfer() - %s | %s | %s", type, key, string_data);
+
+        QByteArray chunk;
+        chunk = QByteArray::fromBase64(string_data);
+
+        LV2_Atom* atom = (LV2_Atom*)chunk.constData();
+        LV2_URID urid_atom_Blank = get_custom_uri_id(LV2_ATOM__Blank);
+        LV2_URID urid_patch_body = get_custom_uri_id(LV2_PATCH__body);
+        LV2_URID urid_patch_Set  = get_custom_uri_id(LV2_PATCH__Set);
+
+        if (atom->type == urid_atom_Blank)
         {
-            ext.worker->work(handle, carla_lv2_worker_respond, this, event->index, event->cdata);
-            ext.worker->end_run(handle);
+            qDebug("Is blank");
+
+            LV2_Atom_Object* obj = (LV2_Atom_Object*)atom;
+
+            if (obj->body.otype == urid_patch_Set)
+            {
+                qDebug("Is Patch Set");
+
+                const LV2_Atom_Object* body = nullptr;
+                lv2_atom_object_get(obj, urid_patch_body, &body, 0);
+
+                if (body)
+                {
+                    qDebug("Has body");
+
+                    LV2_ATOM_OBJECT_FOREACH(body, iter)
+                    {
+                        CustomDataType dtype = CUSTOM_DATA_INVALID;
+                        const char* key   = get_custom_uri_string(iter->key);
+                        const char* value = nullptr;
+
+                        if (iter->value.type == CARLA_URI_MAP_ID_ATOM_STRING || iter->value.type == CARLA_URI_MAP_ID_ATOM_PATH)
+                        {
+                            dtype = iter->value.type == CARLA_URI_MAP_ID_ATOM_STRING ? CUSTOM_DATA_STRING : CUSTOM_DATA_PATH;
+                            value = strdup((const char*)LV2_ATOM_BODY(&iter->value));
+                        }
+                        else if (iter->value.type == CARLA_URI_MAP_ID_ATOM_CHUNK || iter->value.type >= CARLA_URI_MAP_ID_COUNT)
+                        {
+                            QByteArray chunk((const char*)LV2_ATOM_BODY(&iter->value), iter->value.size);
+                            value = strdup(chunk.toBase64().constData());
+                            dtype = iter->value.type == CARLA_URI_MAP_ID_ATOM_CHUNK ? CUSTOM_DATA_CHUNK : CUSTOM_DATA_BINARY;
+                        }
+
+                        set_custom_data(dtype, key, value, false);
+                        free((void*)value);
+                    }
+                }
+            }
         }
     }
 
@@ -2205,10 +2271,9 @@ public:
 
     bool is_ui_bridgeable(uint32_t ui_id)
     {
+#ifdef BUILD_BRIDGE
         return false;
-
-        // FIXME
-
+#else
         const LV2_RDF_UI* const rdf_ui = &rdf_descriptor->UIs[ui_id];
 
         for (uint32_t i=0; i < rdf_ui->FeatureCount; i++)
@@ -2218,6 +2283,7 @@ public:
         }
 
         return true;
+#endif
     }
 
     void reinit_external_ui()
@@ -2257,6 +2323,53 @@ public:
 
             if (ui.descriptor->port_event)
             {
+                // state
+                for (int i=0; i < custom.count(); i++)
+                {
+                    if (custom[i].type == CUSTOM_DATA_INVALID)
+                        continue;
+
+                    LV2_URID_Map* URID_Map = (LV2_URID_Map*)features[lv2_feature_id_urid_map]->data;
+
+                    Sratom*   sratom = sratom_new(URID_Map);
+                    SerdChunk chunk  = { nullptr, 0 };
+
+                    LV2_Atom_Forge forge;
+                    lv2_atom_forge_init(&forge, URID_Map);
+                    lv2_atom_forge_set_sink(&forge, sratom_forge_sink, sratom_forge_deref, &chunk);
+
+                    LV2_URID urid_patch_Set  = get_custom_uri_id(LV2_PATCH__Set);
+                    LV2_URID urid_patch_body = get_custom_uri_id(LV2_PATCH__body);
+
+                    LV2_Atom_Forge_Frame ref_frame;
+                    LV2_Atom_Forge_Ref ref = lv2_atom_forge_blank(&forge, &ref_frame, 1, urid_patch_Set);
+
+                    lv2_atom_forge_property_head(&forge, urid_patch_body, 0);
+                    LV2_Atom_Forge_Frame body_frame;
+                    lv2_atom_forge_blank(&forge, &body_frame, 2, 0);
+
+                    lv2_atom_forge_property_head(&forge, get_custom_uri_id(custom[i].key), 0);
+
+                    if (custom[i].type == CUSTOM_DATA_STRING)
+                        lv2_atom_forge_string(&forge, custom[i].value, strlen(custom[i].value));
+                    else if (custom[i].type == CUSTOM_DATA_PATH)
+                        lv2_atom_forge_path(&forge, custom[i].value, strlen(custom[i].value));
+                    else if (custom[i].type == CUSTOM_DATA_CHUNK)
+                        lv2_atom_forge_literal(&forge, custom[i].value, strlen(custom[i].value), CARLA_URI_MAP_ID_ATOM_CHUNK, 0);
+                    else
+                        lv2_atom_forge_literal(&forge, custom[i].value, strlen(custom[i].value), get_custom_uri_id(custom[i].key), 0);
+
+                    lv2_atom_forge_pop(&forge, &body_frame);
+                    lv2_atom_forge_pop(&forge, &ref_frame);
+
+                    LV2_Atom* atom = lv2_atom_forge_deref(&forge, ref);
+                    ui.descriptor->port_event(ui.handle, 0, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
+
+                    free((void*)chunk.buf);
+                    sratom_free(sratom);
+                }
+
+                // control ports
                 float value;
                 for (uint32_t i=0; i < param.count; i++)
                 {
@@ -2418,6 +2531,8 @@ public:
                             features[lv2_feature_id_worker]->URI      = LV2_WORKER__schedule;
                             features[lv2_feature_id_worker]->data     = Worker_Feature;
 
+                            //lv2_atom_forge_init(&atom_forge, URID_Map_Feature);
+
                             handle = descriptor->instantiate(descriptor, get_sample_rate(), rdf_descriptor->Bundle, features);
 
                             if (handle)
@@ -2443,28 +2558,23 @@ public:
                                             switch (rdf_descriptor->UIs[i].Type)
                                             {
                                             case LV2_UI_QT4:
-#ifndef BUILD_BRIDGE
                                                 if (is_ui_bridgeable(i))
                                                     eQt4 = i;
                                                 else
-#endif
                                                     iQt4 = i;
                                                 break;
 
                                             case LV2_UI_X11:
-#ifndef BUILD_BRIDGE
                                                 if (is_ui_bridgeable(i))
                                                     eX11 = i;
                                                 else
-#endif
                                                     iX11 = i;
                                                 break;
 
-#ifndef BUILD_BRIDGE
                                             case LV2_UI_GTK2:
-                                                eGtk2 = i;
+                                                if (is_ui_bridgeable(i))
+                                                    eGtk2 = i;
                                                 break;
-#endif
 
                                             case LV2_UI_EXTERNAL:
                                             case LV2_UI_OLD_EXTERNAL:
@@ -2541,7 +2651,7 @@ public:
                                                                 {
                                                                     gui.type = GUI_EXTERNAL_OSC;
                                                                     osc.thread = new CarlaPluginThread(this, CarlaPluginThread::PLUGIN_THREAD_LV2_GUI);
-                                                                    osc.thread->setOscData(osc_binary, descriptor->URI, ui.descriptor->URI, ui.rdf_descriptor->Binary, ui.rdf_descriptor->Bundle);
+                                                                    osc.thread->setOscData(osc_binary, descriptor->URI, ui.descriptor->URI);
                                                                 }
                                                             }
                                                             else
@@ -2992,6 +3102,10 @@ public:
             return CARLA_URI_MAP_ID_ATOM_SEQUENCE;
         else if (strcmp(uri, LV2_ATOM__String) == 0)
             return CARLA_URI_MAP_ID_ATOM_STRING;
+        else if (strcmp(uri, LV2_ATOM__atomTransfer) == 0)
+            return CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM;
+        else if (strcmp(uri, LV2_ATOM__eventTransfer) == 0)
+            return CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT;
 
         // Log types
         else if (strcmp(uri, LV2_LOG__Error) == 0)
@@ -3031,6 +3145,10 @@ public:
             return CARLA_URI_MAP_ID_ATOM_SEQUENCE;
         else if (strcmp(uri, LV2_ATOM__String) == 0)
             return CARLA_URI_MAP_ID_ATOM_STRING;
+        else if (strcmp(uri, LV2_ATOM__atomTransfer) == 0)
+            return CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM;
+        else if (strcmp(uri, LV2_ATOM__eventTransfer) == 0)
+            return CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT;
 
         // Log types
         else if (strcmp(uri, LV2_LOG__Error) == 0)
@@ -3069,6 +3187,10 @@ public:
             return LV2_ATOM__Sequence;
         else if (urid == CARLA_URI_MAP_ID_ATOM_STRING)
             return LV2_ATOM__String;
+        else if (urid == CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM)
+            return LV2_ATOM__atomTransfer;
+        else if (urid == CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT)
+            return LV2_ATOM__eventTransfer;
 
         // Log types
         else if (urid == CARLA_URI_MAP_ID_LOG_ERROR)
@@ -3101,20 +3223,20 @@ public:
 
         if (handle)
         {
-            Lv2Plugin* plugin = (Lv2Plugin*)handle;
+//            Lv2Plugin* plugin = (Lv2Plugin*)handle;
 
-            if (carla_jack_on_freewheel())
-            {
-                PluginPostEvent event;
-                event.valid = true;
-                event.type  = PostEventCustom;
-                event.index = size;
-                event.value = 0.0;
-                event.cdata = data;
-                plugin->run_custom_event(&event);
-            }
-            else
-                plugin->postpone_event(PostEventCustom, size, 0.0, data);
+//            if (carla_jack_on_freewheel())
+//            {
+//                PluginPostEvent event;
+//                event.valid = true;
+//                event.type  = PostEventCustom;
+//                event.index = size;
+//                event.value = 0.0;
+//                event.cdata = data;
+//                plugin->run_custom_event(&event);
+//            }
+//            else
+//                plugin->postpone_event(PostEventCustom, size, 0.0, data);
 
             return LV2_WORKER_SUCCESS;
         }
@@ -3132,7 +3254,7 @@ public:
 
             if (plugin->ext.worker)
             {
-                plugin->ext.worker->work_response(plugin->handle, size, data);
+                //plugin->ext.worker->work_response(plugin->handle, size, data);
                 return LV2_WORKER_SUCCESS;
             }
         }
@@ -3232,6 +3354,17 @@ public:
                     plugin->send_midi_note(true, note, velo, false, true, true);
                 }
             }
+            else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM)
+            {
+                // TODO
+                //LV2_Atom* atom = (LV2_Atom*)buffer;
+                //QByteArray chunk((const char*)buffer, buffer_size);
+            }
+            else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT)
+            {
+                LV2_Atom* atom = (LV2_Atom*)buffer;
+                plugin->ui.descriptor->port_event(plugin->ui.handle, 0, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
+            }
         }
     }
 
@@ -3268,8 +3401,22 @@ private:
     PluginEventData evin;
     PluginEventData evout;
     Lv2ParameterData* lv2param;
+
+    //LV2_Atom_Forge atom_forge;
     QList<const char*> custom_uri_ids;
 };
+
+int osc_handle_lv2_event_transfer(CarlaPlugin* plugin, lo_arg** argv)
+{
+    Lv2Plugin* lv2plugin = (Lv2Plugin*)plugin;
+
+    const char* type  = (const char*)&argv[0]->s;
+    const char* key   = (const char*)&argv[1]->s;
+    const char* value = (const char*)&argv[2]->s;
+    lv2plugin->handle_event_transfer(type, key, value);
+
+    return 0;
+}
 
 short add_plugin_lv2(const char* filename, const char* label)
 {

@@ -50,7 +50,7 @@ public:
     CarlaPluginThread(CarlaPlugin* plugin, PluginThreadMode mode);
     ~CarlaPluginThread();
 
-    void setOscData(const char* binary, const char* label, const char* data1="", const char* data2="", const char* data3="");
+    void setOscData(const char* binary, const char* label, const char* data1="");
 
 protected:
     void run();
@@ -62,8 +62,6 @@ private:
     QString m_binary;
     QString m_label;
     QString m_data1;
-    QString m_data2;
-    QString m_data3;
 
     QProcess* m_process;
 };

@@ -8,7 +8,7 @@ import waflib.Options as Options
 import waflib.Logs as Logs
 
 # Version of this package (even if built as a child)
-LILV_VERSION       = '0.14.0'
+LILV_VERSION       = '0.14.2'
 LILV_MAJOR_VERSION = '0'
 
 # Library version (UNIX style major, minor, micro)

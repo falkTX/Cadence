@@ -22,6 +22,7 @@
 
 #include "lv2/lv2.h"
 #include "lv2/atom.h"
+#include "lv2/atom-forge.h"
 #include "lv2/atom-util.h"
 #include "lv2/data-access.h"
 #include "lv2/event.h"

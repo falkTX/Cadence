@@ -426,7 +426,7 @@ lv2_atom_forge_literal(LV2_Atom_Forge* forge,
                        uint32_t        lang)
 {
 	const LV2_Atom_Literal a = {
-		{ sizeof(LV2_Atom_Literal) - sizeof(LV2_Atom) + len + 1,
+        { (uint32_t)(sizeof(LV2_Atom_Literal) - sizeof(LV2_Atom) + len + 1),
 		  forge->Literal },
 		{ datatype,
 		  lang }
@@ -466,7 +466,7 @@ lv2_atom_forge_vector(LV2_Atom_Forge* forge,
                       const void*     elems)
 {
 	const LV2_Atom_Vector a = {
-		{ sizeof(LV2_Atom_Vector_Body) + n_elems * child_size, forge->Vector },
+        { (uint32_t)(sizeof(LV2_Atom_Vector_Body) + n_elems * child_size), forge->Vector },
 		{ child_size, child_type }
 	};
 	LV2_Atom_Forge_Ref out = lv2_atom_forge_write(forge, &a, sizeof(a));

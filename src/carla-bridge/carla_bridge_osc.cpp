@@ -37,6 +37,10 @@ const char* global_osc_server_path = nullptr;
 lo_server_thread global_osc_server_thread = nullptr;
 OscData global_osc_data = { nullptr, nullptr, nullptr };
 
+#if BRIDGE_LV2_GTK2 || BRIDGE_LV2_QT4 || BRIDGE_LV2_X11
+int osc_handle_lv2_event_transfer(lo_arg** argv);
+#endif
+
 // -------------------------------------------------------------------------
 
 void osc_init(const char* osc_url)
@@ -124,6 +128,10 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
 
     if (strcmp(method, "configure") == 0)
         return osc_handle_configure(argv);
+#if BRIDGE_LV2_GTK2 || BRIDGE_LV2_QT4 || BRIDGE_LV2_X11
+    else if (strcmp(method, "lv2_event_transfer") == 0)
+        return osc_handle_lv2_event_transfer(argv);
+#endif
     else if (strcmp(method, "control") == 0)
         return osc_handle_control(argv);
     else if (strcmp(method, "program") == 0)
@@ -158,7 +166,6 @@ int osc_handle_configure(lo_arg** argv)
     const char* value = (const char*)&argv[1]->s;
 
 #ifdef BUILD_BRIDGE_UI
-    // TODO
     (void)key;
     (void)value;
 #else
@@ -367,7 +374,18 @@ void osc_send_exiting(OscData*)
 
 // -------------------------------------------------------------------------
 
-#ifndef BUILD_BRIDGE_UI
+#ifdef BUILD_BRIDGE_UI
+void osc_send_lv2_event_transfer(const char* type, const char* key, const char* value)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+20];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/lv2_event_transfer");
+        lo_send(global_osc_data.target, target_path, "sss", type, key, value);
+    }
+}
+#else
 void osc_send_bridge_ains_peak(int index, double value)
 {
     if (global_osc_data.target)

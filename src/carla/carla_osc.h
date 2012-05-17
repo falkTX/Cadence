@@ -33,6 +33,7 @@ int osc_handle_program_as_midi(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_midi_program(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_midi(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_exiting(CarlaPlugin* plugin);
+int osc_handle_lv2_event_transfer(CarlaPlugin* plugin, lo_arg** argv);
 
 int osc_handle_set_active(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_set_drywet(CarlaPlugin* plugin, lo_arg** argv);
@@ -45,6 +46,8 @@ int osc_handle_note_on(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_note_off(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_bridge_ains_peak(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_bridge_aouts_peak(CarlaPlugin* plugin, lo_arg** argv);
+
+void osc_send_lv2_event_transfer(OscData* osc_data, const char* type, const char* key, const char* value);
 
 bool osc_global_registered();
 void osc_global_send_add_plugin(int plugin_id, const char* plugin_name);

@@ -460,7 +460,7 @@ lilv_world_load_dyn_manifest(LilvWorld* world,
 		SerdReader*     reader = sord_new_reader(
 			world->model, env, SERD_TURTLE, sord_node_copy(dmanifest));
 		serd_reader_add_blank_prefix(reader,
-		                             lilv_world_blank_node_prefix(p->world));
+		                             lilv_world_blank_node_prefix(world));
 		serd_reader_read_file_handle(reader, fd,
 		                             (const uint8_t*)"(dyn-manifest)");
 		serd_reader_free(reader);

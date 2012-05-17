@@ -47,8 +47,7 @@ class LEDButton(QPushButton):
         elif color == self.BIG_RED:
             size = 64
         else:
-            qCritical("LEDButton::setColor(%i) - Invalid color" % color)
-            return
+            return qCritical("LEDButton::setColor(%i) - Invalid color" % color)
 
         self.setPixmapSize(size)
 
