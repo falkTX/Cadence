@@ -24,7 +24,7 @@
 #include <fluidsynth.h>
 
 #if (FLUIDSYNTH_VERSION_MAJOR >= 1 && FLUIDSYNTH_VERSION_MINOR >= 1 && FLUIDSYNTH_VERSION_MICRO >= 3)
-#define FLUIDSYNTH_VERSION_113
+#define FLUIDSYNTH_VERSION_NEW_API
 #endif
 
 class Sf2Plugin : public CarlaPlugin
@@ -39,7 +39,9 @@ public:
         fluid_settings_setnum(f_settings, "synth.sample-rate", get_sample_rate());
 
         f_synth = new_fluid_synth(f_settings);
+#ifdef FLUIDSYNTH_VERSION_NEW_API
         fluid_synth_set_sample_rate(f_synth, get_sample_rate());
+#endif
         fluid_synth_set_reverb_on(f_synth, 0);
         fluid_synth_set_chorus_on(f_synth, 0);
 
@@ -721,13 +723,13 @@ public:
 
                 for (i=0; i < 16 && i != 9; i++)
                 {
-#ifndef Q_OS_WIN
+#ifdef FLUIDSYNTH_VERSION_NEW_API
                     fluid_synth_set_channel_type(f_synth, i, CHANNEL_TYPE_MELODIC);
 #endif
                     fluid_synth_program_select(f_synth, i, f_id, midiprog.data[0].bank, midiprog.data[0].program);
                 }
 
-#ifndef Q_OS_WIN
+#ifdef FLUIDSYNTH_VERSION_NEW_API
                 fluid_synth_set_channel_type(f_synth, 9, CHANNEL_TYPE_DRUM);
 #endif
                 fluid_synth_program_select(f_synth, 9, f_id, 128, 0);
@@ -838,7 +840,7 @@ public:
                         }
                         else if (control == MIDI_CONTROL_ALL_SOUND_OFF)
                         {
-#ifdef FLUIDSYNTH_VERSION_113
+#ifdef FLUIDSYNTH_VERSION_NEW_API
                             fluid_synth_all_notes_off(f_synth, 0);
                             fluid_synth_all_sounds_off(f_synth, 0);
 #endif
@@ -847,14 +849,14 @@ public:
                         }
                         else if (control == MIDI_CONTROL_ALL_NOTES_OFF)
                         {
-#ifdef FLUIDSYNTH_VERSION_113
+#ifdef FLUIDSYNTH_VERSION_NEW_API
                             fluid_synth_all_notes_off(f_synth, 0);
 #endif
                             send_midi_all_notes_off();
                             continue;
                         }
                     }
-#ifdef FLUIDSYNTH_VERSION_113
+#ifdef FLUIDSYNTH_VERSION_NEW_API
                     // not channel for backend
                     else if (channel < 16)
                     {
