@@ -749,10 +749,15 @@ public:
                     LV2_EXTERNAL_UI_HIDE((lv2_external_ui*)ui.widget);
                     gui.visible = false;
 
-                    //if (ui.descriptor->cleanup)
-                    //    ui.descriptor->cleanup(ui.handle);
+                    if (strcmp(rdf_descriptor->Author, "linuxDSP") == 0)
+                    {
+                        qWarning("linuxDSP LV2 UI hack (force close instead of hide)");
 
-                    //ui.handle = nullptr;
+                        if (ui.descriptor->cleanup)
+                            ui.descriptor->cleanup(ui.handle);
+
+                        ui.handle = nullptr;
+                    }
                 }
             }
             else
