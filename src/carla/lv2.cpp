@@ -27,12 +27,6 @@ extern "C" {
 #include <QtGui/QDialog>
 #include <QtGui/QLayout>
 
-#if 1
-int main()
-{
-    return 0;
-}
-#endif
 // static max values
 const unsigned int MAX_EVENT_BUFFER = 8192; // 0x2000
 

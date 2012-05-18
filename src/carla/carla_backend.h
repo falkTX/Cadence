@@ -257,7 +257,7 @@ CARLA_EXPORT quint32 get_program_count(unsigned short plugin_id);
 CARLA_EXPORT quint32 get_midi_program_count(unsigned short plugin_id);
 CARLA_EXPORT quint32 get_custom_data_count(unsigned short plugin_id);
 
-CARLA_EXPORT const char* get_parameter_text(unsigned short plugin_id, uint32_t parameter_id);
+CARLA_EXPORT const char* get_parameter_text(unsigned short plugin_id, quint32 parameter_id);
 CARLA_EXPORT const char* get_program_name(unsigned short plugin_id, quint32 program_id);
 CARLA_EXPORT const char* get_midi_program_name(unsigned short plugin_id, quint32 midi_program_id);
 CARLA_EXPORT const char* get_real_plugin_name(unsigned short plugin_id);

@@ -30,6 +30,7 @@
 #include <QtCore/Qt>
 
 #ifdef Q_OS_WIN
+#  include <winsock2.h>
 #  include <windows.h>
 #  define carla_sleep(t)  Sleep(t * 1000)
 #  define carla_msleep(t) Sleep(t)

@@ -224,7 +224,7 @@ void CarlaPluginThread::setOscData(const char* binary, const char* label, const 
     m_data1  = QString(data1);
 }
 
-#include <QDebug>
+#include <QtCore/QDebug>
 
 void CarlaPluginThread::run()
 {

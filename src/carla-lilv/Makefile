@@ -4,7 +4,8 @@
 # Created by falkTX
 #
 
-CC  ?= gcc
+CC ?= gcc
+AR ?= ar
 
 SERD_VERSION   = 0.14.0
 SORD_VERSION   = 0.8.0
@@ -50,7 +51,7 @@ LILV_OBJS   += lilv-${LILV_VERSION}/src/world.o
 all: carla_lilv.a
 
 carla_lilv.a: $(SERD_OBJS) $(SORD_OBJS) $(SRATOM_OBJS) $(LILV_OBJS)
-	ar rs carla_lilv.a $(SERD_OBJS) $(SORD_OBJS) $(SRATOM_OBJS) $(LILV_OBJS)
+	$(AR) rs carla_lilv.a $(SERD_OBJS) $(SORD_OBJS) $(SRATOM_OBJS) $(LILV_OBJS)
 
 clean:
 	rm -f $(SERD_OBJS) $(SORD_OBJS) $(SRATOM_OBJS) $(LILV_OBJS) carla_lilv.a

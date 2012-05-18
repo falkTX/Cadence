@@ -33,6 +33,7 @@
 // common includes
 #include <cmath>
 #include <cstdint>
+#include <cstdio>
 #include <QtCore/QList>
 #include <QtCore/QMutex>
 #include <QtCore/QString>

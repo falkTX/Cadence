@@ -218,7 +218,7 @@ public:
             events.data[i] = (VstEvent*)&midi_events[i];
 
         // make plugin valid
-        unique1 = unique2 = random();
+        unique1 = unique2 = rand();
     }
 
     ~VstPlugin()
@@ -383,7 +383,7 @@ public:
 
     void set_gui_data(int data, void* ptr)
     {
-#ifdef __WINE__
+#ifdef Q_OS_WIN
         if (effect->dispatcher(effect, effEditOpen, 0, data, ptr, 0.0f) == 1)
 #else
         if (effect->dispatcher(effect, effEditOpen, 0, data, (void*)((QDialog*)ptr)->winId(), 0.0f) == 1)
@@ -1759,7 +1759,7 @@ public:
     }
 
 private:
-    long unique1;
+    int unique1;
     AEffect* effect;
     struct {
         int32_t numEvents;
@@ -1773,7 +1773,7 @@ private:
         int width;
         int height;
     } gui;
-    long unique2;
+    int unique2;
 };
 
 short add_plugin_vst(const char* filename, const char* label)
@@ -1807,3 +1807,25 @@ short add_plugin_vst(const char* filename, const char* label)
 
     return id;
 }
+
+#if __MINGW32__
+#include <QtGui/QApplication>
+
+int main(int argc, char* argv[])
+{
+    QApplication app(argc, argv);
+    QDialog gui;
+    short id = add_plugin_vst("/home/falktx/Personal/Muzyks/WinVST/iblit.dll", "ole");
+    if (id >= 0)
+    {
+      CarlaPlugins[id]->set_gui_data(0, gui.winId());
+      show_gui(id, true);
+      gui.show();
+      app.exec();
+      remove_plugin(id);
+    }
+    else
+      qCritical("failed: %s", get_last_error());
+    return 0;
+}
+#endif

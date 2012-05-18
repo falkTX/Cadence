@@ -721,11 +721,15 @@ public:
 
                 for (i=0; i < 16 && i != 9; i++)
                 {
+#ifndef Q_OS_WIN
                     fluid_synth_set_channel_type(f_synth, i, CHANNEL_TYPE_MELODIC);
+#endif
                     fluid_synth_program_select(f_synth, i, f_id, midiprog.data[0].bank, midiprog.data[0].program);
                 }
 
+#ifndef Q_OS_WIN
                 fluid_synth_set_channel_type(f_synth, 9, CHANNEL_TYPE_DRUM);
+#endif
                 fluid_synth_program_select(f_synth, 9, f_id, 128, 0);
 
                 set_midi_program(0, false, false, false, true);

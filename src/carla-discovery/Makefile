@@ -6,6 +6,7 @@
 
 CXX     ?= g++
 WINECXX ?= wineg++
+PKGCONFIG ?= pkg-config
 
 BUILD_FLAGS  = -Wall -std=c++0x -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -I../carla-includes $(CXXFLAGS)
 BUILD_FLAGS += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
@@ -31,8 +32,8 @@ WINE_64BIT_FLAGS = -L/usr/lib64/wine -L/usr/lib/x86_64-linux-gnu/wine $(64BIT_FL
 
 ifeq ($(FLUIDSYNTH),)
 else
-BUILD_FLAGS += `pkg-config --cflags fluidsynth` -DWANT_FLUIDSYNTH
-LINK_FLAGS  += `pkg-config --libs fluidsynth`
+BUILD_FLAGS += `$(PKGCONFIG) --cflags fluidsynth` -DWANT_FLUIDSYNTH
+LINK_FLAGS  += `$(PKGCONFIG) --libs fluidsynth`
 endif
 
 ifeq ($(LILV),)

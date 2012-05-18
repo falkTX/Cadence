@@ -20,6 +20,7 @@
 
 #include "carla_includes.h"
 
+#include <cstdio>
 #include <cstring>
 #include <QtCore/QMutex>
 
@@ -205,7 +206,7 @@ public:
             return nullptr;
     }
 
-    const char* lib_error()
+    const char* lib_error(const char* filename)
     {
 #ifdef Q_OS_WIN
         static char libError[2048];
@@ -215,12 +216,13 @@ public:
         DWORD  winErrorCode = GetLastError();
         FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |  FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, winErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&winErrorString, 0, nullptr);
 
-        snprintf(libError, 2048, "%s: error code %i: %s", m_filename, winErrorCode, (const char*)winErrorString);
+        snprintf(libError, 2048, "%s: error code %i: %s", filename, winErrorCode, (const char*)winErrorString);
         LocalFree(winErrorString);
 
         return libError;
 #else
         return dlerror();
+        (void)filename;
 #endif
     }
 

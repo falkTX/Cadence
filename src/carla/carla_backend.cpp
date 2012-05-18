@@ -609,7 +609,7 @@ uint32_t get_custom_data_count(unsigned short plugin_id)
     return 0;
 }
 
-const char* get_parameter_text(unsigned short plugin_id, uint32_t parameter_id)
+const char* get_parameter_text(unsigned short plugin_id, quint32 parameter_id)
 {
     qDebug("get_parameter_text(%i, %i)", plugin_id, parameter_id);
 
@@ -1062,7 +1062,11 @@ void set_gui_data(unsigned short plugin_id, int data, quintptr gui_addr)
         if (plugin && plugin->id() == plugin_id)
         {
             //if (plugin->gui.type != GUI_NONE)
-            plugin->set_gui_data(data, get_pointer(gui_addr));
+//#ifdef Q_OS_WIN
+                //plugin->set_gui_data(data, (void*)gui_addr);
+//#else
+                plugin->set_gui_data(data, get_pointer(gui_addr));
+//#endif
             //else
             //    qCritical("set_gui_data(%i, %i, " P_INTPTR ") - plugin has no UI", plugin_id, data, gui_addr);
 
@@ -1149,6 +1153,8 @@ void set_option(OptionsType option, int value, const char* value_str)
     case OPTION_PREFER_UI_BRIDGES:
         carla_options.prefer_ui_bridges = value;
         break;
+#ifndef Q_OS_WIN
+    // FIXME
     case OPTION_PATH_LADSPA:
         setenv("LADSPA_PATH", value_str, 1);
         break;
@@ -1164,6 +1170,7 @@ void set_option(OptionsType option, int value, const char* value_str)
     case OPTION_PATH_SF2:
         setenv("SF2_PATH", value_str, 1);
         break;
+#endif
     case OPTION_PATH_BRIDGE_UNIX32:
         carla_options.bridge_unix32 = strdup(value_str);
         break;

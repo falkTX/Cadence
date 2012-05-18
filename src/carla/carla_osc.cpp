@@ -18,6 +18,8 @@
 #include "carla_osc.h"
 #include "carla_plugin.h"
 
+#include <iostream>
+
 size_t client_name_len = 0;
 const char* global_osc_server_path = nullptr;
 lo_server_thread global_osc_server_thread = nullptr;

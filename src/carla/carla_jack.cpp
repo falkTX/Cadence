@@ -18,6 +18,8 @@
 #include "carla_jack.h"
 #include "carla_plugin.h"
 
+#include <iostream>
+
 // Global JACK stuff
 static jack_client_t* carla_jack_client = nullptr;
 static jack_nframes_t carla_buffer_size = 512;
