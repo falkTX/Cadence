@@ -23,18 +23,17 @@ from PyQt4.QtGui import QAction, QMenu, QIcon, QSystemTrayIcon
 
 global TrayEngine, TrayParent
 
-try:
+#try:
   #if (os.getenv("KDE_FULL_SESSION") != None):
     #from PyKDE4.kdeui import KAction, KIcon, KMenu, KStatusNotifierItem
     #TrayEngine = "KDE"
-  if (os.getenv("DESKTOP_SESSION") in ("ubuntu", "ubuntu-2d")):
-    from gi.repository import AppIndicator3, Gtk
-    TrayEngine = "AppIndicator"
-  else:
-    TrayEngine = "Qt"
-except:
-  TrayEngine = "Qt"
-
+  #if (os.getenv("DESKTOP_SESSION") in ("ubuntu", "ubuntu-2d")):
+    #from gi.repository import AppIndicator3, Gtk
+    #TrayEngine = "AppIndicator"
+  #else:
+    #TrayEngine = "Qt"
+#except:
+TrayEngine = "Qt"
 TrayParent = "None"
 
 # Get Icon from user theme, using our own as backup (Oxygen)
