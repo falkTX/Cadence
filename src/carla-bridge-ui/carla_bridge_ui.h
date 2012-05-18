@@ -21,6 +21,7 @@
 #include "carla_includes.h"
 
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <QtCore/QMutex>
 
