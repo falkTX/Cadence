@@ -34,6 +34,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <QtCore/QList>
 #include <QtCore/QMutex>
 #include <QtCore/QString>
