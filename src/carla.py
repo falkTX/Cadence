@@ -1154,15 +1154,15 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.close()
 
 # About Carla Dialog
-class AboutW(QDialog, ui_carla_about.Ui_AboutW):
+class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
     def __init__(self, parent=None):
-        super(AboutW, self).__init__(parent)
+        super(CarlaAboutW, self).__init__(parent)
         self.setupUi(self)
 
         self.l_about.setText(self.tr(""
                                      "<br>Version %s"
                                      "<br>Carla is a Multi-Plugin Host for JACK.<br>"
-                                     "<br>Copyright (C) 2011 falkTX<br>"
+                                     "<br>Copyright (C) 2011-2012 falkTX<br>"
                                      "<br><i>VST is a trademark of Steinberg Media Technologies GmbH.</i>"
                                      "" % VERSION))
 
@@ -2793,17 +2793,14 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.connect(self.act_help_about_qt, SIGNAL("triggered()"), app, SLOT("aboutQt()"))
 
         self.connect(self, SIGNAL("SIGUSR1()"), SLOT("slot_handleSIGUSR1()"))
-        self.connect(self, SIGNAL("DebugCallback(int, int, int, double)"),
-            SLOT("slot_handleDebugCallback(int, int, int, double)"))
-        self.connect(self, SIGNAL("ParameterCallback(int, int, double)"),
-            SLOT("slot_handleParameterCallback(int, int, double)"))
+        self.connect(self, SIGNAL("DebugCallback(int, int, int, double)"), SLOT("slot_handleDebugCallback(int, int, int, double)"))
+        self.connect(self, SIGNAL("ParameterCallback(int, int, double)"), SLOT("slot_handleParameterCallback(int, int, double)"))
         self.connect(self, SIGNAL("ProgramCallback(int, int)"), SLOT("slot_handleProgramCallback(int, int)"))
         self.connect(self, SIGNAL("MidiProgramCallback(int, int)"), SLOT("slot_handleMidiProgramCallback(int, int)"))
         self.connect(self, SIGNAL("NoteOnCallback(int, int, int)"), SLOT("slot_handleNoteOnCallback(int, int)"))
         self.connect(self, SIGNAL("NoteOffCallback(int, int)"), SLOT("slot_handleNoteOffCallback(int, int)"))
         self.connect(self, SIGNAL("ShowGuiCallback(int, int)"), SLOT("slot_handleShowGuiCallback(int, int)"))
-        self.connect(self, SIGNAL("ResizeGuiCallback(int, int, int)"),
-            SLOT("slot_handleResizeGuiCallback(int, int, int)"))
+        self.connect(self, SIGNAL("ResizeGuiCallback(int, int, int)"), SLOT("slot_handleResizeGuiCallback(int, int, int)"))
         self.connect(self, SIGNAL("UpdateCallback(int)"), SLOT("slot_handleUpdateCallback(int)"))
         self.connect(self, SIGNAL("ReloadInfoCallback(int)"), SLOT("slot_handleReloadInfoCallback(int)"))
         self.connect(self, SIGNAL("ReloadParametersCallback(int)"), SLOT("slot_handleReloadParametersCallback(int)"))
@@ -2811,7 +2808,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.connect(self, SIGNAL("ReloadAllCallback(int)"), SLOT("slot_handleReloadAllCallback(int)"))
         self.connect(self, SIGNAL("QuitCallback()"), SLOT("slot_handleQuitCallback()"))
 
-        self.TIMER_GUI_STUFF = self.startTimer(self.m_savedSettings["Main/RefreshInterval"])   # Peaks
+        self.TIMER_GUI_STUFF  = self.startTimer(self.m_savedSettings["Main/RefreshInterval"])     # Peaks
         self.TIMER_GUI_STUFF2 = self.startTimer(self.m_savedSettings["Main/RefreshInterval"] * 2) # LEDs and edit dialog
 
     def callback_function(self, action, plugin_id, value1, value2, value3):
@@ -3346,7 +3343,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
     @pyqtSlot()
     def slot_aboutCarla(self):
-        AboutW(self).exec_()
+        CarlaAboutW(self).exec_()
 
     def saveSettings(self):
         self.settings.setValue("Geometry", self.saveGeometry())
@@ -3361,8 +3358,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             self.toolBar.setVisible(show_toolbar)
 
         self.m_savedSettings = {
-            "Main/DefaultProjectFolder": self.settings.value("Main/DefaultProjectFolder", DEFAULT_PROJECT_FOLDER,
-                type=str),
+            "Main/DefaultProjectFolder": self.settings.value("Main/DefaultProjectFolder", DEFAULT_PROJECT_FOLDER, type=str),
             "Main/RefreshInterval": self.settings.value("Main/RefreshInterval", 120, type=int)
         }
 
@@ -3400,7 +3396,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setApplicationName("Carla")
     app.setApplicationVersion(VERSION)
-    app.setOrganizationName("falkTX")
+    app.setOrganizationName("Cadence")
     app.setWindowIcon(QIcon(":/scalable/carla.svg"))
 
     lib_prefix = None

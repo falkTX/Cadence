@@ -22,6 +22,9 @@ all: carla_backend.so
 carla_backend.so: $(OBJS)
 	$(CXX) $(OBJS) ../carla-lilv/carla_lilv.a $(CARLA_LINK_FLAGS) -o carla_backend.so
 
+carla_backend.a: $(OBJS)
+	$(CXX) $(OBJS) ../carla-lilv/carla_lilv.a -static $(CARLA_LINK_FLAGS) -o carla_backend.a
+
 .c.o:
 	$(CC) -c $< $(CARLA_C_FLAGS) -o $@
 
