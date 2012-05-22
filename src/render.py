@@ -70,7 +70,7 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
         self.m_process.start("jack_capture", ["-pf"])
         self.m_process.waitForFinished()
 
-        formats = str(self.m_process.readAllStandardOutput(), encoding="ascii").split(" ")
+        formats = str(self.m_process.readAllStandardOutput(), encoding="utf-8").split(" ")
         for i in range(len(formats)-1):
           self.cb_format.addItem(formats[i])
           if (formats[i] == "wav"):

@@ -584,7 +584,7 @@ def jack_session_callback(event, arg):
     else:
       filepath = os.path.join(sys.path[0], "xycontroller.py")
 
-  event.command_line = str(filepath).encode("ascii")
+  event.command_line = str(filepath).encode("utf-8")
   jacklib.session_reply(jack_client, event)
 
   if (event.type == jacklib.JackSessionSaveAndQuit):

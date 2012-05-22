@@ -215,7 +215,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
           port_flags = jacklib.port_flags(port_ptr)
           group_name = port_nameR.split(":", 1)[0]
 
-          port_short_name = str(jacklib.port_short_name(port_ptr), encoding="ascii")
+          port_short_name = str(jacklib.port_short_name(port_ptr), encoding="utf-8")
 
           aliases = jacklib.port_get_aliases(port_ptr)
           if (aliases[0] == 1):
@@ -246,7 +246,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
               flags_text += " | "
             flags_text += flag
 
-          port_type_str = str(jacklib.port_type(port_ptr), encoding="ascii")
+          port_type_str = str(jacklib.port_type(port_ptr), encoding="utf-8")
           if (port_type_str == jacklib.JACK_DEFAULT_AUDIO_TYPE):
             type_text = self.tr("JACK Audio")
           elif (port_type_str == jacklib.JACK_DEFAULT_MIDI_TYPE):
@@ -502,7 +502,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         else:
           port_short_name = port_name.replace("%s:" % (group_name), "", 1)
 
-          port_type_str = str(jacklib.port_type(port_ptr), encoding="ascii")
+          port_type_str = str(jacklib.port_type(port_ptr), encoding="utf-8")
           if (port_type_str == jacklib.JACK_DEFAULT_AUDIO_TYPE):
             port_type = patchcanvas.PORT_TYPE_AUDIO_JACK
           elif (port_type_str == jacklib.JACK_DEFAULT_MIDI_TYPE):
@@ -771,7 +771,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
     def JackPortRenameCallback(self, port_id, old_name, new_name, arg):
         if (DEBUG): print("JackPortRenameCallback(%i, %s, %s)" % (port_id, old_name, new_name))
-        self.emit(SIGNAL("PortRenameCallback(int, QString, QString)"), port_id, str(old_name, encoding="ascii"), str(new_name, encoding="ascii"))
+        self.emit(SIGNAL("PortRenameCallback(int, QString, QString)"), port_id, str(old_name, encoding="utf-8"), str(new_name, encoding="utf-8"))
         return 0
 
     def JackSessionCallback(self, event, arg):
@@ -783,7 +783,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
           else:
             filepath = os.path.join(sys.path[0], "catia.py")
 
-        event.command_line = str(filepath).encode("ascii")
+        event.command_line = str(filepath).encode("utf-8")
         jacklib.session_reply(jack.client, event)
 
         if (event.type == jacklib.JackSessionSaveAndQuit):
@@ -860,7 +860,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
     @pyqtSlot(int, bool)
     def slot_PortRegistrationCallback(self, port_id_jack, register_yesno):
         port_ptr   = jacklib.port_by_id(jack.client, port_id_jack)
-        port_nameR = str(jacklib.port_name(port_ptr), encoding="ascii")
+        port_nameR = str(jacklib.port_name(port_ptr), encoding="utf-8")
 
         if (register_yesno):
           self.canvas_add_port(port_ptr, port_nameR)
@@ -878,8 +878,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
     def slot_PortConnectCallback(self, port_a_jack, port_b_jack, connect_yesno):
         port_a_ptr   = jacklib.port_by_id(jack.client, port_a_jack)
         port_b_ptr   = jacklib.port_by_id(jack.client, port_b_jack)
-        port_a_nameR = str(jacklib.port_name(port_a_ptr), encoding="ascii")
-        port_b_nameR = str(jacklib.port_name(port_b_ptr), encoding="ascii")
+        port_a_nameR = str(jacklib.port_name(port_a_ptr), encoding="utf-8")
+        port_b_nameR = str(jacklib.port_name(port_b_ptr), encoding="utf-8")
 
         if (connect_yesno):
           self.canvas_connect_ports(port_a_nameR, port_b_nameR)
@@ -889,7 +889,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
     @pyqtSlot(int, str, str)
     def slot_PortRenameCallback(self, port_id_jack, old_name, new_name):
         port_ptr = jacklib.port_by_id(jack.client, port_id_jack)
-        port_short_name = str(jacklib.port_short_name(port_ptr), encoding="ascii")
+        port_short_name = str(jacklib.port_short_name(port_ptr), encoding="utf-8")
 
         for port in self.m_port_list:
           if (port[iPortNameR] == old_name):

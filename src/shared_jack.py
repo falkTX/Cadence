@@ -27,7 +27,7 @@ from jacklib_helpers import *
 
 # Have JACK2 ?
 if (jacklib.JACK2):
-  version_str = str(jacklib.get_version_string(), encoding="ascii")
+  version_str = str(jacklib.get_version_string(), encoding="utf-8")
   print("Using JACK2, version %s" % (version_str))
 
 # Can Render ?

@@ -238,17 +238,17 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
             if (self.m_server_clock_source_broken):
               value = dbus.UInt32(JACK_TIMER_SYSTEM_CLOCK)
             else:
-              value = dbus.Byte("s".encode("ascii"))
+              value = dbus.Byte("s".encode("utf-8"))
           elif (self.obj_server_clock_source_cycle.isChecked()):
             if (self.m_server_clock_source_broken):
               value = dbus.UInt32(JACK_TIMER_CYCLE_COUNTER)
             else:
-              value = dbus.Byte("c".encode("ascii"))
+              value = dbus.Byte("c".encode("utf-8"))
           elif (self.obj_server_clock_source_hpet.isChecked()):
             if (self.m_server_clock_source_broken):
               value = dbus.UInt32(JACK_TIMER_HPET)
             else:
-              value = dbus.Byte("h".encode("ascii"))
+              value = dbus.Byte("h".encode("utf-8"))
           else:
             value = None
             print("JackSettings::saveServerSettings() - Cannot save clock-source value")
@@ -270,15 +270,15 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
 
         if (self.obj_server_self_connect_mode.isEnabled()):
           if (self.obj_server_self_connect_mode_0.isChecked()):
-            value = dbus.Byte(" ".encode("ascii"))
+            value = dbus.Byte(" ".encode("utf-8"))
           elif (self.obj_server_self_connect_mode_1.isChecked()):
-            value = dbus.Byte("E".encode("ascii"))
+            value = dbus.Byte("E".encode("utf-8"))
           elif (self.obj_server_self_connect_mode_2.isChecked()):
-            value = dbus.Byte("e".encode("ascii"))
+            value = dbus.Byte("e".encode("utf-8"))
           elif (self.obj_server_self_connect_mode_3.isChecked()):
-            value = dbus.Byte("A".encode("ascii"))
+            value = dbus.Byte("A".encode("utf-8"))
           elif (self.obj_server_self_connect_mode_4.isChecked()):
-            value = dbus.Byte("a".encode("ascii"))
+            value = dbus.Byte("a".encode("utf-8"))
           else:
             value = None
             print("JackSettings::saveServerSettings() - Cannot save self-connect-mode value")
@@ -426,13 +426,13 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
 
         if (self.obj_driver_dither.isEnabled()):
           if (self.obj_driver_dither.currentIndex() == 0):
-            value = dbus.Byte("n".encode("ascii"))
+            value = dbus.Byte("n".encode("utf-8"))
           elif (self.obj_driver_dither.currentIndex() == 1):
-            value = dbus.Byte("r".encode("ascii"))
+            value = dbus.Byte("r".encode("utf-8"))
           elif (self.obj_driver_dither.currentIndex() == 2):
-            value = dbus.Byte("s".encode("ascii"))
+            value = dbus.Byte("s".encode("utf-8"))
           elif (self.obj_driver_dither.currentIndex() == 3):
-            value = dbus.Byte("t".encode("ascii"))
+            value = dbus.Byte("t".encode("utf-8"))
           else:
             value = None
             print("JackSettings::saveDriverSettings() - Cannot save dither value")
