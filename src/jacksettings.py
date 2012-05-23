@@ -43,9 +43,10 @@ JACK_TIMER_HPET          = 2
 
 # Set Platform
 if ("linux" in platform):
-  LINUX   = True
+  LINUX = True
+  from process import getoutput
 else:
-  LINUX   = False
+  LINUX = False
 
 # Init DBus
 def initBus(bus):

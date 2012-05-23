@@ -57,7 +57,7 @@ x_gui = None
 
 # Small integrity tests
 HOME = os.getenv("HOME")
-if HOME == None:
+if HOME is None:
     if WINDOWS:
         HOME = os.getenv("TMP")
     else:
@@ -71,14 +71,16 @@ elif not os.path.exists(HOME):
         HOME = "/tmp"
 
 PATH_env = os.getenv("PATH")
-if PATH_env == None:
+if PATH_env is None:
     qWarning("PATH variable not set")
     if LINUX:
         PATH = ("/bin", "/sbin", "/usr/local/bin", "/usr/local/sbin", "/usr/bin", "/usr/sbin", "/usr/games")
     elif MACOS:
         PATH = ("TODO",)
     elif WINDOWS:
-        PATH = ("TODO",)
+        WINDIR = os.getenv("WINDIR")
+        PATH = (os.path.join(WINDIR, "system32"), WINDIR)
+        del WINDIR
     else:
         PATH = ("/bin", "/usr/local/bin", "/usr/bin")
 else:
@@ -199,7 +201,7 @@ def isNumber(value):
 
 # Convert a value to a list
 def toList(value):
-    if value == None:
+    if value is None:
         return []
     elif not isinstance(value, list):
         return [value]
