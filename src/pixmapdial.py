@@ -68,7 +68,7 @@ class PixmapDial(QDial):
     def setLabel(self, label):
         self.m_label = label
 
-        self.m_label_width = QFontMetrics(self.font()).width(label)
+        self.m_label_width  = QFontMetrics(self.font()).width(label)
         self.m_label_height = QFontMetrics(self.font()).height()
 
         self.m_label_pos.setX((self.p_size / 2) - (self.m_label_width / 2))

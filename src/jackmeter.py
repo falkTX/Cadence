@@ -48,7 +48,7 @@ def process_callback(nframes, arg):
 
     return 0
 
-def port_callback(port_a, port_b, connect_yesno, arg):
+def port_callback(port_a, port_b, yesno, arg):
     global need_reconnect
     need_reconnect = True
     return 0
@@ -151,6 +151,7 @@ if __name__ == '__main__':
     gui.resize(70, 600)
     gui.show()
 
+    # Set-up custom signal handling
     set_up_signals(gui)
 
     # App-Loop
