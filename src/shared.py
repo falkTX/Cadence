@@ -181,7 +181,7 @@ MIDI_CC_LIST = (
     )
 
 # Convert a ctypes c_char_p to a python string
-def c_string(value):
+def cString(value):
     if value:
         return value.decode("utf-8", errors="ignore")
     else:
