@@ -93,14 +93,21 @@ class CanvasPreviewFrame(QFrame):
 
         max_width  = self.view_rect[iWidth]/self.scale
         max_height = self.view_rect[iHeight]/self.scale
-        if (max_width > self.fake_width): max_width = self.fake_width
-        if (max_height > self.fake_height): max_height = self.fake_height
 
-        if (x < 0.0): x = 0.0
-        elif (x > self.fake_width-max_width): x = self.fake_width-max_width
+        if (max_width > self.fake_width):
+            max_width = self.fake_width
+        if (max_height > self.fake_height):
+            max_height = self.fake_height
 
-        if (y < 0.0): y = 0.0
-        elif (y > self.fake_height-max_height): y = self.fake_height-max_height
+        if (x < 0.0):
+            x = 0.0
+        elif (x > self.fake_width-max_width):
+            x = self.fake_width-max_width
+
+        if (y < 0.0):
+            y = 0.0
+        elif (y > self.fake_height-max_height):
+            y = self.fake_height-max_height
 
         self.view_rect[iX] = x+self.render_source.x()
         self.view_rect[iY] = y+self.render_source.y()
@@ -110,19 +117,19 @@ class CanvasPreviewFrame(QFrame):
 
     def mousePressEvent(self, event):
         if (event.button() == Qt.LeftButton):
-          self.m_mouseDown = True
-          self.setCursor(QCursor(Qt.SizeAllCursor))
-          self.handleMouseEvent(event.x(), event.y())
+            self.m_mouseDown = True
+            self.setCursor(QCursor(Qt.SizeAllCursor))
+            self.handleMouseEvent(event.x(), event.y())
         event.accept()
 
     def mouseMoveEvent(self, event):
         if (self.m_mouseDown):
-          self.handleMouseEvent(event.x(), event.y())
+            self.handleMouseEvent(event.x(), event.y())
         event.accept()
 
     def mouseReleaseEvent(self, event):
         if (self.m_mouseDown):
-          self.setCursor(QCursor(Qt.ArrowCursor))
+            self.setCursor(QCursor(Qt.ArrowCursor))
         self.m_mouseDown = False
         QFrame.mouseReleaseEvent(self, event)
 
@@ -136,8 +143,11 @@ class CanvasPreviewFrame(QFrame):
 
         max_width  = self.view_rect[iWidth]/self.scale
         max_height = self.view_rect[iHeight]/self.scale
-        if (max_width > self.fake_width): max_width = self.fake_width
-        if (max_height > self.fake_height): max_height = self.fake_height
+
+        if (max_width > self.fake_width):
+            max_width = self.fake_width
+        if (max_height > self.fake_height):
+            max_height = self.fake_height
 
         painter.setBrush(QBrush(QColor(75,75,255,30)))
         painter.setPen(QPen(Qt.blue, 2))
@@ -148,5 +158,5 @@ class CanvasPreviewFrame(QFrame):
     def resizeEvent(self, event):
         self.render_source = self.getRenderSource()
         if (self.real_parent):
-          QTimer.singleShot(0, self.real_parent, SLOT("slot_miniCanvasCheckAll()"))
+            QTimer.singleShot(0, self.real_parent, SLOT("slot_miniCanvasCheckAll()"))
         QFrame.resizeEvent(self, event)

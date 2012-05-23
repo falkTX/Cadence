@@ -16,11 +16,6 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
-# Set PyQt4 API
-from sip import setapi
-setapi("QString", 2)
-setapi("QVariant", 2)
-
 # Imports (Global)
 from PyQt4.QtCore import pyqtSlot, SIGNAL, SLOT
 from PyQt4.QtGui import QDialog, QDialogButtonBox, QIcon, QPixmap

@@ -29,6 +29,9 @@
          <property name="verticalScrollBarPolicy">
           <enum>Qt::ScrollBarAlwaysOn</enum>
          </property>
+         <property name="horizontalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOn</enum>
+         </property>
          <property name="lineWrapMode">
           <enum>QPlainTextEdit::NoWrap</enum>
          </property>
@@ -50,6 +53,9 @@
        <item>
         <widget class="QPlainTextEdit" name="pte_a2j">
          <property name="verticalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOn</enum>
+         </property>
+         <property name="horizontalScrollBarPolicy">
           <enum>Qt::ScrollBarAlwaysOn</enum>
          </property>
          <property name="lineWrapMode">
@@ -75,6 +81,9 @@
          <property name="verticalScrollBarPolicy">
           <enum>Qt::ScrollBarAlwaysOn</enum>
          </property>
+         <property name="horizontalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOn</enum>
+         </property>
          <property name="lineWrapMode">
           <enum>QPlainTextEdit::NoWrap</enum>
          </property>
@@ -96,6 +105,9 @@
        <item>
         <widget class="QPlainTextEdit" name="pte_ladish">
          <property name="verticalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOn</enum>
+         </property>
+         <property name="horizontalScrollBarPolicy">
           <enum>Qt::ScrollBarAlwaysOn</enum>
          </property>
          <property name="lineWrapMode">
