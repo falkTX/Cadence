@@ -16,6 +16,11 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# Set PyQt4 API
+from sip import setapi
+setapi("QString", 2)
+setapi("QVariant", 2)
+
 # Imports (Global)
 from PyQt4.QtCore import pyqtSlot, SIGNAL, SLOT
 from PyQt4.QtGui import QDialog, QDialogButtonBox, QIcon, QPixmap
@@ -31,28 +36,28 @@ TAB_INDEX_LADISH = 2
 TAB_INDEX_CARLA_ENGINE = 3
 TAB_INDEX_CARLA_PATHS  = 4
 
-# Define values here so we don't have to import full patchcanvas here
+# Define values here so we don't have to import full patchcanvas
 CANVAS_ANTIALIASING_SMALL = 1
-CANVAS_EYECANDY_SMALL = 1
+CANVAS_EYECANDY_SMALL     = 1
 
 # ladish defines
-LADISH_CONF_KEY_DAEMON_NOTIFY = "/org/ladish/daemon/notify"
-LADISH_CONF_KEY_DAEMON_SHELL = "/org/ladish/daemon/shell"
-LADISH_CONF_KEY_DAEMON_TERMINAL = "/org/ladish/daemon/terminal"
+LADISH_CONF_KEY_DAEMON_NOTIFY           = "/org/ladish/daemon/notify"
+LADISH_CONF_KEY_DAEMON_SHELL            = "/org/ladish/daemon/shell"
+LADISH_CONF_KEY_DAEMON_TERMINAL         = "/org/ladish/daemon/terminal"
 LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART = "/org/ladish/daemon/studio_autostart"
-LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY = "/org/ladish/daemon/js_save_delay"
+LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY    = "/org/ladish/daemon/js_save_delay"
 
-LADISH_CONF_KEY_DAEMON_NOTIFY_DEFAULT = True
-LADISH_CONF_KEY_DAEMON_SHELL_DEFAULT = "sh"
-LADISH_CONF_KEY_DAEMON_TERMINAL_DEFAULT = "x-terminal-emulator"
+LADISH_CONF_KEY_DAEMON_NOTIFY_DEFAULT           = True
+LADISH_CONF_KEY_DAEMON_SHELL_DEFAULT            = "sh"
+LADISH_CONF_KEY_DAEMON_TERMINAL_DEFAULT         = "x-terminal-emulator"
 LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART_DEFAULT = True
-LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY_DEFAULT = 0
+LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY_DEFAULT    = 0
 
 # Internal defines
 global SETTINGS_DEFAULT_PROJECT_FOLDER
 global SETTINGS_DEFAULT_PLUGINS_PATHS
-SETTINGS_DEFAULT_PROJECT_FOLDER = "/tmp"
-SETTINGS_DEFAULT_PLUGINS_PATHS  = [None, None, None, None, None]
+SETTINGS_DEFAULT_PROJECT_FOLDER = HOME
+SETTINGS_DEFAULT_PLUGINS_PATHS  = [[], [], [], [], []]
 
 def setDefaultProjectFolder(folder):
     global SETTINGS_DEFAULT_PROJECT_FOLDER
@@ -60,11 +65,7 @@ def setDefaultProjectFolder(folder):
 
 def setDefaultPluginsPaths(ladspas, dssis, lv2s, vsts, sf2s):
     global SETTINGS_DEFAULT_PLUGINS_PATHS
-    SETTINGS_DEFAULT_PLUGINS_PATHS[0] = ladspas
-    SETTINGS_DEFAULT_PLUGINS_PATHS[1] = dssis
-    SETTINGS_DEFAULT_PLUGINS_PATHS[2] = lv2s
-    SETTINGS_DEFAULT_PLUGINS_PATHS[3] = vsts
-    SETTINGS_DEFAULT_PLUGINS_PATHS[4] = sf2s
+    SETTINGS_DEFAULT_PLUGINS_PATHS  = [ladspas, dssis, lv2s, vsts, sf2s]
 
 # Settings Dialog
 class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
@@ -74,9 +75,9 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
 
         # Load app-specific settings
         self.ms_RefreshInterval = 120
-        self.ms_AutoHideGroups = True
-        self.ms_UseSystemTray = True
-        self.ms_CloseToTray = False
+        self.ms_AutoHideGroups  = True
+        self.ms_UseSystemTray   = True
+        self.ms_CloseToTray     = False
 
         if appName == "catarina":
             self.ms_AutoHideGroups = False
@@ -165,7 +166,6 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             self.cb_canvas_eyecandy.setCheckState(self.settings.value("Canvas/EyeCandy", CANVAS_EYECANDY_SMALL, type=int))
             self.cb_canvas_use_opengl.setChecked(self.settings.value("Canvas/UseOpenGL", False, type=bool))
             self.cb_canvas_render_aa.setCheckState(self.settings.value("Canvas/Antialiasing", CANVAS_ANTIALIASING_SMALL, type=int))
-            self.cb_canvas_render_text_aa.setChecked(self.settings.value("Canvas/TextAntialiasing", True, type=bool))
             self.cb_canvas_render_hq_aa.setChecked(self.settings.value("Canvas/HighQualityAntialiasing", False, type=bool))
 
             theme_name = self.settings.value("Canvas/Theme", getDefaultThemeName(), type=str)
@@ -329,7 +329,6 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             self.settings.setValue("Canvas/AutoHideGroups", self.cb_canvas_hide_groups.isChecked())
             self.settings.setValue("Canvas/UseBezierLines", self.cb_canvas_bezier_lines.isChecked())
             self.settings.setValue("Canvas/UseOpenGL", self.cb_canvas_use_opengl.isChecked())
-            self.settings.setValue("Canvas/TextAntialiasing", self.cb_canvas_render_text_aa.isChecked())
             self.settings.setValue("Canvas/HighQualityAntialiasing", self.cb_canvas_render_hq_aa.isChecked())
 
             # 0, 1, 2 match their enum variants
@@ -398,7 +397,6 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             self.cb_canvas_eyecandy.setCheckState(Qt.PartiallyChecked)
             self.cb_canvas_use_opengl.setChecked(False)
             self.cb_canvas_render_aa.setCheckState(Qt.PartiallyChecked)
-            self.cb_canvas_render_text_aa.setChecked(True)
             self.cb_canvas_render_hq_aa.setChecked(False)
 
         elif self.lw_page.currentRow() == TAB_INDEX_LADISH:

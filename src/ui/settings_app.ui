@@ -574,13 +574,6 @@
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="cb_canvas_render_text_aa">
-              <property name="text">
-               <string>Text Antialiasing</string>
-              </property>
-             </widget>
-            </item>
-            <item>
              <widget class="QCheckBox" name="cb_canvas_render_hq_aa">
               <property name="enabled">
                <bool>false</bool>
