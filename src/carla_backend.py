@@ -338,7 +338,7 @@ def findSoundFonts(bPATH):
 
 def findDSSIGUI(filename, name, label):
     plugin_dir = filename.rsplit(".", 1)[0]
-    short_name = getShortFileName(plugin_dir)
+    short_name = os.path.basename(plugin_dir)
     gui_filename = ""
 
     check_name  = name.replace(" ", "_")
@@ -389,7 +389,7 @@ PyPluginInfo = {
 }
 
 def runCarlaDiscovery(itype, stype, filename, tool, isWine=False):
-    fake_label = getShortFileName(filename).rsplit(".", 1)[0]
+    fake_label = os.path.basename(filename).rsplit(".", 1)[0]
     plugins = []
     command = []
 

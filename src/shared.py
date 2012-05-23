@@ -87,6 +87,8 @@ else:
     PATH = PATH_env.split(os.pathsep)
 del PATH_env
 
+# ------------------------------------------------------------------------------------------------------------
+
 MIDI_CC_LIST = (
     #"0x00 Bank Select",
     "0x01 Modulation",
@@ -180,16 +182,18 @@ MIDI_CC_LIST = (
     "0x5F FX 5 Depth [Phaser]"
     )
 
+# ------------------------------------------------------------------------------------------------------------
+
+# Remove/convert non-ascii chars from a string
+def unicode2ascii(string):
+    return normalize('NFKD', string).encode("ascii", "ignore").decode("utf-8")
+
 # Convert a ctypes c_char_p to a python string
 def cString(value):
     if value:
         return value.decode("utf-8", errors="ignore")
     else:
         return ""
-
-# Remove/convert non-ascii chars from a string
-def unicode2ascii(string):
-    return normalize('NFKD', string).encode("ascii", "ignore").decode("utf-8")
 
 # Check if a value is a number (float support)
 def isNumber(value):
@@ -219,12 +223,6 @@ def getAndSetPath(self_, currentPath, lineEdit):
 def getIcon(icon, size=16):
     return QIcon.fromTheme(icon, QIcon(":/%ix%i/%s.png" % (size, size, icon)))
 
-# Get short filename from full filename (/a/b.c -> b.c)
-def getShortFileName(filename):
-    if os.sep in filename:
-        return filename.rsplit(os.sep, 1)[1]
-    return filename
-
 # Custom MessageBox
 def CustomMessageBox(self_, icon, title, text, extraText="", buttons=QMessageBox.Yes|QMessageBox.No, defButton=QMessageBox.No):
     msgBox = QMessageBox(self_)
@@ -235,6 +233,8 @@ def CustomMessageBox(self_, icon, title, text, extraText="", buttons=QMessageBox
     msgBox.setStandardButtons(buttons)
     msgBox.setDefaultButton(defButton)
     return msgBox.exec_()
+
+# ------------------------------------------------------------------------------------------------------------
 
 # signal handler for unix systems
 def set_up_signals(self_):
@@ -263,6 +263,8 @@ def showWindow(self_):
         self_.showMaximized()
     else:
         self_.showNormal()
+
+# ------------------------------------------------------------------------------------------------------------
 
 # Shared Icons
 def setIcons(self_, modes):

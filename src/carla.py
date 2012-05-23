@@ -372,7 +372,7 @@ class SearchPluginsThread(QThread):
 
                 for i in range(len(ladspa_binaries)):
                     ladspa = ladspa_binaries[i]
-                    if (getShortFileName(ladspa) in blacklist):
+                    if (os.path.basename(ladspa) in blacklist):
                         print("plugin %s is blacklisted, skip it" % (ladspa))
                         continue
                     else:
@@ -400,7 +400,7 @@ class SearchPluginsThread(QThread):
                 # Check binaries, wine
                 for i in range(len(ladspa_binaries_w)):
                     ladspa_w = ladspa_binaries_w[i]
-                    if (getShortFileName(ladspa_w) in blacklist):
+                    if (os.path.basename(ladspa_w) in blacklist):
                         print("plugin %s is blacklisted, skip it" % (ladspa_w))
                         continue
                     else:
@@ -440,7 +440,7 @@ class SearchPluginsThread(QThread):
 
                 for i in range(len(dssi_binaries)):
                     dssi = dssi_binaries[i]
-                    if (getShortFileName(dssi) in blacklist):
+                    if (os.path.basename(dssi) in blacklist):
                         print("plugin %s is blacklisted, skip it" % (dssi))
                         continue
                     else:
@@ -468,7 +468,7 @@ class SearchPluginsThread(QThread):
                 # Check binaries, wine
                 for i in range(len(dssi_binaries_w)):
                     dssi_w = dssi_binaries_w[i]
-                    if (getShortFileName(dssi_w) in blacklist):
+                    if (os.path.basename(dssi_w) in blacklist):
                         print("plugin %s is blacklisted, skip it" % (dssi_w))
                         continue
                     else:
@@ -498,7 +498,7 @@ class SearchPluginsThread(QThread):
             if (check_native):
                 for i in range(len(lv2_bundles)):
                     lv2 = lv2_bundles[i]
-                    if (getShortFileName(lv2) in blacklist):
+                    if (os.path.basename(lv2) in blacklist):
                         print("bundle %s is blacklisted, skip it" % (lv2))
                         continue
                     else:
@@ -516,7 +516,7 @@ class SearchPluginsThread(QThread):
                 # Check binaries, wine
                 for i in range(len(lv2_bundles)):
                     lv2_w = lv2_bundles[i]
-                    if (getShortFileName(lv2_w) in blacklist):
+                    if (os.path.basename(lv2_w) in blacklist):
                         print("bundle %s is blacklisted, skip it" % (lv2_w))
                         continue
                     else:
@@ -545,7 +545,7 @@ class SearchPluginsThread(QThread):
 
                 for i in range(len(vst_binaries)):
                     vst = vst_binaries[i]
-                    if (getShortFileName(vst) in blacklist):
+                    if (os.path.basename(vst) in blacklist):
                         print("plugin %s is blacklisted, skip it" % (vst))
                         continue
                     else:
@@ -573,7 +573,7 @@ class SearchPluginsThread(QThread):
                 # Check binaries, wine
                 for i in range(len(vst_binaries_w)):
                     vst_w = vst_binaries_w[i]
-                    if (getShortFileName(vst_w) in blacklist):
+                    if (os.path.basename(vst_w) in blacklist):
                         print("plugin %s is blacklisted, skip it" % (vst_w))
                         continue
                     else:
@@ -598,7 +598,7 @@ class SearchPluginsThread(QThread):
 
             for i in range(len(sf2_files)):
                 sf2 = sf2_files[i]
-                if (getShortFileName(sf2) in blacklist):
+                if (os.path.basename(sf2) in blacklist):
                     print("soundfont %s is blacklisted, skip it" % (sf2))
                     continue
                 else:
@@ -996,7 +996,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
     def slot_refresh_plugins(self):
         lastLoadedPlugin = self.settings_db.value("Plugins/LastLoadedBinary", "", type=str)
         if (lastLoadedPlugin):
-            lastLoadedPlugin = getShortFileName(lastLoadedPlugin)
+            lastLoadedPlugin = os.path.basename(lastLoadedPlugin)
             ask = QMessageBox.question(self, self.tr("Warning"), self.tr("There was an error while checking the plugin %s.\n"
                                                                          "Do you want to blacklist it?" % (lastLoadedPlugin)),
                                                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
@@ -3103,7 +3103,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             ptype = x_save_state_dict['Type']
             label = x_save_state_dict['Label']
             binary = x_save_state_dict['Binary']
-            binaryS = getShortFileName(binary)
+            binaryS = os.path.basename(binary)
             unique_id = x_save_state_dict['UniqueID']
 
             if (ptype == "LADSPA"):
@@ -3144,25 +3144,20 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
             for _plugins in x_plugins:
                 for x_plugin in _plugins:
-                    if (
-                        unique_id == x_plugin['unique_id'] and label == x_plugin['label'] and binary == x_plugin[
-                                                                                                        'binary']):
+                    if (unique_id == x_plugin['unique_id'] and label == x_plugin['label'] and binary == x_plugin['binary']):
                         plugin_ulB = x_plugin
                         break
-                    elif (
-                        unique_id == x_plugin['unique_id'] and label == x_plugin[
-                                                                        'label'] and binaryS == getShortFileName(
-                            x_plugin['binary'])):
+                    elif (unique_id == x_plugin['unique_id'] and label == x_plugin['label'] and binaryS == os.path.basename(x_plugin['binary'])):
                         plugin_ulb = x_plugin
                     elif (unique_id == x_plugin['unique_id'] and label == x_plugin['label']):
                         plugin_ul = x_plugin
                     elif (unique_id == x_plugin['unique_id'] and binary == x_plugin['binary']):
                         plugin_uB = x_plugin
-                    elif (unique_id == x_plugin['unique_id'] and binaryS == getShortFileName(x_plugin['binary'])):
+                    elif (unique_id == x_plugin['unique_id'] and binaryS == os.path.basename(x_plugin['binary'])):
                         plugin_ub = x_plugin
                     elif (label == x_plugin['label'] and binary == x_plugin['binary']):
                         plugin_lB = x_plugin
-                    elif (label == x_plugin['label'] and binaryS == getShortFileName(x_plugin['binary'])):
+                    elif (label == x_plugin['label'] and binaryS == os.path.basename(x_plugin['binary'])):
                         plugin_lb = x_plugin
                     elif (unique_id == x_plugin['unique_id']):
                         plugin_u = x_plugin
@@ -3292,7 +3287,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             self.m_project_filename = filename
             self.slot_remove_all()
             self.load_project()
-            self.setWindowTitle("Carla - %s" % (getShortFileName(self.m_project_filename)))
+            self.setWindowTitle("Carla - %s" % os.path.basename(self.m_project_filename))
 
     @pyqtSlot()
     def slot_file_save(self, saveAs=False):
@@ -3304,7 +3299,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             if (filename):
                 self.m_project_filename = filename
                 self.save_project()
-                self.setWindowTitle("Carla - %s" % (getShortFileName(self.m_project_filename)))
+                self.setWindowTitle("Carla - %s" % os.path.basename(self.m_project_filename))
 
         else:
             self.save_project()
@@ -3460,7 +3455,7 @@ if __name__ == '__main__':
     if (project_filename):
         gui.m_project_filename = project_filename
         gui.load_project()
-        gui.setWindowTitle("Carla - %s" % (getShortFileName(project_filename)))
+        gui.setWindowTitle("Carla - %s" % os.path.basename(project_filename))
 
     # App-Loop
     ret = app.exec_()
