@@ -356,8 +356,8 @@ def setXruns(self_, xruns):
 def slot_showJackSettings(self_):
     jacksettings.JackSettingsW(self_).exec_()
 
+    # Force update of gui widgets
     if not jack.client:
-        # Force update of gui widgets
         self_.jackStopped()
 
 @pyqtSlot()

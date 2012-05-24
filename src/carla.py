@@ -1455,8 +1455,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         # Update current midi program text
         if (self.cb_midi_programs.count() > 0):
             mpindex = self.cb_midi_programs.currentIndex()
-            mpname = "%s %s" % (self.cb_midi_programs.currentText().split(" ", 1)[0],
-                                cString(CarlaHost.get_midi_program_name(self.plugin_id, mpindex)))
+            mpname  = "%s %s" % (self.cb_midi_programs.currentText().split(" ", 1)[0], cString(CarlaHost.get_midi_program_name(self.plugin_id, mpindex)))
             self.cb_midi_programs.setItemText(mpindex, mpname)
 
         QTimer.singleShot(0, self, SLOT("slot_checkInputControlParameters()"))
@@ -1465,19 +1464,19 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
     def do_reload_all(self):
         self.pinfo = CarlaHost.get_plugin_info(self.plugin_id)
         if (self.pinfo['valid']):
-            self.pinfo["binary"] = cString(self.pinfo["binary"])
-            self.pinfo["name"] = cString(self.pinfo["name"])
-            self.pinfo["label"] = cString(self.pinfo["label"])
-            self.pinfo["maker"] = cString(self.pinfo["maker"])
+            self.pinfo["binary"]    = cString(self.pinfo["binary"])
+            self.pinfo["name"]      = cString(self.pinfo["name"])
+            self.pinfo["label"]     = cString(self.pinfo["label"])
+            self.pinfo["maker"]     = cString(self.pinfo["maker"])
             self.pinfo["copyright"] = cString(self.pinfo["copyright"])
         else:
-            self.pinfo["type"] = PLUGIN_NONE
-            self.pinfo["category"] = PLUGIN_CATEGORY_NONE
-            self.pinfo["hints"] = 0x0
-            self.pinfo["binary"] = ""
-            self.pinfo["name"] = "(Unknown)"
-            self.pinfo["label"] = ""
-            self.pinfo["maker"] = ""
+            self.pinfo["type"]      = PLUGIN_NONE
+            self.pinfo["category"]  = PLUGIN_CATEGORY_NONE
+            self.pinfo["hints"]     = 0x0
+            self.pinfo["binary"]    = ""
+            self.pinfo["name"]      = "(Unknown)"
+            self.pinfo["label"]     = ""
+            self.pinfo["maker"]     = ""
             self.pinfo["copyright"] = ""
             self.pinfo["unique_id"] = 0
 
@@ -1486,11 +1485,10 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.do_reload_programs()
 
     def do_reload_info(self):
-        if (self.ptype == PLUGIN_NONE and self.pinfo['type'] in (PLUGIN_DSSI, PLUGIN_SF2)):
+        if self.ptype == PLUGIN_NONE and self.pinfo['type'] in (PLUGIN_DSSI, PLUGIN_LV2, PLUGIN_SF2):
             self.tab_programs.setCurrentIndex(1)
 
         self.ptype = self.pinfo['type']
-
         real_plugin_name = cString(CarlaHost.get_real_plugin_name(self.plugin_id))
 
         self.le_name.setText(real_plugin_name)

@@ -20,7 +20,7 @@
 
 #include "carla_includes.h"
 
-#define STR_MAX 255
+#define STR_MAX 256
 
 // static max values
 #ifdef BUILD_BRIDGE

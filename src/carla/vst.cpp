@@ -319,6 +319,9 @@ public:
     void get_parameter_text(uint32_t param_id, char* buf_str)
     {
         effect->dispatcher(effect, effGetParamDisplay, param_id, 0, buf_str, 0.0f);
+
+        if (*buf_str == 0)
+            sprintf(buf_str, "%f", get_parameter_value(param_id));
     }
 
     void get_gui_info(GuiInfo* info)
