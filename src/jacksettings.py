@@ -585,8 +585,7 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
             elif attribute == "channels":
                 self.obj_driver_channels.setValue(int(value))
             else:
-                print("JackSettings::loadDriverSettings() - Unimplemented driver attribute '%s', value: '%s'" % (
-                attribute, str(value)))
+                print("JackSettings::loadDriverSettings() - Unimplemented driver attribute '%s', value: '%s'" % (attribute, str(value)))
 
     # -------------------------------------------------------------
     # Helper functions

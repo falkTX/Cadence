@@ -657,7 +657,7 @@ public:
 
     void set_midi_program(int32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
     {
-        if (index >= 0)
+        if (ext.programs && index >= 0)
         {
             if (carla_jack_on_freewheel())
             {
@@ -1303,8 +1303,6 @@ public:
         evout.count = ev_outs;
         param.count = params;
 
-        reload_programs(true);
-
         // plugin checks
         m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
 
@@ -1340,6 +1338,9 @@ public:
             if (m_hints & PLUGIN_HAS_EXTENSION_WORKER)
                 ext.worker = (LV2_Worker_Interface*)descriptor->extension_data(LV2_WORKER__interface);
         }
+
+        // TODO - apply same to others (reload_programs() after hints)
+        reload_programs(true);
 
         //if (ext.dynparam)
         //    ext.dynparam->host_attach(handle, &dynparam_host, this);
