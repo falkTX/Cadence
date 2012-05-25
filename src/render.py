@@ -178,8 +178,8 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
         self.m_process.waitForStarted()
 
         if self.m_freewheel:
-            sleep(1)
             print("NOTICE: rendering in freewheel mode")
+            sleep(1)
             jacklib.set_freewheel(self.m_jack_client, 1)
 
         self.m_timer.start()

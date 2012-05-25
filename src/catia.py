@@ -35,7 +35,6 @@ except:
 try:
     import dbus
     from dbus.mainloop.qt import DBusQtMainLoop
-
     haveDBus = True
 except:
     haveDBus = False
