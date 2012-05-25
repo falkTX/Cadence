@@ -634,6 +634,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         self.m_last_bpm = None
         self.m_last_transport_state = None
+        self.m_selected_transport_view = None
 
         self.m_last_item_type = None
         self.m_last_room_path = None
