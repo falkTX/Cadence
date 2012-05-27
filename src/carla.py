@@ -1392,7 +1392,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.cur_midi_program_index = -1
 
         self.tab_icon_off = QIcon(":/bitmaps/led_off.png")
-        self.tab_icon_on = QIcon(":/bitmaps/led_yellow.png")
+        self.tab_icon_on  = QIcon(":/bitmaps/led_yellow.png")
         self.tab_icon_count = 0
         self.tab_icon_timers = []
 

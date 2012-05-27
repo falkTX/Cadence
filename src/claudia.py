@@ -567,8 +567,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         # Global Systray
         if self.m_savedSettings["Main/UseSystemTray"]:
-            self.systray = systray.GlobalSysTray("Claudia", "claudia")
-            self.systray.setQtParent(self)
+            self.systray = systray.GlobalSysTray(self, "Claudia", "claudia")
 
             self.systray.addAction("studio_new", self.tr("New Studio..."))
             self.systray.addSeparator("sep1")
@@ -587,9 +586,6 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             self.systray.addMenuSeparator("tools", "tools_sep")
             self.systray.addMenuAction("tools", "tools_clear_xruns", self.tr("Clear Xruns"))
             self.systray.addAction("configure", self.tr("Configure Claudia"))
-            self.systray.addSeparator("sep4")
-            self.systray.addAction("show", self.tr("Hide"))
-            self.systray.addAction("quit", self.tr("Quit"))
 
             self.systray.setActionIcon("studio_new", "document-new")
             self.systray.setActionIcon("studio_start", "media-playback-start")
@@ -602,9 +598,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             self.systray.setActionIcon("tools_render", "media-record")
             self.systray.setActionIcon("tools_clear_xruns", "edit-clear")
             self.systray.setActionIcon("configure", "configure")
-            self.systray.setActionIcon("quit", "application-exit")
 
-            self.systray.connect("show", self.systray_clicked_callback)
             self.systray.connect("studio_new", self.slot_studio_new)
             self.systray.connect("studio_start", self.slot_studio_start)
             self.systray.connect("studio_stop", self.slot_studio_stop)
@@ -617,7 +611,6 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             self.systray.connect("tools_logs", lambda: slot_showLogs(self))
             self.systray.connect("tools_clear_xruns", self.slot_JackClearXruns)
             self.systray.connect("configure", self.slot_configureClaudia)
-            self.systray.connect("quit", self.systray_closed)
 
             self.systray.setToolTip("LADISH Frontend")
             self.systray.show()
@@ -632,7 +625,6 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         self.m_last_bpm = None
         self.m_last_transport_state = None
-        self.m_selected_transport_view = None
 
         self.m_last_item_type = None
         self.m_last_room_path = None
@@ -1334,18 +1326,6 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.act_transport_forwards.setEnabled(enabled)
         self.menu_Transport.setEnabled(enabled)
         self.group_transport.setEnabled(enabled)
-
-    def systray_closed(self):
-        self.hide()
-        self.close()
-
-    def systray_clicked_callback(self):
-        if self.isVisible():
-            self.systray.setActionText("show", self.tr("Restore"))
-            self.hide()
-        else:
-            self.systray.setActionText("show", self.tr("Hide"))
-            showWindow(self)
 
     def DBusSignalReceiver(self, *args, **kwds):
         if kwds['interface'] == "org.freedesktop.DBus" and kwds['path'] == "/org/freedesktop/DBus" and kwds['member'] == "NameOwnerChanged":

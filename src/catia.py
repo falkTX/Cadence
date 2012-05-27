@@ -83,7 +83,6 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
         self.m_last_bpm = None
         self.m_last_transport_state = None
-        self.m_selected_transport_view = None
 
         self.cb_buffer_size.clear()
         self.cb_sample_rate.clear()

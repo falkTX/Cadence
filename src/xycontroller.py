@@ -49,11 +49,11 @@ class XYGraphicsScene(QGraphicsScene):
 
         self.setBackgroundBrush(Qt.black)
 
-        cursorPen = QPen(QColor(255,255,255), 2)
-        cursorBrush = QColor(255,255,255,50)
+        cursorPen   = QPen(QColor(255, 255, 255), 2)
+        cursorBrush = QColor(255, 255, 255, 50)
         self.m_cursor = self.addEllipse(QRectF(-10, -10, 20, 20), cursorPen, cursorBrush)
 
-        linePen = QPen(QColor(200,200,200,100), 1, Qt.DashLine)
+        linePen = QPen(QColor(200, 200, 200, 100), 1, Qt.DashLine)
         self.m_lineH = self.addLine(-9999, 0, 9999, 0, linePen)
         self.m_lineV = self.addLine(0, -9999, 0, 9999, linePen)
 
@@ -70,129 +70,130 @@ class XYGraphicsScene(QGraphicsScene):
 
     def setPosX(self, x, forward=True):
         if not self.m_mouseLock:
-          pos_x = x*(self.p_size.x()+self.p_size.width())
-          self.m_cursor.setPos(pos_x, self.m_cursor.y())
-          self.m_lineV.setX(pos_x)
+            pos_x = x * (self.p_size.x() + self.p_size.width())
+            self.m_cursor.setPos(pos_x, self.m_cursor.y())
+            self.m_lineV.setX(pos_x)
 
-          if forward:
-            self.sendMIDI(pos_x/(self.p_size.x()+self.p_size.width()), None)
-          else:
-            self.m_smooth_x = pos_x
+            if forward:
+                self.sendMIDI(pos_x / (self.p_size.x() + self.p_size.width()), None)
+            else:
+                self.m_smooth_x = pos_x
 
     def setPosY(self, y, forward=True):
         if not self.m_mouseLock:
-          pos_y = y*(self.p_size.y()+self.p_size.height())
-          self.m_cursor.setPos(self.m_cursor.x(), pos_y)
-          self.m_lineH.setY(pos_y)
+            pos_y = y * (self.p_size.y() + self.p_size.height())
+            self.m_cursor.setPos(self.m_cursor.x(), pos_y)
+            self.m_lineH.setY(pos_y)
 
-          if forward:
-            self.sendMIDI(None, pos_y/(self.p_size.y()+self.p_size.height()))
-          else:
-            self.m_smooth_y = pos_y
+            if forward:
+                self.sendMIDI(None, pos_y / (self.p_size.y() + self.p_size.height()))
+            else:
+                self.m_smooth_y = pos_y
 
     def setSmooth(self, smooth):
         self.m_smooth = smooth
 
     def setSmoothValues(self, x, y):
-        self.m_smooth_x = x*(self.p_size.x()+self.p_size.width())
-        self.m_smooth_y = y*(self.p_size.y()+self.p_size.height())
+        self.m_smooth_x = x * (self.p_size.x() + self.p_size.width())
+        self.m_smooth_y = y * (self.p_size.y() + self.p_size.height())
 
     def handleCC(self, param, value):
         sendUpdate = False
+        xp = yp = 0.0
 
-        if (param == self.cc_x):
-          sendUpdate = True
-          xp = (float(value)/63)-1.0
-          yp = self.m_cursor.y()/(self.p_size.y()+self.p_size.height())
+        if param == self.cc_x:
+            sendUpdate = True
+            xp = (float(value) / 63) - 1.0
+            yp = self.m_cursor.y() / (self.p_size.y() + self.p_size.height())
 
-          if (xp < -1.0):
-            xp = -1.0
-          elif (xp > 1.0):
-            xp = 1.0
+            if xp < -1.0:
+                xp = -1.0
+            elif xp > 1.0:
+                xp = 1.0
 
-          self.setPosX(xp, False)
+            self.setPosX(xp, False)
 
-        if (param == self.cc_y):
-          sendUpdate = True
-          xp = self.m_cursor.x()/(self.p_size.x()+self.p_size.width())
-          yp = (float(value)/63)-1.0
+        if param == self.cc_y:
+            sendUpdate = True
+            xp = self.m_cursor.x() / (self.p_size.x() + self.p_size.width())
+            yp = (float(value) / 63) - 1.0
 
-          if (yp < -1.0):
-            yp = -1.0
-          elif (yp > 1.0):
-            yp = 1.0
+            if yp < -1.0:
+                yp = -1.0
+            elif yp > 1.0:
+                yp = 1.0
 
-          self.setPosY(yp, False)
+            self.setPosY(yp, False)
 
-        if (sendUpdate):
-          self.emit(SIGNAL("cursorMoved(double, double)"), xp, yp)
+        if sendUpdate:
+            self.emit(SIGNAL("cursorMoved(double, double)"), xp, yp)
 
     def handleMousePos(self, pos):
-        if (not self.p_size.contains(pos)):
-          if (pos.x() < self.p_size.x()):
-            pos.setX(self.p_size.x())
-          elif (pos.x() > self.p_size.x()+self.p_size.width()):
-            pos.setX(self.p_size.x()+self.p_size.width())
+        if not self.p_size.contains(pos):
+            if pos.x() < self.p_size.x():
+                pos.setX(self.p_size.x())
+            elif pos.x() > self.p_size.x() + self.p_size.width():
+                pos.setX(self.p_size.x() + self.p_size.width())
 
-          if (pos.y() < self.p_size.y()):
-            pos.setY(self.p_size.y())
-          elif (pos.y() > self.p_size.y()+self.p_size.height()):
-            pos.setY(self.p_size.y()+self.p_size.height())
+            if pos.y() < self.p_size.y():
+                pos.setY(self.p_size.y())
+            elif pos.y() > self.p_size.y() + self.p_size.height():
+                pos.setY(self.p_size.y() + self.p_size.height())
 
         self.m_smooth_x = pos.x()
         self.m_smooth_y = pos.y()
 
-        if (not self.m_smooth):
-          self.m_cursor.setPos(pos)
-          self.m_lineH.setY(pos.y())
-          self.m_lineV.setX(pos.x())
-
-          xp = pos.x()/(self.p_size.x()+self.p_size.width())
-          yp = pos.y()/(self.p_size.y()+self.p_size.height())
-
-          self.sendMIDI(xp, yp)
-          self.emit(SIGNAL("cursorMoved(double, double)"), xp, yp)
-
-    def sendMIDI(self, xp=None, yp=None):
-        global jack_midi_out_data
-        rate = float(0xff)/4
-
-        if (xp != None):
-          value = int((xp*rate)+rate)
-          for channel in self.m_channels:
-            jack_midi_out_data.put_nowait((0xB0+channel-1, self.cc_x, value))
-
-        if (yp != None):
-          value = int((yp*rate)+rate)
-          for channel in self.m_channels:
-            jack_midi_out_data.put_nowait((0xB0+channel-1, self.cc_y, value))
-
-    def updateSize(self, size):
-        self.p_size.setRect(-(size.width()/2), -(size.height()/2), size.width(), size.height())
-
-    def updateSmooth(self):
-        if (self.m_smooth):
-          if (self.m_cursor.x() != self.m_smooth_x or self.m_cursor.y() != self.m_smooth_y):
-            if (abs(self.m_cursor.x() - self.m_smooth_x) <= 0.001):
-              self.m_smooth_x = self.m_cursor.x()
-              return
-            elif (abs(self.m_cursor.y() - self.m_smooth_y) <= 0.001):
-              self.m_smooth_y = self.m_cursor.y()
-              return
-
-            new_x = (self.m_smooth_x+self.m_cursor.x()*3)/4
-            new_y = (self.m_smooth_y+self.m_cursor.y()*3)/4
-            pos = QPointF(new_x, new_y)
-
+        if not self.m_smooth:
             self.m_cursor.setPos(pos)
             self.m_lineH.setY(pos.y())
             self.m_lineV.setX(pos.x())
 
-            xp = pos.x()/(self.p_size.x()+self.p_size.width())
-            yp = pos.y()/(self.p_size.y()+self.p_size.height())
+            xp = pos.x() / (self.p_size.x() + self.p_size.width())
+            yp = pos.y() / (self.p_size.y() + self.p_size.height())
 
             self.sendMIDI(xp, yp)
             self.emit(SIGNAL("cursorMoved(double, double)"), xp, yp)
+
+    def sendMIDI(self, xp=None, yp=None):
+        global jack_midi_out_data
+        rate = float(0xff) / 4
+
+        if xp != None:
+            value = int((xp * rate) + rate)
+            for channel in self.m_channels:
+                jack_midi_out_data.put_nowait((0xB0 + channel - 1, self.cc_x, value))
+
+        if yp != None:
+            value = int((yp * rate) + rate)
+            for channel in self.m_channels:
+                jack_midi_out_data.put_nowait((0xB0 + channel - 1, self.cc_y, value))
+
+    def updateSize(self, size):
+        self.p_size.setRect(-(size.width() / 2), -(size.height() / 2), size.width(), size.height())
+
+    def updateSmooth(self):
+        if self.m_smooth:
+            if self.m_cursor.x() != self.m_smooth_x or self.m_cursor.y() != self.m_smooth_y:
+                if abs(self.m_cursor.x() - self.m_smooth_x) <= 0.001:
+                    self.m_smooth_x = self.m_cursor.x()
+                    return
+                elif abs(self.m_cursor.y() - self.m_smooth_y) <= 0.001:
+                    self.m_smooth_y = self.m_cursor.y()
+                    return
+
+                new_x = (self.m_smooth_x + self.m_cursor.x() * 3) / 4
+                new_y = (self.m_smooth_y + self.m_cursor.y() * 3) / 4
+                pos = QPointF(new_x, new_y)
+
+                self.m_cursor.setPos(pos)
+                self.m_lineH.setY(pos.y())
+                self.m_lineV.setX(pos.x())
+
+                xp = pos.x() / (self.p_size.x() + self.p_size.width())
+                yp = pos.y() / (self.p_size.y() + self.p_size.height())
+
+                self.sendMIDI(xp, yp)
+                self.emit(SIGNAL("cursorMoved(double, double)"), xp, yp)
 
     def keyPressEvent(self, event):
         event.accept()
@@ -240,8 +241,8 @@ class XYControllerW(QMainWindow, ui_xycontroller.Ui_XYControllerW):
         self.graphicsView.setRenderHints(QPainter.Antialiasing)
 
         for MIDI_CC in MIDI_CC_LIST:
-          self.cb_control_x.addItem(MIDI_CC)
-          self.cb_control_y.addItem(MIDI_CC)
+            self.cb_control_x.addItem(MIDI_CC)
+            self.cb_control_y.addItem(MIDI_CC)
 
         # -------------------------------------------------------------
         # Load Settings
@@ -301,47 +302,47 @@ class XYControllerW(QMainWindow, ui_xycontroller.Ui_XYControllerW):
         dial_y = self.dial_y.value()
         self.slot_updateSceneX(dial_x)
         self.slot_updateSceneY(dial_y)
-        self.scene.setSmoothValues(float(dial_x)/100, float(dial_y)/100)
+        self.scene.setSmoothValues(float(dial_x) / 100, float(dial_y) / 100)
 
     @pyqtSlot(int)
     def slot_noteOn(self, note):
         global jack_midi_out_data
         for channel in self.m_channels:
-          jack_midi_out_data.put_nowait((0x90+channel-1, note, 100))
+            jack_midi_out_data.put_nowait((0x90 + channel - 1, note, 100))
 
     @pyqtSlot(int)
     def slot_noteOff(self, note):
         global jack_midi_out_data
         for channel in self.m_channels:
-          jack_midi_out_data.put_nowait((0x80+channel-1, note, 0))
+            jack_midi_out_data.put_nowait((0x80 + channel - 1, note, 0))
 
     @pyqtSlot(int)
     def slot_updateSceneX(self, x):
-        self.scene.setPosX(float(x)/100, not self.dial_x.isSliderDown())
+        self.scene.setPosX(float(x) / 100, not self.dial_x.isSliderDown())
 
     @pyqtSlot(int)
     def slot_updateSceneY(self, y):
-        self.scene.setPosY(float(y)/100, not self.dial_y.isSliderDown())
+        self.scene.setPosY(float(y) / 100, not self.dial_y.isSliderDown())
 
     @pyqtSlot(str)
     def slot_checkCC_X(self, text):
-        if (text):
-          self.cc_x = int(text.split(" ")[0], 16)
-          self.scene.setControlX(self.cc_x)
+        if text:
+            self.cc_x = int(text.split(" ")[0], 16)
+            self.scene.setControlX(self.cc_x)
 
     @pyqtSlot(str)
     def slot_checkCC_Y(self, text):
-        if (text):
-          self.cc_y = int(text.split(" ")[0], 16)
-          self.scene.setControlY(self.cc_y)
+        if text:
+            self.cc_y = int(text.split(" ")[0], 16)
+            self.scene.setControlY(self.cc_y)
 
     @pyqtSlot(bool)
     def slot_checkChannel(self, clicked):
         channel = int(self.sender().text())
-        if (clicked and channel not in self.m_channels):
-          self.m_channels.append(channel)
-        elif (not clicked and channel in self.m_channels):
-          self.m_channels.remove(channel)
+        if clicked and channel not in self.m_channels:
+            self.m_channels.append(channel)
+        elif not clicked and channel in self.m_channels:
+            self.m_channels.remove(channel)
         self.scene.setChannels(self.m_channels)
 
     @pyqtSlot()
@@ -362,7 +363,7 @@ class XYControllerW(QMainWindow, ui_xycontroller.Ui_XYControllerW):
         self.act_ch_14.setChecked(True)
         self.act_ch_15.setChecked(True)
         self.act_ch_16.setChecked(True)
-        self.m_channels = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+        self.m_channels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
         self.scene.setChannels(self.m_channels)
 
     @pyqtSlot()
@@ -395,8 +396,8 @@ class XYControllerW(QMainWindow, ui_xycontroller.Ui_XYControllerW):
         self.dial_x.blockSignals(True)
         self.dial_y.blockSignals(True)
 
-        self.dial_x.setValue(xp*100)
-        self.dial_y.setValue(yp*100)
+        self.dial_x.setValue(xp * 100)
+        self.dial_y.setValue(yp * 100)
 
         self.dial_x.blockSignals(False)
         self.dial_y.blockSignals(False)
@@ -409,9 +410,9 @@ class XYControllerW(QMainWindow, ui_xycontroller.Ui_XYControllerW):
     @pyqtSlot()
     def slot_about(self):
         QMessageBox.about(self, self.tr("About XY Controller"), self.tr("<h3>XY Controller</h3>"
-            "<br>Version %s"
-            "<br>XY Controller is a simple XY widget that sends and receives data from Jack MIDI.<br>"
-            "<br>Copyright (C) 2012 falkTX" % (VERSION)))
+                                                                        "<br>Version %s"
+                                                                        "<br>XY Controller is a simple XY widget that sends and receives data from Jack MIDI.<br>"
+                                                                        "<br>Copyright (C) 2012 falkTX" % VERSION))
 
     @pyqtSlot()
     def slot_updateScreen(self):
@@ -449,74 +450,74 @@ class XYControllerW(QMainWindow, ui_xycontroller.Ui_XYControllerW):
         self.m_channels = toList(self.settings.value("Channels", [1]))
 
         for i in range(len(self.m_channels)):
-          self.m_channels[i] = int(self.m_channels[i])
+            self.m_channels[i] = int(self.m_channels[i])
 
         self.scene.setChannels(self.m_channels)
 
         for i in range(len(MIDI_CC_LIST)):
-          cc = int(MIDI_CC_LIST[i].split(" ")[0], 16)
-          if (self.cc_x == cc):
-            self.cb_control_x.setCurrentIndex(i)
-          if (self.cc_y == cc):
-            self.cb_control_y.setCurrentIndex(i)
+            cc = int(MIDI_CC_LIST[i].split(" ")[0], 16)
+            if self.cc_x == cc:
+                self.cb_control_x.setCurrentIndex(i)
+            if self.cc_y == cc:
+                self.cb_control_y.setCurrentIndex(i)
 
-        if (1 in self.m_channels):
-          self.act_ch_01.setChecked(True)
-        if (2 in self.m_channels):
-          self.act_ch_02.setChecked(True)
-        if (3 in self.m_channels):
-          self.act_ch_03.setChecked(True)
-        if (4 in self.m_channels):
-          self.act_ch_04.setChecked(True)
-        if (5 in self.m_channels):
-          self.act_ch_05.setChecked(True)
-        if (6 in self.m_channels):
-          self.act_ch_06.setChecked(True)
-        if (7 in self.m_channels):
-          self.act_ch_07.setChecked(True)
-        if (8 in self.m_channels):
-          self.act_ch_08.setChecked(True)
-        if (9 in self.m_channels):
-          self.act_ch_09.setChecked(True)
-        if (10 in self.m_channels):
-          self.act_ch_10.setChecked(True)
-        if (11 in self.m_channels):
-          self.act_ch_11.setChecked(True)
-        if (12 in self.m_channels):
-          self.act_ch_12.setChecked(True)
-        if (13 in self.m_channels):
-          self.act_ch_13.setChecked(True)
-        if (14 in self.m_channels):
-          self.act_ch_14.setChecked(True)
-        if (15 in self.m_channels):
-          self.act_ch_15.setChecked(True)
-        if (16 in self.m_channels):
-          self.act_ch_16.setChecked(True)
+        if 1 in self.m_channels:
+            self.act_ch_01.setChecked(True)
+        if 2 in self.m_channels:
+            self.act_ch_02.setChecked(True)
+        if 3 in self.m_channels:
+            self.act_ch_03.setChecked(True)
+        if 4 in self.m_channels:
+            self.act_ch_04.setChecked(True)
+        if 5 in self.m_channels:
+            self.act_ch_05.setChecked(True)
+        if 6 in self.m_channels:
+            self.act_ch_06.setChecked(True)
+        if 7 in self.m_channels:
+            self.act_ch_07.setChecked(True)
+        if 8 in self.m_channels:
+            self.act_ch_08.setChecked(True)
+        if 9 in self.m_channels:
+            self.act_ch_09.setChecked(True)
+        if 10 in self.m_channels:
+            self.act_ch_10.setChecked(True)
+        if 11 in self.m_channels:
+            self.act_ch_11.setChecked(True)
+        if 12 in self.m_channels:
+            self.act_ch_12.setChecked(True)
+        if 13 in self.m_channels:
+            self.act_ch_13.setChecked(True)
+        if 14 in self.m_channels:
+            self.act_ch_14.setChecked(True)
+        if 15 in self.m_channels:
+            self.act_ch_15.setChecked(True)
+        if 16 in self.m_channels:
+            self.act_ch_16.setChecked(True)
 
     def timerEvent(self, event):
-        if (event.timerId() == self.m_midiInTimerId):
-          global jack_midi_in_data
-          if (jack_midi_in_data.empty() == False):
-            while (True):
-              try:
-                data1, data2, data3 = jack_midi_in_data.get_nowait()
-              except QuequeEmpty:
-                break
+        if event.timerId() == self.m_midiInTimerId:
+            global jack_midi_in_data
+            if not jack_midi_in_data.empty():
+                while True:
+                    try:
+                        data1, data2, data3 = jack_midi_in_data.get_nowait()
+                    except QuequeEmpty:
+                        break
 
-              channel = (data1 & 0x0F)+1
-              mode    =  data1 & 0xF0
+                    channel = (data1 & 0x0F) + 1
+                    mode    = data1 & 0xF0
 
-              if (channel in self.m_channels):
-                if (mode == 0x80):
-                  self.keyboard.sendNoteOff(data2, False)
-                elif (mode == 0x90):
-                  self.keyboard.sendNoteOn(data2, False)
-                elif (mode == 0xB0):
-                  self.scene.handleCC(data2, data3)
+                    if channel in self.m_channels:
+                        if mode == 0x80:
+                            self.keyboard.sendNoteOff(data2, False)
+                        elif mode == 0x90:
+                            self.keyboard.sendNoteOn(data2, False)
+                        elif mode == 0xB0:
+                            self.scene.handleCC(data2, data3)
 
-              jack_midi_in_data.task_done()
+                    jack_midi_in_data.task_done()
 
-          self.scene.updateSmooth()
+            self.scene.updateSmooth()
 
         QMainWindow.timerEvent(self, event)
 
@@ -532,7 +533,7 @@ class XYControllerW(QMainWindow, ui_xycontroller.Ui_XYControllerW):
 # JACK Stuff
 
 static_event = jacklib.jack_midi_event_t()
-static_mtype = jacklib.c_ubyte*3
+static_mtype = jacklib.c_ubyte * 3
 
 def jack_process_callback(nframes, arg):
     global jack_midi_in_port, jack_midi_out_port, jack_midi_in_data, jack_midi_out_data
@@ -540,61 +541,60 @@ def jack_process_callback(nframes, arg):
     # MIDI In
     midi_in_buffer = jacklib.port_get_buffer(jack_midi_in_port, nframes)
 
-    if (midi_in_buffer):
-      event_count = jacklib.midi_get_event_count(midi_in_buffer)
+    if midi_in_buffer:
+        event_count = jacklib.midi_get_event_count(midi_in_buffer)
 
-      for i in range(event_count):
-        if (jacklib.midi_event_get(jacklib.pointer(static_event), midi_in_buffer, i) == 0):
-          if (static_event.size == 1):
-            jack_midi_in_data.put_nowait((static_event.buffer[0], 0, 0))
-          elif (static_event.size == 2):
-            jack_midi_in_data.put_nowait((static_event.buffer[0], static_event.buffer[1], 0))
-          elif (static_event.size >= 3):
-            jack_midi_in_data.put_nowait((static_event.buffer[0], static_event.buffer[1], static_event.buffer[2]))
+        for i in range(event_count):
+            if jacklib.midi_event_get(jacklib.pointer(static_event), midi_in_buffer, i) == 0:
+                if static_event.size == 1:
+                    jack_midi_in_data.put_nowait((static_event.buffer[0], 0, 0))
+                elif static_event.size == 2:
+                    jack_midi_in_data.put_nowait((static_event.buffer[0], static_event.buffer[1], 0))
+                elif static_event.size >= 3:
+                    jack_midi_in_data.put_nowait((static_event.buffer[0], static_event.buffer[1], static_event.buffer[2]))
 
-          if (jack_midi_in_data.full()):
-            break
+                if jack_midi_in_data.full():
+                    break
 
     # MIDI Out
     midi_out_buffer = jacklib.port_get_buffer(jack_midi_out_port, nframes)
 
-    if (midi_out_buffer):
-      jacklib.midi_clear_buffer(midi_out_buffer)
+    if midi_out_buffer:
+        jacklib.midi_clear_buffer(midi_out_buffer)
 
-      if (jack_midi_out_data.empty() == False):
-        while (True):
-          try:
-            mode, note, velo = jack_midi_out_data.get_nowait()
-          except QuequeEmpty:
-            break
+        if not jack_midi_out_data.empty():
+            while True:
+                try:
+                    mode, note, velo = jack_midi_out_data.get_nowait()
+                except QuequeEmpty:
+                    break
 
-          data = static_mtype(mode, note, velo)
-          jacklib.midi_event_write(midi_out_buffer, 0, data, 3)
+                data = static_mtype(mode, note, velo)
+                jacklib.midi_event_write(midi_out_buffer, 0, data, 3)
 
-          jack_midi_out_data.task_done()
+                jack_midi_out_data.task_done()
 
     return 0
 
 def jack_session_callback(event, arg):
-  if (WINDOWS):
-    filepath = os.path.join(sys.argv[0])
-  else:
-    if (sys.argv[0].startswith("/")):
-      filepath = "jack_xycontroller"
+    if WINDOWS:
+        filepath = os.path.join(sys.argv[0])
     else:
-      filepath = os.path.join(sys.path[0], "xycontroller.py")
+        if sys.argv[0].startswith("/"):
+            filepath = "jack_xycontroller"
+        else:
+            filepath = os.path.join(sys.path[0], "xycontroller.py")
 
-  event.command_line = str(filepath).encode("utf-8")
-  jacklib.session_reply(jack_client, event)
+    event.command_line = str(filepath).encode("utf-8")
+    jacklib.session_reply(jack_client, event)
 
-  if (event.type == jacklib.JackSessionSaveAndQuit):
-    app.quit()
+    if event.type == jacklib.JackSessionSaveAndQuit:
+        app.quit()
 
-  #jacklib.session_event_free(event)
+    #jacklib.session_event_free(event)
 
 #--------------- main ------------------
 if __name__ == '__main__':
-
     # App initialization
     app = QApplication(sys.argv)
     app.setApplicationName("XY-Controller")
@@ -607,8 +607,9 @@ if __name__ == '__main__':
     jack_client = jacklib.client_open("XY-Controller", jacklib.JackSessionID, jacklib.pointer(jack_status))
 
     if not jack_client:
-      QMessageBox.critical(None, app.translate("XYControllerW", "Error"), app.translate("XYControllerW", "Could not connect to JACK, possible errors:\n%s" % (get_jack_status_error_string(jack_status))))
-      sys.exit(1)
+        QMessageBox.critical(None, app.translate("XYControllerW", "Error"), app.translate("XYControllerW",
+            "Could not connect to JACK, possible errors:\n%s" % (get_jack_status_error_string(jack_status))))
+        sys.exit(1)
 
     jack_midi_in_port = jacklib.port_register(jack_client, "midi_in", jacklib.JACK_DEFAULT_MIDI_TYPE, jacklib.JackPortIsInput, 0)
     jack_midi_out_port = jacklib.port_register(jack_client, "midi_out", jacklib.JACK_DEFAULT_MIDI_TYPE, jacklib.JackPortIsOutput, 0)
@@ -627,9 +628,9 @@ if __name__ == '__main__':
     ret = app.exec_()
 
     # Close Jack
-    if (jack_client):
-      jacklib.deactivate(jack_client)
-      jacklib.client_close(jack_client)
+    if jack_client:
+        jacklib.deactivate(jack_client)
+        jacklib.client_close(jack_client)
 
     # Exit properly
     sys.exit(ret)
