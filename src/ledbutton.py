@@ -22,10 +22,10 @@ from PyQt4.QtGui import QPainter, QPixmap, QPushButton
 
 # Widget Class
 class LEDButton(QPushButton):
-    BLUE = 1
-    GREEN = 2
-    RED = 3
-    YELLOW = 4
+    BLUE    = 1
+    GREEN   = 2
+    RED     = 3
+    YELLOW  = 4
     BIG_RED = 5
 
     def __init__(self, parent):
@@ -45,7 +45,7 @@ class LEDButton(QPushButton):
         if color in (self.BLUE, self.GREEN, self.RED, self.YELLOW):
             size = 14
         elif color == self.BIG_RED:
-            size = 64
+            size = 32
         else:
             return qCritical("LEDButton::setColor(%i) - Invalid color" % color)
 

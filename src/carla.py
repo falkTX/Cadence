@@ -1800,13 +1800,10 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
                     self.parameter_list.append((ptype, p_list[j]['index'], pwidget))
 
                     if (ptype == PARAMETER_INPUT):
-                        self.connect(pwidget, SIGNAL("valueChanged(int, double)"),
-                            SLOT("slot_parameterValueChanged(int, double)"))
+                        self.connect(pwidget, SIGNAL("valueChanged(int, double)"), SLOT("slot_parameterValueChanged(int, double)"))
 
-                    self.connect(pwidget, SIGNAL("midiChannelChanged(int, int)"),
-                        SLOT("slot_parameterMidiChannelChanged(int, int)"))
-                    self.connect(pwidget, SIGNAL("midiCcChanged(int, int)"),
-                        SLOT("slot_parameterMidiCcChanged(int, int)"))
+                    self.connect(pwidget, SIGNAL("midiChannelChanged(int, int)"), SLOT("slot_parameterMidiChannelChanged(int, int)"))
+                    self.connect(pwidget, SIGNAL("midiCcChanged(int, int)"), SLOT("slot_parameterMidiCcChanged(int, int)"))
 
                 # FIXME
                 layout.addStretch()
@@ -1975,14 +1972,14 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.led_audio_out.setEnabled(False)
 
         self.dial_drywet.setPixmap(1)
-        self.dial_vol.setPixmap(2)
+        self.dial_vol.setPixmap(1)
         self.dial_b_left.setPixmap(1)
         self.dial_b_right.setPixmap(1)
 
-        self.dial_drywet.setLabel("Wet")
-        self.dial_vol.setLabel("Vol")
-        self.dial_b_left.setLabel("L")
-        self.dial_b_right.setLabel("R")
+        #self.dial_drywet.setLabel("Wet")
+        #self.dial_vol.setLabel("Vol")
+        #self.dial_b_left.setLabel("L")
+        #self.dial_b_right.setLabel("R")
 
         self.peak_in.setColor(self.peak_in.GREEN)
         self.peak_in.setOrientation(self.peak_in.HORIZONTAL)
@@ -2205,7 +2202,8 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
         self.setStyleSheet("""
         QFrame#PluginWidget {
-                  background-image: url(:/bitmaps/textures/metal_%i-512px.jpg);
+                  /*background-image: url(:/bitmaps/textures/metal_%i-512px.jpg);*/
+                  background-color: rgb(17, 17, 17);
                   background-repeat: repeat-x;
                   background-position: top left;
                 }
@@ -2213,15 +2211,17 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
           color: white;
         }
         QFrame#frame_name {
-          background-image: url(:/bitmaps/glass.png);
+          /* background-image: url(:/bitmaps/glass.png); */
+          /*background-color: rgb(17, 17, 120);*/
           background-color: rgb(%i, %i, %i);
-          border: 2px outset;
-          border-color: rgb(%i, %i, %i);
+          border: 1px solid #333;
+          border-radius: 4px;
+          /*border-color: rgb(%i, %i, %i);*/
         }
         QFrame#frame_controls {
-          background-image: url(:/bitmaps/glass2.png);
+          /* background-image: url(:/bitmaps/glass2.png); */
           background-color: rgb(30, 30, 30);
-          border: 2px outset;
+          /*border: 2px outset;*/
           border-color: rgb(30, 30, 30);
         }
         QFrame#frame_peaks {

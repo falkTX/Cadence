@@ -25,10 +25,8 @@ from os import getenv
 from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QAction, QIcon, QMenu, QSystemTrayIcon
 
-global TrayEngine
-
 try:
-    if False or getenv("DESKTOP_SESSION") in ("ubuntu", "ubuntu-2d"):
+    if getenv("DESKTOP_SESSION") in ("ubuntu", "ubuntu-2d") and not os.path.exists("/var/kxstudio/no_appindicators"):
         from gi.repository import AppIndicator3, Gtk
         TrayEngine = "AppIndicator"
     elif getenv("KDE_FULL_SESSION"):
@@ -39,7 +37,7 @@ try:
 except:
     TrayEngine = "Qt"
 
-print("Using Tray Engine %s" % TrayEngine)
+print("Using Tray Engine '%s'" % TrayEngine)
 
 iActNameId = 0
 iActWidget = 1
@@ -339,8 +337,8 @@ class GlobalSysTray(object):
             act_widget.setText(text)
 
         elif TrayEngine == "AppIndicator":
-            # Fix icon reset
             if isinstance(act_widget, Gtk.ImageMenuItem):
+                # Fix icon reset
                 last_icon = act_widget.get_image()
                 act_widget.set_label(text)
                 act_widget.set_image(last_icon)
@@ -623,9 +621,11 @@ if __name__ == '__main__':
             self.systray = GlobalSysTray(self, "Claudia", "claudia")
             self.systray.addAction("about", self.tr("About"))
             self.systray.setIcon("audacity")
-            self.systray.show()
+            self.systray.setToolTip("Demo systray app")
 
             self.systray.connect("about", self.about)
+
+            self.systray.show()
 
         def about(self):
             QMessageBox.about(self, self.tr("About"), self.tr("Systray Demo"))
