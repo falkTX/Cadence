@@ -92,7 +92,7 @@ void toolkit_loop()
         }
     }
 
-    osc_send_update(nullptr);
+    osc_send_update();
 
     // Main loop
     gtk_main();

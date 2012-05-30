@@ -22,7 +22,6 @@ lilv_lib_open(LilvWorld*               world,
               const char*              bundle_path,
               const LV2_Feature*const* features)
 {
-#if 0
 	ZixTreeIter*            i   = NULL;
 	const struct LilvHeader key = { world, (LilvNode*)uri };
 	if (!zix_tree_find(world->libs, &key, &i)) {
@@ -79,15 +78,11 @@ lilv_lib_open(LilvWorld*               world,
 
 	zix_tree_insert(world->libs, llib, NULL);
 	return llib;
-#else
-        return NULL;
-#endif
 }
 
 const LV2_Descriptor*
 lilv_lib_get_plugin(LilvLib* lib, uint32_t index)
 {
-#if 0
 	if (lib->lv2_descriptor) {
 		return lib->lv2_descriptor(index);
 	}
@@ -96,14 +91,12 @@ lilv_lib_get_plugin(LilvLib* lib, uint32_t index)
 		return lib->desc->get_plugin(lib->desc->handle, index);
 	}
 #endif
-#endif
 	return NULL;
 }
 
 void
 lilv_lib_close(LilvLib* lib)
 {
-#if 0
 	if (--lib->refs == 0) {
 		dlclose(lib->lib);
 
@@ -115,5 +108,4 @@ lilv_lib_close(LilvLib* lib)
 		lilv_node_free(lib->uri);
 		free(lib);
 	}
-#endif
 }

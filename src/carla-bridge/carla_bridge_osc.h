@@ -1,5 +1,5 @@
 /*
- * Carla Plugin bridge code
+ * Carla bridge code
  * Copyright (C) 2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -31,10 +31,10 @@ int osc_handle_hide();
 int osc_handle_quit();
 
 #ifdef BUILD_BRIDGE_UI
-// ui only
+// ui-bridge only
 void osc_send_lv2_event_transfer(const char* type, const char* key, const char* value);
 #else
-// bridge only
+// plugin-bridge only
 void osc_send_bridge_ains_peak(int index, double value);
 void osc_send_bridge_aouts_peak(int index, double value);
 void osc_send_bridge_audio_count(int ins, int outs, int total);

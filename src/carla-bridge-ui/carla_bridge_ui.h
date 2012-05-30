@@ -76,7 +76,7 @@ public:
 
     virtual ~UiData()
     {
-        free((void*)m_title);
+        free(m_title);
     }
 
     void queque_message(BridgeMessageType type, int value1, int value2, double value3)
@@ -117,10 +117,10 @@ public:
                     set_midi_program(m->value1, m->value2);
                     break;
                 case BRIDGE_MESSAGE_NOTE_ON:
-                    //send_note_on(m->value1, m->value2);
+                    note_on(m->value1, m->value2);
                     break;
                 case BRIDGE_MESSAGE_NOTE_OFF:
-                    //send_note_off(m->value1);
+                    note_off(m->value1);
                     break;
                 case BRIDGE_MESSAGE_SHOW_GUI:
                     if (m->value1)
@@ -160,16 +160,16 @@ public:
     virtual void close() = 0;
 
     // processing
-    virtual void set_parameter(int index, double value) = 0;
-    virtual void set_program(int index) = 0;
-    virtual void set_midi_program(int bank, int program) = 0;
-    //virtual void send_note_on(int note, int velocity) = 0;
-    //virtual void send_note_off(int note) = 0;
+    virtual void set_parameter(uint32_t index, double value) = 0;
+    virtual void set_program(uint32_t index) = 0;
+    virtual void set_midi_program(uint32_t bank, uint32_t program) = 0;
+    virtual void note_on(uint8_t note, uint8_t velocity) = 0;
+    virtual void note_off(uint8_t note) = 0;
 
     // gui
-    virtual bool has_parent() const = 0;
-    virtual bool is_resizable() const = 0;
     virtual void* get_widget() const = 0;
+    virtual bool is_resizable() const = 0;
+    virtual bool needs_reparent() const = 0;
 
     // ---------------------------------------------------------------------
 
@@ -229,11 +229,9 @@ public:
 
     // ---------------------------------------------------------------------
 
-protected:
-    const char* m_title;
-
 private:
     void* m_lib;
+    char* m_title;
     QMutex m_lock;
     QuequeBridgeMessage QuequeBridgeMessages[MAX_BRIDGE_MESSAGES];
 };

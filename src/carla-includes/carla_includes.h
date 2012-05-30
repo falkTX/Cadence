@@ -49,11 +49,11 @@
 // needed for qDebug/Warning/Critical sections
 #if __WORDSIZE == 64
 #  define P_INTPTR  "%li"
-#  define P_UINTPTR "%llu"
+#  define P_UINTPTR "%llx"
 #  define P_SIZE    "%lu"
 #else
 #  define P_INTPTR  "%i"
-#  define P_UINTPTR "%u"
+#  define P_UINTPTR "%x"
 #  define P_SIZE    "%u"
 #endif
 

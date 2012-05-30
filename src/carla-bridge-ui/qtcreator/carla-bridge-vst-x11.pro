@@ -19,7 +19,8 @@ HEADERS = \
     ../../carla/lv2_rdf.h \
     ../../carla-bridge/carla_bridge_osc.h \
     ../../carla-includes/carla_includes.h \
-    ../../carla-includes/carla_osc_includes.h
+    ../../carla-includes/carla_osc_includes.h \
+    ../../carla-includes/carla_vst_includes.h
 
 INCLUDEPATH = .. \
     ../../carla \

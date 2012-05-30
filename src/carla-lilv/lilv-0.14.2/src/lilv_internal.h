@@ -50,7 +50,7 @@ static inline char* dlerror(void) { return "Unknown error"; }
 #include "lilv/lilv.h"
 
 #ifdef LILV_DYN_MANIFEST
-#    include "dynmanifest.h"
+#    include "lv2/dynmanifest.h"
 #endif
 
 /*

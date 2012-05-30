@@ -30,7 +30,15 @@ CarlaCheckThread::CarlaCheckThread(QObject *parent) :
     qDebug("CarlaCheckThread::CarlaCheckThread(%p)", parent);
 }
 
-// TODO - make sure plugin removals can't make this crash
+void CarlaCheckThread::stopNow()
+{
+    m_stopNow = true;
+
+    while (isRunning())
+    {
+        msleep(10);
+    }
+}
 
 void CarlaCheckThread::run()
 {
@@ -41,7 +49,8 @@ void CarlaCheckThread::run()
     ParameterData* param_data;
     PluginPostEvent post_events[MAX_POST_EVENTS];
 
-    while (carla_is_engine_running())
+    m_stopNow = false;
+    while (carla_is_engine_running() && ! m_stopNow)
     {
         for (unsigned short i=0; i<MAX_PLUGINS; i++)
         {
@@ -231,6 +240,8 @@ void CarlaPluginThread::run()
     if (m_process == nullptr)
         m_process = new QProcess(nullptr);
 
+    m_process->setProcessChannelMode(QProcess::ForwardedChannels);
+
     QStringList arguments;
 
     switch (m_mode)
@@ -243,10 +254,10 @@ void CarlaPluginThread::run()
         break;
 
     case PLUGIN_THREAD_LV2_GUI:
-        /* osc_url     */ arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
-        /* URI         */ arguments << m_label;
-        /* ui-URI      */ arguments << m_data1;
-        /* ui-title    */ arguments << QString("%1 (GUI)").arg(m_plugin->name());
+        /* osc_url  */ arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
+        /* URI      */ arguments << m_label;
+        /* ui-URI   */ arguments << m_data1;
+        /* ui-title */ arguments << QString("%1 (GUI)").arg(m_plugin->name());
         break;
 
     case PLUGIN_THREAD_BRIDGE:

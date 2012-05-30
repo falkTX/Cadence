@@ -60,10 +60,14 @@ bool carla_close()
             remove_plugin(i);
     }
 
+    carla_check_thread.stopNow();
     carla_check_thread.quit();
 
-    if (carla_check_thread.wait(2000) == false) // 2 secs
+    if (carla_check_thread.wait(500) == false)
+    {
         qWarning("Failed to properly stop global check thread");
+        carla_check_thread.terminate();
+    }
 
     osc_global_send_exit();
     osc_close();
@@ -160,10 +164,15 @@ bool remove_plugin(unsigned short plugin_id)
             plugin->set_id(-1);
             carla_proc_unlock();
 
+            carla_check_thread.stopNow();
+
             delete plugin;
 
             CarlaPlugins[i] = nullptr;
             unique_names[i] = nullptr;
+
+            if (carla_is_engine_running())
+                carla_check_thread.start(QThread::HighPriority);
 
             return true;
         }

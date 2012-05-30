@@ -1,10 +1,12 @@
 <RCC version="1.0">
         <qresource prefix="/">
+            <file>16x16/cadence.png</file>
             <file>16x16/catarina.png</file>
             <file>16x16/catia.png</file>
             <file>16x16/claudia.png</file>
             <file>16x16/claudia-launcher.png</file>
             <file>16x16/carla.png</file>
+            <file>16x16/carla-control.png</file>
             <file>16x16/application-exit.png</file>
             <file>16x16/arrow-right.png</file>
             <file>16x16/configure.png</file>
@@ -40,11 +42,13 @@
             <file>16x16/zoom-original.png</file>
             <file>16x16/zoom-out.png</file>
 
+            <file>48x48/cadence.png</file>
             <file>48x48/catarina.png</file>
             <file>48x48/catia.png</file>
             <file>48x48/claudia.png</file>
             <file>48x48/claudia-launcher.png</file>
             <file>48x48/carla.png</file>
+            <file>48x48/carla-control.png</file>
             <file>48x48/canvas.png</file>
             <file>48x48/exec.png</file>
             <file>48x48/folder.png</file>
@@ -52,11 +56,13 @@
             <file>48x48/ladish.png</file>
             <file>48x48/media-record.png</file>
 
+            <file>scalable/cadence.svg</file>
             <file>scalable/catarina.svg</file>
             <file>scalable/catia.svg</file>
             <file>scalable/claudia.svg</file>
             <file>scalable/claudia-launcher.svg</file>
             <file>scalable/carla.svg</file>
+            <file>scalable/carla-control.svg</file>
             <file>scalable/jack.svg</file>
             <file>scalable/pb_generic.svg</file>
             <file>scalable/pb_hardware.svg</file>
@@ -82,8 +88,6 @@
             <file>bitmaps/led-big_on.png</file>
             <file>bitmaps/led-big_off.png</file>
             <file>bitmaps/carla_about.png</file>
-            <file>bitmaps/glass.png</file>
-            <file>bitmaps/glass2.png</file>
             <file>bitmaps/textures/metal_1-512px.jpg</file>
             <file>bitmaps/textures/metal_2-512px.jpg</file>
             <file>bitmaps/textures/metal_3-512px.jpg</file>
@@ -93,5 +97,12 @@
             <file>bitmaps/textures/metal_7-512px.jpg</file>
             <file>bitmaps/textures/metal_8-512px.jpg</file>
             <file>bitmaps/textures/metal_9-512px.jpg</file>
+
+            <file>screens/catia.png</file>
+            <file>screens/claudia.png</file>
+            <file>screens/carla.png</file>
+            <file>screens/logs.png</file>
+            <file>screens/render.png</file>
+            <file>screens/xy-controller.png</file>
         </qresource>
 </RCC>

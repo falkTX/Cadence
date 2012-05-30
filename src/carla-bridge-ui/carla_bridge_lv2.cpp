@@ -66,6 +66,26 @@ class Lv2UiData : public UiData
 public:
     Lv2UiData(const char* ui_title) : UiData(ui_title)
     {
+        // TEST
+        LV2_RDF_Descriptor** rdfPtr = nullptr;
+
+        QString sPtr(getenv("INSTANCE_ADDRESS"));
+        qWarning("INST - S - %s", sPtr.toUtf8().constData());
+
+        bool ok;
+        quintptr uPtr = sPtr.toULongLong(&ok);
+        if (ok)
+        {
+            qWarning("INST - U - " P_UINTPTR, uPtr);
+            rdfPtr = (LV2_RDF_Descriptor**)uPtr;
+        }
+
+        qWarning("INST - P - %p", rdfPtr);
+
+        LV2_RDF_Descriptor* rdf = *rdfPtr;
+        qWarning("INST - REAL - %p", rdf);
+        // TEST
+
         handle = nullptr;
         widget = nullptr;
         descriptor = nullptr;
@@ -182,6 +202,8 @@ public:
 
     ~Lv2UiData()
     {
+        qWarning("UI destroyed");
+
         if (rdf_descriptor)
             lv2_rdf_free(rdf_descriptor);
 
@@ -266,11 +288,11 @@ public:
                             }
 
                             // Check for programs extension
-                            if (handle && descriptor->extension_data)
+                            if (descriptor->extension_data)
                             {
-                                for (uint32_t j=0; j < rdf_ui_descriptor->ExtensionCount; j++)
+                                for (uint32_t i=0; i < rdf_ui_descriptor->ExtensionCount; i++)
                                 {
-                                    if (strcmp(rdf_ui_descriptor->Extensions[j], LV2_PROGRAMS__UIInterface) == 0)
+                                    if (strcmp(rdf_ui_descriptor->Extensions[i], LV2_PROGRAMS__UIInterface) == 0)
                                     {
                                         programs = (LV2_Programs_UI_Interface*)descriptor->extension_data(LV2_PROGRAMS__UIInterface);
                                         break;
@@ -304,17 +326,12 @@ public:
             descriptor->cleanup(handle);
 
         lib_close();
-
-#ifdef BRIDGE_LV2_X11
-        //if (x11_widget)
-        //    delete x11_widget;
-#endif
     }
 
     // ---------------------------------------------------------------------
     // processing
 
-    void set_parameter(int index, double value)
+    void set_parameter(uint32_t index, double value)
     {
         if (descriptor && descriptor->port_event)
         {
@@ -323,26 +340,41 @@ public:
         }
     }
 
-    void set_program(int) {}
+    void set_program(uint32_t) {}
 
-    void set_midi_program(int bank, int program)
+    void set_midi_program(uint32_t bank, uint32_t program)
     {
         if (programs)
             programs->select_program(handle, bank, program);
     }
 
-    void send_note_on(int, int) {}
-    void send_note_off(int) {}
+    void note_on(uint8_t note, uint8_t velo)
+    {
+        if (descriptor && descriptor->port_event)
+        {
+            uint8_t buf[3] = { 0x90, note, velo };
+            descriptor->port_event(handle, 0, 3, CARLA_URI_MAP_ID_MIDI_EVENT, buf);
+        }
+    }
+
+    void note_off(uint8_t note)
+    {
+        if (descriptor && descriptor->port_event)
+        {
+            uint8_t buf[3] = { 0x80, note, 0 };
+            descriptor->port_event(handle, 0, 3, CARLA_URI_MAP_ID_MIDI_EVENT, buf);
+        }
+    }
 
     // ---------------------------------------------------------------------
     // gui
 
-    bool has_parent() const
+    void* get_widget() const
     {
 #ifdef BRIDGE_LV2_X11
-        return false;
+        return x11_widget;
 #else
-        return true;
+        return widget;
 #endif
     }
 
@@ -351,12 +383,12 @@ public:
         return m_resizable;
     }
 
-    void* get_widget() const
+    bool needs_reparent() const
     {
 #ifdef BRIDGE_LV2_X11
-        return x11_widget;
+        return true;
 #else
-        return widget;
+        return false;
 #endif
     }
 
@@ -421,12 +453,12 @@ public:
         return custom_uri_ids.count()-1;
     }
 
-    const char* get_custom_uri_string(int uri_id)
+    const char* get_custom_uri_string(int urid)
     {
-        qDebug("Lv2Plugin::get_custom_uri_string(%i)", uri_id);
+        qDebug("Lv2Plugin::get_custom_uri_string(%i)", urid);
 
-        if (uri_id < custom_uri_ids.count())
-            return custom_uri_ids.at(uri_id);
+        if (urid < custom_uri_ids.count())
+            return custom_uri_ids.at(urid);
         else
             return nullptr;
     }
@@ -493,7 +525,7 @@ public:
     {
         qDebug("Lv2Plugin::carla_lv2_program_changed(%p, %i)", handle, index);
 
-        osc_send_configure(nullptr, "reloadprograms", "");
+        osc_send_configure("reloadprograms", "");
         // QString::number(index).toUtf8().constData()
     }
 
@@ -520,43 +552,7 @@ public:
     static uint32_t carla_lv2_uri_to_id(LV2_URI_Map_Callback_Data data, const char* map, const char* uri)
     {
         qDebug("carla_lv2_uri_to_id(%p, %s, %s)", data, map, uri);
-
-        // Atom types
-        if (strcmp(uri, LV2_ATOM__Chunk) == 0)
-            return CARLA_URI_MAP_ID_ATOM_CHUNK;
-        else if (strcmp(uri, LV2_ATOM__Path) == 0)
-            return CARLA_URI_MAP_ID_ATOM_PATH;
-        else if (strcmp(uri, LV2_ATOM__Sequence) == 0)
-            return CARLA_URI_MAP_ID_ATOM_SEQUENCE;
-        else if (strcmp(uri, LV2_ATOM__String) == 0)
-            return CARLA_URI_MAP_ID_ATOM_STRING;
-        else if (strcmp(uri, LV2_ATOM__atomTransfer) == 0)
-            return CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM;
-        else if (strcmp(uri, LV2_ATOM__eventTransfer) == 0)
-            return CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT;
-
-        // Log types
-        else if (strcmp(uri, LV2_LOG__Error) == 0)
-            return CARLA_URI_MAP_ID_LOG_ERROR;
-        else if (strcmp(uri, LV2_LOG__Note) == 0)
-            return CARLA_URI_MAP_ID_LOG_NOTE;
-        else if (strcmp(uri, LV2_LOG__Trace) == 0)
-            return CARLA_URI_MAP_ID_LOG_TRACE;
-        else if (strcmp(uri, LV2_LOG__Warning) == 0)
-            return CARLA_URI_MAP_ID_LOG_WARNING;
-
-        // Others
-        else if (strcmp(uri, LV2_MIDI__MidiEvent) == 0)
-            return CARLA_URI_MAP_ID_MIDI_EVENT;
-
-        // Custom types
-        if (data)
-        {
-            Lv2UiData* lv2ui = (Lv2UiData*)data;
-            return lv2ui->get_custom_uri_id(uri);
-        }
-
-        return CARLA_URI_MAP_ID_NULL;
+        return carla_lv2_urid_map(data, uri);
     }
 
     // ----------------- URID Feature ------------------------------------------
@@ -692,7 +688,7 @@ public:
                 if (buffer_size == sizeof(float))
                 {
                     float value = *(float*)buffer;
-                    osc_send_control(nullptr, port_index, value);
+                    osc_send_control(port_index, value);
                 }
             }
             else if (format == CARLA_URI_MAP_ID_MIDI_EVENT)
@@ -705,7 +701,7 @@ public:
                     status -= 0x10;
 
                 uint8_t midi_buf[4] = { 0, status, data[2], data[3] };
-                osc_send_midi(nullptr, midi_buf);
+                osc_send_midi(midi_buf);
             }
             else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM)
             {
@@ -797,7 +793,7 @@ int main(int argc, char* argv[])
     }
 
     // Close OSC
-    osc_send_exiting(nullptr);
+    osc_send_exiting();
     osc_close();
 
     // Close LV2-UI

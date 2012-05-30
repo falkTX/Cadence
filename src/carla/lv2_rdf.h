@@ -229,11 +229,11 @@ struct LV2_RDF_PortScalePoint {
 #define LV2_PORT_TIME_POSITION           0xA
 #define LV2_PORT_TIME_SPEED              0xB
 
-#define LV2_IS_PORT_LATENCY(x)          ((x) == LV2_PORT_LATENCY)
-#define LV2_IS_PORT_TIME_BAR(x)         ((x) == LV2_PORT_TIME_BAR)
-#define LV2_IS_PORT_TIME_BAR_BEAT(x)    ((x) == LV2_PORT_TIME_BAR_BEAT)
-#define LV2_IS_PORT_TIME_BEAT(x)        ((x) == LV2_PORT_TIME_BEAT)
-#define LV2_IS_PORT_TIME_BEAT_UNIT(x)   ((x) == LV2_PORT_TIME_BEAT_UNIT)
+#define LV2_IS_PORT_LATENCY(x)           ((x) == LV2_PORT_LATENCY)
+#define LV2_IS_PORT_TIME_BAR(x)          ((x) == LV2_PORT_TIME_BAR)
+#define LV2_IS_PORT_TIME_BAR_BEAT(x)     ((x) == LV2_PORT_TIME_BAR_BEAT)
+#define LV2_IS_PORT_TIME_BEAT(x)         ((x) == LV2_PORT_TIME_BEAT)
+#define LV2_IS_PORT_TIME_BEAT_UNIT(x)    ((x) == LV2_PORT_TIME_BEAT_UNIT)
 #define LV2_IS_PORT_TIME_BEATS_PER_BAR(x)     ((x) == LV2_PORT_TIME_BEATS_PER_BAR)
 #define LV2_IS_PORT_TIME_BEATS_PER_MINUTE(x)  ((x) == LV2_PORT_TIME_BEATS_PER_MINUTE)
 #define LV2_IS_PORT_TIME_FRAMES(x)            ((x) == LV2_PORT_TIME_FRAMES)

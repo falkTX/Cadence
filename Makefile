@@ -26,7 +26,9 @@ endif
 all: UI RES CPP
 
 
-UI: catarina catia claudia carla tools
+UI: cadence catarina catia claudia carla tools
+
+cadence: src/ui_cadence.py
 
 catarina: src/ui_catarina.py \
 	src/ui_catarina_addgroup.py src/ui_catarina_removegroup.py src/ui_catarina_renamegroup.py \
@@ -47,6 +49,9 @@ carla: src/ui_carla.py src/ui_carla_control.py \
 tools: \
 	src/ui_logs.py src/ui_render.py src/ui_xycontroller.py \
 	src/ui_settings_app.py src/ui_settings_jack.py
+
+src/ui_cadence.py: src/ui/cadence.ui
+	$(PYUIC) -o src/ui_cadence.py $<
 
 src/ui_catarina.py: src/ui/catarina.ui
 	$(PYUIC) -o src/ui_catarina.py $<

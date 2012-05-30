@@ -56,7 +56,12 @@ void toolkit_init()
 
 void toolkit_loop()
 {
-    if (ui->has_parent())
+    if (ui->needs_reparent())
+    {
+        window = (QDialog*)ui->get_widget();
+        window->resize(10, 10);
+    }
+    else
     {
         window = new QDialog();
         window->resize(10, 10);
@@ -69,11 +74,6 @@ void toolkit_loop()
         widget->setParent(window);
         widget->show();
     }
-    else
-    {
-        window = (QDialog*)ui->get_widget();
-        window->resize(10, 10);
-    }
 
     MessageChecker checker;
     checker.start(50);
@@ -81,6 +81,7 @@ void toolkit_loop()
 
     if (! ui->is_resizable())
         window->setFixedSize(window->width(), window->height());
+
     window->setWindowTitle(ui->get_title());
 
     if (settings.contains(QString("%1/pos_x").arg(ui->get_title())))
@@ -97,7 +98,7 @@ void toolkit_loop()
         }
     }
 
-    osc_send_update(nullptr);
+    osc_send_update();
 
     // Main loop
     app->exec();

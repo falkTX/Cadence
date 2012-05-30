@@ -44,53 +44,53 @@ except:
 USE_CLAUDIA_ADD_NEW = True
 
 # internal indexes
-iConnId = 0
+iConnId     = 0
 iConnOutput = 1
-iConnInput = 2
+iConnInput  = 2
 
-iAppCommand = 0
-iAppName = 1
+iAppCommand  = 0
+iAppName     = 1
 iAppTerminal = 2
-iAppLevel = 3
-iAppActive = 4
+iAppLevel    = 3
+iAppActive   = 4
 
-iAppPropName = 0
+iAppPropName        = 0
 iAppPropDescription = 1
-iAppPropNotes = 2
-iAppPropSaveNow = 3
+iAppPropNotes       = 2
+iAppPropSaveNow     = 3
 
-iItemPropNumber = 0
-iItemPropName = 1
-iItemPropActive = 2
+iItemPropNumber   = 0
+iItemPropName     = 1
+iItemPropActive   = 2
 iItemPropTerminal = 3
-iItemPropLevel = 4
+iItemPropLevel    = 4
 
 iItemPropRoomPath = 0
 iItemPropRoomName = 1
 
 # jackdbus indexes
-iGraphVersion = 0
-iJackClientId = 1
-iJackClientName = 2
-iJackPortId = 3
-iJackPortName = 4
+iGraphVersion    = 0
+iJackClientId    = 1
+iJackClientName  = 2
+iJackPortId      = 3
+iJackPortName    = 4
 iJackPortNewName = 5
-iJackPortFlags = 5
-iJackPortType = 6
+iJackPortFlags   = 5
+iJackPortType    = 6
 
-iRenamedId = 1
+iRenamedId      = 1
 iRenamedOldName = 2
 iRenamedNewName = 3
 
-iSourceClientId = 1
+iSourceClientId   = 1
 iSourceClientName = 2
-iSourcePortId = 3
-iSourcePortName = 4
-iTargetClientId = 5
+iSourcePortId     = 3
+iSourcePortName   = 4
+iTargetClientId   = 5
 iTargetClientName = 6
-iTargetPortId = 7
-iTargetPortName = 8
-iJackConnId = 9
+iTargetPortId     = 7
+iTargetPortName   = 8
+iJackConnId       = 9
 
 # ladish indexes
 iStudioListName = 0
@@ -101,47 +101,47 @@ iStudioRenamedName = 0
 iRoomAppearedPath = 0
 iRoomAppearedDict = 1
 
-iProjChangedId = 0
+iProjChangedId   = 0
 iProjChangedDict = 1
 
-iAppChangedNumber = 1
-iAppChangedName = 2
-iAppChangedActive = 3
+iAppChangedNumber   = 1
+iAppChangedName     = 2
+iAppChangedActive   = 3
 iAppChangedTerminal = 4
-iAppChangedLevel = 5
+iAppChangedLevel    = 5
 
 # internal defines
-ITEM_TYPE_NULL = 0
-ITEM_TYPE_STUDIO = 1
+ITEM_TYPE_NULL       = 0
+ITEM_TYPE_STUDIO     = 1
 ITEM_TYPE_STUDIO_APP = 2
-ITEM_TYPE_ROOM = 3
-ITEM_TYPE_ROOM_APP = 4
+ITEM_TYPE_ROOM       = 3
+ITEM_TYPE_ROOM_APP   = 4
 
 # C defines
-JACKDBUS_PORT_FLAG_INPUT = 0x00000001
-JACKDBUS_PORT_FLAG_OUTPUT = 0x00000002
-JACKDBUS_PORT_FLAG_PHYSICAL = 0x00000004
+JACKDBUS_PORT_FLAG_INPUT       = 0x00000001
+JACKDBUS_PORT_FLAG_OUTPUT      = 0x00000002
+JACKDBUS_PORT_FLAG_PHYSICAL    = 0x00000004
 JACKDBUS_PORT_FLAG_CAN_MONITOR = 0x00000008
-JACKDBUS_PORT_FLAG_TERMINAL = 0x00000010
+JACKDBUS_PORT_FLAG_TERMINAL    = 0x00000010
 
 JACKDBUS_PORT_TYPE_AUDIO = 0
-JACKDBUS_PORT_TYPE_MIDI = 1
+JACKDBUS_PORT_TYPE_MIDI  = 1
 
-GRAPH_DICT_OBJECT_TYPE_GRAPH = 0
+GRAPH_DICT_OBJECT_TYPE_GRAPH  = 0
 GRAPH_DICT_OBJECT_TYPE_CLIENT = 1
-GRAPH_DICT_OBJECT_TYPE_PORT = 2
+GRAPH_DICT_OBJECT_TYPE_PORT   = 2
 GRAPH_DICT_OBJECT_TYPE_CONNECTION = 3
 
-URI_A2J_PORT = "http://ladish.org/ns/a2j"
-URI_CANVAS_WIDTH = "http://ladish.org/ns/canvas/width"
-URI_CANVAS_HEIGHT = "http://ladish.org/ns/canvas/height"
-URI_CANVAS_X = "http://ladish.org/ns/canvas/x"
-URI_CANVAS_Y = "http://ladish.org/ns/canvas/y"
-URI_CANVAS_SPLIT = "http://kxstudio.sourceforge.net/ns/canvas/split"
+URI_A2J_PORT       = "http://ladish.org/ns/a2j"
+URI_CANVAS_WIDTH   = "http://ladish.org/ns/canvas/width"
+URI_CANVAS_HEIGHT  = "http://ladish.org/ns/canvas/height"
+URI_CANVAS_X       = "http://ladish.org/ns/canvas/x"
+URI_CANVAS_Y       = "http://ladish.org/ns/canvas/y"
+URI_CANVAS_SPLIT   = "http://kxstudio.sourceforge.net/ns/canvas/split"
 URI_CANVAS_X_SPLIT = "http://kxstudio.sourceforge.net/ns/canvas/x_split"
 URI_CANVAS_Y_SPLIT = "http://kxstudio.sourceforge.net/ns/canvas/y_split"
 
-DEFAULT_CANVAS_WIDTH = 3100
+DEFAULT_CANVAS_WIDTH  = 3100
 DEFAULT_CANVAS_HEIGHT = 2400
 
 RECENT_PROJECTS_STORE_MAX_ITEMS = 50
@@ -2432,8 +2432,8 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         elif event.timerId() == self.m_timer600:
             if jack.client:
                 refreshDSPLoad(self)
-            #else:
-                #self.update()
+            else:
+                self.update()
         QMainWindow.timerEvent(self, event)
 
     def closeEvent(self, event):

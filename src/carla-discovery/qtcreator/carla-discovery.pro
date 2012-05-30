@@ -9,7 +9,8 @@ SOURCES = \
     ../carla-discovery.cpp
 
 HEADERS = \
-    ../../carla-includes/carla_includes.h
+    ../../carla-includes/carla_includes.h \
+    ../../carla-includes/carla_vst_includes.h
 
 INCLUDEPATH = .. \
     ../../carla-includes \

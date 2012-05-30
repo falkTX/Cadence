@@ -2,7 +2,7 @@
 
 QT = core gui
 
-CONFIG   += warn_on qt debug link_pkgconfig
+CONFIG   += warn_on debug link_pkgconfig
 PKGCONFIG = liblo
 
 TEMPLATE = app

@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "hash.h"
+#include "zix/hash.h"
 
 /**
    Primes, each slightly less than twice its predecessor, and as far away

@@ -33,6 +33,10 @@ class CarlaCheckThread : public QThread
 public:
     CarlaCheckThread(QObject* parent = 0);
     void run();
+    void stopNow();
+
+private:
+    bool m_stopNow;
 };
 
 // --------------------------------------------------------------------------------------------------------

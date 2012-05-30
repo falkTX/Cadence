@@ -295,7 +295,7 @@ int osc_handle_quit()
 
 // -------------------------------------------------------------------------
 
-void osc_send_update(OscData*)
+void osc_send_update()
 {
     if (global_osc_data.target)
     {
@@ -306,7 +306,7 @@ void osc_send_update(OscData*)
     }
 }
 
-void osc_send_configure(OscData*, const char* key, const char* value)
+void osc_send_configure(const char* key, const char* value)
 {
     if (global_osc_data.target)
     {
@@ -317,7 +317,7 @@ void osc_send_configure(OscData*, const char* key, const char* value)
     }
 }
 
-void osc_send_control(OscData*, int param, double value)
+void osc_send_control(int param, double value)
 {
     if (global_osc_data.target)
     {
@@ -328,7 +328,7 @@ void osc_send_control(OscData*, int param, double value)
     }
 }
 
-void osc_send_program(OscData*, int program)
+void osc_send_program(int program)
 {
     if (global_osc_data.target)
     {
@@ -339,7 +339,7 @@ void osc_send_program(OscData*, int program)
     }
 }
 
-void osc_send_midi_program(OscData*, int bank, int program, bool)
+void osc_send_midi_program(int bank, int program, bool)
 {
     if (global_osc_data.target)
     {
@@ -350,7 +350,7 @@ void osc_send_midi_program(OscData*, int bank, int program, bool)
     }
 }
 
-void osc_send_midi(OscData*, uint8_t buf[4])
+void osc_send_midi(uint8_t buf[4])
 {
     if (global_osc_data.target)
     {
@@ -361,7 +361,7 @@ void osc_send_midi(OscData*, uint8_t buf[4])
     }
 }
 
-void osc_send_exiting(OscData*)
+void osc_send_exiting()
 {
     if (global_osc_data.target)
     {

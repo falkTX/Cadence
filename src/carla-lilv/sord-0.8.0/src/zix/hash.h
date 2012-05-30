@@ -17,7 +17,7 @@
 #ifndef ZIX_HASH_H
 #define ZIX_HASH_H
 
-#include "common.h"
+#include "zix/common.h"
 
 #ifdef __cplusplus
 extern "C" {

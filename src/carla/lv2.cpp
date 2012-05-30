@@ -129,8 +129,7 @@ const char* lv2bridge2str(LV2_Property type)
 class Lv2Plugin : public CarlaPlugin
 {
 public:
-    Lv2Plugin() :
-        CarlaPlugin()
+    Lv2Plugin() : CarlaPlugin()
     {
         qDebug("Lv2Plugin::Lv2Plugin()");
         m_type = PLUGIN_LV2;
@@ -2649,6 +2648,11 @@ public:
 
                                                                 if (osc_binary)
                                                                 {
+                                                                    // TESTING
+                                                                    quintptr address = (quintptr)&rdf_descriptor;
+                                                                    setenv("INSTANCE_ADDRESS", QString::number(address).toUtf8().constData(), 1);
+                                                                    qWarning("Sending Pointer %p " P_UINTPTR, &rdf_descriptor, address);
+
                                                                     gui.type = GUI_EXTERNAL_OSC;
                                                                     osc.thread = new CarlaPluginThread(this, CarlaPluginThread::PLUGIN_THREAD_LV2_GUI);
                                                                     osc.thread->setOscData(osc_binary, descriptor->URI, ui.descriptor->URI);

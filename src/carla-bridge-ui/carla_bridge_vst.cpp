@@ -15,158 +15,15 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_bridge_osc.h"
+#include "carla_osc_includes.h"
+#include "carla_vst_includes.h"
+
 #include "carla_bridge_ui.h"
 #include "carla_midi.h"
-
-#define VST_FORCE_DEPRECATED 0
-#include "aeffectx.h"
-
-#if VESTIGE_HEADER
-#warning Using vestige header
-#define kVstVersion 2400
-#define effSetBlockSizeAndSampleRate 43
-#endif
 
 #include <QtGui/QDialog>
 
 UiData* ui = nullptr;
-
-// -------------------------------------------------------------------------
-
-typedef AEffect* (*VST_Function)(audioMasterCallback);
-
-bool VstPluginCanDo(AEffect* effect, const char* feature)
-{
-    return (effect->dispatcher(effect, effCanDo, 0, 0, (void*)feature, 0.0f) == 1);
-}
-
-const char* VstOpcode2str(int32_t opcode)
-{
-    switch (opcode)
-    {
-    case audioMasterAutomate:
-        return "audioMasterAutomate";
-    case audioMasterVersion:
-        return "audioMasterVersion";
-    case audioMasterCurrentId:
-        return "audioMasterCurrentId";
-    case audioMasterIdle:
-        return "audioMasterIdle";
-#if ! VST_FORCE_DEPRECATED
-    case audioMasterPinConnected:
-        return "audioMasterPinConnected";
-    case audioMasterWantMidi:
-        return "audioMasterWantMidi";
-#endif
-    case audioMasterGetTime:
-        return "audioMasterGetTime";
-    case audioMasterProcessEvents:
-        return "audioMasterProcessEvents";
-#if ! VST_FORCE_DEPRECATED
-    case audioMasterSetTime:
-        return "audioMasterSetTime";
-    case audioMasterTempoAt:
-        return "audioMasterTempoAt";
-    case audioMasterGetNumAutomatableParameters:
-        return "audioMasterGetNumAutomatableParameters";
-    case audioMasterGetParameterQuantization:
-        return "audioMasterGetParameterQuantization";
-#endif
-    case audioMasterIOChanged:
-        return "audioMasterIOChanged";
-#if ! VST_FORCE_DEPRECATED
-    case audioMasterNeedIdle:
-        return "audioMasterNeedIdle";
-#endif
-    case audioMasterSizeWindow:
-        return "audioMasterSizeWindow";
-    case audioMasterGetSampleRate:
-        return "audioMasterGetSampleRate";
-    case audioMasterGetBlockSize:
-        return "audioMasterGetBlockSize";
-    case audioMasterGetInputLatency:
-        return "audioMasterGetInputLatency";
-    case audioMasterGetOutputLatency:
-        return "audioMasterGetOutputLatency";
-#if ! VST_FORCE_DEPRECATED
-    case audioMasterGetPreviousPlug:
-        return "audioMasterGetPreviousPlug";
-    case audioMasterGetNextPlug:
-        return "audioMasterGetNextPlug";
-    case audioMasterWillReplaceOrAccumulate:
-        return "audioMasterWillReplaceOrAccumulate";
-#endif
-    case audioMasterGetCurrentProcessLevel:
-        return "audioMasterGetCurrentProcessLevel";
-    case audioMasterGetAutomationState:
-        return "audioMasterGetAutomationState";
-    case audioMasterOfflineStart:
-        return "audioMasterOfflineStart";
-    case audioMasterOfflineRead:
-        return "audioMasterOfflineRead";
-    case audioMasterOfflineWrite:
-        return "audioMasterOfflineWrite";
-    case audioMasterOfflineGetCurrentPass:
-        return "audioMasterOfflineGetCurrentPass";
-    case audioMasterOfflineGetCurrentMetaPass:
-        return "audioMasterOfflineGetCurrentMetaPass";
-#if ! VST_FORCE_DEPRECATED
-    case audioMasterSetOutputSampleRate:
-        return "audioMasterSetOutputSampleRate";
-#ifdef VESTIGE_HEADER
-    case audioMasterGetSpeakerArrangement:
-#else
-    case audioMasterGetOutputSpeakerArrangement:
-#endif
-        return "audioMasterGetOutputSpeakerArrangement";
-#endif
-    case audioMasterGetVendorString:
-        return "audioMasterGetVendorString";
-    case audioMasterGetProductString:
-        return "audioMasterGetProductString";
-    case audioMasterGetVendorVersion:
-        return "audioMasterGetVendorVersion";
-    case audioMasterVendorSpecific:
-        return "audioMasterVendorSpecific";
-#if ! VST_FORCE_DEPRECATED
-    case audioMasterSetIcon:
-        return "audioMasterSetIcon";
-#endif
-    case audioMasterCanDo:
-        return "audioMasterCanDo";
-    case audioMasterGetLanguage:
-        return "audioMasterGetLanguage";
-#if ! VST_FORCE_DEPRECATED
-    case audioMasterOpenWindow:
-        return "audioMasterOpenWindow";
-    case audioMasterCloseWindow:
-        return "audioMasterCloseWindow";
-#endif
-    case audioMasterGetDirectory:
-        return "audioMasterGetDirectory";
-    case audioMasterUpdateDisplay:
-        return "audioMasterUpdateDisplay";
-    case audioMasterBeginEdit:
-        return "audioMasterBeginEdit";
-    case audioMasterEndEdit:
-        return "audioMasterEndEdit";
-    case audioMasterOpenFileSelector:
-        return "audioMasterOpenFileSelector";
-    case audioMasterCloseFileSelector:
-        return "audioMasterCloseFileSelector";
-#if ! VST_FORCE_DEPRECATED
-    case audioMasterEditFile:
-        return "audioMasterEditFile";
-    case audioMasterGetChunkFile:
-        return "audioMasterGetChunkFile";
-    case audioMasterGetInputSpeakerArrangement:
-        return "audioMasterGetInputSpeakerArrangement";
-#endif
-    default:
-        return "unknown";
-    }
-}
 
 // -------------------------------------------------------------------------
 
@@ -254,29 +111,28 @@ public:
     // ---------------------------------------------------------------------
     // processing
 
-    void set_parameter(int index, double value)
+    void set_parameter(uint32_t index, double value)
     {
         if (effect)
             effect->setParameter(effect, index, value);
     }
 
-    void set_program(int index)
+    void set_program(uint32_t index)
     {
         if (effect)
             effect->dispatcher(effect, effSetProgram, 0, index, nullptr, 0.0f);
     }
 
-    void set_midi_program(int, int) {}
-
-    void send_note_on(int, int) {}
-    void send_note_off(int) {}
+    void set_midi_program(uint32_t, uint32_t) {}
+    void note_on(uint8_t, uint8_t) {}
+    void note_off(uint8_t) {}
 
     // ---------------------------------------------------------------------
     // gui
 
-    bool has_parent() const
+    void* get_widget() const
     {
-        return false;
+        return widget;
     }
 
     bool is_resizable() const
@@ -284,9 +140,9 @@ public:
         return false;
     }
 
-    void* get_widget() const
+    bool needs_reparent() const
     {
-        return widget;
+        return true;
     }
 
     static intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
@@ -308,7 +164,7 @@ public:
         switch (opcode)
         {
         case audioMasterAutomate:
-            osc_send_control(nullptr, index, opt);
+            osc_send_control(index, opt);
             break;
 
         case audioMasterVersion:
@@ -347,7 +203,7 @@ public:
                         status -= 0x10;
 
                     uint8_t midi_buf[4] = { 0, status, (uint8_t)midi_event->midiData[1], (uint8_t)midi_event->midiData[2] };
-                    osc_send_midi(nullptr, midi_buf);
+                    osc_send_midi(midi_buf);
                 }
             }
             else
@@ -434,7 +290,7 @@ public:
             return kVstLangEnglish;
 
         case audioMasterUpdateDisplay:
-            osc_send_configure(nullptr, "reloadprograms", "");
+            osc_send_configure("reloadprograms", "");
             break;
 
         default:
@@ -490,7 +346,7 @@ int main(int argc, char* argv[])
     }
 
     // Close OSC
-    osc_send_exiting(nullptr);
+    osc_send_exiting();
     osc_close();
 
     // Close VST-UI

@@ -1405,8 +1405,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.connect(self.keyboard, SIGNAL("notesOff()"), SLOT("slot_notesOff()"))
 
         self.connect(self.cb_programs, SIGNAL("currentIndexChanged(int)"), SLOT("slot_programIndexChanged(int)"))
-        self.connect(self.cb_midi_programs, SIGNAL("currentIndexChanged(int)"),
-            SLOT("slot_midiProgramIndexChanged(int)"))
+        self.connect(self.cb_midi_programs, SIGNAL("currentIndexChanged(int)"), SLOT("slot_midiProgramIndexChanged(int)"))
 
         self.keyboard.setMode(self.keyboard.HORIZONTAL)
         self.keyboard.setOctaves(6)
@@ -1543,8 +1542,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.le_is_synth.setText(self.tr("Yes") if (self.pinfo['hints'] & PLUGIN_IS_SYNTH) else (self.tr("No")))
         self.le_has_gui.setText(self.tr("Yes") if (self.pinfo['hints'] & PLUGIN_HAS_GUI) else (self.tr("No")))
 
-        self.scrollArea.setVisible(
-            self.pinfo['hints'] & PLUGIN_IS_SYNTH or (midi_count['ins'] > 0 < midi_count['outs']))
+        self.scrollArea.setVisible(self.pinfo['hints'] & PLUGIN_IS_SYNTH or (midi_count['ins'] > 0 < midi_count['outs']))
         self.parent().recheck_hints(self.pinfo['hints'])
 
     def do_reload_parameters(self):
@@ -1989,11 +1987,11 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
         audio_count = CarlaHost.get_audio_port_count_info(self.plugin_id)
         if (not audio_count['valid']):
-            audio_count['ins'] = 0
-            audio_count['outs'] = 0
+            audio_count['ins']   = 0
+            audio_count['outs']  = 0
             audio_count['total'] = 0
 
-        self.peaks_in = int(audio_count['ins'])
+        self.peaks_in  = int(audio_count['ins'])
         self.peaks_out = int(audio_count['outs'])
 
         if (self.peaks_in > 2):
@@ -2008,24 +2006,26 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.pinfo = CarlaHost.get_plugin_info(self.plugin_id)
         if (self.pinfo['valid']):
             self.pinfo["binary"] = cString(self.pinfo["binary"])
-            self.pinfo["name"] = cString(self.pinfo["name"])
-            self.pinfo["label"] = cString(self.pinfo["label"])
-            self.pinfo["maker"] = cString(self.pinfo["maker"])
+            self.pinfo["name"]   = cString(self.pinfo["name"])
+            self.pinfo["label"]  = cString(self.pinfo["label"])
+            self.pinfo["maker"]  = cString(self.pinfo["maker"])
             self.pinfo["copyright"] = cString(self.pinfo["copyright"])
         else:
             self.pinfo["type"] = PLUGIN_NONE
             self.pinfo["category"] = PLUGIN_CATEGORY_NONE
-            self.pinfo["hints"] = 0
+            self.pinfo["hints"]  = 0
             self.pinfo["binary"] = ""
-            self.pinfo["name"] = "(Unknown)"
-            self.pinfo["label"] = ""
-            self.pinfo["maker"] = ""
+            self.pinfo["name"]   = "(Unknown)"
+            self.pinfo["label"]  = ""
+            self.pinfo["maker"]  = ""
             self.pinfo["copyright"] = ""
             self.pinfo["unique_id"] = 0
 
         # Set widget page
         if (self.pinfo['type'] == PLUGIN_NONE or audio_count['total'] == 0):
             self.stackedWidget.setCurrentIndex(1)
+        else:
+            self.stackedWidget.setCurrentIndex(0)
 
         self.label_name.setText(self.pinfo['name'])
 
@@ -2158,78 +2158,90 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             r = 110
             g = 110
             b = 110
-            texture = 7
         elif (color == PALETTE_COLOR_RED):
             r = 110
             g = 15
             b = 15
-            texture = 3
         elif (color == PALETTE_COLOR_GREEN):
             r = 15
             g = 110
             b = 15
-            texture = 6
         elif (color == PALETTE_COLOR_BLUE):
             r = 15
             g = 15
             b = 110
-            texture = 4
         elif (color == PALETTE_COLOR_YELLOW):
             r = 110
             g = 110
             b = 15
-            texture = 2
         elif (color == PALETTE_COLOR_ORANGE):
             r = 180
             g = 110
             b = 15
-            texture = 5
         elif (color == PALETTE_COLOR_BROWN):
             r = 110
             g = 35
             b = 15
-            texture = 1
         elif (color == PALETTE_COLOR_PINK):
             r = 110
             g = 15
             b = 110
-            texture = 8
         else:
             r = 35
             g = 35
             b = 35
-            texture = 9
+
+        border_r = (r*2/3)+36
+        border_g = (g*2/3)+36
+        border_b = (b*2/3)+36
 
         self.setStyleSheet("""
         QFrame#PluginWidget {
-                  /*background-image: url(:/bitmaps/textures/metal_%i-512px.jpg);*/
-                  background-color: rgb(17, 17, 17);
-                  background-repeat: repeat-x;
-                  background-position: top left;
-                }
+            background-image: url(:/bitmaps/textures/metal_9-512px.jpg);
+            background-color: rgb(17, 17, 17);
+            background-repeat: repeat-x;
+            background-position: top left;
+        }
         QLabel#label_name {
-          color: white;
+            color: white;
+        }
+        QWidget#widget_buttons {
+            background-color: rgb(%i, %i, %i);
+            border-left: 1px solid rgb(%i, %i, %i);
+            border-right: 1px solid rgb(%i, %i, %i);
+            border-bottom: 1px solid rgb(%i, %i, %i);
+            border-bottom-left-radius: 3px;
+            border-bottom-right-radius: 3px;
+        }
+        QPushButton#b_gui:hover, QPushButton#b_edit:hover, QPushButton#b_edit:down, QPushButton#b_remove:hover {
+            background-color: rgb(%i, %i, %i);
+            border: 1px solid rgb(%i, %i, %i);
+            border-radius: 3px;
         }
         QFrame#frame_name {
-          /* background-image: url(:/bitmaps/glass.png); */
-          /*background-color: rgb(17, 17, 120);*/
-          background-color: rgb(%i, %i, %i);
-          border: 1px solid #333;
-          border-radius: 4px;
-          /*border-color: rgb(%i, %i, %i);*/
+            background-color: rgb(%i, %i, %i);
+            border: 1px solid rgb(%i, %i, %i);
+            border-radius: 4px;
         }
         QFrame#frame_controls {
-          /* background-image: url(:/bitmaps/glass2.png); */
-          background-color: rgb(30, 30, 30);
-          /*border: 2px outset;*/
-          border-color: rgb(30, 30, 30);
+            background-color: rgb(35, 35, 35);
+            border: 1px solid rgb(35, 35, 35);
+            border-radius: 4px;
         }
         QFrame#frame_peaks {
-          background-color: rgba(30, 30, 30, 200);
-          border: 2px outset;
-          border-color: rgba(30, 30, 30, 225);
+            background-color: rgb(35, 35, 35);
+            border: 1px solid rgb(35, 35, 35);
+            border-radius: 4px;
         }
-      """ % (texture, r, g, b, r, g, b))
+        """ % (border_r, border_g, border_b,
+               border_r, border_g, border_b,
+               border_r, border_g, border_b,
+               border_r, border_g, border_b,
+               r, g, b,
+               border_r, border_g, border_b,
+               r, g, b,                      # frame_name background-color
+               border_r, border_g, border_b  # frame_name border
+              ))
 
     def recheck_hints(self, hints):
         self.pinfo['hints'] = hints

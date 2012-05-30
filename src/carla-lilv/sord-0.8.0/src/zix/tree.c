@@ -20,8 +20,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
-#include "tree.h"
+#include "zix/common.h"
+#include "zix/tree.h"
 
 typedef struct ZixTreeNodeImpl ZixTreeNode;
 
