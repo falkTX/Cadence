@@ -42,14 +42,19 @@ WINE_LINK_FLAGS  = -ldl $(LINK_PLUGIN_FLAGS)
 
 # --------------------------------------------------------------
 
-BUILD_UI_LV2_GTK2_FLAGS = -DBUILD_BRIDGE_UI -DBRIDGE_LV2_GTK2 $(shell pkg-config --cflags gtk+-2.0)
+BUILD_UI_FLAGS = $(BUILD_FLAGS) -DBUILD_BRIDGE_UI
+
+BUILD_UI_LV2_GTK2_FLAGS = $(BUILD_UI_FLAGS) -DBRIDGE_LV2_GTK2 $(shell pkg-config --cflags gtk+-2.0)
 LINK_UI_LV2_GTK2_FLAGS  = $(LINK_FLAGS) $(shell pkg-config --libs gtk+-2.0)
 
-BUILD_UI_LV2_QT4_FLAGS = -DBUILD_BRIDGE_UI -DBRIDGE_LV2_QT4
-LINK_UI_LV2_QT4_FLAGS  = $(LINK_FLAGS) $(shell pkg-config --libs QtGui)
+BUILD_UI_LV2_QT4_FLAGS  = $(BUILD_UI_FLAGS) -DBRIDGE_LV2_QT4 $(shell pkg-config --cflags QtGui)
+LINK_UI_LV2_QT4_FLAGS   = $(LINK_FLAGS) $(shell pkg-config --libs QtGui)
 
-BUILD_UI_LV2_X11_FLAGS = -DBUILD_BRIDGE_UI -DBRIDGE_LV2_X11
-LINK_UI_LV2_X11_FLAGS  = $(LINK_FLAGS) $(shell pkg-config --libs QtGui)
+BUILD_UI_LV2_X11_FLAGS  = $(BUILD_UI_FLAGS) -DBRIDGE_LV2_X11 $(shell pkg-config --cflags QtGui)
+LINK_UI_LV2_X11_FLAGS   = $(LINK_FLAGS) $(shell pkg-config --libs QtGui)
+
+BUILD_UI_VST_X11_FLAGS  = $(BUILD_UI_FLAGS) -DBRIDGE_VST_X11 $(shell pkg-config --cflags QtGui)
+LINK_UI_VST_X11_FLAGS   = $(LINK_FLAGS) $(shell pkg-config --libs QtGui)
 
 # --------------------------------------------------------------
 
@@ -77,13 +82,13 @@ carla-bridge-lv2-gtk2: $(OBJS_UI_LV2_GTK2)
 	$(CXX) $(OBJS_UI_LV2_GTK2) $(LINK_UI_LV2_GTK2_FLAGS) -o $@ && strip $@
 
 carla_bridge_ui-lv2__lv2-gtk2.o: carla_bridge_ui-lv2.cpp
-	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_GTK2_FLAGS) -c -o $@
+	$(CXX) $< $(BUILD_UI_LV2_GTK2_FLAGS) -c -o $@
 
 carla_bridge_ui-gtk2__lv2-gtk2.o: carla_bridge_ui-gtk2.cpp
-	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_GTK2_FLAGS) -c -o $@
+	$(CXX) $< $(BUILD_UI_LV2_GTK2_FLAGS) -c -o $@
 
 carla_bridge_osc__lv2-gtk2.o: carla_bridge_osc.cpp
-	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_GTK2_FLAGS) -c -o $@
+	$(CXX) $< $(BUILD_UI_LV2_GTK2_FLAGS) -c -o $@
 
 # --------------------------------------------------------------
 # ui_lv2-qt4
@@ -94,13 +99,13 @@ carla-bridge-lv2-qt4: $(OBJS_UI_LV2_QT4)
 	$(CXX) $(OBJS_UI_LV2_QT4) $(LINK_UI_LV2_QT4_FLAGS) -o $@ && strip $@
 
 carla_bridge_ui-lv2__lv2-qt4.o: carla_bridge_ui-lv2.cpp
-	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_QT4_FLAGS) -c -o $@
+	$(CXX) $< $(BUILD_UI_LV2_QT4_FLAGS) -c -o $@
 
 carla_bridge_ui-qt4__lv2-qt4.o: carla_bridge_ui-qt4.cpp
-	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_QT4_FLAGS) -c -o $@
+	$(CXX) $< $(BUILD_UI_LV2_QT4_FLAGS) -c -o $@
 
 carla_bridge_osc__lv2-qt4.o: carla_bridge_osc.cpp
-	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_QT4_FLAGS) -c -o $@
+	$(CXX) $< $(BUILD_UI_LV2_QT4_FLAGS) -c -o $@
 
 # --------------------------------------------------------------
 # ui_lv2-x11
@@ -111,19 +116,16 @@ carla-bridge-lv2-x11: $(OBJS_UI_LV2_X11)
 	$(CXX) $(OBJS_UI_LV2_X11) $(LINK_UI_LV2_X11_FLAGS) -o $@ && strip $@
 
 carla_bridge_ui-lv2__lv2-x11.o: carla_bridge_ui-lv2.cpp
-	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_X11_FLAGS) -c -o $@
+	$(CXX) $< $(BUILD_UI_LV2_X11_FLAGS) -c -o $@
 
 carla_bridge_ui-qt4__lv2-x11.o: carla_bridge_ui-qt4.cpp
-	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_X11_FLAGS) -c -o $@
+	$(CXX) $< $(BUILD_UI_LV2_X11_FLAGS) -c -o $@
 
 carla_bridge_osc__lv2-x11.o: carla_bridge_osc.cpp
-	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_X11_FLAGS) -c -o $@
+	$(CXX) $< $(BUILD_UI_LV2_X11_FLAGS) -c -o $@
 
 # --------------------------------------------------------------
 # ui_vst-x11
-
-BUILD_UI_VST_X11_FLAGS = -DBUILD_BRIDGE_UI -DBRIDGE_VST_X11 $(shell pkg-config --cflags QtGui)
-LINK_UI_VST_X11_FLAGS  = $(LINK_FLAGS) $(shell pkg-config --libs QtGui)
 
 OBJS_UI_VST_X11 = carla_bridge_ui-vst__vst-x11.o carla_bridge_ui-qt4__vst-x11.o carla_bridge_osc__vst-x11.o
 
@@ -131,13 +133,13 @@ carla-bridge-vst-x11: $(OBJS_UI_VST_X11)
 	$(CXX) $(OBJS_UI_VST_X11) $(LINK_UI_VST_X11_FLAGS) -o $@ && strip $@
 
 carla_bridge_ui-vst__vst-x11.o: carla_bridge_ui-vst.cpp
-	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_VST_X11_FLAGS) -c -o $@
+	$(CXX) $< $(BUILD_UI_VST_X11_FLAGS) -c -o $@
 
 carla_bridge_ui-qt4__vst-x11.o: carla_bridge_ui-qt4.cpp
-	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_VST_X11_FLAGS) -c -o $@
+	$(CXX) $< $(BUILD_UI_VST_X11_FLAGS) -c -o $@
 
 carla_bridge_osc__vst-x11.o: carla_bridge_osc.cpp
-	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_VST_X11_FLAGS) -c -o $@
+	$(CXX) $< $(BUILD_UI_VST_X11_FLAGS) -c -o $@
 
 # --------------------------------------------------------------
 # unix32
@@ -153,7 +155,7 @@ carla-bridge-unix32: $(OBJS_UNIX32)
 # 	$(CXX) $< $(UNIX_BUILD_FLAGS) $(UNIX_32BIT_FLAGS) $(UNIX_LINK_FLAGS) -c -o $@
 
 rtmempool__unix32.o: ../carla/lv2-rtmempool/rtmempool.c
-	$(CC) $< $(BUILD_CFLAGS) -c -o $@
+	$(CC) $< $(BUILD_CFLAGS) $(32BIT_FLAGS) -c -o $@
 
 # --------------------------------------------------------------
 

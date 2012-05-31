@@ -2,28 +2,27 @@
 
 QT = core
 
-CONFIG   += warn_on qt debug link_pkgconfig
+CONFIG    = warn_on qt link_pkgconfig debug
 PKGCONFIG = liblo gtk+-2.0
 
 TEMPLATE = app
 VERSION  = 0.5.0
 
 SOURCES = \
-    ../carla_bridge_lv2.cpp \
-    ../carla_bridge_gtk2.cpp \
-    ../../carla-bridge/carla_bridge_osc.cpp
+    ../carla_bridge_osc.cpp \
+    ../carla_bridge_ui-lv2.cpp \
+    ../carla_bridge_ui-gtk2.cpp
 
 HEADERS = \
+    ../carla_bridge_osc.h \
     ../carla_bridge_ui.h \
     ../../carla/carla_midi.h \
     ../../carla/lv2_rdf.h \
-    ../../carla-bridge/carla_bridge_osc.h \
     ../../carla-includes/carla_includes.h \
     ../../carla-includes/carla_osc_includes.h
 
 INCLUDEPATH = .. \
     ../../carla \
-    ../../carla-bridge \
     ../../carla-includes
 
 TARGET  = carla-bridge-lv2-gtk2

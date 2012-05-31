@@ -66,26 +66,6 @@ class Lv2UiData : public UiData
 public:
     Lv2UiData(const char* ui_title) : UiData(ui_title)
     {
-        // TEST
-        LV2_RDF_Descriptor** rdfPtr = nullptr;
-
-        QString sPtr(getenv("INSTANCE_ADDRESS"));
-        qWarning("INST - S - %s", sPtr.toUtf8().constData());
-
-        bool ok;
-        quintptr uPtr = sPtr.toULongLong(&ok);
-        if (ok)
-        {
-            qWarning("INST - U - " P_UINTPTR, uPtr);
-            rdfPtr = (LV2_RDF_Descriptor**)uPtr;
-        }
-
-        qWarning("INST - P - %p", rdfPtr);
-
-        LV2_RDF_Descriptor* rdf = *rdfPtr;
-        qWarning("INST - REAL - %p", rdf);
-        // TEST
-
         handle = nullptr;
         widget = nullptr;
         descriptor = nullptr;
@@ -202,8 +182,6 @@ public:
 
     ~Lv2UiData()
     {
-        qWarning("UI destroyed");
-
         if (rdf_descriptor)
             lv2_rdf_free(rdf_descriptor);
 
