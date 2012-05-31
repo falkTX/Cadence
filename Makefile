@@ -159,41 +159,45 @@ src/icons_rc.py: src/icons/icons.qrc
 	$(PYRCC) -o src/icons_rc.py $<
 
 
-CPP: carla_backend carla_bridge_ui carla_discovery
+CPP: carla_backend carla_bridge carla_discovery
 
 carla_backend: carla_lilv
 	$(MAKE) -C src/carla
 
-carla_bridge_ui: carla_lilv
-	$(MAKE) -C src/carla-bridge-ui
+carla_bridge: carla_lilv
+	$(MAKE) -C src/carla-bridge
 
-carla_bridge_unix32:
-	$(MAKE) -C src/carla-bridge unix32
-	$(MAKE) -C src/carla-discovery unix32
-
-carla_bridge_unix64:
-	$(MAKE) -C src/carla-bridge unix64
-	$(MAKE) -C src/carla-discovery unix64
-
-carla_bridge_wine32:
-	$(MAKE) -C src/carla-bridge wine32
-	$(MAKE) -C src/carla-discovery wine32
-
-carla_bridge_wine64:
-	$(MAKE) -C src/carla-bridge wine64
-	$(MAKE) -C src/carla-discovery wine64
-
-carla_discovery: carla_lilv
-	$(MAKE) -C src/carla-discovery unix$(_arch_n) FLUIDSYNTH=1 LILV=1
+carla_discovery:
+	$(MAKE) -C src/carla-lilv $(_arch_n)bit
+	$(MAKE) -C src/carla-discovery unix$(_arch_n) FLUIDSYNTH=1
 
 carla_lilv:
 	$(MAKE) -C src/carla-lilv
+
+unix32:
+	$(MAKE) -C src/carla-lilv 32bit
+# 	$(MAKE) -C src/carla-bridge unix32
+	$(MAKE) -C src/carla-discovery unix32
+
+unix64:
+	$(MAKE) -C src/carla-lilv 64bit
+# 	$(MAKE) -C src/carla-bridge unix64
+	$(MAKE) -C src/carla-discovery unix64
+
+wine32:
+	$(MAKE) -C src/carla-lilv 32bit
+# 	$(MAKE) -C src/carla-bridge wine32
+	$(MAKE) -C src/carla-discovery wine32
+
+wine64:
+	$(MAKE) -C src/carla-lilv 64bit
+# 	$(MAKE) -C src/carla-bridge wine64
+	$(MAKE) -C src/carla-discovery wine64
 
 
 clean:
 	$(MAKE) clean -C src/carla
 	$(MAKE) clean -C src/carla-bridge
-	$(MAKE) clean -C src/carla-bridge-ui
 	$(MAKE) clean -C src/carla-discovery
 	$(MAKE) clean -C src/carla-lilv
 	rm -f *~ src/*~ src/*.pyc src/*.dll src/*.so src/ui_*.py src/icons_rc.py

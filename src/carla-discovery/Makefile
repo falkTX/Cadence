@@ -54,10 +54,10 @@ wine64: carla-discovery-win64.exe.so
 64BIT_OBJS = carla-discovery.cpp ../carla-lilv/carla_lilv_64bit.a
 
 carla-discovery-unix32: $(32BIT_OBJS)
-	$(CXX) $(32BIT_OBJS) $(UNIX_BUILD_FLAGS) $(UNIX_32BIT_FLAGS) $(UNIX_LINK_FLAGS) -o $@
+	$(CXX) $(32BIT_OBJS) $(UNIX_BUILD_FLAGS) $(UNIX_32BIT_FLAGS) $(UNIX_LINK_FLAGS) -o $@ && strip $@
 
 carla-discovery-unix64: $(64BIT_OBJS)
-	$(CXX) $(64BIT_OBJS) $(UNIX_BUILD_FLAGS) $(UNIX_64BIT_FLAGS) $(UNIX_LINK_FLAGS) -o $@
+	$(CXX) $(64BIT_OBJS) $(UNIX_BUILD_FLAGS) $(UNIX_64BIT_FLAGS) $(UNIX_LINK_FLAGS) -o $@ && strip $@
 
 carla-discovery-win32.exe: $(32BIT_OBJS)
 	$(CXX) $(32BIT_OBJS) $(WIN_BUILD_FLAGS) $(WIN_32BIT_FLAGS) $(WIN_LINK_FLAGS) -o $@
@@ -66,10 +66,10 @@ carla-discovery-win64.exe: $(64BIT_OBJS)
 	$(CXX) $(64BIT_OBJS) $(WIN_BUILD_FLAGS) $(WIN_64BIT_FLAGS) $(WIN_LINK_FLAGS) -o $@
 
 carla-discovery-win32.exe.so: $(32BIT_OBJS)
-	$(WINECXX) $(32BIT_OBJS) $(WINE_BUILD_FLAGS) $(WINE_32BIT_FLAGS) $(WINE_LINK_FLAGS) -o carla-discovery-win32.exe
+	$(WINECXX) $(32BIT_OBJS) $(WINE_BUILD_FLAGS) $(WINE_32BIT_FLAGS) $(WINE_LINK_FLAGS) -o carla-discovery-win32.exe && strip $@
 
 carla-discovery-win64.exe.so: $(64BIT_OBJS)
-	$(WINECXX) $(64BIT_OBJS) $(WINE_BUILD_FLAGS) $(WINE_64BIT_FLAGS) $(WINE_LINK_FLAGS) -o carla-discovery-win64.exe
+	$(WINECXX) $(64BIT_OBJS) $(WINE_BUILD_FLAGS) $(WINE_64BIT_FLAGS) $(WINE_LINK_FLAGS) -o carla-discovery-win64.exe && strip $@
 
 # --------------------------------------------------------------
 

@@ -24,7 +24,7 @@
 
 #ifdef BUILD_BRIDGE
 #include <QtCore/QThread>
-#include "../carla-bridge/carla_osc.h"
+#include "carla_bridge_osc.h"
 #else
 #include "carla_osc.h"
 #include "carla_threads.h"

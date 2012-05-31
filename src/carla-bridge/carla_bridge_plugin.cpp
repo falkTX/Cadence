@@ -15,7 +15,6 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_osc.h"
 #include "carla_plugin.h"
 
 #include <QtGui/QApplication>

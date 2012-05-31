@@ -1,72 +1,163 @@
 #!/usr/bin/make -f
-# Makefile for Carla-Bridge #
-# ----------------------------------------- #
+# Makefile for carla-bridges #
+# ---------------------------------------- #
 # Created by falkTX
 #
 
+CC      ?= gcc
 CXX     ?= g++
+WINECC  ?= winegcc
 WINECXX ?= wineg++
 
-BUILD_FLAGS  = -DBUILD_BRIDGE -Wall -std=c++0x -I. -I../carla-includes -I../carla `pkg-config --cflags jack liblo QtCore QtGui` $(CXXFLAGS)
-# BUILD_FLAGS += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse
-BUILD_FLAGS += -DDEBUG -O0 -g
+BUILD_CFLAGS = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -std=c99 -Wall -I. -I../carla -I../carla-includes $(CFLAGS)
+
+BUILD_FLAGS  = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -std=c++0x -Wall $(CXXFLAGS)
+BUILD_FLAGS += -I. -I../carla -I../carla-includes $(shell pkg-config --cflags liblo QtCore)
+BUILD_FLAGS += -DBUILD_BRIDGE -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT
 BUILD_FLAGS += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
-LINK_FLAGS   = `pkg-config --libs jack liblo QtCore QtGui` $(LDFLAGS)
 
 32BIT_FLAGS  = -m32
 64BIT_FLAGS  = -m64
+LINK_FLAGS   = $(shell pkg-config --libs liblo QtCore)
 
-UNIX_BUILD_FLAGS = $(BUILD_FLAGS)
-UNIX_LINK_FLAGS  = -ldl $(LINK_FLAGS)
+# --------------------------------------------------------------
+
+BUILD_PLUGIN_FLAGS = $(shell pkg-config --cflags QtGui) $(BUILD_FLAGS)
+LINK_PLUGIN_FLAGS  = $(shell pkg-config --libs QtGui) $(LINK_FLAGS)
+
+UNIX_BUILD_FLAGS = $(BUILD_PLUGIN_FLAGS)
 UNIX_32BIT_FLAGS = -L/usr/lib32 -L/usr/lib/i386-linux-gnu $(32BIT_FLAGS)
 UNIX_64BIT_FLAGS = -L/usr/lib64 -L/usr/lib/x86_64-linux-gnu $(64BIT_FLAGS)
+UNIX_LINK_FLAGS  = -ldl $(LINK_PLUGIN_FLAGS)
 
-WIN_BUILD_FLAGS = $(BUILD_FLAGS)
-WIN_LINK_FLAGS  = -static $(LINK_FLAGS)
-WIN_32BIT_FLAGS = $(32BIT_FLAGS)
-WIN_64BIT_FLAGS = $(64BIT_FLAGS)
+WIN_BUILD_FLAGS  = $(BUILD_PLUGIN_FLAGS)
+WIN_32BIT_FLAGS  = $(32BIT_FLAGS)
+WIN_64BIT_FLAGS  = $(64BIT_FLAGS)
+WIN_LINK_FLAGS   = -static $(LINK_PLUGIN_FLAGS)
 
-WINE_BUILD_FLAGS = -fpermissive $(BUILD_FLAGS)
-WINE_LINK_FLAGS  = $(LINK_FLAGS)
+WINE_BUILD_FLAGS = $(BUILD_PLUGIN_FLAGS) # -fpermissive
 WINE_32BIT_FLAGS = -L/usr/lib32/wine -L/usr/lib/i386-linux-gnu/wine $(32BIT_FLAGS)
 WINE_64BIT_FLAGS = -L/usr/lib64/wine -L/usr/lib/x86_64-linux-gnu/wine $(64BIT_FLAGS)
+WINE_LINK_FLAGS  = -ldl $(LINK_PLUGIN_FLAGS)
 
-SOURCES = carla_bridge.cpp carla_osc.cpp ../carla/carla_jack.cpp ../carla/carla_shared.cpp ../carla/ladspa.cpp ../carla/dssi.cpp ../carla/lv2.cpp ../carla/vst.cpp ../carla/lv2-rtmempool/rtmempool.o ../carla-lilv/carla_lilv.a
+# --------------------------------------------------------------
 
+BUILD_UI_LV2_GTK2_FLAGS = -DBUILD_BRIDGE_UI -DBRIDGE_LV2_GTK2 $(shell pkg-config --cflags gtk+-2.0)
+LINK_UI_LV2_GTK2_FLAGS  = $(LINK_FLAGS) $(shell pkg-config --libs gtk+-2.0)
 
-all:
-	@echo "Build type must be unix32, unix64, win[e]32 or win[e]64"
+BUILD_UI_LV2_QT4_FLAGS = -DBUILD_BRIDGE_UI -DBRIDGE_LV2_QT4
+LINK_UI_LV2_QT4_FLAGS  = $(LINK_FLAGS) $(shell pkg-config --libs QtGui)
+
+BUILD_UI_LV2_X11_FLAGS = -DBUILD_BRIDGE_UI -DBRIDGE_LV2_X11
+LINK_UI_LV2_X11_FLAGS  = $(LINK_FLAGS) $(shell pkg-config --libs QtGui)
+
+# --------------------------------------------------------------
+
+all: ui
+
+ui: ui_lv2-gtk2 ui_lv2-qt4 ui_lv2-x11 ui_vst-x11
+ui_lv2-gtk2: carla-bridge-lv2-gtk2
+ui_lv2-qt4:  carla-bridge-lv2-qt4
+ui_lv2-x11:  carla-bridge-lv2-x11
+ui_vst-x11:  carla-bridge-vst-x11
 
 unix32: carla-bridge-unix32
-
 unix64: carla-bridge-unix64
-
-win32: carla-bridge-win32.exe
-
-win64: carla-bridge-win64.exe
-
+win32:  carla-bridge-win32.exe
+win64:  carla-bridge-win64.exe
 wine32: carla-bridge-win32.exe.so
-
 wine64: carla-bridge-win64.exe.so
 
+# --------------------------------------------------------------
+# ui_lv2-gtk2
 
-carla-bridge-unix32: $(SOURCES)
-	$(CXX) $(SOURCES) $(UNIX_BUILD_FLAGS) $(UNIX_32BIT_FLAGS) $(UNIX_LINK_FLAGS) -o $@
+OBJS_UI_LV2_GTK2 = carla_bridge_ui-lv2__lv2-gtk2.o carla_bridge_ui-gtk2__lv2-gtk2.o carla_bridge_osc__lv2-gtk2.o ../carla-lilv/carla_lilv.a
 
-carla-bridge-unix64: $(SOURCES)
-	$(CXX) $(SOURCES) $(UNIX_BUILD_FLAGS) $(UNIX_64BIT_FLAGS) $(UNIX_LINK_FLAGS) -o $@
+carla-bridge-lv2-gtk2: $(OBJS_UI_LV2_GTK2)
+	$(CXX) $(OBJS_UI_LV2_GTK2) $(LINK_UI_LV2_GTK2_FLAGS) -o $@ && strip $@
 
-carla-bridge-win32.exe: $(SOURCES)
-	$(CXX) $(SOURCES) $(WIN_BUILD_FLAGS) $(WIN_32BIT_FLAGS) $(WIN_LINK_FLAGS) -o $@
+carla_bridge_ui-lv2__lv2-gtk2.o: carla_bridge_ui-lv2.cpp
+	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_GTK2_FLAGS) -c -o $@
 
-carla-bridge-win64.exe: $(SOURCES)
-	$(CXX) $(SOURCES) $(WIN_BUILD_FLAGS) $(WIN_64BIT_FLAGS) $(WIN_LINK_FLAGS) -o $@
+carla_bridge_ui-gtk2__lv2-gtk2.o: carla_bridge_ui-gtk2.cpp
+	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_GTK2_FLAGS) -c -o $@
 
-carla-bridge-win32.exe.so: $(SOURCES)
-	$(WINECXX) $(SOURCES) $(WINE_BUILD_FLAGS) $(WINE_32BIT_FLAGS) $(WINE_LINK_FLAGS) -o carla-bridge-win32.exe
+carla_bridge_osc__lv2-gtk2.o: carla_bridge_osc.cpp
+	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_GTK2_FLAGS) -c -o $@
 
-carla-bridge-win64.exe.so: $(SOURCES)
-	$(WINECXX) $(SOURCES) $(WINE_BUILD_FLAGS) $(WINE_64BIT_FLAGS) $(WINE_LINK_FLAGS) -o carla-bridge-win64.exe
+# --------------------------------------------------------------
+# ui_lv2-qt4
+
+OBJS_UI_LV2_QT4 = carla_bridge_ui-lv2__lv2-qt4.o carla_bridge_ui-qt4__lv2-qt4.o carla_bridge_osc__lv2-qt4.o ../carla-lilv/carla_lilv.a
+
+carla-bridge-lv2-qt4: $(OBJS_UI_LV2_QT4)
+	$(CXX) $(OBJS_UI_LV2_QT4) $(LINK_UI_LV2_QT4_FLAGS) -o $@ && strip $@
+
+carla_bridge_ui-lv2__lv2-qt4.o: carla_bridge_ui-lv2.cpp
+	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_QT4_FLAGS) -c -o $@
+
+carla_bridge_ui-qt4__lv2-qt4.o: carla_bridge_ui-qt4.cpp
+	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_QT4_FLAGS) -c -o $@
+
+carla_bridge_osc__lv2-qt4.o: carla_bridge_osc.cpp
+	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_QT4_FLAGS) -c -o $@
+
+# --------------------------------------------------------------
+# ui_lv2-x11
+
+OBJS_UI_LV2_X11 = carla_bridge_ui-lv2__lv2-x11.o carla_bridge_ui-qt4__lv2-x11.o carla_bridge_osc__lv2-x11.o ../carla-lilv/carla_lilv.a
+
+carla-bridge-lv2-x11: $(OBJS_UI_LV2_X11)
+	$(CXX) $(OBJS_UI_LV2_X11) $(LINK_UI_LV2_X11_FLAGS) -o $@ && strip $@
+
+carla_bridge_ui-lv2__lv2-x11.o: carla_bridge_ui-lv2.cpp
+	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_X11_FLAGS) -c -o $@
+
+carla_bridge_ui-qt4__lv2-x11.o: carla_bridge_ui-qt4.cpp
+	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_X11_FLAGS) -c -o $@
+
+carla_bridge_osc__lv2-x11.o: carla_bridge_osc.cpp
+	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_LV2_X11_FLAGS) -c -o $@
+
+# --------------------------------------------------------------
+# ui_vst-x11
+
+BUILD_UI_VST_X11_FLAGS = -DBUILD_BRIDGE_UI -DBRIDGE_VST_X11 $(shell pkg-config --cflags QtGui)
+LINK_UI_VST_X11_FLAGS  = $(LINK_FLAGS) $(shell pkg-config --libs QtGui)
+
+OBJS_UI_VST_X11 = carla_bridge_ui-vst__vst-x11.o carla_bridge_ui-qt4__vst-x11.o carla_bridge_osc__vst-x11.o
+
+carla-bridge-vst-x11: $(OBJS_UI_VST_X11)
+	$(CXX) $(OBJS_UI_VST_X11) $(LINK_UI_VST_X11_FLAGS) -o $@ && strip $@
+
+carla_bridge_ui-vst__vst-x11.o: carla_bridge_ui-vst.cpp
+	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_VST_X11_FLAGS) -c -o $@
+
+carla_bridge_ui-qt4__vst-x11.o: carla_bridge_ui-qt4.cpp
+	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_VST_X11_FLAGS) -c -o $@
+
+carla_bridge_osc__vst-x11.o: carla_bridge_osc.cpp
+	$(CXX) $< $(BUILD_FLAGS) $(BUILD_UI_VST_X11_FLAGS) -c -o $@
+
+# --------------------------------------------------------------
+# unix32
+
+OBJS_UNIX32 = carla_bridge_plugin__unix32.o carla_bridge_osc__unix32.o carla_jack__unix32.o carla_shared__unix32.o ladspa__unix32.o dssi__unix32.o lv2__unix32.o vst__unix32.o rtmempool__unix32.o ../carla-lilv/carla_lilv_32bit.a
+
+carla-bridge-unix32: $(OBJS_UNIX32)
+
+# carla_bridge_plugin__unix32.o: carla_bridge_plugin.cpp
+# 	$(CXX) $< $(UNIX_BUILD_FLAGS) $(UNIX_32BIT_FLAGS) $(UNIX_LINK_FLAGS) -c -o $@
+
+# carla_jack__unix32.o: ../carla/carla_jack.cpp
+# 	$(CXX) $< $(UNIX_BUILD_FLAGS) $(UNIX_32BIT_FLAGS) $(UNIX_LINK_FLAGS) -c -o $@
+
+rtmempool__unix32.o: ../carla/lv2-rtmempool/rtmempool.c
+	$(CC) $< $(BUILD_CFLAGS) -c -o $@
+
+# --------------------------------------------------------------
 
 clean:
-	rm -f carla-bridge-*
+	rm -f *.o *.so *.exe
+	rm -f carla-bridge-lv2-gtk2 carla-bridge-lv2-qt4 carla-bridge-lv2-x11 carla-bridge-vst-x11
+	rm -f carla-bridge-unix32 carla-bridge-unix64
