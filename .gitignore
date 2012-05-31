@@ -22,8 +22,8 @@ moc_*.cpp
 ui_*.h
 
 c++/*/Makefile
-src/carla/qtcreator/Makefile
-src/carla/qtcreator/carla_backend
+src/carla-backend/qtcreator/Makefile
+src/carla-backend/qtcreator/carla_backend
 src/carla-bridge/qtcreator/Makefile
 src/carla-bridge-ui/qtcreator/Makefile
 src/carla-discovery/qtcreator/Makefile

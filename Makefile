@@ -162,7 +162,7 @@ src/icons_rc.py: src/icons/icons.qrc
 CPP: carla_backend carla_bridge carla_discovery
 
 carla_backend: carla_lilv
-	$(MAKE) -C src/carla
+	$(MAKE) -C src/carla-backend
 
 carla_bridge: carla_lilv
 	$(MAKE) -C src/carla-bridge
@@ -196,7 +196,7 @@ wine64:
 
 
 clean:
-	$(MAKE) clean -C src/carla
+	$(MAKE) clean -C src/carla-backend
 	$(MAKE) clean -C src/carla-bridge
 	$(MAKE) clean -C src/carla-discovery
 	$(MAKE) clean -C src/carla-lilv
