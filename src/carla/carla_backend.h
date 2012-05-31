@@ -231,6 +231,8 @@ typedef void (*CallbackFunc)(CallbackType action, unsigned short plugin_id, int 
 // -----------------------------------------------------
 // Exported symbols (API)
 
+#ifndef CARLA_NO_EXPORTS
+
 CARLA_EXPORT bool carla_init(const char* client_name);
 CARLA_EXPORT bool carla_close();
 CARLA_EXPORT bool carla_is_engine_running();
@@ -303,6 +305,8 @@ CARLA_EXPORT const char* get_host_osc_url();
 CARLA_EXPORT quint32 get_buffer_size();
 CARLA_EXPORT double get_sample_rate();
 CARLA_EXPORT double get_latency();
+
+#endif // CARLA_NO_EXPORTS
 
 // End of exported symbols
 // -----------------------------------------------------

@@ -734,7 +734,7 @@ inline const LV2_RDF_Descriptor* lv2_rdf_new(const char* URI)
 
     LILV_FOREACH(plugins, i, Plugins)
     {
-        Lilv::Plugin Plugin = Lilv::Plugin(lilv_plugins_get(Plugins, i));
+        Lilv::Plugin Plugin(lilv_plugins_get(Plugins, i));
 
         if (strcmp(Plugin.get_uri().as_string(), URI) == 0)
         {
@@ -1771,33 +1771,24 @@ inline bool is_lv2_feature_supported(const char* uri)
         return true;
     else if (strcmp(uri, LV2_URID__unmap) == 0)
         return true;
-#ifndef BUILD_BRIDGE_UI
     else if (strcmp(uri, LV2_WORKER__schedule) == 0)
         return true;
-#endif
     else if (strcmp(uri, LV2_PROGRAMS__Host) == 0)
         return true;
-#ifndef BUILD_BRIDGE_UI
     else if (strcmp(uri, LV2_RTSAFE_MEMORY_POOL_URI) == 0)
         return true;
-#endif
     else
         return false;
 }
 
 inline bool is_lv2_ui_feature_supported(const char* uri)
 {
-#ifndef LV2_UI_PREFIX
-#define LV2_UI_PREFIX "http://lv2plug.in/ns/extensions/ui#"
-#endif
     if (is_lv2_feature_supported(uri))
         return true;
-#ifndef BUILD_BRIDGE_UI
     else if (strcmp(uri, LV2_DATA_ACCESS_URI) == 0)
         return true;
     else if (strcmp(uri, LV2_INSTANCE_ACCESS_URI) == 0)
         return true;
-#endif
     else if (strcmp(uri, LV2_UI__noUserResize) == 0)
         return true;
     else if (strcmp(uri, LV2_UI__fixedSize) == 0)
@@ -1814,12 +1805,10 @@ inline bool is_lv2_ui_feature_supported(const char* uri)
         return false; // TODO
     else if (strcmp(uri, LV2_UI_PREFIX "makeResident") == 0)
         return true;
-#ifndef BUILD_BRIDGE_UI
     else if (strcmp(uri, LV2_EXTERNAL_UI_URI) == 0)
         return true;
     else if (strcmp(uri, LV2_EXTERNAL_UI_DEPRECATED_URI) == 0)
         return true;
-#endif
     else
         return false;
 }

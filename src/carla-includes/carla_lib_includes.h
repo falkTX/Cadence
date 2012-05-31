@@ -1,0 +1,76 @@
+/*
+ * Carla shared library code
+ * Copyright (C) 2012 Filipe Coelho <falktx@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * For a full copy of the GNU General Public License see the COPYING file
+ */
+
+#ifndef CARLA_LIB_INCLUDES_H
+#define CARLA_LIB_INCLUDES_H
+
+#ifdef Q_OS_WIN
+#include <cstdio>
+#endif
+
+static
+void* lib_open(const char* filename)
+{
+#ifdef Q_OS_WIN
+    return LoadLibraryA(filename);
+#else
+    return dlopen(filename, RTLD_LAZY);
+#endif
+}
+
+static
+bool lib_close(void* lib)
+{
+#ifdef Q_OS_WIN
+    return FreeLibrary((HMODULE)lib);
+#else
+    return (dlclose(lib) == 0);
+#endif
+}
+
+static
+void* lib_symbol(void* lib, const char* symbol)
+{
+#ifdef Q_OS_WIN
+    return (void*)GetProcAddress((HMODULE)lib, symbol);
+#else
+    return dlsym(lib, symbol);
+#endif
+}
+
+static
+const char* lib_error(const char* filename)
+{
+#ifdef Q_OS_WIN
+    static char libError[2048];
+    memset(libError, 0, sizeof(char)*2048);
+
+    LPVOID winErrorString;
+    DWORD  winErrorCode = GetLastError();
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |  FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, winErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&winErrorString, 0, nullptr);
+
+    snprintf(libError, 2048, "%s: error code %i: %s", filename, winErrorCode, (const char*)winErrorString);
+    LocalFree(winErrorString);
+
+    return libError;
+#else
+    return dlerror();
+    (void)filename;
+#endif
+}
+
+#endif // CARLA_LIB_INCLUDES_H

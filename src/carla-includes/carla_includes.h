@@ -1,5 +1,5 @@
 /*
- * JACK Backend code for Carla
+ * Carla shared includes
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,6 +25,12 @@
 #define Q_CORE_EXPORT
 #define Q_GUI_EXPORT
 #define QT_NO_STL
+#endif
+
+#if defined (__GXX_EXPERIMENTAL_CXX0X__) && defined (__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+// nullptr is available
+#else
+#  define nullptr (0)
 #endif
 
 #include <QtCore/Qt>

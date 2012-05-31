@@ -15,188 +15,49 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#if defined (__GXX_EXPERIMENTAL_CXX0X__) && defined (__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
-// nullptr is available
-#else
-#define nullptr (0)
-#endif
-
-#if defined(__WIN32__) || defined(__WIN64__)
-#include <windows.h>
-#ifndef __WINDOWS__
-#define __WINDOWS__
-#endif
-#else
-#include <dlfcn.h>
-#ifndef __cdecl
-#define __cdecl
-#endif
-#endif
+#include "carla_includes.h"
+#include "carla_lib_includes.h"
+#include "carla_vst_includes.h"
 
 #include <cmath>
-#include <cstdio>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 
 #include "ladspa/ladspa.h"
 #include "dssi/dssi.h"
-
-#ifdef WANT_LILV
-#include "lv2/atom.h"
-#include "lv2/event.h"
-#include "lv2/midi.h"
-#include "lilv/lilvmm.hpp"
-#define LV2_MIDI_LL__MidiPort "http://ll-plugins.nongnu.org/lv2/ext/MidiPort"
-#endif
-
-#define VST_FORCE_DEPRECATED 0
-#include "aeffectx.h"
-
-#if VESTIGE_HEADER
-#warning Using vestige header
-#define kVstVersion 2400
-#define effGetPlugCategory 35
-#define effSetBlockSizeAndSampleRate 43
-#define effShellGetNextPlugin 70
-#define effStartProcess 71
-#define effStopProcess 72
-#define effSetProcessPrecision 77
-#define kVstProcessPrecision32 0
-#define kPlugCategUnknown 0
-#define kPlugCategSynth 2
-#define kPlugCategAnalysis 3
-#define kPlugCategMastering 4
-#define kPlugCategRoomFx 6
-#define kPlugCategRestoration 8
-#define kPlugCategShell 10
-#define kPlugCategGenerator 11
-#endif
+#include "lv2_rdf.h"
 
 #ifdef WANT_FLUIDSYNTH
 #include <fluidsynth.h>
 #endif
 
+#define CARLA_NO_EXPORTS
+#include "../carla/carla_backend.h"
+
 #define DISCOVERY_OUT(x, y) std::cout << "\ncarla-discovery::" << x << "::" << y << std::endl;
 
 // fake values to test plugins with
-const unsigned int bufferSize = 512;
-const unsigned int sampleRate = 44100;
+const uint32_t bufferSize = 512;
+const double   sampleRate = 44100.f;
 
-// ------------------------------ Carla main defs ------------------------------
-
-// plugin hints
-const unsigned int PLUGIN_HAS_GUI     = 0x01;
-const unsigned int PLUGIN_IS_BRIDGE   = 0x02;
-const unsigned int PLUGIN_IS_SYNTH    = 0x04;
-const unsigned int PLUGIN_USES_CHUNKS = 0x08;
-const unsigned int PLUGIN_CAN_DRYWET  = 0x10;
-const unsigned int PLUGIN_CAN_VOLUME  = 0x20;
-const unsigned int PLUGIN_CAN_BALANCE = 0x40;
-
-enum BinaryType {
-    BINARY_NONE   = 0,
-    BINARY_UNIX32 = 1,
-    BINARY_UNIX64 = 2,
-    BINARY_WIN32  = 3,
-    BINARY_WIN64  = 4
-};
-
-enum PluginType {
-    PLUGIN_NONE   = 0,
-    PLUGIN_LADSPA = 1,
-    PLUGIN_DSSI   = 2,
-    PLUGIN_LV2    = 3,
-    PLUGIN_VST    = 4,
-    PLUGIN_SF2    = 5
-};
-
-enum PluginCategory {
-    PLUGIN_CATEGORY_NONE      = 0,
-    PLUGIN_CATEGORY_SYNTH     = 1,
-    PLUGIN_CATEGORY_DELAY     = 2, // also Reverb
-    PLUGIN_CATEGORY_EQ        = 3,
-    PLUGIN_CATEGORY_FILTER    = 4,
-    PLUGIN_CATEGORY_DYNAMICS  = 5, // Amplifier, Compressor, Gate
-    PLUGIN_CATEGORY_MODULATOR = 6, // Chorus, Flanger, Phaser
-    PLUGIN_CATEGORY_UTILITY   = 7, // Analyzer, Converter, Mixer
-    PLUGIN_CATEGORY_OUTRO     = 8  // used to check if a plugin has a category
-};
-
-#if BUILD_UNIX32
-#  define BINARY_TYPE BINARY_UNIX32
-#elif  BUILD_UNIX64
-#  define BINARY_TYPE BINARY_UNIX64
-#elif  BUILD_WIN32
-#  define BINARY_TYPE BINARY_WIN32
-#elif  BUILD_WIN64
-#  define BINARY_TYPE BINARY_WIN64
-#else
-#  error Invalid build type
-#endif
-
-// ------------------------------ library functions ------------------------------
-void* lib_open(const char* filename)
+// Since discovery can find multi-architecture binaries, don't print ELF related errors
+void print_lib_error(const char* filename)
 {
-#ifdef __WINDOWS__
-    return LoadLibraryA(filename);
-#else
-    return dlopen(filename, RTLD_LAZY);
-#endif
-}
-
-int lib_close(void* lib)
-{
-#ifdef __WINDOWS__
-    return FreeLibrary((HMODULE)lib);
-#else
-    return dlclose(lib);
-#endif
-}
-
-void* lib_symbol(void* lib, const char* symbol)
-{
-#ifdef __WINDOWS__
-    return (void*)GetProcAddress((HMODULE)lib, symbol);
-#else
-    return dlsym(lib, symbol);
-#endif
-}
-
-const char* lib_error(const char* filename)
-{
-#ifdef __WINDOWS__
-    static char libError[2048];
-    memset(libError, 0, sizeof(char)*2048);
-
-    LPVOID winErrorString;
-    DWORD  winErrorCode = GetLastError();
-    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |  FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, winErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&winErrorString, 0, nullptr);
-
-    snprintf(libError, 2048, "%s: error code %i: %s", filename, winErrorCode, (const char*)winErrorString);
-    LocalFree(winErrorString);
-
-    return libError;
-#else
-    (void)filename;
-    return dlerror();
-#endif
+    const char* error = lib_error(filename);
+    if (error && strstr(error, "wrong ELF class") == nullptr && strstr(error, "Bad EXE format") == nullptr)
+        DISCOVERY_OUT("error", error);
 }
 
 // ------------------------------ VST Stuff ------------------------------
-typedef AEffect* (*VST_Function)(audioMasterCallback);
 
 intptr_t VstCurrentUniqueId = 0;
-
-bool VstPluginCanDo(AEffect* effect, const char* feature)
-{
-    return (effect->dispatcher(effect, effCanDo, 0, 0, (void*)feature, 0.0f) == 1);
-}
 
 intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
 {
 #if DEBUG
-    std::cout << "VstHostCallback(" << effect << ", " << opcode << ", " << index << ", " << value << ", " << ptr << ", " << opt << ")" << std::endl;
+    qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstOpcode2str(opcode), index, value, opt);
 #endif
 
     switch (opcode)
@@ -212,11 +73,30 @@ intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_
     case audioMasterCurrentId:
         return VstCurrentUniqueId;
 
+    case audioMasterIdle:
+        if (effect)
+            effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
+        break;
+
     case audioMasterGetTime:
-        static VstTimeInfo timeInfo;
-        memset(&timeInfo, 0, sizeof(VstTimeInfo));
+        static VstTimeInfo_R timeInfo;
+        memset(&timeInfo, 0, sizeof(VstTimeInfo_R));
         timeInfo.sampleRate = sampleRate;
+
+        // Tempo
+        timeInfo.tempo  = 120.0;
+        timeInfo.flags |= kVstTempoValid;
+
+        // Time Signature
+        timeInfo.timeSigNumerator   = 4;
+        timeInfo.timeSigDenominator = 4;
+        timeInfo.flags |= kVstTimeSigValid;
+
         return (intptr_t)&timeInfo;
+
+    case audioMasterTempoAt:
+        // Deprecated in VST SDK 2.4
+        return 120 * 10000;
 
     case audioMasterGetSampleRate:
         return sampleRate;
@@ -225,13 +105,11 @@ intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_
         return bufferSize;
 
     case audioMasterGetVendorString:
-        if (ptr)
-            strcpy((char*)ptr, "falkTX");
+        strcpy((char*)ptr, "falkTX");
         break;
 
     case audioMasterGetProductString:
-        if (ptr)
-            strcpy((char*)ptr, "Carla-Discovery");
+        strcpy((char*)ptr, "Carla-Discovery");
         break;
 
     case audioMasterGetVendorVersion:
@@ -239,51 +117,53 @@ intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_
 
     case audioMasterCanDo:
 #if DEBUG
-        std::cout << "VstHostCallback:audioMasterCanDo - " << (char*)ptr << std::endl;
+        qDebug("VstHostCallback:audioMasterCanDo - %s", (char*)ptr);
 #endif
 
+        if (strcmp((char*)ptr, "supplyIdle") == 0)
+            return 1;
         if (strcmp((char*)ptr, "sendVstEvents") == 0)
             return 1;
-        else if (strcmp((char*)ptr, "sendVstMidiEvent") == 0)
+        if (strcmp((char*)ptr, "sendVstMidiEvent") == 0)
             return 1;
-        else if (strcmp((char*)ptr, "sendVstTimeInfo") == 0)
-            return 1;
-        else if (strcmp((char*)ptr, "receiveVstEvents") == 0)
-            return 1;
-        else if (strcmp((char*)ptr, "receiveVstMidiEvent") == 0)
-            return 1;
-#if !VST_FORCE_DEPRECATED
-        else if (strcmp((char*)ptr, "receiveVstTimeInfo") == 0)
+        if (strcmp((char*)ptr, "sendVstMidiEventFlagIsRealtime") == 0)
             return -1;
-#endif
-        else if (strcmp((char*)ptr, "reportConnectionChanges") == 0)
+        if (strcmp((char*)ptr, "sendVstTimeInfo") == 0)
             return 1;
-        else if (strcmp((char*)ptr, "acceptIOChanges") == 0)
+        if (strcmp((char*)ptr, "receiveVstEvents") == 0)
             return 1;
-        else if (strcmp((char*)ptr, "sizeWindow") == 0)
+        if (strcmp((char*)ptr, "receiveVstMidiEvent") == 0)
             return 1;
-        else if (strcmp((char*)ptr, "offline") == 0)
+        if (strcmp((char*)ptr, "receiveVstTimeInfo") == 0)
             return -1;
-        else if (strcmp((char*)ptr, "openFileSelector") == 0)
+        if (strcmp((char*)ptr, "reportConnectionChanges") == 0)
             return -1;
-        else if (strcmp((char*)ptr, "closeFileSelector") == 0)
+        if (strcmp((char*)ptr, "acceptIOChanges") == 0)
             return -1;
-        else if (strcmp((char*)ptr, "startStopProcess") == 0)
+        if (strcmp((char*)ptr, "sizeWindow") == 0)
             return 1;
-        else if (strcmp((char*)ptr, "shellCategory") == 0)
-            return 1;
-        else if (strcmp((char*)ptr, "sendVstMidiEventFlagIsRealtime") == 0)
+        if (strcmp((char*)ptr, "offline") == 0)
             return -1;
-        else
-        {
-            std::cerr << "VstHostCallback:audioMasterCanDo - Got uninplemented feature request '" << (char*)ptr << "'" << std::endl;
-            return 0;
-        }
+        if (strcmp((char*)ptr, "openFileSelector") == 0)
+            return -1;
+        if (strcmp((char*)ptr, "closeFileSelector") == 0)
+            return -1;
+        if (strcmp((char*)ptr, "startStopProcess") == 0)
+            return 1;
+        if (strcmp((char*)ptr, "supportShell") == 0)
+            return 1;
+        if (strcmp((char*)ptr, "shellCategory") == 0)
+            return 1;
+
+        // unimplemented
+        qWarning("VstHostCallback:audioMasterCanDo - Got unknown feature request '%s'", (char*)ptr);
+        return 0;
 
     case audioMasterGetLanguage:
         return kVstLangEnglish;
 
     default:
+        qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstOpcode2str(opcode), index, value, opt);
         break;
     }
 
@@ -292,12 +172,13 @@ intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_
     (void)value;
 }
 
-// ------------------------------ Plugin Check ------------------------------
+// ------------------------------ Plugin Checks -----------------------------
+
 void do_ladspa_check(void* lib_handle)
 {
     LADSPA_Descriptor_Function descfn = (LADSPA_Descriptor_Function)lib_symbol(lib_handle, "ladspa_descriptor");
 
-    if (descfn == nullptr)
+    if (! descfn)
     {
         DISCOVERY_OUT("error", "Not a LADSPA plugin");
         return;
@@ -313,35 +194,29 @@ void do_ladspa_check(void* lib_handle)
         if (handle)
         {
             int hints = 0;
-            PluginCategory category = PLUGIN_CATEGORY_NONE;
-
             int audio_ins = 0;
             int audio_outs = 0;
             int audio_total = 0;
-            int midi_ins = 0;
-            int midi_outs = 0;
-            int midi_total = 0;
             int parameters_ins = 0;
             int parameters_outs = 0;
             int parameters_total = 0;
-            int programs_total = 0;
 
             for (unsigned long j=0; j < descriptor->PortCount; j++)
             {
                 const LADSPA_PortDescriptor PortDescriptor = descriptor->PortDescriptors[j];
-                if (PortDescriptor & LADSPA_PORT_AUDIO)
+                if (LADSPA_IS_PORT_AUDIO(PortDescriptor))
                 {
-                    if (PortDescriptor & LADSPA_PORT_INPUT)
+                    if (LADSPA_IS_PORT_INPUT(PortDescriptor))
                         audio_ins += 1;
-                    else if (PortDescriptor & LADSPA_PORT_OUTPUT)
+                    else if (LADSPA_IS_PORT_OUTPUT(PortDescriptor))
                         audio_outs += 1;
                     audio_total += 1;
                 }
-                else if (PortDescriptor & LADSPA_PORT_CONTROL)
+                else if (LADSPA_IS_PORT_CONTROL(PortDescriptor))
                 {
-                    if (PortDescriptor & LADSPA_PORT_INPUT)
+                    if (LADSPA_IS_PORT_INPUT(PortDescriptor))
                         parameters_ins += 1;
-                    else if (PortDescriptor & LADSPA_PORT_OUTPUT)
+                    else if (LADSPA_IS_PORT_OUTPUT(PortDescriptor))
                     {
                         if (strcmp(descriptor->PortNames[j], "latency") != 0 && strcmp(descriptor->PortNames[j], "_latency") != 0)
                             parameters_outs += 1;
@@ -350,25 +225,27 @@ void do_ladspa_check(void* lib_handle)
                 }
             }
 
-            // small crash-free plugin test
+            // -----------------------------------------------------------------------
+            // start crash-free plugin test
+
             float bufferAudio[bufferSize][audio_total];
-            memset(&bufferAudio, 0, sizeof(float)*bufferSize*audio_total);
+            memset(bufferAudio, 0, sizeof(float)*bufferSize*audio_total);
 
             float bufferParams[parameters_total];
-            memset(&bufferParams, 0, sizeof(float)*parameters_total);
+            memset(bufferParams, 0, sizeof(float)*parameters_total);
 
-            float min, max, def;
+            double min, max, def;
 
             for (unsigned long j=0, iA=0, iP=0; j < descriptor->PortCount; j++)
             {
                 const LADSPA_PortDescriptor PortType = descriptor->PortDescriptors[j];
                 const LADSPA_PortRangeHint  PortHint = descriptor->PortRangeHints[j];
 
-                if (PortType & LADSPA_PORT_AUDIO)
+                if (LADSPA_IS_PORT_AUDIO(PortType))
                 {
                     descriptor->connect_port(handle, j, bufferAudio[iA++]);
                 }
-                else if (PortType & LADSPA_PORT_CONTROL)
+                else if (LADSPA_IS_PORT_CONTROL(PortType))
                 {
                     // min value
                     if (LADSPA_IS_HINT_BOUNDED_BELOW(PortHint.HintDescriptor))
@@ -386,6 +263,12 @@ void do_ladspa_check(void* lib_handle)
                         max = min;
                     else if (max < min)
                         min = max;
+
+                    if (max - min == 0.0)
+                    {
+                        DISCOVERY_OUT("error", "Broken parameter: max - min == 0");
+                        max = min + 0.1;
+                    }
 
                     // default value
                     if (LADSPA_IS_HINT_HAS_DEFAULT(PortHint.HintDescriptor))
@@ -445,14 +328,6 @@ void do_ladspa_check(void* lib_handle)
                             def = min;
                     }
 
-                    if (LADSPA_IS_PORT_OUTPUT(PortType) && (strcmp(descriptor->PortNames[j], "latency") == 0 || strcmp(descriptor->PortNames[j], "_latency") == 0))
-                    {
-                        // latency parameter
-                        min = 0;
-                        max = sampleRate;
-                        def = 0;
-                    }
-
                     if (def < min)
                         def = min;
                     else if (def > max)
@@ -463,6 +338,14 @@ void do_ladspa_check(void* lib_handle)
                         min *= sampleRate;
                         max *= sampleRate;
                         def *= sampleRate;
+                    }
+
+                    if (LADSPA_IS_PORT_OUTPUT(PortType) && (strcmp(descriptor->PortNames[j], "latency") == 0 || strcmp(descriptor->PortNames[j], "_latency") == 0))
+                    {
+                        // latency parameter
+                        min = 0.0;
+                        max = sampleRate;
+                        def = 0.0;
                     }
 
                     bufferParams[iP] = def;
@@ -479,6 +362,9 @@ void do_ladspa_check(void* lib_handle)
             if (descriptor->deactivate)
                 descriptor->deactivate(handle);
 
+            // end crash-free plugin test
+            // -----------------------------------------------------------------------
+
             DISCOVERY_OUT("init", "-----------");
             DISCOVERY_OUT("name", descriptor->Name);
             DISCOVERY_OUT("label", descriptor->Label);
@@ -486,22 +372,17 @@ void do_ladspa_check(void* lib_handle)
             DISCOVERY_OUT("copyright", descriptor->Copyright);
             DISCOVERY_OUT("unique_id", descriptor->UniqueID);
             DISCOVERY_OUT("hints", hints);
-            DISCOVERY_OUT("category", category);
             DISCOVERY_OUT("audio.ins", audio_ins);
             DISCOVERY_OUT("audio.outs", audio_outs);
             DISCOVERY_OUT("audio.total", audio_total);
-            DISCOVERY_OUT("midi.ins", midi_ins);
-            DISCOVERY_OUT("midi.outs", midi_outs);
-            DISCOVERY_OUT("midi.total", midi_total);
             DISCOVERY_OUT("parameters.ins", parameters_ins);
             DISCOVERY_OUT("parameters.outs", parameters_outs);
             DISCOVERY_OUT("parameters.total", parameters_total);
-            DISCOVERY_OUT("programs.total", programs_total);
 
             if (descriptor->cleanup)
                 descriptor->cleanup(handle);
 
-            DISCOVERY_OUT("build", BINARY_TYPE);
+            DISCOVERY_OUT("build", BINARY_NATIVE);
             DISCOVERY_OUT("end", "------------");
         }
         else
@@ -513,7 +394,7 @@ void do_dssi_check(void* lib_handle)
 {
     DSSI_Descriptor_Function descfn = (DSSI_Descriptor_Function)lib_symbol(lib_handle, "dssi_descriptor");
 
-    if (descfn == nullptr)
+    if (! descfn)
     {
         DISCOVERY_OUT("error", "Not a DSSI plugin");
         return;
@@ -530,13 +411,10 @@ void do_dssi_check(void* lib_handle)
         if (handle)
         {
             int hints = 0;
-            PluginCategory category = PLUGIN_CATEGORY_NONE;
-
             int audio_ins = 0;
             int audio_outs = 0;
             int audio_total = 0;
             int midi_ins = 0;
-            int midi_outs = 0;
             int midi_total = 0;
             int parameters_ins = 0;
             int parameters_outs = 0;
@@ -546,19 +424,19 @@ void do_dssi_check(void* lib_handle)
             for (unsigned long j=0; j < ldescriptor->PortCount; j++)
             {
                 const LADSPA_PortDescriptor PortDescriptor = ldescriptor->PortDescriptors[j];
-                if (PortDescriptor & LADSPA_PORT_AUDIO)
+                if (LADSPA_IS_PORT_AUDIO(PortDescriptor))
                 {
-                    if (PortDescriptor & LADSPA_PORT_INPUT)
+                    if (LADSPA_IS_PORT_INPUT(PortDescriptor))
                         audio_ins += 1;
-                    else if (PortDescriptor & LADSPA_PORT_OUTPUT)
+                    else if (LADSPA_IS_PORT_OUTPUT(PortDescriptor))
                         audio_outs += 1;
                     audio_total += 1;
                 }
-                else if (PortDescriptor & LADSPA_PORT_CONTROL)
+                else if (LADSPA_IS_PORT_CONTROL(PortDescriptor))
                 {
-                    if (PortDescriptor & LADSPA_PORT_INPUT)
+                    if (LADSPA_IS_PORT_INPUT(PortDescriptor))
                         parameters_ins += 1;
-                    else if (PortDescriptor & LADSPA_PORT_OUTPUT)
+                    else if (LADSPA_IS_PORT_OUTPUT(PortDescriptor))
                     {
                         if (strcmp(ldescriptor->PortNames[j], "latency") != 0 && strcmp(ldescriptor->PortNames[j], "_latency") != 0)
                             parameters_outs += 1;
@@ -568,39 +446,38 @@ void do_dssi_check(void* lib_handle)
             }
 
             if (descriptor->run_synth || descriptor->run_multiple_synths)
-            {
-                midi_ins = 1;
-                midi_total = 1;
-            }
+                midi_ins = midi_total = 1;
 
             if (midi_ins > 0 && audio_outs > 0)
                 hints |= PLUGIN_IS_SYNTH;
 
             if (descriptor->get_program)
             {
-                while ((descriptor->get_program(handle, programs_total)))
-                    programs_total += 1;
+                while ((descriptor->get_program(handle, programs_total++)))
+                    continue;
             }
 
-            // small crash-free plugin test
+            // -----------------------------------------------------------------------
+            // start crash-free plugin test
+
             float bufferAudio[bufferSize][audio_total];
-            memset(&bufferAudio, 0, sizeof(float)*bufferSize*audio_total);
+            memset(bufferAudio, 0, sizeof(float)*bufferSize*audio_total);
 
             float bufferParams[parameters_total];
-            memset(&bufferParams, 0, sizeof(float)*parameters_total);
+            memset(bufferParams, 0, sizeof(float)*parameters_total);
 
-            float min, max, def;
+            double min, max, def;
 
             for (unsigned long j=0, iA=0, iP=0; j < ldescriptor->PortCount; j++)
             {
                 const LADSPA_PortDescriptor PortType = ldescriptor->PortDescriptors[j];
                 const LADSPA_PortRangeHint  PortHint = ldescriptor->PortRangeHints[j];
 
-                if (PortType & LADSPA_PORT_AUDIO)
+                if (LADSPA_IS_PORT_AUDIO(PortType))
                 {
                     ldescriptor->connect_port(handle, j, bufferAudio[iA++]);
                 }
-                else if (PortType & LADSPA_PORT_CONTROL)
+                else if (LADSPA_IS_PORT_CONTROL(PortType))
                 {
                     // min value
                     if (LADSPA_IS_HINT_BOUNDED_BELOW(PortHint.HintDescriptor))
@@ -618,6 +495,12 @@ void do_dssi_check(void* lib_handle)
                         max = min;
                     else if (max < min)
                         min = max;
+
+                    if (max - min == 0.0)
+                    {
+                        DISCOVERY_OUT("error", "Broken parameter: max - min == 0");
+                        max = min + 0.1;
+                    }
 
                     // default value
                     if (LADSPA_IS_HINT_HAS_DEFAULT(PortHint.HintDescriptor))
@@ -677,14 +560,6 @@ void do_dssi_check(void* lib_handle)
                             def = min;
                     }
 
-                    if (LADSPA_IS_PORT_OUTPUT(PortType) && (strcmp(ldescriptor->PortNames[j], "latency") == 0 || strcmp(ldescriptor->PortNames[j], "_latency") == 0))
-                    {
-                        // latency parameter
-                        min = 0;
-                        max = sampleRate;
-                        def = 0;
-                    }
-
                     if (def < min)
                         def = min;
                     else if (def > max)
@@ -697,43 +572,55 @@ void do_dssi_check(void* lib_handle)
                         def *= sampleRate;
                     }
 
+                    if (LADSPA_IS_PORT_OUTPUT(PortType) && (strcmp(ldescriptor->PortNames[j], "latency") == 0 || strcmp(ldescriptor->PortNames[j], "_latency") == 0))
+                    {
+                        // latency parameter
+                        min = 0.0;
+                        max = sampleRate;
+                        def = 0.0;
+                    }
+
                     bufferParams[iP] = def;
 
                     ldescriptor->connect_port(handle, j, &bufferParams[iP++]);
                 }
             }
 
-            snd_seq_event_t midiEvents[2];
-            memset(&midiEvents, 0, sizeof(snd_seq_event_t)*2);
-
-            unsigned long midiEventCount = 2;
-
-            midiEvents[0].type = SND_SEQ_EVENT_NOTEON;
-            midiEvents[0].data.note.note     = 64;
-            midiEvents[0].data.note.velocity = 100;
-
-            midiEvents[1].type = SND_SEQ_EVENT_NOTEOFF;
-            midiEvents[1].data.note.note     = 64;
-            midiEvents[1].data.note.velocity = 0;
-            midiEvents[1].time.tick = bufferSize/2;
-
             if (ldescriptor->activate)
                 ldescriptor->activate(handle);
 
-            if (descriptor->run_synth)
+            if (descriptor->run_synth || descriptor->run_multiple_synths)
             {
-                descriptor->run_synth(handle, bufferSize, midiEvents, midiEventCount);
-            }
-            else if (descriptor->run_multiple_synths)
-            {
-                snd_seq_event_t* midiEventsPtr[] = { midiEvents, nullptr };
-                descriptor->run_multiple_synths(1, &handle, bufferSize, midiEventsPtr, &midiEventCount);
+                snd_seq_event_t midiEvents[2];
+                memset(midiEvents, 0, sizeof(snd_seq_event_t)*2);
+
+                unsigned long midiEventCount = 2;
+
+                midiEvents[0].type = SND_SEQ_EVENT_NOTEON;
+                midiEvents[0].data.note.note     = 64;
+                midiEvents[0].data.note.velocity = 100;
+
+                midiEvents[1].type = SND_SEQ_EVENT_NOTEOFF;
+                midiEvents[1].data.note.note     = 64;
+                midiEvents[1].data.note.velocity = 0;
+                midiEvents[1].time.tick = bufferSize/2;
+
+                if (descriptor->run_multiple_synths)
+                {
+                    snd_seq_event_t* midiEventsPtr[] = { midiEvents, nullptr };
+                    descriptor->run_multiple_synths(1, &handle, bufferSize, midiEventsPtr, &midiEventCount);
+                }
+                else
+                    descriptor->run_synth(handle, bufferSize, midiEvents, midiEventCount);
             }
             else
                 ldescriptor->run(handle, bufferSize);
 
             if (ldescriptor->deactivate)
                 ldescriptor->deactivate(handle);
+
+            // end crash-free plugin test
+            // -----------------------------------------------------------------------
 
             DISCOVERY_OUT("init", "-----------");
             DISCOVERY_OUT("name", ldescriptor->Name);
@@ -742,12 +629,10 @@ void do_dssi_check(void* lib_handle)
             DISCOVERY_OUT("copyright", ldescriptor->Copyright);
             DISCOVERY_OUT("unique_id", ldescriptor->UniqueID);
             DISCOVERY_OUT("hints", hints);
-            DISCOVERY_OUT("category", category);
             DISCOVERY_OUT("audio.ins", audio_ins);
             DISCOVERY_OUT("audio.outs", audio_outs);
             DISCOVERY_OUT("audio.total", audio_total);
             DISCOVERY_OUT("midi.ins", midi_ins);
-            DISCOVERY_OUT("midi.outs", midi_outs);
             DISCOVERY_OUT("midi.total", midi_total);
             DISCOVERY_OUT("parameters.ins", parameters_ins);
             DISCOVERY_OUT("parameters.outs", parameters_outs);
@@ -757,7 +642,7 @@ void do_dssi_check(void* lib_handle)
             if (ldescriptor->cleanup)
                 ldescriptor->cleanup(handle);
 
-            DISCOVERY_OUT("build", BINARY_TYPE);
+            DISCOVERY_OUT("build", BINARY_NATIVE);
             DISCOVERY_OUT("end", "------------");
         }
         else
@@ -767,58 +652,67 @@ void do_dssi_check(void* lib_handle)
 
 void do_lv2_check(const char* bundle)
 {
-#ifdef WANT_LILV
-    std::string sbundle;
-    sbundle += "file://";
-    sbundle += bundle;
-#ifdef __WINDOWS__
-    sbundle += "\\";
+    // Convert bundle filename to URI
+    QString qBundle;
+    qBundle += "file://";
+    qBundle += bundle;
+#ifdef Q_OS_WIN
+    qBundle += "\\";
 #else
-    sbundle += "/";
+    qBundle += "/";
 #endif
 
-    Lilv::World World;
-    Lilv::Node Bundle(lilv_new_uri(World.me, sbundle.c_str()));
-    World.load_bundle(Bundle);
+    // Load bundle
+    Lilv::Node Bundle(Lv2World.new_uri(qBundle.toUtf8().constData()));
+    Lv2World.load_bundle(Bundle);
 
-    Lilv::Node AtomBufferTypes  = Lilv::Node(lilv_new_uri(World.me, LV2_ATOM__bufferType));
-    Lilv::Node EventTypeMidi    = Lilv::Node(lilv_new_uri(World.me, LV2_MIDI__MidiEvent));
+    // Load plugins in this bundle
+    const Lilv::Plugins Plugins = Lv2World.get_all_plugins();
 
-    Lilv::Node PortTypeInput    = Lilv::Node(lilv_new_uri(World.me, LV2_CORE__InputPort));
-    Lilv::Node PortTypeOutput   = Lilv::Node(lilv_new_uri(World.me, LV2_CORE__OutputPort));
-    Lilv::Node PortTypeAudio    = Lilv::Node(lilv_new_uri(World.me, LV2_CORE__AudioPort));
-    Lilv::Node PortTypeControl  = Lilv::Node(lilv_new_uri(World.me, LV2_CORE__ControlPort));
-    Lilv::Node PortTypeAtom     = Lilv::Node(lilv_new_uri(World.me, LV2_ATOM__AtomPort));
-    Lilv::Node PortTypeEvent    = Lilv::Node(lilv_new_uri(World.me, LV2_EVENT__EventPort));
-    Lilv::Node PortTypeMidiLL   = Lilv::Node(lilv_new_uri(World.me, LV2_MIDI_LL__MidiPort));
-
-    Lilv::Node PortPropertyLatency = Lilv::Node(lilv_new_uri(World.me, LV2_CORE__latency));
-
-    const Lilv::Plugins Plugins = World.get_all_plugins();
+    // Get all plugin URIs in this bundle
+    QStringList URIs;
 
     LILV_FOREACH(plugins, i, Plugins)
     {
-        Lilv::Plugin p(lilv_plugins_get(Plugins, i));
+        Lilv::Plugin Plugin(lilv_plugins_get(Plugins, i));
+        URIs.append(QString(Plugin.get_uri().as_string()));
+    }
 
-        //Lilv::Nodes requiredFeatures(p.get_required_features());
-        // check
-
-        const char* filename = lilv_uri_to_path(p.get_library_uri().as_string());
+    // Get & check every plugin-instance
+    for (int i=0; i < URIs.count(); i++)
+    {
+        const LV2_RDF_Descriptor* rdf_descriptor = lv2_rdf_new(URIs.at(i).toUtf8().constData());
 
         // test if DLL is loadable
-        void* lib_handle = lib_open(filename);
+        void* lib_handle = lib_open(rdf_descriptor->Binary);
 
-        if (lib_handle == nullptr)
+        if (! lib_handle)
         {
-            DISCOVERY_OUT("error", lib_error(filename));
+            print_lib_error(rdf_descriptor->Binary);
             continue;
         }
 
         lib_close(lib_handle);
 
-        int hints = 0;
-        PluginCategory category = PLUGIN_CATEGORY_NONE;
+        // test if we support all required features
+        bool supported = true;
 
+        for (uint32_t j=0; j < rdf_descriptor->FeatureCount; j++)
+        {
+            const LV2_RDF_Feature* const Feature = &rdf_descriptor->Features[j];
+
+            if (LV2_IS_FEATURE_REQUIRED(Feature->Type) && ! is_lv2_feature_supported(Feature->URI))
+            {
+                DISCOVERY_OUT("error", "plugin requires non-supported feature " << Feature->URI);
+                supported = false;
+                break;
+            }
+        }
+
+        if (! supported)
+            continue;
+
+        int hints = 0;
         int audio_ins = 0;
         int audio_outs = 0;
         int audio_total = 0;
@@ -830,71 +724,51 @@ void do_lv2_check(const char* bundle)
         int parameters_total = 0;
         int programs_total = 0;
 
-        for (unsigned j=0; j < p.get_num_ports(); j++)
+        for (uint32_t j=0; j < rdf_descriptor->PortCount; j++)
         {
-            Lilv::Port Port = p.get_port_by_index(j);
+            const LV2_RDF_Port* const Port = &rdf_descriptor->Ports[j];
 
-            if (Port.is_a(PortTypeAudio))
+            if (LV2_IS_PORT_AUDIO(Port->Type))
             {
-                if (Port.is_a(PortTypeInput))
+                if (LV2_IS_PORT_INPUT(Port->Type))
                     audio_ins += 1;
-                else if (Port.is_a(PortTypeOutput))
+                else if (LV2_IS_PORT_OUTPUT(Port->Type))
                     audio_outs += 1;
                 audio_total += 1;
             }
-            else if (Port.is_a(PortTypeControl))
+            else if (LV2_IS_PORT_CONTROL(Port->Type))
             {
-                if (Port.is_a(PortTypeInput))
+                if (LV2_IS_PORT_INPUT(Port->Type))
                     parameters_ins += 1;
-                else if (Port.is_a(PortTypeOutput))
-                {
-                    if (Port.has_property(PortPropertyLatency) == false)
-                        parameters_outs += 1;
-                }
+                else if (LV2_IS_PORT_OUTPUT(Port->Type) && ! LV2_IS_PORT_LATENCY(Port->Designation))
+                    parameters_outs += 1;
                 parameters_total += 1;
             }
-            else if (Port.is_a(PortTypeAtom))
+            else if (Port->Type & LV2_PORT_SUPPORTS_MIDI_EVENT)
             {
-                Lilv::Nodes bufferTypes(Port.get_value(AtomBufferTypes));
-                if (bufferTypes.contains(EventTypeMidi))
-                {
-                    if (Port.is_a(PortTypeInput))
-                        midi_ins += 1;
-                    else if (Port.is_a(PortTypeOutput))
-                        midi_outs += 1;
-                    midi_total += 1;
-                }
-            }
-            else if (Port.is_a(PortTypeEvent))
-            {
-                if (Port.supports_event(EventTypeMidi))
-                {
-                    if (Port.is_a(PortTypeInput))
-                        midi_ins += 1;
-                    else if (Port.is_a(PortTypeOutput))
-                        midi_outs += 1;
-                    midi_total += 1;
-                }
-            }
-            else if (Port.is_a(PortTypeMidiLL))
-            {
-                if (Port.is_a(PortTypeInput))
+                if (LV2_IS_PORT_INPUT(Port->Type))
                     midi_ins += 1;
-                else if (Port.is_a(PortTypeOutput))
+                else if (LV2_IS_PORT_OUTPUT(Port->Type))
                     midi_outs += 1;
                 midi_total += 1;
             }
         }
 
+        if (rdf_descriptor->Type & LV2_CLASS_INSTRUMENT)
+            hints |= PLUGIN_IS_SYNTH;
+
+        if (rdf_descriptor->UICount > 0)
+            hints |= PLUGIN_HAS_GUI;
+
         DISCOVERY_OUT("init", "-----------");
-        DISCOVERY_OUT("name", p.get_name().as_string());
-        DISCOVERY_OUT("label", p.get_uri().as_string());
-        if (p.get_author_name())
-          DISCOVERY_OUT("maker", p.get_author_name().as_string());
-        //DISCOVERY_OUT("copyright", ldescriptor->Copyright);
-        //DISCOVERY_OUT("unique_id", ldescriptor->UniqueID);
+        DISCOVERY_OUT("name", rdf_descriptor->Name);
+        DISCOVERY_OUT("label", rdf_descriptor->URI);
+        if (rdf_descriptor->Author)
+            DISCOVERY_OUT("maker", rdf_descriptor->Author);
+        if (rdf_descriptor->License)
+            DISCOVERY_OUT("copyright", rdf_descriptor->License);
+        DISCOVERY_OUT("unique_id", rdf_descriptor->UniqueID);
         DISCOVERY_OUT("hints", hints);
-        DISCOVERY_OUT("category", category);
         DISCOVERY_OUT("audio.ins", audio_ins);
         DISCOVERY_OUT("audio.outs", audio_outs);
         DISCOVERY_OUT("audio.total", audio_total);
@@ -905,34 +779,19 @@ void do_lv2_check(const char* bundle)
         DISCOVERY_OUT("parameters.outs", parameters_outs);
         DISCOVERY_OUT("parameters.total", parameters_total);
         DISCOVERY_OUT("programs.total", programs_total);
-
-        DISCOVERY_OUT("build", BINARY_TYPE);
+        DISCOVERY_OUT("build", BINARY_NATIVE);
         DISCOVERY_OUT("end", "------------");
     }
-#else
-    (void)bundle;
-    DISCOVERY_OUT("error", "LV2 support not available");
-#endif
 }
 
 void do_vst_check(void* lib_handle)
 {
     VST_Function vstfn = (VST_Function)lib_symbol(lib_handle, "VSTPluginMain");
 
-    if (vstfn == nullptr)
-    {
-        if (vstfn == nullptr)
-        {
-#ifdef TARGET_API_MAC_CARBON
+    if (! vstfn)
+        vstfn = (VST_Function)lib_symbol(lib_handle, "main");
 
-            vstfn = (VST_Function)lib_symbol(lib_handle, "main_macho");
-            if (vstfn == nullptr)
-#endif
-                vstfn = (VST_Function)lib_symbol(lib_handle, "main");
-        }
-    }
-
-    if (vstfn == nullptr)
+    if (! vstfn)
     {
         DISCOVERY_OUT("error", "Not a VST plugin");
         return;
@@ -966,46 +825,6 @@ void do_vst_check(void* lib_handle)
             effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
 
             int hints = 0;
-            PluginCategory category = PLUGIN_CATEGORY_NONE;
-
-            switch (VstCategory)
-            {
-            case kPlugCategUnknown:
-                category = PLUGIN_CATEGORY_NONE;
-                break;
-            case kPlugCategSynth:
-                category = PLUGIN_CATEGORY_SYNTH;
-                break;
-            case kPlugCategAnalysis:
-                category = PLUGIN_CATEGORY_UTILITY;
-                break;
-            case kPlugCategMastering:
-                category = PLUGIN_CATEGORY_DYNAMICS;
-                break;
-            case kPlugCategRoomFx:
-                category = PLUGIN_CATEGORY_DELAY;
-                break;
-            case kPlugCategRestoration:
-                category = PLUGIN_CATEGORY_UTILITY;
-                break;
-            case kPlugCategGenerator:
-                category = PLUGIN_CATEGORY_SYNTH;
-                break;
-            default:
-                category = PLUGIN_CATEGORY_OUTRO;
-            }
-
-            if (effect->flags & effFlagsHasEditor)
-                hints |= PLUGIN_HAS_GUI;
-
-            if (effect->flags & effFlagsIsSynth)
-            {
-                hints |= PLUGIN_IS_SYNTH;
-
-                if (category == PLUGIN_CATEGORY_NONE)
-                    category = PLUGIN_CATEGORY_SYNTH;
-            }
-
             int audio_ins = effect->numInputs;
             int audio_outs = effect->numOutputs;
             int audio_total = audio_ins + audio_outs;
@@ -1013,11 +832,16 @@ void do_vst_check(void* lib_handle)
             int midi_outs = 0;
             int midi_total = 0;
             int parameters_ins = effect->numParams;
-            int parameters_outs = 0;
             int parameters_total = parameters_ins;
             int programs_total = effect->numPrograms;
 
-            if (VstPluginCanDo(effect, "receiveVstEvents") || VstPluginCanDo(effect, "receiveVstMidiEvent") || effect->flags & effFlagsIsSynth)
+            if (effect->flags & effFlagsHasEditor)
+                hints |= PLUGIN_HAS_GUI;
+
+            if (effect->flags & effFlagsIsSynth)
+                hints |= PLUGIN_IS_SYNTH;
+
+            if (VstPluginCanDo(effect, "receiveVstEvents") || VstPluginCanDo(effect, "receiveVstMidiEvent") || (effect->flags & effFlagsIsSynth) > 0)
                 midi_ins = 1;
 
             if (VstPluginCanDo(effect, "sendVstEvents") || VstPluginCanDo(effect, "sendVstMidiEvent"))
@@ -1025,7 +849,9 @@ void do_vst_check(void* lib_handle)
 
             midi_total = midi_ins + midi_outs;
 
-            // small crash-free plugin test
+            // -----------------------------------------------------------------------
+            // start crash-free plugin test
+
             float** bufferAudioIn = new float* [audio_ins];
             for (int j=0; j < audio_ins; j++)
             {
@@ -1046,7 +872,7 @@ void do_vst_check(void* lib_handle)
                 VstEvent* data[2];
             } events;
             VstMidiEvent midiEvents[2];
-            memset(&midiEvents, 0, sizeof(VstMidiEvent)*2);
+            memset(midiEvents, 0, sizeof(VstMidiEvent)*2);
 
             midiEvents[0].type = kVstMidiType;
             midiEvents[0].byteSize = sizeof(VstMidiEvent);
@@ -1065,22 +891,22 @@ void do_vst_check(void* lib_handle)
             events.data[0] = (VstEvent*)&midiEvents[0];
             events.data[1] = (VstEvent*)&midiEvents[1];
 
-#if !VST_FORCE_DEPRECATED
+#if ! VST_FORCE_DEPRECATED
             effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, bufferSize, nullptr, sampleRate);
 #endif
-            effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, sampleRate);
             effect->dispatcher(effect, effSetBlockSize, 0, bufferSize, nullptr, 0.0f);
+            effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, sampleRate);
             effect->dispatcher(effect, effSetProcessPrecision, 0, kVstProcessPrecision32, nullptr, 0.0f);
 
             effect->dispatcher(effect, effMainsChanged, 0, 1, nullptr, 0.0f);
             effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
 
-            if (midi_ins == 1)
+            if (midi_ins > 0)
                 effect->dispatcher(effect, effProcessEvents, 0, 0, &events, 0.0f);
 
             if (effect->flags & effFlagsCanReplacing)
                 effect->processReplacing(effect, bufferAudioIn, bufferAudioOut, bufferSize);
-#if !VST_FORCE_DEPRECATED
+#if ! VST_FORCE_DEPRECATED
             else
                 effect->process(effect, bufferAudioIn, bufferAudioOut, bufferSize);
 #endif
@@ -1095,6 +921,9 @@ void do_vst_check(void* lib_handle)
             delete[] bufferAudioIn;
             delete[] bufferAudioOut;
 
+            // end crash-free plugin test
+            // -----------------------------------------------------------------------
+
             DISCOVERY_OUT("init", "-----------");
             DISCOVERY_OUT("name", c_name);
             DISCOVERY_OUT("label", c_product);
@@ -1102,7 +931,6 @@ void do_vst_check(void* lib_handle)
             DISCOVERY_OUT("copyright", c_vendor);
             DISCOVERY_OUT("unique_id", VstCurrentUniqueId);
             DISCOVERY_OUT("hints", hints);
-            DISCOVERY_OUT("category", category);
             DISCOVERY_OUT("audio.ins", audio_ins);
             DISCOVERY_OUT("audio.outs", audio_outs);
             DISCOVERY_OUT("audio.total", audio_total);
@@ -1110,13 +938,12 @@ void do_vst_check(void* lib_handle)
             DISCOVERY_OUT("midi.outs", midi_outs);
             DISCOVERY_OUT("midi.total", midi_total);
             DISCOVERY_OUT("parameters.ins", parameters_ins);
-            DISCOVERY_OUT("parameters.outs", parameters_outs);
             DISCOVERY_OUT("parameters.total", parameters_total);
             DISCOVERY_OUT("programs.total", programs_total);
 
             effect->dispatcher(effect, effClose, 0, 0, nullptr, 0.0f);
 
-            DISCOVERY_OUT("build", BINARY_TYPE);
+            DISCOVERY_OUT("build", BINARY_NATIVE);
             DISCOVERY_OUT("end", "------------");
 
             if (VstCategory == kPlugCategShell)
@@ -1172,15 +999,11 @@ void do_sf2_check(const char* filename)
             DISCOVERY_OUT("label", "");
             DISCOVERY_OUT("maker", "");
             DISCOVERY_OUT("copyright", "");
-            DISCOVERY_OUT("unique_id", 0);
 
-            DISCOVERY_OUT("hints", 0);
-            DISCOVERY_OUT("category", PLUGIN_CATEGORY_SYNTH);
-            DISCOVERY_OUT("audio.ins", 0);
+            DISCOVERY_OUT("hints", PLUGIN_IS_SYNTH);
             DISCOVERY_OUT("audio.outs", 2);
             DISCOVERY_OUT("audio.total", 2);
             DISCOVERY_OUT("midi.ins", 1);
-            DISCOVERY_OUT("midi.outs", 0);
             DISCOVERY_OUT("midi.total", 1);
             DISCOVERY_OUT("programs.total", programs);
 
@@ -1189,7 +1012,7 @@ void do_sf2_check(const char* filename)
             DISCOVERY_OUT("parameters.outs", 1);
             DISCOVERY_OUT("parameters.total", 14);
 
-            DISCOVERY_OUT("build", BINARY_TYPE);
+            DISCOVERY_OUT("build", BINARY_NATIVE);
             DISCOVERY_OUT("end", "------------");
         }
         else
@@ -1207,17 +1030,21 @@ void do_sf2_check(const char* filename)
 }
 
 // ------------------------------ main entry point ------------------------------
+
 int main(int argc, char* argv[])
 {
     if (argc != 3)
+    {
+        qWarning("usage: %s <type> </path/to/plugin>", argv[0]);
         return 1;
+    }
 
     const char* type_str = argv[1];
     const char* filename = argv[2];
 
     bool open_lib;
     PluginType type;
-    void* handle = 0;
+    void* handle = nullptr;
 
     if (strcmp(type_str, "LADSPA") == 0)
     {
@@ -1254,12 +1081,9 @@ int main(int argc, char* argv[])
     {
         handle = lib_open(filename);
 
-        if (handle == nullptr)
+        if (! handle)
         {
-            const char* error = lib_error(filename);
-            // Since discovery can find multi-architecture binaries, don't print ELF related errors
-            if (error && strstr(error, "wrong ELF class") == nullptr && strstr(error, "Bad EXE format") == nullptr)
-                DISCOVERY_OUT("error", error);
+            print_lib_error(filename);
             return 1;
         }
     }

@@ -1179,7 +1179,7 @@ public:
     static intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
     {
 #if DEBUG
-        qDebug("VstHostCallback() - code: %s, index: %i, value: " P_INTPTR ", opt: %f", VstOpcode2str(opcode), index, value, opt);
+        qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstOpcode2str(opcode), index, value, opt);
 #endif
 
         // Check if 'user' points to this plugin
@@ -1336,7 +1336,7 @@ public:
             if (jack_pos->unique_1 == jack_pos->unique_2 && (jack_pos->valid & JackPositionBBT) > 0)
                 return jack_pos->beats_per_minute * 10000;
 
-            return 120.0 * 10000;
+            return 120 * 10000;
 
         case audioMasterGetNumAutomatableParameters:
             // Deprecated in VST SDK 2.4
@@ -1582,7 +1582,7 @@ public:
 #endif
 
         default:
-            qDebug("VstHostCallback() - code: %s, index: %i, value: " P_INTPTR ", opt: %f", VstOpcode2str(opcode), index, value, opt);
+            qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstOpcode2str(opcode), index, value, opt);
             break;
         }
 

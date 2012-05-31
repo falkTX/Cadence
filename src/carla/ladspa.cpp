@@ -503,12 +503,12 @@ public:
                 {
                     if (strcmp(descriptor->PortNames[i], "latency") == 0 || strcmp(descriptor->PortNames[i], "_latency") == 0)
                     {
-                        min = 0;
+                        min = 0.0;
                         max = get_sample_rate();
-                        def = 0;
-                        step = 1;
-                        step_small = 1;
-                        step_large = 1;
+                        def = 0.0;
+                        step = 1.0;
+                        step_small = 1.0;
+                        step_large = 1.0;
 
                         param.data[j].type  = PARAMETER_LATENCY;
                         param.data[j].hints = 0;
