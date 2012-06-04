@@ -19,8 +19,7 @@
 #define CARLA_OSC_H
 
 #include "carla_osc_includes.h"
-
-class CarlaPlugin;
+#include "carla_backend.h"
 
 int osc_handle_register(lo_arg** argv, lo_address source);
 int osc_handle_unregister();

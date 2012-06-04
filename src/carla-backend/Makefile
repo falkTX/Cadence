@@ -8,13 +8,13 @@ CC  ?= gcc
 CXX ?= g++
 
 CARLA_C_FLAGS    = -Wall -fPIC -I. -I../carla-includes $(CFLAGS)
-CARLA_CXX_FLAGS  = -Wall -std=c++0x -fPIC -I. -I../carla-includes `pkg-config --cflags jack fluidsynth liblo QtCore QtGui` $(CXXFLAGS)
+CARLA_CXX_FLAGS  = -Wall -std=c++0x -fPIC -I. -I../carla-includes `pkg-config --cflags jack fluidsynth liblo QtCore QtGui` -DCARLA_ENGINE_JACK $(CXXFLAGS)
 CARLA_CXX_FLAGS += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
 CARLA_CXX_FLAGS += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT -O2 -ffast-math -fomit-frame-pointer -fvisibility=hidden -mtune=generic -msse
 # CARLA_CXX_FLAGS += -DDEBUG -O0 -g
 CARLA_LINK_FLAGS = -shared -fPIC -ldl `pkg-config --libs jack fluidsynth liblo QtCore QtGui` $(LDFLAGS)
 
-OBJS = carla_backend.o carla_bridge.o carla_jack.o carla_osc.o carla_shared.o carla_threads.o ladspa.o dssi.o lv2.o vst.o sf2.o lv2-rtmempool/rtmempool.o
+OBJS = carla_backend.o carla_bridge.o carla_engine_jack.o carla_osc.o carla_shared.o carla_threads.o ladspa.o dssi.o lv2.o vst.o sf2.o lv2-rtmempool/rtmempool.o
 
 
 all: carla_backend.so

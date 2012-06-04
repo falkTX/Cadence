@@ -12,7 +12,7 @@ SORD_VERSION   = 0.8.0
 SRATOM_VERSION = 0.2.0
 LILV_VERSION   = 0.14.2
 
-BUILD_FLAGS  = -O2 -fvisibility=hidden -fPIC -mtune=generic -std=c99 -Wall $(CFLAGS)
+BUILD_FLAGS  = -O2 -ffast-math -fomit-frame-pointer -fvisibility=hidden -fPIC -mtune=generic -msse -std=c99 -Wall $(CFLAGS)
 BUILD_FLAGS += -Iconfig -I../carla-includes
 
 32BIT_FLAGS  = -m32

@@ -20,6 +20,8 @@
 
 #include "carla_backend.h"
 
+CARLA_BACKEND_START_NAMESPACE
+
 class CarlaPlugin;
 
 const char* bool2str(bool yesno);
@@ -48,9 +50,8 @@ extern volatile double aouts_peak[MAX_PLUGINS*2];
 #ifndef BUILD_BRIDGE
 // Global options
 struct carla_options_t {
-    bool global_jack_client;
-    bool use_dssi_chunks;
     bool prefer_ui_bridges;
+    bool proccess_32x;
     const char* bridge_unix32;
     const char* bridge_unix64;
     const char* bridge_win32;
@@ -62,5 +63,7 @@ struct carla_options_t {
 
 extern carla_options_t carla_options;
 #endif
+
+CARLA_BACKEND_END_NAMESPACE
 
 #endif // CARLA_SHARED_H

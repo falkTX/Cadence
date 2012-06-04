@@ -22,7 +22,7 @@
 class DssiPlugin : public CarlaPlugin
 {
 public:
-    DssiPlugin() : CarlaPlugin()
+    DssiPlugin(unsigned short id) : CarlaPlugin(id)
     {
         qDebug("DssiPlugin::DssiPlugin()");
         m_type = PLUGIN_DSSI;
@@ -193,7 +193,7 @@ public:
     {
         if (index >= 0)
         {
-            if (carla_jack_on_freewheel())
+            if (0) //(carla_jack_on_freewheel())
             {
                 if (block) carla_proc_lock();
                 descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
@@ -248,15 +248,15 @@ public:
     void reload()
     {
         qDebug("DssiPlugin::reload() - start");
-        short _id = m_id;
 
         // Safely disable plugin for reload
-        carla_proc_lock();
-        m_id = -1;
-        carla_proc_unlock();
+        const CarlaPluginScopedDisabler m(this);
 
-        // Unregister previous jack ports if needed
-        remove_from_jack(bool(_id >= 0));
+        if (x_client->isActive())
+            x_client->deactivate();
+
+        // Remove client ports
+        remove_client_ports();
 
         // Delete old data
         delete_buffers();
@@ -285,13 +285,13 @@ public:
 
         if (ains > 0)
         {
-            ain.ports    = new jack_port_t*[ains];
+            ain.ports    = new CarlaEngineAudioPort*[ains];
             ain.rindexes = new uint32_t[ains];
         }
 
         if (aouts > 0)
         {
-            aout.ports    = new jack_port_t*[aouts];
+            aout.ports    = new CarlaEngineAudioPort*[aouts];
             aout.rindexes = new uint32_t[aouts];
         }
 
@@ -314,27 +314,18 @@ public:
 
             if (LADSPA_IS_PORT_AUDIO(PortType))
             {
-#ifndef BUILD_BRIDGE
-                if (carla_options.global_jack_client)
-                {
-                    strcpy(port_name, m_name);
-                    strcat(port_name, ":");
-                    strncat(port_name, ldescriptor->PortNames[i], port_name_size/2);
-                }
-                else
-#endif
-                    strncpy(port_name, ldescriptor->PortNames[i], port_name_size);
+                strncpy(port_name, ldescriptor->PortNames[i], port_name_size);
 
                 if (LADSPA_IS_PORT_INPUT(PortType))
                 {
                     j = ain.count++;
-                    ain.ports[j] = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+                    ain.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(port_name, CarlaEnginePortTypeAudio, true);
                     ain.rindexes[j] = i;
                 }
                 else if (LADSPA_IS_PORT_OUTPUT(PortType))
                 {
                     j = aout.count++;
-                    aout.ports[j] = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+                    aout.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(port_name, CarlaEnginePortTypeAudio, false);
                     aout.rindexes[j] = i;
                     needs_cin = true;
                 }
@@ -541,47 +532,20 @@ public:
 
         if (needs_cin)
         {
-#ifndef BUILD_BRIDGE
-            if (carla_options.global_jack_client)
-            {
-                strcpy(port_name, m_name);
-                strcat(port_name, ":control-in");
-            }
-            else
-#endif
-                strcpy(port_name, "control-in");
-
-            param.port_cin = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+            strcpy(port_name, "control-in");
+            param.port_cin = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, true);
         }
 
         if (needs_cout)
         {
-#ifndef BUILD_BRIDGE
-            if (carla_options.global_jack_client)
-            {
-                strcpy(port_name, m_name);
-                strcat(port_name, ":control-out");
-            }
-            else
-#endif
-                strcpy(port_name, "control-out");
-
-            param.port_cout = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
+            strcpy(port_name, "control-out");
+            param.port_cout = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, false);
         }
 
-        if (mins == 1)
+        if (mins > 0)
         {
-#ifndef BUILD_BRIDGE
-            if (carla_options.global_jack_client)
-            {
-                strcpy(port_name, m_name);
-                strcat(port_name, ":midi-in");
-            }
-            else
-#endif
-                strcpy(port_name, "midi-in");
-
-            midi.port_min = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+            strcpy(port_name, "midi-in");
+            midi.port_min = (CarlaEngineMidiPort*)x_client->addPort(port_name, CarlaEnginePortTypeMIDI, true);
         }
 
         ain.count   = ains;
@@ -596,7 +560,7 @@ public:
         if (midi.port_min > 0 && aout.count > 0)
             m_hints |= PLUGIN_IS_SYNTH;
 
-#ifndef BUILD_BRIDGE
+#if 0
         if (carla_options.use_dssi_chunks && QString(m_filename).endsWith("dssi-vst.so", Qt::CaseInsensitive))
         {
             if (descriptor->get_custom_data && descriptor->set_custom_data)
@@ -613,19 +577,12 @@ public:
         if (aouts >= 2 && aouts%2 == 0)
             m_hints |= PLUGIN_CAN_BALANCE;
 
-        carla_proc_lock();
-        m_id = _id;
-        carla_proc_unlock();
-
-#ifndef BUILD_BRIDGE
-        if (carla_options.global_jack_client == false)
-#endif
-            jack_activate(jack_client);
+        x_client->activate();
 
         qDebug("DssiPlugin::reload() - end");
     }
 
-    virtual void reload_programs(bool init)
+    void reload_programs(bool init)
     {
         qDebug("DssiPlugin::reload_programs(%s)", bool2str(init));
         uint32_t i, old_count = midiprog.count;
@@ -722,7 +679,7 @@ public:
         }
     }
 
-    virtual void process(jack_nframes_t nframes)
+    void process(float** ains_buffer, float** aouts_buffer, uint32_t nframes, uint32_t nframesOffset)
     {
         uint32_t i, k;
         unsigned short plugin_id = m_id;
@@ -730,19 +687,6 @@ public:
 
         double ains_peak_tmp[2]  = { 0.0 };
         double aouts_peak_tmp[2] = { 0.0 };
-
-        jack_audio_sample_t* ains_buffer[ain.count];
-        jack_audio_sample_t* aouts_buffer[aout.count];
-        void* min_buffer = nullptr;
-
-        for (i=0; i < ain.count; i++)
-            ains_buffer[i] = (jack_audio_sample_t*)jack_port_get_buffer(ain.ports[i], nframes);
-
-        for (i=0; i < aout.count; i++)
-            aouts_buffer[i] = (jack_audio_sample_t*)jack_port_get_buffer(aout.ports[i], nframes);
-
-        if (midi.port_min > 0)
-            min_buffer = jack_port_get_buffer(midi.port_min, nframes);
 
         // --------------------------------------------------------------------------------------------------------
         // Input VU
@@ -777,59 +721,53 @@ public:
 
         if (param.port_cin)
         {
-            void* pin_buffer = jack_port_get_buffer(param.port_cin, nframes);
+            void* cin_buffer = param.port_cin->getBuffer(nframes);
 
-            jack_midi_event_t pin_event;
-            uint32_t n_pin_events = jack_midi_get_event_count(pin_buffer);
+            const CarlaEngineControlEvent* cin_event;
+            uint32_t n_cin_events = param.port_cin->getEventCount(cin_buffer);
 
-            unsigned char next_bank_id = 0;
+            uint32_t next_bank_id = 0;
             if (midiprog.current > 0 && midiprog.count > 0)
                 next_bank_id = midiprog.data[midiprog.current].bank;
 
-            for (i=0; i < n_pin_events; i++)
+            for (i=0; i < n_cin_events; i++)
             {
-                if (jack_midi_event_get(&pin_event, pin_buffer, i) != 0)
+                cin_event = param.port_cin->getEvent(cin_buffer, i);
+
+                if (! cin_event)
+                    continue;
+
+                if (carla_options.proccess_32x && cin_event->time < 32)
                     break;
 
-                jack_midi_data_t status  = pin_event.buffer[0];
-                jack_midi_data_t channel = status & 0x0F;
-
                 // Control change
-                if (MIDI_IS_STATUS_CONTROL_CHANGE(status))
+                switch (cin_event->type)
                 {
-                    jack_midi_data_t control = pin_event.buffer[1];
-                    jack_midi_data_t c_value = pin_event.buffer[2];
-
-                    // Bank Select
-                    if (MIDI_IS_CONTROL_BANK_SELECT(control))
-                    {
-                        next_bank_id = c_value;
-                        continue;
-                    }
-
+                case CarlaEngineEventControlChange:
+                {
                     double value;
 
                     // Control backend stuff
-                    if (channel == cin_channel)
+                    if (cin_event->channel == cin_channel)
                     {
-                        if (MIDI_IS_CONTROL_BREATH_CONTROLLER(control) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
+                        if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cin_event->controller) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
-                            value = double(c_value)/127;
+                            value = cin_event->value;
                             set_drywet(value, false, false);
-                            postpone_event(PostEventParameterChange, PARAMETER_DRYWET, value);
+                            postpone_event(PluginPostEventParameterChange, PARAMETER_DRYWET, value);
                             continue;
                         }
-                        else if (MIDI_IS_CONTROL_CHANNEL_VOLUME(control) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
+                        else if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cin_event->controller) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
                         {
-                            value = double(c_value)/100;
+                            value = cin_event->value*127/100;
                             set_volume(value, false, false);
-                            postpone_event(PostEventParameterChange, PARAMETER_VOLUME, value);
+                            postpone_event(PluginPostEventParameterChange, PARAMETER_VOLUME, value);
                             continue;
                         }
-                        else if (MIDI_IS_CONTROL_BALANCE(control) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
+                        else if (MIDI_IS_CONTROL_BALANCE(cin_event->controller) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
                         {
                             double left, right;
-                            value = (double(c_value)-63.5)/63.5;
+                            value = cin_event->value/0.5 - 1.0;
 
                             if (value < 0)
                             {
@@ -849,29 +787,8 @@ public:
 
                             set_balance_left(left, false, false);
                             set_balance_right(right, false, false);
-                            postpone_event(PostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
-                            postpone_event(PostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
-                            continue;
-                        }
-                        else if (control == MIDI_CONTROL_ALL_SOUND_OFF)
-                        {
-                            if (midi.port_min)
-                                send_midi_all_notes_off();
-
-                            if (m_active && m_active_before)
-                            {
-                                if (ldescriptor->deactivate)
-                                    ldescriptor->deactivate(handle);
-
-                                if (ldescriptor->activate)
-                                    ldescriptor->activate(handle);
-                            }
-                            continue;
-                        }
-                        else if (control == MIDI_CONTROL_ALL_NOTES_OFF)
-                        {
-                            if (midi.port_min)
-                                send_midi_all_notes_off();
+                            postpone_event(PluginPostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
+                            postpone_event(PluginPostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
                             continue;
                         }
                     }
@@ -879,40 +796,76 @@ public:
                     // Control plugin parameters
                     for (k=0; k < param.count; k++)
                     {
-                        if (param.data[k].midi_channel == channel && param.data[k].midi_cc == control && param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0)
+                        if (param.data[k].midi_channel == cin_event->channel && param.data[k].midi_cc == cin_event->controller && param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0)
                         {
                             if (param.data[k].hints & PARAMETER_IS_BOOLEAN)
                             {
-                                value = c_value <= 63 ? param.ranges[k].min : param.ranges[k].max;
+                                value = cin_event->value < 0.5 ? param.ranges[k].min : param.ranges[k].max;
                             }
                             else
                             {
-                                value = (double(c_value) / 127 * (param.ranges[k].max - param.ranges[k].min)) + param.ranges[k].min;
+                                value = cin_event->value * (param.ranges[k].max - param.ranges[k].min) + param.ranges[k].min;
 
                                 if (param.data[k].hints & PARAMETER_IS_INTEGER)
                                     value = rint(value);
                             }
 
                             set_parameter_value(k, value, false, false, false);
-                            postpone_event(PostEventParameterChange, k, value);
+                            postpone_event(PluginPostEventParameterChange, k, value);
                         }
                     }
+
+                    break;
                 }
-                // Program change
-                else if (MIDI_IS_STATUS_PROGRAM_CHANGE(status))
+
+                case CarlaEngineEventMidiBankChange:
+                {
+                    next_bank_id = cin_event->value;
+                    break;
+                }
+
+                case CarlaEngineEventMidiProgramChange:
                 {
                     uint32_t mbank_id = next_bank_id;
-                    uint32_t mprog_id = pin_event.buffer[1];
+                    uint32_t mprog_id = cin_event->value;
 
                     for (k=0; k < midiprog.count; k++)
                     {
                         if (midiprog.data[k].bank == mbank_id && midiprog.data[k].program == mprog_id)
                         {
                             set_midi_program(k, false, false, false, false);
-                            postpone_event(PostEventMidiProgramChange, k, 0.0);
+                            postpone_event(PluginPostEventMidiProgramChange, k, 0.0);
                             break;
                         }
                     }
+
+                    break;
+                }
+
+                case CarlaEngineEventAllSoundOff:
+                    if (cin_event->channel == cin_channel)
+                    {
+                        if (midi.port_min)
+                            send_midi_all_notes_off();
+
+                        if (m_active && m_active_before)
+                        {
+                            if (ldescriptor->deactivate)
+                                ldescriptor->deactivate(handle);
+
+                            if (ldescriptor->activate)
+                                ldescriptor->activate(handle);
+                        }
+                    }
+                    break;
+
+                case CarlaEngineEventAllNotesOff:
+                    if (cin_event->channel == cin_channel)
+                    {
+                        if (midi.port_min)
+                            send_midi_all_notes_off();
+                    }
+                    break;
                 }
             }
         } // End of Parameters Input
@@ -928,17 +881,17 @@ public:
 
             for (i=0; i < MAX_MIDI_EVENTS && midi_event_count < MAX_MIDI_EVENTS; i++)
             {
-                if (ext_midi_notes[i].valid)
+                if (extMidiNotes[i].valid)
                 {
                     snd_seq_event_t* midi_event = &midi_events[midi_event_count];
                     memset(midi_event, 0, sizeof(snd_seq_event_t));
 
-                    midi_event->type = ext_midi_notes[i].onoff ? SND_SEQ_EVENT_NOTEON : SND_SEQ_EVENT_NOTEOFF;
+                    midi_event->type = extMidiNotes[i].onoff ? SND_SEQ_EVENT_NOTEON : SND_SEQ_EVENT_NOTEOFF;
                     midi_event->data.note.channel  = 0;
-                    midi_event->data.note.note     = ext_midi_notes[i].note;
-                    midi_event->data.note.velocity = ext_midi_notes[i].velo;
+                    midi_event->data.note.note     = extMidiNotes[i].note;
+                    midi_event->data.note.velocity = extMidiNotes[i].velo;
 
-                    ext_midi_notes[i].valid = false;
+                    extMidiNotes[i].valid = false;
                     midi_event_count += 1;
                 }
                 else
@@ -956,50 +909,57 @@ public:
 
         if (midi.port_min)
         {
-            jack_midi_event_t min_event;
-            uint32_t n_min_events = jack_midi_get_event_count(min_buffer);
+            void* min_buffer = midi.port_min->getBuffer(nframes);
 
-            for (k=0; k < n_min_events && midi_event_count < MAX_MIDI_EVENTS; k++)
+            const CarlaEngineMidiEvent* min_event;
+            uint32_t n_min_events = midi.port_min->getEventCount(min_buffer);
+
+            for (i=0; i < n_min_events && midi_event_count < MAX_MIDI_EVENTS; i++)
             {
-                if (jack_midi_event_get(&min_event, min_buffer, k) != 0)
+                min_event = midi.port_min->getEvent(min_buffer, i);
+
+                if (! min_event)
                     break;
 
-                jack_midi_data_t status  = min_event.buffer[0];
-                jack_midi_data_t channel = status & 0x0F;
+                if (carla_options.proccess_32x && min_event->time < 32)
+                    break;
+
+                uint8_t status  = min_event->data[0];
+                uint8_t channel = status & 0x0F;
 
                 // Fix bad note-off
-                if (MIDI_IS_STATUS_NOTE_ON(status) && min_event.buffer[2] == 0)
+                if (MIDI_IS_STATUS_NOTE_ON(status) && min_event->data[2] == 0)
                     status -= 0x10;
 
                 snd_seq_event_t* midi_event = &midi_events[midi_event_count];
                 memset(midi_event, 0, sizeof(snd_seq_event_t));
 
-                midi_event->time.tick = min_event.time;
+                midi_event->time.tick = min_event->time - nframesOffset;
 
                 if (MIDI_IS_STATUS_NOTE_OFF(status))
                 {
-                    jack_midi_data_t note = min_event.buffer[1];
+                    uint8_t note = min_event->data[1];
 
                     midi_event->type = SND_SEQ_EVENT_NOTEOFF;
                     midi_event->data.note.channel = channel;
                     midi_event->data.note.note    = note;
-                    postpone_event(PostEventNoteOff, note, 0.0);
+                    postpone_event(PluginPostEventNoteOff, note, 0.0);
                 }
                 else if (MIDI_IS_STATUS_NOTE_ON(status))
                 {
-                    jack_midi_data_t note = min_event.buffer[1];
-                    jack_midi_data_t velo = min_event.buffer[2];
+                    uint8_t note = min_event->data[1];
+                    uint8_t velo = min_event->data[2];
 
                     midi_event->type = SND_SEQ_EVENT_NOTEON;
                     midi_event->data.note.channel  = channel;
                     midi_event->data.note.note     = note;
                     midi_event->data.note.velocity = velo;
-                    postpone_event(PostEventNoteOn, note, velo);
+                    postpone_event(PluginPostEventNoteOn, note, velo);
                 }
                 else if (MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status))
                 {
-                    jack_midi_data_t note     = min_event.buffer[1];
-                    jack_midi_data_t pressure = min_event.buffer[2];
+                    uint8_t note     = min_event->data[1];
+                    uint8_t pressure = min_event->data[2];
 
                     midi_event->type = SND_SEQ_EVENT_KEYPRESS;
                     midi_event->data.note.channel  = channel;
@@ -1008,7 +968,7 @@ public:
                 }
                 else if (MIDI_IS_STATUS_AFTERTOUCH(status))
                 {
-                    jack_midi_data_t pressure = min_event.buffer[1];
+                    uint8_t pressure = min_event->data[1];
 
                     midi_event->type = SND_SEQ_EVENT_CHANPRESS;
                     midi_event->data.control.channel = channel;
@@ -1016,8 +976,8 @@ public:
                 }
                 else if (MIDI_IS_STATUS_PITCH_WHEEL_CONTROL(status))
                 {
-                    jack_midi_data_t lsb = min_event.buffer[1];
-                    jack_midi_data_t msb = min_event.buffer[2];
+                    uint8_t lsb = min_event->data[1];
+                    uint8_t msb = min_event->data[2];
 
                     midi_event->type = SND_SEQ_EVENT_PITCHBEND;
                     midi_event->data.control.channel = channel;
@@ -1097,7 +1057,7 @@ public:
             bool do_balance = (m_hints & PLUGIN_CAN_BALANCE) > 0 && (x_bal_left != -1.0 || x_bal_right != 1.0);
 
             double bal_rangeL, bal_rangeR;
-            jack_audio_sample_t old_bal_left[do_balance ? nframes : 0];
+            float old_bal_left[do_balance ? nframes : 0];
 
             for (i=0; i < aout.count; i++)
             {
@@ -1123,7 +1083,7 @@ public:
                 if (do_balance)
                 {
                     if (i%2 == 0)
-                        memcpy(&old_bal_left, aouts_buffer[i], sizeof(jack_audio_sample_t)*nframes);
+                        memcpy(&old_bal_left, aouts_buffer[i], sizeof(float)*nframes);
 
                     bal_rangeL = (x_bal_left+1.0)/2;
                     bal_rangeR = (x_bal_right+1.0)/2;
@@ -1157,7 +1117,7 @@ public:
         {
             // disable any output sound if not active
             for (i=0; i < aout.count; i++)
-                memset(aouts_buffer[i], 0.0f, sizeof(jack_audio_sample_t)*nframes);
+                memset(aouts_buffer[i], 0.0f, sizeof(float)*nframes);
 
             aouts_peak_tmp[0] = 0.0;
             aouts_peak_tmp[1] = 0.0;
@@ -1171,21 +1131,15 @@ public:
 
         if (param.port_cout)
         {
-            void* cout_buffer = jack_port_get_buffer(param.port_cout, nframes);
-            jack_midi_clear_buffer(cout_buffer);
-
+            void* cout_buffer = param.port_cout->getBuffer(nframes);
             double value;
 
             for (k=0; k < param.count; k++)
             {
                 if (param.data[k].type == PARAMETER_OUTPUT && param.data[k].midi_cc > 0)
                 {
-                    value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min) * 127;
-
-                    jack_midi_data_t* event_buffer = jack_midi_event_reserve(cout_buffer, 0, 3);
-                    event_buffer[0] = MIDI_STATUS_CONTROL_CHANGE + param.data[k].midi_channel;
-                    event_buffer[1] = param.data[k].midi_cc;
-                    event_buffer[2] = value;
+                    value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
+                    param.port_cout->writeEvent(cout_buffer, param.data[k].midi_channel, param.data[k].midi_cc, value);
                 }
             }
         } // End of Control Output
@@ -1203,7 +1157,7 @@ public:
         m_active_before = m_active;
     }
 
-    virtual void delete_buffers()
+    void delete_buffers()
     {
         qDebug("DssiPlugin::delete_buffers() - start");
 
@@ -1239,8 +1193,9 @@ public:
                     {
                         m_filename = strdup(filename);
                         m_name = get_unique_name(ldescriptor->Name);
+                        x_client = new CarlaEngineClient(this);
 
-                        if (carla_jack_register_plugin(this, &jack_client))
+                        if (x_client->isOk())
                         {
 #ifndef BUILD_BRIDGE
                             if (gui_filename)
@@ -1257,7 +1212,7 @@ public:
                             return true;
                         }
                         else
-                            set_last_error("Failed to register plugin in JACK");
+                            set_last_error("Failed to register plugin client");
                     }
                     else
                         set_last_error("Plugin failed to initialize");
@@ -1291,17 +1246,16 @@ short add_plugin_dssi(const char* filename, const char* label, const void* extra
 
     if (id >= 0)
     {
-        DssiPlugin* plugin = new DssiPlugin;
+        DssiPlugin* plugin = new DssiPlugin(id);
 
         if (plugin->init(filename, label, (const char*)extra_stuff))
         {
             plugin->reload();
-            plugin->set_id(id);
 
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-            plugin->osc_global_register_new();
+            plugin->osc_register_new();
         }
         else
         {

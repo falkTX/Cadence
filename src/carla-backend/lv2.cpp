@@ -129,7 +129,7 @@ const char* lv2bridge2str(LV2_Property type)
 class Lv2Plugin : public CarlaPlugin
 {
 public:
-    Lv2Plugin() : CarlaPlugin()
+    Lv2Plugin(unsigned short id) : CarlaPlugin(id)
     {
         qDebug("Lv2Plugin::Lv2Plugin()");
         m_type = PLUGIN_LV2;
@@ -658,7 +658,7 @@ public:
     {
         if (ext.programs && index >= 0)
         {
-            if (carla_jack_on_freewheel())
+            if (0) //carla_jack_on_freewheel())
             {
                 if (block) carla_proc_lock();
                 ext.programs->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
@@ -803,6 +803,7 @@ public:
         }
     }
 
+#if 0
     void reload()
     {
         qDebug("Lv2Plugin::reload() - start");
@@ -1339,7 +1340,7 @@ public:
         }
 
         // TODO - apply same to others (reload_programs() after hints)
-        reload_programs(true);
+        //reload_programs(true);
 
         //if (ext.dynparam)
         //    ext.dynparam->host_attach(handle, &dynparam_host, this);
@@ -1349,7 +1350,7 @@ public:
         carla_proc_unlock();
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.global_jack_client == false)
+        if (! carla_options.global_jack_client)
 #endif
             jack_activate(jack_client);
 
@@ -1459,7 +1460,7 @@ public:
             ext.state->save(handle, carla_lv2_state_store, this, LV2_STATE_IS_POD, features);
     }
 
-    void process(jack_nframes_t nframes)
+    void process(jack_nframes_t nframes, jack_nframes_t nframesOffset)
     {
         uint32_t i, k;
         unsigned short plugin_id = m_id;
@@ -2109,7 +2110,7 @@ public:
     }
 
     // TODO, remove = true
-    void remove_from_jack(bool deactivate = true)
+    void remove_from_jack(bool deactivate)
     {
         qDebug("Lv2Plugin::remove_from_jack() - start");
 
@@ -2129,6 +2130,7 @@ public:
 
         qDebug("Lv2Plugin::remove_from_jack() - end");
     }
+#endif
 
     void run_custom_event(PluginPostEvent* event)
     {
@@ -2537,9 +2539,10 @@ public:
                             if (handle)
                             {
                                 m_filename = strdup(bundle);
-                                m_name = get_unique_name(rdf_descriptor->Name);
+                                m_name   = get_unique_name(rdf_descriptor->Name);
+                                x_client = new CarlaEngineClient(this);
 
-                                if (carla_jack_register_plugin(this, &jack_client))
+                                if (x_client->isOk())
                                 {
                                     // ----------------- GUI Stuff -------------------------------------------------------
 
@@ -2773,7 +2776,7 @@ public:
                                     return true;
                                 }
                                 else
-                                    set_last_error("Failed to register plugin in JACK");
+                                    set_last_error("Failed to register plugin client");
                             }
                             else
                                 set_last_error("Plugin failed to initialize");
@@ -3334,7 +3337,7 @@ public:
                 if (buffer_size == sizeof(float))
                 {
                     float value = *(float*)buffer;
-                    plugin->set_parameter_value_rindex(port_index, value, false, true, true);
+                    plugin->set_parameter_value_by_rindex(port_index, value, false, true, true);
                 }
             }
             else if (format == CARLA_URI_MAP_ID_MIDI_EVENT)
@@ -3430,17 +3433,16 @@ short add_plugin_lv2(const char* filename, const char* label)
 
     if (id >= 0)
     {
-        Lv2Plugin* plugin = new Lv2Plugin;
+        Lv2Plugin* plugin = new Lv2Plugin(id);
 
         if (plugin->init(filename, label))
         {
             plugin->reload();
-            plugin->set_id(id);
 
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-            plugin->osc_global_register_new();
+            plugin->osc_register_new();
         }
         else
         {

@@ -30,7 +30,7 @@
 class Sf2Plugin : public CarlaPlugin
 {
 public:
-    Sf2Plugin() : CarlaPlugin()
+    Sf2Plugin(unsigned short id) : CarlaPlugin(id)
     {
         qDebug("Sf2Plugin::Sf2Plugin()");
         m_type = PLUGIN_SF2;
@@ -275,7 +275,7 @@ public:
     {
         if (index >= 0)
         {
-            if (carla_jack_on_freewheel())
+            if (0) //carla_jack_on_freewheel())
             {
                 if (block) carla_proc_lock();
                 fluid_synth_program_select(f_synth, 0, f_id, midiprog.data[index].bank, midiprog.data[index].program);
@@ -306,6 +306,7 @@ public:
         CarlaPlugin::set_midi_program(index, gui_send, osc_send, callback_send, block);
     }
 
+#if 0
     void reload()
     {
         qDebug("Sf2AudioPlugin::reload() - start");
@@ -739,7 +740,7 @@ public:
         }
     }
 
-    virtual void process(jack_nframes_t nframes)
+    virtual void process(jack_nframes_t nframes, jack_nframes_t nframesOffset)
     {
         uint32_t i, k;
         unsigned short plugin_id = m_id;
@@ -1121,6 +1122,7 @@ public:
 
         qDebug("Sf2Plugin::delete_buffers() - end");
     }
+#endif
 
     bool init(const char* filename, const char* label)
     {
@@ -1129,13 +1131,14 @@ public:
         if (f_id >= 0)
         {
             m_filename = strdup(filename);
-            m_label = strdup(label);
-            m_name  = get_unique_name(label);
+            m_label  = strdup(label);
+            m_name   = get_unique_name(label);
+            x_client = new CarlaEngineClient(this);
 
-            if (carla_jack_register_plugin(this, &jack_client))
+            if (x_client->isOk())
                 return true;
-            else
-                set_last_error("Failed to register plugin in JACK");
+
+            set_last_error("Failed to register plugin client");
         }
         else
             set_last_error("Failed to load SoundFont file");
@@ -1180,19 +1183,16 @@ short add_plugin_sf2(const char* filename, const char* label)
     {
         if (fluid_is_soundfont(filename))
         {
-            Sf2Plugin* plugin = new Sf2Plugin;
+            Sf2Plugin* plugin = new Sf2Plugin(id);
 
             if (plugin->init(filename, label))
             {
                 plugin->reload();
-                plugin->set_id(id);
 
                 unique_names[id] = plugin->name();
                 CarlaPlugins[id] = plugin;
 
-#ifndef BUILD_BRIDGE
-                plugin->osc_global_register_new();
-#endif
+                plugin->osc_register_new();
             }
             else
             {

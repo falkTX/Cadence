@@ -181,8 +181,8 @@ else:
 CWD = sys.path[0]
 
 # find carla_library_path
-if os.path.exists(os.path.join(CWD, "carla", carla_libname)):
-    carla_library_path = os.path.join(CWD, "carla", carla_libname)
+if os.path.exists(os.path.join(CWD, "carla-backend", carla_libname)):
+    carla_library_path = os.path.join(CWD, "carla-backend", carla_libname)
 else:
     if WINDOWS:
         CARLA_PATH = (os.path.join(PROGRAMFILES, "Cadence", "carla"),)
@@ -728,14 +728,14 @@ class Host(object):
 
         self.lib = cdll.LoadLibrary(carla_library_path)
 
-        self.lib.carla_init.argtypes = [c_char_p]
-        self.lib.carla_init.restype = c_bool
+        self.lib.engine_init.argtypes = [c_char_p]
+        self.lib.engine_init.restype = c_bool
 
-        self.lib.carla_close.argtypes = None
-        self.lib.carla_close.restype = c_bool
+        self.lib.engine_close.argtypes = None
+        self.lib.engine_close.restype = c_bool
 
-        self.lib.carla_is_engine_running.argtypes = None
-        self.lib.carla_is_engine_running.restype = c_bool
+        self.lib.is_engine_running.argtypes = None
+        self.lib.is_engine_running.restype = c_bool
 
         self.lib.add_plugin.argtypes = [c_enum, c_enum, c_char_p, c_char_p, c_void_p]
         self.lib.add_plugin.restype = c_short
@@ -896,14 +896,14 @@ class Host(object):
         self.lib.get_latency.argtypes = None
         self.lib.get_latency.restype = c_double
 
-    def carla_init(self, client_name):
-        return self.lib.carla_init(client_name.encode("utf-8"))
+    def engine_init(self, client_name):
+        return self.lib.engine_init(client_name.encode("utf-8"))
 
-    def carla_close(self):
-        return self.lib.carla_close()
+    def engine_close(self):
+        return self.lib.engine_close()
 
-    def carla_is_engine_running(self):
-        return self.lib.carla_is_engine_running()
+    def is_engine_running(self):
+        return self.lib.is_engine_running()
 
     def add_plugin(self, btype, ptype, filename, label, extra_stuff):
         return self.lib.add_plugin(btype, ptype, filename.encode("utf-8"), label.encode("utf-8"), cast(extra_stuff, c_void_p))

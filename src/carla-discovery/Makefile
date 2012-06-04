@@ -8,7 +8,7 @@ CXX     ?= g++
 WINECXX ?= wineg++
 
 BUILD_FLAGS  = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -std=c++0x -Wall $(CXXFLAGS)
-BUILD_FLAGS += -I../carla-includes $(shell pkg-config --cflags QtCore)
+BUILD_FLAGS += -I../carla-backend -I../carla-includes $(shell pkg-config --cflags QtCore)
 BUILD_FLAGS += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT
 BUILD_FLAGS += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
 
@@ -22,19 +22,19 @@ LINK_FLAGS  += $(shell pkg-config --libs fluidsynth)
 endif
 
 UNIX_BUILD_FLAGS = $(BUILD_FLAGS)
-UNIX_32BIT_FLAGS = -L/usr/lib32 -L/usr/lib/i386-linux-gnu $(32BIT_FLAGS)
-UNIX_64BIT_FLAGS = -L/usr/lib64 -L/usr/lib/x86_64-linux-gnu $(64BIT_FLAGS)
-UNIX_LINK_FLAGS  = -ldl $(LINK_FLAGS)
+UNIX_32BIT_FLAGS = $(32BIT_FLAGS) -L/usr/lib32 -L/usr/lib/i386-linux-gnu
+UNIX_64BIT_FLAGS = $(64BIT_FLAGS) -L/usr/lib64 -L/usr/lib/x86_64-linux-gnu
+UNIX_LINK_FLAGS  = $(LINK_FLAGS) -ldl
 
 WIN_BUILD_FLAGS  = $(BUILD_FLAGS)
 WIN_32BIT_FLAGS  = $(32BIT_FLAGS)
 WIN_64BIT_FLAGS  = $(64BIT_FLAGS)
-WIN_LINK_FLAGS   = -static $(LINK_FLAGS)
+WIN_LINK_FLAGS   = $(LINK_FLAGS) -static
 
 WINE_BUILD_FLAGS = $(BUILD_FLAGS) # -fpermissive
-WINE_32BIT_FLAGS = -L/usr/lib32/wine -L/usr/lib/i386-linux-gnu/wine $(32BIT_FLAGS)
-WINE_64BIT_FLAGS = -L/usr/lib64/wine -L/usr/lib/x86_64-linux-gnu/wine $(64BIT_FLAGS)
-WINE_LINK_FLAGS  = -ldl $(LINK_FLAGS)
+WINE_32BIT_FLAGS = $(32BIT_FLAGS) -L/usr/lib32/wine -L/usr/lib/i386-linux-gnu/wine
+WINE_64BIT_FLAGS = $(64BIT_FLAGS) -L/usr/lib64/wine -L/usr/lib/x86_64-linux-gnu/wine
+WINE_LINK_FLAGS  = $(LINK_FLAGS) -ldl
 
 # --------------------------------------------------------------
 

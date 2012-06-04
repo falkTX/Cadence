@@ -41,12 +41,14 @@
 #  define carla_sleep(t)  Sleep(t * 1000)
 #  define carla_msleep(t) Sleep(t)
 #  define carla_usleep(t) Sleep(t / 1000)
+#  define carla_setenv(key, value) SetEnvironmentVariableA(key, value)
 #else
 #  include <dlfcn.h>
 #  include <unistd.h>
 #  define carla_sleep(t)  sleep(t)
 #  define carla_msleep(t) usleep(t * 1000)
 #  define carla_usleep(t) usleep(t)
+#  define carla_setenv(key, value) setenv(key, value, 1)
 #  ifndef __cdecl
 #    define __cdecl
 #  endif
@@ -77,7 +79,7 @@
 #    define BINARY_NATIVE BINARY_WIN32
 #   endif
 #else
-#  warning Invalid build type
+#  warning Unknown binary type
 #  define BINARY_NATIVE BINARY_NONE
 #endif
 
@@ -85,7 +87,7 @@
 #ifdef BUILD_BRIDGE
 #  define CARLA_EXPORT
 #else
-#  if defined(Q_OS_WIN) && !defined(__WINE__)
+#  if defined(Q_OS_WIN) && ! defined(__WINE__)
 #    define CARLA_EXPORT extern "C" __declspec (dllexport)
 #  else
 #    define CARLA_EXPORT extern "C" __attribute__ ((visibility("default")))

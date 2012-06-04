@@ -27,7 +27,7 @@
 class VstPlugin : public CarlaPlugin
 {
 public:
-    VstPlugin() : CarlaPlugin()
+    VstPlugin(unsigned short id) : CarlaPlugin(id)
     {
         qDebug("VstPlugin::VstPlugin()");
         m_type = PLUGIN_VST;
@@ -181,7 +181,7 @@ public:
     {
         if (index >= 0)
         {
-            if (carla_jack_on_freewheel())
+            if (0) //carla_jack_on_freewheel())
             {
                 if (block) carla_proc_lock();
                 effect->dispatcher(effect, effSetProgram, 0, index, nullptr, 0.0f);
@@ -274,6 +274,7 @@ public:
             effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
     }
 
+#if 0
     void reload()
     {
         qDebug("VstPlugin::reload() - start");
@@ -630,7 +631,7 @@ public:
         }
     }
 
-    void process(jack_nframes_t nframes)
+    void process(jack_nframes_t nframes, jack_nframes_t nframesOffset)
     {
         uint32_t i, k;
         unsigned short plugin_id = m_id;
@@ -1117,6 +1118,7 @@ public:
             effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
         }
     }
+#endif
 
     bool init(const char* filename, const char* label)
     {
@@ -1143,6 +1145,8 @@ public:
                     else
                         m_name = get_unique_name(label);
 
+                    x_client = new CarlaEngineClient(this);
+
                     // Init plugin
                     effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
 #if ! VST_FORCE_DEPRECATED
@@ -1153,7 +1157,7 @@ public:
                     effect->dispatcher(effect, effSetProcessPrecision, 0, kVstProcessPrecision32, nullptr, 0.0f);
                     effect->user = this;
 
-                    if (carla_jack_register_plugin(this, &jack_client))
+                    if (x_client->isOk())
                     {
                         // GUI Stuff
                         if (effect->flags & effFlagsHasEditor)
@@ -1162,7 +1166,7 @@ public:
                         return true;
                     }
                     else
-                        set_last_error("Failed to register plugin in JACK");
+                        set_last_error("Failed to register plugin client");
                 }
                 else
                     set_last_error("Plugin failed to initialize");
@@ -1197,10 +1201,10 @@ public:
         case audioMasterAutomate:
             if (self)
             {
-                if (carla_jack_on_audio_thread())
+                if (1) //carla_jack_on_audio_thread())
                 {
                     self->set_parameter_value(index, opt, false, false, false);
-                    self->postpone_event(PostEventParameterChange, index, opt);
+                    //self->postpone_event(PostEventParameterChange, index, opt);
                 }
                 else
                     self->set_parameter_value(index, opt, false, true, true);
@@ -1255,6 +1259,7 @@ public:
             break;
 #endif
 
+#if 0
         case audioMasterGetTime:
         {
             static VstTimeInfo_R timeInfo;
@@ -1348,6 +1353,7 @@ public:
             break;
 #endif
 #endif
+#endif
 
 #if 0
         case audioMasterIOChanged:
@@ -1423,6 +1429,7 @@ public:
             break;
 #endif
 
+#if 0
         case audioMasterGetCurrentProcessLevel:
             if (carla_jack_on_audio_thread())
             {
@@ -1431,6 +1438,7 @@ public:
                 return 	kVstProcessLevelRealtime;
             }
             return 	kVstProcessLevelUser;
+#endif
 
 #if 0
         case audioMasterGetAutomationState:
@@ -1615,17 +1623,16 @@ short add_plugin_vst(const char* filename, const char* label)
 
     if (id >= 0)
     {
-        VstPlugin* plugin = new VstPlugin;
+        VstPlugin* plugin = new VstPlugin(id);
 
         if (plugin->init(filename, label))
         {
             plugin->reload();
-            plugin->set_id(id);
 
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-            plugin->osc_global_register_new();
+            plugin->osc_register_new();
         }
         else
         {
@@ -1638,25 +1645,3 @@ short add_plugin_vst(const char* filename, const char* label)
 
     return id;
 }
-
-#if 1
-#include <QtGui/QApplication>
-
-int main(int argc, char* argv[])
-{
-    QApplication app(argc, argv);
-    QDialog gui;
-    short id = add_plugin_vst("/usr/lib/vst/peq-2a.so", "ole");
-    if (id >= 0)
-    {
-      CarlaPlugins[id]->set_gui_data(0, &gui); //(void*)gui.winId()
-      show_gui(id, true);
-      gui.show();
-      app.exec();
-      remove_plugin(id);
-    }
-    else
-      qCritical("failed: %s", get_last_error());
-    return 0;
-}
-#endif

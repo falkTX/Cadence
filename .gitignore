@@ -3,11 +3,11 @@
 .*.kate-swp
 
 *~
-*.o
 *.a
-*.exe
+*.o
 *.so
 *.dll
+*.exe
 
 *.carxp
 *.carxs

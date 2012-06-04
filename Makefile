@@ -9,7 +9,7 @@ DESTDIR =
 
 SED_PREFIX = $(shell echo $(PREFIX) | sed "s/\//\\\\\\\\\//g")
 
-PYUIC = pyuic4 --pyqt3-wrapper
+PYUIC = pyuic4
 PYRCC = pyrcc4 -py3
 
 # Detect architecture

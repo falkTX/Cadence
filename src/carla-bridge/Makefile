@@ -12,7 +12,7 @@ WINECXX ?= wineg++
 BUILD_CFLAGS = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -std=c99 -Wall -I. -I../carla -I../carla-includes $(CFLAGS)
 
 BUILD_FLAGS  = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -std=c++0x -Wall $(CXXFLAGS)
-BUILD_FLAGS += -I. -I../carla -I../carla-includes $(shell pkg-config --cflags liblo QtCore)
+BUILD_FLAGS += -I. -I../carla-backend -I../carla-includes $(shell pkg-config --cflags liblo QtCore)
 BUILD_FLAGS += -DBUILD_BRIDGE -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT
 BUILD_FLAGS += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
 
@@ -22,39 +22,40 @@ LINK_FLAGS   = $(shell pkg-config --libs liblo QtCore)
 
 # --------------------------------------------------------------
 
-BUILD_PLUGIN_FLAGS = $(shell pkg-config --cflags QtGui) $(BUILD_FLAGS)
-LINK_PLUGIN_FLAGS  = $(shell pkg-config --libs QtGui) $(LINK_FLAGS)
+BUILD_PLUGIN_FLAGS = $(BUILD_FLAGS) $(shell pkg-config --cflags QtGui)
+LINK_PLUGIN_FLAGS  = $(LINK_FLAGS) $(shell pkg-config --libs QtGui)
 
 UNIX_BUILD_FLAGS = $(BUILD_PLUGIN_FLAGS)
-UNIX_32BIT_FLAGS = -L/usr/lib32 -L/usr/lib/i386-linux-gnu $(32BIT_FLAGS)
-UNIX_64BIT_FLAGS = -L/usr/lib64 -L/usr/lib/x86_64-linux-gnu $(64BIT_FLAGS)
-UNIX_LINK_FLAGS  = -ldl $(LINK_PLUGIN_FLAGS)
+UNIX_32BIT_FLAGS = $(32BIT_FLAGS) -L/usr/lib32 -L/usr/lib/i386-linux-gnu
+UNIX_64BIT_FLAGS = $(64BIT_FLAGS) -L/usr/lib64 -L/usr/lib/x86_64-linux-gnu
+UNIX_LINK_FLAGS  = $(LINK_PLUGIN_FLAGS) -ldl
 
 WIN_BUILD_FLAGS  = $(BUILD_PLUGIN_FLAGS)
 WIN_32BIT_FLAGS  = $(32BIT_FLAGS)
 WIN_64BIT_FLAGS  = $(64BIT_FLAGS)
-WIN_LINK_FLAGS   = -static $(LINK_PLUGIN_FLAGS)
+WIN_LINK_FLAGS   = $(LINK_PLUGIN_FLAGS) -static
 
 WINE_BUILD_FLAGS = $(BUILD_PLUGIN_FLAGS) # -fpermissive
-WINE_32BIT_FLAGS = -L/usr/lib32/wine -L/usr/lib/i386-linux-gnu/wine $(32BIT_FLAGS)
-WINE_64BIT_FLAGS = -L/usr/lib64/wine -L/usr/lib/x86_64-linux-gnu/wine $(64BIT_FLAGS)
-WINE_LINK_FLAGS  = -ldl $(LINK_PLUGIN_FLAGS)
+WINE_32BIT_FLAGS = $(32BIT_FLAGS) -L/usr/lib32/wine -L/usr/lib/i386-linux-gnu/wine
+WINE_64BIT_FLAGS = $(64BIT_FLAGS) -L/usr/lib64/wine -L/usr/lib/x86_64-linux-gnu/wine
+WINE_LINK_FLAGS  = $(LINK_PLUGIN_FLAGS) -ldl
 
 # --------------------------------------------------------------
 
 BUILD_UI_FLAGS = $(BUILD_FLAGS) -DBUILD_BRIDGE_UI
+LINK_UI_FLAGS  = $(LINK_FLAGS)
 
 BUILD_UI_LV2_GTK2_FLAGS = $(BUILD_UI_FLAGS) -DBRIDGE_LV2_GTK2 $(shell pkg-config --cflags gtk+-2.0)
-LINK_UI_LV2_GTK2_FLAGS  = $(LINK_FLAGS) $(shell pkg-config --libs gtk+-2.0)
+LINK_UI_LV2_GTK2_FLAGS  = $(LINK_UI_FLAGS) $(shell pkg-config --libs gtk+-2.0)
 
 BUILD_UI_LV2_QT4_FLAGS  = $(BUILD_UI_FLAGS) -DBRIDGE_LV2_QT4 $(shell pkg-config --cflags QtGui)
-LINK_UI_LV2_QT4_FLAGS   = $(LINK_FLAGS) $(shell pkg-config --libs QtGui)
+LINK_UI_LV2_QT4_FLAGS   = $(LINK_UI_FLAGS) $(shell pkg-config --libs QtGui)
 
 BUILD_UI_LV2_X11_FLAGS  = $(BUILD_UI_FLAGS) -DBRIDGE_LV2_X11 $(shell pkg-config --cflags QtGui)
-LINK_UI_LV2_X11_FLAGS   = $(LINK_FLAGS) $(shell pkg-config --libs QtGui)
+LINK_UI_LV2_X11_FLAGS   = $(LINK_UI_FLAGS) $(shell pkg-config --libs QtGui)
 
 BUILD_UI_VST_X11_FLAGS  = $(BUILD_UI_FLAGS) -DBRIDGE_VST_X11 $(shell pkg-config --cflags QtGui)
-LINK_UI_VST_X11_FLAGS   = $(LINK_FLAGS) $(shell pkg-config --libs QtGui)
+LINK_UI_VST_X11_FLAGS   = $(LINK_UI_FLAGS) $(shell pkg-config --libs QtGui)
 
 # --------------------------------------------------------------
 

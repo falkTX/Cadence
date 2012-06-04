@@ -3451,7 +3451,7 @@ if __name__ == '__main__':
     if (carla_bridge_lv2_x11):
         CarlaHost.set_option(OPTION_PATH_BRIDGE_LV2_X11, 0, carla_bridge_lv2_x11)
 
-    if (not CarlaHost.carla_init("Carla")):
+    if (not CarlaHost.engine_init("Carla")):
         CustomMessageBox(None, QMessageBox.Critical, "Error", "Could not connect to JACK",
             cString(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
         sys.exit(1)
@@ -3471,8 +3471,8 @@ if __name__ == '__main__':
     ret = app.exec_()
 
     # Close Host
-    if (CarlaHost.carla_is_engine_running()):
-        if (not CarlaHost.carla_close()):
+    if (CarlaHost.is_engine_running()):
+        if (not CarlaHost.engine_close()):
             print(cString(CarlaHost.get_last_error()))
 
     # Exit properly

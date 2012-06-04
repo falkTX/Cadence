@@ -17,6 +17,8 @@
 
 #include "carla_plugin.h"
 
+CARLA_BACKEND_START_NAMESPACE
+
 struct BridgeParamInfo {
     QString name;
     QString unit;
@@ -25,7 +27,7 @@ struct BridgeParamInfo {
 class BridgePlugin : public CarlaPlugin
 {
 public:
-    BridgePlugin(BinaryType btype, PluginType ptype) : CarlaPlugin(),
+    BridgePlugin(BinaryType btype, PluginType ptype, unsigned short id) : CarlaPlugin(id),
         m_binary(btype)
     {
         qDebug("BridgePlugin::BridgePlugin()");
@@ -203,21 +205,21 @@ public:
 
         switch (intoType)
         {
-        case PluginBridgeAudioCountInfo:
+        case PluginBridgeAudioCount:
         {
             m_info.ains  = argv[0]->i;
             m_info.aouts = argv[1]->i;
             break;
         }
 
-        case PluginBridgeMidiCountInfo:
+        case PluginBridgeMidiCount:
         {
             m_info.mins  = argv[0]->i;
             m_info.mouts = argv[1]->i;
             break;
         }
 
-        case PluginBridgeParameterCountInfo:
+        case PluginBridgeParameterCount:
         {
             // delete old data
             if (param.count > 0)
@@ -232,7 +234,7 @@ public:
 
             if (param.count > 0 && param.count < MAX_PARAMETERS)
             {
-                param.data    = new ParameterData[param.count];
+                param.data    = new ::ParameterData[param.count];
                 param.ranges  = new ParameterRanges[param.count];
                 param_buffers = new double[param.count];
                 param_info    = new BridgeParamInfo[param.count];
@@ -379,6 +381,8 @@ private:
     BridgeParamInfo* param_info;
 };
 
+CARLA_BACKEND_END_NAMESPACE
+
 short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename, const char* label, void* extra_stuff)
 {
     qDebug("add_plugin_bridge(%i, %i, %s, %s, %p)", btype, ptype, filename, label, extra_stuff);
@@ -387,19 +391,16 @@ short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename
 
     if (id >= 0)
     {
-        BridgePlugin* plugin = new BridgePlugin(btype, ptype);
+        BridgePlugin* plugin = new BridgePlugin(btype, ptype, id);
 
         if (plugin->init(filename, label, (PluginBridgeInfo*)extra_stuff))
         {
             plugin->reload();
-            plugin->set_id(id);
 
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-#ifndef BUILD_BRIDGE
-            plugin->osc_global_register_new();
-#endif
+            plugin->osc_register_new();
         }
         else
         {

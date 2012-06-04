@@ -20,6 +20,8 @@
 #include "ladspa/ladspa.h"
 #include "ladspa_rdf.h"
 
+CARLA_BACKEND_START_NAMESPACE
+
 bool is_rdf_port_good(int Type1, int Type2)
 {
     if (LADSPA_IS_PORT_INPUT(Type1) && ! LADSPA_IS_PORT_INPUT(Type2))
@@ -64,7 +66,7 @@ bool is_ladspa_rdf_descriptor_valid(const LADSPA_RDF_Descriptor* rdf_descriptor,
 class LadspaPlugin : public CarlaPlugin
 {
 public:
-    LadspaPlugin() : CarlaPlugin()
+    LadspaPlugin(unsigned short id) : CarlaPlugin(id)
     {
         qDebug("LadspaPlugin::LadspaPlugin()");
         m_type = PLUGIN_LADSPA;
@@ -264,6 +266,7 @@ public:
         CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
     }
 
+#if 0
     void reload()
     {
         qDebug("LadspaPlugin::reload() - start");
@@ -345,13 +348,13 @@ public:
                 if (LADSPA_IS_PORT_INPUT(PortType))
                 {
                     j = ain.count++;
-                    ain.ports[j] = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+                    ain.ports[j] = jack_port_register(x_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
                     ain.rindexes[j] = i;
                 }
                 else if (LADSPA_IS_PORT_OUTPUT(PortType))
                 {
                     j = aout.count++;
-                    aout.ports[j] = jack_port_register(jack_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+                    aout.ports[j] = jack_port_register(x_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
                     aout.rindexes[j] = i;
                     needs_cin = true;
                 }
@@ -563,7 +566,7 @@ public:
 #endif
                 strcpy(port_name, "control-in");
 
-            param.port_cin = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+            param.port_cin = jack_port_register(x_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
         }
 
         if (needs_cout)
@@ -578,7 +581,7 @@ public:
 #endif
                 strcpy(port_name, "control-out");
 
-            param.port_cout = jack_port_register(jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
+            param.port_cout = jack_port_register(x_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
         }
 
         ain.count   = ains;
@@ -609,7 +612,7 @@ public:
         qDebug("LadspaPlugin::reload() - end");
     }
 
-    void process(jack_nframes_t nframes)
+    void process(uint32_t nframes, uint32_t nframesOffset)
     {
         uint32_t i, k;
         unsigned short plugin_id = m_id;
@@ -926,6 +929,7 @@ public:
 
         m_active_before = m_active;
     }
+#endif
 
     void delete_buffers()
     {
@@ -970,12 +974,14 @@ public:
                         else
                             m_name = get_unique_name(descriptor->Name);
 
-                        if (carla_jack_register_plugin(this, &jack_client))
+                        x_client = new CarlaEngineClient(this);
+
+                        if (x_client->isOk())
                         {
                             return true;
                         }
                         else
-                            set_last_error("Failed to register plugin in JACK");
+                            set_last_error("Failed to register plugin client");
                     }
                     else
                         set_last_error("Plugin failed to initialize");
@@ -1000,6 +1006,12 @@ private:
     float* param_buffers;
 };
 
+CARLA_BACKEND_END_NAMESPACE
+
+#ifndef CARLA_BACKEND_NO_NAMESPACE
+typedef CarlaBackend::LadspaPlugin LadspaPlugin;
+#endif
+
 short add_plugin_ladspa(const char* filename, const char* label, const void* extra_stuff)
 {
     qDebug("add_plugin_ladspa(%s, %s, %p)", filename, label, extra_stuff);
@@ -1008,17 +1020,16 @@ short add_plugin_ladspa(const char* filename, const char* label, const void* ext
 
     if (id >= 0)
     {
-        LadspaPlugin* plugin = new LadspaPlugin;
+        LadspaPlugin* plugin = new LadspaPlugin(id);
 
         if (plugin->init(filename, label, (LADSPA_RDF_Descriptor*)extra_stuff))
         {
             plugin->reload();
-            plugin->set_id(id);
 
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-            plugin->osc_global_register_new();
+            plugin->osc_register_new();
         }
         else
         {

@@ -59,7 +59,7 @@
 #define MIDI_CONTROL_BREATH_CONTROLLER                 0x02 // 0-127, MSB
 #define MIDI_CONTROL_FOOT_CONTROLLER                   0x04 // 0-127, MSB
 #define MIDI_CONTROL_PORTAMENTO_TIME                   0x05 // 0-127, MSB
-//#define MIDI_CONTROL_DATA_ENTRY                        0x06 // 0-127, MSB
+#define MIDI_CONTROL_DATA_ENTRY                        0x06 // 0-127, MSB
 #define MIDI_CONTROL_CHANNEL_VOLUME                    0x07 // 0-127, MSB
 #define MIDI_CONTROL_BALANCE                           0x08 // 0-127, MSB
 #define MIDI_CONTROL_PAN                               0x0A // 0-127, MSB
@@ -75,7 +75,7 @@
 #define MIDI_CONTROL_BREATH_CONTROLLER__LSB            0x22 // 0-127, LSB
 #define MIDI_CONTROL_FOOT_CONTROLLER__LSB              0x24 // 0-127, LSB
 #define MIDI_CONTROL_PORTAMENTO_TIME__LSB              0x25 // 0-127, LSB
-//#define MIDI_CONTROL_DATA_ENTRY__LSB                   0x26 // 0-127, LSB
+#define MIDI_CONTROL_DATA_ENTRY__LSB                   0x26 // 0-127, LSB
 #define MIDI_CONTROL_CHANNEL_VOLUME__LSB               0x27 // 0-127, LSB
 #define MIDI_CONTROL_BALANCE__LSB                      0x28 // 0-127, LSB
 #define MIDI_CONTROL_PAN__LSB                          0x2A // 0-127, LSB

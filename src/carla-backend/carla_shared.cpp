@@ -16,10 +16,12 @@
  */
 
 #include "carla_shared.h"
-#include "carla_jack.h"
+#include "carla_engine.h"
 
 #include <QtCore/QMutex>
 #include <QtCore/QString>
+
+CARLA_BACKEND_START_NAMESPACE
 
 // Global variables (shared)
 const char* unique_names[MAX_PLUGINS]  = { nullptr };
@@ -31,9 +33,8 @@ volatile double aouts_peak[MAX_PLUGINS*2] = { 0.0 };
 #ifndef BUILD_BRIDGE
 // Global options
 carla_options_t carla_options = {
-    /* global_jack_client */ false,
-    /* use_dssi_chunks    */ false,
     /* prefer_ui_bridges  */ true,
+    /* proccess_32x       */ false,
     /* bridge_unix32      */ nullptr,
     /* bridge_unix64      */ nullptr,
     /* bridge_win32       */ nullptr,
@@ -51,7 +52,7 @@ QMutex carla_proc_lock_var;
 QMutex carla_midi_lock_var;
 
 // define max possible client name
-const unsigned short max_client_name_size = jack_client_name_size() - 1 - 5; // 5 = strlen(" (10)")
+const unsigned short max_client_name_size = CarlaEngine::maxClientNameSize() - 5; // 5 = strlen(" (10)")
 
 // -------------------------------------------------------------------------------------------------------------------
 // Exported symbols (API)
@@ -156,7 +157,7 @@ const char* get_unique_name(const char* name)
     if (qname.isEmpty())
         qname = "(No name)";
 
-    qname.truncate(max_client_name_size);
+    qname.truncate(max_client_name_size-1);
     qname.replace(":", "."); // ":" is used in JACK to split client/port names
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
@@ -318,3 +319,5 @@ void callback_action(CallbackType action, unsigned short plugin_id, int value1, 
     if (Callback)
         Callback(action, plugin_id, value1, value2, value3);
 }
+
+CARLA_BACKEND_END_NAMESPACE

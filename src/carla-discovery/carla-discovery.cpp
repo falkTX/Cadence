@@ -34,7 +34,7 @@
 #endif
 
 #define CARLA_NO_EXPORTS
-#include "../carla/carla_backend.h"
+#include "carla_backend.h"
 
 #define DISCOVERY_OUT(x, y) std::cout << "\ncarla-discovery::" << x << "::" << y << std::endl;
 

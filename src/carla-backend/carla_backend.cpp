@@ -15,6 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
+#include "carla_backend.h"
+#include "carla_engine.h"
 #include "carla_plugin.h"
 #include "carla_threads.h"
 
@@ -24,18 +26,23 @@ short add_plugin_dssi(const char* filename, const char* label, const void* extra
 short add_plugin_lv2(const char* filename, const char* label);
 short add_plugin_vst(const char* filename, const char* label);
 short add_plugin_sf2(const char* filename, const char* label);
-short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename, const char* label, void* extra_stuff);
+#ifndef BUILD_BRIDGE
+//short add_plugin_bridge(CarlaBackend::BinaryType btype, CarlaBackend::PluginType ptype, const char* filename, const char* label, void* extra_stuff);
+#endif
 
+CarlaEngine carla_engine;
 CarlaCheckThread carla_check_thread;
 
 // -------------------------------------------------------------------------------------------------------------------
 // Exported symbols (API)
 
-bool carla_init(const char* client_name)
-{
-    qDebug("carla_init(%s)", client_name);
+CARLA_BACKEND_START_NAMESPACE
 
-    bool started = carla_jack_init(client_name);
+bool engine_init(const char* client_name)
+{
+    qDebug("carla_backend_init(%s)", client_name);
+
+    bool started = carla_engine.init(client_name);
 
     if (started)
     {
@@ -47,16 +54,15 @@ bool carla_init(const char* client_name)
     return started;
 }
 
-bool carla_close()
+bool engine_close()
 {
-    qDebug("carla_close()");
+    qDebug("carla_backend_close()");
 
-    bool closed = carla_jack_close();
+    bool closed = carla_engine.close();
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
-        CarlaPlugin* plugin = CarlaPlugins[i];
-        if (plugin && plugin->id() >= 0)
+        if (CarlaPlugins[i])
             remove_plugin(i);
     }
 
@@ -118,7 +124,7 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
 {
     qDebug("add_plugin(%i, %i, %s, %s, %p)", btype, ptype, filename, label, extra_stuff);
 
-#ifndef BUILD_BRIDGE
+#if 0 //ndef BUILD_BRIDGE
     if (btype != BINARY_NATIVE)
     {
         if (carla_options.global_jack_client)
@@ -161,17 +167,18 @@ bool remove_plugin(unsigned short plugin_id)
             osc_global_send_remove_plugin(plugin->id());
 
             carla_proc_lock();
-            plugin->set_id(-1);
+            plugin->set_enabled(false);
             carla_proc_unlock();
 
-            carla_check_thread.stopNow();
+            if (is_engine_running() && carla_check_thread.isRunning())
+                carla_check_thread.stopNow();
 
             delete plugin;
 
             CarlaPlugins[i] = nullptr;
             unique_names[i] = nullptr;
 
-            if (carla_is_engine_running())
+            if (is_engine_running())
                 carla_check_thread.start(QThread::HighPriority);
 
             return true;
@@ -226,7 +233,7 @@ PluginInfo* get_plugin_info(unsigned short plugin_id)
         }
     }
 
-    if (carla_is_engine_running())
+    if (is_engine_running())
         qCritical("get_plugin_info(%i) - could not find plugin", plugin_id);
 
     return &info;
@@ -345,7 +352,7 @@ ParameterInfo* get_parameter_info(unsigned short plugin_id, uint32_t parameter_i
         }
     }
 
-    if (carla_is_engine_running())
+    if (is_engine_running())
         qCritical("get_parameter_info(%i, %i) - could not find plugin", plugin_id, parameter_id);
 
     return &info;
@@ -389,7 +396,7 @@ ScalePointInfo* get_scalepoint_info(unsigned short plugin_id, uint32_t parameter
         }
     }
 
-    if (carla_is_engine_running())
+    if (is_engine_running())
         qCritical("get_scalepoint_info(%i, %i, %i) - could not find plugin", plugin_id, parameter_id, scalepoint_id);
 
     return &info;
@@ -444,7 +451,7 @@ GuiInfo* get_gui_info(unsigned short plugin_id)
     return &info;
 }
 
-ParameterData* get_parameter_data(unsigned short plugin_id, uint32_t parameter_id)
+const ParameterData* get_parameter_data(unsigned short plugin_id, uint32_t parameter_id)
 {
     qDebug("get_parameter_data(%i, %i)", plugin_id, parameter_id);
 
@@ -468,7 +475,7 @@ ParameterData* get_parameter_data(unsigned short plugin_id, uint32_t parameter_i
     return &data;
 }
 
-ParameterRanges* get_parameter_ranges(unsigned short plugin_id, uint32_t parameter_id)
+const ParameterRanges* get_parameter_ranges(unsigned short plugin_id, uint32_t parameter_id)
 {
     qDebug("get_parameter_ranges(%i, %i)", plugin_id, parameter_id);
 
@@ -492,7 +499,7 @@ ParameterRanges* get_parameter_ranges(unsigned short plugin_id, uint32_t paramet
     return &ranges;
 }
 
-CustomData* get_custom_data(unsigned short plugin_id, uint32_t custom_data_id)
+const CustomData* get_custom_data(unsigned short plugin_id, uint32_t custom_data_id)
 {
     qDebug("get_custom_data(%i, %i)", plugin_id, custom_data_id);
 
@@ -552,7 +559,7 @@ const char* get_chunk_data(unsigned short plugin_id)
         }
     }
 
-    if (carla_is_engine_running())
+    if (is_engine_running())
         qCritical("get_chunk_data(%i) - could not find plugin", plugin_id);
 
     return chunk_data;
@@ -674,8 +681,9 @@ const char* get_program_name(unsigned short plugin_id, uint32_t program_id)
         }
     }
 
-    if (carla_is_engine_running())
+    if (is_engine_running())
         qCritical("get_program_name(%i, %i) - could not find plugin", plugin_id, program_id);
+
     return nullptr;
 }
 
@@ -711,8 +719,9 @@ const char* get_midi_program_name(unsigned short plugin_id, uint32_t midi_progra
         }
     }
 
-    if (carla_is_engine_running())
+    if (is_engine_running())
         qCritical("get_midi_program_name(%i, %i) - could not find plugin", plugin_id, midi_program_id);
+
     return nullptr;
 }
 
@@ -741,7 +750,7 @@ const char* get_real_plugin_name(unsigned short plugin_id)
         }
     }
 
-    if (carla_is_engine_running())
+    if (is_engine_running())
         qCritical("get_real_plugin_name(%i) - could not find plugin", plugin_id);
 
     return real_plugin_name;
@@ -1086,6 +1095,20 @@ void set_gui_data(unsigned short plugin_id, int data, quintptr gui_addr)
     qCritical("set_gui_data(%i, %i, " P_UINTPTR ") - could not find plugin", plugin_id, data, gui_addr);
 }
 
+// TESTING
+//void set_name(unsigned short plugin_id, const char* name)
+//{
+
+//    for (unsigned short i=0; i<MAX_PLUGINS; i++)
+//    {
+//        CarlaPlugin* plugin = CarlaPlugins[i];
+//        if (plugin && plugin->id() == plugin_id)
+//        {
+//            plugin->set_name(name);
+//        }
+//    }
+//}
+
 void show_gui(unsigned short plugin_id, bool yesno)
 {
     qDebug("show_gui(%i, %s)", plugin_id, bool2str(yesno));
@@ -1108,7 +1131,7 @@ void idle_guis()
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
-        if (plugin && plugin->id() >= 0)
+        if (plugin && plugin->enabled())
             plugin->idle_gui();
     }
 }
@@ -1148,38 +1171,28 @@ void set_option(OptionsType option, int value, const char* value_str)
 {
     qDebug("set_option(%i, %i, %s)", option, value, value_str);
 
-    //if (carla_options.initiated)
-    //    return;
+    // TODO
 
     switch(option)
     {
-    case OPTION_GLOBAL_JACK_CLIENT:
-        carla_options.global_jack_client = value;
-        break;
-    case OPTION_USE_DSSI_CHUNKS:
-        carla_options.use_dssi_chunks = value;
-        break;
     case OPTION_PREFER_UI_BRIDGES:
         carla_options.prefer_ui_bridges = value;
         break;
-#ifndef Q_OS_WIN
-    // FIXME
     case OPTION_PATH_LADSPA:
-        setenv("LADSPA_PATH", value_str, 1);
+        carla_setenv("LADSPA_PATH", value_str);
         break;
     case OPTION_PATH_DSSI:
-        setenv("DSSI_PATH", value_str, 1);
+        carla_setenv("DSSI_PATH", value_str);
         break;
     case OPTION_PATH_LV2:
-        setenv("LV2_PATH", value_str, 1);
+        carla_setenv("LV2_PATH", value_str);
         break;
     case OPTION_PATH_VST:
-        setenv("VST_PATH", value_str, 1);
+        carla_setenv("VST_PATH", value_str);
         break;
     case OPTION_PATH_SF2:
-        setenv("SF2_PATH", value_str, 1);
+        carla_setenv("SF2_PATH", value_str);
         break;
-#endif
     case OPTION_PATH_BRIDGE_UNIX32:
         carla_options.bridge_unix32 = strdup(value_str);
         break;
@@ -1206,5 +1219,79 @@ void set_option(OptionsType option, int value, const char* value_str)
     }
 }
 
+CARLA_BACKEND_END_NAMESPACE
+
 // End of exported symbols (API)
 // -------------------------------------------------------------------------------------------------------------------
+
+#ifdef QTCREATOR_TEST
+
+#include <QtGui/QApplication>
+#include <QtGui/QDialog>
+
+QDialog* gui;
+
+#ifndef CARLA_BACKEND_NO_NAMESPACE
+using namespace CarlaBackend;
+#endif
+
+void main_callback(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3)
+{
+    qDebug("Callback(%i, %u, %i, %i, %f)", action, plugin_id, value1, value2, value3);
+
+    switch (action)
+    {
+    case CALLBACK_SHOW_GUI:
+        if (! value1)
+            gui->close();
+        break;
+    case CALLBACK_RESIZE_GUI:
+        gui->setFixedSize(value1, value2);
+        break;
+    default:
+        break;
+    }
+}
+
+int main(int argc, char* argv[])
+{
+    QApplication app(argc, argv);
+    gui = new QDialog(nullptr);
+
+    if (engine_init("carla_demo"))
+    {
+        set_callback_function(main_callback);
+        short id = add_plugin_dssi("/usr/lib/dssi/horgand.so", "horgand", "/usr/lib/dssi/horgand/horgand_fltk");
+
+        if (id >= 0)
+        {
+            qDebug("Main Initiated, id = %u", id);
+            //const char* test_name = strdup("test reloaded named");
+            //set_name(id, test_name);
+
+            const GuiInfo* guiInfo = get_gui_info(id);
+
+            if (guiInfo->type == GUI_INTERNAL_QT4 || guiInfo->type == GUI_INTERNAL_X11)
+            {
+                set_gui_data(id, 0, (quintptr)gui);
+                gui->show();
+            }
+
+            show_gui(id, true);
+            app.exec();
+
+            remove_plugin(id);
+        }
+        else
+            qCritical("failed: %s", get_last_error());
+
+        engine_close();
+    }
+    else
+        qCritical("failed to start backend engine");
+
+    delete gui;
+    return 0;
+}
+
+#endif

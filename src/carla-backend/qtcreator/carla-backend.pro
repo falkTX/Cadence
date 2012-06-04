@@ -2,16 +2,18 @@
 
 QT = core gui
 
-CONFIG   += warn_on qt debug shared dll plugin link_pkgconfig
+CONFIG    = debug link_pkgconfig qt warn_on
 PKGCONFIG = jack liblo fluidsynth
 
-TEMPLATE = app #lib
+TARGET   = carla_backend
+TEMPLATE = app
 VERSION  = 0.5.0
 
 SOURCES = \
     ../carla_backend.cpp \
+    ../carla_engine_jack.cpp \
+    ../carla_engine_rtaudio.cpp \
     ../carla_bridge.cpp \
-    ../carla_jack.cpp \
     ../carla_osc.cpp \
     ../carla_shared.cpp \
     ../carla_threads.cpp \
@@ -24,26 +26,24 @@ SOURCES = \
 
 HEADERS = \
     ../carla_backend.h \
-    ../carla_jack.h \
+    ../carla_engine.h \
     ../carla_midi.h \
     ../carla_osc.h \
     ../carla_plugin.h \
     ../carla_shared.h \
     ../carla_threads.h \
-    ../ladspa_rdf.h \
-    ../lv2_rdf.h \
     ../../carla-includes/carla_includes.h \
-    ../../carla-includes/carla_osc_includes.h
+    ../../carla-includes/carla_lib_includes.h \
+    ../../carla-includes/carla_osc_includes.h \
+    ../../carla-includes/carla_vst_includes.h \
+    ../../carla-includes/ladspa_rdf.h \
+    ../../carla-includes/lv2_rdf.h
 
 INCLUDEPATH = .. \
     ../../carla-includes \
     ../../carla-includes/vst
-#    ../../carla-includes/vestige
 
-TARGET  = carla_backend
-
-#DEFINES = VESTIGE_HEADER
-
-LIBS    = ../../carla-lilv/carla_lilv.a
+DEFINES = QTCREATOR_TEST CARLA_ENGINE_JACK
+LIBS    = ../../carla-lilv/carla_lilv.a -lrtaudio
 
 QMAKE_CXXFLAGS *= -std=c++0x

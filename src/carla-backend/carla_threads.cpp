@@ -16,10 +16,13 @@
  */
 
 #include "carla_threads.h"
-
 #include "carla_plugin.h"
 
 #include <QtCore/QProcess>
+
+#ifndef CARLA_BACKEND_NO_NAMESPACE
+using namespace CarlaBackend;
+#endif
 
 // --------------------------------------------------------------------------------------------------------
 // CarlaCheckThread
@@ -46,112 +49,112 @@ void CarlaCheckThread::run()
 
     uint32_t j, k;
     double value;
-    ParameterData* param_data;
-    PluginPostEvent post_events[MAX_POST_EVENTS];
+    const ParameterData* paramData;
+    PluginPostEvent postEvents[MAX_POST_EVENTS];
 
     m_stopNow = false;
-    while (carla_is_engine_running() && ! m_stopNow)
+    while (is_engine_running() && ! m_stopNow)
     {
         for (unsigned short i=0; i<MAX_PLUGINS; i++)
         {
             CarlaPlugin* plugin = CarlaPlugins[i];
-            if (plugin && plugin->id() >= 0)
+            if (plugin && plugin->enabled())
             {
                 // --------------------------------------------------------------------------------------------------------
                 // Process postponed events
 
                 // Make a safe copy of events, and clear them
-                plugin->post_events_copy(post_events);
+                plugin->post_events_copy(postEvents);
 
                 OscData* osc_data = plugin->osc_data();
 
                 // Process events now
                 for (j=0; j < MAX_POST_EVENTS; j++)
                 {
-                    if (post_events[j].valid)
+                    if (postEvents[j].type != PluginPostEventNull)
                     {
-                        switch (post_events[j].type)
+                        switch (postEvents[j].type)
                         {
-                        case PostEventDebug:
-                            callback_action(CALLBACK_DEBUG, plugin->id(), post_events[j].index, 0, post_events[j].value);
+                        case PluginPostEventDebug:
+                            callback_action(CALLBACK_DEBUG, plugin->id(), postEvents[j].index, 0, postEvents[j].value);
                             break;
 
-                        case PostEventParameterChange:
+                        case PluginPostEventParameterChange:
                             // Update OSC based UIs
-                            osc_send_control(osc_data, post_events[j].index, post_events[j].value);
+                            osc_send_control(osc_data, postEvents[j].index, postEvents[j].value);
 
                             // Update OSC control client
-                            osc_global_send_set_parameter_value(plugin->id(), post_events[j].index, post_events[j].value);
+                            osc_global_send_set_parameter_value(plugin->id(), postEvents[j].index, postEvents[j].value);
 
                             // Update Host
-                            callback_action(CALLBACK_PARAMETER_CHANGED, plugin->id(), post_events[j].index, 0, post_events[j].value);
+                            callback_action(CALLBACK_PARAMETER_CHANGED, plugin->id(), postEvents[j].index, 0, postEvents[j].value);
 
                             break;
 
-                        case PostEventProgramChange:
+                        case PluginPostEventProgramChange:
                             // Update OSC based UIs
-                            osc_send_program(osc_data, post_events[j].index);
+                            osc_send_program(osc_data, postEvents[j].index);
 
                             // Update OSC control client
-                            osc_global_send_set_program(plugin->id(), post_events[j].index);
+                            osc_global_send_set_program(plugin->id(), postEvents[j].index);
 
                             for (k=0; k < plugin->param_count(); k++)
                                 osc_global_send_set_default_value(plugin->id(), k, plugin->param_ranges(k)->def);
 
                             // Update Host
-                            callback_action(CALLBACK_PROGRAM_CHANGED, plugin->id(), post_events[j].index, 0, 0.0);
+                            callback_action(CALLBACK_PROGRAM_CHANGED, plugin->id(), postEvents[j].index, 0, 0.0);
 
                             break;
 
-                        case PostEventMidiProgramChange:
-                            if (post_events[j].index < (int32_t)plugin->midiprog_count())
+                        case PluginPostEventMidiProgramChange:
+                            if (postEvents[j].index < (int32_t)plugin->midiprog_count())
                             {
                                 MidiProgramInfo midiprog = { false, 0, 0, nullptr };
-                                plugin->get_midi_program_info(&midiprog, post_events[j].index);
+                                plugin->get_midi_program_info(&midiprog, postEvents[j].index);
 
                                 // Update OSC based UIs
                                 osc_send_midi_program(osc_data, midiprog.bank, midiprog.program, (plugin->type() == PLUGIN_DSSI));
 
                                 // Update OSC control client
-                                osc_global_send_set_midi_program(plugin->id(), post_events[j].index);
+                                osc_global_send_set_midi_program(plugin->id(), postEvents[j].index);
 
                                 for (k=0; k < plugin->param_count(); k++)
                                     osc_global_send_set_default_value(plugin->id(), k, plugin->param_ranges(k)->def);
 
                                 // Update Host
-                                callback_action(CALLBACK_MIDI_PROGRAM_CHANGED, plugin->id(), post_events[j].index, 0, 0.0);
+                                callback_action(CALLBACK_MIDI_PROGRAM_CHANGED, plugin->id(), postEvents[j].index, 0, 0.0);
                             }
 
                             break;
 
-                        case PostEventNoteOn:
+                        case PluginPostEventNoteOn:
                             // Update OSC based UIs
                             //if (plugin->type() == PLUGIN_LV2)
                             //    osc_send_note_on(osc_data, plugin->id(), post_events[j].index, post_events[j].value);
 
                             // Update OSC control client
-                            osc_global_send_note_on(plugin->id(), post_events[j].index, post_events[j].value);
+                            osc_global_send_note_on(plugin->id(), postEvents[j].index, postEvents[j].value);
 
                             // Update Host
-                            callback_action(CALLBACK_NOTE_ON, plugin->id(), post_events[j].index, post_events[j].value, 0.0);
+                            callback_action(CALLBACK_NOTE_ON, plugin->id(), postEvents[j].index, postEvents[j].value, 0.0);
 
                             break;
 
-                        case PostEventNoteOff:
+                        case PluginPostEventNoteOff:
                             // Update OSC based UIs
                             //if (plugin->type() == PLUGIN_LV2)
                             //    osc_send_note_off(osc_data, plugin->id(), post_events[j].index, 0);
 
                             // Update OSC control client
-                            osc_global_send_note_off(plugin->id(), post_events[j].index);
+                            osc_global_send_note_off(plugin->id(), postEvents[j].index);
 
                             // Update Host
-                            callback_action(CALLBACK_NOTE_OFF, plugin->id(), post_events[j].index, 0, 0.0);
+                            callback_action(CALLBACK_NOTE_OFF, plugin->id(), postEvents[j].index, 0, 0.0);
 
                             break;
 
-                        case PostEventCustom:
-                            plugin->run_custom_event(&post_events[j]);
+                        case PluginPostEventCustom:
+                            plugin->run_custom_event(&postEvents[j]);
                             break;
 
                         default:
@@ -172,14 +175,14 @@ void CarlaCheckThread::run()
                 // Update
                 for (j=0; j < plugin->param_count(); j++)
                 {
-                    param_data = plugin->param_data(j);
+                    paramData = plugin->param_data(j);
 
-                    if (param_data->type == PARAMETER_OUTPUT && (param_data->hints & PARAMETER_IS_AUTOMABLE) > 0)
+                    if (paramData->type == PARAMETER_OUTPUT && (paramData->hints & PARAMETER_IS_AUTOMABLE) > 0)
                     {
                         value = plugin->get_parameter_value(j);
 
                         if (update_ports_gui)
-                            osc_send_control(osc_data, param_data->rindex, value);
+                            osc_send_control(osc_data, paramData->rindex, value);
 
                         osc_global_send_set_parameter_value(plugin->id(), j, value);
                     }
@@ -237,6 +240,8 @@ void CarlaPluginThread::setOscData(const char* binary, const char* label, const 
 
 void CarlaPluginThread::run()
 {
+    qDebug("CarlaPluginThread::run()");
+
     if (m_process == nullptr)
         m_process = new QProcess(nullptr);
 
@@ -281,7 +286,7 @@ void CarlaPluginThread::run()
     {
     case PLUGIN_THREAD_DSSI_GUI:
     case PLUGIN_THREAD_LV2_GUI:
-        if (m_plugin->update_osc_gui())
+        if (m_plugin->show_osc_gui())
         {
             m_process->waitForFinished(-1);
 

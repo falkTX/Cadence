@@ -18,12 +18,11 @@
 #ifndef CARLA_THREADS_H
 #define CARLA_THREADS_H
 
-#include "carla_includes.h"
+#include "carla_backend.h"
 
 #include <QtCore/QThread>
 
 class QProcess;
-class CarlaPlugin;
 
 // --------------------------------------------------------------------------------------------------------
 // CarlaCheckThread

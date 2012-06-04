@@ -18,7 +18,7 @@
 #ifndef CARLA_VST_INCLUDES_H
 #define CARLA_VST_INCLUDES_H
 
-#define VST_FORCE_DEPRECATED 0
+#define VST_FORCE_DEPRECATED 1
 #include "aeffectx.h"
 
 #if VESTIGE_HEADER
@@ -59,12 +59,14 @@ typedef VstTimeInfo VstTimeInfo_R;
 
 typedef AEffect* (*VST_Function)(audioMasterCallback);
 
-inline bool VstPluginCanDo(AEffect* effect, const char* feature)
+static inline
+bool VstPluginCanDo(AEffect* effect, const char* feature)
 {
     return (effect->dispatcher(effect, effCanDo, 0, 0, (void*)feature, 0.0f) == 1);
 }
 
-inline const char* VstOpcode2str(int32_t opcode)
+static inline
+const char* VstOpcode2str(int32_t opcode)
 {
     switch (opcode)
     {

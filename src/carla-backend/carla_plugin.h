@@ -18,9 +18,10 @@
 #ifndef CARLA_PLUGIN_H
 #define CARLA_PLUGIN_H
 
-#include "carla_jack.h"
+#include "carla_engine.h"
 #include "carla_midi.h"
 #include "carla_shared.h"
+#include "carla_lib_includes.h"
 
 #ifdef BUILD_BRIDGE
 #include <QtCore/QThread>
@@ -35,33 +36,40 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <QtCore/QList>
 #include <QtCore/QMutex>
 #include <QtCore/QString>
+#include <QtCore/QVector>
+
+CARLA_BACKEND_START_NAMESPACE
 
 #define CARLA_PROCESS_CONTINUE_CHECK if (m_id != plugin_id) { return callback_action(CALLBACK_DEBUG, plugin_id, m_id, 0, 0.0); }
 
 const unsigned short MAX_MIDI_EVENTS = 512;
 const unsigned short MAX_POST_EVENTS = 152;
 
-typedef jack_default_audio_sample_t jack_audio_sample_t;
+struct midi_program_t {
+    uint32_t bank;
+    uint32_t program;
+    const char* name;
+};
 
 enum PluginPostEventType {
-    PostEventDebug,
-    PostEventParameterChange,
-    PostEventProgramChange,
-    PostEventMidiProgramChange,
-    PostEventNoteOn,
-    PostEventNoteOff,
-    PostEventCustom
+    PluginPostEventNull,
+    PluginPostEventDebug,
+    PluginPostEventParameterChange,
+    PluginPostEventProgramChange,
+    PluginPostEventMidiProgramChange,
+    PluginPostEventNoteOn,
+    PluginPostEventNoteOff,
+    PluginPostEventCustom
 };
 
 enum PluginBridgeInfoType {
-    PluginBridgeAudioCountInfo,
-    PluginBridgeMidiCountInfo,
-    PluginBridgeParameterCountInfo,
-    PluginBridgeProgramCountInfo,
-    PluginBridgeMidiProgramCountInfo,
+    PluginBridgeAudioCount,
+    PluginBridgeMidiCount,
+    PluginBridgeParameterCount,
+    PluginBridgeProgramCount,
+    PluginBridgeMidiProgramCount,
     PluginBridgePluginInfo,
     PluginBridgeParameterInfo,
     PluginBridgeParameterDataInfo,
@@ -71,29 +79,23 @@ enum PluginBridgeInfoType {
     PluginBridgeUpdateNow
 };
 
-struct midi_program_t {
-    uint32_t bank;
-    uint32_t program;
-    const char* name;
-};
-
 struct PluginAudioData {
     uint32_t count;
+    CarlaEngineAudioPort** ports;
     uint32_t* rindexes;
-    jack_port_t** ports;
 };
 
 struct PluginMidiData {
-    jack_port_t* port_min;
-    jack_port_t* port_mout;
+    CarlaEngineMidiPort* port_min;
+    CarlaEngineMidiPort* port_mout;
 };
 
 struct PluginParameterData {
     uint32_t count;
     ParameterData* data;
     ParameterRanges* ranges;
-    jack_port_t* port_cin;
-    jack_port_t* port_cout;
+    CarlaEngineControlPort* port_cin;
+    CarlaEngineControlPort* port_cout;
 };
 
 struct PluginProgramData {
@@ -109,7 +111,6 @@ struct PluginMidiProgramData {
 };
 
 struct PluginPostEvent {
-    bool valid;
     PluginPostEventType type;
     int32_t index;
     double value;
@@ -126,16 +127,17 @@ struct ExternalMidiNote {
 class CarlaPlugin
 {
 public:
-    CarlaPlugin()
+    CarlaPlugin(unsigned short id)
     {
         qDebug("CarlaPlugin::CarlaPlugin()");
 
-        m_type = PLUGIN_NONE;
-        m_id   = -1;
+        m_type  = PLUGIN_NONE;
+        m_id    = id;
         m_hints = 0;
 
         m_active = false;
         m_active_before = false;
+        m_enabled = false;
 
         m_lib  = nullptr;
         m_name = nullptr;
@@ -147,8 +149,7 @@ public:
         x_vol    = 1.0;
         x_bal_left = -1.0;
         x_bal_right = 1.0;
-
-        jack_client = nullptr;
+        x_client = nullptr;
 
         ain.count = 0;
         ain.ports = nullptr;
@@ -175,8 +176,6 @@ public:
         midiprog.current = -1;
         midiprog.data    = nullptr;
 
-        custom.clear();
-
 #ifndef BUILD_BRIDGE
         osc.data.path = nullptr;
         osc.data.source = nullptr;
@@ -185,18 +184,26 @@ public:
 #endif
 
         for (unsigned short i=0; i < MAX_POST_EVENTS; i++)
-            post_events.data[i].valid = false;
+            postEvents.data[i].type = PluginPostEventNull;
 
         for (unsigned short i=0; i < MAX_MIDI_EVENTS; i++)
-            ext_midi_notes[i].valid = false;
+            extMidiNotes[i].valid = false;
     }
 
     virtual ~CarlaPlugin()
     {
         qDebug("CarlaPlugin::~CarlaPlugin()");
 
-        // Unregister jack client and ports
-        remove_from_jack();
+        // Remove client and ports
+
+        if (x_client)
+        {
+            if (x_client->isActive())
+                x_client->deactivate();
+
+            remove_client_ports();
+            delete x_client;
+        }
 
         // Delete data
         delete_buffers();
@@ -245,36 +252,37 @@ public:
 
             custom.clear();
         }
-
-#ifdef BUILD_BRIDGE
-        if (jack_client)
-#else
-        if (jack_client && carla_options.global_jack_client == false)
-#endif
-            jack_client_close(jack_client);
     }
 
-    PluginType type()
+    // -------------------------------------------------------------------
+    // Information (base)
+
+    PluginType type() const
     {
         return m_type;
     }
 
-    short id()
+    unsigned short id() const
     {
         return m_id;
     }
 
-    unsigned int hints()
+    unsigned int hints() const
     {
         return m_hints;
     }
 
-    const char* name()
+    bool enabled() const
+    {
+        return m_enabled;
+    }
+
+    const char* name() const
     {
         return m_name;
     }
 
-    const char* filename()
+    const char* filename() const
     {
         return m_filename;
     }
@@ -288,6 +296,9 @@ public:
     {
         return 0;
     }
+
+    // -------------------------------------------------------------------
+    // Information (count)
 
     virtual uint32_t ain_count()
     {
@@ -309,14 +320,15 @@ public:
         return (midi.port_mout) ? 1 : 0;
     }
 
-    uint32_t param_count()
+    uint32_t param_count() const
     {
         return param.count;
     }
 
-    virtual uint32_t param_scalepoint_count(uint32_t /*param_id*/)
+    virtual uint32_t param_scalepoint_count(uint32_t param_id)
     {
         return 0;
+        Q_UNUSED(param_id);
     }
 
     uint32_t custom_count()
@@ -324,44 +336,48 @@ public:
         return custom.count();
     }
 
-    uint32_t prog_count()
+    uint32_t prog_count() const
     {
         return prog.count;
     }
 
-    uint32_t midiprog_count()
+    uint32_t midiprog_count() const
     {
         return midiprog.count;
     }
 
-    int32_t prog_current()
+    // -------------------------------------------------------------------
+    // Information (current data)
+
+    int32_t prog_current() const
     {
         return prog.current;
     }
 
-    int32_t midiprog_current()
+    int32_t midiprog_current() const
     {
         return midiprog.current;
     }
 
-    ParameterData* param_data(uint32_t index)
+    const ParameterData* param_data(uint32_t index) const
     {
         return &param.data[index];
     }
 
-    ParameterRanges* param_ranges(uint32_t index)
+    const ParameterRanges* param_ranges(uint32_t index) const
     {
         return &param.ranges[index];
     }
 
-    CustomData* custom_data(uint32_t index)
+    const CustomData* custom_data(uint32_t index)
     {
         return &custom[index];
     }
 
-    virtual int32_t chunk_data(void** /*data_ptr*/)
+    virtual int32_t chunk_data(void** data_ptr)
     {
         return 0;
+        Q_UNUSED(data_ptr);
     }
 
 #ifndef BUILD_BRIDGE
@@ -371,14 +387,20 @@ public:
     }
 #endif
 
-    virtual double get_parameter_value(uint32_t /*param_id*/)
+    // -------------------------------------------------------------------
+    // Information (per-plugin data)
+
+    virtual double get_parameter_value(uint32_t param_id)
     {
         return 0.0;
+        Q_UNUSED(param_id);
     }
 
-    virtual double get_parameter_scalepoint_value(uint32_t /*param_id*/, uint32_t /*scalepoint_id*/)
+    virtual double get_parameter_scalepoint_value(uint32_t param_id, uint32_t scalepoint_id)
     {
         return 0.0;
+        Q_UNUSED(param_id);
+        Q_UNUSED(scalepoint_id);
     }
 
     virtual void get_label(char* buf_str)
@@ -401,29 +423,35 @@ public:
         *buf_str = 0;
     }
 
-    virtual void get_parameter_name(uint32_t /*param_id*/, char* buf_str)
+    virtual void get_parameter_name(uint32_t param_id, char* buf_str)
     {
         *buf_str = 0;
+        Q_UNUSED(param_id);
     }
 
-    virtual void get_parameter_symbol(uint32_t /*param_id*/, char* buf_str)
+    virtual void get_parameter_symbol(uint32_t param_id, char* buf_str)
     {
         *buf_str = 0;
+        Q_UNUSED(param_id);
     }
 
-    virtual void get_parameter_unit(uint32_t /*param_id*/, char* buf_str)
+    virtual void get_parameter_text(uint32_t param_id, char* buf_str)
     {
         *buf_str = 0;
+        Q_UNUSED(param_id);
     }
 
-    virtual void get_parameter_text(uint32_t /*param_id*/, char* buf_str)
+    virtual void get_parameter_unit(uint32_t param_id, char* buf_str)
     {
         *buf_str = 0;
+        Q_UNUSED(param_id);
     }
 
-    virtual void get_parameter_scalepoint_label(uint32_t /*param_id*/, uint32_t /*scalepoint_id*/, char* buf_str)
+    virtual void get_parameter_scalepoint_label(uint32_t param_id, uint32_t scalepoint_id, char* buf_str)
     {
         *buf_str = 0;
+        Q_UNUSED(param_id);
+        Q_UNUSED(scalepoint_id);
     }
 
     void get_program_name(uint32_t program_id, char* buf_str)
@@ -464,9 +492,12 @@ public:
         info->resizable = false;
     }
 
-    void set_id(short id)
+    // -------------------------------------------------------------------
+    // Set data (internal stuff)
+
+    void set_enabled(bool enabled)
     {
-        m_id = id;
+        m_enabled = enabled;
     }
 
     void set_active(bool active, bool osc_send, bool callback_send)
@@ -596,10 +627,25 @@ public:
 #endif
     }
 
-    virtual void set_parameter_value(uint32_t param_id, double value, bool /*gui_send*/, bool osc_send, bool callback_send)
-    {
 #ifndef BUILD_BRIDGE
-        if (osc_send && param.data[param_id].type == PARAMETER_INPUT)
+    virtual int set_osc_bridge_info(PluginBridgeInfoType itype, lo_arg** argv)
+    {
+        return 1;
+        Q_UNUSED(itype);
+        Q_UNUSED(argv);
+    }
+#endif
+
+    // -------------------------------------------------------------------
+    // Set data (plugin-specific stuff)
+
+    virtual void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
+    {
+        if (param.data[param_id].type != PARAMETER_INPUT)
+            return;
+
+#ifndef BUILD_BRIDGE
+        if (osc_send)
         {
             osc_global_send_set_parameter_value(m_id, param_id, value);
 
@@ -615,31 +661,29 @@ public:
         Q_UNUSED(osc_send);
         Q_UNUSED(callback_send);
 #endif
+        Q_UNUSED(gui_send);
     }
 
-    void set_parameter_value_rindex(int32_t rindex, double value, bool gui_send, bool osc_send, bool callback_send)
+    void set_parameter_value_by_rindex(int32_t rindex, double value, bool gui_send, bool osc_send, bool callback_send)
     {
         if (m_hints & PLUGIN_IS_BRIDGE)
         {
             if (rindex == PARAMETER_ACTIVE)
                 return set_active(value > 0.0, osc_send, callback_send);
-            else if (rindex == PARAMETER_DRYWET)
+            if (rindex == PARAMETER_DRYWET)
                 return set_drywet(value, osc_send, callback_send);
-            else if (rindex == PARAMETER_VOLUME)
+            if (rindex == PARAMETER_VOLUME)
                 return set_volume(value, osc_send, callback_send);
-            else if (rindex == PARAMETER_BALANCE_LEFT)
+            if (rindex == PARAMETER_BALANCE_LEFT)
                 return set_balance_left(value, osc_send, callback_send);
-            else if (rindex == PARAMETER_BALANCE_LEFT)
+            if (rindex == PARAMETER_BALANCE_LEFT)
                 return set_balance_right(value, osc_send, callback_send);
         }
 
         for (uint32_t i=0; i < param.count; i++)
         {
             if (param.data[i].rindex == rindex)
-            {
-                set_parameter_value(i, value, gui_send, osc_send, callback_send);
-                break;
-            }
+                return set_parameter_value(i, value, gui_send, osc_send, callback_send);
         }
     }
 
@@ -665,7 +709,7 @@ public:
 #endif
     }
 
-    virtual void set_custom_data(CustomDataType dtype, const char* key, const char* value, bool /*gui_send*/)
+    virtual void set_custom_data(CustomDataType dtype, const char* key, const char* value, bool gui_send)
     {
         qDebug("set_custom_data(%i, %s, %s)", dtype, key, value);
 
@@ -710,13 +754,16 @@ public:
                 custom.append(new_data);
             }
         }
+
+        Q_UNUSED(gui_send);
     }
 
-    virtual void set_chunk_data(const char* /*string_data*/)
+    virtual void set_chunk_data(const char* string_data)
     {
+        Q_UNUSED(string_data);
     }
 
-    virtual void set_program(int32_t index, bool /*gui_send*/, bool osc_send, bool callback_send, bool /*block*/)
+    virtual void set_program(int32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
     {
         prog.current = index;
 
@@ -736,7 +783,7 @@ public:
         Q_UNUSED(callback_send);
 #endif
 
-        // Change default value
+        // Change default parameter values
         for (uint32_t i=0; i < param.count; i++)
         {
             param.ranges[i].def = get_parameter_value(i);
@@ -746,9 +793,12 @@ public:
                 osc_global_send_set_default_value(m_id, i, param.ranges[i].def);
 #endif
         }
+
+        Q_UNUSED(gui_send);
+        Q_UNUSED(block);
     }
 
-    virtual void set_midi_program(int32_t index, bool /*gui_send*/, bool osc_send, bool callback_send, bool /*block*/)
+    virtual void set_midi_program(int32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
     {
         midiprog.current = index;
 
@@ -768,11 +818,11 @@ public:
         Q_UNUSED(callback_send);
 #endif
 
-        // SF2 never change defaults
+        // SF2 never changes defaults
         if (m_type != PLUGIN_SF2)
             return;
 
-        // Change default value
+        // Change default parameter values
         for (uint32_t i=0; i < param.count; i++)
         {
             param.ranges[i].def = get_parameter_value(i);
@@ -782,9 +832,12 @@ public:
                 osc_global_send_set_default_value(m_id, i, param.ranges[i].def);
 #endif
         }
+
+        Q_UNUSED(gui_send);
+        Q_UNUSED(block);
     }
 
-    void set_midi_program_full(uint32_t bank_id, uint32_t program_id, bool gui_send, bool osc_send, bool callback_send, bool block)
+    void set_midi_program_by_id(uint32_t bank_id, uint32_t program_id, bool gui_send, bool osc_send, bool callback_send, bool block)
     {
         for (uint32_t i=0; i < midiprog.count; i++)
         {
@@ -793,164 +846,82 @@ public:
         }
     }
 
-    virtual void set_gui_data(int /*data*/, void* /*ptr*/)
+    // -------------------------------------------------------------------
+    // Set gui stuff
+
+    virtual void set_gui_data(int data, void* ptr)
     {
+        Q_UNUSED(data);
+        Q_UNUSED(ptr);
     }
 
-    virtual void show_gui(bool /*yesno*/)
+    virtual void show_gui(bool yesno)
     {
+        Q_UNUSED(yesno);
     }
 
     virtual void idle_gui()
     {
     }
 
+    // -------------------------------------------------------------------
+    // Plugin state
+
     virtual void reload()
     {
     }
 
-    virtual void reload_programs(bool /*init*/)
+    virtual void reload_programs(bool init)
     {
+        Q_UNUSED(init);
     }
 
     virtual void prepare_for_save()
     {
     }
 
-    virtual void process(jack_nframes_t)
+    // -------------------------------------------------------------------
+    // Plugin processing
+
+    virtual void process(float** ains_buffer, float** aouts_buffer, uint32_t nframes, uint32_t nframesOffset = 0)
     {
+        Q_UNUSED(ains_buffer);
+        Q_UNUSED(aouts_buffer);
+        Q_UNUSED(nframes);
+        Q_UNUSED(nframesOffset);
     }
 
-    virtual void buffer_size_changed(jack_nframes_t)
+#ifdef CARLA_ENGINE_JACK
+    void process_jack(uint32_t nframes)
     {
+        float* ains_buffer[ain.count];
+        float* aouts_buffer[aout.count];
+
+        for (uint32_t i=0; i < ain.count; i++)
+            ains_buffer[i] = (float*)ain.ports[i]->getBuffer(nframes);
+
+        for (uint32_t i=0; i < aout.count; i++)
+            aouts_buffer[i] = (float*)aout.ports[i]->getBuffer(nframes);
+
+        if (carla_options.proccess_32x)
+        {
+            for (uint32_t i=0; i < nframes; i += 32)
+                process(ains_buffer, aouts_buffer, 32, i);
+        }
+        else
+            process(ains_buffer, aouts_buffer, nframes);
     }
-
-    virtual void send_midi_note(bool onoff, uint8_t note, uint8_t velo, bool /*gui_send*/, bool osc_send, bool callback_send)
-    {
-        carla_midi_lock();
-        for (unsigned int i=0; i<MAX_MIDI_EVENTS; i++)
-        {
-            if (ext_midi_notes[i].valid == false)
-            {
-                ext_midi_notes[i].valid = true;
-                ext_midi_notes[i].onoff = onoff;
-                ext_midi_notes[i].note = note;
-                ext_midi_notes[i].velo = velo;
-                break;
-            }
-        }
-        carla_midi_unlock();
-
-#ifndef BUILD_BRIDGE
-        if (osc_send)
-        {
-            if (onoff)
-                osc_global_send_note_on(m_id, note, velo);
-            else
-                osc_global_send_note_off(m_id, note);
-
-            // FIXME, send midi
-            //if (m_hints & PLUGIN_IS_BRIDGE)
-            //{
-            //    if (onoff)
-            //        osc_send_note_on(&osc.data, m_id, note, velo);
-            //    else
-            //        osc_send_note_off(&osc.data, m_id, note);
-            //}
-        }
-
-        if (callback_send)
-            callback_action(onoff ? CALLBACK_NOTE_ON : CALLBACK_NOTE_OFF, m_id, note, velo, 0.0);
-#else
-        Q_UNUSED(osc_send);
-        Q_UNUSED(callback_send);
 #endif
-    }
 
-    void send_midi_all_notes_off()
+    virtual void buffer_size_changed(uint32_t newBufferSize)
     {
-        carla_midi_lock();
-        post_events.lock.lock();
-
-        unsigned short pe_pad = 0;
-
-        for (unsigned short i=0; i < MAX_POST_EVENTS; i++)
-        {
-            if (post_events.data[i].valid == false)
-            {
-                pe_pad = i;
-                break;
-            }
-            else if (i + MAX_MIDI_EVENTS == MAX_POST_EVENTS)
-            {
-                qWarning("post-events buffer full, making room for all notes off now");
-                pe_pad = i - 1;
-                break;
-            }
-        }
-
-        for (unsigned short i=0; i < 128 && i < MAX_MIDI_EVENTS && i < MAX_POST_EVENTS; i++)
-        {
-            //if (notes_off)
-            //{
-            ext_midi_notes[i].valid = true;
-            ext_midi_notes[i].onoff = false;
-            ext_midi_notes[i].note  = i;
-            ext_midi_notes[i].velo  = 0;
-            //}
-
-            post_events.data[i+pe_pad].valid = true;
-            post_events.data[i+pe_pad].type  = PostEventNoteOff;
-            post_events.data[i+pe_pad].index = i;
-            post_events.data[i+pe_pad].value = 0.0;
-        }
-
-        post_events.lock.unlock();
-        carla_midi_unlock();
+        Q_UNUSED(newBufferSize);
     }
 
-    void postpone_event(PluginPostEventType type, int32_t index, double value, const void* cdata = nullptr)
-    {
-        post_events.lock.lock();
+    // -------------------------------------------------------------------
+    // OSC stuff
 
-        for (unsigned short i=0; i<MAX_POST_EVENTS; i++)
-        {
-            if (post_events.data[i].valid == false)
-            {
-                post_events.data[i].valid = true;
-                post_events.data[i].type  = type;
-                post_events.data[i].index = index;
-                post_events.data[i].value = value;
-                post_events.data[i].cdata = cdata;
-                break;
-            }
-        }
-
-        post_events.lock.unlock();
-    }
-
-    void post_events_copy(PluginPostEvent* post_events_dst)
-    {
-        post_events.lock.lock();
-
-        memcpy(post_events_dst, post_events.data, sizeof(PluginPostEvent)*MAX_POST_EVENTS);
-
-        for (unsigned short i=0; i < MAX_POST_EVENTS; i++)
-            post_events.data[i].valid = false;
-
-        post_events.lock.unlock();
-    }
-
-    virtual void run_custom_event(PluginPostEvent* /*event*/)
-    {
-    }
-
-    virtual int set_osc_bridge_info(PluginBridgeInfoType /*intoType*/, lo_arg** /*argv*/)
-    {
-        return 1;
-    }
-
-    void osc_global_register_new()
+    void osc_register_new()
     {
 #ifdef BUILD_BRIDGE
         // Base data
@@ -1084,7 +1055,7 @@ public:
         }
     }
 
-    bool update_osc_gui()
+    bool show_osc_gui()
     {
         // wait for UI 'update' call; 40 re-tries, 4 secs
         for (short i=1; i<40; i++)
@@ -1101,43 +1072,175 @@ public:
     }
 #endif
 
-    // TODO, remove = true
-    virtual void remove_from_jack(bool deactivate = true)
-    {
-        qDebug("CarlaPlugin::remove_from_jack(%s) - start", bool2str(deactivate));
+    // -------------------------------------------------------------------
+    // MIDI events
 
-        if (jack_client == nullptr)
+    virtual void send_midi_note(bool onoff, uint8_t note, uint8_t velo, bool /*gui_send*/, bool osc_send, bool callback_send)
+    {
+        carla_midi_lock();
+        for (unsigned int i=0; i<MAX_MIDI_EVENTS; i++)
         {
-            qDebug("CarlaPlugin::remove_from_jack(%s) - return", bool2str(deactivate));
-            return;
+            if (extMidiNotes[i].valid == false)
+            {
+                extMidiNotes[i].valid = true;
+                extMidiNotes[i].onoff = onoff;
+                extMidiNotes[i].note = note;
+                extMidiNotes[i].velo = velo;
+                break;
+            }
+        }
+        carla_midi_unlock();
+
+#ifndef BUILD_BRIDGE
+        if (osc_send)
+        {
+            if (onoff)
+                osc_global_send_note_on(m_id, note, velo);
+            else
+                osc_global_send_note_off(m_id, note);
+
+            // FIXME, send midi
+            //if (m_hints & PLUGIN_IS_BRIDGE)
+            //{
+            //    if (onoff)
+            //        osc_send_note_on(&osc.data, m_id, note, velo);
+            //    else
+            //        osc_send_note_off(&osc.data, m_id, note);
+            //}
         }
 
-#ifdef BUILD_BRIDGE
-        if (deactivate)
+        if (callback_send)
+            callback_action(onoff ? CALLBACK_NOTE_ON : CALLBACK_NOTE_OFF, m_id, note, velo, 0.0);
 #else
-        if (carla_options.global_jack_client == false && deactivate)
+        Q_UNUSED(osc_send);
+        Q_UNUSED(callback_send);
 #endif
-            jack_deactivate(jack_client);
+    }
+
+    void send_midi_all_notes_off()
+    {
+        carla_midi_lock();
+        postEvents.mutex.lock();
+
+        unsigned short pe_pad = 0;
+
+        for (unsigned short i=0; i < MAX_POST_EVENTS; i++)
+        {
+            if (postEvents.data[i].type == PluginPostEventNull)
+            {
+                pe_pad = i;
+                break;
+            }
+            else if (i + MAX_MIDI_EVENTS == MAX_POST_EVENTS)
+            {
+                qWarning("post-events buffer full, making room for all notes off now");
+                pe_pad = i - 1;
+                break;
+            }
+        }
+
+        for (unsigned short i=0; i < 128 && i < MAX_MIDI_EVENTS && i < MAX_POST_EVENTS; i++)
+        {
+            //if (notes_off)
+            //{
+            extMidiNotes[i].valid = true;
+            extMidiNotes[i].onoff = false;
+            extMidiNotes[i].note  = i;
+            extMidiNotes[i].velo  = 0;
+            //}
+
+            postEvents.data[i+pe_pad].type  = PluginPostEventNoteOff;
+            postEvents.data[i+pe_pad].index = i;
+            postEvents.data[i+pe_pad].value = 0.0;
+        }
+
+        postEvents.mutex.unlock();
+        carla_midi_unlock();
+    }
+
+    // -------------------------------------------------------------------
+    // Post-poned events
+
+    void postpone_event(PluginPostEventType type, int32_t index, double value, const void* cdata = nullptr)
+    {
+        postEvents.mutex.lock();
+
+        for (unsigned short i=0; i<MAX_POST_EVENTS; i++)
+        {
+            if (postEvents.data[i].type != PluginPostEventNull)
+            {
+                postEvents.data[i].type  = type;
+                postEvents.data[i].index = index;
+                postEvents.data[i].value = value;
+                postEvents.data[i].cdata = cdata;
+                break;
+            }
+        }
+
+        postEvents.mutex.unlock();
+    }
+
+    void post_events_copy(PluginPostEvent* postEventsDest)
+    {
+        postEvents.mutex.lock();
+
+        memcpy(postEventsDest, postEvents.data, sizeof(PluginPostEvent)*MAX_POST_EVENTS);
+
+        for (unsigned short i=0; i < MAX_POST_EVENTS; i++)
+            postEvents.data[i].type = PluginPostEventNull;
+
+        postEvents.mutex.unlock();
+    }
+
+    virtual void run_custom_event(PluginPostEvent* event)
+    {
+        Q_UNUSED(event);
+    }
+
+    // -------------------------------------------------------------------
+    // Cleanup
+
+    virtual void remove_client_ports()
+    {
+        qDebug("CarlaPlugin::remove_client_ports() - start");
 
         for (uint32_t i=0; i < ain.count; i++)
-            jack_port_unregister(jack_client, ain.ports[i]);
+        {
+            delete ain.ports[i];
+            ain.ports[i] = nullptr;
+        }
 
         for (uint32_t i=0; i < aout.count; i++)
-            jack_port_unregister(jack_client, aout.ports[i]);
+        {
+            delete aout.ports[i];
+            aout.ports[i] = nullptr;
+        }
 
         if (midi.port_min)
-            jack_port_unregister(jack_client, midi.port_min);
+        {
+            delete midi.port_min;
+            midi.port_min = nullptr;
+        }
 
         if (midi.port_mout)
-            jack_port_unregister(jack_client, midi.port_mout);
+        {
+            delete midi.port_mout;
+            midi.port_mout = nullptr;
+        }
 
         if (param.port_cin)
-            jack_port_unregister(jack_client, param.port_cin);
+        {
+            delete param.port_cin;
+            param.port_cin = nullptr;
+        }
 
         if (param.port_cout)
-            jack_port_unregister(jack_client, param.port_cout);
+        {
+            delete param.port_cout;
+            param.port_cout = nullptr;
+        }
 
-        qDebug("CarlaPlugin::remove_from_jack(%s) - end", bool2str(deactivate));
+        qDebug("CarlaPlugin::remove_client_ports() - end");
     }
 
     virtual void delete_buffers()
@@ -1182,66 +1285,44 @@ public:
         qDebug("CarlaPlugin::delete_buffers() - end");
     }
 
+    // -------------------------------------------------------------------
+    // Library functions
+
     bool lib_open(const char* filename)
     {
-#ifdef Q_OS_WIN
-        m_lib = LoadLibraryA(filename);
-#else
-        m_lib = dlopen(filename, RTLD_NOW);
-#endif
+        m_lib = ::lib_open(filename);
         return bool(m_lib);
     }
 
     bool lib_close()
     {
         if (m_lib)
-#ifdef Q_OS_WIN
-            return FreeLibrary((HMODULE)m_lib) != 0;
-#else
-            return dlclose(m_lib) != 0;
-#endif
-        else
-            return false;
+            return ::lib_close(m_lib);
+        return false;
     }
 
     void* lib_symbol(const char* symbol)
     {
         if (m_lib)
-#ifdef Q_OS_WIN
-            return (void*)GetProcAddress((HMODULE)m_lib, symbol);
-#else
-            return dlsym(m_lib, symbol);
-#endif
-        else
-            return nullptr;
+            return ::lib_symbol(m_lib, symbol);
+        return nullptr;
     }
 
     const char* lib_error()
     {
-#ifdef Q_OS_WIN
-        static char libError[2048];
-        memset(libError, 0, sizeof(char)*2048);
-
-        LPVOID winErrorString;
-        DWORD  winErrorCode = GetLastError();
-        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |  FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, winErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&winErrorString, 0, nullptr);
-
-        snprintf(libError, 2048, "%s: error code %i: %s", m_filename, winErrorCode, (const char*)winErrorString);
-        LocalFree(winErrorString);
-
-        return libError;
-#else
-        return dlerror();
-#endif
+        return ::lib_error(m_filename ? m_filename : "");
     }
+
+    // -------------------------------------------------------------------
 
 protected:
     PluginType m_type;
-    short m_id;
+    unsigned short m_id;
     unsigned int m_hints;
 
     bool m_active;
     bool m_active_before;
+    bool m_enabled;
 
     void* m_lib;
     const char* m_name;
@@ -1250,18 +1331,22 @@ protected:
     int8_t cin_channel;
 
     double x_drywet, x_vol, x_bal_left, x_bal_right;
-    jack_client_t* jack_client;
+    CarlaEngineClient* x_client;
 
+    // -------------------------------------------------------------------
     // Storage Data
+
     PluginAudioData ain;
     PluginAudioData aout;
     PluginMidiData midi;
     PluginParameterData param;
     PluginProgramData prog;
     PluginMidiProgramData midiprog;
-    QList<CustomData> custom;
+    QVector<CustomData> custom;
 
+    // -------------------------------------------------------------------
     // Extra
+
 #ifndef BUILD_BRIDGE
     struct {
         OscData data;
@@ -1270,13 +1355,15 @@ protected:
 #endif
 
     struct {
-        QMutex lock;
+        QMutex mutex;
         PluginPostEvent data[MAX_POST_EVENTS];
-    } post_events;
+    } postEvents;
 
-    ExternalMidiNote ext_midi_notes[MAX_MIDI_EVENTS];
+    ExternalMidiNote extMidiNotes[MAX_MIDI_EVENTS];
 
-    // utilities
+    // -------------------------------------------------------------------
+    // Utilities
+
     static double fix_parameter_value(double& value, const ParameterRanges& ranges)
     {
         if (value < ranges.min)
@@ -1300,5 +1387,29 @@ protected:
         return (value < 0.0) ? -value : value;
     }
 };
+
+class CarlaPluginScopedDisabler
+{
+public:
+    CarlaPluginScopedDisabler(CarlaPlugin* const plugin) :
+        m_plugin(plugin)
+    {
+        carla_proc_lock();
+        m_plugin->set_enabled(false);
+        carla_proc_unlock();
+    }
+
+    ~CarlaPluginScopedDisabler()
+    {
+        carla_proc_lock();
+        m_plugin->set_enabled(true);
+        carla_proc_unlock();
+    }
+
+private:
+    CarlaPlugin* const m_plugin;
+};
+
+CARLA_BACKEND_END_NAMESPACE
 
 #endif // CARLA_PLUGIN_H

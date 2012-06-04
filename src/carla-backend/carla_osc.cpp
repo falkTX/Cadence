@@ -28,14 +28,22 @@ OscData global_osc_data = { nullptr, nullptr, nullptr };
 // -------------------------------------------------------------------------------------------------------------------
 // Exported symbols (API)
 
+CARLA_BACKEND_START_NAMESPACE
+
 const char* get_host_osc_url()
 {
     qDebug("get_host_osc_url()");
     return global_osc_server_path;
 }
 
+CARLA_BACKEND_END_NAMESPACE
+
 // End of exported symbols (API)
 // -------------------------------------------------------------------------------------------------------------------
+
+#ifndef CARLA_BACKEND_NO_NAMESPACE
+using namespace CarlaBackend;
+#endif
 
 void osc_init(const char*)
 {
@@ -189,15 +197,15 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
         else if (strcmp(method, "bridge_aouts_peak") == 0)
             return osc_handle_bridge_aouts_peak(plugin, argv);
         else if (strcmp(method, "bridge_audio_count") == 0)
-            return plugin->set_osc_bridge_info(PluginBridgeAudioCountInfo, argv);
+            return plugin->set_osc_bridge_info(PluginBridgeAudioCount, argv);
         else if (strcmp(method, "bridge_midi_count") == 0)
-            return plugin->set_osc_bridge_info(PluginBridgeMidiCountInfo, argv);
+            return plugin->set_osc_bridge_info(PluginBridgeMidiCount, argv);
         else if (strcmp(method, "bridge_param_count") == 0)
-            return plugin->set_osc_bridge_info(PluginBridgeParameterCountInfo, argv);
+            return plugin->set_osc_bridge_info(PluginBridgeParameterCount, argv);
         else if (strcmp(method, "bridge_program_count") == 0)
-            return plugin->set_osc_bridge_info(PluginBridgeProgramCountInfo, argv);
+            return plugin->set_osc_bridge_info(PluginBridgeProgramCount, argv);
         else if (strcmp(method, "bridge_midi_program_count") == 0)
-            return plugin->set_osc_bridge_info(PluginBridgeMidiProgramCountInfo, argv);
+            return plugin->set_osc_bridge_info(PluginBridgeMidiProgramCount, argv);
         else if (strcmp(method, "bridge_plugin_info") == 0)
             return plugin->set_osc_bridge_info(PluginBridgePluginInfo, argv);
         else if (strcmp(method, "bridge_param_info") == 0)
@@ -276,7 +284,7 @@ int osc_handle_register(lo_arg** argv, lo_address source)
         for (unsigned short i=0; i<MAX_PLUGINS; i++)
         {
             //CarlaPlugin* plugin = CarlaPlugins[i];
-            //if (plugin && plugin->id() >= 0)
+            //if (plugin && plugin->enabled())
             //    osc_new_plugin(plugin);
         }
 

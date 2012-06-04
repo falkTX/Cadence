@@ -18,11 +18,13 @@
 #ifndef CARLA_LIB_INCLUDES_H
 #define CARLA_LIB_INCLUDES_H
 
-#ifdef Q_OS_WIN
-#include <cstdio>
-#endif
+#include "carla_includes.h"
 
-static
+//#ifdef Q_OS_WIN
+//#include <cstdio>
+//#endif
+
+static inline
 void* lib_open(const char* filename)
 {
 #ifdef Q_OS_WIN
@@ -32,7 +34,7 @@ void* lib_open(const char* filename)
 #endif
 }
 
-static
+static inline
 bool lib_close(void* lib)
 {
 #ifdef Q_OS_WIN
@@ -42,7 +44,7 @@ bool lib_close(void* lib)
 #endif
 }
 
-static
+static inline
 void* lib_symbol(void* lib, const char* symbol)
 {
 #ifdef Q_OS_WIN
@@ -52,7 +54,7 @@ void* lib_symbol(void* lib, const char* symbol)
 #endif
 }
 
-static
+static inline
 const char* lib_error(const char* filename)
 {
 #ifdef Q_OS_WIN
