@@ -186,8 +186,8 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
         return osc_handle_exiting(plugin);
 
     // Plugin-specific methods
-    else if (strcmp(method, "lv2_event_transfer") == 0)
-        return osc_handle_lv2_event_transfer(plugin, argv);
+//    else if (strcmp(method, "lv2_event_transfer") == 0)
+//        return osc_handle_lv2_event_transfer(plugin, argv);
 
     // Plugin Bridges
     if (plugin->hints() & PLUGIN_IS_BRIDGE)

@@ -52,13 +52,13 @@ public:
 
             if (osc.thread)
             {
-                // Wait a bit first, try safe quit else force kill
+                // Wait a bit first, try safe quit, then force kill
                 if (osc.thread->isRunning())
                 {
-                    if (osc.thread->wait(2000) == false)
+                    if (! osc.thread->wait(2000))
                         osc.thread->quit();
 
-                    if (osc.thread->isRunning() && osc.thread->wait(1000) == false)
+                    if (osc.thread->isRunning() && ! osc.thread->wait(1000))
                     {
                         qWarning("Failed to properly stop DSSI GUI thread");
                         osc.thread->terminate();
@@ -72,10 +72,10 @@ public:
         }
 #endif
 
-        if (handle && ldescriptor->deactivate && m_active_before)
+        if (handle && ldescriptor && ldescriptor->deactivate && m_active_before)
             ldescriptor->deactivate(handle);
 
-        if (handle && ldescriptor->cleanup)
+        if (handle && ldescriptor && ldescriptor->cleanup)
             ldescriptor->cleanup(handle);
 
         handle = nullptr;
@@ -166,17 +166,8 @@ public:
 
         if (strcmp(key, "reloadprograms") == 0 || strcmp(key, "load") == 0 || strncmp(key, "patches", 7) == 0)
         {
-            // Safely disable plugin for reload
-            carla_proc_lock();
-            short _id = m_id;
-            m_id = -1;
-            carla_proc_unlock();
-
+            const CarlaPluginScopedDisabler m(this);
             reload_programs(false);
-
-            carla_proc_lock();
-            m_id = _id;
-            carla_proc_unlock();
         }
 
         CarlaPlugin::set_custom_data(dtype, key, value, gui_send);
@@ -193,7 +184,7 @@ public:
     {
         if (index >= 0)
         {
-            if (0) //(carla_jack_on_freewheel())
+            if (CarlaEngine::isOffline())
             {
                 if (block) carla_proc_lock();
                 descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
@@ -201,23 +192,8 @@ public:
             }
             else
             {
-                short _id = m_id;
-
-                if (block)
-                {
-                    carla_proc_lock();
-                    m_id = -1;
-                    carla_proc_unlock();
-                }
-
+                const CarlaPluginScopedDisabler m(this, block);
                 descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
-
-                if (block)
-                {
-                    carla_proc_lock();
-                    m_id = _id;
-                    carla_proc_unlock();
-                }
             }
 
 #ifndef BUILD_BRIDGE
@@ -302,7 +278,7 @@ public:
             param_buffers = new float[params];
         }
 
-        const int port_name_size = jack_port_name_size() - 1;
+        const int port_name_size = CarlaEngine::maxClientNameSize() - 1;
         char port_name[port_name_size];
         bool needs_cin  = false;
         bool needs_cout = false;
@@ -724,7 +700,7 @@ public:
             void* cin_buffer = param.port_cin->getBuffer(nframes);
 
             const CarlaEngineControlEvent* cin_event;
-            uint32_t n_cin_events = param.port_cin->getEventCount(cin_buffer);
+            uint32_t time, n_cin_events = param.port_cin->getEventCount(cin_buffer);
 
             uint32_t next_bank_id = 0;
             if (midiprog.current > 0 && midiprog.count > 0)
@@ -737,8 +713,10 @@ public:
                 if (! cin_event)
                     continue;
 
-                if (carla_options.proccess_32x && cin_event->time < 32)
-                    break;
+                time = cin_event->time - nframesOffset;
+
+                if (time >= nframes)
+                    continue;
 
                 // Control change
                 switch (cin_event->type)
@@ -905,14 +883,14 @@ public:
         CARLA_PROCESS_CONTINUE_CHECK;
 
         // --------------------------------------------------------------------------------------------------------
-        // MIDI Input (JACK)
+        // MIDI Input (System)
 
         if (midi.port_min)
         {
             void* min_buffer = midi.port_min->getBuffer(nframes);
 
             const CarlaEngineMidiEvent* min_event;
-            uint32_t n_min_events = midi.port_min->getEventCount(min_buffer);
+            uint32_t time, n_min_events = midi.port_min->getEventCount(min_buffer);
 
             for (i=0; i < n_min_events && midi_event_count < MAX_MIDI_EVENTS; i++)
             {
@@ -921,8 +899,10 @@ public:
                 if (! min_event)
                     break;
 
-                if (carla_options.proccess_32x && min_event->time < 32)
-                    break;
+                time = min_event->time - nframesOffset;
+
+                if (time >= nframes)
+                    continue;
 
                 uint8_t status  = min_event->data[0];
                 uint8_t channel = status & 0x0F;
@@ -934,7 +914,7 @@ public:
                 snd_seq_event_t* midi_event = &midi_events[midi_event_count];
                 memset(midi_event, 0, sizeof(snd_seq_event_t));
 
-                midi_event->time.tick = min_event->time - nframesOffset;
+                midi_event->time.tick = time;
 
                 if (MIDI_IS_STATUS_NOTE_OFF(status))
                 {
@@ -988,7 +968,7 @@ public:
 
                 midi_event_count += 1;
             }
-        } // End of MIDI Input (JACK)
+        } // End of MIDI Input (System)
 
         CARLA_PROCESS_CONTINUE_CHECK;
 

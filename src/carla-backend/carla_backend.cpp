@@ -139,16 +139,16 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
 
     switch (ptype)
     {
-    case PLUGIN_LADSPA:
-        return add_plugin_ladspa(filename, label, extra_stuff);
+//    case PLUGIN_LADSPA:
+//        return add_plugin_ladspa(filename, label, extra_stuff);
     case PLUGIN_DSSI:
         return add_plugin_dssi(filename, label, extra_stuff);
-    case PLUGIN_LV2:
-        return add_plugin_lv2(filename, label);
-    case PLUGIN_VST:
-        return add_plugin_vst(filename, label);
-    case PLUGIN_SF2:
-        return add_plugin_sf2(filename, label);
+//    case PLUGIN_LV2:
+//        return add_plugin_lv2(filename, label);
+//    case PLUGIN_VST:
+//        return add_plugin_vst(filename, label);
+//    case PLUGIN_SF2:
+//        return add_plugin_sf2(filename, label);
     default:
         set_last_error("Unknown plugin type");
         return -1;
@@ -1261,13 +1261,11 @@ int main(int argc, char* argv[])
     if (engine_init("carla_demo"))
     {
         set_callback_function(main_callback);
-        short id = add_plugin_dssi("/usr/lib/dssi/horgand.so", "horgand", "/usr/lib/dssi/horgand/horgand_fltk");
+        short id = add_plugin_dssi("/usr/lib/dssi/calf.so", "Reverb", "/usr/lib/dssi/calf/calf_gtk");
 
         if (id >= 0)
         {
             qDebug("Main Initiated, id = %u", id);
-            //const char* test_name = strdup("test reloaded named");
-            //set_name(id, test_name);
 
             const GuiInfo* guiInfo = get_gui_info(id);
 
@@ -1277,6 +1275,7 @@ int main(int argc, char* argv[])
                 gui->show();
             }
 
+            set_active(id, true);
             show_gui(id, true);
             app.exec();
 

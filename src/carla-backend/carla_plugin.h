@@ -905,8 +905,19 @@ public:
 
         if (carla_options.proccess_32x)
         {
-            for (uint32_t i=0; i < nframes; i += 32)
-                process(ains_buffer, aouts_buffer, 32, i);
+            float* ains_buffer2[ain.count];
+            float* aouts_buffer2[aout.count];
+
+            for (uint32_t i=0, j; i < nframes; i += 8)
+            {
+                for (j=0; j < ain.count; j++)
+                    ains_buffer2[j] = ains_buffer[j] + i;
+
+                for (j=0; j < aout.count; j++)
+                    aouts_buffer2[j] = aouts_buffer[j] + i;
+
+                process(ains_buffer2, aouts_buffer2, 8, i);
+            }
         }
         else
             process(ains_buffer, aouts_buffer, nframes);
@@ -1391,23 +1402,31 @@ protected:
 class CarlaPluginScopedDisabler
 {
 public:
-    CarlaPluginScopedDisabler(CarlaPlugin* const plugin) :
-        m_plugin(plugin)
+    CarlaPluginScopedDisabler(CarlaPlugin* const plugin, bool disable = true) :
+        m_plugin(plugin),
+        m_disable(disable)
     {
-        carla_proc_lock();
-        m_plugin->set_enabled(false);
-        carla_proc_unlock();
+        if (m_disable)
+        {
+            carla_proc_lock();
+            m_plugin->set_enabled(false);
+            carla_proc_unlock();
+        }
     }
 
     ~CarlaPluginScopedDisabler()
     {
-        carla_proc_lock();
-        m_plugin->set_enabled(true);
-        carla_proc_unlock();
+        if (m_disable)
+        {
+            carla_proc_lock();
+            m_plugin->set_enabled(true);
+            carla_proc_unlock();
+        }
     }
 
 private:
     CarlaPlugin* const m_plugin;
+    const bool m_disable;
 };
 
 CARLA_BACKEND_END_NAMESPACE

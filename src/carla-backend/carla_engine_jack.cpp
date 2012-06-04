@@ -52,7 +52,7 @@ quint32 get_buffer_size()
 {
     qDebug("get_buffer_size()");
     if (carla_options.proccess_32x)
-        return 32;
+        return 8;
     return carla_buffer_size;
 }
 
@@ -104,8 +104,10 @@ static int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
     if (carla_jack_thread == nullptr)
         carla_jack_thread = QThread::currentThread();
 
+#ifndef BUILD_BRIDGE
     // request time info once (arg only null on global client)
     if (carla_jack_client && ! arg)
+#endif
         carla_jack_state = jack_transport_query(carla_jack_client, &carla_jack_pos);
 
     CarlaPlugin* plugin = (CarlaPlugin*)arg;
