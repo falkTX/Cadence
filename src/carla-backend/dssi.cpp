@@ -83,6 +83,9 @@ public:
         ldescriptor = nullptr;
     }
 
+    // -------------------------------------------------------------------
+    // Information (base)
+
     PluginCategory category()
     {
         if (midi.port_min && aout.count > 0)
@@ -95,6 +98,9 @@ public:
         return ldescriptor->UniqueID;
     }
 
+    // -------------------------------------------------------------------
+    // Information (current data)
+
     int32_t chunk_data(void** data_ptr)
     {
         unsigned long long_data_size = 0;
@@ -102,6 +108,9 @@ public:
             return long_data_size;
         return 0;
     }
+
+    // -------------------------------------------------------------------
+    // Information (per-plugin data)
 
     double get_parameter_value(uint32_t param_id)
     {
@@ -142,6 +151,9 @@ public:
             info->type = GUI_NONE;
         info->resizable = false;
     }
+
+    // -------------------------------------------------------------------
+    // Set data (plugin-specific stuff)
 
     void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
@@ -278,7 +290,7 @@ public:
             param_buffers = new float[params];
         }
 
-        const int port_name_size = CarlaEngine::maxClientNameSize() - 1;
+        const int port_name_size = CarlaEngine::maxPortNameSize() - 1;
         char port_name[port_name_size];
         bool needs_cin  = false;
         bool needs_cout = false;
@@ -583,7 +595,7 @@ public:
         }
 
         if (midiprog.count > 0)
-            midiprog.data  = new midi_program_t [midiprog.count];
+            midiprog.data = new midi_program_t [midiprog.count];
 
         // Update data
         for (i=0; i < midiprog.count; i++)
@@ -658,11 +670,12 @@ public:
     void process(float** ains_buffer, float** aouts_buffer, uint32_t nframes, uint32_t nframesOffset)
     {
         uint32_t i, k;
-        unsigned short plugin_id = m_id;
         unsigned long midi_event_count = 0;
 
         double ains_peak_tmp[2]  = { 0.0 };
         double aouts_peak_tmp[2] = { 0.0 };
+
+        CARLA_PROCESS_CONTINUE_CHECK;
 
         // --------------------------------------------------------------------------------------------------------
         // Input VU
@@ -695,15 +708,15 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Parameters Input [Automation]
 
-        if (param.port_cin)
+        if (param.port_cin && m_active)
         {
-            void* cin_buffer = param.port_cin->getBuffer(nframes);
+            void* cin_buffer = param.port_cin->getBuffer();
 
             const CarlaEngineControlEvent* cin_event;
             uint32_t time, n_cin_events = param.port_cin->getEventCount(cin_buffer);
 
             uint32_t next_bank_id = 0;
-            if (midiprog.current > 0 && midiprog.count > 0)
+            if (midiprog.current >= 0 && midiprog.count > 0)
                 next_bank_id = midiprog.data[midiprog.current].bank;
 
             for (i=0; i < n_cin_events; i++)
@@ -797,10 +810,8 @@ public:
                 }
 
                 case CarlaEngineEventMidiBankChange:
-                {
                     next_bank_id = cin_event->value;
                     break;
-                }
 
                 case CarlaEngineEventMidiProgramChange:
                 {
@@ -816,7 +827,6 @@ public:
                             break;
                         }
                     }
-
                     break;
                 }
 
@@ -853,7 +863,7 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // MIDI Input (External)
 
-        if (midi.port_min)
+        if (midi.port_min && m_active)
         {
             carla_midi_lock();
 
@@ -885,9 +895,9 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // MIDI Input (System)
 
-        if (midi.port_min)
+        if (midi.port_min && m_active)
         {
-            void* min_buffer = midi.port_min->getBuffer(nframes);
+            void* min_buffer = midi.port_min->getBuffer();
 
             const CarlaEngineMidiEvent* min_event;
             uint32_t time, n_min_events = midi.port_min->getEventCount(min_buffer);
@@ -897,7 +907,7 @@ public:
                 min_event = midi.port_min->getEvent(min_buffer, i);
 
                 if (! min_event)
-                    break;
+                    continue;
 
                 time = min_event->time - nframesOffset;
 
@@ -992,7 +1002,7 @@ public:
 
         if (m_active)
         {
-            if (m_active_before == false)
+            if (! m_active_before)
             {
                 if (ldescriptor->activate)
                     ldescriptor->activate(handle);
@@ -1109,9 +1119,13 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Control Output
 
-        if (param.port_cout)
+        if (param.port_cout && m_active)
         {
-            void* cout_buffer = param.port_cout->getBuffer(nframes);
+            void* cout_buffer = param.port_cout->getBuffer();
+
+            if (nframesOffset == 0 || ! m_active_before)
+                param.port_cout->initBuffer(cout_buffer);
+
             double value;
 
             for (k=0; k < param.count; k++)
@@ -1119,7 +1133,7 @@ public:
                 if (param.data[k].type == PARAMETER_OUTPUT && param.data[k].midi_cc > 0)
                 {
                     value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
-                    param.port_cout->writeEvent(cout_buffer, param.data[k].midi_channel, param.data[k].midi_cc, value);
+                    param.port_cout->writeEvent(cout_buffer, CarlaEngineEventControlChange, nframesOffset, param.data[k].midi_channel, param.data[k].midi_cc, value);
                 }
             }
         } // End of Control Output
@@ -1129,10 +1143,10 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Peak Values
 
-        ains_peak[(plugin_id*2)+0]  = ains_peak_tmp[0];
-        ains_peak[(plugin_id*2)+1]  = ains_peak_tmp[1];
-        aouts_peak[(plugin_id*2)+0] = aouts_peak_tmp[0];
-        aouts_peak[(plugin_id*2)+1] = aouts_peak_tmp[1];
+        ains_peak[(m_id*2)+0]  = ains_peak_tmp[0];
+        ains_peak[(m_id*2)+1]  = ains_peak_tmp[1];
+        aouts_peak[(m_id*2)+0] = aouts_peak_tmp[0];
+        aouts_peak[(m_id*2)+1] = aouts_peak_tmp[1];
 
         m_active_before = m_active;
     }

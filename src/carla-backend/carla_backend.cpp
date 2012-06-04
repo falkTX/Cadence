@@ -147,8 +147,8 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
 //        return add_plugin_lv2(filename, label);
 //    case PLUGIN_VST:
 //        return add_plugin_vst(filename, label);
-//    case PLUGIN_SF2:
-//        return add_plugin_sf2(filename, label);
+    case PLUGIN_SF2:
+        return add_plugin_sf2(filename, label);
     default:
         set_last_error("Unknown plugin type");
         return -1;

@@ -251,12 +251,11 @@ CarlaEngineBasePort* CarlaEngineClient::addPort(const char* name, CarlaEnginePor
 CarlaEngineAudioPort::CarlaEngineAudioPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput) :
     CarlaEngineBasePort(client, isInput)
 {
-    //handle = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, isInput ? JackPortIsInput : JackPortIsOutput, 0);
 }
 
-void* CarlaEngineAudioPort::getBuffer(uint32_t frames)
+void* CarlaEngineAudioPort::getBuffer()
 {
-    return nullptr; //jack_port_get_buffer(handle, frames);
+    return nullptr;
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -265,17 +264,11 @@ void* CarlaEngineAudioPort::getBuffer(uint32_t frames)
 CarlaEngineControlPort::CarlaEngineControlPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput) :
     CarlaEngineBasePort(client, isInput)
 {
-    //handle = jack_port_register(client, name, JACK_DEFAULT_MIDI_TYPE, isInput ? JackPortIsInput : JackPortIsOutput, 0);
 }
 
-void* CarlaEngineControlPort::getBuffer(uint32_t frames)
+void* CarlaEngineControlPort::getBuffer()
 {
-    //void* buffer = jack_port_get_buffer(handle, frames);
-
-    //if (! isInput)
-    //    jack_midi_clear_buffer(buffer);
-
-    return nullptr; //buffer;
+    return nullptr;
 }
 
 uint32_t CarlaEngineControlPort::getEventCount(void* buffer)
@@ -283,44 +276,21 @@ uint32_t CarlaEngineControlPort::getEventCount(void* buffer)
     if (! isInput)
         return 0;
 
-    return 0; //jack_midi_get_event_count(buffer);
+    return 0;
 }
 
 const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(void* buffer, uint32_t index)
 {
-    //if (! isInput)
-    //    return nullptr;
-
-    //static jack_midi_event_t jackEvent;
-    static CarlaEngineControlEvent carlaEvent;
-
-    //if (jack_midi_event_get(&jackEvent, buffer, index) != 0)
-    //    return nullptr;
-
-    memset(&carlaEvent, 0, sizeof(CarlaEngineControlEvent));
-
-    //uint8_t midiStatus  = jackEvent.buffer[0];
-    //uint8_t midiChannel = midiStatus & 0x0F;
-
-    //carlaEvent.time    = jackEvent.time;
-    //carlaEvent.channel = midiChannel;
+    if (! isInput)
+        return nullptr;
 
     return nullptr;
 }
 
-void CarlaEngineControlPort::writeEvent(void* buffer, uint8_t channel, uint8_t controller, double value)
+void CarlaEngineControlPort::writeEvent(void* buffer, CarlaEngineControlEventType type, uint32_t time, uint8_t channel, uint8_t controller, double value)
 {
     if (isInput)
         return;
-
-    //jack_midi_data_t* event_buffer = jack_midi_event_reserve(buffer, 0, 3);
-
-    //if (event_buffer)
-    //{
-    //    event_buffer[0] = MIDI_STATUS_CONTROL_CHANGE + channel;
-    //    event_buffer[1] = controller;
-    //    event_buffer[2] = value * 127;
-    //}
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -329,17 +299,11 @@ void CarlaEngineControlPort::writeEvent(void* buffer, uint8_t channel, uint8_t c
 CarlaEngineMidiPort::CarlaEngineMidiPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput) :
     CarlaEngineBasePort(client, isInput)
 {
-    //handle = jack_port_register(client, name, JACK_DEFAULT_MIDI_TYPE, isInput ? JackPortIsInput : JackPortIsOutput, 0);
 }
 
-void* CarlaEngineMidiPort::getBuffer(uint32_t frames)
+void* CarlaEngineMidiPort::getBuffer()
 {
-    //void* buffer = jack_port_get_buffer(handle, frames);
-
-    //if (! isInput)
-    //    jack_midi_clear_buffer(buffer);
-
-    return nullptr; //buffer;
+    return nullptr;
 }
 
 uint32_t CarlaEngineMidiPort::getEventCount(void* buffer)
@@ -347,7 +311,7 @@ uint32_t CarlaEngineMidiPort::getEventCount(void* buffer)
     if (! isInput)
         return 0;
 
-    return 0; //jack_midi_get_event_count(buffer);
+    return 0;
 }
 
 const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(void* buffer, uint32_t index)
@@ -355,17 +319,7 @@ const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(void* buffer, uint32_t
     if (! isInput)
         return nullptr;
 
-    //static jack_midi_event_t jackEvent;
-    static CarlaEngineMidiEvent carlaEvent;
-
-    //if (jack_midi_event_get(&jackEvent, buffer, index) != 0)
-    //    return nullptr;
-
-    //carlaEvent.time = jackEvent.time;
-    //carlaEvent.size = jackEvent.size;
-    //memcpy(carlaEvent.data, jackEvent.buffer, jackEvent.size);
-
-    return &carlaEvent;
+    return nullptr;
 }
 
 CARLA_BACKEND_END_NAMESPACE

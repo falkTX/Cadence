@@ -42,7 +42,7 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
-#define CARLA_PROCESS_CONTINUE_CHECK if (m_id != plugin_id) { return callback_action(CALLBACK_DEBUG, plugin_id, m_id, 0, 0.0); }
+#define CARLA_PROCESS_CONTINUE_CHECK if (! m_enabled) { return callback_action(CALLBACK_DEBUG, m_id, m_enabled, 0, 0.0); }
 
 const unsigned short MAX_MIDI_EVENTS = 512;
 const unsigned short MAX_POST_EVENTS = 152;
@@ -898,10 +898,10 @@ public:
         float* aouts_buffer[aout.count];
 
         for (uint32_t i=0; i < ain.count; i++)
-            ains_buffer[i] = (float*)ain.ports[i]->getBuffer(nframes);
+            ains_buffer[i] = (float*)ain.ports[i]->getBuffer();
 
         for (uint32_t i=0; i < aout.count; i++)
-            aouts_buffer[i] = (float*)aout.ports[i]->getBuffer(nframes);
+            aouts_buffer[i] = (float*)aout.ports[i]->getBuffer();
 
         if (carla_options.proccess_32x)
         {
@@ -1178,7 +1178,7 @@ public:
 
         for (unsigned short i=0; i<MAX_POST_EVENTS; i++)
         {
-            if (postEvents.data[i].type != PluginPostEventNull)
+            if (postEvents.data[i].type == PluginPostEventNull)
             {
                 postEvents.data[i].type  = type;
                 postEvents.data[i].index = index;
