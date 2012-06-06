@@ -1,5 +1,5 @@
 /*
- * JACK Backend code for Carla
+ * Carla Backend
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,8 +20,6 @@
 
 #include "carla_includes.h"
 
-#define CARLA_BACKEND_NO_NAMESPACE
-
 #ifdef CARLA_BACKEND_NO_NAMESPACE
 #define CARLA_BACKEND_START_NAMESPACE
 #define CARLA_BACKEND_END_NAMESPACE
@@ -31,6 +29,10 @@
 #endif
 
 CARLA_BACKEND_START_NAMESPACE
+
+#if 0
+} /* adjust editor indent */
+#endif
 
 #define STR_MAX 256
 

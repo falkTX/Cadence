@@ -43,7 +43,7 @@ WINE_LINK_FLAGS  = $(LINK_PLUGIN_FLAGS) -ldl
 # --------------------------------------------------------------
 
 BUILD_UI_FLAGS = $(BUILD_FLAGS) -DBUILD_BRIDGE_UI
-LINK_UI_FLAGS  = $(LINK_FLAGS)
+LINK_UI_FLAGS  = $(LINK_FLAGS) -ldl
 
 BUILD_UI_LV2_GTK2_FLAGS = $(BUILD_UI_FLAGS) -DBRIDGE_LV2_GTK2 $(shell pkg-config --cflags gtk+-2.0)
 LINK_UI_LV2_GTK2_FLAGS  = $(LINK_UI_FLAGS) $(shell pkg-config --libs gtk+-2.0)

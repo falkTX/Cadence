@@ -1,5 +1,5 @@
 /*
- * JACK Backend code for Carla
+ * Carla Backend
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,10 @@
 #include "ladspa_rdf.h"
 
 CARLA_BACKEND_START_NAMESPACE
+
+#if 0
+} /* adjust editor indent */
+#endif
 
 bool is_rdf_port_good(int Type1, int Type2)
 {
@@ -82,19 +86,18 @@ public:
     {
         qDebug("LadspaPlugin::~LadspaPlugin()");
 
-        if (handle && descriptor->deactivate && m_active_before)
+        if (handle && descriptor && descriptor->deactivate && m_active_before)
             descriptor->deactivate(handle);
 
-        if (handle && descriptor->cleanup)
+        if (handle && descriptor && descriptor->cleanup)
             descriptor->cleanup(handle);
 
         if (rdf_descriptor)
             ladspa_rdf_free(rdf_descriptor);
-
-        handle = nullptr;
-        descriptor = nullptr;
-        rdf_descriptor = nullptr;
     }
+
+    // -------------------------------------------------------------------
+    // Information (base)
 
     PluginCategory category()
     {
@@ -105,29 +108,29 @@ public:
             // Specific Types
             if (Category & (LADSPA_CLASS_DELAY|LADSPA_CLASS_REVERB))
                 return PLUGIN_CATEGORY_DELAY;
-            else if (Category & (LADSPA_CLASS_PHASER|LADSPA_CLASS_FLANGER|LADSPA_CLASS_CHORUS))
+            if (Category & (LADSPA_CLASS_PHASER|LADSPA_CLASS_FLANGER|LADSPA_CLASS_CHORUS))
                 return PLUGIN_CATEGORY_MODULATOR;
-            else if (Category & (LADSPA_CLASS_AMPLIFIER))
+            if (Category & (LADSPA_CLASS_AMPLIFIER))
                 return PLUGIN_CATEGORY_DYNAMICS;
-            else if (Category & (LADSPA_CLASS_UTILITY|LADSPA_CLASS_SPECTRAL|LADSPA_CLASS_FREQUENCY_METER))
+            if (Category & (LADSPA_CLASS_UTILITY|LADSPA_CLASS_SPECTRAL|LADSPA_CLASS_FREQUENCY_METER))
                 return PLUGIN_CATEGORY_UTILITY;
 
             // Pre-set LADSPA Types
-            else if (LADSPA_IS_PLUGIN_DYNAMICS(Category))
+            if (LADSPA_IS_PLUGIN_DYNAMICS(Category))
                 return PLUGIN_CATEGORY_DYNAMICS;
-            else if (LADSPA_IS_PLUGIN_AMPLITUDE(Category))
+            if (LADSPA_IS_PLUGIN_AMPLITUDE(Category))
                 return PLUGIN_CATEGORY_MODULATOR;
-            else if (LADSPA_IS_PLUGIN_EQ(Category))
+            if (LADSPA_IS_PLUGIN_EQ(Category))
                 return PLUGIN_CATEGORY_EQ;
-            else if (LADSPA_IS_PLUGIN_FILTER(Category))
+            if (LADSPA_IS_PLUGIN_FILTER(Category))
                 return PLUGIN_CATEGORY_FILTER;
-            else if (LADSPA_IS_PLUGIN_FREQUENCY(Category))
+            if (LADSPA_IS_PLUGIN_FREQUENCY(Category))
                 return PLUGIN_CATEGORY_UTILITY;
-            else if (LADSPA_IS_PLUGIN_SIMULATOR(Category))
+            if (LADSPA_IS_PLUGIN_SIMULATOR(Category))
                 return PLUGIN_CATEGORY_OTHER;
-            else if (LADSPA_IS_PLUGIN_TIME(Category))
+            if (LADSPA_IS_PLUGIN_TIME(Category))
                 return PLUGIN_CATEGORY_DELAY;
-            else if (LADSPA_IS_PLUGIN_GENERATOR(Category))
+            if (LADSPA_IS_PLUGIN_GENERATOR(Category))
                 return PLUGIN_CATEGORY_SYNTH;
         }
 
@@ -139,6 +142,9 @@ public:
         return descriptor->UniqueID;
     }
 
+    // -------------------------------------------------------------------
+    // Information (count)
+
     uint32_t param_scalepoint_count(uint32_t param_id)
     {
         int32_t rindex = param.data[param_id].rindex;
@@ -146,13 +152,15 @@ public:
         bool HasPortRDF = (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount);
         if (HasPortRDF)
             return rdf_descriptor->Ports[rindex].ScalePointCount;
-        else
-            return 0;
+        return 0;
     }
+
+    // -------------------------------------------------------------------
+    // Information (per-plugin data)
 
     double get_parameter_value(uint32_t param_id)
     {
-        return fix_parameter_value(param_buffers[param_id], param.ranges[param_id]);
+        return param_buffers[param_id];
     }
 
     double get_parameter_scalepoint_value(uint32_t param_id, uint32_t scalepoint_id)
@@ -162,8 +170,7 @@ public:
         bool HasPortRDF = (rdf_descriptor && param_rindex < (int32_t)rdf_descriptor->PortCount);
         if (HasPortRDF)
             return rdf_descriptor->Ports[param_rindex].ScalePoints[scalepoint_id].Value;
-        else
-            return 0.0;
+        return 0.0;
     }
 
     void get_label(char* buf_str)
@@ -259,6 +266,9 @@ public:
             *buf_str = 0;
     }
 
+    // -------------------------------------------------------------------
+    // Set data (plugin-specific stuff)
+
     void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
         param_buffers[param_id] = fix_parameter_value(value, param.ranges[param_id]);
@@ -266,19 +276,21 @@ public:
         CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
     }
 
-#if 0
+    // -------------------------------------------------------------------
+    // Plugin state
+
     void reload()
     {
         qDebug("LadspaPlugin::reload() - start");
-        short _id = m_id;
 
         // Safely disable plugin for reload
-        carla_proc_lock();
-        m_id = -1;
-        carla_proc_unlock();
+        const CarlaPluginScopedDisabler m(this);
 
-        // Unregister previous jack ports if needed
-        remove_from_jack(bool(_id >= 0));
+        if (x_client->isActive())
+            x_client->deactivate();
+
+        // Remove client ports
+        remove_client_ports();
 
         // Delete old data
         delete_buffers();
@@ -304,13 +316,13 @@ public:
 
         if (ains > 0)
         {
-            ain.ports    = new jack_port_t*[ains];
+            ain.ports    = new CarlaEngineAudioPort*[ains];
             ain.rindexes = new uint32_t[ains];
         }
 
         if (aouts > 0)
         {
-            aout.ports    = new jack_port_t*[aouts];
+            aout.ports    = new CarlaEngineAudioPort*[aouts];
             aout.rindexes = new uint32_t[aouts];
         }
 
@@ -321,7 +333,7 @@ public:
             param_buffers = new float[params];
         }
 
-        const int port_name_size = jack_port_name_size() - 1;
+        const int port_name_size = CarlaEngine::maxPortNameSize() - 1;
         char port_name[port_name_size];
         bool needs_cin  = false;
         bool needs_cout = false;
@@ -348,13 +360,13 @@ public:
                 if (LADSPA_IS_PORT_INPUT(PortType))
                 {
                     j = ain.count++;
-                    ain.ports[j] = jack_port_register(x_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+                    ain.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(port_name, CarlaEnginePortTypeAudio, true);
                     ain.rindexes[j] = i;
                 }
                 else if (LADSPA_IS_PORT_OUTPUT(PortType))
                 {
                     j = aout.count++;
-                    aout.ports[j] = jack_port_register(x_client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+                    aout.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(port_name, CarlaEnginePortTypeAudio, false);
                     aout.rindexes[j] = i;
                     needs_cin = true;
                 }
@@ -566,7 +578,7 @@ public:
 #endif
                 strcpy(port_name, "control-in");
 
-            param.port_cin = jack_port_register(x_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+            param.port_cin = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, true);
         }
 
         if (needs_cout)
@@ -581,7 +593,7 @@ public:
 #endif
                 strcpy(port_name, "control-out");
 
-            param.port_cout = jack_port_register(x_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
+            param.port_cout = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, false);
         }
 
         ain.count   = ains;
@@ -600,34 +612,22 @@ public:
         if (aouts >= 2 && aouts%2 == 0)
             m_hints |= PLUGIN_CAN_BALANCE;
 
-        carla_proc_lock();
-        m_id = _id;
-        carla_proc_unlock();
-
-#ifndef BUILD_BRIDGE
-        if (carla_options.global_jack_client == false)
-#endif
-            jack_activate(jack_client);
+        x_client->activate();
 
         qDebug("LadspaPlugin::reload() - end");
     }
 
-    void process(uint32_t nframes, uint32_t nframesOffset)
+    // -------------------------------------------------------------------
+    // Plugin processing
+
+    void process(float** ains_buffer, float** aouts_buffer, uint32_t nframes, uint32_t nframesOffset)
     {
         uint32_t i, k;
-        unsigned short plugin_id = m_id;
 
         double ains_peak_tmp[2]  = { 0.0 };
         double aouts_peak_tmp[2] = { 0.0 };
 
-        jack_audio_sample_t* ains_buffer[ain.count];
-        jack_audio_sample_t* aouts_buffer[aout.count];
-
-        for (i=0; i < ain.count; i++)
-            ains_buffer[i] = (jack_audio_sample_t*)jack_port_get_buffer(ain.ports[i], nframes);
-
-        for (i=0; i < aout.count; i++)
-            aouts_buffer[i] = (jack_audio_sample_t*)jack_port_get_buffer(aout.ports[i], nframes);
+        CARLA_PROCESS_CONTINUE_CHECK;
 
         // --------------------------------------------------------------------------------------------------------
         // Input VU
@@ -660,50 +660,53 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Parameters Input [Automation]
 
-        if (param.port_cin)
+        if (param.port_cin && m_active && m_active_before)
         {
-            void* pin_buffer = jack_port_get_buffer(param.port_cin, nframes);
+            void* cin_buffer = param.port_cin->getBuffer();
 
-            jack_midi_event_t pin_event;
-            uint32_t n_pin_events = jack_midi_get_event_count(pin_buffer);
+            const CarlaEngineControlEvent* cin_event;
+            uint32_t time, n_cin_events = param.port_cin->getEventCount(cin_buffer);
 
-            for (i=0; i < n_pin_events; i++)
+            for (i=0; i < n_cin_events; i++)
             {
-                if (jack_midi_event_get(&pin_event, pin_buffer, i) != 0)
-                    break;
+                cin_event = param.port_cin->getEvent(cin_buffer, i);
 
-                jack_midi_data_t status  = pin_event.buffer[0];
-                jack_midi_data_t channel = status & 0x0F;
+                if (! cin_event)
+                    continue;
+
+                time = cin_event->time - nframesOffset;
+
+                if (time >= nframes)
+                    continue;
 
                 // Control change
-                if (MIDI_IS_STATUS_CONTROL_CHANGE(status))
+                switch (cin_event->type)
                 {
-                    jack_midi_data_t control = pin_event.buffer[1];
-                    jack_midi_data_t c_value = pin_event.buffer[2];
-
+                case CarlaEngineEventControlChange:
+                {
                     double value;
 
                     // Control backend stuff
-                    if (channel == cin_channel)
+                    if (cin_event->channel == cin_channel)
                     {
-                        if (MIDI_IS_CONTROL_BREATH_CONTROLLER(control) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
+                        if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cin_event->controller) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
-                            value = double(c_value)/127;
+                            value = cin_event->value;
                             set_drywet(value, false, false);
-                            postpone_event(PostEventParameterChange, PARAMETER_DRYWET, value);
+                            postpone_event(PluginPostEventParameterChange, PARAMETER_DRYWET, value);
                             continue;
                         }
-                        else if (MIDI_IS_CONTROL_CHANNEL_VOLUME(control) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
+                        else if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cin_event->controller) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
                         {
-                            value = double(c_value)/100;
+                            value = cin_event->value*127/100;
                             set_volume(value, false, false);
-                            postpone_event(PostEventParameterChange, PARAMETER_VOLUME, value);
+                            postpone_event(PluginPostEventParameterChange, PARAMETER_VOLUME, value);
                             continue;
                         }
-                        else if (MIDI_IS_CONTROL_BALANCE(control) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
+                        else if (MIDI_IS_CONTROL_BALANCE(cin_event->controller) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
                         {
                             double left, right;
-                            value = (double(c_value)-63.5)/63.5;
+                            value = cin_event->value/0.5 - 1.0;
 
                             if (value < 0)
                             {
@@ -723,20 +726,8 @@ public:
 
                             set_balance_left(left, false, false);
                             set_balance_right(right, false, false);
-                            postpone_event(PostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
-                            postpone_event(PostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
-                            continue;
-                        }
-                        else if (control == MIDI_CONTROL_ALL_SOUND_OFF)
-                        {
-                            if (m_active && m_active_before)
-                            {
-                                if (descriptor->deactivate)
-                                    descriptor->deactivate(handle);
-
-                                if (descriptor->activate)
-                                    descriptor->activate(handle);
-                            }
+                            postpone_event(PluginPostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
+                            postpone_event(PluginPostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
                             continue;
                         }
                     }
@@ -744,24 +735,41 @@ public:
                     // Control plugin parameters
                     for (k=0; k < param.count; k++)
                     {
-                        if (param.data[k].midi_channel == channel && param.data[k].midi_cc == control && param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0)
+                        if (param.data[k].midi_channel == cin_event->channel && param.data[k].midi_cc == cin_event->controller && param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0)
                         {
                             if (param.data[k].hints & PARAMETER_IS_BOOLEAN)
                             {
-                                value = c_value <= 63 ? param.ranges[k].min : param.ranges[k].max;
+                                value = cin_event->value < 0.5 ? param.ranges[k].min : param.ranges[k].max;
                             }
                             else
                             {
-                                value = (double(c_value) / 127 * (param.ranges[k].max - param.ranges[k].min)) + param.ranges[k].min;
+                                value = cin_event->value * (param.ranges[k].max - param.ranges[k].min) + param.ranges[k].min;
 
                                 if (param.data[k].hints & PARAMETER_IS_INTEGER)
                                     value = rint(value);
                             }
 
                             set_parameter_value(k, value, false, false, false);
-                            postpone_event(PostEventParameterChange, k, value);
+                            postpone_event(PluginPostEventParameterChange, k, value);
                         }
                     }
+
+                    break;
+                }
+
+                case CarlaEngineEventAllSoundOff:
+                    if (cin_event->channel == cin_channel)
+                    {
+                        if (descriptor->deactivate)
+                            descriptor->deactivate(handle);
+
+                        if (descriptor->activate)
+                            descriptor->activate(handle);
+                    }
+                    break;
+
+                default:
+                    break;
                 }
             }
         } // End of Parameters Input
@@ -788,7 +796,7 @@ public:
 
         if (m_active)
         {
-            if (m_active_before == false)
+            if (! m_active_before)
             {
                 if (descriptor->activate)
                     descriptor->activate(handle);
@@ -824,7 +832,7 @@ public:
             bool do_balance = (m_hints & PLUGIN_CAN_BALANCE) > 0 && (x_bal_left != -1.0 || x_bal_right != 1.0);
 
             double bal_rangeL, bal_rangeR;
-            jack_audio_sample_t old_bal_left[do_balance ? nframes : 0];
+            float old_bal_left[do_balance ? nframes : 0];
 
             for (i=0; i < aout.count; i++)
             {
@@ -850,7 +858,7 @@ public:
                 if (do_balance)
                 {
                     if (i%2 == 0)
-                        memcpy(&old_bal_left, aouts_buffer[i], sizeof(jack_audio_sample_t)*nframes);
+                        memcpy(&old_bal_left, aouts_buffer[i], sizeof(float)*nframes);
 
                     bal_rangeL = (x_bal_left+1.0)/2;
                     bal_rangeR = (x_bal_right+1.0)/2;
@@ -884,7 +892,7 @@ public:
         {
             // disable any output sound if not active
             for (i=0; i < aout.count; i++)
-                memset(aouts_buffer[i], 0.0f, sizeof(jack_audio_sample_t)*nframes);
+                memset(aouts_buffer[i], 0.0f, sizeof(float)*nframes);
 
             aouts_peak_tmp[0] = 0.0;
             aouts_peak_tmp[1] = 0.0;
@@ -896,23 +904,26 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Control Output
 
-        if (param.port_cout)
+        if (param.port_cout && m_active)
         {
-            void* cout_buffer = jack_port_get_buffer(param.port_cout, nframes);
-            jack_midi_clear_buffer(cout_buffer);
+            void* cout_buffer = param.port_cout->getBuffer();
+
+            if (nframesOffset == 0 || ! m_active_before)
+                param.port_cout->initBuffer(cout_buffer);
 
             double value;
 
             for (k=0; k < param.count; k++)
             {
-                if (param.data[k].type == PARAMETER_OUTPUT && param.data[k].midi_cc > 0)
+                if (param.data[k].type == PARAMETER_OUTPUT)
                 {
-                    value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min) * 127;
+                    fix_parameter_value(param_buffers[k], param.ranges[k]);
 
-                    jack_midi_data_t* event_buffer = jack_midi_event_reserve(cout_buffer, 0, 3);
-                    event_buffer[0] = MIDI_STATUS_CONTROL_CHANGE + param.data[k].midi_channel;
-                    event_buffer[1] = param.data[k].midi_cc;
-                    event_buffer[2] = value;
+                    if (param.data[k].midi_cc > 0)
+                    {
+                        value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
+                        param.port_cout->writeEvent(cout_buffer, CarlaEngineEventControlChange, nframesOffset, param.data[k].midi_channel, param.data[k].midi_cc, value);
+                    }
                 }
             }
         } // End of Control Output
@@ -922,14 +933,13 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Peak Values
 
-        ains_peak[(plugin_id*2)+0]  = ains_peak_tmp[0];
-        ains_peak[(plugin_id*2)+1]  = ains_peak_tmp[1];
-        aouts_peak[(plugin_id*2)+0] = aouts_peak_tmp[0];
-        aouts_peak[(plugin_id*2)+1] = aouts_peak_tmp[1];
+        ains_peak[(m_id*2)+0]  = ains_peak_tmp[0];
+        ains_peak[(m_id*2)+1]  = ains_peak_tmp[1];
+        aouts_peak[(m_id*2)+0] = aouts_peak_tmp[0];
+        aouts_peak[(m_id*2)+1] = aouts_peak_tmp[1];
 
         m_active_before = m_active;
     }
-#endif
 
     void delete_buffers()
     {
@@ -1006,12 +1016,6 @@ private:
     float* param_buffers;
 };
 
-CARLA_BACKEND_END_NAMESPACE
-
-#ifndef CARLA_BACKEND_NO_NAMESPACE
-typedef CarlaBackend::LadspaPlugin LadspaPlugin;
-#endif
-
 short add_plugin_ladspa(const char* filename, const char* label, const void* extra_stuff)
 {
     qDebug("add_plugin_ladspa(%s, %s, %p)", filename, label, extra_stuff);
@@ -1042,3 +1046,5 @@ short add_plugin_ladspa(const char* filename, const char* label, const void* ext
 
     return id;
 }
+
+CARLA_BACKEND_END_NAMESPACE

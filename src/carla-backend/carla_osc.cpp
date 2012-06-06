@@ -1,5 +1,5 @@
 /*
- * JACK Backend code for Carla
+ * Carla Backend
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,10 @@
 #include "carla_plugin.h"
 
 #include <iostream>
+
+#ifndef CARLA_BACKEND_NO_NAMESPACE
+using namespace CarlaBackend;
+#endif
 
 size_t client_name_len = 0;
 const char* global_osc_server_path = nullptr;
@@ -40,10 +44,6 @@ CARLA_BACKEND_END_NAMESPACE
 
 // End of exported symbols (API)
 // -------------------------------------------------------------------------------------------------------------------
-
-#ifndef CARLA_BACKEND_NO_NAMESPACE
-using namespace CarlaBackend;
-#endif
 
 void osc_init(const char*)
 {
@@ -186,8 +186,8 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
         return osc_handle_exiting(plugin);
 
     // Plugin-specific methods
-//    else if (strcmp(method, "lv2_event_transfer") == 0)
-//        return osc_handle_lv2_event_transfer(plugin, argv);
+    //    else if (strcmp(method, "lv2_event_transfer") == 0)
+    //        return osc_handle_lv2_event_transfer(plugin, argv);
 
     // Plugin Bridges
     if (plugin->hints() & PLUGIN_IS_BRIDGE)

@@ -1,5 +1,5 @@
 /*
- * JACK Backend code for Carla
+ * Carla Backend
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,10 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
+#if 0
+} /* adjust editor indent */
+#endif
+
 // Global variables (shared)
 const char* unique_names[MAX_PLUGINS]  = { nullptr };
 CarlaPlugin* CarlaPlugins[MAX_PLUGINS] = { nullptr };
@@ -33,8 +37,9 @@ volatile double aouts_peak[MAX_PLUGINS*2] = { 0.0 };
 #ifndef BUILD_BRIDGE
 // Global options
 carla_options_t carla_options = {
+    /* global_jack_client */ true,
     /* prefer_ui_bridges  */ true,
-    /* proccess_32x       */ false,
+    /* proccess_hq        */ true,
     /* bridge_unix32      */ nullptr,
     /* bridge_unix64      */ nullptr,
     /* bridge_win32       */ nullptr,

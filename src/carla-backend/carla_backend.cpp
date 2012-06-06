@@ -1,5 +1,5 @@
 /*
- * JACK Backend code for Carla
+ * Carla Backend
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,12 @@
 #include "carla_plugin.h"
 #include "carla_threads.h"
 
+CARLA_BACKEND_START_NAMESPACE
+
+#if 0
+} /* adjust editor indent */
+#endif
+
 // plugin specific
 short add_plugin_ladspa(const char* filename, const char* label, const void* extra_stuff);
 short add_plugin_dssi(const char* filename, const char* label, const void* extra_stuff);
@@ -27,7 +33,7 @@ short add_plugin_lv2(const char* filename, const char* label);
 short add_plugin_vst(const char* filename, const char* label);
 short add_plugin_sf2(const char* filename, const char* label);
 #ifndef BUILD_BRIDGE
-//short add_plugin_bridge(CarlaBackend::BinaryType btype, CarlaBackend::PluginType ptype, const char* filename, const char* label, void* extra_stuff);
+short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename, const char* label, void* extra_stuff);
 #endif
 
 CarlaEngine carla_engine;
@@ -35,8 +41,6 @@ CarlaCheckThread carla_check_thread;
 
 // -------------------------------------------------------------------------------------------------------------------
 // Exported symbols (API)
-
-CARLA_BACKEND_START_NAMESPACE
 
 bool engine_init(const char* client_name)
 {
@@ -66,14 +70,8 @@ bool engine_close()
             remove_plugin(i);
     }
 
-    carla_check_thread.stopNow();
-    carla_check_thread.quit();
-
-    if (carla_check_thread.wait(500) == false)
-    {
-        qWarning("Failed to properly stop global check thread");
-        carla_check_thread.terminate();
-    }
+    if (carla_check_thread.isRunning())
+        carla_check_thread.stopNow();
 
     osc_global_send_exit();
     osc_close();
@@ -124,7 +122,7 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
 {
     qDebug("add_plugin(%i, %i, %s, %s, %p)", btype, ptype, filename, label, extra_stuff);
 
-#if 0 //ndef BUILD_BRIDGE
+#ifndef BUILD_BRIDGE
     if (btype != BINARY_NATIVE)
     {
         if (carla_options.global_jack_client)
@@ -139,14 +137,14 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
 
     switch (ptype)
     {
-//    case PLUGIN_LADSPA:
-//        return add_plugin_ladspa(filename, label, extra_stuff);
+    case PLUGIN_LADSPA:
+        return add_plugin_ladspa(filename, label, extra_stuff);
     case PLUGIN_DSSI:
         return add_plugin_dssi(filename, label, extra_stuff);
-//    case PLUGIN_LV2:
-//        return add_plugin_lv2(filename, label);
-//    case PLUGIN_VST:
-//        return add_plugin_vst(filename, label);
+        //    case PLUGIN_LV2:
+        //        return add_plugin_lv2(filename, label);
+        //    case PLUGIN_VST:
+        //        return add_plugin_vst(filename, label);
     case PLUGIN_SF2:
         return add_plugin_sf2(filename, label);
     default:
@@ -797,7 +795,7 @@ double get_default_parameter_value(unsigned short plugin_id, uint32_t parameter_
         {
             if (parameter_id < plugin->param_count())
                 return plugin->param_ranges(parameter_id)->def;
-                //return plugin->get_default_parameter_value(parameter_id);
+            //return plugin->get_default_parameter_value(parameter_id);
             else
                 qCritical("get_default_parameter_value(%i, %i) - parameter_id out of bounds", plugin_id, parameter_id);
 
@@ -1079,15 +1077,9 @@ void set_gui_data(unsigned short plugin_id, int data, quintptr gui_addr)
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            //if (plugin->gui.type != GUI_NONE)
-//#ifdef Q_OS_WIN
-                //plugin->set_gui_data(data, (void*)gui_addr);
-//#else
-                plugin->set_gui_data(data, get_pointer(gui_addr));
-//#endif
-            //else
-            //    qCritical("set_gui_data(%i, %i, " P_INTPTR ") - plugin has no UI", plugin_id, data, gui_addr);
-
+            void*    ptr    = get_pointer(gui_addr);
+            QDialog* dialog = (QDialog*)ptr;
+            plugin->set_gui_data(data, dialog);
             return;
         }
     }
@@ -1219,10 +1211,10 @@ void set_option(OptionsType option, int value, const char* value_str)
     }
 }
 
-CARLA_BACKEND_END_NAMESPACE
-
 // End of exported symbols (API)
 // -------------------------------------------------------------------------------------------------------------------
+
+CARLA_BACKEND_END_NAMESPACE
 
 #ifdef QTCREATOR_TEST
 

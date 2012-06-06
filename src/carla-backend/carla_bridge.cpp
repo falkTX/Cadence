@@ -1,5 +1,5 @@
 /*
- * JACK Backend code for Carla
+ * Carla Backend
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,10 @@
 #include "carla_plugin.h"
 
 CARLA_BACKEND_START_NAMESPACE
+
+#if 0
+} /* adjust editor indent */
+#endif
 
 struct BridgeParamInfo {
     QString name;
@@ -85,6 +89,9 @@ public:
             free((void*)m_info.maker);
     }
 
+    // -------------------------------------------------------------------
+    // Information (base)
+
     PluginCategory category()
     {
         return m_info.category;
@@ -94,6 +101,9 @@ public:
     {
         return m_info.unique_id;
     }
+
+    // -------------------------------------------------------------------
+    // Information (count)
 
     uint32_t ain_count()
     {
@@ -115,9 +125,12 @@ public:
         return m_info.mouts;
     }
 
+    // -------------------------------------------------------------------
+    // Information (per-plugin data)
+
     double get_parameter_value(uint32_t param_id)
     {
-        return fix_parameter_value(param_buffers[param_id], param.ranges[param_id]);
+        return param_buffers[param_id];
     }
 
     void get_label(char* buf_str)
@@ -156,52 +169,20 @@ public:
         info->resizable = false;
     }
 
-    void show_gui(bool yesno)
-    {
-        if (yesno)
-            osc_send_show(&osc.data);
-        else
-            osc_send_hide(&osc.data);
-    }
-
-    void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
-    {
-        param_buffers[param_id] = fix_parameter_value(value, param.ranges[param_id]);
-
-        if (param.data[param_id].type == PARAMETER_INPUT)
-            osc_send_control(&osc.data, param.data[param_id].rindex, value);
-
-        CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
-    }
-
-    void reload()
-    {
-        // plugin checks
-        m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
-
-        if (m_info.aouts > 0 && (m_info.ains == m_info.aouts || m_info.ains == 1))
-            m_hints |= PLUGIN_CAN_DRYWET;
-
-        if (m_info.aouts > 0)
-            m_hints |= PLUGIN_CAN_VOLUME;
-
-        if (m_info.aouts >= 2 && m_info.aouts % 2 == 0)
-            m_hints |= PLUGIN_CAN_BALANCE;
-
-        m_hints |= m_info.hints;
-    }
+    // -------------------------------------------------------------------
+    // Set data (internal stuff)
 
     int set_osc_bridge_info(PluginBridgeInfoType intoType, lo_arg** argv)
     {
         qDebug("set_osc_bridge_info(%i, %p)", intoType, argv);
 
-//        PluginBridgeProgramCountInfo,
-//        PluginBridgeMidiProgramCountInfo,
-//        PluginBridgePluginInfo,
-//        PluginBridgeParameterInfo,
+        //        PluginBridgeProgramCountInfo,
+        //        PluginBridgeMidiProgramCountInfo,
+        //        PluginBridgePluginInfo,
+        //        PluginBridgeParameterInfo,
 
-//        PluginBridgeProgramInfo,
-//        PluginBridgeMidiProgramInfo,
+        //        PluginBridgeProgramInfo,
+        //        PluginBridgeMidiProgramInfo,
 
         switch (intoType)
         {
@@ -234,7 +215,7 @@ public:
 
             if (param.count > 0 && param.count < MAX_PARAMETERS)
             {
-                param.data    = new ::ParameterData[param.count];
+                param.data    = new ParameterData[param.count];
                 param.ranges  = new ParameterRanges[param.count];
                 param_buffers = new double[param.count];
                 param_info    = new BridgeParamInfo[param.count];
@@ -311,11 +292,56 @@ public:
         case PluginBridgeUpdateNow:
             callback_action(CALLBACK_RELOAD_ALL, m_id, 0, 0, 0.0);
             break;
+
         default:
             break;
         }
 
         return 0;
+    }
+
+    // -------------------------------------------------------------------
+    // Set data (plugin-specific stuff)
+
+    void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
+    {
+        param_buffers[param_id] = fix_parameter_value(value, param.ranges[param_id]);
+
+        if (param.data[param_id].type == PARAMETER_INPUT)
+            osc_send_control(&osc.data, param.data[param_id].rindex, value);
+
+        CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
+    }
+
+    // -------------------------------------------------------------------
+    // Set gui stuff
+
+    void show_gui(bool yesno)
+    {
+        if (yesno)
+            osc_send_show(&osc.data);
+        else
+            osc_send_hide(&osc.data);
+    }
+
+    // -------------------------------------------------------------------
+    // Plugin state
+
+    void reload()
+    {
+        // plugin checks
+        m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
+
+        if (m_info.aouts > 0 && (m_info.ains == m_info.aouts || m_info.ains == 1))
+            m_hints |= PLUGIN_CAN_DRYWET;
+
+        if (m_info.aouts > 0)
+            m_hints |= PLUGIN_CAN_VOLUME;
+
+        if (m_info.aouts >= 2 && m_info.aouts % 2 == 0)
+            m_hints |= PLUGIN_CAN_BALANCE;
+
+        m_hints |= m_info.hints;
     }
 
     void delete_buffers()
@@ -381,8 +407,6 @@ private:
     BridgeParamInfo* param_info;
 };
 
-CARLA_BACKEND_END_NAMESPACE
-
 short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename, const char* label, void* extra_stuff)
 {
     qDebug("add_plugin_bridge(%i, %i, %s, %s, %p)", btype, ptype, filename, label, extra_stuff);
@@ -413,3 +437,5 @@ short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename
 
     return id;
 }
+
+CARLA_BACKEND_END_NAMESPACE

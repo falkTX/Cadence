@@ -8,7 +8,8 @@ CC  ?= gcc
 CXX ?= g++
 
 CARLA_C_FLAGS    = -Wall -fPIC -I. -I../carla-includes $(CFLAGS)
-CARLA_CXX_FLAGS  = -Wall -std=c++0x -fPIC -I. -I../carla-includes `pkg-config --cflags jack fluidsynth liblo QtCore QtGui` -DCARLA_ENGINE_JACK $(CXXFLAGS)
+CARLA_CXX_FLAGS  = -Wall -std=c++0x -fPIC -I. -I../carla-includes `pkg-config --cflags jack fluidsynth liblo QtCore QtGui`
+CARLA_CXX_FLAGS += -DCARLA_BACKEND_NO_NAMESPACE -DCARLA_ENGINE_JACK $(CXXFLAGS)
 CARLA_CXX_FLAGS += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
 CARLA_CXX_FLAGS += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT -O2 -ffast-math -fomit-frame-pointer -fvisibility=hidden -mtune=generic -msse
 # CARLA_CXX_FLAGS += -DDEBUG -O0 -g

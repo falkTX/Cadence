@@ -13,13 +13,13 @@ SOURCES = \
     ../carla_backend.cpp \
     ../carla_engine_jack.cpp \
     ../carla_engine_rtaudio.cpp \
-#    ../carla_bridge.cpp \
+    ../carla_bridge.cpp \
     ../carla_osc.cpp \
     ../carla_shared.cpp \
     ../carla_threads.cpp \
-#    ../ladspa.cpp \
+    ../ladspa.cpp \
     ../dssi.cpp \
-#    ../lv2.cpp \
+    ../lv2.cpp \
 #    ../vst.cpp \
     ../sf2.cpp \
     ../lv2-rtmempool/rtmempool.c
@@ -43,7 +43,7 @@ INCLUDEPATH = .. \
     ../../carla-includes \
     ../../carla-includes/vst
 
-DEFINES = QTCREATOR_TEST __LINUX_JACK__ CARLA_ENGINE_RTAUDIO
-LIBS    = ../../carla-lilv/carla_lilv.a -lrtaudio
+DEFINES = QTCREATOR_TEST __LINUX_JACK__ CARLA_ENGINE_JACK
+LIBS    = ../../carla-lilv/carla_lilv.a -ldl #-lrtaudio
 
 QMAKE_CXXFLAGS *= -std=c++0x

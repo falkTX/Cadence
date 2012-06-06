@@ -1,5 +1,5 @@
 /*
- * JACK Backend code for Carla
+ * Carla Backend
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,10 @@
 #include <iostream>
 
 CARLA_BACKEND_START_NAMESPACE
+
+#if 0
+} /* adjust editor indent */
+#endif
 
 // Global JACK stuff
 static jack_client_t* carla_jack_client = nullptr;
@@ -51,7 +55,7 @@ const char* get_host_client_name()
 quint32 get_buffer_size()
 {
     qDebug("get_buffer_size()");
-    if (carla_options.proccess_32x)
+    if (carla_options.proccess_hq)
         return 8;
     return carla_buffer_size;
 }
@@ -75,7 +79,7 @@ static int carla_jack_bufsize_callback(jack_nframes_t new_buffer_size, void*)
 {
     carla_buffer_size = new_buffer_size;
 
-    if (carla_options.proccess_32x)
+    if (carla_options.proccess_hq)
         return 0;
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
@@ -110,13 +114,30 @@ static int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
 #endif
         carla_jack_state = jack_transport_query(carla_jack_client, &carla_jack_pos);
 
-    CarlaPlugin* plugin = (CarlaPlugin*)arg;
-
-    if (plugin && plugin->enabled())
+#ifndef BUILD_BRIDGE
+    if (carla_options.global_jack_client)
     {
-        carla_proc_lock();
-        plugin->process_jack(nframes);
-        carla_proc_unlock();
+        for (unsigned short i=0; i<MAX_PLUGINS; i++)
+        {
+            CarlaPlugin* plugin = CarlaPlugins[i];
+            if (plugin && plugin->enabled())
+            {
+                carla_proc_lock();
+                plugin->process_jack(nframes);
+                carla_proc_unlock();
+            }
+        }
+    }
+    else
+#endif
+    {
+        CarlaPlugin* plugin = (CarlaPlugin*)arg;
+        if (plugin && plugin->enabled())
+        {
+            carla_proc_lock();
+            plugin->process_jack(nframes);
+            carla_proc_unlock();
+        }
     }
 
     return 0;
@@ -250,31 +271,56 @@ CarlaEngineBasePort::~CarlaEngineBasePort()
 
 CarlaEngineClient::CarlaEngineClient(CarlaPlugin* const plugin)
 {
-    m_active = false;
-    handle   = jack_client_open(plugin->name(), JackNullOption, nullptr);
+#ifndef BUILD_BRIDGE
+    if (carla_options.global_jack_client)
+    {
+        handle   = carla_jack_client;
+        m_active = bool(carla_jack_client);
+    }
+    else
+#endif
+    {
+        handle   = jack_client_open(plugin->name(), JackNullOption, nullptr);
+        m_active = false;
 
-    if (handle)
-        jack_set_process_callback(handle, carla_jack_process_callback, plugin);
+        if (handle)
+            jack_set_process_callback(handle, carla_jack_process_callback, plugin);
+    }
 }
 
 CarlaEngineClient::~CarlaEngineClient()
 {
-    if (handle)
-        jack_client_close(handle);
+#ifndef BUILD_BRIDGE
+    if (! carla_options.global_jack_client)
+#endif
+    {
+        if (handle)
+            jack_client_close(handle);
+    }
 }
 
 void CarlaEngineClient::activate()
 {
-    if (handle)
-        jack_activate(handle);
-    m_active = true;
+#ifndef BUILD_BRIDGE
+    if (! carla_options.global_jack_client)
+#endif
+    {
+        if (handle)
+            jack_activate(handle);
+        m_active = true;
+    }
 }
 
 void CarlaEngineClient::deactivate()
 {
-    if (handle)
-        jack_deactivate(handle);
-    m_active = false;
+#ifndef BUILD_BRIDGE
+    if (! carla_options.global_jack_client)
+#endif
+    {
+        if (handle)
+            jack_deactivate(handle);
+        m_active = false;
+    }
 }
 
 bool CarlaEngineClient::isActive()
@@ -484,11 +530,15 @@ const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(void* buffer, uint32_t
     if (jack_midi_event_get(&jackEvent, buffer, index) != 0)
         return nullptr;
 
-    carlaEvent.time = jackEvent.time;
-    carlaEvent.size = jackEvent.size;
-    memcpy(carlaEvent.data, jackEvent.buffer, jackEvent.size);
+    if (jackEvent.size < 4)
+    {
+        carlaEvent.time = jackEvent.time;
+        carlaEvent.size = jackEvent.size;
+        memcpy(carlaEvent.data, jackEvent.buffer, jackEvent.size);
+        return &carlaEvent;
+    }
 
-    return &carlaEvent;
+    return nullptr;
 }
 
 CARLA_BACKEND_END_NAMESPACE

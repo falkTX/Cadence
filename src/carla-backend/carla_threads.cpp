@@ -1,5 +1,5 @@
 /*
- * JACK Backend code for Carla
+ * Carla Backend
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,10 +37,11 @@ void CarlaCheckThread::stopNow()
 {
     m_stopNow = true;
 
-    while (isRunning())
-    {
-        msleep(10);
-    }
+    if (! wait(200))
+        quit();
+
+    if (isRunning() && ! wait(200))
+        terminate();
 }
 
 void CarlaCheckThread::run()

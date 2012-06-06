@@ -1,5 +1,5 @@
 /*
- * JACK Backend code for Carla
+ * Carla Backend
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,17 +24,25 @@ extern "C" {
 #include "lv2-rtmempool/rtmempool.h"
 }
 
+#ifndef __WINE__
 #include <QtGui/QDialog>
 #include <QtGui/QLayout>
+#endif
+
+CARLA_BACKEND_START_NAMESPACE
+
+#if 0
+} /* adjust editor indent */
+#endif
 
 // static max values
 const unsigned int MAX_EVENT_BUFFER = 8192; // 0x2000
 
 // extra plugin hints
-const unsigned int PLUGIN_HAS_EXTENSION_DYNPARAM = 0x1000;
-const unsigned int PLUGIN_HAS_EXTENSION_PROGRAMS = 0x2000;
-const unsigned int PLUGIN_HAS_EXTENSION_STATE    = 0x4000;
-const unsigned int PLUGIN_HAS_EXTENSION_WORKER   = 0x8000;
+const unsigned int PLUGIN_HAS_EXTENSION_DYNPARAM = 0x0100;
+const unsigned int PLUGIN_HAS_EXTENSION_PROGRAMS = 0x0200;
+const unsigned int PLUGIN_HAS_EXTENSION_STATE    = 0x0400;
+const unsigned int PLUGIN_HAS_EXTENSION_WORKER   = 0x0800;
 
 // extra parameter hints
 const unsigned int PARAMETER_IS_TRIGGER          = 0x1000;
@@ -47,18 +55,19 @@ const uint32_t lv2_feature_id_programs        = 2;
 const uint32_t lv2_feature_id_rtmempool       = 3;
 const uint32_t lv2_feature_id_state_make_path = 4;
 const uint32_t lv2_feature_id_state_map_path  = 5;
-const uint32_t lv2_feature_id_uri_map         = 6;
-const uint32_t lv2_feature_id_urid_map        = 7;
-const uint32_t lv2_feature_id_urid_unmap      = 8;
-const uint32_t lv2_feature_id_worker          = 9;
-const uint32_t lv2_feature_id_data_access     = 10;
-const uint32_t lv2_feature_id_instance_access = 11;
-const uint32_t lv2_feature_id_ui_parent       = 12;
-const uint32_t lv2_feature_id_ui_port_map     = 13;
-const uint32_t lv2_feature_id_ui_resize       = 14;
-const uint32_t lv2_feature_id_external_ui     = 15;
-const uint32_t lv2_feature_id_external_ui_old = 16;
-const uint32_t lv2_feature_count              = 17;
+const uint32_t lv2_feature_id_strict_bounds   = 6;
+const uint32_t lv2_feature_id_uri_map         = 7;
+const uint32_t lv2_feature_id_urid_map        = 8;
+const uint32_t lv2_feature_id_urid_unmap      = 9;
+const uint32_t lv2_feature_id_worker          = 10;
+const uint32_t lv2_feature_id_data_access     = 11;
+const uint32_t lv2_feature_id_instance_access = 12;
+const uint32_t lv2_feature_id_ui_parent       = 13;
+const uint32_t lv2_feature_id_ui_port_map     = 14;
+const uint32_t lv2_feature_id_ui_resize       = 15;
+const uint32_t lv2_feature_id_external_ui     = 16;
+const uint32_t lv2_feature_id_external_ui_old = 17;
+const uint32_t lv2_feature_count              = 18;
 
 // event data/types
 const unsigned int CARLA_EVENT_DATA_ATOM      = 0x01;
@@ -83,23 +92,17 @@ const uint32_t CARLA_URI_MAP_ID_MIDI_EVENT    = 11;
 const uint32_t CARLA_URI_MAP_ID_COUNT         = 12;
 
 enum Lv2ParameterDataType {
-    LV2_PARAMETER_TYPE_CONTROL,
-    LV2_PARAMETER_TYPE_SOMETHING_ELSE_HERE
+    LV2_PARAMETER_TYPE_CONTROL
 };
 
 struct EventData {
     unsigned int type;
     jack_port_t* port;
     union {
-        LV2_Atom_Sequence* a;
-        LV2_Event_Buffer* e;
-        LV2_MIDI* m;
-    } buffer;
-};
-
-struct PluginEventData {
-    uint32_t count;
-    EventData* data;
+        LV2_Atom_Sequence* atom;
+        LV2_Event_Buffer* event;
+        LV2_MIDI* midi;
+    };
 };
 
 struct Lv2ParameterData {
@@ -107,6 +110,11 @@ struct Lv2ParameterData {
     union {
         float control;
     };
+};
+
+struct PluginEventData {
+    uint32_t count;
+    EventData* data;
 };
 
 const char* lv2bridge2str(LV2_Property type)
@@ -149,13 +157,13 @@ public:
         ui.descriptor = nullptr;
         ui.rdf_descriptor = nullptr;
 
-        lv2param = nullptr;
-
         evin.count = 0;
         evin.data  = nullptr;
 
         evout.count = 0;
         evout.data  = nullptr;
+
+        lv2param = nullptr;
 
         gui.type = GUI_NONE;
         gui.visible = false;
@@ -172,7 +180,7 @@ public:
         Lv2World.init();
     }
 
-    virtual ~Lv2Plugin()
+    ~Lv2Plugin()
     {
         qDebug("Lv2Plugin::~Lv2Plugin()");
 
@@ -229,11 +237,6 @@ public:
             if (ui.handle && ui.descriptor && ui.descriptor->cleanup)
                 ui.descriptor->cleanup(ui.handle);
 
-            ui.lib = nullptr;
-            ui.handle = nullptr;
-            ui.descriptor = nullptr;
-            ui.rdf_descriptor = nullptr;
-
             if (features[lv2_feature_id_data_access] && features[lv2_feature_id_data_access]->data)
                 delete (LV2_Extension_Data_Feature*)features[lv2_feature_id_data_access]->data;
 
@@ -252,18 +255,14 @@ public:
             ui_lib_close();
         }
 
-        if (handle && descriptor->deactivate && m_active_before)
+        if (handle && descriptor && descriptor->deactivate && m_active_before)
             descriptor->deactivate(handle);
 
-        if (handle && descriptor->cleanup)
+        if (handle && descriptor && descriptor->cleanup)
             descriptor->cleanup(handle);
 
         if (rdf_descriptor)
             lv2_rdf_free(rdf_descriptor);
-
-        handle = nullptr;
-        descriptor = nullptr;
-        rdf_descriptor = nullptr;
 
         if (features[lv2_feature_id_event] && features[lv2_feature_id_event]->data)
             delete (LV2_Event_Feature*)features[lv2_feature_id_event]->data;
@@ -310,33 +309,36 @@ public:
         custom_uri_ids.clear();
     }
 
+    // -------------------------------------------------------------------
+    // Information (base)
+
     PluginCategory category()
     {
         LV2_Property Category = rdf_descriptor->Type;
 
         if (LV2_IS_DELAY(Category))
             return PLUGIN_CATEGORY_DELAY;
-        else if (LV2_IS_DISTORTION(Category))
+        if (LV2_IS_DISTORTION(Category))
             return PLUGIN_CATEGORY_OTHER;
-        else if (LV2_IS_DYNAMICS(Category))
+        if (LV2_IS_DYNAMICS(Category))
             return PLUGIN_CATEGORY_DYNAMICS;
-        else if (LV2_IS_EQ(Category))
+        if (LV2_IS_EQ(Category))
             return PLUGIN_CATEGORY_EQ;
-        else if (LV2_IS_FILTER(Category))
+        if (LV2_IS_FILTER(Category))
             return PLUGIN_CATEGORY_FILTER;
-        else if (LV2_IS_GENERATOR(Category))
+        if (LV2_IS_GENERATOR(Category))
             return PLUGIN_CATEGORY_SYNTH;
-        else if (LV2_IS_MODULATOR(Category))
+        if (LV2_IS_MODULATOR(Category))
             return PLUGIN_CATEGORY_MODULATOR;
-        else if (LV2_IS_REVERB(Category))
+        if (LV2_IS_REVERB(Category))
             return PLUGIN_CATEGORY_DELAY;
-        else if (LV2_IS_SIMULATOR(Category))
+        if (LV2_IS_SIMULATOR(Category))
             return PLUGIN_CATEGORY_OTHER;
-        else if (LV2_IS_SPATIAL(Category))
+        if (LV2_IS_SPATIAL(Category))
             return PLUGIN_CATEGORY_OTHER;
-        else if (LV2_IS_SPECTRAL(Category))
+        if (LV2_IS_SPECTRAL(Category))
             return PLUGIN_CATEGORY_UTILITY;
-        else if (LV2_IS_UTILITY(Category))
+        if (LV2_IS_UTILITY(Category))
             return PLUGIN_CATEGORY_UTILITY;
 
         return get_category_from_name(m_name);
@@ -347,11 +349,14 @@ public:
         return rdf_descriptor->UniqueID;
     }
 
+    // -------------------------------------------------------------------
+    // Information (count)
+
     uint32_t min_count()
     {
-        uint32_t count = 0;
+        uint32_t i, count = 0;
 
-        for (uint32_t i=0; i < evin.count; i++)
+        for (i=0; i < evin.count; i++)
         {
             if (evin.data[i].type & CARLA_EVENT_TYPE_MIDI)
                 count += 1;
@@ -362,9 +367,9 @@ public:
 
     uint32_t mout_count()
     {
-        uint32_t count = 0;
+        uint32_t i, count = 0;
 
-        for (uint32_t i=0; i < evout.count; i++)
+        for (i=0; i < evout.count; i++)
         {
             if (evout.data[i].type & CARLA_EVENT_TYPE_MIDI)
                 count += 1;
@@ -379,17 +384,15 @@ public:
         return rdf_descriptor->Ports[rindex].ScalePointCount;
     }
 
+    // -------------------------------------------------------------------
+    // Information (per-plugin data)
+
     double get_parameter_value(uint32_t param_id)
     {
         switch (lv2param[param_id].type)
         {
         case LV2_PARAMETER_TYPE_CONTROL:
-        {
-            double value = lv2param[param_id].control;
-            if (1) // FIXME - only if output and strict bounds
-                fix_parameter_value(value, param.ranges[param_id]);
-            return value;
-        }
+            return lv2param[param_id].control;
         default:
             return 0.0;
         }
@@ -445,8 +448,7 @@ public:
     void get_parameter_unit(uint32_t param_id, char* buf_str)
     {
         int32_t rindex = param.data[param_id].rindex;
-
-        LV2_RDF_Port* Port = &rdf_descriptor->Ports[rindex];
+        const LV2_RDF_Port* const Port = &rdf_descriptor->Ports[rindex];
 
         if (LV2_HAVE_UNIT_SYMBOL(Port->Unit.Hints))
             strncpy(buf_str, Port->Unit.Symbol, STR_MAX);
@@ -544,6 +546,9 @@ public:
         info->resizable = gui.resizable;
     }
 
+    // -------------------------------------------------------------------
+    // Set data (plugin-specific stuff)
+
     void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
         switch (lv2param[param_id].type)
@@ -591,66 +596,29 @@ public:
         {
             LV2_State_Status status = ext.state->restore(handle, carla_lv2_state_retrieve, this, 0, features);
 
+            const char* stype = customdatatype2str(dtype);
+
             switch (status)
             {
             case LV2_STATE_SUCCESS:
-                qDebug("Lv2Plugin::set_custom_data(%s, %s, <value>, %s) - success", customdatatype2str(dtype), key, bool2str(gui_send));
+                qDebug("Lv2Plugin::set_custom_data(%s, %s, <value>, %s) - success", stype, key, bool2str(gui_send));
                 break;
             case LV2_STATE_ERR_UNKNOWN:
-                qWarning("Lv2Plugin::set_custom_data(%s, %s, <value>, %s) - unknown error", customdatatype2str(dtype), key, bool2str(gui_send));
+                qWarning("Lv2Plugin::set_custom_data(%s, %s, <value>, %s) - unknown error", stype, key, bool2str(gui_send));
                 break;
             case LV2_STATE_ERR_BAD_TYPE:
-                qWarning("Lv2Plugin::set_custom_data(%s, %s, <value>, %s) - error, bad type", customdatatype2str(dtype), key, bool2str(gui_send));
+                qWarning("Lv2Plugin::set_custom_data(%s, %s, <value>, %s) - error, bad type", stype, key, bool2str(gui_send));
                 break;
             case LV2_STATE_ERR_BAD_FLAGS:
-                qWarning("Lv2Plugin::set_custom_data(%s, %s, <value>, %s) - error, bad flags", customdatatype2str(dtype), key, bool2str(gui_send));
+                qWarning("Lv2Plugin::set_custom_data(%s, %s, <value>, %s) - error, bad flags", stype, key, bool2str(gui_send));
                 break;
             case LV2_STATE_ERR_NO_FEATURE:
-                qWarning("Lv2Plugin::set_custom_data(%s, %s, <value>, %s) - error, missing feature", customdatatype2str(dtype), key, bool2str(gui_send));
+                qWarning("Lv2Plugin::set_custom_data(%s, %s, <value>, %s) - error, missing feature", stype, key, bool2str(gui_send));
                 break;
             case LV2_STATE_ERR_NO_PROPERTY:
-                qWarning("Lv2Plugin::set_custom_data(%s, %s, <value>, %s) - error, missing property", customdatatype2str(dtype), key, bool2str(gui_send));
+                qWarning("Lv2Plugin::set_custom_data(%s, %s, <value>, %s) - error, missing property", stype, key, bool2str(gui_send));
                 break;
             }
-        }
-    }
-
-    void set_gui_data(int, void* ptr)
-    {
-        switch(gui.type)
-        {
-        case GUI_INTERNAL_QT4:
-            if (ui.widget)
-            {
-                QDialog* qtPtr  = (QDialog*)ptr;
-                QWidget* widget = (QWidget*)ui.widget;
-
-                qtPtr->layout()->addWidget(widget);
-                widget->adjustSize();
-                widget->setParent(qtPtr);
-                widget->show();
-            }
-            break;
-
-        case GUI_INTERNAL_X11:
-            if (ui.descriptor)
-            {
-                QDialog* qtPtr  = (QDialog*)ptr;
-                features[lv2_feature_id_ui_parent]->data = (void*)qtPtr->winId();
-
-                ui.handle = ui.descriptor->instantiate(ui.descriptor,
-                                                       descriptor->URI,
-                                                       ui.rdf_descriptor->Bundle,
-                                                       carla_lv2_ui_write_function,
-                                                       this,
-                                                       &ui.widget,
-                                                       features);
-                update_ui();
-            }
-            break;
-
-        default:
-            break;
         }
     }
 
@@ -658,7 +626,7 @@ public:
     {
         if (ext.programs && index >= 0)
         {
-            if (0) //carla_jack_on_freewheel())
+            if (CarlaEngine::isOffline())
             {
                 if (block) carla_proc_lock();
                 ext.programs->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
@@ -666,23 +634,8 @@ public:
             }
             else
             {
-                short _id = m_id;
-
-                if (block)
-                {
-                    carla_proc_lock();
-                    m_id = -1;
-                    carla_proc_unlock();
-                }
-
+                const CarlaPluginScopedDisabler m(this, block);
                 ext.programs->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
-
-                if (block)
-                {
-                    carla_proc_lock();
-                    m_id = _id;
-                    carla_proc_unlock();
-                }
             }
 
             if (gui_send)
@@ -700,6 +653,45 @@ public:
         CarlaPlugin::set_midi_program(index, gui_send, osc_send, callback_send, block);
     }
 
+    // -------------------------------------------------------------------
+    // Set gui stuff
+
+    void set_gui_data(int, QDialog* dialog)
+    {
+        switch(gui.type)
+        {
+        case GUI_INTERNAL_QT4:
+            if (ui.widget)
+            {
+                QWidget* widget = (QWidget*)ui.widget;
+                dialog->layout()->addWidget(widget);
+                widget->adjustSize();
+                widget->setParent(dialog);
+                widget->show();
+            }
+            break;
+
+        case GUI_INTERNAL_X11:
+            if (ui.descriptor)
+            {
+                features[lv2_feature_id_ui_parent]->data = (void*)dialog->winId();
+
+                ui.handle = ui.descriptor->instantiate(ui.descriptor,
+                                                       descriptor->URI,
+                                                       ui.rdf_descriptor->Bundle,
+                                                       carla_lv2_ui_write_function,
+                                                       this,
+                                                       &ui.widget,
+                                                       features);
+                update_ui();
+            }
+            break;
+
+        default:
+            break;
+        }
+    }
+
     void show_gui(bool yesno)
     {
         // FIXME - is gui.visible needed at all?
@@ -712,7 +704,7 @@ public:
         case GUI_INTERNAL_X11:
             gui.visible = yesno;
 
-            if (gui.visible && gui.width > 0 && gui.height > 0)
+            if (yesno && gui.width > 0 && gui.height > 0)
                 callback_action(CALLBACK_RESIZE_GUI, m_id, gui.width, gui.height, 0.0);
 
             break;
@@ -733,10 +725,10 @@ public:
 #endif
 
         case GUI_EXTERNAL_LV2:
-            if (ui.handle == nullptr)
+            if (! ui.handle)
                 reinit_external_ui();
 
-            if (ui.handle && ui.widget)
+            if (ui.handle && ui.descriptor && ui.widget)
             {
                 if (yesno)
                 {
@@ -783,11 +775,13 @@ public:
             {
                 if (ui.descriptor->port_event)
                 {
+                    float value;
+
                     for (uint32_t i=0; i < param.count; i++)
                     {
-                        if (param.data[i].type == PARAMETER_OUTPUT && (param.data[i].hints & PARAMETER_IS_AUTOMABLE) > 0)
+                        if (param.data[i].type == PARAMETER_OUTPUT)
                         {
-                            float value = get_parameter_value(i);
+                            value = get_parameter_value(i);
                             ui.descriptor->port_event(ui.handle, param.data[i].rindex, sizeof(float), 0, &value);
                         }
                     }
@@ -2139,6 +2133,7 @@ public:
         //    ext.worker->work(handle, carla_lv2_worker_respond, this, event->index, event->cdata);
         //    ext.worker->end_run(handle);
         //}
+        Q_UNUSED(event);
     }
 
     void handle_event_transfer(const char* type, const char* key, const char* string_data)
@@ -2178,15 +2173,17 @@ public:
 
                         if (iter->value.type == CARLA_URI_MAP_ID_ATOM_STRING || iter->value.type == CARLA_URI_MAP_ID_ATOM_PATH)
                         {
-                            dtype = iter->value.type == CARLA_URI_MAP_ID_ATOM_STRING ? CUSTOM_DATA_STRING : CUSTOM_DATA_PATH;
                             value = strdup((const char*)LV2_ATOM_BODY(&iter->value));
+                            dtype = (iter->value.type == CARLA_URI_MAP_ID_ATOM_STRING) ? CUSTOM_DATA_STRING : CUSTOM_DATA_PATH;
                         }
                         else if (iter->value.type == CARLA_URI_MAP_ID_ATOM_CHUNK || iter->value.type >= CARLA_URI_MAP_ID_COUNT)
                         {
                             QByteArray chunk((const char*)LV2_ATOM_BODY(&iter->value), iter->value.size);
                             value = strdup(chunk.toBase64().constData());
-                            dtype = iter->value.type == CARLA_URI_MAP_ID_ATOM_CHUNK ? CUSTOM_DATA_CHUNK : CUSTOM_DATA_BINARY;
+                            dtype = (iter->value.type == CARLA_URI_MAP_ID_ATOM_CHUNK) ? CUSTOM_DATA_CHUNK : CUSTOM_DATA_BINARY; // FIXME - binary should be a custom type
                         }
+                        else
+                            value = strdup("");
 
                         set_custom_data(dtype, key, value, false);
                         free((void*)value);
@@ -2224,24 +2221,16 @@ public:
     {
         if (index == -1)
         {
-            carla_proc_lock();
-            short _id = m_id;
-            m_id = -1;
-            carla_proc_unlock();
-
+            const CarlaPluginScopedDisabler m(this);
             reload_programs(false);
-
-            carla_proc_lock();
-            m_id = _id;
-            carla_proc_unlock();
         }
         else
         {
-            if (ext.programs && index < (int32_t)prog.count)
+            if (ext.programs && index >= 0 && index < (int32_t)prog.count)
             {
                 const char* prog_name = ext.programs->get_program(handle, index)->name;
 
-                if (prog_name && !(prog.names[index] && strcmp(prog_name, prog.names[index]) == 0))
+                if (prog_name && ! (prog.names[index] && strcmp(prog_name, prog.names[index]) == 0))
                 {
                     if (prog.names[index])
                         free((void*)prog.names[index]);
@@ -2515,6 +2504,10 @@ public:
                             features[lv2_feature_id_state_map_path]   = new LV2_Feature;
                             features[lv2_feature_id_state_map_path]->URI  = LV2_STATE__mapPath;
                             features[lv2_feature_id_state_map_path]->data = State_MapPath_Feature;
+
+                            features[lv2_feature_id_strict_bounds]    = new LV2_Feature;
+                            features[lv2_feature_id_strict_bounds]->URI  = LV2_PORT_PROPS__supportsStrictBounds;
+                            features[lv2_feature_id_strict_bounds]->data = nullptr;
 
                             features[lv2_feature_id_uri_map]          = new LV2_Feature;
                             features[lv2_feature_id_uri_map]->URI     = LV2_URI_MAP_URI;
@@ -2951,7 +2944,7 @@ public:
             Lv2Plugin* plugin = (Lv2Plugin*)handle;
             const char* uri_key = plugin->get_custom_uri_string(key);
 
-            if (uri_key > 0 && (flags & LV2_STATE_IS_POD) > 0 && value)
+            if (uri_key && value && (flags & LV2_STATE_IS_POD) > 0)
             {
                 qDebug("Lv2Plugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i) - Got uri_key and flags", handle, key, value, size, type, flags);
 
@@ -3230,20 +3223,20 @@ public:
 
         if (handle)
         {
-//            Lv2Plugin* plugin = (Lv2Plugin*)handle;
+            //            Lv2Plugin* plugin = (Lv2Plugin*)handle;
 
-//            if (carla_jack_on_freewheel())
-//            {
-//                PluginPostEvent event;
-//                event.valid = true;
-//                event.type  = PostEventCustom;
-//                event.index = size;
-//                event.value = 0.0;
-//                event.cdata = data;
-//                plugin->run_custom_event(&event);
-//            }
-//            else
-//                plugin->postpone_event(PostEventCustom, size, 0.0, data);
+            //            if (carla_jack_on_freewheel())
+            //            {
+            //                PluginPostEvent event;
+            //                event.valid = true;
+            //                event.type  = PostEventCustom;
+            //                event.index = size;
+            //                event.value = 0.0;
+            //                event.cdata = data;
+            //                plugin->run_custom_event(&event);
+            //            }
+            //            else
+            //                plugin->postpone_event(PostEventCustom, size, 0.0, data);
 
             return LV2_WORKER_SUCCESS;
         }
@@ -3410,7 +3403,7 @@ private:
     Lv2ParameterData* lv2param;
 
     //LV2_Atom_Forge atom_forge;
-    QList<const char*> custom_uri_ids;
+    QVector<const char*> custom_uri_ids;
 };
 
 int osc_handle_lv2_event_transfer(CarlaPlugin* plugin, lo_arg** argv)
@@ -3455,3 +3448,5 @@ short add_plugin_lv2(const char* filename, const char* label)
 
     return id;
 }
+
+CARLA_BACKEND_END_NAMESPACE

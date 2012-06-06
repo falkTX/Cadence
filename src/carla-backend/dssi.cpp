@@ -1,5 +1,5 @@
 /*
- * JACK Backend code for Carla
+ * Carla Backend
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,12 @@
 #include "carla_plugin.h"
 
 #include "dssi/dssi.h"
+
+CARLA_BACKEND_START_NAMESPACE
+
+#if 0
+} /* adjust editor indent */
+#endif
 
 class DssiPlugin : public CarlaPlugin
 {
@@ -77,10 +83,6 @@ public:
 
         if (handle && ldescriptor && ldescriptor->cleanup)
             ldescriptor->cleanup(handle);
-
-        handle = nullptr;
-        descriptor = nullptr;
-        ldescriptor = nullptr;
     }
 
     // -------------------------------------------------------------------
@@ -88,7 +90,7 @@ public:
 
     PluginCategory category()
     {
-        if (midi.port_min && aout.count > 0)
+        if (m_hints & PLUGIN_IS_SYNTH)
             return PLUGIN_CATEGORY_SYNTH;
         return get_category_from_name(m_name);
     }
@@ -114,7 +116,7 @@ public:
 
     double get_parameter_value(uint32_t param_id)
     {
-        return fix_parameter_value(param_buffers[param_id], param.ranges[param_id]);
+        return param_buffers[param_id];
     }
 
     void get_label(char* buf_str)
@@ -217,6 +219,9 @@ public:
         CarlaPlugin::set_midi_program(index, gui_send, osc_send, callback_send, block);
     }
 
+    // -------------------------------------------------------------------
+    // Set gui stuff
+
 #ifndef BUILD_BRIDGE
     void show_gui(bool yesno)
     {
@@ -229,9 +234,13 @@ public:
             osc_send_hide(&osc.data);
             osc_send_quit(&osc.data);
             osc_clear_data(&osc.data);
+            // FIXME - stop thread?
         }
     }
 #endif
+
+    // -------------------------------------------------------------------
+    // Plugin state
 
     void reload()
     {
@@ -302,7 +311,16 @@ public:
 
             if (LADSPA_IS_PORT_AUDIO(PortType))
             {
-                strncpy(port_name, ldescriptor->PortNames[i], port_name_size);
+#ifndef BUILD_BRIDGE
+                if (carla_options.global_jack_client)
+                {
+                    strcpy(port_name, m_name);
+                    strcat(port_name, ":");
+                    strncat(port_name, ldescriptor->PortNames[i], port_name_size/2);
+                }
+                else
+#endif
+                    strncpy(port_name, ldescriptor->PortNames[i], port_name_size);
 
                 if (LADSPA_IS_PORT_INPUT(PortType))
                 {
@@ -474,12 +492,12 @@ public:
                 {
                     if (strcmp(ldescriptor->PortNames[i], "latency") == 0 || strcmp(ldescriptor->PortNames[i], "_latency") == 0)
                     {
-                        min = 0;
+                        min = 0.0;
                         max = get_sample_rate();
-                        def = 0;
-                        step = 1;
-                        step_small = 1;
-                        step_large = 1;
+                        def = 0.0;
+                        step = 1.0;
+                        step_small = 1.0;
+                        step_large = 1.0;
 
                         param.data[j].type  = PARAMETER_LATENCY;
                         param.data[j].hints = 0;
@@ -520,19 +538,45 @@ public:
 
         if (needs_cin)
         {
-            strcpy(port_name, "control-in");
+#ifndef BUILD_BRIDGE
+            if (carla_options.global_jack_client)
+            {
+                strcpy(port_name, m_name);
+                strcat(port_name, ":control-in");
+            }
+            else
+#endif
+                strcpy(port_name, "control-in");
+
             param.port_cin = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, true);
         }
 
         if (needs_cout)
         {
-            strcpy(port_name, "control-out");
+#ifndef BUILD_BRIDGE
+            if (carla_options.global_jack_client)
+            {
+                strcpy(port_name, m_name);
+                strcat(port_name, ":control-out");
+            }
+            else
+#endif
+                strcpy(port_name, "control-out");
+
             param.port_cout = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, false);
         }
 
         if (mins > 0)
         {
-            strcpy(port_name, "midi-in");
+#ifndef BUILD_BRIDGE
+            if (carla_options.global_jack_client)
+            {
+                strcpy(port_name, m_name);
+                strcat(port_name, ":midi-in");
+            }
+            else
+#endif
+                strcpy(port_name, "midi-in");
             midi.port_min = (CarlaEngineMidiPort*)x_client->addPort(port_name, CarlaEnginePortTypeMIDI, true);
         }
 
@@ -545,7 +589,7 @@ public:
         // plugin checks
         m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
 
-        if (midi.port_min > 0 && aout.count > 0)
+        if (midi.port_min && aout.count > 0)
             m_hints |= PLUGIN_IS_SYNTH;
 
 #if 0
@@ -667,6 +711,9 @@ public:
         }
     }
 
+    // -------------------------------------------------------------------
+    // Plugin processing
+
     void process(float** ains_buffer, float** aouts_buffer, uint32_t nframes, uint32_t nframesOffset)
     {
         uint32_t i, k;
@@ -708,7 +755,7 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Parameters Input [Automation]
 
-        if (param.port_cin && m_active)
+        if (param.port_cin && m_active && m_active_before)
         {
             void* cin_buffer = param.port_cin->getBuffer();
 
@@ -810,40 +857,42 @@ public:
                 }
 
                 case CarlaEngineEventMidiBankChange:
-                    next_bank_id = cin_event->value;
+                    if (cin_event->channel == cin_channel)
+                        next_bank_id = cin_event->value;
                     break;
 
                 case CarlaEngineEventMidiProgramChange:
-                {
-                    uint32_t mbank_id = next_bank_id;
-                    uint32_t mprog_id = cin_event->value;
-
-                    for (k=0; k < midiprog.count; k++)
+                    if (cin_event->channel == cin_channel)
                     {
-                        if (midiprog.data[k].bank == mbank_id && midiprog.data[k].program == mprog_id)
+                        uint32_t mbank_id = next_bank_id;
+                        uint32_t mprog_id = cin_event->value;
+
+                        for (k=0; k < midiprog.count; k++)
                         {
-                            set_midi_program(k, false, false, false, false);
-                            postpone_event(PluginPostEventMidiProgramChange, k, 0.0);
-                            break;
+                            if (midiprog.data[k].bank == mbank_id && midiprog.data[k].program == mprog_id)
+                            {
+                                set_midi_program(k, false, false, false, false);
+                                postpone_event(PluginPostEventMidiProgramChange, k, 0.0);
+                                break;
+                            }
                         }
+                        break;
                     }
-                    break;
-                }
 
                 case CarlaEngineEventAllSoundOff:
                     if (cin_event->channel == cin_channel)
                     {
                         if (midi.port_min)
-                            send_midi_all_notes_off();
-
-                        if (m_active && m_active_before)
                         {
-                            if (ldescriptor->deactivate)
-                                ldescriptor->deactivate(handle);
-
-                            if (ldescriptor->activate)
-                                ldescriptor->activate(handle);
+                            send_midi_all_notes_off();
+                            midi_event_count += 128;
                         }
+
+                        if (ldescriptor->deactivate)
+                            ldescriptor->deactivate(handle);
+
+                        if (ldescriptor->activate)
+                            ldescriptor->activate(handle);
                     }
                     break;
 
@@ -851,7 +900,10 @@ public:
                     if (cin_event->channel == cin_channel)
                     {
                         if (midi.port_min)
+                        {
                             send_midi_all_notes_off();
+                            midi_event_count += 128;
+                        }
                     }
                     break;
                 }
@@ -863,7 +915,7 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // MIDI Input (External)
 
-        if (midi.port_min && m_active)
+        if (midi.port_min && cin_channel >= 0 && cin_channel < 16 && m_active && m_active_before)
         {
             carla_midi_lock();
 
@@ -875,7 +927,7 @@ public:
                     memset(midi_event, 0, sizeof(snd_seq_event_t));
 
                     midi_event->type = extMidiNotes[i].onoff ? SND_SEQ_EVENT_NOTEON : SND_SEQ_EVENT_NOTEOFF;
-                    midi_event->data.note.channel  = 0;
+                    midi_event->data.note.channel  = cin_channel;
                     midi_event->data.note.note     = extMidiNotes[i].note;
                     midi_event->data.note.velocity = extMidiNotes[i].velo;
 
@@ -895,7 +947,7 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // MIDI Input (System)
 
-        if (midi.port_min && m_active)
+        if (midi.port_min && m_active && m_active_before)
         {
             void* min_buffer = midi.port_min->getBuffer();
 
@@ -933,7 +985,9 @@ public:
                     midi_event->type = SND_SEQ_EVENT_NOTEOFF;
                     midi_event->data.note.channel = channel;
                     midi_event->data.note.note    = note;
-                    postpone_event(PluginPostEventNoteOff, note, 0.0);
+
+                    if (channel == cin_channel)
+                        postpone_event(PluginPostEventNoteOff, note, 0.0);
                 }
                 else if (MIDI_IS_STATUS_NOTE_ON(status))
                 {
@@ -944,7 +998,9 @@ public:
                     midi_event->data.note.channel  = channel;
                     midi_event->data.note.note     = note;
                     midi_event->data.note.velocity = velo;
-                    postpone_event(PluginPostEventNoteOn, note, velo);
+
+                    if (channel == cin_channel)
+                        postpone_event(PluginPostEventNoteOn, note, velo);
                 }
                 else if (MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status))
                 {
@@ -1004,6 +1060,20 @@ public:
         {
             if (! m_active_before)
             {
+                if (midi.port_min)
+                {
+                    memset(&midi_events[0], 0, sizeof(snd_seq_event_t));
+                    memset(&midi_events[1], 0, sizeof(snd_seq_event_t));
+
+                    midi_events[0].type = SND_SEQ_EVENT_CONTROLLER;
+                    midi_events[0].data.control.param = MIDI_CONTROL_ALL_SOUND_OFF;
+
+                    midi_events[1].type = SND_SEQ_EVENT_CONTROLLER;
+                    midi_events[1].data.control.param = MIDI_CONTROL_ALL_NOTES_OFF;
+
+                    midi_event_count = 2;
+                }
+
                 if (ldescriptor->activate)
                     ldescriptor->activate(handle);
             }
@@ -1130,10 +1200,15 @@ public:
 
             for (k=0; k < param.count; k++)
             {
-                if (param.data[k].type == PARAMETER_OUTPUT && param.data[k].midi_cc > 0)
+                if (param.data[k].type == PARAMETER_OUTPUT)
                 {
-                    value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
-                    param.port_cout->writeEvent(cout_buffer, CarlaEngineEventControlChange, nframesOffset, param.data[k].midi_channel, param.data[k].midi_cc, value);
+                    fix_parameter_value(param_buffers[k], param.ranges[k]);
+
+                    if (param.data[k].midi_cc > 0)
+                    {
+                        value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
+                        param.port_cout->writeEvent(cout_buffer, CarlaEngineEventControlChange, nframesOffset, param.data[k].midi_channel, param.data[k].midi_cc, value);
+                    }
                 }
             }
         } // End of Control Output
@@ -1262,3 +1337,5 @@ short add_plugin_dssi(const char* filename, const char* label, const void* extra
 
     return id;
 }
+
+CARLA_BACKEND_END_NAMESPACE

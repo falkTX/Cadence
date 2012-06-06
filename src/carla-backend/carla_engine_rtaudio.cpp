@@ -1,5 +1,5 @@
 /*
- * JACK Backend code for Carla
+ * Carla Backend
  * Copyright (C) 2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,10 @@
 #include "carla_plugin.h"
 
 CARLA_BACKEND_START_NAMESPACE
+
+#if 0
+} /* adjust editor indent */
+#endif
 
 // Global RtAudio stuff
 static RtAudio adac(RtAudio::UNIX_JACK);
@@ -65,7 +69,7 @@ double get_latency()
 // -------------------------------------------------------------------------------------------------------------------
 // static RtAudio<->Engine calls
 
-static int process_callback(void* outputBuffer, void* inputBuffer, unsigned int nframes, double streamTime, RtAudioStreamStatus status, void* userData)
+static int process_callback(void* outputBuffer, void* inputBuffer, unsigned int nframes, double /*streamTime*/, RtAudioStreamStatus /*status*/, void* /*userData*/)
 {
     if (carla_proc_thread == nullptr)
         carla_proc_thread = QThread::currentThread();
@@ -177,6 +181,11 @@ int CarlaEngine::maxClientNameSize()
     return STR_MAX;
 }
 
+int CarlaEngine::maxPortNameSize()
+{
+    return STR_MAX;
+}
+
 // -------------------------------------------------------------------------------------------------------------------
 // Carla Engine Port (Base class)
 
@@ -188,8 +197,6 @@ CarlaEngineBasePort::CarlaEngineBasePort(CarlaEngineClientNativeHandle* const cl
 
 CarlaEngineBasePort::~CarlaEngineBasePort()
 {
-    //if (handle)
-    //    jack_port_unregister(client, handle);
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -198,29 +205,20 @@ CarlaEngineBasePort::~CarlaEngineBasePort()
 CarlaEngineClient::CarlaEngineClient(CarlaPlugin* const plugin)
 {
     m_active = false;
-    //handle   = jack_client_open(plugin->name(), JackNullOption, nullptr);
-
-    //if (handle)
-    //    jack_set_process_callback(handle, carla_jack_process_callback, plugin);
+    Q_UNUSED(plugin);
 }
 
 CarlaEngineClient::~CarlaEngineClient()
 {
-    //if (handle)
-    //    jack_client_close(handle);
 }
 
 void CarlaEngineClient::activate()
 {
-    //if (handle)
-    //    jack_activate(handle);
     m_active = true;
 }
 
 void CarlaEngineClient::deactivate()
 {
-    //if (handle)
-    //    jack_deactivate(handle);
     m_active = false;
 }
 
@@ -251,6 +249,7 @@ CarlaEngineBasePort* CarlaEngineClient::addPort(const char* name, CarlaEnginePor
 CarlaEngineAudioPort::CarlaEngineAudioPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput) :
     CarlaEngineBasePort(client, isInput)
 {
+    Q_UNUSED(name);
 }
 
 void* CarlaEngineAudioPort::getBuffer()
@@ -264,6 +263,7 @@ void* CarlaEngineAudioPort::getBuffer()
 CarlaEngineControlPort::CarlaEngineControlPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput) :
     CarlaEngineBasePort(client, isInput)
 {
+    Q_UNUSED(name);
 }
 
 void* CarlaEngineControlPort::getBuffer()
@@ -271,11 +271,20 @@ void* CarlaEngineControlPort::getBuffer()
     return nullptr;
 }
 
+void CarlaEngineControlPort::initBuffer(void* buffer)
+{
+    if (isInput)
+        return;
+
+    Q_UNUSED(buffer);
+}
+
 uint32_t CarlaEngineControlPort::getEventCount(void* buffer)
 {
     if (! isInput)
         return 0;
 
+    Q_UNUSED(buffer);
     return 0;
 }
 
@@ -284,6 +293,8 @@ const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(void* buffer, ui
     if (! isInput)
         return nullptr;
 
+    Q_UNUSED(buffer);
+    Q_UNUSED(index);
     return nullptr;
 }
 
@@ -291,6 +302,13 @@ void CarlaEngineControlPort::writeEvent(void* buffer, CarlaEngineControlEventTyp
 {
     if (isInput)
         return;
+
+    Q_UNUSED(buffer);
+    Q_UNUSED(type);
+    Q_UNUSED(time);
+    Q_UNUSED(channel);
+    Q_UNUSED(controller);
+    Q_UNUSED(value);
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -299,6 +317,7 @@ void CarlaEngineControlPort::writeEvent(void* buffer, CarlaEngineControlEventTyp
 CarlaEngineMidiPort::CarlaEngineMidiPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput) :
     CarlaEngineBasePort(client, isInput)
 {
+    Q_UNUSED(name);
 }
 
 void* CarlaEngineMidiPort::getBuffer()
@@ -311,6 +330,7 @@ uint32_t CarlaEngineMidiPort::getEventCount(void* buffer)
     if (! isInput)
         return 0;
 
+    Q_UNUSED(buffer);
     return 0;
 }
 
@@ -319,6 +339,8 @@ const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(void* buffer, uint32_t
     if (! isInput)
         return nullptr;
 
+    Q_UNUSED(buffer);
+    Q_UNUSED(index);
     return nullptr;
 }
 

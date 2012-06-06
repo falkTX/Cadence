@@ -1,5 +1,5 @@
 /*
- * JACK Backend code for Carla
+ * Carla Backend
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -40,7 +40,13 @@
 #include <QtCore/QString>
 #include <QtCore/QVector>
 
+class QDialog;
+
 CARLA_BACKEND_START_NAMESPACE
+
+#if 0
+} /* adjust editor indent */
+#endif
 
 #define CARLA_PROCESS_CONTINUE_CHECK if (! m_enabled) { return callback_action(CALLBACK_DEBUG, m_id, m_enabled, 0, 0.0); }
 
@@ -81,8 +87,8 @@ enum PluginBridgeInfoType {
 
 struct PluginAudioData {
     uint32_t count;
-    CarlaEngineAudioPort** ports;
     uint32_t* rindexes;
+    CarlaEngineAudioPort** ports;
 };
 
 struct PluginMidiData {
@@ -732,27 +738,22 @@ public:
         if (save_data)
         {
             // Check if we already have this key
-            bool already_have = false;
-
             for (int i=0; i < custom.count(); i++)
             {
                 if (strcmp(custom[i].key, key) == 0)
                 {
                     free((void*)custom[i].value);
                     custom[i].value = strdup(value);
-                    already_have = true;
-                    break;
+                    return;
                 }
             }
 
-            if (already_have == false)
-            {
-                CustomData new_data;
-                new_data.type  = dtype;
-                new_data.key   = strdup(key);
-                new_data.value = strdup(value);
-                custom.append(new_data);
-            }
+            // False if we get here, so store it
+            CustomData new_data;
+            new_data.type  = dtype;
+            new_data.key   = strdup(key);
+            new_data.value = strdup(value);
+            custom.append(new_data);
         }
 
         Q_UNUSED(gui_send);
@@ -849,7 +850,7 @@ public:
     // -------------------------------------------------------------------
     // Set gui stuff
 
-    virtual void set_gui_data(int data, void* ptr)
+    virtual void set_gui_data(int data, QDialog* ptr)
     {
         Q_UNUSED(data);
         Q_UNUSED(ptr);
@@ -903,7 +904,7 @@ public:
         for (uint32_t i=0; i < aout.count; i++)
             aouts_buffer[i] = (float*)aout.ports[i]->getBuffer();
 
-        if (carla_options.proccess_32x)
+        if (carla_options.proccess_hq)
         {
             float* ains_buffer2[ain.count];
             float* aouts_buffer2[aout.count];
@@ -1142,7 +1143,7 @@ public:
                 pe_pad = i;
                 break;
             }
-            else if (i + MAX_MIDI_EVENTS == MAX_POST_EVENTS)
+            else if (i + MAX_POST_EVENTS == MAX_MIDI_EVENTS)
             {
                 qWarning("post-events buffer full, making room for all notes off now");
                 pe_pad = i - 1;
@@ -1150,15 +1151,12 @@ public:
             }
         }
 
-        for (unsigned short i=0; i < 128 && i < MAX_MIDI_EVENTS && i < MAX_POST_EVENTS; i++)
+        for (unsigned short i=0; i < 128; i++)
         {
-            //if (notes_off)
-            //{
             extMidiNotes[i].valid = true;
             extMidiNotes[i].onoff = false;
             extMidiNotes[i].note  = i;
             extMidiNotes[i].velo  = 0;
-            //}
 
             postEvents.data[i+pe_pad].type  = PluginPostEventNoteOff;
             postEvents.data[i+pe_pad].index = i;
