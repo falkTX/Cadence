@@ -92,10 +92,11 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         QMainWindow.__init__(self, parent)
         self.setupUi(self)
 
+        self.m_last_buffer_size = None
+        self.m_timer120 = None
+
         self.settings = QSettings("Cadence", "Cadence")
         self.loadSettings(True)
-
-        self.m_timer120 = None
 
         # -------------------------------------------------------------
         # System Information
@@ -161,9 +162,9 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         self.m_timer1000 = self.startTimer(1000)
 
-        if haveDBus:
-            self.DBusReconnect()
+        self.DBusReconnect()
 
+        if haveDBus:
             DBus.bus.add_signal_receiver(self.DBusSignalReceiver, destination_keyword='dest', path_keyword='path',
                 member_keyword='member', interface_keyword='interface', sender_keyword='sender', )
 

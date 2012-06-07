@@ -45,8 +45,8 @@ const unsigned int PLUGIN_HAS_EXTENSION_STATE    = 0x0400;
 const unsigned int PLUGIN_HAS_EXTENSION_WORKER   = 0x0800;
 
 // extra parameter hints
-const unsigned int PARAMETER_IS_TRIGGER          = 0x1000;
-const unsigned int PARAMETER_IS_STRICT_BOUNDS    = 0x2000;
+const unsigned int PARAMETER_IS_STRICT_BOUNDS    = 0x1000;
+const unsigned int PARAMETER_IS_TRIGGER          = 0x2000;
 
 // feature ids
 const uint32_t lv2_feature_id_event           = 0;
@@ -270,6 +270,12 @@ public:
         if (features[lv2_feature_id_logs] && features[lv2_feature_id_logs]->data)
             delete (LV2_Log_Log*)features[lv2_feature_id_logs]->data;
 
+        if (features[lv2_feature_id_programs] && features[lv2_feature_id_programs]->data)
+            delete (LV2_Programs_Host*)features[lv2_feature_id_programs]->data;
+
+        if (features[lv2_feature_id_rtmempool] && features[lv2_feature_id_rtmempool]->data)
+            delete (lv2_rtsafe_memory_pool_provider*)features[lv2_feature_id_rtmempool]->data;
+
         if (features[lv2_feature_id_state_make_path] && features[lv2_feature_id_state_make_path]->data)
             delete (LV2_State_Make_Path*)features[lv2_feature_id_state_make_path]->data;
 
@@ -287,12 +293,6 @@ public:
 
         if (features[lv2_feature_id_worker] && features[lv2_feature_id_worker]->data)
             delete (LV2_Worker_Schedule*)features[lv2_feature_id_worker]->data;
-
-        if (features[lv2_feature_id_programs] && features[lv2_feature_id_programs]->data)
-            delete (LV2_Programs_Host*)features[lv2_feature_id_programs]->data;
-
-        if (features[lv2_feature_id_rtmempool] && features[lv2_feature_id_rtmempool]->data)
-            delete (lv2_rtsafe_memory_pool_provider*)features[lv2_feature_id_rtmempool]->data;
 
         for (uint32_t i=0; i < lv2_feature_count; i++)
         {
@@ -579,7 +579,6 @@ public:
                 osc_send_control(&osc.data, param.data[param_id].rindex, value);
                 break;
 #endif
-
             default:
                 break;
             }

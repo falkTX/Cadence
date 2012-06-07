@@ -180,7 +180,10 @@ public:
 
     void get_maker(char* buf_str)
     {
-        strncpy(buf_str, descriptor->Maker, STR_MAX);
+        if (rdf_descriptor && rdf_descriptor->Creator)
+            strncpy(buf_str, rdf_descriptor->Creator, STR_MAX);
+        else
+            strncpy(buf_str, descriptor->Maker, STR_MAX);
     }
 
     void get_copyright(char* buf_str)
