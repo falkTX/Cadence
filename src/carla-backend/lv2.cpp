@@ -1791,6 +1791,7 @@ public:
                         continue;
 
                     uint8_t status  = min_event->data[0];
+                    uint8_t channel = status & 0x0F;
 
                     // Fix bad note-off
                     if (MIDI_IS_STATUS_NOTE_ON(status) && min_event->data[2] == 0)
@@ -1813,13 +1814,17 @@ public:
                         }
                         else if (evin.data[i].type & CARLA_EVENT_DATA_EVENT)
                             lv2_event_write(&evin_iters[i], min_event->time, 0, CARLA_URI_MAP_ID_MIDI_EVENT, min_event->size, min_event->data);
+
                         else if (evin.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
                             lv2midi_put_event(&evin_states[i], min_event->time, min_event->size, min_event->data);
 
-                        if (MIDI_IS_STATUS_NOTE_OFF(status))
-                            postpone_event(PluginPostEventNoteOff, min_event->data[1], 0.0);
-                        else if (MIDI_IS_STATUS_NOTE_ON(status))
-                            postpone_event(PluginPostEventNoteOn, min_event->data[1], min_event->data[2]);
+                        if (channel == cin_channel)
+                        {
+                            if (MIDI_IS_STATUS_NOTE_OFF(status))
+                                postpone_event(PluginPostEventNoteOff, min_event->data[1], 0.0);
+                            else if (MIDI_IS_STATUS_NOTE_ON(status))
+                                postpone_event(PluginPostEventNoteOn, min_event->data[1], min_event->data[2]);
+                        }
                     }
 
                     midi_event_count += 1;

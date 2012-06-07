@@ -18,7 +18,7 @@
 #ifndef CARLA_VST_INCLUDES_H
 #define CARLA_VST_INCLUDES_H
 
-#define VST_FORCE_DEPRECATED 1
+#define VST_FORCE_DEPRECATED 0
 #include "aeffectx.h"
 
 #if VESTIGE_HEADER

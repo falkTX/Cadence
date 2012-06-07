@@ -20,7 +20,7 @@ SOURCES = \
     ../ladspa.cpp \
     ../dssi.cpp \
     ../lv2.cpp \
-#    ../vst.cpp \
+    ../vst.cpp \
     ../sf2.cpp \
     ../lv2-rtmempool/rtmempool.c
 

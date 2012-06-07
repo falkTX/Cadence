@@ -20,9 +20,9 @@
 
 #include "carla_includes.h"
 
-//#ifdef Q_OS_WIN
-//#include <cstdio>
-//#endif
+#ifdef Q_OS_WIN
+#include <cstdio>
+#endif
 
 static inline
 void* lib_open(const char* filename)

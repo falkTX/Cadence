@@ -578,6 +578,7 @@ public:
             else
 #endif
                 strcpy(port_name, "midi-in");
+
             midi.port_min = (CarlaEngineMidiPort*)x_client->addPort(port_name, CarlaEnginePortTypeMIDI, true);
         }
 
