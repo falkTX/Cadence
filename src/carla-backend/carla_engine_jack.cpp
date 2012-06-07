@@ -541,6 +541,14 @@ const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(void* buffer, uint32_t
     return nullptr;
 }
 
+void CarlaEngineMidiPort::writeEvent(void* buffer, uint32_t time, uint8_t* data, uint8_t size)
+{
+    if (! isInput)
+        return;
+
+    jack_midi_event_write(buffer, time, data, size);
+}
+
 CARLA_BACKEND_END_NAMESPACE
 
 #endif // CARLA_ENGINE_JACK

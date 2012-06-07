@@ -671,14 +671,14 @@ public:
         aout.count  = aouts;
         param.count = params;
 
-        reload_programs(true);
-
         // plugin checks
         m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
 
         m_hints |= PLUGIN_IS_SYNTH;
         m_hints |= PLUGIN_CAN_VOLUME;
         m_hints |= PLUGIN_CAN_BALANCE;
+
+        reload_programs(true);
 
         x_client->activate();
 

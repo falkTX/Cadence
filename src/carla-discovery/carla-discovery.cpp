@@ -33,7 +33,8 @@
 #include <fluidsynth.h>
 #endif
 
-#define CARLA_NO_EXPORTS
+#define CARLA_BACKEND_NO_EXPORTS
+#define CARLA_BACKEND_NO_NAMESPACE
 #include "carla_backend.h"
 
 #define DISCOVERY_OUT(x, y) std::cout << "\ncarla-discovery::" << x << "::" << y << std::endl;
@@ -694,8 +695,21 @@ void do_lv2_check(const char* bundle)
 
         lib_close(lib_handle);
 
-        // test if we support all required features
+        // test if we support all required ports and features
         bool supported = true;
+
+        for (uint32_t j=0; j < rdf_descriptor->PortCount; j++)
+        {
+            const LV2_RDF_Port* const Port = &rdf_descriptor->Ports[j];
+            bool validPort = (LV2_IS_PORT_CONTROL(Port->Type) || LV2_IS_PORT_AUDIO(Port->Type) || LV2_IS_PORT_ATOM_SEQUENCE(Port->Type) || LV2_IS_PORT_CV(Port->Type) || LV2_IS_PORT_EVENT(Port->Type) || LV2_IS_PORT_MIDI_LL(Port->Type));
+
+            if (! (validPort || LV2_IS_PORT_OPTIONAL(Port->Properties)))
+            {
+                supported = false;
+                break;
+            }
+
+        }
 
         for (uint32_t j=0; j < rdf_descriptor->FeatureCount; j++)
         {

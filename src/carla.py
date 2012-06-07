@@ -2062,6 +2062,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.edit_dialog_geometry = None
 
         if (self.pinfo['hints'] & PLUGIN_HAS_GUI):
+            print("Has gui")
             gui_info = CarlaHost.get_gui_info(self.plugin_id)
             self.gui_dialog_type = gui_info['type']
 
@@ -2084,6 +2085,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
                 self.b_gui.setEnabled(False)
 
         else:
+            print("NOT gui")
             self.gui_dialog = None
             self.gui_dialog_type = GUI_NONE
 

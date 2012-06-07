@@ -3,7 +3,7 @@
 QT = core
 
 CONFIG    = link_pkgconfig qt warn_on debug
-DEFINES   = DEBUG VESTIGE_HEADER WANT_FLUIDSYNTH
+DEFINES   = DEBUG WANT_FLUIDSYNTH
 PKGCONFIG = fluidsynth
 
 TARGET   = carla-discovery-qtcreator
@@ -20,8 +20,8 @@ HEADERS = \
     ../../carla-includes/lv2_rdf.h
 
 INCLUDEPATH = .. \
-    ../../carla-includes \
-    ../../carla-includes/vestige
+    ../../carla-backend \
+    ../../carla-includes
 
 LIBS = ../../carla-lilv/carla_lilv.a -ldl
 

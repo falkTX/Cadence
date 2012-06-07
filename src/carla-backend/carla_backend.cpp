@@ -1077,9 +1077,7 @@ void set_gui_data(unsigned short plugin_id, int data, quintptr gui_addr)
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            void*    ptr    = get_pointer(gui_addr);
-            QDialog* dialog = (QDialog*)ptr;
-            plugin->set_gui_data(data, dialog);
+            plugin->set_gui_data(data, (QDialog*)get_pointer(gui_addr));
             return;
         }
     }

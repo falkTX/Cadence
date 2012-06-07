@@ -244,7 +244,7 @@ class CarlaPlugin;
 
 typedef void (*CallbackFunc)(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3);
 
-#ifndef CARLA_NO_EXPORTS
+#ifndef CARLA_BACKEND_NO_EXPORTS
 
 // -----------------------------------------------------
 // Exported symbols (API)
@@ -326,7 +326,7 @@ CARLA_EXPORT double get_latency();
 // End of exported symbols
 // -----------------------------------------------------
 
-#endif // CARLA_NO_EXPORTS
+#endif // CARLA_BACKEND_NO_EXPORTS
 
 CARLA_BACKEND_END_NAMESPACE
 

@@ -164,6 +164,7 @@ public:
     void initBuffer(void* buffer);
     uint32_t getEventCount(void* buffer);
     const CarlaEngineMidiEvent* getEvent(void* buffer, uint32_t index);
+    void writeEvent(void* buffer, uint32_t time, uint8_t* data, uint8_t size);
 };
 
 CARLA_BACKEND_END_NAMESPACE

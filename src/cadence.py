@@ -47,6 +47,8 @@ def get_linux_distro():
 
     if os.path.exists("/etc/lsb-release"):
         distro = getoutput(". /etc/lsb-release && echo $DISTRIB_DESCRIPTION")
+    elif os.path.exists("/etc/arch-release"):
+        distro = "ArchLinux"
     else:
         distro = os.uname()[0]
 

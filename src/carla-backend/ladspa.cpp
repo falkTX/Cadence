@@ -507,9 +507,6 @@ public:
                     step_large = range/10.0;
                 }
 
-                if (LADSPA_IS_HINT_LOGARITHMIC(PortHint.HintDescriptor))
-                    param.data[j].hints |= PARAMETER_IS_LOGARITHMIC;
-
                 if (LADSPA_IS_PORT_INPUT(PortType))
                 {
                     param.data[j].type   = PARAMETER_INPUT;
@@ -544,6 +541,10 @@ public:
                     param.data[j].type = PARAMETER_UNKNOWN;
                     qWarning("WARNING - Got a broken Port (Control, but not input or output)");
                 }
+
+                // extra parameter hints
+                if (LADSPA_IS_HINT_LOGARITHMIC(PortHint.HintDescriptor))
+                    param.data[j].hints |= PARAMETER_IS_LOGARITHMIC;
 
                 // check for scalepoints, require at least 2 to make it useful
                 if (HasPortRDF && rdf_descriptor->Ports[i].ScalePointCount > 1)
@@ -944,6 +945,9 @@ public:
         m_active_before = m_active;
     }
 
+    // -------------------------------------------------------------------
+    // Cleanup
+
     void delete_buffers()
     {
         qDebug("LadspaPlugin::delete_buffers() - start");
@@ -955,6 +959,8 @@ public:
 
         qDebug("LadspaPlugin::delete_buffers() - end");
     }
+
+    // -------------------------------------------------------------------
 
     bool init(const char* filename, const char* label, const LADSPA_RDF_Descriptor* rdf_descriptor_)
     {

@@ -466,9 +466,6 @@ public:
                     step_large = range/10.0;
                 }
 
-                if (LADSPA_IS_HINT_LOGARITHMIC(PortHint.HintDescriptor))
-                    param.data[j].hints |= PARAMETER_IS_LOGARITHMIC;
-
                 if (LADSPA_IS_PORT_INPUT(PortType))
                 {
                     param.data[j].type   = PARAMETER_INPUT;
@@ -515,6 +512,10 @@ public:
                     param.data[j].type = PARAMETER_UNKNOWN;
                     qWarning("WARNING - Got a broken Port (Control, but not input or output)");
                 }
+
+                // extra parameter hints
+                if (LADSPA_IS_HINT_LOGARITHMIC(PortHint.HintDescriptor))
+                    param.data[j].hints |= PARAMETER_IS_LOGARITHMIC;
 
                 param.ranges[j].min = min;
                 param.ranges[j].max = max;
@@ -584,8 +585,6 @@ public:
         aout.count  = aouts;
         param.count = params;
 
-        reload_programs(true);
-
         // plugin checks
         m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
 
@@ -608,6 +607,8 @@ public:
 
         if (aouts >= 2 && aouts%2 == 0)
             m_hints |= PLUGIN_CAN_BALANCE;
+
+        reload_programs(true);
 
         x_client->activate();
 
@@ -1226,6 +1227,9 @@ public:
         m_active_before = m_active;
     }
 
+    // -------------------------------------------------------------------
+    // Cleanup
+
     void delete_buffers()
     {
         qDebug("DssiPlugin::delete_buffers() - start");
@@ -1237,6 +1241,8 @@ public:
 
         qDebug("DssiPlugin::delete_buffers() - end");
     }
+
+    // -------------------------------------------------------------------
 
     bool init(const char* filename, const char* label, const char* gui_filename)
     {
