@@ -1776,7 +1776,7 @@ public:
                     continue;
 
                 const CarlaEngineMidiEvent* min_event;
-                uint32_t time, n_min_events = midi.port_min->getEventCount(min_buffer);
+                uint32_t time, n_min_events = evin.data[i].port->getEventCount(min_buffer);
 
                 for (k=0; k < n_min_events && midi_event_count < MAX_MIDI_EVENTS; k++)
                 {

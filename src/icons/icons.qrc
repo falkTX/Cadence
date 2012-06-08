@@ -76,6 +76,10 @@
             <file>bitmaps/dial_01d.png</file>
             <file>bitmaps/dial_02.png</file>
             <file>bitmaps/dial_02d.png</file>
+            <file>bitmaps/dial_03.png</file>
+            <file>bitmaps/dial_03d.png</file>
+            <file>bitmaps/dial_04.png</file>
+            <file>bitmaps/dial_04d.png</file>
             <file>bitmaps/kbd_h_classic.png</file>
             <file>bitmaps/kbd_h_orange.png</file>
             <file>bitmaps/kbd_v_classic.png</file>
@@ -88,6 +92,7 @@
             <file>bitmaps/led-big_on.png</file>
             <file>bitmaps/led-big_off.png</file>
             <file>bitmaps/carla_about.png</file>
+            <file>bitmaps/carla_knobs1.png</file>
             <file>bitmaps/textures/metal_1-512px.jpg</file>
             <file>bitmaps/textures/metal_2-512px.jpg</file>
             <file>bitmaps/textures/metal_3-512px.jpg</file>

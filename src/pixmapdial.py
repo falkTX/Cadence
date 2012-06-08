@@ -17,19 +17,31 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
-from PyQt4.QtCore import Qt, QPointF, QRectF, QSize
-from PyQt4.QtGui import QColor, QDial, QFontMetrics, QLinearGradient, QPainter, QPixmap
+from PyQt4.QtCore import Qt, QPointF, QRectF, QTimer, QSize, SLOT
+from PyQt4.QtGui import QColor, QConicalGradient, QDial, QFontMetrics, QLinearGradient, QPainter, QPainterPath, QPen, QPixmap
 
 # Widget Class
 class PixmapDial(QDial):
     HORIZONTAL = 0
-    VERTICAL = 1
+    VERTICAL   = 1
+
+    CUSTOM_PAINT_CARLA_WET = 1
+    CUSTOM_PAINT_CARLA_VOL = 2
+    CUSTOM_PAINT_CARLA_L   = 3
+    CUSTOM_PAINT_CARLA_R   = 4
+
+    HOVER_MIN = 0
+    HOVER_MAX = 9
 
     def __init__(self, parent):
         QDial.__init__(self, parent)
 
         self.m_pixmap = QPixmap(":/bitmaps/dial_01d.png")
         self.m_pixmap_n_str = "01"
+        self.m_custom_paint = 0
+
+        self.m_hovered    = False
+        self.m_hover_step = self.HOVER_MIN
 
         if self.m_pixmap.width() > self.m_pixmap.height():
             self.m_orientation = self.HORIZONTAL
@@ -57,6 +69,10 @@ class PixmapDial(QDial):
 
     def getSize(self):
         return self.p_size
+
+    def setCustomPaint(self, paint):
+        self.m_custom_paint = paint
+        self.update()
 
     def setEnabled(self, enabled):
         if self.isEnabled() != enabled:
@@ -126,8 +142,21 @@ class PixmapDial(QDial):
         self.setMinimumSize(self.p_size, self.p_size + self.m_label_height + 5)
         self.setMaximumSize(self.p_size, self.p_size + self.m_label_height + 5)
 
+    def enterEvent(self, event):
+        self.m_hovered = True
+        if self.m_hover_step == self.HOVER_MIN:
+            self.m_hover_step = self.HOVER_MIN + 1
+        QDial.enterEvent(self, event)
+
+    def leaveEvent(self, event):
+        self.m_hovered = False
+        if self.m_hover_step == self.HOVER_MAX:
+            self.m_hover_step = self.HOVER_MAX - 1
+        QDial.leaveEvent(self, event)
+
     def paintEvent(self, event):
         painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing, True)
 
         if self.m_label:
             painter.setPen(self.m_color2)
@@ -145,7 +174,8 @@ class PixmapDial(QDial):
                 return
 
             target = QRectF(0.0, 0.0, self.p_size, self.p_size)
-            per = int((self.p_count - 1) * (current / divider))
+            value  = (current / divider)
+            per    = int((self.p_count - 1) * (current / divider))
 
             if self.m_orientation == self.HORIZONTAL:
                 xpos = self.p_size * per
@@ -155,12 +185,73 @@ class PixmapDial(QDial):
                 ypos = self.p_size * per
 
             source = QRectF(xpos, ypos, self.p_size, self.p_size)
+            painter.drawPixmap(target, self.m_pixmap, source)
+
+            if self.m_custom_paint in (self.CUSTOM_PAINT_CARLA_WET, self.CUSTOM_PAINT_CARLA_VOL):
+                # knob color
+                colorGreen = QColor(0x5D + self.m_hover_step*6, 0xE7 + self.m_hover_step*1, 0x3D + self.m_hover_step*5)
+                colorBlue  = QColor(0x52 + self.m_hover_step*8, 0xEE + self.m_hover_step*1, 0xF8 + self.m_hover_step/2)
+
+                # draw arc
+                startAngle = 225*16
+                spanAngle  = -270.0*16*value
+
+                if self.m_custom_paint == self.CUSTOM_PAINT_CARLA_WET:
+                    #colorWet = colorGreen if value < 0.5 else colorBlue
+
+                    gradient = QConicalGradient(15.5, 15.5, -45)
+                    gradient.setColorAt(0.0,   colorBlue)
+                    gradient.setColorAt(0.125, colorBlue)
+                    gradient.setColorAt(0.625, colorGreen)
+                    gradient.setColorAt(0.75,  colorGreen)
+                    gradient.setColorAt(0.76,  colorGreen)
+                    gradient.setColorAt(1.0,   colorGreen)
+                    painter.setBrush(gradient)
+                    painter.setPen(QPen(gradient, 3))
+                    #painter.drawRect(QRectF(0, 0, 31, 31))
+                else:
+                    painter.setBrush(colorBlue)
+                    painter.setPen(QPen(colorBlue, 3))
+
+                painter.drawArc(3.0, 3.0, 25.0, 25.0, startAngle, spanAngle)
+
+            elif self.m_custom_paint in (self.CUSTOM_PAINT_CARLA_L, self.CUSTOM_PAINT_CARLA_R):
+                # knob color
+                color = QColor(0xAD + self.m_hover_step*5, 0xD5 + self.m_hover_step*4, 0x4B + self.m_hover_step*5)
+
+                # draw small circle
+                ballPath = QPainterPath()
+                ballRect = QRectF(6.0, 6.0, 11.0, 12.0)
+                ballPath.addEllipse(ballRect)
+                #painter.drawRect(ballRect)
+                ballValue = (0.375 + 0.75*value) % 1.0
+                ballPoint = ballPath.pointAtPercent(ballValue)
+
+                painter.setBrush(color)
+                painter.setPen(QPen(color, 0))
+                painter.drawEllipse(QRectF(ballPoint.x(), ballPoint.y(), 3.0, 3.0))
+
+                # draw arc
+                if self.m_custom_paint == self.CUSTOM_PAINT_CARLA_L:
+                    startAngle = 225*16
+                    spanAngle  = -270.0*16*value
+                elif self.m_custom_paint == self.CUSTOM_PAINT_CARLA_R:
+                    startAngle = 315.0*16
+                    spanAngle  = 270.0*16*(1.0-value)
+                else:
+                    return
+
+                painter.setPen(QPen(color, 2))
+                painter.drawArc(3.0, 3.0, 20.0, 20.0, startAngle, spanAngle)
+
+            if self.HOVER_MIN < self.m_hover_step < self.HOVER_MAX:
+                self.m_hover_step += 1 if self.m_hovered else -1
+                QTimer.singleShot(20, self, SLOT("update()"))
 
         else:
             target = QRectF(0.0, 0.0, self.p_size, self.p_size)
             source = target
-
-        painter.drawPixmap(target, self.m_pixmap, source)
+            painter.drawPixmap(target, self.m_pixmap, source)
 
     def resizeEvent(self, event):
         self.updateSizes()

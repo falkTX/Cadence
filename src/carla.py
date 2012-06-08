@@ -1969,15 +1969,20 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.led_audio_out.setColor(self.led_audio_out.BLUE)
         self.led_audio_out.setEnabled(False)
 
-        self.dial_drywet.setPixmap(1)
-        self.dial_vol.setPixmap(1)
-        self.dial_b_left.setPixmap(1)
-        self.dial_b_right.setPixmap(1)
+        self.dial_drywet.setPixmap(3)
+        self.dial_vol.setPixmap(3)
+        self.dial_b_left.setPixmap(4)
+        self.dial_b_right.setPixmap(4)
 
         #self.dial_drywet.setLabel("Wet")
         #self.dial_vol.setLabel("Vol")
         #self.dial_b_left.setLabel("L")
         #self.dial_b_right.setLabel("R")
+
+        self.dial_drywet.setCustomPaint(self.dial_b_left.CUSTOM_PAINT_CARLA_WET)
+        self.dial_vol.setCustomPaint(self.dial_b_right.CUSTOM_PAINT_CARLA_VOL)
+        self.dial_b_left.setCustomPaint(self.dial_b_left.CUSTOM_PAINT_CARLA_L)
+        self.dial_b_right.setCustomPaint(self.dial_b_right.CUSTOM_PAINT_CARLA_R)
 
         self.peak_in.setColor(self.peak_in.GREEN)
         self.peak_in.setOrientation(self.peak_in.HORIZONTAL)
@@ -1994,10 +1999,10 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.peaks_in  = int(audio_count['ins'])
         self.peaks_out = int(audio_count['outs'])
 
-        if (self.peaks_in > 2):
+        if self.peaks_in > 2:
             self.peaks_in = 2
 
-        if (self.peaks_out > 2):
+        if self.peaks_out > 2:
             self.peaks_out = 2
 
         self.peak_in.setChannels(self.peaks_in)
@@ -2061,8 +2066,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.edit_dialog.hide()
         self.edit_dialog_geometry = None
 
-        if (self.pinfo['hints'] & PLUGIN_HAS_GUI):
-            print("Has gui")
+        if self.pinfo['hints'] & PLUGIN_HAS_GUI:
             gui_info = CarlaHost.get_gui_info(self.plugin_id)
             self.gui_dialog_type = gui_info['type']
 
@@ -2076,7 +2080,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
                 # TODO - display
                 CarlaHost.set_gui_data(self.plugin_id, 0, unwrapinstance(self.gui_dialog))
 
-            elif (self.gui_dialog_type in (GUI_EXTERNAL_OSC, GUI_EXTERNAL_LV2)):
+            elif self.gui_dialog_type in (GUI_EXTERNAL_OSC, GUI_EXTERNAL_LV2):
                 self.gui_dialog = None
 
             else:
@@ -2085,7 +2089,6 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
                 self.b_gui.setEnabled(False)
 
         else:
-            print("NOT gui")
             self.gui_dialog = None
             self.gui_dialog_type = GUI_NONE
 
@@ -2108,32 +2111,32 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.check_gui_stuff()
 
     def set_active(self, active, gui_send=False, callback_send=True):
-        if (gui_send): self.led_enable.setChecked(active)
-        if (callback_send): CarlaHost.set_active(self.plugin_id, active)
+        if gui_send: self.led_enable.setChecked(active)
+        if callback_send: CarlaHost.set_active(self.plugin_id, active)
 
     def set_drywet(self, value, gui_send=False, callback_send=True):
-        if (gui_send): self.dial_drywet.setValue(value)
-        if (callback_send): CarlaHost.set_drywet(self.plugin_id, float(value) / 1000)
+        if gui_send: self.dial_drywet.setValue(value)
+        if callback_send: CarlaHost.set_drywet(self.plugin_id, float(value) / 1000)
 
         message = self.tr("Output dry/wet (%s%%)" % (value / 10))
         self.dial_drywet.setStatusTip(message)
         gui.statusBar().showMessage(message)
 
     def set_volume(self, value, gui_send=False, callback_send=True):
-        if (gui_send): self.dial_vol.setValue(value)
-        if (callback_send): CarlaHost.set_volume(self.plugin_id, float(value) / 1000)
+        if gui_send: self.dial_vol.setValue(value)
+        if callback_send: CarlaHost.set_volume(self.plugin_id, float(value) / 1000)
 
         message = self.tr("Output volume (%s%%)" % (value / 10))
         self.dial_vol.setStatusTip(message)
         gui.statusBar().showMessage(message)
 
     def set_balance_left(self, value, gui_send=False, callback_send=True):
-        if (gui_send): self.dial_b_left.setValue(value)
-        if (callback_send): CarlaHost.set_balance_left(self.plugin_id, float(value) / 1000)
+        if gui_send: self.dial_b_left.setValue(value)
+        if callback_send: CarlaHost.set_balance_left(self.plugin_id, float(value) / 1000)
 
-        if (value == 0):
+        if value == 0:
             message = self.tr("Left Panning (Center)")
-        elif (value < 0):
+        elif value < 0:
             message = self.tr("Left Panning (%s%% Left)" % (-value / 10))
         else:
             message = self.tr("Left Panning (%s%% Right)" % (value / 10))
@@ -2142,13 +2145,13 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         gui.statusBar().showMessage(message)
 
     def set_balance_right(self, value, gui_send=False, callback_send=True):
-        if (gui_send): self.dial_b_right.setValue(value)
-        if (callback_send): CarlaHost.set_balance_right(self.plugin_id, float(value) / 1000)
+        if gui_send: self.dial_b_right.setValue(value)
+        if callback_send: CarlaHost.set_balance_right(self.plugin_id, float(value) / 1000)
 
-        if (value == 0):
+        if value == 0:
             message = self.tr("Right Panning (Center)")
-        elif (value < 0):
-            message = self.tr("Right Panning (%s%% Left" % (-value / 10))
+        elif value < 0:
+            message = self.tr("Right Panning (%s%% Left)" % (-value / 10))
         else:
             message = self.tr("Right Panning (%s%% Right)" % (value / 10))
 
@@ -2215,7 +2218,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             border-bottom-left-radius: 3px;
             border-bottom-right-radius: 3px;
         }
-        QPushButton#b_gui:hover, QPushButton#b_edit:hover, QPushButton#b_edit:down, QPushButton#b_remove:hover {
+        QPushButton#b_gui:hover, QPushButton#b_edit:hover, QPushButton#b_remove:hover {
             background-color: rgb(%i, %i, %i);
             border: 1px solid rgb(%i, %i, %i);
             border-radius: 3px;
@@ -2226,6 +2229,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             border-radius: 4px;
         }
         QFrame#frame_controls {
+            /*background-image: url(:/bitmaps/carla_knobs1.png);*/
             background-color: rgb(35, 35, 35);
             border: 1px solid rgb(35, 35, 35);
             border-radius: 4px;
