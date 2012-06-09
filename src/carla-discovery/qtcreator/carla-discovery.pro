@@ -3,8 +3,8 @@
 QT = core
 
 CONFIG    = link_pkgconfig qt warn_on debug
-DEFINES   = DEBUG WANT_FLUIDSYNTH
-PKGCONFIG = fluidsynth
+DEFINES   = DEBUG WANT_FLUIDSYNTH WANT_LINUXSAMPLER
+PKGCONFIG = fluidsynth linuxsampler
 
 TARGET   = carla-discovery-qtcreator
 TEMPLATE = app

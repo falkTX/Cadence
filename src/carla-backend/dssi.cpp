@@ -592,8 +592,8 @@ public:
         if (midi.port_min && aout.count > 0)
             m_hints |= PLUGIN_IS_SYNTH;
 
-#if 0
-        if (carla_options.use_dssi_chunks && QString(m_filename).endsWith("dssi-vst.so", Qt::CaseInsensitive))
+#if 1
+        if (/*carla_options.use_dssi_chunks &&*/ QString(m_filename).endsWith("dssi-vst.so", Qt::CaseInsensitive))
         {
             if (descriptor->get_custom_data && descriptor->set_custom_data)
                 m_hints |= PLUGIN_USES_CHUNKS;

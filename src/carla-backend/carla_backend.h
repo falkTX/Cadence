@@ -77,7 +77,9 @@ enum PluginType {
     PLUGIN_DSSI   = 2,
     PLUGIN_LV2    = 3,
     PLUGIN_VST    = 4,
-    PLUGIN_SF2    = 5
+    PLUGIN_GIG    = 5,
+    PLUGIN_SF2    = 6,
+    PLUGIN_SFZ    = 7
 };
 
 enum PluginCategory {

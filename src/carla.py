@@ -2229,7 +2229,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             border-radius: 4px;
         }
         QFrame#frame_controls {
-            /*background-image: url(:/bitmaps/carla_knobs1.png);*/
+            background-image: url(:/bitmaps/carla_knobs1.png);
             background-color: rgb(35, 35, 35);
             border: 1px solid rgb(35, 35, 35);
             border-radius: 4px;

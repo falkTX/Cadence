@@ -39,7 +39,7 @@ volatile double aouts_peak[MAX_PLUGINS*2] = { 0.0 };
 carla_options_t carla_options = {
     /* global_jack_client */ true,
     /* prefer_ui_bridges  */ true,
-    /* proccess_hq        */ true,
+    /* proccess_hq        */ false,
     /* bridge_unix32      */ nullptr,
     /* bridge_unix64      */ nullptr,
     /* bridge_win32       */ nullptr,

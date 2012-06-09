@@ -37,6 +37,7 @@ CARLA_BACKEND_START_NAMESPACE
 
 // static max values
 const unsigned int MAX_EVENT_BUFFER = 8192; // 0x2000
+//const unsigned int MAX_EVENT_BUFFER = (sizeof(LV2_Atom_Event) + 4) * MAX_MIDI_EVENTS;
 
 // extra plugin hints
 const unsigned int PLUGIN_HAS_EXTENSION_DYNPARAM = 0x0100;
@@ -3131,43 +3132,7 @@ public:
     static uint32_t carla_lv2_uri_to_id(LV2_URI_Map_Callback_Data data, const char* map, const char* uri)
     {
         qDebug("Lv2Plugin::carla_lv2_uri_to_id(%p, %s, %s)", data, map, uri);
-
-        // Atom types
-        if (strcmp(uri, LV2_ATOM__Chunk) == 0)
-            return CARLA_URI_MAP_ID_ATOM_CHUNK;
-        else if (strcmp(uri, LV2_ATOM__Path) == 0)
-            return CARLA_URI_MAP_ID_ATOM_PATH;
-        else if (strcmp(uri, LV2_ATOM__Sequence) == 0)
-            return CARLA_URI_MAP_ID_ATOM_SEQUENCE;
-        else if (strcmp(uri, LV2_ATOM__String) == 0)
-            return CARLA_URI_MAP_ID_ATOM_STRING;
-        else if (strcmp(uri, LV2_ATOM__atomTransfer) == 0)
-            return CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM;
-        else if (strcmp(uri, LV2_ATOM__eventTransfer) == 0)
-            return CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT;
-
-        // Log types
-        else if (strcmp(uri, LV2_LOG__Error) == 0)
-            return CARLA_URI_MAP_ID_LOG_ERROR;
-        else if (strcmp(uri, LV2_LOG__Note) == 0)
-            return CARLA_URI_MAP_ID_LOG_NOTE;
-        else if (strcmp(uri, LV2_LOG__Trace) == 0)
-            return CARLA_URI_MAP_ID_LOG_TRACE;
-        else if (strcmp(uri, LV2_LOG__Warning) == 0)
-            return CARLA_URI_MAP_ID_LOG_WARNING;
-
-        // Others
-        else if (strcmp(uri, LV2_MIDI__MidiEvent) == 0)
-            return CARLA_URI_MAP_ID_MIDI_EVENT;
-
-        // Custom types
-        if (data)
-        {
-            Lv2Plugin* plugin = (Lv2Plugin*)data;
-            return plugin->get_custom_uri_id(uri);
-        }
-
-        return CARLA_URI_MAP_ID_NULL;
+        return carla_lv2_urid_map(data, uri);
     }
 
     // ----------------- URID Feature ----------------------------------------------------
@@ -3178,29 +3143,29 @@ public:
         // Atom types
         if (strcmp(uri, LV2_ATOM__Chunk) == 0)
             return CARLA_URI_MAP_ID_ATOM_CHUNK;
-        else if (strcmp(uri, LV2_ATOM__Path) == 0)
+        if (strcmp(uri, LV2_ATOM__Path) == 0)
             return CARLA_URI_MAP_ID_ATOM_PATH;
-        else if (strcmp(uri, LV2_ATOM__Sequence) == 0)
+        if (strcmp(uri, LV2_ATOM__Sequence) == 0)
             return CARLA_URI_MAP_ID_ATOM_SEQUENCE;
-        else if (strcmp(uri, LV2_ATOM__String) == 0)
+        if (strcmp(uri, LV2_ATOM__String) == 0)
             return CARLA_URI_MAP_ID_ATOM_STRING;
-        else if (strcmp(uri, LV2_ATOM__atomTransfer) == 0)
+        if (strcmp(uri, LV2_ATOM__atomTransfer) == 0)
             return CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM;
-        else if (strcmp(uri, LV2_ATOM__eventTransfer) == 0)
+        if (strcmp(uri, LV2_ATOM__eventTransfer) == 0)
             return CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT;
 
         // Log types
-        else if (strcmp(uri, LV2_LOG__Error) == 0)
+        if (strcmp(uri, LV2_LOG__Error) == 0)
             return CARLA_URI_MAP_ID_LOG_ERROR;
-        else if (strcmp(uri, LV2_LOG__Note) == 0)
+        if (strcmp(uri, LV2_LOG__Note) == 0)
             return CARLA_URI_MAP_ID_LOG_NOTE;
-        else if (strcmp(uri, LV2_LOG__Trace) == 0)
+        if (strcmp(uri, LV2_LOG__Trace) == 0)
             return CARLA_URI_MAP_ID_LOG_TRACE;
-        else if (strcmp(uri, LV2_LOG__Warning) == 0)
+        if (strcmp(uri, LV2_LOG__Warning) == 0)
             return CARLA_URI_MAP_ID_LOG_WARNING;
 
         // Others
-        else if (strcmp(uri, LV2_MIDI__MidiEvent) == 0)
+        if (strcmp(uri, LV2_MIDI__MidiEvent) == 0)
             return CARLA_URI_MAP_ID_MIDI_EVENT;
 
         // Custom types
@@ -3220,29 +3185,29 @@ public:
         // Atom types
         if (urid == CARLA_URI_MAP_ID_ATOM_CHUNK)
             return LV2_ATOM__Chunk;
-        else if (urid == CARLA_URI_MAP_ID_ATOM_PATH)
+        if (urid == CARLA_URI_MAP_ID_ATOM_PATH)
             return LV2_ATOM__Path;
-        else if (urid == CARLA_URI_MAP_ID_ATOM_SEQUENCE)
+        if (urid == CARLA_URI_MAP_ID_ATOM_SEQUENCE)
             return LV2_ATOM__Sequence;
-        else if (urid == CARLA_URI_MAP_ID_ATOM_STRING)
+        if (urid == CARLA_URI_MAP_ID_ATOM_STRING)
             return LV2_ATOM__String;
-        else if (urid == CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM)
+        if (urid == CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM)
             return LV2_ATOM__atomTransfer;
-        else if (urid == CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT)
+        if (urid == CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT)
             return LV2_ATOM__eventTransfer;
 
         // Log types
-        else if (urid == CARLA_URI_MAP_ID_LOG_ERROR)
+        if (urid == CARLA_URI_MAP_ID_LOG_ERROR)
             return LV2_LOG__Error;
-        else if (urid == CARLA_URI_MAP_ID_LOG_NOTE)
+        if (urid == CARLA_URI_MAP_ID_LOG_NOTE)
             return LV2_LOG__Note;
-        else if (urid == CARLA_URI_MAP_ID_LOG_TRACE)
+        if (urid == CARLA_URI_MAP_ID_LOG_TRACE)
             return LV2_LOG__Trace;
-        else if (urid == CARLA_URI_MAP_ID_LOG_WARNING)
+        if (urid == CARLA_URI_MAP_ID_LOG_WARNING)
             return LV2_LOG__Warning;
 
         // Others
-        else if (urid == CARLA_URI_MAP_ID_MIDI_EVENT)
+        if (urid == CARLA_URI_MAP_ID_MIDI_EVENT)
             return LV2_MIDI__MidiEvent;
 
         // Custom types

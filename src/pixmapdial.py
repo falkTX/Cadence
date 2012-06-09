@@ -175,18 +175,8 @@ class PixmapDial(QDial):
 
             target = QRectF(0.0, 0.0, self.p_size, self.p_size)
             value  = (current / divider)
-            per    = int((self.p_count - 1) * (current / divider))
 
-            if self.m_orientation == self.HORIZONTAL:
-                xpos = self.p_size * per
-                ypos = 0.0
-            else:
-                xpos = 0.0
-                ypos = self.p_size * per
-
-            source = QRectF(xpos, ypos, self.p_size, self.p_size)
-            painter.drawPixmap(target, self.m_pixmap, source)
-
+            # Custom knobs (Dry/Wet and Volume)
             if self.m_custom_paint in (self.CUSTOM_PAINT_CARLA_WET, self.CUSTOM_PAINT_CARLA_VOL):
                 # knob color
                 colorGreen = QColor(0x5D + self.m_hover_step*6, 0xE7 + self.m_hover_step*1, 0x3D + self.m_hover_step*5)
@@ -213,8 +203,9 @@ class PixmapDial(QDial):
                     painter.setBrush(colorBlue)
                     painter.setPen(QPen(colorBlue, 3))
 
-                painter.drawArc(3.0, 3.0, 25.0, 25.0, startAngle, spanAngle)
+                painter.drawArc(3.0, 3.0, 26.0, 26.0, startAngle, spanAngle)
 
+            # Custom knobs (L and R)
             elif self.m_custom_paint in (self.CUSTOM_PAINT_CARLA_L, self.CUSTOM_PAINT_CARLA_R):
                 # knob color
                 color = QColor(0xAD + self.m_hover_step*5, 0xD5 + self.m_hover_step*4, 0x4B + self.m_hover_step*5)
@@ -229,7 +220,7 @@ class PixmapDial(QDial):
 
                 painter.setBrush(color)
                 painter.setPen(QPen(color, 0))
-                painter.drawEllipse(QRectF(ballPoint.x(), ballPoint.y(), 3.0, 3.0))
+                painter.drawEllipse(QRectF(ballPoint.x(), ballPoint.y(), 2.0, 2.0))
 
                 # draw arc
                 if self.m_custom_paint == self.CUSTOM_PAINT_CARLA_L:
@@ -242,7 +233,21 @@ class PixmapDial(QDial):
                     return
 
                 painter.setPen(QPen(color, 2))
-                painter.drawArc(3.0, 3.0, 20.0, 20.0, startAngle, spanAngle)
+                painter.drawArc(3.0, 4.0, 20.0, 20.0, startAngle, spanAngle)
+
+            # Regular knobs
+            else:
+                per = int((self.p_count - 1) * (current / divider))
+
+                if self.m_orientation == self.HORIZONTAL:
+                    xpos = self.p_size * per
+                    ypos = 0.0
+                else:
+                    xpos = 0.0
+                    ypos = self.p_size * per
+
+                source = QRectF(xpos, ypos, self.p_size, self.p_size)
+                painter.drawPixmap(target, self.m_pixmap, source)
 
             if self.HOVER_MIN < self.m_hover_step < self.HOVER_MAX:
                 self.m_hover_step += 1 if self.m_hovered else -1

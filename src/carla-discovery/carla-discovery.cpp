@@ -25,12 +25,19 @@
 #include <cstring>
 #include <iostream>
 
+#include <QtCore/QFileInfo>
+#include <QtCore/QUrl>
+
 #include "ladspa/ladspa.h"
 #include "dssi/dssi.h"
 #include "lv2_rdf.h"
 
 #ifdef WANT_FLUIDSYNTH
 #include <fluidsynth.h>
+#endif
+
+#ifdef WANT_LINUXSAMPLER
+#include "linuxsampler/EngineFactory.h"
 #endif
 
 #define CARLA_BACKEND_NO_EXPORTS
@@ -175,7 +182,7 @@ intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_
 
 // ------------------------------ Plugin Checks -----------------------------
 
-void do_ladspa_check(void* lib_handle)
+void do_ladspa_check(void* lib_handle, bool init)
 {
     LADSPA_Descriptor_Function descfn = (LADSPA_Descriptor_Function)lib_symbol(lib_handle, "ladspa_descriptor");
 
@@ -190,42 +197,53 @@ void do_ladspa_check(void* lib_handle)
 
     while ((descriptor = descfn(i++)))
     {
-        LADSPA_Handle handle = descriptor->instantiate(descriptor, sampleRate);
+        LADSPA_Handle handle = nullptr;
 
-        if (handle)
+        if (init)
         {
-            int hints = 0;
-            int audio_ins = 0;
-            int audio_outs = 0;
-            int audio_total = 0;
-            int parameters_ins = 0;
-            int parameters_outs = 0;
-            int parameters_total = 0;
+            handle = descriptor->instantiate(descriptor, sampleRate);
 
-            for (unsigned long j=0; j < descriptor->PortCount; j++)
+            if (! handle)
             {
-                const LADSPA_PortDescriptor PortDescriptor = descriptor->PortDescriptors[j];
-                if (LADSPA_IS_PORT_AUDIO(PortDescriptor))
-                {
-                    if (LADSPA_IS_PORT_INPUT(PortDescriptor))
-                        audio_ins += 1;
-                    else if (LADSPA_IS_PORT_OUTPUT(PortDescriptor))
-                        audio_outs += 1;
-                    audio_total += 1;
-                }
-                else if (LADSPA_IS_PORT_CONTROL(PortDescriptor))
-                {
-                    if (LADSPA_IS_PORT_INPUT(PortDescriptor))
-                        parameters_ins += 1;
-                    else if (LADSPA_IS_PORT_OUTPUT(PortDescriptor))
-                    {
-                        if (strcmp(descriptor->PortNames[j], "latency") != 0 && strcmp(descriptor->PortNames[j], "_latency") != 0)
-                            parameters_outs += 1;
-                    }
-                    parameters_total += 1;
-                }
+                DISCOVERY_OUT("error", "Failed to init LADSPA plugin");
+                continue;
             }
+        }
 
+        int hints = 0;
+        int audio_ins = 0;
+        int audio_outs = 0;
+        int audio_total = 0;
+        int parameters_ins = 0;
+        int parameters_outs = 0;
+        int parameters_total = 0;
+
+        for (unsigned long j=0; j < descriptor->PortCount; j++)
+        {
+            const LADSPA_PortDescriptor PortDescriptor = descriptor->PortDescriptors[j];
+            if (LADSPA_IS_PORT_AUDIO(PortDescriptor))
+            {
+                if (LADSPA_IS_PORT_INPUT(PortDescriptor))
+                    audio_ins += 1;
+                else if (LADSPA_IS_PORT_OUTPUT(PortDescriptor))
+                    audio_outs += 1;
+                audio_total += 1;
+            }
+            else if (LADSPA_IS_PORT_CONTROL(PortDescriptor))
+            {
+                if (LADSPA_IS_PORT_INPUT(PortDescriptor))
+                    parameters_ins += 1;
+                else if (LADSPA_IS_PORT_OUTPUT(PortDescriptor))
+                {
+                    if (strcmp(descriptor->PortNames[j], "latency") != 0 && strcmp(descriptor->PortNames[j], "_latency") != 0)
+                        parameters_outs += 1;
+                }
+                parameters_total += 1;
+            }
+        }
+
+        if (init)
+        {
             // -----------------------------------------------------------------------
             // start crash-free plugin test
 
@@ -365,33 +383,31 @@ void do_ladspa_check(void* lib_handle)
 
             // end crash-free plugin test
             // -----------------------------------------------------------------------
-
-            DISCOVERY_OUT("init", "-----------");
-            DISCOVERY_OUT("name", descriptor->Name);
-            DISCOVERY_OUT("label", descriptor->Label);
-            DISCOVERY_OUT("maker", descriptor->Maker);
-            DISCOVERY_OUT("copyright", descriptor->Copyright);
-            DISCOVERY_OUT("unique_id", descriptor->UniqueID);
-            DISCOVERY_OUT("hints", hints);
-            DISCOVERY_OUT("audio.ins", audio_ins);
-            DISCOVERY_OUT("audio.outs", audio_outs);
-            DISCOVERY_OUT("audio.total", audio_total);
-            DISCOVERY_OUT("parameters.ins", parameters_ins);
-            DISCOVERY_OUT("parameters.outs", parameters_outs);
-            DISCOVERY_OUT("parameters.total", parameters_total);
-
-            if (descriptor->cleanup)
-                descriptor->cleanup(handle);
-
-            DISCOVERY_OUT("build", BINARY_NATIVE);
-            DISCOVERY_OUT("end", "------------");
         }
-        else
-            DISCOVERY_OUT("error", "Failed to init LADSPA plugin");
+
+        DISCOVERY_OUT("init", "-----------");
+        DISCOVERY_OUT("name", descriptor->Name);
+        DISCOVERY_OUT("label", descriptor->Label);
+        DISCOVERY_OUT("maker", descriptor->Maker);
+        DISCOVERY_OUT("copyright", descriptor->Copyright);
+        DISCOVERY_OUT("unique_id", descriptor->UniqueID);
+        DISCOVERY_OUT("hints", hints);
+        DISCOVERY_OUT("audio.ins", audio_ins);
+        DISCOVERY_OUT("audio.outs", audio_outs);
+        DISCOVERY_OUT("audio.total", audio_total);
+        DISCOVERY_OUT("parameters.ins", parameters_ins);
+        DISCOVERY_OUT("parameters.outs", parameters_outs);
+        DISCOVERY_OUT("parameters.total", parameters_total);
+
+        if (init && descriptor->cleanup)
+            descriptor->cleanup(handle);
+
+        DISCOVERY_OUT("build", BINARY_NATIVE);
+        DISCOVERY_OUT("end", "------------");
     }
 }
 
-void do_dssi_check(void* lib_handle)
+void do_dssi_check(void* lib_handle, bool init)
 {
     DSSI_Descriptor_Function descfn = (DSSI_Descriptor_Function)lib_symbol(lib_handle, "dssi_descriptor");
 
@@ -407,51 +423,62 @@ void do_dssi_check(void* lib_handle)
     while ((descriptor = descfn(i++)))
     {
         const LADSPA_Descriptor* ldescriptor = descriptor->LADSPA_Plugin;
-        LADSPA_Handle handle = ldescriptor->instantiate(ldescriptor, sampleRate);
+        LADSPA_Handle handle = nullptr;
 
-        if (handle)
+        if (init)
         {
-            int hints = 0;
-            int audio_ins = 0;
-            int audio_outs = 0;
-            int audio_total = 0;
-            int midi_ins = 0;
-            int midi_total = 0;
-            int parameters_ins = 0;
-            int parameters_outs = 0;
-            int parameters_total = 0;
-            int programs_total = 0;
+            handle = ldescriptor->instantiate(ldescriptor, sampleRate);
 
-            for (unsigned long j=0; j < ldescriptor->PortCount; j++)
+            if (! handle)
             {
-                const LADSPA_PortDescriptor PortDescriptor = ldescriptor->PortDescriptors[j];
-                if (LADSPA_IS_PORT_AUDIO(PortDescriptor))
-                {
-                    if (LADSPA_IS_PORT_INPUT(PortDescriptor))
-                        audio_ins += 1;
-                    else if (LADSPA_IS_PORT_OUTPUT(PortDescriptor))
-                        audio_outs += 1;
-                    audio_total += 1;
-                }
-                else if (LADSPA_IS_PORT_CONTROL(PortDescriptor))
-                {
-                    if (LADSPA_IS_PORT_INPUT(PortDescriptor))
-                        parameters_ins += 1;
-                    else if (LADSPA_IS_PORT_OUTPUT(PortDescriptor))
-                    {
-                        if (strcmp(ldescriptor->PortNames[j], "latency") != 0 && strcmp(ldescriptor->PortNames[j], "_latency") != 0)
-                            parameters_outs += 1;
-                    }
-                    parameters_total += 1;
-                }
+                DISCOVERY_OUT("error", "Failed to init DSSI plugin");
+                continue;
             }
+        }
 
-            if (descriptor->run_synth || descriptor->run_multiple_synths)
-                midi_ins = midi_total = 1;
+        int hints = 0;
+        int audio_ins = 0;
+        int audio_outs = 0;
+        int audio_total = 0;
+        int midi_ins = 0;
+        int midi_total = 0;
+        int parameters_ins = 0;
+        int parameters_outs = 0;
+        int parameters_total = 0;
+        int programs_total = 0;
 
-            if (midi_ins > 0 && audio_outs > 0)
-                hints |= PLUGIN_IS_SYNTH;
+        for (unsigned long j=0; j < ldescriptor->PortCount; j++)
+        {
+            const LADSPA_PortDescriptor PortDescriptor = ldescriptor->PortDescriptors[j];
+            if (LADSPA_IS_PORT_AUDIO(PortDescriptor))
+            {
+                if (LADSPA_IS_PORT_INPUT(PortDescriptor))
+                    audio_ins += 1;
+                else if (LADSPA_IS_PORT_OUTPUT(PortDescriptor))
+                    audio_outs += 1;
+                audio_total += 1;
+            }
+            else if (LADSPA_IS_PORT_CONTROL(PortDescriptor))
+            {
+                if (LADSPA_IS_PORT_INPUT(PortDescriptor))
+                    parameters_ins += 1;
+                else if (LADSPA_IS_PORT_OUTPUT(PortDescriptor))
+                {
+                    if (strcmp(ldescriptor->PortNames[j], "latency") != 0 && strcmp(ldescriptor->PortNames[j], "_latency") != 0)
+                        parameters_outs += 1;
+                }
+                parameters_total += 1;
+            }
+        }
 
+        if (descriptor->run_synth || descriptor->run_multiple_synths)
+            midi_ins = midi_total = 1;
+
+        if (midi_ins > 0 && audio_outs > 0)
+            hints |= PLUGIN_IS_SYNTH;
+
+        if (init)
+        {
             if (descriptor->get_program)
             {
                 while ((descriptor->get_program(handle, programs_total++)))
@@ -622,46 +649,37 @@ void do_dssi_check(void* lib_handle)
 
             // end crash-free plugin test
             // -----------------------------------------------------------------------
-
-            DISCOVERY_OUT("init", "-----------");
-            DISCOVERY_OUT("name", ldescriptor->Name);
-            DISCOVERY_OUT("label", ldescriptor->Label);
-            DISCOVERY_OUT("maker", ldescriptor->Maker);
-            DISCOVERY_OUT("copyright", ldescriptor->Copyright);
-            DISCOVERY_OUT("unique_id", ldescriptor->UniqueID);
-            DISCOVERY_OUT("hints", hints);
-            DISCOVERY_OUT("audio.ins", audio_ins);
-            DISCOVERY_OUT("audio.outs", audio_outs);
-            DISCOVERY_OUT("audio.total", audio_total);
-            DISCOVERY_OUT("midi.ins", midi_ins);
-            DISCOVERY_OUT("midi.total", midi_total);
-            DISCOVERY_OUT("parameters.ins", parameters_ins);
-            DISCOVERY_OUT("parameters.outs", parameters_outs);
-            DISCOVERY_OUT("parameters.total", parameters_total);
-            DISCOVERY_OUT("programs.total", programs_total);
-
-            if (ldescriptor->cleanup)
-                ldescriptor->cleanup(handle);
-
-            DISCOVERY_OUT("build", BINARY_NATIVE);
-            DISCOVERY_OUT("end", "------------");
         }
-        else
-            DISCOVERY_OUT("error", "Failed to init DSSI plugin");
+
+        DISCOVERY_OUT("init", "-----------");
+        DISCOVERY_OUT("name", ldescriptor->Name);
+        DISCOVERY_OUT("label", ldescriptor->Label);
+        DISCOVERY_OUT("maker", ldescriptor->Maker);
+        DISCOVERY_OUT("copyright", ldescriptor->Copyright);
+        DISCOVERY_OUT("unique_id", ldescriptor->UniqueID);
+        DISCOVERY_OUT("hints", hints);
+        DISCOVERY_OUT("audio.ins", audio_ins);
+        DISCOVERY_OUT("audio.outs", audio_outs);
+        DISCOVERY_OUT("audio.total", audio_total);
+        DISCOVERY_OUT("midi.ins", midi_ins);
+        DISCOVERY_OUT("midi.total", midi_total);
+        DISCOVERY_OUT("parameters.ins", parameters_ins);
+        DISCOVERY_OUT("parameters.outs", parameters_outs);
+        DISCOVERY_OUT("parameters.total", parameters_total);
+        DISCOVERY_OUT("programs.total", programs_total);
+
+        if (init && ldescriptor->cleanup)
+            ldescriptor->cleanup(handle);
+
+        DISCOVERY_OUT("build", BINARY_NATIVE);
+        DISCOVERY_OUT("end", "------------");
     }
 }
 
 void do_lv2_check(const char* bundle)
 {
     // Convert bundle filename to URI
-    QString qBundle;
-    qBundle += "file://";
-    qBundle += bundle;
-#ifdef Q_OS_WIN
-    qBundle += "\\";
-#else
-    qBundle += "/";
-#endif
+    QString qBundle(QUrl::fromLocalFile(bundle).toString());
 
     // Load bundle
     Lilv::Node Bundle(Lv2World.new_uri(qBundle.toUtf8().constData()));
@@ -985,7 +1003,7 @@ void do_vst_check(void* lib_handle)
         DISCOVERY_OUT("error", "Failed to init VST plugin");
 }
 
-void do_sf2_check(const char* filename)
+void do_fluidsynth_check(const char* filename)
 {
 #ifdef WANT_FLUIDSYNTH
     if (fluid_is_soundfont(filename))
@@ -1043,6 +1061,110 @@ void do_sf2_check(const char* filename)
 #endif
 }
 
+void do_linuxsampler_check(const char* filename, const char* stype)
+{
+#ifdef WANT_LINUXSAMPLER
+    using namespace LinuxSampler;
+
+    class ScopedEngine {
+    public:
+        ScopedEngine(const char* filename, const char* stype)
+        {
+            try {
+                engine = EngineFactory::Create(stype);
+            }
+            catch (Exception& e)
+            {
+                DISCOVERY_OUT("error", e.what());
+                return;
+            }
+
+            try {
+                ins = engine->GetInstrumentManager();
+            }
+            catch (Exception& e)
+            {
+                DISCOVERY_OUT("error", e.what());
+                return;
+            }
+
+            std::vector<InstrumentManager::instrument_id_t> ids;
+
+            try {
+                ids = ins->GetInstrumentFileContent(filename);
+            }
+            catch (Exception& e)
+            {
+                DISCOVERY_OUT("error", e.what());
+                return;
+            }
+
+            if (ids.size() > 0)
+            {
+                InstrumentManager::instrument_info_t info = ins->GetInstrumentInfo(ids[0]);
+
+                DISCOVERY_OUT("init", "-----------");
+                DISCOVERY_OUT("name", info.InstrumentName);
+                DISCOVERY_OUT("label", info.Product);
+                DISCOVERY_OUT("maker", info.Artists);
+                DISCOVERY_OUT("copyright", info.Artists);
+
+                DISCOVERY_OUT("hints", PLUGIN_IS_SYNTH);
+                DISCOVERY_OUT("audio.outs", 2);
+                DISCOVERY_OUT("audio.total", 2);
+                DISCOVERY_OUT("midi.ins", 1);
+                DISCOVERY_OUT("midi.total", 1);
+                DISCOVERY_OUT("programs.total", ids.size());
+
+                // defined in Carla - TODO
+                //DISCOVERY_OUT("parameters.ins", 13);
+                //DISCOVERY_OUT("parameters.outs", 1);
+                //DISCOVERY_OUT("parameters.total", 14);
+
+                DISCOVERY_OUT("build", BINARY_NATIVE);
+                DISCOVERY_OUT("end", "------------");
+            }
+        }
+
+        ~ScopedEngine()
+        {
+            if (engine)
+                EngineFactory::Destroy(engine);
+        }
+
+    private:
+        Engine* engine;
+        InstrumentManager* ins;
+    };
+
+    QFileInfo file(filename);
+
+    if (! file.exists())
+    {
+        DISCOVERY_OUT("error", "Requested file does not exist");
+        return;
+    }
+
+    if (! file.isFile())
+    {
+        DISCOVERY_OUT("error", "Requested filename is not a file");
+        return;
+    }
+
+    if (! file.isReadable())
+    {
+        DISCOVERY_OUT("error", "Requested file is not readable");
+        return;
+    }
+
+    const ScopedEngine engine(filename, stype);
+
+#else
+    (void)filename;
+    DISCOVERY_OUT("error", stype << " support not available");
+#endif
+}
+
 // ------------------------------ main entry point ------------------------------
 
 int main(int argc, char* argv[])
@@ -1080,10 +1202,20 @@ int main(int argc, char* argv[])
         open_lib = true;
         type = PLUGIN_VST;
     }
+    else if (strcmp(type_str, "GIG") == 0)
+    {
+        open_lib = false;
+        type = PLUGIN_GIG;
+    }
     else if (strcmp(type_str, "SF2") == 0)
     {
         open_lib = false;
         type = PLUGIN_SF2;
+    }
+    else if (strcmp(type_str, "SFZ") == 0)
+    {
+        open_lib = false;
+        type = PLUGIN_SFZ;
     }
     else
     {
@@ -1102,13 +1234,15 @@ int main(int argc, char* argv[])
         }
     }
 
+    bool doInit = QString(filename).endsWith("dssi-vst.so", Qt::CaseInsensitive);
+
     switch (type)
     {
     case PLUGIN_LADSPA:
-        do_ladspa_check(handle);
+        do_ladspa_check(handle, doInit);
         break;
     case PLUGIN_DSSI:
-        do_dssi_check(handle);
+        do_dssi_check(handle, doInit);
         break;
     case PLUGIN_LV2:
         do_lv2_check(filename);
@@ -1116,8 +1250,14 @@ int main(int argc, char* argv[])
     case PLUGIN_VST:
         do_vst_check(handle);
         break;
+    case PLUGIN_GIG:
+        do_linuxsampler_check(filename, "gig");
+        break;
     case PLUGIN_SF2:
-        do_sf2_check(filename);
+        do_fluidsynth_check(filename);
+        break;
+    case PLUGIN_SFZ:
+        do_linuxsampler_check(filename, "sfz");
         break;
     default:
         break;
