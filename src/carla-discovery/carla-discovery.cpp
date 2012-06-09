@@ -25,6 +25,7 @@
 #include <cstring>
 #include <iostream>
 
+#include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QUrl>
 
@@ -680,6 +681,8 @@ void do_lv2_check(const char* bundle)
 {
     // Convert bundle filename to URI
     QString qBundle(QUrl::fromLocalFile(bundle).toString());
+    if (! qBundle.endsWith(QDir::separator()))
+        qBundle += QDir::separator();
 
     // Load bundle
     Lilv::Node Bundle(Lv2World.new_uri(qBundle.toUtf8().constData()));
@@ -723,11 +726,14 @@ void do_lv2_check(const char* bundle)
 
             if (! (validPort || LV2_IS_PORT_OPTIONAL(Port->Properties)))
             {
+                DISCOVERY_OUT("error", "plugin requires non-supported port, port-name: " << Port->Name);
                 supported = false;
                 break;
             }
-
         }
+
+        if (! supported)
+            continue;
 
         for (uint32_t j=0; j < rdf_descriptor->FeatureCount; j++)
         {
