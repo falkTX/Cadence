@@ -247,13 +247,13 @@ class PixmapDial(QDial):
                     ypos = self.p_size * per
 
                 source = QRectF(xpos, ypos, self.p_size, self.p_size)
-                painter.drawPixmap(target, self.m_pixmap, source)
+                #painter.drawPixmap(target, self.m_pixmap, source)
 
             if self.HOVER_MIN < self.m_hover_step < self.HOVER_MAX:
                 self.m_hover_step += 1 if self.m_hovered else -1
                 QTimer.singleShot(20, self, SLOT("update()"))
 
-        else:
+        elif not self.m_custom_paint:
             target = QRectF(0.0, 0.0, self.p_size, self.p_size)
             source = target
             painter.drawPixmap(target, self.m_pixmap, source)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Carla Backend code
@@ -16,11 +16,23 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# Special rule for AVLinux
+AVLINUX_PY2BUILD = False
+
+if AVLINUX_PY2BUILD:
+    from sip import setapi
+    setapi("QString", 2)
+    setapi("QVariant", 2)
+
 # Imports (Global)
 import os, sys
 from ctypes import *
 from copy import deepcopy
-from subprocess import Popen, PIPE
+
+if AVLINUX_PY2BUILD:
+    from commands import getoutput
+else:
+    from subprocess import Popen, PIPE
 
 # Imports (Custom)
 from shared import *
@@ -32,7 +44,10 @@ except:
     print("LRDF Support not available (LADSPA-RDF will be disabled)")
     haveLRDF = False
 
-if sys.int_info[1] == 4:
+if AVLINUX_PY2BUILD:
+    is64bit = True # TODO ------------------------- TODO ---------- TODO False
+    c_uintptr = c_uint32
+elif sys.int_info[1] == 4:
     is64bit = True
     c_uintptr = c_uint64
 else:
@@ -85,8 +100,16 @@ if WINDOWS:
         os.path.join(PROGRAMFILES, "Steinberg", "VstPlugins")
     ]
 
+    DEFAULT_GIG_PATH = [
+        os.path.join(APPDATA, "GIG"),
+    ]
+
     DEFAULT_SF2_PATH = [
         os.path.join(APPDATA, "SF2"),
+    ]
+
+    DEFAULT_SFZ_PATH = [
+        os.path.join(APPDATA, "SFZ"),
     ]
 
     #if (is64bit):
@@ -115,7 +138,15 @@ elif MACOS:
         os.path.join("/", "Library", "Audio", "Plug-Ins", "VST")
     ]
 
+    DEFAULT_GIG_PATH = [
+        # TODO
+    ]
+
     DEFAULT_SF2_PATH = [
+        # TODO
+    ]
+
+    DEFAULT_SFZ_PATH = [
         # TODO
     ]
 
@@ -146,9 +177,19 @@ else:
         os.path.join("/", "usr", "local", "lib", "vst")
     ]
 
+    DEFAULT_GIG_PATH = [
+        os.path.join(HOME, ".sounds"),
+        os.path.join("/", "usr", "share", "sounds", "gig")
+    ]
+
     DEFAULT_SF2_PATH = [
         os.path.join(HOME, ".sounds"),
         os.path.join("/", "usr", "share", "sounds", "sf2")
+    ]
+
+    DEFAULT_SFZ_PATH = [
+        os.path.join(HOME, ".sounds"),
+        os.path.join("/", "usr", "share", "sounds", "sfz")
     ]
 
 # ------------------------------------------------------------------------------------------------
@@ -159,17 +200,18 @@ carla_library_path = ""
 
 carla_discovery_unix32 = ""
 carla_discovery_unix64 = ""
-carla_discovery_win32 = ""
-carla_discovery_win64 = ""
+carla_discovery_win32  = ""
+carla_discovery_win64  = ""
 
 carla_bridge_unix32 = ""
 carla_bridge_unix64 = ""
-carla_bridge_win32 = ""
-carla_bridge_win64 = ""
+carla_bridge_win32  = ""
+carla_bridge_win64  = ""
 
 carla_bridge_lv2_gtk2 = ""
-carla_bridge_lv2_qt4 = ""
-carla_bridge_lv2_x11 = ""
+carla_bridge_lv2_qt4  = ""
+carla_bridge_lv2_x11  = ""
+carla_bridge_vst_x11  = ""
 
 if WINDOWS:
     carla_libname = "carla_backend.dll"
@@ -270,8 +312,8 @@ else:
             break
 
 # find carla_bridge_lv2_gtk2
-if os.path.exists(os.path.join(CWD, "carla-bridge-ui", "carla-bridge-lv2-gtk2")):
-    carla_bridge_lv2_gtk2 = os.path.join(CWD, "carla-bridge-ui", "carla-bridge-lv2-gtk2")
+if os.path.exists(os.path.join(CWD, "carla-bridge", "carla-bridge-lv2-gtk2")):
+    carla_bridge_lv2_gtk2 = os.path.join(CWD, "carla-bridge", "carla-bridge-lv2-gtk2")
 else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-bridge-lv2-gtk2")):
@@ -279,8 +321,8 @@ else:
             break
 
 # find carla_bridge_lv2_qt4
-if os.path.exists(os.path.join(CWD, "carla-bridge-ui", "carla-bridge-lv2-qt4")):
-    carla_bridge_lv2_qt4 = os.path.join(CWD, "carla-bridge-ui", "carla-bridge-lv2-qt4")
+if os.path.exists(os.path.join(CWD, "carla-bridge", "carla-bridge-lv2-qt4")):
+    carla_bridge_lv2_qt4 = os.path.join(CWD, "carla-bridge", "carla-bridge-lv2-qt4")
 else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-bridge-lv2-qt4")):
@@ -288,12 +330,21 @@ else:
             break
 
 # find carla_bridge_lv2_x11
-if os.path.exists(os.path.join(CWD, "carla-bridge-ui", "carla-bridge-lv2-x11")):
-    carla_bridge_lv2_x11 = os.path.join(CWD, "carla-bridge-ui", "carla-bridge-lv2-x11")
+if os.path.exists(os.path.join(CWD, "carla-bridge", "carla-bridge-lv2-x11")):
+    carla_bridge_lv2_x11 = os.path.join(CWD, "carla-bridge", "carla-bridge-lv2-x11")
 else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-bridge-lv2-x11")):
             carla_bridge_lv2_x11 = os.path.join(p, "carla-bridge-lv2-x11")
+            break
+
+# find carla_bridge_vst_x11
+if os.path.exists(os.path.join(CWD, "carla-bridge", "carla-bridge-vst-x11")):
+    carla_bridge_vst_x11 = os.path.join(CWD, "carla-bridge", "carla-bridge-vst-x11")
+else:
+    for p in PATH:
+        if os.path.exists(os.path.join(p, "carla-bridge-vst-x11")):
+            carla_bridge_vst_x11 = os.path.join(p, "carla-bridge-vst-x11")
             break
 
 # ------------------------------------------------------------------------------------------------
@@ -325,10 +376,17 @@ def findLV2Bundles(bPATH):
 
     return bundles
 
-def findSoundFonts(bPATH):
+def findSoundKits(bPATH, stype):
     soundfonts = []
 
-    extensions = (".sf2", ".sF2", ".SF2", ".Sf2")
+    if stype == "gig":
+        extensions = (".gig", ".giG", ".gIG", ".GIG", ".GIg", ".Gig")
+    elif stype == "sf2":
+        extensions = (".sf2", ".sF2", ".SF2", ".Sf2")
+    elif stype == "sfz":
+        extensions = (".sfz", ".sfZ", ".sFZ", ".SFZ", ".SFz", ".Sfz")
+    else:
+        extensions = ()
 
     for root, dirs, files in os.walk(bPATH):
         for name in [name for name in files if name.endswith(extensions)]:
@@ -368,7 +426,6 @@ def findDSSIGUI(filename, name, label):
 PyPluginInfo = {
     'build': 0, # BINARY_NONE
     'type': 0, # PLUGIN_NONE,
-    'category': 0, # PLUGIN_CATEGORY_NONE
     'hints': 0x0,
     'binary': "",
     'name': "",
@@ -401,11 +458,17 @@ def runCarlaDiscovery(itype, stype, filename, tool, isWine=False):
 
     command.append(tool)
     command.append(stype)
-    command.append(filename)
+    command.append('"%s"' % filename)
 
-    Ps = Popen(command, stdout=PIPE)
-    Ps.wait()
-    output = Ps.stdout.read().decode("utf-8", errors="ignore").split("\n")
+    if AVLINUX_PY2BUILD:
+        try:
+            output = getoutput(" ".join(command)).split("\n")
+        except:
+            output = []
+    else:
+        Ps = Popen(command, stdout=PIPE)
+        Ps.wait()
+        output = Ps.stdout.read().decode("utf-8", errors="ignore").split("\n")
 
     pinfo = None
 
@@ -447,8 +510,6 @@ def runCarlaDiscovery(itype, stype, filename, tool, isWine=False):
                 if value.isdigit(): pinfo['unique_id'] = int(value)
             elif prop == "hints":
                 if value.isdigit(): pinfo['hints'] = int(value)
-            elif prop == "category":
-                if value.isdigit(): pinfo['category'] = int(value)
             elif prop == "audio.ins":
                 if value.isdigit(): pinfo['audio.ins'] = int(value)
             elif prop == "audio.outs":
@@ -492,8 +553,14 @@ def checkPluginLV2(filename, tool, isWine=False):
 def checkPluginVST(filename, tool, isWine=False):
     return runCarlaDiscovery(PLUGIN_VST, "VST", filename, tool, isWine)
 
+def checkPluginGIG(filename, tool):
+    return runCarlaDiscovery(PLUGIN_GIG, "GIG", filename, tool)
+
 def checkPluginSF2(filename, tool):
     return runCarlaDiscovery(PLUGIN_SF2, "SF2", filename, tool)
+
+def checkPluginSFZ(filename, tool):
+    return runCarlaDiscovery(PLUGIN_SFZ, "SFZ", filename, tool)
 
 # ------------------------------------------------------------------------------------------------
 # Backend C++ -> Python variables
@@ -580,21 +647,27 @@ GUI_EXTERNAL_LV2 = 3
 GUI_EXTERNAL_OSC = 4
 
 # enum OptionsType
-OPTION_GLOBAL_JACK_CLIENT   = 1
-OPTION_USE_DSSI_CHUNKS      = 2
+OPTION_MAX_PARAMETERS       = 1
+OPTION_GLOBAL_JACK_CLIENT   = 2
 OPTION_PREFER_UI_BRIDGES    = 3
-OPTION_PATH_LADSPA          = 4
-OPTION_PATH_DSSI            = 5
-OPTION_PATH_LV2             = 6
-OPTION_PATH_VST             = 7
-OPTION_PATH_SF2             = 8
-OPTION_PATH_BRIDGE_UNIX32   = 9
-OPTION_PATH_BRIDGE_UNIX64   = 10
-OPTION_PATH_BRIDGE_WIN32    = 11
-OPTION_PATH_BRIDGE_WIN64    = 12
-OPTION_PATH_BRIDGE_LV2_GTK2 = 13
-OPTION_PATH_BRIDGE_LV2_QT4  = 14
-OPTION_PATH_BRIDGE_LV2_X11  = 15
+OPTION_PROCESS_HQ           = 4
+OPTION_OSC_GUI_TIMEOUT      = 5
+OPTION_USE_DSSI_CHUNKS      = 6
+OPTION_PATH_LADSPA          = 7
+OPTION_PATH_DSSI            = 8
+OPTION_PATH_LV2             = 9
+OPTION_PATH_VST             = 10
+OPTION_PATH_GIG             = 11
+OPTION_PATH_SF2             = 12
+OPTION_PATH_SFZ             = 13
+OPTION_PATH_BRIDGE_UNIX32   = 14
+OPTION_PATH_BRIDGE_UNIX64   = 15
+OPTION_PATH_BRIDGE_WIN32    = 16
+OPTION_PATH_BRIDGE_WIN64    = 17
+OPTION_PATH_BRIDGE_LV2_GTK2 = 18
+OPTION_PATH_BRIDGE_LV2_QT4  = 19
+OPTION_PATH_BRIDGE_LV2_X11  = 20
+OPTION_PATH_BRIDGE_VST_X11  = 21
 
 # enum CallbackType
 CALLBACK_DEBUG                = 0
@@ -1077,7 +1150,9 @@ LADSPA_PATH_env = os.getenv("LADSPA_PATH")
 DSSI_PATH_env = os.getenv("DSSI_PATH")
 LV2_PATH_env = os.getenv("LV2_PATH")
 VST_PATH_env = os.getenv("VST_PATH")
+GIG_PATH_env = os.getenv("GIG_PATH")
 SF2_PATH_env = os.getenv("SF2_PATH")
+SFZ_PATH_env = os.getenv("SFZ_PATH")
 
 if LADSPA_PATH_env:
     LADSPA_PATH = LADSPA_PATH_env.split(splitter)
@@ -1099,10 +1174,20 @@ if VST_PATH_env:
 else:
     VST_PATH = DEFAULT_VST_PATH
 
+if GIG_PATH_env:
+    GIG_PATH = GIG_PATH_env.split(splitter)
+else:
+    GIG_PATH = DEFAULT_GIG_PATH
+
 if SF2_PATH_env:
     SF2_PATH = SF2_PATH_env.split(splitter)
 else:
     SF2_PATH = DEFAULT_SF2_PATH
+
+if SFZ_PATH_env:
+    SFZ_PATH = SFZ_PATH_env.split(splitter)
+else:
+    SFZ_PATH = DEFAULT_SFZ_PATH
 
 if haveLRDF:
     LADSPA_RDF_PATH_env = os.getenv("LADSPA_RDF_PATH")

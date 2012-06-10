@@ -90,9 +90,9 @@
        </widget>
       </item>
       <item row="4" column="0">
-       <widget class="QCheckBox" name="ch_sf2">
+       <widget class="QCheckBox" name="ch_kits">
         <property name="text">
-         <string>SoundFonts</string>
+         <string>Sound Kits</string>
         </property>
        </widget>
       </item>

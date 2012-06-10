@@ -80,7 +80,7 @@ def translate_audio_port_buffer(void_p):
 # Convert a jack midi buffer into a variable-size list
 def translate_midi_event_buffer(void_p, size):
     if not void_p:
-        return list()
+        return ()
     elif size == 1:
         return (void_p[0],)
     elif size == 2:
@@ -90,4 +90,4 @@ def translate_midi_event_buffer(void_p, size):
     elif size == 4:
         return (void_p[0], void_p[1], void_p[2], void_p[3])
     else:
-        return list()
+        return ()

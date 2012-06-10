@@ -952,13 +952,33 @@
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="sf2">
+           <widget class="QWidget" name="gig">
             <attribute name="title">
-             <string>SoundFonts</string>
+             <string>GIG</string>
             </attribute>
             <layout class="QVBoxLayout" name="verticalLayout_15">
              <item>
+              <widget class="QListWidget" name="lw_gig"/>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="tab_sf2">
+            <attribute name="title">
+             <string>SF2</string>
+            </attribute>
+            <layout class="QVBoxLayout" name="verticalLayout_4">
+             <item>
               <widget class="QListWidget" name="lw_sf2"/>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="tab_sfz">
+            <attribute name="title">
+             <string>SFZ</string>
+            </attribute>
+            <layout class="QVBoxLayout" name="verticalLayout_14">
+             <item>
+              <widget class="QListWidget" name="lw_sfz"/>
              </item>
             </layout>
            </widget>

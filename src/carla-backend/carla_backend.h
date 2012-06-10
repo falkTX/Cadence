@@ -127,20 +127,26 @@ enum GuiType {
 
 enum OptionsType {
     OPTION_MAX_PARAMETERS       = 1,
-    OPTION_PREFER_UI_BRIDGES    = 2,
-    OPTION_PROCESS_32X          = 3,
-    OPTION_PATH_LADSPA          = 4,
-    OPTION_PATH_DSSI            = 5,
-    OPTION_PATH_LV2             = 6,
-    OPTION_PATH_VST             = 7,
-    OPTION_PATH_SF2             = 8,
-    OPTION_PATH_BRIDGE_UNIX32   = 9,
-    OPTION_PATH_BRIDGE_UNIX64   = 10,
-    OPTION_PATH_BRIDGE_WIN32    = 11,
-    OPTION_PATH_BRIDGE_WIN64    = 12,
-    OPTION_PATH_BRIDGE_LV2_GTK2 = 13,
-    OPTION_PATH_BRIDGE_LV2_QT4  = 14,
-    OPTION_PATH_BRIDGE_LV2_X11  = 15
+    OPTION_GLOBAL_JACK_CLIENT   = 2,
+    OPTION_PREFER_UI_BRIDGES    = 3,
+    OPTION_PROCESS_HQ           = 4,
+    OPTION_OSC_GUI_TIMEOUT      = 5,
+    OPTION_USE_DSSI_CHUNKS      = 6,
+    OPTION_PATH_LADSPA          = 7,
+    OPTION_PATH_DSSI            = 8,
+    OPTION_PATH_LV2             = 9,
+    OPTION_PATH_VST             = 10,
+    OPTION_PATH_GIG             = 11,
+    OPTION_PATH_SF2             = 12,
+    OPTION_PATH_SFZ             = 13,
+    OPTION_PATH_BRIDGE_UNIX32   = 14,
+    OPTION_PATH_BRIDGE_UNIX64   = 15,
+    OPTION_PATH_BRIDGE_WIN32    = 16,
+    OPTION_PATH_BRIDGE_WIN64    = 17,
+    OPTION_PATH_BRIDGE_LV2_GTK2 = 18,
+    OPTION_PATH_BRIDGE_LV2_QT4  = 19,
+    OPTION_PATH_BRIDGE_LV2_X11  = 20,
+    OPTION_PATH_BRIDGE_VST_X11  = 21
 };
 
 enum CallbackType {

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>700</width>
-    <height>195</height>
+    <width>702</width>
+    <height>247</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -39,63 +39,7 @@
       <set>Qt::AlignCenter</set>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="2" column="0">
-       <widget class="QCheckBox" name="ch_lv2">
-        <property name="text">
-         <string>LV2</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QCheckBox" name="ch_ladspa">
-        <property name="text">
-         <string>LADSPA</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QCheckBox" name="ch_dssi">
-        <property name="text">
-         <string>DSSI</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QCheckBox" name="ch_sf2">
-        <property name="text">
-         <string>SoundFonts</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QCheckBox" name="ch_vst">
-        <property name="text">
-         <string>VST</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
-       <widget class="QCheckBox" name="ch_unix32">
-        <property name="text">
-         <string>Unix 32bit</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="3">
-       <widget class="QCheckBox" name="ch_unix64">
-        <property name="text">
-         <string>Unix 64bit</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="3">
-       <widget class="QCheckBox" name="ch_win32">
-        <property name="text">
-         <string>Windows 32bit</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2" rowspan="5">
+      <item row="0" column="2" rowspan="6">
        <widget class="Line" name="line_2">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
@@ -121,6 +65,83 @@
          </size>
         </property>
        </spacer>
+      </item>
+      <item row="1" column="3">
+       <widget class="QCheckBox" name="ch_unix64">
+        <property name="text">
+         <string>Unix 64bit</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QCheckBox" name="ch_win32">
+        <property name="text">
+         <string>Windows 32bit</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QCheckBox" name="ch_lv2">
+        <property name="text">
+         <string>LV2</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QCheckBox" name="ch_ladspa">
+        <property name="text">
+         <string>LADSPA</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QCheckBox" name="ch_dssi">
+        <property name="text">
+         <string>DSSI</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QCheckBox" name="ch_unix32">
+        <property name="text">
+         <string>Unix 32bit</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QCheckBox" name="ch_gig">
+        <property name="text">
+         <string>GIG</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QCheckBox" name="ch_vst">
+        <property name="text">
+         <string>VST</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="Line" name="line_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0">
+       <widget class="QCheckBox" name="ch_sf2">
+        <property name="text">
+         <string>SF2</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <widget class="QCheckBox" name="ch_sfz">
+        <property name="text">
+         <string>SFZ</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>

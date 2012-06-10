@@ -154,7 +154,6 @@ public:
         midiInputPort     = midiInputDevice->CreateMidiPort();
 
         m_isGIG = isGIG;
-        m_name  = nullptr;
         m_label = nullptr;
         m_maker = nullptr;
     }
@@ -174,9 +173,6 @@ public:
         delete audioOutputDevice;
         delete midiInputDevice;
         delete sampler;
-
-        if (m_name)
-            free((void*)m_name);
 
         if (m_label)
             free((void*)m_label);
@@ -358,7 +354,7 @@ public:
     // -------------------------------------------------------------------
     // Plugin processing
 
-    void process(float** ains_buffer, float** aouts_buffer, uint32_t nframes, uint32_t nframesOffset = 0)
+    void process(float**, float** aouts_buffer, uint32_t nframes, uint32_t nframesOffset = 0)
     {
         uint32_t i, k;
         uint32_t midi_event_count = 0;
@@ -603,7 +599,7 @@ public:
             {
                 LinuxSampler::InstrumentManager::instrument_info_t info = instrument->GetInstrumentInfo(instrumentIds[0]);
 
-                m_name  = strdup(info.InstrumentName.c_str());
+                m_name  = strdup(label && label[0] ? label : info.InstrumentName.c_str());
                 m_label = strdup(info.Product.c_str());
                 m_maker = strdup(info.Artists.c_str());
                 m_filename = strdup(filename);
@@ -650,7 +646,6 @@ private:
     LinuxSampler::MidiInputPort* midiInputPort;
 
     bool m_isGIG;
-    const char* m_name;
     const char* m_label;
     const char* m_maker;
 };

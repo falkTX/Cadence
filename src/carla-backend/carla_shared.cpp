@@ -37,16 +37,20 @@ volatile double aouts_peak[MAX_PLUGINS*2] = { 0.0 };
 #ifndef BUILD_BRIDGE
 // Global options
 carla_options_t carla_options = {
+    /* max_parameters     */ MAX_PARAMETERS,
     /* global_jack_client */ true,
     /* prefer_ui_bridges  */ true,
     /* proccess_hq        */ false,
+    /* osc_gui_timeout    */ 4000/100,
+    /* use_dssi_chunks    */ false,
     /* bridge_unix32      */ nullptr,
     /* bridge_unix64      */ nullptr,
     /* bridge_win32       */ nullptr,
     /* bridge_win64       */ nullptr,
     /* bridge_lv2gtk2     */ nullptr,
     /* bridge_lv2qt4      */ nullptr,
-    /* bridge_lv2x11      */ nullptr
+    /* bridge_lv2x11      */ nullptr,
+    /* bridge_vstx11      */ nullptr
 };
 #endif
 

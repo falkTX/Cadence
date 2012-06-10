@@ -52,15 +52,15 @@ LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY_DEFAULT    = 0
 global SETTINGS_DEFAULT_PROJECT_FOLDER
 global SETTINGS_DEFAULT_PLUGINS_PATHS
 SETTINGS_DEFAULT_PROJECT_FOLDER = HOME
-SETTINGS_DEFAULT_PLUGINS_PATHS  = [[], [], [], [], []]
+SETTINGS_DEFAULT_PLUGINS_PATHS  = [[], [], [], [], [], [], []]
 
 def setDefaultProjectFolder(folder):
     global SETTINGS_DEFAULT_PROJECT_FOLDER
     SETTINGS_DEFAULT_PROJECT_FOLDER = folder
 
-def setDefaultPluginsPaths(ladspas, dssis, lv2s, vsts, sf2s):
+def setDefaultPluginsPaths(ladspas, dssis, lv2s, vsts, gigs, sf2s, sfzs):
     global SETTINGS_DEFAULT_PLUGINS_PATHS
-    SETTINGS_DEFAULT_PLUGINS_PATHS  = [ladspas, dssis, lv2s, vsts, sf2s]
+    SETTINGS_DEFAULT_PLUGINS_PATHS  = [ladspas, dssis, lv2s, vsts, gigs, sf2s, sfzs]
 
 # Settings Dialog
 class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
@@ -142,7 +142,9 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         self.lw_dssi.setCurrentRow(0)
         self.lw_lv2.setCurrentRow(0)
         self.lw_vst.setCurrentRow(0)
+        self.lw_gig.setCurrentRow(0)
         self.lw_sf2.setCurrentRow(0)
+        self.lw_sfz.setCurrentRow(0)
         self.slot_pathTabChanged(self.tw_paths.currentIndex())
 
     def loadSettings(self):
@@ -194,13 +196,17 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             dssis = toList(self.settings.value("Paths/DSSI", SETTINGS_DEFAULT_PLUGINS_PATHS[1]))
             lv2s = toList(self.settings.value("Paths/LV2", SETTINGS_DEFAULT_PLUGINS_PATHS[2]))
             vsts = toList(self.settings.value("Paths/VST", SETTINGS_DEFAULT_PLUGINS_PATHS[3]))
-            sf2s = toList(self.settings.value("Paths/SF2", SETTINGS_DEFAULT_PLUGINS_PATHS[4]))
+            gigs = toList(self.settings.value("Paths/GIG", SETTINGS_DEFAULT_PLUGINS_PATHS[4]))
+            sf2s = toList(self.settings.value("Paths/SF2", SETTINGS_DEFAULT_PLUGINS_PATHS[5]))
+            sfzs = toList(self.settings.value("Paths/SFZ", SETTINGS_DEFAULT_PLUGINS_PATHS[6]))
 
             ladspas.sort()
             dssis.sort()
             lv2s.sort()
             vsts.sort()
+            gigs.sort()
             sf2s.sort()
+            sfzs.sort()
 
             for ladspa in ladspas:
                 self.lw_ladspa.addItem(ladspa)
@@ -214,8 +220,14 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             for vst in vsts:
                 self.lw_vst.addItem(vst)
 
+            for gig in gigs:
+                self.lw_gig.addItem(gig)
+
             for sf2 in sf2s:
                 self.lw_sf2.addItem(sf2)
+
+            for sfz in sfzs:
+                self.lw_sfz.addItem(sfz)
 
     @pyqtSlot()
     def slot_getAndSetPath_project(self):
@@ -234,7 +246,11 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             elif self.tw_paths.currentIndex() == 3:
                 self.lw_vst.addItem(newPath)
             elif self.tw_paths.currentIndex() == 4:
+                self.lw_gig.addItem(newPath)
+            elif self.tw_paths.currentIndex() == 5:
                 self.lw_sf2.addItem(newPath)
+            elif self.tw_paths.currentIndex() == 6:
+                self.lw_sfz.addItem(newPath)
 
     @pyqtSlot()
     def slot_removePath(self):
@@ -247,7 +263,11 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         elif self.tw_paths.currentIndex() == 3:
             self.lw_vst.takeItem(self.lw_vst.currentRow())
         elif self.tw_paths.currentIndex() == 4:
+            self.lw_gig.takeItem(self.lw_gig.currentRow())
+        elif self.tw_paths.currentIndex() == 5:
             self.lw_sf2.takeItem(self.lw_sf2.currentRow())
+        elif self.tw_paths.currentIndex() == 6:
+            self.lw_sfz.takeItem(self.lw_sfz.currentRow())
 
     @pyqtSlot()
     def slot_changePath(self):
@@ -260,7 +280,11 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         elif self.tw_paths.currentIndex() == 3:
             currentPath = self.lw_vst.currentItem().text()
         elif self.tw_paths.currentIndex() == 4:
+            currentPath = self.lw_gig.currentItem().text()
+        elif self.tw_paths.currentIndex() == 5:
             currentPath = self.lw_sf2.currentItem().text()
+        elif self.tw_paths.currentIndex() == 6:
+            currentPath = self.lw_sfz.currentItem().text()
         else:
             currentPath = ""
 
@@ -275,7 +299,11 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             elif self.tw_paths.currentIndex() == 3:
                 self.lw_vst.currentItem().setText(newPath)
             elif self.tw_paths.currentIndex() == 4:
+                self.lw_gig.currentItem().setText(newPath)
+            elif self.tw_paths.currentIndex() == 5:
                 self.lw_sf2.currentItem().setText(newPath)
+            elif self.tw_paths.currentIndex() == 6:
+                self.lw_sfz.currentItem().setText(newPath)
 
     @pyqtSlot(int)
     def slot_pathTabChanged(self, index):
@@ -288,7 +316,11 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         elif index == 3:
             row = self.lw_vst.currentRow()
         elif index == 4:
+            row = self.lw_gig.currentRow()
+        elif index == 5:
             row = self.lw_sf2.currentRow()
+        elif index == 6:
+            row = self.lw_sfz.currentRow()
         else:
             row = -1
 
@@ -353,7 +385,9 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             dssis = []
             lv2s = []
             vsts = []
+            gigs = []
             sf2s = []
+            sfzs = []
 
             for i in range(self.lw_ladspa.count()):
                 ladspas.append(self.lw_ladspa.item(i).text())
@@ -367,14 +401,22 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             for i in range(self.lw_vst.count()):
                 vsts.append(self.lw_vst.item(i).text())
 
+            for i in range(self.lw_gig.count()):
+                gigs.append(self.lw_gig.item(i).text())
+
             for i in range(self.lw_sf2.count()):
                 sf2s.append(self.lw_sf2.item(i).text())
+
+            for i in range(self.lw_sfz.count()):
+                sfzs.append(self.lw_sfz.item(i).text())
 
             self.settings.setValue("Paths/LADSPA", ladspas)
             self.settings.setValue("Paths/DSSI", dssis)
             self.settings.setValue("Paths/LV2", lv2s)
             self.settings.setValue("Paths/VST", vsts)
+            self.settings.setValue("Paths/GIG", gigs)
             self.settings.setValue("Paths/SF2", sf2s)
+            self.settings.setValue("Paths/SFZ", sfzs)
 
     @pyqtSlot()
     def slot_resetSettings(self):
@@ -406,7 +448,7 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             self.ch_engine_prefer_bridges.setChecked(True)
 
         elif self.lw_page.currentRow() == TAB_INDEX_CARLA_PATHS:
-            ladspas, dssis, lv2s, vsts, sf2s = SETTINGS_DEFAULT_PLUGINS_PATHS
+            ladspas, dssis, lv2s, vsts, gigs, sf2s, sfzs = SETTINGS_DEFAULT_PLUGINS_PATHS
 
             if self.tw_paths.currentIndex() == 0:
                 self.lw_ladspa.clear()
@@ -437,8 +479,22 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
                     self.lw_vst.addItem(vst)
 
             elif self.tw_paths.currentIndex() == 4:
+                self.lw_gig.clear()
+                gigs.sort()
+
+                for gig in gigs:
+                    self.lw_gig.addItem(gig)
+
+            elif self.tw_paths.currentIndex() == 5:
                 self.lw_sf2.clear()
                 sf2s.sort()
 
                 for sf2 in sf2s:
                     self.lw_sf2.addItem(sf2)
+
+            elif self.tw_paths.currentIndex() == 6:
+                self.lw_sfz.clear()
+                sfzs.sort()
+
+                for sfz in sfzs:
+                    self.lw_sfz.addItem(sfz)

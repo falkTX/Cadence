@@ -1167,12 +1167,25 @@ void set_option(OptionsType option, int value, const char* value_str)
 {
     qDebug("set_option(%i, %i, %s)", option, value, value_str);
 
-    // TODO
-
-    switch(option)
+    switch (option)
     {
+    case OPTION_MAX_PARAMETERS:
+        carla_options.max_parameters = value;
+        break;
+    case OPTION_GLOBAL_JACK_CLIENT:
+        carla_options.global_jack_client = value;
+        break;
     case OPTION_PREFER_UI_BRIDGES:
         carla_options.prefer_ui_bridges = value;
+        break;
+    case OPTION_PROCESS_HQ:
+        carla_options.proccess_hq = value;
+        break;
+    case OPTION_OSC_GUI_TIMEOUT:
+        carla_options.osc_gui_timeout = value/100;
+        break;
+    case OPTION_USE_DSSI_CHUNKS:
+        carla_options.use_dssi_chunks = value;
         break;
     case OPTION_PATH_LADSPA:
         carla_setenv("LADSPA_PATH", value_str);
@@ -1186,8 +1199,14 @@ void set_option(OptionsType option, int value, const char* value_str)
     case OPTION_PATH_VST:
         carla_setenv("VST_PATH", value_str);
         break;
+    case OPTION_PATH_GIG:
+        carla_setenv("GIG_PATH", value_str);
+        break;
     case OPTION_PATH_SF2:
         carla_setenv("SF2_PATH", value_str);
+        break;
+    case OPTION_PATH_SFZ:
+        carla_setenv("SFZ_PATH", value_str);
         break;
     case OPTION_PATH_BRIDGE_UNIX32:
         carla_options.bridge_unix32 = strdup(value_str);
@@ -1210,7 +1229,8 @@ void set_option(OptionsType option, int value, const char* value_str)
     case OPTION_PATH_BRIDGE_LV2_X11:
         carla_options.bridge_lv2x11 = strdup(value_str);
         break;
-    default:
+    case OPTION_PATH_BRIDGE_VST_X11:
+        carla_options.bridge_vstx11 = strdup(value_str);
         break;
     }
 }
@@ -1257,7 +1277,7 @@ int main(int argc, char* argv[])
     if (engine_init("carla_demo"))
     {
         set_callback_function(main_callback);
-        short id = add_plugin_sfz("/home/falktx/Personal/Muzyks/Kits/SFZ/AcousticGuitarFREE/AcousticGuitarFREE Samples/AcousticGuitar.sfz", "xaxaxa");
+        short id = add_plugin_sfz("/home/falktx/Personal/Muzyks/Kits/SFZ/sonatina/Sonatina Symphonic Orchestra/Strings - 1st Violins Sustain.sfz", "xaxaxa");
 
         if (id >= 0)
         {
