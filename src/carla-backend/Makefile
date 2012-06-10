@@ -15,7 +15,7 @@ CARLA_CXX_FLAGS += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUT
 # CARLA_CXX_FLAGS += -DDEBUG -O0 -g
 CARLA_LINK_FLAGS = -shared -fPIC -ldl `pkg-config --libs jack fluidsynth liblo QtCore QtGui` $(LDFLAGS)
 
-OBJS = carla_backend.o carla_bridge.o carla_engine_jack.o carla_osc.o carla_shared.o carla_threads.o ladspa.o dssi.o lv2.o vst.o fluidsynth.o lv2-rtmempool/rtmempool.o
+OBJS = carla_backend.o carla_bridge.o carla_engine_jack.o carla_osc.o carla_shared.o carla_threads.o ladspa.o dssi.o lv2.o vst.o fluidsynth.o linuxsampler.o lv2-rtmempool/rtmempool.o
 
 
 all: carla_backend.so

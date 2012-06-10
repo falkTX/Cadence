@@ -16,7 +16,7 @@
  */
 
 #ifdef BUILD_BRIDGE
-#error You should not use bridge for soundfonts
+#error Should not use fluidsynth for bridges!
 #endif
 
 #include "carla_plugin.h"
@@ -33,12 +33,12 @@ CARLA_BACKEND_START_NAMESPACE
 } /* adjust editor indent */
 #endif
 
-class Sf2Plugin : public CarlaPlugin
+class FluidSynthPlugin : public CarlaPlugin
 {
 public:
-    Sf2Plugin(unsigned short id) : CarlaPlugin(id)
+    FluidSynthPlugin(unsigned short id) : CarlaPlugin(id)
     {
-        qDebug("Sf2Plugin::Sf2Plugin()");
+        qDebug("FluidSynthPlugin::FluidSynthPlugin()");
         m_type = PLUGIN_SF2;
 
         f_settings = new_fluid_settings();
@@ -56,9 +56,9 @@ public:
         m_label = nullptr;
     }
 
-    ~Sf2Plugin()
+    ~FluidSynthPlugin()
     {
-        qDebug("Sf2Plugin::~Sf2Plugin()");
+        qDebug("Sf2Plugin::~FluidSynthPlugin()");
 
         if (m_label)
             free((void*)m_label);
@@ -344,7 +344,7 @@ public:
 
     void reload()
     {
-        qDebug("Sf2Plugin::reload() - start");
+        qDebug("FluidSynthPlugin::reload() - start");
 
         // Safely disable plugin for reload
         const CarlaPluginScopedDisabler m(this);
@@ -682,12 +682,12 @@ public:
 
         x_client->activate();
 
-        qDebug("Sf2Plugin::reload() - end");
+        qDebug("FluidSynthPlugin::reload() - end");
     }
 
     void reload_programs(bool init)
     {
-        qDebug("Sf2Plugin::reload_programs(%s)", bool2str(init));
+        qDebug("FluidSynthPlugin::reload_programs(%s)", bool2str(init));
 
         // Delete old programs
         if (midiprog.count > 0)
@@ -1235,7 +1235,7 @@ short add_plugin_sf2(const char* filename, const char* label)
     {
         if (fluid_is_soundfont(filename))
         {
-            Sf2Plugin* plugin = new Sf2Plugin(id);
+            FluidSynthPlugin* plugin = new FluidSynthPlugin(id);
 
             if (plugin->init(filename, label))
             {

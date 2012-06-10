@@ -22,6 +22,7 @@ SOURCES = \
     ../lv2.cpp \
     ../vst.cpp \
     ../fluidsynth.cpp \
+    ../linuxsampler.cpp \
     ../lv2-rtmempool/rtmempool.c
 
 HEADERS = \
