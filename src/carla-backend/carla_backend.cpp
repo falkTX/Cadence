@@ -1257,7 +1257,7 @@ int main(int argc, char* argv[])
     if (engine_init("carla_demo"))
     {
         set_callback_function(main_callback);
-        short id = add_plugin_dssi("/usr/lib/dssi/calf.so", "Reverb", "/usr/lib/dssi/calf/calf_gtk");
+        short id = add_plugin_sfz("/home/falktx/Personal/Muzyks/Kits/SFZ/AcousticGuitarFREE/AcousticGuitarFREE Samples/AcousticGuitar.sfz", "xaxaxa");
 
         if (id >= 0)
         {

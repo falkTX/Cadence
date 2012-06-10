@@ -13,7 +13,7 @@ CARLA_CXX_FLAGS += -DCARLA_BACKEND_NO_NAMESPACE -DCARLA_ENGINE_JACK $(CXXFLAGS)
 CARLA_CXX_FLAGS += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
 CARLA_CXX_FLAGS += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT -O2 -ffast-math -fomit-frame-pointer -fvisibility=hidden -mtune=generic -msse
 # CARLA_CXX_FLAGS += -DDEBUG -O0 -g
-CARLA_LINK_FLAGS = -shared -fPIC -ldl `pkg-config --libs jack fluidsynth liblo QtCore QtGui` $(LDFLAGS)
+CARLA_LINK_FLAGS = -shared -fPIC -ldl `pkg-config --libs jack fluidsynth linuxsampler liblo QtCore QtGui` $(LDFLAGS)
 
 OBJS = carla_backend.o carla_bridge.o carla_engine_jack.o carla_osc.o carla_shared.o carla_threads.o ladspa.o dssi.o lv2.o vst.o fluidsynth.o linuxsampler.o lv2-rtmempool/rtmempool.o
 

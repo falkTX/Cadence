@@ -3,7 +3,7 @@
 QT = core gui
 
 CONFIG    = debug link_pkgconfig qt warn_on
-PKGCONFIG = jack liblo fluidsynth
+PKGCONFIG = jack liblo fluidsynth linuxsampler
 
 TARGET   = carla_backend
 TEMPLATE = app

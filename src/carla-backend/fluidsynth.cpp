@@ -82,9 +82,9 @@ public:
     {
         switch (param_id)
         {
-        case Sf2ChorusType:
+        case FluidSynthChorusType:
             return 2;
-        case Sf2Interpolation:
+        case FluidSynthInterpolation:
             return 4;
         default:
             return 0;
@@ -103,7 +103,7 @@ public:
     {
         switch (param_id)
         {
-        case Sf2ChorusType:
+        case FluidSynthChorusType:
             switch (scalepoint_id)
             {
             case 0:
@@ -113,7 +113,7 @@ public:
             default:
                 return FLUID_CHORUS_DEFAULT_TYPE;
             }
-        case Sf2Interpolation:
+        case FluidSynthInterpolation:
             switch (scalepoint_id)
             {
             case 0:
@@ -156,46 +156,46 @@ public:
     {
         switch (param_id)
         {
-        case Sf2ReverbOnOff:
+        case FluidSynthReverbOnOff:
             strncpy(buf_str, "Reverb On/Off", STR_MAX);
             break;
-        case Sf2ReverbRoomSize:
+        case FluidSynthReverbRoomSize:
             strncpy(buf_str, "Reverb Room Size", STR_MAX);
             break;
-        case Sf2ReverbDamp:
+        case FluidSynthReverbDamp:
             strncpy(buf_str, "Reverb Damp", STR_MAX);
             break;
-        case Sf2ReverbLevel:
+        case FluidSynthReverbLevel:
             strncpy(buf_str, "Reverb Level", STR_MAX);
             break;
-        case Sf2ReverbWidth:
+        case FluidSynthReverbWidth:
             strncpy(buf_str, "Reverb Width", STR_MAX);
             break;
-        case Sf2ChorusOnOff:
+        case FluidSynthChorusOnOff:
             strncpy(buf_str, "Chorus On/Off", STR_MAX);
             break;
-        case Sf2ChorusNr:
+        case FluidSynthChorusNr:
             strncpy(buf_str, "Chorus Voice Count", STR_MAX);
             break;
-        case Sf2ChorusLevel:
+        case FluidSynthChorusLevel:
             strncpy(buf_str, "Chorus Level", STR_MAX);
             break;
-        case Sf2ChorusSpeedHz:
+        case FluidSynthChorusSpeedHz:
             strncpy(buf_str, "Chorus Speed", STR_MAX);
             break;
-        case Sf2ChorusDepthMs:
+        case FluidSynthChorusDepthMs:
             strncpy(buf_str, "Chorus Depth", STR_MAX);
             break;
-        case Sf2ChorusType:
+        case FluidSynthChorusType:
             strncpy(buf_str, "Chorus Type", STR_MAX);
             break;
-        case Sf2Polyphony:
+        case FluidSynthPolyphony:
             strncpy(buf_str, "Polyphony", STR_MAX);
             break;
-        case Sf2Interpolation:
+        case FluidSynthInterpolation:
             strncpy(buf_str, "Interpolation", STR_MAX);
             break;
-        case Sf2VoiceCount:
+        case FluidSynthVoiceCount:
             strncpy(buf_str, "Voice Count", STR_MAX);
             break;
         default:
@@ -208,10 +208,10 @@ public:
     {
         switch (param_id)
         {
-        case Sf2ChorusSpeedHz:
+        case FluidSynthChorusSpeedHz:
             strncpy(buf_str, "Hz", STR_MAX);
             break;
-        case Sf2ChorusDepthMs:
+        case FluidSynthChorusDepthMs:
             strncpy(buf_str, "ms", STR_MAX);
             break;
         default:
@@ -224,7 +224,7 @@ public:
     {
         switch (param_id)
         {
-        case Sf2ChorusType:
+        case FluidSynthChorusType:
             switch (scalepoint_id)
             {
             case 0:
@@ -234,7 +234,7 @@ public:
                 strncpy(buf_str, "Triangle wave", STR_MAX);
                 return;
             }
-        case Sf2Interpolation:
+        case FluidSynthInterpolation:
             switch (scalepoint_id)
             {
             case 0:
@@ -263,19 +263,19 @@ public:
 
         switch(param_id)
         {
-        case Sf2ReverbOnOff:
+        case FluidSynthReverbOnOff:
             value = value > 0.5 ? 1 : 0;
             fluid_synth_set_reverb_on(f_synth, value);
             break;
 
-        case Sf2ReverbRoomSize:
-        case Sf2ReverbDamp:
-        case Sf2ReverbLevel:
-        case Sf2ReverbWidth:
-            fluid_synth_set_reverb(f_synth, param_buffers[Sf2ReverbRoomSize], param_buffers[Sf2ReverbDamp], param_buffers[Sf2ReverbWidth], param_buffers[Sf2ReverbLevel]);
+        case FluidSynthReverbRoomSize:
+        case FluidSynthReverbDamp:
+        case FluidSynthReverbLevel:
+        case FluidSynthReverbWidth:
+            fluid_synth_set_reverb(f_synth, param_buffers[FluidSynthReverbRoomSize], param_buffers[FluidSynthReverbDamp], param_buffers[FluidSynthReverbWidth], param_buffers[FluidSynthReverbLevel]);
             break;
 
-        case Sf2ChorusOnOff:
+        case FluidSynthChorusOnOff:
         {
             const CarlaPluginScopedDisabler m(this, ! CarlaEngine::isOffline());
             value = value > 0.5 ? 1 : 0;
@@ -283,25 +283,25 @@ public:
             break;
         }
 
-        case Sf2ChorusNr:
-        case Sf2ChorusLevel:
-        case Sf2ChorusSpeedHz:
-        case Sf2ChorusDepthMs:
-        case Sf2ChorusType:
+        case FluidSynthChorusNr:
+        case FluidSynthChorusLevel:
+        case FluidSynthChorusSpeedHz:
+        case FluidSynthChorusDepthMs:
+        case FluidSynthChorusType:
         {
             const CarlaPluginScopedDisabler m(this, ! CarlaEngine::isOffline());
-            fluid_synth_set_chorus(f_synth, rint(param_buffers[Sf2ChorusNr]), param_buffers[Sf2ChorusLevel], param_buffers[Sf2ChorusSpeedHz], param_buffers[Sf2ChorusDepthMs], rint(param_buffers[Sf2ChorusType]));
+            fluid_synth_set_chorus(f_synth, rint(param_buffers[FluidSynthChorusNr]), param_buffers[FluidSynthChorusLevel], param_buffers[FluidSynthChorusSpeedHz], param_buffers[FluidSynthChorusDepthMs], rint(param_buffers[FluidSynthChorusType]));
             break;
         }
 
-        case Sf2Polyphony:
+        case FluidSynthPolyphony:
         {
             const CarlaPluginScopedDisabler m(this, ! CarlaEngine::isOffline());
             fluid_synth_set_polyphony(f_synth, rint(value));
             break;
         }
 
-        case Sf2Interpolation:
+        case FluidSynthInterpolation:
         {
             const CarlaPluginScopedDisabler m(this, ! CarlaEngine::isOffline());
             for (int i=0; i < 16; i++)
@@ -360,7 +360,7 @@ public:
 
         uint32_t aouts, params, j;
         aouts  = 2;
-        params = Sf2ParametersMax;
+        params = FluidSynthParametersMax;
 
         aout.ports    = new CarlaEngineAudioPort*[aouts];
         aout.rindexes = new uint32_t[aouts];
@@ -443,7 +443,7 @@ public:
         param.port_cout = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, false);
 
         // ----------------------
-        j = Sf2ReverbOnOff;
+        j = FluidSynthReverbOnOff;
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
@@ -459,7 +459,7 @@ public:
         param_buffers[j] = param.ranges[j].def;
 
         // ----------------------
-        j = Sf2ReverbRoomSize;
+        j = FluidSynthReverbRoomSize;
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
@@ -475,7 +475,7 @@ public:
         param_buffers[j] = param.ranges[j].def;
 
         // ----------------------
-        j = Sf2ReverbDamp;
+        j = FluidSynthReverbDamp;
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
@@ -491,7 +491,7 @@ public:
         param_buffers[j] = param.ranges[j].def;
 
         // ----------------------
-        j = Sf2ReverbLevel;
+        j = FluidSynthReverbLevel;
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
@@ -507,7 +507,7 @@ public:
         param_buffers[j] = param.ranges[j].def;
 
         // ----------------------
-        j = Sf2ReverbWidth;
+        j = FluidSynthReverbWidth;
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
@@ -523,7 +523,7 @@ public:
         param_buffers[j] = param.ranges[j].def;
 
         // ----------------------
-        j = Sf2ChorusOnOff;
+        j = FluidSynthChorusOnOff;
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
@@ -539,7 +539,7 @@ public:
         param_buffers[j] = param.ranges[j].def;
 
         // ----------------------
-        j = Sf2ChorusNr;
+        j = FluidSynthChorusNr;
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
@@ -555,7 +555,7 @@ public:
         param_buffers[j] = param.ranges[j].def;
 
         // ----------------------
-        j = Sf2ChorusLevel;
+        j = FluidSynthChorusLevel;
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
@@ -571,7 +571,7 @@ public:
         param_buffers[j] = param.ranges[j].def;
 
         // ----------------------
-        j = Sf2ChorusSpeedHz;
+        j = FluidSynthChorusSpeedHz;
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
@@ -587,7 +587,7 @@ public:
         param_buffers[j] = param.ranges[j].def;
 
         // ----------------------
-        j = Sf2ChorusDepthMs;
+        j = FluidSynthChorusDepthMs;
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
@@ -603,7 +603,7 @@ public:
         param_buffers[j] = param.ranges[j].def;
 
         // ----------------------
-        j = Sf2ChorusType;
+        j = FluidSynthChorusType;
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
@@ -619,7 +619,7 @@ public:
         param_buffers[j] = param.ranges[j].def;
 
         // ----------------------
-        j = Sf2Polyphony;
+        j = FluidSynthPolyphony;
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
@@ -635,7 +635,7 @@ public:
         param_buffers[j] = param.ranges[j].def;
 
         // ----------------------
-        j = Sf2Interpolation;
+        j = FluidSynthInterpolation;
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_INPUT;
@@ -651,7 +651,7 @@ public:
         param_buffers[j] = param.ranges[j].def;
 
         // ----------------------
-        j = Sf2VoiceCount;
+        j = FluidSynthVoiceCount;
         param.data[j].index  = j;
         param.data[j].rindex = j;
         param.data[j].type   = PARAMETER_OUTPUT;
@@ -743,27 +743,24 @@ public:
         callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
 #endif
 
-        if (init)
+        if (init && midiprog.count > 0)
         {
-            if (midiprog.count > 0)
+            fluid_synth_program_reset(f_synth);
+
+            for (i=0; i < 16 && i != 9; i++)
             {
-                fluid_synth_program_reset(f_synth);
-
-                for (i=0; i < 16 && i != 9; i++)
-                {
 #ifdef FLUIDSYNTH_VERSION_NEW_API
-                    fluid_synth_set_channel_type(f_synth, i, CHANNEL_TYPE_MELODIC);
+                fluid_synth_set_channel_type(f_synth, i, CHANNEL_TYPE_MELODIC);
 #endif
-                    fluid_synth_program_select(f_synth, i, f_id, midiprog.data[0].bank, midiprog.data[0].program);
-                }
-
-#ifdef FLUIDSYNTH_VERSION_NEW_API
-                fluid_synth_set_channel_type(f_synth, 9, CHANNEL_TYPE_DRUM);
-#endif
-                fluid_synth_program_select(f_synth, 9, f_id, 128, 0);
-
-                set_midi_program(0, false, false, false, true);
+                fluid_synth_program_select(f_synth, i, f_id, midiprog.data[0].bank, midiprog.data[0].program);
             }
+
+#ifdef FLUIDSYNTH_VERSION_NEW_API
+            fluid_synth_set_channel_type(f_synth, 9, CHANNEL_TYPE_DRUM);
+#endif
+            fluid_synth_program_select(f_synth, 9, f_id, 128, 0);
+
+            set_midi_program(0, false, false, false, true);
         }
     }
 
@@ -773,7 +770,7 @@ public:
     void process(float** ains_buffer, float** aouts_buffer, uint32_t nframes, uint32_t nframesOffset)
     {
         uint32_t i, k;
-        unsigned int midi_event_count = 0;
+        uint32_t midi_event_count = 0;
 
         double aouts_peak_tmp[2] = { 0.0 };
 
@@ -1154,7 +1151,7 @@ public:
             if (nframesOffset == 0 || ! m_active_before)
                 param.port_cout->initBuffer(cout_buffer);
 
-            k = Sf2VoiceCount;
+            k = FluidSynthVoiceCount;
             param_buffers[k] = rint(fluid_synth_get_active_voice_count(f_synth));
             fix_parameter_value(param_buffers[k], param.ranges[k]);
 
@@ -1199,29 +1196,29 @@ public:
     }
 
 private:
-    enum Sf2InputParameters {
-        Sf2ReverbOnOff    = 0,
-        Sf2ReverbRoomSize = 1,
-        Sf2ReverbDamp     = 2,
-        Sf2ReverbLevel    = 3,
-        Sf2ReverbWidth    = 4,
-        Sf2ChorusOnOff    = 5,
-        Sf2ChorusNr       = 6,
-        Sf2ChorusLevel    = 7,
-        Sf2ChorusSpeedHz  = 8,
-        Sf2ChorusDepthMs  = 9,
-        Sf2ChorusType     = 10,
-        Sf2Polyphony      = 11,
-        Sf2Interpolation  = 12,
-        Sf2VoiceCount     = 13,
-        Sf2ParametersMax  = 14
+    enum FluidSynthInputParameters {
+        FluidSynthReverbOnOff    = 0,
+        FluidSynthReverbRoomSize = 1,
+        FluidSynthReverbDamp     = 2,
+        FluidSynthReverbLevel    = 3,
+        FluidSynthReverbWidth    = 4,
+        FluidSynthChorusOnOff    = 5,
+        FluidSynthChorusNr       = 6,
+        FluidSynthChorusLevel    = 7,
+        FluidSynthChorusSpeedHz  = 8,
+        FluidSynthChorusDepthMs  = 9,
+        FluidSynthChorusType     = 10,
+        FluidSynthPolyphony      = 11,
+        FluidSynthInterpolation  = 12,
+        FluidSynthVoiceCount     = 13,
+        FluidSynthParametersMax  = 14
     };
 
     fluid_settings_t* f_settings;
     fluid_synth_t* f_synth;
     int f_id;
 
-    double param_buffers[Sf2ParametersMax];
+    double param_buffers[FluidSynthParametersMax];
     const char* m_label;
 };
 

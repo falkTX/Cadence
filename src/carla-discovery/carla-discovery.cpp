@@ -1150,25 +1150,10 @@ void do_linuxsampler_check(const char* filename, const char* stype)
 
     QFileInfo file(filename);
 
-    if (! file.exists())
-    {
-        DISCOVERY_OUT("error", "Requested file does not exist");
-        return;
-    }
-
-    if (! file.isFile())
-    {
-        DISCOVERY_OUT("error", "Requested filename is not a file");
-        return;
-    }
-
-    if (! file.isReadable())
-    {
-        DISCOVERY_OUT("error", "Requested file is not readable");
-        return;
-    }
-
-    const ScopedEngine engine(filename, stype);
+    if (file.exists() && file.isFile() && file.isReadable())
+        const ScopedEngine engine(filename, stype);
+    else
+        DISCOVERY_OUT("error", "Requested file is not valid or does not exist");
 
 #else
     (void)filename;
