@@ -82,6 +82,12 @@ carla-discovery-win32.exe.so: $(32BIT_OBJS)
 carla-discovery-win64.exe.so: $(64BIT_OBJS)
 	$(WINECXX) $^ $(WINE_BUILD_FLAGS) $(WINE_64BIT_FLAGS) $(WINE_LINK_FLAGS) -o carla-discovery-win64.exe
 
+../carla-lilv/carla_lilv_32bit.a:
+	$(MAKE) -C ../carla-lilv 32bit
+
+../carla-lilv/carla_lilv_64bit.a:
+	$(MAKE) -C ../carla-lilv 64bit
+
 # --------------------------------------------------------------
 
 clean:

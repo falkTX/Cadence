@@ -1,0 +1,50 @@
+[Desktop Entry]
+Name=Cadence
+GenericName=Cadence
+Comment=JACK Toolbox
+Exec=cadence
+Icon=cadence
+Terminal=false
+Type=Application
+Categories=AudioVideo;AudioEditing;Qt;
+X-Ayatana-Desktop-Shortcuts=Catia;Claudia;Carla;JackMeter;JackSettings;Logs;Render;XYController;
+
+[Catia Shortcut Group]
+Name=Catia
+Exec=catia
+TargetEnvironment=Unity
+
+[Claudia Shortcut Group]
+Name=Claudia
+Exec=claudia
+TargetEnvironment=Unity
+
+[Carla Shortcut Group]
+Name=Carla
+Exec=carla
+TargetEnvironment=Unity
+
+[JackMeter Shortcut Group]
+Name=JACK Meter
+Exec=cadence_jackmeter
+TargetEnvironment=Unity
+
+[JackSettings Shortcut Group]
+Name=JACK Settings
+Exec=cadence_jacksettings
+TargetEnvironment=Unity
+
+[Logs Shortcut Group]
+Name=Logs
+Exec=cadence_logs
+TargetEnvironment=Unity
+
+[Render Shortcut Group]
+Name=Render
+Exec=cadence_render
+TargetEnvironment=Unity
+
+[XYController Shortcut Group]
+Name=XY-Controller
+Exec=cadence_xycontroller
+TargetEnvironment=Unity

@@ -39,9 +39,6 @@
 #  else
 #    warning fluidsynth not available (no SF2 support)
 #  endif
-#endif
-
-#ifdef BUILD_NATIVE
 #  ifdef WANT_LINUXSAMPLER
 #    include "linuxsampler/EngineFactory.h"
 #  else

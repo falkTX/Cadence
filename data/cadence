@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Check if already running
+
+PROCS=`ps -ea -f | grep /share/cadence/src/cadence.py | grep python3`
+
+if [ x"$PROCS" != x"" ]; then
+
+  # One instance only
+  PROC=`echo "$PROCS" | head -n 1`
+
+  # Get PID
+  PID=`echo "$PROC" | awk '{printf$2}'`
+
+  # Last check, just to make sure
+  if [ x"$PID" != x"" ]; then
+
+    # Tell user about this
+    echo "Cadence already started, showing GUI now..."
+
+    # Send SIGUSR2, shows the GUI
+    kill -USR2 "$PID"
+
+    # Quit now
+    exit
+
+  fi
+
+fi
+
+
+if [ -f /usr/bin/python3 ]; then
+  PYTHON=/usr/bin/python3
+else
+  PYTHON=python
+fi
+
+# We only got here if not running yet
+INSTALL_PREFIX="X-PREFIX-X"
+exec $PYTHON $INSTALL_PREFIX/share/cadence/src/cadence.py "$@"
