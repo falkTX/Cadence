@@ -21,7 +21,7 @@ SOURCES = \
     ../dssi.cpp \
     ../lv2.cpp \
     ../vst.cpp \
-    ../sf2.cpp \
+    ../fluidsynth.cpp \
     ../lv2-rtmempool/rtmempool.c
 
 HEADERS = \
