@@ -33,12 +33,20 @@
 #include "dssi/dssi.h"
 #include "lv2_rdf.h"
 
-#ifdef WANT_FLUIDSYNTH
-#include <fluidsynth.h>
+#ifdef BUILD_NATIVE
+#  ifdef WANT_FLUIDSYNTH
+#    include <fluidsynth.h>
+#  else
+#    warning fluidsynth not available (no SF2 support)
+#  endif
 #endif
 
-#ifdef WANT_LINUXSAMPLER
-#include "linuxsampler/EngineFactory.h"
+#ifdef BUILD_NATIVE
+#  ifdef WANT_LINUXSAMPLER
+#    include "linuxsampler/EngineFactory.h"
+#  else
+#    warning linuxsampler not available (no GIG and SFZ support)
+#  endif
 #endif
 
 #define CARLA_BACKEND_NO_EXPORTS

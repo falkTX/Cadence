@@ -16,9 +16,20 @@ BUILD_FLAGS += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line 
 64BIT_FLAGS  = -m64
 LINK_FLAGS   = $(shell pkg-config --libs QtCore) $(LDFLAGS)
 
-ifneq ($(FLUIDSYNTH),)
+ifneq ($(NATIVE),)
+BUILD_FLAGS += -DBUILD_NATIVE
+HAVE_FLUIDSYNTH   = $(shell pkg-config --exists fluidsynth && echo true)
+HAVE_LINUXSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
+
+ifeq ($(HAVE_FLUIDSYNTH),true)
 BUILD_FLAGS += $(shell pkg-config --cflags fluidsynth) -DWANT_FLUIDSYNTH
 LINK_FLAGS  += $(shell pkg-config --libs fluidsynth)
+endif
+
+ifeq ($(HAVE_LINUXSAMPLER),true)
+BUILD_FLAGS += $(shell pkg-config --cflags linuxsampler) -DWANT_LINUXSAMPLER
+LINK_FLAGS  += $(shell pkg-config --libs linuxsampler)
+endif
 endif
 
 UNIX_BUILD_FLAGS = $(BUILD_FLAGS)
@@ -54,22 +65,22 @@ wine64: carla-discovery-win64.exe.so
 64BIT_OBJS = carla-discovery.cpp ../carla-lilv/carla_lilv_64bit.a
 
 carla-discovery-unix32: $(32BIT_OBJS)
-	$(CXX) $(32BIT_OBJS) $(UNIX_BUILD_FLAGS) $(UNIX_32BIT_FLAGS) $(UNIX_LINK_FLAGS) -o $@ && strip $@
+	$(CXX) $^ $(UNIX_BUILD_FLAGS) $(UNIX_32BIT_FLAGS) $(UNIX_LINK_FLAGS) -o $@ && strip $@
 
 carla-discovery-unix64: $(64BIT_OBJS)
-	$(CXX) $(64BIT_OBJS) $(UNIX_BUILD_FLAGS) $(UNIX_64BIT_FLAGS) $(UNIX_LINK_FLAGS) -o $@ && strip $@
+	$(CXX) $^ $(UNIX_BUILD_FLAGS) $(UNIX_64BIT_FLAGS) $(UNIX_LINK_FLAGS) -o $@ && strip $@
 
 carla-discovery-win32.exe: $(32BIT_OBJS)
-	$(CXX) $(32BIT_OBJS) $(WIN_BUILD_FLAGS) $(WIN_32BIT_FLAGS) $(WIN_LINK_FLAGS) -o $@
+	$(CXX) $^ $(WIN_BUILD_FLAGS) $(WIN_32BIT_FLAGS) $(WIN_LINK_FLAGS) -o $@
 
 carla-discovery-win64.exe: $(64BIT_OBJS)
-	$(CXX) $(64BIT_OBJS) $(WIN_BUILD_FLAGS) $(WIN_64BIT_FLAGS) $(WIN_LINK_FLAGS) -o $@
+	$(CXX) $^ $(WIN_BUILD_FLAGS) $(WIN_64BIT_FLAGS) $(WIN_LINK_FLAGS) -o $@
 
 carla-discovery-win32.exe.so: $(32BIT_OBJS)
-	$(WINECXX) $(32BIT_OBJS) $(WINE_BUILD_FLAGS) $(WINE_32BIT_FLAGS) $(WINE_LINK_FLAGS) -o carla-discovery-win32.exe && strip $@
+	$(WINECXX) $^ $(WINE_BUILD_FLAGS) $(WINE_32BIT_FLAGS) $(WINE_LINK_FLAGS) -o carla-discovery-win32.exe
 
 carla-discovery-win64.exe.so: $(64BIT_OBJS)
-	$(WINECXX) $(64BIT_OBJS) $(WINE_BUILD_FLAGS) $(WINE_64BIT_FLAGS) $(WINE_LINK_FLAGS) -o carla-discovery-win64.exe && strip $@
+	$(WINECXX) $^ $(WINE_BUILD_FLAGS) $(WINE_64BIT_FLAGS) $(WINE_LINK_FLAGS) -o carla-discovery-win64.exe
 
 # --------------------------------------------------------------
 

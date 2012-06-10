@@ -169,7 +169,7 @@ carla_bridge: carla_lilv
 
 carla_discovery:
 	$(MAKE) -C src/carla-lilv $(_arch_n)bit
-	$(MAKE) -C src/carla-discovery unix$(_arch_n) FLUIDSYNTH=1
+	$(MAKE) -C src/carla-discovery unix$(_arch_n) NATIVE=1
 
 carla_lilv:
 	$(MAKE) -C src/carla-lilv
