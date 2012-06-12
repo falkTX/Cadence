@@ -24,8 +24,11 @@
 
 #ifdef BUILD_BRIDGE
 #define OSC_SEND_ARGS
+#define OSC_HANDLE_ARGS
 #else
+class CarlaPlugin;
 #define OSC_SEND_ARGS OscData*,
+#define OSC_HANDLE_ARGS CarlaPlugin*,
 #endif
 
 struct OscData {
@@ -41,16 +44,23 @@ void osc_clear_data(OscData*);
 void osc_error_handler(int num, const char* msg, const char* path);
 int  osc_message_handler(const char* path, const char* types, lo_arg** argv, int argc, void* data, void* user_data);
 
+int osc_handle_configure(OSC_HANDLE_ARGS lo_arg** argv);
+int osc_handle_control(OSC_HANDLE_ARGS lo_arg** argv);
+int osc_handle_program(OSC_HANDLE_ARGS lo_arg** argv);
+int osc_handle_midi_program(OSC_HANDLE_ARGS lo_arg** argv);
+int osc_handle_midi(OSC_HANDLE_ARGS lo_arg** argv);
+#ifdef BUILD_BRIDGE
+int osc_handle_show();
+int osc_handle_hide();
+int osc_handle_quit();
+#endif
+
 void osc_send_configure(OSC_SEND_ARGS const char* key, const char* value);
 void osc_send_control(OSC_SEND_ARGS int control, double value);
 void osc_send_program(OSC_SEND_ARGS int program);
 void osc_send_midi_program(OSC_SEND_ARGS int bank, int program, bool);
 void osc_send_midi(OSC_SEND_ARGS uint8_t buf[4]);
-
-#ifdef BUILD_BRIDGE_UI
-void osc_send_update();
-void osc_send_exiting();
-#else
+#ifndef BUILD_BRIDGE
 void osc_send_show(OscData*);
 void osc_send_hide(OscData*);
 void osc_send_quit(OscData*);

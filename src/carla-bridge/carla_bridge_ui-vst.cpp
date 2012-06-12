@@ -15,9 +15,9 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_osc_includes.h"
 #include "carla_vst_includes.h"
 
+#include "carla_bridge_osc.h"
 #include "carla_bridge_ui.h"
 #include "carla_midi.h"
 

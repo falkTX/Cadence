@@ -22,7 +22,7 @@ LINK_FLAGS   = $(shell pkg-config --libs liblo QtCore)
 
 # --------------------------------------------------------------
 
-BUILD_PLUGIN_FLAGS = $(BUILD_FLAGS) $(shell pkg-config --cflags QtGui)
+BUILD_PLUGIN_FLAGS = $(BUILD_FLAGS) -DBUILD_BRIDGE_PLUGIN $(shell pkg-config --cflags QtGui)
 LINK_PLUGIN_FLAGS  = $(LINK_FLAGS) $(shell pkg-config --libs QtGui)
 
 UNIX_BUILD_FLAGS = $(BUILD_PLUGIN_FLAGS)

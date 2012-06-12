@@ -21,9 +21,9 @@
 #ifndef __LS_ENGINEFACTORY_H__
 #define __LS_ENGINEFACTORY_H__
 
-#include "linuxsampler/common/global.h"
-#include "linuxsampler/common/Exception.h"
-#include "linuxsampler/engines/Engine.h"
+#include <linuxsampler/common/global.h>
+#include <linuxsampler/common/Exception.h>
+#include <linuxsampler/engines/Engine.h>
 
 #include <set>
 #include <vector>

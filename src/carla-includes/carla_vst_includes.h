@@ -18,6 +18,8 @@
 #ifndef CARLA_VST_INCLUDES_H
 #define CARLA_VST_INCLUDES_H
 
+#include <cstdint>
+
 #define VST_FORCE_DEPRECATED 0
 #include "aeffectx.h"
 

@@ -20,20 +20,7 @@
 
 #include "carla_osc_includes.h"
 
-// common handlers
-int osc_handle_configure(lo_arg** argv);
-int osc_handle_control(lo_arg** argv);
-int osc_handle_program(lo_arg** argv);
-int osc_handle_midi_program(lo_arg** argv);
-int osc_handle_midi(lo_arg** argv);
-int osc_handle_show();
-int osc_handle_hide();
-int osc_handle_quit();
-
-#ifdef BUILD_BRIDGE_UI
-// ui-bridge only
-void osc_send_lv2_event_transfer(const char* type, const char* key, const char* value);
-#else
+#ifdef BUILD_BRIDGE_PLUGIN
 // plugin-bridge only
 void osc_send_bridge_ains_peak(int index, double value);
 void osc_send_bridge_aouts_peak(int index, double value);
@@ -49,6 +36,12 @@ void osc_send_bridge_param_ranges(int index, double def, double min, double max,
 void osc_send_bridge_program_info(int index, const char* name);
 void osc_send_bridge_midi_program_info(int index, int bank, int program, const char* label);
 void osc_send_bridge_update();
+#else
+// ui-bridge only
+void osc_send_update();
+void osc_send_exiting();
+//void osc_send_lv2_atom_transfer();
+void osc_send_lv2_event_transfer(const char* type, const char* key, const char* value);
 #endif
 
 #endif // CARLA_BRIDGE_OSC_H

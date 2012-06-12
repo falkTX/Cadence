@@ -904,6 +904,7 @@ public:
         for (uint32_t i=0; i < aout.count; i++)
             aouts_buffer[i] = (float*)aout.ports[i]->getBuffer();
 
+#ifndef BUILD_BRIDGE
         if (carla_options.proccess_hq)
         {
             float* ains_buffer2[ain.count];
@@ -921,6 +922,7 @@ public:
             }
         }
         else
+#endif
             process(ains_buffer, aouts_buffer, nframes);
     }
 #endif

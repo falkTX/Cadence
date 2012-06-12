@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# Makefile for Carla-Backend #
+# Makefile for carla-backend #
 # ------------------------------------- #
 # Created by falkTX
 #
@@ -7,24 +7,50 @@
 CC  ?= gcc
 CXX ?= g++
 
-CARLA_C_FLAGS    = -Wall -fPIC -I. -I../carla-includes $(CFLAGS)
-CARLA_CXX_FLAGS  = -Wall -std=c++0x -fPIC -I. -I../carla-includes `pkg-config --cflags jack fluidsynth liblo QtCore QtGui`
-CARLA_CXX_FLAGS += -DCARLA_BACKEND_NO_NAMESPACE -DCARLA_ENGINE_JACK $(CXXFLAGS)
-CARLA_CXX_FLAGS += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
-CARLA_CXX_FLAGS += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT -O2 -ffast-math -fomit-frame-pointer -fvisibility=hidden -mtune=generic -msse
-# CARLA_CXX_FLAGS += -DDEBUG -O0 -g
-CARLA_LINK_FLAGS = -shared -fPIC -ldl `pkg-config --libs jack fluidsynth linuxsampler liblo QtCore QtGui` $(LDFLAGS)
+BASE_FLAGS = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -Wall -I. -I../carla-includes
 
-OBJS = carla_backend.o carla_bridge.o carla_engine_jack.o carla_osc.o carla_shared.o carla_threads.o ladspa.o dssi.o lv2.o vst.o fluidsynth.o linuxsampler.o lv2-rtmempool/rtmempool.o
+HAVE_FLUIDSYNTH   = $(shell pkg-config --exists fluidsynth && echo true)
+HAVE_LINUXSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
 
+CARLA_C_FLAGS     = $(BASE_FLAGS) $(CFLAGS)
+
+CARLA_CXX_FLAGS   = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
+CARLA_CXX_FLAGS  += $(shell pkg-config --cflags jack liblo QtCore QtGui) -DCARLA_BACKEND_NO_NAMESPACE -DCARLA_ENGINE_JACK
+CARLA_CXX_FLAGS  += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT
+CARLA_CXX_FLAGS  += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
+
+CARLA_LD_FLAGS    = -shared -ldl $(LDFLAGS)
+CARLA_LD_FLAGS   += $(shell pkg-config --libs jack liblo QtCore QtGui)
+
+ifeq ($(HAVE_FLUIDSYNTH),true)
+CARLA_CXX_FLAGS  += $(shell pkg-config --cflags fluidsynth) -DWANT_FLUIDSYNTH
+CARLA_LD_FLAGS   += $(shell pkg-config --libs fluidsynth)
+endif
+
+ifeq ($(HAVE_LINUXSAMPLER),true)
+CARLA_CXX_FLAGS  += $(shell pkg-config --cflags linuxsampler) -DWANT_LINUXSAMPLER
+CARLA_LD_FLAGS   += $(shell pkg-config --libs linuxsampler)
+endif
+
+OBJS = \
+	carla_backend.o \
+	carla_bridge.o \
+	carla_engine_jack.o \
+	carla_osc.o \
+	carla_shared.o \
+	carla_threads.o \
+	ladspa.o dssi.o lv2.o vst.o fluidsynth.o linuxsampler.o \
+	lv2-rtmempool/rtmempool.o \
+	../carla-lilv/carla_lilv.a
+
+# --------------------------------------------------------------
 
 all: carla_backend.so
 
 carla_backend.so: $(OBJS)
-	$(CXX) $(OBJS) ../carla-lilv/carla_lilv.a $(CARLA_LINK_FLAGS) -o carla_backend.so
+	$(CXX) $^ $(CARLA_LD_FLAGS) -o $@ && strip $@
 
-carla_backend.a: $(OBJS)
-	$(CXX) $(OBJS) ../carla-lilv/carla_lilv.a -static $(CARLA_LINK_FLAGS) -o carla_backend.a
+# --------------------------------------------------------------
 
 .c.o:
 	$(CC) -c $< $(CARLA_C_FLAGS) -o $@

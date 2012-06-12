@@ -15,6 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
+#define CARLA_BACKEND_NO_EXPORTS
+#include "carla_backend.h"
 #include "carla_plugin.h"
 
 #include <QtGui/QApplication>

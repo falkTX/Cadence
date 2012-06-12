@@ -2,7 +2,7 @@
 
 QT = core gui
 
-CONFIG    = warn_on qt link_pkgconfig debug
+CONFIG    = debug link_pkgconfig qt warn_on
 PKGCONFIG = liblo
 
 TEMPLATE = app
@@ -16,15 +16,16 @@ SOURCES = \
 HEADERS = \
     ../carla_bridge_osc.h \
     ../carla_bridge_ui.h \
-    ../../carla/carla_midi.h \
-    ../../carla/lv2_rdf.h \
+    ../../carla-backend/carla_midi.h \
     ../../carla-includes/carla_includes.h \
+    ../../carla-includes/carla_lib_includes.h \
     ../../carla-includes/carla_osc_includes.h \
     ../../carla-includes/carla_vst_includes.h
 
 INCLUDEPATH = .. \
-    ../../carla \
-    ../../carla-includes
+    ../../carla-backend \
+    ../../carla-includes \
+    ../../carla-includes/vst
 
 TARGET  = carla-bridge-vst-x11
 

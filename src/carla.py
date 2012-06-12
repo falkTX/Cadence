@@ -2083,7 +2083,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         else:
             self.setWidgetColor(PALETTE_COLOR_NONE)
 
-        if (self.pinfo['hints'] & PLUGIN_IS_SYNTH):
+        if self.pinfo['hints'] & PLUGIN_IS_SYNTH:
             self.led_audio_in.setVisible(False)
         else:
             self.led_midi.setVisible(False)
@@ -3052,9 +3052,8 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
         if (build != BINARY_NATIVE):
             # Store object so we can return a pointer
-            if (self.m_bridge_info == None):
+            if self.m_bridge_info is None:
                 self.m_bridge_info = PluginBridgeInfo()
-            self.m_bridge_info.category  = plugin['category']
             self.m_bridge_info.hints     = plugin['hints']
             self.m_bridge_info.name      = plugin['name'].encode("utf-8")
             self.m_bridge_info.maker     = plugin['maker'].encode("utf-8")

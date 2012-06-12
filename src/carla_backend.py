@@ -458,7 +458,10 @@ def runCarlaDiscovery(itype, stype, filename, tool, isWine=False):
 
     command.append(tool)
     command.append(stype)
-    command.append('"%s"' % filename)
+    if AVLINUX_PY2BUILD:
+        command.append('"%s"' % filename)
+    else:
+        command.append(filename)
 
     if AVLINUX_PY2BUILD:
         try:

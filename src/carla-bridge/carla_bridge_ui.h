@@ -19,6 +19,7 @@
 #define CARLA_BRIDGE_UI_H
 
 #include "carla_includes.h"
+#include "carla_lib_includes.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -63,6 +64,7 @@ public:
     UiData(const char* ui_title)
     {
         m_lib = nullptr;
+        m_filename = nullptr;
         m_title = strdup(ui_title);
 
         for (unsigned int i=0; i < MAX_BRIDGE_MESSAGES; i++)
@@ -76,6 +78,8 @@ public:
 
     virtual ~UiData()
     {
+        if (m_filename)
+            free(m_filename);
         free(m_title);
     }
 
@@ -175,62 +179,35 @@ public:
 
     bool lib_open(const char* filename)
     {
-#ifdef Q_OS_WIN
-        m_lib = LoadLibraryA(filename);
-#else
-        m_lib = dlopen(filename, RTLD_NOW);
-#endif
+        m_lib = ::lib_open(filename);
+        m_filename = strdup(filename);
         return bool(m_lib);
     }
 
     bool lib_close()
     {
         if (m_lib)
-#ifdef Q_OS_WIN
-            return FreeLibrary((HMODULE)m_lib) != 0;
-#else
-            return dlclose(m_lib) != 0;
-#endif
-        else
-            return false;
+            return ::lib_close(m_lib);
+        return false;
     }
 
     void* lib_symbol(const char* symbol)
     {
         if (m_lib)
-#ifdef Q_OS_WIN
-            return (void*)GetProcAddress((HMODULE)m_lib, symbol);
-#else
-            return dlsym(m_lib, symbol);
-#endif
-        else
-            return nullptr;
+            return ::lib_symbol(m_lib, symbol);
+        return nullptr;
     }
 
-    const char* lib_error(const char* filename)
+    const char* lib_error()
     {
-#ifdef Q_OS_WIN
-        static char libError[2048];
-        memset(libError, 0, sizeof(char)*2048);
-
-        LPVOID winErrorString;
-        DWORD  winErrorCode = GetLastError();
-        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |  FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, winErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&winErrorString, 0, nullptr);
-
-        snprintf(libError, 2048, "%s: error code %i: %s", filename, winErrorCode, (const char*)winErrorString);
-        LocalFree(winErrorString);
-
-        return libError;
-#else
-        return dlerror();
-        (void)filename;
-#endif
+        return ::lib_error(m_filename ? m_filename : "");
     }
 
     // ---------------------------------------------------------------------
 
 private:
     void* m_lib;
+    char* m_filename;
     char* m_title;
     QMutex m_lock;
     QuequeBridgeMessage QuequeBridgeMessages[MAX_BRIDGE_MESSAGES];
