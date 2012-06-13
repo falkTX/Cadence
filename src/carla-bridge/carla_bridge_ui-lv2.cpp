@@ -36,13 +36,14 @@ const uint32_t lv2_feature_id_logs            = 1;
 const uint32_t lv2_feature_id_programs        = 2;
 const uint32_t lv2_feature_id_state_make_path = 3;
 const uint32_t lv2_feature_id_state_map_path  = 4;
-const uint32_t lv2_feature_id_uri_map         = 5;
-const uint32_t lv2_feature_id_urid_map        = 6;
-const uint32_t lv2_feature_id_urid_unmap      = 7;
-const uint32_t lv2_feature_id_ui_parent       = 8;
-const uint32_t lv2_feature_id_ui_port_map     = 9;
-const uint32_t lv2_feature_id_ui_resize       = 10;
-const uint32_t lv2_feature_count              = 11;
+const uint32_t lv2_feature_id_strict_bounds   = 5;
+const uint32_t lv2_feature_id_uri_map         = 6;
+const uint32_t lv2_feature_id_urid_map        = 7;
+const uint32_t lv2_feature_id_urid_unmap      = 8;
+const uint32_t lv2_feature_id_ui_parent       = 9;
+const uint32_t lv2_feature_id_ui_port_map     = 10;
+const uint32_t lv2_feature_id_ui_resize       = 11;
+const uint32_t lv2_feature_count              = 12;
 
 // pre-set uri[d] map ids
 const uint32_t CARLA_URI_MAP_ID_NULL          = 0;
@@ -150,6 +151,10 @@ public:
         features[lv2_feature_id_state_map_path]    = new LV2_Feature;
         features[lv2_feature_id_state_map_path]->URI  = LV2_STATE__mapPath;
         features[lv2_feature_id_state_map_path]->data = State_MapPath_Feature;
+
+        features[lv2_feature_id_strict_bounds]     = new LV2_Feature;
+        features[lv2_feature_id_strict_bounds]->URI  = LV2_PORT_PROPS__supportsStrictBounds;
+        features[lv2_feature_id_strict_bounds]->data = nullptr;
 
         features[lv2_feature_id_uri_map]           = new LV2_Feature;
         features[lv2_feature_id_uri_map]->URI      = LV2_URI_MAP_URI;

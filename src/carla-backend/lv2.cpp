@@ -2565,8 +2565,6 @@ public:
                             features[lv2_feature_id_worker]->URI      = LV2_WORKER__schedule;
                             features[lv2_feature_id_worker]->data     = Worker_Feature;
 
-                            //lv2_atom_forge_init(&atom_forge, URID_Map_Feature);
-
                             handle = descriptor->instantiate(descriptor, get_sample_rate(), rdf_descriptor->Bundle, features);
 
                             if (handle)
@@ -2578,8 +2576,6 @@ public:
                                 if (x_client->isOk())
                                 {
                                     // ----------------- GUI Stuff -------------------------------------------------------
-
-#if 1
                                     uint32_t UICount = rdf_descriptor->UICount;
 
                                     if (UICount > 0)
@@ -2593,14 +2589,14 @@ public:
                                             switch (rdf_descriptor->UIs[i].Type)
                                             {
                                             case LV2_UI_QT4:
-                                                if (is_ui_bridgeable(i))
+                                                if (is_ui_bridgeable(i) && carla_options.prefer_ui_bridges)
                                                     eQt4 = i;
                                                 else
                                                     iQt4 = i;
                                                 break;
 
                                             case LV2_UI_X11:
-                                                if (is_ui_bridgeable(i))
+                                                if (is_ui_bridgeable(i) && carla_options.prefer_ui_bridges)
                                                     eX11 = i;
                                                 else
                                                     iX11 = i;
@@ -2684,11 +2680,6 @@ public:
 
                                                                 if (osc_binary)
                                                                 {
-                                                                    // TESTING
-                                                                    quintptr address = (quintptr)&rdf_descriptor;
-                                                                    setenv("INSTANCE_ADDRESS", QString::number(address).toUtf8().constData(), 1);
-                                                                    qWarning("Sending Pointer %p " P_UINTPTR, &rdf_descriptor, address);
-
                                                                     gui.type = GUI_EXTERNAL_OSC;
                                                                     osc.thread = new CarlaPluginThread(this, CarlaPluginThread::PLUGIN_THREAD_LV2_GUI);
                                                                     osc.thread->setOscData(osc_binary, descriptor->URI, ui.descriptor->URI);
@@ -2804,7 +2795,6 @@ public:
 
                                     if (gui.type != GUI_NONE)
                                         m_hints |= PLUGIN_HAS_GUI;
-#endif
 
                                     return true;
                                 }

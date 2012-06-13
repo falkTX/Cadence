@@ -1753,64 +1753,64 @@ inline bool is_lv2_feature_supported(const char* uri)
 {
     if (strcmp(uri, LV2_CORE__hardRTCapable) == 0)
         return true;
-    else if (strcmp(uri, LV2_CORE__inPlaceBroken) == 0)
+    if (strcmp(uri, LV2_CORE__inPlaceBroken) == 0)
         return true;
-    else if (strcmp(uri, LV2_CORE__isLive) == 0)
+    if (strcmp(uri, LV2_CORE__isLive) == 0)
         return true;
-    else if (strcmp(uri, LV2_EVENT_URI) == 0)
+    if (strcmp(uri, LV2_EVENT_URI) == 0)
         return true;
-    else if (strcmp(uri, LV2_LOG__log) == 0)
+    if (strcmp(uri, LV2_LOG__log) == 0)
         return true;
-    else if (strcmp(uri, LV2_STATE__makePath) == 0)
+    if (strcmp(uri, LV2_PROGRAMS__Host) == 0)
         return true;
-    else if (strcmp(uri, LV2_STATE__mapPath) == 0)
+    if (strcmp(uri, LV2_RTSAFE_MEMORY_POOL_URI) == 0)
         return true;
-    else if (strcmp(uri, LV2_URI_MAP_URI) == 0)
+    if (strcmp(uri, LV2_STATE__makePath) == 0)
         return true;
-    else if (strcmp(uri, LV2_URID__map) == 0)
+    if (strcmp(uri, LV2_STATE__mapPath) == 0)
         return true;
-    else if (strcmp(uri, LV2_URID__unmap) == 0)
+    if (strcmp(uri, LV2_PORT_PROPS__supportsStrictBounds) == 0)
         return true;
-    else if (strcmp(uri, LV2_WORKER__schedule) == 0)
+    if (strcmp(uri, LV2_URI_MAP_URI) == 0)
         return true;
-    else if (strcmp(uri, LV2_PROGRAMS__Host) == 0)
+    if (strcmp(uri, LV2_URID__map) == 0)
         return true;
-    else if (strcmp(uri, LV2_RTSAFE_MEMORY_POOL_URI) == 0)
+    if (strcmp(uri, LV2_URID__unmap) == 0)
         return true;
-    else
-        return false;
+    if (strcmp(uri, LV2_WORKER__schedule) == 0)
+        return true;
+    return false;
 }
 
 inline bool is_lv2_ui_feature_supported(const char* uri)
 {
     if (is_lv2_feature_supported(uri))
         return true;
-    else if (strcmp(uri, LV2_DATA_ACCESS_URI) == 0)
+    if (strcmp(uri, LV2_DATA_ACCESS_URI) == 0)
         return true;
-    else if (strcmp(uri, LV2_INSTANCE_ACCESS_URI) == 0)
+    if (strcmp(uri, LV2_INSTANCE_ACCESS_URI) == 0)
         return true;
-    else if (strcmp(uri, LV2_UI__noUserResize) == 0)
+    if (strcmp(uri, LV2_UI__noUserResize) == 0)
         return true;
-    else if (strcmp(uri, LV2_UI__fixedSize) == 0)
+    if (strcmp(uri, LV2_UI__fixedSize) == 0)
         return true;
-    else if (strcmp(uri, LV2_UI__parent) == 0)
+    if (strcmp(uri, LV2_UI__parent) == 0)
         return true;
-    else if (strcmp(uri, LV2_UI__portMap) == 0)
+    if (strcmp(uri, LV2_UI__portMap) == 0)
         return true;
-    else if (strcmp(uri, LV2_UI__portSubscribe) == 0)
+    if (strcmp(uri, LV2_UI__portSubscribe) == 0)
         return false; // TODO
-    else if (strcmp(uri, LV2_UI__resize) == 0)
+    if (strcmp(uri, LV2_UI__resize) == 0)
         return true;
-    else if (strcmp(uri, LV2_UI__touch) == 0)
+    if (strcmp(uri, LV2_UI__touch) == 0)
         return false; // TODO
-    else if (strcmp(uri, LV2_UI_PREFIX "makeResident") == 0)
+    if (strcmp(uri, LV2_UI_PREFIX "makeResident") == 0)
         return true;
-    else if (strcmp(uri, LV2_EXTERNAL_UI_URI) == 0)
+    if (strcmp(uri, LV2_EXTERNAL_UI_URI) == 0)
         return true;
-    else if (strcmp(uri, LV2_EXTERNAL_UI_DEPRECATED_URI) == 0)
+    if (strcmp(uri, LV2_EXTERNAL_UI_DEPRECATED_URI) == 0)
         return true;
-    else
-        return false;
+    return false;
 }
 
 inline const char* lv2_get_ui_uri(int UiType)
