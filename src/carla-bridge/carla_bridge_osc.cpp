@@ -113,7 +113,7 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
     // Check if message is for this client
     if (strlen(path) <= client_name_len || strncmp(path+1, client_name, client_name_len) != 0)
     {
-        qWarning("osc_message_handler() - message not for this client -> '%s'' != '/%s/'", path, client_name);
+        qWarning("osc_message_handler() - message not for this client -> '%s' != '/%s/'", path, client_name);
         return 1;
     }
 
@@ -137,6 +137,8 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
     else if (strcmp(method, "/quit") == 0)
         return osc_handle_quit();
 #if BRIDGE_LV2_GTK2 || BRIDGE_LV2_QT4 || BRIDGE_LV2_X11
+    //else if (strcmp(method, "/lv2_atom_transfer") == 0)
+    //    return osc_handle_lv2_atom_transfer(argv);
     else if (strcmp(method, "/lv2_event_transfer") == 0)
         return osc_handle_lv2_event_transfer(argv);
 #endif
@@ -150,6 +152,11 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
         qWarning("Got unsupported OSC method '%s' on '%s'", method, path);
 
     return 1;
+
+    Q_UNUSED(types);
+    Q_UNUSED(argc);
+    Q_UNUSED(data);
+    Q_UNUSED(user_data);
 }
 
 // -------------------------------------------------------------------------
@@ -171,15 +178,15 @@ int osc_handle_configure(lo_arg** argv)
 
 int osc_handle_control(lo_arg** argv)
 {
-    int index   = argv[0]->i;
+    int rindex  = argv[0]->i;
     float value = argv[1]->f;
 
 #ifdef BUILD_BRIDGE_PLUGIN
     if (CarlaPlugins[0])
-        CarlaPlugins[0]->set_parameter_value_rindex(index, value, false, true, true);
+        CarlaPlugins[0]->set_parameter_value_by_rindex(rindex, value, false, true, true);
 #else
     if (ui)
-        ui->queque_message(BRIDGE_MESSAGE_PARAMETER, index, 0, value);
+        ui->queque_message(BRIDGE_MESSAGE_PARAMETER, rindex, 0, value);
 #endif
 
     return 0;
@@ -192,7 +199,7 @@ int osc_handle_program(lo_arg** argv)
     if (index >= 0)
     {
 #ifdef BUILD_BRIDGE_PLUGIN
-        if (CarlaPlugins[0]) // TODO - asserts in plugin code
+        if (CarlaPlugins[0] && index < CarlaPlugins[0]->prog_count())
             CarlaPlugins[0]->set_program(index, false, true, true, true);
 #else
         if (ui)
@@ -212,7 +219,7 @@ int osc_handle_midi_program(lo_arg** argv)
     {
 #ifdef BUILD_BRIDGE_PLUGIN
         if (CarlaPlugins[0])
-            CarlaPlugins[0]->set_midi_program_full(bank, program, false, true, true, true);
+            CarlaPlugins[0]->set_midi_program_by_id(bank, program, false, true, true, true);
 #else
         if (ui)
             ui->queque_message(BRIDGE_MESSAGE_MIDI_PROGRAM, bank, program, 0.0);

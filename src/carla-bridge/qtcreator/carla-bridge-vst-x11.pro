@@ -5,6 +5,7 @@ QT = core gui
 CONFIG    = debug link_pkgconfig qt warn_on
 PKGCONFIG = liblo
 
+TARGET   = carla-bridge-vst-x11
 TEMPLATE = app
 VERSION  = 0.5.0
 
@@ -26,8 +27,6 @@ INCLUDEPATH = .. \
     ../../carla-backend \
     ../../carla-includes \
     ../../carla-includes/vst
-
-TARGET  = carla-bridge-vst-x11
 
 DEFINES = BUILD_BRIDGE BUILD_BRIDGE_UI BRIDGE_VST_X11
 

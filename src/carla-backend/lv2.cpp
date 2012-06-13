@@ -3410,18 +3410,6 @@ private:
     QVector<const char*> custom_uri_ids;
 };
 
-int osc_handle_lv2_event_transfer(CarlaPlugin* plugin, lo_arg** argv)
-{
-    Lv2Plugin* lv2plugin = (Lv2Plugin*)plugin;
-
-    const char* type  = (const char*)&argv[0]->s;
-    const char* key   = (const char*)&argv[1]->s;
-    const char* value = (const char*)&argv[2]->s;
-    lv2plugin->handle_event_transfer(type, key, value);
-
-    return 0;
-}
-
 short add_plugin_lv2(const char* filename, const char* label)
 {
     qDebug("add_plugin_lv2(%s, %s)", filename, label);
@@ -3454,3 +3442,21 @@ short add_plugin_lv2(const char* filename, const char* label)
 }
 
 CARLA_BACKEND_END_NAMESPACE
+
+// -------------------------------------------------------------------------------------------------------------------
+
+#ifndef CARLA_BACKEND_NO_NAMESPACE
+typedef CarlaBackend::Lv2Plugin Lv2Plugin;
+#endif
+
+int osc_handle_lv2_event_transfer(CarlaPlugin* plugin, lo_arg** argv)
+{
+    Lv2Plugin* lv2plugin = (Lv2Plugin*)plugin;
+
+    const char* type  = (const char*)&argv[0]->s;
+    const char* key   = (const char*)&argv[1]->s;
+    const char* value = (const char*)&argv[2]->s;
+    lv2plugin->handle_event_transfer(type, key, value);
+
+    return 0;
+}

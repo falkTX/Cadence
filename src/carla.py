@@ -3300,8 +3300,6 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             else:
                 plugin = None
 
-            print(plugin, ptype, len(x_plugins), plugin_l)
-
             if plugin:
                 btype = plugin['build']
                 ptype = plugin['type']

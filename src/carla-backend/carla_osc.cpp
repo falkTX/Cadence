@@ -134,7 +134,7 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
         // Check if message is for this client
         if (strlen(path) <= client_name_len || strncmp(path+1, client_name, client_name_len) != 0)
         {
-            qWarning("osc_message_handler() - message not for this client -> '%s'' != '/%s/'", path, client_name);
+            qWarning("osc_message_handler() - message not for this client -> '%s' != '/%s/'", path, client_name);
             return 1;
         }
     }
@@ -186,8 +186,10 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
         return osc_handle_exiting(plugin);
 
     // Plugin-specific methods
-    //    else if (strcmp(method, "lv2_event_transfer") == 0)
-    //        return osc_handle_lv2_event_transfer(plugin, argv);
+    //else if (strcmp(method, "/lv2_atom_transfer") == 0)
+    //    return osc_handle_lv2_atom_transfer(plugin, argv);
+    else if (strcmp(method, "/lv2_event_transfer") == 0)
+        return osc_handle_lv2_event_transfer(plugin, argv);
 
     // Plugin Bridges
     if (plugin->hints() & PLUGIN_IS_BRIDGE)
@@ -256,73 +258,6 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
 
 // -------------------------------------------------------------------------------------------------------------------
 
-int osc_handle_register(lo_arg** argv, lo_address source)
-{
-    qDebug("osc_handle_register()");
-
-    if (global_osc_data.path == nullptr)
-    {
-        const char* url = (const char*)&argv[0]->s;
-        const char* host;
-        const char* port;
-
-        qDebug("osc_handle_register() - OSC backend registered to %s", url);
-
-        host = lo_address_get_hostname(source);
-        port = lo_address_get_port(source);
-        global_osc_data.source = lo_address_new(host, port);
-
-        host = lo_url_get_hostname(url);
-        port = lo_url_get_port(url);
-        global_osc_data.target = lo_address_new(host, port);
-
-        global_osc_data.path = lo_url_get_path(url);
-
-        free((void*)host);
-        free((void*)port);
-
-        for (unsigned short i=0; i<MAX_PLUGINS; i++)
-        {
-            //CarlaPlugin* plugin = CarlaPlugins[i];
-            //if (plugin && plugin->enabled())
-            //    osc_new_plugin(plugin);
-        }
-
-        return 0;
-    }
-    else
-        qWarning("osc_handle_register() - OSC backend already registered to %s", global_osc_data.path);
-
-    return 1;
-}
-
-int osc_handle_unregister()
-{
-    qDebug("osc_handle_unregister()");
-
-    if (global_osc_data.path)
-    {
-        osc_clear_data(&global_osc_data);
-        return 0;
-    }
-    else
-        qWarning("osc_handle_unregister() - OSC backend is not registered yet");
-
-    return 1;
-}
-
-// -------------------------------------------------------------------------------------------------------------------
-
-int osc_handle_update(CarlaPlugin* plugin, lo_arg** argv, lo_address source)
-{
-    qDebug("osc_handle_update()");
-
-    const char* url = (const char*)&argv[0]->s;
-    plugin->update_osc_data(source, url);
-
-    return 0;
-}
-
 int osc_handle_configure(CarlaPlugin* plugin, lo_arg** argv)
 {
     qDebug("osc_handle_configure()");
@@ -336,24 +271,14 @@ int osc_handle_configure(CarlaPlugin* plugin, lo_arg** argv)
 
 int osc_handle_control(CarlaPlugin* plugin, lo_arg** argv)
 {
-    //qDebug("osc_handle_control()");
+#if DEBUG
+    qDebug("osc_handle_control()");
+#endif
 
-    int32_t rindex = argv[0]->i;
-    double value   = argv[1]->f;
+    int rindex  = argv[0]->i;
+    float value = argv[1]->f;
 
-    int32_t parameter_id = -1;
-
-    for (uint32_t i=0; i < plugin->param_count(); i++)
-    {
-        if (plugin->param_data(i)->rindex == rindex)
-        {
-            parameter_id = i;
-            break;
-        }
-    }
-
-    if (parameter_id >= 0)
-        plugin->set_parameter_value(parameter_id, value, false, true, true);
+    plugin->set_parameter_value_by_rindex(rindex, value, false, true, true);
 
     return 0;
 }
@@ -367,23 +292,10 @@ int osc_handle_program(CarlaPlugin* plugin, lo_arg** argv)
         uint32_t bank_id    = argv[0]->i;
         uint32_t program_id = argv[1]->i;
 
-        MidiProgramInfo midiprog = { false, 0, 0, nullptr };
-
-        for (uint32_t i=0; i < plugin->midiprog_count(); i++)
-        {
-            plugin->get_midi_program_info(&midiprog, i);
-            if (midiprog.bank == bank_id && midiprog.program == program_id)
-            {
-                plugin->set_midi_program(i, false, true, true, true);
-                return 0;
-            }
-        }
-
-        qCritical("osc_handle_program() - failed to find respective bank/program '%i', '%i'", bank_id, program_id);
+        plugin->set_midi_program_by_id(bank_id, program_id, false, true, true, true);
     }
     else
     {
-
         uint32_t program_id = argv[0]->i;
 
         if (program_id < plugin->prog_count())
@@ -391,8 +303,8 @@ int osc_handle_program(CarlaPlugin* plugin, lo_arg** argv)
             plugin->set_program(program_id, false, true, true, true);
             return 0;
         }
-        else
-            qCritical("osc_handle_program() - program_id '%i' out of bounds", program_id);
+
+        qCritical("osc_handle_program() - program_id '%i' out of bounds", program_id);
     }
 
     return 1;
@@ -428,6 +340,74 @@ int osc_handle_midi(CarlaPlugin* plugin, lo_arg **argv)
 
     qWarning("osc_handle_midi() - recived midi when plugin has no midi inputs");
     return 1;
+}
+
+// -------------------------------------------------------------------------------------------------------------------
+
+int osc_handle_register(lo_arg** argv, lo_address source)
+{
+    qDebug("osc_handle_register()");
+
+    if (! global_osc_data.path)
+    {
+        const char* url = (const char*)&argv[0]->s;
+        const char* host;
+        const char* port;
+
+        qDebug("osc_handle_register() - OSC backend registered to %s", url);
+
+        host = lo_address_get_hostname(source);
+        port = lo_address_get_port(source);
+        global_osc_data.source = lo_address_new(host, port);
+
+        host = lo_url_get_hostname(url);
+        port = lo_url_get_port(url);
+        global_osc_data.path   = lo_url_get_path(url);
+        global_osc_data.target = lo_address_new(host, port);
+
+        free((void*)host);
+        free((void*)port);
+
+        for (unsigned short i=0; i<MAX_PLUGINS; i++)
+        {
+            CarlaPlugin* plugin = CarlaPlugins[i];
+            if (plugin && plugin->enabled())
+                plugin->osc_register_new();
+        }
+
+        return 0;
+    }
+    else
+        qWarning("osc_handle_register() - OSC backend already registered to %s", global_osc_data.path);
+
+    return 1;
+}
+
+int osc_handle_unregister()
+{
+    qDebug("osc_handle_unregister()");
+
+    if (global_osc_data.path)
+    {
+        osc_clear_data(&global_osc_data);
+        return 0;
+    }
+    else
+        qWarning("osc_handle_unregister() - OSC backend is not registered yet");
+
+    return 1;
+}
+
+// -------------------------------------------------------------------------------------------------------------------
+
+int osc_handle_update(CarlaPlugin* plugin, lo_arg** argv, lo_address source)
+{
+    qDebug("osc_handle_update()");
+
+    const char* url = (const char*)&argv[0]->s;
+    plugin->update_osc_data(source, url);
+
+    return 0;
 }
 
 int osc_handle_exiting(CarlaPlugin* plugin)
@@ -568,18 +548,6 @@ void osc_send_configure(OscData* osc_data, const char* key, const char* value)
     }
 }
 
-void osc_send_lv2_event_transfer(OscData* osc_data, const char* type, const char* key, const char* value)
-{
-    qDebug("osc_send_lv2_event_transfer(%s, %s, %s)", type, key, value);
-    if (osc_data->target)
-    {
-        char target_path[strlen(osc_data->path)+20];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/lv2_event_transfer");
-        lo_send(osc_data->target, target_path, "sss", type, key, value);
-    }
-}
-
 void osc_send_control(OscData* osc_data, int index, double value)
 {
     qDebug("osc_send_control(%i, %f)", index, value);
@@ -649,6 +617,22 @@ void osc_send_quit(OscData* osc_data)
         strcpy(target_path, osc_data->path);
         strcat(target_path, "/quit");
         lo_send(osc_data->target, target_path, "");
+    }
+}
+
+// -------------------------------------------------------------------------------------------------------------------
+
+//void osc_send_lv2_atom_transfer(OscData* osc_data, )
+
+void osc_send_lv2_event_transfer(OscData* osc_data, const char* type, const char* key, const char* value)
+{
+    qDebug("osc_send_lv2_event_transfer(%s, %s, %s)", type, key, value);
+    if (osc_data->target)
+    {
+        char target_path[strlen(osc_data->path)+20];
+        strcpy(target_path, osc_data->path);
+        strcat(target_path, "/lv2_event_transfer");
+        lo_send(osc_data->target, target_path, "sss", type, key, value);
     }
 }
 

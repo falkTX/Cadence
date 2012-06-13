@@ -19,13 +19,13 @@
 #define CARLA_OSC_H
 
 #include "carla_osc_includes.h"
-#include "carla_backend.h"
 
 int osc_handle_register(lo_arg** argv, lo_address source);
 int osc_handle_unregister();
 
 int osc_handle_update(CarlaPlugin* plugin, lo_arg** argv, lo_address source);
 int osc_handle_exiting(CarlaPlugin* plugin);
+//int osc_handle_lv2_atom_transfer(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_lv2_event_transfer(CarlaPlugin* plugin, lo_arg** argv);
 
 int osc_handle_set_active(CarlaPlugin* plugin, lo_arg** argv);
