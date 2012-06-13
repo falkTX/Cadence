@@ -5,6 +5,7 @@ QT = core
 CONFIG    = debug link_pkgconfig qt warn_on
 PKGCONFIG = liblo gtk+-2.0
 
+TARGET   = carla-bridge-lv2-gtk2
 TEMPLATE = app
 VERSION  = 0.5.0
 
@@ -25,8 +26,6 @@ HEADERS = \
 INCLUDEPATH = .. \
     ../../carla-backend \
     ../../carla-includes
-
-TARGET  = carla-bridge-lv2-gtk2
 
 DEFINES = BUILD_BRIDGE BUILD_BRIDGE_UI BRIDGE_LV2_GTK2
 

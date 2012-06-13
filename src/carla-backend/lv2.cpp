@@ -2990,12 +2990,12 @@ public:
 
                 CustomDataType dtype;
 
-                if (type == CARLA_URI_MAP_ID_ATOM_STRING)
-                    dtype = CUSTOM_DATA_STRING;
+                if (type == CARLA_URI_MAP_ID_ATOM_CHUNK)
+                    dtype = CUSTOM_DATA_CHUNK;
                 else if (type == CARLA_URI_MAP_ID_ATOM_PATH)
                     dtype = CUSTOM_DATA_PATH;
-                else if (type == CARLA_URI_MAP_ID_ATOM_CHUNK)
-                    dtype = CUSTOM_DATA_CHUNK;
+                else if (type == CARLA_URI_MAP_ID_ATOM_STRING)
+                    dtype = CUSTOM_DATA_STRING;
                 else if (type >= CARLA_URI_MAP_ID_COUNT)
                     dtype = CUSTOM_DATA_BINARY;
                 else

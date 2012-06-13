@@ -224,10 +224,10 @@ install:
 		data/claudia \
 		data/claudia-launcher \
 		data/carla \
-		src/carla-bridge-ui/carla-bridge-lv2-gtk2 \
-		src/carla-bridge-ui/carla-bridge-lv2-qt4 \
-		src/carla-bridge-ui/carla-bridge-lv2-x11 \
-		src/carla-bridge-ui/carla-bridge-vst-x11 \
+		src/carla-bridge/carla-bridge-lv2-gtk2 \
+		src/carla-bridge/carla-bridge-lv2-qt4 \
+		src/carla-bridge/carla-bridge-lv2-x11 \
+		src/carla-bridge/carla-bridge-vst-x11 \
 		src/carla-discovery/carla-discovery-* \
 		$(DESTDIR)$(PREFIX)/bin/
 
@@ -276,7 +276,7 @@ install:
 
 	# Install main code
 	install -m 755 src/*.py $(DESTDIR)$(PREFIX)/share/cadence/src/
-	install -m 755 src/carla/*.so $(DESTDIR)$(PREFIX)/lib/carla/
+	install -m 755 src/carla-backend/*.so $(DESTDIR)$(PREFIX)/lib/carla/
 
 	# Install addtional stuff
 	install -m 644 data/pulse2jack-data/* $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/

@@ -25,12 +25,6 @@ int osc_handle_register(lo_arg** argv, lo_address source);
 int osc_handle_unregister();
 
 int osc_handle_update(CarlaPlugin* plugin, lo_arg** argv, lo_address source);
-int osc_handle_configure(CarlaPlugin* plugin, lo_arg** argv);
-int osc_handle_control(CarlaPlugin* plugin, lo_arg** argv);
-int osc_handle_program(CarlaPlugin* plugin, lo_arg** argv);
-int osc_handle_program_as_midi(CarlaPlugin* plugin, lo_arg** argv);
-int osc_handle_midi_program(CarlaPlugin* plugin, lo_arg** argv);
-int osc_handle_midi(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_exiting(CarlaPlugin* plugin);
 int osc_handle_lv2_event_transfer(CarlaPlugin* plugin, lo_arg** argv);
 

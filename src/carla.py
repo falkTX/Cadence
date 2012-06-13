@@ -3155,19 +3155,39 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             unique_id = x_save_state_dict['UniqueID']
 
             if ptype == "LADSPA":
-                if not x_ladspa_plugins: x_ladspa_plugins = toList(self.settings_db.value("Plugins/LADSPA", []))
+                if not x_ladspa_plugins:
+                    x_ladspa_plugins  = []
+                    x_ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_unix32", []))
+                    x_ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_unix64", []))
+                    x_ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_win32", []))
+                    x_ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_win64", []))
                 x_plugins = x_ladspa_plugins
 
             elif ptype == "DSSI":
-                if not x_dssi_plugins: x_dssi_plugins = toList(self.settings_db.value("Plugins/DSSI", []))
+                if not x_dssi_plugins:
+                    x_dssi_plugins  = []
+                    x_dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_unix32", []))
+                    x_dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_unix64", []))
+                    x_dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_win32", []))
+                    x_dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_win64", []))
                 x_plugins = x_dssi_plugins
 
             elif ptype == "LV2":
-                if not x_lv2_plugins: x_lv2_plugins = toList(self.settings_db.value("Plugins/LV2", []))
+                if not x_lv2_plugins:
+                    x_lv2_plugins  = []
+                    x_lv2_plugins += toList(self.settings_db.value("Plugins/LV2_unix32", []))
+                    x_lv2_plugins += toList(self.settings_db.value("Plugins/LV2_unix64", []))
+                    x_lv2_plugins += toList(self.settings_db.value("Plugins/LV2_win32", []))
+                    x_lv2_plugins += toList(self.settings_db.value("Plugins/LV2_win64", []))
                 x_plugins = x_lv2_plugins
 
             elif ptype == "VST":
-                if not x_vst_plugins: x_vst_plugins = toList(self.settings_db.value("Plugins/VST", []))
+                if not x_vst_plugins:
+                    x_vst_plugins  = []
+                    x_vst_plugins += toList(self.settings_db.value("Plugins/VST_unix32", []))
+                    x_vst_plugins += toList(self.settings_db.value("Plugins/VST_unix64", []))
+                    x_vst_plugins += toList(self.settings_db.value("Plugins/VST_win32", []))
+                    x_vst_plugins += toList(self.settings_db.value("Plugins/VST_win64", []))
                 x_plugins = x_vst_plugins
 
             elif ptype == "GIG":
@@ -3183,6 +3203,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
                 x_plugins = x_sfz_plugins
 
             else:
+                print("load_project() - ptype '%s' not recognized", ptype)
                 x_failed_plugins.append(x_save_state_dict['Name'])
                 continue
 
@@ -3279,6 +3300,8 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             else:
                 plugin = None
 
+            print(plugin, ptype, len(x_plugins), plugin_l)
+
             if plugin:
                 btype = plugin['build']
                 ptype = plugin['type']
@@ -3300,8 +3323,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         if len(x_failed_plugins) > 0:
             text = self.tr("The following plugins were not found or failed to initialize:\n")
             for plugin in x_failed_plugins:
-                text += plugin
-                text += "\n"
+                text += " - %s\n" % plugin
 
             self.statusBar().showMessage("State file loaded with errors")
             QMessageBox.critical(self, self.tr("Error"), text)

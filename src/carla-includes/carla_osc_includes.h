@@ -26,7 +26,14 @@
 #define OSC_SEND_ARGS
 #define OSC_HANDLE_ARGS
 #else
+#ifdef CARLA_BACKEND_NO_NAMESPACE
 class CarlaPlugin;
+#else
+namespace CarlaBackend {
+class CarlaPlugin;
+}
+typedef CarlaBackend::CarlaPlugin CarlaPlugin;
+#endif
 #define OSC_SEND_ARGS OscData*,
 #define OSC_HANDLE_ARGS CarlaPlugin*,
 #endif

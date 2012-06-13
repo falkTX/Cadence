@@ -18,19 +18,19 @@
 #include "carla_bridge_osc.h"
 #include "carla_midi.h"
 
-#include <cstring>
+#include <QtCore/QString>
 
 #ifdef BUILD_BRIDGE_PLUGIN
 #include "carla_plugin.h"
 extern void plugin_bridge_show_gui(bool yesno);
 extern void plugin_bridge_quit();
-static const size_t plugin_name_len  = 14;
-static const char* const plugin_name = "plugin-bridge";
+static const size_t client_name_len  = 13;
+static const char* const client_name = "plugin-bridge";
 #else
 #include "carla_bridge_ui.h"
 extern int osc_handle_lv2_event_transfer(lo_arg** argv);
-static const size_t plugin_name_len  = 14;
-static const char* const plugin_name = "lv2-ui-bridge";
+static const size_t client_name_len  = 13;
+static const char* const client_name = "lv2-ui-bridge";
 #endif
 
 const char* global_osc_server_path = nullptr;
@@ -56,14 +56,9 @@ void osc_init(const char* osc_url)
     global_osc_server_thread = lo_server_thread_new(nullptr, osc_error_handler);
 
     // get our full OSC server path
-    char* this_thread_path = lo_server_thread_get_url(global_osc_server_thread);
-
-    char osc_path_tmp[strlen(this_thread_path) + plugin_name_len + 1];
-    strcpy(osc_path_tmp, this_thread_path);
-    strcat(osc_path_tmp, plugin_name);
-    free(this_thread_path);
-
-    global_osc_server_path = strdup(osc_path_tmp);
+    char* osc_thread_path = lo_server_thread_get_url(global_osc_server_thread);
+    global_osc_server_path = strdup(QString("%1%2").arg(osc_thread_path).arg(client_name).toUtf8().constData());
+    free(osc_thread_path);
 
     // register message handler and start OSC thread
     lo_server_thread_add_method(global_osc_server_thread, nullptr, nullptr, osc_message_handler, nullptr);
@@ -111,35 +106,38 @@ void osc_error_handler(int num, const char* msg, const char* path)
 
 int osc_message_handler(const char* path, const char* types, lo_arg** argv, int argc, void* data, void* user_data)
 {
+#if DEBUG
     qDebug("osc_message_handler(%s, %s, %p, %i, %p, %p)", path, types, argv, argc, data, user_data);
+#endif
 
-    if (strlen(path) < plugin_name_len + 3)
+    // Check if message is for this client
+    if (strlen(path) <= client_name_len || strncmp(path+1, client_name, client_name_len) != 0)
     {
-        qWarning("Got invalid OSC path '%s'", path);
+        qWarning("osc_message_handler() - message not for this client -> '%s'' != '/%s/'", path, client_name);
         return 1;
     }
 
     char method[32] = { 0 };
-    memcpy(method, path + plugin_name_len + 2, 32);
+    memcpy(method, path + client_name_len + 1, 32);
 
-    if (strcmp(method, "configure") == 0)
+    if (strcmp(method, "/configure") == 0)
         return osc_handle_configure(argv);
-    else if (strcmp(method, "control") == 0)
+    else if (strcmp(method, "/control") == 0)
         return osc_handle_control(argv);
-    else if (strcmp(method, "program") == 0)
+    else if (strcmp(method, "/program") == 0)
         return osc_handle_program(argv);
-    else if (strcmp(method, "midi_program") == 0)
+    else if (strcmp(method, "/midi_program") == 0)
         return osc_handle_midi_program(argv);
-    else if (strcmp(method, "midi") == 0)
+    else if (strcmp(method, "/midi") == 0)
         return osc_handle_midi(argv);
-    else if (strcmp(method, "show") == 0)
+    else if (strcmp(method, "/show") == 0)
         return osc_handle_show();
-    else if (strcmp(method, "hide") == 0)
+    else if (strcmp(method, "/hide") == 0)
         return osc_handle_hide();
-    else if (strcmp(method, "quit") == 0)
+    else if (strcmp(method, "/quit") == 0)
         return osc_handle_quit();
 #if BRIDGE_LV2_GTK2 || BRIDGE_LV2_QT4 || BRIDGE_LV2_X11
-    else if (strcmp(method, "lv2_event_transfer") == 0)
+    else if (strcmp(method, "/lv2_event_transfer") == 0)
         return osc_handle_lv2_event_transfer(argv);
 #endif
 #if 0

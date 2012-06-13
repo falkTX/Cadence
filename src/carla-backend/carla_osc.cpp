@@ -20,11 +20,9 @@
 
 #include <iostream>
 
-#ifndef CARLA_BACKEND_NO_NAMESPACE
-using namespace CarlaBackend;
-#endif
+size_t client_name_len  = 0;
+const char* client_name = nullptr;
 
-size_t client_name_len = 0;
 const char* global_osc_server_path = nullptr;
 lo_server_thread global_osc_server_thread = nullptr;
 OscData global_osc_data = { nullptr, nullptr, nullptr };
@@ -45,31 +43,30 @@ CARLA_BACKEND_END_NAMESPACE
 // End of exported symbols (API)
 // -------------------------------------------------------------------------------------------------------------------
 
-void osc_init(const char*)
+#ifndef CARLA_BACKEND_NO_NAMESPACE
+using namespace CarlaBackend;
+#endif
+
+void osc_init(const char* host_client_name)
 {
-    qDebug("osc_init()");
-    const char* host_client_name = get_host_client_name();
-    client_name_len = strlen(host_client_name);
+    qDebug("osc_init(%s)", host_client_name);
+    client_name = strdup(host_client_name);
+    client_name_len = strlen(client_name);
 
     // create new OSC thread
     global_osc_server_thread = lo_server_thread_new(nullptr, osc_error_handler);
 
     // get our full OSC server path
     char* osc_thread_path = lo_server_thread_get_url(global_osc_server_thread);
-
-    char osc_path_tmp[strlen(osc_thread_path) + client_name_len + 1];
-    strcpy(osc_path_tmp, osc_thread_path);
-    strcat(osc_path_tmp, host_client_name);
+    global_osc_server_path = strdup(QString("%1%2").arg(osc_thread_path).arg(client_name).toUtf8().constData());
     free(osc_thread_path);
-
-    global_osc_server_path = strdup(osc_path_tmp);
 
     // register message handler and start OSC thread
     lo_server_thread_add_method(global_osc_server_thread, nullptr, nullptr, osc_message_handler, nullptr);
     lo_server_thread_start(global_osc_server_thread);
 
-    // debug our server path just to make sure everything is ok
-    qDebug("Carla OSC -> %s\n", global_osc_server_path);
+    // print our server path just to make sure everything is ok
+    printf("Carla-Backend OSC -> %s\n", global_osc_server_path);
 }
 
 void osc_close()
@@ -84,6 +81,10 @@ void osc_close()
 
     free((void*)global_osc_server_path);
     global_osc_server_path = nullptr;
+
+    free((void*)client_name);
+    client_name = nullptr;
+    client_name_len = 0;
 }
 
 void osc_clear_data(OscData* osc_data)
@@ -113,25 +114,27 @@ void osc_error_handler(int num, const char* msg, const char* path)
 
 int osc_message_handler(const char* path, const char* types, lo_arg** argv, int argc, void* data, void* user_data)
 {
-    //qDebug("osc_message_handler(%s, %s, %p, %i, %p, %p)", path, types, argv, argc, data, user_data);
+#if DEBUG
+    qDebug("osc_message_handler(%s, %s, %p, %i, %p, %p)", path, types, argv, argc, data, user_data);
+#endif
 
     // Initial path check
-    if (strcmp(path, "register") == 0)
+    if (strcmp(path, "/register") == 0)
     {
         lo_message message = lo_message(data);
         lo_address source  = lo_message_get_source(message);
         return osc_handle_register(argv, source);
     }
-    else if (strcmp(path, "unregister") == 0)
+    else if (strcmp(path, "/unregister") == 0)
     {
         return osc_handle_unregister();
     }
     else
     {
         // Check if message is for this client
-        if (strncmp(path+1, get_host_client_name(), client_name_len) != 0 && path[client_name_len+1] == '/')
+        if (strlen(path) <= client_name_len || strncmp(path+1, client_name, client_name_len) != 0)
         {
-            qWarning("osc_message_handler() - message not for this client -> '%s'' != '/%s/'", path, get_host_client_name());
+            qWarning("osc_message_handler() - message not for this client -> '%s'' != '/%s/'", path, client_name);
             return 1;
         }
     }
@@ -160,29 +163,26 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
     }
 
     // Get method from path (/Carla/i/method)
-    size_t mindex = client_name_len + 3;
-    mindex += (plugin_id >= 10) ? 2 : 1;
-    char method[24] = { 0 };
-
-    for (size_t i=mindex; i < strlen(path) && i < mindex+24; i++)
-        method[i-mindex] = path[i];
+    int offset = (plugin_id >= 10) ? 4 : 3;
+    char method[32] = { 0 };
+    memcpy(method, path + (client_name_len + offset), 32);
 
     // Common OSC methods
-    if (strcmp(method, "update") == 0)
+    if (strcmp(method, "/update") == 0)
     {
         lo_message message = lo_message(data);
         lo_address source  = lo_message_get_source(message);
         return osc_handle_update(plugin, argv, source);
     }
-    else if (strcmp(method, "configure") == 0)
+    if (strcmp(method, "/configure") == 0)
         return osc_handle_configure(plugin, argv);
-    else if (strcmp(method, "control") == 0)
+    if (strcmp(method, "/control") == 0)
         return osc_handle_control(plugin, argv);
-    else if (strcmp(method, "program") == 0)
-        return (plugin->type() == PLUGIN_DSSI) ? osc_handle_program_as_midi(plugin, argv) : osc_handle_program(plugin, argv);
-    else if (strcmp(method, "midi") == 0)
+    if (strcmp(method, "/program") == 0)
+        return osc_handle_program(plugin, argv);
+    if (strcmp(method, "/midi") == 0)
         return osc_handle_midi(plugin, argv);
-    else if (strcmp(method, "exiting") == 0)
+    if (strcmp(method, "/exiting") == 0)
         return osc_handle_exiting(plugin);
 
     // Plugin-specific methods
@@ -192,56 +192,56 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
     // Plugin Bridges
     if (plugin->hints() & PLUGIN_IS_BRIDGE)
     {
-        if (strcmp(method, "bridge_ains_peak") == 0)
+        if (strcmp(method, "/bridge_ains_peak") == 0)
             return osc_handle_bridge_ains_peak(plugin, argv);
-        else if (strcmp(method, "bridge_aouts_peak") == 0)
+        else if (strcmp(method, "/bridge_aouts_peak") == 0)
             return osc_handle_bridge_aouts_peak(plugin, argv);
-        else if (strcmp(method, "bridge_audio_count") == 0)
+        else if (strcmp(method, "/bridge_audio_count") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeAudioCount, argv);
-        else if (strcmp(method, "bridge_midi_count") == 0)
+        else if (strcmp(method, "/bridge_midi_count") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeMidiCount, argv);
-        else if (strcmp(method, "bridge_param_count") == 0)
+        else if (strcmp(method, "/bridge_param_count") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeParameterCount, argv);
-        else if (strcmp(method, "bridge_program_count") == 0)
+        else if (strcmp(method, "/bridge_program_count") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeProgramCount, argv);
-        else if (strcmp(method, "bridge_midi_program_count") == 0)
+        else if (strcmp(method, "/bridge_midi_program_count") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeMidiProgramCount, argv);
-        else if (strcmp(method, "bridge_plugin_info") == 0)
+        else if (strcmp(method, "/bridge_plugin_info") == 0)
             return plugin->set_osc_bridge_info(PluginBridgePluginInfo, argv);
-        else if (strcmp(method, "bridge_param_info") == 0)
+        else if (strcmp(method, "/bridge_param_info") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeParameterInfo, argv);
-        else if (strcmp(method, "bridge_param_data") == 0)
+        else if (strcmp(method, "/bridge_param_data") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeParameterDataInfo, argv);
-        else if (strcmp(method, "bridge_param_ranges") == 0)
+        else if (strcmp(method, "/bridge_param_ranges") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeParameterRangesInfo, argv);
-        else if (strcmp(method, "bridge_program_info") == 0)
+        else if (strcmp(method, "/bridge_program_info") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeProgramInfo, argv);
-        else if (strcmp(method, "bridge_midi_program_info") == 0)
+        else if (strcmp(method, "/bridge_midi_program_info") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeMidiProgramInfo, argv);
-        else if (strcmp(method, "bridge_update") == 0)
+        else if (strcmp(method, "/bridge_update") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeUpdateNow, argv);
     }
 
     // Internal OSC Stuff
     if (global_osc_data.target)
     {
-        if (strcmp(method, "set_active") == 0)
+        if (strcmp(method, "/set_active") == 0)
             return osc_handle_set_active(plugin, argv);
-        else if (strcmp(method, "set_drywet") == 0)
+        else if (strcmp(method, "/set_drywet") == 0)
             return osc_handle_set_drywet(plugin, argv);
-        else if (strcmp(method, "set_vol") == 0)
+        else if (strcmp(method, "/set_vol") == 0)
             return osc_handle_set_volume(plugin, argv);
-        else if (strcmp(method, "set_balance_left") == 0)
+        else if (strcmp(method, "/set_balance_left") == 0)
             return osc_handle_set_balance_left(plugin, argv);
-        else if (strcmp(method, "set_balance_right") == 0)
+        else if (strcmp(method, "/set_balance_right") == 0)
             return osc_handle_set_balance_right(plugin, argv);
-        else if (strcmp(method, "set_parameter") == 0)
+        else if (strcmp(method, "/set_parameter") == 0)
             return osc_handle_set_parameter(plugin, argv);
-        else if (strcmp(method, "set_program") == 0)
+        else if (strcmp(method, "/set_program") == 0)
             return osc_handle_set_program(plugin, argv);
-        else if (strcmp(method, "note_on") == 0)
+        else if (strcmp(method, "/note_on") == 0)
             return osc_handle_note_on(plugin, argv);
-        else if (strcmp(method, "note_off") == 0)
+        else if (strcmp(method, "/note_off") == 0)
             return osc_handle_note_off(plugin, argv);
     }
 
@@ -362,39 +362,39 @@ int osc_handle_program(CarlaPlugin* plugin, lo_arg** argv)
 {
     qDebug("osc_handle_program()");
 
-    uint32_t program_id = argv[0]->i;
-
-    if (program_id < plugin->prog_count())
+    if (plugin->type() == PLUGIN_DSSI)
     {
-        plugin->set_program(program_id, false, true, true, true);
-        return 0;
+        uint32_t bank_id    = argv[0]->i;
+        uint32_t program_id = argv[1]->i;
+
+        MidiProgramInfo midiprog = { false, 0, 0, nullptr };
+
+        for (uint32_t i=0; i < plugin->midiprog_count(); i++)
+        {
+            plugin->get_midi_program_info(&midiprog, i);
+            if (midiprog.bank == bank_id && midiprog.program == program_id)
+            {
+                plugin->set_midi_program(i, false, true, true, true);
+                return 0;
+            }
+        }
+
+        qCritical("osc_handle_program() - failed to find respective bank/program '%i', '%i'", bank_id, program_id);
     }
     else
-        qCritical("osc_handle_program() - program_id '%i' out of bounds", program_id);
-
-    return 1;
-}
-
-int osc_handle_program_as_midi(CarlaPlugin* plugin, lo_arg** argv)
-{
-    qDebug("osc_handle_program_as_midi()");
-
-    uint32_t bank_id    = argv[0]->i;
-    uint32_t program_id = argv[1]->i;
-
-    MidiProgramInfo midiprog = { false, 0, 0, nullptr };
-
-    for (uint32_t i=0; i < plugin->midiprog_count(); i++)
     {
-        plugin->get_midi_program_info(&midiprog, i);
-        if (midiprog.bank == bank_id && midiprog.program == program_id)
+
+        uint32_t program_id = argv[0]->i;
+
+        if (program_id < plugin->prog_count())
         {
-            plugin->set_midi_program(i, false, true, true, true);
+            plugin->set_program(program_id, false, true, true, true);
             return 0;
         }
+        else
+            qCritical("osc_handle_program() - program_id '%i' out of bounds", program_id);
     }
 
-    qCritical("osc_handle_program_as_midi() - failed to find respective bank/program '%i', '%i'", bank_id, program_id);
     return 1;
 }
 
@@ -580,15 +580,15 @@ void osc_send_lv2_event_transfer(OscData* osc_data, const char* type, const char
     }
 }
 
-void osc_send_control(OscData* osc_data, int param, double value)
+void osc_send_control(OscData* osc_data, int index, double value)
 {
-    qDebug("osc_send_control(%i, %f)", param, value);
+    qDebug("osc_send_control(%i, %f)", index, value);
     if (osc_data->target)
     {
         char target_path[strlen(osc_data->path)+9];
         strcpy(target_path, osc_data->path);
         strcat(target_path, "/control");
-        lo_send(osc_data->target, target_path, "if", param, value);
+        lo_send(osc_data->target, target_path, "if", index, value);
     }
 }
 
