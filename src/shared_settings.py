@@ -16,6 +16,14 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# Special rule for AVLinux
+AVLINUX_PY2BUILD = False
+
+if AVLINUX_PY2BUILD:
+    from sip import setapi
+    setapi("QString", 2)
+    setapi("QVariant", 1)
+
 # Imports (Global)
 from PyQt4.QtCore import pyqtSlot, SIGNAL, SLOT
 from PyQt4.QtGui import QDialog, QDialogButtonBox, QIcon, QPixmap
@@ -149,11 +157,18 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
 
     def loadSettings(self):
         if not self.lw_page.isRowHidden(TAB_INDEX_MAIN):
-            self.le_main_def_folder.setText(self.settings.value("Main/DefaultProjectFolder", SETTINGS_DEFAULT_PROJECT_FOLDER, type=str))
-            self.cb_tray_enable.setChecked(self.settings.value("Main/UseSystemTray", self.ms_UseSystemTray, type=bool))
-            self.cb_tray_close_to.setChecked(self.settings.value("Main/CloseToTray", self.ms_CloseToTray, type=bool))
-            self.sb_gui_refresh.setValue(self.settings.value("Main/RefreshInterval", self.ms_RefreshInterval, type=int))
-            self.cb_jack_port_alias.setCurrentIndex(self.settings.value("Main/JackPortAlias", 2, type=int))
+            if AVLINUX_PY2BUILD:
+                self.le_main_def_folder.setText(self.settings.value("Main/DefaultProjectFolder", SETTINGS_DEFAULT_PROJECT_FOLDER).toString())
+                self.cb_tray_enable.setChecked(self.settings.value("Main/UseSystemTray", self.ms_UseSystemTray).toBool())
+                self.cb_tray_close_to.setChecked(self.settings.value("Main/CloseToTray", self.ms_CloseToTray).toBool())
+                self.sb_gui_refresh.setValue(self.settings.value("Main/RefreshInterval", self.ms_RefreshInterval).toInt()[0])
+                self.cb_jack_port_alias.setCurrentIndex(self.settings.value("Main/JackPortAlias", 2).toInt()[0])
+            else:
+                self.le_main_def_folder.setText(self.settings.value("Main/DefaultProjectFolder", SETTINGS_DEFAULT_PROJECT_FOLDER, type=str))
+                self.cb_tray_enable.setChecked(self.settings.value("Main/UseSystemTray", self.ms_UseSystemTray, type=bool))
+                self.cb_tray_close_to.setChecked(self.settings.value("Main/CloseToTray", self.ms_CloseToTray, type=bool))
+                self.sb_gui_refresh.setValue(self.settings.value("Main/RefreshInterval", self.ms_RefreshInterval, type=int))
+                self.cb_jack_port_alias.setCurrentIndex(self.settings.value("Main/JackPortAlias", 2, type=int))
 
         # ---------------------------------------
 
@@ -185,20 +200,34 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         # --------------------------------------------
 
         if not self.lw_page.isRowHidden(TAB_INDEX_CARLA_ENGINE):
-            self.ch_engine_global_client.setChecked(self.settings.value("Engine/GlobalClient", False, type=bool))
-            self.ch_engine_dssi_chunks.setChecked(self.settings.value("Engine/DSSIChunks", False, type=bool))
-            self.ch_engine_prefer_bridges.setChecked(self.settings.value("Engine/PreferBridges", True, type=bool))
+            if AVLINUX_PY2BUILD:
+                self.ch_engine_global_client.setChecked(self.settings.value("Engine/GlobalJackClient", False).toBool())
+                self.ch_engine_dssi_chunks.setChecked(self.settings.value("Engine/UseDSSIChunks", False).toBool())
+                self.ch_engine_prefer_bridges.setChecked(self.settings.value("Engine/PreferUIBridges", True).toBool())
+            else:
+                self.ch_engine_global_client.setChecked(self.settings.value("Engine/GlobalJackClient", False, type=bool))
+                self.ch_engine_dssi_chunks.setChecked(self.settings.value("Engine/UseDSSIChunks", False, type=bool))
+                self.ch_engine_prefer_bridges.setChecked(self.settings.value("Engine/PreferUIBridges", True, type=bool))
 
         # --------------------------------------------
 
         if not self.lw_page.isRowHidden(TAB_INDEX_CARLA_PATHS):
-            ladspas = toList(self.settings.value("Paths/LADSPA", SETTINGS_DEFAULT_PLUGINS_PATHS[0]))
-            dssis = toList(self.settings.value("Paths/DSSI", SETTINGS_DEFAULT_PLUGINS_PATHS[1]))
-            lv2s = toList(self.settings.value("Paths/LV2", SETTINGS_DEFAULT_PLUGINS_PATHS[2]))
-            vsts = toList(self.settings.value("Paths/VST", SETTINGS_DEFAULT_PLUGINS_PATHS[3]))
-            gigs = toList(self.settings.value("Paths/GIG", SETTINGS_DEFAULT_PLUGINS_PATHS[4]))
-            sf2s = toList(self.settings.value("Paths/SF2", SETTINGS_DEFAULT_PLUGINS_PATHS[5]))
-            sfzs = toList(self.settings.value("Paths/SFZ", SETTINGS_DEFAULT_PLUGINS_PATHS[6]))
+            if AVLINUX_PY2BUILD:
+                ladspas = QVariantStringList(self.settings.value("Paths/LADSPA", SETTINGS_DEFAULT_PLUGINS_PATHS[0]).toList())
+                dssis = QVariantStringList(self.settings.value("Paths/DSSI", SETTINGS_DEFAULT_PLUGINS_PATHS[1]).toList())
+                lv2s = QVariantStringList(self.settings.value("Paths/LV2", SETTINGS_DEFAULT_PLUGINS_PATHS[2]).toList())
+                vsts = QVariantStringList(self.settings.value("Paths/VST", SETTINGS_DEFAULT_PLUGINS_PATHS[3]).toList())
+                gigs = QVariantStringList(self.settings.value("Paths/GIG", SETTINGS_DEFAULT_PLUGINS_PATHS[4]).toList())
+                sf2s = QVariantStringList(self.settings.value("Paths/SF2", SETTINGS_DEFAULT_PLUGINS_PATHS[5]).toList())
+                sfzs = QVariantStringList(self.settings.value("Paths/SFZ", SETTINGS_DEFAULT_PLUGINS_PATHS[6]).toList())
+            else:
+                ladspas = toList(self.settings.value("Paths/LADSPA", SETTINGS_DEFAULT_PLUGINS_PATHS[0]))
+                dssis = toList(self.settings.value("Paths/DSSI", SETTINGS_DEFAULT_PLUGINS_PATHS[1]))
+                lv2s = toList(self.settings.value("Paths/LV2", SETTINGS_DEFAULT_PLUGINS_PATHS[2]))
+                vsts = toList(self.settings.value("Paths/VST", SETTINGS_DEFAULT_PLUGINS_PATHS[3]))
+                gigs = toList(self.settings.value("Paths/GIG", SETTINGS_DEFAULT_PLUGINS_PATHS[4]))
+                sf2s = toList(self.settings.value("Paths/SF2", SETTINGS_DEFAULT_PLUGINS_PATHS[5]))
+                sfzs = toList(self.settings.value("Paths/SFZ", SETTINGS_DEFAULT_PLUGINS_PATHS[6]))
 
             ladspas.sort()
             dssis.sort()
@@ -374,9 +403,9 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         # --------------------------------------------
 
         if not self.lw_page.isRowHidden(TAB_INDEX_CARLA_ENGINE):
-            self.settings.setValue("Engine/GlobalClient", self.ch_engine_global_client.isChecked())
-            self.settings.setValue("Engine/DSSIChunks", self.ch_engine_dssi_chunks.isChecked())
-            self.settings.setValue("Engine/PreferBridges", self.ch_engine_prefer_bridges.isChecked())
+            self.settings.setValue("Engine/GlobalJackClient", self.ch_engine_global_client.isChecked())
+            self.settings.setValue("Engine/UseDSSIChunks", self.ch_engine_dssi_chunks.isChecked())
+            self.settings.setValue("Engine/PreferUIBridges", self.ch_engine_prefer_bridges.isChecked())
 
         # --------------------------------------------
 

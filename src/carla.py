@@ -22,7 +22,7 @@ AVLINUX_PY2BUILD = False
 if AVLINUX_PY2BUILD:
     from sip import setapi
     setapi("QString", 2)
-    setapi("QVariant", 2)
+    setapi("QVariant", 1)
 
 # Imports (Global)
 import json, os, sys
@@ -91,6 +91,18 @@ save_state_custom_data = {
 DEFAULT_PROJECT_FOLDER = HOME
 setDefaultProjectFolder(DEFAULT_PROJECT_FOLDER)
 setDefaultPluginsPaths(LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, GIG_PATH, SF2_PATH, SFZ_PATH)
+
+def toListCompat(item):
+    if AVLINUX_PY2BUILD:
+        return QVariantStringList(item.toList())
+    else:
+        return toList(item)
+
+def toListCompat2(item):
+    if AVLINUX_PY2BUILD:
+        return QVariantPyObjectList(item.toList())
+    else:
+        return toList(item)
 
 def CustomDataType2String(dtype):
     if dtype == CUSTOM_DATA_STRING:
@@ -469,7 +481,7 @@ class SearchPluginsThread(QThread):
         os.environ['SF2_PATH'] = splitter.join(SF2_PATH)
         os.environ['SFZ_PATH'] = splitter.join(SFZ_PATH)
 
-        self.blacklist = toList(self.settings_db.value("Plugins/Blacklisted", []))
+        self.blacklist = toListCompat(self.settings_db.value("Plugins/Blacklisted", []))
 
         self.m_count = 0
         plugin_count = 0
@@ -782,17 +794,30 @@ class PluginRefreshW(QDialog, ui_carla_refresh.Ui_PluginRefreshW):
         self.settings_db.setValue("Plugins/LastLoadedBinary", "")
 
     def loadSettings(self):
-        self.ch_ladspa.setChecked(self.settings.value("PluginDatabase/SearchLADSPA", True, type=bool))
-        self.ch_dssi.setChecked(self.settings.value("PluginDatabase/SearchDSSI", True, type=bool))
-        self.ch_lv2.setChecked(self.settings.value("PluginDatabase/SearchLV2", True, type=bool))
-        self.ch_vst.setChecked(self.settings.value("PluginDatabase/SearchVST", True, type=bool))
-        self.ch_gig.setChecked(self.settings.value("PluginDatabase/SearchGIG", True, type=bool))
-        self.ch_sf2.setChecked(self.settings.value("PluginDatabase/SearchSF2", True, type=bool))
-        self.ch_sfz.setChecked(self.settings.value("PluginDatabase/SearchSFZ", True, type=bool))
-        self.ch_unix32.setChecked(self.settings.value("PluginDatabase/SearchUnix32", True, type=bool))
-        self.ch_unix64.setChecked(self.settings.value("PluginDatabase/SearchUnix64", True, type=bool))
-        self.ch_win32.setChecked(self.settings.value("PluginDatabase/SearchWin32", True, type=bool))
-        self.ch_win64.setChecked(self.settings.value("PluginDatabase/SearchWin64", True, type=bool))
+        if AVLINUX_PY2BUILD:
+            self.ch_ladspa.setChecked(self.settings.value("PluginDatabase/SearchLADSPA", True).toBool())
+            self.ch_dssi.setChecked(self.settings.value("PluginDatabase/SearchDSSI", True).toBool())
+            self.ch_lv2.setChecked(self.settings.value("PluginDatabase/SearchLV2", True).toBool())
+            self.ch_vst.setChecked(self.settings.value("PluginDatabase/SearchVST", True).toBool())
+            self.ch_gig.setChecked(self.settings.value("PluginDatabase/SearchGIG", True).toBool())
+            self.ch_sf2.setChecked(self.settings.value("PluginDatabase/SearchSF2", True).toBool())
+            self.ch_sfz.setChecked(self.settings.value("PluginDatabase/SearchSFZ", True).toBool())
+            self.ch_unix32.setChecked(self.settings.value("PluginDatabase/SearchUnix32", True).toBool())
+            self.ch_unix64.setChecked(self.settings.value("PluginDatabase/SearchUnix64", True).toBool())
+            self.ch_win32.setChecked(self.settings.value("PluginDatabase/SearchWin32", True).toBool())
+            self.ch_win64.setChecked(self.settings.value("PluginDatabase/SearchWin64", True).toBool())
+        else:
+            self.ch_ladspa.setChecked(self.settings.value("PluginDatabase/SearchLADSPA", True, type=bool))
+            self.ch_dssi.setChecked(self.settings.value("PluginDatabase/SearchDSSI", True, type=bool))
+            self.ch_lv2.setChecked(self.settings.value("PluginDatabase/SearchLV2", True, type=bool))
+            self.ch_vst.setChecked(self.settings.value("PluginDatabase/SearchVST", True, type=bool))
+            self.ch_gig.setChecked(self.settings.value("PluginDatabase/SearchGIG", True, type=bool))
+            self.ch_sf2.setChecked(self.settings.value("PluginDatabase/SearchSF2", True, type=bool))
+            self.ch_sfz.setChecked(self.settings.value("PluginDatabase/SearchSFZ", True, type=bool))
+            self.ch_unix32.setChecked(self.settings.value("PluginDatabase/SearchUnix32", True, type=bool))
+            self.ch_unix64.setChecked(self.settings.value("PluginDatabase/SearchUnix64", True, type=bool))
+            self.ch_win32.setChecked(self.settings.value("PluginDatabase/SearchWin32", True, type=bool))
+            self.ch_win64.setChecked(self.settings.value("PluginDatabase/SearchWin64", True, type=bool))
 
     def closeEvent(self, event):
         if self.pThread.isRunning():
@@ -881,32 +906,32 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.tableWidget.setSortingEnabled(False)
 
         ladspa_plugins  = []
-        ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_unix32", []))
-        ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_unix64", []))
-        ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_win32", []))
-        ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_win64", []))
+        ladspa_plugins += toListCompat2(self.settings_db.value("Plugins/LADSPA_unix32", []))
+        ladspa_plugins += toListCompat2(self.settings_db.value("Plugins/LADSPA_unix64", []))
+        ladspa_plugins += toListCompat2(self.settings_db.value("Plugins/LADSPA_win32", []))
+        ladspa_plugins += toListCompat2(self.settings_db.value("Plugins/LADSPA_win64", []))
 
         dssi_plugins  = []
-        dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_unix32", []))
-        dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_unix64", []))
-        dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_win32", []))
-        dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_win64", []))
+        dssi_plugins += toListCompat2(self.settings_db.value("Plugins/DSSI_unix32", []))
+        dssi_plugins += toListCompat2(self.settings_db.value("Plugins/DSSI_unix64", []))
+        dssi_plugins += toListCompat2(self.settings_db.value("Plugins/DSSI_win32", []))
+        dssi_plugins += toListCompat2(self.settings_db.value("Plugins/DSSI_win64", []))
 
         lv2_plugins  = []
-        lv2_plugins += toList(self.settings_db.value("Plugins/LV2_unix32", []))
-        lv2_plugins += toList(self.settings_db.value("Plugins/LV2_unix64", []))
-        lv2_plugins += toList(self.settings_db.value("Plugins/LV2_win32", []))
-        lv2_plugins += toList(self.settings_db.value("Plugins/LV2_win64", []))
+        lv2_plugins += toListCompat2(self.settings_db.value("Plugins/LV2_unix32", []))
+        lv2_plugins += toListCompat2(self.settings_db.value("Plugins/LV2_unix64", []))
+        lv2_plugins += toListCompat2(self.settings_db.value("Plugins/LV2_win32", []))
+        lv2_plugins += toListCompat2(self.settings_db.value("Plugins/LV2_win64", []))
 
         vst_plugins  = []
-        vst_plugins += toList(self.settings_db.value("Plugins/VST_unix32", []))
-        vst_plugins += toList(self.settings_db.value("Plugins/VST_unix64", []))
-        vst_plugins += toList(self.settings_db.value("Plugins/VST_win32", []))
-        vst_plugins += toList(self.settings_db.value("Plugins/VST_win64", []))
+        vst_plugins += toListCompat2(self.settings_db.value("Plugins/VST_unix32", []))
+        vst_plugins += toListCompat2(self.settings_db.value("Plugins/VST_unix64", []))
+        vst_plugins += toListCompat2(self.settings_db.value("Plugins/VST_win32", []))
+        vst_plugins += toListCompat2(self.settings_db.value("Plugins/VST_win64", []))
 
-        gigs = toList(self.settings_db.value("Plugins/GIG", []))
-        sf2s = toList(self.settings_db.value("Plugins/SF2", []))
-        sfzs = toList(self.settings_db.value("Plugins/SFZ", []))
+        gigs = toListCompat2(self.settings_db.value("Plugins/GIG", []))
+        sf2s = toListCompat2(self.settings_db.value("Plugins/SF2", []))
+        sfzs = toListCompat2(self.settings_db.value("Plugins/SFZ", []))
 
         ladspa_count = 0
         dssi_count = 0
@@ -1012,7 +1037,10 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
 
     @pyqtSlot()
     def slot_refresh_plugins(self):
-        lastLoadedPlugin = self.settings_db.value("Plugins/LastLoadedBinary", "", type=str)
+        if AVLINUX_PY2BUILD:
+            lastLoadedPlugin = self.settings_db.value("Plugins/LastLoadedBinary", "").toString()
+        else:
+            lastLoadedPlugin = self.settings_db.value("Plugins/LastLoadedBinary", "", type=str)
         if lastLoadedPlugin:
             lastLoadedPlugin = os.path.basename(lastLoadedPlugin)
             ask = QMessageBox.question(self, self.tr("Warning"), self.tr("There was an error while checking the plugin %s.\n"
@@ -1020,7 +1048,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
                                                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
 
             if ask == QMessageBox.Yes:
-                blacklist = toList(self.settings_db.value("Plugins/Blacklisted", []))
+                blacklist = toListCompat(self.settings_db.value("Plugins/Blacklisted", []))
                 blacklist.append(lastLoadedPlugin)
                 self.settings_db.setValue("Plugins/Blacklisted", blacklist)
 
@@ -1148,23 +1176,42 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.settings.setValue("PluginDatabase/ShowStereoOnly", self.ch_stereo.isChecked())
 
     def loadSettings(self):
-        self.restoreGeometry(self.settings.value("PluginDatabase/Geometry", ""))
-        self.tableWidget.horizontalHeader().restoreState(self.settings.value("PluginDatabase/TableGeometry", ""))
-        self.showFilters(self.settings.value("PluginDatabase/ShowFilters", False, type=bool))
-        self.ch_effects.setChecked(self.settings.value("PluginDatabase/ShowEffects", True, type=bool))
-        self.ch_instruments.setChecked(self.settings.value("PluginDatabase/ShowInstruments", True, type=bool))
-        self.ch_midi.setChecked(self.settings.value("PluginDatabase/ShowMIDI", True, type=bool))
-        self.ch_other.setChecked(self.settings.value("PluginDatabase/ShowOther", True, type=bool))
-        self.ch_ladspa.setChecked(self.settings.value("PluginDatabase/ShowLADSPA", True, type=bool))
-        self.ch_dssi.setChecked(self.settings.value("PluginDatabase/ShowDSSI", True, type=bool))
-        self.ch_lv2.setChecked(self.settings.value("PluginDatabase/ShowLV2", True, type=bool))
-        self.ch_vst.setChecked(self.settings.value("PluginDatabase/ShowVST", True, type=bool))
-        self.ch_kits.setChecked(self.settings.value("PluginDatabase/ShowKits", True, type=bool))
-        self.ch_native.setChecked(self.settings.value("PluginDatabase/ShowNative", True, type=bool))
-        self.ch_bridged.setChecked(self.settings.value("PluginDatabase/ShowBridged", True, type=bool))
-        self.ch_bridged_wine.setChecked(self.settings.value("PluginDatabase/ShowBridgedWine", True, type=bool))
-        self.ch_gui.setChecked(self.settings.value("PluginDatabase/ShowHasGUI", False, type=bool))
-        self.ch_stereo.setChecked(self.settings.value("PluginDatabase/ShowStereoOnly", False, type=bool))
+        if AVLINUX_PY2BUILD:
+            self.restoreGeometry(self.settings.value("PluginDatabase/Geometry").toByteArray())
+            self.tableWidget.horizontalHeader().restoreState(self.settings.value("PluginDatabase/TableGeometry").toByteArray())
+            self.showFilters(self.settings.value("PluginDatabase/ShowFilters", False).toBool())
+            self.ch_effects.setChecked(self.settings.value("PluginDatabase/ShowEffects", True).toBool())
+            self.ch_instruments.setChecked(self.settings.value("PluginDatabase/ShowInstruments", True).toBool())
+            self.ch_midi.setChecked(self.settings.value("PluginDatabase/ShowMIDI", True).toBool())
+            self.ch_other.setChecked(self.settings.value("PluginDatabase/ShowOther", True).toBool())
+            self.ch_ladspa.setChecked(self.settings.value("PluginDatabase/ShowLADSPA", True).toBool())
+            self.ch_dssi.setChecked(self.settings.value("PluginDatabase/ShowDSSI", True).toBool())
+            self.ch_lv2.setChecked(self.settings.value("PluginDatabase/ShowLV2", True).toBool())
+            self.ch_vst.setChecked(self.settings.value("PluginDatabase/ShowVST", True).toBool())
+            self.ch_kits.setChecked(self.settings.value("PluginDatabase/ShowKits", True).toBool())
+            self.ch_native.setChecked(self.settings.value("PluginDatabase/ShowNative", True).toBool())
+            self.ch_bridged.setChecked(self.settings.value("PluginDatabase/ShowBridged", True).toBool())
+            self.ch_bridged_wine.setChecked(self.settings.value("PluginDatabase/ShowBridgedWine", True).toBool())
+            self.ch_gui.setChecked(self.settings.value("PluginDatabase/ShowHasGUI", False).toBool())
+            self.ch_stereo.setChecked(self.settings.value("PluginDatabase/ShowStereoOnly", False).toBool())
+        else:
+            self.restoreGeometry(self.settings.value("PluginDatabase/Geometry", ""))
+            self.tableWidget.horizontalHeader().restoreState(self.settings.value("PluginDatabase/TableGeometry", ""))
+            self.showFilters(self.settings.value("PluginDatabase/ShowFilters", False, type=bool))
+            self.ch_effects.setChecked(self.settings.value("PluginDatabase/ShowEffects", True, type=bool))
+            self.ch_instruments.setChecked(self.settings.value("PluginDatabase/ShowInstruments", True, type=bool))
+            self.ch_midi.setChecked(self.settings.value("PluginDatabase/ShowMIDI", True, type=bool))
+            self.ch_other.setChecked(self.settings.value("PluginDatabase/ShowOther", True, type=bool))
+            self.ch_ladspa.setChecked(self.settings.value("PluginDatabase/ShowLADSPA", True, type=bool))
+            self.ch_dssi.setChecked(self.settings.value("PluginDatabase/ShowDSSI", True, type=bool))
+            self.ch_lv2.setChecked(self.settings.value("PluginDatabase/ShowLV2", True, type=bool))
+            self.ch_vst.setChecked(self.settings.value("PluginDatabase/ShowVST", True, type=bool))
+            self.ch_kits.setChecked(self.settings.value("PluginDatabase/ShowKits", True, type=bool))
+            self.ch_native.setChecked(self.settings.value("PluginDatabase/ShowNative", True, type=bool))
+            self.ch_bridged.setChecked(self.settings.value("PluginDatabase/ShowBridged", True, type=bool))
+            self.ch_bridged_wine.setChecked(self.settings.value("PluginDatabase/ShowBridgedWine", True, type=bool))
+            self.ch_gui.setChecked(self.settings.value("PluginDatabase/ShowHasGUI", False, type=bool))
+            self.ch_stereo.setChecked(self.settings.value("PluginDatabase/ShowStereoOnly", False, type=bool))
         self.reAddPlugins()
 
     def closeEvent(self, event):
@@ -3157,49 +3204,49 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             if ptype == "LADSPA":
                 if not x_ladspa_plugins:
                     x_ladspa_plugins  = []
-                    x_ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_unix32", []))
-                    x_ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_unix64", []))
-                    x_ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_win32", []))
-                    x_ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_win64", []))
+                    x_ladspa_plugins += toListCompat2(self.settings_db.value("Plugins/LADSPA_unix32", []))
+                    x_ladspa_plugins += toListCompat2(self.settings_db.value("Plugins/LADSPA_unix64", []))
+                    x_ladspa_plugins += toListCompat2(self.settings_db.value("Plugins/LADSPA_win32", []))
+                    x_ladspa_plugins += toListCompat2(self.settings_db.value("Plugins/LADSPA_win64", []))
                 x_plugins = x_ladspa_plugins
 
             elif ptype == "DSSI":
                 if not x_dssi_plugins:
                     x_dssi_plugins  = []
-                    x_dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_unix32", []))
-                    x_dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_unix64", []))
-                    x_dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_win32", []))
-                    x_dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_win64", []))
+                    x_dssi_plugins += toListCompat2(self.settings_db.value("Plugins/DSSI_unix32", []))
+                    x_dssi_plugins += toListCompat2(self.settings_db.value("Plugins/DSSI_unix64", []))
+                    x_dssi_plugins += toListCompat2(self.settings_db.value("Plugins/DSSI_win32", []))
+                    x_dssi_plugins += toListCompat2(self.settings_db.value("Plugins/DSSI_win64", []))
                 x_plugins = x_dssi_plugins
 
             elif ptype == "LV2":
                 if not x_lv2_plugins:
                     x_lv2_plugins  = []
-                    x_lv2_plugins += toList(self.settings_db.value("Plugins/LV2_unix32", []))
-                    x_lv2_plugins += toList(self.settings_db.value("Plugins/LV2_unix64", []))
-                    x_lv2_plugins += toList(self.settings_db.value("Plugins/LV2_win32", []))
-                    x_lv2_plugins += toList(self.settings_db.value("Plugins/LV2_win64", []))
+                    x_lv2_plugins += toListCompat2(self.settings_db.value("Plugins/LV2_unix32", []))
+                    x_lv2_plugins += toListCompat2(self.settings_db.value("Plugins/LV2_unix64", []))
+                    x_lv2_plugins += toListCompat2(self.settings_db.value("Plugins/LV2_win32", []))
+                    x_lv2_plugins += toListCompat2(self.settings_db.value("Plugins/LV2_win64", []))
                 x_plugins = x_lv2_plugins
 
             elif ptype == "VST":
                 if not x_vst_plugins:
                     x_vst_plugins  = []
-                    x_vst_plugins += toList(self.settings_db.value("Plugins/VST_unix32", []))
-                    x_vst_plugins += toList(self.settings_db.value("Plugins/VST_unix64", []))
-                    x_vst_plugins += toList(self.settings_db.value("Plugins/VST_win32", []))
-                    x_vst_plugins += toList(self.settings_db.value("Plugins/VST_win64", []))
+                    x_vst_plugins += toListCompat2(self.settings_db.value("Plugins/VST_unix32", []))
+                    x_vst_plugins += toListCompat2(self.settings_db.value("Plugins/VST_unix64", []))
+                    x_vst_plugins += toListCompat2(self.settings_db.value("Plugins/VST_win32", []))
+                    x_vst_plugins += toListCompat2(self.settings_db.value("Plugins/VST_win64", []))
                 x_plugins = x_vst_plugins
 
             elif ptype == "GIG":
-                if not x_gig_plugins: x_gig_plugins = toList(self.settings_db.value("Plugins/GIG", []))
+                if not x_gig_plugins: x_gig_plugins = toListCompat2(self.settings_db.value("Plugins/GIG", []))
                 x_plugins = x_gig_plugins
 
             elif ptype == "SF2":
-                if not x_sf2_plugins: x_sf2_plugins = toList(self.settings_db.value("Plugins/SF2", []))
+                if not x_sf2_plugins: x_sf2_plugins = toListCompat2(self.settings_db.value("Plugins/SF2", []))
                 x_plugins = x_sf2_plugins
 
             elif ptype == "SFZ":
-                if not x_sfz_plugins: x_sfz_plugins = toList(self.settings_db.value("Plugins/SFZ", []))
+                if not x_sfz_plugins: x_sfz_plugins = toListCompat2(self.settings_db.value("Plugins/SFZ", []))
                 x_plugins = x_sfz_plugins
 
             else:
@@ -3421,26 +3468,40 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.settings.setValue("ShowToolbar", self.toolBar.isVisible())
 
     def loadSettings(self, geometry):
-        if geometry:
-            self.restoreGeometry(self.settings.value("Geometry", ""))
+        if AVLINUX_PY2BUILD:
+            if geometry:
+                self.restoreGeometry(self.settings.value("Geometry").toByteArray())
 
-            show_toolbar = self.settings.value("ShowToolbar", True, type=bool)
-            self.act_settings_show_toolbar.setChecked(show_toolbar)
-            self.toolBar.setVisible(show_toolbar)
+                show_toolbar = self.settings.value("ShowToolbar", True).toBool()
+                self.act_settings_show_toolbar.setChecked(show_toolbar)
+                self.toolBar.setVisible(show_toolbar)
 
-        self.m_savedSettings = {
-            "Main/DefaultProjectFolder": self.settings.value("Main/DefaultProjectFolder", DEFAULT_PROJECT_FOLDER, type=str),
-            "Main/RefreshInterval": self.settings.value("Main/RefreshInterval", 120, type=int)
-        }
+            self.m_savedSettings = {
+                "Main/DefaultProjectFolder": self.settings.value("Main/DefaultProjectFolder", DEFAULT_PROJECT_FOLDER).toString(),
+                "Main/RefreshInterval": self.settings.value("Main/RefreshInterval", 120).toInt()[0]
+            }
+
+        else:
+            if geometry:
+                self.restoreGeometry(self.settings.value("Geometry", ""))
+
+                show_toolbar = self.settings.value("ShowToolbar", True, type=bool)
+                self.act_settings_show_toolbar.setChecked(show_toolbar)
+                self.toolBar.setVisible(show_toolbar)
+
+            self.m_savedSettings = {
+                "Main/DefaultProjectFolder": self.settings.value("Main/DefaultProjectFolder", DEFAULT_PROJECT_FOLDER, type=str),
+                "Main/RefreshInterval": self.settings.value("Main/RefreshInterval", 120, type=int)
+            }
 
         global LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, GIG_PATH, SF2_PATH, SFZ_PATH
-        LADSPA_PATH = toList(self.settings.value("Paths/LADSPA", LADSPA_PATH))
-        DSSI_PATH = toList(self.settings.value("Paths/DSSI", DSSI_PATH))
-        LV2_PATH = toList(self.settings.value("Paths/LV2", LV2_PATH))
-        VST_PATH = toList(self.settings.value("Paths/VST", VST_PATH))
-        GIG_PATH = toList(self.settings.value("Paths/GIG", GIG_PATH))
-        SF2_PATH = toList(self.settings.value("Paths/SF2", SF2_PATH))
-        SFZ_PATH = toList(self.settings.value("Paths/SFZ", SFZ_PATH))
+        LADSPA_PATH = toListCompat(self.settings.value("Paths/LADSPA", LADSPA_PATH))
+        DSSI_PATH = toListCompat(self.settings.value("Paths/DSSI", DSSI_PATH))
+        LV2_PATH = toListCompat(self.settings.value("Paths/LV2", LV2_PATH))
+        VST_PATH = toListCompat(self.settings.value("Paths/VST", VST_PATH))
+        GIG_PATH = toListCompat(self.settings.value("Paths/GIG", GIG_PATH))
+        SF2_PATH = toListCompat(self.settings.value("Paths/SF2", SF2_PATH))
+        SFZ_PATH = toListCompat(self.settings.value("Paths/SFZ", SFZ_PATH))
 
         CarlaHost.set_option(OPTION_PATH_LADSPA, 0, splitter.join(LADSPA_PATH))
         CarlaHost.set_option(OPTION_PATH_DSSI, 0, splitter.join(DSSI_PATH))
@@ -3496,9 +3557,27 @@ if __name__ == '__main__':
     gui = CarlaMainW()
 
     # Init backend
-    CarlaHost.set_option(OPTION_GLOBAL_JACK_CLIENT, gui.settings.value("Engine/GlobalClient", False, type=bool), "")
-    CarlaHost.set_option(OPTION_USE_DSSI_CHUNKS, gui.settings.value("Engine/DSSIChunks", False, type=bool), "")
-    CarlaHost.set_option(OPTION_PREFER_UI_BRIDGES, gui.settings.value("Engine/PreferBridges", True, type=bool), "")
+    if AVLINUX_PY2BUILD:
+        max_parameters     = gui.settings.value("Engine/MaxParameters", MAX_PARAMETERS).toInt()[0]
+        global_jack_client = gui.settings.value("Engine/GlobalJackClient", False).toBool()
+        prefer_ui_bridges  = gui.settings.value("Engine/PreferUIBridges", True).toBool()
+        proccess_hq        = gui.settings.value("Engine/ProcessHQ", False).toBool()
+        osc_gui_timeout    = gui.settings.value("Engine/OscGuiTimeout", 40).toInt()[0]
+        use_dssi_chunks    = gui.settings.value("Engine/UseDSSIChunks", False).toBool()
+    else:
+        max_parameters     = gui.settings.value("Engine/MaxParameters", MAX_PARAMETERS, type=int)
+        global_jack_client = gui.settings.value("Engine/GlobalJackClient", False, type=bool)
+        prefer_ui_bridges  = gui.settings.value("Engine/PreferUIBridges", True, type=bool)
+        proccess_hq        = gui.settings.value("Engine/ProcessHQ", False, type=bool)
+        osc_gui_timeout    = gui.settings.value("Engine/OscGuiTimeout", 40, type=int)
+        use_dssi_chunks    = gui.settings.value("Engine/UseDSSIChunks", False, type=bool)
+
+    CarlaHost.set_option(OPTION_MAX_PARAMETERS, max_parameters, "")
+    CarlaHost.set_option(OPTION_GLOBAL_JACK_CLIENT, global_jack_client, "")
+    CarlaHost.set_option(OPTION_PREFER_UI_BRIDGES, prefer_ui_bridges, "")
+    CarlaHost.set_option(OPTION_PROCESS_HQ, proccess_hq, "")
+    CarlaHost.set_option(OPTION_OSC_GUI_TIMEOUT, osc_gui_timeout, "")
+    CarlaHost.set_option(OPTION_USE_DSSI_CHUNKS, use_dssi_chunks, "")
 
     if carla_bridge_unix32:
         CarlaHost.set_option(OPTION_PATH_BRIDGE_UNIX32, 0, carla_bridge_unix32)

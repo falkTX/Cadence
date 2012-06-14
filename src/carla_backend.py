@@ -22,7 +22,7 @@ AVLINUX_PY2BUILD = False
 if AVLINUX_PY2BUILD:
     from sip import setapi
     setapi("QString", 2)
-    setapi("QVariant", 2)
+    setapi("QVariant", 1)
 
 # Imports (Global)
 import os, sys
@@ -975,6 +975,8 @@ class Host(object):
         self.lib.get_latency.restype = c_double
 
     def engine_init(self, client_name):
+        if AVLINUX_PY2BUILD:
+            return self.lib.engine_init(client_name)
         return self.lib.engine_init(client_name.encode("utf-8"))
 
     def engine_close(self):
@@ -984,6 +986,8 @@ class Host(object):
         return self.lib.is_engine_running()
 
     def add_plugin(self, btype, ptype, filename, label, extra_stuff):
+        if AVLINUX_PY2BUILD:
+            return self.lib.add_plugin(btype, ptype, filename, label, cast(extra_stuff, c_void_p))
         return self.lib.add_plugin(btype, ptype, filename.encode("utf-8"), label.encode("utf-8"), cast(extra_stuff, c_void_p))
 
     def remove_plugin(self, plugin_id):
@@ -1098,9 +1102,13 @@ class Host(object):
         self.lib.set_midi_program(plugin_id, midi_program_id)
 
     def set_custom_data(self, plugin_id, dtype, key, value):
+        if AVLINUX_PY2BUILD:
+            self.lib.set_custom_data(plugin_id, dtype, key, value)
         self.lib.set_custom_data(plugin_id, dtype, key.encode("utf-8"), value.encode("utf-8"))
 
     def set_chunk_data(self, plugin_id, chunk_data):
+        if AVLINUX_PY2BUILD:
+            self.lib.set_chunk_data(plugin_id, chunk_data)
         self.lib.set_chunk_data(plugin_id, chunk_data.encode("utf-8"))
 
     def set_gui_data(self, plugin_id, data, gui_addr):
@@ -1124,6 +1132,8 @@ class Host(object):
         self.lib.set_callback_function(Callback)
 
     def set_option(self, option, value, value_str):
+        if AVLINUX_PY2BUILD:
+            self.lib.set_option(option, value, value_str)
         self.lib.set_option(option, value, value_str.encode("utf-8"))
 
     def get_last_error(self):

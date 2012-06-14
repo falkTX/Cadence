@@ -234,6 +234,20 @@ def CustomMessageBox(self_, icon, title, text, extraText="", buttons=QMessageBox
     msgBox.setDefaultButton(defButton)
     return msgBox.exec_()
 
+# Convert QList<QVariant(QString)> to python list<str> (python2)
+def QVariantStringList(variant):
+    ret_list = []
+    for i in range(len(variant)):
+        ret_list.append(variant[i].toString())
+    return ret_list
+
+# Convert QList<QVariant(PyObject(...))> to python list<objects> (python2)
+def QVariantPyObjectList(variant):
+    ret_list = []
+    for i in range(len(variant)):
+        ret_list.append(variant[i].toPyObject())
+    return ret_list
+
 # ------------------------------------------------------------------------------------------------------------
 
 # signal handler for unix systems
