@@ -231,6 +231,38 @@ bool CarlaEngine::close()
     return false;
 }
 
+const CarlaTimeInfo* CarlaEngine::getTimeInfo()
+{
+    static CarlaTimeInfo info;
+    info.playing = (carla_jack_state != JackTransportStopped);
+
+    if (carla_jack_pos.unique_1 == carla_jack_pos.unique_2)
+    {
+        info.frame = carla_jack_pos.frame;
+        info.time  = carla_jack_pos.usecs;
+
+        if (carla_jack_pos.valid & JackPositionBBT)
+        {
+            info.valid = CarlaEngineTimeBBT;
+            info.bbt.bar  = carla_jack_pos.bar;
+            info.bbt.beat = carla_jack_pos.beat;
+            info.bbt.tick = carla_jack_pos.tick;
+            info.bbt.bar_start_tick = carla_jack_pos.bar_start_tick;
+            info.bbt.beats_per_bar  = carla_jack_pos.beats_per_bar;
+            info.bbt.beat_type      = carla_jack_pos.beat_type;
+            info.bbt.ticks_per_beat = carla_jack_pos.ticks_per_beat;
+            info.bbt.beats_per_minute = carla_jack_pos.beats_per_minute;
+        }
+    }
+    else
+    {
+        info.frame = 0;
+        info.valid = 0;
+    }
+
+    return &info;
+}
+
 bool CarlaEngine::isOnAudioThread()
 {
     return (QThread::currentThread() == carla_jack_thread);

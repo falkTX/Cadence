@@ -24,6 +24,8 @@ extern "C" {
 #include "lv2-rtmempool/rtmempool.h"
 }
 
+#include <QtCore/QDir>
+
 #ifndef __WINE__
 #include <QtGui/QDialog>
 #include <QtGui/QLayout>
@@ -173,7 +175,7 @@ public:
         gui.height = 0;
 
         for (uint32_t i=0; i < CARLA_URI_MAP_ID_COUNT; i++)
-            custom_uri_ids.append(nullptr);
+            custom_uri_ids.push_back(nullptr);
 
         for (uint32_t i=0; i < lv2_feature_count+1; i++)
             features[i] = nullptr;
@@ -301,7 +303,7 @@ public:
                 delete features[i];
         }
 
-        for (int i=0; i < custom_uri_ids.count(); i++)
+        for (size_t i=0; i < custom_uri_ids.size(); i++)
         {
             if (custom_uri_ids[i])
                 free((void*)custom_uri_ids[i]);
@@ -1181,9 +1183,13 @@ public:
                 if (LV2_IS_PORT_INPUT(PortType))
                 {
                     param.data[j].type   = PARAMETER_INPUT;
-                    param.data[j].hints |= PARAMETER_IS_ENABLED;
-                    param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
-                    needs_cin = true;
+
+                    if (rdf_descriptor->Ports[i].Designation == 0)
+                    {
+                        param.data[j].hints |= PARAMETER_IS_ENABLED;
+                        param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
+                        needs_cin = true;
+                    }
 
                     // MIDI CC value
                     LV2_RDF_PortMidiMap* PortMidiMap = &rdf_descriptor->Ports[i].MidiMap;
@@ -1845,17 +1851,63 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Special Parameters
 
-#if 0
+        int32_t rindex;
+        const CarlaTimeInfo* const timeInfo = CarlaEngine::getTimeInfo();
+
         for (k=0; k < param.count; k++)
         {
             if (param.data[k].type == PARAMETER_LATENCY)
             {
                 // TODO
+                continue;
+            }
+
+            rindex = param.data[k].rindex;
+
+            switch (rdf_descriptor->Ports[rindex].Designation)
+            {
+            case LV2_PORT_TIME_BAR:
+                set_parameter_value(k, timeInfo->bbt.bar, false, false, false);
+                postpone_event(PluginPostEventParameterChange, k, timeInfo->bbt.bar);
+                break;
+            case LV2_PORT_TIME_BAR_BEAT:
+                set_parameter_value(k, timeInfo->bbt.tick, false, false, false);
+                postpone_event(PluginPostEventParameterChange, k, timeInfo->bbt.tick);
+                break;
+            case LV2_PORT_TIME_BEAT:
+                set_parameter_value(k, timeInfo->bbt.beat, false, false, false);
+                postpone_event(PluginPostEventParameterChange, k, timeInfo->bbt.beat);
+                break;
+            case LV2_PORT_TIME_BEAT_UNIT:
+                set_parameter_value(k, timeInfo->bbt.beat_type, false, false, false);
+                postpone_event(PluginPostEventParameterChange, k, timeInfo->bbt.beat_type);
+                break;
+            case LV2_PORT_TIME_BEATS_PER_BAR:
+                set_parameter_value(k, timeInfo->bbt.beats_per_bar, false, false, false);
+                postpone_event(PluginPostEventParameterChange, k, timeInfo->bbt.beats_per_bar);
+                break;
+            case LV2_PORT_TIME_BEATS_PER_MINUTE:
+                set_parameter_value(k, timeInfo->bbt.beats_per_minute, false, false, false);
+                postpone_event(PluginPostEventParameterChange, k, timeInfo->bbt.beats_per_minute);
+                break;
+            case LV2_PORT_TIME_FRAME:
+                set_parameter_value(k, timeInfo->frame, false, false, false);
+                postpone_event(PluginPostEventParameterChange, k, timeInfo->frame);
+                break;
+            case LV2_PORT_TIME_FRAMES_PER_SECOND:
+                break;
+            case LV2_PORT_TIME_POSITION:
+                set_parameter_value(k, timeInfo->time, false, false, false);
+                postpone_event(PluginPostEventParameterChange, k, timeInfo->time);
+                break;
+            case LV2_PORT_TIME_SPEED:
+                set_parameter_value(k, timeInfo->playing ? 1.0 : 0.0, false, false, false);
+                postpone_event(PluginPostEventParameterChange, k, timeInfo->playing ? 1.0 : 0.0);
+                break;
             }
         }
 
         CARLA_PROCESS_CONTINUE_CHECK;
-#endif
 
         // --------------------------------------------------------------------------------------------------------
         // Plugin processing
@@ -2194,48 +2246,51 @@ public:
         LV2_URID urid_patch_body = get_custom_uri_id(LV2_PATCH__body);
         LV2_URID urid_patch_Set  = get_custom_uri_id(LV2_PATCH__Set);
 
-        if (atom->type == urid_atom_Blank)
+        if (atom->type != urid_atom_Blank)
         {
-            qDebug("Is blank");
+            qWarning("Lv2Plugin::handle_event_transfer() - Not blank");
+            return;
+        }
 
-            LV2_Atom_Object* obj = (LV2_Atom_Object*)atom;
+        LV2_Atom_Object* obj = (LV2_Atom_Object*)atom;
 
-            if (obj->body.otype == urid_patch_Set)
+        if (obj->body.otype != urid_patch_Set)
+        {
+            qWarning("Lv2Plugin::handle_event_transfer() - Not Patch Set");
+            return;
+        }
+
+        const LV2_Atom_Object* body = nullptr;
+        lv2_atom_object_get(obj, urid_patch_body, &body, 0);
+
+        if (! body)
+        {
+            qWarning("Lv2Plugin::handle_event_transfer() - Has no body");
+            return;
+        }
+
+        LV2_ATOM_OBJECT_FOREACH(body, iter)
+        {
+            CustomDataType dtype = CUSTOM_DATA_INVALID;
+            const char* key   = get_custom_uri_string(iter->key);
+            const char* value = nullptr;
+
+            if (iter->value.type == CARLA_URI_MAP_ID_ATOM_STRING || iter->value.type == CARLA_URI_MAP_ID_ATOM_PATH)
             {
-                qDebug("Is Patch Set");
-
-                const LV2_Atom_Object* body = nullptr;
-                lv2_atom_object_get(obj, urid_patch_body, &body, 0);
-
-                if (body)
-                {
-                    qDebug("Has body");
-
-                    LV2_ATOM_OBJECT_FOREACH(body, iter)
-                    {
-                        CustomDataType dtype = CUSTOM_DATA_INVALID;
-                        const char* key   = get_custom_uri_string(iter->key);
-                        const char* value = nullptr;
-
-                        if (iter->value.type == CARLA_URI_MAP_ID_ATOM_STRING || iter->value.type == CARLA_URI_MAP_ID_ATOM_PATH)
-                        {
-                            value = strdup((const char*)LV2_ATOM_BODY(&iter->value));
-                            dtype = (iter->value.type == CARLA_URI_MAP_ID_ATOM_STRING) ? CUSTOM_DATA_STRING : CUSTOM_DATA_PATH;
-                        }
-                        else if (iter->value.type == CARLA_URI_MAP_ID_ATOM_CHUNK || iter->value.type >= CARLA_URI_MAP_ID_COUNT)
-                        {
-                            QByteArray chunk((const char*)LV2_ATOM_BODY(&iter->value), iter->value.size);
-                            value = strdup(chunk.toBase64().constData());
-                            dtype = (iter->value.type == CARLA_URI_MAP_ID_ATOM_CHUNK) ? CUSTOM_DATA_CHUNK : CUSTOM_DATA_BINARY; // FIXME - binary should be a custom type
-                        }
-                        else
-                            value = strdup("");
-
-                        set_custom_data(dtype, key, value, false);
-                        free((void*)value);
-                    }
-                }
+                value = strdup((const char*)LV2_ATOM_BODY(&iter->value));
+                dtype = (iter->value.type == CARLA_URI_MAP_ID_ATOM_STRING) ? CUSTOM_DATA_STRING : CUSTOM_DATA_PATH;
             }
+            else if (iter->value.type == CARLA_URI_MAP_ID_ATOM_CHUNK || iter->value.type >= CARLA_URI_MAP_ID_COUNT)
+            {
+                QByteArray chunk((const char*)LV2_ATOM_BODY(&iter->value), iter->value.size);
+                value = strdup(chunk.toBase64().constData());
+                dtype = (iter->value.type == CARLA_URI_MAP_ID_ATOM_CHUNK) ? CUSTOM_DATA_CHUNK : CUSTOM_DATA_BINARY; // FIXME - binary should be a custom type
+            }
+            else
+                value = strdup("");
+
+            set_custom_data(dtype, key, value, false);
+            free((void*)value);
         }
     }
 
@@ -2243,22 +2298,22 @@ public:
     {
         qDebug("Lv2Plugin::get_custom_uri_id(%s)", uri);
 
-        for (int i=0; i < custom_uri_ids.count(); i++)
+        for (size_t i=0; i < custom_uri_ids.size(); i++)
         {
             if (custom_uri_ids[i] && strcmp(custom_uri_ids[i], uri) == 0)
                 return i;
         }
 
-        custom_uri_ids.append(strdup(uri));
-        return custom_uri_ids.count()-1;
+        custom_uri_ids.push_back(strdup(uri));
+        return custom_uri_ids.size()-1;
     }
 
-    const char* get_custom_uri_string(int uri_id)
+    const char* get_custom_uri_string(uint32_t uri_id)
     {
         qDebug("Lv2Plugin::get_custom_uri_string(%i)", uri_id);
 
-        if (uri_id < custom_uri_ids.count())
-            return custom_uri_ids.at(uri_id);
+        if (uri_id < custom_uri_ids.size())
+            return custom_uri_ids[uri_id];
         return nullptr;
     }
 
@@ -2289,6 +2344,8 @@ public:
         callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
 #endif
     }
+
+    // -------------------------------------------------------------------
 
     bool is_ui_resizable()
     {
@@ -2333,8 +2390,6 @@ public:
         }
         else
         {
-            qDebug("Lv2Plugin::reinit_external_ui() - Failed to re-initiate external UI");
-
             ui.handle = nullptr;
             ui.widget = nullptr;
             callback_action(CALLBACK_SHOW_GUI, m_id, -1, 0, 0.0);
@@ -2609,12 +2664,12 @@ public:
         features[lv2_feature_id_worker]->URI      = LV2_WORKER__schedule;
         features[lv2_feature_id_worker]->data     = Worker_Feature;
 
-        handle = descriptor->instantiate(descriptor, get_sample_rate(), rdf_descriptor->Bundle, features);
-
         // ---------------------------------------------------------------
         // initialize plugin
 
-        if (handle)
+        handle = descriptor->instantiate(descriptor, get_sample_rate(), rdf_descriptor->Bundle, features);
+
+        if (! handle)
         {
             set_last_error("Plugin failed to initialize");
             return false;
@@ -2624,7 +2679,7 @@ public:
         // get info
 
         m_filename = strdup(bundle);
-        m_name   = get_unique_name(rdf_descriptor->Name);
+        m_name     = get_unique_name(rdf_descriptor->Name);
 
         // ---------------------------------------------------------------
         // register client
@@ -2732,7 +2787,7 @@ public:
 
             if (! ui_lib_open(ui.rdf_descriptor->Binary))
             {
-                qCritical("Could not load UI library, error was:\n%s", ui_lib_error());
+                qCritical("Could not load UI library, error was:\n%s", lib_error());
                 ui.rdf_descriptor = nullptr;
                 return true;
             }
@@ -2886,61 +2941,29 @@ public:
 
     bool ui_lib_open(const char* filename)
     {
-#ifdef Q_OS_WIN
-        ui.lib = LoadLibraryA(filename);
-#else
-        ui.lib = dlopen(filename, RTLD_LAZY);
-#endif
+        ui.lib = ::lib_open(filename);
         return bool(ui.lib);
     }
 
     bool ui_lib_close()
     {
         if (ui.lib)
-#ifdef Q_OS_WIN
-            return FreeLibrary((HMODULE)ui.lib) != 0;
-#else
-            return dlclose(ui.lib) != 0;
-#endif
-        else
-            return false;
+            return ::lib_close(ui.lib);
+        return false;
     }
 
     void* ui_lib_symbol(const char* symbol)
     {
         if (ui.lib)
-#ifdef Q_OS_WIN
-            return (void*)GetProcAddress((HMODULE)ui.lib, symbol);
-#else
-            return dlsym(ui.lib, symbol);
-#endif
-        else
-            return nullptr;
-    }
-
-    const char* ui_lib_error()
-    {
-#ifdef Q_OS_WIN
-        static char libError[2048];
-        memset(libError, 0, sizeof(char)*2048);
-
-        LPVOID winErrorString;
-        DWORD  winErrorCode = GetLastError();
-        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |  FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, winErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&winErrorString, 0, nullptr);
-
-        snprintf(libError, 2048, "%s: error code %i: %s", m_filename, winErrorCode, (const char*)winErrorString);
-        LocalFree(winErrorString);
-
-        return libError;
-#else
-        return dlerror();
-#endif
+            return ::lib_symbol(ui.lib, symbol);
+        return nullptr;
     }
 
     // ----------------- DynParam Feature ------------------------------------------------
     // TODO
 
     // ----------------- Event Feature ---------------------------------------------------
+
     static uint32_t carla_lv2_event_ref(LV2_Event_Callback_Data callback_data, LV2_Event* event)
     {
         qDebug("Lv2Plugin::carla_lv2_event_ref(%p, %p)", callback_data, event);
@@ -2954,6 +2977,7 @@ public:
     }
 
     // ----------------- Logs Feature ----------------------------------------------------
+
     static int carla_lv2_log_vprintf(LV2_Log_Handle handle, LV2_URID type, const char* fmt, va_list ap)
     {
         qDebug("Lv2Plugin::carla_lv2_log_vprintf(%p, %i, %s, ...)", handle, type, fmt);
@@ -2998,6 +3022,7 @@ public:
     }
 
     // ----------------- Programs Feature ------------------------------------------------
+
     static void carla_lv2_program_changed(LV2_Programs_Handle handle, int32_t index)
     {
         qDebug("Lv2Plugin::carla_lv2_program_changed(%p, %i)", handle, index);
@@ -3010,178 +3035,177 @@ public:
     }
 
     // ----------------- State Feature ---------------------------------------------------
+
     static char* carla_lv2_state_make_path(LV2_State_Make_Path_Handle handle, const char* path)
     {
         qDebug("Lv2Plugin::carla_lv2_state_make_path(%p, %p)", handle, path);
+        QDir dir;
+        dir.mkpath(path);
         return strdup(path);
     }
 
     static char* carla_lv2_state_map_abstract_path(LV2_State_Map_Path_Handle handle, const char* absolute_path)
     {
         qDebug("Lv2Plugin::carla_lv2_state_map_abstract_path(%p, %p)", handle, absolute_path);
-        return strdup(absolute_path);
+        QDir dir(absolute_path);
+        return strdup(dir.canonicalPath().toUtf8().constData());
     }
 
     static char* carla_lv2_state_map_absolute_path(LV2_State_Map_Path_Handle handle, const char* abstract_path)
     {
         qDebug("Lv2Plugin::carla_lv2_state_map_absolute_path(%p, %p)", handle, abstract_path);
-        return strdup(abstract_path);
+        QDir dir(abstract_path);
+        return strdup(dir.absolutePath().toUtf8().constData());
     }
 
     static LV2_State_Status carla_lv2_state_store(LV2_State_Handle handle, uint32_t key, const void* value, size_t size, uint32_t type, uint32_t flags)
     {
         qDebug("Lv2Plugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i)", handle, key, value, size, type, flags);
+        assert(handle);
+        assert(value);
 
-        if (handle)
+        Lv2Plugin*  plugin  = (Lv2Plugin*)handle;
+        const char* uri_key = plugin->get_custom_uri_string(key);
+
+        CustomDataType dtype;
+
+        if (type == CARLA_URI_MAP_ID_ATOM_CHUNK)
+            dtype = CUSTOM_DATA_CHUNK;
+        else if (type == CARLA_URI_MAP_ID_ATOM_PATH)
+            dtype = CUSTOM_DATA_PATH;
+        else if (type == CARLA_URI_MAP_ID_ATOM_STRING)
+            dtype = CUSTOM_DATA_STRING;
+        else if (type >= CARLA_URI_MAP_ID_COUNT)
+            dtype = CUSTOM_DATA_BINARY;
+        else
+            dtype = CUSTOM_DATA_INVALID;
+
+        // do basic checks
+        if (! uri_key)
         {
-            Lv2Plugin* plugin = (Lv2Plugin*)handle;
-            const char* uri_key = plugin->get_custom_uri_string(key);
+            qWarning("Lv2Plugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i) - Invalid key", handle, key, value, size, type, flags);
+            return LV2_STATE_ERR_BAD_FLAGS;
+        }
 
-            if (uri_key && value && (flags & LV2_STATE_IS_POD) > 0)
+        if (! flags & LV2_STATE_IS_POD)
+        {
+            qWarning("Lv2Plugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i) - Invalid flags", handle, key, value, size, type, flags);
+            return LV2_STATE_ERR_BAD_FLAGS;
+        }
+
+        if (dtype == CUSTOM_DATA_INVALID)
+        {
+            qCritical("Lv2Plugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i) - Invalid type '%s'", handle, key, value, size, type, flags, customdatatype2str(dtype));
+            return LV2_STATE_ERR_BAD_TYPE;
+        }
+
+        // Check if we already have this key
+        for (size_t i=0; i < plugin->custom.size(); i++)
+        {
+            if (strcmp(plugin->custom[i].key, uri_key) == 0)
             {
-                qDebug("Lv2Plugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i) - Got uri_key and flags", handle, key, value, size, type, flags);
+                free((void*)plugin->custom[i].value);
 
-                CustomDataType dtype;
-
-                if (type == CARLA_URI_MAP_ID_ATOM_CHUNK)
-                    dtype = CUSTOM_DATA_CHUNK;
-                else if (type == CARLA_URI_MAP_ID_ATOM_PATH)
-                    dtype = CUSTOM_DATA_PATH;
-                else if (type == CARLA_URI_MAP_ID_ATOM_STRING)
-                    dtype = CUSTOM_DATA_STRING;
-                else if (type >= CARLA_URI_MAP_ID_COUNT)
-                    dtype = CUSTOM_DATA_BINARY;
-                else
-                    dtype = CUSTOM_DATA_INVALID;
-
-                if (dtype != CUSTOM_DATA_INVALID)
+                if (dtype == CUSTOM_DATA_STRING || dtype == CUSTOM_DATA_PATH)
                 {
-                    // Check if we already have this key
-                    for (size_t i=0; i < plugin->custom.size(); i++)
-                    {
-                        if (strcmp(plugin->custom[i].key, uri_key) == 0)
-                        {
-                            free((void*)plugin->custom[i].value);
-
-                            if (dtype == CUSTOM_DATA_STRING || dtype == CUSTOM_DATA_PATH)
-                            {
-                                plugin->custom[i].value = strdup((const char*)value);
-                            }
-                            else
-                            {
-                                QByteArray chunk((const char*)value, size);
-                                plugin->custom[i].value = strdup(chunk.toBase64().constData());
-                            }
-
-                            return LV2_STATE_SUCCESS;
-                        }
-                    }
-
-                    // Add a new one then
-                    CustomData new_data;
-                    new_data.type = dtype;
-                    new_data.key  = strdup(uri_key);
-
-                    if (dtype == CUSTOM_DATA_STRING || dtype == CUSTOM_DATA_PATH)
-                    {
-                        new_data.value = strdup((const char*)value);
-                    }
-                    else
-                    {
-                        QByteArray chunk((const char*)value, size);
-                        new_data.value = strdup(chunk.toBase64().constData());
-                    }
-
-                    plugin->custom.push_back(new_data);
-
-                    return LV2_STATE_SUCCESS;
+                    plugin->custom[i].value = strdup((const char*)value);
                 }
                 else
                 {
-                    qCritical("Lv2Plugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i) - Invalid type '%s'", handle, key, value, size, type, flags, customdatatype2str(dtype));
-                    return LV2_STATE_ERR_BAD_TYPE;
+                    QByteArray chunk((const char*)value, size);
+                    plugin->custom[i].value = strdup(chunk.toBase64().constData());
                 }
+
+                return LV2_STATE_SUCCESS;
             }
-            else
-            {
-                qWarning("Lv2Plugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i) - Invalid key, flags or value", handle, key, value, size, type, flags);
-                return LV2_STATE_ERR_BAD_FLAGS;
-            }
+        }
+
+        // Add a new one then
+        CustomData new_data;
+        new_data.type = dtype;
+        new_data.key  = strdup(uri_key);
+
+        if (dtype == CUSTOM_DATA_STRING || dtype == CUSTOM_DATA_PATH)
+        {
+            new_data.value = strdup((const char*)value);
         }
         else
         {
-            qCritical("Lv2Plugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i) - Invalid handle", handle, key, value, size, type, flags);
-            return LV2_STATE_ERR_UNKNOWN;
+            QByteArray chunk((const char*)value, size);
+            new_data.value = strdup(chunk.toBase64().constData());
         }
+
+        plugin->custom.push_back(new_data);
+
+        return LV2_STATE_SUCCESS;
     }
 
     static const void* carla_lv2_state_retrieve(LV2_State_Handle handle, uint32_t key, size_t* size, uint32_t* type, uint32_t* flags)
     {
         qDebug("Lv2Plugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p)", handle, key, size, type, flags);
+        assert(handle);
 
-        if (handle)
+        Lv2Plugin*  plugin  = (Lv2Plugin*)handle;
+        const char* uri_key = plugin->get_custom_uri_string(key);
+
+        if (! uri_key)
         {
-            Lv2Plugin* plugin = (Lv2Plugin*)handle;
-            const char* uri_key = plugin->get_custom_uri_string(key);
+            qCritical("Lv2Plugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p) - Failed to find key", handle, key, size, type, flags);
+            return nullptr;
+        }
 
-            if (uri_key)
+        const char* string_data = nullptr;
+        CustomDataType dtype = CUSTOM_DATA_INVALID;
+
+        for (size_t i=0; i < plugin->custom.size(); i++)
+        {
+            if (strcmp(plugin->custom[i].key, uri_key) == 0)
             {
-                const char* string_data = nullptr;
-                CustomDataType dtype = CUSTOM_DATA_INVALID;
-
-                for (size_t i=0; i < plugin->custom.size(); i++)
-                {
-                    if (strcmp(plugin->custom[i].key, uri_key) == 0)
-                    {
-                        dtype = plugin->custom[i].type;
-                        string_data = plugin->custom[i].value;
-                        break;
-                    }
-                }
-
-                if (string_data)
-                {
-                    *size  = 0;
-                    *type  = 0;
-                    *flags = 0;
-
-                    if (dtype == CUSTOM_DATA_STRING)
-                    {
-                        *size = strlen(string_data);
-                        *type = CARLA_URI_MAP_ID_ATOM_STRING;
-                        return string_data;
-                    }
-                    else if (dtype == CUSTOM_DATA_PATH)
-                    {
-                        *size = strlen(string_data);
-                        *type = CARLA_URI_MAP_ID_ATOM_PATH;
-                        return string_data;
-                    }
-                    else if (dtype == CUSTOM_DATA_CHUNK || dtype == CUSTOM_DATA_BINARY)
-                    {
-                        static QByteArray chunk;
-                        chunk = QByteArray::fromBase64(string_data);
-
-                        *size = chunk.size();
-                        *type = (dtype == CUSTOM_DATA_CHUNK) ? CARLA_URI_MAP_ID_ATOM_CHUNK : key;
-                        return chunk.constData();
-                    }
-                    else
-                        qCritical("Lv2Plugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p) - Invalid key type '%s'", handle, key, size, type, flags, customdatatype2str(dtype));
-                }
-                else
-                    qCritical("Lv2Plugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p) - Invalid key '%s'", handle, key, size, type, flags, uri_key);
+                dtype = plugin->custom[i].type;
+                string_data = plugin->custom[i].value;
+                break;
             }
-            else
-                qCritical("Lv2Plugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p) - Failed to find key", handle, key, size, type, flags);
+        }
+
+        if (! string_data)
+        {
+            qCritical("Lv2Plugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p) - Invalid key '%s'", handle, key, size, type, flags, uri_key);
+            return nullptr;
+        }
+
+        *size  = 0;
+        *type  = 0;
+        *flags = 0;
+
+        if (dtype == CUSTOM_DATA_STRING)
+        {
+            *size = strlen(string_data);
+            *type = CARLA_URI_MAP_ID_ATOM_STRING;
+            return string_data;
+        }
+        else if (dtype == CUSTOM_DATA_PATH)
+        {
+            *size = strlen(string_data);
+            *type = CARLA_URI_MAP_ID_ATOM_PATH;
+            return string_data;
+        }
+        else if (dtype == CUSTOM_DATA_CHUNK || dtype == CUSTOM_DATA_BINARY)
+        {
+            static QByteArray chunk;
+            chunk = QByteArray::fromBase64(string_data);
+
+            *size = chunk.size();
+            *type = (dtype == CUSTOM_DATA_CHUNK) ? CARLA_URI_MAP_ID_ATOM_CHUNK : key;
+            return chunk.constData();
         }
         else
-            qCritical("Lv2Plugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p) - Invalid handle", handle, key, size, type, flags);
+            qCritical("Lv2Plugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p) - Invalid key type '%s'", handle, key, size, type, flags, customdatatype2str(dtype));
 
         return nullptr;
     }
 
     // ----------------- URI-Map Feature -------------------------------------------------
+
     static uint32_t carla_lv2_uri_to_id(LV2_URI_Map_Callback_Data data, const char* map, const char* uri)
     {
         qDebug("Lv2Plugin::carla_lv2_uri_to_id(%p, %s, %s)", data, map, uri);
@@ -3189,6 +3213,7 @@ public:
     }
 
     // ----------------- URID Feature ----------------------------------------------------
+
     static LV2_URID carla_lv2_urid_map(LV2_URID_Map_Handle handle, const char* uri)
     {
         qDebug("Lv2Plugin::carla_lv2_urid_map(%p, %s)", handle, uri);
@@ -3274,65 +3299,59 @@ public:
     }
 
     // ----------------- Worker Feature --------------------------------------------------
+
     static LV2_Worker_Status carla_lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void* data)
     {
         qDebug("Lv2Plugin::carla_lv2_worker_schedule(%p, %i, %p)", handle, size, data);
+        assert(handle);
 
-        if (handle)
+        //Lv2Plugin* plugin = (Lv2Plugin*)handle;
+        //if (carla_jack_on_freewheel())
+        //{
+        //    PluginPostEvent event;
+        //    event.valid = true;
+        //    event.type  = PostEventCustom;
+        //    event.index = size;
+        //    event.value = 0.0;
+        //    event.cdata = data;
+        //   plugin->run_custom_event(&event);
+        //}
+        //else
+        //    plugin->postpone_event(PostEventCustom, size, 0.0, data);
+
+        return LV2_WORKER_SUCCESS;
+    }
+
+    static LV2_Worker_Status carla_lv2_worker_respond(LV2_Worker_Respond_Handle handle, uint32_t size, const void* data)
+    {
+        qDebug("Lv2Plugin::carla_lv2_worker_respond(%p, %i, %p)", handle, size, data);
+        assert(handle);
+
+        Lv2Plugin* plugin = (Lv2Plugin*)handle;
+
+        if (plugin->ext.worker)
         {
-            //            Lv2Plugin* plugin = (Lv2Plugin*)handle;
-
-            //            if (carla_jack_on_freewheel())
-            //            {
-            //                PluginPostEvent event;
-            //                event.valid = true;
-            //                event.type  = PostEventCustom;
-            //                event.index = size;
-            //                event.value = 0.0;
-            //                event.cdata = data;
-            //                plugin->run_custom_event(&event);
-            //            }
-            //            else
-            //                plugin->postpone_event(PostEventCustom, size, 0.0, data);
-
+            //plugin->ext.worker->work_response(plugin->handle, size, data);
             return LV2_WORKER_SUCCESS;
         }
 
         return LV2_WORKER_ERR_UNKNOWN;
     }
 
-    static LV2_Worker_Status carla_lv2_worker_respond(LV2_Worker_Respond_Handle handle, uint32_t size, const void* data)
-    {
-        qDebug("Lv2Plugin::carla_lv2_worker_respond(%p, %i, %p)", handle, size, data);
-
-        if (handle)
-        {
-            Lv2Plugin* plugin = (Lv2Plugin*)handle;
-
-            if (plugin->ext.worker)
-            {
-                //plugin->ext.worker->work_response(plugin->handle, size, data);
-                return LV2_WORKER_SUCCESS;
-            }
-        }
-
-        return LV2_WORKER_ERR_UNKNOWN;
-    }
-
     // ----------------- UI Port-Map Feature ---------------------------------------------
+
     static uint32_t carla_lv2_ui_port_map(LV2UI_Feature_Handle handle, const char* symbol)
     {
         qDebug("Lv2Plugin::carla_lv2_ui_port_map(%p, %s)", handle, symbol);
+        assert(handle);
+        assert(symbol);
 
-        if (handle)
+        Lv2Plugin* plugin = (Lv2Plugin*)handle;
+
+        for (uint32_t i=0; i < plugin->rdf_descriptor->PortCount; i++)
         {
-            Lv2Plugin* plugin = (Lv2Plugin*)handle;
-
-            for (uint32_t i=0; i < plugin->rdf_descriptor->PortCount; i++)
-            {
-                if (strcmp(plugin->rdf_descriptor->Ports[i].Symbol, symbol) == 0)
-                    return i;
-            }
+            if (strcmp(plugin->rdf_descriptor->Ports[i].Symbol, symbol) == 0)
+                return i;
         }
 
         return 0;
@@ -3359,69 +3378,65 @@ public:
     static void carla_lv2_external_ui_closed(LV2UI_Controller controller)
     {
         qDebug("Lv2Plugin::carla_lv2_external_ui_closed(%p)", controller);
+        assert(controller);
 
-        if (controller)
-        {
-            Lv2Plugin* plugin = (Lv2Plugin*)controller;
-            plugin->gui.visible = false;
+        Lv2Plugin* plugin = (Lv2Plugin*)controller;
+        plugin->gui.visible = false;
 
-            if (plugin->ui.handle && plugin->ui.descriptor && plugin->ui.descriptor->cleanup)
-                plugin->ui.descriptor->cleanup(plugin->ui.handle);
+        if (plugin->ui.handle && plugin->ui.descriptor && plugin->ui.descriptor->cleanup)
+            plugin->ui.descriptor->cleanup(plugin->ui.handle);
 
-            plugin->ui.handle = nullptr;
-            callback_action(CALLBACK_SHOW_GUI, plugin->m_id, 0, 0, 0.0);
-        }
+        plugin->ui.handle = nullptr;
+        callback_action(CALLBACK_SHOW_GUI, plugin->m_id, 0, 0, 0.0);
     }
 
     // ----------------- UI Extension ----------------------------------------------------
     static void carla_lv2_ui_write_function(LV2UI_Controller controller, uint32_t port_index, uint32_t buffer_size, uint32_t format, const void* buffer)
     {
         qDebug("Lv2Plugin::carla_lv2_ui_write_function(%p, %i, %i, %i, %p)", controller, port_index, buffer_size, format, buffer);
+        assert(controller);
 
-        if (controller)
+        Lv2Plugin* plugin = (Lv2Plugin*)controller;
+
+        if (format == 0)
         {
-            Lv2Plugin* plugin = (Lv2Plugin*)controller;
+            if (buffer_size == sizeof(float))
+            {
+                float value = *(float*)buffer;
+                plugin->set_parameter_value_by_rindex(port_index, value, false, true, true);
+            }
+        }
+        else if (format == CARLA_URI_MAP_ID_MIDI_EVENT)
+        {
+            const uint8_t* data = (const uint8_t*)buffer;
+            uint8_t status = data[0];
 
-            if (format == 0)
-            {
-                if (buffer_size == sizeof(float))
-                {
-                    float value = *(float*)buffer;
-                    plugin->set_parameter_value_by_rindex(port_index, value, false, true, true);
-                }
-            }
-            else if (format == CARLA_URI_MAP_ID_MIDI_EVENT)
-            {
-                const uint8_t* data = (const uint8_t*)buffer;
-                uint8_t status = data[0];
+            // Fix bad note-off
+            if (MIDI_IS_STATUS_NOTE_ON(status) && data[2] == 0)
+                status -= 0x10;
 
-                // Fix bad note-off
-                if (MIDI_IS_STATUS_NOTE_ON(status) && data[2] == 0)
-                    status -= 0x10;
-
-                if (MIDI_IS_STATUS_NOTE_OFF(status))
-                {
-                    uint8_t note = data[2];
-                    plugin->send_midi_note(false, note, 0, false, true, true);
-                }
-                else if (MIDI_IS_STATUS_NOTE_ON(status))
-                {
-                    uint8_t note = data[2];
-                    uint8_t velo = data[3];
-                    plugin->send_midi_note(true, note, velo, false, true, true);
-                }
-            }
-            else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM)
+            if (MIDI_IS_STATUS_NOTE_OFF(status))
             {
-                // TODO
-                //LV2_Atom* atom = (LV2_Atom*)buffer;
-                //QByteArray chunk((const char*)buffer, buffer_size);
+                uint8_t note = data[2];
+                plugin->send_midi_note(false, note, 0, false, true, true);
             }
-            else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT)
+            else if (MIDI_IS_STATUS_NOTE_ON(status))
             {
-                LV2_Atom* atom = (LV2_Atom*)buffer;
-                plugin->ui.descriptor->port_event(plugin->ui.handle, 0, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
+                uint8_t note = data[2];
+                uint8_t velo = data[3];
+                plugin->send_midi_note(true, note, velo, false, true, true);
             }
+        }
+        else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM)
+        {
+            // TODO
+            //LV2_Atom* atom = (LV2_Atom*)buffer;
+            //QByteArray chunk((const char*)buffer, buffer_size);
+        }
+        else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT)
+        {
+            LV2_Atom* atom = (LV2_Atom*)buffer;
+            plugin->ui.descriptor->port_event(plugin->ui.handle, 0, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
         }
     }
 
@@ -3460,7 +3475,7 @@ private:
     Lv2ParameterData* lv2param;
 
     //LV2_Atom_Forge atom_forge;
-    QVector<const char*> custom_uri_ids;
+    std::vector<const char*> custom_uri_ids;
 };
 
 short add_plugin_lv2(const char* filename, const char* label)

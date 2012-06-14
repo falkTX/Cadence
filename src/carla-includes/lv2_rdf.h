@@ -224,7 +224,7 @@ struct LV2_RDF_PortScalePoint {
 #define LV2_PORT_TIME_BEAT_UNIT          0x5
 #define LV2_PORT_TIME_BEATS_PER_BAR      0x6
 #define LV2_PORT_TIME_BEATS_PER_MINUTE   0x7
-#define LV2_PORT_TIME_FRAMES             0x8
+#define LV2_PORT_TIME_FRAME              0x8
 #define LV2_PORT_TIME_FRAMES_PER_SECOND  0x9
 #define LV2_PORT_TIME_POSITION           0xA
 #define LV2_PORT_TIME_SPEED              0xB
@@ -236,7 +236,7 @@ struct LV2_RDF_PortScalePoint {
 #define LV2_IS_PORT_TIME_BEAT_UNIT(x)    ((x) == LV2_PORT_TIME_BEAT_UNIT)
 #define LV2_IS_PORT_TIME_BEATS_PER_BAR(x)     ((x) == LV2_PORT_TIME_BEATS_PER_BAR)
 #define LV2_IS_PORT_TIME_BEATS_PER_MINUTE(x)  ((x) == LV2_PORT_TIME_BEATS_PER_MINUTE)
-#define LV2_IS_PORT_TIME_FRAMES(x)            ((x) == LV2_PORT_TIME_FRAMES)
+#define LV2_IS_PORT_TIME_FRAME(x)             ((x) == LV2_PORT_TIME_FRAME)
 #define LV2_IS_PORT_TIME_FRAMES_PER_SECOND(x) ((x) == LV2_PORT_TIME_FRAMES_PER_SECOND)
 #define LV2_IS_PORT_TIME_POSITION(x)          ((x) == LV2_PORT_TIME_POSITION)
 #define LV2_IS_PORT_TIME_SPEED(x)             ((x) == LV2_PORT_TIME_SPEED)
@@ -557,6 +557,17 @@ public:
         preset_preset       (new_uri(LV2_PRESETS__Preset)),
         preset_value        (new_uri(LV2_PRESETS__value)),
 
+        time_bar            (new_uri(LV2_TIME__bar)),
+        time_barBeat        (new_uri(LV2_TIME__barBeat)),
+        time_beat           (new_uri(LV2_TIME__beat)),
+        time_beatUnit       (new_uri(LV2_TIME__beatUnit)),
+        time_beatsPerBar    (new_uri(LV2_TIME__beatsPerBar)),
+        time_beatsPerMinute (new_uri(LV2_TIME__beatsPerMinute)),
+        time_frame          (new_uri(LV2_TIME__frame)),
+        time_framesPerSecond (new_uri(LV2_TIME__framesPerSecond)),
+        time_position       (new_uri(LV2_TIME__position)),
+        time_speed          (new_uri(LV2_TIME__speed)),
+
         value_default       (new_uri(LV2_CORE__default)),
         value_minimum       (new_uri(LV2_CORE__minimum)),
         value_maximum       (new_uri(LV2_CORE__maximum)),
@@ -689,6 +700,17 @@ public:
     Lilv::Node preset_value;
 
     // LV2 stuff
+    Lilv::Node time_bar;
+    Lilv::Node time_barBeat;
+    Lilv::Node time_beat;
+    Lilv::Node time_beatUnit;
+    Lilv::Node time_beatsPerBar;
+    Lilv::Node time_beatsPerMinute;
+    Lilv::Node time_frame;
+    Lilv::Node time_framesPerSecond;
+    Lilv::Node time_position;
+    Lilv::Node time_speed;
+
     Lilv::Node value_default;
     Lilv::Node value_minimum;
     Lilv::Node value_maximum;
@@ -973,7 +995,28 @@ inline const LV2_RDF_Descriptor* lv2_rdf_new(const char* URI)
                     // ------------------------------------------
                     // Set Port Designation
 
-                    RDF_Port->Designation = 0;
+                    if (lilv_plugin_get_port_by_designation(Plugin.me, nullptr, Lv2World.time_bar) == Port.me)
+                        RDF_Port->Designation = LV2_PORT_TIME_BAR;
+                    else if (lilv_plugin_get_port_by_designation(Plugin.me, nullptr, Lv2World.time_barBeat) == Port.me)
+                        RDF_Port->Designation = LV2_PORT_TIME_BAR_BEAT;
+                    else if (lilv_plugin_get_port_by_designation(Plugin.me, nullptr, Lv2World.time_beat) == Port.me)
+                        RDF_Port->Designation = LV2_PORT_TIME_BEAT;
+                    else if (lilv_plugin_get_port_by_designation(Plugin.me, nullptr, Lv2World.time_beatUnit) == Port.me)
+                        RDF_Port->Designation = LV2_PORT_TIME_BEAT_UNIT;
+                    else if (lilv_plugin_get_port_by_designation(Plugin.me, nullptr, Lv2World.time_beatsPerBar) == Port.me)
+                        RDF_Port->Designation = LV2_PORT_TIME_BEATS_PER_BAR;
+                    else if (lilv_plugin_get_port_by_designation(Plugin.me, nullptr, Lv2World.time_beatsPerMinute) == Port.me)
+                        RDF_Port->Designation = LV2_PORT_TIME_BEATS_PER_MINUTE;
+                    else if (lilv_plugin_get_port_by_designation(Plugin.me, nullptr, Lv2World.time_frame) == Port.me)
+                        RDF_Port->Designation = LV2_PORT_TIME_FRAME;
+                    else if (lilv_plugin_get_port_by_designation(Plugin.me, nullptr, Lv2World.time_framesPerSecond) == Port.me)
+                        RDF_Port->Designation = LV2_PORT_TIME_FRAMES_PER_SECOND;
+                    else if (lilv_plugin_get_port_by_designation(Plugin.me, nullptr, Lv2World.time_position) == Port.me)
+                        RDF_Port->Designation = LV2_PORT_TIME_POSITION;
+                    else if (lilv_plugin_get_port_by_designation(Plugin.me, nullptr, Lv2World.time_speed) == Port.me)
+                        RDF_Port->Designation = LV2_PORT_TIME_SPEED;
+                    else
+                        RDF_Port->Designation = 0;
 
                     // ------------------------------------------
                     // Set Port Information

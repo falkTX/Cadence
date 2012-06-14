@@ -21,6 +21,7 @@
 
 #include "carla_plugin.h"
 
+#ifdef WANT_LINUXSAMPLER
 #include <linuxsampler/Sampler.h>
 #include "linuxsampler/EngineFactory.h"
 
@@ -649,11 +650,13 @@ private:
     const char* m_label;
     const char* m_maker;
 };
+#endif
 
 short add_plugin_linuxsampler(const char* filename, const char* label, bool isGIG)
 {
     qDebug("add_plugin_linuxsampler(%s, %s, %s)", filename, label, bool2str(isGIG));
 
+#ifdef WANT_LINUXSAMPLER
     short id = get_new_plugin_id();
 
     if (id >= 0)
@@ -679,6 +682,10 @@ short add_plugin_linuxsampler(const char* filename, const char* label, bool isGI
         set_last_error("Requested file is not a valid SoundFont");
 
     return id;
+#else
+    set_last_error("fluidsynth support not available");
+    return -1;
+#endif
 }
 
 short add_plugin_gig(const char* filename, const char* label)

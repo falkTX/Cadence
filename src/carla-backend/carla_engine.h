@@ -38,6 +38,8 @@ CARLA_BACKEND_START_NAMESPACE
 } /* adjust editor indent */
 #endif
 
+const uint32_t CarlaEngineTimeBBT = 0x01;
+
 enum CarlaEnginePortType {
     CarlaEnginePortTypeAudio,
     CarlaEnginePortTypeControl,
@@ -66,10 +68,22 @@ struct CarlaEngineMidiEvent {
     uint8_t data[4];
 };
 
-//struct CarlaTimeInfo {
-//    bool playing;
-//    double bpm;
-//};
+struct CarlaTimeInfo {
+    bool playing;
+    uint32_t frame;
+    uint32_t time;
+    uint32_t valid;
+    struct {
+        int32_t bar;
+        int32_t beat;
+        int32_t tick;
+        double bar_start_tick;
+        float  beats_per_bar;
+        float  beat_type;
+        double ticks_per_beat;
+        double beats_per_minute;
+    } bbt;
+};
 
 // -----------------------------------------
 
@@ -87,7 +101,7 @@ public:
     static int maxClientNameSize();
     static int maxPortNameSize();
 
-    //static const CarlaTimeInfo* getTimeInfo();
+    static const CarlaTimeInfo* getTimeInfo();
 };
 
 // -----------------------------------------

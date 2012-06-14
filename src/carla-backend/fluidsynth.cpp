@@ -21,6 +21,7 @@
 
 #include "carla_plugin.h"
 
+#ifdef WANT_FLUIDSYNTH
 #include <fluidsynth.h>
 
 #if (FLUIDSYNTH_VERSION_MAJOR >= 1 && FLUIDSYNTH_VERSION_MINOR >= 1 && FLUIDSYNTH_VERSION_MICRO >= 4)
@@ -1250,11 +1251,13 @@ private:
     double param_buffers[FluidSynthParametersMax];
     const char* m_label;
 };
+#endif // WANT_FLUIDSYNTH
 
 short add_plugin_sf2(const char* filename, const char* label)
 {
     qDebug("add_plugin_sf2(%s, %s)", filename, label);
 
+#ifdef WANT_FLUIDSYNTH
     short id = get_new_plugin_id();
 
     if (id >= 0)
@@ -1285,6 +1288,10 @@ short add_plugin_sf2(const char* filename, const char* label)
         set_last_error("Maximum number of plugins reached");
 
     return id;
+#else
+    set_last_error("fluidsynth support not available");
+    return -1;
+#endif
 }
 
 CARLA_BACKEND_END_NAMESPACE
