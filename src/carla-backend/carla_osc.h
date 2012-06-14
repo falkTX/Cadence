@@ -40,7 +40,7 @@ int osc_handle_note_off(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_bridge_ains_peak(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_bridge_aouts_peak(CarlaPlugin* plugin, lo_arg** argv);
 
-void osc_send_lv2_event_transfer(OscData* osc_data, const char* type, const char* key, const char* value);
+void osc_send_lv2_event_transfer(const OscData* const osc_data, const char* type, const char* key, const char* value);
 
 bool osc_global_registered();
 void osc_global_send_add_plugin(int plugin_id, const char* plugin_name);

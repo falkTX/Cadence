@@ -30,41 +30,36 @@ bool is_rdf_port_good(int Type1, int Type2)
 {
     if (LADSPA_IS_PORT_INPUT(Type1) && ! LADSPA_IS_PORT_INPUT(Type2))
         return false;
-    else if (LADSPA_IS_PORT_OUTPUT(Type1) && ! LADSPA_IS_PORT_OUTPUT(Type2))
+    if (LADSPA_IS_PORT_OUTPUT(Type1) && ! LADSPA_IS_PORT_OUTPUT(Type2))
         return false;
-    else if (LADSPA_IS_PORT_CONTROL(Type1) && ! LADSPA_IS_PORT_CONTROL(Type2))
+    if (LADSPA_IS_PORT_CONTROL(Type1) && ! LADSPA_IS_PORT_CONTROL(Type2))
         return false;
-    else if (LADSPA_IS_PORT_AUDIO(Type1) && ! LADSPA_IS_PORT_AUDIO(Type2))
+    if (LADSPA_IS_PORT_AUDIO(Type1) && ! LADSPA_IS_PORT_AUDIO(Type2))
         return false;
-    else
-        return true;
+    return true;
 }
 
 bool is_ladspa_rdf_descriptor_valid(const LADSPA_RDF_Descriptor* rdf_descriptor, const LADSPA_Descriptor* descriptor)
 {
-    if (rdf_descriptor)
+    if (! rdf_descriptor)
+        return false;
+
+    if (rdf_descriptor->PortCount > descriptor->PortCount)
     {
-        if (rdf_descriptor->PortCount <= descriptor->PortCount)
+        qWarning("WARNING - Plugin has RDF data, but invalid PortCount: %li > %li", rdf_descriptor->PortCount, descriptor->PortCount);
+        return false;
+    }
+
+    for (unsigned long i=0; i < rdf_descriptor->PortCount; i++)
+    {
+        if (! is_rdf_port_good(rdf_descriptor->Ports[i].Type, descriptor->PortDescriptors[i]))
         {
-            for (unsigned long i=0; i < rdf_descriptor->PortCount; i++)
-            {
-                if (is_rdf_port_good(rdf_descriptor->Ports[i].Type, descriptor->PortDescriptors[i]) == false)
-                {
-                    qWarning("WARNING - Plugin has RDF data, but invalid PortTypes: %i != %i", rdf_descriptor->Ports[i].Type, descriptor->PortDescriptors[i]);
-                    return false;
-                }
-            }
-            return true;
-        }
-        else
-        {
-            qWarning("WARNING - Plugin has RDF data, but invalid PortCount: %li > %li", rdf_descriptor->PortCount, descriptor->PortCount);
+            qWarning("WARNING - Plugin has RDF data, but invalid PortTypes: %i != %i", rdf_descriptor->Ports[i].Type, descriptor->PortDescriptors[i]);
             return false;
         }
     }
-    else
-        // No RDF Descriptor
-        return false;
+
+    return true;
 }
 
 class LadspaPlugin : public CarlaPlugin
@@ -147,10 +142,9 @@ public:
 
     uint32_t param_scalepoint_count(uint32_t param_id)
     {
+        assert(param_id < param.count);
         int32_t rindex = param.data[param_id].rindex;
-
-        bool HasPortRDF = (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount);
-        if (HasPortRDF)
+        if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
             return rdf_descriptor->Ports[rindex].ScalePointCount;
         return 0;
     }
@@ -160,15 +154,15 @@ public:
 
     double get_parameter_value(uint32_t param_id)
     {
+        assert(param_id < param.count);
         return param_buffers[param_id];
     }
 
     double get_parameter_scalepoint_value(uint32_t param_id, uint32_t scalepoint_id)
     {
+        assert(param_id < param.count);
         int32_t param_rindex = param.data[param_id].rindex;
-
-        bool HasPortRDF = (rdf_descriptor && param_rindex < (int32_t)rdf_descriptor->PortCount);
-        if (HasPortRDF)
+        if (rdf_descriptor && param_rindex < (int32_t)rdf_descriptor->PortCount)
             return rdf_descriptor->Ports[param_rindex].ScalePoints[scalepoint_id].Value;
         return 0.0;
     }
@@ -201,21 +195,21 @@ public:
 
     void get_parameter_name(uint32_t param_id, char* buf_str)
     {
+        assert(param_id < param.count);
         int32_t rindex = param.data[param_id].rindex;
         strncpy(buf_str, descriptor->PortNames[rindex], STR_MAX);
     }
 
     void get_parameter_symbol(uint32_t param_id, char* buf_str)
     {
+        assert(param_id < param.count);
         int32_t rindex = param.data[param_id].rindex;
-
-        bool HasPortRDF = (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount);
-        if (HasPortRDF)
+        if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
         {
-            LADSPA_RDF_Port Port = rdf_descriptor->Ports[rindex];
-            if (LADSPA_PORT_HAS_LABEL(Port.Hints))
+            const LADSPA_RDF_Port* const Port = &rdf_descriptor->Ports[rindex];
+            if (LADSPA_PORT_HAS_LABEL(Port->Hints))
             {
-                strncpy(buf_str, Port.Label, STR_MAX);
+                strncpy(buf_str, Port->Label, STR_MAX);
                 return;
             }
         }
@@ -224,15 +218,14 @@ public:
 
     void get_parameter_unit(uint32_t param_id, char* buf_str)
     {
+        assert(param_id < param.count);
         int32_t rindex = param.data[param_id].rindex;
-
-        bool HasPortRDF = (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount);
-        if (HasPortRDF)
+        if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
         {
-            LADSPA_RDF_Port Port = rdf_descriptor->Ports[rindex];
-            if (LADSPA_PORT_HAS_UNIT(Port.Hints))
+            const LADSPA_RDF_Port* const Port = &rdf_descriptor->Ports[rindex];
+            if (LADSPA_PORT_HAS_UNIT(Port->Hints))
             {
-                switch (Port.Unit)
+                switch (Port->Unit)
                 {
                 case LADSPA_UNIT_DB:
                     strncpy(buf_str, "dB", STR_MAX);
@@ -260,13 +253,14 @@ public:
 
     void get_parameter_scalepoint_label(uint32_t param_id, uint32_t scalepoint_id, char* buf_str)
     {
+        assert(param_id < param.count);
         int32_t param_rindex = param.data[param_id].rindex;
-
-        bool HasPortRDF = (rdf_descriptor && param_rindex < (int32_t)rdf_descriptor->PortCount);
-        if (HasPortRDF)
+        if (rdf_descriptor && param_rindex < (int32_t)rdf_descriptor->PortCount)
+        {
             strncpy(buf_str, rdf_descriptor->Ports[param_rindex].ScalePoints[scalepoint_id].Label, STR_MAX);
-        else
-            *buf_str = 0;
+            return;
+        }
+        *buf_str = 0;
     }
 
     // -------------------------------------------------------------------
@@ -274,8 +268,8 @@ public:
 
     void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
+        assert(param_id < param.count);
         param_buffers[param_id] = fix_parameter_value(value, param.ranges[param_id]);
-
         CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
     }
 
@@ -739,7 +733,14 @@ public:
                     // Control plugin parameters
                     for (k=0; k < param.count; k++)
                     {
-                        if (param.data[k].midi_channel == cin_event->channel && param.data[k].midi_cc == cin_event->controller && param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0)
+                        if (param.data[k].midi_channel != cin_event->channel)
+                            continue;
+                        if (param.data[k].midi_cc != cin_event->controller)
+                            continue;
+                        if (param.data[k].type != PARAMETER_INPUT)
+                            continue;
+
+                        if (param.data[k].hints & PARAMETER_IS_AUTOMABLE)
                         {
                             if (param.data[k].hints & PARAMETER_IS_BOOLEAN)
                             {
@@ -964,57 +965,78 @@ public:
 
     bool init(const char* filename, const char* label, const LADSPA_RDF_Descriptor* rdf_descriptor_)
     {
+        // ---------------------------------------------------------------
+        // open DLL
+
         if (lib_open(filename))
         {
-            LADSPA_Descriptor_Function descfn = (LADSPA_Descriptor_Function)lib_symbol("ladspa_descriptor");
-
-            if (descfn)
-            {
-                unsigned long i = 0;
-                while ((descriptor = descfn(i++)))
-                {
-                    if (strcmp(descriptor->Label, label) == 0)
-                        break;
-                }
-
-                if (descriptor)
-                {
-                    handle = descriptor->instantiate(descriptor, get_sample_rate());
-
-                    if (handle)
-                    {
-                        m_filename = strdup(filename);
-
-                        if (is_ladspa_rdf_descriptor_valid(rdf_descriptor_, descriptor))
-                            rdf_descriptor = ladspa_rdf_dup(rdf_descriptor_);
-
-                        if (rdf_descriptor && rdf_descriptor->Title)
-                            m_name = get_unique_name(rdf_descriptor->Title);
-                        else
-                            m_name = get_unique_name(descriptor->Name);
-
-                        x_client = new CarlaEngineClient(this);
-
-                        if (x_client->isOk())
-                        {
-                            return true;
-                        }
-                        else
-                            set_last_error("Failed to register plugin client");
-                    }
-                    else
-                        set_last_error("Plugin failed to initialize");
-                }
-                else
-                    set_last_error("Could not find the requested plugin Label in the plugin library");
-            }
-            else
-                set_last_error("Could not find the LASDPA Descriptor in the plugin library");
-        }
-        else
             set_last_error(lib_error());
+            return false;
+        }
 
-        return false;
+        // ---------------------------------------------------------------
+        // get DLL main entry
+
+        LADSPA_Descriptor_Function descfn = (LADSPA_Descriptor_Function)lib_symbol("ladspa_descriptor");
+
+        if (! descfn)
+        {
+            set_last_error("Could not find the LASDPA Descriptor in the plugin library");
+            return false;
+        }
+
+        // ---------------------------------------------------------------
+        // get descriptor that matches label
+
+        unsigned long i = 0;
+        while ((descriptor = descfn(i++)))
+        {
+            if (strcmp(descriptor->Label, label) == 0)
+                break;
+        }
+
+        if (! descriptor)
+        {
+            set_last_error("Could not find the requested plugin Label in the plugin library");
+            return false;
+        }
+
+        // ---------------------------------------------------------------
+        // initialize plugin
+
+        handle = descriptor->instantiate(descriptor, get_sample_rate());
+
+        if (! handle)
+        {
+            set_last_error("Plugin failed to initialize");
+            return false;
+        }
+
+        // ---------------------------------------------------------------
+        // get info
+
+        m_filename = strdup(filename);
+
+        if (is_ladspa_rdf_descriptor_valid(rdf_descriptor_, descriptor))
+            rdf_descriptor = ladspa_rdf_dup(rdf_descriptor_);
+
+        if (rdf_descriptor && rdf_descriptor->Title)
+            m_name = get_unique_name(rdf_descriptor->Title);
+        else
+            m_name = get_unique_name(descriptor->Name);
+
+        // ---------------------------------------------------------------
+        // register client
+
+        x_client = new CarlaEngineClient(this);
+
+        if (! x_client->isOk())
+        {
+            set_last_error("Failed to register plugin client");
+            return false;
+        }
+
+        return true;
     }
 
 private:

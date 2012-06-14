@@ -213,7 +213,7 @@ public:
             // create new if needed
             param.count = argv[2]->i;
 
-            if (param.count > 0 && param.count < MAX_PARAMETERS)
+            if (param.count > 0 && param.count < carla_options.max_parameters)
             {
                 param.data    = new ParameterData[param.count];
                 param.ranges  = new ParameterRanges[param.count];

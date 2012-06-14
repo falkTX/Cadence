@@ -67,7 +67,7 @@ void CarlaCheckThread::run()
                 // Make a safe copy of events, and clear them
                 plugin->post_events_copy(postEvents);
 
-                OscData* osc_data = plugin->osc_data();
+                const OscData* const osc_data = plugin->osc_data();
 
                 // Process events now
                 for (j=0; j < MAX_POST_EVENTS; j++)

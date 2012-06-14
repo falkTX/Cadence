@@ -1170,7 +1170,7 @@ void set_option(OptionsType option, int value, const char* value_str)
     switch (option)
     {
     case OPTION_MAX_PARAMETERS:
-        carla_options.max_parameters = value;
+        carla_options.max_parameters = (value > 0) ? value : MAX_PARAMETERS;
         break;
     case OPTION_GLOBAL_JACK_CLIENT:
         carla_options.global_jack_client = value;

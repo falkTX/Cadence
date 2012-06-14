@@ -77,10 +77,11 @@ public:
         programs = nullptr;
 
 #ifdef BRIDGE_LV2_X11
+        m_resizable = false;
         x11_widget = new QDialog;
-#endif
-
+#else
         m_resizable = true;
+#endif
 
         for (uint32_t i=0; i < CARLA_URI_MAP_ID_COUNT; i++)
             custom_uri_ids.append(nullptr);

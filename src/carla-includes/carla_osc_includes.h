@@ -34,7 +34,7 @@ class CarlaPlugin;
 }
 typedef CarlaBackend::CarlaPlugin CarlaPlugin;
 #endif
-#define OSC_SEND_ARGS OscData*,
+#define OSC_SEND_ARGS const OscData* const,
 #define OSC_HANDLE_ARGS CarlaPlugin*,
 #endif
 
@@ -68,9 +68,9 @@ void osc_send_program(OSC_SEND_ARGS int program);
 void osc_send_midi_program(OSC_SEND_ARGS int bank, int program, bool);
 void osc_send_midi(OSC_SEND_ARGS uint8_t buf[4]);
 #ifndef BUILD_BRIDGE
-void osc_send_show(OscData*);
-void osc_send_hide(OscData*);
-void osc_send_quit(OscData*);
+void osc_send_show(const OscData* const);
+void osc_send_hide(const OscData* const);
+void osc_send_quit(const OscData* const);
 #endif
 
 #endif // CARLA_OSC_INCLUDES_H

@@ -416,7 +416,7 @@ int osc_handle_exiting(CarlaPlugin* plugin)
 
     // TODO - check for non-UIs (dssi-vst) and set to -1 instead
     callback_action(CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
-    osc_clear_data(plugin->osc_data());
+    plugin->clear_osc_data();
 
     return 0;
 }
@@ -536,7 +536,7 @@ int osc_handle_bridge_aouts_peak(CarlaPlugin* plugin, lo_arg** argv)
 
 // -------------------------------------------------------------------------------------------------------------------
 
-void osc_send_configure(OscData* osc_data, const char* key, const char* value)
+void osc_send_configure(const OscData* const osc_data, const char* key, const char* value)
 {
     qDebug("osc_send_configure(%s, %s)", key, value);
     if (osc_data->target)
@@ -548,7 +548,7 @@ void osc_send_configure(OscData* osc_data, const char* key, const char* value)
     }
 }
 
-void osc_send_control(OscData* osc_data, int index, double value)
+void osc_send_control(const OscData* const osc_data, int index, double value)
 {
     qDebug("osc_send_control(%i, %f)", index, value);
     if (osc_data->target)
@@ -560,7 +560,7 @@ void osc_send_control(OscData* osc_data, int index, double value)
     }
 }
 
-void osc_send_program(OscData* osc_data, int program_id)
+void osc_send_program(const OscData* const osc_data, int program_id)
 {
     qDebug("osc_send_program(%i)", program_id);
     if (osc_data->target)
@@ -572,19 +572,31 @@ void osc_send_program(OscData* osc_data, int program_id)
     }
 }
 
-void osc_send_midi_program(OscData* osc_data, int bank, int program, bool asProgram)
+void osc_send_midi_program(const OscData* const osc_data, int bank, int program, bool asProgram)
 {
     qDebug("osc_send_midi_program(%i, %i)", bank, program);
     if (osc_data->target)
     {
-        char target_path[strlen(osc_data->path)+9];
+        char target_path[strlen(osc_data->path)+14];
         strcpy(target_path, osc_data->path);
         strcat(target_path, asProgram ? "/program" : "/midi_program");
         lo_send(osc_data->target, target_path, "ii", bank, program);
     }
 }
 
-void osc_send_show(OscData* osc_data)
+void osc_send_midi(const OscData* const osc_data, uint8_t buf[4])
+{
+    qDebug("osc_send_midi()");
+    if (osc_data->target)
+    {
+        char target_path[strlen(osc_data->path)+6];
+        strcpy(target_path, osc_data->path);
+        strcat(target_path, "/midi");
+        lo_send(osc_data->target, target_path, "m", buf);
+    }
+}
+
+void osc_send_show(const OscData* const osc_data)
 {
     qDebug("osc_send_show()");
     if (osc_data->target)
@@ -596,7 +608,7 @@ void osc_send_show(OscData* osc_data)
     }
 }
 
-void osc_send_hide(OscData* osc_data)
+void osc_send_hide(const OscData* const osc_data)
 {
     qDebug("osc_send_hide()");
     if (osc_data->target)
@@ -608,7 +620,7 @@ void osc_send_hide(OscData* osc_data)
     }
 }
 
-void osc_send_quit(OscData* osc_data)
+void osc_send_quit(const OscData* const osc_data)
 {
     qDebug("osc_send_quit()");
     if (osc_data->target)
@@ -624,7 +636,7 @@ void osc_send_quit(OscData* osc_data)
 
 //void osc_send_lv2_atom_transfer(OscData* osc_data, )
 
-void osc_send_lv2_event_transfer(OscData* osc_data, const char* type, const char* key, const char* value)
+void osc_send_lv2_event_transfer(const OscData* const osc_data, const char* type, const char* key, const char* value)
 {
     qDebug("osc_send_lv2_event_transfer(%s, %s, %s)", type, key, value);
     if (osc_data->target)

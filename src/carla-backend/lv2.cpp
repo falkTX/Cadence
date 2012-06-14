@@ -2352,7 +2352,7 @@ public:
             if (ui.descriptor->port_event)
             {
                 // state
-                for (int i=0; i < custom.count(); i++)
+                for (size_t i=0; i < custom.size(); i++)
                 {
                     if (custom[i].type == CUSTOM_DATA_INVALID)
                         continue;
@@ -2994,7 +2994,7 @@ public:
                 if (dtype != CUSTOM_DATA_INVALID)
                 {
                     // Check if we already have this key
-                    for (int i=0; i < plugin->custom.count(); i++)
+                    for (size_t i=0; i < plugin->custom.size(); i++)
                     {
                         if (strcmp(plugin->custom[i].key, uri_key) == 0)
                         {
@@ -3029,7 +3029,7 @@ public:
                         new_data.value = strdup(chunk.toBase64().constData());
                     }
 
-                    plugin->custom.append(new_data);
+                    plugin->custom.push_back(new_data);
 
                     return LV2_STATE_SUCCESS;
                 }
@@ -3066,7 +3066,7 @@ public:
                 const char* string_data = nullptr;
                 CustomDataType dtype = CUSTOM_DATA_INVALID;
 
-                for (int i=0; i < plugin->custom.count(); i++)
+                for (size_t i=0; i < plugin->custom.size(); i++)
                 {
                     if (strcmp(plugin->custom[i].key, uri_key) == 0)
                     {
