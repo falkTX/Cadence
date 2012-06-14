@@ -116,6 +116,7 @@ public:
 
     double get_parameter_value(uint32_t param_id)
     {
+        assert(param_id < param.count);
         return param_buffers[param_id];
     }
 
@@ -141,6 +142,7 @@ public:
 
     void get_parameter_name(uint32_t param_id, char* buf_str)
     {
+        assert(param_id < param.count);
         int32_t rindex = param.data[param_id].rindex;
         strncpy(buf_str, ldescriptor->PortNames[rindex], STR_MAX);
     }
@@ -159,6 +161,7 @@ public:
 
     void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
+        assert(param_id < param.count);
         param_buffers[param_id] = fix_parameter_value(value, param.ranges[param_id]);
 
 #ifndef BUILD_BRIDGE
@@ -198,6 +201,7 @@ public:
     {
         if (index >= 0)
         {
+            assert(index < (int32_t)midiprog.count);
             if (CarlaEngine::isOffline())
             {
                 if (block) carla_proc_lock();
@@ -234,7 +238,7 @@ public:
             osc_send_hide(&osc.data);
             osc_send_quit(&osc.data);
             osc_clear_data(&osc.data);
-            // FIXME - stop thread?
+            osc.thread->quit(); // FIXME - stop thread?
         }
     }
 #endif
@@ -592,13 +596,11 @@ public:
         if (midi.port_min && aout.count > 0)
             m_hints |= PLUGIN_IS_SYNTH;
 
-#if 1
-        if (/*carla_options.use_dssi_chunks &&*/ QString(m_filename).endsWith("dssi-vst.so", Qt::CaseInsensitive))
+        if (carla_options.use_dssi_chunks && QString(m_filename).endsWith("dssi-vst.so", Qt::CaseInsensitive))
         {
             if (descriptor->get_custom_data && descriptor->set_custom_data)
                 m_hints |= PLUGIN_USES_CHUNKS;
         }
-#endif
 
         if (aouts > 0 && (ains == aouts || ains == 1))
             m_hints |= PLUGIN_CAN_DRYWET;
@@ -647,18 +649,10 @@ public:
         for (i=0; i < midiprog.count; i++)
         {
             const DSSI_Program_Descriptor* pdesc = descriptor->get_program(handle, i);
-            if (pdesc)
-            {
-                midiprog.data[i].bank    = pdesc->Bank;
-                midiprog.data[i].program = pdesc->Program;
-                midiprog.data[i].name    = strdup(pdesc->Name);
-            }
-            else
-            {
-                midiprog.data[i].bank    = 0;
-                midiprog.data[i].program = 0;
-                midiprog.data[i].name    = strdup("(error)");
-            }
+            assert(pdesc);
+            midiprog.data[i].bank    = pdesc->Bank;
+            midiprog.data[i].program = pdesc->Program;
+            midiprog.data[i].name    = strdup(pdesc->Name);
         }
 
 #ifndef BUILD_BRIDGE
@@ -836,7 +830,14 @@ public:
                     // Control plugin parameters
                     for (k=0; k < param.count; k++)
                     {
-                        if (param.data[k].midi_channel == cin_event->channel && param.data[k].midi_cc == cin_event->controller && param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0)
+                        if (param.data[k].midi_channel != cin_event->channel)
+                            continue;
+                        if (param.data[k].midi_cc != cin_event->controller)
+                            continue;
+                        if (param.data[k].type != PARAMETER_INPUT)
+                            continue;
+
+                        if (param.data[k].hints & PARAMETER_IS_AUTOMABLE)
                         {
                             if (param.data[k].hints & PARAMETER_IS_BOOLEAN)
                             {
@@ -1248,62 +1249,86 @@ public:
 
     bool init(const char* filename, const char* label, const char* gui_filename)
     {
-        if (lib_open(filename))
+        // ---------------------------------------------------------------
+        // open DLL
+
+        if (! lib_open(filename))
         {
-            DSSI_Descriptor_Function descfn = (DSSI_Descriptor_Function)lib_symbol("dssi_descriptor");
-
-            if (descfn)
-            {
-                unsigned long i = 0;
-                while ((descriptor = descfn(i++)))
-                {
-                    ldescriptor = descriptor->LADSPA_Plugin;
-                    if (strcmp(ldescriptor->Label, label) == 0)
-                        break;
-                }
-
-                if (descriptor && ldescriptor)
-                {
-                    handle = ldescriptor->instantiate(ldescriptor, get_sample_rate());
-
-                    if (handle)
-                    {
-                        m_filename = strdup(filename);
-                        m_name = get_unique_name(ldescriptor->Name);
-                        x_client = new CarlaEngineClient(this);
-
-                        if (x_client->isOk())
-                        {
-#ifndef BUILD_BRIDGE
-                            if (gui_filename)
-                            {
-                                // GUI Stuff
-                                osc.thread = new CarlaPluginThread(this, CarlaPluginThread::PLUGIN_THREAD_DSSI_GUI);
-                                osc.thread->setOscData(gui_filename, ldescriptor->Label);
-
-                                m_hints |= PLUGIN_HAS_GUI;
-                            }
-#else
-                            Q_UNUSED(gui_filename);
-#endif
-                            return true;
-                        }
-                        else
-                            set_last_error("Failed to register plugin client");
-                    }
-                    else
-                        set_last_error("Plugin failed to initialize");
-                }
-                else
-                    set_last_error("Could not find the requested plugin Label in the plugin library");
-            }
-            else
-                set_last_error("Could not find the LASDPA Descriptor in the plugin library");
-        }
-        else
             set_last_error(lib_error());
+            return false;
+        }
 
-        return false;
+        // ---------------------------------------------------------------
+        // get DLL main entry
+
+        DSSI_Descriptor_Function descfn = (DSSI_Descriptor_Function)lib_symbol("dssi_descriptor");
+
+        if (! descfn)
+        {
+            set_last_error("Could not find the LASDPA Descriptor in the plugin library");
+            return false;
+        }
+
+        // ---------------------------------------------------------------
+        // get descriptor that matches label
+
+        unsigned long i = 0;
+        while ((descriptor = descfn(i++)))
+        {
+            ldescriptor = descriptor->LADSPA_Plugin;
+            if (strcmp(ldescriptor->Label, label) == 0)
+                break;
+        }
+
+        if (! descriptor)
+        {
+            set_last_error("Could not find the requested plugin Label in the plugin library");
+            return false;
+        }
+
+        // ---------------------------------------------------------------
+        // initialize plugin
+
+        handle = ldescriptor->instantiate(ldescriptor, get_sample_rate());
+
+        if (! handle)
+        {
+            set_last_error("Plugin failed to initialize");
+            return false;
+        }
+
+        // ---------------------------------------------------------------
+        // get info
+
+        m_filename = strdup(filename);
+        m_name = get_unique_name(ldescriptor->Name);
+
+        // ---------------------------------------------------------------
+        // register client
+
+        x_client = new CarlaEngineClient(this);
+
+        if (! x_client->isOk())
+        {
+            set_last_error("Failed to register plugin client");
+            return false;
+        }
+
+        // ---------------------------------------------------------------
+        // gui stuff
+
+#ifndef BUILD_BRIDGE
+        if (gui_filename)
+        {
+            osc.thread = new CarlaPluginThread(this, CarlaPluginThread::PLUGIN_THREAD_DSSI_GUI);
+            osc.thread->setOscData(gui_filename, ldescriptor->Label);
+
+            m_hints |= PLUGIN_HAS_GUI;
+        }
+#else
+        Q_UNUSED(gui_filename);
+#endif
+        return true;
     }
 
 private:

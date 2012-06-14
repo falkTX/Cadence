@@ -80,6 +80,7 @@ public:
 
     uint32_t param_scalepoint_count(uint32_t param_id)
     {
+        assert(param_id < param.count);
         switch (param_id)
         {
         case FluidSynthChorusType:
@@ -96,11 +97,14 @@ public:
 
     double get_parameter_value(uint32_t param_id)
     {
+        assert(param_id < param.count);
         return param_buffers[param_id];
     }
 
     double get_parameter_scalepoint_value(uint32_t param_id, uint32_t scalepoint_id)
     {
+        assert(param_id < param.count);
+        assert(scalepoint_id < param_scalepoint_count(param_id));
         switch (param_id)
         {
         case FluidSynthChorusType:
@@ -154,6 +158,7 @@ public:
 
     void get_parameter_name(uint32_t param_id, char* buf_str)
     {
+        assert(param_id < param.count);
         switch (param_id)
         {
         case FluidSynthReverbOnOff:
@@ -206,6 +211,7 @@ public:
 
     void get_parameter_unit(uint32_t param_id, char* buf_str)
     {
+        assert(param_id < param.count);
         switch (param_id)
         {
         case FluidSynthChorusSpeedHz:
@@ -222,6 +228,8 @@ public:
 
     void get_parameter_scalepoint_label(uint32_t param_id, uint32_t scalepoint_id, char* buf_str)
     {
+        assert(param_id < param.count);
+        assert(scalepoint_id < param_scalepoint_count(param_id));
         switch (param_id)
         {
         case FluidSynthChorusType:
@@ -259,6 +267,7 @@ public:
 
     void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
+        assert(param_id < param.count);
         param_buffers[param_id] = fix_parameter_value(value, param.ranges[param_id]);
 
         switch(param_id)
@@ -323,6 +332,7 @@ public:
 
         if (index >= 0)
         {
+            assert(index < (int32_t)midiprog.count);
             if (CarlaEngine::isOffline())
             {
                 if (block) carla_proc_lock();
@@ -859,7 +869,14 @@ public:
                     // Control plugin parameters
                     for (k=0; k < param.count; k++)
                     {
-                        if (param.data[k].midi_channel == cin_event->channel && param.data[k].midi_cc == cin_event->controller && param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0)
+                        if (param.data[k].midi_channel != cin_event->channel)
+                            continue;
+                        if (param.data[k].midi_cc != cin_event->controller)
+                            continue;
+                        if (param.data[k].type != PARAMETER_INPUT)
+                            continue;
+
+                        if (param.data[k].hints & PARAMETER_IS_AUTOMABLE)
                         {
                             if (param.data[k].hints & PARAMETER_IS_BOOLEAN)
                             {
@@ -1175,24 +1192,36 @@ public:
 
     bool init(const char* filename, const char* label)
     {
+        // ---------------------------------------------------------------
+        // open soundfont
+
         f_id = fluid_synth_sfload(f_synth, filename, 0);
 
-        if (f_id >= 0)
+        if (f_id < 0)
         {
-            m_filename = strdup(filename);
-            m_label  = strdup(label);
-            m_name   = get_unique_name(label);
-            x_client = new CarlaEngineClient(this);
-
-            if (x_client->isOk())
-                return true;
-
-            set_last_error("Failed to register plugin client");
-        }
-        else
             set_last_error("Failed to load SoundFont file");
+            return false;
+        }
 
-        return false;
+        // ---------------------------------------------------------------
+        // get info
+
+        m_filename = strdup(filename);
+        m_label    = strdup(label);
+        m_name     = get_unique_name(label);
+
+        // ---------------------------------------------------------------
+        // register client
+
+        x_client = new CarlaEngineClient(this);
+
+        if (! x_client->isOk())
+        {
+            set_last_error("Failed to register plugin client");
+            return false;
+        }
+
+        return true;
     }
 
 private:

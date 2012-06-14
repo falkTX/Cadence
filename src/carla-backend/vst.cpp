@@ -26,7 +26,7 @@ CARLA_BACKEND_START_NAMESPACE
 
 class VstPlugin : public CarlaPlugin
 {
-public:
+    public:
     VstPlugin(unsigned short id) : CarlaPlugin(id)
     {
         qDebug("VstPlugin::VstPlugin()");
@@ -760,7 +760,14 @@ public:
                     // Control plugin parameters
                     for (k=0; k < param.count; k++)
                     {
-                        if (param.data[k].midi_channel == cin_event->channel && param.data[k].midi_cc == cin_event->controller && param.data[k].type == PARAMETER_INPUT && (param.data[k].hints & PARAMETER_IS_AUTOMABLE) > 0)
+                        if (param.data[k].midi_channel != cin_event->channel)
+                            continue;
+                        if (param.data[k].midi_cc != cin_event->controller)
+                            continue;
+                        if (param.data[k].type != PARAMETER_INPUT)
+                            continue;
+
+                        if (param.data[k].hints & PARAMETER_IS_AUTOMABLE)
                         {
                             if (param.data[k].hints & PARAMETER_IS_BOOLEAN)
                             {
@@ -1151,62 +1158,88 @@ public:
 
     bool init(const char* filename, const char* label)
     {
-        if (lib_open(filename))
+        // ---------------------------------------------------------------
+        // open DLL
+
+        if (! lib_open(filename))
         {
-            VST_Function vstfn = (VST_Function)lib_symbol("VSTPluginMain");
-
-            if (! vstfn)
-                vstfn = (VST_Function)lib_symbol("main");
-
-            if (vstfn)
-            {
-                effect = vstfn(VstHostCallback);
-
-                if (effect && effect->magic == kEffectMagic)
-                {
-                    m_filename = strdup(filename);
-
-                    char buf_str[STR_MAX] = { 0 };
-                    effect->dispatcher(effect, effGetEffectName, 0, 0, buf_str, 0.0f);
-
-                    if (buf_str[0] != 0)
-                        m_name = get_unique_name(buf_str);
-                    else
-                        m_name = get_unique_name(label);
-
-                    x_client = new CarlaEngineClient(this);
-
-                    // Init plugin
-                    effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
-#if ! VST_FORCE_DEPRECATED
-                    effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, get_buffer_size(), nullptr, get_sample_rate());
-#endif
-                    effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, get_sample_rate());
-                    effect->dispatcher(effect, effSetBlockSize, 0, get_buffer_size(), nullptr, 0.0f);
-                    effect->dispatcher(effect, effSetProcessPrecision, 0, kVstProcessPrecision32, nullptr, 0.0f);
-                    effect->user = this;
-
-                    if (x_client->isOk())
-                    {
-                        // GUI Stuff
-                        if (effect->flags & effFlagsHasEditor)
-                            m_hints |= PLUGIN_HAS_GUI;
-
-                        return true;
-                    }
-                    else
-                        set_last_error("Failed to register plugin client");
-                }
-                else
-                    set_last_error("Plugin failed to initialize");
-            }
-            else
-                set_last_error("Could not find the VST main entry in the plugin library");
-        }
-        else
             set_last_error(lib_error());
+            return false;
+        }
 
-        return false;
+        // ---------------------------------------------------------------
+        // get DLL main entry
+
+        VST_Function vstfn = (VST_Function)lib_symbol("VSTPluginMain");
+
+        if (! vstfn)
+            vstfn = (VST_Function)lib_symbol("main");
+
+        if (! vstfn)
+        {
+            set_last_error("Could not find the VST main entry in the plugin library");
+            return false;
+        }
+
+        // ---------------------------------------------------------------
+        // initialize plugin
+
+        effect = vstfn(VstHostCallback);
+
+        if (! effect || effect->magic != kEffectMagic)
+        {
+            set_last_error("Plugin failed to initialize");
+            return false;
+        }
+
+        // ---------------------------------------------------------------
+        // get info
+
+        m_filename = strdup(filename);
+
+        char buf_str[STR_MAX] = { 0 };
+        effect->dispatcher(effect, effGetEffectName, 0, 0, buf_str, 0.0f);
+
+        if (buf_str[0] != 0)
+            m_name = get_unique_name(buf_str);
+        else
+            m_name = get_unique_name(label);
+
+        // ---------------------------------------------------------------
+        // initialize VST stuff
+
+        effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
+#if ! VST_FORCE_DEPRECATED
+        effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, get_buffer_size(), nullptr, get_sample_rate());
+#endif
+        effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, get_sample_rate());
+        effect->dispatcher(effect, effSetBlockSize, 0, get_buffer_size(), nullptr, 0.0f);
+        effect->dispatcher(effect, effSetProcessPrecision, 0, kVstProcessPrecision32, nullptr, 0.0f);
+
+#ifdef VESTIGE_HEADER
+        effect->ptr1 = this;
+#else
+        effect->resvd1 = (intptr_t)this;
+#endif
+
+        // ---------------------------------------------------------------
+        // register client
+
+        x_client = new CarlaEngineClient(this);
+
+        if (! x_client->isOk())
+        {
+            set_last_error("Failed to register plugin client");
+            return false;
+        }
+
+        // ---------------------------------------------------------------
+        // gui stuff
+
+        if (effect->flags & effFlagsHasEditor)
+            m_hints |= PLUGIN_HAS_GUI;
+
+        return true;
     }
 
     // -------------------------------------------------------------------
@@ -1217,12 +1250,20 @@ public:
         qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstOpcode2str(opcode), index, value, opt);
 #endif
 
-        // Check if 'user' points to this plugin
+        // Check if 'resvd1' points to this plugin
         VstPlugin* self = nullptr;
 
-        if (effect && effect->user)
+#ifdef VESTIGE_HEADER
+        if (effect && effect->ptr1)
+#else
+        if (effect && effect->resvd1)
+#endif
         {
-            self = (VstPlugin*)effect->user;
+#ifdef VESTIGE_HEADER
+            self = (VstPlugin*)effect->ptr1;
+#else
+            self = (VstPlugin*)get_pointer(effect->resvd1);
+#endif
             if (self->unique1 != self->unique2)
                 self = nullptr;
         }

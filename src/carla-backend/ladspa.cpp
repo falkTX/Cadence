@@ -161,6 +161,7 @@ public:
     double get_parameter_scalepoint_value(uint32_t param_id, uint32_t scalepoint_id)
     {
         assert(param_id < param.count);
+        assert(scalepoint_id < param_scalepoint_count(param_id));
         int32_t param_rindex = param.data[param_id].rindex;
         if (rdf_descriptor && param_rindex < (int32_t)rdf_descriptor->PortCount)
             return rdf_descriptor->Ports[param_rindex].ScalePoints[scalepoint_id].Value;
@@ -254,6 +255,7 @@ public:
     void get_parameter_scalepoint_label(uint32_t param_id, uint32_t scalepoint_id, char* buf_str)
     {
         assert(param_id < param.count);
+        assert(scalepoint_id < param_scalepoint_count(param_id));
         int32_t param_rindex = param.data[param_id].rindex;
         if (rdf_descriptor && param_rindex < (int32_t)rdf_descriptor->PortCount)
         {
@@ -339,7 +341,7 @@ public:
         {
             const LADSPA_PortDescriptor PortType = descriptor->PortDescriptors[i];
             const LADSPA_PortRangeHint PortHint  = descriptor->PortRangeHints[i];
-            bool HasPortRDF = (rdf_descriptor && i < rdf_descriptor->PortCount);
+            const bool HasPortRDF = (rdf_descriptor && i < rdf_descriptor->PortCount);
 
             if (LADSPA_IS_PORT_AUDIO(PortType))
             {
@@ -968,7 +970,7 @@ public:
         // ---------------------------------------------------------------
         // open DLL
 
-        if (lib_open(filename))
+        if (! lib_open(filename))
         {
             set_last_error(lib_error());
             return false;
