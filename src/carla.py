@@ -92,6 +92,14 @@ DEFAULT_PROJECT_FOLDER = HOME
 setDefaultProjectFolder(DEFAULT_PROJECT_FOLDER)
 setDefaultPluginsPaths(LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, GIG_PATH, SF2_PATH, SFZ_PATH)
 
+def cStringCompat(string):
+    if AVLINUX_PY2BUILD:
+        if value:
+            return value
+        return ""
+    else:
+        return cString(string)
+
 def toListCompat(item):
     if AVLINUX_PY2BUILD:
         return QVariantStringList(item.toList())
@@ -1235,7 +1243,7 @@ class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
                                      "<br><i>VST is a trademark of Steinberg Media Technologies GmbH.</i>"
                                      "" % VERSION))
 
-        host_osc_url = cString(CarlaHost.get_host_osc_url())
+        host_osc_url = cStringCompat(CarlaHost.get_host_osc_url())
         self.le_osc_url.setText(host_osc_url)
 
         self.l_osc_cmds.setText(""
@@ -1384,7 +1392,7 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
         self.combo.setCurrentIndex(cc_index)
 
     def textCallFunction(self):
-        return cString(CarlaHost.get_parameter_text(self.plugin_id, self.parameter_id))
+        return cStringCompat(CarlaHost.get_parameter_text(self.plugin_id, self.parameter_id))
 
     @pyqtSlot(float)
     def slot_valueChanged(self, value):
@@ -1517,13 +1525,13 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         # Update current program text
         if (self.cb_programs.count() > 0):
             pindex = self.cb_programs.currentIndex()
-            pname = cString(CarlaHost.get_program_name(self.plugin_id, pindex))
+            pname  = cStringCompat(CarlaHost.get_program_name(self.plugin_id, pindex))
             self.cb_programs.setItemText(pindex, pname)
 
         # Update current midi program text
         if (self.cb_midi_programs.count() > 0):
             mpindex = self.cb_midi_programs.currentIndex()
-            mpname  = "%s %s" % (self.cb_midi_programs.currentText().split(" ", 1)[0], cString(CarlaHost.get_midi_program_name(self.plugin_id, mpindex)))
+            mpname  = "%s %s" % (self.cb_midi_programs.currentText().split(" ", 1)[0], cStringCompat(CarlaHost.get_midi_program_name(self.plugin_id, mpindex)))
             self.cb_midi_programs.setItemText(mpindex, mpname)
 
         QTimer.singleShot(0, self, SLOT("slot_checkInputControlParameters()"))
@@ -1532,11 +1540,11 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
     def do_reload_all(self):
         self.pinfo = CarlaHost.get_plugin_info(self.plugin_id)
         if (self.pinfo['valid']):
-            self.pinfo["binary"]    = cString(self.pinfo["binary"])
-            self.pinfo["name"]      = cString(self.pinfo["name"])
-            self.pinfo["label"]     = cString(self.pinfo["label"])
-            self.pinfo["maker"]     = cString(self.pinfo["maker"])
-            self.pinfo["copyright"] = cString(self.pinfo["copyright"])
+            self.pinfo["binary"]    = cStringCompat(self.pinfo["binary"])
+            self.pinfo["name"]      = cStringCompat(self.pinfo["name"])
+            self.pinfo["label"]     = cStringCompat(self.pinfo["label"])
+            self.pinfo["maker"]     = cStringCompat(self.pinfo["maker"])
+            self.pinfo["copyright"] = cStringCompat(self.pinfo["copyright"])
         else:
             self.pinfo["type"]      = PLUGIN_NONE
             self.pinfo["category"]  = PLUGIN_CATEGORY_NONE
@@ -1557,7 +1565,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
             self.tab_programs.setCurrentIndex(1)
 
         self.ptype = self.pinfo['type']
-        real_plugin_name = cString(CarlaHost.get_real_plugin_name(self.plugin_id))
+        real_plugin_name = cStringCompat(CarlaHost.get_real_plugin_name(self.plugin_id))
 
         self.le_name.setText(real_plugin_name)
         self.le_name.setToolTip(real_plugin_name)
@@ -1657,8 +1665,8 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
                 parameter = {
                     'type': param_data['type'],
                     'hints': param_data['hints'],
-                    'name': cString(param_info['name']),
-                    'unit': cString(param_info['unit']),
+                    'name': cStringCompat(param_info['name']),
+                    'unit': cStringCompat(param_info['unit']),
                     'scalepoints': [],
 
                     'index': param_data['index'],
@@ -1678,7 +1686,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
                     scalepoint = CarlaHost.get_scalepoint_info(self.plugin_id, i, j)
                     parameter['scalepoints'].append({
                           'value': scalepoint['value'],
-                          'label': cString(scalepoint['label'])
+                          'label': cStringCompat(scalepoint['label'])
                         })
 
                 # -----------------------------------------------------------------
@@ -1774,7 +1782,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
             self.cb_programs.setEnabled(True)
 
             for i in range(program_count):
-                pname = cString(CarlaHost.get_program_name(self.plugin_id, i))
+                pname = cStringCompat(CarlaHost.get_program_name(self.plugin_id, i))
                 self.cb_programs.addItem(pname)
 
             self.cur_program_index = CarlaHost.get_current_program_index(self.plugin_id)
@@ -1799,7 +1807,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
                 bank = int(midip['bank'])
                 prog = int(midip['program'])
-                label = cString(midip['label'])
+                label = cStringCompat(midip['label'])
 
                 self.cb_midi_programs.addItem("%03i:%03i - %s" % (bank, prog, label))
 
@@ -2083,11 +2091,11 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
         self.pinfo = CarlaHost.get_plugin_info(self.plugin_id)
         if (self.pinfo['valid']):
-            self.pinfo["binary"] = cString(self.pinfo["binary"])
-            self.pinfo["name"]   = cString(self.pinfo["name"])
-            self.pinfo["label"]  = cString(self.pinfo["label"])
-            self.pinfo["maker"]  = cString(self.pinfo["maker"])
-            self.pinfo["copyright"] = cString(self.pinfo["copyright"])
+            self.pinfo["binary"] = cStringCompat(self.pinfo["binary"])
+            self.pinfo["name"]   = cStringCompat(self.pinfo["name"])
+            self.pinfo["label"]  = cStringCompat(self.pinfo["label"])
+            self.pinfo["maker"]  = cStringCompat(self.pinfo["maker"])
+            self.pinfo["copyright"] = cStringCompat(self.pinfo["copyright"])
         else:
             self.pinfo["type"] = PLUGIN_NONE
             self.pinfo["category"] = PLUGIN_CATEGORY_NONE
@@ -2399,10 +2407,10 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
             x_save_state_parameter = deepcopy(save_state_parameter)
 
-            x_save_state_parameter['index'] = parameter_data['index']
-            x_save_state_parameter['name'] = cString(parameter_info['name'])
-            x_save_state_parameter['symbol'] = cString(parameter_info['symbol'])
-            x_save_state_parameter['value'] = CarlaHost.get_current_parameter_value(self.plugin_id, parameter_data['index'])
+            x_save_state_parameter['index']  = parameter_data['index']
+            x_save_state_parameter['name']   = cStringCompat(parameter_info['name'])
+            x_save_state_parameter['symbol'] = cStringCompat(parameter_info['symbol'])
+            x_save_state_parameter['value']  = CarlaHost.get_current_parameter_value(self.plugin_id, parameter_data['index'])
             x_save_state_parameter['midi_channel'] = parameter_data['midi_channel'] + 1
             x_save_state_parameter['midi_cc'] = parameter_data['midi_cc']
 
@@ -2425,8 +2433,8 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             x_save_state_custom_data = deepcopy(save_state_custom_data)
 
             x_save_state_custom_data['type']  = CustomDataType2String(custom_data['type'])
-            x_save_state_custom_data['key']   = cString(custom_data['key'])
-            x_save_state_custom_data['value'] = cString(custom_data['value'])
+            x_save_state_custom_data['key']   = cStringCompat(custom_data['key'])
+            x_save_state_custom_data['value'] = cStringCompat(custom_data['value'])
 
             x_save_state_dict['CustomData'].append(x_save_state_custom_data)
 
@@ -2434,7 +2442,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         # Chunk
 
         if (self.pinfo['hints'] & PLUGIN_USES_CHUNKS):
-            x_save_state_dict['Chunk'] = cString(CarlaHost.get_chunk_data(self.plugin_id))
+            x_save_state_dict['Chunk'] = cStringCompat(CarlaHost.get_chunk_data(self.plugin_id))
 
         # ----------------------------
         # Generate XML for this plugin
@@ -2520,7 +2528,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         program_count = CarlaHost.get_program_count(self.plugin_id)
 
         if (content['CurrentProgramName']):
-            test_pname = cString(CarlaHost.get_program_name(self.plugin_id, content['CurrentProgramIndex']))
+            test_pname = cStringCompat(CarlaHost.get_program_name(self.plugin_id, content['CurrentProgramIndex']))
 
             # Program index and name matches
             if (content['CurrentProgramName'] == test_pname):
@@ -2533,7 +2541,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             # index not valid, try to find by name
             else:
                 for i in range(program_count):
-                    test_pname = cString(CarlaHost.get_program_name(self.plugin_id, i))
+                    test_pname = cStringCompat(CarlaHost.get_program_name(self.plugin_id, i))
 
                     if (content['CurrentProgramName'] == test_pname):
                         program_id = i
@@ -2566,7 +2574,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
                 param_info = CarlaHost.get_parameter_info(self.plugin_id, parameter['index'])
 
                 if (param_info['valid'] and param_info['symbol']):
-                    param_symbols.append((parameter['index'], cString(param_info['symbol'])))
+                    param_symbols.append((parameter['index'], cStringCompat(param_info['symbol'])))
 
         # ---------------------------------------------------------------------
         # Part 4b - set parameter values (carefully)
@@ -3053,7 +3061,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
         if (new_plugin_id < 0):
             CustomMessageBox(self, QMessageBox.Critical, self.tr("Error"), self.tr("Failed to load plugin"),
-                cString(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
+                cStringCompat(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
         else:
             pwidget = PluginWidget(self, new_plugin_id)
             self.w_plugins.layout().addWidget(pwidget)
@@ -3084,7 +3092,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         else:
             if (showError):
                 CustomMessageBox(self, QMessageBox.Critical, self.tr("Error"), self.tr("Failed to remove plugin"),
-                    cString(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
+                    cStringCompat(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
 
         for i in range(MAX_PLUGINS):
             if (self.m_plugin_list[i] != None):
@@ -3141,7 +3149,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
                 if not first_plugin:
                     content += "\n"
 
-                real_plugin_name = cString(CarlaHost.get_real_plugin_name(pwidget.plugin_id))
+                real_plugin_name = cStringCompat(CarlaHost.get_real_plugin_name(pwidget.plugin_id))
                 if real_plugin_name:
                     content += " <!-- %s -->\n" % xmlSafeString(real_plugin_name, True)
 
@@ -3605,7 +3613,7 @@ if __name__ == '__main__':
 
     if not CarlaHost.engine_init("Carla"):
         CustomMessageBox(None, QMessageBox.Critical, "Error", "Could not connect to JACK",
-            cString(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
+            cStringCompat(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
         sys.exit(1)
 
     # Set-up custom signal handling
@@ -3624,7 +3632,7 @@ if __name__ == '__main__':
 
     # Close Host
     if CarlaHost.is_engine_running() and not CarlaHost.engine_close():
-        print(cString(CarlaHost.get_last_error()))
+        print(cStringCompat(CarlaHost.get_last_error()))
 
     # Exit properly
     sys.exit(ret)
