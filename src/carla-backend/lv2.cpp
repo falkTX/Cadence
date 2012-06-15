@@ -545,7 +545,14 @@ public:
 
     void get_gui_info(GuiInfo* info)
     {
-        info->type      = gui.type;
+#ifdef __WINE__
+        if (gui.type == GUI_EXTERNAL_LV2)
+            info->type = gui.type;
+        else
+            info->type = GUI_NONE;
+#else
+        info->type     = gui.type;
+#endif
         info->resizable = gui.resizable;
     }
 
@@ -658,10 +665,15 @@ public:
     // -------------------------------------------------------------------
     // Set gui stuff
 
+#ifdef __WINE__
+    void set_gui_data(int, HWND ptr)
+#else
     void set_gui_data(int, QDialog* dialog)
+#endif
     {
         switch(gui.type)
         {
+#ifndef __WINE__
         case GUI_INTERNAL_QT4:
             if (ui.widget)
             {
@@ -688,6 +700,9 @@ public:
                 update_ui();
             }
             break;
+#else
+        Q_UNUSED(ptr);
+#endif
 
         default:
             break;
@@ -2365,6 +2380,7 @@ public:
     {
 #ifdef BUILD_BRIDGE
         return false;
+        Q_UNUSED(ui_id);
 #else
         const LV2_RDF_UI* const rdf_ui = &rdf_descriptor->UIs[ui_id];
 
@@ -2708,22 +2724,28 @@ public:
                 switch (rdf_descriptor->UIs[i].Type)
                 {
                 case LV2_UI_QT4:
+#ifndef BUILD_BRIDGE
                     if (is_ui_bridgeable(i) && carla_options.prefer_ui_bridges)
                         eQt4 = i;
                     else
+#endif
                         iQt4 = i;
                     break;
 
                 case LV2_UI_X11:
+#ifndef BUILD_BRIDGE
                     if (is_ui_bridgeable(i) && carla_options.prefer_ui_bridges)
                         eX11 = i;
                     else
+#endif
                         iX11 = i;
                     break;
 
                 case LV2_UI_GTK2:
+#ifndef BUILD_BRIDGE
                     if (is_ui_bridgeable(i))
                         eGtk2 = i;
+#endif
                     break;
 
                 case LV2_UI_EXTERNAL:

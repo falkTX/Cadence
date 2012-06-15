@@ -516,9 +516,9 @@ public:
     {
         m_active = active;
 
-#ifndef BUILD_BRIDGE
         double value = active ? 1.0 : 0.0;
 
+#ifndef BUILD_BRIDGE
         if (osc_send)
         {
             osc_global_send_set_parameter_value(m_id, PARAMETER_ACTIVE, value);
@@ -526,13 +526,12 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_ACTIVE, value);
         }
+#else
+        Q_UNUSED(osc_send);
+#endif
 
         if (callback_send)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_ACTIVE, 0, value);
-#else
-        Q_UNUSED(osc_send);
-        Q_UNUSED(callback_send);
-#endif
     }
 
     void set_drywet(double value, bool osc_send, bool callback_send)
@@ -552,13 +551,12 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_DRYWET, value);
         }
+#else
+        Q_UNUSED(osc_send);
+#endif
 
         if (callback_send)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_DRYWET, 0, value);
-#else
-        Q_UNUSED(osc_send);
-        Q_UNUSED(callback_send);
-#endif
     }
 
     void set_volume(double value, bool osc_send, bool callback_send)
@@ -576,15 +574,17 @@ public:
             osc_global_send_set_parameter_value(m_id, PARAMETER_VOLUME, value);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
+            {
+                qWarning("Sending volume to bridge, %f", value);
                 osc_send_control(&osc.data, PARAMETER_VOLUME, value);
+            }
         }
+#else
+        Q_UNUSED(osc_send);
+#endif
 
         if (callback_send)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_VOLUME, 0, value);
-#else
-        Q_UNUSED(osc_send);
-        Q_UNUSED(callback_send);
-#endif
     }
 
     void set_balance_left(double value, bool osc_send, bool callback_send)
@@ -604,13 +604,12 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_BALANCE_LEFT, value);
         }
+#else
+        Q_UNUSED(osc_send);
+#endif
 
         if (callback_send)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_BALANCE_LEFT, 0, value);
-#else
-        Q_UNUSED(osc_send);
-        Q_UNUSED(callback_send);
-#endif
     }
 
     void set_balance_right(double value, bool osc_send, bool callback_send)
@@ -630,13 +629,12 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_BALANCE_RIGHT, value);
         }
+#else
+        Q_UNUSED(osc_send);
+#endif
 
         if (callback_send)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_BALANCE_RIGHT, 0, value);
-#else
-        Q_UNUSED(osc_send);
-        Q_UNUSED(callback_send);
-#endif
     }
 
 #ifndef BUILD_BRIDGE
@@ -665,33 +663,30 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, param_id, value);
         }
+#else
+        Q_UNUSED(osc_send);
+#endif
 
         if (callback_send)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, param_id, 0, value);
-#else
-        Q_UNUSED(param_id);
-        Q_UNUSED(value);
-        Q_UNUSED(osc_send);
-        Q_UNUSED(callback_send);
-#endif
+
         Q_UNUSED(gui_send);
     }
 
     void set_parameter_value_by_rindex(int32_t rindex, double value, bool gui_send, bool osc_send, bool callback_send)
     {
-        if (m_hints & PLUGIN_IS_BRIDGE)
-        {
-            if (rindex == PARAMETER_ACTIVE)
-                return set_active(value > 0.0, osc_send, callback_send);
-            if (rindex == PARAMETER_DRYWET)
-                return set_drywet(value, osc_send, callback_send);
-            if (rindex == PARAMETER_VOLUME)
-                return set_volume(value, osc_send, callback_send);
-            if (rindex == PARAMETER_BALANCE_LEFT)
-                return set_balance_left(value, osc_send, callback_send);
-            if (rindex == PARAMETER_BALANCE_LEFT)
-                return set_balance_right(value, osc_send, callback_send);
-        }
+#ifdef BUILD_BRIDGE
+        if (rindex == PARAMETER_ACTIVE)
+            return set_active(value > 0.0, osc_send, callback_send);
+        if (rindex == PARAMETER_DRYWET)
+            return set_drywet(value, osc_send, callback_send);
+        if (rindex == PARAMETER_VOLUME)
+            return set_volume(value, osc_send, callback_send);
+        if (rindex == PARAMETER_BALANCE_LEFT)
+            return set_balance_left(value, osc_send, callback_send);
+        if (rindex == PARAMETER_BALANCE_RIGHT)
+            return set_balance_right(value, osc_send, callback_send);
+#endif
 
         for (uint32_t i=0; i < param.count; i++)
         {
@@ -737,7 +732,7 @@ public:
             break;
         case CUSTOM_DATA_STRING:
             // Ignore some keys
-            if (strncmp(key, "OSC:", 4) == 0 || strcmp(key, "guiVisible") == 0)
+            if (strncmp(key, "OSC:", 4) == 0 || strcmp(key, "guiVisible") || strcmp(key, "CarlaBridgeSaveNow") == 0)
                 save_data = false;
             break;
         default:
@@ -860,7 +855,11 @@ public:
     // -------------------------------------------------------------------
     // Set gui stuff
 
+#ifdef __WINE__
+    virtual void set_gui_data(int data, HWND ptr)
+#else
     virtual void set_gui_data(int data, QDialog* ptr)
+#endif
     {
         Q_UNUSED(data);
         Q_UNUSED(ptr);
@@ -973,7 +972,7 @@ public:
                 osc_send_bridge_param_data(param.data[i].type, i, param.data[i].rindex, param.data[i].hints, param.data[i].midi_channel, param.data[i].midi_cc);
                 osc_send_bridge_param_ranges(i, param.ranges[i].def, param.ranges[i].min, param.ranges[i].max, param.ranges[i].step, param.ranges[i].step_small, param.ranges[i].step_large);
 
-                set_parameter_value(i, param.ranges[i].def, false, false, false);
+                set_parameter_value(i, param.ranges[i].def, false, false, true);
             }
         }
 #else

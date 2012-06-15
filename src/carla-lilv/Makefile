@@ -27,7 +27,7 @@ OBJS_64bit = serd_64bit.o sord_64bit.o sratom_64bit.o lilv_64bit.o
 all: carla_lilv.a
 
 carla_lilv.a: $(OBJS)
-	$(AR) rs $@ $(OBJS)
+	$(AR) rs $@ $^
 
 serd.o: serd.c
 	$(CC) $< $(BUILD_FLAGS) -c -o $@
@@ -46,7 +46,7 @@ lilv.o: lilv.c
 32bit: carla_lilv_32bit.a
 
 carla_lilv_32bit.a: $(OBJS_32bit)
-	$(AR) rs $@ $(OBJS_32bit)
+	$(AR) rs $@ $^
 
 serd_32bit.o: serd.c
 	$(CC) $< $(BUILD_FLAGS) $(32BIT_FLAGS) -c -o $@
@@ -65,7 +65,7 @@ lilv_32bit.o: lilv.c
 64bit: carla_lilv_64bit.a
 
 carla_lilv_64bit.a: $(OBJS_64bit)
-	$(AR) rs $@ $(OBJS_64bit)
+	$(AR) rs $@ $^
 
 serd_64bit.o: serd.c
 	$(CC) $< $(BUILD_FLAGS) $(64BIT_FLAGS) -c -o $@

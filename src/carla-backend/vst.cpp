@@ -163,11 +163,13 @@ class VstPlugin : public CarlaPlugin
 
     void get_gui_info(GuiInfo* info)
     {
-#ifndef __WINE__
         if (effect->flags & effFlagsHasEditor)
+#ifdef __WINE__
+            info->type = GUI_INTERNAL_HWND;
+#else
             info->type = GUI_INTERNAL_QT4;
-        else
 #endif
+        else
             info->type = GUI_NONE;
         info->resizable = false;
     }
@@ -181,6 +183,19 @@ class VstPlugin : public CarlaPlugin
         effect->setParameter(effect, param_id, value);
         CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
     }
+
+#ifdef BUILD_BRIDGE
+    void set_custom_data(CustomDataType dtype, const char* key, const char* value, bool gui_send)
+    {
+        qDebug("VstPlugin::set_custom_data(%i, %s, %s, %s)", dtype, key, value, bool2str(gui_send));
+
+        if (dtype == CUSTOM_DATA_STRING && strcmp(key, "CarlaBridgeSaveNow") == 0)
+        {
+            qDebug("asked bridge to save, path = %s", value);
+            //chunk_data();
+        }
+    }
+#endif
 
     void set_chunk_data(const char* string_data)
     {
@@ -227,18 +242,16 @@ class VstPlugin : public CarlaPlugin
     // -------------------------------------------------------------------
     // Set gui stuff
 
+#ifdef __WINE__
+    void set_gui_data(int data, HWND ptr)
+    {
+        if (effect->dispatcher(effect, effEditOpen, 0, data, ptr, 0.0f) == 1)
+#else
     void set_gui_data(int data, QDialog* dialog)
     {
         if (effect->dispatcher(effect, effEditOpen, 0, data, (void*)dialog->winId(), 0.0f) == 1)
-        {
-#ifndef ERect
-            struct ERect {
-                short top;
-                short left;
-                short bottom;
-                short right;
-            };
 #endif
+        {
             ERect* vst_rect;
 
             if (effect->dispatcher(effect, effEditGetRect, 0, 0, &vst_rect, 0.0f))
@@ -459,7 +472,9 @@ class VstPlugin : public CarlaPlugin
             param.ranges[j].step_large = step_large;
 
             param.data[j].hints |= PARAMETER_IS_ENABLED;
+#ifndef BUILD_BRIDGE
             param.data[j].hints |= PARAMETER_USES_CUSTOM_TEXT;
+#endif
 
             if (effect->dispatcher(effect, effCanBeAutomated, j, 0, nullptr, 0.0f) != 0)
                 param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
@@ -1247,7 +1262,7 @@ class VstPlugin : public CarlaPlugin
     static intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
     {
 #if DEBUG
-        qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstOpcode2str(opcode), index, value, opt);
+        //qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstOpcode2str(opcode), index, value, opt);
 #endif
 
         // Check if 'resvd1' points to this plugin
@@ -1273,12 +1288,14 @@ class VstPlugin : public CarlaPlugin
         case audioMasterAutomate:
             if (self)
             {
+#ifndef BUILD_BRIDGE // FIXME
                 if (CarlaEngine::isOnAudioThread())
                 {
                     self->set_parameter_value(index, opt, false, false, false);
                     self->postpone_event(PluginPostEventParameterChange, index, opt);
                 }
                 else
+#endif
                     self->set_parameter_value(index, opt, false, true, true);
             }
             break;
@@ -1469,9 +1486,7 @@ class VstPlugin : public CarlaPlugin
             {
                 self->gui.width  = index;
                 self->gui.height = value;
-#ifndef BUILD_BRIDGE
                 callback_action(CALLBACK_RESIZE_GUI, self->id(), index, value, 0.0);
-#endif
             }
             return 1;
 
@@ -1662,14 +1677,14 @@ class VstPlugin : public CarlaPlugin
 #endif
 
         default:
-            qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstOpcode2str(opcode), index, value, opt);
+            //qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstOpcode2str(opcode), index, value, opt);
             break;
         }
 
         return 0;
     }
 
-private:
+    private:
     int unique1;
     AEffect* effect;
     struct {

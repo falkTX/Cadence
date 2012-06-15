@@ -26,6 +26,7 @@ extern void plugin_bridge_show_gui(bool yesno);
 extern void plugin_bridge_quit();
 static const size_t client_name_len  = 13;
 static const char* const client_name = "plugin-bridge";
+#define CARLA_PLUGIN CarlaBackend::CarlaPlugins[0]
 #else
 #include "carla_bridge_ui.h"
 extern int osc_handle_lv2_event_transfer(lo_arg** argv);
@@ -167,8 +168,8 @@ int osc_handle_configure(lo_arg** argv)
     const char* key   = (const char*)&argv[0]->s;
     const char* value = (const char*)&argv[1]->s;
 
-    if (CarlaPlugins[0])
-        CarlaPlugins[0]->set_custom_data(CUSTOM_DATA_STRING, key, value, false);
+    if (CARLA_PLUGIN)
+        CARLA_PLUGIN->set_custom_data(CarlaBackend::CUSTOM_DATA_STRING, key, value, false);
 #else
     Q_UNUSED(argv);
 #endif
@@ -181,9 +182,11 @@ int osc_handle_control(lo_arg** argv)
     int rindex  = argv[0]->i;
     float value = argv[1]->f;
 
+    qDebug("osc_handle_control(%i, %f)", rindex, value);
+
 #ifdef BUILD_BRIDGE_PLUGIN
-    if (CarlaPlugins[0])
-        CarlaPlugins[0]->set_parameter_value_by_rindex(rindex, value, false, true, true);
+    if (CARLA_PLUGIN)
+        CARLA_PLUGIN->set_parameter_value_by_rindex(rindex, value, true, true, false);
 #else
     if (ui)
         ui->queque_message(BRIDGE_MESSAGE_PARAMETER, rindex, 0, value);
@@ -199,8 +202,8 @@ int osc_handle_program(lo_arg** argv)
     if (index >= 0)
     {
 #ifdef BUILD_BRIDGE_PLUGIN
-        if (CarlaPlugins[0] && index < CarlaPlugins[0]->prog_count())
-            CarlaPlugins[0]->set_program(index, false, true, true, true);
+        if (CARLA_PLUGIN && index < (int32_t)CARLA_PLUGIN->prog_count())
+            CARLA_PLUGIN->set_program(index, false, true, true, true);
 #else
         if (ui)
             ui->queque_message(BRIDGE_MESSAGE_PROGRAM, index, 0, 0.0);
@@ -218,8 +221,8 @@ int osc_handle_midi_program(lo_arg** argv)
     if (bank >= 0 && program >= 0)
     {
 #ifdef BUILD_BRIDGE_PLUGIN
-        if (CarlaPlugins[0])
-            CarlaPlugins[0]->set_midi_program_by_id(bank, program, false, true, true, true);
+        if (CARLA_PLUGIN)
+            CARLA_PLUGIN->set_midi_program_by_id(bank, program, false, true, true, true);
 #else
         if (ui)
             ui->queque_message(BRIDGE_MESSAGE_MIDI_PROGRAM, bank, program, 0.0);
@@ -242,7 +245,8 @@ int osc_handle_midi(lo_arg** argv)
     {
         uint8_t note = data[2];
 #ifdef BUILD_BRIDGE_PLUGIN
-        plugin->send_midi_note(false, note, 0, false, true, true);
+        if (CARLA_PLUGIN)
+            CARLA_PLUGIN->send_midi_note(false, note, 0, false, true, true);
 #else
         if (ui)
             ui->queque_message(BRIDGE_MESSAGE_NOTE_OFF, note, 0, 0.0);
@@ -253,7 +257,8 @@ int osc_handle_midi(lo_arg** argv)
         uint8_t note = data[2];
         uint8_t velo = data[3];
 #ifdef BUILD_BRIDGE_PLUGIN
-        plugin->send_midi_note(true, note, velo, false, true, true);
+        if (CARLA_PLUGIN)
+            CARLA_PLUGIN->send_midi_note(true, note, velo, false, true, true);
 #else
         if (ui)
             ui->queque_message(BRIDGE_MESSAGE_NOTE_ON, note, velo, 0.0);
@@ -357,6 +362,28 @@ void osc_send_midi(uint8_t buf[4])
 }
 
 // -------------------------------------------------------------------------
+
+void osc_send_update()
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+8];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/update");
+        lo_send(global_osc_data.target, target_path, "s", global_osc_server_path);
+    }
+}
+
+void osc_send_exiting()
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+9];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/exiting");
+        lo_send(global_osc_data.target, target_path, "");
+    }
+}
 
 #ifdef BUILD_BRIDGE_PLUGIN
 void osc_send_bridge_ains_peak(int index, double value)
@@ -513,28 +540,6 @@ void osc_send_bridge_update()
     }
 }
 #else
-void osc_send_update()
-{
-    if (global_osc_data.target)
-    {
-        char target_path[strlen(global_osc_data.path)+8];
-        strcpy(target_path, global_osc_data.path);
-        strcat(target_path, "/update");
-        lo_send(global_osc_data.target, target_path, "s", global_osc_server_path);
-    }
-}
-
-void osc_send_exiting()
-{
-    if (global_osc_data.target)
-    {
-        char target_path[strlen(global_osc_data.path)+9];
-        strcpy(target_path, global_osc_data.path);
-        strcat(target_path, "/exiting");
-        lo_send(global_osc_data.target, target_path, "");
-    }
-}
-
 void osc_send_lv2_event_transfer(const char* type, const char* key, const char* value)
 {
     if (global_osc_data.target)

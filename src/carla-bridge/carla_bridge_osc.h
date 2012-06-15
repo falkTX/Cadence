@@ -20,6 +20,9 @@
 
 #include "carla_osc_includes.h"
 
+void osc_send_update();
+void osc_send_exiting();
+
 #ifdef BUILD_BRIDGE_PLUGIN
 // plugin-bridge only
 void osc_send_bridge_ains_peak(int index, double value);
@@ -38,8 +41,6 @@ void osc_send_bridge_midi_program_info(int index, int bank, int program, const c
 void osc_send_bridge_update();
 #else
 // ui-bridge only
-void osc_send_update();
-void osc_send_exiting();
 //void osc_send_lv2_atom_transfer();
 void osc_send_lv2_event_transfer(const char* type, const char* key, const char* value);
 #endif

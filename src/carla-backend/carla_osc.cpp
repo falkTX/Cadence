@@ -264,16 +264,18 @@ int osc_handle_configure(CarlaPlugin* plugin, lo_arg** argv)
 
     const char* key   = (const char*)&argv[0]->s;
     const char* value = (const char*)&argv[1]->s;
-    plugin->set_custom_data(CUSTOM_DATA_STRING, key, value, false);
+
+    if (strcmp(key, "CarlaBridgeHideGUI") == 0)
+        callback_action(CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
+    else
+        plugin->set_custom_data(CUSTOM_DATA_STRING, key, value, false);
 
     return 0;
 }
 
 int osc_handle_control(CarlaPlugin* plugin, lo_arg** argv)
 {
-#if DEBUG
     qDebug("osc_handle_control()");
-#endif
 
     int rindex  = argv[0]->i;
     float value = argv[1]->f;

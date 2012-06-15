@@ -55,8 +55,10 @@ const char* get_host_client_name()
 quint32 get_buffer_size()
 {
     qDebug("get_buffer_size()");
+#ifndef BUILD_BRIDGE
     if (carla_options.proccess_hq)
         return 8;
+#endif
     return carla_buffer_size;
 }
 
@@ -79,8 +81,10 @@ static int carla_jack_bufsize_callback(jack_nframes_t new_buffer_size, void*)
 {
     carla_buffer_size = new_buffer_size;
 
+#ifndef BUILD_BRIDGE
     if (carla_options.proccess_hq)
         return 0;
+#endif
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {

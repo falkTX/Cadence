@@ -39,6 +39,8 @@ public:
         m_hints  = PLUGIN_IS_BRIDGE;
         m_label  = nullptr;
 
+        initiated = false;
+
         m_info.category  = PLUGIN_CATEGORY_NONE;
         m_info.hints     = 0;
         m_info.name      = nullptr;
@@ -291,6 +293,7 @@ public:
 
         case PluginBridgeUpdateNow:
             callback_action(CALLBACK_RELOAD_ALL, m_id, 0, 0, 0.0);
+            initiated = true;
             break;
 
         default:
@@ -307,7 +310,7 @@ public:
     {
         param_buffers[param_id] = fix_parameter_value(value, param.ranges[param_id]);
 
-        if (param.data[param_id].type == PARAMETER_INPUT)
+        if (gui_send)
             osc_send_control(&osc.data, param.data[param_id].rindex, value);
 
         CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
@@ -343,6 +346,13 @@ public:
 
         m_hints |= m_info.hints;
     }
+
+    void prepare_for_save()
+    {
+        osc_send_configure(&osc.data, "CarlaBridgeSaveNow", "/tmp/test-path1");
+    }
+
+    // -------------------------------------------------------------------
 
     void delete_buffers()
     {
@@ -383,10 +393,23 @@ public:
 
             if (bridge_binary)
             {
+                // register plugin now so we can receive OSC (and wait for it)
+                CarlaPlugins[m_id] = this;
+
                 m_thread->setOscData(bridge_binary, label, plugintype2str(m_type));
                 m_thread->start();
 
-                return true;
+                for (int i=0; i < 100; i++)
+                {
+                    if (initiated)
+                        break;
+                    carla_msleep(100);
+                }
+
+                if (! initiated)
+                    set_last_error("Timeout while waiting for a response from plugin-bridge");
+
+                return initiated;
             }
             else
                 set_last_error("Bridge not possible, bridge-binary not found");
@@ -398,6 +421,7 @@ public:
     }
 
 private:
+    bool initiated;
     const char* m_label;
     const BinaryType m_binary;
     PluginBridgeInfo m_info;

@@ -119,10 +119,11 @@ enum CustomDataType {
 
 enum GuiType {
     GUI_NONE = 0,
-    GUI_INTERNAL_QT4 = 1,
-    GUI_INTERNAL_X11 = 2,
-    GUI_EXTERNAL_LV2 = 3,
-    GUI_EXTERNAL_OSC = 4
+    GUI_INTERNAL_QT4  = 1,
+    GUI_INTERNAL_X11  = 2,
+    GUI_INTERNAL_HWND = 3,
+    GUI_EXTERNAL_LV2  = 4,
+    GUI_EXTERNAL_OSC  = 5
 };
 
 enum OptionsType {
@@ -333,6 +334,17 @@ CARLA_EXPORT double get_latency();
 
 // End of exported symbols
 // -----------------------------------------------------
+
+#else
+
+void set_callback_function(CallbackFunc func);
+
+const char* get_last_error();
+const char* get_host_client_name();
+
+quint32 get_buffer_size();
+double get_sample_rate();
+double get_latency();
 
 #endif // CARLA_BACKEND_NO_EXPORTS
 
