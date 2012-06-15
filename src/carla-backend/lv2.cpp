@@ -1748,7 +1748,7 @@ public:
                 if (extMidiNotes[i].valid)
                 {
                     uint8_t midi_event[4] = { 0 };
-                    midi_event[0] = extMidiNotes[i].onoff ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF;
+                    midi_event[0] = extMidiNotes[i].velo ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF;
                     midi_event[1] = extMidiNotes[i].note;
                     midi_event[2] = extMidiNotes[i].velo;
 
@@ -3440,13 +3440,13 @@ public:
             if (MIDI_IS_STATUS_NOTE_OFF(status))
             {
                 uint8_t note = data[2];
-                plugin->send_midi_note(false, note, 0, false, true, true);
+                plugin->send_midi_note(note, 0, false, true, true);
             }
             else if (MIDI_IS_STATUS_NOTE_ON(status))
             {
                 uint8_t note = data[2];
                 uint8_t velo = data[3];
-                plugin->send_midi_note(true, note, velo, false, true, true);
+                plugin->send_midi_note(note, velo, false, true, true);
             }
         }
         else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM)

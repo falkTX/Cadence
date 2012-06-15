@@ -163,8 +163,8 @@ int osc_handle_configure(lo_arg** argv)
     const char* key   = (const char*)&argv[0]->s;
     const char* value = (const char*)&argv[1]->s;
 
-    //if (CARLA_PLUGIN)
-    //    CARLA_PLUGIN->set_custom_data(CarlaBackend::CUSTOM_DATA_STRING, key, value, false);
+    if (client && strcmp(key, "CarlaBridgeSaveNow") == 0)
+        client->save_now(value);
 #else
     Q_UNUSED(argv);
 #endif

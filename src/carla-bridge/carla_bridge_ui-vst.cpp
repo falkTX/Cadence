@@ -120,10 +120,10 @@ public:
     // ---------------------------------------------------------------------
     // processing
 
-    void set_parameter(uint32_t index, double value)
+    void set_parameter(int32_t rindex, double value)
     {
         if (effect)
-            effect->setParameter(effect, index, value);
+            effect->setParameter(effect, rindex, value);
     }
 
     void set_program(uint32_t index)

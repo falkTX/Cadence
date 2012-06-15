@@ -17,6 +17,9 @@
 
 #include "carla_plugin.h"
 
+#include <QtCore/QFile>
+#include <QtCore/QTextStream>
+
 CARLA_BACKEND_START_NAMESPACE
 
 #if 0
@@ -39,7 +42,7 @@ public:
         m_hints  = PLUGIN_IS_BRIDGE;
         m_label  = nullptr;
 
-        initiated = false;
+        initiated = saved = false;
 
         m_info.category  = PLUGIN_CATEGORY_NONE;
         m_info.hints     = 0;
@@ -125,6 +128,30 @@ public:
     uint32_t mout_count()
     {
         return m_info.mouts;
+    }
+
+    // -------------------------------------------------------------------
+    // Information (current data)
+
+    int32_t chunk_data(void** data_ptr)
+    {
+        // TESTING
+        QFile sFile("/tmp/test-path2");
+
+        if (! sFile.open(QIODevice::ReadOnly | QIODevice::Text))
+            return 0;
+
+        static QByteArray chunk;
+        chunk = sFile.readAll();
+
+        if (chunk.size() >= 0)
+        {
+            *data_ptr = chunk.data();
+            return chunk.size();
+        }
+
+
+        return 0;
     }
 
     // -------------------------------------------------------------------
@@ -296,7 +323,8 @@ public:
             initiated = true;
             break;
 
-        default:
+        case PluginBridgeSaved:
+            saved = true;
             break;
         }
 
@@ -345,11 +373,25 @@ public:
             m_hints |= PLUGIN_CAN_BALANCE;
 
         m_hints |= m_info.hints;
+        m_hints |= PLUGIN_USES_CHUNKS; // FIXME
     }
 
     void prepare_for_save()
     {
-        osc_send_configure(&osc.data, "CarlaBridgeSaveNow", "/tmp/test-path1");
+        saved = false;
+        osc_send_configure(&osc.data, "CarlaBridgeSaveNow", "/tmp/test-path2");
+
+        for (int i=0; i < 100; i++)
+        {
+            if (saved)
+                break;
+            carla_msleep(100);
+        }
+
+        if (! saved)
+            qWarning("BridgePlugin::prepare_for_save() - Timeout while requesting save state");
+        else
+            qWarning("BridgePlugin::prepare_for_save() - success!");
     }
 
     // -------------------------------------------------------------------
@@ -422,6 +464,7 @@ public:
 
 private:
     bool initiated;
+    bool saved;
     const char* m_label;
     const BinaryType m_binary;
     PluginBridgeInfo m_info;

@@ -83,7 +83,8 @@ enum PluginBridgeInfoType {
     PluginBridgeParameterRangesInfo,
     PluginBridgeProgramInfo,
     PluginBridgeMidiProgramInfo,
-    PluginBridgeUpdateNow
+    PluginBridgeUpdateNow,
+    PluginBridgeSaved
 };
 
 struct PluginAudioData {
@@ -126,7 +127,6 @@ struct PluginPostEvent {
 
 struct ExternalMidiNote {
     bool valid;
-    bool onoff;
     uint8_t note;
     uint8_t velo;
 };
@@ -1102,7 +1102,7 @@ public:
     // -------------------------------------------------------------------
     // MIDI events
 
-    virtual void send_midi_note(bool onoff, uint8_t note, uint8_t velo, bool gui_send, bool osc_send, bool callback_send)
+    virtual void send_midi_note(uint8_t note, uint8_t velo, bool gui_send, bool osc_send, bool callback_send)
     {
         carla_midi_lock();
         for (unsigned short i=0; i<MAX_MIDI_EVENTS; i++)
@@ -1110,7 +1110,6 @@ public:
             if (extMidiNotes[i].valid == false)
             {
                 extMidiNotes[i].valid = true;
-                extMidiNotes[i].onoff = onoff;
                 extMidiNotes[i].note  = note;
                 extMidiNotes[i].velo  = velo;
                 break;
@@ -1121,7 +1120,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (osc_send)
         {
-            if (onoff)
+            if (velo)
                 osc_global_send_note_on(m_id, note, velo);
             else
                 osc_global_send_note_off(m_id, note);
@@ -1129,7 +1128,7 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
             {
                 uint8_t mdata[4] = { 0 };
-                mdata[1] = onoff ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF;
+                mdata[1] = velo ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF;
                 mdata[2] = note;
                 mdata[3] = velo;
 
@@ -1138,7 +1137,7 @@ public:
         }
 
         if (callback_send)
-            callback_action(onoff ? CALLBACK_NOTE_ON : CALLBACK_NOTE_OFF, m_id, note, velo, 0.0);
+            callback_action(velo ? CALLBACK_NOTE_ON : CALLBACK_NOTE_OFF, m_id, note, velo, 0.0);
 #else
         Q_UNUSED(osc_send);
         Q_UNUSED(callback_send);
@@ -1171,7 +1170,6 @@ public:
         for (unsigned short i=0; i < 128; i++)
         {
             extMidiNotes[i].valid = true;
-            extMidiNotes[i].onoff = false;
             extMidiNotes[i].note  = i;
             extMidiNotes[i].velo  = 0;
 

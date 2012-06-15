@@ -188,7 +188,7 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
     // Plugin-specific methods
     //else if (strcmp(method, "/lv2_atom_transfer") == 0)
     //    return osc_handle_lv2_atom_transfer(plugin, argv);
-    else if (strcmp(method, "/lv2_event_transfer") == 0)
+    if (strcmp(method, "/lv2_event_transfer") == 0)
         return osc_handle_lv2_event_transfer(plugin, argv);
 
     // Plugin Bridges
@@ -196,31 +196,31 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
     {
         if (strcmp(method, "/bridge_ains_peak") == 0)
             return osc_handle_bridge_ains_peak(plugin, argv);
-        else if (strcmp(method, "/bridge_aouts_peak") == 0)
+        if (strcmp(method, "/bridge_aouts_peak") == 0)
             return osc_handle_bridge_aouts_peak(plugin, argv);
-        else if (strcmp(method, "/bridge_audio_count") == 0)
+        if (strcmp(method, "/bridge_audio_count") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeAudioCount, argv);
-        else if (strcmp(method, "/bridge_midi_count") == 0)
+        if (strcmp(method, "/bridge_midi_count") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeMidiCount, argv);
-        else if (strcmp(method, "/bridge_param_count") == 0)
+        if (strcmp(method, "/bridge_param_count") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeParameterCount, argv);
-        else if (strcmp(method, "/bridge_program_count") == 0)
+        if (strcmp(method, "/bridge_program_count") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeProgramCount, argv);
-        else if (strcmp(method, "/bridge_midi_program_count") == 0)
+        if (strcmp(method, "/bridge_midi_program_count") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeMidiProgramCount, argv);
-        else if (strcmp(method, "/bridge_plugin_info") == 0)
+        if (strcmp(method, "/bridge_plugin_info") == 0)
             return plugin->set_osc_bridge_info(PluginBridgePluginInfo, argv);
-        else if (strcmp(method, "/bridge_param_info") == 0)
+        if (strcmp(method, "/bridge_param_info") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeParameterInfo, argv);
-        else if (strcmp(method, "/bridge_param_data") == 0)
+        if (strcmp(method, "/bridge_param_data") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeParameterDataInfo, argv);
-        else if (strcmp(method, "/bridge_param_ranges") == 0)
+        if (strcmp(method, "/bridge_param_ranges") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeParameterRangesInfo, argv);
-        else if (strcmp(method, "/bridge_program_info") == 0)
+        if (strcmp(method, "/bridge_program_info") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeProgramInfo, argv);
-        else if (strcmp(method, "/bridge_midi_program_info") == 0)
+        if (strcmp(method, "/bridge_midi_program_info") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeMidiProgramInfo, argv);
-        else if (strcmp(method, "/bridge_update") == 0)
+        if (strcmp(method, "/bridge_update") == 0)
             return plugin->set_osc_bridge_info(PluginBridgeUpdateNow, argv);
     }
 
@@ -229,21 +229,21 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
     {
         if (strcmp(method, "/set_active") == 0)
             return osc_handle_set_active(plugin, argv);
-        else if (strcmp(method, "/set_drywet") == 0)
+        if (strcmp(method, "/set_drywet") == 0)
             return osc_handle_set_drywet(plugin, argv);
-        else if (strcmp(method, "/set_vol") == 0)
+        if (strcmp(method, "/set_vol") == 0)
             return osc_handle_set_volume(plugin, argv);
-        else if (strcmp(method, "/set_balance_left") == 0)
+        if (strcmp(method, "/set_balance_left") == 0)
             return osc_handle_set_balance_left(plugin, argv);
-        else if (strcmp(method, "/set_balance_right") == 0)
+        if (strcmp(method, "/set_balance_right") == 0)
             return osc_handle_set_balance_right(plugin, argv);
-        else if (strcmp(method, "/set_parameter") == 0)
+        if (strcmp(method, "/set_parameter") == 0)
             return osc_handle_set_parameter(plugin, argv);
-        else if (strcmp(method, "/set_program") == 0)
+        if (strcmp(method, "/set_program") == 0)
             return osc_handle_set_program(plugin, argv);
-        else if (strcmp(method, "/note_on") == 0)
+        if (strcmp(method, "/note_on") == 0)
             return osc_handle_note_on(plugin, argv);
-        else if (strcmp(method, "/note_off") == 0)
+        if (strcmp(method, "/note_off") == 0)
             return osc_handle_note_off(plugin, argv);
     }
 
@@ -267,6 +267,8 @@ int osc_handle_configure(CarlaPlugin* plugin, lo_arg** argv)
 
     if (strcmp(key, "CarlaBridgeHideGUI") == 0)
         callback_action(CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
+    else if (strcmp(key, "CarlaBridgeSaveNowDone") == 0)
+        plugin->set_osc_bridge_info(PluginBridgeSaved, nullptr);
     else
         plugin->set_custom_data(CUSTOM_DATA_STRING, key, value, false);
 
@@ -328,13 +330,13 @@ int osc_handle_midi(CarlaPlugin* plugin, lo_arg **argv)
         if (MIDI_IS_STATUS_NOTE_OFF(status))
         {
             uint8_t note = data[2];
-            plugin->send_midi_note(false, note, 0, false, true, true);
+            plugin->send_midi_note(note, 0, false, true, true);
         }
         else if (MIDI_IS_STATUS_NOTE_ON(status))
         {
             uint8_t note = data[2];
             uint8_t velo = data[3];
-            plugin->send_midi_note(true, note, velo, false, true, true);
+            plugin->send_midi_note(note, velo, false, true, true);
         }
 
         return 0;
@@ -502,7 +504,7 @@ int osc_handle_note_on(CarlaPlugin* plugin, lo_arg** argv)
 
     int note = argv[0]->i;
     int velo = argv[1]->i;
-    plugin->send_midi_note(true, note, velo, true, false, true);
+    plugin->send_midi_note(note, velo, true, false, true);
 
     return 0;
 }
@@ -513,7 +515,7 @@ int osc_handle_note_off(CarlaPlugin* plugin, lo_arg** argv)
 
     int note = argv[0]->i;
     int velo = argv[1]->i;
-    plugin->send_midi_note(false, note, velo, true, false, true);
+    plugin->send_midi_note(note, velo, true, false, true);
 
     return 0;
 }

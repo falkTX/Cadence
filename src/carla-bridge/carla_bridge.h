@@ -25,6 +25,7 @@
 #endif
 
 #include <cstdio>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <QtCore/QMutex>
@@ -66,7 +67,6 @@ class ClientData
 public:
     ClientData(const char* ui_title)
     {
-        m_filename = nullptr;
         m_title = strdup(ui_title);
 
         for (unsigned int i=0; i < MAX_BRIDGE_MESSAGES; i++)
@@ -78,15 +78,19 @@ public:
         }
 
 #ifdef BUILD_BRIDGE_UI
+        m_filename = nullptr;
         m_lib = nullptr;
 #endif
     }
 
     virtual ~ClientData()
     {
+        free(m_title);
+
+#ifdef BUILD_BRIDGE_UI
         if (m_filename)
             free(m_filename);
-        free(m_title);
+#endif
     }
 
     void queque_message(BridgeMessageType type, int value1, int value2, double value3)
@@ -165,18 +169,23 @@ public:
 
     // ---------------------------------------------------------------------
 
+#ifdef BUILD_BRIDGE_UI
     // initialization
     virtual bool init(const char*, const char*) = 0;
     virtual void close() = 0;
+#endif
 
     // processing
-    virtual void set_parameter(uint32_t index, double value) = 0;
+    virtual void set_parameter(int32_t rindex, double value) = 0;
     virtual void set_program(uint32_t index) = 0;
     virtual void set_midi_program(uint32_t bank, uint32_t program) = 0;
     virtual void note_on(uint8_t note, uint8_t velocity) = 0;
     virtual void note_off(uint8_t note) = 0;
 
-#ifdef BUILD_BRIDGE_UI
+#ifdef BUILD_BRIDGE_PLUGIN
+    // plugin
+    virtual void save_now(const char* filename) = 0;
+#else
     // gui
     virtual void* get_widget() const = 0;
     virtual bool is_resizable() const = 0;
@@ -216,12 +225,12 @@ public:
     // ---------------------------------------------------------------------
 
 private:
-    char* m_filename;
     char* m_title;
     QMutex m_lock;
     QuequeBridgeMessage QuequeBridgeMessages[MAX_BRIDGE_MESSAGES];
 
 #ifdef BUILD_BRIDGE_UI
+    char* m_filename;
     void* m_lib;
 #endif
 };

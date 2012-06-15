@@ -15,8 +15,10 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_backend.h"
+#include "carla_bridge.h"
 #include "carla_plugin.h"
+
+#include <QtCore/QFile>
 
 #ifndef __WINE__
 #include <QtCore/QTimer>
@@ -25,6 +27,10 @@
 #endif
 
 #define CARLA_PLUGIN CarlaBackend::CarlaPlugins[0]
+
+void toolkit_plugin_idle();
+
+ClientData* client = nullptr;
 
 // -------------------------------------------------------------------------
 // backend stuff
@@ -38,57 +44,73 @@ short add_plugin_vst(const char* filename, const char* label);
 
 CARLA_BACKEND_END_NAMESPACE
 
-// -------------------------------------------------------------------------
-// plugin bridge stuff
-
 using namespace CarlaBackend;
 
+// -------------------------------------------------------------------------
+// toolkit stuff
+
 #ifdef __WINE__
+LRESULT WINAPI MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch (msg)
+    {
+    case WM_CLOSE:
+        if (client)
+            client->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 0, 0, 0.0);
+        osc_send_configure("CarlaBridgeHideGUI", "");
+        return TRUE;
+    }
+
+    return DefWindowProc(hWnd, msg, wParam, lParam);
+}
 static bool close_now = false;
 static HINSTANCE hInst = nullptr;
 static HWND gui = nullptr;
 #else
+class PluginIdleTimer : public QTimer
+{
+public:
+    PluginIdleTimer() {}
+
+    void timerEvent(QTimerEvent*)
+    {
+        if (client)
+            client->run_messages();
+
+        toolkit_plugin_idle();
+    }
+
+    Q_SLOT guiClosed()
+    {
+        //if (client)
+        //    client->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 0, 0, 0.0);
+        osc_send_configure("CarlaBridgeHideGUI", "");
+    }
+};
 static QApplication* app = nullptr;
 static QDialog* gui = nullptr;
 #endif
 
-static int nextWidth  = 0;
-static int nextHeight = 0;
-static int nextGuiMsg = 0;
+#define nextShowMsgNULL  0
+#define nextShowMsgFALSE 1
+#define nextShowMsgTRUE  2
+static int nextShowMsg = nextShowMsgNULL;
 
-void plugin_bridge_show_gui(bool yesno)
-{
-    nextGuiMsg = int(yesno)+1;
-}
-
-void plugin_bridge_quit()
+void toolkit_init()
 {
 #ifdef __WINE__
-    close_now = true;
 #else
-    if (app)
-        app->quit();
+    static int argc = 0;
+    static char* argv[] = { nullptr };
+    app = new QApplication(argc, argv, true);
 #endif
 }
 
-void plugin_bridge_idle()
+void toolkit_plugin_idle()
 {
-    if (nextWidth != 0 && nextHeight != 0)
+    if (nextShowMsg)
     {
-        if (gui)
-        {
-#ifdef __WINE__
-            SetWindowPos(gui, 0, 0, 0, nextWidth + 6, nextHeight + 25, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
-#else
-            gui->setFixedSize(nextWidth, nextHeight);
-#endif
-        }
-        nextWidth = nextHeight = 0;
-    }
-
-    if (nextGuiMsg)
-    {
-        bool yesno = nextGuiMsg -1;
+        bool yesno = nextShowMsg - 1;
 
         CARLA_PLUGIN->show_gui(yesno);
 
@@ -102,7 +124,7 @@ void plugin_bridge_idle()
 #endif
         }
 
-        nextGuiMsg = 0;
+        nextShowMsg = nextShowMsgNULL;
     }
 
     CARLA_PLUGIN->idle_gui();
@@ -130,33 +152,140 @@ void plugin_bridge_idle()
     }
 }
 
-// -------------------------------------------------------------------------
-
-#ifdef __WINE__
-LRESULT WINAPI MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+void toolkit_loop()
 {
-    switch (msg)
-    {
-    case WM_CLOSE:
-        plugin_bridge_show_gui(false);
-        osc_send_configure("CarlaBridgeHideGUI", "");
-        return TRUE;
-    }
+#ifdef __WINE__
+    MSG msg;
 
-    return DefWindowProc(hWnd, msg, wParam, lParam);
-}
+    while (! close_now)
+    {
+        while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+            DispatchMessage(&msg);
+
+        if (close_now)
+            break;
+
+        if (client)
+        {
+            toolkit_plugin_idle();
+            client->run_messages();
+        }
+
+        if (close_now)
+            break;
+
+        carla_msleep(50);
+    }
 #else
-class PluginIdleTimer : public QTimer
+    PluginIdleTimer timer;
+    timer.start(50);
+
+    app->setQuitOnLastWindowClosed(false);
+    app->exec();
+#endif
+}
+
+void toolkit_quit()
+{
+#ifdef __WINE__
+    close_now = true;
+#else
+    if (app)
+        app->quit();
+#endif
+}
+
+void toolkit_window_show()
+{
+    nextShowMsg = nextShowMsgTRUE;
+}
+
+void toolkit_window_hide()
+{
+    nextShowMsg = nextShowMsgFALSE;
+}
+
+void toolkit_window_resize(int width, int height)
+{
+    if (gui)
+    {
+#ifdef __WINE__
+        SetWindowPos(gui, 0, 0, 0, width + 6, height + 25, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+#else
+        gui->setFixedSize(width, height);
+#endif
+    }
+}
+
+// -------------------------------------------------------------------------
+// client stuff
+
+class PluginData : public ClientData
 {
 public:
-    PluginIdleTimer() {}
-
-    void timerEvent(QTimerEvent*)
+    PluginData() : ClientData("")
     {
-        plugin_bridge_idle();
+    }
+
+    ~PluginData()
+    {
+    }
+
+    // ---------------------------------------------------------------------
+
+    // processing
+    void set_parameter(int32_t rindex, double value)
+    {
+        if (CARLA_PLUGIN)
+            CARLA_PLUGIN->set_parameter_value_by_rindex(rindex, value, true, true, false);
+    }
+
+    void set_program(uint32_t index)
+    {
+        if (CARLA_PLUGIN && index < CARLA_PLUGIN->prog_count())
+            CARLA_PLUGIN->set_program(index, true, true, false, true);
+    }
+
+    void set_midi_program(uint32_t bank, uint32_t program)
+    {
+        if (CARLA_PLUGIN)
+            CARLA_PLUGIN->set_midi_program_by_id(bank, program, true, true, false, true);
+    }
+
+    void note_on(uint8_t note, uint8_t velocity)
+    {
+        if (CARLA_PLUGIN)
+            CARLA_PLUGIN->send_midi_note(note, velocity, true, true, false);
+    }
+
+    void note_off(uint8_t note)
+    {
+        if (CARLA_PLUGIN)
+            CARLA_PLUGIN->send_midi_note(note, 0, true, true, false);
+    }
+
+    // plugin
+    void save_now(const char* filename)
+    {
+        qDebug("PluginData::save_now(%s)", filename);
+        QFile sFile(filename);
+
+        if (! sFile.open(QIODevice::WriteOnly | QIODevice::Text))
+            return;
+
+        if (CARLA_PLUGIN->hints() & PLUGIN_USES_CHUNKS)
+        {
+            void* data = nullptr;
+            int32_t data_size = CARLA_PLUGIN->chunk_data(&data);
+            if (data_size >= 4)
+                sFile.write((const char*)data, data_size);
+        }
+
+        osc_send_configure("CarlaBridgeSaveNowDone", filename);
     }
 };
-#endif
+
+// -------------------------------------------------------------------------
 
 void plugin_bridge_callback(CallbackType action, unsigned short, int value1, int value2, double value3)
 {
@@ -172,15 +301,24 @@ void plugin_bridge_callback(CallbackType action, unsigned short, int value1, int
         osc_send_midi_program(value1, value2, false);
         break;
     case CALLBACK_NOTE_ON:
-    case CALLBACK_NOTE_OFF:
-        //osc_send_midi(value1, value2);
+    {
+        uint8_t mdata[4] = { 0, MIDI_STATUS_NOTE_ON, (uint8_t)value1, (uint8_t)value2 };
+        osc_send_midi(mdata);
         break;
+    }
+    case CALLBACK_NOTE_OFF:
+    {
+        uint8_t mdata[4] = { 0, MIDI_STATUS_NOTE_OFF, (uint8_t)value1, (uint8_t)value2 };
+        osc_send_midi(mdata);
+        break;
+    }
     case CALLBACK_RESIZE_GUI:
-        nextWidth  = value1;
-        nextHeight = value2;
+        if (client)
+            client->queque_message(BRIDGE_MESSAGE_RESIZE_GUI, value1, value2, 0.0);
         break;
     case CALLBACK_QUIT:
-        plugin_bridge_quit();
+        if (client)
+            client->queque_message(BRIDGE_MESSAGE_QUIT, 0, 0, 0.0);
         break;
     default:
         break;
@@ -192,10 +330,11 @@ void plugin_bridge_callback(CallbackType action, unsigned short, int value1, int
 // -------------------------------------------------------------------------
 
 #ifdef __WINE__
-int WINAPI WinMain(HINSTANCE hInst_, HINSTANCE hPrevInst, LPSTR cmdline, int cmdshow)
+int WINAPI WinMain(HINSTANCE hInstX, HINSTANCE, LPSTR, int)
 {
+    hInst = hInstX;
+
 #define MAXCMDTOKENS 128
-    hInst = hInst_;
     int argc;
     LPSTR argv[MAXCMDTOKENS];
     LPSTR p = GetCommandLine();
@@ -207,7 +346,7 @@ int WINAPI WinMain(HINSTANCE hInst_, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
     argc = 0;
     args = (char *)malloc(lstrlen(p)+1);
     if (args == (char *)NULL) {
-        fprintf(stdout, "Insufficient memory in WinMain()\n");
+        qCritical("Insufficient memory in WinMain()");
         return 1;
     }
 
@@ -279,22 +418,28 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    // Init backend
+    set_callback_function(plugin_bridge_callback);
+    set_last_error("no error");
+
+    // Init engine
     QString engName = QString("%1 (master)").arg(label);
     engName.truncate(CarlaEngine::maxClientNameSize());
 
     CarlaEngine engine;
     engine.init(engName.toUtf8().constData());
 
-#ifdef __WINE__
-#else
-    app = new QApplication(argc, argv);
-#endif
+    // Init toolkit
+    toolkit_init();
 
-    set_callback_function(plugin_bridge_callback);
-    set_last_error("no error");
+    // Init plugin client
+    client = new PluginData;
+
+    // Init OSC
     osc_init(osc_url);
     osc_send_update();
 
+    // Get plugin type
     switch (itype)
     {
     case PLUGIN_LADSPA:
@@ -314,8 +459,10 @@ int main(int argc, char* argv[])
         break;
     }
 
+    // Init plugin
     if (id == 0 && CARLA_PLUGIN)
     {
+        // Create gui if needed
         GuiInfo guiInfo;
         CARLA_PLUGIN->get_gui_info(&guiInfo);
 
@@ -348,6 +495,8 @@ int main(int argc, char* argv[])
                                CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
                                0, 0, hInst, 0);
             SetWindowPos(gui, 0, 0, 0, 6, 25, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+
+            qDebug("Wine GUI created");
 #else
         if (guiInfo.type == GUI_INTERNAL_QT4 || guiInfo.type == GUI_INTERNAL_X11)
         {
@@ -357,46 +506,20 @@ int main(int argc, char* argv[])
             CARLA_PLUGIN->set_gui_data(0, gui);
         }
 
+        // Report OK to backend
         osc_send_bridge_update();
 
-        {
-            // FIXME
-            //CARLA_PLUGIN->set_active(true, false, false);
-            //plugin_bridge_show_gui(true);
+        // Main loop
+        toolkit_loop();
 
-#ifdef __WINE__
-            MSG msg;
-
-            while (! close_now)
-            {
-                while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
-                    DispatchMessage(&msg);
-
-                if (close_now)
-                    break;
-
-                plugin_bridge_idle();
-
-                if (close_now)
-                    break;
-
-                carla_msleep(50);
-            }
-#else
-            PluginIdleTimer timer;
-            timer.start(50);
-
-            app->setQuitOnLastWindowClosed(false);
-            app->exec();
-#endif
-        }
-
+        // Remove & delete plugin
         carla_proc_lock();
         CARLA_PLUGIN->set_enabled(false);
         carla_proc_unlock();
 
         delete CARLA_PLUGIN;
 
+        // Cleanup
 #ifndef __WINE__
         if (gui)
         {
@@ -412,8 +535,13 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    delete client;
+    client = nullptr;
+
+    // Close engine
     engine.close();
 
+    // Close OSC
     osc_send_exiting();
     osc_close();
 

@@ -869,7 +869,7 @@ class VstPlugin : public CarlaPlugin
 
                     midi_event->type = kVstMidiType;
                     midi_event->byteSize = sizeof(VstMidiEvent);
-                    midi_event->midiData[0] = (extMidiNotes[i].onoff ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF) + cin_channel;
+                    midi_event->midiData[0] = cin_channel + extMidiNotes[i].velo ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF;
                     midi_event->midiData[1] = extMidiNotes[i].note;
                     midi_event->midiData[2] = extMidiNotes[i].velo;
 

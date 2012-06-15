@@ -326,12 +326,12 @@ public:
     // ---------------------------------------------------------------------
     // processing
 
-    void set_parameter(uint32_t index, double value)
+    void set_parameter(int32_t rindex, double value)
     {
         if (descriptor && descriptor->port_event)
         {
             float fvalue = value;
-            descriptor->port_event(handle, index, sizeof(float), 0, &fvalue);
+            descriptor->port_event(handle, rindex, sizeof(float), 0, &fvalue);
         }
     }
 
