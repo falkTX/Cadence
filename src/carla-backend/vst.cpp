@@ -1270,13 +1270,11 @@ class VstPlugin : public CarlaPlugin
 
 #ifdef VESTIGE_HEADER
         if (effect && effect->ptr1)
-#else
-        if (effect && effect->resvd1)
-#endif
         {
-#ifdef VESTIGE_HEADER
             self = (VstPlugin*)effect->ptr1;
 #else
+        if (effect && effect->resvd1)
+        {
             self = (VstPlugin*)get_pointer(effect->resvd1);
 #endif
             if (self->unique1 != self->unique2)

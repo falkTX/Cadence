@@ -15,38 +15,32 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_vst_includes.h"
-
+#include "carla_bridge.h"
 #include "carla_bridge_osc.h"
-#include "carla_bridge_ui.h"
 #include "carla_midi.h"
+
+#include "carla_vst_includes.h"
 
 #include <QtGui/QDialog>
 
-UiData* ui = nullptr;
+ClientData* client = nullptr;
 
 // -------------------------------------------------------------------------
 
 #define FAKE_SAMPLE_RATE 44100.0
 #define FAKE_BUFFER_SIZE 512
 
-class VstUiData : public UiData
+class VstUiData : public ClientData
 {
 public:
-    VstUiData(const char* ui_title) : UiData(ui_title)
+    VstUiData(const char* ui_title) : ClientData(ui_title)
     {
         effect = nullptr;
         widget = new QDialog;
-
-        // make UI valid
-        unique1 = unique2 = random();
     }
 
     ~VstUiData()
     {
-        // UI is no longer valid
-        unique1 = 0;
-        unique2 = 1;
     }
 
     // ---------------------------------------------------------------------
@@ -54,48 +48,63 @@ public:
 
     bool init(const char* binary, const char*)
     {
-        if (lib_open(binary))
+        // -----------------------------------------------------------------
+        // open DLL
+
+        if ( !lib_open(binary))
+            return false;
+
+        // -----------------------------------------------------------------
+        // get DLL main entry
+
+        VST_Function vstfn = (VST_Function)lib_symbol("VSTPluginMain");
+
+        if (! vstfn)
         {
-            VST_Function vstfn = (VST_Function)lib_symbol("VSTPluginMain");
+            vstfn = (VST_Function)lib_symbol("main");
 
             if (! vstfn)
-                vstfn = (VST_Function)lib_symbol("main");
-
-            if (vstfn)
-            {
-                effect = vstfn(VstHostCallback);
-
-                if (effect && effect->magic == kEffectMagic)
-                {
-                    effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
-#if ! VST_FORCE_DEPRECATED
-                    effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, FAKE_BUFFER_SIZE, nullptr, FAKE_SAMPLE_RATE);
-#endif
-                    effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, FAKE_SAMPLE_RATE);
-                    effect->dispatcher(effect, effSetBlockSize, 0, FAKE_BUFFER_SIZE, nullptr, 0.0f);
-                    effect->dispatcher(effect, effEditOpen, 0, 0, (void*)widget->winId(), 0.0f);
-                    effect->user = this;
-
-#ifndef ERect
-                    struct ERect {
-                        short top;
-                        short left;
-                        short bottom;
-                        short right;
-                    };
-#endif
-                    ERect* vst_rect;
-
-                    if (effect->dispatcher(effect, effEditGetRect, 0, 0, &vst_rect, 0.0f))
-                    {
-                        int width  = vst_rect->right - vst_rect->left;
-                        int height = vst_rect->bottom - vst_rect->top;
-                        widget->setFixedSize(width, height);
-                        return true;
-                    }
-                }
-            }
+                return false;
         }
+
+        // -----------------------------------------------------------------
+        // initialize plugin
+
+        effect = vstfn(VstHostCallback);
+
+        if (! effect || effect->magic != kEffectMagic)
+            return false;
+
+        // -----------------------------------------------------------------
+        // initialize VST stuff
+
+        effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
+#if ! VST_FORCE_DEPRECATED
+        effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, FAKE_BUFFER_SIZE, nullptr, FAKE_SAMPLE_RATE);
+#endif
+        effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, FAKE_SAMPLE_RATE);
+        effect->dispatcher(effect, effSetBlockSize, 0, FAKE_BUFFER_SIZE, nullptr, 0.0f);
+        effect->dispatcher(effect, effEditOpen, 0, 0, (void*)widget->winId(), 0.0f);
+
+#ifdef VESTIGE_HEADER
+        effect->ptr1 = this;
+#else
+        effect->resvd1 = (intptr_t)this;
+#endif
+
+        // -----------------------------------------------------------------
+        // initialize gui stuff
+
+        ERect* vstRect;
+
+        if (effect->dispatcher(effect, effEditGetRect, 0, 0, &vstRect, 0.0f))
+        {
+            int width  = vstRect->right - vstRect->left;
+            int height = vstRect->bottom - vstRect->top;
+            widget->setFixedSize(width, height);
+            return true;
+        }
+
         return false;
     }
 
@@ -147,20 +156,6 @@ public:
 
     static intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
     {
-#if DEBUG
-        qDebug("VstHostCallback() - code: %s, index: %i, value: " P_INTPTR ", opt: %f", VstOpcode2str(opcode), index, value, opt);
-#endif
-
-        // Check if 'user' points to this UI
-        VstUiData* self = nullptr;
-
-        if (effect && effect->user)
-        {
-            self = (VstUiData*)effect->user;
-            if (self->unique1 != self->unique2)
-                self = nullptr;
-        }
-
         switch (opcode)
         {
         case audioMasterAutomate:
@@ -179,20 +174,17 @@ public:
             break;
 
         case audioMasterGetTime:
-        {
-            static VstTimeInfo timeInfo;
-            memset(&timeInfo, 0, sizeof(VstTimeInfo));
-            timeInfo.sampleRate = 44100;
+            static VstTimeInfo_R timeInfo;
+            memset(&timeInfo, 0, sizeof(VstTimeInfo_R));
+            timeInfo.sampleRate = FAKE_SAMPLE_RATE;
             return (intptr_t)&timeInfo;
-        }
 
         case audioMasterProcessEvents:
-            if (self && ptr)
+            if (client && ptr)
             {
-                int32_t i;
                 const VstEvents* const events = (VstEvents*)ptr;
 
-                for (i=0; i < events->numEvents; i++)
+                for (int32_t i=0; i < events->numEvents; i++)
                 {
                     const VstMidiEvent* const midi_event = (VstMidiEvent*)events->events[i];
 
@@ -218,8 +210,8 @@ public:
 #endif
 
         case audioMasterSizeWindow:
-            if (self)
-                self->queque_message(BRIDGE_MESSAGE_RESIZE_GUI, index, value, 0.0f);
+            if (client)
+                client->queque_message(BRIDGE_MESSAGE_RESIZE_GUI, index, value, 0.0f);
             return 1;
 
         case audioMasterGetSampleRate:
@@ -290,7 +282,7 @@ public:
             return kVstLangEnglish;
 
         case audioMasterUpdateDisplay:
-            osc_send_configure("reloadprograms", "");
+            //osc_send_configure("reloadprograms", "");
             break;
 
         default:
@@ -304,18 +296,16 @@ public:
     }
 
 private:
-    long unique1;
     AEffect* effect;
     QDialog* widget;
-    long unique2;
 };
 
 int main(int argc, char* argv[])
 {
     if (argc != 4)
     {
-       qCritical("%s: bad arguments", argv[0]);
-       return 1;
+        qCritical("%s: bad arguments", argv[0]);
+        return 1;
     }
 
     const char* osc_url  = argv[1];
@@ -326,7 +316,7 @@ int main(int argc, char* argv[])
     toolkit_init();
 
     // Init VST-UI
-    ui = new VstUiData(ui_title);
+    client = new VstUiData(ui_title);
 
     // Init OSC
     osc_init(osc_url);
@@ -334,7 +324,7 @@ int main(int argc, char* argv[])
     // Load UI
     int ret;
 
-    if (ui->init(binary, nullptr))
+    if (client->init(binary, nullptr))
     {
         toolkit_loop();
         ret = 0;
@@ -350,14 +340,14 @@ int main(int argc, char* argv[])
     osc_close();
 
     // Close VST-UI
-    ui->close();
+    client->close();
 
     // Close toolkit
     if (! ret)
         toolkit_quit();
 
-    delete ui;
-    ui = nullptr;
+    delete client;
+    client = nullptr;
 
     return ret;
 }

@@ -41,6 +41,8 @@ void osc_send_bridge_midi_program_info(int index, int bank, int program, const c
 void osc_send_bridge_update();
 #else
 // ui-bridge only
+//int osc_handle_lv2_atom_transfer(lo_arg** argv);
+int osc_handle_lv2_event_transfer(lo_arg** argv);
 //void osc_send_lv2_atom_transfer();
 void osc_send_lv2_event_transfer(const char* type, const char* key, const char* value);
 #endif

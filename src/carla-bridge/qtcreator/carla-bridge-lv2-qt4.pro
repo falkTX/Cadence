@@ -15,8 +15,8 @@ SOURCES = \
     ../carla_bridge_ui-qt4.cpp
 
 HEADERS = \
+    ../carla_bridge.h \
     ../carla_bridge_osc.h \
-    ../carla_bridge_ui.h \
     ../../carla-backend/carla_midi.h \
     ../../carla-includes/carla_includes.h \
     ../../carla-includes/carla_lib_includes.h \

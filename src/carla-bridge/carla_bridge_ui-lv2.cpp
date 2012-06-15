@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
+#include "carla_bridge.h"
 #include "carla_bridge_osc.h"
-#include "carla_bridge_ui.h"
 #include "carla_midi.h"
 
 #include "lv2_rdf.h"
@@ -26,7 +26,7 @@
 #include <QtGui/QDialog>
 #endif
 
-UiData* ui = nullptr;
+ClientData* client = nullptr;
 
 // -------------------------------------------------------------------------
 
@@ -62,10 +62,10 @@ const uint32_t CARLA_URI_MAP_ID_COUNT         = 12;
 
 // -------------------------------------------------------------------------
 
-class Lv2UiData : public UiData
+class Lv2UiData : public ClientData
 {
 public:
-    Lv2UiData(const char* ui_title) : UiData(ui_title)
+    Lv2UiData(const char* ui_title) : ClientData(ui_title)
     {
         handle = nullptr;
         widget = nullptr;
@@ -89,7 +89,9 @@ public:
         for (uint32_t i=0; i < lv2_feature_count+1; i++)
             features[i] = nullptr;
 
-        // Initialize features
+        // -----------------------------------------------------------------
+        // initialize features
+
         LV2_Event_Feature* Event_Feature     = new LV2_Event_Feature;
         Event_Feature->callback_data         = this;
         Event_Feature->lv2_event_ref         = carla_lv2_event_ref;
@@ -222,86 +224,95 @@ public:
 
     bool init(const char* plugin_uri, const char* ui_uri)
     {
+        // -----------------------------------------------------------------
+        // get plugin from lv2_rdf (lilv)
+
         Lv2World.init();
         rdf_descriptor = lv2_rdf_new(plugin_uri);
 
-        if (rdf_descriptor)
+        if (! rdf_descriptor)
+            return false;
+
+        // -----------------------------------------------------------------
+        // find requested UI
+
+        for (uint32_t i=0; i < rdf_descriptor->UICount; i++)
         {
-            for (uint32_t i=0; i < rdf_descriptor->UICount; i++)
+            if (strcmp(rdf_descriptor->UIs[i].URI, ui_uri) == 0)
             {
-                if (strcmp(rdf_descriptor->UIs[i].URI, ui_uri) == 0)
+                rdf_ui_descriptor = &rdf_descriptor->UIs[i];
+                break;
+            }
+        }
+
+        if (! rdf_ui_descriptor)
+            return false;
+
+        // -----------------------------------------------------------------
+        // open DLL
+
+        if (! lib_open(rdf_ui_descriptor->Binary))
+            return false;
+
+        // -----------------------------------------------------------------
+        // get DLL main entry
+
+        LV2UI_DescriptorFunction ui_descfn = (LV2UI_DescriptorFunction)lib_symbol("lv2ui_descriptor");
+
+        if (! ui_descfn)
+            return false;
+
+        // -----------------------------------------------------------
+        // get descriptor that matches URI
+
+        uint32_t i = 0;
+        while ((descriptor = ui_descfn(i++)))
+        {
+            if (strcmp(descriptor->URI, ui_uri) == 0)
+                break;
+        }
+
+        if (! descriptor)
+            return false;
+
+        // -----------------------------------------------------------
+        // initialize UI
+
+        handle = descriptor->instantiate(descriptor, plugin_uri, rdf_ui_descriptor->Bundle, carla_lv2_ui_write_function, this, &widget, features);
+
+        if (! handle)
+            return false;
+
+        // -----------------------------------------------------------
+        // check if not resizable
+
+#ifndef BRIDGE_LV2_X11
+        for (uint32_t i=0; i < rdf_ui_descriptor->FeatureCount; i++)
+        {
+            if (strcmp(rdf_ui_descriptor->Features[i].URI, LV2_UI__fixedSize) == 0 || strcmp(rdf_ui_descriptor->Features[i].URI, LV2_UI__noUserResize) == 0)
+            {
+                m_resizable = false;
+                break;
+            }
+        }
+#endif
+
+        // -----------------------------------------------------------
+        // check for programs extension
+
+        if (descriptor->extension_data)
+        {
+            for (uint32_t i=0; i < rdf_ui_descriptor->ExtensionCount; i++)
+            {
+                if (strcmp(rdf_ui_descriptor->Extensions[i], LV2_PROGRAMS__UIInterface) == 0)
                 {
-                    rdf_ui_descriptor = &rdf_descriptor->UIs[i];
+                    programs = (LV2_Programs_UI_Interface*)descriptor->extension_data(LV2_PROGRAMS__UIInterface);
                     break;
                 }
             }
-
-            if (rdf_ui_descriptor && lib_open(rdf_ui_descriptor->Binary))
-            {
-                LV2UI_DescriptorFunction ui_descfn = (LV2UI_DescriptorFunction)lib_symbol("lv2ui_descriptor");
-
-                if (ui_descfn)
-                {
-                    uint32_t i = 0;
-                    while ((descriptor = ui_descfn(i++)))
-                    {
-                        if (strcmp(descriptor->URI, ui_uri) == 0)
-                            break;
-                    }
-
-                    if (descriptor)
-                    {
-                        handle = descriptor->instantiate(descriptor,
-                                                         plugin_uri,
-                                                         rdf_ui_descriptor->Bundle,
-                                                         carla_lv2_ui_write_function,
-                                                         this,
-                                                         &widget,
-                                                         features);
-
-                        if (handle)
-                        {
-                            // Check if not resizable
-                            for (uint32_t i=0; i < rdf_ui_descriptor->FeatureCount; i++)
-                            {
-                                if (strcmp(rdf_ui_descriptor->Features[i].URI, LV2_UI__fixedSize) == 0 || strcmp(rdf_ui_descriptor->Features[i].URI, LV2_UI__noUserResize) == 0)
-                                {
-                                    m_resizable = false;
-                                    break;
-                                }
-                            }
-
-                            // Check for programs extension
-                            if (descriptor->extension_data)
-                            {
-                                for (uint32_t i=0; i < rdf_ui_descriptor->ExtensionCount; i++)
-                                {
-                                    if (strcmp(rdf_ui_descriptor->Extensions[i], LV2_PROGRAMS__UIInterface) == 0)
-                                    {
-                                        programs = (LV2_Programs_UI_Interface*)descriptor->extension_data(LV2_PROGRAMS__UIInterface);
-                                        break;
-                                    }
-                                }
-                            }
-
-                            return true;
-                        }
-                        else
-                            qCritical("Lv2UiData::init(%s, %s) - ui failed no initiliaze", plugin_uri, ui_uri);
-                    }
-                    else
-                        qCritical("Lv2UiData::init(%s, %s) - ui descriptor mismatch", plugin_uri, ui_uri);
-                }
-                else
-                    qCritical("Lv2UiData::init(%s, %s) - Failed to find ui entry point", plugin_uri, ui_uri);
-            }
-            else
-                qCritical("Lv2UiData::init(%s, %s) - Failed to find ui", plugin_uri, ui_uri);
         }
-        else
-            qCritical("Lv2UiData::init(%s, %s) - Failed to find plugin", plugin_uri, ui_uri);
 
-        return false;
+        return true;
     }
 
     void close()
@@ -447,7 +458,10 @@ public:
             return nullptr;
     }
 
+    // TODO - finish lv2-features and import here from main backend code
+
     // ----------------- Event Feature ---------------------------------------------------
+
     static uint32_t carla_lv2_event_ref(LV2_Event_Callback_Data callback_data, LV2_Event* event)
     {
         qDebug("carla_lv2_event_ref(%p, %p)", callback_data, event);
@@ -461,6 +475,7 @@ public:
     }
 
     // ----------------- Logs Feature ----------------------------------------------------
+
     static int carla_lv2_log_vprintf(LV2_Log_Handle handle, LV2_URID type, const char* fmt, va_list ap)
     {
         qDebug("carla_lv2_log_vprintf(%p, %i, %s, ...)", handle, type, fmt);
@@ -505,6 +520,7 @@ public:
     }
 
     // ----------------- Programs Feature ------------------------------------------------
+
     static void carla_lv2_program_changed(LV2_Programs_Handle handle, int32_t index)
     {
         qDebug("Lv2Plugin::carla_lv2_program_changed(%p, %i)", handle, index);
@@ -514,6 +530,7 @@ public:
     }
 
     // ----------------- State Feature ---------------------------------------------------
+
     static char* carla_lv2_state_make_path(LV2_State_Make_Path_Handle handle, const char* path)
     {
         qDebug("carla_lv2_state_make_path(%p, %p)", handle, path);
@@ -533,6 +550,7 @@ public:
     }
 
     // ----------------- URI-Map Feature ---------------------------------------
+
     static uint32_t carla_lv2_uri_to_id(LV2_URI_Map_Callback_Data data, const char* map, const char* uri)
     {
         qDebug("carla_lv2_uri_to_id(%p, %s, %s)", data, map, uri);
@@ -540,6 +558,7 @@ public:
     }
 
     // ----------------- URID Feature ------------------------------------------
+
     static LV2_URID carla_lv2_urid_map(LV2_URID_Map_Handle handle, const char* uri)
     {
         qDebug("carla_lv2_urid_map(%p, %s)", handle, uri);
@@ -625,6 +644,7 @@ public:
     }
 
     // ----------------- UI Port-Map Feature ---------------------------------------------
+
     static uint32_t carla_lv2_ui_port_map(LV2UI_Feature_Handle handle, const char* symbol)
     {
         qDebug("Lv2Plugin::carla_lv2_ui_port_map(%p, %s)", handle, symbol);
@@ -644,6 +664,7 @@ public:
     }
 
     // ----------------- UI Resize Feature -------------------------------------
+
     static int carla_lv2_ui_resize(LV2UI_Feature_Handle data, int width, int height)
     {
         qDebug("carla_lv2_ui_resized(%p, %i, %i)", data, width, height);
@@ -659,6 +680,7 @@ public:
     }
 
     // ----------------- UI Extension ------------------------------------------
+
     static void carla_lv2_ui_write_function(LV2UI_Controller controller, uint32_t port_index, uint32_t buffer_size, uint32_t format, const void* buffer)
     {
         qDebug("carla_lv2_ui_write_function(%p, %i, %i, %i, %p)", controller, port_index, buffer_size, format, buffer);
@@ -729,7 +751,7 @@ int osc_handle_lv2_event_transfer(lo_arg** argv)
     const char* type  = (const char*)&argv[0]->s;
     const char* key   = (const char*)&argv[1]->s;
     const char* value = (const char*)&argv[2]->s;
-    ((Lv2UiData*)ui)->handle_event_transfer(type, key, value);
+    ((Lv2UiData*)client)->handle_event_transfer(type, key, value);
     return 0;
 }
 
@@ -738,8 +760,8 @@ int main(int argc, char* argv[])
 #if 1
     if (argc != 5)
     {
-       qCritical("%s: bad arguments", argv[0]);
-       return 1;
+        qCritical("%s: bad arguments", argv[0]);
+        return 1;
     }
 
     const char* osc_url    = argv[1];
@@ -757,7 +779,7 @@ int main(int argc, char* argv[])
     toolkit_init();
 
     // Init LV2-UI
-    ui = new Lv2UiData(ui_title);
+    client = new Lv2UiData(ui_title);
 
     // Init OSC
     osc_init(osc_url);
@@ -765,7 +787,7 @@ int main(int argc, char* argv[])
     // Load UI
     int ret;
 
-    if (ui->init(plugin_uri, ui_uri))
+    if (client->init(plugin_uri, ui_uri))
     {
         toolkit_loop();
         ret = 0;
@@ -781,14 +803,14 @@ int main(int argc, char* argv[])
     osc_close();
 
     // Close LV2-UI
-    ui->close();
+    client->close();
 
     // Close toolkit
     if (! ret)
         toolkit_quit();
 
-    delete ui;
-    ui = nullptr;
+    delete client;
+    client = nullptr;
 
     return ret;
 }

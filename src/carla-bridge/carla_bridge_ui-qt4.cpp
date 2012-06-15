@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
+#include "carla_bridge.h"
 #include "carla_bridge_osc.h"
-#include "carla_bridge_ui.h"
 
 #include <QtCore/QSettings>
 #include <QtCore/QTimer>
@@ -26,7 +26,11 @@
 #include <QtGui/QVBoxLayout>
 
 static QDialog* window = nullptr;
-static QSettings settings("Cadence", "Carla-UIs");
+#ifdef BRIDGE_LV2_X11
+static QSettings settings("Cadence", "Carla-X11UIs");
+#else
+static QSettings settings("Cadence", "Carla-Qt4UIs");
+#endif
 
 // -------------------------------------------------------------------------
 
@@ -40,8 +44,8 @@ public:
 
     void timerEvent(QTimerEvent*)
     {
-        if (ui)
-            ui->run_messages();
+        if (client)
+            client->run_messages();
     }
 };
 
@@ -56,9 +60,9 @@ void toolkit_init()
 
 void toolkit_loop()
 {
-    if (ui->needs_reparent())
+    if (client->needs_reparent())
     {
-        window = (QDialog*)ui->get_widget();
+        window = (QDialog*)client->get_widget();
         window->resize(10, 10);
     }
     else
@@ -67,7 +71,7 @@ void toolkit_loop()
         window->resize(10, 10);
         window->setLayout(new QVBoxLayout(window));
 
-        QWidget* widget = (QWidget*)ui->get_widget();
+        QWidget* widget = (QWidget*)client->get_widget();
         window->layout()->addWidget(widget);
         window->layout()->setContentsMargins(0, 0, 0, 0);
         window->adjustSize();
@@ -79,21 +83,21 @@ void toolkit_loop()
     checker.start(50);
     QObject::connect(window, SIGNAL(finished(int)), app, SLOT(quit()));
 
-    if (! ui->is_resizable())
+    if (! client->is_resizable())
         window->setFixedSize(window->width(), window->height());
 
-    window->setWindowTitle(ui->get_title());
+    window->setWindowTitle(client->get_title());
 
-    if (settings.contains(QString("%1/pos_x").arg(ui->get_title())))
+    if (settings.contains(QString("%1/pos_x").arg(client->get_title())))
     {
-        int pos_x = settings.value(QString("%1/pos_x").arg(ui->get_title()), window->x()).toInt();
-        int pos_y = settings.value(QString("%1/pos_y").arg(ui->get_title()), window->y()).toInt();
+        int pos_x = settings.value(QString("%1/pos_x").arg(client->get_title()), window->x()).toInt();
+        int pos_y = settings.value(QString("%1/pos_y").arg(client->get_title()), window->y()).toInt();
         window->move(pos_x, pos_y);
 
-        if (ui->is_resizable())
+        if (client->is_resizable())
         {
-            int width  = settings.value(QString("%1/width").arg(ui->get_title()), window->width()).toInt();
-            int height = settings.value(QString("%1/height").arg(ui->get_title()), window->height()).toInt();
+            int width  = settings.value(QString("%1/width").arg(client->get_title()), window->width()).toInt();
+            int height = settings.value(QString("%1/height").arg(client->get_title()), window->height()).toInt();
             window->resize(width, height);
         }
     }
@@ -108,24 +112,29 @@ void toolkit_quit()
 {
     if (window)
     {
-        settings.setValue(QString("%1/pos_x").arg(ui->get_title()), window->x());
-        settings.setValue(QString("%1/pos_y").arg(ui->get_title()), window->y());
-        settings.setValue(QString("%1/width").arg(ui->get_title()), window->width());
-        settings.setValue(QString("%1/height").arg(ui->get_title()), window->height());
-        settings.sync();
+        if (client)
+        {
+            settings.setValue(QString("%1/pos_x").arg(client->get_title()), window->x());
+            settings.setValue(QString("%1/pos_y").arg(client->get_title()), window->y());
+            settings.setValue(QString("%1/width").arg(client->get_title()), window->width());
+            settings.setValue(QString("%1/height").arg(client->get_title()), window->height());
+            settings.sync();
+        }
 
         window->close();
+
         delete window;
+        window = nullptr;
     }
 
     if (app)
     {
-        app->quit();
-        delete app;
-    }
+        if (! app->closingDown())
+            app->quit();
 
-    app = nullptr;
-    window = nullptr;
+        delete app;
+        app = nullptr;
+    }
 }
 
 void toolkit_window_show()
@@ -142,9 +151,9 @@ void toolkit_window_hide()
 
 void toolkit_window_resize(int width, int height)
 {
-    if (window)
+    if (client && window)
     {
-        if (ui->is_resizable())
+        if (client->is_resizable())
             window->resize(width, height);
         else
             window->setFixedSize(width, height);

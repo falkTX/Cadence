@@ -1,5 +1,5 @@
 /*
- * Carla UI bridge code
+ * Carla bridge code
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,11 +15,14 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_BRIDGE_UI_H
-#define CARLA_BRIDGE_UI_H
+#ifndef CARLA_BRIDGE_H
+#define CARLA_BRIDGE_H
 
 #include "carla_includes.h"
+
+#ifdef BUILD_BRIDGE_UI
 #include "carla_lib_includes.h"
+#endif
 
 #include <cstdio>
 #include <cstdlib>
@@ -58,12 +61,11 @@ struct QuequeBridgeMessage {
 
 // -------------------------------------------------------------------------
 
-class UiData
+class ClientData
 {
 public:
-    UiData(const char* ui_title)
+    ClientData(const char* ui_title)
     {
-        m_lib = nullptr;
         m_filename = nullptr;
         m_title = strdup(ui_title);
 
@@ -74,9 +76,13 @@ public:
             QuequeBridgeMessages[i].value2 = 0;
             QuequeBridgeMessages[i].value3 = 0.0;
         }
+
+#ifdef BUILD_BRIDGE_UI
+        m_lib = nullptr;
+#endif
     }
 
-    virtual ~UiData()
+    virtual ~ClientData()
     {
         if (m_filename)
             free(m_filename);
@@ -170,13 +176,16 @@ public:
     virtual void note_on(uint8_t note, uint8_t velocity) = 0;
     virtual void note_off(uint8_t note) = 0;
 
+#ifdef BUILD_BRIDGE_UI
     // gui
     virtual void* get_widget() const = 0;
     virtual bool is_resizable() const = 0;
     virtual bool needs_reparent() const = 0;
+#endif
 
     // ---------------------------------------------------------------------
 
+#ifdef BUILD_BRIDGE_UI
     bool lib_open(const char* filename)
     {
         m_lib = ::lib_open(filename);
@@ -202,19 +211,23 @@ public:
     {
         return ::lib_error(m_filename ? m_filename : "");
     }
+#endif
 
     // ---------------------------------------------------------------------
 
 private:
-    void* m_lib;
     char* m_filename;
     char* m_title;
     QMutex m_lock;
     QuequeBridgeMessage QuequeBridgeMessages[MAX_BRIDGE_MESSAGES];
+
+#ifdef BUILD_BRIDGE_UI
+    void* m_lib;
+#endif
 };
 
 // -------------------------------------------------------------------------
 
-extern UiData* ui;
+extern ClientData* client;
 
-#endif // CARLA_BRIDGE_UI_H
+#endif // CARLA_BRIDGE_H

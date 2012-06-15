@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
+#include "carla_bridge.h"
 #include "carla_bridge_osc.h"
-#include "carla_bridge_ui.h"
 
 #ifdef BRIDGE_LV2_X11
 #error X11 UI uses Qt4
@@ -26,7 +26,7 @@
 #include <QtCore/QSettings>
 
 static GtkWidget* window = nullptr;
-static QSettings settings("Cadence", "Carla-UIs");
+static QSettings settings("Cadence", "Carla-Gtk2UIs");
 
 // -------------------------------------------------------------------------
 
@@ -34,20 +34,27 @@ gint last_x, last_y, last_width, last_height;
 
 void save_window_settings()
 {
-    settings.setValue(QString("%1/pos_x").arg(ui->get_title()), last_x);
-    settings.setValue(QString("%1/pos_y").arg(ui->get_title()), last_y);
-    settings.setValue(QString("%1/width").arg(ui->get_title()), last_width);
-    settings.setValue(QString("%1/height").arg(ui->get_title()), last_height);
-    settings.sync();
+    if (client)
+    {
+        settings.setValue(QString("%1/pos_x").arg(client->get_title()), last_x);
+        settings.setValue(QString("%1/pos_y").arg(client->get_title()), last_y);
+        settings.setValue(QString("%1/width").arg(client->get_title()), last_width);
+        settings.setValue(QString("%1/height").arg(client->get_title()), last_height);
+        settings.sync();
+    }
 }
 
 // -------------------------------------------------------------------------
 
 gboolean gtk_ui_recheck(void*)
 {
-    gtk_window_get_position(GTK_WINDOW(window), &last_x, &last_y);
-    gtk_window_get_size(GTK_WINDOW(window), &last_width, &last_height);
-    return ui->run_messages();
+    if (window)
+    {
+        gtk_window_get_position(GTK_WINDOW(window), &last_x, &last_y);
+        gtk_window_get_size(GTK_WINDOW(window), &last_width, &last_height);
+    }
+
+    return client ? client->run_messages() : false;
 }
 
 void gtk_ui_destroy(GtkWidget*, void*)
@@ -67,27 +74,27 @@ void toolkit_init()
 void toolkit_loop()
 {
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_container_add(GTK_CONTAINER(window), (GtkWidget*)ui->get_widget());
+    gtk_container_add(GTK_CONTAINER(window), (GtkWidget*)client->get_widget());
 
     g_timeout_add(50, gtk_ui_recheck, nullptr);
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_ui_destroy), nullptr);
 
-    gtk_window_set_resizable(GTK_WINDOW(window), ui->is_resizable());
-    gtk_window_set_title(GTK_WINDOW(window), ui->get_title());
+    gtk_window_set_resizable(GTK_WINDOW(window), client->is_resizable());
+    gtk_window_set_title(GTK_WINDOW(window), client->get_title());
 
     gtk_window_get_position(GTK_WINDOW(window), &last_x, &last_y);
     gtk_window_get_size(GTK_WINDOW(window), &last_width, &last_height);
 
-    if (settings.contains(QString("%1/pos_x").arg(ui->get_title())))
+    if (settings.contains(QString("%1/pos_x").arg(client->get_title())))
     {
-        last_x = settings.value(QString("%1/pos_x").arg(ui->get_title()), last_x).toInt();
-        last_y = settings.value(QString("%1/pos_y").arg(ui->get_title()), last_y).toInt();
+        last_x = settings.value(QString("%1/pos_x").arg(client->get_title()), last_x).toInt();
+        last_y = settings.value(QString("%1/pos_y").arg(client->get_title()), last_y).toInt();
         gtk_window_move(GTK_WINDOW(window), last_x, last_y);
 
-        if (ui->is_resizable())
+        if (client->is_resizable())
         {
-            last_width  = settings.value(QString("%1/width").arg(ui->get_title()), last_width).toInt();
-            last_height = settings.value(QString("%1/height").arg(ui->get_title()), last_height).toInt();
+            last_width  = settings.value(QString("%1/width").arg(client->get_title()), last_width).toInt();
+            last_height = settings.value(QString("%1/height").arg(client->get_title()), last_height).toInt();
             gtk_window_resize(GTK_WINDOW(window), last_width, last_height);
         }
     }
@@ -100,9 +107,10 @@ void toolkit_loop()
 
 void toolkit_quit()
 {
+    save_window_settings();
+
     if (window)
     {
-        save_window_settings();
         gtk_widget_destroy(window);
         gtk_main_quit();
     }

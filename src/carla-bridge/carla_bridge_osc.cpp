@@ -15,21 +15,16 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
+#include "carla_bridge.h"
 #include "carla_bridge_osc.h"
 #include "carla_midi.h"
 
 #include <QtCore/QString>
 
 #ifdef BUILD_BRIDGE_PLUGIN
-#include "carla_plugin.h"
-extern void plugin_bridge_show_gui(bool yesno);
-extern void plugin_bridge_quit();
 static const size_t client_name_len  = 13;
 static const char* const client_name = "plugin-bridge";
-#define CARLA_PLUGIN CarlaBackend::CarlaPlugins[0]
 #else
-#include "carla_bridge_ui.h"
-extern int osc_handle_lv2_event_transfer(lo_arg** argv);
 static const size_t client_name_len  = 13;
 static const char* const client_name = "lv2-ui-bridge";
 #endif
@@ -168,8 +163,8 @@ int osc_handle_configure(lo_arg** argv)
     const char* key   = (const char*)&argv[0]->s;
     const char* value = (const char*)&argv[1]->s;
 
-    if (CARLA_PLUGIN)
-        CARLA_PLUGIN->set_custom_data(CarlaBackend::CUSTOM_DATA_STRING, key, value, false);
+    //if (CARLA_PLUGIN)
+    //    CARLA_PLUGIN->set_custom_data(CarlaBackend::CUSTOM_DATA_STRING, key, value, false);
 #else
     Q_UNUSED(argv);
 #endif
@@ -182,15 +177,8 @@ int osc_handle_control(lo_arg** argv)
     int rindex  = argv[0]->i;
     float value = argv[1]->f;
 
-    qDebug("osc_handle_control(%i, %f)", rindex, value);
-
-#ifdef BUILD_BRIDGE_PLUGIN
-    if (CARLA_PLUGIN)
-        CARLA_PLUGIN->set_parameter_value_by_rindex(rindex, value, true, true, false);
-#else
-    if (ui)
-        ui->queque_message(BRIDGE_MESSAGE_PARAMETER, rindex, 0, value);
-#endif
+    if (client)
+        client->queque_message(BRIDGE_MESSAGE_PARAMETER, rindex, 0, value);
 
     return 0;
 }
@@ -199,16 +187,8 @@ int osc_handle_program(lo_arg** argv)
 {
     int index = argv[0]->i;
 
-    if (index >= 0)
-    {
-#ifdef BUILD_BRIDGE_PLUGIN
-        if (CARLA_PLUGIN && index < (int32_t)CARLA_PLUGIN->prog_count())
-            CARLA_PLUGIN->set_program(index, false, true, true, true);
-#else
-        if (ui)
-            ui->queque_message(BRIDGE_MESSAGE_PROGRAM, index, 0, 0.0);
-#endif
-    }
+    if (client)
+        client->queque_message(BRIDGE_MESSAGE_PROGRAM, index, 0, 0.0);
 
     return 0;
 }
@@ -218,16 +198,8 @@ int osc_handle_midi_program(lo_arg** argv)
     int bank    = argv[0]->i;
     int program = argv[1]->i;
 
-    if (bank >= 0 && program >= 0)
-    {
-#ifdef BUILD_BRIDGE_PLUGIN
-        if (CARLA_PLUGIN)
-            CARLA_PLUGIN->set_midi_program_by_id(bank, program, false, true, true, true);
-#else
-        if (ui)
-            ui->queque_message(BRIDGE_MESSAGE_MIDI_PROGRAM, bank, program, 0.0);
-#endif
-    }
+    if (client)
+        client->queque_message(BRIDGE_MESSAGE_MIDI_PROGRAM, bank, program, 0.0);
 
     return 0;
 }
@@ -244,25 +216,17 @@ int osc_handle_midi(lo_arg** argv)
     if (MIDI_IS_STATUS_NOTE_OFF(status))
     {
         uint8_t note = data[2];
-#ifdef BUILD_BRIDGE_PLUGIN
-        if (CARLA_PLUGIN)
-            CARLA_PLUGIN->send_midi_note(false, note, 0, false, true, true);
-#else
-        if (ui)
-            ui->queque_message(BRIDGE_MESSAGE_NOTE_OFF, note, 0, 0.0);
-#endif
+
+        if (client)
+            client->queque_message(BRIDGE_MESSAGE_NOTE_OFF, note, 0, 0.0);
     }
     else if (MIDI_IS_STATUS_NOTE_ON(status))
     {
         uint8_t note = data[2];
         uint8_t velo = data[3];
-#ifdef BUILD_BRIDGE_PLUGIN
-        if (CARLA_PLUGIN)
-            CARLA_PLUGIN->send_midi_note(true, note, velo, false, true, true);
-#else
-        if (ui)
-            ui->queque_message(BRIDGE_MESSAGE_NOTE_ON, note, velo, 0.0);
-#endif
+
+        if (client)
+            client->queque_message(BRIDGE_MESSAGE_NOTE_ON, note, velo, 0.0);
     }
 
     return 0;
@@ -270,36 +234,24 @@ int osc_handle_midi(lo_arg** argv)
 
 int osc_handle_show()
 {
-#ifdef BUILD_BRIDGE_PLUGIN
-    plugin_bridge_show_gui(true);
-#else
-    if (ui)
-        ui->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 1, 0, 0.0);
-#endif
+    if (client)
+        client->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 1, 0, 0.0);
 
     return 0;
 }
 
 int osc_handle_hide()
 {
-#ifdef BUILD_BRIDGE_PLUGIN
-    plugin_bridge_show_gui(false);
-#else
-    if (ui)
-        ui->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 0, 0, 0.0);
-#endif
+    if (client)
+        client->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 0, 0, 0.0);
 
     return 0;
 }
 
 int osc_handle_quit()
 {
-#ifdef BUILD_BRIDGE_PLUGIN
-    plugin_bridge_quit();
-#else
-    if (ui)
-        ui->queque_message(BRIDGE_MESSAGE_QUIT, 0, 0, 0.0);
-#endif
+    if (client)
+        client->queque_message(BRIDGE_MESSAGE_QUIT, 0, 0, 0.0);
 
     return 0;
 }
