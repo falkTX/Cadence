@@ -94,23 +94,20 @@ setDefaultPluginsPaths(LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, GIG_PATH, SF2
 
 def cStringCompat(string):
     if AVLINUX_PY2BUILD:
-        if value:
-            return value
+        if string:
+            return string
         return ""
-    else:
-        return cString(string)
+     return cString(string)
 
 def toListCompat(item):
     if AVLINUX_PY2BUILD:
         return QVariantStringList(item.toList())
-    else:
-        return toList(item)
+    return toList(item)
 
 def toListCompat2(item):
     if AVLINUX_PY2BUILD:
         return QVariantPyObjectList(item.toList())
-    else:
-        return toList(item)
+    return toList(item)
 
 def CustomDataType2String(dtype):
     if dtype == CUSTOM_DATA_STRING:
