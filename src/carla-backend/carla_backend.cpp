@@ -1132,21 +1132,21 @@ void idle_guis()
     }
 }
 
-void send_midi_note(unsigned short plugin_id, bool onoff, uint8_t note, uint8_t velocity)
+void send_midi_note(unsigned short plugin_id, uint8_t note, uint8_t velocity)
 {
-    qDebug("send_midi_note(%i, %s, %i, %i)", plugin_id, bool2str(onoff), note, velocity);
+    qDebug("send_midi_note(%i, %i, %i)", plugin_id, note, velocity);
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            plugin->send_midi_note(onoff, note, velocity, true, true, false);
+            plugin->send_midi_note(note, velocity, true, true, false);
             return;
         }
     }
 
-    qCritical("send_midi_note(%i, %s, %i, %i) - could not find plugin", plugin_id, bool2str(onoff), note, velocity);
+    qCritical("send_midi_note(%i, %i, %i) - could not find plugin", plugin_id, note, velocity);
 }
 
 void prepare_for_save(unsigned short plugin_id)

@@ -318,7 +318,7 @@ CARLA_EXPORT void set_gui_data(unsigned short plugin_id, int data, quintptr gui_
 CARLA_EXPORT void show_gui(unsigned short plugin_id, bool yesno);
 CARLA_EXPORT void idle_guis();
 
-CARLA_EXPORT void send_midi_note(unsigned short plugin_id, bool onoff, quint8 note, quint8 velocity);
+CARLA_EXPORT void send_midi_note(unsigned short plugin_id, quint8 note, quint8 velocity);
 CARLA_EXPORT void prepare_for_save(unsigned short plugin_id);
 
 CARLA_EXPORT void set_callback_function(CallbackFunc func);

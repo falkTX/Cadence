@@ -47,7 +47,7 @@ CARLA_BACKEND_END_NAMESPACE
 using namespace CarlaBackend;
 
 // -------------------------------------------------------------------------
-// toolkit stuff
+// toolkit classes
 
 #ifdef __WINE__
 LRESULT WINAPI MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -80,12 +80,12 @@ public:
         toolkit_plugin_idle();
     }
 
-    Q_SLOT guiClosed()
-    {
+    //Q_SLOT guiClosed()
+    //{
         //if (client)
         //    client->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 0, 0, 0.0);
-        osc_send_configure("CarlaBridgeHideGUI", "");
-    }
+        //osc_send_configure("CarlaBridgeHideGUI", "");
+    //}
 };
 static QApplication* app = nullptr;
 static QDialog* gui = nullptr;
@@ -95,6 +95,9 @@ static QDialog* gui = nullptr;
 #define nextShowMsgFALSE 1
 #define nextShowMsgTRUE  2
 static int nextShowMsg = nextShowMsgNULL;
+
+// -------------------------------------------------------------------------
+// toolkit calls
 
 void toolkit_init()
 {
@@ -162,17 +165,9 @@ void toolkit_loop()
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
             DispatchMessage(&msg);
 
-        if (close_now)
-            break;
+        client->run_messages();
 
-        if (client)
-        {
-            toolkit_plugin_idle();
-            client->run_messages();
-        }
-
-        if (close_now)
-            break;
+        toolkit_plugin_idle();
 
         carla_msleep(50);
     }
@@ -265,23 +260,31 @@ public:
     }
 
     // plugin
-    void save_now(const char* filename)
+    void save_now()
     {
-        qDebug("PluginData::save_now(%s)", filename);
-        QFile sFile(filename);
+        qDebug("PluginData::save_now()");
 
-        if (! sFile.open(QIODevice::WriteOnly | QIODevice::Text))
-            return;
+        CARLA_PLUGIN->prepare_for_save();
+
+        for (uint32_t i=0; i < CARLA_PLUGIN->custom_count(); i++)
+        {
+            const CustomData* const cdata = CARLA_PLUGIN->custom_data(i);
+            osc_send_bridge_custom_data(customdatatype2str(cdata->type), cdata->key, cdata->value);
+        }
 
         if (CARLA_PLUGIN->hints() & PLUGIN_USES_CHUNKS)
         {
             void* data = nullptr;
             int32_t data_size = CARLA_PLUGIN->chunk_data(&data);
-            if (data_size >= 4)
-                sFile.write((const char*)data, data_size);
+
+            if (data && data_size >= 4)
+            {
+                QByteArray chunk((const char*)data, data_size);
+                osc_send_bridge_chunk_data(chunk.toBase64().data());
+            }
         }
 
-        osc_send_configure("CarlaBridgeSaveNowDone", filename);
+        osc_send_configure("CarlaBridgeSaveNowDone", "");
     }
 };
 
@@ -501,6 +504,7 @@ int main(int argc, char* argv[])
         if (guiInfo.type == GUI_INTERNAL_QT4 || guiInfo.type == GUI_INTERNAL_X11)
         {
             gui = new QDialog(nullptr);
+            gui->resize(10, 10);
             gui->setWindowTitle(guiTitle);
 #endif
             CARLA_PLUGIN->set_gui_data(0, gui);
@@ -535,6 +539,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    // Close plugin client
     delete client;
     client = nullptr;
 

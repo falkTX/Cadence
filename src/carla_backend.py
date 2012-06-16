@@ -945,7 +945,7 @@ class Host(object):
         self.lib.idle_guis.argtypes = None
         self.lib.idle_guis.restype = None
 
-        self.lib.send_midi_note.argtypes = [c_ushort, c_bool, c_uint8, c_uint8]
+        self.lib.send_midi_note.argtypes = [c_ushort, c_uint8, c_uint8]
         self.lib.send_midi_note.restype = None
 
         self.lib.prepare_for_save.argtypes = [c_ushort]
@@ -1121,8 +1121,8 @@ class Host(object):
     def idle_guis(self):
         self.lib.idle_guis()
 
-    def send_midi_note(self, plugin_id, onoff, note, velocity):
-        self.lib.send_midi_note(plugin_id, onoff, note, velocity)
+    def send_midi_note(self, plugin_id, note, velocity):
+        self.lib.send_midi_note(plugin_id, note, velocity)
 
     def prepare_for_save(self, plugin_id):
         self.lib.prepare_for_save(plugin_id)

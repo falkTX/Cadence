@@ -375,7 +375,7 @@ public:
             {
                 if (extMidiNotes[i].valid)
                 {
-                    if (extMidiNotes[i].onoff)
+                    if (extMidiNotes[i].velo)
                         midiInputPort->DispatchNoteOn(extMidiNotes[i].note, extMidiNotes[i].velo, cin_channel, nframesOffset);
                     else
                         midiInputPort->DispatchNoteOff(extMidiNotes[i].note, extMidiNotes[i].velo, cin_channel, nframesOffset);

@@ -161,10 +161,10 @@ int osc_handle_configure(lo_arg** argv)
 {
 #ifdef BUILD_BRIDGE_PLUGIN
     const char* key   = (const char*)&argv[0]->s;
-    const char* value = (const char*)&argv[1]->s;
+    //const char* value = (const char*)&argv[1]->s;
 
     if (client && strcmp(key, "CarlaBridgeSaveNow") == 0)
-        client->save_now(value);
+        client->save_now();
 #else
     Q_UNUSED(argv);
 #endif
@@ -478,6 +478,28 @@ void osc_send_bridge_midi_program_info(int index, int bank, int program, const c
         strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/bridge_midi_program_info");
         lo_send(global_osc_data.target, target_path, "iiis", index, bank, program, label);
+    }
+}
+
+void osc_send_bridge_custom_data(const char* stype, const char* key, const char* value)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+20];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/bridge_custom_data");
+        lo_send(global_osc_data.target, target_path, "sss", stype, key, value);
+    }
+}
+
+void osc_send_bridge_chunk_data(const char* string_data)
+{
+    if (global_osc_data.target)
+    {
+        char target_path[strlen(global_osc_data.path)+19];
+        strcpy(target_path, global_osc_data.path);
+        strcat(target_path, "/bridge_chunk_data");
+        lo_send(global_osc_data.target, target_path, "s", string_data);
     }
 }
 

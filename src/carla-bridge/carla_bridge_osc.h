@@ -38,6 +38,8 @@ void osc_send_bridge_param_data(int index, int type, int rindex, int hints, int 
 void osc_send_bridge_param_ranges(int index, double def, double min, double max, double step, double step_small, double step_large);
 void osc_send_bridge_program_info(int index, const char* name);
 void osc_send_bridge_midi_program_info(int index, int bank, int program, const char* label);
+void osc_send_bridge_custom_data(const char* stype, const char* key, const char* value);
+void osc_send_bridge_chunk_data(const char* string_data);
 void osc_send_bridge_update();
 #else
 // ui-bridge only

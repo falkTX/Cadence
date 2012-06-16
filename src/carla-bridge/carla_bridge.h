@@ -184,7 +184,7 @@ public:
 
 #ifdef BUILD_BRIDGE_PLUGIN
     // plugin
-    virtual void save_now(const char* filename) = 0;
+    virtual void save_now() = 0;
 #else
     // gui
     virtual void* get_widget() const = 0;

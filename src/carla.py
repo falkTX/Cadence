@@ -97,7 +97,7 @@ def cStringCompat(string):
         if string:
             return string
         return ""
-     return cString(string)
+    return cString(string)
 
 def toListCompat(item):
     if AVLINUX_PY2BUILD:
@@ -1984,11 +1984,11 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
     @pyqtSlot(int)
     def slot_noteOn(self, note):
-        CarlaHost.send_midi_note(self.plugin_id, True, note, 100)
+        CarlaHost.send_midi_note(self.plugin_id, note, 100)
 
     @pyqtSlot(int)
     def slot_noteOff(self, note):
-        CarlaHost.send_midi_note(self.plugin_id, False, note, 0)
+        CarlaHost.send_midi_note(self.plugin_id, note, 0)
 
     @pyqtSlot()
     def slot_notesOn(self):

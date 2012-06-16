@@ -982,7 +982,7 @@ public:
             {
                 if (extMidiNotes[i].valid)
                 {
-                    if (extMidiNotes[i].onoff)
+                    if (extMidiNotes[i].velo)
                         fluid_synth_noteon(f_synth, cin_channel, extMidiNotes[i].note, extMidiNotes[i].velo);
                     else
                         fluid_synth_noteoff(f_synth, cin_channel, extMidiNotes[i].note);
