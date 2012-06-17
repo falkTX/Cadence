@@ -20,6 +20,8 @@
 #include "carla_engine.h"
 #include "carla_plugin.h"
 
+#include <QtCore/QThread>
+
 CARLA_BACKEND_START_NAMESPACE
 
 #if 0
@@ -27,7 +29,7 @@ CARLA_BACKEND_START_NAMESPACE
 #endif
 
 // Global RtAudio stuff
-static RtAudio adac(RtAudio::UNIX_JACK);
+static RtAudio adac(RtAudio::LINUX_PULSE);
 
 static uint32_t carla_buffer_size = 512;
 static const char* carla_client_name = nullptr;
@@ -49,7 +51,7 @@ const char* get_host_client_name()
 quint32 get_buffer_size()
 {
     qDebug("get_buffer_size()");
-    if (carla_options.proccess_32x)
+    if (carla_options.proccess_hq)
         return 8;
     return carla_buffer_size;
 }
@@ -77,26 +79,59 @@ static int process_callback(void* outputBuffer, void* inputBuffer, unsigned int 
     float* insPtr  = (float*)inputBuffer;
     float* outsPtr = (float*)outputBuffer;
 
-    float* in1  = insPtr  + 0*nframes;
-    float* in2  = insPtr  + 1*nframes;
-    float* out1 = outsPtr + 0*nframes;
-    float* out2 = outsPtr + 1*nframes;
+    //float* in1  = insPtr  + 0*nframes;
+    //float* in2  = insPtr  + 1*nframes;
+    //float* out1 = outsPtr + 0*nframes;
+    //float* out2 = outsPtr + 1*nframes;
 
-    float* ains_buffer[2]  = { in1, in2 };
-    float* aouts_buffer[2] = { out1, out2 };
+    float ains_tmp_buf1[nframes];
+    float ains_tmp_buf2[nframes];
+    float aouts_tmp_buf1[nframes];
+    float aouts_tmp_buf2[nframes];
+
+    float* ains_tmp[2]  = { ains_tmp_buf1, ains_tmp_buf2 };
+    float* aouts_tmp[2] = { aouts_tmp_buf1, aouts_tmp_buf2 };
+
+    for (unsigned int i=0; i < nframes*2; i++)
+    {
+        if (i % 2)
+            ains_tmp_buf2[i/2] = insPtr[i];
+        else
+            ains_tmp_buf1[i/2] = insPtr[i];
+    }
+
+    //memcpy(ains_tmp_buf1, in1, sizeof(float)*nframes);
+    //memcpy(ains_tmp_buf2, in2, sizeof(float)*nframes);
+    memset(aouts_tmp_buf1, 0, sizeof(float)*nframes);
+    memset(aouts_tmp_buf2, 0, sizeof(float)*nframes);
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->enabled())
         {
+            memset(aouts_tmp_buf1, 0, sizeof(float)*nframes);
+            memset(aouts_tmp_buf2, 0, sizeof(float)*nframes);
+
             carla_proc_lock();
-
-            plugin->process(ains_buffer, aouts_buffer, nframes);
-
+            plugin->process(ains_tmp, aouts_tmp, nframes);
             carla_proc_unlock();
+
+            memcpy(ains_tmp_buf1, aouts_tmp_buf1, sizeof(float)*nframes);
+            memcpy(ains_tmp_buf2, aouts_tmp_buf2, sizeof(float)*nframes);
         }
     }
+
+    for (unsigned int i=0; i < nframes*2; i++)
+    {
+        if (i % 2)
+            outsPtr[i] = aouts_tmp_buf2[i/2];
+        else
+            outsPtr[i] = aouts_tmp_buf1[i/2];
+    }
+
+    //memcpy(out1, aouts_tmp_buf1, sizeof(float)*nframes);
+    //memcpy(out2, aouts_tmp_buf2, sizeof(float)*nframes);
 
     return 0;
 }
@@ -115,18 +150,25 @@ bool CarlaEngine::init(const char* name)
         return false;
     }
 
+//    for (unsigned int i=0; i < adac.getDeviceCount(); i++)
+//    {
+//        qWarning("DevName %i: %s", i, adac.getDeviceInfo(i).name.c_str());
+//    }
+
     // Set the same number of channels for both input and output.
     unsigned int bufferFrames = 512;
     RtAudio::StreamParameters iParams, oParams;
+//    iParams.deviceId  = 3;
+//    oParams.deviceId  = 2;
     iParams.nChannels = 2;
     oParams.nChannels = 2;
     RtAudio::StreamOptions options;
-    options.flags = RTAUDIO_NONINTERLEAVED | RTAUDIO_MINIMIZE_LATENCY | RTAUDIO_SCHEDULE_REALTIME /*| RTAUDIO_ALSA_USE_DEFAULT*/;
+    options.flags = /*RTAUDIO_NONINTERLEAVED |*/ RTAUDIO_MINIMIZE_LATENCY /*| RTAUDIO_HOG_DEVICE*/ | RTAUDIO_SCHEDULE_REALTIME /*| RTAUDIO_ALSA_USE_DEFAULT*/;
     options.streamName = name;
     options.priority = 85;
 
     try {
-        adac.openStream(&oParams, &iParams, RTAUDIO_FLOAT32, 44100, &bufferFrames, process_callback, nullptr, &options);
+        adac.openStream(&oParams, &iParams, RTAUDIO_FLOAT32, 48000, &bufferFrames, process_callback, nullptr, &options);
     }
     catch (RtError& e)
     {
@@ -164,6 +206,15 @@ bool CarlaEngine::close()
         adac.closeStream();
 
     return true;
+}
+
+const CarlaTimeInfo* CarlaEngine::getTimeInfo()
+{
+    static CarlaTimeInfo info;
+    info.playing = false;
+    info.frame = 0;
+    info.valid = 0;
+    return &info;
 }
 
 bool CarlaEngine::isOnAudioThread()
@@ -234,13 +285,17 @@ bool CarlaEngineClient::isOk()
 
 CarlaEngineBasePort* CarlaEngineClient::addPort(const char* name, CarlaEnginePortType type, bool isInput)
 {
-    if (type == CarlaEnginePortTypeAudio)
+    switch (type)
+    {
+    case CarlaEnginePortTypeAudio:
         return new CarlaEngineAudioPort(handle, name, isInput);
-    if (type == CarlaEnginePortTypeControl)
+    case CarlaEnginePortTypeControl:
         return new CarlaEngineControlPort(handle, name, isInput);
-    if (type == CarlaEnginePortTypeMIDI)
+    case CarlaEnginePortTypeMIDI:
         return new CarlaEngineMidiPort(handle, name, isInput);
-    return nullptr;
+    default:
+        return nullptr;
+    }
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -273,35 +328,33 @@ void* CarlaEngineControlPort::getBuffer()
 
 void CarlaEngineControlPort::initBuffer(void* buffer)
 {
-    if (isInput)
-        return;
+    //if (isInput)
+    return;
 
     Q_UNUSED(buffer);
 }
 
 uint32_t CarlaEngineControlPort::getEventCount(void* buffer)
 {
-    if (! isInput)
-        return 0;
+    //if (! isInput)
+    return 0;
 
     Q_UNUSED(buffer);
-    return 0;
 }
 
 const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(void* buffer, uint32_t index)
 {
-    if (! isInput)
-        return nullptr;
+    //if (! isInput)
+    return nullptr;
 
     Q_UNUSED(buffer);
     Q_UNUSED(index);
-    return nullptr;
 }
 
 void CarlaEngineControlPort::writeEvent(void* buffer, CarlaEngineControlEventType type, uint32_t time, uint8_t channel, uint8_t controller, double value)
 {
-    if (isInput)
-        return;
+    //if (isInput)
+    return;
 
     Q_UNUSED(buffer);
     Q_UNUSED(type);
@@ -325,23 +378,42 @@ void* CarlaEngineMidiPort::getBuffer()
     return nullptr;
 }
 
-uint32_t CarlaEngineMidiPort::getEventCount(void* buffer)
+void CarlaEngineMidiPort::initBuffer(void* buffer)
 {
-    if (! isInput)
-        return 0;
+    //if (isInput)
+    return;
 
     Q_UNUSED(buffer);
+}
+
+uint32_t CarlaEngineMidiPort::getEventCount(void* buffer)
+{
+    //if (! isInput)
     return 0;
+
+    Q_UNUSED(buffer);
 }
 
 const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(void* buffer, uint32_t index)
 {
-    if (! isInput)
-        return nullptr;
+    //if (! isInput)
+    return nullptr;
+
+    return nullptr;
 
     Q_UNUSED(buffer);
     Q_UNUSED(index);
-    return nullptr;
+}
+
+void CarlaEngineMidiPort::writeEvent(void* buffer, uint32_t time, uint8_t* data, uint8_t size)
+{
+    //if (! isInput)
+    return;
+
+    Q_UNUSED(buffer);
+    Q_UNUSED(time);
+    Q_UNUSED(data);
+    Q_UNUSED(size);
 }
 
 CARLA_BACKEND_END_NAMESPACE

@@ -53,8 +53,8 @@ extern volatile double aouts_peak[MAX_PLUGINS*2];
 #ifndef BUILD_BRIDGE
 // Global options
 struct carla_options_t {
+    ProcessModeType process_mode;
     uint max_parameters;
-    bool global_jack_client;
     bool prefer_ui_bridges;
     bool proccess_hq;
     int  osc_gui_timeout;

@@ -44,8 +44,14 @@ INCLUDEPATH = .. \
     ../../carla-includes \
     ../../carla-includes/vst
 
-DEFINES = QTCREATOR_TEST WANT_FLUIDSYNTH WANT_LINUXSAMPLER CARLA_ENGINE_JACK
-#DEFINES = QTCREATOR_TEST __LINUX_JACK__
-LIBS    = ../../carla-lilv/carla_lilv.a -ldl #-lrtaudio
+DEFINES = QTCREATOR_TEST WANT_FLUIDSYNTH WANT_LINUXSAMPLER
+DEFINES += CARLA_ENGINE_JACK
+#DEFINES += CARLA_ENGINE_RTAUDIO
+LIBS    = ../../carla-lilv/carla_lilv.a -ldl -lasound -lpulse -lpulse-simple
 
 QMAKE_CXXFLAGS *= -std=c++0x
+
+
+#INCLUDEPATH += ../rtaudio/rtaudio-4.0.11
+#SOURCES += ../rtaudio/rtaudio-4.0.11/RtAudio.cpp
+#DEFINES += _FORTIFY_SOURCE=2 HAVE_GETTIMEOFDAY __UNIX_JACK__ __LINUX_ALSA__ __LINUX_PULSE__

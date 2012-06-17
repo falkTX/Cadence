@@ -316,7 +316,7 @@ public:
             if (LADSPA_IS_PORT_AUDIO(PortType))
             {
 #ifndef BUILD_BRIDGE
-                if (carla_options.global_jack_client)
+                if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
                 {
                     strcpy(port_name, m_name);
                     strcat(port_name, ":");
@@ -544,7 +544,7 @@ public:
         if (needs_cin)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.global_jack_client)
+            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(port_name, m_name);
                 strcat(port_name, ":control-in");
@@ -559,7 +559,7 @@ public:
         if (needs_cout)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.global_jack_client)
+            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(port_name, m_name);
                 strcat(port_name, ":control-out");
@@ -574,7 +574,7 @@ public:
         if (mins > 0)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.global_jack_client)
+            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(port_name, m_name);
                 strcat(port_name, ":midi-in");

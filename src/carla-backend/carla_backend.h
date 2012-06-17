@@ -127,8 +127,8 @@ enum GuiType {
 };
 
 enum OptionsType {
-    OPTION_MAX_PARAMETERS       = 1,
-    OPTION_GLOBAL_JACK_CLIENT   = 2,
+    OPTION_PROCESS_MODE         = 1,
+    OPTION_MAX_PARAMETERS       = 2,
     OPTION_PREFER_UI_BRIDGES    = 3,
     OPTION_PROCESS_HQ           = 4,
     OPTION_OSC_GUI_TIMEOUT      = 5,
@@ -165,6 +165,12 @@ enum CallbackType {
     CALLBACK_RELOAD_PROGRAMS      = 11,
     CALLBACK_RELOAD_ALL           = 12,
     CALLBACK_QUIT                 = 13
+};
+
+enum ProcessModeType {
+    PROCESS_MODE_SINGLE_CLIENT    = 0,
+    PROCESS_MODE_MULTIPLE_CLIENTS = 1,
+    PROCESS_MODE_CONTINUOUS_RACK  = 2
 };
 
 struct ParameterData {

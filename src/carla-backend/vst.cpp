@@ -355,7 +355,7 @@ class VstPlugin : public CarlaPlugin
         for (j=0; j<ains; j++)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.global_jack_client)
+            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
                 sprintf(port_name, "%s:input_%02i", m_name, j+1);
             else
 #endif
@@ -368,7 +368,7 @@ class VstPlugin : public CarlaPlugin
         for (j=0; j<aouts; j++)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.global_jack_client)
+            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
                 sprintf(port_name, "%s:output_%02i", m_name, j+1);
             else
 #endif
@@ -483,7 +483,7 @@ class VstPlugin : public CarlaPlugin
         if (needs_cin)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.global_jack_client)
+            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(port_name, m_name);
                 strcat(port_name, ":control-in");
@@ -498,7 +498,7 @@ class VstPlugin : public CarlaPlugin
         if (mins == 1)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.global_jack_client)
+            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(port_name, m_name);
                 strcat(port_name, ":midi-in");
@@ -513,7 +513,7 @@ class VstPlugin : public CarlaPlugin
         if (mouts == 1)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.global_jack_client)
+            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(port_name, m_name);
                 strcat(port_name, ":midi-out");

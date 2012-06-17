@@ -26,8 +26,8 @@
 typedef jack_client_t CarlaEngineClientNativeHandle;
 typedef jack_port_t CarlaEnginePortNativeHandle;
 #elif defined(CARLA_ENGINE_RTAUDIO)
-#include <RtAudio.h>
-#include <RtMidi.h>
+#include "RtAudio.h"
+//#include <RtMidi.h>
 typedef void* CarlaEngineClientNativeHandle;
 typedef void* CarlaEnginePortNativeHandle;
 #endif

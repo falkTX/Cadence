@@ -386,7 +386,7 @@ public:
         // Audio Outputs
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.global_jack_client)
+        if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(port_name, m_name);
             strcat(port_name, ":out-left");
@@ -399,7 +399,7 @@ public:
         aout.rindexes[0] = 0;
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.global_jack_client)
+        if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(port_name, m_name);
             strcat(port_name, ":out-right");
@@ -415,7 +415,7 @@ public:
         // MIDI Input
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.global_jack_client)
+        if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(port_name, m_name);
             strcat(port_name, ":midi-in");
@@ -430,7 +430,7 @@ public:
         // Parameters
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.global_jack_client)
+        if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(port_name, m_name);
             strcat(port_name, ":control-in");
@@ -442,7 +442,7 @@ public:
         param.port_cin = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, true);
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.global_jack_client)
+        if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(port_name, m_name);
             strcat(port_name, ":control-out");

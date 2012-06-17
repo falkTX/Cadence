@@ -127,11 +127,16 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
 #ifndef BUILD_BRIDGE
     if (btype != BINARY_NATIVE)
     {
-        if (carla_options.global_jack_client)
+#ifdef CARLA_ENGINE_JACK
+        if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
-            set_last_error("Cannot use bridged plugins while in global client mode");
+            set_last_error("Can onlt use bridged plugins in JACK multi-client mode");
             return -1;
         }
+#else
+        set_last_error("Can only use bridged plugins with JACK backend");
+        return -1;
+#endif
 
         return add_plugin_bridge(btype, ptype, filename, label);
     }
@@ -1169,11 +1174,15 @@ void set_option(OptionsType option, int value, const char* value_str)
 
     switch (option)
     {
+    case OPTION_PROCESS_MODE:
+        if (value < PROCESS_MODE_SINGLE_CLIENT)
+            value = PROCESS_MODE_SINGLE_CLIENT;
+        else if (value > PROCESS_MODE_CONTINUOUS_RACK)
+            value = PROCESS_MODE_CONTINUOUS_RACK;
+        carla_options.process_mode = (ProcessModeType)value;
+        break;
     case OPTION_MAX_PARAMETERS:
         carla_options.max_parameters = (value > 0) ? value : MAX_PARAMETERS;
-        break;
-    case OPTION_GLOBAL_JACK_CLIENT:
-        carla_options.global_jack_client = value;
         break;
     case OPTION_PREFER_UI_BRIDGES:
         carla_options.prefer_ui_bridges = value;
@@ -1277,7 +1286,7 @@ int main(int argc, char* argv[])
     if (engine_init("carla_demo"))
     {
         set_callback_function(main_callback);
-        short id = add_plugin_sfz("/home/falktx/Personal/Muzyks/Kits/SFZ/sonatina/Sonatina Symphonic Orchestra/Strings - 1st Violins Sustain.sfz", "xaxaxa");
+        short id = add_plugin_vst("/usr/lib/vst/Wolpertinger.so", "xaxaxa");
 
         if (id >= 0)
         {
@@ -1303,7 +1312,7 @@ int main(int argc, char* argv[])
         engine_close();
     }
     else
-        qCritical("failed to start backend engine");
+        qCritical("failed to start backend engine, reason:\n%s", get_last_error());
 
     delete gui;
     return 0;

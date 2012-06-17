@@ -40,6 +40,20 @@ static bool carla_jack_is_freewheel = false;
 static const char* carla_client_name = nullptr;
 static QThread* carla_jack_thread = nullptr;
 
+// rack mode
+const unsigned short rackPortAudioIn1   = 0;
+const unsigned short rackPortAudioIn2   = 1;
+const unsigned short rackPortAudioOut1  = 2;
+const unsigned short rackPortAudioOut2  = 3;
+const unsigned short rackPortControlIn  = 4;
+const unsigned short rackPortControlOut = 5;
+const unsigned short rackPortMidiIn     = 6;
+const unsigned short rackPortMidiOut    = 7;
+const unsigned short rackPortCount      = 8;
+static jack_port_t* carla_jack_rack_ports[rackPortCount] = { nullptr };
+static CarlaEngineMidiEvent carlaRackEventsIn[MAX_MIDI_EVENTS];
+static CarlaEngineMidiEvent carlaRackEventsOut[MAX_MIDI_EVENTS];
+
 // -------------------------------------------------------------------------------------------------------------------
 // Exported symbols (API)
 
@@ -120,7 +134,7 @@ static int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
         carla_jack_state = jack_transport_query(carla_jack_client, &carla_jack_pos);
 
 #ifndef BUILD_BRIDGE
-    if (carla_options.global_jack_client)
+    if (carla_options.process_mode == PROCESS_MODE_SINGLE_CLIENT)
     {
         for (unsigned short i=0; i<MAX_PLUGINS; i++)
         {
@@ -132,6 +146,79 @@ static int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
                 carla_proc_unlock();
             }
         }
+    }
+    else if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    {
+        // get buffers from jack
+        float* audioIn1  = (float*)jack_port_get_buffer(carla_jack_rack_ports[rackPortAudioIn1], nframes);
+        float* audioIn2  = (float*)jack_port_get_buffer(carla_jack_rack_ports[rackPortAudioIn2], nframes);
+        float* audioOut1 = (float*)jack_port_get_buffer(carla_jack_rack_ports[rackPortAudioOut1], nframes);
+        float* audioOut2 = (float*)jack_port_get_buffer(carla_jack_rack_ports[rackPortAudioOut2], nframes);
+        //void* controlIn  = jack_port_get_buffer(carla_jack_rack_ports[rackPortControlIn], nframes);
+        //void* controlOut = jack_port_get_buffer(carla_jack_rack_ports[rackPortControlOut], nframes);
+        void* midiIn     = jack_port_get_buffer(carla_jack_rack_ports[rackPortMidiIn], nframes);
+        //void* midiOut    = jack_port_get_buffer(carla_jack_rack_ports[rackPortMidiOut], nframes);
+
+        // create temporary audio bufffers
+        float ains_tmp_buf1[nframes];
+        float ains_tmp_buf2[nframes];
+        float aouts_tmp_buf1[nframes];
+        float aouts_tmp_buf2[nframes];
+
+        float* ains_tmp[2]  = { ains_tmp_buf1, ains_tmp_buf2 };
+        float* aouts_tmp[2] = { aouts_tmp_buf1, aouts_tmp_buf2 };
+
+        // initialize input buffers (from jack)
+        memcpy(ains_tmp_buf1, audioIn1, sizeof(float)*nframes);
+        memcpy(ains_tmp_buf2, audioIn2, sizeof(float)*nframes);
+
+        {
+            uint32_t i = 0, j = 0;
+            jack_midi_event_t jackEvent;
+
+            while (jack_midi_event_get(&jackEvent, midiIn, j++) == 0)
+            {
+                if (i == MAX_MIDI_EVENTS)
+                    break;
+
+                if (jackEvent.size < 4)
+                {
+                    carlaRackEventsIn[i].time = jackEvent.time;
+                    carlaRackEventsIn[i].size = jackEvent.size;
+                    memcpy(carlaRackEventsIn[i].data, jackEvent.buffer, jackEvent.size);
+                    i += 1;
+                }
+            }
+        }
+
+        // initialize output buffers (zero)
+        memset(aouts_tmp_buf1, 0, sizeof(float)*nframes);
+        memset(aouts_tmp_buf2, 0, sizeof(float)*nframes);
+        memset(carlaRackEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
+
+        // process plugins
+        for (unsigned short i=0; i<MAX_PLUGINS; i++)
+        {
+            CarlaPlugin* plugin = CarlaPlugins[i];
+            if (plugin && plugin->enabled())
+            {
+                memset(aouts_tmp_buf1, 0, sizeof(float)*nframes);
+                memset(aouts_tmp_buf2, 0, sizeof(float)*nframes);
+                memset(carlaRackEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
+
+                carla_proc_lock();
+                plugin->process(ains_tmp, aouts_tmp, nframes);
+                carla_proc_unlock();
+
+                memcpy(ains_tmp_buf1, aouts_tmp_buf1, sizeof(float)*nframes);
+                memcpy(ains_tmp_buf2, aouts_tmp_buf2, sizeof(float)*nframes);
+                memcpy(carlaRackEventsIn, carlaRackEventsOut, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
+            }
+        }
+
+        // copy last audio buffer to jack
+        memcpy(audioOut1, aouts_tmp_buf1, sizeof(float)*nframes);
+        memcpy(audioOut2, aouts_tmp_buf2, sizeof(float)*nframes);
     }
     else
 #endif
@@ -183,6 +270,18 @@ bool CarlaEngine::init(const char* name)
         jack_set_process_callback(carla_jack_client, carla_jack_process_callback, nullptr);
         jack_on_shutdown(carla_jack_client, carla_jack_shutdown_callback, nullptr);
 
+        if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        {
+            carla_jack_rack_ports[rackPortAudioIn1]   = jack_port_register(carla_jack_client, "in1", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+            carla_jack_rack_ports[rackPortAudioIn2]   = jack_port_register(carla_jack_client, "in2", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+            carla_jack_rack_ports[rackPortAudioOut1]  = jack_port_register(carla_jack_client, "out1", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+            carla_jack_rack_ports[rackPortAudioOut2]  = jack_port_register(carla_jack_client, "out2", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+            carla_jack_rack_ports[rackPortControlIn]  = jack_port_register(carla_jack_client, "control-in", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+            carla_jack_rack_ports[rackPortControlOut] = jack_port_register(carla_jack_client, "control-out", JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
+            carla_jack_rack_ports[rackPortMidiIn]     = jack_port_register(carla_jack_client, "midi-in", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+            carla_jack_rack_ports[rackPortMidiOut]    = jack_port_register(carla_jack_client, "midi-out", JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
+        }
+
         if (jack_activate(carla_jack_client) == 0)
         {
             // set client name, fixed for OSC usage
@@ -221,6 +320,18 @@ bool CarlaEngine::close()
 
     if (jack_deactivate(carla_jack_client) == 0)
     {
+        if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        {
+            jack_port_unregister(carla_jack_client, carla_jack_rack_ports[rackPortAudioIn1]);
+            jack_port_unregister(carla_jack_client, carla_jack_rack_ports[rackPortAudioIn2]);
+            jack_port_unregister(carla_jack_client, carla_jack_rack_ports[rackPortAudioOut1]);
+            jack_port_unregister(carla_jack_client, carla_jack_rack_ports[rackPortAudioOut2]);
+            jack_port_unregister(carla_jack_client, carla_jack_rack_ports[rackPortControlIn]);
+            jack_port_unregister(carla_jack_client, carla_jack_rack_ports[rackPortControlOut]);
+            jack_port_unregister(carla_jack_client, carla_jack_rack_ports[rackPortMidiIn]);
+            jack_port_unregister(carla_jack_client, carla_jack_rack_ports[rackPortMidiOut]);
+        }
+
         if (jack_client_close(carla_jack_client) == 0)
         {
             carla_jack_client = nullptr;
@@ -299,8 +410,13 @@ CarlaEngineBasePort::CarlaEngineBasePort(CarlaEngineClientNativeHandle* const cl
 
 CarlaEngineBasePort::~CarlaEngineBasePort()
 {
-    if (client && handle)
-        jack_port_unregister(client, handle);
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode != PROCESS_MODE_CONTINUOUS_RACK)
+#endif
+    {
+        if (client && handle)
+            jack_port_unregister(client, handle);
+    }
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -309,26 +425,35 @@ CarlaEngineBasePort::~CarlaEngineBasePort()
 CarlaEngineClient::CarlaEngineClient(CarlaPlugin* const plugin)
 {
 #ifndef BUILD_BRIDGE
-    if (carla_options.global_jack_client)
+    switch (carla_options.process_mode)
     {
+    case PROCESS_MODE_SINGLE_CLIENT:
         handle   = carla_jack_client;
         m_active = bool(carla_jack_client);
-    }
-    else
+        break;
+
+    case PROCESS_MODE_MULTIPLE_CLIENTS:
 #endif
-    {
         handle   = jack_client_open(plugin->name(), JackNullOption, nullptr);
         m_active = false;
 
         if (handle)
             jack_set_process_callback(handle, carla_jack_process_callback, plugin);
+#ifndef BUILD_BRIDGE
+        break;
+
+    case PROCESS_MODE_CONTINUOUS_RACK:
+        handle   = nullptr;
+        m_active = bool(carla_jack_client);
+        break;
     }
+#endif
 }
 
 CarlaEngineClient::~CarlaEngineClient()
 {
 #ifndef BUILD_BRIDGE
-    if (! carla_options.global_jack_client)
+    if (carla_options.process_mode == PROCESS_MODE_MULTIPLE_CLIENTS)
 #endif
     {
         if (handle)
@@ -339,25 +464,27 @@ CarlaEngineClient::~CarlaEngineClient()
 void CarlaEngineClient::activate()
 {
 #ifndef BUILD_BRIDGE
-    if (! carla_options.global_jack_client)
+    if (carla_options.process_mode == PROCESS_MODE_MULTIPLE_CLIENTS)
 #endif
     {
-        if (handle)
+        if (handle && ! m_active)
             jack_activate(handle);
-        m_active = true;
     }
+
+    m_active = true;
 }
 
 void CarlaEngineClient::deactivate()
 {
 #ifndef BUILD_BRIDGE
-    if (! carla_options.global_jack_client)
+    if (carla_options.process_mode == PROCESS_MODE_MULTIPLE_CLIENTS)
 #endif
     {
-        if (handle)
+        if (handle && m_active)
             jack_deactivate(handle);
-        m_active = false;
     }
+
+    m_active = false;
 }
 
 bool CarlaEngineClient::isActive()
@@ -367,18 +494,26 @@ bool CarlaEngineClient::isActive()
 
 bool CarlaEngineClient::isOk()
 {
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        return true;
+#endif
     return bool(handle);
 }
 
 CarlaEngineBasePort* CarlaEngineClient::addPort(const char* name, CarlaEnginePortType type, bool isInput)
 {
-    if (type == CarlaEnginePortTypeAudio)
+    switch (type)
+    {
+    case CarlaEnginePortTypeAudio:
         return new CarlaEngineAudioPort(handle, name, isInput);
-    if (type == CarlaEnginePortTypeControl)
+    case CarlaEnginePortTypeControl:
         return new CarlaEngineControlPort(handle, name, isInput);
-    if (type == CarlaEnginePortTypeMIDI)
+    case CarlaEnginePortTypeMIDI:
         return new CarlaEngineMidiPort(handle, name, isInput);
-    return nullptr;
+    default:
+        return nullptr;
+    }
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -387,12 +522,22 @@ CarlaEngineBasePort* CarlaEngineClient::addPort(const char* name, CarlaEnginePor
 CarlaEngineAudioPort::CarlaEngineAudioPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput) :
     CarlaEngineBasePort(client, isInput)
 {
-    handle = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, isInput ? JackPortIsInput : JackPortIsOutput, 0);
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        handle = nullptr;
+    else
+#endif
+        handle = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, isInput ? JackPortIsInput : JackPortIsOutput, 0);
 }
 
 void* CarlaEngineAudioPort::getBuffer()
 {
-    return jack_port_get_buffer(handle, carla_buffer_size);
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        return nullptr;
+    else
+#endif
+        return jack_port_get_buffer(handle, carla_buffer_size);
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -401,16 +546,29 @@ void* CarlaEngineAudioPort::getBuffer()
 CarlaEngineControlPort::CarlaEngineControlPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput) :
     CarlaEngineBasePort(client, isInput)
 {
-    handle = jack_port_register(client, name, JACK_DEFAULT_MIDI_TYPE, isInput ? JackPortIsInput : JackPortIsOutput, 0);
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        handle = nullptr;
+    else
+#endif
+        handle = jack_port_register(client, name, JACK_DEFAULT_MIDI_TYPE, isInput ? JackPortIsInput : JackPortIsOutput, 0);
 }
 
 void* CarlaEngineControlPort::getBuffer()
 {
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        return nullptr;
+#endif
     return jack_port_get_buffer(handle, carla_buffer_size);
 }
 
 void CarlaEngineControlPort::initBuffer(void* buffer)
 {
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        return;
+#endif
     if (isInput)
         return;
 
@@ -422,6 +580,11 @@ uint32_t CarlaEngineControlPort::getEventCount(void* buffer)
     if (! isInput)
         return 0;
 
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        return 0; // TODO
+#endif
+
     return jack_midi_get_event_count(buffer);
 }
 
@@ -429,6 +592,11 @@ const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(void* buffer, ui
 {
     if (! isInput)
         return nullptr;
+
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        return nullptr; // TODO
+#endif
 
     static jack_midi_event_t jackEvent;
     static CarlaEngineControlEvent carlaEvent;
@@ -489,6 +657,11 @@ void CarlaEngineControlPort::writeEvent(void* buffer, CarlaEngineControlEventTyp
     if (isInput)
         return;
 
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        return; // TODO
+#endif
+
     if (type == CarlaEngineEventControlChange && MIDI_IS_CONTROL_BANK_SELECT(controller))
         type = CarlaEngineEventMidiBankChange;
 
@@ -532,16 +705,29 @@ void CarlaEngineControlPort::writeEvent(void* buffer, CarlaEngineControlEventTyp
 CarlaEngineMidiPort::CarlaEngineMidiPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput) :
     CarlaEngineBasePort(client, isInput)
 {
-    handle = jack_port_register(client, name, JACK_DEFAULT_MIDI_TYPE, isInput ? JackPortIsInput : JackPortIsOutput, 0);
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        handle = nullptr;
+    else
+#endif
+        handle = jack_port_register(client, name, JACK_DEFAULT_MIDI_TYPE, isInput ? JackPortIsInput : JackPortIsOutput, 0);
 }
 
 void* CarlaEngineMidiPort::getBuffer()
 {
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        return nullptr;
+#endif
     return jack_port_get_buffer(handle, carla_buffer_size);
 }
 
 void CarlaEngineMidiPort::initBuffer(void* buffer)
 {
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        return;
+#endif
     if (isInput)
         return;
 
@@ -553,6 +739,18 @@ uint32_t CarlaEngineMidiPort::getEventCount(void* buffer)
     if (! isInput)
         return 0;
 
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    {
+        uint32_t count = 0;
+        for (unsigned short i=0; i < MAX_MIDI_EVENTS; i++)
+        {
+            if (carlaRackEventsIn[i].size > 0)
+                count++;
+        }
+        return count;
+    }
+#endif
     return jack_midi_get_event_count(buffer);
 }
 
@@ -561,18 +759,28 @@ const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(void* buffer, uint32_t
     if (! isInput)
         return nullptr;
 
-    static jack_midi_event_t jackEvent;
-    static CarlaEngineMidiEvent carlaEvent;
-
-    if (jack_midi_event_get(&jackEvent, buffer, index) != 0)
-        return nullptr;
-
-    if (jackEvent.size < 4)
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
     {
-        carlaEvent.time = jackEvent.time;
-        carlaEvent.size = jackEvent.size;
-        memcpy(carlaEvent.data, jackEvent.buffer, jackEvent.size);
-        return &carlaEvent;
+        if (index < MAX_MIDI_EVENTS)
+            return &carlaRackEventsIn[index];
+    }
+    else
+#endif
+    {
+        static jack_midi_event_t jackEvent;
+        static CarlaEngineMidiEvent carlaEvent;
+
+        if (jack_midi_event_get(&jackEvent, buffer, index) != 0)
+            return nullptr;
+
+        if (jackEvent.size < 4)
+        {
+            carlaEvent.time = jackEvent.time;
+            carlaEvent.size = jackEvent.size;
+            memcpy(carlaEvent.data, jackEvent.buffer, jackEvent.size);
+            return &carlaEvent;
+        }
     }
 
     return nullptr;
@@ -582,6 +790,11 @@ void CarlaEngineMidiPort::writeEvent(void* buffer, uint32_t time, uint8_t* data,
 {
     if (! isInput)
         return;
+
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        return; // TODO
+#endif
 
     jack_midi_event_write(buffer, time, data, size);
 }
