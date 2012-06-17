@@ -80,12 +80,12 @@ public:
         toolkit_plugin_idle();
     }
 
-    //Q_SLOT guiClosed()
-    //{
+    Q_SLOT void guiClosed()
+    {
         //if (client)
         //    client->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 0, 0, 0.0);
-        //osc_send_configure("CarlaBridgeHideGUI", "");
-    //}
+        osc_send_configure("CarlaBridgeHideGUI", "");
+    }
 };
 static QApplication* app = nullptr;
 static QDialog* gui = nullptr;
@@ -132,6 +132,45 @@ void toolkit_plugin_idle()
 
     CARLA_PLUGIN->idle_gui();
 
+    static const ParameterData* param_data;
+    static PluginPostEvent postEvents[MAX_POST_EVENTS];
+    CARLA_PLUGIN->post_events_copy(postEvents);
+
+    for (uint32_t i=0; i < MAX_POST_EVENTS; i++)
+    {
+        if (postEvents[i].type == PluginPostEventNull)
+            break;
+
+        switch (postEvents[i].type)
+        {
+        case PluginPostEventParameterChange:
+            callback_action(CALLBACK_PARAMETER_CHANGED, 0, postEvents[i].index, 0, postEvents[i].value);
+            break;
+        case PluginPostEventProgramChange:
+            callback_action(CALLBACK_PROGRAM_CHANGED, 0, postEvents[i].index, 0, 0.0);
+            break;
+        case PluginPostEventMidiProgramChange:
+            callback_action(CALLBACK_MIDI_PROGRAM_CHANGED, 0, postEvents[i].index, 0, 0.0);
+            break;
+        case PluginPostEventNoteOn:
+            callback_action(CALLBACK_NOTE_ON, 0, postEvents[i].index, postEvents[i].value, 0.0);
+            break;
+        case PluginPostEventNoteOff:
+            callback_action(CALLBACK_NOTE_OFF, 0, postEvents[i].index, 0, 0.0);
+            break;
+        default:
+            break;
+        }
+    }
+
+    for (uint32_t i=0; i < CARLA_PLUGIN->param_count(); i++)
+    {
+        param_data = CARLA_PLUGIN->param_data(i);
+
+        if (param_data->type == PARAMETER_OUTPUT && (param_data->hints & PARAMETER_IS_AUTOMABLE) > 0)
+            osc_send_control(param_data->rindex, CARLA_PLUGIN->get_parameter_value(i));
+    }
+
     if (CARLA_PLUGIN->ain_count() > 0)
     {
         osc_send_bridge_ains_peak(1, ains_peak[0]);
@@ -142,16 +181,6 @@ void toolkit_plugin_idle()
     {
         osc_send_bridge_aouts_peak(1, aouts_peak[0]);
         osc_send_bridge_aouts_peak(2, aouts_peak[1]);
-    }
-
-    const ParameterData* param_data;
-
-    for (uint32_t i=0; i < CARLA_PLUGIN->param_count(); i++)
-    {
-        param_data = CARLA_PLUGIN->param_data(i);
-
-        if (param_data->type == PARAMETER_OUTPUT && (param_data->hints & PARAMETER_IS_AUTOMABLE) > 0)
-            osc_send_control(param_data->rindex, CARLA_PLUGIN->get_parameter_value(i));
     }
 }
 
@@ -174,6 +203,9 @@ void toolkit_loop()
 #else
     PluginIdleTimer timer;
     timer.start(50);
+
+    if (gui)
+        timer.connect(gui, SIGNAL(finished(int)), &timer, SLOT(guiClosed()));
 
     app->setQuitOnLastWindowClosed(false);
     app->exec();
@@ -239,12 +271,16 @@ public:
     {
         if (CARLA_PLUGIN && index < CARLA_PLUGIN->prog_count())
             CARLA_PLUGIN->set_program(index, true, true, false, true);
+
+        callback_action(CALLBACK_RELOAD_PARAMETERS, 0, 0, 0, 0.0);
     }
 
     void set_midi_program(uint32_t bank, uint32_t program)
     {
         if (CARLA_PLUGIN)
             CARLA_PLUGIN->set_midi_program_by_id(bank, program, true, true, false, true);
+
+        callback_action(CALLBACK_RELOAD_PARAMETERS, 0, 0, 0, 0.0);
     }
 
     void note_on(uint8_t note, uint8_t velocity)
@@ -286,6 +322,12 @@ public:
 
         osc_send_configure("CarlaBridgeSaveNowDone", "");
     }
+
+    void set_chunk_data(const char* string_data)
+    {
+        if (CARLA_PLUGIN)
+            CARLA_PLUGIN->set_chunk_data(string_data);
+    }
 };
 
 // -------------------------------------------------------------------------
@@ -315,9 +357,22 @@ void plugin_bridge_callback(CallbackType action, unsigned short, int value1, int
         osc_send_midi(mdata);
         break;
     }
+    case CALLBACK_SHOW_GUI:
+        if (value1 == 0)
+            osc_send_configure("CarlaBridgeHideGUI", "");
+        break;
     case CALLBACK_RESIZE_GUI:
         if (client)
             client->queque_message(BRIDGE_MESSAGE_RESIZE_GUI, value1, value2, 0.0);
+        break;
+    case CALLBACK_RELOAD_PARAMETERS:
+        if (CARLA_PLUGIN)
+        {
+            for (uint32_t i=0; i < CARLA_PLUGIN->param_count(); i++)
+            {
+                osc_send_control(i, CARLA_PLUGIN->get_parameter_value(i));
+            }
+        }
         break;
     case CALLBACK_QUIT:
         if (client)
@@ -326,8 +381,6 @@ void plugin_bridge_callback(CallbackType action, unsigned short, int value1, int
     default:
         break;
     }
-
-    Q_UNUSED(value3);
 }
 
 // -------------------------------------------------------------------------

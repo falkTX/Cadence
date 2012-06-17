@@ -72,95 +72,95 @@ void CarlaCheckThread::run()
                 // Process events now
                 for (j=0; j < MAX_POST_EVENTS; j++)
                 {
-                    if (postEvents[j].type != PluginPostEventNull)
+                    if (postEvents[j].type == PluginPostEventNull)
+                      break;
+
+                    switch (postEvents[j].type)
                     {
-                        switch (postEvents[j].type)
+                    case PluginPostEventDebug:
+                        callback_action(CALLBACK_DEBUG, plugin->id(), postEvents[j].index, 0, postEvents[j].value);
+                        break;
+
+                    case PluginPostEventParameterChange:
+                        // Update OSC based UIs
+                        osc_send_control(osc_data, postEvents[j].index, postEvents[j].value);
+
+                        // Update OSC control client
+                        osc_global_send_set_parameter_value(plugin->id(), postEvents[j].index, postEvents[j].value);
+
+                        // Update Host
+                        callback_action(CALLBACK_PARAMETER_CHANGED, plugin->id(), postEvents[j].index, 0, postEvents[j].value);
+
+                        break;
+
+                    case PluginPostEventProgramChange:
+                        // Update OSC based UIs
+                        osc_send_program(osc_data, postEvents[j].index);
+
+                        // Update OSC control client
+                        osc_global_send_set_program(plugin->id(), postEvents[j].index);
+
+                        for (k=0; k < plugin->param_count(); k++)
+                            osc_global_send_set_default_value(plugin->id(), k, plugin->param_ranges(k)->def);
+
+                        // Update Host
+                        callback_action(CALLBACK_PROGRAM_CHANGED, plugin->id(), postEvents[j].index, 0, 0.0);
+
+                        break;
+
+                    case PluginPostEventMidiProgramChange:
+                        if (postEvents[j].index < (int32_t)plugin->midiprog_count())
                         {
-                        case PluginPostEventDebug:
-                            callback_action(CALLBACK_DEBUG, plugin->id(), postEvents[j].index, 0, postEvents[j].value);
-                            break;
+                            MidiProgramInfo midiprog = { false, 0, 0, nullptr };
+                            plugin->get_midi_program_info(&midiprog, postEvents[j].index);
 
-                        case PluginPostEventParameterChange:
                             // Update OSC based UIs
-                            osc_send_control(osc_data, postEvents[j].index, postEvents[j].value);
+                            osc_send_midi_program(osc_data, midiprog.bank, midiprog.program, (plugin->type() == PLUGIN_DSSI));
 
                             // Update OSC control client
-                            osc_global_send_set_parameter_value(plugin->id(), postEvents[j].index, postEvents[j].value);
-
-                            // Update Host
-                            callback_action(CALLBACK_PARAMETER_CHANGED, plugin->id(), postEvents[j].index, 0, postEvents[j].value);
-
-                            break;
-
-                        case PluginPostEventProgramChange:
-                            // Update OSC based UIs
-                            osc_send_program(osc_data, postEvents[j].index);
-
-                            // Update OSC control client
-                            osc_global_send_set_program(plugin->id(), postEvents[j].index);
+                            osc_global_send_set_midi_program(plugin->id(), postEvents[j].index);
 
                             for (k=0; k < plugin->param_count(); k++)
                                 osc_global_send_set_default_value(plugin->id(), k, plugin->param_ranges(k)->def);
 
                             // Update Host
-                            callback_action(CALLBACK_PROGRAM_CHANGED, plugin->id(), postEvents[j].index, 0, 0.0);
-
-                            break;
-
-                        case PluginPostEventMidiProgramChange:
-                            if (postEvents[j].index < (int32_t)plugin->midiprog_count())
-                            {
-                                MidiProgramInfo midiprog = { false, 0, 0, nullptr };
-                                plugin->get_midi_program_info(&midiprog, postEvents[j].index);
-
-                                // Update OSC based UIs
-                                osc_send_midi_program(osc_data, midiprog.bank, midiprog.program, (plugin->type() == PLUGIN_DSSI));
-
-                                // Update OSC control client
-                                osc_global_send_set_midi_program(plugin->id(), postEvents[j].index);
-
-                                for (k=0; k < plugin->param_count(); k++)
-                                    osc_global_send_set_default_value(plugin->id(), k, plugin->param_ranges(k)->def);
-
-                                // Update Host
-                                callback_action(CALLBACK_MIDI_PROGRAM_CHANGED, plugin->id(), postEvents[j].index, 0, 0.0);
-                            }
-
-                            break;
-
-                        case PluginPostEventNoteOn:
-                            // Update OSC based UIs
-                            //if (plugin->type() == PLUGIN_LV2)
-                            //    osc_send_note_on(osc_data, plugin->id(), post_events[j].index, post_events[j].value);
-
-                            // Update OSC control client
-                            osc_global_send_note_on(plugin->id(), postEvents[j].index, postEvents[j].value);
-
-                            // Update Host
-                            callback_action(CALLBACK_NOTE_ON, plugin->id(), postEvents[j].index, postEvents[j].value, 0.0);
-
-                            break;
-
-                        case PluginPostEventNoteOff:
-                            // Update OSC based UIs
-                            //if (plugin->type() == PLUGIN_LV2)
-                            //    osc_send_note_off(osc_data, plugin->id(), post_events[j].index, 0);
-
-                            // Update OSC control client
-                            osc_global_send_note_off(plugin->id(), postEvents[j].index);
-
-                            // Update Host
-                            callback_action(CALLBACK_NOTE_OFF, plugin->id(), postEvents[j].index, 0, 0.0);
-
-                            break;
-
-                        case PluginPostEventCustom:
-                            plugin->run_custom_event(&postEvents[j]);
-                            break;
-
-                        default:
-                            break;
+                            callback_action(CALLBACK_MIDI_PROGRAM_CHANGED, plugin->id(), postEvents[j].index, 0, 0.0);
                         }
+
+                        break;
+
+                    case PluginPostEventNoteOn:
+                        // Update OSC based UIs
+                        //if (plugin->type() == PLUGIN_LV2)
+                        //    osc_send_note_on(osc_data, plugin->id(), post_events[j].index, post_events[j].value);
+
+                        // Update OSC control client
+                        osc_global_send_note_on(plugin->id(), postEvents[j].index, postEvents[j].value);
+
+                        // Update Host
+                        callback_action(CALLBACK_NOTE_ON, plugin->id(), postEvents[j].index, postEvents[j].value, 0.0);
+
+                        break;
+
+                    case PluginPostEventNoteOff:
+                        // Update OSC based UIs
+                        //if (plugin->type() == PLUGIN_LV2)
+                        //    osc_send_note_off(osc_data, plugin->id(), post_events[j].index, 0);
+
+                        // Update OSC control client
+                        osc_global_send_note_off(plugin->id(), postEvents[j].index);
+
+                        // Update Host
+                        callback_action(CALLBACK_NOTE_OFF, plugin->id(), postEvents[j].index, 0, 0.0);
+
+                        break;
+
+                    case PluginPostEventCustom:
+                        plugin->run_custom_event(&postEvents[j]);
+                        break;
+
+                    default:
+                        break;
                     }
                 }
 

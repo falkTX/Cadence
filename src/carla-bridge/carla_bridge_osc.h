@@ -32,7 +32,7 @@ void osc_send_bridge_midi_count(int ins, int outs, int total);
 void osc_send_bridge_param_count(int ins, int outs, int total);
 void osc_send_bridge_program_count(int count);
 void osc_send_bridge_midi_program_count(int count);
-void osc_send_bridge_plugin_info(int type, int category, int hints, const char* name, const char* label, const char* maker, const char* copyright, long unique_id);
+void osc_send_bridge_plugin_info(int category, int hints, const char* name, const char* label, const char* maker, const char* copyright, long unique_id);
 void osc_send_bridge_param_info(int index, const char* name, const char* unit);
 void osc_send_bridge_param_data(int index, int type, int rindex, int hints, int midi_channel, int midi_cc);
 void osc_send_bridge_param_ranges(int index, double def, double min, double max, double step, double step_small, double step_large);

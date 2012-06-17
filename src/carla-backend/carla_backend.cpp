@@ -35,7 +35,7 @@ short add_plugin_gig(const char* filename, const char* label);
 short add_plugin_sf2(const char* filename, const char* label);
 short add_plugin_sfz(const char* filename, const char* label);
 #ifndef BUILD_BRIDGE
-short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename, const char* label, void* extra_stuff);
+short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename, const char* label);
 #endif
 
 CarlaEngine carla_engine;
@@ -132,8 +132,8 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
             set_last_error("Cannot use bridged plugins while in global client mode");
             return -1;
         }
-        else
-            return add_plugin_bridge(btype, ptype, filename, label, extra_stuff);
+
+        return add_plugin_bridge(btype, ptype, filename, label);
     }
 #endif
 

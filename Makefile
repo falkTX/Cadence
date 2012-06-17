@@ -174,19 +174,19 @@ carla_lilv:
 	$(MAKE) -C src/carla-lilv
 
 unix32:
-# 	$(MAKE) -C src/carla-bridge unix32
+	$(MAKE) -C src/carla-bridge unix32
 	$(MAKE) -C src/carla-discovery unix32
 
 unix64:
-# 	$(MAKE) -C src/carla-bridge unix64
+	$(MAKE) -C src/carla-bridge unix64
 	$(MAKE) -C src/carla-discovery unix64
 
 wine32:
-# 	$(MAKE) -C src/carla-bridge wine32
+	$(MAKE) -C src/carla-bridge wine32
 	$(MAKE) -C src/carla-discovery wine32
 
 wine64:
-# 	$(MAKE) -C src/carla-bridge wine64
+	$(MAKE) -C src/carla-bridge wine64
 	$(MAKE) -C src/carla-discovery wine64
 
 

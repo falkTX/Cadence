@@ -237,18 +237,6 @@ struct GuiInfo {
     bool resizable;
 };
 
-struct PluginBridgeInfo {
-    PluginCategory category;
-    unsigned int hints;
-    const char* name;
-    const char* maker;
-    long unique_id;
-    quint32 ains;
-    quint32 aouts;
-    quint32 mins;
-    quint32 mouts;
-};
-
 class CarlaPlugin;
 
 typedef void (*CallbackFunc)(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3);

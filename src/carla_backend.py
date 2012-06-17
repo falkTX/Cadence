@@ -768,19 +768,6 @@ class GuiInfo(Structure):
         ("resizable", c_bool),
     ]
 
-class PluginBridgeInfo(Structure):
-    _fields_ = [
-        ("category", c_enum),
-        ("hints", c_uint),
-        ("name", c_char_p),
-        ("maker", c_char_p),
-        ("unique_id", c_long),
-        ("ains", c_uint32),
-        ("aouts", c_uint32),
-        ("mins", c_uint32),
-        ("mouts", c_uint32)
-    ]
-
 CallbackFunc = CFUNCTYPE(None, c_enum, c_ushort, c_int, c_int, c_double)
 
 if LINUX or MACOS:

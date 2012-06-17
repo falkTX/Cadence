@@ -1286,14 +1286,12 @@ class VstPlugin : public CarlaPlugin
         case audioMasterAutomate:
             if (self)
             {
-#ifndef BUILD_BRIDGE // FIXME
                 if (CarlaEngine::isOnAudioThread())
                 {
                     self->set_parameter_value(index, opt, false, false, false);
                     self->postpone_event(PluginPostEventParameterChange, index, opt);
                 }
                 else
-#endif
                     self->set_parameter_value(index, opt, false, true, true);
             }
             break;

@@ -146,6 +146,19 @@ const char* customdatatype2str(CustomDataType type)
     }
 }
 
+CustomDataType customdatastr2type(const char* stype)
+{
+    if (strcmp(stype, "string") == 0)
+        return CUSTOM_DATA_STRING;
+    if (strcmp(stype, "path") == 0)
+        return CUSTOM_DATA_PATH;
+    if (strcmp(stype, "chunk") == 0)
+        return CUSTOM_DATA_CHUNK;
+    if (strcmp(stype, "binary") == 0)
+        return CUSTOM_DATA_BINARY;
+    return CUSTOM_DATA_INVALID;
+}
+
 // -------------------------------------------------------------------------------------------------------------------
 
 short get_new_plugin_id()

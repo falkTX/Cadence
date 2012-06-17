@@ -364,8 +364,8 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
             if value != jackctl.GetParameterValue(["driver", "device"])[2]:
                 jackctl.SetParameterValue(["driver", "device"], value)
 
-        elif resetIfNeeded:
-            jackctl.ResetParameterValue(["driver", "device"])
+        #elif resetIfNeeded:
+            #jackctl.ResetParameterValue(["driver", "device"])
 
         if self.obj_driver_capture.isEnabled():
             if self.m_driver == "alsa":
@@ -381,8 +381,8 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
             if value != None:
                 setDriverParameter("capture", value, True)
 
-        elif resetIfNeeded:
-            jackctl.ResetParameterValue(["driver", "capture"])
+        #elif resetIfNeeded:
+            #jackctl.ResetParameterValue(["driver", "capture"])
 
         if self.obj_driver_playback.isEnabled():
             if self.m_driver == "alsa":
@@ -398,8 +398,8 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
             if value != None:
                 setDriverParameter("playback", value, True)
 
-        elif resetIfNeeded:
-            jackctl.ResetParameterValue(["driver", "playback"])
+        #elif resetIfNeeded:
+            #jackctl.ResetParameterValue(["driver", "playback"])
 
         if self.obj_driver_rate.isEnabled():
             value = dbus.UInt32(int(self.obj_driver_rate.currentText()))

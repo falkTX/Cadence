@@ -24,7 +24,6 @@
 #include "carla_shared.h"
 
 #ifdef BUILD_BRIDGE
-#include <QtCore/QThread>
 #include "carla_bridge_osc.h"
 #else
 #include "carla_osc.h"
@@ -83,6 +82,8 @@ enum PluginBridgeInfoType {
     PluginBridgeParameterRangesInfo,
     PluginBridgeProgramInfo,
     PluginBridgeMidiProgramInfo,
+    PluginBridgeCustomData,
+    PluginBridgeChunkData,
     PluginBridgeUpdateNow,
     PluginBridgeSaved
 };
@@ -518,6 +519,9 @@ public:
 
         double value = active ? 1.0 : 0.0;
 
+        if (callback_send)
+            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_ACTIVE, 0, value);
+
 #ifndef BUILD_BRIDGE
         if (osc_send)
         {
@@ -529,9 +533,6 @@ public:
 #else
         Q_UNUSED(osc_send);
 #endif
-
-        if (callback_send)
-            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_ACTIVE, 0, value);
     }
 
     void set_drywet(double value, bool osc_send, bool callback_send)
@@ -542,6 +543,9 @@ public:
             value = 1.0;
 
         x_drywet = value;
+
+        if (callback_send)
+            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_DRYWET, 0, value);
 
 #ifndef BUILD_BRIDGE
         if (osc_send)
@@ -554,9 +558,6 @@ public:
 #else
         Q_UNUSED(osc_send);
 #endif
-
-        if (callback_send)
-            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_DRYWET, 0, value);
     }
 
     void set_volume(double value, bool osc_send, bool callback_send)
@@ -567,6 +568,9 @@ public:
             value = 1.27;
 
         x_vol = value;
+
+        if (callback_send)
+            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_VOLUME, 0, value);
 
 #ifndef BUILD_BRIDGE
         if (osc_send)
@@ -582,9 +586,6 @@ public:
 #else
         Q_UNUSED(osc_send);
 #endif
-
-        if (callback_send)
-            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_VOLUME, 0, value);
     }
 
     void set_balance_left(double value, bool osc_send, bool callback_send)
@@ -595,6 +596,9 @@ public:
             value = 1.0;
 
         x_bal_left = value;
+
+        if (callback_send)
+            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_BALANCE_LEFT, 0, value);
 
 #ifndef BUILD_BRIDGE
         if (osc_send)
@@ -607,9 +611,6 @@ public:
 #else
         Q_UNUSED(osc_send);
 #endif
-
-        if (callback_send)
-            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_BALANCE_LEFT, 0, value);
     }
 
     void set_balance_right(double value, bool osc_send, bool callback_send)
@@ -620,6 +621,9 @@ public:
             value = 1.0;
 
         x_bal_right = value;
+
+        if (callback_send)
+            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_BALANCE_RIGHT, 0, value);
 
 #ifndef BUILD_BRIDGE
         if (osc_send)
@@ -632,9 +636,6 @@ public:
 #else
         Q_UNUSED(osc_send);
 #endif
-
-        if (callback_send)
-            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_BALANCE_RIGHT, 0, value);
     }
 
 #ifndef BUILD_BRIDGE
@@ -652,8 +653,12 @@ public:
     virtual void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
         assert(param_id < param.count);
+
         if (param.data[param_id].type != PARAMETER_INPUT)
             return;
+
+        if (callback_send)
+            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, param_id, 0, value);
 
 #ifndef BUILD_BRIDGE
         if (osc_send)
@@ -666,16 +671,11 @@ public:
 #else
         Q_UNUSED(osc_send);
 #endif
-
-        if (callback_send)
-            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, param_id, 0, value);
-
         Q_UNUSED(gui_send);
     }
 
     void set_parameter_value_by_rindex(int32_t rindex, double value, bool gui_send, bool osc_send, bool callback_send)
     {
-#ifdef BUILD_BRIDGE
         if (rindex == PARAMETER_ACTIVE)
             return set_active(value > 0.0, osc_send, callback_send);
         if (rindex == PARAMETER_DRYWET)
@@ -686,7 +686,6 @@ public:
             return set_balance_left(value, osc_send, callback_send);
         if (rindex == PARAMETER_BALANCE_RIGHT)
             return set_balance_right(value, osc_send, callback_send);
-#endif
 
         for (uint32_t i=0; i < param.count; i++)
         {
@@ -697,7 +696,7 @@ public:
 
     void set_parameter_midi_channel(uint32_t index, uint8_t channel)
     {
-        assert(index < param.count);
+        assert(index < param.count && channel < 16);
         param.data[index].midi_channel = channel;
 
 #ifndef BUILD_BRIDGE
@@ -773,6 +772,9 @@ public:
     {
         prog.current = index;
 
+        if (callback_send)
+            callback_action(CALLBACK_PROGRAM_CHANGED, m_id, prog.current, 0, 0.0);
+
 #ifndef BUILD_BRIDGE
         if (osc_send)
         {
@@ -781,12 +783,8 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_program(&osc.data, prog.current);
         }
-
-        if (callback_send)
-            callback_action(CALLBACK_PROGRAM_CHANGED, m_id, prog.current, 0, 0.0);
 #else
         Q_UNUSED(osc_send);
-        Q_UNUSED(callback_send);
 #endif
 
         // Change default parameter values
@@ -808,6 +806,9 @@ public:
     {
         midiprog.current = index;
 
+        if (callback_send)
+            callback_action(CALLBACK_MIDI_PROGRAM_CHANGED, m_id, midiprog.current, 0, 0.0);
+
 #ifndef BUILD_BRIDGE
         if (osc_send)
         {
@@ -816,12 +817,8 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_program(&osc.data, midiprog.current);
         }
-
-        if (callback_send)
-            callback_action(CALLBACK_MIDI_PROGRAM_CHANGED, m_id, midiprog.current, 0, 0.0);
 #else
         Q_UNUSED(osc_send);
-        Q_UNUSED(callback_send);
 #endif
 
         // Sound banks never change defaults
@@ -948,8 +945,17 @@ public:
     {
 #ifdef BUILD_BRIDGE
         // Base data
-        //const PluginInfo* info = get_plugin_info(m_id);
-        //osc_send_bridge_plugin_info(m_type, category(), m_hints, get_real_plugin_name(m_id), info->label, info->maker, info->copyright, unique_id());
+        {
+            char buf_name[STR_MAX]  = { 0 };
+            char buf_label[STR_MAX] = { 0 };
+            char buf_maker[STR_MAX] = { 0 };
+            char buf_copyright[STR_MAX] = { 0 };
+            get_real_name(buf_name);
+            get_label(buf_label);
+            get_maker(buf_maker);
+            get_copyright(buf_copyright);
+            osc_send_bridge_plugin_info(category(), m_hints, buf_name, buf_label, buf_maker, buf_copyright, unique_id());
+        }
 
         osc_send_bridge_audio_count(ain_count(), aout_count(), ain_count() + aout_count());
         osc_send_bridge_midi_count(min_count(), mout_count(), min_count() + mout_count());
@@ -975,6 +981,24 @@ public:
                 set_parameter_value(i, param.ranges[i].def, false, false, true);
             }
         }
+
+        // Programs
+        osc_send_bridge_program_count(prog.count);
+
+        for (i=0; i < prog.count; i++)
+            osc_send_bridge_program_info(i, prog.names[i]);
+
+        if (prog.current >= 0)
+            osc_send_program(prog.current);
+
+        // MIDI Programs
+        osc_send_bridge_midi_program_count(midiprog.count);
+
+        for (i=0; i < midiprog.count; i++)
+            osc_send_bridge_midi_program_info(i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
+
+        if (midiprog.current >= 0 && midiprog.count > 0)
+            osc_send_midi_program(midiprog.data[midiprog.current].bank, midiprog.data[midiprog.current].program, false);
 #else
         if (osc_global_registered())
         {

@@ -27,6 +27,7 @@ CARLA_BACKEND_START_NAMESPACE
 #endif
 
 struct BridgeParamInfo {
+    double value;
     QString name;
     QString unit;
 };
@@ -40,19 +41,23 @@ public:
         qDebug("BridgePlugin::BridgePlugin()");
         m_type   = ptype;
         m_hints  = PLUGIN_IS_BRIDGE;
-        m_label  = nullptr;
 
         initiated = saved = false;
 
-        m_info.category  = PLUGIN_CATEGORY_NONE;
-        m_info.hints     = 0;
-        m_info.name      = nullptr;
-        m_info.maker     = nullptr;
-        m_info.unique_id = 0;
-        m_info.ains  = 0;
-        m_info.aouts = 0;
-        m_info.mins  = 0;
-        m_info.mouts = 0;
+        info.ains  = 0;
+        info.aouts = 0;
+        info.mins  = 0;
+        info.mouts = 0;
+
+        info.category = PLUGIN_CATEGORY_NONE;
+        info.uniqueId = 0;
+
+        info.label = nullptr;
+        info.maker = nullptr;
+        info.chunk = nullptr;
+        info.copyright = nullptr;
+
+        params = nullptr;
 
         m_thread = new CarlaPluginThread(this, CarlaPluginThread::PLUGIN_THREAD_BRIDGE);
     }
@@ -84,14 +89,17 @@ public:
 
         osc_clear_data(&osc.data);
 
-        if (m_label)
-            free((void*)m_label);
+        if (info.label)
+            free((void*)info.label);
 
-        if (m_info.name)
-            free((void*)m_info.name);
+        if (info.maker)
+            free((void*)info.maker);
 
-        if (m_info.maker)
-            free((void*)m_info.maker);
+        if (info.copyright)
+            free((void*)info.copyright);
+
+        if (info.chunk)
+            free((void*)info.chunk);
     }
 
     // -------------------------------------------------------------------
@@ -99,12 +107,12 @@ public:
 
     PluginCategory category()
     {
-        return m_info.category;
+        return info.category;
     }
 
     long unique_id()
     {
-        return m_info.unique_id;
+        return info.uniqueId;
     }
 
     // -------------------------------------------------------------------
@@ -112,22 +120,22 @@ public:
 
     uint32_t ain_count()
     {
-        return m_info.ains;
+        return info.ains;
     }
 
     uint32_t aout_count()
     {
-        return m_info.aouts;
+        return info.aouts;
     }
 
     uint32_t min_count()
     {
-        return m_info.mins;
+        return info.mins;
     }
 
     uint32_t mout_count()
     {
-        return m_info.mouts;
+        return info.mouts;
     }
 
     // -------------------------------------------------------------------
@@ -135,22 +143,13 @@ public:
 
     int32_t chunk_data(void** data_ptr)
     {
-        // TESTING
-        QFile sFile("/tmp/test-path2");
-
-        if (! sFile.open(QIODevice::ReadOnly | QIODevice::Text))
-            return 0;
-
-        static QByteArray chunk;
-        chunk = sFile.readAll();
-
-        if (chunk.size() >= 0)
+        if (info.chunk)
         {
+            static QByteArray chunk;
+            chunk = QByteArray::fromBase64(info.chunk);
             *data_ptr = chunk.data();
             return chunk.size();
         }
-
-
         return 0;
     }
 
@@ -159,42 +158,45 @@ public:
 
     double get_parameter_value(uint32_t param_id)
     {
-        return param_buffers[param_id];
+        return params[param_id].value;
     }
 
     void get_label(char* buf_str)
     {
-        strncpy(buf_str, m_label, STR_MAX);
+        strncpy(buf_str, info.label, STR_MAX);
     }
 
     void get_maker(char* buf_str)
     {
-        strncpy(buf_str, m_info.maker, STR_MAX);
+        strncpy(buf_str, info.maker, STR_MAX);
     }
 
     void get_copyright(char* buf_str)
     {
-        strncpy(buf_str, m_info.maker, STR_MAX);
+        strncpy(buf_str, info.copyright, STR_MAX);
     }
 
     void get_real_name(char* buf_str)
     {
-        strncpy(buf_str, m_info.name, STR_MAX);
+        strncpy(buf_str, info.name, STR_MAX);
     }
 
     void get_parameter_name(uint32_t param_id, char* buf_str)
     {
-        strncpy(buf_str, param_info[param_id].name.toUtf8().constData(), STR_MAX);
+        strncpy(buf_str, params[param_id].name.toUtf8().constData(), STR_MAX);
     }
 
     void get_parameter_unit(uint32_t param_id, char* buf_str)
     {
-        strncpy(buf_str, param_info[param_id].unit.toUtf8().constData(), STR_MAX);
+        strncpy(buf_str, params[param_id].unit.toUtf8().constData(), STR_MAX);
     }
 
     void get_gui_info(GuiInfo* info)
     {
-        info->type = GUI_NONE;
+        if (m_hints & PLUGIN_HAS_GUI)
+            info->type = GUI_EXTERNAL_OSC;
+        else
+            info->type = GUI_NONE;
         info->resizable = false;
     }
 
@@ -205,49 +207,56 @@ public:
     {
         qDebug("set_osc_bridge_info(%i, %p)", intoType, argv);
 
-        //        PluginBridgeProgramCountInfo,
-        //        PluginBridgeMidiProgramCountInfo,
-        //        PluginBridgePluginInfo,
-        //        PluginBridgeParameterInfo,
-
-        //        PluginBridgeProgramInfo,
-        //        PluginBridgeMidiProgramInfo,
-
         switch (intoType)
         {
         case PluginBridgeAudioCount:
         {
-            m_info.ains  = argv[0]->i;
-            m_info.aouts = argv[1]->i;
+            int aIns   = argv[0]->i;
+            int aOuts  = argv[1]->i;
+            int aTotal = argv[2]->i;
+
+            info.ains  = aIns;
+            info.aouts = aOuts;
+
+            Q_UNUSED(aTotal);
             break;
         }
 
         case PluginBridgeMidiCount:
         {
-            m_info.mins  = argv[0]->i;
-            m_info.mouts = argv[1]->i;
+            int mIns   = argv[0]->i;
+            int mOuts  = argv[1]->i;
+            int mTotal = argv[2]->i;
+
+            info.mins  = mIns;
+            info.mouts = mOuts;
+
+            Q_UNUSED(mTotal);
             break;
         }
 
         case PluginBridgeParameterCount:
         {
+            int pIns   = argv[0]->i;
+            int pOuts  = argv[1]->i;
+            int pTotal = argv[2]->i;
+
             // delete old data
             if (param.count > 0)
             {
                 delete[] param.data;
                 delete[] param.ranges;
-                delete[] param_buffers;
+                delete[] params;
             }
 
             // create new if needed
-            param.count = argv[2]->i;
+            param.count = pTotal;
 
             if (param.count > 0 && param.count < carla_options.max_parameters)
             {
-                param.data    = new ParameterData[param.count];
-                param.ranges  = new ParameterRanges[param.count];
-                param_buffers = new double[param.count];
-                param_info    = new BridgeParamInfo[param.count];
+                param.data   = new ParameterData[param.count];
+                param.ranges = new ParameterRanges[param.count];
+                params       = new BridgeParamInfo[param.count];
             }
             else
                 param.count = 0;
@@ -269,21 +278,110 @@ public:
                 param.ranges[i].step_small = 0.0001;
                 param.ranges[i].step_large = 0.1;
 
-                param_buffers[i] = 0.0;
-
-                param_info[i].name = QString();
-                param_info[i].unit = QString();
+                params[i].value = 0.0;
+                params[i].name = QString();
+                params[i].unit = QString();
             }
+
+            Q_UNUSED(pIns);
+            Q_UNUSED(pOuts);
             break;
+        }
+
+        case PluginBridgeProgramCount:
+        {
+            int count = argv[0]->i;
+
+            // Delete old programs
+            if (prog.count > 0)
+            {
+                for (uint32_t i=0; i < prog.count; i++)
+                    free((void*)prog.names[i]);
+
+                delete[] prog.names;
+            }
+
+            prog.count = 0;
+            prog.names = nullptr;
+
+            // Query new programs
+            prog.count = count;
+
+            if (prog.count > 0)
+                prog.names = new const char* [prog.count];
+
+            // Update names (NULL)
+            for (uint32_t i=0; i < prog.count; i++)
+                prog.names[i] = nullptr;
+
+            break;
+        }
+
+        case PluginBridgeMidiProgramCount:
+        {
+            int count = argv[0]->i;
+
+            // Delete old programs
+            if (midiprog.count > 0)
+            {
+                for (uint32_t i=0; i < midiprog.count; i++)
+                    free((void*)midiprog.data[i].name);
+
+                delete[] midiprog.data;
+            }
+
+            midiprog.count = 0;
+            midiprog.data  = nullptr;
+
+            // Query new programs
+            midiprog.count = count;
+
+            if (midiprog.count > 0)
+                midiprog.data = new midi_program_t [midiprog.count];
+
+            // Update data (NULL)
+            for (uint32_t i=0; i < midiprog.count; i++)
+            {
+                midiprog.data[i].bank    = 0;
+                midiprog.data[i].program = 0;
+                midiprog.data[i].name    = nullptr;
+            }
+
+            break;
+        }
+
+        case PluginBridgePluginInfo:
+        {
+            int category = argv[0]->i;
+            int hints    = argv[1]->i;
+            const char* name  = (const char*)&argv[2]->s;
+            const char* label = (const char*)&argv[3]->s;
+            const char* maker = (const char*)&argv[4]->s;
+            const char* copyright = (const char*)&argv[5]->s;
+            long unique_id = argv[6]->i;
+
+            m_hints = hints | PLUGIN_IS_BRIDGE;
+            info.category = (PluginCategory)category;
+            info.uniqueId = unique_id;
+
+            info.name  = strdup(name);
+            info.label = strdup(label);
+            info.maker = strdup(maker);
+            info.copyright = strdup(copyright);
+
+            m_name = get_unique_name(name);
         }
 
         case PluginBridgeParameterInfo:
         {
             int index = argv[0]->i;
+            const char* name = (const char*)&argv[1]->s;
+            const char* unit = (const char*)&argv[2]->s;
+
             if (index >= 0 && index < (int32_t)param.count)
             {
-                param_info[index].name = QString((const char*)&argv[1]->s);
-                param_info[index].unit = QString((const char*)&argv[2]->s);
+                params[index].name = QString(name);
+                params[index].unit = QString(unit);
             }
             break;
         }
@@ -318,6 +416,47 @@ public:
             break;
         }
 
+        case PluginBridgeProgramInfo:
+        {
+            int index = argv[0]->i;
+            const char* name = (const char*)&argv[1]->s;
+
+            prog.names[index] = strdup(name);
+            break;
+        }
+
+        case PluginBridgeMidiProgramInfo:
+        {
+            int index   = argv[0]->i;
+            int bank    = argv[1]->i;
+            int program = argv[2]->i;
+            const char* name = (const char*)&argv[3]->s;
+
+            midiprog.data[index].bank    = bank;
+            midiprog.data[index].program = program;
+            midiprog.data[index].name    = strdup(name);
+            break;
+        }
+
+        case PluginBridgeCustomData:
+        {
+            const char* stype = (const char*)&argv[0]->s;
+            const char* key   = (const char*)&argv[1]->s;
+            const char* value = (const char*)&argv[2]->s;
+
+            set_custom_data(customdatastr2type(stype), key, value, false);
+            break;
+        }
+
+        case PluginBridgeChunkData:
+        {
+            const char* string_data = (const char*)&argv[0]->s;
+            if (info.chunk)
+                free((void*)info.chunk);
+            info.chunk = strdup(string_data);
+            break;
+        }
+
         case PluginBridgeUpdateNow:
             callback_action(CALLBACK_RELOAD_ALL, m_id, 0, 0, 0.0);
             initiated = true;
@@ -336,12 +475,17 @@ public:
 
     void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
-        param_buffers[param_id] = fix_parameter_value(value, param.ranges[param_id]);
+        params[param_id].value = fix_parameter_value(value, param.ranges[param_id]);
 
         if (gui_send)
             osc_send_control(&osc.data, param.data[param_id].rindex, value);
 
         CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
+    }
+
+    void set_chunk_data(const char* string_data)
+    {
+        osc_send_configure(&osc.data, "CarlaBridgeChunk", string_data);
     }
 
     // -------------------------------------------------------------------
@@ -360,26 +504,12 @@ public:
 
     void reload()
     {
-        // plugin checks
-        m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
-
-        if (m_info.aouts > 0 && (m_info.ains == m_info.aouts || m_info.ains == 1))
-            m_hints |= PLUGIN_CAN_DRYWET;
-
-        if (m_info.aouts > 0)
-            m_hints |= PLUGIN_CAN_VOLUME;
-
-        if (m_info.aouts >= 2 && m_info.aouts % 2 == 0)
-            m_hints |= PLUGIN_CAN_BALANCE;
-
-        m_hints |= m_info.hints;
-        m_hints |= PLUGIN_USES_CHUNKS; // FIXME
     }
 
     void prepare_for_save()
     {
         saved = false;
-        osc_send_configure(&osc.data, "CarlaBridgeSaveNow", "/tmp/test-path2");
+        osc_send_configure(&osc.data, "CarlaBridgeSaveNow", "");
 
         for (int i=0; i < 100; i++)
         {
@@ -401,63 +531,41 @@ public:
         qDebug("BridgePlugin::delete_buffers() - start");
 
         if (param.count > 0)
-        {
-            delete[] param_buffers;
-            delete[] param_info;
-        }
+            delete[] params;
 
-        param_buffers = nullptr;
-        param_info    = nullptr;
+        params = nullptr;
 
         qDebug("BridgePlugin::delete_buffers() - end");
     }
 
-    bool init(const char* filename, const char* label, PluginBridgeInfo* info)
+    bool init(const char* filename, const char* label)
     {
-        if (info)
+        const char* bridge_binary = binarytype2str(m_binary);
+
+        if (bridge_binary)
         {
-            m_info.category  = info->category;
-            m_info.hints     = info->hints;
-            m_info.unique_id = info->unique_id;
-            m_info.ains  = info->ains;
-            m_info.aouts = info->aouts;
-            m_info.mins  = info->mins;
-            m_info.mouts = info->mouts;
-
-            m_info.name  = strdup(info->name);
-            m_info.maker = strdup(info->maker);
-
-            m_label = strdup(label);
-            m_name  = get_unique_name(info->name);
             m_filename = strdup(filename);
 
-            const char* bridge_binary = binarytype2str(m_binary);
+            // register plugin now so we can receive OSC (and wait for it)
+            CarlaPlugins[m_id] = this;
 
-            if (bridge_binary)
+            m_thread->setOscData(bridge_binary, label, plugintype2str(m_type));
+            m_thread->start();
+
+            for (int i=0; i < 100; i++)
             {
-                // register plugin now so we can receive OSC (and wait for it)
-                CarlaPlugins[m_id] = this;
-
-                m_thread->setOscData(bridge_binary, label, plugintype2str(m_type));
-                m_thread->start();
-
-                for (int i=0; i < 100; i++)
-                {
-                    if (initiated)
-                        break;
-                    carla_msleep(100);
-                }
-
-                if (! initiated)
-                    set_last_error("Timeout while waiting for a response from plugin-bridge");
-
-                return initiated;
+                if (initiated)
+                    break;
+                carla_msleep(100);
             }
-            else
-                set_last_error("Bridge not possible, bridge-binary not found");
+
+            if (! initiated)
+                set_last_error("Timeout while waiting for a response from plugin-bridge");
+
+            return initiated;
         }
         else
-            set_last_error("Invalid bridge info, cannot continue");
+            set_last_error("Bridge not possible, bridge-binary not found");
 
         return false;
     }
@@ -465,18 +573,28 @@ public:
 private:
     bool initiated;
     bool saved;
-    const char* m_label;
+
     const BinaryType m_binary;
-    PluginBridgeInfo m_info;
     CarlaPluginThread* m_thread;
 
-    double* param_buffers;
-    BridgeParamInfo* param_info;
+    struct {
+        uint32_t ains, aouts;
+        uint32_t mins, mouts;
+        PluginCategory category;
+        long uniqueId;
+        const char* name;
+        const char* label;
+        const char* maker;
+        const char* copyright;
+        const char* chunk;
+    } info;
+
+    BridgeParamInfo* params;
 };
 
-short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename, const char* label, void* extra_stuff)
+short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename, const char* label)
 {
-    qDebug("add_plugin_bridge(%i, %i, %s, %s, %p)", btype, ptype, filename, label, extra_stuff);
+    qDebug("add_plugin_bridge(%i, %i, %s, %s)", btype, ptype, filename, label);
 
     short id = get_new_plugin_id();
 
@@ -484,7 +602,7 @@ short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename
     {
         BridgePlugin* plugin = new BridgePlugin(btype, ptype, id);
 
-        if (plugin->init(filename, label, (PluginBridgeInfo*)extra_stuff))
+        if (plugin->init(filename, label))
         {
             plugin->reload();
 

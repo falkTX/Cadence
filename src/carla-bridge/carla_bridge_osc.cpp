@@ -161,10 +161,16 @@ int osc_handle_configure(lo_arg** argv)
 {
 #ifdef BUILD_BRIDGE_PLUGIN
     const char* key   = (const char*)&argv[0]->s;
-    //const char* value = (const char*)&argv[1]->s;
+    const char* value = (const char*)&argv[1]->s;
 
-    if (client && strcmp(key, "CarlaBridgeSaveNow") == 0)
-        client->save_now();
+    if (client)
+    {
+        if (strcmp(key, "CarlaBridgeSaveNow") == 0)
+            client->save_now();
+        else if (strcmp(key, "CarlaBridgeChunk") == 0)
+            client->set_chunk_data(value);
+    }
+
 #else
     Q_UNUSED(argv);
 #endif
@@ -415,14 +421,15 @@ void osc_send_bridge_midi_program_count(int count)
     }
 }
 
-void osc_send_bridge_plugin_info(int type, int category, int hints, const char* name, const char* label, const char* maker, const char* copyright, long unique_id)
+void osc_send_bridge_plugin_info(int category, int hints, const char* name, const char* label, const char* maker, const char* copyright, long unique_id)
 {
     if (global_osc_data.target)
     {
         char target_path[strlen(global_osc_data.path)+20];
         strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/bridge_plugin_info");
-        lo_send(global_osc_data.target, target_path, "iiissssh", type, category, hints, name, label, maker, copyright, unique_id);
+        lo_send(global_osc_data.target, target_path, "iissssi", category, hints, name, label, maker, copyright, unique_id);
+        // FIXME - should be long type
     }
 }
 

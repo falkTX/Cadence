@@ -100,6 +100,9 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.settings = QSettings("Cadence", "Cadence")
         self.loadSettings(True)
 
+        # TODO
+        self.b_jack_restart.setEnabled(False)
+
         # -------------------------------------------------------------
         # System Information
 
@@ -162,6 +165,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.connect(self.pic_render, SIGNAL("clicked()"), lambda tool="cadence_render": self.func_start_tool(tool))
         self.connect(self.pic_xycontroller, SIGNAL("clicked()"), lambda tool="cadence_xycontroller": self.func_start_tool(tool))
 
+        self.m_timer120  = None
         self.m_timer1000 = self.startTimer(1000)
 
         self.DBusReconnect()
@@ -171,25 +175,24 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
                 member_keyword='member', interface_keyword='interface', sender_keyword='sender', )
 
     def DBusReconnect(self):
-        try:
-            DBus.jack = DBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
-            jacksettings.initBus(DBus.bus)
-        except:
-            DBus.jack = None
+        if haveDBus:
+            try:
+                DBus.jack = DBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
+                jacksettings.initBus(DBus.bus)
+            except:
+                DBus.jack = None
 
-        try:
-            DBus.a2j = dbus.Interface(DBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
-        except:
-            DBus.a2j = None
+            try:
+                DBus.a2j = dbus.Interface(DBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
+            except:
+                DBus.a2j = None
 
         if DBus.jack:
             if DBus.jack.IsStarted():
                 self.jackStarted()
             else:
                 self.jackStopped()
-
-                # FIXME
-                self.label_jack_realtime.setText("TODO")
+                self.label_jack_realtime.setText("Yes" if jacksettings.isRealtime() else "No")
         else:
             self.jackStopped()
             self.label_jack_status.setText("Unavailable")
@@ -213,6 +216,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
                     QTimer.singleShot(0, self, SLOT("slot_handleCrash_jack()"))
 
         elif kwds['interface'] == "org.jackaudio.JackControl":
+            if DEBUG: print("org.jackaudio.JackControl", kwds['member'])
             if kwds['member'] == "ServerStarted":
                 self.jackStarted()
             elif kwds['member'] == "ServerStopped":
@@ -280,7 +284,10 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_JackServerStop(self):
-        DBus.jack.StopServer()
+        try:
+            DBus.jack.StopServer()
+        except:
+            QMessageBox.warning(self, self.tr("Warning"), self.tr("Failed to stop JACK, please check the logs for more information."))
 
     @pyqtSlot()
     def slot_JackServerForceRestart(self):
@@ -292,7 +299,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_JackClearXruns(self):
-        DBus.jack.ResetXruns()
+        if DBus.jack:
+            DBus.jack.ResetXruns()
 
     @pyqtSlot()
     def slot_handleCrash_a2j(self):
@@ -316,30 +324,29 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     def timerEvent(self, event):
         if event.timerId() == self.m_timer120:
-            next_dsp_load = DBus.jack.GetLoad()
-            next_xruns    = DBus.jack.GetXruns()
+            if DBus.jack and self.m_last_dsp_load != None:
+                next_dsp_load = DBus.jack.GetLoad()
+                next_xruns    = DBus.jack.GetXruns()
 
-            if self.m_last_dsp_load != next_dsp_load:
-                self.m_last_dsp_load = next_dsp_load
-                self.label_jack_dsp.setText("%.2f%%" % self.m_last_dsp_load)
+                if self.m_last_dsp_load != next_dsp_load:
+                    self.m_last_dsp_load = next_dsp_load
+                    self.label_jack_dsp.setText("%.2f%%" % self.m_last_dsp_load)
 
-            if self.m_last_xruns != next_xruns:
-                self.m_last_xruns = next_xruns
-                self.label_jack_xruns.setText(str(self.m_last_xruns))
+                if self.m_last_xruns != next_xruns:
+                    self.m_last_xruns = next_xruns
+                    self.label_jack_xruns.setText(str(self.m_last_xruns))
 
         elif event.timerId() == self.m_timer1000:
             if DBus.jack and self.m_last_buffer_size != None:
                 next_buffer_size = DBus.jack.GetBufferSize()
-            else:
-                next_buffer_size = None
 
-            if self.m_last_buffer_size != next_buffer_size:
-                self.m_last_buffer_size = next_buffer_size
-                self.label_jack_bfsize.setText("%i samples" % self.m_last_buffer_size)
-                self.label_jack_latency.setText("%.1f ms" % DBus.jack.GetLatency())
+                if self.m_last_buffer_size != next_buffer_size:
+                    self.m_last_buffer_size = next_buffer_size
+                    self.label_jack_bfsize.setText("%i samples" % self.m_last_buffer_size)
+                    self.label_jack_latency.setText("%.1f ms" % DBus.jack.GetLatency())
 
             else:
-              self.update()
+                self.update()
 
         QMainWindow.timerEvent(self, event)
 

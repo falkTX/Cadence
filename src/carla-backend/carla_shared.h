@@ -30,6 +30,7 @@ const char* bool2str(bool yesno);
 const char* plugintype2str(PluginType type);
 const char* binarytype2str(BinaryType type);
 const char* customdatatype2str(CustomDataType type);
+CustomDataType customdatastr2type(const char* stype);
 
 short get_new_plugin_id();
 const char* get_unique_name(const char* name);

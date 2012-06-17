@@ -3102,33 +3102,19 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         build = plugin['build']
         ptype = plugin['type']
 
-        if (build != BINARY_NATIVE):
-            # Store object so we can return a pointer
-            if self.m_bridge_info is None:
-                self.m_bridge_info = PluginBridgeInfo()
-            self.m_bridge_info.hints     = plugin['hints']
-            self.m_bridge_info.name      = plugin['name'].encode("utf-8")
-            self.m_bridge_info.maker     = plugin['maker'].encode("utf-8")
-            self.m_bridge_info.unique_id = plugin['unique_id']
-            self.m_bridge_info.ains  = plugin['audio.ins']
-            self.m_bridge_info.aouts = plugin['audio.outs']
-            self.m_bridge_info.mins  = plugin['midi.ins']
-            self.m_bridge_info.mouts = plugin['midi.outs']
-            return pointer(self.m_bridge_info)
-
-        elif (ptype == PLUGIN_LADSPA):
+        if (ptype == PLUGIN_LADSPA):
             unique_id = plugin['unique_id']
             for rdf_item in self.ladspa_rdf_list:
-                if (rdf_item.UniqueID == unique_id):
+                if rdf_item.UniqueID == unique_id:
                     return pointer(rdf_item)
             else:
                 return c_nullptr
 
         elif (ptype == PLUGIN_DSSI):
-            if (plugin['hints'] & PLUGIN_HAS_GUI):
+            if plugin['hints'] & PLUGIN_HAS_GUI:
                 gui = findDSSIGUI(plugin['binary'], plugin['name'], plugin['label'])
-                if (gui):
-                    return gui.encode("utf-8")
+                if gui:
+                    return gui if AVLINUX_PY2BUILD else gui.encode("utf-8")
             return c_nullptr
 
         else:
