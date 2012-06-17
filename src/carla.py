@@ -3549,24 +3549,28 @@ if __name__ == '__main__':
 
     # Init backend
     if AVLINUX_PY2BUILD:
-        max_parameters     = gui.settings.value("Engine/MaxParameters", MAX_PARAMETERS).toInt()[0]
+        MAX_PARAMETERS     = gui.settings.value("Engine/MaxParameters", MAX_PARAMETERS).toInt()[0]
         global_jack_client = gui.settings.value("Engine/GlobalJackClient", False).toBool()
         prefer_ui_bridges  = gui.settings.value("Engine/PreferUIBridges", True).toBool()
         proccess_hq        = gui.settings.value("Engine/ProcessHQ", False).toBool()
         osc_gui_timeout    = gui.settings.value("Engine/OscGuiTimeout", 40).toInt()[0]
         use_dssi_chunks    = gui.settings.value("Engine/UseDSSIChunks", False).toBool()
     else:
-        max_parameters     = gui.settings.value("Engine/MaxParameters", MAX_PARAMETERS, type=int)
+        MAX_PARAMETERS     = gui.settings.value("Engine/MaxParameters", MAX_PARAMETERS, type=int)
         global_jack_client = gui.settings.value("Engine/GlobalJackClient", False, type=bool)
         prefer_ui_bridges  = gui.settings.value("Engine/PreferUIBridges", True, type=bool)
         proccess_hq        = gui.settings.value("Engine/ProcessHQ", False, type=bool)
         osc_gui_timeout    = gui.settings.value("Engine/OscGuiTimeout", 40, type=int)
         use_dssi_chunks    = gui.settings.value("Engine/UseDSSIChunks", False, type=bool)
 
-    CarlaHost.set_option(OPTION_MAX_PARAMETERS, max_parameters, "")
+    if os.getenv("LADISH_APP_NAME") and not global_jack_client:
+        print("LADISH detected but global jack client is off, forcing it to on now")
+        global_jack_client = True
+
+    CarlaHost.set_option(OPTION_MAX_PARAMETERS, MAX_PARAMETERS, "")
     CarlaHost.set_option(OPTION_GLOBAL_JACK_CLIENT, global_jack_client, "")
-    CarlaHost.set_option(OPTION_PREFER_UI_BRIDGES, prefer_ui_bridges, "")
     CarlaHost.set_option(OPTION_PROCESS_HQ, proccess_hq, "")
+    CarlaHost.set_option(OPTION_PREFER_UI_BRIDGES, prefer_ui_bridges, "")
     CarlaHost.set_option(OPTION_OSC_GUI_TIMEOUT, osc_gui_timeout, "")
     CarlaHost.set_option(OPTION_USE_DSSI_CHUNKS, use_dssi_chunks, "")
 
