@@ -359,7 +359,7 @@
               <property name="sizeHint" stdset="0">
                <size>
                 <width>40</width>
-                <height>20</height>
+                <height>10</height>
                </size>
               </property>
              </spacer>
@@ -787,11 +787,65 @@
            <property name="title">
             <string>Core</string>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_16">
-            <item>
+           <layout class="QGridLayout" name="gridLayout_7">
+            <item row="2" column="1">
+             <widget class="QSpinBox" name="sb_engine_max_params">
+              <property name="toolTip">
+               <string>Maximum number of parameters to allow in the built-in 'Edit' dialog</string>
+              </property>
+              <property name="maximum">
+               <number>1000</number>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_7">
+              <property name="toolTip">
+               <string>Maximum number of parameters to allow in the built-in 'Edit' dialog</string>
+              </property>
+              <property name="text">
+               <string>Max Parameters:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="2">
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Fixed</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>10</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="0" column="0" colspan="3">
              <widget class="QCheckBox" name="ch_engine_global_client">
+              <property name="toolTip">
+               <string>Use a single JACK client for all plugins</string>
+              </property>
               <property name="text">
                <string>Use a single/global JACK client</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0" colspan="3">
+             <widget class="QCheckBox" name="ch_engine_process_hq">
+              <property name="toolTip">
+               <string>Process audio in blocks of 8 samples, allowing &quot;per-sample&quot; automation.
+Recommended to use when 'rendering' a project.
+Some plugins might not work properly under this mode.</string>
+              </property>
+              <property name="text">
+               <string>Process HQ (EXPERIMENTAL)</string>
               </property>
              </widget>
             </item>
@@ -801,20 +855,74 @@
          <item>
           <widget class="QGroupBox" name="groupBox_8">
            <property name="title">
+            <string>GUIs</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_8">
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_12">
+              <property name="toolTip">
+               <string>How much time to wait for OSC GUIs to ping back the host</string>
+              </property>
+              <property name="text">
+               <string>OSC GUI Timeout:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QSpinBox" name="sb_engine_oscgui_timeout">
+              <property name="toolTip">
+               <string>How much time to wait for OSC GUIs to ping back the host</string>
+              </property>
+              <property name="suffix">
+               <string> ms</string>
+              </property>
+              <property name="maximum">
+               <number>10000</number>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="2">
+             <spacer name="horizontalSpacer_9">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Fixed</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>10</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="0" column="0" colspan="3">
+             <widget class="QCheckBox" name="ch_engine_prefer_bridges">
+              <property name="toolTip">
+               <string>Use OSC-GUI bridges when possible, this way separating the UI from DSP code</string>
+              </property>
+              <property name="text">
+               <string>Use UI bridges instead of direct handling when possible</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_2">
+           <property name="title">
             <string>Advanced</string>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_19">
+           <layout class="QVBoxLayout" name="verticalLayout_17">
             <item>
              <widget class="QCheckBox" name="ch_engine_dssi_chunks">
               <property name="text">
                <string>Enable chunk data for dssi-vst</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="ch_engine_prefer_bridges">
-              <property name="text">
-               <string>Use UI bridges instead of direct handling when possible</string>
               </property>
              </widget>
             </item>

@@ -202,12 +202,18 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         if not self.lw_page.isRowHidden(TAB_INDEX_CARLA_ENGINE):
             if AVLINUX_PY2BUILD:
                 self.ch_engine_global_client.setChecked(self.settings.value("Engine/GlobalJackClient", False).toBool())
-                self.ch_engine_dssi_chunks.setChecked(self.settings.value("Engine/UseDSSIChunks", False).toBool())
+                self.ch_engine_process_hq.setChecked(self.settings.value("Engine/ProcessHQ", False).toBool())
+                self.sb_engine_max_params.setValue(self.settings.value("Engine/MaxParameters", 200).toInt()[0])
                 self.ch_engine_prefer_bridges.setChecked(self.settings.value("Engine/PreferUIBridges", True).toBool())
+                self.sb_engine_oscgui_timeout.setValue(self.settings.value("Engine/OscGuiTimeout", 4000).toInt()[0])
+                self.ch_engine_dssi_chunks.setChecked(self.settings.value("Engine/UseDSSIChunks", False).toBool())
             else:
                 self.ch_engine_global_client.setChecked(self.settings.value("Engine/GlobalJackClient", False, type=bool))
-                self.ch_engine_dssi_chunks.setChecked(self.settings.value("Engine/UseDSSIChunks", False, type=bool))
+                self.ch_engine_process_hq.setChecked(self.settings.value("Engine/ProcessHQ", False, type=bool))
+                self.sb_engine_max_params.setValue(self.settings.value("Engine/MaxParameters", 200, type=int))
                 self.ch_engine_prefer_bridges.setChecked(self.settings.value("Engine/PreferUIBridges", True, type=bool))
+                self.sb_engine_oscgui_timeout.setValue(self.settings.value("Engine/OscGuiTimeout", 4000, type=int))
+                self.ch_engine_dssi_chunks.setChecked(self.settings.value("Engine/UseDSSIChunks", False, type=bool))
 
         # --------------------------------------------
 
@@ -404,8 +410,11 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
 
         if not self.lw_page.isRowHidden(TAB_INDEX_CARLA_ENGINE):
             self.settings.setValue("Engine/GlobalJackClient", self.ch_engine_global_client.isChecked())
-            self.settings.setValue("Engine/UseDSSIChunks", self.ch_engine_dssi_chunks.isChecked())
+            self.settings.setValue("Engine/ProcessHQ", self.ch_engine_process_hq.isChecked())
+            self.settings.setValue("Engine/MaxParameters", self.sb_engine_max_params.value())
             self.settings.setValue("Engine/PreferUIBridges", self.ch_engine_prefer_bridges.isChecked())
+            self.settings.setValue("Engine/OscGuiTimeout", self.sb_engine_oscgui_timeout.value())
+            self.settings.setValue("Engine/UseDSSIChunks", self.ch_engine_dssi_chunks.isChecked())
 
         # --------------------------------------------
 
@@ -473,8 +482,11 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
 
         elif self.lw_page.currentRow() == TAB_INDEX_CARLA_ENGINE:
             self.ch_engine_global_client.setChecked(False)
-            self.ch_engine_dssi_chunks.setChecked(False)
+            self.ch_engine_process_hq.setChecked(False)
             self.ch_engine_prefer_bridges.setChecked(True)
+            self.ch_engine_dssi_chunks.setChecked(False)
+            self.sb_engine_max_params.setValue(200)
+            self.sb_engine_oscgui_timeout.setValue(4000)
 
         elif self.lw_page.currentRow() == TAB_INDEX_CARLA_PATHS:
             ladspas, dssis, lv2s, vsts, gigs, sf2s, sfzs = SETTINGS_DEFAULT_PLUGINS_PATHS
