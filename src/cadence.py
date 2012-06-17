@@ -94,9 +94,6 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         QMainWindow.__init__(self, parent)
         self.setupUi(self)
 
-        self.m_last_buffer_size = None
-        self.m_timer120 = None
-
         self.settings = QSettings("Cadence", "Cadence")
         self.loadSettings(True)
 
@@ -164,6 +161,10 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.connect(self.pic_logs, SIGNAL("clicked()"), lambda tool="cadence_logs": self.func_start_tool(tool))
         self.connect(self.pic_render, SIGNAL("clicked()"), lambda tool="cadence_render": self.func_start_tool(tool))
         self.connect(self.pic_xycontroller, SIGNAL("clicked()"), lambda tool="cadence_xycontroller": self.func_start_tool(tool))
+
+        self.m_last_dsp_load = None
+        self.m_last_xruns    = None
+        self.m_last_buffer_size = None
 
         self.m_timer120  = None
         self.m_timer1000 = self.startTimer(1000)

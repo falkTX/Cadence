@@ -222,6 +222,10 @@ else:
 
 CWD = sys.path[0]
 
+# make it work with cxfreeze
+if CWD.endswith("/carla"):
+    CWD = CWD.rsplit("/carla", 1)[0]
+
 # find carla_library_path
 if os.path.exists(os.path.join(CWD, "carla-backend", carla_libname)):
     carla_library_path = os.path.join(CWD, "carla-backend", carla_libname)
