@@ -115,7 +115,7 @@ void toolkit_plugin_idle()
     {
         bool yesno = nextShowMsg - 1;
 
-        CARLA_PLUGIN->show_gui(yesno);
+        CARLA_PLUGIN->showGui(yesno);
 
         if (gui)
         {
@@ -130,9 +130,9 @@ void toolkit_plugin_idle()
         nextShowMsg = nextShowMsgNULL;
     }
 
-    CARLA_PLUGIN->idle_gui();
+    CARLA_PLUGIN->idleGui();
 
-    static const ParameterData* param_data;
+    static const ParameterData* paramData;
     static PluginPostEvent postEvents[MAX_POST_EVENTS];
     CARLA_PLUGIN->post_events_copy(postEvents);
 
@@ -163,21 +163,21 @@ void toolkit_plugin_idle()
         }
     }
 
-    for (uint32_t i=0; i < CARLA_PLUGIN->param_count(); i++)
+    for (uint32_t i=0; i < CARLA_PLUGIN->paramCount(); i++)
     {
-        param_data = CARLA_PLUGIN->param_data(i);
+        paramData = CARLA_PLUGIN->paramData(i);
 
-        if (param_data->type == PARAMETER_OUTPUT && (param_data->hints & PARAMETER_IS_AUTOMABLE) > 0)
-            osc_send_control(param_data->rindex, CARLA_PLUGIN->get_parameter_value(i));
+        if (paramData->type == PARAMETER_OUTPUT && (paramData->hints & PARAMETER_IS_AUTOMABLE) > 0)
+            osc_send_control(paramData->rindex, CARLA_PLUGIN->getParameterValue(i));
     }
 
-    if (CARLA_PLUGIN->ain_count() > 0)
+    if (CARLA_PLUGIN->ainCount() > 0)
     {
         osc_send_bridge_ains_peak(1, ains_peak[0]);
         osc_send_bridge_ains_peak(2, ains_peak[1]);
     }
 
-    if (CARLA_PLUGIN->aout_count() > 0)
+    if (CARLA_PLUGIN->aoutCount() > 0)
     {
         osc_send_bridge_aouts_peak(1, aouts_peak[0]);
         osc_send_bridge_aouts_peak(2, aouts_peak[1]);
@@ -264,13 +264,13 @@ public:
     void set_parameter(int32_t rindex, double value)
     {
         if (CARLA_PLUGIN)
-            CARLA_PLUGIN->set_parameter_value_by_rindex(rindex, value, true, true, false);
+            CARLA_PLUGIN->setParameterValueByRIndex(rindex, value, true, true, false);
     }
 
     void set_program(uint32_t index)
     {
-        if (CARLA_PLUGIN && index < CARLA_PLUGIN->prog_count())
-            CARLA_PLUGIN->set_program(index, true, true, false, true);
+        if (CARLA_PLUGIN && index < CARLA_PLUGIN->progCount())
+            CARLA_PLUGIN->setProgram(index, true, true, false, true);
 
         callback_action(CALLBACK_RELOAD_PARAMETERS, 0, 0, 0, 0.0);
     }
@@ -278,7 +278,7 @@ public:
     void set_midi_program(uint32_t bank, uint32_t program)
     {
         if (CARLA_PLUGIN)
-            CARLA_PLUGIN->set_midi_program_by_id(bank, program, true, true, false, true);
+            CARLA_PLUGIN->setMidiProgramById(bank, program, true, true, false, true);
 
         callback_action(CALLBACK_RELOAD_PARAMETERS, 0, 0, 0, 0.0);
     }
@@ -300,22 +300,22 @@ public:
     {
         qDebug("PluginData::save_now()");
 
-        CARLA_PLUGIN->prepare_for_save();
+        CARLA_PLUGIN->prepareForSave();
 
-        for (uint32_t i=0; i < CARLA_PLUGIN->custom_count(); i++)
+        for (uint32_t i=0; i < CARLA_PLUGIN->customCount(); i++)
         {
-            const CustomData* const cdata = CARLA_PLUGIN->custom_data(i);
+            const CustomData* const cdata = CARLA_PLUGIN->customData(i);
             osc_send_bridge_custom_data(customdatatype2str(cdata->type), cdata->key, cdata->value);
         }
 
         if (CARLA_PLUGIN->hints() & PLUGIN_USES_CHUNKS)
         {
             void* data = nullptr;
-            int32_t data_size = CARLA_PLUGIN->chunk_data(&data);
+            int32_t dataSize = CARLA_PLUGIN->chunkData(&data);
 
-            if (data && data_size >= 4)
+            if (data && dataSize >= 4)
             {
-                QByteArray chunk((const char*)data, data_size);
+                QByteArray chunk((const char*)data, dataSize);
                 osc_send_bridge_chunk_data(chunk.toBase64().data());
             }
         }
@@ -323,10 +323,10 @@ public:
         osc_send_configure("CarlaBridgeSaveNowDone", "");
     }
 
-    void set_chunk_data(const char* string_data)
+    void set_chunk_data(const char* stringData)
     {
         if (CARLA_PLUGIN)
-            CARLA_PLUGIN->set_chunk_data(string_data);
+            CARLA_PLUGIN->setChunkData(stringData);
     }
 };
 
@@ -368,9 +368,9 @@ void plugin_bridge_callback(CallbackType action, unsigned short, int value1, int
     case CALLBACK_RELOAD_PARAMETERS:
         if (CARLA_PLUGIN)
         {
-            for (uint32_t i=0; i < CARLA_PLUGIN->param_count(); i++)
+            for (uint32_t i=0; i < CARLA_PLUGIN->paramCount(); i++)
             {
-                osc_send_control(i, CARLA_PLUGIN->get_parameter_value(i));
+                osc_send_control(i, CARLA_PLUGIN->getParameterValue(i));
             }
         }
         break;
@@ -520,7 +520,7 @@ int main(int argc, char* argv[])
     {
         // Create gui if needed
         GuiInfo guiInfo;
-        CARLA_PLUGIN->get_gui_info(&guiInfo);
+        CARLA_PLUGIN->getGuiInfo(&guiInfo);
 
         QString guiTitle = QString("%1 (GUI)").arg(CARLA_PLUGIN->name());
 
@@ -560,7 +560,7 @@ int main(int argc, char* argv[])
             gui->resize(10, 10);
             gui->setWindowTitle(guiTitle);
 #endif
-            CARLA_PLUGIN->set_gui_data(0, gui);
+            CARLA_PLUGIN->setGuiData(0, gui);
         }
 
         // Report OK to backend
@@ -571,7 +571,7 @@ int main(int argc, char* argv[])
 
         // Remove & delete plugin
         carla_proc_lock();
-        CARLA_PLUGIN->set_enabled(false);
+        CARLA_PLUGIN->setEnabled(false);
         carla_proc_unlock();
 
         delete CARLA_PLUGIN;

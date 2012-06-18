@@ -16,14 +16,6 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
-# Special rule for AVLinux
-AVLINUX_PY2BUILD = False
-
-if AVLINUX_PY2BUILD:
-    from sip import setapi
-    setapi("QString", 2)
-    setapi("QVariant", 1)
-
 # Imports (Global)
 import json, os, sys
 from sip import unwrapinstance
@@ -91,23 +83,6 @@ save_state_custom_data = {
 DEFAULT_PROJECT_FOLDER = HOME
 setDefaultProjectFolder(DEFAULT_PROJECT_FOLDER)
 setDefaultPluginsPaths(LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, GIG_PATH, SF2_PATH, SFZ_PATH)
-
-def cStringCompat(string):
-    if AVLINUX_PY2BUILD:
-        if string:
-            return string
-        return ""
-    return cString(string)
-
-def toListCompat(item):
-    if AVLINUX_PY2BUILD:
-        return QVariantStringList(item.toList())
-    return toList(item)
-
-def toListCompat2(item):
-    if AVLINUX_PY2BUILD:
-        return QVariantPyObjectList(item.toList())
-    return toList(item)
 
 def CustomDataType2String(dtype):
     if dtype == CUSTOM_DATA_STRING:
@@ -486,7 +461,7 @@ class SearchPluginsThread(QThread):
         os.environ['SF2_PATH'] = splitter.join(SF2_PATH)
         os.environ['SFZ_PATH'] = splitter.join(SFZ_PATH)
 
-        self.blacklist = toListCompat(self.settings_db.value("Plugins/Blacklisted", []))
+        self.blacklist = toList(self.settings_db.value("Plugins/Blacklisted", []))
 
         self.m_count = 0
         plugin_count = 0
@@ -799,30 +774,17 @@ class PluginRefreshW(QDialog, ui_carla_refresh.Ui_PluginRefreshW):
         self.settings_db.setValue("Plugins/LastLoadedBinary", "")
 
     def loadSettings(self):
-        if AVLINUX_PY2BUILD:
-            self.ch_ladspa.setChecked(self.settings.value("PluginDatabase/SearchLADSPA", True).toBool())
-            self.ch_dssi.setChecked(self.settings.value("PluginDatabase/SearchDSSI", True).toBool())
-            self.ch_lv2.setChecked(self.settings.value("PluginDatabase/SearchLV2", True).toBool())
-            self.ch_vst.setChecked(self.settings.value("PluginDatabase/SearchVST", True).toBool())
-            self.ch_gig.setChecked(self.settings.value("PluginDatabase/SearchGIG", True).toBool())
-            self.ch_sf2.setChecked(self.settings.value("PluginDatabase/SearchSF2", True).toBool())
-            self.ch_sfz.setChecked(self.settings.value("PluginDatabase/SearchSFZ", True).toBool())
-            self.ch_unix32.setChecked(self.settings.value("PluginDatabase/SearchUnix32", True).toBool())
-            self.ch_unix64.setChecked(self.settings.value("PluginDatabase/SearchUnix64", True).toBool())
-            self.ch_win32.setChecked(self.settings.value("PluginDatabase/SearchWin32", True).toBool())
-            self.ch_win64.setChecked(self.settings.value("PluginDatabase/SearchWin64", True).toBool())
-        else:
-            self.ch_ladspa.setChecked(self.settings.value("PluginDatabase/SearchLADSPA", True, type=bool))
-            self.ch_dssi.setChecked(self.settings.value("PluginDatabase/SearchDSSI", True, type=bool))
-            self.ch_lv2.setChecked(self.settings.value("PluginDatabase/SearchLV2", True, type=bool))
-            self.ch_vst.setChecked(self.settings.value("PluginDatabase/SearchVST", True, type=bool))
-            self.ch_gig.setChecked(self.settings.value("PluginDatabase/SearchGIG", True, type=bool))
-            self.ch_sf2.setChecked(self.settings.value("PluginDatabase/SearchSF2", True, type=bool))
-            self.ch_sfz.setChecked(self.settings.value("PluginDatabase/SearchSFZ", True, type=bool))
-            self.ch_unix32.setChecked(self.settings.value("PluginDatabase/SearchUnix32", True, type=bool))
-            self.ch_unix64.setChecked(self.settings.value("PluginDatabase/SearchUnix64", True, type=bool))
-            self.ch_win32.setChecked(self.settings.value("PluginDatabase/SearchWin32", True, type=bool))
-            self.ch_win64.setChecked(self.settings.value("PluginDatabase/SearchWin64", True, type=bool))
+        self.ch_ladspa.setChecked(self.settings.value("PluginDatabase/SearchLADSPA", True, type=bool))
+        self.ch_dssi.setChecked(self.settings.value("PluginDatabase/SearchDSSI", True, type=bool))
+        self.ch_lv2.setChecked(self.settings.value("PluginDatabase/SearchLV2", True, type=bool))
+        self.ch_vst.setChecked(self.settings.value("PluginDatabase/SearchVST", True, type=bool))
+        self.ch_gig.setChecked(self.settings.value("PluginDatabase/SearchGIG", True, type=bool))
+        self.ch_sf2.setChecked(self.settings.value("PluginDatabase/SearchSF2", True, type=bool))
+        self.ch_sfz.setChecked(self.settings.value("PluginDatabase/SearchSFZ", True, type=bool))
+        self.ch_unix32.setChecked(self.settings.value("PluginDatabase/SearchUnix32", True, type=bool))
+        self.ch_unix64.setChecked(self.settings.value("PluginDatabase/SearchUnix64", True, type=bool))
+        self.ch_win32.setChecked(self.settings.value("PluginDatabase/SearchWin32", True, type=bool))
+        self.ch_win64.setChecked(self.settings.value("PluginDatabase/SearchWin64", True, type=bool))
 
     def closeEvent(self, event):
         if self.pThread.isRunning():
@@ -911,32 +873,32 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.tableWidget.setSortingEnabled(False)
 
         ladspa_plugins  = []
-        ladspa_plugins += toListCompat2(self.settings_db.value("Plugins/LADSPA_unix32", []))
-        ladspa_plugins += toListCompat2(self.settings_db.value("Plugins/LADSPA_unix64", []))
-        ladspa_plugins += toListCompat2(self.settings_db.value("Plugins/LADSPA_win32", []))
-        ladspa_plugins += toListCompat2(self.settings_db.value("Plugins/LADSPA_win64", []))
+        ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_unix32", []))
+        ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_unix64", []))
+        ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_win32", []))
+        ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_win64", []))
 
         dssi_plugins  = []
-        dssi_plugins += toListCompat2(self.settings_db.value("Plugins/DSSI_unix32", []))
-        dssi_plugins += toListCompat2(self.settings_db.value("Plugins/DSSI_unix64", []))
-        dssi_plugins += toListCompat2(self.settings_db.value("Plugins/DSSI_win32", []))
-        dssi_plugins += toListCompat2(self.settings_db.value("Plugins/DSSI_win64", []))
+        dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_unix32", []))
+        dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_unix64", []))
+        dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_win32", []))
+        dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_win64", []))
 
         lv2_plugins  = []
-        lv2_plugins += toListCompat2(self.settings_db.value("Plugins/LV2_unix32", []))
-        lv2_plugins += toListCompat2(self.settings_db.value("Plugins/LV2_unix64", []))
-        lv2_plugins += toListCompat2(self.settings_db.value("Plugins/LV2_win32", []))
-        lv2_plugins += toListCompat2(self.settings_db.value("Plugins/LV2_win64", []))
+        lv2_plugins += toList(self.settings_db.value("Plugins/LV2_unix32", []))
+        lv2_plugins += toList(self.settings_db.value("Plugins/LV2_unix64", []))
+        lv2_plugins += toList(self.settings_db.value("Plugins/LV2_win32", []))
+        lv2_plugins += toList(self.settings_db.value("Plugins/LV2_win64", []))
 
         vst_plugins  = []
-        vst_plugins += toListCompat2(self.settings_db.value("Plugins/VST_unix32", []))
-        vst_plugins += toListCompat2(self.settings_db.value("Plugins/VST_unix64", []))
-        vst_plugins += toListCompat2(self.settings_db.value("Plugins/VST_win32", []))
-        vst_plugins += toListCompat2(self.settings_db.value("Plugins/VST_win64", []))
+        vst_plugins += toList(self.settings_db.value("Plugins/VST_unix32", []))
+        vst_plugins += toList(self.settings_db.value("Plugins/VST_unix64", []))
+        vst_plugins += toList(self.settings_db.value("Plugins/VST_win32", []))
+        vst_plugins += toList(self.settings_db.value("Plugins/VST_win64", []))
 
-        gigs = toListCompat2(self.settings_db.value("Plugins/GIG", []))
-        sf2s = toListCompat2(self.settings_db.value("Plugins/SF2", []))
-        sfzs = toListCompat2(self.settings_db.value("Plugins/SFZ", []))
+        gigs = toList(self.settings_db.value("Plugins/GIG", []))
+        sf2s = toList(self.settings_db.value("Plugins/SF2", []))
+        sfzs = toList(self.settings_db.value("Plugins/SFZ", []))
 
         ladspa_count = 0
         dssi_count = 0
@@ -1042,10 +1004,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
 
     @pyqtSlot()
     def slot_refresh_plugins(self):
-        if AVLINUX_PY2BUILD:
-            lastLoadedPlugin = self.settings_db.value("Plugins/LastLoadedBinary", "").toString()
-        else:
-            lastLoadedPlugin = self.settings_db.value("Plugins/LastLoadedBinary", "", type=str)
+        lastLoadedPlugin = self.settings_db.value("Plugins/LastLoadedBinary", "", type=str)
         if lastLoadedPlugin:
             lastLoadedPlugin = os.path.basename(lastLoadedPlugin)
             ask = QMessageBox.question(self, self.tr("Warning"), self.tr("There was an error while checking the plugin %s.\n"
@@ -1053,7 +1012,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
                                                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
 
             if ask == QMessageBox.Yes:
-                blacklist = toListCompat(self.settings_db.value("Plugins/Blacklisted", []))
+                blacklist = toList(self.settings_db.value("Plugins/Blacklisted", []))
                 blacklist.append(lastLoadedPlugin)
                 self.settings_db.setValue("Plugins/Blacklisted", blacklist)
 
@@ -1181,42 +1140,23 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.settings.setValue("PluginDatabase/ShowStereoOnly", self.ch_stereo.isChecked())
 
     def loadSettings(self):
-        if AVLINUX_PY2BUILD:
-            self.restoreGeometry(self.settings.value("PluginDatabase/Geometry").toByteArray())
-            self.tableWidget.horizontalHeader().restoreState(self.settings.value("PluginDatabase/TableGeometry").toByteArray())
-            self.showFilters(self.settings.value("PluginDatabase/ShowFilters", False).toBool())
-            self.ch_effects.setChecked(self.settings.value("PluginDatabase/ShowEffects", True).toBool())
-            self.ch_instruments.setChecked(self.settings.value("PluginDatabase/ShowInstruments", True).toBool())
-            self.ch_midi.setChecked(self.settings.value("PluginDatabase/ShowMIDI", True).toBool())
-            self.ch_other.setChecked(self.settings.value("PluginDatabase/ShowOther", True).toBool())
-            self.ch_ladspa.setChecked(self.settings.value("PluginDatabase/ShowLADSPA", True).toBool())
-            self.ch_dssi.setChecked(self.settings.value("PluginDatabase/ShowDSSI", True).toBool())
-            self.ch_lv2.setChecked(self.settings.value("PluginDatabase/ShowLV2", True).toBool())
-            self.ch_vst.setChecked(self.settings.value("PluginDatabase/ShowVST", True).toBool())
-            self.ch_kits.setChecked(self.settings.value("PluginDatabase/ShowKits", True).toBool())
-            self.ch_native.setChecked(self.settings.value("PluginDatabase/ShowNative", True).toBool())
-            self.ch_bridged.setChecked(self.settings.value("PluginDatabase/ShowBridged", True).toBool())
-            self.ch_bridged_wine.setChecked(self.settings.value("PluginDatabase/ShowBridgedWine", True).toBool())
-            self.ch_gui.setChecked(self.settings.value("PluginDatabase/ShowHasGUI", False).toBool())
-            self.ch_stereo.setChecked(self.settings.value("PluginDatabase/ShowStereoOnly", False).toBool())
-        else:
-            self.restoreGeometry(self.settings.value("PluginDatabase/Geometry", ""))
-            self.tableWidget.horizontalHeader().restoreState(self.settings.value("PluginDatabase/TableGeometry", ""))
-            self.showFilters(self.settings.value("PluginDatabase/ShowFilters", False, type=bool))
-            self.ch_effects.setChecked(self.settings.value("PluginDatabase/ShowEffects", True, type=bool))
-            self.ch_instruments.setChecked(self.settings.value("PluginDatabase/ShowInstruments", True, type=bool))
-            self.ch_midi.setChecked(self.settings.value("PluginDatabase/ShowMIDI", True, type=bool))
-            self.ch_other.setChecked(self.settings.value("PluginDatabase/ShowOther", True, type=bool))
-            self.ch_ladspa.setChecked(self.settings.value("PluginDatabase/ShowLADSPA", True, type=bool))
-            self.ch_dssi.setChecked(self.settings.value("PluginDatabase/ShowDSSI", True, type=bool))
-            self.ch_lv2.setChecked(self.settings.value("PluginDatabase/ShowLV2", True, type=bool))
-            self.ch_vst.setChecked(self.settings.value("PluginDatabase/ShowVST", True, type=bool))
-            self.ch_kits.setChecked(self.settings.value("PluginDatabase/ShowKits", True, type=bool))
-            self.ch_native.setChecked(self.settings.value("PluginDatabase/ShowNative", True, type=bool))
-            self.ch_bridged.setChecked(self.settings.value("PluginDatabase/ShowBridged", True, type=bool))
-            self.ch_bridged_wine.setChecked(self.settings.value("PluginDatabase/ShowBridgedWine", True, type=bool))
-            self.ch_gui.setChecked(self.settings.value("PluginDatabase/ShowHasGUI", False, type=bool))
-            self.ch_stereo.setChecked(self.settings.value("PluginDatabase/ShowStereoOnly", False, type=bool))
+        self.restoreGeometry(self.settings.value("PluginDatabase/Geometry", ""))
+        self.tableWidget.horizontalHeader().restoreState(self.settings.value("PluginDatabase/TableGeometry", ""))
+        self.showFilters(self.settings.value("PluginDatabase/ShowFilters", False, type=bool))
+        self.ch_effects.setChecked(self.settings.value("PluginDatabase/ShowEffects", True, type=bool))
+        self.ch_instruments.setChecked(self.settings.value("PluginDatabase/ShowInstruments", True, type=bool))
+        self.ch_midi.setChecked(self.settings.value("PluginDatabase/ShowMIDI", True, type=bool))
+        self.ch_other.setChecked(self.settings.value("PluginDatabase/ShowOther", True, type=bool))
+        self.ch_ladspa.setChecked(self.settings.value("PluginDatabase/ShowLADSPA", True, type=bool))
+        self.ch_dssi.setChecked(self.settings.value("PluginDatabase/ShowDSSI", True, type=bool))
+        self.ch_lv2.setChecked(self.settings.value("PluginDatabase/ShowLV2", True, type=bool))
+        self.ch_vst.setChecked(self.settings.value("PluginDatabase/ShowVST", True, type=bool))
+        self.ch_kits.setChecked(self.settings.value("PluginDatabase/ShowKits", True, type=bool))
+        self.ch_native.setChecked(self.settings.value("PluginDatabase/ShowNative", True, type=bool))
+        self.ch_bridged.setChecked(self.settings.value("PluginDatabase/ShowBridged", True, type=bool))
+        self.ch_bridged_wine.setChecked(self.settings.value("PluginDatabase/ShowBridgedWine", True, type=bool))
+        self.ch_gui.setChecked(self.settings.value("PluginDatabase/ShowHasGUI", False, type=bool))
+        self.ch_stereo.setChecked(self.settings.value("PluginDatabase/ShowStereoOnly", False, type=bool))
         self.reAddPlugins()
 
     def closeEvent(self, event):
@@ -1240,7 +1180,7 @@ class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
                                      "<br><i>VST is a trademark of Steinberg Media Technologies GmbH.</i>"
                                      "" % VERSION))
 
-        host_osc_url = cStringCompat(CarlaHost.get_host_osc_url())
+        host_osc_url = cString(CarlaHost.get_host_osc_url())
         self.le_osc_url.setText(host_osc_url)
 
         self.l_osc_cmds.setText(""
@@ -1389,7 +1329,7 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
         self.combo.setCurrentIndex(cc_index)
 
     def textCallFunction(self):
-        return cStringCompat(CarlaHost.get_parameter_text(self.plugin_id, self.parameter_id))
+        return cString(CarlaHost.get_parameter_text(self.plugin_id, self.parameter_id))
 
     @pyqtSlot(float)
     def slot_valueChanged(self, value):
@@ -1522,13 +1462,13 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         # Update current program text
         if (self.cb_programs.count() > 0):
             pindex = self.cb_programs.currentIndex()
-            pname  = cStringCompat(CarlaHost.get_program_name(self.plugin_id, pindex))
+            pname  = cString(CarlaHost.get_program_name(self.plugin_id, pindex))
             self.cb_programs.setItemText(pindex, pname)
 
         # Update current midi program text
         if (self.cb_midi_programs.count() > 0):
             mpindex = self.cb_midi_programs.currentIndex()
-            mpname  = "%s %s" % (self.cb_midi_programs.currentText().split(" ", 1)[0], cStringCompat(CarlaHost.get_midi_program_name(self.plugin_id, mpindex)))
+            mpname  = "%s %s" % (self.cb_midi_programs.currentText().split(" ", 1)[0], cString(CarlaHost.get_midi_program_name(self.plugin_id, mpindex)))
             self.cb_midi_programs.setItemText(mpindex, mpname)
 
         QTimer.singleShot(0, self, SLOT("slot_checkInputControlParameters()"))
@@ -1537,11 +1477,11 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
     def do_reload_all(self):
         self.pinfo = CarlaHost.get_plugin_info(self.plugin_id)
         if (self.pinfo['valid']):
-            self.pinfo["binary"]    = cStringCompat(self.pinfo["binary"])
-            self.pinfo["name"]      = cStringCompat(self.pinfo["name"])
-            self.pinfo["label"]     = cStringCompat(self.pinfo["label"])
-            self.pinfo["maker"]     = cStringCompat(self.pinfo["maker"])
-            self.pinfo["copyright"] = cStringCompat(self.pinfo["copyright"])
+            self.pinfo["binary"]    = cString(self.pinfo["binary"])
+            self.pinfo["name"]      = cString(self.pinfo["name"])
+            self.pinfo["label"]     = cString(self.pinfo["label"])
+            self.pinfo["maker"]     = cString(self.pinfo["maker"])
+            self.pinfo["copyright"] = cString(self.pinfo["copyright"])
         else:
             self.pinfo["type"]      = PLUGIN_NONE
             self.pinfo["category"]  = PLUGIN_CATEGORY_NONE
@@ -1551,7 +1491,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
             self.pinfo["label"]     = ""
             self.pinfo["maker"]     = ""
             self.pinfo["copyright"] = ""
-            self.pinfo["unique_id"] = 0
+            self.pinfo["uniqueId"] = 0
 
         self.do_reload_info()
         self.do_reload_parameters()
@@ -1562,7 +1502,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
             self.tab_programs.setCurrentIndex(1)
 
         self.ptype = self.pinfo['type']
-        real_plugin_name = cStringCompat(CarlaHost.get_real_plugin_name(self.plugin_id))
+        real_plugin_name = cString(CarlaHost.get_real_plugin_name(self.plugin_id))
 
         self.le_name.setText(real_plugin_name)
         self.le_name.setToolTip(real_plugin_name)
@@ -1572,8 +1512,8 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.le_maker.setToolTip(self.pinfo['maker'])
         self.le_copyright.setText(self.pinfo['copyright'])
         self.le_copyright.setToolTip(self.pinfo['copyright'])
-        self.le_unique_id.setText(str(self.pinfo['unique_id']))
-        self.le_unique_id.setToolTip(str(self.pinfo['unique_id']))
+        self.le_unique_id.setText(str(self.pinfo['uniqueId']))
+        self.le_unique_id.setToolTip(str(self.pinfo['uniqueId']))
 
         self.label_plugin.setText("\n%s\n" % (self.pinfo['name']))
         self.setWindowTitle(self.pinfo['name'])
@@ -1662,8 +1602,8 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
                 parameter = {
                     'type': param_data['type'],
                     'hints': param_data['hints'],
-                    'name': cStringCompat(param_info['name']),
-                    'unit': cStringCompat(param_info['unit']),
+                    'name': cString(param_info['name']),
+                    'unit': cString(param_info['unit']),
                     'scalepoints': [],
 
                     'index': param_data['index'],
@@ -1683,7 +1623,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
                     scalepoint = CarlaHost.get_scalepoint_info(self.plugin_id, i, j)
                     parameter['scalepoints'].append({
                           'value': scalepoint['value'],
-                          'label': cStringCompat(scalepoint['label'])
+                          'label': cString(scalepoint['label'])
                         })
 
                 # -----------------------------------------------------------------
@@ -1779,7 +1719,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
             self.cb_programs.setEnabled(True)
 
             for i in range(program_count):
-                pname = cStringCompat(CarlaHost.get_program_name(self.plugin_id, i))
+                pname = cString(CarlaHost.get_program_name(self.plugin_id, i))
                 self.cb_programs.addItem(pname)
 
             self.cur_program_index = CarlaHost.get_current_program_index(self.plugin_id)
@@ -1804,7 +1744,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
                 bank = int(midip['bank'])
                 prog = int(midip['program'])
-                label = cStringCompat(midip['label'])
+                label = cString(midip['label'])
 
                 self.cb_midi_programs.addItem("%03i:%03i - %s" % (bank, prog, label))
 
@@ -2069,10 +2009,16 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.peak_out.setOrientation(self.peak_out.HORIZONTAL)
 
         audio_count = CarlaHost.get_audio_port_count_info(self.plugin_id)
-        if (not audio_count['valid']):
+        if not audio_count['valid']:
             audio_count['ins']   = 0
             audio_count['outs']  = 0
             audio_count['total'] = 0
+
+        midi_count = CarlaHost.get_midi_port_count_info(self.plugin_id)
+        if not midi_count['valid']:
+            midi_count['ins']   = 0
+            midi_count['outs']  = 0
+            midi_count['total'] = 0
 
         self.peaks_in  = int(audio_count['ins'])
         self.peaks_out = int(audio_count['outs'])
@@ -2087,12 +2033,12 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.peak_out.setChannels(self.peaks_out)
 
         self.pinfo = CarlaHost.get_plugin_info(self.plugin_id)
-        if (self.pinfo['valid']):
-            self.pinfo["binary"] = cStringCompat(self.pinfo["binary"])
-            self.pinfo["name"]   = cStringCompat(self.pinfo["name"])
-            self.pinfo["label"]  = cStringCompat(self.pinfo["label"])
-            self.pinfo["maker"]  = cStringCompat(self.pinfo["maker"])
-            self.pinfo["copyright"] = cStringCompat(self.pinfo["copyright"])
+        if self.pinfo['valid']:
+            self.pinfo["binary"] = cString(self.pinfo["binary"])
+            self.pinfo["name"]   = cString(self.pinfo["name"])
+            self.pinfo["label"]  = cString(self.pinfo["label"])
+            self.pinfo["maker"]  = cString(self.pinfo["maker"])
+            self.pinfo["copyright"] = cString(self.pinfo["copyright"])
         else:
             self.pinfo["type"] = PLUGIN_NONE
             self.pinfo["category"] = PLUGIN_CATEGORY_NONE
@@ -2102,10 +2048,10 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             self.pinfo["label"]  = ""
             self.pinfo["maker"]  = ""
             self.pinfo["copyright"] = ""
-            self.pinfo["unique_id"] = 0
+            self.pinfo["uniqueId"] = 0
 
         # Set widget page
-        if (self.pinfo['type'] == PLUGIN_NONE or audio_count['total'] == 0):
+        if self.pinfo['type'] == PLUGIN_NONE or audio_count['total'] == 0:
             self.stackedWidget.setCurrentIndex(1)
         else:
             self.stackedWidget.setCurrentIndex(0)
@@ -2135,7 +2081,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         else:
             self.setWidgetColor(PALETTE_COLOR_NONE)
 
-        if self.pinfo['hints'] & PLUGIN_IS_SYNTH:
+        if (self.pinfo['hints'] & PLUGIN_IS_SYNTH) > 0 or (midi_count['ins'] > 0 < midi_count['outs']):
             self.led_audio_in.setVisible(False)
         else:
             self.led_midi.setVisible(False)
@@ -2148,7 +2094,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             gui_info = CarlaHost.get_gui_info(self.plugin_id)
             self.gui_dialog_type = gui_info['type']
 
-            if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_X11)):
+            if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_HWND, GUI_INTERNAL_X11)):
                 self.gui_dialog = None
                 self.gui_dialog = PluginGUI(self, self.pinfo['name'], gui_info['resizable'])
                 self.gui_dialog.hide()
@@ -2364,7 +2310,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         x_save_state_dict['Name'] = self.pinfo['name']
         x_save_state_dict['Label'] = self.pinfo['label']
         x_save_state_dict['Binary'] = self.pinfo['binary']
-        x_save_state_dict['UniqueID'] = self.pinfo['unique_id']
+        x_save_state_dict['UniqueID'] = self.pinfo['uniqueId']
 
         # ----------------------------
         # Internals
@@ -2405,8 +2351,8 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             x_save_state_parameter = deepcopy(save_state_parameter)
 
             x_save_state_parameter['index']  = parameter_data['index']
-            x_save_state_parameter['name']   = cStringCompat(parameter_info['name'])
-            x_save_state_parameter['symbol'] = cStringCompat(parameter_info['symbol'])
+            x_save_state_parameter['name']   = cString(parameter_info['name'])
+            x_save_state_parameter['symbol'] = cString(parameter_info['symbol'])
             x_save_state_parameter['value']  = CarlaHost.get_current_parameter_value(self.plugin_id, parameter_data['index'])
             x_save_state_parameter['midi_channel'] = parameter_data['midi_channel'] + 1
             x_save_state_parameter['midi_cc'] = parameter_data['midi_cc']
@@ -2430,16 +2376,16 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             x_save_state_custom_data = deepcopy(save_state_custom_data)
 
             x_save_state_custom_data['type']  = CustomDataType2String(custom_data['type'])
-            x_save_state_custom_data['key']   = cStringCompat(custom_data['key'])
-            x_save_state_custom_data['value'] = cStringCompat(custom_data['value'])
+            x_save_state_custom_data['key']   = cString(custom_data['key'])
+            x_save_state_custom_data['value'] = cString(custom_data['value'])
 
             x_save_state_dict['CustomData'].append(x_save_state_custom_data)
 
         # ----------------------------
         # Chunk
 
-        if (self.pinfo['hints'] & PLUGIN_USES_CHUNKS):
-            x_save_state_dict['Chunk'] = cStringCompat(CarlaHost.get_chunk_data(self.plugin_id))
+        if self.pinfo['hints'] & PLUGIN_USES_CHUNKS:
+            x_save_state_dict['Chunk'] = cString(CarlaHost.get_chunk_data(self.plugin_id))
 
         # ----------------------------
         # Generate XML for this plugin
@@ -2525,7 +2471,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         program_count = CarlaHost.get_program_count(self.plugin_id)
 
         if (content['CurrentProgramName']):
-            test_pname = cStringCompat(CarlaHost.get_program_name(self.plugin_id, content['CurrentProgramIndex']))
+            test_pname = cString(CarlaHost.get_program_name(self.plugin_id, content['CurrentProgramIndex']))
 
             # Program index and name matches
             if (content['CurrentProgramName'] == test_pname):
@@ -2538,7 +2484,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             # index not valid, try to find by name
             else:
                 for i in range(program_count):
-                    test_pname = cStringCompat(CarlaHost.get_program_name(self.plugin_id, i))
+                    test_pname = cString(CarlaHost.get_program_name(self.plugin_id, i))
 
                     if (content['CurrentProgramName'] == test_pname):
                         program_id = i
@@ -2571,7 +2517,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
                 param_info = CarlaHost.get_parameter_info(self.plugin_id, parameter['index'])
 
                 if (param_info['valid'] and param_info['symbol']):
-                    param_symbols.append((parameter['index'], cStringCompat(param_info['symbol'])))
+                    param_symbols.append((parameter['index'], cString(param_info['symbol'])))
 
         # ---------------------------------------------------------------------
         # Part 4b - set parameter values (carefully)
@@ -2713,7 +2659,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
     @pyqtSlot(bool)
     def slot_guiClicked(self, show):
-        if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_X11)):
+        if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_HWND, GUI_INTERNAL_X11)):
             if (show):
                 if (self.gui_dialog_geometry):
                     self.gui_dialog.restoreGeometry(self.gui_dialog_geometry)
@@ -3058,7 +3004,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
         if (new_plugin_id < 0):
             CustomMessageBox(self, QMessageBox.Critical, self.tr("Error"), self.tr("Failed to load plugin"),
-                cStringCompat(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
+                cString(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
         else:
             pwidget = PluginWidget(self, new_plugin_id)
             self.w_plugins.layout().addWidget(pwidget)
@@ -3089,7 +3035,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         else:
             if (showError):
                 CustomMessageBox(self, QMessageBox.Critical, self.tr("Error"), self.tr("Failed to remove plugin"),
-                    cStringCompat(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
+                    cString(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
 
         for i in range(MAX_PLUGINS):
             if (self.m_plugin_list[i] != None):
@@ -3114,7 +3060,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             if plugin['hints'] & PLUGIN_HAS_GUI:
                 gui = findDSSIGUI(plugin['binary'], plugin['name'], plugin['label'])
                 if gui:
-                    return gui if AVLINUX_PY2BUILD else gui.encode("utf-8")
+                    return gui.encode("utf-8")
             return c_nullptr
 
         else:
@@ -3132,7 +3078,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
                 if not first_plugin:
                     content += "\n"
 
-                real_plugin_name = cStringCompat(CarlaHost.get_real_plugin_name(pwidget.plugin_id))
+                real_plugin_name = cString(CarlaHost.get_real_plugin_name(pwidget.plugin_id))
                 if real_plugin_name:
                     content += " <!-- %s -->\n" % xmlSafeString(real_plugin_name, True)
 
@@ -3195,49 +3141,49 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             if ptype == "LADSPA":
                 if not x_ladspa_plugins:
                     x_ladspa_plugins  = []
-                    x_ladspa_plugins += toListCompat2(self.settings_db.value("Plugins/LADSPA_unix32", []))
-                    x_ladspa_plugins += toListCompat2(self.settings_db.value("Plugins/LADSPA_unix64", []))
-                    x_ladspa_plugins += toListCompat2(self.settings_db.value("Plugins/LADSPA_win32", []))
-                    x_ladspa_plugins += toListCompat2(self.settings_db.value("Plugins/LADSPA_win64", []))
+                    x_ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_unix32", []))
+                    x_ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_unix64", []))
+                    x_ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_win32", []))
+                    x_ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_win64", []))
                 x_plugins = x_ladspa_plugins
 
             elif ptype == "DSSI":
                 if not x_dssi_plugins:
                     x_dssi_plugins  = []
-                    x_dssi_plugins += toListCompat2(self.settings_db.value("Plugins/DSSI_unix32", []))
-                    x_dssi_plugins += toListCompat2(self.settings_db.value("Plugins/DSSI_unix64", []))
-                    x_dssi_plugins += toListCompat2(self.settings_db.value("Plugins/DSSI_win32", []))
-                    x_dssi_plugins += toListCompat2(self.settings_db.value("Plugins/DSSI_win64", []))
+                    x_dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_unix32", []))
+                    x_dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_unix64", []))
+                    x_dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_win32", []))
+                    x_dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_win64", []))
                 x_plugins = x_dssi_plugins
 
             elif ptype == "LV2":
                 if not x_lv2_plugins:
                     x_lv2_plugins  = []
-                    x_lv2_plugins += toListCompat2(self.settings_db.value("Plugins/LV2_unix32", []))
-                    x_lv2_plugins += toListCompat2(self.settings_db.value("Plugins/LV2_unix64", []))
-                    x_lv2_plugins += toListCompat2(self.settings_db.value("Plugins/LV2_win32", []))
-                    x_lv2_plugins += toListCompat2(self.settings_db.value("Plugins/LV2_win64", []))
+                    x_lv2_plugins += toList(self.settings_db.value("Plugins/LV2_unix32", []))
+                    x_lv2_plugins += toList(self.settings_db.value("Plugins/LV2_unix64", []))
+                    x_lv2_plugins += toList(self.settings_db.value("Plugins/LV2_win32", []))
+                    x_lv2_plugins += toList(self.settings_db.value("Plugins/LV2_win64", []))
                 x_plugins = x_lv2_plugins
 
             elif ptype == "VST":
                 if not x_vst_plugins:
                     x_vst_plugins  = []
-                    x_vst_plugins += toListCompat2(self.settings_db.value("Plugins/VST_unix32", []))
-                    x_vst_plugins += toListCompat2(self.settings_db.value("Plugins/VST_unix64", []))
-                    x_vst_plugins += toListCompat2(self.settings_db.value("Plugins/VST_win32", []))
-                    x_vst_plugins += toListCompat2(self.settings_db.value("Plugins/VST_win64", []))
+                    x_vst_plugins += toList(self.settings_db.value("Plugins/VST_unix32", []))
+                    x_vst_plugins += toList(self.settings_db.value("Plugins/VST_unix64", []))
+                    x_vst_plugins += toList(self.settings_db.value("Plugins/VST_win32", []))
+                    x_vst_plugins += toList(self.settings_db.value("Plugins/VST_win64", []))
                 x_plugins = x_vst_plugins
 
             elif ptype == "GIG":
-                if not x_gig_plugins: x_gig_plugins = toListCompat2(self.settings_db.value("Plugins/GIG", []))
+                if not x_gig_plugins: x_gig_plugins = toList(self.settings_db.value("Plugins/GIG", []))
                 x_plugins = x_gig_plugins
 
             elif ptype == "SF2":
-                if not x_sf2_plugins: x_sf2_plugins = toListCompat2(self.settings_db.value("Plugins/SF2", []))
+                if not x_sf2_plugins: x_sf2_plugins = toList(self.settings_db.value("Plugins/SF2", []))
                 x_plugins = x_sf2_plugins
 
             elif ptype == "SFZ":
-                if not x_sfz_plugins: x_sfz_plugins = toListCompat2(self.settings_db.value("Plugins/SFZ", []))
+                if not x_sfz_plugins: x_sfz_plugins = toList(self.settings_db.value("Plugins/SFZ", []))
                 x_plugins = x_sfz_plugins
 
             else:
@@ -3459,40 +3405,26 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.settings.setValue("ShowToolbar", self.toolBar.isVisible())
 
     def loadSettings(self, geometry):
-        if AVLINUX_PY2BUILD:
-            if geometry:
-                self.restoreGeometry(self.settings.value("Geometry").toByteArray())
+        if geometry:
+            self.restoreGeometry(self.settings.value("Geometry", ""))
 
-                show_toolbar = self.settings.value("ShowToolbar", True).toBool()
-                self.act_settings_show_toolbar.setChecked(show_toolbar)
-                self.toolBar.setVisible(show_toolbar)
+            show_toolbar = self.settings.value("ShowToolbar", True, type=bool)
+            self.act_settings_show_toolbar.setChecked(show_toolbar)
+            self.toolBar.setVisible(show_toolbar)
 
-            self.m_savedSettings = {
-                "Main/DefaultProjectFolder": self.settings.value("Main/DefaultProjectFolder", DEFAULT_PROJECT_FOLDER).toString(),
-                "Main/RefreshInterval": self.settings.value("Main/RefreshInterval", 120).toInt()[0]
-            }
-
-        else:
-            if geometry:
-                self.restoreGeometry(self.settings.value("Geometry", ""))
-
-                show_toolbar = self.settings.value("ShowToolbar", True, type=bool)
-                self.act_settings_show_toolbar.setChecked(show_toolbar)
-                self.toolBar.setVisible(show_toolbar)
-
-            self.m_savedSettings = {
-                "Main/DefaultProjectFolder": self.settings.value("Main/DefaultProjectFolder", DEFAULT_PROJECT_FOLDER, type=str),
-                "Main/RefreshInterval": self.settings.value("Main/RefreshInterval", 120, type=int)
-            }
+        self.m_savedSettings = {
+            "Main/DefaultProjectFolder": self.settings.value("Main/DefaultProjectFolder", DEFAULT_PROJECT_FOLDER, type=str),
+            "Main/RefreshInterval": self.settings.value("Main/RefreshInterval", 120, type=int)
+        }
 
         global LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, GIG_PATH, SF2_PATH, SFZ_PATH
-        LADSPA_PATH = toListCompat(self.settings.value("Paths/LADSPA", LADSPA_PATH))
-        DSSI_PATH = toListCompat(self.settings.value("Paths/DSSI", DSSI_PATH))
-        LV2_PATH = toListCompat(self.settings.value("Paths/LV2", LV2_PATH))
-        VST_PATH = toListCompat(self.settings.value("Paths/VST", VST_PATH))
-        GIG_PATH = toListCompat(self.settings.value("Paths/GIG", GIG_PATH))
-        SF2_PATH = toListCompat(self.settings.value("Paths/SF2", SF2_PATH))
-        SFZ_PATH = toListCompat(self.settings.value("Paths/SFZ", SFZ_PATH))
+        LADSPA_PATH = toList(self.settings.value("Paths/LADSPA", LADSPA_PATH))
+        DSSI_PATH = toList(self.settings.value("Paths/DSSI", DSSI_PATH))
+        LV2_PATH = toList(self.settings.value("Paths/LV2", LV2_PATH))
+        VST_PATH = toList(self.settings.value("Paths/VST", VST_PATH))
+        GIG_PATH = toList(self.settings.value("Paths/GIG", GIG_PATH))
+        SF2_PATH = toList(self.settings.value("Paths/SF2", SF2_PATH))
+        SFZ_PATH = toList(self.settings.value("Paths/SFZ", SFZ_PATH))
 
         CarlaHost.set_option(OPTION_PATH_LADSPA, 0, splitter.join(LADSPA_PATH))
         CarlaHost.set_option(OPTION_PATH_DSSI, 0, splitter.join(DSSI_PATH))
@@ -3548,26 +3480,18 @@ if __name__ == '__main__':
     gui = CarlaMainW()
 
     # Init backend
-    if AVLINUX_PY2BUILD:
-        process_mode       = gui.settings.value("Engine/ProcessMode", PROCESS_MODE_MULTIPLE_CLIENTS).toInt()[0]
-        MAX_PARAMETERS     = gui.settings.value("Engine/MaxParameters", MAX_PARAMETERS).toInt()[0]
-        prefer_ui_bridges  = gui.settings.value("Engine/PreferUIBridges", True).toBool()
-        proccess_hq        = gui.settings.value("Engine/ProcessHQ", False).toBool()
-        osc_gui_timeout    = gui.settings.value("Engine/OscGuiTimeout", 40).toInt()[0]
-        use_dssi_chunks    = gui.settings.value("Engine/UseDSSIChunks", False).toBool()
-    else:
-        process_mode       = gui.settings.value("Engine/ProcessMode", PROCESS_MODE_MULTIPLE_CLIENTS, type=int)
-        MAX_PARAMETERS     = gui.settings.value("Engine/MaxParameters", MAX_PARAMETERS, type=int)
-        prefer_ui_bridges  = gui.settings.value("Engine/PreferUIBridges", True, type=bool)
-        proccess_hq        = gui.settings.value("Engine/ProcessHQ", False, type=bool)
-        osc_gui_timeout    = gui.settings.value("Engine/OscGuiTimeout", 40, type=int)
-        use_dssi_chunks    = gui.settings.value("Engine/UseDSSIChunks", False, type=bool)
+    process_mode       = gui.settings.value("Engine/ProcessMode", PROCESS_MODE_MULTIPLE_CLIENTS, type=int)
+    MAX_PARAMETERS     = gui.settings.value("Engine/MaxParameters", MAX_PARAMETERS, type=int)
+    prefer_ui_bridges  = gui.settings.value("Engine/PreferUIBridges", True, type=bool)
+    proccess_hq        = gui.settings.value("Engine/ProcessHQ", False, type=bool)
+    osc_gui_timeout    = gui.settings.value("Engine/OscGuiTimeout", 40, type=int)
+    use_dssi_chunks    = gui.settings.value("Engine/UseDSSIChunks", False, type=bool)
 
     if os.getenv("LADISH_APP_NAME") and process_mode == PROCESS_MODE_MULTIPLE_CLIENTS:
         print("LADISH detected but using multiple clients (not allowed), forcing single client now")
         process_mode = PROCESS_MODE_SINGLE_CLIENT
 
-    process_mode = PROCESS_MODE_CONTINUOUS_RACK
+    #process_mode = PROCESS_MODE_CONTINUOUS_RACK
 
     CarlaHost.set_option(OPTION_PROCESS_MODE, process_mode, "")
     CarlaHost.set_option(OPTION_MAX_PARAMETERS, MAX_PARAMETERS, "")
@@ -3602,7 +3526,7 @@ if __name__ == '__main__':
 
     if not CarlaHost.engine_init("Carla"):
         CustomMessageBox(None, QMessageBox.Critical, "Error", "Could not connect to JACK",
-            cStringCompat(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
+            cString(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
         sys.exit(1)
 
     # Set-up custom signal handling
@@ -3621,7 +3545,7 @@ if __name__ == '__main__':
 
     # Close Host
     if CarlaHost.is_engine_running() and not CarlaHost.engine_close():
-        print(cStringCompat(CarlaHost.get_last_error()))
+        print(cString(CarlaHost.get_last_error()))
 
     # Exit properly
     sys.exit(ret)

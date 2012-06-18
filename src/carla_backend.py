@@ -16,23 +16,11 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
-# Special rule for AVLinux
-AVLINUX_PY2BUILD = False
-
-if AVLINUX_PY2BUILD:
-    from sip import setapi
-    setapi("QString", 2)
-    setapi("QVariant", 1)
-
 # Imports (Global)
 import os, sys
 from ctypes import *
 from copy import deepcopy
-
-if AVLINUX_PY2BUILD:
-    from commands import getoutput
-else:
-    from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE
 
 # Imports (Custom)
 from shared import *
@@ -44,10 +32,7 @@ except:
     print("LRDF Support not available (LADSPA-RDF will be disabled)")
     haveLRDF = False
 
-if AVLINUX_PY2BUILD:
-    is64bit = True # TODO ------------------------- TODO ---------- TODO False
-    c_uintptr = c_uint32
-elif sys.int_info[1] == 4:
+if sys.int_info[1] == 4:
     is64bit = True
     c_uintptr = c_uint64
 else:
@@ -462,20 +447,11 @@ def runCarlaDiscovery(itype, stype, filename, tool, isWine=False):
 
     command.append(tool)
     command.append(stype)
-    if AVLINUX_PY2BUILD:
-        command.append('"%s"' % filename)
-    else:
-        command.append(filename)
+    command.append(filename)
 
-    if AVLINUX_PY2BUILD:
-        try:
-            output = getoutput(" ".join(command)).split("\n")
-        except:
-            output = []
-    else:
-        Ps = Popen(command, stdout=PIPE)
-        Ps.wait()
-        output = Ps.stdout.read().decode("utf-8", errors="ignore").split("\n")
+    Ps = Popen(command, stdout=PIPE)
+    Ps.wait()
+    output = Ps.stdout.read().decode("utf-8", errors="ignore").split("\n")
 
     pinfo = None
 
@@ -649,8 +625,8 @@ CUSTOM_DATA_BINARY  = 4
 # enum GuiType
 GUI_NONE = 0
 GUI_INTERNAL_QT4  = 1
-GUI_INTERNAL_X11  = 2
-GUI_INTERNAL_HWND = 3
+GUI_INTERNAL_HWND = 2
+GUI_INTERNAL_X11  = 3
 GUI_EXTERNAL_LV2  = 4
 GUI_EXTERNAL_OSC  = 5
 
@@ -736,7 +712,7 @@ class PluginInfo(Structure):
         ("label", c_char_p),
         ("maker", c_char_p),
         ("copyright", c_char_p),
-        ("unique_id", c_long)
+        ("uniqueId", c_long)
     ]
 
 class PortCountInfo(Structure):
@@ -972,8 +948,6 @@ class Host(object):
         self.lib.get_latency.restype = c_double
 
     def engine_init(self, client_name):
-        if AVLINUX_PY2BUILD:
-            return self.lib.engine_init(client_name)
         return self.lib.engine_init(client_name.encode("utf-8"))
 
     def engine_close(self):
@@ -983,8 +957,6 @@ class Host(object):
         return self.lib.is_engine_running()
 
     def add_plugin(self, btype, ptype, filename, label, extra_stuff):
-        if AVLINUX_PY2BUILD:
-            return self.lib.add_plugin(btype, ptype, filename, label, cast(extra_stuff, c_void_p))
         return self.lib.add_plugin(btype, ptype, filename.encode("utf-8"), label.encode("utf-8"), cast(extra_stuff, c_void_p))
 
     def remove_plugin(self, plugin_id):
@@ -1099,13 +1071,9 @@ class Host(object):
         self.lib.set_midi_program(plugin_id, midi_program_id)
 
     def set_custom_data(self, plugin_id, dtype, key, value):
-        if AVLINUX_PY2BUILD:
-            self.lib.set_custom_data(plugin_id, dtype, key, value)
         self.lib.set_custom_data(plugin_id, dtype, key.encode("utf-8"), value.encode("utf-8"))
 
     def set_chunk_data(self, plugin_id, chunk_data):
-        if AVLINUX_PY2BUILD:
-            self.lib.set_chunk_data(plugin_id, chunk_data)
         self.lib.set_chunk_data(plugin_id, chunk_data.encode("utf-8"))
 
     def set_gui_data(self, plugin_id, data, gui_addr):
@@ -1129,8 +1097,6 @@ class Host(object):
         self.lib.set_callback_function(Callback)
 
     def set_option(self, option, value, value_str):
-        if AVLINUX_PY2BUILD:
-            self.lib.set_option(option, value, value_str)
         self.lib.set_option(option, value, value_str.encode("utf-8"))
 
     def get_last_error(self):

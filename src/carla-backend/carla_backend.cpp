@@ -1175,10 +1175,8 @@ void set_option(OptionsType option, int value, const char* value_str)
     switch (option)
     {
     case OPTION_PROCESS_MODE:
-        if (value < PROCESS_MODE_SINGLE_CLIENT)
-            value = PROCESS_MODE_SINGLE_CLIENT;
-        else if (value > PROCESS_MODE_CONTINUOUS_RACK)
-            value = PROCESS_MODE_CONTINUOUS_RACK;
+        if (value < PROCESS_MODE_SINGLE_CLIENT || value > PROCESS_MODE_CONTINUOUS_RACK)
+            value = PROCESS_MODE_MULTIPLE_CLIENTS;
         carla_options.process_mode = (ProcessModeType)value;
         break;
     case OPTION_MAX_PARAMETERS:
@@ -1286,7 +1284,7 @@ int main(int argc, char* argv[])
     if (engine_init("carla_demo"))
     {
         set_callback_function(main_callback);
-        short id = add_plugin_vst("/usr/lib/vst/Wolpertinger.so", "xaxaxa");
+        short id = add_plugin_vst("/usr/lib/vst/Pianoteq 4.so", "xaxaxa");
 
         if (id >= 0)
         {

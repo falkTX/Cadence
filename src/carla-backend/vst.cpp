@@ -24,9 +24,13 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
+#if 0
+} /* adjust editor indent */
+#endif
+
 class VstPlugin : public CarlaPlugin
 {
-    public:
+public:
     VstPlugin(unsigned short id) : CarlaPlugin(id)
     {
         qDebug("VstPlugin::VstPlugin()");
@@ -63,7 +67,7 @@ class VstPlugin : public CarlaPlugin
             if (m_hints & PLUGIN_HAS_GUI)
                 effect->dispatcher(effect, effEditClose, 0, 0, nullptr, 0.0f);
 
-            if (m_active_before)
+            if (m_activeBefore)
             {
                 effect->dispatcher(effect, effStopProcess, 0, 0, nullptr, 0.0f);
                 effect->dispatcher(effect, effMainsChanged, 0, 0, nullptr, 0.0f);
@@ -102,7 +106,7 @@ class VstPlugin : public CarlaPlugin
         return get_category_from_name(m_name);
     }
 
-    long unique_id()
+    long uniqueId()
     {
         return effect->uniqueID;
     }
@@ -110,58 +114,63 @@ class VstPlugin : public CarlaPlugin
     // -------------------------------------------------------------------
     // Information (current data)
 
-    int32_t chunk_data(void** data_ptr)
+    int32_t chunkData(void** dataPtr)
     {
-        return effect->dispatcher(effect, effGetChunk, 0 /* bank */, 0, data_ptr, 0.0f);
+        assert(dataPtr);
+        return effect->dispatcher(effect, effGetChunk, 0 /* bank */, 0, dataPtr, 0.0f);
     }
 
     // -------------------------------------------------------------------
     // Information (per-plugin data)
 
-    double get_parameter_value(uint32_t param_id)
+    double getParameterValue(uint32_t paramId)
     {
-        return effect->getParameter(effect, param_id);
+        assert(paramId < param.count);
+        return effect->getParameter(effect, paramId);
     }
 
-    void get_label(char* buf_str)
+    void getLabel(char* strBuf)
     {
-        effect->dispatcher(effect, effGetProductString, 0, 0, buf_str, 0.0f);
+        effect->dispatcher(effect, effGetProductString, 0, 0, strBuf, 0.0f);
     }
 
-    void get_maker(char* buf_str)
+    void getMaker(char* strBuf)
     {
-        effect->dispatcher(effect, effGetVendorString, 0, 0, buf_str, 0.0f);
+        effect->dispatcher(effect, effGetVendorString, 0, 0, strBuf, 0.0f);
     }
 
-    void get_copyright(char* buf_str)
+    void getCopyright(char* strBuf)
     {
-        effect->dispatcher(effect, effGetVendorString, 0, 0, buf_str, 0.0f);
+        effect->dispatcher(effect, effGetVendorString, 0, 0, strBuf, 0.0f);
     }
 
-    void get_real_name(char* buf_str)
+    void getRealName(char* strBuf)
     {
-        effect->dispatcher(effect, effGetEffectName, 0, 0, buf_str, 0.0f);
+        effect->dispatcher(effect, effGetEffectName, 0, 0, strBuf, 0.0f);
     }
 
-    void get_parameter_name(uint32_t param_id, char* buf_str)
+    void getParameterName(uint32_t paramId, char* strBuf)
     {
-        effect->dispatcher(effect, effGetParamName, param_id, 0, buf_str, 0.0f);
+        assert(paramId < param.count);
+        effect->dispatcher(effect, effGetParamName, paramId, 0, strBuf, 0.0f);
     }
 
-    void get_parameter_unit(uint32_t param_id, char* buf_str)
+    void getParameterUnit(uint32_t paramId, char* strBuf)
     {
-        effect->dispatcher(effect, effGetParamLabel, param_id, 0, buf_str, 0.0f);
+        assert(paramId < param.count);
+        effect->dispatcher(effect, effGetParamLabel, paramId, 0, strBuf, 0.0f);
     }
 
-    void get_parameter_text(uint32_t param_id, char* buf_str)
+    void getParameterText(uint32_t paramId, char* strBuf)
     {
-        effect->dispatcher(effect, effGetParamDisplay, param_id, 0, buf_str, 0.0f);
+        assert(paramId < param.count);
+        effect->dispatcher(effect, effGetParamDisplay, paramId, 0, strBuf, 0.0f);
 
-        if (*buf_str == 0)
-            sprintf(buf_str, "%f", get_parameter_value(param_id));
+        if (*strBuf == 0)
+            sprintf(strBuf, "%f", getParameterValue(paramId));
     }
 
-    void get_gui_info(GuiInfo* info)
+    void getGuiInfo(GuiInfo* const info)
     {
         if (effect->flags & effFlagsHasEditor)
 #ifdef __WINE__
@@ -177,38 +186,28 @@ class VstPlugin : public CarlaPlugin
     // -------------------------------------------------------------------
     // Set data (plugin-specific stuff)
 
-    void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
+    void setParameterValue(uint32_t paramId, double value, bool sendGui, bool sendOsc, bool sendCallback)
     {
-        fix_parameter_value(value, param.ranges[param_id]);
-        effect->setParameter(effect, param_id, value);
-        CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
+        assert(paramId < param.count);
+        fix_parameter_value(value, param.ranges[paramId]);
+        effect->setParameter(effect, paramId, value);
+        CarlaPlugin::setParameterValue(paramId, value, sendGui, sendOsc, sendCallback);
     }
 
-#ifdef BUILD_BRIDGE
-    void set_custom_data(CustomDataType dtype, const char* key, const char* value, bool gui_send)
+    void setChunkData(const char* stringData)
     {
-        qDebug("VstPlugin::set_custom_data(%i, %s, %s, %s)", dtype, key, value, bool2str(gui_send));
-
-        if (dtype == CUSTOM_DATA_STRING && strcmp(key, "CarlaBridgeSaveNow") == 0)
-        {
-            qDebug("asked bridge to save, path = %s", value);
-            //chunk_data();
-        }
-    }
-#endif
-
-    void set_chunk_data(const char* string_data)
-    {
+        assert(stringData);
         static QByteArray chunk;
-        chunk = QByteArray::fromBase64(string_data);
+        chunk = QByteArray::fromBase64(stringData);
         effect->dispatcher(effect, effSetChunk, 0 /* bank */, chunk.size(), chunk.data(), 0.0f);
     }
 
-    void set_program(int32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
+    void setProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
     {
         if (index >= 0)
         {
-            if (0) //carla_jack_on_freewheel())
+            assert(index < (int32_t)prog.count);
+            if (CarlaEngine::isOffline())
             {
                 if (block) carla_proc_lock();
                 effect->dispatcher(effect, effSetProgram, 0, index, nullptr, 0.0f);
@@ -236,19 +235,18 @@ class VstPlugin : public CarlaPlugin
             }
         }
 
-        CarlaPlugin::set_program(index, gui_send, osc_send, callback_send, block);
+        CarlaPlugin::setProgram(index, sendGui, sendOsc, sendCallback, block);
     }
 
     // -------------------------------------------------------------------
     // Set gui stuff
 
+    void setGuiData(int data, GuiDataHandle handle)
+    {
 #ifdef __WINE__
-    void set_gui_data(int data, HWND ptr)
-    {
-        if (effect->dispatcher(effect, effEditOpen, 0, data, ptr, 0.0f) == 1)
+        if (effect->dispatcher(effect, effEditOpen, 0, data, handle, 0.0f) == 1)
 #else
-    void set_gui_data(int data, QDialog* dialog)
-    {
+        QDialog* dialog = handle;
         if (effect->dispatcher(effect, effEditOpen, 0, data, (void*)dialog->winId(), 0.0f) == 1)
 #endif
         {
@@ -281,15 +279,15 @@ class VstPlugin : public CarlaPlugin
         }
     }
 
-    void show_gui(bool yesno)
+    void showGui(bool yesNo)
     {
-        gui.visible = yesno;
+        gui.visible = yesNo;
 
         if (gui.visible && gui.width > 0 && gui.height > 0)
             callback_action(CALLBACK_RESIZE_GUI, m_id, gui.width, gui.height, 0.0);
     }
 
-    void idle_gui()
+    void idleGui()
     {
         //effect->dispatcher(effect, effIdle, 0, 0, nullptr, 0.0f);
 
@@ -492,7 +490,7 @@ class VstPlugin : public CarlaPlugin
 #endif
                 strcpy(port_name, "control-in");
 
-            param.port_cin = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, true);
+            param.portCin = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, true);
         }
 
         if (mins == 1)
@@ -507,7 +505,7 @@ class VstPlugin : public CarlaPlugin
 #endif
                 strcpy(port_name, "midi-in");
 
-            midi.port_min = (CarlaEngineMidiPort*)x_client->addPort(port_name, CarlaEnginePortTypeMIDI, true);
+            midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(port_name, CarlaEnginePortTypeMIDI, true);
         }
 
         if (mouts == 1)
@@ -522,7 +520,7 @@ class VstPlugin : public CarlaPlugin
 #endif
                 strcpy(port_name, "midi-out");
 
-            midi.port_mout = (CarlaEngineMidiPort*)x_client->addPort(port_name, CarlaEnginePortTypeMIDI, false);
+            midi.portMout = (CarlaEngineMidiPort*)x_client->addPort(port_name, CarlaEnginePortTypeMIDI, false);
         }
 
         ain.count   = ains;
@@ -549,16 +547,16 @@ class VstPlugin : public CarlaPlugin
         if (aouts >= 2 && aouts%2 == 0)
             m_hints |= PLUGIN_CAN_BALANCE;
 
-        reload_programs(true);
+        reloadPrograms(true);
 
         x_client->activate();
 
         qDebug("VstPlugin::reload() - end");
     }
 
-    void reload_programs(bool init)
+    void reloadPrograms(bool init)
     {
-        qDebug("VstPlugin::reload_programs(%s)", bool2str(init));
+        qDebug("VstPlugin::reloadPrograms(%s)", bool2str(init));
         uint32_t i, old_count = prog.count;
 
         // Delete old programs
@@ -582,14 +580,14 @@ class VstPlugin : public CarlaPlugin
         // Update names
         for (i=0; i < prog.count; i++)
         {
-            char buf_str[STR_MAX] = { 0 };
-            if (effect->dispatcher(effect, effGetProgramNameIndexed, i, 0, buf_str, 0.0f) != 1)
+            char strBuf[STR_MAX] = { 0 };
+            if (effect->dispatcher(effect, effGetProgramNameIndexed, i, 0, strBuf, 0.0f) != 1)
             {
                 // program will be [re-]changed later
                 effect->dispatcher(effect, effSetProgram, 0, i, nullptr, 0.0f);
-                effect->dispatcher(effect, effGetProgramName, 0, 0, buf_str, 0.0f);
+                effect->dispatcher(effect, effGetProgramName, 0, 0, strBuf, 0.0f);
             }
-            prog.names[i] = strdup(buf_str);
+            prog.names[i] = strdup(strBuf);
         }
 
 #ifndef BUILD_BRIDGE
@@ -605,7 +603,7 @@ class VstPlugin : public CarlaPlugin
         if (init)
         {
             if (prog.count > 0)
-                set_program(0, false, false, false, true);
+                setProgram(0, false, false, false, true);
         }
         else
         {
@@ -641,7 +639,7 @@ class VstPlugin : public CarlaPlugin
 
             if (program_changed)
             {
-                set_program(prog.current, true, true, true, true);
+                setProgram(prog.current, true, true, true, true);
             }
             else
             {
@@ -700,16 +698,16 @@ class VstPlugin : public CarlaPlugin
         // --------------------------------------------------------------------------------------------------------
         // Parameters Input [Automation]
 
-        if (param.port_cin && m_active && m_active_before)
+        if (param.portCin && m_active && m_activeBefore)
         {
-            void* cin_buffer = param.port_cin->getBuffer();
+            void* cin_buffer = param.portCin->getBuffer();
 
             const CarlaEngineControlEvent* cin_event;
-            uint32_t time, n_cin_events = param.port_cin->getEventCount(cin_buffer);
+            uint32_t time, n_cin_events = param.portCin->getEventCount(cin_buffer);
 
             for (i=0; i < n_cin_events; i++)
             {
-                cin_event = param.port_cin->getEvent(cin_buffer, i);
+                cin_event = param.portCin->getEvent(cin_buffer, i);
 
                 if (! cin_event)
                     continue;
@@ -732,14 +730,14 @@ class VstPlugin : public CarlaPlugin
                         if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cin_event->controller) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
                             value = cin_event->value;
-                            set_drywet(value, false, false);
+                            setDryWet(value, false, false);
                             postpone_event(PluginPostEventParameterChange, PARAMETER_DRYWET, value);
                             continue;
                         }
                         else if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cin_event->controller) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
                         {
                             value = cin_event->value*127/100;
-                            set_volume(value, false, false);
+                            setVolume(value, false, false);
                             postpone_event(PluginPostEventParameterChange, PARAMETER_VOLUME, value);
                             continue;
                         }
@@ -764,8 +762,8 @@ class VstPlugin : public CarlaPlugin
                                 right = 1.0;
                             }
 
-                            set_balance_left(left, false, false);
-                            set_balance_right(right, false, false);
+                            setBalanceLeft(left, false, false);
+                            setBalanceRight(right, false, false);
                             postpone_event(PluginPostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
                             postpone_event(PluginPostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
                             continue;
@@ -796,7 +794,7 @@ class VstPlugin : public CarlaPlugin
                                     value = rint(value);
                             }
 
-                            set_parameter_value(k, value, false, false, false);
+                            setParameterValue(k, value, false, false, false);
                             postpone_event(PluginPostEventParameterChange, k, value);
                         }
                     }
@@ -814,7 +812,7 @@ class VstPlugin : public CarlaPlugin
 
                         if (prog_id < prog.count)
                         {
-                            set_program(prog_id, false, false, false, false);
+                            setProgram(prog_id, false, false, false, false);
                             postpone_event(PluginPostEventMidiProgramChange, prog_id, 0.0);
                         }
                     }
@@ -823,7 +821,7 @@ class VstPlugin : public CarlaPlugin
                 case CarlaEngineEventAllSoundOff:
                     if (cin_event->channel == cin_channel)
                     {
-                        if (midi.port_min)
+                        if (midi.portMin)
                         {
                             send_midi_all_notes_off();
                             midi_event_count += 128;
@@ -840,7 +838,7 @@ class VstPlugin : public CarlaPlugin
                 case CarlaEngineEventAllNotesOff:
                     if (cin_event->channel == cin_channel)
                     {
-                        if (midi.port_min)
+                        if (midi.portMin)
                         {
                             send_midi_all_notes_off();
                             midi_event_count += 128;
@@ -856,7 +854,7 @@ class VstPlugin : public CarlaPlugin
         // --------------------------------------------------------------------------------------------------------
         // MIDI Input (External)
 
-        if (midi.port_min && cin_channel >= 0 && cin_channel < 16 && m_active && m_active_before)
+        if (midi.portMin && cin_channel >= 0 && cin_channel < 16 && m_active && m_activeBefore)
         {
             carla_midi_lock();
 
@@ -889,16 +887,16 @@ class VstPlugin : public CarlaPlugin
         // --------------------------------------------------------------------------------------------------------
         // MIDI Input (System)
 
-        if (midi.port_min && m_active && m_active_before)
+        if (midi.portMin && m_active && m_activeBefore)
         {
-            void* min_buffer = midi.port_min->getBuffer();
+            void* min_buffer = midi.portMin->getBuffer();
 
             const CarlaEngineMidiEvent* min_event;
-            uint32_t time, n_min_events = midi.port_min->getEventCount(min_buffer);
+            uint32_t time, n_min_events = midi.portMin->getEventCount(min_buffer);
 
             for (i=0; i < n_min_events && midi_event_count < MAX_MIDI_EVENTS; i++)
             {
-                min_event = midi.port_min->getEvent(min_buffer, i);
+                min_event = midi.portMin->getEvent(min_buffer, i);
 
                 if (! min_event)
                     continue;
@@ -983,7 +981,7 @@ class VstPlugin : public CarlaPlugin
 
         if (m_active)
         {
-            if (! m_active_before)
+            if (! m_activeBefore)
             {
                 // TODO - send sound-off notes-off events here
 
@@ -1019,7 +1017,7 @@ class VstPlugin : public CarlaPlugin
         }
         else
         {
-            if (m_active_before)
+            if (m_activeBefore)
             {
                 effect->dispatcher(effect, effStopProcess, 0, 0, nullptr, 0.0f);
                 effect->dispatcher(effect, effMainsChanged, 0, 0, nullptr, 0.0f);
@@ -1110,13 +1108,13 @@ class VstPlugin : public CarlaPlugin
         // --------------------------------------------------------------------------------------------------------
         // MIDI Output
 
-        if (midi.port_mout && m_active)
+        if (midi.portMout && m_active)
         {
             uint8_t data[4];
-            void* mout_buffer = midi.port_mout->getBuffer();
+            void* mout_buffer = midi.portMout->getBuffer();
 
-            if (nframesOffset == 0 || ! m_active_before)
-                midi.port_mout->initBuffer(mout_buffer);
+            if (nframesOffset == 0 || ! m_activeBefore)
+                midi.portMout->initBuffer(mout_buffer);
 
             for (i = events.numEvents; i < MAX_MIDI_EVENTS*2; i++)
             {
@@ -1132,7 +1130,7 @@ class VstPlugin : public CarlaPlugin
                 if (MIDI_IS_STATUS_NOTE_ON(data[0]) && data[2] == 0)
                     data[0] -= 0x10;
 
-                midi.port_mout->writeEvent(mout_buffer, midi_events[i].deltaFrames, data, 3);
+                midi.portMout->writeEvent(mout_buffer, midi_events[i].deltaFrames, data, 3);
             }
         } // End of MIDI Output
 
@@ -1146,10 +1144,10 @@ class VstPlugin : public CarlaPlugin
         aouts_peak[(m_id*2)+0] = aouts_peak_tmp[0];
         aouts_peak[(m_id*2)+1] = aouts_peak_tmp[1];
 
-        m_active_before = m_active;
+        m_activeBefore = m_active;
     }
 
-    void buffer_size_changed(uint32_t new_buffer_size)
+    void bufferSizeChanged(uint32_t newBufferSize)
     {
         if (m_active)
         {
@@ -1158,9 +1156,9 @@ class VstPlugin : public CarlaPlugin
         }
 
 #if ! VST_FORCE_DEPRECATED
-        effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, new_buffer_size, nullptr, get_sample_rate());
+        effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, newBufferSize, nullptr, get_sample_rate());
 #endif
-        effect->dispatcher(effect, effSetBlockSize, 0, new_buffer_size, nullptr, 0.0f);
+        effect->dispatcher(effect, effSetBlockSize, 0, newBufferSize, nullptr, 0.0f);
 
         if (m_active)
         {
@@ -1178,7 +1176,7 @@ class VstPlugin : public CarlaPlugin
 
         if (! lib_open(filename))
         {
-            set_last_error(lib_error());
+            set_last_error(lib_error(filename));
             return false;
         }
 
@@ -1212,11 +1210,11 @@ class VstPlugin : public CarlaPlugin
 
         m_filename = strdup(filename);
 
-        char buf_str[STR_MAX] = { 0 };
-        effect->dispatcher(effect, effGetEffectName, 0, 0, buf_str, 0.0f);
+        char strBuf[STR_MAX] = { 0 };
+        effect->dispatcher(effect, effGetEffectName, 0, 0, strBuf, 0.0f);
 
-        if (buf_str[0] != 0)
-            m_name = get_unique_name(buf_str);
+        if (strBuf[0] != 0)
+            m_name = get_unique_name(strBuf);
         else
             m_name = get_unique_name(label);
 
@@ -1288,11 +1286,11 @@ class VstPlugin : public CarlaPlugin
             {
                 if (CarlaEngine::isOnAudioThread())
                 {
-                    self->set_parameter_value(index, opt, false, false, false);
+                    self->setParameterValue(index, opt, false, false, false);
                     self->postpone_event(PluginPostEventParameterChange, index, opt);
                 }
                 else
-                    self->set_parameter_value(index, opt, false, true, true);
+                    self->setParameterValue(index, opt, false, true, true);
             }
             break;
 
@@ -1388,8 +1386,9 @@ class VstPlugin : public CarlaPlugin
             return (intptr_t)&timeInfo;
         }
 
+#endif
         case audioMasterProcessEvents:
-            if (self && self->midi.port_mout && ptr)
+            if (self && ptr && self->midi.portMout)
             {
                 int32_t i;
                 const VstEvents* const events = (VstEvents*)ptr;
@@ -1409,6 +1408,7 @@ class VstPlugin : public CarlaPlugin
 
             break;
 
+#if 0
 #if ! VST_FORCE_DEPRECATED
 #if 0
         case audioMasterSetTime:
@@ -1629,15 +1629,15 @@ class VstPlugin : public CarlaPlugin
                 // Update current program name
                 if (self->prog.count > 0 && self->prog.current >= 0)
                 {
-                    char buf_str[STR_MAX] = { 0 };
-                    self->effect->dispatcher(self->effect, effGetProgramName, 0, 0, buf_str, 0.0f);
+                    char strBuf[STR_MAX] = { 0 };
+                    self->effect->dispatcher(self->effect, effGetProgramName, 0, 0, strBuf, 0.0f);
 
-                    if (buf_str[0] != 0 && !(self->prog.names[self->prog.current] && strcmp(buf_str, self->prog.names[self->prog.current]) == 0))
+                    if (strBuf[0] != 0 && !(self->prog.names[self->prog.current] && strcmp(strBuf, self->prog.names[self->prog.current]) == 0))
                     {
                         if (self->prog.names[self->prog.current])
                             free((void*)self->prog.names[self->prog.current]);
 
-                        self->prog.names[self->prog.current] = strdup(buf_str);
+                        self->prog.names[self->prog.current] = strdup(strBuf);
                     }
                 }
 
@@ -1680,7 +1680,7 @@ class VstPlugin : public CarlaPlugin
         return 0;
     }
 
-    private:
+private:
     int unique1;
     AEffect* effect;
     struct {

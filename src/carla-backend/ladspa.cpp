@@ -81,7 +81,7 @@ public:
     {
         qDebug("LadspaPlugin::~LadspaPlugin()");
 
-        if (handle && descriptor && descriptor->deactivate && m_active_before)
+        if (handle && descriptor && descriptor->deactivate && m_activeBefore)
             descriptor->deactivate(handle);
 
         if (handle && descriptor && descriptor->cleanup)
@@ -132,7 +132,7 @@ public:
         return get_category_from_name(m_name);
     }
 
-    long unique_id()
+    long uniqueId()
     {
         return descriptor->UniqueID;
     }
@@ -140,10 +140,10 @@ public:
     // -------------------------------------------------------------------
     // Information (count)
 
-    uint32_t param_scalepoint_count(uint32_t param_id)
+    uint32_t paramScalePointCount(uint32_t paramId)
     {
-        assert(param_id < param.count);
-        int32_t rindex = param.data[param_id].rindex;
+        assert(paramId < param.count);
+        int32_t rindex = param.data[paramId].rindex;
         if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
             return rdf_descriptor->Ports[rindex].ScalePointCount;
         return 0;
@@ -152,75 +152,75 @@ public:
     // -------------------------------------------------------------------
     // Information (per-plugin data)
 
-    double get_parameter_value(uint32_t param_id)
+    double getParameterValue(uint32_t paramId)
     {
-        assert(param_id < param.count);
-        return param_buffers[param_id];
+        assert(paramId < param.count);
+        return param_buffers[paramId];
     }
 
-    double get_parameter_scalepoint_value(uint32_t param_id, uint32_t scalepoint_id)
+    double getParameterScalePointValue(uint32_t paramId, uint32_t scalepointId)
     {
-        assert(param_id < param.count);
-        assert(scalepoint_id < param_scalepoint_count(param_id));
-        int32_t param_rindex = param.data[param_id].rindex;
+        assert(paramId < param.count);
+        assert(scalepointId < paramScalePointCount(paramId));
+        int32_t param_rindex = param.data[paramId].rindex;
         if (rdf_descriptor && param_rindex < (int32_t)rdf_descriptor->PortCount)
-            return rdf_descriptor->Ports[param_rindex].ScalePoints[scalepoint_id].Value;
+            return rdf_descriptor->Ports[param_rindex].ScalePoints[scalepointId].Value;
         return 0.0;
     }
 
-    void get_label(char* buf_str)
+    void getLabel(char* strBuf)
     {
-        strncpy(buf_str, descriptor->Label, STR_MAX);
+        strncpy(strBuf, descriptor->Label, STR_MAX);
     }
 
-    void get_maker(char* buf_str)
+    void getMaker(char* strBuf)
     {
         if (rdf_descriptor && rdf_descriptor->Creator)
-            strncpy(buf_str, rdf_descriptor->Creator, STR_MAX);
+            strncpy(strBuf, rdf_descriptor->Creator, STR_MAX);
         else
-            strncpy(buf_str, descriptor->Maker, STR_MAX);
+            strncpy(strBuf, descriptor->Maker, STR_MAX);
     }
 
-    void get_copyright(char* buf_str)
+    void getCopyright(char* strBuf)
     {
-        strncpy(buf_str, descriptor->Copyright, STR_MAX);
+        strncpy(strBuf, descriptor->Copyright, STR_MAX);
     }
 
-    void get_real_name(char* buf_str)
+    void getRealName(char* strBuf)
     {
         if (rdf_descriptor && rdf_descriptor->Title)
-            strncpy(buf_str, rdf_descriptor->Title, STR_MAX);
+            strncpy(strBuf, rdf_descriptor->Title, STR_MAX);
         else
-            strncpy(buf_str, descriptor->Name, STR_MAX);
+            strncpy(strBuf, descriptor->Name, STR_MAX);
     }
 
-    void get_parameter_name(uint32_t param_id, char* buf_str)
+    void getParameterName(uint32_t paramId, char* strBuf)
     {
-        assert(param_id < param.count);
-        int32_t rindex = param.data[param_id].rindex;
-        strncpy(buf_str, descriptor->PortNames[rindex], STR_MAX);
+        assert(paramId < param.count);
+        int32_t rindex = param.data[paramId].rindex;
+        strncpy(strBuf, descriptor->PortNames[rindex], STR_MAX);
     }
 
-    void get_parameter_symbol(uint32_t param_id, char* buf_str)
+    void getParameterSymbol(uint32_t paramId, char* strBuf)
     {
-        assert(param_id < param.count);
-        int32_t rindex = param.data[param_id].rindex;
+        assert(paramId < param.count);
+        int32_t rindex = param.data[paramId].rindex;
         if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
         {
             const LADSPA_RDF_Port* const Port = &rdf_descriptor->Ports[rindex];
             if (LADSPA_PORT_HAS_LABEL(Port->Hints))
             {
-                strncpy(buf_str, Port->Label, STR_MAX);
+                strncpy(strBuf, Port->Label, STR_MAX);
                 return;
             }
         }
-        *buf_str = 0;
+        *strBuf = 0;
     }
 
-    void get_parameter_unit(uint32_t param_id, char* buf_str)
+    void getParameterUnit(uint32_t paramId, char* strBuf)
     {
-        assert(param_id < param.count);
-        int32_t rindex = param.data[param_id].rindex;
+        assert(paramId < param.count);
+        int32_t rindex = param.data[paramId].rindex;
         if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
         {
             const LADSPA_RDF_Port* const Port = &rdf_descriptor->Ports[rindex];
@@ -229,50 +229,50 @@ public:
                 switch (Port->Unit)
                 {
                 case LADSPA_UNIT_DB:
-                    strncpy(buf_str, "dB", STR_MAX);
+                    strncpy(strBuf, "dB", STR_MAX);
                     return;
                 case LADSPA_UNIT_COEF:
-                    strncpy(buf_str, "(coef)", STR_MAX);
+                    strncpy(strBuf, "(coef)", STR_MAX);
                     return;
                 case LADSPA_UNIT_HZ:
-                    strncpy(buf_str, "Hz", STR_MAX);
+                    strncpy(strBuf, "Hz", STR_MAX);
                     return;
                 case LADSPA_UNIT_S:
-                    strncpy(buf_str, "s", STR_MAX);
+                    strncpy(strBuf, "s", STR_MAX);
                     return;
                 case LADSPA_UNIT_MS:
-                    strncpy(buf_str, "ms", STR_MAX);
+                    strncpy(strBuf, "ms", STR_MAX);
                     return;
                 case LADSPA_UNIT_MIN:
-                    strncpy(buf_str, "min", STR_MAX);
+                    strncpy(strBuf, "min", STR_MAX);
                     return;
                 }
             }
         }
-        *buf_str = 0;
+        *strBuf = 0;
     }
 
-    void get_parameter_scalepoint_label(uint32_t param_id, uint32_t scalepoint_id, char* buf_str)
+    void getParameterScalePointLabel(uint32_t paramId, uint32_t scalePointId, char* strBuf)
     {
-        assert(param_id < param.count);
-        assert(scalepoint_id < param_scalepoint_count(param_id));
-        int32_t param_rindex = param.data[param_id].rindex;
+        assert(paramId < param.count);
+        assert(scalePointId < paramScalePointCount(paramId));
+        int32_t param_rindex = param.data[paramId].rindex;
         if (rdf_descriptor && param_rindex < (int32_t)rdf_descriptor->PortCount)
         {
-            strncpy(buf_str, rdf_descriptor->Ports[param_rindex].ScalePoints[scalepoint_id].Label, STR_MAX);
+            strncpy(strBuf, rdf_descriptor->Ports[param_rindex].ScalePoints[scalePointId].Label, STR_MAX);
             return;
         }
-        *buf_str = 0;
+        *strBuf = 0;
     }
 
     // -------------------------------------------------------------------
     // Set data (plugin-specific stuff)
 
-    void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
+    void setParameterValue(uint32_t paramId, double value, bool sendGui, bool sendOsc, bool sendCallback)
     {
-        assert(param_id < param.count);
-        param_buffers[param_id] = fix_parameter_value(value, param.ranges[param_id]);
-        CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
+        assert(paramId < param.count);
+        param_buffers[paramId] = fix_parameter_value(value, param.ranges[paramId]);
+        CarlaPlugin::setParameterValue(paramId, value, sendGui, sendOsc, sendCallback);
     }
 
     // -------------------------------------------------------------------
@@ -578,7 +578,7 @@ public:
 #endif
                 strcpy(port_name, "control-in");
 
-            param.port_cin = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, true);
+            param.portCin = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, true);
         }
 
         if (needs_cout)
@@ -593,7 +593,7 @@ public:
 #endif
                 strcpy(port_name, "control-out");
 
-            param.port_cout = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, false);
+            param.portCout = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, false);
         }
 
         ain.count   = ains;
@@ -660,16 +660,16 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Parameters Input [Automation]
 
-        if (param.port_cin && m_active && m_active_before)
+        if (param.portCin && m_active && m_activeBefore)
         {
-            void* cin_buffer = param.port_cin->getBuffer();
+            void* cin_buffer = param.portCin->getBuffer();
 
             const CarlaEngineControlEvent* cin_event;
-            uint32_t time, n_cin_events = param.port_cin->getEventCount(cin_buffer);
+            uint32_t time, n_cin_events = param.portCin->getEventCount(cin_buffer);
 
             for (i=0; i < n_cin_events; i++)
             {
-                cin_event = param.port_cin->getEvent(cin_buffer, i);
+                cin_event = param.portCin->getEvent(cin_buffer, i);
 
                 if (! cin_event)
                     continue;
@@ -692,14 +692,14 @@ public:
                         if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cin_event->controller) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
                             value = cin_event->value;
-                            set_drywet(value, false, false);
+                            setDryWet(value, false, false);
                             postpone_event(PluginPostEventParameterChange, PARAMETER_DRYWET, value);
                             continue;
                         }
                         else if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cin_event->controller) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
                         {
                             value = cin_event->value*127/100;
-                            set_volume(value, false, false);
+                            setVolume(value, false, false);
                             postpone_event(PluginPostEventParameterChange, PARAMETER_VOLUME, value);
                             continue;
                         }
@@ -724,8 +724,8 @@ public:
                                 right = 1.0;
                             }
 
-                            set_balance_left(left, false, false);
-                            set_balance_right(right, false, false);
+                            setBalanceLeft(left, false, false);
+                            setBalanceRight(right, false, false);
                             postpone_event(PluginPostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
                             postpone_event(PluginPostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
                             continue;
@@ -756,7 +756,7 @@ public:
                                     value = rint(value);
                             }
 
-                            set_parameter_value(k, value, false, false, false);
+                            setParameterValue(k, value, false, false, false);
                             postpone_event(PluginPostEventParameterChange, k, value);
                         }
                     }
@@ -803,7 +803,7 @@ public:
 
         if (m_active)
         {
-            if (! m_active_before)
+            if (! m_activeBefore)
             {
                 if (descriptor->activate)
                     descriptor->activate(handle);
@@ -820,7 +820,7 @@ public:
         }
         else
         {
-            if (m_active_before)
+            if (m_activeBefore)
             {
                 if (descriptor->deactivate)
                     descriptor->deactivate(handle);
@@ -911,12 +911,12 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Control Output
 
-        if (param.port_cout && m_active)
+        if (param.portCout && m_active)
         {
-            void* cout_buffer = param.port_cout->getBuffer();
+            void* cout_buffer = param.portCout->getBuffer();
 
-            if (nframesOffset == 0 || ! m_active_before)
-                param.port_cout->initBuffer(cout_buffer);
+            if (nframesOffset == 0 || ! m_activeBefore)
+                param.portCout->initBuffer(cout_buffer);
 
             double value;
 
@@ -929,7 +929,7 @@ public:
                     if (param.data[k].midi_cc > 0)
                     {
                         value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
-                        param.port_cout->writeEvent(cout_buffer, CarlaEngineEventControlChange, nframesOffset, param.data[k].midi_channel, param.data[k].midi_cc, value);
+                        param.portCout->writeEvent(cout_buffer, CarlaEngineEventControlChange, nframesOffset, param.data[k].midi_channel, param.data[k].midi_cc, value);
                     }
                 }
             }
@@ -945,7 +945,7 @@ public:
         aouts_peak[(m_id*2)+0] = aouts_peak_tmp[0];
         aouts_peak[(m_id*2)+1] = aouts_peak_tmp[1];
 
-        m_active_before = m_active;
+        m_activeBefore = m_active;
     }
 
     // -------------------------------------------------------------------
@@ -972,7 +972,7 @@ public:
 
         if (! lib_open(filename))
         {
-            set_last_error(lib_error());
+            set_last_error(lib_error(filename));
             return false;
         }
 

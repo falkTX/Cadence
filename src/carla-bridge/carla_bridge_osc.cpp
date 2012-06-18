@@ -421,14 +421,14 @@ void osc_send_bridge_midi_program_count(int count)
     }
 }
 
-void osc_send_bridge_plugin_info(int category, int hints, const char* name, const char* label, const char* maker, const char* copyright, long unique_id)
+void osc_send_bridge_plugin_info(int category, int hints, const char* name, const char* label, const char* maker, const char* copyright, long uniqueId)
 {
     if (global_osc_data.target)
     {
         char target_path[strlen(global_osc_data.path)+20];
         strcpy(target_path, global_osc_data.path);
         strcat(target_path, "/bridge_plugin_info");
-        lo_send(global_osc_data.target, target_path, "iissssi", category, hints, name, label, maker, copyright, unique_id);
+        lo_send(global_osc_data.target, target_path, "iissssi", category, hints, name, label, maker, copyright, uniqueId);
         // FIXME - should be long type
     }
 }

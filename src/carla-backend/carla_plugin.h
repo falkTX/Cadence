@@ -18,10 +18,11 @@
 #ifndef CARLA_PLUGIN_H
 #define CARLA_PLUGIN_H
 
-#include "carla_lib_includes.h"
 #include "carla_engine.h"
 #include "carla_midi.h"
 #include "carla_shared.h"
+
+#include "carla_lib_includes.h"
 
 #ifdef BUILD_BRIDGE
 #include "carla_bridge_osc.h"
@@ -40,7 +41,12 @@
 #include <QtCore/QMutex>
 #include <QtCore/QString>
 
-class QDialog;
+#ifdef __WINE__
+typedef HWND GuiDataHandle;
+#else
+#include <QtGui/QDialog>
+typedef QDialog* GuiDataHandle;
+#endif
 
 CARLA_BACKEND_START_NAMESPACE
 
@@ -53,12 +59,6 @@ CARLA_BACKEND_START_NAMESPACE
 const unsigned short MAX_MIDI_EVENTS = 512;
 const unsigned short MAX_POST_EVENTS = 152;
 
-struct midi_program_t {
-    uint32_t bank;
-    uint32_t program;
-    const char* name;
-};
-
 enum PluginPostEventType {
     PluginPostEventNull,
     PluginPostEventDebug,
@@ -70,6 +70,7 @@ enum PluginPostEventType {
     PluginPostEventCustom
 };
 
+#ifndef BUILD_BRIDGE
 enum PluginBridgeInfoType {
     PluginBridgeAudioCount,
     PluginBridgeMidiCount,
@@ -87,6 +88,13 @@ enum PluginBridgeInfoType {
     PluginBridgeUpdateNow,
     PluginBridgeSaved
 };
+#endif
+
+struct midi_program_t {
+    uint32_t bank;
+    uint32_t program;
+    const char* name;
+};
 
 struct PluginAudioData {
     uint32_t count;
@@ -95,16 +103,16 @@ struct PluginAudioData {
 };
 
 struct PluginMidiData {
-    CarlaEngineMidiPort* port_min;
-    CarlaEngineMidiPort* port_mout;
+    CarlaEngineMidiPort* portMin;
+    CarlaEngineMidiPort* portMout;
 };
 
 struct PluginParameterData {
     uint32_t count;
     ParameterData* data;
     ParameterRanges* ranges;
-    CarlaEngineControlPort* port_cin;
-    CarlaEngineControlPort* port_cout;
+    CarlaEngineControlPort* portCin;
+    CarlaEngineControlPort* portCout;
 };
 
 struct PluginProgramData {
@@ -144,7 +152,7 @@ public:
         m_hints = 0;
 
         m_active = false;
-        m_active_before = false;
+        m_activeBefore = false;
         m_enabled = false;
 
         m_lib  = nullptr;
@@ -167,14 +175,14 @@ public:
         aout.ports = nullptr;
         aout.rindexes = nullptr;
 
-        midi.port_min  = nullptr;
-        midi.port_mout = nullptr;
+        midi.portMin  = nullptr;
+        midi.portMout = nullptr;
 
         param.count  = 0;
         param.data   = nullptr;
         param.ranges = nullptr;
-        param.port_cin  = nullptr;
-        param.port_cout = nullptr;
+        param.portCin  = nullptr;
+        param.portCout = nullptr;
 
         prog.count   = 0;
         prog.current = -1;
@@ -231,7 +239,6 @@ public:
                 if (prog.names[i])
                     free((void*)prog.names[i]);
             }
-
             delete[] prog.names;
         }
 
@@ -242,7 +249,6 @@ public:
                 if (midiprog.data[i].name)
                     free((void*)midiprog.data[i].name);
             }
-
             delete[] midiprog.data;
         }
 
@@ -256,7 +262,6 @@ public:
                 if (custom[i].value)
                     free((void*)custom[i].value);
             }
-
             custom.clear();
         }
     }
@@ -299,7 +304,7 @@ public:
         return PLUGIN_CATEGORY_NONE;
     }
 
-    virtual long unique_id()
+    virtual long uniqueId()
     {
         return 0;
     }
@@ -307,48 +312,48 @@ public:
     // -------------------------------------------------------------------
     // Information (count)
 
-    virtual uint32_t ain_count()
+    virtual uint32_t ainCount()
     {
         return ain.count;
     }
 
-    virtual uint32_t aout_count()
+    virtual uint32_t aoutCount()
     {
         return aout.count;
     }
 
-    virtual uint32_t min_count()
+    virtual uint32_t minCount()
     {
-        return (midi.port_min) ? 1 : 0;
+        return midi.portMin ? 1 : 0;
     }
 
-    virtual uint32_t mout_count()
+    virtual uint32_t moutCount()
     {
-        return (midi.port_mout) ? 1 : 0;
+        return midi.portMout ? 1 : 0;
     }
 
-    uint32_t param_count() const
+    uint32_t paramCount() const
     {
         return param.count;
     }
 
-    virtual uint32_t param_scalepoint_count(uint32_t param_id)
+    virtual uint32_t paramScalePointCount(uint32_t paramId)
     {
-        assert(param_id < param.count);
+        assert(paramId < param.count);
         return 0;
     }
 
-    uint32_t prog_count() const
+    uint32_t progCount() const
     {
         return prog.count;
     }
 
-    uint32_t midiprog_count() const
+    uint32_t midiprogCount() const
     {
         return midiprog.count;
     }
 
-    uint32_t custom_count() const
+    uint32_t customCount() const
     {
         return custom.size();
     }
@@ -356,42 +361,42 @@ public:
     // -------------------------------------------------------------------
     // Information (current data)
 
-    int32_t prog_current() const
+    int32_t progCurrent() const
     {
         return prog.current;
     }
 
-    int32_t midiprog_current() const
+    int32_t midiprogCurrent() const
     {
         return midiprog.current;
     }
 
-    const ParameterData* param_data(uint32_t index) const
+    const ParameterData* paramData(uint32_t index) const
     {
         assert(index < param.count);
         return &param.data[index];
     }
 
-    const ParameterRanges* param_ranges(uint32_t index) const
+    const ParameterRanges* paramRanges(uint32_t index) const
     {
         assert(index < param.count);
         return &param.ranges[index];
     }
 
-    const CustomData* custom_data(uint32_t index) const
+    const CustomData* customData(uint32_t index) const
     {
         assert(index < custom.size());
         return &custom[index];
     }
 
-    virtual int32_t chunk_data(void** data_ptr)
+    virtual int32_t chunkData(void** dataPtr)
     {
-        assert(data_ptr);
+        assert(dataPtr);
         return 0;
     }
 
 #ifndef BUILD_BRIDGE
-    const OscData* osc_data() const
+    const OscData* oscData() const
     {
         return &osc.data;
     }
@@ -400,83 +405,83 @@ public:
     // -------------------------------------------------------------------
     // Information (per-plugin data)
 
-    virtual double get_parameter_value(uint32_t param_id)
+    virtual double getParameterValue(uint32_t paramId)
     {
-        assert(param_id < param.count);
+        assert(paramId < param.count);
         return 0.0;
     }
 
-    virtual double get_parameter_scalepoint_value(uint32_t param_id, uint32_t scalepoint_id)
+    virtual double getParameterScalePointValue(uint32_t paramId, uint32_t scalepointId)
     {
-        assert(param_id < param.count);
-        assert(scalepoint_id < param_scalepoint_count(param_id));
+        assert(paramId < param.count);
+        assert(scalepointId < paramScalePointCount(paramId));
         return 0.0;
     }
 
-    virtual void get_label(char* buf_str)
+    virtual void getLabel(char* strBuf)
     {
-        *buf_str = 0;
+        *strBuf = 0;
     }
 
-    virtual void get_maker(char* buf_str)
+    virtual void getMaker(char* strBuf)
     {
-        *buf_str = 0;
+        *strBuf = 0;
     }
 
-    virtual void get_copyright(char* buf_str)
+    virtual void getCopyright(char* strBuf)
     {
-        *buf_str = 0;
+        *strBuf = 0;
     }
 
-    virtual void get_real_name(char* buf_str)
+    virtual void getRealName(char* strBuf)
     {
-        *buf_str = 0;
+        *strBuf = 0;;
     }
 
-    virtual void get_parameter_name(uint32_t param_id, char* buf_str)
+    virtual void getParameterName(uint32_t paramId, char* strBuf)
     {
-        assert(param_id < param.count);
-        *buf_str = 0;
+        assert(paramId < param.count);
+        *strBuf = 0;
     }
 
-    virtual void get_parameter_symbol(uint32_t param_id, char* buf_str)
+    virtual void getParameterSymbol(uint32_t paramId, char* strBuf)
     {
-        assert(param_id < param.count);
-        *buf_str = 0;
+        assert(paramId < param.count);
+        *strBuf = 0;
     }
 
-    virtual void get_parameter_text(uint32_t param_id, char* buf_str)
+    virtual void getParameterText(uint32_t paramId, char* strBuf)
     {
-        assert(param_id < param.count);
-        *buf_str = 0;
+        assert(paramId < param.count);
+        *strBuf = 0;
     }
 
-    virtual void get_parameter_unit(uint32_t param_id, char* buf_str)
+    virtual void getParameterUnit(uint32_t paramId, char* strBuf)
     {
-        assert(param_id < param.count);
-        *buf_str = 0;
+        assert(paramId < param.count);
+        *strBuf = 0;
     }
 
-    virtual void get_parameter_scalepoint_label(uint32_t param_id, uint32_t scalepoint_id, char* buf_str)
+    virtual void getParameterScalePointLabel(uint32_t paramId, uint32_t scalePointId, char* strBuf)
     {
-        assert(param_id < param.count);
-        assert(scalepoint_id < param_scalepoint_count(param_id));
-        *buf_str = 0;
+        assert(paramId < param.count);
+        assert(scalePointId < paramScalePointCount(paramId));
+        *strBuf = 0;
     }
 
-    void get_program_name(uint32_t program_id, char* buf_str)
+    void getProgramName(uint32_t index, char* strBuf)
     {
-        assert(program_id < prog.count);
-        strncpy(buf_str, prog.names[program_id], STR_MAX);
+        assert(index < prog.count);
+        strncpy(strBuf, prog.names[index], STR_MAX);
     }
 
-    void get_midi_program_name(uint32_t midiprogram_id, char* buf_str)
+    void getMidiProgramName(uint32_t index, char* strBuf)
     {
-        assert(midiprogram_id < midiprog.count);
-        strncpy(buf_str, midiprog.data[midiprogram_id].name, STR_MAX);
+        assert(index < midiprog.count);
+        strncpy(strBuf, midiprog.data[index].name, STR_MAX);
     }
 
-    void get_parameter_count_info(PortCountInfo* info)
+    void getParameterCountInfo(PortCountInfo* const info)
     {
         info->ins   = 0;
         info->outs  = 0;
@@ -491,7 +496,7 @@ public:
         }
     }
 
-    void get_midi_program_info(MidiProgramInfo* info, uint32_t index)
+    void getMidiProgramInfo(MidiProgramInfo* const info, uint32_t index)
     {
         assert(index < midiprog.count);
         info->bank    = midiprog.data[index].bank;
@@ -499,7 +504,7 @@ public:
         info->label   = midiprog.data[index].name;
     }
 
-    virtual void get_gui_info(GuiInfo* info)
+    virtual void getGuiInfo(GuiInfo* const info)
     {
         info->type = GUI_NONE;
         info->resizable = false;
@@ -508,22 +513,22 @@ public:
     // -------------------------------------------------------------------
     // Set data (internal stuff)
 
-    void set_enabled(bool enabled)
+    void setEnabled(bool enabled)
     {
         m_enabled = enabled;
     }
 
-    void set_active(bool active, bool osc_send, bool callback_send)
+    void setActive(bool active, bool sendOsc, bool sendCallback)
     {
         m_active = active;
 
         double value = active ? 1.0 : 0.0;
 
-        if (callback_send)
+        if (sendCallback)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_ACTIVE, 0, value);
 
 #ifndef BUILD_BRIDGE
-        if (osc_send)
+        if (sendOsc)
         {
             osc_global_send_set_parameter_value(m_id, PARAMETER_ACTIVE, value);
 
@@ -531,11 +536,11 @@ public:
                 osc_send_control(&osc.data, PARAMETER_ACTIVE, value);
         }
 #else
-        Q_UNUSED(osc_send);
+        Q_UNUSED(sendOsc);
 #endif
     }
 
-    void set_drywet(double value, bool osc_send, bool callback_send)
+    void setDryWet(double value, bool sendOsc, bool sendCallback)
     {
         if (value < 0.0)
             value = 0.0;
@@ -544,11 +549,11 @@ public:
 
         x_drywet = value;
 
-        if (callback_send)
+        if (sendCallback)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_DRYWET, 0, value);
 
 #ifndef BUILD_BRIDGE
-        if (osc_send)
+        if (sendOsc)
         {
             osc_global_send_set_parameter_value(m_id, PARAMETER_DRYWET, value);
 
@@ -556,11 +561,11 @@ public:
                 osc_send_control(&osc.data, PARAMETER_DRYWET, value);
         }
 #else
-        Q_UNUSED(osc_send);
+        Q_UNUSED(sendOsc);
 #endif
     }
 
-    void set_volume(double value, bool osc_send, bool callback_send)
+    void setVolume(double value, bool sendOsc, bool sendCallback)
     {
         if (value < 0.0)
             value = 0.0;
@@ -569,26 +574,23 @@ public:
 
         x_vol = value;
 
-        if (callback_send)
+        if (sendCallback)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_VOLUME, 0, value);
 
 #ifndef BUILD_BRIDGE
-        if (osc_send)
+        if (sendOsc)
         {
             osc_global_send_set_parameter_value(m_id, PARAMETER_VOLUME, value);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
-            {
-                qWarning("Sending volume to bridge, %f", value);
                 osc_send_control(&osc.data, PARAMETER_VOLUME, value);
-            }
         }
 #else
-        Q_UNUSED(osc_send);
+        Q_UNUSED(sendOsc);
 #endif
     }
 
-    void set_balance_left(double value, bool osc_send, bool callback_send)
+    void setBalanceLeft(double value, bool sendOsc, bool sendCallback)
     {
         if (value < -1.0)
             value = -1.0;
@@ -597,11 +599,11 @@ public:
 
         x_bal_left = value;
 
-        if (callback_send)
+        if (sendCallback)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_BALANCE_LEFT, 0, value);
 
 #ifndef BUILD_BRIDGE
-        if (osc_send)
+        if (sendOsc)
         {
             osc_global_send_set_parameter_value(m_id, PARAMETER_BALANCE_LEFT, value);
 
@@ -609,11 +611,11 @@ public:
                 osc_send_control(&osc.data, PARAMETER_BALANCE_LEFT, value);
         }
 #else
-        Q_UNUSED(osc_send);
+        Q_UNUSED(sendOsc);
 #endif
     }
 
-    void set_balance_right(double value, bool osc_send, bool callback_send)
+    void setBalanceRight(double value, bool sendOsc, bool sendCallback)
     {
         if (value < -1.0)
             value = -1.0;
@@ -622,11 +624,11 @@ public:
 
         x_bal_right = value;
 
-        if (callback_send)
+        if (sendCallback)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_BALANCE_RIGHT, 0, value);
 
 #ifndef BUILD_BRIDGE
-        if (osc_send)
+        if (sendOsc)
         {
             osc_global_send_set_parameter_value(m_id, PARAMETER_BALANCE_RIGHT, value);
 
@@ -634,7 +636,7 @@ public:
                 osc_send_control(&osc.data, PARAMETER_BALANCE_RIGHT, value);
         }
 #else
-        Q_UNUSED(osc_send);
+        Q_UNUSED(sendOsc);
 #endif
     }
 
@@ -650,51 +652,50 @@ public:
     // -------------------------------------------------------------------
     // Set data (plugin-specific stuff)
 
-    virtual void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
+    virtual void setParameterValue(uint32_t paramId, double value, bool sendGui, bool sendOsc, bool sendCallback)
     {
-        assert(param_id < param.count);
+        assert(paramId < param.count);
+        fix_parameter_value(value, param.ranges[paramId]);
 
-        if (param.data[param_id].type != PARAMETER_INPUT)
-            return;
-
-        if (callback_send)
-            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, param_id, 0, value);
+        if (sendCallback)
+            callback_action(CALLBACK_PARAMETER_CHANGED, m_id, paramId, 0, value);
 
 #ifndef BUILD_BRIDGE
-        if (osc_send)
+        if (sendOsc)
         {
-            osc_global_send_set_parameter_value(m_id, param_id, value);
+            osc_global_send_set_parameter_value(m_id, paramId, value);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
-                osc_send_control(&osc.data, param_id, value);
+                osc_send_control(&osc.data, paramId, value);
         }
 #else
-        Q_UNUSED(osc_send);
+        Q_UNUSED(sendOsc);
 #endif
-        Q_UNUSED(gui_send);
+        Q_UNUSED(sendGui);
     }
 
-    void set_parameter_value_by_rindex(int32_t rindex, double value, bool gui_send, bool osc_send, bool callback_send)
+    // FIXME? (better name?)
+    void setParameterValueByRIndex(int32_t rindex, double value, bool gui_send, bool osc_send, bool callback_send)
     {
         if (rindex == PARAMETER_ACTIVE)
-            return set_active(value > 0.0, osc_send, callback_send);
+            return setActive(value > 0.0, osc_send, callback_send);
         if (rindex == PARAMETER_DRYWET)
-            return set_drywet(value, osc_send, callback_send);
+            return setDryWet(value, osc_send, callback_send);
         if (rindex == PARAMETER_VOLUME)
-            return set_volume(value, osc_send, callback_send);
+            return setVolume(value, osc_send, callback_send);
         if (rindex == PARAMETER_BALANCE_LEFT)
-            return set_balance_left(value, osc_send, callback_send);
+            return setBalanceLeft(value, osc_send, callback_send);
         if (rindex == PARAMETER_BALANCE_RIGHT)
-            return set_balance_right(value, osc_send, callback_send);
+            return setBalanceRight(value, osc_send, callback_send);
 
         for (uint32_t i=0; i < param.count; i++)
         {
             if (param.data[i].rindex == rindex)
-                return set_parameter_value(i, value, gui_send, osc_send, callback_send);
+                return setParameterValue(i, value, gui_send, osc_send, callback_send);
         }
     }
 
-    void set_parameter_midi_channel(uint32_t index, uint8_t channel)
+    void setParameterMidiChannel(uint32_t index, uint8_t channel)
     {
         assert(index < param.count && channel < 16);
         param.data[index].midi_channel = channel;
@@ -706,10 +707,10 @@ public:
 #endif
     }
 
-    void set_parameter_midi_cc(uint32_t index, int16_t midi_cc)
+    void setParameterMidiCC(uint32_t index, int16_t midiCC)
     {
         assert(index < param.count);
-        param.data[index].midi_cc = midi_cc;
+        param.data[index].midi_cc = midiCC;
 
 #ifndef BUILD_BRIDGE
         // FIXME
@@ -718,13 +719,13 @@ public:
 #endif
     }
 
-    virtual void set_custom_data(CustomDataType dtype, const char* key, const char* value, bool gui_send)
+    virtual void setCustomData(CustomDataType type, const char* key, const char* value, bool sendGui)
     {
-        qDebug("set_custom_data(%i, %s, %s, %s)", dtype, key, value, bool2str(gui_send));
+        qDebug("setCustomData(%i, %s, %s, %s)", type, key, value, bool2str(sendGui));
 
         bool save_data = true;
 
-        switch (dtype)
+        switch (type)
         {
         case CUSTOM_DATA_INVALID:
             save_data = false;
@@ -756,69 +757,70 @@ public:
 
             // False if we get here, so store it
             CustomData new_data;
-            new_data.type  = dtype;
+            new_data.type  = type;
             new_data.key   = strdup(key);
             new_data.value = strdup(value);
             custom.push_back(new_data);
         }
     }
 
-    virtual void set_chunk_data(const char* string_data)
+    virtual void setChunkData(const char* stringData)
     {
-        assert(string_data);
+        assert(stringData);
     }
 
-    virtual void set_program(int32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
+    virtual void setProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
     {
+        assert(index < (int32_t)prog.count);
         prog.current = index;
 
-        if (callback_send)
+        if (sendCallback)
             callback_action(CALLBACK_PROGRAM_CHANGED, m_id, prog.current, 0, 0.0);
 
 #ifndef BUILD_BRIDGE
-        if (osc_send)
+        if (sendOsc)
         {
             osc_global_send_set_program(m_id, prog.current);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_program(&osc.data, prog.current);
         }
-#else
-        Q_UNUSED(osc_send);
 #endif
 
         // Change default parameter values
         for (uint32_t i=0; i < param.count; i++)
         {
-            param.ranges[i].def = get_parameter_value(i);
+            param.ranges[i].def = getParameterValue(i);
 
 #ifndef BUILD_BRIDGE
-            if (osc_send)
+            if (sendOsc)
                 osc_global_send_set_default_value(m_id, i, param.ranges[i].def);
 #endif
         }
 
-        Q_UNUSED(gui_send);
+#ifdef BUILD_BRIDGE
+        Q_UNUSED(sendOsc);
+#endif
+        Q_UNUSED(sendGui);
         Q_UNUSED(block);
     }
 
-    virtual void set_midi_program(int32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
+    virtual void setMidiProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
     {
+        assert(index < (int32_t)midiprog.count);
         midiprog.current = index;
 
-        if (callback_send)
+        if (sendCallback)
             callback_action(CALLBACK_MIDI_PROGRAM_CHANGED, m_id, midiprog.current, 0, 0.0);
 
 #ifndef BUILD_BRIDGE
-        if (osc_send)
+        if (sendOsc)
         {
             osc_global_send_set_midi_program(m_id, midiprog.current);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_program(&osc.data, midiprog.current);
         }
-#else
-        Q_UNUSED(osc_send);
 #endif
 
         // Sound banks never change defaults
@@ -828,46 +830,45 @@ public:
         // Change default parameter values
         for (uint32_t i=0; i < param.count; i++)
         {
-            param.ranges[i].def = get_parameter_value(i);
+            param.ranges[i].def = getParameterValue(i);
 
 #ifndef BUILD_BRIDGE
-            if (osc_send)
+            if (sendOsc)
                 osc_global_send_set_default_value(m_id, i, param.ranges[i].def);
 #endif
         }
 
-        Q_UNUSED(gui_send);
+#ifdef BUILD_BRIDGE
+        Q_UNUSED(sendOsc);
+#endif
+        Q_UNUSED(sendGui);
         Q_UNUSED(block);
     }
 
-    void set_midi_program_by_id(uint32_t bank_id, uint32_t program_id, bool gui_send, bool osc_send, bool callback_send, bool block)
+    void setMidiProgramById(uint32_t bank, uint32_t program, bool sendGui, bool sendOsc, bool sendCallback, bool block)
     {
         for (uint32_t i=0; i < midiprog.count; i++)
         {
-            if (midiprog.data[i].bank == bank_id && midiprog.data[i].program == program_id)
-                return set_midi_program(i, gui_send, osc_send, callback_send, block);
+            if (midiprog.data[i].bank == bank && midiprog.data[i].program == program)
+                return setMidiProgram(i, sendGui, sendOsc, sendCallback, block);
         }
     }
 
     // -------------------------------------------------------------------
     // Set gui stuff
 
-#ifdef __WINE__
-    virtual void set_gui_data(int data, HWND ptr)
-#else
-    virtual void set_gui_data(int data, QDialog* ptr)
-#endif
+    virtual void setGuiData(int data, GuiDataHandle handle)
     {
         Q_UNUSED(data);
-        Q_UNUSED(ptr);
+        Q_UNUSED(handle);
     }
 
-    virtual void show_gui(bool yesno)
+    virtual void showGui(bool yesNo)
     {
-        Q_UNUSED(yesno);
+        Q_UNUSED(yesNo);
     }
 
-    virtual void idle_gui()
+    virtual void idleGui()
     {
     }
 
@@ -878,12 +879,12 @@ public:
     {
     }
 
-    virtual void reload_programs(bool init)
+    virtual void reloadPrograms(bool init)
     {
         Q_UNUSED(init);
     }
 
-    virtual void prepare_for_save()
+    virtual void prepareForSave()
     {
     }
 
@@ -933,7 +934,7 @@ public:
     }
 #endif
 
-    virtual void buffer_size_changed(uint32_t newBufferSize)
+    virtual void bufferSizeChanged(uint32_t newBufferSize)
     {
         Q_UNUSED(newBufferSize);
     }
@@ -946,39 +947,39 @@ public:
 #ifdef BUILD_BRIDGE
         // Base data
         {
-            char buf_name[STR_MAX]  = { 0 };
-            char buf_label[STR_MAX] = { 0 };
-            char buf_maker[STR_MAX] = { 0 };
-            char buf_copyright[STR_MAX] = { 0 };
-            get_real_name(buf_name);
-            get_label(buf_label);
-            get_maker(buf_maker);
-            get_copyright(buf_copyright);
-            osc_send_bridge_plugin_info(category(), m_hints, buf_name, buf_label, buf_maker, buf_copyright, unique_id());
+            char bufName[STR_MAX]  = { 0 };
+            char bufLabel[STR_MAX] = { 0 };
+            char bufMaker[STR_MAX] = { 0 };
+            char bufCopyright[STR_MAX] = { 0 };
+            getRealName(bufName);
+            getLabel(bufLabel);
+            getMaker(bufMaker);
+            getCopyright(bufCopyright);
+            osc_send_bridge_plugin_info(category(), m_hints, bufName, bufLabel, bufMaker, bufCopyright, uniqueId());
         }
 
-        osc_send_bridge_audio_count(ain_count(), aout_count(), ain_count() + aout_count());
-        osc_send_bridge_midi_count(min_count(), mout_count(), min_count() + mout_count());
+        osc_send_bridge_audio_count(ainCount(), aoutCount(), ainCount() + aoutCount());
+        osc_send_bridge_midi_count(minCount(), moutCount(), minCount() + moutCount());
 
         PortCountInfo param_info = { false, 0, 0, 0 };
-        get_parameter_count_info(&param_info);
+        getParameterCountInfo(&param_info);
         osc_send_bridge_param_count(param_info.ins, param_info.outs, param_info.total);
 
         // Parameters
         uint32_t i;
-        char buf_name[STR_MAX], buf_unit[STR_MAX];
+        char bufName[STR_MAX], bufUnit[STR_MAX];
 
         if (param.count > 0 && param.count < MAX_PARAMETERS)
         {
             for (i=0; i < param.count; i++)
             {
-                get_parameter_name(i, buf_name);
-                get_parameter_unit(i, buf_unit);
-                osc_send_bridge_param_info(i, buf_name, buf_unit);
+                getParameterName(i, bufName);
+                getParameterUnit(i, bufUnit);
+                osc_send_bridge_param_info(i, bufName, bufUnit);
                 osc_send_bridge_param_data(param.data[i].type, i, param.data[i].rindex, param.data[i].hints, param.data[i].midi_channel, param.data[i].midi_cc);
                 osc_send_bridge_param_ranges(i, param.ranges[i].def, param.ranges[i].min, param.ranges[i].max, param.ranges[i].step, param.ranges[i].step_small, param.ranges[i].step_large);
 
-                set_parameter_value(i, param.ranges[i].def, false, false, true);
+                setParameterValue(i, param.ranges[i].def, false, false, true);
             }
         }
 
@@ -1006,11 +1007,11 @@ public:
             osc_global_send_add_plugin(m_id, m_name);
 
             const PluginInfo* const info = get_plugin_info(m_id);
-            osc_global_send_set_plugin_data(m_id, m_type, category(), m_hints, get_real_plugin_name(m_id), info->label, info->maker, info->copyright, unique_id());
+            osc_global_send_set_plugin_data(m_id, m_type, category(), m_hints, get_real_plugin_name(m_id), info->label, info->maker, info->copyright, uniqueId());
 
             PortCountInfo param_info = { false, 0, 0, 0 };
             get_parameter_count_info(&param_info);
-            osc_global_send_set_plugin_ports(m_id, ain.count, aout.count, min_count(), mout_count(), param_info.ins, param_info.outs, param_info.total);
+            osc_global_send_set_plugin_ports(m_id, ain.count, aout.count, minCount(), moutCount(), param_info.ins, param_info.outs, param_info.total);
 
             // Parameters
             osc_global_send_set_parameter_value(m_id, PARAMETER_ACTIVE, m_active ? 1.0f : 0.0f);
@@ -1027,7 +1028,7 @@ public:
                 {
                     const ParameterInfo* const info = get_parameter_info(m_id, i);
 
-                    osc_global_send_set_parameter_data(m_id, i, param.data[i].type, param.data[i].hints, info->name, info->unit, get_parameter_value(i));
+                    osc_global_send_set_parameter_data(m_id, i, param.data[i].type, param.data[i].hints, info->name, info->unit, getParameterValue(i));
                     osc_global_send_set_parameter_ranges(m_id, i, param.ranges[i].min, param.ranges[i].max, param.ranges[i].def, param.ranges[i].step, param.ranges[i].step_small, param.ranges[i].step_large);
                 }
             }
@@ -1089,7 +1090,7 @@ public:
         }
 
         for (uint32_t i=0; i < param.count; i++)
-            osc_send_control(&osc.data, param.data[i].rindex, get_parameter_value(i));
+            osc_send_control(&osc.data, param.data[i].rindex, getParameterValue(i));
 
         if (m_hints & PLUGIN_IS_BRIDGE)
         {
@@ -1264,28 +1265,28 @@ public:
             aout.ports[i] = nullptr;
         }
 
-        if (midi.port_min)
+        if (midi.portMin)
         {
-            delete midi.port_min;
-            midi.port_min = nullptr;
+            delete midi.portMin;
+            midi.portMin = nullptr;
         }
 
-        if (midi.port_mout)
+        if (midi.portMout)
         {
-            delete midi.port_mout;
-            midi.port_mout = nullptr;
+            delete midi.portMout;
+            midi.portMout = nullptr;
         }
 
-        if (param.port_cin)
+        if (param.portCin)
         {
-            delete param.port_cin;
-            param.port_cin = nullptr;
+            delete param.portCin;
+            param.portCin = nullptr;
         }
 
-        if (param.port_cout)
+        if (param.portCout)
         {
-            delete param.port_cout;
-            param.port_cout = nullptr;
+            delete param.portCout;
+            param.portCout = nullptr;
         }
 
         qDebug("CarlaPlugin::remove_client_ports() - end");
@@ -1321,14 +1322,14 @@ public:
         aout.ports = nullptr;
         aout.rindexes = nullptr;
 
-        midi.port_min  = nullptr;
-        midi.port_mout = nullptr;
+        midi.portMin  = nullptr;
+        midi.portMout = nullptr;
 
         param.count    = 0;
         param.data     = nullptr;
         param.ranges   = nullptr;
-        param.port_cin  = nullptr;
-        param.port_cout = nullptr;
+        param.portCin  = nullptr;
+        param.portCout = nullptr;
 
         qDebug("CarlaPlugin::delete_buffers() - end");
     }
@@ -1356,9 +1357,9 @@ public:
         return nullptr;
     }
 
-    const char* lib_error()
+    const char* lib_error(const char* filename)
     {
-        return ::lib_error(m_filename ? m_filename : "");
+        return ::lib_error(filename);
     }
 
     // -------------------------------------------------------------------
@@ -1369,7 +1370,7 @@ protected:
     unsigned int m_hints;
 
     bool m_active;
-    bool m_active_before;
+    bool m_activeBefore;
     bool m_enabled;
 
     void* m_lib;
@@ -1446,7 +1447,7 @@ public:
         if (m_disable)
         {
             carla_proc_lock();
-            m_plugin->set_enabled(false);
+            m_plugin->setEnabled(false);
             carla_proc_unlock();
         }
     }
@@ -1456,7 +1457,7 @@ public:
         if (m_disable)
         {
             carla_proc_lock();
-            m_plugin->set_enabled(true);
+            m_plugin->setEnabled(true);
             carla_proc_unlock();
         }
     }

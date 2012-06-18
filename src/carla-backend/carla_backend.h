@@ -120,8 +120,8 @@ enum CustomDataType {
 enum GuiType {
     GUI_NONE = 0,
     GUI_INTERNAL_QT4  = 1,
-    GUI_INTERNAL_X11  = 2,
-    GUI_INTERNAL_HWND = 3,
+    GUI_INTERNAL_HWND = 2,
+    GUI_INTERNAL_X11  = 3,
     GUI_EXTERNAL_LV2  = 4,
     GUI_EXTERNAL_OSC  = 5
 };
@@ -207,7 +207,7 @@ struct PluginInfo {
     const char* label;
     const char* maker;
     const char* copyright;
-    long unique_id;
+    long uniqueId;
 };
 
 struct PortCountInfo {
