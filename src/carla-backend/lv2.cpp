@@ -254,7 +254,7 @@ public:
                 delete (lv2_external_ui_host*)features[lv2_feature_id_external_ui]->data;
             }
 
-            ui_lib_close();
+            uiLibClose();
         }
 
         if (handle && descriptor && descriptor->deactivate && m_activeBefore)
@@ -573,7 +573,7 @@ public:
         switch (lv2param[paramId].type)
         {
         case LV2_PARAMETER_TYPE_CONTROL:
-            lv2param[paramId].control = fix_parameter_value(value, param.ranges[paramId]);
+            lv2param[paramId].control = fixParameterValue(value, param.ranges[paramId]);
             break;
         default:
             break;
@@ -851,10 +851,10 @@ public:
             x_client->deactivate();
 
         // Remove client ports
-        remove_client_ports();
+        removeClientPorts();
 
         // Delete old data
-        delete_buffers();
+        deleteBuffers();
 
         uint32_t ains, aouts, cv_ins, cv_outs, ev_ins, ev_outs, params, j;
         ains = aouts = cv_ins = cv_outs = ev_ins = ev_outs = params = 0;
@@ -1140,8 +1140,8 @@ public:
                 param.data[j].index  = j;
                 param.data[j].rindex = i;
                 param.data[j].hints  = 0;
-                param.data[j].midi_channel = 0;
-                param.data[j].midi_cc = -1;
+                param.data[j].midiChannel = 0;
+                param.data[j].midiCC = -1;
 
                 double min, max, def, step, step_small, step_large;
 
@@ -1234,7 +1234,7 @@ public:
                     if (LV2_IS_PORT_MIDI_MAP_CC(PortMidiMap->Type))
                     {
                         if (! MIDI_IS_CONTROL_BANK_SELECT(PortMidiMap->Number))
-                            param.data[j].midi_cc = PortMidiMap->Number;
+                            param.data[j].midiCC = PortMidiMap->Number;
                     }
                 }
                 else if (LV2_IS_PORT_OUTPUT(PortType))
@@ -1289,8 +1289,8 @@ public:
                 param.ranges[j].max = max;
                 param.ranges[j].def = def;
                 param.ranges[j].step = step;
-                param.ranges[j].step_small = step_small;
-                param.ranges[j].step_large = step_large;
+                param.ranges[j].stepSmall = step_small;
+                param.ranges[j].stepLarge = step_large;
 
                 // Set LV2 params as needed
                 lv2param[j].type = LV2_PARAMETER_TYPE_CONTROL;
@@ -1573,19 +1573,19 @@ public:
             {
                 for (k=0; k < nframes; k++)
                 {
-                    if (abs_d(ains_buffer[0][k]) > ains_peak_tmp[0])
-                        ains_peak_tmp[0] = abs_d(ains_buffer[0][k]);
+                    if (abs(ains_buffer[0][k]) > ains_peak_tmp[0])
+                        ains_peak_tmp[0] = abs(ains_buffer[0][k]);
                 }
             }
             else if (ain.count >= 1)
             {
                 for (k=0; k < nframes; k++)
                 {
-                    if (abs_d(ains_buffer[0][k]) > ains_peak_tmp[0])
-                        ains_peak_tmp[0] = abs_d(ains_buffer[0][k]);
+                    if (abs(ains_buffer[0][k]) > ains_peak_tmp[0])
+                        ains_peak_tmp[0] = abs(ains_buffer[0][k]);
 
-                    if (abs_d(ains_buffer[1][k]) > ains_peak_tmp[1])
-                        ains_peak_tmp[1] = abs_d(ains_buffer[1][k]);
+                    if (abs(ains_buffer[1][k]) > ains_peak_tmp[1])
+                        ains_peak_tmp[1] = abs(ains_buffer[1][k]);
                 }
             }
         }
@@ -1632,14 +1632,14 @@ public:
                         {
                             value = cin_event->value;
                             setDryWet(value, false, false);
-                            postpone_event(PluginPostEventParameterChange, PARAMETER_DRYWET, value);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_DRYWET, value);
                             continue;
                         }
                         else if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cin_event->controller) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
                         {
                             value = cin_event->value*127/100;
                             setVolume(value, false, false);
-                            postpone_event(PluginPostEventParameterChange, PARAMETER_VOLUME, value);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_VOLUME, value);
                             continue;
                         }
                         else if (MIDI_IS_CONTROL_BALANCE(cin_event->controller) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
@@ -1665,8 +1665,8 @@ public:
 
                             setBalanceLeft(left, false, false);
                             setBalanceRight(right, false, false);
-                            postpone_event(PluginPostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
-                            postpone_event(PluginPostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
                             continue;
                         }
                     }
@@ -1674,9 +1674,9 @@ public:
                     // Control plugin parameters
                     for (k=0; k < param.count; k++)
                     {
-                        if (param.data[k].midi_channel != cin_event->channel)
+                        if (param.data[k].midiChannel != cin_event->channel)
                             continue;
-                        if (param.data[k].midi_cc != cin_event->controller)
+                        if (param.data[k].midiCC != cin_event->controller)
                             continue;
                         if (param.data[k].type != PARAMETER_INPUT)
                             continue;
@@ -1696,7 +1696,7 @@ public:
                             }
 
                             setParameterValue(k, value, false, false, false);
-                            postpone_event(PluginPostEventParameterChange, k, value);
+                            postponeEvent(PluginPostEventParameterChange, k, value);
                         }
                     }
 
@@ -1719,7 +1719,7 @@ public:
                             if (midiprog.data[k].bank == mbank_id && midiprog.data[k].program == mprog_id)
                             {
                                 setMidiProgram(k, false, false, false, false);
-                                postpone_event(PluginPostEventMidiProgramChange, k, 0.0);
+                                postponeEvent(PluginPostEventMidiProgramChange, k, 0.0);
                                 break;
                             }
                         }
@@ -1730,10 +1730,7 @@ public:
                     if (cin_event->channel == cin_channel)
                     {
                         if (midi.portMin)
-                        {
-                            send_midi_all_notes_off();
-                            midi_event_count += 128;
-                        }
+                            sendMidiAllNotesOff();
 
                         if (descriptor->deactivate)
                             descriptor->deactivate(handle);
@@ -1747,10 +1744,7 @@ public:
                     if (cin_event->channel == cin_channel)
                     {
                         if (midi.portMin)
-                        {
-                            send_midi_all_notes_off();
-                            midi_event_count += 128;
-                        }
+                            sendMidiAllNotesOff();
                     }
                     break;
                 }
@@ -1873,9 +1867,9 @@ public:
                         if (channel == cin_channel)
                         {
                             if (MIDI_IS_STATUS_NOTE_OFF(status))
-                                postpone_event(PluginPostEventNoteOff, min_event->data[1], 0.0);
+                                postponeEvent(PluginPostEventNoteOff, min_event->data[1], 0.0);
                             else if (MIDI_IS_STATUS_NOTE_ON(status))
-                                postpone_event(PluginPostEventNoteOn, min_event->data[1], min_event->data[2]);
+                                postponeEvent(PluginPostEventNoteOn, min_event->data[1], min_event->data[2]);
                         }
                     }
 
@@ -1906,41 +1900,41 @@ public:
             {
             case LV2_PORT_TIME_BAR:
                 setParameterValue(k, timeInfo->bbt.bar, false, false, false);
-                postpone_event(PluginPostEventParameterChange, k, timeInfo->bbt.bar);
+                postponeEvent(PluginPostEventParameterChange, k, timeInfo->bbt.bar);
                 break;
             case LV2_PORT_TIME_BAR_BEAT:
                 setParameterValue(k, timeInfo->bbt.tick, false, false, false);
-                postpone_event(PluginPostEventParameterChange, k, timeInfo->bbt.tick);
+                postponeEvent(PluginPostEventParameterChange, k, timeInfo->bbt.tick);
                 break;
             case LV2_PORT_TIME_BEAT:
                 setParameterValue(k, timeInfo->bbt.beat, false, false, false);
-                postpone_event(PluginPostEventParameterChange, k, timeInfo->bbt.beat);
+                postponeEvent(PluginPostEventParameterChange, k, timeInfo->bbt.beat);
                 break;
             case LV2_PORT_TIME_BEAT_UNIT:
                 setParameterValue(k, timeInfo->bbt.beat_type, false, false, false);
-                postpone_event(PluginPostEventParameterChange, k, timeInfo->bbt.beat_type);
+                postponeEvent(PluginPostEventParameterChange, k, timeInfo->bbt.beat_type);
                 break;
             case LV2_PORT_TIME_BEATS_PER_BAR:
                 setParameterValue(k, timeInfo->bbt.beats_per_bar, false, false, false);
-                postpone_event(PluginPostEventParameterChange, k, timeInfo->bbt.beats_per_bar);
+                postponeEvent(PluginPostEventParameterChange, k, timeInfo->bbt.beats_per_bar);
                 break;
             case LV2_PORT_TIME_BEATS_PER_MINUTE:
                 setParameterValue(k, timeInfo->bbt.beats_per_minute, false, false, false);
-                postpone_event(PluginPostEventParameterChange, k, timeInfo->bbt.beats_per_minute);
+                postponeEvent(PluginPostEventParameterChange, k, timeInfo->bbt.beats_per_minute);
                 break;
             case LV2_PORT_TIME_FRAME:
                 setParameterValue(k, timeInfo->frame, false, false, false);
-                postpone_event(PluginPostEventParameterChange, k, timeInfo->frame);
+                postponeEvent(PluginPostEventParameterChange, k, timeInfo->frame);
                 break;
             case LV2_PORT_TIME_FRAMES_PER_SECOND:
                 break;
             case LV2_PORT_TIME_POSITION:
                 setParameterValue(k, timeInfo->time, false, false, false);
-                postpone_event(PluginPostEventParameterChange, k, timeInfo->time);
+                postponeEvent(PluginPostEventParameterChange, k, timeInfo->time);
                 break;
             case LV2_PORT_TIME_SPEED:
                 setParameterValue(k, timeInfo->playing ? 1.0 : 0.0, false, false, false);
-                postpone_event(PluginPostEventParameterChange, k, timeInfo->playing ? 1.0 : 0.0);
+                postponeEvent(PluginPostEventParameterChange, k, timeInfo->playing ? 1.0 : 0.0);
                 break;
             }
         }
@@ -2041,8 +2035,8 @@ public:
                 // Output VU
                 for (k=0; k < nframes && i < 2; k++)
                 {
-                    if (abs_d(aouts_buffer[i][k]) > aouts_peak_tmp[i])
-                        aouts_peak_tmp[i] = abs_d(aouts_buffer[i][k]);
+                    if (abs(aouts_buffer[i][k]) > aouts_peak_tmp[i])
+                        aouts_peak_tmp[i] = abs(aouts_buffer[i][k]);
                 }
             }
         }
@@ -2076,14 +2070,14 @@ public:
                 if (param.data[k].type == PARAMETER_OUTPUT)
                 {
                     if (lv2param[k].type == LV2_PARAMETER_TYPE_CONTROL)
-                        fix_parameter_value(lv2param[k].control, param.ranges[k]);
+                        fixParameterValue(lv2param[k].control, param.ranges[k]);
 
-                    if (param.data[k].midi_cc > 0)
+                    if (param.data[k].midiCC > 0)
                     {
                         switch (lv2param[k].type)
                         {
                         case LV2_PARAMETER_TYPE_CONTROL:
-                            fix_parameter_value(lv2param[k].control, param.ranges[k]);
+                            //fixParameterValue(lv2param[k].control, param.ranges[k]);
                             value = lv2param[k].control;
                             break;
                         default:
@@ -2092,7 +2086,7 @@ public:
                         }
 
                         rvalue = (value - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
-                        param.portCout->writeEvent(cout_buffer, CarlaEngineEventControlChange, nframesOffset, param.data[k].midi_channel, param.data[k].midi_cc, rvalue);
+                        param.portCout->writeEvent(cout_buffer, CarlaEngineEventControlChange, nframesOffset, param.data[k].midiChannel, param.data[k].midiCC, rvalue);
                     }
                 }
             }
@@ -2171,11 +2165,9 @@ public:
     // -------------------------------------------------------------------
     // Cleanup
 
-    void remove_client_ports()
+    void removeClientPorts()
     {
-        qDebug("Lv2Plugin::remove_from_jack() - start");
-
-        CarlaPlugin::remove_client_ports();
+        qDebug("Lv2Plugin::removeClientPorts() - start");
 
         for (uint32_t i=0; i < evin.count; i++)
         {
@@ -2195,12 +2187,13 @@ public:
             }
         }
 
-        qDebug("Lv2Plugin::remove_from_jack() - end");
+        CarlaPlugin::removeClientPorts();
+        qDebug("Lv2Plugin::removeClientPorts() - end");
     }
 
-    void delete_buffers()
+    void deleteBuffers()
     {
-        qDebug("Lv2Plugin::delete_buffers() - start");
+        qDebug("Lv2Plugin::deleteBuffers() - start");
 
         if (param.count > 0)
             delete[] lv2param;
@@ -2257,20 +2250,10 @@ public:
         evout.count = 0;
         evout.data  = nullptr;
 
-        qDebug("Lv2Plugin::delete_buffers() - end");
+        qDebug("Lv2Plugin::deleteBuffers() - end");
     }
 
     // -------------------------------------------------------------------
-
-    void run_custom_event(PluginPostEvent* event)
-    {
-        //if (ext.worker)
-        //{
-        //    ext.worker->work(handle, carla_lv2_worker_respond, this, event->index, event->cdata);
-        //    ext.worker->end_run(handle);
-        //}
-        Q_UNUSED(event);
-    }
 
     void handle_event_transfer(const char* type, const char* key, const char* string_data)
     {
@@ -2527,16 +2510,16 @@ public:
         // ---------------------------------------------------------------
         // open DLL
 
-        if (! lib_open(rdf_descriptor->Binary))
+        if (! libOpen(rdf_descriptor->Binary))
         {
-            set_last_error(lib_error(rdf_descriptor->Binary));
+            set_last_error(libError(rdf_descriptor->Binary));
             return false;
         }
 
         // ---------------------------------------------------------------
         // get DLL main entry
 
-        LV2_Descriptor_Function descfn = (LV2_Descriptor_Function)lib_symbol("lv2_descriptor");
+        LV2_Descriptor_Function descfn = (LV2_Descriptor_Function)libSymbol("lv2_descriptor");
 
         if (! descfn)
         {
@@ -2830,9 +2813,9 @@ public:
             // -----------------------------------------------------------
             // open DLL
 
-            if (! ui_lib_open(ui.rdf_descriptor->Binary))
+            if (! uiLibOpen(ui.rdf_descriptor->Binary))
             {
-                qCritical("Could not load UI library, error was:\n%s", lib_error(ui.rdf_descriptor->Binary));
+                qCritical("Could not load UI library, error was:\n%s", libError(ui.rdf_descriptor->Binary));
                 ui.rdf_descriptor = nullptr;
                 return true;
             }
@@ -2840,12 +2823,12 @@ public:
             // -----------------------------------------------------------
             // get DLL main entry
 
-            LV2UI_DescriptorFunction ui_descfn = (LV2UI_DescriptorFunction)ui_lib_symbol("lv2ui_descriptor");
+            LV2UI_DescriptorFunction ui_descfn = (LV2UI_DescriptorFunction)uiLibSymbol("lv2ui_descriptor");
 
             if (! ui_descfn)
             {
                 qCritical("Could not find the LV2UI Descriptor in the UI library");
-                ui_lib_close();
+                uiLibClose();
                 ui.lib = nullptr;
                 ui.rdf_descriptor = nullptr;
                 return true;
@@ -2864,7 +2847,7 @@ public:
             if (! ui.descriptor)
             {
                 qCritical("Could not find the requested GUI in the plugin UI library");
-                ui_lib_close();
+                uiLibClose();
                 ui.lib = nullptr;
                 ui.rdf_descriptor = nullptr;
                 return true;
@@ -2984,23 +2967,23 @@ public:
         return true;
     }
 
-    bool ui_lib_open(const char* filename)
+    bool uiLibOpen(const char* filename)
     {
-        ui.lib = ::lib_open(filename);
+        ui.lib = lib_open(filename);
         return bool(ui.lib);
     }
 
-    bool ui_lib_close()
+    bool uiLibClose()
     {
         if (ui.lib)
-            return ::lib_close(ui.lib);
+            return lib_close(ui.lib);
         return false;
     }
 
-    void* ui_lib_symbol(const char* symbol)
+    void* uiLibSymbol(const char* symbol)
     {
         if (ui.lib)
-            return ::lib_symbol(ui.lib, symbol);
+            return lib_symbol(ui.lib, symbol);
         return nullptr;
     }
 
@@ -3463,13 +3446,13 @@ public:
             if (MIDI_IS_STATUS_NOTE_OFF(status))
             {
                 uint8_t note = data[2];
-                plugin->send_midi_note(note, 0, false, true, true);
+                plugin->sendMidiSingleNote(note, 0, false, true, true);
             }
             else if (MIDI_IS_STATUS_NOTE_ON(status))
             {
                 uint8_t note = data[2];
                 uint8_t velo = data[3];
-                plugin->send_midi_note(note, velo, false, true, true);
+                plugin->sendMidiSingleNote(note, velo, false, true, true);
             }
         }
         else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM)
@@ -3540,7 +3523,7 @@ short add_plugin_lv2(const char* filename, const char* label)
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-            plugin->osc_register_new();
+            plugin->registerToOsc();
         }
         else
         {

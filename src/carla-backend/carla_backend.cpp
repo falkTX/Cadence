@@ -176,7 +176,7 @@ bool remove_plugin(unsigned short plugin_id)
             osc_global_send_remove_plugin(plugin->id());
 
             carla_proc_lock();
-            plugin->set_enabled(false);
+            plugin->setEnabled(false);
             carla_proc_unlock();
 
             if (is_engine_running() && carla_check_thread.isRunning())
@@ -221,21 +221,21 @@ PluginInfo* get_plugin_info(unsigned short plugin_id)
         {
             char buf_str[STR_MAX] = { 0 };
 
-            info.valid     = true;
-            info.type      = plugin->type();
-            info.category  = plugin->category();
-            info.hints     = plugin->hints();
-            info.binary    = plugin->filename();
-            info.name      = plugin->name();
-            info.unique_id = plugin->unique_id();
+            info.valid    = true;
+            info.type     = plugin->type();
+            info.category = plugin->category();
+            info.hints    = plugin->hints();
+            info.binary   = plugin->filename();
+            info.name     = plugin->name();
+            info.uniqueId = plugin->uniqueId();
 
-            plugin->get_label(buf_str);
+            plugin->getLabel(buf_str);
             info.label = strdup(buf_str);
 
-            plugin->get_maker(buf_str);
+            plugin->getMaker(buf_str);
             info.maker = strdup(buf_str);
 
-            plugin->get_copyright(buf_str);
+            plugin->getCopyright(buf_str);
             info.copyright = strdup(buf_str);
 
             return &info;
@@ -261,8 +261,8 @@ PortCountInfo* get_audio_port_count_info(unsigned short plugin_id)
         if (plugin && plugin->id() == plugin_id)
         {
             info.valid = true;
-            info.ins   = plugin->ain_count();
-            info.outs  = plugin->aout_count();
+            info.ins   = plugin->audioInCount();
+            info.outs  = plugin->audioOutCount();
             info.total = info.ins + info.outs;
             return &info;
         }
@@ -285,8 +285,8 @@ PortCountInfo* get_midi_port_count_info(unsigned short plugin_id)
         if (plugin && plugin->id() == plugin_id)
         {
             info.valid = true;
-            info.ins   = plugin->min_count();
-            info.outs  = plugin->mout_count();
+            info.ins   = plugin->midiInCount();
+            info.outs  = plugin->midiOutCount();
             info.total = info.ins + info.outs;
             return &info;
         }
@@ -309,7 +309,7 @@ PortCountInfo* get_parameter_count_info(unsigned short plugin_id)
         if (plugin && plugin->id() == plugin_id)
         {
             info.valid = true;
-            plugin->get_parameter_count_info(&info);
+            plugin->getParameterCountInfo(&info);
             return &info;
         }
     }
@@ -338,20 +338,20 @@ ParameterInfo* get_parameter_info(unsigned short plugin_id, uint32_t parameter_i
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            if (parameter_id < plugin->param_count())
+            if (parameter_id < plugin->parameterCount())
             {
                 char buf_str[STR_MAX] = { 0 };
 
                 info.valid = true;
-                info.scalepoint_count = plugin->param_scalepoint_count(parameter_id);
+                info.scalePointCount = plugin->parameterScalePointCount(parameter_id);
 
-                plugin->get_parameter_name(parameter_id, buf_str);
+                plugin->getParameterName(parameter_id, buf_str);
                 info.name = strdup(buf_str);
 
-                plugin->get_parameter_symbol(parameter_id, buf_str);
+                plugin->getParameterSymbol(parameter_id, buf_str);
                 info.symbol = strdup(buf_str);
 
-                plugin->get_parameter_unit(parameter_id, buf_str);
+                plugin->getParameterUnit(parameter_id, buf_str);
                 info.unit = strdup(buf_str);
             }
             else
@@ -383,16 +383,16 @@ ScalePointInfo* get_scalepoint_info(unsigned short plugin_id, uint32_t parameter
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            if (parameter_id < plugin->param_count())
+            if (parameter_id < plugin->parameterCount())
             {
-                if (scalepoint_id < plugin->param_scalepoint_count(parameter_id))
+                if (scalepoint_id < plugin->parameterScalePointCount(parameter_id))
                 {
                     char buf_str[STR_MAX] = { 0 };
 
                     info.valid = true;
-                    info.value = plugin->get_parameter_scalepoint_value(parameter_id, scalepoint_id);
+                    info.value = plugin->getParameterScalePointValue(parameter_id, scalepoint_id);
 
-                    plugin->get_parameter_scalepoint_label(parameter_id, scalepoint_id, buf_str);
+                    plugin->getParameterScalePointLabel(parameter_id, scalepoint_id, buf_str);
                     info.label = strdup(buf_str);
                 }
                 else
@@ -423,10 +423,10 @@ MidiProgramInfo* get_midi_program_info(unsigned short plugin_id, uint32_t midi_p
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            if (midi_program_id < plugin->midiprog_count())
+            if (midi_program_id < plugin->midiProgramCount())
             {
                 info.valid   = true;
-                plugin->get_midi_program_info(&info, midi_program_id);
+                plugin->getMidiProgramInfo(&info, midi_program_id);
             }
             else
                 qCritical("get_midi_program_info(%i, %i) - midi_program_id out of bounds", plugin_id, midi_program_id);
@@ -451,7 +451,7 @@ GuiInfo* get_gui_info(unsigned short plugin_id)
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            plugin->get_gui_info(&info);
+            plugin->getGuiInfo(&info);
             return &info;
         }
     }
@@ -471,8 +471,8 @@ const ParameterData* get_parameter_data(unsigned short plugin_id, uint32_t param
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            if (parameter_id < plugin->param_count())
-                return plugin->param_data(parameter_id);
+            if (parameter_id < plugin->parameterCount())
+                return plugin->parameterData(parameter_id);
             else
                 qCritical("get_parameter_data(%i, %i) - parameter_id out of bounds", plugin_id, parameter_id);
 
@@ -495,8 +495,8 @@ const ParameterRanges* get_parameter_ranges(unsigned short plugin_id, uint32_t p
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            if (parameter_id < plugin->param_count())
-                return plugin->param_ranges(parameter_id);
+            if (parameter_id < plugin->parameterCount())
+                return plugin->parameterRanges(parameter_id);
             else
                 qCritical("get_parameter_ranges(%i, %i) - parameter_id out of bounds", plugin_id, parameter_id);
 
@@ -519,8 +519,8 @@ const CustomData* get_custom_data(unsigned short plugin_id, uint32_t custom_data
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            if (custom_data_id < plugin->custom_count())
-                return plugin->custom_data(custom_data_id);
+            if (custom_data_id < plugin->customDataCount())
+                return plugin->customData(custom_data_id);
             else
                 qCritical("get_custom_data(%i, %i) - custom_data_id out of bounds", plugin_id, custom_data_id);
 
@@ -551,7 +551,7 @@ const char* get_chunk_data(unsigned short plugin_id)
             if (plugin->hints() & PLUGIN_USES_CHUNKS)
             {
                 void* data = nullptr;
-                int32_t data_size = plugin->chunk_data(&data);
+                int32_t data_size = plugin->chunkData(&data);
 
                 if (data && data_size >= 4)
                 {
@@ -582,7 +582,7 @@ uint32_t get_parameter_count(unsigned short plugin_id)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
-            return plugin->param_count();
+            return plugin->parameterCount();
     }
 
     qCritical("get_parameter_count(%i) - could not find plugin", plugin_id);
@@ -597,7 +597,7 @@ uint32_t get_program_count(unsigned short plugin_id)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
-            return plugin->prog_count();
+            return plugin->programCount();
     }
 
     qCritical("get_program_count(%i) - could not find plugin", plugin_id);
@@ -612,7 +612,7 @@ uint32_t get_midi_program_count(unsigned short plugin_id)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
-            return plugin->midiprog_count();
+            return plugin->midiProgramCount();
     }
 
     qCritical("get_midi_program_count(%i) - could not find plugin", plugin_id);
@@ -627,7 +627,7 @@ uint32_t get_custom_data_count(unsigned short plugin_id)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
-            return plugin->custom_count();
+            return plugin->customDataCount();
     }
 
     qCritical("get_custom_data_count(%i) - could not find plugin", plugin_id);
@@ -646,8 +646,8 @@ const char* get_parameter_text(unsigned short plugin_id, quint32 parameter_id)
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            if (parameter_id < plugin->param_count())
-                plugin->get_parameter_text(parameter_id, buf_text);
+            if (parameter_id < plugin->parameterCount())
+                plugin->getParameterText(parameter_id, buf_text);
             else
                 qCritical("get_parameter_text(%i, %i) - parameter_id out of bounds", plugin_id, parameter_id);
 
@@ -674,11 +674,11 @@ const char* get_program_name(unsigned short plugin_id, uint32_t program_id)
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            if (program_id < plugin->prog_count())
+            if (program_id < plugin->programCount())
             {
                 char buf_str[STR_MAX] = { 0 };
 
-                plugin->get_program_name(program_id, buf_str);
+                plugin->getProgramName(program_id, buf_str);
                 program_name = strdup(buf_str);
 
                 return program_name;
@@ -712,11 +712,11 @@ const char* get_midi_program_name(unsigned short plugin_id, uint32_t midi_progra
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            if (midi_program_id < plugin->midiprog_count())
+            if (midi_program_id < plugin->midiProgramCount())
             {
                 char buf_str[STR_MAX] = { 0 };
 
-                plugin->get_midi_program_name(midi_program_id, buf_str);
+                plugin->getMidiProgramName(midi_program_id, buf_str);
                 midi_program_name = strdup(buf_str);
 
                 return midi_program_name;
@@ -752,7 +752,7 @@ const char* get_real_plugin_name(unsigned short plugin_id)
         {
             char buf_str[STR_MAX] = { 0 };
 
-            plugin->get_real_name(buf_str);
+            plugin->getRealName(buf_str);
             real_plugin_name = strdup(buf_str);
 
             return real_plugin_name;
@@ -773,7 +773,7 @@ qint32 get_current_program_index(unsigned short plugin_id)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
-            return plugin->prog_current();
+            return plugin->currentProgram();
     }
 
     qCritical("get_current_program_index(%i) - could not find plugin", plugin_id);
@@ -788,7 +788,7 @@ qint32 get_current_midi_program_index(unsigned short plugin_id)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
-            return plugin->midiprog_current();
+            return plugin->currentMidiProgram();
     }
 
     qCritical("get_current_midi_program_index(%i) - could not find plugin", plugin_id);
@@ -804,9 +804,8 @@ double get_default_parameter_value(unsigned short plugin_id, uint32_t parameter_
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            if (parameter_id < plugin->param_count())
-                return plugin->param_ranges(parameter_id)->def;
-            //return plugin->get_default_parameter_value(parameter_id);
+            if (parameter_id < plugin->parameterCount())
+                return plugin->parameterRanges(parameter_id)->def;
             else
                 qCritical("get_default_parameter_value(%i, %i) - parameter_id out of bounds", plugin_id, parameter_id);
 
@@ -827,8 +826,8 @@ double get_current_parameter_value(unsigned short plugin_id, uint32_t parameter_
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            if (parameter_id < plugin->param_count())
-                return plugin->get_parameter_value(parameter_id);
+            if (parameter_id < plugin->parameterCount())
+                return plugin->getParameterValue(parameter_id);
             else
                 qCritical("get_current_parameter_value(%i, %i) - parameter_id out of bounds", plugin_id, parameter_id);
 
@@ -864,7 +863,7 @@ void set_active(unsigned short plugin_id, bool onoff)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
-            return plugin->set_active(onoff, true, false);
+            return plugin->setActive(onoff, true, false);
     }
 
     qCritical("set_active(%i, %s) - could not find plugin", plugin_id, bool2str(onoff));
@@ -878,7 +877,7 @@ void set_drywet(unsigned short plugin_id, double value)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
-            return plugin->set_drywet(value, true, false);
+            return plugin->setDryWet(value, true, false);
     }
 
     qCritical("set_drywet(%i, %f) - could not find plugin", plugin_id, value);
@@ -892,7 +891,7 @@ void set_volume(unsigned short plugin_id, double value)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
-            return plugin->set_volume(value, true, false);
+            return plugin->setVolume(value, true, false);
     }
 
     qCritical("set_vol(%i, %f) - could not find plugin", plugin_id, value);
@@ -906,7 +905,7 @@ void set_balance_left(unsigned short plugin_id, double value)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
-            return plugin->set_balance_left(value, true, false);
+            return plugin->setBalanceLeft(value, true, false);
     }
 
     qCritical("set_balance_left(%i, %f) - could not find plugin", plugin_id, value);
@@ -920,7 +919,7 @@ void set_balance_right(unsigned short plugin_id, double value)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
-            return plugin->set_balance_right(value, true, false);
+            return plugin->setBalanceRight(value, true, false);
     }
 
     qCritical("set_balance_right(%i, %f) - could not find plugin", plugin_id, value);
@@ -935,8 +934,8 @@ void set_parameter_value(unsigned short plugin_id, uint32_t parameter_id, double
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            if (parameter_id < plugin->param_count())
-                plugin->set_parameter_value(parameter_id, value, true, true, false);
+            if (parameter_id < plugin->parameterCount())
+                plugin->setParameterValue(parameter_id, value, true, true, false);
             else
                 qCritical("set_parameter_value(%i, %i, %f) - parameter_id out of bounds", plugin_id, parameter_id, value);
             return;
@@ -961,8 +960,8 @@ void set_parameter_midi_channel(unsigned short plugin_id, uint32_t parameter_id,
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            if (parameter_id < plugin->param_count())
-                plugin->set_parameter_midi_channel(parameter_id, channel);
+            if (parameter_id < plugin->parameterCount())
+                plugin->setParameterMidiChannel(parameter_id, channel);
             else
                 qCritical("set_parameter_midi_channel(%i, %i, %i) - parameter_id out of bounds", plugin_id, parameter_id, channel);
             return;
@@ -991,8 +990,8 @@ void set_parameter_midi_cc(unsigned short plugin_id, uint32_t parameter_id, int1
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            if (parameter_id < plugin->param_count())
-                plugin->set_parameter_midi_cc(parameter_id, midi_cc);
+            if (parameter_id < plugin->parameterCount())
+                plugin->setParameterMidiCC(parameter_id, midi_cc);
             else
                 qCritical("set_parameter_midi_cc(%i, %i, %i) - parameter_id out of bounds", plugin_id, parameter_id, midi_cc);
             return;
@@ -1011,8 +1010,8 @@ void set_program(unsigned short plugin_id, uint32_t program_id)
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            if (program_id < plugin->prog_count())
-                plugin->set_program(program_id, true, true, false, true);
+            if (program_id < plugin->programCount())
+                plugin->setProgram(program_id, true, true, false, true);
             else
                 qCritical("set_program(%i, %i) - program_id out of bounds", plugin_id, program_id);
 
@@ -1032,8 +1031,8 @@ void set_midi_program(unsigned short plugin_id, uint32_t midi_program_id)
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            if (midi_program_id < plugin->midiprog_count())
-                plugin->set_midi_program(midi_program_id, true, true, false, true);
+            if (midi_program_id < plugin->midiProgramCount())
+                plugin->setMidiProgram(midi_program_id, true, true, false, true);
             else
                 qCritical("set_midi_program(%i, %i) - program_id out of bounds", plugin_id, midi_program_id);
 
@@ -1052,7 +1051,7 @@ void set_custom_data(unsigned short plugin_id, CustomDataType type, const char* 
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
-            return plugin->set_custom_data(type, key, value, true);
+            return plugin->setCustomData(type, key, value, true);
     }
 
     qCritical("set_custom_data(%i, %i, %s, %s) - could not find plugin", plugin_id, type, key, value);
@@ -1068,7 +1067,7 @@ void set_chunk_data(unsigned short plugin_id, const char* chunk_data)
         if (plugin && plugin->id() == plugin_id)
         {
             if (plugin->hints() & PLUGIN_USES_CHUNKS)
-                plugin->set_chunk_data(chunk_data);
+                plugin->setChunkData(chunk_data);
             else
                 qCritical("set_chunk_data(%i, %s) - plugin does not support chunks", plugin_id, chunk_data);
 
@@ -1088,27 +1087,13 @@ void set_gui_data(unsigned short plugin_id, int data, quintptr gui_addr)
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            plugin->set_gui_data(data, (QDialog*)get_pointer(gui_addr));
+            plugin->setGuiData(data, (QDialog*)get_pointer(gui_addr));
             return;
         }
     }
 
     qCritical("set_gui_data(%i, %i, " P_UINTPTR ") - could not find plugin", plugin_id, data, gui_addr);
 }
-
-// TESTING
-//void set_name(unsigned short plugin_id, const char* name)
-//{
-
-//    for (unsigned short i=0; i<MAX_PLUGINS; i++)
-//    {
-//        CarlaPlugin* plugin = CarlaPlugins[i];
-//        if (plugin && plugin->id() == plugin_id)
-//        {
-//            plugin->set_name(name);
-//        }
-//    }
-//}
 
 void show_gui(unsigned short plugin_id, bool yesno)
 {
@@ -1119,7 +1104,7 @@ void show_gui(unsigned short plugin_id, bool yesno)
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            plugin->show_gui(yesno);
+            plugin->showGui(yesno);
             return;
         }
     }
@@ -1133,7 +1118,7 @@ void idle_guis()
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->enabled())
-            plugin->idle_gui();
+            plugin->idleGui();
     }
 }
 
@@ -1146,7 +1131,7 @@ void send_midi_note(unsigned short plugin_id, uint8_t note, uint8_t velocity)
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
         {
-            plugin->send_midi_note(note, velocity, true, true, false);
+            plugin->sendMidiSingleNote(note, velocity, true, true, false);
             return;
         }
     }
@@ -1162,7 +1147,7 @@ void prepare_for_save(unsigned short plugin_id)
     {
         CarlaPlugin* plugin = CarlaPlugins[i];
         if (plugin && plugin->id() == plugin_id)
-            return plugin->prepare_for_save();
+            return plugin->prepareForSave();
     }
 
     qCritical("prepare_for_save(%i) - could not find plugin", plugin_id);

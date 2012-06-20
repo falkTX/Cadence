@@ -271,7 +271,7 @@ public:
     void setParameterValue(uint32_t paramId, double value, bool sendGui, bool sendOsc, bool sendCallback)
     {
         assert(paramId < param.count);
-        param_buffers[paramId] = fix_parameter_value(value, param.ranges[paramId]);
+        param_buffers[paramId] = fixParameterValue(value, param.ranges[paramId]);
         CarlaPlugin::setParameterValue(paramId, value, sendGui, sendOsc, sendCallback);
     }
 
@@ -289,10 +289,10 @@ public:
             x_client->deactivate();
 
         // Remove client ports
-        remove_client_ports();
+        removeClientPorts();
 
         // Delete old data
-        delete_buffers();
+        deleteBuffers();
 
         uint32_t ains, aouts, params, j;
         ains = aouts = params = 0;
@@ -378,8 +378,8 @@ public:
                 param.data[j].index  = j;
                 param.data[j].rindex = i;
                 param.data[j].hints  = 0;
-                param.data[j].midi_channel = 0;
-                param.data[j].midi_cc = -1;
+                param.data[j].midiChannel = 0;
+                param.data[j].midiCC = -1;
 
                 double min, max, def, step, step_small, step_large;
 
@@ -550,8 +550,8 @@ public:
                 param.ranges[j].max = max;
                 param.ranges[j].def = def;
                 param.ranges[j].step = step;
-                param.ranges[j].step_small = step_small;
-                param.ranges[j].step_large = step_large;
+                param.ranges[j].stepSmall = step_small;
+                param.ranges[j].stepLarge = step_large;
 
                 // Start parameters in their default values
                 param_buffers[j] = def;
@@ -638,19 +638,19 @@ public:
             {
                 for (k=0; k < nframes; k++)
                 {
-                    if (abs_d(ains_buffer[0][k]) > ains_peak_tmp[0])
-                        ains_peak_tmp[0] = abs_d(ains_buffer[0][k]);
+                    if (abs(ains_buffer[0][k]) > ains_peak_tmp[0])
+                        ains_peak_tmp[0] = abs(ains_buffer[0][k]);
                 }
             }
             else if (ain.count >= 1)
             {
                 for (k=0; k < nframes; k++)
                 {
-                    if (abs_d(ains_buffer[0][k]) > ains_peak_tmp[0])
-                        ains_peak_tmp[0] = abs_d(ains_buffer[0][k]);
+                    if (abs(ains_buffer[0][k]) > ains_peak_tmp[0])
+                        ains_peak_tmp[0] = abs(ains_buffer[0][k]);
 
-                    if (abs_d(ains_buffer[1][k]) > ains_peak_tmp[1])
-                        ains_peak_tmp[1] = abs_d(ains_buffer[1][k]);
+                    if (abs(ains_buffer[1][k]) > ains_peak_tmp[1])
+                        ains_peak_tmp[1] = abs(ains_buffer[1][k]);
                 }
             }
         }
@@ -693,14 +693,14 @@ public:
                         {
                             value = cin_event->value;
                             setDryWet(value, false, false);
-                            postpone_event(PluginPostEventParameterChange, PARAMETER_DRYWET, value);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_DRYWET, value);
                             continue;
                         }
                         else if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cin_event->controller) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
                         {
                             value = cin_event->value*127/100;
                             setVolume(value, false, false);
-                            postpone_event(PluginPostEventParameterChange, PARAMETER_VOLUME, value);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_VOLUME, value);
                             continue;
                         }
                         else if (MIDI_IS_CONTROL_BALANCE(cin_event->controller) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
@@ -726,8 +726,8 @@ public:
 
                             setBalanceLeft(left, false, false);
                             setBalanceRight(right, false, false);
-                            postpone_event(PluginPostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
-                            postpone_event(PluginPostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
                             continue;
                         }
                     }
@@ -735,9 +735,9 @@ public:
                     // Control plugin parameters
                     for (k=0; k < param.count; k++)
                     {
-                        if (param.data[k].midi_channel != cin_event->channel)
+                        if (param.data[k].midiChannel != cin_event->channel)
                             continue;
-                        if (param.data[k].midi_cc != cin_event->controller)
+                        if (param.data[k].midiCC != cin_event->controller)
                             continue;
                         if (param.data[k].type != PARAMETER_INPUT)
                             continue;
@@ -757,7 +757,7 @@ public:
                             }
 
                             setParameterValue(k, value, false, false, false);
-                            postpone_event(PluginPostEventParameterChange, k, value);
+                            postponeEvent(PluginPostEventParameterChange, k, value);
                         }
                     }
 
@@ -890,8 +890,8 @@ public:
                 // Output VU
                 for (k=0; k < nframes && i < 2; k++)
                 {
-                    if (abs_d(aouts_buffer[i][k]) > aouts_peak_tmp[i])
-                        aouts_peak_tmp[i] = abs_d(aouts_buffer[i][k]);
+                    if (abs(aouts_buffer[i][k]) > aouts_peak_tmp[i])
+                        aouts_peak_tmp[i] = abs(aouts_buffer[i][k]);
                 }
             }
         }
@@ -924,12 +924,12 @@ public:
             {
                 if (param.data[k].type == PARAMETER_OUTPUT)
                 {
-                    fix_parameter_value(param_buffers[k], param.ranges[k]);
+                    fixParameterValue(param_buffers[k], param.ranges[k]);
 
-                    if (param.data[k].midi_cc > 0)
+                    if (param.data[k].midiCC > 0)
                     {
                         value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
-                        param.portCout->writeEvent(cout_buffer, CarlaEngineEventControlChange, nframesOffset, param.data[k].midi_channel, param.data[k].midi_cc, value);
+                        param.portCout->writeEvent(cout_buffer, CarlaEngineEventControlChange, nframesOffset, param.data[k].midiChannel, param.data[k].midiCC, value);
                     }
                 }
             }
@@ -951,16 +951,16 @@ public:
     // -------------------------------------------------------------------
     // Cleanup
 
-    void delete_buffers()
+    void deleteBuffers()
     {
-        qDebug("LadspaPlugin::delete_buffers() - start");
+        qDebug("LadspaPlugin::deleteBuffers() - start");
 
         if (param.count > 0)
             delete[] param_buffers;
 
         param_buffers = nullptr;
 
-        qDebug("LadspaPlugin::delete_buffers() - end");
+        qDebug("LadspaPlugin::deleteBuffers() - end");
     }
 
     // -------------------------------------------------------------------
@@ -970,16 +970,16 @@ public:
         // ---------------------------------------------------------------
         // open DLL
 
-        if (! lib_open(filename))
+        if (! libOpen(filename))
         {
-            set_last_error(lib_error(filename));
+            set_last_error(libError(filename));
             return false;
         }
 
         // ---------------------------------------------------------------
         // get DLL main entry
 
-        LADSPA_Descriptor_Function descfn = (LADSPA_Descriptor_Function)lib_symbol("ladspa_descriptor");
+        LADSPA_Descriptor_Function descfn = (LADSPA_Descriptor_Function)libSymbol("ladspa_descriptor");
 
         if (! descfn)
         {
@@ -1066,7 +1066,7 @@ short add_plugin_ladspa(const char* filename, const char* label, const void* ext
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-            plugin->osc_register_new();
+            plugin->registerToOsc();
         }
         else
         {

@@ -268,15 +268,15 @@ public:
                 param.data[i].index  = -1;
                 param.data[i].rindex = -1;
                 param.data[i].hints  = 0;
-                param.data[i].midi_channel = 0;
-                param.data[i].midi_cc = -1;
+                param.data[i].midiChannel = 0;
+                param.data[i].midiCC = -1;
 
                 param.ranges[i].def  = 0.0;
                 param.ranges[i].min  = 0.0;
                 param.ranges[i].max  = 1.0;
                 param.ranges[i].step = 0.01;
-                param.ranges[i].step_small = 0.0001;
-                param.ranges[i].step_large = 0.1;
+                param.ranges[i].stepSmall = 0.0001;
+                param.ranges[i].stepLarge = 0.1;
 
                 params[i].value = 0.0;
                 params[i].name = QString();
@@ -395,8 +395,8 @@ public:
                 param.data[index].index   = index;
                 param.data[index].rindex  = argv[2]->i;
                 param.data[index].hints   = argv[3]->i;
-                param.data[index].midi_channel = argv[4]->i;
-                param.data[index].midi_cc = argv[5]->i;
+                param.data[index].midiChannel = argv[4]->i;
+                param.data[index].midiCC = argv[5]->i;
             }
             break;
         }
@@ -410,8 +410,8 @@ public:
                 param.ranges[index].min  = argv[2]->f;
                 param.ranges[index].max  = argv[3]->f;
                 param.ranges[index].step = argv[4]->f;
-                param.ranges[index].step_small = argv[5]->f;
-                param.ranges[index].step_large = argv[6]->f;
+                param.ranges[index].stepSmall = argv[5]->f;
+                param.ranges[index].stepLarge = argv[6]->f;
             }
             break;
         }
@@ -444,7 +444,7 @@ public:
             const char* key   = (const char*)&argv[1]->s;
             const char* value = (const char*)&argv[2]->s;
 
-            set_custom_data(customdatastr2type(stype), key, value, false);
+            setCustomData(customdatastr2type(stype), key, value, false);
             break;
         }
 
@@ -475,12 +475,12 @@ public:
 
     void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
     {
-        params[param_id].value = fix_parameter_value(value, param.ranges[param_id]);
+        params[param_id].value = fixParameterValue(value, param.ranges[param_id]);
 
         if (gui_send)
             osc_send_control(&osc.data, param.data[param_id].rindex, value);
 
-        CarlaPlugin::set_parameter_value(param_id, value, gui_send, osc_send, callback_send);
+        CarlaPlugin::setParameterValue(param_id, value, gui_send, osc_send, callback_send);
     }
 
     void set_chunk_data(const char* string_data)
@@ -609,7 +609,7 @@ short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-            plugin->osc_register_new();
+            plugin->registerToOsc();
         }
         else
         {

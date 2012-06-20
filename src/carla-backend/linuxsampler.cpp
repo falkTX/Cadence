@@ -227,10 +227,10 @@ public:
             x_client->deactivate();
 
         // Remove client ports
-        remove_client_ports();
+        removeClientPorts();
 
         // Delete old data
-        delete_buffers();
+        deleteBuffers();
 
         uint32_t aouts;
         aouts  = 2;
@@ -283,7 +283,7 @@ public:
 #endif
             strcpy(port_name, "midi-in");
 
-        midi.port_min = (CarlaEngineMidiPort*)x_client->addPort(port_name, CarlaEnginePortTypeMIDI, true);
+        midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(port_name, CarlaEnginePortTypeMIDI, true);
 
         // ---------------------------------------
 
@@ -348,7 +348,7 @@ public:
 
         if (init && midiprog.count > 0)
         {
-            set_midi_program(0, false, false, false, true);
+            setMidiProgram(0, false, false, false, true);
         }
     }
 
@@ -367,7 +367,7 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // MIDI Input (External)
 
-        if (cin_channel >= 0 && cin_channel < 16 && m_active && m_active_before)
+        if (cin_channel >= 0 && cin_channel < 16 && m_active && m_activeBefore)
         {
             carla_midi_lock();
 
@@ -396,16 +396,16 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // MIDI Input (System)
 
-        if (m_active && m_active_before)
+        if (m_active && m_activeBefore)
         {
-            void* min_buffer = midi.port_min->getBuffer();
+            void* min_buffer = midi.portMin->getBuffer();
 
             const CarlaEngineMidiEvent* min_event;
-            uint32_t time, n_min_events = midi.port_min->getEventCount(min_buffer);
+            uint32_t time, n_min_events = midi.portMin->getEventCount(min_buffer);
 
             for (i=0; i < n_min_events && midi_event_count < MAX_MIDI_EVENTS; i++)
             {
-                min_event = midi.port_min->getEvent(min_buffer, i);
+                min_event = midi.portMin->getEvent(min_buffer, i);
 
                 if (! min_event)
                     continue;
@@ -429,7 +429,7 @@ public:
                     midiInputPort->DispatchNoteOff(note, 0, channel, time);
 
                     if (channel == cin_channel)
-                        postpone_event(PluginPostEventNoteOff, note, 0.0);
+                        postponeEvent(PluginPostEventNoteOff, note, 0.0);
                 }
                 else if (MIDI_IS_STATUS_NOTE_ON(status))
                 {
@@ -439,7 +439,7 @@ public:
                     midiInputPort->DispatchNoteOn(note, velo, channel, time);
 
                     if (channel == cin_channel)
-                        postpone_event(PluginPostEventNoteOn, note, velo);
+                        postponeEvent(PluginPostEventNoteOn, note, velo);
                 }
                 else if (MIDI_IS_STATUS_AFTERTOUCH(status))
                 {
@@ -468,7 +468,7 @@ public:
 
         if (m_active)
         {
-            if (! m_active_before)
+            if (! m_activeBefore)
             {
                 if (cin_channel >= 0 && cin_channel < 16)
                 {
@@ -532,8 +532,8 @@ public:
                 // Output VU
                 for (k=0; k < nframes && i < 2; k++)
                 {
-                    if (abs_d(aouts_buffer[i][k]) > aouts_peak_tmp[i])
-                        aouts_peak_tmp[i] = abs_d(aouts_buffer[i][k]);
+                    if (abs(aouts_buffer[i][k]) > aouts_peak_tmp[i])
+                        aouts_peak_tmp[i] = abs(aouts_buffer[i][k]);
                 }
             }
         }
@@ -556,7 +556,7 @@ public:
         aouts_peak[(m_id*2)+0] = aouts_peak_tmp[0];
         aouts_peak[(m_id*2)+1] = aouts_peak_tmp[1];
 
-        m_active_before = m_active;
+        m_activeBefore = m_active;
     }
 
     // -------------------------------------------------------------------
@@ -670,7 +670,7 @@ short add_plugin_linuxsampler(const char* filename, const char* label, bool isGI
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-            plugin->osc_register_new();
+            plugin->registerToOsc();
         }
         else
         {

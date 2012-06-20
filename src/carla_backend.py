@@ -729,7 +729,7 @@ class ParameterInfo(Structure):
         ("name", c_char_p),
         ("symbol", c_char_p),
         ("unit", c_char_p),
-        ("scalepoint_count", c_uint32)
+        ("scalePointCount", c_uint32)
     ]
 
 class ScalePointInfo(Structure):

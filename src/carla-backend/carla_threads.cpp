@@ -65,9 +65,9 @@ void CarlaCheckThread::run()
                 // Process postponed events
 
                 // Make a safe copy of events, and clear them
-                plugin->post_events_copy(postEvents);
+                plugin->postEventsCopy(postEvents);
 
-                const OscData* const osc_data = plugin->osc_data();
+                const OscData* const osc_data = plugin->oscData();
 
                 // Process events now
                 for (j=0; j < MAX_POST_EVENTS; j++)
@@ -100,8 +100,8 @@ void CarlaCheckThread::run()
                         // Update OSC control client
                         osc_global_send_set_program(plugin->id(), postEvents[j].index);
 
-                        for (k=0; k < plugin->param_count(); k++)
-                            osc_global_send_set_default_value(plugin->id(), k, plugin->param_ranges(k)->def);
+                        for (k=0; k < plugin->parameterCount(); k++)
+                            osc_global_send_set_default_value(plugin->id(), k, plugin->parameterRanges(k)->def);
 
                         // Update Host
                         callback_action(CALLBACK_PROGRAM_CHANGED, plugin->id(), postEvents[j].index, 0, 0.0);
@@ -109,10 +109,10 @@ void CarlaCheckThread::run()
                         break;
 
                     case PluginPostEventMidiProgramChange:
-                        if (postEvents[j].index < (int32_t)plugin->midiprog_count())
+                        if (postEvents[j].index < (int32_t)plugin->midiProgramCount())
                         {
                             MidiProgramInfo midiprog = { false, 0, 0, nullptr };
-                            plugin->get_midi_program_info(&midiprog, postEvents[j].index);
+                            plugin->getMidiProgramInfo(&midiprog, postEvents[j].index);
 
                             // Update OSC based UIs
                             osc_send_midi_program(osc_data, midiprog.bank, midiprog.program, (plugin->type() == PLUGIN_DSSI));
@@ -120,8 +120,8 @@ void CarlaCheckThread::run()
                             // Update OSC control client
                             osc_global_send_set_midi_program(plugin->id(), postEvents[j].index);
 
-                            for (k=0; k < plugin->param_count(); k++)
-                                osc_global_send_set_default_value(plugin->id(), k, plugin->param_ranges(k)->def);
+                            for (k=0; k < plugin->parameterCount(); k++)
+                                osc_global_send_set_default_value(plugin->id(), k, plugin->parameterRanges(k)->def);
 
                             // Update Host
                             callback_action(CALLBACK_MIDI_PROGRAM_CHANGED, plugin->id(), postEvents[j].index, 0, 0.0);
@@ -155,10 +155,6 @@ void CarlaCheckThread::run()
 
                         break;
 
-                    case PluginPostEventCustom:
-                        plugin->run_custom_event(&postEvents[j]);
-                        break;
-
                     default:
                         break;
                     }
@@ -174,13 +170,13 @@ void CarlaCheckThread::run()
                     continue;
 
                 // Update
-                for (j=0; j < plugin->param_count(); j++)
+                for (j=0; j < plugin->parameterCount(); j++)
                 {
-                    paramData = plugin->param_data(j);
+                    paramData = plugin->parameterData(j);
 
                     if (paramData->type == PARAMETER_OUTPUT && (paramData->hints & PARAMETER_IS_AUTOMABLE) > 0)
                     {
-                        value = plugin->get_parameter_value(j);
+                        value = plugin->getParameterValue(j);
 
                         if (update_ports_gui)
                             osc_send_control(osc_data, paramData->rindex, value);
@@ -194,12 +190,12 @@ void CarlaCheckThread::run()
 
                 if (osc_global_registered())
                 {
-                    if (plugin->ain_count() > 0)
+                    if (plugin->audioInCount() > 0)
                     {
                         osc_global_send_set_input_peak_value(plugin->id(), 1, ains_peak[ (plugin->id() * 2) + 0 ]);
                         osc_global_send_set_input_peak_value(plugin->id(), 2, ains_peak[ (plugin->id() * 2) + 1 ]);
                     }
-                    if (plugin->aout_count() > 0)
+                    if (plugin->audioOutCount() > 0)
                     {
                         osc_global_send_set_output_peak_value(plugin->id(), 1, aouts_peak[ (plugin->id() * 2) + 0 ]);
                         osc_global_send_set_output_peak_value(plugin->id(), 2, aouts_peak[ (plugin->id() * 2) + 1 ]);
@@ -287,7 +283,7 @@ void CarlaPluginThread::run()
     {
     case PLUGIN_THREAD_DSSI_GUI:
     case PLUGIN_THREAD_LV2_GUI:
-        if (m_plugin->show_osc_gui())
+        if (m_plugin->showOscGui())
         {
             m_process->waitForFinished(-1);
 

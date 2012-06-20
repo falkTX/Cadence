@@ -189,8 +189,7 @@ public:
     void setParameterValue(uint32_t paramId, double value, bool sendGui, bool sendOsc, bool sendCallback)
     {
         assert(paramId < param.count);
-        fix_parameter_value(value, param.ranges[paramId]);
-        effect->setParameter(effect, paramId, value);
+        effect->setParameter(effect, paramId, fixParameterValue(value, param.ranges[paramId]));
         CarlaPlugin::setParameterValue(paramId, value, sendGui, sendOsc, sendCallback);
     }
 
@@ -310,10 +309,10 @@ public:
             x_client->deactivate();
 
         // Remove client ports
-        remove_client_ports();
+        removeClientPorts();
 
         // Delete old data
-        delete_buffers();
+        deleteBuffers();
 
         uint32_t ains, aouts, mins, mouts, params, j;
         ains = aouts = mins = mouts = params = 0;
@@ -382,8 +381,8 @@ public:
             param.data[j].index  = j;
             param.data[j].rindex = j;
             param.data[j].hints  = 0;
-            param.data[j].midi_channel = 0;
-            param.data[j].midi_cc = -1;
+            param.data[j].midiChannel = 0;
+            param.data[j].midiCC = -1;
 
             double min, max, def, step, step_small, step_large;
 
@@ -466,8 +465,8 @@ public:
             param.ranges[j].max = max;
             param.ranges[j].def = def;
             param.ranges[j].step = step;
-            param.ranges[j].step_small = step_small;
-            param.ranges[j].step_large = step_large;
+            param.ranges[j].stepSmall = step_small;
+            param.ranges[j].stepLarge = step_large;
 
             param.data[j].hints |= PARAMETER_IS_ENABLED;
 #ifndef BUILD_BRIDGE
@@ -676,19 +675,19 @@ public:
             {
                 for (k=0; k < nframes; k++)
                 {
-                    if (abs_d(ains_buffer[0][k]) > ains_peak_tmp[0])
-                        ains_peak_tmp[0] = abs_d(ains_buffer[0][k]);
+                    if (abs(ains_buffer[0][k]) > ains_peak_tmp[0])
+                        ains_peak_tmp[0] = abs(ains_buffer[0][k]);
                 }
             }
             else if (ain.count >= 1)
             {
                 for (k=0; k < nframes; k++)
                 {
-                    if (abs_d(ains_buffer[0][k]) > ains_peak_tmp[0])
-                        ains_peak_tmp[0] = abs_d(ains_buffer[0][k]);
+                    if (abs(ains_buffer[0][k]) > ains_peak_tmp[0])
+                        ains_peak_tmp[0] = abs(ains_buffer[0][k]);
 
-                    if (abs_d(ains_buffer[1][k]) > ains_peak_tmp[1])
-                        ains_peak_tmp[1] = abs_d(ains_buffer[1][k]);
+                    if (abs(ains_buffer[1][k]) > ains_peak_tmp[1])
+                        ains_peak_tmp[1] = abs(ains_buffer[1][k]);
                 }
             }
         }
@@ -731,14 +730,14 @@ public:
                         {
                             value = cin_event->value;
                             setDryWet(value, false, false);
-                            postpone_event(PluginPostEventParameterChange, PARAMETER_DRYWET, value);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_DRYWET, value);
                             continue;
                         }
                         else if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cin_event->controller) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
                         {
                             value = cin_event->value*127/100;
                             setVolume(value, false, false);
-                            postpone_event(PluginPostEventParameterChange, PARAMETER_VOLUME, value);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_VOLUME, value);
                             continue;
                         }
                         else if (MIDI_IS_CONTROL_BALANCE(cin_event->controller) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
@@ -764,8 +763,8 @@ public:
 
                             setBalanceLeft(left, false, false);
                             setBalanceRight(right, false, false);
-                            postpone_event(PluginPostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
-                            postpone_event(PluginPostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
                             continue;
                         }
                     }
@@ -773,9 +772,9 @@ public:
                     // Control plugin parameters
                     for (k=0; k < param.count; k++)
                     {
-                        if (param.data[k].midi_channel != cin_event->channel)
+                        if (param.data[k].midiChannel != cin_event->channel)
                             continue;
-                        if (param.data[k].midi_cc != cin_event->controller)
+                        if (param.data[k].midiCC != cin_event->controller)
                             continue;
                         if (param.data[k].type != PARAMETER_INPUT)
                             continue;
@@ -795,7 +794,7 @@ public:
                             }
 
                             setParameterValue(k, value, false, false, false);
-                            postpone_event(PluginPostEventParameterChange, k, value);
+                            postponeEvent(PluginPostEventParameterChange, k, value);
                         }
                     }
 
@@ -813,7 +812,7 @@ public:
                         if (prog_id < prog.count)
                         {
                             setProgram(prog_id, false, false, false, false);
-                            postpone_event(PluginPostEventMidiProgramChange, prog_id, 0.0);
+                            postponeEvent(PluginPostEventMidiProgramChange, prog_id, 0.0);
                         }
                     }
                     break;
@@ -822,10 +821,7 @@ public:
                     if (cin_event->channel == cin_channel)
                     {
                         if (midi.portMin)
-                        {
-                            send_midi_all_notes_off();
-                            midi_event_count += 128;
-                        }
+                            sendMidiAllNotesOff();
 
                         effect->dispatcher(effect, effStopProcess, 0, 0, nullptr, 0.0f);
                         effect->dispatcher(effect, effMainsChanged, 0, 0, nullptr, 0.0f);
@@ -839,10 +835,7 @@ public:
                     if (cin_event->channel == cin_channel)
                     {
                         if (midi.portMin)
-                        {
-                            send_midi_all_notes_off();
-                            midi_event_count += 128;
-                        }
+                            sendMidiAllNotesOff();
                     }
                     break;
                 }
@@ -928,7 +921,7 @@ public:
                     midi_event->midiData[1] = note;
 
                     if (channel == cin_channel)
-                        postpone_event(PluginPostEventNoteOff, note, 0.0);
+                        postponeEvent(PluginPostEventNoteOff, note, 0.0);
                 }
                 else if (MIDI_IS_STATUS_NOTE_ON(status))
                 {
@@ -940,7 +933,7 @@ public:
                     midi_event->midiData[2] = velo;
 
                     if (channel == cin_channel)
-                        postpone_event(PluginPostEventNoteOn, note, velo);
+                        postponeEvent(PluginPostEventNoteOn, note, velo);
                 }
                 else if (MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status))
                 {
@@ -1087,8 +1080,8 @@ public:
                 // Output VU
                 for (k=0; k < nframes && i < 2; k++)
                 {
-                    if (abs_d(aouts_buffer[i][k]) > aouts_peak_tmp[i])
-                        aouts_peak_tmp[i] = abs_d(aouts_buffer[i][k]);
+                    if (abs(aouts_buffer[i][k]) > aouts_peak_tmp[i])
+                        aouts_peak_tmp[i] = abs(aouts_buffer[i][k]);
                 }
             }
         }
@@ -1174,24 +1167,26 @@ public:
         // ---------------------------------------------------------------
         // open DLL
 
-        if (! lib_open(filename))
+        if (! libOpen(filename))
         {
-            set_last_error(lib_error(filename));
+            set_last_error(libError(filename));
             return false;
         }
 
         // ---------------------------------------------------------------
         // get DLL main entry
 
-        VST_Function vstfn = (VST_Function)lib_symbol("VSTPluginMain");
-
-        if (! vstfn)
-            vstfn = (VST_Function)lib_symbol("main");
+        VST_Function vstfn = (VST_Function)libSymbol("VSTPluginMain");
 
         if (! vstfn)
         {
-            set_last_error("Could not find the VST main entry in the plugin library");
-            return false;
+            vstfn = (VST_Function)libSymbol("main");
+
+            if (! vstfn)
+            {
+                set_last_error("Could not find the VST main entry in the plugin library");
+                return false;
+            }
         }
 
         // ---------------------------------------------------------------
@@ -1287,7 +1282,7 @@ public:
                 if (CarlaEngine::isOnAudioThread())
                 {
                     self->setParameterValue(index, opt, false, false, false);
-                    self->postpone_event(PluginPostEventParameterChange, index, opt);
+                    self->postponeEvent(PluginPostEventParameterChange, index, opt);
                 }
                 else
                     self->setParameterValue(index, opt, false, true, true);
@@ -1715,7 +1710,7 @@ short add_plugin_vst(const char* filename, const char* label)
             unique_names[id] = plugin->name();
             CarlaPlugins[id] = plugin;
 
-            plugin->osc_register_new();
+            plugin->registerToOsc();
         }
         else
         {

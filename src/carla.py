@@ -1619,7 +1619,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
                     'current': CarlaHost.get_current_parameter_value(self.plugin_id, i)
                 }
 
-                for j in range(param_info['scalepoint_count']):
+                for j in range(param_info['scalePointCount']):
                     scalepoint = CarlaHost.get_scalepoint_info(self.plugin_id, i, j)
                     parameter['scalepoints'].append({
                           'value': scalepoint['value'],

@@ -36,62 +36,90 @@ CARLA_BACKEND_START_NAMESPACE
 
 #define STR_MAX 256
 
-// static max values
+/*!
+ * @defgroup CarlaBackendAPI Carla Backend API
+ *
+ * The Carla Backend API
+ * @{
+ */
+
 #ifdef BUILD_BRIDGE
 const unsigned short MAX_PLUGINS = 1;
 #else
-const unsigned short MAX_PLUGINS = 99;
+const unsigned short MAX_PLUGINS = 99; //!< Maximum number of plugins
 #endif
-const unsigned int MAX_PARAMETERS = 200;
+const unsigned int MAX_PARAMETERS = 200; //!< Default value for maximum number of parameters the callback can handle.\see OPTION_MAX_PARAMETERS
 
-// plugin hints
-const unsigned int PLUGIN_IS_BRIDGE   = 0x01;
-const unsigned int PLUGIN_IS_SYNTH    = 0x02;
-const unsigned int PLUGIN_HAS_GUI     = 0x04;
-const unsigned int PLUGIN_USES_CHUNKS = 0x08;
-const unsigned int PLUGIN_CAN_DRYWET  = 0x10;
-const unsigned int PLUGIN_CAN_VOLUME  = 0x20;
-const unsigned int PLUGIN_CAN_BALANCE = 0x40;
+/*!
+ * @defgroup PluginHints Plugin Hints
+ *
+ * Various plugin hints.
+ * \see CarlaPlugin::hints
+ * @{
+ */
+const unsigned int PLUGIN_IS_BRIDGE   = 0x01; //!< Plugin is a bridge (ie, BridgePlugin). This hint is required because "bridge" itself is not a PluginType.
+const unsigned int PLUGIN_IS_SYNTH    = 0x02; //!< Plugin is a synthesizer (produces sound).
+const unsigned int PLUGIN_HAS_GUI     = 0x04; //!< Plugin has its own custom GUI.
+const unsigned int PLUGIN_USES_CHUNKS = 0x08; //!< Plugin uses chunks to save internal data.\see CarlaPlugin::chunkData()
+const unsigned int PLUGIN_CAN_DRYWET  = 0x10; //!< Plugin can make use of Dry/Wet controls.
+const unsigned int PLUGIN_CAN_VOLUME  = 0x20; //!< Plugin can make use of Volume controls.
+const unsigned int PLUGIN_CAN_BALANCE = 0x40; //!< Plugin can make use of Left & Right Balance controls.
+/**@}*/
 
-// parameter hints
-const unsigned int PARAMETER_IS_BOOLEAN       = 0x01;
-const unsigned int PARAMETER_IS_INTEGER       = 0x02;
-const unsigned int PARAMETER_IS_LOGARITHMIC   = 0x04;
-const unsigned int PARAMETER_IS_ENABLED       = 0x08;
-const unsigned int PARAMETER_IS_AUTOMABLE     = 0x10;
-const unsigned int PARAMETER_USES_SAMPLERATE  = 0x20;
-const unsigned int PARAMETER_USES_SCALEPOINTS = 0x40;
-const unsigned int PARAMETER_USES_CUSTOM_TEXT = 0x80;
+/*!
+ * @defgroup ParameterHints Parameter Hints
+ *
+ * Various parameter hints.
+ * \see CarlaPlugin::paramData()
+ * @{
+ */
+const unsigned int PARAMETER_IS_BOOLEAN       = 0x01; //!< Parameter value is of boolean type (always at minimum or maximum).
+const unsigned int PARAMETER_IS_INTEGER       = 0x02; //!< Parameter values are always integer.
+const unsigned int PARAMETER_IS_LOGARITHMIC   = 0x04; //!< Parameter is logarithmic (informative only, not really implemented).
+const unsigned int PARAMETER_IS_ENABLED       = 0x08; //!< Parameter is enabled and will be shown in the host built-in editor.
+const unsigned int PARAMETER_IS_AUTOMABLE     = 0x10; //!< Parameter is automable (realtime safe)
+const unsigned int PARAMETER_USES_SAMPLERATE  = 0x20; //!< Parameter needs sample rate to work (value and ranges are multiplied by SR, and divided by SR on save).
+const unsigned int PARAMETER_USES_SCALEPOINTS = 0x40; //!< Parameter uses scalepoints to define internal values in a meaninful way.
+const unsigned int PARAMETER_USES_CUSTOM_TEXT = 0x80; //!< Parameter uses custom text for displaying its value.\see CarlaPlugin::getParameterText()
+/**@}*/
 
+/*!
+ * The binary type of a plugin.\n
+ * If a plugin binary type is loaded that doesn't match the system's native type, a bridge will be used (see BridgePlugin).
+ */
 enum BinaryType {
-    BINARY_NONE   = 0,
-    BINARY_UNIX32 = 1,
-    BINARY_UNIX64 = 2,
-    BINARY_WIN32  = 3,
-    BINARY_WIN64  = 4
+    BINARY_NONE   = 0, //!< Null binary type.
+    BINARY_UNIX32 = 1, //!< Unix 32bit.
+    BINARY_UNIX64 = 2, //!< Unix 64bit.
+    BINARY_WIN32  = 3, //!< Windows 32bit.
+    BINARY_WIN64  = 4  //!< Windows 64bit.
 };
 
+/*!
+ * All the available plugin types, provided by subclasses of CarlaPlugin.\n
+ * \note Some plugin classes might provide more than 1 plugin type.
+ */
 enum PluginType {
-    PLUGIN_NONE   = 0,
-    PLUGIN_LADSPA = 1,
-    PLUGIN_DSSI   = 2,
-    PLUGIN_LV2    = 3,
-    PLUGIN_VST    = 4,
-    PLUGIN_GIG    = 5,
-    PLUGIN_SF2    = 6,
-    PLUGIN_SFZ    = 7
+    PLUGIN_NONE   = 0, //!< Null plugin type.
+    PLUGIN_LADSPA = 1, //!< LADSPA plugin.\see LadspaPlugin
+    PLUGIN_DSSI   = 2, //!< DSSI plugin.\see DssiPlugin
+    PLUGIN_LV2    = 3, //!< LV2 plugin.\see Lv2Plugin
+    PLUGIN_VST    = 4, //!< VST plugin.\see VstPlugin
+    PLUGIN_GIG    = 5, //!< GIG sound kit, provided by LinuxSampler.\see LinuxSamplerPlugin
+    PLUGIN_SF2    = 6, //!< SF2 sound kit (aka SoundFont), provided by FluidSynth.\see FluidSynthPlugin
+    PLUGIN_SFZ    = 7  //!< SFZ sound kit, provided by LinuxSampler.\see LinuxSamplerPlugin
 };
 
 enum PluginCategory {
-    PLUGIN_CATEGORY_NONE      = 0,
-    PLUGIN_CATEGORY_SYNTH     = 1,
-    PLUGIN_CATEGORY_DELAY     = 2, // also Reverb
-    PLUGIN_CATEGORY_EQ        = 3,
-    PLUGIN_CATEGORY_FILTER    = 4,
-    PLUGIN_CATEGORY_DYNAMICS  = 5, // Amplifier, Compressor, Gate
-    PLUGIN_CATEGORY_MODULATOR = 6, // Chorus, Flanger, Phaser
-    PLUGIN_CATEGORY_UTILITY   = 7, // Analyzer, Converter, Mixer
-    PLUGIN_CATEGORY_OTHER     = 8  // used to check if a plugin has a category
+    PLUGIN_CATEGORY_NONE      = 0, //!< Unknown or undefined plugin category
+    PLUGIN_CATEGORY_SYNTH     = 1, //!< A synthesizer or generator
+    PLUGIN_CATEGORY_DELAY     = 2, //!< A delay or reverberator
+    PLUGIN_CATEGORY_EQ        = 3, //!< An equalizer
+    PLUGIN_CATEGORY_FILTER    = 4, //!< A filter
+    PLUGIN_CATEGORY_DYNAMICS  = 5, //!< A "dynamic" plugin (amplifier, compressor, gate, etc)
+    PLUGIN_CATEGORY_MODULATOR = 6, //!< A "modulator" plugin (chorus, flanger, phaser, etc)
+    PLUGIN_CATEGORY_UTILITY   = 7, //!< An utility plugin (analyzer, converter, mixer, etc)
+    PLUGIN_CATEGORY_OTHER     = 8  //!< Misc plugin (used to check if plugin has a category)
 };
 
 enum ParameterType {
@@ -126,9 +154,10 @@ enum GuiType {
     GUI_EXTERNAL_OSC  = 5
 };
 
+// TODO - fill desc
 enum OptionsType {
-    OPTION_PROCESS_MODE         = 1,
-    OPTION_MAX_PARAMETERS       = 2,
+    OPTION_PROCESS_MODE         = 1, //!< ...\see ProcessModeType
+    OPTION_MAX_PARAMETERS       = 2, //!< Maximum number of parameters the callback can handle, defaults to MAX_PARAMETERS
     OPTION_PREFER_UI_BRIDGES    = 3,
     OPTION_PROCESS_HQ           = 4,
     OPTION_OSC_GUI_TIMEOUT      = 5,
@@ -168,9 +197,9 @@ enum CallbackType {
 };
 
 enum ProcessModeType {
-    PROCESS_MODE_SINGLE_CLIENT    = 0,
-    PROCESS_MODE_MULTIPLE_CLIENTS = 1,
-    PROCESS_MODE_CONTINUOUS_RACK  = 2
+    PROCESS_MODE_SINGLE_CLIENT    = 0, //!< Single client mode (dynamic input/outputs as needed by plugins)
+    PROCESS_MODE_MULTIPLE_CLIENTS = 1, //!< Multiple client mode
+    PROCESS_MODE_CONTINUOUS_RACK  = 2  //!< Single client "rack" mode. Processes plugins in order of it's id, with forced stereo input/output.
 };
 
 struct ParameterData {
@@ -178,8 +207,8 @@ struct ParameterData {
     qint32 index;
     qint32 rindex;
     qint32 hints;
-    quint8 midi_channel;
-    qint16 midi_cc;
+    quint8 midiChannel;
+    qint16 midiCC;
 };
 
 struct ParameterRanges {
@@ -187,8 +216,8 @@ struct ParameterRanges {
     double min;
     double max;
     double step;
-    double step_small;
-    double step_large;
+    double stepSmall;
+    double stepLarge;
 };
 
 struct CustomData {
@@ -222,7 +251,7 @@ struct ParameterInfo {
     const char* name;
     const char* symbol;
     const char* unit;
-    quint32 scalepoint_count;
+    quint32 scalePointCount;
 };
 
 struct ScalePointInfo {
@@ -247,11 +276,10 @@ class CarlaPlugin;
 
 typedef void (*CallbackFunc)(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3);
 
-#ifndef CARLA_BACKEND_NO_EXPORTS
-
 // -----------------------------------------------------
 // Exported symbols (API)
 
+#ifndef CARLA_BACKEND_NO_EXPORTS
 CARLA_EXPORT bool engine_init(const char* client_name);
 CARLA_EXPORT bool engine_close();
 CARLA_EXPORT bool is_engine_running();
@@ -307,7 +335,6 @@ CARLA_EXPORT void set_midi_program(unsigned short plugin_id, quint32 midi_progra
 CARLA_EXPORT void set_custom_data(unsigned short plugin_id, CustomDataType dtype, const char* key, const char* value);
 CARLA_EXPORT void set_chunk_data(unsigned short plugin_id, const char* chunk_data);
 CARLA_EXPORT void set_gui_data(unsigned short plugin_id, int data, quintptr gui_addr);
-//CARLA_EXPORT void set_name(unsigned short plugin_id, const char* name); // TESTING
 
 CARLA_EXPORT void show_gui(unsigned short plugin_id, bool yesno);
 CARLA_EXPORT void idle_guis();
@@ -315,8 +342,10 @@ CARLA_EXPORT void idle_guis();
 CARLA_EXPORT void send_midi_note(unsigned short plugin_id, quint8 note, quint8 velocity);
 CARLA_EXPORT void prepare_for_save(unsigned short plugin_id);
 
-CARLA_EXPORT void set_callback_function(CallbackFunc func);
 CARLA_EXPORT void set_option(OptionsType option, int value, const char* value_str);
+#endif
+
+CARLA_EXPORT void set_callback_function(CallbackFunc func);
 
 CARLA_EXPORT const char* get_last_error();
 CARLA_EXPORT const char* get_host_client_name();
@@ -329,23 +358,12 @@ CARLA_EXPORT double get_latency();
 // End of exported symbols
 // -----------------------------------------------------
 
-#else
-
-void set_callback_function(CallbackFunc func);
-
-const char* get_last_error();
-const char* get_host_client_name();
-
-quint32 get_buffer_size();
-double get_sample_rate();
-double get_latency();
-
-#endif // CARLA_BACKEND_NO_EXPORTS
-
 CARLA_BACKEND_END_NAMESPACE
 
 #ifndef CARLA_BACKEND_NO_NAMESPACE
 typedef CarlaBackend::CarlaPlugin CarlaPlugin;
 #endif
+
+/**@}*/
 
 #endif // CARLA_BACKEND_H
