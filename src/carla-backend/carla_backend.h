@@ -44,9 +44,9 @@ CARLA_BACKEND_START_NAMESPACE
  */
 
 #ifdef BUILD_BRIDGE
-const unsigned short MAX_PLUGINS = 1;
+const unsigned short MAX_PLUGINS  = 1;
 #else
-const unsigned short MAX_PLUGINS = 99; //!< Maximum number of plugins
+const unsigned short MAX_PLUGINS  = 99;  //!< Maximum number of loadable plugins
 #endif
 const unsigned int MAX_PARAMETERS = 200; //!< Default value for maximum number of parameters the callback can handle.\see OPTION_MAX_PARAMETERS
 
@@ -154,48 +154,313 @@ enum GuiType {
     GUI_EXTERNAL_OSC  = 5
 };
 
-// TODO - fill desc
+/*!
+ * Options used in set_option().\n
+ * These options must be set before calling engine_init() and never again (with the exception of paths).
+ *
+ * \see set_option()
+ */
 enum OptionsType {
-    OPTION_PROCESS_MODE         = 1, //!< ...\see ProcessModeType
-    OPTION_MAX_PARAMETERS       = 2, //!< Maximum number of parameters the callback can handle, defaults to MAX_PARAMETERS
-    OPTION_PREFER_UI_BRIDGES    = 3,
-    OPTION_PROCESS_HQ           = 4,
-    OPTION_OSC_GUI_TIMEOUT      = 5,
-    OPTION_USE_DSSI_CHUNKS      = 6,
-    OPTION_PATH_LADSPA          = 7,
-    OPTION_PATH_DSSI            = 8,
-    OPTION_PATH_LV2             = 9,
-    OPTION_PATH_VST             = 10,
-    OPTION_PATH_GIG             = 11,
-    OPTION_PATH_SF2             = 12,
-    OPTION_PATH_SFZ             = 13,
-    OPTION_PATH_BRIDGE_UNIX32   = 14,
-    OPTION_PATH_BRIDGE_UNIX64   = 15,
-    OPTION_PATH_BRIDGE_WIN32    = 16,
-    OPTION_PATH_BRIDGE_WIN64    = 17,
+    /*!
+     * Set the engine processing mode.\n
+     * Default is PROCESS_MODE_MULTIPLE_CLIENTS.
+     *
+     * \param value A value from ProcessModeType
+     * \param valueStr Unused
+     * \see ProcessModeType
+     */
+    OPTION_PROCESS_MODE = 1,
+
+    /*!
+     * Maximum number of parameters the callback can handle.\n
+     * Default is MAX_PARAMETERS.
+     *
+     * \param value The new value
+     * \param valueStr Unused
+     */
+    OPTION_MAX_PARAMETERS = 2,
+
+    /*!
+     * Wherever to use OSC-UI bridges when possible, otherwise UIs will be handled in the main thread.\n
+     * Default is yes.
+     *
+     * \param value Boolean for yes/no
+     * \param valueStr Unused
+     */
+    OPTION_PREFER_UI_BRIDGES = 3,
+
+    /*!
+     * High-Quality processing mode.\n
+     * When enabled, audio will be processed by blocks 8 samples at a time, no matter what the real buffer size is.\n
+     * Default is no (this is EXPERIMENTAL!).
+     *
+     * \param value Boolean for yes/no
+     * \param valueStr Unused
+     */
+    OPTION_PROCESS_HQ = 4,
+
+    /*!
+     * Timeout value for how many miliseconds to wait for OSC-GUIs to respond.\n
+     * Default is 4000 ms (4 secs).
+     *
+     * \param value The new value
+     * \param valueStr Unused
+     */
+    OPTION_OSC_GUI_TIMEOUT = 5,
+
+    /*!
+     * Wherever to use unofficial dssi-vst chunks feature.\n
+     * Default is no.
+     *
+     * \param value Boolean for yes/no
+     * \param valueStr Unused
+     */
+    OPTION_USE_DSSI_CHUNKS = 6,
+
+    /*!
+     * Set LADSPA_PATH environment variable.\n
+     * Default undefined.
+     *
+     * \param value Unused
+     * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
+     */
+    OPTION_PATH_LADSPA = 7,
+
+    /*!
+     * Set DSSI_PATH environment variable.\n
+     * Default undefined.
+     *
+     * \param value Unused
+     * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
+     */
+    OPTION_PATH_DSSI = 8,
+
+    /*!
+     * Set LV2_PATH environment variable.\n
+     * Default undefined.
+     *
+     * \param value Unused
+     * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
+     */
+    OPTION_PATH_LV2 = 9,
+
+    /*!
+     * Set VST_PATH environment variable.\n
+     * Default undefined.
+     *
+     * \param value Unused
+     * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
+     */
+    OPTION_PATH_VST = 10,
+
+    /*!
+     * Set GIG_PATH environment variable.\n
+     * Default undefined.
+     *
+     * \param value Unused
+     * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
+     */
+    OPTION_PATH_GIG = 11,
+
+    /*!
+     * Set SF2_PATH environment variable.\n
+     * Default undefined.
+     *
+     * \param value Unused
+     * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
+     */
+    OPTION_PATH_SF2 = 12,
+
+    /*!
+     * Set SFZ_PATH environment variable.\n
+     * Default undefined.
+     *
+     * \param value Unused
+     * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
+     */
+    OPTION_PATH_SFZ = 13,
+
+    /*!
+     * Set path to the Unix 32bit plugin bridge.\n
+     * Default unset.
+     *
+     * \param value Unused
+     * \param valueStr The new path
+     */
+    OPTION_PATH_BRIDGE_UNIX32 = 14,
+
+    /*!
+     * Set path to the Unix 64bit plugin bridge.\n
+     * Default unset.
+     *
+     * \param value Unused
+     * \param valueStr The new path
+     */
+    OPTION_PATH_BRIDGE_UNIX64 = 15,
+
+    /*!
+     * Set path to the Windows 32bit plugin bridge.\n
+     * Default unset.
+     *
+     * \param value Unused
+     * \param valueStr The new path
+     */
+    OPTION_PATH_BRIDGE_WIN32 = 16,
+
+    /*!
+     * Set path to the Windows 64bit plugin bridge.\n
+     * Default unset.
+     *
+     * \param value Unused
+     * \param valueStr The new path
+     */
+    OPTION_PATH_BRIDGE_WIN64 = 17,
+
+    /*!
+     * Set path to the LV2 Gtk2 UI bridge.\n
+     * Default unset.
+     *
+     * \param value Unused
+     * \param valueStr The new path
+     */
     OPTION_PATH_BRIDGE_LV2_GTK2 = 18,
-    OPTION_PATH_BRIDGE_LV2_QT4  = 19,
-    OPTION_PATH_BRIDGE_LV2_X11  = 20,
-    OPTION_PATH_BRIDGE_VST_X11  = 21
+
+    /*!
+     * Set path to the LV2 Qt4 UI bridge.\n
+     * Default unset.
+     *
+     * \param value Unused
+     * \param valueStr The new path
+     */
+    OPTION_PATH_BRIDGE_LV2_QT4 = 19,
+
+    /*!
+     * Set path to the LV2 X11 UI bridge.\n
+     * Default unset.
+     *
+     * \param value Unused
+     * \param valueStr The new path
+     */
+    OPTION_PATH_BRIDGE_LV2_X11 = 20,
+
+    /*!
+     * Set path to the VST X11 UI bridge.\n
+     * Default unset.
+     *
+     * \param value Unused
+     * \param valueStr The new path
+     */
+    OPTION_PATH_BRIDGE_VST_X11 = 21
 };
 
+/*!
+ * Opcodes sent to the callback, defined by CallbackFunc.
+ *
+ * \see set_callback_function()
+ */
 enum CallbackType {
-    CALLBACK_DEBUG                = 0,
-    CALLBACK_PARAMETER_CHANGED    = 1, // parameter_id, 0, value
-    CALLBACK_PROGRAM_CHANGED      = 2, // program_id, 0, 0
-    CALLBACK_MIDI_PROGRAM_CHANGED = 3, // bank_id, program_id, 0
-    CALLBACK_NOTE_ON              = 4, // key, velocity, 0
-    CALLBACK_NOTE_OFF             = 5, // key, 0, 0
-    CALLBACK_SHOW_GUI             = 6, // show? (0|1, -1=quit), 0, 0
-    CALLBACK_RESIZE_GUI           = 7, // width, height, 0
-    CALLBACK_UPDATE               = 8,
-    CALLBACK_RELOAD_INFO          = 9,
-    CALLBACK_RELOAD_PARAMETERS    = 10,
-    CALLBACK_RELOAD_PROGRAMS      = 11,
-    CALLBACK_RELOAD_ALL           = 12,
-    CALLBACK_QUIT                 = 13
+    /*!
+     * Debug.\n
+     * This opcode is undefined and used only for testing purposes.
+     *
+     * \param value1 Undefined
+     * \param value2 Undefined
+     * \param value3 Undefined
+     */
+    CALLBACK_DEBUG = 0,
+
+    /*!
+     * A parameter has been changed.
+     *
+     * \param value1 The parameter Id
+     * \param value3 The new value
+     */
+    CALLBACK_PARAMETER_CHANGED = 1,
+
+    /*!
+     * The current program has has been changed.
+     *
+     * \param value1 The new program index
+     */
+    CALLBACK_PROGRAM_CHANGED = 2,
+
+    /*!
+     * The current MIDI program has been changed.
+     *
+     * \param value1 The new MIDI program's bank
+     * \param value2 The new MIDI program's program
+     */
+    CALLBACK_MIDI_PROGRAM_CHANGED = 3,
+
+    /*!
+     * A note has been pressed.
+     *
+     * \param value1 The note
+     * \param value2 Velocity of the note
+     */
+    CALLBACK_NOTE_ON = 4,
+
+    /*!
+     * A note has been released.
+     *
+     * \param value1 The note
+     */
+    CALLBACK_NOTE_OFF = 5,
+
+    /*!
+     * The plugin's custom GUI state has changed.
+     *
+     * \param value1 The new state is as follows:.\n
+     *                0: GUI has been closed or hidden\n
+     *                1: GUI has been shown\n
+     *               -1: GUI has crashed and should not be shown again\n
+     */
+    CALLBACK_SHOW_GUI = 6,
+
+    /*!
+     * The plugin's custom GUI has been resized.
+     *
+     * \param value1 The new width
+     * \param value2 The new height
+     */
+    CALLBACK_RESIZE_GUI = 7,
+
+    /*!
+     * The plugin needs repaint and/or update.
+     */
+    CALLBACK_UPDATE = 8,
+
+    /*!
+     * The plugin's data/information has been changed.
+     */
+    CALLBACK_RELOAD_INFO = 9,
+
+    /*!
+     * The plugin's parameters have been changed.
+     */
+    CALLBACK_RELOAD_PARAMETERS = 10,
+
+    /*!
+     * The plugin's programs have been changed.
+     */
+    CALLBACK_RELOAD_PROGRAMS = 11,
+
+    /*!
+     * The plugin's state have been changed.
+     */
+    CALLBACK_RELOAD_ALL = 12,
+
+    /*!
+     * The engine has crashed or malfunctioned and will no longer work.
+     */
+    CALLBACK_QUIT = 13
 };
 
+/*!
+ * Engine processing mode, changed using set_option().
+ *
+ * \see ProcessModeType
+ */
 enum ProcessModeType {
     PROCESS_MODE_SINGLE_CLIENT    = 0, //!< Single client mode (dynamic input/outputs as needed by plugins)
     PROCESS_MODE_MULTIPLE_CLIENTS = 1, //!< Multiple client mode
@@ -272,8 +537,6 @@ struct GuiInfo {
     bool resizable;
 };
 
-class CarlaPlugin;
-
 typedef void (*CallbackFunc)(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3);
 
 // -----------------------------------------------------
@@ -342,7 +605,7 @@ CARLA_EXPORT void idle_guis();
 CARLA_EXPORT void send_midi_note(unsigned short plugin_id, quint8 note, quint8 velocity);
 CARLA_EXPORT void prepare_for_save(unsigned short plugin_id);
 
-CARLA_EXPORT void set_option(OptionsType option, int value, const char* value_str);
+CARLA_EXPORT void set_option(OptionsType option, int value, const char* valueStr);
 #endif
 
 CARLA_EXPORT void set_callback_function(CallbackFunc func);
@@ -358,12 +621,14 @@ CARLA_EXPORT double get_latency();
 // End of exported symbols
 // -----------------------------------------------------
 
+/**@}*/
+
+class CarlaPlugin;
+
 CARLA_BACKEND_END_NAMESPACE
 
 #ifndef CARLA_BACKEND_NO_NAMESPACE
 typedef CarlaBackend::CarlaPlugin CarlaPlugin;
 #endif
-
-/**@}*/
 
 #endif // CARLA_BACKEND_H

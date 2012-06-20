@@ -196,7 +196,18 @@ public:
         assert(stringData);
         static QByteArray chunk;
         chunk = QByteArray::fromBase64(stringData);
-        descriptor->set_custom_data(handle, chunk.data(), chunk.size());
+
+        if (CarlaEngine::isOffline())
+        {
+            carla_proc_lock();
+            descriptor->set_custom_data(handle, chunk.data(), chunk.size());
+            carla_proc_unlock();
+        }
+        else
+        {
+            const CarlaPluginScopedDisabler m(this);
+            descriptor->set_custom_data(handle, chunk.data(), chunk.size());
+        }
     }
 
     void setMidiProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)

@@ -44,7 +44,7 @@ INCLUDEPATH = .. \
     ../../carla-includes \
     ../../carla-includes/vst
 
-DEFINES = QTCREATOR_TEST WANT_FLUIDSYNTH WANT_LINUXSAMPLER
+DEFINES = QTCREATOR_TEST WANT_FLUIDSYNTH WANT_LINUXSAMPLER CARLA_BACKEND_NO_NAMESPACE
 DEFINES += CARLA_ENGINE_JACK
 #DEFINES += CARLA_ENGINE_RTAUDIO
 LIBS    = ../../carla-lilv/carla_lilv.a -ldl -lasound -lpulse -lpulse-simple

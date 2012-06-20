@@ -198,7 +198,18 @@ public:
         assert(stringData);
         static QByteArray chunk;
         chunk = QByteArray::fromBase64(stringData);
-        effect->dispatcher(effect, effSetChunk, 0 /* bank */, chunk.size(), chunk.data(), 0.0f);
+
+        if (CarlaEngine::isOffline())
+        {
+            carla_proc_lock();
+            effect->dispatcher(effect, effSetChunk, 0 /* bank */, chunk.size(), chunk.data(), 0.0f);
+            carla_proc_unlock();
+        }
+        else
+        {
+            const CarlaPluginScopedDisabler m(this);
+            effect->dispatcher(effect, effSetChunk, 0 /* bank */, chunk.size(), chunk.data(), 0.0f);
+        }
     }
 
     void setProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)

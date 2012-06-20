@@ -1153,9 +1153,9 @@ void prepare_for_save(unsigned short plugin_id)
     qCritical("prepare_for_save(%i) - could not find plugin", plugin_id);
 }
 
-void set_option(OptionsType option, int value, const char* value_str)
+void set_option(OptionsType option, int value, const char* valueStr)
 {
-    qDebug("set_option(%i, %i, %s)", option, value, value_str);
+    qDebug("set_option(%i, %i, %s)", option, value, valueStr);
 
     switch (option)
     {
@@ -1180,49 +1180,49 @@ void set_option(OptionsType option, int value, const char* value_str)
         carla_options.use_dssi_chunks = value;
         break;
     case OPTION_PATH_LADSPA:
-        carla_setenv("LADSPA_PATH", value_str);
+        carla_setenv("LADSPA_PATH", valueStr);
         break;
     case OPTION_PATH_DSSI:
-        carla_setenv("DSSI_PATH", value_str);
+        carla_setenv("DSSI_PATH", valueStr);
         break;
     case OPTION_PATH_LV2:
-        carla_setenv("LV2_PATH", value_str);
+        carla_setenv("LV2_PATH", valueStr);
         break;
     case OPTION_PATH_VST:
-        carla_setenv("VST_PATH", value_str);
+        carla_setenv("VST_PATH", valueStr);
         break;
     case OPTION_PATH_GIG:
-        carla_setenv("GIG_PATH", value_str);
+        carla_setenv("GIG_PATH", valueStr);
         break;
     case OPTION_PATH_SF2:
-        carla_setenv("SF2_PATH", value_str);
+        carla_setenv("SF2_PATH", valueStr);
         break;
     case OPTION_PATH_SFZ:
-        carla_setenv("SFZ_PATH", value_str);
+        carla_setenv("SFZ_PATH", valueStr);
         break;
     case OPTION_PATH_BRIDGE_UNIX32:
-        carla_options.bridge_unix32 = strdup(value_str);
+        carla_options.bridge_unix32 = strdup(valueStr);
         break;
     case OPTION_PATH_BRIDGE_UNIX64:
-        carla_options.bridge_unix64 = strdup(value_str);
+        carla_options.bridge_unix64 = strdup(valueStr);
         break;
     case OPTION_PATH_BRIDGE_WIN32:
-        carla_options.bridge_win32 = strdup(value_str);
+        carla_options.bridge_win32 = strdup(valueStr);
         break;
     case OPTION_PATH_BRIDGE_WIN64:
-        carla_options.bridge_win64 = strdup(value_str);
+        carla_options.bridge_win64 = strdup(valueStr);
         break;
     case OPTION_PATH_BRIDGE_LV2_GTK2:
-        carla_options.bridge_lv2gtk2 = strdup(value_str);
+        carla_options.bridge_lv2gtk2 = strdup(valueStr);
         break;
     case OPTION_PATH_BRIDGE_LV2_QT4:
-        carla_options.bridge_lv2qt4 = strdup(value_str);
+        carla_options.bridge_lv2qt4 = strdup(valueStr);
         break;
     case OPTION_PATH_BRIDGE_LV2_X11:
-        carla_options.bridge_lv2x11 = strdup(value_str);
+        carla_options.bridge_lv2x11 = strdup(valueStr);
         break;
     case OPTION_PATH_BRIDGE_VST_X11:
-        carla_options.bridge_vstx11 = strdup(value_str);
+        carla_options.bridge_vstx11 = strdup(valueStr);
         break;
     }
 }

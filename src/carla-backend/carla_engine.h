@@ -38,6 +38,13 @@ CARLA_BACKEND_START_NAMESPACE
 } /* adjust editor indent */
 #endif
 
+/*!
+ * @defgroup CarlaBackendEngine Carla Backend Engine
+ *
+ * The Carla Backend Engine
+ * @{
+ */
+
 const uint32_t CarlaEngineTimeBBT = 0x01;
 
 enum CarlaEnginePortType {
@@ -180,6 +187,8 @@ public:
     const CarlaEngineMidiEvent* getEvent(void* buffer, uint32_t index);
     void writeEvent(void* buffer, uint32_t time, uint8_t* data, uint8_t size);
 };
+
+/**@}*/
 
 CARLA_BACKEND_END_NAMESPACE
 
