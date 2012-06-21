@@ -680,8 +680,8 @@ class ParameterData(Structure):
         ("index", c_int32),
         ("rindex", c_int32),
         ("hints", c_int32),
-        ("midi_channel", c_uint8),
-        ("midi_cc", c_int16)
+        ("midiChannel", c_uint8),
+        ("midiCC", c_int16)
     ]
 
 class ParameterRanges(Structure):
@@ -690,8 +690,8 @@ class ParameterRanges(Structure):
         ("min", c_double),
         ("max", c_double),
         ("step", c_double),
-        ("step_small", c_double),
-        ("step_large", c_double)
+        ("stepSmall", c_double),
+        ("stepLarge", c_double)
     ]
 
 class CustomData(Structure):

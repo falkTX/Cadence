@@ -153,7 +153,7 @@ struct ExternalMidiNote {
  *
  * \brief Carla Backend base plugin class
  *
- * This is the base class for all available plugin types in Carla Backend.\n
+ * This is the base class for all available plugin types available in Carla Backend.\n
  * All virtual calls are implemented in this class as fallback, so it's safe to only override needed calls.
  *
  * \see PluginType
@@ -408,7 +408,8 @@ public:
     }
 
     /*!
-     * Get the number of parameters.
+     * Get the number of parameters.\n
+     * To know the number of parameter inputs and outputs, use getParameterCountInfo() instead.
      */
     uint32_t parameterCount() const
     {
@@ -416,7 +417,7 @@ public:
     }
 
     /*!
-     * Get the number of scalepoints for parameter \a paramId.
+     * Get the number of scalepoints for parameter \a parameterId.
      */
     virtual uint32_t parameterScalePointCount(uint32_t parameterId)
     {
@@ -511,7 +512,7 @@ public:
      *
      * \see setChunkData()
      */
-    virtual int32_t chunkData(void** dataPtr)
+    virtual int32_t chunkData(void** const dataPtr)
     {
         assert(dataPtr);
         return 0;
@@ -519,7 +520,7 @@ public:
 
 #ifndef BUILD_BRIDGE
     /*!
-     * Get the plugin's OSC data.
+     * Get the plugin's internal OSC data.
      */
     const OscData* oscData() const
     {
@@ -540,7 +541,7 @@ public:
     }
 
     /*!
-     * Get the scalepoint \a scalePointId value of parameter \a parameterId.
+     * Get the scalepoint \a scalePointId value of the parameter \a parameterId.
      */
     virtual double getParameterScalePointValue(uint32_t parameterId, uint32_t scalePointId)
     {
@@ -552,7 +553,7 @@ public:
     /*!
      * Get the plugin's label (URI for PLUGIN_LV2).
      */
-    virtual void getLabel(char* strBuf)
+    virtual void getLabel(char* const strBuf)
     {
         *strBuf = 0;
     }
@@ -560,7 +561,7 @@ public:
     /*!
      * Get the plugin's maker.
      */
-    virtual void getMaker(char* strBuf)
+    virtual void getMaker(char* const strBuf)
     {
         *strBuf = 0;
     }
@@ -568,7 +569,7 @@ public:
     /*!
      * Get the plugin's copyright/license.
      */
-    virtual void getCopyright(char* strBuf)
+    virtual void getCopyright(char* const strBuf)
     {
         *strBuf = 0;
     }
@@ -578,51 +579,51 @@ public:
      *
      * \see name()
      */
-    virtual void getRealName(char* strBuf)
+    virtual void getRealName(char* const strBuf)
     {
         *strBuf = 0;;
     }
 
     /*!
-     * Get the parameter name of \a parameterId.
+     * Get the name of the parameter \a parameterId.
      */
-    virtual void getParameterName(uint32_t parameterId, char* strBuf)
+    virtual void getParameterName(uint32_t parameterId, char* const strBuf)
     {
         assert(parameterId < param.count);
         *strBuf = 0;
     }
 
     /*!
-     * Get the parameter symbol of \a parameterId.
+     * Get the symbol of the parameter \a parameterId.
      */
-    virtual void getParameterSymbol(uint32_t parameterId, char* strBuf)
+    virtual void getParameterSymbol(uint32_t parameterId, char* const strBuf)
     {
         assert(parameterId < param.count);
         *strBuf = 0;
     }
 
     /*!
-     * Get the custom parameter text of \a parameterId.
+     * Get the custom text of the parameter \a parameterId.
      */
-    virtual void getParameterText(uint32_t parameterId, char* strBuf)
+    virtual void getParameterText(uint32_t parameterId, char* const strBuf)
     {
         assert(parameterId < param.count);
         *strBuf = 0;
     }
 
     /*!
-     * Get the parameter unit of \a parameterId.
+     * Get the unit of the parameter \a parameterId.
      */
-    virtual void getParameterUnit(uint32_t parameterId, char* strBuf)
+    virtual void getParameterUnit(uint32_t parameterId, char* const strBuf)
     {
         assert(parameterId < param.count);
         *strBuf = 0;
     }
 
     /*!
-     * Get the scalepoint \a scalePointId label of parameter \a parameterId.
+     * Get the scalepoint \a scalePointId label of the parameter \a parameterId.
      */
-    virtual void getParameterScalePointLabel(uint32_t parameterId, uint32_t scalePointId, char* strBuf)
+    virtual void getParameterScalePointLabel(uint32_t parameterId, uint32_t scalePointId, char* const strBuf)
     {
         assert(parameterId < param.count);
         assert(scalePointId < parameterScalePointCount(parameterId));
@@ -630,28 +631,32 @@ public:
     }
 
     /*!
-     * Get the program name at \a index.
+     * Get the name of the program at \a index.
      */
-    void getProgramName(uint32_t index, char* strBuf)
+    void getProgramName(uint32_t index, char* const strBuf)
     {
         assert(index < prog.count);
         strncpy(strBuf, prog.names[index], STR_MAX);
     }
 
     /*!
-     * Get the MIDI program name at \a index.
+     * Get the name of the MIDI program at \a index.
+     *
+     * \see getMidiProgramInfo()
      */
-    void getMidiProgramName(uint32_t index, char* strBuf)
+    void getMidiProgramName(uint32_t index, char* const strBuf)
     {
         assert(index < midiprog.count);
         strncpy(strBuf, midiprog.data[index].name, STR_MAX);
     }
 
     /*!
-     * Get information about the parameter count.\n
+     * Get information about the plugin's parameter count.\n
      * This is used to check how many input, output and total parameters are available.\n
      *
      * \note Some parameters might not be input or output (ie, invalid).
+     *
+     * \see parameterCount()
      */
     void getParameterCountInfo(PortCountInfo* const info)
     {
@@ -670,6 +675,8 @@ public:
 
     /*!
      * Get information about the MIDI program at \a index.
+     *
+     * \see getMidiProgramName()
      */
     void getMidiProgramInfo(MidiProgramInfo* const info, uint32_t index)
     {
@@ -681,8 +688,6 @@ public:
 
     /*!
      * Get information about the plugin's custom GUI, if provided.
-     *
-     * \note Make sure to verify the plugin has a custom GUI before calling this function!
      */
     virtual void getGuiInfo(GuiInfo* const info)
     {
@@ -694,7 +699,7 @@ public:
     // Set data (internal stuff)
 
     /*!
-     * Enable or disable the plugin, according to \a enable.
+     * Enable or disable the plugin according to \a yesNo.
      *
      * When a plugin is disabled, it will never be processed or managed in any way.\n
      * If you want to "bypass" a plugin, use setActive() instead.
@@ -709,13 +714,12 @@ public:
     /*!
      * Set plugin as active according to \a active.
      *
-     * \param sendOsc send message change over OSC
-     * \param sendCallback send message change to registered callback
+     * \param sendOsc Send message change over OSC
+     * \param sendCallback Send message change to registered callback
      */
     void setActive(bool active, bool sendOsc, bool sendCallback)
     {
         m_active = active;
-
         double value = active ? 1.0 : 0.0;
 
         if (sendCallback)
@@ -735,11 +739,11 @@ public:
     }
 
     /*!
-     * Set the dry/wet signal value according to \a value.\n
+     * Set the plugin's dry/wet signal value to \a value.\n
      * \a value must be between 0.0 and 1.0.
      *
-     * \param sendOsc send message change over OSC
-     * \param sendCallback send message change to registered callback
+     * \param sendOsc Send message change over OSC
+     * \param sendCallback Send message change to registered callback
      */
     void setDryWet(double value, bool sendOsc, bool sendCallback)
     {
@@ -767,11 +771,11 @@ public:
     }
 
     /*!
-     * Set the output volume according to \a value.\n
+     * Set the plugin's output volume to \a value.\n
      * \a value must be between 0.0 and 1.27.
      *
-     * \param sendOsc send message change over OSC
-     * \param sendCallback send message change to registered callback
+     * \param sendOsc Send message change over OSC
+     * \param sendCallback Send message change to registered callback
      */
     void setVolume(double value, bool sendOsc, bool sendCallback)
     {
@@ -799,11 +803,11 @@ public:
     }
 
     /*!
-     * Set the output balance-left value according to \a value.\n
+     * Set the plugin's output balance-left value to \a value.\n
      * \a value must be between -1.0 and 1.0.
      *
-     * \param sendOsc send message change over OSC
-     * \param sendCallback send message change to registered callback
+     * \param sendOsc Send message change over OSC
+     * \param sendCallback Send message change to registered callback
      */
     void setBalanceLeft(double value, bool sendOsc, bool sendCallback)
     {
@@ -831,11 +835,11 @@ public:
     }
 
     /*!
-     * Set the output balance-right value according to \a value.\n
+     * Set the plugin's output balance-right value to \a value.\n
      * \a value must be between -1.0 and 1.0.
      *
-     * \param sendOsc send message change over OSC
-     * \param sendCallback send message change to registered callback
+     * \param sendOsc Send message change over OSC
+     * \param sendCallback Send message change to registered callback
      */
     void setBalanceRight(double value, bool sendOsc, bool sendCallback)
     {
@@ -863,8 +867,10 @@ public:
     }
 
 #ifndef BUILD_BRIDGE
-    // TODO
-    virtual int setOscBridgeInfo(PluginBridgeInfoType type, lo_arg** argv)
+    /*!
+     * TODO
+     */
+    virtual int setOscBridgeInfo(PluginBridgeInfoType type, lo_arg** const argv)
     {
         return 1;
         Q_UNUSED(type);
@@ -876,21 +882,20 @@ public:
     // Set data (plugin-specific stuff)
 
     /*!
-     * Set a plugin's parameter value.
+     * Set a plugin's parameter value.\n
      * \a value must be within the parameter's range.
      *
-     * \param parameterId parameter to change
-     * \param value new parameter value
-     * \param sendGui send message change to plugin's custom GUI, if any
-     * \param sendOsc send message change over OSC
-     * \param sendCallback send message change to registered callback
+     * \param parameterId The parameter to change
+     * \param value The new parameter value
+     * \param sendGui Send message change to plugin's custom GUI, if any
+     * \param sendOsc Send message change over OSC
+     * \param sendCallback Send message change to registered callback
      *
      * \see getParameterValue()
      */
     virtual void setParameterValue(uint32_t parameterId, double value, bool sendGui, bool sendOsc, bool sendCallback)
     {
         assert(parameterId < param.count);
-        fixParameterValue(value, param.ranges[parameterId]);
 
         if (sendCallback)
             callback_action(CALLBACK_PARAMETER_CHANGED, m_id, parameterId, 0, value);
@@ -909,7 +914,17 @@ public:
         Q_UNUSED(sendGui);
     }
 
-    // FIXME? (better name?)
+    /*!
+     * Set a plugin's parameter value, including internal parameters.\n
+     * \a rindex can be negative to allow internal parameters change (as defined in InternalParametersIndex).
+     *
+     * \see setActive()
+     * \see setDryWet()
+     * \see setVolume()
+     * \see setBalanceLeft()
+     * \see setBalanceRight()
+     * \see setParameterValue()
+     */
     void setParameterValueByRIndex(int32_t rindex, double value, bool gui_send, bool osc_send, bool callback_send)
     {
         if (rindex == PARAMETER_ACTIVE)
@@ -931,40 +946,40 @@ public:
     }
 
     /*!
-     * Set parameter's \a parameterId MIDI channel to \a channel.
+     * Set parameter's \a parameterId MIDI channel to \a channel.\n
      * \a channel must be between 0 and 15.
      */
-    void setParameterMidiChannel(uint32_t index, uint8_t channel)
+    void setParameterMidiChannel(uint32_t parameterId, uint8_t channel)
     {
-        assert(index < param.count && channel < 16);
-        param.data[index].midiChannel = channel;
+        assert(parameterId < param.count && channel < 16);
+        param.data[parameterId].midiChannel = channel;
 
 #ifndef BUILD_BRIDGE
         // FIXME
         //if (m_hints & PLUGIN_IS_BRIDGE)
-        //    osc_send_set_parameter_midi_channel(&osc.data, m_id, index, channel);
+        //    osc_send_set_parameter_midi_channel(&osc.data, m_id, parameterId, channel);
 #endif
     }
 
     /*!
-     * Set parameter's \a parameterId MIDI CC to \a cc.
+     * Set parameter's \a parameterId MIDI CC to \a cc.\n
      * \a cc must be between 0 and 15.
      */
-    void setParameterMidiCC(uint32_t index, int16_t cc)
+    void setParameterMidiCC(uint32_t parameterId, int16_t cc)
     {
-        assert(index < param.count);
-        param.data[index].midiCC = cc;
+        assert(parameterId < param.count);
+        param.data[parameterId].midiCC = cc;
 
 #ifndef BUILD_BRIDGE
         // FIXME
         //if (m_hints & PLUGIN_IS_BRIDGE)
-        //    osc_send_set_parameter_midi_cc(&osc.data, m_id, index, midi_cc);
+        //    osc_send_set_parameter_midi_cc(&osc.data, m_id, parameterId, midi_cc);
 #endif
     }
 
     /*!
      * Add a custom data set.\n
-     * If \a key already exists, it's value will be replaced with \a value.
+     * If \a key already exists, its value will be swapped with \a value.
      *
      * \param type Type of data used in \a value.
      * \param key A key identifing this data set.
@@ -972,27 +987,27 @@ public:
      *
      * \see customData()
      */
-    virtual void setCustomData(CustomDataType type, const char* key, const char* value, bool sendGui)
+    virtual void setCustomData(CustomDataType type, const char* const key, const char* const value, bool sendGui)
     {
         qDebug("setCustomData(%i, %s, %s, %s)", type, key, value, bool2str(sendGui));
 
-        bool save_data = true;
+        bool saveData = true;
 
         switch (type)
         {
         case CUSTOM_DATA_INVALID:
-            save_data = false;
+            saveData = false;
             break;
         case CUSTOM_DATA_STRING:
             // Ignore some keys
             if (strncmp(key, "OSC:", 4) == 0 || strcmp(key, "guiVisible") || strcmp(key, "CarlaBridgeSaveNow") == 0)
-                save_data = false;
+                saveData = false;
             break;
         default:
             break;
         }
 
-        if (save_data)
+        if (saveData)
         {
             assert(key);
             assert(value);
@@ -1009,11 +1024,11 @@ public:
             }
 
             // False if we get here, so store it
-            CustomData new_data;
-            new_data.type  = type;
-            new_data.key   = strdup(key);
-            new_data.value = strdup(value);
-            custom.push_back(new_data);
+            CustomData newData;
+            newData.type  = type;
+            newData.key   = strdup(key);
+            newData.value = strdup(value);
+            custom.push_back(newData);
         }
     }
 
@@ -1025,7 +1040,7 @@ public:
      *
      * \note Make sure to verify the plugin supports chunks before calling this function!
      */
-    virtual void setChunkData(const char* stringData)
+    virtual void setChunkData(const char* const stringData)
     {
         assert(stringData);
     }
@@ -1033,7 +1048,7 @@ public:
     /*!
      * Change the current plugin program to \a index.
      *
-     * When \a index is negative the plugin's program is considered unset.
+     * If \a index is negative the plugin's program will be considered unset.
      * The plugin's default parameter values will be updated when this function is called.
      *
      * \param index New program index to use
@@ -1045,6 +1060,10 @@ public:
     virtual void setProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
     {
         assert(index < (int32_t)prog.count);
+
+        if (index < -1)
+            index = -1;
+
         prog.current = index;
 
         if (sendCallback)
@@ -1058,29 +1077,47 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_program(&osc.data, prog.current);
         }
+#else
+        Q_UNUSED(sendOsc);
 #endif
 
         // Change default parameter values
-        for (uint32_t i=0; i < param.count; i++)
+        if (index >= 0)
         {
-            param.ranges[i].def = getParameterValue(i);
+            for (uint32_t i=0; i < param.count; i++)
+            {
+                param.ranges[i].def = getParameterValue(i);
 
 #ifndef BUILD_BRIDGE
-            if (sendOsc)
-                osc_global_send_set_default_value(m_id, i, param.ranges[i].def);
+                if (sendOsc)
+                    osc_global_send_set_default_value(m_id, i, param.ranges[i].def);
 #endif
+            }
         }
 
-#ifdef BUILD_BRIDGE
-        Q_UNUSED(sendOsc);
-#endif
         Q_UNUSED(sendGui);
         Q_UNUSED(block);
     }
 
+    /*!
+     * Change the current MIDI plugin program to \a index.
+     *
+     * If \a index is negative the plugin's program will be considered unset.
+     * The plugin's default parameter values will be updated when this function is called.
+     *
+     * \param index New program index to use
+     * \param sendGui Send message change to plugin's custom GUI, if any
+     * \param sendOsc Send message change over OSC
+     * \param sendCallback Send message change to registered callback
+     * \param block Block the audio callback
+     */
     virtual void setMidiProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
     {
         assert(index < (int32_t)midiprog.count);
+
+        if (index < -1)
+            index = -1;
+
         midiprog.current = index;
 
         if (sendCallback)
@@ -1094,30 +1131,36 @@ public:
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_program(&osc.data, midiprog.current);
         }
-#endif
-
-        // Sound banks never change defaults
-        if (m_type == PLUGIN_GIG || m_type == PLUGIN_SF2 || m_type == PLUGIN_SFZ)
-            return;
-
-        // Change default parameter values
-        for (uint32_t i=0; i < param.count; i++)
-        {
-            param.ranges[i].def = getParameterValue(i);
-
-#ifndef BUILD_BRIDGE
-            if (sendOsc)
-                osc_global_send_set_default_value(m_id, i, param.ranges[i].def);
-#endif
-        }
-
-#ifdef BUILD_BRIDGE
+#else
         Q_UNUSED(sendOsc);
 #endif
+
+        // Change default parameter values
+        if (index >= 0)
+        {
+            // Sound banks never change defaults
+            if (m_type == PLUGIN_GIG || m_type == PLUGIN_SF2 || m_type == PLUGIN_SFZ)
+                return;
+
+            for (uint32_t i=0; i < param.count; i++)
+            {
+                param.ranges[i].def = getParameterValue(i);
+
+#ifndef BUILD_BRIDGE
+                if (sendOsc)
+                    osc_global_send_set_default_value(m_id, i, param.ranges[i].def);
+#endif
+            }
+        }
+
         Q_UNUSED(sendGui);
         Q_UNUSED(block);
     }
 
+    /*!
+     * This is an overloaded call to setMidiProgram().\n
+     * It changes the current MIDI program using \a bank and \a program values instead of index.
+     */
     void setMidiProgramById(uint32_t bank, uint32_t program, bool sendGui, bool sendOsc, bool sendCallback, bool block)
     {
         for (uint32_t i=0; i < midiprog.count; i++)
@@ -1130,17 +1173,33 @@ public:
     // -------------------------------------------------------------------
     // Set gui stuff
 
+    /*!
+     * Set plugin's custom GUI stuff.\n
+     * Parameters change between plugin types.
+     *
+     * \note This function must be always called from the main thread.
+     */
     virtual void setGuiData(int data, GuiDataHandle handle)
     {
         Q_UNUSED(data);
         Q_UNUSED(handle);
     }
 
+    /*!
+     * Show (or hide) a plugin's custom GUI according to \a yesNo.
+     *
+     * \note This function must be always called from the main thread.
+     */
     virtual void showGui(bool yesNo)
     {
         Q_UNUSED(yesNo);
     }
 
+    /*!
+     * Idle plugin's custom GUI.
+     *
+     * \note This function must be always called from the main thread.
+     */
     virtual void idleGui()
     {
     }
@@ -1148,15 +1207,25 @@ public:
     // -------------------------------------------------------------------
     // Plugin state
 
+    /*!
+     * Reload the plugin's entire state (including programs).\n
+     * The plugin will be disabled during this call.
+     */
     virtual void reload()
     {
     }
 
+    /*!
+     * Reload the plugin's programs state.
+     */
     virtual void reloadPrograms(bool init)
     {
         Q_UNUSED(init);
     }
 
+    /*!
+     * Tell the plugin to prepare for save.
+     */
     virtual void prepareForSave()
     {
     }
@@ -1164,12 +1233,15 @@ public:
     // -------------------------------------------------------------------
     // Plugin processing
 
-    virtual void process(float** ains_buffer, float** aouts_buffer, uint32_t nframes, uint32_t nframesOffset = 0)
+    /*!
+     * Plugin process callback.
+     */
+    virtual void process(float** inBuffer, float** outBuffer, uint32_t frames, uint32_t framesOffset = 0)
     {
-        Q_UNUSED(ains_buffer);
-        Q_UNUSED(aouts_buffer);
-        Q_UNUSED(nframes);
-        Q_UNUSED(nframesOffset);
+        Q_UNUSED(inBuffer);
+        Q_UNUSED(outBuffer);
+        Q_UNUSED(frames);
+        Q_UNUSED(framesOffset);
     }
 
 #ifdef CARLA_ENGINE_JACK
@@ -1207,6 +1279,9 @@ public:
     }
 #endif
 
+    /*!
+     * Tell the plugin the current buffer size has changed.
+     */
     virtual void bufferSizeChanged(uint32_t newBufferSize)
     {
         Q_UNUSED(newBufferSize);
@@ -1215,6 +1290,9 @@ public:
     // -------------------------------------------------------------------
     // OSC stuff
 
+    /*!
+     * Register this plugin to the global OSC client.
+     */
     void registerToOsc()
     {
 #ifdef BUILD_BRIDGE
@@ -1287,7 +1365,7 @@ public:
             osc_global_send_set_plugin_ports(m_id, audioInCount(), audioOutCount(), midiInCount(), midiOutCount(), param_info.ins, param_info.outs, param_info.total);
 
             // Parameters
-            osc_global_send_set_parameter_value(m_id, PARAMETER_ACTIVE, m_active ? 1.0f : 0.0f);
+            osc_global_send_set_parameter_value(m_id, PARAMETER_ACTIVE, m_active ? 1.0 : 0.0);
             osc_global_send_set_parameter_value(m_id, PARAMETER_DRYWET, x_drywet);
             osc_global_send_set_parameter_value(m_id, PARAMETER_VOLUME, x_vol);
             osc_global_send_set_parameter_value(m_id, PARAMETER_BALANCE_LEFT, x_bal_left);
@@ -1326,6 +1404,10 @@ public:
     }
 
 #ifndef BUILD_BRIDGE
+    /*!
+     * Update the plugin's internal OSC data according to \a source and \a url.\n
+     * This is used for OSC-GUI bridges.
+     */
     void updateOscData(lo_address source, const char* url)
     {
         const char* host;
@@ -1375,11 +1457,18 @@ public:
         }
     }
 
+    /*!
+     * Clear the plugin's internal OSC data.
+     */
     void clearOscData()
     {
         osc_clear_data(&osc.data);
     }
 
+    /*!
+     * Show the plugin's OSC based GUI.\n
+     * This is a handy function that waits for the GUI to respond and automatically asks it to show itself.
+     */
     bool showOscGui()
     {
         // wait for UI 'update' call
@@ -1400,6 +1489,10 @@ public:
     // -------------------------------------------------------------------
     // MIDI events
 
+    /*!
+     * Send a single midi note to be processed in the next audio callback.\n
+     * A note with 0 velocity means note-off.
+     */
     virtual void sendMidiSingleNote(uint8_t note, uint8_t velo, bool sendGui, bool sendOsc, bool sendCallback)
     {
         carla_midi_lock();
@@ -1442,26 +1535,30 @@ public:
         Q_UNUSED(sendGui);
     }
 
+    /*!
+     * Send all midi notes off for the next audio callback.\n
+     * This doesn't send the actual MIDI All-Notes-Off event, but 128 note-offs instead.
+     */
     void sendMidiAllNotesOff()
     {
         carla_midi_lock();
         postEvents.mutex.lock();
 
-        unsigned short pe_pad = 0;
+        unsigned short postPad = 0;
 
         for (unsigned short i=0; i < MAX_POST_EVENTS; i++)
         {
             if (postEvents.data[i].type == PluginPostEventNull)
             {
-                pe_pad = i;
+                postPad = i;
                 break;
             }
-            else if (i + MAX_POST_EVENTS == MAX_MIDI_EVENTS)
-            {
-                qWarning("post-events buffer full, making room for all notes off now");
-                pe_pad = i - 1;
-                break;
-            }
+        }
+
+        if (postPad == MAX_POST_EVENTS - 1)
+        {
+            qWarning("post-events buffer full, making room for all notes off now");
+            postPad -= 128;
         }
 
         for (unsigned short i=0; i < 128; i++)
@@ -1470,9 +1567,9 @@ public:
             extMidiNotes[i].note  = i;
             extMidiNotes[i].velo  = 0;
 
-            postEvents.data[i+pe_pad].type  = PluginPostEventNoteOff;
-            postEvents.data[i+pe_pad].index = i;
-            postEvents.data[i+pe_pad].value = 0.0;
+            postEvents.data[i + postPad].type  = PluginPostEventNoteOff;
+            postEvents.data[i + postPad].index = i;
+            postEvents.data[i + postPad].value = 0.0;
         }
 
         postEvents.mutex.unlock();
@@ -1482,10 +1579,13 @@ public:
     // -------------------------------------------------------------------
     // Post-poned events
 
+    /*!
+     * Post pone an event of type \a type.\n
+     * The event will be processed later in a high-priority thread (but not the main one).
+     */
     void postponeEvent(PluginPostEventType type, int32_t index, double value)
     {
         postEvents.mutex.lock();
-
         for (unsigned short i=0; i<MAX_POST_EVENTS; i++)
         {
             if (postEvents.data[i].type == PluginPostEventNull)
@@ -1496,14 +1596,15 @@ public:
                 break;
             }
         }
-
         postEvents.mutex.unlock();
     }
 
-    void postEventsCopy(PluginPostEvent* postEventsDest)
+    /*!
+     * Copy all the plugin's post-poned events into \a postEventsDest, and clear all events from the plugin.
+     */
+    void postEventsCopy(PluginPostEvent* const postEventsDest)
     {
         postEvents.mutex.lock();
-
         memcpy(postEventsDest, postEvents.data, sizeof(PluginPostEvent)*MAX_POST_EVENTS);
 
         for (unsigned short i=0; i < MAX_POST_EVENTS; i++)
@@ -1515,6 +1616,9 @@ public:
     // -------------------------------------------------------------------
     // Cleanup
 
+    /*!
+     * Clear the engine client ports of the plugin.
+     */
     virtual void removeClientPorts()
     {
         qDebug("CarlaPlugin::removeClientPorts() - start");
@@ -1558,6 +1662,9 @@ public:
         qDebug("CarlaPlugin::removeClientPorts() - end");
     }
 
+    /*!
+     * Delete all temporary buffers of the plugin.
+     */
     virtual void deleteBuffers()
     {
         qDebug("CarlaPlugin::deleteBuffers() - start");
@@ -1588,9 +1695,6 @@ public:
         aout.ports = nullptr;
         aout.rindexes = nullptr;
 
-        midi.portMin  = nullptr;
-        midi.portMout = nullptr;
-
         param.count    = 0;
         param.data     = nullptr;
         param.ranges   = nullptr;
@@ -1603,12 +1707,18 @@ public:
     // -------------------------------------------------------------------
     // Library functions
 
+    /*!
+     * Open the DLL \a filename.
+     */
     bool libOpen(const char* filename)
     {
         m_lib = lib_open(filename);
         return bool(m_lib);
     }
 
+    /*!
+     * Close the DLL previously loaded in libOpen().
+     */
     bool libClose()
     {
         if (m_lib)
@@ -1616,6 +1726,9 @@ public:
         return false;
     }
 
+    /*!
+     * Get the symbol entry \a symbol of the currently loaded DLL.
+     */
     void* libSymbol(const char* symbol)
     {
         if (m_lib)
@@ -1623,6 +1736,9 @@ public:
         return nullptr;
     }
 
+    /*!
+     * Get the last DLL related error.
+     */
     const char* libError(const char* filename)
     {
         return lib_error(filename);

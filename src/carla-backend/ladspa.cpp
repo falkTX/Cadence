@@ -39,7 +39,7 @@ bool is_rdf_port_good(int Type1, int Type2)
     return true;
 }
 
-bool is_ladspa_rdf_descriptor_valid(const LADSPA_RDF_Descriptor* rdf_descriptor, const LADSPA_Descriptor* descriptor)
+bool is_ladspa_rdf_descriptor_valid(const LADSPA_RDF_Descriptor* const rdf_descriptor, const LADSPA_Descriptor* const descriptor)
 {
     if (! rdf_descriptor)
         return false;
@@ -68,6 +68,7 @@ public:
     LadspaPlugin(unsigned short id) : CarlaPlugin(id)
     {
         qDebug("LadspaPlugin::LadspaPlugin()");
+
         m_type = PLUGIN_LADSPA;
 
         handle = nullptr;
@@ -140,90 +141,115 @@ public:
     // -------------------------------------------------------------------
     // Information (count)
 
-    uint32_t paramScalePointCount(uint32_t paramId)
+    uint32_t parameterScalePointCount(uint32_t parameterId)
     {
-        assert(paramId < param.count);
-        int32_t rindex = param.data[paramId].rindex;
+        assert(parameterId < param.count);
+        int32_t rindex = param.data[parameterId].rindex;
+
         if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
             return rdf_descriptor->Ports[rindex].ScalePointCount;
+
         return 0;
     }
 
     // -------------------------------------------------------------------
     // Information (per-plugin data)
 
-    double getParameterValue(uint32_t paramId)
+    double getParameterValue(uint32_t parameterId)
     {
-        assert(paramId < param.count);
-        return param_buffers[paramId];
+        assert(parameterId < param.count);
+        return param_buffers[parameterId];
     }
 
-    double getParameterScalePointValue(uint32_t paramId, uint32_t scalepointId)
+    double getParameterScalePointValue(uint32_t parameterId, uint32_t scalePointId)
     {
-        assert(paramId < param.count);
-        assert(scalepointId < paramScalePointCount(paramId));
-        int32_t param_rindex = param.data[paramId].rindex;
-        if (rdf_descriptor && param_rindex < (int32_t)rdf_descriptor->PortCount)
-            return rdf_descriptor->Ports[param_rindex].ScalePoints[scalepointId].Value;
+        assert(parameterId < param.count);
+        assert(scalePointId < parameterScalePointCount(parameterId));
+        int32_t rindex = param.data[parameterId].rindex;
+
+        if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
+        {
+            const LADSPA_RDF_ScalePoint* const scalePoint = &rdf_descriptor->Ports[rindex].ScalePoints[scalePointId];
+
+            if (scalePoint)
+                return rdf_descriptor->Ports[rindex].ScalePoints[scalePointId].Value;
+        }
+
         return 0.0;
     }
 
-    void getLabel(char* strBuf)
+    void getLabel(char* const strBuf)
     {
-        strncpy(strBuf, descriptor->Label, STR_MAX);
+        if (descriptor->Label)
+            strncpy(strBuf, descriptor->Label, STR_MAX);
+        else
+            CarlaPlugin::getLabel(strBuf);
     }
 
-    void getMaker(char* strBuf)
+    void getMaker(char* const strBuf)
     {
         if (rdf_descriptor && rdf_descriptor->Creator)
             strncpy(strBuf, rdf_descriptor->Creator, STR_MAX);
-        else
+        else if (descriptor->Maker)
             strncpy(strBuf, descriptor->Maker, STR_MAX);
+        else
+            CarlaPlugin::getMaker(strBuf);
     }
 
-    void getCopyright(char* strBuf)
+    void getCopyright(char* const strBuf)
     {
-        strncpy(strBuf, descriptor->Copyright, STR_MAX);
+        if (descriptor->Copyright)
+            strncpy(strBuf, descriptor->Copyright, STR_MAX);
+        else
+            CarlaPlugin::getCopyright(strBuf);
     }
 
-    void getRealName(char* strBuf)
+    void getRealName(char* const strBuf)
     {
         if (rdf_descriptor && rdf_descriptor->Title)
             strncpy(strBuf, rdf_descriptor->Title, STR_MAX);
-        else
+        else if (descriptor->Name)
             strncpy(strBuf, descriptor->Name, STR_MAX);
+        else
+            CarlaPlugin::getRealName(strBuf);
     }
 
-    void getParameterName(uint32_t paramId, char* strBuf)
+    void getParameterName(uint32_t parameterId, char* const strBuf)
     {
-        assert(paramId < param.count);
-        int32_t rindex = param.data[paramId].rindex;
+        assert(parameterId < param.count);
+        int32_t rindex = param.data[parameterId].rindex;
+
         strncpy(strBuf, descriptor->PortNames[rindex], STR_MAX);
     }
 
-    void getParameterSymbol(uint32_t paramId, char* strBuf)
+    void getParameterSymbol(uint32_t parameterId, char* const strBuf)
     {
-        assert(paramId < param.count);
-        int32_t rindex = param.data[paramId].rindex;
+        assert(parameterId < param.count);
+        int32_t rindex = param.data[parameterId].rindex;
+
         if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
         {
             const LADSPA_RDF_Port* const Port = &rdf_descriptor->Ports[rindex];
-            if (LADSPA_PORT_HAS_LABEL(Port->Hints))
+
+            if (LADSPA_PORT_HAS_LABEL(Port->Hints) && Port->Label)
             {
                 strncpy(strBuf, Port->Label, STR_MAX);
                 return;
             }
         }
+
         *strBuf = 0;
     }
 
-    void getParameterUnit(uint32_t paramId, char* strBuf)
+    void getParameterUnit(uint32_t parameterId, char* const strBuf)
     {
-        assert(paramId < param.count);
-        int32_t rindex = param.data[paramId].rindex;
+        assert(parameterId < param.count);
+        int32_t rindex = param.data[parameterId].rindex;
+
         if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
         {
             const LADSPA_RDF_Port* const Port = &rdf_descriptor->Ports[rindex];
+
             if (LADSPA_PORT_HAS_UNIT(Port->Hints))
             {
                 switch (Port->Unit)
@@ -249,30 +275,38 @@ public:
                 }
             }
         }
+
         *strBuf = 0;
     }
 
-    void getParameterScalePointLabel(uint32_t paramId, uint32_t scalePointId, char* strBuf)
+    void getParameterScalePointLabel(uint32_t parameterId, uint32_t scalePointId, char* const strBuf)
     {
-        assert(paramId < param.count);
-        assert(scalePointId < paramScalePointCount(paramId));
-        int32_t param_rindex = param.data[paramId].rindex;
-        if (rdf_descriptor && param_rindex < (int32_t)rdf_descriptor->PortCount)
+        assert(parameterId < param.count);
+        assert(scalePointId < parameterScalePointCount(parameterId));
+        int32_t rindex = param.data[parameterId].rindex;
+
+        if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
         {
-            strncpy(strBuf, rdf_descriptor->Ports[param_rindex].ScalePoints[scalePointId].Label, STR_MAX);
-            return;
+            const LADSPA_RDF_ScalePoint* const scalePoint = &rdf_descriptor->Ports[rindex].ScalePoints[scalePointId];
+
+            if (scalePoint && scalePoint->Label)
+            {
+                strncpy(strBuf, rdf_descriptor->Ports[rindex].ScalePoints[scalePointId].Label, STR_MAX);
+                return;
+            }
         }
+
         *strBuf = 0;
     }
 
     // -------------------------------------------------------------------
     // Set data (plugin-specific stuff)
 
-    void setParameterValue(uint32_t paramId, double value, bool sendGui, bool sendOsc, bool sendCallback)
+    void setParameterValue(uint32_t parameterId, double value, bool sendGui, bool sendOsc, bool sendCallback)
     {
-        assert(paramId < param.count);
-        param_buffers[paramId] = fixParameterValue(value, param.ranges[paramId]);
-        CarlaPlugin::setParameterValue(paramId, value, sendGui, sendOsc, sendCallback);
+        assert(parameterId < param.count);
+        param_buffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
+        CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
     }
 
     // -------------------------------------------------------------------
@@ -332,10 +366,10 @@ public:
             param_buffers = new float[params];
         }
 
-        const int port_name_size = CarlaEngine::maxPortNameSize() - 1;
-        char port_name[port_name_size];
-        bool needs_cin  = false;
-        bool needs_cout = false;
+        const int portNameSize = CarlaEngine::maxPortNameSize() - 1;
+        char portName[portNameSize];
+        bool needsCin  = false;
+        bool needsCout = false;
 
         for (unsigned long i=0; i<PortCount; i++)
         {
@@ -348,26 +382,26 @@ public:
 #ifndef BUILD_BRIDGE
                 if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
                 {
-                    strcpy(port_name, m_name);
-                    strcat(port_name, ":");
-                    strncat(port_name, descriptor->PortNames[i], port_name_size/2);
+                    strcpy(portName, m_name);
+                    strcat(portName, ":");
+                    strncat(portName, descriptor->PortNames[i], portNameSize/2);
                 }
                 else
 #endif
-                    strncpy(port_name, descriptor->PortNames[i], port_name_size);
+                    strncpy(portName, descriptor->PortNames[i], portNameSize);
 
                 if (LADSPA_IS_PORT_INPUT(PortType))
                 {
                     j = ain.count++;
-                    ain.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(port_name, CarlaEnginePortTypeAudio, true);
+                    ain.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, true);
                     ain.rindexes[j] = i;
                 }
                 else if (LADSPA_IS_PORT_OUTPUT(PortType))
                 {
                     j = aout.count++;
-                    aout.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(port_name, CarlaEnginePortTypeAudio, false);
+                    aout.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, false);
                     aout.rindexes[j] = i;
-                    needs_cin = true;
+                    needsCin = true;
                 }
                 else
                     qWarning("WARNING - Got a broken Port (Audio, but not input or output)");
@@ -508,7 +542,7 @@ public:
                     param.data[j].type   = PARAMETER_INPUT;
                     param.data[j].hints |= PARAMETER_IS_ENABLED;
                     param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
-                    needs_cin = true;
+                    needsCin = true;
                 }
                 else if (LADSPA_IS_PORT_OUTPUT(PortType))
                 {
@@ -529,7 +563,7 @@ public:
                         param.data[j].type   = PARAMETER_OUTPUT;
                         param.data[j].hints |= PARAMETER_IS_ENABLED;
                         param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
-                        needs_cout = true;
+                        needsCout = true;
                     }
                 }
                 else
@@ -566,34 +600,34 @@ public:
             }
         }
 
-        if (needs_cin)
+        if (needsCin)
         {
 #ifndef BUILD_BRIDGE
             if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
-                strcpy(port_name, m_name);
-                strcat(port_name, ":control-in");
+                strcpy(portName, m_name);
+                strcat(portName, ":control-in");
             }
             else
 #endif
-                strcpy(port_name, "control-in");
+                strcpy(portName, "control-in");
 
-            param.portCin = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, true);
+            param.portCin = (CarlaEngineControlPort*)x_client->addPort(portName, CarlaEnginePortTypeControl, true);
         }
 
-        if (needs_cout)
+        if (needsCout)
         {
 #ifndef BUILD_BRIDGE
             if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
-                strcpy(port_name, m_name);
-                strcat(port_name, ":control-out");
+                strcpy(portName, m_name);
+                strcat(portName, ":control-out");
             }
             else
 #endif
-                strcpy(port_name, "control-out");
+                strcpy(portName, "control-out");
 
-            param.portCout = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, false);
+            param.portCout = (CarlaEngineControlPort*)x_client->addPort(portName, CarlaEnginePortTypeControl, false);
         }
 
         ain.count   = ains;
@@ -620,7 +654,7 @@ public:
     // -------------------------------------------------------------------
     // Plugin processing
 
-    void process(float** ains_buffer, float** aouts_buffer, uint32_t nframes, uint32_t nframesOffset)
+    void process(float** inBuffer, float** outBuffer, uint32_t frames, uint32_t framesOffset)
     {
         uint32_t i, k;
 
@@ -636,21 +670,21 @@ public:
         {
             if (ain.count == 1)
             {
-                for (k=0; k < nframes; k++)
+                for (k=0; k < frames; k++)
                 {
-                    if (abs(ains_buffer[0][k]) > ains_peak_tmp[0])
-                        ains_peak_tmp[0] = abs(ains_buffer[0][k]);
+                    if (abs(inBuffer[0][k]) > ains_peak_tmp[0])
+                        ains_peak_tmp[0] = abs(inBuffer[0][k]);
                 }
             }
             else if (ain.count >= 1)
             {
-                for (k=0; k < nframes; k++)
+                for (k=0; k < frames; k++)
                 {
-                    if (abs(ains_buffer[0][k]) > ains_peak_tmp[0])
-                        ains_peak_tmp[0] = abs(ains_buffer[0][k]);
+                    if (abs(inBuffer[0][k]) > ains_peak_tmp[0])
+                        ains_peak_tmp[0] = abs(inBuffer[0][k]);
 
-                    if (abs(ains_buffer[1][k]) > ains_peak_tmp[1])
-                        ains_peak_tmp[1] = abs(ains_buffer[1][k]);
+                    if (abs(inBuffer[1][k]) > ains_peak_tmp[1])
+                        ains_peak_tmp[1] = abs(inBuffer[1][k]);
                 }
             }
         }
@@ -662,51 +696,51 @@ public:
 
         if (param.portCin && m_active && m_activeBefore)
         {
-            void* cin_buffer = param.portCin->getBuffer();
+            void* cinBuffer = param.portCin->getBuffer();
 
-            const CarlaEngineControlEvent* cin_event;
-            uint32_t time, n_cin_events = param.portCin->getEventCount(cin_buffer);
+            const CarlaEngineControlEvent* cinEvent;
+            uint32_t time, nEvents = param.portCin->getEventCount(cinBuffer);
 
-            for (i=0; i < n_cin_events; i++)
+            for (i=0; i < nEvents; i++)
             {
-                cin_event = param.portCin->getEvent(cin_buffer, i);
+                cinEvent = param.portCin->getEvent(cinBuffer, i);
 
-                if (! cin_event)
+                if (! cinEvent)
                     continue;
 
-                time = cin_event->time - nframesOffset;
+                time = cinEvent->time - framesOffset;
 
-                if (time >= nframes)
+                if (time >= frames)
                     continue;
 
                 // Control change
-                switch (cin_event->type)
+                switch (cinEvent->type)
                 {
                 case CarlaEngineEventControlChange:
                 {
                     double value;
 
                     // Control backend stuff
-                    if (cin_event->channel == cin_channel)
+                    if (cinEvent->channel == cin_channel)
                     {
-                        if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cin_event->controller) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
+                        if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cinEvent->controller) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
-                            value = cin_event->value;
+                            value = cinEvent->value;
                             setDryWet(value, false, false);
                             postponeEvent(PluginPostEventParameterChange, PARAMETER_DRYWET, value);
                             continue;
                         }
-                        else if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cin_event->controller) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
+                        else if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cinEvent->controller) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
                         {
-                            value = cin_event->value*127/100;
+                            value = cinEvent->value*127/100;
                             setVolume(value, false, false);
                             postponeEvent(PluginPostEventParameterChange, PARAMETER_VOLUME, value);
                             continue;
                         }
-                        else if (MIDI_IS_CONTROL_BALANCE(cin_event->controller) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
+                        else if (MIDI_IS_CONTROL_BALANCE(cinEvent->controller) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
                         {
                             double left, right;
-                            value = cin_event->value/0.5 - 1.0;
+                            value = cinEvent->value/0.5 - 1.0;
 
                             if (value < 0)
                             {
@@ -735,9 +769,9 @@ public:
                     // Control plugin parameters
                     for (k=0; k < param.count; k++)
                     {
-                        if (param.data[k].midiChannel != cin_event->channel)
+                        if (param.data[k].midiChannel != cinEvent->channel)
                             continue;
-                        if (param.data[k].midiCC != cin_event->controller)
+                        if (param.data[k].midiCC != cinEvent->controller)
                             continue;
                         if (param.data[k].type != PARAMETER_INPUT)
                             continue;
@@ -746,11 +780,11 @@ public:
                         {
                             if (param.data[k].hints & PARAMETER_IS_BOOLEAN)
                             {
-                                value = cin_event->value < 0.5 ? param.ranges[k].min : param.ranges[k].max;
+                                value = cinEvent->value < 0.5 ? param.ranges[k].min : param.ranges[k].max;
                             }
                             else
                             {
-                                value = cin_event->value * (param.ranges[k].max - param.ranges[k].min) + param.ranges[k].min;
+                                value = cinEvent->value * (param.ranges[k].max - param.ranges[k].min) + param.ranges[k].min;
 
                                 if (param.data[k].hints & PARAMETER_IS_INTEGER)
                                     value = rint(value);
@@ -765,7 +799,7 @@ public:
                 }
 
                 case CarlaEngineEventAllSoundOff:
-                    if (cin_event->channel == cin_channel)
+                    if (cinEvent->channel == cin_channel)
                     {
                         if (descriptor->deactivate)
                             descriptor->deactivate(handle);
@@ -810,13 +844,13 @@ public:
             }
 
             for (i=0; i < ain.count; i++)
-                descriptor->connect_port(handle, ain.rindexes[i], ains_buffer[i]);
+                descriptor->connect_port(handle, ain.rindexes[i], inBuffer[i]);
 
             for (i=0; i < aout.count; i++)
-                descriptor->connect_port(handle, aout.rindexes[i], aouts_buffer[i]);
+                descriptor->connect_port(handle, aout.rindexes[i], outBuffer[i]);
 
             if (descriptor->run)
-                descriptor->run(handle, nframes);
+                descriptor->run(handle, frames);
         }
         else
         {
@@ -839,25 +873,25 @@ public:
             bool do_balance = (m_hints & PLUGIN_CAN_BALANCE) > 0 && (x_bal_left != -1.0 || x_bal_right != 1.0);
 
             double bal_rangeL, bal_rangeR;
-            float old_bal_left[do_balance ? nframes : 0];
+            float oldBufLeft[do_balance ? frames : 0];
 
             for (i=0; i < aout.count; i++)
             {
                 // Dry/Wet and Volume
                 if (do_drywet || do_volume)
                 {
-                    for (k=0; k<nframes; k++)
+                    for (k=0; k < frames; k++)
                     {
                         if (do_drywet)
                         {
                             if (aout.count == 1)
-                                aouts_buffer[i][k] = (aouts_buffer[i][k]*x_drywet)+(ains_buffer[0][k]*(1.0-x_drywet));
+                                outBuffer[i][k] = (outBuffer[i][k]*x_drywet)+(inBuffer[0][k]*(1.0-x_drywet));
                             else
-                                aouts_buffer[i][k] = (aouts_buffer[i][k]*x_drywet)+(ains_buffer[i][k]*(1.0-x_drywet));
+                                outBuffer[i][k] = (outBuffer[i][k]*x_drywet)+(inBuffer[i][k]*(1.0-x_drywet));
                         }
 
                         if (do_volume)
-                            aouts_buffer[i][k] *= x_vol;
+                            outBuffer[i][k] *= x_vol;
                     }
                 }
 
@@ -865,33 +899,33 @@ public:
                 if (do_balance)
                 {
                     if (i%2 == 0)
-                        memcpy(&old_bal_left, aouts_buffer[i], sizeof(float)*nframes);
+                        memcpy(&oldBufLeft, outBuffer[i], sizeof(float)*frames);
 
                     bal_rangeL = (x_bal_left+1.0)/2;
                     bal_rangeR = (x_bal_right+1.0)/2;
 
-                    for (k=0; k<nframes; k++)
+                    for (k=0; k < frames; k++)
                     {
                         if (i%2 == 0)
                         {
                             // left output
-                            aouts_buffer[i][k]  = old_bal_left[k]*(1.0-bal_rangeL);
-                            aouts_buffer[i][k] += aouts_buffer[i+1][k]*(1.0-bal_rangeR);
+                            outBuffer[i][k]  = oldBufLeft[k]*(1.0-bal_rangeL);
+                            outBuffer[i][k] += outBuffer[i+1][k]*(1.0-bal_rangeR);
                         }
                         else
                         {
                             // right
-                            aouts_buffer[i][k]  = aouts_buffer[i][k]*bal_rangeR;
-                            aouts_buffer[i][k] += old_bal_left[k]*bal_rangeL;
+                            outBuffer[i][k]  = outBuffer[i][k]*bal_rangeR;
+                            outBuffer[i][k] += oldBufLeft[k]*bal_rangeL;
                         }
                     }
                 }
 
                 // Output VU
-                for (k=0; k < nframes && i < 2; k++)
+                for (k=0; i < 2 && k < frames; k++)
                 {
-                    if (abs(aouts_buffer[i][k]) > aouts_peak_tmp[i])
-                        aouts_peak_tmp[i] = abs(aouts_buffer[i][k]);
+                    if (abs(outBuffer[i][k]) > aouts_peak_tmp[i])
+                        aouts_peak_tmp[i] = abs(outBuffer[i][k]);
                 }
             }
         }
@@ -899,7 +933,7 @@ public:
         {
             // disable any output sound if not active
             for (i=0; i < aout.count; i++)
-                memset(aouts_buffer[i], 0.0f, sizeof(float)*nframes);
+                memset(outBuffer[i], 0.0f, sizeof(float)*frames);
 
             aouts_peak_tmp[0] = 0.0;
             aouts_peak_tmp[1] = 0.0;
@@ -913,10 +947,10 @@ public:
 
         if (param.portCout && m_active)
         {
-            void* cout_buffer = param.portCout->getBuffer();
+            void* coutBuffer = param.portCout->getBuffer();
 
-            if (nframesOffset == 0 || ! m_activeBefore)
-                param.portCout->initBuffer(cout_buffer);
+            if (framesOffset == 0 || ! m_activeBefore)
+                param.portCout->initBuffer(coutBuffer);
 
             double value;
 
@@ -929,7 +963,7 @@ public:
                     if (param.data[k].midiCC > 0)
                     {
                         value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
-                        param.portCout->writeEvent(cout_buffer, CarlaEngineEventControlChange, nframesOffset, param.data[k].midiChannel, param.data[k].midiCC, value);
+                        param.portCout->writeEvent(coutBuffer, CarlaEngineEventControlChange, framesOffset, param.data[k].midiChannel, param.data[k].midiCC, value);
                     }
                 }
             }

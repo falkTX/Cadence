@@ -69,8 +69,8 @@ save_state_parameter = {
     'name': "",
     'symbol': "",
     'value': 0.0,
-    'midi_channel': 1,
-    'midi_cc': -1
+    'midiChannel': 1,
+    'midiCC': -1
 }
 
 save_state_custom_data = {
@@ -194,12 +194,12 @@ def getStateDictFromXML(xml_node):
                         elif ptag == "value":
                             if isNumber(ptext):
                                 x_save_state_parameter['value'] = float(ptext)
-                        elif ptag == "midi_channel":
+                        elif ptag == "midiChannel":
                             if ptext.isdigit():
-                                x_save_state_parameter['midi_channel'] = int(ptext)
-                        elif ptag == "midi_cc":
+                                x_save_state_parameter['midiChannel'] = int(ptext)
+                        elif ptag == "midiCC":
                             if ptext.isdigit():
-                                x_save_state_parameter['midi_cc'] = int(ptext)
+                                x_save_state_parameter['midiCC'] = int(ptext)
 
                         xml_subdata = xml_subdata.nextSibling()
 
@@ -1254,8 +1254,8 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
             self.widget.set_value(pinfo['current'], False)
             self.widget.set_label(pinfo['unit'])
             self.widget.set_step(pinfo['step'])
-            self.widget.set_step_small(pinfo['step_small'])
-            self.widget.set_step_large(pinfo['step_large'])
+            self.widget.set_step_small(pinfo['stepSmall'])
+            self.widget.set_step_large(pinfo['stepLarge'])
             self.widget.set_scalepoints(pinfo['scalepoints'], (pinfo['hints'] & PARAMETER_USES_SCALEPOINTS))
 
             if (not self.hints & PARAMETER_IS_ENABLED):
@@ -1283,8 +1283,8 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
             self.combo.setVisible(False)
             self.sb_channel.setVisible(False)
 
-        self.set_parameter_midi_channel(pinfo['midi_channel'])
-        self.set_parameter_midi_cc(pinfo['midi_cc'])
+        self.set_parameter_midi_channel(pinfo['midiChannel'])
+        self.set_parameter_midi_cc(pinfo['midiCC'])
 
         self.connect(self.widget, SIGNAL("valueChanged(double)"), SLOT("slot_valueChanged(double)"))
         self.connect(self.sb_channel, SIGNAL("valueChanged(int)"), SLOT("slot_midiChannelChanged(int)"))
@@ -1611,10 +1611,10 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
                     'minimum': param_ranges['min'],
                     'maximum': param_ranges['max'],
                     'step': param_ranges['step'],
-                    'step_small': param_ranges['step_small'],
-                    'step_large': param_ranges['step_large'],
-                    'midi_channel': param_data['midi_channel'],
-                    'midi_cc': param_data['midi_cc'],
+                    'stepSmall': param_ranges['stepSmall'],
+                    'stepLarge': param_ranges['stepLarge'],
+                    'midiChannel': param_data['midiChannel'],
+                    'midiCC': param_data['midiCC'],
 
                     'current': CarlaHost.get_current_parameter_value(self.plugin_id, i)
                 }
@@ -1695,10 +1695,10 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
                 'minimum': 0,
                 'maximum': 0,
                 'step': 0,
-                'step_small': 0,
-                'step_large': 0,
-                'midi_channel': 0,
-                'midi_cc': -1,
+                'stepSmall': 0,
+                'stepLarge': 0,
+                'midiChannel': 0,
+                'midiCC': -1,
 
                 'current': 0.0
             }
@@ -2354,8 +2354,8 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             x_save_state_parameter['name']   = cString(parameter_info['name'])
             x_save_state_parameter['symbol'] = cString(parameter_info['symbol'])
             x_save_state_parameter['value']  = CarlaHost.get_current_parameter_value(self.plugin_id, parameter_data['index'])
-            x_save_state_parameter['midi_channel'] = parameter_data['midi_channel'] + 1
-            x_save_state_parameter['midi_cc'] = parameter_data['midi_cc']
+            x_save_state_parameter['midiChannel'] = parameter_data['midiChannel'] + 1
+            x_save_state_parameter['midiCC'] = parameter_data['midiCC']
 
             if (parameter_data['hints'] & PARAMETER_USES_SAMPLERATE):
                 x_save_state_parameter['value'] /= CarlaHost.get_sample_rate()
@@ -2421,9 +2421,9 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             if (parameter['symbol']):
                 content += "    <symbol>%s</symbol>\n" % parameter['symbol']
             content += "    <value>%f</value>\n" % parameter['value']
-            if (parameter['midi_cc'] > 0):
-                content += "    <midi_channel>%i</midi_channel>\n" % parameter['midi_channel']
-                content += "    <midi_cc>%i</midi_cc>\n" % parameter['midi_cc']
+            if (parameter['midiCC'] > 0):
+                content += "    <midiChannel>%i</midiChannel>\n" % parameter['midiChannel']
+                content += "    <midiCC>%i</midiCC>\n" % parameter['midiCC']
             content += "   </Parameter>\n"
 
         if (x_save_state_dict['CurrentProgramIndex'] >= 0):
@@ -2560,8 +2560,8 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
                     parameter['value'] *= CarlaHost.get_sample_rate()
 
                 CarlaHost.set_parameter_value(self.plugin_id, index, parameter['value'])
-                CarlaHost.set_parameter_midi_channel(self.plugin_id, index, parameter['midi_channel'] - 1)
-                CarlaHost.set_parameter_midi_cc(self.plugin_id, index, parameter['midi_cc'])
+                CarlaHost.set_parameter_midi_channel(self.plugin_id, index, parameter['midiChannel'] - 1)
+                CarlaHost.set_parameter_midi_cc(self.plugin_id, index, parameter['midiCC'])
             else:
                 print("Could not set parameter data for %i -> %s" % (parameter['index'], parameter['name']))
 
