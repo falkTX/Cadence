@@ -54,7 +54,7 @@ CARLA_BACKEND_START_NAMESPACE
 /*!
  * @defgroup CarlaBackendPlugin Carla Backend Plugin
  *
- * The Carla Backend Plugin
+ * The Carla Backend Plugin.
  * @{
  */
 

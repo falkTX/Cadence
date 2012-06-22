@@ -26,6 +26,14 @@ CARLA_BACKEND_START_NAMESPACE
 } /* adjust editor indent */
 #endif
 
+/*!
+ * @defgroup CarlaBackendLadspaPlugin Carla Backend LADSPA Plugin
+ *
+ * The Carla Backend LADSPA Plugin.\n
+ * http://www.ladspa.org/
+ * @{
+ */
+
 bool is_rdf_port_good(int Type1, int Type2)
 {
     if (LADSPA_IS_PORT_INPUT(Type1) && ! LADSPA_IS_PORT_INPUT(Type2))
@@ -999,7 +1007,7 @@ public:
 
     // -------------------------------------------------------------------
 
-    bool init(const char* filename, const char* label, const LADSPA_RDF_Descriptor* rdf_descriptor_)
+    bool init(const char* const filename, const char* const label, const LADSPA_RDF_Descriptor* const rdf_descriptor_)
     {
         // ---------------------------------------------------------------
         // open DLL
@@ -1083,7 +1091,7 @@ private:
     float* param_buffers;
 };
 
-short add_plugin_ladspa(const char* filename, const char* label, const void* extra_stuff)
+short add_plugin_ladspa(const char* const filename, const char* const label, const void* const extra_stuff)
 {
     qDebug("add_plugin_ladspa(%s, %s, %p)", filename, label, extra_stuff);
 
@@ -1091,9 +1099,9 @@ short add_plugin_ladspa(const char* filename, const char* label, const void* ext
 
     if (id >= 0)
     {
-        LadspaPlugin* plugin = new LadspaPlugin(id);
+        LadspaPlugin* const plugin = new LadspaPlugin(id);
 
-        if (plugin->init(filename, label, (LADSPA_RDF_Descriptor*)extra_stuff))
+        if (plugin->init(filename, label, (const LADSPA_RDF_Descriptor*)extra_stuff))
         {
             plugin->reload();
 
@@ -1113,5 +1121,7 @@ short add_plugin_ladspa(const char* filename, const char* label, const void* ext
 
     return id;
 }
+
+/**@}*/
 
 CARLA_BACKEND_END_NAMESPACE

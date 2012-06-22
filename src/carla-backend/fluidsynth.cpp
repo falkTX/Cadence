@@ -34,32 +34,54 @@ CARLA_BACKEND_START_NAMESPACE
 } /* adjust editor indent */
 #endif
 
+/*!
+ * @defgroup CarlaBackendFluidSynthPlugin Carla Backend FluidSynth Plugin
+ *
+ * The Carla Backend FluidSynth Plugin.\n
+ * http://www.fluidsynth.org/
+ * @{
+ */
+
 class FluidSynthPlugin : public CarlaPlugin
 {
 public:
     FluidSynthPlugin(unsigned short id) : CarlaPlugin(id)
     {
         qDebug("FluidSynthPlugin::FluidSynthPlugin()");
-        m_type = PLUGIN_SF2;
 
+        m_type  = PLUGIN_SF2;
+        m_label = nullptr;
+
+        // create settings
         f_settings = new_fluid_settings();
 
+        // define settings
         fluid_settings_setnum(f_settings, "synth.sample-rate", get_sample_rate());
-        fluid_settings_setnum(f_settings, "synth.threadsafe-api ", 0.0);
+        fluid_settings_setint(f_settings, "synth.threadsafe-api ", 0);
 
+        // create synth
         f_synth = new_fluid_synth(f_settings);
+
 #ifdef FLUIDSYNTH_VERSION_NEW_API
         fluid_synth_set_sample_rate(f_synth, get_sample_rate());
 #endif
-        fluid_synth_set_reverb_on(f_synth, 0);
-        fluid_synth_set_chorus_on(f_synth, 0);
 
-        m_label = nullptr;
+        // set default values
+        fluid_synth_set_reverb_on(f_synth, 0);
+        fluid_synth_set_reverb(f_synth, FLUID_REVERB_DEFAULT_ROOMSIZE, FLUID_REVERB_DEFAULT_DAMP, FLUID_REVERB_DEFAULT_WIDTH, FLUID_REVERB_DEFAULT_LEVEL);
+
+        fluid_synth_set_chorus_on(f_synth, 0);
+        fluid_synth_set_chorus(f_synth, FLUID_CHORUS_DEFAULT_N, FLUID_CHORUS_DEFAULT_LEVEL, FLUID_CHORUS_DEFAULT_SPEED, FLUID_CHORUS_DEFAULT_DEPTH, FLUID_CHORUS_DEFAULT_TYPE);
+
+        fluid_synth_set_polyphony(f_synth, 64);
+
+        for (int i=0; i < 16; i++)
+            fluid_synth_set_interp_method(f_synth, i, FLUID_INTERP_DEFAULT);
     }
 
     ~FluidSynthPlugin()
     {
-        qDebug("Sf2Plugin::~FluidSynthPlugin()");
+        qDebug("FluidSynthPlugin::~FluidSynthPlugin()");
 
         if (m_label)
             free((void*)m_label);
@@ -79,10 +101,11 @@ public:
     // -------------------------------------------------------------------
     // Information (count)
 
-    uint32_t param_scalepoint_count(uint32_t param_id)
+    uint32_t parameterScalePointCount(uint32_t parameterId)
     {
-        assert(param_id < param.count);
-        switch (param_id)
+        assert(parameterId < param.count);
+
+        switch (parameterId)
         {
         case FluidSynthChorusType:
             return 2;
@@ -96,20 +119,21 @@ public:
     // -------------------------------------------------------------------
     // Information (per-plugin data)
 
-    double get_parameter_value(uint32_t param_id)
+    double getParameterValue(uint32_t parameterId)
     {
-        assert(param_id < param.count);
-        return param_buffers[param_id];
+        assert(parameterId < param.count);
+        return param_buffers[parameterId];
     }
 
-    double get_parameter_scalepoint_value(uint32_t param_id, uint32_t scalepoint_id)
+    double getParameterScalePointValue(uint32_t parameterId, uint32_t scalePointId)
     {
-        assert(param_id < param.count);
-        assert(scalepoint_id < param_scalepoint_count(param_id));
-        switch (param_id)
+        assert(parameterId < param.count);
+        assert(scalePointId < parameterScalePointCount(parameterId));
+
+        switch (parameterId)
         {
         case FluidSynthChorusType:
-            switch (scalepoint_id)
+            switch (scalePointId)
             {
             case 0:
                 return FLUID_CHORUS_MOD_SINE;
@@ -119,7 +143,7 @@ public:
                 return FLUID_CHORUS_DEFAULT_TYPE;
             }
         case FluidSynthInterpolation:
-            switch (scalepoint_id)
+            switch (scalePointId)
             {
             case 0:
                 return FLUID_INTERP_NONE;
@@ -137,141 +161,145 @@ public:
         }
     }
 
-    void get_label(char* buf_str)
+    void getLabel(char* const strBuf)
     {
-        strncpy(buf_str, m_label, STR_MAX);
+        strncpy(strBuf, m_label, STR_MAX);
     }
 
-    void get_maker(char* buf_str)
+    void getMaker(char* const strBuf)
     {
-        strncpy(buf_str, "FluidSynth SF2 engine", STR_MAX);
+        strncpy(strBuf, "FluidSynth SF2 engine", STR_MAX);
     }
 
-    void get_copyright(char* buf_str)
+    void getCopyright(char* const strBuf)
     {
-        strncpy(buf_str, "GNU GPL v2+", STR_MAX);
+        strncpy(strBuf, "GNU GPL v2+", STR_MAX);
     }
 
-    void get_real_name(char* buf_str)
+    void getRealName(char* const strBuf)
     {
-        strncpy(buf_str, m_label, STR_MAX);
+        getLabel(strBuf);
     }
 
-    void get_parameter_name(uint32_t param_id, char* buf_str)
+    void getParameterName(uint32_t parameterId, char* const strBuf)
     {
-        assert(param_id < param.count);
-        switch (param_id)
+        assert(parameterId < param.count);
+
+        switch (parameterId)
         {
         case FluidSynthReverbOnOff:
-            strncpy(buf_str, "Reverb On/Off", STR_MAX);
+            strncpy(strBuf, "Reverb On/Off", STR_MAX);
             break;
         case FluidSynthReverbRoomSize:
-            strncpy(buf_str, "Reverb Room Size", STR_MAX);
+            strncpy(strBuf, "Reverb Room Size", STR_MAX);
             break;
         case FluidSynthReverbDamp:
-            strncpy(buf_str, "Reverb Damp", STR_MAX);
+            strncpy(strBuf, "Reverb Damp", STR_MAX);
             break;
         case FluidSynthReverbLevel:
-            strncpy(buf_str, "Reverb Level", STR_MAX);
+            strncpy(strBuf, "Reverb Level", STR_MAX);
             break;
         case FluidSynthReverbWidth:
-            strncpy(buf_str, "Reverb Width", STR_MAX);
+            strncpy(strBuf, "Reverb Width", STR_MAX);
             break;
         case FluidSynthChorusOnOff:
-            strncpy(buf_str, "Chorus On/Off", STR_MAX);
+            strncpy(strBuf, "Chorus On/Off", STR_MAX);
             break;
         case FluidSynthChorusNr:
-            strncpy(buf_str, "Chorus Voice Count", STR_MAX);
+            strncpy(strBuf, "Chorus Voice Count", STR_MAX);
             break;
         case FluidSynthChorusLevel:
-            strncpy(buf_str, "Chorus Level", STR_MAX);
+            strncpy(strBuf, "Chorus Level", STR_MAX);
             break;
         case FluidSynthChorusSpeedHz:
-            strncpy(buf_str, "Chorus Speed", STR_MAX);
+            strncpy(strBuf, "Chorus Speed", STR_MAX);
             break;
         case FluidSynthChorusDepthMs:
-            strncpy(buf_str, "Chorus Depth", STR_MAX);
+            strncpy(strBuf, "Chorus Depth", STR_MAX);
             break;
         case FluidSynthChorusType:
-            strncpy(buf_str, "Chorus Type", STR_MAX);
+            strncpy(strBuf, "Chorus Type", STR_MAX);
             break;
         case FluidSynthPolyphony:
-            strncpy(buf_str, "Polyphony", STR_MAX);
+            strncpy(strBuf, "Polyphony", STR_MAX);
             break;
         case FluidSynthInterpolation:
-            strncpy(buf_str, "Interpolation", STR_MAX);
+            strncpy(strBuf, "Interpolation", STR_MAX);
             break;
         case FluidSynthVoiceCount:
-            strncpy(buf_str, "Voice Count", STR_MAX);
+            strncpy(strBuf, "Voice Count", STR_MAX);
             break;
         default:
-            *buf_str = 0;
+            *strBuf = 0;
             break;
         }
     }
 
-    void get_parameter_unit(uint32_t param_id, char* buf_str)
+    void getParameterUnit(uint32_t parameterId, char* const strBuf)
     {
-        assert(param_id < param.count);
-        switch (param_id)
+        assert(parameterId < param.count);
+
+        switch (parameterId)
         {
         case FluidSynthChorusSpeedHz:
-            strncpy(buf_str, "Hz", STR_MAX);
+            strncpy(strBuf, "Hz", STR_MAX);
             break;
         case FluidSynthChorusDepthMs:
-            strncpy(buf_str, "ms", STR_MAX);
+            strncpy(strBuf, "ms", STR_MAX);
             break;
         default:
-            *buf_str = 0;
+            *strBuf = 0;
             break;
         }
     }
 
-    void get_parameter_scalepoint_label(uint32_t param_id, uint32_t scalepoint_id, char* buf_str)
+    void getParameterScalePointLabel(uint32_t parameterId, uint32_t scalePointId, char* const strBuf)
     {
-        assert(param_id < param.count);
-        assert(scalepoint_id < param_scalepoint_count(param_id));
-        switch (param_id)
+        assert(parameterId < param.count);
+        assert(scalePointId < parameterScalePointCount(parameterId));
+
+        switch (parameterId)
         {
         case FluidSynthChorusType:
-            switch (scalepoint_id)
+            switch (scalePointId)
             {
             case 0:
-                strncpy(buf_str, "Sine wave", STR_MAX);
+                strncpy(strBuf, "Sine wave", STR_MAX);
                 return;
             case 1:
-                strncpy(buf_str, "Triangle wave", STR_MAX);
+                strncpy(strBuf, "Triangle wave", STR_MAX);
                 return;
             }
         case FluidSynthInterpolation:
-            switch (scalepoint_id)
+            switch (scalePointId)
             {
             case 0:
-                strncpy(buf_str, "None", STR_MAX);
+                strncpy(strBuf, "None", STR_MAX);
                 return;
             case 1:
-                strncpy(buf_str, "Straight-line", STR_MAX);
+                strncpy(strBuf, "Straight-line", STR_MAX);
                 return;
             case 2:
-                strncpy(buf_str, "Fourth-order", STR_MAX);
+                strncpy(strBuf, "Fourth-order", STR_MAX);
                 return;
             case 3:
-                strncpy(buf_str, "Seventh-order", STR_MAX);
+                strncpy(strBuf, "Seventh-order", STR_MAX);
                 return;
             }
         }
-        *buf_str = 0;
+
+        *strBuf = 0;
     }
 
     // -------------------------------------------------------------------
     // Set data (plugin-specific stuff)
 
-    void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
+    void setParameterValue(uint32_t parameterId, double value, bool sendGui, bool sendOsc, bool sendCallback)
     {
-        assert(param_id < param.count);
-        param_buffers[param_id] = fixParameterValue(value, param.ranges[param_id]);
+        assert(parameterId < param.count);
+        param_buffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
 
-        switch(param_id)
+        switch (parameterId)
         {
         case FluidSynthReverbOnOff:
             value = value > 0.5 ? 1 : 0;
@@ -323,17 +351,18 @@ public:
             break;
         }
 
-        CarlaPlugin::setParameterValue(param_id, value, gui_send, osc_send, callback_send);
+        CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
     }
 
-    void set_midi_program(int32_t index, bool gui_send, bool osc_send, bool callback_send, bool block)
+    void setMidiProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
     {
+        assert(index < (int32_t)midiprog.count);
+
         if (cin_channel < 0 || cin_channel > 15)
             return;
 
         if (index >= 0)
         {
-            assert(index < (int32_t)midiprog.count);
             if (CarlaEngine::isOffline())
             {
                 if (block) carla_proc_lock();
@@ -347,7 +376,7 @@ public:
             }
         }
 
-        CarlaPlugin::setMidiProgram(index, gui_send, osc_send, callback_send, block);
+        CarlaPlugin::setMidiProgram(index, sendGui, sendOsc, sendCallback, block);
     }
 
     // -------------------------------------------------------------------
@@ -379,8 +408,8 @@ public:
         param.data    = new ParameterData[params];
         param.ranges  = new ParameterRanges[params];
 
-        const int port_name_size = CarlaEngine::maxPortNameSize() - 1;
-        char port_name[port_name_size];
+        //const int portNameSize = CarlaEngine::maxPortNameSize() - 1;
+        char portName[STR_MAX];
 
         // ---------------------------------------
         // Audio Outputs
@@ -388,27 +417,27 @@ public:
 #ifndef BUILD_BRIDGE
         if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
-            strcpy(port_name, m_name);
-            strcat(port_name, ":out-left");
+            strcpy(portName, m_name);
+            strcat(portName, ":out-left");
         }
         else
 #endif
-            strcpy(port_name, "out-left");
+            strcpy(portName, "out-left");
 
-        aout.ports[0]    = (CarlaEngineAudioPort*)x_client->addPort(port_name, CarlaEnginePortTypeAudio, false);
+        aout.ports[0]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, false);
         aout.rindexes[0] = 0;
 
 #ifndef BUILD_BRIDGE
         if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
-            strcpy(port_name, m_name);
-            strcat(port_name, ":out-right");
+            strcpy(portName, m_name);
+            strcat(portName, ":out-right");
         }
         else
 #endif
-            strcpy(port_name, "out-right");
+            strcpy(portName, "out-right");
 
-        aout.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(port_name, CarlaEnginePortTypeAudio, false);
+        aout.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, false);
         aout.rindexes[1] = 1;
 
         // ---------------------------------------
@@ -417,14 +446,14 @@ public:
 #ifndef BUILD_BRIDGE
         if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
-            strcpy(port_name, m_name);
-            strcat(port_name, ":midi-in");
+            strcpy(portName, m_name);
+            strcat(portName, ":midi-in");
         }
         else
 #endif
-            strcpy(port_name, "midi-in");
+            strcpy(portName, "midi-in");
 
-        midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(port_name, CarlaEnginePortTypeMIDI, true);
+        midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(portName, CarlaEnginePortTypeMIDI, true);
 
         // ---------------------------------------
         // Parameters
@@ -432,26 +461,26 @@ public:
 #ifndef BUILD_BRIDGE
         if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
-            strcpy(port_name, m_name);
-            strcat(port_name, ":control-in");
+            strcpy(portName, m_name);
+            strcat(portName, ":control-in");
         }
         else
 #endif
-            strcpy(port_name, "control-in");
+            strcpy(portName, "control-in");
 
-        param.portCin = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, true);
+        param.portCin = (CarlaEngineControlPort*)x_client->addPort(portName, CarlaEnginePortTypeControl, true);
 
 #ifndef BUILD_BRIDGE
         if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
-            strcpy(port_name, m_name);
-            strcat(port_name, ":control-out");
+            strcpy(portName, m_name);
+            strcat(portName, ":control-out");
         }
         else
 #endif
-            strcpy(port_name, "control-out");
+            strcpy(portName, "control-out");
 
-        param.portCout = (CarlaEngineControlPort*)x_client->addPort(port_name, CarlaEnginePortTypeControl, false);
+        param.portCout = (CarlaEngineControlPort*)x_client->addPort(portName, CarlaEnginePortTypeControl, false);
 
         // ----------------------
         j = FluidSynthReverbOnOff;
@@ -689,16 +718,16 @@ public:
         m_hints |= PLUGIN_CAN_VOLUME;
         m_hints |= PLUGIN_CAN_BALANCE;
 
-        reload_programs(true);
+        reloadPrograms(true);
 
         x_client->activate();
 
         qDebug("FluidSynthPlugin::reload() - end");
     }
 
-    void reload_programs(bool init)
+    void reloadPrograms(bool init)
     {
-        qDebug("FluidSynthPlugin::reload_programs(%s)", bool2str(init));
+        qDebug("FluidSynthPlugin::reloadPrograms(%s)", bool2str(init));
 
         // Delete old programs
         if (midiprog.count > 0)
@@ -731,16 +760,12 @@ public:
         f_sfont->iteration_start(f_sfont);
         while (f_sfont->iteration_next(f_sfont, &f_preset))
         {
-            if (i < midiprog.count)
-            {
-                midiprog.data[i].bank    = f_preset.get_banknum(&f_preset);
-                midiprog.data[i].program = f_preset.get_num(&f_preset);
-                midiprog.data[i].name    = strdup(f_preset.get_name(&f_preset));
-            }
+            assert(i < midiprog.count);
+            midiprog.data[i].bank    = f_preset.get_banknum(&f_preset);
+            midiprog.data[i].program = f_preset.get_num(&f_preset);
+            midiprog.data[i].name    = strdup(f_preset.get_name(&f_preset));
             i++;
         }
-
-        // TODO - for xx(), rest of i < count to null
 
         //f_sfont->free(f_sfont);
 
@@ -754,34 +779,37 @@ public:
         callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
 #endif
 
-        if (init && midiprog.count > 0)
+        if (init)
         {
             fluid_synth_program_reset(f_synth);
 
-            for (i=0; i < 16 && i != 9; i++)
+            if (midiprog.count > 0)
             {
+                for (i=0; i < 16 && i != 9; i++)
+                {
+                    fluid_synth_program_select(f_synth, i, f_id, midiprog.data[0].bank, midiprog.data[0].program);
 #ifdef FLUIDSYNTH_VERSION_NEW_API
-                fluid_synth_set_channel_type(f_synth, i, CHANNEL_TYPE_MELODIC);
+                    fluid_synth_set_channel_type(f_synth, i, CHANNEL_TYPE_MELODIC);
 #endif
-                fluid_synth_program_select(f_synth, i, f_id, midiprog.data[0].bank, midiprog.data[0].program);
+                }
+
+                fluid_synth_program_select(f_synth, 9, f_id, 128, 0);
+#ifdef FLUIDSYNTH_VERSION_NEW_API
+                fluid_synth_set_channel_type(f_synth, 9, CHANNEL_TYPE_DRUM);
+#endif
+
+                setMidiProgram(0, false, false, false, true);
             }
-
-#ifdef FLUIDSYNTH_VERSION_NEW_API
-            fluid_synth_set_channel_type(f_synth, 9, CHANNEL_TYPE_DRUM);
-#endif
-            fluid_synth_program_select(f_synth, 9, f_id, 128, 0);
-
-            set_midi_program(0, false, false, false, true);
         }
     }
 
     // -------------------------------------------------------------------
     // Plugin processing
 
-    void process(float** ains_buffer, float** aouts_buffer, uint32_t nframes, uint32_t nframesOffset)
+    void process(float**, float** outBuffer, uint32_t frames, uint32_t framesOffset)
     {
         uint32_t i, k;
-        uint32_t midi_event_count = 0;
+        uint32_t midiEventCount = 0;
 
         double aouts_peak_tmp[2] = { 0.0 };
 
@@ -792,56 +820,57 @@ public:
 
         if (m_active && m_activeBefore)
         {
-            void* cin_buffer = param.portCin->getBuffer();
+            bool allNotesOffSent = false;
+            void* cinBuffer = param.portCin->getBuffer();
 
-            const CarlaEngineControlEvent* cin_event;
-            uint32_t time, n_cin_events = param.portCin->getEventCount(cin_buffer);
+            const CarlaEngineControlEvent* cinEvent;
+            uint32_t time, nEvents = param.portCin->getEventCount(cinBuffer);
 
-            unsigned char next_bank_ids[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 0, 0, 0, 0, 0, 0 };
+            unsigned char nextBankIds[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 0, 0, 0, 0, 0, 0 };
 
-            if (midiprog.current >= 0 && midiprog.count > 0)
-                next_bank_ids[0] = midiprog.data[midiprog.current].bank;
+            if (midiprog.current >= 0 && midiprog.count > 0 && cin_channel >= 0 && cin_channel < 16)
+                nextBankIds[cin_channel] = midiprog.data[midiprog.current].bank;
 
-            for (i=0; i < n_cin_events; i++)
+            for (i=0; i < nEvents; i++)
             {
-                cin_event = param.portCin->getEvent(cin_buffer, i);
+                cinEvent = param.portCin->getEvent(cinBuffer, i);
 
-                if (! cin_event)
+                if (! cinEvent)
                     continue;
 
-                time = cin_event->time - nframesOffset;
+                time = cinEvent->time - framesOffset;
 
-                if (time >= nframes)
+                if (time >= frames)
                     continue;
 
                 // Control change
-                switch (cin_event->type)
+                switch (cinEvent->type)
                 {
                 case CarlaEngineEventControlChange:
                 {
                     double value;
 
                     // Control backend stuff
-                    if (cin_event->channel == cin_channel)
+                    if (cinEvent->channel == cin_channel)
                     {
-                        if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cin_event->controller) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
+                        if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cinEvent->controller) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
-                            value = cin_event->value;
+                            value = cinEvent->value;
                             setDryWet(value, false, false);
                             postponeEvent(PluginPostEventParameterChange, PARAMETER_DRYWET, value);
                             continue;
                         }
-                        else if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cin_event->controller) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
+                        else if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cinEvent->controller) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
                         {
-                            value = cin_event->value*127/100;
+                            value = cinEvent->value*127/100;
                             setVolume(value, false, false);
                             postponeEvent(PluginPostEventParameterChange, PARAMETER_VOLUME, value);
                             continue;
                         }
-                        else if (MIDI_IS_CONTROL_BALANCE(cin_event->controller) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
+                        else if (MIDI_IS_CONTROL_BALANCE(cinEvent->controller) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
                         {
                             double left, right;
-                            value = cin_event->value/0.5 - 1.0;
+                            value = cinEvent->value/0.5 - 1.0;
 
                             if (value < 0)
                             {
@@ -870,9 +899,9 @@ public:
                     // Control plugin parameters
                     for (k=0; k < param.count; k++)
                     {
-                        if (param.data[k].midiChannel != cin_event->channel)
+                        if (param.data[k].midiChannel != cinEvent->channel)
                             continue;
-                        if (param.data[k].midiCC != cin_event->controller)
+                        if (param.data[k].midiCC != cinEvent->controller)
                             continue;
                         if (param.data[k].type != PARAMETER_INPUT)
                             continue;
@@ -881,17 +910,17 @@ public:
                         {
                             if (param.data[k].hints & PARAMETER_IS_BOOLEAN)
                             {
-                                value = cin_event->value < 0.5 ? param.ranges[k].min : param.ranges[k].max;
+                                value = cinEvent->value < 0.5 ? param.ranges[k].min : param.ranges[k].max;
                             }
                             else
                             {
-                                value = cin_event->value * (param.ranges[k].max - param.ranges[k].min) + param.ranges[k].min;
+                                value = cinEvent->value * (param.ranges[k].max - param.ranges[k].min) + param.ranges[k].min;
 
                                 if (param.data[k].hints & PARAMETER_IS_INTEGER)
                                     value = rint(value);
                             }
 
-                            set_parameter_value(k, value, false, false, false);
+                            setParameterValue(k, value, false, false, false);
                             postponeEvent(PluginPostEventParameterChange, k, value);
                         }
                     }
@@ -900,27 +929,27 @@ public:
                 }
 
                 case CarlaEngineEventMidiBankChange:
-                    if (cin_event->channel < 16)
-                        next_bank_ids[cin_event->channel] = cin_event->value;
+                    if (cinEvent->channel < 16)
+                        nextBankIds[cinEvent->channel] = rint(cinEvent->value);
                     break;
 
                 case CarlaEngineEventMidiProgramChange:
-                    if (cin_event->channel < 16)
+                    if (cinEvent->channel < 16)
                     {
-                        uint32_t mbank_id = next_bank_ids[cin_event->channel];
-                        uint32_t mprog_id = cin_event->value;
+                        uint32_t bankId = nextBankIds[cinEvent->channel];
+                        uint32_t progId = rint(cinEvent->value);
 
                         for (k=0; k < midiprog.count; k++)
                         {
-                            if (midiprog.data[k].bank == mbank_id && midiprog.data[k].program == mprog_id)
+                            if (midiprog.data[k].bank == bankId && midiprog.data[k].program == progId)
                             {
-                                if (cin_event->channel == cin_channel)
+                                if (cinEvent->channel == cin_channel)
                                 {
                                     setMidiProgram(k, false, false, false, false);
                                     postponeEvent(PluginPostEventMidiProgramChange, k, 0.0);
                                 }
                                 else
-                                    fluid_synth_program_select(f_synth, cin_event->channel, f_id, mbank_id, mprog_id);
+                                    fluid_synth_program_select(f_synth, cinEvent->channel, f_id, bankId, progId);
 
                                 break;
                             }
@@ -929,39 +958,41 @@ public:
                     break;
 
                 case CarlaEngineEventAllSoundOff:
-                    if (cin_event->channel == cin_channel)
+                    if (cinEvent->channel == cin_channel)
                     {
-                        sendMidiAllNotesOff();
+                        if (! allNotesOffSent)
+                            sendMidiAllNotesOff();
+
+                        allNotesOffSent = true;
 
 #ifdef FLUIDSYNTH_VERSION_NEW_API
                         fluid_synth_all_notes_off(f_synth, cin_channel);
                         fluid_synth_all_sounds_off(f_synth, cin_channel);
-#endif
                     }
-#ifdef FLUIDSYNTH_VERSION_NEW_API
-                    else if (cin_event->channel < 16)
+                    else if (cinEvent->channel < 16)
                     {
-                        fluid_synth_all_notes_off(f_synth, cin_event->channel);
-                        fluid_synth_all_sounds_off(f_synth, cin_event->channel);
-                    }
+                        fluid_synth_all_notes_off(f_synth, cinEvent->channel);
+                        fluid_synth_all_sounds_off(f_synth, cinEvent->channel);
 #endif
+                    }
                     break;
 
                 case CarlaEngineEventAllNotesOff:
-                    if (cin_event->channel == cin_channel)
+                    if (cinEvent->channel == cin_channel)
                     {
-                        sendMidiAllNotesOff();
+                        if (! allNotesOffSent)
+                            sendMidiAllNotesOff();
+
+                        allNotesOffSent = true;
 
 #ifdef FLUIDSYNTH_VERSION_NEW_API
                         fluid_synth_all_notes_off(f_synth, cin_channel);
-#endif
                     }
-#ifdef FLUIDSYNTH_VERSION_NEW_API
-                    else if (cin_event->channel < 16)
+                    else if (cinEvent->channel < 16)
                     {
-                        fluid_synth_all_notes_off(f_synth, cin_event->channel);
-                    }
+                        fluid_synth_all_notes_off(f_synth, cinEvent->channel);
 #endif
+                    }
                     break;
                 }
             }
@@ -976,20 +1007,18 @@ public:
         {
             carla_midi_lock();
 
-            for (i=0; i < MAX_MIDI_EVENTS && midi_event_count < MAX_MIDI_EVENTS; i++)
+            for (i=0; i < MAX_MIDI_EVENTS && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
-                if (extMidiNotes[i].valid)
-                {
-                    if (extMidiNotes[i].velo)
-                        fluid_synth_noteon(f_synth, cin_channel, extMidiNotes[i].note, extMidiNotes[i].velo);
-                    else
-                        fluid_synth_noteoff(f_synth, cin_channel, extMidiNotes[i].note);
-
-                    extMidiNotes[i].valid = false;
-                    midi_event_count += 1;
-                }
-                else
+                if (! extMidiNotes[i].valid)
                     break;
+
+                if (extMidiNotes[i].velo)
+                    fluid_synth_noteon(f_synth, cin_channel, extMidiNotes[i].note, extMidiNotes[i].velo);
+                else
+                    fluid_synth_noteoff(f_synth, cin_channel, extMidiNotes[i].note);
+
+                extMidiNotes[i].valid = false;
+                midiEventCount += 1;
             }
 
             carla_midi_unlock();
@@ -1003,33 +1032,33 @@ public:
 
         if (m_active && m_activeBefore)
         {
-            void* min_buffer = midi.portMin->getBuffer();
+            void* minBuffer = midi.portMin->getBuffer();
 
-            const CarlaEngineMidiEvent* min_event;
-            uint32_t time, n_min_events = midi.portMin->getEventCount(min_buffer);
+            const CarlaEngineMidiEvent* minEvent;
+            uint32_t time, nEvents = midi.portMin->getEventCount(minBuffer);
 
-            for (i=0; i < n_min_events && midi_event_count < MAX_MIDI_EVENTS; i++)
+            for (i=0; i < nEvents && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
-                min_event = midi.portMin->getEvent(min_buffer, i);
+                minEvent = midi.portMin->getEvent(minBuffer, i);
 
-                if (! min_event)
+                if (! minEvent)
                     continue;
 
-                time = min_event->time - nframesOffset;
+                time = minEvent->time - framesOffset;
 
-                if (time >= nframes)
+                if (time >= frames)
                     continue;
 
-                uint8_t status  = min_event->data[0];
+                uint8_t status  = minEvent->data[0];
                 uint8_t channel = status & 0x0F;
 
                 // Fix bad note-off
-                if (MIDI_IS_STATUS_NOTE_ON(status) && min_event->data[2] == 0)
+                if (MIDI_IS_STATUS_NOTE_ON(status) && minEvent->data[2] == 0)
                     status -= 0x10;
 
                 if (MIDI_IS_STATUS_NOTE_OFF(status))
                 {
-                    uint8_t note = min_event->data[1];
+                    uint8_t note = minEvent->data[1];
 
                     fluid_synth_noteoff(f_synth, channel, note);
 
@@ -1038,8 +1067,8 @@ public:
                 }
                 else if (MIDI_IS_STATUS_NOTE_ON(status))
                 {
-                    uint8_t note = min_event->data[1];
-                    uint8_t velo = min_event->data[2];
+                    uint8_t note = minEvent->data[1];
+                    uint8_t velo = minEvent->data[2];
 
                     fluid_synth_noteon(f_synth, channel, note, velo);
 
@@ -1048,21 +1077,21 @@ public:
                 }
                 else if (MIDI_IS_STATUS_AFTERTOUCH(status))
                 {
-                    uint8_t pressure = min_event->data[1];
+                    uint8_t pressure = minEvent->data[1];
 
                     fluid_synth_channel_pressure(f_synth, channel, pressure);
                 }
                 else if (MIDI_IS_STATUS_PITCH_WHEEL_CONTROL(status))
                 {
-                    uint8_t lsb = min_event->data[1];
-                    uint8_t msb = min_event->data[2];
+                    uint8_t lsb = minEvent->data[1];
+                    uint8_t msb = minEvent->data[2];
 
                     fluid_synth_pitch_bend(f_synth, channel, (msb << 7) | lsb);
                 }
                 else
                     continue;
 
-                midi_event_count += 1;
+                midiEventCount += 1;
             }
         } // End of MIDI Input (System)
 
@@ -1090,7 +1119,7 @@ public:
 #endif
             }
 
-            fluid_synth_process(f_synth, nframes, 0, ains_buffer, 2, aouts_buffer);
+            fluid_synth_process(f_synth, frames, 0, nullptr, 2, outBuffer);
         }
 
         CARLA_PROCESS_CONTINUE_CHECK;
@@ -1103,7 +1132,7 @@ public:
             bool do_balance = (x_bal_left != -1.0 || x_bal_right != 1.0);
 
             double bal_rangeL, bal_rangeR;
-            float old_bal_left[do_balance ? nframes : 0];
+            float oldBufLeft[do_balance ? frames : 0];
 
             for (i=0; i < aout.count; i++)
             {
@@ -1114,33 +1143,33 @@ public:
                 if (do_balance)
                 {
                     if (i%2 == 0)
-                        memcpy(&old_bal_left, aouts_buffer[i], sizeof(float)*nframes);
+                        memcpy(&oldBufLeft, outBuffer[i], sizeof(float)*frames);
 
                     bal_rangeL = (x_bal_left+1.0)/2;
                     bal_rangeR = (x_bal_right+1.0)/2;
 
-                    for (k=0; k<nframes; k++)
+                    for (k=0; k < frames; k++)
                     {
                         if (i%2 == 0)
                         {
                             // left output
-                            aouts_buffer[i][k]  = old_bal_left[k]*(1.0-bal_rangeL);
-                            aouts_buffer[i][k] += aouts_buffer[i+1][k]*(1.0-bal_rangeR);
+                            outBuffer[i][k]  = oldBufLeft[k]*(1.0-bal_rangeL);
+                            outBuffer[i][k] += outBuffer[i+1][k]*(1.0-bal_rangeR);
                         }
                         else
                         {
                             // right
-                            aouts_buffer[i][k]  = aouts_buffer[i][k]*bal_rangeR;
-                            aouts_buffer[i][k] += old_bal_left[k]*bal_rangeL;
+                            outBuffer[i][k]  = outBuffer[i][k]*bal_rangeR;
+                            outBuffer[i][k] += oldBufLeft[k]*bal_rangeL;
                         }
                     }
                 }
 
                 // Output VU
-                for (k=0; k < nframes && i < 2; k++)
+                for (k=0; i < 2 && k < frames; k++)
                 {
-                    if (abs(aouts_buffer[i][k]) > aouts_peak_tmp[i])
-                        aouts_peak_tmp[i] = abs(aouts_buffer[i][k]);
+                    if (abs(outBuffer[i][k]) > aouts_peak_tmp[i])
+                        aouts_peak_tmp[i] = abs(outBuffer[i][k]);
                 }
             }
         }
@@ -1148,7 +1177,7 @@ public:
         {
             // disable any output sound if not active
             for (i=0; i < aout.count; i++)
-                memset(aouts_buffer[i], 0.0f, sizeof(float)*nframes);
+                memset(outBuffer[i], 0.0f, sizeof(float)*frames);
 
             aouts_peak_tmp[0] = 0.0;
             aouts_peak_tmp[1] = 0.0;
@@ -1162,19 +1191,19 @@ public:
 
         if (m_active)
         {
-            void* cout_buffer = param.portCout->getBuffer();
+            void* coutBuffer = param.portCout->getBuffer();
 
-            if (nframesOffset == 0 || ! m_activeBefore)
-                param.portCout->initBuffer(cout_buffer);
+            if (framesOffset == 0 || ! m_activeBefore)
+                param.portCout->initBuffer(coutBuffer);
 
             k = FluidSynthVoiceCount;
-            param_buffers[k] = rint(fluid_synth_get_active_voice_count(f_synth));
+            param_buffers[k] = fluid_synth_get_active_voice_count(f_synth);
             fixParameterValue(param_buffers[k], param.ranges[k]);
 
             if (param.data[k].midiCC > 0)
             {
                 double value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
-                param.portCout->writeEvent(cout_buffer, CarlaEngineEventControlChange, nframesOffset, param.data[k].midiChannel, param.data[k].midiCC, value);
+                param.portCout->writeEvent(coutBuffer, CarlaEngineEventControlChange, framesOffset, param.data[k].midiChannel, param.data[k].midiCC, value);
             }
         } // End of Control Output
 
@@ -1189,7 +1218,9 @@ public:
         m_activeBefore = m_active;
     }
 
-    bool init(const char* filename, const char* label)
+    // -------------------------------------------------------------------
+
+    bool init(const char* const filename, const char* const label)
     {
         // ---------------------------------------------------------------
         // open soundfont
@@ -1251,7 +1282,7 @@ private:
 };
 #endif // WANT_FLUIDSYNTH
 
-short add_plugin_sf2(const char* filename, const char* label)
+short add_plugin_sf2(const char* const filename, const char* const label)
 {
     qDebug("add_plugin_sf2(%s, %s)", filename, label);
 
@@ -1262,7 +1293,7 @@ short add_plugin_sf2(const char* filename, const char* label)
     {
         if (fluid_is_soundfont(filename))
         {
-            FluidSynthPlugin* plugin = new FluidSynthPlugin(id);
+            FluidSynthPlugin* const plugin = new FluidSynthPlugin(id);
 
             if (plugin->init(filename, label))
             {
@@ -1280,7 +1311,10 @@ short add_plugin_sf2(const char* filename, const char* label)
             }
         }
         else
+        {
             set_last_error("Requested file is not a valid SoundFont");
+            id = -1;
+        }
     }
     else
         set_last_error("Maximum number of plugins reached");
@@ -1291,5 +1325,7 @@ short add_plugin_sf2(const char* filename, const char* label)
     return -1;
 #endif
 }
+
+/**@}*/
 
 CARLA_BACKEND_END_NAMESPACE

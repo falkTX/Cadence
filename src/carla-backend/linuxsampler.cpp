@@ -33,6 +33,16 @@ CARLA_BACKEND_START_NAMESPACE
 } /* adjust editor indent */
 #endif
 
+/*!
+ * @defgroup CarlaBackendLinuxSamplerPlugin Carla Backend LinuxSampler Plugin
+ *
+ * The Carla Backend LinuxSampler Plugin.\n
+ * http://www.linuxsampler.org/
+ * @{
+ */
+
+// TODO - setMidiProgram()
+
 #define LINUXSAMPLER_VOLUME_MAX 3.16227766f    // +10 dB
 #define LINUXSAMPLER_VOLUME_MIN 0.0f           // -inf dB
 
@@ -146,9 +156,14 @@ public:
     LinuxSamplerPlugin(unsigned short id, bool isGIG) : CarlaPlugin(id)
     {
         qDebug("LinuxSamplerPlugin::LinuxSamplerPlugin()");
-        m_type = isGIG ? PLUGIN_GIG : PLUGIN_SFZ;
 
+        m_type  = isGIG ? PLUGIN_GIG : PLUGIN_SFZ;
         sampler = new LinuxSampler::Sampler;
+        sampler_channel = nullptr;
+
+        engine = nullptr;
+        engine_channel = nullptr;
+        instrument = nullptr;
 
         audioOutputDevice = new AudioOutputDevicePlugin(this);
         midiInputDevice   = new MidiInputDevicePlugin(sampler);
@@ -175,6 +190,8 @@ public:
         delete midiInputDevice;
         delete sampler;
 
+        instrumentIds.clear();
+
         if (m_label)
             free((void*)m_label);
 
@@ -193,24 +210,24 @@ public:
     // -------------------------------------------------------------------
     // Information (per-plugin data)
 
-    void get_label(char* buf_str)
+    void getLabel(char* const strBuf)
     {
-        strncpy(buf_str, m_label, STR_MAX);
+        strncpy(strBuf, m_label, STR_MAX);
     }
 
-    void get_maker(char* buf_str)
+    void getMaker(char* const strBuf)
     {
-        strncpy(buf_str, m_maker, STR_MAX);
+        strncpy(strBuf, m_maker, STR_MAX);
     }
 
-    void get_copyright(char* buf_str)
+    void getCopyright(char* const strBuf)
     {
-        strncpy(buf_str, m_maker, STR_MAX);
+        getMaker(strBuf);
     }
 
-    void get_real_name(char* buf_str)
+    void getRealName(char* const strBuf)
     {
-        strncpy(buf_str, m_name, STR_MAX);
+        strncpy(strBuf, m_name, STR_MAX);
     }
 
     // -------------------------------------------------------------------
@@ -238,8 +255,7 @@ public:
         aout.ports    = new CarlaEngineAudioPort*[aouts];
         aout.rindexes = new uint32_t[aouts];
 
-        const int port_name_size = CarlaEngine::maxPortNameSize() - 1;
-        char port_name[port_name_size];
+        char portName[STR_MAX];
 
         // ---------------------------------------
         // Audio Outputs
@@ -247,27 +263,27 @@ public:
 #ifndef BUILD_BRIDGE
         if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
-            strcpy(port_name, m_name);
-            strcat(port_name, ":out-left");
+            strcpy(portName, m_name);
+            strcat(portName, ":out-left");
         }
         else
 #endif
-            strcpy(port_name, "out-left");
+            strcpy(portName, "out-left");
 
-        aout.ports[0]    = (CarlaEngineAudioPort*)x_client->addPort(port_name, CarlaEnginePortTypeAudio, false);
+        aout.ports[0]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, false);
         aout.rindexes[0] = 0;
 
 #ifndef BUILD_BRIDGE
         if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
-            strcpy(port_name, m_name);
-            strcat(port_name, ":out-right");
+            strcpy(portName, m_name);
+            strcat(portName, ":out-right");
         }
         else
 #endif
-            strcpy(port_name, "out-right");
+            strcpy(portName, "out-right");
 
-        aout.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(port_name, CarlaEnginePortTypeAudio, false);
+        aout.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, false);
         aout.rindexes[1] = 1;
 
         // ---------------------------------------
@@ -276,14 +292,14 @@ public:
 #ifndef BUILD_BRIDGE
         if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
-            strcpy(port_name, m_name);
-            strcat(port_name, ":midi-in");
+            strcpy(portName, m_name);
+            strcat(portName, ":midi-in");
         }
         else
 #endif
-            strcpy(port_name, "midi-in");
+            strcpy(portName, "midi-in");
 
-        midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(port_name, CarlaEnginePortTypeMIDI, true);
+        midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(portName, CarlaEnginePortTypeMIDI, true);
 
         // ---------------------------------------
 
@@ -296,16 +312,16 @@ public:
         m_hints |= PLUGIN_CAN_VOLUME;
         m_hints |= PLUGIN_CAN_BALANCE;
 
-        reload_programs(true);
+        reloadPrograms(true);
 
         x_client->activate();
 
         qDebug("LinuxSamplerPlugin::reload() - end");
     }
 
-    void reload_programs(bool init)
+    void reloadPrograms(bool init)
     {
-        qDebug("LinuxSamplerPlugin::reload_programs(%s)", bool2str(init));
+        qDebug("LinuxSamplerPlugin::reloadPrograms(%s)", bool2str(init));
 
         // Delete old programs
         if (midiprog.count > 0)
@@ -331,6 +347,7 @@ public:
         {
             LinuxSampler::InstrumentManager::instrument_info_t info = instrument->GetInstrumentInfo(instrumentIds[i]);
 
+            // FIXME - use % 128 stuff
             midiprog.data[i].bank    = 0;
             midiprog.data[i].program = i;
             midiprog.data[i].name    = strdup(info.InstrumentName.c_str());
@@ -346,19 +363,20 @@ public:
         callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
 #endif
 
-        if (init && midiprog.count > 0)
+        if (init)
         {
-            setMidiProgram(0, false, false, false, true);
+            if (midiprog.count > 0)
+                setMidiProgram(0, false, false, false, true);
         }
     }
 
     // -------------------------------------------------------------------
     // Plugin processing
 
-    void process(float**, float** aouts_buffer, uint32_t nframes, uint32_t nframesOffset = 0)
+    void process(float**, float** outBuffer, uint32_t frames, uint32_t framesOffset)
     {
         uint32_t i, k;
-        uint32_t midi_event_count = 0;
+        uint32_t midiEventCount = 0;
 
         double aouts_peak_tmp[2] = { 0.0 };
 
@@ -371,20 +389,18 @@ public:
         {
             carla_midi_lock();
 
-            for (i=0; i < MAX_MIDI_EVENTS && midi_event_count < MAX_MIDI_EVENTS; i++)
+            for (i=0; i < MAX_MIDI_EVENTS && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
-                if (extMidiNotes[i].valid)
-                {
-                    if (extMidiNotes[i].velo)
-                        midiInputPort->DispatchNoteOn(extMidiNotes[i].note, extMidiNotes[i].velo, cin_channel, nframesOffset);
-                    else
-                        midiInputPort->DispatchNoteOff(extMidiNotes[i].note, extMidiNotes[i].velo, cin_channel, nframesOffset);
-
-                    extMidiNotes[i].valid = false;
-                    midi_event_count += 1;
-                }
-                else
+                if (! extMidiNotes[i].valid)
                     break;
+
+                if (extMidiNotes[i].velo)
+                    midiInputPort->DispatchNoteOn(extMidiNotes[i].note, extMidiNotes[i].velo, cin_channel, framesOffset);
+                else
+                    midiInputPort->DispatchNoteOff(extMidiNotes[i].note, extMidiNotes[i].velo, cin_channel, framesOffset);
+
+                extMidiNotes[i].valid = false;
+                midiEventCount += 1;
             }
 
             carla_midi_unlock();
@@ -398,33 +414,33 @@ public:
 
         if (m_active && m_activeBefore)
         {
-            void* min_buffer = midi.portMin->getBuffer();
+            void* minBuffer = midi.portMin->getBuffer();
 
-            const CarlaEngineMidiEvent* min_event;
-            uint32_t time, n_min_events = midi.portMin->getEventCount(min_buffer);
+            const CarlaEngineMidiEvent* minEvent;
+            uint32_t time, nEvents = midi.portMin->getEventCount(minBuffer);
 
-            for (i=0; i < n_min_events && midi_event_count < MAX_MIDI_EVENTS; i++)
+            for (i=0; i < nEvents && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
-                min_event = midi.portMin->getEvent(min_buffer, i);
+                minEvent = midi.portMin->getEvent(minBuffer, i);
 
-                if (! min_event)
+                if (! minEvent)
                     continue;
 
-                time = min_event->time - nframesOffset;
+                time = minEvent->time - framesOffset;
 
-                if (time >= nframes)
+                if (time >= frames)
                     continue;
 
-                uint8_t status  = min_event->data[0];
+                uint8_t status  = minEvent->data[0];
                 uint8_t channel = status & 0x0F;
 
                 // Fix bad note-off
-                if (MIDI_IS_STATUS_NOTE_ON(status) && min_event->data[2] == 0)
+                if (MIDI_IS_STATUS_NOTE_ON(status) && minEvent->data[2] == 0)
                     status -= 0x10;
 
                 if (MIDI_IS_STATUS_NOTE_OFF(status))
                 {
-                    uint8_t note = min_event->data[1];
+                    uint8_t note = minEvent->data[1];
 
                     midiInputPort->DispatchNoteOff(note, 0, channel, time);
 
@@ -433,8 +449,8 @@ public:
                 }
                 else if (MIDI_IS_STATUS_NOTE_ON(status))
                 {
-                    uint8_t note = min_event->data[1];
-                    uint8_t velo = min_event->data[2];
+                    uint8_t note = minEvent->data[1];
+                    uint8_t velo = minEvent->data[2];
 
                     midiInputPort->DispatchNoteOn(note, velo, channel, time);
 
@@ -443,21 +459,21 @@ public:
                 }
                 else if (MIDI_IS_STATUS_AFTERTOUCH(status))
                 {
-                    uint8_t pressure = min_event->data[1];
+                    uint8_t pressure = minEvent->data[1];
 
                     midiInputPort->DispatchControlChange(MIDI_STATUS_AFTERTOUCH, pressure, channel, time);
                 }
                 else if (MIDI_IS_STATUS_PITCH_WHEEL_CONTROL(status))
                 {
-                    uint8_t lsb = min_event->data[1];
-                    uint8_t msb = min_event->data[2];
+                    uint8_t lsb = minEvent->data[1];
+                    uint8_t msb = minEvent->data[2];
 
                     midiInputPort->DispatchPitchbend(((msb << 7) | lsb) - 8192, channel, time);
                 }
                 else
                     continue;
 
-                midi_event_count += 1;
+                midiEventCount += 1;
             }
         } // End of MIDI Input (System)
 
@@ -477,11 +493,13 @@ public:
                 }
             }
 
-            audioOutputDevice->Channel(0)->SetBuffer(aouts_buffer[0]);
-            audioOutputDevice->Channel(1)->SetBuffer(aouts_buffer[1]);
+            audioOutputDevice->Channel(0)->SetBuffer(outBuffer[0]);
+            audioOutputDevice->Channel(1)->SetBuffer(outBuffer[1]);
             // QUESTION: Need to clear it before?
-            audioOutputDevice->Render(nframes);
+            audioOutputDevice->Render(frames);
         }
+
+        CARLA_PROCESS_CONTINUE_CHECK;
 
         // --------------------------------------------------------------------------------------------------------
         // Post-processing (dry/wet, volume and balance)
@@ -492,48 +510,48 @@ public:
             bool do_balance = (x_bal_left != -1.0 || x_bal_right != 1.0);
 
             double bal_rangeL, bal_rangeR;
-            float old_bal_left[do_balance ? nframes : 0];
+            float oldBufLeft[do_balance ? frames : 0];
 
             for (i=0; i < aout.count; i++)
             {
                 // Volume
                 if (do_volume)
                 {
-                    for (k=0; k<nframes; k++)
-                        aouts_buffer[i][k] *= x_vol;
+                    for (k=0; k < frames; k++)
+                        outBuffer[i][k] *= x_vol;
                 }
 
                 // Balance
                 if (do_balance)
                 {
                     if (i%2 == 0)
-                        memcpy(&old_bal_left, aouts_buffer[i], sizeof(float)*nframes);
+                        memcpy(&oldBufLeft, outBuffer[i], sizeof(float)*frames);
 
                     bal_rangeL = (x_bal_left+1.0)/2;
                     bal_rangeR = (x_bal_right+1.0)/2;
 
-                    for (k=0; k<nframes; k++)
+                    for (k=0; k < frames; k++)
                     {
                         if (i%2 == 0)
                         {
                             // left output
-                            aouts_buffer[i][k]  = old_bal_left[k]*(1.0-bal_rangeL);
-                            aouts_buffer[i][k] += aouts_buffer[i+1][k]*(1.0-bal_rangeR);
+                            outBuffer[i][k]  = oldBufLeft[k]*(1.0-bal_rangeL);
+                            outBuffer[i][k] += outBuffer[i+1][k]*(1.0-bal_rangeR);
                         }
                         else
                         {
                             // right
-                            aouts_buffer[i][k]  = aouts_buffer[i][k]*bal_rangeR;
-                            aouts_buffer[i][k] += old_bal_left[k]*bal_rangeL;
+                            outBuffer[i][k]  = outBuffer[i][k]*bal_rangeR;
+                            outBuffer[i][k] += oldBufLeft[k]*bal_rangeL;
                         }
                     }
                 }
 
                 // Output VU
-                for (k=0; k < nframes && i < 2; k++)
+                for (k=0; i < 2 && k < frames; k++)
                 {
-                    if (abs(aouts_buffer[i][k]) > aouts_peak_tmp[i])
-                        aouts_peak_tmp[i] = abs(aouts_buffer[i][k]);
+                    if (abs(outBuffer[i][k]) > aouts_peak_tmp[i])
+                        aouts_peak_tmp[i] = abs(outBuffer[i][k]);
                 }
             }
         }
@@ -541,7 +559,7 @@ public:
         {
             // disable any output sound if not active
             for (i=0; i < aout.count; i++)
-                memset(aouts_buffer[i], 0.0f, sizeof(float)*nframes);
+                memset(outBuffer[i], 0.0f, sizeof(float)*frames);
 
             aouts_peak_tmp[0] = 0.0;
             aouts_peak_tmp[1] = 0.0;
@@ -683,7 +701,7 @@ short add_plugin_linuxsampler(const char* filename, const char* label, bool isGI
 
     return id;
 #else
-    set_last_error("fluidsynth support not available");
+    set_last_error("linuxsampler support not available");
     return -1;
 #endif
 }
@@ -699,5 +717,7 @@ short add_plugin_sfz(const char* filename, const char* label)
     qDebug("add_plugin_sfz(%s, %s)", filename, label);
     return add_plugin_linuxsampler(filename, label, false);
 }
+
+/**@}*/
 
 CARLA_BACKEND_END_NAMESPACE

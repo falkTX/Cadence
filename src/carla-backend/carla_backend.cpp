@@ -27,15 +27,15 @@ CARLA_BACKEND_START_NAMESPACE
 #endif
 
 // plugin specific
-short add_plugin_ladspa(const char* filename, const char* label, const void* extra_stuff);
-short add_plugin_dssi(const char* filename, const char* label, const void* extra_stuff);
-short add_plugin_lv2(const char* filename, const char* label);
-short add_plugin_vst(const char* filename, const char* label);
-short add_plugin_gig(const char* filename, const char* label);
-short add_plugin_sf2(const char* filename, const char* label);
-short add_plugin_sfz(const char* filename, const char* label);
+short add_plugin_ladspa(const char* const filename, const char* const label, const void* const extra_stuff);
+short add_plugin_dssi(const char* const filename, const char* const label, const void* const extra_stuff);
+short add_plugin_lv2(const char* const filename, const char* const label);
+short add_plugin_vst(const char* const filename, const char* const label);
+short add_plugin_gig(const char* const filename, const char* const label);
+short add_plugin_sf2(const char* const filename, const char* const label);
+short add_plugin_sfz(const char* const filename, const char* const label);
 #ifndef BUILD_BRIDGE
-short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename, const char* label);
+short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* const filename, const char* const label);
 #endif
 
 CarlaEngine carla_engine;

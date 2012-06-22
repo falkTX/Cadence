@@ -428,7 +428,7 @@ int CarlaEngine::maxClientNameSize()
 {
 #ifndef BUILD_BRIDGE
     if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
-        return STR_MAX;
+        return STR_MAX/2;
 #endif
     return jack_client_name_size();
 }
