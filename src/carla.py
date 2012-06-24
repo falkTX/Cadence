@@ -2104,7 +2104,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
                 # TODO - display
                 CarlaHost.set_gui_data(self.plugin_id, 0, unwrapinstance(self.gui_dialog))
 
-            elif self.gui_dialog_type in (GUI_EXTERNAL_OSC, GUI_EXTERNAL_LV2):
+            elif self.gui_dialog_type in (GUI_EXTERNAL_LV2, GUI_EXTERNAL_SUIL, GUI_EXTERNAL_OSC):
                 self.gui_dialog = None
 
             else:

@@ -3,7 +3,7 @@
 QT = core gui
 
 CONFIG    = debug link_pkgconfig qt warn_on
-PKGCONFIG = jack liblo fluidsynth linuxsampler
+PKGCONFIG = jack liblo fluidsynth linuxsampler suil-0
 
 TARGET   = carla_backend
 TEMPLATE = app
@@ -44,7 +44,7 @@ INCLUDEPATH = .. \
     ../../carla-includes \
     ../../carla-includes/vst
 
-DEFINES = QTCREATOR_TEST WANT_FLUIDSYNTH WANT_LINUXSAMPLER CARLA_BACKEND_NO_NAMESPACE
+DEFINES = QTCREATOR_TEST HAVE_SUIL WANT_FLUIDSYNTH WANT_LINUXSAMPLER CARLA_BACKEND_NO_NAMESPACE
 DEFINES += CARLA_ENGINE_JACK
 #DEFINES += CARLA_ENGINE_RTAUDIO
 LIBS    = ../../carla-lilv/carla_lilv.a -ldl -lasound -lpulse -lpulse-simple

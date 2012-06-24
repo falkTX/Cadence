@@ -53,7 +53,7 @@ public:
     CarlaPluginThread(CarlaPlugin* plugin, PluginThreadMode mode);
     ~CarlaPluginThread();
 
-    void setOscData(const char* binary, const char* label, const char* data1="");
+    void setOscData(const char* const binary, const char* const label, const char* const data1="");
 
 protected:
     void run();

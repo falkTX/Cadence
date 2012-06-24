@@ -151,7 +151,8 @@ enum GuiType {
     GUI_INTERNAL_HWND = 2,
     GUI_INTERNAL_X11  = 3,
     GUI_EXTERNAL_LV2  = 4,
-    GUI_EXTERNAL_OSC  = 5
+    GUI_EXTERNAL_SUIL = 5,
+    GUI_EXTERNAL_OSC  = 6
 };
 
 /*!

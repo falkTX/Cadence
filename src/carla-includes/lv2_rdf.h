@@ -321,12 +321,14 @@ struct LV2_RDF_Feature {
 // UI Types
 #define LV2_UI_GTK2                      0x1
 #define LV2_UI_QT4                       0x2
-#define LV2_UI_X11                       0x3
-#define LV2_UI_EXTERNAL                  0x4
-#define LV2_UI_OLD_EXTERNAL              0x5
+#define LV2_UI_HWND                      0x3
+#define LV2_UI_X11                       0x4
+#define LV2_UI_EXTERNAL                  0x5
+#define LV2_UI_OLD_EXTERNAL              0x6
 
 #define LV2_IS_UI_GTK2(x)                ((x) == LV2_UI_GTK2)
 #define LV2_IS_UI_QT4(x)                 ((x) == LV2_UI_QT4)
+#define LV2_IS_UI_HWND(x)                ((x) == LV2_UI_HWND)
 #define LV2_IS_UI_X11(x)                 ((x) == LV2_UI_X11)
 #define LV2_IS_UI_EXTERNAL(x)            ((x) == LV2_UI_EXTERNAL)
 #define LV2_IS_UI_OLD_EXTERNAL(x)        ((x) == LV2_UI_OLD_EXTERNAL)
@@ -550,6 +552,7 @@ public:
 
         ui_gtk2             (new_uri(LV2_UI__GtkUI)),
         ui_qt4              (new_uri(LV2_UI__Qt4UI)),
+        ui_hwnd             (new_uri(LV2_UI__HWNDUI)),
         ui_x11              (new_uri(LV2_UI__X11UI)),
         ui_external         (new_uri(LV2_EXTERNAL_UI_URI)),
         ui_external_old     (new_uri(LV2_EXTERNAL_UI_DEPRECATED_URI)),
@@ -692,6 +695,7 @@ public:
     // UI Types
     Lilv::Node ui_gtk2;
     Lilv::Node ui_qt4;
+    Lilv::Node ui_hwnd;
     Lilv::Node ui_x11;
     Lilv::Node ui_external;
     Lilv::Node ui_external_old;
@@ -1369,6 +1373,8 @@ inline const LV2_RDF_Descriptor* lv2_rdf_new(const char* URI)
                         RDF_UI->Type = LV2_UI_GTK2;
                     else if (UI.is_a(Lv2World.ui_qt4))
                         RDF_UI->Type = LV2_UI_QT4;
+                    else if (UI.is_a(Lv2World.ui_hwnd))
+                        RDF_UI->Type = LV2_UI_HWND;
                     else if (UI.is_a(Lv2World.ui_x11))
                         RDF_UI->Type = LV2_UI_X11;
                     else if (UI.is_a(Lv2World.ui_external))
@@ -1864,6 +1870,8 @@ inline const char* lv2_get_ui_uri(int UiType)
         return LV2_UI__GtkUI;
     case LV2_UI_QT4:
         return LV2_UI__Qt4UI;
+    case LV2_UI_HWND:
+        return LV2_UI__HWNDUI;
     case LV2_UI_X11:
         return LV2_UI__X11UI;
     case LV2_UI_EXTERNAL:

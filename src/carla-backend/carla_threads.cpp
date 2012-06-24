@@ -226,7 +226,7 @@ CarlaPluginThread::~CarlaPluginThread()
         delete m_process;
 }
 
-void CarlaPluginThread::setOscData(const char* binary, const char* label, const char* data1)
+void CarlaPluginThread::setOscData(const char* const binary, const char* const label, const char* const data1)
 {
     m_binary = QString(binary);
     m_label  = QString(label);

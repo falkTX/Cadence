@@ -1269,7 +1269,7 @@ int main(int argc, char* argv[])
     if (engine_init("carla_demo"))
     {
         set_callback_function(main_callback);
-        short id = add_plugin_vst("/usr/lib/vst/Pianoteq 4.so", "xaxaxa");
+        short id = add_plugin_lv2("xxx", "http://linuxdsp.co.uk/lv2/peq-2a.lv2");
 
         if (id >= 0)
         {

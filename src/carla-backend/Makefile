@@ -11,6 +11,7 @@ BASE_FLAGS = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -Wa
 
 HAVE_FLUIDSYNTH   = $(shell pkg-config --exists fluidsynth && echo true)
 HAVE_LINUXSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
+HAVE_SUIL         = $(shell pkg-config --exists suil-0 && echo true)
 
 CARLA_C_FLAGS     = $(BASE_FLAGS) $(CFLAGS)
 
@@ -31,6 +32,11 @@ endif
 ifeq ($(HAVE_LINUXSAMPLER),true)
 CARLA_CXX_FLAGS  += $(shell pkg-config --cflags linuxsampler) -DWANT_LINUXSAMPLER
 CARLA_LD_FLAGS   += $(shell pkg-config --libs linuxsampler)
+endif
+
+ifeq ($(HAVE_SUIL),true)
+CARLA_CXX_FLAGS  += $(shell pkg-config --cflags suil-0) -DHAVE_SUIL
+CARLA_LD_FLAGS   += $(shell pkg-config --libs suil-0)
 endif
 
 OBJS = \
