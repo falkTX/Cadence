@@ -381,20 +381,20 @@
        <rect>
         <x>8</x>
         <y>2</y>
-        <width>31</width>
-        <height>31</height>
+        <width>34</width>
+        <height>34</height>
        </rect>
       </property>
       <property name="minimumSize">
        <size>
-        <width>31</width>
-        <height>31</height>
+        <width>34</width>
+        <height>34</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
-        <width>31</width>
-        <height>31</height>
+        <width>34</width>
+        <height>34</height>
        </size>
       </property>
       <property name="contextMenuPolicy">
@@ -415,20 +415,20 @@
        <rect>
         <x>57</x>
         <y>2</y>
-        <width>31</width>
-        <height>31</height>
+        <width>34</width>
+        <height>34</height>
        </rect>
       </property>
       <property name="minimumSize">
        <size>
-        <width>31</width>
-        <height>31</height>
+        <width>34</width>
+        <height>34</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
-        <width>31</width>
-        <height>31</height>
+        <width>34</width>
+        <height>34</height>
        </size>
       </property>
       <property name="contextMenuPolicy">

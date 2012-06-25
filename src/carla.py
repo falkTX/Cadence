@@ -2250,17 +2250,17 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         QFrame#frame_name {
             background-color: rgba(0, 0, 0, 0);
             background-color: qlineargradient(x1:0.0, y1:0.8, x2:1.0, y2:1.0,
-                                  stop: 0.0 rgba(110, 110, 110, 120),
-                                  stop: 0.2 rgba(110, 110, 110, 120),
-                                  stop: 1.0 rgba(%i, %i, %i, 120));
+                                  stop: 0.0 rgba(110, 110, 110, 180),
+                                  stop: 0.2 rgba(110, 110, 110, 180),
+                                  stop: 1.0 rgba(%i, %i, %i, 180));
             /*border: 1px solid rgb(110, 110, 110);*/
             border-radius: 4px;
         }
         QFrame#frame_controls {
             background-color: rgba(0, 0, 0, 0);
             background-image: url(:/bitmaps/carla_knobs1.png);
-            background-color: rgb(110, 110, 110);
-            border: 1px solid rgb(35, 35, 35);
+            background-color: rgb(135, 135, 135);
+            border: 1px solid rgb(135, 135, 135);
             border-radius: 4px;
         }
         QFrame#frame_peaks {

@@ -176,6 +176,20 @@ class PixmapDial(QDial):
             target = QRectF(0.0, 0.0, self.p_size, self.p_size)
             value  = (current / divider)
 
+            ## Regular knobs
+            #else:
+            per = int((self.p_count - 1) * (current / divider))
+
+            if self.m_orientation == self.HORIZONTAL:
+                xpos = self.p_size * per
+                ypos = 0.0
+            else:
+                xpos = 0.0
+                ypos = self.p_size * per
+
+            source = QRectF(xpos, ypos, self.p_size, self.p_size)
+            painter.drawPixmap(target, self.m_pixmap, source)
+
             # Custom knobs (Dry/Wet and Volume)
             if self.m_custom_paint in (self.CUSTOM_PAINT_CARLA_WET, self.CUSTOM_PAINT_CARLA_VOL):
                 # knob color
@@ -187,7 +201,7 @@ class PixmapDial(QDial):
 
                 # draw small circle
                 ballPath = QPainterPath()
-                ballRect = QRectF(7.0, 7.0, 15.0, 15.0)
+                ballRect = QRectF(8.0, 8.0, 15.0, 15.0)
                 ballPath.addEllipse(ballRect)
                 #painter.drawRect(ballRect)
                 ballValue = (0.375 + 0.75*value) % 1.0
@@ -220,7 +234,7 @@ class PixmapDial(QDial):
                     painter.setBrush(colorBlue)
                     painter.setPen(QPen(colorBlue, 3))
 
-                painter.drawArc(3.0, 3.0, 26.0, 26.0, startAngle, spanAngle)
+                painter.drawArc(4.0, 4.0, 26.0, 26.0, startAngle, spanAngle)
 
             # Custom knobs (L and R)
             elif self.m_custom_paint in (self.CUSTOM_PAINT_CARLA_L, self.CUSTOM_PAINT_CARLA_R):
@@ -229,7 +243,7 @@ class PixmapDial(QDial):
 
                 # draw small circle
                 ballPath = QPainterPath()
-                ballRect = QRectF(6.0, 7.0, 11.0, 12.0)
+                ballRect = QRectF(7.0, 8.0, 11.0, 12.0)
                 ballPath.addEllipse(ballRect)
                 #painter.drawRect(ballRect)
                 ballValue = (0.375 + 0.75*value) % 1.0
@@ -241,30 +255,16 @@ class PixmapDial(QDial):
 
                 # draw arc
                 if self.m_custom_paint == self.CUSTOM_PAINT_CARLA_L:
-                    startAngle = 216*16          # / 225 = 9
-                    spanAngle  = -252.0*16*value # / 270 = 18
+                    startAngle = 216*16
+                    spanAngle  = -252.0*16*value
                 elif self.m_custom_paint == self.CUSTOM_PAINT_CARLA_R:
-                    startAngle = 324.0*16 # 315
-                    spanAngle  = 252.0*16*(1.0-value) # 270
+                    startAngle = 324.0*16
+                    spanAngle  = 252.0*16*(1.0-value)
                 else:
                     return
 
                 painter.setPen(QPen(color, 2))
-                painter.drawArc(2.5, 3.5, 22.0, 22.0, startAngle, spanAngle)
-
-            # Regular knobs
-            else:
-                per = int((self.p_count - 1) * (current / divider))
-
-                if self.m_orientation == self.HORIZONTAL:
-                    xpos = self.p_size * per
-                    ypos = 0.0
-                else:
-                    xpos = 0.0
-                    ypos = self.p_size * per
-
-                source = QRectF(xpos, ypos, self.p_size, self.p_size)
-                #painter.drawPixmap(target, self.m_pixmap, source)
+                painter.drawArc(3.5, 4.5, 22.0, 22.0, startAngle, spanAngle)
 
             if self.HOVER_MIN < self.m_hover_step < self.HOVER_MAX:
                 self.m_hover_step += 1 if self.m_hovered else -1
