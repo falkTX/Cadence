@@ -2227,7 +2227,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.setStyleSheet("""
         QFrame#PluginWidget {
             background-image: url(:/bitmaps/textures/metal_9-512px.jpg);
-            background-color: rgb(17, 17, 17);
+            background-color: rgb(35, 35, 35);
             background-repeat: repeat-x;
             background-position: top left;
         }
@@ -2248,13 +2248,18 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             border-radius: 3px;
         }
         QFrame#frame_name {
-            background-color: rgb(%i, %i, %i);
-            border: 1px solid rgb(%i, %i, %i);
+            background-color: rgba(0, 0, 0, 0);
+            background-color: qlineargradient(x1:0.0, y1:0.8, x2:1.0, y2:1.0,
+                                  stop: 0.0 rgba(110, 110, 110, 120),
+                                  stop: 0.2 rgba(110, 110, 110, 120),
+                                  stop: 1.0 rgba(%i, %i, %i, 120));
+            /*border: 1px solid rgb(110, 110, 110);*/
             border-radius: 4px;
         }
         QFrame#frame_controls {
+            background-color: rgba(0, 0, 0, 0);
             background-image: url(:/bitmaps/carla_knobs1.png);
-            background-color: rgb(35, 35, 35);
+            background-color: rgb(110, 110, 110);
             border: 1px solid rgb(35, 35, 35);
             border-radius: 4px;
         }
@@ -2269,8 +2274,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
                border_r, border_g, border_b,
                r, g, b,
                border_r, border_g, border_b,
-               r, g, b,                      # frame_name background-color
-               border_r, border_g, border_b  # frame_name border
+               r, g, b
               ))
 
     def recheck_hints(self, hints):

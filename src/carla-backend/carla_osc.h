@@ -25,7 +25,7 @@ int osc_handle_unregister();
 
 int osc_handle_update(CarlaPlugin* plugin, lo_arg** argv, lo_address source);
 int osc_handle_exiting(CarlaPlugin* plugin);
-//int osc_handle_lv2_atom_transfer(CarlaPlugin* plugin, lo_arg** argv);
+int osc_handle_lv2_atom_transfer(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_lv2_event_transfer(CarlaPlugin* plugin, lo_arg** argv);
 
 int osc_handle_set_active(CarlaPlugin* plugin, lo_arg** argv);
@@ -40,7 +40,7 @@ int osc_handle_note_off(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_bridge_ains_peak(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_bridge_aouts_peak(CarlaPlugin* plugin, lo_arg** argv);
 
-//void osc_send_lv2_atom_transfer(OscData* osc_data, )
+//void osc_send_lv2_atom_transfer(OSC_SEND_ARGS void*);
 void osc_send_lv2_event_transfer(OSC_SEND_ARGS const char* type, const char* key, const char* value);
 
 bool osc_global_registered();

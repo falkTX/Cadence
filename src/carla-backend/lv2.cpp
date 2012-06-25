@@ -683,9 +683,20 @@ public:
 
         if (ext.state)
         {
-            LV2_State_Status status = ext.state->restore(handle, carla_lv2_state_retrieve, this, 0, features);
+            const char* const stype = customdatatype2str(type);
+            LV2_State_Status status;
 
-            const char* stype = customdatatype2str(type);
+            if (CarlaEngine::isOffline())
+            {
+                carla_proc_lock();
+                status = ext.state->restore(handle, carla_lv2_state_retrieve, this, 0, features);
+                carla_proc_unlock();
+            }
+            else
+            {
+                const CarlaPluginScopedDisabler m(this);
+                status = ext.state->restore(handle, carla_lv2_state_retrieve, this, 0, features);
+            }
 
             switch (status)
             {
@@ -872,7 +883,7 @@ public:
         if (ui.handle && ui.descriptor && gui.type != GUI_EXTERNAL_OSC)
         {
             // Update output port values
-            if (ui.handle && ui.descriptor && ui.descriptor->port_event)
+            if (ui.descriptor->port_event)
             {
                 float value;
 
@@ -1690,14 +1701,16 @@ public:
                             postponeEvent(PluginPostEventParameterChange, PARAMETER_DRYWET, value);
                             continue;
                         }
-                        else if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cinEvent->controller) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
+
+                        if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cinEvent->controller) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
                         {
                             value = cinEvent->value*127/100;
                             setVolume(value, false, false);
                             postponeEvent(PluginPostEventParameterChange, PARAMETER_VOLUME, value);
                             continue;
                         }
-                        else if (MIDI_IS_CONTROL_BALANCE(cinEvent->controller) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
+
+                        if (MIDI_IS_CONTROL_BALANCE(cinEvent->controller) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
                         {
                             double left, right;
                             value = cinEvent->value/0.5 - 1.0;
@@ -2425,9 +2438,7 @@ public:
             }
         }
 
-#ifndef BUILD_BRIDGE
         callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
-#endif
     }
 
     LV2_State_Status handleStateStore(uint32_t key, const void* const value, size_t size, uint32_t type, uint32_t flags)
@@ -2540,13 +2551,15 @@ public:
             *type = CARLA_URI_MAP_ID_ATOM_STRING;
             return stringData;
         }
-        else if (dtype == CUSTOM_DATA_PATH)
+
+        if (dtype == CUSTOM_DATA_PATH)
         {
             *size = strlen(stringData);
             *type = CARLA_URI_MAP_ID_ATOM_PATH;
             return stringData;
         }
-        else if (dtype == CUSTOM_DATA_CHUNK || dtype == CUSTOM_DATA_BINARY)
+
+        if (dtype == CUSTOM_DATA_CHUNK || dtype == CUSTOM_DATA_BINARY)
         {
             static QByteArray chunk;
             chunk = QByteArray::fromBase64(stringData);
@@ -3641,8 +3654,6 @@ private:
     PluginEventData evin;
     PluginEventData evout;
     Lv2ParameterData* lv2param;
-
-    //LV2_Atom_Forge atom_forge;
     std::vector<const char*> customURIDs;
 };
 

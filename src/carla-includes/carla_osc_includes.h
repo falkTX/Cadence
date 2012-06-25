@@ -62,7 +62,7 @@ int osc_handle_hide();
 int osc_handle_quit();
 #endif
 
-void osc_send_configure(OSC_SEND_ARGS const char* key, const char* value);
+void osc_send_configure(OSC_SEND_ARGS const char* const key, const char* const value);
 void osc_send_control(OSC_SEND_ARGS int control, double value);
 void osc_send_program(OSC_SEND_ARGS int program);
 void osc_send_midi_program(OSC_SEND_ARGS int bank, int program, bool);

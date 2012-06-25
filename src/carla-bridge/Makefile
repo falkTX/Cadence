@@ -12,10 +12,10 @@ WINECXX ?= wineg++
 BUILD_CFLAGS = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -std=c99 -Wall -I. -I../carla-backend -I../carla-includes $(CFLAGS)
 
 BUILD_FLAGS  = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -std=c++0x -Wall $(CXXFLAGS)
-BUILD_FLAGS  = -O0 -g -std=c++0x -Wall $(CXXFLAGS)
+# BUILD_FLAGS  = -O0 -g -std=c++0x -Wall $(CXXFLAGS)
 BUILD_FLAGS += -I. -I../carla-backend -I../carla-includes $(shell pkg-config --cflags liblo QtCore)
-# BUILD_FLAGS += -DBUILD_BRIDGE -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT
-BUILD_FLAGS += -DBUILD_BRIDGE -DDEBUG
+BUILD_FLAGS += -DBUILD_BRIDGE -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT
+# BUILD_FLAGS += -DBUILD_BRIDGE -DDEBUG
 BUILD_FLAGS += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
 
 32BIT_FLAGS  = -m32

@@ -132,9 +132,8 @@ void toolkit_plugin_idle()
 
     CARLA_PLUGIN->idleGui();
 
-    static const ParameterData* paramData;
     static PluginPostEvent postEvents[MAX_POST_EVENTS];
-    CARLA_PLUGIN->post_events_copy(postEvents);
+    CARLA_PLUGIN->postEventsCopy(postEvents);
 
     for (uint32_t i=0; i < MAX_POST_EVENTS; i++)
     {
@@ -163,21 +162,23 @@ void toolkit_plugin_idle()
         }
     }
 
-    for (uint32_t i=0; i < CARLA_PLUGIN->paramCount(); i++)
+    const ParameterData* paramData;
+
+    for (uint32_t i=0; i < CARLA_PLUGIN->parameterCount(); i++)
     {
-        paramData = CARLA_PLUGIN->paramData(i);
+        paramData = CARLA_PLUGIN->parameterData(i);
 
         if (paramData->type == PARAMETER_OUTPUT && (paramData->hints & PARAMETER_IS_AUTOMABLE) > 0)
             osc_send_control(paramData->rindex, CARLA_PLUGIN->getParameterValue(i));
     }
 
-    if (CARLA_PLUGIN->ainCount() > 0)
+    if (CARLA_PLUGIN->audioInCount() > 0)
     {
         osc_send_bridge_ains_peak(1, ains_peak[0]);
         osc_send_bridge_ains_peak(2, ains_peak[1]);
     }
 
-    if (CARLA_PLUGIN->aoutCount() > 0)
+    if (CARLA_PLUGIN->audioOutCount() > 0)
     {
         osc_send_bridge_aouts_peak(1, aouts_peak[0]);
         osc_send_bridge_aouts_peak(2, aouts_peak[1]);
@@ -269,7 +270,7 @@ public:
 
     void set_program(uint32_t index)
     {
-        if (CARLA_PLUGIN && index < CARLA_PLUGIN->progCount())
+        if (CARLA_PLUGIN && index < CARLA_PLUGIN->programCount())
             CARLA_PLUGIN->setProgram(index, true, true, false, true);
 
         callback_action(CALLBACK_RELOAD_PARAMETERS, 0, 0, 0, 0.0);
@@ -286,13 +287,13 @@ public:
     void note_on(uint8_t note, uint8_t velocity)
     {
         if (CARLA_PLUGIN)
-            CARLA_PLUGIN->send_midi_note(note, velocity, true, true, false);
+            CARLA_PLUGIN->sendMidiSingleNote(note, velocity, true, true, false);
     }
 
     void note_off(uint8_t note)
     {
         if (CARLA_PLUGIN)
-            CARLA_PLUGIN->send_midi_note(note, 0, true, true, false);
+            CARLA_PLUGIN->sendMidiSingleNote(note, 0, true, true, false);
     }
 
     // plugin
@@ -302,7 +303,7 @@ public:
 
         CARLA_PLUGIN->prepareForSave();
 
-        for (uint32_t i=0; i < CARLA_PLUGIN->customCount(); i++)
+        for (uint32_t i=0; i < CARLA_PLUGIN->customDataCount(); i++)
         {
             const CustomData* const cdata = CARLA_PLUGIN->customData(i);
             osc_send_bridge_custom_data(customdatatype2str(cdata->type), cdata->key, cdata->value);
@@ -368,7 +369,7 @@ void plugin_bridge_callback(CallbackType action, unsigned short, int value1, int
     case CALLBACK_RELOAD_PARAMETERS:
         if (CARLA_PLUGIN)
         {
-            for (uint32_t i=0; i < CARLA_PLUGIN->paramCount(); i++)
+            for (uint32_t i=0; i < CARLA_PLUGIN->parameterCount(); i++)
             {
                 osc_send_control(i, CARLA_PLUGIN->getParameterValue(i));
             }

@@ -69,6 +69,12 @@ typedef QDialog* GuiDataHandle;
 const unsigned short MAX_MIDI_EVENTS = 512;
 const unsigned short MAX_POST_EVENTS = 152;
 
+const char* const CARLA_BRIDGE_MSG_HIDE_GUI   = "CarlaBridgeHideGUI";   //!< Plugin -> Host call, tells host GUI is now hidden
+const char* const CARLA_BRIDGE_MSG_SAVED      = "CarlaBridgeSaved";     //!< Plugin -> Host call, tells host state is saved
+const char* const CARLA_BRIDGE_MSG_SAVE_NOW   = "CarlaBridgeSaveNow";   //!< Host -> Plugin call, tells plugin to save state now
+const char* const CARLA_BRIDGE_MSG_SET_CHUNK  = "CarlaBridgeSetChunk";  //!< Host -> Plugin call, tells plugin to set chunk as \a value
+const char* const CARLA_BRIDGE_MSG_SET_CUSTOM = "CarlaBridgeSetCustom"; //!< Host -> Plugin call, tells plugin to set a custom data set using \a value ("type:key:value")
+
 #ifndef BUILD_BRIDGE
 enum PluginBridgeInfoType {
     PluginBridgeAudioCount,
@@ -990,6 +996,8 @@ public:
     virtual void setCustomData(CustomDataType type, const char* const key, const char* const value, bool sendGui)
     {
         qDebug("setCustomData(%i, %s, %s, %s)", type, key, value, bool2str(sendGui));
+        assert(key);
+        assert(value);
 
         bool saveData = true;
 
@@ -1327,7 +1335,7 @@ public:
                 getParameterName(i, bufName);
                 getParameterUnit(i, bufUnit);
                 osc_send_bridge_param_info(i, bufName, bufUnit);
-                osc_send_bridge_param_data(param.data[i].type, i, param.data[i].rindex, param.data[i].hints, param.data[i].midiChannel, param.data[i].midiCC);
+                osc_send_bridge_param_data(i, param.data[i].type, param.data[i].rindex, param.data[i].hints, param.data[i].midiChannel, param.data[i].midiCC);
                 osc_send_bridge_param_ranges(i, param.ranges[i].def, param.ranges[i].min, param.ranges[i].max, param.ranges[i].step, param.ranges[i].stepSmall, param.ranges[i].stepLarge);
 
                 setParameterValue(i, param.ranges[i].def, false, false, true);
@@ -1426,6 +1434,8 @@ public:
 
         free((void*)host);
         free((void*)port);
+
+        osc_send_sample_rate(%osc.data, get_sample_rate());
 
         for (size_t i=0; i < custom.size(); i++)
         {

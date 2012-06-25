@@ -114,7 +114,7 @@ void osc_error_handler(int num, const char* msg, const char* path)
 
 int osc_message_handler(const char* path, const char* types, lo_arg** argv, int argc, void* data, void* user_data)
 {
-#if DEBUG
+#ifdef DEBUG
     qDebug("osc_message_handler(%s, %s, %p, %i, %p, %p)", path, types, argv, argc, data, user_data);
 #endif
 
@@ -125,18 +125,17 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
         lo_address source  = lo_message_get_source(message);
         return osc_handle_register(argv, source);
     }
-    else if (strcmp(path, "/unregister") == 0)
+
+    if (strcmp(path, "/unregister") == 0)
     {
         return osc_handle_unregister();
     }
-    else
+
+    // Check if message is for this client
+    if (strlen(path) <= client_name_len || strncmp(path+1, client_name, client_name_len) != 0)
     {
-        // Check if message is for this client
-        if (strlen(path) <= client_name_len || strncmp(path+1, client_name, client_name_len) != 0)
-        {
-            qWarning("osc_message_handler() - message not for this client -> '%s' != '/%s/'", path, client_name);
-            return 1;
-        }
+        qWarning("osc_message_handler() - message not for this client -> '%s' != '/%s/'", path, client_name);
+        return 1;
     }
 
     // Get id from message
@@ -186,8 +185,8 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
         return osc_handle_exiting(plugin);
 
     // Plugin-specific methods
-    //else if (strcmp(method, "/lv2_atom_transfer") == 0)
-    //    return osc_handle_lv2_atom_transfer(plugin, argv);
+    if (strcmp(method, "/lv2_atom_transfer") == 0)
+        return osc_handle_lv2_atom_transfer(plugin, argv);
     if (strcmp(method, "/lv2_event_transfer") == 0)
         return osc_handle_lv2_event_transfer(plugin, argv);
 
@@ -271,10 +270,16 @@ int osc_handle_configure(CarlaPlugin* plugin, lo_arg** argv)
 
     if (plugin->hints() & PLUGIN_IS_BRIDGE)
     {
-        if (strcmp(key, "CarlaBridgeHideGUI") == 0)
+        if (strcmp(key, CARLA_BRIDGE_MSG_HIDE_GUI) == 0)
+        {
             callback_action(CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
-        else if (strcmp(key, "CarlaBridgeSaveNowDone") == 0)
+            return 0;
+        }
+
+        if (strcmp(key, CARLA_BRIDGE_MSG_SAVED) == 0)
+        {
             return plugin->setOscBridgeInfo(PluginBridgeSaved, nullptr);
+        }
     }
 
     plugin->setCustomData(CUSTOM_DATA_STRING, key, value, false);

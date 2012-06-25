@@ -110,7 +110,7 @@ public:
         return info.category;
     }
 
-    long unique_id()
+    long uniqueId()
     {
         return info.uniqueId;
     }
@@ -118,22 +118,22 @@ public:
     // -------------------------------------------------------------------
     // Information (count)
 
-    uint32_t ain_count()
+    uint32_t audioInCount()
     {
         return info.ains;
     }
 
-    uint32_t aout_count()
+    uint32_t audioOutCount()
     {
         return info.aouts;
     }
 
-    uint32_t min_count()
+    uint32_t midiInCount()
     {
         return info.mins;
     }
 
-    uint32_t mout_count()
+    uint32_t midiOutCount()
     {
         return info.mouts;
     }
@@ -141,57 +141,63 @@ public:
     // -------------------------------------------------------------------
     // Information (current data)
 
-    int32_t chunk_data(void** data_ptr)
+    int32_t chunkData(void** const dataPtr)
     {
+        assert(dataPtr);
+
         if (info.chunk)
         {
             static QByteArray chunk;
             chunk = QByteArray::fromBase64(info.chunk);
-            *data_ptr = chunk.data();
+            *dataPtr = chunk.data();
             return chunk.size();
         }
+
         return 0;
     }
 
     // -------------------------------------------------------------------
     // Information (per-plugin data)
 
-    double get_parameter_value(uint32_t param_id)
+    double getParameterValue(uint32_t parameterId)
     {
-        return params[param_id].value;
+        assert(parameterId < param.count);
+        return params[parameterId].value;
     }
 
-    void get_label(char* buf_str)
+    void getLabel(char* const strBuf)
     {
-        strncpy(buf_str, info.label, STR_MAX);
+        strncpy(strBuf, info.label, STR_MAX);
     }
 
-    void get_maker(char* buf_str)
+    void getMaker(char* const strBuf)
     {
-        strncpy(buf_str, info.maker, STR_MAX);
+        strncpy(strBuf, info.maker, STR_MAX);
     }
 
-    void get_copyright(char* buf_str)
+    void getCopyright(char* const strBuf)
     {
-        strncpy(buf_str, info.copyright, STR_MAX);
+        strncpy(strBuf, info.copyright, STR_MAX);
     }
 
-    void get_real_name(char* buf_str)
+    void getRealName(char* const strBuf)
     {
-        strncpy(buf_str, info.name, STR_MAX);
+        strncpy(strBuf, info.name, STR_MAX);
     }
 
-    void get_parameter_name(uint32_t param_id, char* buf_str)
+    void getParameterName(uint32_t parameterId, char* const strBuf)
     {
-        strncpy(buf_str, params[param_id].name.toUtf8().constData(), STR_MAX);
+        assert(parameterId < param.count);
+        strncpy(strBuf, params[parameterId].name.toUtf8().constData(), STR_MAX);
     }
 
-    void get_parameter_unit(uint32_t param_id, char* buf_str)
+    void getParameterUnit(uint32_t parameterId, char* const strBuf)
     {
-        strncpy(buf_str, params[param_id].unit.toUtf8().constData(), STR_MAX);
+        assert(parameterId < param.count);
+        strncpy(strBuf, params[parameterId].unit.toUtf8().constData(), STR_MAX);
     }
 
-    void get_gui_info(GuiInfo* info)
+    void getGuiInfo(GuiInfo* const info)
     {
         if (m_hints & PLUGIN_HAS_GUI)
             info->type = GUI_EXTERNAL_OSC;
@@ -203,11 +209,11 @@ public:
     // -------------------------------------------------------------------
     // Set data (internal stuff)
 
-    int set_osc_bridge_info(PluginBridgeInfoType intoType, lo_arg** argv)
+    int setOscBridgeInfo(PluginBridgeInfoType type, lo_arg** const argv)
     {
-        qDebug("set_osc_bridge_info(%i, %p)", intoType, argv);
+        qDebug("setOscBridgeInfo(%i, %p)", type, argv);
 
-        switch (intoType)
+        switch (type)
         {
         case PluginBridgeAudioCount:
         {
@@ -218,8 +224,8 @@ public:
             info.ains  = aIns;
             info.aouts = aOuts;
 
-            Q_UNUSED(aTotal);
             break;
+            Q_UNUSED(aTotal);
         }
 
         case PluginBridgeMidiCount:
@@ -231,8 +237,8 @@ public:
             info.mins  = mIns;
             info.mouts = mOuts;
 
-            Q_UNUSED(mTotal);
             break;
+            Q_UNUSED(mTotal);
         }
 
         case PluginBridgeParameterCount:
@@ -250,16 +256,20 @@ public:
             }
 
             // create new if needed
-            param.count = pTotal;
+            param.count = (pTotal < (int)carla_options.max_parameters) ? pTotal : 0;
 
-            if (param.count > 0 && param.count < carla_options.max_parameters)
+            if (param.count > 0)
             {
                 param.data   = new ParameterData[param.count];
                 param.ranges = new ParameterRanges[param.count];
                 params       = new BridgeParamInfo[param.count];
             }
             else
-                param.count = 0;
+            {
+                param.data = nullptr;
+                param.ranges = nullptr;
+                params = nullptr;
+            }
 
             // initialize
             for (uint32_t i=0; i < param.count; i++)
@@ -283,9 +293,9 @@ public:
                 params[i].unit = QString();
             }
 
+            break;
             Q_UNUSED(pIns);
             Q_UNUSED(pOuts);
-            break;
         }
 
         case PluginBridgeProgramCount:
@@ -358,11 +368,11 @@ public:
             const char* label = (const char*)&argv[3]->s;
             const char* maker = (const char*)&argv[4]->s;
             const char* copyright = (const char*)&argv[5]->s;
-            long unique_id = argv[6]->i;
+            long uniqueId = argv[6]->i;
 
             m_hints = hints | PLUGIN_IS_BRIDGE;
             info.category = (PluginCategory)category;
-            info.uniqueId = unique_id;
+            info.uniqueId = uniqueId;
 
             info.name  = strdup(name);
             info.label = strdup(label);
@@ -370,6 +380,8 @@ public:
             info.copyright = strdup(copyright);
 
             m_name = get_unique_name(name);
+
+            break;
         }
 
         case PluginBridgeParameterInfo:
@@ -383,36 +395,53 @@ public:
                 params[index].name = QString(name);
                 params[index].unit = QString(unit);
             }
+
             break;
         }
 
         case PluginBridgeParameterDataInfo:
         {
-            int index = argv[1]->i;
+            int index   = argv[0]->i;
+            int type    = argv[1]->i;
+            int rindex  = argv[2]->i;
+            int hints   = argv[3]->i;
+            int channel = argv[4]->i;
+            int cc      = argv[5]->i;
+
+
             if (index >= 0 && index < (int32_t)param.count)
             {
-                param.data[index].type    = static_cast<ParameterType>(argv[0]->i);
+                param.data[index].type    = (ParameterType)type;
                 param.data[index].index   = index;
-                param.data[index].rindex  = argv[2]->i;
-                param.data[index].hints   = argv[3]->i;
-                param.data[index].midiChannel = argv[4]->i;
-                param.data[index].midiCC = argv[5]->i;
+                param.data[index].rindex  = rindex;
+                param.data[index].hints   = hints;
+                param.data[index].midiChannel = channel;
+                param.data[index].midiCC  = cc;
             }
+
             break;
         }
 
         case PluginBridgeParameterRangesInfo:
         {
             int index = argv[0]->i;
+            float def = argv[1]->f;
+            float min = argv[2]->f;
+            float max = argv[3]->f;
+            float step = argv[4]->f;
+            float stepSmall = argv[5]->f;
+            float stepLarge = argv[6]->f;
+
             if (index >= 0 && index < (int32_t)param.count)
             {
-                param.ranges[index].def  = argv[1]->f;
-                param.ranges[index].min  = argv[2]->f;
-                param.ranges[index].max  = argv[3]->f;
-                param.ranges[index].step = argv[4]->f;
-                param.ranges[index].stepSmall = argv[5]->f;
-                param.ranges[index].stepLarge = argv[6]->f;
+                param.ranges[index].def  = def;
+                param.ranges[index].min  = min;
+                param.ranges[index].max  = max;
+                param.ranges[index].step = step;
+                param.ranges[index].stepSmall = stepSmall;
+                param.ranges[index].stepLarge = stepLarge;
             }
+
             break;
         }
 
@@ -421,7 +450,9 @@ public:
             int index = argv[0]->i;
             const char* name = (const char*)&argv[1]->s;
 
-            prog.names[index] = strdup(name);
+            if (index >= 0 && index < (int32_t)prog.count)
+                prog.names[index] = strdup(name);
+
             break;
         }
 
@@ -432,9 +463,13 @@ public:
             int program = argv[2]->i;
             const char* name = (const char*)&argv[3]->s;
 
-            midiprog.data[index].bank    = bank;
-            midiprog.data[index].program = program;
-            midiprog.data[index].name    = strdup(name);
+            if (index >= 0 && index < (int32_t)midiprog.count)
+            {
+                midiprog.data[index].bank    = bank;
+                midiprog.data[index].program = program;
+                midiprog.data[index].name    = strdup(name);
+            }
+
             break;
         }
 
@@ -445,15 +480,19 @@ public:
             const char* value = (const char*)&argv[2]->s;
 
             setCustomData(customdatastr2type(stype), key, value, false);
+
             break;
         }
 
         case PluginBridgeChunkData:
         {
-            const char* string_data = (const char*)&argv[0]->s;
+            const char* stringData = (const char*)&argv[0]->s;
+
             if (info.chunk)
                 free((void*)info.chunk);
-            info.chunk = strdup(string_data);
+
+            info.chunk = strdup(stringData);
+
             break;
         }
 
@@ -473,27 +512,68 @@ public:
     // -------------------------------------------------------------------
     // Set data (plugin-specific stuff)
 
-    void set_parameter_value(uint32_t param_id, double value, bool gui_send, bool osc_send, bool callback_send)
+    void setParameterValue(uint32_t parameterId, double value, bool sendGui, bool sendOsc, bool sendCallback)
     {
-        params[param_id].value = fixParameterValue(value, param.ranges[param_id]);
+        assert(parameterId < param.count);
+        params[parameterId].value = fixParameterValue(value, param.ranges[parameterId]);
 
-        if (gui_send)
-            osc_send_control(&osc.data, param.data[param_id].rindex, value);
+        if (sendGui)
+            osc_send_control(&osc.data, param.data[parameterId].rindex, value);
 
-        CarlaPlugin::setParameterValue(param_id, value, gui_send, osc_send, callback_send);
+        CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
     }
 
-    void set_chunk_data(const char* string_data)
+    void setCustomData(CustomDataType type, const char* const key, const char* const value, bool sendGui)
     {
-        osc_send_configure(&osc.data, "CarlaBridgeChunk", string_data);
+        assert(key);
+        assert(value);
+
+        if (sendGui)
+        {
+            QString cData;
+            cData += customdatatype2str(type);
+            cData += "·";
+            cData += key;
+            cData += "·";
+            cData += value;
+            osc_send_configure(&osc.data, CARLA_BRIDGE_MSG_SET_CUSTOM, cData.toUtf8().constData());
+        }
+
+        CarlaPlugin::setCustomData(type, key, value, sendGui);
+    }
+
+    void setChunkData(const char* const stringData)
+    {
+        assert(stringData);
+        osc_send_configure(&osc.data, CARLA_BRIDGE_MSG_SET_CHUNK, stringData);
+    }
+
+    void setProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
+    {
+        assert(index < (int32_t)prog.count);
+
+        if (sendGui)
+            osc_send_program(&osc.data, index);
+
+        CarlaPlugin::setProgram(index, sendGui, sendOsc, sendCallback, block);
+    }
+
+    void setMidiProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
+    {
+        assert(index < (int32_t)midiprog.count);
+
+        if (sendGui)
+            osc_send_midi_program(&osc.data, midiprog.data[index].bank, midiprog.data[index].program, (m_type == PLUGIN_DSSI));
+
+        CarlaPlugin::setMidiProgram(index, sendGui, sendOsc, sendCallback, block);
     }
 
     // -------------------------------------------------------------------
     // Set gui stuff
 
-    void show_gui(bool yesno)
+    void showGui(bool yesNo)
     {
-        if (yesno)
+        if (yesNo)
             osc_send_show(&osc.data);
         else
             osc_send_hide(&osc.data);
@@ -506,10 +586,10 @@ public:
     {
     }
 
-    void prepare_for_save()
+    void prepareForSave()
     {
         saved = false;
-        osc_send_configure(&osc.data, "CarlaBridgeSaveNow", "");
+        osc_send_configure(&osc.data, CARLA_BRIDGE_MSG_SAVE_NOW, "");
 
         for (int i=0; i < 100; i++)
         {
@@ -519,14 +599,15 @@ public:
         }
 
         if (! saved)
-            qWarning("BridgePlugin::prepare_for_save() - Timeout while requesting save state");
+            qWarning("BridgePlugin::prepareForSave() - Timeout while requesting save state");
         else
-            qWarning("BridgePlugin::prepare_for_save() - success!");
+            qWarning("BridgePlugin::prepareForSave() - success!");
     }
 
     // -------------------------------------------------------------------
+    // Cleanup
 
-    void delete_buffers()
+    void deleteBuffers()
     {
         qDebug("BridgePlugin::delete_buffers() - start");
 
@@ -538,36 +619,41 @@ public:
         qDebug("BridgePlugin::delete_buffers() - end");
     }
 
+    // -------------------------------------------------------------------
+
     bool init(const char* filename, const char* label)
     {
-        const char* bridge_binary = binarytype2str(m_binary);
+        const char* bridgeBinary = binarytype2str(m_binary);
 
-        if (bridge_binary)
+        if (! bridgeBinary)
         {
-            m_filename = strdup(filename);
-
-            // register plugin now so we can receive OSC (and wait for it)
-            CarlaPlugins[m_id] = this;
-
-            m_thread->setOscData(bridge_binary, label, plugintype2str(m_type));
-            m_thread->start();
-
-            for (int i=0; i < 100; i++)
-            {
-                if (initiated)
-                    break;
-                carla_msleep(100);
-            }
-
-            if (! initiated)
-                set_last_error("Timeout while waiting for a response from plugin-bridge");
-
-            return initiated;
-        }
-        else
             set_last_error("Bridge not possible, bridge-binary not found");
+            return false;
+        }
 
-        return false;
+        m_filename = strdup(filename);
+
+        // register plugin now so we can receive OSC (and wait for it)
+        CarlaPlugins[m_id] = this;
+
+        m_thread->setOscData(bridgeBinary, label, plugintype2str(m_type));
+        m_thread->start();
+
+        for (int i=0; i < 100; i++)
+        {
+            if (initiated)
+                break;
+            carla_msleep(100);
+        }
+
+        if (! initiated)
+        {
+            m_thread->quit();
+            set_last_error("Timeout while waiting for a response from plugin-bridge");
+            return false;
+        }
+
+        return true;
     }
 
 private:

@@ -179,15 +179,28 @@ class PixmapDial(QDial):
             # Custom knobs (Dry/Wet and Volume)
             if self.m_custom_paint in (self.CUSTOM_PAINT_CARLA_WET, self.CUSTOM_PAINT_CARLA_VOL):
                 # knob color
-                colorGreen = QColor(0x5D + self.m_hover_step*6, 0xE7 + self.m_hover_step*1, 0x3D + self.m_hover_step*5)
-                colorBlue  = QColor(0x52 + self.m_hover_step*8, 0xEE + self.m_hover_step*1, 0xF8 + self.m_hover_step/2)
+                colorGreen = QColor(0x5D, 0xE7, 0x3D, 191 + self.m_hover_step*7)
+                colorBlue  = QColor(0x3E, 0xB8, 0xBE, 191 + self.m_hover_step*7)
+
+                #colorGreen = QColor(0x5D + self.m_hover_step*6, 0xE7 + self.m_hover_step*1, 0x3D + self.m_hover_step*5)
+                #colorBlue  = QColor(0x52 + self.m_hover_step*8, 0xEE + self.m_hover_step*1, 0xF8 + self.m_hover_step/2)
+
+                # draw small circle
+                ballPath = QPainterPath()
+                ballRect = QRectF(7.0, 7.0, 15.0, 15.0)
+                ballPath.addEllipse(ballRect)
+                #painter.drawRect(ballRect)
+                ballValue = (0.375 + 0.75*value) % 1.0
+                ballPoint = ballPath.pointAtPercent(ballValue)
 
                 # draw arc
                 startAngle = 225*16
                 spanAngle  = -270.0*16*value
 
                 if self.m_custom_paint == self.CUSTOM_PAINT_CARLA_WET:
-                    #colorWet = colorGreen if value < 0.5 else colorBlue
+                    painter.setBrush(colorBlue)
+                    painter.setPen(QPen(colorBlue, 0))
+                    painter.drawEllipse(QRectF(ballPoint.x(), ballPoint.y(), 2.2, 2.2))
 
                     gradient = QConicalGradient(15.5, 15.5, -45)
                     gradient.setColorAt(0.0,   colorBlue)
@@ -198,8 +211,12 @@ class PixmapDial(QDial):
                     gradient.setColorAt(1.0,   colorGreen)
                     painter.setBrush(gradient)
                     painter.setPen(QPen(gradient, 3))
-                    #painter.drawRect(QRectF(0, 0, 31, 31))
+
                 else:
+                    painter.setBrush(colorBlue)
+                    painter.setPen(QPen(colorBlue, 0))
+                    painter.drawEllipse(QRectF(ballPoint.x(), ballPoint.y(), 2.2, 2.2))
+
                     painter.setBrush(colorBlue)
                     painter.setPen(QPen(colorBlue, 3))
 
@@ -212,7 +229,7 @@ class PixmapDial(QDial):
 
                 # draw small circle
                 ballPath = QPainterPath()
-                ballRect = QRectF(6.0, 6.0, 11.0, 12.0)
+                ballRect = QRectF(6.0, 7.0, 11.0, 12.0)
                 ballPath.addEllipse(ballRect)
                 #painter.drawRect(ballRect)
                 ballValue = (0.375 + 0.75*value) % 1.0

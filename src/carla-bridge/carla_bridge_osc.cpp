@@ -264,7 +264,7 @@ int osc_handle_quit()
 
 // -------------------------------------------------------------------------
 
-void osc_send_configure(const char* key, const char* value)
+void osc_send_configure(const char* const key, const char* const value)
 {
     if (global_osc_data.target)
     {

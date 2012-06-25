@@ -203,8 +203,9 @@ const char* get_unique_name(const char* name)
 
                 continue;
             }
+
             // 2 digits, ex: " (11)"
-            else if (qname.at(len-5) == QChar(' ') && qname.at(len-4) == QChar('(') && qname.at(len-3).isDigit() && qname.at(len-2).isDigit() && qname.at(len-1) == QChar(')'))
+            if (qname.at(len-5) == QChar(' ') && qname.at(len-4) == QChar('(') && qname.at(len-3).isDigit() && qname.at(len-2).isDigit() && qname.at(len-1) == QChar(')'))
             {
                 QChar n2 = qname.at(len-2);
                 QChar n3 = qname.at(len-3);
