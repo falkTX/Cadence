@@ -185,7 +185,8 @@ public:
 #ifdef BUILD_BRIDGE_PLUGIN
     // plugin
     virtual void save_now() = 0;
-    virtual void set_chunk_data(const char* stringData) = 0;
+    virtual void set_custom_data(const char* const type, const char* const key, const char* const value) = 0;
+    virtual void set_chunk_data(const char* const stringData) = 0;
 #else
     // gui
     virtual void* get_widget() const = 0;

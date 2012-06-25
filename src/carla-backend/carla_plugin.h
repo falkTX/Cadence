@@ -1435,7 +1435,8 @@ public:
         free((void*)host);
         free((void*)port);
 
-        osc_send_sample_rate(%osc.data, get_sample_rate());
+        // TODO
+        //osc_send_sample_rate(%osc.data, get_sample_rate());
 
         for (size_t i=0; i < custom.size(); i++)
         {

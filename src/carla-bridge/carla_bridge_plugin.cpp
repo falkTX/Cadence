@@ -57,7 +57,7 @@ LRESULT WINAPI MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_CLOSE:
         if (client)
             client->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 0, 0, 0.0);
-        osc_send_configure("CarlaBridgeHideGUI", "");
+        osc_send_configure(CARLA_BRIDGE_MSG_HIDE_GUI, "");
         return TRUE;
     }
 
@@ -84,7 +84,7 @@ public:
     {
         //if (client)
         //    client->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 0, 0, 0.0);
-        osc_send_configure("CarlaBridgeHideGUI", "");
+        osc_send_configure(CARLA_BRIDGE_MSG_HIDE_GUI, "");
     }
 };
 static QApplication* app = nullptr;
@@ -321,10 +321,16 @@ public:
             }
         }
 
-        osc_send_configure("CarlaBridgeSaveNowDone", "");
+        osc_send_configure(CARLA_BRIDGE_MSG_SAVED, "");
     }
 
-    void set_chunk_data(const char* stringData)
+    void set_custom_data(const char* const type, const char* const key, const char* const value)
+    {
+        if (CARLA_PLUGIN)
+            CARLA_PLUGIN->setCustomData(customdatastr2type(type), key, value, false);
+    }
+
+    void set_chunk_data(const char* const stringData)
     {
         if (CARLA_PLUGIN)
             CARLA_PLUGIN->setChunkData(stringData);
@@ -360,7 +366,7 @@ void plugin_bridge_callback(CallbackType action, unsigned short, int value1, int
     }
     case CALLBACK_SHOW_GUI:
         if (value1 == 0)
-            osc_send_configure("CarlaBridgeHideGUI", "");
+            osc_send_configure(CARLA_BRIDGE_MSG_HIDE_GUI, "");
         break;
     case CALLBACK_RESIZE_GUI:
         if (client)

@@ -194,8 +194,8 @@ class PixmapDial(QDial):
                 ballPoint = ballPath.pointAtPercent(ballValue)
 
                 # draw arc
-                startAngle = 225*16
-                spanAngle  = -270.0*16*value
+                startAngle = 216*16
+                spanAngle  = -252.0*16*value
 
                 if self.m_custom_paint == self.CUSTOM_PAINT_CARLA_WET:
                     painter.setBrush(colorBlue)
@@ -241,16 +241,16 @@ class PixmapDial(QDial):
 
                 # draw arc
                 if self.m_custom_paint == self.CUSTOM_PAINT_CARLA_L:
-                    startAngle = 225*16
-                    spanAngle  = -270.0*16*value
+                    startAngle = 216*16          # / 225 = 9
+                    spanAngle  = -252.0*16*value # / 270 = 18
                 elif self.m_custom_paint == self.CUSTOM_PAINT_CARLA_R:
-                    startAngle = 315.0*16
-                    spanAngle  = 270.0*16*(1.0-value)
+                    startAngle = 324.0*16 # 315
+                    spanAngle  = 252.0*16*(1.0-value) # 270
                 else:
                     return
 
                 painter.setPen(QPen(color, 2))
-                painter.drawArc(3.0, 4.0, 20.0, 20.0, startAngle, spanAngle)
+                painter.drawArc(2.5, 3.5, 22.0, 22.0, startAngle, spanAngle)
 
             # Regular knobs
             else:

@@ -152,7 +152,7 @@ def getStateDictFromXML(xml_node):
                 elif tag == "DryWet":
                     if isNumber(text):
                         x_save_state_dict['DryWet'] = float(text)
-                elif (tag == "Vol"):
+                elif (tag == "Volume"):
                     if isNumber(text):
                         x_save_state_dict['Volume'] = float(text)
                 elif (tag == "Balance-Left"):
@@ -2696,22 +2696,22 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
     @pyqtSlot()
     def slot_showCustomDialMenu(self):
         dial_name = self.sender().objectName()
-        if (dial_name == "dial_drywet"):
+        if dial_name == "dial_drywet":
             minimum = 0
             maximum = 100
             default = 100
             label = "Dry/Wet"
-        elif (dial_name == "dial_vol"):
+        elif dial_name == "dial_vol":
             minimum = 0
             maximum = 127
             default = 100
             label = "Volume"
-        elif (dial_name == "dial_b_left"):
+        elif dial_name == "dial_b_left":
             minimum = -100
             maximum = 100
             default = -100
             label = "Balance-Left"
-        elif (dial_name == "dial_b_right"):
+        elif dial_name == "dial_b_right":
             minimum = -100
             maximum = 100
             default = 100
@@ -2738,32 +2738,32 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
         act_x_sel = menu.exec_(QCursor.pos())
 
-        if (act_x_sel == act_x_set):
+        if act_x_sel == act_x_set:
             value_try = QInputDialog.getInteger(self, self.tr("Set value"), label, current, minimum, maximum, 1)
-            if (value_try[1]):
+            if value_try[1]:
                 value = value_try[0] * 10
             else:
                 value = None
 
-        elif (act_x_sel == act_x_min):
+        elif act_x_sel == act_x_min:
             value = minimum * 10
-        elif (act_x_sel == act_x_max):
+        elif act_x_sel == act_x_max:
             value = maximum * 10
-        elif (act_x_sel == act_x_reset):
+        elif act_x_sel == act_x_reset:
             value = default * 10
-        elif (act_x_sel == act_x_cen):
+        elif act_x_sel == act_x_cen:
             value = 0
         else:
             value = None
 
-        if (value != None):
-            if (label == "Dry/Wet"):
+        if value != None:
+            if label == "Dry/Wet":
                 self.set_drywet(value, True, True)
-            elif (label == "Volume"):
+            elif label == "Volume":
                 self.set_volume(value, True, True)
-            elif (label == "Balance-Left"):
+            elif label == "Balance-Left":
                 self.set_balance_left(value, True, True)
-            elif (label == "Balance-Right"):
+            elif label == "Balance-Right":
                 self.set_balance_right(value, True, True)
 
     def paintEvent(self, event):
@@ -2905,20 +2905,20 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
     @pyqtSlot(int, int, float)
     def slot_handleParameterCallback(self, plugin_id, parameter_id, value):
         pwidget = self.m_plugin_list[plugin_id]
-        if (pwidget):
+        if pwidget:
             pwidget.parameter_activity_timer = ICON_STATE_ON
 
-            if (parameter_id == PARAMETER_ACTIVE):
+            if parameter_id == PARAMETER_ACTIVE:
                 pwidget.set_active((value > 0.0), True, False)
-            elif (parameter_id == PARAMETER_DRYWET):
+            elif parameter_id == PARAMETER_DRYWET:
                 pwidget.set_drywet(value * 1000, True, False)
-            elif (parameter_id == PARAMETER_VOLUME):
+            elif parameter_id == PARAMETER_VOLUME:
                 pwidget.set_volume(value * 1000, True, False)
-            elif (parameter_id == PARAMETER_BALANCE_LEFT):
+            elif parameter_id == PARAMETER_BALANCE_LEFT:
                 pwidget.set_balance_left(value * 1000, True, False)
-            elif (parameter_id == PARAMETER_BALANCE_RIGHT):
+            elif parameter_id == PARAMETER_BALANCE_RIGHT:
                 pwidget.set_balance_right(value * 1000, True, False)
-            elif (parameter_id >= 0):
+            elif parameter_id >= 0:
                 pwidget.edit_dialog.set_parameter_to_update(parameter_id)
 
     @pyqtSlot(int, int)
