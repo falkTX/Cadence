@@ -45,7 +45,7 @@ CARLA_BACKEND_START_NAMESPACE
  * @{
  */
 
-const uint32_t CarlaEngineTimeBBT = 0x01;
+const uint32_t CarlaEngineTimeBBT = 0x1;
 
 enum CarlaEnginePortType {
     CarlaEnginePortTypeAudio,

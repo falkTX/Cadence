@@ -35,6 +35,11 @@ TAB_INDEX_CARLA_PATHS  = 4
 CANVAS_ANTIALIASING_SMALL = 1
 CANVAS_EYECANDY_SMALL     = 1
 
+# carla defines
+PROCESS_MODE_SINGLE_CLIENT    = 0
+PROCESS_MODE_MULTIPLE_CLIENTS = 1
+PROCESS_MODE_CONTINUOUS_RACK  = 2
+
 # ladish defines
 LADISH_CONF_KEY_DAEMON_NOTIFY           = "/org/ladish/daemon/notify"
 LADISH_CONF_KEY_DAEMON_SHELL            = "/org/ladish/daemon/shell"
@@ -185,12 +190,13 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         # --------------------------------------------
 
         if not self.lw_page.isRowHidden(TAB_INDEX_CARLA_ENGINE):
-            self.ch_engine_global_client.setChecked(self.settings.value("Engine/GlobalJackClient", False, type=bool))
-            self.ch_engine_process_hq.setChecked(self.settings.value("Engine/ProcessHQ", False, type=bool))
+            #self.cb_engine_audio_driver.setCurrentIndex(self.settings.value("Engine/AudioDriver", "JACK", type=str))
+            self.cb_engine_process_mode.setCurrentIndex(self.settings.value("Engine/ProcessMode", PROCESS_MODE_MULTIPLE_CLIENTS, type=int))
             self.sb_engine_max_params.setValue(self.settings.value("Engine/MaxParameters", 200, type=int))
             self.ch_engine_prefer_bridges.setChecked(self.settings.value("Engine/PreferUIBridges", True, type=bool))
             self.sb_engine_oscgui_timeout.setValue(self.settings.value("Engine/OscGuiTimeout", 4000, type=int))
             self.ch_engine_dssi_chunks.setChecked(self.settings.value("Engine/UseDSSIChunks", False, type=bool))
+            self.ch_engine_process_hq.setChecked(self.settings.value("Engine/ProcessHQ", False, type=bool))
 
         # --------------------------------------------
 
@@ -377,12 +383,13 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         # --------------------------------------------
 
         if not self.lw_page.isRowHidden(TAB_INDEX_CARLA_ENGINE):
-            self.settings.setValue("Engine/GlobalJackClient", self.ch_engine_global_client.isChecked())
-            self.settings.setValue("Engine/ProcessHQ", self.ch_engine_process_hq.isChecked())
+            self.settings.setValue("Engine/AudioDriver", self.cb_engine_audio_driver.currentText())
+            self.settings.setValue("Engine/ProcessMode", self.cb_engine_process_mode.currentIndex())
             self.settings.setValue("Engine/MaxParameters", self.sb_engine_max_params.value())
             self.settings.setValue("Engine/PreferUIBridges", self.ch_engine_prefer_bridges.isChecked())
             self.settings.setValue("Engine/OscGuiTimeout", self.sb_engine_oscgui_timeout.value())
             self.settings.setValue("Engine/UseDSSIChunks", self.ch_engine_dssi_chunks.isChecked())
+            self.settings.setValue("Engine/ProcessHQ", self.ch_engine_process_hq.isChecked())
 
         # --------------------------------------------
 

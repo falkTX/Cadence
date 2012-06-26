@@ -19,7 +19,7 @@ CARLA_CXX_FLAGS   = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
 CARLA_CXX_FLAGS  += $(shell pkg-config --cflags jack liblo QtCore QtGui) -DCARLA_BACKEND_NO_NAMESPACE -DCARLA_ENGINE_JACK
 # CARLA_CXX_FLAGS  += $(shell pkg-config --cflags jack liblo QtCore QtGui) -DCARLA_BACKEND_NO_NAMESPACE -DCARLA_ENGINE_RTAUDIO -D_FORTIFY_SOURCE=2 -DHAVE_GETTIMEOFDAY -D__UNIX_JACK__ -D__LINUX_ALSA__ -D__LINUX_PULSE__
 CARLA_CXX_FLAGS  += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT
-CARLA_CXX_FLAGS  += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
+# CARLA_CXX_FLAGS  += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
 
 CARLA_LD_FLAGS    = -shared -ldl -fPIC $(LDFLAGS)
 CARLA_LD_FLAGS   += $(shell pkg-config --libs jack liblo QtCore QtGui)

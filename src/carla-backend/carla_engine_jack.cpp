@@ -174,6 +174,7 @@ static int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
         memcpy(ains_tmp_buf1, audioIn1, sizeof(float)*nframes);
         memcpy(ains_tmp_buf2, audioIn2, sizeof(float)*nframes);
 
+        // initialize midi input
         {
             uint32_t i = 0, j = 0;
             jack_midi_event_t jackEvent;
@@ -198,12 +199,16 @@ static int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
         memset(aouts_tmp_buf2, 0, sizeof(float)*nframes);
         memset(carlaRackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
 
+        bool processed = false;
+
         // process plugins
         for (unsigned short i=0; i<MAX_PLUGINS; i++)
         {
             CarlaPlugin* plugin = CarlaPlugins[i];
             if (plugin && plugin->enabled())
             {
+                processed = true;
+
                 memset(aouts_tmp_buf1, 0, sizeof(float)*nframes);
                 memset(aouts_tmp_buf2, 0, sizeof(float)*nframes);
                 memset(carlaRackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
@@ -235,6 +240,14 @@ static int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
                 memcpy(ains_tmp_buf2, aouts_tmp_buf2, sizeof(float)*nframes);
                 memcpy(carlaRackMidiEventsIn, carlaRackMidiEventsOut, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
             }
+        }
+
+        // no plugins in the rack, copy inputs over outputs
+        if (! processed)
+        {
+            memcpy(aouts_tmp_buf1, ains_tmp_buf1, sizeof(float)*nframes);
+            memcpy(aouts_tmp_buf2, ains_tmp_buf2, sizeof(float)*nframes);
+            memcpy(carlaRackMidiEventsIn, carlaRackMidiEventsOut, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
         }
 
         // copy last audio buffer to jack
@@ -404,6 +417,8 @@ const CarlaTimeInfo* CarlaEngine::getTimeInfo()
             info.bbt.ticks_per_beat = carla_jack_pos.ticks_per_beat;
             info.bbt.beats_per_minute = carla_jack_pos.beats_per_minute;
         }
+        else
+            info.valid = 0;
     }
     else
     {

@@ -130,7 +130,7 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
 #ifdef CARLA_ENGINE_JACK
         if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
-            set_last_error("Can onlt use bridged plugins in JACK multi-client mode");
+            set_last_error("Can only use bridged plugins in JACK Multi-Clients mode");
             return -1;
         }
 #else

@@ -788,7 +788,7 @@
             <string>Core</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_7">
-            <item row="2" column="1">
+            <item row="4" column="1">
              <widget class="QSpinBox" name="sb_engine_max_params">
               <property name="toolTip">
                <string>Maximum number of parameters to allow in the built-in 'Edit' dialog</string>
@@ -798,20 +798,7 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_7">
-              <property name="toolTip">
-               <string>Maximum number of parameters to allow in the built-in 'Edit' dialog</string>
-              </property>
-              <property name="text">
-               <string>Max Parameters:</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="2">
+            <item row="4" column="2">
              <spacer name="horizontalSpacer_2">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
@@ -827,25 +814,64 @@
               </property>
              </spacer>
             </item>
-            <item row="0" column="0" colspan="3">
-             <widget class="QCheckBox" name="ch_engine_global_client">
+            <item row="4" column="0">
+             <widget class="QLabel" name="label_7">
               <property name="toolTip">
-               <string>Use a single JACK client for all plugins</string>
+               <string>Maximum number of parameters to allow in the built-in 'Edit' dialog</string>
               </property>
               <property name="text">
-               <string>Use a single/global JACK client</string>
+               <string>Max Parameters:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
-            <item row="1" column="0" colspan="3">
-             <widget class="QCheckBox" name="ch_engine_process_hq">
-              <property name="toolTip">
-               <string>Process audio in blocks of 8 samples, allowing &quot;per-sample&quot; automation.
-Recommended to use when 'rendering' a project.
-Some plugins might not work properly under this mode.</string>
-              </property>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_20">
               <property name="text">
-               <string>Process HQ (EXPERIMENTAL)</string>
+               <string>Process mode:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QComboBox" name="cb_engine_process_mode">
+              <item>
+               <property name="text">
+                <string>Single Client</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Multiple Clients</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Continuous Rack (EXPERIMENTAL)</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QComboBox" name="cb_engine_audio_driver">
+              <item>
+               <property name="text">
+                <string>JACK</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_21">
+              <property name="text">
+               <string>Audio driver:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
@@ -923,6 +949,18 @@ Some plugins might not work properly under this mode.</string>
              <widget class="QCheckBox" name="ch_engine_dssi_chunks">
               <property name="text">
                <string>Enable chunk data for dssi-vst</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="ch_engine_process_hq">
+              <property name="toolTip">
+               <string>Process audio in blocks of 8 samples, allowing &quot;per-sample&quot; automation.
+Recommended to use when 'rendering' a project.
+Some plugins might not work properly under this mode.</string>
+              </property>
+              <property name="text">
+               <string>High-Quality processing (EXPERIMENTAL)</string>
               </property>
              </widget>
             </item>

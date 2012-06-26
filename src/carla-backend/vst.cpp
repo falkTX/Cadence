@@ -48,6 +48,9 @@ public:
         events.numEvents = 0;
         events.reserved  = 0;
 
+        m_oldSDK    = false;
+        m_wantsMidi = false;
+
         gui.visible = false;
         gui.width  = 0;
         gui.height = 0;
@@ -327,7 +330,7 @@ public:
         aouts  = effect->numOutputs;
         params = effect->numParams;
 
-        if (VstPluginCanDo(effect, "receiveVstEvents") || VstPluginCanDo(effect, "receiveVstMidiEvent") || (effect->flags & effFlagsIsSynth) > 0)
+        if (VstPluginCanDo(effect, "receiveVstEvents") || VstPluginCanDo(effect, "receiveVstMidiEvent") || (effect->flags & effFlagsIsSynth) > 0 || m_wantsMidi)
             mins = 1;
 
         if (VstPluginCanDo(effect, "sendVstEvents") || VstPluginCanDo(effect, "sendVstMidiEvent"))
@@ -479,7 +482,7 @@ public:
             param.data[j].hints |= PARAMETER_USES_CUSTOM_TEXT;
 #endif
 
-            if (effect->dispatcher(effect, effCanBeAutomated, j, 0, nullptr, 0.0f) != 0)
+            if (m_oldSDK || effect->dispatcher(effect, effCanBeAutomated, j, 0, nullptr, 0.0f) != 0)
                 param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
         }
 
@@ -988,7 +991,24 @@ public:
         {
             if (! m_activeBefore)
             {
-                // TODO - send sound-off notes-off events here
+                if (midi.portMin && cin_channel >= 0 && cin_channel < 16)
+                {
+                    memset(&midiEvents[0], 0, sizeof(VstMidiEvent));
+                    midiEvents[0].type = kVstMidiType;
+                    midiEvents[0].byteSize = sizeof(VstMidiEvent);
+                    midiEvents[0].deltaFrames = framesOffset;
+                    midiEvents[0].midiData[0] = MIDI_STATUS_CONTROL_CHANGE + cin_channel;
+                    midiEvents[0].midiData[1] = MIDI_CONTROL_ALL_SOUND_OFF;
+
+                    memset(&midiEvents[1], 0, sizeof(VstMidiEvent));
+                    midiEvents[1].type = kVstMidiType;
+                    midiEvents[1].byteSize = sizeof(VstMidiEvent);
+                    midiEvents[1].deltaFrames = framesOffset;
+                    midiEvents[1].midiData[0] = MIDI_STATUS_CONTROL_CHANGE + cin_channel;
+                    midiEvents[1].midiData[1] = MIDI_CONTROL_ALL_NOTES_OFF;
+
+                    midiEventCount = 2;
+                }
 
                 effect->dispatcher(effect, effMainsChanged, 0, 1, nullptr, 0.0f);
                 effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
@@ -1121,11 +1141,8 @@ public:
             if (framesOffset == 0 || ! m_activeBefore)
                 midi.portMout->initBuffer(moutBuffer);
 
-            for (i = events.numEvents; i < MAX_MIDI_EVENTS*2; i++)
+            for (int32_t i = midiEventCount; i < events.numEvents; i++)
             {
-                if (midiEvents[i].type != kVstMidiType)
-                    break;
-
                 data[0] = midiEvents[i].midiData[0];
                 data[1] = midiEvents[i].midiData[1];
                 data[2] = midiEvents[i].midiData[2];
@@ -1174,100 +1191,10 @@ public:
 
     // -------------------------------------------------------------------
 
-    bool init(const char* filename, const char* label)
-    {
-        // ---------------------------------------------------------------
-        // open DLL
-
-        if (! libOpen(filename))
-        {
-            set_last_error(libError(filename));
-            return false;
-        }
-
-        // ---------------------------------------------------------------
-        // get DLL main entry
-
-        VST_Function vstfn = (VST_Function)libSymbol("VSTPluginMain");
-
-        if (! vstfn)
-        {
-            vstfn = (VST_Function)libSymbol("main");
-
-            if (! vstfn)
-            {
-                set_last_error("Could not find the VST main entry in the plugin library");
-                return false;
-            }
-        }
-
-        // ---------------------------------------------------------------
-        // initialize plugin
-
-        effect = vstfn(VstHostCallback);
-
-        if (! effect || effect->magic != kEffectMagic)
-        {
-            set_last_error("Plugin failed to initialize");
-            return false;
-        }
-
-        // ---------------------------------------------------------------
-        // get info
-
-        m_filename = strdup(filename);
-
-        char strBuf[STR_MAX] = { 0 };
-        effect->dispatcher(effect, effGetEffectName, 0, 0, strBuf, 0.0f);
-
-        if (strBuf[0] != 0)
-            m_name = get_unique_name(strBuf);
-        else
-            m_name = get_unique_name(label);
-
-        // ---------------------------------------------------------------
-        // initialize VST stuff
-
-        effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
-#if ! VST_FORCE_DEPRECATED
-        effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, get_buffer_size(), nullptr, get_sample_rate());
-#endif
-        effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, get_sample_rate());
-        effect->dispatcher(effect, effSetBlockSize, 0, get_buffer_size(), nullptr, 0.0f);
-        effect->dispatcher(effect, effSetProcessPrecision, 0, kVstProcessPrecision32, nullptr, 0.0f);
-
-#ifdef VESTIGE_HEADER
-        effect->ptr1 = this;
-#else
-        effect->resvd1 = (intptr_t)this;
-#endif
-
-        // ---------------------------------------------------------------
-        // register client
-
-        x_client = new CarlaEngineClient(this);
-
-        if (! x_client->isOk())
-        {
-            set_last_error("Failed to register plugin client");
-            return false;
-        }
-
-        // ---------------------------------------------------------------
-        // gui stuff
-
-        if (effect->flags & effFlagsHasEditor)
-            m_hints |= PLUGIN_HAS_GUI;
-
-        return true;
-    }
-
-    // -------------------------------------------------------------------
-
     static intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
     {
 #ifdef DEBUG
-        //qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstOpcode2str(opcode), index, value, opt);
+        qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstOpcode2str(opcode), index, value, opt);
 #endif
 
         // Check if 'resvd1' points to this plugin
@@ -1291,7 +1218,7 @@ public:
         case audioMasterAutomate:
             if (self)
             {
-                if (CarlaEngine::isOnAudioThread())
+                if (CarlaEngine::isOnAudioThread() && ! CarlaEngine::isOffline())
                 {
                     self->setParameterValue(index, opt, false, false, false);
                     self->postponeEvent(PluginPostEventParameterChange, index, opt);
@@ -1308,132 +1235,103 @@ public:
             return 0; // TODO
 
         case audioMasterIdle:
-            if (effect)
-                effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
+            //if (effect)
+            //    effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
             break;
 
 #if ! VST_FORCE_DEPRECATED
-        case audioMasterWantMidi: // TODO
+        case audioMasterWantMidi:
             // Deprecated in VST SDK 2.4
-#if 0
-            if (plugin && plugin->jack_client && plugin->min.count == 0)
-            {
-                i = plugin->id;
-                bool unlock = carla_proc_trylock();
-                plugin->id = -1;
-                if (unlock) carla_proc_unlock();
-
-                const int port_name_size = jack_port_name_size();
-                char port_name[port_name_size];
-
-#ifndef BUILD_BRIDGE
-                if (carla_options.global_jack_client)
-                {
-                    strncpy(port_name, plugin->name, (port_name_size/2)-2);
-                    strcat(port_name, ":midi-in");
-                }
-                else
-#endif
-                    strcpy(port_name, "midi-in");
-
-                plugin->min.count    = 1;
-                plugin->min.ports    = new jack_port_t*[1];
-                plugin->min.ports[0] = jack_port_register(plugin->jack_client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
-
-                plugin->id = i;
-#ifndef BRIDGE_WINVST
-                callback_action(CALLBACK_RELOAD_INFO, plugin->id, 0, 0, 0.0f);
-#endif
-            }
-#endif
+            if (self)
+                self->m_wantsMidi = true;
             break;
 #endif
 
-#if 0
         case audioMasterGetTime:
         {
-            static VstTimeInfo_R timeInfo;
-            memset(&timeInfo, 0, sizeof(VstTimeInfo_R));
+            static VstTimeInfo_R vstTimeInfo;
+            memset(&vstTimeInfo, 0, sizeof(VstTimeInfo_R));
 
-            jack_position_t* jack_pos;
-            bool playing = carla_jack_transport_query(&jack_pos);
+            const CarlaTimeInfo* const timeInfo = CarlaEngine::getTimeInfo();
 
-            timeInfo.flags |= kVstTransportChanged;
+            vstTimeInfo.flags |= kVstTransportChanged;
 
-            if (playing)
-                timeInfo.flags |= kVstTransportPlaying;
+            if (timeInfo->playing)
+                vstTimeInfo.flags |= kVstTransportPlaying;
 
-            if (jack_pos->unique_1 == jack_pos->unique_2)
+            vstTimeInfo.samplePos  = timeInfo->frame;
+            vstTimeInfo.sampleRate = get_sample_rate();
+
+            vstTimeInfo.nanoSeconds = timeInfo->time;
+            vstTimeInfo.flags |= kVstNanosValid;
+
+            if (timeInfo->valid & CarlaEngineTimeBBT)
             {
-                timeInfo.samplePos  = jack_pos->frame;
-                timeInfo.sampleRate = jack_pos->frame_rate;
+                double ppqBar  = double(timeInfo->bbt.bar) * timeInfo->bbt.beats_per_bar - timeInfo->bbt.beats_per_bar;
+                double ppqBeat = double(timeInfo->bbt.beat) - 1.0;
+                double ppqTick = double(timeInfo->bbt.tick) / timeInfo->bbt.ticks_per_beat;
 
-                if (jack_pos->valid & JackPositionBBT)
-                {
-                    // Tempo
-                    timeInfo.tempo  = jack_pos->beats_per_minute;
-                    timeInfo.flags |= kVstTempoValid;
+                // Bars
+                vstTimeInfo.barStartPos = ppqBar + ppqBeat;
+                vstTimeInfo.flags |= kVstBarsValid;
 
-                    // Time Signature
-                    timeInfo.timeSigNumerator   = jack_pos->beats_per_bar;
-                    timeInfo.timeSigDenominator = jack_pos->beat_type;
-                    timeInfo.flags |= kVstTimeSigValid;
+                // PPQ Pos
+                vstTimeInfo.ppqPos = ppqBar + ppqBeat + ppqTick;
+                vstTimeInfo.flags |= kVstPpqPosValid;
 
-                    // Position
-                    double dPos = timeInfo.samplePos / timeInfo.sampleRate;
-                    timeInfo.barStartPos = 0;
-                    timeInfo.nanoSeconds = dPos * 1000.0;
-                    timeInfo.ppqPos = dPos * timeInfo.tempo / 60.0;
-                    timeInfo.flags |= kVstBarsValid|kVstNanosValid|kVstPpqPosValid;
-                }
+                // Tempo
+                vstTimeInfo.tempo  = timeInfo->bbt.beats_per_minute;
+                vstTimeInfo.flags |= kVstTempoValid;
+
+                // Time Signature
+                vstTimeInfo.timeSigNumerator   = timeInfo->bbt.beats_per_bar;
+                vstTimeInfo.timeSigDenominator = timeInfo->bbt.beat_type;
+                vstTimeInfo.flags |= kVstTimeSigValid;
             }
-            else
-                timeInfo.sampleRate = get_sample_rate();
 
-            return (intptr_t)&timeInfo;
+            return (intptr_t)&vstTimeInfo;
         }
 
-#endif
         case audioMasterProcessEvents:
             if (self && ptr && self->midi.portMout)
             {
+                if (! CarlaEngine::isOnAudioThread())
+                {
+                    qDebug("VstHostCallback:audioMasterProcessEvents - Received MIDI Out events outside audio thread, ignoring");
+                    return 0;
+                }
+
                 int32_t i;
                 const VstEvents* const events = (VstEvents*)ptr;
 
-                for (i=0; i < events->numEvents && self->events.numEvents+i < MAX_MIDI_EVENTS*2; i++)
+                for (i=0; i < events->numEvents && self->events.numEvents < MAX_MIDI_EVENTS*2; i++)
                 {
                     const VstMidiEvent* const midiEvent = (VstMidiEvent*)events->events[i];
 
                     if (midiEvent && midiEvent->type == kVstMidiType)
-                        memcpy(&self->midiEvents[self->events.numEvents+i], midiEvent, sizeof(VstMidiEvent));
+                        memcpy(&self->midiEvents[self->events.numEvents++], midiEvent, sizeof(VstMidiEvent));
                 }
-
-                self->midiEvents[self->events.numEvents+i].type = 0;
             }
             else
                 qDebug("VstHostCallback:audioMasterProcessEvents - Some MIDI Out events were ignored");
 
             break;
 
-#if 0
 #if ! VST_FORCE_DEPRECATED
-#if 0
         case audioMasterSetTime:
             // Deprecated in VST SDK 2.4
             break;
-#endif
-#endif
 
-#if ! VST_FORCE_DEPRECATED
         case audioMasterTempoAt:
+        {
             // Deprecated in VST SDK 2.4
-            jack_position_t* jack_pos;
-            carla_jack_transport_query(&jack_pos);
+            const CarlaTimeInfo* const timeInfo = CarlaEngine::getTimeInfo();
 
-            if (jack_pos->unique_1 == jack_pos->unique_2 && (jack_pos->valid & JackPositionBBT) > 0)
-                return jack_pos->beats_per_minute * 10000;
+            if (timeInfo->valid & CarlaEngineTimeBBT)
+                return timeInfo->bbt.beats_per_minute * 10000;
 
             return 120 * 10000;
+        }
 
         case audioMasterGetNumAutomatableParameters:
             // Deprecated in VST SDK 2.4
@@ -1445,16 +1343,14 @@ public:
             break;
 #endif
 #endif
-#endif
 
-#if 0
         case audioMasterIOChanged:
-            if (self && self->m_id >= 0)
+            if (self && self->m_enabled)
             {
-                short _id = self->m_id;
+                qWarning("audioMasterIOChanged called!");
 
                 carla_proc_lock();
-                plugin->m_id = -1;
+                self->m_enabled = false;
                 carla_proc_unlock();
 
                 if (self->m_active)
@@ -1471,14 +1367,11 @@ public:
                     self->effect->dispatcher(self->effect, effStartProcess, 0, 0, nullptr, 0.0f);
                 }
 
-                self->m_id = _id;
-
-#ifndef BUILD_BRIDGE
-                callback_action(CALLBACK_RELOAD_ALL, plugin->id, 0, 0, 0.0);
-#endif
+                callback_action(CALLBACK_RELOAD_ALL, self->m_id, 0, 0, 0.0);
             }
-            break;
+            return 1;
 
+#if 0
         case audioMasterNeedIdle:
             // Deprecated in VST SDK 2.4
             break;
@@ -1489,7 +1382,7 @@ public:
             {
                 self->gui.width  = index;
                 self->gui.height = value;
-                callback_action(CALLBACK_RESIZE_GUI, self->id(), index, value, 0.0);
+                callback_action(CALLBACK_RESIZE_GUI, self->m_id, index, value, 0.0);
             }
             return 1;
 
@@ -1519,22 +1412,17 @@ public:
             break;
 #endif
 
-#if 0
         case audioMasterGetCurrentProcessLevel:
-            if (carla_jack_on_audio_thread())
-            {
-                if (carla_jack_on_freewheel())
-                    return kVstProcessLevelOffline;
+            if (CarlaEngine::isOffline())
+                return kVstProcessLevelOffline;
+            if (CarlaEngine::isOnAudioThread())
                 return 	kVstProcessLevelRealtime;
-            }
             return 	kVstProcessLevelUser;
-#endif
+
+        case audioMasterGetAutomationState:
+            return kVstAutomationReadWrite;
 
 #if 0
-        case audioMasterGetAutomationState:
-            // TODO
-            return 0;
-
         case audioMasterOfflineStart:
         case audioMasterOfflineRead:
         case audioMasterOfflineWrite:
@@ -1637,21 +1525,24 @@ public:
                 if (self->prog.count > 0 && self->prog.current >= 0)
                 {
                     char strBuf[STR_MAX] = { 0 };
+                    int32_t i = self->prog.current;
+
                     self->effect->dispatcher(self->effect, effGetProgramName, 0, 0, strBuf, 0.0f);
 
-                    if (strBuf[0] != 0 && !(self->prog.names[self->prog.current] && strcmp(strBuf, self->prog.names[self->prog.current]) == 0))
-                    {
-                        if (self->prog.names[self->prog.current])
-                            free((void*)self->prog.names[self->prog.current]);
+                    if (*strBuf == 0)
+                        return 0;
 
-                        self->prog.names[self->prog.current] = strdup(strBuf);
-                    }
+                    if (self->prog.names[i] && strcmp(strBuf, self->prog.names[i]) == 0)
+                        return 0;
+
+                    if (self->prog.names[i])
+                        free((void*)self->prog.names[i]);
+
+                    self->prog.names[i] = strdup(strBuf);
                 }
 
-#ifndef BUILD_BRIDGE
                 // Tell backend to update
-                callback_action(CALLBACK_UPDATE, self->id(), 0, 0, 0.0);
-#endif
+                callback_action(CALLBACK_UPDATE, self->m_id, 0, 0, 0.0);
             }
             break;
 
@@ -1680,16 +1571,118 @@ public:
 #endif
 
         default:
-            //qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstOpcode2str(opcode), index, value, opt);
+#ifdef DEBUG
+            qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstOpcode2str(opcode), index, value, opt);
+#endif
             break;
         }
 
         return 0;
     }
 
+    // -------------------------------------------------------------------
+
+    bool init(const char* filename, const char* label)
+    {
+        // ---------------------------------------------------------------
+        // open DLL
+
+        if (! libOpen(filename))
+        {
+            set_last_error(libError(filename));
+            return false;
+        }
+
+        // ---------------------------------------------------------------
+        // get DLL main entry
+
+        VST_Function vstfn = (VST_Function)libSymbol("VSTPluginMain");
+
+        if (! vstfn)
+        {
+            vstfn = (VST_Function)libSymbol("main");
+
+            if (! vstfn)
+            {
+                set_last_error("Could not find the VST main entry in the plugin library");
+                return false;
+            }
+        }
+
+        // ---------------------------------------------------------------
+        // initialize plugin
+
+        effect = vstfn(VstHostCallback);
+
+        if (! effect || effect->magic != kEffectMagic)
+        {
+            set_last_error("Plugin failed to initialize");
+            return false;
+        }
+
+        // ---------------------------------------------------------------
+        // get info
+
+        m_filename = strdup(filename);
+
+        char strBuf[STR_MAX] = { 0 };
+        effect->dispatcher(effect, effGetEffectName, 0, 0, strBuf, 0.0f);
+
+        if (strBuf[0] != 0)
+            m_name = get_unique_name(strBuf);
+        else
+            m_name = get_unique_name(label);
+
+        // ---------------------------------------------------------------
+        // initialize VST stuff
+
+        m_oldSDK = (effect->dispatcher(effect, effGetVstVersion, 0, 0, nullptr, 0.0f) < kVstVersion);
+
+        effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
+#if ! VST_FORCE_DEPRECATED
+        effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, get_buffer_size(), nullptr, get_sample_rate());
+#endif
+        effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, get_sample_rate());
+        effect->dispatcher(effect, effSetBlockSize, 0, get_buffer_size(), nullptr, 0.0f);
+        effect->dispatcher(effect, effSetProcessPrecision, 0, kVstProcessPrecision32, nullptr, 0.0f);
+
+#ifdef VESTIGE_HEADER
+        effect->ptr1 = this;
+#else
+        effect->resvd1 = (intptr_t)this;
+#endif
+
+#if ! VST_FORCE_DEPRECATED
+        // dummy pre-start to catch possible wantEvents() call on old plugins
+        effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
+        effect->dispatcher(effect, effStopProcess, 0, 0, nullptr, 0.0f);
+#endif
+
+        // ---------------------------------------------------------------
+        // register client
+
+        x_client = new CarlaEngineClient(this);
+
+        if (! x_client->isOk())
+        {
+            set_last_error("Failed to register plugin client");
+            return false;
+        }
+
+        // ---------------------------------------------------------------
+        // gui stuff
+
+        if (effect->flags & effFlagsHasEditor)
+            m_hints |= PLUGIN_HAS_GUI;
+
+        return true;
+    }
+
 private:
     int unique1;
+
     AEffect* effect;
+
     struct {
         int32_t numEvents;
         intptr_t reserved;
@@ -1697,11 +1690,15 @@ private:
     } events;
     VstMidiEvent midiEvents[MAX_MIDI_EVENTS*2];
 
+    bool m_oldSDK;
+    bool m_wantsMidi;
+
     struct {
         bool visible;
         int width;
         int height;
     } gui;
+
     int unique2;
 };
 
