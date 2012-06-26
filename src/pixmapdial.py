@@ -270,7 +270,7 @@ class PixmapDial(QDial):
                 self.m_hover_step += 1 if self.m_hovered else -1
                 QTimer.singleShot(20, self, SLOT("update()"))
 
-        elif not self.m_custom_paint:
+        else:
             target = QRectF(0.0, 0.0, self.p_size, self.p_size)
             source = target
             painter.drawPixmap(target, self.m_pixmap, source)

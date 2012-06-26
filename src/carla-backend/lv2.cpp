@@ -176,8 +176,8 @@ const char* lv2bridge2str(LV2_Property type)
         return carla_options.bridge_lv2gtk2;
     case LV2_UI_QT4:
         return carla_options.bridge_lv2qt4;
-    //case LV2_UI_HWND:
-    //    return carla_options.bridge_lv2hwnd;
+        //case LV2_UI_HWND:
+        //    return carla_options.bridge_lv2hwnd;
     case LV2_UI_X11:
         return carla_options.bridge_lv2x11;
 #endif
@@ -3663,27 +3663,39 @@ short add_plugin_lv2(const char* filename, const char* label)
 
     short id = get_new_plugin_id();
 
-    if (id >= 0)
+    if (id < 0)
     {
-        Lv2Plugin* plugin = new Lv2Plugin(id);
-
-        if (plugin->init(filename, label))
-        {
-            plugin->reload();
-
-            unique_names[id] = plugin->name();
-            CarlaPlugins[id] = plugin;
-
-            plugin->registerToOsc();
-        }
-        else
-        {
-            delete plugin;
-            id = -1;
-        }
-    }
-    else
         set_last_error("Maximum number of plugins reached");
+        return -1;
+    }
+
+    Lv2Plugin* plugin = new Lv2Plugin(id);
+
+    if (! plugin->init(filename, label))
+    {
+        delete plugin;
+        return -1;
+    }
+
+    plugin->reload();
+
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    {
+        if (/* inputs */ ((plugin->audioInCount() != 0 && plugin->audioInCount() != 2)) || /* outputs */ ((plugin->audioOutCount() != 0 && plugin->audioOutCount() != 2)))
+        {
+            set_last_error("Carla Rack Mode can only work with Stereo plugins, sorry!");
+            delete plugin;
+            return -1;
+        }
+
+    }
+#endif
+
+    unique_names[id] = plugin->name();
+    CarlaPlugins[id] = plugin;
+
+    plugin->registerToOsc();
 
     return id;
 }

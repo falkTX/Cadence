@@ -677,27 +677,26 @@ short add_plugin_linuxsampler(const char* filename, const char* label, bool isGI
 #ifdef WANT_LINUXSAMPLER
     short id = get_new_plugin_id();
 
-    if (id >= 0)
+    if (id < 0)
     {
-        LinuxSamplerPlugin* plugin = new LinuxSamplerPlugin(id, isGIG);
-
-        if (plugin->init(filename, label))
-        {
-            plugin->reload();
-
-            unique_names[id] = plugin->name();
-            CarlaPlugins[id] = plugin;
-
-            plugin->registerToOsc();
-        }
-        else
-        {
-            delete plugin;
-            id = -1;
-        }
+        set_last_error("Maximum number of plugins reached");
+        return -1;
     }
-    else
-        set_last_error("Requested file is not a valid SoundFont");
+
+    LinuxSamplerPlugin* plugin = new LinuxSamplerPlugin(id, isGIG);
+
+    if (! plugin->init(filename, label))
+    {
+        delete plugin;
+        return -1;
+    }
+
+    plugin->reload();
+
+    unique_names[id] = plugin->name();
+    CarlaPlugins[id] = plugin;
+
+    plugin->registerToOsc();
 
     return id;
 #else

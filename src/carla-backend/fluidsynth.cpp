@@ -1291,35 +1291,32 @@ short add_plugin_sf2(const char* const filename, const char* const label)
 #ifdef WANT_FLUIDSYNTH
     short id = get_new_plugin_id();
 
-    if (id >= 0)
+    if (id < 0)
     {
-        if (fluid_is_soundfont(filename))
-        {
-            FluidSynthPlugin* const plugin = new FluidSynthPlugin(id);
-
-            if (plugin->init(filename, label))
-            {
-                plugin->reload();
-
-                unique_names[id] = plugin->name();
-                CarlaPlugins[id] = plugin;
-
-                plugin->registerToOsc();
-            }
-            else
-            {
-                delete plugin;
-                id = -1;
-            }
-        }
-        else
-        {
-            set_last_error("Requested file is not a valid SoundFont");
-            id = -1;
-        }
-    }
-    else
         set_last_error("Maximum number of plugins reached");
+        return -1;
+    }
+
+    if (! fluid_is_soundfont(filename))
+    {
+        set_last_error("Requested file is not a valid SoundFont");
+        return -1;
+    }
+
+    FluidSynthPlugin* const plugin = new FluidSynthPlugin(id);
+
+    if (! plugin->init(filename, label))
+    {
+        delete plugin;
+        return -1;
+    }
+
+    plugin->reload();
+
+    unique_names[id] = plugin->name();
+    CarlaPlugins[id] = plugin;
+
+    plugin->registerToOsc();
 
     return id;
 #else

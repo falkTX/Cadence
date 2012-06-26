@@ -161,7 +161,7 @@ static int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
         void* midiIn     = jack_port_get_buffer(carla_jack_rack_ports[rackPortMidiIn], nframes);
         void* midiOut    = jack_port_get_buffer(carla_jack_rack_ports[rackPortMidiOut], nframes);
 
-        // create temporary audio bufffers
+        // create temporary audio buffers
         float ains_tmp_buf1[nframes];
         float ains_tmp_buf2[nframes];
         float aouts_tmp_buf1[nframes];
@@ -170,11 +170,17 @@ static int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
         float* ains_tmp[2]  = { ains_tmp_buf1, ains_tmp_buf2 };
         float* aouts_tmp[2] = { aouts_tmp_buf1, aouts_tmp_buf2 };
 
-        // initialize input buffers (from jack)
+        // initialize audio input
         memcpy(ains_tmp_buf1, audioIn1, sizeof(float)*nframes);
         memcpy(ains_tmp_buf2, audioIn2, sizeof(float)*nframes);
 
+        // initialize control input
+        {
+            // TODO
+        }
+
         // initialize midi input
+        memset(carlaRackMidiEventsIn, 0, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
         {
             uint32_t i = 0, j = 0;
             jack_midi_event_t jackEvent;
@@ -194,7 +200,7 @@ static int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
             }
         }
 
-        // initialize output buffers (zero)
+        // initialize outputs (zero)
         memset(aouts_tmp_buf1, 0, sizeof(float)*nframes);
         memset(aouts_tmp_buf2, 0, sizeof(float)*nframes);
         memset(carlaRackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
@@ -207,12 +213,20 @@ static int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
             CarlaPlugin* plugin = CarlaPlugins[i];
             if (plugin && plugin->enabled())
             {
-                processed = true;
+                if (processed)
+                {
+                    // initialize inputs (from previous outputs)
+                    memcpy(ains_tmp_buf1, aouts_tmp_buf1, sizeof(float)*nframes);
+                    memcpy(ains_tmp_buf2, aouts_tmp_buf2, sizeof(float)*nframes);
+                    memcpy(carlaRackMidiEventsIn, carlaRackMidiEventsOut, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
 
-                memset(aouts_tmp_buf1, 0, sizeof(float)*nframes);
-                memset(aouts_tmp_buf2, 0, sizeof(float)*nframes);
-                memset(carlaRackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
+                    // initialize outputs (zero)
+                    memset(aouts_tmp_buf1, 0, sizeof(float)*nframes);
+                    memset(aouts_tmp_buf2, 0, sizeof(float)*nframes);
+                    memset(carlaRackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
+                }
 
+                // process
                 carla_proc_lock();
 
                 if (carla_options.proccess_hq)
@@ -236,26 +250,38 @@ static int carla_jack_process_callback(jack_nframes_t nframes, void* arg)
 
                 carla_proc_unlock();
 
-                memcpy(ains_tmp_buf1, aouts_tmp_buf1, sizeof(float)*nframes);
-                memcpy(ains_tmp_buf2, aouts_tmp_buf2, sizeof(float)*nframes);
-                memcpy(carlaRackMidiEventsIn, carlaRackMidiEventsOut, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
+                // if plugin has no audio inputs, add previous buffers
+                if (plugin->audioInCount() == 0)
+                {
+                    for (uint32_t j=0; j < nframes; j++)
+                    {
+                        aouts_tmp_buf1[j] += ains_tmp_buf1[j];
+                        aouts_tmp_buf2[j] += ains_tmp_buf2[j];
+                    }
+                }
+
+                processed = true;
             }
         }
 
-        // no plugins in the rack, copy inputs over outputs
+        // if no plugins in the rack, copy inputs over outputs
         if (! processed)
         {
             memcpy(aouts_tmp_buf1, ains_tmp_buf1, sizeof(float)*nframes);
             memcpy(aouts_tmp_buf2, ains_tmp_buf2, sizeof(float)*nframes);
-            memcpy(carlaRackMidiEventsIn, carlaRackMidiEventsOut, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
+            memcpy(carlaRackMidiEventsOut, carlaRackMidiEventsIn, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
         }
 
-        // copy last audio buffer to jack
+        // output audio
         memcpy(audioOut1, aouts_tmp_buf1, sizeof(float)*nframes);
         memcpy(audioOut2, aouts_tmp_buf2, sizeof(float)*nframes);
 
-        // write midi-out
+        // output control
+        // TODO
+
+        // output midi
         jack_midi_clear_buffer(midiOut);
+
         for (unsigned short i=0; i < MAX_MIDI_EVENTS; i++)
         {
             if (carlaRackMidiEventsOut[i].size == 0)
@@ -321,8 +347,8 @@ bool CarlaEngine::init(const char* name)
             carla_jack_rack_ports[rackPortAudioIn2]   = jack_port_register(carla_jack_client, "in2", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
             carla_jack_rack_ports[rackPortAudioOut1]  = jack_port_register(carla_jack_client, "out1", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
             carla_jack_rack_ports[rackPortAudioOut2]  = jack_port_register(carla_jack_client, "out2", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-            carla_jack_rack_ports[rackPortControlIn]  = jack_port_register(carla_jack_client, "control-in", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
-            carla_jack_rack_ports[rackPortControlOut] = jack_port_register(carla_jack_client, "control-out", JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
+            //carla_jack_rack_ports[rackPortControlIn]  = jack_port_register(carla_jack_client, "control-in", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+            //carla_jack_rack_ports[rackPortControlOut] = jack_port_register(carla_jack_client, "control-out", JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
             carla_jack_rack_ports[rackPortMidiIn]     = jack_port_register(carla_jack_client, "midi-in", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
             carla_jack_rack_ports[rackPortMidiOut]    = jack_port_register(carla_jack_client, "midi-out", JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
         }
@@ -373,8 +399,8 @@ bool CarlaEngine::close()
             jack_port_unregister(carla_jack_client, carla_jack_rack_ports[rackPortAudioIn2]);
             jack_port_unregister(carla_jack_client, carla_jack_rack_ports[rackPortAudioOut1]);
             jack_port_unregister(carla_jack_client, carla_jack_rack_ports[rackPortAudioOut2]);
-            jack_port_unregister(carla_jack_client, carla_jack_rack_ports[rackPortControlIn]);
-            jack_port_unregister(carla_jack_client, carla_jack_rack_ports[rackPortControlOut]);
+            //jack_port_unregister(carla_jack_client, carla_jack_rack_ports[rackPortControlIn]);
+            //jack_port_unregister(carla_jack_client, carla_jack_rack_ports[rackPortControlOut]);
             jack_port_unregister(carla_jack_client, carla_jack_rack_ports[rackPortMidiIn]);
             jack_port_unregister(carla_jack_client, carla_jack_rack_ports[rackPortMidiOut]);
         }

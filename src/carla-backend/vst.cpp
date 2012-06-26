@@ -1712,27 +1712,39 @@ short add_plugin_vst(const char* filename, const char* label)
 
     short id = get_new_plugin_id();
 
-    if (id >= 0)
+    if (id < 0)
     {
-        VstPlugin* plugin = new VstPlugin(id);
-
-        if (plugin->init(filename, label))
-        {
-            plugin->reload();
-
-            unique_names[id] = plugin->name();
-            CarlaPlugins[id] = plugin;
-
-            plugin->registerToOsc();
-        }
-        else
-        {
-            delete plugin;
-            id = -1;
-        }
-    }
-    else
         set_last_error("Maximum number of plugins reached");
+        return -1;
+    }
+
+    VstPlugin* plugin = new VstPlugin(id);
+
+    if (! plugin->init(filename, label))
+    {
+        delete plugin;
+        return -1;
+    }
+
+    plugin->reload();
+
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    {
+        if (/* inputs */ ((plugin->audioInCount() != 0 && plugin->audioInCount() != 2)) || /* outputs */ ((plugin->audioOutCount() != 0 && plugin->audioOutCount() != 2)))
+        {
+            set_last_error("Carla Rack Mode can only work with Stereo plugins, sorry!");
+            delete plugin;
+            return -1;
+        }
+
+    }
+#endif
+
+    unique_names[id] = plugin->name();
+    CarlaPlugins[id] = plugin;
+
+    plugin->registerToOsc();
 
     return id;
 }
