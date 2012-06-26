@@ -1335,7 +1335,11 @@ public:
 
         case audioMasterGetNumAutomatableParameters:
             // Deprecated in VST SDK 2.4
+#ifdef BUILD_BRIDGE
+            return MAX_PARAMETERS;
+#else
             return carla_options.max_parameters;
+#endif
 
 #if 0
         case audioMasterGetParameterQuantization:
