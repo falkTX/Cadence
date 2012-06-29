@@ -20,10 +20,12 @@
 #include "carla_midi.h"
 
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 
 #ifdef BUILD_BRIDGE_PLUGIN
 static const size_t client_name_len  = 13;
 static const char* const client_name = "plugin-bridge";
+#include "carla_plugin.h"
 #else
 static const size_t client_name_len  = 13;
 static const char* const client_name = "lv2-ui-bridge";
@@ -160,15 +162,34 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
 int osc_handle_configure(lo_arg** argv)
 {
 #ifdef BUILD_BRIDGE_PLUGIN
+    using namespace CarlaBackend;
+
     const char* key   = (const char*)&argv[0]->s;
     const char* value = (const char*)&argv[1]->s;
 
     if (client)
     {
-        if (strcmp(key, "CarlaBridgeSaveNow") == 0)
-            client->save_now();
-        else if (strcmp(key, "CarlaBridgeChunk") == 0)
+        if (strcmp(key, CARLA_BRIDGE_MSG_SAVE_NOW) == 0)
+        {
+            client->queque_message(BRIDGE_MESSAGE_SAVE_NOW, 0, 0, 0.0);
+        }
+        else if (strcmp(key, CARLA_BRIDGE_MSG_SET_CHUNK) == 0)
+        {
             client->set_chunk_data(value);
+        }
+        else if (strcmp(key, CARLA_BRIDGE_MSG_SET_CUSTOM) == 0)
+        {
+            QStringList vList = QString(value).split("·", QString::KeepEmptyParts);
+
+            if (vList.size() == 3)
+            {
+                const char* const cType  = vList.at(0).toUtf8().constData();
+                const char* const cKey   = vList.at(1).toUtf8().constData();
+                const char* const cValue = vList.at(2).toUtf8().constData();
+
+                client->set_custom_data(cType, cKey, cValue);
+            }
+        }
     }
 
 #else

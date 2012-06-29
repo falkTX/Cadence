@@ -54,7 +54,6 @@ public:
 
         info.label = nullptr;
         info.maker = nullptr;
-        info.chunk = nullptr;
         info.copyright = nullptr;
 
         params = nullptr;
@@ -98,8 +97,7 @@ public:
         if (info.copyright)
             free((void*)info.copyright);
 
-        if (info.chunk)
-            free((void*)info.chunk);
+        info.chunk.clear();
     }
 
     // -------------------------------------------------------------------
@@ -145,12 +143,10 @@ public:
     {
         assert(dataPtr);
 
-        if (info.chunk)
+        if (! info.chunk.isEmpty())
         {
-            static QByteArray chunk;
-            chunk = QByteArray::fromBase64(info.chunk);
-            *dataPtr = chunk.data();
-            return chunk.size();
+            *dataPtr = info.chunk.data();
+            return info.chunk.size();
         }
 
         return 0;
@@ -487,18 +483,19 @@ public:
 
         case PluginBridgeChunkData:
         {
-            const char* stringData = (const char*)&argv[0]->s;
+            const char* const filePath = (const char*)&argv[0]->s;
+            QFile file(filePath);
 
-            if (info.chunk)
-                free((void*)info.chunk);
-
-            info.chunk = strdup(stringData);
+            if (file.open(QIODevice::ReadOnly))
+            {
+                info.chunk = file.readAll();
+                file.remove();
+            }
 
             break;
         }
 
         case PluginBridgeUpdateNow:
-            callback_action(CALLBACK_RELOAD_ALL, m_id, 0, 0, 0.0);
             initiated = true;
             break;
 
@@ -546,7 +543,20 @@ public:
     void setChunkData(const char* const stringData)
     {
         assert(stringData);
-        osc_send_configure(&osc.data, CARLA_BRIDGE_MSG_SET_CHUNK, stringData);
+
+        QString filePath;
+        filePath += "/tmp/.CarlaChunk_";
+        filePath += m_name;
+
+        QFile file(filePath);
+
+        if (file.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            QTextStream out(&file);
+            out << stringData;
+            file.close();
+            osc_send_configure(&osc.data, CARLA_BRIDGE_MSG_SET_CHUNK, filePath.toUtf8().constData());
+        }
     }
 
     void setProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
@@ -676,7 +686,7 @@ private:
         const char* label;
         const char* maker;
         const char* copyright;
-        const char* chunk;
+        QByteArray chunk;
     } info;
 
     BridgeParamInfo* params;

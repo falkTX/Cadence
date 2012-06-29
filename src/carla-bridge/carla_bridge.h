@@ -50,7 +50,8 @@ enum BridgeMessageType {
     BRIDGE_MESSAGE_NOTE_OFF     = 5, // note, 0, 0
     BRIDGE_MESSAGE_SHOW_GUI     = 6, // show, 0, 0
     BRIDGE_MESSAGE_RESIZE_GUI   = 7, // width, height, 0
-    BRIDGE_MESSAGE_QUIT         = 8
+    BRIDGE_MESSAGE_SAVE_NOW     = 8,
+    BRIDGE_MESSAGE_QUIT         = 9
 };
 
 struct QuequeBridgeMessage {
@@ -145,6 +146,11 @@ public:
                 case BRIDGE_MESSAGE_RESIZE_GUI:
                     toolkit_window_resize(m->value1, m->value2);
                     break;
+                case BRIDGE_MESSAGE_SAVE_NOW:
+#ifdef BUILD_BRIDGE_PLUGIN
+                    save_now();
+#endif
+                    break;
                 case BRIDGE_MESSAGE_QUIT:
                     toolkit_quit();
                     m_lock.unlock();
@@ -186,7 +192,7 @@ public:
     // plugin
     virtual void save_now() = 0;
     virtual void set_custom_data(const char* const type, const char* const key, const char* const value) = 0;
-    virtual void set_chunk_data(const char* const stringData) = 0;
+    virtual void set_chunk_data(const char* const filePath) = 0;
 #else
     // gui
     virtual void* get_widget() const = 0;

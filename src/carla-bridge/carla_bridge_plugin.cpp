@@ -95,6 +95,7 @@ static QDialog* gui = nullptr;
 #define nextShowMsgFALSE 1
 #define nextShowMsgTRUE  2
 static int nextShowMsg = nextShowMsgNULL;
+static const char* nextChunkFilePath = nullptr;
 
 // -------------------------------------------------------------------------
 // toolkit calls
@@ -128,6 +129,22 @@ void toolkit_plugin_idle()
         }
 
         nextShowMsg = nextShowMsgNULL;
+    }
+
+    if (nextChunkFilePath)
+    {
+        QFile file(nextChunkFilePath);
+
+        free((void*)nextChunkFilePath);
+        nextChunkFilePath = nullptr;
+
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            QString stringData = file.readAll();
+            file.remove();
+
+            CARLA_PLUGIN->setChunkData(stringData.toUtf8().constData());
+        }
     }
 
     CARLA_PLUGIN->idleGui();
@@ -299,8 +316,6 @@ public:
     // plugin
     void save_now()
     {
-        qDebug("PluginData::save_now()");
-
         CARLA_PLUGIN->prepareForSave();
 
         for (uint32_t i=0; i < CARLA_PLUGIN->customDataCount(); i++)
@@ -316,8 +331,19 @@ public:
 
             if (data && dataSize >= 4)
             {
-                QByteArray chunk((const char*)data, dataSize);
-                osc_send_bridge_chunk_data(chunk.toBase64().data());
+                QString filePath;
+                filePath += "/tmp/.CarlaChunk_";
+                filePath += CARLA_PLUGIN->name();
+
+                QFile file(filePath);
+
+                if (file.open(QIODevice::WriteOnly))
+                {
+                    QByteArray chunk((const char*)data, dataSize);
+                    file.write(chunk);
+                    file.close();
+                    osc_send_bridge_chunk_data(filePath.toUtf8().constData());
+                }
             }
         }
 
@@ -330,10 +356,12 @@ public:
             CARLA_PLUGIN->setCustomData(customdatastr2type(type), key, value, false);
     }
 
-    void set_chunk_data(const char* const stringData)
+    void set_chunk_data(const char* const filePath)
     {
-        if (CARLA_PLUGIN)
-            CARLA_PLUGIN->setChunkData(stringData);
+        nextChunkFilePath = strdup(filePath);
+
+        while (nextChunkFilePath)
+            carla_msleep(25);
     }
 };
 
@@ -601,6 +629,13 @@ int main(int argc, char* argv[])
     {
         qWarning("Plugin failed to load, error was:\n%s", get_last_error());
         return 1;
+    }
+
+    // delete old data
+    if (nextChunkFilePath)
+    {
+        free((void*)nextChunkFilePath);
+        nextChunkFilePath = nullptr;
     }
 
     // Close plugin client

@@ -1183,7 +1183,7 @@ class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
         host_osc_url = cString(CarlaHost.get_host_osc_url())
         self.le_osc_url.setText(host_osc_url)
 
-        self.l_osc_cmds.setText(""
+        self.l_osc_cmds.setText(
                                 " /set_active         <i-value>\n"
                                 " /set_drywet         <f-value>\n"
                                 " /set_volume         <f-value>\n"
@@ -1193,8 +1193,8 @@ class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
                                 " /set_program        <i-index>\n"
                                 " /set_midi_program   <i-index>\n"
                                 " /note_on            <i-note> <i-velo>\n"
-                                " /note_off           <i-note> <i-velo>\n"
-        )
+                                " /note_off           <i-note>\n"
+                               )
 
         self.l_example.setText("/Carla/2/set_parameter 2 0.5")
         self.l_example_help.setText("<i>(as in this example, \"2\" is the plugin number)</i>")
@@ -1210,11 +1210,11 @@ class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
                                    "<li>http://lv2plug.in/ns/ext/instance-access</li>"
                                    "<li>http://lv2plug.in/ns/ext/log</li>"
                                    "<li>http://lv2plug.in/ns/ext/midi</li>"
-                                   #"<li>http://lv2plug.in/ns/ext/patch</li>"
+                                   "<li>http://lv2plug.in/ns/ext/patch</li>"
                                    "<li>http://lv2plug.in/ns/ext/port-props</li>"
                                    #"<li>http://lv2plug.in/ns/ext/presets</li>"
                                    "<li>http://lv2plug.in/ns/ext/state</li>"
-                                   #"<li>http://lv2plug.in/ns/ext/time</li>"
+                                   "<li>http://lv2plug.in/ns/ext/time</li>"
                                    "<li>http://lv2plug.in/ns/ext/uri-map</li>"
                                    "<li>http://lv2plug.in/ns/ext/urid</li>"
                                    "<li>http://lv2plug.in/ns/ext/worker</li>"
