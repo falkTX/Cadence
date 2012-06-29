@@ -709,14 +709,13 @@ public:
         if (param.portCin && m_active && m_activeBefore)
         {
             bool allNotesOffSent = false;
-            void* cinBuffer = param.portCin->getBuffer();
 
             const CarlaEngineControlEvent* cinEvent;
-            uint32_t time, nEvents = param.portCin->getEventCount(cinBuffer);
+            uint32_t time, nEvents = param.portCin->getEventCount();
 
             for (i=0; i < nEvents; i++)
             {
-                cinEvent = param.portCin->getEvent(cinBuffer, i);
+                cinEvent = param.portCin->getEvent(i);
 
                 if (! cinEvent)
                     continue;
@@ -897,14 +896,12 @@ public:
 
         if (midi.portMin && m_active && m_activeBefore)
         {
-            void* minBuffer = midi.portMin->getBuffer();
-
             const CarlaEngineMidiEvent* minEvent;
-            uint32_t time, nEvents = midi.portMin->getEventCount(minBuffer);
+            uint32_t time, nEvents = midi.portMin->getEventCount();
 
             for (i=0; i < nEvents && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
-                minEvent = midi.portMin->getEvent(minBuffer, i);
+                minEvent = midi.portMin->getEvent(i);
 
                 if (! minEvent)
                     continue;
@@ -1136,10 +1133,6 @@ public:
         if (midi.portMout && m_active)
         {
             uint8_t data[4];
-            void* moutBuffer = midi.portMout->getBuffer();
-
-            if (framesOffset == 0 || ! m_activeBefore)
-                midi.portMout->initBuffer(moutBuffer);
 
             for (int32_t i = midiEventCount; i < events.numEvents; i++)
             {
@@ -1152,7 +1145,7 @@ public:
                 if (MIDI_IS_STATUS_NOTE_ON(data[0]) && data[2] == 0)
                     data[0] -= 0x10;
 
-                midi.portMout->writeEvent(moutBuffer, midiEvents[i].deltaFrames, data, 3);
+                midi.portMout->writeEvent(midiEvents[i].deltaFrames, data, 3);
             }
         } // End of MIDI Output
 

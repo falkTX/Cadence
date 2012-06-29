@@ -23,11 +23,17 @@
 #if defined(CARLA_ENGINE_JACK)
 #include <jack/jack.h>
 #include <jack/midiport.h>
+
 typedef jack_client_t CarlaEngineClientNativeHandle;
-typedef jack_port_t CarlaEnginePortNativeHandle;
+
+struct CarlaEnginePortNativeHandle {
+    jack_port_t* port;
+    void* buffer;
+};
 #elif defined(CARLA_ENGINE_RTAUDIO)
 #include "RtAudio.h"
 //#include <RtMidi.h>
+
 typedef void* CarlaEngineClientNativeHandle;
 typedef void* CarlaEnginePortNativeHandle;
 #endif
@@ -119,11 +125,11 @@ public:
     CarlaEngineBasePort(CarlaEngineClientNativeHandle* const client, bool isInput);
     virtual ~CarlaEngineBasePort();
 
-    virtual void* getBuffer() = 0;
+    virtual void initBuffer() = 0;
 
 protected:
     const bool isInput;
-    CarlaEnginePortNativeHandle* handle;
+    CarlaEnginePortNativeHandle handle;
     CarlaEngineClientNativeHandle* const client;
 };
 
@@ -155,7 +161,11 @@ class CarlaEngineAudioPort : public CarlaEngineBasePort
 public:
     CarlaEngineAudioPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput);
 
-    void* getBuffer();
+    void initBuffer();
+
+#ifdef CARLA_ENGINE_JACK
+    float* getJackAudioBuffer();
+#endif
 };
 
 // -----------------------------------------
@@ -165,12 +175,12 @@ class CarlaEngineControlPort : public CarlaEngineBasePort
 public:
     CarlaEngineControlPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput);
 
-    void* getBuffer();
+    void initBuffer();
 
-    void initBuffer(void* buffer);
-    uint32_t getEventCount(void* buffer);
-    const CarlaEngineControlEvent* getEvent(void* buffer, uint32_t index);
-    void writeEvent(void* buffer, CarlaEngineControlEventType type, uint32_t time, uint8_t channel, uint8_t controller, double value);
+    uint32_t getEventCount();
+    const CarlaEngineControlEvent* getEvent(uint32_t index);
+
+    void writeEvent(CarlaEngineControlEventType type, uint32_t time, uint8_t channel, uint8_t controller, double value);
 };
 
 // -----------------------------------------
@@ -180,12 +190,12 @@ class CarlaEngineMidiPort : public CarlaEngineBasePort
 public:
     CarlaEngineMidiPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput);
 
-    void* getBuffer();
+    void initBuffer();
 
-    void initBuffer(void* buffer);
-    uint32_t getEventCount(void* buffer);
-    const CarlaEngineMidiEvent* getEvent(void* buffer, uint32_t index);
-    void writeEvent(void* buffer, uint32_t time, uint8_t* data, uint8_t size);
+    uint32_t getEventCount();
+    const CarlaEngineMidiEvent* getEvent(uint32_t index);
+
+    void writeEvent(uint32_t time, uint8_t* data, uint8_t size);
 };
 
 /**@}*/

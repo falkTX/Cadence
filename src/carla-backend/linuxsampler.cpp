@@ -414,14 +414,12 @@ public:
 
         if (m_active && m_activeBefore)
         {
-            void* minBuffer = midi.portMin->getBuffer();
-
             const CarlaEngineMidiEvent* minEvent;
-            uint32_t time, nEvents = midi.portMin->getEventCount(minBuffer);
+            uint32_t time, nEvents = midi.portMin->getEventCount();
 
             for (i=0; i < nEvents && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
-                minEvent = midi.portMin->getEvent(minBuffer, i);
+                minEvent = midi.portMin->getEvent(i);
 
                 if (! minEvent)
                     continue;

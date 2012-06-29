@@ -1565,9 +1565,6 @@ public:
         double ains_peak_tmp[2]  = { 0.0 };
         double aouts_peak_tmp[2] = { 0.0 };
 
-        void* evinsBuffer[evin.count];
-        void* evoutsBuffer[evout.count];
-
         // handle midi from different APIs
         uint32_t evinAtomOffsets[evin.count];
         LV2_Event_Iterator evinEventIters[evin.count];
@@ -1596,11 +1593,6 @@ public:
                 evinMidiStates[i].midi->event_count = 0;
                 evinMidiStates[i].midi->size = 0;
             }
-
-            if (evin.data[i].port)
-                evinsBuffer[i] = evin.data[i].port->getBuffer();
-            else
-                evinsBuffer[i] = nullptr;
         }
 
         for (i=0; i < evout.count; i++)
@@ -1620,11 +1612,6 @@ public:
             {
                 // not needed
             }
-
-            if (evout.data[i].port)
-                evoutsBuffer[i] = evout.data[i].port->getBuffer();
-            else
-                evoutsBuffer[i] = nullptr;
         }
 
         CARLA_PROCESS_CONTINUE_CHECK;
@@ -1663,10 +1650,9 @@ public:
         if (param.portCin && m_active && m_activeBefore)
         {
             bool allNotesOffSent = false;
-            void* cinBuffer = param.portCin->getBuffer();
 
             const CarlaEngineControlEvent* cinEvent;
-            uint32_t time, nEvents = param.portCin->getEventCount(cinBuffer);
+            uint32_t time, nEvents = param.portCin->getEventCount();
 
             uint32_t nextBankId = 0;
             if (midiprog.current >= 0 && midiprog.count > 0)
@@ -1674,7 +1660,7 @@ public:
 
             for (i=0; i < nEvents; i++)
             {
-                cinEvent = param.portCin->getEvent(cinBuffer, i);
+                cinEvent = param.portCin->getEvent(i);
 
                 if (! cinEvent)
                     continue;
@@ -1881,21 +1867,17 @@ public:
 
         if (evin.count > 0 && m_active && m_activeBefore)
         {
-            void* minBuffer;
-
             for (i=0; i < evin.count; i++)
             {
-                minBuffer = evinsBuffer[i];
-
-                if (! minBuffer)
+                if (! evin.data[i].port)
                     continue;
 
                 const CarlaEngineMidiEvent* minEvent;
-                uint32_t time, nEvents = evin.data[i].port->getEventCount(minBuffer);
+                uint32_t time, nEvents = evin.data[i].port->getEventCount();
 
                 for (k=0; k < nEvents && midiEventCount < MAX_MIDI_EVENTS; k++)
                 {
-                    minEvent = evin.data[i].port->getEvent(minBuffer, k);
+                    minEvent = evin.data[i].port->getEvent(k);
 
                     if (! minEvent)
                         continue;
@@ -2127,11 +2109,6 @@ public:
 
         if (param.portCout && m_active)
         {
-            void* coutBuffer = param.portCout->getBuffer();
-
-            if (framesOffset == 0 || ! m_activeBefore)
-                param.portCout->initBuffer(coutBuffer);
-
             double value, rvalue;
 
             for (k=0; k < param.count; k++)
@@ -2154,7 +2131,7 @@ public:
                         }
 
                         rvalue = (value - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
-                        param.portCout->writeEvent(coutBuffer, CarlaEngineEventControlChange, framesOffset, param.data[k].midiChannel, param.data[k].midiCC, rvalue);
+                        param.portCout->writeEvent(CarlaEngineEventControlChange, framesOffset, param.data[k].midiChannel, param.data[k].midiCC, rvalue);
                     }
                 }
             }
@@ -2167,17 +2144,10 @@ public:
 
         if (evout.count > 0 && m_active)
         {
-            void* moutBuffer;
-
             for (i=0; i < evout.count; i++)
             {
-                moutBuffer = evoutsBuffer[i];
-
-                if (! moutBuffer)
+                if (! evout.data[i].port)
                     continue;
-
-                if (framesOffset == 0 || ! m_activeBefore)
-                    evout.data[i].port->initBuffer(moutBuffer);
 
                 if (evin.data[i].type & CARLA_EVENT_DATA_ATOM)
                 {
@@ -2196,7 +2166,7 @@ public:
                         ev = lv2_event_get(&iter, &data);
 
                         if (ev && data)
-                            evout.data[i].port->writeEvent(evoutsBuffer[i], ev->frames, data, ev->size);
+                            evout.data[i].port->writeEvent(ev->frames, data, ev->size);
 
                         lv2_event_increment(&iter);
                     }
@@ -2211,7 +2181,7 @@ public:
 
                     while (lv2midi_get_event(&state, &eventTime, &eventSize, &eventData) < frames)
                     {
-                        evout.data[i].port->writeEvent(evoutsBuffer[i], eventTime, eventData, eventSize);
+                        evout.data[i].port->writeEvent(eventTime, eventData, eventSize);
                         lv2midi_step(&state);
                     }
                 }
@@ -2259,6 +2229,25 @@ public:
         CarlaPlugin::removeClientPorts();
 
         qDebug("Lv2Plugin::removeClientPorts() - end");
+    }
+
+    void initBuffers()
+    {
+        uint32_t i;
+
+        for (i=0; i < evin.count; i++)
+        {
+            if (evin.data[i].port)
+                evin.data[i].port->initBuffer();
+        }
+
+        for (uint32_t i=0; i < evout.count; i++)
+        {
+            if (evout.data[i].port)
+                evout.data[i].port->initBuffer();
+        }
+
+        CarlaPlugin::initBuffers();
     }
 
     void deleteBuffers()
@@ -2604,7 +2593,7 @@ public:
                 return i;
         }
 
-        return 0;
+        return LV2UI_INVALID_PORT_INDEX;
     }
 
     int handleUiResize(int width, int height)

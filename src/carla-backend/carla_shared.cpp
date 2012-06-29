@@ -163,7 +163,13 @@ CustomDataType customdatastr2type(const char* stype)
 
 short get_new_plugin_id()
 {
-    for (unsigned short i=0; i<MAX_PLUGINS; i++)
+#ifdef BUILD_BRIDGE
+    const unsigned short max = MAX_PLUGINS;
+#else
+    const unsigned short max = (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK) ? 16 : MAX_PLUGINS;
+#endif
+
+    for (unsigned short i=0; i < max; i++)
     {
         if (CarlaPlugins[i] == nullptr)
             return i;

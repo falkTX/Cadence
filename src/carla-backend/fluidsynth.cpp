@@ -821,10 +821,9 @@ public:
         if (m_active && m_activeBefore)
         {
             bool allNotesOffSent = false;
-            void* cinBuffer = param.portCin->getBuffer();
 
             const CarlaEngineControlEvent* cinEvent;
-            uint32_t time, nEvents = param.portCin->getEventCount(cinBuffer);
+            uint32_t time, nEvents = param.portCin->getEventCount();
 
             unsigned char nextBankIds[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 0, 0, 0, 0, 0, 0 };
 
@@ -833,7 +832,7 @@ public:
 
             for (i=0; i < nEvents; i++)
             {
-                cinEvent = param.portCin->getEvent(cinBuffer, i);
+                cinEvent = param.portCin->getEvent(i);
 
                 if (! cinEvent)
                     continue;
@@ -1034,14 +1033,12 @@ public:
 
         if (m_active && m_activeBefore)
         {
-            void* minBuffer = midi.portMin->getBuffer();
-
             const CarlaEngineMidiEvent* minEvent;
-            uint32_t time, nEvents = midi.portMin->getEventCount(minBuffer);
+            uint32_t time, nEvents = midi.portMin->getEventCount();
 
             for (i=0; i < nEvents && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
-                minEvent = midi.portMin->getEvent(minBuffer, i);
+                minEvent = midi.portMin->getEvent(i);
 
                 if (! minEvent)
                     continue;
@@ -1193,11 +1190,6 @@ public:
 
         if (m_active)
         {
-            void* coutBuffer = param.portCout->getBuffer();
-
-            if (framesOffset == 0 || ! m_activeBefore)
-                param.portCout->initBuffer(coutBuffer);
-
             k = FluidSynthVoiceCount;
             param_buffers[k] = fluid_synth_get_active_voice_count(f_synth);
             fixParameterValue(param_buffers[k], param.ranges[k]);
@@ -1205,7 +1197,7 @@ public:
             if (param.data[k].midiCC > 0)
             {
                 double value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
-                param.portCout->writeEvent(coutBuffer, CarlaEngineEventControlChange, framesOffset, param.data[k].midiChannel, param.data[k].midiCC, value);
+                param.portCout->writeEvent(CarlaEngineEventControlChange, framesOffset, param.data[k].midiChannel, param.data[k].midiCC, value);
             }
         } // End of Control Output
 

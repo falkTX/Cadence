@@ -484,7 +484,7 @@ public:
                 return i;
         }
 
-        return 0;
+        return LV2UI_INVALID_PORT_INDEX;
     }
 
 

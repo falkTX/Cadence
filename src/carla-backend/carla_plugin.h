@@ -188,7 +188,12 @@ public:
         m_name = nullptr;
         m_filename = nullptr;
 
-        cin_channel = 0;
+#ifndef BUILD_BRIDGE
+        if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+            cin_channel = m_id;
+        else
+#endif
+            cin_channel = 0;
 
         x_drywet = 1.0;
         x_vol    = 1.0;
@@ -1259,10 +1264,10 @@ public:
         float* aouts_buffer[aout.count];
 
         for (uint32_t i=0; i < ain.count; i++)
-            ains_buffer[i] = (float*)ain.ports[i]->getBuffer();
+            ains_buffer[i] = (float*)ain.ports[i]->getJackAudioBuffer();
 
         for (uint32_t i=0; i < aout.count; i++)
-            aouts_buffer[i] = (float*)aout.ports[i]->getBuffer();
+            aouts_buffer[i] = (float*)aout.ports[i]->getJackAudioBuffer();
 
 #ifndef BUILD_BRIDGE
         if (carla_options.proccess_hq)
@@ -1671,6 +1676,38 @@ public:
         }
 
         qDebug("CarlaPlugin::removeClientPorts() - end");
+    }
+
+    /*!
+     * Initializes all RT buffers of the plugin.
+     */
+    virtual void initBuffers()
+    {
+        uint32_t i;
+
+        for (i=0; i < ain.count; i++)
+        {
+            if (ain.ports[i])
+                ain.ports[i]->initBuffer();
+        }
+
+        for (i=0; i < aout.count; i++)
+        {
+            if (aout.ports[i])
+                aout.ports[i]->initBuffer();
+        }
+
+        if (param.portCin)
+            param.portCin->initBuffer();
+
+        if (param.portCout)
+            param.portCout->initBuffer();
+
+        if (midi.portMin)
+            midi.portMin->initBuffer();
+
+        if (midi.portMout)
+            midi.portMout->initBuffer();
     }
 
     /*!

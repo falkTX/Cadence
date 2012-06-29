@@ -796,10 +796,9 @@ public:
         if (param.portCin && m_active && m_activeBefore)
         {
             bool allNotesOffSent = false;
-            void* cinBuffer = param.portCin->getBuffer();
 
             const CarlaEngineControlEvent* cinEvent;
-            uint32_t time, nEvents = param.portCin->getEventCount(cinBuffer);
+            uint32_t time, nEvents = param.portCin->getEventCount();
 
             uint32_t nextBankId = 0;
             if (midiprog.current >= 0 && midiprog.count > 0)
@@ -807,7 +806,7 @@ public:
 
             for (i=0; i < nEvents; i++)
             {
-                cinEvent = param.portCin->getEvent(cinBuffer, i);
+                cinEvent = param.portCin->getEvent(i);
 
                 if (! cinEvent)
                     continue;
@@ -993,14 +992,12 @@ public:
 
         if (midi.portMin && m_active && m_activeBefore)
         {
-            void* minBuffer = midi.portMin->getBuffer();
-
             const CarlaEngineMidiEvent* minEvent;
-            uint32_t time, nEvents = midi.portMin->getEventCount(minBuffer);
+            uint32_t time, nEvents = midi.portMin->getEventCount();
 
             for (i=0; i < nEvents && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
-                minEvent = midi.portMin->getEvent(minBuffer, i);
+                minEvent = midi.portMin->getEvent(i);
 
                 if (! minEvent)
                     continue;
@@ -1238,11 +1235,6 @@ public:
 
         if (param.portCout && m_active)
         {
-            void* coutBuffer = param.portCout->getBuffer();
-
-            if (framesOffset == 0 || ! m_activeBefore)
-                param.portCout->initBuffer(coutBuffer);
-
             double value;
 
             for (k=0; k < param.count; k++)
@@ -1254,7 +1246,7 @@ public:
                     if (param.data[k].midiCC > 0)
                     {
                         value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
-                        param.portCout->writeEvent(coutBuffer, CarlaEngineEventControlChange, framesOffset, param.data[k].midiChannel, param.data[k].midiCC, value);
+                        param.portCout->writeEvent(CarlaEngineEventControlChange, framesOffset, param.data[k].midiChannel, param.data[k].midiCC, value);
                     }
                 }
             }
