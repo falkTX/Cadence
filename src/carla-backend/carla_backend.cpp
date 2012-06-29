@@ -48,6 +48,14 @@ bool engine_init(const char* client_name)
 {
     qDebug("carla_backend_init(%s)", client_name);
 
+#ifndef Q_OS_WIN
+    if (! getenv("WINE_RT"))
+    {
+        carla_setenv("WINE_RT", "15");
+        carla_setenv("WINE_SVR_RT", "10");
+    }
+#endif
+
     bool started = carla_engine.init(client_name);
 
     if (started)

@@ -1235,11 +1235,16 @@ public:
             return 0; // TODO
 
         case audioMasterIdle:
-            //if (effect)
-            //    effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
+            if (effect)
+                effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
             break;
 
 #if ! VST_FORCE_DEPRECATED
+        case audioMasterPinConnected:
+            // Deprecated in VST SDK 2.4
+            // TODO
+            break;
+
         case audioMasterWantMidi:
             // Deprecated in VST SDK 2.4
             if (self)
@@ -1341,45 +1346,44 @@ public:
             return carla_options.max_parameters;
 #endif
 
-#if 0
         case audioMasterGetParameterQuantization:
             // Deprecated in VST SDK 2.4
+            // TODO
             break;
-#endif
 #endif
 
         case audioMasterIOChanged:
             if (self && self->m_enabled)
             {
+                // TESTING
                 qWarning("audioMasterIOChanged called!");
 
-                carla_proc_lock();
-                self->m_enabled = false;
-                carla_proc_unlock();
+                //carla_proc_lock();
+                //self->m_enabled = false;
+                //carla_proc_unlock();
 
-                if (self->m_active)
-                {
-                    self->effect->dispatcher(self->effect, effStopProcess, 0, 0, nullptr, 0.0f);
-                    self->effect->dispatcher(self->effect, effMainsChanged, 0, 0, nullptr, 0.0f);
-                }
+                //if (self->m_active)
+                //{
+                //    self->effect->dispatcher(self->effect, effStopProcess, 0, 0, nullptr, 0.0f);
+                //    self->effect->dispatcher(self->effect, effMainsChanged, 0, 0, nullptr, 0.0f);
+                //}
 
-                self->reload();
+                //self->reload();
 
-                if (self->m_active)
-                {
-                    self->effect->dispatcher(self->effect, effMainsChanged, 0, 1, nullptr, 0.0f);
-                    self->effect->dispatcher(self->effect, effStartProcess, 0, 0, nullptr, 0.0f);
-                }
+                //if (self->m_active)
+                //{
+                //    self->effect->dispatcher(self->effect, effMainsChanged, 0, 1, nullptr, 0.0f);
+                //    self->effect->dispatcher(self->effect, effStartProcess, 0, 0, nullptr, 0.0f);
+                //}
 
-                callback_action(CALLBACK_RELOAD_ALL, self->m_id, 0, 0, 0.0);
+                //callback_action(CALLBACK_RELOAD_ALL, self->m_id, 0, 0, 0.0);
             }
             return 1;
 
-#if 0
         case audioMasterNeedIdle:
             // Deprecated in VST SDK 2.4
+            // TODO
             break;
-#endif
 
         case audioMasterSizeWindow:
             if (self)
@@ -1396,19 +1400,23 @@ public:
         case audioMasterGetBlockSize:
             return get_buffer_size();
 
-#if 0
         case audioMasterGetInputLatency:
+            // TODO
             return 0;
 
         case audioMasterGetOutputLatency:
+            // TODO
             return 0;
 
+#if ! VST_FORCE_DEPRECATED
         case audioMasterGetPreviousPlug:
             // Deprecated in VST SDK 2.4
+            // TODO
             break;
 
         case audioMasterGetNextPlug:
             // Deprecated in VST SDK 2.4
+            // TODO
             break;
 
         case audioMasterWillReplaceOrAccumulate:
@@ -1426,7 +1434,6 @@ public:
         case audioMasterGetAutomationState:
             return kVstAutomationReadWrite;
 
-#if 0
         case audioMasterOfflineStart:
         case audioMasterOfflineRead:
         case audioMasterOfflineWrite:
@@ -1435,12 +1442,18 @@ public:
             // TODO
             break;
 
+#if ! VST_FORCE_DEPRECATED
         case audioMasterSetOutputSampleRate:
             // Deprecated in VST SDK 2.4
             break;
 
+#ifdef VESTIGE_HEADER
+        case audioMasterGetSpeakerArrangement:
+#else
         case audioMasterGetOutputSpeakerArrangement:
+#endif
             // Deprecated in VST SDK 2.4
+            // TODO
             break;
 #endif
 
@@ -1456,6 +1469,7 @@ public:
             return 0x05; // 0.5
 
         case audioMasterVendorSpecific:
+            // TODO - cockos extensions
             break;
 
 #if ! VST_FORCE_DEPRECATED
@@ -1511,16 +1525,17 @@ public:
         case audioMasterGetLanguage:
             return kVstLangEnglish;
 
-#if 0
+#if ! VST_FORCE_DEPRECATED
         case audioMasterOpenWindow:
         case audioMasterCloseWindow:
             // Deprecated in VST SDK 2.4
+            // TODO
             break;
+#endif
 
         case audioMasterGetDirectory:
             // TODO
             break;
-#endif
 
         case audioMasterUpdateDisplay:
             if (self)
@@ -1550,7 +1565,6 @@ public:
             }
             break;
 
-#if 0
         case audioMasterBeginEdit:
         case audioMasterEndEdit:
             // TODO
@@ -1561,16 +1575,20 @@ public:
             // TODO
             break;
 
+#if ! VST_FORCE_DEPRECATED
         case audioMasterEditFile:
             // Deprecated in VST SDK 2.4
+            // TODO
             break;
 
         case audioMasterGetChunkFile:
             // Deprecated in VST SDK 2.4
+            // TODO
             break;
 
         case audioMasterGetInputSpeakerArrangement:
             // Deprecated in VST SDK 2.4
+            // TODO
             break;
 #endif
 
