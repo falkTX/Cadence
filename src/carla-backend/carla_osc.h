@@ -35,6 +35,7 @@ int osc_handle_set_balance_left(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_set_balance_right(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_set_parameter(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_set_program(CarlaPlugin* plugin, lo_arg** argv);
+int osc_handle_set_midi_program(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_note_on(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_note_off(CarlaPlugin* plugin, lo_arg** argv);
 int osc_handle_bridge_ains_peak(CarlaPlugin* plugin, lo_arg** argv);

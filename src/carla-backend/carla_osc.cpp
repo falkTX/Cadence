@@ -227,31 +227,28 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
             return plugin->setOscBridgeInfo(PluginBridgeUpdateNow, argv);
     }
 
-    // Internal OSC Stuff
-    if (global_osc_data.target)
-    {
-        if (strcmp(method, "/set_active") == 0)
-            return osc_handle_set_active(plugin, argv);
-        if (strcmp(method, "/set_drywet") == 0)
-            return osc_handle_set_drywet(plugin, argv);
-        if (strcmp(method, "/set_vol") == 0)
-            return osc_handle_set_volume(plugin, argv);
-        if (strcmp(method, "/set_balance_left") == 0)
-            return osc_handle_set_balance_left(plugin, argv);
-        if (strcmp(method, "/set_balance_right") == 0)
-            return osc_handle_set_balance_right(plugin, argv);
-        if (strcmp(method, "/set_parameter") == 0)
-            return osc_handle_set_parameter(plugin, argv);
-        if (strcmp(method, "/set_program") == 0)
-            return osc_handle_set_program(plugin, argv);
-        if (strcmp(method, "/note_on") == 0)
-            return osc_handle_note_on(plugin, argv);
-        if (strcmp(method, "/note_off") == 0)
-            return osc_handle_note_off(plugin, argv);
-    }
+    if (strcmp(method, "/set_active") == 0)
+        return osc_handle_set_active(plugin, argv);
+    if (strcmp(method, "/set_drywet") == 0)
+        return osc_handle_set_drywet(plugin, argv);
+    if (strcmp(method, "/set_volume") == 0)
+        return osc_handle_set_volume(plugin, argv);
+    if (strcmp(method, "/set_balance_left") == 0)
+        return osc_handle_set_balance_left(plugin, argv);
+    if (strcmp(method, "/set_balance_right") == 0)
+        return osc_handle_set_balance_right(plugin, argv);
+    if (strcmp(method, "/set_parameter") == 0)
+        return osc_handle_set_parameter(plugin, argv);
+    if (strcmp(method, "/set_program") == 0)
+        return osc_handle_set_program(plugin, argv);
+    if (strcmp(method, "/set_midi_program") == 0)
+        return osc_handle_set_midi_program(plugin, argv);
+    if (strcmp(method, "/note_on") == 0)
+        return osc_handle_note_on(plugin, argv);
+    if (strcmp(method, "/note_off") == 0)
+        return osc_handle_note_off(plugin, argv);
 
     qWarning("osc_message_handler() - unsupported OSC method '%s'", method);
-
     return 1;
 
     Q_UNUSED(types);
@@ -504,8 +501,18 @@ int osc_handle_set_program(CarlaPlugin* plugin, lo_arg** argv)
 {
     qDebug("osc_handle_set_program()");
 
-    uint32_t program_id = argv[0]->i;
-    plugin->setProgram(program_id, true, false, true, true);
+    uint32_t index = argv[0]->i;
+    plugin->setProgram(index, true, false, true, true);
+
+    return 0;
+}
+
+int osc_handle_set_midi_program(CarlaPlugin* plugin, lo_arg** argv)
+{
+    qDebug("osc_handle_set_midi_program()");
+
+    uint32_t index = argv[0]->i;
+    plugin->setMidiProgram(index, true, false, true, true);
 
     return 0;
 }

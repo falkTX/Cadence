@@ -1186,7 +1186,7 @@ class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
         self.l_osc_cmds.setText(""
                                 " /set_active         <i-value>\n"
                                 " /set_drywet         <f-value>\n"
-                                " /set_vol            <f-value>\n"
+                                " /set_volume         <f-value>\n"
                                 " /set_balance_left   <f-value>\n"
                                 " /set_balance_right  <f-value>\n"
                                 " /set_parameter      <i-index> <f-value>\n"
@@ -1196,7 +1196,7 @@ class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
                                 " /note_off           <i-note> <i-velo>\n"
         )
 
-        self.l_example.setText("/Carla/2/set_parameter_value 2 0.5")
+        self.l_example.setText("/Carla/2/set_parameter 2 0.5")
         self.l_example_help.setText("<i>(as in this example, \"2\" is the plugin number)</i>")
 
         self.l_ladspa.setText(self.tr("Everything! (Including LRDF)"))
