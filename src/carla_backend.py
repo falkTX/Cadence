@@ -789,7 +789,7 @@ class Host(object):
         self.lib.is_engine_running.argtypes = None
         self.lib.is_engine_running.restype = c_bool
 
-        self.lib.add_plugin.argtypes = [c_enum, c_enum, c_char_p, c_char_p, c_void_p]
+        self.lib.add_plugin.argtypes = [c_enum, c_enum, c_char_p, c_char_p, c_char_p, c_void_p]
         self.lib.add_plugin.restype = c_short
 
         self.lib.remove_plugin.argtypes = [c_ushort]
@@ -957,8 +957,8 @@ class Host(object):
     def is_engine_running(self):
         return self.lib.is_engine_running()
 
-    def add_plugin(self, btype, ptype, filename, label, extra_stuff):
-        return self.lib.add_plugin(btype, ptype, filename.encode("utf-8"), label.encode("utf-8"), cast(extra_stuff, c_void_p))
+    def add_plugin(self, btype, ptype, filename, name, label, extra_stuff):
+        return self.lib.add_plugin(btype, ptype, filename.encode("utf-8"), name.encode("utf-8") if name else c_nullptr, label.encode("utf-8"), cast(extra_stuff, c_void_p))
 
     def remove_plugin(self, plugin_id):
         return self.lib.remove_plugin(plugin_id)

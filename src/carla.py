@@ -2299,11 +2299,6 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         border_r, border_g, border_b
         ))
 
-              #background-color: qlineargradient(x1:0.0, y1:0.8, x2:1.0, y2:1.0,
-                                  #stop: 0.0 rgba(110, 110, 110, 180),
-                                  #stop: 0.2 rgba(110, 110, 110, 180),
-                                  #stop: 1.0 rgba(%i, %i, %i, 180));
-
     def recheck_hints(self, hints):
         self.pinfo['hints'] = hints
         self.dial_drywet.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_DRYWET)
@@ -3030,8 +3025,8 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             self.tr("JACK has been stopped or crashed.\nPlease start JACK and restart Carla"),
             "You may want to save your session now...", QMessageBox.Ok, QMessageBox.Ok)
 
-    def add_plugin(self, btype, ptype, filename, label, extra_stuff, activate):
-        new_plugin_id = CarlaHost.add_plugin(btype, ptype, filename, label, extra_stuff)
+    def add_plugin(self, btype, ptype, filename, name, label, extra_stuff, activate):
+        new_plugin_id = CarlaHost.add_plugin(btype, ptype, filename, name, label, extra_stuff)
 
         if (new_plugin_id < 0):
             CustomMessageBox(self, QMessageBox.Critical, self.tr("Error"), self.tr("Failed to load plugin"),
@@ -3319,9 +3314,10 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
                 btype = plugin['build']
                 ptype = plugin['type']
                 filename = plugin['binary']
+                name     = x_save_state_dict['Name']
                 label    = plugin['label']
                 extra_stuff   = self.get_extra_stuff(plugin)
-                new_plugin_id = self.add_plugin(btype, ptype, filename, label, extra_stuff, False)
+                new_plugin_id = self.add_plugin(btype, ptype, filename, name, label, extra_stuff, False)
 
                 if new_plugin_id >= 0:
                     pwidget = self.m_plugin_list[new_plugin_id]
@@ -3408,7 +3404,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             filename = dialog.ret_plugin['binary']
             label = dialog.ret_plugin['label']
             extra_stuff = self.get_extra_stuff(dialog.ret_plugin)
-            self.add_plugin(btype, ptype, filename, label, extra_stuff, True)
+            self.add_plugin(btype, ptype, filename, None, label, extra_stuff, True)
 
     @pyqtSlot()
     def slot_remove_all(self):

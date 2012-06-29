@@ -579,7 +579,7 @@ public:
 
     // -------------------------------------------------------------------
 
-    bool init(const char* filename, const char* label)
+    bool init(const char* filename, const char* const name, const char* label)
     {
         QFileInfo file(filename);
 
@@ -618,10 +618,14 @@ public:
             {
                 LinuxSampler::InstrumentManager::instrument_info_t info = instrument->GetInstrumentInfo(instrumentIds[0]);
 
-                m_name  = strdup(label && label[0] ? label : info.InstrumentName.c_str());
                 m_label = strdup(info.Product.c_str());
                 m_maker = strdup(info.Artists.c_str());
                 m_filename = strdup(filename);
+
+                if (name)
+                    m_name = get_unique_name(name);
+                else
+                    m_name = get_unique_name(label && label[0] ? label : info.InstrumentName.c_str());
 
                 sampler_channel = sampler->AddSamplerChannel();
                 sampler_channel->SetEngineType(stype);
@@ -670,9 +674,9 @@ private:
 };
 #endif
 
-short add_plugin_linuxsampler(const char* filename, const char* label, bool isGIG)
+short add_plugin_linuxsampler(const char* const filename, const char* const name, const char* const label, bool isGIG)
 {
-    qDebug("add_plugin_linuxsampler(%s, %s, %s)", filename, label, bool2str(isGIG));
+    qDebug("add_plugin_linuxsampler(%s, %s, %s, %s)", filename, name, label, bool2str(isGIG));
 
 #ifdef WANT_LINUXSAMPLER
     short id = get_new_plugin_id();
@@ -685,7 +689,7 @@ short add_plugin_linuxsampler(const char* filename, const char* label, bool isGI
 
     LinuxSamplerPlugin* plugin = new LinuxSamplerPlugin(id, isGIG);
 
-    if (! plugin->init(filename, label))
+    if (! plugin->init(filename, name, label))
     {
         delete plugin;
         return -1;
@@ -705,16 +709,16 @@ short add_plugin_linuxsampler(const char* filename, const char* label, bool isGI
 #endif
 }
 
-short add_plugin_gig(const char* filename, const char* label)
+short add_plugin_gig(const char* const filename, const char* const name, const char* const label)
 {
-    qDebug("add_plugin_gig(%s, %s)", filename, label);
-    return add_plugin_linuxsampler(filename, label, true);
+    qDebug("add_plugin_gig(%s, %s, %s)", filename, name, label);
+    return add_plugin_linuxsampler(filename, name, label, true);
 }
 
-short add_plugin_sfz(const char* filename, const char* label)
+short add_plugin_sfz(const char* const filename, const char* const name, const char* const label)
 {
-    qDebug("add_plugin_sfz(%s, %s)", filename, label);
-    return add_plugin_linuxsampler(filename, label, false);
+    qDebug("add_plugin_sfz(%s, %s, %s)", filename, name, label);
+    return add_plugin_linuxsampler(filename, name, label, false);
 }
 
 /**@}*/

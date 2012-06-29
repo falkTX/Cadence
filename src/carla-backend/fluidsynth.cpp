@@ -1222,7 +1222,7 @@ public:
 
     // -------------------------------------------------------------------
 
-    bool init(const char* const filename, const char* const label)
+    bool init(const char* const filename, const char* const name, const char* const label)
     {
         // ---------------------------------------------------------------
         // open soundfont
@@ -1240,7 +1240,11 @@ public:
 
         m_filename = strdup(filename);
         m_label    = strdup(label);
-        m_name     = get_unique_name(label);
+
+        if (name)
+            m_name = get_unique_name(name);
+        else
+            m_name = get_unique_name(label);
 
         // ---------------------------------------------------------------
         // register client
@@ -1284,9 +1288,9 @@ private:
 };
 #endif // WANT_FLUIDSYNTH
 
-short add_plugin_sf2(const char* const filename, const char* const label)
+short add_plugin_sf2(const char* const filename, const char* const name, const char* const label)
 {
-    qDebug("add_plugin_sf2(%s, %s)", filename, label);
+    qDebug("add_plugin_sf2(%s, %s, %s)", filename, name, label);
 
 #ifdef WANT_FLUIDSYNTH
     short id = get_new_plugin_id();
@@ -1305,7 +1309,7 @@ short add_plugin_sf2(const char* const filename, const char* const label)
 
     FluidSynthPlugin* const plugin = new FluidSynthPlugin(id);
 
-    if (! plugin->init(filename, label))
+    if (! plugin->init(filename, name, label))
     {
         delete plugin;
         return -1;

@@ -263,11 +263,15 @@ void CarlaPluginThread::run()
         break;
 
     case PLUGIN_THREAD_BRIDGE:
+    {
+        const char* const name = m_plugin->name() ? m_plugin->name() : "(none)";
         /* osc_url  */ arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
         /* stype    */ arguments << m_data1;
         /* filename */ arguments << m_plugin->filename();
+        /* name     */ arguments << name;
         /* label    */ arguments << m_label;
         break;
+    }
 
     default:
         break;

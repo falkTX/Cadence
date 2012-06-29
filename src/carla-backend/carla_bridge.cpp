@@ -379,7 +379,8 @@ public:
             info.maker = strdup(maker);
             info.copyright = strdup(copyright);
 
-            m_name = get_unique_name(name);
+            if (! m_name)
+                m_name = get_unique_name(name);
 
             break;
         }
@@ -621,7 +622,7 @@ public:
 
     // -------------------------------------------------------------------
 
-    bool init(const char* filename, const char* label)
+    bool init(const char* filename, const char* const name, const char* label)
     {
         const char* bridgeBinary = binarytype2str(m_binary);
 
@@ -632,6 +633,9 @@ public:
         }
 
         m_filename = strdup(filename);
+
+        if (name)
+            m_name = get_unique_name(name);
 
         // register plugin now so we can receive OSC (and wait for it)
         CarlaPlugins[m_id] = this;
@@ -678,9 +682,9 @@ private:
     BridgeParamInfo* params;
 };
 
-short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename, const char* label)
+short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* const filename, const char* const name, const char* const label)
 {
-    qDebug("add_plugin_bridge(%i, %i, %s, %s)", btype, ptype, filename, label);
+    qDebug("add_plugin_bridge(%i, %i, %s, %s, %s)", btype, ptype, filename, name, label);
 
     short id = get_new_plugin_id();
 
@@ -688,7 +692,7 @@ short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* filename
     {
         BridgePlugin* plugin = new BridgePlugin(btype, ptype, id);
 
-        if (plugin->init(filename, label))
+        if (plugin->init(filename, name, label))
         {
             plugin->reload();
 

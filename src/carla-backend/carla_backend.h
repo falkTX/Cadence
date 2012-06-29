@@ -548,7 +548,7 @@ CARLA_EXPORT bool engine_init(const char* client_name);
 CARLA_EXPORT bool engine_close();
 CARLA_EXPORT bool is_engine_running();
 
-CARLA_EXPORT short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const char* label, void* extra_stuff);
+CARLA_EXPORT short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const char* const name, const char* label, void* extra_stuff);
 CARLA_EXPORT bool remove_plugin(unsigned short plugin_id);
 
 CARLA_EXPORT PluginInfo* get_plugin_info(unsigned short plugin_id);

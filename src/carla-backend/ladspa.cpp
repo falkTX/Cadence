@@ -1009,7 +1009,7 @@ public:
 
     // -------------------------------------------------------------------
 
-    bool init(const char* const filename, const char* const label, const LADSPA_RDF_Descriptor* const rdf_descriptor_)
+    bool init(const char* const filename, const char* const name, const char* const label, const LADSPA_RDF_Descriptor* const rdf_descriptor_)
     {
         // ---------------------------------------------------------------
         // open DLL
@@ -1066,7 +1066,9 @@ public:
         if (is_ladspa_rdf_descriptor_valid(rdf_descriptor_, descriptor))
             rdf_descriptor = ladspa_rdf_dup(rdf_descriptor_);
 
-        if (rdf_descriptor && rdf_descriptor->Title)
+        if (name)
+            m_name = get_unique_name(name);
+        else if (rdf_descriptor && rdf_descriptor->Title)
             m_name = get_unique_name(rdf_descriptor->Title);
         else
             m_name = get_unique_name(descriptor->Name);
@@ -1093,9 +1095,9 @@ private:
     float* param_buffers;
 };
 
-short add_plugin_ladspa(const char* const filename, const char* const label, const void* const extra_stuff)
+short add_plugin_ladspa(const char* const filename, const char* const name, const char* const label, const void* const extra_stuff)
 {
-    qDebug("add_plugin_ladspa(%s, %s, %p)", filename, label, extra_stuff);
+    qDebug("add_plugin_ladspa(%s, %s, %s, %p)", filename, name, label, extra_stuff);
 
     short id = get_new_plugin_id();
 
@@ -1107,7 +1109,7 @@ short add_plugin_ladspa(const char* const filename, const char* const label, con
 
     LadspaPlugin* const plugin = new LadspaPlugin(id);
 
-    if (! plugin->init(filename, label, (const LADSPA_RDF_Descriptor*)extra_stuff))
+    if (! plugin->init(filename, name, label, (const LADSPA_RDF_Descriptor*)extra_stuff))
     {
         delete plugin;
         return -1;

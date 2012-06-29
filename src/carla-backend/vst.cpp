@@ -1586,7 +1586,7 @@ public:
 
     // -------------------------------------------------------------------
 
-    bool init(const char* filename, const char* label)
+    bool init(const char* filename, const char* const name, const char* label)
     {
         // ---------------------------------------------------------------
         // open DLL
@@ -1629,13 +1629,20 @@ public:
 
         m_filename = strdup(filename);
 
-        char strBuf[STR_MAX] = { 0 };
-        effect->dispatcher(effect, effGetEffectName, 0, 0, strBuf, 0.0f);
-
-        if (strBuf[0] != 0)
-            m_name = get_unique_name(strBuf);
+        if (name)
+        {
+            m_name = get_unique_name(name);
+        }
         else
-            m_name = get_unique_name(label);
+        {
+            char strBuf[STR_MAX] = { 0 };
+            effect->dispatcher(effect, effGetEffectName, 0, 0, strBuf, 0.0f);
+
+            if (strBuf[0] != 0)
+                m_name = get_unique_name(strBuf);
+            else
+                m_name = get_unique_name(label);
+        }
 
         // ---------------------------------------------------------------
         // initialize VST stuff
@@ -1706,9 +1713,9 @@ private:
     int unique2;
 };
 
-short add_plugin_vst(const char* filename, const char* label)
+short add_plugin_vst(const char* const filename, const char* const name, const char* const label)
 {
-    qDebug("add_plugin_vst(%s, %s)", filename, label);
+    qDebug("add_plugin_vst(%s, %s, %s)", filename, name, label);
 
     short id = get_new_plugin_id();
 
@@ -1720,7 +1727,7 @@ short add_plugin_vst(const char* filename, const char* label)
 
     VstPlugin* plugin = new VstPlugin(id);
 
-    if (! plugin->init(filename, label))
+    if (! plugin->init(filename, name, label))
     {
         delete plugin;
         return -1;

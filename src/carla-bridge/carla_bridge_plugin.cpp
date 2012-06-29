@@ -37,10 +37,10 @@ ClientData* client = nullptr;
 
 CARLA_BACKEND_START_NAMESPACE
 
-short add_plugin_ladspa(const char* filename, const char* label, const void* extra_stuff);
-short add_plugin_dssi(const char* filename, const char* label, const void* extra_stuff);
-short add_plugin_lv2(const char* filename, const char* label);
-short add_plugin_vst(const char* filename, const char* label);
+short add_plugin_ladspa(const char* const filename, const char* const name, const char* const label, const void* const extra_stuff);
+short add_plugin_dssi(const char* const filename, const char* const name, const char* const label, const void* const extra_stuff);
+short add_plugin_lv2(const char* const filename, const char* const name, const char* const label);
+short add_plugin_vst(const char* const filename, const char* const name, const char* const label);
 
 CARLA_BACKEND_END_NAMESPACE
 
@@ -452,16 +452,20 @@ int WINAPI WinMain(HINSTANCE hInstX, HINSTANCE, LPSTR, int)
 int main(int argc, char* argv[])
 {
 #endif
-    if (argc != 5)
+    if (argc != 6)
     {
         qWarning("%s :: bad arguments", argv[0]);
         return 1;
     }
 
-    const char* osc_url  = argv[1];
-    const char* stype    = argv[2];
-    const char* filename = argv[3];
-    const char* label    = argv[4];
+    const char* const osc_url  = argv[1];
+    const char* const stype    = argv[2];
+    const char* const filename = argv[3];
+    const char*       name     = argv[4];
+    const char* const label    = argv[5];
+
+    if (strcmp(name, "(none)") == 0)
+        name = nullptr;
 
     short id;
     PluginType itype;
@@ -506,16 +510,16 @@ int main(int argc, char* argv[])
     switch (itype)
     {
     case PLUGIN_LADSPA:
-        id = add_plugin_ladspa(filename, label, nullptr);
+        id = add_plugin_ladspa(filename, name, label, nullptr);
         break;
     case PLUGIN_DSSI:
-        id = add_plugin_dssi(filename, label, nullptr);
+        id = add_plugin_dssi(filename, name, label, nullptr);
         break;
     case PLUGIN_LV2:
-        id = add_plugin_lv2(filename, label);
+        id = add_plugin_lv2(filename, name, label);
         break;
     case PLUGIN_VST:
-        id = add_plugin_vst(filename, label);
+        id = add_plugin_vst(filename, name, label);
         break;
     default:
         id = -1;

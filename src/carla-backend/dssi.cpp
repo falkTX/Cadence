@@ -1290,7 +1290,7 @@ public:
 
     // -------------------------------------------------------------------
 
-    bool init(const char* const filename, const char* const label, const char* const guiFilename)
+    bool init(const char* const filename, const char* const name, const char* const label, const char* const guiFilename)
     {
         // ---------------------------------------------------------------
         // open DLL
@@ -1344,7 +1344,11 @@ public:
         // get info
 
         m_filename = strdup(filename);
-        m_name = get_unique_name(ldescriptor->Name);
+
+        if (name)
+            m_name = get_unique_name(name);
+        else
+            m_name = get_unique_name(ldescriptor->Name);
 
         // ---------------------------------------------------------------
         // register client
@@ -1383,9 +1387,9 @@ private:
     float* param_buffers;
 };
 
-short add_plugin_dssi(const char* const filename, const char* const label, const void* const extra_stuff)
+short add_plugin_dssi(const char* const filename, const char* const name, const char* const label, const void* const extra_stuff)
 {
-    qDebug("add_plugin_dssi(%s, %s, %p)", filename, label, extra_stuff);
+    qDebug("add_plugin_dssi(%s, %s, %s, %p)", filename, name, label, extra_stuff);
 
     short id = get_new_plugin_id();
 
@@ -1397,7 +1401,7 @@ short add_plugin_dssi(const char* const filename, const char* const label, const
 
     DssiPlugin* const plugin = new DssiPlugin(id);
 
-    if (! plugin->init(filename, label, (const char*)extra_stuff))
+    if (! plugin->init(filename, name, label, (const char*)extra_stuff))
     {
         delete plugin;
         return -1;

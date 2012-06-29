@@ -27,15 +27,15 @@ CARLA_BACKEND_START_NAMESPACE
 #endif
 
 // plugin specific
-short add_plugin_ladspa(const char* const filename, const char* const label, const void* const extra_stuff);
-short add_plugin_dssi(const char* const filename, const char* const label, const void* const extra_stuff);
-short add_plugin_lv2(const char* const filename, const char* const label);
-short add_plugin_vst(const char* const filename, const char* const label);
-short add_plugin_gig(const char* const filename, const char* const label);
-short add_plugin_sf2(const char* const filename, const char* const label);
-short add_plugin_sfz(const char* const filename, const char* const label);
+short add_plugin_ladspa(const char* const filename, const char* const name, const char* const label, const void* const extra_stuff);
+short add_plugin_dssi(const char* const filename, const char* const name, const char* const label, const void* const extra_stuff);
+short add_plugin_lv2(const char* const filename, const char* const name, const char* const label);
+short add_plugin_vst(const char* const filename, const char* const name, const char* const label);
+short add_plugin_gig(const char* const filename, const char* const name, const char* const label);
+short add_plugin_sf2(const char* const filename, const char* const name, const char* const label);
+short add_plugin_sfz(const char* const filename, const char* const name, const char* const label);
 #ifndef BUILD_BRIDGE
-short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* const filename, const char* const label);
+short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* const filename, const char* const name, const char* const label);
 #endif
 
 CarlaEngine carla_engine;
@@ -120,7 +120,7 @@ bool engine_close()
     return closed;
 }
 
-short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const char* label, void* extra_stuff)
+short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const char* const name, const char* label, void* extra_stuff)
 {
     qDebug("add_plugin(%i, %i, %s, %s, %p)", btype, ptype, filename, label, extra_stuff);
 
@@ -138,26 +138,26 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
         return -1;
 #endif
 
-        return add_plugin_bridge(btype, ptype, filename, label);
+        return add_plugin_bridge(btype, ptype, filename, name, label);
     }
 #endif
 
     switch (ptype)
     {
     case PLUGIN_LADSPA:
-        return add_plugin_ladspa(filename, label, extra_stuff);
+        return add_plugin_ladspa(filename, name, label, extra_stuff);
     case PLUGIN_DSSI:
-        return add_plugin_dssi(filename, label, extra_stuff);
+        return add_plugin_dssi(filename, name, label, extra_stuff);
     case PLUGIN_LV2:
-        return add_plugin_lv2(filename, label);
+        return add_plugin_lv2(filename, name, label);
     case PLUGIN_VST:
-        return add_plugin_vst(filename, label);
+        return add_plugin_vst(filename, name, label);
     case PLUGIN_GIG:
-        return add_plugin_gig(filename, label);
+        return add_plugin_gig(filename, name, label);
     case PLUGIN_SF2:
-        return add_plugin_sf2(filename, label);
+        return add_plugin_sf2(filename, name, label);
     case PLUGIN_SFZ:
-        return add_plugin_sfz(filename, label);
+        return add_plugin_sfz(filename, name, label);
     default:
         set_last_error("Unknown plugin type");
         return -1;
@@ -1269,7 +1269,7 @@ int main(int argc, char* argv[])
     if (engine_init("carla_demo"))
     {
         set_callback_function(main_callback);
-        short id = add_plugin_lv2("xxx", "http://linuxdsp.co.uk/lv2/peq-2a.lv2");
+        short id = add_plugin_lv2("xxx", "name!!!", "http://linuxdsp.co.uk/lv2/peq-2a.lv2");
 
         if (id >= 0)
         {

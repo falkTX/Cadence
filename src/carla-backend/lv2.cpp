@@ -3088,7 +3088,7 @@ public:
 
     // -------------------------------------------------------------------
 
-    bool init(const char* bundle, const char* URI)
+    bool init(const char* bundle, const char* const name, const char* URI)
     {
         // ---------------------------------------------------------------
         // get plugin from lv2_rdf (lilv)
@@ -3295,7 +3295,11 @@ public:
         // get info
 
         m_filename = strdup(bundle);
-        m_name     = get_unique_name(rdf_descriptor->Name);
+
+        if (name)
+            m_name = get_unique_name(name);
+        else
+            m_name = get_unique_name(rdf_descriptor->Name);
 
         // ---------------------------------------------------------------
         // register client
@@ -3669,9 +3673,9 @@ private:
     std::vector<const char*> customURIDs;
 };
 
-short add_plugin_lv2(const char* filename, const char* label)
+short add_plugin_lv2(const char* const filename, const char* const name, const char* const label)
 {
-    qDebug("add_plugin_lv2(%s, %s)", filename, label);
+    qDebug("add_plugin_lv2(%s, %s, %s)", filename, name, label);
 
     short id = get_new_plugin_id();
 
@@ -3683,7 +3687,7 @@ short add_plugin_lv2(const char* filename, const char* label)
 
     Lv2Plugin* plugin = new Lv2Plugin(id);
 
-    if (! plugin->init(filename, label))
+    if (! plugin->init(filename, name, label))
     {
         delete plugin;
         return -1;
