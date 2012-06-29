@@ -2183,46 +2183,69 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         gui.statusBar().showMessage(message)
 
     def setWidgetColor(self, color):
-        if (color == PALETTE_COLOR_WHITE):
+        if color == PALETTE_COLOR_WHITE:
             r = 110
             g = 110
             b = 110
-        elif (color == PALETTE_COLOR_RED):
+            border_r = 72
+            border_g = 72
+            border_b = 72
+        elif color == PALETTE_COLOR_RED:
             r = 110
             g = 15
             b = 15
-        elif (color == PALETTE_COLOR_GREEN):
+            border_r = 110
+            border_g = 45
+            border_b = 45
+        elif color == PALETTE_COLOR_GREEN:
             r = 15
             g = 110
             b = 15
-        elif (color == PALETTE_COLOR_BLUE):
+            border_r = 72
+            border_g = 110
+            border_b = 72
+        elif color == PALETTE_COLOR_BLUE:
             r = 15
             g = 15
             b = 110
-        elif (color == PALETTE_COLOR_YELLOW):
+            border_r = 45
+            border_g = 45
+            border_b = 110
+        elif color == PALETTE_COLOR_YELLOW:
             r = 110
             g = 110
             b = 15
-        elif (color == PALETTE_COLOR_ORANGE):
+            border_r = 110
+            border_g = 110
+            border_b = 110
+        elif color == PALETTE_COLOR_ORANGE:
             r = 180
             g = 110
             b = 15
-        elif (color == PALETTE_COLOR_BROWN):
+            border_r = 155
+            border_g = 110
+            border_b = 60
+        elif color == PALETTE_COLOR_BROWN:
             r = 110
             g = 35
             b = 15
-        elif (color == PALETTE_COLOR_PINK):
+            border_r = 110
+            border_g = 60
+            border_b = 45
+        elif color == PALETTE_COLOR_PINK:
             r = 110
             g = 15
             b = 110
+            border_r = 110
+            border_g = 45
+            border_b = 110
         else:
             r = 35
             g = 35
             b = 35
-
-        border_r = (r*2/3)+36
-        border_g = (g*2/3)+36
-        border_b = (b*2/3)+36
+            border_r = 60
+            border_g = 60
+            border_b = 60
 
         self.setStyleSheet("""
         QFrame#PluginWidget {
@@ -2262,15 +2285,19 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             border: 1px solid rgb(35, 35, 35);
             border-radius: 4px;
         }
-        """ % (border_r, border_g, border_b,
-               border_r, border_g, border_b,
-               border_r, border_g, border_b,
-               border_r, border_g, border_b,
-               r, g, b,
-               border_r, border_g, border_b,
-               r, g, b,
-               border_r, border_g, border_b
-              ))
+        """ % (
+        # QWidget#widget_buttons
+        border_r, border_g, border_b,
+        border_r, border_g, border_b,
+        border_r, border_g, border_b,
+        border_r, border_g, border_b,
+        # QPushButton#b_*
+        r, g, b,
+        border_r, border_g, border_b,
+        # QFrame#frame_name
+        r, g, b,
+        border_r, border_g, border_b
+        ))
 
               #background-color: qlineargradient(x1:0.0, y1:0.8, x2:1.0, y2:1.0,
                                   #stop: 0.0 rgba(110, 110, 110, 180),

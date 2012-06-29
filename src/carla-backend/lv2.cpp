@@ -3316,8 +3316,8 @@ public:
             // -----------------------------------------------------------
             // find more appropriate ui
 
-            int eQt4, eX11, eGtk2, iX11, iQt4, iExt, iSuil, iFinal;
-            eQt4 = eX11 = eGtk2 = iQt4 = iX11 = iExt = iSuil = iFinal = -1;
+            int eQt4, eHWND, eX11, eGtk2, iHWND, iX11, iQt4, iExt, iSuil, iFinal;
+            eQt4 = eHWND = eX11 = eGtk2 = iQt4 = iHWND = iX11 = iExt = iSuil = iFinal = -1;
 
             for (i=0; i < rdf_descriptor->UICount; i++)
             {
@@ -3329,6 +3329,14 @@ public:
                         eQt4 = i;
 #endif
                     iQt4 = i;
+                    break;
+
+                case LV2_UI_HWND:
+#ifndef BUILD_BRIDGE
+                    if (isUiBridgeable(i) && carla_options.prefer_ui_bridges)
+                        eHWND = i;
+#endif
+                    iHWND = i;
                     break;
 
                 case LV2_UI_X11:
@@ -3367,12 +3375,16 @@ public:
 
             if (eQt4 >= 0)
                 iFinal = eQt4;
+            else if (eHWND >= 0)
+                iFinal = eHWND;
             else if (eX11 >= 0)
                 iFinal = eX11;
             else if (eGtk2 >= 0)
                 iFinal = eGtk2;
             else if (iQt4 >= 0)
                 iFinal = iQt4;
+            else if (iHWND >= 0)
+                iFinal = iHWND;
             else if (iX11 >= 0)
                 iFinal = iX11;
             else if (iExt >= 0)

@@ -32,10 +32,10 @@
 #define LV2_UI_PREFIX LV2_UI_URI "#"
 
 #define LV2_UI__GtkUI            LV2_UI_PREFIX "GtkUI"
-#define LV2_UI__HWNDUI           LV2_UI_PREFIX "HWNDUI"
 #define LV2_UI__PortNotification LV2_UI_PREFIX "PortNotification"
 #define LV2_UI__Qt4UI            LV2_UI_PREFIX "Qt4UI"
 #define LV2_UI__UI               LV2_UI_PREFIX "UI"
+#define LV2_UI__WindowsUI        LV2_UI_PREFIX "WindowsUI"
 #define LV2_UI__X11UI            LV2_UI_PREFIX "X11UI"
 #define LV2_UI__binary           LV2_UI_PREFIX "binary"
 #define LV2_UI__fixedSize        LV2_UI_PREFIX "fixedSize"

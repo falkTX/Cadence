@@ -552,7 +552,7 @@ public:
 
         ui_gtk2             (new_uri(LV2_UI__GtkUI)),
         ui_qt4              (new_uri(LV2_UI__Qt4UI)),
-        ui_hwnd             (new_uri(LV2_UI__HWNDUI)),
+        ui_windows          (new_uri(LV2_UI__WindowsUI)),
         ui_x11              (new_uri(LV2_UI__X11UI)),
         ui_external         (new_uri(LV2_EXTERNAL_UI_URI)),
         ui_external_old     (new_uri(LV2_EXTERNAL_UI_DEPRECATED_URI)),
@@ -695,7 +695,7 @@ public:
     // UI Types
     Lilv::Node ui_gtk2;
     Lilv::Node ui_qt4;
-    Lilv::Node ui_hwnd;
+    Lilv::Node ui_windows;
     Lilv::Node ui_x11;
     Lilv::Node ui_external;
     Lilv::Node ui_external_old;
@@ -1373,7 +1373,7 @@ inline const LV2_RDF_Descriptor* lv2_rdf_new(const char* URI)
                         RDF_UI->Type = LV2_UI_GTK2;
                     else if (UI.is_a(Lv2World.ui_qt4))
                         RDF_UI->Type = LV2_UI_QT4;
-                    else if (UI.is_a(Lv2World.ui_hwnd))
+                    else if (UI.is_a(Lv2World.ui_windows))
                         RDF_UI->Type = LV2_UI_HWND;
                     else if (UI.is_a(Lv2World.ui_x11))
                         RDF_UI->Type = LV2_UI_X11;
@@ -1382,7 +1382,10 @@ inline const LV2_RDF_Descriptor* lv2_rdf_new(const char* URI)
                     else if (UI.is_a(Lv2World.ui_external_old))
                         RDF_UI->Type = LV2_UI_OLD_EXTERNAL;
                     else
+                    {
+                        qWarning("lv2_rdf_new(%s) - got unknown UI type '%s'", URI, UI.get_uri().as_uri());
                         RDF_UI->Type = 0;
+                    }
 
                     // ------------------------------------------
                     // Set UI Information
@@ -1871,7 +1874,7 @@ inline const char* lv2_get_ui_uri(int UiType)
     case LV2_UI_QT4:
         return LV2_UI__Qt4UI;
     case LV2_UI_HWND:
-        return LV2_UI__HWNDUI;
+        return LV2_UI__WindowsUI;
     case LV2_UI_X11:
         return LV2_UI__X11UI;
     case LV2_UI_EXTERNAL:
