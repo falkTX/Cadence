@@ -74,14 +74,14 @@ jack = JackObject()
 
 # Init objects
 DBus.loop = None
-DBus.bus = None
-DBus.a2j = None
+DBus.bus  = None
+DBus.a2j  = None
 DBus.jack = None
 DBus.ladish_control = None
-DBus.ladish_studio = None
-DBus.ladish_room = None
-DBus.ladish_graph = None
-DBus.ladish_app_iface = None
+DBus.ladish_studio  = None
+DBus.ladish_room    = None
+DBus.ladish_graph   = None
+DBus.ladish_app_iface  = None
 DBus.ladish_app_daemon = None
 DBus.patchbay = None
 

@@ -83,8 +83,8 @@ def setSampleRate(srate):
 # Helper functions (engine)
 
 def engineHasFeature(feature):
-    feature_list = jackctl.ReadContainer(["engine"])[1]
-    return bool(dbus.String(feature) in feature_list)
+    featureList = jackctl.ReadContainer(["engine"])[1]
+    return bool(dbus.String(feature) in featureList)
 
 def getEngineParameter(parameter, fallback):
     if not engineHasFeature(parameter):
@@ -107,8 +107,8 @@ def setEngineParameter(parameter, value, optional=True):
 # Helper functions (driver)
 
 def driverHasFeature(feature):
-    feature_list = jackctl.ReadContainer(["driver"])[1]
-    return bool(dbus.String(feature) in feature_list)
+    featureList = jackctl.ReadContainer(["driver"])[1]
+    return bool(dbus.String(feature) in featureList)
 
 def getDriverParameter(parameter, fallback):
     if not driverHasFeature(parameter):
@@ -145,10 +145,12 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
         # -------------------------------------------------------------
         # Align driver text and hide non available ones
 
-        driver_list = jackctl.ReadContainer(["drivers"])[1]
+        driverList = jackctl.ReadContainer(["drivers"])[1]
+
         for i in range(self.obj_server_driver.rowCount()):
             self.obj_server_driver.item(0, i).setTextAlignment(Qt.AlignCenter)
-            if dbus.String(self.obj_server_driver.item(0, i).text().lower()) not in driver_list:
+
+            if dbus.String(self.obj_server_driver.item(0, i).text().lower()) not in driverList:
                 self.obj_server_driver.hideRow(i)
 
         # -------------------------------------------------------------
@@ -799,7 +801,8 @@ if __name__ == '__main__':
     if dbus:
         if initBus(dbus.SessionBus()):
             QMessageBox.critical(None, app.translate("JackSettingsW", "Error"), app.translate("JackSettingsW",
-                "jackdbus is not available!\nIs not possible to configure JACK at this point."))
+                "jackdbus is not available!\n"
+                "Is not possible to configure JACK at this point."))
             sys_exit(1)
     else:
         QMessageBox.critical(None, app.translate("JackSettingsW", "Error"),
