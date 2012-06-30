@@ -799,7 +799,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
             patchcanvas.addGroup(group[iGroupId], group[iGroupName], patchcanvas.SPLIT_YES if (group[iGroupSplit]) else patchcanvas.SPLIT_NO, group[iGroupIcon])
 
         for group_pos in self.m_group_list_pos:
-            patchcanvas.setGroupPos(group_pos[iGroupPosId], group_pos[iGroupPosX_o], group_pos[iGroupPosY_o], group_pos[iGroupPosX_i], group_pos[iGroupPosY_i])
+            patchcanvas.setGroupPosFull(group_pos[iGroupPosId], group_pos[iGroupPosX_o], group_pos[iGroupPosY_o], group_pos[iGroupPosX_i], group_pos[iGroupPosY_i])
 
         for port in self.m_port_list:
             patchcanvas.addPort(port[iPortGroup], port[iPortId], port[iPortName], port[iPortMode], port[iPortType])

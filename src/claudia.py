@@ -1149,7 +1149,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         if x != None and y != None:
             if x2 is None: x2 = "%f" % (float(x) + 50)
             if y2 is None: y2 = "%f" % (float(y) + 50)
-            patchcanvas.setGroupPos(group_id, float(x), float(y), float(x2), float(y2))
+            patchcanvas.setGroupPosFull(group_id, float(x), float(y), float(x2), float(y2))
 
         QTimer.singleShot(0, self.miniCanvasPreview, SLOT("update()"))
 

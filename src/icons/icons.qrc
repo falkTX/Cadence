@@ -93,6 +93,8 @@
             <file>bitmaps/led-big_off.png</file>
             <file>bitmaps/carla_about.png</file>
             <file>bitmaps/carla_knobs1.png</file>
+            <file>bitmaps/canvas/frame_node_header.png</file>
+            <file>bitmaps/canvas/frame_port_bg.png</file>
             <file>bitmaps/textures/metal_1-512px.jpg</file>
             <file>bitmaps/textures/metal_2-512px.jpg</file>
             <file>bitmaps/textures/metal_3-512px.jpg</file>
