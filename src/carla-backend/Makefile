@@ -4,6 +4,10 @@
 # Created by falkTX
 #
 
+# backend ouput driver, default JACK
+driver = JACK
+# driver = RtAudio
+
 CC  ?= gcc
 CXX ?= g++
 
@@ -16,8 +20,13 @@ HAVE_SUIL         = $(shell pkg-config --exists suil-0 && echo true)
 CARLA_C_FLAGS     = $(BASE_FLAGS) $(CFLAGS)
 
 CARLA_CXX_FLAGS   = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
-CARLA_CXX_FLAGS  += $(shell pkg-config --cflags jack liblo QtCore QtGui) -DCARLA_BACKEND_NO_NAMESPACE -DCARLA_ENGINE_JACK
-# CARLA_CXX_FLAGS  += $(shell pkg-config --cflags jack liblo QtCore QtGui) -DCARLA_BACKEND_NO_NAMESPACE -DCARLA_ENGINE_RTAUDIO -D_FORTIFY_SOURCE=2 -DHAVE_GETTIMEOFDAY -D__UNIX_JACK__ -D__LINUX_ALSA__ -D__LINUX_PULSE__
+CARLA_CXX_FLAGS  += $(shell pkg-config --cflags jack liblo QtCore QtGui) -DCARLA_BACKEND_NO_NAMESPACE
+ifeq ($(driver),JACK)
+CARLA_CXX_FLAGS  += -DCARLA_ENGINE_JACK
+endif
+ifeq ($(driver),RtAudio)
+CARLA_CXX_FLAGS  += -DCARLA_ENGINE_RTAUDIO -D_FORTIFY_SOURCE=2 -DHAVE_GETTIMEOFDAY -D__LINUX_ALSA__ -D__LINUX_PULSE__
+endif
 CARLA_CXX_FLAGS  += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT
 CARLA_CXX_FLAGS  += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
 
@@ -51,9 +60,11 @@ OBJS = \
 	lv2-rtmempool/rtmempool.o \
 	../carla-lilv/carla_lilv.a
 
-# OBJS += rtaudio/rtaudio-4.0.11/RtAudio.o
-# CARLA_CXX_FLAGS += -Irtaudio/rtaudio-4.0.11
-# CARLA_LD_FLAGS  += -lasound -lpulse -lpulse-simple
+ifeq ($(driver),RtAudio)
+OBJS += rtaudio/rtaudio-4.0.11/RtAudio.o
+CARLA_CXX_FLAGS += $(shell pkg-config --cflags alsa libpulse-simple) -Irtaudio/rtaudio-4.0.11
+CARLA_LD_FLAGS  += $(shell pkg-config --libs alsa libpulse-simple)
+endif
 
 # --------------------------------------------------------------
 

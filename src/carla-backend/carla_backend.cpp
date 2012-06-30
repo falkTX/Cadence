@@ -1277,6 +1277,8 @@ int main(int argc, char* argv[])
     if (engine_init("carla_demo"))
     {
         set_callback_function(main_callback);
+        set_option(OPTION_PROCESS_MODE, PROCESS_MODE_CONTINUOUS_RACK, nullptr);
+
         short id = add_plugin_lv2("xxx", "name!!!", "http://linuxdsp.co.uk/lv2/peq-2a.lv2");
 
         if (id >= 0)

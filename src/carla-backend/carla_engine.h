@@ -36,6 +36,8 @@ struct CarlaEnginePortNativeHandle {
 
 typedef void* CarlaEngineClientNativeHandle;
 typedef void* CarlaEnginePortNativeHandle;
+#else
+#error Engine type undefined!
 #endif
 
 CARLA_BACKEND_START_NAMESPACE

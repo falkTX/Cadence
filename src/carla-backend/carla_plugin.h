@@ -1264,10 +1264,10 @@ public:
         float* aouts_buffer[aout.count];
 
         for (uint32_t i=0; i < ain.count; i++)
-            ains_buffer[i] = (float*)ain.ports[i]->getJackAudioBuffer();
+            ains_buffer[i] = ain.ports[i]->getJackAudioBuffer();
 
         for (uint32_t i=0; i < aout.count; i++)
-            aouts_buffer[i] = (float*)aout.ports[i]->getJackAudioBuffer();
+            aouts_buffer[i] = aout.ports[i]->getJackAudioBuffer();
 
 #ifndef BUILD_BRIDGE
         if (carla_options.proccess_hq)

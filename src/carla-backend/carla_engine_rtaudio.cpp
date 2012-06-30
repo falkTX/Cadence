@@ -28,8 +28,47 @@ CARLA_BACKEND_START_NAMESPACE
 } /* adjust editor indent */
 #endif
 
+// get initial options from environment
+RtAudio::Api getRtApiFromEnvironment()
+{
+#if defined(Q_OS_LINUX)
+    RtAudio::Api defaultRtApi = RtAudio::LINUX_PULSE;
+#elif defined(Q_OS_MACOS)
+    RtAudio::Api defaultRtApi = RtAudio::MACOSX_CORE;
+#elif defined(Q_OS_WIN)
+    RtAudio::Api defaultRtApi = RtAudio::WINDOWS_DS;
+#endif
+
+    const char* const driver  = getenv("CARLA_BACKEND_DRIVER");
+
+    if (! driver)
+        return defaultRtApi;
+#ifdef Q_OS_LINUX
+    if (strcmp(driver, "LINUX_ALSA") == 0)
+        return RtAudio::LINUX_ALSA;
+    if (strcmp(driver, "LINUX_PULSE") == 0)
+        return RtAudio::LINUX_PULSE;
+    if (strcmp(driver, "LINUX_OSS") == 0)
+        return RtAudio::LINUX_OSS;
+#endif
+    if (strcmp(driver, "UNIX_JACK") == 0)
+        return RtAudio::UNIX_JACK;
+#ifdef Q_OS_MACOS
+    if (strcmp(driver, "MACOSX_CORE") == 0)
+        return RtAudio::MACOSX_CORE;
+#endif
+#ifdef Q_OS_WIN
+    if (strcmp(driver, "WINDOWS_ASIO") == 0)
+        return RtAudio::WINDOWS_ASIO;
+    if (strcmp(driver, "WINDOWS_DS") == 0)
+        return RtAudio::WINDOWS_DS;
+#endif
+
+    return defaultRtApi;
+}
+
 // Global RtAudio stuff
-static RtAudio adac(RtAudio::LINUX_PULSE);
+static RtAudio adac(getRtApiFromEnvironment());
 
 static uint32_t carla_buffer_size = 512;
 static const char* carla_client_name = nullptr;
@@ -244,6 +283,7 @@ CarlaEngineBasePort::CarlaEngineBasePort(CarlaEngineClientNativeHandle* const cl
     isInput(isInput_),
     client(clientHandle)
 {
+    handle = nullptr;
 }
 
 CarlaEngineBasePort::~CarlaEngineBasePort()
@@ -255,6 +295,7 @@ CarlaEngineBasePort::~CarlaEngineBasePort()
 
 CarlaEngineClient::CarlaEngineClient(CarlaPlugin* const plugin)
 {
+    handle = nullptr;
     m_active = false;
     Q_UNUSED(plugin);
 }
@@ -280,7 +321,8 @@ bool CarlaEngineClient::isActive()
 
 bool CarlaEngineClient::isOk()
 {
-    return bool(handle);
+    //return bool(handle);
+    return true;
 }
 
 CarlaEngineBasePort* CarlaEngineClient::addPort(const char* name, CarlaEnginePortType type, bool isInput)
@@ -307,9 +349,8 @@ CarlaEngineAudioPort::CarlaEngineAudioPort(CarlaEngineClientNativeHandle* const 
     Q_UNUSED(name);
 }
 
-void* CarlaEngineAudioPort::getBuffer()
+void CarlaEngineAudioPort::initBuffer()
 {
-    return nullptr;
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -321,42 +362,23 @@ CarlaEngineControlPort::CarlaEngineControlPort(CarlaEngineClientNativeHandle* co
     Q_UNUSED(name);
 }
 
-void* CarlaEngineControlPort::getBuffer()
+void CarlaEngineControlPort::initBuffer()
 {
-    return nullptr;
 }
 
-void CarlaEngineControlPort::initBuffer(void* buffer)
+uint32_t CarlaEngineControlPort::getEventCount()
 {
-    //if (isInput)
-    return;
-
-    Q_UNUSED(buffer);
-}
-
-uint32_t CarlaEngineControlPort::getEventCount(void* buffer)
-{
-    //if (! isInput)
     return 0;
-
-    Q_UNUSED(buffer);
 }
 
-const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(void* buffer, uint32_t index)
+const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(uint32_t index)
 {
-    //if (! isInput)
     return nullptr;
-
-    Q_UNUSED(buffer);
     Q_UNUSED(index);
 }
 
-void CarlaEngineControlPort::writeEvent(void* buffer, CarlaEngineControlEventType type, uint32_t time, uint8_t channel, uint8_t controller, double value)
+void CarlaEngineControlPort::writeEvent(CarlaEngineControlEventType type, uint32_t time, uint8_t channel, uint8_t controller, double value)
 {
-    //if (isInput)
-    return;
-
-    Q_UNUSED(buffer);
     Q_UNUSED(type);
     Q_UNUSED(time);
     Q_UNUSED(channel);
@@ -373,44 +395,23 @@ CarlaEngineMidiPort::CarlaEngineMidiPort(CarlaEngineClientNativeHandle* const cl
     Q_UNUSED(name);
 }
 
-void* CarlaEngineMidiPort::getBuffer()
+void CarlaEngineMidiPort::initBuffer()
 {
-    return nullptr;
 }
 
-void CarlaEngineMidiPort::initBuffer(void* buffer)
+uint32_t CarlaEngineMidiPort::getEventCount()
 {
-    //if (isInput)
-    return;
-
-    Q_UNUSED(buffer);
-}
-
-uint32_t CarlaEngineMidiPort::getEventCount(void* buffer)
-{
-    //if (! isInput)
     return 0;
-
-    Q_UNUSED(buffer);
 }
 
-const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(void* buffer, uint32_t index)
+const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(uint32_t index)
 {
-    //if (! isInput)
     return nullptr;
-
-    return nullptr;
-
-    Q_UNUSED(buffer);
     Q_UNUSED(index);
 }
 
-void CarlaEngineMidiPort::writeEvent(void* buffer, uint32_t time, uint8_t* data, uint8_t size)
+void CarlaEngineMidiPort::writeEvent(uint32_t time, uint8_t* data, uint8_t size)
 {
-    //if (! isInput)
-    return;
-
-    Q_UNUSED(buffer);
     Q_UNUSED(time);
     Q_UNUSED(data);
     Q_UNUSED(size);
