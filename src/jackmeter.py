@@ -25,14 +25,17 @@ from digitalpeakmeter import DigitalPeakMeter
 from jacklib_helpers import *
 from shared import *
 
-global x_port1, x_port2, need_reconnect
+global x_port1, x_port2, x_needReconnect
 x_port1 = 0.0
 x_port2 = 0.0
-need_reconnect = False
+x_needReconnect = False
 
 client = None
 port_1 = None
 port_2 = None
+
+# -------------------------------
+# JACK callbacks
 
 def process_callback(nframes, arg):
     global x_port1, x_port2
@@ -49,8 +52,8 @@ def process_callback(nframes, arg):
     return 0
 
 def port_callback(port_a, port_b, yesno, arg):
-    global need_reconnect
-    need_reconnect = True
+    global x_needReconnect
+    x_needReconnect = True
     return 0
 
 def session_callback(event, arg):
@@ -62,13 +65,16 @@ def session_callback(event, arg):
         else:
             filepath = os.path.join(sys.path[0], "jackmeter.py")
 
-    event.command_line = str(filepath).encode("utf-8")
+    event.command_line = filepath.encode("utf-8")
     jacklib.session_reply(client, event)
 
     if event.type == jacklib.JackSessionSaveAndQuit:
         app.quit()
 
     #jacklib.session_event_free(event)
+
+# -------------------------------
+# helpers
 
 def reconnect_inputs():
     play_port_1 = jacklib.port_by_name(client, "system:playback_1")
@@ -87,8 +93,11 @@ def reconnect_inputs():
         if not (jacklib.port_is_mine(client, this_port) or jacklib.port_connected_to(port_2, port)):
             jacklib.connect(client, port, "%s:in2" % client_name)
 
-    global need_reconnect
-    need_reconnect = False
+    global x_needReconnect
+    x_needReconnect = False
+
+# -------------------------------
+# Meter class
 
 class MeterW(DigitalPeakMeter):
     def __init__(self, parent=None):
@@ -107,17 +116,18 @@ class MeterW(DigitalPeakMeter):
 
         refresh = float(jacklib.get_buffer_size(client)) / jacklib.get_sample_rate(client) * 1000
         self.setRefreshRate(refresh if refresh > 25 else 25)
+
         self.m_peakTimerId = self.startTimer(refresh if refresh > 50 else 50)
 
     def timerEvent(self, event):
         if event.timerId() == self.m_peakTimerId:
-            global x_port1, x_port2, need_reconnect
+            global x_port1, x_port2, x_needReconnect
             self.displayMeter(1, x_port1)
             self.displayMeter(2, x_port2)
             x_port1 = 0.0
             x_port2 = 0.0
 
-            if need_reconnect:
+            if x_needReconnect:
                 reconnect_inputs()
 
         QWidget.timerEvent(self, event)
@@ -132,8 +142,10 @@ if __name__ == '__main__':
     client = jacklib.client_open("M", jacklib.JackSessionID, jacklib.pointer(jack_status))
 
     if not client:
+        errorString = get_jack_status_error_string(jack_status)
         QMessageBox.critical(None, app.translate("MeterW", "Error"), app.translate("MeterW",
-            "Could not connect to JACK, possible errors:\n%s" % get_jack_status_error_string(jack_status)))
+            "Could not connect to JACK, possible reasons:\n"
+            "%s" % errorString))
         sys.exit(1)
 
     port_1 = jacklib.port_register(client, "in1", jacklib.JACK_DEFAULT_AUDIO_TYPE, jacklib.JackPortIsInput, 0)
