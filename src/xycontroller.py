@@ -17,9 +17,10 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
-from PyQt4.QtCore import pyqtSlot, Qt, QPointF, QRectF, QSettings, QTimer, QVariant
-from PyQt4.QtGui import QApplication, QColor, QIcon, QPainter, QPen, QGraphicsItem, QGraphicsScene, QMainWindow
+from PyQt4.QtCore import pyqtSlot, Qt, QPointF, QRectF, QSettings, QTimer
+from PyQt4.QtGui import QApplication, QColor, QGraphicsItem, QGraphicsScene, QMainWindow, QPainter, QPen
 from queue import Queue, Empty as QuequeEmpty
+#from Queue import Queue, Empty as QuequeEmpty
 
 # Imports (Custom)
 import ui_xycontroller
@@ -42,6 +43,7 @@ class XYGraphicsScene(QGraphicsScene):
         self.cc_x = 1
         self.cc_y = 2
         self.m_channels = []
+
         self.m_mouseLock = False
         self.m_smooth = False
         self.m_smooth_x = 0
@@ -318,11 +320,11 @@ class XYControllerW(QMainWindow, ui_xycontroller.Ui_XYControllerW):
 
     @pyqtSlot(int)
     def slot_updateSceneX(self, x):
-        self.scene.setPosX(float(x) / 100, not self.dial_x.isSliderDown())
+        self.scene.setPosX(float(x) / 100, bool(self.sender()))
 
     @pyqtSlot(int)
     def slot_updateSceneY(self, y):
-        self.scene.setPosY(float(y) / 100, not self.dial_y.isSliderDown())
+        self.scene.setPosY(float(y) / 100, bool(self.sender()))
 
     @pyqtSlot(str)
     def slot_checkCC_X(self, text):
@@ -536,7 +538,7 @@ static_event = jacklib.jack_midi_event_t()
 static_mtype = jacklib.c_ubyte * 3
 
 def jack_process_callback(nframes, arg):
-    global jack_midi_in_port, jack_midi_out_port, jack_midi_in_data, jack_midi_out_data
+    #global jack_midi_in_port, jack_midi_out_port, jack_midi_in_data, jack_midi_out_data
 
     # MIDI In
     midi_in_buffer = jacklib.port_get_buffer(jack_midi_in_port, nframes)
@@ -566,13 +568,12 @@ def jack_process_callback(nframes, arg):
             while True:
                 try:
                     mode, note, velo = jack_midi_out_data.get_nowait()
+                    jack_midi_out_data.task_done()
                 except QuequeEmpty:
                     break
 
                 data = static_mtype(mode, note, velo)
                 jacklib.midi_event_write(midi_out_buffer, 0, data, 3)
-
-                jack_midi_out_data.task_done()
 
     return 0
 
@@ -585,7 +586,7 @@ def jack_session_callback(event, arg):
         else:
             filepath = os.path.join(sys.path[0], "xycontroller.py")
 
-    event.command_line = str(filepath).encode("utf-8")
+    event.command_line = filepath.encode("utf-8")
     jacklib.session_reply(jack_client, event)
 
     if event.type == jacklib.JackSessionSaveAndQuit:
@@ -607,8 +608,10 @@ if __name__ == '__main__':
     jack_client = jacklib.client_open("XY-Controller", jacklib.JackSessionID, jacklib.pointer(jack_status))
 
     if not jack_client:
+        errorString = get_jack_status_error_string(jack_status)
         QMessageBox.critical(None, app.translate("XYControllerW", "Error"), app.translate("XYControllerW",
-            "Could not connect to JACK, possible errors:\n%s" % (get_jack_status_error_string(jack_status))))
+            "Could not connect to JACK, possible errors:\n"
+            "%s" % errorString))
         sys.exit(1)
 
     jack_midi_in_port = jacklib.port_register(jack_client, "midi_in", jacklib.JACK_DEFAULT_MIDI_TYPE, jacklib.JackPortIsInput, 0)
