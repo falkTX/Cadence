@@ -46,12 +46,16 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
             self.m_jack_client = jacklib.client_open("Render-Dialog", jacklib.JackNoStartServer, None)
             self.m_closeClient = True
 
-        self.m_buffer_size = jacklib.get_buffer_size(self.m_jack_client)
+        self.m_buffer_size = int(jacklib.get_buffer_size(self.m_jack_client))
+        self.m_sample_rate = int(jacklib.get_sample_rate(self.m_jack_client))
+
         for i in range(self.cb_buffer_size.count()):
             if int(self.cb_buffer_size.itemText(i)) == self.m_buffer_size:
                 self.cb_buffer_size.setCurrentIndex(i)
-
-        self.m_sample_rate = jacklib.get_sample_rate(self.m_jack_client)
+                break
+        else:
+            self.cb_buffer_size.addItem(str(self.m_buffer_size))
+            self.cb_buffer_size.setCurrentIndex(self.cb_buffer_size.count() - 1)
 
         # -------------------------------------------------------------
         # Internal stuff
@@ -71,9 +75,16 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
         self.m_process.waitForFinished()
 
         formats = str(self.m_process.readAllStandardOutput(), encoding="utf-8").split(" ")
+        formatsList = []
+
         for i in range(len(formats) - 1):
-            self.cb_format.addItem(formats[i])
-            if formats[i] == "wav":
+            formatsList.append(formats[i])
+
+        formatsList.sort()
+
+        for i in range(len(formatsList)):
+            self.cb_format.addItem(formatsList[i])
+            if formatsList[i] == "wav":
                 self.cb_format.setCurrentIndex(i)
 
         self.cb_depth.setCurrentIndex(4) #Float
@@ -164,11 +175,11 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
         # Change current directory
         os.chdir(self.le_folder.text())
 
-        if new_buffer_size != jacklib.get_buffer_size(self.m_jack_client):
+        if new_buffer_size != int(jacklib.get_buffer_size(self.m_jack_client)):
             print("NOTICE: buffer size changed before render")
             jacklib.set_buffer_size(self.m_jack_client, new_buffer_size)
 
-        if jacklib.transport_query(self.m_jack_client, None) > jacklib.JackTransportStopped: # >TransportStopped is rolling/starting
+        if jacklib.transport_query(self.m_jack_client, None) > jacklib.JackTransportStopped: # > JackTransportStopped is rolling|starting
             jacklib.transport_stop(self.m_jack_client)
 
         jacklib.transport_locate(self.m_jack_client, min_time * self.m_sample_rate)
@@ -210,7 +221,7 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
         self.progressBar.update()
 
         # Restore buffer size
-        new_buffer_size = jacklib.get_buffer_size(self.m_jack_client)
+        new_buffer_size = int(jacklib.get_buffer_size(self.m_jack_client))
         if new_buffer_size != self.m_buffer_size:
             jacklib.set_buffer_size(self.m_jack_client, new_buffer_size)
 
@@ -220,18 +231,18 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
 
     @pyqtSlot()
     def slot_setStartNow(self):
-        time = jacklib.get_current_transport_frame(self.m_jack_client) / self.m_sample_rate
+        time = int(jacklib.get_current_transport_frame(self.m_jack_client) / self.m_sample_rate)
         secs = time % 60
-        mins = (time / 60) % 60
-        hrs  = (time / 3600) % 60
+        mins = int(time / 60) % 60
+        hrs  = int(time / 3600) % 60
         self.te_start.setTime(QTime(hrs, mins, secs))
 
     @pyqtSlot()
     def slot_setEndNow(self):
-        time = jacklib.get_current_transport_frame(self.m_jack_client) / self.m_sample_rate
+        time = int(jacklib.get_current_transport_frame(self.m_jack_client) / self.m_sample_rate)
         secs = time % 60
-        mins = (time / 60) % 60
-        hrs  = (time / 3600) % 60
+        mins = int(time / 60) % 60
+        hrs  = int(time / 3600) % 60
         self.te_end.setTime(QTime(hrs, mins, secs))
 
     @pyqtSlot(QTime)
@@ -252,7 +263,7 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
 
     @pyqtSlot()
     def slot_updateProgressbar(self):
-        time = jacklib.get_current_transport_frame(self.m_jack_client) / self.m_sample_rate
+        time = int(jacklib.get_current_transport_frame(self.m_jack_client)) / self.m_sample_rate
         self.progressBar.setValue(time)
 
         if time > self.m_max_time or (self.m_last_time > time and not self.m_freewheel):
@@ -283,15 +294,18 @@ if __name__ == '__main__':
             break
     else:
         QMessageBox.critical(None, app.translate("RenderW", "Error"), app.translate("RenderW",
-            "The 'jack_capture' application is not available.\nIs not possible to render without it!"))
+            "The 'jack_capture' application is not available.\n"
+            "Is not possible to render without it!"))
         sys.exit(1)
 
     jack_status = jacklib.jack_status_t(0)
     jack_client = jacklib.client_open("Render", jacklib.JackNoStartServer, jacklib.pointer(jack_status))
 
     if not jack_client:
+        errorString = get_jack_status_error_string(jack_status)
         QMessageBox.critical(None, app.translate("RenderW", "Error"), app.translate("RenderW",
-            "Could not connect to JACK, possible errors:\n%s" % (get_jack_status_error_string(jack_status))))
+            "Could not connect to JACK, possible reasons:\n"
+            "%s" % errorString))
         sys.exit(1)
 
     # Show GUI

@@ -33,7 +33,7 @@ elif "linux" in sys.platform:
     LINUX   = True
     MACOS   = False
     WINDOWS = False
-elif "win" in sys.platform:
+elif sys.platform in ("win32", "win64"):
     LINUX   = False
     MACOS   = False
     WINDOWS = True

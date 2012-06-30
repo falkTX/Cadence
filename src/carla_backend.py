@@ -32,12 +32,10 @@ except:
     print("LRDF Support not available (LADSPA-RDF will be disabled)")
     haveLRDF = False
 
-if sys.int_info[1] == 4:
+if sys.int_info[1] == 4 or sys.platform == "win64":
     is64bit = True
-    c_uintptr = c_uint64
 else:
     is64bit = False
-    c_uintptr = c_uint32
 
 # Convert a ctypes struct into a dict
 def struct_to_dict(struct):
@@ -550,6 +548,11 @@ def checkPluginSFZ(filename, tool):
 
 c_enum = c_int
 c_nullptr = None
+
+if is64bit:
+    c_uintptr = c_uint64
+else:
+    c_uintptr = c_uint32
 
 # static max values
 MAX_PLUGINS     = 99
