@@ -198,6 +198,10 @@ class StudioNameW(QDialog, ui_claudia_studioname.Ui_StudioNameW):
     def slot_setReturn(self):
         self.ret_studio_name = self.le_name.text()
 
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
+
 # Studio List Dialog
 class StudioListW(QDialog, ui_claudia_studiolist.Ui_StudioListW):
     def __init__(self, parent):
@@ -240,6 +244,10 @@ class StudioListW(QDialog, ui_claudia_studiolist.Ui_StudioListW):
         if self.tableWidget.rowCount() >= 0:
             self.ret_studio_name = self.tableWidget.item(self.tableWidget.currentRow(), 0).text()
 
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
+
 # Create Room Dialog
 class CreateRoomW(QDialog, ui_claudia_createroom.Ui_CreateRoomW):
     def __init__(self, parent):
@@ -271,6 +279,10 @@ class CreateRoomW(QDialog, ui_claudia_createroom.Ui_CreateRoomW):
         if self.lw_templates.count() > 0:
             self.ret_room_name = self.le_name.text()
             self.ret_room_template = self.lw_templates.currentItem().text()
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
 
 # Project Name Dialog
 class ProjectNameW(QDialog, ui_claudia_projectname.Ui_ProjectNameW):
@@ -332,6 +344,10 @@ class ProjectNameW(QDialog, ui_claudia_projectname.Ui_ProjectNameW):
         self.ret_project_name = self.le_name.text()
         self.ret_project_path = self.le_path.text()
 
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
+
 # Project Properties Dialog
 class ProjectPropertiesW(QDialog, ui_claudia_projectproperties.Ui_ProjectPropertiesW):
     def __init__(self, parent, name, description, notes):
@@ -371,6 +387,10 @@ class ProjectPropertiesW(QDialog, ui_claudia_projectproperties.Ui_ProjectPropert
     def slot_checkText_name(self, text):
         check = bool(text)
         self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(check)
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
 
 # Run Custom App Dialog
 class RunCustomW(QDialog, ui_claudia_runcustom.Ui_RunCustomW):
@@ -440,6 +460,10 @@ class RunCustomW(QDialog, ui_claudia_runcustom.Ui_RunCustomW):
         self.ret_app_obj[iAppTerminal] = self.cb_terminal.isChecked()
         self.ret_app_obj[iAppLevel] = level
         self.ret_app_obj[iAppActive] = False
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
 
 # Add Application Dialog
 class ClaudiaLauncherW(QDialog):
@@ -518,6 +542,10 @@ class ClaudiaLauncherW(QDialog):
     def closeEvent(self, event):
         self.saveSettings()
         QDialog.closeEvent(self, event)
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
 
 # Main Window
 class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):

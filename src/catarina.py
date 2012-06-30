@@ -86,6 +86,10 @@ class CatarinaAddGroupW(QDialog, ui_catarina_addgroup.Ui_CatarinaAddGroupW):
         self.ret_group_name = self.le_group_name.text()
         self.ret_group_split = self.cb_split.isChecked()
 
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
+
 # Remove Group Dialog
 class CatarinaRemoveGroupW(QDialog, ui_catarina_removegroup.Ui_CatarinaRemoveGroupW):
     def __init__(self, parent, group_list):
@@ -120,6 +124,10 @@ class CatarinaRemoveGroupW(QDialog, ui_catarina_removegroup.Ui_CatarinaRemoveGro
     def slot_setReturn(self):
         if self.tw_group_list.rowCount() >= 0:
             self.ret_group_id = int(self.tw_group_list.item(self.tw_group_list.currentRow(), 0).text())
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
 
 # Rename Group Dialog
 class CatarinaRenameGroupW(QDialog, ui_catarina_renamegroup.Ui_CatarinaRenameGroupW):
@@ -158,6 +166,10 @@ class CatarinaRenameGroupW(QDialog, ui_catarina_renamegroup.Ui_CatarinaRenameGro
         self.ret_group_id = int(self.cb_group_to_rename.currentText().split(" - ", 1)[0])
         self.ret_new_group_name = self.le_new_group_name.text()
 
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
+
 # Add Port Dialog
 class CatarinaAddPortW(QDialog, ui_catarina_addport.Ui_CatarinaAddPortW):
     def __init__(self, parent, group_list, port_id):
@@ -190,6 +202,10 @@ class CatarinaAddPortW(QDialog, ui_catarina_addport.Ui_CatarinaAddPortW):
             self.ret_port_name = self.le_port_name.text()
             self.ret_port_mode = patchcanvas.PORT_MODE_INPUT if self.rb_flags_input.isChecked() else patchcanvas.PORT_MODE_OUTPUT
             self.ret_port_type = self.cb_port_type.currentIndex() + 1 # 1, 2, 3 or 4 for patchcanvas types
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
 
 # Remove Port Dialog
 class CatarinaRemovePortW(QDialog, ui_catarina_removeport.Ui_CatarinaRemovePortW):
@@ -266,6 +282,10 @@ class CatarinaRemovePortW(QDialog, ui_catarina_removeport.Ui_CatarinaRemovePortW
     def slot_setReturn(self):
         if self.tw_port_list.rowCount() > 0:
             self.ret_port_id = int(self.tw_port_list.item(self.tw_port_list.currentRow(), 0).text())
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
 
 # Rename Port Dialog
 class CatarinaRenamePortW(QDialog, ui_catarina_renameport.Ui_CatarinaRenamePortW):
@@ -351,6 +371,10 @@ class CatarinaRenamePortW(QDialog, ui_catarina_renameport.Ui_CatarinaRenamePortW
         if self.tw_port_list.rowCount() > 0:
             self.ret_port_id = int(self.tw_port_list.item(self.tw_port_list.currentRow(), 0).text())
             self.ret_new_port_name = self.le_new_name.text()
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
 
 # Connect Ports Dialog
 class CatarinaConnectPortsW(QDialog, ui_catarina_connectports.Ui_CatarinaConnectPortsW):
@@ -438,6 +462,10 @@ class CatarinaConnectPortsW(QDialog, ui_catarina_connectports.Ui_CatarinaConnect
         if self.lw_outputs.currentRow() >= 0 and self.lw_inputs.currentRow() >= 0:
             self.ret_port_out_id = int(self.lw_outputs.currentItem().text().split(" - ", 1)[0])
             self.ret_port_in_id = int(self.lw_inputs.currentItem().text().split(" - ", 1)[0])
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
 
 # Disconnect Ports Dialog
 class CatarinaDisconnectPortsW(QDialog, ui_catarina_disconnectports.Ui_CatarinaDisconnectPortsW):
@@ -530,6 +558,10 @@ class CatarinaDisconnectPortsW(QDialog, ui_catarina_disconnectports.Ui_CatarinaD
         if self.tw_connections.currentRow() >= 0:
             self.ret_port_out_id = int(self.tw_connections.item(self.tw_connections.currentRow(), 0).text().split(" - ", 1)[0])
             self.ret_port_in_id  = int(self.tw_connections.item(self.tw_connections.currentRow(), 1).text().split(" - ", 1)[0])
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
 
 # Main Window
 class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):

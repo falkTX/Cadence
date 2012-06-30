@@ -178,6 +178,8 @@ class LogsReadThread(QThread):
                     self.log_ladish_file.close()
                     self.log_ladish_file.open(QIODevice.ReadOnly)
 
+                self.m_purgeLogs = False
+
             else:
                 text_jack   = ""
                 text_a2j    = ""

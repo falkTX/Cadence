@@ -20,7 +20,7 @@
 import os, sys
 from unicodedata import normalize
 from PyQt4.QtCore import qWarning, SIGNAL, SLOT
-from PyQt4.QtGui import QIcon, QMessageBox, QFileDialog
+from PyQt4.QtGui import QFileDialog, QIcon, QMessageBox
 
 # Set Platform
 if sys.platform == "darwin":
@@ -42,8 +42,11 @@ else:
     MACOS   = False
     WINDOWS = False
 
-if LINUX or MACOS:
+try:
     from signal import signal, SIGINT, SIGTERM, SIGUSR1, SIGUSR2
+    haveSignal = True
+except:
+    haveSignal = False
 
 # Set Version
 VERSION = "0.5.0"
@@ -74,15 +77,15 @@ PATH_env = os.getenv("PATH")
 if PATH_env is None:
     qWarning("PATH variable not set")
     if LINUX:
-        PATH = ("/bin", "/sbin", "/usr/local/bin", "/usr/local/sbin", "/usr/bin", "/usr/sbin", "/usr/games")
+        PATH = ("/usr/local/bin", "/usr/bin", "/bin", "/usr/games")
     elif MACOS:
-        PATH = ("TODO",)
+        PATH = ("/opt/local/bin", "/usr/local/bin", "/usr/bin", "/bin")
     elif WINDOWS:
         WINDIR = os.getenv("WINDIR")
-        PATH = (os.path.join(WINDIR, "system32"), WINDIR)
+        PATH   = (os.path.join(WINDIR, "system32"), WINDIR)
         del WINDIR
     else:
-        PATH = ("/bin", "/usr/local/bin", "/usr/bin")
+        PATH = ("/usr/local/bin", "/usr/bin", "/bin")
 else:
     PATH = PATH_env.split(os.pathsep)
 del PATH_env
@@ -238,7 +241,7 @@ def CustomMessageBox(self_, icon, title, text, extraText="", buttons=QMessageBox
 
 # signal handler for unix systems
 def set_up_signals(self_):
-    if LINUX or MACOS:
+    if haveSignal:
         global x_gui
         x_gui = self_
         signal(SIGINT,  signal_handler)

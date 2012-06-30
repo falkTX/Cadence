@@ -780,6 +780,10 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
         QMessageBox.critical(self, self.tr("Error"), self.tr("jackdbus is not available!\nIt's not possible to configure JACK at this point."))
         self.close()
 
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
+
 # -------------------------------------------------------------
 # Allow to use this as a standalone app
 if __name__ == '__main__':

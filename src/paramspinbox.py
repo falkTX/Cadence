@@ -55,6 +55,10 @@ class CustomInputDialog(QDialog, ui_inputdialog_value.Ui_Dialog):
     def setReturnValue(self):
         self.ret_value = self.doubleSpinBox.value()
 
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
+
 # Progress-Bar used for ParamSpinBox
 class ParamProgressBar(QProgressBar):
     def __init__(self, parent):

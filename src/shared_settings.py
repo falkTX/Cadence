@@ -514,3 +514,7 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
 
                 for sfz in sfzs:
                     self.lw_sfz.addItem(sfz)
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()

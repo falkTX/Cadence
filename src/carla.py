@@ -1229,6 +1229,10 @@ class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
                                    "</ul>"))
         self.l_vst.setText(self.tr("<p>About 85&#37; complete (missing vst bank/presets and some minor stuff)</p>"))
 
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
+
 # Single Plugin Parameter
 class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
     def __init__(self, parent, pinfo, plugin_id):
@@ -1951,6 +1955,10 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         for ptype, pid, pwidget in self.parameter_list:
             if (ptype == PARAMETER_OUTPUT):
                 pwidget.set_parameter_value(CarlaHost.get_current_parameter_value(self.plugin_id, pid), False)
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
 
 # (New) Plugin Widget
 class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
