@@ -352,9 +352,15 @@ def setXruns(self_, xruns):
 # -------------------------------------------------------------
 # External Dialogs
 
+global jacksettingsW, logsW
+jacksettingsW = logsW = None
+
 @pyqtSlot()
 def slot_showJackSettings(self_):
-    jacksettings.JackSettingsW(self_).exec_()
+    global jacksettingsW
+    if not jacksettingsW:
+        jacksettingsW = jacksettings.JackSettingsW(self_)
+    jacksettingsW.exec_()
 
     # Force update of gui widgets
     if not jack.client:
@@ -362,11 +368,16 @@ def slot_showJackSettings(self_):
 
 @pyqtSlot()
 def slot_showLogs(self_):
-    logs.LogsW(self_).show()
+    global logsW
+    if not logsW:
+        logsW = logs.LogsW(self_)
+    logsW.show()
 
 @pyqtSlot()
 def slot_showRender(self_):
-    render.RenderW(self_).exec_()
+    renderW = render.RenderW(self_)
+    renderW.exec_()
+    del renderW
 
 # -------------------------------------------------------------
 # Shared Connections
