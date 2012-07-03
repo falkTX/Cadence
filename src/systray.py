@@ -16,10 +16,6 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
-# TESTING - remove if python3
-from sip import setapi
-setapi("QString", 2)
-
 # Imports (Global)
 from os import getenv
 from PyQt4.QtCore import SIGNAL

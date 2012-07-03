@@ -1230,7 +1230,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    bool doInit = QString(filename).endsWith("dssi-vst.so", Qt::CaseInsensitive);
+    bool doInit = ! QString(filename).endsWith("dssi-vst.so", Qt::CaseInsensitive);
 
     switch (type)
     {

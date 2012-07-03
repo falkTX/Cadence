@@ -79,7 +79,7 @@ public:
 
         m_type = PLUGIN_LADSPA;
 
-        handle = nullptr;
+        handle = h2 = nullptr;
         descriptor = nullptr;
         rdf_descriptor = nullptr;
 
@@ -90,11 +90,24 @@ public:
     {
         qDebug("LadspaPlugin::~LadspaPlugin()");
 
-        if (handle && descriptor && descriptor->deactivate && m_activeBefore)
-            descriptor->deactivate(handle);
+        if (descriptor)
+        {
+            if (descriptor->deactivate && m_activeBefore)
+            {
+                if (handle)
+                    descriptor->deactivate(handle);
+                if (h2)
+                    descriptor->deactivate(h2);
+            }
 
-        if (handle && descriptor && descriptor->cleanup)
-            descriptor->cleanup(handle);
+            if (descriptor->cleanup)
+            {
+                if (handle)
+                    descriptor->cleanup(handle);
+                if (h2)
+                    descriptor->cleanup(h2);
+            }
+        }
 
         if (rdf_descriptor)
             ladspa_rdf_free(rdf_descriptor);
@@ -341,7 +354,7 @@ public:
 
         const unsigned long PortCount = descriptor->PortCount;
 
-        for (unsigned long i=0; i<PortCount; i++)
+        for (unsigned long i=0; i < PortCount; i++)
         {
             const LADSPA_PortDescriptor PortType = descriptor->PortDescriptors[i];
             if (LADSPA_IS_PORT_AUDIO(PortType))
@@ -354,6 +367,9 @@ public:
             else if (LADSPA_IS_PORT_CONTROL(PortType))
                 params += 1;
         }
+
+        if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK && (ains == 1 || aouts == 1) && ! h2)
+            h2 = descriptor->instantiate(descriptor, get_sample_rate());
 
         if (ains > 0)
         {
@@ -599,12 +615,14 @@ public:
                 param_buffers[j] = def;
 
                 descriptor->connect_port(handle, i, &param_buffers[j]);
+                if (h2) descriptor->connect_port(h2, i, &param_buffers[j]);
             }
             else
             {
                 // Not Audio or Control
                 qCritical("ERROR - Got a broken Port (neither Audio or Control)");
                 descriptor->connect_port(handle, i, nullptr);
+                if (h2) descriptor->connect_port(h2, i, nullptr);
             }
         }
 
@@ -651,7 +669,7 @@ public:
         if (aouts > 0)
             m_hints |= PLUGIN_CAN_VOLUME;
 
-        if (aouts >= 2 && aouts%2 == 0)
+        if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK || (aouts >= 2 && aouts%2 == 0))
             m_hints |= PLUGIN_CAN_BALANCE;
 
         x_client->activate();
@@ -676,7 +694,9 @@ public:
 
         if (ain.count > 0)
         {
-            if (ain.count == 1)
+            uint32_t count = h2 ? 2 : ain.count;
+
+            if (count == 1)
             {
                 for (k=0; k < frames; k++)
                 {
@@ -684,7 +704,7 @@ public:
                         ains_peak_tmp[0] = abs(inBuffer[0][k]);
                 }
             }
-            else if (ain.count >= 1)
+            else if (count > 1)
             {
                 for (k=0; k < frames; k++)
                 {
@@ -810,10 +830,16 @@ public:
                     if (cinEvent->channel == cin_channel)
                     {
                         if (descriptor->deactivate)
+                        {
                             descriptor->deactivate(handle);
+                            if (h2) descriptor->deactivate(h2);
+                        }
 
                         if (descriptor->activate)
+                        {
                             descriptor->activate(handle);
+                            if (h2) descriptor->activate(h2);
+                        }
                     }
                     break;
 
@@ -848,24 +874,36 @@ public:
             if (! m_activeBefore)
             {
                 if (descriptor->activate)
+                {
                     descriptor->activate(handle);
+                    if (h2) descriptor->activate(h2);
+                }
             }
 
             for (i=0; i < ain.count; i++)
+            {
                 descriptor->connect_port(handle, ain.rindexes[i], inBuffer[i]);
+                if (h2 && i == 0) descriptor->connect_port(h2, ain.rindexes[i], inBuffer[1]);
+            }
 
             for (i=0; i < aout.count; i++)
+            {
                 descriptor->connect_port(handle, aout.rindexes[i], outBuffer[i]);
+                if (h2 && i == 0) descriptor->connect_port(h2, aout.rindexes[i], outBuffer[1]);
+            }
 
-            if (descriptor->run)
-                descriptor->run(handle, frames);
+            descriptor->run(handle, frames);
+            if (h2) descriptor->run(h2, frames);
         }
         else
         {
             if (m_activeBefore)
             {
                 if (descriptor->deactivate)
+                {
                     descriptor->deactivate(handle);
+                    if (h2) descriptor->deactivate(h2);
+                }
             }
         }
 
@@ -883,7 +921,9 @@ public:
             double bal_rangeL, bal_rangeR;
             float oldBufLeft[do_balance ? frames : 0];
 
-            for (i=0; i < aout.count; i++)
+            uint32_t count = h2 ? 2 : aout.count;
+
+            for (i=0; i < count; i++)
             {
                 // Dry/Wet and Volume
                 if (do_drywet || do_volume)
@@ -892,7 +932,7 @@ public:
                     {
                         if (do_drywet)
                         {
-                            if (aout.count == 1)
+                            if (aout.count == 1 && ! h2)
                                 outBuffer[i][k] = (outBuffer[i][k]*x_drywet)+(inBuffer[0][k]*(1.0-x_drywet));
                             else
                                 outBuffer[i][k] = (outBuffer[i][k]*x_drywet)+(inBuffer[i][k]*(1.0-x_drywet));
@@ -1081,7 +1121,7 @@ public:
     }
 
 private:
-    LADSPA_Handle handle;
+    LADSPA_Handle handle, h2;
     const LADSPA_Descriptor* descriptor;
     const LADSPA_RDF_Descriptor* rdf_descriptor;
 
@@ -1113,13 +1153,16 @@ short add_plugin_ladspa(const char* const filename, const char* const name, cons
 #ifndef BUILD_BRIDGE
     if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
     {
-        if (/* inputs */ ((plugin->audioInCount() != 0 && plugin->audioInCount() != 2)) || /* outputs */ ((plugin->audioOutCount() != 0 && plugin->audioOutCount() != 2)))
+        uint32_t ins  = plugin->audioInCount();
+        uint32_t outs = plugin->audioOutCount();
+
+        if (ins > 2 || outs > 2 || (ins != outs && ins != 0 && outs != 0))
         {
-            set_last_error("Carla Rack Mode can only work with Stereo plugins, sorry!");
+            set_last_error("Carla Rack Mode can only work with Mono or Stereo plugins, sorry!");
+            qWarning("data: %i %i | %i %i %i", ins > 2, outs > 2, ins != outs, ins != 0, outs != 0);
             delete plugin;
             return -1;
         }
-
     }
 #endif
 

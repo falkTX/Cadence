@@ -1169,8 +1169,8 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
 
 # About Carla Dialog
 class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
-    def __init__(self, parent=None):
-        super(CarlaAboutW, self).__init__(parent)
+    def __init__(self, parent):
+        QDialog.__init__(self, parent)
         self.setupUi(self)
 
         self.l_about.setText(self.tr(""
@@ -2031,10 +2031,10 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.peaks_in  = int(audio_count['ins'])
         self.peaks_out = int(audio_count['outs'])
 
-        if self.peaks_in > 2:
+        if self.peaks_in > 2 or PROCESS_MODE == PROCESS_MODE_CONTINUOUS_RACK:
             self.peaks_in = 2
 
-        if self.peaks_out > 2:
+        if self.peaks_out > 2 or PROCESS_MODE == PROCESS_MODE_CONTINUOUS_RACK:
             self.peaks_out = 2
 
         self.peak_in.setChannels(self.peaks_in)
@@ -3048,7 +3048,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             pwidget.peak_in.setRefreshRate(self.m_savedSettings["Main/RefreshInterval"])
             pwidget.peak_out.setRefreshRate(self.m_savedSettings["Main/RefreshInterval"])
 
-            if (activate):
+            if activate:
                 pwidget.set_active(True, True, True)
 
         return new_plugin_id
@@ -3515,20 +3515,18 @@ if __name__ == '__main__':
     gui = CarlaMainW()
 
     # Init backend
-    process_mode       = gui.settings.value("Engine/ProcessMode", PROCESS_MODE_MULTIPLE_CLIENTS, type=int)
+    PROCESS_MODE       = gui.settings.value("Engine/ProcessMode", PROCESS_MODE_MULTIPLE_CLIENTS, type=int)
     MAX_PARAMETERS     = gui.settings.value("Engine/MaxParameters", MAX_PARAMETERS, type=int)
     prefer_ui_bridges  = gui.settings.value("Engine/PreferUIBridges", True, type=bool)
     proccess_hq        = gui.settings.value("Engine/ProcessHQ", False, type=bool)
     osc_gui_timeout    = gui.settings.value("Engine/OscGuiTimeout", 40, type=int)
     use_dssi_chunks    = gui.settings.value("Engine/UseDSSIChunks", False, type=bool)
 
-    if os.getenv("LADISH_APP_NAME") and process_mode == PROCESS_MODE_MULTIPLE_CLIENTS:
+    if os.getenv("LADISH_APP_NAME") and PROCESS_MODE == PROCESS_MODE_MULTIPLE_CLIENTS:
         print("LADISH detected but using multiple clients (not allowed), forcing single client now")
-        process_mode = PROCESS_MODE_SINGLE_CLIENT
+        PROCESS_MODE = PROCESS_MODE_SINGLE_CLIENT
 
-    #process_mode = PROCESS_MODE_CONTINUOUS_RACK
-
-    CarlaHost.set_option(OPTION_PROCESS_MODE, process_mode, "")
+    CarlaHost.set_option(OPTION_PROCESS_MODE, PROCESS_MODE, "")
     CarlaHost.set_option(OPTION_MAX_PARAMETERS, MAX_PARAMETERS, "")
     CarlaHost.set_option(OPTION_PROCESS_HQ, proccess_hq, "")
     CarlaHost.set_option(OPTION_PREFER_UI_BRIDGES, prefer_ui_bridges, "")

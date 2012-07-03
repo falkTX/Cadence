@@ -67,6 +67,7 @@ void toolkit_loop()
     }
     else
     {
+        // TODO - window->setCentralWidget(widget); or other simpler method
         window = new QDialog();
         window->resize(10, 10);
         window->setLayout(new QVBoxLayout(window));

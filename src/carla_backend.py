@@ -678,6 +678,8 @@ PROCESS_MODE_SINGLE_CLIENT    = 0
 PROCESS_MODE_MULTIPLE_CLIENTS = 1
 PROCESS_MODE_CONTINUOUS_RACK  = 2
 
+PROCESS_MODE = PROCESS_MODE_MULTIPLE_CLIENTS
+
 class ParameterData(Structure):
     _fields_ = [
         ("type", c_enum),
