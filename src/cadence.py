@@ -162,6 +162,32 @@ def get_windows_information():
 
 # ---------------------------------------------------------------------
 
+def isDesktopFileInstalled(desktop):
+    for X_PATH in XDG_APPLICATIONS_PATH:
+        if os.path.exists(os.path.join(X_PATH, desktop)):
+            return True
+    else:
+        return False
+
+def getXdgProperty(fileRead, key):
+    fileReadSplit = fileRead.split(key, 1)
+
+    if len(fileReadSplit) > 1:
+        value = fileReadSplit[1].split(";\n", 1)[0].strip().replace("=", "", 1)
+        return value
+
+    return None
+
+def searchAndSetComboBoxValue(comboBox, value):
+    for i in range(comboBox.count()):
+        if comboBox.itemText(i).replace("/","-") == value:
+            comboBox.setCurrentIndex(i)
+            comboBox.setEnabled(True)
+            return True
+    return False
+
+# ---------------------------------------------------------------------
+
 # Main Window
 class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
     def __init__(self, parent=None):
@@ -214,7 +240,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         self.tw_tweaks.setCurrentCell(0, 0)
 
-        # Audio Plugins PATH
+        # -------------------------------------------------------------
+        # Set-up GUI (Tweaks, Audio Plugins PATH)
 
         self.b_tweak_plugins_change.setEnabled(False)
         self.b_tweak_plugins_remove.setEnabled(False)
@@ -262,9 +289,84 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.list_LV2.setCurrentRow(0)
         self.list_VST.setCurrentRow(0)
 
-        # Default Applications
+        # -------------------------------------------------------------
+        # Set-up GUI (Tweaks, Default Applications)
 
-        # WineASIO
+        for desktop in DESKTOP_X_IMAGE:
+            if isDesktopFileInstalled(desktop):
+                self.cb_app_image.addItem(desktop)
+
+        for desktop in DESKTOP_X_MUSIC:
+            if isDesktopFileInstalled(desktop):
+                self.cb_app_music.addItem(desktop)
+
+        for desktop in DESKTOP_X_VIDEO:
+            if isDesktopFileInstalled(desktop):
+                self.cb_app_video.addItem(desktop)
+
+        for desktop in DESKTOP_X_TEXT:
+            if isDesktopFileInstalled(desktop):
+                self.cb_app_text.addItem(desktop)
+
+        for desktop in DESKTOP_X_BROWSER:
+            if isDesktopFileInstalled(desktop):
+                self.cb_app_browser.addItem(desktop)
+
+        if self.cb_app_image.count() == 0:
+            self.ch_app_image.setEnabled(False)
+
+        if self.cb_app_music.count() == 0:
+            self.ch_app_music.setEnabled(False)
+
+        if self.cb_app_video.count() == 0:
+            self.ch_app_video.setEnabled(False)
+
+        if self.cb_app_text.count() == 0:
+            self.ch_app_text.setEnabled(False)
+
+        if self.cb_app_browser.count() == 0:
+            self.ch_app_browser.setEnabled(False)
+
+        mimeappsPath = os.path.join(HOME, ".local", "share", "applications", "mimeapps.list")
+
+        if os.path.exists(mimeappsPath):
+            fd = open(mimeappsPath, "r")
+            mimeappsRead = fd.read()
+            fd.close()
+
+            x_image   = getXdgProperty(mimeappsRead, "image/x-bitmap")
+            x_music   = getXdgProperty(mimeappsRead, "audio/x-wav")
+            x_video   = getXdgProperty(mimeappsRead, "video/x-ogg")
+            x_text    = getXdgProperty(mimeappsRead, "application/x-zerosize")
+            x_browser = getXdgProperty(mimeappsRead, "text/html")
+
+            if x_image and searchAndSetComboBoxValue(self.cb_app_image, x_image):
+                self.ch_app_image.setChecked(True)
+
+            if x_music and searchAndSetComboBoxValue(self.cb_app_music, x_music):
+                self.ch_app_music.setChecked(True)
+
+            if x_video and searchAndSetComboBoxValue(self.cb_app_video, x_video):
+                self.ch_app_video.setChecked(True)
+
+            if x_text and searchAndSetComboBoxValue(self.cb_app_text, x_text):
+                self.ch_app_text.setChecked(True)
+
+            if x_browser and searchAndSetComboBoxValue(self.cb_app_browser, x_browser):
+                self.ch_app_browser.setChecked(True)
+
+        else: # ~/.local/share/applications/mimeapps.list doesn't exist
+            if not os.path.exists(os.path.join(HOME, ".local")):
+                os.mkdir(os.path.join(HOME, ".local"))
+            elif not os.path.exists(os.path.join(HOME, ".local", "share")):
+                os.mkdir(os.path.join(HOME, ".local", "share"))
+            elif not os.path.exists(os.path.join(HOME, ".local", "share", "applications")):
+                os.mkdir(os.path.join(HOME, ".local", "share", "applications"))
+
+        # -------------------------------------------------------------
+        # Set-up GUI (Tweaks, WineASIO)
+
+        # ...
 
         # -------------------------------------------------------------
         # Set-up systray
@@ -307,6 +409,19 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.connect(self.list_DSSI, SIGNAL("currentRowChanged(int)"), SLOT("slot_tweakPluginsDssiRowChanged(int)"))
         self.connect(self.list_LV2, SIGNAL("currentRowChanged(int)"), SLOT("slot_tweakPluginsLv2RowChanged(int)"))
         self.connect(self.list_VST, SIGNAL("currentRowChanged(int)"), SLOT("slot_tweakPluginsVstRowChanged(int)"))
+
+        #self.connect(self.ch_image, SIGNAL("clicked()"), self.func_settings_changed_apps)
+        #self.connect(self.ch_music, SIGNAL("clicked()"), self.func_settings_changed_apps)
+        #self.connect(self.ch_video, SIGNAL("clicked()"), self.func_settings_changed_apps)
+        #self.connect(self.ch_text, SIGNAL("clicked()"), self.func_settings_changed_apps)
+        #self.connect(self.ch_office, SIGNAL("clicked()"), self.func_settings_changed_apps)
+        #self.connect(self.ch_browser, SIGNAL("clicked()"), self.func_settings_changed_apps)
+        #self.connect(self.cb_app_image, SIGNAL("currentIndexChanged(int)"), self.func_app_changed_image)
+        #self.connect(self.cb_app_music, SIGNAL("currentIndexChanged(int)"), self.func_app_changed_music)
+        #self.connect(self.cb_app_video, SIGNAL("currentIndexChanged(int)"), self.func_app_changed_video)
+        #self.connect(self.cb_app_text, SIGNAL("currentIndexChanged(int)"), self.func_app_changed_text)
+        #self.connect(self.cb_app_office, SIGNAL("currentIndexChanged(int)"), self.func_app_changed_office)
+        #self.connect(self.cb_app_browser, SIGNAL("currentIndexChanged(int)"), self.func_app_changed_browser)
 
         # -------------------------------------------------------------
 
@@ -501,6 +616,14 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         self.settings_changed_types = []
         self.frame_tweaks_settings.setVisible(False)
+
+    @pyqtSlot()
+    def slot_tweaksSettingsChanged_apps(self):
+        self.func_settings_changed("apps")
+
+    @pyqtSlot()
+    def slot_tweaksSettingsChanged_wineasio(self):
+        self.func_settings_changed("wineasio")
 
     @pyqtSlot()
     def slot_tweakPluginAdd(self):

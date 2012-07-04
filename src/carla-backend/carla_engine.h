@@ -36,6 +36,10 @@ struct CarlaEnginePortNativeHandle {
 
 typedef void* CarlaEngineClientNativeHandle;
 typedef void* CarlaEnginePortNativeHandle;
+#elif defined(CARLA_ENGINE_VST)
+#include "carla_vst_includes.h"
+typedef void* CarlaEngineClientNativeHandle;
+typedef void* CarlaEnginePortNativeHandle;
 #else
 #error Engine type undefined!
 #endif

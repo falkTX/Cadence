@@ -842,7 +842,9 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
         content += "</CATARINA>\n"
 
         try:
-            open(path, "w").write(content)
+            fd = open(path, "w")
+            fd.write(content)
+            fd.close()
         except:
             QMessageBox.critical(self, self.tr("Error"), self.tr("Failed to save file"))
 
@@ -853,7 +855,9 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
             return
 
         try:
-            read = open(path, "r").read()
+            fd = open(path, "r")
+            readState = fd.read()
+            fd.close()
         except:
             QMessageBox.critical(self, self.tr("Error"), self.tr("Failed to load file"))
             self.m_save_path = None
@@ -869,7 +873,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
         self.m_last_connection_id = 1
 
         xml = QDomDocument()
-        xml.setContent(read)
+        xml.setContent(readState)
 
         content = xml.documentElement()
         if content.tagName() != "CATARINA":

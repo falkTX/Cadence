@@ -983,7 +983,7 @@
             </sizepolicy>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>1</number>
            </property>
            <widget class="QWidget" name="page">
             <layout class="QGridLayout" name="gridLayout_6">
@@ -1153,14 +1153,17 @@
               <number>0</number>
              </property>
              <item row="1" column="0">
-              <widget class="QCheckBox" name="checkBox_2">
+              <widget class="QCheckBox" name="ch_app_image">
                <property name="text">
                 <string>Image Viewer</string>
                </property>
               </widget>
              </item>
              <item row="3" column="1">
-              <widget class="QComboBox" name="comboBox_3">
+              <widget class="QComboBox" name="cb_app_video">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -1170,14 +1173,17 @@
               </widget>
              </item>
              <item row="4" column="0">
-              <widget class="QCheckBox" name="checkBox_5">
+              <widget class="QCheckBox" name="ch_app_text">
                <property name="text">
                 <string>Text Editor</string>
                </property>
               </widget>
              </item>
              <item row="4" column="1">
-              <widget class="QComboBox" name="comboBox_4">
+              <widget class="QComboBox" name="cb_app_text">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -1187,14 +1193,17 @@
               </widget>
              </item>
              <item row="3" column="0">
-              <widget class="QCheckBox" name="checkBox_4">
+              <widget class="QCheckBox" name="ch_app_video">
                <property name="text">
                 <string>Video Player</string>
                </property>
               </widget>
              </item>
              <item row="5" column="1">
-              <widget class="QComboBox" name="comboBox_5">
+              <widget class="QComboBox" name="cb_app_browser">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -1204,14 +1213,17 @@
               </widget>
              </item>
              <item row="2" column="0">
-              <widget class="QCheckBox" name="checkBox_3">
+              <widget class="QCheckBox" name="ch_app_music">
                <property name="text">
                 <string>Music Player</string>
                </property>
               </widget>
              </item>
              <item row="2" column="1">
-              <widget class="QComboBox" name="comboBox_2">
+              <widget class="QComboBox" name="cb_app_music">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -1221,7 +1233,7 @@
               </widget>
              </item>
              <item row="5" column="0">
-              <widget class="QCheckBox" name="checkBox_6">
+              <widget class="QCheckBox" name="ch_app_browser">
                <property name="text">
                 <string>Web Browser</string>
                </property>
@@ -1241,7 +1253,10 @@
               </spacer>
              </item>
              <item row="1" column="1">
-              <widget class="QComboBox" name="comboBox">
+              <widget class="QComboBox" name="cb_app_image">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -1474,6 +1489,86 @@
     <hint type="destinationlabel">
      <x>707</x>
      <y>136</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ch_app_image</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>cb_app_image</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>260</x>
+     <y>184</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>365</x>
+     <y>185</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ch_app_music</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>cb_app_music</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>279</x>
+     <y>222</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>346</x>
+     <y>223</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ch_app_video</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>cb_app_video</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>289</x>
+     <y>271</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>363</x>
+     <y>270</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ch_app_text</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>cb_app_text</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>292</x>
+     <y>311</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>349</x>
+     <y>311</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ch_app_browser</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>cb_app_browser</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>292</x>
+     <y>351</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>409</x>
+     <y>347</y>
     </hint>
    </hints>
   </connection>

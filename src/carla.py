@@ -543,9 +543,8 @@ class SearchPluginsThread(QThread):
                     SettingsDir = os.path.join(HOME, ".config", "Cadence")
 
                     f_ladspa = open(os.path.join(SettingsDir, "ladspa_rdf.db"), 'w')
-                    if f_ladspa:
-                        json.dump(ladspa_rdf_info, f_ladspa)
-                        f_ladspa.close()
+                    json.dump(ladspa_rdf_info, f_ladspa)
+                    f_ladspa.close()
 
         if self.check_dssi:
             if self.check_unix32:
@@ -1770,7 +1769,9 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         content += "</CARLA-PRESET>\n"
 
         try:
-            open(self.state_filename, "w").write(content)
+            fd = open(self.state_filename, "w")
+            fd.write(content)
+            fd.close()
         except:
             QMessageBox.critical(self, self.tr("Error"), self.tr("Failed to save state file"))
 
@@ -1782,13 +1783,15 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
     def loadState_InternalFormat(self):
         try:
-            state_read = open(self.state_filename, "r").read()
+            fd = open(self.state_filename, "r")
+            stateRead = fd.read()
+            fd.close()
         except:
             QMessageBox.critical(self, self.tr("Error"), self.tr("Failed to load state file"))
             return
 
         xml = QDomDocument()
-        xml.setContent(state_read)
+        xml.setContent(stateRead)
 
         xml_node = xml.documentElement()
 
@@ -3125,22 +3128,26 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         content += "</CARLA-PROJECT>\n"
 
         try:
-            open(self.m_project_filename, "w").write(content)
+            fd = open(self.m_project_filename, "w")
+            fd.write(content)
+            fd.close()
         except:
             QMessageBox.critical(self, self.tr("Error"), self.tr("Failed to save project file"))
 
     def load_project(self):
         try:
-            project_read = open(self.m_project_filename, "r").read()
+            fd = open(self.m_project_filename, "r")
+            projectRead = fd.read()
+            fd.close()
         except:
-            project_read = None
+            projectRead = None
 
-        if not project_read:
+        if not projectRead:
             QMessageBox.critical(self, self.tr("Error"), self.tr("Failed to load project file"))
             return
 
         xml = QDomDocument()
-        xml.setContent(project_read)
+        xml.setContent(projectRead)
 
         xml_node = xml.documentElement()
         if xml_node.tagName() != "CARLA-PROJECT":
@@ -3352,17 +3359,15 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         # Save RDF info for later
         if haveLRDF:
             SettingsDir = os.path.join(HOME, ".config", "Cadence")
-
             fr_ladspa_file = os.path.join(SettingsDir, "ladspa_rdf.db")
             if os.path.exists(fr_ladspa_file):
                 fr_ladspa = open(fr_ladspa_file, 'r')
-                if fr_ladspa:
-                    try:
-                        self.ladspa_rdf_list = ladspa_rdf.get_c_ladspa_rdfs(json.load(fr_ladspa))
-                    except:
-                        self.ladspa_rdf_list = []
-                    fr_ladspa.close()
-                    return
+                try:
+                    self.ladspa_rdf_list = ladspa_rdf.get_c_ladspa_rdfs(json.load(fr_ladspa))
+                except:
+                    self.ladspa_rdf_list = []
+                fr_ladspa.close()
+                return
 
         self.ladspa_rdf_list = []
 
