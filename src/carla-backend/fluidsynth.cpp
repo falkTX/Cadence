@@ -315,7 +315,7 @@ public:
 
         case FluidSynthChorusOnOff:
         {
-            const CarlaPluginScopedDisabler m(this, ! CarlaEngine::isOffline());
+            const CarlaPluginScopedDisabler m(this, ! carla_engine.isOffline());
             value = value > 0.5 ? 1 : 0;
             fluid_synth_set_chorus_on(f_synth, value);
             break;
@@ -327,21 +327,21 @@ public:
         case FluidSynthChorusDepthMs:
         case FluidSynthChorusType:
         {
-            const CarlaPluginScopedDisabler m(this, ! CarlaEngine::isOffline());
+            const CarlaPluginScopedDisabler m(this, ! carla_engine.isOffline());
             fluid_synth_set_chorus(f_synth, rint(param_buffers[FluidSynthChorusNr]), param_buffers[FluidSynthChorusLevel], param_buffers[FluidSynthChorusSpeedHz], param_buffers[FluidSynthChorusDepthMs], rint(param_buffers[FluidSynthChorusType]));
             break;
         }
 
         case FluidSynthPolyphony:
         {
-            const CarlaPluginScopedDisabler m(this, ! CarlaEngine::isOffline());
+            const CarlaPluginScopedDisabler m(this, ! carla_engine.isOffline());
             fluid_synth_set_polyphony(f_synth, rint(value));
             break;
         }
 
         case FluidSynthInterpolation:
         {
-            const CarlaPluginScopedDisabler m(this, ! CarlaEngine::isOffline());
+            const CarlaPluginScopedDisabler m(this, ! carla_engine.isOffline());
             for (int i=0; i < 16; i++)
                 fluid_synth_set_interp_method(f_synth, i, rint(value));
             break;
@@ -363,7 +363,7 @@ public:
 
         if (index >= 0)
         {
-            if (CarlaEngine::isOffline())
+            if (carla_engine.isOffline())
             {
                 if (block) carla_proc_lock();
                 fluid_synth_program_select(f_synth, cin_channel, f_id, midiprog.data[index].bank, midiprog.data[index].program);

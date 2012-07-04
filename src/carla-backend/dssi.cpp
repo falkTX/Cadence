@@ -222,7 +222,7 @@ public:
         static QByteArray chunk;
         chunk = QByteArray::fromBase64(stringData);
 
-        if (CarlaEngine::isOffline())
+        if (carla_engine.isOffline())
         {
             carla_proc_lock();
             descriptor->set_custom_data(handle, chunk.data(), chunk.size());
@@ -241,7 +241,7 @@ public:
 
         if (index >= 0)
         {
-            if (CarlaEngine::isOffline())
+            if (carla_engine.isOffline())
             {
                 if (block) carla_proc_lock();
                 descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);

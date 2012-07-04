@@ -211,7 +211,7 @@ public:
         static QByteArray chunk;
         chunk = QByteArray::fromBase64(stringData);
 
-        if (CarlaEngine::isOffline())
+        if (carla_engine.isOffline())
         {
             carla_proc_lock();
             effect->dispatcher(effect, effSetChunk, 0 /* bank */, chunk.size(), chunk.data(), 0.0f);
@@ -230,7 +230,7 @@ public:
 
         if (index >= 0)
         {
-            if (CarlaEngine::isOffline())
+            if (carla_engine.isOffline())
             {
                 if (block) carla_proc_lock();
                 effect->dispatcher(effect, effSetProgram, 0, index, nullptr, 0.0f);
@@ -1211,7 +1211,7 @@ public:
         case audioMasterAutomate:
             if (self)
             {
-                if (CarlaEngine::isOnAudioThread() && ! CarlaEngine::isOffline())
+                if (carla_engine.isOnAudioThread() && ! carla_engine.isOffline())
                 {
                     self->setParameterValue(index, opt, false, false, false);
                     self->postponeEvent(PluginPostEventParameterChange, index, opt);
@@ -1250,7 +1250,7 @@ public:
             static VstTimeInfo_R vstTimeInfo;
             memset(&vstTimeInfo, 0, sizeof(VstTimeInfo_R));
 
-            const CarlaTimeInfo* const timeInfo = CarlaEngine::getTimeInfo();
+            const CarlaTimeInfo* const timeInfo = carla_engine.getTimeInfo();
 
             vstTimeInfo.flags |= kVstTransportChanged;
 
@@ -1293,7 +1293,7 @@ public:
         case audioMasterProcessEvents:
             if (self && ptr && self->midi.portMout)
             {
-                if (! CarlaEngine::isOnAudioThread())
+                if (! carla_engine.isOnAudioThread())
                 {
                     qDebug("VstHostCallback:audioMasterProcessEvents - Received MIDI Out events outside audio thread, ignoring");
                     return 0;
@@ -1323,7 +1323,7 @@ public:
         case audioMasterTempoAt:
         {
             // Deprecated in VST SDK 2.4
-            const CarlaTimeInfo* const timeInfo = CarlaEngine::getTimeInfo();
+            const CarlaTimeInfo* const timeInfo = carla_engine.getTimeInfo();
 
             if (timeInfo->valid & CarlaEngineTimeBBT)
                 return timeInfo->bbt.beats_per_minute * 10000;
@@ -1418,9 +1418,9 @@ public:
 #endif
 
         case audioMasterGetCurrentProcessLevel:
-            if (CarlaEngine::isOffline())
+            if (carla_engine.isOffline())
                 return kVstProcessLevelOffline;
-            if (CarlaEngine::isOnAudioThread())
+            if (carla_engine.isOnAudioThread())
                 return 	kVstProcessLevelRealtime;
             return 	kVstProcessLevelUser;
 

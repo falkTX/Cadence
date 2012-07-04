@@ -1920,6 +1920,8 @@ private:
 
 /**@}*/
 
+extern CarlaEngine carla_engine;
+
 CARLA_BACKEND_END_NAMESPACE
 
 #endif // CARLA_PLUGIN_H

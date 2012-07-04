@@ -108,11 +108,20 @@ public:
 
         carla_sample_rate = sampleRate = callback(audioMasterGetSampleRate, 0, 0, nullptr, 0.0f);
         carla_buffer_size = bufferSize = callback(audioMasterGetBlockSize, 0, 0, nullptr, 0.0f);
+
+        char strBuf[STR_MAX];
+        callback(audioMasterGetVendorString, 0, 0, strBuf, 0.0f);
+
+        if (strBuf[0] == 0)
+            strcpy(strBuf, "CarlaVST");
+
+        engine.init(strBuf);
     }
 
     ~CarlaEngineVst()
     {
         qDebug("~CarlaEngineVst()");
+        engine.close();
     }
 
     intptr_t callback(int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
@@ -295,6 +304,8 @@ private:
     AEffect effect;
     double sampleRate;
     uint32_t bufferSize;
+
+    CarlaEngine engine;
 
     const audioMasterCallback m_callback;
 };

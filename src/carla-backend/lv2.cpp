@@ -686,7 +686,7 @@ public:
             const char* const stype = customdatatype2str(type);
             LV2_State_Status status;
 
-            if (CarlaEngine::isOffline())
+            if (carla_engine.isOffline())
             {
                 carla_proc_lock();
                 status = ext.state->restore(handle, carla_lv2_state_retrieve, this, 0, features);
@@ -728,7 +728,7 @@ public:
 
         if (ext.programs && index >= 0)
         {
-            if (CarlaEngine::isOffline())
+            if (carla_engine.isOffline())
             {
                 if (block) carla_proc_lock();
                 ext.programs->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
@@ -1935,7 +1935,7 @@ public:
         // Special Parameters
 
         int32_t rindex;
-        const CarlaTimeInfo* const timeInfo = CarlaEngine::getTimeInfo();
+        const CarlaTimeInfo* const timeInfo = carla_engine.getTimeInfo();
 
         for (k=0; k < param.count; k++)
         {

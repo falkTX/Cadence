@@ -24,7 +24,9 @@
 #include <jack/jack.h>
 #include <jack/midiport.h>
 
-typedef jack_client_t CarlaEngineClientNativeHandle;
+struct CarlaEngineClientNativeHandle {
+    jack_client_t* client;
+};
 
 struct CarlaEnginePortNativeHandle {
     jack_port_t* port;
@@ -112,15 +114,14 @@ public:
     CarlaEngine();
     ~CarlaEngine();
 
-    static bool init(const char* name);
-    static bool close();
-    static bool isOnAudioThread();
-    static bool isOffline();
+    bool init(const char* name);
+    bool close();
+    bool isOnAudioThread();
+    bool isOffline();
+    const CarlaTimeInfo* getTimeInfo();
 
     static int maxClientNameSize();
     static int maxPortNameSize();
-
-    static const CarlaTimeInfo* getTimeInfo();
 };
 
 // -----------------------------------------
@@ -156,7 +157,7 @@ public:
     CarlaEngineBasePort* addPort(const char* name, CarlaEnginePortType type, bool isInput);
 
 private:
-    CarlaEngineClientNativeHandle* handle;
+    CarlaEngineClientNativeHandle handle;
     bool m_active;
 };
 
