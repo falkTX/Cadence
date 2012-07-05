@@ -38,7 +38,7 @@ CARLA_BACKEND_START_NAMESPACE
 class VstPlugin : public CarlaPlugin
 {
 public:
-    VstPlugin(unsigned short id) : CarlaPlugin(id)
+    VstPlugin(CarlaEngine* const engine, unsigned short id) : CarlaPlugin(engine, id)
     {
         qDebug("VstPlugin::VstPlugin()");
 
@@ -211,7 +211,7 @@ public:
         static QByteArray chunk;
         chunk = QByteArray::fromBase64(stringData);
 
-        if (carla_engine.isOffline())
+        if (x_engine->isOffline())
         {
             carla_proc_lock();
             effect->dispatcher(effect, effSetChunk, 0 /* bank */, chunk.size(), chunk.data(), 0.0f);
@@ -230,7 +230,7 @@ public:
 
         if (index >= 0)
         {
-            if (carla_engine.isOffline())
+            if (x_engine->isOffline())
             {
                 if (block) carla_proc_lock();
                 effect->dispatcher(effect, effSetProgram, 0, index, nullptr, 0.0f);
@@ -367,7 +367,7 @@ public:
 #endif
                 sprintf(portName, "input_%02i", j+1);
 
-            ain.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, true);
+            ain.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
             ain.rindexes[j] = j;
         }
 
@@ -380,7 +380,7 @@ public:
 #endif
                 sprintf(portName, "output_%02i", j+1);
 
-            aout.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, false);
+            aout.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
             aout.rindexes[j] = j;
         }
 
@@ -498,7 +498,7 @@ public:
 #endif
                 strcpy(portName, "control-in");
 
-            param.portCin = (CarlaEngineControlPort*)x_client->addPort(portName, CarlaEnginePortTypeControl, true);
+            param.portCin = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, true);
         }
 
         if (mins == 1)
@@ -513,7 +513,7 @@ public:
 #endif
                 strcpy(portName, "midi-in");
 
-            midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(portName, CarlaEnginePortTypeMIDI, true);
+            midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
         }
 
         if (mouts == 1)
@@ -528,7 +528,7 @@ public:
 #endif
                 strcpy(portName, "midi-out");
 
-            midi.portMout = (CarlaEngineMidiPort*)x_client->addPort(portName, CarlaEnginePortTypeMIDI, false);
+            midi.portMout = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
         }
 
         ain.count   = ains;
@@ -728,6 +728,9 @@ public:
                 // Control change
                 switch (cinEvent->type)
                 {
+                case CarlaEngineEventNull:
+                    break;
+
                 case CarlaEngineEventControlChange:
                 {
                     double value;
@@ -1171,7 +1174,7 @@ public:
         }
 
 #if ! VST_FORCE_DEPRECATED
-        effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, newBufferSize, nullptr, get_sample_rate());
+        effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, newBufferSize, nullptr, x_engine->getSampleRate());
 #endif
         effect->dispatcher(effect, effSetBlockSize, 0, newBufferSize, nullptr, 0.0f);
 
@@ -1211,7 +1214,7 @@ public:
         case audioMasterAutomate:
             if (self)
             {
-                if (carla_engine.isOnAudioThread() && ! carla_engine.isOffline())
+                if (self->x_engine->isOnAudioThread() && ! self->x_engine->isOffline())
                 {
                     self->setParameterValue(index, opt, false, false, false);
                     self->postponeEvent(PluginPostEventParameterChange, index, opt);
@@ -1250,7 +1253,7 @@ public:
             static VstTimeInfo_R vstTimeInfo;
             memset(&vstTimeInfo, 0, sizeof(VstTimeInfo_R));
 
-            const CarlaTimeInfo* const timeInfo = carla_engine.getTimeInfo();
+            const CarlaTimeInfo* const timeInfo = self->x_engine->getTimeInfo();
 
             vstTimeInfo.flags |= kVstTransportChanged;
 
@@ -1258,7 +1261,7 @@ public:
                 vstTimeInfo.flags |= kVstTransportPlaying;
 
             vstTimeInfo.samplePos  = timeInfo->frame;
-            vstTimeInfo.sampleRate = get_sample_rate();
+            vstTimeInfo.sampleRate = self->x_engine->getSampleRate();
 
             vstTimeInfo.nanoSeconds = timeInfo->time;
             vstTimeInfo.flags |= kVstNanosValid;
@@ -1293,7 +1296,7 @@ public:
         case audioMasterProcessEvents:
             if (self && ptr && self->midi.portMout)
             {
-                if (! carla_engine.isOnAudioThread())
+                if (! self->x_engine->isOnAudioThread())
                 {
                     qDebug("VstHostCallback:audioMasterProcessEvents - Received MIDI Out events outside audio thread, ignoring");
                     return 0;
@@ -1323,7 +1326,7 @@ public:
         case audioMasterTempoAt:
         {
             // Deprecated in VST SDK 2.4
-            const CarlaTimeInfo* const timeInfo = carla_engine.getTimeInfo();
+            const CarlaTimeInfo* const timeInfo = self->x_engine->getTimeInfo();
 
             if (timeInfo->valid & CarlaEngineTimeBBT)
                 return timeInfo->bbt.beats_per_minute * 10000;
@@ -1388,10 +1391,10 @@ public:
             return 1;
 
         case audioMasterGetSampleRate:
-            return get_sample_rate();
+            return self->x_engine->getSampleRate();
 
         case audioMasterGetBlockSize:
-            return get_buffer_size();
+            return self->x_engine->getBufferSize();
 
         case audioMasterGetInputLatency:
             // TODO
@@ -1418,9 +1421,9 @@ public:
 #endif
 
         case audioMasterGetCurrentProcessLevel:
-            if (carla_engine.isOffline())
+            if (self->x_engine->isOffline())
                 return kVstProcessLevelOffline;
-            if (carla_engine.isOnAudioThread())
+            if (self->x_engine->isOnAudioThread())
                 return 	kVstProcessLevelRealtime;
             return 	kVstProcessLevelUser;
 
@@ -1662,10 +1665,10 @@ public:
 
         effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
 #if ! VST_FORCE_DEPRECATED
-        effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, get_buffer_size(), nullptr, get_sample_rate());
+        effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, x_engine->getBufferSize(), nullptr, x_engine->getSampleRate());
 #endif
-        effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, get_sample_rate());
-        effect->dispatcher(effect, effSetBlockSize, 0, get_buffer_size(), nullptr, 0.0f);
+        effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, x_engine->getSampleRate());
+        effect->dispatcher(effect, effSetBlockSize, 0, x_engine->getBufferSize(), nullptr, 0.0f);
         effect->dispatcher(effect, effSetProcessPrecision, 0, kVstProcessPrecision32, nullptr, 0.0f);
 
 #ifdef VESTIGE_HEADER
@@ -1683,7 +1686,7 @@ public:
         // ---------------------------------------------------------------
         // register client
 
-        x_client = new CarlaEngineClient(this);
+        x_client = x_engine->addClient(this);
 
         if (! x_client->isOk())
         {
@@ -1724,9 +1727,9 @@ private:
     int unique2;
 };
 
-short add_plugin_vst(const char* const filename, const char* const name, const char* const label)
+short CarlaPlugin::newVST(const initializer& init)
 {
-    qDebug("add_plugin_vst(%s, %s, %s)", filename, name, label);
+    qDebug("CarlaPlugin::newVST(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
 
     short id = get_new_plugin_id();
 
@@ -1736,9 +1739,9 @@ short add_plugin_vst(const char* const filename, const char* const name, const c
         return -1;
     }
 
-    VstPlugin* plugin = new VstPlugin(id);
+    VstPlugin* plugin = new VstPlugin(init.engine, id);
 
-    if (! plugin->init(filename, name, label))
+    if (! plugin->init(init.filename, init.name, init.label))
     {
         delete plugin;
         return -1;

@@ -45,7 +45,7 @@ CARLA_BACKEND_START_NAMESPACE
 class FluidSynthPlugin : public CarlaPlugin
 {
 public:
-    FluidSynthPlugin(unsigned short id) : CarlaPlugin(id)
+    FluidSynthPlugin(CarlaEngine* const engine, unsigned short id) : CarlaPlugin(engine, id)
     {
         qDebug("FluidSynthPlugin::FluidSynthPlugin()");
 
@@ -56,14 +56,14 @@ public:
         f_settings = new_fluid_settings();
 
         // define settings
-        fluid_settings_setnum(f_settings, "synth.sample-rate", get_sample_rate());
+        fluid_settings_setnum(f_settings, "synth.sample-rate", x_engine->getSampleRate());
         fluid_settings_setint(f_settings, "synth.threadsafe-api ", 0);
 
         // create synth
         f_synth = new_fluid_synth(f_settings);
 
 #ifdef FLUIDSYNTH_VERSION_NEW_API
-        fluid_synth_set_sample_rate(f_synth, get_sample_rate());
+        fluid_synth_set_sample_rate(f_synth, x_engine->getSampleRate());
 #endif
 
         // set default values
@@ -315,7 +315,7 @@ public:
 
         case FluidSynthChorusOnOff:
         {
-            const CarlaPluginScopedDisabler m(this, ! carla_engine.isOffline());
+            const CarlaPluginScopedDisabler m(this, ! x_engine->isOffline());
             value = value > 0.5 ? 1 : 0;
             fluid_synth_set_chorus_on(f_synth, value);
             break;
@@ -327,21 +327,21 @@ public:
         case FluidSynthChorusDepthMs:
         case FluidSynthChorusType:
         {
-            const CarlaPluginScopedDisabler m(this, ! carla_engine.isOffline());
+            const CarlaPluginScopedDisabler m(this, ! x_engine->isOffline());
             fluid_synth_set_chorus(f_synth, rint(param_buffers[FluidSynthChorusNr]), param_buffers[FluidSynthChorusLevel], param_buffers[FluidSynthChorusSpeedHz], param_buffers[FluidSynthChorusDepthMs], rint(param_buffers[FluidSynthChorusType]));
             break;
         }
 
         case FluidSynthPolyphony:
         {
-            const CarlaPluginScopedDisabler m(this, ! carla_engine.isOffline());
+            const CarlaPluginScopedDisabler m(this, ! x_engine->isOffline());
             fluid_synth_set_polyphony(f_synth, rint(value));
             break;
         }
 
         case FluidSynthInterpolation:
         {
-            const CarlaPluginScopedDisabler m(this, ! carla_engine.isOffline());
+            const CarlaPluginScopedDisabler m(this, ! x_engine->isOffline());
             for (int i=0; i < 16; i++)
                 fluid_synth_set_interp_method(f_synth, i, rint(value));
             break;
@@ -363,7 +363,7 @@ public:
 
         if (index >= 0)
         {
-            if (carla_engine.isOffline())
+            if (x_engine->isOffline())
             {
                 if (block) carla_proc_lock();
                 fluid_synth_program_select(f_synth, cin_channel, f_id, midiprog.data[index].bank, midiprog.data[index].program);
@@ -424,7 +424,7 @@ public:
 #endif
             strcpy(portName, "out-left");
 
-        aout.ports[0]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, false);
+        aout.ports[0]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
         aout.rindexes[0] = 0;
 
 #ifndef BUILD_BRIDGE
@@ -437,7 +437,7 @@ public:
 #endif
             strcpy(portName, "out-right");
 
-        aout.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, false);
+        aout.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
         aout.rindexes[1] = 1;
 
         // ---------------------------------------
@@ -453,7 +453,7 @@ public:
 #endif
             strcpy(portName, "midi-in");
 
-        midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(portName, CarlaEnginePortTypeMIDI, true);
+        midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
 
         // ---------------------------------------
         // Parameters
@@ -468,7 +468,7 @@ public:
 #endif
             strcpy(portName, "control-in");
 
-        param.portCin = (CarlaEngineControlPort*)x_client->addPort(portName, CarlaEnginePortTypeControl, true);
+        param.portCin = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, true);
 
 #ifndef BUILD_BRIDGE
         if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
@@ -480,7 +480,7 @@ public:
 #endif
             strcpy(portName, "control-out");
 
-        param.portCout = (CarlaEngineControlPort*)x_client->addPort(portName, CarlaEnginePortTypeControl, false);
+        param.portCout = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, false);
 
         // ----------------------
         j = FluidSynthReverbOnOff;
@@ -635,7 +635,7 @@ public:
         param.data[j].midiChannel = 0;
         param.data[j].midiCC = -1;
         param.ranges[j].min = 0.0;
-        param.ranges[j].max = 2048000.0 / get_sample_rate();
+        param.ranges[j].max = 2048000.0 / x_engine->getSampleRate();
         param.ranges[j].def = FLUID_CHORUS_DEFAULT_DEPTH;
         param.ranges[j].step = 0.01;
         param.ranges[j].stepSmall = 0.0001;
@@ -845,6 +845,9 @@ public:
                 // Control change
                 switch (cinEvent->type)
                 {
+                case CarlaEngineEventNull:
+                    break;
+
                 case CarlaEngineEventControlChange:
                 {
                     double value;
@@ -1241,7 +1244,7 @@ public:
         // ---------------------------------------------------------------
         // register client
 
-        x_client = new CarlaEngineClient(this);
+        x_client = x_engine->addClient(this);
 
         if (! x_client->isOk())
         {
@@ -1280,9 +1283,9 @@ private:
 };
 #endif // WANT_FLUIDSYNTH
 
-short add_plugin_sf2(const char* const filename, const char* const name, const char* const label)
+short CarlaPlugin::newSF2(const initializer& init)
 {
-    qDebug("add_plugin_sf2(%s, %s, %s)", filename, name, label);
+    qDebug("CarlaPlugin::newSF2(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
 
 #ifdef WANT_FLUIDSYNTH
     short id = get_new_plugin_id();
@@ -1293,15 +1296,15 @@ short add_plugin_sf2(const char* const filename, const char* const name, const c
         return -1;
     }
 
-    if (! fluid_is_soundfont(filename))
+    if (! fluid_is_soundfont(init.filename))
     {
         set_last_error("Requested file is not a valid SoundFont");
         return -1;
     }
 
-    FluidSynthPlugin* const plugin = new FluidSynthPlugin(id);
+    FluidSynthPlugin* const plugin = new FluidSynthPlugin(init.engine, id);
 
-    if (! plugin->init(filename, name, label))
+    if (! plugin->init(init.filename, init.name, init.label))
     {
         delete plugin;
         return -1;

@@ -26,19 +26,8 @@ CARLA_BACKEND_START_NAMESPACE
 } /* adjust editor indent */
 #endif
 
-// plugin specific
-short add_plugin_ladspa(const char* const filename, const char* const name, const char* const label, const void* const extra_stuff);
-short add_plugin_dssi(const char* const filename, const char* const name, const char* const label, const void* const extra_stuff);
-short add_plugin_lv2(const char* const filename, const char* const name, const char* const label);
-short add_plugin_vst(const char* const filename, const char* const name, const char* const label);
-short add_plugin_gig(const char* const filename, const char* const name, const char* const label);
-short add_plugin_sf2(const char* const filename, const char* const name, const char* const label);
-short add_plugin_sfz(const char* const filename, const char* const name, const char* const label);
-#ifndef BUILD_BRIDGE
-short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* const filename, const char* const name, const char* const label);
-#endif
-
-CarlaEngine carla_engine;
+// Global variables
+CarlaEngineVst carla_engine(nullptr);
 CarlaCheckThread carla_check_thread;
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -60,7 +49,7 @@ bool engine_init(const char* client_name)
 
     if (started)
     {
-        osc_init(get_host_client_name());
+        osc_init(carla_engine.getName());
         carla_check_thread.start(QThread::HighPriority);
         set_last_error("no error");
     }
@@ -128,9 +117,21 @@ bool engine_close()
     return closed;
 }
 
+bool is_engine_running()
+{
+    return carla_engine.isRunning();
+}
+
 short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const char* const name, const char* label, void* extra_stuff)
 {
     qDebug("add_plugin(%i, %i, %s, %s, %p)", btype, ptype, filename, label, extra_stuff);
+
+    CarlaPlugin::initializer init = {
+        &carla_engine,
+        filename,
+        name,
+        label
+    };
 
 #ifndef BUILD_BRIDGE
     if (btype != BINARY_NATIVE)
@@ -138,7 +139,7 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
 #ifdef CARLA_ENGINE_JACK
         if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
-            set_last_error("Can only use bridged plugins in JACK Multi-Clients mode");
+            set_last_error("Can only use bridged plugins in JACK Multi-Client mode");
             return -1;
         }
 #else
@@ -146,26 +147,26 @@ short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const
         return -1;
 #endif
 
-        return add_plugin_bridge(btype, ptype, filename, name, label);
+        return CarlaPlugin::newBridge(init, btype, ptype);
     }
 #endif
 
     switch (ptype)
     {
     case PLUGIN_LADSPA:
-        return add_plugin_ladspa(filename, name, label, extra_stuff);
+        return CarlaPlugin::newLADSPA(init, extra_stuff);
     case PLUGIN_DSSI:
-        return add_plugin_dssi(filename, name, label, extra_stuff);
+        return CarlaPlugin::newDSSI(init, extra_stuff);
     case PLUGIN_LV2:
-        return add_plugin_lv2(filename, name, label);
+        return CarlaPlugin::newLV2(init);
     case PLUGIN_VST:
-        return add_plugin_vst(filename, name, label);
+        return CarlaPlugin::newVST(init);
     case PLUGIN_GIG:
-        return add_plugin_gig(filename, name, label);
+        return CarlaPlugin::newGIG(init);
     case PLUGIN_SF2:
-        return add_plugin_sf2(filename, name, label);
+        return CarlaPlugin::newSF2(init);
     case PLUGIN_SFZ:
-        return add_plugin_sfz(filename, name, label);
+        return CarlaPlugin::newSFZ(init);
     default:
         set_last_error("Unknown plugin type");
         return -1;
@@ -187,7 +188,7 @@ bool remove_plugin(unsigned short plugin_id)
             plugin->setEnabled(false);
             carla_proc_unlock();
 
-            if (is_engine_running() && carla_check_thread.isRunning())
+            if (/*carla_engine.isRunning() &&*/ carla_check_thread.isRunning())
                 carla_check_thread.stopNow();
 
             delete plugin;
@@ -195,7 +196,7 @@ bool remove_plugin(unsigned short plugin_id)
             CarlaPlugins[i] = nullptr;
             unique_names[i] = nullptr;
 
-            if (is_engine_running())
+            if (carla_engine.isRunning())
                 carla_check_thread.start(QThread::HighPriority);
 
             return true;
@@ -250,7 +251,7 @@ PluginInfo* get_plugin_info(unsigned short plugin_id)
         }
     }
 
-    if (is_engine_running())
+    if (carla_engine.isRunning())
         qCritical("get_plugin_info(%i) - could not find plugin", plugin_id);
 
     return &info;
@@ -369,7 +370,7 @@ ParameterInfo* get_parameter_info(unsigned short plugin_id, uint32_t parameter_i
         }
     }
 
-    if (is_engine_running())
+    if (carla_engine.isRunning())
         qCritical("get_parameter_info(%i, %i) - could not find plugin", plugin_id, parameter_id);
 
     return &info;
@@ -413,7 +414,7 @@ ScalePointInfo* get_scalepoint_info(unsigned short plugin_id, uint32_t parameter
         }
     }
 
-    if (is_engine_running())
+    if (carla_engine.isRunning())
         qCritical("get_scalepoint_info(%i, %i, %i) - could not find plugin", plugin_id, parameter_id, scalepoint_id);
 
     return &info;
@@ -576,7 +577,7 @@ const char* get_chunk_data(unsigned short plugin_id)
         }
     }
 
-    if (is_engine_running())
+    if (carla_engine.isRunning())
         qCritical("get_chunk_data(%i) - could not find plugin", plugin_id);
 
     return chunk_data;
@@ -698,7 +699,7 @@ const char* get_program_name(unsigned short plugin_id, uint32_t program_id)
         }
     }
 
-    if (is_engine_running())
+    if (carla_engine.isRunning())
         qCritical("get_program_name(%i, %i) - could not find plugin", plugin_id, program_id);
 
     return nullptr;
@@ -736,7 +737,7 @@ const char* get_midi_program_name(unsigned short plugin_id, uint32_t midi_progra
         }
     }
 
-    if (is_engine_running())
+    if (carla_engine.isRunning())
         qCritical("get_midi_program_name(%i, %i) - could not find plugin", plugin_id, midi_program_id);
 
     return nullptr;
@@ -767,7 +768,7 @@ const char* get_real_plugin_name(unsigned short plugin_id)
         }
     }
 
-    if (is_engine_running())
+    if (carla_engine.isRunning())
         qCritical("get_real_plugin_name(%i) - could not find plugin", plugin_id);
 
     return real_plugin_name;
@@ -1235,6 +1236,21 @@ void set_option(OptionsType option, int value, const char* valueStr)
     }
 }
 
+const char* get_host_client_name()
+{
+    return carla_engine.getName();
+}
+
+quint32 get_buffer_size()
+{
+    return carla_engine.getBufferSize();
+}
+
+double get_sample_rate()
+{
+    return carla_engine.getSampleRate();
+}
+
 // End of exported symbols (API)
 // -------------------------------------------------------------------------------------------------------------------
 
@@ -1279,7 +1295,7 @@ int main(int argc, char* argv[])
         set_callback_function(main_callback);
         set_option(OPTION_PROCESS_MODE, PROCESS_MODE_CONTINUOUS_RACK, nullptr);
 
-        short id = add_plugin_lv2("xxx", "name!!!", "http://linuxdsp.co.uk/lv2/peq-2a.lv2");
+        short id = add_plugin(BINARY_NATIVE, PLUGIN_LV2, "xxx", "name!!!", "http://linuxdsp.co.uk/lv2/peq-2a.lv2", nullptr);
 
         if (id >= 0)
         {

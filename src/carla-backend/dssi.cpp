@@ -36,7 +36,7 @@ CARLA_BACKEND_START_NAMESPACE
 class DssiPlugin : public CarlaPlugin
 {
 public:
-    DssiPlugin(unsigned short id) : CarlaPlugin(id)
+    DssiPlugin(CarlaEngine* const engine, unsigned short id) : CarlaPlugin(engine, id)
     {
         qDebug("DssiPlugin::DssiPlugin()");
 
@@ -222,7 +222,7 @@ public:
         static QByteArray chunk;
         chunk = QByteArray::fromBase64(stringData);
 
-        if (carla_engine.isOffline())
+        if (x_engine->isOffline())
         {
             carla_proc_lock();
             descriptor->set_custom_data(handle, chunk.data(), chunk.size());
@@ -241,7 +241,7 @@ public:
 
         if (index >= 0)
         {
-            if (carla_engine.isOffline())
+            if (x_engine->isOffline())
             {
                 if (block) carla_proc_lock();
                 descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
@@ -304,6 +304,7 @@ public:
         uint32_t ains, aouts, mins, params, j;
         ains = aouts = mins = params = 0;
 
+        const double sampleRate = x_engine->getSampleRate();
         const unsigned long PortCount = ldescriptor->PortCount;
 
         for (unsigned long i=0; i<PortCount; i++)
@@ -368,13 +369,13 @@ public:
                 if (LADSPA_IS_PORT_INPUT(PortType))
                 {
                     j = ain.count++;
-                    ain.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, true);
+                    ain.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
                     ain.rindexes[j] = i;
                 }
                 else if (LADSPA_IS_PORT_OUTPUT(PortType))
                 {
                     j = aout.count++;
-                    aout.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, false);
+                    aout.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
                     aout.rindexes[j] = i;
                     needsCin = true;
                 }
@@ -480,10 +481,9 @@ public:
 
                 if (LADSPA_IS_HINT_SAMPLE_RATE(PortHint.HintDescriptor))
                 {
-                    double sample_rate = get_sample_rate();
-                    min *= sample_rate;
-                    max *= sample_rate;
-                    def *= sample_rate;
+                    min *= sampleRate;
+                    max *= sampleRate;
+                    def *= sampleRate;
                     param.data[j].hints |= PARAMETER_USES_SAMPLERATE;
                 }
 
@@ -533,7 +533,7 @@ public:
                     if (strcmp(ldescriptor->PortNames[i], "latency") == 0 || strcmp(ldescriptor->PortNames[i], "_latency") == 0)
                     {
                         min = 0.0;
-                        max = get_sample_rate();
+                        max = sampleRate;
                         def = 0.0;
                         step = 1.0;
                         step_small = 1.0;
@@ -592,7 +592,7 @@ public:
 #endif
                 strcpy(portName, "control-in");
 
-            param.portCin = (CarlaEngineControlPort*)x_client->addPort(portName, CarlaEnginePortTypeControl, true);
+            param.portCin = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, true);
         }
 
         if (needsCout)
@@ -607,7 +607,7 @@ public:
 #endif
                 strcpy(portName, "control-out");
 
-            param.portCout = (CarlaEngineControlPort*)x_client->addPort(portName, CarlaEnginePortTypeControl, false);
+            param.portCout = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, false);
         }
 
         if (mins > 0)
@@ -622,7 +622,7 @@ public:
 #endif
                 strcpy(portName, "midi-in");
 
-            midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(portName, CarlaEnginePortTypeMIDI, true);
+            midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
         }
 
         ain.count   = ains;
@@ -819,6 +819,9 @@ public:
                 // Control change
                 switch (cinEvent->type)
                 {
+                case CarlaEngineEventNull:
+                    break;
+
                 case CarlaEngineEventControlChange:
                 {
                     double value;
@@ -1324,7 +1327,7 @@ public:
         // ---------------------------------------------------------------
         // initialize plugin
 
-        handle = ldescriptor->instantiate(ldescriptor, get_sample_rate());
+        handle = ldescriptor->instantiate(ldescriptor, x_engine->getSampleRate());
 
         if (! handle)
         {
@@ -1345,7 +1348,7 @@ public:
         // ---------------------------------------------------------------
         // register client
 
-        x_client = new CarlaEngineClient(this);
+        x_client = x_engine->addClient(this);
 
         if (! x_client->isOk())
         {
@@ -1379,9 +1382,9 @@ private:
     float* param_buffers;
 };
 
-short add_plugin_dssi(const char* const filename, const char* const name, const char* const label, const void* const extra_stuff)
+short CarlaPlugin::newDSSI(const initializer& init, const void* const extra)
 {
-    qDebug("add_plugin_dssi(%s, %s, %s, %p)", filename, name, label, extra_stuff);
+    qDebug("CarlaPlugin::newDSSI(%p, %s, %s, %s, %p)", init.engine, init.filename, init.name, init.label, extra);
 
     short id = get_new_plugin_id();
 
@@ -1391,9 +1394,9 @@ short add_plugin_dssi(const char* const filename, const char* const name, const 
         return -1;
     }
 
-    DssiPlugin* const plugin = new DssiPlugin(id);
+    DssiPlugin* const plugin = new DssiPlugin(init.engine, id);
 
-    if (! plugin->init(filename, name, label, (const char*)extra_stuff))
+    if (! plugin->init(init.filename, init.name, init.label, (const char*)extra))
     {
         delete plugin;
         return -1;

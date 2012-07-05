@@ -172,12 +172,13 @@ public:
      *
      * \param id The 'id' of this plugin, must between 0 and MAX_PLUGINS
      */
-    CarlaPlugin(unsigned short id)
+    CarlaPlugin(CarlaEngine* const engine, unsigned short id) :
+        m_id(id),
+        x_engine(engine)
     {
         qDebug("CarlaPlugin::CarlaPlugin()");
 
         m_type  = PLUGIN_NONE;
-        m_id    = id;
         m_hints = 0;
 
         m_active = false;
@@ -1264,10 +1265,10 @@ public:
         float* aouts_buffer[aout.count];
 
         for (uint32_t i=0; i < ain.count; i++)
-            ains_buffer[i] = ain.ports[i]->getJackAudioBuffer();
+            ains_buffer[i] = ain.ports[i]->getJackAudioBuffer(nframes);
 
         for (uint32_t i=0; i < aout.count; i++)
-            aouts_buffer[i] = aout.ports[i]->getJackAudioBuffer();
+            aouts_buffer[i] = aout.ports[i]->getJackAudioBuffer(nframes);
 
 #ifndef BUILD_BRIDGE
         if (carla_options.proccess_hq)
@@ -1367,9 +1368,12 @@ public:
 #else
         if (osc_global_registered())
         {
+            uint32_t i;
+
             // Base data
             osc_global_send_add_plugin(m_id, m_name);
 
+#ifndef CARLA_ENGINE_VST // FIXME
             const PluginInfo* const info = get_plugin_info(m_id);
             osc_global_send_set_plugin_data(m_id, m_type, category(), m_hints, get_real_plugin_name(m_id), info->label, info->maker, info->copyright, uniqueId());
 
@@ -1384,8 +1388,6 @@ public:
             osc_global_send_set_parameter_value(m_id, PARAMETER_BALANCE_LEFT, x_bal_left);
             osc_global_send_set_parameter_value(m_id, PARAMETER_BALANCE_RIGHT, x_bal_right);
 
-            uint32_t i;
-
             if (param.count > 0 && param.count < carla_options.max_parameters)
             {
                 for (i=0; i < param.count; i++)
@@ -1396,6 +1398,7 @@ public:
                     osc_global_send_set_parameter_ranges(m_id, i, param.ranges[i].min, param.ranges[i].max, param.ranges[i].def, param.ranges[i].step, param.ranges[i].stepSmall, param.ranges[i].stepLarge);
                 }
             }
+#endif
 
             // Programs
             osc_global_send_set_program_count(m_id, prog.count);
@@ -1688,26 +1691,26 @@ public:
         for (i=0; i < ain.count; i++)
         {
             if (ain.ports[i])
-                ain.ports[i]->initBuffer();
+                ain.ports[i]->initBuffer(x_engine);
         }
 
         for (i=0; i < aout.count; i++)
         {
             if (aout.ports[i])
-                aout.ports[i]->initBuffer();
+                aout.ports[i]->initBuffer(x_engine);
         }
 
         if (param.portCin)
-            param.portCin->initBuffer();
+            param.portCin->initBuffer(x_engine);
 
         if (param.portCout)
-            param.portCout->initBuffer();
+            param.portCout->initBuffer(x_engine);
 
         if (midi.portMin)
-            midi.portMin->initBuffer();
+            midi.portMin->initBuffer(x_engine);
 
         if (midi.portMout)
-            midi.portMout->initBuffer();
+            midi.portMout->initBuffer(x_engine);
     }
 
     /*!
@@ -1793,10 +1796,35 @@ public:
     }
 
     // -------------------------------------------------------------------
+    // Plugin initializers
 
-protected:
+    struct initializer {
+        CarlaEngine* const engine;
+        const char* const filename;
+        const char* const name;
+        const char* const label;
+    };
+
+    static short newLADSPA(const initializer& init, const void* const extra);
+    static short newDSSI(const initializer& init, const void* const extra);
+    static short newLV2(const initializer& init);
+    static short newVST(const initializer& init);
+    static short newGIG(const initializer& init);
+    static short newSF2(const initializer& init);
+    static short newSFZ(const initializer& init);
+#ifndef BUILD_BRIDGE
+    static short newBridge(const initializer& init, BinaryType btype, PluginType ptype);
+#endif
+
+    // -------------------------------------------------------------------
+
+protected:    
+    // static
+    const unsigned short m_id;
+    CarlaEngine* const x_engine;
+
+    // non-static
     PluginType m_type;
-    unsigned short m_id;
     unsigned int m_hints;
 
     bool m_active;
@@ -1919,8 +1947,6 @@ private:
 };
 
 /**@}*/
-
-extern CarlaEngine carla_engine;
 
 CARLA_BACKEND_END_NAMESPACE
 

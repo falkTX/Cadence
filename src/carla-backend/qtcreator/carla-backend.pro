@@ -6,11 +6,11 @@ CONFIG    = debug link_pkgconfig qt warn_on plugin shared
 PKGCONFIG = jack liblo fluidsynth linuxsampler suil-0
 
 TARGET   = carla_backend
-TEMPLATE = lib # app
+TEMPLATE = lib #app
 VERSION  = 0.5.0
 
 SOURCES = \
-    ../carla_backend.cpp \
+#    ../carla_backend.cpp \
     ../carla_engine_jack.cpp \
     ../carla_engine_rtaudio.cpp \
     ../carla_engine_vst.cpp \
@@ -46,10 +46,11 @@ INCLUDEPATH = .. \
     ../../carla-includes/vst
 
 DEFINES = HAVE_SUIL WANT_FLUIDSYNTH WANT_LINUXSAMPLER CARLA_BACKEND_NO_NAMESPACE
-DEFINES += CARLA_ENGINE_JACK
+#DEFINES += CARLA_ENGINE_JACK
 #DEFINES += CARLA_ENGINE_RTAUDIO
-#DEFINES += CARLA_ENGINE_VST
-DEFINES += QTCREATOR_TEST
+DEFINES += CARLA_ENGINE_VST
+#DEFINES += QTCREATOR_TEST
+DEFINES += CARLA_BACKEND_NO_EXPORTS
 LIBS    = ../../carla-lilv/carla_lilv.a -ldl #-lasound -lpulse -lpulse-simple
 
 QMAKE_CXXFLAGS *= -std=c++0x

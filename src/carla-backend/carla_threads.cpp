@@ -54,7 +54,7 @@ void CarlaCheckThread::run()
     PluginPostEvent postEvents[MAX_POST_EVENTS];
 
     m_stopNow = false;
-    while (is_engine_running() && ! m_stopNow)
+    while (/*is_engine_running() &&*/ ! m_stopNow)
     {
         for (unsigned short i=0; i<MAX_PLUGINS; i++)
         {

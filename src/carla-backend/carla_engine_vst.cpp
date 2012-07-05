@@ -28,334 +28,48 @@ CARLA_BACKEND_START_NAMESPACE
 } /* adjust editor indent */
 #endif
 
-// Global VST stuff
-static int32_t carla_buffer_size = 512;
-static double  carla_sample_rate = 44100;
-
-static const char* carla_client_name = nullptr;
-static QThread* carla_proc_thread = nullptr;
-
 // -------------------------------------------------------------------------------------------------------------------
-// Exported symbols (API)
+// static VST<->Engine calls
 
-bool is_engine_running()
+static intptr_t carla_vst_dispatcher(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
 {
-    return true; // TODO
+    qDebug("CarlaEngineVst::dispatcher(%p, %i, %i, " P_INTPTR ", %p, %f)", effect, opcode, index, value, ptr, opt);
+
+    CarlaEngineVst* const engine = (CarlaEngineVst*)effect->object;
+
+    if (opcode == effClose)
+    {
+        delete engine;
+        return 1;
+    }
+
+    return engine->handleDispatch(opcode, index, value, ptr, opt);
 }
 
-const char* get_host_client_name()
+static float carla_vst_get_parameter(AEffect* effect, int32_t index)
 {
-    return carla_client_name;
+    CarlaEngineVst* const engine = (CarlaEngineVst*)effect->object;
+    return engine->handleGetParameter(index);
 }
 
-quint32 get_buffer_size()
+static void carla_vst_set_parameter(AEffect* effect, int32_t index, float value)
 {
-    qDebug("get_buffer_size()");
-    if (carla_options.proccess_hq)
-        return 8;
-    return carla_buffer_size;
+    CarlaEngineVst* const engine = (CarlaEngineVst*)effect->object;
+    engine->handleSetParameter(index, value);
 }
 
-double get_sample_rate()
+static void carla_vst_process_replacing(AEffect* effect, float** inputs, float** outputs, int32_t sampleFrames)
 {
-    qDebug("get_sample_rate()");
-    return carla_sample_rate;
+    CarlaEngineVst* const engine = (CarlaEngineVst*)effect->object;
+    engine->handleProcessReplacing(inputs, outputs,  sampleFrames);
 }
-
-double get_latency()
-{
-    qDebug("get_latency()");
-    return double(carla_buffer_size)/carla_sample_rate*1000;
-}
-
-// -------------------------------------------------------------------------------------------------------------------
-// static VST<->Engine class
-
-class CarlaEngineVst
-{
-public:
-    CarlaEngineVst(const audioMasterCallback callback_) :
-        m_callback(callback_)
-    {
-        qDebug("CarlaEngineVst()");
-        memset(&effect, 0, sizeof(AEffect));
-
-        // static fields
-        effect.magic  = kEffectMagic;
-        effect.object = this;
-        effect.uniqueID = CCONST('C', 'r', 'l', 'a');
-        effect.version = kVstVersion;
-
-        // ...
-        effect.numPrograms = 0;
-        effect.numParams = 0;
-        effect.numInputs = 2;
-        effect.numOutputs = 2;
-        effect.ioRatio = 1.0f;
-
-        // static calls
-        effect.dispatcher = dispatcher;
-        effect.process = nullptr;
-        effect.setParameter = nullptr;
-        effect.getParameter = nullptr;
-        effect.processReplacing = processReplacing;
-        effect.processDoubleReplacing = nullptr;
-
-        // plugin flags
-        //effect.flags |= effFlagsHasEditor;
-        effect.flags |= effFlagsCanReplacing;
-        //effect.flags |= effFlagsProgramChunks;
-
-        carla_sample_rate = sampleRate = callback(audioMasterGetSampleRate, 0, 0, nullptr, 0.0f);
-        carla_buffer_size = bufferSize = callback(audioMasterGetBlockSize, 0, 0, nullptr, 0.0f);
-
-        char strBuf[STR_MAX];
-        callback(audioMasterGetVendorString, 0, 0, strBuf, 0.0f);
-
-        if (strBuf[0] == 0)
-            strcpy(strBuf, "CarlaVST");
-
-        engine.init(strBuf);
-    }
-
-    ~CarlaEngineVst()
-    {
-        qDebug("~CarlaEngineVst()");
-        engine.close();
-    }
-
-    intptr_t callback(int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
-    {
-        return m_callback(&effect, opcode, index, value, ptr, opt);
-    }
-
-    const AEffect* getEffect() const
-    {
-        qDebug("CarlaEngineVst::getEffect()");
-        return &effect;
-    }
-
-    // ---------------------------------------------------------------
-
-    intptr_t handleDispatch(int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
-    {
-        switch (opcode)
-        {
-        case effOpen:
-        case effClose:
-        case effSetProgram:
-        case effGetProgram:
-        case effSetProgramName:
-        case effGetProgramName:
-        case effGetParamLabel:
-        case effGetParamDisplay:
-        case effGetParamName:
-        case effGetVu:
-            break;
-
-        case effSetSampleRate:
-            carla_sample_rate = sampleRate = opt;
-            break;
-
-        case effSetBlockSize:
-            carla_buffer_size = bufferSize = value;
-            break;
-
-        case effMainsChanged:
-        case effEditGetRect:
-        case effEditOpen:
-        case effEditClose:
-        case effEditDraw:
-        case effEditMouse:
-        case effEditKey:
-        case effEditIdle:
-        case effEditTop:
-        case effEditSleep:
-        case effIdentify:
-        case effGetChunk:
-        case effSetChunk:
-        case effProcessEvents:
-        case effCanBeAutomated:
-        case effString2Parameter:
-        case effGetNumProgramCategories:
-        case effGetProgramNameIndexed:
-        case effCopyProgram:
-        case effConnectInput:
-        case effConnectOutput:
-        case effGetInputProperties:
-        case effGetOutputProperties:
-        case effGetPlugCategory:
-        case effGetCurrentPosition:
-        case effGetDestinationBuffer:
-        case effOfflineNotify:
-        case effOfflinePrepare:
-        case effOfflineRun:
-        case effProcessVarIo:
-        case effSetSpeakerArrangement:
-        case effSetBlockSizeAndSampleRate:
-        case effSetBypass:
-        case effGetEffectName:
-        case effGetErrorText:
-            break;
-
-        case effGetVendorString:
-            strncpy((char*)ptr, "falkTX", kVstMaxVendorStrLen);
-            break;
-
-        case effGetProductString:
-            strncpy((char*)ptr, "Carla VST", kVstMaxProductStrLen);
-            break;
-
-        case effGetVendorVersion:
-            return 0x050;
-
-        case effVendorSpecific:
-            return 0;
-
-        case effCanDo:
-        {
-            const char* const feature = (char*)ptr;
-
-            if (strcmp(feature, "sendVstEvents") == 0)
-                return 1;
-            if (strcmp(feature, "sendVstMidiEvent") == 0)
-                return 1;
-            if (strcmp(feature, "receiveVstEvents") == 0)
-                return 1;
-            if (strcmp(feature, "receiveVstMidiEvent") == 0)
-                return 1;
-            if (strcmp(feature, "receiveVstTimeInfo") == 0)
-                return 1;
-
-            return 0;
-        }
-
-        case effGetTailSize:
-        case effIdle:
-        case effGetIcon:
-        case effSetViewPosition:
-        case effGetParameterProperties:
-        case effKeysRequired:
-            break;
-
-        case effGetVstVersion:
-            return kVstVersion;
-
-        case effEditKeyDown:
-        case effEditKeyUp:
-        case effSetEditKnobMode:
-        case effGetMidiProgramName:
-        case effGetCurrentMidiProgram:
-        case effGetMidiProgramCategory:
-        case effHasMidiProgramsChanged:
-        case effGetMidiKeyName:
-        case effBeginSetProgram:
-        case effEndSetProgram:
-        case effGetSpeakerArrangement:
-        case effShellGetNextPlugin:
-        case effStartProcess:
-        case effStopProcess:
-        case effSetTotalSampleToProcess:
-        case effSetPanLaw:
-        case effBeginLoadBank:
-        case effBeginLoadProgram:
-        case effSetProcessPrecision:
-        case effGetNumMidiInputChannels:
-        case effGetNumMidiOutputChannels:
-            break;
-        }
-
-        return 0;
-        Q_UNUSED(index);
-    }
-
-    void handleProcessReplacing(float** inputs, float** outputs, int32_t sampleFrames)
-    {
-        return;
-        Q_UNUSED(inputs);
-        Q_UNUSED(outputs);
-        Q_UNUSED(sampleFrames);
-    }
-
-    // ---------------------------------------------------------------
-
-    static intptr_t dispatcher(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
-    {
-        qDebug("CarlaEngineVst::dispatcher(%p, %i, %i, " P_INTPTR ", %p, %f)", effect, opcode, index, value, ptr, opt);
-
-        CarlaEngineVst* engine = (CarlaEngineVst*)effect->object;
-
-        if (opcode == effClose)
-        {
-            delete engine;
-            return 1;
-        }
-
-        return engine->handleDispatch(opcode, index, value, ptr, opt);
-    }
-
-    static void processReplacing(AEffect* effect, float** inputs, float** outputs, int32_t sampleFrames)
-    {
-        CarlaEngineVst* engine = (CarlaEngineVst*)effect->object;
-        engine->handleProcessReplacing(inputs, outputs,  sampleFrames);
-    }
-
-private:
-    AEffect effect;
-    double sampleRate;
-    uint32_t bufferSize;
-
-    CarlaEngine engine;
-
-    const audioMasterCallback m_callback;
-};
 
 // -------------------------------------------------------------------------------------------------------------------
 // Carla Engine
 
-CarlaEngine::CarlaEngine() {}
-CarlaEngine::~CarlaEngine() {}
-
-bool CarlaEngine::init(const char* name)
-{
-    carla_client_name = strdup(name);
-
-    return true;
-}
-
-bool CarlaEngine::close()
-{
-    if (carla_client_name)
-    {
-        free((void*)carla_client_name);
-        carla_client_name = nullptr;
-    }
-
-    return true;
-}
-
-const CarlaTimeInfo* CarlaEngine::getTimeInfo()
-{
-    static CarlaTimeInfo info;
-    info.playing = false;
-    info.frame = 0;
-    info.valid = 0;
-    return &info;
-}
-
-bool CarlaEngine::isOnAudioThread()
-{
-    return (QThread::currentThread() == carla_proc_thread);
-}
-
-bool CarlaEngine::isOffline()
-{
-    return false;
-}
-
 int CarlaEngine::maxClientNameSize()
 {
-    return STR_MAX;
+    return STR_MAX/2;
 }
 
 int CarlaEngine::maxPortNameSize()
@@ -364,27 +78,449 @@ int CarlaEngine::maxPortNameSize()
 }
 
 // -------------------------------------------------------------------------------------------------------------------
-// Carla Engine Port (Base class)
+// Carla Engine (VST)
 
-CarlaEngineBasePort::CarlaEngineBasePort(CarlaEngineClientNativeHandle* const clientHandle, bool isInput_) :
-    isInput(isInput_),
-    client(clientHandle)
+CarlaEngineVst::CarlaEngineVst(audioMasterCallback callback_) :
+    CarlaEngine(),
+    m_callback(callback_)
 {
-    handle = nullptr;
+    memset(&effect, 0, sizeof(AEffect));
+
+    // vst fields
+    effect.magic    = kEffectMagic;
+    effect.object   = this;
+    effect.version  = kVstVersion;
+    effect.uniqueID = CCONST('C', 'r', 'l', 'a');
+
+    // plugin fields
+    effect.numPrograms = 0;
+    effect.numParams   = 1;
+    effect.numInputs   = 2;
+    effect.numOutputs  = 2;
+    effect.ioRatio = 1.0f;
+
+    // static calls
+    effect.dispatcher = carla_vst_dispatcher;
+    effect.process    = carla_vst_process_replacing;
+    effect.getParameter = carla_vst_get_parameter;
+    effect.setParameter = carla_vst_set_parameter;
+    effect.processReplacing = carla_vst_process_replacing;
+
+    // plugin flags
+    //effect.flags |= effFlagsHasEditor;
+    effect.flags |= effFlagsCanReplacing;
+    //effect.flags |= effFlagsProgramChunks;
+
+    // setup engine
+    sampleRate = callback(audioMasterGetSampleRate, 0, 0, nullptr, 0.0f);
+    bufferSize = callback(audioMasterGetBlockSize, 0, 0, nullptr, 0.0f);
+
+    // set engine name
+    char strBuf[STR_MAX];
+    callback(audioMasterGetVendorString, 0, 0, strBuf, 0.0f);
+
+    if (strBuf[0] == 0)
+        strcpy(strBuf, "CarlaVST");
+
+    init(strBuf);
+
+    carla_options.bridge_lv2gtk2 = strdup("/home/falktx/Personal/FOSS/GIT/Cadence/src/carla-bridge/carla-bridge-lv2-gtk2");
+    //carla_options.prefer_ui_bridges = true;
 }
 
-CarlaEngineBasePort::~CarlaEngineBasePort()
+CarlaEngineVst::~CarlaEngineVst()
 {
+    close();
+}
+
+// -------------------------------------------------------------------------------------------------------------------
+
+CarlaCheckThread checkThread;
+
+bool CarlaEngineVst::init(const char* const name_)
+{
+    name = strdup(name_);
+    osc_init(name);
+
+    // TEST
+    CarlaPlugin::initializer init = {
+        this,
+        "fake-filename-here",
+        nullptr,
+        "http://invadarecords.com/plugins/lv2/meter"
+//        "http://nedko.aranaudov.org/soft/filter/2/stereo"
+    };
+
+    short id = CarlaPlugin::newLV2(init);
+    CarlaPlugins[id]->setActive(true, false, false);
+    CarlaPlugins[id]->showGui(true);
+    checkThread.start();
+
+    return true;
+}
+
+bool CarlaEngineVst::close()
+{
+    if (name)
+    {
+        free((void*)name);
+        name = nullptr;
+    }
+
+    checkThread.stopNow();
+    osc_close();
+
+    CarlaPlugin* plugin = CarlaPlugins[0];
+    carla_proc_lock();
+    plugin->setEnabled(false);
+    carla_proc_unlock();
+    delete plugin;
+
+    return true;
+}
+
+bool CarlaEngineVst::isOnAudioThread()
+{
+    return (callback(audioMasterGetCurrentProcessLevel, 0, 0, nullptr, 0.0f) == kVstProcessLevelRealtime);
+}
+
+bool CarlaEngineVst::isOffline()
+{
+    return (callback(audioMasterGetCurrentProcessLevel, 0, 0, nullptr, 0.0f) == kVstProcessLevelOffline);
+}
+
+bool CarlaEngineVst::isRunning()
+{
+    return true;
+}
+
+CarlaEngineClient* CarlaEngineVst::addClient(CarlaPlugin* const plugin)
+{
+    bool active = true;
+
+    CarlaEngineClientNativeHandle handle = {
+    };
+
+    return new CarlaEngineClient(handle, active);
+    Q_UNUSED(plugin);
+}
+
+// -------------------------------------------------------------------------------------------------------------------
+
+intptr_t CarlaEngineVst::handleDispatch(int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
+{
+    switch (opcode)
+    {
+    case effOpen:
+    case effClose:
+    case effSetProgram:
+    case effGetProgram:
+    case effSetProgramName:
+    case effGetProgramName:
+    case effGetParamLabel:
+    case effGetParamDisplay:
+        break;
+
+    case effGetParamName:
+        strncpy((char*)ptr, "Enabled", kVstMaxParamStrLen);
+        break;
+
+    case effGetVu:
+        break;
+
+    case effSetSampleRate:
+        sampleRate = opt; // TODO - watch for changes
+        break;
+
+    case effSetBlockSize:
+        bufferSize = value; // TODO - watch for changes
+        break;
+
+    case effMainsChanged:
+    case effEditGetRect:
+    case effEditOpen:
+    case effEditClose:
+    case effEditDraw:
+    case effEditMouse:
+    case effEditKey:
+
+    case effEditIdle:
+        for (unsigned short i=0; i<MAX_PLUGINS; i++)
+        {
+            CarlaPlugin* const plugin = CarlaPlugins[i];
+
+            if (plugin && plugin->enabled())
+                plugin->idleGui();
+        }
+        break;
+
+    case effEditTop:
+    case effEditSleep:
+    case effIdentify:
+    case effGetChunk:
+    case effSetChunk:
+    case effProcessEvents:
+    case effCanBeAutomated:
+    case effString2Parameter:
+    case effGetNumProgramCategories:
+    case effGetProgramNameIndexed:
+    case effCopyProgram:
+    case effConnectInput:
+    case effConnectOutput:
+    case effGetInputProperties:
+    case effGetOutputProperties:
+    case effGetPlugCategory:
+    case effGetCurrentPosition:
+    case effGetDestinationBuffer:
+    case effOfflineNotify:
+    case effOfflinePrepare:
+    case effOfflineRun:
+    case effProcessVarIo:
+    case effSetSpeakerArrangement:
+    case effSetBlockSizeAndSampleRate:
+    case effSetBypass:
+    case effGetEffectName:
+    case effGetErrorText:
+        break;
+
+    case effGetVendorString:
+        strncpy((char*)ptr, "falkTX", kVstMaxVendorStrLen);
+        break;
+
+    case effGetProductString:
+        strncpy((char*)ptr, "Carla VST", kVstMaxProductStrLen);
+        break;
+
+    case effGetVendorVersion:
+        return 0x050;
+
+    case effVendorSpecific:
+        return 0;
+
+    case effCanDo:
+    {
+        const char* const feature = (char*)ptr;
+
+        if (strcmp(feature, "sendVstEvents") == 0)
+            return 1;
+        if (strcmp(feature, "sendVstMidiEvent") == 0)
+            return 1;
+        if (strcmp(feature, "receiveVstEvents") == 0)
+            return 1;
+        if (strcmp(feature, "receiveVstMidiEvent") == 0)
+            return 1;
+        if (strcmp(feature, "receiveVstTimeInfo") == 0)
+            return 1;
+
+        return 0;
+    }
+
+    case effGetTailSize:
+    case effIdle:
+    case effGetIcon:
+    case effSetViewPosition:
+    case effGetParameterProperties:
+    case effKeysRequired:
+        break;
+
+    case effGetVstVersion:
+        return kVstVersion;
+
+    case effEditKeyDown:
+    case effEditKeyUp:
+    case effSetEditKnobMode:
+    case effGetMidiProgramName:
+    case effGetCurrentMidiProgram:
+    case effGetMidiProgramCategory:
+    case effHasMidiProgramsChanged:
+    case effGetMidiKeyName:
+    case effBeginSetProgram:
+    case effEndSetProgram:
+    case effGetSpeakerArrangement:
+    case effShellGetNextPlugin:
+    case effStartProcess:
+    case effStopProcess:
+    case effSetTotalSampleToProcess:
+    case effSetPanLaw:
+    case effBeginLoadBank:
+    case effBeginLoadProgram:
+    case effSetProcessPrecision:
+    case effGetNumMidiInputChannels:
+    case effGetNumMidiOutputChannels:
+        break;
+    }
+
+    return 0;
+    Q_UNUSED(index);
+}
+
+float CarlaEngineVst::handleGetParameter(int32_t index)
+{
+    return 0.0f;
+    Q_UNUSED(index);
+}
+
+void CarlaEngineVst::handleSetParameter(int32_t index, float value)
+{
+    return;
+    Q_UNUSED(index);
+    Q_UNUSED(value);
+}
+
+void CarlaEngineVst::handleProcessReplacing(float** inputs, float** outputs, int32_t frames)
+{
+    //const VstTimeInfo_R* const vstTimeInfo = (VstTimeInfo_R*)callback(audioMasterGetTime, 0, kVstTransportPlaying, nullptr, 0.0f);
+
+    //timeInfo.playing = bool(vstTimeInfo->flags & kVstTransportPlaying);
+
+    //    if (pos.unique_1 == pos.unique_2)
+    //    {
+    //        timeInfo.frame = pos.frame;
+    //        timeInfo.time  = pos.usecs;
+
+    //        if (pos.valid & JackPositionBBT)
+    //        {
+    //            timeInfo.valid = CarlaEngineTimeBBT;
+    //            timeInfo.bbt.bar  = pos.bar;
+    //            timeInfo.bbt.beat = pos.beat;
+    //            timeInfo.bbt.tick = pos.tick;
+    //            timeInfo.bbt.bar_start_tick = pos.bar_start_tick;
+    //            timeInfo.bbt.beats_per_bar  = pos.beats_per_bar;
+    //            timeInfo.bbt.beat_type      = pos.beat_type;
+    //            timeInfo.bbt.ticks_per_beat = pos.ticks_per_beat;
+    //            timeInfo.bbt.beats_per_minute = pos.beats_per_minute;
+    //        }
+    //        else
+    //            timeInfo.valid = 0;
+    //    }
+    //    else
+    //    {
+    //timeInfo.frame = 0;
+    //timeInfo.valid = 0;
+    //    }
+
+    // create temporary audio buffers
+    float ains_tmp_buf1[frames];
+    float ains_tmp_buf2[frames];
+    float aouts_tmp_buf1[frames];
+    float aouts_tmp_buf2[frames];
+
+    float* ains_tmp[2]  = { ains_tmp_buf1, ains_tmp_buf2 };
+    float* aouts_tmp[2] = { aouts_tmp_buf1, aouts_tmp_buf2 };
+
+    // initialize audio input
+    memcpy(ains_tmp_buf1, inputs[0], sizeof(float)*frames);
+    memcpy(ains_tmp_buf2, inputs[1], sizeof(float)*frames);
+
+    // initialize control input
+    memset(rackControlEventsIn, 0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
+    {
+        // TODO
+    }
+
+    // initialize midi input
+    memset(rackMidiEventsIn, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+    {
+        // TODO
+    }
+
+    // initialize outputs (zero)
+    memset(aouts_tmp_buf1, 0, sizeof(float)*frames);
+    memset(aouts_tmp_buf2, 0, sizeof(float)*frames);
+    memset(rackControlEventsOut, 0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
+    memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+
+    bool processed = false;
+
+    // process plugins
+    for (unsigned short i=0; i < MAX_PLUGINS; i++)
+    {
+        CarlaPlugin* const plugin = CarlaPlugins[i];
+        if (plugin && plugin->enabled())
+        {
+            if (processed)
+            {
+                // initialize inputs (from previous outputs)
+                memcpy(ains_tmp_buf1, aouts_tmp_buf1, sizeof(float)*frames);
+                memcpy(ains_tmp_buf2, aouts_tmp_buf2, sizeof(float)*frames);
+                memcpy(rackMidiEventsIn, rackMidiEventsOut, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+
+                // initialize outputs (zero)
+                memset(aouts_tmp_buf1, 0, sizeof(float)*frames);
+                memset(aouts_tmp_buf2, 0, sizeof(float)*frames);
+                memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+            }
+
+            // process
+            carla_proc_lock();
+
+            plugin->initBuffers();
+
+            if (carla_options.proccess_hq)
+            {
+                float* ains_buffer2[2];
+                float* aouts_buffer2[2];
+
+                for (int32_t j=0; j < frames; j += 8)
+                {
+                    ains_buffer2[0] = ains_tmp_buf1 + j;
+                    ains_buffer2[1] = ains_tmp_buf2 + j;
+
+                    aouts_buffer2[0] = aouts_tmp_buf1 + j;
+                    aouts_buffer2[1] = aouts_tmp_buf2 + j;
+
+                    plugin->process(ains_buffer2, aouts_buffer2, 8, j);
+                }
+            }
+            else
+                plugin->process(ains_tmp, aouts_tmp, frames);
+
+            carla_proc_unlock();
+
+            // if plugin has no audio inputs, add previous buffers
+            if (plugin->audioInCount() == 0)
+            {
+                for (int32_t j=0; j < frames; j++)
+                {
+                    aouts_tmp_buf1[j] += ains_tmp_buf1[j];
+                    aouts_tmp_buf2[j] += ains_tmp_buf2[j];
+                }
+            }
+
+            processed = true;
+        }
+    }
+
+    // if no plugins in the rack, copy inputs over outputs
+    if (! processed)
+    {
+        memcpy(aouts_tmp_buf1, ains_tmp_buf1, sizeof(float)*frames);
+        memcpy(aouts_tmp_buf2, ains_tmp_buf2, sizeof(float)*frames);
+        memcpy(rackMidiEventsOut, rackMidiEventsIn, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+    }
+
+    // output audio
+    memcpy(outputs[0], aouts_tmp_buf1, sizeof(float)*frames);
+    memcpy(outputs[1], aouts_tmp_buf2, sizeof(float)*frames);
+
+    // output control
+    {
+        // TODO
+    }
+
+    // output midi
+    {
+        // TODO
+    }
 }
 
 // -------------------------------------------------------------------------------------------------------------------
 // Carla Engine Client
 
-CarlaEngineClient::CarlaEngineClient(CarlaPlugin* const plugin)
+CarlaEngineClient::CarlaEngineClient(const CarlaEngineClientNativeHandle& handle_, bool active) :
+    m_active(active),
+    handle(handle_)
 {
-    handle = nullptr;
-    m_active = false;
-    Q_UNUSED(plugin);
 }
 
 CarlaEngineClient::~CarlaEngineClient()
@@ -401,107 +537,189 @@ void CarlaEngineClient::deactivate()
     m_active = false;
 }
 
-bool CarlaEngineClient::isActive()
+bool CarlaEngineClient::isActive() const
 {
     return m_active;
 }
 
-bool CarlaEngineClient::isOk()
+bool CarlaEngineClient::isOk() const
 {
-    //return bool(handle);
     return true;
 }
 
-CarlaEngineBasePort* CarlaEngineClient::addPort(const char* name, CarlaEnginePortType type, bool isInput)
+const CarlaEngineBasePort* CarlaEngineClient::addPort(CarlaEnginePortType type, const char* name, bool isInput)
 {
+    CarlaEnginePortNativeHandle portHandle = {
+        nullptr
+    };
+
     switch (type)
     {
     case CarlaEnginePortTypeAudio:
-        return new CarlaEngineAudioPort(handle, name, isInput);
+        return new CarlaEngineAudioPort(portHandle, isInput);
     case CarlaEnginePortTypeControl:
-        return new CarlaEngineControlPort(handle, name, isInput);
+        return new CarlaEngineControlPort(portHandle, isInput);
     case CarlaEnginePortTypeMIDI:
-        return new CarlaEngineMidiPort(handle, name, isInput);
+        return new CarlaEngineMidiPort(portHandle, isInput);
     default:
         return nullptr;
     }
+
+    Q_UNUSED(name);
+}
+
+// -------------------------------------------------------------------------------------------------------------------
+// Carla Engine Port (Base class)
+
+CarlaEngineBasePort::CarlaEngineBasePort(CarlaEnginePortNativeHandle& handle_, bool isInput_) :
+    isInput(isInput_),
+    handle(handle_)
+{
+}
+
+CarlaEngineBasePort::~CarlaEngineBasePort()
+{
 }
 
 // -------------------------------------------------------------------------------------------------------------------
 // Carla Engine Port (Audio)
 
-CarlaEngineAudioPort::CarlaEngineAudioPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput) :
-    CarlaEngineBasePort(client, isInput)
+CarlaEngineAudioPort::CarlaEngineAudioPort(CarlaEnginePortNativeHandle& handle, bool isInput) :
+    CarlaEngineBasePort(handle, isInput)
 {
-    Q_UNUSED(name);
 }
 
-void CarlaEngineAudioPort::initBuffer()
+void CarlaEngineAudioPort::initBuffer(CarlaEngine* const /*engine*/)
 {
 }
 
 // -------------------------------------------------------------------------------------------------------------------
 // Carla Engine Port (Control)
 
-CarlaEngineControlPort::CarlaEngineControlPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput) :
-    CarlaEngineBasePort(client, isInput)
+CarlaEngineControlPort::CarlaEngineControlPort(CarlaEnginePortNativeHandle& handle, bool isInput) :
+    CarlaEngineBasePort(handle, isInput)
 {
-    Q_UNUSED(name);
 }
 
-void CarlaEngineControlPort::initBuffer()
+void CarlaEngineControlPort::initBuffer(CarlaEngine* const engine)
 {
+    handle.buffer = isInput ? engine->rackControlEventsIn : engine->rackControlEventsOut;
 }
 
 uint32_t CarlaEngineControlPort::getEventCount()
 {
-    return 0;
+    if (! isInput)
+        return 0;
+
+    uint32_t count = 0;
+    const CarlaEngineControlEvent* const events = (CarlaEngineControlEvent*)handle.buffer;
+
+    for (unsigned short i=0; i < CarlaEngine::MAX_ENGINE_CONTROL_EVENTS; i++)
+    {
+        if (events[i].type != CarlaEngineEventNull)
+            count++;
+        else
+            break;
+    }
+
+    return count;
 }
 
 const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(uint32_t index)
 {
+    if (! isInput)
+        return nullptr;
+
+    const CarlaEngineControlEvent* const events = (CarlaEngineControlEvent*)handle.buffer;
+
+    if (index < CarlaEngine::MAX_ENGINE_CONTROL_EVENTS)
+        return &events[index];
     return nullptr;
-    Q_UNUSED(index);
 }
 
 void CarlaEngineControlPort::writeEvent(CarlaEngineControlEventType type, uint32_t time, uint8_t channel, uint8_t controller, double value)
 {
-    Q_UNUSED(type);
-    Q_UNUSED(time);
-    Q_UNUSED(channel);
-    Q_UNUSED(controller);
-    Q_UNUSED(value);
+    if (isInput)
+        return;
+
+    CarlaEngineControlEvent* const events = (CarlaEngineControlEvent*)handle.buffer;
+
+    for (unsigned short i=0; i < CarlaEngine::MAX_ENGINE_CONTROL_EVENTS; i++)
+    {
+        if (events[i].type == CarlaEngineEventNull)
+        {
+            events[i].type  = type;
+            events[i].time  = time;
+            events[i].value = value;
+            events[i].channel    = channel;
+            events[i].controller = controller;
+            break;
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------------------------
 // Carla Engine Port (MIDI)
 
-CarlaEngineMidiPort::CarlaEngineMidiPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput) :
-    CarlaEngineBasePort(client, isInput)
+CarlaEngineMidiPort::CarlaEngineMidiPort(CarlaEnginePortNativeHandle& handle, bool isInput) :
+    CarlaEngineBasePort(handle, isInput)
 {
-    Q_UNUSED(name);
 }
 
-void CarlaEngineMidiPort::initBuffer()
+void CarlaEngineMidiPort::initBuffer(CarlaEngine* const engine)
 {
+    handle.buffer = isInput ? engine->rackMidiEventsIn : engine->rackMidiEventsOut;
 }
 
 uint32_t CarlaEngineMidiPort::getEventCount()
 {
-    return 0;
+    if (! isInput)
+        return 0;
+
+    uint32_t count = 0;
+    const CarlaEngineMidiEvent* const events = (CarlaEngineMidiEvent*)handle.buffer;
+
+    for (unsigned short i=0; i < CarlaEngine::MAX_ENGINE_MIDI_EVENTS; i++)
+    {
+        if (events[i].size > 0)
+            count++;
+        else
+            break;
+    }
+
+    return count;
 }
 
 const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(uint32_t index)
 {
+    if (! isInput)
+        return nullptr;
+
+    const CarlaEngineMidiEvent* const events = (CarlaEngineMidiEvent*)handle.buffer;
+
+    if (index < CarlaEngine::MAX_ENGINE_MIDI_EVENTS)
+        return &events[index];
+
     return nullptr;
-    Q_UNUSED(index);
 }
 
 void CarlaEngineMidiPort::writeEvent(uint32_t time, uint8_t* data, uint8_t size)
 {
-    Q_UNUSED(time);
-    Q_UNUSED(data);
-    Q_UNUSED(size);
+    if (isInput || size >= 4)
+        return;
+
+    CarlaEngineMidiEvent* const events = (CarlaEngineMidiEvent*)handle.buffer;
+
+    for (unsigned short i=0; i < CarlaEngine::MAX_ENGINE_MIDI_EVENTS; i++)
+    {
+        if (events[i].size == 0)
+        {
+            events[i].time = time;
+            events[i].size = size;
+            memcpy(events[i].data, data, size);
+            break;
+        }
+    }
 }
 
 CARLA_BACKEND_END_NAMESPACE
@@ -521,4 +739,4 @@ const AEffect* VSTPluginMain(audioMasterCallback callback)
     return engine->getEffect();
 }
 
-#endif // CARLA_ENGINE_RTAUDIO
+#endif // CARLA_ENGINE_VST

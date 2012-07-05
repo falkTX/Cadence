@@ -73,7 +73,7 @@ bool is_ladspa_rdf_descriptor_valid(const LADSPA_RDF_Descriptor* const rdf_descr
 class LadspaPlugin : public CarlaPlugin
 {
 public:
-    LadspaPlugin(unsigned short id) : CarlaPlugin(id)
+    LadspaPlugin(CarlaEngine* const engine, unsigned short id) : CarlaPlugin(engine, id)
     {
         qDebug("LadspaPlugin::LadspaPlugin()");
 
@@ -352,6 +352,7 @@ public:
         uint32_t ains, aouts, params, j;
         ains = aouts = params = 0;
 
+        const double sampleRate = x_engine->getSampleRate();
         const unsigned long PortCount = descriptor->PortCount;
 
         for (unsigned long i=0; i < PortCount; i++)
@@ -369,7 +370,7 @@ public:
         }
 
         if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK && (ains == 1 || aouts == 1) && ! h2)
-            h2 = descriptor->instantiate(descriptor, get_sample_rate());
+            h2 = descriptor->instantiate(descriptor, sampleRate);
 
         if (ains > 0)
         {
@@ -417,13 +418,13 @@ public:
                 if (LADSPA_IS_PORT_INPUT(PortType))
                 {
                     j = ain.count++;
-                    ain.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, true);
+                    ain.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
                     ain.rindexes[j] = i;
                 }
                 else if (LADSPA_IS_PORT_OUTPUT(PortType))
                 {
                     j = aout.count++;
-                    aout.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, false);
+                    aout.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
                     aout.rindexes[j] = i;
                     needsCin = true;
                 }
@@ -532,10 +533,9 @@ public:
 
                 if (LADSPA_IS_HINT_SAMPLE_RATE(PortHint.HintDescriptor))
                 {
-                    double sample_rate = get_sample_rate();
-                    min *= sample_rate;
-                    max *= sample_rate;
-                    def *= sample_rate;
+                    min *= sampleRate;
+                    max *= sampleRate;
+                    def *= sampleRate;
                     param.data[j].hints |= PARAMETER_USES_SAMPLERATE;
                 }
 
@@ -573,7 +573,7 @@ public:
                     if (strcmp(descriptor->PortNames[i], "latency") == 0 || strcmp(descriptor->PortNames[i], "_latency") == 0)
                     {
                         min = 0.0;
-                        max = get_sample_rate();
+                        max = sampleRate;
                         def = 0.0;
                         step = 1.0;
                         step_small = 1.0;
@@ -638,7 +638,7 @@ public:
 #endif
                 strcpy(portName, "control-in");
 
-            param.portCin = (CarlaEngineControlPort*)x_client->addPort(portName, CarlaEnginePortTypeControl, true);
+            param.portCin = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, true);
         }
 
         if (needsCout)
@@ -653,7 +653,7 @@ public:
 #endif
                 strcpy(portName, "control-out");
 
-            param.portCout = (CarlaEngineControlPort*)x_client->addPort(portName, CarlaEnginePortTypeControl, false);
+            param.portCout = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, false);
         }
 
         ain.count   = ains;
@@ -1083,7 +1083,7 @@ public:
         // ---------------------------------------------------------------
         // initialize plugin
 
-        handle = descriptor->instantiate(descriptor, get_sample_rate());
+        handle = descriptor->instantiate(descriptor, x_engine->getSampleRate());
 
         if (! handle)
         {
@@ -1109,7 +1109,7 @@ public:
         // ---------------------------------------------------------------
         // register client
 
-        x_client = new CarlaEngineClient(this);
+        x_client = x_engine->addClient(this);
 
         if (! x_client->isOk())
         {
@@ -1128,9 +1128,9 @@ private:
     float* param_buffers;
 };
 
-short add_plugin_ladspa(const char* const filename, const char* const name, const char* const label, const void* const extra_stuff)
+short CarlaPlugin::newLADSPA(const initializer& init, const void* const extra)
 {
-    qDebug("add_plugin_ladspa(%s, %s, %s, %p)", filename, name, label, extra_stuff);
+    qDebug("CarlaPlugin::newLADSPA(%p, %s, %s, %s, %p)", init.engine, init.filename, init.name, init.label, extra);
 
     short id = get_new_plugin_id();
 
@@ -1140,9 +1140,9 @@ short add_plugin_ladspa(const char* const filename, const char* const name, cons
         return -1;
     }
 
-    LadspaPlugin* const plugin = new LadspaPlugin(id);
+    LadspaPlugin* const plugin = new LadspaPlugin(init.engine, id);
 
-    if (! plugin->init(filename, name, label, (const LADSPA_RDF_Descriptor*)extra_stuff))
+    if (! plugin->init(init.filename, init.name, init.label, (const LADSPA_RDF_Descriptor*)extra))
     {
         delete plugin;
         return -1;

@@ -189,7 +189,7 @@ const char* lv2bridge2str(LV2_Property type)
 class Lv2Plugin : public CarlaPlugin
 {
 public:
-    Lv2Plugin(unsigned short id) : CarlaPlugin(id)
+    Lv2Plugin(CarlaEngine* const engine, unsigned short id) : CarlaPlugin(engine, id)
     {
         qDebug("Lv2Plugin::Lv2Plugin()");
 
@@ -686,7 +686,7 @@ public:
             const char* const stype = customdatatype2str(type);
             LV2_State_Status status;
 
-            if (carla_engine.isOffline())
+            if (x_engine->isOffline())
             {
                 carla_proc_lock();
                 status = ext.state->restore(handle, carla_lv2_state_retrieve, this, 0, features);
@@ -728,7 +728,7 @@ public:
 
         if (ext.programs && index >= 0)
         {
-            if (carla_engine.isOffline())
+            if (x_engine->isOffline())
             {
                 if (block) carla_proc_lock();
                 ext.programs->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
@@ -926,6 +926,7 @@ public:
         ains = aouts = cvIns = cvOuts = params = 0;
         std::vector<unsigned int> evIns, evOuts;
 
+        const double sampleRate = x_engine->getSampleRate();
         const uint32_t PortCount = rdf_descriptor->PortCount;
 
         for (uint32_t i=0; i < PortCount; i++)
@@ -1086,13 +1087,13 @@ public:
                 if (LV2_IS_PORT_INPUT(PortType))
                 {
                     j = ain.count++;
-                    ain.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, true);
+                    ain.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
                     ain.rindexes[j] = i;
                 }
                 else if (LV2_IS_PORT_OUTPUT(PortType))
                 {
                     j = aout.count++;
-                    aout.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, false);
+                    aout.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
                     aout.rindexes[j] = i;
                     needsCin = true;
                 }
@@ -1124,7 +1125,7 @@ public:
                     if (PortType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
                         evin.data[j].type |= CARLA_EVENT_TYPE_MIDI;
-                        evin.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(portName, CarlaEnginePortTypeMIDI, true);
+                        evin.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
                     }
                     if (PortType & LV2_PORT_SUPPORTS_PATCH_MESSAGE)
                     {
@@ -1139,7 +1140,7 @@ public:
                     if (PortType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
                         evout.data[j].type |= CARLA_EVENT_TYPE_MIDI;
-                        evout.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(portName, CarlaEnginePortTypeMIDI, false);
+                        evout.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
                     }
                     if (PortType & LV2_PORT_SUPPORTS_PATCH_MESSAGE)
                     {
@@ -1159,7 +1160,7 @@ public:
                     if (PortType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
                         evin.data[j].type |= CARLA_EVENT_TYPE_MIDI;
-                        evin.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(portName, CarlaEnginePortTypeMIDI, true);
+                        evin.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
                     }
                 }
                 else if (LV2_IS_PORT_OUTPUT(PortType))
@@ -1170,7 +1171,7 @@ public:
                     if (PortType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
                         evout.data[j].type |= CARLA_EVENT_TYPE_MIDI;
-                        evout.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(portName, CarlaEnginePortTypeMIDI, false);
+                        evout.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
                     }
                 }
                 else
@@ -1184,7 +1185,7 @@ public:
                     descriptor->connect_port(handle, i, evin.data[j].midi);
 
                     evin.data[j].type |= CARLA_EVENT_TYPE_MIDI;
-                    evin.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(portName, CarlaEnginePortTypeMIDI, true);
+                    evin.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
                 }
                 else if (LV2_IS_PORT_OUTPUT(PortType))
                 {
@@ -1192,7 +1193,7 @@ public:
                     descriptor->connect_port(handle, i, evout.data[j].midi);
 
                     evout.data[j].type |= CARLA_EVENT_TYPE_MIDI;
-                    evout.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(portName, CarlaEnginePortTypeMIDI, false);
+                    evout.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
                 }
                 else
                     qWarning("WARNING - Got a broken Port (Midi, but not input or output)");
@@ -1262,10 +1263,9 @@ public:
 
                 if (LV2_IS_PORT_SAMPLE_RATE(PortProps))
                 {
-                    double sample_rate = get_sample_rate();
-                    min *= sample_rate;
-                    max *= sample_rate;
-                    def *= sample_rate;
+                    min *= sampleRate;
+                    max *= sampleRate;
+                    def *= sampleRate;
                     param.data[j].hints |= PARAMETER_USES_SAMPLERATE;
                 }
 
@@ -1315,7 +1315,7 @@ public:
                     if (LV2_IS_PORT_LATENCY(PortProps))
                     {
                         min = 0.0;
-                        max = get_sample_rate();
+                        max = sampleRate;
                         def = 0.0;
                         step = 1.0;
                         step_small = 1.0;
@@ -1388,7 +1388,7 @@ public:
 #endif
                 strcpy(portName, "control-in");
 
-            param.portCin = (CarlaEngineControlPort*)x_client->addPort(portName, CarlaEnginePortTypeControl, true);
+            param.portCin = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, true);
         }
 
         if (needsCout)
@@ -1403,7 +1403,7 @@ public:
 #endif
                 strcpy(portName, "control-out");
 
-            param.portCout = (CarlaEngineControlPort*)x_client->addPort(portName, CarlaEnginePortTypeControl, false);
+            param.portCout = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, false);
         }
 
         ain.count   = ains;
@@ -1673,6 +1673,9 @@ public:
                 // Control change
                 switch (cinEvent->type)
                 {
+                case CarlaEngineEventNull:
+                    break;
+
                 case CarlaEngineEventControlChange:
                 {
                     double value;
@@ -1935,7 +1938,7 @@ public:
         // Special Parameters
 
         int32_t rindex;
-        const CarlaTimeInfo* const timeInfo = carla_engine.getTimeInfo();
+        const CarlaTimeInfo* const timeInfo = x_engine->getTimeInfo();
 
         for (k=0; k < param.count; k++)
         {
@@ -2238,13 +2241,13 @@ public:
         for (i=0; i < evin.count; i++)
         {
             if (evin.data[i].port)
-                evin.data[i].port->initBuffer();
+                evin.data[i].port->initBuffer(x_engine);
         }
 
         for (uint32_t i=0; i < evout.count; i++)
         {
             if (evout.data[i].port)
-                evout.data[i].port->initBuffer();
+                evout.data[i].port->initBuffer(x_engine);
         }
 
         CarlaPlugin::initBuffers();
@@ -2608,17 +2611,17 @@ public:
         return 0;
     }
 
-    void handleUiWrite(uint32_t portIndex, uint32_t bufferSize, uint32_t format, const void* buffer)
+    void handleUiWrite(uint32_t rindex, uint32_t bufferSize, uint32_t format, const void* buffer)
     {
         if (format == 0)
         {
-            assert(portIndex < param.count);
             assert(bufferSize == sizeof(float));
+            float value = *(float*)buffer;
 
-            if (portIndex < param.count && bufferSize == sizeof(float))
+            for (uint32_t i=0; i < param.count; i++)
             {
-                float value = *(float*)buffer;
-                setParameterValue(portIndex, value, false, true, true);
+                if (param.data[i].rindex == (int32_t)rindex)
+                    return setParameterValue(i, value, false, true, true);
             }
         }
         else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM)
@@ -3272,7 +3275,7 @@ public:
         // ---------------------------------------------------------------
         // initialize plugin
 
-        handle = descriptor->instantiate(descriptor, get_sample_rate(), rdf_descriptor->Bundle, features);
+        handle = descriptor->instantiate(descriptor, x_engine->getSampleRate(), rdf_descriptor->Bundle, features);
 
         if (! handle)
         {
@@ -3293,7 +3296,7 @@ public:
         // ---------------------------------------------------------------
         // register client
 
-        x_client = new CarlaEngineClient(this);
+        x_client = x_engine->addClient(this);
 
         if (! x_client->isOk())
         {
@@ -3306,6 +3309,8 @@ public:
 
         if (rdf_descriptor->UICount > 0)
         {
+            qDebug("Has UI");
+
             // -----------------------------------------------------------
             // find more appropriate ui
 
@@ -3487,14 +3492,18 @@ public:
                 // -------------------------------------------------------
                 // initialize ui bridge
 
-                const char* const oscBinary = lv2bridge2str(UiType);
+                const char* const oscBinary = "/home/falktx/Personal/FOSS/GIT/Cadence/src/carla-bridge/carla-bridge-lv2-gtk2"; //lv2bridge2str(UiType);
+                qDebug("Has UI - is bridge, uitype = %i : %s", UiType, oscBinary);
 
                 if (oscBinary)
                 {
+                    qDebug("Has UI - has binary");
                     gui.type = GUI_EXTERNAL_OSC;
                     osc.thread = new CarlaPluginThread(this, CarlaPluginThread::PLUGIN_THREAD_LV2_GUI);
                     osc.thread->setOscData(oscBinary, descriptor->URI, ui.descriptor->URI);
                 }
+                else
+                    qDebug("Has UI - NOT binary");
             }
             else
 #endif
@@ -3662,9 +3671,9 @@ private:
     std::vector<const char*> customURIDs;
 };
 
-short add_plugin_lv2(const char* const filename, const char* const name, const char* const label)
+short CarlaPlugin::newLV2(const initializer& init)
 {
-    qDebug("add_plugin_lv2(%s, %s, %s)", filename, name, label);
+    qDebug("CarlaPlugin::newLV2(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
 
     short id = get_new_plugin_id();
 
@@ -3674,9 +3683,9 @@ short add_plugin_lv2(const char* const filename, const char* const name, const c
         return -1;
     }
 
-    Lv2Plugin* plugin = new Lv2Plugin(id);
+    Lv2Plugin* plugin = new Lv2Plugin(init.engine, id);
 
-    if (! plugin->init(filename, name, label))
+    if (! plugin->init(init.filename, init.name, init.label))
     {
         delete plugin;
         return -1;

@@ -607,17 +607,18 @@ CARLA_EXPORT void send_midi_note(unsigned short plugin_id, quint8 note, quint8 v
 CARLA_EXPORT void prepare_for_save(unsigned short plugin_id);
 
 CARLA_EXPORT void set_option(OptionsType option, int value, const char* valueStr);
+
+CARLA_EXPORT const char* get_host_client_name();
+
+CARLA_EXPORT quint32 get_buffer_size();
+CARLA_EXPORT double get_sample_rate();
+//CARLA_EXPORT double get_latency();
 #endif
 
 CARLA_EXPORT void set_callback_function(CallbackFunc func);
 
 CARLA_EXPORT const char* get_last_error();
-CARLA_EXPORT const char* get_host_client_name();
 CARLA_EXPORT const char* get_host_osc_url();
-
-CARLA_EXPORT quint32 get_buffer_size();
-CARLA_EXPORT double get_sample_rate();
-CARLA_EXPORT double get_latency();
 
 // End of exported symbols
 // -----------------------------------------------------

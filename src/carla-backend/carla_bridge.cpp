@@ -35,7 +35,7 @@ struct BridgeParamInfo {
 class BridgePlugin : public CarlaPlugin
 {
 public:
-    BridgePlugin(BinaryType btype, PluginType ptype, unsigned short id) : CarlaPlugin(id),
+    BridgePlugin(CarlaEngine* const engine, unsigned short id, BinaryType btype, PluginType ptype) : CarlaPlugin(engine, id),
         m_binary(btype)
     {
         qDebug("BridgePlugin::BridgePlugin()");
@@ -692,17 +692,17 @@ private:
     BridgeParamInfo* params;
 };
 
-short add_plugin_bridge(BinaryType btype, PluginType ptype, const char* const filename, const char* const name, const char* const label)
+short CarlaPlugin::newBridge(const initializer& init, BinaryType btype, PluginType ptype)
 {
-    qDebug("add_plugin_bridge(%i, %i, %s, %s, %s)", btype, ptype, filename, name, label);
+    qDebug("CarlaPlugin::newBridge(%p, %s, %s, %s, %i, %i)", init.engine, init.filename, init.name, init.label, btype, ptype);
 
     short id = get_new_plugin_id();
 
     if (id >= 0)
     {
-        BridgePlugin* plugin = new BridgePlugin(btype, ptype, id);
+        BridgePlugin* plugin = new BridgePlugin(init.engine, id, btype, ptype);
 
-        if (plugin->init(filename, name, label))
+        if (plugin->init(init.filename, init.name, init.label))
         {
             plugin->reload();
 

@@ -49,8 +49,9 @@ CARLA_BACKEND_START_NAMESPACE
 class AudioOutputDevicePlugin : public LinuxSampler::AudioOutputDevice
 {
 public:
-    AudioOutputDevicePlugin(CarlaPlugin* plugin) :
+    AudioOutputDevicePlugin(CarlaPlugin* const plugin) :
         AudioOutputDevice(std::map<String,LinuxSampler::DeviceCreationParameter*>()),
+        m_engine(nullptr),
         m_plugin(plugin)
     {
     }
@@ -64,7 +65,7 @@ public:
 
     bool IsPlaying()
     {
-        return m_plugin && m_plugin->enabled();
+        return m_engine->isRunning() && m_plugin->enabled();
     }
 
     void Stop()
@@ -73,12 +74,12 @@ public:
 
     uint MaxSamplesPerCycle()
     {
-        return get_buffer_size();
+        return m_engine->getBufferSize();
     }
 
     uint SampleRate()
     {
-        return get_sample_rate();
+        return m_engine->getSampleRate();
     }
 
     String Driver()
@@ -99,7 +100,8 @@ public:
     }
 
 private:
-    CarlaPlugin* m_plugin;
+    CarlaEngine* const m_engine;
+    CarlaPlugin* const m_plugin;
 };
 
 class MidiInputDevicePlugin : public LinuxSampler::MidiInputDevice
@@ -153,7 +155,7 @@ public:
 class LinuxSamplerPlugin : public CarlaPlugin
 {
 public:
-    LinuxSamplerPlugin(unsigned short id, bool isGIG) : CarlaPlugin(id)
+    LinuxSamplerPlugin(CarlaEngine* const engine_, unsigned short id, bool isGIG) : CarlaPlugin(engine_, id)
     {
         qDebug("LinuxSamplerPlugin::LinuxSamplerPlugin()");
 
@@ -270,7 +272,7 @@ public:
 #endif
             strcpy(portName, "out-left");
 
-        aout.ports[0]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, false);
+        aout.ports[0]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
         aout.rindexes[0] = 0;
 
 #ifndef BUILD_BRIDGE
@@ -283,7 +285,7 @@ public:
 #endif
             strcpy(portName, "out-right");
 
-        aout.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(portName, CarlaEnginePortTypeAudio, false);
+        aout.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
         aout.rindexes[1] = 1;
 
         // ---------------------------------------
@@ -299,7 +301,7 @@ public:
 #endif
             strcpy(portName, "midi-in");
 
-        midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(portName, CarlaEnginePortTypeMIDI, true);
+        midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
 
         // ---------------------------------------
 
@@ -638,7 +640,7 @@ public:
                 engine_channel->LoadInstrument();
                 engine_channel->Volume(LINUXSAMPLER_VOLUME_MAX);
 
-                x_client = new CarlaEngineClient(this);
+                x_client = x_engine->addClient(this);
 
                 if (x_client->isOk())
                     return true;
@@ -653,6 +655,10 @@ public:
 
         return false;
     }
+
+    // -------------------------------------------------------------------
+
+    static short newLinuxSampler(const initializer& init, bool isGIG);
 
 private:
     LinuxSampler::Sampler* sampler;
@@ -672,9 +678,9 @@ private:
 };
 #endif
 
-short add_plugin_linuxsampler(const char* const filename, const char* const name, const char* const label, bool isGIG)
+short LinuxSamplerPlugin::newLinuxSampler(const initializer& init, bool isGIG)
 {
-    qDebug("add_plugin_linuxsampler(%s, %s, %s, %s)", filename, name, label, bool2str(isGIG));
+    qDebug("LinuxSamplerPlugin::newLinuxSampler(%p, %s, %s, %s, %s)", init.engine, init.filename, init.name, init.label, bool2str(isGIG));
 
 #ifdef WANT_LINUXSAMPLER
     short id = get_new_plugin_id();
@@ -685,9 +691,9 @@ short add_plugin_linuxsampler(const char* const filename, const char* const name
         return -1;
     }
 
-    LinuxSamplerPlugin* plugin = new LinuxSamplerPlugin(id, isGIG);
+    LinuxSamplerPlugin* plugin = new LinuxSamplerPlugin(init.engine, id, isGIG);
 
-    if (! plugin->init(filename, name, label))
+    if (! plugin->init(init.filename, init.name, init.label))
     {
         delete plugin;
         return -1;
@@ -707,16 +713,16 @@ short add_plugin_linuxsampler(const char* const filename, const char* const name
 #endif
 }
 
-short add_plugin_gig(const char* const filename, const char* const name, const char* const label)
+short CarlaPlugin::newGIG(const initializer& init)
 {
-    qDebug("add_plugin_gig(%s, %s, %s)", filename, name, label);
-    return add_plugin_linuxsampler(filename, name, label, true);
+    qDebug("CarlaPlugin::newGIG(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
+    return LinuxSamplerPlugin::newLinuxSampler(init, true);
 }
 
-short add_plugin_sfz(const char* const filename, const char* const name, const char* const label)
+short CarlaPlugin::newSFZ(const initializer& init)
 {
-    qDebug("add_plugin_sfz(%s, %s, %s)", filename, name, label);
-    return add_plugin_linuxsampler(filename, name, label, false);
+    qDebug("CarlaPlugin::newSFZ(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
+    return LinuxSamplerPlugin::newLinuxSampler(init, false);
 }
 
 /**@}*/
