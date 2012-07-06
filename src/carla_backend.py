@@ -680,6 +680,13 @@ PROCESS_MODE_CONTINUOUS_RACK  = 2
 
 PROCESS_MODE = PROCESS_MODE_MULTIPLE_CLIENTS
 
+class midi_program_t(Structure):
+    _fields_ = [
+        ("bank", c_uint32),
+        ("program", c_uint32),
+        ("label", c_char_p)
+    ]
+
 class ParameterData(Structure):
     _fields_ = [
         ("type", c_enum),
@@ -709,7 +716,6 @@ class CustomData(Structure):
 
 class PluginInfo(Structure):
     _fields_ = [
-        ("valid", c_bool),
         ("type", c_enum),
         ("category", c_enum),
         ("hints", c_uint),
@@ -723,7 +729,6 @@ class PluginInfo(Structure):
 
 class PortCountInfo(Structure):
     _fields_ = [
-        ("valid", c_bool),
         ("ins", c_uint32),
         ("outs", c_uint32),
         ("total", c_uint32)
@@ -731,7 +736,6 @@ class PortCountInfo(Structure):
 
 class ParameterInfo(Structure):
     _fields_ = [
-        ("valid", c_bool),
         ("name", c_char_p),
         ("symbol", c_char_p),
         ("unit", c_char_p),
@@ -740,16 +744,7 @@ class ParameterInfo(Structure):
 
 class ScalePointInfo(Structure):
     _fields_ = [
-        ("valid", c_bool),
         ("value", c_double),
-        ("label", c_char_p)
-    ]
-
-class MidiProgramInfo(Structure):
-    _fields_ = [
-        ("valid", c_bool),
-        ("bank", c_uint32),
-        ("program", c_uint32),
         ("label", c_char_p)
     ]
 
@@ -815,11 +810,8 @@ class Host(object):
         self.lib.get_parameter_info.argtypes = [c_ushort, c_uint32]
         self.lib.get_parameter_info.restype = POINTER(ParameterInfo)
 
-        self.lib.get_scalepoint_info.argtypes = [c_ushort, c_uint32, c_uint32]
-        self.lib.get_scalepoint_info.restype = POINTER(ScalePointInfo)
-
-        self.lib.get_midi_program_info.argtypes = [c_ushort, c_uint32]
-        self.lib.get_midi_program_info.restype = POINTER(MidiProgramInfo)
+        self.lib.get_parameter_scalepoint_info.argtypes = [c_ushort, c_uint32, c_uint32]
+        self.lib.get_parameter_scalepoint_info.restype = POINTER(ScalePointInfo)
 
         self.lib.get_gui_info.argtypes = [c_ushort]
         self.lib.get_gui_info.restype = POINTER(GuiInfo)
@@ -829,6 +821,9 @@ class Host(object):
 
         self.lib.get_parameter_ranges.argtypes = [c_ushort, c_uint32]
         self.lib.get_parameter_ranges.restype = POINTER(ParameterRanges)
+
+        self.lib.get_midi_program_data.argtypes = [c_ushort, c_uint32]
+        self.lib.get_midi_program_data.restype = POINTER(midi_program_t)
 
         self.lib.get_custom_data.argtypes = [c_ushort, c_uint32]
         self.lib.get_custom_data.restype = POINTER(CustomData)
@@ -929,29 +924,23 @@ class Host(object):
         self.lib.prepare_for_save.argtypes = [c_ushort]
         self.lib.prepare_for_save.restype = None
 
-        self.lib.set_callback_function.argtypes = [CallbackFunc]
-        self.lib.set_callback_function.restype = None
-
-        self.lib.set_option.argtypes = [c_enum, c_int, c_char_p]
-        self.lib.set_option.restype = None
-
-        self.lib.get_last_error.argtypes = None
-        self.lib.get_last_error.restype = c_char_p
-
-        self.lib.get_host_client_name.argtypes = None
-        self.lib.get_host_client_name.restype = c_char_p
-
-        self.lib.get_host_osc_url.argtypes = None
-        self.lib.get_host_osc_url.restype = c_char_p
-
         self.lib.get_buffer_size.argtypes = None
         self.lib.get_buffer_size.restype = c_uint32
 
         self.lib.get_sample_rate.argtypes = None
         self.lib.get_sample_rate.restype = c_double
 
-        self.lib.get_latency.argtypes = None
-        self.lib.get_latency.restype = c_double
+        self.lib.get_last_error.argtypes = None
+        self.lib.get_last_error.restype = c_char_p
+
+        self.lib.get_host_osc_url.argtypes = None
+        self.lib.get_host_osc_url.restype = c_char_p
+
+        self.lib.set_callback_function.argtypes = [CallbackFunc]
+        self.lib.set_callback_function.restype = None
+
+        self.lib.set_option.argtypes = [c_enum, c_int, c_char_p]
+        self.lib.set_option.restype = None
 
     def engine_init(self, client_name):
         return self.lib.engine_init(client_name.encode("utf-8"))
@@ -983,17 +972,17 @@ class Host(object):
     def get_parameter_info(self, plugin_id, parameter_id):
         return struct_to_dict(self.lib.get_parameter_info(plugin_id, parameter_id).contents)
 
-    def get_scalepoint_info(self, plugin_id, parameter_id, scalepoint_id):
-        return struct_to_dict(self.lib.get_scalepoint_info(plugin_id, parameter_id, scalepoint_id).contents)
-
-    def get_midi_program_info(self, plugin_id, midi_program_id):
-        return struct_to_dict(self.lib.get_midi_program_info(plugin_id, midi_program_id).contents)
+    def get_parameter_scalepoint_info(self, plugin_id, parameter_id, scalepoint_id):
+        return struct_to_dict(self.lib.get_parameter_scalepoint_info(plugin_id, parameter_id, scalepoint_id).contents)
 
     def get_parameter_data(self, plugin_id, parameter_id):
         return struct_to_dict(self.lib.get_parameter_data(plugin_id, parameter_id).contents)
 
     def get_parameter_ranges(self, plugin_id, parameter_id):
         return struct_to_dict(self.lib.get_parameter_ranges(plugin_id, parameter_id).contents)
+
+    def get_midi_program_data(self, plugin_id, midi_program_id):
+        return struct_to_dict(self.lib.get_midi_program_data(plugin_id, midi_program_id).contents)
 
     def get_custom_data(self, plugin_id, custom_data_id):
         return struct_to_dict(self.lib.get_custom_data(plugin_id, custom_data_id).contents)
@@ -1108,9 +1097,6 @@ class Host(object):
     def get_last_error(self):
         return self.lib.get_last_error()
 
-    def get_host_client_name(self):
-        return self.lib.get_host_client_name()
-
     def get_host_osc_url(self):
         return self.lib.get_host_osc_url()
 
@@ -1119,9 +1105,6 @@ class Host(object):
 
     def get_sample_rate(self):
         return self.lib.get_sample_rate()
-
-    def get_latency(self):
-        return self.lib.get_latency()
 
 # ------------------------------------------------------------------------------------------------
 # Default Plugin Folders (set)

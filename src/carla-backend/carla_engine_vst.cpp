@@ -65,19 +65,6 @@ static void carla_vst_process_replacing(AEffect* effect, float** inputs, float**
 }
 
 // -------------------------------------------------------------------------------------------------------------------
-// Carla Engine
-
-int CarlaEngine::maxClientNameSize()
-{
-    return STR_MAX/2;
-}
-
-int CarlaEngine::maxPortNameSize()
-{
-    return STR_MAX;
-}
-
-// -------------------------------------------------------------------------------------------------------------------
 // Carla Engine (VST)
 
 CarlaEngineVst::CarlaEngineVst(audioMasterCallback callback_) :
@@ -135,14 +122,13 @@ CarlaEngineVst::~CarlaEngineVst()
 
 // -------------------------------------------------------------------------------------------------------------------
 
-CarlaCheckThread checkThread;
-
 bool CarlaEngineVst::init(const char* const name_)
 {
     name = strdup(name_);
     osc_init(name);
 
     // TEST
+    /*
     CarlaPlugin::initializer init = {
         this,
         "fake-filename-here",
@@ -150,11 +136,11 @@ bool CarlaEngineVst::init(const char* const name_)
         "http://invadarecords.com/plugins/lv2/meter"
 //        "http://nedko.aranaudov.org/soft/filter/2/stereo"
     };
+    */
 
-    short id = CarlaPlugin::newLV2(init);
-    CarlaPlugins[id]->setActive(true, false, false);
-    CarlaPlugins[id]->showGui(true);
-    checkThread.start();
+    //short id = CarlaPlugin::newLV2(init);
+    //CarlaPlugins[id]->setActive(true, false, false);
+    //CarlaPlugins[id]->showGui(true);
 
     return true;
 }
@@ -167,14 +153,13 @@ bool CarlaEngineVst::close()
         name = nullptr;
     }
 
-    checkThread.stopNow();
     osc_close();
 
-    CarlaPlugin* plugin = CarlaPlugins[0];
-    carla_proc_lock();
-    plugin->setEnabled(false);
-    carla_proc_unlock();
-    delete plugin;
+    //CarlaPlugin* plugin = CarlaPlugins[0];
+    //carla_proc_lock();
+    //plugin->setEnabled(false);
+    //carla_proc_unlock();
+    //delete plugin;
 
     return true;
 }
@@ -245,9 +230,9 @@ intptr_t CarlaEngineVst::handleDispatch(int32_t opcode, int32_t index, intptr_t 
     case effEditKey:
 
     case effEditIdle:
-        for (unsigned short i=0; i<MAX_PLUGINS; i++)
+        for (unsigned short i=0; i < MAX_PLUGINS; i++)
         {
-            CarlaPlugin* const plugin = CarlaPlugins[i];
+            CarlaPlugin* const plugin = getPluginByIndex(i);
 
             if (plugin && plugin->enabled())
                 plugin->idleGui();
@@ -435,7 +420,8 @@ void CarlaEngineVst::handleProcessReplacing(float** inputs, float** outputs, int
     // process plugins
     for (unsigned short i=0; i < MAX_PLUGINS; i++)
     {
-        CarlaPlugin* const plugin = CarlaPlugins[i];
+        CarlaPlugin* const plugin = getPluginByIndex(i);
+
         if (plugin && plugin->enabled())
         {
             if (processed)
@@ -452,7 +438,7 @@ void CarlaEngineVst::handleProcessReplacing(float** inputs, float** outputs, int
             }
 
             // process
-            carla_proc_lock();
+            processLock();
 
             plugin->initBuffers();
 
@@ -475,7 +461,7 @@ void CarlaEngineVst::handleProcessReplacing(float** inputs, float** outputs, int
             else
                 plugin->process(ains_tmp, aouts_tmp, frames);
 
-            carla_proc_unlock();
+            processUnlock();
 
             // if plugin has no audio inputs, add previous buffers
             if (plugin->audioInCount() == 0)
@@ -514,214 +500,6 @@ void CarlaEngineVst::handleProcessReplacing(float** inputs, float** outputs, int
     }
 }
 
-// -------------------------------------------------------------------------------------------------------------------
-// Carla Engine Client
-
-CarlaEngineClient::CarlaEngineClient(const CarlaEngineClientNativeHandle& handle_, bool active) :
-    m_active(active),
-    handle(handle_)
-{
-}
-
-CarlaEngineClient::~CarlaEngineClient()
-{
-}
-
-void CarlaEngineClient::activate()
-{
-    m_active = true;
-}
-
-void CarlaEngineClient::deactivate()
-{
-    m_active = false;
-}
-
-bool CarlaEngineClient::isActive() const
-{
-    return m_active;
-}
-
-bool CarlaEngineClient::isOk() const
-{
-    return true;
-}
-
-const CarlaEngineBasePort* CarlaEngineClient::addPort(CarlaEnginePortType type, const char* name, bool isInput)
-{
-    CarlaEnginePortNativeHandle portHandle = {
-        nullptr
-    };
-
-    switch (type)
-    {
-    case CarlaEnginePortTypeAudio:
-        return new CarlaEngineAudioPort(portHandle, isInput);
-    case CarlaEnginePortTypeControl:
-        return new CarlaEngineControlPort(portHandle, isInput);
-    case CarlaEnginePortTypeMIDI:
-        return new CarlaEngineMidiPort(portHandle, isInput);
-    default:
-        return nullptr;
-    }
-
-    Q_UNUSED(name);
-}
-
-// -------------------------------------------------------------------------------------------------------------------
-// Carla Engine Port (Base class)
-
-CarlaEngineBasePort::CarlaEngineBasePort(CarlaEnginePortNativeHandle& handle_, bool isInput_) :
-    isInput(isInput_),
-    handle(handle_)
-{
-}
-
-CarlaEngineBasePort::~CarlaEngineBasePort()
-{
-}
-
-// -------------------------------------------------------------------------------------------------------------------
-// Carla Engine Port (Audio)
-
-CarlaEngineAudioPort::CarlaEngineAudioPort(CarlaEnginePortNativeHandle& handle, bool isInput) :
-    CarlaEngineBasePort(handle, isInput)
-{
-}
-
-void CarlaEngineAudioPort::initBuffer(CarlaEngine* const /*engine*/)
-{
-}
-
-// -------------------------------------------------------------------------------------------------------------------
-// Carla Engine Port (Control)
-
-CarlaEngineControlPort::CarlaEngineControlPort(CarlaEnginePortNativeHandle& handle, bool isInput) :
-    CarlaEngineBasePort(handle, isInput)
-{
-}
-
-void CarlaEngineControlPort::initBuffer(CarlaEngine* const engine)
-{
-    handle.buffer = isInput ? engine->rackControlEventsIn : engine->rackControlEventsOut;
-}
-
-uint32_t CarlaEngineControlPort::getEventCount()
-{
-    if (! isInput)
-        return 0;
-
-    uint32_t count = 0;
-    const CarlaEngineControlEvent* const events = (CarlaEngineControlEvent*)handle.buffer;
-
-    for (unsigned short i=0; i < CarlaEngine::MAX_ENGINE_CONTROL_EVENTS; i++)
-    {
-        if (events[i].type != CarlaEngineEventNull)
-            count++;
-        else
-            break;
-    }
-
-    return count;
-}
-
-const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(uint32_t index)
-{
-    if (! isInput)
-        return nullptr;
-
-    const CarlaEngineControlEvent* const events = (CarlaEngineControlEvent*)handle.buffer;
-
-    if (index < CarlaEngine::MAX_ENGINE_CONTROL_EVENTS)
-        return &events[index];
-    return nullptr;
-}
-
-void CarlaEngineControlPort::writeEvent(CarlaEngineControlEventType type, uint32_t time, uint8_t channel, uint8_t controller, double value)
-{
-    if (isInput)
-        return;
-
-    CarlaEngineControlEvent* const events = (CarlaEngineControlEvent*)handle.buffer;
-
-    for (unsigned short i=0; i < CarlaEngine::MAX_ENGINE_CONTROL_EVENTS; i++)
-    {
-        if (events[i].type == CarlaEngineEventNull)
-        {
-            events[i].type  = type;
-            events[i].time  = time;
-            events[i].value = value;
-            events[i].channel    = channel;
-            events[i].controller = controller;
-            break;
-        }
-    }
-}
-
-// -------------------------------------------------------------------------------------------------------------------
-// Carla Engine Port (MIDI)
-
-CarlaEngineMidiPort::CarlaEngineMidiPort(CarlaEnginePortNativeHandle& handle, bool isInput) :
-    CarlaEngineBasePort(handle, isInput)
-{
-}
-
-void CarlaEngineMidiPort::initBuffer(CarlaEngine* const engine)
-{
-    handle.buffer = isInput ? engine->rackMidiEventsIn : engine->rackMidiEventsOut;
-}
-
-uint32_t CarlaEngineMidiPort::getEventCount()
-{
-    if (! isInput)
-        return 0;
-
-    uint32_t count = 0;
-    const CarlaEngineMidiEvent* const events = (CarlaEngineMidiEvent*)handle.buffer;
-
-    for (unsigned short i=0; i < CarlaEngine::MAX_ENGINE_MIDI_EVENTS; i++)
-    {
-        if (events[i].size > 0)
-            count++;
-        else
-            break;
-    }
-
-    return count;
-}
-
-const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(uint32_t index)
-{
-    if (! isInput)
-        return nullptr;
-
-    const CarlaEngineMidiEvent* const events = (CarlaEngineMidiEvent*)handle.buffer;
-
-    if (index < CarlaEngine::MAX_ENGINE_MIDI_EVENTS)
-        return &events[index];
-
-    return nullptr;
-}
-
-void CarlaEngineMidiPort::writeEvent(uint32_t time, uint8_t* data, uint8_t size)
-{
-    if (isInput || size >= 4)
-        return;
-
-    CarlaEngineMidiEvent* const events = (CarlaEngineMidiEvent*)handle.buffer;
-
-    for (unsigned short i=0; i < CarlaEngine::MAX_ENGINE_MIDI_EVENTS; i++)
-    {
-        if (events[i].size == 0)
-        {
-            events[i].time = time;
-            events[i].size = size;
-            memcpy(events[i].data, data, size);
-            break;
-        }
-    }
-}
-
 CARLA_BACKEND_END_NAMESPACE
 
 #if 0
@@ -735,6 +513,7 @@ CARLA_EXPORT
 const AEffect* VSTPluginMain(audioMasterCallback callback)
 {
     qDebug("VSTPluginMain(%p)", callback);
+    using namespace CarlaBackend;
     CarlaEngineVst* engine = new CarlaEngineVst(callback);
     return engine->getEffect();
 }

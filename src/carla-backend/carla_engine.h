@@ -18,42 +18,28 @@
 #ifndef CARLA_ENGINE_H
 #define CARLA_ENGINE_H
 
-#include "carla_shared.h"
+#include "carla_backend.h"
+#include "carla_osc.h"
+#include "carla_threads.h"
 
-#include <cstring>
+#include <QtCore/QMutex>
 
-class QThread;
-class CarlaEngineClient;
-class CarlaEngineBasePort;
-
-#if defined(CARLA_ENGINE_JACK)
+#ifdef CARLA_ENGINE_JACK
 #include <jack/jack.h>
 #include <jack/midiport.h>
-struct CarlaEngineClientNativeHandle {
-    jack_client_t* client;
-};
-struct CarlaEnginePortNativeHandle {
-    jack_client_t* client;
-    jack_port_t* port;
-    void* buffer;
-};
-#elif defined(CARLA_ENGINE_RTAUDIO)
+#endif
+
+#ifdef CARLA_ENGINE_RTAUDIO
 #include "RtAudio.h"
 //#include <RtMidi.h>
-struct CarlaEngineClientNativeHandle {
-};
-struct CarlaEnginePortNativeHandle {
-    void* buffer;
-};
-#elif defined(CARLA_ENGINE_VST)
+#endif
+
+#ifdef CARLA_ENGINE_LV2
+#include "lv2/lv2.h"
+#endif
+
+#ifdef CARLA_ENGINE_VST
 #include "carla_vst_includes.h"
-struct CarlaEngineClientNativeHandle {
-};
-struct CarlaEnginePortNativeHandle {
-    void* buffer;
-};
-#else
-#error Engine type undefined!
 #endif
 
 CARLA_BACKEND_START_NAMESPACE
@@ -117,39 +103,40 @@ struct CarlaTimeInfo {
     } bbt;
 };
 
-// -----------------------------------------
+struct CarlaEngineClientNativeHandle {
+#ifdef CARLA_ENGINE_JACK
+    jack_client_t* client;
+#endif
+};
 
+struct CarlaEnginePortNativeHandle {
+#ifdef CARLA_ENGINE_JACK
+    jack_client_t* client;
+    jack_port_t* port;
+#endif
+    void* buffer;
+};
+
+// -------------------------------------------------------------------------------------------------------------------
+
+class CarlaEngineClient;
+class CarlaEngineBasePort;
+
+/*!
+ * \class CarlaEngine
+ *
+ * \brief Carla Backend base engine class
+ *
+ * This is the base class for all available engine types available in Carla Backend.
+ */
 class CarlaEngine
 {
 public:
-    CarlaEngine()
-    {
-        qDebug("CarlaEngine::CarlaEngine()");
+    CarlaEngine();
+    virtual ~CarlaEngine();
 
-        name = nullptr;
-
-        sampleRate = 0.0;
-        bufferSize = 0;
-
-        memset(&timeInfo, 0, sizeof(CarlaTimeInfo));
-#ifndef BUILD_BRIDGE
-        memset(rackPorts, 0, sizeof(CarlaEnginePortNativeHandle)*rackPortCount);
-        memset(rackControlEventsIn,  0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
-        memset(rackControlEventsOut, 0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
-        memset(rackMidiEventsIn,  0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
-        memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
-#endif
-    }
-
-    virtual ~CarlaEngine()
-    {
-        qDebug("CarlaEngine::~CarlaEngine()");
-
-        if (name)
-            free((void*)name);
-    }
-
-    // -------------------------------------
+    // -------------------------------------------------------------------
+    // Information (base)
 
     virtual bool init(const char* const name) = 0;
     virtual bool close() = 0;
@@ -160,36 +147,83 @@ public:
 
     virtual CarlaEngineClient* addClient(CarlaPlugin* const plugin) = 0;
 
+    // -------------------------------------------------------------------
+    // Information (base)
+
+    const char* getName() const;
+    double getSampleRate() const;
+    uint32_t getBufferSize() const;
+    const CarlaTimeInfo* getTimeInfo() const;
+
+    // -------------------------------------------------------------------
+    // Information (base)
+
+    void processLock();
+    void processUnlock();
+    void midiLock();
+    void midiUnlock();
+
+    //bool isCheckThreadRunning();
+    //void startCheckThread();
+    //void stopCheckThread();
+
+    //void oscInit();
+    //void oscClose();
+
+    //const OscData* getOscData() const;
+    const char* getOscUrl() const;
+    bool isOscRegisted();
+
+    void osc_send_add_plugin(int plugin_id, const char* plugin_name);
+    void osc_send_remove_plugin(int plugin_id);
+    void osc_send_set_plugin_data(int plugin_id, int type, int category, int hints, const char* real_name, const char* label, const char* maker, const char* copyright, long unique_id);
+    void osc_send_set_plugin_ports(int plugin_id, int ains, int aouts, int mins, int mouts, int cins, int couts, int ctotals);
+    void osc_send_set_parameter_value(int plugin_id, int param_id, double value);
+    void osc_send_set_parameter_data(int plugin_id, int param_id, int ptype, int hints, const char* name, const char* label, double current);
+    void osc_send_set_parameter_ranges(int plugin_id, int param_id, double x_min, double x_max, double x_def, double x_step, double x_step_small, double x_step_large);
+    void osc_send_set_parameter_midi_channel(int plugin_id, int parameter_id, int midi_channel);
+    void osc_send_set_parameter_midi_cc(int plugin_id, int parameter_id, int midi_cc);
+    void osc_send_set_default_value(int plugin_id, int param_id, double value);
+    void osc_send_set_program(int plugin_id, int program_id);
+    void osc_send_set_program_count(int plugin_id, int program_count);
+    void osc_send_set_program_name(int plugin_id, int program_id, const char* program_name);
+    void osc_send_set_midi_program(int plugin_id, int midi_program_id);
+    void osc_send_set_midi_program_count(int plugin_id, int midi_program_count);
+    void osc_send_set_midi_program_data(int plugin_id, int midi_program_id, int bank_id, int program_id, const char* midi_program_name);
+    void osc_send_note_on(int plugin_id, int note, int velo);
+    void osc_send_note_off(int plugin_id, int note);
+
+    short getNewPluginIndex();
+    CarlaPlugin* getPluginById(unsigned short id);
+    CarlaPlugin* getPluginByIndex(unsigned short id);
+    const char* getUniqueName(const char* name);
+
+    void addPlugin(unsigned short id, CarlaPlugin* plugin);
+    bool removePlugin(unsigned short id);
+    //osc_global_send_remove_plugin(plugin_id);
+
+    void callback(CallbackType action, unsigned short pluginId, int value1, int value2, double value3);
+    void setCallback(CallbackFunc func);
+
+    double getInputPeak(unsigned short pluginId, unsigned short id);
+    double getOutputPeak(unsigned short pluginId, unsigned short id);
+    void setInputPeak(unsigned short pluginId, unsigned short id, double value);
+    void setOutputPeak(unsigned short pluginId, unsigned short id, double value);
+
     // -------------------------------------
 
-    const char* getName() const
-    {
-        return name;
-    }
-
-    double getSampleRate() const
-    {
-        return sampleRate;
-    }
-
-    uint32_t getBufferSize() const
-    {
-#ifndef BUILD_BRIDGE
-        if (carla_options.proccess_hq)
-            return 8;
-#endif
-        return bufferSize;
-    }
-
-    const CarlaTimeInfo* getTimeInfo() const
-    {
-        return &timeInfo;
-    }
+    static const unsigned short MAX_PEAKS = 2;
 
     static int maxClientNameSize();
     static int maxPortNameSize();
 
     // -------------------------------------
+
+protected:
+    const char* name;
+    double sampleRate;
+    uint32_t bufferSize;
+    CarlaTimeInfo timeInfo;
 
 #ifndef BUILD_BRIDGE
     // rack mode
@@ -204,23 +238,31 @@ public:
     static const unsigned short rackPortMidiIn     = 6;
     static const unsigned short rackPortMidiOut    = 7;
     static const unsigned short rackPortCount      = 8;
-    CarlaEnginePortNativeHandle rackPorts[rackPortCount];
     CarlaEngineControlEvent rackControlEventsIn[MAX_ENGINE_CONTROL_EVENTS];
     CarlaEngineControlEvent rackControlEventsOut[MAX_ENGINE_CONTROL_EVENTS];
     CarlaEngineMidiEvent rackMidiEventsIn[MAX_ENGINE_MIDI_EVENTS];
     CarlaEngineMidiEvent rackMidiEventsOut[MAX_ENGINE_MIDI_EVENTS];
+#  ifdef CARLA_ENGINE_JACK
+    CarlaEnginePortNativeHandle rackJackPorts[rackPortCount];
+#  endif
 #endif
 
-    // -------------------------------------
+private:
+    QMutex m_procLock;
+    QMutex m_midiLock;
 
-protected:
-    const char* name;
-    double sampleRate;
-    uint32_t bufferSize;
-    CarlaTimeInfo timeInfo;
+    CarlaOsc m_osc;
+    CarlaCheckThread m_checkThread;
+
+    CallbackFunc m_callback;
+    CarlaPlugin* m_carlaPlugins[MAX_PLUGINS];
+    const char*  m_uniqueNames[MAX_PLUGINS];
+
+    double m_insPeak[MAX_PLUGINS * MAX_PEAKS];
+    double m_outsPeak[MAX_PLUGINS * MAX_PEAKS];
 };
 
-#if defined(CARLA_ENGINE_JACK)
+#ifdef CARLA_ENGINE_JACK
 class CarlaEngineJack : public CarlaEngine
 {
 public:
@@ -255,7 +297,9 @@ private:
     bool freewheel;
     QThread* procThread;
 };
-#elif defined(CARLA_ENGINE_RTAUDIO)
+#endif
+
+#ifdef CARLA_ENGINE_RTAUDIO
 class CarlaEngineRtAudio : public CarlaEngine
 {
 public:
@@ -273,7 +317,29 @@ public:
 
     CarlaEngineClient* addClient(CarlaPlugin* const plugin);
 };
-#elif defined(CARLA_ENGINE_VST)
+#endif
+
+#ifdef CARLA_ENGINE_LV2
+class CarlaEngineLv2 : public CarlaEngine
+{
+public:
+    CarlaEngineLv2();
+    ~CarlaEngineLv2();
+
+    // -------------------------------------
+
+    bool init(const char* const name);
+    bool close();
+
+    bool isOnAudioThread();
+    bool isOffline();
+    bool isRunning();
+
+    CarlaEngineClient* addClient(CarlaPlugin* const plugin);
+};
+#endif
+
+#ifdef CARLA_ENGINE_VST
 class CarlaEngineVst : public CarlaEngine
 {
 public:
@@ -313,7 +379,6 @@ public:
 private:
     AEffect effect;
     const audioMasterCallback m_callback;
-    //CarlaCheckThread checkThread;
 };
 #endif
 

@@ -1479,22 +1479,11 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
     def do_reload_all(self):
         self.pinfo = CarlaHost.get_plugin_info(self.plugin_id)
-        if (self.pinfo['valid']):
-            self.pinfo["binary"]    = cString(self.pinfo["binary"])
-            self.pinfo["name"]      = cString(self.pinfo["name"])
-            self.pinfo["label"]     = cString(self.pinfo["label"])
-            self.pinfo["maker"]     = cString(self.pinfo["maker"])
-            self.pinfo["copyright"] = cString(self.pinfo["copyright"])
-        else:
-            self.pinfo["type"]      = PLUGIN_NONE
-            self.pinfo["category"]  = PLUGIN_CATEGORY_NONE
-            self.pinfo["hints"]     = 0x0
-            self.pinfo["binary"]    = ""
-            self.pinfo["name"]      = "(Unknown)"
-            self.pinfo["label"]     = ""
-            self.pinfo["maker"]     = ""
-            self.pinfo["copyright"] = ""
-            self.pinfo["uniqueId"] = 0
+        self.pinfo["binary"]    = cString(self.pinfo["binary"])
+        self.pinfo["name"]      = cString(self.pinfo["name"])
+        self.pinfo["label"]     = cString(self.pinfo["label"])
+        self.pinfo["maker"]     = cString(self.pinfo["maker"])
+        self.pinfo["copyright"] = cString(self.pinfo["copyright"])
 
         self.do_reload_info()
         self.do_reload_parameters()
@@ -1539,22 +1528,8 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
             self.le_type.setText(self.tr("Unknown"))
 
         audio_count = CarlaHost.get_audio_port_count_info(self.plugin_id)
-        if (not audio_count['valid']):
-            audio_count['ins'] = 0
-            audio_count['outs'] = 0
-            audio_count['total'] = 0
-
-        midi_count = CarlaHost.get_midi_port_count_info(self.plugin_id)
-        if (not midi_count['valid']):
-            midi_count['ins'] = 0
-            midi_count['outs'] = 0
-            midi_count['total'] = 0
-
+        midi_count  = CarlaHost.get_midi_port_count_info(self.plugin_id)
         param_count = CarlaHost.get_parameter_count_info(self.plugin_id)
-        if (not param_count['valid']):
-            param_count['ins'] = 0
-            param_count['outs'] = 0
-            param_count['total'] = 0
 
         self.le_ains.setText(str(audio_count['ins']))
         self.le_aouts.setText(str(audio_count['outs']))
@@ -1599,7 +1574,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
                 param_data = CarlaHost.get_parameter_data(self.plugin_id, i)
                 param_ranges = CarlaHost.get_parameter_ranges(self.plugin_id, i)
 
-                if not param_info['valid']:
+                if param_data['type'] not in (PARAMETER_INPUT, PARAMETER_OUTPUT):
                     continue
 
                 parameter = {
@@ -1623,7 +1598,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
                 }
 
                 for j in range(param_info['scalePointCount']):
-                    scalepoint = CarlaHost.get_scalepoint_info(self.plugin_id, i, j)
+                    scalepoint = CarlaHost.get_parameter_scalepoint_info(self.plugin_id, i, j)
                     parameter['scalepoints'].append({
                           'value': scalepoint['value'],
                           'label': cString(scalepoint['label'])
@@ -1743,7 +1718,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
             self.cb_midi_programs.setEnabled(True)
 
             for i in range(midi_program_count):
-                midip = CarlaHost.get_midi_program_info(self.plugin_id, i)
+                midip = CarlaHost.get_midi_program_data(self.plugin_id, i)
 
                 bank = int(midip['bank'])
                 prog = int(midip['program'])
@@ -2020,16 +1995,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.peak_out.setOrientation(self.peak_out.HORIZONTAL)
 
         audio_count = CarlaHost.get_audio_port_count_info(self.plugin_id)
-        if not audio_count['valid']:
-            audio_count['ins']   = 0
-            audio_count['outs']  = 0
-            audio_count['total'] = 0
-
-        midi_count = CarlaHost.get_midi_port_count_info(self.plugin_id)
-        if not midi_count['valid']:
-            midi_count['ins']   = 0
-            midi_count['outs']  = 0
-            midi_count['total'] = 0
+        midi_count  = CarlaHost.get_midi_port_count_info(self.plugin_id)
 
         self.peaks_in  = int(audio_count['ins'])
         self.peaks_out = int(audio_count['outs'])
@@ -2044,22 +2010,11 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.peak_out.setChannels(self.peaks_out)
 
         self.pinfo = CarlaHost.get_plugin_info(self.plugin_id)
-        if self.pinfo['valid']:
-            self.pinfo["binary"] = cString(self.pinfo["binary"])
-            self.pinfo["name"]   = cString(self.pinfo["name"])
-            self.pinfo["label"]  = cString(self.pinfo["label"])
-            self.pinfo["maker"]  = cString(self.pinfo["maker"])
-            self.pinfo["copyright"] = cString(self.pinfo["copyright"])
-        else:
-            self.pinfo["type"] = PLUGIN_NONE
-            self.pinfo["category"] = PLUGIN_CATEGORY_NONE
-            self.pinfo["hints"]  = 0
-            self.pinfo["binary"] = ""
-            self.pinfo["name"]   = "(Unknown)"
-            self.pinfo["label"]  = ""
-            self.pinfo["maker"]  = ""
-            self.pinfo["copyright"] = ""
-            self.pinfo["uniqueId"] = 0
+        self.pinfo["binary"]    = cString(self.pinfo["binary"])
+        self.pinfo["name"]      = cString(self.pinfo["name"])
+        self.pinfo["label"]     = cString(self.pinfo["label"])
+        self.pinfo["maker"]     = cString(self.pinfo["maker"])
+        self.pinfo["copyright"] = cString(self.pinfo["copyright"])
 
         # Set widget page
         if self.pinfo['type'] == PLUGIN_NONE or audio_count['total'] == 0:
@@ -2368,10 +2323,10 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         # ----------------------------
         # Current MIDI Program
 
-        if (self.edit_dialog.cb_midi_programs.currentIndex() >= 0):
-            midi_program_info = CarlaHost.get_midi_program_info(self.plugin_id, self.edit_dialog.cb_midi_programs.currentIndex())
-            x_save_state_dict['CurrentMidiBank'] = midi_program_info['bank']
-            x_save_state_dict['CurrentMidiProgram'] = midi_program_info['program']
+        if self.edit_dialog.cb_midi_programs.currentIndex() >= 0:
+            midi_program_data = CarlaHost.get_midi_program_data(self.plugin_id, self.edit_dialog.cb_midi_programs.currentIndex())
+            x_save_state_dict['CurrentMidiBank'] = midi_program_data['bank']
+            x_save_state_dict['CurrentMidiProgram'] = midi_program_data['program']
 
         # ----------------------------
         # Parameters
@@ -2538,9 +2493,8 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             midi_program_count = CarlaHost.get_midi_program_count(self.plugin_id)
 
             for i in range(midi_program_count):
-                program_info = CarlaHost.get_midi_program_info(self.plugin_id, i)
-                if (program_info['bank'] == content['CurrentMidiBank'] and program_info['program'] == content[
-                                                                                                      'CurrentMidiProgram']):
+                program_info = CarlaHost.get_midi_program_data(self.plugin_id, i)
+                if program_info['bank'] == content['CurrentMidiBank'] and program_info['program'] == content['CurrentMidiProgram']:
                     CarlaHost.set_midi_program(self.plugin_id, i)
                     self.edit_dialog.set_midi_program(i)
                     break
@@ -2550,10 +2504,10 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         param_symbols = [] # (index, symbol)
 
         for parameter in content['Parameters']:
-            if (parameter['symbol']):
+            if parameter['symbol']:
                 param_info = CarlaHost.get_parameter_info(self.plugin_id, parameter['index'])
 
-                if (param_info['valid'] and param_info['symbol']):
+                if param_info['symbol']:
                     param_symbols.append((parameter['index'], cString(param_info['symbol'])))
 
         # ---------------------------------------------------------------------

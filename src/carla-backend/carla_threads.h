@@ -30,11 +30,14 @@ class QProcess;
 class CarlaCheckThread : public QThread
 {
 public:
-    CarlaCheckThread(QObject* parent = 0);
-    void run();
+    CarlaCheckThread(CarlaBackend::CarlaEngine* const engine, QObject* parent = nullptr);
     void stopNow();
 
+protected:
+    void run();
+
 private:
+    CarlaBackend::CarlaEngine* const engine;
     bool m_stopNow;
 };
 
@@ -47,10 +50,12 @@ public:
     enum PluginThreadMode {
         PLUGIN_THREAD_DSSI_GUI,
         PLUGIN_THREAD_LV2_GUI,
+        PLUGIN_THREAD_VST_GUI,
         PLUGIN_THREAD_BRIDGE
     };
+    static const char* pluginthreadmode2str(PluginThreadMode mode);
 
-    CarlaPluginThread(CarlaPlugin* plugin, PluginThreadMode mode);
+    CarlaPluginThread(CarlaBackend::CarlaEngine* const engine, CarlaBackend::CarlaPlugin* const plugin, PluginThreadMode mode, QObject* parent = nullptr);
     ~CarlaPluginThread();
 
     void setOscData(const char* const binary, const char* const label, const char* const data1="");
@@ -59,8 +64,9 @@ protected:
     void run();
 
 private:
-    CarlaPlugin* m_plugin;
-    PluginThreadMode m_mode;
+    CarlaBackend::CarlaEngine* const engine;
+    CarlaBackend::CarlaPlugin* const plugin;
+    const PluginThreadMode mode;
 
     QString m_binary;
     QString m_label;

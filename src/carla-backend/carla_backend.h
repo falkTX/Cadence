@@ -20,13 +20,8 @@
 
 #include "carla_includes.h"
 
-#ifdef CARLA_BACKEND_NO_NAMESPACE
-#define CARLA_BACKEND_START_NAMESPACE
-#define CARLA_BACKEND_END_NAMESPACE
-#else
 #define CARLA_BACKEND_START_NAMESPACE namespace CarlaBackend {
 #define CARLA_BACKEND_END_NAMESPACE }
-#endif
 
 CARLA_BACKEND_START_NAMESPACE
 
@@ -34,7 +29,7 @@ CARLA_BACKEND_START_NAMESPACE
 } /* adjust editor indent */
 #endif
 
-#define STR_MAX 256
+#define STR_MAX 0xff
 
 /*!
  * @defgroup CarlaBackendAPI Carla Backend API
@@ -45,8 +40,10 @@ CARLA_BACKEND_START_NAMESPACE
 
 #ifdef BUILD_BRIDGE
 const unsigned short MAX_PLUGINS  = 1;
-#else
+#elif CARLA_ENGINE_STANDALONE
 const unsigned short MAX_PLUGINS  = 99;  //!< Maximum number of loadable plugins
+#else
+const unsigned short MAX_PLUGINS  = 16;  //!< Maximum number of loadable plugins
 #endif
 const unsigned int MAX_PARAMETERS = 200; //!< Default value for maximum number of parameters the callback can handle.\see OPTION_MAX_PARAMETERS
 
@@ -357,7 +354,7 @@ enum OptionsType {
 /*!
  * Opcodes sent to the callback, defined by CallbackFunc.
  *
- * \see set_callback_function()
+ * \see CarlaEngine::setCallback()
  */
 enum CallbackType {
     /*!
@@ -465,7 +462,13 @@ enum CallbackType {
 enum ProcessModeType {
     PROCESS_MODE_SINGLE_CLIENT    = 0, //!< Single client mode (dynamic input/outputs as needed by plugins)
     PROCESS_MODE_MULTIPLE_CLIENTS = 1, //!< Multiple client mode
-    PROCESS_MODE_CONTINUOUS_RACK  = 2  //!< Single client "rack" mode. Processes plugins in order of it's id, with forced stereo input/output.
+    PROCESS_MODE_CONTINUOUS_RACK  = 2  //!< Single client "rack" mode. Processes plugins in order of id, with forced stereo input/output.
+};
+
+struct midi_program_t {
+    uint32_t bank;
+    uint32_t program;
+    const char* name;
 };
 
 struct ParameterData {
@@ -492,145 +495,14 @@ struct CustomData {
     const char* value;
 };
 
-struct PluginInfo {
-    bool valid;
-    PluginType type;
-    PluginCategory category;
-    unsigned int hints;
-    const char* binary;
-    const char* name;
-    const char* label;
-    const char* maker;
-    const char* copyright;
-    long uniqueId;
-};
-
-struct PortCountInfo {
-    bool valid;
-    quint32 ins;
-    quint32 outs;
-    quint32 total;
-};
-
-struct ParameterInfo {
-    bool valid;
-    const char* name;
-    const char* symbol;
-    const char* unit;
-    quint32 scalePointCount;
-};
-
-struct ScalePointInfo {
-    bool valid;
-    double value;
-    const char* label;
-};
-
-struct MidiProgramInfo {
-    bool valid;
-    quint32 bank;
-    quint32 program;
-    const char* label;
-};
-
-struct GuiInfo {
-    GuiType type;
-    bool resizable;
-};
-
 typedef void (*CallbackFunc)(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3);
-
-// -----------------------------------------------------
-// Exported symbols (API)
-
-#ifndef CARLA_BACKEND_NO_EXPORTS
-CARLA_EXPORT bool engine_init(const char* client_name);
-CARLA_EXPORT bool engine_close();
-CARLA_EXPORT bool is_engine_running();
-
-CARLA_EXPORT short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const char* const name, const char* label, void* extra_stuff);
-CARLA_EXPORT bool remove_plugin(unsigned short plugin_id);
-
-CARLA_EXPORT PluginInfo* get_plugin_info(unsigned short plugin_id);
-CARLA_EXPORT PortCountInfo* get_audio_port_count_info(unsigned short plugin_id);
-CARLA_EXPORT PortCountInfo* get_midi_port_count_info(unsigned short plugin_id);
-CARLA_EXPORT PortCountInfo* get_parameter_count_info(unsigned short plugin_id);
-CARLA_EXPORT ParameterInfo* get_parameter_info(unsigned short plugin_id, quint32 parameter_id);
-CARLA_EXPORT ScalePointInfo* get_scalepoint_info(unsigned short plugin_id, quint32 parameter_id, quint32 scalepoint_id);
-CARLA_EXPORT MidiProgramInfo* get_midi_program_info(unsigned short plugin_id, quint32 midi_program_id);
-CARLA_EXPORT GuiInfo* get_gui_info(unsigned short plugin_id);
-
-CARLA_EXPORT const ParameterData* get_parameter_data(unsigned short plugin_id, quint32 parameter_id);
-CARLA_EXPORT const ParameterRanges* get_parameter_ranges(unsigned short plugin_id, quint32 parameter_id);
-CARLA_EXPORT const CustomData* get_custom_data(unsigned short plugin_id, quint32 custom_data_id);
-CARLA_EXPORT const char* get_chunk_data(unsigned short plugin_id);
-
-CARLA_EXPORT quint32 get_parameter_count(unsigned short plugin_id);
-CARLA_EXPORT quint32 get_program_count(unsigned short plugin_id);
-CARLA_EXPORT quint32 get_midi_program_count(unsigned short plugin_id);
-CARLA_EXPORT quint32 get_custom_data_count(unsigned short plugin_id);
-
-CARLA_EXPORT const char* get_parameter_text(unsigned short plugin_id, quint32 parameter_id);
-CARLA_EXPORT const char* get_program_name(unsigned short plugin_id, quint32 program_id);
-CARLA_EXPORT const char* get_midi_program_name(unsigned short plugin_id, quint32 midi_program_id);
-CARLA_EXPORT const char* get_real_plugin_name(unsigned short plugin_id);
-
-CARLA_EXPORT qint32 get_current_program_index(unsigned short plugin_id);
-CARLA_EXPORT qint32 get_current_midi_program_index(unsigned short plugin_id);
-
-CARLA_EXPORT double get_default_parameter_value(unsigned short plugin_id, quint32 parameter_id);
-CARLA_EXPORT double get_current_parameter_value(unsigned short plugin_id, quint32 parameter_id);
-
-CARLA_EXPORT double get_input_peak_value(unsigned short plugin_id, unsigned short port_id);
-CARLA_EXPORT double get_output_peak_value(unsigned short plugin_id, unsigned short port_id);
-
-CARLA_EXPORT void set_active(unsigned short plugin_id, bool onoff);
-CARLA_EXPORT void set_drywet(unsigned short plugin_id, double value);
-CARLA_EXPORT void set_volume(unsigned short plugin_id, double value);
-CARLA_EXPORT void set_balance_left(unsigned short plugin_id, double value);
-CARLA_EXPORT void set_balance_right(unsigned short plugin_id, double value);
-
-CARLA_EXPORT void set_parameter_value(unsigned short plugin_id, quint32 parameter_id, double value);
-CARLA_EXPORT void set_parameter_midi_channel(unsigned short plugin_id, quint32 parameter_id, quint8 channel);
-CARLA_EXPORT void set_parameter_midi_cc(unsigned short plugin_id, quint32 parameter_id, qint16 midi_cc);
-CARLA_EXPORT void set_program(unsigned short plugin_id, quint32 program_id);
-CARLA_EXPORT void set_midi_program(unsigned short plugin_id, quint32 midi_program_id);
-
-CARLA_EXPORT void set_custom_data(unsigned short plugin_id, CustomDataType dtype, const char* key, const char* value);
-CARLA_EXPORT void set_chunk_data(unsigned short plugin_id, const char* chunk_data);
-CARLA_EXPORT void set_gui_data(unsigned short plugin_id, int data, quintptr gui_addr);
-
-CARLA_EXPORT void show_gui(unsigned short plugin_id, bool yesno);
-CARLA_EXPORT void idle_guis();
-
-CARLA_EXPORT void send_midi_note(unsigned short plugin_id, quint8 note, quint8 velocity);
-CARLA_EXPORT void prepare_for_save(unsigned short plugin_id);
-
-CARLA_EXPORT void set_option(OptionsType option, int value, const char* valueStr);
-
-CARLA_EXPORT const char* get_host_client_name();
-
-CARLA_EXPORT quint32 get_buffer_size();
-CARLA_EXPORT double get_sample_rate();
-//CARLA_EXPORT double get_latency();
-#endif
-
-CARLA_EXPORT void set_callback_function(CallbackFunc func);
-
-CARLA_EXPORT const char* get_last_error();
-CARLA_EXPORT const char* get_host_osc_url();
-
-// End of exported symbols
-// -----------------------------------------------------
 
 /**@}*/
 
+class CarlaEngine;
 class CarlaPlugin;
+class CarlaOsc;
 
 CARLA_BACKEND_END_NAMESPACE
-
-#ifndef CARLA_BACKEND_NO_NAMESPACE
-typedef CarlaBackend::CarlaPlugin CarlaPlugin;
-#endif
 
 #endif // CARLA_BACKEND_H

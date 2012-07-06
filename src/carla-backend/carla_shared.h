@@ -26,31 +26,25 @@ CARLA_BACKEND_START_NAMESPACE
 } /* adjust editor indent */
 #endif
 
-const char* bool2str(bool yesno);
-const char* plugintype2str(PluginType type);
 const char* binarytype2str(BinaryType type);
+const char* plugintype2str(PluginType type);
+const char* optionstype2str(OptionsType type);
 const char* customdatatype2str(CustomDataType type);
-CustomDataType customdatastr2type(const char* stype);
 
-short get_new_plugin_id();
-const char* get_unique_name(const char* name);
-PluginCategory get_category_from_name(const char* name);
+CustomDataType get_customdata_type(const char* const stype);
+const char* get_customdata_str(CustomDataType type);
+const char* get_binarybridge_path(BinaryType type);
+
 void* get_pointer(quintptr ptr_addr);
-void set_last_error(const char* error);
-void carla_proc_lock();
-void carla_proc_unlock();
-void carla_midi_lock();
-void carla_midi_unlock();
-void callback_action(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3);
+PluginCategory get_category_from_name(const char* const name);
 
-// Global variables (shared)
-extern const char* unique_names[MAX_PLUGINS];
-extern CarlaPlugin* CarlaPlugins[MAX_PLUGINS];
-
-extern volatile double ains_peak[MAX_PLUGINS*2];
-extern volatile double aouts_peak[MAX_PLUGINS*2];
+const char* get_last_error();
+void set_last_error(const char* const error);
 
 #ifndef BUILD_BRIDGE
+void set_option(OptionsType option, int value, const char* const valueStr);
+void reset_options();
+
 // Global options
 struct carla_options_t {
     ProcessModeType process_mode;
@@ -68,7 +62,6 @@ struct carla_options_t {
     const char* bridge_lv2x11;
     const char* bridge_vstx11;
 };
-
 extern carla_options_t carla_options;
 #endif
 

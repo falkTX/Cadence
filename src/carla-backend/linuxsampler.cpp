@@ -357,12 +357,12 @@ public:
 
 #ifndef BUILD_BRIDGE
         // Update OSC Names
-        osc_global_send_set_midi_program_count(m_id, midiprog.count);
+        //osc_global_send_set_midi_program_count(m_id, midiprog.count);
 
-        for (i=0; i < midiprog.count; i++)
-            osc_global_send_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
+        //for (i=0; i < midiprog.count; i++)
+        //    osc_global_send_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
 
-        callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
+        x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
 #endif
 
         if (init)
@@ -389,7 +389,7 @@ public:
 
         if (cin_channel >= 0 && cin_channel < 16 && m_active && m_activeBefore)
         {
-            carla_midi_lock();
+            engineMidiLock();
 
             for (i=0; i < MAX_MIDI_EVENTS && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
@@ -405,7 +405,7 @@ public:
                 midiEventCount += 1;
             }
 
-            carla_midi_unlock();
+            engineMidiUnlock();
 
         } // End of MIDI Input (External)
 
@@ -571,8 +571,8 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Peak Values
 
-        aouts_peak[(m_id*2)+0] = aouts_peak_tmp[0];
-        aouts_peak[(m_id*2)+1] = aouts_peak_tmp[1];
+        x_engine->setOutputPeak(m_id, 0, aouts_peak_tmp[0]);
+        x_engine->setOutputPeak(m_id, 1, aouts_peak_tmp[1]);
 
         m_activeBefore = m_active;
     }
@@ -623,9 +623,9 @@ public:
                 m_filename = strdup(filename);
 
                 if (name)
-                    m_name = get_unique_name(name);
+                    m_name = x_engine->getUniqueName(name);
                 else
-                    m_name = get_unique_name(label && label[0] ? label : info.InstrumentName.c_str());
+                    m_name = x_engine->getUniqueName(label && label[0] ? label : info.InstrumentName.c_str());
 
                 sampler_channel = sampler->AddSamplerChannel();
                 sampler_channel->SetEngineType(stype);
@@ -683,7 +683,7 @@ short LinuxSamplerPlugin::newLinuxSampler(const initializer& init, bool isGIG)
     qDebug("LinuxSamplerPlugin::newLinuxSampler(%p, %s, %s, %s, %s)", init.engine, init.filename, init.name, init.label, bool2str(isGIG));
 
 #ifdef WANT_LINUXSAMPLER
-    short id = get_new_plugin_id();
+    short id = init.engine->getNewPluginIndex();
 
     if (id < 0)
     {
@@ -700,11 +700,8 @@ short LinuxSamplerPlugin::newLinuxSampler(const initializer& init, bool isGIG)
     }
 
     plugin->reload();
-
-    unique_names[id] = plugin->name();
-    CarlaPlugins[id] = plugin;
-
     plugin->registerToOsc();
+    init.engine->addPlugin(id, plugin);
 
     return id;
 #else

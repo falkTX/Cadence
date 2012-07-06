@@ -376,7 +376,7 @@ public:
             info.copyright = strdup(copyright);
 
             if (! m_name)
-                m_name = get_unique_name(name);
+                m_name = x_engine->getUniqueName(name);
 
             break;
         }
@@ -645,10 +645,10 @@ public:
         m_filename = strdup(filename);
 
         if (name)
-            m_name = get_unique_name(name);
+            m_name = x_engine->getUniqueName(name);
 
         // register plugin now so we can receive OSC (and wait for it)
-        CarlaPlugins[m_id] = this;
+        x_engine->addPlugin(m_id, this);
 
         m_thread->setOscData(bridgeBinary, label, plugintype2str(m_type));
         m_thread->start();
@@ -696,7 +696,7 @@ short CarlaPlugin::newBridge(const initializer& init, BinaryType btype, PluginTy
 {
     qDebug("CarlaPlugin::newBridge(%p, %s, %s, %s, %i, %i)", init.engine, init.filename, init.name, init.label, btype, ptype);
 
-    short id = get_new_plugin_id();
+    short id = init.engine->getNewPluginIndex();
 
     if (id >= 0)
     {
@@ -705,11 +705,8 @@ short CarlaPlugin::newBridge(const initializer& init, BinaryType btype, PluginTy
         if (plugin->init(init.filename, init.name, init.label))
         {
             plugin->reload();
-
-            unique_names[id] = plugin->name();
-            CarlaPlugins[id] = plugin;
-
             plugin->registerToOsc();
+            init.engine->addPlugin(id, plugin);
         }
         else
         {

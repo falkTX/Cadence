@@ -1017,10 +1017,10 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Peak Values
 
-        ains_peak[(m_id*2)+0]  = ains_peak_tmp[0];
-        ains_peak[(m_id*2)+1]  = ains_peak_tmp[1];
-        aouts_peak[(m_id*2)+0] = aouts_peak_tmp[0];
-        aouts_peak[(m_id*2)+1] = aouts_peak_tmp[1];
+        x_engine->setInputPeak(m_id, 0, ains_peak_tmp[0]);
+        x_engine->setInputPeak(m_id, 1, ains_peak_tmp[1]);
+        x_engine->setOutputPeak(m_id, 0, aouts_peak_tmp[0]);
+        x_engine->setOutputPeak(m_id, 1, aouts_peak_tmp[1]);
 
         m_activeBefore = m_active;
     }
@@ -1100,11 +1100,11 @@ public:
             rdf_descriptor = ladspa_rdf_dup(rdf_descriptor_);
 
         if (name)
-            m_name = get_unique_name(name);
+            m_name = x_engine->getUniqueName(name);
         else if (rdf_descriptor && rdf_descriptor->Title)
-            m_name = get_unique_name(rdf_descriptor->Title);
+            m_name = x_engine->getUniqueName(rdf_descriptor->Title);
         else
-            m_name = get_unique_name(descriptor->Name);
+            m_name = x_engine->getUniqueName(descriptor->Name);
 
         // ---------------------------------------------------------------
         // register client
@@ -1132,7 +1132,7 @@ short CarlaPlugin::newLADSPA(const initializer& init, const void* const extra)
 {
     qDebug("CarlaPlugin::newLADSPA(%p, %s, %s, %s, %p)", init.engine, init.filename, init.name, init.label, extra);
 
-    short id = get_new_plugin_id();
+    short id = init.engine->getNewPluginIndex();
 
     if (id < 0)
     {
@@ -1166,10 +1166,8 @@ short CarlaPlugin::newLADSPA(const initializer& init, const void* const extra)
     }
 #endif
 
-    unique_names[id] = plugin->name();
-    CarlaPlugins[id] = plugin;
-
     plugin->registerToOsc();
+    init.engine->addPlugin(id, plugin);
 
     return id;
 }

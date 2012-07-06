@@ -181,17 +181,20 @@ public:
             sprintf(strBuf, "%f", getParameterValue(parameterId));
     }
 
-    void getGuiInfo(GuiInfo* const info)
+    void getGuiInfo(GuiType* type, bool* resizable)
     {
         if (effect->flags & effFlagsHasEditor)
+        {
 #ifdef Q_OS_WIN
-            info->type = GUI_INTERNAL_HWND;
+            *type = GUI_INTERNAL_HWND;
 #else
-            info->type = GUI_INTERNAL_X11;
+            *type = GUI_INTERNAL_X11;
 #endif
+        }
         else
-            info->type = GUI_NONE;
-        info->resizable = false;
+            *type = GUI_NONE;
+
+        *resizable = false;
     }
 
     // -------------------------------------------------------------------
@@ -213,9 +216,9 @@ public:
 
         if (x_engine->isOffline())
         {
-            carla_proc_lock();
+            engineProcessLock();
             effect->dispatcher(effect, effSetChunk, 0 /* bank */, chunk.size(), chunk.data(), 0.0f);
-            carla_proc_unlock();
+            engineProcessUnlock();
         }
         else
         {
@@ -232,9 +235,9 @@ public:
         {
             if (x_engine->isOffline())
             {
-                if (block) carla_proc_lock();
+                if (block) engineProcessLock();
                 effect->dispatcher(effect, effSetProgram, 0, index, nullptr, 0.0f);
-                if (block) carla_proc_unlock();
+                if (block) engineProcessUnlock();
             }
             else
             {
@@ -281,7 +284,7 @@ public:
         {
             // failed to open UI
             m_hints &= ~PLUGIN_HAS_GUI;
-            callback_action(CALLBACK_SHOW_GUI, m_id, -1, 0, 0.0);
+            x_engine->callback(CALLBACK_SHOW_GUI, m_id, -1, 0, 0.0);
 
             effect->dispatcher(effect, effEditClose, 0, 0, nullptr, 0.0f);
         }
@@ -292,7 +295,7 @@ public:
         gui.visible = yesNo;
 
         if (gui.visible && gui.width > 0 && gui.height > 0)
-            callback_action(CALLBACK_RESIZE_GUI, m_id, gui.width, gui.height, 0.0);
+            x_engine->callback(CALLBACK_RESIZE_GUI, m_id, gui.width, gui.height, 0.0);
     }
 
     void idleGui()
@@ -600,12 +603,12 @@ public:
 
 #ifndef BUILD_BRIDGE
         // Update OSC Names
-        osc_global_send_set_program_count(m_id, prog.count);
+        //osc_global_send_set_program_count(m_id, prog.count);
 
-        for (i=0; i < prog.count; i++)
-            osc_global_send_set_program_name(m_id, i, prog.names[i]);
+        //for (i=0; i < prog.count; i++)
+        //    osc_global_send_set_program_name(m_id, i, prog.names[i]);
 
-        callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
+        x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
 #endif
 
         if (init)
@@ -615,7 +618,7 @@ public:
         }
         else
         {
-            callback_action(CALLBACK_UPDATE, m_id, 0, 0, 0.0);
+            x_engine->callback(CALLBACK_UPDATE, m_id, 0, 0, 0.0);
 
             // Check if current program is invalid
             bool programChanged = false;
@@ -867,7 +870,7 @@ public:
 
         if (midi.portMin && cin_channel >= 0 && cin_channel < 16 && m_active && m_activeBefore)
         {
-            carla_midi_lock();
+            engineMidiLock();
 
             for (i=0; i < MAX_MIDI_EVENTS && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
@@ -888,7 +891,7 @@ public:
                 midiEventCount += 1;
             }
 
-            carla_midi_unlock();
+            engineMidiUnlock();
 
         } // End of MIDI Input (External)
 
@@ -1157,10 +1160,10 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Peak Values
 
-        ains_peak[(m_id*2)+0]  = ains_peak_tmp[0];
-        ains_peak[(m_id*2)+1]  = ains_peak_tmp[1];
-        aouts_peak[(m_id*2)+0] = aouts_peak_tmp[0];
-        aouts_peak[(m_id*2)+1] = aouts_peak_tmp[1];
+        x_engine->setInputPeak(m_id, 0, ains_peak_tmp[0]);
+        x_engine->setInputPeak(m_id, 1, ains_peak_tmp[1]);
+        x_engine->setOutputPeak(m_id, 0, aouts_peak_tmp[0]);
+        x_engine->setOutputPeak(m_id, 1, aouts_peak_tmp[1]);
 
         m_activeBefore = m_active;
     }
@@ -1386,7 +1389,7 @@ public:
             {
                 self->gui.width  = index;
                 self->gui.height = value;
-                callback_action(CALLBACK_RESIZE_GUI, self->m_id, index, value, 0.0);
+                self->x_engine->callback(CALLBACK_RESIZE_GUI, self->m_id, index, value, 0.0);
             }
             return 1;
 
@@ -1557,7 +1560,7 @@ public:
                 }
 
                 // Tell backend to update
-                callback_action(CALLBACK_UPDATE, self->m_id, 0, 0, 0.0);
+                self->x_engine->callback(CALLBACK_UPDATE, self->m_id, 0, 0, 0.0);
             }
             break;
 
@@ -1645,7 +1648,7 @@ public:
 
         if (name)
         {
-            m_name = get_unique_name(name);
+            m_name = x_engine->getUniqueName(name);
         }
         else
         {
@@ -1653,9 +1656,9 @@ public:
             effect->dispatcher(effect, effGetEffectName, 0, 0, strBuf, 0.0f);
 
             if (strBuf[0] != 0)
-                m_name = get_unique_name(strBuf);
+                m_name = x_engine->getUniqueName(strBuf);
             else
-                m_name = get_unique_name(label);
+                m_name = x_engine->getUniqueName(label);
         }
 
         // ---------------------------------------------------------------
@@ -1731,7 +1734,7 @@ short CarlaPlugin::newVST(const initializer& init)
 {
     qDebug("CarlaPlugin::newVST(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
 
-    short id = get_new_plugin_id();
+    short id = init.engine->getNewPluginIndex();
 
     if (id < 0)
     {
@@ -1762,10 +1765,8 @@ short CarlaPlugin::newVST(const initializer& init)
     }
 #endif
 
-    unique_names[id] = plugin->name();
-    CarlaPlugins[id] = plugin;
-
     plugin->registerToOsc();
+    init.engine->addPlugin(id, plugin);
 
     return id;
 }

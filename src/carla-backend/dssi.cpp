@@ -61,8 +61,8 @@ public:
         {
             if (osc.data.target)
             {
-                osc_send_hide(&osc.data);
-                osc_send_quit(&osc.data);
+                //osc_send_hide(&osc.data);
+                //osc_send_quit(&osc.data);
             }
 
             if (osc.thread)
@@ -83,7 +83,7 @@ public:
                 delete osc.thread;
             }
 
-            osc_clear_data(&osc.data);
+            //osc_clear_data(&osc.data);
         }
 #endif
 
@@ -172,10 +172,10 @@ public:
         strncpy(strBuf, ldescriptor->PortNames[rindex], STR_MAX);
     }
 
-    void getGuiInfo(GuiInfo* const info)
+    void getGuiInfo(GuiType* type, bool* resizable)
     {
-        info->type = (m_hints & PLUGIN_HAS_GUI) ? GUI_EXTERNAL_OSC : GUI_NONE;
-        info->resizable = false;
+        *type = (m_hints & PLUGIN_HAS_GUI) ? GUI_EXTERNAL_OSC : GUI_NONE;
+        *resizable = false;
     }
 
     // -------------------------------------------------------------------
@@ -187,8 +187,8 @@ public:
         param_buffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
 
 #ifndef BUILD_BRIDGE
-        if (sendGui)
-            osc_send_control(&osc.data, param.data[parameterId].rindex, value);
+        //if (sendGui)
+            //osc_send_control(&osc.data, param.data[parameterId].rindex, value);
 #endif
 
         CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
@@ -202,8 +202,8 @@ public:
         descriptor->configure(handle, key, value);
 
 #ifndef BUILD_BRIDGE
-        if (sendGui)
-            osc_send_configure(&osc.data, key, value);
+        //if (sendGui)
+            //osc_send_configure(&osc.data, key, value);
 #endif
 
         if (strcmp(key, "reloadprograms") == 0 || strcmp(key, "load") == 0 || strncmp(key, "patches", 7) == 0)
@@ -224,9 +224,9 @@ public:
 
         if (x_engine->isOffline())
         {
-            carla_proc_lock();
+            engineProcessLock();
             descriptor->set_custom_data(handle, chunk.data(), chunk.size());
-            carla_proc_unlock();
+            engineProcessUnlock();
         }
         else
         {
@@ -243,9 +243,9 @@ public:
         {
             if (x_engine->isOffline())
             {
-                if (block) carla_proc_lock();
+                if (block) engineProcessLock();
                 descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
-                if (block) carla_proc_unlock();
+                if (block) engineProcessUnlock();
             }
             else
             {
@@ -254,8 +254,8 @@ public:
             }
 
 #ifndef BUILD_BRIDGE
-            if (sendGui)
-                osc_send_midi_program(&osc.data, midiprog.data[index].bank, midiprog.data[index].program, true);
+            //if (sendGui)
+                //osc_send_midi_program(&osc.data, midiprog.data[index].bank, midiprog.data[index].program, true);
 #endif
         }
 
@@ -274,9 +274,9 @@ public:
         }
         else
         {
-            osc_send_hide(&osc.data);
-            osc_send_quit(&osc.data);
-            osc_clear_data(&osc.data);
+            //osc_send_hide(&osc.data);
+            //osc_send_quit(&osc.data);
+            //osc_clear_data(&osc.data);
             osc.thread->quit(); // FIXME - stop thread?
         }
     }
@@ -699,12 +699,12 @@ public:
 
 #ifndef BUILD_BRIDGE
         // Update OSC Names
-        osc_global_send_set_midi_program_count(m_id, midiprog.count);
+        //osc_global_send_set_midi_program_count(m_id, midiprog.count);
 
-        for (i=0; i < midiprog.count; i++)
-            osc_global_send_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
+        //for (i=0; i < midiprog.count; i++)
+        //    osc_global_send_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
 
-        callback_action(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
+        x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
 #endif
 
         if (init)
@@ -714,7 +714,7 @@ public:
         }
         else
         {
-            callback_action(CALLBACK_UPDATE, m_id, 0, 0, 0.0);
+            x_engine->callback(CALLBACK_UPDATE, m_id, 0, 0, 0.0);
 
             // Check if current program is invalid
             bool programChanged = false;
@@ -964,7 +964,7 @@ public:
 
         if (midi.portMin && cin_channel >= 0 && cin_channel < 16 && m_active && m_activeBefore)
         {
-            carla_midi_lock();
+            engineMidiLock();
 
             for (i=0; i < MAX_MIDI_EVENTS && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
@@ -984,7 +984,7 @@ public:
                 midiEventCount += 1;
             }
 
-            carla_midi_unlock();
+            engineMidiUnlock();
 
         } // End of MIDI Input (External)
 
@@ -1260,10 +1260,10 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Peak Values
 
-        ains_peak[(m_id*2)+0]  = ains_peak_tmp[0];
-        ains_peak[(m_id*2)+1]  = ains_peak_tmp[1];
-        aouts_peak[(m_id*2)+0] = aouts_peak_tmp[0];
-        aouts_peak[(m_id*2)+1] = aouts_peak_tmp[1];
+        x_engine->setInputPeak(m_id, 0, ains_peak_tmp[0]);
+        x_engine->setInputPeak(m_id, 1, ains_peak_tmp[1]);
+        x_engine->setOutputPeak(m_id, 0, aouts_peak_tmp[0]);
+        x_engine->setOutputPeak(m_id, 1, aouts_peak_tmp[1]);
 
         m_activeBefore = m_active;
     }
@@ -1341,9 +1341,9 @@ public:
         m_filename = strdup(filename);
 
         if (name)
-            m_name = get_unique_name(name);
+            m_name = x_engine->getUniqueName(name);
         else
-            m_name = get_unique_name(ldescriptor->Name);
+            m_name = x_engine->getUniqueName(ldescriptor->Name);
 
         // ---------------------------------------------------------------
         // register client
@@ -1362,7 +1362,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (guiFilename)
         {
-            osc.thread = new CarlaPluginThread(this, CarlaPluginThread::PLUGIN_THREAD_DSSI_GUI);
+            osc.thread = new CarlaPluginThread(x_engine, this, CarlaPluginThread::PLUGIN_THREAD_DSSI_GUI);
             osc.thread->setOscData(guiFilename, ldescriptor->Label);
 
             m_hints |= PLUGIN_HAS_GUI;
@@ -1386,7 +1386,7 @@ short CarlaPlugin::newDSSI(const initializer& init, const void* const extra)
 {
     qDebug("CarlaPlugin::newDSSI(%p, %s, %s, %s, %p)", init.engine, init.filename, init.name, init.label, extra);
 
-    short id = get_new_plugin_id();
+    short id = init.engine->getNewPluginIndex();
 
     if (id < 0)
     {
@@ -1417,10 +1417,8 @@ short CarlaPlugin::newDSSI(const initializer& init, const void* const extra)
     }
 #endif
 
-    unique_names[id] = plugin->name();
-    CarlaPlugins[id] = plugin;
-
     plugin->registerToOsc();
+    init.engine->addPlugin(id, plugin);
 
     return id;
 }

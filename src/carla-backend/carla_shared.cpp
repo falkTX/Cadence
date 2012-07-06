@@ -16,9 +16,8 @@
  */
 
 #include "carla_shared.h"
-#include "carla_engine.h"
 
-#include <QtCore/QMutex>
+#include <cassert>
 #include <QtCore/QString>
 
 CARLA_BACKEND_START_NAMESPACE
@@ -27,12 +26,7 @@ CARLA_BACKEND_START_NAMESPACE
 } /* adjust editor indent */
 #endif
 
-// Global variables (shared)
-const char* unique_names[MAX_PLUGINS]  = { nullptr };
-CarlaPlugin* CarlaPlugins[MAX_PLUGINS] = { nullptr };
-
-volatile double ains_peak[MAX_PLUGINS*2]  = { 0.0 };
-volatile double aouts_peak[MAX_PLUGINS*2] = { 0.0 };
+static const char* carla_last_error = nullptr;
 
 #ifndef BUILD_BRIDGE
 // Global options
@@ -54,62 +48,166 @@ carla_options_t carla_options = {
 };
 #endif
 
-CallbackFunc Callback  = nullptr;
-const char* last_error = nullptr;
-
-QMutex carla_proc_lock_var;
-QMutex carla_midi_lock_var;
-
-// define max possible client name
-const unsigned short max_client_name_size = CarlaEngine::maxClientNameSize() - 5; // 5 = strlen(" (10)")
-
-// -------------------------------------------------------------------------------------------------------------------
-// Exported symbols (API)
-
-void set_callback_function(CallbackFunc func)
-{
-    qDebug("set_callback_function(%p)", func);
-    Callback = func;
-}
-
-const char* get_last_error()
-{
-    qDebug("get_last_error()");
-    return last_error;
-}
-
-// End of exported symbols (API)
 // -------------------------------------------------------------------------------------------------------------------
 
-const char* bool2str(bool yesno)
+const char* binarytype2str(BinaryType type)
 {
-    if (yesno)
-        return "true";
-    else
-        return "false";
+    switch (type)
+    {
+    case BINARY_NONE:
+        return "BINARY_NONE";
+    case BINARY_UNIX32:
+        return "BINARY_UNIX32";
+    case BINARY_UNIX64:
+        return "BINARY_UNIX64";
+    case BINARY_WIN32:
+        return "BINARY_WIN32";
+    case BINARY_WIN64:
+        return "BINARY_WIN64";
+    }
+
+    qWarning("CarlaBackend::binarytype2str(%i) - invalid type", type);
+    return nullptr;
 }
 
 const char* plugintype2str(PluginType type)
 {
     switch (type)
     {
+    case PLUGIN_NONE:
+        return "PLUGIN_NONE";
     case PLUGIN_LADSPA:
-        return "LADSPA";
+        return "PLUGIN_LADSPA";
     case PLUGIN_DSSI:
-        return "DSSI";
+        return "PLUGIN_DSSI";
     case PLUGIN_LV2:
-        return "LV2";
+        return "PLUGIN_LV2";
     case PLUGIN_VST:
-        return "VST";
+        return "PLUGIN_VST";
+    case PLUGIN_GIG:
+        return "PLUGIN_GIG";
     case PLUGIN_SF2:
-        return "SF2";
+        return "PLUGIN_SF2";
+    case PLUGIN_SFZ:
+        return "PLUGIN_SFZ";
+    }
+
+    qWarning("CarlaBackend::plugintype2str(%i) - invalid type", type);
+    return nullptr;
+}
+
+const char* optionstype2str(OptionsType type)
+{
+    switch (type)
+    {
+    case OPTION_PROCESS_MODE:
+        return "OPTION_PROCESS_MODE";
+    case OPTION_MAX_PARAMETERS:
+        return "OPTION_MAX_PARAMETERS";
+    case OPTION_PREFER_UI_BRIDGES:
+        return "OPTION_PREFER_UI_BRIDGES";
+    case OPTION_PROCESS_HQ:
+        return "OPTION_PROCESS_HQ";
+    case OPTION_OSC_GUI_TIMEOUT:
+        return "OPTION_OSC_GUI_TIMEOUT";
+    case OPTION_USE_DSSI_CHUNKS:
+        return "OPTION_USE_DSSI_CHUNKS";
+    case OPTION_PATH_LADSPA:
+        return "OPTION_PATH_LADSPA";
+    case OPTION_PATH_DSSI:
+        return "OPTION_PATH_DSSI";
+    case OPTION_PATH_LV2:
+        return "OPTION_PATH_LV2";
+    case OPTION_PATH_VST:
+        return "OPTION_PATH_VST";
+    case OPTION_PATH_GIG:
+        return "OPTION_PATH_GIG";
+    case OPTION_PATH_SF2:
+        return "OPTION_PATH_SF2";
+    case OPTION_PATH_SFZ:
+        return "OPTION_PATH_SFZ";
+    case OPTION_PATH_BRIDGE_UNIX32:
+        return "OPTION_PATH_BRIDGE_UNIX32";
+    case OPTION_PATH_BRIDGE_UNIX64:
+        return "OPTION_PATH_BRIDGE_UNIX64";
+    case OPTION_PATH_BRIDGE_WIN32:
+        return "OPTION_PATH_BRIDGE_WIN32";
+    case OPTION_PATH_BRIDGE_WIN64:
+        return "OPTION_PATH_BRIDGE_WIN64";
+    case OPTION_PATH_BRIDGE_LV2_GTK2:
+        return "OPTION_PATH_BRIDGE_LV2_GTK2";
+    case OPTION_PATH_BRIDGE_LV2_QT4:
+        return "OPTION_PATH_BRIDGE_LV2_QT4";
+    case OPTION_PATH_BRIDGE_LV2_X11:
+        return "OPTION_PATH_BRIDGE_LV2_X11";
+    case OPTION_PATH_BRIDGE_VST_X11:
+        return "OPTION_PATH_BRIDGE_VST_X11";
+    }
+
+    qWarning("CarlaBackend::optionstype2str(%i) - invalid type", type);
+    return nullptr;
+}
+
+const char* customdatatype2str(CustomDataType type)
+{
+    switch (type)
+    {
+    case CUSTOM_DATA_INVALID:
+        return "CUSTOM_DATA_INVALID";
+    case CUSTOM_DATA_STRING:
+        return "CUSTOM_DATA_STRING";
+    case CUSTOM_DATA_PATH:
+        return "CUSTOM_DATA_PATH";
+    case CUSTOM_DATA_CHUNK:
+        return "CUSTOM_DATA_CHUNK";
+    case CUSTOM_DATA_BINARY:
+        return "CUSTOM_DATA_BINARY";
+    }
+
+    qWarning("CarlaBackend::customdatatype2str(%i) - invalid type", type);
+    return nullptr;
+}
+
+// -------------------------------------------------------------------------------------------------------------------
+
+CustomDataType get_customdata_type(const char* const stype)
+{
+    qDebug("CarlaBackend::get_customdata_type(%s)", stype);
+
+    if (strcmp(stype, "string") == 0)
+        return CUSTOM_DATA_STRING;
+    if (strcmp(stype, "path") == 0)
+        return CUSTOM_DATA_PATH;
+    if (strcmp(stype, "chunk") == 0)
+        return CUSTOM_DATA_CHUNK;
+    if (strcmp(stype, "binary") == 0)
+        return CUSTOM_DATA_BINARY;
+    return CUSTOM_DATA_INVALID;
+}
+
+const char* get_customdata_str(CustomDataType type)
+{
+    qDebug("CarlaBackend::get_customdata_str(%s)", customdatatype2str(type));
+
+    switch (type)
+    {
+    case CUSTOM_DATA_STRING:
+        return "string";
+    case CUSTOM_DATA_PATH:
+        return "path";
+    case CUSTOM_DATA_CHUNK:
+        return "chunk";
+    case CUSTOM_DATA_BINARY:
+        return "binary";
     default:
-        return "Unknown";
+        return "invalid";
     }
 }
 
-const char* binarytype2str(BinaryType type)
+const char* get_binarybridge_path(BinaryType type)
 {
+    qDebug("CarlaBackend::get_bridge_path(%s)", binarytype2str(type));
+
     switch (type)
     {
 #ifndef BUILD_BRIDGE
@@ -127,125 +225,27 @@ const char* binarytype2str(BinaryType type)
     }
 }
 
-const char* customdatatype2str(CustomDataType type)
-{
-    switch (type)
-    {
-    case CUSTOM_DATA_INVALID:
-        return "invalid";
-    case CUSTOM_DATA_STRING:
-        return "string";
-    case CUSTOM_DATA_PATH:
-        return "path";
-    case CUSTOM_DATA_CHUNK:
-        return "chunk";
-    case CUSTOM_DATA_BINARY:
-        return "binary";
-    default:
-        return "null";
-    }
-}
-
-CustomDataType customdatastr2type(const char* stype)
-{
-    if (strcmp(stype, "string") == 0)
-        return CUSTOM_DATA_STRING;
-    if (strcmp(stype, "path") == 0)
-        return CUSTOM_DATA_PATH;
-    if (strcmp(stype, "chunk") == 0)
-        return CUSTOM_DATA_CHUNK;
-    if (strcmp(stype, "binary") == 0)
-        return CUSTOM_DATA_BINARY;
-    return CUSTOM_DATA_INVALID;
-}
-
 // -------------------------------------------------------------------------------------------------------------------
 
-short get_new_plugin_id()
+void* get_pointer(quintptr ptr_addr)
 {
-#ifdef BUILD_BRIDGE
-    const unsigned short max = MAX_PLUGINS;
-#else
-    const unsigned short max = (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK) ? 16 : MAX_PLUGINS;
-#endif
+    qDebug("CarlaBackend::get_pointer(" P_UINTPTR ")", ptr_addr);
 
-    for (unsigned short i=0; i < max; i++)
-    {
-        if (CarlaPlugins[i] == nullptr)
-            return i;
-    }
-
-    return -1;
+    quintptr* ptr = (quintptr*)ptr_addr;
+    return (void*)ptr;
 }
 
-const char* get_unique_name(const char* name)
+PluginCategory get_category_from_name(const char* const name)
 {
-    QString qname(name);
+    qDebug("CarlaBackend::get_category_from_name(%s)", name);
+    assert(name);
 
-    if (qname.isEmpty())
-        qname = "(No name)";
-
-    qname.truncate(max_client_name_size-1);
-    qname.replace(":", "."); // ":" is used in JACK to split client/port names
-
-    for (unsigned short i=0; i<MAX_PLUGINS; i++)
-    {
-        // Check if unique name already exists
-        if (unique_names[i] && qname == unique_names[i])
-        {
-            // Check if string has already been modified
-            uint len = qname.size();
-
-            // 1 digit, ex: " (2)"
-            if (qname.at(len-4) == QChar(' ') && qname.at(len-3) == QChar('(') && qname.at(len-2).isDigit() && qname.at(len-1) == QChar(')'))
-            {
-                int number = qname.at(len-2).toAscii()-'0';
-
-                if (number == 9)
-                    // next number is 10, 2 digits
-                    qname.replace(" (9)", " (10)");
-                else
-                    qname[len-2] = QChar('0'+number+1);
-
-                continue;
-            }
-
-            // 2 digits, ex: " (11)"
-            if (qname.at(len-5) == QChar(' ') && qname.at(len-4) == QChar('(') && qname.at(len-3).isDigit() && qname.at(len-2).isDigit() && qname.at(len-1) == QChar(')'))
-            {
-                QChar n2 = qname.at(len-2);
-                QChar n3 = qname.at(len-3);
-
-                if (n2 == QChar('9'))
-                {
-                    n2 = QChar('0');
-                    n3 = QChar(n3.toAscii()+1);
-                }
-                else
-                    n2 = QChar(n2.toAscii()+1);
-
-                qname[len-2] = n2;
-                qname[len-3] = n3;
-
-                continue;
-            }
-
-            // Modify string if not
-            qname += " (2)";
-        }
-    }
-
-    return strdup(qname.toUtf8().constData());
-}
-
-PluginCategory get_category_from_name(const char* name)
-{
     QString qname(name);
 
     if (qname.isEmpty())
         return PLUGIN_CATEGORY_NONE;
-    else
-        qname = qname.toLower();
+
+    qname = qname.toLower();
 
     // generic tags first
     if (qname.contains("delay", Qt::CaseSensitive))
@@ -306,47 +306,145 @@ PluginCategory get_category_from_name(const char* name)
     return PLUGIN_CATEGORY_NONE;
 }
 
-void* get_pointer(quintptr ptr_addr)
+// -------------------------------------------------------------------------------------------------------------------
+
+const char* get_last_error()
 {
-    quintptr* ptr = (quintptr*)ptr_addr;
-    return (void*)ptr;
+    qDebug("CarlaBackend::get_last_error()");
+
+    return carla_last_error;
 }
 
-void set_last_error(const char* error)
+void set_last_error(const char* const error)
 {
-    if (last_error)
-        free((void*)last_error);
+    qDebug("CarlaBackend::set_last_error(%s)", error);
 
-    if (error)
-        last_error = strdup(error);
-    else
-        last_error = nullptr;
+    if (carla_last_error)
+        free((void*)carla_last_error);
+
+    carla_last_error = error ? strdup(error) : nullptr;
 }
 
-void carla_proc_lock()
+// -------------------------------------------------------------------------------------------------------------------
+
+#ifndef BUILD_BRIDGE
+void set_option(OptionsType option, int value, const char* const valueStr)
 {
-    carla_proc_lock_var.lock();
+    qDebug("CarlaBackend::set_option(%s, %i, %s)", optionstype2str(option), value, valueStr);
+
+    switch (option)
+    {
+    case OPTION_PROCESS_MODE:
+        if (value < PROCESS_MODE_SINGLE_CLIENT || value > PROCESS_MODE_CONTINUOUS_RACK)
+            value = PROCESS_MODE_MULTIPLE_CLIENTS;
+        carla_options.process_mode = (ProcessModeType)value;
+        break;
+    case OPTION_MAX_PARAMETERS:
+        carla_options.max_parameters = (value > 0) ? value : MAX_PARAMETERS;
+        break;
+    case OPTION_PREFER_UI_BRIDGES:
+        carla_options.prefer_ui_bridges = value;
+        break;
+    case OPTION_PROCESS_HQ:
+        carla_options.proccess_hq = value;
+        break;
+    case OPTION_OSC_GUI_TIMEOUT:
+        carla_options.osc_gui_timeout = value/100;
+        break;
+    case OPTION_USE_DSSI_CHUNKS:
+        carla_options.use_dssi_chunks = value;
+        break;
+    case OPTION_PATH_LADSPA:
+        carla_setenv("LADSPA_PATH", valueStr);
+        break;
+    case OPTION_PATH_DSSI:
+        carla_setenv("DSSI_PATH", valueStr);
+        break;
+    case OPTION_PATH_LV2:
+        carla_setenv("LV2_PATH", valueStr);
+        break;
+    case OPTION_PATH_VST:
+        carla_setenv("VST_PATH", valueStr);
+        break;
+    case OPTION_PATH_GIG:
+        carla_setenv("GIG_PATH", valueStr);
+        break;
+    case OPTION_PATH_SF2:
+        carla_setenv("SF2_PATH", valueStr);
+        break;
+    case OPTION_PATH_SFZ:
+        carla_setenv("SFZ_PATH", valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_UNIX32:
+        carla_options.bridge_unix32 = strdup(valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_UNIX64:
+        carla_options.bridge_unix64 = strdup(valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_WIN32:
+        carla_options.bridge_win32 = strdup(valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_WIN64:
+        carla_options.bridge_win64 = strdup(valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_LV2_GTK2:
+        carla_options.bridge_lv2gtk2 = strdup(valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_LV2_QT4:
+        carla_options.bridge_lv2qt4 = strdup(valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_LV2_X11:
+        carla_options.bridge_lv2x11 = strdup(valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_VST_X11:
+        carla_options.bridge_vstx11 = strdup(valueStr);
+        break;
+    }
 }
 
-void carla_proc_unlock()
+void reset_options()
 {
-    carla_proc_lock_var.unlock();
-}
+    qDebug("CarlaBackend::reset_options()");
 
-void carla_midi_lock()
-{
-    carla_midi_lock_var.lock();
-}
+    if (carla_options.bridge_unix32)
+        free((void*)carla_options.bridge_unix32);
 
-void carla_midi_unlock()
-{
-    carla_midi_lock_var.unlock();
-}
+    if (carla_options.bridge_unix64)
+        free((void*)carla_options.bridge_unix64);
 
-void callback_action(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3)
-{
-    if (Callback)
-        Callback(action, plugin_id, value1, value2, value3);
+    if (carla_options.bridge_win32)
+        free((void*)carla_options.bridge_win32);
+
+    if (carla_options.bridge_win64)
+        free((void*)carla_options.bridge_win64);
+
+    if (carla_options.bridge_lv2gtk2)
+        free((void*)carla_options.bridge_lv2gtk2);
+
+    if (carla_options.bridge_lv2qt4)
+        free((void*)carla_options.bridge_lv2qt4);
+
+    if (carla_options.bridge_lv2x11)
+        free((void*)carla_options.bridge_lv2x11);
+
+    if (carla_options.bridge_vstx11)
+        free((void*)carla_options.bridge_vstx11);
+
+    carla_options.process_mode      = PROCESS_MODE_MULTIPLE_CLIENTS;
+    carla_options.max_parameters    = MAX_PARAMETERS;
+    carla_options.prefer_ui_bridges = true;
+    carla_options.proccess_hq       = false;
+    carla_options.osc_gui_timeout   = 4000/100;
+    carla_options.use_dssi_chunks   = false;
+    carla_options.bridge_unix32     = nullptr;
+    carla_options.bridge_unix64     = nullptr;
+    carla_options.bridge_win32      = nullptr;
+    carla_options.bridge_win64      = nullptr;
+    carla_options.bridge_lv2gtk2    = nullptr;
+    carla_options.bridge_lv2qt4     = nullptr;
+    carla_options.bridge_lv2x11     = nullptr;
+    carla_options.bridge_vstx11     = nullptr;
 }
+#endif
 
 CARLA_BACKEND_END_NAMESPACE

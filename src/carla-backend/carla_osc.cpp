@@ -38,6 +38,9 @@ const char* get_host_osc_url()
     return global_osc_server_path;
 }
 
+// FIXME
+extern CarlaEngineJack carla_engine;
+
 CARLA_BACKEND_END_NAMESPACE
 
 // End of exported symbols (API)
@@ -153,7 +156,8 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
         return 1;
     }
 
-    CarlaPlugin* plugin = CarlaPlugins[plugin_id];
+    CarlaPlugin* plugin = carla_engine.getPluginById(plugin_id);
+    //CarlaPlugin* plugin = CarlaPlugins[plugin_id];
 
     if (plugin == nullptr || plugin->id() != plugin_id)
     {
@@ -269,7 +273,7 @@ int osc_handle_configure(CarlaPlugin* plugin, lo_arg** argv)
     {
         if (strcmp(key, CARLA_BRIDGE_MSG_HIDE_GUI) == 0)
         {
-            callback_action(CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
+            carla_engine.callback(CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
             return 0;
         }
 
@@ -381,9 +385,10 @@ int osc_handle_register(lo_arg** argv, lo_address source)
         free((void*)host);
         free((void*)port);
 
-        for (unsigned short i=0; i<MAX_PLUGINS; i++)
+        for (unsigned short i=0; i < MAX_PLUGINS; i++)
         {
-            CarlaPlugin* plugin = CarlaPlugins[i];
+            CarlaPlugin* const plugin = carla_engine.getPluginByIndex(i);
+
             if (plugin && plugin->enabled())
                 plugin->registerToOsc();
         }
@@ -428,7 +433,7 @@ int osc_handle_exiting(CarlaPlugin* plugin)
     qDebug("osc_handle_exiting()");
 
     // TODO - check for non-UIs (dssi-vst) and set to -1 instead
-    callback_action(CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
+    carla_engine.callback(CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
     plugin->clearOscData();
 
     return 0;
@@ -543,7 +548,7 @@ int osc_handle_bridge_ains_peak(CarlaPlugin* plugin, lo_arg** argv)
     int index    = argv[0]->i;
     double value = argv[1]->f;
 
-    ains_peak[(plugin->id()*2)+index-1] = value;
+    carla_engine.setInputPeak(plugin->id(), index-1, value);
     return 0;
 }
 
@@ -552,7 +557,7 @@ int osc_handle_bridge_aouts_peak(CarlaPlugin* plugin, lo_arg** argv)
     int index    = argv[0]->i;
     double value = argv[1]->f;
 
-    aouts_peak[(plugin->id()*2)+index-1] = value;
+    carla_engine.setOutputPeak(plugin->id(), index-1, value);
     return 0;
 }
 

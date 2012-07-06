@@ -67,51 +67,12 @@ RtAudio::Api getRtApiFromEnvironment()
     return defaultRtApi;
 }
 
-// Global RtAudio stuff
-static RtAudio adac(getRtApiFromEnvironment());
-
-static uint32_t carla_buffer_size = 512;
-static const char* carla_client_name = nullptr;
-static QThread* carla_proc_thread = nullptr;
-
-// -------------------------------------------------------------------------------------------------------------------
-// Exported symbols (API)
-
-bool is_engine_running()
-{
-    return adac.isStreamRunning();
-}
-
-const char* get_host_client_name()
-{
-    return carla_client_name;
-}
-
-quint32 get_buffer_size()
-{
-    qDebug("get_buffer_size()");
-    if (carla_options.proccess_hq)
-        return 8;
-    return carla_buffer_size;
-}
-
-double get_sample_rate()
-{
-    qDebug("get_sample_rate()");
-    return adac.getStreamSampleRate();
-}
-
-double get_latency()
-{
-    qDebug("get_latency()");
-    return double(carla_buffer_size)/get_sample_rate()*1000;
-}
-
 // -------------------------------------------------------------------------------------------------------------------
 // static RtAudio<->Engine calls
 
 static int process_callback(void* outputBuffer, void* inputBuffer, unsigned int nframes, double /*streamTime*/, RtAudioStreamStatus /*status*/, void* /*userData*/)
 {
+#if 0
     if (carla_proc_thread == nullptr)
         carla_proc_thread = QThread::currentThread();
 
@@ -146,7 +107,7 @@ static int process_callback(void* outputBuffer, void* inputBuffer, unsigned int 
 
     for (unsigned short i=0; i<MAX_PLUGINS; i++)
     {
-        CarlaPlugin* plugin = CarlaPlugins[i];
+        CarlaPlugin* const plugin = CarlaPlugins[i];
         if (plugin && plugin->enabled())
         {
             memset(aouts_tmp_buf1, 0, sizeof(float)*nframes);
@@ -171,6 +132,7 @@ static int process_callback(void* outputBuffer, void* inputBuffer, unsigned int 
 
     //memcpy(out1, aouts_tmp_buf1, sizeof(float)*nframes);
     //memcpy(out2, aouts_tmp_buf2, sizeof(float)*nframes);
+#endif
 
     return 0;
 }
@@ -178,10 +140,18 @@ static int process_callback(void* outputBuffer, void* inputBuffer, unsigned int 
 // -------------------------------------------------------------------------------------------------------------------
 // Carla Engine
 
-CarlaEngine::CarlaEngine() {}
-CarlaEngine::~CarlaEngine() {}
+// Global RtAudio stuff
+static RtAudio adac(getRtApiFromEnvironment());
 
-bool CarlaEngine::init(const char* name)
+CarlaEngineRtAudio::CarlaEngineRtAudio()
+{
+}
+
+CarlaEngineRtAudio::~CarlaEngineRtAudio()
+{
+}
+
+bool CarlaEngineRtAudio::init(const char* name)
 {
     if (adac.getDeviceCount() < 1)
     {
@@ -215,8 +185,8 @@ bool CarlaEngine::init(const char* name)
         return false;
     }
 
-    carla_buffer_size = bufferFrames;
-    carla_client_name = strdup(name);
+    //carla_buffer_size = bufferFrames;
+    //carla_client_name = strdup(name);
 
     try {
         adac.startStream();
@@ -230,13 +200,13 @@ bool CarlaEngine::init(const char* name)
     return true;
 }
 
-bool CarlaEngine::close()
+bool CarlaEngineRtAudio::close()
 {
-    if (carla_client_name)
-    {
-        free((void*)carla_client_name);
-        carla_client_name = nullptr;
-    }
+    //if (carla_client_name)
+    //{
+    //    free((void*)carla_client_name);
+    //    carla_client_name = nullptr;
+    //}
 
     if (adac.isStreamRunning())
         adac.stopStream();
@@ -247,174 +217,15 @@ bool CarlaEngine::close()
     return true;
 }
 
-const CarlaTimeInfo* CarlaEngine::getTimeInfo()
+bool CarlaEngineRtAudio::isOnAudioThread()
 {
-    static CarlaTimeInfo info;
-    info.playing = false;
-    info.frame = 0;
-    info.valid = 0;
-    return &info;
-}
-
-bool CarlaEngine::isOnAudioThread()
-{
-    return (QThread::currentThread() == carla_proc_thread);
-}
-
-bool CarlaEngine::isOffline()
-{
+    //return (QThread::currentThread() == carla_proc_thread);
     return false;
 }
 
-int CarlaEngine::maxClientNameSize()
+bool CarlaEngineRtAudio::isOffline()
 {
-    return STR_MAX;
-}
-
-int CarlaEngine::maxPortNameSize()
-{
-    return STR_MAX;
-}
-
-// -------------------------------------------------------------------------------------------------------------------
-// Carla Engine Port (Base class)
-
-CarlaEngineBasePort::CarlaEngineBasePort(CarlaEngineClientNativeHandle* const clientHandle, bool isInput_) :
-    isInput(isInput_),
-    client(clientHandle)
-{
-    handle = nullptr;
-}
-
-CarlaEngineBasePort::~CarlaEngineBasePort()
-{
-}
-
-// -------------------------------------------------------------------------------------------------------------------
-// Carla Engine Client
-
-CarlaEngineClient::CarlaEngineClient(CarlaPlugin* const plugin)
-{
-    handle = nullptr;
-    m_active = false;
-    Q_UNUSED(plugin);
-}
-
-CarlaEngineClient::~CarlaEngineClient()
-{
-}
-
-void CarlaEngineClient::activate()
-{
-    m_active = true;
-}
-
-void CarlaEngineClient::deactivate()
-{
-    m_active = false;
-}
-
-bool CarlaEngineClient::isActive()
-{
-    return m_active;
-}
-
-bool CarlaEngineClient::isOk()
-{
-    //return bool(handle);
-    return true;
-}
-
-CarlaEngineBasePort* CarlaEngineClient::addPort(const char* name, CarlaEnginePortType type, bool isInput)
-{
-    switch (type)
-    {
-    case CarlaEnginePortTypeAudio:
-        return new CarlaEngineAudioPort(handle, name, isInput);
-    case CarlaEnginePortTypeControl:
-        return new CarlaEngineControlPort(handle, name, isInput);
-    case CarlaEnginePortTypeMIDI:
-        return new CarlaEngineMidiPort(handle, name, isInput);
-    default:
-        return nullptr;
-    }
-}
-
-// -------------------------------------------------------------------------------------------------------------------
-// Carla Engine Port (Audio)
-
-CarlaEngineAudioPort::CarlaEngineAudioPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput) :
-    CarlaEngineBasePort(client, isInput)
-{
-    Q_UNUSED(name);
-}
-
-void CarlaEngineAudioPort::initBuffer()
-{
-}
-
-// -------------------------------------------------------------------------------------------------------------------
-// Carla Engine Port (Control)
-
-CarlaEngineControlPort::CarlaEngineControlPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput) :
-    CarlaEngineBasePort(client, isInput)
-{
-    Q_UNUSED(name);
-}
-
-void CarlaEngineControlPort::initBuffer()
-{
-}
-
-uint32_t CarlaEngineControlPort::getEventCount()
-{
-    return 0;
-}
-
-const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(uint32_t index)
-{
-    return nullptr;
-    Q_UNUSED(index);
-}
-
-void CarlaEngineControlPort::writeEvent(CarlaEngineControlEventType type, uint32_t time, uint8_t channel, uint8_t controller, double value)
-{
-    Q_UNUSED(type);
-    Q_UNUSED(time);
-    Q_UNUSED(channel);
-    Q_UNUSED(controller);
-    Q_UNUSED(value);
-}
-
-// -------------------------------------------------------------------------------------------------------------------
-// Carla Engine Port (MIDI)
-
-CarlaEngineMidiPort::CarlaEngineMidiPort(CarlaEngineClientNativeHandle* const client, const char* name, bool isInput) :
-    CarlaEngineBasePort(client, isInput)
-{
-    Q_UNUSED(name);
-}
-
-void CarlaEngineMidiPort::initBuffer()
-{
-}
-
-uint32_t CarlaEngineMidiPort::getEventCount()
-{
-    return 0;
-}
-
-const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(uint32_t index)
-{
-    return nullptr;
-    Q_UNUSED(index);
-}
-
-void CarlaEngineMidiPort::writeEvent(uint32_t time, uint8_t* data, uint8_t size)
-{
-    Q_UNUSED(time);
-    Q_UNUSED(data);
-    Q_UNUSED(size);
+    return false;
 }
 
 CARLA_BACKEND_END_NAMESPACE

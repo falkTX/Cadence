@@ -18,17 +18,15 @@
 #include "carla_threads.h"
 #include "carla_plugin.h"
 
+#include <QtCore/QDebug>
 #include <QtCore/QProcess>
-
-#ifndef CARLA_BACKEND_NO_NAMESPACE
-using namespace CarlaBackend;
-#endif
 
 // --------------------------------------------------------------------------------------------------------
 // CarlaCheckThread
 
-CarlaCheckThread::CarlaCheckThread(QObject *parent) :
-    QThread(parent)
+CarlaCheckThread::CarlaCheckThread(CarlaBackend::CarlaEngine* const engine_, QObject* parent) :
+    QThread(parent),
+    engine(engine_)
 {
     qDebug("CarlaCheckThread::CarlaCheckThread(%p)", parent);
 }
@@ -47,6 +45,7 @@ void CarlaCheckThread::stopNow()
 void CarlaCheckThread::run()
 {
     qDebug("CarlaCheckThread::run()");
+    using namespace CarlaBackend;
 
     uint32_t j, k;
     double value;
@@ -56,9 +55,10 @@ void CarlaCheckThread::run()
     m_stopNow = false;
     while (/*is_engine_running() &&*/ ! m_stopNow)
     {
-        for (unsigned short i=0; i<MAX_PLUGINS; i++)
+        for (unsigned short i=0; i < MAX_PLUGINS; i++)
         {
-            CarlaPlugin* plugin = CarlaPlugins[i];
+            CarlaPlugin* const plugin = engine->getPluginByIndex(i);
+
             if (plugin && plugin->enabled())
             {
                 // --------------------------------------------------------------------------------------------------------
@@ -78,53 +78,55 @@ void CarlaCheckThread::run()
                     switch (postEvents[j].type)
                     {
                     case PluginPostEventDebug:
-                        callback_action(CALLBACK_DEBUG, plugin->id(), postEvents[j].index, 0, postEvents[j].value);
+                        engine->callback(CALLBACK_DEBUG, plugin->id(), postEvents[j].index, 0, postEvents[j].value);
                         break;
 
                     case PluginPostEventParameterChange:
                         // Update OSC based UIs
-                        osc_send_control(osc_data, postEvents[j].index, postEvents[j].value);
+                        //osc_send_control(osc_data, postEvents[j].index, postEvents[j].value);
 
                         // Update OSC control client
-                        osc_global_send_set_parameter_value(plugin->id(), postEvents[j].index, postEvents[j].value);
+                        //osc_global_send_set_parameter_value(plugin->id(), postEvents[j].index, postEvents[j].value);
 
                         // Update Host
-                        callback_action(CALLBACK_PARAMETER_CHANGED, plugin->id(), postEvents[j].index, 0, postEvents[j].value);
+                        engine->callback(CALLBACK_PARAMETER_CHANGED, plugin->id(), postEvents[j].index, 0, postEvents[j].value);
 
                         break;
 
                     case PluginPostEventProgramChange:
                         // Update OSC based UIs
-                        osc_send_program(osc_data, postEvents[j].index);
+                        //osc_send_program(osc_data, postEvents[j].index);
 
                         // Update OSC control client
-                        osc_global_send_set_program(plugin->id(), postEvents[j].index);
+                        //osc_global_send_set_program(plugin->id(), postEvents[j].index);
 
-                        for (k=0; k < plugin->parameterCount(); k++)
-                            osc_global_send_set_default_value(plugin->id(), k, plugin->parameterRanges(k)->def);
+                        //for (k=0; k < plugin->parameterCount(); k++)
+                        //    osc_global_send_set_default_value(plugin->id(), k, plugin->parameterRanges(k)->def);
 
                         // Update Host
-                        callback_action(CALLBACK_PROGRAM_CHANGED, plugin->id(), postEvents[j].index, 0, 0.0);
+                        engine->callback(CALLBACK_PROGRAM_CHANGED, plugin->id(), postEvents[j].index, 0, 0.0);
 
                         break;
 
                     case PluginPostEventMidiProgramChange:
                         if (postEvents[j].index < (int32_t)plugin->midiProgramCount())
                         {
-                            MidiProgramInfo midiprog = { false, 0, 0, nullptr };
-                            plugin->getMidiProgramInfo(&midiprog, postEvents[j].index);
+                            if (postEvents[j].index >= 0)
+                            {
+                                const midi_program_t* const midiprog = plugin->midiProgramData(postEvents[j].index);
 
-                            // Update OSC based UIs
-                            osc_send_midi_program(osc_data, midiprog.bank, midiprog.program, (plugin->type() == PLUGIN_DSSI));
+                                // Update OSC based UIs
+                                //osc_send_midi_program(osc_data, midiprog->bank, midiprog->program, (plugin->type() == PLUGIN_DSSI));
+                            }
 
                             // Update OSC control client
-                            osc_global_send_set_midi_program(plugin->id(), postEvents[j].index);
+                            //osc_global_send_set_midi_program(plugin->id(), postEvents[j].index);
 
-                            for (k=0; k < plugin->parameterCount(); k++)
-                                osc_global_send_set_default_value(plugin->id(), k, plugin->parameterRanges(k)->def);
+                            //for (k=0; k < plugin->parameterCount(); k++)
+                            //    osc_global_send_set_default_value(plugin->id(), k, plugin->parameterRanges(k)->def);
 
                             // Update Host
-                            callback_action(CALLBACK_MIDI_PROGRAM_CHANGED, plugin->id(), postEvents[j].index, 0, 0.0);
+                            engine->callback(CALLBACK_MIDI_PROGRAM_CHANGED, plugin->id(), postEvents[j].index, 0, 0.0);
                         }
 
                         break;
@@ -135,10 +137,10 @@ void CarlaCheckThread::run()
                         //    osc_send_note_on(osc_data, plugin->id(), post_events[j].index, post_events[j].value);
 
                         // Update OSC control client
-                        osc_global_send_note_on(plugin->id(), postEvents[j].index, postEvents[j].value);
+                        //osc_global_send_note_on(plugin->id(), postEvents[j].index, postEvents[j].value);
 
                         // Update Host
-                        callback_action(CALLBACK_NOTE_ON, plugin->id(), postEvents[j].index, postEvents[j].value, 0.0);
+                        engine->callback(CALLBACK_NOTE_ON, plugin->id(), postEvents[j].index, postEvents[j].value, 0.0);
 
                         break;
 
@@ -148,10 +150,10 @@ void CarlaCheckThread::run()
                         //    osc_send_note_off(osc_data, plugin->id(), post_events[j].index, 0);
 
                         // Update OSC control client
-                        osc_global_send_note_off(plugin->id(), postEvents[j].index);
+                        //osc_global_send_note_off(plugin->id(), postEvents[j].index);
 
                         // Update Host
-                        callback_action(CALLBACK_NOTE_OFF, plugin->id(), postEvents[j].index, 0, 0.0);
+                        engine->callback(CALLBACK_NOTE_OFF, plugin->id(), postEvents[j].index, 0, 0.0);
 
                         break;
 
@@ -166,6 +168,7 @@ void CarlaCheckThread::run()
                 // Check if it needs update
                 bool update_ports_gui = (osc_data->target && (plugin->hints() & PLUGIN_IS_BRIDGE) == 0);
 
+#if 0
                 if (osc_global_registered() == false && update_ports_gui == false)
                     continue;
 
@@ -192,15 +195,16 @@ void CarlaCheckThread::run()
                 {
                     if (plugin->audioInCount() > 0)
                     {
-                        osc_global_send_set_input_peak_value(plugin->id(), 1, ains_peak[ (plugin->id() * 2) + 0 ]);
-                        osc_global_send_set_input_peak_value(plugin->id(), 2, ains_peak[ (plugin->id() * 2) + 1 ]);
+                        osc_global_send_set_input_peak_value(plugin->id(), 1, engine->getInputPeak(plugin->id(), 0));
+                        osc_global_send_set_input_peak_value(plugin->id(), 2, engine->getInputPeak(plugin->id(), 1));
                     }
                     if (plugin->audioOutCount() > 0)
                     {
-                        osc_global_send_set_output_peak_value(plugin->id(), 1, aouts_peak[ (plugin->id() * 2) + 0 ]);
-                        osc_global_send_set_output_peak_value(plugin->id(), 2, aouts_peak[ (plugin->id() * 2) + 1 ]);
+                        osc_global_send_set_output_peak_value(plugin->id(), 1, engine->getOutputPeak(plugin->id(), 0));
+                        osc_global_send_set_output_peak_value(plugin->id(), 2, engine->getOutputPeak(plugin->id(), 1));
                     }
                 }
+#endif
             }
         }
         msleep(50);
@@ -210,12 +214,31 @@ void CarlaCheckThread::run()
 // --------------------------------------------------------------------------------------------------------
 // CarlaPluginThread
 
-CarlaPluginThread::CarlaPluginThread(CarlaPlugin* plugin, PluginThreadMode mode) :
-    QThread (nullptr),
-    m_plugin (plugin),
-    m_mode (mode)
+const char* CarlaPluginThread::pluginthreadmode2str(PluginThreadMode mode)
 {
-    qDebug("CarlaPluginThread::CarlaPluginThread(%p, %i)", plugin, mode);
+    switch (mode)
+    {
+    case PLUGIN_THREAD_DSSI_GUI:
+        return "PLUGIN_THREAD_DSSI_GUI";
+    case PLUGIN_THREAD_LV2_GUI:
+        return "PLUGIN_THREAD_LV2_GUI";
+    case PLUGIN_THREAD_VST_GUI:
+        return "PLUGIN_THREAD_VST_GUI";
+    case PLUGIN_THREAD_BRIDGE:
+        return "PLUGIN_THREAD_BRIDGE";
+    }
+
+    qWarning("CarlaPluginThread::pluginthreadmode2str(%i) - invalid mode", mode);
+    return nullptr;
+}
+
+CarlaPluginThread::CarlaPluginThread(CarlaBackend::CarlaEngine* const engine_, CarlaBackend::CarlaPlugin* const plugin_, PluginThreadMode mode_, QObject* parent) :
+    QThread(parent),
+    engine(engine_),
+    plugin(plugin_),
+    mode(mode_)
+{
+    qDebug("CarlaPluginThread::CarlaPluginThread(%s, %s, %s)", plugin->name(), engine->getName(), pluginthreadmode2str(mode));
 
     m_process = nullptr;
 }
@@ -233,8 +256,6 @@ void CarlaPluginThread::setOscData(const char* const binary, const char* const l
     m_data1  = QString(data1);
 }
 
-#include <QtCore/QDebug>
-
 void CarlaPluginThread::run()
 {
     qDebug("CarlaPluginThread::run()");
@@ -246,28 +267,39 @@ void CarlaPluginThread::run()
 
     QStringList arguments;
 
-    switch (m_mode)
+    switch (mode)
     {
     case PLUGIN_THREAD_DSSI_GUI:
-        /* osc_url  */ arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
-        /* filename */ arguments << m_plugin->filename();
+        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscUrl()).arg(plugin->id());
+        /* filename */ arguments << plugin->filename();
         /* label    */ arguments << m_label;
-        /* ui-title */ arguments << QString("%1 (GUI)").arg(m_plugin->name());
+        /* ui-title */ arguments << QString("%1 (GUI)").arg(plugin->name());
         break;
 
     case PLUGIN_THREAD_LV2_GUI:
-        /* osc_url  */ arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
+        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscUrl()).arg(plugin->id());
         /* URI      */ arguments << m_label;
         /* ui-URI   */ arguments << m_data1;
-        /* ui-title */ arguments << QString("%1 (GUI)").arg(m_plugin->name());
+        /* ui-title */ arguments << QString("%1 (GUI)").arg(plugin->name());
+        break;
+
+    case PLUGIN_THREAD_VST_GUI:
+        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscUrl()).arg(plugin->id());
+        /* filename */ arguments << plugin->filename();
+        /* label    */ arguments << m_label;
+        /* ui-title */ arguments << QString("%1 (GUI)").arg(plugin->name());
         break;
 
     case PLUGIN_THREAD_BRIDGE:
     {
-        const char* const name = m_plugin->name() ? m_plugin->name() : "(none)";
-        /* osc_url  */ arguments << QString("%1/%2").arg(get_host_osc_url()).arg(m_plugin->id());
+        const char* name = plugin->name();
+
+        if (! name)
+            name = "(none)";
+
+        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscUrl()).arg(plugin->id());
         /* stype    */ arguments << m_data1;
-        /* filename */ arguments << m_plugin->filename();
+        /* filename */ arguments << plugin->filename();
         /* name     */ arguments << name;
         /* label    */ arguments << m_label;
         break;
@@ -283,24 +315,24 @@ void CarlaPluginThread::run()
     m_process->start(m_binary, arguments);
     m_process->waitForStarted();
 
-    switch (m_mode)
+    switch (mode)
     {
     case PLUGIN_THREAD_DSSI_GUI:
     case PLUGIN_THREAD_LV2_GUI:
-        if (m_plugin->showOscGui())
+        if (/*plugin->showOscGui()*/1)
         {
             m_process->waitForFinished(-1);
 
             if (m_process->exitCode() == 0)
             {
                 // Hide
-                callback_action(CALLBACK_SHOW_GUI, m_plugin->id(), 0, 0, 0.0);
+                engine->callback(CarlaBackend::CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
                 qWarning("CarlaPluginThread::run() - GUI closed");
             }
             else
             {
                 // Kill
-                callback_action(CALLBACK_SHOW_GUI, m_plugin->id(), -1, 0, 0.0);
+                engine->callback(CarlaBackend::CALLBACK_SHOW_GUI, plugin->id(), -1, 0, 0.0);
                 qWarning("CarlaPluginThread::run() - GUI crashed");
                 break;
             }
@@ -308,9 +340,8 @@ void CarlaPluginThread::run()
         else
         {
             qDebug("CarlaPluginThread::run() - GUI timeout");
-            callback_action(CALLBACK_SHOW_GUI, m_plugin->id(), 0, 0, 0.0);
+            engine->callback(CarlaBackend::CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
         }
-
         break;
 
     case PLUGIN_THREAD_BRIDGE:
