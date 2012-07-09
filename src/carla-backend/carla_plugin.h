@@ -139,7 +139,7 @@ struct PluginPostEvent {
 };
 
 struct ExternalMidiNote {
-    bool valid;
+    int8_t channel; // invalid = -1
     uint8_t note;
     uint8_t velo;
 };
@@ -228,7 +228,7 @@ public:
             postEvents.data[i].type = PluginPostEventNull;
 
         for (unsigned short i=0; i < MAX_MIDI_EVENTS; i++)
-            extMidiNotes[i].valid = false;
+            extMidiNotes[i].channel = -1;
     }
 
     virtual ~CarlaPlugin()
@@ -962,7 +962,7 @@ public:
 #ifndef BUILD_BRIDGE
         x_engine->osc_send_set_parameter_midi_channel(m_id, parameterId, channel);
 
-        // FIXME
+        // FIXME: send to engine
         //if (m_hints & PLUGIN_IS_BRIDGE)
         //    osc_send_set_parameter_midi_channel(&osc.data, m_id, parameterId, channel);
 #endif
@@ -980,7 +980,7 @@ public:
 #ifndef BUILD_BRIDGE
         x_engine->osc_send_set_parameter_midi_cc(m_id, parameterId, cc);
 
-        // FIXME
+        // FIXME: send to engine
         //if (m_hints & PLUGIN_IS_BRIDGE)
         //    osc_send_set_parameter_midi_cc(&osc.data, m_id, parameterId, midi_cc);
 #endif
@@ -1210,6 +1210,8 @@ public:
      */
     virtual void idleGui()
     {
+        m_needsParamUpdate = false;
+        m_needsProgUpdate = false;
     }
 
     // -------------------------------------------------------------------
@@ -1303,7 +1305,13 @@ public:
      */
     void registerToOsc()
     {
-#ifdef BUILD_BRIDGE
+#ifndef BUILD_BRIDGE
+        if (! x_engine->isOscRegisted())
+            return;
+
+        x_engine->osc_send_add_plugin(m_id, m_name);
+#endif
+
         // Base data
         {
             char bufName[STR_MAX]  = { 0 };
@@ -1314,116 +1322,101 @@ public:
             getLabel(bufLabel);
             getMaker(bufMaker);
             getCopyright(bufCopyright);
+
+#ifdef BUILD_BRIDGE
             osc_send_bridge_plugin_info(category(), m_hints, bufName, bufLabel, bufMaker, bufCopyright, uniqueId());
-        }
-
-        osc_send_bridge_audio_count(audioInCount(), audioOutCount(), audioInCount() + audioOutCount());
-        osc_send_bridge_midi_count(midiInCount(), midiOutCount(), midiInCount() + midiOutCount());
-
-        PortCountInfo param_info = { false, 0, 0, 0 };
-        getParameterCountInfo(&param_info);
-        osc_send_bridge_param_count(param_info.ins, param_info.outs, param_info.total);
-
-        // Parameters
-        uint32_t i;
-        char bufName[STR_MAX], bufUnit[STR_MAX];
-
-        if (param.count > 0 && param.count < MAX_PARAMETERS)
-        {
-            for (i=0; i < param.count; i++)
-            {
-                getParameterName(i, bufName);
-                getParameterUnit(i, bufUnit);
-                osc_send_bridge_param_info(i, bufName, bufUnit);
-                osc_send_bridge_param_data(i, param.data[i].type, param.data[i].rindex, param.data[i].hints, param.data[i].midiChannel, param.data[i].midiCC);
-                osc_send_bridge_param_ranges(i, param.ranges[i].def, param.ranges[i].min, param.ranges[i].max, param.ranges[i].step, param.ranges[i].stepSmall, param.ranges[i].stepLarge);
-
-                setParameterValue(i, param.ranges[i].def, false, false, true);
-            }
-        }
-
-        // Programs
-        osc_send_bridge_program_count(prog.count);
-
-        for (i=0; i < prog.count; i++)
-            osc_send_bridge_program_info(i, prog.names[i]);
-
-        if (prog.current >= 0)
-            osc_send_program(prog.current);
-
-        // MIDI Programs
-        osc_send_bridge_midi_program_count(midiprog.count);
-
-        for (i=0; i < midiprog.count; i++)
-            osc_send_bridge_midi_program_info(i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
-
-        if (midiprog.current >= 0 && midiprog.count > 0)
-            osc_send_midi_program(midiprog.data[midiprog.current].bank, midiprog.data[midiprog.current].program, false);
 #else
-        if (x_engine->isOscRegisted())
+            x_engine->osc_send_set_plugin_data(m_id, m_type, category(), m_hints, bufName, bufLabel, bufMaker, bufCopyright, uniqueId());
+#endif
+        }
+
+        // Base count
         {
-            uint32_t i;
+            uint32_t cIns, cOuts, cTotals;
+            getParameterCountInfo(&cIns, &cOuts, &cTotals);
 
-            // Base data
-            x_engine->osc_send_add_plugin(m_id, m_name);
+#ifdef BUILD_BRIDGE
+            osc_send_bridge_audio_count(audioInCount(), audioOutCount(), audioInCount() + audioOutCount());
+            osc_send_bridge_midi_count(midiInCount(), midiOutCount(), midiInCount() + midiOutCount());
+            osc_send_bridge_param_count(cIns, cOuts, cTotals);
+#else
+            x_engine->osc_send_set_plugin_ports(m_id, audioInCount(), audioOutCount(), midiInCount(), midiOutCount(), cIns, cOuts, cTotals);
+#endif
+        }
 
-            {
-                char bufName[STR_MAX]  = { 0 };
-                char bufLabel[STR_MAX] = { 0 };
-                char bufMaker[STR_MAX] = { 0 };
-                char bufCopyright[STR_MAX] = { 0 };
-                getRealName(bufName);
-                getLabel(bufLabel);
-                getMaker(bufMaker);
-                getCopyright(bufCopyright);
-
-                x_engine->osc_send_set_plugin_data(m_id, m_type, category(), m_hints, bufName, bufLabel, bufMaker, bufCopyright, uniqueId());
-            }
-
-            {
-                uint32_t cIns, cOuts, cTotals;
-                getParameterCountInfo(&cIns, &cOuts, &cTotals);
-                x_engine->osc_send_set_plugin_ports(m_id, audioInCount(), audioOutCount(), midiInCount(), midiOutCount(), cIns, cOuts, cTotals);
-            }
-
-            // Parameters
+        // Internal Parameters
+        {
+#ifndef BUILD_BRIDGE
             x_engine->osc_send_set_parameter_value(m_id, PARAMETER_ACTIVE, m_active ? 1.0 : 0.0);
             x_engine->osc_send_set_parameter_value(m_id, PARAMETER_DRYWET, x_drywet);
             x_engine->osc_send_set_parameter_value(m_id, PARAMETER_VOLUME, x_vol);
             x_engine->osc_send_set_parameter_value(m_id, PARAMETER_BALANCE_LEFT, x_bal_left);
             x_engine->osc_send_set_parameter_value(m_id, PARAMETER_BALANCE_RIGHT, x_bal_right);
+#endif
+        }
 
-            if (param.count > 0 && param.count < carla_options.max_parameters)
+        // Plugin Parameters
+        if (param.count > 0 && param.count < carla_options.max_parameters)
+        {
+            char bufName[STR_MAX], bufUnit[STR_MAX];
+
+            for (uint32_t i=0; i < param.count; i++)
             {
-                char bufName[STR_MAX], bufUnit[STR_MAX];
+                getParameterName(i, bufName);
+                getParameterUnit(i, bufUnit);
 
-                for (i=0; i < param.count; i++)
-                {
-                    getParameterName(i, bufName);
-                    getParameterUnit(i, bufUnit);
-
-                    x_engine->osc_send_set_parameter_data(m_id, i, param.data[i].type, param.data[i].hints, bufName, bufUnit, getParameterValue(i));
-                    x_engine->osc_send_set_parameter_ranges(m_id, i, param.ranges[i].min, param.ranges[i].max, param.ranges[i].def, param.ranges[i].step, param.ranges[i].stepSmall, param.ranges[i].stepLarge);
-                }
+#ifdef BUILD_BRIDGE
+                osc_send_bridge_param_info(i, bufName, bufUnit);
+                osc_send_bridge_param_data(i, param.data[i].type, param.data[i].rindex, param.data[i].hints, param.data[i].midiChannel, param.data[i].midiCC);
+                osc_send_bridge_param_ranges(i, param.ranges[i].def, param.ranges[i].min, param.ranges[i].max, param.ranges[i].step, param.ranges[i].stepSmall, param.ranges[i].stepLarge);
+                setParameterValue(i, param.ranges[i].def, false, false, true); // FIXME?
+#else
+                x_engine->osc_send_set_parameter_data(m_id, i, param.data[i].type, param.data[i].hints, bufName, bufUnit, getParameterValue(i));
+                x_engine->osc_send_set_parameter_ranges(m_id, i, param.ranges[i].min, param.ranges[i].max, param.ranges[i].def, param.ranges[i].step, param.ranges[i].stepSmall, param.ranges[i].stepLarge);
+#endif
             }
+        }
 
-            // Programs
+        // Programs
+        {
+#ifdef BUILD_BRIDGE
+            osc_send_bridge_program_count(prog.count);
+
+            for (uint32_t i=0; i < prog.count; i++)
+                osc_send_bridge_program_info(i, prog.names[i]);
+
+            //if (prog.current >= 0)
+            osc_send_program(prog.current);
+#else
             x_engine->osc_send_set_program_count(m_id, prog.count);
 
-            for (i=0; i < prog.count; i++)
+            for (uint32_t i=0; i < prog.count; i++)
                 x_engine->osc_send_set_program_name(m_id, i, prog.names[i]);
 
             x_engine->osc_send_set_program(m_id, prog.current);
+#endif
+        }
 
-            // MIDI Programs
+        // MIDI Programs
+        {
+#ifdef BUILD_BRIDGE
+            osc_send_bridge_midi_program_count(midiprog.count);
+
+            for (uint32_t i=0; i < midiprog.count; i++)
+                osc_send_bridge_midi_program_info(i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
+
+            //if (midiprog.current >= 0 /*&& midiprog.count > 0*/)
+            //osc_send_midi_program(midiprog.data[midiprog.current].bank, midiprog.data[midiprog.current].program, false);
+            osc_send_midi_program(midiprog.current);
+#else
             x_engine->osc_send_set_midi_program_count(m_id, midiprog.count);
 
-            for (i=0; i < midiprog.count; i++)
+            for (uint32_t i=0; i < midiprog.count; i++)
                 x_engine->osc_send_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
 
             x_engine->osc_send_set_midi_program(m_id, midiprog.current);
-        }
 #endif
+        }
     }
 
 #ifndef BUILD_BRIDGE
@@ -1455,10 +1448,11 @@ public:
 
         for (size_t i=0; i < custom.size(); i++)
         {
-            if (m_type == PLUGIN_LV2)
-                osc_send_lv2_event_transfer(&osc.data, customdatatype2str(custom[i].type), custom[i].key, custom[i].value);
-            else if (custom[i].type == CUSTOM_DATA_STRING)
-                osc_send_configure(&osc.data, custom[i].key, custom[i].value);
+            //if (m_type == PLUGIN_LV2)
+            //    osc_send_lv2_event_transfer(&osc.data, customdatatype2str(custom[i].type), custom[i].key, custom[i].value);
+            //else if (custom[i].type == CUSTOM_DATA_STRING)
+            osc_send_configure(&osc.data, custom[i].key, custom[i].value);
+            // FIXME
         }
 
         if (prog.current >= 0)
@@ -1481,6 +1475,34 @@ public:
             osc_send_control(&osc.data, PARAMETER_VOLUME, x_vol);
             osc_send_control(&osc.data, PARAMETER_BALANCE_LEFT, x_bal_left);
             osc_send_control(&osc.data, PARAMETER_BALANCE_RIGHT, x_bal_right);
+        }
+    }
+
+    /*!
+     * TODO
+     */
+    void updateOscParameterOutputs()
+    {
+        // Check if it needs update
+        bool updatePortsGui = (osc.data.target && (m_hints & PLUGIN_IS_BRIDGE) == 0);
+
+        if (! (x_engine->isOscRegisted() || updatePortsGui))
+            return;
+
+        // Update
+        double value;
+
+        for (uint32_t i=0; i < param.count; i++)
+        {
+            if (param.data[i].type == PARAMETER_OUTPUT /*&& (paramData->hints & PARAMETER_IS_AUTOMABLE) > 0*/)
+            {
+                value = getParameterValue(i);
+
+                if (updatePortsGui)
+                    osc_send_control(&osc.data, param.data[i].rindex, value);
+
+                x_engine->osc_send_set_parameter_value(m_id, i, value);
+            }
         }
     }
 
@@ -1520,16 +1542,16 @@ public:
      * Send a single midi note to be processed in the next audio callback.\n
      * A note with 0 velocity means note-off.
      */
-    virtual void sendMidiSingleNote(uint8_t note, uint8_t velo, bool sendGui, bool sendOsc, bool sendCallback)
+    virtual void sendMidiSingleNote(uint8_t channel, uint8_t note, uint8_t velo, bool sendGui, bool sendOsc, bool sendCallback)
     {
         engineMidiLock();
         for (unsigned short i=0; i<MAX_MIDI_EVENTS; i++)
         {
-            if (extMidiNotes[i].valid == false)
+            if (extMidiNotes[i].channel < 0)
             {
-                extMidiNotes[i].valid = true;
-                extMidiNotes[i].note  = note;
-                extMidiNotes[i].velo  = velo;
+                extMidiNotes[i].channel = channel;
+                extMidiNotes[i].note = note;
+                extMidiNotes[i].velo = velo;
                 break;
             }
         }
@@ -1591,9 +1613,9 @@ public:
 
         for (unsigned short i=0; i < 128; i++)
         {
-            extMidiNotes[i].valid = true;
-            extMidiNotes[i].note  = i;
-            extMidiNotes[i].velo  = 0;
+            extMidiNotes[i].channel = 0; // FIXME
+            extMidiNotes[i].note = i;
+            extMidiNotes[i].velo = 0;
 
             postEvents.data[i + postPad].type  = PluginPostEventNoteOff;
             postEvents.data[i + postPad].index = i;
@@ -1614,7 +1636,7 @@ public:
     void postponeEvent(PluginPostEventType type, int32_t index, double value)
     {
         postEvents.mutex.lock();
-        for (unsigned short i=0; i<MAX_POST_EVENTS; i++)
+        for (unsigned short i=0; i < MAX_POST_EVENTS; i++)
         {
             if (postEvents.data[i].type == PluginPostEventNull)
             {
@@ -1628,17 +1650,121 @@ public:
     }
 
     /*!
-     * Copy all the plugin's post-poned events into \a postEventsDest, and clear all events from the plugin.
+     * TODO
      */
-    void postEventsCopy(PluginPostEvent* const postEventsDest)
+    void postEventsRun()
     {
-        postEvents.mutex.lock();
-        memcpy(postEventsDest, postEvents.data, sizeof(PluginPostEvent)*MAX_POST_EVENTS);
+        static PluginPostEvent newPostEvents[MAX_POST_EVENTS];
 
+        // Make a safe copy of events, and clear them
+        postEvents.mutex.lock();
+        memcpy(newPostEvents, postEvents.data, sizeof(PluginPostEvent)*MAX_POST_EVENTS);
         for (unsigned short i=0; i < MAX_POST_EVENTS; i++)
             postEvents.data[i].type = PluginPostEventNull;
-
         postEvents.mutex.unlock();
+
+        // Handle events now
+        for (uint32_t i=0; i < MAX_POST_EVENTS; i++)
+        {
+            const PluginPostEvent* const event = &newPostEvents[i];
+
+            switch (event->type)
+            {
+            case PluginPostEventNull:
+                return;
+
+            case PluginPostEventDebug:
+                x_engine->callback(CALLBACK_DEBUG, m_id, event->index, 0, event->value);
+                break;
+
+            case PluginPostEventParameterChange:
+                // Update OSC based UIs
+                m_needsParamUpdate = true;
+                osc_send_control(&osc.data, event->index, event->value);
+
+                // Update OSC control client
+                x_engine->osc_send_set_parameter_value(m_id, event->index, event->value);
+
+                // Update Host
+                x_engine->callback(CALLBACK_PARAMETER_CHANGED, m_id, event->index, 0, event->value);
+                break;
+
+            case PluginPostEventProgramChange:
+                // Update OSC based UIs
+                m_needsProgUpdate = true;
+                osc_send_program(&osc.data, event->index);
+
+                // Update OSC control client
+                x_engine->osc_send_set_program(m_id, event->index);
+
+                for (uint32_t j=0; j < param.count; j++)
+                    x_engine->osc_send_set_default_value(m_id, j, param.ranges[j].def);
+
+                // Update Host
+                x_engine->callback(CALLBACK_PROGRAM_CHANGED, m_id, event->index, 0, 0.0);
+                break;
+
+            case PluginPostEventMidiProgramChange:
+                //if (event->index < (int32_t)midiprog.count)
+                //{
+                //if (event->index >= 0)
+                //{
+                //const midi_program_t* const midiprog = plugin->midiProgramData(postEvents[j].index);
+                // Update OSC based UIs
+                //osc_send_midi_program(osc_data, midiprog->bank, midiprog->program, (plugin->type() == PLUGIN_DSSI));
+                //}
+
+                // Update OSC based UIs
+                m_needsProgUpdate = true;
+                osc_send_midi_program(&osc.data, event->index);
+
+                // Update OSC control client
+                x_engine->osc_send_set_midi_program(m_id, event->index);
+
+                for (uint32_t j=0; j < param.count; j++)
+                    x_engine->osc_send_set_default_value(m_id, j, param.ranges[j].def);
+
+                // Update Host
+                x_engine->callback(CALLBACK_MIDI_PROGRAM_CHANGED, m_id, event->index, 0, 0.0);
+                //}
+                break;
+
+            case PluginPostEventNoteOn:
+                // Update OSC based UIs
+                if (cin_channel >= 0 && cin_channel < 16)
+                {
+                    uint8_t mdata[4] = { 0 };
+                    mdata[1] = MIDI_STATUS_NOTE_ON + cin_channel;
+                    mdata[2] = event->index;
+                    mdata[3] = rint(event->value);
+                    osc_send_midi(&osc.data, mdata);
+                }
+
+                // Update OSC control client
+                x_engine->osc_send_note_on(m_id, event->index, event->value);
+
+                // Update Host
+                x_engine->callback(CALLBACK_NOTE_ON, m_id, event->index, rint(event->value), 0.0);
+                break;
+
+            case PluginPostEventNoteOff:
+                // Update OSC based UIs
+                if (cin_channel >= 0 && cin_channel < 16)
+                {
+                    uint8_t mdata[4] = { 0 };
+                    mdata[1] = MIDI_STATUS_NOTE_OFF + cin_channel;
+                    mdata[2] = event->index;
+                    osc_send_midi(&osc.data, mdata);
+                }
+
+                // Update OSC control client
+                x_engine->osc_send_note_off(m_id, event->index);
+
+                // Update Host
+                x_engine->callback(CALLBACK_NOTE_OFF, m_id, event->index, 0, 0.0);
+                break;
+            }
+        }
     }
 
     // -------------------------------------------------------------------
@@ -1850,7 +1976,7 @@ public:
 
     // -------------------------------------------------------------------
 
-protected:    
+protected:
     // static
     const unsigned short m_id;
     CarlaEngine* const x_engine;
@@ -1871,6 +1997,9 @@ protected:
 
     double x_drywet, x_vol, x_bal_left, x_bal_right;
     CarlaEngineClient* x_client;
+
+    bool m_needsParamUpdate;
+    bool m_needsProgUpdate;
 
     // -------------------------------------------------------------------
     // Storage Data

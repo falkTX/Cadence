@@ -3516,7 +3516,7 @@ if __name__ == '__main__':
     if carla_bridge_vst_x11:
         CarlaHost.set_option(OPTION_PATH_BRIDGE_VST_X11, 0, carla_bridge_vst_x11)
 
-    if not CarlaHost.engine_init("Carla"):
+    if not CarlaHost.engine_init("JACK", "Carla"):
         CustomMessageBox(None, QMessageBox.Critical, "Error", "Could not connect to JACK",
             cString(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
         sys.exit(1)

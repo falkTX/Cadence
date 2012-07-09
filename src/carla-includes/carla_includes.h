@@ -1,5 +1,5 @@
 /*
- * Carla shared includes
+ * Carla common includes
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -94,11 +94,10 @@
 #  endif
 #endif
 
-inline const char* bool2str(bool yesno)
+static inline
+const char* bool2str(bool yesno)
 {
-    if (yesno)
-        return "true";
-    return "false";
+    return yesno ? "true" : "false";
 }
 
 #endif // CARLA_INCLUDES_H

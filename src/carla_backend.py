@@ -627,12 +627,13 @@ CUSTOM_DATA_BINARY  = 4
 
 # enum GuiType
 GUI_NONE = 0
-GUI_INTERNAL_QT4  = 1
-GUI_INTERNAL_HWND = 2
-GUI_INTERNAL_X11  = 3
-GUI_EXTERNAL_LV2  = 4
-GUI_EXTERNAL_SUIL = 5
-GUI_EXTERNAL_OSC  = 6
+GUI_INTERNAL_QT4   = 1
+GUI_INTERNAL_COCOA = 2
+GUI_INTERNAL_HWND  = 3
+GUI_INTERNAL_X11   = 4
+GUI_EXTERNAL_LV2   = 5
+GUI_EXTERNAL_SUIL  = 6
+GUI_EXTERNAL_OSC   = 7
 
 # enum OptionsType
 OPTION_PROCESS_MODE         = 1
@@ -780,7 +781,13 @@ class Host(object):
 
         self.lib = cdll.LoadLibrary(carla_library_path)
 
-        self.lib.engine_init.argtypes = [c_char_p]
+        self.lib.get_engine_driver_count.argtypes = None
+        self.lib.get_engine_driver_count.restype = c_uint
+
+        self.lib.get_engine_driver_name.argtypes = [c_uint]
+        self.lib.get_engine_driver_name.restype = c_char_p
+
+        self.lib.engine_init.argtypes = [c_char_p, c_char_p]
         self.lib.engine_init.restype = c_bool
 
         self.lib.engine_close.argtypes = None
@@ -942,8 +949,14 @@ class Host(object):
         self.lib.set_option.argtypes = [c_enum, c_int, c_char_p]
         self.lib.set_option.restype = None
 
-    def engine_init(self, client_name):
-        return self.lib.engine_init(client_name.encode("utf-8"))
+    def get_engine_driver_count(self):
+        return self.lib.get_engine_driver_count()
+
+    def get_engine_driver_name(self, index):
+        return self.lib.get_engine_driver_name(index)
+
+    def engine_init(self, driver_name, client_name):
+        return self.lib.engine_init(driver_name.encode("utf-8"), client_name.encode("utf-8"))
 
     def engine_close(self):
         return self.lib.engine_close()

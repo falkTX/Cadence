@@ -19,22 +19,109 @@
 #include "carla_plugin.h"
 
 // Single, standalone engine
-#if CARLA_ENGINE_JACK
-CarlaBackend::CarlaEngineJack carla_engine;
-#elif CARLA_ENGINE_RTAUDIO
-CarlaBackend::CarlaEngineRtAudio carla_engine;
-#else
-#error Invalid engine type!
-#endif
+static CarlaBackend::CarlaEngine* carla_engine = nullptr;
 
 // -------------------------------------------------------------------------------------------------------------------
 
-bool engine_init(const char* client_name)
+unsigned int get_engine_driver_count()
 {
-    qDebug("engine_init(%s)", client_name);
+    qDebug("get_engine_driver_count()");
+
+    unsigned int count = 0;
+#ifdef CARLA_ENGINE_JACK
+    count += 1;
+#endif
+#ifdef CARLA_ENGINE_RTAUDIO
+    std::vector<RtAudio::Api> apis;
+    RtAudio::getCompiledApi(apis);
+    count += apis.size();
+#endif
+    return count;
+}
+
+const char* get_engine_driver_name(unsigned int index)
+{
+    qDebug("get_engine_driver_name(%i)", index);
+
+#ifdef CARLA_ENGINE_JACK
+    if (index == 0)
+        return "JACK";
+    index -= 1;
+#endif
+
+#ifdef CARLA_ENGINE_RTAUDIO
+    std::vector<RtAudio::Api> apis;
+    RtAudio::getCompiledApi(apis);
+
+    if (index < apis.size())
+    {
+        RtAudio::Api api = apis[index];
+
+        switch (api)
+        {
+        case RtAudio::UNSPECIFIED:
+            return "Unspecified";
+        case RtAudio::LINUX_ALSA:
+            return "ALSA";
+        case RtAudio::LINUX_PULSE:
+            return "PulseAudio";
+        case RtAudio::LINUX_OSS:
+            return "OSS";
+        case RtAudio::UNIX_JACK:
+            return "JACK (RtAudio)";
+        case RtAudio::MACOSX_CORE:
+            return "CoreAudio";
+        case RtAudio::WINDOWS_ASIO:
+            return "ASIO";
+        case RtAudio::WINDOWS_DS:
+            return "DirectSound";
+        case RtAudio::RTAUDIO_DUMMY:
+            return "Dummy";
+        }
+    }
+#endif
+
+    qDebug("get_engine_driver_name(%i) - invalid index", index);
+    return nullptr;
+}
+
+// -------------------------------------------------------------------------------------------------------------------
+
+bool engine_init(const char* driver_name, const char* client_name)
+{
+    qDebug("engine_init(%s, %s)", driver_name, client_name);
+
+#ifdef CARLA_ENGINE_JACK
+    if (strcmp(driver_name, "JACK") == 0)
+        carla_engine = new CarlaBackend::CarlaEngineJack;
+#endif
+#ifdef CARLA_ENGINE_RTAUDIO
+    if (strcmp(driver_name, "ALSA") == 0)
+        carla_engine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::LINUX_ALSA);
+    else if (strcmp(driver_name, "PulseAudio") == 0)
+        carla_engine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::LINUX_PULSE);
+    else if (strcmp(driver_name, "OSS") == 0)
+        carla_engine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::LINUX_OSS);
+    else if (strcmp(driver_name, "JACK (RtAudio)") == 0)
+        carla_engine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::UNIX_JACK);
+    else if (strcmp(driver_name, "CoreAudio") == 0)
+        carla_engine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::MACOSX_CORE);
+    else if (strcmp(driver_name, "ASIO") == 0)
+        carla_engine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::WINDOWS_ASIO);
+    else if (strcmp(driver_name, "DirectSound") == 0)
+        carla_engine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::WINDOWS_DS);
+    else if (strcmp(driver_name, "Dummy") == 0)
+        carla_engine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::RTAUDIO_DUMMY);
+#endif
+
+    if (! carla_engine)
+    {
+        CarlaBackend::set_last_error("The seleted audio driver is not available!");
+        return false;
+    }
 
 #ifndef Q_OS_WIN
-    // TODO - make this an option, put somewhere else
+    // TODO: make this an option, put somewhere else
     if (! getenv("WINE_RT"))
     {
         carla_setenv("WINE_RT", "15");
@@ -42,7 +129,7 @@ bool engine_init(const char* client_name)
     }
 #endif
 
-    bool started = carla_engine.init(client_name);
+    bool started = carla_engine->init(client_name);
 
     if (started)
         CarlaBackend::set_last_error("no error");
@@ -54,7 +141,13 @@ bool engine_close()
 {
     qDebug("engine_close()");
 
-    bool closed = carla_engine.close();
+    if (! carla_engine)
+    {
+        CarlaBackend::set_last_error("Engine is not started");
+        return false;
+    }
+
+    bool closed = carla_engine->close();
 
     for (unsigned short i=0; i < CarlaBackend::MAX_PLUGINS; i++)
         remove_plugin(i);
@@ -72,6 +165,9 @@ bool engine_close()
     CarlaBackend::reset_options();
     CarlaBackend::set_last_error(nullptr);
 
+    delete carla_engine;
+    carla_engine = nullptr;
+
     return closed;
 }
 
@@ -79,7 +175,7 @@ bool is_engine_running()
 {
     qDebug("is_engine_running()");
 
-    return carla_engine.isRunning();
+    return carla_engine && carla_engine->isRunning();
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -143,7 +239,7 @@ bool remove_plugin(unsigned short plugin_id)
 {
     qDebug("remove_plugin(%i)", plugin_id);
 
-    return carla_engine.removePlugin(plugin_id);
+    return carla_engine->removePlugin(plugin_id);
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -152,7 +248,7 @@ const PluginInfo* get_plugin_info(unsigned short plugin_id)
 {
     qDebug("get_plugin_info(%i)", plugin_id);
 
-    static PluginInfo info = { CarlaBackend::PLUGIN_NONE, CarlaBackend::PLUGIN_CATEGORY_NONE, 0x0, nullptr, nullptr, nullptr, nullptr, nullptr, 0 };
+    static PluginInfo info;
 
     if (info.label)
     {
@@ -172,7 +268,7 @@ const PluginInfo* get_plugin_info(unsigned short plugin_id)
         info.copyright = nullptr;
     }
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -197,7 +293,7 @@ const PluginInfo* get_plugin_info(unsigned short plugin_id)
         return &info;
     }
 
-    if (carla_engine.isRunning())
+    if (carla_engine->isRunning())
         qCritical("get_plugin_info(%i) - could not find plugin", plugin_id);
 
     return &info;
@@ -207,9 +303,9 @@ const PortCountInfo* get_audio_port_count_info(unsigned short plugin_id)
 {
     qDebug("get_audio_port_count_info(%i)", plugin_id);
 
-    static PortCountInfo info = { 0, 0, 0 };
+    static PortCountInfo info;
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -227,9 +323,9 @@ const PortCountInfo* get_midi_port_count_info(unsigned short plugin_id)
 {
     qDebug("get_midi_port_count_info(%i)", plugin_id);
 
-    static PortCountInfo info = { 0, 0, 0 };
+    static PortCountInfo info;
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -247,9 +343,9 @@ const PortCountInfo* get_parameter_count_info(unsigned short plugin_id)
 {
     qDebug("get_parameter_port_count_info(%i)", plugin_id);
 
-    static PortCountInfo info = { 0, 0, 0 };
+    static PortCountInfo info;
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -265,7 +361,7 @@ const ParameterInfo* get_parameter_info(unsigned short plugin_id, quint32 parame
 {
     qDebug("get_parameter_info(%i, %i)", plugin_id, parameter_id);
 
-    static ParameterInfo info = { nullptr, nullptr, nullptr, 0 };
+    static ParameterInfo info;
 
     if (info.name)
     {
@@ -285,7 +381,7 @@ const ParameterInfo* get_parameter_info(unsigned short plugin_id, quint32 parame
         info.unit = nullptr;
     }
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -310,7 +406,7 @@ const ParameterInfo* get_parameter_info(unsigned short plugin_id, quint32 parame
         return &info;
     }
 
-    if (carla_engine.isRunning())
+    if (carla_engine->isRunning())
         qCritical("get_parameter_info(%i, %i) - could not find plugin", plugin_id, parameter_id);
 
     return &info;
@@ -320,7 +416,7 @@ const ScalePointInfo* get_parameter_scalepoint_info(unsigned short plugin_id, qu
 {
     qDebug("get_parameter_scalepoint_info(%i, %i, %i)", plugin_id, parameter_id, scalepoint_id);
 
-    static ScalePointInfo info = { 0.0, nullptr };
+    static ScalePointInfo info;
 
     if (info.label)
     {
@@ -328,7 +424,7 @@ const ScalePointInfo* get_parameter_scalepoint_info(unsigned short plugin_id, qu
         info.label = nullptr;
     }
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -352,7 +448,7 @@ const ScalePointInfo* get_parameter_scalepoint_info(unsigned short plugin_id, qu
         return &info;
     }
 
-    if (carla_engine.isRunning())
+    if (carla_engine->isRunning())
         qCritical("get_parameter_scalepoint_info(%i, %i, %i) - could not find plugin", plugin_id, parameter_id, scalepoint_id);
 
     return &info;
@@ -362,9 +458,9 @@ const GuiInfo* get_gui_info(unsigned short plugin_id)
 {
     qDebug("get_gui_info(%i)", plugin_id);
 
-    static GuiInfo info = { CarlaBackend::GUI_NONE, false };
+    static GuiInfo info;
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -382,9 +478,9 @@ const CarlaBackend::ParameterData* get_parameter_data(unsigned short plugin_id, 
 {
     qDebug("get_parameter_data(%i, %i)", plugin_id, parameter_id);
 
-    static CarlaBackend::ParameterData data = { CarlaBackend::PARAMETER_UNKNOWN, -1, -1, 0, 0, -1 };
+    static CarlaBackend::ParameterData data;
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -403,9 +499,9 @@ const CarlaBackend::ParameterRanges* get_parameter_ranges(unsigned short plugin_
 {
     qDebug("get_parameter_ranges(%i, %i)", plugin_id, parameter_id);
 
-    static CarlaBackend::ParameterRanges ranges = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+    static CarlaBackend::ParameterRanges ranges;
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -424,9 +520,9 @@ const CarlaBackend::midi_program_t* get_midi_program_data(unsigned short plugin_
 {
     qDebug("get_midi_program_data(%i, %i)", plugin_id, midi_program_id);
 
-    static CarlaBackend::midi_program_t data = { 0, 0, nullptr };
+    static CarlaBackend::midi_program_t data;
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -445,9 +541,9 @@ const CarlaBackend::CustomData* get_custom_data(unsigned short plugin_id, quint3
 {
     qDebug("get_custom_data(%i, %i)", plugin_id, custom_data_id);
 
-    static CarlaBackend::CustomData data = { CarlaBackend::CUSTOM_DATA_INVALID, nullptr, nullptr };
+    static CarlaBackend::CustomData data;
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -474,7 +570,7 @@ const char* get_chunk_data(unsigned short plugin_id)
         chunk_data = nullptr;
     }
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -497,7 +593,7 @@ const char* get_chunk_data(unsigned short plugin_id)
         return chunk_data;
     }
 
-    if (carla_engine.isRunning())
+    if (carla_engine->isRunning())
         qCritical("get_chunk_data(%i) - could not find plugin", plugin_id);
 
     return nullptr;
@@ -509,7 +605,7 @@ uint32_t get_parameter_count(unsigned short plugin_id)
 {
     qDebug("get_parameter_count(%i)", plugin_id);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
         return plugin->parameterCount();
@@ -522,7 +618,7 @@ uint32_t get_program_count(unsigned short plugin_id)
 {
     qDebug("get_program_count(%i)", plugin_id);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
         return plugin->programCount();
@@ -535,7 +631,7 @@ uint32_t get_midi_program_count(unsigned short plugin_id)
 {
     qDebug("get_midi_program_count(%i)", plugin_id);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
         return plugin->midiProgramCount();
@@ -548,7 +644,7 @@ uint32_t get_custom_data_count(unsigned short plugin_id)
 {
     qDebug("get_custom_data_count(%i)", plugin_id);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
         return plugin->customDataCount();
@@ -566,7 +662,7 @@ const char* get_parameter_text(unsigned short plugin_id, quint32 parameter_id)
     static char buf_text[STR_MAX] = { 0 };
     memset(buf_text, 0, sizeof(char)*STR_MAX);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -580,7 +676,7 @@ const char* get_parameter_text(unsigned short plugin_id, quint32 parameter_id)
         return nullptr;
     }
 
-    if (carla_engine.isRunning())
+    if (carla_engine->isRunning())
         qCritical("get_parameter_text(%i, %i) - could not find plugin", plugin_id, parameter_id);
 
     return nullptr;
@@ -598,7 +694,7 @@ const char* get_program_name(unsigned short plugin_id, quint32 program_id)
         program_name = nullptr;
     }
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -616,7 +712,7 @@ const char* get_program_name(unsigned short plugin_id, quint32 program_id)
         return nullptr;
     }
 
-    if (carla_engine.isRunning())
+    if (carla_engine->isRunning())
         qCritical("get_program_name(%i, %i) - could not find plugin", plugin_id, program_id);
 
     return nullptr;
@@ -633,7 +729,7 @@ const char* get_midi_program_name(unsigned short plugin_id, quint32 midi_program
 
     midi_program_name = nullptr;
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -651,7 +747,7 @@ const char* get_midi_program_name(unsigned short plugin_id, quint32 midi_program
         return nullptr;
     }
 
-    if (carla_engine.isRunning())
+    if (carla_engine->isRunning())
         qCritical("get_midi_program_name(%i, %i) - could not find plugin", plugin_id, midi_program_id);
 
     return nullptr;
@@ -669,7 +765,7 @@ const char* get_real_plugin_name(unsigned short plugin_id)
         real_plugin_name = nullptr;
     }
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -681,7 +777,7 @@ const char* get_real_plugin_name(unsigned short plugin_id)
         return real_plugin_name;
     }
 
-    if (carla_engine.isRunning())
+    if (carla_engine->isRunning())
         qCritical("get_real_plugin_name(%i) - could not find plugin", plugin_id);
 
     return real_plugin_name;
@@ -693,7 +789,7 @@ qint32 get_current_program_index(unsigned short plugin_id)
 {
     qDebug("get_current_program_index(%i)", plugin_id);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
         return plugin->currentProgram();
@@ -706,7 +802,7 @@ qint32 get_current_midi_program_index(unsigned short plugin_id)
 {
     qDebug("get_current_midi_program_index(%i)", plugin_id);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
         return plugin->currentMidiProgram();
@@ -721,7 +817,7 @@ double get_default_parameter_value(unsigned short plugin_id, quint32 parameter_i
 {
     qDebug("get_default_parameter_value(%i, %i)", plugin_id, parameter_id);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -740,7 +836,7 @@ double get_current_parameter_value(unsigned short plugin_id, quint32 parameter_i
 {
     qDebug("get_current_parameter_value(%i, %i)", plugin_id, parameter_id);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -760,14 +856,14 @@ double get_current_parameter_value(unsigned short plugin_id, quint32 parameter_i
 double get_input_peak_value(unsigned short plugin_id, unsigned short port_id)
 {
     if (port_id == 1 || port_id == 2)
-        return carla_engine.getInputPeak(plugin_id, port_id-1);
+        return carla_engine->getInputPeak(plugin_id, port_id-1);
     return 0.0;
 }
 
 double get_output_peak_value(unsigned short plugin_id, unsigned short port_id)
 {
     if (port_id == 1 || port_id == 2)
-        return carla_engine.getOutputPeak(plugin_id, port_id-1);
+        return carla_engine->getOutputPeak(plugin_id, port_id-1);
     return 0.0;
 }
 
@@ -777,7 +873,7 @@ void set_active(unsigned short plugin_id, bool onoff)
 {
     qDebug("set_active(%i, %s)", plugin_id, bool2str(onoff));
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
         return plugin->setActive(onoff, true, false);
@@ -789,7 +885,7 @@ void set_drywet(unsigned short plugin_id, double value)
 {
     qDebug("set_drywet(%i, %f)", plugin_id, value);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
         return plugin->setDryWet(value, true, false);
@@ -801,7 +897,7 @@ void set_volume(unsigned short plugin_id, double value)
 {
     qDebug("set_vol(%i, %f)", plugin_id, value);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
         return plugin->setVolume(value, true, false);
@@ -813,7 +909,7 @@ void set_balance_left(unsigned short plugin_id, double value)
 {
     qDebug("set_balance_left(%i, %f)", plugin_id, value);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
         return plugin->setBalanceLeft(value, true, false);
@@ -825,7 +921,7 @@ void set_balance_right(unsigned short plugin_id, double value)
 {
     qDebug("set_balance_right(%i, %f)", plugin_id, value);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
         return plugin->setBalanceRight(value, true, false);
@@ -839,7 +935,7 @@ void set_parameter_value(unsigned short plugin_id, quint32 parameter_id, double 
 {
     qDebug("set_parameter_value(%i, %i, %f)", plugin_id, parameter_id, value);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -863,7 +959,7 @@ void set_parameter_midi_channel(unsigned short plugin_id, quint32 parameter_id, 
         return;
     }
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -891,7 +987,7 @@ void set_parameter_midi_cc(unsigned short plugin_id, quint32 parameter_id, int16
         return;
     }
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -909,7 +1005,7 @@ void set_program(unsigned short plugin_id, quint32 program_id)
 {
     qDebug("set_program(%i, %i)", plugin_id, program_id);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -927,7 +1023,7 @@ void set_midi_program(unsigned short plugin_id, quint32 midi_program_id)
 {
     qDebug("set_midi_program(%i, %i)", plugin_id, midi_program_id);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -947,7 +1043,7 @@ void set_custom_data(unsigned short plugin_id, CarlaBackend::CustomDataType type
 {
     qDebug("set_custom_data(%i, %i, %s, %s)", plugin_id, type, key, value);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
         return plugin->setCustomData(type, key, value, true);
@@ -959,7 +1055,7 @@ void set_chunk_data(unsigned short plugin_id, const char* chunk_data)
 {
     qDebug("set_chunk_data(%i, %s)", plugin_id, chunk_data);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -977,7 +1073,7 @@ void set_gui_data(unsigned short plugin_id, int data, quintptr gui_addr)
 {
     qDebug("set_gui_data(%i, %i, " P_UINTPTR ")", plugin_id, data, gui_addr);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
     {
@@ -998,7 +1094,7 @@ void show_gui(unsigned short plugin_id, bool yesno)
 {
     qDebug("show_gui(%i, %s)", plugin_id, bool2str(yesno));
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
         return plugin->showGui(yesno);
@@ -1010,7 +1106,7 @@ void idle_guis()
 {
     for (unsigned short i=0; i < CarlaBackend::MAX_PLUGINS; i++)
     {
-        CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginByIndex(i);
+        CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginByIndex(i);
 
         if (plugin && plugin->enabled())
             plugin->idleGui();
@@ -1023,10 +1119,10 @@ void send_midi_note(unsigned short plugin_id, quint8 note, quint8 velocity)
 {
     qDebug("send_midi_note(%i, %i, %i)", plugin_id, note, velocity);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
-        return plugin->sendMidiSingleNote(note, velocity, true, true, false);
+        return plugin->sendMidiSingleNote(0, note, velocity, true, true, false); // FIXME
 
     qCritical("send_midi_note(%i, %i, %i) - could not find plugin", plugin_id, note, velocity);
 }
@@ -1035,7 +1131,7 @@ void prepare_for_save(unsigned short plugin_id)
 {
     qDebug("prepare_for_save(%i)", plugin_id);
 
-    CarlaBackend::CarlaPlugin* const plugin = carla_engine.getPluginById(plugin_id);
+    CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPluginById(plugin_id);
 
     if (plugin)
         return plugin->prepareForSave();
@@ -1049,14 +1145,14 @@ quint32 get_buffer_size()
 {
     qDebug("get_buffer_size()");
 
-    return carla_engine.getBufferSize();
+    return carla_engine->getBufferSize();
 }
 
 double get_sample_rate()
 {
     qDebug("get_sample_rate()");
 
-    return carla_engine.getSampleRate();
+    return carla_engine->getSampleRate();
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -1070,7 +1166,7 @@ const char* get_host_osc_url()
 {
     qDebug("get_host_osc_url()");
 
-    return carla_engine.getOscUrl();
+    return carla_engine->getOscUrl();
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -1079,7 +1175,7 @@ void set_callback_function(CarlaBackend::CallbackFunc func)
 {
     qDebug("set_callback_function(%p)", func);
 
-    carla_engine.setCallback(func);
+    carla_engine->setCallback(func);
 }
 
 void set_option(CarlaBackend::OptionsType option, int value, const char* valueStr)
@@ -1096,21 +1192,17 @@ void set_option(CarlaBackend::OptionsType option, int value, const char* valueSt
 
 QDialog* gui;
 
-#ifndef CARLA_BACKEND_NO_NAMESPACE
-using namespace CarlaBackend;
-#endif
-
-void main_callback(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3)
+void main_callback(CarlaBackend::CallbackType action, unsigned short plugin_id, int value1, int value2, double value3)
 {
     qDebug("Callback(%i, %u, %i, %i, %f)", action, plugin_id, value1, value2, value3);
 
     switch (action)
     {
-    case CALLBACK_SHOW_GUI:
+    case CarlaBackend::CALLBACK_SHOW_GUI:
         if (! value1)
             gui->close();
         break;
-    case CALLBACK_RESIZE_GUI:
+    case CarlaBackend::CALLBACK_RESIZE_GUI:
         gui->setFixedSize(value1, value2);
         break;
     default:
@@ -1123,12 +1215,12 @@ int main(int argc, char* argv[])
     QApplication app(argc, argv);
     gui = new QDialog(nullptr);
 
-    if (engine_init("carla_demo"))
+    if (engine_init("JACK", "carla_demo"))
     {
         set_callback_function(main_callback);
-        set_option(OPTION_PROCESS_MODE, PROCESS_MODE_CONTINUOUS_RACK, nullptr);
+        ::set_option(CarlaBackend::OPTION_PROCESS_MODE, CarlaBackend::PROCESS_MODE_CONTINUOUS_RACK, nullptr);
 
-        short id = add_plugin(BINARY_NATIVE, PLUGIN_LV2, "xxx", "name!!!", "http://linuxdsp.co.uk/lv2/peq-2a.lv2", nullptr);
+        short id = add_plugin(BINARY_NATIVE, CarlaBackend::PLUGIN_LV2, "xxx", "name!!!", "http://linuxdsp.co.uk/lv2/peq-2a.lv2", nullptr);
 
         if (id >= 0)
         {
@@ -1136,7 +1228,7 @@ int main(int argc, char* argv[])
 
             const GuiInfo* guiInfo = get_gui_info(id);
 
-            if (guiInfo->type == GUI_INTERNAL_QT4 || guiInfo->type == GUI_INTERNAL_X11)
+            if (guiInfo->type == CarlaBackend::GUI_INTERNAL_QT4 || guiInfo->type == CarlaBackend::GUI_INTERNAL_X11)
             {
                 set_gui_data(id, 0, (quintptr)gui);
                 gui->show();

@@ -30,12 +30,28 @@ struct PluginInfo {
     const char* maker;
     const char* copyright;
     long uniqueId;
+
+    PluginInfo()
+        : type(CarlaBackend::PLUGIN_NONE),
+          category(CarlaBackend::PLUGIN_CATEGORY_NONE),
+          hints(0),
+          binary(nullptr),
+          name(nullptr),
+          label(nullptr),
+          maker(nullptr),
+          copyright(nullptr),
+          uniqueId(0) {}
 };
 
 struct PortCountInfo {
     quint32 ins;
     quint32 outs;
     quint32 total;
+
+    PortCountInfo()
+        : ins(0),
+          outs(0),
+          total(0) {}
 };
 
 struct ParameterInfo {
@@ -43,19 +59,36 @@ struct ParameterInfo {
     const char* symbol;
     const char* unit;
     quint32 scalePointCount;
+
+    ParameterInfo()
+        : name(nullptr),
+          symbol(nullptr),
+          unit(nullptr),
+          scalePointCount(0) {}
 };
 
 struct ScalePointInfo {
     double value;
     const char* label;
+
+    ScalePointInfo()
+        : value(0.0),
+          label(nullptr) {}
 };
 
 struct GuiInfo {
     CarlaBackend::GuiType type;
     bool resizable;
+
+    GuiInfo()
+        : type(CarlaBackend::GUI_NONE),
+          resizable(false) {}
 };
 
-CARLA_EXPORT bool engine_init(const char* client_name);
+CARLA_EXPORT unsigned int get_engine_driver_count();
+CARLA_EXPORT const char* get_engine_driver_name(unsigned int index);
+
+CARLA_EXPORT bool engine_init(const char* driver_name, const char* client_name);
 CARLA_EXPORT bool engine_close();
 CARLA_EXPORT bool is_engine_running();
 

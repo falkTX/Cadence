@@ -81,7 +81,9 @@ static void carla_jack_shutdown_callback(void* arg)
 // -------------------------------------------------------------------------------------------------------------------
 // Carla Engine (JACK)
 
-CarlaEngineJack::CarlaEngineJack() : CarlaEngine()
+CarlaEngineJack::CarlaEngineJack() :
+    CarlaEngine(),
+    rackJackPorts{nullptr}
 {
     client = nullptr;
     state  = JackTransportStopped;
@@ -118,14 +120,14 @@ bool CarlaEngineJack::init(const char* name_)
 #ifndef BUILD_BRIDGE
         if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
         {
-            rackJackPorts[rackPortAudioIn1].port   = jack_port_register(client, "in1", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
-            rackJackPorts[rackPortAudioIn2].port   = jack_port_register(client, "in2", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
-            rackJackPorts[rackPortAudioOut1].port  = jack_port_register(client, "out1", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-            rackJackPorts[rackPortAudioOut2].port  = jack_port_register(client, "out2", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-            rackJackPorts[rackPortControlIn].port  = jack_port_register(client, "control-in", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
-            rackJackPorts[rackPortControlOut].port = jack_port_register(client, "control-out", JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
-            rackJackPorts[rackPortMidiIn].port     = jack_port_register(client, "midi-in", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
-            rackJackPorts[rackPortMidiOut].port    = jack_port_register(client, "midi-out", JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
+            rackJackPorts[rackPortAudioIn1]   = jack_port_register(client, "in1", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+            rackJackPorts[rackPortAudioIn2]   = jack_port_register(client, "in2", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+            rackJackPorts[rackPortAudioOut1]  = jack_port_register(client, "out1", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+            rackJackPorts[rackPortAudioOut2]  = jack_port_register(client, "out2", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+            rackJackPorts[rackPortControlIn]  = jack_port_register(client, "control-in", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+            rackJackPorts[rackPortControlOut] = jack_port_register(client, "control-out", JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
+            rackJackPorts[rackPortMidiIn]     = jack_port_register(client, "midi-in", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+            rackJackPorts[rackPortMidiOut]    = jack_port_register(client, "midi-out", JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
         }
 #endif
 
@@ -142,6 +144,8 @@ bool CarlaEngineJack::init(const char* name_)
 
             name = strdup(fixedName);
             free((void*)fixedName);
+
+            oscInit();
 
             return true;
         }
@@ -165,19 +169,21 @@ bool CarlaEngineJack::close()
         name = nullptr;
     }
 
+    oscClose();
+
     if (jack_deactivate(client) == 0)
     {
 #ifndef BUILD_BRIDGE
         if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
         {
-            jack_port_unregister(client, rackJackPorts[rackPortAudioIn1].port);
-            jack_port_unregister(client, rackJackPorts[rackPortAudioIn2].port);
-            jack_port_unregister(client, rackJackPorts[rackPortAudioOut1].port);
-            jack_port_unregister(client, rackJackPorts[rackPortAudioOut2].port);
-            jack_port_unregister(client, rackJackPorts[rackPortControlIn].port);
-            jack_port_unregister(client, rackJackPorts[rackPortControlOut].port);
-            jack_port_unregister(client, rackJackPorts[rackPortMidiIn].port);
-            jack_port_unregister(client, rackJackPorts[rackPortMidiOut].port);
+            jack_port_unregister(client, rackJackPorts[rackPortAudioIn1]);
+            jack_port_unregister(client, rackJackPorts[rackPortAudioIn2]);
+            jack_port_unregister(client, rackJackPorts[rackPortAudioOut1]);
+            jack_port_unregister(client, rackJackPorts[rackPortAudioOut2]);
+            jack_port_unregister(client, rackJackPorts[rackPortControlIn]);
+            jack_port_unregister(client, rackJackPorts[rackPortControlOut]);
+            jack_port_unregister(client, rackJackPorts[rackPortMidiIn]);
+            jack_port_unregister(client, rackJackPorts[rackPortMidiOut]);
         }
 #endif
 
@@ -211,44 +217,29 @@ bool CarlaEngineJack::isRunning()
     return bool(client);
 }
 
-#if 0
-CarlaEngineClient* CarlaEngineJack::addClient(/*CarlaPlugin* const plugin*/)
+CarlaEngineClient* CarlaEngineJack::addClient(CarlaPlugin* const plugin)
 {
-    jack_client_t* jclient = nullptr;
-    bool active = false;
-
-#ifndef BUILD_BRIDGE
-    switch (carla_options.process_mode)
-    {
-    case PROCESS_MODE_SINGLE_CLIENT:
-        jclient = client;
-        active  = bool(jclient);
-        break;
-
-    case PROCESS_MODE_MULTIPLE_CLIENTS:
-#endif
-        jclient = jack_client_open(plugin->name(), JackNullOption, nullptr);
-
-        if (jclient)
-            jack_set_process_callback(jclient, carla_jack_process_callback_plugin, plugin);
-
-#ifndef BUILD_BRIDGE
-        break;
-
-    case PROCESS_MODE_CONTINUOUS_RACK:
-        jclient = nullptr;
-        active  = true;
-        break;
-    }
-#endif
-
     CarlaEngineClientNativeHandle handle = {
-        jclient
+        nullptr
     };
 
-    return new CarlaEngineClient(handle, active);
-}
+#ifndef BUILD_BRIDGE
+    if (carla_options.process_mode == PROCESS_MODE_SINGLE_CLIENT)
+    {
+        handle.client = client;
+    }
+    else if (carla_options.process_mode == PROCESS_MODE_MULTIPLE_CLIENTS)
 #endif
+    {
+        handle.client = jack_client_open(plugin->name(), JackNullOption, nullptr);
+        jack_set_process_callback(handle.client, carla_jack_process_callback_plugin, plugin);
+    }
+    //else if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    //{
+    //}
+
+    return new CarlaEngineClient(handle);
+}
 
 // -------------------------------------------------------------------------------------------------------------------
 
@@ -334,14 +325,14 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
     else if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         // get buffers from jack
-        float* audioIn1  = (float*)jack_port_get_buffer(rackJackPorts[rackPortAudioIn1].port, nframes);
-        float* audioIn2  = (float*)jack_port_get_buffer(rackJackPorts[rackPortAudioIn2].port, nframes);
-        float* audioOut1 = (float*)jack_port_get_buffer(rackJackPorts[rackPortAudioOut1].port, nframes);
-        float* audioOut2 = (float*)jack_port_get_buffer(rackJackPorts[rackPortAudioOut2].port, nframes);
-        //void* controlIn  = jack_port_get_buffer(rackJackPorts[rackPortControlIn].port, nframes);
-        //void* controlOut = jack_port_get_buffer(rackJackPorts[rackPortControlOut].port, nframes);
-        void* midiIn     = jack_port_get_buffer(rackJackPorts[rackPortMidiIn].port, nframes);
-        void* midiOut    = jack_port_get_buffer(rackJackPorts[rackPortMidiOut].port, nframes);
+        float* audioIn1  = (float*)jack_port_get_buffer(rackJackPorts[rackPortAudioIn1], nframes);
+        float* audioIn2  = (float*)jack_port_get_buffer(rackJackPorts[rackPortAudioIn2], nframes);
+        float* audioOut1 = (float*)jack_port_get_buffer(rackJackPorts[rackPortAudioOut1], nframes);
+        float* audioOut2 = (float*)jack_port_get_buffer(rackJackPorts[rackPortAudioOut2], nframes);
+        //void* controlIn  = jack_port_get_buffer(rackJackPorts[rackPortControlIn], nframes);
+        //void* controlOut = jack_port_get_buffer(rackJackPorts[rackPortControlOut], nframes);
+        void* midiIn     = jack_port_get_buffer(rackJackPorts[rackPortMidiIn], nframes);
+        void* midiOut    = jack_port_get_buffer(rackJackPorts[rackPortMidiOut], nframes);
 
         // create temporary audio buffers
         float ains_tmp_buf1[nframes];

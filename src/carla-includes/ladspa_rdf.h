@@ -1,5 +1,5 @@
 /*
- * Custom types to store LADSPA RDF information
+ * Custom types to store LADSPA-RDF information
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -143,92 +143,5 @@ struct LADSPA_RDF_Descriptor {
     unsigned long PortCount;
     LADSPA_RDF_Port* Ports;
 };
-
-// ------------------------------------------------------------------------------------------------
-
-// Copy RDF object
-inline const LADSPA_RDF_Descriptor* ladspa_rdf_dup(const LADSPA_RDF_Descriptor* rdf_descriptor)
-{
-    LADSPA_RDF_Descriptor* new_descriptor = new LADSPA_RDF_Descriptor;
-
-    new_descriptor->Type = rdf_descriptor->Type;
-    new_descriptor->UniqueID = rdf_descriptor->UniqueID;
-    new_descriptor->PortCount = rdf_descriptor->PortCount;
-
-    if (rdf_descriptor->Title)
-        new_descriptor->Title = strdup(rdf_descriptor->Title);
-    else
-        new_descriptor->Title = nullptr;
-
-    if (rdf_descriptor->Creator)
-        new_descriptor->Creator = strdup(rdf_descriptor->Creator);
-    else
-        new_descriptor->Creator = nullptr;
-
-    if (new_descriptor->PortCount > 0)
-    {
-        new_descriptor->Ports = new LADSPA_RDF_Port[new_descriptor->PortCount];
-
-        for (unsigned long i=0; i < new_descriptor->PortCount; i++)
-        {
-            LADSPA_RDF_Port* const Port = &new_descriptor->Ports[i];
-            Port->Type    = rdf_descriptor->Ports[i].Type;
-            Port->Hints   = rdf_descriptor->Ports[i].Hints;
-            Port->Default = rdf_descriptor->Ports[i].Default;
-            Port->Unit    = rdf_descriptor->Ports[i].Unit;
-            Port->ScalePointCount = rdf_descriptor->Ports[i].ScalePointCount;
-
-            Port->Label = strdup(rdf_descriptor->Ports[i].Label);
-
-            if (Port->ScalePointCount > 0)
-            {
-                Port->ScalePoints = new LADSPA_RDF_ScalePoint[Port->ScalePointCount];
-
-                for (unsigned long j=0; j < Port->ScalePointCount; j++)
-                {
-                    LADSPA_RDF_ScalePoint* const ScalePoint = &Port->ScalePoints[j];
-                    ScalePoint->Value = rdf_descriptor->Ports[i].ScalePoints[j].Value;
-                    ScalePoint->Label = strdup(rdf_descriptor->Ports[i].ScalePoints[j].Label);
-                }
-            }
-            else
-                Port->ScalePoints = nullptr;
-        }
-    }
-    else
-        new_descriptor->Ports = nullptr;
-
-    return new_descriptor;
-}
-
-// Delete copied object
-inline void ladspa_rdf_free(const LADSPA_RDF_Descriptor* rdf_descriptor)
-{
-    if (rdf_descriptor->Title)
-        free((void*)rdf_descriptor->Title);
-
-    if (rdf_descriptor->Creator)
-        free((void*)rdf_descriptor->Creator);
-
-    if (rdf_descriptor->PortCount > 0)
-    {
-        for (unsigned long i=0; i < rdf_descriptor->PortCount; i++)
-        {
-            LADSPA_RDF_Port* const Port = &rdf_descriptor->Ports[i];
-            free((void*)Port->Label);
-
-            if (Port->ScalePointCount > 0)
-            {
-                for (unsigned long j=0; j < Port->ScalePointCount; j++)
-                    free((void*)Port->ScalePoints[j].Label);
-
-                delete[] Port->ScalePoints;
-            }
-        }
-        delete[] rdf_descriptor->Ports;
-    }
-
-    delete rdf_descriptor;
-}
 
 #endif // LADSPA_RDF_INCLUDED

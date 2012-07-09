@@ -16,9 +16,7 @@
  */
 
 #include "carla_plugin.h"
-
-#include "ladspa/ladspa.h"
-#include "ladspa_rdf.h"
+#include "carla_ladspa_includes.h"
 
 CARLA_BACKEND_START_NAMESPACE
 
@@ -33,42 +31,6 @@ CARLA_BACKEND_START_NAMESPACE
  * http://www.ladspa.org/
  * @{
  */
-
-bool is_rdf_port_good(int Type1, int Type2)
-{
-    if (LADSPA_IS_PORT_INPUT(Type1) && ! LADSPA_IS_PORT_INPUT(Type2))
-        return false;
-    if (LADSPA_IS_PORT_OUTPUT(Type1) && ! LADSPA_IS_PORT_OUTPUT(Type2))
-        return false;
-    if (LADSPA_IS_PORT_CONTROL(Type1) && ! LADSPA_IS_PORT_CONTROL(Type2))
-        return false;
-    if (LADSPA_IS_PORT_AUDIO(Type1) && ! LADSPA_IS_PORT_AUDIO(Type2))
-        return false;
-    return true;
-}
-
-bool is_ladspa_rdf_descriptor_valid(const LADSPA_RDF_Descriptor* const rdf_descriptor, const LADSPA_Descriptor* const descriptor)
-{
-    if (! rdf_descriptor)
-        return false;
-
-    if (rdf_descriptor->PortCount > descriptor->PortCount)
-    {
-        qWarning("WARNING - Plugin has RDF data, but invalid PortCount: %li > %li", rdf_descriptor->PortCount, descriptor->PortCount);
-        return false;
-    }
-
-    for (unsigned long i=0; i < rdf_descriptor->PortCount; i++)
-    {
-        if (! is_rdf_port_good(rdf_descriptor->Ports[i].Type, descriptor->PortDescriptors[i]))
-        {
-            qWarning("WARNING - Plugin has RDF data, but invalid PortTypes: %i != %i", rdf_descriptor->Ports[i].Type, descriptor->PortDescriptors[i]);
-            return false;
-        }
-    }
-
-    return true;
-}
 
 class LadspaPlugin : public CarlaPlugin
 {
@@ -859,7 +821,7 @@ public:
         {
             if (param.data[k].type == PARAMETER_LATENCY)
             {
-                // TODO
+                // TODO: ladspa special params
             }
         }
 
@@ -1158,7 +1120,7 @@ short CarlaPlugin::newLADSPA(const initializer& init, const void* const extra)
 
         if (ins > 2 || outs > 2 || (ins != outs && ins != 0 && outs != 0))
         {
-            set_last_error("Carla Rack Mode can only work with Mono or Stereo plugins, sorry!");
+            set_last_error("Carla's Rack Mode can only work with Mono or Stereo plugins, sorry!");
             qWarning("data: %i %i | %i %i %i", ins > 2, outs > 2, ins != outs, ins != 0, outs != 0);
             delete plugin;
             return -1;

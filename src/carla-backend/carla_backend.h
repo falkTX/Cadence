@@ -25,10 +25,6 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
-#if 0
-} /* adjust editor indent */
-#endif
-
 #define STR_MAX 0xff
 
 /*!
@@ -40,10 +36,8 @@ CARLA_BACKEND_START_NAMESPACE
 
 #ifdef BUILD_BRIDGE
 const unsigned short MAX_PLUGINS  = 1;
-#elif CARLA_ENGINE_STANDALONE
-const unsigned short MAX_PLUGINS  = 99;  //!< Maximum number of loadable plugins
 #else
-const unsigned short MAX_PLUGINS  = 16;  //!< Maximum number of loadable plugins
+const unsigned short MAX_PLUGINS  = 99;  //!< Maximum number of loadable plugins
 #endif
 const unsigned int MAX_PARAMETERS = 200; //!< Default value for maximum number of parameters the callback can handle.\see OPTION_MAX_PARAMETERS
 
@@ -54,7 +48,7 @@ const unsigned int MAX_PARAMETERS = 200; //!< Default value for maximum number o
  * \see CarlaPlugin::hints
  * @{
  */
-const unsigned int PLUGIN_IS_BRIDGE   = 0x01; //!< Plugin is a bridge (ie, BridgePlugin). This hint is required because "bridge" itself is not a PluginType.
+const unsigned int PLUGIN_IS_BRIDGE   = 0x01; //!< Plugin is a bridge (ie, BridgePlugin). This hint is required because "bridge" itself is not a plugin type.
 const unsigned int PLUGIN_IS_SYNTH    = 0x02; //!< Plugin is a synthesizer (produces sound).
 const unsigned int PLUGIN_HAS_GUI     = 0x04; //!< Plugin has its own custom GUI.
 const unsigned int PLUGIN_USES_CHUNKS = 0x08; //!< Plugin uses chunks to save internal data.\see CarlaPlugin::chunkData()
@@ -81,8 +75,8 @@ const unsigned int PARAMETER_USES_CUSTOM_TEXT = 0x80; //!< Parameter uses custom
 /**@}*/
 
 /*!
- * The binary type of a plugin.\n
- * If a plugin binary type is loaded that doesn't match the system's native type, a bridge will be used (see BridgePlugin).
+ * The binary type of a plugin.
+ * \see BridgePlugin
  */
 enum BinaryType {
     BINARY_NONE   = 0, //!< Null binary type.
@@ -113,9 +107,9 @@ enum PluginCategory {
     PLUGIN_CATEGORY_DELAY     = 2, //!< A delay or reverberator
     PLUGIN_CATEGORY_EQ        = 3, //!< An equalizer
     PLUGIN_CATEGORY_FILTER    = 4, //!< A filter
-    PLUGIN_CATEGORY_DYNAMICS  = 5, //!< A "dynamic" plugin (amplifier, compressor, gate, etc)
-    PLUGIN_CATEGORY_MODULATOR = 6, //!< A "modulator" plugin (chorus, flanger, phaser, etc)
-    PLUGIN_CATEGORY_UTILITY   = 7, //!< An utility plugin (analyzer, converter, mixer, etc)
+    PLUGIN_CATEGORY_DYNAMICS  = 5, //!< A 'dynamic' plugin (amplifier, compressor, gate, etc)
+    PLUGIN_CATEGORY_MODULATOR = 6, //!< A 'modulator' plugin (chorus, flanger, phaser, etc)
+    PLUGIN_CATEGORY_UTILITY   = 7, //!< An 'utility' plugin (analyzer, converter, mixer, etc)
     PLUGIN_CATEGORY_OTHER     = 8  //!< Misc plugin (used to check if plugin has a category)
 };
 
@@ -144,17 +138,18 @@ enum CustomDataType {
 
 enum GuiType {
     GUI_NONE = 0,
-    GUI_INTERNAL_QT4  = 1,
-    GUI_INTERNAL_HWND = 2,
-    GUI_INTERNAL_X11  = 3,
-    GUI_EXTERNAL_LV2  = 4,
-    GUI_EXTERNAL_SUIL = 5,
-    GUI_EXTERNAL_OSC  = 6
+    GUI_INTERNAL_QT4   = 1,
+    GUI_INTERNAL_COCOA = 2,
+    GUI_INTERNAL_HWND  = 3,
+    GUI_INTERNAL_X11   = 4,
+    GUI_EXTERNAL_LV2   = 5,
+    GUI_EXTERNAL_SUIL  = 6,
+    GUI_EXTERNAL_OSC   = 7
 };
 
 /*!
  * Options used in set_option().\n
- * These options must be set before calling engine_init() and never again (with the exception of paths).
+ * These options must be set before calling CarlaEngine::init() or after CarlaEngine::close().
  *
  * \see set_option()
  */
@@ -465,10 +460,23 @@ enum ProcessModeType {
     PROCESS_MODE_CONTINUOUS_RACK  = 2  //!< Single client "rack" mode. Processes plugins in order of id, with forced stereo input/output.
 };
 
+/*!
+ * Callback function the backend will call when something interesting happens.
+ *
+ * \see CallbackType
+ * \see CarlaEngine::setCallback()
+ */
+typedef void (*CallbackFunc)(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3);
+
 struct midi_program_t {
     uint32_t bank;
     uint32_t program;
     const char* name;
+
+    midi_program_t()
+        : bank(0),
+          program(0),
+          name(nullptr) {}
 };
 
 struct ParameterData {
@@ -478,6 +486,14 @@ struct ParameterData {
     qint32 hints;
     quint8 midiChannel;
     qint16 midiCC;
+
+    ParameterData()
+        : type(PARAMETER_UNKNOWN),
+          index(-1),
+          rindex(-1),
+          hints(0),
+          midiChannel(0),
+          midiCC(-1) {}
 };
 
 struct ParameterRanges {
@@ -487,21 +503,31 @@ struct ParameterRanges {
     double step;
     double stepSmall;
     double stepLarge;
+
+    ParameterRanges()
+        : def(0.0),
+          min(0.0),
+          max(1.0),
+          step(0.01),
+          stepSmall(0.0001),
+          stepLarge(0.1) {}
 };
 
 struct CustomData {
     CustomDataType type;
     const char* key;
     const char* value;
-};
 
-typedef void (*CallbackFunc)(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3);
+    CustomData()
+        : type(CUSTOM_DATA_INVALID),
+          key(nullptr),
+          value(nullptr) {}
+};
 
 /**@}*/
 
 class CarlaEngine;
 class CarlaPlugin;
-class CarlaOsc;
 
 CARLA_BACKEND_END_NAMESPACE
 

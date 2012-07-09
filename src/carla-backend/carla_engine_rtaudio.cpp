@@ -28,50 +28,134 @@ CARLA_BACKEND_START_NAMESPACE
 } /* adjust editor indent */
 #endif
 
-// get initial options from environment
-RtAudio::Api getRtApiFromEnvironment()
-{
-#if defined(Q_OS_LINUX)
-    RtAudio::Api defaultRtApi = RtAudio::LINUX_PULSE;
-#elif defined(Q_OS_MACOS)
-    RtAudio::Api defaultRtApi = RtAudio::MACOSX_CORE;
-#elif defined(Q_OS_WIN)
-    RtAudio::Api defaultRtApi = RtAudio::WINDOWS_DS;
-#endif
-
-    const char* const driver  = getenv("CARLA_BACKEND_DRIVER");
-
-    if (! driver)
-        return defaultRtApi;
-#ifdef Q_OS_LINUX
-    if (strcmp(driver, "LINUX_ALSA") == 0)
-        return RtAudio::LINUX_ALSA;
-    if (strcmp(driver, "LINUX_PULSE") == 0)
-        return RtAudio::LINUX_PULSE;
-    if (strcmp(driver, "LINUX_OSS") == 0)
-        return RtAudio::LINUX_OSS;
-#endif
-    if (strcmp(driver, "UNIX_JACK") == 0)
-        return RtAudio::UNIX_JACK;
-#ifdef Q_OS_MACOS
-    if (strcmp(driver, "MACOSX_CORE") == 0)
-        return RtAudio::MACOSX_CORE;
-#endif
-#ifdef Q_OS_WIN
-    if (strcmp(driver, "WINDOWS_ASIO") == 0)
-        return RtAudio::WINDOWS_ASIO;
-    if (strcmp(driver, "WINDOWS_DS") == 0)
-        return RtAudio::WINDOWS_DS;
-#endif
-
-    return defaultRtApi;
-}
-
 // -------------------------------------------------------------------------------------------------------------------
 // static RtAudio<->Engine calls
 
-static int process_callback(void* outputBuffer, void* inputBuffer, unsigned int nframes, double /*streamTime*/, RtAudioStreamStatus /*status*/, void* /*userData*/)
+static int carla_rtaudio_process_callback(void* outputBuffer, void* inputBuffer, unsigned int nframes, double streamTime, RtAudioStreamStatus status, void* userData)
 {
+    CarlaEngineRtAudio* const engine = (CarlaEngineRtAudio*)userData;
+    engine->handleProcessCallback(outputBuffer, inputBuffer, nframes, streamTime, status);
+    return 0;
+}
+
+// -------------------------------------------------------------------------------------------------------------------
+// Carla Engine (RtAudio)
+
+CarlaEngineRtAudio::CarlaEngineRtAudio(RtAudio::Api api)
+    : CarlaEngine(),
+      adac(api)
+{
+}
+
+CarlaEngineRtAudio::~CarlaEngineRtAudio()
+{
+}
+
+bool CarlaEngineRtAudio::init(const char* name_)
+{
+    if (adac.getDeviceCount() < 1)
+    {
+        set_last_error("No audio devices available");
+        return false;
+    }
+
+    sampleRate = 48000;
+    unsigned int bufferFrames = 512;
+
+    RtAudio::StreamParameters iParams, oParams;
+    //iParams.deviceId = 3;
+    //oParams.deviceId = 2;
+    iParams.nChannels = 2;
+    oParams.nChannels = 2;
+    RtAudio::StreamOptions options;
+    options.flags = /*RTAUDIO_NONINTERLEAVED |*/ RTAUDIO_MINIMIZE_LATENCY /*| RTAUDIO_HOG_DEVICE*/ | RTAUDIO_SCHEDULE_REALTIME | RTAUDIO_ALSA_USE_DEFAULT;
+    options.streamName = name_;
+    options.priority = 85;
+
+    try {
+        adac.openStream(&oParams, &iParams, RTAUDIO_FLOAT32, sampleRate, &bufferFrames, carla_rtaudio_process_callback, this, &options);
+    }
+    catch (RtError& e)
+    {
+        set_last_error(e.what());
+        return false;
+    }
+
+    bufferSize = bufferFrames;
+    name = strdup(name_);
+
+    oscInit();
+
+    try {
+        adac.startStream();
+    }
+    catch (RtError& e)
+    {
+        set_last_error(e.what());
+        return false;
+    }
+
+    return true;
+}
+
+bool CarlaEngineRtAudio::close()
+{
+    if (name)
+    {
+        free((void*)name);
+        name = nullptr;
+    }
+
+    oscClose();
+
+    if (adac.isStreamRunning())
+        adac.stopStream();
+
+    if (adac.isStreamOpen())
+        adac.closeStream();
+
+    return true;
+}
+
+bool CarlaEngineRtAudio::isOnAudioThread()
+{
+    // FIXME ?
+    //return (QThread::currentThread() == procThread);
+    return true;
+}
+
+bool CarlaEngineRtAudio::isOffline()
+{
+    return false;
+}
+
+bool CarlaEngineRtAudio::isRunning()
+{
+    return adac.isStreamRunning();
+}
+
+CarlaEngineClient* CarlaEngineRtAudio::addClient(CarlaPlugin* const plugin)
+{
+    CarlaEngineClientNativeHandle handle = {
+    #ifdef CARLA_ENGINE_JACK
+        nullptr
+    #endif
+    };
+
+    return new CarlaEngineClient(handle);
+    Q_UNUSED(plugin);
+}
+
+// -------------------------------------------------------------------------------------------------------------------
+
+void CarlaEngineRtAudio::handleProcessCallback(void* outputBuffer, void* inputBuffer, unsigned int nframes, double streamTime, RtAudioStreamStatus status)
+{
+    Q_UNUSED(outputBuffer);
+    Q_UNUSED(inputBuffer);
+    Q_UNUSED(nframes);
+    Q_UNUSED(streamTime);
+    Q_UNUSED(status);
+
 #if 0
     if (carla_proc_thread == nullptr)
         carla_proc_thread = QThread::currentThread();
@@ -133,99 +217,6 @@ static int process_callback(void* outputBuffer, void* inputBuffer, unsigned int 
     //memcpy(out1, aouts_tmp_buf1, sizeof(float)*nframes);
     //memcpy(out2, aouts_tmp_buf2, sizeof(float)*nframes);
 #endif
-
-    return 0;
-}
-
-// -------------------------------------------------------------------------------------------------------------------
-// Carla Engine
-
-// Global RtAudio stuff
-static RtAudio adac(getRtApiFromEnvironment());
-
-CarlaEngineRtAudio::CarlaEngineRtAudio()
-{
-}
-
-CarlaEngineRtAudio::~CarlaEngineRtAudio()
-{
-}
-
-bool CarlaEngineRtAudio::init(const char* name)
-{
-    if (adac.getDeviceCount() < 1)
-    {
-        set_last_error("No audio devices available");
-        return false;
-    }
-
-//    for (unsigned int i=0; i < adac.getDeviceCount(); i++)
-//    {
-//        qWarning("DevName %i: %s", i, adac.getDeviceInfo(i).name.c_str());
-//    }
-
-    // Set the same number of channels for both input and output.
-    unsigned int bufferFrames = 512;
-    RtAudio::StreamParameters iParams, oParams;
-//    iParams.deviceId  = 3;
-//    oParams.deviceId  = 2;
-    iParams.nChannels = 2;
-    oParams.nChannels = 2;
-    RtAudio::StreamOptions options;
-    options.flags = /*RTAUDIO_NONINTERLEAVED |*/ RTAUDIO_MINIMIZE_LATENCY /*| RTAUDIO_HOG_DEVICE*/ | RTAUDIO_SCHEDULE_REALTIME /*| RTAUDIO_ALSA_USE_DEFAULT*/;
-    options.streamName = name;
-    options.priority = 85;
-
-    try {
-        adac.openStream(&oParams, &iParams, RTAUDIO_FLOAT32, 48000, &bufferFrames, process_callback, nullptr, &options);
-    }
-    catch (RtError& e)
-    {
-        set_last_error(e.what());
-        return false;
-    }
-
-    //carla_buffer_size = bufferFrames;
-    //carla_client_name = strdup(name);
-
-    try {
-        adac.startStream();
-    }
-    catch (RtError& e)
-    {
-        set_last_error(e.what());
-        return false;
-    }
-
-    return true;
-}
-
-bool CarlaEngineRtAudio::close()
-{
-    //if (carla_client_name)
-    //{
-    //    free((void*)carla_client_name);
-    //    carla_client_name = nullptr;
-    //}
-
-    if (adac.isStreamRunning())
-        adac.stopStream();
-
-    if (adac.isStreamOpen())
-        adac.closeStream();
-
-    return true;
-}
-
-bool CarlaEngineRtAudio::isOnAudioThread()
-{
-    //return (QThread::currentThread() == carla_proc_thread);
-    return false;
-}
-
-bool CarlaEngineRtAudio::isOffline()
-{
-    return false;
 }
 
 CARLA_BACKEND_END_NAMESPACE

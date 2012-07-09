@@ -1,5 +1,5 @@
 /*
- * Carla shared library code
+ * Carla common library code
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,17 +25,17 @@
 #endif
 
 static inline
-void* lib_open(const char* filename)
+void* lib_open(const char* const filename)
 {
 #ifdef Q_OS_WIN
     return LoadLibraryA(filename);
 #else
-    return dlopen(filename, RTLD_LAZY);
+    return dlopen(filename, RTLD_NOW|RTLD_LOCAL);
 #endif
 }
 
 static inline
-bool lib_close(void* lib)
+bool lib_close(void* const lib)
 {
 #ifdef Q_OS_WIN
     return FreeLibrary((HMODULE)lib);
@@ -45,7 +45,7 @@ bool lib_close(void* lib)
 }
 
 static inline
-void* lib_symbol(void* lib, const char* symbol)
+void* lib_symbol(void* const lib, const char* const symbol)
 {
 #ifdef Q_OS_WIN
     return (void*)GetProcAddress((HMODULE)lib, symbol);
@@ -55,7 +55,7 @@ void* lib_symbol(void* lib, const char* symbol)
 }
 
 static inline
-const char* lib_error(const char* filename)
+const char* lib_error(const char* const filename)
 {
 #ifdef Q_OS_WIN
     static char libError[2048];
@@ -71,7 +71,7 @@ const char* lib_error(const char* filename)
     return libError;
 #else
     return dlerror();
-    (void)filename;
+    Q_UNUSED(filename);
 #endif
 }
 

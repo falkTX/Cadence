@@ -28,6 +28,49 @@ CARLA_BACKEND_START_NAMESPACE
 } /* adjust editor indent */
 #endif
 
+#ifdef CARLA_ENGINE_VST
+class CarlaEngineVst : public CarlaEngine
+{
+public:
+    CarlaEngineVst(audioMasterCallback callback);
+    ~CarlaEngineVst();
+
+    // -------------------------------------
+
+    bool init(const char* const name);
+    bool close();
+
+    bool isOnAudioThread();
+    bool isOffline();
+    bool isRunning();
+
+    CarlaEngineClient* addClient(CarlaPlugin* const plugin);
+
+    // -------------------------------------
+
+    intptr_t callback(int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
+    {
+        return m_callback(&effect, opcode, index, value, ptr, opt);
+    }
+
+    const AEffect* getEffect() const
+    {
+        return &effect;
+    }
+
+    // -------------------------------------
+
+    intptr_t handleDispatch(int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt);
+    float handleGetParameter(int32_t index);
+    void handleSetParameter(int32_t index, float value);
+    void handleProcessReplacing(float** inputs, float** outputs, int32_t frames);
+
+private:
+    AEffect effect;
+    const audioMasterCallback m_callback;
+};
+#endif
+
 // -------------------------------------------------------------------------------------------------------------------
 // static VST<->Engine calls
 

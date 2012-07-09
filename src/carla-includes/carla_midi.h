@@ -1,5 +1,5 @@
 /*
- * Carla Backend
+ * Carla common MIDI code
  * Copyright (C) 2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,32 +18,16 @@
 #ifndef CARLA_MIDI_H
 #define CARLA_MIDI_H
 
-// TODO - complete this header
-
 #define MAX_MIDI_CHANNELS 16
 
 // MIDI Messages List
-#define MIDI_STATUS_NOTE_OFF               0x80 // note (0-127), velocity (0-127)
-#define MIDI_STATUS_NOTE_ON                0x90 // note (0-127), velocity (0-127)
-#define MIDI_STATUS_POLYPHONIC_AFTERTOUCH  0xA0 // note (0-127), pressue (0-127)
-#define MIDI_STATUS_CONTROL_CHANGE         0xB0 // see 'Control Change Messages List'
-#define MIDI_STATUS_PROGRAM_CHANGE         0xC0 // program (0-127), none
-#define MIDI_STATUS_AFTERTOUCH             0xD0 // pressure (0-127), none
-#define MIDI_STATUS_PITCH_WHEEL_CONTROL    0xE0 // LSB (0-127), MSB (0-127)
-
-//ME_SYSEX = 0xf0,
-//ME_META = 0xff,
-//ME_MTC_QUARTER = 0xf1,
-//ME_SONGPOS = 0xf2,
-//ME_SONGSEL = 0xf3,
-//ME_TUNE_REQ = 0xf6,
-//ME_SYSEX_END = 0xf7,
-//ME_CLOCK = 0xf8,
-//ME_TICK = 0xf9,
-//ME_START = 0xfa,
-//ME_CONTINUE = 0xfb,
-//ME_STOP = 0xfc,
-//ME_SENSE = 0xfe
+#define MIDI_STATUS_NOTE_OFF                           0x80 // note (0-127), velocity (0-127)
+#define MIDI_STATUS_NOTE_ON                            0x90 // note (0-127), velocity (0-127)
+#define MIDI_STATUS_POLYPHONIC_AFTERTOUCH              0xA0 // note (0-127), pressue (0-127)
+#define MIDI_STATUS_CONTROL_CHANGE                     0xB0 // see 'Control Change Messages List'
+#define MIDI_STATUS_PROGRAM_CHANGE                     0xC0 // program (0-127), none
+#define MIDI_STATUS_AFTERTOUCH                         0xD0 // pressure (0-127), none
+#define MIDI_STATUS_PITCH_WHEEL_CONTROL                0xE0 // LSB (0-127), MSB (0-127)
 
 #define MIDI_IS_STATUS_NOTE_OFF(status)                (((status) & 0xF0) == MIDI_STATUS_NOTE_OFF)
 #define MIDI_IS_STATUS_NOTE_ON(status)                 (((status) & 0xF0) == MIDI_STATUS_NOTE_ON)
@@ -138,9 +122,17 @@
 #define MIDI_CONTROL_DETUNE_DEPTH                      MIDI_CONTROL_EFFECTS_4_DEPTH
 #define MIDI_CONTROL_PHASER_DEPTH                      MIDI_CONTROL_EFFECTS_5_DEPTH
 
-#define MIDI_IS_CONTROL_BANK_SELECT(control)           ((control) == MIDI_CONTROL_BANK_SELECT       || (control) == MIDI_CONTROL_BANK_SELECT__LSB)
-#define MIDI_IS_CONTROL_BREATH_CONTROLLER(control)     ((control) == MIDI_CONTROL_BREATH_CONTROLLER || (control) == MIDI_CONTROL_BREATH_CONTROLLER__LSB)
-#define MIDI_IS_CONTROL_CHANNEL_VOLUME(control)        ((control) == MIDI_CONTROL_CHANNEL_VOLUME    || (control) == MIDI_CONTROL_CHANNEL_VOLUME__LSB)
-#define MIDI_IS_CONTROL_BALANCE(control)               ((control) == MIDI_CONTROL_BALANCE           || (control) == MIDI_CONTROL_BALANCE__LSB)
+#define MIDI_IS_CONTROL_BANK_SELECT(control)           ((control) == MIDI_CONTROL_BANK_SELECT           || (control) == MIDI_CONTROL_BANK_SELECT__LSB)
+#define MIDI_IS_CONTROL_MODULATION_WHEEL(control)      ((control) == MIDI_CONTROL_MODULATION_WHEEL      || (control) == MIDI_CONTROL_MODULATION_WHEEL__LSB)
+#define MIDI_IS_CONTROL_BREATH_CONTROLLER(control)     ((control) == MIDI_CONTROL_BREATH_CONTROLLER     || (control) == MIDI_CONTROL_BREATH_CONTROLLER__LSB)
+#define MIDI_IS_CONTROL_FOOT_CONTROLLER(control)       ((control) == MIDI_CONTROL_FOOT_CONTROLLER       || (control) == MIDI_CONTROL_FOOT_CONTROLLER__LSB)
+#define MIDI_IS_CONTROL_PORTAMENTO_TIME(control)       ((control) == MIDI_CONTROL_PORTAMENTO_TIME       || (control) == MIDI_CONTROL_PORTAMENTO_TIME__LSB)
+#define MIDI_IS_CONTROL_DATA_ENTRY(control)            ((control) == MIDI_CONTROL_DATA_ENTRY            || (control) == MIDI_CONTROL_DATA_ENTRY__LSB)
+#define MIDI_IS_CONTROL_CHANNEL_VOLUME(control)        ((control) == MIDI_CONTROL_CHANNEL_VOLUME        || (control) == MIDI_CONTROL_CHANNEL_VOLUME__LSB)
+#define MIDI_IS_CONTROL_BALANCE(control)               ((control) == MIDI_CONTROL_BALANCE               || (control) == MIDI_CONTROL_BALANCE__LSB)
+#define MIDI_IS_CONTROL_PAN(control)                   ((control) == MIDI_CONTROL_PAN                   || (control) == MIDI_CONTROL_PAN__LSB)
+#define MIDI_IS_CONTROL_EXPRESSION_CONTROLLER(control) ((control) == MIDI_CONTROL_EXPRESSION_CONTROLLER || (control) == MIDI_CONTROL_EXPRESSION_CONTROLLER__LSB)
+#define MIDI_IS_CONTROL_EFFECT_CONTROL_1(control)      ((control) == MIDI_CONTROL_EFFECT_CONTROL_1      || (control) == MIDI_CONTROL_EFFECT_CONTROL_1__LSB)
+#define MIDI_IS_CONTROL_EFFECT_CONTROL_2(control)      ((control) == MIDI_CONTROL_EFFECT_CONTROL_2      || (control) == MIDI_CONTROL_EFFECT_CONTROL_2__LSB)
 
 #endif // CARLA_MIDI_H

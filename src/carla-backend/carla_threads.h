@@ -53,7 +53,6 @@ public:
         PLUGIN_THREAD_VST_GUI,
         PLUGIN_THREAD_BRIDGE
     };
-    static const char* pluginthreadmode2str(PluginThreadMode mode);
 
     CarlaPluginThread(CarlaBackend::CarlaEngine* const engine, CarlaBackend::CarlaPlugin* const plugin, PluginThreadMode mode, QObject* parent = nullptr);
     ~CarlaPluginThread();

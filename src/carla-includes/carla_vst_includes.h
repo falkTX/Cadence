@@ -1,6 +1,6 @@
 /*
- * Carla shared VST code
- * Copyright (C) 2012 Filipe Coelho <falktx@gmail.com>
+ * Carla common VST code
+ * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,6 +52,7 @@
 #define kVstProcessPrecision32 0
 #define kVstTransportChanged 1
 #define kVstVersion 2400
+//#define audioMasterGetOutputSpeakerArrangement audioMasterGetSpeakerArrangement
 struct ERect {
     short top, left, bottom, right;
 };
@@ -66,13 +67,199 @@ typedef VstTimeInfo VstTimeInfo_R;
 typedef AEffect* (*VST_Function)(audioMasterCallback);
 
 static inline
-bool VstPluginCanDo(AEffect* effect, const char* feature)
+bool VstPluginCanDo(AEffect* const effect, const char* const feature)
 {
     return (effect->dispatcher(effect, effCanDo, 0, 0, (void*)feature, 0.0f) == 1);
 }
 
 static inline
-const char* VstOpcode2str(int32_t opcode)
+const char* VstEffectOpcode2str(int32_t opcode)
+{
+    switch (opcode)
+    {
+    case effOpen:
+        return "effOpen";
+    case effClose:
+        return "effClose";
+    case effSetProgram:
+        return "effSetProgram";
+    case effGetProgram:
+        return "effGetProgram";
+    case effSetProgramName:
+        return "effSetProgramName";
+    case effGetProgramName:
+        return "effGetProgramName";
+    case effGetParamLabel:
+        return "effGetParamLabel";
+    case effGetParamDisplay:
+        return "effGetParamDisplay";
+    case effGetParamName:
+        return "effGetParamName";
+#if ! VST_FORCE_DEPRECATED
+    case effGetVu:
+        return "effGetVu";
+#endif
+    case effSetSampleRate:
+        return "effSetSampleRate";
+    case effSetBlockSize:
+        return "effSetBlockSize";
+    case effMainsChanged:
+        return "effMainsChanged";
+    case effEditGetRect:
+        return "effEditGetRect";
+    case effEditOpen:
+        return "effEditOpen";
+    case effEditClose:
+        return "effEditClose";
+#if ! VST_FORCE_DEPRECATED
+    case effEditDraw:
+        return "effEditDraw";
+    case effEditMouse:
+        return "effEditMouse";
+    case effEditKey:
+        return "effEditKey";
+    case effEditTop:
+        return "effEditTop";
+    case effEditSleep:
+        return "effEditSleep";
+    case effIdentify:
+        return "effIdentify";
+#endif
+    case effGetChunk:
+        return "effGetChunk";
+    case effSetChunk:
+        return "effSetChunk";
+    case effProcessEvents:
+        return "effProcessEvents";
+    case effCanBeAutomated:
+        return "effCanBeAutomated";
+    case effString2Parameter:
+        return "effString2Parameter";
+#if ! VST_FORCE_DEPRECATED
+    case effGetNumProgramCategories:
+        return "effGetNumProgramCategories";
+#endif
+    case effGetProgramNameIndexed:
+        return "effGetProgramNameIndexed";
+#if ! VST_FORCE_DEPRECATED
+    case effCopyProgram:
+        return "effCopyProgram";
+    case effConnectInput:
+        return "effConnectInput";
+    case effConnectOutput:
+        return "effConnectOutput";
+#endif
+    case effGetInputProperties:
+        return "effGetInputProperties";
+    case effGetOutputProperties:
+        return "effGetOutputProperties";
+    case effGetPlugCategory:
+        return "effGetPlugCategory";
+#if ! VST_FORCE_DEPRECATED
+    case effGetCurrentPosition:
+        return "effGetCurrentPosition";
+    case effGetDestinationBuffer:
+        return "effGetDestinationBuffer";
+#endif
+    case effOfflineNotify:
+        return "effOfflineNotify";
+    case effOfflinePrepare:
+        return "effOfflinePrepare";
+    case effOfflineRun:
+        return "effOfflineRun";
+    case effProcessVarIo:
+        return "effProcessVarIo";
+    case effSetSpeakerArrangement:
+        return "effSetSpeakerArrangement";
+#if ! VST_FORCE_DEPRECATED
+    case effSetBlockSizeAndSampleRate:
+        return "effSetBlockSizeAndSampleRate";
+#endif
+    case effSetBypass:
+        return "effSetBypass";
+    case effGetEffectName:
+        return "effGetEffectName";
+#if ! VST_FORCE_DEPRECATED
+    case effGetErrorText:
+        return "effGetErrorText";
+#endif
+    case effGetVendorString:
+        return "effGetVendorString";
+    case effGetProductString:
+        return "effGetProductString";
+    case effGetVendorVersion:
+        return "effGetVendorVersion";
+    case effVendorSpecific:
+        return "effVendorSpecific";
+    case effCanDo:
+        return "effCanDo";
+    case effGetTailSize:
+        return "effGetTailSize";
+#if ! VST_FORCE_DEPRECATED
+    case effIdle:
+        return "effIdle";
+    case effGetIcon:
+        return "effGetIcon";
+    case effSetViewPosition:
+        return "effSetViewPosition";
+#endif
+    case effGetParameterProperties:
+        return "effGetParameterProperties";
+#if ! VST_FORCE_DEPRECATED
+    case effKeysRequired:
+        return "effKeysRequired";
+#endif
+    case effGetVstVersion:
+        return "effGetVstVersion";
+    case effEditKeyDown:
+        return "effEditKeyDown";
+    case effEditKeyUp:
+        return "effEditKeyUp";
+    case effSetEditKnobMode:
+        return "effSetEditKnobMode";
+    case effGetMidiProgramName:
+        return "effGetMidiProgramName";
+    case effGetCurrentMidiProgram:
+        return "effGetCurrentMidiProgram";
+    case effGetMidiProgramCategory:
+        return "effGetMidiProgramCategory";
+    case effHasMidiProgramsChanged:
+        return "effHasMidiProgramsChanged";
+    case effGetMidiKeyName:
+        return "effGetMidiKeyName";
+    case effBeginSetProgram:
+        return "effBeginSetProgram";
+    case effEndSetProgram:
+        return "effEndSetProgram";
+    case effGetSpeakerArrangement:
+        return "effGetSpeakerArrangement";
+    case effShellGetNextPlugin:
+        return "effShellGetNextPlugin";
+    case effStartProcess:
+        return "effStartProcess";
+    case effStopProcess:
+        return "effStopProcess";
+    case effSetTotalSampleToProcess:
+        return "effSetTotalSampleToProcess";
+    case effSetPanLaw:
+        return "effSetPanLaw";
+    case effBeginLoadBank:
+        return "effBeginLoadBank";
+    case effBeginLoadProgram:
+        return "effBeginLoadProgram";
+    case effSetProcessPrecision:
+        return "effSetProcessPrecision";
+    case effGetNumMidiInputChannels:
+        return "effGetNumMidiInputChannels";
+    case effGetNumMidiOutputChannels:
+        return "effGetNumMidiOutputChannels";
+    default:
+        return "unknown";
+    }
+}
+
+static inline
+const char* VstMasterOpcode2str(int32_t opcode)
 {
     switch (opcode)
     {

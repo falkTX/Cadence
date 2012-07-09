@@ -22,6 +22,7 @@
 #include "carla_osc.h"
 #include "carla_threads.h"
 
+#include <cassert>
 #include <QtCore/QMutex>
 
 #ifdef CARLA_ENGINE_JACK
@@ -31,18 +32,14 @@
 
 #ifdef CARLA_ENGINE_RTAUDIO
 #include "RtAudio.h"
-//#include <RtMidi.h>
+//#include "RtMidi.h"
 #endif
 
-#ifdef CARLA_ENGINE_LV2
-#include "lv2/lv2.h"
-#endif
-
-#ifdef CARLA_ENGINE_VST
-#include "carla_vst_includes.h"
-#endif
-
+#ifdef QTCREATOR_TEST
+namespace CarlaBackend {
+#else
 CARLA_BACKEND_START_NAMESPACE
+#endif
 
 #if 0
 } /* adjust editor indent */
@@ -75,15 +72,27 @@ enum CarlaEngineControlEventType {
 struct CarlaEngineControlEvent {
     CarlaEngineControlEventType type;
     uint32_t time;
-    uint8_t channel;
-    uint8_t controller;
+    uint8_t  channel;
+    uint16_t controller;
     double value;
+
+    CarlaEngineControlEvent()
+        : type(CarlaEngineEventNull),
+          time(0),
+          channel(0),
+          controller(0),
+          value(0.0) {}
 };
 
 struct CarlaEngineMidiEvent {
     uint32_t time;
     uint8_t size;
     uint8_t data[4];
+
+    //    CarlaEngineMidiEvent()
+    //        : time(0),
+    //          size(0),
+    //          data{0} {}
 };
 
 struct CarlaTimeInfo {
@@ -101,6 +110,13 @@ struct CarlaTimeInfo {
         double ticks_per_beat;
         double beats_per_minute;
     } bbt;
+
+    //    CarlaTimeInfo()
+    //        : playing(false),
+    //          frame(0),
+    //          time(0),
+    //          valid(0),
+    //          bbt{0, 0, 0, 0.0, 0.0f, 0.0f, 0.0, 0.0} {}
 };
 
 struct CarlaEngineClientNativeHandle {
@@ -114,7 +130,6 @@ struct CarlaEnginePortNativeHandle {
     jack_client_t* client;
     jack_port_t* port;
 #endif
-    void* buffer;
 };
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -136,7 +151,15 @@ public:
     virtual ~CarlaEngine();
 
     // -------------------------------------------------------------------
-    // Information (base)
+    // static values
+
+    static const unsigned short MAX_PEAKS = 2;
+
+    static int maxClientNameSize();
+    static int maxPortNameSize();
+
+    // -------------------------------------------------------------------
+    // virtual, per-engine type calls
 
     virtual bool init(const char* const name) = 0;
     virtual bool close() = 0;
@@ -148,31 +171,119 @@ public:
     virtual CarlaEngineClient* addClient(CarlaPlugin* const plugin) = 0;
 
     // -------------------------------------------------------------------
-    // Information (base)
+    // plugin management
 
-    const char* getName() const;
-    double getSampleRate() const;
-    uint32_t getBufferSize() const;
-    const CarlaTimeInfo* getTimeInfo() const;
+    short getNewPluginIndex();
+    CarlaPlugin* getPluginById(unsigned short id);
+    CarlaPlugin* getPluginByIndex(unsigned short id);
+    const char* getUniqueName(const char* name);
+
+    void addPlugin(unsigned short id, CarlaPlugin* plugin);
+    bool removePlugin(unsigned short id);
 
     // -------------------------------------------------------------------
-    // Information (base)
+    // information (base)
 
-    void processLock();
-    void processUnlock();
-    void midiLock();
-    void midiUnlock();
+    const char* getName() const
+    {
+        return name;
+    }
 
-    //bool isCheckThreadRunning();
-    //void startCheckThread();
-    //void stopCheckThread();
+    double getSampleRate() const
+    {
+        return sampleRate;
+    }
 
-    //void oscInit();
-    //void oscClose();
+    uint32_t getBufferSize() const
+    {
+        return bufferSize;
+    }
 
-    //const OscData* getOscData() const;
-    const char* getOscUrl() const;
-    bool isOscRegisted();
+    const CarlaTimeInfo* getTimeInfo() const
+    {
+        return &timeInfo;
+    }
+
+    // -------------------------------------------------------------------
+    // information (audio peaks)
+
+    double getInputPeak(unsigned short pluginId, unsigned short id)
+    {
+        assert(pluginId < MAX_PLUGINS);
+        assert(id < MAX_PEAKS);
+        return m_insPeak[pluginId*MAX_PEAKS + id];
+    }
+
+    double getOutputPeak(unsigned short pluginId, unsigned short id)
+    {
+        assert(pluginId < MAX_PLUGINS);
+        assert(id < MAX_PEAKS);
+        return m_outsPeak[pluginId*MAX_PEAKS + id];
+    }
+
+    void setInputPeak(unsigned short pluginId, unsigned short id, double value)
+    {
+        assert(pluginId < MAX_PLUGINS);
+        assert(id < MAX_PEAKS);
+        m_insPeak[pluginId*MAX_PEAKS + id] = value;
+    }
+
+    void setOutputPeak(unsigned short pluginId, unsigned short id, double value)
+    {
+        assert(pluginId < MAX_PLUGINS);
+        assert(id < MAX_PEAKS);
+        m_outsPeak[pluginId*MAX_PEAKS + id] = value;
+    }
+
+    // -------------------------------------------------------------------
+    // callback
+
+    void callback(CallbackType action, unsigned short pluginId, int value1, int value2, double value3)
+    {
+        if (m_callback)
+            m_callback(action, pluginId, value1, value2, value3);
+    }
+
+    void setCallback(CallbackFunc func)
+    {
+        m_callback = func;
+    }
+
+    // -------------------------------------------------------------------
+    // mutex locks
+
+    void processLock()
+    {
+        m_procLock.lock();
+    }
+
+    void processUnlock()
+    {
+        m_procLock.unlock();
+    }
+
+    void midiLock()
+    {
+        m_midiLock.lock();
+    }
+
+    void midiUnlock()
+    {
+        m_midiLock.unlock();
+    }
+
+    // -------------------------------------------------------------------
+    // osc stuff
+
+    const char* getOscUrl() const
+    {
+        return m_osc.getServerPath();
+    }
+
+    bool isOscRegisted() const
+    {
+        return m_osc.isRegistered();
+    }
 
     void osc_send_add_plugin(int plugin_id, const char* plugin_name);
     void osc_send_remove_plugin(int plugin_id);
@@ -190,32 +301,22 @@ public:
     void osc_send_set_midi_program(int plugin_id, int midi_program_id);
     void osc_send_set_midi_program_count(int plugin_id, int midi_program_count);
     void osc_send_set_midi_program_data(int plugin_id, int midi_program_id, int bank_id, int program_id, const char* midi_program_name);
+    void osc_send_set_input_peak_value(int plugin_id, int port_id, double value);
+    void osc_send_set_output_peak_value(int plugin_id, int port_id, double value);
     void osc_send_note_on(int plugin_id, int note, int velo);
     void osc_send_note_off(int plugin_id, int note);
 
-    short getNewPluginIndex();
-    CarlaPlugin* getPluginById(unsigned short id);
-    CarlaPlugin* getPluginByIndex(unsigned short id);
-    const char* getUniqueName(const char* name);
+#ifndef BUILD_BRIDGE
+    // -------------------------------------------------------------------
+    // rack mode
 
-    void addPlugin(unsigned short id, CarlaPlugin* plugin);
-    bool removePlugin(unsigned short id);
-    //osc_global_send_remove_plugin(plugin_id);
-
-    void callback(CallbackType action, unsigned short pluginId, int value1, int value2, double value3);
-    void setCallback(CallbackFunc func);
-
-    double getInputPeak(unsigned short pluginId, unsigned short id);
-    double getOutputPeak(unsigned short pluginId, unsigned short id);
-    void setInputPeak(unsigned short pluginId, unsigned short id, double value);
-    void setOutputPeak(unsigned short pluginId, unsigned short id, double value);
-
-    // -------------------------------------
-
-    static const unsigned short MAX_PEAKS = 2;
-
-    static int maxClientNameSize();
-    static int maxPortNameSize();
+    static const unsigned short MAX_ENGINE_CONTROL_EVENTS = 512;
+    static const unsigned short MAX_ENGINE_MIDI_EVENTS    = 512;
+    CarlaEngineControlEvent rackControlEventsIn[MAX_ENGINE_CONTROL_EVENTS];
+    CarlaEngineControlEvent rackControlEventsOut[MAX_ENGINE_CONTROL_EVENTS];
+    CarlaEngineMidiEvent rackMidiEventsIn[MAX_ENGINE_MIDI_EVENTS];
+    CarlaEngineMidiEvent rackMidiEventsOut[MAX_ENGINE_MIDI_EVENTS];
+#endif
 
     // -------------------------------------
 
@@ -225,34 +326,22 @@ protected:
     uint32_t bufferSize;
     CarlaTimeInfo timeInfo;
 
-#ifndef BUILD_BRIDGE
-    // rack mode
-    static const unsigned short MAX_ENGINE_CONTROL_EVENTS = 512;
-    static const unsigned short MAX_ENGINE_MIDI_EVENTS    = 512;
-    static const unsigned short rackPortAudioIn1   = 0;
-    static const unsigned short rackPortAudioIn2   = 1;
-    static const unsigned short rackPortAudioOut1  = 2;
-    static const unsigned short rackPortAudioOut2  = 3;
-    static const unsigned short rackPortControlIn  = 4;
-    static const unsigned short rackPortControlOut = 5;
-    static const unsigned short rackPortMidiIn     = 6;
-    static const unsigned short rackPortMidiOut    = 7;
-    static const unsigned short rackPortCount      = 8;
-    CarlaEngineControlEvent rackControlEventsIn[MAX_ENGINE_CONTROL_EVENTS];
-    CarlaEngineControlEvent rackControlEventsOut[MAX_ENGINE_CONTROL_EVENTS];
-    CarlaEngineMidiEvent rackMidiEventsIn[MAX_ENGINE_MIDI_EVENTS];
-    CarlaEngineMidiEvent rackMidiEventsOut[MAX_ENGINE_MIDI_EVENTS];
-#  ifdef CARLA_ENGINE_JACK
-    CarlaEnginePortNativeHandle rackJackPorts[rackPortCount];
-#  endif
-#endif
+    void oscInit()
+    {
+        m_osc.init(name);
+    }
+
+    void oscClose()
+    {
+        m_osc.close();
+    }
 
 private:
-    QMutex m_procLock;
-    QMutex m_midiLock;
-
     CarlaOsc m_osc;
     CarlaCheckThread m_checkThread;
+
+    QMutex m_procLock;
+    QMutex m_midiLock;
 
     CallbackFunc m_callback;
     CarlaPlugin* m_carlaPlugins[MAX_PLUGINS];
@@ -261,6 +350,125 @@ private:
     double m_insPeak[MAX_PLUGINS * MAX_PEAKS];
     double m_outsPeak[MAX_PLUGINS * MAX_PEAKS];
 };
+
+/*!
+ * \class CarlaEngineScopedLocker
+ *
+ * \brief Carla engine scoped locker
+ *
+ * This is a handy class that temporarily locks an engine during a function scope.
+ */
+class CarlaEngineScopedLocker
+{
+public:
+    /*!
+     * Lock the engine \a engine if \a lock is true.
+     * The engine is unlocked in the deconstructor of this class if \a lock is true.
+     *
+     * \param engine The engine to lock
+     * \param lock Wherever to lock the engine or not, true by default
+     */
+    CarlaEngineScopedLocker(CarlaEngine* const engine, bool lock = true) :
+        m_engine(engine),
+        m_lock(lock)
+    {
+        if (m_lock)
+            m_engine->processLock();
+    }
+
+    ~CarlaEngineScopedLocker()
+    {
+        if (m_lock)
+            m_engine->processUnlock();
+    }
+
+private:
+    CarlaEngine* const m_engine;
+    const bool m_lock;
+};
+
+// -------------------------------------------------------------------------------------------------------------------
+
+class CarlaEngineClient
+{
+public:
+    CarlaEngineClient(const CarlaEngineClientNativeHandle& handle);
+    ~CarlaEngineClient();
+
+    void activate();
+    void deactivate();
+
+    bool isActive() const;
+    bool isOk() const;
+
+    const CarlaEngineBasePort* addPort(CarlaEnginePortType type, const char* const name, bool isInput);
+
+private:
+    bool m_active;
+    const CarlaEngineClientNativeHandle handle;
+};
+
+// -----------------------------------------
+
+class CarlaEngineBasePort
+{
+public:
+    CarlaEngineBasePort(const CarlaEnginePortNativeHandle& handle, bool isInput);
+    virtual ~CarlaEngineBasePort();
+
+    virtual void initBuffer(CarlaEngine* const engine) = 0;
+
+protected:
+    void* m_buffer;
+    const bool isInput;
+    const CarlaEnginePortNativeHandle handle;
+};
+
+// -----------------------------------------
+
+class CarlaEngineAudioPort : public CarlaEngineBasePort
+{
+public:
+    CarlaEngineAudioPort(const CarlaEnginePortNativeHandle& handle, bool isInput);
+
+    void initBuffer(CarlaEngine* const engine);
+
+#ifdef CARLA_ENGINE_JACK
+    float* getJackAudioBuffer(uint32_t nframes);
+#endif
+};
+
+// -----------------------------------------
+
+class CarlaEngineControlPort : public CarlaEngineBasePort
+{
+public:
+    CarlaEngineControlPort(const CarlaEnginePortNativeHandle& handle, bool isInput);
+
+    void initBuffer(CarlaEngine* const engine);
+
+    uint32_t getEventCount();
+    const CarlaEngineControlEvent* getEvent(uint32_t index);
+
+    void writeEvent(CarlaEngineControlEventType type, uint32_t time, uint8_t channel, uint8_t controller, double value);
+};
+
+// -----------------------------------------
+
+class CarlaEngineMidiPort : public CarlaEngineBasePort
+{
+public:
+    CarlaEngineMidiPort(const CarlaEnginePortNativeHandle& handle, bool isInput);
+
+    void initBuffer(CarlaEngine* const engine);
+
+    uint32_t getEventCount();
+    const CarlaEngineMidiEvent* getEvent(uint32_t index);
+
+    void writeEvent(uint32_t time, uint8_t* data, uint8_t size);
+};
+
+// -------------------------------------------------------------------------------------------------------------------
 
 #ifdef CARLA_ENGINE_JACK
 class CarlaEngineJack : public CarlaEngine
@@ -296,14 +504,29 @@ private:
     jack_position_t pos;
     bool freewheel;
     QThread* procThread;
+
+    // -------------------------------------
+
+    static const unsigned short rackPortAudioIn1   = 0;
+    static const unsigned short rackPortAudioIn2   = 1;
+    static const unsigned short rackPortAudioOut1  = 2;
+    static const unsigned short rackPortAudioOut2  = 3;
+    static const unsigned short rackPortControlIn  = 4;
+    static const unsigned short rackPortControlOut = 5;
+    static const unsigned short rackPortMidiIn     = 6;
+    static const unsigned short rackPortMidiOut    = 7;
+    static const unsigned short rackPortCount      = 8;
+    jack_port_t* rackJackPorts[rackPortCount];
 };
 #endif
+
+// -----------------------------------------
 
 #ifdef CARLA_ENGINE_RTAUDIO
 class CarlaEngineRtAudio : public CarlaEngine
 {
 public:
-    CarlaEngineRtAudio();
+    CarlaEngineRtAudio(RtAudio::Api api);
     ~CarlaEngineRtAudio();
 
     // -------------------------------------
@@ -316,151 +539,15 @@ public:
     bool isRunning();
 
     CarlaEngineClient* addClient(CarlaPlugin* const plugin);
-};
-#endif
-
-#ifdef CARLA_ENGINE_LV2
-class CarlaEngineLv2 : public CarlaEngine
-{
-public:
-    CarlaEngineLv2();
-    ~CarlaEngineLv2();
 
     // -------------------------------------
 
-    bool init(const char* const name);
-    bool close();
-
-    bool isOnAudioThread();
-    bool isOffline();
-    bool isRunning();
-
-    CarlaEngineClient* addClient(CarlaPlugin* const plugin);
-};
-#endif
-
-#ifdef CARLA_ENGINE_VST
-class CarlaEngineVst : public CarlaEngine
-{
-public:
-    CarlaEngineVst(audioMasterCallback callback);
-    ~CarlaEngineVst();
-
-    // -------------------------------------
-
-    bool init(const char* const name);
-    bool close();
-
-    bool isOnAudioThread();
-    bool isOffline();
-    bool isRunning();
-
-    CarlaEngineClient* addClient(CarlaPlugin* const plugin);
-
-    // -------------------------------------
-
-    intptr_t callback(int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
-    {
-        return m_callback(&effect, opcode, index, value, ptr, opt);
-    }
-
-    const AEffect* getEffect() const
-    {
-        return &effect;
-    }
-
-    // -------------------------------------
-
-    intptr_t handleDispatch(int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt);
-    float handleGetParameter(int32_t index);
-    void handleSetParameter(int32_t index, float value);
-    void handleProcessReplacing(float** inputs, float** outputs, int32_t frames);
+    void handleProcessCallback(void* outputBuffer, void* inputBuffer, unsigned int nframes, double streamTime, RtAudioStreamStatus status);
 
 private:
-    AEffect effect;
-    const audioMasterCallback m_callback;
+    RtAudio adac;
 };
 #endif
-
-// -----------------------------------------
-
-class CarlaEngineClient
-{
-public:
-    CarlaEngineClient(const CarlaEngineClientNativeHandle& handle, bool active);
-    ~CarlaEngineClient();
-
-    void activate();
-    void deactivate();
-
-    bool isActive() const;
-    bool isOk() const;
-
-    const CarlaEngineBasePort* addPort(CarlaEnginePortType type, const char* const name, bool isInput);
-
-private:
-    bool m_active;
-    const CarlaEngineClientNativeHandle handle;
-};
-
-// -----------------------------------------
-
-class CarlaEngineBasePort
-{
-public:
-    CarlaEngineBasePort(CarlaEnginePortNativeHandle& handle, bool isInput);
-    virtual ~CarlaEngineBasePort();
-
-    virtual void initBuffer(CarlaEngine* const engine) = 0;
-
-protected:
-    const bool isInput;
-    CarlaEnginePortNativeHandle handle;
-};
-
-// -----------------------------------------
-
-class CarlaEngineAudioPort : public CarlaEngineBasePort
-{
-public:
-    CarlaEngineAudioPort(CarlaEnginePortNativeHandle& handle, bool isInput);
-
-    void initBuffer(CarlaEngine* const engine);
-
-#ifdef CARLA_ENGINE_JACK
-    float* getJackAudioBuffer(uint32_t nframes);
-#endif
-};
-
-// -----------------------------------------
-
-class CarlaEngineControlPort : public CarlaEngineBasePort
-{
-public:
-    CarlaEngineControlPort(CarlaEnginePortNativeHandle& handle, bool isInput);
-
-    void initBuffer(CarlaEngine* const engine);
-
-    uint32_t getEventCount();
-    const CarlaEngineControlEvent* getEvent(uint32_t index);
-
-    void writeEvent(CarlaEngineControlEventType type, uint32_t time, uint8_t channel, uint8_t controller, double value);
-};
-
-// -----------------------------------------
-
-class CarlaEngineMidiPort : public CarlaEngineBasePort
-{
-public:
-    CarlaEngineMidiPort(CarlaEnginePortNativeHandle& handle, bool isInput);
-
-    void initBuffer(CarlaEngine* const engine);
-
-    uint32_t getEventCount();
-    const CarlaEngineMidiEvent* getEvent(uint32_t index);
-
-    void writeEvent(uint32_t time, uint8_t* data, uint8_t size);
-};
 
 /**@}*/
 

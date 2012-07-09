@@ -45,168 +45,47 @@ void CarlaCheckThread::stopNow()
 void CarlaCheckThread::run()
 {
     qDebug("CarlaCheckThread::run()");
-    using namespace CarlaBackend;
-
-    uint32_t j, k;
-    double value;
-    const ParameterData* paramData;
-    PluginPostEvent postEvents[MAX_POST_EVENTS];
 
     m_stopNow = false;
-    while (/*is_engine_running() &&*/ ! m_stopNow)
+    while (engine->isRunning() && ! m_stopNow)
     {
-        for (unsigned short i=0; i < MAX_PLUGINS; i++)
+        for (unsigned short i=0; i < CarlaBackend::MAX_PLUGINS; i++)
         {
-            CarlaPlugin* const plugin = engine->getPluginByIndex(i);
+            CarlaBackend::CarlaPlugin* const plugin = engine->getPluginByIndex(i);
 
             if (plugin && plugin->enabled())
             {
                 // --------------------------------------------------------------------------------------------------------
                 // Process postponed events
 
-                // Make a safe copy of events, and clear them
-                plugin->postEventsCopy(postEvents);
-
-                const OscData* const osc_data = plugin->oscData();
-
-                // Process events now
-                for (j=0; j < MAX_POST_EVENTS; j++)
-                {
-                    if (postEvents[j].type == PluginPostEventNull)
-                      break;
-
-                    switch (postEvents[j].type)
-                    {
-                    case PluginPostEventDebug:
-                        engine->callback(CALLBACK_DEBUG, plugin->id(), postEvents[j].index, 0, postEvents[j].value);
-                        break;
-
-                    case PluginPostEventParameterChange:
-                        // Update OSC based UIs
-                        //osc_send_control(osc_data, postEvents[j].index, postEvents[j].value);
-
-                        // Update OSC control client
-                        //osc_global_send_set_parameter_value(plugin->id(), postEvents[j].index, postEvents[j].value);
-
-                        // Update Host
-                        engine->callback(CALLBACK_PARAMETER_CHANGED, plugin->id(), postEvents[j].index, 0, postEvents[j].value);
-
-                        break;
-
-                    case PluginPostEventProgramChange:
-                        // Update OSC based UIs
-                        //osc_send_program(osc_data, postEvents[j].index);
-
-                        // Update OSC control client
-                        //osc_global_send_set_program(plugin->id(), postEvents[j].index);
-
-                        //for (k=0; k < plugin->parameterCount(); k++)
-                        //    osc_global_send_set_default_value(plugin->id(), k, plugin->parameterRanges(k)->def);
-
-                        // Update Host
-                        engine->callback(CALLBACK_PROGRAM_CHANGED, plugin->id(), postEvents[j].index, 0, 0.0);
-
-                        break;
-
-                    case PluginPostEventMidiProgramChange:
-                        if (postEvents[j].index < (int32_t)plugin->midiProgramCount())
-                        {
-                            if (postEvents[j].index >= 0)
-                            {
-                                const midi_program_t* const midiprog = plugin->midiProgramData(postEvents[j].index);
-
-                                // Update OSC based UIs
-                                //osc_send_midi_program(osc_data, midiprog->bank, midiprog->program, (plugin->type() == PLUGIN_DSSI));
-                            }
-
-                            // Update OSC control client
-                            //osc_global_send_set_midi_program(plugin->id(), postEvents[j].index);
-
-                            //for (k=0; k < plugin->parameterCount(); k++)
-                            //    osc_global_send_set_default_value(plugin->id(), k, plugin->parameterRanges(k)->def);
-
-                            // Update Host
-                            engine->callback(CALLBACK_MIDI_PROGRAM_CHANGED, plugin->id(), postEvents[j].index, 0, 0.0);
-                        }
-
-                        break;
-
-                    case PluginPostEventNoteOn:
-                        // Update OSC based UIs
-                        //if (plugin->type() == PLUGIN_LV2)
-                        //    osc_send_note_on(osc_data, plugin->id(), post_events[j].index, post_events[j].value);
-
-                        // Update OSC control client
-                        //osc_global_send_note_on(plugin->id(), postEvents[j].index, postEvents[j].value);
-
-                        // Update Host
-                        engine->callback(CALLBACK_NOTE_ON, plugin->id(), postEvents[j].index, postEvents[j].value, 0.0);
-
-                        break;
-
-                    case PluginPostEventNoteOff:
-                        // Update OSC based UIs
-                        //if (plugin->type() == PLUGIN_LV2)
-                        //    osc_send_note_off(osc_data, plugin->id(), post_events[j].index, 0);
-
-                        // Update OSC control client
-                        //osc_global_send_note_off(plugin->id(), postEvents[j].index);
-
-                        // Update Host
-                        engine->callback(CALLBACK_NOTE_OFF, plugin->id(), postEvents[j].index, 0, 0.0);
-
-                        break;
-
-                    default:
-                        break;
-                    }
-                }
+                plugin->postEventsRun();
 
                 // --------------------------------------------------------------------------------------------------------
-                // Update ports
+                // Update parameters (OSC)
 
-                // Check if it needs update
-                bool update_ports_gui = (osc_data->target && (plugin->hints() & PLUGIN_IS_BRIDGE) == 0);
-
-#if 0
-                if (osc_global_registered() == false && update_ports_gui == false)
-                    continue;
-
-                // Update
-                for (j=0; j < plugin->parameterCount(); j++)
-                {
-                    paramData = plugin->parameterData(j);
-
-                    if (paramData->type == PARAMETER_OUTPUT && (paramData->hints & PARAMETER_IS_AUTOMABLE) > 0)
-                    {
-                        value = plugin->getParameterValue(j);
-
-                        if (update_ports_gui)
-                            osc_send_control(osc_data, paramData->rindex, value);
-
-                        osc_global_send_set_parameter_value(plugin->id(), j, value);
-                    }
-                }
+                plugin->updateOscParameterOutputs();
 
                 // --------------------------------------------------------------------------------------------------------
                 // Send peak values (OSC)
 
-                if (osc_global_registered())
+                if (engine->isOscRegisted())
                 {
+                    const unsigned short id = plugin->id();
+
                     if (plugin->audioInCount() > 0)
                     {
-                        osc_global_send_set_input_peak_value(plugin->id(), 1, engine->getInputPeak(plugin->id(), 0));
-                        osc_global_send_set_input_peak_value(plugin->id(), 2, engine->getInputPeak(plugin->id(), 1));
+                        engine->osc_send_set_input_peak_value(id, 1, engine->getInputPeak(id, 0));
+                        engine->osc_send_set_input_peak_value(id, 2, engine->getInputPeak(id, 1));
                     }
                     if (plugin->audioOutCount() > 0)
                     {
-                        osc_global_send_set_output_peak_value(plugin->id(), 1, engine->getOutputPeak(plugin->id(), 0));
-                        osc_global_send_set_output_peak_value(plugin->id(), 2, engine->getOutputPeak(plugin->id(), 1));
+                        engine->osc_send_set_output_peak_value(id, 1, engine->getOutputPeak(id, 0));
+                        engine->osc_send_set_output_peak_value(id, 2, engine->getOutputPeak(id, 1));
                     }
                 }
-#endif
             }
         }
+
         msleep(50);
     }
 }
@@ -214,17 +93,17 @@ void CarlaCheckThread::run()
 // --------------------------------------------------------------------------------------------------------
 // CarlaPluginThread
 
-const char* CarlaPluginThread::pluginthreadmode2str(PluginThreadMode mode)
+const char* pluginthreadmode2str(CarlaPluginThread::PluginThreadMode mode)
 {
     switch (mode)
     {
-    case PLUGIN_THREAD_DSSI_GUI:
+    case CarlaPluginThread::PLUGIN_THREAD_DSSI_GUI:
         return "PLUGIN_THREAD_DSSI_GUI";
-    case PLUGIN_THREAD_LV2_GUI:
+    case CarlaPluginThread::PLUGIN_THREAD_LV2_GUI:
         return "PLUGIN_THREAD_LV2_GUI";
-    case PLUGIN_THREAD_VST_GUI:
+    case CarlaPluginThread::PLUGIN_THREAD_VST_GUI:
         return "PLUGIN_THREAD_VST_GUI";
-    case PLUGIN_THREAD_BRIDGE:
+    case CarlaPluginThread::PLUGIN_THREAD_BRIDGE:
         return "PLUGIN_THREAD_BRIDGE";
     }
 
@@ -304,13 +183,10 @@ void CarlaPluginThread::run()
         /* label    */ arguments << m_label;
         break;
     }
-
-    default:
-        break;
     }
 
-    qWarning() << m_binary;
-    qWarning() << arguments;
+    qDebug() << m_binary;
+    qDebug() << arguments;
 
     m_process->start(m_binary, arguments);
     m_process->waitForStarted();
@@ -319,7 +195,8 @@ void CarlaPluginThread::run()
     {
     case PLUGIN_THREAD_DSSI_GUI:
     case PLUGIN_THREAD_LV2_GUI:
-        if (/*plugin->showOscGui()*/1)
+    case PLUGIN_THREAD_VST_GUI:
+        if (plugin->showOscGui())
         {
             m_process->waitForFinished(-1);
 
@@ -347,16 +224,15 @@ void CarlaPluginThread::run()
     case PLUGIN_THREAD_BRIDGE:
         m_process->waitForFinished(-1);
 
+#ifdef DEBUG
         if (m_process->exitCode() == 0)
             qDebug("CarlaPluginThread::run() - bridge closed");
         else
             qDebug("CarlaPluginThread::run() - bridge crashed");
 
         qDebug("%s", QString(m_process->readAllStandardOutput()).toUtf8().constData());
+#endif
 
-        break;
-
-    default:
         break;
     }
 }
