@@ -38,11 +38,11 @@ CarlaOsc::CarlaOsc(CarlaBackend::CarlaEngine* const engine_) :
     qDebug("CarlaOsc::CarlaOsc()");
     assert(engine);
 
-    serverData.path = nullptr;
-    serverData.source = nullptr;
-    serverData.target = nullptr;
     serverPath = nullptr;
     serverThread = nullptr;
+    __Data.path = nullptr;
+    __Data.source = nullptr;
+    __Data.target = nullptr;
 
     m_name = nullptr;
     m_name_len = 0;
@@ -77,7 +77,7 @@ void CarlaOsc::close()
 {
     qDebug("CarlaOsc::close()");
 
-    osc_clear_data(&serverData);
+    osc_clear_data(&__Data);
 
     lo_server_thread_stop(serverThread);
     lo_server_thread_del_method(serverThread, nullptr, nullptr);
@@ -183,10 +183,10 @@ int CarlaOsc::handleMessage(const char* const path, int argc, lo_arg** const arg
         return handle_note_off(plugin, argv);
 
     // Plugin-specific methods
-    if (strcmp(method, "/lv2_atom_transfer") == 0)
-        return handle_lv2_atom_transfer(plugin, argv);
-    if (strcmp(method, "/lv2_event_transfer") == 0)
-        return handle_lv2_event_transfer(plugin, argv);
+    //if (strcmp(method, "/lv2_atom_transfer") == 0)
+    //    return handle_lv2_atom_transfer(plugin, argv);
+    //if (strcmp(method, "/lv2_event_transfer") == 0)
+    //    return handle_lv2_event_transfer(plugin, argv);
 
     // Plugin Bridges
     if (plugin->hints() & CarlaBackend::PLUGIN_IS_BRIDGE)
@@ -235,7 +235,7 @@ int CarlaOsc::handle_register(lo_arg** argv, lo_address source)
 {
     qDebug("CarlaOsc::handle_register()");
 
-    if (! serverData.path)
+    if (! __Data.path)
     {
         const char* const url = (const char*)&argv[0]->s;
         const char* host;
@@ -245,12 +245,12 @@ int CarlaOsc::handle_register(lo_arg** argv, lo_address source)
 
         host = lo_address_get_hostname(source);
         port = lo_address_get_port(source);
-        serverData.source = lo_address_new(host, port);
+        __Data.source = lo_address_new(host, port);
 
         host = lo_url_get_hostname(url);
         port = lo_url_get_port(url);
-        serverData.path   = lo_url_get_path(url);
-        serverData.target = lo_address_new(host, port);
+        __Data.path   = lo_url_get_path(url);
+        __Data.target = lo_address_new(host, port);
 
         free((void*)host);
         free((void*)port);
@@ -266,7 +266,7 @@ int CarlaOsc::handle_register(lo_arg** argv, lo_address source)
         return 0;
     }
 
-    qWarning("CarlaOsc::handle_register() - OSC backend already registered to %s", serverData.path);
+    qWarning("CarlaOsc::handle_register() - OSC backend already registered to %s", __Data.path);
     return 1;
 }
 
@@ -274,9 +274,9 @@ int CarlaOsc::handle_unregister()
 {
     qDebug("CarlaOsc::handle_unregister()");
 
-    if (serverData.path)
+    if (__Data.path)
     {
-        osc_clear_data(&serverData);
+        osc_clear_data(&__Data);
         return 0;
     }
 

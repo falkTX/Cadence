@@ -18,6 +18,8 @@
 #ifndef LV2_RDF_INCLUDED
 #define LV2_RDF_INCLUDED
 
+// TODO - presets
+
 #include <cstdint>
 
 // Base Types
@@ -160,18 +162,20 @@ typedef unsigned long long LV2_PluginType;
 #define LV2_IS_PORT_TRIGGER(x)           ((x) & LV2_PORT_TRIGGER)
 
 // Port Designation
-#define LV2_PORT_LATENCY                 0x1
-#define LV2_PORT_TIME_BAR                0x2
-#define LV2_PORT_TIME_BAR_BEAT           0x3
-#define LV2_PORT_TIME_BEAT               0x4
-#define LV2_PORT_TIME_BEAT_UNIT          0x5
-#define LV2_PORT_TIME_BEATS_PER_BAR      0x6
-#define LV2_PORT_TIME_BEATS_PER_MINUTE   0x7
-#define LV2_PORT_TIME_FRAME              0x8
-#define LV2_PORT_TIME_FRAMES_PER_SECOND  0x9
-#define LV2_PORT_TIME_POSITION           0xA
-#define LV2_PORT_TIME_SPEED              0xB
+#define LV2_PORT_FREEWHEELING            0x1
+#define LV2_PORT_LATENCY                 0x2
+#define LV2_PORT_TIME_BAR                0x3
+#define LV2_PORT_TIME_BAR_BEAT           0x4
+#define LV2_PORT_TIME_BEAT               0x5
+#define LV2_PORT_TIME_BEAT_UNIT          0x6
+#define LV2_PORT_TIME_BEATS_PER_BAR      0x7
+#define LV2_PORT_TIME_BEATS_PER_MINUTE   0x8
+#define LV2_PORT_TIME_FRAME              0x9
+#define LV2_PORT_TIME_FRAMES_PER_SECOND  0xA
+#define LV2_PORT_TIME_POSITION           0xB
+#define LV2_PORT_TIME_SPEED              0xC
 
+#define LV2_IS_PORT_FREEWHEELING(x)      ((x) == LV2_PORT_FREEWHEELING)
 #define LV2_IS_PORT_LATENCY(x)           ((x) == LV2_PORT_LATENCY)
 #define LV2_IS_PORT_TIME_BAR(x)          ((x) == LV2_PORT_TIME_BAR)
 #define LV2_IS_PORT_TIME_BAR_BEAT(x)     ((x) == LV2_PORT_TIME_BAR_BEAT)
@@ -184,7 +188,7 @@ typedef unsigned long long LV2_PluginType;
 #define LV2_IS_PORT_TIME_POSITION(x)          ((x) == LV2_PORT_TIME_POSITION)
 #define LV2_IS_PORT_TIME_SPEED(x)             ((x) == LV2_PORT_TIME_SPEED)
 
-// Preset State Types
+// Preset State Types (TODO: Null is not a type, this is just a placeholder)
 #define LV2_PRESET_STATE_NULL            0x0
 
 #define LV2_IS_PRESET_STATE_NULL(x)      ((x) == LV2_PRESET_STATE_NULL)
@@ -281,6 +285,10 @@ typedef unsigned long long LV2_PluginType;
 struct LV2_RDF_PortMidiMap {
     LV2_Property Type;
     uint32_t Number;
+
+    LV2_RDF_PortMidiMap()
+        : Type(0),
+          Number(0) {}
 };
 
 // Port Points
@@ -289,6 +297,12 @@ struct LV2_RDF_PortPoints {
     LV2_Data Default;
     LV2_Data Minimum;
     LV2_Data Maximum;
+
+    LV2_RDF_PortPoints()
+        : Hints(0),
+          Default(0.0f),
+          Minimum(0.0f),
+          Maximum(1.0f) {}
 };
 
 // Port Unit
@@ -298,12 +312,23 @@ struct LV2_RDF_PortUnit {
     const char* Name;
     const char* Render;
     const char* Symbol;
+
+    LV2_RDF_PortUnit()
+        : Type(0),
+          Hints(0),
+          Name(nullptr),
+          Render(nullptr),
+          Symbol(nullptr) {}
 };
 
 // Port Scale Point
 struct LV2_RDF_PortScalePoint {
     const char* Label;
     LV2_Data Value;
+
+    LV2_RDF_PortScalePoint()
+        : Label(nullptr),
+          Value(0.0f) {}
 };
 
 // Port
@@ -320,12 +345,28 @@ struct LV2_RDF_Port {
 
     uint32_t ScalePointCount;
     LV2_RDF_PortScalePoint* ScalePoints;
+
+    LV2_RDF_Port()
+        : Type(0),
+          Properties(0),
+          Designation(0),
+          Name(nullptr),
+          Symbol(nullptr),
+          MidiMap(),
+          Points(),
+          Unit(),
+          ScalePointCount(0),
+          ScalePoints(nullptr) {}
 };
 
 // Preset Port
 struct LV2_RDF_PresetPort {
     const char* Symbol;
     LV2_Data Value;
+
+    LV2_RDF_PresetPort()
+        : Symbol(nullptr),
+          Value(0.0f) {}
 };
 
 // Preset State
@@ -333,12 +374,12 @@ struct LV2_RDF_PresetState {
     LV2_Property Type;
     const char* Key;
     union {
-        bool b;
-        int i;
-        long li;
-        float f;
-        const char* s;
+        // TODO
     } Value;
+
+    LV2_RDF_PresetState()
+        : Type(0),
+          Key(nullptr) {}
 };
 
 // Preset
@@ -351,12 +392,24 @@ struct LV2_RDF_Preset {
 
     uint32_t StateCount;
     LV2_RDF_PresetState* States;
+
+    LV2_RDF_Preset()
+        : URI(nullptr),
+          Label(nullptr),
+          PortCount(0),
+          Ports(nullptr),
+          StateCount(0),
+          States(nullptr) {}
 };
 
 // Feature
 struct LV2_RDF_Feature {
     LV2_Property Type;
     LV2_URI URI;
+
+    LV2_RDF_Feature()
+        : Type(0),
+          URI(nullptr) {}
 };
 
 // UI
@@ -371,6 +424,16 @@ struct LV2_RDF_UI {
 
     uint32_t ExtensionCount;
     LV2_URI* Extensions;
+
+    LV2_RDF_UI()
+        : Type(0),
+          URI(nullptr),
+          Binary(nullptr),
+          Bundle(nullptr),
+          FeatureCount(0),
+          Features(nullptr),
+          ExtensionCount(0),
+          Extensions(nullptr) {}
 };
 
 // Plugin
@@ -398,6 +461,26 @@ struct LV2_RDF_Descriptor {
 
     uint32_t UICount;
     LV2_RDF_UI* UIs;
+
+    LV2_RDF_Descriptor()
+        : Type(0),
+          URI(nullptr),
+          Name(nullptr),
+          Author(nullptr),
+          License(nullptr),
+          Binary(nullptr),
+          Bundle(nullptr),
+          UniqueID(0),
+          PortCount(0),
+          Ports(nullptr),
+          PresetCount(0),
+          Presets(nullptr),
+          FeatureCount(0),
+          Features(nullptr),
+          ExtensionCount(0),
+          Extensions(nullptr),
+          UICount(0),
+          UIs(nullptr) {}
 };
 
 #endif /* LV2_RDF_INCLUDED */

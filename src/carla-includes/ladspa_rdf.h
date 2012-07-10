@@ -119,6 +119,10 @@ typedef unsigned long long LADSPA_PluginType;
 struct LADSPA_RDF_ScalePoint {
     LADSPA_Data Value;
     const char* Label;
+
+    LADSPA_RDF_ScalePoint()
+        : Value(0.0f),
+          Label(nullptr) {}
 };
 
 // Port
@@ -131,6 +135,15 @@ struct LADSPA_RDF_Port {
 
     unsigned long ScalePointCount;
     LADSPA_RDF_ScalePoint* ScalePoints;
+
+    LADSPA_RDF_Port()
+        : Type(0),
+          Hints(0),
+          Label(nullptr),
+          Default(0.0f),
+          Unit(0),
+          ScalePointCount(0),
+          ScalePoints(nullptr) {}
 };
 
 // Plugin
@@ -142,6 +155,14 @@ struct LADSPA_RDF_Descriptor {
 
     unsigned long PortCount;
     LADSPA_RDF_Port* Ports;
+
+    LADSPA_RDF_Descriptor()
+        : Type(0),
+          UniqueID(0),
+          Title(nullptr),
+          Creator(nullptr),
+          PortCount(0),
+          Ports(nullptr) {}
 };
 
 #endif // LADSPA_RDF_INCLUDED

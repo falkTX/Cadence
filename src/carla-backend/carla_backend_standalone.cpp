@@ -1166,7 +1166,7 @@ const char* get_host_osc_url()
 {
     qDebug("get_host_osc_url()");
 
-    return carla_engine->getOscUrl();
+    return carla_engine->getOscServerPath();
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -1186,6 +1186,8 @@ void set_option(CarlaBackend::OptionsType option, int value, const char* valueSt
 // -------------------------------------------------------------------------------------------------------------------
 
 #ifdef QTCREATOR_TEST
+
+#include "carla_lv2_includes.h"
 
 #include <QtGui/QApplication>
 #include <QtGui/QDialog>
@@ -1212,10 +1214,35 @@ void main_callback(CarlaBackend::CallbackType action, unsigned short plugin_id, 
 
 int main(int argc, char* argv[])
 {
-    QApplication app(argc, argv);
+    //QApplication app(argc, argv);
+
+    Lv2World.init();
+
+    const LV2_RDF_Descriptor* const descX = lv2_rdf_new("urn:juce:TalFilter2");
+    qDebug("desc: %p", descX);
+
+    if (! descX)
+        return 1;
+
+    const LV2_RDF_Descriptor* const desc = lv2_rdf_dup(descX);
+    lv2_rdf_free(descX);
+
+    qDebug("desc->Name:      %s",  desc->Name);
+    qDebug("desc->PortCount: %u",  desc->PortCount);
+    qDebug("desc->UniqueID:  %lu", desc->UniqueID);
+
+    for (uint32_t i=0; i < desc->PresetCount; i++)
+    {
+        const LV2_RDF_Preset* const Preset = &desc->Presets[i];
+        qDebug("  Preset #%02i: %s",  i, Preset->Label);
+    }
+
+    lv2_rdf_free(desc);
+
+#if 0
     gui = new QDialog(nullptr);
 
-    if (engine_init("JACK", "carla_demo"))
+    if (engine_init("PulseAudio", "carla_demo"))
     {
         set_callback_function(main_callback);
         ::set_option(CarlaBackend::OPTION_PROCESS_MODE, CarlaBackend::PROCESS_MODE_CONTINUOUS_RACK, nullptr);
@@ -1249,6 +1276,7 @@ int main(int argc, char* argv[])
         qCritical("failed to start backend engine, reason:\n%s", get_last_error());
 
     delete gui;
+#endif
     return 0;
 }
 

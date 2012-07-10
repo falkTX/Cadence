@@ -275,14 +275,14 @@ public:
     // -------------------------------------------------------------------
     // osc stuff
 
-    const char* getOscUrl() const
+    const char* getOscServerPath() const
     {
         return m_osc.getServerPath();
     }
 
-    bool isOscRegisted() const
+    bool isOsc__Registed() const
     {
-        return m_osc.isRegistered();
+        return m_osc.is__Registered();
     }
 
     void osc_send_add_plugin(int plugin_id, const char* plugin_name);
@@ -305,6 +305,7 @@ public:
     void osc_send_set_output_peak_value(int plugin_id, int port_id, double value);
     void osc_send_note_on(int plugin_id, int note, int velo);
     void osc_send_note_off(int plugin_id, int note);
+    void osc_send_exit();
 
 #ifndef BUILD_BRIDGE
     // -------------------------------------------------------------------

@@ -27,7 +27,7 @@
 static inline
 const LADSPA_RDF_Descriptor* ladspa_rdf_dup(const LADSPA_RDF_Descriptor* const rdf_descriptor)
 {
-    LADSPA_RDF_Descriptor* new_descriptor = new LADSPA_RDF_Descriptor;
+    LADSPA_RDF_Descriptor* const new_descriptor = new LADSPA_RDF_Descriptor;
 
     new_descriptor->Type = rdf_descriptor->Type;
     new_descriptor->UniqueID = rdf_descriptor->UniqueID;
@@ -35,13 +35,9 @@ const LADSPA_RDF_Descriptor* ladspa_rdf_dup(const LADSPA_RDF_Descriptor* const r
 
     if (rdf_descriptor->Title)
         new_descriptor->Title = strdup(rdf_descriptor->Title);
-    else
-        new_descriptor->Title = nullptr;
 
     if (rdf_descriptor->Creator)
         new_descriptor->Creator = strdup(rdf_descriptor->Creator);
-    else
-        new_descriptor->Creator = nullptr;
 
     if (new_descriptor->PortCount > 0)
     {
@@ -56,7 +52,8 @@ const LADSPA_RDF_Descriptor* ladspa_rdf_dup(const LADSPA_RDF_Descriptor* const r
             Port->Unit    = rdf_descriptor->Ports[i].Unit;
             Port->ScalePointCount = rdf_descriptor->Ports[i].ScalePointCount;
 
-            Port->Label = strdup(rdf_descriptor->Ports[i].Label);
+            if (rdf_descriptor->Ports[i].Label)
+                Port->Label = strdup(rdf_descriptor->Ports[i].Label);
 
             if (Port->ScalePointCount > 0)
             {
@@ -66,20 +63,18 @@ const LADSPA_RDF_Descriptor* ladspa_rdf_dup(const LADSPA_RDF_Descriptor* const r
                 {
                     LADSPA_RDF_ScalePoint* const ScalePoint = &Port->ScalePoints[j];
                     ScalePoint->Value = rdf_descriptor->Ports[i].ScalePoints[j].Value;
-                    ScalePoint->Label = strdup(rdf_descriptor->Ports[i].ScalePoints[j].Label);
+
+                    if (rdf_descriptor->Ports[i].ScalePoints[j].Label)
+                        ScalePoint->Label = strdup(rdf_descriptor->Ports[i].ScalePoints[j].Label);
                 }
             }
-            else
-                Port->ScalePoints = nullptr;
         }
     }
-    else
-        new_descriptor->Ports = nullptr;
 
     return new_descriptor;
 }
 
-// Delete copied object
+// Delete object
 static inline
 void ladspa_rdf_free(const LADSPA_RDF_Descriptor* const rdf_descriptor)
 {
@@ -93,14 +88,20 @@ void ladspa_rdf_free(const LADSPA_RDF_Descriptor* const rdf_descriptor)
     {
         for (unsigned long i=0; i < rdf_descriptor->PortCount; i++)
         {
-            LADSPA_RDF_Port* const Port = &rdf_descriptor->Ports[i];
-            free((void*)Port->Label);
+            const LADSPA_RDF_Port* const Port = &rdf_descriptor->Ports[i];
+
+            if (Port->Label)
+                free((void*)Port->Label);
 
             if (Port->ScalePointCount > 0)
             {
                 for (unsigned long j=0; j < Port->ScalePointCount; j++)
-                    free((void*)Port->ScalePoints[j].Label);
+                {
+                    const LADSPA_RDF_ScalePoint* const ScalePoint = &Port->ScalePoints[j];
 
+                    if (ScalePoint->Label)
+                        free((void*)ScalePoint->Label);
+                }
                 delete[] Port->ScalePoints;
             }
         }
@@ -131,6 +132,12 @@ bool is_ladspa_rdf_descriptor_valid(const LADSPA_RDF_Descriptor* const rdf_descr
 {
     if (! rdf_descriptor)
         return false;
+
+    if (rdf_descriptor->UniqueID != descriptor->UniqueID)
+    {
+        qWarning("WARNING - Plugin has wrong UniqueID: %li != %li", rdf_descriptor->UniqueID, descriptor->UniqueID);
+        return false;
+    }
 
     if (rdf_descriptor->PortCount > descriptor->PortCount)
     {

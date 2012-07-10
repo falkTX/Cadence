@@ -20,19 +20,20 @@
 
 #include "carla_includes.h"
 
+#include <cassert>
 #include <cstring>
 #include <lo/lo.h>
 
-struct OscData {
+struct CarlaOscData {
     char* path;
     lo_address source;
     lo_address target;
 };
 
 static inline
-void osc_clear_data(OscData* const oscData)
+void osc_clear_data(CarlaOscData* const oscData)
 {
-    qDebug("osc_clear_data(%p)", oscData);
+    qDebug("osc_clear_data(%p, %s)", oscData, oscData->path);
 
     if (oscData->path)
         free((void*)oscData->path);
@@ -49,108 +50,151 @@ void osc_clear_data(OscData* const oscData)
 }
 
 static inline
-void osc_send_configure(const OscData* const osc_data, const char* key, const char* value)
+void osc_send_configure(const CarlaOscData* const oscData, const char* key, const char* value)
 {
-    qDebug("osc_send_configure(%s, %s)", key, value);
+    qDebug("osc_send_configure(%s, %s, %s)", oscData->path, key, value);
+    assert(key);
+    assert(value);
 
-    if (osc_data->target)
+    if (oscData->target)
     {
-        char target_path[strlen(osc_data->path)+11];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/configure");
-        lo_send(osc_data->target, target_path, "ss", key, value);
+        char targetPath[strlen(oscData->path)+11];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/configure");
+        lo_send(oscData->target, targetPath, "ss", key, value);
     }
 }
 
 static inline
-void osc_send_control(const OscData* const osc_data, int index, double value)
+void osc_send_control(const CarlaOscData* const oscData, int index, float value)
 {
-    qDebug("osc_send_control(%i, %f)", index, value);
-    if (osc_data->target)
+    qDebug("osc_send_control(%s, %i, %f)", oscData->path, index, value);
+
+    if (oscData->target)
     {
-        char target_path[strlen(osc_data->path)+9];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/control");
-        lo_send(osc_data->target, target_path, "if", index, value);
+        char targetPath[strlen(oscData->path)+9];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/control");
+        lo_send(oscData->target, targetPath, "if", index, value);
     }
 }
 
 static inline
-void osc_send_program(const OscData* const osc_data, int program_id)
+void osc_send_control(const CarlaOscData* const oscData, int index, double value)
 {
-    qDebug("osc_send_program(%i)", program_id);
-    if (osc_data->target)
+    qDebug("osc_send_control(%s, %i, %f)", oscData->path, index, value);
+
+    if (oscData->target)
     {
-        char target_path[strlen(osc_data->path)+9];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/program");
-        lo_send(osc_data->target, target_path, "i", program_id);
+        char targetPath[strlen(oscData->path)+9];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/control");
+        lo_send(oscData->target, targetPath, "id", index, value);
     }
 }
 
 static inline
-void osc_send_midi_program(const OscData* const osc_data, int index)
+void osc_send_program(const CarlaOscData* const oscData, int index)
 {
-    qDebug("osc_send_midi_program(%i)", index);
-    if (osc_data->target)
+    qDebug("osc_send_program(%s, %i)", oscData->path, index);
+    assert(index >= 0);
+
+    if (oscData->target)
     {
-        char target_path[strlen(osc_data->path)+14];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/midi_program");
-        lo_send(osc_data->target, target_path, "i", index);
+        char targetPath[strlen(oscData->path)+9];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/program");
+        lo_send(oscData->target, targetPath, "i", index);
     }
 }
 
 static inline
-void osc_send_midi(const OscData* const osc_data, uint8_t buf[4])
+void osc_send_program(const CarlaOscData* const oscData, int program, int bank)
 {
-    qDebug("osc_send_midi()");
-    if (osc_data->target)
+    qDebug("osc_send_program(%s, %i, %i)", oscData->path, program, bank);
+    assert(program >= 0);
+    assert(bank >= 0);
+
+    if (oscData->target)
     {
-        char target_path[strlen(osc_data->path)+6];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/midi");
-        lo_send(osc_data->target, target_path, "m", buf);
+        char targetPath[strlen(oscData->path)+9];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/program");
+        lo_send(oscData->target, targetPath, "ii", program, bank);
+    }
+}
+
+static inline
+void osc_send_midi_program(const CarlaOscData* const oscData, int index)
+{
+    qDebug("osc_send_midi_program(%s, %i)", oscData->path, index);
+    assert(index >= 0);
+
+    if (oscData->target)
+    {
+        char targetPath[strlen(oscData->path)+14];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/midi_program");
+        lo_send(oscData->target, targetPath, "i", index);
+    }
+}
+
+static inline
+void osc_send_midi(const CarlaOscData* const oscData, uint8_t buf[4])
+{
+    qDebug("osc_send_midi(%s, 0x%X, %03i, %03i)", oscData->path, buf[1], buf[2], buf[3]);
+    assert(buf[0] == 0);
+    assert(buf[1] != 0);
+
+    if (oscData->target)
+    {
+        char targetPath[strlen(oscData->path)+6];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/midi");
+        lo_send(oscData->target, targetPath, "m", buf);
     }
 }
 
 #ifndef BUILD_BRIDGE
 static inline
-void osc_send_show(const OscData* const osc_data)
+void osc_send_show(const CarlaOscData* const oscData)
 {
-    qDebug("osc_send_show()");
-    if (osc_data->target)
+    qDebug("osc_send_show(%s)", oscData->path);
+
+    if (oscData->target)
     {
-        char target_path[strlen(osc_data->path)+6];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/show");
-        lo_send(osc_data->target, target_path, "");
+        char targetPath[strlen(oscData->path)+6];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/show");
+        lo_send(oscData->target, targetPath, "");
     }
 }
 
 static inline
-void osc_send_hide(const OscData* const osc_data)
+void osc_send_hide(const CarlaOscData* const oscData)
 {
-    qDebug("osc_send_hide()");
-    if (osc_data->target)
+    qDebug("osc_send_hide(%s)", oscData->path);
+
+    if (oscData->target)
     {
-        char target_path[strlen(osc_data->path)+6];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/hide");
-        lo_send(osc_data->target, target_path, "");
+        char targetPath[strlen(oscData->path)+6];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/hide");
+        lo_send(oscData->target, targetPath, "");
     }
 }
 
 static inline
-void osc_send_quit(const OscData* const osc_data)
+void osc_send_quit(const CarlaOscData* const oscData)
 {
-    qDebug("osc_send_quit()");
-    if (osc_data->target)
+    qDebug("osc_send_quit(%s)", oscData->path);
+
+    if (oscData->target)
     {
-        char target_path[strlen(osc_data->path)+6];
-        strcpy(target_path, osc_data->path);
-        strcat(target_path, "/quit");
-        lo_send(osc_data->target, target_path, "");
+        char targetPath[strlen(oscData->path)+6];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/quit");
+        lo_send(oscData->target, targetPath, "");
     }
 }
 #endif

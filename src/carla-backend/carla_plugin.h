@@ -1306,7 +1306,7 @@ public:
     void registerToOsc()
     {
 #ifndef BUILD_BRIDGE
-        if (! x_engine->isOscRegisted())
+        if (! x_engine->isOsc__Registed())
             return;
 
         x_engine->osc_send_add_plugin(m_id, m_name);
@@ -1486,7 +1486,7 @@ public:
         // Check if it needs update
         bool updatePortsGui = (osc.data.target && (m_hints & PLUGIN_IS_BRIDGE) == 0);
 
-        if (! (x_engine->isOscRegisted() || updatePortsGui))
+        if (! (x_engine->isOsc__Registed() || updatePortsGui))
             return;
 
         // Update
@@ -2017,7 +2017,7 @@ protected:
 
 #ifndef BUILD_BRIDGE
     struct {
-        OscData data;
+        CarlaOscData data;
         CarlaPluginThread* thread;
     } osc;
 #endif

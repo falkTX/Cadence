@@ -15,7 +15,6 @@ SOURCES = \
     ../carla_engine.cpp \
     ../carla_engine_jack.cpp \
     ../carla_engine_rtaudio.cpp \
-#    ../carla_engine_vst.cpp \
 #    ../carla_bridge.cpp \
     ../carla_osc.cpp \
     ../carla_shared.cpp \
@@ -61,4 +60,4 @@ QMAKE_CXXFLAGS *= -fPIC -std=c++0x
 INCLUDEPATH += ../rtaudio/rtaudio-4.0.11
 SOURCES += ../rtaudio/rtaudio-4.0.11/RtAudio.cpp
 #DEFINES +=  _FORTIFY_SOURCE=2
-DEFINES += HAVE_GETTIMEOFDAY __UNIX_JACK__ __LINUX_ALSA__ __LINUX_PULSE__
+DEFINES += HAVE_GETTIMEOFDAY __UNIX_JACK__ __LINUX_ALSA__ __LINUX_PULSE__ __RTAUDIO_DUMMY__

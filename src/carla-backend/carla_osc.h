@@ -35,14 +35,14 @@ public:
         return serverPath;
     }
 
-    const OscData* getServerData() const
+    const CarlaOscData* get__Data() const
     {
-        return &serverData;
+        return &__Data;
     }
 
-    bool isRegistered() const
+    bool is__Registered() const
     {
-        return bool(serverData.target);
+        return bool(__Data.target);
     }
 
     // -------------------------------------
@@ -50,9 +50,9 @@ public:
     int handleMessage(const char* const path, int argc, lo_arg** const argv, const char* const types, lo_message msg);
 
 private:
-    OscData serverData;
     const char* serverPath;
     lo_server_thread serverThread;
+    CarlaOscData __Data;
 
     CarlaBackend::CarlaEngine* const engine;
 
