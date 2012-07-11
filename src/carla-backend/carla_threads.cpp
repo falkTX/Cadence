@@ -68,7 +68,7 @@ void CarlaCheckThread::run()
                 // --------------------------------------------------------------------------------------------------------
                 // Send peak values (OSC)
 
-                if (engine->isOsc__Registed())
+                if (engine->isOscControllerRegisted())
                 {
                     const unsigned short id = plugin->id();
 

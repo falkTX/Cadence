@@ -50,7 +50,7 @@ void osc_clear_data(CarlaOscData* const oscData)
 }
 
 static inline
-void osc_send_configure(const CarlaOscData* const oscData, const char* key, const char* value)
+void osc_send_configure(const CarlaOscData* const oscData, const char* const key, const char* const value)
 {
     qDebug("osc_send_configure(%s, %s, %s)", oscData->path, key, value);
     assert(key);
@@ -66,7 +66,7 @@ void osc_send_configure(const CarlaOscData* const oscData, const char* key, cons
 }
 
 static inline
-void osc_send_control(const CarlaOscData* const oscData, int index, float value)
+void osc_send_control(const CarlaOscData* const oscData, const int index, const float value)
 {
     qDebug("osc_send_control(%s, %i, %f)", oscData->path, index, value);
 
@@ -80,21 +80,7 @@ void osc_send_control(const CarlaOscData* const oscData, int index, float value)
 }
 
 static inline
-void osc_send_control(const CarlaOscData* const oscData, int index, double value)
-{
-    qDebug("osc_send_control(%s, %i, %f)", oscData->path, index, value);
-
-    if (oscData->target)
-    {
-        char targetPath[strlen(oscData->path)+9];
-        strcpy(targetPath, oscData->path);
-        strcat(targetPath, "/control");
-        lo_send(oscData->target, targetPath, "id", index, value);
-    }
-}
-
-static inline
-void osc_send_program(const CarlaOscData* const oscData, int index)
+void osc_send_program(const CarlaOscData* const oscData, const int index)
 {
     qDebug("osc_send_program(%s, %i)", oscData->path, index);
     assert(index >= 0);
@@ -109,7 +95,7 @@ void osc_send_program(const CarlaOscData* const oscData, int index)
 }
 
 static inline
-void osc_send_program(const CarlaOscData* const oscData, int program, int bank)
+void osc_send_program(const CarlaOscData* const oscData, const int program, const int bank)
 {
     qDebug("osc_send_program(%s, %i, %i)", oscData->path, program, bank);
     assert(program >= 0);
@@ -125,7 +111,7 @@ void osc_send_program(const CarlaOscData* const oscData, int program, int bank)
 }
 
 static inline
-void osc_send_midi_program(const CarlaOscData* const oscData, int index)
+void osc_send_midi_program(const CarlaOscData* const oscData, const int index)
 {
     qDebug("osc_send_midi_program(%s, %i)", oscData->path, index);
     assert(index >= 0);
@@ -140,7 +126,7 @@ void osc_send_midi_program(const CarlaOscData* const oscData, int index)
 }
 
 static inline
-void osc_send_midi(const CarlaOscData* const oscData, uint8_t buf[4])
+void osc_send_midi(const CarlaOscData* const oscData, const uint8_t buf[4])
 {
     qDebug("osc_send_midi(%s, 0x%X, %03i, %03i)", oscData->path, buf[1], buf[2], buf[3]);
     assert(buf[0] == 0);

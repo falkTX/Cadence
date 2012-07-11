@@ -114,7 +114,7 @@ public:
                 return PLUGIN_CATEGORY_SYNTH;
         }
 
-        return get_category_from_name(m_name);
+        return getPluginCategoryFromName(m_name);
     }
 
     long uniqueId()
@@ -332,7 +332,7 @@ public:
                 params += 1;
         }
 
-        if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK && (ains == 1 || aouts == 1) && ! h2)
+        if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK && (ains == 1 || aouts == 1) && ! h2)
             h2 = descriptor->instantiate(descriptor, sampleRate);
 
         if (ains > 0)
@@ -368,7 +368,7 @@ public:
             if (LADSPA_IS_PORT_AUDIO(PortType))
             {
 #ifndef BUILD_BRIDGE
-                if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+                if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
                 {
                     strcpy(portName, m_name);
                     strcat(portName, ":");
@@ -592,7 +592,7 @@ public:
         if (needsCin)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-in");
@@ -607,7 +607,7 @@ public:
         if (needsCout)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-out");
@@ -632,7 +632,7 @@ public:
         if (aouts > 0)
             m_hints |= PLUGIN_CAN_VOLUME;
 
-        if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK || (aouts >= 2 && aouts%2 == 0))
+        if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK || (aouts >= 2 && aouts%2 == 0))
             m_hints |= PLUGIN_CAN_BALANCE;
 
         x_client->activate();
@@ -1012,7 +1012,7 @@ public:
 
         if (! libOpen(filename))
         {
-            set_last_error(libError(filename));
+            setLastError(libError(filename));
             return false;
         }
 
@@ -1023,7 +1023,7 @@ public:
 
         if (! descfn)
         {
-            set_last_error("Could not find the LASDPA Descriptor in the plugin library");
+            setLastError("Could not find the LASDPA Descriptor in the plugin library");
             return false;
         }
 
@@ -1039,7 +1039,7 @@ public:
 
         if (! descriptor)
         {
-            set_last_error("Could not find the requested plugin Label in the plugin library");
+            setLastError("Could not find the requested plugin Label in the plugin library");
             return false;
         }
 
@@ -1050,7 +1050,7 @@ public:
 
         if (! handle)
         {
-            set_last_error("Plugin failed to initialize");
+            setLastError("Plugin failed to initialize");
             return false;
         }
 
@@ -1076,7 +1076,7 @@ public:
 
         if (! x_client->isOk())
         {
-            set_last_error("Failed to register plugin client");
+            setLastError("Failed to register plugin client");
             return false;
         }
 
@@ -1099,7 +1099,7 @@ short CarlaPlugin::newLADSPA(const initializer& init, const void* const extra)
 
     if (id < 0)
     {
-        set_last_error("Maximum number of plugins reached");
+        setLastError("Maximum number of plugins reached");
         return -1;
     }
 
@@ -1114,14 +1114,14 @@ short CarlaPlugin::newLADSPA(const initializer& init, const void* const extra)
     plugin->reload();
 
 #ifndef BUILD_BRIDGE
-    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         uint32_t ins  = plugin->audioInCount();
         uint32_t outs = plugin->audioOutCount();
 
         if (ins > 2 || outs > 2 || (ins != outs && ins != 0 && outs != 0))
         {
-            set_last_error("Carla's Rack Mode can only work with Mono or Stereo plugins, sorry!");
+            setLastError("Carla's Rack Mode can only work with Mono or Stereo plugins, sorry!");
             qWarning("data: %i %i | %i %i %i", ins > 2, outs > 2, ins != outs, ins != 0, outs != 0);
             delete plugin;
             return -1;

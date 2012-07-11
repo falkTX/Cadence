@@ -118,7 +118,7 @@ bool CarlaEngineJack::init(const char* name_)
         jack_on_shutdown(client, carla_jack_shutdown_callback, this);
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
         {
             rackJackPorts[rackPortAudioIn1]   = jack_port_register(client, "in1", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
             rackJackPorts[rackPortAudioIn2]   = jack_port_register(client, "in2", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
@@ -151,12 +151,12 @@ bool CarlaEngineJack::init(const char* name_)
         }
         else
         {
-            set_last_error("Failed to activate the JACK client");
+            setLastError("Failed to activate the JACK client");
             client = nullptr;
         }
     }
     else
-        set_last_error("Failed to create new JACK client");
+        setLastError("Failed to create new JACK client");
 
     return false;
 }
@@ -174,7 +174,7 @@ bool CarlaEngineJack::close()
     if (jack_deactivate(client) == 0)
     {
 #ifndef BUILD_BRIDGE
-        if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
         {
             jack_port_unregister(client, rackJackPorts[rackPortAudioIn1]);
             jack_port_unregister(client, rackJackPorts[rackPortAudioIn2]);
@@ -193,10 +193,10 @@ bool CarlaEngineJack::close()
             return true;
         }
         else
-            set_last_error("Failed to close the JACK client");
+            setLastError("Failed to close the JACK client");
     }
     else
-        set_last_error("Failed to deactivate the JACK client");
+        setLastError("Failed to deactivate the JACK client");
 
     client = nullptr;
     return false;
@@ -224,11 +224,11 @@ CarlaEngineClient* CarlaEngineJack::addClient(CarlaPlugin* const plugin)
     };
 
 #ifndef BUILD_BRIDGE
-    if (carla_options.process_mode == PROCESS_MODE_SINGLE_CLIENT)
+    if (carlaOptions.process_mode == PROCESS_MODE_SINGLE_CLIENT)
     {
         handle.client = client;
     }
-    else if (carla_options.process_mode == PROCESS_MODE_MULTIPLE_CLIENTS)
+    else if (carlaOptions.process_mode == PROCESS_MODE_MULTIPLE_CLIENTS)
 #endif
     {
         handle.client = jack_client_open(plugin->name(), JackNullOption, nullptr);
@@ -253,7 +253,7 @@ void CarlaEngineJack::handleBufferSizeCallback(uint32_t newBufferSize)
     bufferSize = newBufferSize;
 
 #ifndef BUILD_BRIDGE
-    if (carla_options.proccess_hq)
+    if (carlaOptions.proccess_hq)
         return;
 #endif
 
@@ -307,7 +307,7 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
     }
 
 #ifndef BUILD_BRIDGE
-    if (carla_options.process_mode == PROCESS_MODE_SINGLE_CLIENT)
+    if (carlaOptions.process_mode == PROCESS_MODE_SINGLE_CLIENT)
     {
         for (unsigned short i=0; i < MAX_PLUGINS; i++)
         {
@@ -322,7 +322,7 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
             }
         }
     }
-    else if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    else if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         // get buffers from jack
         float* audioIn1  = (float*)jack_port_get_buffer(rackJackPorts[rackPortAudioIn1], nframes);
@@ -407,7 +407,7 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
 
                 plugin->initBuffers();
 
-                if (carla_options.proccess_hq)
+                if (carlaOptions.proccess_hq)
                 {
                     float* ains_buffer2[2];
                     float* aouts_buffer2[2];

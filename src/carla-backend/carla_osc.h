@@ -21,6 +21,32 @@
 #include "carla_osc_includes.h"
 #include "carla_backend.h"
 
+#define CARLA_OSC_HANDLE_ARGS1 CarlaBackend::CarlaPlugin* const plugin
+#define CARLA_OSC_HANDLE_ARGS2 CARLA_OSC_HANDLE_ARGS1, const int argc, const lo_arg* const* const argv, const char* const types
+
+#define CARLA_OSC_CHECK_OSC_TYPES(/* argc, types, */ argcToCompare, typesToCompare)                                   \
+    /* check argument count */                                                                                        \
+    if (argc != argcToCompare)                                                                                        \
+    {                                                                                                                 \
+        qCritical("CarlaOsc::%s() - argument count mismatch: %i != %i", __FUNCTION__, argc, argcToCompare);           \
+        return 1;                                                                                                     \
+    }                                                                                                                 \
+    if (argc > 0)                                                                                                     \
+    {                                                                                                                 \
+        /* check for nullness */                                                                                      \
+        if (! (types && typesToCompare))                                                                              \
+        {                                                                                                             \
+            qCritical("CarlaOsc::%s() - argument types are null", __FUNCTION__);                                      \
+            return 1;                                                                                                 \
+        }                                                                                                             \
+        /* check argument types */                                                                                    \
+        if (strcmp(types, typesToCompare) != 0)                                                                       \
+        {                                                                                                             \
+            qCritical("CarlaOsc::%s() - argument types mismatch: '%s' != '%s'", __FUNCTION__, types, typesToCompare); \
+            return 1;                                                                                                 \
+        }                                                                                                             \
+    }
+
 class CarlaOsc
 {
 public:
@@ -30,66 +56,79 @@ public:
     void init(const char* const name);
     void close();
 
+    // -------------------------------------------------------------------
+
+    bool isControllerRegistered() const
+    {
+        return bool(controllerData.target);
+    }
+
+    const CarlaOscData* getControllerData() const
+    {
+        return &controllerData;
+    }
+
     const char* getServerPath() const
     {
         return serverPath;
     }
 
-    const CarlaOscData* get__Data() const
-    {
-        return &__Data;
-    }
-
-    bool is__Registered() const
-    {
-        return bool(__Data.target);
-    }
-
-    // -------------------------------------
-
-    int handleMessage(const char* const path, int argc, lo_arg** const argv, const char* const types, lo_message msg);
-
 private:
     const char* serverPath;
     lo_server_thread serverThread;
-    CarlaOscData __Data;
+    CarlaOscData controllerData;
 
     CarlaBackend::CarlaEngine* const engine;
 
     const char* m_name;
     size_t m_name_len;
 
-    // -------------------------------------
+    // -------------------------------------------------------------------
 
-    int handle_register(lo_arg** const argv, lo_address source);
+    static void osc_error_handler(const int num, const char* const msg, const char* const path)
+    {
+        qCritical("osc_error_handler(%i, %s, %s)", num, msg, path);
+    }
+
+    static int osc_message_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg, void* const user_data)
+    {
+        CarlaOsc* const osc = (CarlaOsc*)user_data;
+        return osc->handleMessage(path, argc, argv, types, msg);
+    }
+
+    int handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg);
+
+    int handle_register(const int argc, const lo_arg* const* const argv, const char* const types, const lo_address source);
     int handle_unregister();
 
-    int handle_update(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv, lo_address source);
-    int handle_configure(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv);
-    int handle_control(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv);
-    int handle_program(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv);
-    int handle_midi(CarlaBackend::CarlaPlugin* plugin, lo_arg **argv);
-    int handle_exiting(CarlaBackend::CarlaPlugin* plugin);
+    int handle_update(CARLA_OSC_HANDLE_ARGS2, const lo_address source);
+    int handle_configure(CARLA_OSC_HANDLE_ARGS2);
+    int handle_control(CARLA_OSC_HANDLE_ARGS2);
+    int handle_program(CARLA_OSC_HANDLE_ARGS2);
+    int handle_midi(CARLA_OSC_HANDLE_ARGS2);
+    int handle_exiting(CARLA_OSC_HANDLE_ARGS1);
 
-    int handle_set_active(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv);
-    int handle_set_drywet(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv);
-    int handle_set_volume(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv);
-    int handle_set_balance_left(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv);
-    int handle_set_balance_right(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv);
-    int handle_set_parameter(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv);
-    int handle_set_program(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv);
-    int handle_set_midi_program(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv);
-    int handle_note_on(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv);
-    int handle_note_off(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv);
+    int handle_set_active(CARLA_OSC_HANDLE_ARGS2);
+    int handle_set_drywet(CARLA_OSC_HANDLE_ARGS2);
+    int handle_set_volume(CARLA_OSC_HANDLE_ARGS2);
+    int handle_set_balance_left(CARLA_OSC_HANDLE_ARGS2);
+    int handle_set_balance_right(CARLA_OSC_HANDLE_ARGS2);
+    int handle_set_parameter(CARLA_OSC_HANDLE_ARGS2);
+    int handle_set_program(CARLA_OSC_HANDLE_ARGS2);
+    int handle_set_midi_program(CARLA_OSC_HANDLE_ARGS2);
+    int handle_note_on(CARLA_OSC_HANDLE_ARGS2);
+    int handle_note_off(CARLA_OSC_HANDLE_ARGS2);
 
-    int handle_lv2_atom_transfer(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv);
-    int handle_lv2_event_transfer(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv);
+    int handle_lv2_atom_transfer(CARLA_OSC_HANDLE_ARGS2);
+    int handle_lv2_event_transfer(CARLA_OSC_HANDLE_ARGS2);
 
-    int handle_bridge_ains_peak(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv);
-    int handle_bridge_aouts_peak(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv);
+    int handle_bridge_ains_peak(CARLA_OSC_HANDLE_ARGS2);
+    int handle_bridge_aouts_peak(CARLA_OSC_HANDLE_ARGS2);
 };
 
-//void osc_send_lv2_atom_transfer(OSC_SEND_ARGS void*);
-//void osc_send_lv2_event_transfer(OSC_SEND_ARGS const char* type, const char* key, const char* value);
+// -----------------------------------------------------------------------
+
+void osc_send_lv2_atom_transfer(const CarlaOscData* const oscData /* TODO */);
+void osc_send_lv2_event_transfer(const CarlaOscData* const oscData, const char* const type, const char* const key, const char* const value);
 
 #endif // CARLA_OSC_H

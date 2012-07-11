@@ -73,7 +73,7 @@ bool VstPluginCanDo(AEffect* const effect, const char* const feature)
 }
 
 static inline
-const char* VstEffectOpcode2str(int32_t opcode)
+const char* VstEffectOpcode2str(const int32_t opcode)
 {
     switch (opcode)
     {
@@ -259,7 +259,7 @@ const char* VstEffectOpcode2str(int32_t opcode)
 }
 
 static inline
-const char* VstMasterOpcode2str(int32_t opcode)
+const char* VstMasterOpcode2str(const int32_t opcode)
 {
     switch (opcode)
     {

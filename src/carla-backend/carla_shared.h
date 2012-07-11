@@ -26,24 +26,35 @@ CARLA_BACKEND_START_NAMESPACE
 } /* adjust editor indent */
 #endif
 
-const char* binarytype2str(BinaryType type);
-const char* plugintype2str(PluginType type);
-const char* optionstype2str(OptionsType type);
-const char* customdatatype2str(CustomDataType type);
+/*!
+ * @defgroup CarlaBackendShared Carla Backend shared code
+ * @{
+ */
 
-CustomDataType get_customdata_type(const char* const stype);
-const char* get_customdata_str(CustomDataType type);
-const char* get_binarybridge_path(BinaryType type);
+const char* BinaryType2str(const BinaryType type);
+const char* PluginType2str(const PluginType type);
+const char* PluginCategory2str(const PluginCategory category);
+const char* ParameterType2str(const ParameterType type);
+const char* InternalParametersIndex2str(const InternalParametersIndex index);
+const char* CustomDataType2str(const CustomDataType type);
+const char* GuiType2str(const GuiType type);
+const char* OptionsType2str(const OptionsType type);
+const char* CallbackType2str(const CallbackType type);
+const char* ProcessModeType2str(const ProcessModeType type);
 
-void* get_pointer(quintptr ptr_addr);
-PluginCategory get_category_from_name(const char* const name);
+CustomDataType getCustomDataStringType(const char* const stype);
+const char* getCustomDataTypeString(const CustomDataType type);
+const char* getBinaryBidgePath(const BinaryType type);
 
-const char* get_last_error();
-void set_last_error(const char* const error);
+void* getPointer(quintptr addr);
+PluginCategory getPluginCategoryFromName(const char* const name);
+
+const char* getLastError();
+void setLastError(const char* const error);
 
 #ifndef BUILD_BRIDGE
-void set_option(OptionsType option, int value, const char* const valueStr);
-void reset_options();
+void setOption(OptionsType option, int value, const char* const valueStr);
+void resetOptions();
 
 // Global options
 struct carla_options_t {
@@ -62,8 +73,10 @@ struct carla_options_t {
     const char* bridge_lv2x11;
     const char* bridge_vstx11;
 };
-extern carla_options_t carla_options;
+extern carla_options_t carlaOptions;
 #endif
+
+/**@}*/
 
 CARLA_BACKEND_END_NAMESPACE
 

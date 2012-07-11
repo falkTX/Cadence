@@ -18,7 +18,6 @@
 #ifndef CARLA_ENGINE_H
 #define CARLA_ENGINE_H
 
-#include "carla_backend.h"
 #include "carla_osc.h"
 #include "carla_threads.h"
 
@@ -35,11 +34,7 @@
 //#include "RtMidi.h"
 #endif
 
-#ifdef QTCREATOR_TEST
-namespace CarlaBackend {
-#else
 CARLA_BACKEND_START_NAMESPACE
-#endif
 
 #if 0
 } /* adjust editor indent */
@@ -132,7 +127,7 @@ struct CarlaEnginePortNativeHandle {
 #endif
 };
 
-// -------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 
 class CarlaEngineClient;
 class CarlaEngineBasePort;
@@ -280,9 +275,9 @@ public:
         return m_osc.getServerPath();
     }
 
-    bool isOsc__Registed() const
+    bool isOscControllerRegisted() const
     {
-        return m_osc.is__Registered();
+        return m_osc.isControllerRegistered();
     }
 
     void osc_send_add_plugin(int plugin_id, const char* plugin_name);
@@ -388,7 +383,7 @@ private:
     const bool m_lock;
 };
 
-// -------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 
 class CarlaEngineClient
 {
@@ -409,7 +404,7 @@ private:
     const CarlaEngineClientNativeHandle handle;
 };
 
-// -----------------------------------------
+// -----------------------------------------------------------------------
 
 class CarlaEngineBasePort
 {
@@ -425,7 +420,6 @@ protected:
     const CarlaEnginePortNativeHandle handle;
 };
 
-// -----------------------------------------
 
 class CarlaEngineAudioPort : public CarlaEngineBasePort
 {
@@ -438,8 +432,6 @@ public:
     float* getJackAudioBuffer(uint32_t nframes);
 #endif
 };
-
-// -----------------------------------------
 
 class CarlaEngineControlPort : public CarlaEngineBasePort
 {
@@ -454,8 +446,6 @@ public:
     void writeEvent(CarlaEngineControlEventType type, uint32_t time, uint8_t channel, uint8_t controller, double value);
 };
 
-// -----------------------------------------
-
 class CarlaEngineMidiPort : public CarlaEngineBasePort
 {
 public:
@@ -469,7 +459,7 @@ public:
     void writeEvent(uint32_t time, uint8_t* data, uint8_t size);
 };
 
-// -------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 
 #ifdef CARLA_ENGINE_JACK
 class CarlaEngineJack : public CarlaEngine
@@ -521,7 +511,7 @@ private:
 };
 #endif
 
-// -----------------------------------------
+// -----------------------------------------------------------------------
 
 #ifdef CARLA_ENGINE_RTAUDIO
 class CarlaEngineRtAudio : public CarlaEngine

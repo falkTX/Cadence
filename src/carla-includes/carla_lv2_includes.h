@@ -1015,7 +1015,7 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                             {
                                 Lilv::Node FeatureNode(lilv_nodes_get(Features, k));
 
-                                LV2_RDF_Feature* RDF_Feature = &RDF_UI->Features[h++];
+                                LV2_RDF_Feature* const RDF_Feature = &RDF_UI->Features[h++];
                                 RDF_Feature->Type = FeaturesR.contains(FeatureNode) ? LV2_FEATURE_REQUIRED : LV2_FEATURE_OPTIONAL;
                                 RDF_Feature->URI  = strdup(FeatureNode.as_uri());
                             }
@@ -1442,7 +1442,7 @@ void lv2_rdf_free(const LV2_RDF_Descriptor* const rdf_descriptor)
 // ------------------------------------------------------------------------------------------------
 
 static inline
-bool is_lv2_feature_supported(LV2_URI uri)
+bool is_lv2_feature_supported(const LV2_URI uri)
 {
     if (strcmp(uri, LV2_CORE__hardRTCapable) == 0)
         return true;
@@ -1476,7 +1476,7 @@ bool is_lv2_feature_supported(LV2_URI uri)
 }
 
 static inline
-bool is_lv2_ui_feature_supported(LV2_URI uri)
+bool is_lv2_ui_feature_supported(const LV2_URI uri)
 {
     if (is_lv2_feature_supported(uri))
         return true;
@@ -1508,7 +1508,7 @@ bool is_lv2_ui_feature_supported(LV2_URI uri)
 }
 
 static inline
-LV2_URI lv2_get_ui_uri(int UiType)
+LV2_URI lv2_get_ui_uri(const int UiType)
 {
     switch (UiType)
     {

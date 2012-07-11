@@ -29,7 +29,6 @@
 #endif
 
 // common includes
-#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -54,7 +53,7 @@ CARLA_BACKEND_START_NAMESPACE
  * @{
  */
 
-#define CARLA_PROCESS_CONTINUE_CHECK if (! m_enabled) { return x_engine->callback(CALLBACK_DEBUG, m_id, m_enabled, 0, 0.0); }
+#define CARLA_PROCESS_CONTINUE_CHECK if (! m_enabled) { x_engine->callback(CALLBACK_DEBUG, m_id, m_enabled, 0, 0.0); return; }
 
 #ifdef __WINE__
 typedef HWND GuiDataHandle;
@@ -181,7 +180,7 @@ public:
         m_filename = nullptr;
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
             cin_channel = m_id;
         else
 #endif
@@ -874,7 +873,7 @@ public:
     /*!
      * TODO
      */
-    virtual int setOscBridgeInfo(PluginBridgeInfoType type, lo_arg** const argv)
+    virtual int setOscBridgeInfo(PluginBridgeInfoType type, const lo_arg* const* const argv)
     {
         return 1;
         Q_UNUSED(type);
@@ -1267,7 +1266,7 @@ public:
             outBuffer[i] = aout.ports[i]->getJackAudioBuffer(nframes);
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.proccess_hq)
+        if (carlaOptions.proccess_hq)
         {
             float* inBuffer2[ain.count];
             float* outBuffer2[aout.count];
@@ -1301,12 +1300,12 @@ public:
     // OSC stuff
 
     /*!
-     * Register this plugin to the global OSC client.
+     * Register this plugin to the global OSC controller.
      */
     void registerToOsc()
     {
 #ifndef BUILD_BRIDGE
-        if (! x_engine->isOsc__Registed())
+        if (! x_engine->isOscControllerRegisted())
             return;
 
         x_engine->osc_send_add_plugin(m_id, m_name);
@@ -1356,7 +1355,7 @@ public:
         }
 
         // Plugin Parameters
-        if (param.count > 0 && param.count < carla_options.max_parameters)
+        if (param.count > 0 && param.count < carlaOptions.max_parameters)
         {
             char bufName[STR_MAX], bufUnit[STR_MAX];
 
@@ -1486,7 +1485,7 @@ public:
         // Check if it needs update
         bool updatePortsGui = (osc.data.target && (m_hints & PLUGIN_IS_BRIDGE) == 0);
 
-        if (! (x_engine->isOsc__Registed() || updatePortsGui))
+        if (! (x_engine->isOscControllerRegisted() || updatePortsGui))
             return;
 
         // Update
@@ -1521,7 +1520,7 @@ public:
     bool showOscGui()
     {
         // wait for UI 'update' call
-        for (int i=0; i < carla_options.osc_gui_timeout; i++)
+        for (int i=0; i < carlaOptions.osc_gui_timeout; i++)
         {
             if (osc.data.target)
             {

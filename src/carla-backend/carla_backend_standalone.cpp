@@ -116,7 +116,7 @@ bool engine_init(const char* driver_name, const char* client_name)
 
     if (! carla_engine)
     {
-        CarlaBackend::set_last_error("The seleted audio driver is not available!");
+        CarlaBackend::setLastError("The seleted audio driver is not available!");
         return false;
     }
 
@@ -132,7 +132,7 @@ bool engine_init(const char* driver_name, const char* client_name)
     bool started = carla_engine->init(client_name);
 
     if (started)
-        CarlaBackend::set_last_error("no error");
+        CarlaBackend::setLastError("no error");
 
     return started;
 }
@@ -143,7 +143,7 @@ bool engine_close()
 
     if (! carla_engine)
     {
-        CarlaBackend::set_last_error("Engine is not started");
+        CarlaBackend::setLastError("Engine is not started");
         return false;
     }
 
@@ -162,8 +162,8 @@ bool engine_close()
     get_midi_program_name(0, 0);
     get_real_plugin_name(0);
 
-    CarlaBackend::reset_options();
-    CarlaBackend::set_last_error(nullptr);
+    CarlaBackend::resetOptions();
+    CarlaBackend::setLastError(nullptr);
 
     delete carla_engine;
     carla_engine = nullptr;
@@ -182,7 +182,7 @@ bool is_engine_running()
 
 short add_plugin(CarlaBackend::BinaryType btype, CarlaBackend::PluginType ptype, const char* filename, const char* const name, const char* label, void* extra_stuff)
 {
-    qDebug("add_plugin(%s, %s, %s, %s, %s, %p)", CarlaBackend::binarytype2str(btype), CarlaBackend::plugintype2str(ptype), filename, name, label, extra_stuff);
+    qDebug("add_plugin(%s, %s, %s, %s, %s, %p)", CarlaBackend::BinaryType2str(btype), CarlaBackend::PluginType2str(ptype), filename, name, label, extra_stuff);
 
     return -1;
 
@@ -1080,7 +1080,7 @@ void set_gui_data(unsigned short plugin_id, int data, quintptr gui_addr)
 #ifdef __WINE__
         plugin->setGuiData(data, (HWND)gui_addr);
 #else
-        plugin->setGuiData(data, (QDialog*)CarlaBackend::get_pointer(gui_addr));
+        plugin->setGuiData(data, (QDialog*)CarlaBackend::getPointer(gui_addr));
 #endif
         return;
     }
@@ -1159,7 +1159,7 @@ double get_sample_rate()
 
 const char* get_last_error()
 {
-    return CarlaBackend::get_last_error();
+    return CarlaBackend::getLastError();
 }
 
 const char* get_host_osc_url()
@@ -1180,7 +1180,7 @@ void set_callback_function(CarlaBackend::CallbackFunc func)
 
 void set_option(CarlaBackend::OptionsType option, int value, const char* valueStr)
 {
-    CarlaBackend::set_option(option, value, valueStr);
+    CarlaBackend::setOption(option, value, valueStr);
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -1212,32 +1212,32 @@ void main_callback(CarlaBackend::CallbackType action, unsigned short plugin_id, 
     }
 }
 
-int main(int argc, char* argv[])
+int main(int /*argc*/, char* /*argv*/[])
 {
     //QApplication app(argc, argv);
 
-    Lv2World.init();
+    //    Lv2World.init();
 
-    const LV2_RDF_Descriptor* const descX = lv2_rdf_new("urn:juce:TalFilter2");
-    qDebug("desc: %p", descX);
+    //    const LV2_RDF_Descriptor* const descX = lv2_rdf_new("urn:juce:TalFilter2");
+    //    qDebug("desc: %p", descX);
 
-    if (! descX)
-        return 1;
+    //    if (! descX)
+    //        return 1;
 
-    const LV2_RDF_Descriptor* const desc = lv2_rdf_dup(descX);
-    lv2_rdf_free(descX);
+    //    const LV2_RDF_Descriptor* const desc = lv2_rdf_dup(descX);
+    //    lv2_rdf_free(descX);
 
-    qDebug("desc->Name:      %s",  desc->Name);
-    qDebug("desc->PortCount: %u",  desc->PortCount);
-    qDebug("desc->UniqueID:  %lu", desc->UniqueID);
+    //    qDebug("desc->Name:      %s",  desc->Name);
+    //    qDebug("desc->PortCount: %u",  desc->PortCount);
+    //    qDebug("desc->UniqueID:  %lu", desc->UniqueID);
 
-    for (uint32_t i=0; i < desc->PresetCount; i++)
-    {
-        const LV2_RDF_Preset* const Preset = &desc->Presets[i];
-        qDebug("  Preset #%02i: %s",  i, Preset->Label);
-    }
+    //    for (uint32_t i=0; i < desc->PresetCount; i++)
+    //    {
+    //        const LV2_RDF_Preset* const Preset = &desc->Presets[i];
+    //        qDebug("  Preset #%02i: %s",  i, Preset->Label);
+    //    }
 
-    lv2_rdf_free(desc);
+    //    lv2_rdf_free(desc);
 
 #if 0
     gui = new QDialog(nullptr);

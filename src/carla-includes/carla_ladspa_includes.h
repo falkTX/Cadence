@@ -114,7 +114,7 @@ void ladspa_rdf_free(const LADSPA_RDF_Descriptor* const rdf_descriptor)
 // ------------------------------------------------------------------------------------------------
 
 static inline
-bool is_rdf_port_good(int Type1, int Type2)
+bool is_rdf_port_good(const int Type1, const int Type2)
 {
     if (LADSPA_IS_PORT_INPUT(Type1) && ! LADSPA_IS_PORT_INPUT(Type2))
         return false;
