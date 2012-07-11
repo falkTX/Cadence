@@ -91,10 +91,10 @@ struct CarlaEngineMidiEvent {
     uint8_t size;
     uint8_t data[4];
 
-    //    CarlaEngineMidiEvent()
-    //        : time(0),
-    //          size(0),
-    //          data{0} {}
+    CarlaEngineMidiEvent()
+        : time(0),
+          size(0),
+          data{0} {}
 };
 
 struct CarlaTimeInfo {
@@ -113,12 +113,12 @@ struct CarlaTimeInfo {
         double beats_per_minute;
     } bbt;
 
-    //    CarlaTimeInfo()
-    //        : playing(false),
-    //          frame(0),
-    //          time(0),
-    //          valid(0),
-    //          bbt{0, 0, 0, 0.0, 0.0f, 0.0f, 0.0, 0.0} {}
+    CarlaTimeInfo()
+        : playing(false),
+          frame(0),
+          time(0),
+          valid(0),
+          bbt{0, 0, 0, 0.0, 0.0f, 0.0f, 0.0, 0.0} {}
 };
 
 struct CarlaEngineClientNativeHandle {
@@ -177,14 +177,15 @@ public:
     // -------------------------------------------------------------------
     // Plugin management
 
-    short getNewPluginIndex();
-    CarlaPlugin* getPluginById(const unsigned short id);
-    CarlaPlugin* getPluginByIndex(const unsigned short id);
+    short getNewPluginId() const;
+    CarlaPlugin* getPlugin(const unsigned short id) const;
     const char* getUniqueName(const char* const name);
 
     short addPlugin(const BinaryType btype, const PluginType ptype, const char* const filename, const char* const name, const char* const label, void* const extra = nullptr);
     short addPlugin(const PluginType ptype, const char* const filename, const char* const name, const char* const label, void* const extra = nullptr);
     bool removePlugin(const unsigned short id);
+
+    void idlePluginGuis();
 
     // -------------------------------------------------------------------
     // Information (base)
@@ -341,6 +342,8 @@ protected:
     {
         m_osc.close();
     }
+
+    void bufferSizeChanged(uint32_t newBufferSize);
 
 private:
     CarlaOsc m_osc;

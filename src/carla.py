@@ -2805,8 +2805,6 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         for x in range(MAX_PLUGINS):
             self.m_plugin_list.append(None)
 
-        CarlaHost.set_callback_function(self.callback_function)
-
         # -------------------------------------------------------------
         # Set-up GUI stuff
 
@@ -3520,6 +3518,9 @@ if __name__ == '__main__':
         CustomMessageBox(None, QMessageBox.Critical, "Error", "Could not connect to JACK",
             cString(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
         sys.exit(1)
+
+    # Set callback after engine started
+    CarlaHost.set_callback_function(gui.callback_function)
 
     # Set-up custom signal handling
     set_up_signals(gui)

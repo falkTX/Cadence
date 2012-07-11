@@ -104,11 +104,20 @@ struct PluginAudioData {
     uint32_t count;
     uint32_t* rindexes;
     CarlaEngineAudioPort** ports;
+
+    PluginAudioData()
+        : count(0),
+          rindexes(nullptr),
+          ports(nullptr) {}
 };
 
 struct PluginMidiData {
     CarlaEngineMidiPort* portMin;
     CarlaEngineMidiPort* portMout;
+
+    PluginMidiData()
+        : portMin(nullptr),
+          portMout(nullptr) {}
 };
 
 struct PluginParameterData {
@@ -117,30 +126,57 @@ struct PluginParameterData {
     ParameterRanges* ranges;
     CarlaEngineControlPort* portCin;
     CarlaEngineControlPort* portCout;
+
+    PluginParameterData()
+        : count(0),
+          data(nullptr),
+          ranges(nullptr),
+          portCin(nullptr),
+          portCout(nullptr) {}
 };
 
 struct PluginProgramData {
     uint32_t count;
     int32_t current;
-    const char** names;
+    const char* const* names;
+
+    PluginProgramData()
+        : count(0),
+          current(-1),
+          names(nullptr) {}
 };
 
 struct PluginMidiProgramData {
     uint32_t count;
     int32_t current;
     midi_program_t* data;
+
+    PluginMidiProgramData()
+        : count(0),
+          current(-1),
+          data(nullptr) {}
 };
 
 struct PluginPostEvent {
     PluginPostEventType type;
     int32_t index;
     double value;
+
+    PluginPostEvent()
+        : type(PluginPostEventNull),
+          index(-1),
+          value(0.0) {}
 };
 
 struct ExternalMidiNote {
     int8_t channel; // invalid = -1
     uint8_t note;
     uint8_t velo;
+
+    ExternalMidiNote()
+        : channel(-1),
+          note(0),
+          velo(0) {}
 };
 
 /*!
@@ -192,43 +228,12 @@ public:
         x_bal_left = -1.0;
         x_bal_right = 1.0;
 
-        ain.count = 0;
-        ain.ports = nullptr;
-        ain.rindexes = nullptr;
-
-        aout.count = 0;
-        aout.ports = nullptr;
-        aout.rindexes = nullptr;
-
-        midi.portMin  = nullptr;
-        midi.portMout = nullptr;
-
-        param.count  = 0;
-        param.data   = nullptr;
-        param.ranges = nullptr;
-        param.portCin  = nullptr;
-        param.portCout = nullptr;
-
-        prog.count   = 0;
-        prog.current = -1;
-        prog.names   = nullptr;
-
-        midiprog.count   = 0;
-        midiprog.current = -1;
-        midiprog.data    = nullptr;
-
 #ifndef BUILD_BRIDGE
         osc.data.path   = nullptr;
         osc.data.source = nullptr;
         osc.data.target = nullptr;
         osc.thread = nullptr;
 #endif
-
-        for (unsigned short i=0; i < MAX_POST_EVENTS; i++)
-            postEvents.data[i].type = PluginPostEventNull;
-
-        for (unsigned short i=0; i < MAX_MIDI_EVENTS; i++)
-            extMidiNotes[i].channel = -1;
     }
 
     virtual ~CarlaPlugin()
@@ -311,6 +316,8 @@ public:
 
     /*!
      * Get the plugin's id (as passed in the constructor).
+     *
+     * \see setId()
      */
     unsigned short id() const
     {
@@ -701,6 +708,19 @@ public:
 
     // -------------------------------------------------------------------
     // Set data (internal stuff)
+
+    /*!
+     * Set the plugin id to \a yesNo.
+     *
+     * \see id()
+     */
+    void setId(unsigned short id)
+    {
+        m_id = id;
+
+        if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+            cin_channel = id;
+    }
 
     /*!
      * Enable or disable the plugin according to \a yesNo.
@@ -1978,7 +1998,7 @@ public:
 
 protected:
     // static
-    const unsigned short m_id;
+    unsigned short m_id;
     CarlaEngine* const x_engine;
 
     // non-static

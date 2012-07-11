@@ -1095,7 +1095,7 @@ CarlaPlugin* CarlaPlugin::newLADSPA(const initializer& init, const void* const e
 {
     qDebug("CarlaPlugin::newLADSPA(%p, %s, %s, %s, %p)", init.engine, init.filename, init.name, init.label, extra);
 
-    short id = init.engine->getNewPluginIndex();
+    short id = init.engine->getNewPluginId();
 
     if (id < 0)
     {

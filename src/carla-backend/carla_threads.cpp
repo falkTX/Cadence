@@ -21,10 +21,10 @@
 #include <QtCore/QDebug>
 #include <QtCore/QProcess>
 
-// --------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // CarlaCheckThread
 
-CarlaCheckThread::CarlaCheckThread(CarlaBackend::CarlaEngine* const engine_, QObject* parent) :
+CarlaCheckThread::CarlaCheckThread(CarlaBackend::CarlaEngine* const engine_, QObject* const parent) :
     QThread(parent),
     engine(engine_)
 {
@@ -56,21 +56,21 @@ void CarlaCheckThread::run()
     {
         for (unsigned short i=0; i < CarlaBackend::MAX_PLUGINS; i++)
         {
-            CarlaBackend::CarlaPlugin* const plugin = engine->getPluginByIndex(i);
+            CarlaBackend::CarlaPlugin* const plugin = engine->getPlugin(i);
 
             if (plugin && plugin->enabled())
             {
-                // --------------------------------------------------------------------------------------------------------
+                // -------------------------------------------------------
                 // Process postponed events
 
                 plugin->postEventsRun();
 
-                // --------------------------------------------------------------------------------------------------------
+                // -------------------------------------------------------
                 // Update parameters (OSC)
 
                 plugin->updateOscParameterOutputs();
 
-                // --------------------------------------------------------------------------------------------------------
+                // -------------------------------------------------------
                 // Send peak values (OSC)
 
                 if (engine->isOscControllerRegisted())
@@ -95,10 +95,10 @@ void CarlaCheckThread::run()
     }
 }
 
-// --------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // CarlaPluginThread
 
-const char* pluginthreadmode2str(CarlaPluginThread::PluginThreadMode mode)
+const char* PluginThreadMode2str(const CarlaPluginThread::PluginThreadMode mode)
 {
     switch (mode)
     {
@@ -112,17 +112,17 @@ const char* pluginthreadmode2str(CarlaPluginThread::PluginThreadMode mode)
         return "PLUGIN_THREAD_BRIDGE";
     }
 
-    qWarning("CarlaPluginThread::pluginthreadmode2str(%i) - invalid mode", mode);
+    qWarning("CarlaPluginThread::PluginThreadMode2str(%i) - invalid mode", mode);
     return nullptr;
 }
 
-CarlaPluginThread::CarlaPluginThread(CarlaBackend::CarlaEngine* const engine_, CarlaBackend::CarlaPlugin* const plugin_, PluginThreadMode mode_, QObject* parent) :
+CarlaPluginThread::CarlaPluginThread(CarlaBackend::CarlaEngine* const engine_, CarlaBackend::CarlaPlugin* const plugin_, const PluginThreadMode mode_, QObject* const parent) :
     QThread(parent),
     engine(engine_),
     plugin(plugin_),
     mode(mode_)
 {
-    qDebug("CarlaPluginThread::CarlaPluginThread(%s, %s, %s)", plugin->name(), engine->getName(), pluginthreadmode2str(mode));
+    qDebug("CarlaPluginThread::CarlaPluginThread(%s, %s, %s)", plugin->name(), engine->getName(), PluginThreadMode2str(mode));
 
     m_process = nullptr;
 }

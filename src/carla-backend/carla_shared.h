@@ -46,14 +46,14 @@ CustomDataType getCustomDataStringType(const char* const stype);
 const char* getCustomDataTypeString(const CustomDataType type);
 const char* getBinaryBidgePath(const BinaryType type);
 
-void* getPointer(quintptr addr);
+void* getPointer(const quintptr addr);
 PluginCategory getPluginCategoryFromName(const char* const name);
 
 const char* getLastError();
 void setLastError(const char* const error);
 
 #ifndef BUILD_BRIDGE
-void setOption(OptionsType option, int value, const char* const valueStr);
+void setOption(const OptionsType option, const int value, const char* const valueStr);
 void resetOptions();
 
 // Global options

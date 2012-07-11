@@ -60,23 +60,23 @@ public:
 
     bool isControllerRegistered() const
     {
-        return bool(controllerData.target);
+        return bool(m_controllerData.target);
     }
 
     const CarlaOscData* getControllerData() const
     {
-        return &controllerData;
+        return &m_controllerData;
     }
 
     const char* getServerPath() const
     {
-        return serverPath;
+        return m_serverPath;
     }
 
 private:
-    const char* serverPath;
-    lo_server_thread serverThread;
-    CarlaOscData controllerData;
+    const char* m_serverPath;
+    lo_server_thread m_serverThread;
+    CarlaOscData m_controllerData;
 
     CarlaBackend::CarlaEngine* const engine;
 
@@ -92,8 +92,8 @@ private:
 
     static int osc_message_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg, void* const user_data)
     {
-        CarlaOsc* const osc = (CarlaOsc*)user_data;
-        return osc->handleMessage(path, argc, argv, types, msg);
+        CarlaOsc* const _this_ = (CarlaOsc*)user_data;
+        return _this_->handleMessage(path, argc, argv, types, msg);
     }
 
     int handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg);

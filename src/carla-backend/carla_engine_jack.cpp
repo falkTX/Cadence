@@ -257,20 +257,12 @@ void CarlaEngineJack::handleSampleRateCallback(double newSampleRate)
 
 void CarlaEngineJack::handleBufferSizeCallback(uint32_t newBufferSize)
 {
-    bufferSize = newBufferSize;
-
 #ifndef BUILD_BRIDGE
     if (carlaOptions.proccess_hq)
         return;
 #endif
 
-    for (unsigned short i=0; i < MAX_PLUGINS; i++)
-    {
-        CarlaPlugin* const plugin = getPluginByIndex(i);
-
-        if (plugin && plugin->enabled())
-            plugin->bufferSizeChanged(newBufferSize);
-    }
+    bufferSizeChanged(newBufferSize);
 }
 
 void CarlaEngineJack::handleFreewheelCallback(bool isFreewheel)
@@ -318,7 +310,7 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
     {
         for (unsigned short i=0; i < MAX_PLUGINS; i++)
         {
-            CarlaPlugin* const plugin = getPluginByIndex(i);
+            CarlaPlugin* const plugin = getPlugin(i);
 
             if (plugin && plugin->enabled())
             {
@@ -402,7 +394,7 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
         // process plugins
         for (unsigned short i=0; i < MAX_PLUGINS; i++)
         {
-            CarlaPlugin* const plugin = getPluginByIndex(i);
+            CarlaPlugin* const plugin = getPlugin(i);
 
             if (plugin && plugin->enabled())
             {

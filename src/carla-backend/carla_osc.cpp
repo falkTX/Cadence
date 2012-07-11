@@ -24,11 +24,11 @@ CarlaOsc::CarlaOsc(CarlaBackend::CarlaEngine* const engine_) :
     qDebug("CarlaOsc::CarlaOsc(%p)", engine_);
     assert(engine);
 
-    serverPath = nullptr;
-    serverThread = nullptr;
-    controllerData.path = nullptr;
-    controllerData.source = nullptr;
-    controllerData.target = nullptr;
+    m_serverPath = nullptr;
+    m_serverThread = nullptr;
+    m_controllerData.path = nullptr;
+    m_controllerData.source = nullptr;
+    m_controllerData.target = nullptr;
 
     m_name = nullptr;
     m_name_len = 0;
@@ -49,16 +49,16 @@ void CarlaOsc::init(const char* const name)
     m_name_len = strlen(name);
 
     // create new OSC thread
-    serverThread = lo_server_thread_new(nullptr, osc_error_handler);
+    m_serverThread = lo_server_thread_new(nullptr, osc_error_handler);
 
     // get our full OSC server path
-    char* const threadPath = lo_server_thread_get_url(serverThread);
-    serverPath = strdup(QString("%1%2").arg(threadPath).arg(name).toUtf8().constData());
+    char* const threadPath = lo_server_thread_get_url(m_serverThread);
+    m_serverPath = strdup(QString("%1%2").arg(threadPath).arg(name).toUtf8().constData());
     free(threadPath);
 
     // register message handler and start OSC thread
-    lo_server_thread_add_method(serverThread, nullptr, nullptr, osc_message_handler, this);
-    lo_server_thread_start(serverThread);
+    lo_server_thread_add_method(m_serverThread, nullptr, nullptr, osc_message_handler, this);
+    lo_server_thread_start(m_serverThread);
 }
 
 void CarlaOsc::close()
@@ -66,14 +66,14 @@ void CarlaOsc::close()
     qDebug("CarlaOsc::close()");
     assert(m_name);
 
-    osc_clear_data(&controllerData);
+    osc_clear_data(&m_controllerData);
 
-    lo_server_thread_stop(serverThread);
-    lo_server_thread_del_method(serverThread, nullptr, nullptr);
-    lo_server_thread_free(serverThread);
+    lo_server_thread_stop(m_serverThread);
+    lo_server_thread_del_method(m_serverThread, nullptr, nullptr);
+    lo_server_thread_free(m_serverThread);
 
-    free((void*)serverPath);
-    serverPath = nullptr;
+    free((void*)m_serverPath);
+    m_serverPath = nullptr;
 
     free((void*)m_name);
     m_name = nullptr;
@@ -85,7 +85,7 @@ void CarlaOsc::close()
 int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg)
 {
     qDebug("CarlaOsc::handleMessage(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
-    assert(serverThread);
+    assert(m_serverThread);
     assert(path);
 
     // Initial path check
@@ -122,7 +122,7 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
     }
 
     // Get plugin
-    CarlaBackend::CarlaPlugin* const plugin = engine->getPluginById(pluginId);
+    CarlaBackend::CarlaPlugin* const plugin = engine->getPlugin(pluginId);
 
     if (plugin == nullptr || plugin->id() != pluginId)
     {
@@ -228,9 +228,9 @@ int CarlaOsc::handle_register(const int argc, const lo_arg* const* const argv, c
     qDebug("CarlaOsc::handle_register()");
     CARLA_OSC_CHECK_OSC_TYPES(1, "s");
 
-    if (controllerData.path)
+    if (m_controllerData.path)
     {
-        qWarning("CarlaOsc::handle_register() - OSC backend already registered to %s", controllerData.path);
+        qWarning("CarlaOsc::handle_register() - OSC backend already registered to %s", m_controllerData.path);
         return 1;
     }
 
@@ -242,19 +242,19 @@ int CarlaOsc::handle_register(const int argc, const lo_arg* const* const argv, c
 
     host = lo_address_get_hostname(source);
     port = lo_address_get_port(source);
-    controllerData.source = lo_address_new(host, port);
+    m_controllerData.source = lo_address_new(host, port);
 
     host = lo_url_get_hostname(url);
     port = lo_url_get_port(url);
-    controllerData.path   = lo_url_get_path(url);
-    controllerData.target = lo_address_new(host, port);
+    m_controllerData.path   = lo_url_get_path(url);
+    m_controllerData.target = lo_address_new(host, port);
 
     free((void*)host);
     free((void*)port);
 
     for (unsigned short i=0; i < CarlaBackend::MAX_PLUGINS; i++)
     {
-        CarlaBackend::CarlaPlugin* const plugin = engine->getPluginByIndex(i);
+        CarlaBackend::CarlaPlugin* const plugin = engine->getPlugin(i);
 
         if (plugin && plugin->enabled())
             plugin->registerToOsc();
@@ -267,13 +267,13 @@ int CarlaOsc::handle_unregister()
 {
     qDebug("CarlaOsc::handle_unregister()");
 
-    if (! controllerData.path)
+    if (! m_controllerData.path)
     {
         qWarning("CarlaOsc::handle_unregister() - OSC backend is not registered yet");
         return 1;
     }
 
-    osc_clear_data(&controllerData);
+    osc_clear_data(&m_controllerData);
     return 0;
 }
 

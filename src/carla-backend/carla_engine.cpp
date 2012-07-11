@@ -40,15 +40,6 @@ CarlaEngine::CarlaEngine() :
     name = nullptr;
     sampleRate = 0.0;
     bufferSize = 0;
-
-    memset(&timeInfo, 0, sizeof(CarlaTimeInfo));
-
-#ifndef BUILD_BRIDGE
-    memset(rackControlEventsIn,  0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
-    memset(rackControlEventsOut, 0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
-    memset(rackMidiEventsIn,  0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
-    memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
-#endif
 }
 
 CarlaEngine::~CarlaEngine()
@@ -87,7 +78,7 @@ int CarlaEngine::maxPortNameSize()
 // -------------------------------------------------------------------
 // plugin management
 
-short CarlaEngine::getNewPluginIndex()
+short CarlaEngine::getNewPluginId() const
 {
 #ifdef BUILD_BRIDGE
     const unsigned short max = MAX_PLUGINS;
@@ -97,30 +88,20 @@ short CarlaEngine::getNewPluginIndex()
 
     for (unsigned short i=0; i < max; i++)
     {
-        if (m_carlaPlugins[i] == nullptr)
+        if (! m_carlaPlugins[i])
             return i;
     }
 
     return -1;
 }
 
-CarlaPlugin* CarlaEngine::getPluginById(const unsigned short id)
+CarlaPlugin* CarlaEngine::getPlugin(const unsigned short id) const
 {
-    for (unsigned short i=0; i < MAX_PLUGINS; i++)
-    {
-        CarlaPlugin* const plugin = m_carlaPlugins[i];
+    assert(id < MAX_PLUGINS);
 
-        if (plugin && plugin->id() == id)
-            return plugin;
-    }
-
+    if (id < MAX_PLUGINS)
+        return m_carlaPlugins[id];
     return nullptr;
-}
-
-CarlaPlugin* CarlaEngine::getPluginByIndex(const unsigned short index)
-{
-    assert(index < MAX_PLUGINS);
-    return m_carlaPlugins[index];
 }
 
 const char* CarlaEngine::getUniqueName(const char* const name)
@@ -215,32 +196,35 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
 
         //plugin = CarlaPlugin::newBridge(init, btype, ptype);
     }
+    else
 #endif
-    switch (ptype)
     {
-    case PLUGIN_NONE:
-        break;
-    case PLUGIN_LADSPA:
-        plugin = CarlaPlugin::newLADSPA(init, extra);
-        break;
-    case PLUGIN_DSSI:
-        //id = CarlaPlugin::newDSSI(init, extra);
-        break;
-    case PLUGIN_LV2:
-        //id = CarlaPlugin::newLV2(init);
-        break;
-    case PLUGIN_VST:
-        //id = CarlaPlugin::newVST(init);
-        break;
-    case PLUGIN_GIG:
-        //id = CarlaPlugin::newGIG(init);
-        break;
-    case PLUGIN_SF2:
-        //id = CarlaPlugin::newSF2(init);
-        break;
-    case PLUGIN_SFZ:
-        //id = CarlaPlugin::newSFZ(init);
-        break;
+        switch (ptype)
+        {
+        case PLUGIN_NONE:
+            break;
+        case PLUGIN_LADSPA:
+            plugin = CarlaPlugin::newLADSPA(init, extra);
+            break;
+        case PLUGIN_DSSI:
+            //id = CarlaPlugin::newDSSI(init, extra);
+            break;
+        case PLUGIN_LV2:
+            //id = CarlaPlugin::newLV2(init);
+            break;
+        case PLUGIN_VST:
+            //id = CarlaPlugin::newVST(init);
+            break;
+        case PLUGIN_GIG:
+            //id = CarlaPlugin::newGIG(init);
+            break;
+        case PLUGIN_SF2:
+            //id = CarlaPlugin::newSF2(init);
+            break;
+        case PLUGIN_SFZ:
+            //id = CarlaPlugin::newSFZ(init);
+            break;
+        }
     }
 
     if (plugin == nullptr)
@@ -274,6 +258,15 @@ bool CarlaEngine::removePlugin(const unsigned short id)
             m_carlaPlugins[i] = nullptr;
             m_uniqueNames[i]  = nullptr;
 
+            for (unsigned short j=i+1; j < MAX_PLUGINS; i++, j++)
+            {
+                m_carlaPlugins[i] = m_carlaPlugins[j];
+                m_uniqueNames[i]  = m_uniqueNames[j];
+
+                if (m_carlaPlugins[i])
+                    m_carlaPlugins[i]->setId(j);
+            }
+
             if (isRunning())
                 m_checkThread.start(QThread::HighPriority);
 
@@ -288,6 +281,31 @@ bool CarlaEngine::removePlugin(const unsigned short id)
     }
 
     return false;
+}
+
+void CarlaEngine::idlePluginGuis()
+{
+    for (unsigned short i=0; i < MAX_PLUGINS; i++)
+    {
+        CarlaPlugin* const plugin = m_carlaPlugins[i];
+
+        if (plugin && plugin->enabled())
+            plugin->idleGui();
+    }
+}
+
+// -------------------------------------------------------------------
+// protected calls
+
+void CarlaEngine::bufferSizeChanged(uint32_t newBufferSize)
+{
+    bufferSize = newBufferSize;
+
+    for (unsigned short i=0; i < MAX_PLUGINS; i++)
+    {
+        if (m_carlaPlugins[i] && m_carlaPlugins[i]->enabled())
+            m_carlaPlugins[i]->bufferSizeChanged(newBufferSize);
+    }
 }
 
 // -------------------------------------------------------------------------------------------------------------------

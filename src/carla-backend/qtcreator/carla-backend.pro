@@ -55,7 +55,7 @@ DEFINES += CARLA_ENGINE_JACK
 DEFINES += QTCREATOR_TEST
 LIBS    = ../../carla-lilv/carla_lilv.a -ldl
 
-QMAKE_CXXFLAGS *= -fPIC -std=c++11
+QMAKE_CXXFLAGS *= -fPIC -std=c++0x
 
 #INCLUDEPATH += ../rtaudio/rtaudio-4.0.11
 #SOURCES += ../rtaudio/rtaudio-4.0.11/RtAudio.cpp

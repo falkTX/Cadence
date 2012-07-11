@@ -373,11 +373,11 @@ const char* getBinaryBidgePath(const BinaryType type)
 
 // -------------------------------------------------------------------------------------------------------------------
 
-void* getPointer(quintptr addr)
+void* getPointer(const quintptr addr)
 {
     qDebug("CarlaBackend::getPointer(" P_UINTPTR ")", addr);
 
-    quintptr* ptr = (quintptr*)addr;
+    quintptr* const ptr = (quintptr*)addr;
     return (void*)ptr;
 }
 
@@ -474,7 +474,7 @@ void setLastError(const char* const error)
 // -------------------------------------------------------------------------------------------------------------------
 
 #ifndef BUILD_BRIDGE
-void setOption(OptionsType option, int value, const char* const valueStr)
+void setOption(const OptionsType option, const int value, const char* const valueStr)
 {
     qDebug("CarlaBackend::setOption(%s, %i, %s)", OptionsType2str(option), value, valueStr);
 
@@ -482,7 +482,7 @@ void setOption(OptionsType option, int value, const char* const valueStr)
     {
     case OPTION_PROCESS_MODE:
         if (value < PROCESS_MODE_SINGLE_CLIENT || value > PROCESS_MODE_CONTINUOUS_RACK)
-            value = PROCESS_MODE_MULTIPLE_CLIENTS;
+            return qCritical("CarlaBackend::setOption(%s, %i, ...) - invalid value", OptionsType2str(option), value);
         carlaOptions.process_mode = (ProcessModeType)value;
         break;
     case OPTION_MAX_PARAMETERS:
