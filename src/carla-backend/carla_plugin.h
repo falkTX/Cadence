@@ -167,6 +167,7 @@ public:
         x_client(nullptr)
     {
         qDebug("CarlaPlugin::CarlaPlugin()");
+        assert(engine);
 
         m_type  = PLUGIN_NONE;
         m_hints = 0;
@@ -1962,15 +1963,15 @@ public:
         const char* const label;
     };
 
-    static short newLADSPA(const initializer& init, const void* const extra);
-    static short newDSSI(const initializer& init, const void* const extra);
-    static short newLV2(const initializer& init);
-    static short newVST(const initializer& init);
-    static short newGIG(const initializer& init);
-    static short newSF2(const initializer& init);
-    static short newSFZ(const initializer& init);
+    static CarlaPlugin* newLADSPA(const initializer& init, const void* const extra);
+    ///static short newDSSI(const initializer& init, const void* const extra);
+    //static short newLV2(const initializer& init);
+    //static short newVST(const initializer& init);
+    //static short newGIG(const initializer& init);
+    //static short newSF2(const initializer& init);
+    //static short newSFZ(const initializer& init);
 #ifndef BUILD_BRIDGE
-    static short newBridge(const initializer& init, BinaryType btype, PluginType ptype);
+    //static short newBridge(const initializer& init, BinaryType btype, PluginType ptype);
 #endif
 
     // -------------------------------------------------------------------

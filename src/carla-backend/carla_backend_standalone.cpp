@@ -184,55 +184,7 @@ short add_plugin(CarlaBackend::BinaryType btype, CarlaBackend::PluginType ptype,
 {
     qDebug("add_plugin(%s, %s, %s, %s, %s, %p)", CarlaBackend::BinaryType2str(btype), CarlaBackend::PluginType2str(ptype), filename, name, label, extra_stuff);
 
-    return -1;
-
-#if 0
-    CarlaBackend::CarlaPlugin::initializer init = {
-        &carla_engine,
-        filename,
-        name,
-        label
-    };
-
-#ifndef BUILD_BRIDGE
-    if (btype != BINARY_NATIVE)
-    {
-#ifdef CARLA_ENGINE_JACK
-        if (CarlaBackend::carla_options.process_mode != CarlaBackend::PROCESS_MODE_MULTIPLE_CLIENTS)
-        {
-            CarlaBackend::set_last_error("Can only use bridged plugins in JACK Multi-Client mode");
-            return -1;
-        }
-#else
-        CarlaBackend::set_last_error("Can only use bridged plugins with JACK backend");
-        return -1;
-#endif
-
-        return CarlaBackend::CarlaPlugin::newBridge(init, btype, ptype);
-    }
-#endif
-
-    switch (ptype)
-    {
-    case CarlaBackend::PLUGIN_LADSPA:
-        return CarlaBackend::CarlaPlugin::newLADSPA(init, extra_stuff);
-    case CarlaBackend::PLUGIN_DSSI:
-        return CarlaBackend::CarlaPlugin::newDSSI(init, extra_stuff);
-    case CarlaBackend::PLUGIN_LV2:
-        return CarlaBackend::CarlaPlugin::newLV2(init);
-    case CarlaBackend::PLUGIN_VST:
-        return CarlaBackend::CarlaPlugin::newVST(init);
-    case CarlaBackend::PLUGIN_GIG:
-        return CarlaBackend::CarlaPlugin::newGIG(init);
-    case CarlaBackend::PLUGIN_SF2:
-        return CarlaBackend::CarlaPlugin::newSF2(init);
-    case CarlaBackend::PLUGIN_SFZ:
-        return CarlaBackend::CarlaPlugin::newSFZ(init);
-    default:
-        CarlaBackend::set_last_error("Unknown plugin type");
-        return -1;
-    }
-#endif
+    return carla_engine->addPlugin(btype, ptype, filename, name, label, extra_stuff);
 }
 
 bool remove_plugin(unsigned short plugin_id)
@@ -1212,48 +1164,25 @@ void main_callback(CarlaBackend::CallbackType action, unsigned short plugin_id, 
     }
 }
 
-int main(int /*argc*/, char* /*argv*/[])
+int main(int argc, char* argv[])
 {
-    //QApplication app(argc, argv);
+    QApplication app(argc, argv);
 
-    //    Lv2World.init();
+    //set_option(CarlaBackend::OPTION_PROCESS_MODE, CarlaBackend::PROCESS_MODE_CONTINUOUS_RACK, nullptr);
 
-    //    const LV2_RDF_Descriptor* const descX = lv2_rdf_new("urn:juce:TalFilter2");
-    //    qDebug("desc: %p", descX);
-
-    //    if (! descX)
-    //        return 1;
-
-    //    const LV2_RDF_Descriptor* const desc = lv2_rdf_dup(descX);
-    //    lv2_rdf_free(descX);
-
-    //    qDebug("desc->Name:      %s",  desc->Name);
-    //    qDebug("desc->PortCount: %u",  desc->PortCount);
-    //    qDebug("desc->UniqueID:  %lu", desc->UniqueID);
-
-    //    for (uint32_t i=0; i < desc->PresetCount; i++)
-    //    {
-    //        const LV2_RDF_Preset* const Preset = &desc->Presets[i];
-    //        qDebug("  Preset #%02i: %s",  i, Preset->Label);
-    //    }
-
-    //    lv2_rdf_free(desc);
-
-#if 0
     gui = new QDialog(nullptr);
 
-    if (engine_init("PulseAudio", "carla_demo"))
+    if (engine_init("JACK", "carla_demo"))
     {
         set_callback_function(main_callback);
-        ::set_option(CarlaBackend::OPTION_PROCESS_MODE, CarlaBackend::PROCESS_MODE_CONTINUOUS_RACK, nullptr);
 
-        short id = add_plugin(BINARY_NATIVE, CarlaBackend::PLUGIN_LV2, "xxx", "name!!!", "http://linuxdsp.co.uk/lv2/peq-2a.lv2", nullptr);
+        short id = add_plugin(BINARY_NATIVE, CarlaBackend::PLUGIN_LADSPA, "/usr/lib/ladspa/delay.so", "HAHA name!!!", "delay_5s", nullptr);
 
         if (id >= 0)
         {
             qDebug("Main Initiated, id = %u", id);
 
-            const GuiInfo* guiInfo = get_gui_info(id);
+            const GuiInfo* const guiInfo = get_gui_info(id);
 
             if (guiInfo->type == CarlaBackend::GUI_INTERNAL_QT4 || guiInfo->type == CarlaBackend::GUI_INTERNAL_X11)
             {
@@ -1276,7 +1205,6 @@ int main(int /*argc*/, char* /*argv*/[])
         qCritical("failed to start backend engine, reason:\n%s", get_last_error());
 
     delete gui;
-#endif
     return 0;
 }
 

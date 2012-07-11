@@ -47,7 +47,14 @@ CARLA_BACKEND_START_NAMESPACE
  * @{
  */
 
+/*!
+ * @defgroup TimeInfoValidHints TimeInfo Valid Hints
+ *
+ * Various hints used for CarlaTimeInfo::valid.
+ * @{
+ */
 const uint32_t CarlaEngineTimeBBT = 0x1;
+/**@}*/
 
 enum CarlaEnginePortType {
     CarlaEnginePortTypeAudio,
@@ -156,7 +163,7 @@ public:
     // -------------------------------------------------------------------
     // virtual, per-engine type calls
 
-    virtual bool init(const char* const name) = 0;
+    virtual bool init(const char* const clientName) = 0;
     virtual bool close() = 0;
 
     virtual bool isOnAudioThread() = 0;
@@ -166,18 +173,19 @@ public:
     virtual CarlaEngineClient* addClient(CarlaPlugin* const plugin) = 0;
 
     // -------------------------------------------------------------------
-    // plugin management
+    // Plugin management
 
     short getNewPluginIndex();
-    CarlaPlugin* getPluginById(unsigned short id);
-    CarlaPlugin* getPluginByIndex(unsigned short id);
-    const char* getUniqueName(const char* name);
+    CarlaPlugin* getPluginById(const unsigned short id);
+    CarlaPlugin* getPluginByIndex(const unsigned short id);
+    const char* getUniqueName(const char* const name);
 
-    void addPlugin(unsigned short id, CarlaPlugin* plugin);
-    bool removePlugin(unsigned short id);
+    short addPlugin(const BinaryType btype, const PluginType ptype, const char* const filename, const char* const name, const char* const label, void* const extra = nullptr);
+    short addPlugin(const PluginType ptype, const char* const filename, const char* const name, const char* const label, void* const extra = nullptr);
+    bool removePlugin(const unsigned short id);
 
     // -------------------------------------------------------------------
-    // information (base)
+    // Information (base)
 
     const char* getName() const
     {
@@ -200,30 +208,30 @@ public:
     }
 
     // -------------------------------------------------------------------
-    // information (audio peaks)
+    // Information (audio peaks)
 
-    double getInputPeak(unsigned short pluginId, unsigned short id)
+    double getInputPeak(const unsigned short pluginId, const unsigned short id) const
     {
         assert(pluginId < MAX_PLUGINS);
         assert(id < MAX_PEAKS);
         return m_insPeak[pluginId*MAX_PEAKS + id];
     }
 
-    double getOutputPeak(unsigned short pluginId, unsigned short id)
+    double getOutputPeak(const unsigned short pluginId, const unsigned short id) const
     {
         assert(pluginId < MAX_PLUGINS);
         assert(id < MAX_PEAKS);
         return m_outsPeak[pluginId*MAX_PEAKS + id];
     }
 
-    void setInputPeak(unsigned short pluginId, unsigned short id, double value)
+    void setInputPeak(const unsigned short pluginId, const unsigned short id, double value)
     {
         assert(pluginId < MAX_PLUGINS);
         assert(id < MAX_PEAKS);
         m_insPeak[pluginId*MAX_PEAKS + id] = value;
     }
 
-    void setOutputPeak(unsigned short pluginId, unsigned short id, double value)
+    void setOutputPeak(const unsigned short pluginId, const unsigned short id, double value)
     {
         assert(pluginId < MAX_PLUGINS);
         assert(id < MAX_PEAKS);
@@ -231,15 +239,15 @@ public:
     }
 
     // -------------------------------------------------------------------
-    // callback
+    // Callback
 
-    void callback(CallbackType action, unsigned short pluginId, int value1, int value2, double value3)
+    void callback(const CallbackType action, const unsigned short pluginId, const int value1, const int value2, const double value3)
     {
         if (m_callback)
             m_callback(action, pluginId, value1, value2, value3);
     }
 
-    void setCallback(CallbackFunc func)
+    void setCallback(const CallbackFunc func)
     {
         m_callback = func;
     }
@@ -268,16 +276,16 @@ public:
     }
 
     // -------------------------------------------------------------------
-    // osc stuff
-
-    const char* getOscServerPath() const
-    {
-        return m_osc.getServerPath();
-    }
+    // OSC Stuff
 
     bool isOscControllerRegisted() const
     {
         return m_osc.isControllerRegistered();
+    }
+
+    const char* getOscServerPath() const
+    {
+        return m_osc.getServerPath();
     }
 
     void osc_send_add_plugin(int plugin_id, const char* plugin_name);
@@ -304,7 +312,7 @@ public:
 
 #ifndef BUILD_BRIDGE
     // -------------------------------------------------------------------
-    // rack mode
+    // Rack mode
 
     static const unsigned short MAX_ENGINE_CONTROL_EVENTS = 512;
     static const unsigned short MAX_ENGINE_MIDI_EVENTS    = 512;
@@ -470,7 +478,7 @@ public:
 
     // -------------------------------------
 
-    bool init(const char* const name);
+    bool init(const char* const clientName);
     bool close();
 
     bool isOnAudioThread();
@@ -522,7 +530,7 @@ public:
 
     // -------------------------------------
 
-    bool init(const char* const name);
+    bool init(const char* const clientName);
     bool close();
 
     bool isOnAudioThread();

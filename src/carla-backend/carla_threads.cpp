@@ -31,6 +31,11 @@ CarlaCheckThread::CarlaCheckThread(CarlaBackend::CarlaEngine* const engine_, QOb
     qDebug("CarlaCheckThread::CarlaCheckThread(%p)", parent);
 }
 
+CarlaCheckThread::~CarlaCheckThread()
+{
+    qDebug("CarlaCheckThread::~CarlaCheckThread()");
+}
+
 void CarlaCheckThread::stopNow()
 {
     m_stopNow = true;

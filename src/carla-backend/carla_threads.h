@@ -31,6 +31,8 @@ class CarlaCheckThread : public QThread
 {
 public:
     CarlaCheckThread(CarlaBackend::CarlaEngine* const engine, QObject* parent = nullptr);
+    ~CarlaCheckThread();
+
     void stopNow();
 
 protected:

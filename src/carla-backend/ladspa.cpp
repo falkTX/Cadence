@@ -1091,7 +1091,7 @@ private:
     float* param_buffers;
 };
 
-short CarlaPlugin::newLADSPA(const initializer& init, const void* const extra)
+CarlaPlugin* CarlaPlugin::newLADSPA(const initializer& init, const void* const extra)
 {
     qDebug("CarlaPlugin::newLADSPA(%p, %s, %s, %s, %p)", init.engine, init.filename, init.name, init.label, extra);
 
@@ -1100,7 +1100,7 @@ short CarlaPlugin::newLADSPA(const initializer& init, const void* const extra)
     if (id < 0)
     {
         setLastError("Maximum number of plugins reached");
-        return -1;
+        return nullptr;
     }
 
     LadspaPlugin* const plugin = new LadspaPlugin(init.engine, id);
@@ -1108,7 +1108,7 @@ short CarlaPlugin::newLADSPA(const initializer& init, const void* const extra)
     if (! plugin->init(init.filename, init.name, init.label, (const LADSPA_RDF_Descriptor*)extra))
     {
         delete plugin;
-        return -1;
+        return nullptr;
     }
 
     plugin->reload();
@@ -1124,15 +1124,14 @@ short CarlaPlugin::newLADSPA(const initializer& init, const void* const extra)
             setLastError("Carla's Rack Mode can only work with Mono or Stereo plugins, sorry!");
             qWarning("data: %i %i | %i %i %i", ins > 2, outs > 2, ins != outs, ins != 0, outs != 0);
             delete plugin;
-            return -1;
+            return nullptr;
         }
     }
 #endif
 
     plugin->registerToOsc();
-    init.engine->addPlugin(id, plugin);
 
-    return id;
+    return plugin;
 }
 
 /**@}*/

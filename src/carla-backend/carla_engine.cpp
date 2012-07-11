@@ -104,7 +104,7 @@ short CarlaEngine::getNewPluginIndex()
     return -1;
 }
 
-CarlaPlugin* CarlaEngine::getPluginById(unsigned short id)
+CarlaPlugin* CarlaEngine::getPluginById(const unsigned short id)
 {
     for (unsigned short i=0; i < MAX_PLUGINS; i++)
     {
@@ -117,20 +117,20 @@ CarlaPlugin* CarlaEngine::getPluginById(unsigned short id)
     return nullptr;
 }
 
-CarlaPlugin* CarlaEngine::getPluginByIndex(unsigned short index)
+CarlaPlugin* CarlaEngine::getPluginByIndex(const unsigned short index)
 {
     assert(index < MAX_PLUGINS);
     return m_carlaPlugins[index];
 }
 
-const char* CarlaEngine::getUniqueName(const char* name)
+const char* CarlaEngine::getUniqueName(const char* const name)
 {
     QString qname(name);
 
     if (qname.isEmpty())
         qname = "(No name)";
 
-    qname.truncate(maxClientNameSize()-1);
+    qname.truncate(maxClientNameSize()-5-1); // 5 = strlen(" (10)")
     qname.replace(":", "."); // ":" is used in JACK to split client/port names
 
     for (unsigned short i=0; i < MAX_PLUGINS; i++)
@@ -183,15 +183,78 @@ const char* CarlaEngine::getUniqueName(const char* name)
     return strdup(qname.toUtf8().constData());
 }
 
-void CarlaEngine::addPlugin(unsigned short id, CarlaPlugin* plugin)
+short CarlaEngine::addPlugin(const PluginType ptype, const char* const filename, const char* const name, const char* const label, void* const extra)
 {
-    assert(id < MAX_PLUGINS);
-    m_carlaPlugins[id] = plugin;
-    m_uniqueNames[id]  = plugin->name();
-    // TODO - make this bool, or different somehow
+    return addPlugin(BINARY_NATIVE, ptype, filename, name, label, extra);
 }
 
-bool CarlaEngine::removePlugin(unsigned short id)
+short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, const char* const filename, const char* const name, const char* const label, void* const extra)
+{
+    CarlaPlugin::initializer init = {
+        this,
+        filename,
+        name,
+        label
+    };
+
+    CarlaPlugin* plugin = nullptr;
+
+#ifndef BUILD_BRIDGE
+    if (btype != BINARY_NATIVE)
+    {
+#  ifdef CARLA_ENGINE_JACK
+        if (carlaOptions.process_mode != CarlaBackend::PROCESS_MODE_MULTIPLE_CLIENTS)
+        {
+            setLastError("Can only use bridged plugins in JACK Multi-Client mode");
+            return -1;
+        }
+#  else
+        setLastError("Can only use bridged plugins with JACK backend");
+        return -1;
+#  endif
+
+        //plugin = CarlaPlugin::newBridge(init, btype, ptype);
+    }
+#endif
+    switch (ptype)
+    {
+    case PLUGIN_NONE:
+        break;
+    case PLUGIN_LADSPA:
+        plugin = CarlaPlugin::newLADSPA(init, extra);
+        break;
+    case PLUGIN_DSSI:
+        //id = CarlaPlugin::newDSSI(init, extra);
+        break;
+    case PLUGIN_LV2:
+        //id = CarlaPlugin::newLV2(init);
+        break;
+    case PLUGIN_VST:
+        //id = CarlaPlugin::newVST(init);
+        break;
+    case PLUGIN_GIG:
+        //id = CarlaPlugin::newGIG(init);
+        break;
+    case PLUGIN_SF2:
+        //id = CarlaPlugin::newSF2(init);
+        break;
+    case PLUGIN_SFZ:
+        //id = CarlaPlugin::newSFZ(init);
+        break;
+    }
+
+    if (plugin == nullptr)
+        return -1;
+
+    const short id = plugin->id();
+
+    m_carlaPlugins[id] = plugin;
+    m_uniqueNames[id]  = plugin->name();
+
+    return id;
+}
+
+bool CarlaEngine::removePlugin(const unsigned short id)
 {
     for (unsigned short i=0; i < MAX_PLUGINS; i++)
     {
@@ -218,8 +281,12 @@ bool CarlaEngine::removePlugin(unsigned short id)
         }
     }
 
-    qCritical("remove_plugin(%i) - could not find plugin", id);
-    setLastError("Could not find plugin to remove");
+    if (isRunning())
+    {
+        qCritical("remove_plugin(%i) - could not find plugin", id);
+        setLastError("Could not find plugin to remove");
+    }
+
     return false;
 }
 
@@ -235,6 +302,7 @@ CarlaEngineClient::CarlaEngineClient(const CarlaEngineClientNativeHandle& handle
 CarlaEngineClient::~CarlaEngineClient()
 {
     assert(! m_active);
+
 #ifdef CARLA_ENGINE_JACK
 #  ifndef BUILD_BRIDGE
     if (carlaOptions.process_mode == PROCESS_MODE_MULTIPLE_CLIENTS)

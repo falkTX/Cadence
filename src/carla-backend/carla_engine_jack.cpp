@@ -85,6 +85,8 @@ CarlaEngineJack::CarlaEngineJack() :
     CarlaEngine(),
     rackJackPorts{nullptr}
 {
+    qDebug("CarlaEngineJack::CarlaEngineJack()");
+
     client = nullptr;
     state  = JackTransportStopped;
     freewheel = false;
@@ -95,13 +97,16 @@ CarlaEngineJack::CarlaEngineJack() :
 
 CarlaEngineJack::~CarlaEngineJack()
 {
+    qDebug("CarlaEngineJack::~CarlaEngineJack()");
 }
 
 // -------------------------------------------------------------------------------------------------------------------
 
-bool CarlaEngineJack::init(const char* name_)
+bool CarlaEngineJack::init(const char* const clientName)
 {
-    client = jack_client_open(name_, JackNullOption, nullptr);
+    qDebug("CarlaEngineJack::init(%s)", clientName);
+
+    client = jack_client_open(clientName, JackNullOption, nullptr);
     state  = JackTransportStopped;
     freewheel = false;
     procThread = nullptr;
@@ -163,6 +168,8 @@ bool CarlaEngineJack::init(const char* name_)
 
 bool CarlaEngineJack::close()
 {
+    qDebug("CarlaEngineJack::close()");
+
     if (name)
     {
         free((void*)name);
@@ -329,10 +336,20 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
         float* audioIn2  = (float*)jack_port_get_buffer(rackJackPorts[rackPortAudioIn2], nframes);
         float* audioOut1 = (float*)jack_port_get_buffer(rackJackPorts[rackPortAudioOut1], nframes);
         float* audioOut2 = (float*)jack_port_get_buffer(rackJackPorts[rackPortAudioOut2], nframes);
-        //void* controlIn  = jack_port_get_buffer(rackJackPorts[rackPortControlIn], nframes);
-        //void* controlOut = jack_port_get_buffer(rackJackPorts[rackPortControlOut], nframes);
+        void* controlIn  = jack_port_get_buffer(rackJackPorts[rackPortControlIn], nframes);
+        void* controlOut = jack_port_get_buffer(rackJackPorts[rackPortControlOut], nframes);
         void* midiIn     = jack_port_get_buffer(rackJackPorts[rackPortMidiIn], nframes);
         void* midiOut    = jack_port_get_buffer(rackJackPorts[rackPortMidiOut], nframes);
+
+        // assert buffers
+        assert(audioIn1);
+        assert(audioIn2);
+        assert(audioOut1);
+        assert(audioOut2);
+        assert(controlIn);
+        assert(controlOut);
+        assert(midiIn);
+        assert(midiOut);
 
         // create temporary audio buffers
         float ains_tmp_buf1[nframes];

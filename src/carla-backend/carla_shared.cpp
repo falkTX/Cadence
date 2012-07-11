@@ -456,7 +456,7 @@ PluginCategory getPluginCategoryFromName(const char* const name)
 
 const char* getLastError()
 {
-    qDebug("CarlaBackend::gettLastError()");
+    qDebug("CarlaBackend::getLastError()");
 
     return carlaLastError;
 }
