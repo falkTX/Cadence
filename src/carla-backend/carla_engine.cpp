@@ -131,7 +131,7 @@ const char* CarlaEngine::getUniqueName(const char* const name)
         qname = "(No name)";
 
     qname.truncate(maxClientNameSize()-5-1); // 5 = strlen(" (10)")
-    qname.replace(":", "."); // ":" is used in JACK to split client/port names
+    qname.replace(":", "."); // ":" is used in JACK1 to split client/port names
 
     for (unsigned short i=0; i < MAX_PLUGINS; i++)
     {

@@ -27,13 +27,11 @@
 #define QT_NO_STL
 #endif
 
-#if defined (__GXX_EXPERIMENTAL_CXX0X__) && defined (__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
-// nullptr is available
-#else
+#include <QtCore/Qt>
+
+#ifndef Q_COMPILER_LAMBDA
 #  define nullptr (0)
 #endif
-
-#include <QtCore/Qt>
 
 #ifdef Q_OS_WIN
 #  include <winsock2.h>
@@ -68,19 +66,19 @@
 // set native binary type
 #if defined(Q_OS_UNIX)
 #  if __LP64__
-#    define BINARY_NATIVE CarlaBackend::BINARY_UNIX64
+#    define BINARY_NATIVE BINARY_UNIX64
 #  else
-#    define BINARY_NATIVE CarlaBackend::BINARY_UNIX32
+#    define BINARY_NATIVE BINARY_UNIX32
 #  endif
 #elif defined(Q_OS_WIN)
 #  ifdef Q_OS_WIN64
-#    define BINARY_NATIVE CarlaBackend::BINARY_WIN64
+#    define BINARY_NATIVE BINARY_WIN64
 #  else
-#    define BINARY_NATIVE CarlaBackend::BINARY_WIN32
+#    define BINARY_NATIVE BINARY_WIN32
 #   endif
 #else
 #  warning Unknown binary type
-#  define BINARY_NATIVE CarlaBackend::BINARY_NONE
+#  define BINARY_NATIVE BINARY_NONE
 #endif
 
 // export symbols if needed

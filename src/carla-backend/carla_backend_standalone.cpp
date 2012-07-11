@@ -1176,7 +1176,7 @@ int main(int argc, char* argv[])
     {
         set_callback_function(main_callback);
 
-        short id = add_plugin(BINARY_NATIVE, CarlaBackend::PLUGIN_LADSPA, "/usr/lib/ladspa/delay.so", "HAHA name!!!", "delay_5s", nullptr);
+        short id = add_plugin(CarlaBackend::BINARY_NATIVE, CarlaBackend::PLUGIN_LADSPA, "/usr/lib/ladspa/delay.so", "HAHA name!!!", "delay_5s", nullptr);
 
         if (id >= 0)
         {

@@ -456,12 +456,12 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             self.le_ladish_terminal.setText(LADISH_CONF_KEY_DAEMON_TERMINAL_DEFAULT)
 
         elif self.lw_page.currentRow() == TAB_INDEX_CARLA_ENGINE:
-            self.ch_engine_global_client.setChecked(False)
-            self.ch_engine_process_hq.setChecked(False)
-            self.ch_engine_prefer_bridges.setChecked(True)
-            self.ch_engine_dssi_chunks.setChecked(False)
+            self.cb_engine_process_mode.setCurrentIndex(PROCESS_MODE_MULTIPLE_CLIENTS)
             self.sb_engine_max_params.setValue(200)
+            self.ch_engine_prefer_bridges.setChecked(True)
             self.sb_engine_oscgui_timeout.setValue(4000)
+            self.ch_engine_dssi_chunks.setChecked(False)
+            self.ch_engine_process_hq.setChecked(False)
 
         elif self.lw_page.currentRow() == TAB_INDEX_CARLA_PATHS:
             ladspas, dssis, lv2s, vsts, gigs, sf2s, sfzs = SETTINGS_DEFAULT_PLUGINS_PATHS

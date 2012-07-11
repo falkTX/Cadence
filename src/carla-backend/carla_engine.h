@@ -139,6 +139,8 @@ struct CarlaEnginePortNativeHandle {
 class CarlaEngineClient;
 class CarlaEngineBasePort;
 
+Q_COMPILER_INITIALIZER_LISTS
+
 /*!
  * \class CarlaEngine
  *

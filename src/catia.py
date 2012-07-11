@@ -39,11 +39,27 @@ try:
 except:
     haveDBus = False
 
+if LINUX:
+    for iPATH in PATH:
+        if os.path.exists(os.path.join(iPATH, "aconnect")):
+            from subprocess import getoutput
+            haveALSA = True
+            break
+    else:
+        haveALSA = False
+else:
+    haveALSA = False
+
 global a2j_client_name
 a2j_client_name = None
 
+GROUP_TYPE_NULL = 0
+GROUP_TYPE_ALSA = 1
+GROUP_TYPE_JACK = 2
+
 iGroupId   = 0
 iGroupName = 1
+iGroupType = 2
 
 iPortId    = 0
 iPortName  = 1
@@ -406,7 +422,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.m_last_port_id = 1
         self.m_last_connection_id = 1
 
-        # Get all ports, put a2j ones to the bottom of the list
+        # Get all jack ports, put a2j ones to the bottom of the list
         a2j_name_list = []
         port_name_list = c_char_p_p_to_list(jacklib.get_ports(jack.client, "", "", 0))
 
@@ -424,12 +440,12 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
         del a2j_name_list
 
-        # Add ports
+        # Add jack ports
         for port_name in port_name_list:
             port_ptr = jacklib.port_by_name(jack.client, port_name)
-            self.canvas_add_port(port_ptr, port_name)
+            self.canvas_add_jack_port(port_ptr, port_name)
 
-        # Add connections
+        # Add jack connections
         for port_name in port_name_list:
             port_ptr = jacklib.port_by_name(jack.client, port_name)
 
@@ -442,13 +458,95 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             for port_con_name in port_connection_names:
                 self.canvas_connect_ports(port_name, port_con_name)
 
-    def canvas_add_group(self, group_name):
+        if haveALSA:
+            # Get ALSA MIDI ports (inputs)
+            output = getoutput("aconnect -i").split("\n")
+            last_group_id   = -1
+            last_group_name = ""
+
+            for line in output:
+                if line.startswith("client "):
+                    lineSplit  = line.split(": ", 1)
+                    lineSplit2 = lineSplit[1].replace("'", "", 1).split("' [type=", 1)
+                    group_id   = int(lineSplit[0].replace("client ", ""))
+                    group_name = lineSplit2[0]
+                    group_type = lineSplit2[1].rsplit("]", 1)[0]
+
+                    last_group_id   = self.canvas_add_alsa_group("%i: %s" % (group_id, group_name), bool(group_type == "kernel"))
+                    last_group_name = group_name
+
+                elif line.startswith("    ") and last_group_id >= 0 and last_group_name:
+                    lineSplit  = line.split(" '", 1)
+                    port_id    = int(lineSplit[0].strip())
+                    port_name  = lineSplit[1].rsplit("'", 1)[0].strip()
+
+                    self.canvas_add_alsa_port(last_group_id, last_group_name, "%i: %s" % (port_id, port_name), True)
+
+                else:
+                    last_group_id   = -1
+                    last_group_name = ""
+
+            # Get ALSA MIDI ports (outputs)
+            output = getoutput("aconnect -o").split("\n")
+            last_group_id   = -1
+            last_group_name = ""
+
+            for line in output:
+                if line.startswith("client "):
+                    lineSplit  = line.split(": ", 1)
+                    lineSplit2 = lineSplit[1].replace("'", "", 1).split("' [type=", 1)
+                    group_id   = int(lineSplit[0].replace("client ", ""))
+                    group_name = lineSplit2[0]
+                    group_type = lineSplit2[1].rsplit("]", 1)[0]
+
+                    for group in self.m_group_list:
+                        if group[iGroupType] == GROUP_TYPE_ALSA:
+                            this_group_id = int(group[iGroupName].split(": ", 1)[0])
+                            if this_group_id == group_id:
+                                last_group_id = group[iGroupId]
+                                break
+                    else:
+                        last_group_id = self.canvas_add_alsa_group("%i: %s" % (group_id, group_name), bool(group_type == "kernel"))
+
+                    last_group_name = group_name
+
+                elif line.startswith("    ") and last_group_id >= 0 and last_group_name:
+                    lineSplit  = line.split(" '", 1)
+                    port_id    = int(lineSplit[0].strip())
+                    port_name  = lineSplit[1].rsplit("'", 1)[0].strip()
+
+                    self.canvas_add_alsa_port(last_group_id, last_group_name, "%i: %s" % (port_id, port_name), False)
+
+                else:
+                    last_group_id   = -1
+                    last_group_name = ""
+
+    def canvas_add_alsa_group(self, group_name, hw_split):
+        group_id = self.m_last_group_id
+
+        if hw_split:
+            patchcanvas.addGroup(group_id, group_name, patchcanvas.SPLIT_YES, patchcanvas.ICON_HARDWARE)
+        else:
+            patchcanvas.addGroup(group_id, group_name)
+
+        group_obj = [None, None, None]
+        group_obj[iGroupId]   = group_id
+        group_obj[iGroupName] = group_name
+        group_obj[iGroupType] = GROUP_TYPE_ALSA
+
+        self.m_group_list.append(group_obj)
+        self.m_last_group_id += 1
+
+        return group_id
+
+    def canvas_add_jack_group(self, group_name):
         group_id = self.m_last_group_id
         patchcanvas.addGroup(group_id, group_name)
 
-        group_obj = [None, None]
+        group_obj = [None, None, None]
         group_obj[iGroupId]   = group_id
         group_obj[iGroupName] = group_name
+        group_obj[iGroupType] = GROUP_TYPE_JACK
 
         self.m_group_list.append(group_obj)
         self.m_last_group_id += 1
@@ -468,10 +566,28 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
         patchcanvas.removeGroup(group_id)
 
-    def canvas_add_port(self, port_ptr, port_name):
+    def canvas_add_alsa_port(self, group_id, group_name, port_name, is_port_input):
+        port_id   = self.m_last_port_id
+        port_mode = patchcanvas.PORT_MODE_INPUT if is_port_input else patchcanvas.PORT_MODE_OUTPUT
+        port_type = patchcanvas.PORT_TYPE_MIDI_ALSA
+
+        patchcanvas.addPort(group_id, port_id, port_name, port_mode, port_type)
+
+        port_obj = [None, None, None, None]
+        port_obj[iPortId]    = port_id
+        port_obj[iPortName]  = port_name
+        port_obj[iPortNameR] = port_name
+        port_obj[iPortGroupName] = group_name
+
+        self.m_port_list.append(port_obj)
+        self.m_last_port_id += 1
+
+        return port_id
+
+    def canvas_add_jack_port(self, port_ptr, port_name):
         global a2j_client_name
 
-        port_id = self.m_last_port_id
+        port_id  = self.m_last_port_id
         group_id = -1
 
         port_nameR = port_name
@@ -516,7 +632,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
                 break
         else:
             # For ports with no group
-            group_id = self.canvas_add_group(group_name)
+            group_id = self.canvas_add_jack_group(group_name)
 
         patchcanvas.addPort(group_id, port_id, port_short_name, port_mode, port_type)
 
@@ -536,7 +652,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
         return port_id
 
-    def canvas_remove_port(self, port_id):
+    def canvas_remove_jack_port(self, port_id):
         patchcanvas.removePort(port_id)
 
         for port in self.m_port_list:
@@ -862,7 +978,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         port_nameR = str(jacklib.port_name(port_ptr), encoding="utf-8")
 
         if register_yesno:
-            self.canvas_add_port(port_ptr, port_nameR)
+            self.canvas_add_jack_port(port_ptr, port_nameR)
         else:
             for port in self.m_port_list:
                 if port[iPortNameR] == port_nameR:
@@ -871,7 +987,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             else:
                 return
 
-            self.canvas_remove_port(port_id)
+            self.canvas_remove_jack_port(port_id)
 
     @pyqtSlot(int, int, bool)
     def slot_PortConnectCallback(self, port_a_jack, port_b_jack, connect_yesno):
