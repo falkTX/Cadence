@@ -225,73 +225,94 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             for port in self.m_port_list:
                 if port[iPortId] == port_id:
                     port_nameR = port[iPortNameR]
+                    port_nameG = port[iPortGroupName]
                     break
             else:
                 return
 
-            port_ptr = jacklib.port_by_name(jack.client, port_nameR)
-            port_flags = jacklib.port_flags(port_ptr)
-            group_name = port_nameR.split(":", 1)[0]
+            if port_nameR.startswith("[ALSA-"):
+                port_id, port_name = port_nameR.split("] ", 1)[1].split(" ", 1)
 
-            port_short_name = str(jacklib.port_short_name(port_ptr), encoding="utf-8")
+                flags = []
+                if port_nameR.startswith("[ALSA-Input] "):
+                    flags.append(self.tr("Input"))
+                elif port_nameR.startswith("[ALSA-Output] "):
+                    flags.append(self.tr("Output"))
 
-            aliases = jacklib.port_get_aliases(port_ptr)
-            if aliases[0] == 1:
-                alias1text = aliases[1]
-                alias2text = "(none)"
-            elif aliases[0] == 2:
-                alias1text = aliases[1]
-                alias2text = aliases[2]
+                flags_text = " | ".join(flags)
+
+                type_text = self.tr("ALSA MIDI")
+
+                info = self.tr(""
+                              "<table>"
+                              "<tr><td align='right'><b>Group Name:</b></td><td>&nbsp;%s</td></tr>"
+                              "<tr><td align='right'><b>Port Id:</b></td><td>&nbsp;%s</td></tr>"
+                              "<tr><td align='right'><b>Port Name:</b></td><td>&nbsp;%s</td></tr>"
+                              "<tr><td colspan='2'>&nbsp;</td></tr>"
+                              "<tr><td align='right'><b>Port Flags:</b></td><td>&nbsp;%s</td></tr>"
+                              "<tr><td align='right'><b>Port Type:</b></td><td>&nbsp;%s</td></tr>"
+                              "</table>" % (port_nameG, port_id, port_name, flags_text, type_text))
+
             else:
-                alias1text = "(none)"
-                alias2text = "(none)"
+                port_ptr   = jacklib.port_by_name(jack.client, port_nameR)
+                port_flags = jacklib.port_flags(port_ptr)
+                group_name = port_nameR.split(":", 1)[0]
 
-            flags = []
-            if port_flags & jacklib.JackPortIsInput:
-                flags.append(self.tr("Input"))
-            if port_flags & jacklib.JackPortIsOutput:
-                flags.append(self.tr("Output"))
-            if port_flags & jacklib.JackPortIsPhysical:
-                flags.append(self.tr("Physical"))
-            if port_flags & jacklib.JackPortCanMonitor:
-                flags.append(self.tr("Can Monitor"))
-            if port_flags & jacklib.JackPortIsTerminal:
-                flags.append(self.tr("Terminal"))
+                port_short_name = str(jacklib.port_short_name(port_ptr), encoding="utf-8")
 
-            flags_text = ""
-            for flag in flags:
-                if flags_text:
-                    flags_text += " | "
-                flags_text += flag
+                aliases = jacklib.port_get_aliases(port_ptr)
+                if aliases[0] == 1:
+                    alias1text = aliases[1]
+                    alias2text = "(none)"
+                elif aliases[0] == 2:
+                    alias1text = aliases[1]
+                    alias2text = aliases[2]
+                else:
+                    alias1text = "(none)"
+                    alias2text = "(none)"
 
-            port_type_str = str(jacklib.port_type(port_ptr), encoding="utf-8")
-            if port_type_str == jacklib.JACK_DEFAULT_AUDIO_TYPE:
-                type_text = self.tr("JACK Audio")
-            elif port_type_str == jacklib.JACK_DEFAULT_MIDI_TYPE:
-                type_text = self.tr("JACK MIDI")
-            else:
-                type_text = self.tr("Unknown")
+                flags = []
+                if port_flags & jacklib.JackPortIsInput:
+                    flags.append(self.tr("Input"))
+                if port_flags & jacklib.JackPortIsOutput:
+                    flags.append(self.tr("Output"))
+                if port_flags & jacklib.JackPortIsPhysical:
+                    flags.append(self.tr("Physical"))
+                if port_flags & jacklib.JackPortCanMonitor:
+                    flags.append(self.tr("Can Monitor"))
+                if port_flags & jacklib.JackPortIsTerminal:
+                    flags.append(self.tr("Terminal"))
 
-            port_latency = jacklib.port_get_latency(port_ptr)
-            port_total_latency = jacklib.port_get_total_latency(jack.client, port_ptr)
+                flags_text = " | ".join(flags)
 
-            latency_text = self.tr("%.1f ms (%i frames)" % (port_latency * 1000 / self.m_sample_rate, port_latency))
-            latency_total_text = self.tr("%.1f ms (%i frames)" % (port_total_latency * 1000 / self.m_sample_rate, port_total_latency))
+                port_type_str = str(jacklib.port_type(port_ptr), encoding="utf-8")
+                if port_type_str == jacklib.JACK_DEFAULT_AUDIO_TYPE:
+                    type_text = self.tr("JACK Audio")
+                elif port_type_str == jacklib.JACK_DEFAULT_MIDI_TYPE:
+                    type_text = self.tr("JACK MIDI")
+                else:
+                    type_text = self.tr("Unknown")
 
-            info = self.tr(""
-                           "<table>"
-                           "<tr><td align='right'><b>Group Name:</b></td><td>&nbsp;%s</td></tr>"
-                           "<tr><td align='right'><b>Port Name:</b></td><td>&nbsp;%s</td></tr>"
-                           "<tr><td align='right'><b>Full Port Name:</b></td><td>&nbsp;%s</td></tr>"
-                           "<tr><td align='right'><b>Port Alias #1:</b></td><td>&nbsp;%s</td></tr>"
-                           "<tr><td align='right'><b>Port Alias #2:</b></td><td>&nbsp;%s</td></tr>"
-                           "<tr><td colspan='2'>&nbsp;</td></tr>"
-                           "<tr><td align='right'><b>Port Flags:</b></td><td>&nbsp;%s</td></tr>"
-                           "<tr><td align='right'><b>Port Type:</b></td><td>&nbsp;%s</td></tr>"
-                           "<tr><td colspan='2'>&nbsp;</td></tr>"
-                           "<tr><td align='right'><b>Port Latency:</b></td><td>&nbsp;%s</td></tr>"
-                           "<tr><td align='right'><b>Total Port Latency:</b></td><td>&nbsp;%s</td></tr>"
-                           "</table>" % (group_name, port_short_name, port_nameR, alias1text, alias2text, flags_text, type_text, latency_text, latency_total_text))
+                port_latency = jacklib.port_get_latency(port_ptr)
+                port_total_latency = jacklib.port_get_total_latency(jack.client, port_ptr)
+
+                latency_text = self.tr("%.1f ms (%i frames)" % (port_latency * 1000 / self.m_sample_rate, port_latency))
+                latency_total_text = self.tr("%.1f ms (%i frames)" % (port_total_latency * 1000 / self.m_sample_rate, port_total_latency))
+
+                info = self.tr(""
+                              "<table>"
+                              "<tr><td align='right'><b>Group Name:</b></td><td>&nbsp;%s</td></tr>"
+                              "<tr><td align='right'><b>Port Name:</b></td><td>&nbsp;%s</td></tr>"
+                              "<tr><td align='right'><b>Full Port Name:</b></td><td>&nbsp;%s</td></tr>"
+                              "<tr><td align='right'><b>Port Alias #1:</b></td><td>&nbsp;%s</td></tr>"
+                              "<tr><td align='right'><b>Port Alias #2:</b></td><td>&nbsp;%s</td></tr>"
+                              "<tr><td colspan='2'>&nbsp;</td></tr>"
+                              "<tr><td align='right'><b>Port Flags:</b></td><td>&nbsp;%s</td></tr>"
+                              "<tr><td align='right'><b>Port Type:</b></td><td>&nbsp;%s</td></tr>"
+                              "<tr><td colspan='2'>&nbsp;</td></tr>"
+                              "<tr><td align='right'><b>Port Latency:</b></td><td>&nbsp;%s</td></tr>"
+                              "<tr><td align='right'><b>Total Port Latency:</b></td><td>&nbsp;%s</td></tr>"
+                              "</table>" % (group_name, port_short_name, port_nameR, alias1text, alias2text, flags_text, type_text, latency_text, latency_total_text))
 
             QMessageBox.information(self, self.tr("Port Information"), info)
 
@@ -304,6 +325,11 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             for port in self.m_port_list:
                 if port[iPortId] == port_id:
                     port_nameR = port[iPortNameR]
+
+                    if port_nameR.startswith("[ALSA-"):
+                        QMessageBox.warning(self, self.tr("Cannot continue"), self.tr("Rename functions rely on JACK aliases and cannot be done in ALSA ports"))
+                        return
+
                     if port_nameR.split(":", 1)[0] == a2j_client_name:
                         a2j_split = port_nameR.split(":", 3)
                         port_name = "%s:%s: %s" % (a2j_split[0], a2j_split[1], port_short_name)
@@ -346,7 +372,14 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
                 if port[iPortId] == port_b_id:
                     port_b_nameR = port[iPortNameR]
 
-            if port_a_nameR and port_b_nameR:
+            if port_a_nameR.startswith("[ALSA-"):
+                port_a_alsa_id = port_a_nameR.split(" ", 2)[1]
+                port_b_alsa_id = port_b_nameR.split(" ", 2)[1]
+
+                if os.system("aconnect %s %s" % (port_a_alsa_id, port_b_alsa_id)) == 0:
+                    self.canvas_connect_ports(port_a_id, port_b_id)
+
+            elif port_a_nameR and port_b_nameR:
                 jacklib.connect(jack.client, port_a_nameR, port_b_nameR)
 
         elif action == patchcanvas.ACTION_PORTS_DISCONNECT:
@@ -369,7 +402,14 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
                 if port[iPortId] == port_b_id:
                     port_b_nameR = port[iPortNameR]
 
-            if port_a_nameR and port_b_nameR:
+            if port_a_nameR.startswith("[ALSA-"):
+                port_a_alsa_id = port_a_nameR.split(" ", 2)[1]
+                port_b_alsa_id = port_b_nameR.split(" ", 2)[1]
+
+                if os.system("aconnect -d %s %s" % (port_a_alsa_id, port_b_alsa_id)) == 0:
+                    self.canvas_disconnect_ports(port_a_id, port_b_id)
+
+            elif port_a_nameR and port_b_nameR:
                 jacklib.disconnect(jack.client, port_a_nameR, port_b_nameR)
 
     def init_jack(self):
@@ -778,7 +818,14 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
         return self.canvas_connect_ports(port_out_id, port_in_id)
 
-    def canvas_disconnect_ports(self, port_out_name, port_in_name):
+    def canvas_disconnect_ports(self, port_out_id, port_in_id):
+        for connection in self.m_connection_list:
+            if connection[iConnOutput] == port_out_id and connection[iConnInput] == port_in_id:
+                patchcanvas.disconnectPorts(connection[iConnId])
+                self.m_connection_list.remove(connection)
+                break
+
+    def canvas_disconnect_ports_by_name(self, port_out_name, port_in_name):
         port_out_id = -1
         port_in_id = -1
 
@@ -792,11 +839,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             print("Catia - disconnect ports failed")
             return
 
-        for connection in self.m_connection_list:
-            if connection[iConnOutput] == port_out_id and connection[iConnInput] == port_in_id:
-                patchcanvas.disconnectPorts(connection[iConnId])
-                self.m_connection_list.remove(connection)
-                break
+        self.canvas_disconnect_ports(port_out_id, port_in_id)
 
     def jackStarted(self):
         if not jack.client:
@@ -1077,7 +1120,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         if connect_yesno:
             self.canvas_connect_ports_by_name(port_a_nameR, port_b_nameR)
         else:
-            self.canvas_disconnect_ports(port_a_nameR, port_b_nameR)
+            self.canvas_disconnect_ports_by_name(port_a_nameR, port_b_nameR)
 
     @pyqtSlot(int, str, str)
     def slot_PortRenameCallback(self, port_id_jack, old_name, new_name):
