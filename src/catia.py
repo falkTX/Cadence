@@ -60,7 +60,6 @@ GROUP_TYPE_JACK = 2
 iGroupId   = 0
 iGroupName = 1
 iGroupType = 2
-iGroupInfo = 3
 
 iPortId    = 0
 iPortName  = 1
@@ -457,12 +456,6 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
                 return group[iGroupId]
         return -1
 
-    def get_real_group_id(self, alsa_group_id):
-        for group in self.m_group_list:
-            if group[iGroupType] == GROUP_TYPE_ALSA and group[iGroupInfo] == alsa_group_id:
-                return group[iGroupId]
-        return -1
-
     def init_ports(self):
         if not jack.client:
             return
@@ -643,11 +636,10 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         else:
             patchcanvas.addGroup(group_id, group_name)
 
-        group_obj = [None, None, None, None]
+        group_obj = [None, None, None]
         group_obj[iGroupId]   = group_id
         group_obj[iGroupName] = group_name
         group_obj[iGroupType] = GROUP_TYPE_ALSA
-        group_obj[iGroupInfo] = alsa_group_id
 
         self.m_group_list.append(group_obj)
         self.m_last_group_id += 1
@@ -658,7 +650,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         group_id = self.m_last_group_id
         patchcanvas.addGroup(group_id, group_name)
 
-        group_obj = [None, None, None, None]
+        group_obj = [None, None, None]
         group_obj[iGroupId]   = group_id
         group_obj[iGroupName] = group_name
         group_obj[iGroupType] = GROUP_TYPE_JACK
@@ -827,7 +819,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
     def canvas_disconnect_ports_by_name(self, port_out_name, port_in_name):
         port_out_id = -1
-        port_in_id = -1
+        port_in_id  = -1
 
         for port in self.m_port_list:
             if port[iPortNameR] == port_out_name:
