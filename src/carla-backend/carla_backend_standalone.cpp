@@ -148,9 +148,7 @@ bool engine_close()
     }
 
     bool closed = carla_engine->close();
-
-    for (unsigned short i=0; i < CarlaBackend::MAX_PLUGINS; i++)
-        remove_plugin(i);
+    carla_engine->removeAllPlugins();
 
     // cleanup static data
     get_plugin_info(0);
@@ -1142,8 +1140,6 @@ QDialog* gui;
 
 void main_callback(CarlaBackend::CallbackType action, unsigned short plugin_id, int value1, int value2, double value3)
 {
-    qDebug("Callback(%i, %u, %i, %i, %f)", action, plugin_id, value1, value2, value3);
-
     switch (action)
     {
     case CarlaBackend::CALLBACK_SHOW_GUI:
@@ -1156,6 +1152,9 @@ void main_callback(CarlaBackend::CallbackType action, unsigned short plugin_id, 
     default:
         break;
     }
+
+    Q_UNUSED(plugin_id);
+    Q_UNUSED(value3);
 }
 
 int main(int argc, char* argv[])
@@ -1165,12 +1164,13 @@ int main(int argc, char* argv[])
     //set_option(CarlaBackend::OPTION_PROCESS_MODE, CarlaBackend::PROCESS_MODE_CONTINUOUS_RACK, nullptr);
 
     gui = new QDialog(nullptr);
+    set_option(CarlaBackend::OPTION_PREFER_UI_BRIDGES, 0, nullptr);
 
     if (engine_init("JACK", "carla_demo"))
     {
         set_callback_function(main_callback);
 
-        short id = add_plugin(CarlaBackend::BINARY_NATIVE, CarlaBackend::PLUGIN_LADSPA, "/usr/lib/ladspa/delay.so", "HAHA name!!!", "delay_5s", nullptr);
+        short id = add_plugin(CarlaBackend::BINARY_NATIVE, CarlaBackend::PLUGIN_LV2, "FILENAME", "HAHA name!!!", "http://studionumbersix.com/foo/lv2/yc20", nullptr);
 
         if (id >= 0)
         {

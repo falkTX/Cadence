@@ -150,7 +150,7 @@ bool CarlaEngineJack::init(const char* const clientName)
             name = strdup(fixedName);
             free((void*)fixedName);
 
-            oscInit();
+            CarlaEngine::init(name);
 
             return true;
         }
@@ -169,14 +169,13 @@ bool CarlaEngineJack::init(const char* const clientName)
 bool CarlaEngineJack::close()
 {
     qDebug("CarlaEngineJack::close()");
+    CarlaEngine::close();
 
     if (name)
     {
         free((void*)name);
         name = nullptr;
     }
-
-    oscClose();
 
     if (jack_deactivate(client) == 0)
     {

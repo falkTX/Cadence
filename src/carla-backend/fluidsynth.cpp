@@ -21,17 +21,17 @@
 
 #include "carla_plugin.h"
 
+CARLA_BACKEND_START_NAMESPACE
+
+#if 0
+} /* adjust editor indent */
+#endif
+
 #ifdef WANT_FLUIDSYNTH
 #include <fluidsynth.h>
 
 #if (FLUIDSYNTH_VERSION_MAJOR >= 1 && FLUIDSYNTH_VERSION_MINOR >= 1 && FLUIDSYNTH_VERSION_MICRO >= 4)
 #define FLUIDSYNTH_VERSION_NEW_API
-#endif
-
-CARLA_BACKEND_START_NAMESPACE
-
-#if 0
-} /* adjust editor indent */
 #endif
 
 /*!
@@ -415,7 +415,7 @@ public:
         // Audio Outputs
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":out-left");
@@ -428,7 +428,7 @@ public:
         aout.rindexes[0] = 0;
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":out-right");
@@ -444,7 +444,7 @@ public:
         // MIDI Input
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":midi-in");
@@ -459,7 +459,7 @@ public:
         // Parameters
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":control-in");
@@ -471,7 +471,7 @@ public:
         param.portCin = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, true);
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":control-out");
@@ -1013,7 +1013,7 @@ public:
 
             for (i=0; i < MAX_MIDI_EVENTS && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
-                if (! extMidiNotes[i].valid)
+                if (extMidiNotes[i].channel < 0)
                     break;
 
                 if (extMidiNotes[i].velo)
@@ -1021,7 +1021,7 @@ public:
                 else
                     fluid_synth_noteoff(f_synth, cin_channel, extMidiNotes[i].note);
 
-                extMidiNotes[i].valid = false;
+                extMidiNotes[i].channel = -1;
                 midiEventCount += 1;
             }
 
@@ -1226,7 +1226,7 @@ public:
 
         if (f_id < 0)
         {
-            set_last_error("Failed to load SoundFont file");
+            setLastError("Failed to load SoundFont file");
             return false;
         }
 
@@ -1248,7 +1248,7 @@ public:
 
         if (! x_client->isOk())
         {
-            set_last_error("Failed to register plugin client");
+            setLastError("Failed to register plugin client");
             return false;
         }
 
@@ -1283,23 +1283,23 @@ private:
 };
 #endif // WANT_FLUIDSYNTH
 
-short CarlaPlugin::newSF2(const initializer& init)
+CarlaPlugin* CarlaPlugin::newSF2(const initializer& init)
 {
     qDebug("CarlaPlugin::newSF2(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
 
 #ifdef WANT_FLUIDSYNTH
-    short id = init.engine->getNewPluginIndex();
+    short id = init.engine->getNewPluginId();
 
     if (id < 0)
     {
-        set_last_error("Maximum number of plugins reached");
-        return -1;
+        setLastError("Maximum number of plugins reached");
+        return nullptr;
     }
 
     if (! fluid_is_soundfont(init.filename))
     {
-        set_last_error("Requested file is not a valid SoundFont");
-        return -1;
+        setLastError("Requested file is not a valid SoundFont");
+        return nullptr;
     }
 
     FluidSynthPlugin* const plugin = new FluidSynthPlugin(init.engine, id);
@@ -1307,17 +1307,16 @@ short CarlaPlugin::newSF2(const initializer& init)
     if (! plugin->init(init.filename, init.name, init.label))
     {
         delete plugin;
-        return -1;
+        return nullptr;
     }
 
     plugin->reload();
     plugin->registerToOsc();
-    init.engine->addPlugin(id, plugin);
 
-    return id;
+    return plugin;
 #else
-    set_last_error("fluidsynth support not available");
-    return -1;
+    setLastError("fluidsynth support not available");
+    return nullptr;
 #endif
 }
 

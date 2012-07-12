@@ -2337,7 +2337,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             parameter_info = CarlaHost.get_parameter_info(self.plugin_id, i)
             parameter_data = CarlaHost.get_parameter_data(self.plugin_id, i)
 
-            if (not parameter_info['valid']) or parameter_data['type'] != PARAMETER_INPUT:
+            if parameter_data['type'] != PARAMETER_INPUT:
                 continue
 
             x_save_state_parameter = deepcopy(save_state_parameter)

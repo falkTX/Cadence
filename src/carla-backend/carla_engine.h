@@ -19,6 +19,7 @@
 #define CARLA_ENGINE_H
 
 #include "carla_osc.h"
+#include "carla_shared.h"
 #include "carla_threads.h"
 
 #include <cassert>
@@ -165,8 +166,20 @@ public:
     // -------------------------------------------------------------------
     // virtual, per-engine type calls
 
-    virtual bool init(const char* const clientName) = 0;
-    virtual bool close() = 0;
+    virtual bool init(const char* const clientName)
+    {
+        m_checkThread.start(QThread::HighPriority);
+        m_osc.init(clientName);
+        return true;
+    }
+
+    virtual bool close()
+    {
+        if (m_checkThread.isRunning())
+            m_checkThread.stopNow();
+        m_osc.close();
+        return true;
+    }
 
     virtual bool isOnAudioThread() = 0;
     virtual bool isOffline() = 0;
@@ -184,8 +197,15 @@ public:
     short addPlugin(const BinaryType btype, const PluginType ptype, const char* const filename, const char* const name, const char* const label, void* const extra = nullptr);
     short addPlugin(const PluginType ptype, const char* const filename, const char* const name, const char* const label, void* const extra = nullptr);
     bool removePlugin(const unsigned short id);
+    void removeAllPlugins();
 
     void idlePluginGuis();
+
+    // bridge, internal use only
+    void __bridgePluginRegister(const unsigned short id, CarlaPlugin* const plugin)
+    {
+        m_carlaPlugins[id] = plugin;
+    }
 
     // -------------------------------------------------------------------
     // Information (base)
@@ -246,12 +266,16 @@ public:
 
     void callback(const CallbackType action, const unsigned short pluginId, const int value1, const int value2, const double value3)
     {
+        qDebug("CarlaEngine::callback(%s, %i, %i, %i, %f)", CallbackType2str(action), pluginId, value1, value2, value3);
+
         if (m_callback)
             m_callback(action, pluginId, value1, value2, value3);
     }
 
     void setCallback(const CallbackFunc func)
     {
+        qDebug("CarlaEngine::setCallback(%p)", func);
+
         m_callback = func;
     }
 
@@ -332,16 +356,6 @@ protected:
     double sampleRate;
     uint32_t bufferSize;
     CarlaTimeInfo timeInfo;
-
-    void oscInit()
-    {
-        m_osc.init(name);
-    }
-
-    void oscClose()
-    {
-        m_osc.close();
-    }
 
     void bufferSizeChanged(uint32_t newBufferSize);
 

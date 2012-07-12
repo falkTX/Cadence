@@ -42,8 +42,8 @@ public:
 
         m_type = PLUGIN_DSSI;
 
-        handle = nullptr;
-        descriptor = nullptr;
+        handle = h2 = nullptr;
+        descriptor  = nullptr;
         ldescriptor = nullptr;
 
         param_buffers = nullptr;
@@ -61,8 +61,8 @@ public:
         {
             if (osc.data.target)
             {
-                //osc_send_hide(&osc.data);
-                //osc_send_quit(&osc.data);
+                osc_send_hide(&osc.data);
+                osc_send_quit(&osc.data);
             }
 
             if (osc.thread)
@@ -83,15 +83,28 @@ public:
                 delete osc.thread;
             }
 
-            //osc_clear_data(&osc.data);
+            osc_clear_data(&osc.data);
         }
 #endif
 
-        if (handle && ldescriptor && ldescriptor->deactivate && m_activeBefore)
-            ldescriptor->deactivate(handle);
+        if (ldescriptor)
+        {
+            if (ldescriptor->deactivate && m_activeBefore)
+            {
+                if (handle)
+                    ldescriptor->deactivate(handle);
+                if (h2)
+                    ldescriptor->deactivate(h2);
+            }
 
-        if (handle && ldescriptor && ldescriptor->cleanup)
-            ldescriptor->cleanup(handle);
+            if (ldescriptor->cleanup)
+            {
+                if (handle)
+                    ldescriptor->cleanup(handle);
+                if (h2)
+                    ldescriptor->cleanup(h2);
+            }
+        }
     }
 
     // -------------------------------------------------------------------
@@ -101,7 +114,7 @@ public:
     {
         if (m_hints & PLUGIN_IS_SYNTH)
             return PLUGIN_CATEGORY_SYNTH;
-        return get_category_from_name(m_name);
+        return getPluginCategoryFromName(m_name);
     }
 
     long uniqueId()
@@ -187,8 +200,8 @@ public:
         param_buffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
 
 #ifndef BUILD_BRIDGE
-        //if (sendGui)
-            //osc_send_control(&osc.data, param.data[parameterId].rindex, value);
+        if (sendGui)
+            osc_send_control(&osc.data, param.data[parameterId].rindex, value);
 #endif
 
         CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
@@ -202,8 +215,8 @@ public:
         descriptor->configure(handle, key, value);
 
 #ifndef BUILD_BRIDGE
-        //if (sendGui)
-            //osc_send_configure(&osc.data, key, value);
+        if (sendGui)
+            osc_send_configure(&osc.data, key, value);
 #endif
 
         if (strcmp(key, "reloadprograms") == 0 || strcmp(key, "load") == 0 || strncmp(key, "patches", 7) == 0)
@@ -254,8 +267,8 @@ public:
             }
 
 #ifndef BUILD_BRIDGE
-            //if (sendGui)
-                //osc_send_midi_program(&osc.data, midiprog.data[index].bank, midiprog.data[index].program, true);
+            if (sendGui)
+                osc_send_program(&osc.data, midiprog.data[index].bank, midiprog.data[index].program);
 #endif
         }
 
@@ -274,9 +287,9 @@ public:
         }
         else
         {
-            //osc_send_hide(&osc.data);
-            //osc_send_quit(&osc.data);
-            //osc_clear_data(&osc.data);
+            osc_send_hide(&osc.data);
+            osc_send_quit(&osc.data);
+            osc_clear_data(&osc.data);
             osc.thread->quit(); // FIXME - stop thread?
         }
     }
@@ -321,6 +334,9 @@ public:
                 params += 1;
         }
 
+        if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK && (ains == 1 || aouts == 1) && ! h2)
+            h2 = ldescriptor->instantiate(ldescriptor, sampleRate);
+
         if (descriptor->run_synth || descriptor->run_multiple_synths)
             mins = 1;
 
@@ -356,7 +372,7 @@ public:
             if (LADSPA_IS_PORT_AUDIO(PortType))
             {
 #ifndef BUILD_BRIDGE
-                if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+                if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
                 {
                     strcpy(portName, m_name);
                     strcat(portName, ":");
@@ -571,19 +587,21 @@ public:
                 param_buffers[j] = def;
 
                 ldescriptor->connect_port(handle, i, &param_buffers[j]);
+                if (h2) ldescriptor->connect_port(h2, i, &param_buffers[j]);
             }
             else
             {
                 // Not Audio or Control
                 qCritical("ERROR - Got a broken Port (neither Audio or Control)");
                 ldescriptor->connect_port(handle, i, nullptr);
+                if (h2) ldescriptor->connect_port(h2, i, nullptr);
             }
         }
 
         if (needsCin)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-in");
@@ -598,7 +616,7 @@ public:
         if (needsCout)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-out");
@@ -613,7 +631,7 @@ public:
         if (mins > 0)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":midi-in");
@@ -636,7 +654,7 @@ public:
             m_hints |= PLUGIN_IS_SYNTH;
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.use_dssi_chunks && QString(m_filename).endsWith("dssi-vst.so", Qt::CaseInsensitive))
+        if (carlaOptions.use_dssi_chunks && QString(m_filename).endsWith("dssi-vst.so", Qt::CaseInsensitive))
         {
             if (descriptor->get_custom_data && descriptor->set_custom_data)
                 m_hints |= PLUGIN_USES_CHUNKS;
@@ -649,7 +667,7 @@ public:
         if (aouts > 0)
             m_hints |= PLUGIN_CAN_VOLUME;
 
-        if (aouts >= 2 && aouts%2 == 0)
+        if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK || (aouts >= 2 && aouts%2 == 0))
             m_hints |= PLUGIN_CAN_BALANCE;
 
         reloadPrograms(true);
@@ -699,10 +717,10 @@ public:
 
 #ifndef BUILD_BRIDGE
         // Update OSC Names
-        //osc_global_send_set_midi_program_count(m_id, midiprog.count);
+        x_engine->osc_send_set_midi_program_count(m_id, midiprog.count);
 
-        //for (i=0; i < midiprog.count; i++)
-        //    osc_global_send_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
+        for (i=0; i < midiprog.count; i++)
+            x_engine->osc_send_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
 
         x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
 #endif
@@ -767,7 +785,9 @@ public:
 
         if (ain.count > 0)
         {
-            if (ain.count == 1)
+            uint32_t count = h2 ? 2 : ain.count;
+
+            if (count == 1)
             {
                 for (k=0; k < frames; k++)
                 {
@@ -775,7 +795,7 @@ public:
                         ains_peak_tmp[0] = abs(inBuffer[0][k]);
                 }
             }
-            else if (ain.count >= 1)
+            else if (count > 1)
             {
                 for (k=0; k < frames; k++)
                 {
@@ -935,10 +955,16 @@ public:
                             sendMidiAllNotesOff();
 
                         if (ldescriptor->deactivate)
+                        {
                             ldescriptor->deactivate(handle);
+                            if (h2) ldescriptor->deactivate(h2);
+                        }
 
                         if (ldescriptor->activate)
+                        {
                             ldescriptor->activate(handle);
+                            if (h2) ldescriptor->activate(h2);
+                        }
 
                         allNotesOffSent = true;
                     }
@@ -968,7 +994,7 @@ public:
 
             for (i=0; i < MAX_MIDI_EVENTS && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
-                if (! extMidiNotes[i].valid)
+                if (extMidiNotes[i].channel < 0)
                     break;
 
                 snd_seq_event_t* const midiEvent = &midiEvents[midiEventCount];
@@ -980,7 +1006,7 @@ public:
                 midiEvent->data.note.note     = extMidiNotes[i].note;
                 midiEvent->data.note.velocity = extMidiNotes[i].velo;
 
-                extMidiNotes[i].valid = false;
+                extMidiNotes[i].channel = -1;
                 midiEventCount += 1;
             }
 
@@ -1122,33 +1148,51 @@ public:
                 }
 
                 if (ldescriptor->activate)
+                {
                     ldescriptor->activate(handle);
+                    if (h2) ldescriptor->activate(h2);
+                }
             }
 
             for (i=0; i < ain.count; i++)
+            {
                 ldescriptor->connect_port(handle, ain.rindexes[i], inBuffer[i]);
+                if (h2 && i == 0) ldescriptor->connect_port(h2, ain.rindexes[i], inBuffer[1]);
+            }
 
             for (i=0; i < aout.count; i++)
+            {
                 ldescriptor->connect_port(handle, aout.rindexes[i], outBuffer[i]);
+                if (h2 && i == 0) ldescriptor->connect_port(h2, aout.rindexes[i], outBuffer[1]);
+            }
 
             if (descriptor->run_synth)
             {
                 descriptor->run_synth(handle, frames, midiEvents, midiEventCount);
+                if (h2) descriptor->run_synth(handle, frames, midiEvents, midiEventCount);
             }
             else if (descriptor->run_multiple_synths)
             {
-                snd_seq_event_t* midiEventsPtr[1] = { midiEvents };
-                descriptor->run_multiple_synths(1, &handle, frames, midiEventsPtr, &midiEventCount);
+                LADSPA_Handle handlePtr[2] = { handle, h2 };
+                snd_seq_event_t* midiEventsPtr[2] = { midiEvents, midiEvents };
+                unsigned long midiEventCountPtr[2] = { midiEventCount, midiEventCount };
+                descriptor->run_multiple_synths(h2 ? 2 : 1, handlePtr, frames, midiEventsPtr, midiEventCountPtr);
             }
-            else if (ldescriptor->run)
+            else
+            {
                 ldescriptor->run(handle, frames);
+                if (h2) ldescriptor->run(h2, frames);
+            }
         }
         else
         {
             if (m_activeBefore)
             {
                 if (ldescriptor->deactivate)
+                {
                     ldescriptor->deactivate(handle);
+                    if (h2) ldescriptor->deactivate(h2);
+                }
             }
         }
 
@@ -1166,7 +1210,9 @@ public:
             double bal_rangeL, bal_rangeR;
             float oldBufLeft[do_balance ? frames : 0];
 
-            for (i=0; i < aout.count; i++)
+            uint32_t count = h2 ? 2 : aout.count;
+
+            for (i=0; i < count; i++)
             {
                 // Dry/Wet and Volume
                 if (do_drywet || do_volume)
@@ -1175,7 +1221,7 @@ public:
                     {
                         if (do_drywet)
                         {
-                            if (aout.count == 1)
+                            if (aout.count == 1 && ! h2)
                                 outBuffer[i][k] = (outBuffer[i][k]*x_drywet)+(inBuffer[0][k]*(1.0-x_drywet));
                             else
                                 outBuffer[i][k] = (outBuffer[i][k]*x_drywet)+(inBuffer[i][k]*(1.0-x_drywet));
@@ -1292,7 +1338,7 @@ public:
 
         if (! libOpen(filename))
         {
-            set_last_error(libError(filename));
+            setLastError(libError(filename));
             return false;
         }
 
@@ -1303,7 +1349,7 @@ public:
 
         if (! descfn)
         {
-            set_last_error("Could not find the LASDPA Descriptor in the plugin library");
+            setLastError("Could not find the LASDPA Descriptor in the plugin library");
             return false;
         }
 
@@ -1320,7 +1366,7 @@ public:
 
         if (! descriptor)
         {
-            set_last_error("Could not find the requested plugin Label in the plugin library");
+            setLastError("Could not find the requested plugin Label in the plugin library");
             return false;
         }
 
@@ -1331,7 +1377,7 @@ public:
 
         if (! handle)
         {
-            set_last_error("Plugin failed to initialize");
+            setLastError("Plugin failed to initialize");
             return false;
         }
 
@@ -1352,7 +1398,7 @@ public:
 
         if (! x_client->isOk())
         {
-            set_last_error("Failed to register plugin client");
+            setLastError("Failed to register plugin client");
             return false;
         }
 
@@ -1374,7 +1420,7 @@ public:
     }
 
 private:
-    LADSPA_Handle handle;
+    LADSPA_Handle handle, h2;
     const LADSPA_Descriptor* ldescriptor;
     const DSSI_Descriptor* descriptor;
     snd_seq_event_t midiEvents[MAX_MIDI_EVENTS];
@@ -1382,16 +1428,16 @@ private:
     float* param_buffers;
 };
 
-short CarlaPlugin::newDSSI(const initializer& init, const void* const extra)
+CarlaPlugin* CarlaPlugin::newDSSI(const initializer& init, const void* const extra)
 {
     qDebug("CarlaPlugin::newDSSI(%p, %s, %s, %s, %p)", init.engine, init.filename, init.name, init.label, extra);
 
-    short id = init.engine->getNewPluginIndex();
+    short id = init.engine->getNewPluginId();
 
     if (id < 0)
     {
-        set_last_error("Maximum number of plugins reached");
-        return -1;
+        setLastError("Maximum number of plugins reached");
+        return nullptr;
     }
 
     DssiPlugin* const plugin = new DssiPlugin(init.engine, id);
@@ -1399,28 +1445,29 @@ short CarlaPlugin::newDSSI(const initializer& init, const void* const extra)
     if (! plugin->init(init.filename, init.name, init.label, (const char*)extra))
     {
         delete plugin;
-        return -1;
+        return nullptr;
     }
 
     plugin->reload();
 
 #ifndef BUILD_BRIDGE
-    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
     {
-        if (/* inputs */ ((plugin->audioInCount() != 0 && plugin->audioInCount() != 2)) || /* outputs */ ((plugin->audioOutCount() != 0 && plugin->audioOutCount() != 2)))
-        {
-            set_last_error("Carla Rack Mode can only work with Stereo plugins, sorry!");
-            delete plugin;
-            return -1;
-        }
+        uint32_t ins  = plugin->audioInCount();
+        uint32_t outs = plugin->audioOutCount();
 
+        if (ins > 2 || outs > 2 || (ins != outs && ins != 0 && outs != 0))
+        {
+            setLastError("Carla's Rack Mode can only work with Mono or Stereo DSSI plugins, sorry!");
+            delete plugin;
+            return nullptr;
+        }
     }
 #endif
 
     plugin->registerToOsc();
-    init.engine->addPlugin(id, plugin);
 
-    return id;
+    return plugin;
 }
 
 /**@}*/

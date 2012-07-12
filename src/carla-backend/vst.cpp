@@ -114,7 +114,7 @@ public:
         if (effect->flags & effFlagsIsSynth)
             return PLUGIN_CATEGORY_SYNTH;
 
-        return get_category_from_name(m_name);
+        return getPluginCategoryFromName(m_name);
     }
 
     long uniqueId()
@@ -364,7 +364,7 @@ public:
         for (j=0; j<ains; j++)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
                 sprintf(portName, "%s:input_%02i", m_name, j+1);
             else
 #endif
@@ -377,7 +377,7 @@ public:
         for (j=0; j<aouts; j++)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
                 sprintf(portName, "%s:output_%02i", m_name, j+1);
             else
 #endif
@@ -492,7 +492,7 @@ public:
         if (needsCin)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-in");
@@ -507,7 +507,7 @@ public:
         if (mins == 1)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":midi-in");
@@ -522,7 +522,7 @@ public:
         if (mouts == 1)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":midi-out");
@@ -874,7 +874,7 @@ public:
 
             for (i=0; i < MAX_MIDI_EVENTS && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
-                if (! extMidiNotes[i].valid)
+                if (extMidiNotes[i].channel < 0)
                     break;
 
                 VstMidiEvent* const midiEvent = &midiEvents[midiEventCount];
@@ -887,7 +887,7 @@ public:
                 midiEvent->midiData[1] = extMidiNotes[i].note;
                 midiEvent->midiData[2] = extMidiNotes[i].velo;
 
-                extMidiNotes[i].valid = false;
+                extMidiNotes[i].channel = -1;
                 midiEventCount += 1;
             }
 
@@ -1206,7 +1206,7 @@ public:
 #else
         if (effect && effect->resvd1)
         {
-            self = (VstPlugin*)get_pointer(effect->resvd1);
+            self = (VstPlugin*)getPointer(effect->resvd1);
 #endif
             if (self->unique1 != self->unique2)
                 self = nullptr;
@@ -1342,7 +1342,7 @@ public:
 #ifdef BUILD_BRIDGE
             return MAX_PARAMETERS;
 #else
-            return carla_options.max_parameters;
+            return carlaOptions.max_parameters;
 #endif
 
         case audioMasterGetParameterQuantization:
@@ -1610,7 +1610,7 @@ public:
 
         if (! libOpen(filename))
         {
-            set_last_error(libError(filename));
+            setLastError(libError(filename));
             return false;
         }
 
@@ -1625,7 +1625,7 @@ public:
 
             if (! vstfn)
             {
-                set_last_error("Could not find the VST main entry in the plugin library");
+                setLastError("Could not find the VST main entry in the plugin library");
                 return false;
             }
         }
@@ -1637,7 +1637,7 @@ public:
 
         if (! effect || effect->magic != kEffectMagic)
         {
-            set_last_error("Plugin failed to initialize");
+            setLastError("Plugin failed to initialize");
             return false;
         }
 
@@ -1693,7 +1693,7 @@ public:
 
         if (! x_client->isOk())
         {
-            set_last_error("Failed to register plugin client");
+            setLastError("Failed to register plugin client");
             return false;
         }
 
@@ -1730,45 +1730,44 @@ private:
     int unique2;
 };
 
-short CarlaPlugin::newVST(const initializer& init)
+CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
 {
     qDebug("CarlaPlugin::newVST(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
 
-    short id = init.engine->getNewPluginIndex();
+    short id = init.engine->getNewPluginId();
 
     if (id < 0)
     {
-        set_last_error("Maximum number of plugins reached");
-        return -1;
+        setLastError("Maximum number of plugins reached");
+        return nullptr;
     }
 
-    VstPlugin* plugin = new VstPlugin(init.engine, id);
+    VstPlugin* const plugin = new VstPlugin(init.engine, id);
 
     if (! plugin->init(init.filename, init.name, init.label))
     {
         delete plugin;
-        return -1;
+        return nullptr;
     }
 
     plugin->reload();
 
 #ifndef BUILD_BRIDGE
-    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         if (/* inputs */ ((plugin->audioInCount() != 0 && plugin->audioInCount() != 2)) || /* outputs */ ((plugin->audioOutCount() != 0 && plugin->audioOutCount() != 2)))
         {
-            set_last_error("Carla Rack Mode can only work with Stereo plugins, sorry!");
+            setLastError("Carla Rack Mode can only work with Stereo VST plugins, sorry!");
             delete plugin;
-            return -1;
+            return nullptr;
         }
 
     }
 #endif
 
     plugin->registerToOsc();
-    init.engine->addPlugin(id, plugin);
 
-    return id;
+    return plugin;
 }
 
 /**@}*/

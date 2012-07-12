@@ -19,11 +19,10 @@
 #error Should not use linuxsampler for bridges!
 #endif
 
-#include "carla_plugin.h"
+// TODO - setMidiProgram()
 
-#ifdef WANT_LINUXSAMPLER
-#include <linuxsampler/Sampler.h>
-#include "linuxsampler/EngineFactory.h"
+#include "carla_plugin.h"
+#include "carla_linuxsampler_includes.h"
 
 #include <QtCore/QFileInfo>
 
@@ -33,6 +32,8 @@ CARLA_BACKEND_START_NAMESPACE
 } /* adjust editor indent */
 #endif
 
+#ifdef WANT_LINUXSAMPLER
+
 /*!
  * @defgroup CarlaBackendLinuxSamplerPlugin Carla Backend LinuxSampler Plugin
  *
@@ -40,118 +41,6 @@ CARLA_BACKEND_START_NAMESPACE
  * http://www.linuxsampler.org/
  * @{
  */
-
-// TODO - setMidiProgram()
-
-#define LINUXSAMPLER_VOLUME_MAX 3.16227766f    // +10 dB
-#define LINUXSAMPLER_VOLUME_MIN 0.0f           // -inf dB
-
-class AudioOutputDevicePlugin : public LinuxSampler::AudioOutputDevice
-{
-public:
-    AudioOutputDevicePlugin(CarlaPlugin* const plugin) :
-        AudioOutputDevice(std::map<String,LinuxSampler::DeviceCreationParameter*>()),
-        m_engine(nullptr),
-        m_plugin(plugin)
-    {
-    }
-
-    // -------------------------------------------------------------------
-    // LinuxSampler virtual methods
-
-    void Play()
-    {
-    }
-
-    bool IsPlaying()
-    {
-        return m_engine->isRunning() && m_plugin->enabled();
-    }
-
-    void Stop()
-    {
-    }
-
-    uint MaxSamplesPerCycle()
-    {
-        return m_engine->getBufferSize();
-    }
-
-    uint SampleRate()
-    {
-        return m_engine->getSampleRate();
-    }
-
-    String Driver()
-    {
-        return "AudioOutputDevicePlugin";
-    }
-
-    LinuxSampler::AudioChannel* CreateChannel(uint channelNr)
-    {
-        return new LinuxSampler::AudioChannel(channelNr, nullptr, 0);
-    }
-
-    // -------------------------------------------------------------------
-
-    int Render(uint samples)
-    {
-        return RenderAudio(samples);
-    }
-
-private:
-    CarlaEngine* const m_engine;
-    CarlaPlugin* const m_plugin;
-};
-
-class MidiInputDevicePlugin : public LinuxSampler::MidiInputDevice
-{
-public:
-    MidiInputDevicePlugin(LinuxSampler::Sampler* sampler) : LinuxSampler::MidiInputDevice(std::map<String, LinuxSampler::DeviceCreationParameter*>(), sampler)
-    {
-    }
-
-    // -------------------------------------------------------------------
-    // MIDI Port implementation for this plugin MIDI input driver
-
-    class MidiInputPortPlugin : public LinuxSampler::MidiInputPort
-    {
-    protected:
-        MidiInputPortPlugin(MidiInputDevicePlugin* device, int portNumber) : LinuxSampler::MidiInputPort(device, portNumber)
-        {
-        }
-        friend class MidiInputDevicePlugin;
-    };
-
-    // -------------------------------------------------------------------
-    // LinuxSampler virtual methods
-
-    void Listen()
-    {
-    }
-
-    void StopListen()
-    {
-    }
-
-    String Driver()
-    {
-        return "MidiInputDevicePlugin";
-    }
-
-    LinuxSampler::MidiInputPort* CreateMidiPort()
-    {
-        return new MidiInputPortPlugin(this, Ports.size());
-    }
-
-    // -------------------------------------------------------------------
-
-    void DeleteMidiPort(LinuxSampler::MidiInputPort* port)
-    {
-        delete (MidiInputPortPlugin*)port;
-    }
-};
-
 class LinuxSamplerPlugin : public CarlaPlugin
 {
 public:
@@ -160,6 +49,7 @@ public:
         qDebug("LinuxSamplerPlugin::LinuxSamplerPlugin()");
 
         m_type  = isGIG ? PLUGIN_GIG : PLUGIN_SFZ;
+
         sampler = new LinuxSampler::Sampler;
         sampler_channel = nullptr;
 
@@ -263,7 +153,7 @@ public:
         // Audio Outputs
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":out-left");
@@ -276,7 +166,7 @@ public:
         aout.rindexes[0] = 0;
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":out-right");
@@ -292,7 +182,7 @@ public:
         // MIDI Input
 
 #ifndef BUILD_BRIDGE
-        if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":midi-in");
@@ -592,7 +482,7 @@ public:
             }
             catch (LinuxSampler::Exception& e)
             {
-                set_last_error(e.what());
+                setLastError(e.what());
                 return false;
             }
 
@@ -601,7 +491,7 @@ public:
             }
             catch (LinuxSampler::Exception& e)
             {
-                set_last_error(e.what());
+                setLastError(e.what());
                 return false;
             }
 
@@ -610,7 +500,7 @@ public:
             }
             catch (LinuxSampler::Exception& e)
             {
-                set_last_error(e.what());
+                setLastError(e.what());
                 return false;
             }
 
@@ -645,20 +535,20 @@ public:
                 if (x_client->isOk())
                     return true;
                 else
-                    set_last_error("Failed to register plugin client");
+                    setLastError("Failed to register plugin client");
             }
             else
-                set_last_error("Failed to find any instruments");
+                setLastError("Failed to find any instruments");
         }
         else
-            set_last_error("Requested file is not valid or does not exist");
+            setLastError("Requested file is not valid or does not exist");
 
         return false;
     }
 
     // -------------------------------------------------------------------
 
-    static short newLinuxSampler(const initializer& init, bool isGIG);
+    static CarlaPlugin* newLinuxSampler(const initializer& init, bool isGIG);
 
 private:
     LinuxSampler::Sampler* sampler;
@@ -676,50 +566,54 @@ private:
     const char* m_label;
     const char* m_maker;
 };
-#endif
 
-short LinuxSamplerPlugin::newLinuxSampler(const initializer& init, bool isGIG)
+CarlaPlugin* LinuxSamplerPlugin::newLinuxSampler(const initializer& init, bool isGIG)
 {
     qDebug("LinuxSamplerPlugin::newLinuxSampler(%p, %s, %s, %s, %s)", init.engine, init.filename, init.name, init.label, bool2str(isGIG));
 
-#ifdef WANT_LINUXSAMPLER
     short id = init.engine->getNewPluginIndex();
 
     if (id < 0)
     {
-        set_last_error("Maximum number of plugins reached");
-        return -1;
+        setLastError("Maximum number of plugins reached");
+        return nullptr;
     }
 
-    LinuxSamplerPlugin* plugin = new LinuxSamplerPlugin(init.engine, id, isGIG);
+    LinuxSamplerPlugin* const plugin = new LinuxSamplerPlugin(init.engine, id, isGIG);
 
     if (! plugin->init(init.filename, init.name, init.label))
     {
         delete plugin;
-        return -1;
+        return nullptr;
     }
 
     plugin->reload();
     plugin->registerToOsc();
-    init.engine->addPlugin(id, plugin);
 
-    return id;
+    return plugin;
+}
+#endif
+
+CarlaPlugin* CarlaPlugin::newGIG(const initializer& init)
+{
+    qDebug("CarlaPlugin::newGIG(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
+#ifdef WANT_LINUXSAMPLER
+    return LinuxSamplerPlugin::newLinuxSampler(init, true);
 #else
-    set_last_error("linuxsampler support not available");
-    return -1;
+    setLastError("linuxsampler support not available");
+    return nullptr;
 #endif
 }
 
-short CarlaPlugin::newGIG(const initializer& init)
-{
-    qDebug("CarlaPlugin::newGIG(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
-    return LinuxSamplerPlugin::newLinuxSampler(init, true);
-}
-
-short CarlaPlugin::newSFZ(const initializer& init)
+CarlaPlugin* CarlaPlugin::newSFZ(const initializer& init)
 {
     qDebug("CarlaPlugin::newSFZ(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
+#ifdef WANT_LINUXSAMPLER
     return LinuxSamplerPlugin::newLinuxSampler(init, false);
+#else
+    setLastError("linuxsampler support not available");
+    return nullptr;
+#endif
 }
 
 /**@}*/

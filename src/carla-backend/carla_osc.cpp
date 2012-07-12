@@ -175,10 +175,10 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
         return handle_note_off(plugin, argc, argv, types);
 
     // Plugin-specific methods
-    //if (strcmp(method, "/lv2_atom_transfer") == 0)
-    //    return handle_lv2_atom_transfer(plugin, argc, argv, types);
-    //if (strcmp(method, "/lv2_event_transfer") == 0)
-    //    return handle_lv2_event_transfer(plugin, argc, argv, types);
+    if (strcmp(method, "/lv2_atom_transfer") == 0)
+        return handle_lv2_atom_transfer(plugin, argc, argv, types);
+    if (strcmp(method, "/lv2_event_transfer") == 0)
+        return handle_lv2_event_transfer(plugin, argc, argv, types);
 
     // Plugin Bridges
     if (plugin->hints() & CarlaBackend::PLUGIN_IS_BRIDGE)

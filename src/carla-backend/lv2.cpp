@@ -17,7 +17,7 @@
 
 #include "carla_plugin.h"
 
-#include "lv2_rdf.h"
+#include "carla_lv2_includes.h"
 #include "sratom/sratom.h"
 
 extern "C" {
@@ -142,6 +142,7 @@ const uint32_t CARLA_URI_MAP_ID_COUNT         = 12;
 /**@}*/
 
 enum Lv2ParameterDataType {
+    LV2_PARAMETER_TYPE_NULL,
     LV2_PARAMETER_TYPE_CONTROL
 };
 
@@ -153,6 +154,10 @@ struct EventData {
         LV2_Event_Buffer* event;
         LV2_MIDI* midi;
     };
+
+    EventData()
+        : type(0),
+          port(nullptr) {}
 };
 
 struct Lv2ParameterData {
@@ -160,26 +165,35 @@ struct Lv2ParameterData {
     union {
         float control;
     };
+
+    Lv2ParameterData()
+        : type(LV2_PARAMETER_TYPE_NULL) {}
 };
 
 struct PluginEventData {
     uint32_t count;
     EventData* data;
+
+    PluginEventData()
+        : count(0),
+          data(nullptr) {}
 };
 
-const char* lv2bridge2str(LV2_Property type)
+const char* lv2bridge2str(const LV2_Property type)
 {
     switch (type)
     {
 #ifndef BUILD_BRIDGE
     case LV2_UI_GTK2:
-        return carla_options.bridge_lv2gtk2;
+        return carlaOptions.bridge_lv2gtk2;
     case LV2_UI_QT4:
-        return carla_options.bridge_lv2qt4;
-        //case LV2_UI_HWND:
-        //    return carla_options.bridge_lv2hwnd;
+        return carlaOptions.bridge_lv2qt4;
+    case LV2_UI_COCOA:
+        return nullptr; //carlaOptions.bridge_lv2cocoa;
+    case LV2_UI_WINDOWS:
+        return nullptr; //carlaOptions.bridge_lv2hwnd;
     case LV2_UI_X11:
-        return carla_options.bridge_lv2x11;
+        return carlaOptions.bridge_lv2x11;
 #endif
     default:
         return nullptr;
@@ -195,7 +209,7 @@ public:
 
         m_type = PLUGIN_LV2;
 
-        handle = nullptr;
+        handle = h2 = nullptr;
         descriptor = nullptr;
         rdf_descriptor = nullptr;
 
@@ -267,8 +281,8 @@ public:
             case GUI_EXTERNAL_OSC:
                 if (osc.data.target)
                 {
-                    //osc_send_hide(&osc.data);
-                    //osc_send_quit(&osc.data);
+                    osc_send_hide(&osc.data);
+                    osc_send_quit(&osc.data);
                 }
 
                 if (osc.thread)
@@ -289,7 +303,7 @@ public:
                     delete osc.thread;
                 }
 
-                //osc_clear_data(&osc.data);
+                osc_clear_data(&osc.data);
 
                 break;
 #endif
@@ -330,11 +344,24 @@ public:
             uiLibClose();
         }
 
-        if (handle && descriptor && descriptor->deactivate && m_activeBefore)
-            descriptor->deactivate(handle);
+        if (descriptor)
+        {
+            if (descriptor->deactivate && m_activeBefore)
+            {
+                if (handle)
+                    descriptor->deactivate(handle);
+                if (h2)
+                    descriptor->deactivate(handle);
+            }
 
-        if (handle && descriptor && descriptor->cleanup)
-            descriptor->cleanup(handle);
+            if (descriptor->cleanup)
+            {
+                if (handle)
+                    descriptor->cleanup(handle);
+                if (h2)
+                    descriptor->cleanup(h2);
+            }
+        }
 
         if (rdf_descriptor)
             lv2_rdf_free(rdf_descriptor);
@@ -416,7 +443,7 @@ public:
         if (LV2_IS_UTILITY(Category))
             return PLUGIN_CATEGORY_UTILITY;
 
-        return get_category_from_name(m_name);
+        return getPluginCategoryFromName(m_name);
     }
 
     long uniqueId()
@@ -683,7 +710,7 @@ public:
 
         if (ext.state)
         {
-            const char* const stype = customdatatype2str(type);
+            const char* const stype = getCustomDataTypeString(type);
             LV2_State_Status status;
 
             if (x_engine->isOffline())
@@ -747,8 +774,8 @@ public:
                 //    osc_send_midi_program(&osc.data, midiprog.data[index].bank, midiprog.data[index].program, false);
                 //else
 #endif
-                    if (ext.uiprograms)
-                        ext.uiprograms->select_program(ui.handle, midiprog.data[index].bank, midiprog.data[index].program);
+                if (ext.uiprograms)
+                    ext.uiprograms->select_program(ui.handle, midiprog.data[index].bank, midiprog.data[index].program);
             }
         }
 
@@ -1071,7 +1098,7 @@ public:
             if (LV2_IS_PORT_AUDIO(PortType) || LV2_IS_PORT_ATOM_SEQUENCE(PortType) || LV2_IS_PORT_CV(PortType) || LV2_IS_PORT_EVENT(PortType) || LV2_IS_PORT_MIDI_LL(PortType))
             {
 #ifndef BUILD_BRIDGE
-                if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+                if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
                 {
                     strcpy(portName, m_name);
                     strcat(portName, ":");
@@ -1379,7 +1406,7 @@ public:
         if (needsCin)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-in");
@@ -1394,7 +1421,7 @@ public:
         if (needsCout)
         {
 #ifndef BUILD_BRIDGE
-            if (carla_options.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-out");
@@ -1822,7 +1849,7 @@ public:
 
             for (i=0; i < MAX_MIDI_EVENTS && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
-                if (! extMidiNotes[i].valid)
+                if (extMidiNotes[i].channel < 0)
                     break;
 
                 uint8_t midiEvent[4] = { 0 };
@@ -1855,7 +1882,7 @@ public:
                     }
                 }
 
-                extMidiNotes[i].valid = false;
+                extMidiNotes[i].channel = -1;
                 midiEventCount += 1;
             }
 
@@ -2467,7 +2494,7 @@ public:
 
         if (dtype == CUSTOM_DATA_INVALID)
         {
-            qCritical("Lv2Plugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i) - Invalid type '%s'", handle, key, value, size, type, flags, customdatatype2str(dtype));
+            qCritical("Lv2Plugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i) - Invalid type '%s'", handle, key, value, size, type, flags, CustomDataType2str(dtype));
             return LV2_STATE_ERR_BAD_TYPE;
         }
 
@@ -2561,7 +2588,7 @@ public:
             return chunk.constData();
         }
 
-        qCritical("Lv2Plugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p) - Invalid key type '%s'", handle, key, size, type, flags, customdatatype2str(dtype));
+        qCritical("Lv2Plugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p) - Invalid key type '%s'", handle, key, size, type, flags, CustomDataType2str(dtype));
         return nullptr;
     }
 
@@ -3089,7 +3116,7 @@ public:
 
         if (! rdf_descriptor)
         {
-            set_last_error("Failed to find the requested plugin in the LV2 Bundle");
+            setLastError("Failed to find the requested plugin in the LV2 Bundle");
             return false;
         }
 
@@ -3098,7 +3125,7 @@ public:
 
         if (! libOpen(rdf_descriptor->Binary))
         {
-            set_last_error(libError(rdf_descriptor->Binary));
+            setLastError(libError(rdf_descriptor->Binary));
             return false;
         }
 
@@ -3109,7 +3136,7 @@ public:
 
         if (! descfn)
         {
-            set_last_error("Could not find the LV2 Descriptor in the plugin library");
+            setLastError("Could not find the LV2 Descriptor in the plugin library");
             return false;
         }
 
@@ -3125,7 +3152,7 @@ public:
 
         if (! descriptor)
         {
-            set_last_error("Could not find the requested plugin URI in the plugin library");
+            setLastError("Could not find the requested plugin URI in the plugin library");
             return false;
         }
 
@@ -3143,7 +3170,7 @@ public:
                 qCritical("Got unsupported port -> %i", PortType);
                 if (! LV2_IS_PORT_OPTIONAL(rdf_descriptor->Ports[i].Properties))
                 {
-                    set_last_error("Plugin requires a port that is not currently supported");
+                    setLastError("Plugin requires a port that is not currently supported");
                     canContinue = false;
                     break;
                 }
@@ -3156,7 +3183,7 @@ public:
             if (LV2_IS_FEATURE_REQUIRED(rdf_descriptor->Features[i].Type) && is_lv2_feature_supported(rdf_descriptor->Features[i].URI) == false)
             {
                 QString msg = QString("Plugin requires a feature that is not supported:\n%1").arg(rdf_descriptor->Features[i].URI);
-                set_last_error(msg.toUtf8().constData());
+                setLastError(msg.toUtf8().constData());
                 canContinue = false;
                 break;
             }
@@ -3279,7 +3306,7 @@ public:
 
         if (! handle)
         {
-            set_last_error("Plugin failed to initialize");
+            setLastError("Plugin failed to initialize");
             return false;
         }
 
@@ -3300,7 +3327,7 @@ public:
 
         if (! x_client->isOk())
         {
-            set_last_error("Failed to register plugin client");
+            setLastError("Failed to register plugin client");
             return false;
         }
 
@@ -3323,15 +3350,15 @@ public:
                 {
                 case LV2_UI_QT4:
 #ifndef BUILD_BRIDGE
-                    if (isUiBridgeable(i) && carla_options.prefer_ui_bridges)
+                    if (isUiBridgeable(i) && carlaOptions.prefer_ui_bridges)
                         eQt4 = i;
 #endif
                     iQt4 = i;
                     break;
 
-                case LV2_UI_HWND:
+                case LV2_UI_WINDOWS:
 #ifndef BUILD_BRIDGE
-                    if (isUiBridgeable(i) && carla_options.prefer_ui_bridges)
+                    if (isUiBridgeable(i) && carlaOptions.prefer_ui_bridges)
                         eHWND = i;
 #endif
                     iHWND = i;
@@ -3339,7 +3366,7 @@ public:
 
                 case LV2_UI_X11:
 #ifndef BUILD_BRIDGE
-                    if (isUiBridgeable(i) && carla_options.prefer_ui_bridges)
+                    if (isUiBridgeable(i) && carlaOptions.prefer_ui_bridges)
                         eX11 = i;
 #endif
                     iX11 = i;
@@ -3350,7 +3377,7 @@ public:
                     if (false)
 #else
 #  ifdef HAVE_SUIL
-                    if (isUiBridgeable(i) && carla_options.prefer_ui_bridges)
+                    if (isUiBridgeable(i) && carlaOptions.prefer_ui_bridges)
 #  else
                     if (isUiBridgeable(i))
 #  endif
@@ -3569,8 +3596,14 @@ public:
                     updateUi();
                     break;
 
-                case LV2_UI_HWND:
-                    qDebug("Will use LV2 HWND UI");
+                case LV2_UI_COCOA:
+                    qDebug("Will use LV2 Cocoa UI");
+                    gui.type      = GUI_INTERNAL_COCOA;
+                    gui.resizable = isUiResizable();
+                    break;
+
+                case LV2_UI_WINDOWS:
+                    qDebug("Will use LV2 Windows UI");
                     gui.type      = GUI_INTERNAL_HWND;
                     gui.resizable = isUiResizable();
                     break;
@@ -3629,7 +3662,7 @@ public:
     }
 
 private:
-    LV2_Handle handle;
+    LV2_Handle handle, h2;
     const LV2_Descriptor* descriptor;
     const LV2_RDF_Descriptor* rdf_descriptor;
     LV2_Feature* features[lv2_feature_count+1];
@@ -3671,45 +3704,46 @@ private:
     std::vector<const char*> customURIDs;
 };
 
-short CarlaPlugin::newLV2(const initializer& init)
+CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
 {
     qDebug("CarlaPlugin::newLV2(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
 
-    short id = init.engine->getNewPluginIndex();
+    short id = init.engine->getNewPluginId();
 
     if (id < 0)
     {
-        set_last_error("Maximum number of plugins reached");
-        return -1;
+        setLastError("Maximum number of plugins reached");
+        return nullptr;
     }
 
-    Lv2Plugin* plugin = new Lv2Plugin(init.engine, id);
+    Lv2Plugin* const plugin = new Lv2Plugin(init.engine, id);
 
     if (! plugin->init(init.filename, init.name, init.label))
     {
         delete plugin;
-        return -1;
+        return nullptr;
     }
 
     plugin->reload();
 
 #ifndef BUILD_BRIDGE
-    if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
     {
-        if (/* inputs */ ((plugin->audioInCount() != 0 && plugin->audioInCount() != 2)) || /* outputs */ ((plugin->audioOutCount() != 0 && plugin->audioOutCount() != 2)))
-        {
-            set_last_error("Carla Rack Mode can only work with Stereo plugins, sorry!");
-            delete plugin;
-            return -1;
-        }
+        uint32_t ins  = plugin->audioInCount();
+        uint32_t outs = plugin->audioOutCount();
 
+        if (ins > 2 || outs > 2 || (ins != outs && ins != 0 && outs != 0))
+        {
+            setLastError("Carla's Rack Mode can only work with Mono or Stereo LV2 plugins, sorry!");
+            delete plugin;
+            return nullptr;
+        }
     }
 #endif
 
     plugin->registerToOsc();
-    init.engine->addPlugin(id, plugin);
 
-    return id;
+    return plugin;
 }
 
 /**@}*/
@@ -3718,19 +3752,23 @@ CARLA_BACKEND_END_NAMESPACE
 
 // -------------------------------------------------------------------------------------------------------------------
 
-int osc_handle_lv2_atom_transfer(CarlaBackend::CarlaPlugin* plugin, lo_arg** /*argv*/)
+int CarlaOsc::handle_lv2_atom_transfer(CARLA_OSC_HANDLE_ARGS2)
 {
-    CarlaBackend::Lv2Plugin* lv2plugin = (CarlaBackend::Lv2Plugin*)plugin;
+    qDebug("CarlaOsc::handle_lv2_atom_transfer()");
+    //CARLA_OSC_CHECK_OSC_TYPES(2, "ii");
 
+    CarlaBackend::Lv2Plugin* lv2plugin = (CarlaBackend::Lv2Plugin*)plugin;
     lv2plugin->handleAtomTransfer();
 
     return 0;
 }
 
-int osc_handle_lv2_event_transfer(CarlaBackend::CarlaPlugin* plugin, lo_arg** argv)
+int CarlaOsc::handle_lv2_event_transfer(CARLA_OSC_HANDLE_ARGS2)
 {
-    CarlaBackend::Lv2Plugin* lv2plugin = (CarlaBackend::Lv2Plugin*)plugin;
+    qDebug("CarlaOsc::handle_lv2_event_transfer()");
+    CARLA_OSC_CHECK_OSC_TYPES(3, "sss");
 
+    CarlaBackend::Lv2Plugin* lv2plugin = (CarlaBackend::Lv2Plugin*)plugin;
     const char* type  = (const char*)&argv[0]->s;
     const char* key   = (const char*)&argv[1]->s;
     const char* value = (const char*)&argv[2]->s;

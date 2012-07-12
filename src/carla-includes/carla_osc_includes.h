@@ -95,9 +95,9 @@ void osc_send_program(const CarlaOscData* const oscData, const int index)
 }
 
 static inline
-void osc_send_program(const CarlaOscData* const oscData, const int program, const int bank)
+void osc_send_program(const CarlaOscData* const oscData, const int bank, const int program)
 {
-    qDebug("osc_send_program(%s, %i, %i)", oscData->path, program, bank);
+    qDebug("osc_send_program(%s, %i, %i)", oscData->path, bank, program);
     assert(program >= 0);
     assert(bank >= 0);
 
@@ -106,7 +106,7 @@ void osc_send_program(const CarlaOscData* const oscData, const int program, cons
         char targetPath[strlen(oscData->path)+9];
         strcpy(targetPath, oscData->path);
         strcat(targetPath, "/program");
-        lo_send(oscData->target, targetPath, "ii", program, bank);
+        lo_send(oscData->target, targetPath, "ii", bank, program);
     }
 }
 

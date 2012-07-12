@@ -17,7 +17,6 @@
 
 #include "carla_plugin.h"
 #include "carla_ladspa_includes.h"
-#include "carla_lv2_includes.h"
 
 CARLA_BACKEND_START_NAMESPACE
 
@@ -1121,8 +1120,7 @@ CarlaPlugin* CarlaPlugin::newLADSPA(const initializer& init, const void* const e
 
         if (ins > 2 || outs > 2 || (ins != outs && ins != 0 && outs != 0))
         {
-            setLastError("Carla's Rack Mode can only work with Mono or Stereo plugins, sorry!");
-            qWarning("data: %i %i | %i %i %i", ins > 2, outs > 2, ins != outs, ins != 0, outs != 0);
+            setLastError("Carla's Rack Mode can only work with Mono or Stereo LADSPA plugins, sorry!");
             delete plugin;
             return nullptr;
         }

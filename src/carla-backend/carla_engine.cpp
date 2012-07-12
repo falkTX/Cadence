@@ -194,7 +194,7 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
         return -1;
 #  endif
 
-        //plugin = CarlaPlugin::newBridge(init, btype, ptype);
+        plugin = CarlaPlugin::newBridge(init, btype, ptype);
     }
     else
 #endif
@@ -207,22 +207,22 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
             plugin = CarlaPlugin::newLADSPA(init, extra);
             break;
         case PLUGIN_DSSI:
-            //id = CarlaPlugin::newDSSI(init, extra);
+            plugin = CarlaPlugin::newDSSI(init, extra);
             break;
         case PLUGIN_LV2:
-            //id = CarlaPlugin::newLV2(init);
+            plugin = CarlaPlugin::newLV2(init);
             break;
         case PLUGIN_VST:
-            //id = CarlaPlugin::newVST(init);
+            plugin = CarlaPlugin::newVST(init);
             break;
         case PLUGIN_GIG:
-            //id = CarlaPlugin::newGIG(init);
+            plugin = CarlaPlugin::newGIG(init);
             break;
         case PLUGIN_SF2:
-            //id = CarlaPlugin::newSF2(init);
+            plugin = CarlaPlugin::newSF2(init);
             break;
         case PLUGIN_SFZ:
-            //id = CarlaPlugin::newSFZ(init);
+            plugin = CarlaPlugin::newSFZ(init);
             break;
         }
     }
@@ -274,13 +274,35 @@ bool CarlaEngine::removePlugin(const unsigned short id)
         }
     }
 
-    if (isRunning())
+    qCritical("remove_plugin(%i) - could not find plugin", id);
+    setLastError("Could not find plugin to remove");
+    return false;
+}
+
+void CarlaEngine::removeAllPlugins()
+{
+    if (m_checkThread.isRunning())
+        m_checkThread.stopNow();
+
+    for (unsigned short i=0; i < MAX_PLUGINS; i++)
     {
-        qCritical("remove_plugin(%i) - could not find plugin", id);
-        setLastError("Could not find plugin to remove");
+        CarlaPlugin* const plugin = m_carlaPlugins[i];
+
+        if (plugin)
+        {
+            processLock();
+            plugin->setEnabled(false);
+            processUnlock();
+
+            delete plugin;
+
+            m_carlaPlugins[i] = nullptr;
+            m_uniqueNames[i]  = nullptr;
+        }
     }
 
-    return false;
+    if (isRunning())
+        m_checkThread.start(QThread::HighPriority);
 }
 
 void CarlaEngine::idlePluginGuis()

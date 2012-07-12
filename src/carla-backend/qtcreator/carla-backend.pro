@@ -15,16 +15,16 @@ SOURCES = \
     ../carla_engine.cpp \
     ../carla_engine_jack.cpp \
     ../carla_engine_rtaudio.cpp \
-#    ../carla_bridge.cpp \
+    ../carla_bridge.cpp \
     ../carla_osc.cpp \
     ../carla_shared.cpp \
     ../carla_threads.cpp \
     ../ladspa.cpp \
-#    ../dssi.cpp \
-#    ../lv2.cpp \
-#    ../vst.cpp \
-#    ../fluidsynth.cpp \
-#    ../linuxsampler.cpp \
+    ../dssi.cpp \
+    ../lv2.cpp \
+    ../vst.cpp \
+    ../fluidsynth.cpp \
+    ../linuxsampler.cpp \
     ../lv2-rtmempool/rtmempool.c
 
 HEADERS = \
@@ -41,6 +41,7 @@ HEADERS = \
     ../../carla-includes/carla_ladspa_includes.h \
     ../../carla-includes/carla_lv2_includes.h \
     ../../carla-includes/carla_vst_includes.h \
+    ../../carla-includes/carla_linuxsampler_includes.h \
     ../../carla-includes/carla_midi.h \
     ../../carla-includes/ladspa_rdf.h \
     ../../carla-includes/lv2_rdf.h
@@ -49,7 +50,9 @@ INCLUDEPATH = .. \
     ../../carla-includes \
     ../../carla-includes/vst
 
-DEFINES  = HAVE_SUIL WANT_FLUIDSYNTH WANT_LINUXSAMPLER
+#DEFINES += HAVE_SUIL
+DEFINES += WANT_FLUIDSYNTH
+#DEFINES += WANT_LINUXSAMPLER
 DEFINES += CARLA_ENGINE_JACK
 #DEFINES += CARLA_ENGINE_RTAUDIO
 DEFINES += QTCREATOR_TEST

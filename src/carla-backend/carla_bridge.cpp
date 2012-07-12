@@ -58,7 +58,7 @@ public:
 
         params = nullptr;
 
-        m_thread = new CarlaPluginThread(this, CarlaPluginThread::PLUGIN_THREAD_BRIDGE);
+        m_thread = new CarlaPluginThread(engine, this, CarlaPluginThread::PLUGIN_THREAD_BRIDGE);
     }
 
     ~BridgePlugin()
@@ -193,13 +193,13 @@ public:
         strncpy(strBuf, params[parameterId].unit.toUtf8().constData(), STR_MAX);
     }
 
-    void getGuiInfo(GuiInfo* const info)
+    void getGuiInfo(GuiType* type, bool* resizable)
     {
         if (m_hints & PLUGIN_HAS_GUI)
-            info->type = GUI_EXTERNAL_OSC;
+            *type = GUI_EXTERNAL_OSC;
         else
-            info->type = GUI_NONE;
-        info->resizable = false;
+            *type = GUI_NONE;
+        *resizable = false;
     }
 
     // -------------------------------------------------------------------
@@ -252,7 +252,7 @@ public:
             }
 
             // create new if needed
-            param.count = (pTotal < (int)carla_options.max_parameters) ? pTotal : 0;
+            param.count = (pTotal < (int)carlaOptions.max_parameters) ? pTotal : 0;
 
             if (param.count > 0)
             {
@@ -476,7 +476,7 @@ public:
             const char* key   = (const char*)&argv[1]->s;
             const char* value = (const char*)&argv[2]->s;
 
-            setCustomData(customdatastr2type(stype), key, value, false);
+            setCustomData(getCustomDataStringType(stype), key, value, false);
 
             break;
         }
@@ -529,7 +529,7 @@ public:
         if (sendGui)
         {
             QString cData;
-            cData += customdatatype2str(type);
+            cData += getCustomDataTypeString(type);
             cData += "·";
             cData += key;
             cData += "·";
@@ -574,7 +574,7 @@ public:
         assert(index < (int32_t)midiprog.count);
 
         if (sendGui)
-            osc_send_midi_program(&osc.data, midiprog.data[index].bank, midiprog.data[index].program, (m_type == PLUGIN_DSSI));
+            osc_send_midi_program(&osc.data, index);
 
         CarlaPlugin::setMidiProgram(index, sendGui, sendOsc, sendCallback, block);
     }
@@ -634,11 +634,11 @@ public:
 
     bool init(const char* filename, const char* const name, const char* label)
     {
-        const char* bridgeBinary = binarytype2str(m_binary);
+        const char* bridgeBinary = getBinaryBidgePath(m_binary);
 
         if (! bridgeBinary)
         {
-            set_last_error("Bridge not possible, bridge-binary not found");
+            setLastError("Bridge not possible, bridge-binary not found");
             return false;
         }
 
@@ -648,9 +648,9 @@ public:
             m_name = x_engine->getUniqueName(name);
 
         // register plugin now so we can receive OSC (and wait for it)
-        x_engine->addPlugin(m_id, this);
+        x_engine->__bridgePluginRegister(m_id, this);
 
-        m_thread->setOscData(bridgeBinary, label, plugintype2str(m_type));
+        m_thread->setOscData(bridgeBinary, label, PluginType2str(m_type));
         m_thread->start();
 
         for (int i=0; i < 100; i++)
@@ -662,8 +662,11 @@ public:
 
         if (! initiated)
         {
+            // unregister so it gets handled properly
+            x_engine->__bridgePluginRegister(m_id, nullptr);
+
             m_thread->quit();
-            set_last_error("Timeout while waiting for a response from plugin-bridge");
+            setLastError("Timeout while waiting for a response from plugin-bridge");
             return false;
         }
 
@@ -692,32 +695,42 @@ private:
     BridgeParamInfo* params;
 };
 
-short CarlaPlugin::newBridge(const initializer& init, BinaryType btype, PluginType ptype)
+CarlaPlugin* CarlaPlugin::newBridge(const initializer& init, BinaryType btype, PluginType ptype)
 {
     qDebug("CarlaPlugin::newBridge(%p, %s, %s, %s, %i, %i)", init.engine, init.filename, init.name, init.label, btype, ptype);
 
-    short id = init.engine->getNewPluginIndex();
+    short id = init.engine->getNewPluginId();
 
-    if (id >= 0)
+    if (id < 0)
     {
-        BridgePlugin* plugin = new BridgePlugin(init.engine, id, btype, ptype);
-
-        if (plugin->init(init.filename, init.name, init.label))
-        {
-            plugin->reload();
-            plugin->registerToOsc();
-            init.engine->addPlugin(id, plugin);
-        }
-        else
-        {
-            delete plugin;
-            id = -1;
-        }
+        setLastError("Maximum number of plugins reached");
+        return nullptr;
     }
-    else
-        set_last_error("Maximum number of plugins reached");
 
-    return id;
+    BridgePlugin* const plugin = new BridgePlugin(init.engine, id, btype, ptype);
+
+    if (! plugin->init(init.filename, init.name, init.label))
+    {
+        delete plugin;
+        return nullptr;
+    }
+
+    plugin->reload();
+
+    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    {
+        if (/* inputs */ ((plugin->audioInCount() != 0 && plugin->audioInCount() != 2)) || /* outputs */ ((plugin->audioOutCount() != 0 && plugin->audioOutCount() != 2)))
+        {
+            setLastError("Carla Rack Mode can only work with Stereo bridged plugins, sorry!");
+            delete plugin;
+            return nullptr;
+        }
+
+    }
+
+    plugin->registerToOsc();
+
+    return plugin;
 }
 
 CARLA_BACKEND_END_NAMESPACE

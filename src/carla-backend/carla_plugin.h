@@ -138,7 +138,7 @@ struct PluginParameterData {
 struct PluginProgramData {
     uint32_t count;
     int32_t current;
-    const char* const* names;
+    const char** names;
 
     PluginProgramData()
         : count(0),
@@ -1984,14 +1984,14 @@ public:
     };
 
     static CarlaPlugin* newLADSPA(const initializer& init, const void* const extra);
-    ///static short newDSSI(const initializer& init, const void* const extra);
-    //static short newLV2(const initializer& init);
-    //static short newVST(const initializer& init);
-    //static short newGIG(const initializer& init);
-    //static short newSF2(const initializer& init);
-    //static short newSFZ(const initializer& init);
+    static CarlaPlugin* newDSSI(const initializer& init, const void* const extra);
+    static CarlaPlugin* newLV2(const initializer& init);
+    static CarlaPlugin* newVST(const initializer& init);
+    static CarlaPlugin* newGIG(const initializer& init);
+    static CarlaPlugin* newSF2(const initializer& init);
+    static CarlaPlugin* newSFZ(const initializer& init);
 #ifndef BUILD_BRIDGE
-    //static short newBridge(const initializer& init, BinaryType btype, PluginType ptype);
+    static CarlaPlugin* newBridge(const initializer& init, BinaryType btype, PluginType ptype);
 #endif
 
     // -------------------------------------------------------------------
