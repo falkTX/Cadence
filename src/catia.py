@@ -1309,8 +1309,9 @@ if __name__ == '__main__':
 
     else:
         DBus.jack = None
-        DBus.a2j = None
+        DBus.a2j  = None
         a2j_client_name = None
+        print("Not using DBus")
 
     # Show GUI
     gui = CatiaMainW()

@@ -165,7 +165,7 @@ carla_backend: carla_lilv
 	$(MAKE) -C src/carla-backend
 
 carla_bridge: carla_lilv
-	$(MAKE) -C src/carla-bridge
+# 	$(MAKE) -C src/carla-bridge
 
 carla_discovery:
 	$(MAKE) -C src/carla-discovery unix$(_arch_n) NATIVE=1

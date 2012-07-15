@@ -17,7 +17,6 @@
 
 #include "carla_includes.h"
 #include "carla_lib_includes.h"
-#include "carla_vst_includes.h"
 
 #include <cmath>
 #include <cstdint>
@@ -29,9 +28,11 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QUrl>
 
-#include "ladspa/ladspa.h"
+#include "carla_ladspa_includes.h"
+#include "carla_lv2_includes.h"
+#include "carla_vst_includes.h"
+
 #include "dssi/dssi.h"
-#include "lv2_rdf.h"
 
 #ifdef BUILD_NATIVE
 #  ifdef WANT_FLUIDSYNTH
@@ -40,21 +41,21 @@
 #    warning fluidsynth not available (no SF2 support)
 #  endif
 #  ifdef WANT_LINUXSAMPLER
-#    include "linuxsampler/EngineFactory.h"
+#    define BUILD_BRIDGE // FIXME
+#    include "carla_linuxsampler_includes.h"
+#    undef BUILD_BRIDGE
 #  else
 #    warning linuxsampler not available (no GIG and SFZ support)
 #  endif
 #endif
 
-#define CARLA_BACKEND_NO_EXPORTS
-#define CARLA_BACKEND_NO_NAMESPACE
 #include "carla_backend.h"
 
 #define DISCOVERY_OUT(x, y) std::cout << "\ncarla-discovery::" << x << "::" << y << std::endl;
 
 // fake values to test plugins with
 const uint32_t bufferSize = 512;
-const double   sampleRate = 44100.f;
+const double   sampleRate = 44100.0;
 
 // Since discovery can find multi-architecture binaries, don't print ELF related errors
 void print_lib_error(const char* filename)
@@ -64,6 +65,8 @@ void print_lib_error(const char* filename)
         DISCOVERY_OUT("error", error);
 }
 
+using namespace CarlaBackend;
+
 // ------------------------------ VST Stuff ------------------------------
 
 intptr_t VstCurrentUniqueId = 0;
@@ -71,7 +74,7 @@ intptr_t VstCurrentUniqueId = 0;
 intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
 {
 #if DEBUG
-    qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstOpcode2str(opcode), index, value, opt);
+    qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstMasterOpcode2str(opcode), index, value, opt);
 #endif
 
     switch (opcode)
@@ -177,7 +180,7 @@ intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_
         return kVstLangEnglish;
 
     default:
-        qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstOpcode2str(opcode), index, value, opt);
+        qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstMasterOpcode2str(opcode), index, value, opt);
         break;
     }
 

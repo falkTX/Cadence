@@ -3,8 +3,8 @@
 QT = core gui
 
 CONFIG    = debug link_pkgconfig qt warn_on plugin shared
-PKGCONFIG = jack liblo fluidsynth alsa libpulse-simple
-# linuxsampler suil-0
+PKGCONFIG = jack liblo fluidsynth linuxsampler alsa libpulse-simple
+# suil-0
 
 TARGET   = carla_backend
 TEMPLATE = app
@@ -52,7 +52,7 @@ INCLUDEPATH = .. \
 
 #DEFINES += HAVE_SUIL
 DEFINES += WANT_FLUIDSYNTH
-#DEFINES += WANT_LINUXSAMPLER
+DEFINES += WANT_LINUXSAMPLER
 DEFINES += CARLA_ENGINE_JACK
 #DEFINES += CARLA_ENGINE_RTAUDIO
 DEFINES += QTCREATOR_TEST

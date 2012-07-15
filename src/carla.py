@@ -3430,7 +3430,8 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         if event.timerId() == self.TIMER_GUI_STUFF:
             for pwidget in self.m_plugin_list:
                 if pwidget: pwidget.check_gui_stuff()
-            CarlaHost.idle_guis()
+            if CarlaHost.is_engine_running():
+                CarlaHost.idle_guis()
         elif event.timerId() == self.TIMER_GUI_STUFF2:
             for pwidget in self.m_plugin_list:
                 if pwidget: pwidget.check_gui_stuff2()
@@ -3514,8 +3515,15 @@ if __name__ == '__main__':
     if carla_bridge_vst_x11:
         CarlaHost.set_option(OPTION_PATH_BRIDGE_VST_X11, 0, carla_bridge_vst_x11)
 
+    # TEST
+    #count = CarlaHost.get_engine_driver_count()
+    #print(count)
+    #for i in range(0, count):
+        #dname = cString(CarlaHost.get_engine_driver_name(i))
+        #print("%i - %s" % (i, dname))
+
     if not CarlaHost.engine_init("JACK", "Carla"):
-        CustomMessageBox(None, QMessageBox.Critical, "Error", "Could not connect to JACK",
+        CustomMessageBox(None, QMessageBox.Critical, "Error", "Could not connect to Audio backend, possible reasons:",
             cString(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
         sys.exit(1)
 

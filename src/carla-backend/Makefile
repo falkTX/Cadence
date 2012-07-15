@@ -20,7 +20,7 @@ CARLA_C_FLAGS     = $(BASE_FLAGS) $(CFLAGS)
 CARLA_CXX_FLAGS   = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
 CARLA_CXX_FLAGS  += $(shell pkg-config --cflags liblo QtCore QtGui)
 CARLA_CXX_FLAGS  += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT
-# CARLA_CXX_FLAGS  += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
+CARLA_CXX_FLAGS  += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
 
 CARLA_LD_FLAGS    = -shared -ldl -lm -fPIC $(LDFLAGS)
 CARLA_LD_FLAGS   += $(shell pkg-config --libs liblo QtCore QtGui)

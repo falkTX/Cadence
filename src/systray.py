@@ -17,17 +17,41 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
-from os import getenv
+import os, sys
 from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QAction, QIcon, QMenu, QSystemTrayIcon
 
 try:
-    if getenv("DESKTOP_SESSION") in ("ubuntu", "ubuntu-2d") and not os.path.exists("/var/kxstudio/no_appindicators"):
-        from gi.repository import AppIndicator3, Gtk
+    if os.getenv("DESKTOP_SESSION") in ("ubuntu", "ubuntu-2d") and not os.path.exists("/var/cadence/no_appindicators"):
+        # Check current Qt theme. If Gtk+, use Gtk2 AppIndicator
+        style = None
+        if len(sys.argv) > 2 and "-style" in sys.argv:
+            i = sys.argv.index("-style")
+            if i < len(sys.argv):
+                style = sys.argv[i+1]
+
+        check_cmd = "python3 -c 'import sys; from PyQt4.QtGui import QApplication; app = QApplication(sys.argv); print(app.style().objectName())'"
+        if style:
+            check_cmd += " -style "
+            check_cmd += style
+
+        from subprocess import getoutput
+        needsGtk2 = bool(getoutput(check_cmd).strip().lower() in ("gtk", "gtk+"))
+
+        if needsGtk2:
+            from gi import pygtkcompat
+            pygtkcompat.enable()
+            pygtkcompat.enable_gtk(version="2.0")
+            from gi.repository import Gtk, AppIndicator
+        else:
+            from gi.repository import Gtk, AppIndicator3 as AppIndicator
+
         TrayEngine = "AppIndicator"
+
     elif getenv("KDE_FULL_SESSION"):
         from PyKDE4.kdeui import KAction, KIcon, KMenu, KStatusNotifierItem
         TrayEngine = "KDE"
+
     else:
         TrayEngine = "Qt"
 except:
@@ -80,7 +104,7 @@ class GlobalSysTray(object):
 
         elif TrayEngine == "AppIndicator":
             self.menu = Gtk.Menu()
-            self.tray = AppIndicator3.Indicator.new(name, icon, AppIndicator3.IndicatorCategory.APPLICATION_STATUS)
+            self.tray = AppIndicator.Indicator.new(name, icon, AppIndicator.IndicatorCategory.APPLICATION_STATUS)
             self.tray.set_menu(self.menu)
             # Double-click is not possible with App-Indicators
 
@@ -484,7 +508,7 @@ class GlobalSysTray(object):
         if TrayEngine == "KDE":
             self.tray.setStatus(KStatusNotifierItem.Active)
         elif TrayEngine == "AppIndicator":
-            self.tray.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
+            self.tray.set_status(AppIndicator.IndicatorStatus.ACTIVE)
         elif TrayEngine == "Qt":
             self.tray.show()
 
@@ -492,7 +516,7 @@ class GlobalSysTray(object):
         if TrayEngine == "KDE":
             self.tray.setStatus(KStatusNotifierItem.Passive)
         elif TrayEngine == "AppIndicator":
-            self.tray.set_status(AppIndicator3.IndicatorStatus.PASSIVE)
+            self.tray.set_status(AppIndicator.IndicatorStatus.PASSIVE)
         elif TrayEngine == "Qt":
             self.tray.hide()
 

@@ -21,6 +21,8 @@
 
 // TODO - setMidiProgram()
 
+#ifdef WANT_LINUXSAMPLER
+
 #include "carla_plugin.h"
 #include "carla_linuxsampler_includes.h"
 
@@ -31,8 +33,6 @@ CARLA_BACKEND_START_NAMESPACE
 #if 0
 } /* adjust editor indent */
 #endif
-
-#ifdef WANT_LINUXSAMPLER
 
 /*!
  * @defgroup CarlaBackendLinuxSamplerPlugin Carla Backend LinuxSampler Plugin
@@ -57,8 +57,8 @@ public:
         engine_channel = nullptr;
         instrument = nullptr;
 
-        audioOutputDevice = new AudioOutputDevicePlugin(this);
-        midiInputDevice   = new MidiInputDevicePlugin(sampler);
+        audioOutputDevice = new LinuxSampler::AudioOutputDevicePlugin(engine_, this);
+        midiInputDevice   = new LinuxSampler::MidiInputDevicePlugin(sampler);
         midiInputPort     = midiInputDevice->CreateMidiPort();
 
         m_isGIG = isGIG;
@@ -283,7 +283,7 @@ public:
 
             for (i=0; i < MAX_MIDI_EVENTS && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
-                if (! extMidiNotes[i].valid)
+                if (extMidiNotes[i].channel < 0)
                     break;
 
                 if (extMidiNotes[i].velo)
@@ -291,7 +291,7 @@ public:
                 else
                     midiInputPort->DispatchNoteOff(extMidiNotes[i].note, extMidiNotes[i].velo, cin_channel, framesOffset);
 
-                extMidiNotes[i].valid = false;
+                extMidiNotes[i].channel = -1;
                 midiEventCount += 1;
             }
 
@@ -558,8 +558,8 @@ private:
     LinuxSampler::InstrumentManager* instrument;
     std::vector<LinuxSampler::InstrumentManager::instrument_id_t> instrumentIds;
 
-    AudioOutputDevicePlugin* audioOutputDevice;
-    MidiInputDevicePlugin* midiInputDevice;
+    LinuxSampler::AudioOutputDevicePlugin* audioOutputDevice;
+    LinuxSampler::MidiInputDevicePlugin* midiInputDevice;
     LinuxSampler::MidiInputPort* midiInputPort;
 
     bool m_isGIG;
@@ -571,7 +571,7 @@ CarlaPlugin* LinuxSamplerPlugin::newLinuxSampler(const initializer& init, bool i
 {
     qDebug("LinuxSamplerPlugin::newLinuxSampler(%p, %s, %s, %s, %s)", init.engine, init.filename, init.name, init.label, bool2str(isGIG));
 
-    short id = init.engine->getNewPluginIndex();
+    short id = init.engine->getNewPluginId();
 
     if (id < 0)
     {
@@ -592,29 +592,37 @@ CarlaPlugin* LinuxSamplerPlugin::newLinuxSampler(const initializer& init, bool i
 
     return plugin;
 }
-#endif
 
 CarlaPlugin* CarlaPlugin::newGIG(const initializer& init)
 {
     qDebug("CarlaPlugin::newGIG(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
-#ifdef WANT_LINUXSAMPLER
     return LinuxSamplerPlugin::newLinuxSampler(init, true);
-#else
-    setLastError("linuxsampler support not available");
-    return nullptr;
-#endif
 }
 
 CarlaPlugin* CarlaPlugin::newSFZ(const initializer& init)
 {
     qDebug("CarlaPlugin::newSFZ(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
-#ifdef WANT_LINUXSAMPLER
     return LinuxSamplerPlugin::newLinuxSampler(init, false);
-#else
+}
+#else // WANT_LINUXSAMPLER
+#include "carla_plugin.h"
+
+CARLA_BACKEND_START_NAMESPACE
+
+CarlaPlugin* CarlaPlugin::newGIG(const initializer& init)
+{
+    qDebug("CarlaPlugin::newGIG(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
     setLastError("linuxsampler support not available");
     return nullptr;
-#endif
 }
+
+CarlaPlugin* CarlaPlugin::newSFZ(const initializer& init)
+{
+    qDebug("CarlaPlugin::newSFZ(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
+    setLastError("linuxsampler support not available");
+    return nullptr;
+}
+#endif
 
 /**@}*/
 

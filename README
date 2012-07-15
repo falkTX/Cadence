@@ -4,3 +4,10 @@
 
 Cadence is a set of tools useful for audio production.
 It's being developed by falkTX, using Python and Qt (and some C++ where needed).
+
+needs:
+pyqt4-dev-tools
+libqt4-dev
+liblo-dev
+libgtk2.0-dev
+python3-pyqt4

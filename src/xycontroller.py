@@ -206,6 +206,7 @@ class XYGraphicsScene(QGraphicsScene):
     def mousePressEvent(self, event):
         self.m_mouseLock = True
         self.handleMousePos(event.scenePos())
+        self.parent().setCursor(Qt.CrossCursor)
         QGraphicsScene.mousePressEvent(self, event)
 
     def mouseMoveEvent(self, event):
@@ -214,6 +215,7 @@ class XYGraphicsScene(QGraphicsScene):
 
     def mouseReleaseEvent(self, event):
         self.m_mouseLock = False
+        self.parent().setCursor(Qt.ArrowCursor)
         QGraphicsScene.mouseReleaseEvent(self, event)
 
 # XY Controller Window
@@ -605,7 +607,7 @@ if __name__ == '__main__':
 
     # Start jack
     jack_status = jacklib.jack_status_t(0)
-    jack_client = jacklib.client_open("XY-Controller", jacklib.JackSessionID, jacklib.pointer(jack_status))
+    jack_client = jacklib.client_open("XY-Controller", jacklib.JackNoStartServer|jacklib.JackSessionID, jacklib.pointer(jack_status))
 
     if not jack_client:
         errorString = get_jack_status_error_string(jack_status)

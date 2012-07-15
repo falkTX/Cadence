@@ -819,4 +819,4 @@ if __name__ == '__main__':
     gui.show()
 
     # Exit properly
-    sys.exit(app.exec_())
+    sys.exit(gui.systray.exec_(app))

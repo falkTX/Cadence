@@ -139,7 +139,7 @@ if __name__ == '__main__':
 
     # JACK initialization
     jack_status = jacklib.jack_status_t(0)
-    client = jacklib.client_open("M", jacklib.JackSessionID, jacklib.pointer(jack_status))
+    client = jacklib.client_open("M", jacklib.JackNoStartServer|jacklib.JackSessionID, jacklib.pointer(jack_status))
 
     if not client:
         errorString = get_jack_status_error_string(jack_status)

@@ -17,8 +17,6 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
-import dbus
-from dbus.mainloop.qt import DBusQtMainLoop
 from time import ctime
 from PyQt4.QtCore import QPointF, QSettings
 from PyQt4.QtGui import QAction, QApplication, QMainWindow, QVBoxLayout, QTableWidgetItem, QTreeWidgetItem
@@ -39,6 +37,13 @@ try:
     hasGL = True
 except:
     hasGL = False
+
+try:
+    import dbus
+    from dbus.mainloop.qt import DBusQtMainLoop
+    haveDBus = True
+except:
+    haveDBus = False
 
 # NOTE - set to true when supported
 USE_CLAUDIA_ADD_NEW = True
@@ -2484,6 +2489,11 @@ if __name__ == '__main__':
     app.setApplicationVersion(VERSION)
     app.setOrganizationName("Cadence")
     app.setWindowIcon(QIcon(":/scalable/claudia.svg"))
+
+    if not haveDBus:
+        QMessageBox.critical(None, app.translate("ClaudiaMainW", "Error"), app.translate("ClaudiaMainW",
+            "DBus is not available, Claudia cannot start without it!"))
+        sys.exit(1)
 
     DBus.loop = DBusQtMainLoop(set_as_default=True)
     DBus.bus  = dbus.SessionBus(mainloop=DBus.loop)

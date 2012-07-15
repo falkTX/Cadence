@@ -99,6 +99,7 @@ class PixmapKeyboard(QWidget):
         self.m_font = QFont("Monospace", 8, QFont.Normal)
         self.m_pixmap = QPixmap("")
 
+        self.setCursor(Qt.PointingHandCursor)
         self.setMode(self.HORIZONTAL)
 
     def sendNoteOn(self, note, sendSignal=True):

@@ -25,19 +25,66 @@
 
 #if VESTIGE_HEADER
 #warning Using vestige header
+#define audioMasterGetOutputSpeakerArrangement audioMasterGetSpeakerArrangement
 #define effFlagsProgramChunks (1 << 5)
+#define effSetProgramName 4
 #define effGetParamLabel 6
 #define effGetParamDisplay 7
+#define effGetVu 9
+#define effEditDraw 16
+#define effEditMouse 17
+#define effEditKey 18
+#define effEditSleep 21
+#define effIdentify 22
 #define effGetChunk 23
 #define effSetChunk 24
 #define effCanBeAutomated 26
+#define effString2Parameter 27
+#define effGetNumProgramCategories 28
 #define effGetProgramNameIndexed 29
+#define effCopyProgram 30
+#define effConnectInput 31
+#define effConnectOutput 32
+#define effGetInputProperties 33
+#define effGetOutputProperties 34
 #define effGetPlugCategory 35
+#define effGetCurrentPosition 36
+#define effGetDestinationBuffer 37
+#define effOfflineNotify 38
+#define effOfflinePrepare 39
+#define effOfflineRun 40
+#define effProcessVarIo 41
+#define effSetSpeakerArrangement 42
 #define effSetBlockSizeAndSampleRate 43
+#define effSetBypass 44
+#define effGetErrorText 46
+#define effVendorSpecific 50
+#define effGetTailSize 52
+#define effIdle 53
+#define effGetIcon 54
+#define effSetViewPosition 55
+#define effKeysRequired 57
+#define effEditKeyDown 59
+#define effEditKeyUp 60
+#define effSetEditKnobMode 61
+#define effGetMidiProgramName 62
+#define effGetCurrentMidiProgram 63
+#define effGetMidiProgramCategory 64
+#define effHasMidiProgramsChanged 65
+#define effGetMidiKeyName 66
+#define effBeginSetProgram 67
+#define effEndSetProgram 68
+#define effGetSpeakerArrangement 69
 #define effShellGetNextPlugin 70
 #define effStartProcess 71
 #define effStopProcess 72
+#define effSetTotalSampleToProcess 73
+#define effSetPanLaw 74
+#define effBeginLoadBank 75
+#define effBeginLoadProgram 76
 #define effSetProcessPrecision 77
+#define effGetNumMidiInputChannels 78
+#define effGetNumMidiOutputChannels 79
 #define kPlugCategSynth 2
 #define kPlugCategAnalysis 3
 #define kPlugCategMastering 4
@@ -52,7 +99,6 @@
 #define kVstProcessPrecision32 0
 #define kVstTransportChanged 1
 #define kVstVersion 2400
-//#define audioMasterGetOutputSpeakerArrangement audioMasterGetSpeakerArrangement
 struct ERect {
     short top, left, bottom, right;
 };
@@ -332,11 +378,7 @@ const char* VstMasterOpcode2str(const int32_t opcode)
 #if ! VST_FORCE_DEPRECATED
     case audioMasterSetOutputSampleRate:
         return "audioMasterSetOutputSampleRate";
-#ifdef VESTIGE_HEADER
-    case audioMasterGetSpeakerArrangement:
-#else
     case audioMasterGetOutputSpeakerArrangement:
-#endif
         return "audioMasterGetOutputSpeakerArrangement";
 #endif
     case audioMasterGetVendorString:

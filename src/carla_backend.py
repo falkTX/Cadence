@@ -779,6 +779,8 @@ class Host(object):
         if lib_prefix_arg:
             carla_library_path = os.path.join(lib_prefix_arg, "lib", "carla", carla_libname)
 
+        print("Host() - using carla-backend library '%s'" % carla_library_path)
+
         self.lib = cdll.LoadLibrary(carla_library_path)
 
         self.lib.get_engine_driver_count.argtypes = None

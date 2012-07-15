@@ -56,9 +56,10 @@ class PixmapDial(QDial):
 
         if self.palette().window().color().lightness() > 100:
             # Light background
-            self.m_color1 = QColor(100, 100, 100, 255)
-            self.m_color2 = QColor(0, 0, 0, 0)
-            self.m_colorT = [self.palette().text().color(), self.palette().mid().color()]
+            c = self.palette().dark().color()
+            self.m_color1 = c
+            self.m_color2 = QColor(c.red(), c.green(), c.blue(), 0)
+            self.m_colorT = [self.palette().buttonText().color(), self.palette().mid().color()]
         else:
             # Dark background
             self.m_color1 = QColor(0, 0, 0, 255)
