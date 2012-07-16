@@ -596,10 +596,7 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                             RDF_Port->Properties = LV2_PORT_TRIGGER;
 
                         if (Port.has_property(Lv2World.reportsLatency))
-                        {
-                            qWarning("Port Prop Latency!");
                             RDF_Port->Designation = LV2_PORT_LATENCY;
-                        }
                     }
 
                     // --------------------------------------
@@ -607,12 +604,9 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                     {
                         Lilv::Nodes DesignationNodes(Port.get_value(Lv2World.designation));
 
-                        qWarning("Design = %i", DesignationNodes.size());
-
                         if (DesignationNodes.size() > 0)
                         {
                             const char* const designation = Lilv::Node(lilv_nodes_get(DesignationNodes, DesignationNodes.begin())).as_string();
-                            qWarning("Design -> %s", designation);
 
                             if (strcmp(designation, LV2_TIME__bar) == 0)
                                 RDF_Port->Designation = LV2_PORT_TIME_BAR;

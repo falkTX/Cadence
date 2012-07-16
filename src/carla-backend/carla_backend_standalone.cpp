@@ -95,23 +95,40 @@ bool engine_init(const char* driver_name, const char* client_name)
     if (strcmp(driver_name, "JACK") == 0)
         carla_engine = new CarlaBackend::CarlaEngineJack;
 #endif
+
 #ifdef CARLA_ENGINE_RTAUDIO
+#ifdef __LINUX_ALSA__
     if (strcmp(driver_name, "ALSA") == 0)
         carla_engine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::LINUX_ALSA);
-    else if (strcmp(driver_name, "PulseAudio") == 0)
+#endif
+#ifdef __LINUX_PULSE__
+    if (strcmp(driver_name, "PulseAudio") == 0)
         carla_engine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::LINUX_PULSE);
-    else if (strcmp(driver_name, "OSS") == 0)
+#endif
+#ifdef __LINUX_OSS__
+    if (strcmp(driver_name, "OSS") == 0)
         carla_engine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::LINUX_OSS);
-    else if (strcmp(driver_name, "JACK (RtAudio)") == 0)
+#endif
+#ifdef __UNIX_JACK__
+    if (strcmp(driver_name, "JACK (RtAudio)") == 0)
         carla_engine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::UNIX_JACK);
-    else if (strcmp(driver_name, "CoreAudio") == 0)
+#endif
+#ifdef __MACOSX_CORE__
+    if (strcmp(driver_name, "CoreAudio") == 0)
         carla_engine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::MACOSX_CORE);
-    else if (strcmp(driver_name, "ASIO") == 0)
+#endif
+#ifdef __WINDOWS_ASIO__
+    if (strcmp(driver_name, "ASIO") == 0)
         carla_engine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::WINDOWS_ASIO);
+#endif
+#ifdef __WINDOWS_DS__
     else if (strcmp(driver_name, "DirectSound") == 0)
         carla_engine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::WINDOWS_DS);
+#endif
+#ifdef __RTAUDIO_DUMMY__
     else if (strcmp(driver_name, "Dummy") == 0)
         carla_engine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::RTAUDIO_DUMMY);
+#endif
 #endif
 
     if (! carla_engine)

@@ -39,7 +39,7 @@ endif
 
 ifeq ($(HAVE_PULSEAUDIO),true)
 WANT_RTAUDIO      = true
-CARLA_CXX_FLAGS += $(shell pkg-config --cflags libpulse-simple) -D__LINUX_PULSEAUDIO__
+CARLA_CXX_FLAGS += $(shell pkg-config --cflags libpulse-simple) -D__LINUX_PULSE__
 CARLA_LD_FLAGS  += $(shell pkg-config --libs libpulse-simple)
 endif
 
@@ -92,5 +92,8 @@ carla_backend.so: $(OBJS)
 .cpp.o:
 	$(CXX) -c $< $(CARLA_CXX_FLAGS) -o $@
 
+../carla-lilv/carla_lilv.a:
+	$(MAKE) -C ../carla-lilv
+
 clean:
-	rm -f *.o lv2-rtmempool/*.o *.so *.dll
+	rm -f *.o lv2-rtmempool/*.o rtaudio-4.0.11/*.o rtmidi-2.0.0/*.o *.so *.dll
