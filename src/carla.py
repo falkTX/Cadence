@@ -1906,11 +1906,11 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
     @pyqtSlot(int)
     def slot_noteOn(self, note):
-        CarlaHost.send_midi_note(self.plugin_id, note, 100)
+        CarlaHost.send_midi_note(self.plugin_id, 0, note, 100)
 
     @pyqtSlot(int)
     def slot_noteOff(self, note):
-        CarlaHost.send_midi_note(self.plugin_id, note, 0)
+        CarlaHost.send_midi_note(self.plugin_id, 0, note, 0)
 
     @pyqtSlot()
     def slot_notesOn(self):

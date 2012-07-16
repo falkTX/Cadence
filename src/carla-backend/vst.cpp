@@ -882,7 +882,6 @@ public:
 
                 midiEvent->type = kVstMidiType;
                 midiEvent->byteSize = sizeof(VstMidiEvent);
-                midiEvent->deltaFrames = framesOffset;
                 midiEvent->midiData[0] = cin_channel + extMidiNotes[i].velo ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF;
                 midiEvent->midiData[1] = extMidiNotes[i].note;
                 midiEvent->midiData[2] = extMidiNotes[i].velo;
@@ -999,14 +998,12 @@ public:
                     memset(&midiEvents[0], 0, sizeof(VstMidiEvent));
                     midiEvents[0].type = kVstMidiType;
                     midiEvents[0].byteSize = sizeof(VstMidiEvent);
-                    midiEvents[0].deltaFrames = framesOffset;
                     midiEvents[0].midiData[0] = MIDI_STATUS_CONTROL_CHANGE + cin_channel;
                     midiEvents[0].midiData[1] = MIDI_CONTROL_ALL_SOUND_OFF;
 
                     memset(&midiEvents[1], 0, sizeof(VstMidiEvent));
                     midiEvents[1].type = kVstMidiType;
                     midiEvents[1].byteSize = sizeof(VstMidiEvent);
-                    midiEvents[1].deltaFrames = framesOffset;
                     midiEvents[1].midiData[0] = MIDI_STATUS_CONTROL_CHANGE + cin_channel;
                     midiEvents[1].midiData[1] = MIDI_CONTROL_ALL_NOTES_OFF;
 

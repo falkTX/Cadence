@@ -90,6 +90,8 @@ bool CarlaEngineRtAudio::init(const char* const clientName)
     bufferSize = rtBufferFrames;
     name = strdup(clientName);
 
+    qDebug("RtAudio bufferSize = %i", bufferSize);
+
     try {
         adac.startStream();
     }

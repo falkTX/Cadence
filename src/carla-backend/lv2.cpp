@@ -1866,7 +1866,7 @@ public:
                         if (evin.data[k].type & CARLA_EVENT_DATA_ATOM)
                         {
                             LV2_Atom_Event* const aev = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evin.data[k].atom) + evinAtomOffsets[k]);
-                            aev->time.frames = framesOffset;
+                            aev->time.frames = 0;
                             aev->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
                             aev->body.size   = 3;
                             memcpy(LV2_ATOM_BODY(&aev->body), midiEvent, 3);
@@ -1876,10 +1876,10 @@ public:
                             evin.data[k].atom->atom.size += padSize;
                         }
                         else if (evin.data[k].type & CARLA_EVENT_DATA_EVENT)
-                            lv2_event_write(&evinEventIters[k], framesOffset, 0, CARLA_URI_MAP_ID_MIDI_EVENT, 3, midiEvent);
+                            lv2_event_write(&evinEventIters[k], 0, 0, CARLA_URI_MAP_ID_MIDI_EVENT, 3, midiEvent);
 
                         else if (evin.data[k].type & CARLA_EVENT_DATA_MIDI_LL)
-                            lv2midi_put_event(&evinMidiStates[k], framesOffset, 3, midiEvent);
+                            lv2midi_put_event(&evinMidiStates[k], 0, 3, midiEvent);
                     }
                 }
 

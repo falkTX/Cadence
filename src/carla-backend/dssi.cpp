@@ -1000,8 +1000,7 @@ public:
                 snd_seq_event_t* const midiEvent = &midiEvents[midiEventCount];
                 memset(midiEvent, 0, sizeof(snd_seq_event_t));
 
-                midiEvent->type      = extMidiNotes[i].velo ? SND_SEQ_EVENT_NOTEON : SND_SEQ_EVENT_NOTEOFF;
-                midiEvent->time.tick = framesOffset;
+                midiEvent->type = extMidiNotes[i].velo ? SND_SEQ_EVENT_NOTEON : SND_SEQ_EVENT_NOTEOFF;
                 midiEvent->data.note.channel  = cin_channel;
                 midiEvent->data.note.note     = extMidiNotes[i].note;
                 midiEvent->data.note.velocity = extMidiNotes[i].velo;
@@ -1134,13 +1133,11 @@ public:
                 {
                     memset(&midiEvents[0], 0, sizeof(snd_seq_event_t));
                     midiEvents[0].type      = SND_SEQ_EVENT_CONTROLLER;
-                    midiEvents[0].time.tick = framesOffset;
                     midiEvents[0].data.control.channel = cin_channel;
                     midiEvents[0].data.control.param   = MIDI_CONTROL_ALL_SOUND_OFF;
 
                     memset(&midiEvents[1], 0, sizeof(snd_seq_event_t));
                     midiEvents[1].type      = SND_SEQ_EVENT_CONTROLLER;
-                    midiEvents[1].time.tick = framesOffset;
                     midiEvents[1].data.control.channel = cin_channel;
                     midiEvents[1].data.control.param   = MIDI_CONTROL_ALL_NOTES_OFF;
 

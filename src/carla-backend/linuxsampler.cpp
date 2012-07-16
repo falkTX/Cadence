@@ -287,9 +287,9 @@ public:
                     break;
 
                 if (extMidiNotes[i].velo)
-                    midiInputPort->DispatchNoteOn(extMidiNotes[i].note, extMidiNotes[i].velo, cin_channel, framesOffset);
+                    midiInputPort->DispatchNoteOn(extMidiNotes[i].note, extMidiNotes[i].velo, cin_channel, 0);
                 else
-                    midiInputPort->DispatchNoteOff(extMidiNotes[i].note, extMidiNotes[i].velo, cin_channel, framesOffset);
+                    midiInputPort->DispatchNoteOff(extMidiNotes[i].note, extMidiNotes[i].velo, cin_channel, 0);
 
                 extMidiNotes[i].channel = -1;
                 midiEventCount += 1;

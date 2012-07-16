@@ -1059,16 +1059,16 @@ void idle_guis()
 
 // -------------------------------------------------------------------------------------------------------------------
 
-void send_midi_note(unsigned short plugin_id, quint8 note, quint8 velocity)
+void send_midi_note(unsigned short plugin_id, quint8 channel, quint8 note, quint8 velocity)
 {
-    qDebug("CarlaBackendStandalone::send_midi_note(%i, %i, %i)", plugin_id, note, velocity);
+    qDebug("CarlaBackendStandalone::send_midi_note(%i, %i, %i, %i)", plugin_id, channel, note, velocity);
 
     CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPlugin(plugin_id);
 
     if (plugin)
-        return plugin->sendMidiSingleNote(0, note, velocity, true, true, false); // FIXME
+        return plugin->sendMidiSingleNote(channel, note, velocity, true, true, false);
 
-    qCritical("CarlaBackendStandalone::send_midi_note(%i, %i, %i) - could not find plugin", plugin_id, note, velocity);
+    qCritical("CarlaBackendStandalone::send_midi_note(%i, %i, %i, %i) - could not find plugin", plugin_id, channel, note, velocity);
 }
 
 void prepare_for_save(unsigned short plugin_id)
