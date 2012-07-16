@@ -174,6 +174,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             self.act_tools_a2j_export_hw.setEnabled(False)
             self.menu_A2J_Bridge.setEnabled(False)
 
+        self.init_alsa_ports()
+
         self.m_timer120 = self.startTimer(self.m_savedSettings["Main/RefreshInterval"])
         self.m_timer600 = self.startTimer(self.m_savedSettings["Main/RefreshInterval"] * 5)
 
@@ -411,6 +413,18 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             elif port_a_nameR and port_b_nameR:
                 jacklib.disconnect(jack.client, port_a_nameR, port_b_nameR)
 
+    def init_ports(self):
+        self.m_group_list = []
+        self.m_group_split_list = []
+        self.m_port_list = []
+        self.m_connection_list = []
+        self.m_last_group_id = 1
+        self.m_last_port_id = 1
+        self.m_last_connection_id = 1
+
+        self.init_jack_ports()
+        self.init_alsa_ports()
+
     def init_jack(self):
         self.m_xruns = 0
         self.m_next_sample_rate = 0
@@ -430,15 +444,15 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         refreshDSPLoad(self)
         refreshTransport(self)
 
-        self.init_callbacks()
-        self.init_ports()
+        self.init_jack_callbacks()
+        self.init_jack_ports()
 
         self.scene.zoom_fit()
         self.scene.zoom_reset()
 
         jacklib.activate(jack.client)
 
-    def init_callbacks(self):
+    def init_jack_callbacks(self):
         jacklib.set_buffer_size_callback(jack.client, self.JackBufferSizeCallback, None)
         jacklib.set_sample_rate_callback(jack.client, self.JackSampleRateCallback, None)
         jacklib.set_xrun_callback(jack.client, self.JackXRunCallback, None)
@@ -450,23 +464,9 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         if jacklib.JACK2:
             jacklib.set_port_rename_callback(jack.client, self.JackPortRenameCallback, None)
 
-    def get_group_id(self, group_name):
-        for group in self.m_group_list:
-            if group[iGroupName] == group_name:
-                return group[iGroupId]
-        return -1
-
-    def init_ports(self):
+    def init_jack_ports(self):
         if not jack.client:
             return
-
-        self.m_group_list = []
-        self.m_group_split_list = []
-        self.m_port_list = []
-        self.m_connection_list = []
-        self.m_last_group_id = 1
-        self.m_last_port_id = 1
-        self.m_last_connection_id = 1
 
         # Get all jack ports, put a2j ones to the bottom of the list
         a2j_name_list = []
@@ -504,129 +504,138 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             for port_con_name in port_connection_names:
                 self.canvas_connect_ports_by_name(port_name, port_con_name)
 
-        if haveALSA:
-            # Get ALSA MIDI ports (outputs)
-            output = getoutput("env LANG=C aconnect -i").split("\n")
-            last_group_id   = -1
-            last_group_name = ""
+    def init_alsa_ports(self):
+        if not haveALSA:
+            return
 
-            for line in output:
-                # Make 'System' match JACK's 'system'
-                if line == "client 0: 'System' [type=kernel]":
-                    line = "client 0: 'system' [type=kernel]"
+        # Get ALSA MIDI ports (outputs)
+        output = getoutput("env LANG=C aconnect -i").split("\n")
+        last_group_id   = -1
+        last_group_name = ""
 
-                if line.startswith("client "):
-                    lineSplit  = line.split(": ", 1)
-                    lineSplit2 = lineSplit[1].replace("'", "", 1).split("' [type=", 1)
-                    group_id   = int(lineSplit[0].replace("client ", ""))
-                    group_name = lineSplit2[0]
-                    group_type = lineSplit2[1].rsplit("]", 1)[0]
+        for line in output:
+            # Make 'System' match JACK's 'system'
+            if line == "client 0: 'System' [type=kernel]":
+                line = "client 0: 'system' [type=kernel]"
 
-                    last_group_id = self.get_group_id(group_name)
+            if line.startswith("client "):
+                lineSplit  = line.split(": ", 1)
+                lineSplit2 = lineSplit[1].replace("'", "", 1).split("' [type=", 1)
+                group_id   = int(lineSplit[0].replace("client ", ""))
+                group_name = lineSplit2[0]
+                group_type = lineSplit2[1].rsplit("]", 1)[0]
 
-                    if last_group_id == -1:
-                        # Group doesn't exist yet
-                        last_group_id = self.canvas_add_alsa_group(group_id, group_name, bool(group_type == "kernel"))
+                last_group_id = self.get_group_id(group_name)
 
-                    last_group_name = group_name
+                if last_group_id == -1:
+                    # Group doesn't exist yet
+                    last_group_id = self.canvas_add_alsa_group(group_id, group_name, bool(group_type == "kernel"))
 
-                elif line.startswith("    ") and last_group_id >= 0 and last_group_name:
-                    lineSplit = line.split(" '", 1)
-                    port_id   = int(lineSplit[0].strip())
-                    port_name = lineSplit[1].rsplit("'", 1)[0].strip()
+                last_group_name = group_name
 
-                    self.canvas_add_alsa_port(last_group_id, last_group_name, port_name, "%i:%i %s" % (group_id, port_id, port_name), False)
+            elif line.startswith("    ") and last_group_id >= 0 and last_group_name:
+                lineSplit = line.split(" '", 1)
+                port_id   = int(lineSplit[0].strip())
+                port_name = lineSplit[1].rsplit("'", 1)[0].strip()
 
+                self.canvas_add_alsa_port(last_group_id, last_group_name, port_name, "%i:%i %s" % (group_id, port_id, port_name), False)
+
+            else:
+                last_group_id   = -1
+                last_group_name = ""
+
+        # Get ALSA MIDI ports (inputs)
+        output = getoutput("env LANG=C aconnect -o").split("\n")
+        last_group_id   = -1
+        last_group_name = ""
+
+        for line in output:
+            # Make 'System' match JACK's 'system'
+            if line == "client 0: 'System' [type=kernel]":
+                line = "client 0: 'system' [type=kernel]"
+
+            if line.startswith("client "):
+                lineSplit  = line.split(": ", 1)
+                lineSplit2 = lineSplit[1].replace("'", "", 1).split("' [type=", 1)
+                group_id   = int(lineSplit[0].replace("client ", ""))
+                group_name = lineSplit2[0]
+                group_type = lineSplit2[1].rsplit("]", 1)[0]
+
+                last_group_id = self.get_group_id(group_name)
+
+                if last_group_id == -1:
+                    # Group doesn't exist yet
+                    last_group_id = self.canvas_add_alsa_group(group_id, group_name, bool(group_type == "kernel"))
+
+                last_group_name = group_name
+
+            elif line.startswith("    ") and last_group_id >= 0 and last_group_name:
+                lineSplit = line.split(" '", 1)
+                port_id   = int(lineSplit[0].strip())
+                port_name = lineSplit[1].rsplit("'", 1)[0].strip()
+
+                self.canvas_add_alsa_port(last_group_id, last_group_name, port_name, "%i:%i %s" % (group_id, port_id, port_name), True)
+
+            else:
+                last_group_id   = -1
+                last_group_name = ""
+
+        # Get ALSA MIDI connections
+        output = getoutput("env LANG=C aconnect -ol").split("\n")
+        last_group_id = -1
+        last_port_id  = -1
+
+        for line in output:
+            # Make 'System' match JACK's 'system'
+            if line == "client 0: 'System' [type=kernel]":
+                line = "client 0: 'system' [type=kernel]"
+
+            if line.startswith("client "):
+                lineSplit  = line.split(": ", 1)
+                lineSplit2 = lineSplit[1].replace("'", "", 1).split("' [type=", 1)
+                group_id   = int(lineSplit[0].replace("client ", ""))
+                group_name = lineSplit2[0]
+
+                last_group_id = self.get_group_id(group_name)
+
+            elif line.startswith("    ") and last_group_id >= 0:
+                lineSplit = line.split(" '", 1)
+                port_id   = int(lineSplit[0].strip())
+                port_name = lineSplit[1].rsplit("'", 1)[0].strip()
+
+                for port in self.m_port_list:
+                    if port[iPortNameR] == "[ALSA-Input] %i:%i %s" % (group_id, port_id, port_name):
+                        last_port_id = port[iPortId]
+                        break
                 else:
-                    last_group_id   = -1
-                    last_group_name = ""
+                    last_port_id = -1
 
-            # Get ALSA MIDI ports (inputs)
-            output = getoutput("env LANG=C aconnect -o").split("\n")
-            last_group_id   = -1
-            last_group_name = ""
+            elif line.startswith("\tConnect") and last_group_id >= 0 and last_port_id >= 0:
+                if line.startswith("\tConnected From"):
+                    lineSplit = line.split(": ", 1)[1]
+                    lineConns = lineSplit.split(", ")
 
-            for line in output:
-                # Make 'System' match JACK's 'system'
-                if line == "client 0: 'System' [type=kernel]":
-                    line = "client 0: 'system' [type=kernel]"
+                    for lineConn in lineConns:
+                        lineConnSplit = lineConn.replace("'","").split(":", 1)
+                        alsa_group_id = int(lineConnSplit[0])
+                        alsa_port_id  = int(lineConnSplit[1])
 
-                if line.startswith("client "):
-                    lineSplit  = line.split(": ", 1)
-                    lineSplit2 = lineSplit[1].replace("'", "", 1).split("' [type=", 1)
-                    group_id   = int(lineSplit[0].replace("client ", ""))
-                    group_name = lineSplit2[0]
-                    group_type = lineSplit2[1].rsplit("]", 1)[0]
+                        portNameRtest = "[ALSA-Output] %i:%i " % (alsa_group_id, alsa_port_id)
 
-                    last_group_id = self.get_group_id(group_name)
+                        for port in self.m_port_list:
+                            if port[iPortNameR].startswith(portNameRtest):
+                                self.canvas_connect_ports(port[iPortId], last_port_id)
+                                break
 
-                    if last_group_id == -1:
-                        # Group doesn't exist yet
-                        last_group_id = self.canvas_add_alsa_group(group_id, group_name, bool(group_type == "kernel"))
+            else:
+                last_group_id = -1
+                last_port_id  = -1
 
-                    last_group_name = group_name
-
-                elif line.startswith("    ") and last_group_id >= 0 and last_group_name:
-                    lineSplit = line.split(" '", 1)
-                    port_id   = int(lineSplit[0].strip())
-                    port_name = lineSplit[1].rsplit("'", 1)[0].strip()
-
-                    self.canvas_add_alsa_port(last_group_id, last_group_name, port_name, "%i:%i %s" % (group_id, port_id, port_name), True)
-
-                else:
-                    last_group_id   = -1
-                    last_group_name = ""
-
-            # Get ALSA MIDI connections
-            output = getoutput("env LANG=C aconnect -ol").split("\n")
-            last_group_id = -1
-            last_port_id  = -1
-
-            for line in output:
-                # Make 'System' match JACK's 'system'
-                if line == "client 0: 'System' [type=kernel]":
-                    line = "client 0: 'system' [type=kernel]"
-
-                if line.startswith("client "):
-                    lineSplit  = line.split(": ", 1)
-                    lineSplit2 = lineSplit[1].replace("'", "", 1).split("' [type=", 1)
-                    group_id   = int(lineSplit[0].replace("client ", ""))
-                    group_name = lineSplit2[0]
-
-                    last_group_id = self.get_group_id(group_name)
-
-                elif line.startswith("    ") and last_group_id >= 0:
-                    lineSplit = line.split(" '", 1)
-                    port_id   = int(lineSplit[0].strip())
-                    port_name = lineSplit[1].rsplit("'", 1)[0].strip()
-
-                    for port in self.m_port_list:
-                        if port[iPortNameR] == "[ALSA-Input] %i:%i %s" % (group_id, port_id, port_name):
-                            last_port_id = port[iPortId]
-                            break
-                    else:
-                        last_port_id = -1
-
-                elif line.startswith("\tConnect") and last_group_id >= 0 and last_port_id >= 0:
-                    if line.startswith("\tConnected From"):
-                        lineSplit = line.split(": ", 1)[1]
-                        lineConns = lineSplit.split(", ")
-
-                        for lineConn in lineConns:
-                            lineConnSplit = lineConn.replace("'","").split(":", 1)
-                            alsa_group_id = int(lineConnSplit[0])
-                            alsa_port_id  = int(lineConnSplit[1])
-
-                            portNameRtest = "[ALSA-Output] %i:%i " % (alsa_group_id, alsa_port_id)
-
-                            for port in self.m_port_list:
-                                if port[iPortNameR].startswith(portNameRtest):
-                                    self.canvas_connect_ports(port[iPortId], last_port_id)
-                                    break
-
-                else:
-                    last_group_id = -1
-                    last_port_id  = -1
+    def get_group_id(self, group_name):
+        for group in self.m_group_list:
+            if group[iGroupName] == group_name:
+                return group[iGroupId]
+        return -1
 
     def canvas_add_alsa_group(self, alsa_group_id, group_name, hw_split):
         group_id = self.m_last_group_id
@@ -903,8 +912,6 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.pb_dsp_load.setValue(0)
         self.pb_dsp_load.setMaximum(0)
         self.pb_dsp_load.update()
-
-        patchcanvas.clear()
 
     def a2jStarted(self):
         self.menuA2JBridge(True)
