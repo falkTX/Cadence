@@ -21,7 +21,6 @@
 #include "carla_plugin.h"
 
 #include <iostream>
-#include <QtCore/QThread>
 
 CARLA_BACKEND_START_NAMESPACE
 

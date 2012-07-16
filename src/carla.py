@@ -2798,7 +2798,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         # -------------------------------------------------------------
         # Internal stuff
 
-        self.m_bridge_info = None
+        self.m_engine_started = False
         self.m_project_filename = None
 
         self.m_plugin_list = []
@@ -3430,7 +3430,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         if event.timerId() == self.TIMER_GUI_STUFF:
             for pwidget in self.m_plugin_list:
                 if pwidget: pwidget.check_gui_stuff()
-            if CarlaHost.is_engine_running():
+            if self.m_engine_started:
                 CarlaHost.idle_guis()
         elif event.timerId() == self.TIMER_GUI_STUFF2:
             for pwidget in self.m_plugin_list:
@@ -3516,19 +3516,21 @@ if __name__ == '__main__':
         CarlaHost.set_option(OPTION_PATH_BRIDGE_VST_X11, 0, carla_bridge_vst_x11)
 
     # TEST
-    #count = CarlaHost.get_engine_driver_count()
-    #print(count)
-    #for i in range(0, count):
-        #dname = cString(CarlaHost.get_engine_driver_name(i))
-        #print("%i - %s" % (i, dname))
+    count = CarlaHost.get_engine_driver_count()
+    print(count)
+    for i in range(0, count):
+        dname = cString(CarlaHost.get_engine_driver_name(i))
+        print("%i - %s" % (i, dname))
 
     if not CarlaHost.engine_init("JACK", "Carla"):
+    #if not CarlaHost.engine_init("PulseAudio", "Carla"):
         CustomMessageBox(None, QMessageBox.Critical, "Error", "Could not connect to Audio backend, possible reasons:",
             cString(CarlaHost.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
         sys.exit(1)
 
     # Set callback after engine started
     CarlaHost.set_callback_function(gui.callback_function)
+    gui.m_engine_started = True
 
     # Set-up custom signal handling
     set_up_signals(gui)

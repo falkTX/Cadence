@@ -1193,7 +1193,7 @@ public:
     static intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
     {
 #ifdef DEBUG
-        qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstOpcode2str(opcode), index, value, opt);
+        qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstMasterOpcode2str(opcode), index, value, opt);
 #endif
 
         // Check if 'resvd1' points to this plugin
@@ -1593,7 +1593,7 @@ public:
 
         default:
 #ifdef DEBUG
-            qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstOpcode2str(opcode), index, value, opt);
+            qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstMasterOpcode2str(opcode), index, value, opt);
 #endif
             break;
         }

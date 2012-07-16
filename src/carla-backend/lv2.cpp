@@ -1228,6 +1228,7 @@ public:
             else if (LV2_IS_PORT_CONTROL(PortType))
             {
                 const LV2_Property PortProps = rdf_descriptor->Ports[i].Properties;
+                const LV2_Property PortDesignation = rdf_descriptor->Ports[i].Designation;
                 const LV2_RDF_PortPoints PortPoints = rdf_descriptor->Ports[i].Points;
 
                 j = param.count++;
@@ -1339,7 +1340,7 @@ public:
                 }
                 else if (LV2_IS_PORT_OUTPUT(PortType))
                 {
-                    if (LV2_IS_PORT_LATENCY(PortProps))
+                    if (LV2_IS_PORT_LATENCY(PortDesignation))
                     {
                         min = 0.0;
                         max = sampleRate;
@@ -3761,6 +3762,9 @@ int CarlaOsc::handle_lv2_atom_transfer(CARLA_OSC_HANDLE_ARGS2)
     lv2plugin->handleAtomTransfer();
 
     return 0;
+    Q_UNUSED(argc);
+    Q_UNUSED(argv);
+    Q_UNUSED(types);
 }
 
 int CarlaOsc::handle_lv2_event_transfer(CARLA_OSC_HANDLE_ARGS2)

@@ -2,9 +2,12 @@
 
 QT = core gui
 
-CONFIG    = debug link_pkgconfig qt warn_on plugin shared
-PKGCONFIG = jack liblo fluidsynth linuxsampler alsa libpulse-simple
-# suil-0
+CONFIG     = debug link_pkgconfig qt warn_on #plugin shared
+PKGCONFIG  = liblo
+PKGCONFIG += jack
+PKGCONFIG += alsa libpulse-simple
+PKGCONFIG += fluidsynth linuxsampler
+PKGCONFIG += suil-0
 
 TARGET   = carla_backend
 TEMPLATE = app
@@ -12,10 +15,10 @@ VERSION  = 0.5.0
 
 SOURCES = \
     ../carla_backend_standalone.cpp \
+    ../carla_bridge.cpp \
     ../carla_engine.cpp \
     ../carla_engine_jack.cpp \
     ../carla_engine_rtaudio.cpp \
-    ../carla_bridge.cpp \
     ../carla_osc.cpp \
     ../carla_shared.cpp \
     ../carla_threads.cpp \
@@ -50,17 +53,17 @@ INCLUDEPATH = .. \
     ../../carla-includes \
     ../../carla-includes/vst
 
-#DEFINES += HAVE_SUIL
-DEFINES += WANT_FLUIDSYNTH
-DEFINES += WANT_LINUXSAMPLER
+DEFINES += DEBUG
 DEFINES += CARLA_ENGINE_JACK
-#DEFINES += CARLA_ENGINE_RTAUDIO
+DEFINES += CARLA_ENGINE_RTAUDIO HAVE_GETTIMEOFDAY __LINUX_ALSA__ __LINUX_ALSASEQ__ __LINUX_PULSE__ __RTAUDIO_DEBUG__ __RTMIDI_DEBUG__
+DEFINES += WANT_FLUIDSYNTH WANT_LINUXSAMPLER
+DEFINES += HAVE_SUIL
 DEFINES += QTCREATOR_TEST
 LIBS    = ../../carla-lilv/carla_lilv.a -ldl
 
-QMAKE_CXXFLAGS *= -fPIC -std=c++0x
+INCLUDEPATH += ../rtaudio-4.0.11
+INCLUDEPATH += ../rtmidi-2.0.0
+SOURCES += ../rtaudio-4.0.11/RtAudio.cpp
+SOURCES += ../rtmidi-2.0.0/RtMidi.cpp
 
-#INCLUDEPATH += ../rtaudio/rtaudio-4.0.11
-#SOURCES += ../rtaudio/rtaudio-4.0.11/RtAudio.cpp
-#DEFINES +=  _FORTIFY_SOURCE=2
-#DEFINES += HAVE_GETTIMEOFDAY __UNIX_JACK__ __LINUX_ALSA__ __LINUX_PULSE__ __RTAUDIO_DUMMY__
+QMAKE_CXXFLAGS *= -fPIC -std=c++0x

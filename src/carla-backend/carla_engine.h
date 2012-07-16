@@ -32,7 +32,7 @@
 
 #ifdef CARLA_ENGINE_RTAUDIO
 #include "RtAudio.h"
-//#include "RtMidi.h"
+#include "RtMidi.h"
 #endif
 
 CARLA_BACKEND_START_NAMESPACE
@@ -564,6 +564,7 @@ public:
 
 private:
     RtAudio adac;
+    QThread* procThread;
 };
 #endif
 

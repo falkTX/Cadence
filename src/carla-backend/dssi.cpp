@@ -1001,7 +1001,7 @@ public:
                 memset(midiEvent, 0, sizeof(snd_seq_event_t));
 
                 midiEvent->type      = extMidiNotes[i].velo ? SND_SEQ_EVENT_NOTEON : SND_SEQ_EVENT_NOTEOFF;
-                midiEvent->time.tick = framesOffset; // FIXME - other types may also need time-check here
+                midiEvent->time.tick = framesOffset;
                 midiEvent->data.note.channel  = cin_channel;
                 midiEvent->data.note.note     = extMidiNotes[i].note;
                 midiEvent->data.note.velocity = extMidiNotes[i].velo;
