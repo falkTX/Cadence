@@ -21,6 +21,8 @@
 #include "ladspa/ladspa.h"
 #include "ladspa_rdf.h"
 
+#include <cmath>
+
 // ------------------------------------------------------------------------------------------------
 
 // Copy RDF object
@@ -114,7 +116,7 @@ void ladspa_rdf_free(const LADSPA_RDF_Descriptor* const rdf_descriptor)
 // ------------------------------------------------------------------------------------------------
 
 static inline
-bool is_rdf_port_good(const int Type1, const int Type2)
+bool is_ladspa_port_good(const int Type1, const int Type2)
 {
     if (LADSPA_IS_PORT_INPUT(Type1) && ! LADSPA_IS_PORT_INPUT(Type2))
         return false;
@@ -126,6 +128,73 @@ bool is_rdf_port_good(const int Type1, const int Type2)
         return false;
     return true;
 }
+
+static inline
+float get_default_ladspa_port_value(const LADSPA_PortRangeHintDescriptor HintDescriptor, const float min, const float max)
+{
+    float def;
+
+    if (LADSPA_IS_HINT_HAS_DEFAULT(HintDescriptor))
+    {
+        switch (HintDescriptor & LADSPA_HINT_DEFAULT_MASK)
+        {
+        case LADSPA_HINT_DEFAULT_MINIMUM:
+            def = min;
+            break;
+        case LADSPA_HINT_DEFAULT_MAXIMUM:
+            def = max;
+            break;
+        case LADSPA_HINT_DEFAULT_0:
+            def = 0.0f;
+            break;
+        case LADSPA_HINT_DEFAULT_1:
+            def = 1.0f;
+            break;
+        case LADSPA_HINT_DEFAULT_100:
+            def = 100.0f;
+            break;
+        case LADSPA_HINT_DEFAULT_440:
+            def = 440.0f;
+            break;
+        case LADSPA_HINT_DEFAULT_LOW:
+            if (LADSPA_IS_HINT_LOGARITHMIC(HintDescriptor))
+                def = exp((log(min)*0.75f) + (log(max)*0.25f));
+            else
+                def = (min*0.75f) + (max*0.25f);
+            break;
+        case LADSPA_HINT_DEFAULT_MIDDLE:
+            if (LADSPA_IS_HINT_LOGARITHMIC(HintDescriptor))
+                def = sqrt(min*max);
+            else
+                def = (min+max)/2;
+            break;
+        case LADSPA_HINT_DEFAULT_HIGH:
+            if (LADSPA_IS_HINT_LOGARITHMIC(HintDescriptor))
+                def = exp((log(min)*0.25) + (log(max)*0.75));
+            else
+                def = (min*0.25) + (max*0.75);
+            break;
+        default:
+            if (min < 0.0 && max > 0.0)
+                def = 0.0;
+            else
+                def = min;
+            break;
+        }
+    }
+    else
+    {
+        // no default value
+        if (min < 0.0 && max > 0.0)
+            def = 0.0;
+        else
+            def = min;
+    }
+
+    return def;
+}
+
+// ------------------------------------------------------------------------------------------------
 
 static inline
 bool is_ladspa_rdf_descriptor_valid(const LADSPA_RDF_Descriptor* const rdf_descriptor, const LADSPA_Descriptor* const descriptor)
@@ -147,7 +216,7 @@ bool is_ladspa_rdf_descriptor_valid(const LADSPA_RDF_Descriptor* const rdf_descr
 
     for (unsigned long i=0; i < rdf_descriptor->PortCount; i++)
     {
-        if (! is_rdf_port_good(rdf_descriptor->Ports[i].Type, descriptor->PortDescriptors[i]))
+        if (! is_ladspa_port_good(rdf_descriptor->Ports[i].Type, descriptor->PortDescriptors[i]))
         {
             qWarning("WARNING - Plugin has RDF data, but invalid PortTypes: %i != %i", rdf_descriptor->Ports[i].Type, descriptor->PortDescriptors[i]);
             return false;
