@@ -24,7 +24,6 @@
 #include "aeffectx.h"
 
 #if VESTIGE_HEADER
-#warning Using vestige header
 #define audioMasterGetOutputSpeakerArrangement audioMasterGetSpeakerArrangement
 #define effFlagsProgramChunks (1 << 5)
 #define effSetProgramName 4

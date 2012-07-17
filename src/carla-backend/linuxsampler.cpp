@@ -21,9 +21,10 @@
 
 // TODO - setMidiProgram()
 
+#include "carla_plugin.h"
+
 #ifdef WANT_LINUXSAMPLER
 
-#include "carla_plugin.h"
 #include "carla_linuxsampler_includes.h"
 
 #include <QtCore/QFileInfo>
@@ -605,7 +606,7 @@ CarlaPlugin* CarlaPlugin::newSFZ(const initializer& init)
     return LinuxSamplerPlugin::newLinuxSampler(init, false);
 }
 #else // WANT_LINUXSAMPLER
-#include "carla_plugin.h"
+#warning linuxsampler not available (no GIG and SFZ support)
 
 CARLA_BACKEND_START_NAMESPACE
 

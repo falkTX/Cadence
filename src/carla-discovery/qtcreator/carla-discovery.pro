@@ -17,11 +17,16 @@ HEADERS = \
     ../../carla-includes/carla_includes.h \
     ../../carla-includes/carla_lib_includes.h \
     ../../carla-includes/carla_vst_includes.h \
+    ../../carla-includes/carla_ladspa_includes.h \
+    ../../carla-includes/carla_lv2_includes.h \
+    ../../carla-includes/carla_vst_includes.h \
+    ../../carla-includes/carla_linuxsampler_includes.h \
     ../../carla-includes/lv2_rdf.h
 
 INCLUDEPATH = .. \
     ../../carla-backend \
-    ../../carla-includes
+    ../../carla-includes \
+    ../../carla-includes/vst
 
 LIBS = ../../carla-lilv/carla_lilv.a -ldl
 

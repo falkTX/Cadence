@@ -1281,6 +1281,8 @@ private:
     double param_buffers[FluidSynthParametersMax];
     const char* m_label;
 };
+#else
+#warning fluidsynth not available (no SF2 support)
 #endif // WANT_FLUIDSYNTH
 
 CarlaPlugin* CarlaPlugin::newSF2(const initializer& init)

@@ -37,15 +37,9 @@
 #ifdef BUILD_NATIVE
 #  ifdef WANT_FLUIDSYNTH
 #    include <fluidsynth.h>
-#  else
-#    warning fluidsynth not available (no SF2 support)
 #  endif
 #  ifdef WANT_LINUXSAMPLER
-#    define BUILD_BRIDGE // FIXME
 #    include "carla_linuxsampler_includes.h"
-#    undef BUILD_BRIDGE
-#  else
-#    warning linuxsampler not available (no GIG and SFZ support)
 #  endif
 #endif
 
@@ -58,9 +52,9 @@ const uint32_t bufferSize = 512;
 const double   sampleRate = 44100.0;
 
 // Since discovery can find multi-architecture binaries, don't print ELF related errors
-void print_lib_error(const char* filename)
+void print_lib_error(const char* const filename)
 {
-    const char* error = lib_error(filename);
+    const char* const error = lib_error(filename);
     if (error && strstr(error, "wrong ELF class") == nullptr && strstr(error, "Bad EXE format") == nullptr)
         DISCOVERY_OUT("error", error);
 }
@@ -89,11 +83,6 @@ intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_
 
     case audioMasterCurrentId:
         return VstCurrentUniqueId;
-
-    case audioMasterIdle:
-        if (effect)
-            effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
-        break;
 
     case audioMasterGetTime:
         static VstTimeInfo_R timeInfo;
@@ -185,13 +174,12 @@ intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_
     }
 
     return 0;
-
-    (void)value;
+    Q_UNUSED(value);
 }
 
 // ------------------------------ Plugin Checks -----------------------------
 
-void do_ladspa_check(void* lib_handle, bool init)
+void do_ladspa_check(void* const lib_handle, const bool init)
 {
     LADSPA_Descriptor_Function descfn = (LADSPA_Descriptor_Function)lib_symbol(lib_handle, "ladspa_descriptor");
 
@@ -416,7 +404,7 @@ void do_ladspa_check(void* lib_handle, bool init)
     }
 }
 
-void do_dssi_check(void* lib_handle, bool init)
+void do_dssi_check(void* const lib_handle, const bool init)
 {
     DSSI_Descriptor_Function descfn = (DSSI_Descriptor_Function)lib_symbol(lib_handle, "dssi_descriptor");
 
@@ -685,7 +673,7 @@ void do_dssi_check(void* lib_handle, bool init)
     }
 }
 
-void do_lv2_check(const char* bundle)
+void do_lv2_check(const char* const bundle)
 {
     // Convert bundle filename to URI
     QString qBundle(QUrl::fromLocalFile(bundle).toString());
@@ -830,7 +818,7 @@ void do_lv2_check(const char* bundle)
     }
 }
 
-void do_vst_check(void* lib_handle)
+void do_vst_check(void* const lib_handle, const bool init)
 {
     VST_Function vstfn = (VST_Function)lib_symbol(lib_handle, "VSTPluginMain");
 
@@ -898,74 +886,77 @@ void do_vst_check(void* lib_handle)
             // -----------------------------------------------------------------------
             // start crash-free plugin test
 
-            float** bufferAudioIn = new float* [audio_ins];
-            for (int j=0; j < audio_ins; j++)
+            if (init)
             {
-                bufferAudioIn[j] = new float [bufferSize];
-                memset(bufferAudioIn[j], 0, sizeof(float)*bufferSize);
-            }
+                float** bufferAudioIn = new float* [audio_ins];
+                for (int j=0; j < audio_ins; j++)
+                {
+                    bufferAudioIn[j] = new float [bufferSize];
+                    memset(bufferAudioIn[j], 0, sizeof(float)*bufferSize);
+                }
 
-            float** bufferAudioOut = new float* [audio_outs];
-            for (int j=0; j < audio_outs; j++)
-            {
-                bufferAudioOut[j] = new float [bufferSize];
-                memset(bufferAudioOut[j], 0, sizeof(float)*bufferSize);
-            }
+                float** bufferAudioOut = new float* [audio_outs];
+                for (int j=0; j < audio_outs; j++)
+                {
+                    bufferAudioOut[j] = new float [bufferSize];
+                    memset(bufferAudioOut[j], 0, sizeof(float)*bufferSize);
+                }
 
-            struct {
-                int32_t numEvents;
-                intptr_t reserved;
-                VstEvent* data[2];
-            } events;
-            VstMidiEvent midiEvents[2];
-            memset(midiEvents, 0, sizeof(VstMidiEvent)*2);
+                struct {
+                    int32_t numEvents;
+                    intptr_t reserved;
+                    VstEvent* data[2];
+                } events;
+                VstMidiEvent midiEvents[2];
+                memset(midiEvents, 0, sizeof(VstMidiEvent)*2);
 
-            midiEvents[0].type = kVstMidiType;
-            midiEvents[0].byteSize = sizeof(VstMidiEvent);
-            midiEvents[0].midiData[0] = 0x90;
-            midiEvents[0].midiData[1] = 64;
-            midiEvents[0].midiData[2] = 100;
+                midiEvents[0].type = kVstMidiType;
+                midiEvents[0].byteSize = sizeof(VstMidiEvent);
+                midiEvents[0].midiData[0] = 0x90;
+                midiEvents[0].midiData[1] = 64;
+                midiEvents[0].midiData[2] = 100;
 
-            midiEvents[1].type = kVstMidiType;
-            midiEvents[1].byteSize = sizeof(VstMidiEvent);
-            midiEvents[1].midiData[0] = 0x80;
-            midiEvents[1].midiData[1] = 64;
-            midiEvents[1].deltaFrames = bufferSize/2;
+                midiEvents[1].type = kVstMidiType;
+                midiEvents[1].byteSize = sizeof(VstMidiEvent);
+                midiEvents[1].midiData[0] = 0x80;
+                midiEvents[1].midiData[1] = 64;
+                midiEvents[1].deltaFrames = bufferSize/2;
 
-            events.numEvents = 2;
-            events.reserved  = 0;
-            events.data[0] = (VstEvent*)&midiEvents[0];
-            events.data[1] = (VstEvent*)&midiEvents[1];
+                events.numEvents = 2;
+                events.reserved  = 0;
+                events.data[0] = (VstEvent*)&midiEvents[0];
+                events.data[1] = (VstEvent*)&midiEvents[1];
 
 #if ! VST_FORCE_DEPRECATED
-            effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, bufferSize, nullptr, sampleRate);
+                effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, bufferSize, nullptr, sampleRate);
 #endif
-            effect->dispatcher(effect, effSetBlockSize, 0, bufferSize, nullptr, 0.0f);
-            effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, sampleRate);
-            effect->dispatcher(effect, effSetProcessPrecision, 0, kVstProcessPrecision32, nullptr, 0.0f);
+                effect->dispatcher(effect, effSetBlockSize, 0, bufferSize, nullptr, 0.0f);
+                effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, sampleRate);
+                effect->dispatcher(effect, effSetProcessPrecision, 0, kVstProcessPrecision32, nullptr, 0.0f);
 
-            effect->dispatcher(effect, effMainsChanged, 0, 1, nullptr, 0.0f);
-            effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
+                effect->dispatcher(effect, effMainsChanged, 0, 1, nullptr, 0.0f);
+                effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
 
-            if (midi_ins > 0)
-                effect->dispatcher(effect, effProcessEvents, 0, 0, &events, 0.0f);
+                if (midi_ins > 0)
+                    effect->dispatcher(effect, effProcessEvents, 0, 0, &events, 0.0f);
 
-            if (effect->flags & effFlagsCanReplacing)
-                effect->processReplacing(effect, bufferAudioIn, bufferAudioOut, bufferSize);
+                if (effect->flags & effFlagsCanReplacing)
+                    effect->processReplacing(effect, bufferAudioIn, bufferAudioOut, bufferSize);
 #if ! VST_FORCE_DEPRECATED
-            else
-                effect->process(effect, bufferAudioIn, bufferAudioOut, bufferSize);
+                else
+                    effect->process(effect, bufferAudioIn, bufferAudioOut, bufferSize);
 #endif
 
-            effect->dispatcher(effect, effStopProcess, 0, 0, nullptr, 0.0f);
-            effect->dispatcher(effect, effMainsChanged, 0, 0, nullptr, 0.0f);
+                effect->dispatcher(effect, effStopProcess, 0, 0, nullptr, 0.0f);
+                effect->dispatcher(effect, effMainsChanged, 0, 0, nullptr, 0.0f);
 
-            for (int j=0; j < audio_ins; j++)
-                delete[] bufferAudioIn[j];
-            for (int j=0; j < audio_outs; j++)
-                delete[] bufferAudioOut[j];
-            delete[] bufferAudioIn;
-            delete[] bufferAudioOut;
+                for (int j=0; j < audio_ins; j++)
+                    delete[] bufferAudioIn[j];
+                for (int j=0; j < audio_outs; j++)
+                    delete[] bufferAudioOut[j];
+                delete[] bufferAudioIn;
+                delete[] bufferAudioOut;
+            }
 
             // end crash-free plugin test
             // -----------------------------------------------------------------------
@@ -1017,10 +1008,32 @@ void do_vst_check(void* lib_handle)
         DISCOVERY_OUT("error", "Failed to init VST plugin");
 }
 
-void do_fluidsynth_check(const char* filename)
+void do_fluidsynth_check(const char* const filename, const bool init)
 {
 #ifdef WANT_FLUIDSYNTH
-    if (fluid_is_soundfont(filename))
+    if (! init)
+    {
+        DISCOVERY_OUT("init", "-----------");
+        DISCOVERY_OUT("name", "");
+        DISCOVERY_OUT("label", "");
+        DISCOVERY_OUT("maker", "");
+        DISCOVERY_OUT("copyright", "");
+
+        DISCOVERY_OUT("hints", PLUGIN_IS_SYNTH);
+        DISCOVERY_OUT("audio.outs", 2);
+        DISCOVERY_OUT("audio.total", 2);
+        DISCOVERY_OUT("midi.ins", 1);
+        DISCOVERY_OUT("midi.total", 1);
+
+        // defined in Carla
+        DISCOVERY_OUT("parameters.ins", 13);
+        DISCOVERY_OUT("parameters.outs", 1);
+        DISCOVERY_OUT("parameters.total", 14);
+
+        DISCOVERY_OUT("build", BINARY_NATIVE);
+        DISCOVERY_OUT("end", "------------");
+    }
+    else if (fluid_is_soundfont(filename))
     {
         fluid_settings_t* f_settings = new_fluid_settings();
         fluid_synth_t* f_synth = new_fluid_synth(f_settings);
@@ -1075,14 +1088,14 @@ void do_fluidsynth_check(const char* filename)
 #endif
 }
 
-void do_linuxsampler_check(const char* filename, const char* stype)
+void do_linuxsampler_check(const char* const filename, const char* const stype)
 {
 #ifdef WANT_LINUXSAMPLER
     using namespace LinuxSampler;
 
-    class ScopedEngine {
+    class LinuxSamplerScopedEngine {
     public:
-        ScopedEngine(const char* filename, const char* stype)
+        LinuxSamplerScopedEngine(const char* filename, const char* stype)
         {
             try {
                 engine = EngineFactory::Create(stype);
@@ -1140,7 +1153,7 @@ void do_linuxsampler_check(const char* filename, const char* stype)
             }
         }
 
-        ~ScopedEngine()
+        ~LinuxSamplerScopedEngine()
         {
             if (engine)
                 EngineFactory::Destroy(engine);
@@ -1154,7 +1167,7 @@ void do_linuxsampler_check(const char* filename, const char* stype)
     QFileInfo file(filename);
 
     if (file.exists() && file.isFile() && file.isReadable())
-        const ScopedEngine engine(filename, stype);
+        const LinuxSamplerScopedEngine engine(filename, stype);
     else
         DISCOVERY_OUT("error", "Requested file is not valid or does not exist");
 
@@ -1174,46 +1187,46 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    const char* type_str = argv[1];
-    const char* filename = argv[2];
+    const char* const stype    = argv[1];
+    const char* const filename = argv[2];
 
-    bool open_lib;
+    bool openLib;
     PluginType type;
     void* handle = nullptr;
 
-    if (strcmp(type_str, "LADSPA") == 0)
+    if (strcmp(stype, "LADSPA") == 0)
     {
-        open_lib = true;
+        openLib = true;
         type = PLUGIN_LADSPA;
     }
-    else if (strcmp(type_str, "DSSI") == 0)
+    else if (strcmp(stype, "DSSI") == 0)
     {
-        open_lib = true;
+        openLib = true;
         type = PLUGIN_DSSI;
     }
-    else if (strcmp(type_str, "LV2") == 0)
+    else if (strcmp(stype, "LV2") == 0)
     {
-        open_lib = false;
+        openLib = false;
         type = PLUGIN_LV2;
     }
-    else if (strcmp(type_str, "VST") == 0)
+    else if (strcmp(stype, "VST") == 0)
     {
-        open_lib = true;
+        openLib = true;
         type = PLUGIN_VST;
     }
-    else if (strcmp(type_str, "GIG") == 0)
+    else if (strcmp(stype, "GIG") == 0)
     {
-        open_lib = false;
+        openLib = false;
         type = PLUGIN_GIG;
     }
-    else if (strcmp(type_str, "SF2") == 0)
+    else if (strcmp(stype, "SF2") == 0)
     {
-        open_lib = false;
+        openLib = false;
         type = PLUGIN_SF2;
     }
-    else if (strcmp(type_str, "SFZ") == 0)
+    else if (strcmp(stype, "SFZ") == 0)
     {
-        open_lib = false;
+        openLib = false;
         type = PLUGIN_SFZ;
     }
     else
@@ -1222,7 +1235,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    if (open_lib)
+    if (openLib)
     {
         handle = lib_open(filename);
 
@@ -1234,6 +1247,9 @@ int main(int argc, char* argv[])
     }
 
     bool doInit = ! QString(filename).endsWith("dssi-vst.so", Qt::CaseInsensitive);
+
+    if (doInit && getenv("CARLA_DISCOVERY_NO_PROCESSING_CHECK"))
+        doInit = false;
 
     switch (type)
     {
@@ -1247,13 +1263,13 @@ int main(int argc, char* argv[])
         do_lv2_check(filename);
         break;
     case PLUGIN_VST:
-        do_vst_check(handle);
+        do_vst_check(handle, doInit);
         break;
     case PLUGIN_GIG:
         do_linuxsampler_check(filename, "gig");
         break;
     case PLUGIN_SF2:
-        do_fluidsynth_check(filename);
+        do_fluidsynth_check(filename, doInit);
         break;
     case PLUGIN_SFZ:
         do_linuxsampler_check(filename, "sfz");
@@ -1262,7 +1278,7 @@ int main(int argc, char* argv[])
         break;
     }
 
-    if (open_lib)
+    if (openLib)
         lib_close(handle);
 
     return 0;
