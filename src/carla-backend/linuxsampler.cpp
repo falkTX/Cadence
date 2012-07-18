@@ -24,8 +24,10 @@
 #include "carla_plugin.h"
 
 #ifdef WANT_LINUXSAMPLER
-
-#include "carla_linuxsampler_includes.h"
+#include "carla_linuxsampler.h"
+#else
+#warning linuxsampler not available (no GIG and SFZ support)
+#endif
 
 #include <QtCore/QFileInfo>
 
@@ -35,6 +37,8 @@ CARLA_BACKEND_START_NAMESPACE
 } /* adjust editor indent */
 #endif
 
+#ifdef WANT_LINUXSAMPLER
+
 /*!
  * @defgroup CarlaBackendLinuxSamplerPlugin Carla Backend LinuxSampler Plugin
  *
@@ -42,6 +46,7 @@ CARLA_BACKEND_START_NAMESPACE
  * http://www.linuxsampler.org/
  * @{
  */
+
 class LinuxSamplerPlugin : public CarlaPlugin
 {
 public:
@@ -593,37 +598,29 @@ CarlaPlugin* LinuxSamplerPlugin::newLinuxSampler(const initializer& init, bool i
 
     return plugin;
 }
+#endif // WANT_LINUXSAMPLER
 
 CarlaPlugin* CarlaPlugin::newGIG(const initializer& init)
 {
     qDebug("CarlaPlugin::newGIG(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
+#ifdef WANT_LINUXSAMPLER
     return LinuxSamplerPlugin::newLinuxSampler(init, true);
-}
-
-CarlaPlugin* CarlaPlugin::newSFZ(const initializer& init)
-{
-    qDebug("CarlaPlugin::newSFZ(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
-    return LinuxSamplerPlugin::newLinuxSampler(init, false);
-}
-#else // WANT_LINUXSAMPLER
-#warning linuxsampler not available (no GIG and SFZ support)
-
-CARLA_BACKEND_START_NAMESPACE
-
-CarlaPlugin* CarlaPlugin::newGIG(const initializer& init)
-{
-    qDebug("CarlaPlugin::newGIG(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
+#else
     setLastError("linuxsampler support not available");
     return nullptr;
-}
-
-CarlaPlugin* CarlaPlugin::newSFZ(const initializer& init)
-{
-    qDebug("CarlaPlugin::newSFZ(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
-    setLastError("linuxsampler support not available");
-    return nullptr;
-}
 #endif
+}
+
+CarlaPlugin* CarlaPlugin::newSFZ(const initializer& init)
+{
+    qDebug("CarlaPlugin::newSFZ(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
+#ifdef WANT_LINUXSAMPLER
+    return LinuxSamplerPlugin::newLinuxSampler(init, false);
+#else
+    setLastError("linuxsampler support not available");
+    return nullptr;
+#endif
+}
 
 /**@}*/
 

@@ -16,8 +16,7 @@
  */
 
 #include "carla_plugin.h"
-
-#include "dssi/dssi.h"
+#include "carla_dssi.h"
 
 CARLA_BACKEND_START_NAMESPACE
 

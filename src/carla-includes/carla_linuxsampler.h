@@ -40,7 +40,7 @@ protected:
     friend class Engine;
 };
 
-#if ! (defined(BUILD_BRIDGE) || defined(BUILD_NATIVE))
+#ifndef BUILD_NATIVE
 
 #include "carla_plugin.h"
 
@@ -155,7 +155,7 @@ public:
     }
 };
 
-#endif // BUILD_BRIDGE || BUILD_NATIVE
+#endif // ! BUILD_NATIVE
 
 } // namespace LinuxSampler
 

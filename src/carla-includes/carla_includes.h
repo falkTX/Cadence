@@ -19,12 +19,12 @@
 #define CARLA_INCLUDES_H
 
 #ifdef __WINE__
-#define __socklen_t_defined
-#define __WINE_WINSOCK2__
-#define HRESULT LONG
-#define Q_CORE_EXPORT
-#define Q_GUI_EXPORT
-#define QT_NO_STL
+#  define __socklen_t_defined
+#  define __WINE_WINSOCK2__
+#  define HRESULT LONG
+#  define Q_CORE_EXPORT
+#  define Q_GUI_EXPORT
+#  define QT_NO_STL
 #endif
 
 #include <QtCore/Qt>

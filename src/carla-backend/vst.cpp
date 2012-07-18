@@ -16,7 +16,7 @@
  */
 
 #include "carla_plugin.h"
-#include "carla_vst_includes.h"
+#include "carla_vst.h"
 
 #ifndef __WINE__
 #include <QtGui/QDialog>

@@ -38,3 +38,4 @@ carla-discovery-qtcreator
 carla-discovery-unix32
 carla-discovery-unix64
 c++/patchcanvas/PatchCanvas
+carla-*-Release

@@ -21,6 +21,12 @@
 
 #include "carla_plugin.h"
 
+#ifdef WANT_FLUIDSYNTH
+#include "carla_fluidsynth.h"
+#else
+#warning fluidsynth not available (no SF2 support)
+#endif
+
 CARLA_BACKEND_START_NAMESPACE
 
 #if 0
@@ -28,11 +34,6 @@ CARLA_BACKEND_START_NAMESPACE
 #endif
 
 #ifdef WANT_FLUIDSYNTH
-#include <fluidsynth.h>
-
-#if (FLUIDSYNTH_VERSION_MAJOR >= 1 && FLUIDSYNTH_VERSION_MINOR >= 1 && FLUIDSYNTH_VERSION_MICRO >= 4)
-#define FLUIDSYNTH_VERSION_NEW_API
-#endif
 
 /*!
  * @defgroup CarlaBackendFluidSynthPlugin Carla Backend FluidSynth Plugin
@@ -1281,8 +1282,6 @@ private:
     double param_buffers[FluidSynthParametersMax];
     const char* m_label;
 };
-#else
-#warning fluidsynth not available (no SF2 support)
 #endif // WANT_FLUIDSYNTH
 
 CarlaPlugin* CarlaPlugin::newSF2(const initializer& init)

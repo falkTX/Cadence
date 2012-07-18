@@ -12,7 +12,7 @@ BASE_FLAGS   = -O0 -g -Wall -I../carla-includes
 BUILD_FLAGS  = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
 BUILD_FLAGS += -I../carla-backend -I../carla-includes $(shell pkg-config --cflags QtCore)
 BUILD_FLAGS += -DDEBUG
-BUILD_FLAGS += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
+BUILD_FLAGS += -DVESTIGE_HEADER # Comment this line to not use vestige header
 
 32BIT_FLAGS  = -m32
 64BIT_FLAGS  = -m64

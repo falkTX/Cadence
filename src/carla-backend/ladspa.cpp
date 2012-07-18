@@ -16,7 +16,7 @@
  */
 
 #include "carla_plugin.h"
-#include "carla_ladspa_includes.h"
+#include "carla_ladspa.h"
 
 CARLA_BACKEND_START_NAMESPACE
 

@@ -20,10 +20,8 @@
 
 #include <cstdint>
 
-#define VST_FORCE_DEPRECATED 0
-#include "aeffectx.h"
-
 #if VESTIGE_HEADER
+#include "vestige/aeffectx.h"
 #define audioMasterGetOutputSpeakerArrangement audioMasterGetSpeakerArrangement
 #define effFlagsProgramChunks (1 << 5)
 #define effSetProgramName 4
@@ -106,6 +104,8 @@ struct VstTimeInfo_R {
     int32_t timeSigNumerator, timeSigDenominator, smpteOffset, smpteFrameRate, samplesToNextClock, flags;
 };
 #else
+#define VST_FORCE_DEPRECATED 0
+#include "vst/aeffectx.h"
 typedef VstTimeInfo VstTimeInfo_R;
 #endif
 

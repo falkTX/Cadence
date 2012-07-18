@@ -27,18 +27,17 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QUrl>
 
-#include "carla_ladspa_includes.h"
-#include "carla_lv2_includes.h"
-#include "carla_vst_includes.h"
-
-#include "dssi/dssi.h"
+#include "carla_ladspa.h"
+#include "carla_dssi.h"
+#include "carla_lv2.h"
+#include "carla_vst.h"
 
 #ifdef BUILD_NATIVE
 #  ifdef WANT_FLUIDSYNTH
-#    include <fluidsynth.h>
+#    include "carla_fluidsynth.h"
 #  endif
 #  ifdef WANT_LINUXSAMPLER
-#    include "carla_linuxsampler_includes.h"
+#    include "carla_linuxsampler.h"
 #  endif
 #endif
 
@@ -64,7 +63,7 @@ using namespace CarlaBackend;
 
 intptr_t VstCurrentUniqueId = 0;
 
-intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
+intptr_t VstHostCallback(AEffect* const effect, const int32_t opcode, const int32_t index, const intptr_t value, void* const ptr, const float opt)
 {
 #if DEBUG
     qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstMasterOpcode2str(opcode), index, value, opt);
@@ -409,7 +408,7 @@ void do_dssi_check(void* const lib_handle, const bool init)
                 continue;
             }
 
-            // we can only get program list per-handle
+            // we can only get program info per-handle
             if (descriptor->get_program)
             {
                 while ((descriptor->get_program(handle, programsTotal++)))
@@ -710,31 +709,31 @@ void do_vst_check(void* const lib_handle, const bool init)
 
     if (effect && effect->magic == kEffectMagic)
     {
-        const char* c_name;
-        const char* c_product;
-        const char* c_vendor;
+        const char* cName;
+        const char* cProduct;
+        const char* cVendor;
         char strBuf[255] = { 0 };
 
         effect->dispatcher(effect, effGetEffectName, 0, 0, strBuf, 0.0f);
-        c_name = strdup((strBuf[0] != 0) ? strBuf : "");
+        cName = strdup((strBuf[0] != 0) ? strBuf : "");
 
         strBuf[0] = 0;
         effect->dispatcher(effect, effGetProductString, 0, 0, strBuf, 0.0f);
-        c_product = strdup((strBuf[0] != 0) ? strBuf : "");
+        cProduct = strdup((strBuf[0] != 0) ? strBuf : "");
 
         strBuf[0] = 0;
         effect->dispatcher(effect, effGetVendorString, 0, 0, strBuf, 0.0f);
-        c_vendor = strdup((strBuf[0] != 0) ? strBuf : "");
+        cVendor = strdup((strBuf[0] != 0) ? strBuf : "");
 
         VstCurrentUniqueId = effect->uniqueID;
         intptr_t VstCategory = effect->dispatcher(effect, effGetPlugCategory, 0, 0, nullptr, 0.0f);
 
+        // only init if required
+        if (init || VstCategory == kPlugCategShell)
+            effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
+
         while (true)
         {
-            // only init if required
-            if (init || VstCategory == kPlugCategShell)
-                effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
-
             int hints = 0;
             int audioIns = effect->numInputs;
             int audioOuts = effect->numOutputs;
@@ -838,15 +837,11 @@ void do_vst_check(void* const lib_handle, const bool init)
             // end crash-free plugin test
             // -----------------------------------------------------------------------
 
-            // only close if required
-            if (init || VstCategory == kPlugCategShell)
-                effect->dispatcher(effect, effClose, 0, 0, nullptr, 0.0f);
-
             DISCOVERY_OUT("init", "-----------");
-            DISCOVERY_OUT("name", c_name);
-            DISCOVERY_OUT("label", c_product);
-            DISCOVERY_OUT("maker", c_vendor);
-            DISCOVERY_OUT("copyright", c_vendor);
+            DISCOVERY_OUT("name", cName);
+            DISCOVERY_OUT("label", cProduct);
+            DISCOVERY_OUT("maker", cVendor);
+            DISCOVERY_OUT("copyright", cVendor);
             DISCOVERY_OUT("unique_id", VstCurrentUniqueId);
             DISCOVERY_OUT("hints", hints);
             DISCOVERY_OUT("audio.ins", audioIns);
@@ -861,26 +856,28 @@ void do_vst_check(void* const lib_handle, const bool init)
             DISCOVERY_OUT("build", BINARY_NATIVE);
             DISCOVERY_OUT("end", "------------");
 
-            if (VstCategory == kPlugCategShell)
-            {
-                strBuf[0] = 0;
-                VstCurrentUniqueId = effect->dispatcher(effect, effShellGetNextPlugin, 0, 0, strBuf, 0.0f);
+            if (VstCategory != kPlugCategShell)
+                break;
 
-                if (VstCurrentUniqueId != 0)
-                {
-                    free((void*)c_name);
-                    c_name = strdup((strBuf[0] != 0) ? strBuf : "");
-                }
-                else
-                    break;
+            strBuf[0] = 0;
+            VstCurrentUniqueId = effect->dispatcher(effect, effShellGetNextPlugin, 0, 0, strBuf, 0.0f);
+
+            if (VstCurrentUniqueId != 0)
+            {
+                free((void*)cName);
+                cName = strdup((strBuf[0] != 0) ? strBuf : "");
             }
             else
                 break;
         }
 
-        free((void*)c_name);
-        free((void*)c_product);
-        free((void*)c_vendor);
+        // only close if required
+        if (init || VstCategory == kPlugCategShell)
+            effect->dispatcher(effect, effClose, 0, 0, nullptr, 0.0f);
+
+        free((void*)cName);
+        free((void*)cProduct);
+        free((void*)cVendor);
     }
     else
         DISCOVERY_OUT("error", "Failed to init VST plugin");
@@ -947,7 +944,7 @@ void do_fluidsynth_check(const char* const filename, const bool init)
 void do_linuxsampler_check(const char* const filename, const char* const stype, const bool init)
 {
 #ifdef WANT_LINUXSAMPLER
-    QFileInfo file(filename);
+    const QFileInfo file(filename);
 
     if (! file.exists())
     {
@@ -971,12 +968,12 @@ void do_linuxsampler_check(const char* const filename, const char* const stype, 
 
     class LinuxSamplerScopedEngine {
     public:
-        LinuxSamplerScopedEngine(const char* filename, const char* stype)
+        LinuxSamplerScopedEngine(const char* const filename, const char* const stype)
         {
             try {
                 engine = EngineFactory::Create(stype);
             }
-            catch (Exception& e)
+            catch (const Exception& e)
             {
                 DISCOVERY_OUT("error", e.what());
                 return;
@@ -985,7 +982,7 @@ void do_linuxsampler_check(const char* const filename, const char* const stype, 
             try {
                 ins = engine->GetInstrumentManager();
             }
-            catch (Exception& e)
+            catch (const Exception& e)
             {
                 DISCOVERY_OUT("error", e.what());
                 return;
@@ -996,7 +993,7 @@ void do_linuxsampler_check(const char* const filename, const char* const stype, 
             try {
                 ids = ins->GetInstrumentFileContent(filename);
             }
-            catch (Exception& e)
+            catch (const Exception& e)
             {
                 DISCOVERY_OUT("error", e.what());
                 return;

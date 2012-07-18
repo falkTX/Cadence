@@ -51,6 +51,7 @@
 
 #include "lv2_rdf.h"
 #include "lilv/lilvmm.hpp"
+#include "sratom/sratom.h"
 
 #include <QtCore/QMap>
 #include <QtCore/QString>

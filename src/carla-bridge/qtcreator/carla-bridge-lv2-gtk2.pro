@@ -17,18 +17,20 @@ SOURCES = \
 HEADERS = \
     ../carla_bridge.h \
     ../carla_bridge_osc.h \
-    ../../carla-backend/carla_midi.h \
     ../../carla-includes/carla_includes.h \
     ../../carla-includes/carla_lib_includes.h \
     ../../carla-includes/carla_osc_includes.h \
+    ../../carla-includes/carla_lv2_includes.h \
+    ../../carla-includes/carla_midi.h \
     ../../carla-includes/lv2_rdf.h
 
 INCLUDEPATH = .. \
     ../../carla-backend \
     ../../carla-includes
 
-DEFINES = BUILD_BRIDGE BUILD_BRIDGE_UI BRIDGE_LV2_GTK2
+LIBS    = \
+    ../../carla-lilv/carla_lilv.a
 
-LIBS    = ../../carla-lilv/carla_lilv.a -ldl
+DEFINES = BUILD_BRIDGE BUILD_BRIDGE_UI BRIDGE_LV2_GTK2
 
 QMAKE_CXXFLAGS *= -std=c++0x

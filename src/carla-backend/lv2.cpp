@@ -16,9 +16,7 @@
  */
 
 #include "carla_plugin.h"
-
-#include "carla_lv2_includes.h"
-#include "sratom/sratom.h"
+#include "carla_lv2.h"
 
 extern "C" {
 #include "lv2-rtmempool/rtmempool.h"

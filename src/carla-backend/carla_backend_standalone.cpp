@@ -1148,8 +1148,6 @@ void set_option(CarlaBackend::OptionsType option, int value, const char* valueSt
 
 #ifdef QTCREATOR_TEST
 
-#include "carla_lv2_includes.h"
-
 #include <QtGui/QApplication>
 #include <QtGui/QDialog>
 

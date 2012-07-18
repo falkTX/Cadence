@@ -2,7 +2,7 @@
 
 QT = core
 
-CONFIG    = link_pkgconfig qt warn_on debug
+CONFIG    = debug link_pkgconfig qt warn_on
 DEFINES   = DEBUG BUILD_NATIVE WANT_FLUIDSYNTH WANT_LINUXSAMPLER
 PKGCONFIG = fluidsynth linuxsampler
 
@@ -16,18 +16,20 @@ SOURCES = \
 HEADERS = \
     ../../carla-includes/carla_includes.h \
     ../../carla-includes/carla_lib_includes.h \
-    ../../carla-includes/carla_vst_includes.h \
-    ../../carla-includes/carla_ladspa_includes.h \
-    ../../carla-includes/carla_lv2_includes.h \
-    ../../carla-includes/carla_vst_includes.h \
-    ../../carla-includes/carla_linuxsampler_includes.h \
+    ../../carla-includes/carla_ladspa.h \
+    ../../carla-includes/carla_dssi.h \
+    ../../carla-includes/carla_lv2.h \
+    ../../carla-includes/carla_vst.h \
+    ../../carla-includes/carla_fluidsynth.h \
+    ../../carla-includes/carla_linuxsampler.h \
+    ../../carla-includes/ladspa_rdf.h \
     ../../carla-includes/lv2_rdf.h
 
 INCLUDEPATH = .. \
     ../../carla-backend \
-    ../../carla-includes \
-    ../../carla-includes/vst
+    ../../carla-includes
 
-LIBS = ../../carla-lilv/carla_lilv.a -ldl
+LIBS = \
+    ../../carla-lilv/carla_lilv.a
 
 QMAKE_CXXFLAGS *= -std=c++0x
