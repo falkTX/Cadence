@@ -1,6 +1,6 @@
--------------------------
--  README for Cadence  -
------------------------
+=========================
+=  README for Cadence  =
+=======================
 
 Cadence is a set of tools useful for audio production.
 It's being developed by falkTX, using Python and Qt (and some C++ where needed).
@@ -18,7 +18,8 @@ They can be re-used in other projects. Contact the author if you need help on th
 Note that the main focus goes to JACK2 (or JACK1+DBus); JACK1 (raw) and tschack are untested and may not work properly at this point.
 
 
-===== DESCRIPTIONS =====
+DESCRIPTIONS
+------------------------
 Here's a brief description of the main tools:
 
 ---> Cadence
