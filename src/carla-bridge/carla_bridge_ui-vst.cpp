@@ -15,31 +15,30 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_bridge.h"
-#include "carla_bridge_osc.h"
+#include "carla_bridge_client.h"
+#include "carla_vst.h"
 #include "carla_midi.h"
-
-#include "carla_vst_includes.h"
 
 #include <QtGui/QDialog>
 
-ClientData* client = nullptr;
+//CARLA_BRIDGE_START_NAMESPACE;
+namespace CarlaBridge {
 
 // -------------------------------------------------------------------------
 
 #define FAKE_SAMPLE_RATE 44100.0
 #define FAKE_BUFFER_SIZE 512
 
-class VstUiData : public ClientData
+class CarlaBridgeVstClient : public CarlaBridgeClient
 {
 public:
-    VstUiData(const char* ui_title) : ClientData(ui_title)
+    CarlaBridgeVstClient(CarlaBridgeToolkit* const toolkit) : CarlaBridgeClient(toolkit)
     {
         effect = nullptr;
         widget = new QDialog;
     }
 
-    ~VstUiData()
+    ~CarlaBridgeVstClient()
     {
     }
 
@@ -57,22 +56,20 @@ public:
         // -----------------------------------------------------------------
         // get DLL main entry
 
-        VST_Function vstfn = (VST_Function)lib_symbol("VSTPluginMain");
+        VST_Function vstfn = (VST_Function)libSymbol("VSTPluginMain");
 
         if (! vstfn)
-        {
-            vstfn = (VST_Function)lib_symbol("main");
+            vstfn = (VST_Function)libSymbol("main");
 
-            if (! vstfn)
-                return false;
-        }
+        if (! vstfn)
+            return false;
 
         // -----------------------------------------------------------------
         // initialize plugin
 
         effect = vstfn(VstHostCallback);
 
-        if (! effect || effect->magic != kEffectMagic)
+        if ((! effect) || effect->magic != kEffectMagic)
             return false;
 
         // -----------------------------------------------------------------
@@ -120,46 +117,56 @@ public:
     // ---------------------------------------------------------------------
     // processing
 
-    void set_parameter(int32_t rindex, double value)
+    void setParameter(const int32_t rindex, const double value)
     {
         if (effect)
             effect->setParameter(effect, rindex, value);
     }
 
-    void set_program(uint32_t index)
+    void setProgram(const uint32_t index)
     {
         if (effect)
             effect->dispatcher(effect, effSetProgram, 0, index, nullptr, 0.0f);
     }
 
-    void set_midi_program(uint32_t, uint32_t) {}
-    void note_on(uint8_t, uint8_t) {}
-    void note_off(uint8_t) {}
+    void setMidiProgram(uint32_t, uint32_t)
+    {
+    }
+
+    void noteOn(uint8_t, uint8_t)
+    {
+    }
+
+    void noteOff(uint8_t)
+    {
+    }
 
     // ---------------------------------------------------------------------
     // gui
 
-    void* get_widget() const
+    void* getWidget() const
     {
         return widget;
     }
 
-    bool is_resizable() const
+    bool isResizable() const
     {
         return false;
     }
 
-    bool needs_reparent() const
+    bool needsReparent() const
     {
         return true;
     }
+
+    // ---------------------------------------------------------------------
 
     static intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
     {
         switch (opcode)
         {
         case audioMasterAutomate:
-            osc_send_control(index, opt);
+            //osc_send_control(index, opt);
             break;
 
         case audioMasterVersion:
@@ -180,6 +187,7 @@ public:
             return (intptr_t)&timeInfo;
 
         case audioMasterProcessEvents:
+#if 0
             if (client && ptr)
             {
                 const VstEvents* const events = (VstEvents*)ptr;
@@ -200,7 +208,7 @@ public:
             }
             else
                 qDebug("VstHostCallback:audioMasterProcessEvents - Some MIDI Out events were ignored");
-
+#endif
             break;
 
 #if ! VST_FORCE_DEPRECATED
@@ -210,8 +218,8 @@ public:
 #endif
 
         case audioMasterSizeWindow:
-            if (client)
-                client->queque_message(BRIDGE_MESSAGE_RESIZE_GUI, index, value, 0.0f);
+            //if (client)
+            //    client->queque_message(BRIDGE_MESSAGE_RESIZE_GUI, index, value, 0.0f);
             return 1;
 
         case audioMasterGetSampleRate:
@@ -300,6 +308,8 @@ private:
     QDialog* widget;
 };
 
+CARLA_BRIDGE_END_NAMESPACE
+
 int main(int argc, char* argv[])
 {
     if (argc != 4)
@@ -312,21 +322,24 @@ int main(int argc, char* argv[])
     const char* binary   = argv[2];
     const char* ui_title = argv[3];
 
+    using namespace CarlaBridge;
+
     // Init toolkit
-    toolkit_init();
+    CarlaBridgeToolkit* const toolkit = CarlaBridgeToolkit::createNew(ui_title);
+    toolkit->init();
 
     // Init VST-UI
-    client = new VstUiData(ui_title);
+    CarlaBridgeVstClient client(toolkit);
 
     // Init OSC
-    osc_init(osc_url);
+    client.oscInit(osc_url);
 
     // Load UI
     int ret;
 
-    if (client->init(binary, nullptr))
+    if (client.init(binary, nullptr))
     {
-        toolkit_loop();
+        toolkit->exec(&client);
         ret = 0;
     }
     else
@@ -336,18 +349,15 @@ int main(int argc, char* argv[])
     }
 
     // Close OSC
-    osc_send_exiting();
-    osc_close();
+    osc_send_exiting(client.getOscServerData());
+    client.oscClose();
 
     // Close VST-UI
-    client->close();
+    client.close();
 
     // Close toolkit
-    if (! ret)
-        toolkit_quit();
-
-    delete client;
-    client = nullptr;
+    toolkit->quit();
+    delete toolkit;
 
     return ret;
 }

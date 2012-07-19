@@ -543,34 +543,3 @@ int CarlaOsc::handle_bridge_aouts_peak(CARLA_OSC_HANDLE_ARGS2)
 
     return 0;
 }
-
-// -------------------------------------------------------------------------------------------------------------------
-
-void osc_send_lv2_atom_transfer(const CarlaOscData* const oscData /* TODO */)
-{
-    qDebug("osc_send_lv2_atom_transfer(%s)", oscData->path);
-
-    if (oscData->target)
-    {
-        char targetPath[strlen(oscData->path)+19];
-        strcpy(targetPath, oscData->path);
-        strcat(targetPath, "/lv2_atom_transfer");
-        lo_send(oscData->target, targetPath, "");
-    }
-}
-
-void osc_send_lv2_event_transfer(const CarlaOscData* const oscData, const char* const type, const char* const key, const char* const value)
-{
-    qDebug("osc_send_lv2_event_transfer(%s, %s, %s, %s)", oscData->path, type, key, value);
-    assert(type);
-    assert(key);
-    assert(value);
-
-    if (oscData->target)
-    {
-        char targetPath[strlen(oscData->path)+20];
-        strcpy(targetPath, oscData->path);
-        strcat(targetPath, "/lv2_event_transfer");
-        lo_send(oscData->target, targetPath, "sss", type, key, value);
-    }
-}

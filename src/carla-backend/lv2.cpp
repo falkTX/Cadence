@@ -891,9 +891,9 @@ public:
             }
             else
             {
-                //osc_send_hide(&osc.data);
-                //osc_send_quit(&osc.data);
-                //osc_clear_data(&osc.data);
+                osc_send_hide(&osc.data);
+                osc_send_quit(&osc.data);
+                osc_clear_data(&osc.data);
             }
             break;
 #endif
@@ -2481,19 +2481,19 @@ public:
         // do basic checks
         if (! uriKey)
         {
-            qWarning("Lv2Plugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i) - Invalid key", handle, key, value, size, type, flags);
+            qWarning("Lv2Plugin::handleStateStore(%i, %p, " P_SIZE ", %i, %i) - Invalid key", key, value, size, type, flags);
             return LV2_STATE_ERR_NO_PROPERTY;
         }
 
         if (! flags & LV2_STATE_IS_POD)
         {
-            qWarning("Lv2Plugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i) - Invalid flags", handle, key, value, size, type, flags);
+            qWarning("Lv2Plugin::handleStateStore(%i, %p, " P_SIZE ", %i, %i) - Invalid flags", key, value, size, type, flags);
             return LV2_STATE_ERR_BAD_FLAGS;
         }
 
         if (dtype == CUSTOM_DATA_INVALID)
         {
-            qCritical("Lv2Plugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i) - Invalid type '%s'", handle, key, value, size, type, flags, CustomDataType2str(dtype));
+            qCritical("Lv2Plugin::handleStateStore(%i, %p, " P_SIZE ", %i, %i) - Invalid type '%s'", key, value, size, type, flags, CustomDataType2str(dtype));
             return LV2_STATE_ERR_BAD_TYPE;
         }
 
@@ -2536,7 +2536,7 @@ public:
 
         if (! uriKey)
         {
-            qCritical("Lv2Plugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p) - Failed to find key", handle, key, size, type, flags);
+            qCritical("Lv2Plugin::handleStateRetrieve(%i, %p, %p, %p) - Failed to find key", key, size, type, flags);
             return nullptr;
         }
 
@@ -2555,7 +2555,7 @@ public:
 
         if (! stringData)
         {
-            qCritical("Lv2Plugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p) - Invalid key '%s'", handle, key, size, type, flags, uriKey);
+            qCritical("Lv2Plugin::handleStateRetrieve(%i, %p, %p, %p) - Invalid key '%s'", key, size, type, flags, uriKey);
             return nullptr;
         }
 
@@ -2587,7 +2587,7 @@ public:
             return chunk.constData();
         }
 
-        qCritical("Lv2Plugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p) - Invalid key type '%s'", handle, key, size, type, flags, CustomDataType2str(dtype));
+        qCritical("Lv2Plugin::handleStateRetrieve(%i, %p, %p, %p) - Invalid key type '%s'", key, size, type, flags, CustomDataType2str(dtype));
         return nullptr;
     }
 
@@ -3518,7 +3518,7 @@ public:
                 // -------------------------------------------------------
                 // initialize ui bridge
 
-                const char* const oscBinary = "/home/falktx/Personal/FOSS/GIT/Cadence/src/carla-bridge/carla-bridge-lv2-gtk2"; //lv2bridge2str(UiType);
+                const char* const oscBinary = lv2bridge2str(UiType);
                 qDebug("Has UI - is bridge, uitype = %i : %s", UiType, oscBinary);
 
                 if (oscBinary)

@@ -74,11 +74,11 @@ public:
     }
 
 private:
+    CarlaBackend::CarlaEngine* const engine;
+
     const char* m_serverPath;
     lo_server_thread m_serverThread;
     CarlaOscData m_controllerData;
-
-    CarlaBackend::CarlaEngine* const engine;
 
     const char* m_name;
     size_t m_name_len;
@@ -125,10 +125,5 @@ private:
     int handle_bridge_ains_peak(CARLA_OSC_HANDLE_ARGS2);
     int handle_bridge_aouts_peak(CARLA_OSC_HANDLE_ARGS2);
 };
-
-// -----------------------------------------------------------------------
-
-void osc_send_lv2_atom_transfer(const CarlaOscData* const oscData /* TODO */);
-void osc_send_lv2_event_transfer(const CarlaOscData* const oscData, const char* const type, const char* const key, const char* const value);
 
 #endif // CARLA_OSC_H

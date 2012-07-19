@@ -25,7 +25,7 @@
 #include <lo/lo.h>
 
 struct CarlaOscData {
-    char* path;
+    const char* path;
     lo_address source;
     lo_address target;
 };
@@ -141,7 +141,36 @@ void osc_send_midi(const CarlaOscData* const oscData, const uint8_t buf[4])
     }
 }
 
-#ifndef BUILD_BRIDGE
+#ifdef BUILD_BRIDGE
+static inline
+void osc_send_update(const CarlaOscData* const oscData, const char* const url)
+{
+    qDebug("osc_send_update(%s, %s)", oscData->path, url);
+
+    if (oscData->target)
+    {
+        char targetPath[strlen(oscData->path)+8];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/update");
+        lo_send(oscData->target, targetPath, "s", url);
+    }
+}
+
+static inline
+void osc_send_exiting(const CarlaOscData* const oscData)
+{
+    qDebug("osc_send_exiting(%s)", oscData->path);
+
+    if (oscData->target)
+    {
+        char targetPath[strlen(oscData->path)+9];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/exiting");
+        lo_send(oscData->target, targetPath, "");
+    }
+}
+
+#else
 static inline
 void osc_send_show(const CarlaOscData* const oscData)
 {
@@ -184,5 +213,36 @@ void osc_send_quit(const CarlaOscData* const oscData)
     }
 }
 #endif
+
+static inline
+void osc_send_lv2_atom_transfer(const CarlaOscData* const oscData /* TODO */)
+{
+    qDebug("osc_send_lv2_atom_transfer(%s)", oscData->path);
+
+    if (oscData->target)
+    {
+        char targetPath[strlen(oscData->path)+19];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/lv2_atom_transfer");
+        lo_send(oscData->target, targetPath, "");
+    }
+}
+
+static inline
+void osc_send_lv2_event_transfer(const CarlaOscData* const oscData, const char* const type, const char* const key, const char* const value)
+{
+    qDebug("osc_send_lv2_event_transfer(%s, %s, %s, %s)", oscData->path, type, key, value);
+    assert(type);
+    assert(key);
+    assert(value);
+
+    if (oscData->target)
+    {
+        char targetPath[strlen(oscData->path)+20];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/lv2_event_transfer");
+        lo_send(oscData->target, targetPath, "sss", type, key, value);
+    }
+}
 
 #endif // CARLA_OSC_INCLUDES_H

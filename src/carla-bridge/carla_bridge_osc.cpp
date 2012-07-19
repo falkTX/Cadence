@@ -15,131 +15,124 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_bridge.h"
 #include "carla_bridge_osc.h"
+#include "carla_bridge_client.h"
 #include "carla_midi.h"
 
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 
-#ifdef BUILD_BRIDGE_PLUGIN
-static const size_t client_name_len  = 13;
-static const char* const client_name = "plugin-bridge";
-#include "carla_plugin.h"
-#else
-static const size_t client_name_len  = 13;
-static const char* const client_name = "lv2-ui-bridge";
-#endif
+//CARLA_BRIDGE_START_NAMESPACE
+namespace CarlaBridge {
 
-const char* global_osc_server_path = nullptr;
-lo_server_thread global_osc_server_thread = nullptr;
-OscData global_osc_data = { nullptr, nullptr, nullptr };
-
-// -------------------------------------------------------------------------
-
-void osc_init(const char* osc_url)
+CarlaBridgeOsc::CarlaBridgeOsc(CarlaBridgeClient* const client_, const char* const name) :
+    client(client_)
 {
-    qDebug("osc_init(%s)", osc_url);
+    qDebug("CarlaBridgeOsc::CarlaBridgeOsc(%p, %s)", client_, name);
+    assert(client_);
+    assert(name);
 
-    const char* host = lo_url_get_hostname(osc_url);
-    const char* port = lo_url_get_port(osc_url);
+    m_serverPath = nullptr;
+    m_serverThread = nullptr;
+    m_serverData.path = nullptr;
+    m_serverData.source = nullptr;
+    m_serverData.target = nullptr;
 
-    global_osc_data.path   = lo_url_get_path(osc_url);
-    global_osc_data.target = lo_address_new(host, port);
+    m_name = strdup(name);
+    m_name_len = strlen(name);
+}
+
+CarlaBridgeOsc::~CarlaBridgeOsc()
+{
+    qDebug("CarlaBridgeOsc::~CarlaBridgeOsc()");
+
+    free((void*)m_name);
+}
+
+void CarlaBridgeOsc::init(const char* const url)
+{
+    qDebug("CarlaBridgeOsc::init(%s)", url);
+    assert(url);
+
+    const char* host = lo_url_get_hostname(url);
+    const char* port = lo_url_get_port(url);
+
+    m_serverData.path   = lo_url_get_path(url);
+    m_serverData.target = lo_address_new(host, port);
 
     free((void*)host);
     free((void*)port);
 
     // create new OSC thread
-    global_osc_server_thread = lo_server_thread_new(nullptr, osc_error_handler);
+    m_serverThread = lo_server_thread_new(nullptr, osc_error_handler);
 
     // get our full OSC server path
-    char* osc_thread_path = lo_server_thread_get_url(global_osc_server_thread);
-    global_osc_server_path = strdup(QString("%1%2").arg(osc_thread_path).arg(client_name).toUtf8().constData());
-    free(osc_thread_path);
+    char* const threadPath = lo_server_thread_get_url(m_serverThread);
+    m_serverPath = strdup(QString("%1%2").arg(threadPath).arg(m_name).toUtf8().constData());
+    free(threadPath);
 
     // register message handler and start OSC thread
-    lo_server_thread_add_method(global_osc_server_thread, nullptr, nullptr, osc_message_handler, nullptr);
-    lo_server_thread_start(global_osc_server_thread);
+    lo_server_thread_add_method(m_serverThread, nullptr, nullptr, osc_message_handler, this);
+    lo_server_thread_start(m_serverThread);
 }
 
-void osc_close()
+void CarlaBridgeOsc::close()
 {
-    qDebug("osc_close()");
+    qDebug("CarlaBridgeOsc::close()");
+    assert(client);
 
-    osc_clear_data(&global_osc_data);
+    osc_clear_data(&m_serverData);
 
-    lo_server_thread_stop(global_osc_server_thread);
-    lo_server_thread_del_method(global_osc_server_thread, nullptr, nullptr);
-    lo_server_thread_free(global_osc_server_thread);
+    lo_server_thread_stop(m_serverThread);
+    lo_server_thread_del_method(m_serverThread, nullptr, nullptr);
+    lo_server_thread_free(m_serverThread);
 
-    free((void*)global_osc_server_path);
-    global_osc_server_path = nullptr;
+    free((void*)m_serverPath);
+    m_serverPath = nullptr;
 }
 
-void osc_clear_data(OscData* osc_data)
+int CarlaBridgeOsc::handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg)
 {
-    qDebug("osc_clear_data(%p)", osc_data);
-
-    if (osc_data->path)
-        free((void*)osc_data->path);
-
-    if (osc_data->source)
-        lo_address_free(osc_data->source);
-
-    if (osc_data->target)
-        lo_address_free(osc_data->target);
-
-    osc_data->path = nullptr;
-    osc_data->source = nullptr;
-    osc_data->target = nullptr;
-}
-
-// -------------------------------------------------------------------------
-
-void osc_error_handler(int num, const char* msg, const char* path)
-{
-    qCritical("osc_error_handler(%i, %s, %s)", num, msg, path);
-}
-
-int osc_message_handler(const char* path, const char* types, lo_arg** argv, int argc, void* data, void* user_data)
-{
-#if DEBUG
-    qDebug("osc_message_handler(%s, %s, %p, %i, %p, %p)", path, types, argv, argc, data, user_data);
-#endif
+    qDebug("CarlaBridgeOsc::handleMessage(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
+    assert(m_serverThread);
+    assert(path);
 
     // Check if message is for this client
-    if (strlen(path) <= client_name_len || strncmp(path+1, client_name, client_name_len) != 0)
+    if (strlen(path) <= m_name_len || strncmp(path+1, m_name, m_name_len) != 0)
     {
-        qWarning("osc_message_handler() - message not for this client -> '%s' != '/%s/'", path, client_name);
+        qWarning("CarlaBridgeOsc::handleMessage() - message not for this client -> '%s' != '/%s/'", path, m_name);
         return 1;
     }
 
     char method[32] = { 0 };
-    memcpy(method, path + client_name_len + 1, 32);
+    memcpy(method, path + (m_name_len + 1), 32);
 
+    // Common OSC methods
     if (strcmp(method, "/configure") == 0)
-        return osc_handle_configure(argv);
-    else if (strcmp(method, "/control") == 0)
-        return osc_handle_control(argv);
-    else if (strcmp(method, "/program") == 0)
-        return osc_handle_program(argv);
-    else if (strcmp(method, "/midi_program") == 0)
-        return osc_handle_midi_program(argv);
-    else if (strcmp(method, "/midi") == 0)
-        return osc_handle_midi(argv);
-    else if (strcmp(method, "/show") == 0)
-        return osc_handle_show();
-    else if (strcmp(method, "/hide") == 0)
-        return osc_handle_hide();
-    else if (strcmp(method, "/quit") == 0)
-        return osc_handle_quit();
-#if BRIDGE_LV2_GTK2 || BRIDGE_LV2_QT4 || BRIDGE_LV2_X11
-    //else if (strcmp(method, "/lv2_atom_transfer") == 0)
-    //    return osc_handle_lv2_atom_transfer(argv);
-    else if (strcmp(method, "/lv2_event_transfer") == 0)
-        return osc_handle_lv2_event_transfer(argv);
+        return handle_configure(argc, argv, types);
+    if (strcmp(method, "/control") == 0)
+        return handle_control(argc, argv, types);
+    if (strcmp(method, "/program") == 0)
+        return handle_program(argc, argv, types);
+    if (strcmp(method, "/midi_program") == 0)
+        return handle_midi_program(argc, argv, types);
+    if (strcmp(method, "/midi") == 0)
+        return handle_midi(argc, argv, types);
+    if (strcmp(method, "/show") == 0)
+        return handle_show();
+    if (strcmp(method, "/hide") == 0)
+        return handle_hide();
+    if (strcmp(method, "/quit") == 0)
+        return handle_quit();
+
+    // client specific methods
+#if LV2_UI_GTK2 || LV2_UI_QT4 || LV2_UI_X11
+    if (strcmp(method, "/lv2_atom_transfer") == 0)
+        return handle_lv2_atom_transfer(argc, argv, types);
+    if (strcmp(method, "/lv2_event_transfer") == 0)
+        return handle_lv2_event_transfer(argc, argv, types);
 #endif
+
 #if 0
     else if (strcmp(method, "set_parameter_midi_channel") == 0)
         return osc_set_parameter_midi_channel_handler(argv);
@@ -150,48 +143,41 @@ int osc_message_handler(const char* path, const char* types, lo_arg** argv, int 
         qWarning("Got unsupported OSC method '%s' on '%s'", method, path);
 
     return 1;
-
-    Q_UNUSED(types);
-    Q_UNUSED(argc);
-    Q_UNUSED(data);
-    Q_UNUSED(user_data);
 }
 
-// -------------------------------------------------------------------------
-
-int osc_handle_configure(lo_arg** argv)
+int CarlaBridgeOsc::handle_configure(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 {
+    qDebug("CarlaOsc::handle_configure()");
+    CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(2, "ss");
+
+    if (! client)
+        return 1;
+
 #ifdef BUILD_BRIDGE_PLUGIN
-    using namespace CarlaBackend;
+    const char* const key   = (const char*)&argv[0]->s;
+    const char* const value = (const char*)&argv[1]->s;
 
-    const char* key   = (const char*)&argv[0]->s;
-    const char* value = (const char*)&argv[1]->s;
-
-    if (client)
+    if (strcmp(key, CARLA_BRIDGE_MSG_SAVE_NOW) == 0)
     {
-        if (strcmp(key, CARLA_BRIDGE_MSG_SAVE_NOW) == 0)
-        {
-            client->queque_message(BRIDGE_MESSAGE_SAVE_NOW, 0, 0, 0.0);
-        }
-        else if (strcmp(key, CARLA_BRIDGE_MSG_SET_CHUNK) == 0)
-        {
-            client->set_chunk_data(value);
-        }
-        else if (strcmp(key, CARLA_BRIDGE_MSG_SET_CUSTOM) == 0)
-        {
-            QStringList vList = QString(value).split("·", QString::KeepEmptyParts);
+        client->quequeMessage(BRIDGE_MESSAGE_SAVE_NOW, 0, 0, 0.0);
+    }
+    else if (strcmp(key, CARLA_BRIDGE_MSG_SET_CHUNK) == 0)
+    {
+        client->setChunkData(value);
+    }
+    else if (strcmp(key, CARLA_BRIDGE_MSG_SET_CUSTOM) == 0)
+    {
+        QStringList vList = QString(value).split("·", QString::KeepEmptyParts);
 
-            if (vList.size() == 3)
-            {
-                const char* const cType  = vList.at(0).toUtf8().constData();
-                const char* const cKey   = vList.at(1).toUtf8().constData();
-                const char* const cValue = vList.at(2).toUtf8().constData();
+        if (vList.size() == 3)
+        {
+            const char* const cType  = vList.at(0).toUtf8().constData();
+            const char* const cKey   = vList.at(1).toUtf8().constData();
+            const char* const cValue = vList.at(2).toUtf8().constData();
 
-                client->set_custom_data(cType, cKey, cValue);
-            }
+            client->set_custom_data(cType, cKey, cValue);
         }
     }
-
 #else
     Q_UNUSED(argv);
 #endif
@@ -199,41 +185,59 @@ int osc_handle_configure(lo_arg** argv)
     return 0;
 }
 
-int osc_handle_control(lo_arg** argv)
+int CarlaBridgeOsc::handle_control(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 {
-    int rindex  = argv[0]->i;
-    float value = argv[1]->f;
+    //qDebug("CarlaOsc::handle_control()");
+    CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(2, "if");
 
-    if (client)
-        client->queque_message(BRIDGE_MESSAGE_PARAMETER, rindex, 0, value);
+    if (! client)
+        return 1;
+
+    const int  rindex = argv[0]->i;
+    const float value = argv[1]->f;
+    client->quequeMessage(MESSAGE_PARAMETER, rindex, 0, value);
 
     return 0;
 }
 
-int osc_handle_program(lo_arg** argv)
+int CarlaBridgeOsc::handle_program(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 {
-    int index = argv[0]->i;
+    qDebug("CarlaOsc::handle_program()");
+    CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(1, "i");
 
-    if (client)
-        client->queque_message(BRIDGE_MESSAGE_PROGRAM, index, 0, 0.0);
+    if (! client)
+        return 1;
+
+    const int index = argv[0]->i;
+    client->quequeMessage(MESSAGE_PROGRAM, index, 0, 0.0);
 
     return 0;
 }
 
-int osc_handle_midi_program(lo_arg** argv)
+int CarlaBridgeOsc::handle_midi_program(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 {
-    int bank    = argv[0]->i;
-    int program = argv[1]->i;
+    qDebug("CarlaOsc::handle_program()");
+    CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(2, "ii");
 
-    if (client)
-        client->queque_message(BRIDGE_MESSAGE_MIDI_PROGRAM, bank, program, 0.0);
+    if (! client)
+        return 1;
+
+    const int bank    = argv[0]->i;
+    const int program = argv[1]->i;
+    client->quequeMessage(MESSAGE_MIDI_PROGRAM, bank, program, 0.0);
 
     return 0;
 }
 
-int osc_handle_midi(lo_arg** argv)
+int CarlaBridgeOsc::handle_midi(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 {
-    uint8_t* data  = argv[0]->m;
+    qDebug("CarlaOsc::handle_midi()");
+    CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(1, "m");
+
+    if (! client)
+        return 1;
+
+    const uint8_t* const data = argv[0]->m;
     uint8_t status = data[1];
 
     // Fix bad note-off
@@ -243,125 +247,46 @@ int osc_handle_midi(lo_arg** argv)
     if (MIDI_IS_STATUS_NOTE_OFF(status))
     {
         uint8_t note = data[2];
-
-        if (client)
-            client->queque_message(BRIDGE_MESSAGE_NOTE_OFF, note, 0, 0.0);
+        client->quequeMessage(MESSAGE_NOTE_OFF, note, 0, 0.0);
     }
     else if (MIDI_IS_STATUS_NOTE_ON(status))
     {
         uint8_t note = data[2];
         uint8_t velo = data[3];
-
-        if (client)
-            client->queque_message(BRIDGE_MESSAGE_NOTE_ON, note, velo, 0.0);
+        client->quequeMessage(MESSAGE_NOTE_ON, note, velo, 0.0);
     }
 
     return 0;
 }
 
-int osc_handle_show()
+int CarlaBridgeOsc::handle_show()
 {
-    if (client)
-        client->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 1, 0, 0.0);
+    if (! client)
+        return 1;
+
+    client->quequeMessage(MESSAGE_SHOW_GUI, 1, 0, 0.0);
 
     return 0;
 }
 
-int osc_handle_hide()
+int CarlaBridgeOsc::handle_hide()
 {
-    if (client)
-        client->queque_message(BRIDGE_MESSAGE_SHOW_GUI, 0, 0, 0.0);
+    if (! client)
+        return 1;
+
+    client->quequeMessage(MESSAGE_SHOW_GUI, 0, 0, 0.0);
 
     return 0;
 }
 
-int osc_handle_quit()
+int CarlaBridgeOsc::handle_quit()
 {
-    if (client)
-        client->queque_message(BRIDGE_MESSAGE_QUIT, 0, 0, 0.0);
+    if (! client)
+        return 1;
+
+    client->quequeMessage(MESSAGE_QUIT, 0, 0, 0.0);
 
     return 0;
-}
-
-// -------------------------------------------------------------------------
-
-void osc_send_configure(const char* const key, const char* const value)
-{
-    if (global_osc_data.target)
-    {
-        char target_path[strlen(global_osc_data.path)+11];
-        strcpy(target_path, global_osc_data.path);
-        strcat(target_path, "/configure");
-        lo_send(global_osc_data.target, target_path, "ss", key, value);
-    }
-}
-
-void osc_send_control(int param, double value)
-{
-    if (global_osc_data.target)
-    {
-        char target_path[strlen(global_osc_data.path)+9];
-        strcpy(target_path, global_osc_data.path);
-        strcat(target_path, "/control");
-        lo_send(global_osc_data.target, target_path, "if", param, value);
-    }
-}
-
-void osc_send_program(int program)
-{
-    if (global_osc_data.target)
-    {
-        char target_path[strlen(global_osc_data.path)+9];
-        strcpy(target_path, global_osc_data.path);
-        strcat(target_path, "/program");
-        lo_send(global_osc_data.target, target_path, "i", program);
-    }
-}
-
-void osc_send_midi_program(int bank, int program, bool)
-{
-    if (global_osc_data.target)
-    {
-        char target_path[strlen(global_osc_data.path)+14];
-        strcpy(target_path, global_osc_data.path);
-        strcat(target_path, "/midi_program");
-        lo_send(global_osc_data.target, target_path, "ii", bank, program);
-    }
-}
-
-void osc_send_midi(uint8_t buf[4])
-{
-    if (global_osc_data.target)
-    {
-        char target_path[strlen(global_osc_data.path)+6];
-        strcpy(target_path, global_osc_data.path);
-        strcat(target_path, "/midi");
-        lo_send(global_osc_data.target, target_path, "m", buf);
-    }
-}
-
-// -------------------------------------------------------------------------
-
-void osc_send_update()
-{
-    if (global_osc_data.target)
-    {
-        char target_path[strlen(global_osc_data.path)+8];
-        strcpy(target_path, global_osc_data.path);
-        strcat(target_path, "/update");
-        lo_send(global_osc_data.target, target_path, "s", global_osc_server_path);
-    }
-}
-
-void osc_send_exiting()
-{
-    if (global_osc_data.target)
-    {
-        char target_path[strlen(global_osc_data.path)+9];
-        strcpy(target_path, global_osc_data.path);
-        strcat(target_path, "/exiting");
-        lo_send(global_osc_data.target, target_path, "");
-    }
 }
 
 #ifdef BUILD_BRIDGE_PLUGIN
@@ -541,15 +466,6 @@ void osc_send_bridge_update()
         lo_send(global_osc_data.target, target_path, "");
     }
 }
-#else
-void osc_send_lv2_event_transfer(const char* type, const char* key, const char* value)
-{
-    if (global_osc_data.target)
-    {
-        char target_path[strlen(global_osc_data.path)+20];
-        strcpy(target_path, global_osc_data.path);
-        strcat(target_path, "/lv2_event_transfer");
-        lo_send(global_osc_data.target, target_path, "sss", type, key, value);
-    }
-}
 #endif
+
+CARLA_BRIDGE_END_NAMESPACE

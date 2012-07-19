@@ -8,7 +8,7 @@ CXX     ?= g++
 WINECXX ?= wineg++
 STRIP   ?= strip
 
-BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -Wall -I../carla-includes
+BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -Wall
 
 BUILD_FLAGS  = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
 BUILD_FLAGS += -I../carla-backend -I../carla-includes $(shell pkg-config --cflags QtCore)

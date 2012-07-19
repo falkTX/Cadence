@@ -1468,10 +1468,10 @@ public:
 
         for (size_t i=0; i < custom.size(); i++)
         {
-            //if (m_type == PLUGIN_LV2)
-            //    osc_send_lv2_event_transfer(&osc.data, customdatatype2str(custom[i].type), custom[i].key, custom[i].value);
-            //else if (custom[i].type == CUSTOM_DATA_STRING)
-            osc_send_configure(&osc.data, custom[i].key, custom[i].value);
+            if (m_type == PLUGIN_LV2)
+               osc_send_lv2_event_transfer(&osc.data, getCustomDataTypeString(custom[i].type), custom[i].key, custom[i].value);
+            else if (custom[i].type == CUSTOM_DATA_STRING)
+                osc_send_configure(&osc.data, custom[i].key, custom[i].value);
             // FIXME
         }
 

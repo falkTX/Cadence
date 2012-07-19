@@ -9,10 +9,12 @@ CXX     ?= g++
 WINECC  ?= winegcc
 WINECXX ?= wineg++
 
-BUILD_CFLAGS = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -std=c99 -Wall -I. -I../carla-backend -I../carla-includes $(CFLAGS)
+BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -Wall
 
-BUILD_FLAGS  = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -std=c++0x -Wall $(CXXFLAGS)
-BUILD_FLAGS += -I. -I../carla-backend -I../carla-includes $(shell pkg-config --cflags liblo QtCore)
+BUILD_CFLAGS = $(BASE_FLAGS) -std=c99 $(CFLAGS)
+
+BUILD_FLAGS  = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
+BUILD_FLAGS += -I. -I../carla-includes $(shell pkg-config --cflags liblo QtCore)
 BUILD_FLAGS += -DBUILD_BRIDGE -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT
 BUILD_FLAGS += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
 
@@ -77,7 +79,7 @@ wine64: carla-bridge-win64.exe.so
 # --------------------------------------------------------------
 # ui_lv2-gtk2
 
-OBJS_UI_LV2_GTK2 = carla_bridge_ui-lv2__lv2-gtk2.o carla_bridge_ui-gtk2__lv2-gtk2.o carla_bridge_osc__lv2-gtk2.o ../carla-lilv/carla_lilv.a
+OBJS_UI_LV2_GTK2 = carla_bridge_ui-lv2__lv2-gtk2.o carla_bridge_toolkit-gtk2__lv2-gtk2.o carla_bridge_osc__lv2-gtk2.o ../carla-lilv/carla_lilv.a
 
 carla-bridge-lv2-gtk2: $(OBJS_UI_LV2_GTK2)
 	$(CXX) $^ $(LINK_UI_LV2_GTK2_FLAGS) -o $@ && strip $@
@@ -85,7 +87,7 @@ carla-bridge-lv2-gtk2: $(OBJS_UI_LV2_GTK2)
 carla_bridge_ui-lv2__lv2-gtk2.o: carla_bridge_ui-lv2.cpp
 	$(CXX) $< $(BUILD_UI_LV2_GTK2_FLAGS) -c -o $@
 
-carla_bridge_ui-gtk2__lv2-gtk2.o: carla_bridge_ui-gtk2.cpp
+carla_bridge_toolkit-gtk2__lv2-gtk2.o: carla_bridge_toolkit-gtk2.cpp
 	$(CXX) $< $(BUILD_UI_LV2_GTK2_FLAGS) -c -o $@
 
 carla_bridge_osc__lv2-gtk2.o: carla_bridge_osc.cpp
@@ -94,7 +96,7 @@ carla_bridge_osc__lv2-gtk2.o: carla_bridge_osc.cpp
 # --------------------------------------------------------------
 # ui_lv2-qt4
 
-OBJS_UI_LV2_QT4 = carla_bridge_ui-lv2__lv2-qt4.o carla_bridge_ui-qt4__lv2-qt4.o carla_bridge_osc__lv2-qt4.o ../carla-lilv/carla_lilv.a
+OBJS_UI_LV2_QT4 = carla_bridge_ui-lv2__lv2-qt4.o carla_bridge_toolkit-qt4__lv2-qt4.o carla_bridge_osc__lv2-qt4.o ../carla-lilv/carla_lilv.a
 
 carla-bridge-lv2-qt4: $(OBJS_UI_LV2_QT4)
 	$(CXX) $^ $(LINK_UI_LV2_QT4_FLAGS) -o $@ && strip $@
@@ -102,7 +104,7 @@ carla-bridge-lv2-qt4: $(OBJS_UI_LV2_QT4)
 carla_bridge_ui-lv2__lv2-qt4.o: carla_bridge_ui-lv2.cpp
 	$(CXX) $< $(BUILD_UI_LV2_QT4_FLAGS) -c -o $@
 
-carla_bridge_ui-qt4__lv2-qt4.o: carla_bridge_ui-qt4.cpp
+carla_bridge_toolkit-qt4__lv2-qt4.o: carla_bridge_toolkit-qt4.cpp
 	$(CXX) $< $(BUILD_UI_LV2_QT4_FLAGS) -c -o $@
 
 carla_bridge_osc__lv2-qt4.o: carla_bridge_osc.cpp
@@ -111,7 +113,7 @@ carla_bridge_osc__lv2-qt4.o: carla_bridge_osc.cpp
 # --------------------------------------------------------------
 # ui_lv2-x11
 
-OBJS_UI_LV2_X11 = carla_bridge_ui-lv2__lv2-x11.o carla_bridge_ui-qt4__lv2-x11.o carla_bridge_osc__lv2-x11.o ../carla-lilv/carla_lilv.a
+OBJS_UI_LV2_X11 = carla_bridge_ui-lv2__lv2-x11.o carla_bridge_toolkit-qt4__lv2-x11.o carla_bridge_osc__lv2-x11.o ../carla-lilv/carla_lilv.a
 
 carla-bridge-lv2-x11: $(OBJS_UI_LV2_X11)
 	$(CXX) $^ $(LINK_UI_LV2_X11_FLAGS) -o $@ && strip $@
@@ -119,7 +121,7 @@ carla-bridge-lv2-x11: $(OBJS_UI_LV2_X11)
 carla_bridge_ui-lv2__lv2-x11.o: carla_bridge_ui-lv2.cpp
 	$(CXX) $< $(BUILD_UI_LV2_X11_FLAGS) -c -o $@
 
-carla_bridge_ui-qt4__lv2-x11.o: carla_bridge_ui-qt4.cpp
+carla_bridge_toolkit-qt4__lv2-x11.o: carla_bridge_toolkit-qt4.cpp
 	$(CXX) $< $(BUILD_UI_LV2_X11_FLAGS) -c -o $@
 
 carla_bridge_osc__lv2-x11.o: carla_bridge_osc.cpp
@@ -128,7 +130,7 @@ carla_bridge_osc__lv2-x11.o: carla_bridge_osc.cpp
 # --------------------------------------------------------------
 # ui_vst-x11
 
-OBJS_UI_VST_X11 = carla_bridge_ui-vst__vst-x11.o carla_bridge_ui-qt4__vst-x11.o carla_bridge_osc__vst-x11.o
+OBJS_UI_VST_X11 = carla_bridge_ui-vst__vst-x11.o carla_bridge_toolkit-qt4__vst-x11.o carla_bridge_osc__vst-x11.o
 
 carla-bridge-vst-x11: $(OBJS_UI_VST_X11)
 	$(CXX) $^ $(LINK_UI_VST_X11_FLAGS) -o $@ && strip $@
@@ -136,7 +138,7 @@ carla-bridge-vst-x11: $(OBJS_UI_VST_X11)
 carla_bridge_ui-vst__vst-x11.o: carla_bridge_ui-vst.cpp
 	$(CXX) $< $(BUILD_UI_VST_X11_FLAGS) -c -o $@
 
-carla_bridge_ui-qt4__vst-x11.o: carla_bridge_ui-qt4.cpp
+carla_bridge_toolkit-qt4__vst-x11.o: carla_bridge_toolkit-qt4.cpp
 	$(CXX) $< $(BUILD_UI_VST_X11_FLAGS) -c -o $@
 
 carla_bridge_osc__vst-x11.o: carla_bridge_osc.cpp
