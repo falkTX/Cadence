@@ -20,7 +20,7 @@ Note that the main focus goes to JACK2 (or JACK1+DBus); JACK1 (raw) and tschack 
 
 ===== DESCRIPTIONS =====
 ------------------------
-Here's a brief description of the main tools:
+Here's a brief description of the main tools:<br/>
 (Click on the tool name to open its respective documentation)
 
 <h3 style="height:48px;"><img src="Cadence/raw/master/src/icons/48x48/cadence.png" alt="" width="48px" height="48px" style="vertical-align:middle;"/> <a href="http://kxstudio.sourceforge.net/KXStudio:Applications:Cadence" target="_blank">Cadence</a></h3>
