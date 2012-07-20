@@ -240,38 +240,38 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
 
 bool CarlaEngine::removePlugin(const unsigned short id)
 {
-    for (unsigned short i=0; i < MAX_PLUGINS; i++)
+    CarlaPlugin* const plugin = m_carlaPlugins[id];
+
+    if (plugin && plugin->id() == id)
     {
-        CarlaPlugin* const plugin = m_carlaPlugins[i];
+        processLock();
+        plugin->setEnabled(false);
+        processUnlock();
 
-        if (plugin && plugin->id() == id)
+        if (m_checkThread.isRunning())
+            m_checkThread.stopNow();
+
+        delete plugin;
+
+        m_carlaPlugins[id] = nullptr;
+        m_uniqueNames[id]  = nullptr;
+
+        if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
         {
-            processLock();
-            plugin->setEnabled(false);
-            processUnlock();
-
-            if (m_checkThread.isRunning())
-                m_checkThread.stopNow();
-
-            delete plugin;
-
-            m_carlaPlugins[i] = nullptr;
-            m_uniqueNames[i]  = nullptr;
-
-            for (unsigned short j=i+1; j < MAX_PLUGINS; i++, j++)
+            for (unsigned short i=id; i < MAX_PLUGINS; i++)
             {
-                m_carlaPlugins[i] = m_carlaPlugins[j];
-                m_uniqueNames[i]  = m_uniqueNames[j];
+                m_carlaPlugins[i] = m_carlaPlugins[i+1];
+                m_uniqueNames[i]  = m_uniqueNames[i+1];
 
                 if (m_carlaPlugins[i])
-                    m_carlaPlugins[i]->setId(j);
+                    m_carlaPlugins[i]->setId(i+1);
             }
-
-            if (isRunning())
-                m_checkThread.start(QThread::HighPriority);
-
-            return true;
         }
+
+        if (isRunning())
+            m_checkThread.start(QThread::HighPriority);
+
+        return true;
     }
 
     qCritical("remove_plugin(%i) - could not find plugin", id);
