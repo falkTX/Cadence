@@ -183,14 +183,23 @@ enum OptionsType {
     OPTION_PREFER_UI_BRIDGES = 3,
 
     /*!
-     * High-Quality processing mode.\n
-     * When enabled, audio will be processed by blocks 8 samples at a time, no matter what the real buffer size is.\n
-     * Default is no (this is EXPERIMENTAL!).
+     * Force mono plugins as stereo, by running instances at the same time.\n
+     * Supported in LADSPA, DSSI and LV2 plugin types.
      *
      * \param value Boolean for yes/no
      * \param valueStr Unused
      */
-    OPTION_PROCESS_HQ = 4,
+    OPTION_FORCE_STEREO = 4,
+
+    /*!
+     * High-Precision processing mode.\n
+     * When enabled, audio will be processed by blocks 8 samples at a time, no matter what the real buffer size is.\n
+     * Default is no (EXPERIMENTAL!).
+     *
+     * \param value Boolean for yes/no
+     * \param valueStr Unused
+     */
+    OPTION_PROCESS_HIGH_PRECISION = 5,
 
     /*!
      * Timeout value for how many miliseconds to wait for OSC-GUIs to respond.\n
@@ -199,16 +208,16 @@ enum OptionsType {
      * \param value The new value
      * \param valueStr Unused
      */
-    OPTION_OSC_GUI_TIMEOUT = 5,
+    OPTION_OSC_GUI_TIMEOUT = 6,
 
     /*!
      * Wherever to use unofficial dssi-vst chunks feature.\n
-     * Default is no.
+     * Default is no. (EXPERIMENTAL!).
      *
      * \param value Boolean for yes/no
      * \param valueStr Unused
      */
-    OPTION_USE_DSSI_CHUNKS = 6,
+    OPTION_USE_DSSI_CHUNKS = 7,
 
     /*!
      * Set LADSPA_PATH environment variable.\n
@@ -217,7 +226,7 @@ enum OptionsType {
      * \param value Unused
      * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
      */
-    OPTION_PATH_LADSPA = 7,
+    OPTION_PATH_LADSPA = 8,
 
     /*!
      * Set DSSI_PATH environment variable.\n
@@ -226,7 +235,7 @@ enum OptionsType {
      * \param value Unused
      * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
      */
-    OPTION_PATH_DSSI = 8,
+    OPTION_PATH_DSSI = 9,
 
     /*!
      * Set LV2_PATH environment variable.\n
@@ -235,7 +244,7 @@ enum OptionsType {
      * \param value Unused
      * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
      */
-    OPTION_PATH_LV2 = 9,
+    OPTION_PATH_LV2 = 10,
 
     /*!
      * Set VST_PATH environment variable.\n
@@ -244,7 +253,7 @@ enum OptionsType {
      * \param value Unused
      * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
      */
-    OPTION_PATH_VST = 10,
+    OPTION_PATH_VST = 11,
 
     /*!
      * Set GIG_PATH environment variable.\n
@@ -253,7 +262,7 @@ enum OptionsType {
      * \param value Unused
      * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
      */
-    OPTION_PATH_GIG = 11,
+    OPTION_PATH_GIG = 12,
 
     /*!
      * Set SF2_PATH environment variable.\n
@@ -262,7 +271,7 @@ enum OptionsType {
      * \param value Unused
      * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
      */
-    OPTION_PATH_SF2 = 12,
+    OPTION_PATH_SF2 = 13,
 
     /*!
      * Set SFZ_PATH environment variable.\n
@@ -271,7 +280,7 @@ enum OptionsType {
      * \param value Unused
      * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
      */
-    OPTION_PATH_SFZ = 13,
+    OPTION_PATH_SFZ = 14,
 
     /*!
      * Set path to the Unix 32bit plugin bridge.\n
@@ -280,7 +289,7 @@ enum OptionsType {
      * \param value Unused
      * \param valueStr The new path
      */
-    OPTION_PATH_BRIDGE_UNIX32 = 14,
+    OPTION_PATH_BRIDGE_UNIX32 = 15,
 
     /*!
      * Set path to the Unix 64bit plugin bridge.\n
@@ -289,7 +298,7 @@ enum OptionsType {
      * \param value Unused
      * \param valueStr The new path
      */
-    OPTION_PATH_BRIDGE_UNIX64 = 15,
+    OPTION_PATH_BRIDGE_UNIX64 = 16,
 
     /*!
      * Set path to the Windows 32bit plugin bridge.\n
@@ -298,7 +307,7 @@ enum OptionsType {
      * \param value Unused
      * \param valueStr The new path
      */
-    OPTION_PATH_BRIDGE_WIN32 = 16,
+    OPTION_PATH_BRIDGE_WIN32 = 17,
 
     /*!
      * Set path to the Windows 64bit plugin bridge.\n
@@ -307,7 +316,7 @@ enum OptionsType {
      * \param value Unused
      * \param valueStr The new path
      */
-    OPTION_PATH_BRIDGE_WIN64 = 17,
+    OPTION_PATH_BRIDGE_WIN64 = 18,
 
     /*!
      * Set path to the LV2 Gtk2 UI bridge.\n
@@ -316,7 +325,7 @@ enum OptionsType {
      * \param value Unused
      * \param valueStr The new path
      */
-    OPTION_PATH_BRIDGE_LV2_GTK2 = 18,
+    OPTION_PATH_BRIDGE_LV2_GTK2 = 19,
 
     /*!
      * Set path to the LV2 Qt4 UI bridge.\n
@@ -325,7 +334,7 @@ enum OptionsType {
      * \param value Unused
      * \param valueStr The new path
      */
-    OPTION_PATH_BRIDGE_LV2_QT4 = 19,
+    OPTION_PATH_BRIDGE_LV2_QT4 = 20,
 
     /*!
      * Set path to the LV2 X11 UI bridge.\n
@@ -334,7 +343,7 @@ enum OptionsType {
      * \param value Unused
      * \param valueStr The new path
      */
-    OPTION_PATH_BRIDGE_LV2_X11 = 20,
+    OPTION_PATH_BRIDGE_LV2_X11 = 21,
 
     /*!
      * Set path to the VST X11 UI bridge.\n
@@ -343,7 +352,7 @@ enum OptionsType {
      * \param value Unused
      * \param valueStr The new path
      */
-    OPTION_PATH_BRIDGE_VST_X11 = 21
+    OPTION_PATH_BRIDGE_VST_X11 = 22
 };
 
 /*!

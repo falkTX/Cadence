@@ -1124,7 +1124,7 @@ int main(int argc, char* argv[])
 
     bool doInit = ! QString(filename).endsWith("dssi-vst.so", Qt::CaseInsensitive);
 
-    if (doInit && getenv("CARLA_DISCOVERY_NO_PROCESSING_CHECK"))
+    if (doInit && getenv("CARLA_DISCOVERY_NO_PROCESSING_CHECKS"))
         doInit = false;
 
     switch (type)

@@ -61,7 +61,8 @@ struct carla_options_t {
     ProcessModeType process_mode;
     uint max_parameters;
     bool prefer_ui_bridges;
-    bool proccess_hq;
+    bool force_stereo;
+    bool proccess_hp;
     int  osc_gui_timeout;
     bool use_dssi_chunks;
     const char* bridge_unix32;
@@ -72,6 +73,23 @@ struct carla_options_t {
     const char* bridge_lv2qt4;
     const char* bridge_lv2x11;
     const char* bridge_vstx11;
+
+    carla_options_t()
+        : process_mode(PROCESS_MODE_MULTIPLE_CLIENTS),
+          max_parameters(MAX_PARAMETERS),
+          prefer_ui_bridges(true),
+          force_stereo(false),
+          proccess_hp(false),
+          osc_gui_timeout(4000/100),
+          use_dssi_chunks(false),
+          bridge_unix32(nullptr),
+          bridge_unix64(nullptr),
+          bridge_win32(nullptr),
+          bridge_win64(nullptr),
+          bridge_lv2gtk2(nullptr),
+          bridge_lv2qt4(nullptr),
+          bridge_lv2x11(nullptr),
+          bridge_vstx11(nullptr) {}
 };
 extern carla_options_t carlaOptions;
 #endif

@@ -333,7 +333,7 @@ public:
                 params += 1;
         }
 
-        if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK && (ains == 1 || aouts == 1) && ! h2)
+        if (carlaOptions.force_stereo && (ains == 1 || aouts == 1) && ! h2)
             h2 = ldescriptor->instantiate(ldescriptor, sampleRate);
 
         if (descriptor->run_synth || descriptor->run_multiple_synths)
@@ -666,7 +666,7 @@ public:
         if (aouts > 0)
             m_hints |= PLUGIN_CAN_VOLUME;
 
-        if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK || (aouts >= 2 && aouts%2 == 0))
+        if ((aouts >= 2 && aouts%2 == 0) || h2)
             m_hints |= PLUGIN_CAN_BALANCE;
 
         reloadPrograms(true);
@@ -1449,12 +1449,12 @@ CarlaPlugin* CarlaPlugin::newDSSI(const initializer& init, const void* const ext
 #ifndef BUILD_BRIDGE
     if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
     {
-        uint32_t ins  = plugin->audioInCount();
-        uint32_t outs = plugin->audioOutCount();
+        const uint32_t ins  = plugin->audioInCount();
+        const uint32_t outs = plugin->audioOutCount();
 
         if (ins > 2 || outs > 2 || (ins != outs && ins != 0 && outs != 0))
         {
-            setLastError("Carla's Rack Mode can only work with Mono or Stereo DSSI plugins, sorry!");
+            setLastError("Carla's rack mode can only work with Mono or Stereo DSSI plugins, sorry!");
             delete plugin;
             return nullptr;
         }

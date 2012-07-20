@@ -1287,7 +1287,7 @@ public:
             outBuffer[i] = aout.ports[i]->getJackAudioBuffer(nframes);
 
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.proccess_hq)
+        if (carlaOptions.proccess_hp)
         {
             float* inBuffer2[ain.count];
             float* outBuffer2[aout.count];

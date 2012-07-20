@@ -829,6 +829,7 @@ public:
         case GUI_INTERNAL_QT4:
             break;
 
+        case GUI_INTERNAL_COCOA:
         case GUI_INTERNAL_HWND:
         case GUI_INTERNAL_X11:
             if (yesNo && gui.width > 0 && gui.height > 0)
@@ -997,6 +998,26 @@ public:
                 params += 1;
         }
 
+        bool forcedStereoIn, forcedStereoOut;
+        forcedStereoIn = forcedStereoOut = true;
+
+        if (carlaOptions.force_stereo && (ains == 1 || aouts == 1) && ! h2)
+        {
+            h2 = descriptor->instantiate(descriptor, sampleRate, rdf_descriptor->Bundle, features);
+
+            if (ains == 1)
+            {
+                ains = 2;
+                forcedStereoIn = true;
+            }
+
+            if (aouts == 1)
+            {
+                aouts = 2;
+                forcedStereoOut = true;
+            }
+        }
+
         if (ains > 0)
         {
             ain.ports    = new CarlaEngineAudioPort*[ains];
@@ -1114,6 +1135,13 @@ public:
                     j = ain.count++;
                     ain.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
                     ain.rindexes[j] = i;
+
+                    if (forcedStereoIn)
+                    {
+                        strcat(portName, "2");
+                        ain.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
+                        ain.rindexes[1] = i;
+                    }
                 }
                 else if (LV2_IS_PORT_OUTPUT(PortType))
                 {
@@ -1121,6 +1149,13 @@ public:
                     aout.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
                     aout.rindexes[j] = i;
                     needsCin = true;
+
+                    if (forcedStereoOut)
+                    {
+                        strcat(portName, "2");
+                        aout.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
+                        aout.rindexes[1] = i;
+                    }
                 }
                 else
                     qWarning("WARNING - Got a broken Port (Audio, but not input or output)");
@@ -1139,6 +1174,7 @@ public:
                     qWarning("WARNING - Got a broken Port (CV, but not input or output)");
 
                 descriptor->connect_port(handle, i, nullptr);
+                if (h2) descriptor->connect_port(h2, i, nullptr);
             }
             else if (LV2_IS_PORT_ATOM_SEQUENCE(PortType))
             {
@@ -1146,6 +1182,7 @@ public:
                 {
                     j = evin.count++;
                     descriptor->connect_port(handle, i, evin.data[j].atom);
+                    if (h2) descriptor->connect_port(h2, i, evin.data[j].atom);
 
                     if (PortType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
@@ -1161,6 +1198,7 @@ public:
                 {
                     j = evout.count++;
                     descriptor->connect_port(handle, i, evout.data[j].atom);
+                    if (h2) descriptor->connect_port(h2, i, evout.data[j].atom);
 
                     if (PortType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
@@ -1181,6 +1219,7 @@ public:
                 {
                     j = evin.count++;
                     descriptor->connect_port(handle, i, evin.data[j].event);
+                    if (h2) descriptor->connect_port(h2, i, evin.data[j].event);
 
                     if (PortType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
@@ -1192,6 +1231,7 @@ public:
                 {
                     j = evout.count++;
                     descriptor->connect_port(handle, i, evout.data[j].event);
+                    if (h2) descriptor->connect_port(h2, i, evout.data[j].event);
 
                     if (PortType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
@@ -1208,6 +1248,7 @@ public:
                 {
                     j = evin.count++;
                     descriptor->connect_port(handle, i, evin.data[j].midi);
+                    if (h2) descriptor->connect_port(h2, i, evin.data[j].midi);
 
                     evin.data[j].type |= CARLA_EVENT_TYPE_MIDI;
                     evin.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
@@ -1216,6 +1257,7 @@ public:
                 {
                     j = evout.count++;
                     descriptor->connect_port(handle, i, evout.data[j].midi);
+                    if (h2) descriptor->connect_port(h2, i, evout.data[j].midi);
 
                     evout.data[j].type |= CARLA_EVENT_TYPE_MIDI;
                     evout.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
@@ -1396,10 +1438,14 @@ public:
                 lv2param[j].control = def;
 
                 descriptor->connect_port(handle, i, &lv2param[j].control);
+                if (h2) descriptor->connect_port(h2, i, &lv2param[j].control);
             }
             else
+            {
                 // Port Type not supported, but it's optional anyway
                 descriptor->connect_port(handle, i, nullptr);
+                if (h2) descriptor->connect_port(h2, i, nullptr);
+            }
         }
 
         if (needsCin)
@@ -1647,7 +1693,9 @@ public:
 
         if (ain.count > 0)
         {
-            if (ain.count == 1)
+            uint32_t count = h2 ? 2 : ain.count;
+
+            if (count == 1)
             {
                 for (k=0; k < frames; k++)
                 {
@@ -1655,7 +1703,7 @@ public:
                         ains_peak_tmp[0] = abs(inBuffer[0][k]);
                 }
             }
-            else if (ain.count >= 1)
+            else if (count > 1)
             {
                 for (k=0; k < frames; k++)
                 {
@@ -1815,10 +1863,16 @@ public:
                             sendMidiAllNotesOff();
 
                         if (descriptor->deactivate)
+                        {
                             descriptor->deactivate(handle);
+                            if (h2) descriptor->deactivate(h2);
+                        }
 
                         if (descriptor->activate)
+                        {
                             descriptor->activate(handle);
+                            if (h2) descriptor->activate(h2);
+                        }
 
                         allNotesOffSent = true;
                     }
@@ -2031,24 +2085,36 @@ public:
                 // TODO - send sound-off notes-off events here
 
                 if (descriptor->activate)
+                {
                     descriptor->activate(handle);
+                    if (h2) descriptor->activate(h2);
+                }
             }
 
             for (i=0; i < ain.count; i++)
-                descriptor->connect_port(handle, ain.rindexes[i], inBuffer[i]);
+            {
+                if (i == 0 || ! h2) descriptor->connect_port(handle, ain.rindexes[i], inBuffer[i]);
+                if (h2 && i == 1) descriptor->connect_port(h2, ain.rindexes[i], inBuffer[1]);
+            }
 
             for (i=0; i < aout.count; i++)
-                descriptor->connect_port(handle, aout.rindexes[i], outBuffer[i]);
+            {
+                if (i == 0 || ! h2) descriptor->connect_port(handle, aout.rindexes[i], outBuffer[i]);
+                if (h2 && i == 1) descriptor->connect_port(h2, aout.rindexes[i], outBuffer[1]);
+            }
 
-            if (descriptor->run)
-                descriptor->run(handle, frames);
+            descriptor->run(handle, frames);
+            if (h2) descriptor->run(h2, frames);
         }
         else
         {
             if (m_activeBefore)
             {
                 if (descriptor->deactivate)
+                {
                     descriptor->deactivate(handle);
+                    if (h2) descriptor->deactivate(h2);
+                }
             }
         }
 
@@ -2066,7 +2132,9 @@ public:
             double bal_rangeL, bal_rangeR;
             float oldBufLeft[do_balance ? frames : 0];
 
-            for (i=0; i < aout.count; i++)
+            uint32_t count = h2 ? 2 : aout.count;
+
+            for (i=0; i < count; i++)
             {
                 // Dry/Wet and Volume
                 if (do_drywet || do_volume)
@@ -2075,7 +2143,7 @@ public:
                     {
                         if (do_drywet)
                         {
-                            if (aout.count == 1)
+                            if (aout.count == 1 && ! h2)
                                 outBuffer[i][k] = (outBuffer[i][k]*x_drywet)+(inBuffer[0][k]*(1.0-x_drywet));
                             else
                                 outBuffer[i][k] = (outBuffer[i][k]*x_drywet)+(inBuffer[i][k]*(1.0-x_drywet));
@@ -3728,12 +3796,12 @@ CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
 #ifndef BUILD_BRIDGE
     if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
     {
-        uint32_t ins  = plugin->audioInCount();
-        uint32_t outs = plugin->audioOutCount();
+        const uint32_t ins  = plugin->audioInCount();
+        const uint32_t outs = plugin->audioOutCount();
 
         if (ins > 2 || outs > 2 || (ins != outs && ins != 0 && outs != 0))
         {
-            setLastError("Carla's Rack Mode can only work with Mono or Stereo LV2 plugins, sorry!");
+            setLastError("Carla's rack mode can only work with Mono or Stereo LV2 plugins, sorry!");
             delete plugin;
             return nullptr;
         }

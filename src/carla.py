@@ -3476,20 +3476,31 @@ if __name__ == '__main__':
     PROCESS_MODE       = gui.settings.value("Engine/ProcessMode", PROCESS_MODE_MULTIPLE_CLIENTS, type=int)
     MAX_PARAMETERS     = gui.settings.value("Engine/MaxParameters", MAX_PARAMETERS, type=int)
     prefer_ui_bridges  = gui.settings.value("Engine/PreferUIBridges", True, type=bool)
-    proccess_hq        = gui.settings.value("Engine/ProcessHQ", False, type=bool)
     osc_gui_timeout    = gui.settings.value("Engine/OscGuiTimeout", 40, type=int)
+    disable_checks     = gui.settings.value("Engine/DisableChecks", bool(not WINDOWS), type=bool)
     use_dssi_chunks    = gui.settings.value("Engine/UseDSSIChunks", False, type=bool)
+    force_stereo       = gui.settings.value("Engine/ForceStereo", False, type=bool)
+    proccess_hp        = gui.settings.value("Engine/ProcessHP", False, type=bool)
 
-    if os.getenv("LADISH_APP_NAME") and PROCESS_MODE == PROCESS_MODE_MULTIPLE_CLIENTS:
+    if PROCESS_MODE == PROCESS_MODE_CONTINUOUS_RACK:
+        force_stereo = True
+    elif PROCESS_MODE == PROCESS_MODE_MULTIPLE_CLIENTS and os.getenv("LADISH_APP_NAME"):
         print("LADISH detected but using multiple clients (not allowed), forcing single client now")
         PROCESS_MODE = PROCESS_MODE_SINGLE_CLIENT
 
+    if disable_checks:
+        os.environ["CARLA_DISCOVERY_NO_PROCESSING_CHECKS"] = "true"
+
+    print("force-stereo:", force_stereo)
     CarlaHost.set_option(OPTION_PROCESS_MODE, PROCESS_MODE, "")
     CarlaHost.set_option(OPTION_MAX_PARAMETERS, MAX_PARAMETERS, "")
-    CarlaHost.set_option(OPTION_PROCESS_HQ, proccess_hq, "")
-    CarlaHost.set_option(OPTION_PREFER_UI_BRIDGES, prefer_ui_bridges, "")
+
     CarlaHost.set_option(OPTION_OSC_GUI_TIMEOUT, osc_gui_timeout, "")
+    CarlaHost.set_option(OPTION_PREFER_UI_BRIDGES, prefer_ui_bridges, "")
+
     CarlaHost.set_option(OPTION_USE_DSSI_CHUNKS, use_dssi_chunks, "")
+    CarlaHost.set_option(OPTION_FORCE_STEREO, force_stereo, "")
+    CarlaHost.set_option(OPTION_PROCESS_HIGH_PRECISION, proccess_hp, "")
 
     if carla_bridge_unix32:
         CarlaHost.set_option(OPTION_PATH_BRIDGE_UNIX32, 0, carla_bridge_unix32)

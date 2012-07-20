@@ -1752,9 +1752,15 @@ CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
 #ifndef BUILD_BRIDGE
     if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
     {
-        if (/* inputs */ ((plugin->audioInCount() != 0 && plugin->audioInCount() != 2)) || /* outputs */ ((plugin->audioOutCount() != 0 && plugin->audioOutCount() != 2)))
+        const uint32_t ins  = plugin->audioInCount();
+        const uint32_t outs = plugin->audioOutCount();
+
+        const bool stereoInput = ins == 0 || ins == 2;
+        const bool stereoOutput = outs == 0 || outs == 2;
+
+        if (! (stereoInput || stereoOutput))
         {
-            setLastError("Carla Rack Mode can only work with Stereo VST plugins, sorry!");
+            setLastError("Carla's rack mode can only work with Stereo VST plugins, sorry!");
             delete plugin;
             return nullptr;
         }

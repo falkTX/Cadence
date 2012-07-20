@@ -30,22 +30,7 @@ static const char* carlaLastError = nullptr;
 
 #ifndef BUILD_BRIDGE
 // Global options
-carla_options_t carlaOptions = {
-    /* process_mode       */ PROCESS_MODE_MULTIPLE_CLIENTS,
-    /* max_parameters     */ MAX_PARAMETERS,
-    /* prefer_ui_bridges  */ true,
-    /* proccess_hq        */ false,
-    /* osc_gui_timeout    */ 4000/100,
-    /* use_dssi_chunks    */ false,
-    /* bridge_unix32      */ nullptr,
-    /* bridge_unix64      */ nullptr,
-    /* bridge_win32       */ nullptr,
-    /* bridge_win64       */ nullptr,
-    /* bridge_lv2gtk2     */ nullptr,
-    /* bridge_lv2qt4      */ nullptr,
-    /* bridge_lv2x11      */ nullptr,
-    /* bridge_vstx11      */ nullptr
-};
+carla_options_t carlaOptions;
 #endif
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -218,8 +203,10 @@ const char* OptionsType2str(const OptionsType type)
         return "OPTION_MAX_PARAMETERS";
     case OPTION_PREFER_UI_BRIDGES:
         return "OPTION_PREFER_UI_BRIDGES";
-    case OPTION_PROCESS_HQ:
-        return "OPTION_PROCESS_HQ";
+    case OPTION_FORCE_STEREO:
+        return "OPTION_FORCE_STEREO";
+    case OPTION_PROCESS_HIGH_PRECISION:
+        return "OPTION_PROCESS_HIGH_PRECISION";
     case OPTION_OSC_GUI_TIMEOUT:
         return "OPTION_OSC_GUI_TIMEOUT";
     case OPTION_USE_DSSI_CHUNKS:
@@ -491,8 +478,11 @@ void setOption(const OptionsType option, const int value, const char* const valu
     case OPTION_PREFER_UI_BRIDGES:
         carlaOptions.prefer_ui_bridges = value;
         break;
-    case OPTION_PROCESS_HQ:
-        carlaOptions.proccess_hq = value;
+    case OPTION_FORCE_STEREO:
+        carlaOptions.force_stereo = value;
+        break;
+    case OPTION_PROCESS_HIGH_PRECISION:
+        carlaOptions.proccess_hp = value;
         break;
     case OPTION_OSC_GUI_TIMEOUT:
         carlaOptions.osc_gui_timeout = value/100;
@@ -579,7 +569,7 @@ void resetOptions()
     carlaOptions.process_mode      = PROCESS_MODE_MULTIPLE_CLIENTS;
     carlaOptions.max_parameters    = MAX_PARAMETERS;
     carlaOptions.prefer_ui_bridges = true;
-    carlaOptions.proccess_hq       = false;
+    carlaOptions.proccess_hp       = false;
     carlaOptions.osc_gui_timeout   = 4000/100;
     carlaOptions.use_dssi_chunks   = false;
     carlaOptions.bridge_unix32     = nullptr;

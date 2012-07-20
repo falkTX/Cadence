@@ -231,7 +231,7 @@ void CarlaEngineRtAudio::handleProcessCallback(void* outputBuffer, void* inputBu
 
             plugin->initBuffers();
 
-            if (carlaOptions.proccess_hq)
+            if (carlaOptions.proccess_hp)
             {
                 float* ains_buffer2[2];
                 float* aouts_buffer2[2];

@@ -256,7 +256,7 @@ void CarlaEngineJack::handleSampleRateCallback(double newSampleRate)
 void CarlaEngineJack::handleBufferSizeCallback(uint32_t newBufferSize)
 {
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.proccess_hq)
+    if (carlaOptions.proccess_hp)
         return;
 #endif
 
@@ -414,7 +414,7 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
 
                 plugin->initBuffers();
 
-                if (carlaOptions.proccess_hq)
+                if (carlaOptions.proccess_hp)
                 {
                     float* ains_buffer2[2];
                     float* aouts_buffer2[2];
