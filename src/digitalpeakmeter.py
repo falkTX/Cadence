@@ -184,21 +184,21 @@ class DigitalPeakMeter(QWidget):
 
             # Base
             painter.setPen(self.m_colorBaseT)
-            painter.drawLine(lsmall / 4, 1, lsmall / 4, lfull)
-            painter.drawLine(lsmall / 2, 1, lsmall / 2, lfull)
+            painter.drawLine(lsmall * 0.25, 2, lsmall * 0.25, lfull-2)
+            painter.drawLine(lsmall * 0.50, 2, lsmall * 0.50, lfull-2)
 
             # Yellow
             painter.setPen(QColor(110, 110, 15, 100))
-            painter.drawLine(lsmall / 1.4, 1, lsmall / 1.4, lfull)
-            painter.drawLine(lsmall / 1.2, 1, lsmall / 1.2, lfull)
+            painter.drawLine(lsmall * 0.70, 2, lsmall * 0.70, lfull-2)
+            painter.drawLine(lsmall * 0.83, 2, lsmall * 0.83, lfull-2)
 
             # Orange
             painter.setPen(QColor(180, 110, 15, 100))
-            painter.drawLine(lsmall / 1.1, 1, lsmall / 1.1, lfull)
+            painter.drawLine(lsmall * 0.90, 2, lsmall * 0.90, lfull-2)
 
             # Red
             painter.setPen(QColor(110, 15, 15, 100))
-            painter.drawLine(lsmall / 1.04, 1, lsmall / 1.04, lfull)
+            painter.drawLine(lsmall * 0.96, 2, lsmall * 0.96, lfull-2)
 
         elif self.m_orientation == self.VERTICAL:
             # Variables
@@ -207,21 +207,21 @@ class DigitalPeakMeter(QWidget):
 
             # Base
             painter.setPen(self.m_colorBaseT)
-            painter.drawLine(1, lsmall - (lsmall / 4), lfull, lsmall - (lsmall / 4))
-            painter.drawLine(1, lsmall - (lsmall / 2), lfull, lsmall - (lsmall / 2))
+            painter.drawLine(2, lsmall - (lsmall * 0.25), lfull-2, lsmall - (lsmall * 0.25))
+            painter.drawLine(2, lsmall - (lsmall * 0.50), lfull-2, lsmall - (lsmall * 0.50))
 
             # Yellow
             painter.setPen(QColor(110, 110, 15, 100))
-            painter.drawLine(1, lsmall - (lsmall / 1.4), lfull, lsmall - (lsmall / 1.4))
-            painter.drawLine(1, lsmall - (lsmall / 1.2), lfull, lsmall - (lsmall / 1.2))
+            painter.drawLine(2, lsmall - (lsmall * 0.70), lfull-2, lsmall - (lsmall * 0.70))
+            painter.drawLine(2, lsmall - (lsmall * 0.82), lfull-2, lsmall - (lsmall * 0.82))
 
             # Orange
             painter.setPen(QColor(180, 110, 15, 100))
-            painter.drawLine(1, lsmall - (lsmall / 1.1), lfull, lsmall - (lsmall / 1.1))
+            painter.drawLine(2, lsmall - (lsmall * 0.90), lfull-2, lsmall - (lsmall * 0.90))
 
             # Red
             painter.setPen(QColor(110, 15, 15, 100))
-            painter.drawLine(1, lsmall - (lsmall / 1.04), lfull, lsmall - (lsmall / 1.04))
+            painter.drawLine(2, lsmall - (lsmall * 0.96), lfull-2, lsmall - (lsmall * 0.96))
 
     def resizeEvent(self, event):
         self.updateSizes()
