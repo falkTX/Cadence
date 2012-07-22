@@ -1021,6 +1021,12 @@ public:
         assert(key);
         assert(value);
 
+        if (! key)
+            return qCritical("CarlaPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - key is null", CustomDataType2str(type), key, value, bool2str(sendGui));
+
+        if (! value)
+            return qCritical("CarlaPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - value is null", CustomDataType2str(type), key, value, bool2str(sendGui));
+
         bool saveData = true;
 
         switch (type)
@@ -1039,9 +1045,6 @@ public:
 
         if (saveData)
         {
-            assert(key);
-            assert(value);
-
             // Check if we already have this key
             for (size_t i=0; i < custom.size(); i++)
             {
@@ -1060,8 +1063,6 @@ public:
             newData.value = strdup(value);
             custom.push_back(newData);
         }
-
-        Q_UNUSED(sendGui);
     }
 
     /*!

@@ -1092,7 +1092,7 @@ private:
 
 CarlaPlugin* CarlaPlugin::newLADSPA(const initializer& init, const void* const extra)
 {
-    qDebug("CarlaPlugin::newLADSPA(%p, %s, %s, %s, %p)", init.engine, init.filename, init.name, init.label, extra);
+    qDebug("CarlaPlugin::newLADSPA(%p, \"%s\", \"%s\", \"%s\", %p)", init.engine, init.filename, init.name, init.label, extra);
 
     short id = init.engine->getNewPluginId();
 

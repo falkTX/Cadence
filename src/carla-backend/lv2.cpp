@@ -3773,7 +3773,7 @@ private:
 
 CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
 {
-    qDebug("CarlaPlugin::newLV2(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
+    qDebug("CarlaPlugin::newLV2(%p, \"%s\", \"%s\", \"%s\")", init.engine, init.filename, init.name, init.label);
 
     short id = init.engine->getNewPluginId();
 

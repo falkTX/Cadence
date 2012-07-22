@@ -103,7 +103,7 @@ CarlaEngineJack::~CarlaEngineJack()
 
 bool CarlaEngineJack::init(const char* const clientName)
 {
-    qDebug("CarlaEngineJack::init(%s)", clientName);
+    qDebug("CarlaEngineJack::init(\"%s\")", clientName);
 
     client = jack_client_open(clientName, JackNullOption, nullptr);
     state  = JackTransportStopped;

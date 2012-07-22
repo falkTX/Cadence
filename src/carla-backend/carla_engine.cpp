@@ -895,7 +895,12 @@ void CarlaEngine::osc_send_set_plugin_ports(int plugin_id, int ains, int aouts, 
 
 void CarlaEngine::osc_send_set_parameter_value(int plugin_id, int param_id, double value)
 {
-    qDebug("CarlaEngine::osc_send_set_parameter_value(%i, %i, %f)", plugin_id, param_id, value);
+#if DEBUG
+    if (param_id < 0)
+        qDebug("CarlaEngine::osc_send_set_parameter_value(%i, %s, %g)", plugin_id, InternalParametersIndex2str((InternalParametersIndex)param_id), value);
+    else
+        qDebug("CarlaEngine::osc_send_set_parameter_value(%i, %i, %g)", plugin_id, param_id, value);
+#endif
     const CarlaOscData* const oscData = m_osc.getControllerData();
 
     if (oscData->target)

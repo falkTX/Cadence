@@ -122,7 +122,7 @@ CarlaPluginThread::CarlaPluginThread(CarlaBackend::CarlaEngine* const engine_, C
     plugin(plugin_),
     mode(mode_)
 {
-    qDebug("CarlaPluginThread::CarlaPluginThread(%s, %s, %s)", plugin->name(), engine->getName(), PluginThreadMode2str(mode));
+    qDebug("CarlaPluginThread::CarlaPluginThread(plugin:\"%s\", engine:\"%s\", %s)", plugin->name(), engine->getName(), PluginThreadMode2str(mode));
 
     m_process = nullptr;
 }

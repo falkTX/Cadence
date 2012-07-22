@@ -697,7 +697,7 @@ private:
 
 CarlaPlugin* CarlaPlugin::newBridge(const initializer& init, BinaryType btype, PluginType ptype)
 {
-    qDebug("CarlaPlugin::newBridge(%p, %s, %s, %s, %i, %i)", init.engine, init.filename, init.name, init.label, btype, ptype);
+    qDebug("CarlaPlugin::newBridge(%p, \"%s\", \"%s\", \"%s\", %s, %s)", init.engine, init.filename, init.name, init.label, BinaryType2str(btype), PluginType2str(ptype));
 
     short id = init.engine->getNewPluginId();
 

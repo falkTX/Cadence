@@ -575,7 +575,7 @@ private:
 
 CarlaPlugin* LinuxSamplerPlugin::newLinuxSampler(const initializer& init, bool isGIG)
 {
-    qDebug("LinuxSamplerPlugin::newLinuxSampler(%p, %s, %s, %s, %s)", init.engine, init.filename, init.name, init.label, bool2str(isGIG));
+    qDebug("LinuxSamplerPlugin::newLinuxSampler(%p, \"%s\", \"%s\", \"%s\", %s)", init.engine, init.filename, init.name, init.label, bool2str(isGIG));
 
     short id = init.engine->getNewPluginId();
 
@@ -602,7 +602,7 @@ CarlaPlugin* LinuxSamplerPlugin::newLinuxSampler(const initializer& init, bool i
 
 CarlaPlugin* CarlaPlugin::newGIG(const initializer& init)
 {
-    qDebug("CarlaPlugin::newGIG(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
+    qDebug("CarlaPlugin::newGIG(%p, \"%s\", \"%s\", \"%s\")", init.engine, init.filename, init.name, init.label);
 #ifdef WANT_LINUXSAMPLER
     return LinuxSamplerPlugin::newLinuxSampler(init, true);
 #else
@@ -613,7 +613,7 @@ CarlaPlugin* CarlaPlugin::newGIG(const initializer& init)
 
 CarlaPlugin* CarlaPlugin::newSFZ(const initializer& init)
 {
-    qDebug("CarlaPlugin::newSFZ(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
+    qDebug("CarlaPlugin::newSFZ(%p, \"%s\", \"%s\", \"%s\")", init.engine, init.filename, init.name, init.label);
 #ifdef WANT_LINUXSAMPLER
     return LinuxSamplerPlugin::newLinuxSampler(init, false);
 #else

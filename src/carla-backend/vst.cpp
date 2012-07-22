@@ -1729,7 +1729,7 @@ private:
 
 CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
 {
-    qDebug("CarlaPlugin::newVST(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
+    qDebug("CarlaPlugin::newVST(%p, \"%s\", \"%s\", \"%s\")", init.engine, init.filename, init.name, init.label);
 
     short id = init.engine->getNewPluginId();
 

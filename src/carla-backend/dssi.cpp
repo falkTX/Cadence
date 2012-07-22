@@ -211,6 +211,12 @@ public:
         assert(key);
         assert(value);
 
+        if (! key)
+            return qCritical("DssiPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - key is null", CustomDataType2str(type), key, value, bool2str(sendGui));
+
+        if (! value)
+            return qCritical("DssiPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - value is null", CustomDataType2str(type), key, value, bool2str(sendGui));
+
         descriptor->configure(handle, key, value);
 
 #ifndef BUILD_BRIDGE
@@ -280,6 +286,14 @@ public:
 #ifndef BUILD_BRIDGE
     void showGui(bool yesNo)
     {
+        assert(osc.thread);
+
+        if (! osc.thread)
+        {
+            qCritical("DssiPlugin::showGui(%s) - attempt to show gui, but it does not exist!", bool2str(yesNo));
+            return;
+        }
+
         if (yesNo)
         {
             osc.thread->start();
@@ -1426,7 +1440,7 @@ private:
 
 CarlaPlugin* CarlaPlugin::newDSSI(const initializer& init, const void* const extra)
 {
-    qDebug("CarlaPlugin::newDSSI(%p, %s, %s, %s, %p)", init.engine, init.filename, init.name, init.label, extra);
+    qDebug("CarlaPlugin::newDSSI(%p, \"%s\", \"%s\", \"%s\", %p)", init.engine, init.filename, init.name, init.label, extra);
 
     short id = init.engine->getNewPluginId();
 

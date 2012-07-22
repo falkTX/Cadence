@@ -305,7 +305,7 @@ const char* ProcessModeType2str(const ProcessModeType type)
 
 CustomDataType getCustomDataStringType(const char* const stype)
 {
-    qDebug("CarlaBackend::getCustomDataStringType(%s)", stype);
+    qDebug("CarlaBackend::getCustomDataStringType(\"%s\")", stype);
 
     if (strcmp(stype, "string") == 0)
         return CUSTOM_DATA_STRING;
@@ -370,7 +370,7 @@ void* getPointer(const quintptr addr)
 
 PluginCategory getPluginCategoryFromName(const char* const name)
 {
-    qDebug("CarlaBackend::getPluginCategoryFromName(%s)", name);
+    qDebug("CarlaBackend::getPluginCategoryFromName(\"%s\")", name);
     assert(name);
 
     QString qname(name);
@@ -450,7 +450,7 @@ const char* getLastError()
 
 void setLastError(const char* const error)
 {
-    qDebug("CarlaBackend::setLastError(%s)", error);
+    qDebug("CarlaBackend::setLastError(\"%s\")", error);
 
     if (carlaLastError)
         free((void*)carlaLastError);
@@ -463,13 +463,13 @@ void setLastError(const char* const error)
 #ifndef BUILD_BRIDGE
 void setOption(const OptionsType option, const int value, const char* const valueStr)
 {
-    qDebug("CarlaBackend::setOption(%s, %i, %s)", OptionsType2str(option), value, valueStr);
+    qDebug("CarlaBackend::setOption(%s, %i, \"%s\")", OptionsType2str(option), value, valueStr);
 
     switch (option)
     {
     case OPTION_PROCESS_MODE:
         if (value < PROCESS_MODE_SINGLE_CLIENT || value > PROCESS_MODE_CONTINUOUS_RACK)
-            return qCritical("CarlaBackend::setOption(%s, %i, ...) - invalid value", OptionsType2str(option), value);
+            return qCritical("CarlaBackend::setOption(%s, %i, \"%s\") - invalid value", OptionsType2str(option), value, valueStr);
         carlaOptions.process_mode = (ProcessModeType)value;
         break;
     case OPTION_MAX_PARAMETERS:

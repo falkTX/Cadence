@@ -41,7 +41,7 @@ CarlaOsc::~CarlaOsc()
 
 void CarlaOsc::init(const char* const name)
 {
-    qDebug("CarlaOsc::init(%s)", name);
+    qDebug("CarlaOsc::init(\"%s\")", name);
     assert(name);
     assert(m_name_len == 0);
 

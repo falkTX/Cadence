@@ -20,6 +20,7 @@
 
 // Single, standalone engine
 static CarlaBackend::CarlaEngine* carla_engine = nullptr;
+static CarlaBackend::CallbackFunc carla_func = nullptr;
 
 // -------------------------------------------------------------------------------------------------------------------
 
@@ -89,7 +90,7 @@ const char* get_engine_driver_name(unsigned int index)
 
 bool engine_init(const char* driver_name, const char* client_name)
 {
-    qDebug("CarlaBackendStandalone::engine_init(%s, %s)", driver_name, client_name);
+    qDebug("CarlaBackendStandalone::engine_init(\"%s\", \"%s\")", driver_name, client_name);
 
 #ifdef CARLA_ENGINE_JACK
     if (strcmp(driver_name, "JACK") == 0)
@@ -146,6 +147,8 @@ bool engine_init(const char* driver_name, const char* client_name)
     }
 #endif
 
+    carla_engine->setCallback(carla_func);
+
     bool started = carla_engine->init(client_name);
 
     if (started)
@@ -197,7 +200,7 @@ bool is_engine_running()
 
 short add_plugin(CarlaBackend::BinaryType btype, CarlaBackend::PluginType ptype, const char* filename, const char* const name, const char* label, void* extra_stuff)
 {
-    qDebug("CarlaBackendStandalone::add_plugin(%s, %s, %s, %s, %s, %p)", CarlaBackend::BinaryType2str(btype), CarlaBackend::PluginType2str(ptype), filename, name, label, extra_stuff);
+    qDebug("CarlaBackendStandalone::add_plugin(%s, %s, \"%s\", \"%s\", \"%s\", %p)", CarlaBackend::BinaryType2str(btype), CarlaBackend::PluginType2str(ptype), filename, name, label, extra_stuff);
 
     return carla_engine->addPlugin(btype, ptype, filename, name, label, extra_stuff);
 }
@@ -822,15 +825,19 @@ double get_current_parameter_value(unsigned short plugin_id, quint32 parameter_i
 
 double get_input_peak_value(unsigned short plugin_id, unsigned short port_id)
 {
-    if (port_id == 1 || port_id == 2)
+    if (plugin_id < CarlaBackend::MAX_PLUGINS && (port_id == 1 || port_id == 2))
         return carla_engine->getInputPeak(plugin_id, port_id-1);
+
+    qCritical("CarlaBackendStandalone::get_input_peak_value(%i, %i) - invalid plugin or port value", plugin_id, port_id);
     return 0.0;
 }
 
 double get_output_peak_value(unsigned short plugin_id, unsigned short port_id)
 {
-    if (port_id == 1 || port_id == 2)
+    if (plugin_id < CarlaBackend::MAX_PLUGINS && (port_id == 1 || port_id == 2))
         return carla_engine->getOutputPeak(plugin_id, port_id-1);
+
+    qCritical("CarlaBackendStandalone::get_output_peak_value(%i, %i) - invalid plugin or port value", plugin_id, port_id);
     return 0.0;
 }
 
@@ -850,57 +857,57 @@ void set_active(unsigned short plugin_id, bool onoff)
 
 void set_drywet(unsigned short plugin_id, double value)
 {
-    qDebug("CarlaBackendStandalone::set_drywet(%i, %f)", plugin_id, value);
+    qDebug("CarlaBackendStandalone::set_drywet(%i, %g)", plugin_id, value);
 
     CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPlugin(plugin_id);
 
     if (plugin)
         return plugin->setDryWet(value, true, false);
 
-    qCritical("CarlaBackendStandalone::set_drywet(%i, %f) - could not find plugin", plugin_id, value);
+    qCritical("CarlaBackendStandalone::set_drywet(%i, %g) - could not find plugin", plugin_id, value);
 }
 
 void set_volume(unsigned short plugin_id, double value)
 {
-    qDebug("CarlaBackendStandalone::set_vol(%i, %f)", plugin_id, value);
+    qDebug("CarlaBackendStandalone::set_volume(%i, %g)", plugin_id, value);
 
     CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPlugin(plugin_id);
 
     if (plugin)
         return plugin->setVolume(value, true, false);
 
-    qCritical("CarlaBackendStandalone::set_vol(%i, %f) - could not find plugin", plugin_id, value);
+    qCritical("CarlaBackendStandalone::set_volume(%i, %g) - could not find plugin", plugin_id, value);
 }
 
 void set_balance_left(unsigned short plugin_id, double value)
 {
-    qDebug("CarlaBackendStandalone::set_balance_left(%i, %f)", plugin_id, value);
+    qDebug("CarlaBackendStandalone::set_balance_left(%i, %g)", plugin_id, value);
 
     CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPlugin(plugin_id);
 
     if (plugin)
         return plugin->setBalanceLeft(value, true, false);
 
-    qCritical("CarlaBackendStandalone::set_balance_left(%i, %f) - could not find plugin", plugin_id, value);
+    qCritical("CarlaBackendStandalone::set_balance_left(%i, %g) - could not find plugin", plugin_id, value);
 }
 
 void set_balance_right(unsigned short plugin_id, double value)
 {
-    qDebug("CarlaBackendStandalone::set_balance_right(%i, %f)", plugin_id, value);
+    qDebug("CarlaBackendStandalone::set_balance_right(%i, %g)", plugin_id, value);
 
     CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPlugin(plugin_id);
 
     if (plugin)
         return plugin->setBalanceRight(value, true, false);
 
-    qCritical("CarlaBackendStandalone::set_balance_right(%i, %f) - could not find plugin", plugin_id, value);
+    qCritical("CarlaBackendStandalone::set_balance_right(%i, %g) - could not find plugin", plugin_id, value);
 }
 
 // -------------------------------------------------------------------------------------------------------------------
 
 void set_parameter_value(unsigned short plugin_id, quint32 parameter_id, double value)
 {
-    qDebug("CarlaBackendStandalone::set_parameter_value(%i, %i, %f)", plugin_id, parameter_id, value);
+    qDebug("CarlaBackendStandalone::set_parameter_value(%i, %i, %g)", plugin_id, parameter_id, value);
 
     CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPlugin(plugin_id);
 
@@ -909,11 +916,11 @@ void set_parameter_value(unsigned short plugin_id, quint32 parameter_id, double 
         if (parameter_id < plugin->parameterCount())
             return plugin->setParameterValue(parameter_id, value, true, true, false);
 
-        qCritical("CarlaBackendStandalone::set_parameter_value(%i, %i, %f) - parameter_id out of bounds", plugin_id, parameter_id, value);
+        qCritical("CarlaBackendStandalone::set_parameter_value(%i, %i, %g) - parameter_id out of bounds", plugin_id, parameter_id, value);
         return;
     }
 
-    qCritical("CarlaBackendStandalone::set_parameter_value(%i, %i, %f) - could not find plugin", plugin_id, parameter_id, value);
+    qCritical("CarlaBackendStandalone::set_parameter_value(%i, %i, %g) - could not find plugin", plugin_id, parameter_id, value);
 }
 
 void set_parameter_midi_channel(unsigned short plugin_id, quint32 parameter_id, quint8 channel)
@@ -997,7 +1004,7 @@ void set_midi_program(unsigned short plugin_id, quint32 midi_program_id)
         if (midi_program_id < plugin->midiProgramCount())
             return plugin->setMidiProgram(midi_program_id, true, true, false, true);
 
-        qCritical("CarlaBackendStandalone::set_midi_program(%i, %i) - program_id out of bounds", plugin_id, midi_program_id);
+        qCritical("CarlaBackendStandalone::set_midi_program(%i, %i) - midi_program_id out of bounds", plugin_id, midi_program_id);
         return;
     }
 
@@ -1008,19 +1015,19 @@ void set_midi_program(unsigned short plugin_id, quint32 midi_program_id)
 
 void set_custom_data(unsigned short plugin_id, CarlaBackend::CustomDataType type, const char* key, const char* value)
 {
-    qDebug("CarlaBackendStandalone::set_custom_data(%i, %i, %s, %s)", plugin_id, type, key, value);
+    qDebug("CarlaBackendStandalone::set_custom_data(%i, %i, \"%s\", \"%s\")", plugin_id, type, key, value);
 
     CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPlugin(plugin_id);
 
     if (plugin)
         return plugin->setCustomData(type, key, value, true);
 
-    qCritical("CarlaBackendStandalone::set_custom_data(%i, %i, %s, %s) - could not find plugin", plugin_id, type, key, value);
+    qCritical("CarlaBackendStandalone::set_custom_data(%i, %i, \"%s\", \"%s\") - could not find plugin", plugin_id, type, key, value);
 }
 
 void set_chunk_data(unsigned short plugin_id, const char* chunk_data)
 {
-    qDebug("CarlaBackendStandalone::set_chunk_data(%i, %s)", plugin_id, chunk_data);
+    qDebug("CarlaBackendStandalone::set_chunk_data(%i, \"%s\")", plugin_id, chunk_data);
 
     CarlaBackend::CarlaPlugin* const plugin = carla_engine->getPlugin(plugin_id);
 
@@ -1029,11 +1036,11 @@ void set_chunk_data(unsigned short plugin_id, const char* chunk_data)
         if (plugin->hints() & CarlaBackend::PLUGIN_USES_CHUNKS)
             return plugin->setChunkData(chunk_data);
 
-        qCritical("CarlaBackendStandalone::set_chunk_data(%i, %s) - plugin does not support chunks", plugin_id, chunk_data);
+        qCritical("CarlaBackendStandalone::set_chunk_data(%i, \"%s\") - plugin does not support chunks", plugin_id, chunk_data);
         return;
     }
 
-    qCritical("CarlaBackendStandalone::set_chunk_data(%i, %s) - could not find plugin", plugin_id, chunk_data);
+    qCritical("CarlaBackendStandalone::set_chunk_data(%i, \"%s\") - could not find plugin", plugin_id, chunk_data);
 }
 
 void set_gui_data(unsigned short plugin_id, int data, quintptr gui_addr)
@@ -1136,11 +1143,16 @@ void set_callback_function(CarlaBackend::CallbackFunc func)
 {
     qDebug("CarlaBackendStandalone::set_callback_function(%p)", func);
 
-    carla_engine->setCallback(func);
+    carla_func = func;
+
+    if (carla_engine)
+        carla_engine->setCallback(func);
 }
 
 void set_option(CarlaBackend::OptionsType option, int value, const char* valueStr)
 {
+    qDebug("CarlaBackendStandalone::set_option(%s, %i, \"%s\")", CarlaBackend::OptionsType2str(option), value, valueStr);
+
     CarlaBackend::setOption(option, value, valueStr);
 }
 
@@ -1151,67 +1163,196 @@ void set_option(CarlaBackend::OptionsType option, int value, const char* valueSt
 #include <QtGui/QApplication>
 #include <QtGui/QDialog>
 
-QDialog* gui;
+QDialog* vstGui = nullptr;
 
-void main_callback(CarlaBackend::CallbackType action, unsigned short plugin_id, int value1, int value2, double value3)
+void main_callback(CarlaBackend::CallbackType action, unsigned short pluginId, int value1, int value2, double value3)
 {
     switch (action)
     {
     case CarlaBackend::CALLBACK_SHOW_GUI:
-        if (! value1)
-            gui->close();
+        if (vstGui && ! value1)
+            vstGui->close();
         break;
     case CarlaBackend::CALLBACK_RESIZE_GUI:
-        gui->setFixedSize(value1, value2);
+        vstGui->setFixedSize(value1, value2);
         break;
     default:
         break;
     }
 
-    Q_UNUSED(plugin_id);
+    Q_UNUSED(pluginId);
     Q_UNUSED(value3);
+}
+
+void run_tests_standalone(short idMax)
+{
+    for (short id = 0; id <= idMax; id++)
+    {
+        qDebug("------------------- TEST @%i: non-parameter calls --------------------", id);
+        get_plugin_info(id);
+        get_audio_port_count_info(id);
+        get_midi_port_count_info(id);
+        get_parameter_count_info(id);
+        get_gui_info(id);
+        get_chunk_data(id);
+        get_parameter_count(id);
+        get_program_count(id);
+        get_midi_program_count(id);
+        get_custom_data_count(id);
+        get_real_plugin_name(id);
+        get_current_program_index(id);
+        get_current_midi_program_index(id);
+
+        qDebug("------------------- TEST @%i: parameter calls [-1] --------------------", id);
+        get_parameter_info(id, -1);
+        get_parameter_scalepoint_info(id, -1, -1);
+        get_parameter_data(id, -1);
+        get_parameter_ranges(id, -1);
+        get_midi_program_data(id, -1);
+        get_custom_data(id, -1);
+        get_parameter_text(id, -1);
+        get_program_name(id, -1);
+        get_midi_program_name(id, -1);
+        get_default_parameter_value(id, -1);
+        get_current_parameter_value(id, -1);
+        get_input_peak_value(id, -1);
+        get_output_peak_value(id, -1);
+
+        qDebug("------------------- TEST @%i: parameter calls [0] --------------------", id);
+        get_parameter_info(id, 0);
+        get_parameter_scalepoint_info(id, 0, -1);
+        get_parameter_scalepoint_info(id, 0, 0);
+        get_parameter_data(id, 0);
+        get_parameter_ranges(id, 0);
+        get_midi_program_data(id, 0);
+        get_custom_data(id, 0);
+        get_parameter_text(id, 0);
+        get_program_name(id, 0);
+        get_midi_program_name(id, 0);
+        get_default_parameter_value(id, 0);
+        get_current_parameter_value(id, 0);
+        get_input_peak_value(id, 0);
+        get_input_peak_value(id, 1);
+        get_input_peak_value(id, 2);
+        get_output_peak_value(id, 0);
+        get_output_peak_value(id, 1);
+        get_output_peak_value(id, 2);
+
+        qDebug("------------------- TEST @%i: set internal data --------------------", id);
+        set_active(id, false);
+        set_active(id, true);
+        set_active(id, true);
+
+        set_drywet(id, -999);
+        set_volume(id, -999);
+        set_balance_left(id, -999);
+        set_balance_right(id, 999);
+
+        qDebug("------------------- TEST @%i: set parameter data [-1] --------------------", id);
+        set_parameter_value(id, -1, -999);
+        set_parameter_midi_channel(id, -1, -1);
+        set_parameter_midi_cc(id, -1, -1);
+        set_program(id, -1);
+        set_midi_program(id, -1);
+
+        qDebug("------------------- TEST @%i: set parameter data [0] --------------------", id);
+        set_parameter_value(id, 0, -999);
+        set_parameter_midi_channel(id, 0, -1);
+        set_parameter_midi_channel(id, 0, 0);
+        set_parameter_midi_cc(id, 0, -1);
+        set_parameter_midi_cc(id, 0, 0);
+        set_program(id, 0);
+        set_midi_program(id, 0);
+
+        qDebug("------------------- TEST @%i: set extra data --------------------", id);
+        set_custom_data(id, CarlaBackend::CUSTOM_DATA_INVALID, nullptr, nullptr);
+        set_custom_data(id, CarlaBackend::CUSTOM_DATA_INVALID, "", "");
+        set_chunk_data(id, nullptr);
+        set_gui_data(id, 0, 0);
+
+        qDebug("------------------- TEST @%i: gui stuff --------------------", id);
+        show_gui(id, false);
+        show_gui(id, true);
+        show_gui(id, true);
+
+        idle_guis();
+        idle_guis();
+        idle_guis();
+
+        qDebug("------------------- TEST @%i: other --------------------", id);
+        send_midi_note(id, -1,  0,  0);
+        send_midi_note(id,  0,  0,  0);
+
+        prepare_for_save(id);
+        prepare_for_save(id);
+        prepare_for_save(id);
+    }
 }
 
 int main(int argc, char* argv[])
 {
+    using namespace CarlaBackend;
+
+    // Qt app
     QApplication app(argc, argv);
 
-    //set_option(CarlaBackend::OPTION_PROCESS_MODE, CarlaBackend::PROCESS_MODE_CONTINUOUS_RACK, nullptr);
+    // Qt gui (for vst)
+    vstGui = new QDialog(nullptr);
 
-    gui = new QDialog(nullptr);
-    set_option(CarlaBackend::OPTION_PREFER_UI_BRIDGES, 0, nullptr);
+    // set callback and options
+    set_callback_function(main_callback);
+    set_option(OPTION_PREFER_UI_BRIDGES, 0, nullptr);
+    //set_option(OPTION_PROCESS_MODE, PROCESS_MODE_CONTINUOUS_RACK, nullptr);
 
-    if (engine_init("JACK", "carla_demo"))
+    // start engine
+    if (! engine_init("JACK", "carla_demo"))
     {
-        set_callback_function(main_callback);
-
-        short id = add_plugin(CarlaBackend::BINARY_NATIVE, CarlaBackend::PLUGIN_LV2, "FILENAME", "HAHA name!!!", "http://studionumbersix.com/foo/lv2/yc20", nullptr);
-
-        if (id >= 0)
-        {
-            const GuiInfo* const guiInfo = get_gui_info(id);
-
-            if (guiInfo->type == CarlaBackend::GUI_INTERNAL_QT4 || guiInfo->type == CarlaBackend::GUI_INTERNAL_X11)
-            {
-                set_gui_data(id, 0, (quintptr)gui);
-                gui->show();
-            }
-
-            set_active(id, true);
-            show_gui(id, true);
-            app.exec();
-
-            remove_plugin(id);
-        }
-        else
-            qCritical("failed: %s", get_last_error());
-
-        engine_close();
-    }
-    else
         qCritical("failed to start backend engine, reason:\n%s", get_last_error());
+        delete vstGui;
+        return 1;
+    }
 
-    delete gui;
+    short id_ladspa = add_plugin(BINARY_NATIVE, PLUGIN_LADSPA, "/usr/lib/ladspa/LEET_eqbw2x2.so", "LADSPA plug name, test long name - "
+                                 "------- name ------------ name2 ----------- name3 ------------ name4 ------------ name5 ---------- name6", "leet_equalizer_bw2x2", nullptr);
+
+    short id_dssi = add_plugin(BINARY_NATIVE, PLUGIN_DSSI, "/usr/lib/dssi/fluidsynth-dssi.so", "DSSI pname, short-utf8 _ \xAE", "FluidSynth-DSSI", (void*)"/usr/lib/dssi/fluidsynth-dssi/FluidSynth-DSSI_gtk");
+
+    //short id_lv2 = add_plugin(BINARY_NATIVE, PLUGIN_LV2, "FILENAME", "HAHA name!!!", "http://studionumbersix.com/foo/lv2/yc20", nullptr);
+
+    //short id_vst = add_plugin(BINARY_NATIVE, PLUGIN_LV2, "FILENAME", "HAHA name!!!", "http://studionumbersix.com/foo/lv2/yc20", nullptr);
+
+    if (id_ladspa < 0 || id_dssi < 0)
+    {
+        qCritical("failed to start load plugins, reason:\n%s", get_last_error());
+        delete vstGui;
+        return 1;
+    }
+
+    //const GuiInfo* const guiInfo = get_gui_info(id);
+    //if (guiInfo->type == CarlaBackend::GUI_INTERNAL_QT4 || guiInfo->type == CarlaBackend::GUI_INTERNAL_X11)
+    //{
+    //    set_gui_data(id, 0, (quintptr)gui);
+    //gui->show();
+    //}
+
+    // activate
+    set_active(id_ladspa, true);
+    set_active(id_dssi, true);
+
+    // start guis
+    show_gui(id_dssi, true);
+    carla_sleep(1);
+
+    // do tests
+    run_tests_standalone(id_dssi+1);
+
+    // lock
+    app.exec();
+
+    remove_plugin(id_ladspa);
+    remove_plugin(id_dssi);
+    engine_close();
+
     return 0;
 }
 

@@ -1286,7 +1286,7 @@ private:
 
 CarlaPlugin* CarlaPlugin::newSF2(const initializer& init)
 {
-    qDebug("CarlaPlugin::newSF2(%p, %s, %s, %s)", init.engine, init.filename, init.name, init.label);
+    qDebug("CarlaPlugin::newSF2(%p, \"%s\", \"%s\", \"%s\")", init.engine, init.filename, init.name, init.label);
 
 #ifdef WANT_FLUIDSYNTH
     short id = init.engine->getNewPluginId();
