@@ -870,6 +870,10 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         # client already closed
         jack.client = None
 
+        # refresh canvas (remove jack ports)
+        patchcanvas.clear()
+        self.init_ports()
+
         if self.m_next_sample_rate:
             jack_sample_rate(self, self.m_next_sample_rate)
 
