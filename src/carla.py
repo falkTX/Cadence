@@ -22,7 +22,7 @@ from PyQt4.QtCore import Qt, QThread
 from PyQt4.QtGui import QApplication, QMainWindow, QTableWidgetItem
 
 # Imports (Custom Stuff)
-import ui_carla, ui_carla_about, ui_carla_database, ui_carla_parameter, ui_carla_refresh
+import ui_carla, ui_carla_about, ui_carla_database, ui_carla_refresh
 from carla_backend import *
 from shared_settings import *
 
@@ -1347,7 +1347,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         node = xml_node.firstChild()
         while not node.isNull():
             if node.toElement().tagName() == "Plugin":
-                x_save_state_dict = getStateDictFromXML(node)
+                x_save_state_dict = getSaveStateDictFromXML(node)
                 x_save_state_dicts.append(x_save_state_dict)
             node = node.nextSibling()
 

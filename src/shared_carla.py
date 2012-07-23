@@ -31,15 +31,17 @@ from shared import *
 class CarlaHostObject(object):
     __slots__ = [
         'Host',
-        'gui'
+        'gui',
+        'isControl'
     ]
 
 Carla = CarlaHostObject()
 Carla.Host = None
-Carla.gui = None
+Carla.gui  = None
+Carla.isControl = False
 
 # ------------------------------------------------------------------------------------------------
-# Backend variables
+# Backend defines
 
 # static max values
 MAX_PLUGINS    = 99
@@ -187,7 +189,6 @@ PALETTE_COLOR_ORANGE = 6
 PALETTE_COLOR_BROWN  = 7
 PALETTE_COLOR_PINK   = 8
 
-# Save support
 save_state_dict = {
     'Type': "",
     'Name': "",
@@ -223,47 +224,42 @@ save_state_custom_data = {
     'value': ""
 }
 
-def CustomDataType2String(dtype):
+def getCustomDataTypeString(dtype):
     if dtype == CUSTOM_DATA_STRING:
         return "string"
-    elif dtype == CUSTOM_DATA_PATH:
+    if dtype == CUSTOM_DATA_PATH:
         return "path"
-    elif dtype == CUSTOM_DATA_CHUNK:
+    if dtype == CUSTOM_DATA_CHUNK:
         return "chunk"
-    elif dtype == CUSTOM_DATA_BINARY:
+    if dtype == CUSTOM_DATA_BINARY:
         return "binary"
-    else:
-        return "null"
+    return "null"
 
-def CustomDataString2Type(stype):
+def getCustomDataStringType(stype):
     if stype == "string":
         return CUSTOM_DATA_STRING
-    elif stype == "path":
+    if stype == "path":
         return CUSTOM_DATA_PATH
-    elif stype == "chunk":
+    if stype == "chunk":
         return CUSTOM_DATA_CHUNK
-    elif stype == "binary":
+    if stype == "binary":
         return CUSTOM_DATA_BINARY
-    else:
-        return CUSTOM_DATA_INVALID
+    return CUSTOM_DATA_INVALID
 
-def xmlSafeString(string, toXml):
-    if toXml:
-        return string.replace("&", "&amp;").replace("<","&lt;").replace(">","&gt;").replace("'","&apos;").replace("\"","&quot;")
-    else:
-        return string.replace("&amp;", "&").replace("&lt;","<").replace("&gt;",">").replace("&apos;","'").replace("&quot;","\"")
-
-def getStateDictFromXML(xml_node):
+def getSaveStateDictFromXML(xmlNode):
     x_save_state_dict = deepcopy(save_state_dict)
 
-    node = xml_node.firstChild()
+    node = xmlNode.firstChild()
     while not node.isNull():
-        if (node.toElement().tagName() == "Info"):
-            xml_info = node.toElement().firstChild()
+        # ------------------------------------------------------
+        # Info
 
-            while not xml_info.isNull():
-                tag = xml_info.toElement().tagName()
-                text = xml_info.toElement().text().strip()
+        if node.toElement().tagName() == "Info":
+            xmlInfo = node.toElement().firstChild()
+
+            while not xmlInfo.isNull():
+                tag = xmlInfo.toElement().tagName()
+                text = xmlInfo.toElement().text().strip()
 
                 if tag == "Type":
                     x_save_state_dict['Type'] = text
@@ -274,129 +270,147 @@ def getStateDictFromXML(xml_node):
                 elif tag == "Binary":
                     x_save_state_dict['Binary'] = xmlSafeString(text, False)
                 elif tag == "UniqueID":
-                    if text.isdigit():
-                        x_save_state_dict['UniqueID'] = int(text)
+                    if text.isdigit(): x_save_state_dict['UniqueID'] = int(text)
 
-                xml_info = xml_info.nextSibling()
+                xmlInfo = xmlInfo.nextSibling()
 
-        elif (node.toElement().tagName() == "Data"):
-            xml_data = node.toElement().firstChild()
+        # ------------------------------------------------------
+        # Data
 
-            while not xml_data.isNull():
-                tag = xml_data.toElement().tagName()
-                text = xml_data.toElement().text().strip()
+        elif node.toElement().tagName() == "Data":
+            xmlData = node.toElement().firstChild()
+
+            while not xmlData.isNull():
+                tag = xmlData.toElement().tagName()
+                text = xmlData.toElement().text().strip()
+
+                # ----------------------------------------------
+                # Internal Data
 
                 if tag == "Active":
                     x_save_state_dict['Active'] = bool(text == "Yes")
                 elif tag == "DryWet":
-                    if isNumber(text):
-                        x_save_state_dict['DryWet'] = float(text)
-                elif (tag == "Volume"):
-                    if isNumber(text):
-                        x_save_state_dict['Volume'] = float(text)
-                elif (tag == "Balance-Left"):
-                    if isNumber(text):
-                        x_save_state_dict['Balance-Left'] = float(text)
-                elif (tag == "Balance-Right"):
-                    if isNumber(text):
-                        x_save_state_dict['Balance-Right'] = float(text)
+                    if isNumber(text): x_save_state_dict['DryWet'] = float(text)
+                elif tag == "Volume":
+                    if isNumber(text): x_save_state_dict['Volume'] = float(text)
+                elif tag == "Balance-Left":
+                    if isNumber(text): x_save_state_dict['Balance-Left'] = float(text)
+                elif tag == "Balance-Right":
+                    if isNumber(text): x_save_state_dict['Balance-Right'] = float(text)
+
+                # ----------------------------------------------
+                # Program (current)
 
                 elif tag == "CurrentProgramIndex":
-                    if text.isdigit():
-                        x_save_state_dict['CurrentProgramIndex'] = int(text)
+                    if text.isdigit(): x_save_state_dict['CurrentProgramIndex'] = int(text)
                 elif tag == "CurrentProgramName":
                     x_save_state_dict['CurrentProgramName'] = xmlSafeString(text, False)
 
+                # ----------------------------------------------
+                # Midi Program (current)
+
                 elif tag == "CurrentMidiBank":
-                    if text.isdigit():
-                        x_save_state_dict['CurrentMidiBank'] = int(text)
+                    if text.isdigit(): x_save_state_dict['CurrentMidiBank'] = int(text)
                 elif tag == "CurrentMidiProgram":
-                    if text.isdigit():
-                        x_save_state_dict['CurrentMidiProgram'] = int(text)
+                    if text.isdigit(): x_save_state_dict['CurrentMidiProgram'] = int(text)
+
+                # ----------------------------------------------
+                # Parameters
 
                 elif tag == "Parameter":
                     x_save_state_parameter = deepcopy(save_state_parameter)
 
-                    xml_subdata = xml_data.toElement().firstChild()
+                    xmlSubData = xmlData.toElement().firstChild()
 
-                    while not xml_subdata.isNull():
-                        ptag = xml_subdata.toElement().tagName()
-                        ptext = xml_subdata.toElement().text().strip()
+                    while not xmlSubData.isNull():
+                        pTag = xmlSubData.toElement().tagName()
+                        pText = xmlSubData.toElement().text().strip()
 
-                        if ptag == "index":
-                            if ptext.isdigit():
-                                x_save_state_parameter['index'] = int(ptext)
-                        elif ptag == "name":
-                            x_save_state_parameter['name'] = xmlSafeString(ptext, False)
-                        elif ptag == "symbol":
-                            x_save_state_parameter['symbol'] = xmlSafeString(ptext, False)
-                        elif ptag == "value":
-                            if isNumber(ptext):
-                                x_save_state_parameter['value'] = float(ptext)
-                        elif ptag == "midiChannel":
-                            if ptext.isdigit():
-                                x_save_state_parameter['midiChannel'] = int(ptext)
-                        elif ptag == "midiCC":
-                            if ptext.isdigit():
-                                x_save_state_parameter['midiCC'] = int(ptext)
+                        if pTag == "index":
+                            if pText.isdigit(): x_save_state_parameter['index'] = int(pText)
+                        elif pTag == "name":
+                            x_save_state_parameter['name'] = xmlSafeString(pText, False)
+                        elif pTag == "symbol":
+                            x_save_state_parameter['symbol'] = xmlSafeString(pText, False)
+                        elif pTag == "value":
+                            if isNumber(pText): x_save_state_parameter['value'] = float(pText)
+                        elif pTag == "midiChannel":
+                            if pText.isdigit(): x_save_state_parameter['midiChannel'] = int(pText)
+                        elif pTag == "midiCC":
+                            if pText.isdigit(): x_save_state_parameter['midiCC'] = int(pText)
 
-                        xml_subdata = xml_subdata.nextSibling()
+                        xmlSubData = xmlSubData.nextSibling()
 
                     x_save_state_dict['Parameters'].append(x_save_state_parameter)
 
-                elif (tag == "CustomData"):
+                # ----------------------------------------------
+                # Custom Data
+
+                elif tag == "CustomData":
                     x_save_state_custom_data = deepcopy(save_state_custom_data)
 
-                    xml_subdata = xml_data.toElement().firstChild()
+                    xmlSubData = xmlData.toElement().firstChild()
 
-                    while not xml_subdata.isNull():
-                        ctag = xml_subdata.toElement().tagName()
-                        ctext = xml_subdata.toElement().text().strip()
+                    while not xmlSubData.isNull():
+                        cTag = xmlSubData.toElement().tagName()
+                        cText = xmlSubData.toElement().text().strip()
 
-                        if ctag == "type":
-                            x_save_state_custom_data['type'] = CustomDataString2Type(ctext)
-                        elif ctag == "key":
-                            x_save_state_custom_data['key'] = xmlSafeString(ctext, False)
-                        elif ctag == "value":
-                            x_save_state_custom_data['value'] = xmlSafeString(ctext, False)
+                        if cTag == "type":
+                            x_save_state_custom_data['type'] = getCustomDataStringType(cText)
+                        elif cTag == "key":
+                            x_save_state_custom_data['key'] = xmlSafeString(cText, False)
+                        elif cTag == "value":
+                            x_save_state_custom_data['value'] = xmlSafeString(cText, False)
 
-                        xml_subdata = xml_subdata.nextSibling()
+                        xmlSubData = xmlSubData.nextSibling()
 
                     x_save_state_dict['CustomData'].append(x_save_state_custom_data)
 
-                elif tag == "Chunk":
-                    x_save_state_dict['Chunk'] = text
+                # ----------------------------------------------
+                # Chunk
 
-                xml_data = xml_data.nextSibling()
+                elif tag == "Chunk":
+                    x_save_state_dict['Chunk'] = xmlSafeString(text, False)
+
+                # ----------------------------------------------
+
+                xmlData = xmlData.nextSibling()
+
+        # ------------------------------------------------------
 
         node = node.nextSibling()
 
     return x_save_state_dict
+
+def xmlSafeString(string, toXml):
+    if toXml:
+        return string.replace("&", "&amp;").replace("<","&lt;").replace(">","&gt;").replace("'","&apos;").replace("\"","&quot;")
+    else:
+        return string.replace("&amp;", "&").replace("&lt;","<").replace("&gt;",">").replace("&apos;","'").replace("&quot;","\"")
 
 # ------------------------------------------------------------------------------------------------
 # Common widgets
 
 # Plugin GUI
 class PluginGUI(QDialog):
-    def __init__(self, parent, plugin_name, resizable):
+    def __init__(self, parent, pluginName, resizable):
         QDialog.__init__(self, parent)
 
-        self.myLayout = QVBoxLayout(self)
-        self.myLayout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(self.myLayout)
+        self.m_resizable = resizable
 
-        self.resizable = resizable
+        self.vbLayout = QVBoxLayout(self)
+        self.vbLayout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.vbLayout)
         self.setNewSize(50, 50)
-
-        self.setWindowTitle("%s (GUI)" % (plugin_name))
+        self.setWindowTitle("%s (GUI)" % pluginName)
 
     def setNewSize(self, width, height):
-        if (width < 30):
+        if width < 30:
             width = 30
-        if (height < 30):
+        if height < 30:
             height = 30
 
-        if (self.resizable):
+        if self.m_resizable:
             self.resize(width, height)
         else:
             self.setFixedSize(width, height)
@@ -410,52 +424,53 @@ class PluginGUI(QDialog):
         QDialog.done(self, r)
         self.close()
 
-# Single Plugin Parameter
+# (Single) Plugin Parameter
 class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
-    def __init__(self, parent, pinfo, plugin_id):
+    def __init__(self, parent, pInfo, pluginId, tabIndex):
         QWidget.__init__(self, parent)
         self.setupUi(self)
 
-        self.ptype = pinfo['type']
-        self.parameter_id = pinfo['index']
-        self.hints = pinfo['hints']
+        pType  = pInfo['type']
+        pHints = pInfo['hints']
 
-        self.midi_cc = -1
-        self.midi_channel = 1
-        self.plugin_id = plugin_id
+        self.m_midiCC = -1
+        self.m_midiChannel = 1
+        self.m_pluginId = pluginId
+        self.m_parameterId = pInfo['index']
+        self.m_tabIndex = tabIndex
 
         self.add_MIDI_CCs_to_ComboBox()
 
-        self.label.setText(pinfo['name'])
+        self.label.setText(pInfo['name'])
 
-        if self.ptype == PARAMETER_INPUT:
-            self.widget.set_minimum(pinfo['minimum'])
-            self.widget.set_maximum(pinfo['maximum'])
-            self.widget.set_default(pinfo['default'])
-            self.widget.set_value(pinfo['current'], False)
-            self.widget.set_label(pinfo['unit'])
-            self.widget.set_step(pinfo['step'])
-            self.widget.set_step_small(pinfo['stepSmall'])
-            self.widget.set_step_large(pinfo['stepLarge'])
-            self.widget.set_scalepoints(pinfo['scalepoints'], bool(pinfo['hints'] & PARAMETER_USES_SCALEPOINTS))
+        if pType == PARAMETER_INPUT:
+            self.widget.set_minimum(pInfo['minimum'])
+            self.widget.set_maximum(pInfo['maximum'])
+            self.widget.set_default(pInfo['default'])
+            self.widget.set_value(pInfo['current'], False)
+            self.widget.set_label(pInfo['unit'])
+            self.widget.set_step(pInfo['step'])
+            self.widget.set_step_small(pInfo['stepSmall'])
+            self.widget.set_step_large(pInfo['stepLarge'])
+            self.widget.set_scalepoints(pInfo['scalepoints'], bool(pHints & PARAMETER_USES_SCALEPOINTS))
 
-            if not self.hints & PARAMETER_IS_ENABLED:
+            if not pHints & PARAMETER_IS_ENABLED:
                 self.widget.set_read_only(True)
                 self.combo.setEnabled(False)
                 self.sb_channel.setEnabled(False)
 
-            elif not self.hints & PARAMETER_IS_AUTOMABLE:
+            elif not pHints & PARAMETER_IS_AUTOMABLE:
                 self.combo.setEnabled(False)
                 self.sb_channel.setEnabled(False)
 
-        elif self.ptype == PARAMETER_OUTPUT:
-            self.widget.set_minimum(pinfo['minimum'])
-            self.widget.set_maximum(pinfo['maximum'])
-            self.widget.set_value(pinfo['current'], False)
-            self.widget.set_label(pinfo['unit'])
+        elif pType == PARAMETER_OUTPUT:
+            self.widget.set_minimum(pInfo['minimum'])
+            self.widget.set_maximum(pInfo['maximum'])
+            self.widget.set_value(pInfo['current'], False)
+            self.widget.set_label(pInfo['unit'])
             self.widget.set_read_only(True)
 
-            if not self.hints & PARAMETER_IS_AUTOMABLE:
+            if not pHints & PARAMETER_IS_AUTOMABLE:
                 self.combo.setEnabled(False)
                 self.sb_channel.setEnabled(False)
 
@@ -464,8 +479,8 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
             self.combo.setVisible(False)
             self.sb_channel.setVisible(False)
 
-        self.set_parameter_midi_channel(pinfo['midiChannel'])
-        self.set_parameter_midi_cc(pinfo['midiCC'])
+        self.set_parameter_midi_cc(pInfo['midiCC'])
+        self.set_parameter_midi_channel(pInfo['midiChannel'])
 
         self.connect(self.widget, SIGNAL("valueChanged(double)"), SLOT("slot_valueChanged(double)"))
         self.connect(self.sb_channel, SIGNAL("valueChanged(int)"), SLOT("slot_midiChannelChanged(int)"))
@@ -474,7 +489,7 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
         #if force_parameters_style:
         #self.widget.force_plastique_style()
 
-        if self.hints & PARAMETER_USES_CUSTOM_TEXT:
+        if pHints & PARAMETER_USES_CUSTOM_TEXT:
             self.widget.set_text_call(self.textCallFunction)
 
         self.widget.updateAll()
@@ -485,77 +500,94 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
     def set_parameter_value(self, value, send=True):
         self.widget.set_value(value, send)
 
-    def set_parameter_midi_channel(self, channel):
-        self.midi_channel = channel
-        self.sb_channel.setValue(channel - 1)
+    def set_parameter_midi_cc(self, cc):
+        self.m_midiCC = cc
+        self.set_MIDI_CC_in_ComboBox(cc)
 
-    def set_parameter_midi_cc(self, cc_index):
-        self.midi_cc = cc_index
-        self.set_MIDI_CC_in_ComboBox(cc_index)
+    def set_parameter_midi_channel(self, channel):
+        self.m_midiChannel = channel
+        self.sb_channel.setValue(channel - 1)
 
     def add_MIDI_CCs_to_ComboBox(self):
         for MIDI_CC in MIDI_CC_LIST:
             self.combo.addItem(MIDI_CC)
 
-    def set_MIDI_CC_in_ComboBox(self, midi_cc):
+    def set_MIDI_CC_in_ComboBox(self, cc):
         for i in range(len(MIDI_CC_LIST)):
-            midi_cc_text = MIDI_CC_LIST[i].split(" ")[0]
-            if int(midi_cc_text, 16) == midi_cc:
-                cc_index = i
+            ccText = MIDI_CC_LIST[i].split(" ")[0]
+            if int(ccText, 16) == cc:
+                ccIndex = i
                 break
         else:
-            cc_index = -1
+            ccIndex = -1
 
-        cc_index += 1
-        self.combo.setCurrentIndex(cc_index)
+        self.combo.setCurrentIndex(ccIndex+1)
+
+    def tabIndex(self):
+        return self.m_tabIndex
 
     def textCallFunction(self):
-        return cString(Carla.Host.get_parameter_text(self.plugin_id, self.parameter_id))
+        return cString(Carla.Host.get_parameter_text(self.m_pluginId, self.m_parameterId))
 
     @pyqtSlot(float)
     def slot_valueChanged(self, value):
-        self.emit(SIGNAL("valueChanged(int, double)"), self.parameter_id, value)
+        self.emit(SIGNAL("valueChanged(int, double)"), self.m_parameterId, value)
+
+    @pyqtSlot(int)
+    def slot_midiCcChanged(self, ccIndex):
+        if ccIndex <= 0:
+            cc = -1
+        else:
+            ccText = MIDI_CC_LIST[ccIndex - 1].split(" ")[0]
+            cc = int(ccText, 16)
+
+        if self.m_midiCC != cc:
+            self.emit(SIGNAL("midiCcChanged(int, int)"), self.m_parameterId, cc)
+
+        self.m_midiCC = cc
 
     @pyqtSlot(int)
     def slot_midiChannelChanged(self, channel):
-        if self.midi_channel != channel:
-            self.emit(SIGNAL("midiChannelChanged(int, int)"), self.parameter_id, channel)
-        self.midi_channel = channel
+        if self.m_midiChannel != channel:
+            self.emit(SIGNAL("midiChannelChanged(int, int)"), self.m_parameterId, channel)
 
-    @pyqtSlot(int)
-    def slot_midiCcChanged(self, cc_index):
-        if cc_index <= 0:
-            midi_cc = -1
-        else:
-            midi_cc_text = MIDI_CC_LIST[cc_index - 1].split(" ")[0]
-            midi_cc = int(midi_cc_text, 16)
-
-        if self.midi_cc != midi_cc:
-            self.emit(SIGNAL("midiCcChanged(int, int)"), self.parameter_id, midi_cc)
-        self.midi_cc = midi_cc
+        self.m_midiChannel = channel
 
 # Plugin Editor (Built-in)
 class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
-    def __init__(self, parent, plugin_id):
+    def __init__(self, parent, pluginId):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
-        self.pinfo = None
-        self.ptype = PLUGIN_NONE
-        self.plugin_id = plugin_id
+        self.m_pluginId = pluginId
+        self.m_pluginInfo = None
 
-        self.parameter_count = 0
-        self.parameter_list  = [] # type, id, widget
-        self.parameter_list_to_update = [] # ids
+        self.m_parameterCount = 0
+        self.m_parameterList  = [] # (type, id, widget)
+        self.m_parameterIdsToUpdate = [] # id
 
-        self.state_filename = None
-        self.cur_program_index = -1
-        self.cur_midi_program_index = -1
+        self.m_currentProgram = -1
+        self.m_currentMidiProgram = -1
+        self.m_currentStateFilename = None
 
-        self.tab_icon_off = QIcon(":/bitmaps/led_off.png")
-        self.tab_icon_on  = QIcon(":/bitmaps/led_yellow.png")
-        self.tab_icon_count = 0
-        self.tab_icon_timers = []
+        self.m_tabIconOff = QIcon(":/bitmaps/led_off.png")
+        self.m_tabIconOn  = QIcon(":/bitmaps/led_yellow.png")
+        self.m_tabIconCount = 0
+        self.m_tabIconTimers = []
+
+        self.keyboard.setMode(self.keyboard.HORIZONTAL)
+        self.keyboard.setOctaves(6)
+        self.scrollArea.ensureVisible(self.keyboard.width() * 1 / 5, 0)
+        self.scrollArea.setVisible(False)
+
+        # TODO - not implemented yet
+        self.b_reload_program.setEnabled(False)
+        self.b_reload_midi_program.setEnabled(False)
+
+        # Not available for carla-control
+        if Carla.isControl:
+            self.b_load_state.setEnabled(False)
+            self.b_save_state.setEnabled(False)
 
         self.connect(self.b_save_state, SIGNAL("clicked()"), SLOT("slot_saveState()"))
         self.connect(self.b_load_state, SIGNAL("clicked()"), SLOT("slot_loadState()"))
@@ -568,287 +600,270 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.connect(self.cb_programs, SIGNAL("currentIndexChanged(int)"), SLOT("slot_programIndexChanged(int)"))
         self.connect(self.cb_midi_programs, SIGNAL("currentIndexChanged(int)"), SLOT("slot_midiProgramIndexChanged(int)"))
 
-        self.keyboard.setMode(self.keyboard.HORIZONTAL)
-        self.keyboard.setOctaves(6)
-        self.scrollArea.ensureVisible(self.keyboard.width() * 1 / 5, 0)
-        self.scrollArea.setVisible(False)
-
-        # TODO - not implemented yet
-        self.b_reload_program.setEnabled(False)
-        self.b_reload_midi_program.setEnabled(False)
-
         self.do_reload_all()
 
-    def set_parameter_to_update(self, parameter_id):
-        if parameter_id not in self.parameter_list_to_update:
-            self.parameter_list_to_update.append(parameter_id)
-
-    def set_parameter_midi_channel(self, parameter_id, channel):
-        for ptype, pid, pwidget in self.parameter_list:
-            if pid == parameter_id:
-                pwidget.set_parameter_midi_channel(channel)
-                break
-
-    def set_parameter_midi_cc(self, parameter_id, midi_cc):
-        for ptype, pid, pwidget in self.parameter_list:
-            if pid == parameter_id:
-                pwidget.set_parameter_midi_cc(midi_cc)
-                break
-
-    def set_program(self, program_id):
-        self.cur_program_index = program_id
-        self.cb_programs.setCurrentIndex(program_id)
-        QTimer.singleShot(0, self, SLOT("slot_checkInputControlParameters()"))
-
-    def set_midi_program(self, midi_program_id):
-        self.cur_midi_program_index = midi_program_id
-        self.cb_midi_programs.setCurrentIndex(midi_program_id)
-        QTimer.singleShot(0, self, SLOT("slot_checkInputControlParameters()"))
-
-    def do_update(self):
-        # Update current program text
-        if self.cb_programs.count() > 0:
-            pindex = self.cb_programs.currentIndex()
-            pname  = cString(Carla.Host.get_program_name(self.plugin_id, pindex))
-            self.cb_programs.setItemText(pindex, pname)
-
-        # Update current midi program text
-        if self.cb_midi_programs.count() > 0:
-            mpindex  = self.cb_midi_programs.currentIndex()
-            oldtextI = self.cb_midi_programs.currentText().split(" ", 1)[0]
-            mpname = "%s %s" % (oldtextI, cString(Carla.Host.get_midi_program_name(self.plugin_id, mpindex)))
-            self.cb_midi_programs.setItemText(mpindex, mpname)
-
-        QTimer.singleShot(0, self, SLOT("slot_checkInputControlParameters()"))
-        QTimer.singleShot(0, self, SLOT("slot_checkOutputControlParameters()"))
-
     def do_reload_all(self):
-        self.pinfo = Carla.Host.get_plugin_info(self.plugin_id)
-        self.pinfo["binary"]    = cString(self.pinfo["binary"])
-        self.pinfo["name"]      = cString(self.pinfo["name"])
-        self.pinfo["label"]     = cString(self.pinfo["label"])
-        self.pinfo["maker"]     = cString(self.pinfo["maker"])
-        self.pinfo["copyright"] = cString(self.pinfo["copyright"])
+        self.m_pluginInfo = Carla.Host.get_plugin_info(self.m_pluginId)
+        self.m_pluginInfo["binary"]    = cString(self.m_pluginInfo["binary"])
+        self.m_pluginInfo["name"]      = cString(self.m_pluginInfo["name"])
+        self.m_pluginInfo["label"]     = cString(self.m_pluginInfo["label"])
+        self.m_pluginInfo["maker"]     = cString(self.m_pluginInfo["maker"])
+        self.m_pluginInfo["copyright"] = cString(self.m_pluginInfo["copyright"])
 
         self.do_reload_info()
         self.do_reload_parameters()
         self.do_reload_programs()
 
     def do_reload_info(self):
-        if self.ptype == PLUGIN_NONE and self.pinfo['type'] in (PLUGIN_DSSI, PLUGIN_LV2, PLUGIN_GIG, PLUGIN_SF2, PLUGIN_SFZ):
+        pluginName  = cString(Carla.Host.get_real_plugin_name(self.m_pluginId))
+        pluginType  = self.m_pluginInfo['type']
+        pluginHints = self.m_pluginInfo['hints']
+
+        # Automatically change to MidiProgram tab
+        if pluginType in (PLUGIN_DSSI, PLUGIN_LV2, PLUGIN_GIG, PLUGIN_SF2, PLUGIN_SFZ) and not self.le_name.text():
             self.tab_programs.setCurrentIndex(1)
 
-        self.ptype = self.pinfo['type']
-        real_plugin_name = cString(Carla.Host.get_real_plugin_name(self.plugin_id))
-
-        self.le_name.setText(real_plugin_name)
-        self.le_name.setToolTip(real_plugin_name)
-        self.le_label.setText(self.pinfo['label'])
-        self.le_label.setToolTip(self.pinfo['label'])
-        self.le_maker.setText(self.pinfo['maker'])
-        self.le_maker.setToolTip(self.pinfo['maker'])
-        self.le_copyright.setText(self.pinfo['copyright'])
-        self.le_copyright.setToolTip(self.pinfo['copyright'])
-        self.le_unique_id.setText(str(self.pinfo['uniqueId']))
-        self.le_unique_id.setToolTip(str(self.pinfo['uniqueId']))
-
-        self.label_plugin.setText("\n%s\n" % (self.pinfo['name']))
-        self.setWindowTitle(self.pinfo['name'])
-
-        if self.ptype == PLUGIN_LADSPA:
+        # Set Meta-Data
+        if pluginType == PLUGIN_LADSPA:
             self.le_type.setText("LADSPA")
-        elif self.ptype == PLUGIN_DSSI:
+        elif pluginType == PLUGIN_DSSI:
             self.le_type.setText("DSSI")
-        elif self.ptype == PLUGIN_LV2:
+        elif pluginType == PLUGIN_LV2:
             self.le_type.setText("LV2")
-        elif self.ptype == PLUGIN_VST:
+        elif pluginType == PLUGIN_VST:
             self.le_type.setText("VST")
-        elif self.ptype == PLUGIN_GIG:
+        elif pluginType == PLUGIN_GIG:
             self.le_type.setText("GIG")
-        elif self.ptype == PLUGIN_SF2:
+        elif pluginType == PLUGIN_SF2:
             self.le_type.setText("SF2")
-        elif self.ptype == PLUGIN_SFZ:
+        elif pluginType == PLUGIN_SFZ:
             self.le_type.setText("SFZ")
         else:
             self.le_type.setText(self.tr("Unknown"))
 
-        audio_count = Carla.Host.get_audio_port_count_info(self.plugin_id)
-        midi_count  = Carla.Host.get_midi_port_count_info(self.plugin_id)
-        param_count = Carla.Host.get_parameter_count_info(self.plugin_id)
+        self.le_name.setText(pluginName)
+        self.le_name.setToolTip(pluginName)
+        self.le_label.setText(self.m_pluginInfo['label'])
+        self.le_label.setToolTip(self.m_pluginInfo['label'])
+        self.le_maker.setText(self.m_pluginInfo['maker'])
+        self.le_maker.setToolTip(self.m_pluginInfo['maker'])
+        self.le_copyright.setText(self.m_pluginInfo['copyright'])
+        self.le_copyright.setToolTip(self.m_pluginInfo['copyright'])
+        self.le_unique_id.setText(str(self.m_pluginInfo['uniqueId']))
+        self.le_unique_id.setToolTip(str(self.m_pluginInfo['uniqueId']))
+        self.label_plugin.setText("\n%s\n" % self.m_pluginInfo['name'])
+        self.setWindowTitle(self.m_pluginInfo['name'])
 
-        self.le_ains.setText(str(audio_count['ins']))
-        self.le_aouts.setText(str(audio_count['outs']))
-        self.le_params.setText(str(param_count['ins']))
-        self.le_couts.setText(str(param_count['outs']))
-        self.le_is_synth.setText(self.tr("Yes") if (self.pinfo['hints'] & PLUGIN_IS_SYNTH) else self.tr("No"))
-        self.le_has_gui.setText(self.tr("Yes") if (self.pinfo['hints'] & PLUGIN_HAS_GUI) else self.tr("No"))
+        # Set Processing Data
+        audioCountInfo = Carla.Host.get_audio_port_count_info(self.m_pluginId)
+        midiCountInfo  = Carla.Host.get_midi_port_count_info(self.m_pluginId)
+        paramCountInfo = Carla.Host.get_parameter_count_info(self.m_pluginId)
 
-        self.scrollArea.setVisible((self.pinfo['hints'] & PLUGIN_IS_SYNTH) > 0 or (midi_count['ins'] > 0 < midi_count['outs']))
-        self.parent().recheck_hints(self.pinfo['hints'])
+        self.le_ains.setText(str(audioCountInfo['ins']))
+        self.le_aouts.setText(str(audioCountInfo['outs']))
+        self.le_params.setText(str(paramCountInfo['ins']))
+        self.le_couts.setText(str(paramCountInfo['outs']))
+
+        self.le_is_synth.setText(self.tr("Yes") if bool(pluginHints & PLUGIN_IS_SYNTH) else self.tr("No"))
+        self.le_has_gui.setText(self.tr("Yes") if bool(pluginHints & PLUGIN_HAS_GUI) else self.tr("No"))
+
+        # Show/hide keyboard
+        self.scrollArea.setVisible((pluginHints & PLUGIN_IS_SYNTH) > 0 or (midiCountInfo['ins'] > 0 < midiCountInfo['outs']))
+
+        # Force-Update parent for new hints (knobs)
+        self.parent().recheck_hints(pluginHints)
 
     def do_reload_parameters(self):
-        parameters_count = Carla.Host.get_parameter_count(self.plugin_id)
+        parameterCount = Carla.Host.get_parameter_count(self.m_pluginId)
 
-        self.parameter_list = []
-        self.parameter_list_to_update = []
+        self.m_parameterList = []
+        self.m_parameterIdsToUpdate = []
 
-        self.tab_icon_count  = 0
-        self.tab_icon_timers = []
+        self.m_tabIconCount  = 0
+        self.m_tabIconTimers = []
 
+        # remove all parameter tabs
         for i in range(self.tabWidget.count()):
             if i == 0: continue
             self.tabWidget.widget(1).deleteLater()
             self.tabWidget.removeTab(1)
 
-        if parameters_count <= 0:
+        if parameterCount <= 0:
             pass
 
-        elif parameters_count <= MAX_PARAMETERS:
-            p_in = []
-            p_in_tmp = []
-            p_in_index = 0
-            p_in_width = 0
+        elif parameterCount <= MAX_PARAMETERS:
+            paramInputListFull  = []
+            paramOutputListFull = []
 
-            p_out = []
-            p_out_tmp = []
-            p_out_index = 0
-            p_out_width = 0
+            paramInputList   = []
+            paramInputWidth  = 0
+            paramOutputList  = []
+            paramOutputWidth = 0
 
-            for i in range(parameters_count):
-                param_info = Carla.Host.get_parameter_info(self.plugin_id, i)
-                param_data = Carla.Host.get_parameter_data(self.plugin_id, i)
-                param_ranges = Carla.Host.get_parameter_ranges(self.plugin_id, i)
+            for i in range(parameterCount):
+                paramInfo = Carla.Host.get_parameter_info(self.m_pluginId, i)
+                paramData = Carla.Host.get_parameter_data(self.m_pluginId, i)
+                paramRanges = Carla.Host.get_parameter_ranges(self.m_pluginId, i)
 
-                if param_data['type'] not in (PARAMETER_INPUT, PARAMETER_OUTPUT):
+                if paramData['type'] not in (PARAMETER_INPUT, PARAMETER_OUTPUT):
                     continue
 
                 parameter = {
-                    'type': param_data['type'],
-                    'hints': param_data['hints'],
-                    'name': cString(param_info['name']),
-                    'unit': cString(param_info['unit']),
+                    'type':  paramData['type'],
+                    'hints': paramData['hints'],
+                    'name':  cString(paramInfo['name']),
+                    'unit':  cString(paramInfo['unit']),
                     'scalepoints': [],
 
-                    'index': param_data['index'],
-                    'default': param_ranges['def'],
-                    'minimum': param_ranges['min'],
-                    'maximum': param_ranges['max'],
-                    'step': param_ranges['step'],
-                    'stepSmall': param_ranges['stepSmall'],
-                    'stepLarge': param_ranges['stepLarge'],
-                    'midiChannel': param_data['midiChannel'],
-                    'midiCC': param_data['midiCC'],
+                    'index':   paramData['index'],
+                    'default': paramRanges['def'],
+                    'minimum': paramRanges['min'],
+                    'maximum': paramRanges['max'],
+                    'step':    paramRanges['step'],
+                    'stepSmall': paramRanges['stepSmall'],
+                    'stepLarge': paramRanges['stepLarge'],
+                    'midiCC':    paramData['midiCC'],
+                    'midiChannel': paramData['midiChannel'],
 
-                    'current': Carla.Host.get_current_parameter_value(self.plugin_id, i)
+                    'current': Carla.Host.get_current_parameter_value(self.m_pluginId, i)
                 }
 
-                for j in range(param_info['scalePointCount']):
-                    scalepoint = Carla.Host.get_parameter_scalepoint_info(self.plugin_id, i, j)
-                    parameter['scalepoints'].append({
-                          'value': scalepoint['value'],
-                          'label': cString(scalepoint['label'])
+                for j in range(paramInfo['scalePointCount']):
+                    scalePointInfo = Carla.Host.get_parameter_scalepoint_info(self.m_pluginId, i, j)
+
+                    parameter['scalepoints'].append(
+                        {
+                          'value': scalePointInfo['value'],
+                          'label': cString(scalePointInfo['label'])
                         })
 
                 # -----------------------------------------------------------------
                 # Get width values, in packs of 10
 
                 if parameter['type'] == PARAMETER_INPUT:
-                    p_in_tmp.append(parameter)
-                    p_in_width_tmp = QFontMetrics(self.font()).width(parameter['name'])
+                    paramInputList.append(parameter)
+                    paramInputWidthTMP = QFontMetrics(self.font()).width(parameter['name'])
 
-                    if p_in_width_tmp > p_in_width:
-                        p_in_width = p_in_width_tmp
+                    if paramInputWidthTMP > paramInputWidth:
+                        paramInputWidth = paramInputWidthTMP
 
-                    if len(p_in_tmp) == 10:
-                        p_in.append((p_in_tmp, p_in_width))
-                        p_in_tmp = []
-                        p_in_index = 0
-                        p_in_width = 0
-                    else:
-                        p_in_index += 1
+                    if len(paramInputList) == 10:
+                        paramInputListFull.append((paramInputList, paramInputWidth))
+                        paramInputList  = []
+                        paramInputWidth = 0
 
                 elif parameter['type'] == PARAMETER_OUTPUT:
-                    p_out_tmp.append(parameter)
-                    p_out_width_tmp = QFontMetrics(self.font()).width(parameter['name'])
+                    paramOutputList.append(parameter)
+                    paramOutputWidthTMP = QFontMetrics(self.font()).width(parameter['name'])
 
-                    if p_out_width_tmp > p_out_width:
-                        p_out_width = p_out_width_tmp
+                    if paramOutputWidthTMP > paramOutputWidth:
+                        paramOutputWidth = paramOutputWidthTMP
 
-                    if len(p_out_tmp) == 10:
-                        p_out.append((p_out_tmp, p_out_width))
-                        p_out_tmp = []
-                        p_out_index = 0
-                        p_out_width = 0
-                    else:
-                        p_out_index += 1
+                    if len(paramOutputList) == 10:
+                        paramOutputListFull.append((paramOutputList, paramOutputWidth))
+                        paramOutputList  = []
+                        paramOutputWidth = 0
 
             else:
                 # Final page width values
-                if 0 < len(p_in_tmp) < 10:
-                    p_in.append((p_in_tmp, p_in_width))
+                if 0 < len(paramInputList) < 10:
+                    paramInputListFull.append((paramInputList, paramInputWidth))
 
-                if 0 < len(p_out_tmp) < 10:
-                    p_out.append((p_out_tmp, p_out_width))
+                if 0 < len(paramOutputList) < 10:
+                    paramOutputListFull.append((paramOutputList, paramOutputWidth))
 
             # -----------------------------------------------------------------
             # Create parameter widgets
 
-            if len(p_in) > 0:
-                self.createParameterWidgets(p_in, self.tr("Parameters"), PARAMETER_INPUT)
-
-            if len(p_out) > 0:
-                self.createParameterWidgets(p_out, self.tr("Outputs"), PARAMETER_OUTPUT)
+            self.createParameterWidgets(PARAMETER_INPUT, paramInputListFull, self.tr("Parameters"))
+            self.createParameterWidgets(PARAMETER_OUTPUT, paramOutputListFull, self.tr("Outputs"))
 
         else: # > MAX_PARAMETERS
-            fake_name = "This plugin has too many parameters to display here!"
+            fakeName = self.tr("This plugin has too many parameters to display here!")
 
-            p_fake = []
-            p_fake_tmp = []
-            p_fake_width = QFontMetrics(self.font()).width(fake_name)
+            paramFakeListFull = []
+            paramFakeList  = []
+            paramFakeWidth = QFontMetrics(self.font()).width(fakeName)
 
             parameter = {
-                'type': PARAMETER_UNKNOWN,
+                'type':  PARAMETER_UNKNOWN,
                 'hints': 0,
-                'name': fake_name,
-                'unit': "",
+                'name':  fakeName,
+                'unit':  "",
                 'scalepoints': [],
 
-                'index': 0,
+                'index':   0,
                 'default': 0,
                 'minimum': 0,
                 'maximum': 0,
-                'step': 0,
+                'step':     0,
                 'stepSmall': 0,
                 'stepLarge': 0,
+                'midiCC':   -1,
                 'midiChannel': 0,
-                'midiCC': -1,
 
                 'current': 0.0
             }
 
-            p_fake_tmp.append(parameter)
-            p_fake.append((p_fake_tmp, p_fake_width))
+            paramFakeList.append(parameter)
+            paramFakeListFull.append((paramFakeList, paramFakeWidth))
 
-            self.createParameterWidgets(p_fake, self.tr("Information"), PARAMETER_UNKNOWN)
+            self.createParameterWidgets(PARAMETER_UNKNOWN, paramFakeListFull, self.tr("Information"))
+
+    def createParameterWidgets(self, paramType, paramListFull, tabPageName):
+        i = 1
+        for paramList, width in paramListFull:
+            if len(paramList) == 0:
+                break
+
+            tabPageContainer = QWidget(self.tabWidget)
+            tabPageLayout    = QVBoxLayout(tabPageContainer)
+            tabPageContainer.setLayout(tabPageLayout)
+
+            for paramInfo in paramList:
+                paramWidget = PluginParameter(tabPageContainer, paramInfo, self.m_pluginId, self.tabWidget.count())
+                paramWidget.label.setMinimumWidth(width)
+                paramWidget.label.setMaximumWidth(width)
+                tabPageLayout.addWidget(paramWidget)
+
+                self.m_parameterList.append((paramType, paramInfo['index'], paramWidget))
+
+                if paramType == PARAMETER_INPUT:
+                    self.connect(paramWidget, SIGNAL("valueChanged(int, double)"), SLOT("slot_parameterValueChanged(int, double)"))
+
+                self.connect(paramWidget, SIGNAL("midiChannelChanged(int, int)"), SLOT("slot_parameterMidiChannelChanged(int, int)"))
+                self.connect(paramWidget, SIGNAL("midiCcChanged(int, int)"), SLOT("slot_parameterMidiCcChanged(int, int)"))
+
+            # FIXME
+            tabPageLayout.addStretch()
+
+            self.tabWidget.addTab(tabPageContainer, "%s (%i)" % (tabPageName, i))
+            i += 1
+
+            if paramType == PARAMETER_INPUT:
+                self.tabWidget.setTabIcon(paramWidget.tabIndex(), self.m_tabIconOff)
+
+            self.m_tabIconTimers.append(ICON_STATE_NULL)
 
     def do_reload_programs(self):
         # Programs
         self.cb_programs.blockSignals(True)
         self.cb_programs.clear()
 
-        program_count = Carla.Host.get_program_count(self.plugin_id)
+        programCount = Carla.Host.get_program_count(self.m_pluginId)
 
-        if program_count > 0:
+        if programCount > 0:
             self.cb_programs.setEnabled(True)
 
-            for i in range(program_count):
-                pname = cString(Carla.Host.get_program_name(self.plugin_id, i))
-                self.cb_programs.addItem(pname)
+            for i in range(programCount):
+                pName = cString(Carla.Host.get_program_name(self.m_pluginId, i))
+                self.cb_programs.addItem(pName)
 
-            self.cur_program_index = Carla.Host.get_current_program_index(self.plugin_id)
-            self.cb_programs.setCurrentIndex(self.cur_program_index)
+            self.m_currentProgram = Carla.Host.get_current_program_index(self.m_pluginId)
+            self.cb_programs.setCurrentIndex(self.m_currentProgram)
 
         else:
+            self.m_currentProgram = -1
             self.cb_programs.setEnabled(False)
 
         self.cb_programs.blockSignals(False)
@@ -857,53 +872,97 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.cb_midi_programs.blockSignals(True)
         self.cb_midi_programs.clear()
 
-        midi_program_count = Carla.Host.get_midi_program_count(self.plugin_id)
+        midiProgramCount = Carla.Host.get_midi_program_count(self.m_pluginId)
 
-        if midi_program_count > 0:
+        if midiProgramCount > 0:
             self.cb_midi_programs.setEnabled(True)
 
-            for i in range(midi_program_count):
-                midip = Carla.Host.get_midi_program_data(self.plugin_id, i)
+            for i in range(midiProgramCount):
+                mpData  = Carla.Host.get_midi_program_data(self.m_pluginId, i)
+                mpBank  = int(mpData['bank'])
+                mpProg  = int(mpData['program'])
+                mpLabel = cString(mpData['label'])
+                self.cb_midi_programs.addItem("%03i:%03i - %s" % (mpBank, mpProg, mpLabel))
 
-                bank = int(midip['bank'])
-                prog = int(midip['program'])
-                label = cString(midip['label'])
-
-                self.cb_midi_programs.addItem("%03i:%03i - %s" % (bank, prog, label))
-
-            self.cur_midi_program_index = Carla.Host.get_current_midi_program_index(self.plugin_id)
-            self.cb_midi_programs.setCurrentIndex(self.cur_midi_program_index)
+            self.m_currentMidiProgram = Carla.Host.get_current_midi_program_index(self.m_pluginId)
+            self.cb_midi_programs.setCurrentIndex(self.m_currentMidiProgram)
 
         else:
+            self.m_currentMidiProgram = -1
             self.cb_midi_programs.setEnabled(False)
 
         self.cb_midi_programs.blockSignals(False)
 
-    def saveState_InternalFormat(self):
-        content = ("<?xml version='1.0' encoding='UTF-8'?>\n"
-                   "<!DOCTYPE CARLA-PRESET>\n"
-                   "<CARLA-PRESET VERSION='%s'>\n") % VERSION
+    def do_update(self):
+        # Update current program text
+        if self.cb_programs.count() > 0:
+            pIndex = self.cb_programs.currentIndex()
+            pName  = cString(Carla.Host.get_program_name(self.m_pluginId, pIndex))
+            self.cb_programs.setItemText(pIndex, pName)
 
+        # Update current midi program text
+        if self.cb_midi_programs.count() > 0:
+            mpIndex = self.cb_midi_programs.currentIndex()
+            mpData  = Carla.Host.get_midi_program_data(self.m_pluginId, mpIndex)
+            mpBank  = int(mpData['bank'])
+            mpProg  = int(mpData['program'])
+            mpLabel = cString(mpData['label'])
+            self.cb_midi_programs.setItemText(mpIndex, "%03i:%03i - %s" % (mpBank, mpProg, mpLabel))
+
+        for paramType, paramId, paramWidget in self.m_parameterList:
+            paramWidget.set_parameter_value(Carla.Host.get_current_parameter_value(self.m_pluginId, paramId), False)
+            paramWidget.update()
+
+    def set_parameter_to_update(self, index):
+        if index not in self.m_parameterIdsToUpdate:
+            self.m_parameterIdsToUpdate.append(index)
+
+    def set_parameter_midi_channel(self, index, midiChannel):
+        for paramType, paramId, paramWidget in self.m_parameterList:
+            if paramId == index:
+                paramWidget.set_parameter_midi_channel(midiChannel)
+                break
+
+    def set_parameter_midi_cc(self, index, midiCC):
+        for paramType, paramId, paramWidget in self.m_parameterList:
+            if paramId == index:
+                paramWidget.set_parameter_midi_cc(midiCC)
+                break
+
+    def set_program(self, index):
+        self.m_currentProgram = index
+        self.cb_programs.setCurrentIndex(index)
+        QTimer.singleShot(0, self, SLOT("slot_checkInputControlParameters()"))
+
+    def set_midi_program(self, index):
+        self.m_currentMidiProgram = index
+        self.cb_midi_programs.setCurrentIndex(index)
+        QTimer.singleShot(0, self, SLOT("slot_checkInputControlParameters()"))
+
+    def saveState(self):
+        content  = ""
+        content += "<?xml version='1.0' encoding='UTF-8'?>\n"
+        content += "<!DOCTYPE CARLA-PRESET>\n"
+        content += "<CARLA-PRESET VERSION='%s'>\n" % VERSION
         content += self.parent().getSaveXMLContent()
-
         content += "</CARLA-PRESET>\n"
 
         try:
-            fd = open(self.state_filename, "w")
+            fd = open(self.m_currentStateFilename, "w")
             fd.write(content)
             fd.close()
         except:
             QMessageBox.critical(self, self.tr("Error"), self.tr("Failed to save state file"))
 
-    def saveState_Lv2Format(self):
+    def saveStateLV2(self):
         pass
 
-    def saveState_VstFormat(self):
+    def saveStateAsVstPreset(self):
         pass
 
-    def loadState_InternalFormat(self):
+    def loadState(self):
         try:
-            fd = open(self.state_filename, "r")
+            fd = open(self.m_currentStateFilename, "r")
             stateRead = fd.read()
             fd.close()
         except:
@@ -913,149 +972,152 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         xml = QDomDocument()
         xml.setContent(stateRead)
 
-        xml_node = xml.documentElement()
+        xmlNode = xml.documentElement()
 
-        if xml_node.tagName() != "CARLA-PRESET":
+        if xmlNode.tagName() != "CARLA-PRESET":
             QMessageBox.critical(self, self.tr("Error"), self.tr("Not a valid Carla state file"))
             return
 
-        x_save_state_dict = getStateDictFromXML(xml_node)
+        x_save_state_dict = getSaveStateDictFromXML(xmlNode)
 
         self.parent().loadStateDict(x_save_state_dict)
 
-    def createParameterWidgets(self, p_list_full, tab_name, ptype):
-        for i in range(len(p_list_full)):
-            p_list = p_list_full[i][0]
-            width = p_list_full[i][1]
+    def loadStateLV2(self):
+        pass
 
-            if len(p_list) > 0:
-                container = QWidget(self.tabWidget)
-                layout = QVBoxLayout(container)
-                container.setLayout(layout)
-
-                for j in range(len(p_list)):
-                    pwidget = PluginParameter(container, p_list[j], self.plugin_id)
-                    pwidget.label.setMinimumWidth(width)
-                    pwidget.label.setMaximumWidth(width)
-                    pwidget.tab_index = self.tabWidget.count()
-                    layout.addWidget(pwidget)
-
-                    self.parameter_list.append((ptype, p_list[j]['index'], pwidget))
-
-                    if (ptype == PARAMETER_INPUT):
-                        self.connect(pwidget, SIGNAL("valueChanged(int, double)"), SLOT("slot_parameterValueChanged(int, double)"))
-
-                    self.connect(pwidget, SIGNAL("midiChannelChanged(int, int)"), SLOT("slot_parameterMidiChannelChanged(int, int)"))
-                    self.connect(pwidget, SIGNAL("midiCcChanged(int, int)"), SLOT("slot_parameterMidiCcChanged(int, int)"))
-
-                # FIXME
-                layout.addStretch()
-
-                self.tabWidget.addTab(container, "%s (%i)" % (tab_name, i + 1))
-
-                if (ptype == PARAMETER_INPUT):
-                    self.tabWidget.setTabIcon(pwidget.tab_index, self.tab_icon_off)
-
-                self.tab_icon_timers.append(ICON_STATE_NULL)
+    def loadStateFromVstPreset(self):
+        pass
 
     def animateTab(self, index):
-        if self.tab_icon_timers[index - 1] == ICON_STATE_NULL:
-            self.tabWidget.setTabIcon(index, self.tab_icon_on)
-        self.tab_icon_timers[index - 1] = ICON_STATE_ON
+        if self.m_tabIconTimers[index-1] == ICON_STATE_NULL:
+            self.tabWidget.setTabIcon(index, self.m_tabIconOn)
 
-    def check_gui_stuff(self):
+        self.m_tabIconTimers[index-1] = ICON_STATE_ON
+
+    def updateParametersDefaultValues(self):
+        for paramType, paramId, paramWidget in self.m_parameterList:
+            if self.m_pluginInfo["type"] not in (PLUGIN_GIG, PLUGIN_SF2, PLUGIN_SFZ):
+                paramWidget.set_default_value(Carla.Host.get_default_parameter_value(self.m_pluginId, paramId))
+
+    def updateParametersInputs(self):
+        for paramType, paramId, paramWidget in self.m_parameterList:
+            if paramType == PARAMETER_INPUT:
+                paramWidget.set_parameter_value(Carla.Host.get_current_parameter_value(self.m_pluginId, paramId), False)
+
+    def updateParametersOutputs(self):
+        for paramType, paramId, paramWidget in self.m_parameterList:
+            if paramType == PARAMETER_OUTPUT:
+                paramWidget.set_parameter_value(Carla.Host.get_current_parameter_value(self.m_pluginId, paramId), False)
+
+    def updatePlugin(self):
         # Check Tab icons
-        for i in range(len(self.tab_icon_timers)):
-            if self.tab_icon_timers[i] == ICON_STATE_ON:
-                self.tab_icon_timers[i] = ICON_STATE_WAIT
-            elif self.tab_icon_timers[i] == ICON_STATE_WAIT:
-                self.tab_icon_timers[i] = ICON_STATE_OFF
-            elif self.tab_icon_timers[i] == ICON_STATE_OFF:
-                self.tabWidget.setTabIcon(i + 1, self.tab_icon_off)
-                self.tab_icon_timers[i] = ICON_STATE_NULL
+        for i in range(len(self.m_tabIconTimers)):
+            if self.m_tabIconTimers[i] == ICON_STATE_ON:
+                self.m_tabIconTimers[i] = ICON_STATE_WAIT
+            elif self.m_tabIconTimers[i] == ICON_STATE_WAIT:
+                self.m_tabIconTimers[i] = ICON_STATE_OFF
+            elif self.m_tabIconTimers[i] == ICON_STATE_OFF:
+                self.m_tabIconTimers[i] = ICON_STATE_NULL
+                self.tabWidget.setTabIcon(i+1, self.m_tabIconOff)
 
         # Check parameters needing update
-        for parameter_id in self.parameter_list_to_update:
-            value = Carla.Host.get_current_parameter_value(self.plugin_id, parameter_id)
+        for index in self.m_parameterIdsToUpdate:
+            value = Carla.Host.get_current_parameter_value(self.m_pluginId, index)
 
-            for ptype, pid, pwidget in self.parameter_list:
-                if pid == parameter_id:
-                    pwidget.set_parameter_value(value, False)
+            for paramType, paramId, paramWidget in self.m_parameterList:
+                if paramId == index:
+                    paramWidget.set_parameter_value(value, False)
 
-                    if ptype == PARAMETER_INPUT:
-                        self.animateTab(pwidget.tab_index)
+                    if paramType == PARAMETER_INPUT:
+                        self.animateTab(paramWidget.tabIndex())
 
                     break
 
         # Clear all parameters
-        self.parameter_list_to_update = []
+        self.m_parameterIdsToUpdate = []
 
         # Update output parameters
-        QTimer.singleShot(0, self, SLOT("slot_checkOutputControlParameters()"))
+        self.updateParametersOutputs()
 
     @pyqtSlot()
     def slot_saveState(self):
-        # TODO - LV2 and VST native formats
-        if (self.state_filename):
-            ask_try = QMessageBox.question(self, self.tr("Overwrite?"), self.tr("Overwrite previously created file?"), QMessageBox.Ok|QMessageBox.Cancel)
+        if self.m_pluginInfo['type'] == PLUGIN_LV2:
+            # FIXME - remove this
+            QMessageBox.warning(self, self.tr("Warning"), self.tr("LV2 Presets is not implemented yet"))
+            return self.saveStateLV2()
 
-            if (ask_try == QMessageBox.Ok):
-                self.saveState_InternalFormat()
-            else:
-                self.state_filename = None
-                self.slot_saveState()
+        # TODO - VST preset support
+
+        if self.m_currentStateFilename:
+            askTry = QMessageBox.question(self, self.tr("Overwrite?"), self.tr("Overwrite previously created file?"), QMessageBox.Ok|QMessageBox.Cancel)
+
+            if askTry == QMessageBox.Ok:
+                return self.saveState()
+
+            self.m_currentStateFilename = None
+            self.slot_saveState()
 
         else:
-            file_filter = self.tr("Carla State File (*.carxs)")
-            filename_try = QFileDialog.getSaveFileName(self, self.tr("Save Carla State File"), filter=file_filter)
+            fileFilter  = self.tr("Carla State File (*.carxs)")
+            filenameTry = QFileDialog.getSaveFileName(self, self.tr("Save Plugin State File"), filter=fileFilter)
 
-            if (filename_try):
-                self.state_filename = filename_try
-                self.saveState_InternalFormat()
+            if filenameTry:
+                self.m_currentStateFilename = filenameTry
+                self.saveState()
 
     @pyqtSlot()
     def slot_loadState(self):
-        # TODO - LV2 and VST native formats
-        file_filter = self.tr("Carla State File (*.carxs)")
-        filename_try = QFileDialog.getOpenFileName(self, self.tr("Open Carla State File"), filter=file_filter)
+        if self.m_pluginInfo['type'] == PLUGIN_LV2:
+            # FIXME - remove this
+            QMessageBox.warning(self, self.tr("Warning"), self.tr("LV2 Presets is not implemented yet"))
+            return self.loadStateLV2()
 
-        if (filename_try):
-            self.state_filename = filename_try
-            self.loadState_InternalFormat()
+        # TODO - VST preset support
+
+        fileFilter  = self.tr("Carla State File (*.carxs)")
+        filenameTry = QFileDialog.getOpenFileName(self, self.tr("Open Plugin State File"), filter=fileFilter)
+
+        if filenameTry:
+            self.m_currentStateFilename = filenameTry
+            self.loadState()
 
     @pyqtSlot(int, float)
     def slot_parameterValueChanged(self, parameter_id, value):
-        Carla.Host.set_parameter_value(self.plugin_id, parameter_id, value)
+        Carla.Host.set_parameter_value(self.m_pluginId, parameter_id, value)
 
     @pyqtSlot(int, int)
     def slot_parameterMidiChannelChanged(self, parameter_id, channel):
-        Carla.Host.set_parameter_midi_channel(self.plugin_id, parameter_id, channel - 1)
+        Carla.Host.set_parameter_midi_channel(self.m_pluginId, parameter_id, channel - 1)
 
     @pyqtSlot(int, int)
     def slot_parameterMidiCcChanged(self, parameter_id, cc_index):
-        Carla.Host.set_parameter_midi_cc(self.plugin_id, parameter_id, cc_index)
+        Carla.Host.set_parameter_midi_cc(self.m_pluginId, parameter_id, cc_index)
 
     @pyqtSlot(int)
     def slot_programIndexChanged(self, index):
-        if self.cur_program_index != index:
-            Carla.Host.set_program(self.plugin_id, index)
-            QTimer.singleShot(0, self, SLOT("slot_checkInputControlParameters()"))
-        self.cur_program_index = index
+        if self.m_currentProgram != index:
+            Carla.Host.set_program(self.m_pluginId, index)
+            self.updateParametersDefaultValues()
+            self.updateParametersInputs()
+
+        self.m_currentProgram = index
 
     @pyqtSlot(int)
     def slot_midiProgramIndexChanged(self, index):
-        if self.cur_midi_program_index != index:
-            Carla.Host.set_midi_program(self.plugin_id, index)
-            QTimer.singleShot(0, self, SLOT("slot_checkInputControlParameters()"))
-        self.cur_midi_program_index = index
+        if self.m_currentMidiProgram != index:
+            Carla.Host.set_midi_program(self.m_pluginId, index)
+            self.updateParametersDefaultValues()
+            self.updateParametersInputs()
+
+        self.m_currentMidiProgram = index
 
     @pyqtSlot(int)
     def slot_noteOn(self, note):
-        Carla.Host.send_midi_note(self.plugin_id, 0, note, 100)
+        Carla.Host.send_midi_note(self.m_pluginId, 0, note, 100)
 
     @pyqtSlot(int)
     def slot_noteOff(self, note):
-        Carla.Host.send_midi_note(self.plugin_id, 0, note, 0)
+        Carla.Host.send_midi_note(self.m_pluginId, 0, note, 0)
 
     @pyqtSlot()
     def slot_notesOn(self):
@@ -1067,17 +1129,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
     @pyqtSlot()
     def slot_checkInputControlParameters(self):
-        for ptype, pid, pwidget in self.parameter_list:
-            if ptype == PARAMETER_INPUT:
-                if self.pinfo["type"] not in (PLUGIN_GIG, PLUGIN_SF2, PLUGIN_SFZ):
-                    pwidget.set_default_value(Carla.Host.get_default_parameter_value(self.plugin_id, pid))
-                pwidget.set_parameter_value(Carla.Host.get_current_parameter_value(self.plugin_id, pid), False)
-
-    @pyqtSlot()
-    def slot_checkOutputControlParameters(self):
-        for ptype, pid, pwidget in self.parameter_list:
-            if (ptype == PARAMETER_OUTPUT):
-                pwidget.set_parameter_value(Carla.Host.get_current_parameter_value(self.plugin_id, pid), False)
+        self.updateParametersInputs()
 
     def done(self, r):
         QDialog.done(self, r)
@@ -1512,7 +1564,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
             x_save_state_custom_data = deepcopy(save_state_custom_data)
 
-            x_save_state_custom_data['type']  = CustomDataType2String(custom_data['type'])
+            x_save_state_custom_data['type']  = getCustomDataTypeString(custom_data['type'])
             x_save_state_custom_data['key']   = cString(custom_data['key'])
             x_save_state_custom_data['value'] = cString(custom_data['value'])
 
@@ -1771,7 +1823,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             self.parameter_activity_timer = None
 
         # Update edit dialog
-        self.edit_dialog.check_gui_stuff()
+        self.edit_dialog.updatePlugin()
 
     @pyqtSlot(bool)
     def slot_setActive(self, yesno):
