@@ -22,7 +22,7 @@
 #include <QtGui/QFont>
 #include <QtGui/QPen>
 
-#include "patchcanvas-api.h"
+#include "../patchcanvas.h"
 
 START_NAMESPACE_PATCHCANVAS
 
@@ -96,10 +96,6 @@ public:
     QPen rubberband_pen;
     QColor rubberband_brush;
 };
-
-Theme::List getDefaultTheme();
-QString getThemeName(Theme::List id);
-QString getDefaultThemeName();
 
 END_NAMESPACE_PATCHCANVAS
 

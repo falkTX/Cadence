@@ -1,3 +1,7 @@
+/*
+ * PatchCanvas test app
+ */
+
 #include "canvastestapp.h"
 #include "ui_canvastestapp.h"
 
@@ -402,4 +406,17 @@ void CanvasTestApp::closeEvent(QCloseEvent* event)
     settings->setValue("Geometry", QVariant(saveGeometry()));
 
     QMainWindow::closeEvent(event);
+}
+
+// -------------------------------------------------------------------------------------------------------
+
+#include <QtGui/QApplication>
+
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+    CanvasTestApp w;
+    w.show();
+
+    return a.exec();
 }

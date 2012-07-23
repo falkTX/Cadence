@@ -25,10 +25,8 @@
 #define PATCHCANVAS_ORGANISATION_NAME "PatchCanvas"
 #endif
 
-#include <QtCore/QString>
-
-#include "patchcanvas-theme.h"
-#include "patchscene.h"
+#include "patchcanvas/patchcanvas-theme.h"
+#include "patchcanvas/patchscene.h"
 
 START_NAMESPACE_PATCHCANVAS
 
@@ -129,6 +127,11 @@ void disconnectPorts(int connection_id);
 
 void arrange();
 void updateZValues();
+
+// Theme
+Theme::List getDefaultTheme();
+QString getThemeName(Theme::List id);
+QString getDefaultThemeName();
 
 END_NAMESPACE_PATCHCANVAS
 

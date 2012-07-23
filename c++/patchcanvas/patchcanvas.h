@@ -20,7 +20,7 @@
 
 #include <QtGui/QGraphicsItem>
 
-#include "patchcanvas-api.h"
+#include "../patchcanvas.h"
 
 #define foreach2(var, list) \
     for (int i=0; i < list.count(); i++) { var = list[i];

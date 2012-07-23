@@ -9,7 +9,7 @@
 
 #include <jack/jack.h>
 
-#include "patchcanvas-api.h"
+#include "patchcanvas.h"
 
 namespace Ui {
     class CanvasTestApp;

@@ -16,6 +16,7 @@
  */
 
 #include "patchcanvas.h"
+#include "patchscene.h"
 
 #include <QtCore/QSettings>
 #include <QtCore/QTimer>

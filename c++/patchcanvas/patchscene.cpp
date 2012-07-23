@@ -24,8 +24,8 @@
 #include <QtGui/QGraphicsSceneWheelEvent>
 #include <QtGui/QGraphicsView>
 
-#include "patchcanvas.h"
-#include "canvasbox.h"
+#include "patchcanvas/patchcanvas.h"
+#include "patchcanvas/canvasbox.h"
 
 using namespace PatchCanvas;
 
