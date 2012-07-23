@@ -23,7 +23,7 @@ from copy import deepcopy
 from subprocess import Popen, PIPE
 
 # Imports (Custom)
-from shared import *
+from shared_carla import *
 
 try:
     import ladspa_rdf
@@ -373,7 +373,7 @@ def findSoundKits(bPATH, stype):
     elif stype == "sfz":
         extensions = (".sfz", ".sfZ", ".sFZ", ".SFZ", ".SFz", ".Sfz")
     else:
-        extensions = ()
+        return []
 
     for root, dirs, files in os.walk(bPATH):
         for name in [name for name in files if name.endswith(extensions)]:
@@ -553,134 +553,6 @@ if is64bit:
     c_uintptr = c_uint64
 else:
     c_uintptr = c_uint32
-
-# static max values
-MAX_PLUGINS     = 99
-MAX_PARAMETERS  = 200
-
-# plugin hints
-PLUGIN_IS_BRIDGE   = 0x01
-PLUGIN_IS_SYNTH    = 0x02
-PLUGIN_HAS_GUI     = 0x04
-PLUGIN_USES_CHUNKS = 0x08
-PLUGIN_CAN_DRYWET  = 0x10
-PLUGIN_CAN_VOLUME  = 0x20
-PLUGIN_CAN_BALANCE = 0x40
-
-# parameter hints
-PARAMETER_IS_BOOLEAN       = 0x01
-PARAMETER_IS_INTEGER       = 0x02
-PARAMETER_IS_LOGARITHMIC   = 0x04
-PARAMETER_IS_ENABLED       = 0x08
-PARAMETER_IS_AUTOMABLE     = 0x10
-PARAMETER_USES_SAMPLERATE  = 0x20
-PARAMETER_USES_SCALEPOINTS = 0x40
-PARAMETER_USES_CUSTOM_TEXT = 0x80
-
-# enum BinaryType
-BINARY_NONE   = 0
-BINARY_UNIX32 = 1
-BINARY_UNIX64 = 2
-BINARY_WIN32  = 3
-BINARY_WIN64  = 4
-
-# enum PluginType
-PLUGIN_NONE   = 0
-PLUGIN_LADSPA = 1
-PLUGIN_DSSI   = 2
-PLUGIN_LV2    = 3
-PLUGIN_VST    = 4
-PLUGIN_GIG    = 5
-PLUGIN_SF2    = 6
-PLUGIN_SFZ    = 7
-
-# enum PluginCategory
-PLUGIN_CATEGORY_NONE      = 0
-PLUGIN_CATEGORY_SYNTH     = 1
-PLUGIN_CATEGORY_DELAY     = 2 # also Reverb
-PLUGIN_CATEGORY_EQ        = 3
-PLUGIN_CATEGORY_FILTER    = 4
-PLUGIN_CATEGORY_DYNAMICS  = 5 # Amplifier, Compressor, Gate
-PLUGIN_CATEGORY_MODULATOR = 6 # Chorus, Flanger, Phaser
-PLUGIN_CATEGORY_UTILITY   = 7 # Analyzer, Converter, Mixer
-PLUGIN_CATEGORY_OTHER     = 8 # used to check if a plugin has a category
-
-# enum ParameterType
-PARAMETER_UNKNOWN = 0
-PARAMETER_INPUT   = 1
-PARAMETER_OUTPUT  = 2
-PARAMETER_LATENCY = 3
-
-# enum InternalParametersIndex
-PARAMETER_ACTIVE = -1
-PARAMETER_DRYWET = -2
-PARAMETER_VOLUME = -3
-PARAMETER_BALANCE_LEFT  = -4
-PARAMETER_BALANCE_RIGHT = -5
-
-# enum CustomDataType
-CUSTOM_DATA_INVALID = 0
-CUSTOM_DATA_STRING  = 1
-CUSTOM_DATA_PATH    = 2
-CUSTOM_DATA_CHUNK   = 3
-CUSTOM_DATA_BINARY  = 4
-
-# enum GuiType
-GUI_NONE = 0
-GUI_INTERNAL_QT4   = 1
-GUI_INTERNAL_COCOA = 2
-GUI_INTERNAL_HWND  = 3
-GUI_INTERNAL_X11   = 4
-GUI_EXTERNAL_LV2   = 5
-GUI_EXTERNAL_SUIL  = 6
-GUI_EXTERNAL_OSC   = 7
-
-# enum OptionsType
-OPTION_PROCESS_MODE           = 1
-OPTION_MAX_PARAMETERS         = 2
-OPTION_PREFER_UI_BRIDGES      = 3
-OPTION_FORCE_STEREO           = 4
-OPTION_PROCESS_HIGH_PRECISION = 5
-OPTION_OSC_GUI_TIMEOUT        = 6
-OPTION_USE_DSSI_CHUNKS        = 7
-OPTION_PATH_LADSPA            = 8
-OPTION_PATH_DSSI              = 9
-OPTION_PATH_LV2               = 10
-OPTION_PATH_VST               = 11
-OPTION_PATH_GIG               = 12
-OPTION_PATH_SF2               = 13
-OPTION_PATH_SFZ               = 14
-OPTION_PATH_BRIDGE_UNIX32     = 15
-OPTION_PATH_BRIDGE_UNIX64     = 16
-OPTION_PATH_BRIDGE_WIN32      = 17
-OPTION_PATH_BRIDGE_WIN64      = 18
-OPTION_PATH_BRIDGE_LV2_GTK2   = 19
-OPTION_PATH_BRIDGE_LV2_QT4    = 20
-OPTION_PATH_BRIDGE_LV2_X11    = 21
-OPTION_PATH_BRIDGE_VST_X11    = 22
-
-# enum CallbackType
-CALLBACK_DEBUG                = 0
-CALLBACK_PARAMETER_CHANGED    = 1 # parameter_id, 0, value
-CALLBACK_PROGRAM_CHANGED      = 2 # program_id, 0, 0
-CALLBACK_MIDI_PROGRAM_CHANGED = 3 # midi_program_id, 0, 0
-CALLBACK_NOTE_ON              = 4 # key, velocity, 0
-CALLBACK_NOTE_OFF             = 5 # key, velocity, 0
-CALLBACK_SHOW_GUI             = 6 # show? (0|1, -1=quit), 0, 0
-CALLBACK_RESIZE_GUI           = 7 # width, height, 0
-CALLBACK_UPDATE               = 8
-CALLBACK_RELOAD_INFO          = 9
-CALLBACK_RELOAD_PARAMETERS    = 10
-CALLBACK_RELOAD_PROGRAMS      = 11
-CALLBACK_RELOAD_ALL           = 12
-CALLBACK_QUIT                 = 13
-
-# enum ProcessModeType
-PROCESS_MODE_SINGLE_CLIENT    = 0
-PROCESS_MODE_MULTIPLE_CLIENTS = 1
-PROCESS_MODE_CONTINUOUS_RACK  = 2
-
-PROCESS_MODE = PROCESS_MODE_MULTIPLE_CLIENTS
 
 class midi_program_t(Structure):
     _fields_ = [
