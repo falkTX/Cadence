@@ -32,7 +32,9 @@ class CarlaHostObject(object):
     __slots__ = [
         'Host',
         'gui',
-        'isControl'
+        'isControl',
+        'processMode',
+        'maxParameters'
     ]
 
 Carla = CarlaHostObject()
@@ -172,7 +174,8 @@ PROCESS_MODE_CONTINUOUS_RACK  = 2
 # ------------------------------------------------------------------------------------------------
 # Carla GUI stuff
 
-PROCESS_MODE = PROCESS_MODE_MULTIPLE_CLIENTS
+Carla.processMode   = PROCESS_MODE_MULTIPLE_CLIENTS
+Carla.maxParameters = MAX_PARAMETERS
 
 ICON_STATE_NULL = 0
 ICON_STATE_WAIT = 1
@@ -391,40 +394,7 @@ def xmlSafeString(string, toXml):
 # ------------------------------------------------------------------------------------------------
 # Common widgets
 
-# Plugin GUI
-class PluginGUI(QDialog):
-    def __init__(self, parent, pluginName, resizable):
-        QDialog.__init__(self, parent)
-
-        self.m_resizable = resizable
-
-        self.vbLayout = QVBoxLayout(self)
-        self.vbLayout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(self.vbLayout)
-        self.setNewSize(50, 50)
-        self.setWindowTitle("%s (GUI)" % pluginName)
-
-    def setNewSize(self, width, height):
-        if width < 30:
-            width = 30
-        if height < 30:
-            height = 30
-
-        if self.m_resizable:
-            self.resize(width, height)
-        else:
-            self.setFixedSize(width, height)
-
-    def hideEvent(self, event):
-        # FIXME
-        event.accept()
-        self.close()
-
-    def done(self, r):
-        QDialog.done(self, r)
-        self.close()
-
-# (Single) Plugin Parameter
+# Plugin Parameter
 class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
     def __init__(self, parent, pInfo, pluginId, tabIndex):
         QWidget.__init__(self, parent)
@@ -559,6 +529,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
+        self.m_geometry = None
         self.m_pluginId = pluginId
         self.m_pluginInfo = None
 
@@ -599,6 +570,8 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
         self.connect(self.cb_programs, SIGNAL("currentIndexChanged(int)"), SLOT("slot_programIndexChanged(int)"))
         self.connect(self.cb_midi_programs, SIGNAL("currentIndexChanged(int)"), SLOT("slot_midiProgramIndexChanged(int)"))
+
+        self.connect(self, SIGNAL("finished(int)"), SLOT("slot_finished()"))
 
         self.do_reload_all()
 
@@ -691,7 +664,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         if parameterCount <= 0:
             pass
 
-        elif parameterCount <= MAX_PARAMETERS:
+        elif parameterCount <= Carla.maxParameters:
             paramInputListFull  = []
             paramOutputListFull = []
 
@@ -778,7 +751,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
             self.createParameterWidgets(PARAMETER_INPUT, paramInputListFull, self.tr("Parameters"))
             self.createParameterWidgets(PARAMETER_OUTPUT, paramOutputListFull, self.tr("Outputs"))
 
-        else: # > MAX_PARAMETERS
+        else: # > Carla.maxParameters
             fakeName = self.tr("This plugin has too many parameters to display here!")
 
             paramFakeListFull = []
@@ -994,6 +967,15 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
         self.m_tabIconTimers[index-1] = ICON_STATE_ON
 
+    def setVisible(self, yesNo):
+        if yesNo:
+            if self.m_geometry:
+                self.restoreGeometry(self.m_geometry)
+        else:
+            self.m_geometry = self.saveGeometry()
+
+        QDialog.setVisible(self, yesNo)
+
     def updateParametersDefaultValues(self):
         for paramType, paramId, paramWidget in self.m_parameterList:
             if self.m_pluginInfo["type"] not in (PLUGIN_GIG, PLUGIN_SF2, PLUGIN_SFZ):
@@ -1131,29 +1113,86 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
     def slot_checkInputControlParameters(self):
         self.updateParametersInputs()
 
+    @pyqtSlot()
+    def slot_finished(self):
+        self.parent().b_edit.setChecked(False)
+
     def done(self, r):
         QDialog.done(self, r)
         self.close()
 
 # (New) Plugin Widget
 class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
-    def __init__(self, parent, plugin_id):
+    def __init__(self, parent, pluginId):
         QFrame.__init__(self, parent)
         self.setupUi(self)
 
-        self.plugin_id = plugin_id
+        self.m_pluginId   = pluginId
+        self.m_pluginInfo = Carla.Host.get_plugin_info(pluginId)
+        self.m_pluginInfo["binary"]    = cString(self.m_pluginInfo["binary"])
+        self.m_pluginInfo["name"]      = cString(self.m_pluginInfo["name"])
+        self.m_pluginInfo["label"]     = cString(self.m_pluginInfo["label"])
+        self.m_pluginInfo["maker"]     = cString(self.m_pluginInfo["maker"])
+        self.m_pluginInfo["copyright"] = cString(self.m_pluginInfo["copyright"])
 
-        self.params_total = 0
-        self.parameter_activity_timer = None
+        self.m_parameterIconTimer = None
 
-        self.last_led_ain_state = False
-        self.last_led_aout_state = False
+        self.m_lastGreenLedState = False
+        self.m_lastBlueLedState  = False
+
+        if Carla.processMode == PROCESS_MODE_CONTINUOUS_RACK:
+            self.m_peaksInputCount = 2
+            self.m_peaksOutputCount = 2
+            self.stackedWidget.setCurrentIndex(0)
+        else:
+            audioCountInfo = Carla.Host.get_audio_port_count_info(self.m_pluginId)
+
+            self.m_peaksInputCount  = int(audioCountInfo['ins'])
+            self.m_peaksOutputCount = int(audioCountInfo['outs'])
+
+            if self.m_peaksInputCount > 2:
+                self.m_peaksInputCount = 2
+
+            if self.m_peaksOutputCount > 2:
+                self.m_peaksOutputCount = 2
+
+            if audioCountInfo['total'] == 0:
+                self.stackedWidget.setCurrentIndex(1)
+            else:
+                self.stackedWidget.setCurrentIndex(0)
+
+        midiCountInfo = Carla.Host.get_midi_port_count_info(self.m_pluginId)
+
+        if (self.m_pluginInfo['hints'] & PLUGIN_IS_SYNTH) > 0 or (midiCountInfo['ins'] > 0 < midiCountInfo['outs']):
+            self.led_audio_in.setVisible(False)
+        else:
+            self.led_midi.setVisible(False)
+
+        # Colorify
+        if self.m_pluginInfo['category'] == PLUGIN_CATEGORY_SYNTH:
+            self.setWidgetColor(PALETTE_COLOR_WHITE)
+        elif self.m_pluginInfo['category'] == PLUGIN_CATEGORY_DELAY:
+            self.setWidgetColor(PALETTE_COLOR_ORANGE)
+        elif self.m_pluginInfo['category'] == PLUGIN_CATEGORY_EQ:
+            self.setWidgetColor(PALETTE_COLOR_GREEN)
+        elif self.m_pluginInfo['category'] == PLUGIN_CATEGORY_FILTER:
+            self.setWidgetColor(PALETTE_COLOR_BLUE)
+        elif self.m_pluginInfo['category'] == PLUGIN_CATEGORY_DYNAMICS:
+            self.setWidgetColor(PALETTE_COLOR_PINK)
+        elif self.m_pluginInfo['category'] == PLUGIN_CATEGORY_MODULATOR:
+            self.setWidgetColor(PALETTE_COLOR_RED)
+        elif self.m_pluginInfo['category'] == PLUGIN_CATEGORY_UTILITY:
+            self.setWidgetColor(PALETTE_COLOR_YELLOW)
+        elif self.m_pluginInfo['category'] == PLUGIN_CATEGORY_OTHER:
+            self.setWidgetColor(PALETTE_COLOR_BROWN)
+        else:
+            self.setWidgetColor(PALETTE_COLOR_NONE)
 
         # Fake effect
-        self.color_1 = QColor(0, 0, 0, 220)
-        self.color_2 = QColor(0, 0, 0, 170)
-        self.color_3 = QColor(7, 7, 7, 250)
-        self.color_4 = QColor(14, 14, 14, 255)
+        self.m_color1 = QColor(0, 0, 0, 220)
+        self.m_color2 = QColor(0, 0, 0, 170)
+        self.m_color3 = QColor(7, 7, 7, 250)
+        self.m_color4 = QColor(14, 14, 14, 255)
 
         self.led_enable.setColor(self.led_enable.BIG_RED)
         self.led_enable.setChecked(False)
@@ -1175,13 +1214,8 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.dial_b_left.setPixmap(4)
         self.dial_b_right.setPixmap(4)
 
-        #self.dial_drywet.setLabel("Wet")
-        #self.dial_vol.setLabel("Vol")
-        #self.dial_b_left.setLabel("L")
-        #self.dial_b_right.setLabel("R")
-
-        self.dial_drywet.setCustomPaint(self.dial_b_left.CUSTOM_PAINT_CARLA_WET)
-        self.dial_vol.setCustomPaint(self.dial_b_right.CUSTOM_PAINT_CARLA_VOL)
+        self.dial_drywet.setCustomPaint(self.dial_drywet.CUSTOM_PAINT_CARLA_WET)
+        self.dial_vol.setCustomPaint(self.dial_vol.CUSTOM_PAINT_CARLA_VOL)
         self.dial_b_left.setCustomPaint(self.dial_b_left.CUSTOM_PAINT_CARLA_L)
         self.dial_b_right.setCustomPaint(self.dial_b_right.CUSTOM_PAINT_CARLA_R)
 
@@ -1191,93 +1225,32 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.peak_out.setColor(self.peak_in.BLUE)
         self.peak_out.setOrientation(self.peak_out.HORIZONTAL)
 
-        audio_count = Carla.Host.get_audio_port_count_info(self.plugin_id)
-        midi_count  = Carla.Host.get_midi_port_count_info(self.plugin_id)
+        self.peak_in.setChannels(self.m_peaksInputCount)
+        self.peak_out.setChannels(self.m_peaksOutputCount)
 
-        self.peaks_in  = int(audio_count['ins'])
-        self.peaks_out = int(audio_count['outs'])
+        self.label_name.setText(self.m_pluginInfo['name'])
 
-        if self.peaks_in > 2 or PROCESS_MODE == PROCESS_MODE_CONTINUOUS_RACK:
-            self.peaks_in = 2
-
-        if self.peaks_out > 2 or PROCESS_MODE == PROCESS_MODE_CONTINUOUS_RACK:
-            self.peaks_out = 2
-
-        self.peak_in.setChannels(self.peaks_in)
-        self.peak_out.setChannels(self.peaks_out)
-
-        self.pinfo = Carla.Host.get_plugin_info(self.plugin_id)
-        self.pinfo["binary"]    = cString(self.pinfo["binary"])
-        self.pinfo["name"]      = cString(self.pinfo["name"])
-        self.pinfo["label"]     = cString(self.pinfo["label"])
-        self.pinfo["maker"]     = cString(self.pinfo["maker"])
-        self.pinfo["copyright"] = cString(self.pinfo["copyright"])
-
-        # Set widget page
-        if self.pinfo['type'] == PLUGIN_NONE or audio_count['total'] == 0:
-            self.stackedWidget.setCurrentIndex(1)
-        else:
-            self.stackedWidget.setCurrentIndex(0)
-
-        self.label_name.setText(self.pinfo['name'])
-
-        # Enable/disable features
-        self.recheck_hints(self.pinfo['hints'])
-
-        # Colorify
-        if (self.pinfo['category'] == PLUGIN_CATEGORY_SYNTH):
-            self.setWidgetColor(PALETTE_COLOR_WHITE)
-        elif (self.pinfo['category'] == PLUGIN_CATEGORY_DELAY):
-            self.setWidgetColor(PALETTE_COLOR_ORANGE)
-        elif (self.pinfo['category'] == PLUGIN_CATEGORY_EQ):
-            self.setWidgetColor(PALETTE_COLOR_GREEN)
-        elif (self.pinfo['category'] == PLUGIN_CATEGORY_FILTER):
-            self.setWidgetColor(PALETTE_COLOR_BLUE)
-        elif (self.pinfo['category'] == PLUGIN_CATEGORY_DYNAMICS):
-            self.setWidgetColor(PALETTE_COLOR_PINK)
-        elif (self.pinfo['category'] == PLUGIN_CATEGORY_MODULATOR):
-            self.setWidgetColor(PALETTE_COLOR_RED)
-        elif (self.pinfo['category'] == PLUGIN_CATEGORY_UTILITY):
-            self.setWidgetColor(PALETTE_COLOR_YELLOW)
-        elif (self.pinfo['category'] == PLUGIN_CATEGORY_OTHER):
-            self.setWidgetColor(PALETTE_COLOR_BROWN)
-        else:
-            self.setWidgetColor(PALETTE_COLOR_NONE)
-
-        if (self.pinfo['hints'] & PLUGIN_IS_SYNTH) > 0 or (midi_count['ins'] > 0 < midi_count['outs']):
-            self.led_audio_in.setVisible(False)
-        else:
-            self.led_midi.setVisible(False)
-
-        self.edit_dialog = PluginEdit(self, self.plugin_id)
+        self.edit_dialog = PluginEdit(self, self.m_pluginId)
         self.edit_dialog.hide()
-        self.edit_dialog_geometry = None
 
-        if self.pinfo['hints'] & PLUGIN_HAS_GUI:
-            gui_info = Carla.Host.get_gui_info(self.plugin_id)
-            self.gui_dialog_type = gui_info['type']
+        self.gui_dialog = None
 
-            if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_HWND, GUI_INTERNAL_X11)):
-                self.gui_dialog = None
-                self.gui_dialog = PluginGUI(self, self.pinfo['name'], gui_info['resizable'])
+        if self.m_pluginInfo['hints'] & PLUGIN_HAS_GUI:
+            guiInfo = Carla.Host.get_gui_info(self.m_pluginId)
+            guiType = guiInfo['type']
+
+            if guiType in (GUI_INTERNAL_QT4, GUI_INTERNAL_COCOA, GUI_INTERNAL_HWND, GUI_INTERNAL_X11):
+                self.gui_dialog = PluginGUI(self, self.m_pluginInfo['name'], guiInfo['resizable'])
                 self.gui_dialog.hide()
-                self.gui_dialog_geometry = None
-                self.connect(self.gui_dialog, SIGNAL("finished(int)"), SLOT("slot_guiClosed()"))
 
                 # TODO - display
-                Carla.Host.set_gui_data(self.plugin_id, 0, unwrapinstance(self.gui_dialog))
+                Carla.Host.set_gui_data(self.m_pluginId, 0, unwrapinstance(self.gui_dialog))
 
-            elif self.gui_dialog_type in (GUI_EXTERNAL_LV2, GUI_EXTERNAL_SUIL, GUI_EXTERNAL_OSC):
-                self.gui_dialog = None
+            elif guiType in (GUI_EXTERNAL_LV2, GUI_EXTERNAL_SUIL, GUI_EXTERNAL_OSC):
+                pass
 
             else:
-                self.gui_dialog = None
-                self.gui_dialog_type = GUI_NONE
                 self.b_gui.setEnabled(False)
-
-        else:
-            self.gui_dialog = None
-            self.gui_dialog_type = GUI_NONE
 
         self.connect(self.led_enable, SIGNAL("clicked(bool)"), SLOT("slot_setActive(bool)"))
         self.connect(self.dial_drywet, SIGNAL("sliderMoved(int)"), SLOT("slot_setDryWet(int)"))
@@ -1293,54 +1266,52 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.connect(self.dial_b_left, SIGNAL("customContextMenuRequested(QPoint)"), SLOT("slot_showCustomDialMenu()"))
         self.connect(self.dial_b_right, SIGNAL("customContextMenuRequested(QPoint)"), SLOT("slot_showCustomDialMenu()"))
 
-        self.connect(self.edit_dialog, SIGNAL("finished(int)"), SLOT("slot_editClosed()"))
-
         self.check_gui_stuff()
 
-    def set_active(self, active, gui_send=False, callback_send=True):
-        if gui_send: self.led_enable.setChecked(active)
-        if callback_send: Carla.Host.set_active(self.plugin_id, active)
+    def set_active(self, active, sendGui=False, sendCallback=True):
+        if sendGui:      self.led_enable.setChecked(active)
+        if sendCallback: Carla.Host.set_active(self.m_pluginId, active)
 
-    def set_drywet(self, value, gui_send=False, callback_send=True):
-        if gui_send: self.dial_drywet.setValue(value)
-        if callback_send: Carla.Host.set_drywet(self.plugin_id, float(value) / 1000)
+    def set_drywet(self, value, sendGui=False, sendCallback=True):
+        if sendGui:      self.dial_drywet.setValue(value)
+        if sendCallback: Carla.Host.set_drywet(self.m_pluginId, float(value)/1000)
 
-        message = self.tr("Output dry/wet (%s%%)" % (value / 10))
+        message = self.tr("Output dry/wet (%i%%)" % int(value / 10))
         self.dial_drywet.setStatusTip(message)
         Carla.gui.statusBar().showMessage(message)
 
-    def set_volume(self, value, gui_send=False, callback_send=True):
-        if gui_send: self.dial_vol.setValue(value)
-        if callback_send: Carla.Host.set_volume(self.plugin_id, float(value) / 1000)
+    def set_volume(self, value, sendGui=False, sendCallback=True):
+        if sendGui:      self.dial_vol.setValue(value)
+        if sendCallback: Carla.Host.set_volume(self.m_pluginId, float(value)/1000)
 
-        message = self.tr("Output volume (%s%%)" % (value / 10))
+        message = self.tr("Output volume (%i%%)" % int(value / 10))
         self.dial_vol.setStatusTip(message)
         Carla.gui.statusBar().showMessage(message)
 
-    def set_balance_left(self, value, gui_send=False, callback_send=True):
-        if gui_send: self.dial_b_left.setValue(value)
-        if callback_send: Carla.Host.set_balance_left(self.plugin_id, float(value) / 1000)
+    def set_balance_left(self, value, sendGui=False, sendCallback=True):
+        if sendGui:      self.dial_b_left.setValue(value)
+        if sendCallback: Carla.Host.set_balance_left(self.m_pluginId, float(value)/1000)
 
-        if value == 0:
-            message = self.tr("Left Panning (Center)")
-        elif value < 0:
-            message = self.tr("Left Panning (%s%% Left)" % (-value / 10))
+        if value < 0:
+            message = self.tr("Left Panning (%i%% Left)" % int(-value / 10))
+        elif value > 0:
+            message = self.tr("Left Panning (%i%% Right)" % int(value / 10))
         else:
-            message = self.tr("Left Panning (%s%% Right)" % (value / 10))
+            message = self.tr("Left Panning (Center)")
 
         self.dial_b_left.setStatusTip(message)
         Carla.gui.statusBar().showMessage(message)
 
-    def set_balance_right(self, value, gui_send=False, callback_send=True):
-        if gui_send: self.dial_b_right.setValue(value)
-        if callback_send: Carla.Host.set_balance_right(self.plugin_id, float(value) / 1000)
+    def set_balance_right(self, value, sendGui=False, sendCallback=True):
+        if sendGui:      self.dial_b_right.setValue(value)
+        if sendCallback: Carla.Host.set_balance_right(self.m_pluginId, float(value)/1000)
 
-        if value == 0:
-            message = self.tr("Right Panning (Center)")
-        elif value < 0:
-            message = self.tr("Right Panning (%s%% Left)" % (-value / 10))
+        if value < 0:
+            message = self.tr("Right Panning (%i%% Left)" % int(-value / 10))
+        elif value > 0:
+            message = self.tr("Right Panning (%i%% Right)" % int(value / 10))
         else:
-            message = self.tr("Right Panning (%s%% Right)" % (value / 10))
+            message = self.tr("Right Panning (Center)")
 
         self.dial_b_right.setStatusTip(message)
         Carla.gui.statusBar().showMessage(message)
@@ -1350,65 +1321,65 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             r = 110
             g = 110
             b = 110
-            border_r = 72
-            border_g = 72
-            border_b = 72
+            borderR = 72
+            borderG = 72
+            borderB = 72
         elif color == PALETTE_COLOR_RED:
             r = 110
             g = 15
             b = 15
-            border_r = 110
-            border_g = 45
-            border_b = 45
+            borderR = 110
+            borderG = 45
+            borderB = 45
         elif color == PALETTE_COLOR_GREEN:
             r = 15
             g = 110
             b = 15
-            border_r = 72
-            border_g = 110
-            border_b = 72
+            borderR = 72
+            borderG = 110
+            borderB = 72
         elif color == PALETTE_COLOR_BLUE:
             r = 15
             g = 15
             b = 110
-            border_r = 45
-            border_g = 45
-            border_b = 110
+            borderR = 45
+            borderG = 45
+            borderB = 110
         elif color == PALETTE_COLOR_YELLOW:
             r = 110
             g = 110
             b = 15
-            border_r = 110
-            border_g = 110
-            border_b = 110
+            borderR = 110
+            borderG = 110
+            borderB = 110
         elif color == PALETTE_COLOR_ORANGE:
             r = 180
             g = 110
             b = 15
-            border_r = 155
-            border_g = 110
-            border_b = 60
+            borderR = 155
+            borderG = 110
+            borderB = 60
         elif color == PALETTE_COLOR_BROWN:
             r = 110
             g = 35
             b = 15
-            border_r = 110
-            border_g = 60
-            border_b = 45
+            borderR = 110
+            borderG = 60
+            borderB = 45
         elif color == PALETTE_COLOR_PINK:
             r = 110
             g = 15
             b = 110
-            border_r = 110
-            border_g = 45
-            border_b = 110
+            borderR = 110
+            borderG = 45
+            borderB = 110
         else:
             r = 35
             g = 35
             b = 35
-            border_r = 60
-            border_g = 60
-            border_b = 60
+            borderR = 60
+            borderG = 60
+            borderB = 60
 
         self.setStyleSheet("""
         QFrame#PluginWidget {
@@ -1450,56 +1421,56 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         }
         """ % (
         # QWidget#widget_buttons
-        border_r, border_g, border_b,
-        border_r, border_g, border_b,
-        border_r, border_g, border_b,
-        border_r, border_g, border_b,
+        borderR, borderG, borderB,
+        borderR, borderG, borderB,
+        borderR, borderG, borderB,
+        borderR, borderG, borderB,
         # QPushButton#b_*
         r, g, b,
-        border_r, border_g, border_b,
+        borderR, borderG, borderB,
         # QFrame#frame_name
         r, g, b,
-        border_r, border_g, border_b
+        borderR, borderG, borderB
         ))
 
     def recheck_hints(self, hints):
-        self.pinfo['hints'] = hints
-        self.dial_drywet.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_DRYWET)
-        self.dial_vol.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_VOLUME)
-        self.dial_b_left.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_BALANCE)
-        self.dial_b_right.setEnabled(self.pinfo['hints'] & PLUGIN_CAN_BALANCE)
-        self.b_gui.setEnabled(self.pinfo['hints'] & PLUGIN_HAS_GUI)
+        self.m_pluginInfo['hints'] = hints
+        self.dial_drywet.setEnabled(hints & PLUGIN_CAN_DRYWET)
+        self.dial_vol.setEnabled(hints & PLUGIN_CAN_VOLUME)
+        self.dial_b_left.setEnabled(hints & PLUGIN_CAN_BALANCE)
+        self.dial_b_right.setEnabled(hints & PLUGIN_CAN_BALANCE)
+        self.b_gui.setEnabled(hints & PLUGIN_HAS_GUI)
 
     def getSaveXMLContent(self):
-        Carla.Host.prepare_for_save(self.plugin_id)
+        Carla.Host.prepare_for_save(self.m_pluginId)
 
-        if self.pinfo['type'] == PLUGIN_LADSPA:
-            type_str = "LADSPA"
-        elif self.pinfo['type'] == PLUGIN_DSSI:
-            type_str = "DSSI"
-        elif self.pinfo['type'] == PLUGIN_LV2:
-            type_str = "LV2"
-        elif self.pinfo['type'] == PLUGIN_VST:
-            type_str = "VST"
-        elif self.pinfo['type'] == PLUGIN_GIG:
-            type_str = "GIG"
-        elif self.pinfo['type'] == PLUGIN_SF2:
-            type_str = "SF2"
-        elif self.pinfo['type'] == PLUGIN_SFZ:
-            type_str = "SFZ"
+        if self.m_pluginInfo['type'] == PLUGIN_LADSPA:
+            typeStr = "LADSPA"
+        elif self.m_pluginInfo['type'] == PLUGIN_DSSI:
+            typeStr = "DSSI"
+        elif self.m_pluginInfo['type'] == PLUGIN_LV2:
+            typeStr = "LV2"
+        elif self.m_pluginInfo['type'] == PLUGIN_VST:
+            typeStr = "VST"
+        elif self.m_pluginInfo['type'] == PLUGIN_GIG:
+            typeStr = "GIG"
+        elif self.m_pluginInfo['type'] == PLUGIN_SF2:
+            typeStr = "SF2"
+        elif self.m_pluginInfo['type'] == PLUGIN_SFZ:
+            typeStr = "SFZ"
         else:
-            type_str = "Unknown"
+            typeStr = "Unknown"
 
         x_save_state_dict = deepcopy(save_state_dict)
 
         # ----------------------------
         # Basic info
 
-        x_save_state_dict['Type'] = type_str
-        x_save_state_dict['Name'] = self.pinfo['name']
-        x_save_state_dict['Label'] = self.pinfo['label']
-        x_save_state_dict['Binary'] = self.pinfo['binary']
-        x_save_state_dict['UniqueID'] = self.pinfo['uniqueId']
+        x_save_state_dict['Type'] = typeStr
+        x_save_state_dict['Name'] = self.m_pluginInfo['name']
+        x_save_state_dict['Label'] = self.m_pluginInfo['label']
+        x_save_state_dict['Binary'] = self.m_pluginInfo['binary']
+        x_save_state_dict['UniqueID'] = self.m_pluginInfo['uniqueId']
 
         # ----------------------------
         # Internals
@@ -1513,132 +1484,144 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         # ----------------------------
         # Current Program
 
-        if (self.edit_dialog.cb_programs.currentIndex() >= 0):
+        if self.edit_dialog.cb_programs.currentIndex() >= 0:
             x_save_state_dict['CurrentProgramIndex'] = self.edit_dialog.cb_programs.currentIndex()
-            x_save_state_dict['CurrentProgramName'] = self.edit_dialog.cb_programs.currentText()
+            x_save_state_dict['CurrentProgramName']  = self.edit_dialog.cb_programs.currentText()
 
         # ----------------------------
         # Current MIDI Program
 
         if self.edit_dialog.cb_midi_programs.currentIndex() >= 0:
-            midi_program_data = Carla.Host.get_midi_program_data(self.plugin_id, self.edit_dialog.cb_midi_programs.currentIndex())
-            x_save_state_dict['CurrentMidiBank'] = midi_program_data['bank']
-            x_save_state_dict['CurrentMidiProgram'] = midi_program_data['program']
+            midiProgramData = Carla.Host.get_midi_program_data(self.m_pluginId, self.edit_dialog.cb_midi_programs.currentIndex())
+            x_save_state_dict['CurrentMidiBank']    = midiProgramData['bank']
+            x_save_state_dict['CurrentMidiProgram'] = midiProgramData['program']
 
         # ----------------------------
         # Parameters
 
-        parameter_count = Carla.Host.get_parameter_count(self.plugin_id)
+        sampleRate = Carla.Host.get_sample_rate()
+        parameterCount = Carla.Host.get_parameter_count(self.m_pluginId)
 
-        for i in range(parameter_count):
-            parameter_info = Carla.Host.get_parameter_info(self.plugin_id, i)
-            parameter_data = Carla.Host.get_parameter_data(self.plugin_id, i)
+        for i in range(parameterCount):
+            parameterInfo = Carla.Host.get_parameter_info(self.m_pluginId, i)
+            parameterData = Carla.Host.get_parameter_data(self.m_pluginId, i)
 
-            if parameter_data['type'] != PARAMETER_INPUT:
+            if parameterData['type'] != PARAMETER_INPUT:
                 continue
 
             x_save_state_parameter = deepcopy(save_state_parameter)
 
-            x_save_state_parameter['index']  = parameter_data['index']
-            x_save_state_parameter['name']   = cString(parameter_info['name'])
-            x_save_state_parameter['symbol'] = cString(parameter_info['symbol'])
-            x_save_state_parameter['value']  = Carla.Host.get_current_parameter_value(self.plugin_id, parameter_data['index'])
-            x_save_state_parameter['midiChannel'] = parameter_data['midiChannel'] + 1
-            x_save_state_parameter['midiCC'] = parameter_data['midiCC']
+            x_save_state_parameter['index']  = parameterData['index']
+            x_save_state_parameter['name']   = cString(parameterInfo['name'])
+            x_save_state_parameter['symbol'] = cString(parameterInfo['symbol'])
+            x_save_state_parameter['value']  = Carla.Host.get_current_parameter_value(self.m_pluginId, parameterData['index'])
+            x_save_state_parameter['midiCC'] = parameterData['midiCC']
+            x_save_state_parameter['midiChannel'] = parameterData['midiChannel'] + 1
 
-            if (parameter_data['hints'] & PARAMETER_USES_SAMPLERATE):
-                x_save_state_parameter['value'] /= Carla.Host.get_sample_rate()
+            if parameterData['hints'] & PARAMETER_USES_SAMPLERATE:
+                x_save_state_parameter['value'] /= sampleRate
 
             x_save_state_dict['Parameters'].append(x_save_state_parameter)
 
         # ----------------------------
         # Custom Data
 
-        custom_data_count = Carla.Host.get_custom_data_count(self.plugin_id)
+        customDataCount = Carla.Host.get_custom_data_count(self.m_pluginId)
 
-        for i in range(custom_data_count):
-            custom_data = Carla.Host.get_custom_data(self.plugin_id, i)
+        for i in range(customDataCount):
+            customData = Carla.Host.get_custom_data(self.m_pluginId, i)
 
-            if custom_data['type'] == CUSTOM_DATA_INVALID:
+            if customData['type'] == CUSTOM_DATA_INVALID:
                 continue
 
             x_save_state_custom_data = deepcopy(save_state_custom_data)
 
-            x_save_state_custom_data['type']  = getCustomDataTypeString(custom_data['type'])
-            x_save_state_custom_data['key']   = cString(custom_data['key'])
-            x_save_state_custom_data['value'] = cString(custom_data['value'])
+            x_save_state_custom_data['type']  = getCustomDataTypeString(customData['type'])
+            x_save_state_custom_data['key']   = cString(customData['key'])
+            x_save_state_custom_data['value'] = cString(customData['value'])
 
             x_save_state_dict['CustomData'].append(x_save_state_custom_data)
 
         # ----------------------------
         # Chunk
 
-        if self.pinfo['hints'] & PLUGIN_USES_CHUNKS:
-            x_save_state_dict['Chunk'] = cString(Carla.Host.get_chunk_data(self.plugin_id))
+        if self.m_pluginInfo['hints'] & PLUGIN_USES_CHUNKS:
+            x_save_state_dict['Chunk'] = cString(Carla.Host.get_chunk_data(self.m_pluginId))
 
         # ----------------------------
         # Generate XML for this plugin
 
-        content = ""
+        content  = ""
 
         content += "  <Info>\n"
         content += "   <Type>%s</Type>\n" % x_save_state_dict['Type']
         content += "   <Name>%s</Name>\n" % xmlSafeString(x_save_state_dict['Name'], True)
-        if self.pinfo['type'] == PLUGIN_LV2:
+
+        if self.m_pluginInfo['type'] == PLUGIN_LV2:
             content += "   <URI>%s</URI>\n" % xmlSafeString(x_save_state_dict['Label'], True)
+
         else:
-            if x_save_state_dict['Label']:
+            if x_save_state_dict['Label'] and self.m_pluginInfo['type'] not in (PLUGIN_GIG, PLUGIN_SF2, PLUGIN_SFZ):
                 content += "   <Label>%s</Label>\n" % xmlSafeString(x_save_state_dict['Label'], True)
+
             content += "   <Binary>%s</Binary>\n" % xmlSafeString(x_save_state_dict['Binary'], True)
-            if x_save_state_dict['UniqueID'] != 0:
-                content += "   <UniqueID>%li</UniqueID>\n" % x_save_state_dict['UniqueID']
+
+        if self.m_pluginInfo['type'] in (PLUGIN_LADSPA, PLUGIN_VST):
+            content += "   <UniqueID>%li</UniqueID>\n" % x_save_state_dict['UniqueID']
+
         content += "  </Info>\n"
 
         content += "\n"
         content += "  <Data>\n"
         content += "   <Active>%s</Active>\n" % "Yes" if x_save_state_dict['Active'] else "No"
-        content += "   <DryWet>%f</DryWet>\n" % x_save_state_dict['DryWet']
-        content += "   <Volume>%f</Volume>\n" % x_save_state_dict['Volume']
-        content += "   <Balance-Left>%f</Balance-Left>\n" % x_save_state_dict['Balance-Left']
-        content += "   <Balance-Right>%f</Balance-Right>\n" % x_save_state_dict['Balance-Right']
+        content += "   <DryWet>%g</DryWet>\n" % x_save_state_dict['DryWet']
+        content += "   <Volume>%g</Volume>\n" % x_save_state_dict['Volume']
+        content += "   <Balance-Left>%g</Balance-Left>\n" % x_save_state_dict['Balance-Left']
+        content += "   <Balance-Right>%g</Balance-Right>\n" % x_save_state_dict['Balance-Right']
 
         for parameter in x_save_state_dict['Parameters']:
             content += "\n"
             content += "   <Parameter>\n"
             content += "    <index>%i</index>\n" % parameter['index']
             content += "    <name>%s</name>\n" % xmlSafeString(parameter['name'], True)
-            if (parameter['symbol']):
-                content += "    <symbol>%s</symbol>\n" % parameter['symbol']
-            content += "    <value>%f</value>\n" % parameter['value']
-            if (parameter['midiCC'] > 0):
-                content += "    <midiChannel>%i</midiChannel>\n" % parameter['midiChannel']
+
+            if parameter['symbol']:
+                content += "    <symbol>%s</symbol>\n" % xmlSafeString(parameter['symbol'], True)
+
+            content += "    <value>%g</value>\n" % parameter['value']
+
+            if parameter['midiCC'] > 0:
                 content += "    <midiCC>%i</midiCC>\n" % parameter['midiCC']
+                content += "    <midiChannel>%i</midiChannel>\n" % parameter['midiChannel']
+
             content += "   </Parameter>\n"
 
-        if (x_save_state_dict['CurrentProgramIndex'] >= 0):
+        if x_save_state_dict['CurrentProgramIndex'] >= 0:
             content += "\n"
             content += "   <CurrentProgramIndex>%i</CurrentProgramIndex>\n" % x_save_state_dict['CurrentProgramIndex']
             content += "   <CurrentProgramName>%s</CurrentProgramName>\n" % xmlSafeString(x_save_state_dict['CurrentProgramName'], True)
 
-        if (x_save_state_dict['CurrentMidiBank'] >= 0 and x_save_state_dict['CurrentMidiProgram'] >= 0):
+        if x_save_state_dict['CurrentMidiBank'] >= 0 and x_save_state_dict['CurrentMidiProgram'] >= 0:
             content += "\n"
             content += "   <CurrentMidiBank>%i</CurrentMidiBank>\n" % x_save_state_dict['CurrentMidiBank']
             content += "   <CurrentMidiProgram>%i</CurrentMidiProgram>\n" % x_save_state_dict['CurrentMidiProgram']
 
-        for custom_data in x_save_state_dict['CustomData']:
+        for customData in x_save_state_dict['CustomData']:
             content += "\n"
             content += "   <CustomData>\n"
-            content += "    <type>%s</type>\n" % custom_data['type']
-            content += "    <key>%s</key>\n" % xmlSafeString(custom_data['key'], True)
-            if (custom_data['type'] in ("string", "chunk", "binary")):
+            content += "    <type>%s</type>\n" % customData['type']
+            content += "    <key>%s</key>\n" % xmlSafeString(customData['key'], True)
+
+            if customData['type'] in ("string", "chunk", "binary"):
                 content += "    <value>\n"
-                content += "%s\n" % xmlSafeString(custom_data['value'], True)
+                content += "%s\n" % xmlSafeString(customData['value'], True)
                 content += "    </value>\n"
             else:
-                content += "    <value>%s</value>\n" % xmlSafeString(custom_data['value'], True)
+                content += "    <value>%s</value>\n" % xmlSafeString(customData['value'], True)
+
             content += "   </CustomData>\n"
 
-        if (x_save_state_dict['Chunk']):
+        if x_save_state_dict['Chunk']:
             content += "\n"
             content += "   <Chunk>\n"
             content += "%s\n" % x_save_state_dict['Chunk']
@@ -1650,113 +1633,126 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
     def loadStateDict(self, content):
         # ---------------------------------------------------------------------
-        # Part 1 - set custom data
-        for custom_data in content['CustomData']:
-            Carla.Host.set_custom_data(self.plugin_id, custom_data['type'], custom_data['key'], custom_data['value'])
+        # Part 1 - set custom data (non-binary/chunks)
+
+        for customData in content['CustomData']:
+            if customData['type'] not in (CUSTOM_DATA_BINARY, CUSTOM_DATA_CHUNK):
+                Carla.Host.set_custom_data(self.m_pluginId, customData['type'], customData['key'], customData['value'])
 
         # ---------------------------------------------------------------------
         # Part 2 - set program
-        program_id = -1
-        program_count = Carla.Host.get_program_count(self.plugin_id)
 
-        if (content['CurrentProgramName']):
-            test_pname = cString(Carla.Host.get_program_name(self.plugin_id, content['CurrentProgramIndex']))
+        programId = -1
+
+        if content['CurrentProgramName']:
+            programCount = Carla.Host.get_program_count(self.m_pluginId)
+            testProgramName = cString(Carla.Host.get_program_name(self.m_pluginId, content['CurrentProgramIndex']))
 
             # Program index and name matches
-            if (content['CurrentProgramName'] == test_pname):
-                program_id = content['CurrentProgramIndex']
+            if content['CurrentProgramName'] == testProgramName:
+                programId = content['CurrentProgramIndex']
 
             # index < count
-            elif (content['CurrentProgramIndex'] < program_count):
-                program_id = content['CurrentProgramIndex']
+            elif content['CurrentProgramIndex'] < programCount:
+                programId = content['CurrentProgramIndex']
 
             # index not valid, try to find by name
             else:
-                for i in range(program_count):
-                    test_pname = cString(Carla.Host.get_program_name(self.plugin_id, i))
+                for i in range(programCount):
+                    testProgramName = cString(Carla.Host.get_program_name(self.m_pluginId, i))
 
-                    if (content['CurrentProgramName'] == test_pname):
-                        program_id = i
+                    if content['CurrentProgramName'] == testProgramName:
+                        programId = i
                         break
 
-            # set program now, if valid
-            if (program_id >= 0):
-                Carla.Host.set_program(self.plugin_id, program_id)
-                self.edit_dialog.set_program(program_id)
+        # set program now, if valid
+        if programId >= 0:
+            Carla.Host.set_program(self.m_pluginId, programId)
+            self.edit_dialog.set_program(programId)
 
         # ---------------------------------------------------------------------
         # Part 3 - set midi program
-        if (content['CurrentMidiBank'] >= 0 and content['CurrentMidiProgram'] >= 0):
-            midi_program_count = Carla.Host.get_midi_program_count(self.plugin_id)
 
-            for i in range(midi_program_count):
-                program_info = Carla.Host.get_midi_program_data(self.plugin_id, i)
-                if program_info['bank'] == content['CurrentMidiBank'] and program_info['program'] == content['CurrentMidiProgram']:
-                    Carla.Host.set_midi_program(self.plugin_id, i)
+        if content['CurrentMidiBank'] >= 0 and content['CurrentMidiProgram'] >= 0:
+            midiProgramCount = Carla.Host.get_midi_program_count(self.m_pluginId)
+
+            for i in range(midiProgramCount):
+                midiProgramData = Carla.Host.get_midi_program_data(self.m_pluginId, i)
+                if midiProgramData['bank'] == content['CurrentMidiBank'] and midiProgramData['program'] == content['CurrentMidiProgram']:
+                    Carla.Host.set_midi_program(self.m_pluginId, i)
                     self.edit_dialog.set_midi_program(i)
                     break
 
         # ---------------------------------------------------------------------
         # Part 4a - get plugin parameter symbols
-        param_symbols = [] # (index, symbol)
+
+        paramSymbols = [] # (index, symbol)
 
         for parameter in content['Parameters']:
             if parameter['symbol']:
-                param_info = Carla.Host.get_parameter_info(self.plugin_id, parameter['index'])
+                paramInfo = Carla.Host.get_parameter_info(self.m_pluginId, parameter['index'])
 
-                if param_info['symbol']:
-                    param_symbols.append((parameter['index'], cString(param_info['symbol'])))
+                if paramInfo['symbol']:
+                    paramSymbols.append((parameter['index'], cString(paramInfo['symbol'])))
 
         # ---------------------------------------------------------------------
         # Part 4b - set parameter values (carefully)
+
+        sampleRate = Carla.Host.get_sample_rate()
+
         for parameter in content['Parameters']:
             index = -1
 
-            if (content['Type'] == "LADSPA"):
+            if content['Type'] == "LADSPA":
                 # Try to set by symbol, otherwise use index
-                if (parameter['symbol']):
-                    for param_symbol in param_symbols:
-                        if (param_symbol[1] == parameter['symbol']):
-                            index = param_symbol[0]
+                if parameter['symbol']:
+                    for paramIndex, paramSymbol in paramSymbols:
+                        if parameter['symbol'] == paramSymbol:
+                            index = paramIndex
                             break
                     else:
                         index = parameter['index']
                 else:
                     index = parameter['index']
 
-            elif (content['Type'] == "LV2"):
+            elif content['Type'] == "LV2":
                 # Symbol only
-                if (parameter['symbol']):
-                    for param_symbol in param_symbols:
-                        if (param_symbol[1] == parameter['symbol']):
-                            index = param_symbol[0]
+                if parameter['symbol']:
+                    for paramIndex, paramSymbol in paramSymbols:
+                        if parameter['symbol'] == paramSymbol:
+                            index = paramIndex
                             break
                     else:
-                        print("Failed to find LV2 parameter symbol for %i -> %s" % (
-                            parameter['index'], parameter['symbol']))
+                        print("Failed to find LV2 parameter symbol for '%s')" % parameter['symbol'])
                 else:
-                    print("LV2 Plugin parameter #%i, '%s', has no symbol" % (parameter['index'], parameter['name']))
+                    print("LV2 Plugin parameter '%s' has no symbol" % parameter['name'])
 
             else:
                 # Index only
                 index = parameter['index']
 
             # Now set parameter
-            if (index >= 0):
-                param_data = Carla.Host.get_parameter_data(self.plugin_id, parameter['index'])
-                if (param_data['hints'] & PARAMETER_USES_SAMPLERATE):
-                    parameter['value'] *= Carla.Host.get_sample_rate()
+            if index >= 0:
+                paramData = Carla.Host.get_parameter_data(self.m_pluginId, parameter['index'])
+                if paramData['hints'] & PARAMETER_USES_SAMPLERATE:
+                    parameter['value'] *= sampleRate
 
-                Carla.Host.set_parameter_value(self.plugin_id, index, parameter['value'])
-                Carla.Host.set_parameter_midi_channel(self.plugin_id, index, parameter['midiChannel'] - 1)
-                Carla.Host.set_parameter_midi_cc(self.plugin_id, index, parameter['midiCC'])
+                Carla.Host.set_parameter_value(self.m_pluginId, index, parameter['value'])
+                Carla.Host.set_parameter_midi_cc(self.m_pluginId, index, parameter['midiCC'])
+                Carla.Host.set_parameter_midi_channel(self.m_pluginId, index, parameter['midiChannel'] - 1)
+
             else:
-                print("Could not set parameter data for %i -> %s" % (parameter['index'], parameter['name']))
+                print("Could not set parameter data for '%s')" % parameter['name'])
 
         # ---------------------------------------------------------------------
         # Part 5 - set chunk data
-        if (content['Chunk']):
-            Carla.Host.set_chunk_data(self.plugin_id, content['Chunk'])
+
+        for customData in content['CustomData']:
+            if customData['type'] in (CUSTOM_DATA_BINARY, CUSTOM_DATA_CHUNK):
+                Carla.Host.set_custom_data(self.m_pluginId, customData['type'], customData['key'], customData['value'])
+
+        if content['Chunk']:
+            Carla.Host.set_chunk_data(self.m_pluginId, content['Chunk'])
 
         # ---------------------------------------------------------------------
         # Part 6 - set internal stuff
@@ -1770,57 +1766,57 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
     def check_gui_stuff(self):
         # Input peaks
-        if (self.peaks_in > 0):
-            if (self.peaks_in > 1):
-                peak1 = Carla.Host.get_input_peak_value(self.plugin_id, 1)
-                peak2 = Carla.Host.get_input_peak_value(self.plugin_id, 2)
-                led_ain_state = bool(peak1 != 0.0 or peak2 != 0.0)
+        if self.m_peaksInputCount > 0:
+            if self.m_peaksInputCount > 1:
+                peak1 = Carla.Host.get_input_peak_value(self.m_pluginId, 1)
+                peak2 = Carla.Host.get_input_peak_value(self.m_pluginId, 2)
+                ledState = bool(peak1 != 0.0 or peak2 != 0.0)
 
                 self.peak_in.displayMeter(1, peak1)
                 self.peak_in.displayMeter(2, peak2)
 
             else:
-                peak = Carla.Host.get_input_peak_value(self.plugin_id, 1)
-                led_ain_state = bool(peak != 0.0)
+                peak = Carla.Host.get_input_peak_value(self.m_pluginId, 1)
+                ledState = bool(peak != 0.0)
 
                 self.peak_in.displayMeter(1, peak)
 
-            if (led_ain_state != self.last_led_ain_state):
-                self.led_audio_in.setChecked(led_ain_state)
+            if self.m_lastGreenLedState != ledState:
+                self.led_audio_in.setChecked(ledState)
 
-            self.last_led_ain_state = led_ain_state
+            self.m_lastGreenLedState = ledState
 
         # Output peaks
-        if (self.peaks_out > 0):
-            if (self.peaks_out > 1):
-                peak1 = Carla.Host.get_output_peak_value(self.plugin_id, 1)
-                peak2 = Carla.Host.get_output_peak_value(self.plugin_id, 2)
-                led_aout_state = bool(peak1 != 0.0 or peak2 != 0.0)
+        if self.m_peaksOutputCount > 0:
+            if self.m_peaksOutputCount > 1:
+                peak1 = Carla.Host.get_output_peak_value(self.m_pluginId, 1)
+                peak2 = Carla.Host.get_output_peak_value(self.m_pluginId, 2)
+                ledState = bool(peak1 != 0.0 or peak2 != 0.0)
 
                 self.peak_out.displayMeter(1, peak1)
                 self.peak_out.displayMeter(2, peak2)
 
             else:
-                peak = Carla.Host.get_output_peak_value(self.plugin_id, 1)
-                led_aout_state = bool(peak != 0.0)
+                peak = Carla.Host.get_output_peak_value(self.m_pluginId, 1)
+                ledState = bool(peak != 0.0)
 
                 self.peak_out.displayMeter(1, peak)
 
-            if (led_aout_state != self.last_led_aout_state):
-                self.led_audio_out.setChecked(led_aout_state)
+            if self.m_lastBlueLedState != ledState:
+                self.led_audio_out.setChecked(ledState)
 
-            self.last_led_aout_state = led_aout_state
+            self.m_lastBlueLedState = ledState
 
     def check_gui_stuff2(self):
         # Parameter Activity LED
-        if (self.parameter_activity_timer == ICON_STATE_ON):
+        if self.m_parameterIconTimer == ICON_STATE_ON:
+            self.m_parameterIconTimer = ICON_STATE_WAIT
             self.led_control.setChecked(True)
-            self.parameter_activity_timer = ICON_STATE_WAIT
-        elif (self.parameter_activity_timer == ICON_STATE_WAIT):
-            self.parameter_activity_timer = ICON_STATE_OFF
-        elif (self.parameter_activity_timer == ICON_STATE_OFF):
+        elif self.m_parameterIconTimer == ICON_STATE_WAIT:
+            self.m_parameterIconTimer = ICON_STATE_OFF
+        elif self.m_parameterIconTimer == ICON_STATE_OFF:
+            self.m_parameterIconTimer = ICON_STATE_NULL
             self.led_control.setChecked(False)
-            self.parameter_activity_timer = None
 
         # Update edit dialog
         self.edit_dialog.updatePlugin()
@@ -1847,122 +1843,152 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
     @pyqtSlot(bool)
     def slot_guiClicked(self, show):
-        if (self.gui_dialog_type in (GUI_INTERNAL_QT4, GUI_INTERNAL_HWND, GUI_INTERNAL_X11)):
-            if (show):
-                if (self.gui_dialog_geometry):
-                    self.gui_dialog.restoreGeometry(self.gui_dialog_geometry)
-            else:
-                self.gui_dialog_geometry = self.gui_dialog.saveGeometry()
+        if self.gui_dialog:
             self.gui_dialog.setVisible(show)
 
-        Carla.Host.show_gui(self.plugin_id, show)
-
-    @pyqtSlot()
-    def slot_guiClosed(self):
-        self.b_gui.setChecked(False)
+        Carla.Host.show_gui(self.m_pluginId, show)
 
     @pyqtSlot(bool)
     def slot_editClicked(self, show):
-        if (show):
-            if (self.edit_dialog_geometry):
-                self.edit_dialog.restoreGeometry(self.edit_dialog_geometry)
-        else:
-            self.edit_dialog_geometry = self.edit_dialog.saveGeometry()
         self.edit_dialog.setVisible(show)
 
     @pyqtSlot()
-    def slot_editClosed(self):
-        self.b_edit.setChecked(False)
-
-    @pyqtSlot()
     def slot_removeClicked(self):
-        Carla.gui.remove_plugin(self.plugin_id, True)
+        Carla.gui.remove_plugin(self.m_pluginId, True)
 
     @pyqtSlot()
     def slot_showCustomDialMenu(self):
-        dial_name = self.sender().objectName()
-        if dial_name == "dial_drywet":
+        dialName = self.sender().objectName()
+        if dialName == "dial_drywet":
             minimum = 0
             maximum = 100
             default = 100
-            label = "Dry/Wet"
-        elif dial_name == "dial_vol":
+            label   = "Dry/Wet"
+        elif dialName == "dial_vol":
             minimum = 0
             maximum = 127
             default = 100
-            label = "Volume"
-        elif dial_name == "dial_b_left":
+            label   = "Volume"
+        elif dialName == "dial_b_left":
             minimum = -100
             maximum = 100
             default = -100
-            label = "Balance-Left"
-        elif dial_name == "dial_b_right":
+            label   = "Balance-Left"
+        elif dialName == "dial_b_right":
             minimum = -100
             maximum = 100
             default = 100
-            label = "Balance-Right"
+            label   = "Balance-Right"
         else:
             minimum = 0
             maximum = 100
             default = 100
-            label = "Unknown"
+            label   = "Unknown"
 
         current = self.sender().value() / 10
 
         menu = QMenu(self)
-        act_x_reset = menu.addAction(self.tr("Reset (%i%%)" % (default)))
+        actReset = menu.addAction(self.tr("Reset (%i%%)" % (default)))
         menu.addSeparator()
-        act_x_min = menu.addAction(self.tr("Set to Minimum (%i%%)" % (minimum)))
-        act_x_cen = menu.addAction(self.tr("Set to Center"))
-        act_x_max = menu.addAction(self.tr("Set to Maximum (%i%%)" % (maximum)))
+        actMinimum = menu.addAction(self.tr("Set to Minimum (%i%%)" % (minimum)))
+        actCenter  = menu.addAction(self.tr("Set to Center"))
+        actMaximum = menu.addAction(self.tr("Set to Maximum (%i%%)" % (maximum)))
         menu.addSeparator()
-        act_x_set = menu.addAction(self.tr("Set value..."))
+        actSet = menu.addAction(self.tr("Set value..."))
 
-        if (label not in ("Balance-Left", "Balance-Right")):
-            menu.removeAction(act_x_cen)
+        if label not in ("Balance-Left", "Balance-Right"):
+            menu.removeAction(actCenter)
 
-        act_x_sel = menu.exec_(QCursor.pos())
+        actSelected = menu.exec_(QCursor.pos())
 
-        if act_x_sel == act_x_set:
-            value_try = QInputDialog.getInteger(self, self.tr("Set value"), label, current, minimum, maximum, 1)
-            if value_try[1]:
-                value = value_try[0] * 10
+        if actSelected == actSet:
+            valueTry = QInputDialog.getInteger(self, self.tr("Set value"), label, current, minimum, maximum, 1)
+            if valueTry[1]:
+                value = valueTry[0] * 10
             else:
                 value = None
 
-        elif act_x_sel == act_x_min:
+        elif actSelected == actMinimum:
             value = minimum * 10
-        elif act_x_sel == act_x_max:
+        elif actSelected == actMaximum:
             value = maximum * 10
-        elif act_x_sel == act_x_reset:
+        elif actSelected == actReset:
             value = default * 10
-        elif act_x_sel == act_x_cen:
+        elif actSelected == actCenter:
             value = 0
         else:
-            value = None
+            return
 
-        if value != None:
-            if label == "Dry/Wet":
-                self.set_drywet(value, True, True)
-            elif label == "Volume":
-                self.set_volume(value, True, True)
-            elif label == "Balance-Left":
-                self.set_balance_left(value, True, True)
-            elif label == "Balance-Right":
-                self.set_balance_right(value, True, True)
+        if label == "Dry/Wet":
+            self.set_drywet(value, True, True)
+        elif label == "Volume":
+            self.set_volume(value, True, True)
+        elif label == "Balance-Left":
+            self.set_balance_left(value, True, True)
+        elif label == "Balance-Right":
+            self.set_balance_right(value, True, True)
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setPen(self.color_1)
+        painter.setPen(self.m_color1)
         painter.drawLine(0, 3, self.width(), 3)
         painter.drawLine(0, self.height() - 4, self.width(), self.height() - 4)
-        painter.setPen(self.color_2)
+        painter.setPen(self.m_color2)
         painter.drawLine(0, 2, self.width(), 2)
         painter.drawLine(0, self.height() - 3, self.width(), self.height() - 3)
-        painter.setPen(self.color_3)
+        painter.setPen(self.m_color3)
         painter.drawLine(0, 1, self.width(), 1)
         painter.drawLine(0, self.height() - 2, self.width(), self.height() - 2)
-        painter.setPen(self.color_4)
+        painter.setPen(self.m_color4)
         painter.drawLine(0, 0, self.width(), 0)
         painter.drawLine(0, self.height() - 1, self.width(), self.height() - 1)
         QFrame.paintEvent(self, event)
+
+# Plugin GUI
+class PluginGUI(QDialog):
+    def __init__(self, parent, pluginName, resizable):
+        QDialog.__init__(self, parent)
+
+        self.m_geometry  = None
+        self.m_resizable = resizable
+
+        self.vbLayout = QVBoxLayout(self)
+        self.vbLayout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.vbLayout)
+        self.setNewSize(50, 50)
+        self.setWindowTitle("%s (GUI)" % pluginName)
+
+        self.connect(self, SIGNAL("finished(int)"), SLOT("slot_finished()"))
+
+    def setNewSize(self, width, height):
+        if width < 30:
+            width = 30
+        if height < 30:
+            height = 30
+
+        if self.m_resizable:
+            self.resize(width, height)
+        else:
+            self.setFixedSize(width, height)
+
+    def setVisible(self, yesNo):
+        if yesNo:
+            if self.m_geometry:
+                self.restoreGeometry(self.m_geometry)
+        else:
+            self.m_geometry = self.saveGeometry()
+
+        QDialog.setVisible(self, yesNo)
+
+    @pyqtSlot()
+    def slot_finished(self):
+        self.parent().b_gui.setChecked(False)
+
+    def hideEvent(self, event):
+        # FIXME
+        event.accept()
+        self.close()
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()

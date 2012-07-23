@@ -1294,7 +1294,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
                 if not first_plugin:
                     content += "\n"
 
-                real_plugin_name = cString(Carla.Host.get_real_plugin_name(pwidget.plugin_id))
+                real_plugin_name = cString(Carla.Host.get_real_plugin_name(pwidget.m_pluginId))
                 if real_plugin_name:
                     content += " <!-- %s -->\n" % xmlSafeString(real_plugin_name, True)
 
@@ -1735,8 +1735,9 @@ if __name__ == '__main__':
     Carla.gui = CarlaMainW()
 
     # Init backend
-    PROCESS_MODE      = Carla.gui.settings.value("Engine/ProcessMode", PROCESS_MODE_MULTIPLE_CLIENTS, type=int)
-    MAX_PARAMETERS    = Carla.gui.settings.value("Engine/MaxParameters", MAX_PARAMETERS, type=int)
+    Carla.processMode   = Carla.gui.settings.value("Engine/ProcessMode", PROCESS_MODE_MULTIPLE_CLIENTS, type=int)
+    Carla.maxParameters = Carla.gui.settings.value("Engine/MaxParameters", MAX_PARAMETERS, type=int)
+
     prefer_ui_bridges = Carla.gui.settings.value("Engine/PreferUIBridges", True, type=bool)
     osc_gui_timeout   = Carla.gui.settings.value("Engine/OscGuiTimeout", 40, type=int)
     disable_checks    = Carla.gui.settings.value("Engine/DisableChecks", bool(not WINDOWS), type=bool)
@@ -1744,19 +1745,19 @@ if __name__ == '__main__':
     force_stereo      = Carla.gui.settings.value("Engine/ForceStereo", False, type=bool)
     proccess_hp       = Carla.gui.settings.value("Engine/ProcessHP", False, type=bool)
 
-    if PROCESS_MODE == PROCESS_MODE_CONTINUOUS_RACK:
+    if Carla.processMode == PROCESS_MODE_CONTINUOUS_RACK:
         force_stereo = True
-    elif PROCESS_MODE == PROCESS_MODE_MULTIPLE_CLIENTS and os.getenv("LADISH_APP_NAME"):
+    elif Carla.processMode == PROCESS_MODE_MULTIPLE_CLIENTS and os.getenv("LADISH_APP_NAME"):
         print("LADISH detected but using multiple clients (not allowed), forcing single client now")
-        PROCESS_MODE = PROCESS_MODE_SINGLE_CLIENT
+        Carla.processMode = PROCESS_MODE_SINGLE_CLIENT
 
     if disable_checks:
         os.environ["CARLA_DISCOVERY_NO_PROCESSING_CHECKS"] = "true"
 
     Carla.Host.set_callback_function(callback_function)
 
-    Carla.Host.set_option(OPTION_PROCESS_MODE, PROCESS_MODE, "")
-    Carla.Host.set_option(OPTION_MAX_PARAMETERS, MAX_PARAMETERS, "")
+    Carla.Host.set_option(OPTION_PROCESS_MODE, Carla.processMode, "")
+    Carla.Host.set_option(OPTION_MAX_PARAMETERS, Carla.maxParameters, "")
 
     Carla.Host.set_option(OPTION_OSC_GUI_TIMEOUT, osc_gui_timeout, "")
     Carla.Host.set_option(OPTION_PREFER_UI_BRIDGES, prefer_ui_bridges, "")
