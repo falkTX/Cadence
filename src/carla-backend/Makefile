@@ -39,8 +39,8 @@ endif
 
 ifeq ($(HAVE_PULSEAUDIO),true)
 WANT_RTAUDIO      = true
-CARLA_CXX_FLAGS += $(shell pkg-config --cflags libpulse-simple) -D__LINUX_PULSE__
-CARLA_LD_FLAGS  += $(shell pkg-config --libs libpulse-simple)
+CARLA_CXX_FLAGS  += $(shell pkg-config --cflags libpulse-simple) -D__LINUX_PULSE__
+CARLA_LD_FLAGS   += $(shell pkg-config --libs libpulse-simple)
 endif
 
 ifeq ($(HAVE_FLUIDSYNTH),true)
@@ -72,7 +72,7 @@ OBJS = \
 	../carla-lilv/carla_lilv.a
 
 ifeq ($(WANT_RTAUDIO),true)
-CARLA_CXX_FLAGS += -Irtaudio-4.0.11 -Irtmidi-4.0.11 -DCARLA_ENGINE_RTAUDIO -D_FORTIFY_SOURCE=2 -DHAVE_GETTIMEOFDAY
+CARLA_CXX_FLAGS += -Irtaudio-4.0.11 -Irtmidi-2.0.0 -DCARLA_ENGINE_RTAUDIO -D_FORTIFY_SOURCE=2 -DHAVE_GETTIMEOFDAY
 OBJS += rtaudio-4.0.11/RtAudio.o
 OBJS += rtmidi-2.0.0/RtMidi.o
 endif
