@@ -32,6 +32,7 @@
 #include "lv2/log.h"
 #include "lv2/midi.h"
 #include "lv2/patch.h"
+#include "lv2/port-groups.h"
 #include "lv2/port-props.h"
 #include "lv2/presets.h"
 #include "lv2/state.h"
@@ -65,8 +66,11 @@
 #define NS_rdfs "http://www.w3.org/2000/01/rdf-schema#"
 #define NS_llmm "http://ll-plugins.nongnu.org/lv2/ext/midimap#"
 
-#define LV2_MIDI_Map__CC   "http://ll-plugins.nongnu.org/lv2/namespace#CC"
-#define LV2_MIDI_Map__NRPN "http://ll-plugins.nongnu.org/lv2/namespace#NRPN"
+#define LV2_PARAMETERS_URI    "http://lv2plug.in/ns/ext/parameters"
+#define LV2_PARAMETERS_PREFIX LV2_PARAMETERS_URI "#"
+
+#define LV2_MIDI_Map__CC      "http://ll-plugins.nongnu.org/lv2/namespace#CC"
+#define LV2_MIDI_Map__NRPN    "http://ll-plugins.nongnu.org/lv2/namespace#NRPN"
 
 #define LV2_MIDI_LL__MidiPort "http://ll-plugins.nongnu.org/lv2/ext/MidiPort"
 
@@ -629,6 +633,10 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                                 RDF_Port->Designation = LV2_PORT_TIME_POSITION;
                             else if (strcmp(designation, LV2_TIME__speed) == 0)
                                 RDF_Port->Designation = LV2_PORT_TIME_SPEED;
+                            else if (strncmp(designation, LV2_PARAMETERS_PREFIX, strlen(LV2_PARAMETERS_PREFIX)) == 0)
+                                0; // skip
+                            else if (strncmp(designation, LV2_PORT_GROUPS_PREFIX, strlen(LV2_PORT_GROUPS_PREFIX)) == 0)
+                                0; // skip
                             else
                                 qWarning("lv2_rdf_new(%s) - got unknown Port Designation '%s'", URI, designation);
                         }
