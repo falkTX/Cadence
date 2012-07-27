@@ -162,39 +162,39 @@ src/icons_rc.py: src/icons/icons.qrc
 CPP: carla_backend carla_bridge carla_discovery
 
 carla_backend: carla_lilv
-	$(MAKE) -C src/carla-backend
+	$(MAKE) -C c++/carla-backend
 
 carla_bridge: carla_lilv
-	$(MAKE) -C src/carla-bridge
+	$(MAKE) -C c++/carla-bridge
 
 carla_discovery:
-	$(MAKE) -C src/carla-discovery unix$(_arch_n) NATIVE=1
+	$(MAKE) -C c++/carla-discovery unix$(_arch_n) NATIVE=1
 
 carla_lilv:
-	$(MAKE) -C src/carla-lilv
+	$(MAKE) -C c++/carla-lilv
 
 unix32:
-	$(MAKE) -C src/carla-bridge unix32
-	$(MAKE) -C src/carla-discovery unix32
+	$(MAKE) -C c++/carla-bridge unix32
+	$(MAKE) -C c++/carla-discovery unix32
 
 unix64:
-	$(MAKE) -C src/carla-bridge unix64
-	$(MAKE) -C src/carla-discovery unix64
+	$(MAKE) -C c++/carla-bridge unix64
+	$(MAKE) -C c++/carla-discovery unix64
 
 wine32:
-	$(MAKE) -C src/carla-bridge wine32
-	$(MAKE) -C src/carla-discovery wine32
+	$(MAKE) -C c++/carla-bridge wine32
+	$(MAKE) -C c++/carla-discovery wine32
 
 wine64:
-	$(MAKE) -C src/carla-bridge wine64
-	$(MAKE) -C src/carla-discovery wine64
+	$(MAKE) -C c++/carla-bridge wine64
+	$(MAKE) -C c++/carla-discovery wine64
 
 
 clean:
-	$(MAKE) clean -C src/carla-backend
-	$(MAKE) clean -C src/carla-bridge
-	$(MAKE) clean -C src/carla-discovery
-	$(MAKE) clean -C src/carla-lilv
+	$(MAKE) clean -C c++/carla-backend
+	$(MAKE) clean -C c++/carla-bridge
+	$(MAKE) clean -C c++/carla-discovery
+	$(MAKE) clean -C c++/carla-lilv
 	rm -f *~ src/*~ src/*.pyc src/*.dll src/*.so src/ui_*.py src/icons_rc.py
 
 
@@ -224,11 +224,11 @@ install:
 		data/claudia \
 		data/claudia-launcher \
 		data/carla \
-		src/carla-bridge/carla-bridge-lv2-gtk2 \
-		src/carla-bridge/carla-bridge-lv2-qt4 \
-		src/carla-bridge/carla-bridge-lv2-x11 \
-		src/carla-bridge/carla-bridge-vst-x11 \
-		src/carla-discovery/carla-discovery-* \
+		c++/carla-bridge/carla-bridge-lv2-gtk2 \
+		c++/carla-bridge/carla-bridge-lv2-qt4 \
+		c++/carla-bridge/carla-bridge-lv2-x11 \
+		c++/carla-bridge/carla-bridge-vst-x11 \
+		c++/carla-discovery/carla-discovery-* \
 		$(DESTDIR)$(PREFIX)/bin/
 
 	# Install desktop files
@@ -276,7 +276,7 @@ install:
 
 	# Install main code
 	install -m 755 src/*.py $(DESTDIR)$(PREFIX)/share/cadence/src/
-	install -m 755 src/carla-backend/*.so $(DESTDIR)$(PREFIX)/lib/carla/
+	install -m 755 c++/carla-backend/*.so $(DESTDIR)$(PREFIX)/lib/carla/
 
 	# Install addtional stuff
 	install -m 644 data/pulse2jack-data/* $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
