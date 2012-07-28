@@ -98,4 +98,6 @@ const char* bool2str(bool yesno)
     return yesno ? "true" : "false";
 }
 
+inline void pass(void) {}
+
 #endif // CARLA_INCLUDES_H

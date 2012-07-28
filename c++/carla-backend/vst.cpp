@@ -745,7 +745,7 @@ public:
                         {
                             value = cinEvent->value;
                             setDryWet(value, false, false);
-                            postponeEvent(PluginPostEventParameterChange, PARAMETER_DRYWET, value);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_DRYWET, 0, value);
                             continue;
                         }
 
@@ -753,7 +753,7 @@ public:
                         {
                             value = cinEvent->value*127/100;
                             setVolume(value, false, false);
-                            postponeEvent(PluginPostEventParameterChange, PARAMETER_VOLUME, value);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_VOLUME, 0, value);
                             continue;
                         }
 
@@ -780,8 +780,8 @@ public:
 
                             setBalanceLeft(left, false, false);
                             setBalanceRight(right, false, false);
-                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
-                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_LEFT, 0, left);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_RIGHT, 0, right);
                             continue;
                         }
                     }
@@ -811,7 +811,7 @@ public:
                             }
 
                             setParameterValue(k, value, false, false, false);
-                            postponeEvent(PluginPostEventParameterChange, k, value);
+                            postponeEvent(PluginPostEventParameterChange, k, 0, value);
                         }
                     }
 
@@ -829,7 +829,7 @@ public:
                         if (progId < prog.count)
                         {
                             setProgram(progId, false, false, false, false);
-                            postponeEvent(PluginPostEventMidiProgramChange, progId, 0.0);
+                            postponeEvent(PluginPostEventMidiProgramChange, progId, 0, 0.0);
                         }
                     }
                     break;
@@ -938,7 +938,7 @@ public:
                     midiEvent->midiData[1] = note;
 
                     if (channel == cin_channel)
-                        postponeEvent(PluginPostEventNoteOff, note, 0.0);
+                        postponeEvent(PluginPostEventNoteOff, channel, note, 0.0);
                 }
                 else if (MIDI_IS_STATUS_NOTE_ON(status))
                 {
@@ -950,7 +950,7 @@ public:
                     midiEvent->midiData[2] = velo;
 
                     if (channel == cin_channel)
-                        postponeEvent(PluginPostEventNoteOn, note, velo);
+                        postponeEvent(PluginPostEventNoteOn, channel, note, velo);
                 }
                 else if (MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status))
                 {
@@ -1217,7 +1217,7 @@ public:
                 if (self->x_engine->isOnAudioThread() && ! self->x_engine->isOffline())
                 {
                     self->setParameterValue(index, opt, false, false, false);
-                    self->postponeEvent(PluginPostEventParameterChange, index, opt);
+                    self->postponeEvent(PluginPostEventParameterChange, index, 0, opt);
                 }
                 else
                     self->setParameterValue(index, opt, false, true, true);

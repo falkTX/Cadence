@@ -397,15 +397,17 @@ enum CallbackType {
     /*!
      * A note has been pressed.
      *
-     * \param value1 The note
-     * \param value2 Velocity of the note
+     * \param value1 Channel
+     * \param value2 Note
+     * \param value3 Velocity
      */
     CALLBACK_NOTE_ON = 4,
 
     /*!
      * A note has been released.
      *
-     * \param value1 The note
+     * \param value1 Channel
+     * \param value2 Note
      */
     CALLBACK_NOTE_OFF = 5,
 

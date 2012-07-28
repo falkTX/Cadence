@@ -7,8 +7,8 @@ CONFIG    = release static
 CONFIG   += link_pkgconfig qt warn_on
 
 DEFINES   = DEBUG BUILD_NATIVE
-#DEFINES  += WANT_FLUIDSYNTH WANT_LINUXSAMPLER
-#PKGCONFIG = fluidsynth linuxsampler
+DEFINES  += WANT_FLUIDSYNTH WANT_LINUXSAMPLER
+PKGCONFIG = fluidsynth linuxsampler
 
 TARGET   = carla-discovery-qtcreator
 TEMPLATE = app
@@ -36,9 +36,9 @@ INCLUDEPATH = .. \
 LIBS = \
     ../../carla-lilv/carla_lilv.a
 
-#win {
-LIBS += -lkernel32 -luser32 -lshell32 -luuid -lole32 -ladvapi32 -lws2_32 -lqtmain
-#}
-
 QMAKE_CXXFLAGS *= -std=c++0x
-QMAKE_LFLAGS *= -static -static-libgcc
+
+win {
+    LIBS += -lkernel32 -luser32 -lshell32 -luuid -lole32 -ladvapi32 -lws2_32 -lqtmain
+    QMAKE_LFLAGS *= -static -static-libgcc
+}

@@ -715,7 +715,7 @@ public:
                         {
                             value = cinEvent->value;
                             setDryWet(value, false, false);
-                            postponeEvent(PluginPostEventParameterChange, PARAMETER_DRYWET, value);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_DRYWET, 0, value);
                             continue;
                         }
 
@@ -723,7 +723,7 @@ public:
                         {
                             value = cinEvent->value*127/100;
                             setVolume(value, false, false);
-                            postponeEvent(PluginPostEventParameterChange, PARAMETER_VOLUME, value);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_VOLUME, 0, value);
                             continue;
                         }
 
@@ -750,8 +750,8 @@ public:
 
                             setBalanceLeft(left, false, false);
                             setBalanceRight(right, false, false);
-                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
-                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_LEFT, 0, left);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_RIGHT, 0, right);
                             continue;
                         }
                     }
@@ -781,7 +781,7 @@ public:
                             }
 
                             setParameterValue(k, value, false, false, false);
-                            postponeEvent(PluginPostEventParameterChange, k, value);
+                            postponeEvent(PluginPostEventParameterChange, k, 0, value);
                         }
                     }
 

@@ -195,7 +195,7 @@ clean:
 	$(MAKE) clean -C c++/carla-bridge
 	$(MAKE) clean -C c++/carla-discovery
 	$(MAKE) clean -C c++/carla-lilv
-	rm -f *~ src/*~ src/*.pyc src/*.dll src/*.so src/ui_*.py src/icons_rc.py
+	rm -f *~ src/*~ src/*.pyc src/ui_*.py src/icons_rc.py
 
 
 install:

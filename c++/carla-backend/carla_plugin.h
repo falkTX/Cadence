@@ -93,11 +93,11 @@ enum PluginBridgeInfoType {
 enum PluginPostEventType {
     PluginPostEventNull,
     PluginPostEventDebug,
-    PluginPostEventParameterChange,
-    PluginPostEventProgramChange,
-    PluginPostEventMidiProgramChange,
-    PluginPostEventNoteOn,
-    PluginPostEventNoteOff
+    PluginPostEventParameterChange,   // param, N, value
+    PluginPostEventProgramChange,     // index
+    PluginPostEventMidiProgramChange, // index
+    PluginPostEventNoteOn,            // channel, note, velo
+    PluginPostEventNoteOff            // channel, note
 };
 
 struct PluginAudioData {
@@ -159,13 +159,15 @@ struct PluginMidiProgramData {
 
 struct PluginPostEvent {
     PluginPostEventType type;
-    int32_t index;
-    double value;
+    int32_t value1;
+    int32_t value2;
+    double  value3;
 
     PluginPostEvent()
         : type(PluginPostEventNull),
-          index(-1),
-          value(0.0) {}
+          value1(-1),
+          value2(-1),
+          value3(0.0) {}
 };
 
 struct ExternalMidiNote {
@@ -1582,18 +1584,17 @@ public:
         if (sendOsc)
         {
             if (velo)
-                x_engine->osc_send_note_on(m_id, note, velo);
+                x_engine->osc_send_note_on(m_id, channel, note, velo);
             else
-                x_engine->osc_send_note_off(m_id, note);
+                x_engine->osc_send_note_off(m_id, channel, note);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
             {
-                uint8_t mdata[4] = { 0 };
-                mdata[1] = velo ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF;
-                mdata[2] = note;
-                mdata[3] = velo;
-
-                osc_send_midi(&osc.data, mdata);
+                uint8_t midiData[4] = { 0 };
+                midiData[1] = (velo ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF) + channel;
+                midiData[2] = note;
+                midiData[3] = velo;
+                osc_send_midi(&osc.data, midiData);
             }
         }
 #else
@@ -1639,8 +1640,9 @@ public:
             extMidiNotes[i].velo = 0;
 
             postEvents.data[i + postPad].type  = PluginPostEventNoteOff;
-            postEvents.data[i + postPad].index = i;
-            postEvents.data[i + postPad].value = 0.0;
+            postEvents.data[i + postPad].value1 = i;
+            postEvents.data[i + postPad].value2 = 0;
+            postEvents.data[i + postPad].value3 = 0.0;
         }
 
         postEvents.mutex.unlock();
@@ -1654,16 +1656,17 @@ public:
      * Post pone an event of type \a type.\n
      * The event will be processed later in a high-priority thread (but not the main one).
      */
-    void postponeEvent(PluginPostEventType type, int32_t index, double value)
+    void postponeEvent(PluginPostEventType type, int32_t value1, int32_t value2, double value3)
     {
         postEvents.mutex.lock();
         for (unsigned short i=0; i < MAX_POST_EVENTS; i++)
         {
             if (postEvents.data[i].type == PluginPostEventNull)
             {
-                postEvents.data[i].type  = type;
-                postEvents.data[i].index = index;
-                postEvents.data[i].value = value;
+                postEvents.data[i].type   = type;
+                postEvents.data[i].value1 = value1;
+                postEvents.data[i].value2 = value2;
+                postEvents.data[i].value3 = value3;
                 break;
             }
         }
@@ -1695,94 +1698,92 @@ public:
                 return;
 
             case PluginPostEventDebug:
-                x_engine->callback(CALLBACK_DEBUG, m_id, event->index, 0, event->value);
+                x_engine->callback(CALLBACK_DEBUG, m_id, event->value1, event->value2, event->value3);
                 break;
 
             case PluginPostEventParameterChange:
                 // Update OSC based UIs
                 m_needsParamUpdate = true;
-                osc_send_control(&osc.data, event->index, event->value);
+                osc_send_control(&osc.data, event->value1, event->value3);
 
                 // Update OSC control client
-                x_engine->osc_send_set_parameter_value(m_id, event->index, event->value);
+                x_engine->osc_send_set_parameter_value(m_id, event->value1, event->value3);
 
                 // Update Host
-                x_engine->callback(CALLBACK_PARAMETER_CHANGED, m_id, event->index, 0, event->value);
+                x_engine->callback(CALLBACK_PARAMETER_CHANGED, m_id, event->value1, 0, event->value3);
                 break;
 
             case PluginPostEventProgramChange:
                 // Update OSC based UIs
                 m_needsProgUpdate = true;
-                osc_send_program(&osc.data, event->index);
+                osc_send_program(&osc.data, event->value1);
 
                 // Update OSC control client
-                x_engine->osc_send_set_program(m_id, event->index);
+                x_engine->osc_send_set_program(m_id, event->value1);
 
                 for (uint32_t j=0; j < param.count; j++)
                     x_engine->osc_send_set_default_value(m_id, j, param.ranges[j].def);
 
                 // Update Host
-                x_engine->callback(CALLBACK_PROGRAM_CHANGED, m_id, event->index, 0, 0.0);
+                x_engine->callback(CALLBACK_PROGRAM_CHANGED, m_id, event->value1, 0, 0.0);
                 break;
 
             case PluginPostEventMidiProgramChange:
-                //if (event->index < (int32_t)midiprog.count)
-                //{
-                //if (event->index >= 0)
-                //{
-                //const midi_program_t* const midiprog = plugin->midiProgramData(postEvents[j].index);
-                // Update OSC based UIs
-                //osc_send_midi_program(osc_data, midiprog->bank, midiprog->program, (plugin->type() == PLUGIN_DSSI));
-                //}
-
                 // Update OSC based UIs
                 m_needsProgUpdate = true;
-                osc_send_midi_program(&osc.data, event->index);
+
+                if (m_type == PLUGIN_DSSI)
+                {
+                    if (event->value1 >= 0 && event->value1 < (int32_t)midiprog.count)
+                        osc_send_program(&osc.data, midiprog.data[event->value1].bank, midiprog.data[event->value1].program);
+                }
+                else
+                    osc_send_midi_program(&osc.data, event->value1);
 
                 // Update OSC control client
-                x_engine->osc_send_set_midi_program(m_id, event->index);
+                x_engine->osc_send_set_midi_program(m_id, event->value1);
 
                 for (uint32_t j=0; j < param.count; j++)
                     x_engine->osc_send_set_default_value(m_id, j, param.ranges[j].def);
 
                 // Update Host
-                x_engine->callback(CALLBACK_MIDI_PROGRAM_CHANGED, m_id, event->index, 0, 0.0);
+                x_engine->callback(CALLBACK_MIDI_PROGRAM_CHANGED, m_id, event->value1, 0, 0.0);
                 //}
                 break;
 
             case PluginPostEventNoteOn:
                 // Update OSC based UIs
-                if (cin_channel >= 0 && cin_channel < 16)
+                if (true)
                 {
-                    uint8_t mdata[4] = { 0 };
-                    mdata[1] = MIDI_STATUS_NOTE_ON + cin_channel;
-                    mdata[2] = event->index;
-                    mdata[3] = rint(event->value);
-                    osc_send_midi(&osc.data, mdata);
+                    uint8_t midiData[4] = { 0 };
+                    midiData[1] = MIDI_STATUS_NOTE_ON + event->value1;
+                    midiData[2] = event->value2;
+                    midiData[3] = rint(event->value3);
+                    osc_send_midi(&osc.data, midiData);
                 }
 
                 // Update OSC control client
-                x_engine->osc_send_note_on(m_id, event->index, event->value);
+                x_engine->osc_send_note_on(m_id, event->value1, event->value2, event->value3);
 
                 // Update Host
-                x_engine->callback(CALLBACK_NOTE_ON, m_id, event->index, rint(event->value), 0.0);
+                x_engine->callback(CALLBACK_NOTE_ON, m_id, event->value1, event->value2, event->value3);
                 break;
 
             case PluginPostEventNoteOff:
                 // Update OSC based UIs
-                if (cin_channel >= 0 && cin_channel < 16)
+                if (true)
                 {
-                    uint8_t mdata[4] = { 0 };
-                    mdata[1] = MIDI_STATUS_NOTE_OFF + cin_channel;
-                    mdata[2] = event->index;
-                    osc_send_midi(&osc.data, mdata);
+                    uint8_t midiData[4] = { 0 };
+                    midiData[1] = MIDI_STATUS_NOTE_OFF + event->value1;
+                    midiData[2] = event->value2;
+                    osc_send_midi(&osc.data, midiData);
                 }
 
                 // Update OSC control client
-                x_engine->osc_send_note_off(m_id, event->index);
+                x_engine->osc_send_note_off(m_id, event->value1, event->value2);
 
                 // Update Host
-                x_engine->callback(CALLBACK_NOTE_OFF, m_id, event->index, 0, 0.0);
+                x_engine->callback(CALLBACK_NOTE_OFF, m_id, event->value1, event->value2, 0.0);
                 break;
             }
         }

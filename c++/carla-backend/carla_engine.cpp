@@ -1094,9 +1094,9 @@ void CarlaEngine::osc_send_set_midi_program_data(int plugin_id, int midi_program
     }
 }
 
-void CarlaEngine::osc_send_note_on(int plugin_id, int note, int velo)
+void CarlaEngine::osc_send_note_on(int plugin_id, int channel, int note, int velo)
 {
-    qDebug("CarlaEngine::osc_send_note_on(%i, %i, %i)", plugin_id, note, velo);
+    qDebug("CarlaEngine::osc_send_note_on(%i, %i, %i, %i)", plugin_id, channel, note, velo);
     const CarlaOscData* const oscData = m_osc.getControllerData();
 
     if (oscData->target)
@@ -1104,13 +1104,13 @@ void CarlaEngine::osc_send_note_on(int plugin_id, int note, int velo)
         char target_path[strlen(oscData->path)+9];
         strcpy(target_path, oscData->path);
         strcat(target_path, "/note_on");
-        lo_send(oscData->target, target_path, "iii", plugin_id, note, velo);
+        lo_send(oscData->target, target_path, "iiii", plugin_id, channel, note, velo);
     }
 }
 
-void CarlaEngine::osc_send_note_off(int plugin_id, int note)
+void CarlaEngine::osc_send_note_off(int plugin_id, int channel, int note)
 {
-    qDebug("CarlaEngine::osc_send_note_off(%i, %i)", plugin_id, note);
+    qDebug("CarlaEngine::osc_send_note_off(%i, %i, %i)", plugin_id, channel, note);
     const CarlaOscData* const oscData = m_osc.getControllerData();
 
     if (oscData->target)
@@ -1118,7 +1118,7 @@ void CarlaEngine::osc_send_note_off(int plugin_id, int note)
         char target_path[strlen(oscData->path)+10];
         strcpy(target_path, oscData->path);
         strcat(target_path, "/note_off");
-        lo_send(oscData->target, target_path, "ii", plugin_id, note);
+        lo_send(oscData->target, target_path, "iii", plugin_id, channel, note);
     }
 }
 

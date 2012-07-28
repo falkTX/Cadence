@@ -1761,7 +1761,7 @@ public:
                         {
                             value = cinEvent->value;
                             setDryWet(value, false, false);
-                            postponeEvent(PluginPostEventParameterChange, PARAMETER_DRYWET, value);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_DRYWET, 0, value);
                             continue;
                         }
 
@@ -1769,7 +1769,7 @@ public:
                         {
                             value = cinEvent->value*127/100;
                             setVolume(value, false, false);
-                            postponeEvent(PluginPostEventParameterChange, PARAMETER_VOLUME, value);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_VOLUME, 0, value);
                             continue;
                         }
 
@@ -1796,8 +1796,8 @@ public:
 
                             setBalanceLeft(left, false, false);
                             setBalanceRight(right, false, false);
-                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_LEFT, left);
-                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_RIGHT, right);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_LEFT, 0, left);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_RIGHT, 0, right);
                             continue;
                         }
                     }
@@ -1827,7 +1827,7 @@ public:
                             }
 
                             setParameterValue(k, value, false, false, false);
-                            postponeEvent(PluginPostEventParameterChange, k, value);
+                            postponeEvent(PluginPostEventParameterChange, k, 0, value);
                         }
                     }
 
@@ -1849,7 +1849,7 @@ public:
                             if (midiprog.data[k].bank == nextBankId && midiprog.data[k].program == nextProgramId)
                             {
                                 setMidiProgram(k, false, false, false, false);
-                                postponeEvent(PluginPostEventMidiProgramChange, k, 0.0);
+                                postponeEvent(PluginPostEventMidiProgramChange, k, 0, 0.0);
                                 break;
                             }
                         }
@@ -2001,9 +2001,9 @@ public:
                         if (channel == cin_channel)
                         {
                             if (MIDI_IS_STATUS_NOTE_OFF(status))
-                                postponeEvent(PluginPostEventNoteOff, minEvent->data[1], 0.0);
+                                postponeEvent(PluginPostEventNoteOff, channel, minEvent->data[1], 0.0);
                             else if (MIDI_IS_STATUS_NOTE_ON(status))
-                                postponeEvent(PluginPostEventNoteOn, minEvent->data[1], minEvent->data[2]);
+                                postponeEvent(PluginPostEventNoteOn, channel, minEvent->data[1], minEvent->data[2]);
                         }
                     }
 
@@ -2034,41 +2034,41 @@ public:
             {
             case LV2_PORT_TIME_BAR:
                 setParameterValue(k, timeInfo->bbt.bar, false, false, false);
-                postponeEvent(PluginPostEventParameterChange, k, timeInfo->bbt.bar);
+                postponeEvent(PluginPostEventParameterChange, k, 0, timeInfo->bbt.bar);
                 break;
             case LV2_PORT_TIME_BAR_BEAT:
                 setParameterValue(k, timeInfo->bbt.tick, false, false, false);
-                postponeEvent(PluginPostEventParameterChange, k, timeInfo->bbt.tick);
+                postponeEvent(PluginPostEventParameterChange, k, 0, timeInfo->bbt.tick);
                 break;
             case LV2_PORT_TIME_BEAT:
                 setParameterValue(k, timeInfo->bbt.beat, false, false, false);
-                postponeEvent(PluginPostEventParameterChange, k, timeInfo->bbt.beat);
+                postponeEvent(PluginPostEventParameterChange, k, 0, timeInfo->bbt.beat);
                 break;
             case LV2_PORT_TIME_BEAT_UNIT:
                 setParameterValue(k, timeInfo->bbt.beat_type, false, false, false);
-                postponeEvent(PluginPostEventParameterChange, k, timeInfo->bbt.beat_type);
+                postponeEvent(PluginPostEventParameterChange, k, 0, timeInfo->bbt.beat_type);
                 break;
             case LV2_PORT_TIME_BEATS_PER_BAR:
                 setParameterValue(k, timeInfo->bbt.beats_per_bar, false, false, false);
-                postponeEvent(PluginPostEventParameterChange, k, timeInfo->bbt.beats_per_bar);
+                postponeEvent(PluginPostEventParameterChange, k, 0, timeInfo->bbt.beats_per_bar);
                 break;
             case LV2_PORT_TIME_BEATS_PER_MINUTE:
                 setParameterValue(k, timeInfo->bbt.beats_per_minute, false, false, false);
-                postponeEvent(PluginPostEventParameterChange, k, timeInfo->bbt.beats_per_minute);
+                postponeEvent(PluginPostEventParameterChange, k, 0, timeInfo->bbt.beats_per_minute);
                 break;
             case LV2_PORT_TIME_FRAME:
                 setParameterValue(k, timeInfo->frame, false, false, false);
-                postponeEvent(PluginPostEventParameterChange, k, timeInfo->frame);
+                postponeEvent(PluginPostEventParameterChange, k, 0, timeInfo->frame);
                 break;
             case LV2_PORT_TIME_FRAMES_PER_SECOND:
                 break;
             case LV2_PORT_TIME_POSITION:
                 setParameterValue(k, timeInfo->time, false, false, false);
-                postponeEvent(PluginPostEventParameterChange, k, timeInfo->time);
+                postponeEvent(PluginPostEventParameterChange, k, 0, timeInfo->time);
                 break;
             case LV2_PORT_TIME_SPEED:
                 setParameterValue(k, timeInfo->playing ? 1.0 : 0.0, false, false, false);
-                postponeEvent(PluginPostEventParameterChange, k, timeInfo->playing ? 1.0 : 0.0);
+                postponeEvent(PluginPostEventParameterChange, k, 0, timeInfo->playing ? 1.0 : 0.0);
                 break;
             }
         }

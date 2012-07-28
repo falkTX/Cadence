@@ -79,9 +79,9 @@ def session_callback(event, arg):
 def reconnect_inputs():
     play_port_1 = jacklib.port_by_name(client, "system:playback_1")
     play_port_2 = jacklib.port_by_name(client, "system:playback_2")
+    client_name = str(jacklib.get_client_name(client), encoding="utf-8")
     list_port_1 = c_char_p_p_to_list(jacklib.port_get_all_connections(client, play_port_1))
     list_port_2 = c_char_p_p_to_list(jacklib.port_get_all_connections(client, play_port_2))
-    client_name = str(jacklib.get_client_name(client), encoding="utf-8")
 
     for port in list_port_1:
         this_port = jacklib.port_by_name(client, port)

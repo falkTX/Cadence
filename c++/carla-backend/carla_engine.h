@@ -140,8 +140,6 @@ struct CarlaEnginePortNativeHandle {
 class CarlaEngineClient;
 class CarlaEngineBasePort;
 
-Q_COMPILER_INITIALIZER_LISTS
-
 /*!
  * \class CarlaEngine
  *
@@ -333,8 +331,8 @@ public:
     void osc_send_set_midi_program_data(int plugin_id, int midi_program_id, int bank_id, int program_id, const char* midi_program_name);
     void osc_send_set_input_peak_value(int plugin_id, int port_id, double value);
     void osc_send_set_output_peak_value(int plugin_id, int port_id, double value);
-    void osc_send_note_on(int plugin_id, int note, int velo);
-    void osc_send_note_off(int plugin_id, int note);
+    void osc_send_note_on(int plugin_id, int channel, int note, int velo);
+    void osc_send_note_off(int plugin_id, int channel, int note);
     void osc_send_exit();
 
 #ifndef BUILD_BRIDGE

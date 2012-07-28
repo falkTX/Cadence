@@ -634,9 +634,9 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                             else if (strcmp(designation, LV2_TIME__speed) == 0)
                                 RDF_Port->Designation = LV2_PORT_TIME_SPEED;
                             else if (strncmp(designation, LV2_PARAMETERS_PREFIX, strlen(LV2_PARAMETERS_PREFIX)) == 0)
-                                0; // skip
+                                pass();
                             else if (strncmp(designation, LV2_PORT_GROUPS_PREFIX, strlen(LV2_PORT_GROUPS_PREFIX)) == 0)
-                                0; // skip
+                                pass();
                             else
                                 qWarning("lv2_rdf_new(%s) - got unknown Port Designation '%s'", URI, designation);
                         }
