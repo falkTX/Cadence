@@ -159,7 +159,7 @@ src/icons_rc.py: src/icons/icons.qrc
 	$(PYRCC) $< -o $@
 
 
-CPP: carla_backend carla_bridge carla_discovery
+CPP: carla_backend carla_bridge carla_discovery jackmeter
 
 carla_backend: carla_lilv
 	$(MAKE) -C c++/carla-backend
@@ -172,6 +172,10 @@ carla_discovery:
 
 carla_lilv:
 	$(MAKE) -C c++/carla-lilv
+
+jackmeter:
+	$(MAKE) -C c++/jackmeter
+
 
 unix32:
 	$(MAKE) -C c++/carla-bridge unix32
@@ -229,6 +233,7 @@ install:
 		c++/carla-bridge/carla-bridge-lv2-x11 \
 		c++/carla-bridge/carla-bridge-vst-x11 \
 		c++/carla-discovery/carla-discovery-* \
+		c++/jackmeter/cadence_jackmeter \
 		$(DESTDIR)$(PREFIX)/bin/
 
 	# Install desktop files

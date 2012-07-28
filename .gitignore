@@ -36,10 +36,4 @@ carla-discovery-win64.exe
 carla-discovery-win64.exe.so
 
 c++/carla-includes/vst/
-
-#src/carla-backend/qtcreator/Makefile
-#src/carla-backend/qtcreator/carla_backend
-#src/carla-bridge/qtcreator/Makefile
-#src/carla-bridge-ui/qtcreator/Makefile
-#src/carla-discovery/qtcreator/Makefile
-#src/carla-includes/vst/
+c++/jackmeter/cadence_jackmeter
