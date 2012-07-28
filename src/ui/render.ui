@@ -29,7 +29,7 @@
         <string>&amp;Render</string>
        </property>
        <property name="icon">
-        <iconset resource="../icons/icons.qrc">
+        <iconset resource="../../resources/resources.qrc">
          <normaloff>:/16x16/media-record.png</normaloff>:/16x16/media-record.png</iconset>
        </property>
       </widget>
@@ -40,7 +40,7 @@
         <string>&amp;Stop</string>
        </property>
        <property name="icon">
-        <iconset resource="../icons/icons.qrc">
+        <iconset resource="../../resources/resources.qrc">
          <normaloff>:/16x16/media-playback-stop.png</normaloff>:/16x16/media-playback-stop.png</iconset>
        </property>
       </widget>
@@ -51,7 +51,7 @@
         <string>&amp;Close</string>
        </property>
        <property name="icon">
-        <iconset resource="../icons/icons.qrc">
+        <iconset resource="../../resources/resources.qrc">
          <normaloff>:/16x16/window-close.png</normaloff>:/16x16/window-close.png</iconset>
        </property>
       </widget>
@@ -216,7 +216,7 @@
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="../icons/icons.qrc">
+           <iconset resource="../../resources/resources.qrc">
             <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
           </property>
          </widget>
@@ -400,7 +400,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../icons/icons.qrc"/>
+  <include location="../../resources/resources.qrc"/>
  </resources>
  <connections>
   <connection>

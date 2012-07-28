@@ -29,7 +29,7 @@
          <string>&amp;Start</string>
         </property>
         <property name="icon">
-         <iconset resource="../icons/icons.qrc">
+         <iconset resource="../../resources/resources.qrc">
           <normaloff>:/16x16/arrow-right.png</normaloff>:/16x16/arrow-right.png</iconset>
         </property>
        </widget>
@@ -46,7 +46,7 @@
          <string>&amp;Add to LADISH</string>
         </property>
         <property name="icon">
-         <iconset resource="../icons/icons.qrc">
+         <iconset resource="../../resources/resources.qrc">
           <normaloff>:/16x16/list-add.png</normaloff>:/16x16/list-add.png</iconset>
         </property>
        </widget>
@@ -278,7 +278,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../icons/icons.qrc"/>
+  <include location="../../resources/resources.qrc"/>
  </resources>
  <connections/>
 </ui>

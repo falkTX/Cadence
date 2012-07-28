@@ -116,7 +116,7 @@
          <set>AlignLeft|AlignVCenter</set>
         </property>
         <property name="icon">
-         <iconset resource="../icons/icons.qrc">
+         <iconset resource="../../resources/resources.qrc">
           <normaloff>:/48x48/exec.png</normaloff>:/48x48/exec.png</iconset>
         </property>
         <property name="flags">
@@ -134,7 +134,7 @@
          </font>
         </property>
         <property name="icon">
-         <iconset resource="../icons/icons.qrc">
+         <iconset resource="../../resources/resources.qrc">
           <normaloff>:/48x48/canvas.png</normaloff>:/48x48/canvas.png</iconset>
         </property>
         <property name="flags">
@@ -152,7 +152,7 @@
          </font>
         </property>
         <property name="icon">
-         <iconset resource="../icons/icons.qrc">
+         <iconset resource="../../resources/resources.qrc">
           <normaloff>:/48x48/ladish.png</normaloff>:/48x48/ladish.png</iconset>
         </property>
         <property name="flags">
@@ -170,7 +170,7 @@
          </font>
         </property>
         <property name="icon">
-         <iconset resource="../icons/icons.qrc">
+         <iconset resource="../../resources/resources.qrc">
           <normaloff>:/48x48/jack.png</normaloff>:/48x48/jack.png</iconset>
         </property>
         <property name="flags">
@@ -188,7 +188,7 @@
          </font>
         </property>
         <property name="icon">
-         <iconset resource="../icons/icons.qrc">
+         <iconset resource="../../resources/resources.qrc">
           <normaloff>:/48x48/folder.png</normaloff>:/48x48/folder.png</iconset>
         </property>
         <property name="flags">
@@ -241,7 +241,7 @@
               <string notr="true"/>
              </property>
              <property name="pixmap">
-              <pixmap resource="../icons/icons.qrc">:/48x48/exec.png</pixmap>
+              <pixmap resource="../../resources/resources.qrc">:/48x48/exec.png</pixmap>
              </property>
              <property name="alignment">
               <set>Qt::AlignHCenter|Qt::AlignTop</set>
@@ -280,7 +280,7 @@
                  <string/>
                 </property>
                 <property name="icon">
-                 <iconset resource="../icons/icons.qrc">
+                 <iconset resource="../../resources/resources.qrc">
                   <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
                 </property>
                </widget>
@@ -447,7 +447,7 @@
               <string notr="true"/>
              </property>
              <property name="pixmap">
-              <pixmap resource="../icons/icons.qrc">:/48x48/canvas.png</pixmap>
+              <pixmap resource="../../resources/resources.qrc">:/48x48/canvas.png</pixmap>
              </property>
              <property name="alignment">
               <set>Qt::AlignHCenter|Qt::AlignTop</set>
@@ -637,7 +637,7 @@
               <string notr="true"/>
              </property>
              <property name="pixmap">
-              <pixmap resource="../icons/icons.qrc">:/48x48/ladish.png</pixmap>
+              <pixmap resource="../../resources/resources.qrc">:/48x48/ladish.png</pixmap>
              </property>
              <property name="alignment">
               <set>Qt::AlignHCenter|Qt::AlignTop</set>
@@ -773,7 +773,7 @@
               <string notr="true"/>
              </property>
              <property name="pixmap">
-              <pixmap resource="../icons/icons.qrc">:/48x48/exec.png</pixmap>
+              <pixmap resource="../../resources/resources.qrc">:/48x48/exec.png</pixmap>
              </property>
              <property name="alignment">
               <set>Qt::AlignHCenter|Qt::AlignTop</set>
@@ -1050,7 +1050,7 @@ Some plugins might not work properly under this mode.</string>
               <string notr="true"/>
              </property>
              <property name="pixmap">
-              <pixmap resource="../icons/icons.qrc">:/48x48/folder.png</pixmap>
+              <pixmap resource="../../resources/resources.qrc">:/48x48/folder.png</pixmap>
              </property>
              <property name="alignment">
               <set>Qt::AlignHCenter|Qt::AlignTop</set>
@@ -1104,7 +1104,7 @@ Some plugins might not work properly under this mode.</string>
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../icons/icons.qrc">:/16x16/dialog-information.png</pixmap>
+                <pixmap resource="../../resources/resources.qrc">:/16x16/dialog-information.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1186,7 +1186,7 @@ Some plugins might not work properly under this mode.</string>
               <string>Add...</string>
              </property>
              <property name="icon">
-              <iconset resource="../icons/icons.qrc">
+              <iconset resource="../../resources/resources.qrc">
                <normaloff>:/16x16/list-add.png</normaloff>:/16x16/list-add.png</iconset>
              </property>
             </widget>
@@ -1197,7 +1197,7 @@ Some plugins might not work properly under this mode.</string>
               <string>Remove</string>
              </property>
              <property name="icon">
-              <iconset resource="../icons/icons.qrc">
+              <iconset resource="../../resources/resources.qrc">
                <normaloff>:/16x16/list-remove.png</normaloff>:/16x16/list-remove.png</iconset>
              </property>
             </widget>
@@ -1224,7 +1224,7 @@ Some plugins might not work properly under this mode.</string>
               <string>Change...</string>
              </property>
              <property name="icon">
-              <iconset resource="../icons/icons.qrc">
+              <iconset resource="../../resources/resources.qrc">
                <normaloff>:/16x16/edit-rename.png</normaloff>:/16x16/edit-rename.png</iconset>
              </property>
             </widget>
@@ -1263,9 +1263,10 @@ Some plugins might not work properly under this mode.</string>
   </layout>
  </widget>
  <resources>
-  <include location="../icons/icons.qrc"/>
-  <include location="../icons/icons.qrc"/>
-  <include location="../icons/icons.qrc"/>
+  <include location="../../resources/resources.qrc"/>
+  <include location="../../resources/resources.qrc"/>
+  <include location="../../resources/resources.qrc"/>
+  <include location="../../resources/resources.qrc"/>
  </resources>
  <connections>
   <connection>

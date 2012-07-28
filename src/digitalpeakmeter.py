@@ -47,7 +47,7 @@ class DigitalPeakMeter(QWidget):
         self.m_paintTimer.start()
 
     def displayMeter(self, meter, level):
-        if meter < 0 or meter >= self.m_channels:
+        if meter <= 0 or meter > self.m_channels:
             return qCritical("DigitalPeakMeter::displayMeter(%i, %f) - invalid meter number" % (meter, level))
 
         if level < 0.0:
@@ -58,8 +58,8 @@ class DigitalPeakMeter(QWidget):
         self.m_channelsData[meter-1] = level
 
     def setChannels(self, channels):
-        if (channels < 0)
-            return qCritical("DigitalPeakMeter::setChannels(%i) - channels must be a positive integer" % channels)
+        if (channels < 0):
+            return qCritical("DigitalPeakMeter::setChannels(%i) - 'channels' must be a positive integer" % channels)
 
         self.m_channels = channels
         self.m_channelsData  = []

@@ -138,7 +138,7 @@
       <string>Purge all logs</string>
      </property>
      <property name="icon">
-      <iconset resource="../icons/icons.qrc">
+      <iconset resource="../../resources/resources.qrc">
        <normaloff>:/16x16/edit-delete.png</normaloff>:/16x16/edit-delete.png</iconset>
      </property>
     </widget>
@@ -149,7 +149,7 @@
       <string>Close</string>
      </property>
      <property name="icon">
-      <iconset resource="../icons/icons.qrc">
+      <iconset resource="../../resources/resources.qrc">
        <normaloff>:/16x16/window-close.png</normaloff>:/16x16/window-close.png</iconset>
      </property>
     </widget>
@@ -170,7 +170,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../icons/icons.qrc"/>
+  <include location="../../resources/resources.qrc"/>
  </resources>
  <connections>
   <connection>

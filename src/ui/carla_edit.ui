@@ -83,7 +83,7 @@ Plugin Name
             <string>Save State</string>
            </property>
            <property name="icon">
-            <iconset resource="../icons/icons.qrc">
+            <iconset resource="../../resources/resources.qrc">
              <normaloff>:/16x16/document-save.png</normaloff>:/16x16/document-save.png</iconset>
            </property>
           </widget>
@@ -94,7 +94,7 @@ Plugin Name
             <string>Load State</string>
            </property>
            <property name="icon">
-            <iconset resource="../icons/icons.qrc">
+            <iconset resource="../../resources/resources.qrc">
              <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
            </property>
           </widget>
@@ -360,15 +360,12 @@ Plugin Name
               <string/>
              </property>
              <property name="icon">
-              <iconset resource="../icons/icons.qrc">
+              <iconset resource="../../resources/resources.qrc">
                <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
              </property>
             </widget>
            </item>
           </layout>
-          <zorder>group_programs</zorder>
-          <zorder>cb_programs</zorder>
-          <zorder>b_reload_program</zorder>
          </widget>
          <widget class="QWidget" name="midi_programs">
           <attribute name="title">
@@ -384,7 +381,7 @@ Plugin Name
               <string/>
              </property>
              <property name="icon">
-              <iconset resource="../icons/icons.qrc">
+              <iconset resource="../../resources/resources.qrc">
                <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
              </property>
             </widget>
@@ -491,7 +488,7 @@ Plugin Name
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../icons/icons.qrc"/>
+  <include location="../../resources/resources.qrc"/>
  </resources>
  <connections/>
 </ui>

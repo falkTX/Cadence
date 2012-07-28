@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>648</width>
-     <height>17</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -100,7 +100,7 @@
   </widget>
   <action name="act_file_connect">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/network-connect.png</normaloff>:/16x16/network-connect.png</iconset>
    </property>
    <property name="text">
@@ -109,7 +109,7 @@
   </action>
   <action name="act_file_quit">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/application-exit.png</normaloff>:/16x16/application-exit.png</iconset>
    </property>
    <property name="text">
@@ -128,7 +128,7 @@
   </action>
   <action name="act_file_refresh">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/view-refresh.png</normaloff>:/16x16/view-refresh.png</iconset>
    </property>
    <property name="text">
@@ -137,7 +137,7 @@
   </action>
  </widget>
  <resources>
-  <include location="../icons/icons.qrc"/>
+  <include location="../../resources/resources.qrc"/>
  </resources>
  <connections>
   <connection>

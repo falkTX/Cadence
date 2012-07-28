@@ -790,7 +790,7 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
 # Allow to use this as a standalone app
 if __name__ == '__main__':
     # Additional imports
-    import icons_rc
+    import resources_rc
     from sys import argv as sys_argv, exit as sys_exit
     from PyQt4.QtGui import QApplication, QIcon
 

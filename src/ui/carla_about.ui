@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>482</width>
+    <width>484</width>
     <height>252</height>
    </rect>
   </property>
@@ -66,7 +66,7 @@
           <string/>
          </property>
          <property name="pixmap">
-          <pixmap resource="../icons/icons.qrc">:/bitmaps/carla_about.png</pixmap>
+          <pixmap resource="../../resources/resources.qrc">:/bitmaps/carla_about.png</pixmap>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -318,7 +318,8 @@
   </layout>
  </widget>
  <resources>
-  <include location="../icons/icons.qrc"/>
+  <include location="../../resources/resources.qrc"/>
+  <include location="../../resources/resources.qrc"/>
  </resources>
  <connections>
   <connection>

@@ -45,7 +45,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../icons/icons.qrc">
+             <iconset resource="../../resources/resources.qrc">
               <normaloff>:/16x16/document-new.png</normaloff>:/16x16/document-new.png</iconset>
             </property>
            </widget>
@@ -65,7 +65,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../icons/icons.qrc">
+             <iconset resource="../../resources/resources.qrc">
               <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
             </property>
            </widget>
@@ -85,7 +85,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../icons/icons.qrc">
+             <iconset resource="../../resources/resources.qrc">
               <normaloff>:/16x16/document-save.png</normaloff>:/16x16/document-save.png</iconset>
             </property>
            </widget>
@@ -105,7 +105,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../icons/icons.qrc">
+             <iconset resource="../../resources/resources.qrc">
               <normaloff>:/16x16/document-save-as.png</normaloff>:/16x16/document-save-as.png</iconset>
             </property>
            </widget>
@@ -134,7 +134,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../icons/icons.qrc">
+             <iconset resource="../../resources/resources.qrc">
               <normaloff>:/16x16/list-add.png</normaloff>:/16x16/list-add.png</iconset>
             </property>
            </widget>
@@ -154,7 +154,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../icons/icons.qrc">
+             <iconset resource="../../resources/resources.qrc">
               <normaloff>:/16x16/edit-delete.png</normaloff>:/16x16/edit-delete.png</iconset>
             </property>
            </widget>
@@ -174,7 +174,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../icons/icons.qrc">
+             <iconset resource="../../resources/resources.qrc">
               <normaloff>:/16x16/edit-rename.png</normaloff>:/16x16/edit-rename.png</iconset>
             </property>
            </widget>
@@ -201,7 +201,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../icons/icons.qrc">
+             <iconset resource="../../resources/resources.qrc">
               <normaloff>:/16x16/list-add.png</normaloff>:/16x16/list-add.png</iconset>
             </property>
            </widget>
@@ -221,7 +221,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../icons/icons.qrc">
+             <iconset resource="../../resources/resources.qrc">
               <normaloff>:/16x16/list-remove.png</normaloff>:/16x16/list-remove.png</iconset>
             </property>
            </widget>
@@ -241,7 +241,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../icons/icons.qrc">
+             <iconset resource="../../resources/resources.qrc">
               <normaloff>:/16x16/edit-rename.png</normaloff>:/16x16/edit-rename.png</iconset>
             </property>
            </widget>
@@ -268,7 +268,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../icons/icons.qrc">
+             <iconset resource="../../resources/resources.qrc">
               <normaloff>:/16x16/network-connect.png</normaloff>:/16x16/network-connect.png</iconset>
             </property>
            </widget>
@@ -288,7 +288,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../icons/icons.qrc">
+             <iconset resource="../../resources/resources.qrc">
               <normaloff>:/16x16/network-disconnect.png</normaloff>:/16x16/network-disconnect.png</iconset>
             </property>
            </widget>
@@ -317,7 +317,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../icons/icons.qrc">
+             <iconset resource="../../resources/resources.qrc">
               <normaloff>:/16x16/zoom-fit-best.png</normaloff>:/16x16/zoom-fit-best.png</iconset>
             </property>
            </widget>
@@ -337,7 +337,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../icons/icons.qrc">
+             <iconset resource="../../resources/resources.qrc">
               <normaloff>:/16x16/zoom-in.png</normaloff>:/16x16/zoom-in.png</iconset>
             </property>
            </widget>
@@ -357,7 +357,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../icons/icons.qrc">
+             <iconset resource="../../resources/resources.qrc">
               <normaloff>:/16x16/zoom-out.png</normaloff>:/16x16/zoom-out.png</iconset>
             </property>
            </widget>
@@ -377,7 +377,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../icons/icons.qrc">
+             <iconset resource="../../resources/resources.qrc">
               <normaloff>:/16x16/zoom-original.png</normaloff>:/16x16/zoom-original.png</iconset>
             </property>
            </widget>
@@ -419,7 +419,7 @@
      <x>0</x>
      <y>0</y>
      <width>651</width>
-     <height>21</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -494,7 +494,7 @@
   </widget>
   <action name="act_save">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/document-save.png</normaloff>:/16x16/document-save.png</iconset>
    </property>
    <property name="text">
@@ -506,7 +506,7 @@
   </action>
   <action name="act_quit">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/application-exit.png</normaloff>:/16x16/application-exit.png</iconset>
    </property>
    <property name="text">
@@ -518,7 +518,7 @@
   </action>
   <action name="act_patchbay_add_group">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/list-add.png</normaloff>:/16x16/list-add.png</iconset>
    </property>
    <property name="text">
@@ -527,7 +527,7 @@
   </action>
   <action name="act_patchbay_remove_group">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/edit-delete.png</normaloff>:/16x16/edit-delete.png</iconset>
    </property>
    <property name="text">
@@ -536,7 +536,7 @@
   </action>
   <action name="act_patchbay_add_port">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/list-add.png</normaloff>:/16x16/list-add.png</iconset>
    </property>
    <property name="text">
@@ -545,7 +545,7 @@
   </action>
   <action name="act_patchbay_remove_port">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/list-remove.png</normaloff>:/16x16/list-remove.png</iconset>
    </property>
    <property name="text">
@@ -554,7 +554,7 @@
   </action>
   <action name="act_patchbay_rename_port">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/edit-rename.png</normaloff>:/16x16/edit-rename.png</iconset>
    </property>
    <property name="text">
@@ -563,7 +563,7 @@
   </action>
   <action name="act_patchbay_connect_ports">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/network-connect.png</normaloff>:/16x16/network-connect.png</iconset>
    </property>
    <property name="text">
@@ -572,7 +572,7 @@
   </action>
   <action name="act_patchbay_disconnect_ports">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/network-disconnect.png</normaloff>:/16x16/network-disconnect.png</iconset>
    </property>
    <property name="text">
@@ -581,7 +581,7 @@
   </action>
   <action name="act_canvas_refresh">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/view-refresh.png</normaloff>:/16x16/view-refresh.png</iconset>
    </property>
    <property name="text">
@@ -593,7 +593,7 @@
   </action>
   <action name="act_canvas_zoom_fit">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/zoom-fit-best.png</normaloff>:/16x16/zoom-fit-best.png</iconset>
    </property>
    <property name="text">
@@ -602,7 +602,7 @@
   </action>
   <action name="act_canvas_zoom_100">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/zoom-original.png</normaloff>:/16x16/zoom-original.png</iconset>
    </property>
    <property name="text">
@@ -614,7 +614,7 @@
   </action>
   <action name="act_canvas_zoom_out">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/zoom-out.png</normaloff>:/16x16/zoom-out.png</iconset>
    </property>
    <property name="text">
@@ -626,7 +626,7 @@
   </action>
   <action name="act_canvas_zoom_in">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/zoom-in.png</normaloff>:/16x16/zoom-in.png</iconset>
    </property>
    <property name="text">
@@ -664,7 +664,7 @@
   </action>
   <action name="act_canvas_arrange">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/view-sort-ascending.png</normaloff>:/16x16/view-sort-ascending.png</iconset>
    </property>
    <property name="text">
@@ -676,7 +676,7 @@
   </action>
   <action name="act_canvas_print">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/document-print.png</normaloff>:/16x16/document-print.png</iconset>
    </property>
    <property name="text">
@@ -690,7 +690,7 @@
   </action>
   <action name="act_settings_configure">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/configure.png</normaloff>:/16x16/configure.png</iconset>
    </property>
    <property name="text">
@@ -702,7 +702,7 @@
   </action>
   <action name="act_project_new">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/document-new.png</normaloff>:/16x16/document-new.png</iconset>
    </property>
    <property name="text">
@@ -714,7 +714,7 @@
   </action>
   <action name="act_project_open">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
    </property>
    <property name="text">
@@ -726,7 +726,7 @@
   </action>
   <action name="act_project_save">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/document-save.png</normaloff>:/16x16/document-save.png</iconset>
    </property>
    <property name="text">
@@ -738,7 +738,7 @@
   </action>
   <action name="act_project_save_as">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/document-save-as.png</normaloff>:/16x16/document-save-as.png</iconset>
    </property>
    <property name="text">
@@ -750,7 +750,7 @@
   </action>
   <action name="act_patchbay_rename_group">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/edit-rename.png</normaloff>:/16x16/edit-rename.png</iconset>
    </property>
    <property name="text">
@@ -759,7 +759,7 @@
   </action>
  </widget>
  <resources>
-  <include location="../icons/icons.qrc"/>
+  <include location="../../resources/resources.qrc"/>
  </resources>
  <connections>
   <connection>

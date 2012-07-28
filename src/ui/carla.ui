@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>710</width>
-     <height>20</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -123,7 +123,7 @@
   </widget>
   <action name="act_file_save">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/document-save.png</normaloff>:/16x16/document-save.png</iconset>
    </property>
    <property name="text">
@@ -132,7 +132,7 @@
   </action>
   <action name="act_file_save_as">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/document-save-as.png</normaloff>:/16x16/document-save-as.png</iconset>
    </property>
    <property name="text">
@@ -141,7 +141,7 @@
   </action>
   <action name="act_file_new">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/document-new.png</normaloff>:/16x16/document-new.png</iconset>
    </property>
    <property name="text">
@@ -150,7 +150,7 @@
   </action>
   <action name="act_file_open">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
    </property>
    <property name="text">
@@ -159,7 +159,7 @@
   </action>
   <action name="act_file_quit">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/application-exit.png</normaloff>:/16x16/application-exit.png</iconset>
    </property>
    <property name="text">
@@ -168,7 +168,7 @@
   </action>
   <action name="act_plugin_remove_all">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/edit-delete.png</normaloff>:/16x16/edit-delete.png</iconset>
    </property>
    <property name="text">
@@ -187,7 +187,7 @@
   </action>
   <action name="act_plugin_add">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/list-add.png</normaloff>:/16x16/list-add.png</iconset>
    </property>
    <property name="text">
@@ -204,7 +204,7 @@
   </action>
   <action name="act_settings_configure">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
+    <iconset resource="../../resources/resources.qrc">
      <normaloff>:/16x16/configure.png</normaloff>:/16x16/configure.png</iconset>
    </property>
    <property name="text">
@@ -213,7 +213,7 @@
   </action>
  </widget>
  <resources>
-  <include location="../icons/icons.qrc"/>
+  <include location="../../resources/resources.qrc"/>
  </resources>
  <connections>
   <connection>

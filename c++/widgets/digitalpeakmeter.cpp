@@ -57,7 +57,7 @@ void DigitalPeakMeter::setChannels(int channels)
     Q_ASSERT(channels >= 0);
 
     if (channels < 0)
-        return qCritical("DigitalPeakMeter::setChannels(%i) - channels must be a positive integer", channels);
+        return qCritical("DigitalPeakMeter::setChannels(%i) - 'channels' must be a positive integer", channels);
 
     m_channels = channels;
     m_channelsData.clear();

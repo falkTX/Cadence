@@ -39,7 +39,7 @@
       <string/>
      </property>
      <property name="icon">
-      <iconset resource="../icons/icons.qrc">
+      <iconset resource="../../resources/resources.qrc">
        <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
      </property>
     </widget>
@@ -70,7 +70,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../icons/icons.qrc"/>
+  <include location="../../resources/resources.qrc"/>
  </resources>
  <connections>
   <connection>

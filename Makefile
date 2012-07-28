@@ -25,6 +25,7 @@ endif
 
 all: UI RES CPP
 
+# ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 UI: cadence catarina catia claudia carla tools
 
@@ -152,12 +153,14 @@ src/ui_settings_jack.py: src/ui/settings_jack.ui
 src/ui_inputdialog_value.py: src/ui/inputdialog_value.ui
 	$(PYUIC) $< -o $@
 
+# ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-RES: src/icons_rc.py
+RES: src/resources_rc.py
 
-src/icons_rc.py: src/icons/icons.qrc
+src/resources_rc.py: resources/resources.qrc
 	$(PYRCC) $< -o $@
 
+# ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 CPP: carla_backend carla_bridge carla_discovery jackmeter
 
@@ -176,6 +179,7 @@ carla_lilv:
 jackmeter:
 	$(MAKE) -C c++/jackmeter
 
+# ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 unix32:
 	$(MAKE) -C c++/carla-bridge unix32
@@ -193,6 +197,7 @@ wine64:
 	$(MAKE) -C c++/carla-bridge wine64
 	$(MAKE) -C c++/carla-discovery wine64
 
+# ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 clean:
 	$(MAKE) clean -C c++/carla-backend
@@ -200,7 +205,6 @@ clean:
 	$(MAKE) clean -C c++/carla-discovery
 	$(MAKE) clean -C c++/carla-lilv
 	rm -f *~ src/*~ src/*.pyc src/ui_*.py src/icons_rc.py
-
 
 install:
 	# Create directories

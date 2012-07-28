@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_system">
        <attribute name="title">
@@ -139,7 +139,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../icons/icons.qrc">:/16x16/dialog-information.png</pixmap>
+                <pixmap resource="../../resources/resources.qrc">:/16x16/dialog-information.png</pixmap>
                </property>
               </widget>
              </item>
@@ -198,7 +198,7 @@
                    <string/>
                   </property>
                   <property name="pixmap">
-                   <pixmap resource="../icons/icons.qrc">:/16x16/dialog-ok-apply.png</pixmap>
+                   <pixmap resource="../../resources/resources.qrc">:/16x16/dialog-ok-apply.png</pixmap>
                   </property>
                  </widget>
                 </item>
@@ -269,7 +269,7 @@
                    <string/>
                   </property>
                   <property name="pixmap">
-                   <pixmap resource="../icons/icons.qrc">:/16x16/dialog-ok-apply.png</pixmap>
+                   <pixmap resource="../../resources/resources.qrc">:/16x16/dialog-ok-apply.png</pixmap>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignCenter</set>
@@ -532,7 +532,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../icons/icons.qrc">:/screens/catia.png</pixmap>
+                <pixmap resource="../../resources/resources.qrc">:/screens/catia.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -567,7 +567,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../icons/icons.qrc">:/screens/claudia.png</pixmap>
+                <pixmap resource="../../resources/resources.qrc">:/screens/claudia.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -602,7 +602,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../icons/icons.qrc">:/screens/carla.png</pixmap>
+                <pixmap resource="../../resources/resources.qrc">:/screens/carla.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -681,7 +681,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../icons/icons.qrc">:/screens/logs.png</pixmap>
+                <pixmap resource="../../resources/resources.qrc">:/screens/logs.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -716,7 +716,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../icons/icons.qrc">:/screens/render.png</pixmap>
+                <pixmap resource="../../resources/resources.qrc">:/screens/render.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -751,7 +751,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../icons/icons.qrc">:/screens/xy-controller.png</pixmap>
+                <pixmap resource="../../resources/resources.qrc">:/screens/xy-controller.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -1043,8 +1043,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>412</width>
-                  <height>276</height>
+                  <width>94</width>
+                  <height>76</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -1377,7 +1377,7 @@
      <x>0</x>
      <y>0</y>
      <width>732</width>
-     <height>20</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -1457,7 +1457,8 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../icons/icons.qrc"/>
+  <include location="../../resources/resources.qrc"/>
+  <include location="../../resources/resources.qrc"/>
  </resources>
  <connections>
   <connection>
