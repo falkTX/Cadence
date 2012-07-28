@@ -54,7 +54,6 @@ def process_callback(nframes, arg):
 def port_callback(port_a, port_b, yesno, arg):
     global x_needReconnect
     x_needReconnect = True
-    return 0
 
 def session_callback(event, arg):
     if WINDOWS:
@@ -77,9 +76,9 @@ def session_callback(event, arg):
 # helpers
 
 def reconnect_inputs():
+    client_name = str(jacklib.get_client_name(client), encoding="utf-8")
     play_port_1 = jacklib.port_by_name(client, "system:playback_1")
     play_port_2 = jacklib.port_by_name(client, "system:playback_2")
-    client_name = str(jacklib.get_client_name(client), encoding="utf-8")
     list_port_1 = c_char_p_p_to_list(jacklib.port_get_all_connections(client, play_port_1))
     list_port_2 = c_char_p_p_to_list(jacklib.port_get_all_connections(client, play_port_2))
 
@@ -100,13 +99,13 @@ def reconnect_inputs():
 # Meter class
 
 class MeterW(DigitalPeakMeter):
-    def __init__(self, parent=None):
-        DigitalPeakMeter.__init__(self, parent)
+    def __init__(self):
+        DigitalPeakMeter.__init__(self, None)
 
-        client_name = str(jacklib.get_client_name(client), encoding="utf-8")
+        clientName = str(jacklib.get_client_name(client), encoding="utf-8")
 
-        self.setWindowFlags(self.windowFlags()|Qt.WindowStaysOnTopHint)
-        self.setWindowTitle(client_name)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+        self.setWindowTitle(clientName)
         self.setChannels(2)
         self.setOrientation(self.VERTICAL)
         self.setSmoothRelease(1)
