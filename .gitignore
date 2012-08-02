@@ -16,7 +16,6 @@
 
 *.pyc
 ui_*.py
-icons_rc.py
 
 moc_*.cpp
 ui_*.h
@@ -37,3 +36,5 @@ carla-discovery-win64.exe.so
 
 c++/carla-includes/vst/
 c++/jackmeter/cadence_jackmeter
+
+src/resources_rc.py

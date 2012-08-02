@@ -204,7 +204,8 @@ clean:
 	$(MAKE) clean -C c++/carla-bridge
 	$(MAKE) clean -C c++/carla-discovery
 	$(MAKE) clean -C c++/carla-lilv
-	rm -f *~ src/*~ src/*.pyc src/ui_*.py src/icons_rc.py
+	$(MAKE) clean -C c++/jackmeter
+	rm -f *~ src/*~ src/*.pyc src/ui_*.py src/resources_rc.py
 
 install:
 	# Create directories
@@ -225,13 +226,18 @@ install:
 	# Install script files and binaries
 	install -m 755 \
 		data/cadence \
-		data/cadence_* \
+		data/cadence_jacksettings \
+		data/cadence_logs \
+		data/cadence_pulse2jack \
+		data/cadence_render \
+		data/cadence_xycontroller \
 		data/cadence-aloop-daemon \
 		data/catarina \
 		data/catia \
 		data/claudia \
 		data/claudia-launcher \
 		data/carla \
+		data/carla-control \
 		c++/carla-bridge/carla-bridge-lv2-gtk2 \
 		c++/carla-bridge/carla-bridge-lv2-qt4 \
 		c++/carla-bridge/carla-bridge-lv2-x11 \
@@ -250,6 +256,7 @@ install:
 	install -m 644 resources/16x16/claudia.png             $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
 	install -m 644 resources/16x16/claudia-launcher.png    $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
 	install -m 644 resources/16x16/carla.png               $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
+	install -m 644 resources/16x16/carla-control.png       $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
 
 	# Install icons, 48x48
 	install -m 644 resources/48x48/cadence.png             $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/
@@ -258,6 +265,7 @@ install:
 	install -m 644 resources/48x48/claudia.png             $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/
 	install -m 644 resources/48x48/claudia-launcher.png    $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/
 	install -m 644 resources/48x48/carla.png               $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/
+	install -m 644 resources/48x48/carla-control.png       $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/
 
 	# Install icons, 128x128
 	install -m 644 resources/128x128/cadence.png           $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
@@ -266,6 +274,7 @@ install:
 	install -m 644 resources/128x128/claudia.png           $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
 	install -m 644 resources/128x128/claudia-launcher.png  $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
 	install -m 644 resources/128x128/carla.png             $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
+	install -m 644 resources/128x128/carla-control.png     $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
 
 	# Install icons, 256x256
 	install -m 644 resources/256x256/cadence.png           $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
@@ -274,6 +283,7 @@ install:
 	install -m 644 resources/256x256/claudia.png           $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
 	install -m 644 resources/256x256/claudia-launcher.png  $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
 	install -m 644 resources/256x256/carla.png             $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
+	install -m 644 resources/256x256/carla-control.png      $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
 
 	# Install icons, scalable
 	install -m 644 resources/scalable/cadence.svg          $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
@@ -282,6 +292,7 @@ install:
 	install -m 644 resources/scalable/claudia.svg          $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
 	install -m 644 resources/scalable/claudia-launcher.svg $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
 	install -m 644 resources/scalable/carla.svg            $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
+	install -m 644 resources/scalable/carla-control.svg    $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
 
 	# Install main code
 	install -m 755 src/*.py $(DESTDIR)$(PREFIX)/share/cadence/src/
@@ -295,12 +306,17 @@ install:
 	# Adjust PREFIX value in script files
 	sed -i "s/X-PREFIX-X/$(SED_PREFIX)/" \
 		$(DESTDIR)$(PREFIX)/bin/cadence \
+		$(DESTDIR)$(PREFIX)/bin/cadence_jacksettings \
+		$(DESTDIR)$(PREFIX)/bin/cadence_logs \
+		$(DESTDIR)$(PREFIX)/bin/cadence_pulse2jack \
+		$(DESTDIR)$(PREFIX)/bin/cadence_render \
+		$(DESTDIR)$(PREFIX)/bin/cadence_xycontroller \
 		$(DESTDIR)$(PREFIX)/bin/catarina \
 		$(DESTDIR)$(PREFIX)/bin/catia \
 		$(DESTDIR)$(PREFIX)/bin/claudia \
 		$(DESTDIR)$(PREFIX)/bin/claudia-launcher \
 		$(DESTDIR)$(PREFIX)/bin/carla \
-		$(DESTDIR)$(PREFIX)/bin/cadence_*
+		$(DESTDIR)$(PREFIX)/bin/carla-control
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/cadence
@@ -311,6 +327,7 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/claudia
 	rm -f $(DESTDIR)$(PREFIX)/bin/claudia-launcher
 	rm -f $(DESTDIR)$(PREFIX)/bin/carla
+	rm -f $(DESTDIR)$(PREFIX)/bin/carla-control
 	rm -f $(DESTDIR)$(PREFIX)/bin/carla-bridge-*
 	rm -f $(DESTDIR)$(PREFIX)/bin/carla-discovery-*
 	rm -f $(DESTDIR)$(PREFIX)/share/applications/cadence.desktop
@@ -319,35 +336,41 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/share/applications/claudia.desktop
 	rm -f $(DESTDIR)$(PREFIX)/share/applications/claudia-launcher.desktop
 	rm -f $(DESTDIR)$(PREFIX)/share/applications/carla.desktop
+	rm -f $(DESTDIR)$(PREFIX)/share/applications/carla-control.desktop
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/cadence.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/catarina.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/catia.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/claudia.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/claudia-launcher.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/carla.png
+	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/carla-control.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/cadence.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/catarina.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/catia.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/claudia.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/claudia-launcher.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/carla.png
+	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/carla-control.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/cadence.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/catarina.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/catia.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/claudia.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/claudia-launcher.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/carla.png
+	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/carla-control.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/cadence.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/catarina.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/catia.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/claudia.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/claudia-launcher.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/carla.png
+	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/carla-control.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/cadence.svg
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/catarina.svg
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/catia.svg
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/claudia.svg
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/claudia-launcher.svg
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/carla.svg
+	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/carla-control.svg
 	rm -rf $(DESTDIR)$(PREFIX)/lib/carla/
 	rm -rf $(DESTDIR)$(PREFIX)/share/cadence/
