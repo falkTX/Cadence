@@ -20,7 +20,7 @@
 
 #include "carla_includes.h"
 
-#include <cassert>
+#include <cstdint>
 #include <cstring>
 #include <lo/lo.h>
 
@@ -33,7 +33,7 @@ struct CarlaOscData {
 static inline
 void osc_clear_data(CarlaOscData* const oscData)
 {
-    qDebug("osc_clear_data(%p, path:\"%s\")", oscData, oscData->path);
+    qDebug("osc_clear_data(path:\"%s\")", oscData->path);
 
     if (oscData->path)
         free((void*)oscData->path);
@@ -44,7 +44,7 @@ void osc_clear_data(CarlaOscData* const oscData)
     if (oscData->target)
         lo_address_free(oscData->target);
 
-    oscData->path = nullptr;
+    oscData->path   = nullptr;
     oscData->source = nullptr;
     oscData->target = nullptr;
 }
@@ -53,8 +53,8 @@ static inline
 void osc_send_configure(const CarlaOscData* const oscData, const char* const key, const char* const value)
 {
     qDebug("osc_send_configure(path:\"%s\", \"%s\", \"%s\")", oscData->path, key, value);
-    assert(key);
-    assert(value);
+    Q_ASSERT(key);
+    Q_ASSERT(value);
 
     if (oscData->target)
     {
@@ -66,7 +66,7 @@ void osc_send_configure(const CarlaOscData* const oscData, const char* const key
 }
 
 static inline
-void osc_send_control(const CarlaOscData* const oscData, const int index, const float value)
+void osc_send_control(const CarlaOscData* const oscData, const int32_t index, const float value)
 {
     qDebug("osc_send_control(path:\"%s\", %i, %f)", oscData->path, index, value);
 
@@ -80,10 +80,10 @@ void osc_send_control(const CarlaOscData* const oscData, const int index, const 
 }
 
 static inline
-void osc_send_program(const CarlaOscData* const oscData, const int index)
+void osc_send_program(const CarlaOscData* const oscData, const int32_t index)
 {
     qDebug("osc_send_program(path:\"%s\", %i)", oscData->path, index);
-    assert(index >= 0);
+    Q_ASSERT(index >= 0);
 
     if (oscData->target)
     {
@@ -95,11 +95,11 @@ void osc_send_program(const CarlaOscData* const oscData, const int index)
 }
 
 static inline
-void osc_send_program(const CarlaOscData* const oscData, const int bank, const int program)
+void osc_send_program(const CarlaOscData* const oscData, const int32_t bank, const int32_t program)
 {
     qDebug("osc_send_program(path:\"%s\", %i, %i)", oscData->path, bank, program);
-    assert(program >= 0);
-    assert(bank >= 0);
+    Q_ASSERT(program >= 0);
+    Q_ASSERT(bank >= 0);
 
     if (oscData->target)
     {
@@ -111,10 +111,10 @@ void osc_send_program(const CarlaOscData* const oscData, const int bank, const i
 }
 
 static inline
-void osc_send_midi_program(const CarlaOscData* const oscData, const int index)
+void osc_send_midi_program(const CarlaOscData* const oscData, const int32_t index)
 {
     qDebug("osc_send_midi_program(path:\"%s\", %i)", oscData->path, index);
-    assert(index >= 0);
+    Q_ASSERT(index >= 0);
 
     if (oscData->target)
     {
@@ -128,9 +128,9 @@ void osc_send_midi_program(const CarlaOscData* const oscData, const int index)
 static inline
 void osc_send_midi(const CarlaOscData* const oscData, const uint8_t buf[4])
 {
-    qDebug("osc_send_midi(path:\"%s\", 0x%X, %03i, %03i)", oscData->path, buf[1], buf[2], buf[3]);
-    assert(buf[0] == 0);
-    assert(buf[1] != 0);
+    qDebug("osc_send_midi(path:\"%s\", 0x%X, %03u, %03u)", oscData->path, buf[1], buf[2], buf[3]);
+    Q_ASSERT(buf[0] == 0);
+    Q_ASSERT(buf[1] != 0);
 
     if (oscData->target)
     {
@@ -145,7 +145,7 @@ void osc_send_midi(const CarlaOscData* const oscData, const uint8_t buf[4])
 static inline
 void osc_send_update(const CarlaOscData* const oscData, const char* const url)
 {
-    qDebug("osc_send_update(path:\"%s\", %s)", oscData->path, url);
+    qDebug("osc_send_update(path:\"%s\", \"%s\")", oscData->path, url);
 
     if (oscData->target)
     {
@@ -232,9 +232,9 @@ static inline
 void osc_send_lv2_event_transfer(const CarlaOscData* const oscData, const char* const type, const char* const key, const char* const value)
 {
     qDebug("osc_send_lv2_event_transfer(path:\"%s\", \"%s\", \"%s\", \"%s\")", oscData->path, type, key, value);
-    assert(type);
-    assert(key);
-    assert(value);
+    Q_ASSERT(type);
+    Q_ASSERT(key);
+    Q_ASSERT(value);
 
     if (oscData->target)
     {

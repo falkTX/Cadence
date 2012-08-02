@@ -29,7 +29,7 @@ cadence_jackmeter: $(OBJS)
 	$(CXX) $^ $(LINK_FLAGS) -o $@ && strip $@
 
 cadence_jackmeter.exe: $(OBJS)
-	$(CXX) $^ -static $(LINK_FLAGS) -o $@ && strip $@
+	$(CXX) $^ -static -mwindows $(LINK_FLAGS) -o $@ && strip $@
 
 # --------------------------------------------------------------
 
@@ -37,4 +37,4 @@ cadence_jackmeter.exe: $(OBJS)
 	$(CXX) -c $< $(BUILD_FLAGS) -o $@
 
 clean:
-	rm -f $(OBJS) cadence_jackmeter cadence_jackmeter.exe
+	rm -f $(OBJS) cadence_jackmeter*

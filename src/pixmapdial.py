@@ -25,6 +25,7 @@ class PixmapDial(QDial):
     HORIZONTAL = 0
     VERTICAL   = 1
 
+    CUSTOM_PAINT_NULL      = 0
     CUSTOM_PAINT_CARLA_WET = 1
     CUSTOM_PAINT_CARLA_VOL = 2
     CUSTOM_PAINT_CARLA_L   = 3
@@ -38,7 +39,7 @@ class PixmapDial(QDial):
 
         self.m_pixmap = QPixmap(":/bitmaps/dial_01d.png")
         self.m_pixmap_n_str = "01"
-        self.m_custom_paint = 0
+        self.m_custom_paint = CUSTOM_PAINT_NULL
 
         self.m_hovered    = False
         self.m_hover_step = self.HOVER_MIN
@@ -124,7 +125,7 @@ class PixmapDial(QDial):
         return QSize(self.p_size, self.p_size)
 
     def updateSizes(self):
-        self.p_width = self.m_pixmap.width()
+        self.p_width  = self.m_pixmap.width()
         self.p_height = self.m_pixmap.height()
 
         if self.p_width < 1:
@@ -175,11 +176,9 @@ class PixmapDial(QDial):
                 return
 
             target = QRectF(0.0, 0.0, self.p_size, self.p_size)
-            value  = (current / divider)
+            value  = current / divider
 
-            ## Regular knobs
-            #else:
-            per = int((self.p_count - 1) * (current / divider))
+            per = int((self.p_count - 1) * value)
 
             if self.m_orientation == self.HORIZONTAL:
                 xpos = self.p_size * per

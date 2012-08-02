@@ -313,26 +313,30 @@ public:
         return m_osc.getServerPath();
     }
 
-    void osc_send_add_plugin(int plugin_id, const char* plugin_name);
-    void osc_send_remove_plugin(int plugin_id);
-    void osc_send_set_plugin_data(int plugin_id, int type, int category, int hints, const char* real_name, const char* label, const char* maker, const char* copyright, long unique_id);
-    void osc_send_set_plugin_ports(int plugin_id, int ains, int aouts, int mins, int mouts, int cins, int couts, int ctotals);
-    void osc_send_set_parameter_value(int plugin_id, int param_id, double value);
-    void osc_send_set_parameter_data(int plugin_id, int param_id, int ptype, int hints, const char* name, const char* label, double current);
-    void osc_send_set_parameter_ranges(int plugin_id, int param_id, double x_min, double x_max, double x_def, double x_step, double x_step_small, double x_step_large);
-    void osc_send_set_parameter_midi_channel(int plugin_id, int parameter_id, int midi_channel);
-    void osc_send_set_parameter_midi_cc(int plugin_id, int parameter_id, int midi_cc);
-    void osc_send_set_default_value(int plugin_id, int param_id, double value);
-    void osc_send_set_program(int plugin_id, int program_id);
-    void osc_send_set_program_count(int plugin_id, int program_count);
-    void osc_send_set_program_name(int plugin_id, int program_id, const char* program_name);
-    void osc_send_set_midi_program(int plugin_id, int midi_program_id);
-    void osc_send_set_midi_program_count(int plugin_id, int midi_program_count);
-    void osc_send_set_midi_program_data(int plugin_id, int midi_program_id, int bank_id, int program_id, const char* midi_program_name);
-    void osc_send_set_input_peak_value(int plugin_id, int port_id, double value);
-    void osc_send_set_output_peak_value(int plugin_id, int port_id, double value);
-    void osc_send_note_on(int plugin_id, int channel, int note, int velo);
-    void osc_send_note_off(int plugin_id, int channel, int note);
+    void osc_send_add_plugin(const int32_t pluginId, const char* const pluginName);
+    void osc_send_remove_plugin(const int32_t pluginId);
+    void osc_send_set_plugin_data(const int32_t pluginId, const int32_t type, const int32_t category, const int32_t hints,
+                                  const char* const realName, const char* const label, const char* const maker, const char* const copyright, const int64_t uniqueId);
+    void osc_send_set_plugin_ports(const int32_t pluginId, const int32_t audioIns, const int32_t audioOuts, const int32_t midiIns, const int32_t midiOuts,
+                                   const int32_t cIns, const int32_t cOuts, const int32_t cTotals);
+    void osc_send_set_parameter_data(const int32_t pluginId, const int32_t index, const int32_t type, const int32_t hints,
+                                     const char* const name, const char* const label, const double current);
+    void osc_send_set_parameter_ranges(const int32_t pluginId, const int32_t index, const double min, const double max, const double def,
+                                       const double step, const double stepSmall, const double stepLarge);
+    void osc_send_set_parameter_midi_cc(const int32_t pluginId, const int32_t index, const int32_t cc);
+    void osc_send_set_parameter_midi_channel(const int32_t pluginId, const int32_t index, const int32_t channel);
+    void osc_send_set_parameter_value(const int32_t pluginId, const int32_t index, const double value);
+    void osc_send_set_default_value(const int32_t pluginId, const int32_t index, const double value);
+    void osc_send_set_program(const int32_t pluginId, const int32_t index);
+    void osc_send_set_program_count(int32_t pluginId, int program_count);
+    void osc_send_set_program_name(int32_t pluginId, int program_id, const char* program_name);
+    void osc_send_set_midi_program(int32_t pluginId, int midi_program_id);
+    void osc_send_set_midi_program_count(int32_t pluginId, int midi_program_count);
+    void osc_send_set_midi_program_data(int32_t pluginId, int midi_program_id, int bank_id, int program_id, const char* midi_program_name);
+    void osc_send_set_input_peak_value(int32_t pluginId, int port_id, double value);
+    void osc_send_set_output_peak_value(int32_t pluginId, int port_id, double value);
+    void osc_send_note_on(int32_t pluginId, int channel, int note, int velo);
+    void osc_send_note_off(int32_t pluginId, int channel, int note);
     void osc_send_exit();
 
 #ifndef BUILD_BRIDGE

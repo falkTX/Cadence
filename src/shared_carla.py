@@ -403,10 +403,11 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
         pType  = pInfo['type']
         pHints = pInfo['hints']
 
-        self.m_midiCC = -1
+        self.m_midiCC      = -1
         self.m_midiChannel = 1
-        self.m_pluginId = pluginId
+        self.m_pluginId    = pluginId
         self.m_parameterId = pInfo['index']
+
         self.m_tabIndex = tabIndex
 
         self.add_MIDI_CCs_to_ComboBox()

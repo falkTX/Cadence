@@ -137,6 +137,7 @@ public:
     {
         setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
         setWindowTitle("M");
+
         setChannels(2);
         setOrientation(VERTICAL);
         setSmoothRelease(1);

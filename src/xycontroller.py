@@ -20,7 +20,6 @@
 from PyQt4.QtCore import pyqtSlot, Qt, QPointF, QRectF, QSettings, QTimer
 from PyQt4.QtGui import QApplication, QColor, QGraphicsItem, QGraphicsScene, QMainWindow, QPainter, QPen
 from queue import Queue, Empty as QuequeEmpty
-#from Queue import Queue, Empty as QuequeEmpty
 
 # Imports (Custom)
 import ui_xycontroller
@@ -174,28 +173,30 @@ class XYGraphicsScene(QGraphicsScene):
         self.p_size.setRect(-(size.width() / 2), -(size.height() / 2), size.width(), size.height())
 
     def updateSmooth(self):
-        if self.m_smooth:
-            if self.m_cursor.x() != self.m_smooth_x or self.m_cursor.y() != self.m_smooth_y:
-                if abs(self.m_cursor.x() - self.m_smooth_x) <= 0.001:
-                    self.m_smooth_x = self.m_cursor.x()
-                    return
-                elif abs(self.m_cursor.y() - self.m_smooth_y) <= 0.001:
-                    self.m_smooth_y = self.m_cursor.y()
-                    return
+        if not self.m_smooth:
+            return
 
-                new_x = (self.m_smooth_x + self.m_cursor.x() * 3) / 4
-                new_y = (self.m_smooth_y + self.m_cursor.y() * 3) / 4
-                pos = QPointF(new_x, new_y)
+        if self.m_cursor.x() != self.m_smooth_x or self.m_cursor.y() != self.m_smooth_y:
+            if abs(self.m_cursor.x() - self.m_smooth_x) <= 0.001:
+                self.m_smooth_x = self.m_cursor.x()
+                return
+            elif abs(self.m_cursor.y() - self.m_smooth_y) <= 0.001:
+                self.m_smooth_y = self.m_cursor.y()
+                return
 
-                self.m_cursor.setPos(pos)
-                self.m_lineH.setY(pos.y())
-                self.m_lineV.setX(pos.x())
+            new_x = (self.m_smooth_x + self.m_cursor.x() * 3) / 4
+            new_y = (self.m_smooth_y + self.m_cursor.y() * 3) / 4
+            pos = QPointF(new_x, new_y)
 
-                xp = pos.x() / (self.p_size.x() + self.p_size.width())
-                yp = pos.y() / (self.p_size.y() + self.p_size.height())
+            self.m_cursor.setPos(pos)
+            self.m_lineH.setY(pos.y())
+            self.m_lineV.setX(pos.x())
 
-                self.sendMIDI(xp, yp)
-                self.emit(SIGNAL("cursorMoved(double, double)"), xp, yp)
+            xp = pos.x() / (self.p_size.x() + self.p_size.width())
+            yp = pos.y() / (self.p_size.y() + self.p_size.height())
+
+            self.sendMIDI(xp, yp)
+            self.emit(SIGNAL("cursorMoved(double, double)"), xp, yp)
 
     def keyPressEvent(self, event):
         event.accept()
@@ -549,16 +550,18 @@ def jack_process_callback(nframes, arg):
         event_count = jacklib.midi_get_event_count(midi_in_buffer)
 
         for i in range(event_count):
-            if jacklib.midi_event_get(jacklib.pointer(static_event), midi_in_buffer, i) == 0:
-                if static_event.size == 1:
-                    jack_midi_in_data.put_nowait((static_event.buffer[0], 0, 0))
-                elif static_event.size == 2:
-                    jack_midi_in_data.put_nowait((static_event.buffer[0], static_event.buffer[1], 0))
-                elif static_event.size >= 3:
-                    jack_midi_in_data.put_nowait((static_event.buffer[0], static_event.buffer[1], static_event.buffer[2]))
+            if jacklib.midi_event_get(jacklib.pointer(static_event), midi_in_buffer, i) != 0:
+                break
 
-                if jack_midi_in_data.full():
-                    break
+            if static_event.size == 1:
+                jack_midi_in_data.put_nowait((static_event.buffer[0], 0, 0))
+            elif static_event.size == 2:
+                jack_midi_in_data.put_nowait((static_event.buffer[0], static_event.buffer[1], 0))
+            elif static_event.size >= 3:
+                jack_midi_in_data.put_nowait((static_event.buffer[0], static_event.buffer[1], static_event.buffer[2]))
+
+            if jack_midi_in_data.full():
+                break
 
     # MIDI Out
     midi_out_buffer = jacklib.port_get_buffer(jack_midi_out_port, nframes)
@@ -602,7 +605,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setApplicationName("XY-Controller")
     app.setApplicationVersion(VERSION)
-    app.setOrganizationName("falkTX")
+    app.setOrganizationName("Cadence")
     #app.setWindowIcon(QIcon(":/48x48/xy-controller.png"))
 
     # Start jack
@@ -612,11 +615,11 @@ if __name__ == '__main__':
     if not jack_client:
         errorString = get_jack_status_error_string(jack_status)
         QMessageBox.critical(None, app.translate("XYControllerW", "Error"), app.translate("XYControllerW",
-            "Could not connect to JACK, possible errors:\n"
+            "Could not connect to JACK, possible reasons:\n"
             "%s" % errorString))
         sys.exit(1)
 
-    jack_midi_in_port = jacklib.port_register(jack_client, "midi_in", jacklib.JACK_DEFAULT_MIDI_TYPE, jacklib.JackPortIsInput, 0)
+    jack_midi_in_port  = jacklib.port_register(jack_client, "midi_in", jacklib.JACK_DEFAULT_MIDI_TYPE, jacklib.JackPortIsInput, 0)
     jack_midi_out_port = jacklib.port_register(jack_client, "midi_out", jacklib.JACK_DEFAULT_MIDI_TYPE, jacklib.JackPortIsOutput, 0)
     jacklib.set_session_callback(jack_client, jack_session_callback, None)
     jacklib.set_process_callback(jack_client, jack_process_callback, None)
