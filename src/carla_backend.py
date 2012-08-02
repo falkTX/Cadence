@@ -773,11 +773,11 @@ class Host(object):
         self.lib.set_parameter_value.argtypes = [c_ushort, c_uint32, c_double]
         self.lib.set_parameter_value.restype = None
 
-        self.lib.set_parameter_midi_channel.argtypes = [c_ushort, c_uint32, c_uint8]
-        self.lib.set_parameter_midi_channel.restype = None
-
         self.lib.set_parameter_midi_cc.argtypes = [c_ushort, c_uint32, c_int16]
         self.lib.set_parameter_midi_cc.restype = None
+
+        self.lib.set_parameter_midi_channel.argtypes = [c_ushort, c_uint32, c_uint8]
+        self.lib.set_parameter_midi_channel.restype = None
 
         self.lib.set_program.argtypes = [c_ushort, c_uint32]
         self.lib.set_program.restype = None
@@ -941,11 +941,11 @@ class Host(object):
     def set_parameter_value(self, plugin_id, parameter_id, value):
         self.lib.set_parameter_value(plugin_id, parameter_id, value)
 
-    def set_parameter_midi_channel(self, plugin_id, parameter_id, channel):
-        self.lib.set_parameter_midi_channel(plugin_id, parameter_id, channel)
-
     def set_parameter_midi_cc(self, plugin_id, parameter_id, midi_cc):
         self.lib.set_parameter_midi_cc(plugin_id, parameter_id, midi_cc)
+
+    def set_parameter_midi_channel(self, plugin_id, parameter_id, channel):
+        self.lib.set_parameter_midi_channel(plugin_id, parameter_id, channel)
 
     def set_program(self, plugin_id, program_id):
         self.lib.set_program(plugin_id, program_id)

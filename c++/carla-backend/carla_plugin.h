@@ -973,39 +973,43 @@ public:
     }
 
     /*!
-     * Set parameter's \a parameterId MIDI channel to \a channel.\n
-     * \a channel must be between 0 and 15.
-     */
-    void setParameterMidiChannel(uint32_t parameterId, uint8_t channel)
-    {
-        assert(parameterId < param.count && channel < 16);
-        param.data[parameterId].midiChannel = channel;
-
-#ifndef BUILD_BRIDGE
-        x_engine->osc_send_set_parameter_midi_channel(m_id, parameterId, channel);
-
-        // FIXME: send to engine
-        //if (m_hints & PLUGIN_IS_BRIDGE)
-        //    osc_send_set_parameter_midi_channel(&osc.data, m_id, parameterId, channel);
-#endif
-    }
-
-    /*!
      * Set parameter's \a parameterId MIDI CC to \a cc.\n
      * \a cc must be between 0 and 15.
      */
-    void setParameterMidiCC(uint32_t parameterId, int16_t cc)
+    void setParameterMidiCC(uint32_t parameterId, int16_t cc, bool sendOsc, bool sendCallback)
     {
         assert(parameterId < param.count);
         param.data[parameterId].midiCC = cc;
 
 #ifndef BUILD_BRIDGE
-        x_engine->osc_send_set_parameter_midi_cc(m_id, parameterId, cc);
-
-        // FIXME: send to engine
-        //if (m_hints & PLUGIN_IS_BRIDGE)
-        //    osc_send_set_parameter_midi_cc(&osc.data, m_id, parameterId, midi_cc);
+        if (sendOsc)
+            x_engine->osc_send_set_parameter_midi_cc(m_id, parameterId, cc);
+#else
+        Q_UNUSED(sendOsc);
 #endif
+
+        //if (sendCallback)
+            //x_engine->callback(CALLBACK_PARAMETER_MIDI_CC_CHANGED, m_id, parameterId, cc, 0.0);
+    }
+
+    /*!
+     * Set parameter's \a parameterId MIDI channel to \a channel.\n
+     * \a channel must be between 0 and 15.
+     */
+    void setParameterMidiChannel(uint32_t parameterId, uint8_t channel, bool sendOsc, bool sendCallback)
+    {
+        assert(parameterId < param.count && channel < 16);
+        param.data[parameterId].midiChannel = channel;
+
+#ifndef BUILD_BRIDGE
+        if (sendOsc)
+            x_engine->osc_send_set_parameter_midi_channel(m_id, parameterId, channel);
+#else
+        Q_UNUSED(sendOsc);
+#endif
+
+        //if (sendCallback)
+            //x_engine->callback(CALLBACK_PARAMETER_MIDI_CHANNEL_CHANGED, m_id, parameterId, channel, 0.0);
     }
 
     /*!

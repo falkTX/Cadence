@@ -27,7 +27,7 @@ from shared_carla import *
 
 global carla_name, lo_target
 carla_name = ""
-lo_target = None
+lo_target  = None
 
 Carla.isControl = True
 
@@ -53,27 +53,23 @@ class ControlServer(ServerThread):
 
     @make_method('/carla-control/set_plugin_data', 'iiiissssh')
     def set_plugin_data_callback(self, path, args):
-        pluginId, ptype, category, hints, realName, label, maker, copyright, uniqueId = args
-        self.parent.emit(SIGNAL("SetPluginData(int, int, int, int, QString, QString, QString, QString, long)"),
-                                  pluginId, ptype, category, hints, realName, label, maker, copyright, uniqueId)
+        pluginId, ptype, category, hints, realName, label, maker, copyright_, uniqueId = args
+        self.parent.emit(SIGNAL("SetPluginData(int, int, int, int, QString, QString, QString, QString, long)"), pluginId, ptype, category, hints, realName, label, maker, copyright_, uniqueId)
 
     @make_method('/carla-control/set_plugin_ports', 'iiiiiiii')
     def set_plugin_ports_callback(self, path, args):
         pluginId, audioIns, audioOuts, midiIns, midiOuts, cIns, cOuts, cTotals = args
-        self.parent.emit(SIGNAL("SetPluginPorts(int, int, int, int, int, int, int, int)"),
-                                  pluginId, audioIns, audioOuts, midiIns, midiOuts, cIns, cOuts, cTotals)
+        self.parent.emit(SIGNAL("SetPluginPorts(int, int, int, int, int, int, int, int)"), pluginId, audioIns, audioOuts, midiIns, midiOuts, cIns, cOuts, cTotals)
 
     @make_method('/carla-control/set_parameter_data', 'iiiissd')
     def set_parameter_data_callback(self, path, args):
-        pluginId, index, type, hints, name, label, current = args
-        self.parent.emit(SIGNAL("SetParameterData(int, int, int, int, QString, QString, double)"),
-                                  pluginId, index, type, hints, name, label, current)
+        pluginId, index, type_, hints, name, label, current = args
+        self.parent.emit(SIGNAL("SetParameterData(int, int, int, int, QString, QString, double)"), pluginId, index, type_, hints, name, label, current)
 
     @make_method('/carla-control/set_parameter_ranges', 'iidddddd')
     def set_parameter_ranges_callback(self, path, args):
-        pluginId, index, min, max, def, step, stepSmall, stepLarge = args
-        self.parent.emit(SIGNAL("SetParameterRanges(int, int, double, double, double, double, double, double, double)"),
-                                  pluginId, index, min, max, def, step, stepSmall, stepLarge)
+        pluginId, index, min_, max_, def_, step, stepSmall, stepLarge = args
+        self.parent.emit(SIGNAL("SetParameterRanges(int, int, double, double, double, double, double, double, double)"), pluginId, index, min_, max_, def_, step, stepSmall, stepLarge)
 
     @make_method('/carla-control/set_parameter_midi_cc', 'iii')
     def set_parameter_midi_cc_callback(self, path, args):
@@ -105,11 +101,6 @@ class ControlServer(ServerThread):
         pluginId, count = args
         self.parent.emit(SIGNAL("SetProgramCount(int, int)"), pluginId, count)
 
-    #void osc_send_set_program_name(int plugin_id, int program_id, const char* program_name);
-    #void osc_send_set_midi_program(int plugin_id, int midi_program_id);
-    #void osc_send_set_midi_program_count(int plugin_id, int midi_program_count);
-    #void osc_send_set_midi_program_data(int plugin_id, int midi_program_id, int bank_id, int program_id, const char* midi_program_name);
-
     @make_method('/carla-control/set_program_name', 'iis')
     def set_program_name_callback(self, path, args):
         pluginId, index, name = args
@@ -126,99 +117,101 @@ class ControlServer(ServerThread):
         self.parent.emit(SIGNAL("SetMidiProgram(int, int)"), pluginId, count)
 
     @make_method('/carla-control/set_midi_program_data', 'iiiiis')
-    def set_program_name_callback(self, path, args):
+    def set_midi_program_data_callback(self, path, args):
         pluginId, index, bank, program, name = args
         self.parent.emit(SIGNAL("SetMidiProgramName(int, int, int, int, int, QString)"), pluginId, index, bank, program, name)
 
-    @make_method('/carla-control/set_input_peak_value', 'iif')
+    @make_method('/carla-control/set_input_peak_value', 'iid')
     def set_input_peak_value_callback(self, path, args):
-        plugin_id, port_id, value = args
-        self.parent.emit(SIGNAL("SetInputPeakValue(int, int, double)"), plugin_id, port_id, value)
+        pluginId, portId, value = args
+        self.parent.emit(SIGNAL("SetInputPeakValue(int, int, double)"), pluginId, portId, value)
 
-    @make_method('/carla-control/set_output_peak_value', 'iif')
+    @make_method('/carla-control/set_output_peak_value', 'iid')
     def set_output_peak_value_callback(self, path, args):
-        plugin_id, port_id, value = args
-        self.parent.emit(SIGNAL("SetOutputPeakValue(int, int, double)"), plugin_id, port_id, value)
+        pluginId, portId, value = args
+        self.parent.emit(SIGNAL("SetOutputPeakValue(int, int, double)"), pluginId, portId, value)
 
-    @make_method('/carla-control/note_on', 'iii')
+    @make_method('/carla-control/note_on', 'iiii')
     def note_on_callback(self, path, args):
-        plugin_id, note, velo = args
-        self.parent.emit(SIGNAL("NoteOn(int, int, int)"), plugin_id, note, velo)
+        pluginId, channel, note, velo = args
+        self.parent.emit(SIGNAL("NoteOn(int, int, int, int)"), pluginId, channel, note, velo)
 
     @make_method('/carla-control/note_off', 'iii')
     def note_off_callback(self, path, args):
-        plugin_id, note, velo = args
-        self.parent.emit(SIGNAL("NoteOff(int, int, int)"), plugin_id, note, velo)
+        pluginId, channel, note = args
+        self.parent.emit(SIGNAL("NoteOff(int, int, int)"), pluginId, channel, note)
 
     @make_method('/carla-control/exit', '')
     def exit_callback(self, path, args):
         self.parent.emit(SIGNAL("Exit()"))
 
-    #void osc_send_set_input_peak_value(int plugin_id, int port_id, double value);
-    #void osc_send_set_output_peak_value(int plugin_id, int port_id, double value);
-    #void osc_send_note_on(int plugin_id, int channel, int note, int velo);
-    #void osc_send_note_off(int plugin_id, int channel, int note);
-    #void osc_send_exit();
-
     @make_method(None, None)
     def fallback(self, path, args):
-        pass
-        #print "received unknown message '%s'" % path, ":", len(args), ":", args
+        print("ControlServer::fallback(\"%s\") - unknown message, args =" % path, args)
 
 # Python Object class compatible to 'Host' on the Carla Backend code
 class Host(object):
     def __init__(self):
         super(Host, self).__init__()
 
-    def set_active(self, plugin_id, active):
+    def set_active(self, plugin_id, onoff):
         global carla_name, to_target
-        osc_control = "/%s/%i/set_active" % (carla_name, plugin_id)
-        lo_send(lo_target, osc_control, 1 if (active) else 0)
+        lo_path = "/%s/%i/set_active" % (carla_name, plugin_id)
+        lo_send(lo_target, lo_path, 1 if onoff else 0)
 
     def set_drywet(self, plugin_id, value):
         global carla_name, to_target
-        osc_control = "/%s/%i/set_drywet" % (carla_name, plugin_id)
-        lo_send(lo_target, osc_control, value)
+        lo_path = "/%s/%i/set_drywet" % (carla_name, plugin_id)
+        lo_send(lo_target, lo_path, value)
 
-    def set_vol(self, plugin_id, value):
+    def set_volume(self, plugin_id, value):
         global carla_name, to_target
-        osc_control = "/%s/%i/set_vol" % (carla_name, plugin_id)
-        lo_send(lo_target, osc_control, value)
+        lo_path = "/%s/%i/set_volume" % (carla_name, plugin_id)
+        lo_send(lo_target, lo_path, value)
 
     def set_balance_left(self, plugin_id, value):
         global carla_name, to_target
-        osc_control = "/%s/%i/set_balance_left" % (carla_name, plugin_id)
-        lo_send(lo_target, osc_control, value)
+        lo_path = "/%s/%i/set_balance_left" % (carla_name, plugin_id)
+        lo_send(lo_target, lo_path, value)
 
     def set_balance_right(self, plugin_id, value):
         global carla_name, to_target
-        osc_control = "/%s/%i/set_balance_right" % (carla_name, plugin_id)
-        lo_send(lo_target, osc_control, value)
+        lo_path = "/%s/%i/set_balance_right" % (carla_name, plugin_id)
+        lo_send(lo_target, lo_path, value)
 
-    def set_parameter_value(self, plugin_id, param_id, value):
+    def set_parameter_value(self, plugin_id, parameter_id, value):
         global carla_name, to_target
-        osc_control = "/%s/%i/set_parameter" % (carla_name, plugin_id)
-        lo_send(lo_target, osc_control, param_id, value)
+        lo_path = "/%s/%i/set_parameter_value" % (carla_name, plugin_id)
+        lo_send(lo_target, lo_path, parameter_id, value)
+
+    def set_parameter_midi_cc(self, plugin_id, parameter_id, midi_cc):
+        global carla_name, to_target
+        lo_path = "/%s/%i/set_parameter_midi_cc" % (carla_name, plugin_id)
+        lo_send(lo_target, lo_path, parameter_id, midi_cc)
+
+    def set_parameter_midi_channel(self, plugin_id, parameter_id, channel):
+        global carla_name, to_target
+        lo_path = "/%s/%i/set_parameter_midi_channel" % (carla_name, plugin_id)
+        lo_send(lo_target, lo_path, parameter_id, channel)
 
     def set_program(self, plugin_id, program_id):
         global carla_name, to_target
-        osc_control = "/%s/%i/set_program" % (carla_name, plugin_id)
-        lo_send(lo_target, osc_control, program_id)
+        lo_path = "/%s/%i/set_program" % (carla_name, plugin_id)
+        lo_send(lo_target, lo_path, program_id)
 
     def set_midi_program(self, plugin_id, midi_program_id):
         global carla_name, to_target
-        osc_control = "/%s/%i/set_midi_program" % (carla_name, plugin_id)
-        lo_send(lo_target, osc_control, midi_program_id)
+        lo_path = "/%s/%i/set_midi_program" % (carla_name, plugin_id)
+        lo_send(lo_target, lo_path, midi_program_id)
 
-    def note_on(self, plugin_id, note, velo):
-        global carla_name, to_target
-        osc_control = "/%s/%i/note_on" % (carla_name, plugin_id)
-        lo_send(lo_target, osc_control, note, velo)
-
-    def note_off(self, plugin_id, param_id, value):
-        global carla_name, to_target
-        osc_control = "/%s/%i/note_off" % (carla_name, plugin_id)
-        lo_send(lo_target, osc_control, note, velo)
+    def send_midi_note(self, plugin_id, channel, note, velocity):
+      global carla_name, to_target
+      if velocity:
+          lo_path = "/%s/%i/note_on" % (carla_name, plugin_id)
+          lo_send(lo_target, lo_path, channel, note, velocity)
+      else:
+          lo_path = "/%s/%i/note_off" % (carla_name, plugin_id)
+          lo_send(lo_target, lo_path, channel, note)
 
 # About Carla Dialog
 class AboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
@@ -242,30 +235,30 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         super(CarlaControlW, self).__init__(parent)
         self.setupUi(self)
 
-        #self.settings = QSettings("Cadence", "Carla-Control")
-        #self.loadSettings()
+        self.settings = QSettings("Cadence", "Carla-Control")
+        self.loadSettings()
 
-        #self.lo_address = ""
-        #self.lo_server = None
+        self.lo_address = ""
+        self.lo_server  = None
 
-        #self.setStyleSheet("""
-          #QWidget#centralwidget {
-            #background-color: qlineargradient(spread:pad,
-                #x1:0.0, y1:0.0,
-                #x2:0.2, y2:1.0,
-                #stop:0 rgb( 7,  7,  7),
-                #stop:1 rgb(28, 28, 28)
-            #);
-          #}
-        #""")
+        self.setStyleSheet("""
+          QWidget#centralwidget {
+            background-color: qlineargradient(spread:pad,
+                x1:0.0, y1:0.0,
+                x2:0.2, y2:1.0,
+                stop:0 rgb( 7,  7,  7),
+                stop:1 rgb(28, 28, 28)
+            );
+          }
+        """)
 
-        #self.plugin_list = []
-        #for x in range(MAX_PLUGINS):
-          #self.plugin_list.append(None)
+        self.plugin_list = []
+        for x in range(MAX_PLUGINS):
+          self.plugin_list.append(None)
 
-        #self.act_file_refresh.setEnabled(False)
+        self.act_file_refresh.setEnabled(False)
 
-        #self.resize(self.width(), 0)
+        self.resize(self.width(), 0)
 
         #self.connect(self.act_file_connect, SIGNAL("triggered()"), self.do_connect)
         #self.connect(self.act_file_refresh, SIGNAL("triggered()"), self.do_refresh)
@@ -457,17 +450,17 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         #AboutW(self).exec_()
 
     def saveSettings(self):
-        self.settings.setValue("Geometry", QVariant(self.saveGeometry()))
+        self.settings.setValue("Geometry", self.saveGeometry())
 
     def loadSettings(self):
-        self.restoreGeometry(self.settings.value("Geometry").toByteArray())
+        self.restoreGeometry(self.settings.value("Geometry", ""))
 
     def closeEvent(self, event):
         self.saveSettings()
 
-        #global lo_target
-        #if (lo_target and self.lo_server):
-          #lo_send(lo_target, "unregister")
+        global lo_target
+        if lo_target and self.lo_server:
+            lo_send(lo_target, "unregister")
 
         QMainWindow.closeEvent(self, event)
 

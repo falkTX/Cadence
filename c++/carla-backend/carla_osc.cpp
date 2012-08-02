@@ -163,8 +163,12 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
         return handle_set_balance_left(plugin, argc, argv, types);
     if (strcmp(method, "/set_balance_right") == 0)
         return handle_set_balance_right(plugin, argc, argv, types);
-    if (strcmp(method, "/set_parameter") == 0)
-        return handle_set_parameter(plugin, argc, argv, types);
+    if (strcmp(method, "/set_parameter_value") == 0)
+        return handle_set_parameter_value(plugin, argc, argv, types);
+    if (strcmp(method, "/set_parameter_midi_cc") == 0)
+        return handle_set_parameter_midi_cc(plugin, argc, argv, types);
+    if (strcmp(method, "/set_parameter_midi_channel") == 0)
+        return handle_set_parameter_midi_channel(plugin, argc, argv, types);
     if (strcmp(method, "/set_program") == 0)
         return handle_set_program(plugin, argc, argv, types);
     if (strcmp(method, "/set_midi_program") == 0)
@@ -413,8 +417,8 @@ int CarlaOsc::handle_set_active(CARLA_OSC_HANDLE_ARGS2)
     qDebug("CarlaOsc::handle_set_active()");
     CARLA_OSC_CHECK_OSC_TYPES(1, "i");
 
-    bool value = (bool)argv[0]->i;
-    plugin->setActive(value, false, true);
+    bool active = (bool)argv[0]->i;
+    plugin->setActive(active, false, true);
 
     return 0;
 }
@@ -463,14 +467,38 @@ int CarlaOsc::handle_set_balance_right(CARLA_OSC_HANDLE_ARGS2)
     return 0;
 }
 
-int CarlaOsc::handle_set_parameter(CARLA_OSC_HANDLE_ARGS2)
+int CarlaOsc::handle_set_parameter_value(CARLA_OSC_HANDLE_ARGS2)
 {
-    qDebug("CarlaOsc::handle_set_parameter()");
-    CARLA_OSC_CHECK_OSC_TYPES(1, "d");
+    qDebug("CarlaOsc::handle_set_parameter_value()");
+    CARLA_OSC_CHECK_OSC_TYPES(2, "id");
 
-    const uint32_t parameter_id = argv[0]->i;
-    const double   value        = argv[1]->d;
-    plugin->setParameterValue(parameter_id, value, true, false, true);
+    const uint32_t index = argv[0]->i;
+    const double   value = argv[1]->d;
+    plugin->setParameterValue(index, value, true, false, true);
+
+    return 0;
+}
+
+int CarlaOsc::handle_set_parameter_midi_cc(CARLA_OSC_HANDLE_ARGS2)
+{
+    qDebug("CarlaOsc::handle_set_parameter_midi_cc()");
+    CARLA_OSC_CHECK_OSC_TYPES(2, "ii");
+
+    const uint32_t index = argv[0]->i;
+    const int32_t  cc    = argv[1]->i;
+    plugin->setParameterMidiCC(index, cc, false, true);
+
+    return 0;
+}
+
+int CarlaOsc::handle_set_parameter_midi_channel(CARLA_OSC_HANDLE_ARGS2)
+{
+    qDebug("CarlaOsc::handle_set_parameter_midi_channel()");
+    CARLA_OSC_CHECK_OSC_TYPES(2, "ii");
+
+    const uint32_t index   = argv[0]->i;
+    const uint32_t channel = argv[1]->i;
+    plugin->setParameterMidiChannel(index, channel, false, true);
 
     return 0;
 }

@@ -113,7 +113,9 @@ private:
     int handle_set_volume(CARLA_OSC_HANDLE_ARGS2);
     int handle_set_balance_left(CARLA_OSC_HANDLE_ARGS2);
     int handle_set_balance_right(CARLA_OSC_HANDLE_ARGS2);
-    int handle_set_parameter(CARLA_OSC_HANDLE_ARGS2);
+    int handle_set_parameter_value(CARLA_OSC_HANDLE_ARGS2);
+    int handle_set_parameter_midi_cc(CARLA_OSC_HANDLE_ARGS2);
+    int handle_set_parameter_midi_channel(CARLA_OSC_HANDLE_ARGS2);
     int handle_set_program(CARLA_OSC_HANDLE_ARGS2);
     int handle_set_midi_program(CARLA_OSC_HANDLE_ARGS2);
     int handle_note_on(CARLA_OSC_HANDLE_ARGS2);

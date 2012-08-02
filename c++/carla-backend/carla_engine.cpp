@@ -843,6 +843,7 @@ void CarlaEngine::osc_send_add_plugin(const int32_t pluginId, const char* const 
     const CarlaOscData* const oscData = m_osc.getControllerData();
     Q_ASSERT(oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(pluginName);
 
     if (oscData->target)
     {
@@ -868,13 +869,13 @@ void CarlaEngine::osc_send_remove_plugin(const int32_t pluginId)
     }
 }
 
-void CarlaEngine::osc_send_set_plugin_data(const int32_t pluginId, const int32_t type, const int32_t category, const int32_t hints,
-                                           const char* const realName, const char* const label, const char* const maker, const char* const copyright, const int64_t uniqueId)
+void CarlaEngine::osc_send_set_plugin_data(const int32_t pluginId, const int32_t type, const int32_t category, const int32_t hints, const char* const realName, const char* const label, const char* const maker, const char* const copyright, const int64_t uniqueId)
 {
     qDebug("CarlaEngine::osc_send_set_plugin_data(%i, %i, %i, %i, \"%s\", \"%s\", \"%s\", \"%s\", %li)", pluginId, type, category, hints, realName, label, maker, copyright, uniqueId);
     const CarlaOscData* const oscData = m_osc.getControllerData();
     Q_ASSERT(oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(type != PLUGIN_NONE);
 
     if (oscData->target)
     {
@@ -885,8 +886,7 @@ void CarlaEngine::osc_send_set_plugin_data(const int32_t pluginId, const int32_t
     }
 }
 
-void CarlaEngine::osc_send_set_plugin_ports(const int32_t pluginId, const int32_t audioIns, const int32_t audioOuts, const int32_t midiIns, const int32_t midiOuts,
-                                            const int32_t cIns, const int32_t cOuts, const int32_t cTotals)
+void CarlaEngine::osc_send_set_plugin_ports(const int32_t pluginId, const int32_t audioIns, const int32_t audioOuts, const int32_t midiIns, const int32_t midiOuts, const int32_t cIns, const int32_t cOuts, const int32_t cTotals)
 {
     qDebug("CarlaEngine::osc_send_set_plugin_ports(%i, %i, %i, %i, %i, %i, %i, %i)", pluginId, audioIns, audioOuts, midiIns, midiOuts, cIns, cOuts, cTotals);
     const CarlaOscData* const oscData = m_osc.getControllerData();
@@ -902,13 +902,14 @@ void CarlaEngine::osc_send_set_plugin_ports(const int32_t pluginId, const int32_
     }
 }
 
-void CarlaEngine::osc_send_set_parameter_data(const int32_t pluginId, const int32_t index, const int32_t type, const int32_t hints,
-                                              const char* const name, const char* const label, const double current)
+void CarlaEngine::osc_send_set_parameter_data(const int32_t pluginId, const int32_t index, const int32_t type, const int32_t hints, const char* const name, const char* const label, const double current)
 {
     qDebug("CarlaEngine::osc_send_set_parameter_data(%i, %i, %i, %i, \"%s\", \"%s\", %g)", pluginId, index, type, hints, name, label, current);
     const CarlaOscData* const oscData = m_osc.getControllerData();
     Q_ASSERT(oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(index >= 0);
+    Q_ASSERT(type != PARAMETER_UNKNOWN);
 
     if (oscData->target)
     {
@@ -919,13 +920,14 @@ void CarlaEngine::osc_send_set_parameter_data(const int32_t pluginId, const int3
     }
 }
 
-void CarlaEngine::osc_send_set_parameter_ranges(const int32_t pluginId, const int32_t index, const double min, const double max, const double def,
-                                                const double step, const double stepSmall, const double stepLarge)
+void CarlaEngine::osc_send_set_parameter_ranges(const int32_t pluginId, const int32_t index, const double min, const double max, const double def, const double step, const double stepSmall, const double stepLarge)
 {
     qDebug("CarlaEngine::osc_send_set_parameter_ranges(%i, %i, %g, %g, %g, %g, %g, %g)", pluginId, index, min, max, def, step, stepSmall, stepLarge);
     const CarlaOscData* const oscData = m_osc.getControllerData();
     Q_ASSERT(oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(index >= 0);
+    Q_ASSERT(min < max);
 
     if (oscData->target)
     {
@@ -942,6 +944,7 @@ void CarlaEngine::osc_send_set_parameter_midi_cc(const int32_t pluginId, const i
     const CarlaOscData* const oscData = m_osc.getControllerData();
     Q_ASSERT(oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(index >= 0);
 
     if (oscData->target)
     {
@@ -958,6 +961,8 @@ void CarlaEngine::osc_send_set_parameter_midi_channel(const int32_t pluginId, co
     const CarlaOscData* const oscData = m_osc.getControllerData();
     Q_ASSERT(oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(index >= 0);
+    Q_ASSERT(channel >= 0 && channel < 16);
 
     if (oscData->target)
     {
@@ -995,6 +1000,7 @@ void CarlaEngine::osc_send_set_default_value(const int32_t pluginId, const int32
     const CarlaOscData* const oscData = m_osc.getControllerData();
     Q_ASSERT(oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(index >= 0);
 
     if (oscData->target)
     {
@@ -1027,6 +1033,7 @@ void CarlaEngine::osc_send_set_program_count(const int32_t pluginId, const int32
     const CarlaOscData* const oscData = m_osc.getControllerData();
     Q_ASSERT(oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(count >= 0);
 
     if (oscData->target)
     {
@@ -1043,6 +1050,8 @@ void CarlaEngine::osc_send_set_program_name(const int32_t pluginId, const int32_
     const CarlaOscData* const oscData = m_osc.getControllerData();
     Q_ASSERT(oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(index >= 0);
+    Q_ASSERT(name);
 
     if (oscData->target)
     {
@@ -1075,6 +1084,7 @@ void CarlaEngine::osc_send_set_midi_program_count(const int32_t pluginId, const 
     const CarlaOscData* const oscData = m_osc.getControllerData();
     Q_ASSERT(oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(count >= 0);
 
     if (oscData->target)
     {
@@ -1091,6 +1101,10 @@ void CarlaEngine::osc_send_set_midi_program_data(const int32_t pluginId, const i
     const CarlaOscData* const oscData = m_osc.getControllerData();
     Q_ASSERT(oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(index >= 0);
+    Q_ASSERT(bank >= 0);
+    Q_ASSERT(program >= 0);
+    Q_ASSERT(name);
 
     if (oscData->target)
     {
@@ -1101,67 +1115,74 @@ void CarlaEngine::osc_send_set_midi_program_data(const int32_t pluginId, const i
     }
 }
 
-void CarlaEngine::osc_send_set_input_peak_value(const int32_t plugin_id, const int32_t port_id, const double value)
+void CarlaEngine::osc_send_set_input_peak_value(const int32_t pluginId, const int32_t portId, const double value)
 {
-    qDebug("CarlaEngine::osc_send_set_input_peak_value(%i, %i, %f)", plugin_id, port_id, value);
+    qDebug("CarlaEngine::osc_send_set_input_peak_value(%i, %i, %g)", pluginId, portId, value);
     const CarlaOscData* const oscData = m_osc.getControllerData();
     Q_ASSERT(oscData);
-    //Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(portId == 1 || portId == 2);
 
     if (oscData->target)
     {
         char target_path[strlen(oscData->path)+22];
         strcpy(target_path, oscData->path);
         strcat(target_path, "/set_input_peak_value");
-        lo_send(oscData->target, target_path, "iid", plugin_id, port_id, value);
+        lo_send(oscData->target, target_path, "iid", pluginId, portId, value);
     }
 }
 
-void CarlaEngine::osc_send_set_output_peak_value(const int32_t plugin_id, const int32_t port_id, const double value)
+void CarlaEngine::osc_send_set_output_peak_value(const int32_t pluginId, const int32_t portId, const double value)
 {
-    qDebug("CarlaEngine::osc_send_set_output_peak_value(%i, %i, %f)", plugin_id, port_id, value);
+    qDebug("CarlaEngine::osc_send_set_output_peak_value(%i, %i, %g)", pluginId, portId, value);
     const CarlaOscData* const oscData = m_osc.getControllerData();
     Q_ASSERT(oscData);
-    //Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(portId == 1 || portId == 2);
 
     if (oscData->target)
     {
         char target_path[strlen(oscData->path)+23];
         strcpy(target_path, oscData->path);
         strcat(target_path, "/set_output_peak_value");
-        lo_send(oscData->target, target_path, "iid", plugin_id, port_id, value);
+        lo_send(oscData->target, target_path, "iid", pluginId, portId, value);
     }
 }
 
-void CarlaEngine::osc_send_note_on(const int32_t plugin_id, const int32_t channel, const int32_t note, const int32_t velo)
+void CarlaEngine::osc_send_note_on(const int32_t pluginId, const int32_t channel, const int32_t note, const int32_t velo)
 {
-    qDebug("CarlaEngine::osc_send_note_on(%i, %i, %i, %i)", plugin_id, channel, note, velo);
+    qDebug("CarlaEngine::osc_send_note_on(%i, %i, %i, %i)", pluginId, channel, note, velo);
     const CarlaOscData* const oscData = m_osc.getControllerData();
     Q_ASSERT(oscData);
-    //Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(channel >= 0 && channel < 16);
+    Q_ASSERT(note >= 0 && note < 128);
+    Q_ASSERT(velo >= 0 && velo < 128);
 
     if (oscData->target)
     {
         char target_path[strlen(oscData->path)+9];
         strcpy(target_path, oscData->path);
         strcat(target_path, "/note_on");
-        lo_send(oscData->target, target_path, "iiii", plugin_id, channel, note, velo);
+        lo_send(oscData->target, target_path, "iiii", pluginId, channel, note, velo);
     }
 }
 
-void CarlaEngine::osc_send_note_off(const int32_t plugin_id, const int32_t channel, const int32_t note)
+void CarlaEngine::osc_send_note_off(const int32_t pluginId, const int32_t channel, const int32_t note)
 {
-    qDebug("CarlaEngine::osc_send_note_off(%i, %i, %i)", plugin_id, channel, note);
+    qDebug("CarlaEngine::osc_send_note_off(%i, %i, %i)", pluginId, channel, note);
     const CarlaOscData* const oscData = m_osc.getControllerData();
     Q_ASSERT(oscData);
-    //Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
+    Q_ASSERT(channel >= 0 && channel < 16);
+    Q_ASSERT(note >= 0 && note < 128);
 
     if (oscData->target)
     {
         char target_path[strlen(oscData->path)+10];
         strcpy(target_path, oscData->path);
         strcat(target_path, "/note_off");
-        lo_send(oscData->target, target_path, "iii", plugin_id, channel, note);
+        lo_send(oscData->target, target_path, "iii", pluginId, channel, note);
     }
 }
 

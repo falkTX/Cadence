@@ -925,30 +925,6 @@ void set_parameter_value(unsigned short plugin_id, quint32 parameter_id, double 
     qCritical("CarlaBackendStandalone::set_parameter_value(%i, %i, %g) - could not find plugin", plugin_id, parameter_id, value);
 }
 
-void set_parameter_midi_channel(unsigned short plugin_id, quint32 parameter_id, quint8 channel)
-{
-    qDebug("CarlaBackendStandalone::set_parameter_midi_channel(%i, %i, %i)", plugin_id, parameter_id, channel);
-
-    if (channel > 15)
-    {
-        qCritical("CarlaBackendStandalone::set_parameter_midi_channel(%i, %i, %i) - invalid channel number", plugin_id, parameter_id, channel);
-        return;
-    }
-
-    CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
-
-    if (plugin)
-    {
-        if (parameter_id < plugin->parameterCount())
-            return plugin->setParameterMidiChannel(parameter_id, channel);
-
-        qCritical("CarlaBackendStandalone::set_parameter_midi_channel(%i, %i, %i) - parameter_id out of bounds", plugin_id, parameter_id, channel);
-        return;
-    }
-
-    qCritical("CarlaBackendStandalone::set_parameter_midi_channel(%i, %i, %i) - could not find plugin", plugin_id, parameter_id, channel);
-}
-
 void set_parameter_midi_cc(unsigned short plugin_id, quint32 parameter_id, int16_t midi_cc)
 {
     qDebug("CarlaBackendStandalone::set_parameter_midi_cc(%i, %i, %i)", plugin_id, parameter_id, midi_cc);
@@ -968,13 +944,37 @@ void set_parameter_midi_cc(unsigned short plugin_id, quint32 parameter_id, int16
     if (plugin)
     {
         if (parameter_id < plugin->parameterCount())
-            return plugin->setParameterMidiCC(parameter_id, midi_cc);
+            return plugin->setParameterMidiCC(parameter_id, midi_cc, true, false);
 
         qCritical("CarlaBackendStandalone::set_parameter_midi_cc(%i, %i, %i) - parameter_id out of bounds", plugin_id, parameter_id, midi_cc);
         return;
     }
 
     qCritical("CarlaBackendStandalone::set_parameter_midi_cc(%i, %i, %i) - could not find plugin", plugin_id, parameter_id, midi_cc);
+}
+
+void set_parameter_midi_channel(unsigned short plugin_id, quint32 parameter_id, quint8 channel)
+{
+    qDebug("CarlaBackendStandalone::set_parameter_midi_channel(%i, %i, %i)", plugin_id, parameter_id, channel);
+
+    if (channel > 15)
+    {
+        qCritical("CarlaBackendStandalone::set_parameter_midi_channel(%i, %i, %i) - invalid channel number", plugin_id, parameter_id, channel);
+        return;
+    }
+
+    CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
+
+    if (plugin)
+    {
+        if (parameter_id < plugin->parameterCount())
+            return plugin->setParameterMidiChannel(parameter_id, channel, true, false);
+
+        qCritical("CarlaBackendStandalone::set_parameter_midi_channel(%i, %i, %i) - parameter_id out of bounds", plugin_id, parameter_id, channel);
+        return;
+    }
+
+    qCritical("CarlaBackendStandalone::set_parameter_midi_channel(%i, %i, %i) - could not find plugin", plugin_id, parameter_id, channel);
 }
 
 void set_program(unsigned short plugin_id, quint32 program_id)
