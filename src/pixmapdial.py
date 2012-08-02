@@ -39,7 +39,7 @@ class PixmapDial(QDial):
 
         self.m_pixmap = QPixmap(":/bitmaps/dial_01d.png")
         self.m_pixmap_n_str = "01"
-        self.m_custom_paint = CUSTOM_PAINT_NULL
+        self.m_custom_paint = self.CUSTOM_PAINT_NULL
 
         self.m_hovered    = False
         self.m_hover_step = self.HOVER_MIN
