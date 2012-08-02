@@ -329,10 +329,10 @@ public:
     void osc_send_set_default_value(const int32_t pluginId, const int32_t index, const double value);
     void osc_send_set_program(const int32_t pluginId, const int32_t index);
     void osc_send_set_program_count(int32_t pluginId, int program_count);
-    void osc_send_set_program_name(int32_t pluginId, int program_id, const char* program_name);
-    void osc_send_set_midi_program(int32_t pluginId, int midi_program_id);
-    void osc_send_set_midi_program_count(int32_t pluginId, int midi_program_count);
-    void osc_send_set_midi_program_data(int32_t pluginId, int midi_program_id, int bank_id, int program_id, const char* midi_program_name);
+    void osc_send_set_program_name(const int32_t pluginId, const int32_t index, const char* const name);
+    void osc_send_set_midi_program(const int32_t pluginId, const int32_t index);
+    void osc_send_set_midi_program_count(const int32_t pluginId, const int32_t count);
+    void osc_send_set_midi_program_data(const int32_t pluginId, const int32_t index, const int32_t bank, const int32_t program, const char* const name);
     void osc_send_set_input_peak_value(int32_t pluginId, int port_id, double value);
     void osc_send_set_output_peak_value(int32_t pluginId, int port_id, double value);
     void osc_send_note_on(int32_t pluginId, int channel, int note, int velo);
