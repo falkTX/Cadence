@@ -22,6 +22,7 @@
 #include "ladspa_rdf.h"
 
 #include <cmath>
+#include <cstring>
 
 // ------------------------------------------------------------------------------------------------
 
@@ -31,8 +32,8 @@ const LADSPA_RDF_Descriptor* ladspa_rdf_dup(const LADSPA_RDF_Descriptor* const r
 {
     LADSPA_RDF_Descriptor* const new_descriptor = new LADSPA_RDF_Descriptor;
 
-    new_descriptor->Type = rdf_descriptor->Type;
-    new_descriptor->UniqueID = rdf_descriptor->UniqueID;
+    new_descriptor->Type      = rdf_descriptor->Type;
+    new_descriptor->UniqueID  = rdf_descriptor->UniqueID;
     new_descriptor->PortCount = rdf_descriptor->PortCount;
 
     if (rdf_descriptor->Title)
@@ -116,89 +117,24 @@ void ladspa_rdf_free(const LADSPA_RDF_Descriptor* const rdf_descriptor)
 // ------------------------------------------------------------------------------------------------
 
 static inline
-bool is_ladspa_port_good(const int Type1, const int Type2)
+bool is_ladspa_port_good(const LADSPA_PortDescriptor port1, const LADSPA_PortDescriptor port2)
 {
-    if (LADSPA_IS_PORT_INPUT(Type1) && ! LADSPA_IS_PORT_INPUT(Type2))
+    if (LADSPA_IS_PORT_INPUT(port1) && ! LADSPA_IS_PORT_INPUT(port2))
         return false;
-    if (LADSPA_IS_PORT_OUTPUT(Type1) && ! LADSPA_IS_PORT_OUTPUT(Type2))
+    if (LADSPA_IS_PORT_OUTPUT(port1) && ! LADSPA_IS_PORT_OUTPUT(port2))
         return false;
-    if (LADSPA_IS_PORT_CONTROL(Type1) && ! LADSPA_IS_PORT_CONTROL(Type2))
+    if (LADSPA_IS_PORT_CONTROL(port1) && ! LADSPA_IS_PORT_CONTROL(port2))
         return false;
-    if (LADSPA_IS_PORT_AUDIO(Type1) && ! LADSPA_IS_PORT_AUDIO(Type2))
+    if (LADSPA_IS_PORT_AUDIO(port1) && ! LADSPA_IS_PORT_AUDIO(port2))
         return false;
     return true;
 }
 
 static inline
-float get_default_ladspa_port_value(const LADSPA_PortRangeHintDescriptor HintDescriptor, const float min, const float max)
-{
-    float def;
-
-    if (LADSPA_IS_HINT_HAS_DEFAULT(HintDescriptor))
-    {
-        switch (HintDescriptor & LADSPA_HINT_DEFAULT_MASK)
-        {
-        case LADSPA_HINT_DEFAULT_MINIMUM:
-            def = min;
-            break;
-        case LADSPA_HINT_DEFAULT_MAXIMUM:
-            def = max;
-            break;
-        case LADSPA_HINT_DEFAULT_0:
-            def = 0.0f;
-            break;
-        case LADSPA_HINT_DEFAULT_1:
-            def = 1.0f;
-            break;
-        case LADSPA_HINT_DEFAULT_100:
-            def = 100.0f;
-            break;
-        case LADSPA_HINT_DEFAULT_440:
-            def = 440.0f;
-            break;
-        case LADSPA_HINT_DEFAULT_LOW:
-            if (LADSPA_IS_HINT_LOGARITHMIC(HintDescriptor))
-                def = exp((log(min)*0.75f) + (log(max)*0.25f));
-            else
-                def = (min*0.75f) + (max*0.25f);
-            break;
-        case LADSPA_HINT_DEFAULT_MIDDLE:
-            if (LADSPA_IS_HINT_LOGARITHMIC(HintDescriptor))
-                def = sqrt(min*max);
-            else
-                def = (min+max)/2;
-            break;
-        case LADSPA_HINT_DEFAULT_HIGH:
-            if (LADSPA_IS_HINT_LOGARITHMIC(HintDescriptor))
-                def = exp((log(min)*0.25) + (log(max)*0.75));
-            else
-                def = (min*0.25) + (max*0.75);
-            break;
-        default:
-            if (min < 0.0 && max > 0.0)
-                def = 0.0;
-            else
-                def = min;
-            break;
-        }
-    }
-    else
-    {
-        // no default value
-        if (min < 0.0 && max > 0.0)
-            def = 0.0;
-        else
-            def = min;
-    }
-
-    return def;
-}
-
-// ------------------------------------------------------------------------------------------------
-
-static inline
 bool is_ladspa_rdf_descriptor_valid(const LADSPA_RDF_Descriptor* const rdf_descriptor, const LADSPA_Descriptor* const descriptor)
 {
+    Q_ASSERT(descriptor);
+
     if (! rdf_descriptor)
         return false;
 
@@ -224,6 +160,71 @@ bool is_ladspa_rdf_descriptor_valid(const LADSPA_RDF_Descriptor* const rdf_descr
     }
 
     return true;
+}
+
+static inline
+LADSPA_Data get_default_ladspa_port_value(const LADSPA_PortRangeHintDescriptor hintDescriptor, const LADSPA_Data min, const LADSPA_Data max)
+{
+    LADSPA_Data def;
+
+    if (LADSPA_IS_HINT_HAS_DEFAULT(hintDescriptor))
+    {
+        switch (hintDescriptor & LADSPA_HINT_DEFAULT_MASK)
+        {
+        case LADSPA_HINT_DEFAULT_MINIMUM:
+            def = min;
+            break;
+        case LADSPA_HINT_DEFAULT_MAXIMUM:
+            def = max;
+            break;
+        case LADSPA_HINT_DEFAULT_0:
+            def = 0.0f;
+            break;
+        case LADSPA_HINT_DEFAULT_1:
+            def = 1.0f;
+            break;
+        case LADSPA_HINT_DEFAULT_100:
+            def = 100.0f;
+            break;
+        case LADSPA_HINT_DEFAULT_440:
+            def = 440.0f;
+            break;
+        case LADSPA_HINT_DEFAULT_LOW:
+            if (LADSPA_IS_HINT_LOGARITHMIC(hintDescriptor))
+                def = exp((log(min)*0.75f) + (log(max)*0.25f));
+            else
+                def = (min*0.75f) + (max*0.25f);
+            break;
+        case LADSPA_HINT_DEFAULT_MIDDLE:
+            if (LADSPA_IS_HINT_LOGARITHMIC(hintDescriptor))
+                def = sqrt(min*max);
+            else
+                def = (min+max)/2;
+            break;
+        case LADSPA_HINT_DEFAULT_HIGH:
+            if (LADSPA_IS_HINT_LOGARITHMIC(hintDescriptor))
+                def = exp((log(min)*0.25) + (log(max)*0.75));
+            else
+                def = (min*0.25) + (max*0.75);
+            break;
+        default:
+            if (min < 0.0 && max > 0.0)
+                def = 0.0;
+            else
+                def = min;
+            break;
+        }
+    }
+    else
+    {
+        // no default value
+        if (min < 0.0 && max > 0.0)
+            def = 0.0;
+        else
+            def = min;
+    }
+
+    return def;
 }
 
 #endif // CARLA_LADSPA_INCLUDES_H

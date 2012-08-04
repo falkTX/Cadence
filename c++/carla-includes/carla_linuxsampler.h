@@ -44,8 +44,8 @@ protected:
 
 #include "carla_plugin.h"
 
-#define LINUXSAMPLER_VOLUME_MAX 3.16227766f    // +10 dB
-#define LINUXSAMPLER_VOLUME_MIN 0.0f           // -inf dB
+static const float LINUXSAMPLER_VOLUME_MAX = 3.16227766f; // +10 dB
+static const float LINUXSAMPLER_VOLUME_MIN = 0.0f;        // -inf dB
 
 class AudioOutputDevicePlugin : public AudioOutputDevice
 {
@@ -114,19 +114,6 @@ public:
     }
 
     // -------------------------------------------------------------------
-    // MIDI Port implementation for this plugin MIDI input driver
-
-    class MidiInputPortPlugin : public MidiInputPort
-    {
-    protected:
-        MidiInputPortPlugin(MidiInputDevicePlugin* const device, const int portNumber) :
-            MidiInputPort(device, portNumber)
-        {
-        }
-        friend class MidiInputDevicePlugin;
-    };
-
-    // -------------------------------------------------------------------
     // LinuxSampler virtual methods
 
     void Listen()
@@ -153,6 +140,19 @@ public:
     {
         delete (MidiInputPortPlugin*)port;
     }
+
+    // -------------------------------------------------------------------
+    // MIDI Port implementation for this plugin MIDI input driver
+
+    class MidiInputPortPlugin : public MidiInputPort
+    {
+    protected:
+        MidiInputPortPlugin(MidiInputDevicePlugin* const device, const int portNumber) :
+            MidiInputPort(device, portNumber)
+        {
+        }
+        friend class MidiInputDevicePlugin;
+    };
 };
 
 #endif // ! BUILD_NATIVE

@@ -54,10 +54,12 @@
 
 // needed for qDebug/Warning/Critical sections
 #if __WORDSIZE == 64
+#  define P_INT64   "%li"
 #  define P_INTPTR  "%li"
 #  define P_UINTPTR "%llx"
 #  define P_SIZE    "%lu"
 #else
+#  define P_INT64   "%lli"
 #  define P_INTPTR  "%i"
 #  define P_UINTPTR "%x"
 #  define P_SIZE    "%u"
@@ -98,6 +100,7 @@ const char* bool2str(bool yesno)
     return yesno ? "true" : "false";
 }
 
-inline void pass(void) {}
+static inline
+void pass(void) {}
 
 #endif // CARLA_INCLUDES_H

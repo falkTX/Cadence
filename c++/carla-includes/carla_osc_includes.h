@@ -33,6 +33,7 @@ struct CarlaOscData {
 static inline
 void osc_clear_data(CarlaOscData* const oscData)
 {
+    Q_ASSERT(oscData);
     qDebug("osc_clear_data(path:\"%s\")", oscData->path);
 
     if (oscData->path)
@@ -52,9 +53,10 @@ void osc_clear_data(CarlaOscData* const oscData)
 static inline
 void osc_send_configure(const CarlaOscData* const oscData, const char* const key, const char* const value)
 {
-    qDebug("osc_send_configure(path:\"%s\", \"%s\", \"%s\")", oscData->path, key, value);
+    Q_ASSERT(oscData && oscData->path);
     Q_ASSERT(key);
     Q_ASSERT(value);
+    qDebug("osc_send_configure(path:\"%s\", \"%s\", \"%s\")", oscData->path, key, value);
 
     if (oscData->target)
     {
@@ -68,6 +70,8 @@ void osc_send_configure(const CarlaOscData* const oscData, const char* const key
 static inline
 void osc_send_control(const CarlaOscData* const oscData, const int32_t index, const float value)
 {
+    Q_ASSERT(oscData && oscData->path);
+    Q_ASSERT(index >= 0);
     qDebug("osc_send_control(path:\"%s\", %i, %f)", oscData->path, index, value);
 
     if (oscData->target)
@@ -82,8 +86,9 @@ void osc_send_control(const CarlaOscData* const oscData, const int32_t index, co
 static inline
 void osc_send_program(const CarlaOscData* const oscData, const int32_t index)
 {
-    qDebug("osc_send_program(path:\"%s\", %i)", oscData->path, index);
+    Q_ASSERT(oscData && oscData->path);
     Q_ASSERT(index >= 0);
+    qDebug("osc_send_program(path:\"%s\", %i)", oscData->path, index);
 
     if (oscData->target)
     {
@@ -97,9 +102,10 @@ void osc_send_program(const CarlaOscData* const oscData, const int32_t index)
 static inline
 void osc_send_program(const CarlaOscData* const oscData, const int32_t bank, const int32_t program)
 {
-    qDebug("osc_send_program(path:\"%s\", %i, %i)", oscData->path, bank, program);
+    Q_ASSERT(oscData && oscData->path);
     Q_ASSERT(program >= 0);
     Q_ASSERT(bank >= 0);
+    qDebug("osc_send_program(path:\"%s\", %i, %i)", oscData->path, bank, program);
 
     if (oscData->target)
     {
@@ -113,8 +119,9 @@ void osc_send_program(const CarlaOscData* const oscData, const int32_t bank, con
 static inline
 void osc_send_midi_program(const CarlaOscData* const oscData, const int32_t index)
 {
-    qDebug("osc_send_midi_program(path:\"%s\", %i)", oscData->path, index);
+    Q_ASSERT(oscData && oscData->path);
     Q_ASSERT(index >= 0);
+    qDebug("osc_send_midi_program(path:\"%s\", %i)", oscData->path, index);
 
     if (oscData->target)
     {
@@ -128,9 +135,10 @@ void osc_send_midi_program(const CarlaOscData* const oscData, const int32_t inde
 static inline
 void osc_send_midi(const CarlaOscData* const oscData, const uint8_t buf[4])
 {
-    qDebug("osc_send_midi(path:\"%s\", 0x%X, %03u, %03u)", oscData->path, buf[1], buf[2], buf[3]);
+    Q_ASSERT(oscData && oscData->path);
     Q_ASSERT(buf[0] == 0);
     Q_ASSERT(buf[1] != 0);
+    qDebug("osc_send_midi(path:\"%s\", 0x%X, %03u, %03u)", oscData->path, buf[1], buf[2], buf[3]);
 
     if (oscData->target)
     {
@@ -145,6 +153,8 @@ void osc_send_midi(const CarlaOscData* const oscData, const uint8_t buf[4])
 static inline
 void osc_send_update(const CarlaOscData* const oscData, const char* const url)
 {
+    Q_ASSERT(oscData && oscData->path);
+    Q_ASSERT(url);
     qDebug("osc_send_update(path:\"%s\", \"%s\")", oscData->path, url);
 
     if (oscData->target)
@@ -159,6 +169,7 @@ void osc_send_update(const CarlaOscData* const oscData, const char* const url)
 static inline
 void osc_send_exiting(const CarlaOscData* const oscData)
 {
+    Q_ASSERT(oscData && oscData->path);
     qDebug("osc_send_exiting(path:\"%s\")", oscData->path);
 
     if (oscData->target)
@@ -174,6 +185,7 @@ void osc_send_exiting(const CarlaOscData* const oscData)
 static inline
 void osc_send_show(const CarlaOscData* const oscData)
 {
+    Q_ASSERT(oscData && oscData->path);
     qDebug("osc_send_show(path:\"%s\")", oscData->path);
 
     if (oscData->target)
@@ -188,6 +200,7 @@ void osc_send_show(const CarlaOscData* const oscData)
 static inline
 void osc_send_hide(const CarlaOscData* const oscData)
 {
+    Q_ASSERT(oscData && oscData->path);
     qDebug("osc_send_hide(path:\"%s\")", oscData->path);
 
     if (oscData->target)
@@ -202,6 +215,7 @@ void osc_send_hide(const CarlaOscData* const oscData)
 static inline
 void osc_send_quit(const CarlaOscData* const oscData)
 {
+    Q_ASSERT(oscData && oscData->path);
     qDebug("osc_send_quit(path:\"%s\")", oscData->path);
 
     if (oscData->target)
@@ -217,6 +231,7 @@ void osc_send_quit(const CarlaOscData* const oscData)
 static inline
 void osc_send_lv2_atom_transfer(const CarlaOscData* const oscData /* TODO */)
 {
+    Q_ASSERT(oscData && oscData->path);
     qDebug("osc_send_lv2_atom_transfer(path:\"%s\")", oscData->path);
 
     if (oscData->target)
@@ -231,10 +246,11 @@ void osc_send_lv2_atom_transfer(const CarlaOscData* const oscData /* TODO */)
 static inline
 void osc_send_lv2_event_transfer(const CarlaOscData* const oscData, const char* const type, const char* const key, const char* const value)
 {
-    qDebug("osc_send_lv2_event_transfer(path:\"%s\", \"%s\", \"%s\", \"%s\")", oscData->path, type, key, value);
+    Q_ASSERT(oscData && oscData->path);
     Q_ASSERT(type);
     Q_ASSERT(key);
     Q_ASSERT(value);
+    qDebug("osc_send_lv2_event_transfer(path:\"%s\", \"%s\", \"%s\", \"%s\")", oscData->path, type, key, value);
 
     if (oscData->target)
     {

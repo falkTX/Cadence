@@ -72,7 +72,7 @@ OBJS = \
 	../carla-lilv/carla_lilv.a
 
 ifeq ($(WANT_RTAUDIO),true)
-CARLA_CXX_FLAGS += -Irtaudio-4.0.11 -Irtmidi-4.0.11 -DCARLA_ENGINE_RTAUDIO -DHAVE_GETTIMEOFDAY
+CARLA_CXX_FLAGS += -Irtaudio-4.0.11 -Irtmidi-2.0.0 -DCARLA_ENGINE_RTAUDIO -DHAVE_GETTIMEOFDAY
 CARLA_CXX_FLAGS += -D__RTAUDIO_DEBUG__ -D__RTMIDI_DEBUG__
 OBJS += rtaudio-4.0.11/RtAudio.o
 OBJS += rtmidi-2.0.0/RtMidi.o

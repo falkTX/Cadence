@@ -236,8 +236,8 @@ public:
         gui.height = 0;
 
 #ifdef HAVE_SUIL
-        suil.host = nullptr;
         suil.handle = nullptr;
+        suil.host   = nullptr;
 #endif
 
         for (uint32_t i=0; i < CARLA_URI_MAP_ID_COUNT; i++)
@@ -245,8 +245,6 @@ public:
 
         for (uint32_t i=0; i < lv2_feature_count+1; i++)
             features[i] = nullptr;
-
-        Lv2World.init();
     }
 
     ~Lv2Plugin()
@@ -259,6 +257,7 @@ public:
             switch(gui.type)
             {
             case GUI_INTERNAL_QT4:
+            case GUI_INTERNAL_COCOA:
             case GUI_INTERNAL_HWND:
             case GUI_INTERNAL_X11:
                 break;
@@ -312,13 +311,15 @@ public:
 
 #ifdef HAVE_SUIL
             if (suil.handle)
+            {
                 suil_instance_free(suil.handle);
 
-            if (suil.host)
-                suil_host_free(suil.host);
+                if (suil.host)
+                    suil_host_free(suil.host);
 
-            ui.handle = nullptr;
-            ui.descriptor = nullptr;
+                ui.handle = nullptr;
+                ui.descriptor = nullptr;
+            }
 #endif
 
             if (ui.handle && ui.descriptor && ui.descriptor->cleanup)
@@ -3686,7 +3687,7 @@ public:
                     qDebug("Will use LV2 Gtk2 UI (suil)");
                     gui.type      = GUI_EXTERNAL_SUIL;
                     gui.resizable = isUiResizable();
-                    suil.handle   = suil_instance_new(suil.host, this, LV2_UI__Qt4UI, rdf_descriptor->URI, ui.rdf_descriptor->URI, lv2_get_ui_uri(ui.rdf_descriptor->Type), ui.rdf_descriptor->Bundle, ui.rdf_descriptor->Binary, features);
+                    suil.handle   = suil_instance_new(suil.host, this, LV2_UI__Qt4UI, rdf_descriptor->URI, ui.rdf_descriptor->URI, get_lv2_ui_uri(ui.rdf_descriptor->Type), ui.rdf_descriptor->Bundle, ui.rdf_descriptor->Binary, features);
 
                     if (suil.handle)
                     {

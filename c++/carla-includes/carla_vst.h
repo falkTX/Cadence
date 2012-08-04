@@ -18,6 +18,9 @@
 #ifndef CARLA_VST_INCLUDES_H
 #define CARLA_VST_INCLUDES_H
 
+// force-disable deprecated VST features
+#define VST_FORCE_DEPRECATED 0
+
 #include <cstdint>
 
 #if VESTIGE_HEADER
@@ -104,7 +107,6 @@ struct VstTimeInfo_R {
     int32_t timeSigNumerator, timeSigDenominator, smpteOffset, smpteFrameRate, samplesToNextClock, flags;
 };
 #else
-#define VST_FORCE_DEPRECATED 0
 #include "vst/aeffectx.h"
 typedef VstTimeInfo VstTimeInfo_R;
 #endif

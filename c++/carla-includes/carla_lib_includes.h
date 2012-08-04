@@ -27,6 +27,7 @@
 static inline
 void* lib_open(const char* const filename)
 {
+    Q_ASSERT(filename);
 #ifdef Q_OS_WIN
     return LoadLibraryA(filename);
 #else
@@ -37,6 +38,7 @@ void* lib_open(const char* const filename)
 static inline
 bool lib_close(void* const lib)
 {
+    Q_ASSERT(lib);
 #ifdef Q_OS_WIN
     return FreeLibrary((HMODULE)lib);
 #else
@@ -47,6 +49,8 @@ bool lib_close(void* const lib)
 static inline
 void* lib_symbol(void* const lib, const char* const symbol)
 {
+    Q_ASSERT(lib);
+    Q_ASSERT(symbol);
 #ifdef Q_OS_WIN
     return (void*)GetProcAddress((HMODULE)lib, symbol);
 #else
@@ -57,6 +61,7 @@ void* lib_symbol(void* const lib, const char* const symbol)
 static inline
 const char* lib_error(const char* const filename)
 {
+    Q_ASSERT(filename);
 #ifdef Q_OS_WIN
     static char libError[2048];
     memset(libError, 0, sizeof(char)*2048);

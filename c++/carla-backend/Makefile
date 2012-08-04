@@ -14,7 +14,7 @@ HAVE_FLUIDSYNTH   = $(shell pkg-config --exists fluidsynth && echo true)
 HAVE_LINUXSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
 HAVE_SUIL         = $(shell pkg-config --exists suil-0 && echo true)
 
-BASE_FLAGS        = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -Wall -I. -I../carla-includes
+BASE_FLAGS        = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -mfpmath=sse -Wall -I. -I../carla-includes
 
 CARLA_C_FLAGS     = $(BASE_FLAGS) $(CFLAGS)
 

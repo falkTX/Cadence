@@ -130,6 +130,7 @@ struct ScalePoints {
 struct Nodes {
 	LILV_WRAP_COLL(Nodes, Node, nodes);
 	LILV_WRAP1(bool, nodes, contains, const Node, node);
+    LILV_WRAP0(Node, nodes, get_first);
 };
 
 struct Port {
