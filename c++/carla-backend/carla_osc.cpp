@@ -18,11 +18,14 @@
 #include "carla_osc.h"
 #include "carla_plugin.h"
 
-CarlaOsc::CarlaOsc(CarlaBackend::CarlaEngine* const engine_) :
+CARLA_BACKEND_START_NAMESPACE
+//namespace CarlaBackend {
+
+CarlaOsc::CarlaOsc(CarlaEngine* const engine_) :
     engine(engine_)
 {
+    Q_ASSERT(engine);
     qDebug("CarlaOsc::CarlaOsc(%p)", engine_);
-    assert(engine);
 
     m_serverPath = nullptr;
     m_serverThread = nullptr;
@@ -41,9 +44,9 @@ CarlaOsc::~CarlaOsc()
 
 void CarlaOsc::init(const char* const name)
 {
+    Q_ASSERT(name);
+    Q_ASSERT(m_name_len == 0);
     qDebug("CarlaOsc::init(\"%s\")", name);
-    assert(name);
-    assert(m_name_len == 0);
 
     m_name = strdup(name);
     m_name_len = strlen(name);
@@ -63,8 +66,8 @@ void CarlaOsc::init(const char* const name)
 
 void CarlaOsc::close()
 {
+    Q_ASSERT(m_name);
     qDebug("CarlaOsc::close()");
-    assert(m_name);
 
     osc_clear_data(&m_controllerData);
 
@@ -85,8 +88,8 @@ void CarlaOsc::close()
 int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg)
 {
     qDebug("CarlaOsc::handleMessage(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
-    assert(m_serverThread);
-    assert(path);
+    Q_ASSERT(m_serverThread);
+    Q_ASSERT(path);
 
     // Initial path check
     if (strcmp(path, "/register") == 0)
@@ -571,3 +574,5 @@ int CarlaOsc::handle_bridge_aouts_peak(CARLA_OSC_HANDLE_ARGS2)
 
     return 0;
 }
+
+CARLA_BACKEND_END_NAMESPACE

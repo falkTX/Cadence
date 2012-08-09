@@ -30,6 +30,8 @@
 static inline
 const LADSPA_RDF_Descriptor* ladspa_rdf_dup(const LADSPA_RDF_Descriptor* const rdf_descriptor)
 {
+    Q_ASSERT(rdf_descriptor);
+
     LADSPA_RDF_Descriptor* const new_descriptor = new LADSPA_RDF_Descriptor;
 
     new_descriptor->Type      = rdf_descriptor->Type;

@@ -20,6 +20,14 @@
 
 #include "carla_backend.h"
 
+/*!
+ * @defgroup CarlaBackendStandalone Carla Backend Standalone
+ *
+ * The Carla Backend Standalone
+ *
+ * @{
+ */
+
 struct PluginInfo {
     CarlaBackend::PluginType type;
     CarlaBackend::PluginCategory category;
@@ -135,8 +143,8 @@ CARLA_EXPORT void set_balance_left(unsigned short plugin_id, double value);
 CARLA_EXPORT void set_balance_right(unsigned short plugin_id, double value);
 
 CARLA_EXPORT void set_parameter_value(unsigned short plugin_id, quint32 parameter_id, double value);
-CARLA_EXPORT void set_parameter_midi_cc(unsigned short plugin_id, quint32 parameter_id, qint16 midi_cc);
 CARLA_EXPORT void set_parameter_midi_channel(unsigned short plugin_id, quint32 parameter_id, quint8 channel);
+CARLA_EXPORT void set_parameter_midi_cc(unsigned short plugin_id, quint32 parameter_id, qint16 cc);
 CARLA_EXPORT void set_program(unsigned short plugin_id, quint32 program_id);
 CARLA_EXPORT void set_midi_program(unsigned short plugin_id, quint32 midi_program_id);
 
@@ -158,5 +166,7 @@ CARLA_EXPORT const char* get_host_osc_url();
 
 CARLA_EXPORT void set_callback_function(CarlaBackend::CallbackFunc func);
 CARLA_EXPORT void set_option(CarlaBackend::OptionsType option, int value, const char* valueStr);
+
+/**@}*/
 
 #endif // CARLA_BACKEND_STANDALONE_H

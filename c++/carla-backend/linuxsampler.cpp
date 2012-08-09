@@ -534,7 +534,7 @@ public:
                 engine_channel->Connect(audioOutputDevice);
                 engine_channel->PrepareLoadInstrument(filename, 0); // todo - find instrument from label
                 engine_channel->LoadInstrument();
-                engine_channel->Volume(LINUXSAMPLER_VOLUME_MAX);
+                engine_channel->Volume(LinuxSampler::VOLUME_MAX);
 
                 x_client = x_engine->addClient(this);
 

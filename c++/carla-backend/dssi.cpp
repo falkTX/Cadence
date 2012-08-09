@@ -126,7 +126,7 @@ public:
 
     int32_t chunkData(void** const dataPtr)
     {
-        assert(dataPtr);
+        Q_ASSERT(dataPtr);
         unsigned long dataSize = 0;
 
         if (descriptor->get_custom_data(handle, dataPtr, &dataSize))
@@ -140,7 +140,7 @@ public:
 
     double getParameterValue(uint32_t parameterId)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
         return param_buffers[parameterId];
     }
 
@@ -178,7 +178,7 @@ public:
 
     void getParameterName(uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
         int32_t rindex = param.data[parameterId].rindex;
 
         strncpy(strBuf, ldescriptor->PortNames[rindex], STR_MAX);
@@ -195,7 +195,7 @@ public:
 
     void setParameterValue(uint32_t parameterId, double value, bool sendGui, bool sendOsc, bool sendCallback)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
         param_buffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
 
 #ifndef BUILD_BRIDGE
@@ -208,8 +208,8 @@ public:
 
     void setCustomData(CustomDataType type, const char* const key, const char* const value, bool sendGui)
     {
-        assert(key);
-        assert(value);
+        Q_ASSERT(key);
+        Q_ASSERT(value);
 
         if (! key)
             return qCritical("DssiPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - key is null", CustomDataType2str(type), key, value, bool2str(sendGui));
@@ -235,7 +235,7 @@ public:
 
     void setChunkData(const char* const stringData)
     {
-        assert(stringData);
+        Q_ASSERT(stringData);
 
         static QByteArray chunk;
         chunk = QByteArray::fromBase64(stringData);
@@ -255,7 +255,7 @@ public:
 
     void setMidiProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
     {
-        assert(index < (int32_t)midiprog.count);
+        Q_ASSERT(index < (int32_t)midiprog.count);
 
         if (index >= 0)
         {
@@ -286,7 +286,7 @@ public:
 #ifndef BUILD_BRIDGE
     void showGui(bool yesNo)
     {
-        assert(osc.thread);
+        Q_ASSERT(osc.thread);
 
         if (! osc.thread)
         {
@@ -721,7 +721,7 @@ public:
         for (i=0; i < midiprog.count; i++)
         {
             const DSSI_Program_Descriptor* const pdesc = descriptor->get_program(handle, i);
-            assert(pdesc);
+            Q_ASSERT(pdesc);
 
             midiprog.data[i].bank    = pdesc->Bank;
             midiprog.data[i].program = pdesc->Program;

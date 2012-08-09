@@ -925,34 +925,6 @@ void set_parameter_value(unsigned short plugin_id, quint32 parameter_id, double 
     qCritical("CarlaBackendStandalone::set_parameter_value(%i, %i, %g) - could not find plugin", plugin_id, parameter_id, value);
 }
 
-void set_parameter_midi_cc(unsigned short plugin_id, quint32 parameter_id, int16_t midi_cc)
-{
-    qDebug("CarlaBackendStandalone::set_parameter_midi_cc(%i, %i, %i)", plugin_id, parameter_id, midi_cc);
-
-    if (midi_cc < -1)
-    {
-        midi_cc = -1;
-    }
-    else if (midi_cc > 0x5F) // 95
-    {
-        qCritical("CarlaBackendStandalone::set_parameter_midi_cc(%i, %i, %i) - invalid midi_cc number", plugin_id, parameter_id, midi_cc);
-        return;
-    }
-
-    CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
-
-    if (plugin)
-    {
-        if (parameter_id < plugin->parameterCount())
-            return plugin->setParameterMidiCC(parameter_id, midi_cc, true, false);
-
-        qCritical("CarlaBackendStandalone::set_parameter_midi_cc(%i, %i, %i) - parameter_id out of bounds", plugin_id, parameter_id, midi_cc);
-        return;
-    }
-
-    qCritical("CarlaBackendStandalone::set_parameter_midi_cc(%i, %i, %i) - could not find plugin", plugin_id, parameter_id, midi_cc);
-}
-
 void set_parameter_midi_channel(unsigned short plugin_id, quint32 parameter_id, quint8 channel)
 {
     qDebug("CarlaBackendStandalone::set_parameter_midi_channel(%i, %i, %i)", plugin_id, parameter_id, channel);
@@ -975,6 +947,34 @@ void set_parameter_midi_channel(unsigned short plugin_id, quint32 parameter_id, 
     }
 
     qCritical("CarlaBackendStandalone::set_parameter_midi_channel(%i, %i, %i) - could not find plugin", plugin_id, parameter_id, channel);
+}
+
+void set_parameter_midi_cc(unsigned short plugin_id, quint32 parameter_id, int16_t cc)
+{
+    qDebug("CarlaBackendStandalone::set_parameter_midi_cc(%i, %i, %i)", plugin_id, parameter_id, cc);
+
+    if (cc < -1)
+    {
+        cc = -1;
+    }
+    else if (cc > 0x5F) // 95
+    {
+        qCritical("CarlaBackendStandalone::set_parameter_midi_cc(%i, %i, %i) - invalid cc number", plugin_id, parameter_id, cc);
+        return;
+    }
+
+    CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
+
+    if (plugin)
+    {
+        if (parameter_id < plugin->parameterCount())
+            return plugin->setParameterMidiCC(parameter_id, cc, true, false);
+
+        qCritical("CarlaBackendStandalone::set_parameter_midi_cc(%i, %i, %i) - parameter_id out of bounds", plugin_id, parameter_id, cc);
+        return;
+    }
+
+    qCritical("CarlaBackendStandalone::set_parameter_midi_cc(%i, %i, %i) - could not find plugin", plugin_id, parameter_id, cc);
 }
 
 void set_program(unsigned short plugin_id, quint32 program_id)

@@ -1091,8 +1091,8 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.connect(self, SIGNAL("ParameterCallback(int, int, double)"), SLOT("slot_handleParameterCallback(int, int, double)"))
         self.connect(self, SIGNAL("ProgramCallback(int, int)"), SLOT("slot_handleProgramCallback(int, int)"))
         self.connect(self, SIGNAL("MidiProgramCallback(int, int)"), SLOT("slot_handleMidiProgramCallback(int, int)"))
-        self.connect(self, SIGNAL("NoteOnCallback(int, int, int)"), SLOT("slot_handleNoteOnCallback(int, int)"))
-        self.connect(self, SIGNAL("NoteOffCallback(int, int)"), SLOT("slot_handleNoteOffCallback(int, int)"))
+        self.connect(self, SIGNAL("NoteOnCallback(int, int, int, int)"), SLOT("slot_handleNoteOnCallback(int, int, int, int)"))
+        self.connect(self, SIGNAL("NoteOffCallback(int, int, int)"), SLOT("slot_handleNoteOffCallback(int, int, int)"))
         self.connect(self, SIGNAL("ShowGuiCallback(int, int)"), SLOT("slot_handleShowGuiCallback(int, int)"))
         self.connect(self, SIGNAL("ResizeGuiCallback(int, int, int)"), SLOT("slot_handleResizeGuiCallback(int, int, int)"))
         self.connect(self, SIGNAL("UpdateCallback(int)"), SLOT("slot_handleUpdateCallback(int)"))
@@ -1136,84 +1136,84 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
     @pyqtSlot(int, int)
     def slot_handleProgramCallback(self, plugin_id, program_id):
         pwidget = self.m_plugin_list[plugin_id]
-        if (pwidget):
+        if pwidget:
             pwidget.edit_dialog.set_program(program_id)
 
     @pyqtSlot(int, int)
     def slot_handleMidiProgramCallback(self, plugin_id, midi_program_id):
         pwidget = self.m_plugin_list[plugin_id]
-        if (pwidget):
+        if pwidget:
             pwidget.edit_dialog.set_midi_program(midi_program_id)
 
     @pyqtSlot(int, int)
-    def slot_handleNoteOnCallback(self, plugin_id, note):
+    def slot_handleNoteOnCallback(self, plugin_id, channel, note, velo):
         pwidget = self.m_plugin_list[plugin_id]
-        if (pwidget):
+        if pwidget:
             pwidget.edit_dialog.keyboard.sendNoteOn(note, False)
 
     @pyqtSlot(int, int)
-    def slot_handleNoteOffCallback(self, plugin_id, note):
+    def slot_handleNoteOffCallback(self, plugin_id, channel, note):
         pwidget = self.m_plugin_list[plugin_id]
-        if (pwidget):
+        if pwidget:
             pwidget.edit_dialog.keyboard.sendNoteOff(note, False)
 
     @pyqtSlot(int, int)
     def slot_handleShowGuiCallback(self, plugin_id, show):
         pwidget = self.m_plugin_list[plugin_id]
-        if (pwidget):
-            if (show == 0):
+        if pwidget:
+            if show == 0:
                 pwidget.b_gui.setChecked(False)
                 pwidget.b_gui.setEnabled(True)
-            elif (show == 1):
+            elif show == 1:
                 pwidget.b_gui.setChecked(True)
                 pwidget.b_gui.setEnabled(True)
-            elif (show == -1):
+            elif show == -1:
                 pwidget.b_gui.setChecked(False)
                 pwidget.b_gui.setEnabled(False)
 
     @pyqtSlot(int, int, int)
     def slot_handleResizeGuiCallback(self, plugin_id, width, height):
         pwidget = self.m_plugin_list[plugin_id]
-        if (pwidget):
+        if pwidget:
             gui_dialog = pwidget.gui_dialog
-            if (gui_dialog):
+            if gui_dialog:
                 gui_dialog.setNewSize(width, height)
 
     @pyqtSlot(int)
     def slot_handleUpdateCallback(self, plugin_id):
         pwidget = self.m_plugin_list[plugin_id]
-        if (pwidget):
+        if pwidget:
             pwidget.edit_dialog.do_update()
 
     @pyqtSlot(int)
     def slot_handleReloadInfoCallback(self, plugin_id):
         pwidget = self.m_plugin_list[plugin_id]
-        if (pwidget):
+        if pwidget:
             pwidget.edit_dialog.do_reload_info()
 
     @pyqtSlot(int)
     def slot_handleReloadParametersCallback(self, plugin_id):
         pwidget = self.m_plugin_list[plugin_id]
-        if (pwidget):
+        if pwidget:
             pwidget.edit_dialog.do_reload_parameters()
 
     @pyqtSlot(int)
     def slot_handleReloadProgramsCallback(self, plugin_id):
         pwidget = self.m_plugin_list[plugin_id]
-        if (pwidget):
+        if pwidget:
             pwidget.edit_dialog.do_reload_programs()
 
     @pyqtSlot(int)
     def slot_handleReloadAllCallback(self, plugin_id):
         pwidget = self.m_plugin_list[plugin_id]
-        if (pwidget):
+        if pwidget:
             pwidget.edit_dialog.do_reload_all()
 
     @pyqtSlot()
     def slot_handleQuitCallback(self):
         CustomMessageBox(self, QMessageBox.Warning, self.tr("Warning"),
             self.tr("JACK has been stopped or crashed.\nPlease start JACK and restart Carla"),
-            "You may want to save your session now...", QMessageBox.Ok, QMessageBox.Ok)
+            self.tr("You may want to save your session now..."), QMessageBox.Ok, QMessageBox.Ok)
 
     def add_plugin(self, btype, ptype, filename, name, label, extra_stuff, activate):
         new_plugin_id = Carla.Host.add_plugin(btype, ptype, filename, name, label, extra_stuff)
@@ -1684,9 +1684,9 @@ def callback_function(action, plugin_id, value1, value2, value3):
     elif action == CALLBACK_MIDI_PROGRAM_CHANGED:
         Carla.gui.emit(SIGNAL("MidiProgramCallback(int, int)"), plugin_id, value1)
     elif action == CALLBACK_NOTE_ON:
-        Carla.gui.emit(SIGNAL("NoteOnCallback(int, int, int)"), plugin_id, value1, value2)
+        Carla.gui.emit(SIGNAL("NoteOnCallback(int, int, int, int)"), plugin_id, value1, value2, value3)
     elif action == CALLBACK_NOTE_OFF:
-        Carla.gui.emit(SIGNAL("NoteOffCallback(int, int)"), plugin_id, value1)
+        Carla.gui.emit(SIGNAL("NoteOffCallback(int, int, int)"), plugin_id, value1, value2)
     elif action == CALLBACK_SHOW_GUI:
         Carla.gui.emit(SIGNAL("ShowGuiCallback(int, int)"), plugin_id, value1)
     elif action == CALLBACK_RESIZE_GUI:

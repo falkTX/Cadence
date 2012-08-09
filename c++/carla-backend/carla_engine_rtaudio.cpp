@@ -55,7 +55,7 @@ CarlaEngineRtAudio::~CarlaEngineRtAudio()
 
 bool CarlaEngineRtAudio::init(const char* const clientName)
 {
-    qDebug("CarlaEngineRtAudio::init(%s)", clientName);
+    qDebug("CarlaEngineRtAudio::init(\"%s\")", clientName);
 
     procThread = nullptr;
 
@@ -165,8 +165,8 @@ void CarlaEngineRtAudio::handleProcessCallback(void* outputBuffer, void* inputBu
     float* outsPtr = (float*)outputBuffer;
 
     // assert buffers
-    assert(insPtr);
-    assert(outsPtr);
+    Q_ASSERT(insPtr);
+    Q_ASSERT(outsPtr);
 
     // create temporary audio buffers
     float ains_tmp_buf1[nframes];

@@ -30,11 +30,9 @@
 
 // common includes
 #include <cmath>
-#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
-#include <QtCore/QString>
 
 #ifndef __WINE__
 #include <QtGui/QDialog>
@@ -204,8 +202,8 @@ public:
         x_engine(engine),
         x_client(nullptr)
     {
-        qDebug("CarlaPlugin::CarlaPlugin()");
-        assert(engine);
+        Q_ASSERT(engine);
+        qDebug("CarlaPlugin::CarlaPlugin(%p, %i)", engine, id);
 
         m_type  = PLUGIN_NONE;
         m_hints = 0;
@@ -432,7 +430,8 @@ public:
      */
     virtual uint32_t parameterScalePointCount(uint32_t parameterId)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
+
         return 0;
     }
 
@@ -489,7 +488,8 @@ public:
      */
     const ParameterData* parameterData(uint32_t parameterId) const
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
+
         return &param.data[parameterId];
     }
 
@@ -498,7 +498,8 @@ public:
      */
     const ParameterRanges* parameterRanges(uint32_t parameterId) const
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
+
         return &param.ranges[parameterId];
     }
 
@@ -509,7 +510,8 @@ public:
      */
     const midi_program_t* midiProgramData(uint32_t index) const
     {
-        assert(index < midiprog.count);
+        Q_ASSERT(index < midiprog.count);
+
         return &midiprog.data[index];
     }
 
@@ -520,7 +522,8 @@ public:
      */
     const CustomData* customData(uint32_t index) const
     {
-        assert(index < custom.size());
+        Q_ASSERT(index < custom.size());
+
         return &custom[index];
     }
 
@@ -536,7 +539,8 @@ public:
      */
     virtual int32_t chunkData(void** const dataPtr)
     {
-        assert(dataPtr);
+        Q_ASSERT(dataPtr);
+
         return 0;
     }
 
@@ -558,7 +562,8 @@ public:
      */
     virtual double getParameterValue(uint32_t parameterId)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
+
         return 0.0;
     }
 
@@ -567,8 +572,9 @@ public:
      */
     virtual double getParameterScalePointValue(uint32_t parameterId, uint32_t scalePointId)
     {
-        assert(parameterId < param.count);
-        assert(scalePointId < parameterScalePointCount(parameterId));
+        Q_ASSERT(parameterId < param.count);
+        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
+
         return 0.0;
     }
 
@@ -611,7 +617,8 @@ public:
      */
     virtual void getParameterName(uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
+
         *strBuf = 0;
     }
 
@@ -620,7 +627,8 @@ public:
      */
     virtual void getParameterSymbol(uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
+
         *strBuf = 0;
     }
 
@@ -629,7 +637,8 @@ public:
      */
     virtual void getParameterText(uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
+
         *strBuf = 0;
     }
 
@@ -638,7 +647,8 @@ public:
      */
     virtual void getParameterUnit(uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
+
         *strBuf = 0;
     }
 
@@ -647,8 +657,9 @@ public:
      */
     virtual void getParameterScalePointLabel(uint32_t parameterId, uint32_t scalePointId, char* const strBuf)
     {
-        assert(parameterId < param.count);
-        assert(scalePointId < parameterScalePointCount(parameterId));
+        Q_ASSERT(parameterId < param.count);
+        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
+
         *strBuf = 0;
     }
 
@@ -657,7 +668,8 @@ public:
      */
     void getProgramName(uint32_t index, char* const strBuf)
     {
-        assert(index < prog.count);
+        Q_ASSERT(index < prog.count);
+
         strncpy(strBuf, prog.names[index], STR_MAX);
     }
 
@@ -668,7 +680,8 @@ public:
      */
     void getMidiProgramName(uint32_t index, char* const strBuf)
     {
-        assert(index < midiprog.count);
+        Q_ASSERT(index < midiprog.count);
+
         strncpy(strBuf, midiprog.data[index].name, STR_MAX);
     }
 
@@ -761,7 +774,7 @@ public:
 #endif
 
         if (sendCallback)
-            x_engine->callback(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_ACTIVE, 0, value);
+            x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_ACTIVE, 0, value);
     }
 
     /*!
@@ -793,7 +806,7 @@ public:
 #endif
 
         if (sendCallback)
-            x_engine->callback(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_DRYWET, 0, value);
+            x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_DRYWET, 0, value);
     }
 
     /*!
@@ -825,7 +838,7 @@ public:
 #endif
 
         if (sendCallback)
-            x_engine->callback(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_VOLUME, 0, value);
+            x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_VOLUME, 0, value);
     }
 
     /*!
@@ -857,7 +870,7 @@ public:
 #endif
 
         if (sendCallback)
-            x_engine->callback(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_BALANCE_LEFT, 0, value);
+            x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_BALANCE_LEFT, 0, value);
     }
 
     /*!
@@ -889,7 +902,7 @@ public:
 #endif
 
         if (sendCallback)
-            x_engine->callback(CALLBACK_PARAMETER_CHANGED, m_id, PARAMETER_BALANCE_RIGHT, 0, value);
+            x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_BALANCE_RIGHT, 0, value);
     }
 
 #ifndef BUILD_BRIDGE
@@ -921,7 +934,7 @@ public:
      */
     virtual void setParameterValue(uint32_t parameterId, double value, bool sendGui, bool sendOsc, bool sendCallback)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
 
 #ifndef BUILD_BRIDGE
         if (sendOsc)
@@ -936,7 +949,7 @@ public:
 #endif
 
         if (sendCallback)
-            x_engine->callback(CALLBACK_PARAMETER_CHANGED, m_id, parameterId, 0, value);
+            x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, parameterId, 0, value);
 
         Q_UNUSED(sendGui);
     }
@@ -973,32 +986,13 @@ public:
     }
 
     /*!
-     * Set parameter's \a parameterId MIDI CC to \a cc.\n
-     * \a cc must be between 0 and 15.
-     */
-    void setParameterMidiCC(uint32_t parameterId, int16_t cc, bool sendOsc, bool sendCallback)
-    {
-        assert(parameterId < param.count);
-        param.data[parameterId].midiCC = cc;
-
-#ifndef BUILD_BRIDGE
-        if (sendOsc)
-            x_engine->osc_send_set_parameter_midi_cc(m_id, parameterId, cc);
-#else
-        Q_UNUSED(sendOsc);
-#endif
-
-        //if (sendCallback)
-            //x_engine->callback(CALLBACK_PARAMETER_MIDI_CC_CHANGED, m_id, parameterId, cc, 0.0);
-    }
-
-    /*!
      * Set parameter's \a parameterId MIDI channel to \a channel.\n
      * \a channel must be between 0 and 15.
      */
     void setParameterMidiChannel(uint32_t parameterId, uint8_t channel, bool sendOsc, bool sendCallback)
     {
-        assert(parameterId < param.count && channel < 16);
+        Q_ASSERT(parameterId < param.count && channel < 16);
+
         param.data[parameterId].midiChannel = channel;
 
 #ifndef BUILD_BRIDGE
@@ -1008,8 +1002,29 @@ public:
         Q_UNUSED(sendOsc);
 #endif
 
-        //if (sendCallback)
-            //x_engine->callback(CALLBACK_PARAMETER_MIDI_CHANNEL_CHANGED, m_id, parameterId, channel, 0.0);
+        if (sendCallback)
+            x_engine->callback(CALLBACK_PARAMETER_MIDI_CHANNEL_CHANGED, m_id, parameterId, channel, 0.0);
+    }
+
+    /*!
+     * Set parameter's \a parameterId MIDI CC to \a cc.\n
+     * \a cc must be between 0 and 15.
+     */
+    void setParameterMidiCC(uint32_t parameterId, int16_t cc, bool sendOsc, bool sendCallback)
+    {
+        Q_ASSERT(parameterId < param.count);
+
+        param.data[parameterId].midiCC = cc;
+
+#ifndef BUILD_BRIDGE
+        if (sendOsc)
+            x_engine->osc_send_set_parameter_midi_cc(m_id, parameterId, cc);
+#else
+        Q_UNUSED(sendOsc);
+#endif
+
+        if (sendCallback)
+            x_engine->callback(CALLBACK_PARAMETER_MIDI_CC_CHANGED, m_id, parameterId, cc, 0.0);
     }
 
     /*!
@@ -1024,8 +1039,8 @@ public:
      */
     virtual void setCustomData(CustomDataType type, const char* const key, const char* const value, bool sendGui)
     {
-        assert(key);
-        assert(value);
+        Q_ASSERT(key);
+        Q_ASSERT(value);
 
         if (! key)
             return qCritical("CarlaPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - key is null", CustomDataType2str(type), key, value, bool2str(sendGui));
@@ -1081,7 +1096,7 @@ public:
      */
     virtual void setChunkData(const char* const stringData)
     {
-        assert(stringData);
+        Q_ASSERT(stringData);
     }
 
     /*!
@@ -1098,7 +1113,7 @@ public:
      */
     virtual void setProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
     {
-        assert(index < (int32_t)prog.count);
+        Q_ASSERT(index < (int32_t)prog.count);
 
         if (index < -1)
             index = -1;
@@ -1152,7 +1167,7 @@ public:
      */
     virtual void setMidiProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
     {
-        assert(index < (int32_t)midiprog.count);
+        Q_ASSERT(index < (int32_t)midiprog.count);
 
         if (index < -1)
             index = -1;
@@ -1239,6 +1254,36 @@ public:
     {
         m_needsParamUpdate = false;
         m_needsProgUpdate = false;
+
+        if (! m_enabled)
+            return;
+
+        // -------------------------------------------------------
+        // Process postponed events
+
+        postEventsRun();
+
+        // -------------------------------------------------------
+        // Update parameters (OSC)
+
+        updateOscParameterOutputs();
+
+        // -------------------------------------------------------
+        // Send peak values (OSC)
+
+        if (x_engine->isOscControllerRegisted())
+        {
+            if (audioInCount() > 0)
+            {
+                x_engine->osc_send_set_input_peak_value(m_id, 1, x_engine->getInputPeak(m_id, 0));
+                x_engine->osc_send_set_input_peak_value(m_id, 2, x_engine->getInputPeak(m_id, 1));
+            }
+            if (audioOutCount() > 0)
+            {
+                x_engine->osc_send_set_output_peak_value(m_id, 1, x_engine->getOutputPeak(m_id, 0));
+                x_engine->osc_send_set_output_peak_value(m_id, 2, x_engine->getOutputPeak(m_id, 1));
+            }
+        }
     }
 
     // -------------------------------------------------------------------
@@ -1714,7 +1759,7 @@ public:
                 x_engine->osc_send_set_parameter_value(m_id, event->value1, event->value3);
 
                 // Update Host
-                x_engine->callback(CALLBACK_PARAMETER_CHANGED, m_id, event->value1, 0, event->value3);
+                x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, event->value1, 0, event->value3);
                 break;
 
             case PluginPostEventProgramChange:

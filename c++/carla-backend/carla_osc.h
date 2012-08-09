@@ -18,10 +18,10 @@
 #ifndef CARLA_OSC_H
 #define CARLA_OSC_H
 
-#include "carla_osc_includes.h"
 #include "carla_backend.h"
+#include "carla_osc_includes.h"
 
-#define CARLA_OSC_HANDLE_ARGS1 CarlaBackend::CarlaPlugin* const plugin
+#define CARLA_OSC_HANDLE_ARGS1 CarlaPlugin* const plugin
 #define CARLA_OSC_HANDLE_ARGS2 CARLA_OSC_HANDLE_ARGS1, const int argc, const lo_arg* const* const argv, const char* const types
 
 #define CARLA_OSC_CHECK_OSC_TYPES(/* argc, types, */ argcToCompare, typesToCompare)                                   \
@@ -47,10 +47,12 @@
         }                                                                                                             \
     }
 
+CARLA_BACKEND_START_NAMESPACE
+
 class CarlaOsc
 {
 public:
-    CarlaOsc(CarlaBackend::CarlaEngine* const engine);
+    CarlaOsc(CarlaEngine* const engine);
     ~CarlaOsc();
 
     void init(const char* const name);
@@ -74,7 +76,7 @@ public:
     }
 
 private:
-    CarlaBackend::CarlaEngine* const engine;
+    CarlaEngine* const engine;
 
     const char* m_serverPath;
     lo_server_thread m_serverThread;
@@ -127,5 +129,7 @@ private:
     int handle_bridge_ains_peak(CARLA_OSC_HANDLE_ARGS2);
     int handle_bridge_aouts_peak(CARLA_OSC_HANDLE_ARGS2);
 };
+
+CARLA_BACKEND_END_NAMESPACE
 
 #endif // CARLA_OSC_H

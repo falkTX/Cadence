@@ -1044,6 +1044,8 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
 static inline
 const LV2_RDF_Descriptor* lv2_rdf_dup(const LV2_RDF_Descriptor* const rdf_descriptor)
 {
+    Q_ASSERT(rdf_descriptor);
+
     LV2_RDF_Descriptor* const new_descriptor = new LV2_RDF_Descriptor;
 
     new_descriptor->Type           = rdf_descriptor->Type;
@@ -1129,6 +1131,7 @@ const LV2_RDF_Descriptor* lv2_rdf_dup(const LV2_RDF_Descriptor* const rdf_descri
         }
     }
 
+#if 0
     // Presets
     if (new_descriptor->PresetCount > 0)
     {
@@ -1178,6 +1181,7 @@ const LV2_RDF_Descriptor* lv2_rdf_dup(const LV2_RDF_Descriptor* const rdf_descri
             }
         }
     }
+#endif
 
     // Features
     if (new_descriptor->FeatureCount > 0)
@@ -1317,6 +1321,7 @@ void lv2_rdf_free(const LV2_RDF_Descriptor* const rdf_descriptor)
         delete[] rdf_descriptor->Ports;
     }
 
+#if 0
     if (rdf_descriptor->PresetCount > 0)
     {
         for (uint32_t i=0; i < rdf_descriptor->PresetCount; i++)
@@ -1357,6 +1362,7 @@ void lv2_rdf_free(const LV2_RDF_Descriptor* const rdf_descriptor)
         }
         delete[] rdf_descriptor->Presets;
     }
+#endif
 
     if (rdf_descriptor->FeatureCount > 0)
     {

@@ -104,7 +104,7 @@ public:
 
     uint32_t parameterScalePointCount(uint32_t parameterId)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
 
         switch (parameterId)
         {
@@ -122,14 +122,14 @@ public:
 
     double getParameterValue(uint32_t parameterId)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
         return param_buffers[parameterId];
     }
 
     double getParameterScalePointValue(uint32_t parameterId, uint32_t scalePointId)
     {
-        assert(parameterId < param.count);
-        assert(scalePointId < parameterScalePointCount(parameterId));
+        Q_ASSERT(parameterId < param.count);
+        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
 
         switch (parameterId)
         {
@@ -184,7 +184,7 @@ public:
 
     void getParameterName(uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
 
         switch (parameterId)
         {
@@ -238,7 +238,7 @@ public:
 
     void getParameterUnit(uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
 
         switch (parameterId)
         {
@@ -256,8 +256,8 @@ public:
 
     void getParameterScalePointLabel(uint32_t parameterId, uint32_t scalePointId, char* const strBuf)
     {
-        assert(parameterId < param.count);
-        assert(scalePointId < parameterScalePointCount(parameterId));
+        Q_ASSERT(parameterId < param.count);
+        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
 
         switch (parameterId)
         {
@@ -297,7 +297,7 @@ public:
 
     void setParameterValue(uint32_t parameterId, double value, bool sendGui, bool sendOsc, bool sendCallback)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
         param_buffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
 
         switch (parameterId)
@@ -357,7 +357,7 @@ public:
 
     void setMidiProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
     {
-        assert(index < (int32_t)midiprog.count);
+        Q_ASSERT(index < (int32_t)midiprog.count);
 
         if (cin_channel < 0 || cin_channel > 15)
             return;
@@ -761,7 +761,7 @@ public:
         f_sfont->iteration_start(f_sfont);
         while (f_sfont->iteration_next(f_sfont, &f_preset))
         {
-            assert(i < midiprog.count);
+            Q_ASSERT(i < midiprog.count);
             midiprog.data[i].bank    = f_preset.get_banknum(&f_preset);
             midiprog.data[i].program = f_preset.get_num(&f_preset);
             midiprog.data[i].name    = strdup(f_preset.get_name(&f_preset));

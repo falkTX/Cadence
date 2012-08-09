@@ -25,12 +25,13 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
-#define STR_MAX 0xff
+#define STR_MAX 0xFF
 
 /*!
  * @defgroup CarlaBackendAPI Carla Backend API
  *
  * The Carla Backend API
+ *
  * @{
  */
 
@@ -39,13 +40,13 @@ const unsigned short MAX_PLUGINS  = 1;
 #else
 const unsigned short MAX_PLUGINS  = 99;  //!< Maximum number of loadable plugins
 #endif
-const unsigned int MAX_PARAMETERS = 200; //!< Default value for maximum number of parameters the callback can handle.\see OPTION_MAX_PARAMETERS
+const unsigned int MAX_PARAMETERS = 200; //!< Default value for the maximum number of parameters allowed.\see OPTION_MAX_PARAMETERS
 
 /*!
  * @defgroup PluginHints Plugin Hints
  *
  * Various plugin hints.
- * \see CarlaPlugin::hints
+ * \see CarlaPlugin::hints()
  * @{
  */
 const unsigned int PLUGIN_IS_BRIDGE   = 0x01; //!< Plugin is a bridge (ie, BridgePlugin). This hint is required because "bridge" itself is not a plugin type.
@@ -61,7 +62,7 @@ const unsigned int PLUGIN_CAN_BALANCE = 0x40; //!< Plugin can make use of Left &
  * @defgroup ParameterHints Parameter Hints
  *
  * Various parameter hints.
- * \see CarlaPlugin::paramData()
+ * \see CarlaPlugin::parameterData()
  * @{
  */
 const unsigned int PARAMETER_IS_BOOLEAN       = 0x01; //!< Parameter value is of boolean type (always at minimum or maximum).
@@ -76,7 +77,6 @@ const unsigned int PARAMETER_USES_CUSTOM_TEXT = 0x80; //!< Parameter uses custom
 
 /*!
  * The binary type of a plugin.
- * \see BridgePlugin
  */
 enum BinaryType {
     BINARY_NONE   = 0, //!< Null binary type.
@@ -87,7 +87,7 @@ enum BinaryType {
 };
 
 /*!
- * All the available plugin types, provided by subclasses of CarlaPlugin.\n
+ * All the available plugin types, as provided by subclasses of CarlaPlugin.\n
  * \note Some plugin classes might provide more than 1 plugin type.
  */
 enum PluginType {
@@ -96,21 +96,21 @@ enum PluginType {
     PLUGIN_DSSI   = 2, //!< DSSI plugin.\see DssiPlugin
     PLUGIN_LV2    = 3, //!< LV2 plugin.\see Lv2Plugin
     PLUGIN_VST    = 4, //!< VST plugin.\see VstPlugin
-    PLUGIN_GIG    = 5, //!< GIG sound kit, provided by LinuxSampler.\see LinuxSamplerPlugin
-    PLUGIN_SF2    = 6, //!< SF2 sound kit (aka SoundFont), provided by FluidSynth.\see FluidSynthPlugin
-    PLUGIN_SFZ    = 7  //!< SFZ sound kit, provided by LinuxSampler.\see LinuxSamplerPlugin
+    PLUGIN_GIG    = 5, //!< GIG sound kit, implemented via LinuxSampler.\see LinuxSamplerPlugin
+    PLUGIN_SF2    = 6, //!< SF2 sound kit (aka SoundFont), implemented via FluidSynth.\see FluidSynthPlugin
+    PLUGIN_SFZ    = 7  //!< SFZ sound kit, implemented via LinuxSampler.\see LinuxSamplerPlugin
 };
 
 enum PluginCategory {
-    PLUGIN_CATEGORY_NONE      = 0, //!< Unknown or undefined plugin category
-    PLUGIN_CATEGORY_SYNTH     = 1, //!< A synthesizer or generator
-    PLUGIN_CATEGORY_DELAY     = 2, //!< A delay or reverberator
-    PLUGIN_CATEGORY_EQ        = 3, //!< An equalizer
-    PLUGIN_CATEGORY_FILTER    = 4, //!< A filter
-    PLUGIN_CATEGORY_DYNAMICS  = 5, //!< A 'dynamic' plugin (amplifier, compressor, gate, etc)
-    PLUGIN_CATEGORY_MODULATOR = 6, //!< A 'modulator' plugin (chorus, flanger, phaser, etc)
-    PLUGIN_CATEGORY_UTILITY   = 7, //!< An 'utility' plugin (analyzer, converter, mixer, etc)
-    PLUGIN_CATEGORY_OTHER     = 8  //!< Misc plugin (used to check if plugin has a category)
+    PLUGIN_CATEGORY_NONE      = 0, //!< Null plugin category.
+    PLUGIN_CATEGORY_SYNTH     = 1, //!< A synthesizer or generator.
+    PLUGIN_CATEGORY_DELAY     = 2, //!< A delay or reverberator.
+    PLUGIN_CATEGORY_EQ        = 3, //!< An equalizer.
+    PLUGIN_CATEGORY_FILTER    = 4, //!< A filter.
+    PLUGIN_CATEGORY_DYNAMICS  = 5, //!< A 'dynamic' plugin (amplifier, compressor, gate, etc).
+    PLUGIN_CATEGORY_MODULATOR = 6, //!< A 'modulator' plugin (chorus, flanger, phaser, etc).
+    PLUGIN_CATEGORY_UTILITY   = 7, //!< An 'utility' plugin (analyzer, converter, mixer, etc).
+    PLUGIN_CATEGORY_OTHER     = 8  //!< Misc plugin (used to check if the plugin has a category).
 };
 
 enum ParameterType {
@@ -148,215 +148,150 @@ enum GuiType {
 };
 
 /*!
- * Options used in set_option().\n
+ * Options used in the setOption() call.\n
  * These options must be set before calling CarlaEngine::init() or after CarlaEngine::close().
- *
- * \see set_option()
  */
 enum OptionsType {
     /*!
      * Set the engine processing mode.\n
      * Default is PROCESS_MODE_MULTIPLE_CLIENTS.
      *
-     * \param value A value from ProcessModeType
-     * \param valueStr Unused
      * \see ProcessModeType
      */
     OPTION_PROCESS_MODE = 1,
 
     /*!
-     * Maximum number of parameters the callback can handle.\n
+     * Maximum number of parameters allowed.\n
      * Default is MAX_PARAMETERS.
-     *
-     * \param value The new value
-     * \param valueStr Unused
      */
     OPTION_MAX_PARAMETERS = 2,
 
     /*!
-     * Wherever to use OSC-UI bridges when possible, otherwise UIs will be handled in the main thread.\n
+     * Use OSC-UI bridges whenever possible, otherwise UIs will be handled in the main thread.\n
      * Default is yes.
-     *
-     * \param value Boolean for yes/no
-     * \param valueStr Unused
      */
     OPTION_PREFER_UI_BRIDGES = 3,
 
     /*!
-     * Force mono plugins as stereo, by running instances at the same time.\n
-     * Supported in LADSPA, DSSI and LV2 plugin types.
-     *
-     * \param value Boolean for yes/no
-     * \param valueStr Unused
+     * Force mono plugins as stereo, by running 2 instances at the same time.\n
+     * Not supported in VST plugins.
      */
     OPTION_FORCE_STEREO = 4,
 
     /*!
      * High-Precision processing mode.\n
-     * When enabled, audio will be processed by blocks 8 samples at a time, no matter what the real buffer size is.\n
-     * Default is no (EXPERIMENTAL!).
-     *
-     * \param value Boolean for yes/no
-     * \param valueStr Unused
+     * When enabled, audio will be processed by blocks of 8 samples at a time, indenpendently of the buffer size.\n
+     * Default is off.\n
+     * EXPERIMENTAL!
      */
     OPTION_PROCESS_HIGH_PRECISION = 5,
 
     /*!
-     * Timeout value for how many miliseconds to wait for OSC-GUIs to respond.\n
+     * Timeout value in ms for how much to wait for OSC-GUIs to respond.\n
      * Default is 4000 ms (4 secs).
-     *
-     * \param value The new value
-     * \param valueStr Unused
      */
     OPTION_OSC_GUI_TIMEOUT = 6,
 
     /*!
-     * Wherever to use unofficial dssi-vst chunks feature.\n
-     * Default is no. (EXPERIMENTAL!).
-     *
-     * \param value Boolean for yes/no
-     * \param valueStr Unused
+     * Use (unofficial) dssi-vst chunks feature.\n
+     * Default is no.
+     * EXPERIMENTAL!
      */
     OPTION_USE_DSSI_CHUNKS = 7,
 
     /*!
      * Set LADSPA_PATH environment variable.\n
      * Default undefined.
-     *
-     * \param value Unused
-     * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
      */
     OPTION_PATH_LADSPA = 8,
 
     /*!
      * Set DSSI_PATH environment variable.\n
      * Default undefined.
-     *
-     * \param value Unused
-     * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
      */
     OPTION_PATH_DSSI = 9,
 
     /*!
      * Set LV2_PATH environment variable.\n
      * Default undefined.
-     *
-     * \param value Unused
-     * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
      */
     OPTION_PATH_LV2 = 10,
 
     /*!
      * Set VST_PATH environment variable.\n
      * Default undefined.
-     *
-     * \param value Unused
-     * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
      */
     OPTION_PATH_VST = 11,
 
     /*!
      * Set GIG_PATH environment variable.\n
      * Default undefined.
-     *
-     * \param value Unused
-     * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
      */
     OPTION_PATH_GIG = 12,
 
     /*!
      * Set SF2_PATH environment variable.\n
      * Default undefined.
-     *
-     * \param value Unused
-     * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
      */
     OPTION_PATH_SF2 = 13,
 
     /*!
      * Set SFZ_PATH environment variable.\n
      * Default undefined.
-     *
-     * \param value Unused
-     * \param valueStr The new path, separated by ":" on Unix or ";" on Windows
      */
     OPTION_PATH_SFZ = 14,
 
     /*!
-     * Set path to the Unix 32bit plugin bridge.\n
+     * Set path to the Unix 32bit plugin bridge executable.\n
      * Default unset.
-     *
-     * \param value Unused
-     * \param valueStr The new path
      */
     OPTION_PATH_BRIDGE_UNIX32 = 15,
 
     /*!
-     * Set path to the Unix 64bit plugin bridge.\n
+     * Set path to the Unix 64bit plugin bridge executable.\n
      * Default unset.
-     *
-     * \param value Unused
-     * \param valueStr The new path
      */
     OPTION_PATH_BRIDGE_UNIX64 = 16,
 
     /*!
-     * Set path to the Windows 32bit plugin bridge.\n
+     * Set path to the Windows 32bit plugin bridge executable.\n
      * Default unset.
-     *
-     * \param value Unused
-     * \param valueStr The new path
      */
     OPTION_PATH_BRIDGE_WIN32 = 17,
 
     /*!
-     * Set path to the Windows 64bit plugin bridge.\n
+     * Set path to the Windows 64bit plugin bridge executable.\n
      * Default unset.
-     *
-     * \param value Unused
-     * \param valueStr The new path
      */
     OPTION_PATH_BRIDGE_WIN64 = 18,
 
     /*!
-     * Set path to the LV2 Gtk2 UI bridge.\n
+     * Set path to the LV2 Gtk2 UI bridge executable.\n
      * Default unset.
-     *
-     * \param value Unused
-     * \param valueStr The new path
      */
     OPTION_PATH_BRIDGE_LV2_GTK2 = 19,
 
     /*!
-     * Set path to the LV2 Qt4 UI bridge.\n
+     * Set path to the LV2 Qt4 UI bridge executable.\n
      * Default unset.
-     *
-     * \param value Unused
-     * \param valueStr The new path
      */
     OPTION_PATH_BRIDGE_LV2_QT4 = 20,
 
     /*!
-     * Set path to the LV2 X11 UI bridge.\n
+     * Set path to the LV2 X11 UI bridge executable.\n
      * Default unset.
-     *
-     * \param value Unused
-     * \param valueStr The new path
      */
     OPTION_PATH_BRIDGE_LV2_X11 = 21,
 
     /*!
-     * Set path to the VST X11 UI bridge.\n
+     * Set path to the VST X11 UI bridge executable.\n
      * Default unset.
-     *
-     * \param value Unused
-     * \param valueStr The new path
      */
     OPTION_PATH_BRIDGE_VST_X11 = 22
 };
 
 /*!
- * Opcodes sent to the callback, defined by CallbackFunc.
+ * Opcodes sent from the engine callback, as defined by CallbackFunc.
  *
  * \see CarlaEngine::setCallback()
  */
@@ -364,35 +299,47 @@ enum CallbackType {
     /*!
      * Debug.\n
      * This opcode is undefined and used only for testing purposes.
-     *
-     * \param value1 Undefined
-     * \param value2 Undefined
-     * \param value3 Undefined
      */
     CALLBACK_DEBUG = 0,
 
     /*!
      * A parameter has been changed.
      *
-     * \param value1 The parameter Id
-     * \param value3 The new value
+     * \param value1 Parameter index
+     * \param value3 Value
      */
-    CALLBACK_PARAMETER_CHANGED = 1,
+    CALLBACK_PARAMETER_VALUE_CHANGED = 1,
+
+    /*!
+     * A parameter's MIDI channel has been changed.
+     *
+     * \param value1 Parameter index
+     * \param value2 MIDI channel
+     */
+    CALLBACK_PARAMETER_MIDI_CHANNEL_CHANGED = 2,
+
+    /*!
+     * A parameter's MIDI CC has been changed.
+     *
+     * \param value1 Parameter index
+     * \param value2 MIDI CC
+     */
+    CALLBACK_PARAMETER_MIDI_CC_CHANGED = 3,
 
     /*!
      * The current program has has been changed.
      *
-     * \param value1 The new program index
+     * \param value1 Program index
      */
-    CALLBACK_PROGRAM_CHANGED = 2,
+    CALLBACK_PROGRAM_CHANGED = 4,
 
     /*!
      * The current MIDI program has been changed.
      *
-     * \param value1 The new MIDI program's bank
-     * \param value2 The new MIDI program's program
+     * \param value1 MIDI bank
+     * \param value2 MIDI program
      */
-    CALLBACK_MIDI_PROGRAM_CHANGED = 3,
+    CALLBACK_MIDI_PROGRAM_CHANGED = 5,
 
     /*!
      * A note has been pressed.
@@ -401,7 +348,7 @@ enum CallbackType {
      * \param value2 Note
      * \param value3 Velocity
      */
-    CALLBACK_NOTE_ON = 4,
+    CALLBACK_NOTE_ON = 6,
 
     /*!
      * A note has been released.
@@ -409,79 +356,78 @@ enum CallbackType {
      * \param value1 Channel
      * \param value2 Note
      */
-    CALLBACK_NOTE_OFF = 5,
+    CALLBACK_NOTE_OFF = 7,
 
     /*!
      * The plugin's custom GUI state has changed.
      *
-     * \param value1 The new state is as follows:.\n
+     * \param value1 State, as follows:.\n
      *                0: GUI has been closed or hidden\n
      *                1: GUI has been shown\n
      *               -1: GUI has crashed and should not be shown again\n
      */
-    CALLBACK_SHOW_GUI = 6,
+    CALLBACK_SHOW_GUI = 8,
 
     /*!
      * The plugin's custom GUI has been resized.
      *
-     * \param value1 The new width
-     * \param value2 The new height
+     * \param value1 Width
+     * \param value2 Height
      */
-    CALLBACK_RESIZE_GUI = 7,
+    CALLBACK_RESIZE_GUI = 9,
 
     /*!
-     * The plugin needs repaint and/or update.
+     * The plugin needs update.
      */
-    CALLBACK_UPDATE = 8,
+    CALLBACK_UPDATE = 10,
 
     /*!
-     * The plugin's data/information has been changed.
+     * The plugin's data/information has changed.
      */
-    CALLBACK_RELOAD_INFO = 9,
+    CALLBACK_RELOAD_INFO = 11,
 
     /*!
-     * The plugin's parameters have been changed.
+     * The plugin's parameters have changed.
      */
-    CALLBACK_RELOAD_PARAMETERS = 10,
+    CALLBACK_RELOAD_PARAMETERS = 12,
 
     /*!
-     * The plugin's programs have been changed.
+     * The plugin's programs have changed.
      */
-    CALLBACK_RELOAD_PROGRAMS = 11,
+    CALLBACK_RELOAD_PROGRAMS = 13,
 
     /*!
-     * The plugin's state have been changed.
+     * The plugin's state has changed.
      */
-    CALLBACK_RELOAD_ALL = 12,
+    CALLBACK_RELOAD_ALL = 14,
 
     /*!
      * The engine has crashed or malfunctioned and will no longer work.
      */
-    CALLBACK_QUIT = 13
+    CALLBACK_QUIT = 15
 };
 
 /*!
- * Engine processing mode, changed using set_option().
+ * Engine process mode, changed using setOption().
  *
- * \see ProcessModeType
+ * \see OPTION_PROCESS_MODE
  */
 enum ProcessModeType {
-    PROCESS_MODE_SINGLE_CLIENT    = 0, //!< Single client mode (dynamic input/outputs as needed by plugins)
-    PROCESS_MODE_MULTIPLE_CLIENTS = 1, //!< Multiple client mode
-    PROCESS_MODE_CONTINUOUS_RACK  = 2  //!< Single client "rack" mode. Processes plugins in order of id, with forced stereo input/output.
+    PROCESS_MODE_SINGLE_CLIENT    = 0, //!< Single client mode (dynamic audio input/outputs as needed by plugins)
+    PROCESS_MODE_MULTIPLE_CLIENTS = 1, //!< Multiple client mode (1 client per plugin)
+    PROCESS_MODE_CONTINUOUS_RACK  = 2  //!< Single client, "rack" mode. Processes plugins in order of id, with forced stereo.
 };
 
 /*!
  * Callback function the backend will call when something interesting happens.
  *
- * \see CallbackType
  * \see CarlaEngine::setCallback()
  */
-typedef void (*CallbackFunc)(CallbackType action, unsigned short plugin_id, int value1, int value2, double value3);
+typedef void (*CallbackFunc)(CallbackType action, unsigned short pluginId, int value1, int value2, double value3);
 
 struct midi_program_t {
-    uint32_t bank;
-    uint32_t program;
+    quint32 bank;
+    quint32 program;
     const char* name;
 
     midi_program_t()
@@ -539,6 +485,7 @@ struct CustomData {
 
 class CarlaEngine;
 class CarlaPlugin;
+class CarlaOsc;
 
 CARLA_BACKEND_END_NAMESPACE
 

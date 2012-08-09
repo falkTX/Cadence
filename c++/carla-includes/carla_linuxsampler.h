@@ -44,8 +44,8 @@ protected:
 
 #include "carla_plugin.h"
 
-static const float LINUXSAMPLER_VOLUME_MAX = 3.16227766f; // +10 dB
-static const float LINUXSAMPLER_VOLUME_MIN = 0.0f;        // -inf dB
+static const float VOLUME_MAX = 3.16227766f; // +10 dB
+static const float VOLUME_MIN = 0.0f;        // -inf dB
 
 class AudioOutputDevicePlugin : public AudioOutputDevice
 {

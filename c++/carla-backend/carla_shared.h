@@ -27,7 +27,8 @@ CARLA_BACKEND_START_NAMESPACE
 #endif
 
 /*!
- * @defgroup CarlaBackendShared Carla Backend shared code
+ * @defgroup CarlaBackendShared Carla Backend Shared Code
+ *
  * @{
  */
 

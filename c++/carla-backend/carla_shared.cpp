@@ -17,7 +17,6 @@
 
 #include "carla_shared.h"
 
-#include <cassert>
 #include <QtCore/QString>
 
 CARLA_BACKEND_START_NAMESPACE
@@ -253,8 +252,12 @@ const char* CallbackType2str(const CallbackType type)
     {
     case CALLBACK_DEBUG:
         return "CALLBACK_DEBUG";
-    case CALLBACK_PARAMETER_CHANGED:
-        return "CALLBACK_PARAMETER_CHANGED";
+    case CALLBACK_PARAMETER_VALUE_CHANGED:
+        return "CALLBACK_PARAMETER_VALUE_CHANGED";
+    case CALLBACK_PARAMETER_MIDI_CHANNEL_CHANGED:
+        return "CALLBACK_PARAMETER_MIDI_CHANNEL_CHANGED";
+    case CALLBACK_PARAMETER_MIDI_CC_CHANGED:
+        return "CALLBACK_PARAMETER_MIDI_CC_CHANGED";
     case CALLBACK_PROGRAM_CHANGED:
         return "CALLBACK_PROGRAM_CHANGED";
     case CALLBACK_MIDI_PROGRAM_CHANGED:
@@ -362,6 +365,7 @@ const char* getBinaryBidgePath(const BinaryType type)
 
 void* getPointer(const quintptr addr)
 {
+    Q_ASSERT(addr != 0);
     qDebug("CarlaBackend::getPointer(" P_UINTPTR ")", addr);
 
     quintptr* const ptr = (quintptr*)addr;
@@ -370,8 +374,8 @@ void* getPointer(const quintptr addr)
 
 PluginCategory getPluginCategoryFromName(const char* const name)
 {
+    Q_ASSERT(name);
     qDebug("CarlaBackend::getPluginCategoryFromName(\"%s\")", name);
-    assert(name);
 
     QString qname(name);
 
@@ -386,9 +390,11 @@ PluginCategory getPluginCategoryFromName(const char* const name)
     if (qname.contains("reverb", Qt::CaseSensitive))
         return PLUGIN_CATEGORY_DELAY;
 
+    // filter
     if (qname.contains("filter", Qt::CaseSensitive))
         return PLUGIN_CATEGORY_FILTER;
 
+    // dynamics
     if (qname.contains("dynamics", Qt::CaseSensitive))
         return PLUGIN_CATEGORY_DYNAMICS;
     if (qname.contains("amplifier", Qt::CaseSensitive))
@@ -404,6 +410,7 @@ PluginCategory getPluginCategoryFromName(const char* const name)
     if (qname.contains("limiter", Qt::CaseSensitive))
         return PLUGIN_CATEGORY_DYNAMICS;
 
+    // modulator
     if (qname.contains("modulator", Qt::CaseSensitive))
         return PLUGIN_CATEGORY_MODULATOR;
     if (qname.contains("chorus", Qt::CaseSensitive))
@@ -415,6 +422,7 @@ PluginCategory getPluginCategoryFromName(const char* const name)
     if (qname.contains("saturator", Qt::CaseSensitive))
         return PLUGIN_CATEGORY_MODULATOR;
 
+    // unitily
     if (qname.contains("utility", Qt::CaseSensitive))
         return PLUGIN_CATEGORY_UTILITY;
     if (qname.contains("analyzer", Qt::CaseSensitive))
@@ -581,6 +589,6 @@ void resetOptions()
     carlaOptions.bridge_lv2x11     = nullptr;
     carlaOptions.bridge_vstx11     = nullptr;
 }
-#endif
+#endif // BUILD_BRIDGE
 
 CARLA_BACKEND_END_NAMESPACE

@@ -27,8 +27,8 @@ CARLA_BACKEND_START_NAMESPACE
 // -------------------------------------------------------------------
 
 CarlaEngine::CarlaEngine() :
-    m_osc(this),
     m_checkThread(this),
+    m_osc(this),
     m_callback(nullptr),
     m_carlaPlugins{nullptr},
     m_uniqueNames{nullptr},
@@ -97,7 +97,7 @@ short CarlaEngine::getNewPluginId() const
 
 CarlaPlugin* CarlaEngine::getPlugin(const unsigned short id) const
 {
-    assert(id < MAX_PLUGINS);
+    Q_ASSERT(id < MAX_PLUGINS);
 
     if (id < MAX_PLUGINS)
         return m_carlaPlugins[id];
@@ -341,7 +341,7 @@ CarlaEngineClient::CarlaEngineClient(const CarlaEngineClientNativeHandle& handle
 
 CarlaEngineClient::~CarlaEngineClient()
 {
-    assert(! m_active);
+    Q_ASSERT(! m_active);
 
 #ifdef CARLA_ENGINE_JACK
 #  ifndef BUILD_BRIDGE
@@ -484,7 +484,7 @@ float* CarlaEngineAudioPort::getJackAudioBuffer(uint32_t nframes)
     if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
         return nullptr;
 #  endif
-    assert(handle.port);
+    Q_ASSERT(handle.port);
     return (float*)jack_port_get_buffer(handle.port, nframes);
 }
 #endif
@@ -499,7 +499,7 @@ CarlaEngineControlPort::CarlaEngineControlPort(const CarlaEnginePortNativeHandle
 
 void CarlaEngineControlPort::initBuffer(CarlaEngine* const engine)
 {
-    assert(engine);
+    Q_ASSERT(engine);
 
 #ifndef BUILD_BRIDGE
     if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
@@ -525,7 +525,7 @@ uint32_t CarlaEngineControlPort::getEventCount()
     if (! isInput)
         return 0;
 
-    assert(m_buffer);
+    Q_ASSERT(m_buffer);
 
 #ifndef BUILD_BRIDGE
     if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
@@ -557,8 +557,8 @@ const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(uint32_t index)
     if (! isInput)
         return nullptr;
 
-    assert(m_buffer);
-    assert(index < CarlaEngine::MAX_ENGINE_CONTROL_EVENTS);
+    Q_ASSERT(m_buffer);
+    Q_ASSERT(index < CarlaEngine::MAX_ENGINE_CONTROL_EVENTS);
 
 #ifndef BUILD_BRIDGE
     if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
@@ -632,8 +632,8 @@ void CarlaEngineControlPort::writeEvent(CarlaEngineControlEventType type, uint32
     if (isInput)
         return;
 
-    assert(m_buffer);
-    assert(type != CarlaEngineEventNull);
+    Q_ASSERT(m_buffer);
+    Q_ASSERT(type != CarlaEngineEventNull);
 
 #ifndef BUILD_BRIDGE
     if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
@@ -708,7 +708,7 @@ CarlaEngineMidiPort::CarlaEngineMidiPort(const CarlaEnginePortNativeHandle& hand
 
 void CarlaEngineMidiPort::initBuffer(CarlaEngine* const engine)
 {
-    assert(engine);
+    Q_ASSERT(engine);
 
 #ifndef BUILD_BRIDGE
     if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
@@ -734,7 +734,7 @@ uint32_t CarlaEngineMidiPort::getEventCount()
     if (! isInput)
         return 0;
 
-    assert(m_buffer);
+    Q_ASSERT(m_buffer);
 
 #ifndef BUILD_BRIDGE
     if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
@@ -766,8 +766,8 @@ const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(uint32_t index)
     if (! isInput)
         return nullptr;
 
-    assert(m_buffer);
-    assert(index < CarlaEngine::MAX_ENGINE_MIDI_EVENTS);
+    Q_ASSERT(m_buffer);
+    Q_ASSERT(index < CarlaEngine::MAX_ENGINE_MIDI_EVENTS);
 
 #ifndef BUILD_BRIDGE
     if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
@@ -802,9 +802,9 @@ void CarlaEngineMidiPort::writeEvent(uint32_t time, uint8_t* data, uint8_t size)
     if (isInput)
         return;
 
-    assert(m_buffer);
-    assert(data);
-    assert(size > 0);
+    Q_ASSERT(m_buffer);
+    Q_ASSERT(data);
+    Q_ASSERT(size > 0);
 
 #ifndef BUILD_BRIDGE
     if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)

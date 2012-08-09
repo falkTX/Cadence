@@ -126,7 +126,7 @@ public:
 
     uint32_t parameterScalePointCount(uint32_t parameterId)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
         int32_t rindex = param.data[parameterId].rindex;
 
         if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
@@ -140,14 +140,14 @@ public:
 
     double getParameterValue(uint32_t parameterId)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
         return param_buffers[parameterId];
     }
 
     double getParameterScalePointValue(uint32_t parameterId, uint32_t scalePointId)
     {
-        assert(parameterId < param.count);
-        assert(scalePointId < parameterScalePointCount(parameterId));
+        Q_ASSERT(parameterId < param.count);
+        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
         int32_t rindex = param.data[parameterId].rindex;
 
         if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
@@ -199,7 +199,7 @@ public:
 
     void getParameterName(uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
         int32_t rindex = param.data[parameterId].rindex;
 
         strncpy(strBuf, descriptor->PortNames[rindex], STR_MAX);
@@ -207,7 +207,7 @@ public:
 
     void getParameterSymbol(uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
         int32_t rindex = param.data[parameterId].rindex;
 
         if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
@@ -226,7 +226,7 @@ public:
 
     void getParameterUnit(uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
         int32_t rindex = param.data[parameterId].rindex;
 
         if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
@@ -264,8 +264,8 @@ public:
 
     void getParameterScalePointLabel(uint32_t parameterId, uint32_t scalePointId, char* const strBuf)
     {
-        assert(parameterId < param.count);
-        assert(scalePointId < parameterScalePointCount(parameterId));
+        Q_ASSERT(parameterId < param.count);
+        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
         int32_t rindex = param.data[parameterId].rindex;
 
         if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
@@ -287,7 +287,7 @@ public:
 
     void setParameterValue(uint32_t parameterId, double value, bool sendGui, bool sendOsc, bool sendCallback)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
         param_buffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
         CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
     }

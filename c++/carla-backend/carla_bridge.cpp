@@ -141,7 +141,7 @@ public:
 
     int32_t chunkData(void** const dataPtr)
     {
-        assert(dataPtr);
+        Q_ASSERT(dataPtr);
 
         if (! info.chunk.isEmpty())
         {
@@ -157,7 +157,8 @@ public:
 
     double getParameterValue(uint32_t parameterId)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
+
         return params[parameterId].value;
     }
 
@@ -183,13 +184,15 @@ public:
 
     void getParameterName(uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
+
         strncpy(strBuf, params[parameterId].name.toUtf8().constData(), STR_MAX);
     }
 
     void getParameterUnit(uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
+
         strncpy(strBuf, params[parameterId].unit.toUtf8().constData(), STR_MAX);
     }
 
@@ -512,7 +515,8 @@ public:
 
     void setParameterValue(uint32_t parameterId, double value, bool sendGui, bool sendOsc, bool sendCallback)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
+
         params[parameterId].value = fixParameterValue(value, param.ranges[parameterId]);
 
         if (sendGui)
@@ -523,8 +527,8 @@ public:
 
     void setCustomData(CustomDataType type, const char* const key, const char* const value, bool sendGui)
     {
-        assert(key);
-        assert(value);
+        Q_ASSERT(key);
+        Q_ASSERT(value);
 
         if (sendGui)
         {
@@ -542,7 +546,7 @@ public:
 
     void setChunkData(const char* const stringData)
     {
-        assert(stringData);
+        Q_ASSERT(stringData);
 
         QString filePath;
         filePath += "/tmp/.CarlaChunk_";
@@ -561,7 +565,7 @@ public:
 
     void setProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
     {
-        assert(index < (int32_t)prog.count);
+        Q_ASSERT(index < (int32_t)prog.count);
 
         if (sendGui)
             osc_send_program(&osc.data, index);
@@ -571,7 +575,7 @@ public:
 
     void setMidiProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
     {
-        assert(index < (int32_t)midiprog.count);
+        Q_ASSERT(index < (int32_t)midiprog.count);
 
         if (sendGui)
             osc_send_midi_program(&osc.data, index);

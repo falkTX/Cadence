@@ -151,20 +151,22 @@ OPTION_PATH_BRIDGE_LV2_X11    = 21
 OPTION_PATH_BRIDGE_VST_X11    = 22
 
 # enum CallbackType
-CALLBACK_DEBUG                = 0
-CALLBACK_PARAMETER_CHANGED    = 1 # parameter_id, 0, value
-CALLBACK_PROGRAM_CHANGED      = 2 # program_id, 0, 0
-CALLBACK_MIDI_PROGRAM_CHANGED = 3 # midi_program_id, 0, 0
-CALLBACK_NOTE_ON              = 4 # key, velocity, 0
-CALLBACK_NOTE_OFF             = 5 # key, velocity, 0
-CALLBACK_SHOW_GUI             = 6 # show? (0|1, -1=quit), 0, 0
-CALLBACK_RESIZE_GUI           = 7 # width, height, 0
-CALLBACK_UPDATE               = 8
-CALLBACK_RELOAD_INFO          = 9
-CALLBACK_RELOAD_PARAMETERS    = 10
-CALLBACK_RELOAD_PROGRAMS      = 11
-CALLBACK_RELOAD_ALL           = 12
-CALLBACK_QUIT                 = 13
+CALLBACK_DEBUG                     = 0
+CALLBACK_PARAMETER_CHANGED         = 1
+CALLBACK_PARAMETER_MIDI_CHANNEL_CHANGED = 2
+CALLBACK_PARAMETER_MIDI_CC_CHANGED = 3
+CALLBACK_PROGRAM_CHANGED           = 4
+CALLBACK_MIDI_PROGRAM_CHANGED      = 5
+CALLBACK_NOTE_ON                   = 6
+CALLBACK_NOTE_OFF                  = 7
+CALLBACK_SHOW_GUI                  = 8
+CALLBACK_RESIZE_GUI                = 9
+CALLBACK_UPDATE                    = 10
+CALLBACK_RELOAD_INFO               = 11
+CALLBACK_RELOAD_PARAMETERS         = 12
+CALLBACK_RELOAD_PROGRAMS           = 13
+CALLBACK_RELOAD_ALL                = 14
+CALLBACK_QUIT                      = 15
 
 # enum ProcessModeType
 PROCESS_MODE_SINGLE_CLIENT    = 0

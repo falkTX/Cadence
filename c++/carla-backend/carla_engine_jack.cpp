@@ -332,14 +332,14 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
         void* midiOut    = jack_port_get_buffer(rackJackPorts[rackPortMidiOut], nframes);
 
         // assert buffers
-        assert(audioIn1);
-        assert(audioIn2);
-        assert(audioOut1);
-        assert(audioOut2);
-        assert(controlIn);
-        assert(controlOut);
-        assert(midiIn);
-        assert(midiOut);
+        Q_ASSERT(audioIn1);
+        Q_ASSERT(audioIn2);
+        Q_ASSERT(audioOut1);
+        Q_ASSERT(audioOut2);
+        Q_ASSERT(controlIn);
+        Q_ASSERT(controlOut);
+        Q_ASSERT(midiIn);
+        Q_ASSERT(midiOut);
 
         // create temporary audio buffers
         float ains_tmp_buf1[nframes];

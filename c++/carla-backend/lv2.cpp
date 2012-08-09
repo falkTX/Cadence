@@ -3816,8 +3816,6 @@ CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
 
 /**@}*/
 
-CARLA_BACKEND_END_NAMESPACE
-
 // -------------------------------------------------------------------------------------------------------------------
 
 int CarlaOsc::handle_lv2_atom_transfer(CARLA_OSC_HANDLE_ARGS2)
@@ -3847,3 +3845,5 @@ int CarlaOsc::handle_lv2_event_transfer(CARLA_OSC_HANDLE_ARGS2)
 
     return 0;
 }
+
+CARLA_BACKEND_END_NAMESPACE

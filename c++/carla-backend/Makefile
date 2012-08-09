@@ -81,6 +81,9 @@ endif
 
 all: carla_backend.so
 
+doc: carla_backend.doxygen
+	doxygen $<
+
 carla_backend.so: $(OBJS)
 	$(CXX) $^ $(CARLA_LD_FLAGS) -o $@ && strip $@
 

@@ -22,7 +22,6 @@
 #include "carla_shared.h"
 #include "carla_threads.h"
 
-#include <cassert>
 #include <QtCore/QMutex>
 
 #ifdef CARLA_ENGINE_JACK
@@ -233,29 +232,33 @@ public:
 
     double getInputPeak(const unsigned short pluginId, const unsigned short id) const
     {
-        assert(pluginId < MAX_PLUGINS);
-        assert(id < MAX_PEAKS);
+        Q_ASSERT(pluginId < MAX_PLUGINS);
+        Q_ASSERT(id < MAX_PEAKS);
+
         return m_insPeak[pluginId*MAX_PEAKS + id];
     }
 
     double getOutputPeak(const unsigned short pluginId, const unsigned short id) const
     {
-        assert(pluginId < MAX_PLUGINS);
-        assert(id < MAX_PEAKS);
+        Q_ASSERT(pluginId < MAX_PLUGINS);
+        Q_ASSERT(id < MAX_PEAKS);
+
         return m_outsPeak[pluginId*MAX_PEAKS + id];
     }
 
     void setInputPeak(const unsigned short pluginId, const unsigned short id, double value)
     {
-        assert(pluginId < MAX_PLUGINS);
-        assert(id < MAX_PEAKS);
+        Q_ASSERT(pluginId < MAX_PLUGINS);
+        Q_ASSERT(id < MAX_PEAKS);
+
         m_insPeak[pluginId*MAX_PEAKS + id] = value;
     }
 
     void setOutputPeak(const unsigned short pluginId, const unsigned short id, double value)
     {
-        assert(pluginId < MAX_PLUGINS);
-        assert(id < MAX_PEAKS);
+        Q_ASSERT(pluginId < MAX_PLUGINS);
+        Q_ASSERT(id < MAX_PEAKS);
+
         m_outsPeak[pluginId*MAX_PEAKS + id] = value;
     }
 
@@ -300,6 +303,7 @@ public:
         m_midiLock.unlock();
     }
 
+#ifndef BUILD_BRIDGE
     // -------------------------------------------------------------------
     // OSC Stuff
 
@@ -335,7 +339,6 @@ public:
     void osc_send_note_off(const int32_t pluginId, const int32_t channel, const int32_t note);
     void osc_send_exit();
 
-#ifndef BUILD_BRIDGE
     // -------------------------------------------------------------------
     // Rack mode
 
@@ -358,8 +361,10 @@ protected:
     void bufferSizeChanged(uint32_t newBufferSize);
 
 private:
-    CarlaOsc m_osc;
     CarlaCheckThread m_checkThread;
+#ifndef BUILD_BRIDGE
+    CarlaOsc m_osc;
+#endif
 
     QMutex m_procLock;
     QMutex m_midiLock;

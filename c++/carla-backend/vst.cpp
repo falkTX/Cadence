@@ -35,6 +35,16 @@ CARLA_BACKEND_START_NAMESPACE
  * @{
  */
 
+/*!
+ * @defgroup PluginHints Plugin Hints
+ * @{
+ */
+const unsigned int PLUGIN_CAN_PROCESS_REPLACING = 0x100; //!< VST Plugin cas use processReplacing()
+const unsigned int PLUGIN_HAS_COCKOS_EXTENSIONS = 0x200; //!< VST Plugin has Cockos extensions
+const unsigned int PLUGIN_USES_OLD_VSTSDK       = 0x400; //!< VST Plugin uses an old VST SDK
+const unsigned int PLUGIN_WANTS_MIDI_INPUT      = 0x800; //!< VST Plugin wants MIDI input
+/**@}*/
+
 class VstPlugin : public CarlaPlugin
 {
 public:
@@ -47,9 +57,6 @@ public:
         effect = nullptr;
         events.numEvents = 0;
         events.reserved  = 0;
-
-        m_oldSDK    = false;
-        m_wantsMidi = false;
 
         gui.visible = false;
         gui.width  = 0;
@@ -127,7 +134,7 @@ public:
 
     int32_t chunkData(void** const dataPtr)
     {
-        assert(dataPtr);
+        Q_ASSERT(dataPtr);
         return effect->dispatcher(effect, effGetChunk, 0 /* bank */, 0, dataPtr, 0.0f);
     }
 
@@ -136,7 +143,7 @@ public:
 
     double getParameterValue(uint32_t parameterId)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
         return effect->getParameter(effect, parameterId);
     }
 
@@ -162,19 +169,19 @@ public:
 
     void getParameterName(uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
         effect->dispatcher(effect, effGetParamName, parameterId, 0, strBuf, 0.0f);
     }
 
     void getParameterUnit(uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
         effect->dispatcher(effect, effGetParamLabel, parameterId, 0, strBuf, 0.0f);
     }
 
     void getParameterText(uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
         effect->dispatcher(effect, effGetParamDisplay, parameterId, 0, strBuf, 0.0f);
 
         if (*strBuf == 0)
@@ -202,14 +209,14 @@ public:
 
     void setParameterValue(uint32_t parameterId, double value, bool sendGui, bool sendOsc, bool sendCallback)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
         effect->setParameter(effect, parameterId, fixParameterValue(value, param.ranges[parameterId]));
         CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
     }
 
     void setChunkData(const char* const stringData)
     {
-        assert(stringData);
+        Q_ASSERT(stringData);
 
         static QByteArray chunk;
         chunk = QByteArray::fromBase64(stringData);
@@ -229,7 +236,7 @@ public:
 
     void setProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
     {
-        assert(index < (int32_t)prog.count);
+        Q_ASSERT(index < (int32_t)prog.count);
 
         if (index >= 0)
         {
@@ -333,7 +340,7 @@ public:
         aouts  = effect->numOutputs;
         params = effect->numParams;
 
-        if (VstPluginCanDo(effect, "receiveVstEvents") || VstPluginCanDo(effect, "receiveVstMidiEvent") || (effect->flags & effFlagsIsSynth) > 0 || m_wantsMidi)
+        if (VstPluginCanDo(effect, "receiveVstEvents") || VstPluginCanDo(effect, "receiveVstMidiEvent") || (effect->flags & effFlagsIsSynth) > 0 || (m_hints & PLUGIN_WANTS_MIDI_INPUT))
             mins = 1;
 
         if (VstPluginCanDo(effect, "sendVstEvents") || VstPluginCanDo(effect, "sendVstMidiEvent"))
@@ -403,7 +410,14 @@ public:
 
             if (effect->dispatcher(effect, effGetParameterProperties, j, 0, &prop, 0))
             {
-                if (prop.flags & kVstParameterUsesIntegerMinMax)
+                double range[2] = {0,1};
+
+                if ((m_hints & PLUGIN_HAS_COCKOS_EXTENSIONS) > 0 && effect->dispatcher(effect, effVendorSpecific, 0xdeadbef0, j, range, 0.0) >= 0xbeef)
+                {
+                    min = range[0];
+                    max = range[1];
+                }
+                else if (prop.flags & kVstParameterUsesIntegerMinMax)
                 {
                     min = prop.minInteger;
                     max = prop.maxInteger;
@@ -425,7 +439,13 @@ public:
                     max = min + 0.1;
                 }
 
-                if (prop.flags & kVstParameterIsSwitch)
+                if ((m_hints & PLUGIN_HAS_COCKOS_EXTENSIONS) > 0 && effect->dispatcher(effect, effVendorSpecific, kVstParameterUsesIntStep, j, nullptr, 0.0f) >= 0xbeef)
+                {
+                    step = 1.0;
+                    step_small = 1.0;
+                    step_large = 10.0;
+                }
+                else if (prop.flags & kVstParameterIsSwitch)
                 {
                     step = max - min;
                     step_small = step;
@@ -485,7 +505,7 @@ public:
             param.data[j].hints |= PARAMETER_USES_CUSTOM_TEXT;
 #endif
 
-            if (m_oldSDK || effect->dispatcher(effect, effCanBeAutomated, j, 0, nullptr, 0.0f) != 0)
+            if ((m_hints & PLUGIN_USES_OLD_VSTSDK) > 0 || effect->dispatcher(effect, effCanBeAutomated, j, 0, nullptr, 0.0f) == 1)
                 param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
         }
 
@@ -1025,7 +1045,7 @@ public:
             // don't process if not needed
             //if ((effect->flags & effFlagsNoSoundInStop) > 0 && ains_peak_tmp[0] == 0 && ains_peak_tmp[1] == 0 && midi_event_count == 0 && ! midi.port_mout)
             //{
-            if (effect->flags & effFlagsCanReplacing)
+            if (m_hints & PLUGIN_CAN_PROCESS_REPLACING)
             {
                 effect->processReplacing(effect, inBuffer, outBuffer, frames);
             }
@@ -1193,6 +1213,37 @@ public:
         qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstMasterOpcode2str(opcode), index, value, opt);
 #endif
 
+        // Cockos VST extensions
+        if ((uint32_t)opcode == 0xdeadbeef && (uint32_t)index == 0xdeadf00d && ptr)
+        {
+            const char* const func = (char*)ptr;
+
+            if (strcmp(func, "GetPlayPosition") == 0)
+                return 0;
+            if (strcmp(func, "GetPlayPosition2") == 0)
+                return 0;
+            if (strcmp(func, "GetCursorPosition") == 0)
+                return 0;
+            if (strcmp(func, "GetPlayState") == 0)
+                return 0;
+            if (strcmp(func, "SetEditCurPos") == 0)
+                return 0;
+            if (strcmp(func, "GetSetRepeat") == 0)
+                return 0;
+            if (strcmp(func, "GetProjectPath") == 0)
+                return 0;
+            if (strcmp(func, "OnPlayButton") == 0)
+                return 0;
+            if (strcmp(func, "OnStopButton") == 0)
+                return 0;
+            if (strcmp(func, "OnPauseButton") == 0)
+                return 0;
+            if (strcmp(func, "IsInRealTimeAudio") == 0)
+                return 0;
+            if (strcmp(func, "Audio_IsRunning") == 0)
+                return 0;
+        }
+
         // Check if 'resvd1' points to this plugin
         VstPlugin* self = nullptr;
 
@@ -1244,7 +1295,7 @@ public:
         case audioMasterWantMidi:
             // Deprecated in VST SDK 2.4
             if (self)
-                self->m_wantsMidi = true;
+                self->m_hints |= PLUGIN_WANTS_MIDI_INPUT;
             break;
 #endif
 
@@ -1661,8 +1712,6 @@ public:
         // ---------------------------------------------------------------
         // initialize VST stuff
 
-        m_oldSDK = (effect->dispatcher(effect, effGetVstVersion, 0, 0, nullptr, 0.0f) < kVstVersion);
-
         effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
 #if ! VST_FORCE_DEPRECATED
         effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, x_engine->getBufferSize(), nullptr, x_engine->getSampleRate());
@@ -1682,6 +1731,16 @@ public:
         effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
         effect->dispatcher(effect, effStopProcess, 0, 0, nullptr, 0.0f);
 #endif
+
+        // special checks
+        if (effect->dispatcher(effect, effCanDo, 0, 0, (void*)"hasCockosExtensions", 0.0f) == 0xbeef0000)
+            m_hints |= PLUGIN_HAS_COCKOS_EXTENSIONS;
+
+        if (effect->dispatcher(effect, effGetVstVersion, 0, 0, nullptr, 0.0f) < kVstVersion)
+            m_hints |= PLUGIN_USES_OLD_VSTSDK;
+
+        if ((effect->flags & effFlagsCanReplacing) > 0 && effect->processReplacing != effect->process)
+            m_hints |= PLUGIN_CAN_PROCESS_REPLACING;
 
         // ---------------------------------------------------------------
         // register client
@@ -1714,9 +1773,6 @@ private:
         VstEvent* data[MAX_MIDI_EVENTS*2];
     } events;
     VstMidiEvent midiEvents[MAX_MIDI_EVENTS*2];
-
-    bool m_oldSDK;
-    bool m_wantsMidi;
 
     struct {
         bool visible;
