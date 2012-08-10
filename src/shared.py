@@ -26,18 +26,27 @@ from PyQt4.QtGui import QFileDialog, QIcon, QMessageBox
 if sys.platform == "darwin":
     from PyQt4.QtGui import qt_mac_set_menubar_icons
     qt_mac_set_menubar_icons(False)
+    HAIKU   = False
     LINUX   = False
     MACOS   = True
     WINDOWS = False
+elif "haiku" in sys.platform:
+    HAIKU   = True
+    LINUX   = False
+    MACOS   = False
+    WINDOWS = False
 elif "linux" in sys.platform:
+    HAIKU   = False
     LINUX   = True
     MACOS   = False
     WINDOWS = False
 elif sys.platform in ("win32", "win64"):
+    HAIKU   = False
     LINUX   = False
     MACOS   = False
     WINDOWS = True
 else:
+    HAIKU   = False
     LINUX   = False
     MACOS   = False
     WINDOWS = False
@@ -226,6 +235,13 @@ def getAndSetPath(self_, currentPath, lineEdit):
 def getIcon(icon, size=16):
     return QIcon.fromTheme(icon, QIcon(":/%ix%i/%s.png" % (size, size, icon)))
 
+# Properly restore a hidden window (fullscreen support)
+def showWindow(self_):
+    if self_.isMaximized():
+        self_.showMaximized()
+    else:
+        self_.showNormal()
+
 # Custom MessageBox
 def CustomMessageBox(self_, icon, title, text, extraText="", buttons=QMessageBox.Yes|QMessageBox.No, defButton=QMessageBox.No):
     msgBox = QMessageBox(self_)
@@ -260,12 +276,6 @@ def signal_handler(sig, frame):
         x_gui.emit(SIGNAL("SIGUSR1()"))
     elif sig == SIGUSR2:
         x_gui.emit(SIGNAL("SIGUSR2()"))
-
-def showWindow(self_):
-    if self_.isMaximized():
-        self_.showMaximized()
-    else:
-        self_.showNormal()
 
 # ------------------------------------------------------------------------------------------------------------
 
