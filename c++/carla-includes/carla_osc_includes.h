@@ -150,7 +150,7 @@ void osc_send_midi(const CarlaOscData* const oscData, const uint8_t buf[4])
     }
 }
 
-#if 1//def BUILD_BRIDGE
+#ifdef BUILD_BRIDGE
 static inline
 void osc_send_update(const CarlaOscData* const oscData, const char* const url)
 {

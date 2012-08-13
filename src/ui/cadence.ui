@@ -681,7 +681,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../../resources/resources.qrc">:/screens/logs.png</pixmap>
+                <pixmap resource="../../resources/resources.qrc">:/screens/cadence-logs.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -716,7 +716,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../../resources/resources.qrc">:/screens/render.png</pixmap>
+                <pixmap resource="../../resources/resources.qrc">:/screens/cadence-render.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -751,7 +751,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../../resources/resources.qrc">:/screens/xy-controller.png</pixmap>
+                <pixmap resource="../../resources/resources.qrc">:/screens/cadence-xycontroller.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>

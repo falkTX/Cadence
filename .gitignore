@@ -5,9 +5,9 @@
 *~
 *.a
 *.o
-*.so
 *.dll
 *.exe
+*.so
 
 *.carxp
 *.carxs
@@ -29,12 +29,24 @@ carla-bridge-vst-x11
 carla-discovery-qtcreator
 carla-discovery-unix32
 carla-discovery-unix64
-carla-discovery-win32.exe
-carla-discovery-win32.exe.so
-carla-discovery-win64.exe
-carla-discovery-win64.exe.so
 
+c++/carla-backend/doxygen/
 c++/carla-includes/vst/
 c++/jackmeter/cadence_jackmeter
 
 src/resources_rc.py
+
+
+# incoming
+_/
+all-recheck
+c++/carla/
+c++/carla-backend/carla-dynamic.lv2/
+c++/carla-backend/carla_backend_lv2.cpp
+c++/carla-backend/carla_backend_vst.cpp
+c++/carla-bridge/qt-plugin/
+c++/flmixer/
+c++/xycontroller/
+c++/widgets/ledbutton.*
+c++/widgets/pixmapdial.*
+c++/widgets/pixmapkeyboard.*
