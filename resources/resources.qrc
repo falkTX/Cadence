@@ -99,15 +99,6 @@
 
         <file>bitmaps/canvas/frame_node_header.png</file>
         <file>bitmaps/canvas/frame_port_bg.png</file>
-
-        <file>bitmaps/textures/metal_1-512px.jpg</file>
-        <file>bitmaps/textures/metal_2-512px.jpg</file>
-        <file>bitmaps/textures/metal_3-512px.jpg</file>
-        <file>bitmaps/textures/metal_4-512px.jpg</file>
-        <file>bitmaps/textures/metal_5-512px.jpg</file>
-        <file>bitmaps/textures/metal_6-512px.jpg</file>
-        <file>bitmaps/textures/metal_7-512px.jpg</file>
-        <file>bitmaps/textures/metal_8-512px.jpg</file>
         <file>bitmaps/textures/metal_9-512px.jpg</file>
 
         <file>screens/cadence-logs.png</file>
