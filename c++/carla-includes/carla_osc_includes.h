@@ -22,6 +22,7 @@
 
 #include <cstdint>
 #include <cstring>
+
 #include <lo/lo.h>
 
 struct CarlaOscData {
@@ -149,7 +150,7 @@ void osc_send_midi(const CarlaOscData* const oscData, const uint8_t buf[4])
     }
 }
 
-#ifdef BUILD_BRIDGE
+#if 1//def BUILD_BRIDGE
 static inline
 void osc_send_update(const CarlaOscData* const oscData, const char* const url)
 {

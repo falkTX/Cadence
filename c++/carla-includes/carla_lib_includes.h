@@ -21,7 +21,7 @@
 #include "carla_includes.h"
 
 #ifdef Q_OS_WIN
-#include <cstdio>
+#  include <cstdio>
 #endif
 
 static inline

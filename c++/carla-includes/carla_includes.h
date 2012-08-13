@@ -52,7 +52,7 @@
 #  endif
 #endif
 
-// needed for qDebug/Warning/Critical sections
+// needed for qDebug/Warning/Critical sections (FIXME)
 #if __WORDSIZE == 64
 #  define P_INT64   "%li"
 #  define P_INTPTR  "%li"
