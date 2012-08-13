@@ -207,6 +207,9 @@ clean:
 	$(MAKE) clean -C c++/jackmeter
 	rm -f *~ src/*~ src/*.pyc src/ui_*.py src/resources_rc.py
 
+doc:
+	$(MAKE) doc -C c++/carla-backend
+
 install:
 	# Create directories
 	install -d $(DESTDIR)$(PREFIX)/bin/
