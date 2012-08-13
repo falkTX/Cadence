@@ -4,7 +4,7 @@
 # Created by falkTX
 #
 
-PREFIX = /usr/local
+PREFIX  = /usr/local
 DESTDIR =
 
 SED_PREFIX = $(shell echo $(PREFIX) | sed "s/\//\\\\\\\\\//g")
