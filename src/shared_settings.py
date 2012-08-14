@@ -31,14 +31,14 @@ TAB_INDEX_LADISH = 2
 TAB_INDEX_CARLA_ENGINE = 3
 TAB_INDEX_CARLA_PATHS  = 4
 
-# Define values here so we don't have to import full patchcanvas
-CANVAS_ANTIALIASING_SMALL = 1
-CANVAS_EYECANDY_SMALL     = 1
-
 # carla defines
 PROCESS_MODE_SINGLE_CLIENT    = 0
 PROCESS_MODE_MULTIPLE_CLIENTS = 1
 PROCESS_MODE_CONTINUOUS_RACK  = 2
+
+# patchcanvas defines
+CANVAS_ANTIALIASING_SMALL = 1
+CANVAS_EYECANDY_SMALL     = 1
 
 # ladish defines
 LADISH_CONF_KEY_DAEMON_NOTIFY           = "/org/ladish/daemon/notify"
@@ -119,6 +119,15 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             self.lw_page.hideRow(2)
             self.lw_page.setCurrentCell(0, 0)
 
+        else:
+            self.lw_page.hideRow(0)
+            self.lw_page.hideRow(1)
+            self.lw_page.hideRow(2)
+            self.lw_page.hideRow(3)
+            self.lw_page.hideRow(4)
+            self.stackedWidget.setCurrentIndex(5)
+            return
+
         self.settings = self.parent().settings
         self.loadSettings()
 
@@ -126,9 +135,10 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             self.cb_canvas_use_opengl.setChecked(False)
             self.cb_canvas_use_opengl.setEnabled(False)
 
-        self.label_icon.setPixmap(QPixmap(":/48x48/%s" % appName))
-        self.lw_page.item(0, 0).setIcon(QIcon(":/48x48/%s" % appName))
-        self.lw_page.item(3, 0).setIcon(QIcon.fromTheme("application-x-executable", QIcon(":/48x48/exec.png")))
+        self.lw_page.item(0, 0).setIcon(getIcon(appName, 48))
+        self.lw_page.item(3, 0).setIcon(getIcon("jack", 48))
+        self.label_icon_main.setPixmap(getIcon(appName, 48).pixmap(48, 48))
+        self.label_icon_engine.setPixmap(getIcon("jack", 48).pixmap(48, 48))
 
         self.connect(self, SIGNAL("accepted()"), SLOT("slot_saveSettings()"))
         self.connect(self.b_main_def_folder_open, SIGNAL("clicked()"), SLOT("slot_getAndSetPath_project()"))
