@@ -2,7 +2,7 @@
 
 # Check if already running
 
-PROCS=`ps -ea -f | grep /share/cadence/src/claudia-launcher.py | grep python3`
+PROCS=`ps -ea -f | grep /share/cadence/src/claudia-launcher.py | grep python`
 
 if [ x"$PROCS" != x"" ]; then
 
@@ -25,9 +25,7 @@ if [ x"$PROCS" != x"" ]; then
     exit
 
   fi
-
 fi
-
 
 if [ -f /usr/bin/python3 ]; then
   PYTHON=/usr/bin/python3

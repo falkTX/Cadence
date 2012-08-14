@@ -302,7 +302,7 @@ install:
 	install -m 755 c++/carla-backend/*.so $(DESTDIR)$(PREFIX)/lib/carla/
 
 	# Install addtional stuff
-	install -m 644 data/pulse2jack-data/* $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
+	install -m 644 data/pulse2jack/* $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
 	cp -r data/icons/*     $(DESTDIR)$(PREFIX)/share/cadence/icons/
 	cp -r data/templates/* $(DESTDIR)$(PREFIX)/share/cadence/templates/
 

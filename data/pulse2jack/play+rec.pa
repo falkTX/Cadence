@@ -44,4 +44,3 @@ load-module module-always-sink
 ### Make Jack default
 set-default-sink jack_out
 set-default-source jack_in
-

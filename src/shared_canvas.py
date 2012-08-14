@@ -57,8 +57,7 @@ def canvas_print(self_):
         self_.scene.render(painter)
 
 def canvas_save_image(self_):
-    newPath = QFileDialog.getSaveFileName(self_, self_.tr("Save Image"),
-        filter=self_.tr("PNG Image (*.png);;JPEG Image (*.jpg)"))
+    newPath = QFileDialog.getSaveFileName(self_, self_.tr("Save Image"), filter=self_.tr("PNG Image (*.png);;JPEG Image (*.jpg)"))
 
     if newPath:
         self_.scene.clearSelection()
@@ -70,7 +69,7 @@ def canvas_save_image(self_):
         else:
             # File-dialog may not auto-add the extension
             img_format = "PNG"
-            newPath += ".png"
+            newPath   += ".png"
 
         self_.m_export_image = QImage(self_.scene.sceneRect().width(), self_.scene.sceneRect().height(), QImage.Format_RGB32)
         painter = QPainter(self_.m_export_image)

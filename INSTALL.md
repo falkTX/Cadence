@@ -29,7 +29,7 @@ Optional but recommended:
  - FluidSynth
  - LinuxSampler
 
-On Debian and Ubuntu, use this command to install all dependencies: <br/>
+On Debian and Ubuntu, use these commands to install all dependencies: <br/>
 `$ sudo apt-get install libjack-dev liblo-dev libgtk2.0-dev libqt4-dev libfluidsynth-dev` <br/>
 `$ sudo apt-get install qt4-dev-tools python-qt4-dev pyqt4-dev-tools`
 
@@ -47,10 +47,10 @@ Optional but recommended:
  - jack-capture
  - python3-rdflib
 
-The 'Cadence' and 'Catia' apps rely on a jackdbus version to work properly (either JACK2 or JACK1 + DBus patch). <br/>
+The 'Cadence' and 'Catia' apps rely on jackdbus to work properly (either JACK2 or JACK1 + DBus patch). <br/>
 Claudia is a LADISH frontend, so it will obviously require LADISH to run.
 
-The python version used is python3. <br/>
+The python version used is always python3.2. <br/>
 After install, the app/tools will still work on distros with python2 as default, without any additional work.
 
 <br/>
@@ -61,7 +61,7 @@ All tools require Python3 and Qt4, some of them work on Windows and Mac. <br/>
 Here's the required run-time dependencies of each of the main tools:
 
 ### Cadence
-Recommends a2jmidid and jackdbus <br/>
+Recommends a2jmidid (>= 8) and jackdbus <br/>
 Suggests pulseaudio <br/>
 <br/>
 
@@ -70,7 +70,7 @@ No special requirements <br/>
 <br/>
 
 ### Catia
-Recommends a2jmidid and jackdbus <br/>
+Recommends a2jmidid (>= 8) and jackdbus <br/>
 <br/>
 
 ### Claudia [Linux only] <br/>
@@ -80,17 +80,9 @@ Recommends a2jmidid <br/>
 
 ### Carla
 Requires liblo and Gtk2 <br/>
-Recommends python3-rdflib (for LADSPA RDF support) <br/>
+Recommends python3-rdflib (for LADSPA-RDF support) <br/>
 <br/>
 
 ### Carla-Control
 Requires python3-liblo <br/>
-<br/>
-
-### JACK-Meter
-No special requirements <br/>
-<br/>
-
-### XY-Controller
-No special requirements <br/>
 <br/>
