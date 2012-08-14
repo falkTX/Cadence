@@ -624,7 +624,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
 
         patchcanvas.setOptions(p_options)
         patchcanvas.setFeatures(p_features)
-        patchcanvas.init(self.scene, self.canvasCallback, DEBUG)
+        patchcanvas.init("Catarina", self.scene, self.canvasCallback, DEBUG)
 
         self.connect(self.act_project_new, SIGNAL("triggered()"), SLOT("slot_projectNew()"))
         self.connect(self.act_project_open, SIGNAL("triggered()"), SLOT("slot_projectOpen()"))
@@ -1199,7 +1199,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
             p_options.eyecandy         = self.m_savedSettings["Canvas/EyeCandy"]
 
             patchcanvas.setOptions(p_options)
-            patchcanvas.init(self.scene, self.canvasCallback, DEBUG)
+            patchcanvas.init("Catarina", self.scene, self.canvasCallback, DEBUG)
 
             self.init_ports()
 

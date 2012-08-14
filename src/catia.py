@@ -137,7 +137,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
         patchcanvas.setOptions(p_options)
         patchcanvas.setFeatures(p_features)
-        patchcanvas.init(self.scene, self.canvasCallback, DEBUG)
+        patchcanvas.init("Catia", self.scene, self.canvasCallback, DEBUG)
 
         # Try to connect to jack
         self.jackStarted()
@@ -1222,7 +1222,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
             patchcanvas.setOptions(p_options)
             patchcanvas.setFeatures(p_features)
-            patchcanvas.init(self.scene, self.canvasCallback, DEBUG)
+            patchcanvas.init("Catia", self.scene, self.canvasCallback, DEBUG)
 
             self.init_ports()
 

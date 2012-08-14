@@ -31,7 +31,7 @@ Optional but recommended:
 
 On Debian and Ubuntu, use these commands to install all dependencies: <br/>
 `$ sudo apt-get install libjack-dev liblo-dev libgtk2.0-dev libqt4-dev libfluidsynth-dev` <br/>
-`$ sudo apt-get install qt4-dev-tools python-qt4-dev pyqt4-dev-tools`
+`$ sudo apt-get install qt4-dev-tools python-qt4-dev python3-pyqt4 pyqt4-dev-tools`
 
 NOTE: linuxsampler is not packaged in either Debian or Ubuntu, but it's available in KXStudio. <br/>
 <br/>

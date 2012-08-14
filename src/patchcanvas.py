@@ -16,7 +16,7 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
-# TODO - apply last changes to c++ (2 commits)
+# TODO - apply last changes to c++ (2 commits + theme changes)
 
 # Imports (Global)
 from PyQt4.QtCore import pyqtSlot, qDebug, qCritical, qFatal, qWarning, Qt, QObject, SIGNAL, SLOT
@@ -29,8 +29,6 @@ from PyQt4.QtSvg import QGraphicsSvgItem, QSvgRenderer
 
 # Imports (Theme)
 from patchcanvas_theme import *
-
-PATCHCANVAS_ORGANISATION_NAME = "PatchCanvas"
 
 # ------------------------------------------------------------------------------
 # patchcanvas-api.h
@@ -296,7 +294,7 @@ def setFeatures(new_features):
     features.port_rename  = new_features.port_rename
     features.handle_group_pos = new_features.handle_group_pos
 
-def init(scene, callback, debug=False):
+def init(appName, scene, callback, debug=False):
     if debug:
         qDebug("PatchCanvas::init(%s, %s, %s)" % (scene, callback, bool2str(debug)))
 
@@ -308,9 +306,9 @@ def init(scene, callback, debug=False):
         qFatal("PatchCanvas::init() - fatal error: callback not set")
         return
 
-    canvas.scene = scene
+    canvas.scene    = scene
     canvas.callback = callback
-    canvas.debug = debug
+    canvas.debug    = debug
 
     canvas.last_z_value = 0
     canvas.last_connection_id = 0
@@ -318,7 +316,7 @@ def init(scene, callback, debug=False):
     canvas.size_rect = QRectF()
 
     if not canvas.qobject:  canvas.qobject = CanvasObject()
-    if not canvas.settings: canvas.settings = QSettings(PATCHCANVAS_ORGANISATION_NAME, "PatchCanvas")
+    if not canvas.settings: canvas.settings = QSettings("Cadence", appName)
 
     if canvas.theme:
         del canvas.theme

@@ -74,6 +74,7 @@ BINARY_UNIX32 = 1
 BINARY_UNIX64 = 2
 BINARY_WIN32  = 3
 BINARY_WIN64  = 4
+# TODO - use POSIX instead
 
 # enum PluginType
 PLUGIN_NONE   = 0
@@ -101,6 +102,7 @@ PARAMETER_UNKNOWN = 0
 PARAMETER_INPUT   = 1
 PARAMETER_OUTPUT  = 2
 PARAMETER_LATENCY = 3
+# TODO - add PARAMETER_SAMPLE_RATE
 
 # enum InternalParametersIndex
 PARAMETER_ACTIVE = -1
@@ -409,8 +411,7 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
         self.m_midiChannel = 1
         self.m_pluginId    = pluginId
         self.m_parameterId = pInfo['index']
-
-        self.m_tabIndex = tabIndex
+        self.m_tabIndex    = tabIndex
 
         self.add_MIDI_CCs_to_ComboBox()
 

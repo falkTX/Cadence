@@ -22,8 +22,8 @@ from PyQt4.QtCore import QPointF, QSettings
 from PyQt4.QtGui import QAction, QApplication, QMainWindow, QVBoxLayout, QTableWidgetItem, QTreeWidgetItem
 
 # Imports (Custom Stuff)
-import systray
 import claudia_launcher
+import systray
 import ui_claudia
 import ui_claudia_studioname, ui_claudia_studiolist
 import ui_claudia_createroom, ui_claudia_projectname, ui_claudia_projectproperties
@@ -695,7 +695,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         patchcanvas.setOptions(p_options)
         patchcanvas.setFeatures(p_features)
-        patchcanvas.init(self.scene, self.canvasCallback, DEBUG)
+        patchcanvas.init("Claudia", self.scene, self.canvasCallback, DEBUG)
 
         patchcanvas.setInitialPos(DEFAULT_CANVAS_WIDTH / 2, DEFAULT_CANVAS_HEIGHT / 2)
         patchcanvas.setCanvasSize(0, 0, DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT)
@@ -2395,7 +2395,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
             patchcanvas.setOptions(p_options)
             patchcanvas.setFeatures(p_features)
-            patchcanvas.init(self.scene, self.canvasCallback, DEBUG)
+            patchcanvas.init("Claudia", self.scene, self.canvasCallback, DEBUG)
 
             if DBus.ladish_control.IsStudioLoaded() and DBus.ladish_studio and DBus.ladish_studio.IsStarted():
                 self.init_ports()

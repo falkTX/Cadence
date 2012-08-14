@@ -57,7 +57,7 @@ class XIcon(object):
                     icon = QIcon(os.path.join(iEXTRA_PATH, name + ".xpm"))
                     break
             else:
-                print("XIcon::Failed to find icon for %s" % name)
+                print("XIcon::getIcon(%s) - Failed to find icon" % name)
 
         return icon
 
@@ -171,7 +171,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             if appname == AppName:
                 return Binary
 
-        print("Failed to find binary from App name")
+        print("ClaudiaLauncher::getBinaryFromAppName(%s) - Failed to find binary from App name" % appname)
         return ""
 
     def startApp(self, app=None):
@@ -261,7 +261,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         else:
             app = None
             tmplte_cmd = binary
-            print("Failed to find template dir")
+            print("ClaudiaLauncher::createAppTemplate() - Failed to find template dir")
 
         if not os.path.exists(proj_folder):
             os.mkdir(proj_folder)

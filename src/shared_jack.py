@@ -225,7 +225,7 @@ def refreshTransport(self_):
                 tick = 0
             self_.label_time.setText("%03i|%02i|%04i" % (bar, beat, tick))
         else:
-            self_.label_time.setText("000|00|0000")
+            self_.label_time.setText("%03i|%02i|%04i" % (0, 0, 0))
 
     elif self_.m_selected_transport_view == TRANSPORT_VIEW_FRAMES:
         frame1 = pos.frame % 1000
