@@ -3,7 +3,7 @@
 Cadence is a set of tools useful for audio production. <br/>
 It's being developed by falkTX, using Python and Qt (and some C++ where needed).
 
-The tools share the same base source code, so most of them look quite similar (which is intentional).
+The tools share the same base source code, so most of them look quite similar (which is intentional). <br/>
 Also, lots of custom widgets were coded when needed (like pixmapdial, pixmapkeyboard, patchcanvas and systray). <br/>
 They can be re-used in other projects. Contact the author if you need help on that.
 
@@ -35,7 +35,7 @@ Tool to record (or 'render') a JACK project using jack-capture, controlled by JA
 It supports a vast number of file types and can render in both realtime and freewheel modes.
 
 ### [Cadence-XY Controller](http://kxstudio.sourceforge.net/KXStudio:Applications:Cadence-XYController)
-simple XY widget that sends and receives data from Jack MIDI. <br/>
+Simple XY widget that sends and receives data from Jack MIDI. <br/>
 It can send data through specific channels and has a MIDI Keyboard too.
 
 ### [Catarina](http://kxstudio.sourceforge.net/KXStudio:Applications:Catarina)

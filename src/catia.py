@@ -140,7 +140,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         patchcanvas.init("Catia", self.scene, self.canvasCallback, DEBUG)
 
         # Try to connect to jack
-        self.jackStarted()
+        if self.jackStarted():
+            self.init_alsa_ports()
 
         # DBus checks
         if haveDBus:
@@ -173,8 +174,6 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             self.act_tools_a2j_stop.setEnabled(False)
             self.act_tools_a2j_export_hw.setEnabled(False)
             self.menu_A2J_Bridge.setEnabled(False)
-
-        self.init_alsa_ports()
 
         self.m_timer120 = self.startTimer(self.m_savedSettings["Main/RefreshInterval"])
         self.m_timer600 = self.startTimer(self.m_savedSettings["Main/RefreshInterval"] * 5)
@@ -846,7 +845,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         if not jack.client:
             jack.client = jacklib.client_open("catia", jacklib.JackNoStartServer | jacklib.JackSessionID, None)
             if not jack.client:
-                return self.jackStopped()
+                self.jackStopped()
+                return False
 
         self.act_jack_render.setEnabled(canRender)
         self.b_jack_render.setEnabled(canRender)
@@ -862,6 +862,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.pb_dsp_load.update()
 
         self.init_jack()
+
+        return True
 
     def jackStopped(self):
         if haveDBus:
