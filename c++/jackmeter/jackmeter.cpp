@@ -72,6 +72,7 @@ void port_callback(jack_port_id_t, jack_port_id_t, int, void*)
     x_needReconnect = true;
 }
 
+#ifdef HAVE_JACKSESSION
 void session_callback(jack_session_event_t* event, void* arg)
 {
 #ifdef Q_OS_LINUX
@@ -90,6 +91,7 @@ void session_callback(jack_session_event_t* event, void* arg)
 
     jack_session_event_free(event);
 }
+#endif
 
 // -------------------------------
 // helpers
@@ -188,7 +190,11 @@ int main(int argc, char* argv[])
 
     // JACK initialization
     jack_status_t jStatus;
+#ifdef HAVE_JACKSESSION
     jack_options_t jOptions = static_cast<JackOptions>(JackNoStartServer|JackUseExactName|JackSessionID);
+#else
+    jack_options_t jOptions = static_cast<JackOptions>(JackNoStartServer|JackUseExactName);
+#endif
     jClient = jack_client_open("M", jOptions, &jStatus);
 
     if (! jClient)
@@ -205,7 +211,9 @@ int main(int argc, char* argv[])
 
     jack_set_process_callback(jClient, process_callback, nullptr);
     jack_set_port_connect_callback(jClient, port_callback, nullptr);
+#ifdef HAVE_JACKSESSION
     jack_set_session_callback(jClient, session_callback, argv[0]);
+#endif
     jack_activate(jClient);
 
     reconnect_inputs();

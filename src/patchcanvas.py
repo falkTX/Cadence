@@ -296,7 +296,7 @@ def setFeatures(new_features):
 
 def init(appName, scene, callback, debug=False):
     if debug:
-        qDebug("PatchCanvas::init(%s, %s, %s)" % (scene, callback, bool2str(debug)))
+        qDebug("PatchCanvas::init(\"%s\", %s, %s, %s)" % (appName, scene, callback, bool2str(debug)))
 
     if canvas.initiated:
         qCritical("PatchCanvas::init() - already initiated")

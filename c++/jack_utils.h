@@ -20,8 +20,11 @@
 
 #include <jack/jack.h>
 #include <jack/midiport.h>
-#include <jack/session.h>
 #include <jack/transport.h>
+
+#ifdef HAVE_JACKSESSION
+#include <jack/session.h>
+#endif
 
 #include <cstring>
 #include <string>

@@ -21,6 +21,12 @@ OBJS = \
 	jackmeter.o \
 	../widgets/digitalpeakmeter.o
 
+HAVE_JACKSESSION = $(shell pkg-config --atleast-version=0.121.0 jack && echo true)
+
+ifeq ($(HAVE_JACKSESSION),true)
+BUILD_FLAGS += -DHAVE_JACKSESSION
+endif
+
 # --------------------------------------------------------------
 
 all: cadence_jackmeter

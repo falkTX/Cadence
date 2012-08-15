@@ -44,6 +44,7 @@ if LINUX:
         if os.path.exists(os.path.join(iPATH, "aconnect")):
             from subprocess import getoutput
             haveALSA = True
+            print("Using experimental ALSA-MIDI support")
             break
     else:
         haveALSA = False
