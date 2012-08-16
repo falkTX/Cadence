@@ -9,11 +9,13 @@ TARGET   = jackmeter
 TEMPLATE = app
 VERSION  = 0.5.0
 
-SOURCES = \
+DEFINES  = HAVE_JACKSESSION
+
+SOURCES  = \
     ../jackmeter.cpp \
     ../../widgets/digitalpeakmeter.cpp
 
-HEADERS = \
+HEADERS  = \
     ../../jack_utils.h \
     ../../widgets/digitalpeakmeter.h
 

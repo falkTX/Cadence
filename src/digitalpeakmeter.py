@@ -22,11 +22,13 @@ from PyQt4.QtGui import QColor, QLinearGradient, QPainter, QWidget
 
 # Widget Class
 class DigitalPeakMeter(QWidget):
+    # enum Orientation
     HORIZONTAL = 1
-    VERTICAL = 2
+    VERTICAL   = 2
 
+    # enum Color
     GREEN = 1
-    BLUE = 2
+    BLUE  = 2
 
     def __init__(self, parent):
         QWidget.__init__(self, parent)
@@ -52,7 +54,7 @@ class DigitalPeakMeter(QWidget):
 
         if level < 0.0:
             level = -level
-        if level > 1.0:
+        else if level > 1.0:
             level = 1.0
 
         self.m_channelsData[meter-1] = level
@@ -71,10 +73,10 @@ class DigitalPeakMeter(QWidget):
 
     def setColor(self, color):
         if color == self.GREEN:
-            self.m_colorBase  = QColor("#5DE73D")
+            self.m_colorBase  = QColor(93, 231, 61)
             self.m_colorBaseT = QColor(15, 110, 15, 100)
         elif color == self.BLUE:
-            self.m_colorBase  = QColor("#52EEF8")
+            self.m_colorBase  = QColor(82, 238, 248)
             self.m_colorBaseT = QColor(15, 15, 110, 100)
         else:
             return qCritical("DigitalPeakMeter::setColor(%i) - invalid color" % color)
@@ -140,8 +142,6 @@ class DigitalPeakMeter(QWidget):
 
             if self.m_channels > 0:
                 self.m_sizeMeter = self.m_width / self.m_channels
-
-        self.update()
 
     def paintEvent(self, event):
         painter = QPainter(self)

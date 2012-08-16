@@ -1804,7 +1804,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # Set-up custom signal handling
-    set_up_signals(Carla.gui)
+    setUpSignals(Carla.gui)
 
     # Show GUI
     Carla.gui.m_engine_started = True

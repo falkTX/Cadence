@@ -163,7 +163,7 @@ if __name__ == '__main__':
     gui.show()
 
     # Set-up custom signal handling
-    set_up_signals(gui)
+    setUpSignals(gui)
 
     # App-Loop
     ret = app.exec_()

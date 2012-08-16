@@ -484,7 +484,7 @@ if __name__ == '__main__':
     Carla.gui.show()
 
     # Set-up custom signal handling
-    set_up_signals(Carla.gui)
+    setUpSignals(Carla.gui)
 
     # App-Loop
     sys.exit(app.exec_())

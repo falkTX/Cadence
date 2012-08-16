@@ -371,7 +371,7 @@ if __name__ == '__main__':
     gui = LogsW(None)
     gui.show()
 
-    set_up_signals(gui)
+    setUpSignals(gui)
 
     # App-Loop
     sys.exit(app.exec_())

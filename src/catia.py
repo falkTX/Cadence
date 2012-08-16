@@ -321,7 +321,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             global a2j_client_name
 
             port_id = value1
-            port_short_name = unicode2ascii(value_str)
+            port_short_name = asciiString(value_str)
 
             for port in self.m_port_list:
                 if port[iPortId] == port_id:
@@ -1331,7 +1331,7 @@ if __name__ == '__main__':
     gui = CatiaMainW()
 
     # Set-up custom signal handling
-    set_up_signals(gui)
+    setUpSignals(gui)
 
     gui.show()
 

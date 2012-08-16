@@ -814,7 +814,7 @@ if __name__ == '__main__':
     gui = CadenceMainW()
 
     # Set-up custom signal handling
-    set_up_signals(gui)
+    setUpSignals(gui)
 
     gui.show()
 

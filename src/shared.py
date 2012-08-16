@@ -197,15 +197,14 @@ MIDI_CC_LIST = (
 # ------------------------------------------------------------------------------------------------------------
 
 # Remove/convert non-ascii chars from a string
-def unicode2ascii(string):
+def asciiString(string):
     return normalize('NFKD', string).encode("ascii", "ignore").decode("utf-8")
 
 # Convert a ctypes c_char_p to a python string
 def cString(value):
-    if value:
-        return value.decode("utf-8", errors="ignore")
-    else:
+    if not value:
         return ""
+    return value.decode("utf-8", errors="ignore")
 
 # Check if a value is a number (float support)
 def isNumber(value):
@@ -235,13 +234,6 @@ def getAndSetPath(self_, currentPath, lineEdit):
 def getIcon(icon, size=16):
     return QIcon.fromTheme(icon, QIcon(":/%ix%i/%s.png" % (size, size, icon)))
 
-# Properly restore a hidden window (fullscreen support)
-def showWindow(self_):
-    if self_.isMaximized():
-        self_.showMaximized()
-    else:
-        self_.showNormal()
-
 # Custom MessageBox
 def CustomMessageBox(self_, icon, title, text, extraText="", buttons=QMessageBox.Yes|QMessageBox.No, defButton=QMessageBox.No):
     msgBox = QMessageBox(self_)
@@ -256,19 +248,21 @@ def CustomMessageBox(self_, icon, title, text, extraText="", buttons=QMessageBox
 # ------------------------------------------------------------------------------------------------------------
 
 # signal handler for unix systems
-def set_up_signals(self_):
-    if haveSignal:
-        global x_gui
-        x_gui = self_
-        signal(SIGINT,  signal_handler)
-        signal(SIGTERM, signal_handler)
-        signal(SIGUSR1, signal_handler)
-        signal(SIGUSR2, signal_handler)
+def setUpSignals(self_):
+    if not haveSignal:
+        return
 
-        x_gui.connect(x_gui, SIGNAL("SIGUSR2()"), lambda gui=x_gui: showWindow(gui))
-        x_gui.connect(x_gui, SIGNAL("SIGTERM()"), SLOT("close()"))
+    global x_gui
+    x_gui = self_
+    signal(SIGINT,  signalHandler)
+    signal(SIGTERM, signalHandler)
+    signal(SIGUSR1, signalHandler)
+    signal(SIGUSR2, signalHandler)
 
-def signal_handler(sig, frame):
+    x_gui.connect(x_gui, SIGNAL("SIGUSR2()"), lambda: showWindowHandler())
+    x_gui.connect(x_gui, SIGNAL("SIGTERM()"), SLOT("close()"))
+
+def signalHandler(sig, frame):
     global x_gui
     if sig in (SIGINT, SIGTERM):
         x_gui.emit(SIGNAL("SIGTERM()"))
@@ -276,6 +270,13 @@ def signal_handler(sig, frame):
         x_gui.emit(SIGNAL("SIGUSR1()"))
     elif sig == SIGUSR2:
         x_gui.emit(SIGNAL("SIGUSR2()"))
+
+def showWindowHandler():
+    global x_gui
+    if x_gui.isMaximized():
+        x_gui.showMaximized()
+    else:
+        x_gui.showNormal()
 
 # ------------------------------------------------------------------------------------------------------------
 

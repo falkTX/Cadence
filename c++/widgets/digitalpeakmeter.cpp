@@ -19,8 +19,9 @@
 
 #include <QtGui/QPainter>
 
-DigitalPeakMeter::DigitalPeakMeter(QWidget* parent):
-    QWidget(parent)
+DigitalPeakMeter::DigitalPeakMeter(QWidget* parent)
+    : QWidget(parent),
+      m_paintTimer(this)
 {
     m_channels = 0;
     m_orientation = VERTICAL;
@@ -74,12 +75,12 @@ void DigitalPeakMeter::setColor(Color color)
 {
     if (color == GREEN)
     {
-        m_colorBase  = QColor("#5DE73D");
+        m_colorBase  = QColor(93, 231, 61);
         m_colorBaseT = QColor(15, 110, 15, 100);
     }
     else if (color == BLUE)
     {
-        m_colorBase  = QColor("#52EEF8");
+        m_colorBase  = QColor(82, 238, 248);
         m_colorBaseT = QColor(15, 15, 110, 100);
     }
     else

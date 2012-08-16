@@ -18,7 +18,7 @@
 #include <QtCore/Qt>
 
 #ifndef Q_COMPILER_LAMBDA
-#  define nullptr (0)
+# define nullptr (0)
 #endif
 
 #include "../jack_utils.h"
@@ -42,18 +42,16 @@ jack_port_t* jPort2 = nullptr;
 
 float abs_f(const float value)
 {
-    if (value < 1.0f)
-        return -value;
-    return value;
+    return (value < 1.0f) ? -value : value;
 }
 
 // -------------------------------
 // JACK callbacks
 
-int process_callback(jack_nframes_t nframes, void*)
+int process_callback(const jack_nframes_t nframes, void*)
 {
-    float* jOut1 = (float*)jack_port_get_buffer(jPort1, nframes);
-    float* jOut2 = (float*)jack_port_get_buffer(jPort2, nframes);
+    float* const jOut1 = (float*)jack_port_get_buffer(jPort1, nframes);
+    float* const jOut2 = (float*)jack_port_get_buffer(jPort2, nframes);
 
     for (jack_nframes_t i = 0; i < nframes; i++)
     {
@@ -73,7 +71,7 @@ void port_callback(jack_port_id_t, jack_port_id_t, int, void*)
 }
 
 #ifdef HAVE_JACKSESSION
-void session_callback(jack_session_event_t* event, void* arg)
+void session_callback(jack_session_event_t* const event, void* const arg)
 {
 #ifdef Q_OS_LINUX
     QString filepath("cadence_jackmeter");
@@ -107,7 +105,7 @@ void reconnect_inputs()
 
     foreach (char* const& thisPortName, jPortList1)
     {
-        jack_port_t* thisPort = jack_port_by_name(jClient, thisPortName);
+        jack_port_t* const thisPort = jack_port_by_name(jClient, thisPortName);
 
         if (! (jack_port_is_mine(jClient, thisPort) || jack_port_connected_to(jPort1, thisPortName)))
             jack_connect(jClient, thisPortName, "M:in1");
@@ -117,7 +115,7 @@ void reconnect_inputs()
 
     foreach (char* const& thisPortName, jPortList2)
     {
-        jack_port_t* thisPort = jack_port_by_name(jClient, thisPortName);
+        jack_port_t* const thisPort = jack_port_by_name(jClient, thisPortName);
 
         if (! (jack_port_is_mine(jClient, thisPort) || jack_port_connected_to(jPort2, thisPortName)))
             jack_connect(jClient, thisPortName, "M:in2");
@@ -185,8 +183,11 @@ private:
 
 int main(int argc, char* argv[])
 {
-
     QApplication app(argc, argv);
+    app.setApplicationName("JackMeter");
+    //app.setApplicationVersion(VERSION);
+    app.setOrganizationName("Cadence");
+    //app.setWindowIcon(QIcon(":/scalable/meter.svg"));
 
     // JACK initialization
     jack_status_t jStatus;

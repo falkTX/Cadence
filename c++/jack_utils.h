@@ -48,7 +48,7 @@ std::vector<char*> jack_port_get_all_connections_as_vector(jack_client_t* const 
 }
 
 static inline
-std::string jack_status_get_error_string(jack_status_t status)
+std::string jack_status_get_error_string(const jack_status_t& status)
 {
     std::string errorString;
 
