@@ -39,11 +39,11 @@ public:
 
     PixmapDial(QWidget* parent);
 
-    int getSize() const;
+    int  getSize() const;
     void setCustomPaint(CustomPaint paint);
     void setEnabled(bool enabled);
     void setLabel(QString label);
-    void setPixmap(int pixmap_id);
+    void setPixmap(int pixmapId);
 
     QSize minimumSizeHint() const;
     QSize sizeHint() const;
@@ -64,7 +64,7 @@ private:
     Orientation m_orientation;
 
     bool m_hovered;
-    int  m_hover_step;
+    unsigned short m_hover_step;
 
     QString m_label;
     QPointF m_label_pos;
@@ -80,8 +80,8 @@ private:
 
     int p_width, p_height, p_size, p_count;
 
-    static const int HOVER_MIN = 0;
-    static const int HOVER_MAX = 9;
+    static const unsigned short HOVER_MIN = 0;
+    static const unsigned short HOVER_MAX = 9;
 };
 
 #endif // PIXMAPDIAL_H

@@ -54,7 +54,7 @@ class DigitalPeakMeter(QWidget):
 
         if level < 0.0:
             level = -level
-        else if level > 1.0:
+        elif level > 1.0:
             level = 1.0
 
         self.m_channelsData[meter-1] = level

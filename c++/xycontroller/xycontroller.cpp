@@ -60,11 +60,9 @@ private:
     //QMutex mutex;
 };
 
-qreal abs_q(const qreal value)
+float abs_f(const float value)
 {
-    if (value < 1.0)
-        return -value;
-    return value;
+    return (value < 1.0f) ? -value : value;
 }
 
 #if 0
@@ -889,6 +887,10 @@ private:
 int main(int argc, char* argv[])
 {
     MIDI_CC_LIST__init();
+
+#ifdef Q_OS_WIN
+    QApplication::setGraphicsSystem("raster");
+#endif
 
     QApplication app(argc, argv);
     app.setApplicationName("XY-Controller");

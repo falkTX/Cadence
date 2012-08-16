@@ -17,6 +17,7 @@
 *.pyc
 ui_*.py
 
+*.moc
 moc_*.cpp
 ui_*.h
 
@@ -33,6 +34,7 @@ carla-discovery-unix64
 c++/carla-backend/doxygen/
 c++/carla-includes/vst/
 c++/jackmeter/cadence_jackmeter
+c++/xycontroller/cadence_xycontroller
 
 c++/*/*-build-*-Debug/
 c++/*/*-build-*-Release/

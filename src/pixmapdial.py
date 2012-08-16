@@ -17,14 +17,17 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
+from math import floor
 from PyQt4.QtCore import Qt, QPointF, QRectF, QTimer, QSize, SLOT
 from PyQt4.QtGui import QColor, QConicalGradient, QDial, QFontMetrics, QLinearGradient, QPainter, QPainterPath, QPen, QPixmap
 
 # Widget Class
 class PixmapDial(QDial):
+    # enum Orientation
     HORIZONTAL = 0
     VERTICAL   = 1
 
+    # enum CustomPaint
     CUSTOM_PAINT_NULL      = 0
     CUSTOM_PAINT_CARLA_WET = 1
     CUSTOM_PAINT_CARLA_VOL = 2
@@ -89,25 +92,21 @@ class PixmapDial(QDial):
         self.m_label_width  = QFontMetrics(self.font()).width(label)
         self.m_label_height = QFontMetrics(self.font()).height()
 
-        self.m_label_pos.setX((self.p_size / 2) - (self.m_label_width / 2))
+        self.m_label_pos.setX(float(self.p_size)/2 - float(self.m_label_width)/2)
         self.m_label_pos.setY(self.p_size + self.m_label_height)
 
         self.m_label_gradient.setColorAt(0.0, self.m_color1)
         self.m_label_gradient.setColorAt(0.6, self.m_color1)
         self.m_label_gradient.setColorAt(1.0, self.m_color2)
 
-        self.m_label_gradient.setStart(0, self.p_size / 2)
+        self.m_label_gradient.setStart(0, float(self.p_size)/2)
         self.m_label_gradient.setFinalStop(0, self.p_size + self.m_label_height + 5)
 
-        self.m_label_gradient_rect = QRectF(self.p_size * 1 / 8, self.p_size / 2, self.p_size * 6 / 8, self.p_size + self.m_label_height + 5)
+        self.m_label_gradient_rect = QRectF(float(self.p_size)/8, float(self.p_size)/2, float(self.p_size)*6/8, self.p_size+self.m_label_height+5)
         self.update()
 
-    def setPixmap(self, pixmap_id):
-        if pixmap_id > 10:
-            self.m_pixmap_n_str = str(pixmap_id)
-        else:
-            self.m_pixmap_n_str = "0%i" % pixmap_id
-
+    def setPixmap(self, pixmapId):
+        self.m_pixmap_n_str = "%02i" % pixmapId
         self.m_pixmap.load(":/bitmaps/dial_%s%s.png" % (self.m_pixmap_n_str, "" if self.isEnabled() else "d"))
 
         if self.m_pixmap.width() > self.m_pixmap.height():
@@ -135,10 +134,10 @@ class PixmapDial(QDial):
             self.p_height = 1
 
         if self.m_orientation == self.HORIZONTAL:
-            self.p_size = self.p_height
+            self.p_size  = self.p_height
             self.p_count = self.p_width / self.p_height
         else:
-            self.p_size = self.p_width
+            self.p_size  = self.p_width
             self.p_count = self.p_height / self.p_width
 
         self.setMinimumSize(self.p_size, self.p_size + self.m_label_height + 5)
@@ -146,14 +145,14 @@ class PixmapDial(QDial):
 
     def enterEvent(self, event):
         self.m_hovered = True
-        if self.m_hover_step == self.HOVER_MIN:
-            self.m_hover_step = self.HOVER_MIN + 1
+        if self.m_hover_step  == self.HOVER_MIN:
+            self.m_hover_step += 1
         QDial.enterEvent(self, event)
 
     def leaveEvent(self, event):
         self.m_hovered = False
-        if self.m_hover_step == self.HOVER_MAX:
-            self.m_hover_step = self.HOVER_MAX - 1
+        if self.m_hover_step  == self.HOVER_MAX:
+            self.m_hover_step -= 1
         QDial.leaveEvent(self, event)
 
     def paintEvent(self, event):
@@ -165,7 +164,7 @@ class PixmapDial(QDial):
             painter.setBrush(self.m_label_gradient)
             painter.drawRect(self.m_label_gradient_rect)
 
-            painter.setPen(self.m_colorT[0] if self.isEnabled() else self.m_colorT[1])
+            painter.setPen(self.m_colorT[0 if self.isEnabled() else 1])
             painter.drawText(self.m_label_pos, self.m_label)
 
         if self.isEnabled():
@@ -175,8 +174,8 @@ class PixmapDial(QDial):
             if divider == 0.0:
                 return
 
-            target = QRectF(0.0, 0.0, self.p_size, self.p_size)
             value  = current / divider
+            target = QRectF(0.0, 0.0, self.p_size, self.p_size)
 
             per = int((self.p_count - 1) * value)
 
@@ -196,20 +195,18 @@ class PixmapDial(QDial):
                 colorGreen = QColor(0x5D, 0xE7, 0x3D, 191 + self.m_hover_step*7)
                 colorBlue  = QColor(0x3E, 0xB8, 0xBE, 191 + self.m_hover_step*7)
 
-                #colorGreen = QColor(0x5D + self.m_hover_step*6, 0xE7 + self.m_hover_step*1, 0x3D + self.m_hover_step*5)
-                #colorBlue  = QColor(0x52 + self.m_hover_step*8, 0xEE + self.m_hover_step*1, 0xF8 + self.m_hover_step/2)
-
                 # draw small circle
-                ballPath = QPainterPath()
                 ballRect = QRectF(8.0, 8.0, 15.0, 15.0)
+                ballPath = QPainterPath()
                 ballPath.addEllipse(ballRect)
                 #painter.drawRect(ballRect)
-                ballValue = (0.375 + 0.75*value) % 1.0
+                tmpValue  = (0.375 + 0.75*value)
+                ballValue = tmpValue - floor(tmpValue)
                 ballPoint = ballPath.pointAtPercent(ballValue)
 
                 # draw arc
                 startAngle = 216*16
-                spanAngle  = -252.0*16*value
+                spanAngle  = -252*16*value
 
                 if self.m_custom_paint == self.CUSTOM_PAINT_CARLA_WET:
                     painter.setBrush(colorBlue)
@@ -242,11 +239,12 @@ class PixmapDial(QDial):
                 color = QColor(0xAD + self.m_hover_step*5, 0xD5 + self.m_hover_step*4, 0x4B + self.m_hover_step*5)
 
                 # draw small circle
-                ballPath = QPainterPath()
                 ballRect = QRectF(7.0, 8.0, 11.0, 12.0)
+                ballPath = QPainterPath()
                 ballPath.addEllipse(ballRect)
                 #painter.drawRect(ballRect)
-                ballValue = (0.375 + 0.75*value) % 1.0
+                tmpValue  = (0.375 + 0.75*value)
+                ballValue = tmpValue - floor(tmpValue)
                 ballPoint = ballPath.pointAtPercent(ballValue)
 
                 painter.setBrush(color)
@@ -272,8 +270,7 @@ class PixmapDial(QDial):
 
         else:
             target = QRectF(0.0, 0.0, self.p_size, self.p_size)
-            source = target
-            painter.drawPixmap(target, self.m_pixmap, source)
+            painter.drawPixmap(target, self.m_pixmap, target)
 
     def resizeEvent(self, event):
         self.updateSizes()

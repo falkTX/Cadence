@@ -95,21 +95,21 @@ void DigitalPeakMeter::setOrientation(Orientation orientation)
 
     if (m_orientation == HORIZONTAL)
     {
-        m_gradientMeter.setColorAt(0.0, m_colorBase);
-        m_gradientMeter.setColorAt(0.2, m_colorBase);
-        m_gradientMeter.setColorAt(0.4, m_colorBase);
-        m_gradientMeter.setColorAt(0.6, m_colorBase);
-        m_gradientMeter.setColorAt(0.8, Qt::yellow);
-        m_gradientMeter.setColorAt(1.0, Qt::red);
+        m_gradientMeter.setColorAt(0.0f, m_colorBase);
+        m_gradientMeter.setColorAt(0.2f, m_colorBase);
+        m_gradientMeter.setColorAt(0.4f, m_colorBase);
+        m_gradientMeter.setColorAt(0.6f, m_colorBase);
+        m_gradientMeter.setColorAt(0.8f, Qt::yellow);
+        m_gradientMeter.setColorAt(1.0f, Qt::red);
     }
     else if (m_orientation == VERTICAL)
     {
-        m_gradientMeter.setColorAt(0.0, Qt::red);
-        m_gradientMeter.setColorAt(0.2, Qt::yellow);
-        m_gradientMeter.setColorAt(0.4, m_colorBase);
-        m_gradientMeter.setColorAt(0.6, m_colorBase);
-        m_gradientMeter.setColorAt(0.8, m_colorBase);
-        m_gradientMeter.setColorAt(1.0, m_colorBase);
+        m_gradientMeter.setColorAt(0.0f, Qt::red);
+        m_gradientMeter.setColorAt(0.2f, Qt::yellow);
+        m_gradientMeter.setColorAt(0.4f, m_colorBase);
+        m_gradientMeter.setColorAt(0.6f, m_colorBase);
+        m_gradientMeter.setColorAt(0.8f, m_colorBase);
+        m_gradientMeter.setColorAt(1.0f, m_colorBase);
     }
     else
         return qCritical("DigitalPeakMeter::setOrientation(%i) - invalid orientation", orientation);
@@ -220,21 +220,21 @@ void DigitalPeakMeter::paintEvent(QPaintEvent*)
 
         // Base
         painter.setPen(m_colorBaseT);
-        painter.drawLine(lsmall * 0.25, 2, lsmall * 0.25, lfull-2);
-        painter.drawLine(lsmall * 0.50, 2, lsmall * 0.50, lfull-2);
+        painter.drawLine(lsmall * 0.25f, 2, lsmall * 0.25f, lfull-2);
+        painter.drawLine(lsmall * 0.50f, 2, lsmall * 0.50f, lfull-2);
 
         // Yellow
         painter.setPen(QColor(110, 110, 15, 100));
-        painter.drawLine(lsmall * 0.70, 2, lsmall * 0.70, lfull-2);
-        painter.drawLine(lsmall * 0.83, 2, lsmall * 0.83, lfull-2);
+        painter.drawLine(lsmall * 0.70f, 2, lsmall * 0.70f, lfull-2);
+        painter.drawLine(lsmall * 0.83f, 2, lsmall * 0.83f, lfull-2);
 
         // Orange
         painter.setPen(QColor(180, 110, 15, 100));
-        painter.drawLine(lsmall * 0.90, 2, lsmall * 0.90, lfull-2);
+        painter.drawLine(lsmall * 0.90f, 2, lsmall * 0.90f, lfull-2);
 
         // Red
         painter.setPen(QColor(110, 15, 15, 100));
-        painter.drawLine(lsmall * 0.96, 2, lsmall * 0.96, lfull-2);
+        painter.drawLine(lsmall * 0.96f, 2, lsmall * 0.96f, lfull-2);
 
     }
     else if (m_orientation == VERTICAL)
@@ -245,21 +245,21 @@ void DigitalPeakMeter::paintEvent(QPaintEvent*)
 
         // Base
         painter.setPen(m_colorBaseT);
-        painter.drawLine(2, lsmall - (lsmall * 0.25), lfull-2, lsmall - (lsmall * 0.25));
-        painter.drawLine(2, lsmall - (lsmall * 0.50), lfull-2, lsmall - (lsmall * 0.50));
+        painter.drawLine(2, lsmall - (lsmall * 0.25f), lfull-2, lsmall - (lsmall * 0.25f));
+        painter.drawLine(2, lsmall - (lsmall * 0.50f), lfull-2, lsmall - (lsmall * 0.50f));
 
         // Yellow
         painter.setPen(QColor(110, 110, 15, 100));
-        painter.drawLine(2, lsmall - (lsmall * 0.70), lfull-2, lsmall - (lsmall * 0.70));
-        painter.drawLine(2, lsmall - (lsmall * 0.83), lfull-2, lsmall - (lsmall * 0.83));
+        painter.drawLine(2, lsmall - (lsmall * 0.70f), lfull-2, lsmall - (lsmall * 0.70f));
+        painter.drawLine(2, lsmall - (lsmall * 0.83f), lfull-2, lsmall - (lsmall * 0.83f));
 
         // Orange
         painter.setPen(QColor(180, 110, 15, 100));
-        painter.drawLine(2, lsmall - (lsmall * 0.90), lfull-2, lsmall - (lsmall * 0.90));
+        painter.drawLine(2, lsmall - (lsmall * 0.90f), lfull-2, lsmall - (lsmall * 0.90f));
 
         // Red
         painter.setPen(QColor(110, 15, 15, 100));
-        painter.drawLine(2, lsmall - (lsmall * 0.96), lfull-2, lsmall - (lsmall * 0.96));
+        painter.drawLine(2, lsmall - (lsmall * 0.96f), lfull-2, lsmall - (lsmall * 0.96f));
     }
 }
 
