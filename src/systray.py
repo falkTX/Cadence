@@ -22,7 +22,7 @@ from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QAction, QIcon, QMenu, QSystemTrayIcon
 
 try:
-    if os.getenv("DESKTOP_SESSION") in ("ubuntu", "ubuntu-2d") and not os.path.exists("/var/cadence/no_appindicators"):
+    if os.getenv("DESKTOP_SESSION") in ("ubuntu", "ubuntu-2d") and not os.path.exists("/var/cadence/no_app_indicators"):
         # Check current Qt theme. If Gtk+, use Gtk2 AppIndicator
         style = None
         if len(sys.argv) > 2 and "-style" in sys.argv:
@@ -31,9 +31,9 @@ try:
                 style = sys.argv[i+1]
 
         check_cmd = "python3 -c 'import sys; from PyQt4.QtGui import QApplication; app = QApplication(sys.argv); print(app.style().objectName())'"
+
         if style:
-            check_cmd += " -style "
-            check_cmd += style
+            check_cmd += " -style %s" % style
 
         from subprocess import getoutput
         needsGtk2 = bool(getoutput(check_cmd).strip().lower() in ("gtk", "gtk+"))
@@ -604,8 +604,7 @@ class GlobalSysTray(object):
         i = self.get_act_index(act_name_id)
         if i < 0: return None
 
-        act_func = self.act_indexes[i][iActFunc]
-        return act_func()
+        return self.act_indexes[i][iActFunc]
 
     def qt_systray_clicked(self, reason):
         if reason in (QSystemTrayIcon.DoubleClick, QSystemTrayIcon.Trigger):

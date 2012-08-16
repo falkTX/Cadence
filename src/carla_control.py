@@ -152,7 +152,7 @@ class ControlServer(ServerThread):
 # Python Object class compatible to 'Host' on the Carla Backend code
 class Host(object):
     def __init__(self):
-        super(Host, self).__init__()
+        object.__init__(self)
 
     def set_active(self, plugin_id, onoff):
         global carla_name, to_target
@@ -216,7 +216,7 @@ class Host(object):
 # About Carla Dialog
 class AboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
     def __init__(self, parent=None):
-        super(AboutW, self).__init__(parent)
+        QDialog.__init__(self, parent)
         self.setupUi(self)
 
         self.l_about.setText(self.tr(""
@@ -232,7 +232,7 @@ class AboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
 # Main Window
 class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
     def __init__(self, parent=None):
-        super(CarlaControlW, self).__init__(parent)
+        QMainWindow.__init__(self, parent)
         self.setupUi(self)
 
         self.settings = QSettings("Cadence", "Carla-Control")
@@ -264,7 +264,7 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         #self.connect(self.act_file_refresh, SIGNAL("triggered()"), self.do_refresh)
 
         #self.connect(self.act_help_about, SIGNAL("triggered()"), self.aboutCarla)
-        #self.connect(self.act_help_about_qt, SIGNAL("triggered()"), app, SLOT("aboutQt()"))
+        self.connect(self.act_help_about_qt, SIGNAL("triggered()"), app, SLOT("aboutQt()"))
 
         #self.connect(self, SIGNAL("AddPluginCallback(int, QString)"), self.handleAddPluginCallback)
         #self.connect(self, SIGNAL("RemovePluginCallback(int)"), self.handleRemovePluginCallback)
@@ -480,11 +480,11 @@ if __name__ == '__main__':
     CarlaHost = Host()
 
     # Show GUI
-    gui = CarlaControlW()
-    gui.show()
+    Carla.gui = CarlaControlW()
+    Carla.gui.show()
 
     # Set-up custom signal handling
-    set_up_signals(gui)
+    set_up_signals(Carla.gui)
 
     # App-Loop
     sys.exit(app.exec_())

@@ -1139,13 +1139,13 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.m_pluginInfo["maker"]     = cString(self.m_pluginInfo["maker"])
         self.m_pluginInfo["copyright"] = cString(self.m_pluginInfo["copyright"])
 
-        self.m_parameterIconTimer = None
+        self.m_parameterIconTimer = ICON_STATE_NULL
 
         self.m_lastGreenLedState = False
         self.m_lastBlueLedState  = False
 
         if Carla.processMode == PROCESS_MODE_CONTINUOUS_RACK:
-            self.m_peaksInputCount = 2
+            self.m_peaksInputCount  = 2
             self.m_peaksOutputCount = 2
             self.stackedWidget.setCurrentIndex(0)
         else:

@@ -1143,8 +1143,8 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
             dialog = CatarinaConnectPortsW(self, self.m_group_list, self.m_port_list)
             if dialog.exec_():
                 connection_id = self.m_last_connection_id
-                port_out_id = dialog.ret_port_out_id
-                port_in_id = dialog.ret_port_in_id
+                port_out_id   = dialog.ret_port_out_id
+                port_in_id    = dialog.ret_port_in_id
 
                 for connection in self.m_connection_list:
                     if connection[iConnOutput] == port_out_id and connection[iConnInput] == port_in_id:
@@ -1260,7 +1260,7 @@ if __name__ == '__main__':
 
     gui.show()
 
-    if len(app .arguments()) > 1:
+    if len(app.arguments()) > 1:
         gui.loadFile(app.arguments()[1])
 
     # App-Loop

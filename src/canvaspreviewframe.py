@@ -32,6 +32,9 @@ class CanvasPreviewFrame(QFrame):
 
         self.m_mouseDown = False
 
+        self.m_viewbrush = QBrush(QColor(75, 75, 255, 30))
+        self.m_viewpen   = QPen(Qt.blue, 1)
+
         self.scale = 1.0
         self.scene = None
         self.real_parent = None
@@ -50,11 +53,14 @@ class CanvasPreviewFrame(QFrame):
         self.fake_width  = float(real_width) / 15
         self.fake_height = float(real_height) / 15
 
-        self.setMinimumSize(self.fake_width / 2, self.fake_height)
+        self.setMinimumSize(self.fake_width, self.fake_height)
         self.setMaximumSize(self.fake_width * 4, self.fake_height)
 
         self.render_target.setWidth(real_width)
         self.render_target.setHeight(real_height)
+
+    def setRealParent(self, parent):
+        self.real_parent = parent
 
     def getRenderSource(self):
         x_pad = (self.width() - self.fake_width) / 2
@@ -84,8 +90,11 @@ class CanvasPreviewFrame(QFrame):
         self.view_rect[iHeight] = height
         self.update()
 
-    def setRealParent(self, parent):
-        self.real_parent = parent
+    def setViewTheme(self, brushColor, penColor):
+        brushColor.setAlpha(40)
+        penColor.setAlpha(100)
+        self.m_viewbrush = QBrush(brushColor)
+        self.m_viewpen   = QPen(penColor, 1)
 
     def handleMouseEvent(self, event_x, event_y):
         x = float(event_x) - self.render_source.x() - (self.view_rect[iWidth] / self.scale / 2)
@@ -149,8 +158,8 @@ class CanvasPreviewFrame(QFrame):
         if max_height > self.fake_height:
             max_height = self.fake_height
 
-        painter.setBrush(QBrush(QColor(75, 75, 255, 30)))
-        painter.setPen(QPen(Qt.blue, 2))
+        painter.setBrush(self.m_viewbrush)
+        painter.setPen(self.m_viewpen)
         painter.drawRect(self.view_rect[iX], self.view_rect[iY], max_width, max_height)
 
         QFrame.paintEvent(self, event)

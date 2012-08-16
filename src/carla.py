@@ -1145,13 +1145,13 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         if pwidget:
             pwidget.edit_dialog.set_midi_program(midi_program_id)
 
-    @pyqtSlot(int, int)
+    @pyqtSlot(int, int, int, int)
     def slot_handleNoteOnCallback(self, plugin_id, channel, note, velo):
         pwidget = self.m_plugin_list[plugin_id]
         if pwidget:
             pwidget.edit_dialog.keyboard.sendNoteOn(note, False)
 
-    @pyqtSlot(int, int)
+    @pyqtSlot(int, int, int)
     def slot_handleNoteOffCallback(self, plugin_id, channel, note):
         pwidget = self.m_plugin_list[plugin_id]
         if pwidget:

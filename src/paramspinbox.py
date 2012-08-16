@@ -23,11 +23,11 @@ def fix_value(value, minimum, maximum):
     else:
         return value
 
-QPlastiqueStyle = QStyleFactory.create("Plastique")
+#QPlastiqueStyle = QStyleFactory.create("Plastique")
 
 # Custom InputDialog with Scale Points support
 class CustomInputDialog(QDialog, ui_inputdialog_value.Ui_Dialog):
-    def __init__(self, parent, label, current, minimum, maximum, step, scalepoints):
+    def __init__(self, parent, label, current, minimum, maximum, step, scalePoints):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
@@ -39,13 +39,13 @@ class CustomInputDialog(QDialog, ui_inputdialog_value.Ui_Dialog):
 
         self.ret_value = current
 
-        if not scalepoints:
+        if not scalePoints:
             self.groupBox.setVisible(False)
             self.resize(200, 0)
         else:
             text = "<table>"
-            for scalepoint in scalepoints:
-                text += "<tr><td align='right'>%s</td><td align='left'> - %s</td></tr>" % (str(scalepoint['value']), scalepoint['label'])
+            for scalePoint in scalePoints:
+                text += "<tr><td align='right'>%f</td><td align='left'> - %s</td></tr>" % (scalePoint['value'], scalepoint['label'])
             text += "</table>"
             self.textBrowser.setText(text)
             self.resize(200, 300)
@@ -119,23 +119,23 @@ class ParamProgressBar(QProgressBar):
             self._left_click_down = True
         else:
             self._left_click_down = False
-        return QProgressBar.mousePressEvent(self, event)
+        QProgressBar.mousePressEvent(self, event)
 
     def mouseMoveEvent(self, event):
         if self._left_click_down:
             self.handleMouseEventPos(event.pos())
-        return QProgressBar.mouseMoveEvent(self, event)
+        QProgressBar.mouseMoveEvent(self, event)
 
     def mouseReleaseEvent(self, event):
         self._left_click_down = False
-        return QProgressBar.mouseReleaseEvent(self, event)
+        QProgressBar.mouseReleaseEvent(self, event)
 
     def paintEvent(self, event):
         if self._textCall:
             self.setFormat("%s %s %s" % (self._pre_label, self._textCall(), self._label))
         else:
             self.setFormat("%s %f %s" % (self._pre_label, self._rvalue, self._label))
-        return QProgressBar.paintEvent(self, event)
+        QProgressBar.paintEvent(self, event)
 
 # Special SpinBox used for parameters
 class ParamSpinBox(QAbstractSpinBox):
@@ -165,8 +165,8 @@ class ParamSpinBox(QAbstractSpinBox):
 
         QTimer.singleShot(0, self, SLOT("slot_updateBarGeometry()"))
 
-    def force_plastique_style(self):
-        self.setStyle(QPlastiqueStyle)
+    #def force_plastique_style(self):
+        #self.setStyle(QPlastiqueStyle)
 
     def set_minimum(self, value):
         self._minimum = value
