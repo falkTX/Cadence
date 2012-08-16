@@ -34,7 +34,11 @@ c++/carla-backend/doxygen/
 c++/carla-includes/vst/
 c++/jackmeter/cadence_jackmeter
 
+c++/*/*-build-*-Debug/
+c++/*/*-build-*-Release/
+
 src/resources_rc.py
+resources/qrc_resources.cpp
 
 
 # incoming
@@ -46,7 +50,4 @@ c++/carla-backend/carla_backend_lv2.cpp
 c++/carla-backend/carla_backend_vst.cpp
 c++/carla-bridge/qt-plugin/
 c++/flmixer/
-c++/xycontroller/
 c++/widgets/ledbutton.*
-c++/widgets/pixmapdial.*
-c++/widgets/pixmapkeyboard.*

@@ -6,25 +6,22 @@
 
 CXX   ?= g++
 STRIP ?= strip
-PKGCONFIG ?= pkg-config
 
 BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -mfpmath=sse -Wall
 
 BUILD_FLAGS  = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
-BUILD_FLAGS += $(shell $(PKGCONFIG) --cflags QtCore QtGui jack)
+BUILD_FLAGS += $(shell pkg-config --cflags QtCore QtGui jack)
 BUILD_FLAGS += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT
 
 LINK_FLAGS   = $(LDFLAGS)
-LINK_FLAGS  += $(shell $(PKGCONFIG) --libs QtCore QtGui jack)
+LINK_FLAGS  += $(shell pkg-config --libs QtCore QtGui jack)
+
+ifeq ($(shell pkg-config --atleast-version=0.121.0 jack && echo true),true)
+BUILD_FLAGS += -DHAVE_JACKSESSION
+endif
 
 OBJS = jackmeter.o \
 	../widgets/digitalpeakmeter.o
-
-HAVE_JACKSESSION = $(shell pkg-config --atleast-version=0.121.0 jack && echo true)
-
-ifeq ($(HAVE_JACKSESSION),true)
-BUILD_FLAGS += -DHAVE_JACKSESSION
-endif
 
 # --------------------------------------------------------------
 
