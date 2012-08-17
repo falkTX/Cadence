@@ -43,6 +43,7 @@ if WINDOWS:
     splitter = ";"
     APPDATA = os.getenv("APPDATA")
     PROGRAMFILES = os.getenv("PROGRAMFILES")
+    PROGRAMFILESx86 = os.getenv("PROGRAMFILES(x86)")
     COMMONPROGRAMFILES = os.getenv("COMMONPROGRAMFILES")
 
     # Small integrity tests
@@ -79,19 +80,30 @@ if WINDOWS:
     ]
 
     DEFAULT_GIG_PATH = [
-        os.path.join(APPDATA, "GIG"),
+        os.path.join(APPDATA, "GIG")
     ]
 
     DEFAULT_SF2_PATH = [
-        os.path.join(APPDATA, "SF2"),
+        os.path.join(APPDATA, "SF2")
     ]
 
     DEFAULT_SFZ_PATH = [
-        os.path.join(APPDATA, "SFZ"),
+        os.path.join(APPDATA, "SFZ")
     ]
 
-    #if (is64bit):
-    # TODO
+    if PROGRAMFILESx86:
+        DEFAULT_LADSPA_PATH_PATH += [
+            os.path.join(PROGRAMFILESx86, "LADSPA")
+        ]
+
+        DEFAULT_DSSI_PATH_PATH += [
+            os.path.join(PROGRAMFILESx86, "DSSI")
+        ]
+
+        DEFAULT_VST_PATH += [
+            os.path.join(PROGRAMFILESx86, "VstPlugins"),
+            os.path.join(PROGRAMFILESx86, "Steinberg", "VstPlugins")
+        ]
 
 elif MACOS:
     splitter = ":"
