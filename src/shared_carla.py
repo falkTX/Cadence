@@ -1892,11 +1892,11 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         current = self.sender().value() / 10
 
         menu = QMenu(self)
-        actReset = menu.addAction(self.tr("Reset (%i%%)" % (default)))
+        actReset = menu.addAction(self.tr("Reset (%i%%)" % default))
         menu.addSeparator()
-        actMinimum = menu.addAction(self.tr("Set to Minimum (%i%%)" % (minimum)))
+        actMinimum = menu.addAction(self.tr("Set to Minimum (%i%%)" % minimum))
         actCenter  = menu.addAction(self.tr("Set to Center"))
-        actMaximum = menu.addAction(self.tr("Set to Maximum (%i%%)" % (maximum)))
+        actMaximum = menu.addAction(self.tr("Set to Maximum (%i%%)" % maximum))
         menu.addSeparator()
         actSet = menu.addAction(self.tr("Set value..."))
 

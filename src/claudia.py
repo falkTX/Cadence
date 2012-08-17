@@ -1048,8 +1048,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.treeWidget.expandAll()
 
     def init_ports(self):
-        #FIXME
-        if (not jack.client or not DBus.patchbay):
+        if not (jack.client and DBus.patchbay):
             return
 
         version, groups, conns = DBus.patchbay.GetGraph(0)
@@ -1108,7 +1107,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         graph_version, project_properties = room_project_properties
 
         if len(project_properties) > 0:
-            item_string = " (%s)" % (project_properties['name'])
+            item_string = " (%s)" % project_properties['name']
         else:
             item_string = ""
 

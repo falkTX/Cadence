@@ -542,7 +542,7 @@ class PluginRefreshW(QDialog, ui_carla_refresh.Ui_PluginRefreshW):
 
     @pyqtSlot(int, str)
     def slot_handlePluginLook(self, percent, plugin):
-        self.progressBar.setFormat("%s" % (plugin))
+        self.progressBar.setFormat("%s" % plugin)
         self.progressBar.setValue(percent)
 
     @pyqtSlot()
@@ -804,7 +804,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         if lastLoadedPlugin:
             lastLoadedPlugin = os.path.basename(lastLoadedPlugin)
             ask = QMessageBox.question(self, self.tr("Warning"), self.tr("There was an error while checking the plugin %s.\n"
-                                                                         "Do you want to blacklist it?" % (lastLoadedPlugin)),
+                                                                         "Do you want to blacklist it?" % lastLoadedPlugin),
                                                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
 
             if ask == QMessageBox.Yes:
@@ -1254,7 +1254,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
                     cString(Carla.Host.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
 
         for i in range(MAX_PLUGINS):
-            if (self.m_plugin_list[i] != None):
+            if self.m_plugin_list[i] != None:
                 self.act_plugin_remove_all.setEnabled(True)
                 break
         else:
@@ -1264,7 +1264,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         build = plugin['build']
         ptype = plugin['type']
 
-        if (ptype == PLUGIN_LADSPA):
+        if ptype == PLUGIN_LADSPA:
             unique_id = plugin['unique_id']
             for rdf_item in self.ladspa_rdf_list:
                 if rdf_item.UniqueID == unique_id:
@@ -1272,7 +1272,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             else:
                 return c_nullptr
 
-        elif (ptype == PLUGIN_DSSI):
+        elif ptype == PLUGIN_DSSI:
             if plugin['hints'] & PLUGIN_HAS_GUI:
                 gui = findDSSIGUI(plugin['binary'], plugin['name'], plugin['label'])
                 if gui:

@@ -386,9 +386,9 @@ class PixmapKeyboard(QWidget):
 
         for i in range(self.m_octaves):
             if self.m_pixmap_mode == self.HORIZONTAL:
-                painter.drawText(i * 144, 48, 18, 18, Qt.AlignCenter, "C%i" % (i + 2))
+                painter.drawText(i * 144, 48, 18, 18, Qt.AlignCenter, "C%i" % int(i + 2))
             elif self.m_pixmap_mode == self.VERTICAL:
-                painter.drawText(45, (self.m_octaves * 144) - (i * 144) - 16, 18, 18, Qt.AlignCenter, "C%i" % (i + 2))
+                painter.drawText(45, (self.m_octaves * 144) - (i * 144) - 16, 18, 18, Qt.AlignCenter, "C%i" % int(i + 2))
 
     @pyqtSlot()
     def slot_updateOnce(self):

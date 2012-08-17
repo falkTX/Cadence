@@ -604,7 +604,7 @@ def joinGroup(group_id):
             break
 
     # FIXME
-    if not item or not s_item:
+    if not (item and s_item):
         qCritical("PatchCanvas::joinGroup(%i) - unable to find groups to join" % group_id)
         return
 
@@ -732,7 +732,7 @@ def addPort(group_id, port_id, port_name, port_mode, port_type):
             port_widget = box_widget.addPortFromGroup(port_id, port_mode, port_type, port_name)
             break
 
-    if not box_widget or not port_widget:
+    if not (box_widget and port_widget):
         qCritical("PatchCanvas::addPort(%i, %i, %s, %s, %s) - Unable to find parent group" % (group_id, port_id, port_name.encode(), port_mode2str(port_mode), port_type2str(port_type)))
         return
 
@@ -803,7 +803,7 @@ def connectPorts(connection_id, port_out_id, port_in_id):
             port_in_parent = port_in.parentItem()
 
     # FIXME
-    if not port_out or not port_in:
+    if not (port_out and port_in):
         qCritical("PatchCanvas::connectPorts(%i, %i, %i) - unable to find ports to connect" % (connection_id, port_out_id, port_in_id))
         return
 
@@ -1807,8 +1807,7 @@ class CanvasPort(QGraphicsItem):
         if not features.port_rename:
             act_x_rename.setVisible(False)
 
-        # FIXME
-        if features.port_info == False and features.port_rename == False:
+        if not (features.port_info and features.port_rename):
             act_x_sep_1.setVisible(False)
 
         act_selected = menu.exec_(event.screenPos())
@@ -2087,7 +2086,7 @@ class CanvasBox(QGraphicsItem):
     def checkItemPos(self):
         if not canvas.size_rect.isNull():
             pos = self.scenePos()
-            if canvas.size_rect.contains(pos) == False or canvas.size_rect.contains(pos + QPointF(self.p_width, self.p_height)) == False: # FIXME
+            if not (canvas.size_rect.contains(pos) and canvas.size_rect.contains(pos + QPointF(self.p_width, self.p_height))):
                 if pos.x() < canvas.size_rect.x():
                     self.setPos(canvas.size_rect.x(), pos.y())
                 elif pos.x() + self.p_width > canvas.size_rect.width():
@@ -2346,8 +2345,7 @@ class CanvasBox(QGraphicsItem):
         if not features.group_rename:
             act_x_rename.setVisible(False)
 
-        # FIXME
-        if features.group_info == False and features.group_rename == False:
+        if not (features.group_info and features.group_rename):
             act_x_sep1.setVisible(False)
 
         haveIns = haveOuts = False
@@ -2358,8 +2356,7 @@ class CanvasBox(QGraphicsItem):
                 elif port.port_mode == PORT_MODE_OUTPUT:
                     haveOuts = True
 
-        # FIXME
-        if self.m_splitted == False and bool(haveIns and haveOuts) == False:
+        if not (self.m_splitted and bool(haveIns and haveOuts)):
             act_x_sep2.setVisible(False)
             act_x_split_join.setVisible(False)
 

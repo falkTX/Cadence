@@ -666,7 +666,7 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
             else:
                 dev_list = jackctl.GetParameterConstraint(["driver", "device"])[3]
                 for i in range(len(dev_list)):
-                    self.obj_driver_device.addItem(dev_list[i][0] + " [%s]" % (str(dev_list[i][1])))
+                    self.obj_driver_device.addItem(dev_list[i][0] + " [%s]" % str(dev_list[i][1]))
 
         # Custom 'playback' and 'capture' values
         self.obj_driver_capture.clear()
@@ -689,8 +689,8 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
 
         elif self.m_driver == "dummy":
             for i in range(16):
-                self.obj_driver_capture.addItem("%i" % ((i * 2) + 2))
-                self.obj_driver_playback.addItem("%i" % ((i * 2) + 2))
+                self.obj_driver_capture.addItem("%i" % int((i * 2) + 2))
+                self.obj_driver_playback.addItem("%i" % int((i * 2) + 2))
 
         elif self.m_driver == "firewire":
             self.obj_driver_capture.addItem("no")
