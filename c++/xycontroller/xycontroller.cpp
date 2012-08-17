@@ -681,11 +681,13 @@ protected slots:
 
     void slot_updateSceneX(int x)
     {
+        scene.setSmoothValues(float(x) / 100, float(ui->dial_y->value()) / 100);
         scene.setPosX(float(x) / 100, bool(sender()));
     }
 
     void slot_updateSceneY(int y)
     {
+        scene.setSmoothValues(float(ui->dial_x->value()) / 100, float(y) / 100);
         scene.setPosY(float(y) / 100, bool(sender()));
     }
 
