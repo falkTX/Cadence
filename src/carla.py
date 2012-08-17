@@ -17,7 +17,7 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
-import json, os, sys
+import json
 from PyQt4.QtCore import Qt, QThread
 from PyQt4.QtGui import QApplication, QMainWindow, QTableWidgetItem
 
@@ -1677,8 +1677,9 @@ def callback_function(action, plugin_id, value1, value2, value3):
 
     if action == CALLBACK_DEBUG:
         Carla.gui.emit(SIGNAL("DebugCallback(int, int, int, double)"), plugin_id, value1, value2, value3)
-    elif action == CALLBACK_PARAMETER_CHANGED:
+    elif action == CALLBACK_PARAMETER_VALUE_CHANGED:
         Carla.gui.emit(SIGNAL("ParameterCallback(int, int, double)"), plugin_id, value1, value3)
+    # TODO param midi callbacks
     elif action == CALLBACK_PROGRAM_CHANGED:
         Carla.gui.emit(SIGNAL("ProgramCallback(int, int)"), plugin_id, value1)
     elif action == CALLBACK_MIDI_PROGRAM_CHANGED:

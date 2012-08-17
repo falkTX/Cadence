@@ -83,7 +83,8 @@ enum BinaryType {
     BINARY_UNIX32 = 1, //!< Unix 32bit.
     BINARY_UNIX64 = 2, //!< Unix 64bit.
     BINARY_WIN32  = 3, //!< Windows 32bit.
-    BINARY_WIN64  = 4  //!< Windows 64bit.
+    BINARY_WIN64  = 4, //!< Windows 64bit.
+    BINARY_OTHER  = 5  //!< Other.
 };
 
 /*!
@@ -114,18 +115,20 @@ enum PluginCategory {
 };
 
 enum ParameterType {
-    PARAMETER_UNKNOWN = 0,
-    PARAMETER_INPUT   = 1,
-    PARAMETER_OUTPUT  = 2,
-    PARAMETER_LATENCY = 3
+    PARAMETER_UNKNOWN     = 0,
+    PARAMETER_INPUT       = 1,
+    PARAMETER_OUTPUT      = 2,
+    PARAMETER_LATENCY     = 3,
+    PARAMETER_SAMPLE_RATE = 4
 };
 
 enum InternalParametersIndex {
-    PARAMETER_ACTIVE = -1,
-    PARAMETER_DRYWET = -2,
-    PARAMETER_VOLUME = -3,
-    PARAMETER_BALANCE_LEFT  = -4,
-    PARAMETER_BALANCE_RIGHT = -5
+    PARAMETER_NULL   = -1,
+    PARAMETER_ACTIVE = -2,
+    PARAMETER_DRYWET = -3,
+    PARAMETER_VOLUME = -4,
+    PARAMETER_BALANCE_LEFT  = -5,
+    PARAMETER_BALANCE_RIGHT = -6
 };
 
 enum CustomDataType {

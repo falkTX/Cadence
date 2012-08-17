@@ -17,6 +17,7 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
+import sys
 from copy import deepcopy
 from sip import unwrapinstance
 from PyQt4.QtCore import pyqtSlot, QSettings, QTimer
@@ -41,6 +42,8 @@ Carla = CarlaHostObject()
 Carla.Host = None
 Carla.gui  = None
 Carla.isControl = False
+
+is64bit = bool(platform.architecture()[0] == "64bit" and sys.maxsize > 2**32)
 
 # ------------------------------------------------------------------------------------------------
 # Backend defines
@@ -74,7 +77,7 @@ BINARY_UNIX32 = 1
 BINARY_UNIX64 = 2
 BINARY_WIN32  = 3
 BINARY_WIN64  = 4
-# TODO - use POSIX instead
+BINARY_OTHER  = 5
 
 # enum PluginType
 PLUGIN_NONE   = 0
@@ -98,18 +101,19 @@ PLUGIN_CATEGORY_UTILITY   = 7 # Analyzer, Converter, Mixer
 PLUGIN_CATEGORY_OTHER     = 8 # used to check if a plugin has a category
 
 # enum ParameterType
-PARAMETER_UNKNOWN = 0
-PARAMETER_INPUT   = 1
-PARAMETER_OUTPUT  = 2
-PARAMETER_LATENCY = 3
-# TODO - add PARAMETER_SAMPLE_RATE
+PARAMETER_UNKNOWN     = 0
+PARAMETER_INPUT       = 1
+PARAMETER_OUTPUT      = 2
+PARAMETER_LATENCY     = 3
+PARAMETER_SAMPLE_RATE = 4
 
 # enum InternalParametersIndex
-PARAMETER_ACTIVE = -1
-PARAMETER_DRYWET = -2
-PARAMETER_VOLUME = -3
-PARAMETER_BALANCE_LEFT  = -4
-PARAMETER_BALANCE_RIGHT = -5
+PARAMETER_NULL   = -1
+PARAMETER_ACTIVE = -2
+PARAMETER_DRYWET = -3
+PARAMETER_VOLUME = -4
+PARAMETER_BALANCE_LEFT  = -5
+PARAMETER_BALANCE_RIGHT = -6
 
 # enum CustomDataType
 CUSTOM_DATA_INVALID = 0
@@ -154,7 +158,7 @@ OPTION_PATH_BRIDGE_VST_X11    = 22
 
 # enum CallbackType
 CALLBACK_DEBUG                     = 0
-CALLBACK_PARAMETER_CHANGED         = 1
+CALLBACK_PARAMETER_VALUE_CHANGED   = 1
 CALLBACK_PARAMETER_MIDI_CHANNEL_CHANGED = 2
 CALLBACK_PARAMETER_MIDI_CC_CHANGED = 3
 CALLBACK_PROGRAM_CHANGED           = 4
@@ -180,6 +184,19 @@ PROCESS_MODE_CONTINUOUS_RACK  = 2
 
 Carla.processMode   = PROCESS_MODE_MULTIPLE_CLIENTS
 Carla.maxParameters = MAX_PARAMETERS
+
+# set native binary type
+if LINUX or MACOS:
+    BINARY_NATIVE = BINARY_UNIX64 if is64bit BINARY_UNIX32
+elif WINDOWS:
+    BINARY_NATIVE = BINARY_WIN64 if is64bit BINARY_WIN32
+else:
+    BINARY_NATIVE = BINARY_OTHER
+
+BINARY_NATIVE = BINARY_UNIX64
+BINARY_NATIVE = BINARY_WIN32
+BINARY_NATIVE = BINARY_WIN64
+BINARY_NATIVE = BINARY_OTHER
 
 ICON_STATE_NULL = 0
 ICON_STATE_WAIT = 1

@@ -80,7 +80,7 @@
 #   endif
 #else
 #  warning Unknown binary type
-#  define BINARY_NATIVE BINARY_NONE
+#  define BINARY_NATIVE BINARY_OTHER
 #endif
 
 // export symbols if needed

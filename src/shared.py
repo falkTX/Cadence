@@ -40,7 +40,7 @@ elif "linux" in sys.platform:
     LINUX   = True
     MACOS   = False
     WINDOWS = False
-elif sys.platform in ("win32", "win64"):
+elif sys.platform in ("win32", "win64", "cygwin"):
     HAIKU   = False
     LINUX   = False
     MACOS   = False

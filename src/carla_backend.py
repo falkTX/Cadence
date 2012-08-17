@@ -17,7 +17,7 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
-import os, sys
+import os
 from ctypes import *
 from copy import deepcopy
 from subprocess import Popen, PIPE
@@ -31,11 +31,6 @@ try:
 except:
     print("LRDF Support not available (LADSPA-RDF will be disabled)")
     haveLRDF = False
-
-if sys.int_info[1] == 4 or sys.platform == "win64":
-    is64bit = True
-else:
-    is64bit = False
 
 # Convert a ctypes struct into a dict
 def struct_to_dict(struct):
@@ -181,6 +176,7 @@ else:
 global carla_library_path
 carla_library_path = ""
 
+carla_discovery_native = ""
 carla_discovery_unix32 = ""
 carla_discovery_unix64 = ""
 carla_discovery_win32  = ""
@@ -203,15 +199,17 @@ elif MACOS:
 else:
     carla_libname = "carla_backend.so"
 
-CWD = sys.path[0]
+CWD   = sys.path[0]
+CWDpp = os.path.join(CWDpp, "..", "c++")
 
 # make it work with cxfreeze
-if CWD.endswith("/carla"):
-    CWD = CWD.rsplit("/carla", 1)[0]
+if CWD.endswith(os.sep+"carla"):
+    CWD   = CWD.rsplit(os.sep+"carla",1)[0]
+    CWDpp = CWD
 
 # find carla_library_path
-if os.path.exists(os.path.join(CWD, "..", "c++", "carla-backend", carla_libname)):
-    carla_library_path = os.path.join(CWD, "..", "c++", "carla-backend", carla_libname)
+if os.path.exists(os.path.join(CWDpp, "carla-backend", carla_libname)):
+    carla_library_path = os.path.join(CWDpp, "carla-backend", carla_libname)
 else:
     if WINDOWS:
         CARLA_PATH = (os.path.join(PROGRAMFILES, "Cadence", "carla"),)
@@ -226,9 +224,18 @@ else:
             carla_library_path = os.path.join(p, "carla", carla_libname)
             break
 
+# find carla_discovery_native
+if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-native")):
+    carla_discovery_unix32 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-native")
+else:
+    for p in PATH:
+        if os.path.exists(os.path.join(p, "carla-discovery-native")):
+            carla_discovery_unix32 = os.path.join(p, "carla-discovery-native")
+            break
+
 # find carla_discovery_unix32
-if os.path.exists(os.path.join(CWD, "..", "c++", "carla-discovery", "carla-discovery-unix32")):
-    carla_discovery_unix32 = os.path.join(CWD, "..", "c++", "carla-discovery", "carla-discovery-unix32")
+if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-unix32")):
+    carla_discovery_unix32 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-unix32")
 else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-discovery-unix32")):
@@ -236,8 +243,8 @@ else:
             break
 
 # find carla_discovery_unix64
-if os.path.exists(os.path.join(CWD, "..", "c++", "carla-discovery", "carla-discovery-unix64")):
-    carla_discovery_unix64 = os.path.join(CWD, "..", "c++", "carla-discovery", "carla-discovery-unix64")
+if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-unix64")):
+    carla_discovery_unix64 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-unix64")
 else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-discovery-unix64")):
@@ -245,8 +252,8 @@ else:
             break
 
 # find carla_discovery_win32
-if os.path.exists(os.path.join(CWD, "..", "c++", "carla-discovery", "carla-discovery-win32.exe")):
-    carla_discovery_win32 = os.path.join(CWD, "..", "c++", "carla-discovery", "carla-discovery-win32.exe")
+if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-win32.exe")):
+    carla_discovery_win32 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-win32.exe")
 else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-discovery-wine32.exe")):
@@ -254,8 +261,8 @@ else:
             break
 
 # find carla_discovery_win64
-if os.path.exists(os.path.join(CWD, "..", "c++", "carla-discovery", "carla-discovery-win64.exe")):
-    carla_discovery_win64 = os.path.join(CWD, "..", "c++", "carla-discovery", "carla-discovery-win64.exe")
+if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-win64.exe")):
+    carla_discovery_win64 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-win64.exe")
 else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-discovery-win64.exe")):
@@ -263,8 +270,8 @@ else:
             break
 
 # find carla_bridge_unix32
-if os.path.exists(os.path.join(CWD, "..", "c++", "carla-bridge", "carla-bridge-unix32")):
-    carla_bridge_unix32 = os.path.join(CWD, "..", "c++", "carla-bridge", "carla-bridge-unix32")
+if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-unix32")):
+    carla_bridge_unix32 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-unix32")
 else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-bridge-unix32")):
@@ -272,8 +279,8 @@ else:
             break
 
 # find carla_bridge_unix64
-if os.path.exists(os.path.join(CWD, "..", "c++", "carla-bridge", "carla-bridge-unix64")):
-    carla_bridge_unix64 = os.path.join(CWD, "..", "c++", "carla-bridge", "carla-bridge-unix64")
+if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-unix64")):
+    carla_bridge_unix64 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-unix64")
 else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-bridge-unix64")):
@@ -281,8 +288,8 @@ else:
             break
 
 # find carla_bridge_win32
-if os.path.exists(os.path.join(CWD, "..", "c++", "carla-bridge", "carla-bridge-win32.exe")):
-    carla_bridge_win32 = os.path.join(CWD, "..", "c++", "carla-bridge", "carla-bridge-win32.exe")
+if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-win32.exe")):
+    carla_bridge_win32 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-win32.exe")
 else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-bridge-wine32.exe")):
@@ -290,8 +297,8 @@ else:
             break
 
 # find carla_bridge_win64
-if os.path.exists(os.path.join(CWD, "..", "c++", "carla-bridge", "carla-bridge-win64.exe")):
-    carla_bridge_win64 = os.path.join(CWD, "..", "c++", "carla-bridge", "carla-bridge-win64.exe")
+if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-win64.exe")):
+    carla_bridge_win64 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-win64.exe")
 else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-bridge-win64.exe")):
@@ -299,8 +306,8 @@ else:
             break
 
 # find carla_bridge_lv2_gtk2
-if os.path.exists(os.path.join(CWD, "..", "c++", "carla-bridge", "carla-bridge-lv2-gtk2")):
-    carla_bridge_lv2_gtk2 = os.path.join(CWD, "..", "c++", "carla-bridge", "carla-bridge-lv2-gtk2")
+if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-gtk2")):
+    carla_bridge_lv2_gtk2 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-gtk2")
 else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-bridge-lv2-gtk2")):
@@ -308,8 +315,8 @@ else:
             break
 
 # find carla_bridge_lv2_qt4
-if os.path.exists(os.path.join(CWD, "..", "c++", "carla-bridge", "carla-bridge-lv2-qt4")):
-    carla_bridge_lv2_qt4 = os.path.join(CWD, "..", "c++", "carla-bridge", "carla-bridge-lv2-qt4")
+if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-qt4")):
+    carla_bridge_lv2_qt4 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-qt4")
 else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-bridge-lv2-qt4")):
@@ -317,8 +324,8 @@ else:
             break
 
 # find carla_bridge_lv2_x11
-if os.path.exists(os.path.join(CWD, "..", "c++", "carla-bridge", "carla-bridge-lv2-x11")):
-    carla_bridge_lv2_x11 = os.path.join(CWD, "..", "c++", "carla-bridge", "carla-bridge-lv2-x11")
+if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-x11")):
+    carla_bridge_lv2_x11 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-x11")
 else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-bridge-lv2-x11")):
@@ -326,8 +333,8 @@ else:
             break
 
 # find carla_bridge_vst_x11
-if os.path.exists(os.path.join(CWD, "..", "c++", "carla-bridge", "carla-bridge-vst-x11")):
-    carla_bridge_vst_x11 = os.path.join(CWD, "..", "c++", "carla-bridge", "carla-bridge-vst-x11")
+if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-x11")):
+    carla_bridge_vst_x11 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-x11")
 else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-bridge-vst-x11")):
