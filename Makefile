@@ -48,7 +48,7 @@ carla: src/ui_carla.py src/ui_carla_control.py \
 	src/ui_inputdialog_value.py
 
 tools: \
-	src/ui_logs.py src/ui_render.py src/ui_xycontroller.py \
+	src/ui_logs.py src/ui_render.py \
 	src/ui_settings_app.py src/ui_settings_jack.py
 
 src/ui_cadence.py: src/ui/cadence.ui
@@ -141,9 +141,6 @@ src/ui_logs.py: src/ui/logs.ui
 src/ui_render.py: src/ui/render.ui
 	$(PYUIC) $< -o $@
 
-src/ui_xycontroller.py: src/ui/xycontroller.ui
-	$(PYUIC) $< -o $@
-
 src/ui_settings_app.py: src/ui/settings_app.ui
 	$(PYUIC) $< -o $@
 
@@ -162,7 +159,7 @@ src/resources_rc.py: resources/resources.qrc
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-CPP: carla_backend carla_bridge carla_discovery jackmeter
+CPP: carla_backend carla_bridge carla_discovery jackmeter xycontroller
 
 carla_backend: carla_lilv
 	$(MAKE) -C c++/carla-backend
@@ -178,6 +175,9 @@ carla_lilv:
 
 jackmeter:
 	$(MAKE) -C c++/jackmeter
+
+xycontroller:
+	$(MAKE) -C c++/xycontroller
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -233,7 +233,6 @@ install:
 		data/cadence_logs \
 		data/cadence_pulse2jack \
 		data/cadence_render \
-		data/cadence_xycontroller \
 		data/cadence-aloop-daemon \
 		data/catarina \
 		data/catia \
@@ -247,6 +246,7 @@ install:
 		c++/carla-bridge/carla-bridge-vst-x11 \
 		c++/carla-discovery/carla-discovery-* \
 		c++/jackmeter/cadence_jackmeter \
+		c++/xycontroller/cadence_xycontroller \
 		$(DESTDIR)$(PREFIX)/bin/
 
 	# Install desktop files
@@ -313,7 +313,6 @@ install:
 		$(DESTDIR)$(PREFIX)/bin/cadence_logs \
 		$(DESTDIR)$(PREFIX)/bin/cadence_pulse2jack \
 		$(DESTDIR)$(PREFIX)/bin/cadence_render \
-		$(DESTDIR)$(PREFIX)/bin/cadence_xycontroller \
 		$(DESTDIR)$(PREFIX)/bin/catarina \
 		$(DESTDIR)$(PREFIX)/bin/catia \
 		$(DESTDIR)$(PREFIX)/bin/claudia \
