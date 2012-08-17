@@ -12,16 +12,6 @@ SED_PREFIX = $(shell echo $(PREFIX) | sed "s/\//\\\\\\\\\//g")
 PYUIC = pyuic4
 PYRCC = pyrcc4 -py3
 
-# Detect architecture
-ifndef _arch_n
-  ARCH = $(shell uname -m)
-  ifeq ("$(ARCH)", "x86_64")
-    _arch_n = 64
-  else
-    _arch_n = 32
-  endif
-endif
-
 
 all: UI RES CPP
 
@@ -159,7 +149,7 @@ src/resources_rc.py: resources/resources.qrc
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-CPP: carla_backend carla_bridge carla_discovery jackmeter xycontroller
+CPP: carla_backend carla_bridge carla_discovery carla_lilv jackmeter xycontroller
 
 carla_backend: carla_lilv
 	$(MAKE) -C c++/carla-backend
@@ -168,7 +158,7 @@ carla_bridge: carla_lilv
 	$(MAKE) -C c++/carla-bridge
 
 carla_discovery:
-	$(MAKE) -C c++/carla-discovery unix$(_arch_n) NATIVE=1
+	$(MAKE) -C c++/carla-discovery NATIVE=1
 
 carla_lilv:
 	$(MAKE) -C c++/carla-lilv
@@ -205,6 +195,7 @@ clean:
 	$(MAKE) clean -C c++/carla-discovery
 	$(MAKE) clean -C c++/carla-lilv
 	$(MAKE) clean -C c++/jackmeter
+	$(MAKE) clean -C c++/xycontroller
 	rm -f *~ src/*~ src/*.pyc src/ui_*.py src/resources_rc.py
 
 doc:
@@ -240,10 +231,7 @@ install:
 		data/claudia-launcher \
 		data/carla \
 		data/carla-control \
-		c++/carla-bridge/carla-bridge-lv2-gtk2 \
-		c++/carla-bridge/carla-bridge-lv2-qt4 \
-		c++/carla-bridge/carla-bridge-lv2-x11 \
-		c++/carla-bridge/carla-bridge-vst-x11 \
+		c++/carla-bridge/carla-bridge-* \
 		c++/carla-discovery/carla-discovery-* \
 		c++/jackmeter/cadence_jackmeter \
 		c++/xycontroller/cadence_xycontroller \
@@ -286,7 +274,7 @@ install:
 	install -m 644 resources/256x256/claudia.png           $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
 	install -m 644 resources/256x256/claudia-launcher.png  $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
 	install -m 644 resources/256x256/carla.png             $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
-	install -m 644 resources/256x256/carla-control.png      $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
+	install -m 644 resources/256x256/carla-control.png     $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
 
 	# Install icons, scalable
 	install -m 644 resources/scalable/cadence.svg          $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/

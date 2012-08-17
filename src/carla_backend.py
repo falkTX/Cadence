@@ -92,11 +92,11 @@ if WINDOWS:
     ]
 
     if PROGRAMFILESx86:
-        DEFAULT_LADSPA_PATH_PATH += [
+        DEFAULT_LADSPA_PATH += [
             os.path.join(PROGRAMFILESx86, "LADSPA")
         ]
 
-        DEFAULT_DSSI_PATH_PATH += [
+        DEFAULT_DSSI_PATH += [
             os.path.join(PROGRAMFILESx86, "DSSI")
         ]
 
@@ -183,6 +183,59 @@ else:
     ]
 
 # ------------------------------------------------------------------------------------------------
+# Default Plugin Folders (set)
+
+global LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, SF2_PATH
+
+LADSPA_PATH_env = os.getenv("LADSPA_PATH")
+DSSI_PATH_env = os.getenv("DSSI_PATH")
+LV2_PATH_env = os.getenv("LV2_PATH")
+VST_PATH_env = os.getenv("VST_PATH")
+GIG_PATH_env = os.getenv("GIG_PATH")
+SF2_PATH_env = os.getenv("SF2_PATH")
+SFZ_PATH_env = os.getenv("SFZ_PATH")
+
+if LADSPA_PATH_env:
+    LADSPA_PATH = LADSPA_PATH_env.split(splitter)
+else:
+    LADSPA_PATH = DEFAULT_LADSPA_PATH
+
+if DSSI_PATH_env:
+    DSSI_PATH = DSSI_PATH_env.split(splitter)
+else:
+    DSSI_PATH = DEFAULT_DSSI_PATH
+
+if LV2_PATH_env:
+    LV2_PATH = LV2_PATH_env.split(splitter)
+else:
+    LV2_PATH = DEFAULT_LV2_PATH
+
+if VST_PATH_env:
+    VST_PATH = VST_PATH_env.split(splitter)
+else:
+    VST_PATH = DEFAULT_VST_PATH
+
+if GIG_PATH_env:
+    GIG_PATH = GIG_PATH_env.split(splitter)
+else:
+    GIG_PATH = DEFAULT_GIG_PATH
+
+if SF2_PATH_env:
+    SF2_PATH = SF2_PATH_env.split(splitter)
+else:
+    SF2_PATH = DEFAULT_SF2_PATH
+
+if SFZ_PATH_env:
+    SFZ_PATH = SFZ_PATH_env.split(splitter)
+else:
+    SFZ_PATH = DEFAULT_SFZ_PATH
+
+if haveLRDF:
+    LADSPA_RDF_PATH_env = os.getenv("LADSPA_RDF_PATH")
+    if LADSPA_RDF_PATH_env:
+        ladspa_rdf.set_rdf_path(LADSPA_RDF_PATH_env.split(splitter))
+
+# ------------------------------------------------------------------------------------------------
 # Search for Carla library and tools
 
 global carla_library_path
@@ -212,7 +265,7 @@ else:
     carla_libname = "carla_backend.so"
 
 CWD   = sys.path[0]
-CWDpp = os.path.join(CWDpp, "..", "c++")
+CWDpp = os.path.join(CWD, "..", "c++")
 
 # make it work with cxfreeze
 if CWD.endswith(os.sep+"carla"):
@@ -649,13 +702,6 @@ class GuiInfo(Structure):
 
 CallbackFunc = CFUNCTYPE(None, c_enum, c_ushort, c_int, c_int, c_double)
 
-if LINUX or MACOS:
-    BINARY_NATIVE = BINARY_UNIX64 if is64bit else BINARY_UNIX32
-elif WINDOWS:
-    BINARY_NATIVE = BINARY_WIN64 if is64bit else BINARY_WIN32
-else:
-    BINARY_NATIVE = BINARY_NONE
-
 # ------------------------------------------------------------------------------------------------
 # Backend C++ -> Python object
 
@@ -671,7 +717,9 @@ class Host(object):
         if lib_prefix_arg:
             carla_library_path = os.path.join(lib_prefix_arg, "lib", "carla", carla_libname)
 
-        print("Host() - using carla-backend library '%s'" % carla_library_path)
+        if not carla_library_path:
+            self.lib = None
+            return
 
         self.lib = cdll.LoadLibrary(carla_library_path)
 
@@ -1012,56 +1060,3 @@ class Host(object):
 
     def get_sample_rate(self):
         return self.lib.get_sample_rate()
-
-# ------------------------------------------------------------------------------------------------
-# Default Plugin Folders (set)
-
-global LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, SF2_PATH
-
-LADSPA_PATH_env = os.getenv("LADSPA_PATH")
-DSSI_PATH_env = os.getenv("DSSI_PATH")
-LV2_PATH_env = os.getenv("LV2_PATH")
-VST_PATH_env = os.getenv("VST_PATH")
-GIG_PATH_env = os.getenv("GIG_PATH")
-SF2_PATH_env = os.getenv("SF2_PATH")
-SFZ_PATH_env = os.getenv("SFZ_PATH")
-
-if LADSPA_PATH_env:
-    LADSPA_PATH = LADSPA_PATH_env.split(splitter)
-else:
-    LADSPA_PATH = DEFAULT_LADSPA_PATH
-
-if DSSI_PATH_env:
-    DSSI_PATH = DSSI_PATH_env.split(splitter)
-else:
-    DSSI_PATH = DEFAULT_DSSI_PATH
-
-if LV2_PATH_env:
-    LV2_PATH = LV2_PATH_env.split(splitter)
-else:
-    LV2_PATH = DEFAULT_LV2_PATH
-
-if VST_PATH_env:
-    VST_PATH = VST_PATH_env.split(splitter)
-else:
-    VST_PATH = DEFAULT_VST_PATH
-
-if GIG_PATH_env:
-    GIG_PATH = GIG_PATH_env.split(splitter)
-else:
-    GIG_PATH = DEFAULT_GIG_PATH
-
-if SF2_PATH_env:
-    SF2_PATH = SF2_PATH_env.split(splitter)
-else:
-    SF2_PATH = DEFAULT_SF2_PATH
-
-if SFZ_PATH_env:
-    SFZ_PATH = SFZ_PATH_env.split(splitter)
-else:
-    SFZ_PATH = DEFAULT_SFZ_PATH
-
-if haveLRDF:
-    LADSPA_RDF_PATH_env = os.getenv("LADSPA_RDF_PATH")
-    if LADSPA_RDF_PATH_env:
-        ladspa_rdf.set_rdf_path(LADSPA_RDF_PATH_env.split(splitter))

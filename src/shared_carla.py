@@ -17,7 +17,7 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
-import sys
+import platform, sys
 from copy import deepcopy
 from sip import unwrapinstance
 from PyQt4.QtCore import pyqtSlot, QSettings, QTimer
@@ -187,16 +187,11 @@ Carla.maxParameters = MAX_PARAMETERS
 
 # set native binary type
 if LINUX or MACOS:
-    BINARY_NATIVE = BINARY_UNIX64 if is64bit BINARY_UNIX32
+    BINARY_NATIVE = BINARY_UNIX64 if is64bit else BINARY_UNIX32
 elif WINDOWS:
-    BINARY_NATIVE = BINARY_WIN64 if is64bit BINARY_WIN32
+    BINARY_NATIVE = BINARY_WIN64 if is64bit else BINARY_WIN32
 else:
     BINARY_NATIVE = BINARY_OTHER
-
-BINARY_NATIVE = BINARY_UNIX64
-BINARY_NATIVE = BINARY_WIN32
-BINARY_NATIVE = BINARY_WIN64
-BINARY_NATIVE = BINARY_OTHER
 
 ICON_STATE_NULL = 0
 ICON_STATE_WAIT = 1

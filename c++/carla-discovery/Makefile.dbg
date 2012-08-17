@@ -23,15 +23,13 @@ LINK_FLAGS  += $(shell pkg-config --libs QtCore)
 
 ifneq ($(NATIVE),)
 BUILD_FLAGS += -DBUILD_NATIVE
-HAVE_FLUIDSYNTH   = $(shell pkg-config --exists fluidsynth && echo true)
-HAVE_LINUXSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
 
-ifeq ($(HAVE_FLUIDSYNTH),true)
+ifeq ($(shell pkg-config --exists fluidsynth && echo true),true)
 BUILD_FLAGS += $(shell pkg-config --cflags fluidsynth) -DWANT_FLUIDSYNTH
 LINK_FLAGS  += $(shell pkg-config --libs fluidsynth)
 endif
 
-ifeq ($(HAVE_LINUXSAMPLER),true)
+ifeq ($(shell pkg-config --exists linuxsampler && echo true),true)
 BUILD_FLAGS += $(shell pkg-config --cflags linuxsampler) -DWANT_LINUXSAMPLER
 LINK_FLAGS  += $(shell pkg-config --libs linuxsampler)
 endif
@@ -54,8 +52,7 @@ WINE_LINK_FLAGS  = $(LINK_FLAGS) -ldl
 
 # --------------------------------------------------------------
 
-all:
-	@echo "Build type must be unix32, unix64, win[e]32 or win[e]64"
+all: carla-discovery-native
 
 unix32: carla-discovery-unix32
 unix64: carla-discovery-unix64
@@ -68,6 +65,9 @@ wine64: carla-discovery-win64.exe.so
 
 32BIT_OBJS = carla-discovery.cpp ../carla-lilv/carla_lilv_32bit.a
 64BIT_OBJS = carla-discovery.cpp ../carla-lilv/carla_lilv_64bit.a
+
+carla-discovery-native: carla-discovery.cpp ../carla-lilv/carla_lilv.a
+	$(CXX) $^ $(BUILD_FLAGS) $(LINK_FLAGS) -o $@
 
 carla-discovery-unix32: $(32BIT_OBJS)
 	$(CXX) $^ $(UNIX_BUILD_FLAGS) $(UNIX_32BIT_FLAGS) $(UNIX_LINK_FLAGS) -o $@
@@ -86,6 +86,9 @@ carla-discovery-win32.exe.so: $(32BIT_OBJS)
 
 carla-discovery-win64.exe.so: $(64BIT_OBJS)
 	$(WINECXX) $^ $(WINE_BUILD_FLAGS) $(WINE_64BIT_FLAGS) $(WINE_LINK_FLAGS) -o carla-discovery-win64.exe
+
+../carla-lilv/carla_lilv.a:
+	$(MAKE) -C ../carla-lilv
 
 ../carla-lilv/carla_lilv_32bit.a:
 	$(MAKE) -C ../carla-lilv 32bit

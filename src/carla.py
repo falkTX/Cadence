@@ -1798,8 +1798,8 @@ if __name__ == '__main__':
         dname = cString(Carla.Host.get_engine_driver_name(i))
         print("%i - %s" % (i, dname))
 
-    if not Carla.Host.engine_init("JACK", "Carla"):
-    #if not Carla.Host.engine_init("PulseAudio", "Carla"):
+    #if not Carla.Host.engine_init("JACK", "Carla"):
+    if not Carla.Host.engine_init("PulseAudio", "Carla"):
         CustomMessageBox(None, QMessageBox.Critical, "Error", "Could not connect to Audio backend, possible reasons:",
             cString(Carla.Host.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
         sys.exit(1)
