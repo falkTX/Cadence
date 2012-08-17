@@ -51,12 +51,12 @@ signals:
     void notesOff();
 
 protected:
+    void handleMousePos(const QPoint&);
     void keyPressEvent(QKeyEvent*);
     void keyReleaseEvent(QKeyEvent*);
     void mousePressEvent(QMouseEvent*);
     void mouseMoveEvent(QMouseEvent*);
     void mouseReleaseEvent(QMouseEvent*);
-    void handleMousePos(const QPoint&);
     void paintEvent(QPaintEvent*);
 
 private Q_SLOTS:
@@ -77,7 +77,7 @@ private:
     QList<int> m_enabledKeys;
     QMap<int, QRectF> *m_midi_map;
 
-    bool _isNoteBlack(int note);
+    bool   _isNoteBlack(int note);
     QRectF _getRectFromMidiNote(int note);
 };
 

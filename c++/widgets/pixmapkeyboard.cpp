@@ -23,16 +23,18 @@
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPainter>
 
-static QMap<int, QRectF> midi_key2rect_map_horizontal;
-static QMap<int, QRectF> midi_key2rect_map_vertical;
-static QMap<int, int> midi_keyboard2key_map;
-static QVector<int> blackNotes;
+QMap<int, QRectF> midi_key2rect_map_horizontal;
+QMap<int, QRectF> midi_key2rect_map_vertical;
+QMap<int, int> midi_keyboard2key_map;
+QVector<int> blackNotes;
 
-void midi_map_init()
+static bool pixmapkeyboard_initiated = false;
+void pixmapkeyboard_init()
 {
-    static bool init = false;
-    if (init) return;
-    init = true;
+    if (pixmapkeyboard_initiated)
+        return;
+
+    pixmapkeyboard_initiated = true;
 
     // midi_key2rect_map_horizontal ------
     midi_key2rect_map_horizontal[0] =  QRectF(0,   0, 18, 64); // C
@@ -97,11 +99,11 @@ void midi_map_init()
     blackNotes << 10;
 }
 
-PixmapKeyboard::PixmapKeyboard(QWidget* parent):
-    QWidget(parent),
-    m_font("Monospace", 8, QFont::Normal)
+PixmapKeyboard::PixmapKeyboard(QWidget* parent)
+    : QWidget(parent),
+      m_font("Monospace", 8, QFont::Normal)
 {
-    midi_map_init();
+    pixmapkeyboard_init();
 
     m_octaves = 6;
     m_lastMouseNote = -1;
@@ -113,7 +115,7 @@ PixmapKeyboard::PixmapKeyboard(QWidget* parent):
 
 void PixmapKeyboard::sendNoteOn(int note, bool sendSignal)
 {
-    if (note >= 0 && note <= 127 && ! m_enabledKeys.contains(note))
+    if (0 <= note && note <= 127 && ! m_enabledKeys.contains(note))
     {
         m_enabledKeys.append(note);
         if (sendSignal)
@@ -186,6 +188,8 @@ void PixmapKeyboard::setMode(Orientation mode, Color color)
 
 void PixmapKeyboard::setOctaves(int octaves)
 {
+    Q_ASSERT(octaves >= 1 && octaves <= 6);
+
     if (octaves < 1)
         octaves = 1;
     else if (octaves > 6)
@@ -206,50 +210,6 @@ void PixmapKeyboard::setOctaves(int octaves)
     update();
 }
 
-void PixmapKeyboard::keyPressEvent(QKeyEvent* event)
-{
-    int qKey = event->key();
-
-    if (midi_keyboard2key_map.keys().contains(qKey))
-        sendNoteOn(midi_keyboard2key_map[qKey]);
-
-    QWidget::keyPressEvent(event);
-}
-
-void PixmapKeyboard::keyReleaseEvent(QKeyEvent* event)
-{
-    int qKey = event->key();
-
-    if (midi_keyboard2key_map.keys().contains(qKey))
-        sendNoteOff(midi_keyboard2key_map[qKey]);
-
-    QWidget::keyReleaseEvent(event);
-}
-
-void PixmapKeyboard::mousePressEvent(QMouseEvent* event)
-{
-    m_lastMouseNote = -1;
-    handleMousePos(event->pos());
-    setFocus();
-    QWidget::mousePressEvent(event);
-}
-
-void PixmapKeyboard::mouseMoveEvent(QMouseEvent* event)
-{
-    handleMousePos(event->pos());
-    QWidget::mousePressEvent(event);
-}
-
-void PixmapKeyboard::mouseReleaseEvent(QMouseEvent* event)
-{
-    if (m_lastMouseNote != -1)
-    {
-        sendNoteOff(m_lastMouseNote);
-        m_lastMouseNote = -1;
-    }
-    QWidget::mouseReleaseEvent(event);
-}
-
 void PixmapKeyboard::handleMousePos(const QPoint& pos)
 {
     int note, octave;
@@ -259,15 +219,17 @@ void PixmapKeyboard::handleMousePos(const QPoint& pos)
     {
         if (pos.x() < 0 or pos.x() > m_octaves * 144)
             return;
-        octave = pos.x() / p_width;
-        n_pos = QPointF(pos.x() % p_width, pos.y());
+        int posX = pos.x() - 1;
+        octave = posX / p_width;
+        n_pos  = QPointF(posX % p_width, pos.y());
     }
     else if (m_pixmap_mode == VERTICAL)
     {
         if (pos.y() < 0 or pos.y() > m_octaves * 144)
             return;
-        octave = m_octaves - pos.y() / p_height;
-        n_pos = QPointF(pos.x(), pos.y() % p_height);
+        int posY = pos.y() - 1;
+        octave = m_octaves - posY / p_height;
+        n_pos  = QPointF(pos.x(), posY % p_height);
     }
     else
         return;
@@ -316,6 +278,52 @@ void PixmapKeyboard::handleMousePos(const QPoint& pos)
     m_lastMouseNote = note;
 }
 
+void PixmapKeyboard::keyPressEvent(QKeyEvent* event)
+{
+    if (! event->isAutoRepeat())
+    {
+        int qKey = event->key();
+        if (midi_keyboard2key_map.keys().contains(qKey))
+            sendNoteOn(midi_keyboard2key_map[qKey]);
+    }
+    QWidget::keyPressEvent(event);
+}
+
+void PixmapKeyboard::keyReleaseEvent(QKeyEvent* event)
+{
+    if (! event->isAutoRepeat())
+    {
+        int qKey = event->key();
+        if (midi_keyboard2key_map.keys().contains(qKey))
+            sendNoteOff(midi_keyboard2key_map[qKey]);
+    }
+    QWidget::keyReleaseEvent(event);
+}
+
+void PixmapKeyboard::mousePressEvent(QMouseEvent* event)
+{
+    m_lastMouseNote = -1;
+    handleMousePos(event->pos());
+    setFocus();
+    QWidget::mousePressEvent(event);
+}
+
+void PixmapKeyboard::mouseMoveEvent(QMouseEvent* event)
+{
+    handleMousePos(event->pos());
+    QWidget::mousePressEvent(event);
+}
+
+void PixmapKeyboard::mouseReleaseEvent(QMouseEvent* event)
+{
+    if (m_lastMouseNote != -1)
+    {
+        sendNoteOff(m_lastMouseNote);
+        m_lastMouseNote = -1;
+    }
+    QWidget::mouseReleaseEvent(event);
+}
+
 void PixmapKeyboard::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
@@ -351,7 +359,7 @@ void PixmapKeyboard::paintEvent(QPaintEvent*)
         if (_isNoteBlack(note))
             continue;
 
-        if (note < 35)
+        if (note < 36)
             // cannot paint this note
             continue;
         else if (note < 48)
@@ -432,7 +440,7 @@ void PixmapKeyboard::paintEvent(QPaintEvent*)
         if (! _isNoteBlack(note))
             continue;
 
-        if (note < 35)
+        if (note < 36)
             // cannot paint this note
             continue;
         else if (note < 48)

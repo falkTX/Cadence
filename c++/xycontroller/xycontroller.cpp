@@ -18,15 +18,15 @@
 #include <QtCore/Qt>
 
 #ifndef Q_COMPILER_LAMBDA
-#  define nullptr (0)
+# define nullptr (0)
 #endif
 
 #define VERSION "0.5.0"
 
-//#include "../jack_utils.h"
+#include "../jack_utils.h"
 #include "ui_xycontroller.h"
 
-//#include <QtCore/QMutex>
+#include <QtCore/QMutex>
 #include <QtCore/QSettings>
 #include <QtCore/QTimer>
 #include <QtGui/QApplication>
@@ -39,39 +39,149 @@
 
 // -------------------------------
 
-class Queue {
-public:
-    Queue(int size_) :
-        size(size_)
-    {
-    }
-
-    ~Queue()
-    {
-    }
-
-    void put_nowait(int, int, int)
-    {
-        //const QMutexLocker m(&mutex);
-    }
-
-private:
-    const int size;
-    //QMutex mutex;
-};
-
 float abs_f(const float value)
 {
     return (value < 1.0f) ? -value : value;
 }
 
-#if 0
-jack_client_t* jack_client = nullptr;
-jack_port_t* jack_midi_in_port  = nullptr;
-jack_port_t* jack_midi_out_port = nullptr;
-#endif
-Queue jack_midi_in_data  = Queue(512);
-Queue jack_midi_out_data = Queue(512);
+class Queue
+{
+public:
+    Queue()
+    {
+        index = 0;
+        empty = true;
+        full  = false;
+    }
+
+    void copyDataFrom(Queue* queue)
+    {
+        mutex.lock();
+        queue->mutex.lock();
+
+        // copy data from queue
+        memcpy(data, queue->data, sizeof(datatype)*MAX_SIZE);
+        empty = queue->empty;
+        full  = queue->full;
+
+        // reset queque
+        memset(queue->data, 0, sizeof(datatype)*MAX_SIZE);
+        queue->empty = true;
+        queue->full  = false;
+
+        // reset indexes
+        index = queue->index = 0;
+
+        queue->mutex.unlock();
+        mutex.unlock();
+    }
+
+    bool isEmpty()
+    {
+        return empty;
+    }
+
+    bool isFull()
+    {
+        return full;
+    }
+
+    void lock()
+    {
+        mutex.lock();
+    }
+
+    void unlock()
+    {
+        mutex.unlock();
+    }
+
+    void put(unsigned char d1, unsigned char d2, unsigned char d3, bool lock = true)
+    {
+        Q_ASSERT(d1 != 0);
+
+        if (full || d1 == 0)
+            return;
+
+        if (lock)
+            mutex.lock();
+
+        for (unsigned short i=0; i < MAX_SIZE; i++)
+        {
+            if (data[i].d1 == 0)
+            {
+                data[i].d1 = d1;
+                data[i].d2 = d2;
+                data[i].d3 = d3;
+                empty = false;
+                full  = (i == MAX_SIZE-1);
+                break;
+            }
+        }
+
+        if (lock)
+            mutex.unlock();
+    }
+
+    bool get(unsigned char* d1, unsigned char* d2, unsigned char* d3, bool lock = true)
+    {
+        Q_ASSERT(d1 && d2 && d3);
+
+        if (empty || ! (d1 && d2 && d3))
+            return false;
+
+        if (lock)
+            mutex.lock();
+
+        full  = false;
+
+        if (data[index].d1 == 0)
+        {
+            index = 0;
+            empty = true;
+
+            if (lock)
+                mutex.lock();
+
+            return false;
+        }
+
+        *d1 = data[index].d1;
+        *d2 = data[index].d2;
+        *d3 = data[index].d3;
+
+        data[index].d1 = data[index].d2 = data[index].d3 = 0;
+        index++;
+        empty = false;
+
+        if (lock)
+            mutex.lock();
+
+        return true;
+    }
+
+private:
+    struct datatype {
+        unsigned char d1, d2, d3;
+
+        datatype()
+            : d1(0), d2(0), d3(0) {}
+    };
+
+    static const unsigned short MAX_SIZE = 128;
+    datatype data[MAX_SIZE];
+    unsigned short index;
+    bool empty, full;
+
+    QMutex mutex;
+};
+
+jack_client_t* jClient = nullptr;
+jack_port_t* jMidiInPort  = nullptr;
+jack_port_t* jMidiOutPort = nullptr;
+
+static Queue qMidiInData;
+static Queue qMidiOutData;
 
 QVector<QString> MIDI_CC_LIST;
 void MIDI_CC_LIST__init()
@@ -176,19 +286,21 @@ class XYGraphicsScene : public QGraphicsScene
     Q_OBJECT
 
 public:
-    XYGraphicsScene(QWidget* parent) : QGraphicsScene(parent), m_parent(parent)
+    XYGraphicsScene(QWidget* parent)
+        : QGraphicsScene(parent),
+          m_parent(parent)
     {
         cc_x = 1;
         cc_y = 2;
 
         m_mouseLock = false;
-        m_smooth = false;
-        m_smooth_x = 0;
-        m_smooth_y = 0;
+        m_smooth    = false;
+        m_smooth_x  = 0.0f;
+        m_smooth_y  = 0.0f;
 
         setBackgroundBrush(Qt::black);
 
-        QPen cursorPen(QColor(255, 255, 255), 2);
+        QPen   cursorPen(QColor(255, 255, 255), 2);
         QColor cursorBrush(255, 255, 255, 50);
         m_cursor = addEllipse(QRectF(-10, -10, 20, 20), cursorPen, cursorBrush);
 
@@ -197,10 +309,6 @@ public:
         m_lineV = addLine(0, -9999, 0, 9999, linePen);
 
         p_size = QRectF(-100, -100, 100, 100);
-    }
-
-    ~XYGraphicsScene()
-    {
     }
 
     void setControlX(int x)
@@ -218,40 +326,40 @@ public:
         m_channels = channels;
     }
 
-    void setPosX(qreal x, bool forward=true)
+    void setPosX(float x, bool forward=true)
     {
-        if (! m_mouseLock)
-        {
-            qreal pos_x = x * (p_size.x() + p_size.width());
-            m_cursor->setPos(pos_x, m_cursor->y());
-            m_lineV->setX(pos_x);
+        if (m_mouseLock)
+            return;
 
-            if (forward)
-            {
-                qreal value = pos_x / (p_size.x() + p_size.width());
-                sendMIDI(&value, nullptr);
-            }
-            else
-                m_smooth_x = pos_x;
+        float posX = x * (p_size.x() + p_size.width());
+        m_cursor->setPos(posX, m_cursor->y());
+        m_lineV->setX(posX);
+
+        if (forward)
+        {
+            float value = posX / (p_size.x() + p_size.width());
+            sendMIDI(&value, nullptr);
         }
+        else
+            m_smooth_x = posX;
     }
 
-    void setPosY(qreal y, bool forward=true)
+    void setPosY(float y, bool forward=true)
     {
-        if (! m_mouseLock)
-        {
-            qreal pos_y = y * (p_size.y() + p_size.height());
-            m_cursor->setPos(m_cursor->x(), pos_y);
-            m_lineH->setY(pos_y);
+        if (m_mouseLock)
+            return;
 
-            if (forward)
-            {
-                qreal value = pos_y / (p_size.y() + p_size.height());
-                sendMIDI(nullptr, &value);
-            }
-            else
-                m_smooth_y = pos_y;
+        float posY = y * (p_size.y() + p_size.height());
+        m_cursor->setPos(m_cursor->x(), posY);
+        m_lineH->setY(posY);
+
+        if (forward)
+        {
+            float value = posY / (p_size.y() + p_size.height());
+            sendMIDI(nullptr, &value);
         }
+        else
+            m_smooth_y = posY;
     }
 
     void setSmooth(bool smooth)
@@ -259,7 +367,7 @@ public:
         m_smooth = smooth;
     }
 
-    void setSmoothValues(int x, int y)
+    void setSmoothValues(float x, float y)
     {
         m_smooth_x = x * (p_size.x() + p_size.width());
         m_smooth_y = y * (p_size.y() + p_size.height());
@@ -268,19 +376,14 @@ public:
     void handleCC(int param, int value)
     {
         bool sendUpdate = false;
-        qreal xp, yp;
-        xp = yp = 0.0;
+        float xp, yp;
+        xp = yp = 0.0f;
 
         if (param == cc_x)
         {
             sendUpdate = true;
-            xp = (float(value) / 63) - 1.0;
+            xp = float(value)/63 - 1.0f;
             yp = m_cursor->y() / (p_size.y() + p_size.height());
-
-            if (xp < -1.0)
-                xp = -1.0;
-            else if (xp > 1.0)
-                xp = 1.0;
 
             setPosX(xp, false);
         }
@@ -289,15 +392,20 @@ public:
         {
             sendUpdate = true;
             xp = m_cursor->x() / (p_size.x() + p_size.width());
-            yp = (float(value) / 63) - 1.0;
-
-            if (yp < -1.0)
-                yp = -1.0;
-            else if (yp > 1.0)
-                yp = 1.0;
+            yp = float(value)/63 - 1.0f;
 
             setPosY(yp, false);
         }
+
+        if (xp < -1.0f)
+            xp = -1.0f;
+        else if (xp > 1.0f)
+            xp = 1.0f;
+
+        if (yp < -1.0f)
+            yp = -1.0f;
+        else if (yp > 1.0f)
+            yp = 1.0f;
 
         if (sendUpdate)
             emit cursorMoved(xp, yp);
@@ -305,7 +413,7 @@ public:
 
     void updateSize(QSize size)
     {
-        p_size.setRect(-(size.width() / 2), -(size.height() / 2), size.width(), size.height());
+        p_size.setRect(-(float(size.width())/2), -(float(size.height())/2), size.width(), size.height());
     }
 
     void updateSmooth()
@@ -313,33 +421,33 @@ public:
         if (! m_smooth)
             return;
 
-        if (m_cursor->x() != m_smooth_x || m_cursor->y() != m_smooth_y)
+        if (m_cursor->x() == m_smooth_x && m_cursor->y() == m_smooth_y)
+            return;
+
+        if (abs_f(m_cursor->x() - m_smooth_x) <= 0.0005f)
         {
-            if (abs(m_cursor->x() - m_smooth_x) <= 0.001)
-            {
-                m_smooth_x = m_cursor->x();
-                return;
-            }
-            else if (abs(m_cursor->y() - m_smooth_y) <= 0.001)
-            {
-                m_smooth_y = m_cursor->y();
-                return;
-            }
-
-            qreal new_x = (m_smooth_x + m_cursor->x() * 3) / 4;
-            qreal new_y = (m_smooth_y + m_cursor->y() * 3) / 4;
-            QPointF pos(new_x, new_y);
-
-            m_cursor->setPos(pos);
-            m_lineH->setY(pos.y());
-            m_lineV->setX(pos.x());
-
-            qreal xp = pos.x() / (p_size.x() + p_size.width());
-            qreal yp = pos.y() / (p_size.y() + p_size.height());
-
-            sendMIDI(&xp, &yp);
-            emit cursorMoved(xp, yp);
+            m_smooth_x = m_cursor->x();
+            return;
         }
+        if (abs_f(m_cursor->y() - m_smooth_y) <= 0.0005f)
+        {
+            m_smooth_y = m_cursor->y();
+            return;
+        }
+
+        float newX = float(m_smooth_x + m_cursor->x()*7) / 8;
+        float newY = float(m_smooth_y + m_cursor->y()*7) / 8;
+        QPointF pos(newX, newY);
+
+        m_cursor->setPos(pos);
+        m_lineH->setY(pos.y());
+        m_lineV->setX(pos.x());
+
+        float xp = pos.x() / (p_size.x() + p_size.width());
+        float yp = pos.y() / (p_size.y() + p_size.height());
+
+        sendMIDI(&xp, &yp);
+        emit cursorMoved(xp, yp);
     }
 
 protected:
@@ -367,31 +475,30 @@ protected:
             m_lineH->setY(pos.y());
             m_lineV->setX(pos.x());
 
-            qreal xp = pos.x() / (p_size.x() + p_size.width());
-            qreal yp = pos.y() / (p_size.y() + p_size.height());
+            float xp = pos.x() / (p_size.x() + p_size.width());
+            float yp = pos.y() / (p_size.y() + p_size.height());
 
             sendMIDI(&xp, &yp);
-
             emit cursorMoved(xp, yp);
         }
     }
 
-    void sendMIDI(qreal* xp=nullptr, qreal* yp=nullptr)
+    void sendMIDI(float* xp=nullptr, float* yp=nullptr)
     {
-        qreal rate = qreal(0xff) / 4;
+        float rate = float(0xff) / 4;
 
         if (xp != nullptr)
         {
             int value = *xp * rate + rate;
             foreach (const int& channel, m_channels)
-                jack_midi_out_data.put_nowait(0xB0 + channel - 1, cc_x, value);
+                qMidiOutData.put(0xB0 + channel - 1, cc_x, value);
         }
 
         if (yp != nullptr)
         {
             int value = *yp * rate + rate;
             foreach (const int& channel, m_channels)
-                jack_midi_out_data.put_nowait(0xB0 + channel - 1, cc_y, value);
+                qMidiOutData.put(0xB0 + channel - 1, cc_y, value);
         }
     }
 
@@ -426,23 +533,18 @@ protected:
         QGraphicsScene::mouseReleaseEvent(event);
     }
 
-    QWidget* parent() const
-    {
-        return m_parent;
-    }
-
 signals:
-    void cursorMoved(qreal, qreal);
+    void cursorMoved(float, float);
 
 private:
     int cc_x;
     int cc_y;
     QList<int> m_channels;
 
-    bool m_mouseLock;
-    bool m_smooth;
-    int m_smooth_x;
-    int m_smooth_y;
+    bool  m_mouseLock;
+    bool  m_smooth;
+    float m_smooth_x;
+    float m_smooth_y;
 
     QGraphicsEllipseItem* m_cursor;
     QGraphicsLineItem* m_lineH;
@@ -450,7 +552,12 @@ private:
 
     QRectF p_size;
 
+    // fake parent
     QWidget* const m_parent;
+    QWidget* parent() const
+    {
+        return m_parent;
+    }
 };
 
 // -------------------------------
@@ -465,11 +572,11 @@ class XYControllerW : public QMainWindow
     Q_OBJECT
 
 public:
-    XYControllerW() :
-        QMainWindow(nullptr),
-        scene(this),
-        settings("Cadence", "XY-Controller"),
-        ui(new Ui::XYControllerW)
+    XYControllerW()
+        : QMainWindow(nullptr),
+          settings("Cadence", "XY-Controller"),
+          scene(this),
+          ui(new Ui::XYControllerW)
     {
         ui->setupUi(this);
 
@@ -505,102 +612,114 @@ public:
         // -------------------------------------------------------------
         // Connect actions to functions
 
-        connect(ui->keyboard, SIGNAL(noteOn(int)), SLOT(noteOn(int)));
-        connect(ui->keyboard, SIGNAL(noteOff(int)), SLOT(noteOff(int)));
+        connect(ui->keyboard, SIGNAL(noteOn(int)), SLOT(slot_noteOn(int)));
+        connect(ui->keyboard, SIGNAL(noteOff(int)), SLOT(slot_noteOff(int)));
 
-        connect(ui->cb_smooth, SIGNAL(clicked(bool)), SLOT(setSmooth(bool)));
+        connect(ui->cb_smooth, SIGNAL(clicked(bool)), SLOT(slot_setSmooth(bool)));
 
-        connect(ui->dial_x, SIGNAL(valueChanged(int)), SLOT(updateSceneX(int)));
-        connect(ui->dial_y, SIGNAL(valueChanged(int)), SLOT(updateSceneY(int)));
+        connect(ui->dial_x, SIGNAL(valueChanged(int)), SLOT(slot_updateSceneX(int)));
+        connect(ui->dial_y, SIGNAL(valueChanged(int)), SLOT(slot_updateSceneY(int)));
 
-        connect(ui->cb_control_x, SIGNAL(currentIndexChanged(QString)), SLOT(checkCC_X(QString)));
-        connect(ui->cb_control_y, SIGNAL(currentIndexChanged(QString)), SLOT(checkCC_Y(QString)));
+        connect(ui->cb_control_x, SIGNAL(currentIndexChanged(QString)), SLOT(slot_checkCC_X(QString)));
+        connect(ui->cb_control_y, SIGNAL(currentIndexChanged(QString)), SLOT(slot_checkCC_Y(QString)));
 
-        connect(&scene, SIGNAL(cursorMoved(qreal, qreal)), SLOT(sceneCursorMoved(qreal, qreal)));
+        connect(&scene, SIGNAL(cursorMoved(float,float)), SLOT(slot_sceneCursorMoved(float,float)));
 
-        connect(ui->act_ch_01, SIGNAL(triggered(bool)), SLOT(checkChannel(bool)));
-        connect(ui->act_ch_02, SIGNAL(triggered(bool)), SLOT(checkChannel(bool)));
-        connect(ui->act_ch_03, SIGNAL(triggered(bool)), SLOT(checkChannel(bool)));
-        connect(ui->act_ch_04, SIGNAL(triggered(bool)), SLOT(checkChannel(bool)));
-        connect(ui->act_ch_05, SIGNAL(triggered(bool)), SLOT(checkChannel(bool)));
-        connect(ui->act_ch_06, SIGNAL(triggered(bool)), SLOT(checkChannel(bool)));
-        connect(ui->act_ch_07, SIGNAL(triggered(bool)), SLOT(checkChannel(bool)));
-        connect(ui->act_ch_08, SIGNAL(triggered(bool)), SLOT(checkChannel(bool)));
-        connect(ui->act_ch_09, SIGNAL(triggered(bool)), SLOT(checkChannel(bool)));
-        connect(ui->act_ch_10, SIGNAL(triggered(bool)), SLOT(checkChannel(bool)));
-        connect(ui->act_ch_11, SIGNAL(triggered(bool)), SLOT(checkChannel(bool)));
-        connect(ui->act_ch_12, SIGNAL(triggered(bool)), SLOT(checkChannel(bool)));
-        connect(ui->act_ch_13, SIGNAL(triggered(bool)), SLOT(checkChannel(bool)));
-        connect(ui->act_ch_14, SIGNAL(triggered(bool)), SLOT(checkChannel(bool)));
-        connect(ui->act_ch_15, SIGNAL(triggered(bool)), SLOT(checkChannel(bool)));
-        connect(ui->act_ch_16, SIGNAL(triggered(bool)), SLOT(checkChannel(bool)));
-        connect(ui->act_ch_all, SIGNAL(triggered()), SLOT(checkChannel_all()));
-        connect(ui->act_ch_none, SIGNAL(triggered()), SLOT(checkChannel_none()));
+        connect(ui->act_ch_01, SIGNAL(triggered(bool)), SLOT(slot_checkChannel(bool)));
+        connect(ui->act_ch_02, SIGNAL(triggered(bool)), SLOT(slot_checkChannel(bool)));
+        connect(ui->act_ch_03, SIGNAL(triggered(bool)), SLOT(slot_checkChannel(bool)));
+        connect(ui->act_ch_04, SIGNAL(triggered(bool)), SLOT(slot_checkChannel(bool)));
+        connect(ui->act_ch_05, SIGNAL(triggered(bool)), SLOT(slot_checkChannel(bool)));
+        connect(ui->act_ch_06, SIGNAL(triggered(bool)), SLOT(slot_checkChannel(bool)));
+        connect(ui->act_ch_07, SIGNAL(triggered(bool)), SLOT(slot_checkChannel(bool)));
+        connect(ui->act_ch_08, SIGNAL(triggered(bool)), SLOT(slot_checkChannel(bool)));
+        connect(ui->act_ch_09, SIGNAL(triggered(bool)), SLOT(slot_checkChannel(bool)));
+        connect(ui->act_ch_10, SIGNAL(triggered(bool)), SLOT(slot_checkChannel(bool)));
+        connect(ui->act_ch_11, SIGNAL(triggered(bool)), SLOT(slot_checkChannel(bool)));
+        connect(ui->act_ch_12, SIGNAL(triggered(bool)), SLOT(slot_checkChannel(bool)));
+        connect(ui->act_ch_13, SIGNAL(triggered(bool)), SLOT(slot_checkChannel(bool)));
+        connect(ui->act_ch_14, SIGNAL(triggered(bool)), SLOT(slot_checkChannel(bool)));
+        connect(ui->act_ch_15, SIGNAL(triggered(bool)), SLOT(slot_checkChannel(bool)));
+        connect(ui->act_ch_16, SIGNAL(triggered(bool)), SLOT(slot_checkChannel(bool)));
+        connect(ui->act_ch_all, SIGNAL(triggered()), SLOT(slot_checkChannel_all()));
+        connect(ui->act_ch_none, SIGNAL(triggered()), SLOT(slot_checkChannel_none()));
 
-        connect(ui->act_show_keyboard, SIGNAL(triggered(bool)), SLOT(showKeyboard(bool)));
-        connect(ui->act_about, SIGNAL(triggered()), SLOT(about()));
+        connect(ui->act_show_keyboard, SIGNAL(triggered(bool)), SLOT(slot_showKeyboard(bool)));
+        connect(ui->act_about, SIGNAL(triggered()), SLOT(slot_about()));
 
         // -------------------------------------------------------------
         // Final stuff
 
-        m_midiInTimerId = startTimer(50);
-        QTimer::singleShot(0, this, SLOT(updateScreen()));
+        m_midiInTimerId = startTimer(30);
+        QTimer::singleShot(0, this, SLOT(slot_updateScreen()));
+    }
+
+    void updateScreen()
+    {
+        scene.updateSize(ui->graphicsView->size());
+        ui->graphicsView->centerOn(0, 0);
+
+        int dial_x = ui->dial_x->value();
+        int dial_y = ui->dial_y->value();
+        slot_updateSceneX(dial_x);
+        slot_updateSceneY(dial_y);
+        scene.setSmoothValues(float(dial_x) / 100, float(dial_y) / 100);
     }
 
 protected slots:
-    void noteOn(int note)
+    void slot_noteOn(int note)
     {
         foreach (const int& channel, m_channels)
-            jack_midi_out_data.put_nowait(0x90 + channel - 1, note, 100);
+            qMidiOutData.put(0x90 + channel - 1, note, 100);
     }
 
-    void noteOff(int note)
+    void slot_noteOff(int note)
     {
         foreach (const int& channel, m_channels)
-            jack_midi_out_data.put_nowait(0x80 + channel - 1, note, 0);
+            qMidiOutData.put(0x80 + channel - 1, note, 0);
     }
 
-    void updateSceneX(int x)
+    void slot_updateSceneX(int x)
     {
         scene.setPosX(float(x) / 100, bool(sender()));
     }
 
-    void updateSceneY(int y)
+    void slot_updateSceneY(int y)
     {
         scene.setPosY(float(y) / 100, bool(sender()));
     }
 
-    void checkCC_X(QString text)
+    void slot_checkCC_X(QString text)
     {
-        if (! text.isEmpty())
-        {
-            bool ok;
-            int tmp_cc_x = text.split(" ").at(0).toInt(&ok, 16);
+        if (text.isEmpty())
+            return;
 
-            if (ok)
-            {
-                cc_x = tmp_cc_x;
-                scene.setControlX(cc_x);
-            }
+        bool ok;
+        int tmp_cc_x = text.split(" ").at(0).toInt(&ok, 16);
+
+        if (ok)
+        {
+            cc_x = tmp_cc_x;
+            scene.setControlX(cc_x);
         }
     }
 
-    void checkCC_Y(QString text)
+    void slot_checkCC_Y(QString text)
     {
-        if (! text.isEmpty())
-        {
-            bool ok;
-            int tmp_cc_y = text.split(" ").at(0).toInt(&ok, 16);
+        if (text.isEmpty())
+            return;
 
-            if (ok)
-            {
-                cc_y = tmp_cc_y;
-                scene.setControlY(cc_y);
-            }
+        bool ok;
+        int tmp_cc_y = text.split(" ").at(0).toInt(&ok, 16);
+
+        if (ok)
+        {
+            cc_y = tmp_cc_y;
+            scene.setControlY(cc_y);
         }
     }
 
-    void checkChannel(bool clicked)
+    void slot_checkChannel(bool clicked)
     {
         if (! sender())
             return;
@@ -618,7 +737,7 @@ protected slots:
         }
     }
 
-    void checkChannel_all()
+    void slot_checkChannel_all()
     {
         ui->act_ch_01->setChecked(true);
         ui->act_ch_02->setChecked(true);
@@ -648,7 +767,7 @@ protected slots:
         scene.setChannels(m_channels);
     }
 
-    void checkChannel_none()
+    void slot_checkChannel_none()
     {
         ui->act_ch_01->setChecked(false);
         ui->act_ch_02->setChecked(false);
@@ -671,12 +790,12 @@ protected slots:
         scene.setChannels(m_channels);
     }
 
-    void setSmooth(bool yesno)
+    void slot_setSmooth(bool yesno)
     {
         scene.setSmooth(yesno);
     }
 
-    void sceneCursorMoved(qreal xp, qreal yp)
+    void slot_sceneCursorMoved(float xp, float yp)
     {
         ui->dial_x->blockSignals(true);
         ui->dial_y->blockSignals(true);
@@ -688,13 +807,13 @@ protected slots:
         ui->dial_y->blockSignals(false);
     }
 
-    void showKeyboard(bool yesno)
+    void slot_showKeyboard(bool yesno)
     {
         ui->scrollArea->setVisible(yesno);
-        QTimer::singleShot(0, this, SLOT(updateScreen()));
+        QTimer::singleShot(0, this, SLOT(slot_updateScreen()));
     }
 
-    void about()
+    void slot_about()
     {
         QMessageBox::about(this, tr("About XY Controller"), tr("<h3>XY Controller</h3>"
                                                                "<br>Version %1"
@@ -702,16 +821,9 @@ protected slots:
                                                                "<br>Copyright (C) 2012 falkTX").arg(VERSION));
     }
 
-    void updateScreen()
+    void slot_updateScreen()
     {
-        scene.updateSize(ui->graphicsView->size());
-        ui->graphicsView->centerOn(0, 0);
-
-        int dial_x = ui->dial_x->value();
-        int dial_y = ui->dial_y->value();
-        updateSceneX(dial_x);
-        updateSceneY(dial_y);
-        scene.setSmoothValues(float(dial_x) / 100, float(dial_y) / 100);
+        updateScreen();
     }
 
 protected:
@@ -756,7 +868,6 @@ protected:
         if (settings.contains("Channels"))
         {
             QVariantList channels = settings.value("Channels").toList();
-
 
             foreach (const QVariant& var, channels)
             {
@@ -823,29 +934,32 @@ protected:
         if (m_channels.contains(16))
             ui->act_ch_16->setChecked(true);
     }
+
     void timerEvent(QTimerEvent* event)
     {
         if (event->timerId() == m_midiInTimerId)
         {
-            //if not jack_midi_in_data.empty():
-            //while True:
-            //try:
-            //    data1, data2, data3 = jack_midi_in_data.get_nowait()
-            //except QuequeEmpty:
-            //    break
+            if (! qMidiInData.isEmpty())
+            {
+                unsigned char d1, d2, d3;
+                qMidiInInternal.copyDataFrom(&qMidiInData);
 
-            //channel = (data1 & 0x0F) + 1
-            //mode    = data1 & 0xF0
+                while (qMidiInInternal.get(&d1, &d2, &d3, false))
+                {
+                    int channel = (d1 & 0x0F) + 1;
+                    int mode    = d1 & 0xF0;
 
-            //if channel in self.m_channels:
-            //    if mode == 0x80:
-            //        self.keyboard.sendNoteOff(data2, False)
-            //    elif mode == 0x90:
-            //        self.keyboard.sendNoteOn(data2, False)
-            //    elif mode == 0xB0:
-            //        self.scene.handleCC(data2, data3)
-
-            //jack_midi_in_data.task_done()
+                    if (m_channels.contains(channel))
+                    {
+                        if (mode == 0x80)
+                            ui->keyboard->sendNoteOff(d2, false);
+                        else if (mode == 0x90)
+                            ui->keyboard->sendNoteOn(d2, false);
+                        else if (mode == 0xB0)
+                            scene.handleCC(d2, d3);
+                    }
+                }
+            }
 
             scene.updateSmooth();
         }
@@ -872,15 +986,89 @@ private:
 
     int m_midiInTimerId;
 
-    XYGraphicsScene scene;
     QSettings settings;
+    XYGraphicsScene scene;
+    Ui::XYControllerW* const ui;
 
-    Ui::XYControllerW* ui;
+    Queue qMidiInInternal;
 };
 
 #include "xycontroller.moc"
 
 // -------------------------------
+
+int process_callback(const jack_nframes_t nframes, void*)
+{
+    void* const midiInBuffer  = jack_port_get_buffer(jMidiInPort, nframes);
+    void* const midiOutBuffer = jack_port_get_buffer(jMidiOutPort, nframes);
+
+    if (! (midiInBuffer && midiOutBuffer))
+        return 1;
+
+    // MIDI In
+    jack_midi_event_t midiEvent;
+    uint32_t midiEventCount = jack_midi_get_event_count(midiInBuffer);
+
+    qMidiInData.lock();
+
+    for (uint32_t i=0; i < midiEventCount; i++)
+    {
+        if (jack_midi_event_get(&midiEvent, midiInBuffer, i) != 0)
+            break;
+
+        if (midiEvent.size == 1)
+            qMidiInData.put(midiEvent.buffer[0], 0, 0, false);
+        else if (midiEvent.size == 2)
+            qMidiInData.put(midiEvent.buffer[0], midiEvent.buffer[1], 0, false);
+        else if (midiEvent.size >= 3)
+            qMidiInData.put(midiEvent.buffer[0], midiEvent.buffer[1], midiEvent.buffer[2], false);
+
+        if (qMidiInData.isFull())
+            break;
+    }
+    qMidiInData.unlock();
+
+    // MIDI Out
+    jack_midi_clear_buffer(midiOutBuffer);
+    qMidiOutData.lock();
+
+    if (! qMidiOutData.isEmpty())
+    {
+        unsigned char d1, d2, d3, data[3];
+
+        while (qMidiOutData.get(&d1, &d2, &d3, false))
+        {
+            data[0] = d1;
+            data[1] = d2;
+            data[2] = d3;
+            jack_midi_event_write(midiOutBuffer, 0, data, 3);
+        }
+    }
+    qMidiOutData.unlock();
+
+    return 0;
+}
+
+#ifdef HAVE_JACKSESSION
+void session_callback(jack_session_event_t* const event, void* const arg)
+{
+#ifdef Q_OS_LINUX
+    QString filepath("cadence_xycontroller");
+    Q_UNUSED(arg);
+#else
+    QString filepath((char*)arg);
+#endif
+
+    event->command_line = strdup(filepath.toUtf8().constData());
+
+    jack_session_reply(jClient, event);
+
+    if (event->type == JackSessionSaveAndQuit)
+        QApplication::instance()->quit();
+
+    jack_session_event_free(event);
+}
+#endif
 
 // -------------------------------
 
@@ -898,13 +1086,16 @@ int main(int argc, char* argv[])
     app.setOrganizationName("Cadence");
     //app.setWindowIcon(QIcon(":/48x48/xy-controller.png"));
 
-#if 0
     // JACK initialization
     jack_status_t jStatus;
-    jack_options_t jOptions = static_cast<JackOptions>(JackNoStartServer/*|JackSessionID*/);
-    jack_client = jack_client_open("XY-Controller", jOptions, &jStatus);
+#ifdef HAVE_JACKSESSION
+    jack_options_t jOptions = static_cast<JackOptions>(JackNoStartServer|JackSessionID);
+#else
+    jack_options_t jOptions = static_cast<JackOptions>(JackNoStartServer);
+#endif
+    jClient = jack_client_open("XY-Controller", jOptions, &jStatus);
 
-    if (! jack_client)
+    if (! jClient)
     {
         std::string errorString(jack_status_get_error_string(jStatus));
         QMessageBox::critical(nullptr, app.translate("XY-Controller", "Error"), app.translate("XY-Controller",
@@ -913,14 +1104,14 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    jack_midi_in_port  = jack_port_register(jack_client, "midi_in", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
-    jack_midi_out_port = jack_port_register(jack_client, "midi_out", JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
+    jMidiInPort  = jack_port_register(jClient, "midi_in", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+    jMidiOutPort = jack_port_register(jClient, "midi_out", JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
 
-    //jack_set_process_callback(jClient, process_callback, nullptr);
-    //jack_set_port_connect_callback(jClient, port_callback, nullptr);
-    //jack_set_session_callback(jClient, session_callback, argv[0]);
-    jack_activate(jack_client);
+    jack_set_process_callback(jClient, process_callback, nullptr);
+#ifdef HAVE_JACKSESSION
+    jack_set_session_callback(jClient, session_callback, argv[0]);
 #endif
+    jack_activate(jClient);
 
     // Show GUI
     XYControllerW gui;
@@ -929,10 +1120,8 @@ int main(int argc, char* argv[])
     // App-Loop
     int ret = app.exec();
 
-#if 0
-    jack_deactivate(jack_client);
-    jack_client_close(jack_client);
-#endif
+    jack_deactivate(jClient);
+    jack_client_close(jClient);
 
     return ret;
 }

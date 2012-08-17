@@ -7,7 +7,7 @@
 CXX   ?= g++
 STRIP ?= strip
 
-BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -mfpmath=sse -Wall
+BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -mfpmath=sse -Wall
 
 BUILD_FLAGS  = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
 BUILD_FLAGS += $(shell pkg-config --cflags QtCore QtGui jack)

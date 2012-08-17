@@ -81,11 +81,13 @@ midi_keyboard2key_map = {
 
 # MIDI Keyboard, using a pixmap for painting
 class PixmapKeyboard(QWidget):
+    # enum Color
     COLOR_CLASSIC = 0
-    COLOR_ORANGE = 1
+    COLOR_ORANGE  = 1
 
+    # enum Orientation
     HORIZONTAL = 0
-    VERTICAL = 1
+    VERTICAL   = 1
 
     def __init__(self, parent):
         QWidget.__init__(self, parent)
@@ -169,49 +171,19 @@ class PixmapKeyboard(QWidget):
 
         self.update()
 
-    def keyPressEvent(self, event):
-        qKey = str(event.key())
-
-        if qKey in midi_keyboard2key_map.keys():
-            self.sendNoteOn(midi_keyboard2key_map.get(qKey))
-
-        QWidget.keyPressEvent(self, event)
-
-    def keyReleaseEvent(self, event):
-        qKey = str(event.key())
-
-        if qKey in midi_keyboard2key_map.keys():
-            self.sendNoteOff(midi_keyboard2key_map.get(qKey))
-
-        QWidget.keyReleaseEvent(self, event)
-
-    def mousePressEvent(self, event):
-        self.m_lastMouseNote = -1
-        self.handleMousePos(event.pos())
-        self.setFocus()
-        QWidget.mousePressEvent(self, event)
-
-    def mouseMoveEvent(self, event):
-        self.handleMousePos(event.pos())
-        QWidget.mousePressEvent(self, event)
-
-    def mouseReleaseEvent(self, event):
-        if self.m_lastMouseNote != -1:
-            self.sendNoteOff(self.m_lastMouseNote)
-            self.m_lastMouseNote = -1
-        QWidget.mouseReleaseEvent(self, event)
-
     def handleMousePos(self, pos):
         if self.m_pixmap_mode == self.HORIZONTAL:
             if pos.x() < 0 or pos.x() > self.m_octaves * 144:
                 return
-            octave = int(pos.x() / self.p_width)
-            n_pos = QPointF(pos.x() % self.p_width, pos.y())
+            posX = pos.x() - 1
+            octave = int(posX / self.p_width)
+            n_pos  = QPointF(posX % self.p_width, pos.y())
         elif self.m_pixmap_mode == self.VERTICAL:
             if pos.y() < 0 or pos.y() > self.m_octaves * 144:
                 return
-            octave = int(self.m_octaves - pos.y() / self.p_height)
-            n_pos = QPointF(pos.x(), pos.y() % self.p_height)
+            posY = pos.y() - 1
+            octave = int(self.m_octaves - posY / self.p_height)
+            n_pos  = QPointF(pos.x(), posY % self.p_height)
         else:
             return
 
@@ -254,6 +226,36 @@ class PixmapKeyboard(QWidget):
 
         self.m_lastMouseNote = note
 
+    def keyPressEvent(self, event):
+        if not event.isAutoRepeat():
+            qKey = str(event.key())
+            if qKey in midi_keyboard2key_map.keys():
+                self.sendNoteOn(midi_keyboard2key_map.get(qKey))
+        QWidget.keyPressEvent(self, event)
+
+    def keyReleaseEvent(self, event):
+        if not event.isAutoRepeat():
+            qKey = str(event.key())
+            if qKey in midi_keyboard2key_map.keys():
+                self.sendNoteOff(midi_keyboard2key_map.get(qKey))
+        QWidget.keyReleaseEvent(self, event)
+
+    def mousePressEvent(self, event):
+        self.m_lastMouseNote = -1
+        self.handleMousePos(event.pos())
+        self.setFocus()
+        QWidget.mousePressEvent(self, event)
+
+    def mouseMoveEvent(self, event):
+        self.handleMousePos(event.pos())
+        QWidget.mousePressEvent(self, event)
+
+    def mouseReleaseEvent(self, event):
+        if self.m_lastMouseNote != -1:
+            self.sendNoteOff(self.m_lastMouseNote)
+            self.m_lastMouseNote = -1
+        QWidget.mouseReleaseEvent(self, event)
+
     def paintEvent(self, event):
         painter = QPainter(self)
 
@@ -283,7 +285,7 @@ class PixmapKeyboard(QWidget):
             if self._isNoteBlack(note):
                 continue
 
-            if note < 35:
+            if note < 36:
                 # cannot paint this note
                 continue
             elif note < 48:
@@ -345,7 +347,7 @@ class PixmapKeyboard(QWidget):
             if not self._isNoteBlack(note):
                 continue
 
-            if note < 35:
+            if note < 36:
                 # cannot paint this note
                 continue
             elif note < 48:

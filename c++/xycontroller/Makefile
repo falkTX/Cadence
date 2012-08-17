@@ -11,7 +11,7 @@ UIC   ?= uic
 STRIP ?= strip
 WINDRES ?= windres
 
-BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -mfpmath=sse -Wall -I../widgets
+BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -mfpmath=sse -Wall -I../widgets
 
 BUILD_FLAGS  = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
 BUILD_FLAGS += $(shell pkg-config --cflags QtCore QtGui jack)

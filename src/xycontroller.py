@@ -19,6 +19,7 @@
 # Imports (Global)
 from PyQt4.QtCore import pyqtSlot, Qt, QPointF, QRectF, QSettings, QTimer
 from PyQt4.QtGui import QApplication, QColor, QGraphicsItem, QGraphicsScene, QMainWindow, QPainter, QPen
+#from Queue import Queue, Empty as QuequeEmpty
 from queue import Queue, Empty as QuequeEmpty
 
 # Imports (Custom)
@@ -44,9 +45,9 @@ class XYGraphicsScene(QGraphicsScene):
         self.m_channels = []
 
         self.m_mouseLock = False
-        self.m_smooth = False
-        self.m_smooth_x = 0
-        self.m_smooth_y = 0
+        self.m_smooth    = False
+        self.m_smooth_x  = 0.0
+        self.m_smooth_y  = 0.0
 
         self.setBackgroundBrush(Qt.black)
 
@@ -70,26 +71,32 @@ class XYGraphicsScene(QGraphicsScene):
         self.m_channels = channels
 
     def setPosX(self, x, forward=True):
-        if not self.m_mouseLock:
-            pos_x = x * (self.p_size.x() + self.p_size.width())
-            self.m_cursor.setPos(pos_x, self.m_cursor.y())
-            self.m_lineV.setX(pos_x)
+        if self.m_mouseLock:
+            return
 
-            if forward:
-                self.sendMIDI(pos_x / (self.p_size.x() + self.p_size.width()), None)
-            else:
-                self.m_smooth_x = pos_x
+        posX = x * (self.p_size.x() + self.p_size.width())
+        self.m_cursor.setPos(posX, self.m_cursor.y())
+        self.m_lineV.setX(posX)
+
+        if forward:
+            value = posX / (self.p_size.x() + self.p_size.width())
+            self.sendMIDI(value, None)
+        else:
+            self.m_smooth_x = posX
 
     def setPosY(self, y, forward=True):
-        if not self.m_mouseLock:
-            pos_y = y * (self.p_size.y() + self.p_size.height())
-            self.m_cursor.setPos(self.m_cursor.x(), pos_y)
-            self.m_lineH.setY(pos_y)
+        if self.m_mouseLock:
+            return
 
-            if forward:
-                self.sendMIDI(None, pos_y / (self.p_size.y() + self.p_size.height()))
-            else:
-                self.m_smooth_y = pos_y
+        posY = y * (self.p_size.y() + self.p_size.height())
+        self.m_cursor.setPos(self.m_cursor.x(), posY)
+        self.m_lineH.setY(posY)
+
+        if forward:
+            value = posY / (self.p_size.y() + self.p_size.height())
+            self.sendMIDI(None, value)
+        else:
+            self.m_smooth_y = posY
 
     def setSmooth(self, smooth):
         self.m_smooth = smooth
@@ -104,27 +111,27 @@ class XYGraphicsScene(QGraphicsScene):
 
         if param == self.cc_x:
             sendUpdate = True
-            xp = (float(value) / 63) - 1.0
+            xp = float(value)/63 - 1.0
             yp = self.m_cursor.y() / (self.p_size.y() + self.p_size.height())
-
-            if xp < -1.0:
-                xp = -1.0
-            elif xp > 1.0:
-                xp = 1.0
 
             self.setPosX(xp, False)
 
         if param == self.cc_y:
             sendUpdate = True
             xp = self.m_cursor.x() / (self.p_size.x() + self.p_size.width())
-            yp = (float(value) / 63) - 1.0
-
-            if yp < -1.0:
-                yp = -1.0
-            elif yp > 1.0:
-                yp = 1.0
+            yp = float(value)/63 - 1.0
 
             self.setPosY(yp, False)
+
+        if xp < -1.0:
+            xp = -1.0
+        elif xp > 1.0:
+            xp = 1.0
+
+        if yp < -1.0:
+            yp = -1.0
+        elif yp > 1.0:
+            yp = 1.0
 
         if sendUpdate:
             self.emit(SIGNAL("cursorMoved(double, double)"), xp, yp)
@@ -170,33 +177,37 @@ class XYGraphicsScene(QGraphicsScene):
                 jack_midi_out_data.put_nowait((0xB0 + channel - 1, self.cc_y, value))
 
     def updateSize(self, size):
-        self.p_size.setRect(-(size.width() / 2), -(size.height() / 2), size.width(), size.height())
+        self.p_size.setRect(-(float(size.width())/2), -(float(size.height())/2), size.width(), size.height())
 
     def updateSmooth(self):
         if not self.m_smooth:
             return
 
-        if self.m_cursor.x() != self.m_smooth_x or self.m_cursor.y() != self.m_smooth_y:
-            if abs(self.m_cursor.x() - self.m_smooth_x) <= 0.001:
-                self.m_smooth_x = self.m_cursor.x()
-                return
-            elif abs(self.m_cursor.y() - self.m_smooth_y) <= 0.001:
-                self.m_smooth_y = self.m_cursor.y()
-                return
+        if self.m_cursor.x() == self.m_smooth_x and self.m_cursor.y() == self.m_smooth_y:
+            return
 
-            new_x = (self.m_smooth_x + self.m_cursor.x() * 3) / 4
-            new_y = (self.m_smooth_y + self.m_cursor.y() * 3) / 4
-            pos = QPointF(new_x, new_y)
+        if abs(self.m_cursor.x() - self.m_smooth_x) <= 0.001:
+            self.m_smooth_x = self.m_cursor.x()
+            return
+        if abs(self.m_cursor.y() - self.m_smooth_y) <= 0.001:
+            self.m_smooth_y = self.m_cursor.y()
+            return
 
-            self.m_cursor.setPos(pos)
-            self.m_lineH.setY(pos.y())
-            self.m_lineV.setX(pos.x())
+        print("updateSmooth() - %f %f | %f %f" % (self.m_cursor.x(), self.m_cursor.y(), self.m_smooth_x, self.m_smooth_y))
 
-            xp = pos.x() / (self.p_size.x() + self.p_size.width())
-            yp = pos.y() / (self.p_size.y() + self.p_size.height())
+        newX = float(self.m_smooth_x + self.m_cursor.x()*3) / 4
+        newY = float(self.m_smooth_y + self.m_cursor.y()*3) / 4
+        pos  = QPointF(newX, newY)
 
-            self.sendMIDI(xp, yp)
-            self.emit(SIGNAL("cursorMoved(double, double)"), xp, yp)
+        self.m_cursor.setPos(pos)
+        #self.m_lineH.setY(pos.y())
+        #self.m_lineV.setX(pos.x())
+
+        xp = pos.x() / (self.p_size.x() + self.p_size.width())
+        yp = pos.y() / (self.p_size.y() + self.p_size.height())
+
+        #self.sendMIDI(xp, yp)
+        self.emit(SIGNAL("cursorMoved(double, double)"), xp, yp)
 
     def keyPressEvent(self, event):
         event.accept()
@@ -324,25 +335,34 @@ class XYControllerW(QMainWindow, ui_xycontroller.Ui_XYControllerW):
     @pyqtSlot(int)
     def slot_updateSceneX(self, x):
         self.scene.setPosX(float(x) / 100, bool(self.sender()))
+        print("slot_updateSceneX(%i)" % x)
 
     @pyqtSlot(int)
     def slot_updateSceneY(self, y):
         self.scene.setPosY(float(y) / 100, bool(self.sender()))
+        print("slot_updateSceneY(%i)" % y)
 
     @pyqtSlot(str)
     def slot_checkCC_X(self, text):
-        if text:
-            self.cc_x = int(text.split(" ")[0], 16)
-            self.scene.setControlX(self.cc_x)
+        if not text:
+            return
+
+        self.cc_x = int(text.split(" ")[0], 16)
+        self.scene.setControlX(self.cc_x)
 
     @pyqtSlot(str)
     def slot_checkCC_Y(self, text):
-        if text:
-            self.cc_y = int(text.split(" ")[0], 16)
-            self.scene.setControlY(self.cc_y)
+        if not text:
+            return
+
+        self.cc_y = int(text.split(" ")[0], 16)
+        self.scene.setControlY(self.cc_y)
 
     @pyqtSlot(bool)
     def slot_checkChannel(self, clicked):
+        if not self.sender():
+            return
+
         channel = int(self.sender().text())
         if clicked and channel not in self.m_channels:
             self.m_channels.append(channel)
