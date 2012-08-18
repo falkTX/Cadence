@@ -24,11 +24,6 @@
 class PixmapDial : public QDial
 {
 public:
-    enum Orientation {
-        HORIZONTAL = 0,
-        VERTICAL   = 1
-    };
-
     enum CustomPaint {
         CUSTOM_PAINT_NULL      = 0,
         CUSTOM_PAINT_CARLA_WET = 1,
@@ -57,6 +52,16 @@ protected:
     void resizeEvent(QResizeEvent* event);
 
 private:
+    enum Orientation {
+        HORIZONTAL = 0,
+        VERTICAL   = 1
+    };
+
+    static const unsigned short HOVER_MIN = 0;
+    static const unsigned short HOVER_MAX = 9;
+
+    // -------------------------------------
+
     QPixmap m_pixmap;
     QString m_pixmap_n_str;
 
@@ -79,9 +84,6 @@ private:
     QColor m_colorT[2];
 
     int p_width, p_height, p_size, p_count;
-
-    static const unsigned short HOVER_MIN = 0;
-    static const unsigned short HOVER_MAX = 9;
 };
 
 #endif // PIXMAPDIAL_H

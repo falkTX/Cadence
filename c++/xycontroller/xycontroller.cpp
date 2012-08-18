@@ -56,24 +56,27 @@ public:
 
     void copyDataFrom(Queue* queue)
     {
-        mutex.lock();
+        // lock mutexes
         queue->mutex.lock();
+        mutex.lock();
 
         // copy data from queue
         memcpy(data, queue->data, sizeof(datatype)*MAX_SIZE);
+        index = queue->index;
         empty = queue->empty;
         full  = queue->full;
 
+        // unlock our mutex, no longer needed
+        mutex.unlock();
+
         // reset queque
         memset(queue->data, 0, sizeof(datatype)*MAX_SIZE);
+        queue->index = 0;
         queue->empty = true;
         queue->full  = false;
 
-        // reset indexes
-        index = queue->index = 0;
-
+        // unlock queque mutex
         queue->mutex.unlock();
-        mutex.unlock();
     }
 
     bool isEmpty()
@@ -133,7 +136,7 @@ public:
         if (lock)
             mutex.lock();
 
-        full  = false;
+        full = false;
 
         if (data[index].d1 == 0)
         {
