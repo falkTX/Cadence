@@ -18,7 +18,7 @@
 #ifndef CARLA_LV2_INCLUDES_H
 #define CARLA_LV2_INCLUDES_H
 
-// TODO - presets
+// TODO - presets state
 
 #include "lv2/lv2.h"
 #include "lv2/atom.h"

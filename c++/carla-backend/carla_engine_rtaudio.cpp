@@ -45,6 +45,8 @@ CarlaEngineRtAudio::CarlaEngineRtAudio(RtAudio::Api api)
 {
     qDebug("CarlaEngineRtAudio::CarlaEngineRtAudio()");
 
+    type = CarlaEngineTypeRtAudio;
+
     procThread = nullptr;
 }
 
@@ -143,11 +145,7 @@ bool CarlaEngineRtAudio::isRunning()
 
 CarlaEngineClient* CarlaEngineRtAudio::addClient(CarlaPlugin* const plugin)
 {
-    CarlaEngineClientNativeHandle handle = {
-    #ifdef CARLA_ENGINE_JACK
-        nullptr
-    #endif
-    };
+    CarlaEngineClientNativeHandle handle;
 
     return new CarlaEngineClient(handle);
     Q_UNUSED(plugin);

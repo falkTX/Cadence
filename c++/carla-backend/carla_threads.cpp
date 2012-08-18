@@ -40,11 +40,13 @@ void CarlaCheckThread::stopNow()
 {
     m_stopNow = true;
 
-    if (! wait(200))
+    if (isRunning() && ! wait(200))
+    {
         quit();
 
-    if (isRunning() && ! wait(200))
-        terminate();
+        if (isRunning() && ! wait(300))
+            terminate();
+    }
 }
 
 void CarlaCheckThread::run()

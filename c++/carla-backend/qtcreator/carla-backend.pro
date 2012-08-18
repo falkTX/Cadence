@@ -15,7 +15,7 @@ VERSION  = 0.5.0
 
 SOURCES = \
     ../carla_backend_standalone.cpp \
-    ../carla_backend_lv2.cpp \
+#    ../carla_backend_lv2.cpp \
     ../carla_bridge.cpp \
     ../carla_engine.cpp \
     ../carla_engine_jack.cpp \

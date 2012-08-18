@@ -22,10 +22,6 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
-#if 0
-} /* adjust editor indent */
-#endif
-
 /*!
  * @defgroup CarlaBackendShared Carla Backend Shared Code
  *

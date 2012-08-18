@@ -29,6 +29,11 @@
 
 #include <QtCore/Qt>
 
+// TESTING - remove later
+#ifdef QTCREATOR_TEST
+#undef Q_COMPILER_INITIALIZER_LISTS
+#endif
+
 #ifndef Q_COMPILER_LAMBDA
 #  define nullptr (0)
 #endif

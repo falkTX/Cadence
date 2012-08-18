@@ -18,7 +18,7 @@
 #ifndef CARLA_VST_INCLUDES_H
 #define CARLA_VST_INCLUDES_H
 
-// force-disable deprecated VST features
+// disable deprecated VST features (not)
 #define VST_FORCE_DEPRECATED 0
 
 #include <cstdint>

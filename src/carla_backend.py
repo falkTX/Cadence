@@ -700,7 +700,7 @@ class GuiInfo(Structure):
         ("resizable", c_bool),
     ]
 
-CallbackFunc = CFUNCTYPE(None, c_enum, c_ushort, c_int, c_int, c_double)
+CallbackFunc = CFUNCTYPE(None, c_void_p, c_enum, c_ushort, c_int, c_int, c_double)
 
 # ------------------------------------------------------------------------------------------------
 # Backend C++ -> Python object

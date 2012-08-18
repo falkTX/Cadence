@@ -149,7 +149,7 @@ bool engine_init(const char* driver_name, const char* client_name)
     }
 #endif
 
-    carlaEngine->setCallback(carlaFunc);
+    carlaEngine->setCallback(carlaFunc, nullptr);
 
     bool started = carlaEngine->init(client_name);
 
@@ -1148,7 +1148,7 @@ void set_callback_function(CarlaBackend::CallbackFunc func)
     carlaFunc = func;
 
     if (carlaEngine)
-        carlaEngine->setCallback(func);
+        carlaEngine->setCallback(func, nullptr);
 }
 
 void set_option(CarlaBackend::OptionsType option, int value, const char* valueStr)
@@ -1167,7 +1167,7 @@ void set_option(CarlaBackend::OptionsType option, int value, const char* valueSt
 
 QDialog* vstGui = nullptr;
 
-void main_callback(CarlaBackend::CallbackType action, unsigned short pluginId, int value1, int value2, double value3)
+void main_callback(void* ptr, CarlaBackend::CallbackType action, unsigned short pluginId, int value1, int value2, double value3)
 {
     switch (action)
     {
@@ -1182,6 +1182,7 @@ void main_callback(CarlaBackend::CallbackType action, unsigned short pluginId, i
         break;
     }
 
+    Q_UNUSED(ptr);
     Q_UNUSED(pluginId);
     Q_UNUSED(value3);
 }

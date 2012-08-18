@@ -21,10 +21,6 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
-#if 0
-} /* adjust editor indent */
-#endif
-
 static const char* carlaLastError = nullptr;
 
 #ifndef BUILD_BRIDGE
@@ -48,6 +44,8 @@ const char* BinaryType2str(const BinaryType type)
         return "BINARY_WIN32";
     case BINARY_WIN64:
         return "BINARY_WIN64";
+    case BINARY_OTHER:
+        return "BINARY_OTHER";
     }
 
     qWarning("CarlaBackend::BinaryType2str(%i) - invalid type", type);
@@ -120,6 +118,8 @@ const char* ParameterType2str(const ParameterType type)
         return "PARAMETER_OUTPUT";
     case PARAMETER_LATENCY:
         return "PARAMETER_LATENCY";
+    case PARAMETER_SAMPLE_RATE:
+        return "PARAMETER_SAMPLE_RATE";
     }
 
     qWarning("CarlaBackend::ParameterType2str(%i) - invalid type", type);
@@ -130,6 +130,8 @@ const char* InternalParametersIndex2str(const InternalParametersIndex index)
 {
     switch (index)
     {
+    case PARAMETER_NULL:
+        return "PARAMETER_NULL";
     case PARAMETER_ACTIVE:
         return "PARAMETER_ACTIVE";
     case PARAMETER_DRYWET:

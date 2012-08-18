@@ -87,11 +87,6 @@ private:
 
     // -------------------------------------------------------------------
 
-    static void osc_error_handler(const int num, const char* const msg, const char* const path)
-    {
-        qCritical("osc_error_handler(%i, %s, %s)", num, msg, path);
-    }
-
     static int osc_message_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg, void* const user_data)
     {
         CarlaOsc* const _this_ = (CarlaOsc*)user_data;

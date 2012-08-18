@@ -86,6 +86,8 @@ CarlaEngineJack::CarlaEngineJack() :
 {
     qDebug("CarlaEngineJack::CarlaEngineJack()");
 
+    type = CarlaEngineTypeJack;
+
     client = nullptr;
     state  = JackTransportStopped;
     freewheel = false;
@@ -224,9 +226,7 @@ bool CarlaEngineJack::isRunning()
 
 CarlaEngineClient* CarlaEngineJack::addClient(CarlaPlugin* const plugin)
 {
-    CarlaEngineClientNativeHandle handle = {
-        nullptr
-    };
+    CarlaEngineClientNativeHandle handle;
 
 #ifndef BUILD_BRIDGE
     if (carlaOptions.process_mode == PROCESS_MODE_SINGLE_CLIENT)

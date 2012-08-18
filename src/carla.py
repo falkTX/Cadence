@@ -1671,7 +1671,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
 # ------------------------------------------------------------------------------------------------
 
-def callback_function(action, plugin_id, value1, value2, value3):
+def callback_function(ptr, action, plugin_id, value1, value2, value3):
     if plugin_id < 0 or plugin_id >= MAX_PLUGINS:
         return
 

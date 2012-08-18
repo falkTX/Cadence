@@ -426,7 +426,7 @@ enum ProcessModeType {
  *
  * \see CarlaEngine::setCallback()
  */
-typedef void (*CallbackFunc)(CallbackType action, unsigned short pluginId, int value1, int value2, double value3);
+typedef void (*CallbackFunc)(void* ptr, CallbackType action, unsigned short pluginId, int value1, int value2, double value3);
 
 struct midi_program_t {
     quint32 bank;

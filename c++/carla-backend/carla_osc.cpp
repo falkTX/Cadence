@@ -19,7 +19,11 @@
 #include "carla_plugin.h"
 
 CARLA_BACKEND_START_NAMESPACE
-//namespace CarlaBackend {
+
+void osc_error_handler(const int num, const char* const msg, const char* const path)
+{
+    qCritical("osc_error_handler(%i, %s, %s)", num, msg, path);
+}
 
 CarlaOsc::CarlaOsc(CarlaEngine* const engine_) :
     engine(engine_)
