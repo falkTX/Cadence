@@ -39,8 +39,8 @@ endif
 
 ifeq ($(HAVE_PULSEAUDIO),true)
 WANT_RTAUDIO      = true
-CARLA_CXX_FLAGS += $(shell pkg-config --cflags libpulse-simple) -D__LINUX_PULSE__
-CARLA_LD_FLAGS  += $(shell pkg-config --libs libpulse-simple)
+CARLA_CXX_FLAGS  += $(shell pkg-config --cflags libpulse-simple) -D__LINUX_PULSE__
+CARLA_LD_FLAGS   += $(shell pkg-config --libs libpulse-simple)
 endif
 
 ifeq ($(HAVE_FLUIDSYNTH),true)
@@ -81,6 +81,9 @@ endif
 # --------------------------------------------------------------
 
 all: carla_backend.so
+
+doc: carla_backend.doxygen
+	doxygen $<
 
 carla_backend.so: $(OBJS)
 	$(CXX) $^ $(CARLA_LD_FLAGS) -o $@ && strip $@

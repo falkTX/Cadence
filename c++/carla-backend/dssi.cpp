@@ -1224,21 +1224,15 @@ public:
 
             for (i=0; i < count; i++)
             {
-                // Dry/Wet and Volume
-                if (do_drywet || do_volume)
+                // Dry/Wet
+                if (do_drywet)
                 {
                     for (k=0; k < frames; k++)
                     {
-                        if (do_drywet)
-                        {
-                            if (aout.count == 1 && ! h2)
-                                outBuffer[i][k] = (outBuffer[i][k]*x_drywet)+(inBuffer[0][k]*(1.0-x_drywet));
-                            else
-                                outBuffer[i][k] = (outBuffer[i][k]*x_drywet)+(inBuffer[i][k]*(1.0-x_drywet));
-                        }
-
-                        if (do_volume)
-                            outBuffer[i][k] *= x_vol;
+                        if (aout.count == 1 && ! h2)
+                            outBuffer[i][k] = (outBuffer[i][k]*x_drywet)+(inBuffer[0][k]*(1.0-x_drywet));
+                        else
+                            outBuffer[i][k] = (outBuffer[i][k]*x_drywet)+(inBuffer[i][k]*(1.0-x_drywet));
                     }
                 }
 
@@ -1266,6 +1260,13 @@ public:
                             outBuffer[i][k] += oldBufLeft[k]*bal_rangeL;
                         }
                     }
+                }
+
+                // Volume
+                if (do_volume)
+                {
+                    for (k=0; k < frames; k++)
+                        outBuffer[i][k] *= x_vol;
                 }
 
                 // Output VU

@@ -1802,7 +1802,7 @@ public:
 
             case PluginPostEventNoteOn:
                 // Update OSC based UIs
-                if (true)
+                if (osc.data.target)
                 {
                     uint8_t midiData[4] = { 0 };
                     midiData[1] = MIDI_STATUS_NOTE_ON + event->value1;
@@ -1820,7 +1820,7 @@ public:
 
             case PluginPostEventNoteOff:
                 // Update OSC based UIs
-                if (true)
+                if (osc.data.target)
                 {
                     uint8_t midiData[4] = { 0 };
                     midiData[1] = MIDI_STATUS_NOTE_OFF + event->value1;

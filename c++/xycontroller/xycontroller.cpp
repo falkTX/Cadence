@@ -428,15 +428,12 @@ public:
             return;
 
         if (abs_f(m_cursor->x() - m_smooth_x) <= 0.0005f)
-        {
             m_smooth_x = m_cursor->x();
-            return;
-        }
         if (abs_f(m_cursor->y() - m_smooth_y) <= 0.0005f)
-        {
             m_smooth_y = m_cursor->y();
+
+        if (m_cursor->x() == m_smooth_x && m_cursor->y() == m_smooth_y)
             return;
-        }
 
         float newX = float(m_smooth_x + m_cursor->x()*7) / 8;
         float newY = float(m_smooth_y + m_cursor->y()*7) / 8;

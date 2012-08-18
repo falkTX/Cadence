@@ -1332,6 +1332,10 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.dial_b_right.setStatusTip(message)
         Carla.gui.statusBar().showMessage(message)
 
+    def setId(self, idx):
+        self.m_pluginId = idx
+        self.edit_dialog.m_pluginId = idx
+
     def setWidgetColor(self, color):
         if color == PALETTE_COLOR_WHITE:
             r = 110

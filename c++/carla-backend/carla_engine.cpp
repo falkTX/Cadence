@@ -281,9 +281,7 @@ bool CarlaEngine::removePlugin(const unsigned short id)
         plugin->setEnabled(false);
         processUnlock();
 
-        if (m_checkThread.isRunning())
-            m_checkThread.stopNow();
-
+        m_checkThread.stopNow();
         delete plugin;
 
         m_carlaPlugins[id] = nullptr;
@@ -291,13 +289,13 @@ bool CarlaEngine::removePlugin(const unsigned short id)
 
         if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
         {
-            for (unsigned short i=id; i < MAX_PLUGINS; i++)
+            for (unsigned short i=id; i < MAX_PLUGINS-1; i++)
             {
                 m_carlaPlugins[i] = m_carlaPlugins[i+1];
                 m_uniqueNames[i]  = m_uniqueNames[i+1];
 
                 if (m_carlaPlugins[i])
-                    m_carlaPlugins[i]->setId(i+1);
+                    m_carlaPlugins[i]->setId(i);
             }
         }
 
@@ -992,8 +990,7 @@ void CarlaEngine::osc_send_set_parameter_ranges(const int32_t pluginId, const in
 void CarlaEngine::osc_send_set_parameter_midi_cc(const int32_t pluginId, const int32_t index, const int32_t cc)
 {
     qDebug("CarlaEngine::osc_send_set_parameter_midi_cc(%i, %i, %i)", pluginId, index, cc);
-    const CarlaOscData* const oscData = m_osc.getControllerData();
-    Q_ASSERT(oscData);
+    Q_ASSERT(m_oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < MAX_PLUGINS);
     Q_ASSERT(index >= 0);
 

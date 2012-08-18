@@ -49,7 +49,7 @@
 const uint32_t bufferSize = 512;
 const double   sampleRate = 44100.0;
 
-// Since discovery can find multi-architecture binaries, don't print ELF related errors
+// Since discovery can find multi-architecture binaries, don't print ELF/EXE related errors
 void print_lib_error(const char* const filename)
 {
     const char* const error = lib_error(filename);

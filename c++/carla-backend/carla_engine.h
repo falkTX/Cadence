@@ -202,6 +202,11 @@ public:
         m_carlaPlugins[id] = plugin;
     }
 
+    CarlaPlugin* __getPlugin(const unsigned short id) const
+    {
+        return m_carlaPlugins[id];
+    }
+
     // -------------------------------------------------------------------
     // Information (base)
 

@@ -58,7 +58,7 @@ void CarlaCheckThread::run()
     {
         for (unsigned short i=0; i < CarlaBackend::MAX_PLUGINS; i++)
         {
-            CarlaBackend::CarlaPlugin* const plugin = engine->getPlugin(i);
+            CarlaBackend::CarlaPlugin* const plugin = engine->__getPlugin(i);
 
             if (plugin && plugin->enabled())
             {

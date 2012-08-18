@@ -80,9 +80,13 @@ static void carla_jack_shutdown_callback(void* arg)
 // -------------------------------------------------------------------------------------------------------------------
 // Carla Engine (JACK)
 
-CarlaEngineJack::CarlaEngineJack() :
-    CarlaEngine(),
-    rackJackPorts{nullptr}
+CarlaEngineJack::CarlaEngineJack()
+#ifdef Q_COMPILER_INITIALIZER_LISTS
+    : CarlaEngine(),
+      rackJackPorts{nullptr}
+#else
+    : CarlaEngine()
+#endif
 {
     qDebug("CarlaEngineJack::CarlaEngineJack()");
 
@@ -94,6 +98,11 @@ CarlaEngineJack::CarlaEngineJack() :
     procThread = nullptr;
 
     memset(&pos, 0, sizeof(jack_position_t));
+
+#ifndef Q_COMPILER_INITIALIZER_LISTS
+    for (unsigned short i=0; i < rackPortCount; i++)
+        rackJackPorts[i] = nullptr;
+#endif
 }
 
 CarlaEngineJack::~CarlaEngineJack()
@@ -308,7 +317,7 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
     {
         for (unsigned short i=0; i < MAX_PLUGINS; i++)
         {
-            CarlaPlugin* const plugin = getPlugin(i);
+            CarlaPlugin* const plugin = __getPlugin(i);
 
             if (plugin && plugin->enabled())
             {
@@ -357,7 +366,57 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
         // initialize control input
         memset(rackControlEventsIn, 0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
         {
-            // TODO
+            jack_midi_event_t jackEvent;
+            const uint32_t    jackEventCount = jack_midi_get_event_count(controlIn);
+
+            uint32_t carlaEventIndex = 0;
+
+            for (uint32_t jackEventIndex=0; jackEventIndex < jackEventCount; jackEventIndex++)
+            {
+                if (jack_midi_event_get(&jackEvent, controlIn, jackEventIndex) != 0)
+                    continue;
+
+                CarlaEngineControlEvent* const carlaEvent = &rackControlEventsIn[carlaEventIndex++];
+
+                uint8_t midiStatus  = jackEvent.buffer[0];
+                uint8_t midiChannel = midiStatus & 0x0F;
+
+                carlaEvent->time    = jackEvent.time;
+                carlaEvent->channel = midiChannel;
+
+                if (MIDI_IS_STATUS_CONTROL_CHANGE(midiStatus))
+                {
+                    uint8_t midiControl = jackEvent.buffer[1];
+
+                    if (MIDI_IS_CONTROL_BANK_SELECT(midiControl))
+                    {
+                        uint8_t midiBank = jackEvent.buffer[2];
+                        carlaEvent->type  = CarlaEngineEventMidiBankChange;
+                        carlaEvent->value = midiBank;
+                    }
+                    else if (midiControl == MIDI_CONTROL_ALL_SOUND_OFF)
+                    {
+                        carlaEvent->type = CarlaEngineEventAllSoundOff;
+                    }
+                    else if (midiControl == MIDI_CONTROL_ALL_NOTES_OFF)
+                    {
+                        carlaEvent->type = CarlaEngineEventAllNotesOff;
+                    }
+                    else
+                    {
+                        uint8_t midiValue     = jackEvent.buffer[2];
+                        carlaEvent->type       = CarlaEngineEventControlChange;
+                        carlaEvent->controller = midiControl;
+                        carlaEvent->value      = double(midiValue)/127;
+                    }
+                }
+                else if (MIDI_IS_STATUS_PROGRAM_CHANGE(midiStatus))
+                {
+                    uint8_t midiProgram = jackEvent.buffer[1];
+                    carlaEvent->type  = CarlaEngineEventMidiProgramChange;
+                    carlaEvent->value = midiProgram;
+                }
+            }
         }
 
         // initialize midi input
@@ -392,7 +451,7 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
         // process plugins
         for (unsigned short i=0; i < MAX_PLUGINS; i++)
         {
-            CarlaPlugin* const plugin = getPlugin(i);
+            CarlaPlugin* const plugin = __getPlugin(i);
 
             if (plugin && plugin->enabled())
             {
@@ -445,6 +504,12 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
                     }
                 }
 
+                // if plugin has no midi output, add previous midi input
+                if (plugin->midiOutCount() == 0)
+                {
+                    memcpy(rackMidiEventsOut, rackMidiEventsIn, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+                }
+
                 processed = true;
             }
         }
@@ -463,7 +528,50 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
 
         // output control
         {
-            // TODO
+            jack_midi_clear_buffer(controlOut);
+
+            for (unsigned short i=0; i < MAX_ENGINE_CONTROL_EVENTS; i++)
+            {
+                CarlaEngineControlEvent* const event = &rackControlEventsOut[i];
+
+                if (event->type == CarlaEngineEventControlChange && MIDI_IS_CONTROL_BANK_SELECT(event->controller))
+                    event->type = CarlaEngineEventMidiBankChange;
+
+                uint8_t data[4] = { 0 };
+
+                switch (event->type)
+                {
+                case CarlaEngineEventNull:
+                    break;
+                case CarlaEngineEventControlChange:
+                    data[0] = MIDI_STATUS_CONTROL_CHANGE + event->channel;
+                    data[1] = event->controller;
+                    data[2] = event->value * 127;
+                    jack_midi_event_write(controlOut, event->time, data, 3);
+                    break;
+                case CarlaEngineEventMidiBankChange:
+                    data[0] = MIDI_STATUS_CONTROL_CHANGE + event->channel;
+                    data[1] = MIDI_CONTROL_BANK_SELECT;
+                    data[2] = event->value;
+                    jack_midi_event_write(controlOut, event->time, data, 3);
+                    break;
+                case CarlaEngineEventMidiProgramChange:
+                    data[0] = MIDI_STATUS_PROGRAM_CHANGE + event->channel;
+                    data[1] = event->value;
+                    jack_midi_event_write(controlOut, event->time, data, 2);
+                    break;
+                case CarlaEngineEventAllSoundOff:
+                    data[0] = MIDI_STATUS_CONTROL_CHANGE + event->channel;
+                    data[1] = MIDI_CONTROL_ALL_SOUND_OFF;
+                    jack_midi_event_write(controlOut, event->time, data, 2);
+                    break;
+                case CarlaEngineEventAllNotesOff:
+                    data[0] = MIDI_STATUS_CONTROL_CHANGE + event->channel;
+                    data[1] = MIDI_CONTROL_ALL_NOTES_OFF;
+                    jack_midi_event_write(controlOut, event->time, data, 2);
+                    break;
+                }
+            }
         }
 
         // output midi

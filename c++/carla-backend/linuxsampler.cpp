@@ -410,13 +410,6 @@ public:
 
             for (i=0; i < aout.count; i++)
             {
-                // Volume
-                if (do_volume)
-                {
-                    for (k=0; k < frames; k++)
-                        outBuffer[i][k] *= x_vol;
-                }
-
                 // Balance
                 if (do_balance)
                 {
@@ -441,6 +434,13 @@ public:
                             outBuffer[i][k] += oldBufLeft[k]*bal_rangeL;
                         }
                     }
+                }
+
+                // Volume
+                if (do_volume)
+                {
+                    for (k=0; k < frames; k++)
+                        outBuffer[i][k] *= x_vol;
                 }
 
                 // Output VU

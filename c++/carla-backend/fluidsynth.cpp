@@ -1128,7 +1128,7 @@ public:
         CARLA_PROCESS_CONTINUE_CHECK;
 
         // --------------------------------------------------------------------------------------------------------
-        // Post-processing (volume and balance)
+        // Post-processing (balance and volume)
 
         if (m_active)
         {
@@ -1139,9 +1139,6 @@ public:
 
             for (i=0; i < aout.count; i++)
             {
-                // Volume, using fluidsynth internals
-                fluid_synth_set_gain(f_synth, x_vol);
-
                 // Balance
                 if (do_balance)
                 {
@@ -1167,6 +1164,9 @@ public:
                         }
                     }
                 }
+
+                // Volume, using fluidsynth internals
+                fluid_synth_set_gain(f_synth, x_vol);
 
                 // Output VU
                 for (k=0; i < 2 && k < frames; k++)

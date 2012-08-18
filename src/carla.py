@@ -1239,24 +1239,32 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         pwidget = self.m_plugin_list[plugin_id]
         pwidget.edit_dialog.close()
 
-        if (pwidget.gui_dialog):
+        if pwidget.gui_dialog:
             pwidget.gui_dialog.close()
 
-        if (Carla.Host.remove_plugin(plugin_id)):
+        if Carla.Host.remove_plugin(plugin_id):
             pwidget.close()
             pwidget.deleteLater()
             self.w_plugins.layout().removeWidget(pwidget)
             self.m_plugin_list[plugin_id] = None
 
-        else:
-            if (showError):
-                CustomMessageBox(self, QMessageBox.Critical, self.tr("Error"), self.tr("Failed to remove plugin"),
-                    cString(Carla.Host.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
+        elif showError:
+            CustomMessageBox(self, QMessageBox.Critical, self.tr("Error"), self.tr("Failed to remove plugin"), cString(Carla.Host.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
 
+        # push all plugins 1 slot if rack mode
+        if Carla.processMode == PROCESS_MODE_CONTINUOUS_RACK:
+            for i in range(MAX_PLUGINS-1):
+                if i < plugin_id: continue
+                self.m_plugin_list[i] = self.m_plugin_list[i+1]
+
+                if self.m_plugin_list[i]:
+                    self.m_plugin_list[i].setId(i)
+
+            self.m_plugin_list[MAX_PLUGINS-1] = None
+
+        # check if there are still plugins
         for i in range(MAX_PLUGINS):
-            if self.m_plugin_list[i] != None:
-                self.act_plugin_remove_all.setEnabled(True)
-                break
+            if self.m_plugin_list[i]: break
         else:
             self.act_plugin_remove_all.setEnabled(False)
 
@@ -1601,8 +1609,23 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
     @pyqtSlot()
     def slot_remove_all(self):
         for i in range(MAX_PLUGINS):
-            if self.m_plugin_list[i]:
-                self.remove_plugin(i, False)
+            pwidget = self.m_plugin_list[i]
+
+            if not pwidget:
+                continue
+
+            pwidget.edit_dialog.close()
+
+            if pwidget.gui_dialog:
+                pwidget.gui_dialog.close()
+
+            if Carla.Host.remove_plugin(i):
+                pwidget.close()
+                pwidget.deleteLater()
+                self.w_plugins.layout().removeWidget(pwidget)
+                self.m_plugin_list[i] = None
+
+        self.act_plugin_remove_all.setEnabled(False)
 
     @pyqtSlot()
     def slot_configureCarla(self):
@@ -1798,8 +1821,8 @@ if __name__ == '__main__':
         dname = cString(Carla.Host.get_engine_driver_name(i))
         print("%i - %s" % (i, dname))
 
-    #if not Carla.Host.engine_init("JACK", "Carla"):
-    if not Carla.Host.engine_init("PulseAudio", "Carla"):
+    if not Carla.Host.engine_init("JACK", "Carla"):
+    #if not Carla.Host.engine_init("PulseAudio", "Carla"):
         CustomMessageBox(None, QMessageBox.Critical, "Error", "Could not connect to Audio backend, possible reasons:",
             cString(Carla.Host.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
         sys.exit(1)
