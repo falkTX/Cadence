@@ -907,27 +907,11 @@ public:
 
     void idleGui()
     {
-        if (ui.handle && ui.descriptor && gui.type != GUI_EXTERNAL_OSC)
-        {
-            // Update output port values
-            if (ui.descriptor->port_event)
-            {
-                float value;
+        // Update external UI
+        if (ui.handle && ui.descriptor && ui.widget && gui.type == GUI_EXTERNAL_LV2)
+            LV2_EXTERNAL_UI_RUN((lv2_external_ui*)ui.widget);
 
-                for (uint32_t i=0; i < param.count; i++)
-                {
-                    if (param.data[i].type == PARAMETER_OUTPUT)
-                    {
-                        value = getParameterValue(i);
-                        ui.descriptor->port_event(ui.handle, param.data[i].rindex, sizeof(float), 0, &value);
-                    }
-                }
-            }
-
-            // Update UI
-            if (ui.widget && gui.type == GUI_EXTERNAL_LV2)
-                LV2_EXTERNAL_UI_RUN((lv2_external_ui*)ui.widget);
-        }
+        CarlaPlugin::idleGui();
     }
 
     // -------------------------------------------------------------------
@@ -2301,6 +2285,51 @@ public:
     }
 
     // -------------------------------------------------------------------
+    // Post-poned events
+
+    void uiParameterChange(uint32_t index, double value)
+    {
+        Q_ASSERT(index < param.count);
+        if (index >= param.count)
+            return;
+
+        if (osc.data.target)
+            osc_send_control(&osc.data, param.data[index].rindex, value);
+        else if (ui.handle && ui.descriptor && ui.descriptor->port_event)
+        {
+            float valuef = value;
+            ui.descriptor->port_event(ui.handle, param.data[index].rindex, sizeof(float), 0, &valuef);
+        }
+    }
+
+    void uiMidiProgramChange(uint32_t index)
+    {
+        Q_ASSERT(index < midiprog.count);
+        if (index >= midiprog.count)
+            return;
+
+        if (osc.data.target)
+            osc_send_program(&osc.data, midiprog.data[index].bank, midiprog.data[index].program);
+        else if (ext.uiprograms)
+            ext.uiprograms->select_program(ui.handle, midiprog.data[index].bank, midiprog.data[index].program);
+    }
+
+    void uiNoteOn(uint8_t channel, uint8_t note, uint8_t velo)
+    {
+        // TODO
+        Q_UNUSED(channel);
+        Q_UNUSED(note);
+        Q_UNUSED(velo);
+    }
+
+    void uiNoteOff(uint8_t channel, uint8_t note)
+    {
+        // TODO
+        Q_UNUSED(channel);
+        Q_UNUSED(note);
+    }
+
+    // -------------------------------------------------------------------
     // Cleanup
 
     void removeClientPorts()
@@ -3662,6 +3691,7 @@ public:
                     gui.type      = GUI_INTERNAL_QT4;
                     gui.resizable = isUiResizable();
                     ui.handle     = ui.descriptor->instantiate(ui.descriptor, descriptor->URI, ui.rdf_descriptor->Bundle, carla_lv2_ui_write_function, this, &ui.widget, features);
+                    m_hints      |= PLUGIN_USES_SINGLE_THREAD;
                     updateUi();
                     break;
 
@@ -3689,6 +3719,7 @@ public:
                     gui.type      = GUI_EXTERNAL_SUIL;
                     gui.resizable = isUiResizable();
                     suil.handle   = suil_instance_new(suil.host, this, LV2_UI__Qt4UI, rdf_descriptor->URI, ui.rdf_descriptor->URI, get_lv2_ui_uri(ui.rdf_descriptor->Type), ui.rdf_descriptor->Bundle, ui.rdf_descriptor->Binary, features);
+                    m_hints      |= PLUGIN_USES_SINGLE_THREAD;
 
                     if (suil.handle)
                     {

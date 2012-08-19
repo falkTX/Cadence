@@ -504,6 +504,18 @@ public:
     }
 
     /*!
+     * Check if a parameter is out output type.
+     *
+     * \see PARAMETER_OUTPUT
+     */
+    bool parameterIsOutput(uint32_t parameterId) const
+    {
+        Q_ASSERT(parameterId < param.count);
+
+        return (param.data[parameterId].type == PARAMETER_OUTPUT);
+    }
+
+    /*!
      * Get the MIDI program at \a index.
      *
      * \see getMidiProgramName()
@@ -695,21 +707,17 @@ public:
      */
     void getParameterCountInfo(uint32_t* ins, uint32_t* outs, uint32_t* total)
     {
-        uint32_t _ins   = 0;
-        uint32_t _outs  = 0;
-        uint32_t _total = param.count;
+        *ins   = 0;
+        *outs  = 0;
+        *total = param.count;
 
         for (uint32_t i=0; i < param.count; i++)
         {
             if (param.data[i].type == PARAMETER_INPUT)
-                _ins += 1;
+                *ins += 1;
             else if (param.data[i].type == PARAMETER_OUTPUT)
-                _outs += 1;
+                *outs += 1;
         }
-
-        *ins   = _ins;
-        *outs  = _outs;
-        *total = _total;
     }
 
     /*!
@@ -1252,36 +1260,19 @@ public:
      */
     virtual void idleGui()
     {
-        m_needsParamUpdate = false;
-        m_needsProgUpdate = false;
-
         if (! m_enabled)
             return;
 
-        // -------------------------------------------------------
-        // Process postponed events
-
-        postEventsRun();
-
-        // -------------------------------------------------------
-        // Update parameters (OSC)
-
-        updateOscParameterOutputs();
-
-        // -------------------------------------------------------
-        // Send peak values (OSC)
-
-        if (x_engine->isOscControllerRegisted())
+        if (m_hints & PLUGIN_USES_SINGLE_THREAD)
         {
-            if (audioInCount() > 0)
+            // Process postponed events
+            postEventsRun();
+
+            // Update parameter outputs
+            for (uint32_t i=0; i < param.count; i++)
             {
-                x_engine->osc_send_set_input_peak_value(m_id, 1, x_engine->getInputPeak(m_id, 0));
-                x_engine->osc_send_set_input_peak_value(m_id, 2, x_engine->getInputPeak(m_id, 1));
-            }
-            if (audioOutCount() > 0)
-            {
-                x_engine->osc_send_set_output_peak_value(m_id, 1, x_engine->getOutputPeak(m_id, 0));
-                x_engine->osc_send_set_output_peak_value(m_id, 2, x_engine->getOutputPeak(m_id, 1));
+                if (param.data[i].type == PARAMETER_OUTPUT)
+                    uiParameterChange(i, getParameterValue(i));
             }
         }
     }
@@ -1551,34 +1542,6 @@ public:
     }
 
     /*!
-     * TODO
-     */
-    void updateOscParameterOutputs()
-    {
-        // Check if it needs update
-        bool updatePortsGui = (osc.data.target && (m_hints & PLUGIN_IS_BRIDGE) == 0);
-
-        if (! (x_engine->isOscControllerRegisted() || updatePortsGui))
-            return;
-
-        // Update
-        double value;
-
-        for (uint32_t i=0; i < param.count; i++)
-        {
-            if (param.data[i].type == PARAMETER_OUTPUT /*&& (paramData->hints & PARAMETER_IS_AUTOMABLE) > 0*/)
-            {
-                value = getParameterValue(i);
-
-                if (updatePortsGui)
-                    osc_send_control(&osc.data, param.data[i].rindex, value);
-
-                x_engine->osc_send_set_parameter_value(m_id, i, value);
-            }
-        }
-    }
-
-    /*!
      * Clear the plugin's internal OSC data.
      */
     void clearOscData()
@@ -1744,16 +1707,15 @@ public:
             switch (event->type)
             {
             case PluginPostEventNull:
-                return;
+                break;
 
             case PluginPostEventDebug:
                 x_engine->callback(CALLBACK_DEBUG, m_id, event->value1, event->value2, event->value3);
                 break;
 
             case PluginPostEventParameterChange:
-                // Update OSC based UIs
-                m_needsParamUpdate = true;
-                osc_send_control(&osc.data, event->value1, event->value3);
+                // Update UI
+                uiParameterChange(event->value1, event->value3);
 
                 // Update OSC control client
                 x_engine->osc_send_set_parameter_value(m_id, event->value1, event->value3);
@@ -1763,9 +1725,8 @@ public:
                 break;
 
             case PluginPostEventProgramChange:
-                // Update OSC based UIs
-                m_needsProgUpdate = true;
-                osc_send_program(&osc.data, event->value1);
+                // Update UI
+                uiProgramChange(event->value1);
 
                 // Update OSC control client
                 x_engine->osc_send_set_program(m_id, event->value1);
@@ -1778,16 +1739,8 @@ public:
                 break;
 
             case PluginPostEventMidiProgramChange:
-                // Update OSC based UIs
-                m_needsProgUpdate = true;
-
-                if (m_type == PLUGIN_DSSI)
-                {
-                    if (event->value1 >= 0 && event->value1 < (int32_t)midiprog.count)
-                        osc_send_program(&osc.data, midiprog.data[event->value1].bank, midiprog.data[event->value1].program);
-                }
-                else
-                    osc_send_midi_program(&osc.data, event->value1);
+                // Update UI
+                uiMidiProgramChange(event->value1);
 
                 // Update OSC control client
                 x_engine->osc_send_set_midi_program(m_id, event->value1);
@@ -1797,19 +1750,11 @@ public:
 
                 // Update Host
                 x_engine->callback(CALLBACK_MIDI_PROGRAM_CHANGED, m_id, event->value1, 0, 0.0);
-                //}
                 break;
 
             case PluginPostEventNoteOn:
-                // Update OSC based UIs
-                if (osc.data.target)
-                {
-                    uint8_t midiData[4] = { 0 };
-                    midiData[1] = MIDI_STATUS_NOTE_ON + event->value1;
-                    midiData[2] = event->value2;
-                    midiData[3] = rint(event->value3);
-                    osc_send_midi(&osc.data, midiData);
-                }
+                // Update UI
+                uiNoteOn(event->value1, event->value2, rint(event->value3));
 
                 // Update OSC control client
                 x_engine->osc_send_note_on(m_id, event->value1, event->value2, event->value3);
@@ -1819,14 +1764,8 @@ public:
                 break;
 
             case PluginPostEventNoteOff:
-                // Update OSC based UIs
-                if (osc.data.target)
-                {
-                    uint8_t midiData[4] = { 0 };
-                    midiData[1] = MIDI_STATUS_NOTE_OFF + event->value1;
-                    midiData[2] = event->value2;
-                    osc_send_midi(&osc.data, midiData);
-                }
+                // Update UI
+                uiNoteOff(event->value1, event->value2);
 
                 // Update OSC control client
                 x_engine->osc_send_note_off(m_id, event->value1, event->value2);
@@ -1836,6 +1775,53 @@ public:
                 break;
             }
         }
+    }
+
+    /*!
+     * TODO
+     */
+    virtual void uiParameterChange(uint32_t index, double value)
+    {
+        Q_ASSERT(index < param.count);
+        Q_UNUSED(index);
+        Q_UNUSED(value);
+    }
+
+    /*!
+     * TODO
+     */
+    virtual void uiProgramChange(uint32_t index)
+    {
+        Q_ASSERT(index < prog.count);
+        Q_UNUSED(index);
+    }
+
+    /*!
+     * TODO
+     */
+    virtual void uiMidiProgramChange(uint32_t index)
+    {
+        Q_ASSERT(index < midiprog.count);
+        Q_UNUSED(index);
+    }
+
+    /*!
+     * TODO
+     */
+    virtual void uiNoteOn(uint8_t channel, uint8_t note, uint8_t velo)
+    {
+        Q_UNUSED(channel);
+        Q_UNUSED(note);
+        Q_UNUSED(velo);
+    }
+
+    /*!
+     * TODO
+     */
+    virtual void uiNoteOff(uint8_t channel, uint8_t note)
+    {
+        Q_UNUSED(channel);
+        Q_UNUSED(note);
     }
 
     // -------------------------------------------------------------------
@@ -2048,11 +2034,10 @@ public:
     // -------------------------------------------------------------------
 
 protected:
-    // static
     unsigned short m_id;
     CarlaEngine* const x_engine;
+    CarlaEngineClient* x_client;
 
-    // non-static
     PluginType m_type;
     unsigned int m_hints;
 
@@ -2067,10 +2052,6 @@ protected:
     int8_t cin_channel;
 
     double x_drywet, x_vol, x_bal_left, x_bal_right;
-    CarlaEngineClient* x_client;
-
-    bool m_needsParamUpdate;
-    bool m_needsProgUpdate;
 
     // -------------------------------------------------------------------
     // Storage Data

@@ -171,7 +171,7 @@ private:
             : d1(0), d2(0), d3(0) {}
     };
 
-    static const unsigned short MAX_SIZE = 128;
+    static const unsigned short MAX_SIZE = 512;
     datatype data[MAX_SIZE];
     unsigned short index;
     bool empty, full;

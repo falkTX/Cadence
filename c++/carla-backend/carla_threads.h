@@ -20,6 +20,7 @@
 
 #include "carla_backend.h"
 
+#include <QtCore/QMutex>
 #include <QtCore/QThread>
 
 class QProcess;
@@ -35,11 +36,22 @@ public:
 
     void stopNow();
 
+    void lock()
+    {
+        mutex.lock();
+    }
+
+    void unlock()
+    {
+        mutex.unlock();
+    }
+
 protected:
     void run();
 
 private:
     CarlaBackend::CarlaEngine* const engine;
+    QMutex mutex;
     bool m_stopNow;
 };
 

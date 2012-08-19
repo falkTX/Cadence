@@ -312,6 +312,8 @@ public:
         // FIXME
         if (gui.visible)
             effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
+
+        CarlaPlugin::idleGui();
     }
 
     // -------------------------------------------------------------------

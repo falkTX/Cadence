@@ -187,6 +187,7 @@ public:
 
     short        getNewPluginId() const;
     CarlaPlugin* getPlugin(const unsigned short id) const;
+    CarlaPlugin* getPluginUnchecked(const unsigned short id) const { return m_carlaPlugins[id]; }
     const char*  getUniqueName(const char* const name);
 
     short addPlugin(const BinaryType btype, const PluginType ptype, const char* const filename, const char* const name, const char* const label, void* const extra = nullptr);
@@ -200,11 +201,6 @@ public:
     void __bridgePluginRegister(const unsigned short id, CarlaPlugin* const plugin)
     {
         m_carlaPlugins[id] = plugin;
-    }
-
-    CarlaPlugin* __getPlugin(const unsigned short id) const
-    {
-        return m_carlaPlugins[id];
     }
 
     // -------------------------------------------------------------------

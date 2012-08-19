@@ -207,7 +207,7 @@ void CarlaEngineRtAudio::handleProcessCallback(void* outputBuffer, void* inputBu
     // process plugins
     for (unsigned short i=0; i < MAX_PLUGINS; i++)
     {
-        CarlaPlugin* const plugin = __getPlugin(i);
+        CarlaPlugin* const plugin = getPluginUnchecked(i);
 
         if (plugin && plugin->enabled())
         {

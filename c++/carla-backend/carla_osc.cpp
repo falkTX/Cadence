@@ -265,7 +265,7 @@ int CarlaOsc::handle_register(const int argc, const lo_arg* const* const argv, c
 
     for (unsigned short i=0; i < CarlaBackend::MAX_PLUGINS; i++)
     {
-        CarlaBackend::CarlaPlugin* const plugin = engine->__getPlugin(i);
+        CarlaBackend::CarlaPlugin* const plugin = engine->getPluginUnchecked(i);
 
         if (plugin && plugin->enabled())
             plugin->registerToOsc();

@@ -40,6 +40,9 @@ void CarlaCheckThread::stopNow()
 {
     m_stopNow = true;
 
+    // TESTING - let processing finish first
+    QMutexLocker(&this->mutex); // FIXME
+
     if (isRunning() && ! wait(200))
     {
         quit();
@@ -53,32 +56,60 @@ void CarlaCheckThread::run()
 {
     qDebug("CarlaCheckThread::run()");
 
+    bool oscControllerRegisted, usesSingleThread;
+    unsigned short id;
+    double value;
+
     m_stopNow = false;
+
     while (engine->isRunning() && ! m_stopNow)
     {
+        QMutexLocker(&this->mutex); // FIXME
+        oscControllerRegisted = engine->isOscControllerRegisted();
+
         for (unsigned short i=0; i < CarlaBackend::MAX_PLUGINS; i++)
         {
-            CarlaBackend::CarlaPlugin* const plugin = engine->__getPlugin(i);
+            CarlaBackend::CarlaPlugin* const plugin = engine->getPluginUnchecked(i);
 
             if (plugin && plugin->enabled())
             {
+                id = plugin->id();
+                usesSingleThread = (plugin->hints() & CarlaBackend::PLUGIN_USES_SINGLE_THREAD);
+
                 // -------------------------------------------------------
                 // Process postponed events
 
-                plugin->postEventsRun();
+                if (! usesSingleThread)
+                    plugin->postEventsRun();
 
                 // -------------------------------------------------------
-                // Update parameters (OSC)
+                // Update parameter outputs
 
-                plugin->updateOscParameterOutputs();
-
-                // -------------------------------------------------------
-                // Send peak values (OSC)
-
-                if (engine->isOscControllerRegisted())
+                if (oscControllerRegisted || ! usesSingleThread)
                 {
-                    const unsigned short id = plugin->id();
+                    for (uint32_t i=0; i < plugin->parameterCount(); i++)
+                    {
+                        if (plugin->parameterIsOutput(i))
+                        {
+                            value = plugin->getParameterValue(i);
 
+                            // Update UI
+                            if (! usesSingleThread)
+                                plugin->uiParameterChange(i, value);
+
+                            // Update OSC control client
+                            if (oscControllerRegisted)
+                                engine->osc_send_set_parameter_value(id, i, value);
+                        }
+                    }
+                }
+
+                // -------------------------------------------------------
+                // Update OSC control client
+
+                if (oscControllerRegisted)
+                {
+                    // Peak values
                     if (plugin->audioInCount() > 0)
                     {
                         engine->osc_send_set_input_peak_value(id, 1, engine->getInputPeak(id, 0));
@@ -146,7 +177,7 @@ void CarlaPluginThread::run()
 {
     qDebug("CarlaPluginThread::run()");
 
-    if (m_process == nullptr)
+    if (! m_process)
         m_process = new QProcess(nullptr);
 
     m_process->setProcessChannelMode(QProcess::ForwardedChannels);
@@ -156,21 +187,21 @@ void CarlaPluginThread::run()
     switch (mode)
     {
     case PLUGIN_THREAD_DSSI_GUI:
-        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath()).arg(plugin->id());
+        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath(), plugin->id());
         /* filename */ arguments << plugin->filename();
         /* label    */ arguments << m_label;
         /* ui-title */ arguments << QString("%1 (GUI)").arg(plugin->name());
         break;
 
     case PLUGIN_THREAD_LV2_GUI:
-        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath()).arg(plugin->id());
+        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath(), plugin->id());
         /* URI      */ arguments << m_label;
         /* ui-URI   */ arguments << m_data1;
         /* ui-title */ arguments << QString("%1 (GUI)").arg(plugin->name());
         break;
 
     case PLUGIN_THREAD_VST_GUI:
-        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath()).arg(plugin->id());
+        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath(), plugin->id());
         /* filename */ arguments << plugin->filename();
         /* label    */ arguments << m_label;
         /* ui-title */ arguments << QString("%1 (GUI)").arg(plugin->name());
@@ -183,7 +214,7 @@ void CarlaPluginThread::run()
         if (! name)
             name = "(none)";
 
-        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath()).arg(plugin->id());
+        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath(), plugin->id());
         /* stype    */ arguments << m_data1;
         /* filename */ arguments << plugin->filename();
         /* name     */ arguments << name;

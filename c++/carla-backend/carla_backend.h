@@ -49,13 +49,14 @@ const unsigned int MAX_PARAMETERS = 200; //!< Default value for the maximum numb
  * \see CarlaPlugin::hints()
  * @{
  */
-const unsigned int PLUGIN_IS_BRIDGE   = 0x01; //!< Plugin is a bridge (ie, BridgePlugin). This hint is required because "bridge" itself is not a plugin type.
-const unsigned int PLUGIN_IS_SYNTH    = 0x02; //!< Plugin is a synthesizer (produces sound).
-const unsigned int PLUGIN_HAS_GUI     = 0x04; //!< Plugin has its own custom GUI.
-const unsigned int PLUGIN_USES_CHUNKS = 0x08; //!< Plugin uses chunks to save internal data.\see CarlaPlugin::chunkData()
-const unsigned int PLUGIN_CAN_DRYWET  = 0x10; //!< Plugin can make use of Dry/Wet controls.
-const unsigned int PLUGIN_CAN_VOLUME  = 0x20; //!< Plugin can make use of Volume controls.
-const unsigned int PLUGIN_CAN_BALANCE = 0x40; //!< Plugin can make use of Left & Right Balance controls.
+const unsigned int PLUGIN_IS_BRIDGE          = 0x01; //!< Plugin is a bridge (ie, BridgePlugin). This hint is required because "bridge" itself is not a plugin type.
+const unsigned int PLUGIN_IS_SYNTH           = 0x02; //!< Plugin is a synthesizer (produces sound).
+const unsigned int PLUGIN_HAS_GUI            = 0x04; //!< Plugin has its own custom GUI.
+const unsigned int PLUGIN_USES_CHUNKS        = 0x08; //!< Plugin uses chunks to save internal data.\see CarlaPlugin::chunkData()
+const unsigned int PLUGIN_USES_SINGLE_THREAD = 0x10; //!< Plugin has its own custom GUI.
+const unsigned int PLUGIN_CAN_DRYWET         = 0x20; //!< Plugin can make use of Dry/Wet controls.
+const unsigned int PLUGIN_CAN_VOLUME         = 0x40; //!< Plugin can make use of Volume controls.
+const unsigned int PLUGIN_CAN_BALANCE        = 0x80; //!< Plugin can make use of Left & Right Balance controls.
 /**@}*/
 
 /*!

@@ -1326,6 +1326,54 @@ public:
     }
 
     // -------------------------------------------------------------------
+    // Post-poned events
+
+    void uiParameterChange(uint32_t index, double value)
+    {
+        Q_ASSERT(index < param.count);
+        if (index >= param.count)
+            return;
+        if (! osc.data.target)
+            return;
+
+        osc_send_control(&osc.data, param.data[index].rindex, value);
+    }
+
+    void uiMidiProgramChange(uint32_t index)
+    {
+        Q_ASSERT(index < midiprog.count);
+        if (index >= midiprog.count)
+            return;
+        if (! osc.data.target)
+            return;
+
+        osc_send_program(&osc.data, midiprog.data[index].bank, midiprog.data[index].program);
+    }
+
+    void uiNoteOn(uint8_t channel, uint8_t note, uint8_t velo)
+    {
+        if (! osc.data.target)
+            return;
+
+        uint8_t midiData[4] = { 0 };
+        midiData[1] = MIDI_STATUS_NOTE_ON + channel;
+        midiData[2] = note;
+        midiData[3] = velo;
+        osc_send_midi(&osc.data, midiData);
+    }
+
+    void uiNoteOff(uint8_t channel, uint8_t note)
+    {
+        if (! osc.data.target)
+            return;
+
+        uint8_t midiData[4] = { 0 };
+        midiData[1] = MIDI_STATUS_NOTE_OFF + channel;
+        midiData[2] = note;
+        osc_send_midi(&osc.data, midiData);
+    }
+
+    // -------------------------------------------------------------------
     // Cleanup
 
     void deleteBuffers()
