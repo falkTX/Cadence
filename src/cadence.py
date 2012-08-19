@@ -17,6 +17,7 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # Imports (Global)
+from platform import architecture
 from subprocess import getoutput
 from PyQt4.QtCore import QSettings
 from PyQt4.QtGui import QApplication, QMainWindow
@@ -106,14 +107,11 @@ GlobalSettings = QSettings("Cadence", "GlobalSettings")
 # ---------------------------------------------------------------------
 
 def get_architecture():
-    if LINUX:
-        return os.uname()[4]
-    elif WINDOWS:
-        if sys.platform == "win32":
-            return "32-bit"
-        if sys.platform == "win64":
-            return "64-bit"
-    return "Unknown"
+    return architecture()[0]
+
+def get_haiku_information():
+    # TODO
+    return ("Haiku OS", "Unknown")
 
 def get_linux_information():
     if os.path.exists("/etc/lsb-release"):
@@ -216,7 +214,9 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         # -------------------------------------------------------------
         # Set-up GUI (System Information)
 
-        if LINUX:
+        if HAIKU:
+            info = get_haiku_information()
+        elif LINUX:
             info = get_linux_information()
         elif MACOS:
             info = get_mac_information()
@@ -410,17 +410,15 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.connect(self.list_LV2, SIGNAL("currentRowChanged(int)"), SLOT("slot_tweakPluginsLv2RowChanged(int)"))
         self.connect(self.list_VST, SIGNAL("currentRowChanged(int)"), SLOT("slot_tweakPluginsVstRowChanged(int)"))
 
-        #self.connect(self.ch_image, SIGNAL("clicked()"), self.func_settings_changed_apps)
-        #self.connect(self.ch_music, SIGNAL("clicked()"), self.func_settings_changed_apps)
-        #self.connect(self.ch_video, SIGNAL("clicked()"), self.func_settings_changed_apps)
-        #self.connect(self.ch_text, SIGNAL("clicked()"), self.func_settings_changed_apps)
-        #self.connect(self.ch_office, SIGNAL("clicked()"), self.func_settings_changed_apps)
-        #self.connect(self.ch_browser, SIGNAL("clicked()"), self.func_settings_changed_apps)
+        self.connect(self.ch_app_image, SIGNAL("clicked()"), SLOT("slot_tweaksSettingsChanged_apps()"))
+        self.connect(self.ch_app_music, SIGNAL("clicked()"), SLOT("slot_tweaksSettingsChanged_apps()"))
+        self.connect(self.ch_app_video, SIGNAL("clicked()"), SLOT("slot_tweaksSettingsChanged_apps()"))
+        self.connect(self.ch_app_text, SIGNAL("clicked()"), SLOT("slot_tweaksSettingsChanged_apps()"))
+        self.connect(self.ch_app_browser, SIGNAL("clicked()"), SLOT("slot_tweaksSettingsChanged_apps()"))
         #self.connect(self.cb_app_image, SIGNAL("currentIndexChanged(int)"), self.func_app_changed_image)
         #self.connect(self.cb_app_music, SIGNAL("currentIndexChanged(int)"), self.func_app_changed_music)
         #self.connect(self.cb_app_video, SIGNAL("currentIndexChanged(int)"), self.func_app_changed_video)
         #self.connect(self.cb_app_text, SIGNAL("currentIndexChanged(int)"), self.func_app_changed_text)
-        #self.connect(self.cb_app_office, SIGNAL("currentIndexChanged(int)"), self.func_app_changed_office)
         #self.connect(self.cb_app_browser, SIGNAL("currentIndexChanged(int)"), self.func_app_changed_browser)
 
         # -------------------------------------------------------------
@@ -613,6 +611,12 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             GlobalSettings.setValue("AudioPlugins/EXTRA_DSSI_PATH", ":".join(EXTRA_DSSI_DIRS))
             GlobalSettings.setValue("AudioPlugins/EXTRA_LV2_PATH", ":".join(EXTRA_LV2_DIRS))
             GlobalSettings.setValue("AudioPlugins/EXTRA_VST_PATH", ":".join(EXTRA_VST_DIRS))
+
+        if "apps" in self.settings_changed_types:
+            pass
+
+        if "wineasio" in self.settings_changed_types:
+            pass
 
         self.settings_changed_types = []
         self.frame_tweaks_settings.setVisible(False)
@@ -815,6 +819,15 @@ if __name__ == '__main__':
 
     # Set-up custom signal handling
     setUpSignals(gui)
+
+    if "--gnome-settings" in app.arguments():
+        gui.setMenuBar(None)
+        gui.tabWidget.removeTab(0)
+        gui.tabWidget.removeTab(0)
+        gui.tabWidget.tabBar().hide()
+        gui.label_tweaks.setText(gui.tr("Cadence Tweaks"))
+        gui.menubar.clear()
+        gui.systray.hide()
 
     gui.show()
 

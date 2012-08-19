@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Cadence Tweaks
+Comment=Audio related tweaks
+Exec=/home/falktx/Personal/FOSS/GIT/Cadence/src/cadence.py --gnome-settings
+Icon=cadence
+Terminal=false
+Type=Application
+Categories=Settings;X-GNOME-Settings-Panel;X-GNOME-PersonalSettings;
+X-GNOME-Settings-Panel=cadence
+StartupNotify=true
+OnlyShowIn=GNOME;Unity;
