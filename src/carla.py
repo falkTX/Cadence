@@ -1608,22 +1608,27 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
     @pyqtSlot()
     def slot_remove_all(self):
+        h = 0
         for i in range(MAX_PLUGINS):
             pwidget = self.m_plugin_list[i]
 
             if not pwidget:
                 continue
 
+            pwidget.setId(i-h)
             pwidget.edit_dialog.close()
 
             if pwidget.gui_dialog:
                 pwidget.gui_dialog.close()
 
-            if Carla.Host.remove_plugin(i):
+            if Carla.Host.remove_plugin(i-h):
                 pwidget.close()
                 pwidget.deleteLater()
                 self.w_plugins.layout().removeWidget(pwidget)
                 self.m_plugin_list[i] = None
+
+            if Carla.processMode == PROCESS_MODE_CONTINUOUS_RACK:
+                h += 1
 
         self.act_plugin_remove_all.setEnabled(False)
 

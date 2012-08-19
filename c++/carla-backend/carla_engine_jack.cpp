@@ -240,19 +240,19 @@ CarlaEngineClient* CarlaEngineJack::addClient(CarlaPlugin* const plugin)
 #ifndef BUILD_BRIDGE
     if (carlaOptions.process_mode == PROCESS_MODE_SINGLE_CLIENT)
     {
-        handle.client = client;
+        handle.jackClient = client;
     }
     else if (carlaOptions.process_mode == PROCESS_MODE_MULTIPLE_CLIENTS)
 #endif
     {
-        handle.client = jack_client_open(plugin->name(), JackNullOption, nullptr);
-        jack_set_process_callback(handle.client, carla_jack_process_callback_plugin, plugin);
+        handle.jackClient = jack_client_open(plugin->name(), JackNullOption, nullptr);
+        jack_set_process_callback(handle.jackClient, carla_jack_process_callback_plugin, plugin);
     }
     //else if (carla_options.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
     //{
     //}
 
-    return new CarlaEngineClient(handle);
+    return new CarlaEngineClient(CarlaEngineTypeJack, handle);
 }
 
 // -------------------------------------------------------------------------------------------------------------------

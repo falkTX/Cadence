@@ -1268,7 +1268,7 @@ void run_tests_standalone(short idMax)
         set_midi_program(id, 0);
 
         qDebug("------------------- TEST @%i: set extra data --------------------", id);
-        set_custom_data(id, CarlaBackend::CUSTOM_DATA_INVALID, nullptr, nullptr);
+        //set_custom_data(id, CarlaBackend::CUSTOM_DATA_INVALID, nullptr, nullptr);
         set_custom_data(id, CarlaBackend::CUSTOM_DATA_INVALID, "", "");
         set_chunk_data(id, nullptr);
         set_gui_data(id, 0, 0);
@@ -1308,7 +1308,7 @@ int main(int argc, char* argv[])
     //set_option(OPTION_PROCESS_MODE, PROCESS_MODE_CONTINUOUS_RACK, nullptr);
 
     // start engine
-    if (! engine_init("JACK", "carla_demo"))
+    if (! engine_init("PulseAudio", "carla_demo"))
     {
         qCritical("failed to start backend engine, reason:\n%s", get_last_error());
         delete vstGui;
@@ -1350,7 +1350,7 @@ int main(int argc, char* argv[])
     run_tests_standalone(id_dssi+1);
 
     // lock
-    app.exec();
+    //app.exec();
 
     remove_plugin(id_ladspa);
     remove_plugin(id_dssi);

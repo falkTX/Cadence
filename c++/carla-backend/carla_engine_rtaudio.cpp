@@ -147,7 +147,7 @@ CarlaEngineClient* CarlaEngineRtAudio::addClient(CarlaPlugin* const plugin)
 {
     CarlaEngineClientNativeHandle handle;
 
-    return new CarlaEngineClient(handle);
+    return new CarlaEngineClient(CarlaEngineTypeRtAudio, handle);
     Q_UNUSED(plugin);
 }
 

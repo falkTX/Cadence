@@ -22,8 +22,6 @@
 #include "carla_shared.h"
 #include "carla_threads.h"
 
-#include <QtCore/QMutex>
-
 #ifdef CARLA_ENGINE_JACK
 #include <jack/jack.h>
 #include <jack/midiport.h>
@@ -138,22 +136,36 @@ struct CarlaTimeInfo {
 
 struct CarlaEngineClientNativeHandle {
 #ifdef CARLA_ENGINE_JACK
-    jack_client_t* client;
+    jack_client_t* jackClient;
+#endif
+#ifdef CARLA_ENGINE_JACK
+    RtAudio* rtAudioPtr;
+#endif
 
     CarlaEngineClientNativeHandle()
-        : client(nullptr) {}
+    {
+#ifdef CARLA_ENGINE_JACK
+        jackClient = nullptr;
 #endif
+#ifdef CARLA_ENGINE_JACK
+        rtAudioPtr = nullptr;
+#endif
+    }
 };
 
 struct CarlaEnginePortNativeHandle {
 #ifdef CARLA_ENGINE_JACK
-    jack_client_t* client;
-    jack_port_t* port;
+    jack_client_t* jackClient;
+    jack_port_t* jackPort;
+#endif
 
     CarlaEnginePortNativeHandle()
-        : client(nullptr),
-          port(nullptr) {}
+    {
+#ifdef CARLA_ENGINE_JACK
+        jackClient = nullptr;
+        jackPort = nullptr;
 #endif
+    }
 };
 
 // -----------------------------------------------------------------------
@@ -449,7 +461,7 @@ private:
 class CarlaEngineClient
 {
 public:
-    CarlaEngineClient(const CarlaEngineClientNativeHandle& handle);
+    CarlaEngineClient(const CarlaEngineType& type, const CarlaEngineClientNativeHandle& handle);
     ~CarlaEngineClient();
 
     void activate();
@@ -462,6 +474,7 @@ public:
 
 private:
     bool m_active;
+    const CarlaEngineType type;
     const CarlaEngineClientNativeHandle handle;
 };
 
