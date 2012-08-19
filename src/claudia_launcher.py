@@ -91,15 +91,23 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         # For the custom icons
         self.ClaudiaIcons = XIcon()
 
-        if os.path.exists(os.path.join(sys.path[0], "..", "icons")):
-            self.ClaudiaIcons.addIconPath(os.path.join(sys.path[0], "..", "icons"))
-        elif os.path.exists(os.path.join(sys.path[0], "..", "data", "icons")):
-            self.ClaudiaIcons.addIconPath(os.path.join(sys.path[0], "..", "data", "icons"))
-
         self.icon_yes = QIcon(self.getIcon("dialog-ok-apply"))
         self.icon_no  = QIcon(self.getIcon("dialog-cancel"))
 
         self.m_lastThemeName = QIcon.themeName()
+
+        # Copy our icons, so we can then set the fallback icon theme as the current theme
+        if not os.path.exists("/tmp/.claudia-icons"):
+            os.mkdir("/tmp/.claudia-icons")
+
+        if os.path.exists(os.path.join(sys.path[0], "..", "icons")):
+            os.system("cp -r '%s' /tmp/.claudia-icons/" % os.path.join(sys.path[0], "..", "icons", "claudia-hicolor"))
+        elif os.path.exists(os.path.join(sys.path[0], "..", "data", "icons")):
+            os.system("cp -r '%s' /tmp/.claudia-icons/" % os.path.join(sys.path[0], "..", "data", "icons", "claudia-hicolor"))
+
+        os.system("sed -i 's/X-CURRENT-THEME-X/%s/' /tmp/.claudia-icons/claudia-hicolor/index.theme" % self.m_lastThemeName)
+
+        self.ClaudiaIcons.addIconPath("/tmp/.claudia-icons")
         QIcon.setThemeName("claudia-hicolor")
 
         self.clearInfo_DAW()

@@ -2,6 +2,7 @@
 Name=claudia-hicolor
 Comment=Claudia fallback icon theme
 Directories=16x16/apps,48x48/apps
+Inherits=X-CURRENT-THEME-X
 
 [16x16/apps]
 Size=16
