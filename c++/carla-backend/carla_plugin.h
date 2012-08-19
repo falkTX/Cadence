@@ -504,7 +504,7 @@ public:
     }
 
     /*!
-     * Check if a parameter is out output type.
+     * Check if a parameter is of output type.
      *
      * \see PARAMETER_OUTPUT
      */

@@ -96,10 +96,11 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif os.path.exists(os.path.join(sys.path[0], "..", "data", "icons")):
             self.ClaudiaIcons.addIconPath(os.path.join(sys.path[0], "..", "data", "icons"))
 
-        QIcon.setThemeName("claudia-hicolor")
-
         self.icon_yes = QIcon(self.getIcon("dialog-ok-apply"))
         self.icon_no  = QIcon(self.getIcon("dialog-cancel"))
+
+        self.m_lastThemeName = QIcon.themeName()
+        QIcon.setThemeName("claudia-hicolor")
 
         self.clearInfo_DAW()
         self.clearInfo_Host()
@@ -1102,6 +1103,8 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             self.settings().setValue("SplitterBristol", self.splitter_Bristol.saveState())
             self.settings().setValue("SplitterEffect", self.splitter_Effect.saveState())
             self.settings().setValue("SplitterTool", self.splitter_Tool.saveState())
+
+        QIcon.setThemeName(self.m_lastThemeName)
 
     def loadSettings(self):
         if self.settings() and self.settings().contains("SplitterDAW"):
