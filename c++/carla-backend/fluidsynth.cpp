@@ -316,7 +316,7 @@ public:
 
         case FluidSynthChorusOnOff:
         {
-            const CarlaPluginScopedDisabler m(this, ! x_engine->isOffline());
+            const ScopedDisabler m(this, ! x_engine->isOffline());
             value = value > 0.5 ? 1 : 0;
             fluid_synth_set_chorus_on(f_synth, value);
             break;
@@ -328,21 +328,21 @@ public:
         case FluidSynthChorusDepthMs:
         case FluidSynthChorusType:
         {
-            const CarlaPluginScopedDisabler m(this, ! x_engine->isOffline());
+            const ScopedDisabler m(this, ! x_engine->isOffline());
             fluid_synth_set_chorus(f_synth, rint(param_buffers[FluidSynthChorusNr]), param_buffers[FluidSynthChorusLevel], param_buffers[FluidSynthChorusSpeedHz], param_buffers[FluidSynthChorusDepthMs], rint(param_buffers[FluidSynthChorusType]));
             break;
         }
 
         case FluidSynthPolyphony:
         {
-            const CarlaPluginScopedDisabler m(this, ! x_engine->isOffline());
+            const ScopedDisabler m(this, ! x_engine->isOffline());
             fluid_synth_set_polyphony(f_synth, rint(value));
             break;
         }
 
         case FluidSynthInterpolation:
         {
-            const CarlaPluginScopedDisabler m(this, ! x_engine->isOffline());
+            const ScopedDisabler m(this, ! x_engine->isOffline());
             for (int i=0; i < 16; i++)
                 fluid_synth_set_interp_method(f_synth, i, rint(value));
             break;
@@ -366,13 +366,12 @@ public:
         {
             if (x_engine->isOffline())
             {
-                if (block) engineProcessLock();
+                const CarlaEngine::ScopedLocker m(x_engine, block);
                 fluid_synth_program_select(f_synth, cin_channel, f_id, midiprog.data[index].bank, midiprog.data[index].program);
-                if (block) engineProcessUnlock();
             }
             else
             {
-                const CarlaPluginScopedDisabler m(this, block);
+                const ScopedDisabler m(this, block);
                 fluid_synth_program_select(f_synth, cin_channel, f_id, midiprog.data[index].bank, midiprog.data[index].program);
             }
         }
@@ -388,7 +387,7 @@ public:
         qDebug("FluidSynthPlugin::reload() - start");
 
         // Safely disable plugin for reload
-        const CarlaPluginScopedDisabler m(this);
+        const ScopedDisabler m(this);
 
         if (x_client->isActive())
             x_client->deactivate();

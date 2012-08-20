@@ -64,7 +64,7 @@ void CarlaCheckThread::run()
 
     while (engine->isRunning() && ! m_stopNow)
     {
-        QMutexLocker(&this->mutex); // FIXME
+        const ScopedLocker m(this);
         oscControllerRegisted = engine->isOscControllerRegisted();
 
         for (unsigned short i=0; i < CarlaBackend::MAX_PLUGINS; i++)

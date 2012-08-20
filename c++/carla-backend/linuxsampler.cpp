@@ -136,7 +136,7 @@ public:
         qDebug("LinuxSamplerPlugin::reload() - start");
 
         // Safely disable plugin for reload
-        const CarlaPluginScopedDisabler m(this);
+        const ScopedDisabler m(this);
 
         if (x_client->isActive())
             x_client->deactivate();

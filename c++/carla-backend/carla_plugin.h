@@ -2033,6 +2033,57 @@ public:
 
     // -------------------------------------------------------------------
 
+    /*!
+     * \class CarlaPluginScopedDisabler
+     *
+     * \brief Carla plugin scoped disabler
+     *
+     * This is a handy class that temporarily disables a plugin during a function scope.\n
+     * It should be used when the plugin needs reload or state change, something like this:
+     * \code
+     * {
+     *      const CarlaPluginScopedDisabler m(plugin);
+     *      plugin->setChunkData(data);
+     * }
+     * \endcode
+     */
+    class ScopedDisabler
+    {
+    public:
+        /*!
+         * Disable plugin \a plugin if \a disable is true.
+         * The plugin is re-enabled in the deconstructor of this class if \a disable is true.
+         *
+         * \param plugin The plugin to disable
+         * \param disable Wherever to disable the plugin or not, true by default
+         */
+        ScopedDisabler(CarlaPlugin* const plugin, bool disable = true) :
+            m_plugin(plugin),
+            m_disable(disable)
+        {
+            if (m_disable)
+            {
+                m_plugin->engineProcessLock();
+                m_plugin->setEnabled(false);
+                m_plugin->engineProcessUnlock();
+            }
+        }
+
+        ~ScopedDisabler()
+        {
+            if (m_disable)
+            {
+                m_plugin->engineProcessLock();
+                m_plugin->setEnabled(true);
+                m_plugin->engineProcessUnlock();
+            }
+        }
+
+    private:
+        CarlaPlugin* const m_plugin;
+        const bool m_disable;
+    };
+
 protected:
     unsigned short m_id;
     CarlaEngine* const x_engine;
@@ -2106,57 +2157,6 @@ protected:
     {
         return (value < 0.0) ? -value : value;
     }
-};
-
-/*!
- * \class CarlaPluginScopedDisabler
- *
- * \brief Carla plugin scoped disabler
- *
- * This is a handy class that temporarily disables a plugin during a function scope.\n
- * It should be used when the plugin needs reload or state change, something like this:
- * \code
- * {
- *      const CarlaPluginScopedDisabler m(plugin);
- *      plugin->setChunkData(data);
- * }
- * \endcode
- */
-class CarlaPluginScopedDisabler
-{
-public:
-    /*!
-     * Disable plugin \a plugin if \a disable is true.
-     * The plugin is re-enabled in the deconstructor of this class if \a disable is true.
-     *
-     * \param plugin The plugin to disable
-     * \param disable Wherever to disable the plugin or not, true by default
-     */
-    CarlaPluginScopedDisabler(CarlaPlugin* const plugin, bool disable = true) :
-        m_plugin(plugin),
-        m_disable(disable)
-    {
-        if (m_disable)
-        {
-            m_plugin->engineProcessLock();
-            m_plugin->setEnabled(false);
-            m_plugin->engineProcessUnlock();
-        }
-    }
-
-    ~CarlaPluginScopedDisabler()
-    {
-        if (m_disable)
-        {
-            m_plugin->engineProcessLock();
-            m_plugin->setEnabled(true);
-            m_plugin->engineProcessUnlock();
-        }
-    }
-
-private:
-    CarlaPlugin* const m_plugin;
-    const bool m_disable;
 };
 
 /**@}*/

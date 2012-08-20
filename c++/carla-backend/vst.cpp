@@ -223,13 +223,12 @@ public:
 
         if (x_engine->isOffline())
         {
-            engineProcessLock();
+            const CarlaEngine::ScopedLocker m(x_engine);
             effect->dispatcher(effect, effSetChunk, 0 /* bank */, chunk.size(), chunk.data(), 0.0f);
-            engineProcessUnlock();
         }
         else
         {
-            const CarlaPluginScopedDisabler m(this);
+            const ScopedDisabler m(this);
             effect->dispatcher(effect, effSetChunk, 0 /* bank */, chunk.size(), chunk.data(), 0.0f);
         }
     }
@@ -242,13 +241,12 @@ public:
         {
             if (x_engine->isOffline())
             {
-                if (block) engineProcessLock();
+                const CarlaEngine::ScopedLocker m(x_engine, block);
                 effect->dispatcher(effect, effSetProgram, 0, index, nullptr, 0.0f);
-                if (block) engineProcessUnlock();
             }
             else
             {
-                const CarlaPluginScopedDisabler m(this, block);
+                const ScopedDisabler m(this, block);
                 effect->dispatcher(effect, effSetProgram, 0, index, nullptr, 0.0f);
             }
         }
@@ -324,7 +322,7 @@ public:
         qDebug("VstPlugin::reload() - start");
 
         // Safely disable plugin for reload
-        const CarlaPluginScopedDisabler m(this);
+        const ScopedDisabler m(this);
 
         if (x_client->isActive())
             x_client->deactivate();

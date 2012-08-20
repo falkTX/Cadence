@@ -226,7 +226,7 @@ public:
 
         if (strcmp(key, "reloadprograms") == 0 || strcmp(key, "load") == 0 || strncmp(key, "patches", 7) == 0)
         {
-            const CarlaPluginScopedDisabler m(this);
+            const ScopedDisabler m(this);
             reloadPrograms(false);
         }
 
@@ -242,13 +242,12 @@ public:
 
         if (x_engine->isOffline())
         {
-            engineProcessLock();
+            const CarlaEngine::ScopedLocker m(x_engine);
             descriptor->set_custom_data(handle, chunk.data(), chunk.size());
-            engineProcessUnlock();
         }
         else
         {
-            const CarlaPluginScopedDisabler m(this);
+            const ScopedDisabler m(this);
             descriptor->set_custom_data(handle, chunk.data(), chunk.size());
         }
     }
@@ -261,13 +260,12 @@ public:
         {
             if (x_engine->isOffline())
             {
-                if (block) engineProcessLock();
+                const CarlaEngine::ScopedLocker m(x_engine, block);
                 descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
-                if (block) engineProcessUnlock();
             }
             else
             {
-                const CarlaPluginScopedDisabler m(this, block);
+                const ScopedDisabler m(this, block);
                 descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
             }
 
@@ -316,7 +314,7 @@ public:
         qDebug("DssiPlugin::reload() - start");
 
         // Safely disable plugin for reload
-        const CarlaPluginScopedDisabler m(this);
+        const ScopedDisabler m(this);
 
         if (x_client->isActive())
             x_client->deactivate();

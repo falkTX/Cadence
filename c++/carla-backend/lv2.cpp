@@ -714,13 +714,12 @@ public:
 
             if (x_engine->isOffline())
             {
-                engineProcessLock();
+                const CarlaEngine::ScopedLocker m(x_engine);
                 status = ext.state->restore(handle, carla_lv2_state_retrieve, this, 0, features);
-                engineProcessUnlock();
             }
             else
             {
-                const CarlaPluginScopedDisabler m(this);
+                const ScopedDisabler m(this);
                 status = ext.state->restore(handle, carla_lv2_state_retrieve, this, 0, features);
             }
 
@@ -756,13 +755,12 @@ public:
         {
             if (x_engine->isOffline())
             {
-                if (block) engineProcessLock();
+                const CarlaEngine::ScopedLocker m(x_engine, block);
                 ext.programs->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
-                if (block) engineProcessUnlock();
             }
             else
             {
-                const CarlaPluginScopedDisabler m(this, block);
+                const ScopedDisabler m(this, block);
                 ext.programs->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
             }
 
@@ -922,7 +920,7 @@ public:
         qDebug("Lv2Plugin::reload() - start");
 
         // Safely disable plugin for reload
-        const CarlaPluginScopedDisabler m(this);
+        const ScopedDisabler m(this);
 
         if (x_client->isActive())
             x_client->deactivate();
@@ -2539,7 +2537,7 @@ public:
     {
         if (index == -1)
         {
-            const CarlaPluginScopedDisabler m(this);
+            const ScopedDisabler m(this);
             reloadPrograms(false);
         }
         else

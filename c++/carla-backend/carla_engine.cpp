@@ -314,8 +314,7 @@ void CarlaEngine::removeAllPlugins()
 {
     qDebug("CarlaEngine::removeAllPlugins()");
 
-    if (m_checkThread.isRunning())
-        m_checkThread.stopNow();
+    const CarlaCheckThread::ScopedLocker m(&m_checkThread);
 
     for (unsigned short i=0; i < MAX_PLUGINS; i++)
     {
@@ -333,9 +332,6 @@ void CarlaEngine::removeAllPlugins()
             m_uniqueNames[i]  = nullptr;
         }
     }
-
-    if (isRunning())
-        m_checkThread.start(QThread::HighPriority);
 }
 
 void CarlaEngine::idlePluginGuis()

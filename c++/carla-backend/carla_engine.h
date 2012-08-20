@@ -391,6 +391,42 @@ public:
 
     // -------------------------------------
 
+    /*!
+     * \class CarlaEngineScopedLocker
+     *
+     * \brief Carla engine scoped locker
+     *
+     * This is a handy class that temporarily locks an engine during a function scope.
+     */
+    class ScopedLocker
+    {
+    public:
+        /*!
+         * Lock the engine \a engine if \a lock is true.
+         * The engine is unlocked in the deconstructor of this class if \a lock is true.
+         *
+         * \param engine The engine to lock
+         * \param lock Wherever to lock the engine or not, true by default
+         */
+        ScopedLocker(CarlaEngine* const engine, bool lock = true) :
+            m_engine(engine),
+            m_lock(lock)
+        {
+            if (m_lock)
+                m_engine->processLock();
+        }
+
+        ~ScopedLocker()
+        {
+            if (m_lock)
+                m_engine->processUnlock();
+        }
+
+    private:
+        CarlaEngine* const m_engine;
+        const bool m_lock;
+    };
+
 protected:
     CarlaEngineType type;
     const char* name;
@@ -418,42 +454,6 @@ private:
 
     double m_insPeak[MAX_PLUGINS * MAX_PEAKS];
     double m_outsPeak[MAX_PLUGINS * MAX_PEAKS];
-};
-
-/*!
- * \class CarlaEngineScopedLocker
- *
- * \brief Carla engine scoped locker
- *
- * This is a handy class that temporarily locks an engine during a function scope.
- */
-class CarlaEngineScopedLocker
-{
-public:
-    /*!
-     * Lock the engine \a engine if \a lock is true.
-     * The engine is unlocked in the deconstructor of this class if \a lock is true.
-     *
-     * \param engine The engine to lock
-     * \param lock Wherever to lock the engine or not, true by default
-     */
-    CarlaEngineScopedLocker(CarlaEngine* const engine, bool lock = true) :
-        m_engine(engine),
-        m_lock(lock)
-    {
-        if (m_lock)
-            m_engine->processLock();
-    }
-
-    ~CarlaEngineScopedLocker()
-    {
-        if (m_lock)
-            m_engine->processUnlock();
-    }
-
-private:
-    CarlaEngine* const m_engine;
-    const bool m_lock;
 };
 
 // -----------------------------------------------------------------------

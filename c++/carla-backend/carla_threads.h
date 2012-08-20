@@ -23,8 +23,6 @@
 #include <QtCore/QMutex>
 #include <QtCore/QThread>
 
-class QProcess;
-
 // --------------------------------------------------------------------------------------------------------
 // CarlaCheckThread
 
@@ -36,15 +34,23 @@ public:
 
     void stopNow();
 
-    void lock()
+    class ScopedLocker
     {
-        mutex.lock();
-    }
+    public:
+        ScopedLocker(CarlaCheckThread* const thread)
+            : m_thread(thread)
+        {
+            m_thread->mutex.lock();
+        }
 
-    void unlock()
-    {
-        mutex.unlock();
-    }
+        ~ScopedLocker()
+        {
+            m_thread->mutex.unlock();
+        }
+
+    private:
+        CarlaCheckThread* const m_thread;
+    };
 
 protected:
     void run();
@@ -57,6 +63,8 @@ private:
 
 // --------------------------------------------------------------------------------------------------------
 // CarlaPluginThread
+
+class QProcess;
 
 class CarlaPluginThread : public QThread
 {
