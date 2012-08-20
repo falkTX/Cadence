@@ -78,7 +78,7 @@ int CarlaEngine::maxClientNameSize()
 {
 #ifdef CARLA_ENGINE_JACK
 #  ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode != PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #  endif
         return jack_client_name_size();
 #endif
@@ -89,7 +89,7 @@ int CarlaEngine::maxPortNameSize()
 {
 #ifdef CARLA_ENGINE_JACK
 #  ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode != PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #  endif
         return jack_port_name_size();
 #endif
@@ -102,8 +102,6 @@ bool CarlaEngine::init(const char* const clientName)
 
     m_osc.init(clientName);
     m_oscData = m_osc.getControllerData();
-
-    m_checkThread.start(QThread::HighPriority);
 
     return true;
 }
@@ -126,13 +124,6 @@ bool CarlaEngine::close()
 short CarlaEngine::getNewPluginId() const
 {
     qDebug("CarlaEngine::getNewPluginId()");
-
-    if (maxPluginNumber == 0)
-#ifdef BUILD_BRIDGE
-        maxPluginNumber = MAX_PLUGINS;
-#else
-        maxPluginNumber = (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK) ? 16 : MAX_PLUGINS;
-#endif
 
     for (unsigned short i=0; i < maxPluginNumber; i++)
     {
@@ -157,7 +148,7 @@ CarlaPlugin* CarlaEngine::getPlugin(const unsigned short id) const
 
 CarlaPlugin* CarlaEngine::getPluginUnchecked(const unsigned short id) const
 {
-    Q_ASSERT(maxPluginNumber != 0);
+    //Q_ASSERT(maxPluginNumber != 0);
     Q_ASSERT(id < maxPluginNumber);
 
     return m_carlaPlugins[id];
@@ -233,11 +224,17 @@ short CarlaEngine::addPlugin(const PluginType ptype, const char* const filename,
 short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, const char* const filename, const char* const name, const char* const label, void* const extra)
 {
     qDebug("CarlaEngine::addPlugin(%s, %s, \"%s\", \"%s\", \"%s\", %p)", BinaryType2str(btype), PluginType2str(ptype), filename, name, label, extra);
-    Q_ASSERT(maxPluginNumber != 0);
     Q_ASSERT(btype != BINARY_NONE);
     Q_ASSERT(ptype != PLUGIN_NONE);
     Q_ASSERT(filename);
     Q_ASSERT(label);
+
+    if (maxPluginNumber == 0)
+#ifdef BUILD_BRIDGE
+        maxPluginNumber = MAX_PLUGINS;
+#else
+        maxPluginNumber = (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK) ? 16 : MAX_PLUGINS;
+#endif
 
     CarlaPlugin::initializer init = {
         this,
@@ -252,7 +249,7 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
     if (btype != BINARY_NATIVE)
     {
 #  ifdef CARLA_ENGINE_JACK
-        if (carlaOptions.process_mode != CarlaBackend::PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (carlaOptions.processMode != CarlaBackend::PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             setLastError("Can only use bridged plugins in JACK Multi-Client mode");
             return -1;
@@ -306,6 +303,9 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
     m_carlaPlugins[id] = plugin;
     m_uniqueNames[id]  = plugin->name();
 
+    if (! m_checkThread.isRunning())
+        m_checkThread.start(QThread::HighPriority);
+
     return id;
 }
 
@@ -321,7 +321,7 @@ bool CarlaEngine::removePlugin(const unsigned short id)
     {
         Q_ASSERT(plugin->id() == id);
 
-        const CarlaCheckThread::ScopedLocker m(&m_checkThread);
+        m_checkThread.stopNow();
 
         processLock();
         plugin->setEnabled(false);
@@ -331,7 +331,7 @@ bool CarlaEngine::removePlugin(const unsigned short id)
         m_carlaPlugins[id] = nullptr;
         m_uniqueNames[id]  = nullptr;
 
-        if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
         {
             for (unsigned short i=id; i < maxPluginNumber-1; i++)
             {
@@ -342,6 +342,9 @@ bool CarlaEngine::removePlugin(const unsigned short id)
                     m_carlaPlugins[i]->setId(i);
             }
         }
+
+        if (isRunning())
+            m_checkThread.start(QThread::HighPriority);
 
         return true;
     }
@@ -356,7 +359,7 @@ void CarlaEngine::removeAllPlugins()
     qDebug("CarlaEngine::removeAllPlugins()");
     Q_ASSERT(maxPluginNumber != 0);
 
-    const CarlaCheckThread::ScopedLocker m(&m_checkThread);
+    m_checkThread.stopNow();
 
     for (unsigned short i=0; i < maxPluginNumber; i++)
     {
@@ -546,7 +549,7 @@ CarlaEngineClient::~CarlaEngineClient()
     Q_ASSERT(! m_active);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode == PROCESS_MODE_MULTIPLE_CLIENTS)
+    if (carlaOptions.processMode == PROCESS_MODE_MULTIPLE_CLIENTS)
 #endif
     {
 #ifdef CARLA_ENGINE_JACK
@@ -566,7 +569,7 @@ void CarlaEngineClient::activate()
     Q_ASSERT(! m_active);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode == PROCESS_MODE_MULTIPLE_CLIENTS)
+    if (carlaOptions.processMode == PROCESS_MODE_MULTIPLE_CLIENTS)
 #endif
     {
         if (! m_active)
@@ -591,7 +594,7 @@ void CarlaEngineClient::deactivate()
     Q_ASSERT(m_active);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode == PROCESS_MODE_MULTIPLE_CLIENTS)
+    if (carlaOptions.processMode == PROCESS_MODE_MULTIPLE_CLIENTS)
 #endif
     {
         if (m_active)
@@ -622,7 +625,7 @@ bool CarlaEngineClient::isOk() const
     qDebug("CarlaEngineClient::isOk()");
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode != PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #endif
     {
 #ifdef CARLA_ENGINE_JACK
@@ -645,7 +648,7 @@ const CarlaEngineBasePort* CarlaEngineClient::addPort(const CarlaEnginePortType 
 
 #ifdef CARLA_ENGINE_JACK
 #  ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode != PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #  endif
     {
         switch (type)
@@ -694,7 +697,7 @@ CarlaEngineBasePort::~CarlaEngineBasePort()
 
 #ifdef CARLA_ENGINE_JACK
 #  ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode != PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #  endif
     {
         if (handle.jackClient && handle.jackPort)
@@ -720,7 +723,7 @@ void CarlaEngineAudioPort::initBuffer(CarlaEngine* const /*engine*/)
 float* CarlaEngineAudioPort::getJackAudioBuffer(uint32_t nframes)
 {
 #  ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
         return nullptr;
 #  endif
     Q_ASSERT(handle.jackPort);
@@ -742,7 +745,7 @@ void CarlaEngineControlPort::initBuffer(CarlaEngine* const engine)
     Q_ASSERT(engine);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         buffer = isInput ? engine->rackControlEventsIn : engine->rackControlEventsOut;
         return;
@@ -768,7 +771,7 @@ uint32_t CarlaEngineControlPort::getEventCount()
     Q_ASSERT(buffer);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         uint32_t count = 0;
         const CarlaEngineControlEvent* const events = (CarlaEngineControlEvent*)buffer;
@@ -801,7 +804,7 @@ const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(uint32_t index)
     Q_ASSERT(index < CarlaEngine::MAX_ENGINE_CONTROL_EVENTS);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         const CarlaEngineControlEvent* const events = (CarlaEngineControlEvent*)buffer;
 
@@ -876,7 +879,7 @@ void CarlaEngineControlPort::writeEvent(CarlaEngineControlEventType type, uint32
     Q_ASSERT(type != CarlaEngineEventNull);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         CarlaEngineControlEvent* const events = (CarlaEngineControlEvent*)buffer;
 
@@ -952,7 +955,7 @@ void CarlaEngineMidiPort::initBuffer(CarlaEngine* const engine)
     Q_ASSERT(engine);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         buffer = isInput ? engine->rackMidiEventsIn : engine->rackMidiEventsOut;
         return;
@@ -978,7 +981,7 @@ uint32_t CarlaEngineMidiPort::getEventCount()
     Q_ASSERT(buffer);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         uint32_t count = 0;
         const CarlaEngineMidiEvent* const events = (CarlaEngineMidiEvent*)buffer;
@@ -1011,7 +1014,7 @@ const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(uint32_t index)
     Q_ASSERT(index < CarlaEngine::MAX_ENGINE_MIDI_EVENTS);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         const CarlaEngineMidiEvent* const events = (CarlaEngineMidiEvent*)buffer;
 
@@ -1048,7 +1051,7 @@ void CarlaEngineMidiPort::writeEvent(uint32_t time, uint8_t* data, uint8_t size)
     Q_ASSERT(size > 0);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         if (size > 4)
             return;

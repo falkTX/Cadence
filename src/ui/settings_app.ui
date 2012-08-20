@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>600</width>
-    <height>449</height>
+    <height>465</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -203,7 +203,7 @@
         <number>0</number>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="page_main">
         <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -309,7 +309,7 @@
             <item row="0" column="0">
              <widget class="QCheckBox" name="cb_tray_enable">
               <property name="text">
-               <string>Use System Tray (App-Indicator and KDE support)</string>
+               <string>Use System Tray (App-Indicator support)</string>
               </property>
              </widget>
             </item>
@@ -799,13 +799,7 @@
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QComboBox" name="cb_engine_audio_driver">
-              <item>
-               <property name="text">
-                <string>JACK</string>
-               </property>
-              </item>
-             </widget>
+             <widget class="QComboBox" name="cb_engine_audio_driver"/>
             </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_20">
@@ -900,7 +894,7 @@
                <string>How much time to wait for OSC GUIs to ping back the host</string>
               </property>
               <property name="text">
-               <string>OSC GUI Timeout:</string>
+               <string>OSC UI Timeout:</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

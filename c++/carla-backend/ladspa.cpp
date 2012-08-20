@@ -331,7 +331,7 @@ public:
                 params += 1;
         }
 
-        if (carlaOptions.force_stereo && (ains == 1 || aouts == 1) && ! h2)
+        if (carlaOptions.forceStereo && (ains == 1 || aouts == 1) && ! h2)
             h2 = descriptor->instantiate(descriptor, sampleRate);
 
         if (ains > 0)
@@ -367,7 +367,7 @@ public:
             if (LADSPA_IS_PORT_AUDIO(PortType))
             {
 #ifndef BUILD_BRIDGE
-                if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+                if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
                 {
                     strcpy(portName, m_name);
                     strcat(portName, ":");
@@ -591,7 +591,7 @@ public:
         if (needsCin)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-in");
@@ -606,7 +606,7 @@ public:
         if (needsCout)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-out");
@@ -1114,7 +1114,7 @@ CarlaPlugin* CarlaPlugin::newLADSPA(const initializer& init, const void* const e
     plugin->reload();
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         const uint32_t ins  = plugin->audioInCount();
         const uint32_t outs = plugin->audioOutCount();

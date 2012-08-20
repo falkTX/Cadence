@@ -200,18 +200,22 @@ const char* OptionsType2str(const OptionsType type)
     {
     case OPTION_PROCESS_MODE:
         return "OPTION_PROCESS_MODE";
-    case OPTION_MAX_PARAMETERS:
-        return "OPTION_MAX_PARAMETERS";
-    case OPTION_PREFER_UI_BRIDGES:
-        return "OPTION_PREFER_UI_BRIDGES";
-    case OPTION_FORCE_STEREO:
-        return "OPTION_FORCE_STEREO";
     case OPTION_PROCESS_HIGH_PRECISION:
         return "OPTION_PROCESS_HIGH_PRECISION";
-    case OPTION_OSC_GUI_TIMEOUT:
-        return "OPTION_OSC_GUI_TIMEOUT";
-    case OPTION_USE_DSSI_CHUNKS:
-        return "OPTION_USE_DSSI_CHUNKS";
+    case OPTION_MAX_PARAMETERS:
+        return "OPTION_MAX_PARAMETERS";
+    case OPTION_PREFERRED_BUFFER_SIZE:
+        return "OPTION_PREFERRED_BUFFER_SIZE";
+    case OPTION_PREFERRED_SAMPLE_RATE:
+        return "OPTION_PREFERRED_SAMPLE_RATE";
+    case OPTION_FORCE_STEREO:
+        return "OPTION_FORCE_STEREO";
+    case OPTION_USE_DSSI_VST_CHUNKS:
+        return "OPTION_USE_DSSI_VST_CHUNKS";
+    case OPTION_PREFER_UI_BRIDGES:
+        return "OPTION_PREFER_UI_BRIDGES";
+    case OPTION_OSC_UI_TIMEOUT:
+        return "OPTION_OSC_UI_TIMEOUT";
     case OPTION_PATH_LADSPA:
         return "OPTION_PATH_LADSPA";
     case OPTION_PATH_DSSI:
@@ -480,25 +484,31 @@ void setOption(const OptionsType option, const int value, const char* const valu
     case OPTION_PROCESS_MODE:
         if (value < PROCESS_MODE_SINGLE_CLIENT || value > PROCESS_MODE_CONTINUOUS_RACK)
             return qCritical("CarlaBackend::setOption(%s, %i, \"%s\") - invalid value", OptionsType2str(option), value, valueStr);
-        carlaOptions.process_mode = (ProcessModeType)value;
-        break;
-    case OPTION_MAX_PARAMETERS:
-        carlaOptions.max_parameters = (value > 0) ? value : MAX_PARAMETERS;
-        break;
-    case OPTION_PREFER_UI_BRIDGES:
-        carlaOptions.prefer_ui_bridges = value;
-        break;
-    case OPTION_FORCE_STEREO:
-        carlaOptions.force_stereo = value;
+        carlaOptions.processMode = (ProcessModeType)value;
         break;
     case OPTION_PROCESS_HIGH_PRECISION:
-        carlaOptions.proccess_hp = value;
+        carlaOptions.processHighPrecision = value;
         break;
-    case OPTION_OSC_GUI_TIMEOUT:
-        carlaOptions.osc_gui_timeout = value/100;
+    case OPTION_MAX_PARAMETERS:
+        carlaOptions.maxParameters = (value > 0) ? value : MAX_PARAMETERS;
         break;
-    case OPTION_USE_DSSI_CHUNKS:
-        carlaOptions.use_dssi_chunks = value;
+    case OPTION_PREFERRED_BUFFER_SIZE:
+        carlaOptions.preferredBufferSize = value;
+        break;
+    case OPTION_PREFERRED_SAMPLE_RATE:
+        carlaOptions.preferredSampleRate = value;
+        break;
+    case OPTION_FORCE_STEREO:
+        carlaOptions.forceStereo = value;
+        break;
+    case OPTION_USE_DSSI_VST_CHUNKS:
+        carlaOptions.useDssiVstChunks = value;
+        break;
+    case OPTION_PREFER_UI_BRIDGES:
+        carlaOptions.preferUiBridges = value;
+        break;
+    case OPTION_OSC_UI_TIMEOUT:
+        carlaOptions.oscUiTimeout = value/100;
         break;
     case OPTION_PATH_LADSPA:
         carla_setenv("LADSPA_PATH", valueStr);
@@ -576,20 +586,24 @@ void resetOptions()
     if (carlaOptions.bridge_vstx11)
         free((void*)carlaOptions.bridge_vstx11);
 
-    carlaOptions.process_mode      = PROCESS_MODE_MULTIPLE_CLIENTS;
-    carlaOptions.max_parameters    = MAX_PARAMETERS;
-    carlaOptions.prefer_ui_bridges = true;
-    carlaOptions.proccess_hp       = false;
-    carlaOptions.osc_gui_timeout   = 4000/100;
-    carlaOptions.use_dssi_chunks   = false;
-    carlaOptions.bridge_unix32     = nullptr;
-    carlaOptions.bridge_unix64     = nullptr;
-    carlaOptions.bridge_win32      = nullptr;
-    carlaOptions.bridge_win64      = nullptr;
-    carlaOptions.bridge_lv2gtk2    = nullptr;
-    carlaOptions.bridge_lv2qt4     = nullptr;
-    carlaOptions.bridge_lv2x11     = nullptr;
-    carlaOptions.bridge_vstx11     = nullptr;
+    carlaOptions.processMode          = PROCESS_MODE_MULTIPLE_CLIENTS;
+    carlaOptions.processHighPrecision = false;
+    carlaOptions.maxParameters        = MAX_PARAMETERS;
+    carlaOptions.preferredBufferSize  = 512;
+    carlaOptions.preferredSampleRate  = 44100;
+    carlaOptions.forceStereo          = false;
+    carlaOptions.useDssiVstChunks     = false;
+    carlaOptions.preferUiBridges      = true;
+    carlaOptions.oscUiTimeout         = 4000/100;
+
+    carlaOptions.bridge_unix32  = nullptr;
+    carlaOptions.bridge_unix64  = nullptr;
+    carlaOptions.bridge_win32   = nullptr;
+    carlaOptions.bridge_win64   = nullptr;
+    carlaOptions.bridge_lv2gtk2 = nullptr;
+    carlaOptions.bridge_lv2qt4  = nullptr;
+    carlaOptions.bridge_lv2x11  = nullptr;
+    carlaOptions.bridge_vstx11  = nullptr;
 }
 #endif // BUILD_BRIDGE
 

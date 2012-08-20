@@ -34,6 +34,16 @@ public:
 
     void stopNow();
 
+protected:
+    void run();
+
+private:
+    CarlaBackend::CarlaEngine* const engine;
+    QMutex mutex;
+    bool m_stopNow;
+
+    // ----------------------------------------------
+
     class ScopedLocker
     {
     public:
@@ -51,14 +61,6 @@ public:
     private:
         CarlaCheckThread* const m_thread;
     };
-
-protected:
-    void run();
-
-private:
-    CarlaBackend::CarlaEngine* const engine;
-    QMutex mutex;
-    bool m_stopNow;
 };
 
 // --------------------------------------------------------------------------------------------------------

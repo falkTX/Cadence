@@ -55,13 +55,19 @@ void resetOptions();
 
 // Global options
 struct carla_options_t {
-    ProcessModeType process_mode;
-    uint max_parameters;
-    bool prefer_ui_bridges;
-    bool force_stereo;
-    bool proccess_hp;
-    int  osc_gui_timeout;
-    bool use_dssi_chunks;
+    ProcessModeType processMode;
+    bool            processHighPrecision;
+
+    uint maxParameters;
+    uint preferredBufferSize;
+    uint preferredSampleRate;
+
+    bool forceStereo;
+    bool useDssiVstChunks;
+
+    bool preferUiBridges;
+    uint oscUiTimeout;
+
     const char* bridge_unix32;
     const char* bridge_unix64;
     const char* bridge_win32;
@@ -72,13 +78,15 @@ struct carla_options_t {
     const char* bridge_vstx11;
 
     carla_options_t()
-        : process_mode(PROCESS_MODE_MULTIPLE_CLIENTS),
-          max_parameters(MAX_PARAMETERS),
-          prefer_ui_bridges(true),
-          force_stereo(false),
-          proccess_hp(false),
-          osc_gui_timeout(4000/100),
-          use_dssi_chunks(false),
+        : processMode(PROCESS_MODE_MULTIPLE_CLIENTS),
+          processHighPrecision(false),
+          maxParameters(MAX_PARAMETERS),
+          preferredBufferSize(512),
+          preferredSampleRate(44100),
+          forceStereo(false),
+          useDssiVstChunks(false),
+          preferUiBridges(true),
+          oscUiTimeout(4000/100),
           bridge_unix32(nullptr),
           bridge_unix64(nullptr),
           bridge_win32(nullptr),

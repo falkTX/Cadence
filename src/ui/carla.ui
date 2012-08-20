@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>710</width>
-     <height>19</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -88,7 +88,17 @@
     <addaction name="separator"/>
     <addaction name="act_settings_configure"/>
    </widget>
+   <widget class="QMenu" name="menu_Engine">
+    <property name="title">
+     <string>&amp;Engine</string>
+    </property>
+    <addaction name="act_engine_start"/>
+    <addaction name="act_engine_stop"/>
+    <addaction name="separator"/>
+    <addaction name="act_engine_configure"/>
+   </widget>
    <addaction name="menu_File"/>
+   <addaction name="menu_Engine"/>
    <addaction name="menu_Plugin"/>
    <addaction name="menu_Settings"/>
    <addaction name="menu_Help"/>
@@ -117,6 +127,10 @@
    <addaction name="act_file_open"/>
    <addaction name="act_file_save"/>
    <addaction name="act_file_save_as"/>
+   <addaction name="separator"/>
+   <addaction name="act_engine_start"/>
+   <addaction name="act_engine_stop"/>
+   <addaction name="act_engine_configure"/>
    <addaction name="separator"/>
    <addaction name="act_plugin_add"/>
    <addaction name="act_plugin_remove_all"/>
@@ -209,6 +223,36 @@
    </property>
    <property name="text">
     <string>Configure Carla</string>
+   </property>
+  </action>
+  <action name="act_engine_start">
+   <property name="icon">
+    <iconset resource="../../resources/resources.qrc">
+     <normaloff>:/16x16/media-playback-start.png</normaloff>:/16x16/media-playback-start.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Start</string>
+   </property>
+  </action>
+  <action name="act_engine_stop">
+   <property name="icon">
+    <iconset resource="../../resources/resources.qrc">
+     <normaloff>:/16x16/media-playback-stop.png</normaloff>:/16x16/media-playback-stop.png</iconset>
+   </property>
+   <property name="text">
+    <string>St&amp;op</string>
+   </property>
+  </action>
+  <action name="act_engine_configure">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../resources/resources.qrc">
+     <normaloff>:/16x16/configure.png</normaloff>:/16x16/configure.png</iconset>
+   </property>
+   <property name="text">
+    <string>Configure Driver</string>
    </property>
   </action>
  </widget>

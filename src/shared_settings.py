@@ -56,8 +56,10 @@ LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY_DEFAULT    = 0
 # Internal defines
 global SETTINGS_DEFAULT_PROJECT_FOLDER
 global SETTINGS_DEFAULT_PLUGINS_PATHS
-SETTINGS_DEFAULT_PROJECT_FOLDER = HOME
-SETTINGS_DEFAULT_PLUGINS_PATHS  = [[], [], [], [], [], [], []]
+global SETTINGS_AVAILABLE_ENGINE_DRIVERS
+SETTINGS_DEFAULT_PROJECT_FOLDER   = HOME
+SETTINGS_DEFAULT_PLUGINS_PATHS    = [[], [], [], [], [], [], []]
+SETTINGS_AVAILABLE_ENGINE_DRIVERS = ["JACK"]
 
 def setDefaultProjectFolder(folder):
     global SETTINGS_DEFAULT_PROJECT_FOLDER
@@ -65,7 +67,11 @@ def setDefaultProjectFolder(folder):
 
 def setDefaultPluginsPaths(ladspas, dssis, lv2s, vsts, gigs, sf2s, sfzs):
     global SETTINGS_DEFAULT_PLUGINS_PATHS
-    SETTINGS_DEFAULT_PLUGINS_PATHS  = [ladspas, dssis, lv2s, vsts, gigs, sf2s, sfzs]
+    SETTINGS_DEFAULT_PLUGINS_PATHS = [ladspas, dssis, lv2s, vsts, gigs, sf2s, sfzs]
+
+def setAvailableEngineDrivers(drivers):
+    global SETTINGS_AVAILABLE_ENGINE_DRIVERS
+    SETTINGS_AVAILABLE_ENGINE_DRIVERS = drivers
 
 # Settings Dialog
 class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
@@ -118,6 +124,10 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             self.lw_page.hideRow(1)
             self.lw_page.hideRow(2)
             self.lw_page.setCurrentCell(0, 0)
+
+            global SETTINGS_AVAILABLE_ENGINE_DRIVERS
+            for driver in SETTINGS_AVAILABLE_ENGINE_DRIVERS:
+                self.cb_engine_audio_driver.addItem(driver)
 
         else:
             self.lw_page.hideRow(0)
@@ -200,7 +210,13 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         # --------------------------------------------
 
         if not self.lw_page.isRowHidden(TAB_INDEX_CARLA_ENGINE):
-            #self.cb_engine_audio_driver.setCurrentIndex(self.settings.value("Engine/AudioDriver", "JACK", type=str))
+            audioDriver = self.settings.value("Engine/AudioDriver", "JACK", type=str)
+            for i in range(self.cb_engine_audio_driver.count()):
+                if self.cb_engine_audio_driver.itemText(i) == audioDriver:
+                    self.cb_engine_audio_driver.setCurrentIndex(i)
+                    break
+            else:
+                self.cb_engine_audio_driver.setCurrentIndex(-1)
             self.cb_engine_process_mode.setCurrentIndex(self.settings.value("Engine/ProcessMode", PROCESS_MODE_MULTIPLE_CLIENTS, type=int))
             self.sb_engine_max_params.setValue(self.settings.value("Engine/MaxParameters", 200, type=int))
             self.ch_engine_prefer_bridges.setChecked(self.settings.value("Engine/PreferUIBridges", True, type=bool))
@@ -398,12 +414,12 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             self.settings.setValue("Engine/AudioDriver", self.cb_engine_audio_driver.currentText())
             self.settings.setValue("Engine/ProcessMode", self.cb_engine_process_mode.currentIndex())
             self.settings.setValue("Engine/MaxParameters", self.sb_engine_max_params.value())
-            self.settings.setValue("Engine/PreferUIBridges", self.ch_engine_prefer_bridges.isChecked())
-            self.settings.setValue("Engine/OscGuiTimeout", self.sb_engine_oscgui_timeout.value())
+            self.settings.setValue("Engine/PreferUiBridges", self.ch_engine_prefer_bridges.isChecked())
+            self.settings.setValue("Engine/OscUiTimeout", self.sb_engine_oscgui_timeout.value())
             self.settings.setValue("Engine/DisableChecks", self.ch_engine_disable_checks.isChecked())
-            self.settings.setValue("Engine/UseDSSIChunks", self.ch_engine_dssi_chunks.isChecked())
+            self.settings.setValue("Engine/UseDssiVstChunks", self.ch_engine_dssi_chunks.isChecked())
             self.settings.setValue("Engine/ForceStereo", self.ch_engine_force_stereo.isChecked())
-            self.settings.setValue("Engine/ProcessHP", self.ch_engine_process_hp.isChecked())
+            self.settings.setValue("Engine/ProcessHighPrecision", self.ch_engine_process_hp.isChecked())
 
         # --------------------------------------------
 
@@ -470,6 +486,7 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             self.le_ladish_terminal.setText(LADISH_CONF_KEY_DAEMON_TERMINAL_DEFAULT)
 
         elif self.lw_page.currentRow() == TAB_INDEX_CARLA_ENGINE:
+            self.cb_engine_audio_driver.setCurrentIndex(0)
             self.cb_engine_process_mode.setCurrentIndex(PROCESS_MODE_MULTIPLE_CLIENTS)
             self.sb_engine_max_params.setValue(200)
             self.ch_engine_prefer_bridges.setChecked(True)

@@ -159,7 +159,7 @@ public:
         // Audio Outputs
 
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":out-left");
@@ -172,7 +172,7 @@ public:
         aout.rindexes[0] = 0;
 
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":out-right");
@@ -188,7 +188,7 @@ public:
         // MIDI Input
 
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":midi-in");

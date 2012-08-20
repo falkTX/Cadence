@@ -240,6 +240,9 @@ const PluginInfo* get_plugin_info(unsigned short plugin_id)
         info.copyright = nullptr;
     }
 
+    if (! carlaEngine->isRunning())
+        return nullptr;
+
     CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
 
     if (plugin)
@@ -265,9 +268,7 @@ const PluginInfo* get_plugin_info(unsigned short plugin_id)
         return &info;
     }
 
-    if (carlaEngine->isRunning())
-        qCritical("CarlaBackendStandalone::get_plugin_info(%i) - could not find plugin", plugin_id);
-
+    qCritical("CarlaBackendStandalone::get_plugin_info(%i) - could not find plugin", plugin_id);
     return &info;
 }
 

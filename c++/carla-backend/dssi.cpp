@@ -345,7 +345,7 @@ public:
                 params += 1;
         }
 
-        if (carlaOptions.force_stereo && (ains == 1 || aouts == 1) && ! h2)
+        if (carlaOptions.forceStereo && (ains == 1 || aouts == 1) && ! h2)
             h2 = ldescriptor->instantiate(ldescriptor, sampleRate);
 
         if (descriptor->run_synth || descriptor->run_multiple_synths)
@@ -383,7 +383,7 @@ public:
             if (LADSPA_IS_PORT_AUDIO(PortType))
             {
 #ifndef BUILD_BRIDGE
-                if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+                if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
                 {
                     strcpy(portName, m_name);
                     strcat(portName, ":");
@@ -612,7 +612,7 @@ public:
         if (needsCin)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-in");
@@ -627,7 +627,7 @@ public:
         if (needsCout)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-out");
@@ -642,7 +642,7 @@ public:
         if (mins > 0)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":midi-in");
@@ -665,7 +665,7 @@ public:
             m_hints |= PLUGIN_IS_SYNTH;
 
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.use_dssi_chunks && QString(m_filename).endsWith("dssi-vst.so", Qt::CaseInsensitive))
+        if (carlaOptions.useDssiVstChunks && QString(m_filename).endsWith("dssi-vst.so", Qt::CaseInsensitive))
         {
             if (descriptor->get_custom_data && descriptor->set_custom_data)
                 m_hints |= PLUGIN_USES_CHUNKS;
@@ -1508,7 +1508,7 @@ CarlaPlugin* CarlaPlugin::newDSSI(const initializer& init, const void* const ext
     plugin->reload();
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         const uint32_t ins  = plugin->audioInCount();
         const uint32_t outs = plugin->audioOutCount();

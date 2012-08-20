@@ -165,133 +165,143 @@ enum OptionsType {
     OPTION_PROCESS_MODE = 1,
 
     /*!
-     * Maximum number of parameters allowed.\n
-     * Default is MAX_PARAMETERS.
-     */
-    OPTION_MAX_PARAMETERS = 2,
-
-    /*!
-     * Use OSC-UI bridges whenever possible, otherwise UIs will be handled in the main thread.\n
-     * Default is yes.
-     */
-    OPTION_PREFER_UI_BRIDGES = 3,
-
-    /*!
-     * Force mono plugins as stereo, by running 2 instances at the same time.\n
-     * Not supported in VST plugins.
-     */
-    OPTION_FORCE_STEREO = 4,
-
-    /*!
      * High-Precision processing mode.\n
      * When enabled, audio will be processed by blocks of 8 samples at a time, indenpendently of the buffer size.\n
      * Default is off.\n
      * EXPERIMENTAL!
      */
-    OPTION_PROCESS_HIGH_PRECISION = 5,
+    OPTION_PROCESS_HIGH_PRECISION = 2,
 
     /*!
-     * Timeout value in ms for how much to wait for OSC-GUIs to respond.\n
-     * Default is 4000 ms (4 secs).
+     * Maximum number of parameters allowed.\n
+     * Default is MAX_PARAMETERS.
      */
-    OPTION_OSC_GUI_TIMEOUT = 6,
+    OPTION_MAX_PARAMETERS = 3,
+
+    /*!
+     * Prefered buffer size.
+     */
+    OPTION_PREFERRED_BUFFER_SIZE = 4,
+
+    /*!
+     * Prefered sample rate.
+     */
+    OPTION_PREFERRED_SAMPLE_RATE = 5,
+
+    /*!
+     * Force mono plugins as stereo, by running 2 instances at the same time.\n
+     * Not supported in VST plugins.
+     */
+    OPTION_FORCE_STEREO = 6,
 
     /*!
      * Use (unofficial) dssi-vst chunks feature.\n
      * Default is no.
      * EXPERIMENTAL!
      */
-    OPTION_USE_DSSI_CHUNKS = 7,
+    OPTION_USE_DSSI_VST_CHUNKS = 7,
+
+    /*!
+     * Use OSC-UI bridges whenever possible, otherwise UIs will be handled in the main thread.\n
+     * Default is yes.
+     */
+    OPTION_PREFER_UI_BRIDGES = 8,
+
+    /*!
+     * Timeout value in ms for how much to wait for OSC-UIs to respond.\n
+     * Default is 4000 ms (4 secs).
+     */
+    OPTION_OSC_UI_TIMEOUT = 9,
 
     /*!
      * Set LADSPA_PATH environment variable.\n
      * Default undefined.
      */
-    OPTION_PATH_LADSPA = 8,
+    OPTION_PATH_LADSPA = 10,
 
     /*!
      * Set DSSI_PATH environment variable.\n
      * Default undefined.
      */
-    OPTION_PATH_DSSI = 9,
+    OPTION_PATH_DSSI = 11,
 
     /*!
      * Set LV2_PATH environment variable.\n
      * Default undefined.
      */
-    OPTION_PATH_LV2 = 10,
+    OPTION_PATH_LV2 = 12,
 
     /*!
      * Set VST_PATH environment variable.\n
      * Default undefined.
      */
-    OPTION_PATH_VST = 11,
+    OPTION_PATH_VST = 13,
 
     /*!
      * Set GIG_PATH environment variable.\n
      * Default undefined.
      */
-    OPTION_PATH_GIG = 12,
+    OPTION_PATH_GIG = 14,
 
     /*!
      * Set SF2_PATH environment variable.\n
      * Default undefined.
      */
-    OPTION_PATH_SF2 = 13,
+    OPTION_PATH_SF2 = 15,
 
     /*!
      * Set SFZ_PATH environment variable.\n
      * Default undefined.
      */
-    OPTION_PATH_SFZ = 14,
+    OPTION_PATH_SFZ = 16,
 
     /*!
      * Set path to the Unix 32bit plugin bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_UNIX32 = 15,
+    OPTION_PATH_BRIDGE_UNIX32 = 17,
 
     /*!
      * Set path to the Unix 64bit plugin bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_UNIX64 = 16,
+    OPTION_PATH_BRIDGE_UNIX64 = 18,
 
     /*!
      * Set path to the Windows 32bit plugin bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_WIN32 = 17,
+    OPTION_PATH_BRIDGE_WIN32 = 19,
 
     /*!
      * Set path to the Windows 64bit plugin bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_WIN64 = 18,
+    OPTION_PATH_BRIDGE_WIN64 = 20,
 
     /*!
      * Set path to the LV2 Gtk2 UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_LV2_GTK2 = 19,
+    OPTION_PATH_BRIDGE_LV2_GTK2 = 21,
 
     /*!
      * Set path to the LV2 Qt4 UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_LV2_QT4 = 20,
+    OPTION_PATH_BRIDGE_LV2_QT4 = 22,
 
     /*!
      * Set path to the LV2 X11 UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_LV2_X11 = 21,
+    OPTION_PATH_BRIDGE_LV2_X11 = 23,
 
     /*!
      * Set path to the VST X11 UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_VST_X11 = 22
+    OPTION_PATH_BRIDGE_VST_X11 = 24
 };
 
 /*!

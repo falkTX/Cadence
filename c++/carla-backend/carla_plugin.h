@@ -217,7 +217,7 @@ public:
         m_filename = nullptr;
 
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
             cin_channel = m_id;
         else
 #endif
@@ -741,7 +741,7 @@ public:
     {
         m_id = id;
 
-        if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+        if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
             cin_channel = id;
     }
 
@@ -1330,7 +1330,7 @@ public:
             outBuffer[i] = aout.ports[i]->getJackAudioBuffer(nframes);
 
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.proccess_hp)
+        if (carlaOptions.processHighPrecision)
         {
             float* inBuffer2[ain.count];
             float* outBuffer2[aout.count];
@@ -1419,7 +1419,7 @@ public:
         }
 
         // Plugin Parameters
-        if (param.count > 0 && param.count < carlaOptions.max_parameters)
+        if (param.count > 0 && param.count < carlaOptions.maxParameters)
         {
             char bufName[STR_MAX], bufUnit[STR_MAX];
 
@@ -1556,7 +1556,7 @@ public:
     bool showOscGui()
     {
         // wait for UI 'update' call
-        for (int i=0; i < carlaOptions.osc_gui_timeout; i++)
+        for (uint i=0; i < carlaOptions.oscUiTimeout; i++)
         {
             if (osc.data.target)
             {

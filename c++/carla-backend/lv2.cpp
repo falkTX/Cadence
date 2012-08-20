@@ -984,7 +984,7 @@ public:
         bool forcedStereoIn, forcedStereoOut;
         forcedStereoIn = forcedStereoOut = true;
 
-        if (carlaOptions.force_stereo && (ains == 1 || aouts == 1) && ! h2)
+        if (carlaOptions.forceStereo && (ains == 1 || aouts == 1) && ! h2)
         {
             h2 = descriptor->instantiate(descriptor, sampleRate, rdf_descriptor->Bundle, features);
 
@@ -1100,7 +1100,7 @@ public:
             if (LV2_IS_PORT_AUDIO(PortType) || LV2_IS_PORT_ATOM_SEQUENCE(PortType) || LV2_IS_PORT_CV(PortType) || LV2_IS_PORT_EVENT(PortType) || LV2_IS_PORT_MIDI_LL(PortType))
             {
 #ifndef BUILD_BRIDGE
-                if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+                if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
                 {
                     strcpy(portName, m_name);
                     strcat(portName, ":");
@@ -1434,7 +1434,7 @@ public:
         if (needsCin)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-in");
@@ -1449,7 +1449,7 @@ public:
         if (needsCout)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-out");
@@ -3446,7 +3446,7 @@ public:
                 {
                 case LV2_UI_QT4:
 #ifndef BUILD_BRIDGE
-                    if (isUiBridgeable(i) && carlaOptions.prefer_ui_bridges)
+                    if (isUiBridgeable(i) && carlaOptions.preferUiBridges)
                         eQt4 = i;
 #endif
                     iQt4 = i;
@@ -3454,7 +3454,7 @@ public:
 
                 case LV2_UI_WINDOWS:
 #ifndef BUILD_BRIDGE
-                    if (isUiBridgeable(i) && carlaOptions.prefer_ui_bridges)
+                    if (isUiBridgeable(i) && carlaOptions.preferUiBridges)
                         eHWND = i;
 #endif
                     iHWND = i;
@@ -3462,7 +3462,7 @@ public:
 
                 case LV2_UI_X11:
 #ifndef BUILD_BRIDGE
-                    if (isUiBridgeable(i) && carlaOptions.prefer_ui_bridges)
+                    if (isUiBridgeable(i) && carlaOptions.preferUiBridges)
                         eX11 = i;
 #endif
                     iX11 = i;
@@ -3473,7 +3473,7 @@ public:
                     if (false)
 #else
 #  ifdef HAVE_SUIL
-                    if (isUiBridgeable(i) && carlaOptions.prefer_ui_bridges)
+                    if (isUiBridgeable(i) && carlaOptions.preferUiBridges)
 #  else
                     if (isUiBridgeable(i))
 #  endif
@@ -3825,7 +3825,7 @@ CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
     plugin->reload();
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         const uint32_t ins  = plugin->audioInCount();
         const uint32_t outs = plugin->audioOutCount();

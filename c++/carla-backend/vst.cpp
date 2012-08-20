@@ -371,7 +371,7 @@ public:
         for (j=0; j<ains; j++)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
                 sprintf(portName, "%s:input_%02i", m_name, j+1);
             else
 #endif
@@ -384,7 +384,7 @@ public:
         for (j=0; j<aouts; j++)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
                 sprintf(portName, "%s:output_%02i", m_name, j+1);
             else
 #endif
@@ -512,7 +512,7 @@ public:
         if (needsCin)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-in");
@@ -527,7 +527,7 @@ public:
         if (mins == 1)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":midi-in");
@@ -542,7 +542,7 @@ public:
         if (mouts == 1)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.process_mode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":midi-out");
@@ -1391,7 +1391,7 @@ public:
 #ifdef BUILD_BRIDGE
             return MAX_PARAMETERS;
 #else
-            return carlaOptions.max_parameters;
+            return carlaOptions.maxParameters;
 #endif
 
         case audioMasterGetParameterQuantization:
@@ -1807,7 +1807,7 @@ CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
     plugin->reload();
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         const uint32_t ins  = plugin->audioInCount();
         const uint32_t outs = plugin->audioOutCount();

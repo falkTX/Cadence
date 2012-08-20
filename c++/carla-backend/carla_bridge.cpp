@@ -255,7 +255,7 @@ public:
             }
 
             // create new if needed
-            param.count = (pTotal < (int)carlaOptions.max_parameters) ? pTotal : 0;
+            param.count = (pTotal < (int)carlaOptions.maxParameters) ? pTotal : 0;
 
             if (param.count > 0)
             {
@@ -721,7 +721,7 @@ CarlaPlugin* CarlaPlugin::newBridge(const initializer& init, BinaryType btype, P
 
     plugin->reload();
 
-    if (carlaOptions.process_mode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         if (/* inputs */ ((plugin->audioInCount() != 0 && plugin->audioInCount() != 2)) || /* outputs */ ((plugin->audioOutCount() != 0 && plugin->audioOutCount() != 2)))
         {
