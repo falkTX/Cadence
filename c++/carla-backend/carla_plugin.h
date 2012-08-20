@@ -2084,6 +2084,8 @@ public:
         const bool m_disable;
     };
 
+    // -------------------------------------------------------------------
+
 protected:
     unsigned short m_id;
     CarlaEngine* const x_engine;

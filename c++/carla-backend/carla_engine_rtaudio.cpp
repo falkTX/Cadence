@@ -22,10 +22,6 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
-#if 0
-} /* adjust editor indent */
-#endif
-
 // -------------------------------------------------------------------------------------------------------------------
 // static RtAudio<->Engine calls
 
@@ -90,7 +86,17 @@ bool CarlaEngineRtAudio::init(const char* const clientName)
     }
 
     bufferSize = rtBufferFrames;
-    name = strdup(clientName);
+
+    // set client name, fixed for OSC usage
+    // FIXME - put this in shared?
+    char* fixedName = strdup(clientName);
+    for (size_t i=0; i < strlen(fixedName); i++)
+    {
+        if (! (std::isalpha(fixedName[i]) || std::isdigit(fixedName[i])))
+            fixedName[i] = '_';
+    }
+    name = strdup(fixedName);
+    free((void*)fixedName);
 
     qDebug("RtAudio bufferSize = %i", bufferSize);
 
@@ -146,6 +152,25 @@ bool CarlaEngineRtAudio::isRunning()
 CarlaEngineClient* CarlaEngineRtAudio::addClient(CarlaPlugin* const plugin)
 {
     CarlaEngineClientNativeHandle handle;
+
+//    unsigned int rtBufferFrames = getBufferSize();
+
+//    RtAudio::StreamParameters iParams, oParams;
+//    iParams.nChannels = plugin->audioInCount();
+//    oParams.nChannels = plugin->audioOutCount();
+//    RtAudio::StreamOptions options;
+//    options.flags = /*RTAUDIO_NONINTERLEAVED |*/ RTAUDIO_MINIMIZE_LATENCY /*| RTAUDIO_HOG_DEVICE*/ | RTAUDIO_SCHEDULE_REALTIME | RTAUDIO_ALSA_USE_DEFAULT;
+//    options.streamName = plugin->name();
+//    options.priority = 85;
+
+//    try {
+//        adac.openStream(&oParams, &iParams, RTAUDIO_FLOAT32, getSampleRate(), &rtBufferFrames, carla_rtaudio_process_callback, this, &options);
+//    }
+//    catch (RtError& e)
+//    {
+//        setLastError(e.what());
+//        return false;
+//    }
 
     return new CarlaEngineClient(CarlaEngineTypeRtAudio, handle);
     Q_UNUSED(plugin);

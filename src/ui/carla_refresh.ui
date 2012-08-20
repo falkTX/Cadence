@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>702</width>
-    <height>247</height>
+    <height>290</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -180,24 +180,24 @@
         </sizepolicy>
        </property>
        <property name="maximum">
-        <number>0</number>
+        <number>100</number>
        </property>
        <property name="value">
-        <number>-1</number>
+        <number>0</number>
        </property>
        <property name="format">
-        <string/>
+        <string>Press 'Start' to begin the search</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="b_refresh">
+      <widget class="QPushButton" name="b_start">
        <property name="text">
-        <string>Refresh</string>
+        <string>Start</string>
        </property>
        <property name="icon">
         <iconset resource="../../resources/resources.qrc">
-         <normaloff>:/16x16/view-refresh.png</normaloff>:/16x16/view-refresh.png</iconset>
+         <normaloff>:/16x16/arrow-right.png</normaloff>:/16x16/arrow-right.png</iconset>
        </property>
       </widget>
      </item>

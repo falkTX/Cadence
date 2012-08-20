@@ -512,19 +512,19 @@ class PluginRefreshW(QDialog, ui_carla_refresh.Ui_PluginRefreshW):
                 self.ch_dssi.setEnabled(False)
                 self.ch_vst.setChecked(False)
                 self.ch_vst.setEnabled(False)
-                self.b_refresh.setEnabled(False)
+                self.b_start.setEnabled(False)
 
-        self.connect(self.b_refresh, SIGNAL("clicked()"), SLOT("slot_refresh_plugins()"))
+        self.connect(self.b_start, SIGNAL("clicked()"), SLOT("slot_start()"))
         self.connect(self.b_skip, SIGNAL("clicked()"), SLOT("slot_skip()"))
         self.connect(self.pThread, SIGNAL("PluginLook(int, QString)"), SLOT("slot_handlePluginLook(int, QString)"))
         self.connect(self.pThread, SIGNAL("finished()"), SLOT("slot_handlePluginThreadFinished()"))
 
     @pyqtSlot()
-    def slot_refresh_plugins(self):
+    def slot_start(self):
         self.progressBar.setMinimum(0)
         self.progressBar.setMaximum(100)
         self.progressBar.setValue(0)
-        self.b_refresh.setEnabled(False)
+        self.b_start.setEnabled(False)
         self.b_skip.setVisible(True)
         self.b_close.setVisible(False)
 
@@ -551,7 +551,7 @@ class PluginRefreshW(QDialog, ui_carla_refresh.Ui_PluginRefreshW):
         self.progressBar.setMaximum(1)
         self.progressBar.setValue(1)
         self.progressBar.setFormat(self.tr("Done"))
-        self.b_refresh.setEnabled(True)
+        self.b_start.setEnabled(True)
         self.b_skip.setVisible(False)
         self.b_close.setVisible(True)
 
