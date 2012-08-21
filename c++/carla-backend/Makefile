@@ -7,9 +7,9 @@
 CC  ?= gcc
 CXX ?= g++
 
-HAVE_ALSA         = $(shell pkg-config --exists alsa && echo true)
+# HAVE_ALSA         = $(shell pkg-config --exists alsa && echo true)
 HAVE_JACK         = $(shell pkg-config --exists jack && echo true)
-HAVE_PULSEAUDIO   = $(shell pkg-config --exists libpulse-simple && echo true)
+# HAVE_PULSEAUDIO   = $(shell pkg-config --exists libpulse-simple && echo true)
 HAVE_FLUIDSYNTH   = $(shell pkg-config --exists fluidsynth && echo true)
 HAVE_LINUXSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
 HAVE_SUIL         = $(shell pkg-config --exists suil-0 && echo true)
@@ -20,7 +20,7 @@ CARLA_C_FLAGS     = $(BASE_FLAGS) $(CFLAGS)
 
 CARLA_CXX_FLAGS   = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
 CARLA_CXX_FLAGS  += $(shell pkg-config --cflags liblo QtCore QtGui)
-CARLA_CXX_FLAGS  += -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT #  -DNDEBUG
+CARLA_CXX_FLAGS  += -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT # -DNDEBUG
 CARLA_CXX_FLAGS  += -DVESTIGE_HEADER # Comment this line to not use vestige header
 
 CARLA_LD_FLAGS    = -shared -ldl -lm -fPIC $(LDFLAGS)

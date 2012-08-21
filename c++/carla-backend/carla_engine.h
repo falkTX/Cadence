@@ -138,7 +138,7 @@ struct CarlaEngineClientNativeHandle {
 #ifdef CARLA_ENGINE_JACK
     jack_client_t* jackClient;
 #endif
-#ifdef CARLA_ENGINE_JACK
+#ifdef CARLA_ENGINE_RTAUDIO
     RtAudio* rtAudioPtr;
 #endif
 
@@ -147,7 +147,7 @@ struct CarlaEngineClientNativeHandle {
 #ifdef CARLA_ENGINE_JACK
         jackClient = nullptr;
 #endif
-#ifdef CARLA_ENGINE_JACK
+#ifdef CARLA_ENGINE_RTAUDIO
         rtAudioPtr = nullptr;
 #endif
     }
