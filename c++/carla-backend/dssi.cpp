@@ -1416,6 +1416,7 @@ public:
         unsigned long i = 0;
         while ((descriptor = descfn(i++)))
         {
+            qDebug("init 003 -> %li", i);
             ldescriptor = descriptor->LADSPA_Plugin;
             if (strcmp(ldescriptor->Label, label) == 0)
                 break;
@@ -1473,6 +1474,7 @@ public:
 #else
         Q_UNUSED(guiFilename);
 #endif
+
         return true;
     }
 

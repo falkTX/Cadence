@@ -1132,16 +1132,12 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
         preferUiBridges = self.settings.value("Engine/PreferUiBridges", True, type=bool)
         oscUiTimeout    = self.settings.value("Engine/OscUiTimeout", 40, type=int)
-        disableChecks   = self.settings.value("Engine/DisableChecks", bool(not WINDOWS), type=bool)
 
         if Carla.processMode == PROCESS_MODE_CONTINUOUS_RACK:
             forceStereo = True
         elif Carla.processMode == PROCESS_MODE_MULTIPLE_CLIENTS and os.getenv("LADISH_APP_NAME"):
             print("LADISH detected but using multiple clients (not allowed), forcing single client now")
             Carla.processMode = PROCESS_MODE_SINGLE_CLIENT
-
-        if disableChecks:
-            os.environ["CARLA_DISCOVERY_NO_PROCESSING_CHECKS"] = "true"
 
         Carla.Host.set_option(OPTION_PROCESS_MODE, Carla.processMode, "")
         Carla.Host.set_option(OPTION_PROCESS_HIGH_PRECISION, processHighPrecision, "")
@@ -1155,26 +1151,6 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
         Carla.Host.set_option(OPTION_PREFER_UI_BRIDGES, preferUiBridges, "")
         Carla.Host.set_option(OPTION_OSC_UI_TIMEOUT, oscUiTimeout, "")
-
-        # ---------------------------------------------
-        # plugin paths
-
-        global LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, GIG_PATH, SF2_PATH, SFZ_PATH
-        LADSPA_PATH = toList(self.settings.value("Paths/LADSPA", LADSPA_PATH))
-        DSSI_PATH = toList(self.settings.value("Paths/DSSI", DSSI_PATH))
-        LV2_PATH = toList(self.settings.value("Paths/LV2", LV2_PATH))
-        VST_PATH = toList(self.settings.value("Paths/VST", VST_PATH))
-        GIG_PATH = toList(self.settings.value("Paths/GIG", GIG_PATH))
-        SF2_PATH = toList(self.settings.value("Paths/SF2", SF2_PATH))
-        SFZ_PATH = toList(self.settings.value("Paths/SFZ", SFZ_PATH))
-
-        Carla.Host.set_option(OPTION_PATH_LADSPA, 0, splitter.join(LADSPA_PATH))
-        Carla.Host.set_option(OPTION_PATH_DSSI, 0, splitter.join(DSSI_PATH))
-        Carla.Host.set_option(OPTION_PATH_LV2, 0, splitter.join(LV2_PATH))
-        Carla.Host.set_option(OPTION_PATH_VST, 0, splitter.join(VST_PATH))
-        Carla.Host.set_option(OPTION_PATH_GIG, 0, splitter.join(GIG_PATH))
-        Carla.Host.set_option(OPTION_PATH_SF2, 0, splitter.join(SF2_PATH))
-        Carla.Host.set_option(OPTION_PATH_SFZ, 0, splitter.join(SFZ_PATH))
 
         # ---------------------------------------------
         # bridge paths
@@ -1214,10 +1190,18 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             QMessageBox.critical(self, self.tr("Error"), self.tr("Could not connect to Audio backend '%s', possible reasons: %s" % (audioDriver, cString(Carla.Host.get_last_error()))))
             return
 
-        
         self.m_engine_started = True
 
     def stopEngine(self):
+        if self.m_pluginCount > 0:
+            ask = QMessageBox.question(self, self.tr("Warning"), self.tr("There are still some plugins loaded, you need to remove them to stop the engine.\n"
+                                                                         "Do you want to do this now?"),
+                                                                         QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if ask == QMessageBox.Yes:
+                self.slot_remove_all()
+            else:
+                return
+
         if Carla.Host.is_engine_running() and not Carla.Host.engine_close():
             print(cString(Carla.Host.get_last_error()))
 
@@ -1227,6 +1211,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
     def slot_engine_start(self):
         self.startEngine()
         check = Carla.Host.is_engine_running()
+        self.act_file_open.setEnabled(check)
         self.act_engine_start.setEnabled(not check)
         self.act_engine_stop.setEnabled(check)
 
@@ -1234,6 +1219,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
     def slot_engine_stop(self):
         self.stopEngine()
         check = Carla.Host.is_engine_running()
+        self.act_file_open.setEnabled(check)
         self.act_engine_start.setEnabled(not check)
         self.act_engine_stop.setEnabled(check)
 
@@ -1769,6 +1755,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             if Carla.processMode == PROCESS_MODE_CONTINUOUS_RACK:
                 h += 1
 
+        self.m_pluginCount = 0
         self.act_plugin_remove_all.setEnabled(False)
 
     @pyqtSlot()
@@ -1802,6 +1789,39 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             "Main/DefaultProjectFolder": self.settings.value("Main/DefaultProjectFolder", DEFAULT_PROJECT_FOLDER, type=str),
             "Main/RefreshInterval": self.settings.value("Main/RefreshInterval", 120, type=int)
         }
+
+        # ---------------------------------------------
+        # plugin checks
+
+        disableChecks = self.settings.value("Engine/DisableChecks", bool(not WINDOWS), type=bool)
+
+        if disableChecks:
+            os.environ["CARLA_DISCOVERY_NO_PROCESSING_CHECKS"] = "true"
+        else:
+            try:
+                os.environ.pop("CARLA_DISCOVERY_NO_PROCESSING_CHECKS")
+            except:
+                pass
+
+        # ---------------------------------------------
+        # plugin paths
+
+        global LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, GIG_PATH, SF2_PATH, SFZ_PATH
+        LADSPA_PATH = toList(self.settings.value("Paths/LADSPA", LADSPA_PATH))
+        DSSI_PATH = toList(self.settings.value("Paths/DSSI", DSSI_PATH))
+        LV2_PATH = toList(self.settings.value("Paths/LV2", LV2_PATH))
+        VST_PATH = toList(self.settings.value("Paths/VST", VST_PATH))
+        GIG_PATH = toList(self.settings.value("Paths/GIG", GIG_PATH))
+        SF2_PATH = toList(self.settings.value("Paths/SF2", SF2_PATH))
+        SFZ_PATH = toList(self.settings.value("Paths/SFZ", SFZ_PATH))
+
+        Carla.Host.set_option(OPTION_PATH_LADSPA, 0, splitter.join(LADSPA_PATH))
+        Carla.Host.set_option(OPTION_PATH_DSSI, 0, splitter.join(DSSI_PATH))
+        Carla.Host.set_option(OPTION_PATH_LV2, 0, splitter.join(LV2_PATH))
+        Carla.Host.set_option(OPTION_PATH_VST, 0, splitter.join(VST_PATH))
+        Carla.Host.set_option(OPTION_PATH_GIG, 0, splitter.join(GIG_PATH))
+        Carla.Host.set_option(OPTION_PATH_SF2, 0, splitter.join(SF2_PATH))
+        Carla.Host.set_option(OPTION_PATH_SFZ, 0, splitter.join(SFZ_PATH))
 
     def timerEvent(self, event):
         if event.timerId() == self.TIMER_GUI_STUFF:

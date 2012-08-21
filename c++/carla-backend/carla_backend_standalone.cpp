@@ -177,7 +177,7 @@ bool engine_close()
     get_parameter_info(0, 0);
     get_parameter_scalepoint_info(0, 0, 0);
     get_chunk_data(0);
-    get_parameter_text(0, 0);
+    //get_parameter_text(0, 0);
     get_program_name(0, 0);
     get_midi_program_name(0, 0);
     get_real_plugin_name(0);
@@ -354,6 +354,9 @@ const ParameterInfo* get_parameter_info(unsigned short plugin_id, quint32 parame
         info.unit = nullptr;
     }
 
+    if (! carlaEngine->isRunning())
+        return nullptr;
+
     CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
 
     if (plugin)
@@ -396,6 +399,9 @@ const ScalePointInfo* get_parameter_scalepoint_info(unsigned short plugin_id, qu
         free((void*)info.label);
         info.label = nullptr;
     }
+
+    if (! carlaEngine->isRunning())
+        return nullptr;
 
     CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
 
@@ -543,6 +549,9 @@ const char* get_chunk_data(unsigned short plugin_id)
         chunk_data = nullptr;
     }
 
+    if (! carlaEngine->isRunning())
+        return nullptr;
+
     CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
 
     if (plugin)
@@ -667,6 +676,9 @@ const char* get_program_name(unsigned short plugin_id, quint32 program_id)
         program_name = nullptr;
     }
 
+    if (! carlaEngine->isRunning())
+        return nullptr;
+
     CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
 
     if (plugin)
@@ -701,6 +713,9 @@ const char* get_midi_program_name(unsigned short plugin_id, quint32 midi_program
         free((void*)midi_program_name);
 
     midi_program_name = nullptr;
+
+    if (! carlaEngine->isRunning())
+        return nullptr;
 
     CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
 
@@ -737,6 +752,9 @@ const char* get_real_plugin_name(unsigned short plugin_id)
         free((void*)real_plugin_name);
         real_plugin_name = nullptr;
     }
+
+    if (! carlaEngine->isRunning())
+        return nullptr;
 
     CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
 
@@ -1272,7 +1290,7 @@ void run_tests_standalone(short idMax)
         //set_custom_data(id, CarlaBackend::CUSTOM_DATA_INVALID, nullptr, nullptr);
         set_custom_data(id, CarlaBackend::CUSTOM_DATA_INVALID, "", "");
         set_chunk_data(id, nullptr);
-        set_gui_data(id, 0, 0);
+        set_gui_data(id, 0, (quintptr)1);
 
         qDebug("------------------- TEST @%i: gui stuff --------------------", id);
         show_gui(id, false);
@@ -1284,7 +1302,7 @@ void run_tests_standalone(short idMax)
         idle_guis();
 
         qDebug("------------------- TEST @%i: other --------------------", id);
-        send_midi_note(id, -1,  0,  0);
+        send_midi_note(id, 15,  127,  127);
         send_midi_note(id,  0,  0,  0);
 
         prepare_for_save(id);
@@ -1309,7 +1327,7 @@ int main(int argc, char* argv[])
     //set_option(OPTION_PROCESS_MODE, PROCESS_MODE_CONTINUOUS_RACK, nullptr);
 
     // start engine
-    if (! engine_init("PulseAudio", "carla_demo"))
+    if (! engine_init("JACK", "carla_demo"))
     {
         qCritical("failed to start backend engine, reason:\n%s", get_last_error());
         delete vstGui;

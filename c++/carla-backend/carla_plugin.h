@@ -25,7 +25,7 @@
 #include "carla_lib_includes.h"
 
 #ifdef BUILD_BRIDGE
-#include "carla_bridge_osc.h"
+#  include "carla_bridge_osc.h"
 #endif
 
 // common includes
@@ -35,14 +35,10 @@
 #include <vector>
 
 #ifndef __WINE__
-#include <QtGui/QDialog>
+#  include <QtGui/QDialog>
 #endif
 
 CARLA_BACKEND_START_NAMESPACE
-
-#if 0
-} /* adjust editor indent */
-#endif
 
 /*!
  * @defgroup CarlaBackendPlugin Carla Backend Plugin
@@ -203,6 +199,7 @@ public:
         x_client(nullptr)
     {
         Q_ASSERT(engine);
+        Q_ASSERT(id < MAX_PLUGINS);
         qDebug("CarlaPlugin::CarlaPlugin(%p, %i)", engine, id);
 
         m_type  = PLUGIN_NONE;
@@ -732,6 +729,7 @@ public:
     // -------------------------------------------------------------------
     // Set data (internal stuff)
 
+#ifndef BUILD_BRIDGE
     /*!
      * Set the plugin id to \a yesNo.
      *
@@ -744,6 +742,7 @@ public:
         if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
             cin_channel = id;
     }
+#endif
 
     /*!
      * Enable or disable the plugin according to \a yesNo.

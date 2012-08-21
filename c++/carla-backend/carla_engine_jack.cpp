@@ -592,11 +592,10 @@ void CarlaEngineJack::handleShutdownCallback()
 {
     //for (unsigned short i=0; i < MAX_PLUGINS; i++)
     //{
-    // FIXME
-    //CarlaPlugin* plugin = CarlaPlugins[i];
-    //if (plugin && plugin->id() == plugin_id)
-    //    plugin->jack_client = nullptr;
+        //CarlaPlugin* const plugin = getPluginUnchecked(i);
+        //plugin->x_client
     //}
+
     client = nullptr;
     procThread = nullptr;
     callback(CALLBACK_QUIT, 0, 0, 0, 0.0);

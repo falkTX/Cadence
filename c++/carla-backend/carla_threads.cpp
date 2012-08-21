@@ -187,21 +187,21 @@ void CarlaPluginThread::run()
     switch (mode)
     {
     case PLUGIN_THREAD_DSSI_GUI:
-        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath(), plugin->id());
+        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath()).arg(plugin->id());
         /* filename */ arguments << plugin->filename();
         /* label    */ arguments << m_label;
         /* ui-title */ arguments << QString("%1 (GUI)").arg(plugin->name());
         break;
 
     case PLUGIN_THREAD_LV2_GUI:
-        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath(), plugin->id());
+        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath()).arg(plugin->id());
         /* URI      */ arguments << m_label;
         /* ui-URI   */ arguments << m_data1;
         /* ui-title */ arguments << QString("%1 (GUI)").arg(plugin->name());
         break;
 
     case PLUGIN_THREAD_VST_GUI:
-        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath(), plugin->id());
+        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath()).arg(plugin->id());
         /* filename */ arguments << plugin->filename();
         /* label    */ arguments << m_label;
         /* ui-title */ arguments << QString("%1 (GUI)").arg(plugin->name());
@@ -214,7 +214,7 @@ void CarlaPluginThread::run()
         if (! name)
             name = "(none)";
 
-        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath(), plugin->id());
+        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath()).arg(plugin->id());
         /* stype    */ arguments << m_data1;
         /* filename */ arguments << plugin->filename();
         /* name     */ arguments << name;
