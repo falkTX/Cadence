@@ -28,6 +28,7 @@ carla-bridge-lv2-x11
 carla-bridge-vst-x11
 
 carla-discovery-qtcreator
+carla-discovery-native
 carla-discovery-unix32
 carla-discovery-unix64
 

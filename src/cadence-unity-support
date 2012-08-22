@@ -1,0 +1,116 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Imports (Global)
+import dbus, signal, sys
+from PyQt4.QtCore import QCoreApplication, QObject
+
+# DBus
+class DBus(object):
+    __slots__ = [
+      'bus',
+      'jack'
+    ]
+DBus = DBus()
+DBus.bus  = None
+DBus.jack = None
+
+def appQuit(sig, frame):
+    app.exit(0)
+
+# Main Application
+class CadenceUnityApp(QObject):
+    def __init__(self, parent=None):
+        QObject.__init__(self, parent)
+
+        self.m_lastLoad  = None
+        self.m_lastXruns = None
+
+        self.m_timerDBus = self.startTimer(5000)
+        self.m_timerLauncher = self.startTimer(1000)
+
+        self.timerCheckDBus()
+        self.timerCheckLauncher()
+
+    def refreshDBus(self):
+        DBus.bus = dbus.SessionBus()
+
+        try:
+            DBus.jack = DBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
+        except:
+            DBus.jack = None
+
+    def jackGetLoad(self):
+        if DBus.jack:
+            try:
+                return DBus.jack.GetLoad()
+            except:
+                DBus.jack = None
+                return None
+        else:
+            return None
+
+    def jackGetXruns(self):
+        if DBus.jack:
+            try:
+                return DBus.jack.GetXruns()
+            except:
+                DBus.jack = None
+                return None
+        else:
+            return None
+
+    def timerCheckDBus(self):
+        if not DBus.jack:
+            self.refreshDBus()
+
+    def timerCheckLauncher(self):
+        load  = self.jackGetLoad()
+        xruns = self.jackGetXruns()
+
+        if load != self.m_lastLoad:
+            if load != None:
+                launcher.set_property("progress", load/100)
+                launcher.set_property("progress_visible", True)
+            else:
+                launcher.set_property("progress", 0.0)
+                launcher.set_property("progress_visible", False)
+
+        if xruns != self.m_lastXruns:
+            if xruns != None:
+                launcher.set_property("count", xruns)
+                launcher.set_property("count_visible", True)
+            else:
+                launcher.set_property("count", 0)
+                launcher.set_property("count_visible", False)
+
+        self.m_lastLoad  = load
+        self.m_lastXruns = xruns
+
+    def timerEvent(self, event):
+        if event.timerId() == self.m_timerDBus:
+            self.timerCheckDBus()
+        elif event.timerId() == self.m_timerLauncher:
+            self.timerCheckLauncher()
+        QObject.timerEvent(self, event)
+
+#--------------- main ------------------
+if __name__ == '__main__':
+
+    # Imports (Unity)
+    from gi.repository import Unity
+
+    # App initialization
+    app = QCoreApplication(sys.argv)
+    app.setApplicationName("Cadence-Unity-Support")
+    app.setApplicationVersion("0.5.0")
+    app.setOrganizationName("Cadence")
+
+    launcher = Unity.LauncherEntry.get_for_desktop_id("cadence.desktop")
+    qtLoop   = CadenceUnityApp()
+
+    signal.signal(signal.SIGTERM, appQuit)
+    signal.signal(signal.SIGINT, appQuit)
+
+    # App-Loop
+    sys.exit(app.exec_())
