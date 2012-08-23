@@ -16,8 +16,6 @@ HAVE_SUIL         = $(shell pkg-config --exists suil-0 && echo true)
 
 BASE_FLAGS        = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -mfpmath=sse -Wall -I. -I../carla-includes
 
-CARLA_C_FLAGS     = $(BASE_FLAGS) $(CFLAGS)
-
 CARLA_CXX_FLAGS   = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
 CARLA_CXX_FLAGS  += $(shell pkg-config --cflags liblo QtCore QtGui)
 CARLA_CXX_FLAGS  += -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT # -DNDEBUG
@@ -68,7 +66,6 @@ OBJS = \
 	carla_shared.o \
 	carla_threads.o \
 	ladspa.o dssi.o lv2.o vst.o fluidsynth.o linuxsampler.o \
-	lv2-rtmempool/rtmempool.o \
 	../carla-lilv/carla_lilv.a
 
 ifeq ($(WANT_RTAUDIO),true)
@@ -88,9 +85,6 @@ carla_backend.so: $(OBJS)
 	$(CXX) $^ $(CARLA_LD_FLAGS) -o $@ && strip $@
 
 # --------------------------------------------------------------
-
-.c.o:
-	$(CC) -c $< $(CARLA_C_FLAGS) -o $@
 
 .cpp.o:
 	$(CXX) -c $< $(CARLA_CXX_FLAGS) -o $@

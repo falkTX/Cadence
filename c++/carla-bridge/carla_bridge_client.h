@@ -61,9 +61,9 @@ public:
 
     // ---------------------------------------------------------------------
 
-    void oscInit(const char* const url)
+    bool oscInit(const char* const url)
     {
-        m_osc.init(url);
+        return m_osc.init(url);
     }
 
     void oscClose()
@@ -71,19 +71,41 @@ public:
         m_osc.close();
     }
 
-    void oscSendUpdate()
+    void sendOscConfigure(const char* const key, const char* const value)
     {
+        qDebug("sendOscConfigure(\"%s\", \"%s\")", key, value);
+        m_osc.sendOscConfigure(key, value);
+    }
+
+    void sendOscControl(int32_t index, float value)
+    {
+        qDebug("sendOscConfigure(%i, %f)", index, value);
+        m_osc.sendOscControl(index, value);
+    }
+
+    void sendOscUpdate()
+    {
+        qDebug("sendOscUpdate()");
         m_osc.sendOscUpdate();
     }
 
-    const CarlaOscData* getOscServerData()
+    void sendOscExiting()
     {
-        return m_osc.getServerData();
+        qDebug("sendOscExiting()");
+        m_osc.sendOscExiting();
     }
+
+#ifdef BRIDGE_LV2
+    void sendOscLv2EventTransfer(const char* const type, const char* const key, const char* const value)
+    {
+        qDebug("sendOscLv2EventTransfer(\"%s\", \"%s\", \"%s\")", type, key, value);
+        m_osc.sendOscLv2EventTransfer(type, key, value);
+    }
+#endif
 
     // ---------------------------------------------------------------------
 
-    void quequeMessage(MessageType type, int value1, int value2, double value3)
+    void quequeMessage(MessageType type, int32_t value1, int32_t value2, double value3)
     {
         const QMutexLocker locker(&m_messages.lock);
 

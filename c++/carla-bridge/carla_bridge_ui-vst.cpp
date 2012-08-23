@@ -229,7 +229,7 @@ public:
             return FAKE_BUFFER_SIZE;
 
         case audioMasterGetVendorString:
-            strcpy((char*)ptr, "falkTX");
+            strcpy((char*)ptr, "Cadence");
             break;
 
         case audioMasterGetProductString:
@@ -332,7 +332,12 @@ int main(int argc, char* argv[])
     CarlaBridgeVstClient client(toolkit);
 
     // Init OSC
-    client.oscInit(osc_url);
+    if (! client.oscInit(osc_url))
+    {
+        toolkit->quit();
+        delete toolkit;
+        return -1;
+    }
 
     // Load UI
     int ret;
@@ -349,7 +354,7 @@ int main(int argc, char* argv[])
     }
 
     // Close OSC
-    osc_send_exiting(client.getOscServerData());
+    client.sendOscExiting();
     client.oscClose();
 
     // Close VST-UI

@@ -20,18 +20,17 @@
 
 #include "carla_bridge.h"
 
-#include <cassert>
+#include <cstdlib>
 #include <cstring>
 
-//CARLA_BRIDGE_START_NAMESPACE
-namespace CarlaBridge {
+CARLA_BRIDGE_START_NAMESPACE
 
 class CarlaBridgeToolkit
 {
 public:
     CarlaBridgeToolkit(const char* const title)
     {
-        assert(title);
+        Q_ASSERT(title);
 
         m_title  = strdup(title);
         m_client = nullptr;
@@ -39,7 +38,7 @@ public:
 
     virtual ~CarlaBridgeToolkit()
     {
-        free((void*)m_title);
+        free(m_title);
     }
 
     virtual void init() = 0;
@@ -53,7 +52,7 @@ public:
     static CarlaBridgeToolkit* createNew(const char* const title);
 
 protected:
-    const char* m_title;
+    char* m_title;
     CarlaBridgeClient* m_client;
 };
 

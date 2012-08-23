@@ -224,7 +224,6 @@ install:
 		data/cadence_logs \
 		data/cadence_pulse2jack \
 		data/cadence_render \
-		data/cadence-aloop-daemon \
 		data/catarina \
 		data/catia \
 		data/claudia \
@@ -235,6 +234,8 @@ install:
 		c++/carla-discovery/carla-discovery-* \
 		c++/jackmeter/cadence_jackmeter \
 		c++/xycontroller/cadence_xycontroller \
+		src/cadence-aloop-daemon \
+		src/cadence-unity-support \
 		$(DESTDIR)$(PREFIX)/bin/
 
 	# Install desktop files
@@ -309,17 +310,11 @@ install:
 		$(DESTDIR)$(PREFIX)/bin/carla-control
 
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/cadence
-	rm -f $(DESTDIR)$(PREFIX)/bin/cadence_*
-	rm -f $(DESTDIR)$(PREFIX)/bin/cadence-aloop-daemon
+	rm -f $(DESTDIR)$(PREFIX)/bin/cadence*
 	rm -f $(DESTDIR)$(PREFIX)/bin/catarina
 	rm -f $(DESTDIR)$(PREFIX)/bin/catia
-	rm -f $(DESTDIR)$(PREFIX)/bin/claudia
-	rm -f $(DESTDIR)$(PREFIX)/bin/claudia-launcher
-	rm -f $(DESTDIR)$(PREFIX)/bin/carla
-	rm -f $(DESTDIR)$(PREFIX)/bin/carla-control
-	rm -f $(DESTDIR)$(PREFIX)/bin/carla-bridge-*
-	rm -f $(DESTDIR)$(PREFIX)/bin/carla-discovery-*
+	rm -f $(DESTDIR)$(PREFIX)/bin/claudia*
+	rm -f $(DESTDIR)$(PREFIX)/bin/carla*
 	rm -f $(DESTDIR)$(PREFIX)/share/applications/cadence.desktop
 	rm -f $(DESTDIR)$(PREFIX)/share/applications/catarina.desktop
 	rm -f $(DESTDIR)$(PREFIX)/share/applications/catia.desktop
@@ -327,34 +322,13 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/share/applications/claudia-launcher.desktop
 	rm -f $(DESTDIR)$(PREFIX)/share/applications/carla.desktop
 	rm -f $(DESTDIR)$(PREFIX)/share/applications/carla-control.desktop
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/cadence.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/catarina.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/catia.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/claudia.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/claudia-launcher.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/carla.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/carla-control.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/cadence.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/catarina.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/catia.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/claudia.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/claudia-launcher.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/carla.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/carla-control.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/cadence.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/catarina.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/catia.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/claudia.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/claudia-launcher.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/carla.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/carla-control.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/cadence.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/catarina.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/catia.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/claudia.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/claudia-launcher.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/carla.png
-	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/carla-control.png
+	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/*/apps/cadence.png
+	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/*/apps/catarina.png
+	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/*/apps/catia.png
+	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/*/apps/claudia.png
+	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/*/apps/claudia-launcher.png
+	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/*/apps/carla.png
+	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/*/apps/carla-control.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/cadence.svg
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/catarina.svg
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/catia.svg

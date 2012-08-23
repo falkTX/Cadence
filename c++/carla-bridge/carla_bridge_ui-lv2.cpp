@@ -315,8 +315,6 @@ public:
 
     void close()
     {
-        assert(handle && descriptor);
-
         if (handle && descriptor && descriptor->cleanup)
             descriptor->cleanup(handle);
 
@@ -482,7 +480,7 @@ public:
 
     void handleProgramChanged(int32_t /*index*/)
     {
-        osc_send_configure(getOscServerData(), "reloadprograms", "");
+        sendOscConfigure("reloadprograms", "");
     }
 
     uint32_t handleUiPortMap(const char* const symbol)
@@ -519,7 +517,7 @@ public:
             if (bufferSize == sizeof(float))
             {
                 float value = *(float*)buffer;
-                osc_send_control(getOscServerData(), portIndex, value);
+                sendOscControl(portIndex, value);
             }
         }
         else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM)
@@ -537,7 +535,7 @@ public:
                 descriptor->port_event(handle, 0, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
 
             QByteArray chunk((const char*)buffer, bufferSize);
-            osc_send_lv2_event_transfer(getOscServerData(), getCustomURIString(atom->type), LV2_ATOM__eventTransfer, chunk.toBase64().constData());
+            sendOscLv2EventTransfer(getCustomURIString(atom->type), LV2_ATOM__eventTransfer, chunk.toBase64().constData());
         }
     }
 
@@ -866,7 +864,12 @@ int main(int argc, char* argv[])
     CarlaBridgeLv2Client client(toolkit);
 
     // Init OSC
-    client.oscInit(osc_url);
+    if (! client.oscInit(osc_url))
+    {
+        toolkit->quit();
+        delete toolkit;
+        return -1;
+    }
 
     // Load UI
     int ret;
@@ -883,7 +886,7 @@ int main(int argc, char* argv[])
     }
 
     // Close OSC
-    osc_send_exiting(client.getOscServerData());
+    client.sendOscExiting();
     client.oscClose();
 
     // Close LV2-UI

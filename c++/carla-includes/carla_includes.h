@@ -106,6 +106,6 @@ const char* bool2str(bool yesno)
 }
 
 static inline
-void pass(void) {}
+void pass() {}
 
 #endif // CARLA_INCLUDES_H

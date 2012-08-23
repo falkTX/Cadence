@@ -32,10 +32,10 @@ namespace CarlaBridge {
 class MessageChecker : public QTimer
 {
 public:
-    MessageChecker(CarlaBridgeClient* const client_) :
-        client(client_)
+    MessageChecker(CarlaBridgeClient* const client_)
+        : client(client_)
     {
-        assert(client);
+        Q_ASSERT(client);
     }
 
     void timerEvent(QTimerEvent*)
@@ -73,7 +73,7 @@ public:
     void init()
     {
         qDebug("CarlaBridgeToolkitQt4::init()");
-        assert(! app);
+        Q_ASSERT(! app);
 
         static int argc = 0;
         static char* argv[] = { nullptr };
@@ -83,8 +83,8 @@ public:
     void exec(CarlaBridgeClient* const client)
     {
         qDebug("CarlaBridgeToolkitQt4::exec(%p)", client);
-        assert(app);
-        assert(client);
+        Q_ASSERT(app);
+        Q_ASSERT(client);
 
         if (client->needsReparent())
         {
@@ -131,7 +131,11 @@ public:
         QObject::connect(window, SIGNAL(finished(int)), app, SLOT(quit()));
 
         m_client = client;
-        client->oscSendUpdate();
+        m_client->sendOscUpdate();
+
+#ifdef QTCREATOR_TEST
+        show();
+#endif
 
         // Main loop
         app->exec();
@@ -140,7 +144,7 @@ public:
     void quit()
     {
         qDebug("CarlaBridgeToolkitQt4::quit()");
-        assert(app);
+        Q_ASSERT(app);
 
         if (window)
         {
@@ -173,7 +177,7 @@ public:
     void show()
     {
         qDebug("CarlaBridgeToolkitQt4::show()");
-        assert(window);
+        Q_ASSERT(window);
 
         if (window)
             window->show();
@@ -182,7 +186,7 @@ public:
     void hide()
     {
         qDebug("CarlaBridgeToolkitQt4::hide()");
-        assert(window);
+        Q_ASSERT(window);
 
         if (window)
             window->hide();
@@ -191,7 +195,7 @@ public:
     void resize(int width, int height)
     {
         qDebug("CarlaBridgeToolkitQt4::resize(%i, %i)", width, height);
-        assert(window);
+        Q_ASSERT(window);
 
         if (window)
             window->setFixedSize(width, height);

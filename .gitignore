@@ -37,8 +37,8 @@ c++/carla-includes/vst/
 c++/jackmeter/cadence_jackmeter
 c++/xycontroller/cadence_xycontroller
 
-c++/*/*-build-*-Debug/
-c++/*/*-build-*-Release/
+*-build-*Debug/
+*-build-*Release/
 
 src/resources_rc.py
 resources/qrc_resources.cpp

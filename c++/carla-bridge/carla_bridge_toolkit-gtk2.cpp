@@ -18,7 +18,7 @@
 #include "carla_bridge_client.h"
 
 #ifdef BRIDGE_LV2_X11
-#error X11 UI uses Qt4
+#  error X11 UI uses Qt4
 #endif
 
 #include <gtk/gtk.h>
@@ -31,16 +31,16 @@ CARLA_BRIDGE_START_NAMESPACE
 class CarlaBridgeToolkitGtk2: public CarlaBridgeToolkit
 {
 public:
-    CarlaBridgeToolkitGtk2(const char* const title) :
-        CarlaBridgeToolkit(title),
-        settings("Cadence", "Carla-Gtk2UIs")
+    CarlaBridgeToolkitGtk2(const char* const title)
+        : CarlaBridgeToolkit(title),
+          settings("Cadence", "Carla-Gtk2UIs")
     {
         qDebug("CarlaBridgeToolkitGtk2::CarlaBridgeToolkitGtk2(%s)", title);
 
         window = nullptr;
 
-        last_x = last_y = 0;
-        last_width = last_height = 0;
+        lastX = lastY = 0;
+        lastWidth = lastHeight = 0;
     }
 
     ~CarlaBridgeToolkitGtk2()
@@ -60,7 +60,7 @@ public:
     void exec(CarlaBridgeClient* const client)
     {
         qDebug("CarlaBridgeToolkitGtk2::exec(%p)", client);
-        assert(client);
+        Q_ASSERT(client);
 
         window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
         gtk_container_add(GTK_CONTAINER(window), (GtkWidget*)client->getWidget());
@@ -68,20 +68,20 @@ public:
         gtk_window_set_resizable(GTK_WINDOW(window), client->isResizable());
         gtk_window_set_title(GTK_WINDOW(window), m_title);
 
-        gtk_window_get_position(GTK_WINDOW(window), &last_x, &last_y);
-        gtk_window_get_size(GTK_WINDOW(window), &last_width, &last_height);
+        gtk_window_get_position(GTK_WINDOW(window), &lastX, &lastY);
+        gtk_window_get_size(GTK_WINDOW(window), &lastWidth, &lastHeight);
 
         if (settings.contains(QString("%1/pos_x").arg(m_title)))
         {
-            last_x = settings.value(QString("%1/pos_x").arg(m_title), last_x).toInt();
-            last_y = settings.value(QString("%1/pos_y").arg(m_title), last_y).toInt();
-            gtk_window_move(GTK_WINDOW(window), last_x, last_y);
+            lastX = settings.value(QString("%1/pos_x").arg(m_title), lastX).toInt();
+            lastY = settings.value(QString("%1/pos_y").arg(m_title), lastY).toInt();
+            gtk_window_move(GTK_WINDOW(window), lastX, lastY);
 
             if (client->isResizable())
             {
-                last_width  = settings.value(QString("%1/width").arg(m_title), last_width).toInt();
-                last_height = settings.value(QString("%1/height").arg(m_title), last_height).toInt();
-                gtk_window_resize(GTK_WINDOW(window), last_width, last_height);
+                lastWidth  = settings.value(QString("%1/width").arg(m_title), lastWidth).toInt();
+                lastHeight = settings.value(QString("%1/height").arg(m_title), lastHeight).toInt();
+                gtk_window_resize(GTK_WINDOW(window), lastWidth, lastHeight);
             }
         }
 
@@ -89,7 +89,11 @@ public:
         g_signal_connect(window, "destroy", G_CALLBACK(gtk_ui_destroy), this);
 
         m_client = client;
-        client->oscSendUpdate();
+        m_client->sendOscUpdate();
+
+#ifdef QTCREATOR_TEST
+        show();
+#endif
 
         // Main loop
         gtk_main();
@@ -113,7 +117,7 @@ public:
     void show()
     {
         qDebug("CarlaBridgeToolkitGtk2::show()");
-        assert(window);
+        Q_ASSERT(window);
 
         if (window)
             gtk_widget_show_all(window);
@@ -122,7 +126,7 @@ public:
     void hide()
     {
         qDebug("CarlaBridgeToolkitGtk2::hide()");
-        assert(window);
+        Q_ASSERT(window);
 
         if (window)
             gtk_widget_hide_all(window);
@@ -131,7 +135,7 @@ public:
     void resize(int width, int height)
     {
         qDebug("CarlaBridgeToolkitGtk2::resize(%i, %i)", width, height);
-        assert(window);
+        Q_ASSERT(window);
 
         if (window)
             gtk_window_resize(GTK_WINDOW(window), width, height);
@@ -141,7 +145,7 @@ private:
     GtkWidget* window;
     QSettings settings;
 
-    gint last_x, last_y, last_width, last_height;
+    gint lastX, lastY, lastWidth, lastHeight;
 
     static void gtk_ui_destroy(GtkWidget*, gpointer data)
     {
@@ -164,10 +168,10 @@ private:
         window = nullptr;
         m_client = nullptr;
 
-        settings.setValue(QString("%1/pos_x").arg(m_title), last_x);
-        settings.setValue(QString("%1/pos_y").arg(m_title), last_y);
-        settings.setValue(QString("%1/width").arg(m_title), last_width);
-        settings.setValue(QString("%1/height").arg(m_title), last_height);
+        settings.setValue(QString("%1/pos_x").arg(m_title), lastX);
+        settings.setValue(QString("%1/pos_y").arg(m_title), lastY);
+        settings.setValue(QString("%1/width").arg(m_title), lastWidth);
+        settings.setValue(QString("%1/height").arg(m_title), lastHeight);
         settings.sync();
     }
 
@@ -175,8 +179,8 @@ private:
     {
         if (window)
         {
-            gtk_window_get_position(GTK_WINDOW(window), &last_x, &last_y);
-            gtk_window_get_size(GTK_WINDOW(window), &last_width, &last_height);
+            gtk_window_get_position(GTK_WINDOW(window), &lastX, &lastY);
+            gtk_window_get_size(GTK_WINDOW(window), &lastWidth, &lastHeight);
         }
 
         return m_client ? m_client->runMessages() : false;

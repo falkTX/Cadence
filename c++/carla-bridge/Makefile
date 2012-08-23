@@ -4,14 +4,11 @@
 # Created by falkTX
 #
 
-CC      ?= gcc
 CXX     ?= g++
-WINECC  ?= winegcc
 WINECXX ?= wineg++
+STRIP   ?= strip
 
-BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -Wall
-
-BUILD_CFLAGS = $(BASE_FLAGS) -std=c99 $(CFLAGS)
+BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -mfpmath=sse -Wall
 
 BUILD_FLAGS  = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
 BUILD_FLAGS += -I. -I../carla-includes $(shell pkg-config --cflags liblo QtCore)
@@ -47,16 +44,16 @@ WINE_LINK_FLAGS  = $(LINK_PLUGIN_FLAGS) -ldl
 BUILD_UI_FLAGS = $(BUILD_FLAGS) -DBUILD_BRIDGE_UI
 LINK_UI_FLAGS  = $(LINK_FLAGS) -ldl
 
-BUILD_UI_LV2_GTK2_FLAGS = $(BUILD_UI_FLAGS) -DBRIDGE_LV2_GTK2 $(shell pkg-config --cflags gtk+-2.0)
+BUILD_UI_LV2_GTK2_FLAGS = $(BUILD_UI_FLAGS) -DBRIDGE_LV2 -DBRIDGE_LV2_GTK2 $(shell pkg-config --cflags gtk+-2.0)
 LINK_UI_LV2_GTK2_FLAGS  = $(LINK_UI_FLAGS) $(shell pkg-config --libs gtk+-2.0)
 
-BUILD_UI_LV2_QT4_FLAGS  = $(BUILD_UI_FLAGS) -DBRIDGE_LV2_QT4 $(shell pkg-config --cflags QtGui)
+BUILD_UI_LV2_QT4_FLAGS  = $(BUILD_UI_FLAGS) -DBRIDGE_LV2 -DBRIDGE_LV2_QT4 $(shell pkg-config --cflags QtGui)
 LINK_UI_LV2_QT4_FLAGS   = $(LINK_UI_FLAGS) $(shell pkg-config --libs QtGui)
 
-BUILD_UI_LV2_X11_FLAGS  = $(BUILD_UI_FLAGS) -DBRIDGE_LV2_X11 $(shell pkg-config --cflags QtGui)
+BUILD_UI_LV2_X11_FLAGS  = $(BUILD_UI_FLAGS) -DBRIDGE_LV2 -DBRIDGE_LV2_X11 $(shell pkg-config --cflags QtGui)
 LINK_UI_LV2_X11_FLAGS   = $(LINK_UI_FLAGS) $(shell pkg-config --libs QtGui)
 
-BUILD_UI_VST_X11_FLAGS  = $(BUILD_UI_FLAGS) -DBRIDGE_VST_X11 $(shell pkg-config --cflags QtGui)
+BUILD_UI_VST_X11_FLAGS  = $(BUILD_UI_FLAGS) -DBRIDGE_VST -DBRIDGE_VST_X11 $(shell pkg-config --cflags QtGui)
 LINK_UI_VST_X11_FLAGS   = $(LINK_UI_FLAGS) $(shell pkg-config --libs QtGui)
 
 # --------------------------------------------------------------
@@ -82,7 +79,7 @@ wine64: carla-bridge-win64.exe.so
 OBJS_UI_LV2_GTK2 = carla_bridge_ui-lv2__lv2-gtk2.o carla_bridge_toolkit-gtk2__lv2-gtk2.o carla_bridge_osc__lv2-gtk2.o ../carla-lilv/carla_lilv.a
 
 carla-bridge-lv2-gtk2: $(OBJS_UI_LV2_GTK2)
-	$(CXX) $^ $(LINK_UI_LV2_GTK2_FLAGS) -o $@ && strip $@
+	$(CXX) $^ $(LINK_UI_LV2_GTK2_FLAGS) -o $@ && $(STRIP) $@
 
 carla_bridge_ui-lv2__lv2-gtk2.o: carla_bridge_ui-lv2.cpp
 	$(CXX) $< $(BUILD_UI_LV2_GTK2_FLAGS) -c -o $@
@@ -99,7 +96,7 @@ carla_bridge_osc__lv2-gtk2.o: carla_bridge_osc.cpp
 OBJS_UI_LV2_QT4 = carla_bridge_ui-lv2__lv2-qt4.o carla_bridge_toolkit-qt4__lv2-qt4.o carla_bridge_osc__lv2-qt4.o ../carla-lilv/carla_lilv.a
 
 carla-bridge-lv2-qt4: $(OBJS_UI_LV2_QT4)
-	$(CXX) $^ $(LINK_UI_LV2_QT4_FLAGS) -o $@ && strip $@
+	$(CXX) $^ $(LINK_UI_LV2_QT4_FLAGS) -o $@ && $(STRIP) $@
 
 carla_bridge_ui-lv2__lv2-qt4.o: carla_bridge_ui-lv2.cpp
 	$(CXX) $< $(BUILD_UI_LV2_QT4_FLAGS) -c -o $@
@@ -116,7 +113,7 @@ carla_bridge_osc__lv2-qt4.o: carla_bridge_osc.cpp
 OBJS_UI_LV2_X11 = carla_bridge_ui-lv2__lv2-x11.o carla_bridge_toolkit-qt4__lv2-x11.o carla_bridge_osc__lv2-x11.o ../carla-lilv/carla_lilv.a
 
 carla-bridge-lv2-x11: $(OBJS_UI_LV2_X11)
-	$(CXX) $^ $(LINK_UI_LV2_X11_FLAGS) -o $@ && strip $@
+	$(CXX) $^ $(LINK_UI_LV2_X11_FLAGS) -o $@ && $(STRIP) $@
 
 carla_bridge_ui-lv2__lv2-x11.o: carla_bridge_ui-lv2.cpp
 	$(CXX) $< $(BUILD_UI_LV2_X11_FLAGS) -c -o $@
@@ -133,7 +130,7 @@ carla_bridge_osc__lv2-x11.o: carla_bridge_osc.cpp
 OBJS_UI_VST_X11 = carla_bridge_ui-vst__vst-x11.o carla_bridge_toolkit-qt4__vst-x11.o carla_bridge_osc__vst-x11.o
 
 carla-bridge-vst-x11: $(OBJS_UI_VST_X11)
-	$(CXX) $^ $(LINK_UI_VST_X11_FLAGS) -o $@ && strip $@
+	$(CXX) $^ $(LINK_UI_VST_X11_FLAGS) -o $@ && $(STRIP) $@
 
 carla_bridge_ui-vst__vst-x11.o: carla_bridge_ui-vst.cpp
 	$(CXX) $< $(BUILD_UI_VST_X11_FLAGS) -c -o $@
@@ -149,10 +146,10 @@ carla_bridge_osc__vst-x11.o: carla_bridge_osc.cpp
 
 OBJS_UNIX32 = \
 	carla_bridge_plugin__unix32.o carla_bridge_osc__unix32.o \
-	carla_engine_jack__unix32.o carla_shared__unix32.o ladspa__unix32.o dssi__unix32.o lv2__unix32.o vst__unix32.o rtmempool__unix32.o ../carla-lilv/carla_lilv_32bit.a
+	carla_engine_jack__unix32.o carla_shared__unix32.o ladspa__unix32.o dssi__unix32.o lv2__unix32.o vst__unix32.o ../carla-lilv/carla_lilv_32bit.a
 
 carla-bridge-unix32: $(OBJS_UNIX32)
-	$(CXX) $^ $(UNIX_LINK_FLAGS) $(UNIX_32BIT_FLAGS) -o $@ && strip $@
+	$(CXX) $^ $(UNIX_LINK_FLAGS) $(UNIX_32BIT_FLAGS) -o $@ && $(STRIP) $@
 
 carla_bridge_plugin__unix32.o: carla_bridge_plugin.cpp
 	$(CXX) $< $(UNIX_BUILD_FLAGS) $(UNIX_32BIT_FLAGS) -c -o $@
@@ -178,18 +175,15 @@ lv2__unix32.o: ../carla-backend/lv2.cpp
 vst__unix32.o: ../carla-backend/vst.cpp
 	$(CXX) $< $(UNIX_BUILD_FLAGS) $(UNIX_32BIT_FLAGS) -c -o $@
 
-rtmempool__unix32.o: ../carla-backend/lv2-rtmempool/rtmempool.c
-	$(CC) $< $(BUILD_CFLAGS) $(32BIT_FLAGS) -c -o $@
-
 # --------------------------------------------------------------
 # unix64
 
 OBJS_UNIX64 = \
 	carla_bridge_plugin__unix64.o carla_bridge_osc__unix64.o \
-	carla_engine_jack__unix64.o carla_shared__unix64.o ladspa__unix64.o dssi__unix64.o lv2__unix64.o vst__unix64.o rtmempool__unix64.o ../carla-lilv/carla_lilv_64bit.a
+	carla_engine_jack__unix64.o carla_shared__unix64.o ladspa__unix64.o dssi__unix64.o lv2__unix64.o vst__unix64.o ../carla-lilv/carla_lilv_64bit.a
 
 carla-bridge-unix64: $(OBJS_UNIX64)
-	$(CXX) $^ $(UNIX_LINK_FLAGS) $(UNIX_64BIT_FLAGS) -o $@ && strip $@
+	$(CXX) $^ $(UNIX_LINK_FLAGS) $(UNIX_64BIT_FLAGS) -o $@ && $(STRIP) $@
 
 carla_bridge_plugin__unix64.o: carla_bridge_plugin.cpp
 	$(CXX) $< $(UNIX_BUILD_FLAGS) $(UNIX_64BIT_FLAGS) -c -o $@
@@ -215,18 +209,15 @@ lv2__unix64.o: ../carla-backend/lv2.cpp
 vst__unix64.o: ../carla-backend/vst.cpp
 	$(CXX) $< $(UNIX_BUILD_FLAGS) $(UNIX_64BIT_FLAGS) -c -o $@
 
-rtmempool__unix64.o: ../carla-backend/lv2-rtmempool/rtmempool.c
-	$(CC) $< $(BUILD_CFLAGS) $(64BIT_FLAGS) -c -o $@
-
 # --------------------------------------------------------------
 # wine32
 
 OBJS_WINE32 = \
 	carla_bridge_plugin__wine32.o carla_bridge_osc__wine32.o \
-	carla_engine_jack__wine32.o carla_shared__wine32.o ladspa__wine32.o dssi__wine32.o lv2__wine32.o vst__wine32.o rtmempool__wine32.o ../carla-lilv/carla_lilv_32bit.a
+	carla_engine_jack__wine32.o carla_shared__wine32.o ladspa__wine32.o dssi__wine32.o lv2__wine32.o vst__wine32.o ../carla-lilv/carla_lilv_32bit.a
 
 carla-bridge-win32.exe.so: $(OBJS_WINE32)
-	$(WINECXX) $^ $(WINE_LINK_FLAGS) $(WINE_32BIT_FLAGS) -o carla-bridge-win32 && strip $@
+	$(WINECXX) $^ $(WINE_LINK_FLAGS) $(WINE_32BIT_FLAGS) -o carla-bridge-win32 && $(STRIP) $@
 
 carla_bridge_plugin__wine32.o: carla_bridge_plugin.cpp
 	$(WINECXX) $< $(WINE_BUILD_FLAGS) $(WINE_32BIT_FLAGS) -c -o $@
@@ -252,18 +243,15 @@ lv2__wine32.o: ../carla-backend/lv2.cpp
 vst__wine32.o: ../carla-backend/vst.cpp
 	$(WINECXX) $< $(WINE_BUILD_FLAGS) $(WINE_32BIT_FLAGS) -c -o $@
 
-rtmempool__wine32.o: ../carla-backend/lv2-rtmempool/rtmempool.c
-	$(WINECC) $< $(BUILD_CFLAGS) $(32BIT_FLAGS) -c -o $@
-
 # --------------------------------------------------------------
 # wine64
 
 OBJS_WINE64 = \
 	carla_bridge_plugin__wine64.o carla_bridge_osc__wine64.o \
-	carla_engine_jack__wine64.o carla_shared__wine64.o ladspa__wine64.o dssi__wine64.o lv2__wine64.o vst__wine64.o rtmempool__wine64.o ../carla-lilv/carla_lilv_64bit.a
+	carla_engine_jack__wine64.o carla_shared__wine64.o ladspa__wine64.o dssi__wine64.o lv2__wine64.o vst__wine64.o ../carla-lilv/carla_lilv_64bit.a
 
 carla-bridge-win64.exe.so: $(OBJS_WINE64)
-	$(WINECXX) $^ $(WINE_LINK_FLAGS) $(WINE_64BIT_FLAGS) -o carla-bridge-win64 && strip $@
+	$(WINECXX) $^ $(WINE_LINK_FLAGS) $(WINE_64BIT_FLAGS) -o carla-bridge-win64 && $(STRIP) $@
 
 carla_bridge_plugin__wine64.o: carla_bridge_plugin.cpp
 	$(WINECXX) $< $(WINE_BUILD_FLAGS) $(WINE_64BIT_FLAGS) -c -o $@
@@ -288,9 +276,6 @@ lv2__wine64.o: ../carla-backend/lv2.cpp
 
 vst__wine64.o: ../carla-backend/vst.cpp
 	$(WINECXX) $< $(WINE_BUILD_FLAGS) $(WINE_64BIT_FLAGS) -c -o $@
-
-rtmempool__wine64.o: ../carla-backend/lv2-rtmempool/rtmempool.c
-	$(WINECC) $< $(BUILD_CFLAGS) $(64BIT_FLAGS) -c -o $@
 
 # --------------------------------------------------------------
 
