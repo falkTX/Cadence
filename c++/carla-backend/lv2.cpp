@@ -18,10 +18,6 @@
 #include "carla_plugin.h"
 #include "carla_lv2.h"
 
-extern "C" {
-#include "lv2-rtmempool/rtmempool.h"
-}
-
 #include <QtCore/QDir>
 
 #ifndef __WINE__
@@ -61,10 +57,9 @@ const unsigned int MAX_EVENT_BUFFER = 8192; // 0x2000
  * @defgroup PluginHints Plugin Hints
  * @{
  */
-const unsigned int PLUGIN_HAS_EXTENSION_DYNPARAM = 0x100; //!< LV2 Plugin has DynParam extension
-const unsigned int PLUGIN_HAS_EXTENSION_PROGRAMS = 0x200; //!< LV2 Plugin has Programs extension
-const unsigned int PLUGIN_HAS_EXTENSION_STATE    = 0x400; //!< LV2 Plugin has State extension
-const unsigned int PLUGIN_HAS_EXTENSION_WORKER   = 0x800; //!< LV2 Plugin has Worker extension
+const unsigned int PLUGIN_HAS_EXTENSION_PROGRAMS = 0x100; //!< LV2 Plugin has Programs extension
+const unsigned int PLUGIN_HAS_EXTENSION_STATE    = 0x200; //!< LV2 Plugin has State extension
+const unsigned int PLUGIN_HAS_EXTENSION_WORKER   = 0x400; //!< LV2 Plugin has Worker extension
 /**@}*/
 
 /*!
@@ -85,22 +80,21 @@ const unsigned int PARAMETER_IS_TRIGGER       = 0x2000; //!< LV2 Parameter is tr
 const uint32_t lv2_feature_id_event           = 0;
 const uint32_t lv2_feature_id_logs            = 1;
 const uint32_t lv2_feature_id_programs        = 2;
-const uint32_t lv2_feature_id_rtmempool       = 3;
-const uint32_t lv2_feature_id_state_make_path = 4;
-const uint32_t lv2_feature_id_state_map_path  = 5;
-const uint32_t lv2_feature_id_strict_bounds   = 6;
-const uint32_t lv2_feature_id_uri_map         = 7;
-const uint32_t lv2_feature_id_urid_map        = 8;
-const uint32_t lv2_feature_id_urid_unmap      = 9;
-const uint32_t lv2_feature_id_worker          = 10;
-const uint32_t lv2_feature_id_data_access     = 11;
-const uint32_t lv2_feature_id_instance_access = 12;
-const uint32_t lv2_feature_id_ui_parent       = 13;
-const uint32_t lv2_feature_id_ui_port_map     = 14;
-const uint32_t lv2_feature_id_ui_resize       = 15;
-const uint32_t lv2_feature_id_external_ui     = 16;
-const uint32_t lv2_feature_id_external_ui_old = 17;
-const uint32_t lv2_feature_count              = 18;
+const uint32_t lv2_feature_id_state_make_path = 3;
+const uint32_t lv2_feature_id_state_map_path  = 4;
+const uint32_t lv2_feature_id_strict_bounds   = 5;
+const uint32_t lv2_feature_id_uri_map         = 6;
+const uint32_t lv2_feature_id_urid_map        = 7;
+const uint32_t lv2_feature_id_urid_unmap      = 8;
+const uint32_t lv2_feature_id_worker          = 9;
+const uint32_t lv2_feature_id_data_access     = 10;
+const uint32_t lv2_feature_id_instance_access = 11;
+const uint32_t lv2_feature_id_ui_parent       = 12;
+const uint32_t lv2_feature_id_ui_port_map     = 13;
+const uint32_t lv2_feature_id_ui_resize       = 14;
+const uint32_t lv2_feature_id_external_ui     = 15;
+const uint32_t lv2_feature_id_external_ui_old = 16;
+const uint32_t lv2_feature_count              = 17;
 /**@}*/
 
 /*!
@@ -211,7 +205,6 @@ public:
         descriptor = nullptr;
         rdf_descriptor = nullptr;
 
-        ext.dynparam   = nullptr;
         ext.state      = nullptr;
         ext.worker     = nullptr;
         ext.programs   = nullptr;
@@ -373,9 +366,6 @@ public:
 
         if (features[lv2_feature_id_programs] && features[lv2_feature_id_programs]->data)
             delete (LV2_Programs_Host*)features[lv2_feature_id_programs]->data;
-
-        if (features[lv2_feature_id_rtmempool] && features[lv2_feature_id_rtmempool]->data)
-            delete (lv2_rtsafe_memory_pool_provider*)features[lv2_feature_id_rtmempool]->data;
 
         if (features[lv2_feature_id_state_make_path] && features[lv2_feature_id_state_make_path]->data)
             delete (LV2_State_Make_Path*)features[lv2_feature_id_state_make_path]->data;
@@ -1483,16 +1473,12 @@ public:
             m_hints |= PLUGIN_CAN_BALANCE;
 
         // check extensions
-        ext.dynparam   = nullptr;
         ext.state      = nullptr;
         ext.worker     = nullptr;
         ext.programs   = nullptr;
 
         if (descriptor->extension_data)
         {
-            if (m_hints & PLUGIN_HAS_EXTENSION_DYNPARAM)
-                ext.dynparam = (lv2dynparam_plugin_callbacks*)descriptor->extension_data(LV2DYNPARAM_URI);
-
             if (m_hints & PLUGIN_HAS_EXTENSION_PROGRAMS)
                 ext.programs = (LV2_Programs_Interface*)descriptor->extension_data(LV2_PROGRAMS__Interface);
 
@@ -1504,9 +1490,6 @@ public:
         }
 
         reloadPrograms(true);
-
-        //if (ext.dynparam)
-        //    ext.dynparam->host_attach(handle, &dynparam_host, this);
 
         x_client->activate();
 
@@ -2883,9 +2866,6 @@ public:
         }
     }
 
-    // ----------------- DynParam Feature ------------------------------------------------
-    // TODO
-
     // ----------------- Event Feature ---------------------------------------------------
 
     static uint32_t carla_lv2_event_ref(LV2_Event_Callback_Data callback_data, LV2_Event* event)
@@ -3288,9 +3268,7 @@ public:
         // Check extensions
         for (i=0; i < rdf_descriptor->ExtensionCount; i++)
         {
-            if (strcmp(rdf_descriptor->Extensions[i], LV2DYNPARAM_URI) == 0)
-                m_hints |= PLUGIN_HAS_EXTENSION_DYNPARAM;
-            else if (strcmp(rdf_descriptor->Extensions[i], LV2_PROGRAMS__Interface) == 0)
+            if (strcmp(rdf_descriptor->Extensions[i], LV2_PROGRAMS__Interface) == 0)
                 m_hints |= PLUGIN_HAS_EXTENSION_PROGRAMS;
             else if (strcmp(rdf_descriptor->Extensions[i], LV2_STATE__interface) == 0)
                 m_hints |= PLUGIN_HAS_EXTENSION_STATE;
@@ -3348,9 +3326,6 @@ public:
         Worker_Feature->handle               = this;
         Worker_Feature->schedule_work        = carla_lv2_worker_schedule;
 
-        lv2_rtsafe_memory_pool_provider* RT_MemPool_Feature = new lv2_rtsafe_memory_pool_provider;
-        rtmempool_allocator_init(RT_MemPool_Feature);
-
         features[lv2_feature_id_event]            = new LV2_Feature;
         features[lv2_feature_id_event]->URI       = LV2_EVENT_URI;
         features[lv2_feature_id_event]->data      = Event_Feature;
@@ -3362,10 +3337,6 @@ public:
         features[lv2_feature_id_programs]         = new LV2_Feature;
         features[lv2_feature_id_programs]->URI    = LV2_PROGRAMS__Host;
         features[lv2_feature_id_programs]->data   = Programs_Feature;
-
-        features[lv2_feature_id_rtmempool]        = new LV2_Feature;
-        features[lv2_feature_id_rtmempool]->URI   = LV2_RTSAFE_MEMORY_POOL_URI;
-        features[lv2_feature_id_rtmempool]->data  = RT_MemPool_Feature;
 
         features[lv2_feature_id_state_make_path]  = new LV2_Feature;
         features[lv2_feature_id_state_make_path]->URI  = LV2_STATE__makePath;
@@ -3766,7 +3737,6 @@ private:
     LV2_Feature* features[lv2_feature_count+1];
 
     struct {
-        lv2dynparam_plugin_callbacks* dynparam;
         LV2_State_Interface* state;
         LV2_Worker_Interface* worker;
         LV2_Programs_Interface* programs;

@@ -51,13 +51,13 @@ private:
 class CarlaBridgeToolkitQt4: public CarlaBridgeToolkit
 {
 public:
-    CarlaBridgeToolkitQt4(const char* const title) :
-        CarlaBridgeToolkit(title),
-    #ifdef BRIDGE_LV2_X11
-        settings("Cadence", "Carla-X11UIs")
-  #else
-        settings("Cadence", "Carla-Qt4UIs")
-  #endif
+    CarlaBridgeToolkitQt4(const char* const title)
+        : CarlaBridgeToolkit(title),
+      #ifdef BRIDGE_LV2_X11
+          settings("Cadence", "Carla-X11UIs")
+    #else
+          settings("Cadence", "Carla-Qt4UIs")
+    #endif
     {
         qDebug("CarlaBridgeToolkitQt4::CarlaBridgeToolkitQt4(%s)", title);
 

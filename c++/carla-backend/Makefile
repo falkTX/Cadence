@@ -4,7 +4,6 @@
 # Created by falkTX
 #
 
-CC  ?= gcc
 CXX ?= g++
 
 # HAVE_ALSA         = $(shell pkg-config --exists alsa && echo true)
