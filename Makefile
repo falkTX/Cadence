@@ -235,7 +235,6 @@ install:
 		c++/jackmeter/cadence_jackmeter \
 		c++/xycontroller/cadence_xycontroller \
 		src/cadence-aloop-daemon \
-		src/cadence-unity-support \
 		$(DESTDIR)$(PREFIX)/bin/
 
 	# Install desktop files
