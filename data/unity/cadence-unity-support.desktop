@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Cadence Unity Support
+Comment=JACK Xruns and DSP Load for Unity
+Exec=cadence-unity-support
+Icon=cadence
+Terminal=false
+Type=Application
+Categories=Utility;Qt;
+OnlyShowIn=Unity;
