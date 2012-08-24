@@ -983,9 +983,9 @@
             </sizepolicy>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>2</number>
            </property>
-           <widget class="QWidget" name="page">
+           <widget class="QWidget" name="page_plugins">
             <layout class="QGridLayout" name="gridLayout_6">
              <property name="margin">
               <number>0</number>
@@ -1043,8 +1043,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>395</width>
-                  <height>256</height>
+                  <width>412</width>
+                  <height>282</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -1061,8 +1061,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>98</width>
-                  <height>96</height>
+                  <width>89</width>
+                  <height>76</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -1079,8 +1079,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>98</width>
-                  <height>96</height>
+                  <width>89</width>
+                  <height>76</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -1097,8 +1097,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>98</width>
-                  <height>96</height>
+                  <width>89</width>
+                  <height>76</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -1144,7 +1144,7 @@
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="page_2">
+           <widget class="QWidget" name="page_apps">
             <layout class="QGridLayout" name="gridLayout_7">
              <property name="verticalSpacing">
               <number>20</number>
@@ -1282,7 +1282,7 @@
               </spacer>
              </item>
              <item row="0" column="2" rowspan="7">
-              <widget class="QFrame" name="frame">
+              <widget class="QFrame" name="frame_app">
                <property name="minimumSize">
                 <size>
                  <width>156</width>
@@ -1303,22 +1303,31 @@
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_16">
                 <item>
-                 <widget class="QLabel" name="label">
+                 <widget class="QLabel" name="ico_app">
+                  <property name="minimumSize">
+                   <size>
+                    <width>48</width>
+                    <height>48</height>
+                   </size>
+                  </property>
                   <property name="text">
-                   <string>ICO</string>
+                   <string/>
+                  </property>
+                  <property name="pixmap">
+                   <pixmap resource="../../resources/resources.qrc">:/48x48/exec.png</pixmap>
                   </property>
                   <property name="alignment">
-                   <set>Qt::AlignCenter</set>
+                   <set>Qt::AlignHCenter|Qt::AlignTop</set>
                   </property>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QLabel" name="label_3">
+                 <widget class="QLabel" name="label_app_name">
                   <property name="text">
-                   <string>AppName</string>
+                   <string>[App Name]</string>
                   </property>
                   <property name="alignment">
-                   <set>Qt::AlignCenter</set>
+                   <set>Qt::AlignBottom|Qt::AlignHCenter</set>
                   </property>
                  </widget>
                 </item>
@@ -1330,12 +1339,15 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QLabel" name="label_4">
+                 <widget class="QLabel" name="label_app_comment">
                   <property name="text">
-                   <string>Desc</string>
+                   <string>[App Comment]</string>
                   </property>
                   <property name="alignment">
-                   <set>Qt::AlignCenter</set>
+                   <set>Qt::AlignHCenter|Qt::AlignTop</set>
+                  </property>
+                  <property name="wordWrap">
+                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>
@@ -1357,7 +1369,222 @@
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="page_3"/>
+           <widget class="QWidget" name="page_wineasio">
+            <layout class="QVBoxLayout" name="verticalLayout_17">
+             <property name="margin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QGroupBox" name="groupBox_7">
+               <property name="title">
+                <string>Audio Ports</string>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_22">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_20">
+                  <item>
+                   <widget class="QLabel" name="label_7">
+                    <property name="toolTip">
+                     <string>Number of jack ports that wineasio will try to open.
+Default is 16</string>
+                    </property>
+                    <property name="text">
+                     <string>Number of inputs:</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QSpinBox" name="sb_wineasio_ins">
+                    <property name="toolTip">
+                     <string>Number of jack ports that wineasio will try to open.
+Default is 16</string>
+                    </property>
+                    <property name="maximum">
+                     <number>128</number>
+                    </property>
+                    <property name="singleStep">
+                     <number>2</number>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_19">
+                  <item>
+                   <widget class="QLabel" name="label_21">
+                    <property name="toolTip">
+                     <string>Number of jack ports that wineasio will try to open.
+Default is 16</string>
+                    </property>
+                    <property name="text">
+                     <string>Number of outputs:</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QSpinBox" name="sb_wineasio_outs">
+                    <property name="toolTip">
+                     <string>Number of jack ports that wineasio will try to open.
+Default is 16</string>
+                    </property>
+                    <property name="minimum">
+                     <number>2</number>
+                    </property>
+                    <property name="maximum">
+                     <number>128</number>
+                    </property>
+                    <property name="singleStep">
+                     <number>2</number>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_21">
+                  <item>
+                   <spacer name="horizontalSpacer_10">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                     <enum>QSizePolicy::Fixed</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>150</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="cb_wineasio_hw">
+                    <property name="toolTip">
+                     <string>Try to connect the asio channels to the
+physical I/O ports on your hardware.
+Default is on</string>
+                    </property>
+                    <property name="text">
+                     <string>Connect to hardware</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="groupBox_8">
+               <property name="title">
+                <string>JACK Options</string>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_23">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_22">
+                  <item>
+                   <spacer name="horizontalSpacer_11">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                     <enum>QSizePolicy::Fixed</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>150</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="cb_wineasio_autostart">
+                    <property name="toolTip">
+                     <string>Enable wineasio to launch the jack server.
+Default is off</string>
+                    </property>
+                    <property name="text">
+                     <string>Autostart server</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_23">
+                  <item>
+                   <spacer name="horizontalSpacer_12">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                     <enum>QSizePolicy::Fixed</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>150</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="cb_wineasio_fixed_bsize">
+                    <property name="toolTip">
+                     <string>When on, an asio app will be able to change the jack buffer size.
+Default is off</string>
+                    </property>
+                    <property name="text">
+                     <string>Fixed buffersize</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_18">
+                  <item>
+                   <widget class="QLabel" name="label_22">
+                    <property name="text">
+                     <string>Preferred buffersize:</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="cb_wineasio_bsizes"/>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <spacer name="verticalSpacer_11">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>152</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
           </widget>
          </widget>
         </item>
@@ -1377,7 +1604,7 @@
      <x>0</x>
      <y>0</y>
      <width>732</width>
-     <height>20</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
