@@ -299,7 +299,7 @@ class CadenceSystemCheck_kernel(CadenceSystemCheck):
     def __init__(self):
         CadenceSystemCheck.__init__(self)
 
-        self.name   = self.tr("Current kernel")
+        self.name = self.tr("Current kernel")
 
         uname3 = os.uname()[2]
 
@@ -330,7 +330,7 @@ class CadenceSystemCheck_kernel(CadenceSystemCheck):
                 self.result += kernelType.title()
 
             if kernelType in ("rt", "realtime") or (kernelType == "lowlatency" and versionInt >= [2, 6, 39]):
-                self.icon     = self.ICON_WARN
+                self.icon     = self.ICON_OK
                 self.moreInfo = None
             elif versionInt >= [2, 6, 39]:
                 self.icon     = self.ICON_WARN
@@ -1282,6 +1282,10 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
     def saveSettings(self):
         self.settings.setValue("Geometry", self.saveGeometry())
 
+        GlobalSettings.setValue("JACK/AutoStart", self.cb_jack_autostart.isChecked())
+        #GlobalSettings.setValue("A2J-MIDI/AutoStart", self.cb_a2jmidi_autostart.isChecked())
+        #GlobalSettings.setValue("Pulse2JACK/AutoStart", (havePulseAudio and self.cb_pulse_autostart.isChecked()))
+
     def loadSettings(self, geometry):
         if geometry:
             self.restoreGeometry(self.settings.value("Geometry", ""))
@@ -1290,6 +1294,10 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             "Main/UseSystemTray": self.settings.value("Main/UseSystemTray", True, type=bool),
             "Main/CloseToTray": self.settings.value("Main/CloseToTray", True, type=bool)
         }
+
+        self.cb_jack_autostart.setChecked(GlobalSettings.value("JACK/AutoStart", True, type=bool))
+        #self.cb_a2j_autostart.setChecked(GlobalSettings.value("A2J/AutoStart", True).toBool())
+        #self.cb_pulse_autostart.setChecked(GlobalSettings.value("Pulse2JACK/AutoStart", havePulseAudio).toBool())
 
     def timerEvent(self, event):
         if event.timerId() == self.m_timer250:
