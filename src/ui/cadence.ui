@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>732</width>
-    <height>527</height>
+    <height>483</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -39,13 +39,6 @@
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0" colspan="3">
-         <widget class="Line" name="line_welcome">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
           </property>
          </widget>
         </item>
@@ -113,12 +106,44 @@
           </item>
           <item>
            <widget class="QGroupBox" name="groupBox_checks">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="title">
              <string>System Checks</string>
             </property>
             <layout class="QGridLayout" name="gridLayout_3">
+             <item row="0" column="1">
+              <widget class="QLabel" name="label_check_helper2">
+               <property name="text">
+                <string/>
+               </property>
+               <property name="pixmap">
+                <pixmap resource="../../resources/resources.qrc">:/16x16/dialog-information.png</pixmap>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QLabel" name="label_check_helper3">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Result</string>
+               </property>
+              </widget>
+             </item>
              <item row="0" column="0">
-              <widget class="QLabel" name="label_18">
+              <widget class="QLabel" name="label_check_helper1">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -133,26 +158,10 @@
                </property>
               </widget>
              </item>
-             <item row="0" column="1">
-              <widget class="QLabel" name="label_19">
-               <property name="text">
-                <string/>
-               </property>
-               <property name="pixmap">
-                <pixmap resource="../../resources/resources.qrc">:/16x16/dialog-information.png</pixmap>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="2">
-              <widget class="QLabel" name="label_20">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Label</string>
+             <item row="1" column="0" colspan="3">
+              <widget class="Line" name="line_4">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
                </property>
               </widget>
              </item>
@@ -173,13 +182,6 @@
            </spacer>
           </item>
          </layout>
-        </item>
-        <item row="2" column="1">
-         <widget class="Line" name="line">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-         </widget>
         </item>
         <item row="2" column="2">
          <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -486,6 +488,20 @@
            </spacer>
           </item>
          </layout>
+        </item>
+        <item row="2" column="1">
+         <widget class="Line" name="line">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0" colspan="3">
+         <widget class="Line" name="line_welcome">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -1043,8 +1059,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>412</width>
-                  <height>282</height>
+                  <width>76</width>
+                  <height>76</height>
                  </rect>
                 </property>
                 <attribute name="label">

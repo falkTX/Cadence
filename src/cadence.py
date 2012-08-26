@@ -25,7 +25,7 @@ except:
 # Imports (Global)
 from platform import architecture
 from PyQt4.QtCore import QSettings
-from PyQt4.QtGui import QApplication, QMainWindow
+from PyQt4.QtGui import QApplication, QLabel, QMainWindow, QSizePolicy
 
 # Imports (Custom Stuff)
 import ui_cadence
@@ -240,6 +240,112 @@ def smartHex(value, length):
 
 # ---------------------------------------------------------------------
 
+cadenceSystemChecks = []
+
+class CadenceSystemCheck(object):
+    ICON_ERROR = 0
+    ICON_WARN  = 1
+    ICON_OK    = 2
+
+    def __init__(self):
+        object.__init__(self)
+
+        self.name   = self.tr("check")
+        self.icon   = self.ICON_OK
+        self.result = self.tr("yes")
+
+        self.moreInfo = self.tr("nothing to report")
+
+    def tr(self, text):
+        return app.translate("CadenceSystemCheck", text)
+
+class CadenceSystemCheck_audioGroup(CadenceSystemCheck):
+    def __init__(self):
+        CadenceSystemCheck.__init__(self)
+
+        self.name = self.tr("User in audio group")
+
+        user   = getoutput("whoami").strip()
+        groups = getoutput("groups").strip().split(" ")
+
+        if "audio" in groups:
+            self.icon     = self.ICON_OK
+            self.result   = self.tr("Yes")
+            self.moreInfo = None
+
+        else:
+            fd = open("/etc/group", "r")
+            groupRead = fd.read().strip().split("\n")
+            fd.close()
+
+            onAudioGroup = False
+            for lineRead in groupRead:
+                if lineRead.startswith("audio:"):
+                    groups = lineRead.split(":")[-1].split(",")
+                    if user in groups:
+                        onAudioGroup = True
+                    break
+
+            if onAudioGroup:
+                self.icon     = self.ICON_WARN
+                self.result   = self.tr("Yes, but needs relogin")
+                self.moreInfo = None
+            else:
+                self.icon     = self.ICON_ERROR
+                self.result   = self.tr("No")
+                self.moreInfo = None
+
+class CadenceSystemCheck_kernel(CadenceSystemCheck):
+    def __init__(self):
+        CadenceSystemCheck.__init__(self)
+
+        self.name   = self.tr("Current kernel")
+
+        uname3 = os.uname()[2]
+
+        versionInt   = []
+        versionStr   = uname3.split("-",1)[0]
+        versionSplit = versionStr.split(".")
+
+        for split in versionSplit:
+            if split.isdigit():
+                versionInt.append(int(split))
+            else:
+                versionInt = [0, 0, 0]
+                break
+
+        self.result = versionStr + " "
+
+        if "-" not in uname3:
+            self.icon     = self.ICON_WARN
+            self.result  += self.tr("Vanilla")
+            self.moreInfo = None
+
+        else:
+            if uname3.endswith("-pae"):
+                kernelType   = uname3.split("-")[-2].lower()
+                self.result += kernelType.title() + " (PAE)"
+            else:
+                kernelType   = uname3.split("-")[-1].lower()
+                self.result += kernelType.title()
+
+            if kernelType in ("rt", "realtime") or (kernelType == "lowlatency" and versionInt >= [2, 6, 39]):
+                self.icon     = self.ICON_WARN
+                self.moreInfo = None
+            elif versionInt >= [2, 6, 39]:
+                self.icon     = self.ICON_WARN
+                self.moreInfo = None
+            else:
+                self.icon     = self.ICON_ERROR
+                self.moreInfo = None
+
+def initSystemChecks():
+    if LINUX:
+        cadenceSystemChecks.append(CadenceSystemCheck_kernel())
+        cadenceSystemChecks.append(CadenceSystemCheck_audioGroup())
+
+# ---------------------------------------------------------------------
+
 # Main Window
 class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
     def __init__(self, parent=None):
@@ -287,6 +393,47 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.label_info_os.setText(info[0])
         self.label_info_version.setText(info[1])
         self.label_info_arch.setText(get_architecture())
+
+        # -------------------------------------------------------------
+        # Set-up GUI (System Checks)
+
+        #self.label_check_helper1.setVisible(False)
+        #self.label_check_helper2.setVisible(False)
+        #self.label_check_helper3.setVisible(False)
+
+        index = 2
+        checksLayout = self.groupBox_checks.layout()
+
+        for check in cadenceSystemChecks:
+            widgetName   = QLabel("%s:" % check.name)
+            widgetIcon   = QLabel("")
+            widgetResult = QLabel(check.result)
+
+            if check.moreInfo:
+                widgetName.setToolTip(check.moreInfo)
+                widgetIcon.setToolTip(check.moreInfo)
+                widgetResult.setToolTip(check.moreInfo)
+
+            #widgetName.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+            #widgetIcon.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+            #widgetIcon.setMinimumSize(16, 16)
+            #widgetIcon.setMaximumSize(16, 16)
+            #widgetResult.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+
+            if check.icon == check.ICON_ERROR:
+                widgetIcon.setPixmap(self.pix_error)
+            elif check.icon == check.ICON_WARN:
+                widgetIcon.setPixmap(self.pix_warning)
+            elif check.icon == check.ICON_OK:
+                widgetIcon.setPixmap(self.pix_apply)
+            else:
+                widgetIcon.setPixmap(self.pix_cancel)
+
+            checksLayout.addWidget(widgetName, index, 0, Qt.AlignRight)
+            checksLayout.addWidget(widgetIcon, index, 1, Qt.AlignHCenter)
+            checksLayout.addWidget(widgetResult, index, 2, Qt.AlignLeft)
+
+            index += 1
 
         # -------------------------------------------------------------
         # Set-up GUI (Tweaks)
@@ -428,10 +575,10 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         if haveWine:
             ins  = int(getWineAsioKeyValue("Number of inputs", "00000010"), 16)
             outs = int(getWineAsioKeyValue("Number of outputs", "00000010"), 16)
-            hw   = bool(int(getWineAsioKeyValue("Connect to hardware", "00000001")))
+            hw   = bool(int(getWineAsioKeyValue("Connect to hardware", "00000001"), 10))
 
-            autostart    = bool(int(getWineAsioKeyValue("Autostart server", "00000000")))
-            fixed_bsize  = bool(int(getWineAsioKeyValue("Fixed buffersize", "00000001")))
+            autostart    = bool(int(getWineAsioKeyValue("Autostart server", "00000000"), 10))
+            fixed_bsize  = bool(int(getWineAsioKeyValue("Fixed buffersize", "00000001"), 10))
             prefer_bsize = int(getWineAsioKeyValue("Preferred buffersize", "00000400"), 16)
 
             for bsize in buffer_sizes:
@@ -521,7 +668,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.m_last_xruns    = None
         self.m_last_buffer_size = None
 
-        self.m_timer120  = None
+        self.m_timer250  = None
         self.m_timer1000 = self.startTimer(1000)
 
         self.DBusReconnect()
@@ -609,12 +756,12 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.label_jack_srate.setText("%i Hz" % DBus.jack.GetSampleRate())
         self.label_jack_latency.setText("%.1f ms" % DBus.jack.GetLatency())
 
-        self.m_timer120 = self.startTimer(120)
+        self.m_timer250 = self.startTimer(250)
 
     def jackStopped(self):
-        if self.m_timer120:
-            self.killTimer(self.m_timer120)
-            self.m_timer120 = None
+        if self.m_timer250:
+            self.killTimer(self.m_timer250)
+            self.m_timer250 = None
 
         self.m_last_dsp_load = None
         self.m_last_xruns    = None
@@ -1145,7 +1292,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         }
 
     def timerEvent(self, event):
-        if event.timerId() == self.m_timer120:
+        if event.timerId() == self.m_timer250:
             if DBus.jack and self.m_last_dsp_load != None:
                 next_dsp_load = DBus.jack.GetLoad()
                 next_xruns    = DBus.jack.GetXruns()
@@ -1181,14 +1328,16 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 if __name__ == '__main__':
     # App initialization
     app = QApplication(sys.argv)
-    app.setApplicationName("Catia")
+    app.setApplicationName("Cadence")
     app.setApplicationVersion(VERSION)
     app.setOrganizationName("Cadence")
-    app.setWindowIcon(QIcon(":/scalable/catia.svg"))
+    app.setWindowIcon(QIcon(":/scalable/cadence.svg"))
 
     if haveDBus:
         DBus.loop = DBusQtMainLoop(set_as_default=True)
         DBus.bus  = dbus.SessionBus(mainloop=DBus.loop)
+
+    initSystemChecks()
 
     # Show GUI
     gui = CadenceMainW()
