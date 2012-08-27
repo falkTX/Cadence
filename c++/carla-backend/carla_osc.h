@@ -55,7 +55,7 @@ public:
     CarlaOsc(CarlaEngine* const engine);
     ~CarlaOsc();
 
-    void init(const char* const name);
+    void init(const char* const name, const unsigned short maxPluginNumber);
     void close();
 
     // -------------------------------------------------------------------
@@ -77,6 +77,7 @@ public:
 
 private:
     CarlaEngine* const engine;
+    unsigned short maxPluginNumber;
 
     const char* m_serverPath;
     lo_server_thread m_serverThread;

@@ -183,6 +183,9 @@ void CarlaEngineRtAudio::handleProcessCallback(void* outputBuffer, void* inputBu
     if (procThread == nullptr)
         procThread = QThread::currentThread();
 
+    if (maxPluginNumber == 0)
+        return;
+
     // get buffers from RtAudio
     float* insPtr  = (float*)inputBuffer;
     float* outsPtr = (float*)outputBuffer;
@@ -230,7 +233,7 @@ void CarlaEngineRtAudio::handleProcessCallback(void* outputBuffer, void* inputBu
     bool processed = false;
 
     // process plugins
-    for (unsigned short i=0; i < MAX_PLUGINS; i++)
+    for (unsigned short i=0; i < maxPluginNumber; i++)
     {
         CarlaPlugin* const plugin = getPluginUnchecked(i);
 

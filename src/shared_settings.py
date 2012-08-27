@@ -217,14 +217,15 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
                     break
             else:
                 self.cb_engine_audio_driver.setCurrentIndex(-1)
+
             self.cb_engine_process_mode.setCurrentIndex(self.settings.value("Engine/ProcessMode", PROCESS_MODE_MULTIPLE_CLIENTS, type=int))
             self.sb_engine_max_params.setValue(self.settings.value("Engine/MaxParameters", 200, type=int))
-            self.ch_engine_prefer_bridges.setChecked(self.settings.value("Engine/PreferUIBridges", True, type=bool))
-            self.sb_engine_oscgui_timeout.setValue(self.settings.value("Engine/OscGuiTimeout", 4000, type=int))
+            self.ch_engine_prefer_bridges.setChecked(self.settings.value("Engine/PreferUiBridges", True, type=bool))
+            self.sb_engine_oscgui_timeout.setValue(self.settings.value("Engine/OscUiTimeout", 4000, type=int))
             self.ch_engine_disable_checks.setChecked(self.settings.value("Engine/DisableChecks", bool(not WINDOWS), type=bool))
-            self.ch_engine_dssi_chunks.setChecked(self.settings.value("Engine/UseDSSIChunks", False, type=bool))
+            self.ch_engine_dssi_chunks.setChecked(self.settings.value("Engine/UseDssiVstChunks", False, type=bool))
             self.ch_engine_force_stereo.setChecked(self.settings.value("Engine/ForceStereo", False, type=bool))
-            self.ch_engine_process_hp.setChecked(self.settings.value("Engine/ProcessHP", False, type=bool))
+            self.ch_engine_process_hp.setChecked(self.settings.value("Engine/ProcessHighPrecision", False, type=bool))
 
         # --------------------------------------------
 

@@ -28,12 +28,19 @@ CarlaCheckThread::CarlaCheckThread(CarlaBackend::CarlaEngine* const engine_, QOb
     QThread(parent),
     engine(engine_)
 {
+    maxPluginNumber = 0;
     qDebug("CarlaCheckThread::CarlaCheckThread(%p)", parent);
 }
 
 CarlaCheckThread::~CarlaCheckThread()
 {
     qDebug("CarlaCheckThread::~CarlaCheckThread()");
+}
+
+void CarlaCheckThread::startNow(const unsigned short maxPluginNumber_)
+{
+    maxPluginNumber = maxPluginNumber_;
+    start(QThread::HighPriority);
 }
 
 void CarlaCheckThread::stopNow()
@@ -67,7 +74,7 @@ void CarlaCheckThread::run()
         const ScopedLocker m(this);
         oscControllerRegisted = engine->isOscControllerRegisted();
 
-        for (unsigned short i=0; i < CarlaBackend::MAX_PLUGINS; i++)
+        for (unsigned short i=0; i < maxPluginNumber; i++)
         {
             CarlaBackend::CarlaPlugin* const plugin = engine->getPluginUnchecked(i);
 

@@ -340,6 +340,7 @@ protected:
     uint32_t bufferSize;
     double   sampleRate;
     CarlaTimeInfo timeInfo;
+    unsigned short maxPluginNumber;
 
     void bufferSizeChanged(uint32_t newBufferSize);
 

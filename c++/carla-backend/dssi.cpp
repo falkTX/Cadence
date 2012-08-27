@@ -199,7 +199,7 @@ public:
         param_buffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
 
 #ifndef BUILD_BRIDGE
-        if (sendGui)
+        if (sendGui && osc.data.target)
             osc_send_control(&osc.data, param.data[parameterId].rindex, value);
 #endif
 
@@ -220,7 +220,7 @@ public:
         descriptor->configure(handle, key, value);
 
 #ifndef BUILD_BRIDGE
-        if (sendGui)
+        if (sendGui && osc.data.target)
             osc_send_configure(&osc.data, key, value);
 #endif
 
@@ -270,7 +270,7 @@ public:
             }
 
 #ifndef BUILD_BRIDGE
-            if (sendGui)
+            if (sendGui && osc.data.target)
                 osc_send_program(&osc.data, midiprog.data[index].bank, midiprog.data[index].program);
 #endif
         }

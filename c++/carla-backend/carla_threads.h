@@ -32,6 +32,7 @@ public:
     CarlaCheckThread(CarlaBackend::CarlaEngine* const engine, QObject* const parent = nullptr);
     ~CarlaCheckThread();
 
+    void startNow(const unsigned short maxPluginNumber);
     void stopNow();
 
 protected:
@@ -41,6 +42,7 @@ private:
     CarlaBackend::CarlaEngine* const engine;
     QMutex mutex;
     bool m_stopNow;
+    unsigned short maxPluginNumber;
 
     // ----------------------------------------------
 

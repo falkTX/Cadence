@@ -278,6 +278,9 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
     if (procThread == nullptr)
         procThread = QThread::currentThread();
 
+    if (maxPluginNumber == 0)
+        return;
+
     state = jack_transport_query(client, &pos);
 
     timeInfo.playing = (state != JackTransportStopped);
@@ -311,7 +314,7 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
 #ifndef BUILD_BRIDGE
     if (carlaOptions.processMode == PROCESS_MODE_SINGLE_CLIENT)
     {
-        for (unsigned short i=0; i < MAX_PLUGINS; i++)
+        for (unsigned short i=0; i < maxPluginNumber; i++)
         {
             CarlaPlugin* const plugin = getPluginUnchecked(i);
 
@@ -445,7 +448,7 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
         bool processed = false;
 
         // process plugins
-        for (unsigned short i=0; i < MAX_PLUGINS; i++)
+        for (unsigned short i=0; i < maxPluginNumber; i++)
         {
             CarlaPlugin* const plugin = getPluginUnchecked(i);
 
@@ -590,7 +593,7 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
 
 void CarlaEngineJack::handleShutdownCallback()
 {
-    //for (unsigned short i=0; i < MAX_PLUGINS; i++)
+    //for (unsigned short i=0; i < maxPluginNumber; i++)
     //{
         //CarlaPlugin* const plugin = getPluginUnchecked(i);
         //plugin->x_client

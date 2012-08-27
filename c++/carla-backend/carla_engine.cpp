@@ -20,8 +20,6 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
-unsigned short maxPluginNumber = 0;
-
 // -----------------------------------------------------------------------
 
 CarlaEngine::CarlaEngine()
@@ -47,6 +45,7 @@ CarlaEngine::CarlaEngine()
     name = nullptr;
     bufferSize = 0;
     sampleRate = 0.0;
+    maxPluginNumber = 0;
 
 #ifndef Q_COMPILER_INITIALIZER_LISTS
     for (unsigned short i=0; i < MAX_PLUGINS; i++)
@@ -100,7 +99,7 @@ bool CarlaEngine::init(const char* const clientName)
 {
     qDebug("CarlaEngine::init(\"%s\")", clientName);
 
-    m_osc.init(clientName);
+    m_osc.init(clientName, maxPluginNumber);
     m_oscData = m_osc.getControllerData();
 
     return true;
@@ -114,6 +113,8 @@ bool CarlaEngine::close()
 
     m_oscData = nullptr;
     m_osc.close();
+
+    maxPluginNumber = 0;
 
     return true;
 }
@@ -136,7 +137,7 @@ short CarlaEngine::getNewPluginId() const
 
 CarlaPlugin* CarlaEngine::getPlugin(const unsigned short id) const
 {
-    qDebug("CarlaEngine::getPlugin(%i)", id);
+    qDebug("CarlaEngine::getPlugin(%i/%i)", id, maxPluginNumber);
     Q_ASSERT(maxPluginNumber != 0);
     Q_ASSERT(id < maxPluginNumber);
 
@@ -148,7 +149,7 @@ CarlaPlugin* CarlaEngine::getPlugin(const unsigned short id) const
 
 CarlaPlugin* CarlaEngine::getPluginUnchecked(const unsigned short id) const
 {
-    //Q_ASSERT(maxPluginNumber != 0);
+    Q_ASSERT(maxPluginNumber != 0);
     Q_ASSERT(id < maxPluginNumber);
 
     return m_carlaPlugins[id];
@@ -304,7 +305,7 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
     m_uniqueNames[id]  = plugin->name();
 
     if (! m_checkThread.isRunning())
-        m_checkThread.start(QThread::HighPriority);
+        m_checkThread.startNow(maxPluginNumber);
 
     return id;
 }
@@ -344,7 +345,7 @@ bool CarlaEngine::removePlugin(const unsigned short id)
         }
 
         if (isRunning())
-            m_checkThread.start(QThread::HighPriority);
+            m_checkThread.startNow(maxPluginNumber);
 
         return true;
     }
@@ -357,7 +358,6 @@ bool CarlaEngine::removePlugin(const unsigned short id)
 void CarlaEngine::removeAllPlugins()
 {
     qDebug("CarlaEngine::removeAllPlugins()");
-    Q_ASSERT(maxPluginNumber != 0);
 
     m_checkThread.stopNow();
 

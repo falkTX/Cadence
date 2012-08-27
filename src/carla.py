@@ -20,6 +20,7 @@
 import json
 from PyQt4.QtCore import Qt, QThread
 from PyQt4.QtGui import QApplication, QMainWindow, QTableWidgetItem
+from liblo import make_method, Address, ServerThread
 
 # Imports (Custom Stuff)
 import ui_carla, ui_carla_about, ui_carla_database, ui_carla_refresh
@@ -1029,6 +1030,37 @@ class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
         QDialog.done(self, r)
         self.close()
 
+# NSM Control server
+class NSMControlServer(ServerThread):
+    def __init__(self, parent):
+        ServerThread.__init__(self, 8087)
+
+        self.parent = parent
+
+    @make_method('/reply', 'ssss')
+    def nsm_reply(self, path, args):
+        method, message, smName, capabilities = args
+
+        if method == "/nsm/server/announce":
+            self.parent.emit(SIGNAL("NSM_Announce(QString)"), smName)
+
+    @make_method('/error', 'is')
+    def nsm_error(self, path, args):
+        pass
+
+    @make_method('/nsm/client/open', 'sss')
+    def nsm_client_open(self, path, args):
+        projectPath, displayName, clientId = args
+        self.parent.emit(SIGNAL("NSM_Open(QString, QString, QString)"), projectPath, displayName, clientId)
+
+    @make_method('/nsm/client/save', '')
+    def nsm_client_save(self, path, args):
+        self.parent.emit(SIGNAL("NSM_Save()"))
+
+    @make_method(None, None)
+    def fallback(self, path, args):
+        print("NSMControlServer::fallback(\"%s\") - unknown message, args =" % path, args)
+
 # Main Window
 class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
     def __init__(self, parent=None):
@@ -1061,6 +1093,9 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.m_engine_started = False
         self.m_project_filename = None
         self.m_pluginCount = 0
+
+        self.nsm_server = None
+        self.nsm_url = None
 
         self.m_plugin_list = []
         for x in range(MAX_PLUGINS):
@@ -1106,17 +1141,34 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.connect(self, SIGNAL("ReloadParametersCallback(int)"), SLOT("slot_handleReloadParametersCallback(int)"))
         self.connect(self, SIGNAL("ReloadProgramsCallback(int)"), SLOT("slot_handleReloadProgramsCallback(int)"))
         self.connect(self, SIGNAL("ReloadAllCallback(int)"), SLOT("slot_handleReloadAllCallback(int)"))
+        self.connect(self, SIGNAL("NSM_Announce(QString)"), SLOT("slot_handleNSM_AnnounceCallback(QString)"))
+        self.connect(self, SIGNAL("NSM_Open(QString, QString, QString)"), SLOT("slot_handleNSM_OpenCallback(QString, QString, QString)"))
+        self.connect(self, SIGNAL("NSM_Save()"), SLOT("slot_handleNSM_SaveCallback()"))
         self.connect(self, SIGNAL("QuitCallback()"), SLOT("slot_handleQuitCallback()"))
 
         self.TIMER_GUI_STUFF  = self.startTimer(self.m_savedSettings["Main/RefreshInterval"])     # Peaks
         self.TIMER_GUI_STUFF2 = self.startTimer(self.m_savedSettings["Main/RefreshInterval"] * 2) # LEDs and edit dialog
 
-        QTimer.singleShot(0, self, SLOT("slot_engine_start()"))
+        NSM_URL = os.getenv("NSM_URL")
+
+        if NSM_URL:
+            self.nsm_url = Address(NSM_URL)
+
+            try:
+                self.nsm_server = NSMControlServer(self)
+            except:
+                return
+
+            self.nsm_server.start()
+            self.nsm_server.send(self.nsm_url, "/nsm/server/announce", "Carla", ":switch:", sys.argv[0], 1, 0, os.getpid())
+
+        else:
+            QTimer.singleShot(0, self, SLOT("slot_engine_start()"))
 
     def loadProjectLater(self):
         QTimer.singleShot(0, self.load_project)
 
-    def startEngine(self):
+    def startEngine(self, clientName = "Carla"):
         # ---------------------------------------------
         # engine
 
@@ -1184,7 +1236,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
         audioDriver = self.settings.value("Engine/AudioDriver", "JACK", type=str)
 
-        if not Carla.Host.engine_init(audioDriver, "Carla"):
+        if not Carla.Host.engine_init(audioDriver, clientName):
             self.act_engine_start.setEnabled(True)
             self.act_engine_stop.setEnabled(False)
             QMessageBox.critical(self, self.tr("Error"), self.tr("Could not connect to Audio backend '%s', possible reasons: %s" % (audioDriver, cString(Carla.Host.get_last_error()))))
@@ -1326,6 +1378,38 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         pwidget = self.m_plugin_list[plugin_id]
         if pwidget:
             pwidget.edit_dialog.do_reload_all()
+
+    @pyqtSlot(str)
+    def slot_handleNSM_AnnounceCallback(self, smName):
+        self.act_file_new.setEnabled(False)
+        self.act_file_open.setEnabled(False)
+        self.act_file_save_as.setEnabled(False)
+        self.setWindowTitle("Carla (%s)" % smName)
+
+    @pyqtSlot(str, str, str)
+    def slot_handleNSM_OpenCallback(self, projectPath, displayName, clientId):
+        # remove all previous plugins
+        self.slot_remove_all()
+
+        # restart engine
+        if Carla.Host.is_engine_running():
+            self.stopEngine()
+        self.startEngine(clientId)
+
+        self.m_project_filename = projectPath
+
+        if os.path.exists(self.m_project_filename):
+            self.load_project()
+        else:
+            self.save_project()
+
+        self.setWindowTitle("Carla - %s" % clientId)
+        self.nsm_server.send(self.nsm_url, "/reply" "/nsm/client/open" "done!")
+
+    @pyqtSlot()
+    def slot_handleNSM_SaveCallback(self):
+        self.save_project()
+        self.nsm_server.send(self.nsm_url, "/reply" "/nsm/client/save" "done!")
 
     @pyqtSlot()
     def slot_handleQuitCallback(self):
@@ -1835,6 +1919,9 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         QMainWindow.timerEvent(self, event)
 
     def closeEvent(self, event):
+        if self.nsm_server:
+            self.nsm_server.stop()
+
         self.saveSettings()
         self.slot_remove_all()
         QMainWindow.closeEvent(self, event)
