@@ -416,9 +416,29 @@ enum CallbackType {
     CALLBACK_RELOAD_ALL = 14,
 
     /*!
+     * Non-Session-Manager Announce message.
+     */
+    CALLBACK_NSM_ANNOUNCE = 15,
+
+    /*!
+     * Non-Session-Manager Open message.
+     */
+    CALLBACK_NSM_OPEN1 = 16,
+
+    /*!
+     * Non-Session-Manager Open message.
+     */
+    CALLBACK_NSM_OPEN2 = 17,
+
+    /*!
+     * Non-Session-Manager Save message.
+     */
+    CALLBACK_NSM_SAVE = 18,
+
+    /*!
      * The engine has crashed or malfunctioned and will no longer work.
      */
-    CALLBACK_QUIT = 15
+    CALLBACK_QUIT = 19
 };
 
 /*!

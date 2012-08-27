@@ -1179,6 +1179,172 @@ void set_option(CarlaBackend::OptionsType option, int value, const char* valueSt
 
 // -------------------------------------------------------------------------------------------------------------------
 
+#define NSM_API_VERSION_MAJOR 1
+#define NSM_API_VERSION_MINOR 0
+
+class CarlaNSM
+{
+public:
+    CarlaNSM()
+    {
+        m_controlAddr = nullptr;
+        m_serverThread = nullptr;
+        m_isOpened = false;
+        m_isSaved  = false;
+    }
+
+    ~CarlaNSM()
+    {
+        if (m_controlAddr)
+            lo_address_free(m_controlAddr);
+
+        if (m_serverThread)
+        {
+            lo_server_thread_stop(m_serverThread);
+            lo_server_thread_del_method(m_serverThread, nullptr, nullptr);
+            lo_server_thread_free(m_serverThread);
+        }
+    }
+
+    void announce(const char* const url, const int pid)
+    {
+        lo_address addr = lo_address_new_from_url(url);
+        int proto = lo_address_get_protocol(addr);
+
+        if (! m_serverThread)
+        {
+            // create new OSC thread
+            m_serverThread = lo_server_thread_new_with_proto(nullptr, proto, error_handler);
+
+            // register message handlers and start OSC thread
+            lo_server_thread_add_method(m_serverThread, "/reply", "ssss", _announce_handler, this);
+            lo_server_thread_add_method(m_serverThread, "/nsm/client/open", "sss", _nsm_open_handler, this);
+            lo_server_thread_add_method(m_serverThread, "/nsm/client/save", "", _nsm_save_handler, this);
+            lo_server_thread_start(m_serverThread);
+        }
+
+        lo_send_from(addr, lo_server_thread_get_server(m_serverThread), LO_TT_IMMEDIATE, "/nsm/server/announce", "sssiii",
+                     "Carla", ":switch:", "carla-git", NSM_API_VERSION_MAJOR, NSM_API_VERSION_MINOR, pid);
+
+        lo_address_free(addr);
+    }
+
+    void replyOpen()
+    {
+        m_isOpened = true;
+    }
+
+    void replySave()
+    {
+        m_isSaved = true;
+    }
+
+protected:
+    int announce_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg)
+    {
+        qDebug("CarlaNSM::announce_handler(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
+
+        m_controlAddr = lo_address_new_from_url(lo_address_get_url(lo_message_get_source(msg)));
+
+        const char* const method = &argv[0]->s;
+
+        if (strcmp(method, "/nsm/server/announce") == 0 && carlaFunc)
+            carlaFunc(nullptr, CarlaBackend::CALLBACK_NSM_ANNOUNCE, 0, 0, 0, 0.0);
+
+        return 0;
+    }
+
+    int nsm_open_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg)
+    {
+        qDebug("CarlaNSM::nsm_open_handler(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
+
+        if (! carlaFunc)
+            return 1;
+
+        const char* const projectPath = &argv[0]->s;
+        const char* const clientId    = &argv[2]->s;
+
+        CarlaBackend::setLastError(clientId);
+        carlaFunc(nullptr, CarlaBackend::CALLBACK_NSM_OPEN1, 0, 0, 0, 0.0);
+
+        CarlaBackend::setLastError(projectPath);
+        carlaFunc(nullptr, CarlaBackend::CALLBACK_NSM_OPEN2, 0, 0, 0, 0.0);
+
+        for (int i=0; i < 30 && ! m_isOpened; i++)
+            carla_msleep(100);
+
+        if (m_controlAddr)
+            lo_send_from(m_controlAddr, lo_server_thread_get_server(m_serverThread), LO_TT_IMMEDIATE, "/reply", "ss", "/nsm/client/open", "OK");
+
+        return 0;
+    }
+
+    int nsm_save_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg)
+    {
+        qDebug("CarlaNSM::nsm_save_handler(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
+
+        if (! carlaFunc)
+            return 1;
+
+        carlaFunc(nullptr, CarlaBackend::CALLBACK_NSM_SAVE, 0, 0, 0, 0.0);
+
+        for (int i=0; i < 30 && ! m_isSaved; i++)
+            carla_msleep(100);
+
+        if (m_controlAddr)
+            lo_send_from(m_controlAddr, lo_server_thread_get_server(m_serverThread), LO_TT_IMMEDIATE, "/reply", "ss", "/nsm/client/save", "OK");
+
+        return 0;
+    }
+
+private:
+    lo_address m_controlAddr;
+    lo_server_thread m_serverThread;
+    bool m_isOpened, m_isSaved;
+
+    static int _announce_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg, void* const data)
+    {
+        CarlaNSM* const _this_ = (CarlaNSM*)data;
+        return _this_->announce_handler(path, types, argv, argc, msg);
+    }
+
+    static int _nsm_open_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg, void* const data)
+    {
+        CarlaNSM* const _this_ = (CarlaNSM*)data;
+        return _this_->nsm_open_handler(path, types, argv, argc, msg);
+    }
+
+    static int _nsm_save_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg, void* const data)
+    {
+        CarlaNSM* const _this_ = (CarlaNSM*)data;
+        return _this_->nsm_save_handler(path, types, argv, argc, msg);
+    }
+
+    static void error_handler(const int num, const char* const msg, const char* const path)
+    {
+        qCritical("CarlaNSM::error_handler(%i, %s, %s)", num, msg, path);
+    }
+};
+
+static CarlaNSM carlaNSM;
+
+void nsm_announce(const char* url, int pid)
+{
+    carlaNSM.announce(url, pid);
+}
+
+void nsm_reply_open()
+{
+    carlaNSM.replyOpen();
+}
+
+void nsm_reply_save()
+{
+    carlaNSM.replySave();
+}
+
+// -------------------------------------------------------------------------------------------------------------------
+
 #ifdef QTCREATOR_TEST
 
 #include <QtGui/QApplication>

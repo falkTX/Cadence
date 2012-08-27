@@ -286,6 +286,14 @@ const char* CallbackType2str(const CallbackType type)
         return "CALLBACK_RELOAD_PROGRAMS";
     case CALLBACK_RELOAD_ALL:
         return "CALLBACK_RELOAD_ALL";
+    case CALLBACK_NSM_ANNOUNCE:
+        return "CALLBACK_NSM_ANNOUNCE";
+    case CALLBACK_NSM_OPEN1:
+        return "CALLBACK_NSM_OPEN1";
+    case CALLBACK_NSM_OPEN2:
+        return "CALLBACK_NSM_OPEN2";
+    case CALLBACK_NSM_SAVE:
+        return "CALLBACK_NSM_SAVE";
     case CALLBACK_QUIT:
         return "CALLBACK_QUIT";
     }

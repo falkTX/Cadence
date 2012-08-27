@@ -167,6 +167,10 @@ CARLA_EXPORT const char* get_host_osc_url();
 CARLA_EXPORT void set_callback_function(CarlaBackend::CallbackFunc func);
 CARLA_EXPORT void set_option(CarlaBackend::OptionsType option, int value, const char* valueStr);
 
+CARLA_EXPORT void nsm_announce(const char* url, int pid);
+CARLA_EXPORT void nsm_reply_open();
+CARLA_EXPORT void nsm_reply_save();
+
 /**@}*/
 
 #endif // CARLA_BACKEND_STANDALONE_H

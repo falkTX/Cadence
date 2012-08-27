@@ -99,7 +99,7 @@ bool CarlaEngine::init(const char* const clientName)
 {
     qDebug("CarlaEngine::init(\"%s\")", clientName);
 
-    m_osc.init(clientName, maxPluginNumber);
+    m_osc.init(clientName);
     m_oscData = m_osc.getControllerData();
 
     return true;

@@ -46,7 +46,7 @@ CarlaOsc::~CarlaOsc()
     qDebug("CarlaOsc::~CarlaOsc()");
 }
 
-void CarlaOsc::init(const char* const name, const unsigned short maxPluginNumber_)
+void CarlaOsc::init(const char* const name)
 {
     Q_ASSERT(name);
     Q_ASSERT(m_name_len == 0);
@@ -54,8 +54,6 @@ void CarlaOsc::init(const char* const name, const unsigned short maxPluginNumber
 
     m_name = strdup(name);
     m_name_len = strlen(name);
-
-    maxPluginNumber = maxPluginNumber_;
 
     // create new OSC thread
     m_serverThread = lo_server_thread_new(nullptr, osc_error_handler);
@@ -124,7 +122,7 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
     if (std::isdigit(path[m_name_len+3]))
         pluginId += (path[m_name_len+3]-'0')*10;
 
-    if (pluginId < 0 || pluginId > maxPluginNumber)
+    if (pluginId < 0 || pluginId > CarlaBackend::MAX_PLUGINS)
     {
         qCritical("CarlaOsc::handleMessage() - failed to get plugin, wrong id -> %i", pluginId);
         return 1;
@@ -265,7 +263,8 @@ int CarlaOsc::handle_register(const int argc, const lo_arg* const* const argv, c
     free((void*)host);
     free((void*)port);
 
-    for (unsigned short i=0; i < maxPluginNumber; i++)
+    // FIXME - max plugins
+    for (unsigned short i=0; i < CarlaBackend::MAX_PLUGINS; i++)
     {
         CarlaBackend::CarlaPlugin* const plugin = engine->getPluginUnchecked(i);
 

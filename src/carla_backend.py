@@ -891,6 +891,15 @@ class Host(object):
         self.lib.set_option.argtypes = [c_enum, c_int, c_char_p]
         self.lib.set_option.restype = None
 
+        self.lib.nsm_announce.argtypes = [c_char_p, c_int]
+        self.lib.nsm_announce.restype = None
+
+        self.lib.nsm_reply_open.argtypes = None
+        self.lib.nsm_reply_open.restype = None
+
+        self.lib.nsm_reply_save.argtypes = None
+        self.lib.nsm_reply_save.restype = None
+
     def get_engine_driver_count(self):
         return self.lib.get_engine_driver_count()
 
@@ -1060,3 +1069,12 @@ class Host(object):
 
     def get_sample_rate(self):
         return self.lib.get_sample_rate()
+
+    def nsm_announce(self, url, pid):
+        self.lib.nsm_announce(url.encode("utf-8"), pid)
+
+    def nsm_reply_open(self):
+        self.lib.nsm_reply_open()
+
+    def nsm_reply_save(self):
+        self.lib.nsm_reply_save()
