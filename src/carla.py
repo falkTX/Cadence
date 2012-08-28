@@ -20,7 +20,6 @@
 import json
 from PyQt4.QtCore import Qt, QThread
 from PyQt4.QtGui import QApplication, QMainWindow, QTableWidgetItem
-#from liblo import make_method, Address, ServerThread
 
 # Imports (Custom Stuff)
 import ui_carla, ui_carla_about, ui_carla_database, ui_carla_refresh
@@ -39,8 +38,7 @@ class SearchPluginsThread(QThread):
 
         self.settings_db = self.parent().settings_db
 
-        self.tool_native = None
-
+        self.check_native = False
         self.check_unix32 = False
         self.check_unix64 = False
         self.check_win32  = False
@@ -54,10 +52,13 @@ class SearchPluginsThread(QThread):
         self.check_sf2 = False
         self.check_sfz = False
 
+        self.tool_native = carla_discovery_native
+
     def skipPlugin(self):
         # TODO - windows and mac support
         apps  = ""
         apps += " carla-discovery"
+        apps += " carla-discovery-native"
         apps += " carla-discovery-unix32"
         apps += " carla-discovery-unix64"
         apps += " carla-discovery-win32.exe"
@@ -69,7 +70,8 @@ class SearchPluginsThread(QThread):
     def pluginLook(self, percent, plugin):
         self.emit(SIGNAL("PluginLook(int, QString)"), percent, plugin)
 
-    def setSearchBinaryTypes(self, unix32, unix64, win32, win64):
+    def setSearchBinaryTypes(self, native, unix32, unix64, win32, win64):
+        self.check_native = native
         self.check_unix32 = unix32
         self.check_unix64 = unix64
         self.check_win32  = win32
@@ -269,6 +271,8 @@ class SearchPluginsThread(QThread):
         if self.check_lv2:    plugin_count += 1
         if self.check_vst:    plugin_count += 1
 
+        if self.check_native:
+            self.m_count += plugin_count
         if self.check_unix32:
             self.m_count += plugin_count
         if self.check_unix64:
@@ -293,7 +297,9 @@ class SearchPluginsThread(QThread):
         self.m_last_value = 0
         self.m_percent_value = 100 / self.m_count
 
-        if LINUX:
+        if HAIKU:
+            OS = "HAIKU"
+        elif LINUX:
             OS = "LINUX"
         elif MACOS:
             OS = "MACOS"
@@ -305,11 +311,17 @@ class SearchPluginsThread(QThread):
         if self.check_ladspa:
             m_value = 0
             if haveLRDF:
+                if self.check_native: m_value += 0.1
                 if self.check_unix32: m_value += 0.1
                 if self.check_unix64: m_value += 0.1
                 if self.check_win32:  m_value += 0.1
                 if self.check_win64:  m_value += 0.1
             rdf_pad_value = self.m_percent_value * m_value
+
+            if self.check_native:
+                self.checkLADSPA(OS, carla_discovery_native)
+                self.settings_db.setValue("Plugins/LADSPA_native", self.ladspa_plugins)
+                self.settings_db.sync()
 
             if self.check_unix32:
                 self.checkLADSPA(OS, carla_discovery_unix32)
@@ -345,6 +357,11 @@ class SearchPluginsThread(QThread):
                     f_ladspa.close()
 
         if self.check_dssi:
+            if self.check_native:
+                self.checkDSSI(OS, carla_discovery_native)
+                self.settings_db.setValue("Plugins/DSSI_native", self.dssi_plugins)
+                self.settings_db.sync()
+
             if self.check_unix32:
                 self.checkDSSI(OS, carla_discovery_unix32)
                 self.settings_db.setValue("Plugins/DSSI_unix32", self.dssi_plugins)
@@ -366,6 +383,11 @@ class SearchPluginsThread(QThread):
                 self.settings_db.sync()
 
         if self.check_lv2:
+            if self.check_native:
+                self.checkLV2(carla_discovery_native)
+                self.settings_db.setValue("Plugins/LV2_native", self.lv2_plugins)
+                self.settings_db.sync()
+
             if self.check_unix32:
                 self.checkLV2(carla_discovery_unix32)
                 self.settings_db.setValue("Plugins/LV2_unix32", self.lv2_plugins)
@@ -387,6 +409,11 @@ class SearchPluginsThread(QThread):
                 self.settings_db.sync()
 
         if self.check_vst:
+            if self.check_native:
+                self.checkVST(OS, carla_discovery_native)
+                self.settings_db.setValue("Plugins/VST_native", self.vst_plugins)
+                self.settings_db.sync()
+
             if self.check_unix32:
                 self.checkVST(OS, carla_discovery_unix32)
                 self.settings_db.setValue("Plugins/VST_unix32", self.vst_plugins)
@@ -476,36 +503,52 @@ class PluginRefreshW(QDialog, ui_carla_refresh.Ui_PluginRefreshW):
         else:
             self.ico_rdflib.setPixmap(getIcon("dialog-error").pixmap(16, 16))
 
-        hasNative = False
+        hasNative = bool(carla_discovery_native)
         hasNonNative = False
 
-        if LINUX or MACOS:
-            if is64bit:
-                hasNative = bool(carla_discovery_unix64)
-                hasNonNative = bool(carla_discovery_unix32 or carla_discovery_win32 or carla_discovery_win64)
-                self.pThread.setSearchToolNative(carla_discovery_unix64)
-            else:
-                hasNative = bool(carla_discovery_unix32)
-                hasNonNative = bool(carla_discovery_unix64 or carla_discovery_win32 or carla_discovery_win64)
-                self.pThread.setSearchToolNative(carla_discovery_unix32)
-        elif WINDOWS:
+        if WINDOWS:
             if is64bit:
                 hasNative = bool(carla_discovery_win64)
                 hasNonNative = bool(carla_discovery_win32)
                 self.pThread.setSearchToolNative(carla_discovery_win64)
+                self.ch_win64.setChecked(False)
+                self.ch_win64.setVisible(False)
+                self.ico_win64.setVisible(False)
+                self.label_win64.setVisible(False)
             else:
                 hasNative = bool(carla_discovery_win32)
                 hasNonNative = bool(carla_discovery_win64)
                 self.pThread.setSearchToolNative(carla_discovery_win32)
+                self.ch_win32.setChecked(False)
+                self.ch_win32.setVisible(False)
+                self.ico_win32.setVisible(False)
+                self.label_win32.setVisible(False)
+        elif LINUX or MACOS:
+            if is64bit:
+                hasNonNative = bool(carla_discovery_unix32 or carla_discovery_win32 or carla_discovery_win64)
+                self.ch_unix64.setChecked(False)
+                self.ch_unix64.setVisible(False)
+                self.ico_unix64.setVisible(False)
+                self.label_unix64.setVisible(False)
+            else:
+                hasNonNative = bool(carla_discovery_unix64 or carla_discovery_win32 or carla_discovery_win64)
+                self.ch_unix32.setChecked(False)
+                self.ch_unix32.setVisible(False)
+                self.ico_unix32.setVisible(False)
+                self.label_unix32.setVisible(False)
 
-        if not hasNative:
+        if hasNative:
+            self.ico_native.setPixmap(getIcon("dialog-ok-apply").pixmap(16, 16))
+        else:
+            self.ico_native.setPixmap(getIcon("dialog-error").pixmap(16, 16))
+            self.ch_native.setChecked(False)
+            self.ch_native.setEnabled(False)
             self.ch_gig.setChecked(False)
             self.ch_gig.setEnabled(False)
             self.ch_sf2.setChecked(False)
             self.ch_sf2.setEnabled(False)
             self.ch_sfz.setChecked(False)
             self.ch_sfz.setEnabled(False)
-
             if not hasNonNative:
                 self.ch_ladspa.setChecked(False)
                 self.ch_ladspa.setEnabled(False)
@@ -529,11 +572,11 @@ class PluginRefreshW(QDialog, ui_carla_refresh.Ui_PluginRefreshW):
         self.b_skip.setVisible(True)
         self.b_close.setVisible(False)
 
-        unix32, unix64, win32, win64 = (self.ch_unix32.isChecked(), self.ch_unix64.isChecked(), self.ch_win32.isChecked(), self.ch_win64.isChecked())
+        native, unix32, unix64, win32, win64  = (self.ch_native.isChecked(), self.ch_unix32.isChecked(), self.ch_unix64.isChecked(), self.ch_win32.isChecked(), self.ch_win64.isChecked())
         ladspa, dssi, lv2, vst, gig, sf2, sfz = (self.ch_ladspa.isChecked(), self.ch_dssi.isChecked(), self.ch_lv2.isChecked(), self.ch_vst.isChecked(),
                                                  self.ch_gig.isChecked(), self.ch_sf2.isChecked(), self.ch_sfz.isChecked())
 
-        self.pThread.setSearchBinaryTypes(unix32, unix64, win32, win64)
+        self.pThread.setSearchBinaryTypes(native, unix32, unix64, win32, win64)
         self.pThread.setSearchPluginTypes(ladspa, dssi, lv2, vst, gig, sf2, sfz)
         self.pThread.start()
 
@@ -564,6 +607,7 @@ class PluginRefreshW(QDialog, ui_carla_refresh.Ui_PluginRefreshW):
         self.settings.setValue("PluginDatabase/SearchGIG", self.ch_gig.isChecked())
         self.settings.setValue("PluginDatabase/SearchSF2", self.ch_sf2.isChecked())
         self.settings.setValue("PluginDatabase/SearchSFZ", self.ch_sfz.isChecked())
+        self.settings.setValue("PluginDatabase/SearchNative", self.ch_native.isChecked())
         self.settings.setValue("PluginDatabase/SearchUnix32", self.ch_unix32.isChecked())
         self.settings.setValue("PluginDatabase/SearchUnix64", self.ch_unix64.isChecked())
         self.settings.setValue("PluginDatabase/SearchWin32", self.ch_win32.isChecked())
@@ -578,10 +622,11 @@ class PluginRefreshW(QDialog, ui_carla_refresh.Ui_PluginRefreshW):
         self.ch_gig.setChecked(self.settings.value("PluginDatabase/SearchGIG", True, type=bool))
         self.ch_sf2.setChecked(self.settings.value("PluginDatabase/SearchSF2", True, type=bool))
         self.ch_sfz.setChecked(self.settings.value("PluginDatabase/SearchSFZ", True, type=bool))
-        self.ch_unix32.setChecked(self.settings.value("PluginDatabase/SearchUnix32", True, type=bool))
-        self.ch_unix64.setChecked(self.settings.value("PluginDatabase/SearchUnix64", True, type=bool))
-        self.ch_win32.setChecked(self.settings.value("PluginDatabase/SearchWin32", True, type=bool))
-        self.ch_win64.setChecked(self.settings.value("PluginDatabase/SearchWin64", True, type=bool))
+        self.ch_native.setChecked(self.settings.value("PluginDatabase/SearchNative", True, type=bool))
+        self.ch_unix32.setChecked(self.settings.value("PluginDatabase/SearchUnix32", False, type=bool))
+        self.ch_unix64.setChecked(self.settings.value("PluginDatabase/SearchUnix64", False, type=bool))
+        self.ch_win32.setChecked(self.settings.value("PluginDatabase/SearchWin32", False, type=bool))
+        self.ch_win64.setChecked(self.settings.value("PluginDatabase/SearchWin64", False, type=bool))
 
     def closeEvent(self, event):
         if self.pThread.isRunning():
@@ -670,24 +715,28 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.tableWidget.setSortingEnabled(False)
 
         ladspa_plugins  = []
+        ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_native", []))
         ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_unix32", []))
         ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_unix64", []))
         ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_win32", []))
         ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_win64", []))
 
         dssi_plugins  = []
+        dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_native", []))
         dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_unix32", []))
         dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_unix64", []))
         dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_win32", []))
         dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_win64", []))
 
         lv2_plugins  = []
+        lv2_plugins += toList(self.settings_db.value("Plugins/LV2_native", []))
         lv2_plugins += toList(self.settings_db.value("Plugins/LV2_unix32", []))
         lv2_plugins += toList(self.settings_db.value("Plugins/LV2_unix64", []))
         lv2_plugins += toList(self.settings_db.value("Plugins/LV2_win32", []))
         lv2_plugins += toList(self.settings_db.value("Plugins/LV2_win64", []))
 
         vst_plugins  = []
+        vst_plugins += toList(self.settings_db.value("Plugins/VST_native", []))
         vst_plugins += toList(self.settings_db.value("Plugins/VST_unix32", []))
         vst_plugins += toList(self.settings_db.value("Plugins/VST_unix64", []))
         vst_plugins += toList(self.settings_db.value("Plugins/VST_win32", []))
@@ -749,7 +798,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
 
         if "build" not in plugin.keys():
             if not self.warning_old_shown:
-                QMessageBox.warning(self, self.tr("Warning"), self.tr("You're using a Carla-Database from an old version of Carla, please update the plugins"))
+                QMessageBox.warning(self, self.tr("Warning"), self.tr("You're using a Carla-Database from an old version of Carla, please update *all* the plugins"))
                 self.warning_old_shown = True
             return
 
@@ -1063,6 +1112,9 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.m_project_filename = None
         self.m_pluginCount = 0
 
+        self._nsmAnnounce2str = ""
+        self._nsmOpen1str = ""
+        self._nsmOpen2str = ""
         self.nsm_server = None
         self.nsm_url = None
 
@@ -1448,7 +1500,6 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             self.act_plugin_remove_all.setEnabled(False)
 
     def get_extra_stuff(self, plugin):
-        build = plugin['build']
         ptype = plugin['type']
 
         if ptype == PLUGIN_LADSPA:
@@ -1456,18 +1507,14 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             for rdf_item in self.ladspa_rdf_list:
                 if rdf_item.UniqueID == unique_id:
                     return pointer(rdf_item)
-            else:
-                return c_nullptr
 
         elif ptype == PLUGIN_DSSI:
             if plugin['hints'] & PLUGIN_HAS_GUI:
                 gui = findDSSIGUI(plugin['binary'], plugin['name'], plugin['label'])
                 if gui:
                     return gui.encode("utf-8")
-            return c_nullptr
 
-        else:
-            return c_nullptr
+        return c_nullptr
 
     def save_project(self):
         content = ("<?xml version='1.0' encoding='UTF-8'?>\n"

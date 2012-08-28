@@ -291,11 +291,11 @@ else:
 
 # find carla_discovery_native
 if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-native")):
-    carla_discovery_unix32 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-native")
+    carla_discovery_native = os.path.join(CWDpp, "carla-discovery", "carla-discovery-native")
 else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-discovery-native")):
-            carla_discovery_unix32 = os.path.join(p, "carla-discovery-native")
+            carla_discovery_native = os.path.join(p, "carla-discovery-native")
             break
 
 # find carla_discovery_unix32
