@@ -1298,23 +1298,23 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         print("DEBUG :: %i, %i, %i, %f)" % (plugin_id, value1, value2, value3))
 
     @pyqtSlot(int, int, float)
-    def slot_handleParameterCallback(self, plugin_id, parameter_id, value):
-        pwidget = self.m_plugin_list[plugin_id]
+    def slot_handleParameterCallback(self, pluginId, parameterId, value):
+        pwidget = self.m_plugin_list[pluginId]
         if pwidget:
-            pwidget.parameter_activity_timer = ICON_STATE_ON
+            pwidget.m_parameterIconTimer = ICON_STATE_ON
 
-            if parameter_id == PARAMETER_ACTIVE:
+            if parameterId == PARAMETER_ACTIVE:
                 pwidget.set_active((value > 0.0), True, False)
-            elif parameter_id == PARAMETER_DRYWET:
+            elif parameterId == PARAMETER_DRYWET:
                 pwidget.set_drywet(value * 1000, True, False)
-            elif parameter_id == PARAMETER_VOLUME:
+            elif parameterId == PARAMETER_VOLUME:
                 pwidget.set_volume(value * 1000, True, False)
-            elif parameter_id == PARAMETER_BALANCE_LEFT:
+            elif parameterId == PARAMETER_BALANCE_LEFT:
                 pwidget.set_balance_left(value * 1000, True, False)
-            elif parameter_id == PARAMETER_BALANCE_RIGHT:
+            elif parameterId == PARAMETER_BALANCE_RIGHT:
                 pwidget.set_balance_right(value * 1000, True, False)
-            elif parameter_id >= 0:
-                pwidget.edit_dialog.set_parameter_to_update(parameter_id)
+            elif parameterId >= 0:
+                pwidget.edit_dialog.set_parameter_to_update(parameterId)
 
     @pyqtSlot(int, int)
     def slot_handleProgramCallback(self, plugin_id, program_id):

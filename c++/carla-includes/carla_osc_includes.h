@@ -150,6 +150,22 @@ void osc_send_midi(const CarlaOscData* const oscData, const uint8_t buf[4])
     }
 }
 
+static inline
+void osc_send_sample_rate(const CarlaOscData* const oscData, const float sampleRate)
+{
+    Q_ASSERT(oscData && oscData->path);
+    Q_ASSERT(sampleRate >= 0.0f);
+    qDebug("osc_send_sample_rate(path:\"%s\", %f)", oscData->path, sampleRate);
+
+    if (oscData->target)
+    {
+        char targetPath[strlen(oscData->path)+12];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/sample_rate");
+        lo_send(oscData->target, targetPath, "f", sampleRate);
+    }
+}
+
 #ifdef BUILD_BRIDGE
 static inline
 void osc_send_update(const CarlaOscData* const oscData, const char* const url)

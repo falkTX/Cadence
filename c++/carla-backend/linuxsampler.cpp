@@ -147,11 +147,11 @@ public:
         // Delete old data
         deleteBuffers();
 
-        uint32_t aouts;
-        aouts  = 2;
+        uint32_t aOuts;
+        aOuts  = 2;
 
-        aout.ports    = new CarlaEngineAudioPort*[aouts];
-        aout.rindexes = new uint32_t[aouts];
+        aOut.ports    = new CarlaEngineAudioPort*[aOuts];
+        aOut.rindexes = new uint32_t[aOuts];
 
         char portName[STR_MAX];
 
@@ -168,8 +168,8 @@ public:
 #endif
             strcpy(portName, "out-left");
 
-        aout.ports[0]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
-        aout.rindexes[0] = 0;
+        aOut.ports[0]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
+        aOut.rindexes[0] = 0;
 
 #ifndef BUILD_BRIDGE
         if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
@@ -181,8 +181,8 @@ public:
 #endif
             strcpy(portName, "out-right");
 
-        aout.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
-        aout.rindexes[1] = 1;
+        aOut.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
+        aOut.rindexes[1] = 1;
 
         // ---------------------------------------
         // MIDI Input
@@ -201,7 +201,7 @@ public:
 
         // ---------------------------------------
 
-        aout.count  = aouts;
+        aOut.count  = aOuts;
 
         // plugin checks
         m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
@@ -283,7 +283,7 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // MIDI Input (External)
 
-        if (cin_channel >= 0 && cin_channel < 16 && m_active && m_activeBefore)
+        if (m_ctrlInChannel >= 0 && m_ctrlInChannel < 16 && m_active && m_activeBefore)
         {
             engineMidiLock();
 
@@ -293,9 +293,9 @@ public:
                     break;
 
                 if (extMidiNotes[i].velo)
-                    midiInputPort->DispatchNoteOn(extMidiNotes[i].note, extMidiNotes[i].velo, cin_channel, 0);
+                    midiInputPort->DispatchNoteOn(extMidiNotes[i].note, extMidiNotes[i].velo, m_ctrlInChannel, 0);
                 else
-                    midiInputPort->DispatchNoteOff(extMidiNotes[i].note, extMidiNotes[i].velo, cin_channel, 0);
+                    midiInputPort->DispatchNoteOff(extMidiNotes[i].note, extMidiNotes[i].velo, m_ctrlInChannel, 0);
 
                 extMidiNotes[i].channel = -1;
                 midiEventCount += 1;
@@ -340,7 +340,7 @@ public:
 
                     midiInputPort->DispatchNoteOff(note, 0, channel, time);
 
-                    if (channel == cin_channel)
+                    if (channel == m_ctrlInChannel)
                         postponeEvent(PluginPostEventNoteOff, channel, note, 0.0);
                 }
                 else if (MIDI_IS_STATUS_NOTE_ON(status))
@@ -350,7 +350,7 @@ public:
 
                     midiInputPort->DispatchNoteOn(note, velo, channel, time);
 
-                    if (channel == cin_channel)
+                    if (channel == m_ctrlInChannel)
                         postponeEvent(PluginPostEventNoteOn, channel, note, velo);
                 }
                 else if (MIDI_IS_STATUS_AFTERTOUCH(status))
@@ -382,10 +382,10 @@ public:
         {
             if (! m_activeBefore)
             {
-                if (cin_channel >= 0 && cin_channel < 16)
+                if (m_ctrlInChannel >= 0 && m_ctrlInChannel < 16)
                 {
-                    midiInputPort->DispatchControlChange(MIDI_CONTROL_ALL_SOUND_OFF, 0, cin_channel);
-                    midiInputPort->DispatchControlChange(MIDI_CONTROL_ALL_NOTES_OFF, 0, cin_channel);
+                    midiInputPort->DispatchControlChange(MIDI_CONTROL_ALL_SOUND_OFF, 0, m_ctrlInChannel);
+                    midiInputPort->DispatchControlChange(MIDI_CONTROL_ALL_NOTES_OFF, 0, m_ctrlInChannel);
                 }
             }
 
@@ -402,13 +402,13 @@ public:
 
         if (m_active)
         {
-            bool do_volume  = x_vol != 1.0;
-            bool do_balance = (x_bal_left != -1.0 || x_bal_right != 1.0);
+            bool do_volume  = x_volume != 1.0;
+            bool do_balance = (x_balanceLeft != -1.0 || x_balanceRight != 1.0);
 
             double bal_rangeL, bal_rangeR;
             float oldBufLeft[do_balance ? frames : 0];
 
-            for (i=0; i < aout.count; i++)
+            for (i=0; i < aOut.count; i++)
             {
                 // Balance
                 if (do_balance)
@@ -416,8 +416,8 @@ public:
                     if (i%2 == 0)
                         memcpy(&oldBufLeft, outBuffer[i], sizeof(float)*frames);
 
-                    bal_rangeL = (x_bal_left+1.0)/2;
-                    bal_rangeR = (x_bal_right+1.0)/2;
+                    bal_rangeL = (x_balanceLeft+1.0)/2;
+                    bal_rangeR = (x_balanceRight+1.0)/2;
 
                     for (k=0; k < frames; k++)
                     {
@@ -440,7 +440,7 @@ public:
                 if (do_volume)
                 {
                     for (k=0; k < frames; k++)
-                        outBuffer[i][k] *= x_vol;
+                        outBuffer[i][k] *= x_volume;
                 }
 
                 // Output VU
@@ -454,7 +454,7 @@ public:
         else
         {
             // disable any output sound if not active
-            for (i=0; i < aout.count; i++)
+            for (i=0; i < aOut.count; i++)
                 memset(outBuffer[i], 0.0f, sizeof(float)*frames);
 
             aouts_peak_tmp[0] = 0.0;

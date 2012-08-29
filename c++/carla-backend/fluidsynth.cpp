@@ -359,7 +359,7 @@ public:
     {
         Q_ASSERT(index < (int32_t)midiprog.count);
 
-        if (cin_channel < 0 || cin_channel > 15)
+        if (m_ctrlInChannel < 0 || m_ctrlInChannel > 15)
             return;
 
         if (index >= 0)
@@ -367,12 +367,12 @@ public:
             if (x_engine->isOffline())
             {
                 const CarlaEngine::ScopedLocker m(x_engine, block);
-                fluid_synth_program_select(f_synth, cin_channel, f_id, midiprog.data[index].bank, midiprog.data[index].program);
+                fluid_synth_program_select(f_synth, m_ctrlInChannel, f_id, midiprog.data[index].bank, midiprog.data[index].program);
             }
             else
             {
                 const ScopedDisabler m(this, block);
-                fluid_synth_program_select(f_synth, cin_channel, f_id, midiprog.data[index].bank, midiprog.data[index].program);
+                fluid_synth_program_select(f_synth, m_ctrlInChannel, f_id, midiprog.data[index].bank, midiprog.data[index].program);
             }
         }
 
@@ -398,12 +398,12 @@ public:
         // Delete old data
         deleteBuffers();
 
-        uint32_t aouts, params, j;
-        aouts  = 2;
+        uint32_t aOuts, params, j;
+        aOuts  = 2;
         params = FluidSynthParametersMax;
 
-        aout.ports    = new CarlaEngineAudioPort*[aouts];
-        aout.rindexes = new uint32_t[aouts];
+        aOut.ports    = new CarlaEngineAudioPort*[aOuts];
+        aOut.rindexes = new uint32_t[aOuts];
 
         param.data    = new ParameterData[params];
         param.ranges  = new ParameterRanges[params];
@@ -424,8 +424,8 @@ public:
 #endif
             strcpy(portName, "out-left");
 
-        aout.ports[0]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
-        aout.rindexes[0] = 0;
+        aOut.ports[0]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
+        aOut.rindexes[0] = 0;
 
 #ifndef BUILD_BRIDGE
         if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
@@ -437,8 +437,8 @@ public:
 #endif
             strcpy(portName, "out-right");
 
-        aout.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
-        aout.rindexes[1] = 1;
+        aOut.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
+        aOut.rindexes[1] = 1;
 
         // ---------------------------------------
         // MIDI Input
@@ -708,7 +708,7 @@ public:
 
         // ---------------------------------------
 
-        aout.count  = aouts;
+        aOut.count  = aOuts;
         param.count = params;
 
         // plugin checks
@@ -827,8 +827,8 @@ public:
 
             unsigned char nextBankIds[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 0, 0, 0, 0, 0, 0 };
 
-            if (midiprog.current >= 0 && midiprog.count > 0 && cin_channel >= 0 && cin_channel < 16)
-                nextBankIds[cin_channel] = midiprog.data[midiprog.current].bank;
+            if (midiprog.current >= 0 && midiprog.count > 0 && m_ctrlInChannel >= 0 && m_ctrlInChannel < 16)
+                nextBankIds[m_ctrlInChannel] = midiprog.data[midiprog.current].bank;
 
             for (i=0; i < nEvents; i++)
             {
@@ -853,7 +853,7 @@ public:
                     double value;
 
                     // Control backend stuff
-                    if (cinEvent->channel == cin_channel)
+                    if (cinEvent->channel == m_ctrlInChannel)
                     {
                         if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cinEvent->controller) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
@@ -947,7 +947,7 @@ public:
                         {
                             if (midiprog.data[k].bank == bankId && midiprog.data[k].program == progId)
                             {
-                                if (cinEvent->channel == cin_channel)
+                                if (cinEvent->channel == m_ctrlInChannel)
                                 {
                                     setMidiProgram(k, false, false, false, false);
                                     postponeEvent(PluginPostEventMidiProgramChange, k, 0, 0.0);
@@ -962,7 +962,7 @@ public:
                     break;
 
                 case CarlaEngineEventAllSoundOff:
-                    if (cinEvent->channel == cin_channel)
+                    if (cinEvent->channel == m_ctrlInChannel)
                     {
                         if (! allNotesOffSent)
                             sendMidiAllNotesOff();
@@ -970,8 +970,8 @@ public:
                         allNotesOffSent = true;
 
 #ifdef FLUIDSYNTH_VERSION_NEW_API
-                        fluid_synth_all_notes_off(f_synth, cin_channel);
-                        fluid_synth_all_sounds_off(f_synth, cin_channel);
+                        fluid_synth_all_notes_off(f_synth, m_ctrlInChannel);
+                        fluid_synth_all_sounds_off(f_synth, m_ctrlInChannel);
                     }
                     else if (cinEvent->channel < 16)
                     {
@@ -982,7 +982,7 @@ public:
                     break;
 
                 case CarlaEngineEventAllNotesOff:
-                    if (cinEvent->channel == cin_channel)
+                    if (cinEvent->channel == m_ctrlInChannel)
                     {
                         if (! allNotesOffSent)
                             sendMidiAllNotesOff();
@@ -990,7 +990,7 @@ public:
                         allNotesOffSent = true;
 
 #ifdef FLUIDSYNTH_VERSION_NEW_API
-                        fluid_synth_all_notes_off(f_synth, cin_channel);
+                        fluid_synth_all_notes_off(f_synth, m_ctrlInChannel);
                     }
                     else if (cinEvent->channel < 16)
                     {
@@ -1007,7 +1007,7 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // MIDI Input (External)
 
-        if (cin_channel >= 0 && cin_channel < 16 && m_active && m_activeBefore)
+        if (m_ctrlInChannel >= 0 && m_ctrlInChannel < 16 && m_active && m_activeBefore)
         {
             engineMidiLock();
 
@@ -1017,9 +1017,9 @@ public:
                     break;
 
                 if (extMidiNotes[i].velo)
-                    fluid_synth_noteon(f_synth, cin_channel, extMidiNotes[i].note, extMidiNotes[i].velo);
+                    fluid_synth_noteon(f_synth, m_ctrlInChannel, extMidiNotes[i].note, extMidiNotes[i].velo);
                 else
-                    fluid_synth_noteoff(f_synth, cin_channel, extMidiNotes[i].note);
+                    fluid_synth_noteoff(f_synth, m_ctrlInChannel, extMidiNotes[i].note);
 
                 extMidiNotes[i].channel = -1;
                 midiEventCount += 1;
@@ -1064,7 +1064,7 @@ public:
 
                     fluid_synth_noteoff(f_synth, channel, note);
 
-                    if (channel == cin_channel)
+                    if (channel == m_ctrlInChannel)
                         postponeEvent(PluginPostEventNoteOff, channel, note, 0.0);
                 }
                 else if (MIDI_IS_STATUS_NOTE_ON(status))
@@ -1074,7 +1074,7 @@ public:
 
                     fluid_synth_noteon(f_synth, channel, note, velo);
 
-                    if (channel == cin_channel)
+                    if (channel == m_ctrlInChannel)
                         postponeEvent(PluginPostEventNoteOn, channel, note, velo);
                 }
                 else if (MIDI_IS_STATUS_AFTERTOUCH(status))
@@ -1106,10 +1106,10 @@ public:
         {
             if (! m_activeBefore)
             {
-                if (cin_channel >= 0 && cin_channel < 16)
+                if (m_ctrlInChannel >= 0 && m_ctrlInChannel < 16)
                 {
-                    fluid_synth_cc(f_synth, cin_channel, MIDI_CONTROL_ALL_SOUND_OFF, 0);
-                    fluid_synth_cc(f_synth, cin_channel, MIDI_CONTROL_ALL_NOTES_OFF, 0);
+                    fluid_synth_cc(f_synth, m_ctrlInChannel, MIDI_CONTROL_ALL_SOUND_OFF, 0);
+                    fluid_synth_cc(f_synth, m_ctrlInChannel, MIDI_CONTROL_ALL_NOTES_OFF, 0);
                 }
 
 #ifdef FLUIDSYNTH_VERSION_NEW_API
@@ -1131,12 +1131,12 @@ public:
 
         if (m_active)
         {
-            bool do_balance = (x_bal_left != -1.0 || x_bal_right != 1.0);
+            bool do_balance = (x_balanceLeft != -1.0 || x_balanceRight != 1.0);
 
             double bal_rangeL, bal_rangeR;
             float oldBufLeft[do_balance ? frames : 0];
 
-            for (i=0; i < aout.count; i++)
+            for (i=0; i < aOut.count; i++)
             {
                 // Balance
                 if (do_balance)
@@ -1144,8 +1144,8 @@ public:
                     if (i%2 == 0)
                         memcpy(&oldBufLeft, outBuffer[i], sizeof(float)*frames);
 
-                    bal_rangeL = (x_bal_left+1.0)/2;
-                    bal_rangeR = (x_bal_right+1.0)/2;
+                    bal_rangeL = (x_balanceLeft+1.0)/2;
+                    bal_rangeR = (x_balanceRight+1.0)/2;
 
                     for (k=0; k < frames; k++)
                     {
@@ -1165,7 +1165,7 @@ public:
                 }
 
                 // Volume, using fluidsynth internals
-                fluid_synth_set_gain(f_synth, x_vol);
+                fluid_synth_set_gain(f_synth, x_volume);
 
                 // Output VU
                 for (k=0; i < 2 && k < frames; k++)
@@ -1178,7 +1178,7 @@ public:
         else
         {
             // disable any output sound if not active
-            for (i=0; i < aout.count; i++)
+            for (i=0; i < aOut.count; i++)
                 memset(outBuffer[i], 0.0f, sizeof(float)*frames);
 
             aouts_peak_tmp[0] = 0.0;

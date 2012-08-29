@@ -921,12 +921,15 @@ public:
         // Delete old data
         deleteBuffers();
 
-        uint32_t ains, aouts, cvIns, cvOuts, params, j;
-        ains = aouts = cvIns = cvOuts = params = 0;
+        uint32_t aIns, aOuts, cvIns, cvOuts, params, j;
+        aIns = aOuts = cvIns = cvOuts = params = 0;
         std::vector<unsigned int> evIns, evOuts;
 
         const double sampleRate = x_engine->getSampleRate();
         const uint32_t PortCount = rdf_descriptor->PortCount;
+
+        bool forcedStereoIn, forcedStereoOut;
+        forcedStereoIn = forcedStereoOut = false;
 
         for (uint32_t i=0; i < PortCount; i++)
         {
@@ -935,9 +938,9 @@ public:
             if (LV2_IS_PORT_AUDIO(PortType))
             {
                 if (LV2_IS_PORT_INPUT(PortType))
-                    ains += 1;
+                    aIns += 1;
                 else if (LV2_IS_PORT_OUTPUT(PortType))
-                    aouts += 1;
+                    aOuts += 1;
             }
             else if (LV2_IS_PORT_CV(PortType))
             {
@@ -971,36 +974,33 @@ public:
                 params += 1;
         }
 
-        bool forcedStereoIn, forcedStereoOut;
-        forcedStereoIn = forcedStereoOut = true;
-
-        if (carlaOptions.forceStereo && (ains == 1 || aouts == 1) && ! h2)
+        if (carlaOptions.forceStereo && (aIns == 1 || aOuts == 1) && ! h2)
         {
             h2 = descriptor->instantiate(descriptor, sampleRate, rdf_descriptor->Bundle, features);
 
-            if (ains == 1)
+            if (aIns == 1)
             {
-                ains = 2;
+                aIns = 2;
                 forcedStereoIn = true;
             }
 
-            if (aouts == 1)
+            if (aOuts == 1)
             {
-                aouts = 2;
+                aOuts = 2;
                 forcedStereoOut = true;
             }
         }
 
-        if (ains > 0)
+        if (aIns > 0)
         {
-            ain.ports    = new CarlaEngineAudioPort*[ains];
-            ain.rindexes = new uint32_t[ains];
+            aIn.ports    = new CarlaEngineAudioPort*[aIns];
+            aIn.rindexes = new uint32_t[aIns];
         }
 
-        if (aouts > 0)
+        if (aOuts > 0)
         {
-            aout.ports    = new CarlaEngineAudioPort*[aouts];
-            aout.rindexes = new uint32_t[aouts];
+            aOut.ports    = new CarlaEngineAudioPort*[aOuts];
+            aOut.rindexes = new uint32_t[aOuts];
         }
 
         if (evIns.size() > 0)
@@ -1105,29 +1105,29 @@ public:
             {
                 if (LV2_IS_PORT_INPUT(PortType))
                 {
-                    j = ain.count++;
-                    ain.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
-                    ain.rindexes[j] = i;
+                    j = aIn.count++;
+                    aIn.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
+                    aIn.rindexes[j] = i;
 
                     if (forcedStereoIn)
                     {
                         strcat(portName, "2");
-                        ain.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
-                        ain.rindexes[1] = i;
+                        aIn.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
+                        aIn.rindexes[1] = i;
                     }
                 }
                 else if (LV2_IS_PORT_OUTPUT(PortType))
                 {
-                    j = aout.count++;
-                    aout.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
-                    aout.rindexes[j] = i;
+                    j = aOut.count++;
+                    aOut.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
+                    aOut.rindexes[j] = i;
                     needsCin = true;
 
                     if (forcedStereoOut)
                     {
                         strcat(portName, "2");
-                        aout.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
-                        aout.rindexes[1] = i;
+                        aOut.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
+                        aOut.rindexes[1] = i;
                     }
                 }
                 else
@@ -1451,8 +1451,8 @@ public:
             param.portCout = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, false);
         }
 
-        ain.count   = ains;
-        aout.count  = aouts;
+        aIn.count   = aIns;
+        aOut.count  = aOuts;
         evin.count  = evIns.size();
         evout.count = evOuts.size();
         param.count = params;
@@ -1463,13 +1463,13 @@ public:
         if (LV2_IS_GENERATOR(rdf_descriptor->Type))
             m_hints |= PLUGIN_IS_SYNTH;
 
-        if (aouts > 0 && (ains == aouts || ains == 1))
+        if (aOuts > 0 && (aIns == aOuts || aIns == 1))
             m_hints |= PLUGIN_CAN_DRYWET;
 
-        if (aouts > 0)
+        if (aOuts > 0)
             m_hints |= PLUGIN_CAN_VOLUME;
 
-        if (aouts >= 2 && aouts%2 == 0)
+        if (aOuts >= 2 && aOuts%2 == 0)
             m_hints |= PLUGIN_CAN_BALANCE;
 
         // check extensions
@@ -1657,9 +1657,9 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Input VU
 
-        if (ain.count > 0)
+        if (aIn.count > 0)
         {
-            uint32_t count = h2 ? 2 : ain.count;
+            uint32_t count = h2 ? 2 : aIn.count;
 
             if (count == 1)
             {
@@ -1721,7 +1721,7 @@ public:
                     double value;
 
                     // Control backend stuff
-                    if (cinEvent->channel == cin_channel)
+                    if (cinEvent->channel == m_ctrlInChannel)
                     {
                         if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cinEvent->controller) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
@@ -1801,12 +1801,12 @@ public:
                 }
 
                 case CarlaEngineEventMidiBankChange:
-                    if (cinEvent->channel == cin_channel)
+                    if (cinEvent->channel == m_ctrlInChannel)
                         nextBankId = rint(cinEvent->value);
                     break;
 
                 case CarlaEngineEventMidiProgramChange:
-                    if (cinEvent->channel == cin_channel)
+                    if (cinEvent->channel == m_ctrlInChannel)
                     {
                         uint32_t nextProgramId = rint(cinEvent->value);
 
@@ -1823,7 +1823,7 @@ public:
                     break;
 
                 case CarlaEngineEventAllSoundOff:
-                    if (cinEvent->channel == cin_channel)
+                    if (cinEvent->channel == m_ctrlInChannel)
                     {
                         if (midi.portMin && ! allNotesOffSent)
                             sendMidiAllNotesOff();
@@ -1845,7 +1845,7 @@ public:
                     break;
 
                 case CarlaEngineEventAllNotesOff:
-                    if (cinEvent->channel == cin_channel)
+                    if (cinEvent->channel == m_ctrlInChannel)
                     {
                         if (midi.portMin && ! allNotesOffSent)
                             sendMidiAllNotesOff();
@@ -1862,7 +1862,7 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // MIDI Input (External)
 
-        if (evin.count > 0 && cin_channel >= 0 && cin_channel < 16 && m_active && m_activeBefore)
+        if (evin.count > 0 && m_ctrlInChannel >= 0 && m_ctrlInChannel < 16 && m_active && m_activeBefore)
         {
             engineMidiLock();
 
@@ -1872,7 +1872,7 @@ public:
                     break;
 
                 uint8_t midiEvent[4] = { 0 };
-                midiEvent[0] = cin_channel + extMidiNotes[i].velo ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF;
+                midiEvent[0] = m_ctrlInChannel + extMidiNotes[i].velo ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF;
                 midiEvent[1] = extMidiNotes[i].note;
                 midiEvent[2] = extMidiNotes[i].velo;
 
@@ -1964,7 +1964,7 @@ public:
                         else if (evin.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
                             lv2midi_put_event(&evinMidiStates[i], time, minEvent->size, minEvent->data);
 
-                        if (channel == cin_channel)
+                        if (channel == m_ctrlInChannel)
                         {
                             if (MIDI_IS_STATUS_NOTE_OFF(status))
                                 postponeEvent(PluginPostEventNoteOff, channel, minEvent->data[1], 0.0);
@@ -2057,16 +2057,16 @@ public:
                 }
             }
 
-            for (i=0; i < ain.count; i++)
+            for (i=0; i < aIn.count; i++)
             {
-                if (i == 0 || ! h2) descriptor->connect_port(handle, ain.rindexes[i], inBuffer[i]);
-                if (h2 && i == 1) descriptor->connect_port(h2, ain.rindexes[i], inBuffer[1]);
+                if (i == 0 || ! h2) descriptor->connect_port(handle, aIn.rindexes[i], inBuffer[i]);
+                if (i == 1 && h2) descriptor->connect_port(h2, aIn.rindexes[i], inBuffer[i]);
             }
 
-            for (i=0; i < aout.count; i++)
+            for (i=0; i < aOut.count; i++)
             {
-                if (i == 0 || ! h2) descriptor->connect_port(handle, aout.rindexes[i], outBuffer[i]);
-                if (h2 && i == 1) descriptor->connect_port(h2, aout.rindexes[i], outBuffer[1]);
+                if (i == 0 || ! h2) descriptor->connect_port(handle, aOut.rindexes[i], outBuffer[i]);
+                if (i == 1 && h2)   descriptor->connect_port(h2, aOut.rindexes[i], outBuffer[i]);
             }
 
             descriptor->run(handle, frames);
@@ -2091,14 +2091,14 @@ public:
 
         if (m_active)
         {
-            bool do_drywet  = (m_hints & PLUGIN_CAN_DRYWET) > 0 && x_drywet != 1.0;
-            bool do_volume  = (m_hints & PLUGIN_CAN_VOLUME) > 0 && x_vol != 1.0;
-            bool do_balance = (m_hints & PLUGIN_CAN_BALANCE) > 0 && (x_bal_left != -1.0 || x_bal_right != 1.0);
+            bool do_drywet  = (m_hints & PLUGIN_CAN_DRYWET) > 0 && x_dryWet != 1.0;
+            bool do_volume  = (m_hints & PLUGIN_CAN_VOLUME) > 0 && x_volume != 1.0;
+            bool do_balance = (m_hints & PLUGIN_CAN_BALANCE) > 0 && (x_balanceLeft != -1.0 || x_balanceRight != 1.0);
 
             double bal_rangeL, bal_rangeR;
             float oldBufLeft[do_balance ? frames : 0];
 
-            uint32_t count = h2 ? 2 : aout.count;
+            uint32_t count = h2 ? 2 : aOut.count;
 
             for (i=0; i < count; i++)
             {
@@ -2107,10 +2107,10 @@ public:
                 {
                     for (k=0; k < frames; k++)
                     {
-                        if (aout.count == 1 && ! h2)
-                            outBuffer[i][k] = (outBuffer[i][k]*x_drywet)+(inBuffer[0][k]*(1.0-x_drywet));
+                        if (aOut.count == 1 && ! h2)
+                            outBuffer[i][k] = (outBuffer[i][k]*x_dryWet)+(inBuffer[0][k]*(1.0-x_dryWet));
                         else
-                            outBuffer[i][k] = (outBuffer[i][k]*x_drywet)+(inBuffer[i][k]*(1.0-x_drywet));
+                            outBuffer[i][k] = (outBuffer[i][k]*x_dryWet)+(inBuffer[i][k]*(1.0-x_dryWet));
                     }
                 }
 
@@ -2120,8 +2120,8 @@ public:
                     if (i%2 == 0)
                         memcpy(&oldBufLeft, outBuffer[i], sizeof(float)*frames);
 
-                    bal_rangeL = (x_bal_left+1.0)/2;
-                    bal_rangeR = (x_bal_right+1.0)/2;
+                    bal_rangeL = (x_balanceLeft+1.0)/2;
+                    bal_rangeR = (x_balanceRight+1.0)/2;
 
                     for (k=0; k < frames; k++)
                     {
@@ -2144,7 +2144,7 @@ public:
                 if (do_volume)
                 {
                     for (k=0; k < frames; k++)
-                        outBuffer[i][k] *= x_vol;
+                        outBuffer[i][k] *= x_volume;
                 }
 
                 // Output VU
@@ -2158,7 +2158,7 @@ public:
         else
         {
             // disable any output sound if not active
-            for (i=0; i < aout.count; i++)
+            for (i=0; i < aOut.count; i++)
                 memset(outBuffer[i], 0.0f, sizeof(float)*frames);
 
             aouts_peak_tmp[0] = 0.0;

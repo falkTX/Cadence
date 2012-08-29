@@ -333,29 +333,29 @@ public:
         // Delete old data
         deleteBuffers();
 
-        uint32_t ains, aouts, mins, mouts, params, j;
-        ains = aouts = mins = mouts = params = 0;
+        uint32_t aIns, aOuts, mIns, mOuts, params, j;
+        aIns = aOuts = mIns = mOuts = params = 0;
 
-        ains   = effect->numInputs;
-        aouts  = effect->numOutputs;
+        aIns   = effect->numInputs;
+        aOuts  = effect->numOutputs;
         params = effect->numParams;
 
         if (VstPluginCanDo(effect, "receiveVstEvents") || VstPluginCanDo(effect, "receiveVstMidiEvent") || (effect->flags & effFlagsIsSynth) > 0 || (m_hints & PLUGIN_WANTS_MIDI_INPUT))
-            mins = 1;
+            mIns = 1;
 
         if (VstPluginCanDo(effect, "sendVstEvents") || VstPluginCanDo(effect, "sendVstMidiEvent"))
-            mouts = 1;
+            mOuts = 1;
 
-        if (ains > 0)
+        if (aIns > 0)
         {
-            ain.ports    = new CarlaEngineAudioPort*[ains];
-            ain.rindexes = new uint32_t[ains];
+            aIn.ports    = new CarlaEngineAudioPort*[aIns];
+            aIn.rindexes = new uint32_t[aIns];
         }
 
-        if (aouts > 0)
+        if (aOuts > 0)
         {
-            aout.ports    = new CarlaEngineAudioPort*[aouts];
-            aout.rindexes = new uint32_t[aouts];
+            aOut.ports    = new CarlaEngineAudioPort*[aOuts];
+            aOut.rindexes = new uint32_t[aOuts];
         }
 
         if (params > 0)
@@ -366,9 +366,9 @@ public:
 
         const int portNameSize = CarlaEngine::maxPortNameSize() - 1;
         char portName[portNameSize];
-        bool needsCin = (aouts > 0 || params > 0);
+        bool needsCin = (aOuts > 0 || params > 0);
 
-        for (j=0; j<ains; j++)
+        for (j=0; j < aIns; j++)
         {
 #ifndef BUILD_BRIDGE
             if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
@@ -377,11 +377,11 @@ public:
 #endif
                 sprintf(portName, "input_%02i", j+1);
 
-            ain.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
-            ain.rindexes[j] = j;
+            aIn.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
+            aIn.rindexes[j] = j;
         }
 
-        for (j=0; j<aouts; j++)
+        for (j=0; j < aOuts; j++)
         {
 #ifndef BUILD_BRIDGE
             if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
@@ -390,8 +390,8 @@ public:
 #endif
                 sprintf(portName, "output_%02i", j+1);
 
-            aout.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
-            aout.rindexes[j] = j;
+            aOut.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
+            aOut.rindexes[j] = j;
         }
 
         for (j=0; j<params; j++)
@@ -524,7 +524,7 @@ public:
             param.portCin = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, true);
         }
 
-        if (mins == 1)
+        if (mIns == 1)
         {
 #ifndef BUILD_BRIDGE
             if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
@@ -539,7 +539,7 @@ public:
             midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
         }
 
-        if (mouts == 1)
+        if (mOuts == 1)
         {
 #ifndef BUILD_BRIDGE
             if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
@@ -554,8 +554,8 @@ public:
             midi.portMout = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
         }
 
-        ain.count   = ains;
-        aout.count  = aouts;
+        aIn.count   = aIns;
+        aOut.count  = aOuts;
         param.count = params;
 
         // plugin checks
@@ -569,13 +569,13 @@ public:
         if (effect->flags & effFlagsProgramChunks)
             m_hints |= PLUGIN_USES_CHUNKS;
 
-        if (aouts > 0 && (ains == aouts || ains == 1))
+        if (aOuts > 0 && (aIns == aOuts || aIns == 1))
             m_hints |= PLUGIN_CAN_DRYWET;
 
-        if (aouts > 0)
+        if (aOuts > 0)
             m_hints |= PLUGIN_CAN_VOLUME;
 
-        if (aouts >= 2 && aouts%2 == 0)
+        if (aOuts >= 2 && aOuts%2 == 0)
             m_hints |= PLUGIN_CAN_BALANCE;
 
         reloadPrograms(true);
@@ -701,9 +701,9 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Input VU
 
-        if (ain.count > 0)
+        if (aIn.count > 0)
         {
-            if (ain.count == 1)
+            if (aIn.count == 1)
             {
                 for (k=0; k < frames; k++)
                 {
@@ -711,7 +711,7 @@ public:
                         ains_peak_tmp[0] = abs(inBuffer[0][k]);
                 }
             }
-            else if (ain.count >= 1)
+            else if (aIn.count >= 1)
             {
                 for (k=0; k < frames; k++)
                 {
@@ -759,7 +759,7 @@ public:
                     double value;
 
                     // Control backend stuff
-                    if (cinEvent->channel == cin_channel)
+                    if (cinEvent->channel == m_ctrlInChannel)
                     {
                         if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cinEvent->controller) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
@@ -842,7 +842,7 @@ public:
                     break;
 
                 case CarlaEngineEventMidiProgramChange:
-                    if (cinEvent->channel == cin_channel)
+                    if (cinEvent->channel == m_ctrlInChannel)
                     {
                         uint32_t progId = rint(cinEvent->value);
 
@@ -855,7 +855,7 @@ public:
                     break;
 
                 case CarlaEngineEventAllSoundOff:
-                    if (cinEvent->channel == cin_channel)
+                    if (cinEvent->channel == m_ctrlInChannel)
                     {
                         if (midi.portMin && ! allNotesOffSent)
                             sendMidiAllNotesOff();
@@ -871,7 +871,7 @@ public:
                     break;
 
                 case CarlaEngineEventAllNotesOff:
-                    if (cinEvent->channel == cin_channel)
+                    if (cinEvent->channel == m_ctrlInChannel)
                     {
                         if (midi.portMin && ! allNotesOffSent)
                             sendMidiAllNotesOff();
@@ -888,7 +888,7 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // MIDI Input (External)
 
-        if (midi.portMin && cin_channel >= 0 && cin_channel < 16 && m_active && m_activeBefore)
+        if (midi.portMin && m_ctrlInChannel >= 0 && m_ctrlInChannel < 16 && m_active && m_activeBefore)
         {
             engineMidiLock();
 
@@ -902,7 +902,7 @@ public:
 
                 midiEvent->type = kVstMidiType;
                 midiEvent->byteSize = sizeof(VstMidiEvent);
-                midiEvent->midiData[0] = cin_channel + extMidiNotes[i].velo ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF;
+                midiEvent->midiData[0] = m_ctrlInChannel + extMidiNotes[i].velo ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF;
                 midiEvent->midiData[1] = extMidiNotes[i].note;
                 midiEvent->midiData[2] = extMidiNotes[i].velo;
 
@@ -957,7 +957,7 @@ public:
                     midiEvent->midiData[0] = status;
                     midiEvent->midiData[1] = note;
 
-                    if (channel == cin_channel)
+                    if (channel == m_ctrlInChannel)
                         postponeEvent(PluginPostEventNoteOff, channel, note, 0.0);
                 }
                 else if (MIDI_IS_STATUS_NOTE_ON(status))
@@ -969,7 +969,7 @@ public:
                     midiEvent->midiData[1] = note;
                     midiEvent->midiData[2] = velo;
 
-                    if (channel == cin_channel)
+                    if (channel == m_ctrlInChannel)
                         postponeEvent(PluginPostEventNoteOn, channel, note, velo);
                 }
                 else if (MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status))
@@ -1013,18 +1013,18 @@ public:
         {
             if (! m_activeBefore)
             {
-                if (midi.portMin && cin_channel >= 0 && cin_channel < 16)
+                if (midi.portMin && m_ctrlInChannel >= 0 && m_ctrlInChannel < 16)
                 {
                     memset(&midiEvents[0], 0, sizeof(VstMidiEvent));
                     midiEvents[0].type = kVstMidiType;
                     midiEvents[0].byteSize = sizeof(VstMidiEvent);
-                    midiEvents[0].midiData[0] = MIDI_STATUS_CONTROL_CHANGE + cin_channel;
+                    midiEvents[0].midiData[0] = MIDI_STATUS_CONTROL_CHANGE + m_ctrlInChannel;
                     midiEvents[0].midiData[1] = MIDI_CONTROL_ALL_SOUND_OFF;
 
                     memset(&midiEvents[1], 0, sizeof(VstMidiEvent));
                     midiEvents[1].type = kVstMidiType;
                     midiEvents[1].byteSize = sizeof(VstMidiEvent);
-                    midiEvents[1].midiData[0] = MIDI_STATUS_CONTROL_CHANGE + cin_channel;
+                    midiEvents[1].midiData[0] = MIDI_STATUS_CONTROL_CHANGE + m_ctrlInChannel;
                     midiEvents[1].midiData[1] = MIDI_CONTROL_ALL_NOTES_OFF;
 
                     midiEventCount = 2;
@@ -1051,7 +1051,7 @@ public:
             }
             else
             {
-                for (i=0; i < aout.count; i++)
+                for (i=0; i < aOut.count; i++)
                     memset(outBuffer[i], 0, sizeof(float)*frames);
 
 #if ! VST_FORCE_DEPRECATED
@@ -1076,24 +1076,24 @@ public:
 
         if (m_active)
         {
-            bool do_drywet  = (m_hints & PLUGIN_CAN_DRYWET) > 0 && x_drywet != 1.0;
-            bool do_volume  = (m_hints & PLUGIN_CAN_VOLUME) > 0 && x_vol != 1.0;
-            bool do_balance = (m_hints & PLUGIN_CAN_BALANCE) > 0 && (x_bal_left != -1.0 || x_bal_right != 1.0);
+            bool do_drywet  = (m_hints & PLUGIN_CAN_DRYWET) > 0 && x_dryWet != 1.0;
+            bool do_volume  = (m_hints & PLUGIN_CAN_VOLUME) > 0 && x_volume != 1.0;
+            bool do_balance = (m_hints & PLUGIN_CAN_BALANCE) > 0 && (x_balanceLeft != -1.0 || x_balanceRight != 1.0);
 
             double bal_rangeL, bal_rangeR;
             float oldBufLeft[do_balance ? frames : 0];
 
-            for (i=0; i < aout.count; i++)
+            for (i=0; i < aOut.count; i++)
             {
                 // Dry/Wet
                 if (do_drywet || do_volume)
                 {
                     for (k=0; k < frames; k++)
                     {
-                        if (aout.count == 1)
-                            outBuffer[i][k] = (outBuffer[i][k]*x_drywet)+(inBuffer[0][k]*(1.0-x_drywet));
+                        if (aOut.count == 1)
+                            outBuffer[i][k] = (outBuffer[i][k]*x_dryWet)+(inBuffer[0][k]*(1.0-x_dryWet));
                         else
-                            outBuffer[i][k] = (outBuffer[i][k]*x_drywet)+(inBuffer[i][k]*(1.0-x_drywet));
+                            outBuffer[i][k] = (outBuffer[i][k]*x_dryWet)+(inBuffer[i][k]*(1.0-x_dryWet));
                     }
                 }
 
@@ -1103,8 +1103,8 @@ public:
                     if (i%2 == 0)
                         memcpy(&oldBufLeft, outBuffer[i], sizeof(float)*frames);
 
-                    bal_rangeL = (x_bal_left+1.0)/2;
-                    bal_rangeR = (x_bal_right+1.0)/2;
+                    bal_rangeL = (x_balanceLeft+1.0)/2;
+                    bal_rangeR = (x_balanceRight+1.0)/2;
 
                     for (k=0; k < frames; k++)
                     {
@@ -1127,7 +1127,7 @@ public:
                 if (do_volume)
                 {
                     for (k=0; k < frames; k++)
-                        outBuffer[i][k] *= x_vol;
+                        outBuffer[i][k] *= x_volume;
                 }
 
                 // Output VU
@@ -1141,7 +1141,7 @@ public:
         else
         {
             // disable any output sound if not active
-            for (i=0; i < aout.count; i++)
+            for (i=0; i < aOut.count; i++)
                 memset(outBuffer[i], 0.0f, sizeof(float)*frames);
 
             aouts_peak_tmp[0] = 0.0;
