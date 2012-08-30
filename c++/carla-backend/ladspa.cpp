@@ -1048,9 +1048,9 @@ public:
         // ---------------------------------------------------------------
         // get DLL main entry
 
-        LADSPA_Descriptor_Function descfn = (LADSPA_Descriptor_Function)libSymbol("ladspa_descriptor");
+        LADSPA_Descriptor_Function descFn = (LADSPA_Descriptor_Function)libSymbol("ladspa_descriptor");
 
-        if (! descfn)
+        if (! descFn)
         {
             setLastError("Could not find the LASDPA Descriptor in the plugin library");
             return false;
@@ -1060,7 +1060,7 @@ public:
         // get descriptor that matches label
 
         unsigned long i = 0;
-        while ((descriptor = descfn(i++)))
+        while ((descriptor = descFn(i++)))
         {
             if (strcmp(descriptor->Label, label) == 0)
                 break;

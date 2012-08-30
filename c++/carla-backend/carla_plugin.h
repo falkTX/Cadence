@@ -1785,7 +1785,8 @@ public:
 
             case PluginPostEventProgramChange:
                 // Update UI
-                uiProgramChange(event->value1);
+                if (event->value1 >= 0)
+                    uiProgramChange(event->value1);
 
                 // Update OSC control client
                 x_engine->osc_send_set_program(m_id, event->value1);
@@ -1799,7 +1800,8 @@ public:
 
             case PluginPostEventMidiProgramChange:
                 // Update UI
-                uiMidiProgramChange(event->value1);
+                if (event->value1 >= 0)
+                    uiMidiProgramChange(event->value1);
 
                 // Update OSC control client
                 x_engine->osc_send_set_midi_program(m_id, event->value1);
@@ -1869,6 +1871,10 @@ public:
      */
     virtual void uiNoteOn(const uint8_t channel, const uint8_t note, const uint8_t velo)
     {
+        Q_ASSERT(channel < 16);
+        Q_ASSERT(note < 128);
+        Q_ASSERT(velo < 128);
+
         Q_UNUSED(channel);
         Q_UNUSED(note);
         Q_UNUSED(velo);
@@ -1879,6 +1885,9 @@ public:
      */
     virtual void uiNoteOff(const uint8_t channel, const uint8_t note)
     {
+        Q_ASSERT(channel < 16);
+        Q_ASSERT(note < 128);
+
         Q_UNUSED(channel);
         Q_UNUSED(note);
     }

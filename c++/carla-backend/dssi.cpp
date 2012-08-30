@@ -35,7 +35,8 @@ CARLA_BACKEND_START_NAMESPACE
 class DssiPlugin : public CarlaPlugin
 {
 public:
-    DssiPlugin(CarlaEngine* const engine, unsigned short id) : CarlaPlugin(engine, id)
+    DssiPlugin(CarlaEngine* const engine, const unsigned short id)
+        : CarlaPlugin(engine, id)
     {
         qDebug("DssiPlugin::DssiPlugin()");
 
@@ -58,31 +59,19 @@ public:
         // close UI
         if (m_hints & PLUGIN_HAS_GUI)
         {
-            if (osc.data.target)
-            {
-                osc_send_hide(&osc.data);
-                osc_send_quit(&osc.data);
-            }
+            showGui(false);
 
             if (osc.thread)
             {
                 // Wait a bit first, try safe quit, then force kill
-                if (osc.thread->isRunning())
+                if (osc.thread->isRunning() && ! osc.thread->wait(carlaOptions.oscUiTimeout * 100))
                 {
-                    if (! osc.thread->wait(2000))
-                        osc.thread->quit();
-
-                    if (osc.thread->isRunning() && ! osc.thread->wait(1000))
-                    {
-                        qWarning("Failed to properly stop DSSI GUI thread");
-                        osc.thread->terminate();
-                    }
+                    qWarning("Failed to properly stop DSSI GUI thread");
+                    osc.thread->terminate();
                 }
 
                 delete osc.thread;
             }
-
-            osc_clear_data(&osc.data);
         }
 #endif
 
@@ -113,11 +102,14 @@ public:
     {
         if (m_hints & PLUGIN_IS_SYNTH)
             return PLUGIN_CATEGORY_SYNTH;
+
         return getPluginCategoryFromName(m_name);
     }
 
     long uniqueId()
     {
+        Q_ASSERT(ldescriptor);
+
         return ldescriptor->UniqueID;
     }
 
@@ -127,6 +119,9 @@ public:
     int32_t chunkData(void** const dataPtr)
     {
         Q_ASSERT(dataPtr);
+        Q_ASSERT(descriptor);
+        Q_ASSERT(descriptor->get_custom_data);
+
         unsigned long dataSize = 0;
 
         if (descriptor->get_custom_data(handle, dataPtr, &dataSize))
@@ -138,15 +133,18 @@ public:
     // -------------------------------------------------------------------
     // Information (per-plugin data)
 
-    double getParameterValue(uint32_t parameterId)
+    double getParameterValue(const uint32_t parameterId)
     {
         Q_ASSERT(parameterId < param.count);
+
         return param_buffers[parameterId];
     }
 
     void getLabel(char* const strBuf)
     {
-        if (ldescriptor->Label)
+        Q_ASSERT(ldescriptor);
+
+        if (ldescriptor && ldescriptor->Label)
             strncpy(strBuf, ldescriptor->Label, STR_MAX);
         else
             CarlaPlugin::getLabel(strBuf);
@@ -154,7 +152,9 @@ public:
 
     void getMaker(char* const strBuf)
     {
-        if (ldescriptor->Maker)
+        Q_ASSERT(ldescriptor);
+
+        if (ldescriptor && ldescriptor->Maker)
             strncpy(strBuf, ldescriptor->Maker, STR_MAX);
         else
             CarlaPlugin::getMaker(strBuf);
@@ -162,7 +162,9 @@ public:
 
     void getCopyright(char* const strBuf)
     {
-        if (ldescriptor->Copyright)
+        Q_ASSERT(ldescriptor);
+
+        if (ldescriptor && ldescriptor->Copyright)
             strncpy(strBuf, ldescriptor->Copyright, STR_MAX);
         else
             CarlaPlugin::getCopyright(strBuf);
@@ -170,22 +172,32 @@ public:
 
     void getRealName(char* const strBuf)
     {
-        if (ldescriptor->Name)
+        Q_ASSERT(ldescriptor);
+
+        if (ldescriptor && ldescriptor->Name)
             strncpy(strBuf, ldescriptor->Name, STR_MAX);
         else
             CarlaPlugin::getRealName(strBuf);
     }
 
-    void getParameterName(uint32_t parameterId, char* const strBuf)
+    void getParameterName(const uint32_t parameterId, char* const strBuf)
     {
+        Q_ASSERT(ldescriptor);
         Q_ASSERT(parameterId < param.count);
+
         int32_t rindex = param.data[parameterId].rindex;
 
-        strncpy(strBuf, ldescriptor->PortNames[rindex], STR_MAX);
+        if (ldescriptor && rindex < (int32_t)ldescriptor->PortCount)
+            strncpy(strBuf, ldescriptor->PortNames[rindex], STR_MAX);
+        else
+            CarlaPlugin::getParameterName(parameterId, strBuf);
     }
 
-    void getGuiInfo(GuiType* type, bool* resizable)
+    void getGuiInfo(GuiType* const type, bool* const resizable)
     {
+        Q_ASSERT(type);
+        Q_ASSERT(resizable);
+
         *type = (m_hints & PLUGIN_HAS_GUI) ? GUI_EXTERNAL_OSC : GUI_NONE;
         *resizable = false;
     }
@@ -193,23 +205,23 @@ public:
     // -------------------------------------------------------------------
     // Set data (plugin-specific stuff)
 
-    void setParameterValue(uint32_t parameterId, double value, bool sendGui, bool sendOsc, bool sendCallback)
+    void setParameterValue(const uint32_t parameterId, double value, const bool sendGui, const bool sendOsc, const bool sendCallback)
     {
         Q_ASSERT(parameterId < param.count);
-        param_buffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
 
-#ifndef BUILD_BRIDGE
-        if (sendGui && osc.data.target)
-            osc_send_control(&osc.data, param.data[parameterId].rindex, value);
-#endif
+        param_buffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
 
         CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
     }
 
-    void setCustomData(CustomDataType type, const char* const key, const char* const value, bool sendGui)
+    void setCustomData(const CustomDataType type, const char* const key, const char* const value, const bool sendGui)
     {
+        Q_ASSERT(type == CUSTOM_DATA_STRING);
         Q_ASSERT(key);
         Q_ASSERT(value);
+
+        if (type != CUSTOM_DATA_STRING)
+            return qCritical("CarlaPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - type is not string", CustomDataType2str(type), key, value, bool2str(sendGui));
 
         if (! key)
             return qCritical("DssiPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - key is null", CustomDataType2str(type), key, value, bool2str(sendGui));
@@ -252,9 +264,14 @@ public:
         }
     }
 
-    void setMidiProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
+    void setMidiProgram(int32_t index, const bool sendGui, const bool sendOsc, const bool sendCallback, const bool block)
     {
-        Q_ASSERT(index < (int32_t)midiprog.count);
+        Q_ASSERT(index >= -1 && index < (int32_t)midiprog.count);
+
+        if (index < -1)
+            index = -1;
+        else if (index > (int32_t)midiprog.count)
+            return;
 
         if (index >= 0)
         {
@@ -268,11 +285,6 @@ public:
                 const ScopedDisabler m(this, block);
                 descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
             }
-
-#ifndef BUILD_BRIDGE
-            if (sendGui && osc.data.target)
-                osc_send_program(&osc.data, midiprog.data[index].bank, midiprog.data[index].program);
-#endif
         }
 
         CarlaPlugin::setMidiProgram(index, sendGui, sendOsc, sendCallback, block);
@@ -282,7 +294,7 @@ public:
     // Set gui stuff
 
 #ifndef BUILD_BRIDGE
-    void showGui(bool yesNo)
+    void showGui(const bool yesNo)
     {
         Q_ASSERT(osc.thread);
 
@@ -301,7 +313,9 @@ public:
             osc_send_hide(&osc.data);
             osc_send_quit(&osc.data);
             osc_clear_data(&osc.data);
-            osc.thread->quit(); // FIXME - stop thread?
+
+            if (! osc.thread->wait(500))
+                osc.thread->quit();
         }
     }
 #endif
@@ -329,24 +343,42 @@ public:
         aIns = aOuts = mIns = params = 0;
 
         const double sampleRate = x_engine->getSampleRate();
-        const unsigned long PortCount = ldescriptor->PortCount;
+        const unsigned long portCount = ldescriptor->PortCount;
 
-        for (unsigned long i=0; i<PortCount; i++)
+        bool forcedStereoIn, forcedStereoOut;
+        forcedStereoIn = forcedStereoOut = false;
+
+        for (unsigned long i=0; i < portCount; i++)
         {
-            const LADSPA_PortDescriptor PortType = ldescriptor->PortDescriptors[i];
-            if (LADSPA_IS_PORT_AUDIO(PortType))
+            const LADSPA_PortDescriptor portType = ldescriptor->PortDescriptors[i];
+
+            if (LADSPA_IS_PORT_AUDIO(portType))
             {
-                if (LADSPA_IS_PORT_INPUT(PortType))
+                if (LADSPA_IS_PORT_INPUT(portType))
                     aIns += 1;
-                else if (LADSPA_IS_PORT_OUTPUT(PortType))
+                else if (LADSPA_IS_PORT_OUTPUT(portType))
                     aOuts += 1;
             }
-            else if (LADSPA_IS_PORT_CONTROL(PortType))
+            else if (LADSPA_IS_PORT_CONTROL(portType))
                 params += 1;
         }
 
         if (carlaOptions.forceStereo && (aIns == 1 || aOuts == 1) && ! h2)
+        {
             h2 = ldescriptor->instantiate(ldescriptor, sampleRate);
+
+            if (aIns == 1)
+            {
+                aIns = 2;
+                forcedStereoIn = true;
+            }
+
+            if (aOuts == 1)
+            {
+                aOuts = 2;
+                forcedStereoOut = true;
+            }
+        }
 
         if (descriptor->run_synth || descriptor->run_multiple_synths)
             mIns = 1;
@@ -372,15 +404,15 @@ public:
 
         const int portNameSize = CarlaEngine::maxPortNameSize() - 1;
         char portName[portNameSize];
-        bool needsCin  = false;
-        bool needsCout = false;
+        bool needsCtrlIn  = false;
+        bool needsCtrlOut = false;
 
-        for (unsigned long i=0; i<PortCount; i++)
+        for (unsigned long i=0; i < portCount; i++)
         {
-            const LADSPA_PortDescriptor PortType = ldescriptor->PortDescriptors[i];
-            const LADSPA_PortRangeHint PortHint  = ldescriptor->PortRangeHints[i];
+            const LADSPA_PortDescriptor portType = ldescriptor->PortDescriptors[i];
+            const LADSPA_PortRangeHint portHints = ldescriptor->PortRangeHints[i];
 
-            if (LADSPA_IS_PORT_AUDIO(PortType))
+            if (LADSPA_IS_PORT_AUDIO(portType))
             {
 #ifndef BUILD_BRIDGE
                 if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
@@ -393,23 +425,37 @@ public:
 #endif
                     strncpy(portName, ldescriptor->PortNames[i], portNameSize);
 
-                if (LADSPA_IS_PORT_INPUT(PortType))
+                if (LADSPA_IS_PORT_INPUT(portType))
                 {
                     j = aIn.count++;
                     aIn.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
                     aIn.rindexes[j] = i;
+
+                    if (forcedStereoIn)
+                    {
+                        strcat(portName, "-2");
+                        aIn.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
+                        aIn.rindexes[1] = i;
+                    }
                 }
-                else if (LADSPA_IS_PORT_OUTPUT(PortType))
+                else if (LADSPA_IS_PORT_OUTPUT(portType))
                 {
                     j = aOut.count++;
                     aOut.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
                     aOut.rindexes[j] = i;
-                    needsCin = true;
+                    needsCtrlIn = true;
+
+                    if (forcedStereoOut)
+                    {
+                        strcat(portName, "-2");
+                        aOut.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
+                        aOut.rindexes[1] = i;
+                    }
                 }
                 else
                     qWarning("WARNING - Got a broken Port (Audio, but not input or output)");
             }
-            else if (LADSPA_IS_PORT_CONTROL(PortType))
+            else if (LADSPA_IS_PORT_CONTROL(portType))
             {
                 j = param.count++;
                 param.data[j].index  = j;
@@ -418,17 +464,17 @@ public:
                 param.data[j].midiChannel = 0;
                 param.data[j].midiCC = -1;
 
-                double min, max, def, step, step_small, step_large;
+                double min, max, def, step, stepSmall, stepLarge;
 
                 // min value
-                if (LADSPA_IS_HINT_BOUNDED_BELOW(PortHint.HintDescriptor))
-                    min = PortHint.LowerBound;
+                if (LADSPA_IS_HINT_BOUNDED_BELOW(portHints.HintDescriptor))
+                    min = portHints.LowerBound;
                 else
                     min = 0.0;
 
                 // max value
-                if (LADSPA_IS_HINT_BOUNDED_ABOVE(PortHint.HintDescriptor))
-                    max = PortHint.UpperBound;
+                if (LADSPA_IS_HINT_BOUNDED_ABOVE(portHints.HintDescriptor))
+                    max = portHints.UpperBound;
                 else
                     max = 1.0;
 
@@ -444,69 +490,14 @@ public:
                 }
 
                 // default value
-                if (LADSPA_IS_HINT_HAS_DEFAULT(PortHint.HintDescriptor))
-                {
-                    switch (PortHint.HintDescriptor & LADSPA_HINT_DEFAULT_MASK)
-                    {
-                    case LADSPA_HINT_DEFAULT_MINIMUM:
-                        def = min;
-                        break;
-                    case LADSPA_HINT_DEFAULT_MAXIMUM:
-                        def = max;
-                        break;
-                    case LADSPA_HINT_DEFAULT_0:
-                        def = 0.0;
-                        break;
-                    case LADSPA_HINT_DEFAULT_1:
-                        def = 1.0;
-                        break;
-                    case LADSPA_HINT_DEFAULT_100:
-                        def = 100.0;
-                        break;
-                    case LADSPA_HINT_DEFAULT_440:
-                        def = 440.0;
-                        break;
-                    case LADSPA_HINT_DEFAULT_LOW:
-                        if (LADSPA_IS_HINT_LOGARITHMIC(PortHint.HintDescriptor))
-                            def = exp((log(min)*0.75) + (log(max)*0.25));
-                        else
-                            def = (min*0.75) + (max*0.25);
-                        break;
-                    case LADSPA_HINT_DEFAULT_MIDDLE:
-                        if (LADSPA_IS_HINT_LOGARITHMIC(PortHint.HintDescriptor))
-                            def = sqrt(min*max);
-                        else
-                            def = (min+max)/2;
-                        break;
-                    case LADSPA_HINT_DEFAULT_HIGH:
-                        if (LADSPA_IS_HINT_LOGARITHMIC(PortHint.HintDescriptor))
-                            def = exp((log(min)*0.25) + (log(max)*0.75));
-                        else
-                            def = (min*0.25) + (max*0.75);
-                        break;
-                    default:
-                        if (min < 0.0 && max > 0.0)
-                            def = 0.0;
-                        else
-                            def = min;
-                        break;
-                    }
-                }
-                else
-                {
-                    // no default value
-                    if (min < 0.0 && max > 0.0)
-                        def = 0.0;
-                    else
-                        def = min;
-                }
+                def = get_default_ladspa_port_value(portHints.HintDescriptor, min, max);
 
                 if (def < min)
                     def = min;
                 else if (def > max)
                     def = max;
 
-                if (LADSPA_IS_HINT_SAMPLE_RATE(PortHint.HintDescriptor))
+                if (LADSPA_IS_HINT_SAMPLE_RATE(portHints.HintDescriptor))
                 {
                     min *= sampleRate;
                     max *= sampleRate;
@@ -514,34 +505,34 @@ public:
                     param.data[j].hints |= PARAMETER_USES_SAMPLERATE;
                 }
 
-                if (LADSPA_IS_HINT_TOGGLED(PortHint.HintDescriptor))
+                if (LADSPA_IS_HINT_TOGGLED(portHints.HintDescriptor))
                 {
                     step = max - min;
-                    step_small = step;
-                    step_large = step;
+                    stepSmall = step;
+                    stepLarge = step;
                     param.data[j].hints |= PARAMETER_IS_BOOLEAN;
                 }
-                else if (LADSPA_IS_HINT_INTEGER(PortHint.HintDescriptor))
+                else if (LADSPA_IS_HINT_INTEGER(portHints.HintDescriptor))
                 {
                     step = 1.0;
-                    step_small = 1.0;
-                    step_large = 10.0;
+                    stepSmall = 1.0;
+                    stepLarge = 10.0;
                     param.data[j].hints |= PARAMETER_IS_INTEGER;
                 }
                 else
                 {
                     double range = max - min;
                     step = range/100.0;
-                    step_small = range/1000.0;
-                    step_large = range/10.0;
+                    stepSmall = range/1000.0;
+                    stepLarge = range/10.0;
                 }
 
-                if (LADSPA_IS_PORT_INPUT(PortType))
+                if (LADSPA_IS_PORT_INPUT(portType))
                 {
                     param.data[j].type   = PARAMETER_INPUT;
                     param.data[j].hints |= PARAMETER_IS_ENABLED;
                     param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
-                    needsCin = true;
+                    needsCtrlIn = true;
 
                     // MIDI CC value
                     if (descriptor->get_midi_controller_for_port)
@@ -555,7 +546,7 @@ public:
                         }
                     }
                 }
-                else if (LADSPA_IS_PORT_OUTPUT(PortType))
+                else if (LADSPA_IS_PORT_OUTPUT(portType))
                 {
                     if (strcmp(ldescriptor->PortNames[i], "latency") == 0 || strcmp(ldescriptor->PortNames[i], "_latency") == 0)
                     {
@@ -563,10 +554,19 @@ public:
                         max = sampleRate;
                         def = 0.0;
                         step = 1.0;
-                        step_small = 1.0;
-                        step_large = 1.0;
+                        stepSmall = 1.0;
+                        stepLarge = 1.0;
 
                         param.data[j].type  = PARAMETER_LATENCY;
+                        param.data[j].hints = 0;
+                    }
+                    else if (strcmp(ldescriptor->PortNames[i], "_sample-rate") == 0)
+                    {
+                        step = 1.0;
+                        stepSmall = 1.0;
+                        stepLarge = 1.0;
+
+                        param.data[j].type  = PARAMETER_SAMPLE_RATE;
                         param.data[j].hints = 0;
                     }
                     else
@@ -574,7 +574,7 @@ public:
                         param.data[j].type   = PARAMETER_OUTPUT;
                         param.data[j].hints |= PARAMETER_IS_ENABLED;
                         param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
-                        needsCout = true;
+                        needsCtrlOut = true;
                     }
                 }
                 else
@@ -584,15 +584,15 @@ public:
                 }
 
                 // extra parameter hints
-                if (LADSPA_IS_HINT_LOGARITHMIC(PortHint.HintDescriptor))
+                if (LADSPA_IS_HINT_LOGARITHMIC(portHints.HintDescriptor))
                     param.data[j].hints |= PARAMETER_IS_LOGARITHMIC;
 
                 param.ranges[j].min = min;
                 param.ranges[j].max = max;
                 param.ranges[j].def = def;
                 param.ranges[j].step = step;
-                param.ranges[j].stepSmall = step_small;
-                param.ranges[j].stepLarge = step_large;
+                param.ranges[j].stepSmall = stepSmall;
+                param.ranges[j].stepLarge = stepLarge;
 
                 // Start parameters in their default values
                 param_buffers[j] = def;
@@ -609,7 +609,7 @@ public:
             }
         }
 
-        if (needsCin)
+        if (needsCtrlIn)
         {
 #ifndef BUILD_BRIDGE
             if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
@@ -624,7 +624,7 @@ public:
             param.portCin = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, true);
         }
 
-        if (needsCout)
+        if (needsCtrlOut)
         {
 #ifndef BUILD_BRIDGE
             if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
@@ -688,7 +688,7 @@ public:
         qDebug("DssiPlugin::reload() - end");
     }
 
-    void reloadPrograms(bool init)
+    void reloadPrograms(const bool init)
     {
         qDebug("DssiPlugin::reloadPrograms(%s)", bool2str(init));
         uint32_t i, oldCount = midiprog.count;
@@ -697,7 +697,10 @@ public:
         if (midiprog.count > 0)
         {
             for (uint32_t i=0; i < midiprog.count; i++)
-                free((void*)midiprog.data[i].name);
+            {
+                if (midiprog.data[i].name)
+                    free((void*)midiprog.data[i].name);
+            }
 
             delete[] midiprog.data;
         }
@@ -720,6 +723,8 @@ public:
         {
             const DSSI_Program_Descriptor* const pdesc = descriptor->get_program(handle, i);
             Q_ASSERT(pdesc);
+            Q_ASSERT(pdesc->Program < 128);
+            Q_ASSERT(pdesc->Name);
 
             midiprog.data[i].bank    = pdesc->Bank;
             midiprog.data[i].program = pdesc->Program;
@@ -743,7 +748,7 @@ public:
         }
         else
         {
-            x_engine->callback(CALLBACK_UPDATE, m_id, 0, 0, 0.0);
+            x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
 
             // Check if current program is invalid
             bool programChanged = false;
@@ -781,13 +786,13 @@ public:
     // -------------------------------------------------------------------
     // Plugin processing
 
-    void process(float** inBuffer, float** outBuffer, uint32_t frames, uint32_t framesOffset)
+    void process(float* const* const inBuffer, float* const* const outBuffer, const uint32_t frames, const uint32_t framesOffset)
     {
         uint32_t i, k;
         unsigned long midiEventCount = 0;
 
-        double ains_peak_tmp[2]  = { 0.0 };
-        double aouts_peak_tmp[2] = { 0.0 };
+        double aInsPeak[2]  = { 0.0 };
+        double aOutsPeak[2] = { 0.0 };
 
         CARLA_PROCESS_CONTINUE_CHECK;
 
@@ -802,19 +807,19 @@ public:
             {
                 for (k=0; k < frames; k++)
                 {
-                    if (abs(inBuffer[0][k]) > ains_peak_tmp[0])
-                        ains_peak_tmp[0] = abs(inBuffer[0][k]);
+                    if (abs(inBuffer[0][k]) > aInsPeak[0])
+                        aInsPeak[0] = abs(inBuffer[0][k]);
                 }
             }
             else if (count > 1)
             {
                 for (k=0; k < frames; k++)
                 {
-                    if (abs(inBuffer[0][k]) > ains_peak_tmp[0])
-                        ains_peak_tmp[0] = abs(inBuffer[0][k]);
+                    if (abs(inBuffer[0][k]) > aInsPeak[0])
+                        aInsPeak[0] = abs(inBuffer[0][k]);
 
-                    if (abs(inBuffer[1][k]) > ains_peak_tmp[1])
-                        ains_peak_tmp[1] = abs(inBuffer[1][k]);
+                    if (abs(inBuffer[1][k]) > aInsPeak[1])
+                        aInsPeak[1] = abs(inBuffer[1][k]);
                 }
             }
         }
@@ -881,12 +886,12 @@ public:
                             double left, right;
                             value = cinEvent->value/0.5 - 1.0;
 
-                            if (value < 0)
+                            if (value < 0.0)
                             {
                                 left  = -1.0;
                                 right = (value*2)+1.0;
                             }
-                            else if (value > 0)
+                            else if (value > 0.0)
                             {
                                 left  = (value*2)-1.0;
                                 right = 1.0;
@@ -999,122 +1004,126 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // MIDI Input (External)
 
-        if (midi.portMin && m_ctrlInChannel >= 0 && m_ctrlInChannel < 16 && m_active && m_activeBefore)
-        {
-            engineMidiLock();
-
-            for (i=0; i < MAX_MIDI_EVENTS && midiEventCount < MAX_MIDI_EVENTS; i++)
-            {
-                if (extMidiNotes[i].channel < 0)
-                    break;
-
-                snd_seq_event_t* const midiEvent = &midiEvents[midiEventCount];
-                memset(midiEvent, 0, sizeof(snd_seq_event_t));
-
-                midiEvent->type = extMidiNotes[i].velo ? SND_SEQ_EVENT_NOTEON : SND_SEQ_EVENT_NOTEOFF;
-                midiEvent->data.note.channel  = m_ctrlInChannel;
-                midiEvent->data.note.note     = extMidiNotes[i].note;
-                midiEvent->data.note.velocity = extMidiNotes[i].velo;
-
-                extMidiNotes[i].channel = -1;
-                midiEventCount += 1;
-            }
-
-            engineMidiUnlock();
-
-        } // End of MIDI Input (External)
-
-        CARLA_PROCESS_CONTINUE_CHECK;
-
-        // --------------------------------------------------------------------------------------------------------
-        // MIDI Input (System)
-
         if (midi.portMin && m_active && m_activeBefore)
         {
-            const CarlaEngineMidiEvent* minEvent;
-            uint32_t time, nEvents = midi.portMin->getEventCount();
+            // ----------------------------------------------------------------------------------------------------
+            // MIDI Input (External)
 
-            for (i=0; i < nEvents && midiEventCount < MAX_MIDI_EVENTS; i++)
+            if (m_ctrlInChannel >= 0 && m_ctrlInChannel < 16)
             {
-                minEvent = midi.portMin->getEvent(i);
+                engineMidiLock();
 
-                if (! minEvent)
-                    continue;
-
-                time = minEvent->time - framesOffset;
-
-                if (time >= frames)
-                    continue;
-
-                uint8_t status  = minEvent->data[0];
-                uint8_t channel = status & 0x0F;
-
-                // Fix bad note-off
-                if (MIDI_IS_STATUS_NOTE_ON(status) && minEvent->data[2] == 0)
-                    status -= 0x10;
-
-                snd_seq_event_t* const midiEvent = &midiEvents[midiEventCount];
-                memset(midiEvent, 0, sizeof(snd_seq_event_t));
-
-                midiEvent->time.tick = time;
-
-                if (MIDI_IS_STATUS_NOTE_OFF(status))
+                for (i=0; i < MAX_MIDI_EVENTS && midiEventCount < MAX_MIDI_EVENTS; i++)
                 {
-                    uint8_t note = minEvent->data[1];
+                    if (extMidiNotes[i].channel < 0)
+                        break;
 
-                    midiEvent->type = SND_SEQ_EVENT_NOTEOFF;
-                    midiEvent->data.note.channel = channel;
-                    midiEvent->data.note.note    = note;
+                    snd_seq_event_t* const midiEvent = &midiEvents[midiEventCount];
+                    memset(midiEvent, 0, sizeof(snd_seq_event_t));
 
-                    if (channel == m_ctrlInChannel)
+                    midiEvent->type = extMidiNotes[i].velo ? SND_SEQ_EVENT_NOTEON : SND_SEQ_EVENT_NOTEOFF;
+                    midiEvent->data.note.channel  = m_ctrlInChannel;
+                    midiEvent->data.note.note     = extMidiNotes[i].note;
+                    midiEvent->data.note.velocity = extMidiNotes[i].velo;
+
+                    extMidiNotes[i].channel = -1; // mark as invalid
+                    midiEventCount += 1;
+                }
+
+                engineMidiUnlock();
+
+            } // End of MIDI Input (External)
+
+            CARLA_PROCESS_CONTINUE_CHECK;
+
+            // ----------------------------------------------------------------------------------------------------
+            // MIDI Input (System)
+
+            {
+                const CarlaEngineMidiEvent* minEvent;
+                uint32_t time, nEvents = midi.portMin->getEventCount();
+
+                for (i=0; i < nEvents && midiEventCount < MAX_MIDI_EVENTS; i++)
+                {
+                    minEvent = midi.portMin->getEvent(i);
+
+                    if (! minEvent)
+                        continue;
+
+                    time = minEvent->time - framesOffset;
+
+                    if (time >= frames)
+                        continue;
+
+                    uint8_t status  = minEvent->data[0];
+                    uint8_t channel = status & 0x0F;
+
+                    // Fix bad note-off
+                    if (MIDI_IS_STATUS_NOTE_ON(status) && minEvent->data[2] == 0)
+                        status -= 0x10;
+
+                    snd_seq_event_t* const midiEvent = &midiEvents[midiEventCount];
+                    memset(midiEvent, 0, sizeof(snd_seq_event_t));
+
+                    midiEvent->time.tick = time;
+
+                    if (MIDI_IS_STATUS_NOTE_OFF(status))
+                    {
+                        uint8_t note = minEvent->data[1];
+
+                        midiEvent->type = SND_SEQ_EVENT_NOTEOFF;
+                        midiEvent->data.note.channel = channel;
+                        midiEvent->data.note.note    = note;
+
                         postponeEvent(PluginPostEventNoteOff, channel, note, 0.0);
-                }
-                else if (MIDI_IS_STATUS_NOTE_ON(status))
-                {
-                    uint8_t note = minEvent->data[1];
-                    uint8_t velo = minEvent->data[2];
+                    }
+                    else if (MIDI_IS_STATUS_NOTE_ON(status))
+                    {
+                        uint8_t note = minEvent->data[1];
+                        uint8_t velo = minEvent->data[2];
 
-                    midiEvent->type = SND_SEQ_EVENT_NOTEON;
-                    midiEvent->data.note.channel  = channel;
-                    midiEvent->data.note.note     = note;
-                    midiEvent->data.note.velocity = velo;
+                        midiEvent->type = SND_SEQ_EVENT_NOTEON;
+                        midiEvent->data.note.channel  = channel;
+                        midiEvent->data.note.note     = note;
+                        midiEvent->data.note.velocity = velo;
 
-                    if (channel == m_ctrlInChannel)
                         postponeEvent(PluginPostEventNoteOn, channel, note, velo);
-                }
-                else if (MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status))
-                {
-                    uint8_t note     = minEvent->data[1];
-                    uint8_t pressure = minEvent->data[2];
+                    }
+                    else if (MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status))
+                    {
+                        uint8_t note     = minEvent->data[1];
+                        uint8_t pressure = minEvent->data[2];
 
-                    midiEvent->type = SND_SEQ_EVENT_KEYPRESS;
-                    midiEvent->data.note.channel  = channel;
-                    midiEvent->data.note.note     = note;
-                    midiEvent->data.note.velocity = pressure;
-                }
-                else if (MIDI_IS_STATUS_AFTERTOUCH(status))
-                {
-                    uint8_t pressure = minEvent->data[1];
+                        midiEvent->type = SND_SEQ_EVENT_KEYPRESS;
+                        midiEvent->data.note.channel  = channel;
+                        midiEvent->data.note.note     = note;
+                        midiEvent->data.note.velocity = pressure;
+                    }
+                    else if (MIDI_IS_STATUS_AFTERTOUCH(status))
+                    {
+                        uint8_t pressure = minEvent->data[1];
 
-                    midiEvent->type = SND_SEQ_EVENT_CHANPRESS;
-                    midiEvent->data.control.channel = channel;
-                    midiEvent->data.control.value   = pressure;
-                }
-                else if (MIDI_IS_STATUS_PITCH_WHEEL_CONTROL(status))
-                {
-                    uint8_t lsb = minEvent->data[1];
-                    uint8_t msb = minEvent->data[2];
+                        midiEvent->type = SND_SEQ_EVENT_CHANPRESS;
+                        midiEvent->data.control.channel = channel;
+                        midiEvent->data.control.value   = pressure;
+                    }
+                    else if (MIDI_IS_STATUS_PITCH_WHEEL_CONTROL(status))
+                    {
+                        uint8_t lsb = minEvent->data[1];
+                        uint8_t msb = minEvent->data[2];
 
-                    midiEvent->type = SND_SEQ_EVENT_PITCHBEND;
-                    midiEvent->data.control.channel = channel;
-                    midiEvent->data.control.value   = ((msb << 7) | lsb) - 8192;
-                }
-                else
-                    continue;
+                        midiEvent->type = SND_SEQ_EVENT_PITCHBEND;
+                        midiEvent->data.control.channel = channel;
+                        midiEvent->data.control.value   = ((msb << 7) | lsb) - 8192;
+                    }
+                    else
+                        continue;
 
-                midiEventCount += 1;
-            }
-        } // End of MIDI Input (System)
+                    midiEventCount += 1;
+                }
+            } // End of MIDI Input (System)
+
+        } // End of MIDI Input
 
         CARLA_PROCESS_CONTINUE_CHECK;
 
@@ -1164,14 +1173,14 @@ public:
 
             for (i=0; i < aIn.count; i++)
             {
-                ldescriptor->connect_port(handle, aIn.rindexes[i], inBuffer[i]);
-                if (h2 && i == 0) ldescriptor->connect_port(h2, aIn.rindexes[i], inBuffer[1]);
+                if (i == 0 || ! h2) ldescriptor->connect_port(handle, aIn.rindexes[i], inBuffer[i]);
+                if (i == 1 && h2)   ldescriptor->connect_port(h2, aIn.rindexes[i], inBuffer[i]);
             }
 
             for (i=0; i < aOut.count; i++)
             {
-                ldescriptor->connect_port(handle, aOut.rindexes[i], outBuffer[i]);
-                if (h2 && i == 0) ldescriptor->connect_port(h2, aOut.rindexes[i], outBuffer[1]);
+                if (i == 0 || ! h2) ldescriptor->connect_port(handle, aOut.rindexes[i], outBuffer[i]);
+                if (i == 1 && h2)   ldescriptor->connect_port(h2, aOut.rindexes[i], outBuffer[i]);
             }
 
             if (descriptor->run_synth)
@@ -1270,8 +1279,8 @@ public:
                 // Output VU
                 for (k=0; i < 2 && k < frames; k++)
                 {
-                    if (abs(outBuffer[i][k]) > aouts_peak_tmp[i])
-                        aouts_peak_tmp[i] = abs(outBuffer[i][k]);
+                    if (abs(outBuffer[i][k]) > aOutsPeak[i])
+                        aOutsPeak[i] = abs(outBuffer[i][k]);
                 }
             }
         }
@@ -1281,8 +1290,8 @@ public:
             for (i=0; i < aOut.count; i++)
                 memset(outBuffer[i], 0.0f, sizeof(float)*frames);
 
-            aouts_peak_tmp[0] = 0.0;
-            aouts_peak_tmp[1] = 0.0;
+            aOutsPeak[0] = 0.0;
+            aOutsPeak[1] = 0.0;
 
         } // End of Post-processing
 
@@ -1315,10 +1324,10 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Peak Values
 
-        x_engine->setInputPeak(m_id, 0, ains_peak_tmp[0]);
-        x_engine->setInputPeak(m_id, 1, ains_peak_tmp[1]);
-        x_engine->setOutputPeak(m_id, 0, aouts_peak_tmp[0]);
-        x_engine->setOutputPeak(m_id, 1, aouts_peak_tmp[1]);
+        x_engine->setInputPeak(m_id, 0, aInsPeak[0]);
+        x_engine->setInputPeak(m_id, 1, aInsPeak[1]);
+        x_engine->setOutputPeak(m_id, 0, aOutsPeak[0]);
+        x_engine->setOutputPeak(m_id, 1, aOutsPeak[1]);
 
         m_activeBefore = m_active;
     }
@@ -1326,9 +1335,10 @@ public:
     // -------------------------------------------------------------------
     // Post-poned events
 
-    void uiParameterChange(uint32_t index, double value)
+    void uiParameterChange(const uint32_t index, const double value)
     {
         Q_ASSERT(index < param.count);
+
         if (index >= param.count)
             return;
         if (! osc.data.target)
@@ -1337,9 +1347,10 @@ public:
         osc_send_control(&osc.data, param.data[index].rindex, value);
     }
 
-    void uiMidiProgramChange(uint32_t index)
+    void uiMidiProgramChange(const uint32_t index)
     {
         Q_ASSERT(index < midiprog.count);
+
         if (index >= midiprog.count)
             return;
         if (! osc.data.target)
@@ -1348,8 +1359,12 @@ public:
         osc_send_program(&osc.data, midiprog.data[index].bank, midiprog.data[index].program);
     }
 
-    void uiNoteOn(uint8_t channel, uint8_t note, uint8_t velo)
+    void uiNoteOn(const uint8_t channel, const uint8_t note, const uint8_t velo)
     {
+        Q_ASSERT(channel < 16);
+        Q_ASSERT(note < 128);
+        Q_ASSERT(velo < 128);
+
         if (! osc.data.target)
             return;
 
@@ -1360,8 +1375,11 @@ public:
         osc_send_midi(&osc.data, midiData);
     }
 
-    void uiNoteOff(uint8_t channel, uint8_t note)
+    void uiNoteOff(const uint8_t channel, const uint8_t note)
     {
+        Q_ASSERT(channel < 16);
+        Q_ASSERT(note < 128);
+
         if (! osc.data.target)
             return;
 
@@ -1402,11 +1420,11 @@ public:
         // ---------------------------------------------------------------
         // get DLL main entry
 
-        DSSI_Descriptor_Function descfn = (DSSI_Descriptor_Function)libSymbol("dssi_descriptor");
+        DSSI_Descriptor_Function descFn = (DSSI_Descriptor_Function)libSymbol("dssi_descriptor");
 
-        if (! descfn)
+        if (! descFn)
         {
-            setLastError("Could not find the LASDPA Descriptor in the plugin library");
+            setLastError("Could not find the DSSI Descriptor in the plugin library");
             return false;
         }
 
@@ -1414,11 +1432,10 @@ public:
         // get descriptor that matches label
 
         unsigned long i = 0;
-        while ((descriptor = descfn(i++)))
+        while ((descriptor = descFn(i++)))
         {
-            qDebug("init 003 -> %li", i);
             ldescriptor = descriptor->LADSPA_Plugin;
-            if (strcmp(ldescriptor->Label, label) == 0)
+            if (ldescriptor && strcmp(ldescriptor->Label, label) == 0)
                 break;
         }
 
