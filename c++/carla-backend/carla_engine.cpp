@@ -1042,7 +1042,7 @@ const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(uint32_t index)
     return nullptr;
 }
 
-void CarlaEngineMidiPort::writeEvent(uint32_t time, uint8_t* data, uint8_t size)
+void CarlaEngineMidiPort::writeEvent(uint32_t time, const uint8_t* data, uint8_t size)
 {
     if (isInput)
         return;

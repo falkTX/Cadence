@@ -705,7 +705,7 @@ CarlaPlugin* CarlaPlugin::newBridge(const initializer& init, BinaryType btype, P
 
     short id = init.engine->getNewPluginId();
 
-    if (id < 0)
+    if (id < 0 || id > MAX_PLUGINS)
     {
         setLastError("Maximum number of plugins reached");
         return nullptr;

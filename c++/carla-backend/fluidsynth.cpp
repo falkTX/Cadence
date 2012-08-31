@@ -1286,7 +1286,7 @@ CarlaPlugin* CarlaPlugin::newSF2(const initializer& init)
 #ifdef WANT_FLUIDSYNTH
     short id = init.engine->getNewPluginId();
 
-    if (id < 0)
+    if (id < 0 || id > MAX_PLUGINS)
     {
         setLastError("Maximum number of plugins reached");
         return nullptr;

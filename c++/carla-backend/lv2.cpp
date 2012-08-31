@@ -359,17 +359,14 @@ public:
             if (features[lv2_feature_id_ui_resize] && features[lv2_feature_id_ui_resize]->data)
                 delete (LV2UI_Resize*)features[lv2_feature_id_ui_resize]->data;
 
-            if (features[lv2_feature_id_external_ui])
+            if (features[lv2_feature_id_external_ui] && features[lv2_feature_id_external_ui]->data)
             {
                 const lv2_external_ui_host* const uiHost = (const lv2_external_ui_host*)features[lv2_feature_id_external_ui]->data;
 
-                if (uiHost)
-                {
-                    if (uiHost->plugin_human_id)
-                        free((void*)uiHost->plugin_human_id);
+                if (uiHost->plugin_human_id)
+                    free((void*)uiHost->plugin_human_id);
 
-                    delete uiHost;
-                }
+                delete uiHost;
             }
 
             uiLibClose();
@@ -429,6 +426,14 @@ public:
 
         if (features[lv2_feature_id_worker] && features[lv2_feature_id_worker]->data)
             delete (LV2_Worker_Schedule*)features[lv2_feature_id_worker]->data;
+
+#ifndef BUILD_BRIDGE
+        if (! carlaOptions.processHighPrecision)
+#endif
+        {
+            features[lv2_feature_id_bufsize_fixed]    = nullptr;
+            features[lv2_feature_id_bufsize_powerof2] = nullptr;
+        }
 
         for (uint32_t i=0; i < lv2_feature_count; i++)
         {
@@ -1765,15 +1770,15 @@ public:
         double aOutsPeak[2] = { 0.0 };
 
         // handle midi from different APIs
-        uint32_t evinAtomOffsets[evIn.count];
-        LV2_Event_Iterator evinEventIters[evIn.count];
-        LV2_MIDIState evinMidiStates[evIn.count];
+        uint32_t evInAtomOffsets[evIn.count];
+        LV2_Event_Iterator evInEventIters[evIn.count];
+        LV2_MIDIState evInMidiStates[evIn.count];
 
         for (i=0; i < evIn.count; i++)
         {
             if (evIn.data[i].type & CARLA_EVENT_DATA_ATOM)
             {
-                evinAtomOffsets[i] = 0;
+                evInAtomOffsets[i] = 0;
                 evIn.data[i].atom->atom.size = 0;
                 evIn.data[i].atom->atom.type = CARLA_URI_MAP_ID_ATOM_SEQUENCE;
                 evIn.data[i].atom->body.unit = CARLA_URI_MAP_ID_NULL;
@@ -1782,15 +1787,15 @@ public:
             else if (evIn.data[i].type & CARLA_EVENT_DATA_EVENT)
             {
                 lv2_event_buffer_reset(evIn.data[i].event, LV2_EVENT_AUDIO_STAMP, (uint8_t*)(evIn.data[i].event + 1));
-                lv2_event_begin(&evinEventIters[i], evIn.data[i].event);
+                lv2_event_begin(&evInEventIters[i], evIn.data[i].event);
             }
             else if (evIn.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
             {
-                evinMidiStates[i].midi = evIn.data[i].midi;
-                evinMidiStates[i].frame_count = frames;
-                evinMidiStates[i].position = 0;
-                evinMidiStates[i].midi->event_count = 0;
-                evinMidiStates[i].midi->size = 0;
+                evInMidiStates[i].midi = evIn.data[i].midi;
+                evInMidiStates[i].frame_count = frames;
+                evInMidiStates[i].position = 0;
+                evInMidiStates[i].midi->event_count = 0;
+                evInMidiStates[i].midi->size = 0;
             }
         }
 
@@ -2049,23 +2054,23 @@ public:
                         {
                             if (evIn.data[k].type & CARLA_EVENT_DATA_ATOM)
                             {
-                                LV2_Atom_Event* const aev = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evIn.data[k].atom) + evinAtomOffsets[k]);
+                                LV2_Atom_Event* const aev = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evIn.data[k].atom) + evInAtomOffsets[k]);
                                 aev->time.frames = 0;
                                 aev->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
                                 aev->body.size   = 3;
                                 memcpy(LV2_ATOM_BODY(&aev->body), midiEvent, 3);
 
                                 const uint32_t padSize = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + 3);
-                                evinAtomOffsets[k]           += padSize;
+                                evInAtomOffsets[k]           += padSize;
                                 evIn.data[k].atom->atom.size += padSize;
                             }
                             else if (evIn.data[k].type & CARLA_EVENT_DATA_EVENT)
                             {
-                                lv2_event_write(&evinEventIters[k], 0, 0, CARLA_URI_MAP_ID_MIDI_EVENT, 3, midiEvent);
+                                lv2_event_write(&evInEventIters[k], 0, 0, CARLA_URI_MAP_ID_MIDI_EVENT, 3, midiEvent);
                             }
                             else if (evIn.data[k].type & CARLA_EVENT_DATA_MIDI_LL)
                             {
-                                lv2midi_put_event(&evinMidiStates[k], 0, 3, midiEvent);
+                                lv2midi_put_event(&evInMidiStates[k], 0, 3, midiEvent);
                             }
                         }
                     }
@@ -2116,23 +2121,23 @@ public:
                         {
                             if (evIn.data[i].type & CARLA_EVENT_DATA_ATOM)
                             {
-                                LV2_Atom_Event* const aev = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evIn.data[i].atom) + evinAtomOffsets[i]);
+                                LV2_Atom_Event* const aev = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evIn.data[i].atom) + evInAtomOffsets[i]);
                                 aev->time.frames = time;
                                 aev->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
                                 aev->body.size   = minEvent->size;
                                 memcpy(LV2_ATOM_BODY(&aev->body), minEvent->data, minEvent->size);
 
                                 const uint32_t padSize = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + minEvent->size);
-                                evinAtomOffsets[i]           += padSize;
+                                evInAtomOffsets[i]           += padSize;
                                 evIn.data[i].atom->atom.size += padSize;
                             }
                             else if (evIn.data[i].type & CARLA_EVENT_DATA_EVENT)
                             {
-                                lv2_event_write(&evinEventIters[i], time, 0, CARLA_URI_MAP_ID_MIDI_EVENT, minEvent->size, minEvent->data);
+                                lv2_event_write(&evInEventIters[i], time, 0, CARLA_URI_MAP_ID_MIDI_EVENT, minEvent->size, minEvent->data);
                             }
                             else if (evIn.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
                             {
-                                lv2midi_put_event(&evinMidiStates[i], time, minEvent->size, minEvent->data);
+                                lv2midi_put_event(&evInMidiStates[i], time, minEvent->size, minEvent->data);
                             }
 
                             if (MIDI_IS_STATUS_NOTE_OFF(status))
@@ -2242,35 +2247,35 @@ public:
                             if (evIn.data[k].type & CARLA_EVENT_DATA_ATOM)
                             {
                                 // all sound off
-                                LV2_Atom_Event* const aev1 = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evIn.data[k].atom) + evinAtomOffsets[k]);
+                                LV2_Atom_Event* const aev1 = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evIn.data[k].atom) + evInAtomOffsets[k]);
                                 aev1->time.frames = 0;
                                 aev1->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
                                 aev1->body.size   = 2;
                                 memcpy(LV2_ATOM_BODY(&aev1->body), midiEvent1, 2);
 
                                 const uint32_t padSize = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + 2);
-                                evinAtomOffsets[k]           += padSize;
+                                evInAtomOffsets[k]           += padSize;
                                 evIn.data[k].atom->atom.size += padSize;
 
                                 // all notes off
-                                LV2_Atom_Event* const aev2 = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evIn.data[k].atom) + evinAtomOffsets[k]);
+                                LV2_Atom_Event* const aev2 = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evIn.data[k].atom) + evInAtomOffsets[k]);
                                 aev2->time.frames = 0;
                                 aev2->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
                                 aev2->body.size   = 2;
                                 memcpy(LV2_ATOM_BODY(&aev2->body), midiEvent2, 2);
 
-                                evinAtomOffsets[k]           += padSize;
+                                evInAtomOffsets[k]           += padSize;
                                 evIn.data[k].atom->atom.size += padSize;
                             }
                             else if (evIn.data[k].type & CARLA_EVENT_DATA_EVENT)
                             {
-                                lv2_event_write(&evinEventIters[k], 0, 0, CARLA_URI_MAP_ID_MIDI_EVENT, 2, midiEvent1);
-                                lv2_event_write(&evinEventIters[k], 0, 0, CARLA_URI_MAP_ID_MIDI_EVENT, 2, midiEvent2);
+                                lv2_event_write(&evInEventIters[k], 0, 0, CARLA_URI_MAP_ID_MIDI_EVENT, 2, midiEvent1);
+                                lv2_event_write(&evInEventIters[k], 0, 0, CARLA_URI_MAP_ID_MIDI_EVENT, 2, midiEvent2);
                             }
                             else if (evIn.data[k].type & CARLA_EVENT_DATA_MIDI_LL)
                             {
-                                lv2midi_put_event(&evinMidiStates[k], 0, 2, midiEvent1);
-                                lv2midi_put_event(&evinMidiStates[k], 0, 2, midiEvent2);
+                                lv2midi_put_event(&evInMidiStates[k], 0, 2, midiEvent1);
+                                lv2midi_put_event(&evInMidiStates[k], 0, 2, midiEvent2);
                             }
                         }
                     }
@@ -2299,6 +2304,18 @@ public:
 
             descriptor->run(handle, frames);
             if (h2) descriptor->run(h2, frames);
+
+            if (ext.worker)
+            {
+                // TODO
+                //ext.worker->work_response();
+
+                if (ext.worker->end_run)
+                {
+                    ext.worker->end_run(handle);
+                    if (h2) ext.worker->end_run(h2);
+                }
+            }
         }
         else
         {
@@ -2430,11 +2447,28 @@ public:
                 if (! evOut.data[i].port)
                     continue;
 
-                if (evIn.data[i].type & CARLA_EVENT_DATA_ATOM)
+                if (evOut.data[i].type & CARLA_EVENT_DATA_ATOM)
                 {
-                    // TODO
+                    uint32_t size   = evOut.data[i].atom->atom.size - sizeof(LV2_Atom_Sequence_Body);
+                    uint32_t offset = 0;
+
+                    while (offset < size)
+                    {
+                        const LV2_Atom_Event* const aev = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evOut.data[i].atom) + offset);
+
+                        if ((! aev) || aev->body.type == CARLA_URI_MAP_ID_NULL)
+                            break;
+
+                        if (aev->body.type == CARLA_URI_MAP_ID_MIDI_EVENT)
+                        {
+                            const unsigned char* const data = (unsigned char*)LV2_ATOM_BODY(&aev->body);
+                            evOut.data[i].port->writeEvent(aev->time.frames, data, aev->body.size);
+                        }
+
+                        offset += lv2_atom_pad_size(sizeof(LV2_Atom_Event) + aev->body.size);
+                    }
                 }
-                else if (evIn.data[i].type & CARLA_EVENT_DATA_EVENT)
+                else if (evOut.data[i].type & CARLA_EVENT_DATA_EVENT)
                 {
                     const LV2_Event* ev;
                     LV2_Event_Iterator iter;
@@ -2446,13 +2480,13 @@ public:
                     {
                         ev = lv2_event_get(&iter, &data);
 
-                        if (ev && data)
+                        if (ev && ev->type == CARLA_URI_MAP_ID_MIDI_EVENT && data)
                             evOut.data[i].port->writeEvent(ev->frames, data, ev->size);
 
                         lv2_event_increment(&iter);
                     }
                 }
-                else if (evIn.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
+                else if (evOut.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
                 {
                     LV2_MIDIState state = { evOut.data[i].midi, frames, 0 };
 
@@ -2730,22 +2764,21 @@ public:
 
     // -------------------------------------------------------------------
 
-    void handleTransferAtom()
+    void handleTransferAtom(const LV2_Atom* const atom, const char* const stype)
     {
+        qDebug("Lv2Plugin::handleAtomTransfer(%p, \"%s\")", atom, stype);
+        Q_ASSERT(atom);
+        Q_ASSERT(stype);
+
         // TODO
     }
 
-    void handleTransferEvent(const char* const type, const char* const key, const char* const stringData)
+    void handleTransferEvent(const LV2_Atom* const atom, const char* const stype)
     {
-        qDebug("Lv2Plugin::handleEventTransfer(%s, %s, %s)", type, key, stringData);
-        Q_ASSERT(type);
-        Q_ASSERT(key);
-        Q_ASSERT(stringData);
+        qDebug("Lv2Plugin::handleEventTransfer(%p, \"%s\")", atom, stype);
+        Q_ASSERT(atom);
+        Q_ASSERT(stype);
 
-        QByteArray chunk;
-        chunk = QByteArray::fromBase64(stringData);
-
-        const LV2_Atom* const atom = (LV2_Atom*)chunk.constData();
         const LV2_URID uridAtomBlank = getCustomURID(LV2_ATOM__Blank);
         const LV2_URID uridPatchBody = getCustomURID(LV2_PATCH__body);
         const LV2_URID uridPatchSet  = getCustomURID(LV2_PATCH__Set);
@@ -2788,7 +2821,7 @@ public:
             {
                 QByteArray chunk((const char*)LV2_ATOM_BODY(&iter->value), iter->value.size);
                 value = strdup(chunk.toBase64().constData());
-                dtype = (iter->value.type == CARLA_URI_MAP_ID_ATOM_CHUNK) ? CUSTOM_DATA_CHUNK : CUSTOM_DATA_BINARY; // FIXME - binary should be a custom type
+                dtype = (iter->value.type == CARLA_URI_MAP_ID_ATOM_CHUNK) ? CUSTOM_DATA_CHUNK : CUSTOM_DATA_BINARY; // FIXME - binary should be custom stype
             }
             else
                 value = strdup("");
@@ -3029,7 +3062,8 @@ public:
         {
             Q_ASSERT(buffer);
 
-            const LV2_Atom* const atom = (LV2_Atom*)buffer;
+            const LV2_Atom* const atom = (const LV2_Atom*)buffer;
+            handleTransferAtom(atom, getCustomURIString(atom->type));
 
             if (ui.handle && ui.descriptor && ui.descriptor->port_event)
                 ui.descriptor->port_event(ui.handle, 0, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM, atom);
@@ -3038,7 +3072,8 @@ public:
         {
             Q_ASSERT(buffer);
 
-            const LV2_Atom* const atom = (LV2_Atom*)buffer;
+            const LV2_Atom* const atom = (const LV2_Atom*)buffer;
+            handleTransferEvent(atom, getCustomURIString(atom->type));
 
             if (ui.handle && ui.descriptor && ui.descriptor->port_event)
                 ui.descriptor->port_event(ui.handle, 0, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
@@ -3118,8 +3153,8 @@ public:
         const LV2_URID uridPatchSet  = getCustomURID(LV2_PATCH__Set);
         const LV2_URID uridPatchBody = getCustomURID(LV2_PATCH__body);
 
-        Sratom*   sratom = sratom_new(URID_Map);
-        SerdChunk chunk  = { nullptr, 0 };
+        Sratom* const sratom = sratom_new(URID_Map);
+        SerdChunk     chunk  = { nullptr, 0 };
 
         LV2_Atom_Forge forge;
         lv2_atom_forge_init(&forge, URID_Map);
@@ -3738,6 +3773,7 @@ public:
         features[lv2_feature_id_bufsize_bounded]->URI  = LV2_BUF_SIZE__boundedBlockLength;
         features[lv2_feature_id_bufsize_bounded]->data = nullptr;
 
+#ifndef BUILD_BRIDGE
         if (carlaOptions.processHighPrecision)
         {
             features[lv2_feature_id_bufsize_fixed]          = new LV2_Feature;
@@ -3749,6 +3785,7 @@ public:
             features[lv2_feature_id_bufsize_powerof2]->data = nullptr;
         }
         else
+#endif
         {
             // fake, used to keep a valid array
             features[lv2_feature_id_bufsize_fixed]    = features[lv2_feature_id_bufsize_bounded];
@@ -4185,7 +4222,6 @@ private:
     } ext;
 
     struct {
-
         void* lib;
         LV2UI_Handle handle;
         LV2UI_Widget widget;
@@ -4220,7 +4256,7 @@ CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
 
     short id = init.engine->getNewPluginId();
 
-    if (id < 0)
+    if (id < 0 || id > MAX_PLUGINS)
     {
         setLastError("Maximum number of plugins reached");
         return nullptr;
@@ -4264,28 +4300,37 @@ CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
 int CarlaOsc::handle_lv2_atom_transfer(CARLA_OSC_HANDLE_ARGS2)
 {
     qDebug("CarlaOsc::handle_lv2_atom_transfer()");
-    //CARLA_OSC_CHECK_OSC_TYPES(2, "ii");
+    CARLA_OSC_CHECK_OSC_TYPES(2, "ss");
+
+    const char* const type  = (const char*)&argv[0]->s;
+    const char* const value = (const char*)&argv[1]->s;
+
+    QByteArray chunk;
+    chunk = QByteArray::fromBase64(value);
+
+    const LV2_Atom* const atom = (LV2_Atom*)chunk.constData();
 
     CarlaBackend::Lv2Plugin* const lv2plugin = (CarlaBackend::Lv2Plugin*)plugin;
-    lv2plugin->handleTransferAtom();
+    lv2plugin->handleTransferAtom(atom, type);
 
     return 0;
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
-    Q_UNUSED(types);
 }
 
 int CarlaOsc::handle_lv2_event_transfer(CARLA_OSC_HANDLE_ARGS2)
 {
     qDebug("CarlaOsc::handle_lv2_event_transfer()");
-    CARLA_OSC_CHECK_OSC_TYPES(3, "sss");
+    CARLA_OSC_CHECK_OSC_TYPES(2, "ss");
 
     const char* const type  = (const char*)&argv[0]->s;
-    const char* const key   = (const char*)&argv[1]->s;
-    const char* const value = (const char*)&argv[2]->s;
+    const char* const value = (const char*)&argv[1]->s;
+
+    QByteArray chunk;
+    chunk = QByteArray::fromBase64(value);
+
+    const LV2_Atom* const atom = (LV2_Atom*)chunk.constData();
 
     CarlaBackend::Lv2Plugin* const lv2plugin = (CarlaBackend::Lv2Plugin*)plugin;
-    lv2plugin->handleTransferEvent(type, key, value);
+    lv2plugin->handleTransferEvent(atom, type);
 
     return 0;
 }

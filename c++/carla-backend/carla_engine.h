@@ -437,7 +437,7 @@ public:
     uint32_t getEventCount();
     const CarlaEngineMidiEvent* getEvent(uint32_t index);
 
-    void writeEvent(uint32_t time, uint8_t* data, uint8_t size);
+    void writeEvent(uint32_t time, const uint8_t* data, uint8_t size);
 };
 
 // -----------------------------------------------------------------------

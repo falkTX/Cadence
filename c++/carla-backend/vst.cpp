@@ -1792,7 +1792,7 @@ CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
 
     short id = init.engine->getNewPluginId();
 
-    if (id < 0)
+    if (id < 0 || id > MAX_PLUGINS)
     {
         setLastError("Maximum number of plugins reached");
         return nullptr;
@@ -1823,7 +1823,6 @@ CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
             delete plugin;
             return nullptr;
         }
-
     }
 #endif
 
