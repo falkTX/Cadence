@@ -29,10 +29,6 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
-#if 0
-} /* adjust editor indent */
-#endif
-
 #ifdef WANT_FLUIDSYNTH
 
 /*!

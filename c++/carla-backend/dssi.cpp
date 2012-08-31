@@ -20,10 +20,6 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
-#if 0
-} /* adjust editor indent */
-#endif
-
 /*!
  * @defgroup CarlaBackendDssiPlugin Carla Backend DSSI Plugin
  *
@@ -562,6 +558,7 @@ public:
                     }
                     else if (strcmp(ldescriptor->PortNames[i], "_sample-rate") == 0)
                     {
+                        def = sampleRate;
                         step = 1.0;
                         stepSmall = 1.0;
                         stepLarge = 1.0;
@@ -678,7 +675,7 @@ public:
         if (aOuts > 0)
             m_hints |= PLUGIN_CAN_VOLUME;
 
-        if ((aOuts >= 2 && aOuts%2 == 0) || h2)
+        if (aOuts >= 2 && aOuts%2 == 0)
             m_hints |= PLUGIN_CAN_BALANCE;
 
         reloadPrograms(true);
@@ -716,7 +713,7 @@ public:
         }
 
         if (midiprog.count > 0)
-            midiprog.data = new midi_program_t [midiprog.count];
+            midiprog.data = new midi_program_t[midiprog.count];
 
         // Update data
         for (i=0; i < midiprog.count; i++)
@@ -737,8 +734,6 @@ public:
 
         for (i=0; i < midiprog.count; i++)
             x_engine->osc_send_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
-
-        x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
 #endif
 
         if (init)
@@ -757,25 +752,25 @@ public:
             {
                 // one midi program added, probably created by user
                 midiprog.current = oldCount;
-                programChanged  = true;
+                programChanged   = true;
             }
             else if (midiprog.current >= (int32_t)midiprog.count)
             {
                 // current midi program > count
                 midiprog.current = 0;
-                programChanged  = true;
+                programChanged   = true;
             }
             else if (midiprog.current < 0 && midiprog.count > 0)
             {
                 // programs exist now, but not before
                 midiprog.current = 0;
-                programChanged  = true;
+                programChanged   = true;
             }
             else if (midiprog.current >= 0 && midiprog.count == 0)
             {
                 // programs existed before, but not anymore
                 midiprog.current = -1;
-                programChanged  = true;
+                programChanged   = true;
             }
 
             if (programChanged)
@@ -1002,7 +997,7 @@ public:
         CARLA_PROCESS_CONTINUE_CHECK;
 
         // --------------------------------------------------------------------------------------------------------
-        // MIDI Input (External)
+        // MIDI Input
 
         if (midi.portMin && m_active && m_activeBefore)
         {
@@ -1420,7 +1415,7 @@ public:
         // ---------------------------------------------------------------
         // get DLL main entry
 
-        DSSI_Descriptor_Function descFn = (DSSI_Descriptor_Function)libSymbol("dssi_descriptor");
+        const DSSI_Descriptor_Function descFn = (DSSI_Descriptor_Function)libSymbol("dssi_descriptor");
 
         if (! descFn)
         {

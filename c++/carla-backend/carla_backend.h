@@ -116,11 +116,13 @@ enum PluginCategory {
 };
 
 enum ParameterType {
-    PARAMETER_UNKNOWN     = 0,
-    PARAMETER_INPUT       = 1,
-    PARAMETER_OUTPUT      = 2,
-    PARAMETER_LATENCY     = 3,
-    PARAMETER_SAMPLE_RATE = 4
+    PARAMETER_UNKNOWN       = 0,
+    PARAMETER_INPUT         = 1,
+    PARAMETER_OUTPUT        = 2,
+    PARAMETER_LATENCY       = 3,
+    PARAMETER_SAMPLE_RATE   = 4,
+    PARAMETER_LV2_FREEWHEEL = 5,
+    PARAMETER_LV2_TIME      = 6
 };
 
 enum InternalParametersIndex {

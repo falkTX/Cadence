@@ -153,6 +153,7 @@ public:
         unit_symbol         (new_uri(LV2_UNITS__symbol)),
 
         ui_gtk2             (new_uri(LV2_UI__GtkUI)),
+        //ui_gtk3             (new_uri(LV2_UI__Gtk3UI)), // FIXME
         ui_qt4              (new_uri(LV2_UI__Qt4UI)),
         ui_cocoa            (new_uri(LV2_UI__CocoaUI)),
         ui_windows          (new_uri(LV2_UI__WindowsUI)),
@@ -267,6 +268,7 @@ public:
 
     // UI Types
     Lilv::Node ui_gtk2;
+    //Lilv::Node ui_gtk3;// FIXME
     Lilv::Node ui_qt4;
     Lilv::Node ui_cocoa;
     Lilv::Node ui_windows;
@@ -563,7 +565,7 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                         rdf_port->Properties = LV2_PORT_TRIGGER;
 
                     if (lilvPort.has_property(Lv2World.reportsLatency))
-                        rdf_port->Designation = LV2_PORT_LATENCY;
+                        rdf_port->Designation = LV2_PORT_DESIGNATION_LATENCY;
                 }
 
                 // --------------------------------------
@@ -575,28 +577,32 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                     {
                         const char* const designation = designationNodes.get_first().as_string();
 
-                        if (strcmp(designation, LV2_CORE__latency) == 0)
-                            rdf_port->Designation = LV2_PORT_LATENCY;
+                        if (strcmp(designation, LV2_CORE__freeWheeling) == 0)
+                            rdf_port->Designation = LV2_PORT_DESIGNATION_FREEWHEELING;
+                        else if (strcmp(designation, LV2_CORE__latency) == 0)
+                            rdf_port->Designation = LV2_PORT_DESIGNATION_LATENCY;
+                        //else if (strcmp(designation, LV2_PARAMETERS__sampleRate) == 0) // FIXME
+                        //    rdf_port->Designation = LV2_PORT_DESIGNATION_SAMPLE_RATE;
                         else if (strcmp(designation, LV2_TIME__bar) == 0)
-                            rdf_port->Designation = LV2_PORT_TIME_BAR;
+                            rdf_port->Designation = LV2_PORT_DESIGNATION_TIME_BAR;
                         else if (strcmp(designation, LV2_TIME__barBeat) == 0)
-                            rdf_port->Designation = LV2_PORT_TIME_BAR_BEAT;
+                            rdf_port->Designation = LV2_PORT_DESIGNATION_TIME_BAR_BEAT;
                         else if (strcmp(designation, LV2_TIME__beat) == 0)
-                            rdf_port->Designation = LV2_PORT_TIME_BEAT;
+                            rdf_port->Designation = LV2_PORT_DESIGNATION_TIME_BEAT;
                         else if (strcmp(designation, LV2_TIME__beatUnit) == 0)
-                            rdf_port->Designation = LV2_PORT_TIME_BEAT_UNIT;
+                            rdf_port->Designation = LV2_PORT_DESIGNATION_TIME_BEAT_UNIT;
                         else if (strcmp(designation, LV2_TIME__beatsPerBar) == 0)
-                            rdf_port->Designation = LV2_PORT_TIME_BEATS_PER_BAR;
+                            rdf_port->Designation = LV2_PORT_DESIGNATION_TIME_BEATS_PER_BAR;
                         else if (strcmp(designation, LV2_TIME__beatsPerMinute) == 0)
-                            rdf_port->Designation = LV2_PORT_TIME_BEATS_PER_MINUTE;
+                            rdf_port->Designation = LV2_PORT_DESIGNATION_TIME_BEATS_PER_MINUTE;
                         else if (strcmp(designation, LV2_TIME__frame) == 0)
-                            rdf_port->Designation = LV2_PORT_TIME_FRAME;
+                            rdf_port->Designation = LV2_PORT_DESIGNATION_TIME_FRAME;
                         else if (strcmp(designation, LV2_TIME__framesPerSecond) == 0)
-                            rdf_port->Designation = LV2_PORT_TIME_FRAMES_PER_SECOND;
+                            rdf_port->Designation = LV2_PORT_DESIGNATION_TIME_FRAMES_PER_SECOND;
                         else if (strcmp(designation, LV2_TIME__position) == 0)
-                            rdf_port->Designation = LV2_PORT_TIME_POSITION;
+                            rdf_port->Designation = LV2_PORT_DESIGNATION_TIME_POSITION;
                         else if (strcmp(designation, LV2_TIME__speed) == 0)
-                            rdf_port->Designation = LV2_PORT_TIME_SPEED;
+                            rdf_port->Designation = LV2_PORT_DESIGNATION_TIME_SPEED;
                         else if (strncmp(designation, LV2_PARAMETERS_PREFIX, strlen(LV2_PARAMETERS_PREFIX)) == 0)
                             pass();
                         else if (strncmp(designation, LV2_PORT_GROUPS_PREFIX, strlen(LV2_PORT_GROUPS_PREFIX)) == 0)
@@ -960,6 +966,8 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                     {
                         if (lilvUI.is_a(Lv2World.ui_gtk2))
                             rdf_ui->Type = LV2_UI_GTK2;
+                        //else if (lilvUI.is_a(Lv2World.ui_gtk3))
+                        //    rdf_ui->Type = LV2_UI_GTK3;
                         else if (lilvUI.is_a(Lv2World.ui_qt4))
                             rdf_ui->Type = LV2_UI_QT4;
                         else if (lilvUI.is_a(Lv2World.ui_cocoa))
@@ -1504,6 +1512,8 @@ LV2_URI get_lv2_ui_uri(const LV2_Property type)
     {
     case LV2_UI_GTK2:
         return LV2_UI__GtkUI;
+    //case LV2_UI_GTK3: // FIXME
+    //    return LV2_UI__Gtk3UI;
     case LV2_UI_QT4:
         return LV2_UI__Qt4UI;
     case LV2_UI_COCOA:

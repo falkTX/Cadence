@@ -102,11 +102,13 @@ PLUGIN_CATEGORY_UTILITY   = 7 # Analyzer, Converter, Mixer
 PLUGIN_CATEGORY_OTHER     = 8 # used to check if a plugin has a category
 
 # enum ParameterType
-PARAMETER_UNKNOWN     = 0
-PARAMETER_INPUT       = 1
-PARAMETER_OUTPUT      = 2
-PARAMETER_LATENCY     = 3
-PARAMETER_SAMPLE_RATE = 4
+PARAMETER_UNKNOWN       = 0
+PARAMETER_INPUT         = 1
+PARAMETER_OUTPUT        = 2
+PARAMETER_LATENCY       = 3
+PARAMETER_SAMPLE_RATE   = 4
+PARAMETER_LV2_FREEWHEEL = 5
+PARAMETER_LV2_TIME      = 6
 
 # enum InternalParametersIndex
 PARAMETER_NULL   = -1
@@ -992,7 +994,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
     def setVisible(self, yesNo):
         if yesNo:
-            if self.m_geometry:
+            if self.m_geometry and not self.m_geometry.isNull():
                 self.restoreGeometry(self.m_geometry)
         else:
             self.m_geometry = self.saveGeometry()
@@ -2000,7 +2002,7 @@ class PluginGUI(QDialog):
 
     def setVisible(self, yesNo):
         if yesNo:
-            if self.m_geometry:
+            if self.m_geometry and not self.m_geometry.isNull():
                 self.restoreGeometry(self.m_geometry)
         else:
             self.m_geometry = self.saveGeometry()

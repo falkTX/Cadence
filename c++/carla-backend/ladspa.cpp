@@ -20,10 +20,6 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
-#if 0
-} /* adjust editor indent */
-#endif
-
 /*!
  * @defgroup CarlaBackendLadspaPlugin Carla Backend LADSPA Plugin
  *
@@ -562,6 +558,7 @@ public:
                     }
                     else if (strcmp(descriptor->PortNames[i], "_sample-rate") == 0)
                     {
+                        def = sampleRate;
                         step = 1.0;
                         stepSmall = 1.0;
                         stepLarge = 1.0;
@@ -656,7 +653,7 @@ public:
         if (aOuts > 0)
             m_hints |= PLUGIN_CAN_VOLUME;
 
-        if ((aOuts >= 2 && aOuts%2 == 0) || h2)
+        if (aOuts >= 2 && aOuts%2 == 0)
             m_hints |= PLUGIN_CAN_BALANCE;
 
         x_client->activate();
@@ -1051,7 +1048,7 @@ public:
         // ---------------------------------------------------------------
         // get DLL main entry
 
-        LADSPA_Descriptor_Function descFn = (LADSPA_Descriptor_Function)libSymbol("ladspa_descriptor");
+        const LADSPA_Descriptor_Function descFn = (LADSPA_Descriptor_Function)libSymbol("ladspa_descriptor");
 
         if (! descFn)
         {

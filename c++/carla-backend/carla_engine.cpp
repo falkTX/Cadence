@@ -674,9 +674,10 @@ const CarlaEngineBasePort* CarlaEngineClient::addPort(const CarlaEnginePortType 
         return new CarlaEngineControlPort(portHandle, isInput);
     case CarlaEnginePortTypeMIDI:
         return new CarlaEngineMidiPort(portHandle, isInput);
-    default:
-        return nullptr;
     }
+
+    qCritical("CarlaEngineClient::addPort(%i, \"%s\", %s) - invalid type", type, name, bool2str(isInput));
+    return nullptr;
 }
 
 // -------------------------------------------------------------------------------------------------------------------

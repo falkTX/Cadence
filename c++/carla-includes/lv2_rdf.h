@@ -162,31 +162,38 @@ typedef unsigned long long LV2_PluginType;
 #define LV2_IS_PORT_TRIGGER(x)           ((x) & LV2_PORT_TRIGGER)
 
 // Port Designation
-#define LV2_PORT_FREEWHEELING            0x1
-#define LV2_PORT_LATENCY                 0x2
-#define LV2_PORT_TIME_BAR                0x3
-#define LV2_PORT_TIME_BAR_BEAT           0x4
-#define LV2_PORT_TIME_BEAT               0x5
-#define LV2_PORT_TIME_BEAT_UNIT          0x6
-#define LV2_PORT_TIME_BEATS_PER_BAR      0x7
-#define LV2_PORT_TIME_BEATS_PER_MINUTE   0x8
-#define LV2_PORT_TIME_FRAME              0x9
-#define LV2_PORT_TIME_FRAMES_PER_SECOND  0xA
-#define LV2_PORT_TIME_POSITION           0xB
-#define LV2_PORT_TIME_SPEED              0xC
+#define LV2_PORT_DESIGNATION_FREEWHEELING            0x1
+#define LV2_PORT_DESIGNATION_LATENCY                 0x2
+#define LV2_PORT_DESIGNATION_SAMPLE_RATE             0x3
+#define LV2_PORT_DESIGNATION_TIME_BAR                0x4
+#define LV2_PORT_DESIGNATION_TIME_BAR_BEAT           0x5
+#define LV2_PORT_DESIGNATION_TIME_BEAT               0x6
+#define LV2_PORT_DESIGNATION_TIME_BEAT_UNIT          0x7
+#define LV2_PORT_DESIGNATION_TIME_BEATS_PER_BAR      0x8
+#define LV2_PORT_DESIGNATION_TIME_BEATS_PER_MINUTE   0x9
+#define LV2_PORT_DESIGNATION_TIME_FRAME              0xA
+#define LV2_PORT_DESIGNATION_TIME_FRAMES_PER_SECOND  0xB
+#define LV2_PORT_DESIGNATION_TIME_POSITION           0xC
+#define LV2_PORT_DESIGNATION_TIME_SPEED              0xD
 
-#define LV2_IS_PORT_FREEWHEELING(x)      ((x) == LV2_PORT_FREEWHEELING)
-#define LV2_IS_PORT_LATENCY(x)           ((x) == LV2_PORT_LATENCY)
-#define LV2_IS_PORT_TIME_BAR(x)          ((x) == LV2_PORT_TIME_BAR)
-#define LV2_IS_PORT_TIME_BAR_BEAT(x)     ((x) == LV2_PORT_TIME_BAR_BEAT)
-#define LV2_IS_PORT_TIME_BEAT(x)         ((x) == LV2_PORT_TIME_BEAT)
-#define LV2_IS_PORT_TIME_BEAT_UNIT(x)    ((x) == LV2_PORT_TIME_BEAT_UNIT)
-#define LV2_IS_PORT_TIME_BEATS_PER_BAR(x)     ((x) == LV2_PORT_TIME_BEATS_PER_BAR)
-#define LV2_IS_PORT_TIME_BEATS_PER_MINUTE(x)  ((x) == LV2_PORT_TIME_BEATS_PER_MINUTE)
-#define LV2_IS_PORT_TIME_FRAME(x)             ((x) == LV2_PORT_TIME_FRAME)
-#define LV2_IS_PORT_TIME_FRAMES_PER_SECOND(x) ((x) == LV2_PORT_TIME_FRAMES_PER_SECOND)
-#define LV2_IS_PORT_TIME_POSITION(x)          ((x) == LV2_PORT_TIME_POSITION)
-#define LV2_IS_PORT_TIME_SPEED(x)             ((x) == LV2_PORT_TIME_SPEED)
+#define LV2_IS_PORT_DESIGNATION_FREEWHEELING(x)      ((x) == LV2_PORT_DESIGNATION_FREEWHEELING)
+#define LV2_IS_PORT_DESIGNATION_LATENCY(x)           ((x) == LV2_PORT_DESIGNATION_LATENCY)
+#define LV2_IS_PORT_DESIGNATION_SAMPLE_RATE(x)       ((x) == LV2_PORT_DESIGNATION_SAMPLE_RATE)
+#define LV2_IS_PORT_DESIGNATION_TIME_BAR(x)          ((x) == LV2_PORT_DESIGNATION_TIME_BAR)
+#define LV2_IS_PORT_DESIGNATION_TIME_BAR_BEAT(x)     ((x) == LV2_PORT_DESIGNATION_TIME_BAR_BEAT)
+#define LV2_IS_PORT_DESIGNATION_TIME_BEAT(x)         ((x) == LV2_PORT_DESIGNATION_TIME_BEAT)
+#define LV2_IS_PORT_DESIGNATION_TIME_BEAT_UNIT(x)    ((x) == LV2_PORT_DESIGNATION_TIME_BEAT_UNIT)
+#define LV2_IS_PORT_DESIGNATION_TIME_BEATS_PER_BAR(x)     ((x) == LV2_PORT_DESIGNATION_TIME_BEATS_PER_BAR)
+#define LV2_IS_PORT_DESIGNATION_TIME_BEATS_PER_MINUTE(x)  ((x) == LV2_PORT_DESIGNATION_TIME_BEATS_PER_MINUTE)
+#define LV2_IS_PORT_DESIGNATION_TIME_FRAME(x)             ((x) == LV2_PORT_DESIGNATION_TIME_FRAME)
+#define LV2_IS_PORT_DESIGNATION_TIME_FRAMES_PER_SECOND(x) ((x) == LV2_PORT_DESIGNATION_TIME_FRAMES_PER_SECOND)
+#define LV2_IS_PORT_DESIGNATION_TIME_POSITION(x)          ((x) == LV2_PORT_DESIGNATION_TIME_POSITION)
+#define LV2_IS_PORT_DESIGNATION_TIME_SPEED(x)             ((x) == LV2_PORT_DESIGNATION_TIME_SPEED)
+#define LV2_IS_PORT_DESIGNATION_TIME(x)                   ((x) == LV2_PORT_DESIGNATION_TIME_BAR || (x) == LV2_PORT_DESIGNATION_TIME_BAR_BEAT ||                   \
+                                                           (x) == LV2_PORT_DESIGNATION_TIME_BEAT || (x) == LV2_PORT_DESIGNATION_TIME_BEAT_UNIT ||                 \
+                                                           (x) == LV2_PORT_DESIGNATION_TIME_BEATS_PER_BAR || (x) == LV2_PORT_DESIGNATION_TIME_BEATS_PER_MINUTE || \
+                                                           (x) == LV2_PORT_DESIGNATION_TIME_FRAME || (x) == LV2_PORT_DESIGNATION_TIME_FRAMES_PER_SECOND ||        \
+                                                           (x) == LV2_PORT_DESIGNATION_TIME_POSITION || (x) == LV2_PORT_DESIGNATION_TIME_SPEED)
 
 // Preset State Types (TODO: Null is not a type, this is just a placeholder)
 #define LV2_PRESET_STATE_NULL            0x0
@@ -202,14 +209,16 @@ typedef unsigned long long LV2_PluginType;
 
 // UI Types
 #define LV2_UI_GTK2                      0x1
-#define LV2_UI_QT4                       0x2
-#define LV2_UI_COCOA                     0x3
-#define LV2_UI_WINDOWS                   0x4
-#define LV2_UI_X11                       0x5
-#define LV2_UI_EXTERNAL                  0x6
-#define LV2_UI_OLD_EXTERNAL              0x7
+#define LV2_UI_GTK3                      0x2
+#define LV2_UI_QT4                       0x3
+#define LV2_UI_COCOA                     0x4
+#define LV2_UI_WINDOWS                   0x5
+#define LV2_UI_X11                       0x6
+#define LV2_UI_EXTERNAL                  0x7
+#define LV2_UI_OLD_EXTERNAL              0x8
 
 #define LV2_IS_UI_GTK2(x)                ((x) == LV2_UI_GTK2)
+#define LV2_IS_UI_GTK3(x)                ((x) == LV2_UI_GTK3)
 #define LV2_IS_UI_QT4(x)                 ((x) == LV2_UI_QT4)
 #define LV2_IS_UI_COCOA(x)               ((x) == LV2_UI_COCOA)
 #define LV2_IS_UI_WINDOWS(x)             ((x) == LV2_UI_WINDOWS)

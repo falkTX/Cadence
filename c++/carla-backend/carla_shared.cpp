@@ -120,6 +120,10 @@ const char* ParameterType2str(const ParameterType type)
         return "PARAMETER_LATENCY";
     case PARAMETER_SAMPLE_RATE:
         return "PARAMETER_SAMPLE_RATE";
+    case PARAMETER_LV2_FREEWHEEL:
+        return "PARAMETER_LV2_FREEWHEEL";
+    case PARAMETER_LV2_TIME:
+        return "PARAMETER_LV2_TIME";
     }
 
     qWarning("CarlaBackend::ParameterType2str(%i) - invalid type", type);
