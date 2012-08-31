@@ -2107,23 +2107,30 @@ public:
                     switch (rdf_descriptor->Ports[rindex].Designation)
                     {
                     case LV2_PORT_DESIGNATION_TIME_BAR:
-                        setParameterValue(k, timeInfo->bbt.bar, false, false, false);
+                        if (timeInfo->valid & CarlaEngineTimeBBT)
+                            setParameterValue(k, timeInfo->bbt.bar, false, false, false);
                         break;
                     case LV2_PORT_DESIGNATION_TIME_BAR_BEAT:
-                        setParameterValue(k, timeInfo->bbt.tick, false, false, false);
+                        if (timeInfo->valid & CarlaEngineTimeBBT)
+                            setParameterValue(k, timeInfo->bbt.tick, false, false, false);
                         break;
                     case LV2_PORT_DESIGNATION_TIME_BEAT:
-                        setParameterValue(k, timeInfo->bbt.beat, false, false, false);
+                        if (timeInfo->valid & CarlaEngineTimeBBT)
+                            setParameterValue(k, timeInfo->bbt.beat, false, false, false);
                         break;
                     case LV2_PORT_DESIGNATION_TIME_BEAT_UNIT:
-                        setParameterValue(k, timeInfo->bbt.beat_type, false, false, false);
+                        if (timeInfo->valid & CarlaEngineTimeBBT)
+                            setParameterValue(k, timeInfo->bbt.beat_type, false, false, false);
                         break;
                     case LV2_PORT_DESIGNATION_TIME_BEATS_PER_BAR:
-                        setParameterValue(k, timeInfo->bbt.beats_per_bar, false, false, false);
+                        if (timeInfo->valid & CarlaEngineTimeBBT)
+                            setParameterValue(k, timeInfo->bbt.beats_per_bar, false, false, false);
                         break;
                     case LV2_PORT_DESIGNATION_TIME_BEATS_PER_MINUTE:
-                        setParameterValue(k, timeInfo->bbt.beats_per_minute, false, false, false);
+                        if (timeInfo->valid & CarlaEngineTimeBBT)
+                            setParameterValue(k, timeInfo->bbt.beats_per_minute, false, false, false);
                         break;
+
                     case LV2_PORT_DESIGNATION_TIME_FRAME:
                         setParameterValue(k, timeInfo->frame, false, false, false);
                         break;

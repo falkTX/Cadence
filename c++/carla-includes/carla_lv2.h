@@ -24,6 +24,7 @@
 #include "lv2/atom.h"
 #include "lv2/atom-forge.h"
 #include "lv2/atom-util.h"
+#include "lv2/buf-size.h"
 #include "lv2/data-access.h"
 // dynmanifest
 #include "lv2/event.h"
@@ -31,6 +32,8 @@
 #include "lv2/instance-access.h"
 #include "lv2/log.h"
 #include "lv2/midi.h"
+#include "lv2/options.h"
+#include "lv2/parameters.h"
 #include "lv2/patch.h"
 #include "lv2/port-groups.h"
 #include "lv2/port-props.h"
@@ -65,9 +68,6 @@
 #define NS_rdf  "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 #define NS_rdfs "http://www.w3.org/2000/01/rdf-schema#"
 #define NS_llmm "http://ll-plugins.nongnu.org/lv2/ext/midimap#"
-
-#define LV2_PARAMETERS_URI    "http://lv2plug.in/ns/ext/parameters"
-#define LV2_PARAMETERS_PREFIX LV2_PARAMETERS_URI "#"
 
 #define LV2_MIDI_Map__CC      "http://ll-plugins.nongnu.org/lv2/namespace#CC"
 #define LV2_MIDI_Map__NRPN    "http://ll-plugins.nongnu.org/lv2/namespace#NRPN"
@@ -153,7 +153,7 @@ public:
         unit_symbol         (new_uri(LV2_UNITS__symbol)),
 
         ui_gtk2             (new_uri(LV2_UI__GtkUI)),
-        //ui_gtk3             (new_uri(LV2_UI__Gtk3UI)), // FIXME
+        ui_gtk3             (new_uri(LV2_UI__Gtk3UI)),
         ui_qt4              (new_uri(LV2_UI__Qt4UI)),
         ui_cocoa            (new_uri(LV2_UI__CocoaUI)),
         ui_windows          (new_uri(LV2_UI__WindowsUI)),
@@ -268,7 +268,7 @@ public:
 
     // UI Types
     Lilv::Node ui_gtk2;
-    //Lilv::Node ui_gtk3;// FIXME
+    Lilv::Node ui_gtk3;
     Lilv::Node ui_qt4;
     Lilv::Node ui_cocoa;
     Lilv::Node ui_windows;
@@ -581,8 +581,8 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                             rdf_port->Designation = LV2_PORT_DESIGNATION_FREEWHEELING;
                         else if (strcmp(designation, LV2_CORE__latency) == 0)
                             rdf_port->Designation = LV2_PORT_DESIGNATION_LATENCY;
-                        //else if (strcmp(designation, LV2_PARAMETERS__sampleRate) == 0) // FIXME
-                        //    rdf_port->Designation = LV2_PORT_DESIGNATION_SAMPLE_RATE;
+                        else if (strcmp(designation, LV2_PARAMETERS__sampleRate) == 0)
+                            rdf_port->Designation = LV2_PORT_DESIGNATION_SAMPLE_RATE;
                         else if (strcmp(designation, LV2_TIME__bar) == 0)
                             rdf_port->Designation = LV2_PORT_DESIGNATION_TIME_BAR;
                         else if (strcmp(designation, LV2_TIME__barBeat) == 0)
@@ -966,8 +966,8 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                     {
                         if (lilvUI.is_a(Lv2World.ui_gtk2))
                             rdf_ui->Type = LV2_UI_GTK2;
-                        //else if (lilvUI.is_a(Lv2World.ui_gtk3))
-                        //    rdf_ui->Type = LV2_UI_GTK3;
+                        else if (lilvUI.is_a(Lv2World.ui_gtk3))
+                            rdf_ui->Type = LV2_UI_GTK3;
                         else if (lilvUI.is_a(Lv2World.ui_qt4))
                             rdf_ui->Type = LV2_UI_QT4;
                         else if (lilvUI.is_a(Lv2World.ui_cocoa))
@@ -1512,8 +1512,8 @@ LV2_URI get_lv2_ui_uri(const LV2_Property type)
     {
     case LV2_UI_GTK2:
         return LV2_UI__GtkUI;
-    //case LV2_UI_GTK3: // FIXME
-    //    return LV2_UI__Gtk3UI;
+    case LV2_UI_GTK3:
+        return LV2_UI__Gtk3UI;
     case LV2_UI_QT4:
         return LV2_UI__Qt4UI;
     case LV2_UI_COCOA:
