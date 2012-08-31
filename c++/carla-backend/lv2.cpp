@@ -133,13 +133,8 @@ const uint32_t CARLA_URI_MAP_ID_MIDI_EVENT    = 11;
 const uint32_t CARLA_URI_MAP_ID_COUNT         = 12;
 /**@}*/
 
-enum Lv2ParameterDataType {
-    LV2_PARAMETER_TYPE_NULL,
-    LV2_PARAMETER_TYPE_CONTROL
-};
-
 struct EventData {
-    unsigned int type;
+    uint32_t type;
     CarlaEngineMidiPort* port;
     union {
         LV2_Atom_Sequence* atom;
@@ -150,16 +145,6 @@ struct EventData {
     EventData()
         : type(0),
           port(nullptr) {}
-};
-
-struct Lv2ParameterData {
-    Lv2ParameterDataType type;
-    union {
-        float control;
-    };
-
-    Lv2ParameterData()
-        : type(LV2_PARAMETER_TYPE_NULL) {}
 };
 
 struct PluginEventData {
@@ -195,14 +180,15 @@ const char* lv2bridge2str(const LV2_Property type)
 class Lv2Plugin : public CarlaPlugin
 {
 public:
-    Lv2Plugin(CarlaEngine* const engine, unsigned short id) : CarlaPlugin(engine, id)
+    Lv2Plugin(CarlaEngine* const engine, const unsigned short id)
+        : CarlaPlugin(engine, id)
     {
         qDebug("Lv2Plugin::Lv2Plugin()");
 
         m_type = PLUGIN_LV2;
 
         handle = h2 = nullptr;
-        descriptor = nullptr;
+        descriptor  = nullptr;
         rdf_descriptor = nullptr;
 
         ext.state      = nullptr;
@@ -215,13 +201,13 @@ public:
         ui.descriptor = nullptr;
         ui.rdf_descriptor = nullptr;
 
-        evin.count = 0;
-        evin.data  = nullptr;
+        evIn.count = 0;
+        evIn.data  = nullptr;
 
-        evout.count = 0;
-        evout.data  = nullptr;
+        evOut.count = 0;
+        evOut.data  = nullptr;
 
-        lv2param = nullptr;
+        paramBuffers = nullptr;
 
         gui.type = GUI_NONE;
         gui.resizable = false;
@@ -343,7 +329,7 @@ public:
                 if (handle)
                     descriptor->deactivate(handle);
                 if (h2)
-                    descriptor->deactivate(handle);
+                    descriptor->deactivate(h2);
             }
 
             if (descriptor->cleanup)
@@ -405,31 +391,33 @@ public:
 
     PluginCategory category()
     {
-        LV2_Property Category = rdf_descriptor->Type;
+        Q_ASSERT(rdf_descriptor);
 
-        if (LV2_IS_DELAY(Category))
+        LV2_Property category = rdf_descriptor->Type;
+
+        if (LV2_IS_DELAY(category))
             return PLUGIN_CATEGORY_DELAY;
-        if (LV2_IS_DISTORTION(Category))
+        if (LV2_IS_DISTORTION(category))
             return PLUGIN_CATEGORY_OTHER;
-        if (LV2_IS_DYNAMICS(Category))
+        if (LV2_IS_DYNAMICS(category))
             return PLUGIN_CATEGORY_DYNAMICS;
-        if (LV2_IS_EQ(Category))
+        if (LV2_IS_EQ(category))
             return PLUGIN_CATEGORY_EQ;
-        if (LV2_IS_FILTER(Category))
+        if (LV2_IS_FILTER(category))
             return PLUGIN_CATEGORY_FILTER;
-        if (LV2_IS_GENERATOR(Category))
+        if (LV2_IS_GENERATOR(category))
             return PLUGIN_CATEGORY_SYNTH;
-        if (LV2_IS_MODULATOR(Category))
+        if (LV2_IS_MODULATOR(category))
             return PLUGIN_CATEGORY_MODULATOR;
-        if (LV2_IS_REVERB(Category))
+        if (LV2_IS_REVERB(category))
             return PLUGIN_CATEGORY_DELAY;
-        if (LV2_IS_SIMULATOR(Category))
+        if (LV2_IS_SIMULATOR(category))
             return PLUGIN_CATEGORY_OTHER;
-        if (LV2_IS_SPATIAL(Category))
+        if (LV2_IS_SPATIAL(category))
             return PLUGIN_CATEGORY_OTHER;
-        if (LV2_IS_SPECTRAL(Category))
+        if (LV2_IS_SPECTRAL(category))
             return PLUGIN_CATEGORY_UTILITY;
-        if (LV2_IS_UTILITY(Category))
+        if (LV2_IS_UTILITY(category))
             return PLUGIN_CATEGORY_UTILITY;
 
         return getPluginCategoryFromName(m_name);
@@ -437,6 +425,8 @@ public:
 
     long uniqueId()
     {
+        Q_ASSERT(rdf_descriptor);
+
         return rdf_descriptor->UniqueID;
     }
 
@@ -447,9 +437,9 @@ public:
     {
         uint32_t i, count = 0;
 
-        for (i=0; i < evin.count; i++)
+        for (i=0; i < evIn.count; i++)
         {
-            if (evin.data[i].type & CARLA_EVENT_TYPE_MIDI)
+            if (evIn.data[i].type & CARLA_EVENT_TYPE_MIDI)
                 count += 1;
         }
 
@@ -460,54 +450,81 @@ public:
     {
         uint32_t i, count = 0;
 
-        for (i=0; i < evout.count; i++)
+        for (i=0; i < evOut.count; i++)
         {
-            if (evout.data[i].type & CARLA_EVENT_TYPE_MIDI)
+            if (evOut.data[i].type & CARLA_EVENT_TYPE_MIDI)
                 count += 1;
         }
 
         return count;
     }
 
-    uint32_t parameterScalePointCount(uint32_t parameterId)
+    uint32_t parameterScalePointCount(const uint32_t parameterId)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
+        Q_ASSERT(rdf_descriptor);
+
         int32_t rindex = param.data[parameterId].rindex;
-        return rdf_descriptor->Ports[rindex].ScalePointCount;
+
+        if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
+        {
+            const LV2_RDF_Port* const port = &rdf_descriptor->Ports[rindex];
+
+            if (port)
+                return port->ScalePointCount;
+        }
+
+        return 0;
     }
 
     // -------------------------------------------------------------------
     // Information (per-plugin data)
 
-    double getParameterValue(uint32_t parameterId)
+    double getParameterValue(const uint32_t parameterId)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
 
-        switch (lv2param[parameterId].type)
-        {
-        case LV2_PARAMETER_TYPE_CONTROL:
-            return lv2param[parameterId].control;
-        default:
-            return 0.0;
-        }
+        return paramBuffers[parameterId];
     }
 
-    double getParameterScalePointValue(uint32_t parameterId, uint32_t scalePointId)
+    double getParameterScalePointValue(const uint32_t parameterId, const uint32_t scalePointId)
     {
-        assert(parameterId < param.count);
-        assert(scalePointId < parameterScalePointCount(parameterId));
+        Q_ASSERT(parameterId < param.count);
+        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
+
         int32_t rindex = param.data[parameterId].rindex;
-        return rdf_descriptor->Ports[rindex].ScalePoints[scalePointId].Value;
+
+        if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
+        {
+            const LV2_RDF_Port* const port = &rdf_descriptor->Ports[rindex];
+
+            if (port && scalePointId < port->ScalePointCount)
+            {
+                const LV2_RDF_PortScalePoint* const portScalePoint = &port->ScalePoints[scalePointId];
+
+                if (portScalePoint)
+                    return portScalePoint->Value;
+            }
+        }
+
+        return 0.0;
     }
 
     void getLabel(char* const strBuf)
     {
-        strncpy(strBuf, rdf_descriptor->URI, STR_MAX);
+        Q_ASSERT(rdf_descriptor);
+
+        if (rdf_descriptor && rdf_descriptor->URI)
+            strncpy(strBuf, rdf_descriptor->URI, STR_MAX);
+        else
+            CarlaPlugin::getLabel(strBuf);
     }
 
     void getMaker(char* const strBuf)
     {
-        if (rdf_descriptor->Author)
+        Q_ASSERT(rdf_descriptor);
+
+        if (rdf_descriptor && rdf_descriptor->Author)
             strncpy(strBuf, rdf_descriptor->Author, STR_MAX);
         else
             CarlaPlugin::getMaker(strBuf);
@@ -515,7 +532,9 @@ public:
 
     void getCopyright(char* const strBuf)
     {
-        if (rdf_descriptor->License)
+        Q_ASSERT(rdf_descriptor);
+
+        if (rdf_descriptor && rdf_descriptor->License)
             strncpy(strBuf, rdf_descriptor->License, STR_MAX);
         else
             CarlaPlugin::getCopyright(strBuf);
@@ -523,127 +542,169 @@ public:
 
     void getRealName(char* const strBuf)
     {
-        if (rdf_descriptor->Name)
+        Q_ASSERT(rdf_descriptor);
+
+        if (rdf_descriptor && rdf_descriptor->Name)
             strncpy(strBuf, rdf_descriptor->Name, STR_MAX);
         else
             CarlaPlugin::getRealName(strBuf);
     }
 
-    void getParameterName(uint32_t parameterId, char* const strBuf)
+    void getParameterName(const uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(rdf_descriptor);
+        Q_ASSERT(parameterId < param.count);
+
         int32_t rindex = param.data[parameterId].rindex;
-        strncpy(strBuf, rdf_descriptor->Ports[rindex].Name, STR_MAX);
+
+        if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
+            strncpy(strBuf, rdf_descriptor->Ports[rindex].Name, STR_MAX);
+        else
+            CarlaPlugin::getParameterName(parameterId, strBuf);
     }
 
-    void getParameterSymbol(uint32_t parameterId, char* const strBuf)
+    void getParameterSymbol(const uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(rdf_descriptor);
+        Q_ASSERT(parameterId < param.count);
+
         int32_t rindex = param.data[parameterId].rindex;
-        strncpy(strBuf, rdf_descriptor->Ports[rindex].Symbol, STR_MAX);
+
+        if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
+            strncpy(strBuf, rdf_descriptor->Ports[rindex].Symbol, STR_MAX);
+        else
+            CarlaPlugin::getParameterSymbol(parameterId, strBuf);
     }
 
-    void getParameterUnit(uint32_t parameterId, char* const strBuf)
+    void getParameterUnit(const uint32_t parameterId, char* const strBuf)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(rdf_descriptor);
+        Q_ASSERT(parameterId < param.count);
+
         int32_t rindex = param.data[parameterId].rindex;
-        const LV2_RDF_Port* const Port = &rdf_descriptor->Ports[rindex];
 
-        if (LV2_HAVE_UNIT_SYMBOL(Port->Unit.Hints))
-            strncpy(strBuf, Port->Unit.Symbol, STR_MAX);
-
-        else if (LV2_HAVE_UNIT(Port->Unit.Hints))
+        if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
         {
-            switch (Port->Unit.Type)
+            const LV2_RDF_Port* const port = &rdf_descriptor->Ports[rindex];
+
+            if (LV2_HAVE_UNIT_SYMBOL(port->Unit.Hints) && port->Unit.Symbol)
+                strncpy(strBuf, port->Unit.Symbol, STR_MAX);
+
+            else if (LV2_HAVE_UNIT(port->Unit.Hints))
             {
-            case LV2_UNIT_BAR:
-                strncpy(strBuf, "bars", STR_MAX);
-                return;
-            case LV2_UNIT_BEAT:
-                strncpy(strBuf, "beats", STR_MAX);
-                return;
-            case LV2_UNIT_BPM:
-                strncpy(strBuf, "BPM", STR_MAX);
-                return;
-            case LV2_UNIT_CENT:
-                strncpy(strBuf, "ct", STR_MAX);
-                return;
-            case LV2_UNIT_CM:
-                strncpy(strBuf, "cm", STR_MAX);
-                return;
-            case LV2_UNIT_COEF:
-                strncpy(strBuf, "(coef)", STR_MAX);
-                return;
-            case LV2_UNIT_DB:
-                strncpy(strBuf, "dB", STR_MAX);
-                return;
-            case LV2_UNIT_DEGREE:
-                strncpy(strBuf, "deg", STR_MAX);
-                return;
-            case LV2_UNIT_FRAME:
-                strncpy(strBuf, "frames", STR_MAX);
-                return;
-            case LV2_UNIT_HZ:
-                strncpy(strBuf, "Hz", STR_MAX);
-                return;
-            case LV2_UNIT_INCH:
-                strncpy(strBuf, "in", STR_MAX);
-                return;
-            case LV2_UNIT_KHZ:
-                strncpy(strBuf, "kHz", STR_MAX);
-                return;
-            case LV2_UNIT_KM:
-                strncpy(strBuf, "km", STR_MAX);
-                return;
-            case LV2_UNIT_M:
-                strncpy(strBuf, "m", STR_MAX);
-                return;
-            case LV2_UNIT_MHZ:
-                strncpy(strBuf, "MHz", STR_MAX);
-                return;
-            case LV2_UNIT_MIDINOTE:
-                strncpy(strBuf, "note", STR_MAX);
-                return;
-            case LV2_UNIT_MILE:
-                strncpy(strBuf, "mi", STR_MAX);
-                return;
-            case LV2_UNIT_MIN:
-                strncpy(strBuf, "min", STR_MAX);
-                return;
-            case LV2_UNIT_MM:
-                strncpy(strBuf, "mm", STR_MAX);
-                return;
-            case LV2_UNIT_MS:
-                strncpy(strBuf, "ms", STR_MAX);
-                return;
-            case LV2_UNIT_OCT:
-                strncpy(strBuf, "oct", STR_MAX);
-                return;
-            case LV2_UNIT_PC:
-                strncpy(strBuf, "%", STR_MAX);
-                return;
-            case LV2_UNIT_S:
-                strncpy(strBuf, "s", STR_MAX);
-                return;
-            case LV2_UNIT_SEMITONE:
-                strncpy(strBuf, "semi", STR_MAX);
-                return;
+                switch (port->Unit.Type)
+                {
+                case LV2_UNIT_BAR:
+                    strncpy(strBuf, "bars", STR_MAX);
+                    return;
+                case LV2_UNIT_BEAT:
+                    strncpy(strBuf, "beats", STR_MAX);
+                    return;
+                case LV2_UNIT_BPM:
+                    strncpy(strBuf, "BPM", STR_MAX);
+                    return;
+                case LV2_UNIT_CENT:
+                    strncpy(strBuf, "ct", STR_MAX);
+                    return;
+                case LV2_UNIT_CM:
+                    strncpy(strBuf, "cm", STR_MAX);
+                    return;
+                case LV2_UNIT_COEF:
+                    strncpy(strBuf, "(coef)", STR_MAX);
+                    return;
+                case LV2_UNIT_DB:
+                    strncpy(strBuf, "dB", STR_MAX);
+                    return;
+                case LV2_UNIT_DEGREE:
+                    strncpy(strBuf, "deg", STR_MAX);
+                    return;
+                case LV2_UNIT_FRAME:
+                    strncpy(strBuf, "frames", STR_MAX);
+                    return;
+                case LV2_UNIT_HZ:
+                    strncpy(strBuf, "Hz", STR_MAX);
+                    return;
+                case LV2_UNIT_INCH:
+                    strncpy(strBuf, "in", STR_MAX);
+                    return;
+                case LV2_UNIT_KHZ:
+                    strncpy(strBuf, "kHz", STR_MAX);
+                    return;
+                case LV2_UNIT_KM:
+                    strncpy(strBuf, "km", STR_MAX);
+                    return;
+                case LV2_UNIT_M:
+                    strncpy(strBuf, "m", STR_MAX);
+                    return;
+                case LV2_UNIT_MHZ:
+                    strncpy(strBuf, "MHz", STR_MAX);
+                    return;
+                case LV2_UNIT_MIDINOTE:
+                    strncpy(strBuf, "note", STR_MAX);
+                    return;
+                case LV2_UNIT_MILE:
+                    strncpy(strBuf, "mi", STR_MAX);
+                    return;
+                case LV2_UNIT_MIN:
+                    strncpy(strBuf, "min", STR_MAX);
+                    return;
+                case LV2_UNIT_MM:
+                    strncpy(strBuf, "mm", STR_MAX);
+                    return;
+                case LV2_UNIT_MS:
+                    strncpy(strBuf, "ms", STR_MAX);
+                    return;
+                case LV2_UNIT_OCT:
+                    strncpy(strBuf, "oct", STR_MAX);
+                    return;
+                case LV2_UNIT_PC:
+                    strncpy(strBuf, "%", STR_MAX);
+                    return;
+                case LV2_UNIT_S:
+                    strncpy(strBuf, "s", STR_MAX);
+                    return;
+                case LV2_UNIT_SEMITONE:
+                    strncpy(strBuf, "semi", STR_MAX);
+                    return;
+                }
             }
         }
 
-        *strBuf = 0;
+        CarlaPlugin::getParameterUnit(parameterId, strBuf);
     }
 
-    void getParameterScalePointLabel(uint32_t parameterId, uint32_t scalePointId, char* const strBuf)
+    void getParameterScalePointLabel(const uint32_t parameterId, const uint32_t scalePointId, char* const strBuf)
     {
-        assert(parameterId < param.count);
-        assert(scalePointId < parameterScalePointCount(parameterId));
+        Q_ASSERT(rdf_descriptor);
+        Q_ASSERT(parameterId < param.count);
+        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
+
         int32_t rindex = param.data[parameterId].rindex;
-        strncpy(strBuf, rdf_descriptor->Ports[rindex].ScalePoints[scalePointId].Label, STR_MAX);
+
+        if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
+        {
+            const LV2_RDF_Port* const port = &rdf_descriptor->Ports[rindex];
+
+            if (port && scalePointId < port->ScalePointCount)
+            {
+                const LV2_RDF_PortScalePoint* const portScalePoint = &port->ScalePoints[scalePointId];
+
+                if (portScalePoint && portScalePoint->Label)
+                {
+                    strncpy(strBuf, portScalePoint->Label, STR_MAX);
+                    return;
+                }
+            }
+        }
+
+        CarlaPlugin::getParameterScalePointLabel(parameterId, scalePointId, strBuf);
     }
 
-    void getGuiInfo(GuiType* type, bool* resizable)
+    void getGuiInfo(GuiType* const type, bool* const resizable)
     {
+        Q_ASSERT(type);
+        Q_ASSERT(resizable);
+
         *type      = gui.type;
         *resizable = gui.resizable;
     }
@@ -651,19 +712,13 @@ public:
     // -------------------------------------------------------------------
     // Set data (plugin-specific stuff)
 
-    void setParameterValue(uint32_t parameterId, double value, bool sendGui, bool sendOsc, bool sendCallback)
+    void setParameterValue(const uint32_t parameterId, double value, const bool sendGui, const bool sendOsc, const bool sendCallback)
     {
-        assert(parameterId < param.count);
+        Q_ASSERT(parameterId < param.count);
 
-        switch (lv2param[parameterId].type)
-        {
-        case LV2_PARAMETER_TYPE_CONTROL:
-            lv2param[parameterId].control = fixParameterValue(value, param.ranges[parameterId]);
-            break;
-        default:
-            break;
-        }
+        paramBuffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
 
+#if 0
         if (sendGui)
         {
             switch (gui.type)
@@ -689,12 +744,26 @@ public:
                 break;
             }
         }
+#endif
 
         CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
     }
 
-    void setCustomData(CustomDataType type, const char* key, const char* value, bool sendGui)
+    void setCustomData(const CustomDataType type, const char* const key, const char* const value, const bool sendGui)
     {
+        Q_ASSERT(type != CUSTOM_DATA_INVALID);
+        Q_ASSERT(key);
+        Q_ASSERT(value);
+
+        if (type == CUSTOM_DATA_INVALID)
+            return qCritical("Lv2Plugin::setCustomData(%s, \"%s\", \"%s\", %s) - type is invalid", CustomDataType2str(type), key, value, bool2str(sendGui));
+
+        if (! key)
+            return qCritical("Lv2Plugin::setCustomData(%s, \"%s\", \"%s\", %s) - key is null", CustomDataType2str(type), key, value, bool2str(sendGui));
+
+        if (! value)
+            return qCritical("Lv2Plugin::setCustomData(%s, \"%s\", \"%s\", %s) - value is null", CustomDataType2str(type), key, value, bool2str(sendGui));
+
         CarlaPlugin::setCustomData(type, key, value, sendGui);
 
         if (ext.state)
@@ -709,7 +778,7 @@ public:
             }
             else
             {
-                const ScopedDisabler m(this);
+                const CarlaPlugin::ScopedDisabler m(this);
                 status = ext.state->restore(handle, carla_lv2_state_retrieve, this, 0, features);
             }
 
@@ -737,7 +806,7 @@ public:
         }
     }
 
-    void setMidiProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
+    void setMidiProgram(int32_t index, const bool sendGui, const bool sendOsc, const bool sendCallback, const bool block)
     {
         assert(index < (int32_t)midiprog.count);
 
@@ -772,7 +841,7 @@ public:
     // -------------------------------------------------------------------
     // Set gui stuff
 
-    void setGuiData(int, GuiDataHandle handle)
+    void setGuiData(const int, const GuiDataHandle handle)
     {
         switch(gui.type)
         {
@@ -780,8 +849,8 @@ public:
         case GUI_INTERNAL_QT4:
             if (ui.widget)
             {
-                QDialog* dialog = handle;
-                QWidget* widget = (QWidget*)ui.widget;
+                QDialog* const dialog = handle;
+                QWidget* const widget = (QWidget*)ui.widget;
                 dialog->layout()->addWidget(widget);
                 widget->adjustSize();
                 widget->setParent(dialog);
@@ -790,6 +859,7 @@ public:
             break;
 #endif
 
+        case GUI_INTERNAL_COCOA:
         case GUI_INTERNAL_HWND:
         case GUI_INTERNAL_X11:
             if (ui.descriptor)
@@ -811,7 +881,7 @@ public:
         }
     }
 
-    void showGui(bool yesNo)
+    void showGui(const bool yesNo)
     {
         switch(gui.type)
         {
@@ -923,54 +993,54 @@ public:
 
         uint32_t aIns, aOuts, cvIns, cvOuts, params, j;
         aIns = aOuts = cvIns = cvOuts = params = 0;
-        std::vector<unsigned int> evIns, evOuts;
+        std::vector<uint32_t> evIns, evOuts;
 
-        const double sampleRate = x_engine->getSampleRate();
-        const uint32_t PortCount = rdf_descriptor->PortCount;
+        const double sampleRate  = x_engine->getSampleRate();
+        const uint32_t portCount = rdf_descriptor->PortCount;
 
         bool forcedStereoIn, forcedStereoOut;
         forcedStereoIn = forcedStereoOut = false;
 
-        for (uint32_t i=0; i < PortCount; i++)
+        for (uint32_t i=0; i < portCount; i++)
         {
-            const LV2_Property PortType = rdf_descriptor->Ports[i].Type;
+            const LV2_Property portType = rdf_descriptor->Ports[i].Type;
 
-            if (LV2_IS_PORT_AUDIO(PortType))
+            if (LV2_IS_PORT_AUDIO(portType))
             {
-                if (LV2_IS_PORT_INPUT(PortType))
+                if (LV2_IS_PORT_INPUT(portType))
                     aIns += 1;
-                else if (LV2_IS_PORT_OUTPUT(PortType))
+                else if (LV2_IS_PORT_OUTPUT(portType))
                     aOuts += 1;
             }
-            else if (LV2_IS_PORT_CV(PortType))
+            else if (LV2_IS_PORT_CV(portType))
             {
-                if (LV2_IS_PORT_INPUT(PortType))
+                if (LV2_IS_PORT_INPUT(portType))
                     cvIns += 1;
-                else if (LV2_IS_PORT_OUTPUT(PortType))
+                else if (LV2_IS_PORT_OUTPUT(portType))
                     cvOuts += 1;
             }
-            else if (LV2_IS_PORT_ATOM_SEQUENCE(PortType))
+            else if (LV2_IS_PORT_ATOM_SEQUENCE(portType))
             {
-                if (LV2_IS_PORT_INPUT(PortType))
+                if (LV2_IS_PORT_INPUT(portType))
                     evIns.push_back(CARLA_EVENT_DATA_ATOM);
-                else if (LV2_IS_PORT_OUTPUT(PortType))
+                else if (LV2_IS_PORT_OUTPUT(portType))
                     evOuts.push_back(CARLA_EVENT_DATA_ATOM);
             }
-            else if (LV2_IS_PORT_EVENT(PortType))
+            else if (LV2_IS_PORT_EVENT(portType))
             {
-                if (LV2_IS_PORT_INPUT(PortType))
+                if (LV2_IS_PORT_INPUT(portType))
                     evIns.push_back(CARLA_EVENT_DATA_EVENT);
-                else if (LV2_IS_PORT_OUTPUT(PortType))
+                else if (LV2_IS_PORT_OUTPUT(portType))
                     evOuts.push_back(CARLA_EVENT_DATA_EVENT);
             }
-            else if (LV2_IS_PORT_MIDI_LL(PortType))
+            else if (LV2_IS_PORT_MIDI_LL(portType))
             {
-                if (LV2_IS_PORT_INPUT(PortType))
+                if (LV2_IS_PORT_INPUT(portType))
                     evIns.push_back(CARLA_EVENT_DATA_MIDI_LL);
-                else if (LV2_IS_PORT_OUTPUT(PortType))
+                else if (LV2_IS_PORT_OUTPUT(portType))
                     evOuts.push_back(CARLA_EVENT_DATA_MIDI_LL);
             }
-            else if (LV2_IS_PORT_CONTROL(PortType))
+            else if (LV2_IS_PORT_CONTROL(portType))
                 params += 1;
         }
 
@@ -1006,33 +1076,33 @@ public:
         if (evIns.size() > 0)
         {
             const size_t size = evIns.size();
-            evin.data = new EventData[size];
+            evIn.data = new EventData[size];
 
             for (j=0; j < size; j++)
             {
-                evin.data[j].port = nullptr;
-                evin.data[j].type = 0;
+                evIn.data[j].port = nullptr;
+                evIn.data[j].type = 0;
 
                 if (evIns[j] == CARLA_EVENT_DATA_ATOM)
                 {
-                    evin.data[j].type = CARLA_EVENT_DATA_ATOM;
-                    evin.data[j].atom = (LV2_Atom_Sequence*)malloc(sizeof(LV2_Atom_Sequence) + MAX_EVENT_BUFFER);
-                    evin.data[j].atom->atom.size = sizeof(LV2_Atom_Sequence_Body);
-                    evin.data[j].atom->atom.type = CARLA_URI_MAP_ID_ATOM_SEQUENCE;
-                    evin.data[j].atom->body.unit = CARLA_URI_MAP_ID_NULL;
-                    evin.data[j].atom->body.pad  = 0;
+                    evIn.data[j].type = CARLA_EVENT_DATA_ATOM;
+                    evIn.data[j].atom = (LV2_Atom_Sequence*)malloc(sizeof(LV2_Atom_Sequence) + MAX_EVENT_BUFFER);
+                    evIn.data[j].atom->atom.size = sizeof(LV2_Atom_Sequence_Body);
+                    evIn.data[j].atom->atom.type = CARLA_URI_MAP_ID_ATOM_SEQUENCE;
+                    evIn.data[j].atom->body.unit = CARLA_URI_MAP_ID_NULL;
+                    evIn.data[j].atom->body.pad  = 0;
                 }
                 else if (evIns[j] == CARLA_EVENT_DATA_EVENT)
                 {
-                    evin.data[j].type  = CARLA_EVENT_DATA_EVENT;
-                    evin.data[j].event = lv2_event_buffer_new(MAX_EVENT_BUFFER, LV2_EVENT_AUDIO_STAMP);
+                    evIn.data[j].type  = CARLA_EVENT_DATA_EVENT;
+                    evIn.data[j].event = lv2_event_buffer_new(MAX_EVENT_BUFFER, LV2_EVENT_AUDIO_STAMP);
                 }
                 else if (evIns[j] == CARLA_EVENT_DATA_MIDI_LL)
                 {
-                    evin.data[j].type  = CARLA_EVENT_DATA_MIDI_LL;
-                    evin.data[j].midi  = new LV2_MIDI;
-                    evin.data[j].midi->capacity = MAX_EVENT_BUFFER;
-                    evin.data[j].midi->data     = new unsigned char [MAX_EVENT_BUFFER];
+                    evIn.data[j].type  = CARLA_EVENT_DATA_MIDI_LL;
+                    evIn.data[j].midi  = new LV2_MIDI;
+                    evIn.data[j].midi->capacity = MAX_EVENT_BUFFER;
+                    evIn.data[j].midi->data     = new unsigned char [MAX_EVENT_BUFFER];
                 }
             }
         }
@@ -1040,33 +1110,33 @@ public:
         if (evOuts.size() > 0)
         {
             const size_t size = evOuts.size();
-            evout.data = new EventData[size];
+            evOut.data = new EventData[size];
 
             for (j=0; j < size; j++)
             {
-                evout.data[j].port = nullptr;
-                evout.data[j].type = 0;
+                evOut.data[j].port = nullptr;
+                evOut.data[j].type = 0;
 
                 if (evOuts[j] == CARLA_EVENT_DATA_ATOM)
                 {
-                    evout.data[j].type = CARLA_EVENT_DATA_ATOM;
-                    evout.data[j].atom = (LV2_Atom_Sequence*)malloc(sizeof(LV2_Atom_Sequence) + MAX_EVENT_BUFFER);
-                    evout.data[j].atom->atom.size = sizeof(LV2_Atom_Sequence_Body);
-                    evout.data[j].atom->atom.type = CARLA_URI_MAP_ID_ATOM_SEQUENCE;
-                    evout.data[j].atom->body.unit = CARLA_URI_MAP_ID_NULL;
-                    evout.data[j].atom->body.pad  = 0;
+                    evOut.data[j].type = CARLA_EVENT_DATA_ATOM;
+                    evOut.data[j].atom = (LV2_Atom_Sequence*)malloc(sizeof(LV2_Atom_Sequence) + MAX_EVENT_BUFFER);
+                    evOut.data[j].atom->atom.size = sizeof(LV2_Atom_Sequence_Body);
+                    evOut.data[j].atom->atom.type = CARLA_URI_MAP_ID_ATOM_SEQUENCE;
+                    evOut.data[j].atom->body.unit = CARLA_URI_MAP_ID_NULL;
+                    evOut.data[j].atom->body.pad  = 0;
                 }
                 else if (evOuts[j] == CARLA_EVENT_DATA_EVENT)
                 {
-                    evout.data[j].type  = CARLA_EVENT_DATA_EVENT;
-                    evout.data[j].event = lv2_event_buffer_new(MAX_EVENT_BUFFER, LV2_EVENT_AUDIO_STAMP);
+                    evOut.data[j].type  = CARLA_EVENT_DATA_EVENT;
+                    evOut.data[j].event = lv2_event_buffer_new(MAX_EVENT_BUFFER, LV2_EVENT_AUDIO_STAMP);
                 }
                 else if (evOuts[j] == CARLA_EVENT_DATA_MIDI_LL)
                 {
-                    evout.data[j].type  = CARLA_EVENT_DATA_MIDI_LL;
-                    evout.data[j].midi  = new LV2_MIDI;
-                    evout.data[j].midi->capacity = MAX_EVENT_BUFFER;
-                    evout.data[j].midi->data     = new unsigned char [MAX_EVENT_BUFFER];
+                    evOut.data[j].type  = CARLA_EVENT_DATA_MIDI_LL;
+                    evOut.data[j].midi  = new LV2_MIDI;
+                    evOut.data[j].midi->capacity = MAX_EVENT_BUFFER;
+                    evOut.data[j].midi->data     = new unsigned char [MAX_EVENT_BUFFER];
                 }
             }
         }
@@ -1075,19 +1145,19 @@ public:
         {
             param.data   = new ParameterData[params];
             param.ranges = new ParameterRanges[params];
-            lv2param     = new Lv2ParameterData[params];
+            paramBuffers = new float[params];
         }
 
         const int portNameSize = CarlaEngine::maxPortNameSize() - 1;
         char portName[portNameSize];
-        bool needsCin  = false;
-        bool needsCout = false;
+        bool needsCtrlIn  = false;
+        bool needsCtrlOut = false;
 
-        for (uint32_t i=0; i < PortCount; i++)
+        for (uint32_t i=0; i < portCount; i++)
         {
-            const LV2_Property PortType  = rdf_descriptor->Ports[i].Type;
+            const LV2_Property portType = rdf_descriptor->Ports[i].Type;
 
-            if (LV2_IS_PORT_AUDIO(PortType) || LV2_IS_PORT_ATOM_SEQUENCE(PortType) || LV2_IS_PORT_CV(PortType) || LV2_IS_PORT_EVENT(PortType) || LV2_IS_PORT_MIDI_LL(PortType))
+            if (LV2_IS_PORT_AUDIO(portType) || LV2_IS_PORT_ATOM_SEQUENCE(portType) || LV2_IS_PORT_CV(portType) || LV2_IS_PORT_EVENT(portType) || LV2_IS_PORT_MIDI_LL(portType))
             {
 #ifndef BUILD_BRIDGE
                 if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
@@ -1101,9 +1171,9 @@ public:
                     strncpy(portName, rdf_descriptor->Ports[i].Name, portNameSize);
             }
 
-            if (LV2_IS_PORT_AUDIO(PortType))
+            if (LV2_IS_PORT_AUDIO(portType))
             {
-                if (LV2_IS_PORT_INPUT(PortType))
+                if (LV2_IS_PORT_INPUT(portType))
                 {
                     j = aIn.count++;
                     aIn.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
@@ -1111,21 +1181,21 @@ public:
 
                     if (forcedStereoIn)
                     {
-                        strcat(portName, "2");
+                        strcat(portName, "_");
                         aIn.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
                         aIn.rindexes[1] = i;
                     }
                 }
-                else if (LV2_IS_PORT_OUTPUT(PortType))
+                else if (LV2_IS_PORT_OUTPUT(portType))
                 {
                     j = aOut.count++;
                     aOut.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
                     aOut.rindexes[j] = i;
-                    needsCin = true;
+                    needsCtrlIn = true;
 
                     if (forcedStereoOut)
                     {
-                        strcat(portName, "2");
+                        strcat(portName, "_");
                         aOut.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
                         aOut.rindexes[1] = i;
                     }
@@ -1133,13 +1203,13 @@ public:
                 else
                     qWarning("WARNING - Got a broken Port (Audio, but not input or output)");
             }
-            else if (LV2_IS_PORT_CV(PortType))
+            else if (LV2_IS_PORT_CV(portType))
             {
-                if (LV2_IS_PORT_INPUT(PortType))
+                if (LV2_IS_PORT_INPUT(portType))
                 {
                     qWarning("WARNING - CV Ports are not supported yet");
                 }
-                else if (LV2_IS_PORT_OUTPUT(PortType))
+                else if (LV2_IS_PORT_OUTPUT(portType))
                 {
                     qWarning("WARNING - CV Ports are not supported yet");
                 }
@@ -1149,100 +1219,100 @@ public:
                 descriptor->connect_port(handle, i, nullptr);
                 if (h2) descriptor->connect_port(h2, i, nullptr);
             }
-            else if (LV2_IS_PORT_ATOM_SEQUENCE(PortType))
+            else if (LV2_IS_PORT_ATOM_SEQUENCE(portType))
             {
-                if (LV2_IS_PORT_INPUT(PortType))
+                if (LV2_IS_PORT_INPUT(portType))
                 {
-                    j = evin.count++;
-                    descriptor->connect_port(handle, i, evin.data[j].atom);
-                    if (h2) descriptor->connect_port(h2, i, evin.data[j].atom);
+                    j = evIn.count++;
+                    descriptor->connect_port(handle, i, evIn.data[j].atom);
+                    if (h2) descriptor->connect_port(h2, i, evIn.data[j].atom);
 
-                    if (PortType & LV2_PORT_SUPPORTS_MIDI_EVENT)
+                    if (portType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
-                        evin.data[j].type |= CARLA_EVENT_TYPE_MIDI;
-                        evin.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
+                        evIn.data[j].type |= CARLA_EVENT_TYPE_MIDI;
+                        evIn.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
                     }
-                    if (PortType & LV2_PORT_SUPPORTS_PATCH_MESSAGE)
+                    if (portType & LV2_PORT_SUPPORTS_PATCH_MESSAGE)
                     {
-                        evin.data[j].type |= CARLA_EVENT_TYPE_MESSAGE;
+                        evIn.data[j].type |= CARLA_EVENT_TYPE_MESSAGE;
                     }
                 }
-                else if (LV2_IS_PORT_OUTPUT(PortType))
+                else if (LV2_IS_PORT_OUTPUT(portType))
                 {
-                    j = evout.count++;
-                    descriptor->connect_port(handle, i, evout.data[j].atom);
-                    if (h2) descriptor->connect_port(h2, i, evout.data[j].atom);
+                    j = evOut.count++;
+                    descriptor->connect_port(handle, i, evOut.data[j].atom);
+                    if (h2) descriptor->connect_port(h2, i, evOut.data[j].atom);
 
-                    if (PortType & LV2_PORT_SUPPORTS_MIDI_EVENT)
+                    if (portType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
-                        evout.data[j].type |= CARLA_EVENT_TYPE_MIDI;
-                        evout.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
+                        evOut.data[j].type |= CARLA_EVENT_TYPE_MIDI;
+                        evOut.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
                     }
-                    if (PortType & LV2_PORT_SUPPORTS_PATCH_MESSAGE)
+                    if (portType & LV2_PORT_SUPPORTS_PATCH_MESSAGE)
                     {
-                        evout.data[j].type |= CARLA_EVENT_TYPE_MESSAGE;
+                        evOut.data[j].type |= CARLA_EVENT_TYPE_MESSAGE;
                     }
                 }
                 else
                     qWarning("WARNING - Got a broken Port (Atom Sequence, but not input or output)");
             }
-            else if (LV2_IS_PORT_EVENT(PortType))
+            else if (LV2_IS_PORT_EVENT(portType))
             {
-                if (LV2_IS_PORT_INPUT(PortType))
+                if (LV2_IS_PORT_INPUT(portType))
                 {
-                    j = evin.count++;
-                    descriptor->connect_port(handle, i, evin.data[j].event);
-                    if (h2) descriptor->connect_port(h2, i, evin.data[j].event);
+                    j = evIn.count++;
+                    descriptor->connect_port(handle, i, evIn.data[j].event);
+                    if (h2) descriptor->connect_port(h2, i, evIn.data[j].event);
 
-                    if (PortType & LV2_PORT_SUPPORTS_MIDI_EVENT)
+                    if (portType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
-                        evin.data[j].type |= CARLA_EVENT_TYPE_MIDI;
-                        evin.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
+                        evIn.data[j].type |= CARLA_EVENT_TYPE_MIDI;
+                        evIn.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
                     }
                 }
-                else if (LV2_IS_PORT_OUTPUT(PortType))
+                else if (LV2_IS_PORT_OUTPUT(portType))
                 {
-                    j = evout.count++;
-                    descriptor->connect_port(handle, i, evout.data[j].event);
-                    if (h2) descriptor->connect_port(h2, i, evout.data[j].event);
+                    j = evOut.count++;
+                    descriptor->connect_port(handle, i, evOut.data[j].event);
+                    if (h2) descriptor->connect_port(h2, i, evOut.data[j].event);
 
-                    if (PortType & LV2_PORT_SUPPORTS_MIDI_EVENT)
+                    if (portType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
-                        evout.data[j].type |= CARLA_EVENT_TYPE_MIDI;
-                        evout.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
+                        evOut.data[j].type |= CARLA_EVENT_TYPE_MIDI;
+                        evOut.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
                     }
                 }
                 else
                     qWarning("WARNING - Got a broken Port (Event, but not input or output)");
             }
-            else if (LV2_IS_PORT_MIDI_LL(PortType))
+            else if (LV2_IS_PORT_MIDI_LL(portType))
             {
-                if (LV2_IS_PORT_INPUT(PortType))
+                if (LV2_IS_PORT_INPUT(portType))
                 {
-                    j = evin.count++;
-                    descriptor->connect_port(handle, i, evin.data[j].midi);
-                    if (h2) descriptor->connect_port(h2, i, evin.data[j].midi);
+                    j = evIn.count++;
+                    descriptor->connect_port(handle, i, evIn.data[j].midi);
+                    if (h2) descriptor->connect_port(h2, i, evIn.data[j].midi);
 
-                    evin.data[j].type |= CARLA_EVENT_TYPE_MIDI;
-                    evin.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
+                    evIn.data[j].type |= CARLA_EVENT_TYPE_MIDI;
+                    evIn.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
                 }
-                else if (LV2_IS_PORT_OUTPUT(PortType))
+                else if (LV2_IS_PORT_OUTPUT(portType))
                 {
-                    j = evout.count++;
-                    descriptor->connect_port(handle, i, evout.data[j].midi);
-                    if (h2) descriptor->connect_port(h2, i, evout.data[j].midi);
+                    j = evOut.count++;
+                    descriptor->connect_port(handle, i, evOut.data[j].midi);
+                    if (h2) descriptor->connect_port(h2, i, evOut.data[j].midi);
 
-                    evout.data[j].type |= CARLA_EVENT_TYPE_MIDI;
-                    evout.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
+                    evOut.data[j].type |= CARLA_EVENT_TYPE_MIDI;
+                    evOut.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
                 }
                 else
                     qWarning("WARNING - Got a broken Port (Midi, but not input or output)");
             }
-            else if (LV2_IS_PORT_CONTROL(PortType))
+            else if (LV2_IS_PORT_CONTROL(portType))
             {
-                const LV2_Property PortProps = rdf_descriptor->Ports[i].Properties;
-                const LV2_Property PortDesignation = rdf_descriptor->Ports[i].Designation;
-                const LV2_RDF_PortPoints PortPoints = rdf_descriptor->Ports[i].Points;
+                const LV2_Property portProps = rdf_descriptor->Ports[i].Properties;
+                const LV2_Property portDesignation = rdf_descriptor->Ports[i].Designation;
+                const LV2_RDF_PortPoints portPoints = rdf_descriptor->Ports[i].Points;
 
                 j = param.count++;
                 param.data[j].index  = j;
@@ -1251,17 +1321,17 @@ public:
                 param.data[j].midiChannel = 0;
                 param.data[j].midiCC = -1;
 
-                double min, max, def, step, step_small, step_large;
+                double min, max, def, step, stepSmall, stepLarge;
 
                 // min value
-                if (LV2_HAVE_MINIMUM_PORT_POINT(PortPoints.Hints))
-                    min = PortPoints.Minimum;
+                if (LV2_HAVE_MINIMUM_PORT_POINT(portPoints.Hints))
+                    min = portPoints.Minimum;
                 else
                     min = 0.0;
 
                 // max value
-                if (LV2_HAVE_MAXIMUM_PORT_POINT(PortPoints.Hints))
-                    max = PortPoints.Maximum;
+                if (LV2_HAVE_MAXIMUM_PORT_POINT(portPoints.Hints))
+                    max = portPoints.Maximum;
                 else
                     max = 1.0;
 
@@ -1284,9 +1354,9 @@ public:
                 }
 
                 // default value
-                if (LV2_HAVE_DEFAULT_PORT_POINT(PortPoints.Hints))
+                if (LV2_HAVE_DEFAULT_PORT_POINT(portPoints.Hints))
                 {
-                    def = PortPoints.Default;
+                    def = portPoints.Default;
                 }
                 else
                 {
@@ -1302,7 +1372,7 @@ public:
                 else if (def > max)
                     def = max;
 
-                if (LV2_IS_PORT_SAMPLE_RATE(PortProps))
+                if (LV2_IS_PORT_SAMPLE_RATE(portProps))
                 {
                     min *= sampleRate;
                     max *= sampleRate;
@@ -1310,29 +1380,29 @@ public:
                     param.data[j].hints |= PARAMETER_USES_SAMPLERATE;
                 }
 
-                if (LV2_IS_PORT_TOGGLED(PortProps))
+                if (LV2_IS_PORT_TOGGLED(portProps))
                 {
                     step = max - min;
-                    step_small = step;
-                    step_large = step;
+                    stepSmall = step;
+                    stepLarge = step;
                     param.data[j].hints |= PARAMETER_IS_BOOLEAN;
                 }
-                else if (LV2_IS_PORT_INTEGER(PortProps))
+                else if (LV2_IS_PORT_INTEGER(portProps))
                 {
                     step = 1.0;
-                    step_small = 1.0;
-                    step_large = 10.0;
+                    stepSmall = 1.0;
+                    stepLarge = 10.0;
                     param.data[j].hints |= PARAMETER_IS_INTEGER;
                 }
                 else
                 {
                     double range = max - min;
                     step = range/100.0;
-                    step_small = range/1000.0;
-                    step_large = range/10.0;
+                    stepSmall = range/1000.0;
+                    stepLarge = range/10.0;
                 }
 
-                if (LV2_IS_PORT_INPUT(PortType))
+                if (LV2_IS_PORT_INPUT(portType))
                 {
                     param.data[j].type   = PARAMETER_INPUT;
 
@@ -1340,27 +1410,27 @@ public:
                     {
                         param.data[j].hints |= PARAMETER_IS_ENABLED;
                         param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
-                        needsCin = true;
+                        needsCtrlIn = true;
                     }
 
                     // MIDI CC value
-                    LV2_RDF_PortMidiMap* PortMidiMap = &rdf_descriptor->Ports[i].MidiMap;
-                    if (LV2_IS_PORT_MIDI_MAP_CC(PortMidiMap->Type))
+                    const LV2_RDF_PortMidiMap* const portMidiMap = &rdf_descriptor->Ports[i].MidiMap;
+                    if (LV2_IS_PORT_MIDI_MAP_CC(portMidiMap->Type))
                     {
-                        if (! MIDI_IS_CONTROL_BANK_SELECT(PortMidiMap->Number))
-                            param.data[j].midiCC = PortMidiMap->Number;
+                        if (! MIDI_IS_CONTROL_BANK_SELECT(portMidiMap->Number))
+                            param.data[j].midiCC = portMidiMap->Number;
                     }
                 }
-                else if (LV2_IS_PORT_OUTPUT(PortType))
+                else if (LV2_IS_PORT_OUTPUT(portType))
                 {
-                    if (LV2_IS_PORT_LATENCY(PortDesignation))
+                    if (LV2_IS_PORT_LATENCY(portDesignation))
                     {
                         min = 0.0;
                         max = sampleRate;
                         def = 0.0;
                         step = 1.0;
-                        step_small = 1.0;
-                        step_large = 1.0;
+                        stepSmall = 1.0;
+                        stepLarge = 1.0;
 
                         param.data[j].type  = PARAMETER_LATENCY;
                         param.data[j].hints = 0;
@@ -1370,7 +1440,7 @@ public:
                         param.data[j].type   = PARAMETER_OUTPUT;
                         param.data[j].hints |= PARAMETER_IS_ENABLED;
                         param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
-                        needsCout = true;
+                        needsCtrlOut = true;
                     }
                 }
                 else
@@ -1380,38 +1450,37 @@ public:
                 }
 
                 // extra parameter hints
-                if (LV2_IS_PORT_ENUMERATION(PortProps))
+                if (LV2_IS_PORT_ENUMERATION(portProps))
                     param.data[j].hints |= PARAMETER_USES_SCALEPOINTS;
 
-                if (LV2_IS_PORT_LOGARITHMIC(PortProps))
+                if (LV2_IS_PORT_LOGARITHMIC(portProps))
                     param.data[j].hints |= PARAMETER_IS_LOGARITHMIC;
 
-                if (LV2_IS_PORT_TRIGGER(PortProps))
+                if (LV2_IS_PORT_TRIGGER(portProps))
                     param.data[j].hints |= PARAMETER_IS_TRIGGER;
 
-                if (LV2_IS_PORT_STRICT_BOUNDS(PortProps))
+                if (LV2_IS_PORT_STRICT_BOUNDS(portProps))
                     param.data[j].hints |= PARAMETER_IS_STRICT_BOUNDS;
 
                 // check if parameter is not enabled or automable
-                if (LV2_IS_PORT_NOT_ON_GUI(PortProps))
+                if (LV2_IS_PORT_NOT_ON_GUI(portProps))
                     param.data[j].hints &= ~PARAMETER_IS_ENABLED;
 
-                if (LV2_IS_PORT_CAUSES_ARTIFACTS(PortProps) || LV2_IS_PORT_EXPENSIVE(PortProps) || LV2_IS_PORT_NOT_AUTOMATIC(PortProps))
+                if (LV2_IS_PORT_CAUSES_ARTIFACTS(portProps) || LV2_IS_PORT_EXPENSIVE(portProps) || LV2_IS_PORT_NOT_AUTOMATIC(portProps))
                     param.data[j].hints &= ~PARAMETER_IS_AUTOMABLE;
 
                 param.ranges[j].min = min;
                 param.ranges[j].max = max;
                 param.ranges[j].def = def;
                 param.ranges[j].step = step;
-                param.ranges[j].stepSmall = step_small;
-                param.ranges[j].stepLarge = step_large;
+                param.ranges[j].stepSmall = stepSmall;
+                param.ranges[j].stepLarge = stepLarge;
 
-                // Set LV2 params as needed
-                lv2param[j].type = LV2_PARAMETER_TYPE_CONTROL;
-                lv2param[j].control = def;
+                // Start parameters in their default values
+                paramBuffers[j] = def;
 
-                descriptor->connect_port(handle, i, &lv2param[j].control);
-                if (h2) descriptor->connect_port(h2, i, &lv2param[j].control);
+                descriptor->connect_port(handle, i, &paramBuffers[j]);
+                if (h2) descriptor->connect_port(h2, i, &paramBuffers[j]);
             }
             else
             {
@@ -1421,7 +1490,7 @@ public:
             }
         }
 
-        if (needsCin)
+        if (needsCtrlIn)
         {
 #ifndef BUILD_BRIDGE
             if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
@@ -1436,7 +1505,7 @@ public:
             param.portCin = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, true);
         }
 
-        if (needsCout)
+        if (needsCtrlOut)
         {
 #ifndef BUILD_BRIDGE
             if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
@@ -1453,8 +1522,8 @@ public:
 
         aIn.count   = aIns;
         aOut.count  = aOuts;
-        evin.count  = evIns.size();
-        evout.count = evOuts.size();
+        evIn.count  = evIns.size();
+        evOut.count = evOuts.size();
         param.count = params;
 
         // plugin checks
@@ -1496,7 +1565,7 @@ public:
         qDebug("Lv2Plugin::reload() - end");
     }
 
-    void reloadPrograms(bool init)
+    void reloadPrograms(const bool init)
     {
         qDebug("Lv2Plugin::reloadPrograms(%s)", bool2str(init));
         uint32_t i, oldCount = midiprog.count;
@@ -1595,7 +1664,7 @@ public:
     // -------------------------------------------------------------------
     // Plugin processing
 
-    void process(float** inBuffer, float** outBuffer, uint32_t frames, uint32_t framesOffset)
+    void process(float* const* const inBuffer, float* const* const outBuffer, const uint32_t frames, const uint32_t framesOffset)
     {
         uint32_t i, k;
         uint32_t midiEventCount = 0;
@@ -1604,28 +1673,28 @@ public:
         double aouts_peak_tmp[2] = { 0.0 };
 
         // handle midi from different APIs
-        uint32_t evinAtomOffsets[evin.count];
-        LV2_Event_Iterator evinEventIters[evin.count];
-        LV2_MIDIState evinMidiStates[evin.count];
+        uint32_t evinAtomOffsets[evIn.count];
+        LV2_Event_Iterator evinEventIters[evIn.count];
+        LV2_MIDIState evinMidiStates[evIn.count];
 
-        for (i=0; i < evin.count; i++)
+        for (i=0; i < evIn.count; i++)
         {
-            if (evin.data[i].type & CARLA_EVENT_DATA_ATOM)
+            if (evIn.data[i].type & CARLA_EVENT_DATA_ATOM)
             {
                 evinAtomOffsets[i] = 0;
-                evin.data[i].atom->atom.size = 0;
-                evin.data[i].atom->atom.type = CARLA_URI_MAP_ID_ATOM_SEQUENCE;
-                evin.data[i].atom->body.unit = CARLA_URI_MAP_ID_NULL;
-                evin.data[i].atom->body.pad  = 0;
+                evIn.data[i].atom->atom.size = 0;
+                evIn.data[i].atom->atom.type = CARLA_URI_MAP_ID_ATOM_SEQUENCE;
+                evIn.data[i].atom->body.unit = CARLA_URI_MAP_ID_NULL;
+                evIn.data[i].atom->body.pad  = 0;
             }
-            else if (evin.data[i].type & CARLA_EVENT_DATA_EVENT)
+            else if (evIn.data[i].type & CARLA_EVENT_DATA_EVENT)
             {
-                lv2_event_buffer_reset(evin.data[i].event, LV2_EVENT_AUDIO_STAMP, (uint8_t*)(evin.data[i].event + 1));
-                lv2_event_begin(&evinEventIters[i], evin.data[i].event);
+                lv2_event_buffer_reset(evIn.data[i].event, LV2_EVENT_AUDIO_STAMP, (uint8_t*)(evIn.data[i].event + 1));
+                lv2_event_begin(&evinEventIters[i], evIn.data[i].event);
             }
-            else if (evin.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
+            else if (evIn.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
             {
-                evinMidiStates[i].midi = evin.data[i].midi;
+                evinMidiStates[i].midi = evIn.data[i].midi;
                 evinMidiStates[i].frame_count = frames;
                 evinMidiStates[i].position = 0;
                 evinMidiStates[i].midi->event_count = 0;
@@ -1633,20 +1702,20 @@ public:
             }
         }
 
-        for (i=0; i < evout.count; i++)
+        for (i=0; i < evOut.count; i++)
         {
-            if (evout.data[i].type & CARLA_EVENT_DATA_ATOM)
+            if (evOut.data[i].type & CARLA_EVENT_DATA_ATOM)
             {
-                evout.data[i].atom->atom.size = 0;
-                evout.data[i].atom->atom.type = CARLA_URI_MAP_ID_ATOM_SEQUENCE;
-                evout.data[i].atom->body.unit = CARLA_URI_MAP_ID_NULL;
-                evout.data[i].atom->body.pad  = 0;
+                evOut.data[i].atom->atom.size = 0;
+                evOut.data[i].atom->atom.type = CARLA_URI_MAP_ID_ATOM_SEQUENCE;
+                evOut.data[i].atom->body.unit = CARLA_URI_MAP_ID_NULL;
+                evOut.data[i].atom->body.pad  = 0;
             }
-            else if (evout.data[i].type & CARLA_EVENT_DATA_EVENT)
+            else if (evOut.data[i].type & CARLA_EVENT_DATA_EVENT)
             {
-                lv2_event_buffer_reset(evout.data[i].event, LV2_EVENT_AUDIO_STAMP, (uint8_t*)(evout.data[i].event + 1));
+                lv2_event_buffer_reset(evOut.data[i].event, LV2_EVENT_AUDIO_STAMP, (uint8_t*)(evOut.data[i].event + 1));
             }
-            else if (evout.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
+            else if (evOut.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
             {
                 // not needed
             }
@@ -1862,7 +1931,7 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // MIDI Input (External)
 
-        if (evin.count > 0 && m_ctrlInChannel >= 0 && m_ctrlInChannel < 16 && m_active && m_activeBefore)
+        if (evIn.count > 0 && m_ctrlInChannel >= 0 && m_ctrlInChannel < 16 && m_active && m_activeBefore)
         {
             engineMidiLock();
 
@@ -1877,13 +1946,13 @@ public:
                 midiEvent[2] = extMidiNotes[i].velo;
 
                 // send to all midi inputs
-                for (k=0; k < evin.count; k++)
+                for (k=0; k < evIn.count; k++)
                 {
-                    if (evin.data[k].type & CARLA_EVENT_TYPE_MIDI)
+                    if (evIn.data[k].type & CARLA_EVENT_TYPE_MIDI)
                     {
-                        if (evin.data[k].type & CARLA_EVENT_DATA_ATOM)
+                        if (evIn.data[k].type & CARLA_EVENT_DATA_ATOM)
                         {
-                            LV2_Atom_Event* const aev = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evin.data[k].atom) + evinAtomOffsets[k]);
+                            LV2_Atom_Event* const aev = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evIn.data[k].atom) + evinAtomOffsets[k]);
                             aev->time.frames = 0;
                             aev->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
                             aev->body.size   = 3;
@@ -1891,12 +1960,12 @@ public:
 
                             const uint32_t padSize = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + 3);
                             evinAtomOffsets[k]           += padSize;
-                            evin.data[k].atom->atom.size += padSize;
+                            evIn.data[k].atom->atom.size += padSize;
                         }
-                        else if (evin.data[k].type & CARLA_EVENT_DATA_EVENT)
+                        else if (evIn.data[k].type & CARLA_EVENT_DATA_EVENT)
                             lv2_event_write(&evinEventIters[k], 0, 0, CARLA_URI_MAP_ID_MIDI_EVENT, 3, midiEvent);
 
-                        else if (evin.data[k].type & CARLA_EVENT_DATA_MIDI_LL)
+                        else if (evIn.data[k].type & CARLA_EVENT_DATA_MIDI_LL)
                             lv2midi_put_event(&evinMidiStates[k], 0, 3, midiEvent);
                     }
                 }
@@ -1914,19 +1983,19 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // MIDI Input (System)
 
-        if (evin.count > 0 && m_active && m_activeBefore)
+        if (evIn.count > 0 && m_active && m_activeBefore)
         {
-            for (i=0; i < evin.count; i++)
+            for (i=0; i < evIn.count; i++)
             {
-                if (! evin.data[i].port)
+                if (! evIn.data[i].port)
                     continue;
 
                 const CarlaEngineMidiEvent* minEvent;
-                uint32_t time, nEvents = evin.data[i].port->getEventCount();
+                uint32_t time, nEvents = evIn.data[i].port->getEventCount();
 
                 for (k=0; k < nEvents && midiEventCount < MAX_MIDI_EVENTS; k++)
                 {
-                    minEvent = evin.data[i].port->getEvent(k);
+                    minEvent = evIn.data[i].port->getEvent(k);
 
                     if (! minEvent)
                         continue;
@@ -1946,9 +2015,9 @@ public:
                     // write supported status types
                     if (MIDI_IS_STATUS_NOTE_OFF(status) || MIDI_IS_STATUS_NOTE_ON(status) || MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status) || MIDI_IS_STATUS_AFTERTOUCH(status) || MIDI_IS_STATUS_PITCH_WHEEL_CONTROL(status))
                     {
-                        if (evin.data[i].type & CARLA_EVENT_DATA_ATOM)
+                        if (evIn.data[i].type & CARLA_EVENT_DATA_ATOM)
                         {
-                            LV2_Atom_Event* aev = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evin.data[i].atom) + evinAtomOffsets[i]);
+                            LV2_Atom_Event* aev = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evIn.data[i].atom) + evinAtomOffsets[i]);
                             aev->time.frames = time;
                             aev->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
                             aev->body.size   = minEvent->size;
@@ -1956,12 +2025,12 @@ public:
 
                             const uint32_t padSize = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + minEvent->size);
                             evinAtomOffsets[i]           += padSize;
-                            evin.data[i].atom->atom.size += padSize;
+                            evIn.data[i].atom->atom.size += padSize;
                         }
-                        else if (evin.data[i].type & CARLA_EVENT_DATA_EVENT)
+                        else if (evIn.data[i].type & CARLA_EVENT_DATA_EVENT)
                             lv2_event_write(&evinEventIters[i], time, 0, CARLA_URI_MAP_ID_MIDI_EVENT, minEvent->size, minEvent->data);
 
-                        else if (evin.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
+                        else if (evIn.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
                             lv2midi_put_event(&evinMidiStates[i], time, minEvent->size, minEvent->data);
 
                         if (channel == m_ctrlInChannel)
@@ -2173,29 +2242,18 @@ public:
 
         if (param.portCout && m_active)
         {
-            double value, rvalue;
+            double value;
 
             for (k=0; k < param.count; k++)
             {
                 if (param.data[k].type == PARAMETER_OUTPUT)
                 {
-                    if (lv2param[k].type == LV2_PARAMETER_TYPE_CONTROL)
-                        fixParameterValue(lv2param[k].control, param.ranges[k]);
+                    fixParameterValue(paramBuffers[k], param.ranges[k]);
 
                     if (param.data[k].midiCC > 0)
                     {
-                        switch (lv2param[k].type)
-                        {
-                        case LV2_PARAMETER_TYPE_CONTROL:
-                            value = lv2param[k].control;
-                            break;
-                        default:
-                            value = param.ranges[k].min;
-                            break;
-                        }
-
-                        rvalue = (value - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
-                        param.portCout->writeEvent(CarlaEngineEventControlChange, framesOffset, param.data[k].midiChannel, param.data[k].midiCC, rvalue);
+                        value = (paramBuffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
+                        param.portCout->writeEvent(CarlaEngineEventControlChange, framesOffset, param.data[k].midiChannel, param.data[k].midiCC, value);
                     }
                 }
             }
@@ -2206,38 +2264,38 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // MIDI Output
 
-        if (evout.count > 0 && m_active)
+        if (evOut.count > 0 && m_active)
         {
-            for (i=0; i < evout.count; i++)
+            for (i=0; i < evOut.count; i++)
             {
-                if (! evout.data[i].port)
+                if (! evOut.data[i].port)
                     continue;
 
-                if (evin.data[i].type & CARLA_EVENT_DATA_ATOM)
+                if (evIn.data[i].type & CARLA_EVENT_DATA_ATOM)
                 {
                     // TODO
                 }
-                else if (evin.data[i].type & CARLA_EVENT_DATA_EVENT)
+                else if (evIn.data[i].type & CARLA_EVENT_DATA_EVENT)
                 {
                     LV2_Event* ev;
                     LV2_Event_Iterator iter;
 
                     uint8_t* data;
-                    lv2_event_begin(&iter, evout.data[i].event);
+                    lv2_event_begin(&iter, evOut.data[i].event);
 
                     for (k=0; k < iter.buf->event_count; k++)
                     {
                         ev = lv2_event_get(&iter, &data);
 
                         if (ev && data)
-                            evout.data[i].port->writeEvent(ev->frames, data, ev->size);
+                            evOut.data[i].port->writeEvent(ev->frames, data, ev->size);
 
                         lv2_event_increment(&iter);
                     }
                 }
-                else if (evin.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
+                else if (evIn.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
                 {
-                    LV2_MIDIState state = { evout.data[i].midi, frames, 0 };
+                    LV2_MIDIState state = { evOut.data[i].midi, frames, 0 };
 
                     uint32_t eventSize;
                     double   eventTime;
@@ -2245,7 +2303,7 @@ public:
 
                     while (lv2midi_get_event(&state, &eventTime, &eventSize, &eventData) < frames)
                     {
-                        evout.data[i].port->writeEvent(eventTime, eventData, eventSize);
+                        evOut.data[i].port->writeEvent(eventTime, eventData, eventSize);
                         lv2midi_step(&state);
                     }
                 }
@@ -2268,7 +2326,7 @@ public:
     // -------------------------------------------------------------------
     // Post-poned events
 
-    void uiParameterChange(uint32_t index, double value)
+    void uiParameterChange(const uint32_t index, const double value)
     {
         Q_ASSERT(index < param.count);
         if (index >= param.count)
@@ -2283,7 +2341,7 @@ public:
         }
     }
 
-    void uiMidiProgramChange(uint32_t index)
+    void uiMidiProgramChange(const uint32_t index)
     {
         Q_ASSERT(index < midiprog.count);
         if (index >= midiprog.count)
@@ -2295,7 +2353,7 @@ public:
             ext.uiprograms->select_program(ui.handle, midiprog.data[index].bank, midiprog.data[index].program);
     }
 
-    void uiNoteOn(uint8_t channel, uint8_t note, uint8_t velo)
+    void uiNoteOn(const uint8_t channel, const uint8_t note, const uint8_t velo)
     {
         // TODO
         Q_UNUSED(channel);
@@ -2303,7 +2361,7 @@ public:
         Q_UNUSED(velo);
     }
 
-    void uiNoteOff(uint8_t channel, uint8_t note)
+    void uiNoteOff(const uint8_t channel, const uint8_t note)
     {
         // TODO
         Q_UNUSED(channel);
@@ -2317,21 +2375,21 @@ public:
     {
         qDebug("Lv2Plugin::removeClientPorts() - start");
 
-        for (uint32_t i=0; i < evin.count; i++)
+        for (uint32_t i=0; i < evIn.count; i++)
         {
-            if (evin.data[i].port)
+            if (evIn.data[i].port)
             {
-                delete evin.data[i].port;
-                evin.data[i].port = nullptr;
+                delete evIn.data[i].port;
+                evIn.data[i].port = nullptr;
             }
         }
 
-        for (uint32_t i=0; i < evout.count; i++)
+        for (uint32_t i=0; i < evOut.count; i++)
         {
-            if (evout.data[i].port)
+            if (evOut.data[i].port)
             {
-                delete evout.data[i].port;
-                evout.data[i].port = nullptr;
+                delete evOut.data[i].port;
+                evOut.data[i].port = nullptr;
             }
         }
 
@@ -2344,16 +2402,16 @@ public:
     {
         uint32_t i;
 
-        for (i=0; i < evin.count; i++)
+        for (i=0; i < evIn.count; i++)
         {
-            if (evin.data[i].port)
-                evin.data[i].port->initBuffer(x_engine);
+            if (evIn.data[i].port)
+                evIn.data[i].port->initBuffer(x_engine);
         }
 
-        for (uint32_t i=0; i < evout.count; i++)
+        for (uint32_t i=0; i < evOut.count; i++)
         {
-            if (evout.data[i].port)
-                evout.data[i].port->initBuffer(x_engine);
+            if (evOut.data[i].port)
+                evOut.data[i].port->initBuffer(x_engine);
         }
 
         CarlaPlugin::initBuffers();
@@ -2363,60 +2421,60 @@ public:
     {
         qDebug("Lv2Plugin::deleteBuffers() - start");
 
+        if (evIn.count > 0)
+        {
+            for (uint32_t i=0; i < evIn.count; i++)
+            {
+                if (evIn.data[i].type & CARLA_EVENT_DATA_ATOM)
+                {
+                    free(evIn.data[i].atom);
+                }
+                else if (evIn.data[i].type & CARLA_EVENT_DATA_EVENT)
+                {
+                    free(evIn.data[i].event);
+                }
+                else if (evIn.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
+                {
+                    delete[] evIn.data[i].midi->data;
+                    delete evIn.data[i].midi;
+                }
+            }
+
+            delete[] evIn.data;
+        }
+
+        if (evOut.count > 0)
+        {
+            for (uint32_t i=0; i < evOut.count; i++)
+            {
+                if (evOut.data[i].type & CARLA_EVENT_DATA_ATOM)
+                {
+                    free(evOut.data[i].atom);
+                }
+                else if (evOut.data[i].type & CARLA_EVENT_DATA_EVENT)
+                {
+                    free(evOut.data[i].event);
+                }
+                else if (evOut.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
+                {
+                    delete[] evOut.data[i].midi->data;
+                    delete evOut.data[i].midi;
+                }
+            }
+
+            delete[] evOut.data;
+        }
+
         if (param.count > 0)
-            delete[] lv2param;
+            delete[] paramBuffers;
 
-        if (evin.count > 0)
-        {
-            for (uint32_t i=0; i < evin.count; i++)
-            {
-                if (evin.data[i].type & CARLA_EVENT_DATA_ATOM)
-                {
-                    free(evin.data[i].atom);
-                }
-                else if (evin.data[i].type & CARLA_EVENT_DATA_EVENT)
-                {
-                    free(evin.data[i].event);
-                }
-                else if (evin.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
-                {
-                    delete[] evin.data[i].midi->data;
-                    delete evin.data[i].midi;
-                }
-            }
+        evIn.count = 0;
+        evIn.data  = nullptr;
 
-            delete[] evin.data;
-        }
+        evOut.count = 0;
+        evOut.data  = nullptr;
 
-        if (evout.count > 0)
-        {
-            for (uint32_t i=0; i < evout.count; i++)
-            {
-                if (evout.data[i].type & CARLA_EVENT_DATA_ATOM)
-                {
-                    free(evout.data[i].atom);
-                }
-                else if (evout.data[i].type & CARLA_EVENT_DATA_EVENT)
-                {
-                    free(evout.data[i].event);
-                }
-                else if (evout.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
-                {
-                    delete[] evout.data[i].midi->data;
-                    delete evout.data[i].midi;
-                }
-            }
-
-            delete[] evout.data;
-        }
-
-        lv2param = nullptr;
-
-        evin.count = 0;
-        evin.data  = nullptr;
-
-        evout.count = 0;
-        evout.data  = nullptr;
+        paramBuffers = nullptr;
 
         qDebug("Lv2Plugin::deleteBuffers() - end");
     }
@@ -2437,7 +2495,7 @@ public:
         return customURIDs.size()-1;
     }
 
-    const char* getCustomURIString(LV2_URID urid)
+    const char* getCustomURIString(const LV2_URID urid)
     {
         qDebug("Lv2Plugin::getCustomURIString(%i)", urid);
 
@@ -2516,7 +2574,7 @@ public:
         }
     }
 
-    void handleProgramChanged(int32_t index)
+    void handleProgramChanged(const int32_t index)
     {
         if (index == -1)
         {
@@ -2539,7 +2597,7 @@ public:
         x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
     }
 
-    LV2_State_Status handleStateStore(uint32_t key, const void* const value, size_t size, uint32_t type, uint32_t flags)
+    LV2_State_Status handleStateStore(const uint32_t key, const void* const value, const size_t size, const uint32_t type, const uint32_t flags)
     {
         assert(key > 0);
         assert(value);
@@ -2608,7 +2666,7 @@ public:
         return LV2_STATE_SUCCESS;
     }
 
-    const void* handleStateRetrieve(uint32_t key, size_t* size, uint32_t* type, uint32_t* flags)
+    const void* handleStateRetrieve(const uint32_t key, size_t* const size, uint32_t* const type, uint32_t* const flags)
     {
         assert(key > 0);
 
@@ -2671,12 +2729,12 @@ public:
         return nullptr;
     }
 
-    LV2_Worker_Status handleWorkerSchedule(uint32_t /*size*/, const void* const /*data*/)
+    LV2_Worker_Status handleWorkerSchedule(const uint32_t /*size*/, const void* const /*data*/)
     {
         return LV2_WORKER_SUCCESS;
     }
 
-    LV2_Worker_Status handleWorkerRespond(uint32_t /*size*/, const void* const /*data*/)
+    LV2_Worker_Status handleWorkerRespond(const uint32_t /*size*/, const void* const /*data*/)
     {
         if (ext.worker)
             return LV2_WORKER_SUCCESS;
@@ -2705,7 +2763,7 @@ public:
         return LV2UI_INVALID_PORT_INDEX;
     }
 
-    int handleUiResize(int width, int height)
+    int handleUiResize(const int width, const int height)
     {
         assert(width > 0);
         assert(height > 0);
@@ -2717,7 +2775,7 @@ public:
         return 0;
     }
 
-    void handleUiWrite(uint32_t rindex, uint32_t bufferSize, uint32_t format, const void* buffer)
+    void handleUiWrite(const uint32_t rindex, const uint32_t bufferSize, const uint32_t format, const void* const buffer)
     {
         if (format == 0)
         {
@@ -2748,7 +2806,7 @@ public:
     // -------------------------------------------------------------------
 
 #ifndef BUILD_BRIDGE
-    bool isUiBridgeable(uint32_t uiId)
+    bool isUiBridgeable(const uint32_t uiId)
     {
         const LV2_RDF_UI* const rdf_ui = &rdf_descriptor->UIs[uiId];
 
@@ -2868,7 +2926,7 @@ public:
 
     // ----------------- Event Feature ---------------------------------------------------
 
-    static uint32_t carla_lv2_event_ref(LV2_Event_Callback_Data callback_data, LV2_Event* event)
+    static uint32_t carla_lv2_event_ref(const LV2_Event_Callback_Data callback_data, LV2_Event* const event)
     {
         qDebug("Lv2Plugin::carla_lv2_event_ref(%p, %p)", callback_data, event);
         assert(callback_data);
@@ -2877,7 +2935,7 @@ public:
         return 0;
     }
 
-    static uint32_t carla_lv2_event_unref(LV2_Event_Callback_Data callback_data, LV2_Event* event)
+    static uint32_t carla_lv2_event_unref(const LV2_Event_Callback_Data callback_data, LV2_Event* const event)
     {
         qDebug("Lv2Plugin::carla_lv2_event_unref(%p, %p)", callback_data, event);
         assert(callback_data);
@@ -2888,7 +2946,7 @@ public:
 
     // ----------------- Logs Feature ----------------------------------------------------
 
-    static int carla_lv2_log_printf(LV2_Log_Handle handle, LV2_URID type, const char* fmt, ...)
+    static int carla_lv2_log_printf(const LV2_Log_Handle handle, const LV2_URID type, const char* const fmt, ...)
     {
         qDebug("Lv2Plugin::carla_lv2_log_printf(%p, %i, %s, ...)", handle, type, fmt);
         assert(handle);
@@ -2907,7 +2965,7 @@ public:
         return ret;
     }
 
-    static int carla_lv2_log_vprintf(LV2_Log_Handle handle, LV2_URID type, const char* fmt, va_list ap)
+    static int carla_lv2_log_vprintf(const LV2_Log_Handle handle, const LV2_URID type, const char* const fmt, va_list ap)
     {
         qDebug("Lv2Plugin::carla_lv2_log_vprintf(%p, %i, %s, ...)", handle, type, fmt);
         assert(handle);
@@ -2947,7 +3005,7 @@ public:
 
     // ----------------- Programs Feature ------------------------------------------------
 
-    static void carla_lv2_program_changed(LV2_Programs_Handle handle, int32_t index)
+    static void carla_lv2_program_changed(const LV2_Programs_Handle handle, const int32_t index)
     {
         qDebug("Lv2Plugin::carla_lv2_program_changed(%p, %i)", handle, index);
         assert(handle);
@@ -2958,7 +3016,7 @@ public:
 
     // ----------------- State Feature ---------------------------------------------------
 
-    static char* carla_lv2_state_make_path(LV2_State_Make_Path_Handle handle, const char* path)
+    static char* carla_lv2_state_make_path(const LV2_State_Make_Path_Handle handle, const char* const path)
     {
         qDebug("Lv2Plugin::carla_lv2_state_make_path(%p, %p)", handle, path);
         assert(handle);
@@ -2969,7 +3027,7 @@ public:
         return strdup(path);
     }
 
-    static char* carla_lv2_state_map_abstract_path(LV2_State_Map_Path_Handle handle, const char* absolute_path)
+    static char* carla_lv2_state_map_abstract_path(const LV2_State_Map_Path_Handle handle, const char* const absolute_path)
     {
         qDebug("Lv2Plugin::carla_lv2_state_map_abstract_path(%p, %p)", handle, absolute_path);
         assert(handle);
@@ -2979,7 +3037,7 @@ public:
         return strdup(dir.canonicalPath().toUtf8().constData());
     }
 
-    static char* carla_lv2_state_map_absolute_path(LV2_State_Map_Path_Handle handle, const char* abstract_path)
+    static char* carla_lv2_state_map_absolute_path(const LV2_State_Map_Path_Handle handle, const char* const abstract_path)
     {
         qDebug("Lv2Plugin::carla_lv2_state_map_absolute_path(%p, %p)", handle, abstract_path);
         assert(handle);
@@ -2989,7 +3047,7 @@ public:
         return strdup(dir.absolutePath().toUtf8().constData());
     }
 
-    static LV2_State_Status carla_lv2_state_store(LV2_State_Handle handle, uint32_t key, const void* value, size_t size, uint32_t type, uint32_t flags)
+    static LV2_State_Status carla_lv2_state_store(const LV2_State_Handle handle, const uint32_t key, const void* const value, const size_t size, const uint32_t type, const uint32_t flags)
     {
         qDebug("Lv2Plugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i)", handle, key, value, size, type, flags);
         assert(handle);
@@ -2998,7 +3056,7 @@ public:
         return plugin->handleStateStore(key, value, size, type, flags);
     }
 
-    static const void* carla_lv2_state_retrieve(LV2_State_Handle handle, uint32_t key, size_t* size, uint32_t* type, uint32_t* flags)
+    static const void* carla_lv2_state_retrieve(const LV2_State_Handle handle, const uint32_t key, size_t* const size, uint32_t* const type, uint32_t* const flags)
     {
         qDebug("Lv2Plugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p)", handle, key, size, type, flags);
         assert(handle);
@@ -3009,7 +3067,7 @@ public:
 
     // ----------------- URI-Map Feature -------------------------------------------------
 
-    static uint32_t carla_lv2_uri_to_id(LV2_URI_Map_Callback_Data data, const char* map, const char* uri)
+    static uint32_t carla_lv2_uri_to_id(const LV2_URI_Map_Callback_Data data, const char* const map, const char* const uri)
     {
         qDebug("Lv2Plugin::carla_lv2_uri_to_id(%p, %s, %s)", data, map, uri);
         return carla_lv2_urid_map(data, uri);
@@ -3017,7 +3075,7 @@ public:
 
     // ----------------- URID Feature ----------------------------------------------------
 
-    static LV2_URID carla_lv2_urid_map(LV2_URID_Map_Handle handle, const char* uri)
+    static LV2_URID carla_lv2_urid_map(const LV2_URID_Map_Handle handle, const char* const uri)
     {
         qDebug("Lv2Plugin::carla_lv2_urid_map(%p, %s)", handle, uri);
         assert(handle);
@@ -3056,7 +3114,7 @@ public:
         return plugin->getCustomURID(uri);
     }
 
-    static const char* carla_lv2_urid_unmap(LV2_URID_Map_Handle handle, LV2_URID urid)
+    static const char* carla_lv2_urid_unmap(const LV2_URID_Map_Handle handle, const LV2_URID urid)
     {
         qDebug("Lv2Plugin::carla_lv2_urid_unmap(%p, %i)", handle, urid);
         assert(handle);
@@ -3097,7 +3155,7 @@ public:
 
     // ----------------- Worker Feature --------------------------------------------------
 
-    static LV2_Worker_Status carla_lv2_worker_schedule(LV2_Worker_Schedule_Handle handle, uint32_t size, const void* data)
+    static LV2_Worker_Status carla_lv2_worker_schedule(const LV2_Worker_Schedule_Handle handle, const uint32_t size, const void* const data)
     {
         qDebug("Lv2Plugin::carla_lv2_worker_schedule(%p, %i, %p)", handle, size, data);
         assert(handle);
@@ -3106,7 +3164,7 @@ public:
         return plugin->handleWorkerSchedule(size, data);
     }
 
-    static LV2_Worker_Status carla_lv2_worker_respond(LV2_Worker_Respond_Handle handle, uint32_t size, const void* data)
+    static LV2_Worker_Status carla_lv2_worker_respond(const LV2_Worker_Respond_Handle handle, const uint32_t size, const void* const data)
     {
         qDebug("Lv2Plugin::carla_lv2_worker_respond(%p, %i, %p)", handle, size, data);
         assert(handle);
@@ -3117,7 +3175,7 @@ public:
 
     // ----------------- UI Port-Map Feature ---------------------------------------------
 
-    static uint32_t carla_lv2_ui_port_map(LV2UI_Feature_Handle handle, const char* symbol)
+    static uint32_t carla_lv2_ui_port_map(const LV2UI_Feature_Handle handle, const char* const symbol)
     {
         qDebug("Lv2Plugin::carla_lv2_ui_port_map(%p, %s)", handle, symbol);
         assert(handle);
@@ -3128,7 +3186,7 @@ public:
 
     // ----------------- UI Resize Feature -----------------------------------------------
 
-    static int carla_lv2_ui_resize(LV2UI_Feature_Handle handle, int width, int height)
+    static int carla_lv2_ui_resize(const LV2UI_Feature_Handle handle, const int width, const int height)
     {
         qDebug("Lv2Plugin::carla_lv2_ui_resize(%p, %i, %i)", handle, width, height);
         assert(handle);
@@ -3139,7 +3197,7 @@ public:
 
     // ----------------- External UI Feature ---------------------------------------------
 
-    static void carla_lv2_external_ui_closed(LV2UI_Controller controller)
+    static void carla_lv2_external_ui_closed(const LV2UI_Controller controller)
     {
         qDebug("Lv2Plugin::carla_lv2_external_ui_closed(%p)", controller);
         assert(controller);
@@ -3150,7 +3208,7 @@ public:
 
     // ----------------- UI Extension ----------------------------------------------------
 
-    static void carla_lv2_ui_write_function(LV2UI_Controller controller, uint32_t port_index, uint32_t buffer_size, uint32_t format, const void* buffer)
+    static void carla_lv2_ui_write_function(const LV2UI_Controller controller, const uint32_t port_index, const uint32_t buffer_size, const uint32_t format, const void* const buffer)
     {
         qDebug("Lv2Plugin::carla_lv2_ui_write_function(%p, %i, %i, %i, %p)", controller, port_index, buffer_size, format, buffer);
         assert(controller);
@@ -3161,7 +3219,7 @@ public:
 
     // -------------------------------------------------------------------
 
-    bool uiLibOpen(const char* filename)
+    bool uiLibOpen(const char* const filename)
     {
         ui.lib = lib_open(filename);
         return bool(ui.lib);
@@ -3174,7 +3232,7 @@ public:
         return false;
     }
 
-    void* uiLibSymbol(const char* symbol)
+    void* uiLibSymbol(const char* const symbol)
     {
         if (ui.lib)
             return lib_symbol(ui.lib, symbol);
@@ -3183,7 +3241,7 @@ public:
 
     // -------------------------------------------------------------------
 
-    bool init(const char* bundle, const char* const name, const char* URI)
+    bool init(const char* const bundle, const char* const name, const char* const URI)
     {
         // ---------------------------------------------------------------
         // get plugin from lv2_rdf (lilv)
@@ -3408,8 +3466,8 @@ public:
             // -----------------------------------------------------------
             // find more appropriate ui
 
-            int eQt4, eHWND, eX11, eGtk2, iHWND, iX11, iQt4, iExt, iSuil, iFinal;
-            eQt4 = eHWND = eX11 = eGtk2 = iQt4 = iHWND = iX11 = iExt = iSuil = iFinal = -1;
+            int eQt4, eCocoa, eHWND, eX11, eGtk2, iCocoa, iHWND, iX11, iQt4, iExt, iSuil, iFinal;
+            eQt4 = eCocoa = eHWND = eX11 = eGtk2 = iQt4 = iCocoa = iHWND = iX11 = iExt = iSuil = iFinal = -1;
 
             for (i=0; i < rdf_descriptor->UICount; i++)
             {
@@ -3421,6 +3479,14 @@ public:
                         eQt4 = i;
 #endif
                     iQt4 = i;
+                    break;
+
+                case LV2_UI_COCOA:
+#ifndef BUILD_BRIDGE
+                    if (isUiBridgeable(i) && carlaOptions.preferUiBridges)
+                        eCocoa = i;
+#endif
+                    iCocoa = i;
                     break;
 
                 case LV2_UI_WINDOWS:
@@ -3467,6 +3533,8 @@ public:
 
             if (eQt4 >= 0)
                 iFinal = eQt4;
+            else if (eCocoa >= 0)
+                iFinal = eCocoa;
             else if (eHWND >= 0)
                 iFinal = eHWND;
             else if (eX11 >= 0)
@@ -3475,6 +3543,8 @@ public:
                 iFinal = eGtk2;
             else if (iQt4 >= 0)
                 iFinal = iQt4;
+            else if (iCocoa >= 0)
+                iFinal = iCocoa;
             else if (iHWND >= 0)
                 iFinal = iHWND;
             else if (iX11 >= 0)
@@ -3485,10 +3555,10 @@ public:
                 iFinal = iSuil;
 
 #ifndef BUILD_BRIDGE
-            bool isBridged = (iFinal == eQt4 || iFinal == eX11 || iFinal == eGtk2);
+            const bool isBridged = (iFinal == eQt4 || iFinal == eCocoa || iFinal == eHWND || iFinal == eX11 || iFinal == eGtk2);
 #endif
 #ifdef HAVE_SUIL
-            bool isSuil = (iFinal == iSuil && !isBridged);
+            const bool isSuil = (iFinal == iSuil && !isBridged);
 #endif
 
             if (iFinal < 0)
@@ -3744,6 +3814,7 @@ private:
     } ext;
 
     struct {
+
         void* lib;
         LV2UI_Handle handle;
         LV2UI_Widget widget;
@@ -3766,9 +3837,9 @@ private:
     } suil;
 #endif
 
-    PluginEventData evin;
-    PluginEventData evout;
-    Lv2ParameterData* lv2param;
+    PluginEventData evIn;
+    PluginEventData evOut;
+    float* paramBuffers;
     std::vector<const char*> customURIDs;
 };
 
@@ -3838,9 +3909,9 @@ int CarlaOsc::handle_lv2_event_transfer(CARLA_OSC_HANDLE_ARGS2)
     CARLA_OSC_CHECK_OSC_TYPES(3, "sss");
 
     CarlaBackend::Lv2Plugin* lv2plugin = (CarlaBackend::Lv2Plugin*)plugin;
-    const char* type  = (const char*)&argv[0]->s;
-    const char* key   = (const char*)&argv[1]->s;
-    const char* value = (const char*)&argv[2]->s;
+    const char* const type  = (const char*)&argv[0]->s;
+    const char* const key   = (const char*)&argv[1]->s;
+    const char* const value = (const char*)&argv[2]->s;
     lv2plugin->handleEventTransfer(type, key, value);
 
     return 0;

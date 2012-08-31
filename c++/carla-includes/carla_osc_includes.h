@@ -21,6 +21,7 @@
 #include "carla_includes.h"
 
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 
 #include <lo/lo.h>

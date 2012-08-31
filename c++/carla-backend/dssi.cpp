@@ -46,7 +46,7 @@ public:
         descriptor  = nullptr;
         ldescriptor = nullptr;
 
-        param_buffers = nullptr;
+        paramBuffers = nullptr;
 
         memset(midiEvents, 0, sizeof(snd_seq_event_t)*MAX_MIDI_EVENTS);
     }
@@ -137,7 +137,7 @@ public:
     {
         Q_ASSERT(parameterId < param.count);
 
-        return param_buffers[parameterId];
+        return paramBuffers[parameterId];
     }
 
     void getLabel(char* const strBuf)
@@ -209,7 +209,7 @@ public:
     {
         Q_ASSERT(parameterId < param.count);
 
-        param_buffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
+        paramBuffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
 
         CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
     }
@@ -221,7 +221,7 @@ public:
         Q_ASSERT(value);
 
         if (type != CUSTOM_DATA_STRING)
-            return qCritical("CarlaPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - type is not string", CustomDataType2str(type), key, value, bool2str(sendGui));
+            return qCritical("DssiPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - type is not string", CustomDataType2str(type), key, value, bool2str(sendGui));
 
         if (! key)
             return qCritical("DssiPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - key is null", CustomDataType2str(type), key, value, bool2str(sendGui));
@@ -259,7 +259,7 @@ public:
         }
         else
         {
-            const ScopedDisabler m(this);
+            const CarlaPlugin::ScopedDisabler m(this);
             descriptor->set_custom_data(handle, chunk.data(), chunk.size());
         }
     }
@@ -397,9 +397,9 @@ public:
 
         if (params > 0)
         {
-            param.data    = new ParameterData[params];
-            param.ranges  = new ParameterRanges[params];
-            param_buffers = new float[params];
+            param.data   = new ParameterData[params];
+            param.ranges = new ParameterRanges[params];
+            paramBuffers = new float[params];
         }
 
         const int portNameSize = CarlaEngine::maxPortNameSize() - 1;
@@ -433,7 +433,7 @@ public:
 
                     if (forcedStereoIn)
                     {
-                        strcat(portName, "-2");
+                        strcat(portName, "_");
                         aIn.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
                         aIn.rindexes[1] = i;
                     }
@@ -447,7 +447,7 @@ public:
 
                     if (forcedStereoOut)
                     {
-                        strcat(portName, "-2");
+                        strcat(portName, "_");
                         aOut.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
                         aOut.rindexes[1] = i;
                     }
@@ -595,10 +595,10 @@ public:
                 param.ranges[j].stepLarge = stepLarge;
 
                 // Start parameters in their default values
-                param_buffers[j] = def;
+                paramBuffers[j] = def;
 
-                ldescriptor->connect_port(handle, i, &param_buffers[j]);
-                if (h2) ldescriptor->connect_port(h2, i, &param_buffers[j]);
+                ldescriptor->connect_port(handle, i, &paramBuffers[j]);
+                if (h2) ldescriptor->connect_port(h2, i, &paramBuffers[j]);
             }
             else
             {
@@ -1308,11 +1308,11 @@ public:
             {
                 if (param.data[k].type == PARAMETER_OUTPUT)
                 {
-                    fixParameterValue(param_buffers[k], param.ranges[k]);
+                    fixParameterValue(paramBuffers[k], param.ranges[k]);
 
                     if (param.data[k].midiCC > 0)
                     {
-                        value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
+                        value = (paramBuffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
                         param.portCout->writeEvent(CarlaEngineEventControlChange, framesOffset, param.data[k].midiChannel, param.data[k].midiCC, value);
                     }
                 }
@@ -1397,9 +1397,9 @@ public:
         qDebug("DssiPlugin::deleteBuffers() - start");
 
         if (param.count > 0)
-            delete[] param_buffers;
+            delete[] paramBuffers;
 
-        param_buffers = nullptr;
+        paramBuffers = nullptr;
 
         qDebug("DssiPlugin::deleteBuffers() - end");
     }
@@ -1501,7 +1501,7 @@ private:
     const DSSI_Descriptor* descriptor;
     snd_seq_event_t midiEvents[MAX_MIDI_EVENTS];
 
-    float* param_buffers;
+    float* paramBuffers;
 };
 
 CarlaPlugin* CarlaPlugin::newDSSI(const initializer& init, const void* const extra)

@@ -46,7 +46,7 @@ public:
         descriptor  = nullptr;
         rdf_descriptor = nullptr;
 
-        param_buffers = nullptr;
+        paramBuffers = nullptr;
     }
 
     ~LadspaPlugin()
@@ -151,7 +151,7 @@ public:
     {
         Q_ASSERT(parameterId < param.count);
 
-        return param_buffers[parameterId];
+        return paramBuffers[parameterId];
     }
 
     double getParameterScalePointValue(const uint32_t parameterId, const uint32_t scalePointId)
@@ -309,7 +309,10 @@ public:
                 const LADSPA_RDF_ScalePoint* const scalePoint = &port->ScalePoints[scalePointId];
 
                 if (scalePoint && scalePoint->Label)
+                {
                     strncpy(strBuf, scalePoint->Label, STR_MAX);
+                    return;
+                }
             }
         }
 
@@ -323,7 +326,7 @@ public:
     {
         Q_ASSERT(parameterId < param.count);
 
-        param_buffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
+        paramBuffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
 
         CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
     }
@@ -402,9 +405,9 @@ public:
 
         if (params > 0)
         {
-            param.data    = new ParameterData[params];
-            param.ranges  = new ParameterRanges[params];
-            param_buffers = new float[params];
+            param.data   = new ParameterData[params];
+            param.ranges = new ParameterRanges[params];
+            paramBuffers = new float[params];
         }
 
         const int portNameSize = CarlaEngine::maxPortNameSize() - 1;
@@ -439,7 +442,7 @@ public:
 
                     if (forcedStereoIn)
                     {
-                        strcat(portName, "-2");
+                        strcat(portName, "_");
                         aIn.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
                         aIn.rindexes[1] = i;
                     }
@@ -453,7 +456,7 @@ public:
 
                     if (forcedStereoOut)
                     {
-                        strcat(portName, "-2");
+                        strcat(portName, "_");
                         aOut.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
                         aOut.rindexes[1] = i;
                     }
@@ -596,10 +599,10 @@ public:
                 param.ranges[j].stepLarge = stepLarge;
 
                 // Start parameters in their default values
-                param_buffers[j] = def;
+                paramBuffers[j] = def;
 
-                descriptor->connect_port(handle, i, &param_buffers[j]);
-                if (h2) descriptor->connect_port(h2, i, &param_buffers[j]);
+                descriptor->connect_port(handle, i, &paramBuffers[j]);
+                if (h2) descriptor->connect_port(h2, i, &paramBuffers[j]);
             }
             else
             {
@@ -993,11 +996,11 @@ public:
             {
                 if (param.data[k].type == PARAMETER_OUTPUT)
                 {
-                    fixParameterValue(param_buffers[k], param.ranges[k]);
+                    fixParameterValue(paramBuffers[k], param.ranges[k]);
 
                     if (param.data[k].midiCC > 0)
                     {
-                        value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
+                        value = (paramBuffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
                         param.portCout->writeEvent(CarlaEngineEventControlChange, framesOffset, param.data[k].midiChannel, param.data[k].midiCC, value);
                     }
                 }
@@ -1025,9 +1028,9 @@ public:
         qDebug("LadspaPlugin::deleteBuffers() - start");
 
         if (param.count > 0)
-            delete[] param_buffers;
+            delete[] paramBuffers;
 
-        param_buffers = nullptr;
+        paramBuffers = nullptr;
 
         qDebug("LadspaPlugin::deleteBuffers() - end");
     }
@@ -1117,7 +1120,7 @@ private:
     const LADSPA_Descriptor* descriptor;
     const LADSPA_RDF_Descriptor* rdf_descriptor;
 
-    float* param_buffers;
+    float* paramBuffers;
 };
 
 CarlaPlugin* CarlaPlugin::newLADSPA(const initializer& init, const void* const extra)

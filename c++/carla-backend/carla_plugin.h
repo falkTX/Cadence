@@ -1102,7 +1102,9 @@ public:
             break;
         case CUSTOM_DATA_STRING:
             // Ignore some keys
-            if (strncmp(key, "OSC:", 4) == 0 || strcmp(key, "guiVisible") == 0 || strcmp(key, CARLA_BRIDGE_MSG_SAVE_NOW) == 0 || strcmp(key, CARLA_BRIDGE_MSG_SET_CHUNK) == 0 || strcmp(key, CARLA_BRIDGE_MSG_SET_CUSTOM) == 0)
+            if (strncmp(key, "OSC:", 4) == 0 || strcmp(key, "guiVisible") == 0)
+                saveData = false;
+            else if (strcmp(key, CARLA_BRIDGE_MSG_SAVE_NOW) == 0 || strcmp(key, CARLA_BRIDGE_MSG_SET_CHUNK) == 0 || strcmp(key, CARLA_BRIDGE_MSG_SET_CUSTOM) == 0)
                 saveData = false;
             break;
         default:

@@ -192,8 +192,10 @@ public:
     {
         if (effect->flags & effFlagsHasEditor)
         {
-#ifdef Q_OS_WIN
+#if defined(Q_OS_WIN)
             *type = GUI_INTERNAL_HWND;
+#elif defined(Q_OS_MACOS)
+            *type = GUI_INTERNAL_COCOA;
 #else
             *type = GUI_INTERNAL_X11;
 #endif
@@ -228,7 +230,7 @@ public:
         }
         else
         {
-            const ScopedDisabler m(this);
+            const CarlaPlugin::ScopedDisabler m(this);
             effect->dispatcher(effect, effSetChunk, 0 /* bank */, chunk.size(), chunk.data(), 0.0f);
         }
     }
