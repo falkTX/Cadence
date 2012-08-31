@@ -1454,6 +1454,8 @@ bool is_lv2_feature_supported(const LV2_URI uri)
         return true;
     if (strcmp(uri, LV2_LOG__log) == 0)
         return true;
+    if (strcmp(uri, LV2_OPTIONS__options) == 0)
+        return true;
     if (strcmp(uri, LV2_PROGRAMS__Host) == 0)
         return true;
     if (strcmp(uri, LV2_STATE__makePath) == 0)
@@ -1484,6 +1486,8 @@ bool is_lv2_ui_feature_supported(const LV2_URI uri)
         return true;
     if (strcmp(uri, LV2_UI__fixedSize) == 0)
         return true;
+    if (strcmp(uri, LV2_UI__makeResident) == 0)
+        return true;
     if (strcmp(uri, LV2_UI__noUserResize) == 0)
         return true;
     if (strcmp(uri, LV2_UI__parent) == 0)
@@ -1491,13 +1495,11 @@ bool is_lv2_ui_feature_supported(const LV2_URI uri)
     if (strcmp(uri, LV2_UI__portMap) == 0)
         return true;
     if (strcmp(uri, LV2_UI__portSubscribe) == 0)
-        return false; // TODO: uninplemented
+        return false; // TODO
     if (strcmp(uri, LV2_UI__resize) == 0)
         return true;
     if (strcmp(uri, LV2_UI__touch) == 0)
-        return false; // TODO: uninplemented
-    if (strcmp(uri, LV2_UI__makeResident) == 0)
-        return true;
+        return false; // TODO
     if (strcmp(uri, LV2_EXTERNAL_UI_URI) == 0)
         return true;
     if (strcmp(uri, LV2_EXTERNAL_UI_DEPRECATED_URI) == 0)

@@ -1595,6 +1595,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             if ptype == "LADSPA":
                 if not x_ladspa_plugins:
                     x_ladspa_plugins  = []
+                    x_ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_native", []))
                     x_ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_unix32", []))
                     x_ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_unix64", []))
                     x_ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_win32", []))
@@ -1604,6 +1605,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             elif ptype == "DSSI":
                 if not x_dssi_plugins:
                     x_dssi_plugins  = []
+                    x_dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_native", []))
                     x_dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_unix32", []))
                     x_dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_unix64", []))
                     x_dssi_plugins += toList(self.settings_db.value("Plugins/DSSI_win32", []))
@@ -1613,6 +1615,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             elif ptype == "LV2":
                 if not x_lv2_plugins:
                     x_lv2_plugins  = []
+                    x_lv2_plugins += toList(self.settings_db.value("Plugins/LV2_native", []))
                     x_lv2_plugins += toList(self.settings_db.value("Plugins/LV2_unix32", []))
                     x_lv2_plugins += toList(self.settings_db.value("Plugins/LV2_unix64", []))
                     x_lv2_plugins += toList(self.settings_db.value("Plugins/LV2_win32", []))
@@ -1622,6 +1625,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             elif ptype == "VST":
                 if not x_vst_plugins:
                     x_vst_plugins  = []
+                    x_vst_plugins += toList(self.settings_db.value("Plugins/VST_native", []))
                     x_vst_plugins += toList(self.settings_db.value("Plugins/VST_unix32", []))
                     x_vst_plugins += toList(self.settings_db.value("Plugins/VST_unix64", []))
                     x_vst_plugins += toList(self.settings_db.value("Plugins/VST_win32", []))
