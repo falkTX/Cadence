@@ -17,6 +17,8 @@
 
 #include "pixmapdial.h"
 
+#include <cmath>
+
 #include <QtCore/QTimer>
 #include <QtGui/QPainter>
 
