@@ -16,7 +16,7 @@
 */
 
 /**
-   @file programs.h
+   @file lv2_programs.h
    C header for the LV2 programs extension <http://kxstudio.sf.net/ns/lv2ext/programs>.
 */
 

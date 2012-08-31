@@ -48,7 +48,6 @@ CARLA_BACKEND_START_NAMESPACE
 const unsigned int MAX_EVENT_BUFFER = 8192; // 0x2000
 //const unsigned int MAX_EVENT_BUFFER = (sizeof(LV2_Atom_Event) + 4) * MAX_MIDI_EVENTS;
 
-
 /*!
  * @defgroup PluginHints Plugin Hints
  * @{
@@ -361,7 +360,7 @@ public:
 
             if (features[lv2_feature_id_external_ui] && features[lv2_feature_id_external_ui]->data)
             {
-                const lv2_external_ui_host* const uiHost = (const lv2_external_ui_host*)features[lv2_feature_id_external_ui]->data;
+                const LV2_External_UI_Host* const uiHost = (const LV2_External_UI_Host*)features[lv2_feature_id_external_ui]->data;
 
                 if (uiHost->plugin_human_id)
                     free((void*)uiHost->plugin_human_id);
@@ -948,11 +947,11 @@ public:
             {
                 if (yesNo)
                 {
-                    LV2_EXTERNAL_UI_SHOW((lv2_external_ui*)ui.widget);
+                    LV2_EXTERNAL_UI_SHOW((LV2_External_UI_Widget*)ui.widget);
                 }
                 else
                 {
-                    LV2_EXTERNAL_UI_HIDE((lv2_external_ui*)ui.widget);
+                    LV2_EXTERNAL_UI_HIDE((LV2_External_UI_Widget*)ui.widget);
 
                     if (rdf_descriptor->Author && strcmp(rdf_descriptor->Author, "linuxDSP") == 0)
                     {
@@ -1022,7 +1021,7 @@ public:
     {
         // Update external UI
         if (gui.type == GUI_EXTERNAL_LV2 && ui.handle && ui.descriptor && ui.widget)
-            LV2_EXTERNAL_UI_RUN((lv2_external_ui*)ui.widget);
+            LV2_EXTERNAL_UI_RUN((LV2_External_UI_Widget*)ui.widget);
 
         CarlaPlugin::idleGui();
     }
@@ -4102,7 +4101,7 @@ public:
             uiResizeFt->handle                = this;
             uiResizeFt->ui_resize             = carla_lv2_ui_resize;
 
-            lv2_external_ui_host* const uiExternalHostFt = new lv2_external_ui_host;
+            LV2_External_UI_Host* const uiExternalHostFt = new LV2_External_UI_Host;
             uiExternalHostFt->ui_closed                  = carla_lv2_external_ui_closed;
             uiExternalHostFt->plugin_human_id            = strdup(guiTitle.toUtf8().constData());
 
@@ -4127,7 +4126,7 @@ public:
             features[lv2_feature_id_ui_resize]->data       = uiResizeFt;
 
             features[lv2_feature_id_external_ui]           = new LV2_Feature;
-            features[lv2_feature_id_external_ui]->URI      = LV2_EXTERNAL_UI_URI;
+            features[lv2_feature_id_external_ui]->URI      = LV2_EXTERNAL_UI__Host;
             features[lv2_feature_id_external_ui]->data     = uiExternalHostFt;
 
             features[lv2_feature_id_external_ui_old]       = new LV2_Feature;

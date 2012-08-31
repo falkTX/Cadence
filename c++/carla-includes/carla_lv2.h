@@ -158,7 +158,7 @@ public:
         ui_cocoa            (new_uri(LV2_UI__CocoaUI)),
         ui_windows          (new_uri(LV2_UI__WindowsUI)),
         ui_x11              (new_uri(LV2_UI__X11UI)),
-        ui_external         (new_uri(LV2_EXTERNAL_UI_URI)),
+        ui_external         (new_uri(LV2_EXTERNAL_UI__Widget)),
         ui_external_old     (new_uri(LV2_EXTERNAL_UI_DEPRECATED_URI)),
 
         preset_preset       (new_uri(LV2_PRESETS__Preset)),
@@ -1500,7 +1500,7 @@ bool is_lv2_ui_feature_supported(const LV2_URI uri)
         return true;
     if (strcmp(uri, LV2_UI__touch) == 0)
         return false; // TODO
-    if (strcmp(uri, LV2_EXTERNAL_UI_URI) == 0)
+    if (strcmp(uri, LV2_EXTERNAL_UI__Widget) == 0)
         return true;
     if (strcmp(uri, LV2_EXTERNAL_UI_DEPRECATED_URI) == 0)
         return true;
@@ -1525,7 +1525,7 @@ LV2_URI get_lv2_ui_uri(const LV2_Property type)
     case LV2_UI_X11:
         return LV2_UI__X11UI;
     case LV2_UI_EXTERNAL:
-        return LV2_EXTERNAL_UI_URI;
+        return LV2_EXTERNAL_UI__Widget;
     case LV2_UI_OLD_EXTERNAL:
         return LV2_EXTERNAL_UI_DEPRECATED_URI;
     default:
