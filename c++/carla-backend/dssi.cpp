@@ -226,6 +226,7 @@ public:
             return qCritical("DssiPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - value is null", CustomDataType2str(type), key, value, bool2str(sendGui));
 
         descriptor->configure(handle, key, value);
+        if (h2) descriptor->configure(h2, key, value);
 
 #ifndef BUILD_BRIDGE
         if (sendGui && osc.data.target)
@@ -252,11 +253,13 @@ public:
         {
             const CarlaEngine::ScopedLocker m(x_engine);
             descriptor->set_custom_data(handle, chunk.data(), chunk.size());
+            if (h2) descriptor->set_custom_data(h2, chunk.data(), chunk.size());
         }
         else
         {
             const CarlaPlugin::ScopedDisabler m(this);
             descriptor->set_custom_data(handle, chunk.data(), chunk.size());
+            if (h2) descriptor->set_custom_data(h2, chunk.data(), chunk.size());
         }
     }
 
@@ -275,11 +278,13 @@ public:
             {
                 const CarlaEngine::ScopedLocker m(x_engine, block);
                 descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
+                if (h2) descriptor->select_program(h2, midiprog.data[index].bank, midiprog.data[index].program);
             }
             else
             {
                 const ScopedDisabler m(this, block);
                 descriptor->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
+                if (h2) descriptor->select_program(h2, midiprog.data[index].bank, midiprog.data[index].program);
             }
         }
 

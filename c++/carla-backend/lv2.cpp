@@ -810,11 +810,13 @@ public:
             {
                 const CarlaEngine::ScopedLocker m(x_engine);
                 status = ext.state->restore(handle, carla_lv2_state_retrieve, this, 0, features);
+                if (h2) ext.state->restore(h2, carla_lv2_state_retrieve, this, 0, features);
             }
             else
             {
                 const CarlaPlugin::ScopedDisabler m(this);
                 status = ext.state->restore(handle, carla_lv2_state_retrieve, this, 0, features);
+                if (h2) ext.state->restore(h2, carla_lv2_state_retrieve, this, 0, features);
             }
 
             switch (status)
@@ -865,11 +867,13 @@ public:
             {
                 const CarlaEngine::ScopedLocker m(x_engine, block);
                 ext.programs->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
+                if (h2) ext.programs->select_program(h2, midiprog.data[index].bank, midiprog.data[index].program);
             }
             else
             {
                 const ScopedDisabler m(this, block);
                 ext.programs->select_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
+                if (h2) ext.programs->select_program(h2, midiprog.data[index].bank, midiprog.data[index].program);
             }
         }
 
@@ -1642,13 +1646,13 @@ public:
         if (descriptor->extension_data)
         {
             if (m_hints & PLUGIN_HAS_EXTENSION_PROGRAMS)
-                ext.programs = (LV2_Programs_Interface*)descriptor->extension_data(LV2_PROGRAMS__Interface);
+                ext.programs = (const LV2_Programs_Interface*)descriptor->extension_data(LV2_PROGRAMS__Interface);
 
             if (m_hints & PLUGIN_HAS_EXTENSION_STATE)
-                ext.state = (LV2_State_Interface*)descriptor->extension_data(LV2_STATE__interface);
+                ext.state = (const LV2_State_Interface*)descriptor->extension_data(LV2_STATE__interface);
 
             if (m_hints & PLUGIN_HAS_EXTENSION_WORKER)
-                ext.worker = (LV2_Worker_Interface*)descriptor->extension_data(LV2_WORKER__interface);
+                ext.worker = (const LV2_Worker_Interface*)descriptor->extension_data(LV2_WORKER__interface);
         }
 
         reloadPrograms(true);
@@ -1754,7 +1758,10 @@ public:
     void prepareForSave()
     {
         if (ext.state && ext.state->save)
+        {
             ext.state->save(handle, carla_lv2_state_store, this, LV2_STATE_IS_POD, features);
+            if (h2) ext.state->save(h2, carla_lv2_state_store, this, LV2_STATE_IS_POD, features);
+        }
     }
 
     // -------------------------------------------------------------------
@@ -3196,7 +3203,7 @@ public:
         {
             if (ui.descriptor->extension_data)
             {
-                ext.uiprograms = (LV2_Programs_UI_Interface*)ui.descriptor->extension_data(LV2_PROGRAMS__UIInterface);
+                ext.uiprograms = (const LV2_Programs_UI_Interface*)ui.descriptor->extension_data(LV2_PROGRAMS__UIInterface);
 
                 if (ext.uiprograms && ! ext.uiprograms->select_program)
                     // invalid
@@ -4214,10 +4221,10 @@ private:
     LV2_Feature* features[lv2_feature_count+1];
 
     struct {
-        LV2_State_Interface* state;
-        LV2_Worker_Interface* worker;
-        LV2_Programs_Interface* programs;
-        LV2_Programs_UI_Interface* uiprograms;
+        const LV2_State_Interface* state;
+        const LV2_Worker_Interface* worker;
+        const LV2_Programs_Interface* programs;
+        const LV2_Programs_UI_Interface* uiprograms;
     } ext;
 
     struct {
