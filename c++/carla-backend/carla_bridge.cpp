@@ -546,6 +546,7 @@ public:
 
     void setChunkData(const char* const stringData)
     {
+        Q_ASSERT(m_hints & PLUGIN_USES_CHUNKS);
         Q_ASSERT(stringData);
 
         QString filePath;

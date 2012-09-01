@@ -333,6 +333,7 @@ public:
     void reload()
     {
         qDebug("LadspaPlugin::reload() - start");
+        Q_ASSERT(descriptor);
 
         // Safely disable plugin for reload
         const ScopedDisabler m(this);
@@ -406,7 +407,7 @@ public:
             paramBuffers = new float[params];
         }
 
-        const int portNameSize = CarlaEngine::maxPortNameSize() - 1;
+        const int portNameSize = CarlaEngine::maxPortNameSize() - 2;
         char portName[portNameSize];
         bool needsCtrlIn  = false;
         bool needsCtrlOut = false;
@@ -664,7 +665,7 @@ public:
     // -------------------------------------------------------------------
     // Plugin processing
 
-    void process(float* const* const inBuffer, float* const* const outBuffer, const uint32_t frames, const uint32_t framesOffset)
+    void process(float** const inBuffer, float** const outBuffer, const uint32_t frames, const uint32_t framesOffset)
     {
         uint32_t i, k;
 
@@ -678,9 +679,7 @@ public:
 
         if (aIn.count > 0)
         {
-            uint32_t count = h2 ? 2 : aIn.count;
-
-            if (count == 1)
+            if (aIn.count == 1)
             {
                 for (k=0; k < frames; k++)
                 {
@@ -688,7 +687,7 @@ public:
                         aInsPeak[0] = abs(inBuffer[0][k]);
                 }
             }
-            else if (count > 1)
+            else if (aIn.count > 1)
             {
                 for (k=0; k < frames; k++)
                 {
@@ -912,16 +911,14 @@ public:
             double bal_rangeL, bal_rangeR;
             float oldBufLeft[do_balance ? frames : 0];
 
-            uint32_t count = h2 ? 2 : aOut.count;
-
-            for (i=0; i < count; i++)
+            for (i=0; i < aOut.count; i++)
             {
                 // Dry/Wet
                 if (do_drywet)
                 {
                     for (k=0; k < frames; k++)
                     {
-                        if (aOut.count == 1 && ! h2)
+                        if (aOut.count == 1)
                             outBuffer[i][k] = (outBuffer[i][k]*x_dryWet)+(inBuffer[0][k]*(1.0-x_dryWet));
                         else
                             outBuffer[i][k] = (outBuffer[i][k]*x_dryWet)+(inBuffer[i][k]*(1.0-x_dryWet));

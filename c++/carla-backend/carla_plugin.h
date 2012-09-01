@@ -1358,7 +1358,7 @@ public:
     /*!
      * Plugin process callback.
      */
-    virtual void process(float* const* const inBuffer, float* const* const outBuffer, const uint32_t frames, const uint32_t framesOffset = 0)
+    virtual void process(float** const inBuffer, float** const outBuffer, const uint32_t frames, const uint32_t framesOffset = 0)
     {
         Q_UNUSED(inBuffer);
         Q_UNUSED(outBuffer);

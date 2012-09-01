@@ -134,6 +134,7 @@ public:
     void reload()
     {
         qDebug("LinuxSamplerPlugin::reload() - start");
+        Q_ASSERT(instrument);
 
         // Safely disable plugin for reload
         const ScopedDisabler m(this);
@@ -271,7 +272,7 @@ public:
     // -------------------------------------------------------------------
     // Plugin processing
 
-    void process(float**, float** outBuffer, uint32_t frames, uint32_t framesOffset)
+    void process(float** const, float** const outBuffer, const uint32_t frames, const uint32_t framesOffset)
     {
         uint32_t i, k;
         uint32_t midiEventCount = 0;

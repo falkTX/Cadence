@@ -210,7 +210,6 @@ void CarlaPluginThread::run()
     case PLUGIN_THREAD_VST_GUI:
         /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath()).arg(plugin->id());
         /* filename */ arguments << plugin->filename();
-        /* label    */ arguments << m_label;
         /* ui-title */ arguments << QString("%1 (GUI)").arg(plugin->name());
         break;
 
