@@ -142,9 +142,9 @@ int CarlaBridgeOsc::handleMessage(const char* const path, const int argc, const 
 
 #ifdef BRIDGE_LV2
     if (strcmp(method, "/lv2_atom_transfer") == 0)
-        return handle_lv2_atom_transfer(argc, argv, types);
+        return handle_lv2_transfer_atom(argc, argv, types);
     if (strcmp(method, "/lv2_event_transfer") == 0)
-        return handle_lv2_event_transfer(argc, argv, types);
+        return handle_lv2_transfer_event(argc, argv, types);
 #endif
 
 #if 0

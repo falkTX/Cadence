@@ -20,7 +20,7 @@
 
 #include "carla_includes.h"
 
-#include <stdint.h>
+#include <cstdint>
 
 #define CARLA_BRIDGE_START_NAMESPACE namespace CarlaBridge {
 #define CARLA_BRIDGE_END_NAMESPACE }

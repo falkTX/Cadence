@@ -21,8 +21,7 @@
 
 #include <QtGui/QDialog>
 
-//CARLA_BRIDGE_START_NAMESPACE;
-namespace CarlaBridge {
+CARLA_BRIDGE_START_NAMESPACE;
 
 // -------------------------------------------------------------------------
 
@@ -32,14 +31,20 @@ namespace CarlaBridge {
 class CarlaBridgeVstClient : public CarlaBridgeClient
 {
 public:
-    CarlaBridgeVstClient(CarlaBridgeToolkit* const toolkit) : CarlaBridgeClient(toolkit)
+    CarlaBridgeVstClient(CarlaBridgeToolkit* const toolkit)
+        : CarlaBridgeClient(toolkit)
     {
         effect = nullptr;
         widget = new QDialog;
+
+        // make client valid
+        unique1 = unique2 = rand();
     }
 
     ~CarlaBridgeVstClient()
     {
+        // make client invalid
+        unique2 += 1;
     }
 
     // ---------------------------------------------------------------------
@@ -50,7 +55,7 @@ public:
         // -----------------------------------------------------------------
         // open DLL
 
-        if ( !lib_open(binary))
+        if (! libOpen(binary))
             return false;
 
         // -----------------------------------------------------------------
@@ -92,17 +97,18 @@ public:
         // -----------------------------------------------------------------
         // initialize gui stuff
 
-        ERect* vstRect;
+        ERect* vstRect = nullptr;
 
-        if (effect->dispatcher(effect, effEditGetRect, 0, 0, &vstRect, 0.0f))
+        if (effect->dispatcher(effect, effEditGetRect, 0, 0, &vstRect, 0.0f) && vstRect)
         {
             int width  = vstRect->right - vstRect->left;
             int height = vstRect->bottom - vstRect->top;
             widget->setFixedSize(width, height);
-            return true;
+            //return true;
         }
 
-        return false;
+        return true;
+        //return false;
     }
 
     void close()
@@ -163,10 +169,27 @@ public:
 
     static intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
     {
+        // Check if 'resvd1' points to this client
+        CarlaBridgeVstClient* self = nullptr;
+
+#ifdef VESTIGE_HEADER
+        if (effect && effect->ptr1)
+        {
+            self = (CarlaBridgeVstClient*)effect->ptr1;
+#else
+        if (effect && effect->resvd1)
+        {
+            self = (CarlaBridgeVstClient*)getPointer(effect->resvd1);
+#endif
+            if (self->unique1 != self->unique2)
+                self = nullptr;
+        }
+
         switch (opcode)
         {
         case audioMasterAutomate:
-            //osc_send_control(index, opt);
+            if (self)
+                self->sendOscControl(index, opt);
             break;
 
         case audioMasterVersion:
@@ -218,8 +241,8 @@ public:
 #endif
 
         case audioMasterSizeWindow:
-            //if (client)
-            //    client->queque_message(BRIDGE_MESSAGE_RESIZE_GUI, index, value, 0.0f);
+            if (self)
+               self->quequeMessage(MESSAGE_RESIZE_GUI, index, value, 0.0);
             return 1;
 
         case audioMasterGetSampleRate:
@@ -290,7 +313,8 @@ public:
             return kVstLangEnglish;
 
         case audioMasterUpdateDisplay:
-            //osc_send_configure("reloadprograms", "");
+            if (self)
+                self->sendOscConfigure("reloadprograms", "");
             break;
 
         default:
@@ -304,8 +328,10 @@ public:
     }
 
 private:
+    int unique1;
     AEffect* effect;
     QDialog* widget;
+    int unique2;
 };
 
 CARLA_BRIDGE_END_NAMESPACE

@@ -247,35 +247,36 @@ void osc_send_quit(const CarlaOscData* const oscData)
 #endif
 
 static inline
-void osc_send_lv2_atom_transfer(const CarlaOscData* const oscData /* TODO */)
+void osc_send_lv2_transfer_atom(const CarlaOscData* const oscData, const char* const type, const char* const value)
 {
     Q_ASSERT(oscData && oscData->path);
-    qDebug("osc_send_lv2_atom_transfer(path:\"%s\")", oscData->path);
+    Q_ASSERT(type);
+    Q_ASSERT(value);
+    qDebug("osc_send_lv2_transfer_atom(path:\"%s\", \"%s\", \"%s\")", oscData->path, type, value);
 
     if (oscData->target)
     {
         char targetPath[strlen(oscData->path)+19];
         strcpy(targetPath, oscData->path);
         strcat(targetPath, "/lv2_atom_transfer");
-        lo_send(oscData->target, targetPath, "");
+        lo_send(oscData->target, targetPath, "ss", type, value);
     }
 }
 
 static inline
-void osc_send_lv2_event_transfer(const CarlaOscData* const oscData, const char* const type, const char* const key, const char* const value)
+void osc_send_lv2_transfer_event(const CarlaOscData* const oscData, const char* const type, const char* const value)
 {
     Q_ASSERT(oscData && oscData->path);
     Q_ASSERT(type);
-    Q_ASSERT(key);
     Q_ASSERT(value);
-    qDebug("osc_send_lv2_event_transfer(path:\"%s\", \"%s\", \"%s\", \"%s\")", oscData->path, type, key, value);
+    qDebug("osc_send_lv2_transfer_event(path:\"%s\", \"%s\", \"%s\")", oscData->path, type, value);
 
     if (oscData->target)
     {
         char targetPath[strlen(oscData->path)+20];
         strcpy(targetPath, oscData->path);
         strcat(targetPath, "/lv2_event_transfer");
-        lo_send(oscData->target, targetPath, "sss", type, key, value);
+        lo_send(oscData->target, targetPath, "ss", type, value);
     }
 }
 

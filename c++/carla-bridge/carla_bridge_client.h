@@ -31,8 +31,7 @@
 #include <cstdlib>
 #include <QtCore/QMutex>
 
-//CARLA_BRIDGE_START_NAMESPACE;
-namespace CarlaBridge {
+CARLA_BRIDGE_START_NAMESPACE
 
 class CarlaBridgeClient
 {
@@ -96,10 +95,16 @@ public:
     }
 
 #ifdef BRIDGE_LV2
-    void sendOscLv2EventTransfer(const char* const type, const char* const key, const char* const value)
+    void sendOscLv2TransferAtom(const char* const type, const char* const value)
     {
-        qDebug("sendOscLv2EventTransfer(\"%s\", \"%s\", \"%s\")", type, key, value);
-        m_osc.sendOscLv2EventTransfer(type, key, value);
+        qDebug("sendOscLv2TransferAtom(\"%s\", \"%s\")", type, value);
+        m_osc.sendOscLv2TransferAtom(type, value);
+    }
+
+    void sendOscLv2TransferEvent(const char* const type, const char* const value)
+    {
+        qDebug("sendOscLv2TransferEvent(\"%s\", \"%s\")", type, value);
+        m_osc.sendOscLv2TransferEvent(type, value);
     }
 #endif
 
@@ -208,8 +213,8 @@ public:
 #else
     // gui
     virtual void* getWidget() const = 0;
-    virtual bool isResizable() const = 0;
-    virtual bool needsReparent() const = 0;
+    virtual bool  isResizable() const = 0;
+    virtual bool  needsReparent() const = 0;
 #endif
 
     // ---------------------------------------------------------------------
@@ -218,7 +223,7 @@ public:
 protected:
     bool libOpen(const char* const filename)
     {
-        m_lib = ::lib_open(filename);
+        m_lib = lib_open(filename);
         m_filename = strdup(filename);
         return bool(m_lib);
     }
@@ -226,20 +231,24 @@ protected:
     bool libClose()
     {
         if (m_lib)
-            return ::lib_close(m_lib);
+        {
+            const bool closed = lib_close(m_lib);
+            m_lib = nullptr;
+            return closed;
+        }
         return false;
     }
 
     void* libSymbol(const char* const symbol)
     {
         if (m_lib)
-            return ::lib_symbol(m_lib, symbol);
+            return lib_symbol(m_lib, symbol);
         return nullptr;
     }
 
     const char* libError()
     {
-        return ::lib_error(m_filename ? m_filename : "");
+        return lib_error(m_filename ? m_filename : "");
     }
 #endif
 

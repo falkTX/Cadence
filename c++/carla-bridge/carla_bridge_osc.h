@@ -82,9 +82,14 @@ public:
         osc_send_exiting(&m_controlData);
     }
 
-    void sendOscLv2EventTransfer(const char* const type, const char* const key, const char* const value)
+    void sendOscLv2TransferAtom(const char* const type, const char* const value)
     {
-        osc_send_lv2_event_transfer(&m_controlData, type, key, value);
+        osc_send_lv2_transfer_atom(&m_controlData, type, value);
+    }
+
+    void sendOscLv2TransferEvent(const char* const type, const char* const value)
+    {
+        osc_send_lv2_transfer_event(&m_controlData, type, value);
     }
 
 private:
@@ -121,8 +126,8 @@ private:
     int handle_quit();
 
 #ifdef BRIDGE_LV2
-    int handle_lv2_atom_transfer(CARLA_BRIDGE_OSC_HANDLE_ARGS);
-    int handle_lv2_event_transfer(CARLA_BRIDGE_OSC_HANDLE_ARGS);
+    int handle_lv2_transfer_atom(CARLA_BRIDGE_OSC_HANDLE_ARGS);
+    int handle_lv2_transfer_event(CARLA_BRIDGE_OSC_HANDLE_ARGS);
 #endif
 };
 

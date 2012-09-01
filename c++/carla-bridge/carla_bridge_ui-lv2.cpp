@@ -425,17 +425,18 @@ public:
         return nullptr;
     }
 
-    void handleAtomTransfer()
+    void handleTransferAtom(const char* const type, const char* const value)
     {
-        // TODO
+        qDebug("CarlaBridgeLv2Client::handleTransferEvent(%s, %s)", type, value);
+        Q_ASSERT(type);
+        Q_ASSERT(value);
     }
 
-    void handleEventTransfer(const char* const type, const char* const key, const char* const value)
+    void handleTransferEvent(const char* const type, const char* const value)
     {
-        qDebug("CarlaBridgeLv2Client::handleEventTransfer(%s, %s, %s)", type, key, value);
-        assert(type);
-        assert(key);
-        assert(value);
+        qDebug("CarlaBridgeLv2Client::handleTransferEvent(%s, %s)", type, value);
+        Q_ASSERT(type);
+        Q_ASSERT(value);
 
         if (handle && descriptor && descriptor->port_event)
         {
@@ -456,7 +457,7 @@ public:
             lv2_atom_forge_property_head(&forge, uridPatchBody, CARLA_URI_MAP_ID_NULL);
             lv2_atom_forge_blank(&forge, &bodyFrame, 2, CARLA_URI_MAP_ID_NULL);
 
-            lv2_atom_forge_property_head(&forge, getCustomURID(key), CARLA_URI_MAP_ID_NULL);
+            //lv2_atom_forge_property_head(&forge, getCustomURID(key), CARLA_URI_MAP_ID_NULL);
 
             if (strcmp(type, "string") == 0)
                 lv2_atom_forge_string(&forge, value, strlen(value));
@@ -464,8 +465,8 @@ public:
                 lv2_atom_forge_path(&forge, value, strlen(value));
             else if (strcmp(type, "chunk") == 0)
                 lv2_atom_forge_literal(&forge, value, strlen(value), CARLA_URI_MAP_ID_ATOM_CHUNK, CARLA_URI_MAP_ID_NULL);
-            else
-                lv2_atom_forge_literal(&forge, value, strlen(value), getCustomURID(key), CARLA_URI_MAP_ID_NULL);
+            //else
+            //    lv2_atom_forge_literal(&forge, value, strlen(value), getCustomURID(key), CARLA_URI_MAP_ID_NULL);
 
             lv2_atom_forge_pop(&forge, &bodyFrame);
             lv2_atom_forge_pop(&forge, &refFrame);
@@ -522,20 +523,24 @@ public:
         }
         else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM)
         {
-            // TODO
-            //LV2_Atom* atom = (LV2_Atom*)buffer;
-            //QByteArray chunk((const char*)buffer, buffer_size);
-            //osc_send_lv2_atom_transfer(lv2ui->get_custom_uri_string(atom->type), LV2_ATOM__atomTransfer, chunk.toBase64().constData());
+            const LV2_Atom* const atom = (const LV2_Atom*)buffer;
+
+            QByteArray chunk((const char*)buffer, bufferSize);
+            sendOscLv2TransferAtom(getCustomURIString(atom->type), chunk.toBase64().constData());
+
+            if (descriptor && descriptor->port_event)
+                descriptor->port_event(handle, 0, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM, atom);
         }
         else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT)
         {
-            const LV2_Atom* const atom = (LV2_Atom*)buffer;
+            const LV2_Atom* const atom = (const LV2_Atom*)buffer;
+
+            QByteArray chunk((const char*)buffer, bufferSize);
+            sendOscLv2TransferEvent(getCustomURIString(atom->type), chunk.toBase64().constData());
 
             if (descriptor && descriptor->port_event)
                 descriptor->port_event(handle, 0, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
 
-            QByteArray chunk((const char*)buffer, bufferSize);
-            sendOscLv2EventTransfer(getCustomURIString(atom->type), LV2_ATOM__eventTransfer, chunk.toBase64().constData());
         }
     }
 
@@ -803,38 +808,36 @@ private:
     std::vector<const char*> customURIDs;
 };
 
-int CarlaBridgeOsc::handle_lv2_atom_transfer(CARLA_BRIDGE_OSC_HANDLE_ARGS)
+int CarlaBridgeOsc::handle_lv2_transfer_atom(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 {
     qDebug("CarlaBridgeOsc::handle_lv2_atom_transfer()");
-    //CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(2, "ii");
-
-    if (! client)
-        return 1;
-
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
-    Q_UNUSED(types);
-
-    CarlaBridgeLv2Client* const lv2client = (CarlaBridgeLv2Client*)client;
-    lv2client->handleAtomTransfer();
-
-    return 0;
-}
-
-int CarlaBridgeOsc::handle_lv2_event_transfer(CARLA_BRIDGE_OSC_HANDLE_ARGS)
-{
-    qDebug("CarlaBridgeOsc::handle_lv2_event_transfer()");
-    CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(3, "sss");
+    CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(2, "ss");
 
     if (! client)
         return 1;
 
     const char* type  = (const char*)&argv[0]->s;
-    const char* key   = (const char*)&argv[1]->s;
+    const char* value = (const char*)&argv[2]->s;
+
+    CarlaBridgeLv2Client* const lv2client = (CarlaBridgeLv2Client*)client;
+    lv2client->handleTransferAtom(type, value);
+
+    return 0;
+}
+
+int CarlaBridgeOsc::handle_lv2_transfer_event(CARLA_BRIDGE_OSC_HANDLE_ARGS)
+{
+    qDebug("CarlaBridgeOsc::handle_lv2_event_transfer()");
+    CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(2, "ss");
+
+    if (! client)
+        return 1;
+
+    const char* type  = (const char*)&argv[0]->s;
     const char* value = (const char*)&argv[2]->s;
 
     CarlaBridgeLv2Client* lv2client = (CarlaBridgeLv2Client*)client;
-    lv2client->handleEventTransfer(type, key, value);
+    lv2client->handleTransferEvent(type, value);
 
     return 0;
 }
