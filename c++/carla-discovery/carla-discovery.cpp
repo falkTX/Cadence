@@ -69,6 +69,8 @@ intptr_t VstHostCallback(AEffect* const effect, const int32_t opcode, const int3
     qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstMasterOpcode2str(opcode), index, value, opt);
 #endif
 
+    intptr_t ret = 0;
+
     switch (opcode)
     {
     case audioMasterAutomate:
@@ -77,10 +79,12 @@ intptr_t VstHostCallback(AEffect* const effect, const int32_t opcode, const int3
         break;
 
     case audioMasterVersion:
-        return kVstVersion;
+        ret = kVstVersion;
+        break;
 
     case audioMasterCurrentId:
-        return VstCurrentUniqueId;
+        ret = VstCurrentUniqueId;
+        break;
 
     case audioMasterGetTime:
         static VstTimeInfo_R timeInfo;
@@ -96,83 +100,95 @@ intptr_t VstHostCallback(AEffect* const effect, const int32_t opcode, const int3
         timeInfo.timeSigDenominator = 4;
         timeInfo.flags |= kVstTimeSigValid;
 
-        return (intptr_t)&timeInfo;
+        ret = (intptr_t)&timeInfo;
+        break;
 
     case audioMasterTempoAt:
         // Deprecated in VST SDK 2.4
-        return 120 * 10000;
+        ret = 120 * 10000;
+        break;
 
     case audioMasterGetSampleRate:
-        return sampleRate;
+        ret = sampleRate;
+        break;
 
     case audioMasterGetBlockSize:
-        return bufferSize;
+        ret = bufferSize;
+        break;
 
     case audioMasterGetVendorString:
-        strcpy((char*)ptr, "Cadence");
+        if (ptr)
+            strcpy((char*)ptr, "Cadence");
         break;
 
     case audioMasterGetProductString:
-        strcpy((char*)ptr, "Carla-Discovery");
+        if (ptr)
+            strcpy((char*)ptr, "Carla-Discovery");
         break;
 
     case audioMasterGetVendorVersion:
-        return 0x05; // 0.5
+        ret = 0x05; // 0.5
+        break;
 
     case audioMasterCanDo:
 #if DEBUG
         qDebug("VstHostCallback:audioMasterCanDo - %s", (char*)ptr);
 #endif
 
-        if (strcmp((char*)ptr, "supplyIdle") == 0)
-            return 1;
-        if (strcmp((char*)ptr, "sendVstEvents") == 0)
-            return 1;
-        if (strcmp((char*)ptr, "sendVstMidiEvent") == 0)
-            return 1;
-        if (strcmp((char*)ptr, "sendVstMidiEventFlagIsRealtime") == 0)
-            return -1;
-        if (strcmp((char*)ptr, "sendVstTimeInfo") == 0)
-            return 1;
-        if (strcmp((char*)ptr, "receiveVstEvents") == 0)
-            return 1;
-        if (strcmp((char*)ptr, "receiveVstMidiEvent") == 0)
-            return 1;
-        if (strcmp((char*)ptr, "receiveVstTimeInfo") == 0)
-            return -1;
-        if (strcmp((char*)ptr, "reportConnectionChanges") == 0)
-            return -1;
-        if (strcmp((char*)ptr, "acceptIOChanges") == 0)
-            return -1;
-        if (strcmp((char*)ptr, "sizeWindow") == 0)
-            return 1;
-        if (strcmp((char*)ptr, "offline") == 0)
-            return -1;
-        if (strcmp((char*)ptr, "openFileSelector") == 0)
-            return -1;
-        if (strcmp((char*)ptr, "closeFileSelector") == 0)
-            return -1;
-        if (strcmp((char*)ptr, "startStopProcess") == 0)
-            return 1;
-        if (strcmp((char*)ptr, "supportShell") == 0)
-            return 1;
-        if (strcmp((char*)ptr, "shellCategory") == 0)
-            return 1;
-
-        // unimplemented
-        qWarning("VstHostCallback:audioMasterCanDo - Got unknown feature request '%s'", (char*)ptr);
-        return 0;
+        if (! ptr)
+            ret = 0;
+        else if (strcmp((char*)ptr, "supplyIdle") == 0)
+            ret = 1;
+        else if (strcmp((char*)ptr, "sendVstEvents") == 0)
+            ret = 1;
+        else if (strcmp((char*)ptr, "sendVstMidiEvent") == 0)
+            ret = 1;
+        else if (strcmp((char*)ptr, "sendVstMidiEventFlagIsRealtime") == 0)
+            ret = -1;
+        else if (strcmp((char*)ptr, "sendVstTimeInfo") == 0)
+            ret = 1;
+        else if (strcmp((char*)ptr, "receiveVstEvents") == 0)
+            ret = 1;
+        else if (strcmp((char*)ptr, "receiveVstMidiEvent") == 0)
+            ret = 1;
+        else if (strcmp((char*)ptr, "receiveVstTimeInfo") == 0)
+            ret = -1;
+        else if (strcmp((char*)ptr, "reportConnectionChanges") == 0)
+            ret = 1;
+        else if (strcmp((char*)ptr, "acceptIOChanges") == 0)
+            ret = -1;
+        else if (strcmp((char*)ptr, "sizeWindow") == 0)
+            ret = 1;
+        else if (strcmp((char*)ptr, "offline") == 0)
+            ret = -1;
+        else if (strcmp((char*)ptr, "openFileSelector") == 0)
+            ret = -1;
+        else if (strcmp((char*)ptr, "closeFileSelector") == 0)
+            ret = -1;
+        else if (strcmp((char*)ptr, "startStopProcess") == 0)
+            ret = 1;
+        else if (strcmp((char*)ptr, "supportShell") == 0)
+            ret = 1;
+        else if (strcmp((char*)ptr, "shellCategory") == 0)
+            ret = 1;
+        else
+        {
+            // unimplemented
+            qWarning("VstHostCallback:audioMasterCanDo - Got unknown feature request '%s'", (char*)ptr);
+            ret = 0;
+        }
+        break;
 
     case audioMasterGetLanguage:
-        return kVstLangEnglish;
+        ret = kVstLangEnglish;
+        break;
 
     default:
         qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstMasterOpcode2str(opcode), index, value, opt);
         break;
     }
 
-    return 0;
-    Q_UNUSED(value);
+    return ret;
 }
 
 // ------------------------------ Plugin Checks -----------------------------
@@ -647,11 +663,19 @@ void do_lv2_check(const char* const bundle, const bool init)
             }
             else if (LV2_IS_PORT_CONTROL(Port->Type))
             {
-                if (LV2_IS_PORT_INPUT(Port->Type))
-                    parametersIns += 1;
-                else if (LV2_IS_PORT_OUTPUT(Port->Type) && ! LV2_IS_PORT_LATENCY(Port->Designation))
-                    parametersOuts += 1;
-                parametersTotal += 1;
+                if (LV2_IS_PORT_DESIGNATION_LATENCY(Port->Designation) || LV2_IS_PORT_DESIGNATION_SAMPLE_RATE(Port->Designation) ||
+                    LV2_IS_PORT_DESIGNATION_FREEWHEELING(Port->Designation) || LV2_IS_PORT_DESIGNATION_TIME(Port->Designation))
+                {
+                    pass();
+                }
+                else
+                {
+                    if (LV2_IS_PORT_INPUT(Port->Type))
+                        parametersIns += 1;
+                    else if (LV2_IS_PORT_OUTPUT(Port->Type))
+                        parametersOuts += 1;
+                    parametersTotal += 1;
+                }
             }
             else if (Port->Type & LV2_PORT_SUPPORTS_MIDI_EVENT)
             {
@@ -670,8 +694,9 @@ void do_lv2_check(const char* const bundle, const bool init)
             hints |= PLUGIN_HAS_GUI;
 
         DISCOVERY_OUT("init", "-----------");
-        DISCOVERY_OUT("name", rdf_descriptor->Name);
         DISCOVERY_OUT("label", rdf_descriptor->URI);
+        if (rdf_descriptor->Name)
+            DISCOVERY_OUT("name", rdf_descriptor->Name);
         if (rdf_descriptor->Author)
             DISCOVERY_OUT("maker", rdf_descriptor->Author);
         if (rdf_descriptor->License)
