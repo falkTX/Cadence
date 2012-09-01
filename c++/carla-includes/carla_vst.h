@@ -93,6 +93,7 @@
 #define kPlugCategShell 10
 #define kPlugCategGenerator 11
 #define kVstAutomationReadWrite 4
+#define kVstProcessLevelUnknown 0
 #define kVstProcessLevelUser 1
 #define kVstProcessLevelRealtime 2
 #define kVstProcessLevelOffline 4

@@ -17,7 +17,7 @@
 
 #include "carla_bridge_osc.h"
 #include "carla_bridge_client.h"
-#include "carla_midi.h"
+#include "carla_plugin.h"
 
 #include <QtCore/QString>
 #include <QtCore/QStringList>
@@ -304,7 +304,7 @@ int CarlaBridgeOsc::handle_quit()
     return 0;
 }
 
-#ifdef BUILD_BRIDGE_PLUGIN
+#if 0 //def BUILD_BRIDGE_PLUGIN
 void osc_send_bridge_ains_peak(int index, double value)
 {
     if (global_osc_data.target)

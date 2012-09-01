@@ -1505,11 +1505,11 @@ public:
         {
             if (! vstEvents->events[i])
                 break;
-            if (vstEvents->events[i]->type != kVstMidiType)
-                continue;
 
             const VstMidiEvent* const vstMidiEvent = (const VstMidiEvent*)vstEvents->events[i];
-            memcpy(&midiEvents[events.numEvents++], vstMidiEvent, sizeof(VstMidiEvent));
+
+            if (vstMidiEvent->type != kVstMidiType)
+                memcpy(&midiEvents[events.numEvents++], vstMidiEvent, sizeof(VstMidiEvent));
         }
 
         return 1;
