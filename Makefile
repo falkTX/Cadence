@@ -171,13 +171,13 @@ xycontroller:
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-unix32:
-	$(MAKE) -C c++/carla-bridge unix32
-	$(MAKE) -C c++/carla-discovery unix32
+posix32:
+	$(MAKE) -C c++/carla-bridge posix32
+	$(MAKE) -C c++/carla-discovery posix32
 
-unix64:
-	$(MAKE) -C c++/carla-bridge unix64
-	$(MAKE) -C c++/carla-discovery unix64
+posix64:
+	$(MAKE) -C c++/carla-bridge posix64
+	$(MAKE) -C c++/carla-discovery posix64
 
 wine32:
 	$(MAKE) -C c++/carla-bridge wine32

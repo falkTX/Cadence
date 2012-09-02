@@ -68,8 +68,8 @@ struct carla_options_t {
     bool preferUiBridges;
     uint oscUiTimeout;
 
-    const char* bridge_unix32;
-    const char* bridge_unix64;
+    const char* bridge_posix32;
+    const char* bridge_posix64;
     const char* bridge_win32;
     const char* bridge_win64;
     const char* bridge_lv2gtk2;
@@ -87,8 +87,8 @@ struct carla_options_t {
           useDssiVstChunks(false),
           preferUiBridges(true),
           oscUiTimeout(4000/100),
-          bridge_unix32(nullptr),
-          bridge_unix64(nullptr),
+          bridge_posix32(nullptr),
+          bridge_posix64(nullptr),
           bridge_win32(nullptr),
           bridge_win64(nullptr),
           bridge_lv2gtk2(nullptr),

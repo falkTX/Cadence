@@ -36,10 +36,10 @@ const char* BinaryType2str(const BinaryType type)
     {
     case BINARY_NONE:
         return "BINARY_NONE";
-    case BINARY_UNIX32:
-        return "BINARY_UNIX32";
-    case BINARY_UNIX64:
-        return "BINARY_UNIX64";
+    case BINARY_POSIX32:
+        return "BINARY_POSIX32";
+    case BINARY_POSIX64:
+        return "BINARY_POSIX64";
     case BINARY_WIN32:
         return "BINARY_WIN32";
     case BINARY_WIN64:
@@ -234,10 +234,10 @@ const char* OptionsType2str(const OptionsType type)
         return "OPTION_PATH_SF2";
     case OPTION_PATH_SFZ:
         return "OPTION_PATH_SFZ";
-    case OPTION_PATH_BRIDGE_UNIX32:
-        return "OPTION_PATH_BRIDGE_UNIX32";
-    case OPTION_PATH_BRIDGE_UNIX64:
-        return "OPTION_PATH_BRIDGE_UNIX64";
+    case OPTION_PATH_BRIDGE_POSIX32:
+        return "OPTION_PATH_BRIDGE_POSIX32";
+    case OPTION_PATH_BRIDGE_POSIX64:
+        return "OPTION_PATH_BRIDGE_POSIX64";
     case OPTION_PATH_BRIDGE_WIN32:
         return "OPTION_PATH_BRIDGE_WIN32";
     case OPTION_PATH_BRIDGE_WIN64:
@@ -365,10 +365,10 @@ const char* getBinaryBidgePath(const BinaryType type)
     switch (type)
     {
 #ifndef BUILD_BRIDGE
-    case BINARY_UNIX32:
-        return carlaOptions.bridge_unix32;
-    case BINARY_UNIX64:
-        return carlaOptions.bridge_unix64;
+    case BINARY_POSIX32:
+        return carlaOptions.bridge_posix32;
+    case BINARY_POSIX64:
+        return carlaOptions.bridge_posix64;
     case BINARY_WIN32:
         return carlaOptions.bridge_win32;
     case BINARY_WIN64:
@@ -543,11 +543,11 @@ void setOption(const OptionsType option, const int value, const char* const valu
     case OPTION_PATH_SFZ:
         carla_setenv("SFZ_PATH", valueStr);
         break;
-    case OPTION_PATH_BRIDGE_UNIX32:
-        carlaOptions.bridge_unix32 = strdup(valueStr);
+    case OPTION_PATH_BRIDGE_POSIX32:
+        carlaOptions.bridge_posix32 = strdup(valueStr);
         break;
-    case OPTION_PATH_BRIDGE_UNIX64:
-        carlaOptions.bridge_unix64 = strdup(valueStr);
+    case OPTION_PATH_BRIDGE_POSIX64:
+        carlaOptions.bridge_posix64 = strdup(valueStr);
         break;
     case OPTION_PATH_BRIDGE_WIN32:
         carlaOptions.bridge_win32 = strdup(valueStr);
@@ -574,11 +574,11 @@ void resetOptions()
 {
     qDebug("CarlaBackend::resetOptions()");
 
-    if (carlaOptions.bridge_unix32)
-        free((void*)carlaOptions.bridge_unix32);
+    if (carlaOptions.bridge_posix32)
+        free((void*)carlaOptions.bridge_posix32);
 
-    if (carlaOptions.bridge_unix64)
-        free((void*)carlaOptions.bridge_unix64);
+    if (carlaOptions.bridge_posix64)
+        free((void*)carlaOptions.bridge_posix64);
 
     if (carlaOptions.bridge_win32)
         free((void*)carlaOptions.bridge_win32);
@@ -608,8 +608,8 @@ void resetOptions()
     carlaOptions.preferUiBridges      = true;
     carlaOptions.oscUiTimeout         = 4000/100;
 
-    carlaOptions.bridge_unix32  = nullptr;
-    carlaOptions.bridge_unix64  = nullptr;
+    carlaOptions.bridge_posix32 = nullptr;
+    carlaOptions.bridge_posix64 = nullptr;
     carlaOptions.bridge_win32   = nullptr;
     carlaOptions.bridge_win64   = nullptr;
     carlaOptions.bridge_lv2gtk2 = nullptr;

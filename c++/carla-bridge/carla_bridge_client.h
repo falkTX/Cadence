@@ -27,6 +27,7 @@
 #include "carla_lib_includes.h"
 #endif
 
+#include <cmath>
 #include <cstdio>
 #include <cstdint>
 #include <cstdlib>

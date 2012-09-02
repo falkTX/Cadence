@@ -80,12 +80,12 @@ const unsigned int PARAMETER_USES_CUSTOM_TEXT = 0x80; //!< Parameter uses custom
  * The binary type of a plugin.
  */
 enum BinaryType {
-    BINARY_NONE   = 0, //!< Null binary type.
-    BINARY_UNIX32 = 1, //!< Unix 32bit.
-    BINARY_UNIX64 = 2, //!< Unix 64bit.
-    BINARY_WIN32  = 3, //!< Windows 32bit.
-    BINARY_WIN64  = 4, //!< Windows 64bit.
-    BINARY_OTHER  = 5  //!< Other.
+    BINARY_NONE    = 0, //!< Null binary type.
+    BINARY_POSIX32 = 1, //!< POSIX 32bit.
+    BINARY_POSIX64 = 2, //!< POSIX 64bit.
+    BINARY_WIN32   = 3, //!< Windows 32bit.
+    BINARY_WIN64   = 4, //!< Windows 64bit.
+    BINARY_OTHER   = 5  //!< Other.
 };
 
 /*!
@@ -258,16 +258,16 @@ enum OptionsType {
     OPTION_PATH_SFZ = 16,
 
     /*!
-     * Set path to the Unix 32bit plugin bridge executable.\n
+     * Set path to the POSIX 32bit plugin bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_UNIX32 = 17,
+    OPTION_PATH_BRIDGE_POSIX32 = 17,
 
     /*!
-     * Set path to the Unix 64bit plugin bridge executable.\n
+     * Set path to the POSIX 64bit plugin bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_UNIX64 = 18,
+    OPTION_PATH_BRIDGE_POSIX64 = 18,
 
     /*!
      * Set path to the Windows 32bit plugin bridge executable.\n

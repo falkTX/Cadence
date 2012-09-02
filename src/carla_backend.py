@@ -241,16 +241,16 @@ if haveLRDF:
 global carla_library_path
 carla_library_path = ""
 
-carla_discovery_native = ""
-carla_discovery_unix32 = ""
-carla_discovery_unix64 = ""
-carla_discovery_win32  = ""
-carla_discovery_win64  = ""
+carla_discovery_native  = ""
+carla_discovery_posix32 = ""
+carla_discovery_posix64 = ""
+carla_discovery_win32   = ""
+carla_discovery_win64   = ""
 
-carla_bridge_unix32 = ""
-carla_bridge_unix64 = ""
-carla_bridge_win32  = ""
-carla_bridge_win64  = ""
+carla_bridge_posix32 = ""
+carla_bridge_posix64 = ""
+carla_bridge_win32   = ""
+carla_bridge_win64   = ""
 
 carla_bridge_lv2_gtk2 = ""
 carla_bridge_lv2_qt4  = ""
@@ -298,22 +298,22 @@ else:
             carla_discovery_native = os.path.join(p, "carla-discovery-native")
             break
 
-# find carla_discovery_unix32
-if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-unix32")):
-    carla_discovery_unix32 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-unix32")
+# find carla_discovery_posix32
+if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-posix32")):
+    carla_discovery_posix32 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-posix32")
 else:
     for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-discovery-unix32")):
-            carla_discovery_unix32 = os.path.join(p, "carla-discovery-unix32")
+        if os.path.exists(os.path.join(p, "carla-discovery-posix32")):
+            carla_discovery_posix32 = os.path.join(p, "carla-discovery-posix32")
             break
 
-# find carla_discovery_unix64
-if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-unix64")):
-    carla_discovery_unix64 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-unix64")
+# find carla_discovery_posix64
+if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-posix64")):
+    carla_discovery_posix64 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-posix64")
 else:
     for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-discovery-unix64")):
-            carla_discovery_unix64 = os.path.join(p, "carla-discovery-unix64")
+        if os.path.exists(os.path.join(p, "carla-discovery-posix64")):
+            carla_discovery_posix64 = os.path.join(p, "carla-discovery-posix64")
             break
 
 # find carla_discovery_win32
@@ -334,22 +334,22 @@ else:
             carla_discovery_win64 = os.path.join(p, "carla-discovery-win64.exe")
             break
 
-# find carla_bridge_unix32
-if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-unix32")):
-    carla_bridge_unix32 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-unix32")
+# find carla_bridge_posix32
+if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-posix32")):
+    carla_bridge_posix32 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-posix32")
 else:
     for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-bridge-unix32")):
-            carla_bridge_unix32 = os.path.join(p, "carla-bridge-unix32")
+        if os.path.exists(os.path.join(p, "carla-bridge-posix32")):
+            carla_bridge_posix32 = os.path.join(p, "carla-bridge-posix32")
             break
 
-# find carla_bridge_unix64
-if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-unix64")):
-    carla_bridge_unix64 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-unix64")
+# find carla_bridge_posix64
+if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-posix64")):
+    carla_bridge_posix64 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-posix64")
 else:
     for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-bridge-unix64")):
-            carla_bridge_unix64 = os.path.join(p, "carla-bridge-unix64")
+        if os.path.exists(os.path.join(p, "carla-bridge-posix64")):
+            carla_bridge_posix64 = os.path.join(p, "carla-bridge-posix64")
             break
 
 # find carla_bridge_win32

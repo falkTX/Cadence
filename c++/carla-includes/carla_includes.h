@@ -71,11 +71,11 @@
 #endif
 
 // set native binary type
-#if defined(Q_OS_UNIX)
+#if defined(Q_OS_HAIKU) || defined(Q_OS_UNIX)
 #  if __LP64__
-#    define BINARY_NATIVE BINARY_UNIX64
+#    define BINARY_NATIVE BINARY_POSIX64
 #  else
-#    define BINARY_NATIVE BINARY_UNIX32
+#    define BINARY_NATIVE BINARY_POSIX32
 #  endif
 #elif defined(Q_OS_WIN)
 #  ifdef Q_OS_WIN64

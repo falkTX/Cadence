@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>615</width>
-    <height>249</height>
+    <height>255</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -151,16 +151,16 @@
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="ch_unix32">
+           <widget class="QCheckBox" name="ch_posix32">
             <property name="text">
-             <string>Unix 32bit</string>
+             <string>POSIX 32bit</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="ch_unix64">
+           <widget class="QCheckBox" name="ch_posix64">
             <property name="text">
-             <string>Unix 64bit</string>
+             <string>POSIX 64bit</string>
             </property>
            </widget>
           </item>
@@ -241,7 +241,7 @@
          </widget>
         </item>
         <item row="1" column="0">
-         <widget class="QLabel" name="ico_unix32">
+         <widget class="QLabel" name="ico_posix32">
           <property name="maximumSize">
            <size>
             <width>22</width>
@@ -278,7 +278,7 @@
          </widget>
         </item>
         <item row="2" column="0">
-         <widget class="QLabel" name="ico_unix64">
+         <widget class="QLabel" name="ico_posix64">
           <property name="text">
            <string/>
           </property>
@@ -304,9 +304,9 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QLabel" name="label_unix32">
+         <widget class="QLabel" name="label_posix32">
           <property name="text">
-           <string>carla-discovery-unix32</string>
+           <string>carla-discovery-posix32</string>
           </property>
          </widget>
         </item>
@@ -337,9 +337,9 @@
          </widget>
         </item>
         <item row="2" column="1">
-         <widget class="QLabel" name="label_unix64">
+         <widget class="QLabel" name="label_posix64">
           <property name="text">
-           <string>carla-discovery-unix64</string>
+           <string>carla-discovery-posix64</string>
           </property>
          </widget>
         </item>
