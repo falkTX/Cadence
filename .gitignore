@@ -23,6 +23,7 @@ ui_*.h
 
 carla-bridge-qtcreator
 carla-bridge-lv2-gtk2
+carla-bridge-lv2-gtk3
 carla-bridge-lv2-qt4
 carla-bridge-lv2-x11
 carla-bridge-vst-x11
