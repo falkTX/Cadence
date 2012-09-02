@@ -68,6 +68,8 @@ private:
 // --------------------------------------------------------------------------------------------------------
 // CarlaPluginThread
 
+#ifndef BUILD_BRIDGE
+
 class QProcess;
 
 class CarlaPluginThread : public QThread
@@ -99,5 +101,7 @@ private:
 
     QProcess* m_process;
 };
+
+#endif
 
 #endif // CARLA_THREADS_H

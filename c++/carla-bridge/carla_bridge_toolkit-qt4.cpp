@@ -24,15 +24,14 @@
 #include <QtGui/QDialog>
 #include <QtGui/QVBoxLayout>
 
-//CARLA_BRIDGE_START_NAMESPACE
-namespace CarlaBridge {
+CARLA_BRIDGE_START_NAMESPACE
 
 // -------------------------------------------------------------------------
 
 class MessageChecker : public QTimer
 {
 public:
-    MessageChecker(CarlaBridgeClient* const client_)
+    MessageChecker(CarlaClient* const client_)
         : client(client_)
     {
         Q_ASSERT(client);
@@ -45,34 +44,34 @@ public:
     }
 
 private:
-    CarlaBridgeClient* const client;
+    CarlaClient* const client;
 };
 
-class CarlaBridgeToolkitQt4: public CarlaBridgeToolkit
+class CarlaToolkitQt4: public CarlaToolkit
 {
 public:
-    CarlaBridgeToolkitQt4(const char* const title)
-        : CarlaBridgeToolkit(title),
-      #ifdef BRIDGE_LV2_X11
+    CarlaToolkitQt4(const char* const title)
+        : CarlaToolkit(title),
+#ifdef BRIDGE_LV2_X11
           settings("Cadence", "Carla-X11UIs")
-    #else
+#else
           settings("Cadence", "Carla-Qt4UIs")
-    #endif
+#endif
     {
-        qDebug("CarlaBridgeToolkitQt4::CarlaBridgeToolkitQt4(%s)", title);
+        qDebug("CarlaToolkitQt4::CarlaToolkitQt4(%s)", title);
 
         app = nullptr;
         window = nullptr;
     }
 
-    ~CarlaBridgeToolkitQt4()
+    ~CarlaToolkitQt4()
     {
-        qDebug("CarlaBridgeToolkitQt4::~CarlaBridgeToolkitQt4()");
+        qDebug("CarlaToolkitQt4::~CarlaToolkitQt4()");
     }
 
     void init()
     {
-        qDebug("CarlaBridgeToolkitQt4::init()");
+        qDebug("CarlaToolkitQt4::init()");
         Q_ASSERT(! app);
 
         static int argc = 0;
@@ -80,9 +79,9 @@ public:
         app = new QApplication(argc, argv, true);
     }
 
-    void exec(CarlaBridgeClient* const client)
+    void exec(CarlaClient* const client)
     {
-        qDebug("CarlaBridgeToolkitQt4::exec(%p)", client);
+        qDebug("CarlaToolkitQt4::exec(%p)", client);
         Q_ASSERT(app);
         Q_ASSERT(client);
 
@@ -143,7 +142,7 @@ public:
 
     void quit()
     {
-        qDebug("CarlaBridgeToolkitQt4::quit()");
+        qDebug("CarlaToolkitQt4::quit()");
         Q_ASSERT(app);
 
         if (window)
@@ -176,7 +175,7 @@ public:
 
     void show()
     {
-        qDebug("CarlaBridgeToolkitQt4::show()");
+        qDebug("CarlaToolkitQt4::show()");
         Q_ASSERT(window);
 
         if (window)
@@ -185,7 +184,7 @@ public:
 
     void hide()
     {
-        qDebug("CarlaBridgeToolkitQt4::hide()");
+        qDebug("CarlaToolkitQt4::hide()");
         Q_ASSERT(window);
 
         if (window)
@@ -194,7 +193,7 @@ public:
 
     void resize(int width, int height)
     {
-        qDebug("CarlaBridgeToolkitQt4::resize(%i, %i)", width, height);
+        qDebug("CarlaToolkitQt4::resize(%i, %i)", width, height);
         Q_ASSERT(window);
 
         if (window)
@@ -209,9 +208,9 @@ private:
 
 // -------------------------------------------------------------------------
 
-CarlaBridgeToolkit* CarlaBridgeToolkit::createNew(const char* const title)
+CarlaToolkit* CarlaToolkit::createNew(const char* const title)
 {
-    return new CarlaBridgeToolkitQt4(title);
+    return new CarlaToolkitQt4(title);
 }
 
 CARLA_BRIDGE_END_NAMESPACE

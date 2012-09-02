@@ -25,36 +25,46 @@
 
 CARLA_BRIDGE_START_NAMESPACE
 
-class CarlaBridgeToolkit
+/*!
+ * @defgroup CarlaBridgeToolkit Carla Bridge Toolkit
+ *
+ * The Carla Bridge Toolkit.
+ * @{
+ */
+
+class CarlaToolkit
 {
 public:
-    CarlaBridgeToolkit(const char* const title)
+    CarlaToolkit(const char* const title)
     {
         Q_ASSERT(title);
 
-        m_title  = strdup(title);
+        m_title  = strdup(title ? title : "(null)");
         m_client = nullptr;
     }
 
-    virtual ~CarlaBridgeToolkit()
+    virtual ~CarlaToolkit()
     {
-        free(m_title);
+        if (m_title)
+            free(m_title);
     }
 
     virtual void init() = 0;
-    virtual void exec(CarlaBridgeClient* const client) = 0;
+    virtual void exec(CarlaClient* const client) = 0;
     virtual void quit() = 0;
 
     virtual void show() = 0;
     virtual void hide() = 0;
     virtual void resize(int width, int height) = 0;
 
-    static CarlaBridgeToolkit* createNew(const char* const title);
+    static CarlaToolkit* createNew(const char* const title);
 
 protected:
     char* m_title;
-    CarlaBridgeClient* m_client;
+    CarlaClient* m_client;
 };
+
+/**@}*/
 
 CARLA_BRIDGE_END_NAMESPACE
 

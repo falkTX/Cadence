@@ -24,10 +24,12 @@
 #define CARLA_BRIDGE_OSC_HANDLE_ARGS const int argc, const lo_arg* const* const argv, const char* const types
 
 #define CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(/* argc, types, */ argcToCompare, typesToCompare)                                  \
+    Q_ASSERT(m_serverPath);                                                                                                 \
+    Q_ASSERT(m_serverThread);                                                                                               \
     /* check argument count */                                                                                              \
     if (argc != argcToCompare)                                                                                              \
     {                                                                                                                       \
-        qCritical("CarlaBridgeOsc::%s() - argument count mismatch: %i != %i", __FUNCTION__, argc, argcToCompare);           \
+        qCritical("CarlaOsc::%s() - argument count mismatch: %i != %i", __FUNCTION__, argc, argcToCompare);                 \
         return 1;                                                                                                           \
     }                                                                                                                       \
     if (argc > 0)                                                                                                           \
@@ -35,27 +37,36 @@
         /* check for nullness */                                                                                            \
         if (! (types && typesToCompare))                                                                                    \
         {                                                                                                                   \
-            qCritical("CarlaBridgeOsc::%s() - argument types are null", __FUNCTION__);                                      \
+            qCritical("CarlaOsc::%s() - argument types are null", __FUNCTION__);                                            \
             return 1;                                                                                                       \
         }                                                                                                                   \
         /* check argument types */                                                                                          \
         if (strcmp(types, typesToCompare) != 0)                                                                             \
         {                                                                                                                   \
-            qCritical("CarlaBridgeOsc::%s() - argument types mismatch: '%s' != '%s'", __FUNCTION__, types, typesToCompare); \
+            qCritical("CarlaOsc::%s() - argument types mismatch: '%s' != '%s'", __FUNCTION__, types, typesToCompare);       \
             return 1;                                                                                                       \
         }                                                                                                                   \
     }
 
 CARLA_BRIDGE_START_NAMESPACE
 
-class CarlaBridgeOsc
+/*!
+ * @defgroup CarlaBridgeOSC Carla Bridge OSC
+ *
+ * The Carla Bridge OSC.
+ * @{
+ */
+
+class CarlaOsc
 {
 public:
-    CarlaBridgeOsc(CarlaBridgeClient* const client, const char* const name);
-    ~CarlaBridgeOsc();
+    CarlaOsc(CarlaClient* const client, const char* const name);
+    ~CarlaOsc();
 
     bool init(const char* const url);
     void close();
+
+    // -------------------------------------------------------------------
 
     const CarlaOscData* getControllerData() const
     {
@@ -82,6 +93,7 @@ public:
         osc_send_exiting(&m_controlData);
     }
 
+#ifdef BRIDGE_LV2
     void sendOscLv2TransferAtom(const char* const type, const char* const value)
     {
         osc_send_lv2_transfer_atom(&m_controlData, type, value);
@@ -91,9 +103,30 @@ public:
     {
         osc_send_lv2_transfer_event(&m_controlData, type, value);
     }
+#endif
+
+    // -------------------------------------------------------------------
+
+protected:
+    int handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg);
+    int handleMsgConfigure(CARLA_BRIDGE_OSC_HANDLE_ARGS);
+    int handleMsgControl(CARLA_BRIDGE_OSC_HANDLE_ARGS);
+    int handleMsgProgram(CARLA_BRIDGE_OSC_HANDLE_ARGS);
+    int handleMsgMidiProgram(CARLA_BRIDGE_OSC_HANDLE_ARGS);
+    int handleMsgMidi(CARLA_BRIDGE_OSC_HANDLE_ARGS);
+    int handleMsgShow();
+    int handleMsgHide();
+    int handleMsgQuit();
+
+#ifdef BRIDGE_LV2
+    int handleMsgLv2TransferAtom(CARLA_BRIDGE_OSC_HANDLE_ARGS);
+    int handleMsgLv2TransferEvent(CARLA_BRIDGE_OSC_HANDLE_ARGS);
+#endif
+
+    // -------------------------------------------------------------------
 
 private:
-    CarlaBridgeClient* const client;
+    CarlaClient* const client;
 
     const char* m_serverPath;
     lo_server_thread m_serverThread;
@@ -106,49 +139,12 @@ private:
 
     static int osc_message_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg, void* const user_data)
     {
-        CarlaBridgeOsc* const _this_ = (CarlaBridgeOsc*)user_data;
-
-        if (! _this_->client)
-            return 1;
-
+        CarlaOsc* const _this_ = (CarlaOsc*)user_data;
         return _this_->handleMessage(path, argc, argv, types, msg);
     }
-
-    int handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg);
-
-    int handle_configure(CARLA_BRIDGE_OSC_HANDLE_ARGS);
-    int handle_control(CARLA_BRIDGE_OSC_HANDLE_ARGS);
-    int handle_program(CARLA_BRIDGE_OSC_HANDLE_ARGS);
-    int handle_midi_program(CARLA_BRIDGE_OSC_HANDLE_ARGS);
-    int handle_midi(CARLA_BRIDGE_OSC_HANDLE_ARGS);
-    int handle_show();
-    int handle_hide();
-    int handle_quit();
-
-#ifdef BRIDGE_LV2
-    int handle_lv2_transfer_atom(CARLA_BRIDGE_OSC_HANDLE_ARGS);
-    int handle_lv2_transfer_event(CARLA_BRIDGE_OSC_HANDLE_ARGS);
-#endif
 };
 
-#ifdef BUILD_BRIDGE_PLUGIN
-void osc_send_bridge_ains_peak(int index, double value);
-void osc_send_bridge_aouts_peak(int index, double value);
-void osc_send_bridge_audio_count(int ins, int outs, int total);
-void osc_send_bridge_midi_count(int ins, int outs, int total);
-void osc_send_bridge_param_count(int ins, int outs, int total);
-void osc_send_bridge_program_count(int count);
-void osc_send_bridge_midi_program_count(int count);
-void osc_send_bridge_plugin_info(int category, int hints, const char* name, const char* label, const char* maker, const char* copyright, long uniqueId);
-void osc_send_bridge_param_info(int index, const char* name, const char* unit);
-void osc_send_bridge_param_data(int index, int type, int rindex, int hints, int midi_channel, int midi_cc);
-void osc_send_bridge_param_ranges(int index, double def, double min, double max, double step, double step_small, double step_large);
-void osc_send_bridge_program_info(int index, const char* name);
-void osc_send_bridge_midi_program_info(int index, int bank, int program, const char* label);
-void osc_send_bridge_custom_data(const char* stype, const char* key, const char* value);
-void osc_send_bridge_chunk_data(const char* string_data);
-void osc_send_bridge_update();
-#endif
+/**@}*/
 
 CARLA_BRIDGE_END_NAMESPACE
 

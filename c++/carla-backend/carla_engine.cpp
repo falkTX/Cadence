@@ -24,20 +24,20 @@ CARLA_BACKEND_START_NAMESPACE
 
 CarlaEngine::CarlaEngine()
     : m_checkThread(this),
-      #ifndef BUILD_BRIDGE
+#ifndef BUILD_BRIDGE
       m_osc(this),
       m_oscData(nullptr),
-      #endif
+#endif
       m_callback(nullptr),
-      #ifdef Q_COMPILER_INITIALIZER_LISTS
+#ifdef Q_COMPILER_INITIALIZER_LISTS
       m_callbackPtr(nullptr),
       m_carlaPlugins{nullptr},
       m_uniqueNames{nullptr},
       m_insPeak{0.0},
       m_outsPeak{0.0}
-      #else
+#else
       m_callbackPtr(nullptr)
-      #endif
+#endif
 {
     qDebug("CarlaEngine::CarlaEngine()");
 
@@ -99,8 +99,10 @@ bool CarlaEngine::init(const char* const clientName)
 {
     qDebug("CarlaEngine::init(\"%s\")", clientName);
 
+#ifndef BUILD_BRIDGE
     m_osc.init(clientName);
     m_oscData = m_osc.getControllerData();
+#endif
 
     return true;
 }
@@ -111,8 +113,10 @@ bool CarlaEngine::close()
 
     m_checkThread.stopNow();
 
+#ifndef BUILD_BRIDGE
     m_oscData = nullptr;
     m_osc.close();
+#endif
 
     maxPluginNumber = 0;
 
@@ -284,6 +288,12 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
         case PLUGIN_VST:
             plugin = CarlaPlugin::newVST(init);
             break;
+#ifdef BUILD_BRIDGE
+        case PLUGIN_GIG:
+        case PLUGIN_SF2:
+        case PLUGIN_SFZ:
+            break;
+#else
         case PLUGIN_GIG:
             plugin = CarlaPlugin::newGIG(init);
             break;
@@ -293,6 +303,7 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
         case PLUGIN_SFZ:
             plugin = CarlaPlugin::newSFZ(init);
             break;
+#endif
         }
     }
 
@@ -332,6 +343,7 @@ bool CarlaEngine::removePlugin(const unsigned short id)
         m_carlaPlugins[id] = nullptr;
         m_uniqueNames[id]  = nullptr;
 
+#ifndef BUILD_BRIDGE
         if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
         {
             for (unsigned short i=id; i < maxPluginNumber-1; i++)
@@ -343,6 +355,7 @@ bool CarlaEngine::removePlugin(const unsigned short id)
                     m_carlaPlugins[i]->setId(i);
             }
         }
+#endif
 
         if (isRunning())
             m_checkThread.startNow(maxPluginNumber);
@@ -499,18 +512,27 @@ void CarlaEngine::midiUnlock()
     m_midiLock.unlock();
 }
 
-#ifndef BUILD_BRIDGE
 // -----------------------------------------------------------------------
 // OSC Stuff
 
 bool CarlaEngine::isOscControllerRegisted() const
 {
+#ifdef BUILD_BRIDGE
+    return (bool)m_oscData;
+#else
     return m_osc.isControllerRegistered();
+#endif
 }
 
+#ifndef BUILD_BRIDGE
 const char* CarlaEngine::getOscServerPath() const
 {
     return m_osc.getServerPath();
+}
+#else
+void CarlaEngine::setOscBridgeData(const CarlaOscData* const oscData)
+{
+    m_oscData = oscData;
 }
 #endif
 
@@ -802,9 +824,10 @@ const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(uint32_t index)
         return nullptr;
 
     Q_ASSERT(buffer);
-    Q_ASSERT(index < CarlaEngine::MAX_ENGINE_CONTROL_EVENTS);
 
 #ifndef BUILD_BRIDGE
+    Q_ASSERT(index < CarlaEngine::MAX_ENGINE_CONTROL_EVENTS);
+
     if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         const CarlaEngineControlEvent* const events = (CarlaEngineControlEvent*)buffer;
@@ -1012,9 +1035,10 @@ const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(uint32_t index)
         return nullptr;
 
     Q_ASSERT(buffer);
-    Q_ASSERT(index < CarlaEngine::MAX_ENGINE_MIDI_EVENTS);
 
 #ifndef BUILD_BRIDGE
+    Q_ASSERT(index < CarlaEngine::MAX_ENGINE_MIDI_EVENTS);
+
     if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         const CarlaEngineMidiEvent* const events = (CarlaEngineMidiEvent*)buffer;
@@ -1082,6 +1106,7 @@ void CarlaEngineMidiPort::writeEvent(uint32_t time, const uint8_t* data, uint8_t
 // -------------------------------------------------------------------------------------------------------------------
 // Carla Engine OSC stuff
 
+#ifndef BUILD_BRIDGE
 void CarlaEngine::osc_send_add_plugin(const int32_t pluginId, const char* const pluginName)
 {
     qDebug("CarlaEngine::osc_send_add_plugin(%i, \"%s\")", pluginId, pluginName);
@@ -1424,5 +1449,6 @@ void CarlaEngine::osc_send_exit()
         lo_send(m_oscData->target, target_path, "");
     }
 }
+#endif
 
 CARLA_BACKEND_END_NAMESPACE

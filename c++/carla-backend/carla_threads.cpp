@@ -138,6 +138,8 @@ void CarlaCheckThread::run()
 // -----------------------------------------------------------------------
 // CarlaPluginThread
 
+#ifndef BUILD_BRIDGE
+
 const char* PluginThreadMode2str(const CarlaPluginThread::PluginThreadMode mode)
 {
     switch (mode)
@@ -280,3 +282,5 @@ void CarlaPluginThread::run()
         break;
     }
 }
+
+#endif

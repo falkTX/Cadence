@@ -202,6 +202,7 @@ public:
     virtual bool isOnAudioThread() = 0;
     virtual bool isOffline() = 0;
     virtual bool isRunning() = 0;
+
     virtual CarlaEngineClient* addClient(CarlaPlugin* const plugin) = 0;
 
     // -------------------------------------------------------------------
@@ -254,13 +255,26 @@ public:
     void midiLock();
     void midiUnlock();
 
-#ifndef BUILD_BRIDGE
     // -------------------------------------------------------------------
     // OSC Stuff
 
     bool isOscControllerRegisted() const;
+#ifndef BUILD_BRIDGE
     const char* getOscServerPath() const;
+#else
+    void setOscBridgeData(const CarlaOscData* const oscData);
+#endif
 
+    void osc_send_set_default_value(const int32_t pluginId, const int32_t index, const double value);
+    void osc_send_set_parameter_value(const int32_t pluginId, const int32_t index, const double value);
+    void osc_send_set_program(const int32_t pluginId, const int32_t index);
+    void osc_send_set_midi_program(const int32_t pluginId, const int32_t index);
+    void osc_send_note_on(const int32_t pluginId, const int32_t channel, const int32_t note, const int32_t velo);
+    void osc_send_note_off(const int32_t pluginId, const int32_t channel, const int32_t note);
+    void osc_send_set_input_peak_value(const int32_t pluginId, const int32_t portId, const double value);
+    void osc_send_set_output_peak_value(const int32_t pluginId, const int32_t portId, const double value);
+
+#ifndef BUILD_BRIDGE
     void osc_send_add_plugin(const int32_t pluginId, const char* const pluginName);
     void osc_send_remove_plugin(const int32_t pluginId);
     void osc_send_set_plugin_data(const int32_t pluginId, const int32_t type, const int32_t category, const int32_t hints, const char* const realName, const char* const label, const char* const maker, const char* const copyright, const int64_t uniqueId);
@@ -269,20 +283,29 @@ public:
     void osc_send_set_parameter_ranges(const int32_t pluginId, const int32_t index, const double min, const double max, const double def, const double step, const double stepSmall, const double stepLarge);
     void osc_send_set_parameter_midi_cc(const int32_t pluginId, const int32_t index, const int32_t cc);
     void osc_send_set_parameter_midi_channel(const int32_t pluginId, const int32_t index, const int32_t channel);
-    void osc_send_set_parameter_value(const int32_t pluginId, const int32_t index, const double value);
-    void osc_send_set_default_value(const int32_t pluginId, const int32_t index, const double value);
-    void osc_send_set_program(const int32_t pluginId, const int32_t index);
     void osc_send_set_program_count(const int32_t pluginId, const int32_t count);
     void osc_send_set_program_name(const int32_t pluginId, const int32_t index, const char* const name);
-    void osc_send_set_midi_program(const int32_t pluginId, const int32_t index);
     void osc_send_set_midi_program_count(const int32_t pluginId, const int32_t count);
     void osc_send_set_midi_program_data(const int32_t pluginId, const int32_t index, const int32_t bank, const int32_t program, const char* const name);
-    void osc_send_set_input_peak_value(const int32_t pluginId, const int32_t portId, const double value);
-    void osc_send_set_output_peak_value(const int32_t pluginId, const int32_t portId, const double value);
-    void osc_send_note_on(const int32_t pluginId, const int32_t channel, const int32_t note, const int32_t velo);
-    void osc_send_note_off(const int32_t pluginId, const int32_t channel, const int32_t note);
     void osc_send_exit();
+#else
+    void osc_send_bridge_audio_count(const int32_t ins, const int32_t outs, const int32_t total);
+    void osc_send_bridge_midi_count(const int32_t ins, const int32_t outs, const int32_t total);
+    void osc_send_bridge_param_count(const int32_t ins, const int32_t outs, const int32_t total);
+    void osc_send_bridge_program_count(const int32_t count);
+    void osc_send_bridge_midi_program_count(const int32_t count);
+    void osc_send_bridge_plugin_info(const int32_t category, const int32_t hints, const char* const name, const char* const label, const char* const maker, const char* const copyright, const long uniqueId);
+    void osc_send_bridge_param_info(const int32_t index, const char* const name, const char* const unit);
+    void osc_send_bridge_param_data(const int32_t index, const int32_t type, const int32_t rindex, const int32_t hints, const int32_t midiChannel, const int32_t midiCC);
+    void osc_send_bridge_param_ranges(const int32_t index, const double def, const double min, const double max, const double step, const double stepSmall, const double stepLarge);
+    void osc_send_bridge_program_info(const int32_t index, const char* const name);
+    void osc_send_bridge_midi_program_info(const int32_t index, const int32_t bank, const int32_t program, const char* const label);
+    void osc_send_bridge_custom_data(const char* const stype, const char* const key, const char* const value);
+    void osc_send_bridge_chunk_data(const char* const stringData);
+    void osc_send_bridge_update();
+#endif
 
+#ifndef BUILD_BRIDGE
     // -------------------------------------------------------------------
     // Rack mode
 
@@ -346,10 +369,11 @@ protected:
 
 private:
     CarlaCheckThread m_checkThread;
+
 #ifndef BUILD_BRIDGE
     CarlaOsc m_osc;
-    const CarlaOscData* m_oscData;
 #endif
+    const CarlaOscData* m_oscData;
 
     QMutex m_procLock;
     QMutex m_midiLock;

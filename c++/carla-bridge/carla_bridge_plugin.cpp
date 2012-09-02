@@ -15,17 +15,392 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_bridge.h"
+#include "carla_bridge_client.h"
 #include "carla_plugin.h"
+
+//#include "carla_plugin.h"
 
 #include <QtCore/QFile>
 
-#ifndef __WINE__
-#include <QtCore/QTimer>
-#include <QtGui/QApplication>
-#include <QtGui/QDialog>
-#endif
+//#ifndef __WINE__
+//#include <QtCore/QTimer>
+//#include <QtGui/QApplication>
+//#include <QtGui/QDialog>
+//#endif
 
+CARLA_BRIDGE_START_NAMESPACE
+
+// -------------------------------------------------------------------------
+// client
+
+class CarlaBridgePluginClient : public CarlaClient
+{
+public:
+    CarlaBridgePluginClient(CarlaToolkit* const toolkit)
+        : CarlaClient(toolkit)
+    {
+        engine = nullptr;
+        plugin = nullptr;
+    }
+
+    ~CarlaBridgePluginClient()
+    {
+    }
+
+    void setStuff(CarlaBackend::CarlaEngine* const engine_, CarlaBackend::CarlaPlugin* const plugin_)
+    {
+        engine = engine_;
+        plugin = plugin_;
+    }
+
+    // ---------------------------------------------------------------------
+    // processing
+
+    void setParameter(const int32_t rindex, const double value)
+    {
+        Q_ASSERT(plugin);
+
+        if (! plugin)
+            return;
+
+        plugin->setParameterValueByRIndex(rindex, value, true, true, false);
+    }
+
+    void setProgram(const uint32_t index)
+    {
+        Q_ASSERT(plugin && index < plugin->programCount());
+
+        if (! plugin)
+            return;
+        if (index >= plugin->programCount())
+            return;
+
+        plugin->setProgram(index, true, true, false, true);
+    }
+
+    void setMidiProgram(const uint32_t bank, const uint32_t program)
+    {
+        Q_ASSERT(plugin);
+
+        if (! plugin)
+            return;
+
+        plugin->setMidiProgramById(bank, program, true, true, false, true);
+    }
+
+    void noteOn(const uint8_t channel, const uint8_t note, const uint8_t velo)
+    {
+        Q_ASSERT(plugin);
+        Q_ASSERT(velo != 0);
+
+        if (! plugin)
+            return;
+
+        plugin->sendMidiSingleNote(channel, note, velo, true, true, false);
+    }
+
+    void noteOff(const uint8_t channel, const uint8_t note)
+    {
+        Q_ASSERT(plugin);
+
+        if (! plugin)
+            return;
+
+        plugin->sendMidiSingleNote(channel, note, 0, true, true, false);
+    }
+
+    // ---------------------------------------------------------------------
+    // plugin
+
+    void saveNow()
+    {
+        Q_ASSERT(plugin);
+
+        if (! plugin)
+            return;
+
+        plugin->prepareForSave();
+
+#if 0
+        for (uint32_t i=0; i < CARLA_PLUGIN->customDataCount(); i++)
+        {
+            const CustomData* const cdata = CARLA_PLUGIN->customData(i);
+            osc_send_bridge_custom_data(customdatatype2str(cdata->type), cdata->key, cdata->value);
+        }
+
+        if (CARLA_PLUGIN->hints() & PLUGIN_USES_CHUNKS)
+        {
+            void* data = nullptr;
+            int32_t dataSize = CARLA_PLUGIN->chunkData(&data);
+
+            if (data && dataSize >= 4)
+            {
+                QString filePath;
+                filePath += "/tmp/.CarlaChunk_";
+                filePath += CARLA_PLUGIN->name();
+
+                QFile file(filePath);
+
+                if (file.open(QIODevice::WriteOnly))
+                {
+                    QByteArray chunk((const char*)data, dataSize);
+                    file.write(chunk);
+                    file.close();
+                    osc_send_bridge_chunk_data(filePath.toUtf8().constData());
+                }
+            }
+        }
+
+        osc_send_configure(CARLA_BRIDGE_MSG_SAVED, "");
+#endif
+    }
+
+    void setCustomData(const char* const type, const char* const key, const char* const value)
+    {
+        Q_ASSERT(plugin);
+
+        if (! plugin)
+            return;
+
+        plugin->setCustomData(CarlaBackend::getCustomDataStringType(type), key, value, true);
+    }
+
+    void setChunkData(const char* const filePath)
+    {
+        Q_ASSERT(plugin);
+
+        if (! plugin)
+            return;
+
+#if 0
+        nextChunkFilePath = strdup(filePath);
+
+        while (nextChunkFilePath)
+            carla_msleep(25);
+#endif
+    }
+
+    // ---------------------------------------------------------------------
+    // ...
+
+    void handleCallback(const CarlaBackend::CallbackType action, const int value1, const int value2, const double value3)
+    {
+        switch (action)
+        {
+        case CarlaBackend::CALLBACK_PARAMETER_VALUE_CHANGED:
+            //osc_send_control(value1, value3);
+            break;
+        case CarlaBackend::CALLBACK_PROGRAM_CHANGED:
+            //osc_send_program(value1);
+            break;
+        case CarlaBackend::CALLBACK_MIDI_PROGRAM_CHANGED:
+            //osc_send_midi_program(value1, value2, false);
+            break;
+        case CarlaBackend::CALLBACK_NOTE_ON:
+        {
+            //uint8_t mdata[4] = { 0, MIDI_STATUS_NOTE_ON, (uint8_t)value1, (uint8_t)value2 };
+            //osc_send_midi(mdata);
+            break;
+        }
+        case CarlaBackend::CALLBACK_NOTE_OFF:
+        {
+            //uint8_t mdata[4] = { 0, MIDI_STATUS_NOTE_OFF, (uint8_t)value1, (uint8_t)value2 };
+            //osc_send_midi(mdata);
+            break;
+        }
+        case CarlaBackend::CALLBACK_SHOW_GUI:
+            //if (value1 == 0)
+            //    osc_send_configure(CARLA_BRIDGE_MSG_HIDE_GUI, "");
+            break;
+        case CarlaBackend::CALLBACK_RESIZE_GUI:
+            //if (client)
+            //    client->queque_message(BRIDGE_MESSAGE_RESIZE_GUI, value1, value2, 0.0);
+            break;
+        case CarlaBackend::CALLBACK_RELOAD_PARAMETERS:
+            //if (CARLA_PLUGIN)
+            //{
+            //    for (uint32_t i=0; i < CARLA_PLUGIN->parameterCount(); i++)
+            //    {
+            //        osc_send_control(i, CARLA_PLUGIN->getParameterValue(i));
+            //    }
+            //}
+            break;
+        case CarlaBackend::CALLBACK_QUIT:
+            quequeMessage(MESSAGE_QUIT, 0, 0, 0.0);
+            break;
+        }
+    }
+
+    // ---------------------------------------------------------------------
+
+    static void callback(void* const ptr, CarlaBackend::CallbackType const action, const unsigned short, const int value1, const int value2, const double value3)
+    {
+        Q_ASSERT(ptr);
+
+        if (! ptr)
+            return;
+
+        CarlaBridgePluginClient* const client = (CarlaBridgePluginClient*)ptr;
+        client->handleCallback(action, value1, value2, value3);
+    }
+
+private:
+    CarlaBackend::CarlaEngine* engine;
+    CarlaBackend::CarlaPlugin* plugin;
+};
+
+// -------------------------------------------------------------------------
+// toolkit
+
+class CarlaBridgeToolkitPlugin : public CarlaToolkit
+{
+public:
+    CarlaBridgeToolkitPlugin(const char* const title)
+        : CarlaToolkit(title)
+    {
+        qDebug("CarlaBridgeToolkitPlugin::CarlaBridgeToolkitPlugin(%s)", title);
+    }
+
+    ~CarlaBridgeToolkitPlugin()
+    {
+        qDebug("CarlaBridgeToolkitPlugin::~CarlaBridgeToolkitPlugin()");
+    }
+
+    void init()
+    {
+    }
+
+    void exec(CarlaClient* const client)
+    {
+        m_client = client;
+    }
+
+    void quit()
+    {
+    }
+
+    void show()
+    {
+    }
+
+    void hide()
+    {
+    }
+
+    void resize(int width, int height)
+    {
+    }
+};
+
+CarlaToolkit* CarlaToolkit::createNew(const char* const title)
+{
+    return new CarlaBridgeToolkitPlugin(title);
+}
+
+CARLA_BRIDGE_END_NAMESPACE
+
+int main(int argc, char* argv[])
+{
+    if (argc != 6)
+    {
+        qWarning("%s :: bad arguments", argv[0]);
+        return 1;
+    }
+
+    const char* const oscUrl   = argv[1];
+    const char* const stype    = argv[2];
+    const char* const filename = argv[3];
+    const char*       name     = argv[4];
+    const char* const label    = argv[5];
+
+    if (strcmp(name, "(none)") == 0)
+        name = nullptr;
+
+    CarlaBackend::PluginType itype;
+
+    if (strcmp(stype, "LADSPA") == 0)
+        itype = CarlaBackend::PLUGIN_LADSPA;
+    else if (strcmp(stype, "DSSI") == 0)
+        itype = CarlaBackend::PLUGIN_DSSI;
+    else if (strcmp(stype, "LV2") == 0)
+        itype = CarlaBackend::PLUGIN_LV2;
+    else if (strcmp(stype, "VST") == 0)
+        itype = CarlaBackend::PLUGIN_VST;
+    else
+    {
+        itype = CarlaBackend::PLUGIN_NONE;
+        qWarning("Invalid plugin type '%s'", stype);
+        return 1;
+    }
+
+    // Init toolkit
+    CarlaBridge::CarlaBridgeToolkitPlugin toolkit(name);
+    toolkit.init();
+
+    // Init client
+    CarlaBridge::CarlaBridgePluginClient client(&toolkit);
+
+    // Init OSC
+    if (! client.oscInit(oscUrl))
+    {
+        toolkit.quit();
+        return -1;
+    }
+
+    // Init backend engine
+    CarlaBackend::CarlaEngineJack engine;
+    engine.setCallback(client.callback, &client);
+
+    // bridge client <-> engine
+    client.registerOscEngine(&engine);
+
+    /// Init plugin
+    short id = engine.addPlugin(itype, filename, name, label);
+
+    if (id >= 0 && id < CarlaBackend::MAX_PLUGINS)
+    {
+        CarlaBackend::CarlaPlugin* const plugin = engine.getPlugin(id);
+        client.setStuff(&engine, plugin);
+    }
+    else
+    {
+        qWarning("Plugin failed to load, error was:\n%s", CarlaBackend::getLastError());
+        return 1;
+    }
+
+    // Init engine
+    //QString engName = QString("%1 (master)").arg(label);
+    //engName.truncate(CarlaEngine::maxClientNameSize());
+
+    //CarlaEngine engine;
+    //engine.init(engName.toUtf8().constData());
+
+    // Init toolkit
+    //toolkit_init();
+
+    // Init plugin client
+    //client = new PluginData;
+
+    // Init OSC
+    //osc_init(osc_url);
+    //osc_send_update();
+
+    toolkit.exec(&client);
+
+    // Close OSC
+    client.sendOscExiting();
+    client.oscClose();
+
+    // Close client
+    //client.close();
+
+    // Close toolkit
+    toolkit.quit();
+
+    return 0;
+}
+
+#if 0
 #define CARLA_PLUGIN CarlaBackend::CarlaPlugins[0]
 
 void toolkit_plugin_idle();
@@ -34,17 +409,6 @@ ClientData* client = nullptr;
 
 // -------------------------------------------------------------------------
 // backend stuff
-
-CARLA_BACKEND_START_NAMESPACE
-
-short add_plugin_ladspa(const char* const filename, const char* const name, const char* const label, const void* const extra_stuff);
-short add_plugin_dssi(const char* const filename, const char* const name, const char* const label, const void* const extra_stuff);
-short add_plugin_lv2(const char* const filename, const char* const name, const char* const label);
-short add_plugin_vst(const char* const filename, const char* const name, const char* const label);
-
-CARLA_BACKEND_END_NAMESPACE
-
-using namespace CarlaBackend;
 
 // -------------------------------------------------------------------------
 // toolkit classes
@@ -263,160 +627,6 @@ void toolkit_window_resize(int width, int height)
 }
 
 // -------------------------------------------------------------------------
-// client stuff
-
-class PluginData : public ClientData
-{
-public:
-    PluginData() : ClientData("")
-    {
-    }
-
-    ~PluginData()
-    {
-    }
-
-    // ---------------------------------------------------------------------
-
-    // processing
-    void set_parameter(int32_t rindex, double value)
-    {
-        if (CARLA_PLUGIN)
-            CARLA_PLUGIN->setParameterValueByRIndex(rindex, value, true, true, false);
-    }
-
-    void set_program(uint32_t index)
-    {
-        if (CARLA_PLUGIN && index < CARLA_PLUGIN->programCount())
-            CARLA_PLUGIN->setProgram(index, true, true, false, true);
-
-        callback_action(CALLBACK_RELOAD_PARAMETERS, 0, 0, 0, 0.0);
-    }
-
-    void set_midi_program(uint32_t bank, uint32_t program)
-    {
-        if (CARLA_PLUGIN)
-            CARLA_PLUGIN->setMidiProgramById(bank, program, true, true, false, true);
-
-        callback_action(CALLBACK_RELOAD_PARAMETERS, 0, 0, 0, 0.0);
-    }
-
-    void note_on(uint8_t note, uint8_t velocity)
-    {
-        if (CARLA_PLUGIN)
-            CARLA_PLUGIN->sendMidiSingleNote(note, velocity, true, true, false);
-    }
-
-    void note_off(uint8_t note)
-    {
-        if (CARLA_PLUGIN)
-            CARLA_PLUGIN->sendMidiSingleNote(note, 0, true, true, false);
-    }
-
-    // plugin
-    void save_now()
-    {
-        CARLA_PLUGIN->prepareForSave();
-
-        for (uint32_t i=0; i < CARLA_PLUGIN->customDataCount(); i++)
-        {
-            const CustomData* const cdata = CARLA_PLUGIN->customData(i);
-            osc_send_bridge_custom_data(customdatatype2str(cdata->type), cdata->key, cdata->value);
-        }
-
-        if (CARLA_PLUGIN->hints() & PLUGIN_USES_CHUNKS)
-        {
-            void* data = nullptr;
-            int32_t dataSize = CARLA_PLUGIN->chunkData(&data);
-
-            if (data && dataSize >= 4)
-            {
-                QString filePath;
-                filePath += "/tmp/.CarlaChunk_";
-                filePath += CARLA_PLUGIN->name();
-
-                QFile file(filePath);
-
-                if (file.open(QIODevice::WriteOnly))
-                {
-                    QByteArray chunk((const char*)data, dataSize);
-                    file.write(chunk);
-                    file.close();
-                    osc_send_bridge_chunk_data(filePath.toUtf8().constData());
-                }
-            }
-        }
-
-        osc_send_configure(CARLA_BRIDGE_MSG_SAVED, "");
-    }
-
-    void set_custom_data(const char* const type, const char* const key, const char* const value)
-    {
-        if (CARLA_PLUGIN)
-            CARLA_PLUGIN->setCustomData(customdatastr2type(type), key, value, false);
-    }
-
-    void set_chunk_data(const char* const filePath)
-    {
-        nextChunkFilePath = strdup(filePath);
-
-        while (nextChunkFilePath)
-            carla_msleep(25);
-    }
-};
-
-// -------------------------------------------------------------------------
-
-void plugin_bridge_callback(CallbackType action, unsigned short, int value1, int value2, double value3)
-{
-    switch (action)
-    {
-    case CALLBACK_PARAMETER_CHANGED:
-        osc_send_control(value1, value3);
-        break;
-    case CALLBACK_PROGRAM_CHANGED:
-        osc_send_program(value1);
-        break;
-    case CALLBACK_MIDI_PROGRAM_CHANGED:
-        osc_send_midi_program(value1, value2, false);
-        break;
-    case CALLBACK_NOTE_ON:
-    {
-        uint8_t mdata[4] = { 0, MIDI_STATUS_NOTE_ON, (uint8_t)value1, (uint8_t)value2 };
-        osc_send_midi(mdata);
-        break;
-    }
-    case CALLBACK_NOTE_OFF:
-    {
-        uint8_t mdata[4] = { 0, MIDI_STATUS_NOTE_OFF, (uint8_t)value1, (uint8_t)value2 };
-        osc_send_midi(mdata);
-        break;
-    }
-    case CALLBACK_SHOW_GUI:
-        if (value1 == 0)
-            osc_send_configure(CARLA_BRIDGE_MSG_HIDE_GUI, "");
-        break;
-    case CALLBACK_RESIZE_GUI:
-        if (client)
-            client->queque_message(BRIDGE_MESSAGE_RESIZE_GUI, value1, value2, 0.0);
-        break;
-    case CALLBACK_RELOAD_PARAMETERS:
-        if (CARLA_PLUGIN)
-        {
-            for (uint32_t i=0; i < CARLA_PLUGIN->parameterCount(); i++)
-            {
-                osc_send_control(i, CARLA_PLUGIN->getParameterValue(i));
-            }
-        }
-        break;
-    case CALLBACK_QUIT:
-        if (client)
-            client->queque_message(BRIDGE_MESSAGE_QUIT, 0, 0, 0.0);
-        break;
-    default:
-        break;
-    }
-}
 
 // -------------------------------------------------------------------------
 
@@ -651,3 +861,5 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+
+#endif

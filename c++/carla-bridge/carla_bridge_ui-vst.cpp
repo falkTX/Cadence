@@ -15,24 +15,35 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
+#ifdef BRIDGE_VST
+
 #include "carla_bridge_client.h"
 #include "carla_vst.h"
 #include "carla_midi.h"
 
 #include <QtGui/QDialog>
 
-CARLA_BRIDGE_START_NAMESPACE;
+CARLA_BRIDGE_START_NAMESPACE
 
 // -------------------------------------------------------------------------
 
 #define FAKE_SAMPLE_RATE 44100.0
 #define FAKE_BUFFER_SIZE 512
 
-class CarlaBridgeVstClient : public CarlaBridgeClient
+void* getPointer(const quintptr addr)
+{
+    Q_ASSERT(addr != 0);
+    qDebug("getPointer(" P_UINTPTR ")", addr);
+
+    quintptr* const ptr = (quintptr*)addr;
+    return (void*)ptr;
+}
+
+class CarlaVstClient : public CarlaClient
 {
 public:
-    CarlaBridgeVstClient(CarlaBridgeToolkit* const toolkit)
-        : CarlaBridgeClient(toolkit)
+    CarlaVstClient(CarlaToolkit* const toolkit)
+        : CarlaClient(toolkit)
     {
         effect = nullptr;
         widget = new QDialog;
@@ -41,14 +52,14 @@ public:
         unique1 = unique2 = rand();
     }
 
-    ~CarlaBridgeVstClient()
+    ~CarlaVstClient()
     {
         // make client invalid
         unique2 += 1;
     }
 
     // ---------------------------------------------------------------------
-    // initialization
+    // ui initialization
 
     bool init(const char* binary, const char*)
     {
@@ -135,15 +146,15 @@ public:
             effect->dispatcher(effect, effSetProgram, 0, index, nullptr, 0.0f);
     }
 
-    void setMidiProgram(uint32_t, uint32_t)
+    void setMidiProgram(const uint32_t, const uint32_t)
     {
     }
 
-    void noteOn(uint8_t, uint8_t)
+    void noteOn(const uint8_t, const uint8_t, const uint8_t)
     {
     }
 
-    void noteOff(uint8_t)
+    void noteOff(const uint8_t, const uint8_t)
     {
     }
 
@@ -170,16 +181,16 @@ public:
     static intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
     {
         // Check if 'resvd1' points to this client
-        CarlaBridgeVstClient* self = nullptr;
+        CarlaVstClient* self = nullptr;
 
 #ifdef VESTIGE_HEADER
         if (effect && effect->ptr1)
         {
-            self = (CarlaBridgeVstClient*)effect->ptr1;
+            self = (CarlaVstClient*)effect->ptr1;
 #else
         if (effect && effect->resvd1)
         {
-            self = (CarlaBridgeVstClient*)getPointer(effect->resvd1);
+            self = (CarlaVstClient*)getPointer(effect->resvd1);
 #endif
             if (self->unique1 != self->unique2)
                 self = nullptr;
@@ -319,7 +330,7 @@ public:
 
         default:
 #if DEBUG
-            qDebug("VstHostCallback() - code: %s, index: %i, value: " P_INTPTR ", opt: %f", VstOpcode2str(opcode), index, value, opt);
+            qDebug("VstHostCallback() - code: %s, index: %i, value: " P_INTPTR ", opt: %f", VstMasterOpcode2str(opcode), index, value, opt);
 #endif
             break;
         }
@@ -351,11 +362,11 @@ int main(int argc, char* argv[])
     using namespace CarlaBridge;
 
     // Init toolkit
-    CarlaBridgeToolkit* const toolkit = CarlaBridgeToolkit::createNew(ui_title);
+    CarlaToolkit* const toolkit = CarlaToolkit::createNew(ui_title);
     toolkit->init();
 
     // Init VST-UI
-    CarlaBridgeVstClient client(toolkit);
+    CarlaVstClient client(toolkit);
 
     // Init OSC
     if (! client.oscInit(osc_url))
@@ -392,3 +403,5 @@ int main(int argc, char* argv[])
 
     return ret;
 }
+
+#endif

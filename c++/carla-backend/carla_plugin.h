@@ -1439,7 +1439,7 @@ public:
             getCopyright(bufCopyright);
 
 #ifdef BUILD_BRIDGE
-            osc_send_bridge_plugin_info(category(), m_hints, bufName, bufLabel, bufMaker, bufCopyright, uniqueId());
+            x_engine->osc_send_bridge_plugin_info(category(), m_hints, bufName, bufLabel, bufMaker, bufCopyright, uniqueId());
 #else
             x_engine->osc_send_set_plugin_data(m_id, m_type, category(), m_hints, bufName, bufLabel, bufMaker, bufCopyright, uniqueId());
 #endif
@@ -1451,9 +1451,9 @@ public:
             getParameterCountInfo(&cIns, &cOuts, &cTotals);
 
 #ifdef BUILD_BRIDGE
-            osc_send_bridge_audio_count(audioInCount(), audioOutCount(), audioInCount() + audioOutCount());
-            osc_send_bridge_midi_count(midiInCount(), midiOutCount(), midiInCount() + midiOutCount());
-            osc_send_bridge_param_count(cIns, cOuts, cTotals);
+            x_engine->osc_send_bridge_audio_count(audioInCount(), audioOutCount(), audioInCount() + audioOutCount());
+            x_engine->osc_send_bridge_midi_count(midiInCount(), midiOutCount(), midiInCount() + midiOutCount());
+            x_engine->osc_send_bridge_param_count(cIns, cOuts, cTotals);
 #else
             x_engine->osc_send_set_plugin_ports(m_id, audioInCount(), audioOutCount(), midiInCount(), midiOutCount(), cIns, cOuts, cTotals);
 #endif
@@ -1471,7 +1471,12 @@ public:
         }
 
         // Plugin Parameters
-        if (param.count > 0 && param.count < carlaOptions.maxParameters)
+#ifdef BUILD_BRIDGE
+        uint32_t maxParameters = MAX_PARAMETERS;
+#else
+        uint32_t maxParameters = carlaOptions.maxParameters;
+#endif
+        if (param.count > 0 && param.count < maxParameters)
         {
             char bufName[STR_MAX], bufUnit[STR_MAX];
 
@@ -1481,9 +1486,9 @@ public:
                 getParameterUnit(i, bufUnit);
 
 #ifdef BUILD_BRIDGE
-                osc_send_bridge_param_info(i, bufName, bufUnit);
-                osc_send_bridge_param_data(i, param.data[i].type, param.data[i].rindex, param.data[i].hints, param.data[i].midiChannel, param.data[i].midiCC);
-                osc_send_bridge_param_ranges(i, param.ranges[i].def, param.ranges[i].min, param.ranges[i].max, param.ranges[i].step, param.ranges[i].stepSmall, param.ranges[i].stepLarge);
+                x_engine->osc_send_bridge_param_info(i, bufName, bufUnit);
+                x_engine->osc_send_bridge_param_data(i, param.data[i].type, param.data[i].rindex, param.data[i].hints, param.data[i].midiChannel, param.data[i].midiCC);
+                x_engine->osc_send_bridge_param_ranges(i, param.ranges[i].def, param.ranges[i].min, param.ranges[i].max, param.ranges[i].step, param.ranges[i].stepSmall, param.ranges[i].stepLarge);
                 setParameterValue(i, param.ranges[i].def, false, false, true); // FIXME?
 #else
                 x_engine->osc_send_set_parameter_data(m_id, i, param.data[i].type, param.data[i].hints, bufName, bufUnit, getParameterValue(i));
@@ -1495,12 +1500,12 @@ public:
         // Programs
         {
 #ifdef BUILD_BRIDGE
-            osc_send_bridge_program_count(prog.count);
+            x_engine->osc_send_bridge_program_count(prog.count);
 
             for (uint32_t i=0; i < prog.count; i++)
-                osc_send_bridge_program_info(i, prog.names[i]);
+                x_engine->osc_send_bridge_program_info(i, prog.names[i]);
 
-            osc_send_program(prog.current);
+            //x_engine->osc_send_program(prog.current);
 #else
             x_engine->osc_send_set_program_count(m_id, prog.count);
 
@@ -1514,12 +1519,12 @@ public:
         // MIDI Programs
         {
 #ifdef BUILD_BRIDGE
-            osc_send_bridge_midi_program_count(midiprog.count);
+            x_engine->osc_send_bridge_midi_program_count(midiprog.count);
 
             for (uint32_t i=0; i < midiprog.count; i++)
-                osc_send_bridge_midi_program_info(i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
+                x_engine->osc_send_bridge_midi_program_info(i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
 
-            osc_send_midi_program(midiprog.current);
+            //x_engine->osc_send_midi_program(midiprog.current);
 #else
             x_engine->osc_send_set_midi_program_count(m_id, midiprog.count);
 

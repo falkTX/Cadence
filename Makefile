@@ -200,6 +200,7 @@ clean:
 
 doc:
 	$(MAKE) doc -C c++/carla-backend
+	$(MAKE) doc -C c++/carla-bridge
 
 install:
 	# Create directories

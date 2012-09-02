@@ -77,11 +77,9 @@ static void carla_jack_shutdown_callback(void* arg)
 // Carla Engine (JACK)
 
 CarlaEngineJack::CarlaEngineJack()
-#ifdef Q_COMPILER_INITIALIZER_LISTS
-    : CarlaEngine(),
-      rackJackPorts{nullptr}
-#else
     : CarlaEngine()
+#ifdef Q_COMPILER_INITIALIZER_LISTS
+    , rackJackPorts{nullptr}
 #endif
 {
     qDebug("CarlaEngineJack::CarlaEngineJack()");

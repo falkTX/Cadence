@@ -64,8 +64,8 @@ struct Message {
 
 /**@}*/
 
-class CarlaBridgeClient;
-class CarlaBridgeToolkit;
+class CarlaClient;
+class CarlaToolkit;
 
 CARLA_BRIDGE_END_NAMESPACE
 

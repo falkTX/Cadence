@@ -90,6 +90,7 @@ public:
 
                 if (gui.type == GUI_EXTERNAL_OSC)
                 {
+#ifndef BUILD_BRIDGE
                     if (osc.thread)
                     {
                         // Wait a bit first, try safe quit, then force kill
@@ -101,6 +102,7 @@ public:
 
                         delete osc.thread;
                     }
+#endif
                 }
                 else
                     effect->dispatcher(effect, effEditClose, 0, 0, nullptr, 0.0f);
@@ -372,6 +374,7 @@ public:
     {
         if (gui.type == GUI_EXTERNAL_OSC)
         {
+#ifndef BUILD_BRIDGE
             Q_ASSERT(osc.thread);
 
             if (! osc.thread)
@@ -396,6 +399,7 @@ public:
                 if (! osc.thread->wait(500))
                     osc.thread->quit();
             }
+#endif
         }
         else
         {
@@ -954,7 +958,7 @@ public:
                         if (progId < prog.count)
                         {
                             setProgram(progId, false, false, false, false);
-                            postponeEvent(PluginPostEventMidiProgramChange, progId, 0, 0.0);
+                            postponeEvent(PluginPostEventProgramChange, progId, 0, 0.0);
                         }
                     }
                     break;
@@ -1317,6 +1321,7 @@ public:
     // -------------------------------------------------------------------
     // Post-poned events
 
+#ifndef BUILD_BRIDGE
     void uiParameterChange(const uint32_t index, const double value)
     {
         Q_ASSERT(index < param.count);
@@ -1368,6 +1373,7 @@ public:
             osc_send_midi(&osc.data, midiData);
         }
     }
+#endif
 
     // -------------------------------------------------------------------
 
@@ -2017,7 +2023,7 @@ public:
         {
             m_hints |= PLUGIN_HAS_GUI;
 
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) && ! defined(BUILD_BRIDGE)
             if (carlaOptions.bridge_vstx11 && carlaOptions.preferUiBridges && ! (effect->flags & effFlagsProgramChunks))
             {
                 osc.thread = new CarlaPluginThread(x_engine, this, CarlaPluginThread::PLUGIN_THREAD_VST_GUI);
@@ -2095,7 +2101,7 @@ CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
         const bool stereoInput = ins == 0 || ins == 2;
         const bool stereoOutput = outs == 0 || outs == 2;
 
-        if (! (stereoInput || stereoOutput))
+        if (! (stereoInput && stereoOutput))
         {
             setLastError("Carla's rack mode can only work with Stereo VST plugins, sorry!");
             delete plugin;

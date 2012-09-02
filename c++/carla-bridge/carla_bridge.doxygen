@@ -4,7 +4,7 @@
 # Project related configuration options
 #---------------------------------------------------------------------------
 DOXYFILE_ENCODING      = UTF-8
-PROJECT_NAME           = "Carla Backend"
+PROJECT_NAME           = "Carla Bridge UI"
 PROJECT_NUMBER         =
 PROJECT_BRIEF          =
 PROJECT_LOGO           =
@@ -241,7 +241,7 @@ EXPAND_ONLY_PREDEF     = NO
 SEARCH_INCLUDES        = YES
 INCLUDE_PATH           =
 INCLUDE_FILE_PATTERNS  =
-PREDEFINED             = CARLA_ENGINE_JACK CARLA_ENGINE_RTAUDIO WANT_FLUIDSYNTH WANT_LINUXSAMPLER
+PREDEFINED             = BUILD_BRIDGE BUILD_BRIDGE_UI BUILD_BRIDGE_LV2 BUILD_BRIDGE_VST BRIDGE_LV2_GTK2 BRIDGE_LV2_QT4 BRIDGE_LV2_X11 BRIDGE_VST_X11
 EXPAND_AS_DEFINED      =
 SKIP_FUNCTION_MACROS   = YES
 #---------------------------------------------------------------------------

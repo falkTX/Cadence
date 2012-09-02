@@ -241,7 +241,7 @@ const PluginInfo* get_plugin_info(unsigned short plugin_id)
     }
 
     if (! carlaEngine->isRunning())
-        return nullptr;
+        return &info;
 
     CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
 
@@ -355,7 +355,7 @@ const ParameterInfo* get_parameter_info(unsigned short plugin_id, quint32 parame
     }
 
     if (! carlaEngine->isRunning())
-        return nullptr;
+        return &info;
 
     CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
 
@@ -401,7 +401,7 @@ const ScalePointInfo* get_parameter_scalepoint_info(unsigned short plugin_id, qu
     }
 
     if (! carlaEngine->isRunning())
-        return nullptr;
+        return &info;
 
     CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
 

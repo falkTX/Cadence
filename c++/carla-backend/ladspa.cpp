@@ -371,6 +371,7 @@ public:
                 params += 1;
         }
 
+#ifndef BUILD_BRIDGE
         if (carlaOptions.forceStereo && (aIns == 1 || aOuts == 1) && ! h2)
         {
             h2 = descriptor->instantiate(descriptor, sampleRate);
@@ -387,6 +388,7 @@ public:
                 forcedStereoOut = true;
             }
         }
+#endif
 
         if (aIns > 0)
         {

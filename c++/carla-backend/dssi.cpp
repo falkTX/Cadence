@@ -369,6 +369,7 @@ public:
                 params += 1;
         }
 
+#ifndef BUILD_BRIDGE
         if (carlaOptions.forceStereo && (aIns == 1 || aOuts == 1) && ! h2)
         {
             h2 = ldescriptor->instantiate(ldescriptor, sampleRate);
@@ -385,6 +386,7 @@ public:
                 forcedStereoOut = true;
             }
         }
+#endif
 
         if (descriptor->run_synth || descriptor->run_multiple_synths)
             mIns = 1;
@@ -1336,6 +1338,7 @@ public:
     // -------------------------------------------------------------------
     // Post-poned events
 
+#ifndef BUILD_BRIDGE
     void uiParameterChange(const uint32_t index, const double value)
     {
         Q_ASSERT(index < param.count);
@@ -1389,6 +1392,7 @@ public:
         midiData[2] = note;
         osc_send_midi(&osc.data, midiData);
     }
+#endif
 
     // -------------------------------------------------------------------
     // Cleanup

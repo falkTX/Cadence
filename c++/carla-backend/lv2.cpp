@@ -302,15 +302,15 @@ public:
             case GUI_EXTERNAL_LV2:
                 break;
 
-#if defined(HAVE_SUIL) && ! defined(__WINE__)
             case GUI_EXTERNAL_SUIL:
+#if defined(HAVE_SUIL) && ! defined(__WINE__)
                 if (ui.widget)
                     ((QWidget*)ui.widget)->close();
-                break;
 #endif
+                break;
 
-#ifndef BUILD_BRIDGE
             case GUI_EXTERNAL_OSC:
+#ifndef BUILD_BRIDGE
                 if (osc.thread)
                 {
                     // Wait a bit first, try safe quit, then force kill
@@ -322,8 +322,8 @@ public:
 
                     delete osc.thread;
                 }
-                break;
 #endif
+                break;
             }
 
 #ifdef HAVE_SUIL
@@ -967,8 +967,8 @@ public:
 
             break;
 
-#if defined(HAVE_SUIL) && ! defined(__WINE__)
         case GUI_EXTERNAL_SUIL:
+#if defined(HAVE_SUIL) && ! defined(__WINE__)
             if (ui.widget)
             {
                 QWidget* const widget = (QWidget*)ui.widget;
@@ -983,11 +983,11 @@ public:
 
                 widget->setVisible(yesNo);
             }
-            break;
 #endif
+            break;
 
-#ifndef BUILD_BRIDGE
         case GUI_EXTERNAL_OSC:
+#ifndef BUILD_BRIDGE
             Q_ASSERT(osc.thread);
 
             if (! osc.thread)
@@ -1012,8 +1012,8 @@ public:
                 if (! osc.thread->wait(500))
                     osc.thread->quit();
             }
-            break;
 #endif
+            break;
         }
     }
 
@@ -1099,6 +1099,7 @@ public:
                 params += 1;
         }
 
+#ifndef BUILD_BRIDGE
         if (carlaOptions.forceStereo && (aIns == 1 || aOuts == 1) && ! h2)
         {
             h2 = descriptor->instantiate(descriptor, sampleRate, rdf_descriptor->Bundle, features);
@@ -1115,6 +1116,7 @@ public:
                 forcedStereoOut = true;
             }
         }
+#endif
 
         if (aIns > 0)
         {

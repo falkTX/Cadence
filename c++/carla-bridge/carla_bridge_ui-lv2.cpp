@@ -15,6 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
+#ifdef BRIDGE_LV2
+
 #include "carla_bridge_client.h"
 #include "carla_lv2.h"
 #include "carla_midi.h"
@@ -23,11 +25,10 @@
 #include <QtCore/QDir>
 
 #ifdef BRIDGE_LV2_X11
-#include <QtGui/QDialog>
+#  include <QtGui/QDialog>
 #endif
 
-//CARLA_BRIDGE_START_NAMESPACE;
-namespace CarlaBridge {
+CARLA_BRIDGE_START_NAMESPACE
 
 // -------------------------------------------------------------------------
 
@@ -63,10 +64,11 @@ const uint32_t CARLA_URI_MAP_ID_COUNT         = 12;
 
 // -------------------------------------------------------------------------
 
-class CarlaBridgeLv2Client : public CarlaBridgeClient
+class CarlaLv2Client : public CarlaClient
 {
 public:
-    CarlaBridgeLv2Client(CarlaBridgeToolkit* const toolkit) : CarlaBridgeClient(toolkit)
+    CarlaLv2Client(CarlaToolkit* const toolkit)
+        : CarlaClient(toolkit)
     {
         handle = nullptr;
         widget = nullptr;
@@ -189,7 +191,7 @@ public:
         features[lv2_feature_id_ui_resize]->data   = UI_Resize_Feature;
     }
 
-    ~CarlaBridgeLv2Client()
+    ~CarlaLv2Client()
     {
         if (rdf_descriptor)
             lv2_rdf_free(rdf_descriptor);
@@ -221,7 +223,7 @@ public:
     }
 
     // ---------------------------------------------------------------------
-    // initialization
+    // ui initialization
 
     bool init(const char* plugin_uri, const char* ui_uri)
     {
@@ -326,7 +328,7 @@ public:
 
     void setParameter(int32_t rindex, double value)
     {
-        assert(handle && descriptor);
+        Q_ASSERT(handle && descriptor);
 
         if (handle && descriptor && descriptor->port_event)
         {
@@ -341,32 +343,30 @@ public:
 
     void setMidiProgram(uint32_t bank, uint32_t program)
     {
-        assert(handle);
+        Q_ASSERT(handle);
 
         if (handle && programs)
             programs->select_program(handle, bank, program);
     }
 
-    void noteOn(uint8_t note, uint8_t velo)
+    void noteOn(const uint8_t channel, const uint8_t note, const uint8_t velo)
     {
-        assert(handle && descriptor);
+        Q_ASSERT(handle && descriptor);
 
-        // FIXME
         if (handle && descriptor && descriptor->port_event)
         {
-            uint8_t buf[3] = { 0x90, note, velo };
+            uint8_t buf[3] = { uint8_t(0x90 + channel), note, velo };
             descriptor->port_event(handle, 0, 3, CARLA_URI_MAP_ID_MIDI_EVENT, buf);
         }
     }
 
-    void noteOff(uint8_t note)
+    void noteOff(const uint8_t channel, const uint8_t note)
     {
-        assert(handle && descriptor);
+        Q_ASSERT(handle && descriptor);
 
-        // FIXME
         if (handle && descriptor && descriptor->port_event)
         {
-            uint8_t buf[3] = { 0x80, note, 0 };
+            uint8_t buf[3] = { uint8_t(0x80 + channel), note, 0 };
             descriptor->port_event(handle, 0, 3, CARLA_URI_MAP_ID_MIDI_EVENT, buf);
         }
     }
@@ -401,8 +401,8 @@ public:
 
     uint32_t getCustomURID(const char* const uri)
     {
-        qDebug("CarlaBridgeLv2Client::getCustomURID(%s)", uri);
-        assert(uri);
+        qDebug("CarlaLv2Client::getCustomURID(%s)", uri);
+        Q_ASSERT(uri);
 
         for (size_t i=0; i < customURIDs.size(); i++)
         {
@@ -416,8 +416,8 @@ public:
 
     const char* getCustomURIString(LV2_URID urid)
     {
-        qDebug("CarlaBridgeLv2Client::getCustomURIString(%i)", urid);
-        assert(urid != 0);
+        qDebug("CarlaLv2Client::getCustomURIString(%i)", urid);
+        Q_ASSERT(urid != 0);
 
         if (urid < customURIDs.size())
             return customURIDs[urid];
@@ -427,14 +427,14 @@ public:
 
     void handleTransferAtom(const char* const type, const char* const value)
     {
-        qDebug("CarlaBridgeLv2Client::handleTransferEvent(%s, %s)", type, value);
+        qDebug("CarlaLv2Client::handleTransferEvent(%s, %s)", type, value);
         Q_ASSERT(type);
         Q_ASSERT(value);
     }
 
     void handleTransferEvent(const char* const type, const char* const value)
     {
-        qDebug("CarlaBridgeLv2Client::handleTransferEvent(%s, %s)", type, value);
+        qDebug("CarlaLv2Client::handleTransferEvent(%s, %s)", type, value);
         Q_ASSERT(type);
         Q_ASSERT(value);
 
@@ -486,7 +486,7 @@ public:
 
     uint32_t handleUiPortMap(const char* const symbol)
     {
-        assert(symbol);
+        Q_ASSERT(symbol);
 
         for (uint32_t i=0; i < rdf_descriptor->PortCount; i++)
         {
@@ -500,8 +500,8 @@ public:
 
     int handleUiResize(int width, int height)
     {
-        assert(width > 0);
-        assert(height > 0);
+        Q_ASSERT(width > 0);
+        Q_ASSERT(height > 0);
 
         quequeMessage(MESSAGE_RESIZE_GUI, width, height, 0.0);
 
@@ -513,7 +513,7 @@ public:
     {
         if (format == 0)
         {
-            assert(bufferSize == sizeof(float));
+            Q_ASSERT(bufferSize == sizeof(float));
 
             if (bufferSize == sizeof(float))
             {
@@ -548,18 +548,18 @@ public:
 
     static uint32_t carla_lv2_event_ref(LV2_Event_Callback_Data callback_data, LV2_Event* event)
     {
-        qDebug("CarlaBridgeLv2Client::carla_lv2_event_ref(%p, %p)", callback_data, event);
-        assert(callback_data);
-        assert(event);
+        qDebug("CarlaLv2Client::carla_lv2_event_ref(%p, %p)", callback_data, event);
+        Q_ASSERT(callback_data);
+        Q_ASSERT(event);
 
         return 0;
     }
 
     static uint32_t carla_lv2_event_unref(LV2_Event_Callback_Data callback_data, LV2_Event* event)
     {
-        qDebug("CarlaBridgeLv2Client::carla_lv2_event_unref(%p, %p)", callback_data, event);
-        assert(callback_data);
-        assert(event);
+        qDebug("CarlaLv2Client::carla_lv2_event_unref(%p, %p)", callback_data, event);
+        Q_ASSERT(callback_data);
+        Q_ASSERT(event);
 
         return 0;
     }
@@ -568,9 +568,9 @@ public:
 
     static int carla_lv2_log_printf(LV2_Log_Handle handle, LV2_URID type, const char* fmt, ...)
     {
-        qDebug("CarlaBridgeLv2Client::carla_lv2_log_printf(%p, %i, %s, ...)", handle, type, fmt);
-        assert(handle);
-        assert(type > 0);
+        qDebug("CarlaLv2Client::carla_lv2_log_printf(%p, %i, %s, ...)", handle, type, fmt);
+        Q_ASSERT(handle);
+        Q_ASSERT(type > 0);
 
 #ifndef DEBUG
         if (type == CARLA_URI_MAP_ID_LOG_TRACE)
@@ -587,9 +587,9 @@ public:
 
     static int carla_lv2_log_vprintf(LV2_Log_Handle handle, LV2_URID type, const char* fmt, va_list ap)
     {
-        qDebug("CarlaBridgeLv2Client::carla_lv2_log_vprintf(%p, %i, %s, ...)", handle, type, fmt);
-        assert(handle);
-        assert(type > 0);
+        qDebug("CarlaLv2Client::carla_lv2_log_vprintf(%p, %i, %s, ...)", handle, type, fmt);
+        Q_ASSERT(handle);
+        Q_ASSERT(type > 0);
 
 #ifndef DEBUG
         if (type == CARLA_URI_MAP_ID_LOG_TRACE)
@@ -627,10 +627,10 @@ public:
 
     static void carla_lv2_program_changed(LV2_Programs_Handle handle, int32_t index)
     {
-        qDebug("CarlaBridgeLv2Client::carla_lv2_program_changed(%p, %i)", handle, index);
-        assert(handle);
+        qDebug("CarlaLv2Client::carla_lv2_program_changed(%p, %i)", handle, index);
+        Q_ASSERT(handle);
 
-        CarlaBridgeLv2Client* const client = (CarlaBridgeLv2Client*)handle;
+        CarlaLv2Client* const client = (CarlaLv2Client*)handle;
         client->handleProgramChanged(index);
     }
 
@@ -638,9 +638,9 @@ public:
 
     static char* carla_lv2_state_make_path(LV2_State_Make_Path_Handle handle, const char* path)
     {
-        qDebug("CarlaBridgeLv2Client::carla_lv2_state_make_path(%p, %p)", handle, path);
-        assert(handle);
-        assert(path);
+        qDebug("CarlaLv2Client::carla_lv2_state_make_path(%p, %p)", handle, path);
+        Q_ASSERT(handle);
+        Q_ASSERT(path);
 
         QDir dir;
         dir.mkpath(path);
@@ -649,9 +649,9 @@ public:
 
     static char* carla_lv2_state_map_abstract_path(LV2_State_Map_Path_Handle handle, const char* absolute_path)
     {
-        qDebug("CarlaBridgeLv2Client::carla_lv2_state_map_abstract_path(%p, %p)", handle, absolute_path);
-        assert(handle);
-        assert(absolute_path);
+        qDebug("CarlaLv2Client::carla_lv2_state_map_abstract_path(%p, %p)", handle, absolute_path);
+        Q_ASSERT(handle);
+        Q_ASSERT(absolute_path);
 
         QDir dir(absolute_path);
         return strdup(dir.canonicalPath().toUtf8().constData());
@@ -659,9 +659,9 @@ public:
 
     static char* carla_lv2_state_map_absolute_path(LV2_State_Map_Path_Handle handle, const char* abstract_path)
     {
-        qDebug("CarlaBridgeLv2Client::carla_lv2_state_map_absolute_path(%p, %p)", handle, abstract_path);
-        assert(handle);
-        assert(abstract_path);
+        qDebug("CarlaLv2Client::carla_lv2_state_map_absolute_path(%p, %p)", handle, abstract_path);
+        Q_ASSERT(handle);
+        Q_ASSERT(abstract_path);
 
         QDir dir(abstract_path);
         return strdup(dir.absolutePath().toUtf8().constData());
@@ -671,7 +671,7 @@ public:
 
     static uint32_t carla_lv2_uri_to_id(LV2_URI_Map_Callback_Data data, const char* map, const char* uri)
     {
-        qDebug("CarlaBridgeLv2Client::carla_lv2_uri_to_id(%p, %s, %s)", data, map, uri);
+        qDebug("CarlaLv2Client::carla_lv2_uri_to_id(%p, %s, %s)", data, map, uri);
         return carla_lv2_urid_map(data, uri);
     }
 
@@ -679,9 +679,9 @@ public:
 
     static LV2_URID carla_lv2_urid_map(LV2_URID_Map_Handle handle, const char* uri)
     {
-        qDebug("CarlaBridgeLv2Client::carla_lv2_urid_map(%p, %s)", handle, uri);
-        assert(handle);
-        assert(uri);
+        qDebug("CarlaLv2Client::carla_lv2_urid_map(%p, %s)", handle, uri);
+        Q_ASSERT(handle);
+        Q_ASSERT(uri);
 
         // Atom types
         if (strcmp(uri, LV2_ATOM__Chunk) == 0)
@@ -712,15 +712,15 @@ public:
             return CARLA_URI_MAP_ID_MIDI_EVENT;
 
         // Custom types
-        CarlaBridgeLv2Client* const client = (CarlaBridgeLv2Client*)handle;
+        CarlaLv2Client* const client = (CarlaLv2Client*)handle;
         return client->getCustomURID(uri);
     }
 
     static const char* carla_lv2_urid_unmap(LV2_URID_Map_Handle handle, LV2_URID urid)
     {
-        qDebug("CarlaBridgeLv2Client::carla_lv2_urid_unmap(%p, %i)", handle, urid);
-        assert(handle);
-        assert(urid > 0);
+        qDebug("CarlaLv2Client::carla_lv2_urid_unmap(%p, %i)", handle, urid);
+        Q_ASSERT(handle);
+        Q_ASSERT(urid > 0);
 
         // Atom types
         if (urid == CARLA_URI_MAP_ID_ATOM_CHUNK)
@@ -751,7 +751,7 @@ public:
             return LV2_MIDI__MidiEvent;
 
         // Custom types
-        CarlaBridgeLv2Client* const client = (CarlaBridgeLv2Client*)handle;
+        CarlaLv2Client* const client = (CarlaLv2Client*)handle;
         return client->getCustomURIString(urid);
     }
 
@@ -759,10 +759,10 @@ public:
 
     static uint32_t carla_lv2_ui_port_map(LV2UI_Feature_Handle handle, const char* symbol)
     {
-        qDebug("CarlaBridgeLv2Client::carla_lv2_ui_port_map(%p, %s)", handle, symbol);
-        assert(handle);
+        qDebug("CarlaLv2Client::carla_lv2_ui_port_map(%p, %s)", handle, symbol);
+        Q_ASSERT(handle);
 
-        CarlaBridgeLv2Client* const client = (CarlaBridgeLv2Client*)handle;
+        CarlaLv2Client* const client = (CarlaLv2Client*)handle;
         return client->handleUiPortMap(symbol);
     }
 
@@ -771,10 +771,10 @@ public:
 
     static int carla_lv2_ui_resize(LV2UI_Feature_Handle handle, int width, int height)
     {
-        qDebug("CarlaBridgeLv2Client::carla_lv2_ui_resize(%p, %i, %i)", handle, width, height);
-        assert(handle);
+        qDebug("CarlaLv2Client::carla_lv2_ui_resize(%p, %i, %i)", handle, width, height);
+        Q_ASSERT(handle);
 
-        CarlaBridgeLv2Client* const client = (CarlaBridgeLv2Client*)handle;
+        CarlaLv2Client* const client = (CarlaLv2Client*)handle;
         return client->handleUiResize(width, height);
     }
 
@@ -782,10 +782,10 @@ public:
 
     static void carla_lv2_ui_write_function(LV2UI_Controller controller, uint32_t port_index, uint32_t buffer_size, uint32_t format, const void* buffer)
     {
-        qDebug("CarlaBridgeLv2Client::carla_lv2_ui_write_function(%p, %i, %i, %i, %p)", controller, port_index, buffer_size, format, buffer);
-        assert(controller);
+        qDebug("CarlaLv2Client::carla_lv2_ui_write_function(%p, %i, %i, %i, %p)", controller, port_index, buffer_size, format, buffer);
+        Q_ASSERT(controller);
 
-        CarlaBridgeLv2Client* const client = (CarlaBridgeLv2Client*)controller;
+        CarlaLv2Client* const client = (CarlaLv2Client*)controller;
         client->handleUiWrite(port_index, buffer_size, format, buffer);
     }
 
@@ -808,9 +808,9 @@ private:
     std::vector<const char*> customURIDs;
 };
 
-int CarlaBridgeOsc::handle_lv2_transfer_atom(CARLA_BRIDGE_OSC_HANDLE_ARGS)
+int CarlaOsc::handleMsgLv2TransferAtom(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 {
-    qDebug("CarlaBridgeOsc::handle_lv2_atom_transfer()");
+    qDebug("CarlaOsc::handle_lv2_atom_transfer()");
     CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(2, "ss");
 
     if (! client)
@@ -819,15 +819,15 @@ int CarlaBridgeOsc::handle_lv2_transfer_atom(CARLA_BRIDGE_OSC_HANDLE_ARGS)
     const char* type  = (const char*)&argv[0]->s;
     const char* value = (const char*)&argv[2]->s;
 
-    CarlaBridgeLv2Client* const lv2client = (CarlaBridgeLv2Client*)client;
+    CarlaLv2Client* const lv2client = (CarlaLv2Client*)client;
     lv2client->handleTransferAtom(type, value);
 
     return 0;
 }
 
-int CarlaBridgeOsc::handle_lv2_transfer_event(CARLA_BRIDGE_OSC_HANDLE_ARGS)
+int CarlaOsc::handleMsgLv2TransferEvent(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 {
-    qDebug("CarlaBridgeOsc::handle_lv2_event_transfer()");
+    qDebug("CarlaOsc::handle_lv2_event_transfer()");
     CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(2, "ss");
 
     if (! client)
@@ -836,7 +836,7 @@ int CarlaBridgeOsc::handle_lv2_transfer_event(CARLA_BRIDGE_OSC_HANDLE_ARGS)
     const char* type  = (const char*)&argv[0]->s;
     const char* value = (const char*)&argv[2]->s;
 
-    CarlaBridgeLv2Client* lv2client = (CarlaBridgeLv2Client*)client;
+    CarlaLv2Client* const lv2client = (CarlaLv2Client*)client;
     lv2client->handleTransferEvent(type, value);
 
     return 0;
@@ -860,11 +860,11 @@ int main(int argc, char* argv[])
     using namespace CarlaBridge;
 
     // Init toolkit
-    CarlaBridgeToolkit* const toolkit = CarlaBridgeToolkit::createNew(ui_title);
+    CarlaToolkit* const toolkit = CarlaToolkit::createNew(ui_title);
     toolkit->init();
 
     // Init LV2-UI
-    CarlaBridgeLv2Client client(toolkit);
+    CarlaLv2Client client(toolkit);
 
     // Init OSC
     if (! client.oscInit(osc_url))
@@ -901,3 +901,5 @@ int main(int argc, char* argv[])
 
     return ret;
 }
+
+#endif
