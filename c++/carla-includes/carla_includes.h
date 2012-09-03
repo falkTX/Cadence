@@ -19,9 +19,9 @@
 #define CARLA_INCLUDES_H
 
 #ifdef __WINE__
-#  define __socklen_t_defined
-#  define __WINE_WINSOCK2__
-#  define HRESULT LONG
+//#  define __socklen_t_defined
+//#  define __WINE_WINSOCK2__
+//#  define HRESULT LONG
 #  define Q_CORE_EXPORT
 #  define Q_GUI_EXPORT
 #  define QT_NO_STL
@@ -57,14 +57,16 @@
 #  endif
 #endif
 
-// needed for qDebug/Warning/Critical sections (FIXME)
-#if __WORDSIZE == 64
-#  define P_INT64   "%li"
+// needed for qDebug/Warning/Critical sections
+#if defined(Q_OS_WIN64) && ! defined(__WINE__)
+#  define P_INTPTR  "%I64i"
+#  define P_UINTPTR "%I64x"
+#  define P_SIZE    "%I64u"
+#elif __WORDSIZE == 64
 #  define P_INTPTR  "%li"
-#  define P_UINTPTR "%llx"
+#  define P_UINTPTR "%lx"
 #  define P_SIZE    "%lu"
 #else
-#  define P_INT64   "%lli"
 #  define P_INTPTR  "%i"
 #  define P_UINTPTR "%x"
 #  define P_SIZE    "%u"
@@ -72,7 +74,7 @@
 
 // set native binary type
 #if defined(Q_OS_HAIKU) || defined(Q_OS_UNIX)
-#  if __LP64__
+#  ifdef __LP64__
 #    define BINARY_NATIVE BINARY_POSIX64
 #  else
 #    define BINARY_NATIVE BINARY_POSIX32

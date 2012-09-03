@@ -253,8 +253,10 @@ carla_bridge_win32   = ""
 carla_bridge_win64   = ""
 
 carla_bridge_lv2_gtk2 = ""
+carla_bridge_lv2_gtk3 = ""
 carla_bridge_lv2_qt4  = ""
 carla_bridge_lv2_x11  = ""
+carla_bridge_vst_hwnd = ""
 carla_bridge_vst_x11  = ""
 
 if WINDOWS:
@@ -379,6 +381,15 @@ else:
             carla_bridge_lv2_gtk2 = os.path.join(p, "carla-bridge-lv2-gtk2")
             break
 
+# find carla_bridge_lv2_gtk3
+if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-gtk3")):
+    carla_bridge_lv2_gtk3 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-gtk3")
+else:
+    for p in PATH:
+        if os.path.exists(os.path.join(p, "carla-bridge-lv2-gtk3")):
+            carla_bridge_lv2_gtk3 = os.path.join(p, "carla-bridge-lv2-gtk3")
+            break
+
 # find carla_bridge_lv2_qt4
 if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-qt4")):
     carla_bridge_lv2_qt4 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-qt4")
@@ -395,6 +406,15 @@ else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-bridge-lv2-x11")):
             carla_bridge_lv2_x11 = os.path.join(p, "carla-bridge-lv2-x11")
+            break
+
+# find carla_bridge_vst_hwnd
+if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-hwnd.exe")):
+    carla_bridge_vst_hwnd = os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-hwnd.exe")
+else:
+    for p in PATH:
+        if os.path.exists(os.path.join(p, "carla-bridge-vst-hwnd.exe")):
+            carla_bridge_vst_hwnd = os.path.join(p, "carla-bridge-vst-hwnd.exe")
             break
 
 # find carla_bridge_vst_x11

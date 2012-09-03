@@ -244,10 +244,14 @@ const char* OptionsType2str(const OptionsType type)
         return "OPTION_PATH_BRIDGE_WIN64";
     case OPTION_PATH_BRIDGE_LV2_GTK2:
         return "OPTION_PATH_BRIDGE_LV2_GTK2";
+    case OPTION_PATH_BRIDGE_LV2_GTK3:
+        return "OPTION_PATH_BRIDGE_LV2_GTK3";
     case OPTION_PATH_BRIDGE_LV2_QT4:
         return "OPTION_PATH_BRIDGE_LV2_QT4";
     case OPTION_PATH_BRIDGE_LV2_X11:
         return "OPTION_PATH_BRIDGE_LV2_X11";
+    case OPTION_PATH_BRIDGE_VST_HWND:
+        return "OPTION_PATH_BRIDGE_VST_HWND";
     case OPTION_PATH_BRIDGE_VST_X11:
         return "OPTION_PATH_BRIDGE_VST_X11";
     }
@@ -558,11 +562,17 @@ void setOption(const OptionsType option, const int value, const char* const valu
     case OPTION_PATH_BRIDGE_LV2_GTK2:
         carlaOptions.bridge_lv2gtk2 = strdup(valueStr);
         break;
+    case OPTION_PATH_BRIDGE_LV2_GTK3:
+        carlaOptions.bridge_lv2gtk3 = strdup(valueStr);
+        break;
     case OPTION_PATH_BRIDGE_LV2_QT4:
         carlaOptions.bridge_lv2qt4 = strdup(valueStr);
         break;
     case OPTION_PATH_BRIDGE_LV2_X11:
         carlaOptions.bridge_lv2x11 = strdup(valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_VST_HWND:
+        carlaOptions.bridge_vsthwnd = strdup(valueStr);
         break;
     case OPTION_PATH_BRIDGE_VST_X11:
         carlaOptions.bridge_vstx11 = strdup(valueStr);
@@ -589,11 +599,17 @@ void resetOptions()
     if (carlaOptions.bridge_lv2gtk2)
         free((void*)carlaOptions.bridge_lv2gtk2);
 
+    if (carlaOptions.bridge_lv2gtk3)
+        free((void*)carlaOptions.bridge_lv2gtk3);
+
     if (carlaOptions.bridge_lv2qt4)
         free((void*)carlaOptions.bridge_lv2qt4);
 
     if (carlaOptions.bridge_lv2x11)
         free((void*)carlaOptions.bridge_lv2x11);
+
+    if (carlaOptions.bridge_vsthwnd)
+        free((void*)carlaOptions.bridge_vsthwnd);
 
     if (carlaOptions.bridge_vstx11)
         free((void*)carlaOptions.bridge_vstx11);
@@ -613,8 +629,10 @@ void resetOptions()
     carlaOptions.bridge_win32   = nullptr;
     carlaOptions.bridge_win64   = nullptr;
     carlaOptions.bridge_lv2gtk2 = nullptr;
+    carlaOptions.bridge_lv2gtk3 = nullptr;
     carlaOptions.bridge_lv2qt4  = nullptr;
     carlaOptions.bridge_lv2x11  = nullptr;
+    carlaOptions.bridge_vsthwnd = nullptr;
     carlaOptions.bridge_vstx11  = nullptr;
 }
 #endif // BUILD_BRIDGE

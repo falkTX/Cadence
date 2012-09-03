@@ -32,7 +32,7 @@ POSIX_LINK_FLAGS  = $(LINK_PLUGIN_FLAGS) $(shell pkg-config --libs QtGui) -ldl
 WIN_BUILD_FLAGS  = $(BUILD_PLUGIN_FLAGS) $(shell pkg-config --cflags QtGui)
 WIN_32BIT_FLAGS  = $(32BIT_FLAGS)
 WIN_64BIT_FLAGS  = $(64BIT_FLAGS)
-WIN_LINK_FLAGS   = $(LINK_PLUGIN_FLAGS) $(shell pkg-config --libs QtGui) -static
+WIN_LINK_FLAGS   = $(LINK_PLUGIN_FLAGS) $(shell pkg-config --libs QtGui) -static -mwindows
 
 WINE_BUILD_FLAGS = $(BUILD_PLUGIN_FLAGS) -DQTCREATOR_TEST # -fpermissive
 WINE_32BIT_FLAGS = $(32BIT_FLAGS) -L/usr/lib32/wine -L/usr/lib/i386-linux-gnu/wine
@@ -66,13 +66,26 @@ LINK_UI_VST_X11_FLAGS   = $(LINK_UI_FLAGS) $(shell pkg-config --libs QtGui)
 
 all: ui
 
-ui: ui_lv2-gtk2 ui_lv2-qt4 ui_lv2-x11 ui_vst-x11
+ui: ui_lv2-gtk2 ui_lv2-gtk3 ui_lv2-qt4 ui_lv2-x11 ui_vst-x11
+
+ifeq ($(shell pkg-config --exists gtk+-2.0 && echo true),true)
 ui_lv2-gtk2: carla-bridge-lv2-gtk2
+else
+ui_lv2-gtk2:
+endif
+
+ifeq ($(shell pkg-config --exists gtk+-3.0 && echo true),true)
 ui_lv2-gtk3: carla-bridge-lv2-gtk3
+else
+ui_lv2-gtk3:
+endif
+
 ui_lv2-qt4:  carla-bridge-lv2-qt4
 ui_lv2-x11:  carla-bridge-lv2-x11
 ui_vst-hwnd: carla-bridge-vst-hwnd.exe
 ui_vst-x11:  carla-bridge-vst-x11
+
+# --------------------------------------------------------------
 
 posix32: carla-bridge-posix32
 posix64: carla-bridge-posix64

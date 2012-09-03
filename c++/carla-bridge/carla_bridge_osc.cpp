@@ -151,6 +151,8 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
         return handleMsgMidiProgram(argc, argv, types);
     if (strcmp(method, "/midi") == 0)
         return handleMsgMidi(argc, argv, types);
+    if (strcmp(method, "/sample_rate") == 0)
+        return 0; // unused
     if (strcmp(method, "/show") == 0)
         return handleMsgShow();
     if (strcmp(method, "/hide") == 0)
@@ -295,6 +297,8 @@ int CarlaOsc::handleMsgMidi(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 
 int CarlaOsc::handleMsgShow()
 {
+    qDebug("CarlaOsc::handleMsgShow()");
+
     if (! client)
         return 1;
 
@@ -305,6 +309,8 @@ int CarlaOsc::handleMsgShow()
 
 int CarlaOsc::handleMsgHide()
 {
+    qDebug("CarlaOsc::handleMsgHide()");
+
     if (! client)
         return 1;
 
@@ -315,6 +321,8 @@ int CarlaOsc::handleMsgHide()
 
 int CarlaOsc::handleMsgQuit()
 {
+    qDebug("CarlaOsc::handleMsgQuit()");
+
     if (! client)
         return 1;
 

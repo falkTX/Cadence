@@ -43,7 +43,7 @@ POSIX_LINK_FLAGS  = $(LINK_FLAGS) -ldl
 WIN_BUILD_FLAGS   = $(BUILD_FLAGS)
 WIN_32BIT_FLAGS   = $(32BIT_FLAGS)
 WIN_64BIT_FLAGS   = $(64BIT_FLAGS)
-WIN_LINK_FLAGS    = $(LINK_FLAGS) -static
+WIN_LINK_FLAGS    = $(LINK_FLAGS) -static -mwindows
 
 WINE_BUILD_FLAGS  = $(BUILD_FLAGS) # -fpermissive
 WINE_32BIT_FLAGS  = $(32BIT_FLAGS) -L/usr/lib32/wine -L/usr/lib/i386-linux-gnu/wine

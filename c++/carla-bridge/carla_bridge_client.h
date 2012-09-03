@@ -22,9 +22,9 @@
 #include "carla_bridge_toolkit.h"
 
 #ifdef BUILD_BRIDGE_PLUGIN
-#include "carla_engine.h"
+#  include "carla_engine.h"
 #else
-#include "carla_lib_includes.h"
+#  include "carla_lib_includes.h"
 #endif
 
 #include <cmath>

@@ -288,22 +288,34 @@ enum OptionsType {
     OPTION_PATH_BRIDGE_LV2_GTK2 = 21,
 
     /*!
+     * Set path to the LV2 Gtk3 UI bridge executable.\n
+     * Default unset.
+     */
+    OPTION_PATH_BRIDGE_LV2_GTK3 = 22,
+
+    /*!
      * Set path to the LV2 Qt4 UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_LV2_QT4 = 22,
+    OPTION_PATH_BRIDGE_LV2_QT4 = 23,
 
     /*!
      * Set path to the LV2 X11 UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_LV2_X11 = 23,
+    OPTION_PATH_BRIDGE_LV2_X11 = 24,
+
+    /*!
+     * Set path to the VST HWND UI bridge executable.\n
+     * Default unset.
+     */
+    OPTION_PATH_BRIDGE_VST_HWND = 25,
 
     /*!
      * Set path to the VST X11 UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_VST_X11 = 24
+    OPTION_PATH_BRIDGE_VST_X11 = 26
 };
 
 /*!

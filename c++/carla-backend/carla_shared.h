@@ -73,8 +73,10 @@ struct carla_options_t {
     const char* bridge_win32;
     const char* bridge_win64;
     const char* bridge_lv2gtk2;
+    const char* bridge_lv2gtk3;
     const char* bridge_lv2qt4;
     const char* bridge_lv2x11;
+    const char* bridge_vsthwnd;
     const char* bridge_vstx11;
 
     carla_options_t()
@@ -92,8 +94,10 @@ struct carla_options_t {
           bridge_win32(nullptr),
           bridge_win64(nullptr),
           bridge_lv2gtk2(nullptr),
+          bridge_lv2gtk3(nullptr),
           bridge_lv2qt4(nullptr),
           bridge_lv2x11(nullptr),
+          bridge_vsthwnd(nullptr),
           bridge_vstx11(nullptr) {}
 };
 extern carla_options_t carlaOptions;
