@@ -30,10 +30,11 @@ carla-bridge-vst-x11
 
 carla-discovery-qtcreator
 carla-discovery-native
-carla-discovery-unix32
-carla-discovery-unix64
+carla-discovery-posix32
+carla-discovery-posix64
 
 c++/carla-backend/doxygen/
+c++/carla-bridge/doxygen/
 c++/carla-includes/vst/
 c++/jackmeter/cadence_jackmeter
 c++/xycontroller/cadence_xycontroller

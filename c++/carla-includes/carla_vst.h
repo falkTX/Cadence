@@ -100,6 +100,7 @@
 #define kVstProcessPrecision32 0
 #define kVstTransportChanged 1
 #define kVstVersion 2400
+#define VSTCALLBACK
 struct ERect {
     short top, left, bottom, right;
 };
@@ -115,13 +116,13 @@ typedef VstTimeInfo VstTimeInfo_R;
 typedef AEffect* (*VST_Function)(audioMasterCallback);
 
 static inline
-bool VstPluginCanDo(AEffect* const effect, const char* const feature)
+bool vstPluginCanDo(AEffect* const effect, const char* const feature)
 {
     return (effect->dispatcher(effect, effCanDo, 0, 0, (void*)feature, 0.0f) == 1);
 }
 
 static inline
-const char* VstEffectOpcode2str(const int32_t opcode)
+const char* vstEffectOpcode2str(const int32_t opcode)
 {
     switch (opcode)
     {
@@ -307,7 +308,7 @@ const char* VstEffectOpcode2str(const int32_t opcode)
 }
 
 static inline
-const char* VstMasterOpcode2str(const int32_t opcode)
+const char* vstMasterOpcode2str(const int32_t opcode)
 {
     switch (opcode)
     {

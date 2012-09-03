@@ -788,7 +788,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (sendOsc)
         {
-            x_engine->osc_send_set_parameter_value(m_id, PARAMETER_ACTIVE, value);
+            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_ACTIVE, value);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_ACTIVE, value);
@@ -822,7 +822,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (sendOsc)
         {
-            x_engine->osc_send_set_parameter_value(m_id, PARAMETER_DRYWET, value);
+            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_DRYWET, value);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_DRYWET, value);
@@ -856,7 +856,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (sendOsc)
         {
-            x_engine->osc_send_set_parameter_value(m_id, PARAMETER_VOLUME, value);
+            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_VOLUME, value);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_VOLUME, value);
@@ -890,7 +890,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (sendOsc)
         {
-            x_engine->osc_send_set_parameter_value(m_id, PARAMETER_BALANCE_LEFT, value);
+            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_BALANCE_LEFT, value);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_BALANCE_LEFT, value);
@@ -924,7 +924,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (sendOsc)
         {
-            x_engine->osc_send_set_parameter_value(m_id, PARAMETER_BALANCE_RIGHT, value);
+            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_BALANCE_RIGHT, value);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, PARAMETER_BALANCE_RIGHT, value);
@@ -973,7 +973,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (sendOsc)
         {
-            x_engine->osc_send_set_parameter_value(m_id, parameterId, value);
+            x_engine->osc_send_control_set_parameter_value(m_id, parameterId, value);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_control(&osc.data, parameterId, value);
@@ -1034,7 +1034,7 @@ public:
 
 #ifndef BUILD_BRIDGE
         if (sendOsc)
-            x_engine->osc_send_set_parameter_midi_channel(m_id, parameterId, channel);
+            x_engine->osc_send_control_set_parameter_midi_channel(m_id, parameterId, channel);
 #else
         Q_UNUSED(sendOsc);
 #endif
@@ -1058,7 +1058,7 @@ public:
 
 #ifndef BUILD_BRIDGE
         if (sendOsc)
-            x_engine->osc_send_set_parameter_midi_cc(m_id, parameterId, cc);
+            x_engine->osc_send_control_set_parameter_midi_cc(m_id, parameterId, cc);
 #else
         Q_UNUSED(sendOsc);
 #endif
@@ -1175,7 +1175,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (sendOsc)
         {
-            x_engine->osc_send_set_program(m_id, index);
+            x_engine->osc_send_control_set_program(m_id, index);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_program(&osc.data, index);
@@ -1193,7 +1193,7 @@ public:
 
 #ifndef BUILD_BRIDGE
                 if (sendOsc)
-                    x_engine->osc_send_set_default_value(m_id, i, param.ranges[i].def);
+                    x_engine->osc_send_control_set_default_value(m_id, i, param.ranges[i].def);
 #endif
             }
         }
@@ -1233,7 +1233,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (sendOsc)
         {
-            x_engine->osc_send_set_midi_program(m_id, index);
+            x_engine->osc_send_control_set_midi_program(m_id, index);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
                 osc_send_midi_program(&osc.data, index);
@@ -1251,7 +1251,7 @@ public:
 
 #ifndef BUILD_BRIDGE
                 if (sendOsc)
-                    x_engine->osc_send_set_default_value(m_id, i, param.ranges[i].def);
+                    x_engine->osc_send_control_set_default_value(m_id, i, param.ranges[i].def);
 #endif
             }
         }
@@ -1315,13 +1315,13 @@ public:
         if (m_hints & PLUGIN_USES_SINGLE_THREAD)
         {
             // Process postponed events
-            postEventsRun();
+            //postEventsRun();
 
             // Update parameter outputs
             for (uint32_t i=0; i < param.count; i++)
             {
-                if (param.data[i].type == PARAMETER_OUTPUT)
-                    uiParameterChange(i, getParameterValue(i));
+                //if (param.data[i].type == PARAMETER_OUTPUT)
+                //    uiParameterChange(i, getParameterValue(i));
             }
         }
     }
@@ -1420,11 +1420,12 @@ public:
      */
     void registerToOsc()
     {
+        return;
 #ifndef BUILD_BRIDGE
         if (! x_engine->isOscControllerRegisted())
             return;
 
-        x_engine->osc_send_add_plugin(m_id, m_name);
+        x_engine->osc_send_control_add_plugin(m_id, m_name);
 #endif
 
         // Base data
@@ -1441,7 +1442,7 @@ public:
 #ifdef BUILD_BRIDGE
             x_engine->osc_send_bridge_plugin_info(category(), m_hints, bufName, bufLabel, bufMaker, bufCopyright, uniqueId());
 #else
-            x_engine->osc_send_set_plugin_data(m_id, m_type, category(), m_hints, bufName, bufLabel, bufMaker, bufCopyright, uniqueId());
+            x_engine->osc_send_control_set_plugin_data(m_id, m_type, category(), m_hints, bufName, bufLabel, bufMaker, bufCopyright, uniqueId());
 #endif
         }
 
@@ -1455,18 +1456,18 @@ public:
             x_engine->osc_send_bridge_midi_count(midiInCount(), midiOutCount(), midiInCount() + midiOutCount());
             x_engine->osc_send_bridge_param_count(cIns, cOuts, cTotals);
 #else
-            x_engine->osc_send_set_plugin_ports(m_id, audioInCount(), audioOutCount(), midiInCount(), midiOutCount(), cIns, cOuts, cTotals);
+            x_engine->osc_send_control_set_plugin_ports(m_id, audioInCount(), audioOutCount(), midiInCount(), midiOutCount(), cIns, cOuts, cTotals);
 #endif
         }
 
         // Internal Parameters
         {
 #ifndef BUILD_BRIDGE
-            x_engine->osc_send_set_parameter_value(m_id, PARAMETER_ACTIVE, m_active ? 1.0 : 0.0);
-            x_engine->osc_send_set_parameter_value(m_id, PARAMETER_DRYWET, x_dryWet);
-            x_engine->osc_send_set_parameter_value(m_id, PARAMETER_VOLUME, x_volume);
-            x_engine->osc_send_set_parameter_value(m_id, PARAMETER_BALANCE_LEFT, x_balanceLeft);
-            x_engine->osc_send_set_parameter_value(m_id, PARAMETER_BALANCE_RIGHT, x_balanceRight);
+            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_ACTIVE, m_active ? 1.0 : 0.0);
+            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_DRYWET, x_dryWet);
+            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_VOLUME, x_volume);
+            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_BALANCE_LEFT, x_balanceLeft);
+            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_BALANCE_RIGHT, x_balanceRight);
 #endif
         }
 
@@ -1491,8 +1492,8 @@ public:
                 x_engine->osc_send_bridge_param_ranges(i, param.ranges[i].def, param.ranges[i].min, param.ranges[i].max, param.ranges[i].step, param.ranges[i].stepSmall, param.ranges[i].stepLarge);
                 setParameterValue(i, param.ranges[i].def, false, false, true); // FIXME?
 #else
-                x_engine->osc_send_set_parameter_data(m_id, i, param.data[i].type, param.data[i].hints, bufName, bufUnit, getParameterValue(i));
-                x_engine->osc_send_set_parameter_ranges(m_id, i, param.ranges[i].min, param.ranges[i].max, param.ranges[i].def, param.ranges[i].step, param.ranges[i].stepSmall, param.ranges[i].stepLarge);
+                x_engine->osc_send_control_set_parameter_data(m_id, i, param.data[i].type, param.data[i].hints, bufName, bufUnit, getParameterValue(i));
+                x_engine->osc_send_control_set_parameter_ranges(m_id, i, param.ranges[i].min, param.ranges[i].max, param.ranges[i].def, param.ranges[i].step, param.ranges[i].stepSmall, param.ranges[i].stepLarge);
 #endif
             }
         }
@@ -1507,12 +1508,12 @@ public:
 
             //x_engine->osc_send_program(prog.current);
 #else
-            x_engine->osc_send_set_program_count(m_id, prog.count);
+            x_engine->osc_send_control_set_program_count(m_id, prog.count);
 
             for (uint32_t i=0; i < prog.count; i++)
-                x_engine->osc_send_set_program_name(m_id, i, prog.names[i]);
+                x_engine->osc_send_control_set_program_name(m_id, i, prog.names[i]);
 
-            x_engine->osc_send_set_program(m_id, prog.current);
+            x_engine->osc_send_control_set_program(m_id, prog.current);
 #endif
         }
 
@@ -1526,12 +1527,12 @@ public:
 
             //x_engine->osc_send_midi_program(midiprog.current);
 #else
-            x_engine->osc_send_set_midi_program_count(m_id, midiprog.count);
+            x_engine->osc_send_control_set_midi_program_count(m_id, midiprog.count);
 
             for (uint32_t i=0; i < midiprog.count; i++)
-                x_engine->osc_send_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
+                x_engine->osc_send_control_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
 
-            x_engine->osc_send_set_midi_program(m_id, midiprog.current);
+            x_engine->osc_send_control_set_midi_program(m_id, midiprog.current);
 #endif
         }
     }
@@ -1662,9 +1663,9 @@ public:
         if (sendOsc)
         {
             if (velo)
-                x_engine->osc_send_note_on(m_id, channel, note, velo);
+                x_engine->osc_send_control_note_on(m_id, channel, note, velo);
             else
-                x_engine->osc_send_note_off(m_id, channel, note);
+                x_engine->osc_send_control_note_off(m_id, channel, note);
 
             if (m_hints & PLUGIN_IS_BRIDGE)
             {
@@ -1783,8 +1784,10 @@ public:
                 if (event->value1 >= 0)
                     uiParameterChange(event->value1, event->value3);
 
+#ifndef BUILD_BRIDGE
                 // Update OSC control client
-                x_engine->osc_send_set_parameter_value(m_id, event->value1, event->value3);
+                x_engine->osc_send_control_set_parameter_value(m_id, event->value1, event->value3);
+#endif
 
                 // Update Host
                 x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, event->value1, 0, event->value3);
@@ -1795,11 +1798,13 @@ public:
                 if (event->value1 >= 0)
                     uiProgramChange(event->value1);
 
+#ifndef BUILD_BRIDGE
                 // Update OSC control client
-                x_engine->osc_send_set_program(m_id, event->value1);
+                x_engine->osc_send_control_set_program(m_id, event->value1);
 
                 for (uint32_t j=0; j < param.count; j++)
-                    x_engine->osc_send_set_default_value(m_id, j, param.ranges[j].def);
+                    x_engine->osc_send_control_set_default_value(m_id, j, param.ranges[j].def);
+#endif
 
                 // Update Host
                 x_engine->callback(CALLBACK_PROGRAM_CHANGED, m_id, event->value1, 0, 0.0);
@@ -1810,11 +1815,13 @@ public:
                 if (event->value1 >= 0)
                     uiMidiProgramChange(event->value1);
 
+#ifndef BUILD_BRIDGE
                 // Update OSC control client
-                x_engine->osc_send_set_midi_program(m_id, event->value1);
+                x_engine->osc_send_control_set_midi_program(m_id, event->value1);
 
                 for (uint32_t j=0; j < param.count; j++)
-                    x_engine->osc_send_set_default_value(m_id, j, param.ranges[j].def);
+                    x_engine->osc_send_control_set_default_value(m_id, j, param.ranges[j].def);
+#endif
 
                 // Update Host
                 x_engine->callback(CALLBACK_MIDI_PROGRAM_CHANGED, m_id, event->value1, 0, 0.0);
@@ -1824,8 +1831,10 @@ public:
                 // Update UI
                 uiNoteOn(event->value1, event->value2, rint(event->value3));
 
+#ifndef BUILD_BRIDGE
                 // Update OSC control client
-                x_engine->osc_send_note_on(m_id, event->value1, event->value2, event->value3);
+                x_engine->osc_send_control_note_on(m_id, event->value1, event->value2, rint(event->value3));
+#endif
 
                 // Update Host
                 x_engine->callback(CALLBACK_NOTE_ON, m_id, event->value1, event->value2, event->value3);
@@ -1835,8 +1844,10 @@ public:
                 // Update UI
                 uiNoteOff(event->value1, event->value2);
 
+#ifndef BUILD_BRIDGE
                 // Update OSC control client
-                x_engine->osc_send_note_off(m_id, event->value1, event->value2);
+                x_engine->osc_send_control_note_off(m_id, event->value1, event->value2);
+#endif
 
                 // Update Host
                 x_engine->callback(CALLBACK_NOTE_OFF, m_id, event->value1, event->value2, 0.0);
@@ -1880,7 +1891,7 @@ public:
     {
         Q_ASSERT(channel < 16);
         Q_ASSERT(note < 128);
-        Q_ASSERT(velo < 128);
+        Q_ASSERT(velo > 0 && velo < 128);
 
         Q_UNUSED(channel);
         Q_UNUSED(note);

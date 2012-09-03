@@ -331,6 +331,9 @@ public:
 
     void setGuiData(const int data, const GuiDataHandle handle)
     {
+        qDebug("VstPlugin::setGuiData(%i, %p)", data, handle);
+        Q_ASSERT(handle);
+
         if (gui.type == GUI_EXTERNAL_OSC)
             return;
 
@@ -343,14 +346,16 @@ public:
         {
             ERect* vstRect = nullptr;
 
-            if (effect->dispatcher(effect, effEditGetRect, 0, 0, &vstRect, 0.0f) && vstRect)
+            effect->dispatcher(effect, effEditGetRect, 0, 0, &vstRect, 0.0f);
+
+            if (vstRect)
             {
                 int width  = vstRect->right  - vstRect->left;
                 int height = vstRect->bottom - vstRect->top;
 
                 if (width <= 0 || height <= 0)
                 {
-                    qCritical("Failed to get proper Plugin Window size");
+                    qCritical("VstPlugin::setGuiData(%i, %p) - failed to get proper window size", data, handle);
                     return;
                 }
 
@@ -358,7 +363,7 @@ public:
                 gui.height = height;
             }
             else
-                qCritical("Failed to get Plugin Window size");
+                qCritical("VstPlugin::setGuiData(%i, %p) - failed to get plugin window size", data, handle);
         }
         else
         {
@@ -412,13 +417,15 @@ public:
 
     void idleGui()
     {
-        //effect->dispatcher(effect, effIdle, 0, 0, nullptr, 0.0f);
+        qDebug("VstPlugin::idleGui()");
+
+        effect->dispatcher(effect, effIdle, 0, 0, nullptr, 0.0f);
 
         // FIXME
-        if (gui.type != GUI_EXTERNAL_OSC && gui.visible)
+        //if (gui.type != GUI_EXTERNAL_OSC && gui.visible)
             effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
 
-        CarlaPlugin::idleGui();
+        //CarlaPlugin::idleGui();
     }
 
     // -------------------------------------------------------------------
@@ -448,10 +455,10 @@ public:
         aOuts  = effect->numOutputs;
         params = effect->numParams;
 
-        if (VstPluginCanDo(effect, "receiveVstEvents") || VstPluginCanDo(effect, "receiveVstMidiEvent") || (effect->flags & effFlagsIsSynth) > 0 || (m_hints & PLUGIN_WANTS_MIDI_INPUT))
+        if (vstPluginCanDo(effect, "receiveVstEvents") || vstPluginCanDo(effect, "receiveVstMidiEvent") || (effect->flags & effFlagsIsSynth) > 0 || (m_hints & PLUGIN_WANTS_MIDI_INPUT))
             mIns = 1;
 
-        if (VstPluginCanDo(effect, "sendVstEvents") || VstPluginCanDo(effect, "sendVstMidiEvent"))
+        if (vstPluginCanDo(effect, "sendVstEvents") || vstPluginCanDo(effect, "sendVstMidiEvent"))
             mOuts = 1;
 
         if (aIns > 0)
@@ -734,10 +741,10 @@ public:
 
 #ifndef BUILD_BRIDGE
         // Update OSC Names
-        x_engine->osc_send_set_program_count(m_id, prog.count);
+        x_engine->osc_send_control_set_program_count(m_id, prog.count);
 
         for (i=0; i < prog.count; i++)
-            x_engine->osc_send_set_program_name(m_id, i, prog.names[i]);
+            x_engine->osc_send_control_set_program_name(m_id, i, prog.names[i]);
 #endif
 
         if (init)
@@ -1348,7 +1355,7 @@ public:
     {
         Q_ASSERT(channel < 16);
         Q_ASSERT(note < 128);
-        Q_ASSERT(velo < 128);
+        Q_ASSERT(velo > 0 && velo < 128);
 
         if (gui.type == GUI_EXTERNAL_OSC && osc.data.target)
         {
@@ -1570,9 +1577,11 @@ public:
         m_hints |= PLUGIN_WANTS_MIDI_INPUT;
     }
 
-    static intptr_t handleAudioMasterCanDo(const char* const feature)
+    // -------------------------------------------------------------------
+
+    static intptr_t hostCanDo(const char* const feature)
     {
-        qDebug("VstPlugin::handleAudioMasterCanDo(\"%s\")", feature);
+        qDebug("VstPlugin::hostCanDo(\"%s\")", feature);
 
         if (strcmp(feature, "supplyIdle") == 0)
             return 1;
@@ -1610,18 +1619,18 @@ public:
             return -1;
 
         // unimplemented
-        qWarning("VstPlugin::handleAudioMasterCanDo(\"%s\") - unknown feature", feature);
+        qWarning("VstPlugin::hostCanDo(\"%s\") - unknown feature", feature);
         return 0;
     }
 
-    // -------------------------------------------------------------------
-
-    static intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
+    static intptr_t VSTCALLBACK hostCallback(AEffect* const effect, const int32_t opcode, const int32_t index, const intptr_t value, void* const ptr, const float opt)
     {
 #ifdef DEBUG
-        qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstMasterOpcode2str(opcode), index, value, opt);
+        if (opcode != audioMasterGetTime)
+            qDebug("VstPlugin::hostCallback(%p, %s, %i, " P_INTPTR ", %p, %f", effect, vstMasterOpcode2str(opcode), index, value, ptr, opt);
 #endif
 
+#if 0
         // Cockos VST extensions
         if (/*effect &&*/ ptr && (uint32_t)opcode == 0xdeadbeef && (uint32_t)index == 0xdeadf00d)
         {
@@ -1652,6 +1661,7 @@ public:
             if (strcmp(func, "Audio_IsRunning") == 0)
                 return 0;
         }
+#endif
 
         // Check if 'resvd1' points to this plugin
         VstPlugin* self = nullptr;
@@ -1663,10 +1673,11 @@ public:
 #else
         if (effect && effect->resvd1)
         {
-            self = (VstPlugin*)getPointer(effect->resvd1);
+            //self = (VstPlugin*)getPointer(effect->resvd1);
+            //self = (VstPlugin*)effect->resvd1;
 #endif
-            if (self->unique1 != self->unique2)
-                self = nullptr;
+            //if (self->unique1 != self->unique2)
+            //    self = nullptr;
         }
 
         intptr_t ret = 0;
@@ -1706,7 +1717,26 @@ public:
 
         case audioMasterGetTime:
             if (self)
+            {
                 ret = (intptr_t)self->handleAudioMasterGetTime();
+            }
+            else
+            {
+                static VstTimeInfo_R timeInfo;
+                memset(&timeInfo, 0, sizeof(VstTimeInfo_R));
+                timeInfo.sampleRate = 44100.0;
+
+                // Tempo
+                timeInfo.tempo  = 120.0;
+                timeInfo.flags |= kVstTempoValid;
+
+                // Time Signature
+                timeInfo.timeSigNumerator   = 4;
+                timeInfo.timeSigDenominator = 4;
+                timeInfo.flags |= kVstTimeSigValid;
+
+                ret = (intptr_t)&timeInfo;
+            }
             break;
 
         case audioMasterProcessEvents:
@@ -1760,11 +1790,15 @@ public:
         case audioMasterGetSampleRate:
             if (self)
                 ret = self->handleAudioMasterGetSampleRate();
+            else
+                ret = 44100;
             break;
 
         case audioMasterGetBlockSize:
             if (self)
                 ret = self->handleAudioMasterGetBlockSize();
+            else
+                ret = 512;
             break;
 
         case audioMasterGetInputLatency:
@@ -1836,7 +1870,7 @@ public:
             break;
 
         case audioMasterGetVendorVersion:
-            ret = 0x05; // 0.5
+            ret = 0x050; // 0.5.0
             break;
 
         case audioMasterVendorSpecific:
@@ -1851,7 +1885,7 @@ public:
 
         case audioMasterCanDo:
             if (ptr)
-                ret = handleAudioMasterCanDo((const char*)ptr);
+                ret = hostCanDo((const char*)ptr);
             break;
 
         case audioMasterGetLanguage:
@@ -1904,7 +1938,7 @@ public:
 
         default:
 #ifdef DEBUG
-            qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstMasterOpcode2str(opcode), index, value, opt);
+            qDebug("VstPlugin::hostCallback(%p, %s, %i, " P_INTPTR ", %p, %f", effect, vstMasterOpcode2str(opcode), index, value, ptr, opt);
 #endif
             break;
         }
@@ -1944,7 +1978,7 @@ public:
         // ---------------------------------------------------------------
         // initialize plugin
 
-        effect = vstFn(VstHostCallback);
+        effect = vstFn(hostCallback);
 
         if ((! effect) || effect->magic != kEffectMagic)
         {
@@ -2033,6 +2067,7 @@ public:
             else
 #endif
             {
+                m_hints |= PLUGIN_USES_SINGLE_THREAD;
 #if defined(Q_OS_WIN)
                 gui.type = GUI_INTERNAL_HWND;
 #elif defined(Q_OS_MACOS)

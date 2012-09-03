@@ -384,7 +384,7 @@ const char* getBinaryBidgePath(const BinaryType type)
 void* getPointer(const quintptr addr)
 {
     Q_ASSERT(addr != 0);
-    qDebug("CarlaBackend::getPointer(" P_UINTPTR ")", addr);
+    //qDebug("CarlaBackend::getPointer(" P_UINTPTR ")", addr);
 
     quintptr* const ptr = (quintptr*)addr;
     return (void*)ptr;

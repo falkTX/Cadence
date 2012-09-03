@@ -889,10 +889,10 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         hide_other       = not self.ch_other.isChecked()
 
         hide_ladspa = not self.ch_ladspa.isChecked()
-        hide_dssi = not self.ch_dssi.isChecked()
-        hide_lv2  = not self.ch_lv2.isChecked()
-        hide_vst  = not self.ch_vst.isChecked()
-        hide_kits = not self.ch_kits.isChecked()
+        hide_dssi   = not self.ch_dssi.isChecked()
+        hide_lv2    = not self.ch_lv2.isChecked()
+        hide_vst    = not self.ch_vst.isChecked()
+        hide_kits   = not self.ch_kits.isChecked()
 
         hide_native  = not self.ch_native.isChecked()
         hide_bridged = not self.ch_bridged.isChecked()

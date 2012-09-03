@@ -63,7 +63,7 @@ void CarlaCheckThread::run()
 {
     qDebug("CarlaCheckThread::run()");
 
-    bool oscControllerRegisted, usesSingleThread;
+    bool usesSingleThread, oscControllerRegisted = false;
     unsigned short id;
     double value;
 
@@ -72,7 +72,9 @@ void CarlaCheckThread::run()
     while (engine->isRunning() && ! m_stopNow)
     {
         const ScopedLocker m(this);
+#ifndef BUILD_BRIDGE
         oscControllerRegisted = engine->isOscControllerRegisted();
+#endif
 
         for (unsigned short i=0; i < maxPluginNumber; i++)
         {
@@ -104,13 +106,16 @@ void CarlaCheckThread::run()
                             if (! usesSingleThread)
                                 plugin->uiParameterChange(i, value);
 
+#ifndef BUILD_BRIDGE
                             // Update OSC control client
                             if (oscControllerRegisted)
-                                engine->osc_send_set_parameter_value(id, i, value);
+                                engine->osc_send_control_set_parameter_value(id, i, value);
+#endif
                         }
                     }
                 }
 
+#ifndef BUILD_BRIDGE
                 // -------------------------------------------------------
                 // Update OSC control client
 
@@ -119,15 +124,16 @@ void CarlaCheckThread::run()
                     // Peak values
                     if (plugin->audioInCount() > 0)
                     {
-                        engine->osc_send_set_input_peak_value(id, 1, engine->getInputPeak(id, 0));
-                        engine->osc_send_set_input_peak_value(id, 2, engine->getInputPeak(id, 1));
+                        engine->osc_send_control_set_input_peak_value(id, 1, engine->getInputPeak(id, 0));
+                        engine->osc_send_control_set_input_peak_value(id, 2, engine->getInputPeak(id, 1));
                     }
                     if (plugin->audioOutCount() > 0)
                     {
-                        engine->osc_send_set_output_peak_value(id, 1, engine->getOutputPeak(id, 0));
-                        engine->osc_send_set_output_peak_value(id, 2, engine->getOutputPeak(id, 1));
+                        engine->osc_send_control_set_output_peak_value(id, 1, engine->getOutputPeak(id, 0));
+                        engine->osc_send_control_set_output_peak_value(id, 2, engine->getOutputPeak(id, 1));
                     }
                 }
+#endif
             }
         }
 

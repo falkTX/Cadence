@@ -1706,10 +1706,10 @@ public:
 
 #ifndef BUILD_BRIDGE
         // Update OSC Names
-        x_engine->osc_send_set_midi_program_count(m_id, midiprog.count);
+        x_engine->osc_send_control_set_midi_program_count(m_id, midiprog.count);
 
         for (i=0; i < midiprog.count; i++)
-            x_engine->osc_send_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
+            x_engine->osc_send_control_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
 #endif
 
         if (init)
@@ -2574,7 +2574,7 @@ public:
     {
         Q_ASSERT(channel < 16);
         Q_ASSERT(note < 128);
-        Q_ASSERT(velo < 128);
+        Q_ASSERT(velo > 0 && velo < 128);
 
 #ifndef BUILD_BRIDGE
         if (gui.type == GUI_EXTERNAL_OSC)

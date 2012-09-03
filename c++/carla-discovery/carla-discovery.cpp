@@ -27,21 +27,21 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QUrl>
 
+#include "carla_backend.h"
+
 #include "carla_ladspa.h"
 #include "carla_dssi.h"
 #include "carla_lv2.h"
 #include "carla_vst.h"
 
 #ifdef BUILD_NATIVE
-#  ifdef WANT_FLUIDSYNTH
-#    include "carla_fluidsynth.h"
-#  endif
-#  ifdef WANT_LINUXSAMPLER
-#    include "carla_linuxsampler.h"
-#  endif
+ #ifdef WANT_FLUIDSYNTH
+  #include "carla_fluidsynth.h"
+ #endif
+ #ifdef WANT_LINUXSAMPLER
+  #include "carla_linuxsampler.h"
+ #endif
 #endif
-
-#include "carla_backend.h"
 
 #define DISCOVERY_OUT(x, y) std::cout << "\ncarla-discovery::" << x << "::" << y << std::endl;
 
@@ -61,12 +61,56 @@ using namespace CarlaBackend;
 
 // ------------------------------ VST Stuff ------------------------------
 
-intptr_t VstCurrentUniqueId = 0;
+intptr_t vstCurrentUniqueId = 0;
 
-intptr_t VstHostCallback(AEffect* const effect, const int32_t opcode, const int32_t index, const intptr_t value, void* const ptr, const float opt)
+intptr_t vstHostCanDo(const char* const feature)
+{
+    qDebug("vstHostCanDo(\"%s\")", feature);
+
+    if (strcmp(feature, "supplyIdle") == 0)
+        return 1;
+    if (strcmp(feature, "sendVstEvents") == 0)
+        return 1;
+    if (strcmp(feature, "sendVstMidiEvent") == 0)
+        return 1;
+    if (strcmp(feature, "sendVstMidiEventFlagIsRealtime") == 0)
+        return -1;
+    if (strcmp(feature, "sendVstTimeInfo") == 0)
+        return 1;
+    if (strcmp(feature, "receiveVstEvents") == 0)
+        return 1;
+    if (strcmp(feature, "receiveVstMidiEvent") == 0)
+        return 1;
+    if (strcmp(feature, "receiveVstTimeInfo") == 0)
+        return -1;
+    if (strcmp(feature, "reportConnectionChanges") == 0)
+        return -1;
+    if (strcmp(feature, "acceptIOChanges") == 0)
+        return 1;
+    if (strcmp(feature, "sizeWindow") == 0)
+        return 1;
+    if (strcmp(feature, "offline") == 0)
+        return -1;
+    if (strcmp(feature, "openFileSelector") == 0)
+        return -1;
+    if (strcmp(feature, "closeFileSelector") == 0)
+        return -1;
+    if (strcmp(feature, "startStopProcess") == 0)
+        return 1;
+    if (strcmp(feature, "supportShell") == 0)
+        return 1;
+    if (strcmp(feature, "shellCategory") == 0)
+        return 1;
+
+    // unimplemented
+    qWarning("vstHostCanDo(\"%s\") - unknown feature", feature);
+    return 0;
+}
+
+intptr_t VSTCALLBACK vstHostCallback(AEffect* const effect, const int32_t opcode, const int32_t index, const intptr_t value, void* const ptr, const float opt)
 {
 #if DEBUG
-    qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstMasterOpcode2str(opcode), index, value, opt);
+    qDebug("vstHostCallback(%p, %s, %i, " P_INTPTR ", %p, %f", effect, vstMasterOpcode2str(opcode), index, value, ptr, opt);
 #endif
 
     intptr_t ret = 0;
@@ -83,7 +127,7 @@ intptr_t VstHostCallback(AEffect* const effect, const int32_t opcode, const int3
         break;
 
     case audioMasterCurrentId:
-        ret = VstCurrentUniqueId;
+        ret = vstCurrentUniqueId;
         break;
 
     case audioMasterGetTime:
@@ -108,12 +152,20 @@ intptr_t VstHostCallback(AEffect* const effect, const int32_t opcode, const int3
         ret = 120 * 10000;
         break;
 
+    case audioMasterGetNumAutomatableParameters:
+        ret = MAX_PARAMETERS;
+        break;
+
     case audioMasterGetSampleRate:
         ret = sampleRate;
         break;
 
     case audioMasterGetBlockSize:
         ret = bufferSize;
+        break;
+
+    case audioMasterGetCurrentProcessLevel:
+        ret = kVstProcessLevelUser;
         break;
 
     case audioMasterGetVendorString:
@@ -127,56 +179,12 @@ intptr_t VstHostCallback(AEffect* const effect, const int32_t opcode, const int3
         break;
 
     case audioMasterGetVendorVersion:
-        ret = 0x05; // 0.5
+        ret = 0x050; // 0.5.0
         break;
 
     case audioMasterCanDo:
-#if DEBUG
-        qDebug("VstHostCallback:audioMasterCanDo - %s", (char*)ptr);
-#endif
-
-        if (! ptr)
-            ret = 0;
-        else if (strcmp((char*)ptr, "supplyIdle") == 0)
-            ret = 1;
-        else if (strcmp((char*)ptr, "sendVstEvents") == 0)
-            ret = 1;
-        else if (strcmp((char*)ptr, "sendVstMidiEvent") == 0)
-            ret = 1;
-        else if (strcmp((char*)ptr, "sendVstMidiEventFlagIsRealtime") == 0)
-            ret = -1;
-        else if (strcmp((char*)ptr, "sendVstTimeInfo") == 0)
-            ret = 1;
-        else if (strcmp((char*)ptr, "receiveVstEvents") == 0)
-            ret = 1;
-        else if (strcmp((char*)ptr, "receiveVstMidiEvent") == 0)
-            ret = 1;
-        else if (strcmp((char*)ptr, "receiveVstTimeInfo") == 0)
-            ret = -1;
-        else if (strcmp((char*)ptr, "reportConnectionChanges") == 0)
-            ret = 1;
-        else if (strcmp((char*)ptr, "acceptIOChanges") == 0)
-            ret = -1;
-        else if (strcmp((char*)ptr, "sizeWindow") == 0)
-            ret = 1;
-        else if (strcmp((char*)ptr, "offline") == 0)
-            ret = -1;
-        else if (strcmp((char*)ptr, "openFileSelector") == 0)
-            ret = -1;
-        else if (strcmp((char*)ptr, "closeFileSelector") == 0)
-            ret = -1;
-        else if (strcmp((char*)ptr, "startStopProcess") == 0)
-            ret = 1;
-        else if (strcmp((char*)ptr, "supportShell") == 0)
-            ret = 1;
-        else if (strcmp((char*)ptr, "shellCategory") == 0)
-            ret = 1;
-        else
-        {
-            // unimplemented
-            qWarning("VstHostCallback:audioMasterCanDo - Got unknown feature request '%s'", (char*)ptr);
-            ret = 0;
-        }
+        if (ptr)
+            ret = vstHostCanDo((const char*)ptr);
         break;
 
     case audioMasterGetLanguage:
@@ -184,7 +192,7 @@ intptr_t VstHostCallback(AEffect* const effect, const int32_t opcode, const int3
         break;
 
     default:
-        qDebug("VstHostCallback(%p, opcode: %s, index: %i, value: " P_INTPTR ", opt: %f", effect, VstMasterOpcode2str(opcode), index, value, opt);
+        qDebug("vstHostCallback(%p, %s, %i, " P_INTPTR ", %p, %f", effect, vstMasterOpcode2str(opcode), index, value, ptr, opt);
         break;
     }
 
@@ -193,11 +201,11 @@ intptr_t VstHostCallback(AEffect* const effect, const int32_t opcode, const int3
 
 // ------------------------------ Plugin Checks -----------------------------
 
-void do_ladspa_check(void* const lib_handle, const bool init)
+void do_ladspa_check(void* const libHandle, const bool init)
 {
-    const LADSPA_Descriptor_Function descfn = (LADSPA_Descriptor_Function)lib_symbol(lib_handle, "ladspa_descriptor");
+    const LADSPA_Descriptor_Function descFn = (LADSPA_Descriptor_Function)lib_symbol(libHandle, "ladspa_descriptor");
 
-    if (! descfn)
+    if (! descFn)
     {
         DISCOVERY_OUT("error", "Not a LADSPA plugin");
         return;
@@ -206,8 +214,10 @@ void do_ladspa_check(void* const lib_handle, const bool init)
     unsigned long i = 0;
     const LADSPA_Descriptor* descriptor;
 
-    while ((descriptor = descfn(i++)))
+    while ((descriptor = descFn(i++)))
     {
+        Q_ASSERT(descriptor->run);
+
         int hints = 0;
         int audioIns = 0;
         int audioOuts = 0;
@@ -218,21 +228,21 @@ void do_ladspa_check(void* const lib_handle, const bool init)
 
         for (unsigned long j=0; j < descriptor->PortCount; j++)
         {
-            const LADSPA_PortDescriptor PortDescriptor = descriptor->PortDescriptors[j];
+            const LADSPA_PortDescriptor portDescriptor = descriptor->PortDescriptors[j];
 
-            if (LADSPA_IS_PORT_AUDIO(PortDescriptor))
+            if (LADSPA_IS_PORT_AUDIO(portDescriptor))
             {
-                if (LADSPA_IS_PORT_INPUT(PortDescriptor))
+                if (LADSPA_IS_PORT_INPUT(portDescriptor))
                     audioIns += 1;
-                else if (LADSPA_IS_PORT_OUTPUT(PortDescriptor))
+                else if (LADSPA_IS_PORT_OUTPUT(portDescriptor))
                     audioOuts += 1;
                 audioTotal += 1;
             }
-            else if (LADSPA_IS_PORT_CONTROL(PortDescriptor))
+            else if (LADSPA_IS_PORT_CONTROL(portDescriptor))
             {
-                if (LADSPA_IS_PORT_INPUT(PortDescriptor))
+                if (LADSPA_IS_PORT_INPUT(portDescriptor))
                     parametersIns += 1;
-                else if (LADSPA_IS_PORT_OUTPUT(PortDescriptor) && strcmp(descriptor->PortNames[j], "latency") && strcmp(descriptor->PortNames[j], "_latency") && strcmp(descriptor->PortNames[j], "_sample-rate"))
+                else if (LADSPA_IS_PORT_OUTPUT(portDescriptor) && strcmp(descriptor->PortNames[j], "latency") && strcmp(descriptor->PortNames[j], "_latency") && strcmp(descriptor->PortNames[j], "_sample-rate"))
                     parametersOuts += 1;
                 parametersTotal += 1;
             }
@@ -261,24 +271,24 @@ void do_ladspa_check(void* const lib_handle, const bool init)
 
             for (unsigned long j=0, iA=0, iP=0; j < descriptor->PortCount; j++)
             {
-                const LADSPA_PortDescriptor PortType = descriptor->PortDescriptors[j];
-                const LADSPA_PortRangeHint  PortHint = descriptor->PortRangeHints[j];
+                const LADSPA_PortDescriptor portType  = descriptor->PortDescriptors[j];
+                const LADSPA_PortRangeHint  portHints = descriptor->PortRangeHints[j];
 
-                if (LADSPA_IS_PORT_AUDIO(PortType))
+                if (LADSPA_IS_PORT_AUDIO(portType))
                 {
                     descriptor->connect_port(handle, j, bufferAudio[iA++]);
                 }
-                else if (LADSPA_IS_PORT_CONTROL(PortType))
+                else if (LADSPA_IS_PORT_CONTROL(portType))
                 {
                     // min value
-                    if (LADSPA_IS_HINT_BOUNDED_BELOW(PortHint.HintDescriptor))
-                        min = PortHint.LowerBound;
+                    if (LADSPA_IS_HINT_BOUNDED_BELOW(portHints.HintDescriptor))
+                        min = portHints.LowerBound;
                     else
                         min = 0.0f;
 
                     // max value
-                    if (LADSPA_IS_HINT_BOUNDED_ABOVE(PortHint.HintDescriptor))
-                        max = PortHint.UpperBound;
+                    if (LADSPA_IS_HINT_BOUNDED_ABOVE(portHints.HintDescriptor))
+                        max = portHints.UpperBound;
                     else
                         max = 1.0f;
 
@@ -294,21 +304,21 @@ void do_ladspa_check(void* const lib_handle, const bool init)
                     }
 
                     // default value
-                    def = get_default_ladspa_port_value(PortHint.HintDescriptor, min, max);
+                    def = get_default_ladspa_port_value(portHints.HintDescriptor, min, max);
 
                     if (def < min)
                         def = min;
                     else if (def > max)
                         def = max;
 
-                    if (LADSPA_IS_HINT_SAMPLE_RATE(PortHint.HintDescriptor))
+                    if (LADSPA_IS_HINT_SAMPLE_RATE(portHints.HintDescriptor))
                     {
                         min *= sampleRate;
                         max *= sampleRate;
                         def *= sampleRate;
                     }
 
-                    if (LADSPA_IS_PORT_OUTPUT(PortType) && (strcmp(descriptor->PortNames[j], "latency") == 0 || strcmp(descriptor->PortNames[j], "_latency") == 0))
+                    if (LADSPA_IS_PORT_OUTPUT(portType) && (strcmp(descriptor->PortNames[j], "latency") == 0 || strcmp(descriptor->PortNames[j], "_latency") == 0))
                     {
                         // latency parameter
                         min = 0.0f;
@@ -355,11 +365,11 @@ void do_ladspa_check(void* const lib_handle, const bool init)
     }
 }
 
-void do_dssi_check(void* const lib_handle, const bool init)
+void do_dssi_check(void* const libHandle, const bool init)
 {
-    const DSSI_Descriptor_Function descfn = (DSSI_Descriptor_Function)lib_symbol(lib_handle, "dssi_descriptor");
+    const DSSI_Descriptor_Function descFn = (DSSI_Descriptor_Function)lib_symbol(libHandle, "dssi_descriptor");
 
-    if (! descfn)
+    if (! descFn)
     {
         DISCOVERY_OUT("error", "Not a DSSI plugin");
         return;
@@ -368,9 +378,11 @@ void do_dssi_check(void* const lib_handle, const bool init)
     unsigned long i = 0;
     const DSSI_Descriptor* descriptor;
 
-    while ((descriptor = descfn(i++)))
+    while ((descriptor = descFn(i++)))
     {
         const LADSPA_Descriptor* const ldescriptor = descriptor->LADSPA_Plugin;
+        Q_ASSERT(ldescriptor);
+        Q_ASSERT(ldescriptor->run || descriptor->run_synth || descriptor->run_multiple_synths);
 
         int hints = 0;
         int audioIns = 0;
@@ -385,21 +397,21 @@ void do_dssi_check(void* const lib_handle, const bool init)
 
         for (unsigned long j=0; j < ldescriptor->PortCount; j++)
         {
-            const LADSPA_PortDescriptor PortDescriptor = ldescriptor->PortDescriptors[j];
+            const LADSPA_PortDescriptor portDescriptor = ldescriptor->PortDescriptors[j];
 
-            if (LADSPA_IS_PORT_AUDIO(PortDescriptor))
+            if (LADSPA_IS_PORT_AUDIO(portDescriptor))
             {
-                if (LADSPA_IS_PORT_INPUT(PortDescriptor))
+                if (LADSPA_IS_PORT_INPUT(portDescriptor))
                     audioIns += 1;
-                else if (LADSPA_IS_PORT_OUTPUT(PortDescriptor))
+                else if (LADSPA_IS_PORT_OUTPUT(portDescriptor))
                     audioOuts += 1;
                 audioTotal += 1;
             }
-            else if (LADSPA_IS_PORT_CONTROL(PortDescriptor))
+            else if (LADSPA_IS_PORT_CONTROL(portDescriptor))
             {
-                if (LADSPA_IS_PORT_INPUT(PortDescriptor))
+                if (LADSPA_IS_PORT_INPUT(portDescriptor))
                     parametersIns += 1;
-                else if (LADSPA_IS_PORT_OUTPUT(PortDescriptor) && strcmp(ldescriptor->PortNames[j], "latency") && strcmp(ldescriptor->PortNames[j], "_latency") && strcmp(ldescriptor->PortNames[j], "_sample-rate"))
+                else if (LADSPA_IS_PORT_OUTPUT(portDescriptor) && strcmp(ldescriptor->PortNames[j], "latency") && strcmp(ldescriptor->PortNames[j], "_latency") && strcmp(ldescriptor->PortNames[j], "_sample-rate"))
                     parametersOuts += 1;
                 parametersTotal += 1;
             }
@@ -441,24 +453,24 @@ void do_dssi_check(void* const lib_handle, const bool init)
 
             for (unsigned long j=0, iA=0, iP=0; j < ldescriptor->PortCount; j++)
             {
-                const LADSPA_PortDescriptor PortType = ldescriptor->PortDescriptors[j];
-                const LADSPA_PortRangeHint  PortHint = ldescriptor->PortRangeHints[j];
+                const LADSPA_PortDescriptor portType  = ldescriptor->PortDescriptors[j];
+                const LADSPA_PortRangeHint  portHints = ldescriptor->PortRangeHints[j];
 
-                if (LADSPA_IS_PORT_AUDIO(PortType))
+                if (LADSPA_IS_PORT_AUDIO(portType))
                 {
                     ldescriptor->connect_port(handle, j, bufferAudio[iA++]);
                 }
-                else if (LADSPA_IS_PORT_CONTROL(PortType))
+                else if (LADSPA_IS_PORT_CONTROL(portType))
                 {
                     // min value
-                    if (LADSPA_IS_HINT_BOUNDED_BELOW(PortHint.HintDescriptor))
-                        min = PortHint.LowerBound;
+                    if (LADSPA_IS_HINT_BOUNDED_BELOW(portHints.HintDescriptor))
+                        min = portHints.LowerBound;
                     else
                         min = 0.0f;
 
                     // max value
-                    if (LADSPA_IS_HINT_BOUNDED_ABOVE(PortHint.HintDescriptor))
-                        max = PortHint.UpperBound;
+                    if (LADSPA_IS_HINT_BOUNDED_ABOVE(portHints.HintDescriptor))
+                        max = portHints.UpperBound;
                     else
                         max = 1.0f;
 
@@ -474,21 +486,21 @@ void do_dssi_check(void* const lib_handle, const bool init)
                     }
 
                     // default value
-                    def = get_default_ladspa_port_value(PortHint.HintDescriptor, min, max);
+                    def = get_default_ladspa_port_value(portHints.HintDescriptor, min, max);
 
                     if (def < min)
                         def = min;
                     else if (def > max)
                         def = max;
 
-                    if (LADSPA_IS_HINT_SAMPLE_RATE(PortHint.HintDescriptor))
+                    if (LADSPA_IS_HINT_SAMPLE_RATE(portHints.HintDescriptor))
                     {
                         min *= sampleRate;
                         max *= sampleRate;
                         def *= sampleRate;
                     }
 
-                    if (LADSPA_IS_PORT_OUTPUT(PortType) && (strcmp(ldescriptor->PortNames[j], "latency") == 0 || strcmp(ldescriptor->PortNames[j], "_latency") == 0))
+                    if (LADSPA_IS_PORT_OUTPUT(portType) && (strcmp(ldescriptor->PortNames[j], "latency") == 0 || strcmp(ldescriptor->PortNames[j], "_latency") == 0))
                     {
                         // latency parameter
                         min = 0.0f;
@@ -592,31 +604,32 @@ void do_lv2_check(const char* const bundle, const bool init)
     for (int i=0; i < URIs.count(); i++)
     {
         const LV2_RDF_Descriptor* const rdf_descriptor = lv2_rdf_new(URIs.at(i).toUtf8().constData());
+        Q_ASSERT(rdf_descriptor && rdf_descriptor->URI);
 
         if (init)
         {
             // test if DLL is loadable
-            void* const lib_handle = lib_open(rdf_descriptor->Binary);
+            void* const libHandle = lib_open(rdf_descriptor->Binary);
 
-            if (! lib_handle)
+            if (! libHandle)
             {
                 print_lib_error(rdf_descriptor->Binary);
                 continue;
             }
 
-            lib_close(lib_handle);
+            lib_close(libHandle);
 
             // test if we support all required ports and features
             bool supported = true;
 
             for (uint32_t j=0; j < rdf_descriptor->PortCount; j++)
             {
-                const LV2_RDF_Port* const Port = &rdf_descriptor->Ports[j];
-                bool validPort = (LV2_IS_PORT_CONTROL(Port->Type) || LV2_IS_PORT_AUDIO(Port->Type) || LV2_IS_PORT_ATOM_SEQUENCE(Port->Type) /*|| LV2_IS_PORT_CV(Port->Type)*/ || LV2_IS_PORT_EVENT(Port->Type) || LV2_IS_PORT_MIDI_LL(Port->Type));
+                const LV2_RDF_Port* const port = &rdf_descriptor->Ports[j];
+                bool validPort = (LV2_IS_PORT_CONTROL(port->Type) || LV2_IS_PORT_AUDIO(port->Type) || LV2_IS_PORT_ATOM_SEQUENCE(port->Type) /*|| LV2_IS_PORT_CV(port->Type)*/ || LV2_IS_PORT_EVENT(port->Type) || LV2_IS_PORT_MIDI_LL(port->Type));
 
-                if (! (validPort || LV2_IS_PORT_OPTIONAL(Port->Properties)))
+                if (! (validPort || LV2_IS_PORT_OPTIONAL(port->Properties)))
                 {
-                    DISCOVERY_OUT("error", "plugin requires a non-supported port type, port-name: " << Port->Name);
+                    DISCOVERY_OUT("error", "plugin requires a non-supported port type, port-name: " << port->Name);
                     supported = false;
                     break;
                 }
@@ -624,11 +637,11 @@ void do_lv2_check(const char* const bundle, const bool init)
 
             for (uint32_t j=0; j < rdf_descriptor->FeatureCount && supported; j++)
             {
-                const LV2_RDF_Feature* const Feature = &rdf_descriptor->Features[j];
+                const LV2_RDF_Feature* const feature = &rdf_descriptor->Features[j];
 
-                if (LV2_IS_FEATURE_REQUIRED(Feature->Type) && ! is_lv2_feature_supported(Feature->URI))
+                if (LV2_IS_FEATURE_REQUIRED(feature->Type) && ! is_lv2_feature_supported(feature->URI))
                 {
-                    DISCOVERY_OUT("error", "plugin requires a non-supported feature " << Feature->URI);
+                    DISCOVERY_OUT("error", "plugin requires a non-supported feature " << feature->URI);
                     supported = false;
                     break;
                 }
@@ -651,37 +664,37 @@ void do_lv2_check(const char* const bundle, const bool init)
 
         for (uint32_t j=0; j < rdf_descriptor->PortCount; j++)
         {
-            const LV2_RDF_Port* const Port = &rdf_descriptor->Ports[j];
+            const LV2_RDF_Port* const port = &rdf_descriptor->Ports[j];
 
-            if (LV2_IS_PORT_AUDIO(Port->Type))
+            if (LV2_IS_PORT_AUDIO(port->Type))
             {
-                if (LV2_IS_PORT_INPUT(Port->Type))
+                if (LV2_IS_PORT_INPUT(port->Type))
                     audioIns += 1;
-                else if (LV2_IS_PORT_OUTPUT(Port->Type))
+                else if (LV2_IS_PORT_OUTPUT(port->Type))
                     audioOuts += 1;
                 audioTotal += 1;
             }
-            else if (LV2_IS_PORT_CONTROL(Port->Type))
+            else if (LV2_IS_PORT_CONTROL(port->Type))
             {
-                if (LV2_IS_PORT_DESIGNATION_LATENCY(Port->Designation) || LV2_IS_PORT_DESIGNATION_SAMPLE_RATE(Port->Designation) ||
-                    LV2_IS_PORT_DESIGNATION_FREEWHEELING(Port->Designation) || LV2_IS_PORT_DESIGNATION_TIME(Port->Designation))
+                if (LV2_IS_PORT_DESIGNATION_LATENCY(port->Designation) || LV2_IS_PORT_DESIGNATION_SAMPLE_RATE(port->Designation) ||
+                    LV2_IS_PORT_DESIGNATION_FREEWHEELING(port->Designation) || LV2_IS_PORT_DESIGNATION_TIME(port->Designation))
                 {
                     pass();
                 }
                 else
                 {
-                    if (LV2_IS_PORT_INPUT(Port->Type))
+                    if (LV2_IS_PORT_INPUT(port->Type))
                         parametersIns += 1;
-                    else if (LV2_IS_PORT_OUTPUT(Port->Type))
+                    else if (LV2_IS_PORT_OUTPUT(port->Type))
                         parametersOuts += 1;
                     parametersTotal += 1;
                 }
             }
-            else if (Port->Type & LV2_PORT_SUPPORTS_MIDI_EVENT)
+            else if (port->Type & LV2_PORT_SUPPORTS_MIDI_EVENT)
             {
-                if (LV2_IS_PORT_INPUT(Port->Type))
+                if (LV2_IS_PORT_INPUT(port->Type))
                     midiIns += 1;
-                else if (LV2_IS_PORT_OUTPUT(Port->Type))
+                else if (LV2_IS_PORT_OUTPUT(port->Type))
                     midiOuts += 1;
                 midiTotal += 1;
             }
@@ -717,20 +730,20 @@ void do_lv2_check(const char* const bundle, const bool init)
     }
 }
 
-void do_vst_check(void* const lib_handle, const bool init)
+void do_vst_check(void* const libHandle, const bool init)
 {
-    VST_Function vstfn = (VST_Function)lib_symbol(lib_handle, "VSTPluginMain");
+    VST_Function vstFn = (VST_Function)lib_symbol(libHandle, "VSTPluginMain");
 
-    if (! vstfn)
-        vstfn = (VST_Function)lib_symbol(lib_handle, "main");
+    if (! vstFn)
+        vstFn = (VST_Function)lib_symbol(libHandle, "main");
 
-    if (! vstfn)
+    if (! vstFn)
     {
         DISCOVERY_OUT("error", "Not a VST plugin");
         return;
     }
 
-    AEffect* const effect = vstfn(VstHostCallback);
+    AEffect* const effect = vstFn(vstHostCallback);
 
     if (! (effect && effect->magic == kEffectMagic))
     {
@@ -754,11 +767,11 @@ void do_vst_check(void* const lib_handle, const bool init)
     effect->dispatcher(effect, effGetVendorString, 0, 0, strBuf, 0.0f);
     cVendor = strdup((strBuf[0] != 0) ? strBuf : "");
 
-    VstCurrentUniqueId = effect->uniqueID;
-    intptr_t VstCategory = effect->dispatcher(effect, effGetPlugCategory, 0, 0, nullptr, 0.0f);
+    vstCurrentUniqueId = effect->uniqueID;
+    intptr_t vstCategory = effect->dispatcher(effect, effGetPlugCategory, 0, 0, nullptr, 0.0f);
 
     // only init if required
-    if (init || VstCategory == kPlugCategShell)
+    if (init || vstCategory == kPlugCategShell)
         effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
 
     while (true)
@@ -780,10 +793,10 @@ void do_vst_check(void* const lib_handle, const bool init)
         if (effect->flags & effFlagsIsSynth)
             hints |= PLUGIN_IS_SYNTH;
 
-        if (VstPluginCanDo(effect, "receiveVstEvents") || VstPluginCanDo(effect, "receiveVstMidiEvent") || (effect->flags & effFlagsIsSynth) > 0)
+        if (vstPluginCanDo(effect, "receiveVstEvents") || vstPluginCanDo(effect, "receiveVstMidiEvent") || (effect->flags & effFlagsIsSynth) > 0)
             midiIns = 1;
 
-        if (VstPluginCanDo(effect, "sendVstEvents") || VstPluginCanDo(effect, "sendVstMidiEvent"))
+        if (vstPluginCanDo(effect, "sendVstEvents") || vstPluginCanDo(effect, "sendVstMidiEvent"))
             midiOuts = 1;
 
         midiTotal = midiIns + midiOuts;
@@ -845,7 +858,7 @@ void do_vst_check(void* const lib_handle, const bool init)
             if (midiIns > 0)
                 effect->dispatcher(effect, effProcessEvents, 0, 0, &events, 0.0f);
 
-            if (effect->processReplacing != effect->process && (effect->flags & effFlagsCanReplacing) > 0)
+            if ((effect->flags & effFlagsCanReplacing) > 0 && effect->processReplacing != effect->process)
                 effect->processReplacing(effect, bufferAudioIn, bufferAudioOut, bufferSize);
 #if ! VST_FORCE_DEPRECATED
             else
@@ -871,7 +884,7 @@ void do_vst_check(void* const lib_handle, const bool init)
         DISCOVERY_OUT("label", cProduct);
         DISCOVERY_OUT("maker", cVendor);
         DISCOVERY_OUT("copyright", cVendor);
-        DISCOVERY_OUT("unique_id", VstCurrentUniqueId);
+        DISCOVERY_OUT("unique_id", vstCurrentUniqueId);
         DISCOVERY_OUT("hints", hints);
         DISCOVERY_OUT("audio.ins", audioIns);
         DISCOVERY_OUT("audio.outs", audioOuts);
@@ -885,13 +898,13 @@ void do_vst_check(void* const lib_handle, const bool init)
         DISCOVERY_OUT("build", BINARY_NATIVE);
         DISCOVERY_OUT("end", "------------");
 
-        if (VstCategory != kPlugCategShell)
+        if (vstCategory != kPlugCategShell)
             break;
 
         strBuf[0] = 0;
-        VstCurrentUniqueId = effect->dispatcher(effect, effShellGetNextPlugin, 0, 0, strBuf, 0.0f);
+        vstCurrentUniqueId = effect->dispatcher(effect, effShellGetNextPlugin, 0, 0, strBuf, 0.0f);
 
-        if (VstCurrentUniqueId != 0)
+        if (vstCurrentUniqueId != 0)
         {
             free((void*)cName);
             cName = strdup((strBuf[0] != 0) ? strBuf : "");
@@ -901,7 +914,7 @@ void do_vst_check(void* const lib_handle, const bool init)
     }
 
     // only close if required
-    if (init || VstCategory == kPlugCategShell)
+    if (init || vstCategory == kPlugCategShell)
         effect->dispatcher(effect, effClose, 0, 0, nullptr, 0.0f);
 
     free((void*)cName);
@@ -997,6 +1010,8 @@ void do_linuxsampler_check(const char* const filename, const char* const stype, 
     public:
         LinuxSamplerScopedEngine(const char* const filename, const char* const stype)
         {
+            engine = nullptr;
+
             try {
                 engine = EngineFactory::Create(stype);
             }
@@ -1005,6 +1020,9 @@ void do_linuxsampler_check(const char* const filename, const char* const stype, 
                 DISCOVERY_OUT("error", e.what());
                 return;
             }
+
+            if (! engine)
+                return;
 
             ins = engine->GetInstrumentManager();
 
@@ -1038,7 +1056,7 @@ void do_linuxsampler_check(const char* const filename, const char* const stype, 
                 EngineFactory::Destroy(engine);
         }
 
-        static void outputInfo(InstrumentManager::instrument_info_t* const info, const int programs)
+        static void outputInfo(InstrumentManager::instrument_info_t* const info, const int programs, const char* const basename = nullptr)
         {
             DISCOVERY_OUT("init", "-----------");
 
@@ -1048,6 +1066,11 @@ void do_linuxsampler_check(const char* const filename, const char* const stype, 
                 DISCOVERY_OUT("label", info->Product);
                 DISCOVERY_OUT("maker", info->Artists);
                 DISCOVERY_OUT("copyright", info->Artists);
+            }
+            else
+            {
+                DISCOVERY_OUT("name", basename);
+                DISCOVERY_OUT("label", basename);
             }
 
             DISCOVERY_OUT("hints", PLUGIN_IS_SYNTH);
@@ -1071,7 +1094,7 @@ void do_linuxsampler_check(const char* const filename, const char* const stype, 
     if (init)
         const LinuxSamplerScopedEngine engine(filename, stype);
     else
-        LinuxSamplerScopedEngine::outputInfo(nullptr, 0);
+        LinuxSamplerScopedEngine::outputInfo(nullptr, 0, file.baseName().toUtf8().constData());
 
 #else
     DISCOVERY_OUT("error", stype << " support not available");
