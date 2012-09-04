@@ -75,33 +75,59 @@ public:
 
     void sendOscConfigure(const char* const key, const char* const value)
     {
-        osc_send_configure(&m_controlData, key, value);
+        Q_ASSERT(m_controlData.target);
+
+        if (m_controlData.target)
+            osc_send_configure(&m_controlData, key, value);
     }
 
-    void sendOscControl(int32_t index, float value)
+    void sendOscControl(const int32_t index, const float value)
     {
-        osc_send_control(&m_controlData, index, value);
+        Q_ASSERT(m_controlData.target);
+
+        if (m_controlData.target)
+            osc_send_control(&m_controlData, index, value);
+    }
+
+    void sendOscMidi(const uint8_t midiBuf[4])
+    {
+        Q_ASSERT(m_controlData.target);
+
+        if (m_controlData.target)
+            osc_send_midi(&m_controlData, midiBuf);
     }
 
     void sendOscUpdate()
     {
-        osc_send_update(&m_controlData, m_serverPath);
+        Q_ASSERT(m_controlData.target);
+
+        if (m_controlData.target)
+            osc_send_update(&m_controlData, m_serverPath);
     }
 
     void sendOscExiting()
     {
-        osc_send_exiting(&m_controlData);
+        Q_ASSERT(m_controlData.target);
+
+        if (m_controlData.target)
+            osc_send_exiting(&m_controlData);
     }
 
 #ifdef BRIDGE_LV2
     void sendOscLv2TransferAtom(const char* const type, const char* const value)
     {
-        osc_send_lv2_transfer_atom(&m_controlData, type, value);
+        Q_ASSERT(m_controlData.target);
+
+        if (m_controlData.target)
+            osc_send_lv2_transfer_atom(&m_controlData, type, value);
     }
 
     void sendOscLv2TransferEvent(const char* const type, const char* const value)
     {
-        osc_send_lv2_transfer_event(&m_controlData, type, value);
+        Q_ASSERT(m_controlData.target);
+
+        if (m_controlData.target)
+            osc_send_lv2_transfer_event(&m_controlData, type, value);
     }
 #endif
 

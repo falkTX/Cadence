@@ -878,7 +878,7 @@ class Host(object):
         self.lib.set_chunk_data.argtypes = [c_ushort, c_char_p]
         self.lib.set_chunk_data.restype = None
 
-        self.lib.set_gui_data.argtypes = [c_ushort, c_int, c_uintptr]
+        self.lib.set_gui_data.argtypes = [c_ushort, c_uintptr]
         self.lib.set_gui_data.restype = None
 
         self.lib.show_gui.argtypes = [c_ushort, c_bool]
@@ -1055,8 +1055,8 @@ class Host(object):
     def set_chunk_data(self, plugin_id, chunk_data):
         self.lib.set_chunk_data(plugin_id, chunk_data.encode("utf-8"))
 
-    def set_gui_data(self, plugin_id, data, gui_addr):
-        self.lib.set_gui_data(plugin_id, data, gui_addr)
+    def set_gui_data(self, plugin_id, gui_addr):
+        self.lib.set_gui_data(plugin_id, gui_addr)
 
     def show_gui(self, plugin_id, yesno):
         self.lib.show_gui(plugin_id, yesno)

@@ -330,7 +330,7 @@ const PortCountInfo* get_parameter_count_info(unsigned short plugin_id)
     return &info;
 }
 
-const ParameterInfo* get_parameter_info(unsigned short plugin_id, quint32 parameter_id)
+const ParameterInfo* get_parameter_info(unsigned short plugin_id, uint32_t parameter_id)
 {
     qDebug("CarlaBackendStandalone::get_parameter_info(%i, %i)", plugin_id, parameter_id);
 
@@ -388,7 +388,7 @@ const ParameterInfo* get_parameter_info(unsigned short plugin_id, quint32 parame
     return &info;
 }
 
-const ScalePointInfo* get_parameter_scalepoint_info(unsigned short plugin_id, quint32 parameter_id, quint32 scalepoint_id)
+const ScalePointInfo* get_parameter_scalepoint_info(unsigned short plugin_id, uint32_t parameter_id, uint32_t scalepoint_id)
 {
     qDebug("CarlaBackendStandalone::get_parameter_scalepoint_info(%i, %i, %i)", plugin_id, parameter_id, scalepoint_id);
 
@@ -453,7 +453,7 @@ const GuiInfo* get_gui_info(unsigned short plugin_id)
 
 // -------------------------------------------------------------------------------------------------------------------
 
-const CarlaBackend::ParameterData* get_parameter_data(unsigned short plugin_id, quint32 parameter_id)
+const CarlaBackend::ParameterData* get_parameter_data(unsigned short plugin_id, uint32_t parameter_id)
 {
     qDebug("CarlaBackendStandalone::get_parameter_data(%i, %i)", plugin_id, parameter_id);
 
@@ -474,7 +474,7 @@ const CarlaBackend::ParameterData* get_parameter_data(unsigned short plugin_id, 
     return &data;
 }
 
-const CarlaBackend::ParameterRanges* get_parameter_ranges(unsigned short plugin_id, quint32 parameter_id)
+const CarlaBackend::ParameterRanges* get_parameter_ranges(unsigned short plugin_id, uint32_t parameter_id)
 {
     qDebug("CarlaBackendStandalone::get_parameter_ranges(%i, %i)", plugin_id, parameter_id);
 
@@ -495,7 +495,7 @@ const CarlaBackend::ParameterRanges* get_parameter_ranges(unsigned short plugin_
     return &ranges;
 }
 
-const CarlaBackend::midi_program_t* get_midi_program_data(unsigned short plugin_id, quint32 midi_program_id)
+const CarlaBackend::midi_program_t* get_midi_program_data(unsigned short plugin_id, uint32_t midi_program_id)
 {
     qDebug("CarlaBackendStandalone::get_midi_program_data(%i, %i)", plugin_id, midi_program_id);
 
@@ -516,7 +516,7 @@ const CarlaBackend::midi_program_t* get_midi_program_data(unsigned short plugin_
     return &data;
 }
 
-const CarlaBackend::CustomData* get_custom_data(unsigned short plugin_id, quint32 custom_data_id)
+const CarlaBackend::CustomData* get_custom_data(unsigned short plugin_id, uint32_t custom_data_id)
 {
     qDebug("CarlaBackendStandalone::get_custom_data(%i, %i)", plugin_id, custom_data_id);
 
@@ -637,7 +637,7 @@ uint32_t get_custom_data_count(unsigned short plugin_id)
 
 // -------------------------------------------------------------------------------------------------------------------
 
-const char* get_parameter_text(unsigned short plugin_id, quint32 parameter_id)
+const char* get_parameter_text(unsigned short plugin_id, uint32_t parameter_id)
 {
     qDebug("CarlaBackendStandalone::get_parameter_text(%i, %i)", plugin_id, parameter_id);
 
@@ -664,7 +664,7 @@ const char* get_parameter_text(unsigned short plugin_id, quint32 parameter_id)
     return nullptr;
 }
 
-const char* get_program_name(unsigned short plugin_id, quint32 program_id)
+const char* get_program_name(unsigned short plugin_id, uint32_t program_id)
 {
     qDebug("CarlaBackendStandalone::get_program_name(%i, %i)", plugin_id, program_id);
 
@@ -703,7 +703,7 @@ const char* get_program_name(unsigned short plugin_id, quint32 program_id)
     return nullptr;
 }
 
-const char* get_midi_program_name(unsigned short plugin_id, quint32 midi_program_id)
+const char* get_midi_program_name(unsigned short plugin_id, uint32_t midi_program_id)
 {
     qDebug("CarlaBackendStandalone::get_midi_program_name(%i, %i)", plugin_id, midi_program_id);
 
@@ -776,7 +776,7 @@ const char* get_real_plugin_name(unsigned short plugin_id)
 
 // -------------------------------------------------------------------------------------------------------------------
 
-qint32 get_current_program_index(unsigned short plugin_id)
+int32_t get_current_program_index(unsigned short plugin_id)
 {
     qDebug("CarlaBackendStandalone::get_current_program_index(%i)", plugin_id);
 
@@ -789,7 +789,7 @@ qint32 get_current_program_index(unsigned short plugin_id)
     return -1;
 }
 
-qint32 get_current_midi_program_index(unsigned short plugin_id)
+int32_t get_current_midi_program_index(unsigned short plugin_id)
 {
     qDebug("CarlaBackendStandalone::get_current_midi_program_index(%i)", plugin_id);
 
@@ -804,7 +804,7 @@ qint32 get_current_midi_program_index(unsigned short plugin_id)
 
 // -------------------------------------------------------------------------------------------------------------------
 
-double get_default_parameter_value(unsigned short plugin_id, quint32 parameter_id)
+double get_default_parameter_value(unsigned short plugin_id, uint32_t parameter_id)
 {
     qDebug("CarlaBackendStandalone::get_default_parameter_value(%i, %i)", plugin_id, parameter_id);
 
@@ -823,7 +823,7 @@ double get_default_parameter_value(unsigned short plugin_id, quint32 parameter_i
     return 0.0;
 }
 
-double get_current_parameter_value(unsigned short plugin_id, quint32 parameter_id)
+double get_current_parameter_value(unsigned short plugin_id, uint32_t parameter_id)
 {
     qDebug("CarlaBackendStandalone::get_current_parameter_value(%i, %i)", plugin_id, parameter_id);
 
@@ -926,7 +926,7 @@ void set_balance_right(unsigned short plugin_id, double value)
 
 // -------------------------------------------------------------------------------------------------------------------
 
-void set_parameter_value(unsigned short plugin_id, quint32 parameter_id, double value)
+void set_parameter_value(unsigned short plugin_id, uint32_t parameter_id, double value)
 {
     qDebug("CarlaBackendStandalone::set_parameter_value(%i, %i, %g)", plugin_id, parameter_id, value);
 
@@ -944,7 +944,7 @@ void set_parameter_value(unsigned short plugin_id, quint32 parameter_id, double 
     qCritical("CarlaBackendStandalone::set_parameter_value(%i, %i, %g) - could not find plugin", plugin_id, parameter_id, value);
 }
 
-void set_parameter_midi_channel(unsigned short plugin_id, quint32 parameter_id, quint8 channel)
+void set_parameter_midi_channel(unsigned short plugin_id, uint32_t parameter_id, uint8_t channel)
 {
     qDebug("CarlaBackendStandalone::set_parameter_midi_channel(%i, %i, %i)", plugin_id, parameter_id, channel);
 
@@ -968,7 +968,7 @@ void set_parameter_midi_channel(unsigned short plugin_id, quint32 parameter_id, 
     qCritical("CarlaBackendStandalone::set_parameter_midi_channel(%i, %i, %i) - could not find plugin", plugin_id, parameter_id, channel);
 }
 
-void set_parameter_midi_cc(unsigned short plugin_id, quint32 parameter_id, int16_t cc)
+void set_parameter_midi_cc(unsigned short plugin_id, uint32_t parameter_id, int16_t cc)
 {
     qDebug("CarlaBackendStandalone::set_parameter_midi_cc(%i, %i, %i)", plugin_id, parameter_id, cc);
 
@@ -996,7 +996,7 @@ void set_parameter_midi_cc(unsigned short plugin_id, quint32 parameter_id, int16
     qCritical("CarlaBackendStandalone::set_parameter_midi_cc(%i, %i, %i) - could not find plugin", plugin_id, parameter_id, cc);
 }
 
-void set_program(unsigned short plugin_id, quint32 program_id)
+void set_program(unsigned short plugin_id, uint32_t program_id)
 {
     qDebug("CarlaBackendStandalone::set_program(%i, %i)", plugin_id, program_id);
 
@@ -1014,7 +1014,7 @@ void set_program(unsigned short plugin_id, quint32 program_id)
     qCritical("CarlaBackendStandalone::set_program(%i, %i) - could not find plugin", plugin_id, program_id);
 }
 
-void set_midi_program(unsigned short plugin_id, quint32 midi_program_id)
+void set_midi_program(unsigned short plugin_id, uint32_t midi_program_id)
 {
     qDebug("CarlaBackendStandalone::set_midi_program(%i, %i)", plugin_id, midi_program_id);
 
@@ -1064,23 +1064,23 @@ void set_chunk_data(unsigned short plugin_id, const char* chunk_data)
     qCritical("CarlaBackendStandalone::set_chunk_data(%i, \"%s\") - could not find plugin", plugin_id, chunk_data);
 }
 
-void set_gui_data(unsigned short plugin_id, int data, quintptr gui_addr)
+void set_gui_data(unsigned short plugin_id, uintptr_t gui_addr)
 {
-    qDebug("CarlaBackendStandalone::set_gui_data(%i, %i, " P_UINTPTR ")", plugin_id, data, gui_addr);
+    qDebug("CarlaBackendStandalone::set_gui_data(%i, " P_UINTPTR ")", plugin_id, gui_addr);
 
     CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
 
     if (plugin)
     {
 #ifdef __WINE__
-        plugin->setGuiData(data, (HWND)gui_addr);
+        plugin->setGuiData((HWND)gui_addr);
 #else
-        plugin->setGuiData(data, (QDialog*)CarlaBackend::getPointer(gui_addr));
+        plugin->setGuiData((QDialog*)CarlaBackend::getPointer(gui_addr));
 #endif
         return;
     }
 
-    qCritical("CarlaBackendStandalone::set_gui_data(%i, %i, " P_UINTPTR ") - could not find plugin", plugin_id, data, gui_addr);
+    qCritical("CarlaBackendStandalone::set_gui_data(%i, " P_UINTPTR ") - could not find plugin", plugin_id, gui_addr);
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -1104,7 +1104,7 @@ void idle_guis()
 
 // -------------------------------------------------------------------------------------------------------------------
 
-void send_midi_note(unsigned short plugin_id, quint8 channel, quint8 note, quint8 velocity)
+void send_midi_note(unsigned short plugin_id, uint8_t channel, uint8_t note, uint8_t velocity)
 {
     qDebug("CarlaBackendStandalone::send_midi_note(%i, %i, %i, %i)", plugin_id, channel, note, velocity);
 
@@ -1130,7 +1130,7 @@ void prepare_for_save(unsigned short plugin_id)
 
 // -------------------------------------------------------------------------------------------------------------------
 
-quint32 get_buffer_size()
+uint32_t get_buffer_size()
 {
     qDebug("CarlaBackendStandalone::get_buffer_size()");
 
@@ -1456,7 +1456,7 @@ void run_tests_standalone(short idMax)
         //set_custom_data(id, CarlaBackend::CUSTOM_DATA_INVALID, nullptr, nullptr);
         set_custom_data(id, CarlaBackend::CUSTOM_DATA_INVALID, "", "");
         set_chunk_data(id, nullptr);
-        set_gui_data(id, 0, (quintptr)1);
+        set_gui_data(id, 0, (uintptr_t)1);
 
         qDebug("------------------- TEST @%i: gui stuff --------------------", id);
         show_gui(id, false);
@@ -1519,7 +1519,7 @@ int main(int argc, char* argv[])
     //const GuiInfo* const guiInfo = get_gui_info(id);
     //if (guiInfo->type == CarlaBackend::GUI_INTERNAL_QT4 || guiInfo->type == CarlaBackend::GUI_INTERNAL_X11)
     //{
-    //    set_gui_data(id, 0, (quintptr)gui);
+    //    set_gui_data(id, 0, (uintptr_t)gui);
     //gui->show();
     //}
 

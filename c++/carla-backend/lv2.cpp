@@ -876,7 +876,7 @@ public:
     // -------------------------------------------------------------------
     // Set gui stuff
 
-    void setGuiData(const int, const GuiDataHandle handle)
+    void setGuiData(const GuiDataHandle handle)
     {
         switch(gui.type)
         {

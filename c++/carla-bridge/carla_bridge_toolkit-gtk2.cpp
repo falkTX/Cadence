@@ -57,10 +57,12 @@ public:
         gtk_init(&argc, &argv);
     }
 
-    void exec(CarlaClient* const client)
+    void exec(CarlaClient* const client, const bool showGui)
     {
         qDebug("CarlaToolkitGtk2::exec(%p)", client);
         Q_ASSERT(client);
+
+        m_client = client;
 
         window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
         gtk_container_add(GTK_CONTAINER(window), (GtkWidget*)client->getWidget());
@@ -88,12 +90,10 @@ public:
         g_timeout_add(50, gtk_ui_timeout, this);
         g_signal_connect(window, "destroy", G_CALLBACK(gtk_ui_destroy), this);
 
-        m_client = client;
         m_client->sendOscUpdate();
 
-#ifdef QTCREATOR_TEST
-        show();
-#endif
+        if (showGui)
+            show();
 
         // Main loop
         gtk_main();

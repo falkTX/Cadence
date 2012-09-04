@@ -210,6 +210,12 @@ public:
         m_osc.sendOscControl(index, value);
     }
 
+    void sendOscMidi(const uint8_t midiBuf[4])
+    {
+        qDebug("CarlaClient::sendOscMidi(%p)", midiBuf);
+        m_osc.sendOscMidi(midiBuf);
+    }
+
     void sendOscUpdate()
     {
         qDebug("CarlaClient::sendOscUpdate()");

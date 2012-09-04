@@ -105,7 +105,7 @@ static inline
 void osc_send_program(const CarlaOscData* const oscData, const int32_t bank, const int32_t program)
 {
     Q_ASSERT(oscData && oscData->path);
-    Q_ASSERT(program >= 0);
+    Q_ASSERT(program >= 0 && program < 128);
     Q_ASSERT(bank >= 0);
     qDebug("osc_send_program(path:\"%s\", %i, %i)", oscData->path, bank, program);
 
@@ -155,7 +155,7 @@ static inline
 void osc_send_sample_rate(const CarlaOscData* const oscData, const float sampleRate)
 {
     Q_ASSERT(oscData && oscData->path);
-    Q_ASSERT(sampleRate >= 0.0f);
+    Q_ASSERT(sampleRate > 0.0f);
     qDebug("osc_send_sample_rate(path:\"%s\", %f)", oscData->path, sampleRate);
 
     if (oscData->target)

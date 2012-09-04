@@ -1270,8 +1270,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
                 self.gui_dialog = PluginGUI(self, self.m_pluginInfo['name'], guiInfo['resizable'])
                 self.gui_dialog.hide()
 
-                # TODO - display
-                Carla.Host.set_gui_data(self.m_pluginId, 0, unwrapinstance(self.gui_dialog))
+                Carla.Host.set_gui_data(self.m_pluginId, unwrapinstance(self.gui_dialog))
 
             elif guiType in (GUI_EXTERNAL_LV2, GUI_EXTERNAL_SUIL, GUI_EXTERNAL_OSC):
                 pass

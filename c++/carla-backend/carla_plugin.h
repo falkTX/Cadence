@@ -1286,9 +1286,8 @@ public:
      *
      * \note This function must be always called from the main thread.
      */
-    virtual void setGuiData(const int data, const GuiDataHandle handle)
+    virtual void setGuiData(const GuiDataHandle handle)
     {
-        Q_UNUSED(data);
         Q_UNUSED(handle);
     }
 
@@ -1315,13 +1314,13 @@ public:
         if (m_hints & PLUGIN_USES_SINGLE_THREAD)
         {
             // Process postponed events
-            //postEventsRun();
+            postEventsRun();
 
             // Update parameter outputs
             for (uint32_t i=0; i < param.count; i++)
             {
-                //if (param.data[i].type == PARAMETER_OUTPUT)
-                //    uiParameterChange(i, getParameterValue(i));
+                if (param.data[i].type == PARAMETER_OUTPUT)
+                   uiParameterChange(i, getParameterValue(i));
             }
         }
     }

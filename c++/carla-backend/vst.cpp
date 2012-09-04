@@ -20,6 +20,9 @@
 
 #ifndef __WINE__
 #include <QtGui/QDialog>
+#ifdef Q_WS_X11
+#include <QtGui/QX11Info>
+#endif
 #endif
 
 CARLA_BACKEND_START_NAMESPACE
@@ -329,23 +332,27 @@ public:
     // -------------------------------------------------------------------
     // Set gui stuff
 
-    void setGuiData(const int data, const GuiDataHandle handle)
+    void setGuiData(const GuiDataHandle handle)
     {
-        qDebug("VstPlugin::setGuiData(%i, %p)", data, handle);
+        qDebug("VstPlugin::setGuiData(%p)", handle);
         Q_ASSERT(handle);
 
         if (gui.type == GUI_EXTERNAL_OSC)
             return;
 
+        int32_t value = 0;
+#ifdef Q_WS_X11
+        value = (int64_t)QX11Info::display();
+#endif
+
 #ifdef __WINE__
-        if (effect->dispatcher(effect, effEditOpen, 0, data, handle, 0.0f) == 1)
+        if (effect->dispatcher(effect, effEditOpen, 0, value, handle, 0.0f) == 1)
 #else
         const QDialog* const dialog = handle;
-        if (effect->dispatcher(effect, effEditOpen, 0, data, (void*)dialog->winId(), 0.0f) == 1)
+        if (effect->dispatcher(effect, effEditOpen, 0, value, (void*)dialog->winId(), 0.0f) == 1)
 #endif
         {
             ERect* vstRect = nullptr;
-
             effect->dispatcher(effect, effEditGetRect, 0, 0, &vstRect, 0.0f);
 
             if (vstRect)
@@ -355,7 +362,7 @@ public:
 
                 if (width <= 0 || height <= 0)
                 {
-                    qCritical("VstPlugin::setGuiData(%i, %p) - failed to get proper window size", data, handle);
+                    qCritical("VstPlugin::setGuiData(%p) - failed to get proper window size", handle);
                     return;
                 }
 
@@ -363,7 +370,7 @@ public:
                 gui.height = height;
             }
             else
-                qCritical("VstPlugin::setGuiData(%i, %p) - failed to get plugin window size", data, handle);
+                qCritical("VstPlugin::setGuiData(%p) - failed to get plugin window size", handle);
         }
         else
         {
@@ -1398,7 +1405,7 @@ public:
             postponeEvent(PluginPostEventParameterChange, index, 0, value);
         }
         else
-            setParameterValue(index, value, true, true, true);
+            setParameterValue(index, value, true, true, true); // FIXME - dont send to GUI?
     }
 
     intptr_t handleAudioMasterGetCurrentProcessLevel()
@@ -1673,11 +1680,10 @@ public:
 #else
         if (effect && effect->resvd1)
         {
-            //self = (VstPlugin*)getPointer(effect->resvd1);
-            //self = (VstPlugin*)effect->resvd1;
+            self = (VstPlugin*)effect->resvd1;
 #endif
-            //if (self->unique1 != self->unique2)
-            //    self = nullptr;
+            if (self->unique1 != self->unique2)
+               self = nullptr;
         }
 
         intptr_t ret = 0;
@@ -1849,11 +1855,11 @@ public:
             // Deprecated in VST SDK 2.4
             break;
 
-#ifdef VESTIGE_HEADER
-        case audioMasterGetSpeakerArrangement:
-#else
+//#ifdef VESTIGE_HEADER
+//        case audioMasterGetSpeakerArrangement:
+//#else
         case audioMasterGetOutputSpeakerArrangement:
-#endif
+//#endif
             // Deprecated in VST SDK 2.4
             // TODO
             break;
@@ -1861,7 +1867,7 @@ public:
 
         case audioMasterGetVendorString:
             if (ptr)
-                strcpy((char*)ptr, "falkTX");
+                strcpy((char*)ptr, "Cadence");
             break;
 
         case audioMasterGetProductString:

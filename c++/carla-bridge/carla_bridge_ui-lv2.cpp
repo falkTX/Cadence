@@ -32,6 +32,10 @@ CARLA_BRIDGE_START_NAMESPACE
 
 // -------------------------------------------------------------------------
 
+// fake values
+uint32_t bufferSize = 512;
+double   sampleRate = 44100.0;
+
 // feature ids
 const uint32_t lv2_feature_id_event           = 0;
 const uint32_t lv2_feature_id_logs            = 1;
@@ -846,28 +850,36 @@ CARLA_BRIDGE_END_NAMESPACE
 
 int main(int argc, char* argv[])
 {
+    using namespace CarlaBridge;
+
     if (argc != 5)
     {
-        qCritical("%s: bad arguments", argv[0]);
+        qCritical("usage: %s <osc-url|\"null\"> <plugin-uri> <ui-uri> <ui-title>", argv[0]);
         return 1;
     }
 
-    const char* osc_url    = argv[1];
-    const char* plugin_uri = argv[2];
-    const char* ui_uri     = argv[3];
-    const char* ui_title   = argv[4];
+    const char* oscUrl    = argv[1];
+    const char* pluginURI = argv[2];
+    const char* uiURI     = argv[3];
+    const char* uiTitle   = argv[4];
 
-    using namespace CarlaBridge;
+    const bool useOsc = strcmp(oscUrl, "null");
+
+    // try to get sampleRate value
+    const char* const sampleRateStr = getenv("CARLA_SAMPLE_RATE");
+
+    if (sampleRateStr)
+        sampleRate = atof(sampleRateStr);
 
     // Init toolkit
-    CarlaToolkit* const toolkit = CarlaToolkit::createNew(ui_title);
+    CarlaToolkit* const toolkit = CarlaToolkit::createNew(uiTitle);
     toolkit->init();
 
     // Init LV2-UI
     CarlaLv2Client client(toolkit);
 
     // Init OSC
-    if (! client.oscInit(osc_url))
+    if (useOsc && ! client.oscInit(oscUrl))
     {
         toolkit->quit();
         delete toolkit;
@@ -877,9 +889,9 @@ int main(int argc, char* argv[])
     // Load UI
     int ret;
 
-    if (client.init(plugin_uri, ui_uri))
+    if (client.init(pluginURI, uiURI))
     {
-        toolkit->exec(&client);
+        toolkit->exec(&client, !useOsc);
         ret = 0;
     }
     else
@@ -889,8 +901,11 @@ int main(int argc, char* argv[])
     }
 
     // Close OSC
-    client.sendOscExiting();
-    client.oscClose();
+    if (useOsc)
+    {
+        client.sendOscExiting();
+        client.oscClose();
+    }
 
     // Close LV2-UI
     client.close();

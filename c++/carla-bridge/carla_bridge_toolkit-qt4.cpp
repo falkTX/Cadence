@@ -26,36 +26,59 @@
 
 CARLA_BRIDGE_START_NAMESPACE
 
-// -------------------------------------------------------------------------
+static int _argc = 0;
+static char* _argv[] = { nullptr };
 
-class MessageChecker : public QTimer
+class BridgeApplication : public QApplication
 {
 public:
-    MessageChecker(CarlaClient* const client_)
-        : client(client_)
+    BridgeApplication()
+        : QApplication(_argc, _argv, true)
     {
-        Q_ASSERT(client);
+        msgTimer = 0;
+        m_client = nullptr;
     }
 
-    void timerEvent(QTimerEvent*)
+    void exec(CarlaClient* const client)
     {
-        if (! client->runMessages())
-            stop();
+        m_client = client;
+        startTimer(50);
+
+        QApplication::exec();
+    }
+
+protected:
+    void timerEvent(QTimerEvent* const event)
+    {
+        if (event->timerId() == msgTimer)
+        {
+            if (m_client && ! m_client->runMessages())
+                killTimer(msgTimer);
+        }
+
+        QApplication::timerEvent(event);
     }
 
 private:
-    CarlaClient* const client;
+    int msgTimer;
+    CarlaClient* m_client;
 };
+
+// -------------------------------------------------------------------------
 
 class CarlaToolkitQt4: public CarlaToolkit
 {
 public:
     CarlaToolkitQt4(const char* const title)
         : CarlaToolkit(title),
-#ifdef BRIDGE_LV2_X11
-          settings("Cadence", "Carla-X11UIs")
-#else
+#if defined(BRIDGE_LV2_QT4)
           settings("Cadence", "Carla-Qt4UIs")
+#elif defined(BRIDGE_LV2_X11) || defined(BRIDGE_VST_X11)
+          settings("Cadence", "Carla-X11UIs")
+#elif defined(BRIDGE_LV2_HWND) || defined(BRIDGE_VST_HWND)
+          settings("Cadence", "Carla-HWNDUIs")
+#else
+          settings("Cadence", "Carla-UIs")
 #endif
     {
         qDebug("CarlaToolkitQt4::CarlaToolkitQt4(%s)", title);
@@ -67,6 +90,7 @@ public:
     ~CarlaToolkitQt4()
     {
         qDebug("CarlaToolkitQt4::~CarlaToolkitQt4()");
+        Q_ASSERT(! app);
     }
 
     void init()
@@ -74,16 +98,16 @@ public:
         qDebug("CarlaToolkitQt4::init()");
         Q_ASSERT(! app);
 
-        static int argc = 0;
-        static char* argv[] = { nullptr };
-        app = new QApplication(argc, argv, true);
+        app = new BridgeApplication;
     }
 
-    void exec(CarlaClient* const client)
+    void exec(CarlaClient* const client, const bool showGui)
     {
         qDebug("CarlaToolkitQt4::exec(%p)", client);
         Q_ASSERT(app);
         Q_ASSERT(client);
+
+        m_client = client;
 
         if (client->needsReparent())
         {
@@ -93,7 +117,7 @@ public:
         else
         {
             // TODO - window->setCentralWidget(widget); or other simpler method
-            window = new QDialog();
+            window = new QDialog(nullptr);
             window->resize(10, 10);
             window->setLayout(new QVBoxLayout(window));
 
@@ -124,20 +148,15 @@ public:
             }
         }
 
-        MessageChecker messageChecker(client);
-        messageChecker.start(50);
+        app->connect(window, SIGNAL(finished(int)), app, SLOT(quit()));
 
-        QObject::connect(window, SIGNAL(finished(int)), app, SLOT(quit()));
-
-        m_client = client;
         m_client->sendOscUpdate();
 
-#ifdef QTCREATOR_TEST
-        show();
-#endif
+        if (showGui)
+            show();
 
         // Main loop
-        app->exec();
+        app->exec(client);
     }
 
     void quit()
@@ -170,6 +189,7 @@ public:
                 app->quit();
 
             delete app;
+            app = nullptr;
         }
     }
 
@@ -201,7 +221,7 @@ public:
     }
 
 private:
-    QApplication* app;
+    BridgeApplication* app;
     QDialog* window;
     QSettings settings;
 };

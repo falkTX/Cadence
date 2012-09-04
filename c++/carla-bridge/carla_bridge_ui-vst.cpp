@@ -21,32 +21,32 @@
 #include "carla_vst.h"
 #include "carla_midi.h"
 
+#include <QtCore/QTimerEvent>
 #include <QtGui/QDialog>
+
+#ifdef Q_WS_X11
+#include <QtGui/QX11Info>
+#endif
 
 CARLA_BRIDGE_START_NAMESPACE
 
 // -------------------------------------------------------------------------
 
-#define FAKE_SAMPLE_RATE 44100.0
-#define FAKE_BUFFER_SIZE 512
+// fake values
+uint32_t bufferSize = 512;
+double   sampleRate = 44100.0;
 
-void* getPointer(const quintptr addr)
-{
-    Q_ASSERT(addr != 0);
-    qDebug("getPointer(" P_UINTPTR ")", addr);
-
-    quintptr* const ptr = (quintptr*)addr;
-    return (void*)ptr;
-}
-
-class CarlaVstClient : public CarlaClient
+class CarlaVstClient : public CarlaClient, QObject
 {
 public:
     CarlaVstClient(CarlaToolkit* const toolkit)
-        : CarlaClient(toolkit)
+        : CarlaClient(toolkit),
+          QObject(nullptr)
     {
         effect = nullptr;
-        widget = new QDialog;
+        widget = new QDialog(nullptr);
+
+        idleTimer = 0;
 
         // make client valid
         unique1 = unique2 = rand();
@@ -67,37 +67,48 @@ public:
         // open DLL
 
         if (! libOpen(binary))
+        {
+            qWarning("%s", libError());
             return false;
+        }
 
         // -----------------------------------------------------------------
         // get DLL main entry
 
-        VST_Function vstfn = (VST_Function)libSymbol("VSTPluginMain");
+        VST_Function vstFn = (VST_Function)libSymbol("VSTPluginMain");
 
-        if (! vstfn)
-            vstfn = (VST_Function)libSymbol("main");
+        if (! vstFn)
+            vstFn = (VST_Function)libSymbol("main");
 
-        if (! vstfn)
+        if (! vstFn)
             return false;
 
         // -----------------------------------------------------------------
         // initialize plugin
 
-        effect = vstfn(VstHostCallback);
+        effect = vstFn(hostCallback);
 
-        if ((! effect) || effect->magic != kEffectMagic)
+        if (! (effect && effect->magic == kEffectMagic))
             return false;
 
         // -----------------------------------------------------------------
         // initialize VST stuff
 
+        int32_t value = 0;
+#ifdef Q_WS_X11
+        value = (int64_t)QX11Info::display();
+#endif
+
         effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
 #if ! VST_FORCE_DEPRECATED
-        effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, FAKE_BUFFER_SIZE, nullptr, FAKE_SAMPLE_RATE);
+        effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, bufferSize, nullptr, sampleRate);
 #endif
-        effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, FAKE_SAMPLE_RATE);
-        effect->dispatcher(effect, effSetBlockSize, 0, FAKE_BUFFER_SIZE, nullptr, 0.0f);
-        effect->dispatcher(effect, effEditOpen, 0, 0, (void*)widget->winId(), 0.0f);
+        effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, sampleRate);
+        effect->dispatcher(effect, effSetBlockSize, 0, bufferSize, nullptr, 0.0f);
+        effect->dispatcher(effect, effSetProcessPrecision, 0, kVstProcessPrecision32, nullptr, 0.0f);
+
+        if (effect->dispatcher(effect, effEditOpen, 0, value, (void*)widget->winId(), 0.0f) != 1)
+            return false;
 
 #ifdef VESTIGE_HEADER
         effect->ptr1 = this;
@@ -109,17 +120,20 @@ public:
         // initialize gui stuff
 
         ERect* vstRect = nullptr;
+        effect->dispatcher(effect, effEditGetRect, 0, 0, &vstRect, 0.0f);
 
-        if (effect->dispatcher(effect, effEditGetRect, 0, 0, &vstRect, 0.0f) && vstRect)
+        if (vstRect)
         {
             int width  = vstRect->right - vstRect->left;
             int height = vstRect->bottom - vstRect->top;
-            widget->setFixedSize(width, height);
-            //return true;
+
+            if (width > 0 && height > 0)
+                widget->setFixedSize(width, height);
         }
 
+        idleTimer = startTimer(50);
+
         return true;
-        //return false;
     }
 
     void close()
@@ -178,8 +192,108 @@ public:
 
     // ---------------------------------------------------------------------
 
-    static intptr_t VstHostCallback(AEffect* effect, int32_t opcode, int32_t index, intptr_t value, void* ptr, float opt)
+    void handleAudioMasterAutomate(const uint32_t index, const float value)
     {
+        effect->setParameter(effect, index, value);
+        sendOscControl(index, value);
+    }
+
+    intptr_t handleAudioMasterGetCurrentProcessLevel()
+    {
+        return kVstProcessLevelUser;
+    }
+
+    intptr_t handleAudioMasterProcessEvents(const VstEvents* const vstEvents)
+    {
+        for (int32_t i=0; i < vstEvents->numEvents; i++)
+        {
+            if (! vstEvents->events[i])
+                break;
+
+            const VstMidiEvent* const vstMidiEvent = (const VstMidiEvent*)vstEvents->events[i];
+
+            if (vstMidiEvent->type != kVstMidiType)
+            {
+                uint8_t status = vstMidiEvent->midiData[0];
+
+                // Fix bad note-off
+                if (MIDI_IS_STATUS_NOTE_ON(status) && vstMidiEvent->midiData[2] == 0)
+                    status -= 0x10;
+
+                uint8_t midiBuf[4] = { 0, status, (uint8_t)vstMidiEvent->midiData[1], (uint8_t)vstMidiEvent->midiData[2] };
+                sendOscMidi(midiBuf);
+            }
+        }
+
+        return 1;
+    }
+
+    intptr_t handleAdioMasterSizeWindow(int32_t width, int32_t height)
+    {
+        Q_ASSERT(widget);
+
+        widget->setFixedSize(width, height);
+
+        return 1;
+    }
+
+    void handleAudioMasterUpdateDisplay()
+    {
+        sendOscConfigure("reloadprograms", "");
+    }
+
+    // ---------------------------------------------------------------------
+
+    static intptr_t hostCanDo(const char* const feature)
+    {
+        qDebug("CarlaVstClient::hostCanDo(\"%s\")", feature);
+
+        if (strcmp(feature, "supplyIdle") == 0)
+            return 1;
+        if (strcmp(feature, "sendVstEvents") == 0)
+            return 1;
+        if (strcmp(feature, "sendVstMidiEvent") == 0)
+            return 1;
+        if (strcmp(feature, "sendVstMidiEventFlagIsRealtime") == 0)
+            return -1;
+        if (strcmp(feature, "sendVstTimeInfo") == 0)
+            return 1;
+        if (strcmp(feature, "receiveVstEvents") == 0)
+            return 1;
+        if (strcmp(feature, "receiveVstMidiEvent") == 0)
+            return 1;
+        if (strcmp(feature, "receiveVstTimeInfo") == 0)
+            return -1;
+        if (strcmp(feature, "reportConnectionChanges") == 0)
+            return -1;
+        if (strcmp(feature, "acceptIOChanges") == 0)
+            return 1;
+        if (strcmp(feature, "sizeWindow") == 0)
+            return 1;
+        if (strcmp(feature, "offline") == 0)
+            return -1;
+        if (strcmp(feature, "openFileSelector") == 0)
+            return -1;
+        if (strcmp(feature, "closeFileSelector") == 0)
+            return -1;
+        if (strcmp(feature, "startStopProcess") == 0)
+            return 1;
+        if (strcmp(feature, "supportShell") == 0)
+            return -1;
+        if (strcmp(feature, "shellCategory") == 0)
+            return -1;
+
+        // unimplemented
+        qWarning("CarlaVstClient::hostCanDo(\"%s\") - unknown feature", feature);
+        return 0;
+    }
+
+    static intptr_t VSTCALLBACK hostCallback(AEffect* const effect, const int32_t opcode, const int32_t index, const intptr_t value, void* const ptr, const float opt)
+    {
+#if DEBUG
+        qDebug("CarlaVstClient::hostCallback(%p, %s, %i, " P_INTPTR ", %p, %f", effect, vstMasterOpcode2str(opcode), index, value, ptr, opt);
+#endif
+
         // Check if 'resvd1' points to this client
         CarlaVstClient* self = nullptr;
 
@@ -190,158 +304,140 @@ public:
 #else
         if (effect && effect->resvd1)
         {
-            self = (CarlaVstClient*)getPointer(effect->resvd1);
+            self = (CarlaVstClient*)effect->resvd1;
 #endif
             if (self->unique1 != self->unique2)
                 self = nullptr;
         }
 
+        intptr_t ret = 0;
+
         switch (opcode)
         {
         case audioMasterAutomate:
             if (self)
-                self->sendOscControl(index, opt);
+                self->handleAudioMasterAutomate(index, opt);
             break;
 
         case audioMasterVersion:
-            return kVstVersion;
+            ret = kVstVersion;
+            break;
 
         case audioMasterCurrentId:
-            return 0; // TODO
+            // TODO
+            break;
 
         case audioMasterIdle:
-            if (effect)
-                effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
+            //if (effect)
+            //    effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
             break;
 
         case audioMasterGetTime:
             static VstTimeInfo_R timeInfo;
             memset(&timeInfo, 0, sizeof(VstTimeInfo_R));
-            timeInfo.sampleRate = FAKE_SAMPLE_RATE;
-            return (intptr_t)&timeInfo;
+            timeInfo.sampleRate = sampleRate;
+
+            // Tempo
+            timeInfo.tempo  = 120.0;
+            timeInfo.flags |= kVstTempoValid;
+
+            // Time Signature
+            timeInfo.timeSigNumerator   = 4;
+            timeInfo.timeSigDenominator = 4;
+            timeInfo.flags |= kVstTimeSigValid;
+
+            ret = (intptr_t)&timeInfo;
+            break;
 
         case audioMasterProcessEvents:
-#if 0
-            if (client && ptr)
-            {
-                const VstEvents* const events = (VstEvents*)ptr;
-
-                for (int32_t i=0; i < events->numEvents; i++)
-                {
-                    const VstMidiEvent* const midi_event = (VstMidiEvent*)events->events[i];
-
-                    uint8_t status = midi_event->midiData[0];
-
-                    // Fix bad note-off
-                    if (MIDI_IS_STATUS_NOTE_ON(status) && midi_event->midiData[2] == 0)
-                        status -= 0x10;
-
-                    uint8_t midi_buf[4] = { 0, status, (uint8_t)midi_event->midiData[1], (uint8_t)midi_event->midiData[2] };
-                    osc_send_midi(midi_buf);
-                }
-            }
-            else
-                qDebug("VstHostCallback:audioMasterProcessEvents - Some MIDI Out events were ignored");
-#endif
+            if (self && ptr)
+                ret = self->handleAudioMasterProcessEvents((const VstEvents*)ptr);
             break;
 
 #if ! VST_FORCE_DEPRECATED
         case audioMasterTempoAt:
             // Deprecated in VST SDK 2.4
-            return 120.0 * 10000;
+            ret = 120 * 10000;
+            break;
 #endif
 
         case audioMasterSizeWindow:
-            if (self)
-               self->quequeMessage(MESSAGE_RESIZE_GUI, index, value, 0.0);
-            return 1;
+            if (self && index > 0 && value > 0)
+                ret = self->handleAdioMasterSizeWindow(index, value);
+            break;
 
         case audioMasterGetSampleRate:
-            return FAKE_SAMPLE_RATE;
+            ret = sampleRate;
+            break;
 
         case audioMasterGetBlockSize:
-            return FAKE_BUFFER_SIZE;
+            ret = bufferSize;
+            break;
+
+        case audioMasterGetCurrentProcessLevel:
+            ret = kVstProcessLevelUser;
+            break;
+
+        case audioMasterGetAutomationState:
+            ret = kVstAutomationReadWrite;
+            break;
 
         case audioMasterGetVendorString:
-            strcpy((char*)ptr, "Cadence");
+            if (ptr)
+                strcpy((char*)ptr, "Cadence");
             break;
 
         case audioMasterGetProductString:
-            strcpy((char*)ptr, "Carla-Bridge");
+            if (ptr)
+                strcpy((char*)ptr, "Carla-Bridge");
             break;
 
         case audioMasterGetVendorVersion:
-            return 0x05; // 0.5
-
-        case audioMasterVendorSpecific:
+            ret = 0x050; // 0.5.0
             break;
 
         case audioMasterCanDo:
-#if DEBUG
-            qDebug("VstHostCallback:audioMasterCanDo - %s", (char*)ptr);
-#endif
-
-            if (strcmp((char*)ptr, "supplyIdle") == 0)
-                return 1;
-            if (strcmp((char*)ptr, "sendVstEvents") == 0)
-                return 1;
-            if (strcmp((char*)ptr, "sendVstMidiEvent") == 0)
-                return 1;
-            if (strcmp((char*)ptr, "sendVstMidiEventFlagIsRealtime") == 0)
-                return -1;
-            if (strcmp((char*)ptr, "sendVstTimeInfo") == 0)
-                return 1;
-            if (strcmp((char*)ptr, "receiveVstEvents") == 0)
-                return 1;
-            if (strcmp((char*)ptr, "receiveVstMidiEvent") == 0)
-                return 1;
-            if (strcmp((char*)ptr, "receiveVstTimeInfo") == 0)
-                return -1;
-            if (strcmp((char*)ptr, "reportConnectionChanges") == 0)
-                return -1;
-            if (strcmp((char*)ptr, "acceptIOChanges") == 0)
-                return 1;
-            if (strcmp((char*)ptr, "sizeWindow") == 0)
-                return 1;
-            if (strcmp((char*)ptr, "offline") == 0)
-                return -1;
-            if (strcmp((char*)ptr, "openFileSelector") == 0)
-                return -1;
-            if (strcmp((char*)ptr, "closeFileSelector") == 0)
-                return -1;
-            if (strcmp((char*)ptr, "startStopProcess") == 0)
-                return 1;
-            if (strcmp((char*)ptr, "supportShell") == 0)
-                return -1;
-            if (strcmp((char*)ptr, "shellCategory") == 0)
-                return -1;
-
-            // unimplemented
-            qWarning("VstHostCallback:audioMasterCanDo - Got unknown feature request '%s'", (char*)ptr);
-            return 0;
+            if (ptr)
+                ret = hostCanDo((const char*)ptr);
+            break;
 
         case audioMasterGetLanguage:
-            return kVstLangEnglish;
+            ret = kVstLangEnglish;
+            break;
 
         case audioMasterUpdateDisplay:
             if (self)
-                self->sendOscConfigure("reloadprograms", "");
+                self->handleAudioMasterUpdateDisplay();
             break;
 
         default:
-#if DEBUG
-            qDebug("VstHostCallback() - code: %s, index: %i, value: " P_INTPTR ", opt: %f", VstMasterOpcode2str(opcode), index, value, opt);
+#ifdef DEBUG
+            qDebug("CarlaVstClient::hostCallback(%p, %s, %i, " P_INTPTR ", %p, %f", effect, vstMasterOpcode2str(opcode), index, value, ptr, opt);
 #endif
             break;
         }
 
-        return 0;
+        return ret;
+    }
+
+protected:
+    void timerEvent(QTimerEvent* const event)
+    {
+        if (event->timerId() == idleTimer && effect)
+        {
+            qDebug("timerEvent");
+            effect->dispatcher(effect, effIdle, 0, 0, nullptr, 0.0f);
+            effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
+        }
+
+        QObject::timerEvent(event);
     }
 
 private:
     int unique1;
     AEffect* effect;
     QDialog* widget;
+    int idleTimer;
     int unique2;
 };
 
@@ -349,27 +445,35 @@ CARLA_BRIDGE_END_NAMESPACE
 
 int main(int argc, char* argv[])
 {
+    using namespace CarlaBridge;
+
     if (argc != 4)
     {
-        qCritical("%s: bad arguments", argv[0]);
+        qCritical("usage: %s <osc-url|\"null\"> <binary> <ui-title>", argv[0]);
         return 1;
     }
 
-    const char* osc_url  = argv[1];
-    const char* binary   = argv[2];
-    const char* ui_title = argv[3];
+    const char* oscUrl  = argv[1];
+    const char* binary  = argv[2];
+    const char* uiTitle = argv[3];
 
-    using namespace CarlaBridge;
+    const bool useOsc = strcmp(oscUrl, "null");
+
+    // try to get sampleRate value
+    const char* const sampleRateStr = getenv("CARLA_SAMPLE_RATE");
+
+    if (sampleRateStr)
+        sampleRate = atof(sampleRateStr);
 
     // Init toolkit
-    CarlaToolkit* const toolkit = CarlaToolkit::createNew(ui_title);
+    CarlaToolkit* const toolkit = CarlaToolkit::createNew(uiTitle);
     toolkit->init();
 
     // Init VST-UI
     CarlaVstClient client(toolkit);
 
     // Init OSC
-    if (! client.oscInit(osc_url))
+    if (useOsc && ! client.oscInit(oscUrl))
     {
         toolkit->quit();
         delete toolkit;
@@ -381,7 +485,7 @@ int main(int argc, char* argv[])
 
     if (client.init(binary, nullptr))
     {
-        toolkit->exec(&client);
+        toolkit->exec(&client, !useOsc);
         ret = 0;
     }
     else
@@ -391,8 +495,11 @@ int main(int argc, char* argv[])
     }
 
     // Close OSC
-    client.sendOscExiting();
-    client.oscClose();
+    if (useOsc)
+    {
+        client.sendOscExiting();
+        client.oscClose();
+    }
 
     // Close VST-UI
     client.close();

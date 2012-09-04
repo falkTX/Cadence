@@ -385,12 +385,12 @@ const char* getBinaryBidgePath(const BinaryType type)
 
 // -------------------------------------------------------------------------------------------------------------------
 
-void* getPointer(const quintptr addr)
+void* getPointer(const uintptr_t addr)
 {
     Q_ASSERT(addr != 0);
-    //qDebug("CarlaBackend::getPointer(" P_UINTPTR ")", addr);
+    qDebug("CarlaBackend::getPointer(" P_UINTPTR ")", addr);
 
-    quintptr* const ptr = (quintptr*)addr;
+    uintptr_t* const ptr = (uintptr_t*)addr;
     return (void*)ptr;
 }
 

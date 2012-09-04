@@ -168,6 +168,10 @@ intptr_t VSTCALLBACK vstHostCallback(AEffect* const effect, const int32_t opcode
         ret = kVstProcessLevelUser;
         break;
 
+    case audioMasterGetAutomationState:
+        ret = kVstAutomationReadWrite;
+        break;
+
     case audioMasterGetVendorString:
         if (ptr)
             strcpy((char*)ptr, "Cadence");

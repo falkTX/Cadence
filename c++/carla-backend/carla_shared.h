@@ -43,7 +43,7 @@ CustomDataType getCustomDataStringType(const char* const stype);
 const char* getCustomDataTypeString(const CustomDataType type);
 const char* getBinaryBidgePath(const BinaryType type);
 
-void* getPointer(const quintptr addr);
+void* getPointer(const uintptr_t addr);
 PluginCategory getPluginCategoryFromName(const char* const name);
 
 const char* getLastError();

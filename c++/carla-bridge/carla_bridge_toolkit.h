@@ -50,7 +50,7 @@ public:
     }
 
     virtual void init() = 0;
-    virtual void exec(CarlaClient* const client) = 0;
+    virtual void exec(CarlaClient* const client, const bool showGui) = 0;
     virtual void quit() = 0;
 
     virtual void show() = 0;
