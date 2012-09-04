@@ -113,6 +113,16 @@ public:
             osc_send_exiting(&m_controlData);
     }
 
+#ifdef BUILD_BRIDGE_PLUGIN
+    void sendOscBridgeUpdate()
+    {
+        Q_ASSERT(m_controlData.target && m_serverPath);
+
+        if (m_controlData.target && m_serverPath)
+            osc_send_bridge_update(&m_controlData, m_serverPath);
+    }
+#endif
+
 #ifdef BRIDGE_LV2
     void sendOscLv2TransferAtom(const char* const type, const char* const value)
     {

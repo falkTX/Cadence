@@ -19,7 +19,7 @@
 #define CARLA_INCLUDES_H
 
 #ifdef __WINE__
-//#  define __socklen_t_defined
+#  define __socklen_t_defined
 //#  define __WINE_WINSOCK2__
 //#  define HRESULT LONG
 #  define Q_CORE_EXPORT
@@ -41,6 +41,7 @@
 #ifdef Q_OS_WIN
 #  include <winsock2.h>
 #  include <windows.h>
+#  define uintptr_t size_t // FIXME
 #  define carla_sleep(t)  Sleep(t * 1000)
 #  define carla_msleep(t) Sleep(t)
 #  define carla_usleep(t) Sleep(t / 1000)

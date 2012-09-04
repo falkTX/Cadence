@@ -424,8 +424,6 @@ public:
 
     void idleGui()
     {
-        qDebug("VstPlugin::idleGui()");
-
         effect->dispatcher(effect, effIdle, 0, 0, nullptr, 0.0f);
 
         // FIXME

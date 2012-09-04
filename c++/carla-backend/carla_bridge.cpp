@@ -52,6 +52,7 @@ public:
         info.category = PLUGIN_CATEGORY_NONE;
         info.uniqueId = 0;
 
+        info.name  = nullptr;
         info.label = nullptr;
         info.maker = nullptr;
         info.copyright = nullptr;
@@ -87,6 +88,9 @@ public:
         delete m_thread;
 
         osc_clear_data(&osc.data);
+
+        if (info.name)
+            free((void*)info.name);
 
         if (info.label)
             free((void*)info.label);
@@ -164,22 +168,34 @@ public:
 
     void getLabel(char* const strBuf)
     {
-        strncpy(strBuf, info.label, STR_MAX);
+        if (info.label)
+            strncpy(strBuf, info.label, STR_MAX);
+        else
+            CarlaPlugin::getLabel(strBuf);
     }
 
     void getMaker(char* const strBuf)
     {
-        strncpy(strBuf, info.maker, STR_MAX);
+        if (info.maker)
+            strncpy(strBuf, info.maker, STR_MAX);
+        else
+            CarlaPlugin::getMaker(strBuf);
     }
 
     void getCopyright(char* const strBuf)
     {
-        strncpy(strBuf, info.copyright, STR_MAX);
+        if (info.copyright)
+            strncpy(strBuf, info.copyright, STR_MAX);
+        else
+            CarlaPlugin::getCopyright(strBuf);
     }
 
     void getRealName(char* const strBuf)
     {
-        strncpy(strBuf, info.name, STR_MAX);
+        if (info.name)
+            strncpy(strBuf, info.name, STR_MAX);
+        else
+            CarlaPlugin::getRealName(strBuf);
     }
 
     void getParameterName(uint32_t parameterId, char* const strBuf)
@@ -208,156 +224,156 @@ public:
     // -------------------------------------------------------------------
     // Set data (internal stuff)
 
-    int setOscBridgeInfo(PluginBridgeInfoType type, lo_arg** const argv)
+    int setOscBridgeInfo(const PluginBridgeInfoType type, const lo_arg* const* const argv)
     {
         qDebug("setOscBridgeInfo(%i, %p)", type, argv);
 
         switch (type)
         {
-        case PluginBridgeAudioCount:
-        {
-            int aIns   = argv[0]->i;
-            int aOuts  = argv[1]->i;
-            int aTotal = argv[2]->i;
+//        case PluginBridgeAudioCount:
+//        {
+//            int aIns   = argv[0]->i;
+//            int aOuts  = argv[1]->i;
+//            int aTotal = argv[2]->i;
 
-            info.ains  = aIns;
-            info.aouts = aOuts;
+//            info.ains  = aIns;
+//            info.aouts = aOuts;
 
-            break;
-            Q_UNUSED(aTotal);
-        }
+//            break;
+//            Q_UNUSED(aTotal);
+//        }
 
-        case PluginBridgeMidiCount:
-        {
-            int mIns   = argv[0]->i;
-            int mOuts  = argv[1]->i;
-            int mTotal = argv[2]->i;
+//        case PluginBridgeMidiCount:
+//        {
+//            int mIns   = argv[0]->i;
+//            int mOuts  = argv[1]->i;
+//            int mTotal = argv[2]->i;
 
-            info.mins  = mIns;
-            info.mouts = mOuts;
+//            info.mins  = mIns;
+//            info.mouts = mOuts;
 
-            break;
-            Q_UNUSED(mTotal);
-        }
+//            break;
+//            Q_UNUSED(mTotal);
+//        }
 
-        case PluginBridgeParameterCount:
-        {
-            int pIns   = argv[0]->i;
-            int pOuts  = argv[1]->i;
-            int pTotal = argv[2]->i;
+//        case PluginBridgeParameterCount:
+//        {
+//            int pIns   = argv[0]->i;
+//            int pOuts  = argv[1]->i;
+//            int pTotal = argv[2]->i;
 
-            // delete old data
-            if (param.count > 0)
-            {
-                delete[] param.data;
-                delete[] param.ranges;
-                delete[] params;
-            }
+//            // delete old data
+//            if (param.count > 0)
+//            {
+//                delete[] param.data;
+//                delete[] param.ranges;
+//                delete[] params;
+//            }
 
-            // create new if needed
-            param.count = (pTotal < (int)carlaOptions.maxParameters) ? pTotal : 0;
+//            // create new if needed
+//            param.count = (pTotal < (int)carlaOptions.maxParameters) ? pTotal : 0;
 
-            if (param.count > 0)
-            {
-                param.data   = new ParameterData[param.count];
-                param.ranges = new ParameterRanges[param.count];
-                params       = new BridgeParamInfo[param.count];
-            }
-            else
-            {
-                param.data = nullptr;
-                param.ranges = nullptr;
-                params = nullptr;
-            }
+//            if (param.count > 0)
+//            {
+//                param.data   = new ParameterData[param.count];
+//                param.ranges = new ParameterRanges[param.count];
+//                params       = new BridgeParamInfo[param.count];
+//            }
+//            else
+//            {
+//                param.data = nullptr;
+//                param.ranges = nullptr;
+//                params = nullptr;
+//            }
 
-            // initialize
-            for (uint32_t i=0; i < param.count; i++)
-            {
-                param.data[i].type   = PARAMETER_UNKNOWN;
-                param.data[i].index  = -1;
-                param.data[i].rindex = -1;
-                param.data[i].hints  = 0;
-                param.data[i].midiChannel = 0;
-                param.data[i].midiCC = -1;
+//            // initialize
+//            for (uint32_t i=0; i < param.count; i++)
+//            {
+//                param.data[i].type   = PARAMETER_UNKNOWN;
+//                param.data[i].index  = -1;
+//                param.data[i].rindex = -1;
+//                param.data[i].hints  = 0;
+//                param.data[i].midiChannel = 0;
+//                param.data[i].midiCC = -1;
 
-                param.ranges[i].def  = 0.0;
-                param.ranges[i].min  = 0.0;
-                param.ranges[i].max  = 1.0;
-                param.ranges[i].step = 0.01;
-                param.ranges[i].stepSmall = 0.0001;
-                param.ranges[i].stepLarge = 0.1;
+//                param.ranges[i].def  = 0.0;
+//                param.ranges[i].min  = 0.0;
+//                param.ranges[i].max  = 1.0;
+//                param.ranges[i].step = 0.01;
+//                param.ranges[i].stepSmall = 0.0001;
+//                param.ranges[i].stepLarge = 0.1;
 
-                params[i].value = 0.0;
-                params[i].name = QString();
-                params[i].unit = QString();
-            }
+//                params[i].value = 0.0;
+//                params[i].name = QString();
+//                params[i].unit = QString();
+//            }
 
-            break;
-            Q_UNUSED(pIns);
-            Q_UNUSED(pOuts);
-        }
+//            break;
+//            Q_UNUSED(pIns);
+//            Q_UNUSED(pOuts);
+//        }
 
-        case PluginBridgeProgramCount:
-        {
-            int count = argv[0]->i;
+//        case PluginBridgeProgramCount:
+//        {
+//            int count = argv[0]->i;
 
-            // Delete old programs
-            if (prog.count > 0)
-            {
-                for (uint32_t i=0; i < prog.count; i++)
-                    free((void*)prog.names[i]);
+//            // Delete old programs
+//            if (prog.count > 0)
+//            {
+//                for (uint32_t i=0; i < prog.count; i++)
+//                    free((void*)prog.names[i]);
 
-                delete[] prog.names;
-            }
+//                delete[] prog.names;
+//            }
 
-            prog.count = 0;
-            prog.names = nullptr;
+//            prog.count = 0;
+//            prog.names = nullptr;
 
-            // Query new programs
-            prog.count = count;
+//            // Query new programs
+//            prog.count = count;
 
-            if (prog.count > 0)
-                prog.names = new const char* [prog.count];
+//            if (prog.count > 0)
+//                prog.names = new const char* [prog.count];
 
-            // Update names (NULL)
-            for (uint32_t i=0; i < prog.count; i++)
-                prog.names[i] = nullptr;
+//            // Update names (NULL)
+//            for (uint32_t i=0; i < prog.count; i++)
+//                prog.names[i] = nullptr;
 
-            break;
-        }
+//            break;
+//        }
 
-        case PluginBridgeMidiProgramCount:
-        {
-            int count = argv[0]->i;
+//        case PluginBridgeMidiProgramCount:
+//        {
+//            int count = argv[0]->i;
 
-            // Delete old programs
-            if (midiprog.count > 0)
-            {
-                for (uint32_t i=0; i < midiprog.count; i++)
-                    free((void*)midiprog.data[i].name);
+//            // Delete old programs
+//            if (midiprog.count > 0)
+//            {
+//                for (uint32_t i=0; i < midiprog.count; i++)
+//                    free((void*)midiprog.data[i].name);
 
-                delete[] midiprog.data;
-            }
+//                delete[] midiprog.data;
+//            }
 
-            midiprog.count = 0;
-            midiprog.data  = nullptr;
+//            midiprog.count = 0;
+//            midiprog.data  = nullptr;
 
-            // Query new programs
-            midiprog.count = count;
+//            // Query new programs
+//            midiprog.count = count;
 
-            if (midiprog.count > 0)
-                midiprog.data = new midi_program_t [midiprog.count];
+//            if (midiprog.count > 0)
+//                midiprog.data = new midi_program_t [midiprog.count];
 
-            // Update data (NULL)
-            for (uint32_t i=0; i < midiprog.count; i++)
-            {
-                midiprog.data[i].bank    = 0;
-                midiprog.data[i].program = 0;
-                midiprog.data[i].name    = nullptr;
-            }
+//            // Update data (NULL)
+//            for (uint32_t i=0; i < midiprog.count; i++)
+//            {
+//                midiprog.data[i].bank    = 0;
+//                midiprog.data[i].program = 0;
+//                midiprog.data[i].name    = nullptr;
+//            }
 
-            break;
-        }
+//            break;
+//        }
 
         case PluginBridgePluginInfo:
         {
@@ -384,119 +400,119 @@ public:
             break;
         }
 
-        case PluginBridgeParameterInfo:
-        {
-            int index = argv[0]->i;
-            const char* name = (const char*)&argv[1]->s;
-            const char* unit = (const char*)&argv[2]->s;
+//        case PluginBridgeParameterInfo:
+//        {
+//            int index = argv[0]->i;
+//            const char* name = (const char*)&argv[1]->s;
+//            const char* unit = (const char*)&argv[2]->s;
 
-            if (index >= 0 && index < (int32_t)param.count)
-            {
-                params[index].name = QString(name);
-                params[index].unit = QString(unit);
-            }
+//            if (index >= 0 && index < (int32_t)param.count)
+//            {
+//                params[index].name = QString(name);
+//                params[index].unit = QString(unit);
+//            }
 
-            break;
-        }
+//            break;
+//        }
 
-        case PluginBridgeParameterDataInfo:
-        {
-            int index   = argv[0]->i;
-            int type    = argv[1]->i;
-            int rindex  = argv[2]->i;
-            int hints   = argv[3]->i;
-            int channel = argv[4]->i;
-            int cc      = argv[5]->i;
+//        case PluginBridgeParameterDataInfo:
+//        {
+//            int index   = argv[0]->i;
+//            int type    = argv[1]->i;
+//            int rindex  = argv[2]->i;
+//            int hints   = argv[3]->i;
+//            int channel = argv[4]->i;
+//            int cc      = argv[5]->i;
 
 
-            if (index >= 0 && index < (int32_t)param.count)
-            {
-                param.data[index].type    = (ParameterType)type;
-                param.data[index].index   = index;
-                param.data[index].rindex  = rindex;
-                param.data[index].hints   = hints;
-                param.data[index].midiChannel = channel;
-                param.data[index].midiCC  = cc;
-            }
+//            if (index >= 0 && index < (int32_t)param.count)
+//            {
+//                param.data[index].type    = (ParameterType)type;
+//                param.data[index].index   = index;
+//                param.data[index].rindex  = rindex;
+//                param.data[index].hints   = hints;
+//                param.data[index].midiChannel = channel;
+//                param.data[index].midiCC  = cc;
+//            }
 
-            break;
-        }
+//            break;
+//        }
 
-        case PluginBridgeParameterRangesInfo:
-        {
-            int index = argv[0]->i;
-            float def = argv[1]->f;
-            float min = argv[2]->f;
-            float max = argv[3]->f;
-            float step = argv[4]->f;
-            float stepSmall = argv[5]->f;
-            float stepLarge = argv[6]->f;
+//        case PluginBridgeParameterRangesInfo:
+//        {
+//            int index = argv[0]->i;
+//            float def = argv[1]->f;
+//            float min = argv[2]->f;
+//            float max = argv[3]->f;
+//            float step = argv[4]->f;
+//            float stepSmall = argv[5]->f;
+//            float stepLarge = argv[6]->f;
 
-            if (index >= 0 && index < (int32_t)param.count)
-            {
-                param.ranges[index].def  = def;
-                param.ranges[index].min  = min;
-                param.ranges[index].max  = max;
-                param.ranges[index].step = step;
-                param.ranges[index].stepSmall = stepSmall;
-                param.ranges[index].stepLarge = stepLarge;
-            }
+//            if (index >= 0 && index < (int32_t)param.count)
+//            {
+//                param.ranges[index].def  = def;
+//                param.ranges[index].min  = min;
+//                param.ranges[index].max  = max;
+//                param.ranges[index].step = step;
+//                param.ranges[index].stepSmall = stepSmall;
+//                param.ranges[index].stepLarge = stepLarge;
+//            }
 
-            break;
-        }
+//            break;
+//        }
 
-        case PluginBridgeProgramInfo:
-        {
-            int index = argv[0]->i;
-            const char* name = (const char*)&argv[1]->s;
+//        case PluginBridgeProgramInfo:
+//        {
+//            int index = argv[0]->i;
+//            const char* name = (const char*)&argv[1]->s;
 
-            if (index >= 0 && index < (int32_t)prog.count)
-                prog.names[index] = strdup(name);
+//            if (index >= 0 && index < (int32_t)prog.count)
+//                prog.names[index] = strdup(name);
 
-            break;
-        }
+//            break;
+//        }
 
-        case PluginBridgeMidiProgramInfo:
-        {
-            int index   = argv[0]->i;
-            int bank    = argv[1]->i;
-            int program = argv[2]->i;
-            const char* name = (const char*)&argv[3]->s;
+//        case PluginBridgeMidiProgramInfo:
+//        {
+//            int index   = argv[0]->i;
+//            int bank    = argv[1]->i;
+//            int program = argv[2]->i;
+//            const char* name = (const char*)&argv[3]->s;
 
-            if (index >= 0 && index < (int32_t)midiprog.count)
-            {
-                midiprog.data[index].bank    = bank;
-                midiprog.data[index].program = program;
-                midiprog.data[index].name    = strdup(name);
-            }
+//            if (index >= 0 && index < (int32_t)midiprog.count)
+//            {
+//                midiprog.data[index].bank    = bank;
+//                midiprog.data[index].program = program;
+//                midiprog.data[index].name    = strdup(name);
+//            }
 
-            break;
-        }
+//            break;
+//        }
 
-        case PluginBridgeCustomData:
-        {
-            const char* stype = (const char*)&argv[0]->s;
-            const char* key   = (const char*)&argv[1]->s;
-            const char* value = (const char*)&argv[2]->s;
+//        case PluginBridgeCustomData:
+//        {
+//            const char* stype = (const char*)&argv[0]->s;
+//            const char* key   = (const char*)&argv[1]->s;
+//            const char* value = (const char*)&argv[2]->s;
 
-            setCustomData(getCustomDataStringType(stype), key, value, false);
+//            setCustomData(getCustomDataStringType(stype), key, value, false);
 
-            break;
-        }
+//            break;
+//        }
 
-        case PluginBridgeChunkData:
-        {
-            const char* const filePath = (const char*)&argv[0]->s;
-            QFile file(filePath);
+//        case PluginBridgeChunkData:
+//        {
+//            const char* const filePath = (const char*)&argv[0]->s;
+//            QFile file(filePath);
 
-            if (file.open(QIODevice::ReadOnly))
-            {
-                info.chunk = file.readAll();
-                file.remove();
-            }
+//            if (file.open(QIODevice::ReadOnly))
+//            {
+//                info.chunk = file.readAll();
+//                file.remove();
+//            }
 
-            break;
-        }
+//            break;
+//        }
 
         case PluginBridgeUpdateNow:
             initiated = true;
@@ -655,14 +671,14 @@ public:
         // register plugin now so we can receive OSC (and wait for it)
         x_engine->__bridgePluginRegister(m_id, this);
 
-        m_thread->setOscData(bridgeBinary, label, PluginType2str(m_type));
+        m_thread->setOscData(bridgeBinary, label, getPluginTypeString(m_type));
         m_thread->start();
 
         for (int i=0; i < 100; i++)
         {
             if (initiated)
                 break;
-            carla_msleep(100);
+            carla_msleep(50);
         }
 
         if (! initiated)
@@ -670,7 +686,7 @@ public:
             // unregister so it gets handled properly
             x_engine->__bridgePluginRegister(m_id, nullptr);
 
-            m_thread->quit();
+            m_thread->terminate();
             setLastError("Timeout while waiting for a response from plugin-bridge");
             return false;
         }

@@ -15,20 +15,25 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
+#ifdef BUILD_BRIDGE_PLUGIN
+
 #include "carla_bridge_client.h"
 #include "carla_plugin.h"
-
-#include <windows.h>
 
 #include <QtCore/QFile>
 
 #ifndef __WINE__
-//#include <QtCore/QTimer>
-#  include <QtGui/QApplication>
-//#include <QtGui/QDialog>
+#include <QtCore/QTimerEvent>
+#include <QtGui/QApplication>
+#include <QtGui/QDialog>
 #endif
 
-static HINSTANCE hInstG = nullptr;
+#ifdef __WINE__
+static HINSTANCE hInstGlobal = nullptr;
+#else
+static int qargc = 0;
+static char* qargv[] = { nullptr };
+#endif
 
 CARLA_BRIDGE_START_NAMESPACE
 
@@ -41,8 +46,8 @@ public:
     CarlaPluginClient(CarlaToolkit* const toolkit)
         : CarlaClient(toolkit)
     {
-        engine   = nullptr;
-        plugin   = nullptr;
+        engine = nullptr;
+        plugin = nullptr;
     }
 
     ~CarlaPluginClient()
@@ -195,6 +200,7 @@ public:
             return;
 
         plugin->idleGui();
+        //plugin->showGui(true);
     }
 
     // ---------------------------------------------------------------------
@@ -231,8 +237,10 @@ public:
                 //quequeMessage(MESSAGE_QUIT, 0, 0, 0.0);
             break;
         case CarlaBackend::CALLBACK_RESIZE_GUI:
-            //quequeMessage(MESSAGE_RESIZE_GUI, value1, value2, 0.0);
-            //m_toolkit->resize(value1, value2);
+            qDebug("resize callback-------------------------------------------------------------------------------");
+            quequeMessage(MESSAGE_RESIZE_GUI, value1, value2, 0.0);
+            //if (m_toolkit)
+            //    m_toolkit->resize(value1, value2);
             break;
         case CarlaBackend::CALLBACK_RELOAD_PARAMETERS:
             //if (CARLA_PLUGIN)
@@ -275,6 +283,48 @@ private:
 // -------------------------------------------------------------------------
 // toolkit
 
+#ifndef __WINE__
+class BridgeApplication : public QApplication
+{
+public:
+    BridgeApplication()
+        : QApplication(qargc, qargv)
+    {
+        msgTimer = 0;
+        m_client = nullptr;
+    }
+
+    void exec(CarlaPluginClient* const client)
+    {
+        m_client = client;
+        msgTimer = startTimer(50);
+
+        QApplication::exec();
+    }
+
+protected:
+    void timerEvent(QTimerEvent* const event)
+    {
+        if (event->timerId() == msgTimer)
+        {
+            if (m_client)
+            {
+                m_client->idle();
+
+                if (! m_client->runMessages())
+                    killTimer(msgTimer);
+            }
+        }
+
+        QApplication::timerEvent(event);
+    }
+
+private:
+    int msgTimer;
+    CarlaPluginClient* m_client;
+};
+#endif
+
 class CarlaToolkitPlugin : public CarlaToolkit
 {
 public:
@@ -282,7 +332,6 @@ public:
         : CarlaToolkit("carla-bridge-plugin")
     {
         qDebug("CarlaToolkitPlugin::CarlaToolkitPlugin()");
-
 #ifdef __WINE__
         closeNow = false;
         hwnd = nullptr;
@@ -295,6 +344,11 @@ public:
     ~CarlaToolkitPlugin()
     {
         qDebug("CarlaToolkitPlugin::~CarlaToolkitPlugin()");
+#ifdef __WINE__
+        Q_ASSERT(! closeNow);
+#else
+        Q_ASSERT(! app);
+#endif
     }
 
     void init()
@@ -309,7 +363,7 @@ public:
         wc.lpfnWndProc   = windowProcA;
         wc.cbClsExtra    = 0;
         wc.cbWndExtra    = 0;
-        wc.hInstance     = hInstG; //nullptr;
+        wc.hInstance     = hInstGlobal;
         wc.hIcon         = LoadIconA(nullptr, IDI_APPLICATION);
         wc.hCursor       = LoadCursorA(nullptr, IDC_ARROW);
         wc.hbrBackground = (HBRUSH)COLOR_BACKGROUND;
@@ -320,22 +374,21 @@ public:
 #else
         Q_ASSERT(! app);
 
-        static int argc = 0;
-        static char* argv[] = { nullptr };
-        app = new QApplication(argc, argv, true);
+        app = new BridgeApplication;
 #endif
     }
 
-    void exec(CarlaClient* const client)
+    void exec(CarlaClient* const client, const bool showGui)
     {
         qDebug("CarlaToolkitPlugin::exec(%p)", client);
         Q_ASSERT(client);
 
         m_client = client;
+        m_client->sendOscUpdate();
+        m_client->sendOscBridgeUpdate();
 
-#ifdef QTCREATOR_TEST
-        show();
-#endif
+        if (showGui)
+            show();
 
 #ifdef __WINE__
         Q_ASSERT(! closeNow);
@@ -370,14 +423,13 @@ public:
 #else
         Q_ASSERT(app);
 
-        app->exec();
+        app->exec((CarlaPluginClient*)client);
 #endif
     }
 
     void quit()
     {
         qDebug("CarlaToolkitPlugin::quit()");
-
 #ifdef __WINE__
         if (closeNow && hwnd)
         {
@@ -389,60 +441,92 @@ public:
 #else
         Q_ASSERT(app);
 
-        if (app && dialog)
+        if (dialog)
         {
+            dialog->close();
+
             delete dialog;
             dialog = nullptr;
         }
 
-        if (! app)
-            return;
+        if (app)
+        {
+            if (! app->closingDown())
+                app->quit();
 
-        if (! app->closingDown())
-            app->quit();
-
-        delete app;
+            delete app;
+            app = nullptr;
+        }
 #endif
     }
 
     void show()
     {
         qDebug("CarlaToolkitPlugin::show()");
+#ifdef __WINE__
+        Q_ASSERT(hwnd);
 
-        ShowWindow(hwnd, SW_SHOWNORMAL);
-        UpdateWindow(hwnd);
+        if (hwnd)
+        {
+            ShowWindow(hwnd, SW_SHOWNORMAL);
+            UpdateWindow(hwnd);
+        }
+#else
+        Q_ASSERT(dialog);
+
+        if (dialog)
+            dialog->show();
+#endif
     }
 
     void hide()
     {
         qDebug("CarlaToolkitPlugin::hide()");
+#ifdef __WINE__
+        Q_ASSERT(hwnd);
 
-        ShowWindow(hwnd, SW_HIDE);
+        if (hwnd)
+            ShowWindow(hwnd, SW_HIDE);
+#else
+        Q_ASSERT(dialog);
+
+        if (dialog)
+            dialog->show();
+#endif
     }
 
     void resize(int width, int height)
     {
         qDebug("CarlaToolkitPlugin::resize(%i, %i)", width, height);
+#ifdef __WINE__
+        Q_ASSERT(hwnd);
 
-        SetWindowPos(hwnd, 0, 0, 0, width + 6, height + 25, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+        if (hwnd)
+            SetWindowPos(hwnd, 0, 0, 0, width + 6, height + 25, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+#else
+        Q_ASSERT(dialog);
+
+        if (dialog)
+            dialog->setFixedSize(width, height);
+#endif
     }
+
+    // ---------------------------------------------------------------------
 
     void createWindow(const char* const pluginName)
     {
 #ifdef __WINE__
         hwnd = CreateWindowA("CLASS_CARLA_BRIDGE", pluginName, WS_OVERLAPPEDWINDOW &~ WS_THICKFRAME &~ WS_MAXIMIZEBOX,
                               CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                              HWND_DESKTOP, nullptr, hInstG, nullptr);
-
-        if (! hwnd)
-            return;
+                              HWND_DESKTOP, nullptr, hInstGlobal, nullptr);
 
         SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)this);
         SetWindowPos(hwnd, 0, 0, 0, 1100 + 6, 600 + 25, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
 #else
         dialog = new QDialog(nullptr);
         dialog->resize(10, 10);
-        dialog->setWindowTitle(pluginName);
+        //window->setLayout(new QVBoxLayout(dialog);
+        dialog->setWindowTitle(QString("%1 (GUI)").arg(pluginName));
 #endif
     }
 
@@ -454,6 +538,8 @@ public:
         return dialog;
 #endif
     }
+
+    // ---------------------------------------------------------------------
 
 private:
 #ifdef __WINE__
@@ -488,7 +574,7 @@ private:
         return DefWindowProcA(_hwnd, message, wParam, lParam);
     }
 #else
-    QApplication* app;
+    BridgeApplication* app;
     QDialog* dialog;
 #endif
 };
@@ -505,8 +591,7 @@ CARLA_BRIDGE_END_NAMESPACE
 #ifdef __WINE__
 int WINAPI WinMain(HINSTANCE hInstX, HINSTANCE, LPSTR, int)
 {
-    hInstG = hInstX;
-    qWarning("test %li %p", hInstG, hInstG);
+    hInstGlobal = hInstX;
 
 #define MAXCMDTOKENS 128
     int argc;
@@ -556,30 +641,26 @@ int WINAPI WinMain(HINSTANCE hInstX, HINSTANCE, LPSTR, int)
 
     if (strlen(argv[0]) == 0)
     {
-        GetModuleFileName(hInstG, command, sizeof(command)-1);
+        GetModuleFileName(hInstGlobal, command, sizeof(command)-1);
         argv[0] = command;
     }
 #else
 int main(int argc, char* argv[])
 {
 #endif
-    //if (argc != 6)
-    //{
-        //qWarning("%s :: bad arguments", argv[0]);
-        //return 1;
-    //}
+    if (argc != 6)
+    {
+        qWarning("usage: %s <osc-url|\"null\"> <type> <filename> <name|\"(none)\"> <label>", argv[0]);
+        return 1;
+    }
 
-    //const char* const oscUrl   = argv[1];
-    //const char* const stype    = argv[2];
-    //const char* const filename = argv[3];
-    //const char*       name     = argv[4];
-    //const char* const label    = argv[5];
+    const char* const oscUrl   = argv[1];
+    const char* const stype    = argv[2];
+    const char* const filename = argv[3];
+    const char*       name     = argv[4];
+    const char* const label    = argv[5];
 
-    const char* const oscUrl   = "osc.udp://null";
-    const char* const stype    = "VST";
-    const char* const filename = "/home/falktx/.wine/drive_c/Program Files (x86)/VstPlugins/IL Harmless.dll";
-    const char*       name     = "(none)";
-    const char* const label    = "DemoBuild";
+    const bool useOsc = strcmp(oscUrl, "null");
 
     if (strcmp(name, "(none)") == 0)
         name = nullptr;
@@ -609,7 +690,7 @@ int main(int argc, char* argv[])
     CarlaBridge::CarlaPluginClient client(&toolkit);
 
     // Init OSC
-    if (! client.oscInit(oscUrl))
+    if (useOsc && ! client.oscInit(oscUrl))
     {
        toolkit.quit();
        return -1;
@@ -634,12 +715,18 @@ int main(int argc, char* argv[])
     {
         CarlaBackend::CarlaPlugin* const plugin = engine.getPlugin(id);
         client.setStuff(&engine, plugin);
-        plugin->setEnabled(true);
-        plugin->setActive(true, false, false);
 
-        toolkit.createWindow(plugin->name());
-        plugin->setGuiData(0, toolkit.getWindowHandle());
-        plugin->showGui(true);
+        {
+            // create window if needed
+            toolkit.createWindow(plugin->name());
+            plugin->setGuiData(toolkit.getWindowHandle());
+        }
+
+        if (! useOsc)
+        {
+            plugin->setActive(true, false, false);
+            plugin->showGui(true);
+        }
     }
     else
     {
@@ -647,20 +734,22 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    toolkit.exec(&client);
+    toolkit.exec(&client, !useOsc);
 
     engine.removeAllPlugins();
     engine.close();
 
     // Close OSC
-    client.sendOscExiting();
-    client.oscClose();
-
-    // Close client
-    //client.close();
+    if (useOsc)
+    {
+        client.sendOscExiting();
+        client.oscClose();
+    }
 
     // Close toolkit
     toolkit.quit();
 
     return 0;
 }
+
+#endif // BUILD_BRIDGE_PLUGIN

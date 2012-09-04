@@ -383,6 +383,33 @@ const char* getBinaryBidgePath(const BinaryType type)
     }
 }
 
+const char* getPluginTypeString(const PluginType type)
+{
+    qDebug("CarlaBackend::getPluginTypeString(%s)", PluginType2str(type));
+
+    switch (type)
+    {
+    case PLUGIN_NONE:
+        return "NONE";
+    case PLUGIN_LADSPA:
+        return "LADSPA";
+    case PLUGIN_DSSI:
+        return "DSSI";
+    case PLUGIN_LV2:
+        return "LV2";
+    case PLUGIN_VST:
+        return "VST";
+    case PLUGIN_GIG:
+        return "GIG";
+    case PLUGIN_SF2:
+        return "SF2";
+    case PLUGIN_SFZ:
+        return "SFZ";
+    }
+
+    return "NONE";
+}
+
 // -------------------------------------------------------------------------------------------------------------------
 
 void* getPointer(const uintptr_t addr)

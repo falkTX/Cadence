@@ -854,7 +854,7 @@ int main(int argc, char* argv[])
 
     if (argc != 5)
     {
-        qCritical("usage: %s <osc-url|\"null\"> <plugin-uri> <ui-uri> <ui-title>", argv[0]);
+        qWarning("usage: %s <osc-url|\"null\"> <plugin-uri> <ui-uri> <ui-title>", argv[0]);
         return 1;
     }
 

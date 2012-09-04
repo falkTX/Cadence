@@ -73,7 +73,7 @@ static inline
 void osc_send_control(const CarlaOscData* const oscData, const int32_t index, const float value)
 {
     Q_ASSERT(oscData && oscData->path);
-    Q_ASSERT(index >= 0);
+    Q_ASSERT(index != -1);
     qDebug("osc_send_control(path:\"%s\", %i, %f)", oscData->path, index, value);
 
     if (oscData->target)
@@ -242,6 +242,24 @@ void osc_send_quit(const CarlaOscData* const oscData)
         strcpy(targetPath, oscData->path);
         strcat(targetPath, "/quit");
         lo_send(oscData->target, targetPath, "");
+    }
+}
+#endif
+
+#ifdef BUILD_BRIDGE_PLUGIN
+static inline
+void osc_send_bridge_update(const CarlaOscData* const oscData, const char* const url)
+{
+    Q_ASSERT(oscData && oscData->path);
+    Q_ASSERT(url);
+    qDebug("osc_send_bridge_update(path:\"%s\", \"%s\")", oscData->path, url);
+
+    if (oscData->target)
+    {
+        char targetPath[strlen(oscData->path)+15];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/bridge_update");
+        lo_send(oscData->target, targetPath, "s", url);
     }
 }
 #endif

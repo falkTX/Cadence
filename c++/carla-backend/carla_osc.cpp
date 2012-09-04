@@ -142,6 +142,8 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
     char method[32] = { 0 };
     memcpy(method, path + (m_name_len + offset), 32);
 
+    qWarning("CarlaOsc::handleMessage() method: %s", method);
+
     // Common OSC methods
     if (strcmp(method, "/update") == 0)
     {
@@ -194,6 +196,8 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
     // Plugin Bridges
     if (plugin->hints() & CarlaBackend::PLUGIN_IS_BRIDGE)
     {
+        qWarning("CarlaOsc::handleMessage() TO PLUGIN");
+
         if (strcmp(method, "/bridge_ains_peak") == 0)
             return handle_bridge_ains_peak(plugin, argc, argv, types);
         if (strcmp(method, "/bridge_aouts_peak") == 0)

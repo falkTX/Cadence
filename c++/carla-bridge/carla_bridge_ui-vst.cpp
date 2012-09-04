@@ -425,7 +425,6 @@ protected:
     {
         if (event->timerId() == idleTimer && effect)
         {
-            qDebug("timerEvent");
             effect->dispatcher(effect, effIdle, 0, 0, nullptr, 0.0f);
             effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
         }
@@ -449,7 +448,7 @@ int main(int argc, char* argv[])
 
     if (argc != 4)
     {
-        qCritical("usage: %s <osc-url|\"null\"> <binary> <ui-title>", argv[0]);
+        qWarning("usage: %s <osc-url|\"null\"> <binary> <ui-title>", argv[0]);
         return 1;
     }
 

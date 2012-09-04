@@ -274,7 +274,9 @@ void CarlaPluginThread::run()
         break;
 
     case PLUGIN_THREAD_BRIDGE:
+        qDebug("CarlaPluginThread::run() - bridge starting...");
         m_process->waitForFinished(-1);
+        qDebug("CarlaPluginThread::run() - bridge ended");
 
 #ifdef DEBUG
         if (m_process->exitCode() == 0)

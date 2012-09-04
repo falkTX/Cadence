@@ -20,20 +20,21 @@
 #include <QtCore/QSettings>
 #include <QtCore/QTimer>
 
+#include <QtCore/QTimerEvent>
 #include <QtGui/QApplication>
 #include <QtGui/QDialog>
 #include <QtGui/QVBoxLayout>
 
 CARLA_BRIDGE_START_NAMESPACE
 
-static int _argc = 0;
-static char* _argv[] = { nullptr };
+static int qargc = 0;
+static char* qargv[] = { nullptr };
 
 class BridgeApplication : public QApplication
 {
 public:
     BridgeApplication()
-        : QApplication(_argc, _argv, true)
+        : QApplication(qargc, qargv, true)
     {
         msgTimer = 0;
         m_client = nullptr;
@@ -42,7 +43,7 @@ public:
     void exec(CarlaClient* const client)
     {
         m_client = client;
-        startTimer(50);
+        msgTimer = startTimer(50);
 
         QApplication::exec();
     }

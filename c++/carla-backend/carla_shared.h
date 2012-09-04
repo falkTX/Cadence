@@ -42,6 +42,7 @@ const char* ProcessModeType2str(const ProcessModeType type);
 CustomDataType getCustomDataStringType(const char* const stype);
 const char* getCustomDataTypeString(const CustomDataType type);
 const char* getBinaryBidgePath(const BinaryType type);
+const char* getPluginTypeString(const PluginType type);
 
 void* getPointer(const uintptr_t addr);
 PluginCategory getPluginCategoryFromName(const char* const name);

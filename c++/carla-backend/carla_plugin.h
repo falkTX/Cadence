@@ -1419,7 +1419,6 @@ public:
      */
     void registerToOsc()
     {
-        return;
 #ifndef BUILD_BRIDGE
         if (! x_engine->isOscControllerRegisted())
             return;
@@ -1560,6 +1559,9 @@ public:
         free((void*)host);
         free((void*)port);
 
+        if (m_hints & PLUGIN_IS_BRIDGE)
+            return;
+
         osc_send_sample_rate(&osc.data, x_engine->getSampleRate());
 
         for (size_t i=0; i < custom.size(); i++)
@@ -1585,14 +1587,14 @@ public:
         for (uint32_t i=0; i < param.count; i++)
             osc_send_control(&osc.data, param.data[i].rindex, getParameterValue(i));
 
-        if (m_hints & PLUGIN_IS_BRIDGE)
-        {
-            osc_send_control(&osc.data, PARAMETER_ACTIVE, m_active ? 1.0 : 0.0);
-            osc_send_control(&osc.data, PARAMETER_DRYWET, x_dryWet);
-            osc_send_control(&osc.data, PARAMETER_VOLUME, x_volume);
-            osc_send_control(&osc.data, PARAMETER_BALANCE_LEFT, x_balanceLeft);
-            osc_send_control(&osc.data, PARAMETER_BALANCE_RIGHT, x_balanceRight);
-        }
+//        if (m_hints & PLUGIN_IS_BRIDGE)
+//        {
+//            osc_send_control(&osc.data, PARAMETER_ACTIVE, m_active ? 1.0 : 0.0);
+//            osc_send_control(&osc.data, PARAMETER_DRYWET, x_dryWet);
+//            osc_send_control(&osc.data, PARAMETER_VOLUME, x_volume);
+//            osc_send_control(&osc.data, PARAMETER_BALANCE_LEFT, x_balanceLeft);
+//            osc_send_control(&osc.data, PARAMETER_BALANCE_RIGHT, x_balanceRight);
+//        }
     }
 
     /*!

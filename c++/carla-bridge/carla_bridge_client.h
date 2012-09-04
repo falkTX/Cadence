@@ -228,6 +228,14 @@ public:
         m_osc.sendOscExiting();
     }
 
+#ifdef BUILD_BRIDGE_PLUGIN
+    void sendOscBridgeUpdate()
+    {
+        qDebug("CarlaClient::sendOscBridgeUpdate()");
+        m_osc.sendOscBridgeUpdate();
+    }
+#endif
+
 #ifdef BRIDGE_LV2
     void sendOscLv2TransferAtom(const char* const type, const char* const value)
     {
