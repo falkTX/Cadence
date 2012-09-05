@@ -1471,35 +1471,43 @@ public:
 
     intptr_t handleAudioMasterIOChanged()
     {
+        qDebug("VstPlugin::handleAudioMasterIOChanged()");
         Q_ASSERT(m_enabled);
 
         // TESTING
-        qWarning("audioMasterIOChanged called!");
 
         if (! m_enabled)
             return 1;
 
-        //carla_proc_lock();
-        //self->m_enabled = false;
-        //carla_proc_unlock();
+#ifndef BUILD_BRIDGE
+        if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+        {
+            qCritical("VstPlugin::handleAudioMasterIOChanged() - plugin asked IO change, but it's not supported in rack mode");
+            return 0;
+        }
+#endif
 
-        //if (self->m_active)
-        //{
-        //    self->effect->dispatcher(self->effect, effStopProcess, 0, 0, nullptr, 0.0f);
-        //    self->effect->dispatcher(self->effect, effMainsChanged, 0, 0, nullptr, 0.0f);
-        //}
+        engineProcessLock();
+        m_enabled = false;
+        engineProcessUnlock();
 
-        //self->reload();
+        if (m_active)
+        {
+            effect->dispatcher(effect, effStopProcess, 0, 0, nullptr, 0.0f);
+            effect->dispatcher(effect, effMainsChanged, 0, 0, nullptr, 0.0f);
+        }
 
-        //if (self->m_active)
-        //{
-        //    self->effect->dispatcher(self->effect, effMainsChanged, 0, 1, nullptr, 0.0f);
-        //    self->effect->dispatcher(self->effect, effStartProcess, 0, 0, nullptr, 0.0f);
-        //}
+        reload();
 
-        //callback_action(CALLBACK_RELOAD_ALL, self->m_id, 0, 0, 0.0);
+        if (m_active)
+        {
+            effect->dispatcher(effect, effMainsChanged, 0, 1, nullptr, 0.0f);
+            effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
+        }
 
-        return 0; // FIXME - set as 1 when supported
+        x_engine->callback(CALLBACK_RELOAD_ALL, m_id, 0, 0, 0.0);
+
+        return 1;
     }
 
     intptr_t handleAudioMasterProcessEvents(const VstEvents* const vstEvents)
@@ -1544,8 +1552,11 @@ public:
 
     intptr_t handleAdioMasterSizeWindow(int32_t width, int32_t height)
     {
+        qDebug("VstPlugin::handleAudioMasterSizeWindow(%i, %i)", width, height);
+
         gui.width  = width;
         gui.height = height;
+
         x_engine->callback(CALLBACK_RESIZE_GUI, m_id, width, height, 0.0);
 
         return 1;
@@ -1553,6 +1564,8 @@ public:
 
     void handleAudioMasterUpdateDisplay()
     {
+        qDebug("VstPlugin::handleAudioMasterUpdateDisplay()");
+
         // Update current program name
         if (prog.count > 0 && prog.current >= 0)
         {
@@ -1578,6 +1591,8 @@ public:
 
     void handleAudioMasterWantMidi()
     {
+        qDebug("VstPlugin::handleAudioMasterWantMidi()");
+
         m_hints |= PLUGIN_WANTS_MIDI_INPUT;
     }
 
@@ -1606,7 +1621,13 @@ public:
         if (strcmp(feature, "reportConnectionChanges") == 0)
             return -1;
         if (strcmp(feature, "acceptIOChanges") == 0)
+        {
+#ifndef BUILD_BRIDGE
+            if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+                return -1;
+#endif
             return 1;
+        }
         if (strcmp(feature, "sizeWindow") == 0)
             return 1;
         if (strcmp(feature, "offline") == 0)
