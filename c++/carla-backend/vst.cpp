@@ -424,13 +424,12 @@ public:
 
     void idleGui()
     {
-        effect->dispatcher(effect, effIdle, 0, 0, nullptr, 0.0f);
+        //effect->dispatcher(effect, effIdle, 0, 0, nullptr, 0.0f);
 
-        // FIXME
-        //if (gui.type != GUI_EXTERNAL_OSC && gui.visible)
+        if (gui.type != GUI_EXTERNAL_OSC && gui.visible)
             effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
 
-        //CarlaPlugin::idleGui();
+        CarlaPlugin::idleGui();
     }
 
     // -------------------------------------------------------------------

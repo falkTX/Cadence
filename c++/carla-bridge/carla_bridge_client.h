@@ -210,6 +210,18 @@ public:
         m_osc.sendOscControl(index, value);
     }
 
+    void sendOscProgram(const int32_t index)
+    {
+        qDebug("CarlaClient::sendOscProgram(%i)", index);
+        m_osc.sendOscProgram(index);
+    }
+
+    void sendOscMidiProgram(const int32_t index)
+    {
+        qDebug("CarlaClient::sendOscMidiProgram(%i)", index);
+        m_osc.sendOscMidiProgram(index);
+    }
+
     void sendOscMidi(const uint8_t midiBuf[4])
     {
         qDebug("CarlaClient::sendOscMidi(%p)", midiBuf);

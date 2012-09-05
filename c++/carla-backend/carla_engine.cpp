@@ -1476,17 +1476,17 @@ void CarlaEngine::osc_send_bridge_midi_count(const int32_t ins, const int32_t ou
     }
 }
 
-void CarlaEngine::osc_send_bridge_param_count(const int32_t ins, const int32_t outs, const int32_t total)
+void CarlaEngine::osc_send_bridge_parameter_count(const int32_t ins, const int32_t outs, const int32_t total)
 {
-    qDebug("CarlaEngine::osc_send_bridge_param_count(%i, %i, %i)", ins, outs, total);
+    qDebug("CarlaEngine::osc_send_bridge_parameter_count(%i, %i, %i)", ins, outs, total);
     Q_ASSERT(m_oscData);
     Q_ASSERT(total >= 0 && total >= ins + outs);
 
     if (m_oscData && m_oscData->target)
     {
-        char target_path[strlen(m_oscData->path)+20];
+        char target_path[strlen(m_oscData->path)+24];
         strcpy(target_path, m_oscData->path);
-        strcat(target_path, "/bridge_param_count");
+        strcat(target_path, "/bridge_parameter_count");
         lo_send(m_oscData->target, target_path, "iii", ins, outs, total);
     }
 }
@@ -1585,7 +1585,7 @@ void CarlaEngine::osc_send_bridge_param_ranges(const int32_t index, const double
 
 void CarlaEngine::osc_send_bridge_program_info(const int32_t index, const char* const name)
 {
-    //qDebug("CarlaEngine::osc_send_bridge_program_info(%i, \"%s\")", index, name);
+    qDebug("CarlaEngine::osc_send_bridge_program_info(%i, \"%s\")", index, name);
     Q_ASSERT(m_oscData);
 
     if (m_oscData && m_oscData->target)
@@ -1608,6 +1608,62 @@ void CarlaEngine::osc_send_bridge_midi_program_info(const int32_t index, const i
         strcpy(target_path, m_oscData->path);
         strcat(target_path, "/bridge_midi_program_info");
         lo_send(m_oscData->target, target_path, "iiis", index, bank, program, label);
+    }
+}
+
+void CarlaEngine::osc_send_bridge_set_parameter_value(const int32_t index, const double value)
+{
+    qDebug("CarlaEngine::osc_send_bridge_set_parameter_value(%i, %g)", index, value);
+    Q_ASSERT(m_oscData);
+
+    if (m_oscData && m_oscData->target)
+    {
+        char target_path[strlen(m_oscData->path)+27];
+        strcpy(target_path, m_oscData->path);
+        strcat(target_path, "/bridge_set_parameter_value");
+        lo_send(m_oscData->target, target_path, "id", index, value);
+    }
+}
+
+void CarlaEngine::osc_send_bridge_set_default_value(const int32_t index, const double value)
+{
+    qDebug("CarlaEngine::osc_send_bridge_set_default_value(%i, %g)", index, value);
+    Q_ASSERT(m_oscData);
+
+    if (m_oscData && m_oscData->target)
+    {
+        char target_path[strlen(m_oscData->path)+27];
+        strcpy(target_path, m_oscData->path);
+        strcat(target_path, "/bridge_set_default_value");
+        lo_send(m_oscData->target, target_path, "id", index, value);
+    }
+}
+
+void CarlaEngine::osc_send_bridge_set_program(const int32_t index)
+{
+    qDebug("CarlaEngine::osc_send_bridge_set_program(%i)", index);
+    Q_ASSERT(m_oscData);
+
+    if (m_oscData && m_oscData->target)
+    {
+        char target_path[strlen(m_oscData->path)+27];
+        strcpy(target_path, m_oscData->path);
+        strcat(target_path, "/bridge_set_program");
+        lo_send(m_oscData->target, target_path, "i", index);
+    }
+}
+
+void CarlaEngine::osc_send_bridge_set_midi_program(const int32_t index)
+{
+    qDebug("CarlaEngine::osc_send_bridge_set_midi_program(%i)", index);
+    Q_ASSERT(m_oscData);
+
+    if (m_oscData && m_oscData->target)
+    {
+        char target_path[strlen(m_oscData->path)+27];
+        strcpy(target_path, m_oscData->path);
+        strcat(target_path, "/bridge_set_midi_program");
+        lo_send(m_oscData->target, target_path, "i", index);
     }
 }
 #endif

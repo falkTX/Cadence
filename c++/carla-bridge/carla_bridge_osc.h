@@ -89,6 +89,22 @@ public:
             osc_send_control(&m_controlData, index, value);
     }
 
+    void sendOscProgram(const int32_t index)
+    {
+        Q_ASSERT(m_controlData.target);
+
+        if (m_controlData.target)
+            osc_send_program(&m_controlData, index);
+    }
+
+    void sendOscMidiProgram(const int32_t index)
+    {
+        Q_ASSERT(m_controlData.target);
+
+        if (m_controlData.target)
+            osc_send_midi_program(&m_controlData, index);
+    }
+
     void sendOscMidi(const uint8_t midiBuf[4])
     {
         Q_ASSERT(m_controlData.target);

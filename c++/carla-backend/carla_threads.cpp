@@ -63,8 +63,7 @@ void CarlaCheckThread::run()
 {
     qDebug("CarlaCheckThread::run()");
 
-    bool usesSingleThread, oscControllerRegisted = false;
-    unsigned short id;
+    bool oscControllerRegisted, usesSingleThread;
     double value;
 
     m_stopNow = false;
@@ -72,7 +71,10 @@ void CarlaCheckThread::run()
     while (engine->isRunning() && ! m_stopNow)
     {
         const ScopedLocker m(this);
-#ifndef BUILD_BRIDGE
+
+#ifdef BUILD_BRIDGE
+        oscControllerRegisted = true;
+#else
         oscControllerRegisted = engine->isOscControllerRegisted();
 #endif
 
@@ -82,7 +84,9 @@ void CarlaCheckThread::run()
 
             if (plugin && plugin->enabled())
             {
-                id = plugin->id();
+#ifndef BUILD_BRIDGE
+                unsigned short id = plugin->id();
+#endif
                 usesSingleThread = (plugin->hints() & CarlaBackend::PLUGIN_USES_SINGLE_THREAD);
 
                 // -------------------------------------------------------
@@ -106,9 +110,11 @@ void CarlaCheckThread::run()
                             if (! usesSingleThread)
                                 plugin->uiParameterChange(i, value);
 
-#ifndef BUILD_BRIDGE
                             // Update OSC control client
                             if (oscControllerRegisted)
+#ifdef BUILD_BRIDGE
+                                engine->osc_send_bridge_set_parameter_value(i, value);
+#else
                                 engine->osc_send_control_set_parameter_value(id, i, value);
 #endif
                         }

@@ -267,7 +267,7 @@ public:
 #ifdef BUILD_BRIDGE
     void osc_send_bridge_audio_count(const int32_t ins, const int32_t outs, const int32_t total);
     void osc_send_bridge_midi_count(const int32_t ins, const int32_t outs, const int32_t total);
-    void osc_send_bridge_param_count(const int32_t ins, const int32_t outs, const int32_t total);
+    void osc_send_bridge_parameter_count(const int32_t ins, const int32_t outs, const int32_t total);
     void osc_send_bridge_program_count(const int32_t count);
     void osc_send_bridge_midi_program_count(const int32_t count);
     void osc_send_bridge_plugin_info(const int32_t category, const int32_t hints, const char* const name, const char* const label, const char* const maker, const char* const copyright, const int64_t uniqueId);
@@ -276,6 +276,10 @@ public:
     void osc_send_bridge_param_ranges(const int32_t index, const double def, const double min, const double max, const double step, const double stepSmall, const double stepLarge);
     void osc_send_bridge_program_info(const int32_t index, const char* const name);
     void osc_send_bridge_midi_program_info(const int32_t index, const int32_t bank, const int32_t program, const char* const label);
+    void osc_send_bridge_set_parameter_value(const int32_t index, const double value);
+    void osc_send_bridge_set_default_value(const int32_t index, const double value);
+    void osc_send_bridge_set_program(const int32_t index);
+    void osc_send_bridge_set_midi_program(const int32_t index);
     //void osc_send_bridge_program(const int32_t index);
     //void osc_send_bridge_midi_program(const int32_t index);
     //void osc_send_bridge_custom_data(const char* const stype, const char* const key, const char* const value);
