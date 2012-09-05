@@ -42,7 +42,8 @@ public:
         m_type   = ptype;
         m_hints  = PLUGIN_IS_BRIDGE;
 
-        initiated = saved = false;
+        m_initiated = false;
+        m_saved = false;
 
         info.ains  = 0;
         info.aouts = 0;
@@ -59,7 +60,7 @@ public:
 
         params = nullptr;
 
-        m_thread = new CarlaPluginThread(engine, this, CarlaPluginThread::PLUGIN_THREAD_BRIDGE);
+        osc.thread = new CarlaPluginThread(engine, this, CarlaPluginThread::PLUGIN_THREAD_BRIDGE);
     }
 
     ~BridgePlugin()
@@ -70,24 +71,20 @@ public:
         {
             osc_send_hide(&osc.data);
             osc_send_quit(&osc.data);
+            osc_clear_data(&osc.data);
         }
 
-        // Wait a bit first, try safe quit else force kill
-        if (m_thread->isRunning())
+        if (osc.thread)
         {
-            if (m_thread->wait(2000) == false)
-                m_thread->quit();
-
-            if (m_thread->isRunning() && m_thread->wait(1000) == false)
+            // Wait a bit first, try safe quit, then force kill
+            if (osc.thread->isRunning() && ! osc.thread->wait(3000))
             {
-                qWarning("Failed to properly stop Bridge thread");
-                m_thread->terminate();
+                qWarning("Failed to properly stop Plugin Bridge thread");
+                osc.thread->terminate();
             }
+
+            delete osc.thread;
         }
-
-        delete m_thread;
-
-        osc_clear_data(&osc.data);
 
         if (info.name)
             free((void*)info.name);
@@ -159,7 +156,7 @@ public:
     // -------------------------------------------------------------------
     // Information (per-plugin data)
 
-    double getParameterValue(uint32_t parameterId)
+    double getParameterValue(const uint32_t parameterId)
     {
         Q_ASSERT(parameterId < param.count);
 
@@ -515,11 +512,11 @@ public:
 //        }
 
         case PluginBridgeUpdateNow:
-            initiated = true;
+            m_initiated = true;
             break;
 
         case PluginBridgeSaved:
-            saved = true;
+            m_saved = true;
             break;
         }
 
@@ -534,9 +531,6 @@ public:
         Q_ASSERT(parameterId < param.count);
 
         params[parameterId].value = fixParameterValue(value, param.ranges[parameterId]);
-
-        if (sendGui)
-            osc_send_control(&osc.data, param.data[parameterId].rindex, value);
 
         CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
     }
@@ -580,30 +574,10 @@ public:
         }
     }
 
-    void setProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
-    {
-        Q_ASSERT(index < (int32_t)prog.count);
-
-        if (sendGui)
-            osc_send_program(&osc.data, index);
-
-        CarlaPlugin::setProgram(index, sendGui, sendOsc, sendCallback, block);
-    }
-
-    void setMidiProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
-    {
-        Q_ASSERT(index < (int32_t)midiprog.count);
-
-        if (sendGui)
-            osc_send_midi_program(&osc.data, index);
-
-        CarlaPlugin::setMidiProgram(index, sendGui, sendOsc, sendCallback, block);
-    }
-
     // -------------------------------------------------------------------
     // Set gui stuff
 
-    void showGui(bool yesNo)
+    void showGui(const bool yesNo)
     {
         if (yesNo)
             osc_send_show(&osc.data);
@@ -614,26 +588,68 @@ public:
     // -------------------------------------------------------------------
     // Plugin state
 
-    void reload()
-    {
-    }
-
     void prepareForSave()
     {
-        saved = false;
+        m_saved = false;
         osc_send_configure(&osc.data, CARLA_BRIDGE_MSG_SAVE_NOW, "");
 
         for (int i=0; i < 100; i++)
         {
-            if (saved)
+            if (m_saved)
                 break;
             carla_msleep(100);
         }
 
-        if (! saved)
+        if (! m_saved)
             qWarning("BridgePlugin::prepareForSave() - Timeout while requesting save state");
         else
-            qWarning("BridgePlugin::prepareForSave() - success!");
+            qDebug("BridgePlugin::prepareForSave() - success!");
+    }
+
+    // -------------------------------------------------------------------
+    // Post-poned events
+
+    void uiParameterChange(const uint32_t index, const double value)
+    {
+        Q_ASSERT(index < param.count);
+
+        osc_send_control(&osc.data, param.data[index].rindex, value);
+    }
+
+    void uiProgramChange(const uint32_t index)
+    {
+        Q_ASSERT(index < prog.count);
+
+        osc_send_program(&osc.data, index);
+    }
+
+    void uiMidiProgramChange(const uint32_t index)
+    {
+        Q_ASSERT(index < midiprog.count);
+
+        osc_send_midi_program(&osc.data, index);
+    }
+
+    void uiNoteOn(const uint8_t channel, const uint8_t note, const uint8_t velo)
+    {
+        Q_ASSERT(channel < 16);
+        Q_ASSERT(note < 128);
+        Q_ASSERT(velo > 0 && velo < 128);
+
+        // TODO
+        Q_UNUSED(channel);
+        Q_UNUSED(note);
+        Q_UNUSED(velo);
+    }
+
+    void uiNoteOff(const uint8_t channel, const uint8_t note)
+    {
+        Q_ASSERT(channel < 16);
+        Q_ASSERT(note < 128);
+
+        // TODO
+        Q_UNUSED(channel);
+        Q_UNUSED(note);
     }
 
     // -------------------------------------------------------------------
@@ -653,9 +669,9 @@ public:
 
     // -------------------------------------------------------------------
 
-    bool init(const char* filename, const char* const name, const char* label)
+    bool init(const char* const filename, const char* const name, const char* const label)
     {
-        const char* bridgeBinary = getBinaryBidgePath(m_binary);
+        const char* const bridgeBinary = getBinaryBidgePath(m_binary);
 
         if (! bridgeBinary)
         {
@@ -671,22 +687,22 @@ public:
         // register plugin now so we can receive OSC (and wait for it)
         x_engine->__bridgePluginRegister(m_id, this);
 
-        m_thread->setOscData(bridgeBinary, label, getPluginTypeString(m_type));
-        m_thread->start();
+        osc.thread->setOscData(bridgeBinary, label, getPluginTypeString(m_type));
+        osc.thread->start();
 
-        for (int i=0; i < 100; i++)
+        for (int i=0; i < 200; i++)
         {
-            if (initiated)
+            if (m_initiated)
                 break;
             carla_msleep(50);
         }
 
-        if (! initiated)
+        if (! m_initiated)
         {
             // unregister so it gets handled properly
             x_engine->__bridgePluginRegister(m_id, nullptr);
 
-            m_thread->terminate();
+            osc.thread->terminate();
             setLastError("Timeout while waiting for a response from plugin-bridge");
             return false;
         }
@@ -695,11 +711,10 @@ public:
     }
 
 private:
-    bool initiated;
-    bool saved;
-
     const BinaryType m_binary;
-    CarlaPluginThread* m_thread;
+
+    bool m_initiated;
+    bool m_saved;
 
     struct {
         uint32_t ains, aouts;
@@ -736,19 +751,7 @@ CarlaPlugin* CarlaPlugin::newBridge(const initializer& init, BinaryType btype, P
         return nullptr;
     }
 
-    plugin->reload();
-
-    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
-    {
-        if (/* inputs */ ((plugin->audioInCount() != 0 && plugin->audioInCount() != 2)) || /* outputs */ ((plugin->audioOutCount() != 0 && plugin->audioOutCount() != 2)))
-        {
-            setLastError("Carla Rack Mode can only work with Stereo bridged plugins, sorry!");
-            delete plugin;
-            return nullptr;
-        }
-
-    }
-
+    //plugin->reload();
     plugin->registerToOsc();
 
     return plugin;

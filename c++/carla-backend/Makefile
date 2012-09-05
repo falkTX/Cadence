@@ -13,7 +13,7 @@ HAVE_FLUIDSYNTH   = $(shell pkg-config --exists fluidsynth && echo true)
 HAVE_LINUXSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
 HAVE_SUIL         = $(shell pkg-config --exists suil-0 && echo true)
 
-BASE_FLAGS        = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -mfpmath=sse -Wall -I. -I../carla-includes
+BASE_FLAGS        = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -mfpmath=sse -Wall -I. -I../carla-includes -I../carla-jackbridge
 
 CARLA_CXX_FLAGS   = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
 CARLA_CXX_FLAGS  += $(shell pkg-config --cflags liblo QtCore QtGui)
@@ -65,10 +65,11 @@ OBJS = \
 	carla_shared.o \
 	carla_threads.o \
 	ladspa.o dssi.o lv2.o vst.o fluidsynth.o linuxsampler.o \
+	../carla-jackbridge/carla_jackbridge.o \
 	../carla-lilv/carla_lilv.a
 
 ifeq ($(WANT_RTAUDIO),true)
-CARLA_CXX_FLAGS += -Irtaudio-4.0.11 -Irtmidi-2.0.0 -DCARLA_ENGINE_RTAUDIO -D_FORTIFY_SOURCE=2 -DHAVE_GETTIMEOFDAY
+CARLA_CXX_FLAGS += -Irtaudio-4.0.11 -Irtmidi-2.0.0 -DCARLA_ENGINE_RTAUDIO -DHAVE_GETTIMEOFDAY -D_FORTIFY_SOURCE=2
 OBJS += rtaudio-4.0.11/RtAudio.o
 OBJS += rtmidi-2.0.0/RtMidi.o
 endif

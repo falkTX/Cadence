@@ -1654,7 +1654,7 @@ public:
 
         if (sendGui)
         {
-            if (note)
+            if (note > 0)
                 uiNoteOn(channel, note, velo);
             else
                 uiNoteOff(channel, note);

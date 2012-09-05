@@ -29,6 +29,7 @@ SOURCES = \
     ../vst.cpp \
     ../fluidsynth.cpp \
     ../linuxsampler.cpp
+#    ../../carla-jackbridge/carla_jackbridge.cpp
 
 HEADERS = \
     ../carla_backend.h \
@@ -38,6 +39,7 @@ HEADERS = \
     ../carla_plugin.h \
     ../carla_shared.h \
     ../carla_threads.h \
+    ../../carla-jackbridge/carla_jackbridge.h \
     ../../carla-includes/carla_includes.h \
     ../../carla-includes/carla_lib_includes.h \
     ../../carla-includes/carla_osc_includes.h \
@@ -52,6 +54,7 @@ HEADERS = \
     ../../carla-includes/lv2_rdf.h
 
 INCLUDEPATH = .. \
+    ../../carla-jackbridge \
     ../../carla-includes
 
 DEFINES  = QTCREATOR_TEST
@@ -62,6 +65,7 @@ DEFINES += CARLA_ENGINE_LV2
 DEFINES += HAVE_SUIL
 DEFINES += WANT_FLUIDSYNTH WANT_LINUXSAMPLER
 LIBS     = ../../carla-lilv/carla_lilv.a -ldl
+LIBS    += -L../../carla-jackbridge -lcarla-jackbridge-native
 
 INCLUDEPATH += ../rtaudio-4.0.11
 INCLUDEPATH += ../rtmidi-2.0.0

@@ -79,7 +79,7 @@ int CarlaEngine::maxClientNameSize()
 #  ifndef BUILD_BRIDGE
     if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #  endif
-        return jack_client_name_size();
+        return jackbridge_client_name_size();
 #endif
     return STR_MAX/2;
 }
@@ -90,7 +90,7 @@ int CarlaEngine::maxPortNameSize()
 #  ifndef BUILD_BRIDGE
     if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #  endif
-        return jack_port_name_size();
+        return jackbridge_port_name_size();
 #endif
     return STR_MAX;
 }
@@ -572,7 +572,7 @@ CarlaEngineClient::~CarlaEngineClient()
     {
 #ifdef CARLA_ENGINE_JACK
         if (handle.jackClient)
-            jack_client_close(handle.jackClient);
+            jackbridge_client_close(handle.jackClient);
 #endif
 #ifdef CARLA_ENGINE_RTAUDIO
         if (handle.rtAudioPtr)
@@ -594,7 +594,7 @@ void CarlaEngineClient::activate()
         {
 #ifdef CARLA_ENGINE_JACK
             if (handle.jackClient)
-                jack_activate(handle.jackClient);
+                jackbridge_activate(handle.jackClient);
 #endif
 #ifdef CARLA_ENGINE_RTAUDIO
             if (handle.rtAudioPtr)
@@ -619,7 +619,7 @@ void CarlaEngineClient::deactivate()
         {
 #ifdef CARLA_ENGINE_JACK
             if (handle.jackClient)
-                jack_deactivate(handle.jackClient);
+                jackbridge_deactivate(handle.jackClient);
 #endif
 #ifdef CARLA_ENGINE_RTAUDIO
             if (handle.rtAudioPtr)
@@ -672,11 +672,11 @@ const CarlaEngineBasePort* CarlaEngineClient::addPort(const CarlaEnginePortType 
         switch (type)
         {
         case CarlaEnginePortTypeAudio:
-            portHandle.jackPort = jack_port_register(handle.jackClient, name, JACK_DEFAULT_AUDIO_TYPE, isInput ? JackPortIsInput : JackPortIsOutput, 0);
+            portHandle.jackPort = jackbridge_port_register(handle.jackClient, name, JACK_DEFAULT_AUDIO_TYPE, isInput ? JackPortIsInput : JackPortIsOutput, 0);
             break;
         case CarlaEnginePortTypeControl:
         case CarlaEnginePortTypeMIDI:
-            portHandle.jackPort = jack_port_register(handle.jackClient, name, JACK_DEFAULT_MIDI_TYPE, isInput ? JackPortIsInput : JackPortIsOutput, 0);
+            portHandle.jackPort = jackbridge_port_register(handle.jackClient, name, JACK_DEFAULT_MIDI_TYPE, isInput ? JackPortIsInput : JackPortIsOutput, 0);
             break;
         }
     }
@@ -720,7 +720,7 @@ CarlaEngineBasePort::~CarlaEngineBasePort()
 #  endif
     {
         if (handle.jackClient && handle.jackPort)
-            jack_port_unregister(handle.jackClient, handle.jackPort);
+            jackbridge_port_unregister(handle.jackClient, handle.jackPort);
     }
 #endif
 }
@@ -746,7 +746,7 @@ float* CarlaEngineAudioPort::getJackAudioBuffer(uint32_t nframes)
         return nullptr;
 #  endif
     Q_ASSERT(handle.jackPort);
-    return (float*)jack_port_get_buffer(handle.jackPort, nframes);
+    return (float*)jackbridge_port_get_buffer(handle.jackPort, nframes);
 }
 #endif
 
@@ -774,10 +774,10 @@ void CarlaEngineControlPort::initBuffer(CarlaEngine* const engine)
 #ifdef CARLA_ENGINE_JACK
     if (handle.jackPort)
     {
-        buffer = jack_port_get_buffer(handle.jackPort, engine->getBufferSize());
+        buffer = jackbridge_port_get_buffer(handle.jackPort, engine->getBufferSize());
 
         if (! isInput)
-            jack_midi_clear_buffer(buffer);
+            jackbridge_midi_clear_buffer(buffer);
     }
 #endif
 }
@@ -808,7 +808,7 @@ uint32_t CarlaEngineControlPort::getEventCount()
 #endif
 
 #ifdef CARLA_ENGINE_JACK
-    return jack_midi_get_event_count(buffer);
+    return jackbridge_midi_get_event_count(buffer);
 #else
     return 0;
 #endif
@@ -835,10 +835,10 @@ const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(uint32_t index)
 #endif
 
 #ifdef CARLA_ENGINE_JACK
-    static jack_midi_event_t jackEvent;
+    static jackbridge_midi_event_t jackEvent;
     static CarlaEngineControlEvent carlaEvent;
 
-    if (jack_midi_event_get(&jackEvent, buffer, index) != 0)
+    if (jackbridge_midi_event_get(&jackEvent, buffer, index) != 0)
         return nullptr;
 
     memset(&carlaEvent, 0, sizeof(CarlaEngineControlEvent));
@@ -934,28 +934,28 @@ void CarlaEngineControlPort::writeEvent(CarlaEngineControlEventType type, uint32
         data[0] = MIDI_STATUS_CONTROL_CHANGE + channel;
         data[1] = controller;
         data[2] = value * 127;
-        jack_midi_event_write(buffer, time, data, 3);
+        jackbridge_midi_event_write(buffer, time, data, 3);
         break;
     case CarlaEngineEventMidiBankChange:
         data[0] = MIDI_STATUS_CONTROL_CHANGE + channel;
         data[1] = MIDI_CONTROL_BANK_SELECT;
         data[2] = value;
-        jack_midi_event_write(buffer, time, data, 3);
+        jackbridge_midi_event_write(buffer, time, data, 3);
         break;
     case CarlaEngineEventMidiProgramChange:
         data[0] = MIDI_STATUS_PROGRAM_CHANGE + channel;
         data[1] = value;
-        jack_midi_event_write(buffer, time, data, 2);
+        jackbridge_midi_event_write(buffer, time, data, 2);
         break;
     case CarlaEngineEventAllSoundOff:
         data[0] = MIDI_STATUS_CONTROL_CHANGE + channel;
         data[1] = MIDI_CONTROL_ALL_SOUND_OFF;
-        jack_midi_event_write(buffer, time, data, 2);
+        jackbridge_midi_event_write(buffer, time, data, 2);
         break;
     case CarlaEngineEventAllNotesOff:
         data[0] = MIDI_STATUS_CONTROL_CHANGE + channel;
         data[1] = MIDI_CONTROL_ALL_NOTES_OFF;
-        jack_midi_event_write(buffer, time, data, 2);
+        jackbridge_midi_event_write(buffer, time, data, 2);
         break;
     }
 #endif
@@ -985,10 +985,10 @@ void CarlaEngineMidiPort::initBuffer(CarlaEngine* const engine)
 #ifdef CARLA_ENGINE_JACK
     if (handle.jackPort)
     {
-        buffer = jack_port_get_buffer(handle.jackPort, engine->getBufferSize());
+        buffer = jackbridge_port_get_buffer(handle.jackPort, engine->getBufferSize());
 
         if (! isInput)
-            jack_midi_clear_buffer(buffer);
+            jackbridge_midi_clear_buffer(buffer);
     }
 #endif
 }
@@ -1019,7 +1019,7 @@ uint32_t CarlaEngineMidiPort::getEventCount()
 #endif
 
 #ifdef CARLA_ENGINE_JACK
-    return jack_midi_get_event_count(buffer);
+    return jackbridge_midi_get_event_count(buffer);
 #else
     return 0;
 #endif
@@ -1047,10 +1047,10 @@ const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(uint32_t index)
 #endif
 
 #ifdef CARLA_ENGINE_JACK
-    static jack_midi_event_t jackEvent;
+    static jackbridge_midi_event_t jackEvent;
     static CarlaEngineMidiEvent carlaEvent;
 
-    if (jack_midi_event_get(&jackEvent, buffer, index) == 0 && jackEvent.size <= 4)
+    if (jackbridge_midi_event_get(&jackEvent, buffer, index) == 0 && jackEvent.size <= 4)
     {
         carlaEvent.time = jackEvent.time;
         carlaEvent.size = jackEvent.size;
@@ -1095,7 +1095,7 @@ void CarlaEngineMidiPort::writeEvent(uint32_t time, const uint8_t* data, uint8_t
 #endif
 
 #ifdef CARLA_ENGINE_JACK
-    jack_midi_event_write(buffer, time, data, size);
+    jackbridge_midi_event_write(buffer, time, data, size);
 #endif
 }
 

@@ -93,7 +93,7 @@
 
 // export symbols if needed
 #ifdef BUILD_BRIDGE
-#  define CARLA_EXPORT
+#  define CARLA_EXPORT extern "C"
 #else
 #  if defined(Q_OS_WIN) && ! defined(__WINE__)
 #    define CARLA_EXPORT extern "C" __declspec (dllexport)

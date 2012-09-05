@@ -18,9 +18,11 @@ BUILD_FLAGS += -Iconfig -I../carla-includes
 32BIT_FLAGS  = -m32
 64BIT_FLAGS  = -m64
 
-OBJS       = serd.o sord.o sratom.o lilv.o
-OBJS_32bit = serd_32bit.o sord_32bit.o sratom_32bit.o lilv_32bit.o
-OBJS_64bit = serd_64bit.o sord_64bit.o sratom_64bit.o lilv_64bit.o
+OBJS         = serd.o sord.o sratom.o lilv.o
+OBJS_posix32 = serd_posix32.o sord_posix32.o sratom_posix32.o lilv_posix32.o
+OBJS_posix64 = serd_posix64.o sord_posix64.o sratom_posix64.o lilv_posix64.o
+OBJS_win32   = serd_win32.o sord_win32.o sratom_win32.o lilv_win32.o
+OBJS_win64   = serd_win64.o sord_win64.o sratom_win64.o lilv_win64.o
 
 # --------------------------------------------------------------
 
@@ -43,40 +45,78 @@ lilv.o: lilv.c
 
 # --------------------------------------------------------------
 
-32bit: carla_lilv_32bit.a
+posix32: carla_lilv_posix32.a
 
-carla_lilv_32bit.a: $(OBJS_32bit)
+carla_lilv_posix32.a: $(OBJS_posix32)
 	$(AR) rs $@ $^
 
-serd_32bit.o: serd.c
+serd_posix32.o: serd.c
 	$(CC) $< $(BUILD_FLAGS) $(32BIT_FLAGS) -c -o $@
 
-sord_32bit.o: sord.c
+sord_posix32.o: sord.c
 	$(CC) $< $(BUILD_FLAGS) -Isord-$(SORD_VERSION)/src $(32BIT_FLAGS) -c -o $@
 
-sratom_32bit.o: sratom.c
+sratom_posix32.o: sratom.c
 	$(CC) $< $(BUILD_FLAGS) $(32BIT_FLAGS) -c -o $@
 
-lilv_32bit.o: lilv.c
+lilv_posix32.o: lilv.c
 	$(CC) $< $(BUILD_FLAGS) -Ililv-$(LILV_VERSION)/src $(32BIT_FLAGS) -c -o $@
 
 # --------------------------------------------------------------
 
-64bit: carla_lilv_64bit.a
+posix64: carla_lilv_posix64.a
 
-carla_lilv_64bit.a: $(OBJS_64bit)
+carla_lilv_posix64.a: $(OBJS_posix64)
 	$(AR) rs $@ $^
 
-serd_64bit.o: serd.c
+serd_posix64.o: serd.c
 	$(CC) $< $(BUILD_FLAGS) $(64BIT_FLAGS) -c -o $@
 
-sord_64bit.o: sord.c
+sord_posix64.o: sord.c
 	$(CC) $< $(BUILD_FLAGS) -Isord-$(SORD_VERSION)/src $(64BIT_FLAGS) -c -o $@
 
-sratom_64bit.o: sratom.c
+sratom_posix64.o: sratom.c
 	$(CC) $< $(BUILD_FLAGS) $(64BIT_FLAGS) -c -o $@
 
-lilv_64bit.o: lilv.c
+lilv_posix64.o: lilv.c
+	$(CC) $< $(BUILD_FLAGS) -Ililv-$(LILV_VERSION)/src $(64BIT_FLAGS) -c -o $@
+
+# --------------------------------------------------------------
+
+win32: carla_lilv_win32.a
+
+carla_lilv_win32.a: $(OBJS_win32)
+	$(AR) rs $@ $^
+
+serd_win32.o: serd.c
+	$(CC) $< $(BUILD_FLAGS) $(32BIT_FLAGS) -c -o $@
+
+sord_win32.o: sord.c
+	$(CC) $< $(BUILD_FLAGS) -Isord-$(SORD_VERSION)/src $(32BIT_FLAGS) -c -o $@
+
+sratom_win32.o: sratom.c
+	$(CC) $< $(BUILD_FLAGS) $(32BIT_FLAGS) -c -o $@
+
+lilv_win32.o: lilv.c
+	$(CC) $< $(BUILD_FLAGS) -Ililv-$(LILV_VERSION)/src $(32BIT_FLAGS) -c -o $@
+
+# --------------------------------------------------------------
+
+win64: carla_lilv_win64.a
+
+carla_lilv_win64.a: $(OBJS_win64)
+	$(AR) rs $@ $^
+
+serd_win64.o: serd.c
+	$(CC) $< $(BUILD_FLAGS) $(64BIT_FLAGS) -c -o $@
+
+sord_win64.o: sord.c
+	$(CC) $< $(BUILD_FLAGS) -Isord-$(SORD_VERSION)/src $(64BIT_FLAGS) -c -o $@
+
+sratom_win64.o: sratom.c
+	$(CC) $< $(BUILD_FLAGS) $(64BIT_FLAGS) -c -o $@
+
+lilv_win64.o: lilv.c
 	$(CC) $< $(BUILD_FLAGS) -Ililv-$(LILV_VERSION)/src $(64BIT_FLAGS) -c -o $@
 
 # --------------------------------------------------------------

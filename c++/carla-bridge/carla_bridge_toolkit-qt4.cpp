@@ -151,10 +151,10 @@ public:
 
         app->connect(window, SIGNAL(finished(int)), app, SLOT(quit()));
 
-        m_client->sendOscUpdate();
-
         if (showGui)
             show();
+        else
+            m_client->sendOscUpdate();
 
         // Main loop
         app->exec(client);

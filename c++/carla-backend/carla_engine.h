@@ -23,8 +23,7 @@
 #include "carla_threads.h"
 
 #ifdef CARLA_ENGINE_JACK
-#include <jack/jack.h>
-#include <jack/midiport.h>
+#include "carla_jackbridge.h"
 #endif
 
 #ifdef CARLA_ENGINE_RTAUDIO

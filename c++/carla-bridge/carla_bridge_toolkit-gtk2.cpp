@@ -90,10 +90,10 @@ public:
         g_timeout_add(50, gtk_ui_timeout, this);
         g_signal_connect(window, "destroy", G_CALLBACK(gtk_ui_destroy), this);
 
-        m_client->sendOscUpdate();
-
         if (showGui)
             show();
+        else
+            m_client->sendOscUpdate();
 
         // Main loop
         gtk_main();

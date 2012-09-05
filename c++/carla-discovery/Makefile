@@ -5,21 +5,19 @@
 #
 
 CXX     ?= g++
-WINECXX ?= wineg++
 STRIP   ?= strip
 
-BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -mfpmath=sse
-BASE_FLAGS  += -Wall -I../carla-backend -I../carla-includes
+BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -mfpmath=sse -Wall
+BASE_FLAGS  += -I../carla-backend -I../carla-includes
 
 BUILD_FLAGS  = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
 BUILD_FLAGS += $(shell pkg-config --cflags QtCore)
-BUILD_FLAGS += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT
+BUILD_FLAGS += -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT # -DNDEBUG
 BUILD_FLAGS += -DVESTIGE_HEADER # Comment this line to not use vestige header
 
 32BIT_FLAGS  = -m32
 64BIT_FLAGS  = -m64
-LINK_FLAGS   = $(LDFLAGS)
-LINK_FLAGS  += $(shell pkg-config --libs QtCore)
+LINK_FLAGS   = $(shell pkg-config --libs QtCore) $(LDFLAGS)
 
 ifneq ($(NATIVE),)
 BUILD_FLAGS += -DBUILD_NATIVE
@@ -45,11 +43,6 @@ WIN_32BIT_FLAGS   = $(32BIT_FLAGS)
 WIN_64BIT_FLAGS   = $(64BIT_FLAGS)
 WIN_LINK_FLAGS    = $(LINK_FLAGS) -static -mwindows
 
-WINE_BUILD_FLAGS  = $(BUILD_FLAGS) # -fpermissive
-WINE_32BIT_FLAGS  = $(32BIT_FLAGS) -L/usr/lib32/wine -L/usr/lib/i386-linux-gnu/wine
-WINE_64BIT_FLAGS  = $(64BIT_FLAGS) -L/usr/lib64/wine -L/usr/lib/x86_64-linux-gnu/wine
-WINE_LINK_FLAGS   = $(LINK_FLAGS) -ldl
-
 # --------------------------------------------------------------
 
 all: carla-discovery-native
@@ -58,43 +51,40 @@ posix32: carla-discovery-posix32
 posix64: carla-discovery-posix64
 win32:   carla-discovery-win32.exe
 win64:   carla-discovery-win64.exe
-wine32:  carla-discovery-win32.exe.so
-wine64:  carla-discovery-win64.exe.so
 
 # --------------------------------------------------------------
 
-32BIT_OBJS = carla-discovery.cpp ../carla-lilv/carla_lilv_32bit.a
-64BIT_OBJS = carla-discovery.cpp ../carla-lilv/carla_lilv_64bit.a
+OBJS = carla-discovery.cpp
 
 carla-discovery-native: carla-discovery.cpp ../carla-lilv/carla_lilv.a
 	$(CXX) $^ $(BUILD_FLAGS) $(LINK_FLAGS) -o $@ && $(STRIP) $@
 
-carla-discovery-posix32: $(32BIT_OBJS)
+carla-discovery-posix32: $(OBJS) ../carla-lilv/carla_lilv_posix32.a
 	$(CXX) $^ $(POSIX_BUILD_FLAGS) $(POSIX_32BIT_FLAGS) $(POSIX_LINK_FLAGS) -o $@ && $(STRIP) $@
 
-carla-discovery-posix64: $(64BIT_OBJS)
+carla-discovery-posix64: $(OBJS) ../carla-lilv/carla_lilv_posix64.a
 	$(CXX) $^ $(POSIX_BUILD_FLAGS) $(POSIX_64BIT_FLAGS) $(POSIX_LINK_FLAGS) -o $@ && $(STRIP) $@
 
-carla-discovery-win32.exe: $(32BIT_OBJS)
+carla-discovery-win32.exe: $(OBJS) ../carla-lilv/carla_lilv_win32.a
 	$(CXX) $^ $(WIN_BUILD_FLAGS) $(WIN_32BIT_FLAGS) $(WIN_LINK_FLAGS) -o $@ && $(STRIP) $@
 
-carla-discovery-win64.exe: $(64BIT_OBJS)
+carla-discovery-win64.exe: $(OBJS) ../carla-lilv/carla_lilv_win64.a
 	$(CXX) $^ $(WIN_BUILD_FLAGS) $(WIN_64BIT_FLAGS) $(WIN_LINK_FLAGS) -o $@ && $(STRIP) $@
-
-carla-discovery-win32.exe.so: $(32BIT_OBJS)
-	$(WINECXX) $^ $(WINE_BUILD_FLAGS) $(WINE_32BIT_FLAGS) $(WINE_LINK_FLAGS) -o carla-discovery-win32.exe && $(STRIP) $@
-
-carla-discovery-win64.exe.so: $(64BIT_OBJS)
-	$(WINECXX) $^ $(WINE_BUILD_FLAGS) $(WINE_64BIT_FLAGS) $(WINE_LINK_FLAGS) -o carla-discovery-win64.exe && $(STRIP) $@
 
 ../carla-lilv/carla_lilv.a:
 	$(MAKE) -C ../carla-lilv
 
-../carla-lilv/carla_lilv_32bit.a:
-	$(MAKE) -C ../carla-lilv 32bit
+../carla-lilv/carla_lilv_posix32.a:
+	$(MAKE) -C ../carla-lilv posix32
 
-../carla-lilv/carla_lilv_64bit.a:
-	$(MAKE) -C ../carla-lilv 64bit
+../carla-lilv/carla_lilv_posix64.a:
+	$(MAKE) -C ../carla-lilv posix64
+
+../carla-lilv/carla_lilv_win32.a:
+	$(MAKE) -C ../carla-lilv win32
+
+../carla-lilv/carla_lilv_win64.a:
+	$(MAKE) -C ../carla-lilv win64
 
 # --------------------------------------------------------------
 

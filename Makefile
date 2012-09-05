@@ -179,13 +179,21 @@ posix64:
 	$(MAKE) -C c++/carla-bridge posix64
 	$(MAKE) -C c++/carla-discovery posix64
 
+win32:
+	$(MAKE) -C c++/carla-bridge win32
+	$(MAKE) -C c++/carla-discovery win32
+
+win64:
+	$(MAKE) -C c++/carla-bridge win64
+	$(MAKE) -C c++/carla-discovery win64
+
 wine32:
-	$(MAKE) -C c++/carla-bridge wine32
-	$(MAKE) -C c++/carla-discovery wine32
+	$(MAKE) -C c++/carla-jackbridge wine32
+	cp c++/carla-jackbridge/libcarla-jackbridge-win32.dll.so c++/carla-bridge/libcarla-jackbridge-win32.dll
 
 wine64:
-	$(MAKE) -C c++/carla-bridge wine64
-	$(MAKE) -C c++/carla-discovery wine64
+	$(MAKE) -C c++/carla-jackbridge wine64
+	cp c++/carla-jackbridge/libcarla-jackbridge-win64.dll.so c++/carla-bridge/libcarla-jackbridge-win64.dll
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -194,6 +202,7 @@ clean:
 	$(MAKE) clean -C c++/carla-bridge
 	$(MAKE) clean -C c++/carla-discovery
 	$(MAKE) clean -C c++/carla-lilv
+	$(MAKE) clean -C c++/carla-jackbridge
 	$(MAKE) clean -C c++/jackmeter
 	$(MAKE) clean -C c++/xycontroller
 	rm -f *~ src/*~ src/*.pyc src/ui_*.py src/resources_rc.py

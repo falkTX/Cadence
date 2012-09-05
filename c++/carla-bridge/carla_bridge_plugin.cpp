@@ -384,11 +384,16 @@ public:
         Q_ASSERT(client);
 
         m_client = client;
-        m_client->sendOscUpdate();
-        m_client->sendOscBridgeUpdate();
 
         if (showGui)
+        {
             show();
+        }
+        else
+        {
+            m_client->sendOscUpdate();
+            m_client->sendOscBridgeUpdate();
+        }
 
 #ifdef __WINE__
         Q_ASSERT(! closeNow);
@@ -710,6 +715,7 @@ int main(int argc, char* argv[])
 
     /// Init plugin
     short id = engine.addPlugin(itype, filename, name, label);
+    int ret;
 
     if (id >= 0 && id < CarlaBackend::MAX_PLUGINS)
     {
@@ -727,14 +733,17 @@ int main(int argc, char* argv[])
             plugin->setActive(true, false, false);
             plugin->showGui(true);
         }
+
+        ret = 0;
     }
     else
     {
         qWarning("Plugin failed to load, error was:\n%s", CarlaBackend::getLastError());
-        return 1;
+        ret = 1;
     }
 
-    toolkit.exec(&client, !useOsc);
+    if (ret == 0)
+        toolkit.exec(&client, !useOsc);
 
     engine.removeAllPlugins();
     engine.close();
@@ -749,7 +758,7 @@ int main(int argc, char* argv[])
     // Close toolkit
     toolkit.quit();
 
-    return 0;
+    return ret;
 }
 
 #endif // BUILD_BRIDGE_PLUGIN

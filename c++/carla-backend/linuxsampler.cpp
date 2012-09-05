@@ -341,8 +341,7 @@ public:
 
                     midiInputPort->DispatchNoteOff(note, 0, channel, time);
 
-                    if (channel == m_ctrlInChannel)
-                        postponeEvent(PluginPostEventNoteOff, channel, note, 0.0);
+                    postponeEvent(PluginPostEventNoteOff, channel, note, 0.0);
                 }
                 else if (MIDI_IS_STATUS_NOTE_ON(status))
                 {
@@ -351,8 +350,7 @@ public:
 
                     midiInputPort->DispatchNoteOn(note, velo, channel, time);
 
-                    if (channel == m_ctrlInChannel)
-                        postponeEvent(PluginPostEventNoteOn, channel, note, velo);
+                    postponeEvent(PluginPostEventNoteOn, channel, note, velo);
                 }
                 else if (MIDI_IS_STATUS_AFTERTOUCH(status))
                 {
