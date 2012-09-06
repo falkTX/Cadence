@@ -27,10 +27,6 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
-#if 0
-} /* adjust editor indent */
-#endif
-
 /*!
  * @defgroup CarlaBackendVstPlugin Carla Backend VST Plugin
  *
@@ -66,6 +62,8 @@ public:
         gui.visible = false;
         gui.width  = 0;
         gui.height = 0;
+
+        isProcessing = false;
 
         memset(midiEvents, 0, sizeof(VstMidiEvent)*MAX_MIDI_EVENTS*2);
 
@@ -1171,7 +1169,9 @@ public:
             //{
             if (m_hints & PLUGIN_CAN_PROCESS_REPLACING)
             {
+                isProcessing = true;
                 effect->processReplacing(effect, inBuffer, outBuffer, frames);
+                isProcessing = false;
             }
             else
             {
@@ -1179,7 +1179,9 @@ public:
                     memset(outBuffer[i], 0, sizeof(float)*frames);
 
 #if ! VST_FORCE_DEPRECATED
+                isProcessing = true;
                 effect->process(effect, inBuffer, outBuffer, frames);
+                isProcessing = false;
 #endif
             }
             //}
@@ -1396,20 +1398,20 @@ public:
         if (index >= param.count /*|| ! m_enabled*/)
             return;
 
-        if (x_engine->isOnAudioThread() && ! x_engine->isOffline())
+        if (isProcessing && ! x_engine->isOffline())
         {
             setParameterValue(index, value, false, false, false);
             postponeEvent(PluginPostEventParameterChange, index, 0, value);
         }
         else
-            setParameterValue(index, value, true, true, true); // FIXME - dont send to GUI?
+            setParameterValue(index, value, isProcessing, true, true);
     }
 
     intptr_t handleAudioMasterGetCurrentProcessLevel()
     {
         if (x_engine->isOffline())
             return kVstProcessLevelOffline;
-        if (x_engine->isOnAudioThread())
+        if (isProcessing)
             return kVstProcessLevelRealtime;
         return kVstProcessLevelUser;
     }
@@ -1465,8 +1467,29 @@ public:
             vstTimeInfo.timeSigDenominator = timeInfo->bbt.beat_type;
             vstTimeInfo.flags |= kVstTimeSigValid;
         }
+        else
+        {
+            // Tempo
+            vstTimeInfo.tempo  = 120.0;
+            vstTimeInfo.flags |= kVstTempoValid;
+
+            // Time Signature
+            vstTimeInfo.timeSigNumerator   = 4;
+            vstTimeInfo.timeSigDenominator = 4;
+            vstTimeInfo.flags |= kVstTimeSigValid;
+        }
 
         return &vstTimeInfo;
+    }
+
+    intptr_t handleAudioMasterTempoAt()
+    {
+        const CarlaTimeInfo* const timeInfo = x_engine->getTimeInfo();
+
+        if (timeInfo->valid & CarlaEngineTimeBBT)
+            return timeInfo->bbt.beats_per_minute * 10000;
+
+        return 0;
     }
 
     intptr_t handleAudioMasterIOChanged()
@@ -1513,6 +1536,8 @@ public:
     intptr_t handleAudioMasterProcessEvents(const VstEvents* const vstEvents)
     {
         Q_ASSERT(m_enabled);
+        Q_ASSERT(midi.portMout);
+        Q_ASSERT(isProcessing);
 
         if (! m_enabled)
             return 0;
@@ -1520,7 +1545,7 @@ public:
         if (! midi.portMout)
             return 0;
 
-        if (! x_engine->isOnAudioThread())
+        if (! isProcessing)
         {
             qCritical("VstPlugin:handleAudioMasterProcessEvents(%p) - received MIDI out events outside audio thread, ignoring", vstEvents);
             return 0;
@@ -1533,21 +1558,11 @@ public:
 
             const VstMidiEvent* const vstMidiEvent = (const VstMidiEvent*)vstEvents->events[i];
 
-            if (vstMidiEvent->type != kVstMidiType)
+            if (vstMidiEvent->type == kVstMidiType)
                 memcpy(&midiEvents[events.numEvents++], vstMidiEvent, sizeof(VstMidiEvent));
         }
 
         return 1;
-    }
-
-    intptr_t handleAudioMasterTempoAt()
-    {
-        const CarlaTimeInfo* const timeInfo = x_engine->getTimeInfo();
-
-        if (timeInfo->valid & CarlaEngineTimeBBT)
-            return timeInfo->bbt.beats_per_minute * 10000;
-
-        return 0;
     }
 
     intptr_t handleAdioMasterSizeWindow(int32_t width, int32_t height)
@@ -2055,7 +2070,10 @@ public:
 
         // special checks
         if (effect->dispatcher(effect, effCanDo, 0, 0, (void*)"hasCockosExtensions", 0.0f) == 0xbeef0000)
+        {
+            qDebug("Plugin has Cockos extensions!");
             m_hints |= PLUGIN_HAS_COCKOS_EXTENSIONS;
+        }
 
         if (effect->dispatcher(effect, effGetVstVersion, 0, 0, nullptr, 0.0f) < kVstVersion)
             m_hints |= PLUGIN_USES_OLD_VSTSDK;
@@ -2125,6 +2143,8 @@ private:
         int width;
         int height;
     } gui;
+
+    bool isProcessing;
 
     int unique2;
 };

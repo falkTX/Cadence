@@ -198,7 +198,6 @@ public:
 
     virtual bool init(const char* const clientName);
     virtual bool close();
-    virtual bool isOnAudioThread() = 0;
     virtual bool isOffline() = 0;
     virtual bool isRunning() = 0;
 
@@ -503,7 +502,6 @@ private:
     jack_transport_state_t state;
     jack_position_t pos;
     bool freewheel;
-    QThread* procThread;
 
     // -------------------------------------
 
@@ -534,7 +532,6 @@ public:
     bool init(const char* const clientName);
     bool close();
 
-    bool isOnAudioThread();
     bool isOffline();
     bool isRunning();
 
@@ -546,7 +543,6 @@ public:
 
 private:
     RtAudio adac;
-    QThread* procThread;
 };
 #endif
 

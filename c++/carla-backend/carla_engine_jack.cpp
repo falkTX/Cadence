@@ -89,7 +89,6 @@ CarlaEngineJack::CarlaEngineJack()
     client = nullptr;
     state  = JackTransportStopped;
     freewheel = false;
-    procThread = nullptr;
 
     memset(&pos, 0, sizeof(jack_position_t));
 
@@ -113,7 +112,6 @@ bool CarlaEngineJack::init(const char* const clientName)
     client = jackbridge_client_open(clientName, JackNullOption, nullptr);
     state  = JackTransportStopped;
     freewheel = false;
-    procThread = nullptr;
 
     if (client)
     {
@@ -212,11 +210,6 @@ bool CarlaEngineJack::close()
     return false;
 }
 
-bool CarlaEngineJack::isOnAudioThread()
-{
-    return (QThread::currentThread() == procThread);
-}
-
 bool CarlaEngineJack::isOffline()
 {
     return freewheel;
@@ -273,9 +266,6 @@ void CarlaEngineJack::handleFreewheelCallback(bool isFreewheel)
 
 void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
 {
-    if (procThread == nullptr)
-        procThread = QThread::currentThread();
-
     if (maxPluginNumber == 0)
         return;
 
@@ -598,7 +588,6 @@ void CarlaEngineJack::handleShutdownCallback()
     //}
 
     client = nullptr;
-    procThread = nullptr;
     callback(CALLBACK_QUIT, 0, 0, 0, 0.0);
 }
 

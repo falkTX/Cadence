@@ -13,7 +13,7 @@ BASE_FLAGS   = -O0 -g
 BUILD_FLAGS  = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
 BUILD_FLAGS += -I. -I../carla-includes $(shell pkg-config --cflags liblo QtCore)
 BUILD_FLAGS += -DBUILD_BRIDGE -DDEBUG # -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT # -DNDEBUG
-BUILD_FLAGS += -DVESTIGE_HEADER -I../carla-includes/vestige # Comment this line to not use vestige header
+BUILD_FLAGS += -DVESTIGE_HEADER # Comment this line to not use vestige header
 
 32BIT_FLAGS  = -m32
 64BIT_FLAGS  = -m64
