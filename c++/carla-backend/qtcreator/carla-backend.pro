@@ -28,8 +28,8 @@ SOURCES = \
     ../lv2.cpp \
     ../vst.cpp \
     ../fluidsynth.cpp \
-    ../linuxsampler.cpp
-#    ../../carla-jackbridge/carla_jackbridge.cpp
+    ../linuxsampler.cpp \
+    ../../carla-jackbridge/carla_jackbridge.cpp
 
 HEADERS = \
     ../carla_backend.h \
@@ -65,7 +65,7 @@ DEFINES += CARLA_ENGINE_LV2
 DEFINES += HAVE_SUIL
 DEFINES += WANT_FLUIDSYNTH WANT_LINUXSAMPLER
 LIBS     = ../../carla-lilv/carla_lilv.a -ldl
-LIBS    += -L../../carla-jackbridge -lcarla-jackbridge-native
+#LIBS    += -L../../carla-jackbridge -lcarla-jackbridge-native
 
 INCLUDEPATH += ../rtaudio-4.0.11
 INCLUDEPATH += ../rtmidi-2.0.0

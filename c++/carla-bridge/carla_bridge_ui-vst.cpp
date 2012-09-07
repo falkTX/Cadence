@@ -94,6 +94,12 @@ public:
         // -----------------------------------------------------------------
         // initialize VST stuff
 
+#ifdef VESTIGE_HEADER
+        effect->ptr1 = this;
+#else
+        effect->resvd1 = (intptr_t)this;
+#endif
+
         int32_t value = 0;
 #ifdef Q_WS_X11
         value = (int64_t)QX11Info::display();
@@ -109,12 +115,6 @@ public:
 
         if (effect->dispatcher(effect, effEditOpen, 0, value, (void*)widget->winId(), 0.0f) != 1)
             return false;
-
-#ifdef VESTIGE_HEADER
-        effect->ptr1 = this;
-#else
-        effect->resvd1 = (intptr_t)this;
-#endif
 
         // -----------------------------------------------------------------
         // initialize gui stuff

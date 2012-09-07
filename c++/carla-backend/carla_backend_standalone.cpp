@@ -846,7 +846,7 @@ double get_current_parameter_value(unsigned short plugin_id, uint32_t parameter_
 
 double get_input_peak_value(unsigned short plugin_id, unsigned short port_id)
 {
-    if (plugin_id < CarlaBackend::MAX_PLUGINS && (port_id == 1 || port_id == 2))
+    if (plugin_id < CarlaBackend::CarlaEngine::maxPluginNumber() && (port_id == 1 || port_id == 2))
         return carlaEngine->getInputPeak(plugin_id, port_id-1);
 
     qCritical("CarlaBackendStandalone::get_input_peak_value(%i, %i) - invalid plugin or port value", plugin_id, port_id);
@@ -855,7 +855,7 @@ double get_input_peak_value(unsigned short plugin_id, unsigned short port_id)
 
 double get_output_peak_value(unsigned short plugin_id, unsigned short port_id)
 {
-    if (plugin_id < CarlaBackend::MAX_PLUGINS && (port_id == 1 || port_id == 2))
+    if (plugin_id < CarlaBackend::CarlaEngine::maxPluginNumber() && (port_id == 1 || port_id == 2))
         return carlaEngine->getOutputPeak(plugin_id, port_id-1);
 
     qCritical("CarlaBackendStandalone::get_output_peak_value(%i, %i) - invalid plugin or port value", plugin_id, port_id);

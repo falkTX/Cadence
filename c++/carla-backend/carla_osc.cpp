@@ -91,7 +91,11 @@ void CarlaOsc::close()
 
 int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg)
 {
-    qDebug("CarlaOsc::handleMessage(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
+#if DEBUG
+    if (! QString(path).contains("put_peak_value"))
+        qDebug("CarlaOsc::handleMessage(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
+#endif
+
     Q_ASSERT(m_serverThread);
     Q_ASSERT(path);
 
@@ -122,14 +126,14 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
     if (std::isdigit(path[m_name_len+3]))
         pluginId += (path[m_name_len+3]-'0')*10;
 
-    if (pluginId < 0 || pluginId > CarlaBackend::MAX_PLUGINS)
+    if (pluginId < 0 || pluginId > CarlaEngine::maxPluginNumber())
     {
         qCritical("CarlaOsc::handleMessage() - failed to get plugin, wrong id -> %i", pluginId);
         return 1;
     }
 
     // Get plugin
-    CarlaBackend::CarlaPlugin* const plugin = engine->getPlugin(pluginId);
+    CarlaPlugin* const plugin = engine->getPluginUnchecked(pluginId);
 
     if (plugin == nullptr || plugin->id() != pluginId)
     {
@@ -141,8 +145,6 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
     int offset = (pluginId >= 10) ? 4 : 3;
     char method[32] = { 0 };
     memcpy(method, path + (m_name_len + offset), 32);
-
-    qWarning("CarlaOsc::handleMessage() method: %s", method);
 
     // Common OSC methods
     if (strcmp(method, "/update") == 0)
@@ -194,42 +196,48 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
         return handle_lv2_event_transfer(plugin, argc, argv, types);
 
     // Plugin Bridges
-    if (plugin->hints() & CarlaBackend::PLUGIN_IS_BRIDGE)
+    if (plugin->hints() & PLUGIN_IS_BRIDGE)
     {
-        qWarning("CarlaOsc::handleMessage() TO PLUGIN");
-
-        if (strcmp(method, "/bridge_ains_peak") == 0)
-            return handle_bridge_ains_peak(plugin, argc, argv, types);
-        if (strcmp(method, "/bridge_aouts_peak") == 0)
-            return handle_bridge_aouts_peak(plugin, argc, argv, types);
+        if (strcmp(method, "/bridge_set_input_peak_value") == 0)
+            return handle_bridge_set_input_peak_value(plugin, argc, argv, types);
+        if (strcmp(method, "/bridge_set_output_peak_value") == 0)
+            return handle_bridge_set_output_peak_value(plugin, argc, argv, types);
         if (strcmp(method, "/bridge_audio_count") == 0)
-            return plugin->setOscBridgeInfo(CarlaBackend::PluginBridgeAudioCount, argv);
+            return plugin->setOscBridgeInfo(PluginBridgeAudioCount, argc, argv, types);
         if (strcmp(method, "/bridge_midi_count") == 0)
-            return plugin->setOscBridgeInfo(CarlaBackend::PluginBridgeMidiCount, argv);
-        if (strcmp(method, "/bridge_param_count") == 0)
-            return plugin->setOscBridgeInfo(CarlaBackend::PluginBridgeParameterCount, argv);
+            return plugin->setOscBridgeInfo(PluginBridgeMidiCount, argc, argv, types);
+        if (strcmp(method, "/bridge_parameter_count") == 0)
+            return plugin->setOscBridgeInfo(PluginBridgeParameterCount, argc, argv, types);
         if (strcmp(method, "/bridge_program_count") == 0)
-            return plugin->setOscBridgeInfo(CarlaBackend::PluginBridgeProgramCount, argv);
+            return plugin->setOscBridgeInfo(PluginBridgeProgramCount, argc, argv, types);
         if (strcmp(method, "/bridge_midi_program_count") == 0)
-            return plugin->setOscBridgeInfo(CarlaBackend::PluginBridgeMidiProgramCount, argv);
+            return plugin->setOscBridgeInfo(PluginBridgeMidiProgramCount, argc, argv, types);
         if (strcmp(method, "/bridge_plugin_info") == 0)
-            return plugin->setOscBridgeInfo(CarlaBackend::PluginBridgePluginInfo, argv);
-        if (strcmp(method, "/bridge_param_info") == 0)
-            return plugin->setOscBridgeInfo(CarlaBackend::PluginBridgeParameterInfo, argv);
-        if (strcmp(method, "/bridge_param_data") == 0)
-            return plugin->setOscBridgeInfo(CarlaBackend::PluginBridgeParameterDataInfo, argv);
-        if (strcmp(method, "/bridge_param_ranges") == 0)
-            return plugin->setOscBridgeInfo(CarlaBackend::PluginBridgeParameterRangesInfo, argv);
+            return plugin->setOscBridgeInfo(PluginBridgePluginInfo, argc, argv, types);
+        if (strcmp(method, "/bridge_parameter_info") == 0)
+            return plugin->setOscBridgeInfo(PluginBridgeParameterInfo, argc, argv, types);
+        if (strcmp(method, "/bridge_parameter_data") == 0)
+            return plugin->setOscBridgeInfo(PluginBridgeParameterData, argc, argv, types);
+        if (strcmp(method, "/bridge_parameter_ranges") == 0)
+            return plugin->setOscBridgeInfo(PluginBridgeParameterRanges, argc, argv, types);
         if (strcmp(method, "/bridge_program_info") == 0)
-            return plugin->setOscBridgeInfo(CarlaBackend::PluginBridgeProgramInfo, argv);
+            return plugin->setOscBridgeInfo(PluginBridgeProgramInfo, argc, argv, types);
         if (strcmp(method, "/bridge_midi_program_info") == 0)
-            return plugin->setOscBridgeInfo(CarlaBackend::PluginBridgeMidiProgramInfo, argv);
-        if (strcmp(method, "/bridge_custom_data") == 0)
-            return plugin->setOscBridgeInfo(CarlaBackend::PluginBridgeCustomData, argv);
-        if (strcmp(method, "/bridge_chunk_data") == 0)
-            return plugin->setOscBridgeInfo(CarlaBackend::PluginBridgeChunkData, argv);
+            return plugin->setOscBridgeInfo(PluginBridgeMidiProgramInfo, argc, argv, types);
+        if (strcmp(method, "/bridge_set_parameter_value") == 0)
+            return plugin->setOscBridgeInfo(PluginBridgeSetParameterValue, argc, argv, types);
+        if (strcmp(method, "/bridge_set_default_value") == 0)
+            return plugin->setOscBridgeInfo(PluginBridgeSetDefaultValue, argc, argv, types);
+        if (strcmp(method, "/bridge_set_program") == 0)
+            return plugin->setOscBridgeInfo(PluginBridgeSetProgram, argc, argv, types);
+        if (strcmp(method, "/bridge_set_midi_program") == 0)
+            return plugin->setOscBridgeInfo(PluginBridgeSetMidiProgram, argc, argv, types);
+        if (strcmp(method, "/bridge_set_custom_data") == 0)
+            return plugin->setOscBridgeInfo(PluginBridgeSetCustomData, argc, argv, types);
+        if (strcmp(method, "/bridge_set_chunk_data") == 0)
+            return plugin->setOscBridgeInfo(PluginBridgeSetChunkData, argc, argv, types);
         if (strcmp(method, "/bridge_update") == 0)
-            return plugin->setOscBridgeInfo(CarlaBackend::PluginBridgeUpdateNow, argv);
+            return plugin->setOscBridgeInfo(PluginBridgeUpdateNow, argc, argv, types);
     }
 
     qWarning("CarlaOsc::handleMessage() - unsupported OSC method '%s'", method);
@@ -268,9 +276,9 @@ int CarlaOsc::handle_register(const int argc, const lo_arg* const* const argv, c
     free((void*)port);
 
     // FIXME - max plugins
-    for (unsigned short i=0; i < CarlaBackend::MAX_PLUGINS; i++)
+    for (unsigned short i=0; i < CarlaEngine::maxPluginNumber(); i++)
     {
-        CarlaBackend::CarlaPlugin* const plugin = engine->getPluginUnchecked(i);
+        CarlaPlugin* const plugin = engine->getPluginUnchecked(i);
 
         if (plugin && plugin->enabled())
             plugin->registerToOsc();
@@ -314,21 +322,21 @@ int CarlaOsc::handle_configure(CARLA_OSC_HANDLE_ARGS2)
     const char* const key   = (const char*)&argv[0]->s;
     const char* const value = (const char*)&argv[1]->s;
 
-    if (plugin->hints() & CarlaBackend::PLUGIN_IS_BRIDGE)
-    {
-        if (strcmp(key, CarlaBackend::CARLA_BRIDGE_MSG_HIDE_GUI) == 0)
-        {
-            engine->callback(CarlaBackend::CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
-            return 0;
-        }
+//    if (plugin->hints() & PLUGIN_IS_BRIDGE)
+//    {
+//        if (strcmp(key, CARLA_BRIDGE_MSG_HIDE_GUI) == 0)
+//        {
+//            engine->callback(CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
+//            return 0;
+//        }
 
-        if (strcmp(key, CarlaBackend::CARLA_BRIDGE_MSG_SAVED) == 0)
-        {
-            return plugin->setOscBridgeInfo(CarlaBackend::PluginBridgeSaved, nullptr);
-        }
-    }
+//        if (strcmp(key, CARLA_BRIDGE_MSG_SAVED) == 0)
+//        {
+//            return plugin->setOscBridgeInfo(PluginBridgeSaved, nullptr);
+//        }
+//    }
 
-    plugin->setCustomData(CarlaBackend::CUSTOM_DATA_STRING, key, value, false);
+    plugin->setCustomData(CUSTOM_DATA_STRING, key, value, false);
 
     return 0;
 }
@@ -416,7 +424,7 @@ int CarlaOsc::handle_exiting(CARLA_OSC_HANDLE_ARGS1)
     qDebug("CarlaOsc::handle_exiting()");
 
     // TODO - check for non-UIs (dssi-vst) and set to -1 instead
-    engine->callback(CarlaBackend::CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
+    engine->callback(CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
     plugin->clearOscData();
 
     return 0;
@@ -429,7 +437,7 @@ int CarlaOsc::handle_set_active(CARLA_OSC_HANDLE_ARGS2)
     qDebug("CarlaOsc::handle_set_active()");
     CARLA_OSC_CHECK_OSC_TYPES(1, "i");
 
-    bool active = (bool)argv[0]->i;
+    const bool active = (bool)argv[0]->i;
     plugin->setActive(active, false, true);
 
     return 0;
@@ -440,7 +448,7 @@ int CarlaOsc::handle_set_drywet(CARLA_OSC_HANDLE_ARGS2)
     qDebug("CarlaOsc::handle_set_drywet()");
     CARLA_OSC_CHECK_OSC_TYPES(1, "d");
 
-    double value = argv[0]->d;
+    const double value = argv[0]->d;
     plugin->setDryWet(value, false, true);
 
     return 0;
@@ -451,7 +459,7 @@ int CarlaOsc::handle_set_volume(CARLA_OSC_HANDLE_ARGS2)
     qDebug("CarlaOsc::handle_set_volume()");
     CARLA_OSC_CHECK_OSC_TYPES(1, "d");
 
-    double value = argv[0]->d;
+    const double value = argv[0]->d;
     plugin->setVolume(value, false, true);
 
     return 0;
@@ -462,7 +470,7 @@ int CarlaOsc::handle_set_balance_left(CARLA_OSC_HANDLE_ARGS2)
     qDebug("CarlaOsc::handle_set_balance_left()");
     CARLA_OSC_CHECK_OSC_TYPES(1, "d");
 
-    double value = argv[0]->d;
+    const double value = argv[0]->d;
     plugin->setBalanceLeft(value, false, true);
 
     return 0;
@@ -473,7 +481,7 @@ int CarlaOsc::handle_set_balance_right(CARLA_OSC_HANDLE_ARGS2)
     qDebug("CarlaOsc::handle_set_balance_right()");
     CARLA_OSC_CHECK_OSC_TYPES(1, "d");
 
-    double value = argv[0]->d;
+    const double value = argv[0]->d;
     plugin->setBalanceRight(value, false, true);
 
     return 0;
@@ -484,8 +492,8 @@ int CarlaOsc::handle_set_parameter_value(CARLA_OSC_HANDLE_ARGS2)
     qDebug("CarlaOsc::handle_set_parameter_value()");
     CARLA_OSC_CHECK_OSC_TYPES(2, "id");
 
-    const uint32_t index = argv[0]->i;
-    const double   value = argv[1]->d;
+    const int32_t index = argv[0]->i;
+    const double  value = argv[1]->d;
     plugin->setParameterValue(index, value, true, false, true);
 
     return 0;
@@ -496,8 +504,8 @@ int CarlaOsc::handle_set_parameter_midi_cc(CARLA_OSC_HANDLE_ARGS2)
     qDebug("CarlaOsc::handle_set_parameter_midi_cc()");
     CARLA_OSC_CHECK_OSC_TYPES(2, "ii");
 
-    const uint32_t index = argv[0]->i;
-    const int32_t  cc    = argv[1]->i;
+    const int32_t index = argv[0]->i;
+    const int32_t cc    = argv[1]->i;
     plugin->setParameterMidiCC(index, cc, false, true);
 
     return 0;
@@ -508,8 +516,8 @@ int CarlaOsc::handle_set_parameter_midi_channel(CARLA_OSC_HANDLE_ARGS2)
     qDebug("CarlaOsc::handle_set_parameter_midi_channel()");
     CARLA_OSC_CHECK_OSC_TYPES(2, "ii");
 
-    const uint32_t index   = argv[0]->i;
-    const uint32_t channel = argv[1]->i;
+    const int32_t index   = argv[0]->i;
+    const int32_t channel = argv[1]->i;
     plugin->setParameterMidiChannel(index, channel, false, true);
 
     return 0;
@@ -520,7 +528,7 @@ int CarlaOsc::handle_set_program(CARLA_OSC_HANDLE_ARGS2)
     qDebug("CarlaOsc::handle_set_program()");
     CARLA_OSC_CHECK_OSC_TYPES(1, "i");
 
-    const uint32_t index = argv[0]->i;
+    const int32_t index = argv[0]->i;
     plugin->setProgram(index, true, false, true, true);
 
     return 0;
@@ -531,7 +539,7 @@ int CarlaOsc::handle_set_midi_program(CARLA_OSC_HANDLE_ARGS2)
     qDebug("CarlaOsc::handle_set_midi_program()");
     CARLA_OSC_CHECK_OSC_TYPES(1, "i");
 
-    const uint32_t index = argv[0]->i;
+    const int32_t index = argv[0]->i;
     plugin->setMidiProgram(index, true, false, true, true);
 
     return 0;
@@ -542,9 +550,9 @@ int CarlaOsc::handle_note_on(CARLA_OSC_HANDLE_ARGS2)
     qDebug("CarlaOsc::handle_note_on()");
     CARLA_OSC_CHECK_OSC_TYPES(3, "iii");
 
-    const int channel = argv[0]->i;
-    const int note    = argv[1]->i;
-    const int velo    = argv[2]->i;
+    const int32_t channel = argv[0]->i;
+    const int32_t note    = argv[1]->i;
+    const int32_t velo    = argv[2]->i;
     plugin->sendMidiSingleNote(channel, note, velo, true, false, true);
 
     return 0;
@@ -555,30 +563,30 @@ int CarlaOsc::handle_note_off(CARLA_OSC_HANDLE_ARGS2)
     qDebug("CarlaOsc::handle_note_off()");
     CARLA_OSC_CHECK_OSC_TYPES(2, "ii");
 
-    const int channel = argv[0]->i;
-    const int note    = argv[1]->i;
+    const int32_t channel = argv[0]->i;
+    const int32_t note    = argv[1]->i;
     plugin->sendMidiSingleNote(channel, note, 0, true, false, true);
 
     return 0;
 }
 
-int CarlaOsc::handle_bridge_ains_peak(CARLA_OSC_HANDLE_ARGS2)
+int CarlaOsc::handle_bridge_set_input_peak_value(CARLA_OSC_HANDLE_ARGS2)
 {
     CARLA_OSC_CHECK_OSC_TYPES(2, "id");
 
-    const int    index = argv[0]->i;
-    const double value = argv[1]->d;
+    const int32_t index = argv[0]->i;
+    const double  value = argv[1]->d;
     engine->setInputPeak(plugin->id(), index-1, value);
 
     return 0;
 }
 
-int CarlaOsc::handle_bridge_aouts_peak(CARLA_OSC_HANDLE_ARGS2)
+int CarlaOsc::handle_bridge_set_output_peak_value(CARLA_OSC_HANDLE_ARGS2)
 {
     CARLA_OSC_CHECK_OSC_TYPES(2, "id");
 
-    const int    index = argv[0]->i;
-    const double value = argv[1]->d;
+    const int32_t index = argv[0]->i;
+    const double  value = argv[1]->d;
     engine->setOutputPeak(plugin->id(), index-1, value);
 
     return 0;

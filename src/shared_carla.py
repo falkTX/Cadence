@@ -1988,6 +1988,9 @@ class PluginGUI(QDialog):
         self.setNewSize(50, 50)
         self.setWindowTitle("%s (GUI)" % pluginName)
 
+        if (WINDOWS and not resizable):
+            self.setWindowFlags(self.windowFlags() | Qt.MSWindowsFixedSizeDialogHint)
+
         self.connect(self, SIGNAL("finished(int)"), SLOT("slot_finished()"))
 
     def setNewSize(self, width, height):

@@ -22,6 +22,8 @@ CARLA_BACKEND_START_NAMESPACE
 
 // -----------------------------------------------------------------------
 
+unsigned short CarlaEngine::m_maxPluginNumber = 0;
+
 CarlaEngine::CarlaEngine()
     : m_checkThread(this),
 #ifndef BUILD_BRIDGE
@@ -45,7 +47,7 @@ CarlaEngine::CarlaEngine()
     name = nullptr;
     bufferSize = 0;
     sampleRate = 0.0;
-    maxPluginNumber = 0;
+    m_maxPluginNumber = 0;
 
 #ifndef Q_COMPILER_INITIALIZER_LISTS
     for (unsigned short i=0; i < MAX_PLUGINS; i++)
@@ -95,6 +97,11 @@ int CarlaEngine::maxPortNameSize()
     return STR_MAX;
 }
 
+unsigned short CarlaEngine::maxPluginNumber()
+{
+    return m_maxPluginNumber;
+}
+
 bool CarlaEngine::init(const char* const clientName)
 {
     qDebug("CarlaEngine::init(\"%s\")", clientName);
@@ -118,7 +125,7 @@ bool CarlaEngine::close()
     m_osc.close();
 #endif
 
-    maxPluginNumber = 0;
+    m_maxPluginNumber = 0;
 
     return true;
 }
@@ -130,7 +137,7 @@ short CarlaEngine::getNewPluginId() const
 {
     qDebug("CarlaEngine::getNewPluginId()");
 
-    for (unsigned short i=0; i < maxPluginNumber; i++)
+    for (unsigned short i=0; i < m_maxPluginNumber; i++)
     {
         if (! m_carlaPlugins[i])
             return i;
@@ -141,11 +148,11 @@ short CarlaEngine::getNewPluginId() const
 
 CarlaPlugin* CarlaEngine::getPlugin(const unsigned short id) const
 {
-    qDebug("CarlaEngine::getPlugin(%i/%i)", id, maxPluginNumber);
-    Q_ASSERT(maxPluginNumber != 0);
-    Q_ASSERT(id < maxPluginNumber);
+    qDebug("CarlaEngine::getPlugin(%i/%i)", id, m_maxPluginNumber);
+    Q_ASSERT(m_maxPluginNumber != 0);
+    Q_ASSERT(id < m_maxPluginNumber);
 
-    if (id < maxPluginNumber)
+    if (id < m_maxPluginNumber)
         return m_carlaPlugins[id];
 
     return nullptr;
@@ -153,8 +160,8 @@ CarlaPlugin* CarlaEngine::getPlugin(const unsigned short id) const
 
 CarlaPlugin* CarlaEngine::getPluginUnchecked(const unsigned short id) const
 {
-    Q_ASSERT(maxPluginNumber != 0);
-    Q_ASSERT(id < maxPluginNumber);
+    Q_ASSERT(m_maxPluginNumber != 0);
+    Q_ASSERT(id < m_maxPluginNumber);
 
     return m_carlaPlugins[id];
 }
@@ -171,7 +178,7 @@ const char* CarlaEngine::getUniqueName(const char* const name)
     qname.truncate(maxClientNameSize()-5-1); // 5 = strlen(" (10)")
     qname.replace(":", "."); // ":" is used in JACK1 to split client/port names
 
-    for (unsigned short i=0; i < maxPluginNumber; i++)
+    for (unsigned short i=0; i < m_maxPluginNumber; i++)
     {
         // Check if unique name already exists
         if (m_uniqueNames[i] && qname == m_uniqueNames[i])
@@ -234,11 +241,11 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
     Q_ASSERT(filename);
     Q_ASSERT(label);
 
-    if (maxPluginNumber == 0)
+    if (m_maxPluginNumber == 0)
 #ifdef BUILD_BRIDGE
-        maxPluginNumber = MAX_PLUGINS;
+        m_maxPluginNumber = MAX_PLUGINS;
 #else
-        maxPluginNumber = (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK) ? 16 : MAX_PLUGINS;
+        m_maxPluginNumber = (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK) ? 16 : MAX_PLUGINS;
 #endif
 
     CarlaPlugin::initializer init = {
@@ -251,7 +258,7 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
     CarlaPlugin* plugin = nullptr;
 
 #ifndef BUILD_BRIDGE
-    if (btype != BINARY_NATIVE)
+    if (btype != BINARY_NATIVE /*|| true*/)
     {
 #  ifdef CARLA_ENGINE_JACK
         if (carlaOptions.processMode != CarlaBackend::PROCESS_MODE_MULTIPLE_CLIENTS)
@@ -316,7 +323,7 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
     m_uniqueNames[id]  = plugin->name();
 
     if (! m_checkThread.isRunning())
-        m_checkThread.startNow(maxPluginNumber);
+        m_checkThread.startNow();
 
     return id;
 }
@@ -324,8 +331,8 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
 bool CarlaEngine::removePlugin(const unsigned short id)
 {
     qDebug("CarlaEngine::removePlugin(%i)", id);
-    Q_ASSERT(maxPluginNumber != 0);
-    Q_ASSERT(id < maxPluginNumber);
+    Q_ASSERT(m_maxPluginNumber != 0);
+    Q_ASSERT(id < m_maxPluginNumber);
 
     CarlaPlugin* const plugin = m_carlaPlugins[id];
 
@@ -346,7 +353,7 @@ bool CarlaEngine::removePlugin(const unsigned short id)
 #ifndef BUILD_BRIDGE
         if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
         {
-            for (unsigned short i=id; i < maxPluginNumber-1; i++)
+            for (unsigned short i=id; i < m_maxPluginNumber-1; i++)
             {
                 m_carlaPlugins[i] = m_carlaPlugins[i+1];
                 m_uniqueNames[i]  = m_uniqueNames[i+1];
@@ -358,7 +365,7 @@ bool CarlaEngine::removePlugin(const unsigned short id)
 #endif
 
         if (isRunning())
-            m_checkThread.startNow(maxPluginNumber);
+            m_checkThread.startNow();
 
         return true;
     }
@@ -374,7 +381,7 @@ void CarlaEngine::removeAllPlugins()
 
     m_checkThread.stopNow();
 
-    for (unsigned short i=0; i < maxPluginNumber; i++)
+    for (unsigned short i=0; i < m_maxPluginNumber; i++)
     {
         CarlaPlugin* const plugin = m_carlaPlugins[i];
 
@@ -390,14 +397,14 @@ void CarlaEngine::removeAllPlugins()
         }
     }
 
-    maxPluginNumber = 0;
+    m_maxPluginNumber = 0;
 }
 
 void CarlaEngine::idlePluginGuis()
 {
-    Q_ASSERT(maxPluginNumber != 0);
+    Q_ASSERT(m_maxPluginNumber != 0);
 
-    for (unsigned short i=0; i < maxPluginNumber; i++)
+    for (unsigned short i=0; i < m_maxPluginNumber; i++)
     {
         CarlaPlugin* const plugin = m_carlaPlugins[i];
 
@@ -440,7 +447,7 @@ const CarlaTimeInfo* CarlaEngine::getTimeInfo() const
 
 double CarlaEngine::getInputPeak(const unsigned short pluginId, const unsigned short id) const
 {
-    Q_ASSERT(pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId < m_maxPluginNumber);
     Q_ASSERT(id < MAX_PEAKS);
 
     return m_insPeak[pluginId*MAX_PEAKS + id];
@@ -448,7 +455,7 @@ double CarlaEngine::getInputPeak(const unsigned short pluginId, const unsigned s
 
 double CarlaEngine::getOutputPeak(const unsigned short pluginId, const unsigned short id) const
 {
-    Q_ASSERT(pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId < m_maxPluginNumber);
     Q_ASSERT(id < MAX_PEAKS);
 
     return m_outsPeak[pluginId*MAX_PEAKS + id];
@@ -456,7 +463,7 @@ double CarlaEngine::getOutputPeak(const unsigned short pluginId, const unsigned 
 
 void CarlaEngine::setInputPeak(const unsigned short pluginId, const unsigned short id, double value)
 {
-    Q_ASSERT(pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId < m_maxPluginNumber);
     Q_ASSERT(id < MAX_PEAKS);
 
     m_insPeak[pluginId*MAX_PEAKS + id] = value;
@@ -464,7 +471,7 @@ void CarlaEngine::setInputPeak(const unsigned short pluginId, const unsigned sho
 
 void CarlaEngine::setOutputPeak(const unsigned short pluginId, const unsigned short id, double value)
 {
-    Q_ASSERT(pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId < m_maxPluginNumber);
     Q_ASSERT(id < MAX_PEAKS);
 
     m_outsPeak[pluginId*MAX_PEAKS + id] = value;
@@ -541,7 +548,7 @@ void CarlaEngine::bufferSizeChanged(uint32_t newBufferSize)
 
     bufferSize = newBufferSize;
 
-    for (unsigned short i=0; i < maxPluginNumber; i++)
+    for (unsigned short i=0; i < m_maxPluginNumber; i++)
     {
         if (m_carlaPlugins[i] && m_carlaPlugins[i]->enabled())
             m_carlaPlugins[i]->bufferSizeChanged(newBufferSize);
@@ -1105,9 +1112,9 @@ void CarlaEngineMidiPort::writeEvent(uint32_t time, const uint8_t* data, uint8_t
 #ifndef BUILD_BRIDGE
 void CarlaEngine::osc_send_control_add_plugin(const int32_t pluginId, const char* const pluginName)
 {
-    qDebug("CarlaEngine::osc_send_add_plugin(%i, \"%s\")", pluginId, pluginName);
+    qDebug("CarlaEngine::osc_send_control_add_plugin(%i, \"%s\")", pluginId, pluginName);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(pluginName);
 
     if (m_oscData && m_oscData->target)
@@ -1121,7 +1128,7 @@ void CarlaEngine::osc_send_control_add_plugin(const int32_t pluginId, const char
 
 void CarlaEngine::osc_send_control_remove_plugin(const int32_t pluginId)
 {
-    qDebug("CarlaEngine::osc_send_remove_plugin(%i)", pluginId);
+    qDebug("CarlaEngine::osc_send_control_remove_plugin(%i)", pluginId);
     Q_ASSERT(m_oscData);
 
     if (m_oscData && m_oscData->target)
@@ -1135,9 +1142,9 @@ void CarlaEngine::osc_send_control_remove_plugin(const int32_t pluginId)
 
 void CarlaEngine::osc_send_control_set_plugin_data(const int32_t pluginId, const int32_t type, const int32_t category, const int32_t hints, const char* const realName, const char* const label, const char* const maker, const char* const copyright, const int64_t uniqueId)
 {
-    qDebug("CarlaEngine::osc_send_set_plugin_data(%i, %i, %i, %i, \"%s\", \"%s\", \"%s\", \"%s\", %li)", pluginId, type, category, hints, realName, label, maker, copyright, uniqueId);
+    qDebug("CarlaEngine::osc_send_control_set_plugin_data(%i, %i, %i, %i, \"%s\", \"%s\", \"%s\", \"%s\", %li)", pluginId, type, category, hints, realName, label, maker, copyright, uniqueId);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(type != PLUGIN_NONE);
 
     if (m_oscData && m_oscData->target)
@@ -1151,9 +1158,9 @@ void CarlaEngine::osc_send_control_set_plugin_data(const int32_t pluginId, const
 
 void CarlaEngine::osc_send_control_set_plugin_ports(const int32_t pluginId, const int32_t audioIns, const int32_t audioOuts, const int32_t midiIns, const int32_t midiOuts, const int32_t cIns, const int32_t cOuts, const int32_t cTotals)
 {
-    qDebug("CarlaEngine::osc_send_set_plugin_ports(%i, %i, %i, %i, %i, %i, %i, %i)", pluginId, audioIns, audioOuts, midiIns, midiOuts, cIns, cOuts, cTotals);
+    qDebug("CarlaEngine::osc_send_control_set_plugin_ports(%i, %i, %i, %i, %i, %i, %i, %i)", pluginId, audioIns, audioOuts, midiIns, midiOuts, cIns, cOuts, cTotals);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
 
     if (m_oscData && m_oscData->target)
     {
@@ -1166,9 +1173,9 @@ void CarlaEngine::osc_send_control_set_plugin_ports(const int32_t pluginId, cons
 
 void CarlaEngine::osc_send_control_set_parameter_data(const int32_t pluginId, const int32_t index, const int32_t type, const int32_t hints, const char* const name, const char* const label, const double current)
 {
-    qDebug("CarlaEngine::osc_send_set_parameter_data(%i, %i, %i, %i, \"%s\", \"%s\", %g)", pluginId, index, type, hints, name, label, current);
+    qDebug("CarlaEngine::osc_send_control_set_parameter_data(%i, %i, %i, %i, \"%s\", \"%s\", %g)", pluginId, index, type, hints, name, label, current);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(index >= 0);
     Q_ASSERT(type != PARAMETER_UNKNOWN);
 
@@ -1183,9 +1190,9 @@ void CarlaEngine::osc_send_control_set_parameter_data(const int32_t pluginId, co
 
 void CarlaEngine::osc_send_control_set_parameter_ranges(const int32_t pluginId, const int32_t index, const double min, const double max, const double def, const double step, const double stepSmall, const double stepLarge)
 {
-    qDebug("CarlaEngine::osc_send_set_parameter_ranges(%i, %i, %g, %g, %g, %g, %g, %g)", pluginId, index, min, max, def, step, stepSmall, stepLarge);
+    qDebug("CarlaEngine::osc_send_control_set_parameter_ranges(%i, %i, %g, %g, %g, %g, %g, %g)", pluginId, index, min, max, def, step, stepSmall, stepLarge);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(index >= 0);
     Q_ASSERT(min < max);
 
@@ -1200,9 +1207,9 @@ void CarlaEngine::osc_send_control_set_parameter_ranges(const int32_t pluginId, 
 
 void CarlaEngine::osc_send_control_set_parameter_midi_cc(const int32_t pluginId, const int32_t index, const int32_t cc)
 {
-    qDebug("CarlaEngine::osc_send_set_parameter_midi_cc(%i, %i, %i)", pluginId, index, cc);
+    qDebug("CarlaEngine::osc_send_control_set_parameter_midi_cc(%i, %i, %i)", pluginId, index, cc);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(index >= 0);
 
     if (m_oscData && m_oscData->target)
@@ -1216,9 +1223,9 @@ void CarlaEngine::osc_send_control_set_parameter_midi_cc(const int32_t pluginId,
 
 void CarlaEngine::osc_send_control_set_parameter_midi_channel(const int32_t pluginId, const int32_t index, const int32_t channel)
 {
-    qDebug("CarlaEngine::osc_send_set_parameter_midi_channel(%i, %i, %i)", pluginId, index, channel);
+    qDebug("CarlaEngine::osc_send_control_set_parameter_midi_channel(%i, %i, %i)", pluginId, index, channel);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(index >= 0);
     Q_ASSERT(channel >= 0 && channel < 16);
 
@@ -1234,13 +1241,13 @@ void CarlaEngine::osc_send_control_set_parameter_midi_channel(const int32_t plug
 void CarlaEngine::osc_send_control_set_parameter_value(const int32_t pluginId, const int32_t index, const double value)
 {
 #if DEBUG
-    if (index < 0)
-        qDebug("CarlaEngine::osc_send_set_parameter_value(%i, %s, %g)", pluginId, InternalParametersIndex2str((InternalParametersIndex)index), value);
+    if (index < -1)
+        qDebug("CarlaEngine::osc_send_control_set_parameter_value(%i, %s, %g)", pluginId, InternalParametersIndex2str((InternalParametersIndex)index), value);
     else
-        qDebug("CarlaEngine::osc_send_set_parameter_value(%i, %i, %g)", pluginId, index, value);
+        qDebug("CarlaEngine::osc_send_control_set_parameter_value(%i, %i, %g)", pluginId, index, value);
 #endif
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
 
     if (m_oscData && m_oscData->target)
     {
@@ -1253,9 +1260,9 @@ void CarlaEngine::osc_send_control_set_parameter_value(const int32_t pluginId, c
 
 void CarlaEngine::osc_send_control_set_default_value(const int32_t pluginId, const int32_t index, const double value)
 {
-    qDebug("CarlaEngine::osc_send_set_default_value(%i, %i, %g)", pluginId, index, value);
+    qDebug("CarlaEngine::osc_send_control_set_default_value(%i, %i, %g)", pluginId, index, value);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(index >= 0);
 
     if (m_oscData && m_oscData->target)
@@ -1269,9 +1276,9 @@ void CarlaEngine::osc_send_control_set_default_value(const int32_t pluginId, con
 
 void CarlaEngine::osc_send_control_set_program(const int32_t pluginId, const int32_t index)
 {
-    qDebug("CarlaEngine::osc_send_set_program(%i, %i)", pluginId, index);
+    qDebug("CarlaEngine::osc_send_control_set_program(%i, %i)", pluginId, index);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
 
     if (m_oscData && m_oscData->target)
     {
@@ -1284,9 +1291,9 @@ void CarlaEngine::osc_send_control_set_program(const int32_t pluginId, const int
 
 void CarlaEngine::osc_send_control_set_program_count(const int32_t pluginId, const int32_t count)
 {
-    qDebug("CarlaEngine::osc_send_set_program_count(%i, %i)", pluginId, count);
+    qDebug("CarlaEngine::osc_send_control_set_program_count(%i, %i)", pluginId, count);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(count >= 0);
 
     if (m_oscData && m_oscData->target)
@@ -1300,9 +1307,9 @@ void CarlaEngine::osc_send_control_set_program_count(const int32_t pluginId, con
 
 void CarlaEngine::osc_send_control_set_program_name(const int32_t pluginId, const int32_t index, const char* const name)
 {
-    qDebug("CarlaEngine::osc_send_set_program_name(%i, %i, %s)", pluginId, index, name);
+    qDebug("CarlaEngine::osc_send_control_set_program_name(%i, %i, %s)", pluginId, index, name);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(index >= 0);
     Q_ASSERT(name);
 
@@ -1317,9 +1324,9 @@ void CarlaEngine::osc_send_control_set_program_name(const int32_t pluginId, cons
 
 void CarlaEngine::osc_send_control_set_midi_program(const int32_t pluginId, const int32_t index)
 {
-    qDebug("CarlaEngine::osc_send_set_midi_program(%i, %i)", pluginId, index);
+    qDebug("CarlaEngine::osc_send_control_set_midi_program(%i, %i)", pluginId, index);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
 
     if (m_oscData && m_oscData->target)
     {
@@ -1332,9 +1339,9 @@ void CarlaEngine::osc_send_control_set_midi_program(const int32_t pluginId, cons
 
 void CarlaEngine::osc_send_control_set_midi_program_count(const int32_t pluginId, const int32_t count)
 {
-    qDebug("CarlaEngine::osc_send_set_midi_program_count(%i, %i)", pluginId, count);
+    qDebug("CarlaEngine::osc_send_control_set_midi_program_count(%i, %i)", pluginId, count);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(count >= 0);
 
     if (m_oscData && m_oscData->target)
@@ -1348,9 +1355,9 @@ void CarlaEngine::osc_send_control_set_midi_program_count(const int32_t pluginId
 
 void CarlaEngine::osc_send_control_set_midi_program_data(const int32_t pluginId, const int32_t index, const int32_t bank, const int32_t program, const char* const name)
 {
-    qDebug("CarlaEngine::osc_send_set_midi_program_data(%i, %i, %i, %i, %s)", pluginId, index, bank, program, name);
+    qDebug("CarlaEngine::osc_send_control_set_midi_program_data(%i, %i, %i, %i, %s)", pluginId, index, bank, program, name);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(index >= 0);
     Q_ASSERT(bank >= 0);
     Q_ASSERT(program >= 0);
@@ -1367,9 +1374,9 @@ void CarlaEngine::osc_send_control_set_midi_program_data(const int32_t pluginId,
 
 void CarlaEngine::osc_send_control_note_on(const int32_t pluginId, const int32_t channel, const int32_t note, const int32_t velo)
 {
-    qDebug("CarlaEngine::osc_send_note_on(%i, %i, %i, %i)", pluginId, channel, note, velo);
+    qDebug("CarlaEngine::osc_send_control_note_on(%i, %i, %i, %i)", pluginId, channel, note, velo);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(channel >= 0 && channel < 16);
     Q_ASSERT(note >= 0 && note < 128);
     Q_ASSERT(velo > 0 && velo < 128);
@@ -1385,9 +1392,9 @@ void CarlaEngine::osc_send_control_note_on(const int32_t pluginId, const int32_t
 
 void CarlaEngine::osc_send_control_note_off(const int32_t pluginId, const int32_t channel, const int32_t note)
 {
-    qDebug("CarlaEngine::osc_send_note_off(%i, %i, %i)", pluginId, channel, note);
+    qDebug("CarlaEngine::osc_send_control_note_off(%i, %i, %i)", pluginId, channel, note);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(channel >= 0 && channel < 16);
     Q_ASSERT(note >= 0 && note < 128);
 
@@ -1402,9 +1409,9 @@ void CarlaEngine::osc_send_control_note_off(const int32_t pluginId, const int32_
 
 void CarlaEngine::osc_send_control_set_input_peak_value(const int32_t pluginId, const int32_t portId, const double value)
 {
-    qDebug("CarlaEngine::osc_send_set_input_peak_value(%i, %i, %g)", pluginId, portId, value);
+    qDebug("CarlaEngine::osc_send_control_set_input_peak_value(%i, %i, %g)", pluginId, portId, value);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(portId == 1 || portId == 2);
 
     if (m_oscData && m_oscData->target)
@@ -1418,9 +1425,9 @@ void CarlaEngine::osc_send_control_set_input_peak_value(const int32_t pluginId, 
 
 void CarlaEngine::osc_send_control_set_output_peak_value(const int32_t pluginId, const int32_t portId, const double value)
 {
-    qDebug("CarlaEngine::osc_send_set_output_peak_value(%i, %i, %g)", pluginId, portId, value);
+    qDebug("CarlaEngine::osc_send_control_set_output_peak_value(%i, %i, %g)", pluginId, portId, value);
     Q_ASSERT(m_oscData);
-    Q_ASSERT(pluginId >= 0 && pluginId < maxPluginNumber);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(portId == 1 || portId == 2);
 
     if (m_oscData && m_oscData->target)
@@ -1434,7 +1441,7 @@ void CarlaEngine::osc_send_control_set_output_peak_value(const int32_t pluginId,
 
 void CarlaEngine::osc_send_control_exit()
 {
-    qDebug("CarlaEngine::osc_send_exit()");
+    qDebug("CarlaEngine::osc_send_control_exit()");
     Q_ASSERT(m_oscData);
 
     if (m_oscData && m_oscData->target)
@@ -1532,53 +1539,53 @@ void CarlaEngine::osc_send_bridge_plugin_info(const int32_t category, const int3
 
     if (m_oscData && m_oscData->target)
     {
-        char target_path[strlen(m_oscData->path)+27];
+        char target_path[strlen(m_oscData->path)+20];
         strcpy(target_path, m_oscData->path);
         strcat(target_path, "/bridge_plugin_info");
         lo_send(m_oscData->target, target_path, "iissssh", category, hints, name, label, maker, copyright, uniqueId);
     }
 }
 
-void CarlaEngine::osc_send_bridge_param_info(const int32_t index, const char* const name, const char* const unit)
+void CarlaEngine::osc_send_bridge_parameter_info(const int32_t index, const char* const name, const char* const unit)
 {
-    qDebug("CarlaEngine::osc_send_bridge_param_info(%i, \"%s\", \"%s\")", index, name, unit);
+    qDebug("CarlaEngine::osc_send_bridge_parameter_info(%i, \"%s\", \"%s\")", index, name, unit);
     Q_ASSERT(m_oscData);
     Q_ASSERT(name);
     Q_ASSERT(unit);
 
     if (m_oscData && m_oscData->target)
     {
-        char target_path[strlen(m_oscData->path)+27];
+        char target_path[strlen(m_oscData->path)+23];
         strcpy(target_path, m_oscData->path);
-        strcat(target_path, "/bridge_param_info");
+        strcat(target_path, "/bridge_parameter_info");
         lo_send(m_oscData->target, target_path, "iss", index, name, unit);
     }
 }
 
-void CarlaEngine::osc_send_bridge_param_data(const int32_t index, const int32_t type, const int32_t rindex, const int32_t hints, const int32_t midiChannel, const int32_t midiCC)
+void CarlaEngine::osc_send_bridge_parameter_data(const int32_t index, const int32_t type, const int32_t rindex, const int32_t hints, const int32_t midiChannel, const int32_t midiCC)
 {
-    qDebug("CarlaEngine::osc_send_bridge_param_data(%i, %i, %i, %i, %i, %i)", index, type, rindex, hints, midiChannel, midiCC);
+    qDebug("CarlaEngine::osc_send_bridge_parameter_data(%i, %i, %i, %i, %i, %i)", index, type, rindex, hints, midiChannel, midiCC);
     Q_ASSERT(m_oscData);
 
     if (m_oscData && m_oscData->target)
     {
-        char target_path[strlen(m_oscData->path)+27];
+        char target_path[strlen(m_oscData->path)+23];
         strcpy(target_path, m_oscData->path);
-        strcat(target_path, "/bridge_param_data");
+        strcat(target_path, "/bridge_parameter_data");
         lo_send(m_oscData->target, target_path, "iiiiii", index, type, rindex, hints, midiChannel, midiCC);
     }
 }
 
-void CarlaEngine::osc_send_bridge_param_ranges(const int32_t index, const double def, const double min, const double max, const double step, const double stepSmall, const double stepLarge)
+void CarlaEngine::osc_send_bridge_parameter_ranges(const int32_t index, const double def, const double min, const double max, const double step, const double stepSmall, const double stepLarge)
 {
-    qDebug("CarlaEngine::osc_send_bridge_param_ranges(%i, %g, %g, %g, %g, %g, %g)", index, def, min, max, step, stepSmall, stepLarge);
+    qDebug("CarlaEngine::osc_send_bridge_parameter_ranges(%i, %g, %g, %g, %g, %g, %g)", index, def, min, max, step, stepSmall, stepLarge);
     Q_ASSERT(m_oscData);
 
     if (m_oscData && m_oscData->target)
     {
-        char target_path[strlen(m_oscData->path)+27];
+        char target_path[strlen(m_oscData->path)+25];
         strcpy(target_path, m_oscData->path);
-        strcat(target_path, "/bridge_param_ranges");
+        strcat(target_path, "/bridge_parameter_ranges");
         lo_send(m_oscData->target, target_path, "idddddd", index, def, min, max, step, stepSmall, stepLarge);
     }
 }
@@ -1590,9 +1597,9 @@ void CarlaEngine::osc_send_bridge_program_info(const int32_t index, const char* 
 
     if (m_oscData && m_oscData->target)
     {
-        char target_path[strlen(m_oscData->path)+27];
+        char target_path[strlen(m_oscData->path)+21];
         strcpy(target_path, m_oscData->path);
-        strcat(target_path, "/bridge_midi_program_info");
+        strcat(target_path, "/bridge_program_info");
         lo_send(m_oscData->target, target_path, "is", index, name);
     }
 }
@@ -1604,7 +1611,7 @@ void CarlaEngine::osc_send_bridge_midi_program_info(const int32_t index, const i
 
     if (m_oscData && m_oscData->target)
     {
-        char target_path[strlen(m_oscData->path)+27];
+        char target_path[strlen(m_oscData->path)+26];
         strcpy(target_path, m_oscData->path);
         strcat(target_path, "/bridge_midi_program_info");
         lo_send(m_oscData->target, target_path, "iiis", index, bank, program, label);
@@ -1618,7 +1625,7 @@ void CarlaEngine::osc_send_bridge_set_parameter_value(const int32_t index, const
 
     if (m_oscData && m_oscData->target)
     {
-        char target_path[strlen(m_oscData->path)+27];
+        char target_path[strlen(m_oscData->path)+28];
         strcpy(target_path, m_oscData->path);
         strcat(target_path, "/bridge_set_parameter_value");
         lo_send(m_oscData->target, target_path, "id", index, value);
@@ -1632,7 +1639,7 @@ void CarlaEngine::osc_send_bridge_set_default_value(const int32_t index, const d
 
     if (m_oscData && m_oscData->target)
     {
-        char target_path[strlen(m_oscData->path)+27];
+        char target_path[strlen(m_oscData->path)+26];
         strcpy(target_path, m_oscData->path);
         strcat(target_path, "/bridge_set_default_value");
         lo_send(m_oscData->target, target_path, "id", index, value);
@@ -1646,7 +1653,7 @@ void CarlaEngine::osc_send_bridge_set_program(const int32_t index)
 
     if (m_oscData && m_oscData->target)
     {
-        char target_path[strlen(m_oscData->path)+27];
+        char target_path[strlen(m_oscData->path)+20];
         strcpy(target_path, m_oscData->path);
         strcat(target_path, "/bridge_set_program");
         lo_send(m_oscData->target, target_path, "i", index);
@@ -1660,10 +1667,38 @@ void CarlaEngine::osc_send_bridge_set_midi_program(const int32_t index)
 
     if (m_oscData && m_oscData->target)
     {
-        char target_path[strlen(m_oscData->path)+27];
+        char target_path[strlen(m_oscData->path)+25];
         strcpy(target_path, m_oscData->path);
         strcat(target_path, "/bridge_set_midi_program");
         lo_send(m_oscData->target, target_path, "i", index);
+    }
+}
+
+void CarlaEngine::osc_send_bridge_set_input_peak_value(const int32_t portId, const double value)
+{
+    Q_ASSERT(m_oscData);
+    Q_ASSERT(portId == 1 || portId == 2);
+
+    if (m_oscData && m_oscData->target)
+    {
+        char target_path[strlen(m_oscData->path)+28];
+        strcpy(target_path, m_oscData->path);
+        strcat(target_path, "/bridge_set_input_peak_value");
+        lo_send(m_oscData->target, target_path, "id", portId, value);
+    }
+}
+
+void CarlaEngine::osc_send_bridge_set_output_peak_value(const int32_t portId, const double value)
+{
+    Q_ASSERT(m_oscData);
+    Q_ASSERT(portId == 1 || portId == 2);
+
+    if (m_oscData && m_oscData->target)
+    {
+        char target_path[strlen(m_oscData->path)+29];
+        strcpy(target_path, m_oscData->path);
+        strcat(target_path, "/bridge_set_output_peak_value");
+        lo_send(m_oscData->target, target_path, "id", portId, value);
     }
 }
 #endif

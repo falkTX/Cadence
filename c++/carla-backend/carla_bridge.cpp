@@ -20,35 +20,59 @@
 #include <QtCore/QFile>
 #include <QtCore/QTextStream>
 
-CARLA_BACKEND_START_NAMESPACE
+#define CARLA_BRIDGE_CHECK_OSC_TYPES(/* argc, types, */ argcToCompare, typesToCompare)                                    \
+    /* check argument count */                                                                                            \
+    if (argc != argcToCompare)                                                                                            \
+    {                                                                                                                     \
+        qCritical("BridgePlugin::%s() - argument count mismatch: %i != %i", __FUNCTION__, argc, argcToCompare);           \
+        return 1;                                                                                                         \
+    }                                                                                                                     \
+    if (argc > 0)                                                                                                         \
+    {                                                                                                                     \
+        /* check for nullness */                                                                                          \
+        if (! (types && typesToCompare))                                                                                  \
+        {                                                                                                                 \
+            qCritical("BridgePlugin::%s() - argument types are null", __FUNCTION__);                                      \
+            return 1;                                                                                                     \
+        }                                                                                                                 \
+        /* check argument types */                                                                                        \
+        if (strcmp(types, typesToCompare) != 0)                                                                           \
+        {                                                                                                                 \
+            qCritical("BridgePlugin::%s() - argument types mismatch: '%s' != '%s'", __FUNCTION__, types, typesToCompare); \
+            return 1;                                                                                                     \
+        }                                                                                                                 \
+    }
 
-#if 0
-} /* adjust editor indent */
-#endif
+CARLA_BACKEND_START_NAMESPACE
 
 struct BridgeParamInfo {
     double value;
     QString name;
     QString unit;
+
+    BridgeParamInfo()
+        : value(0.0) {}
 };
 
 class BridgePlugin : public CarlaPlugin
 {
 public:
-    BridgePlugin(CarlaEngine* const engine, unsigned short id, BinaryType btype, PluginType ptype) : CarlaPlugin(engine, id),
-        m_binary(btype)
+    BridgePlugin(CarlaEngine* const engine, const unsigned short id, const BinaryType btype, const PluginType ptype)
+        : CarlaPlugin(engine, id),
+          m_binary(btype)
     {
         qDebug("BridgePlugin::BridgePlugin()");
+
         m_type   = ptype;
         m_hints  = PLUGIN_IS_BRIDGE;
 
         m_initiated = false;
         m_saved = false;
 
-        info.ains  = 0;
-        info.aouts = 0;
-        info.mins  = 0;
-        info.mouts = 0;
+        info.aIns  = 0;
+        info.aOuts = 0;
+        info.mIns  = 0;
+        info.mOuts = 0;
 
         info.category = PLUGIN_CATEGORY_NONE;
         info.uniqueId = 0;
@@ -119,22 +143,22 @@ public:
 
     uint32_t audioInCount()
     {
-        return info.ains;
+        return info.aIns;
     }
 
     uint32_t audioOutCount()
     {
-        return info.aouts;
+        return info.aOuts;
     }
 
     uint32_t midiInCount()
     {
-        return info.mins;
+        return info.mIns;
     }
 
     uint32_t midiOutCount()
     {
-        return info.mouts;
+        return info.mOuts;
     }
 
     // -------------------------------------------------------------------
@@ -195,21 +219,21 @@ public:
             CarlaPlugin::getRealName(strBuf);
     }
 
-    void getParameterName(uint32_t parameterId, char* const strBuf)
+    void getParameterName(const uint32_t parameterId, char* const strBuf)
     {
         Q_ASSERT(parameterId < param.count);
 
         strncpy(strBuf, params[parameterId].name.toUtf8().constData(), STR_MAX);
     }
 
-    void getParameterUnit(uint32_t parameterId, char* const strBuf)
+    void getParameterUnit(const uint32_t parameterId, char* const strBuf)
     {
         Q_ASSERT(parameterId < param.count);
 
         strncpy(strBuf, params[parameterId].unit.toUtf8().constData(), STR_MAX);
     }
 
-    void getGuiInfo(GuiType* type, bool* resizable)
+    void getGuiInfo(GuiType* const type, bool* const resizable)
     {
         if (m_hints & PLUGIN_HAS_GUI)
             *type = GUI_EXTERNAL_OSC;
@@ -221,166 +245,159 @@ public:
     // -------------------------------------------------------------------
     // Set data (internal stuff)
 
-    int setOscBridgeInfo(const PluginBridgeInfoType type, const lo_arg* const* const argv)
+    int setOscBridgeInfo(const PluginBridgeInfoType type, const int argc, const lo_arg* const* const argv, const char* const types)
     {
-        qDebug("setOscBridgeInfo(%i, %p)", type, argv);
+        qDebug("setOscBridgeInfo(%i, %i, %p, \"%s\")", type, argc, argv, types);
 
         switch (type)
         {
-//        case PluginBridgeAudioCount:
-//        {
-//            int aIns   = argv[0]->i;
-//            int aOuts  = argv[1]->i;
-//            int aTotal = argv[2]->i;
+        case PluginBridgeAudioCount:
+        {
+            CARLA_BRIDGE_CHECK_OSC_TYPES(3, "iii");
 
-//            info.ains  = aIns;
-//            info.aouts = aOuts;
+            const int32_t aIns   = argv[0]->i;
+            const int32_t aOuts  = argv[1]->i;
+            const int32_t aTotal = argv[2]->i;
 
-//            break;
-//            Q_UNUSED(aTotal);
-//        }
+            info.aIns  = aIns;
+            info.aOuts = aOuts;
 
-//        case PluginBridgeMidiCount:
-//        {
-//            int mIns   = argv[0]->i;
-//            int mOuts  = argv[1]->i;
-//            int mTotal = argv[2]->i;
+            break;
+            Q_UNUSED(aTotal);
+        }
 
-//            info.mins  = mIns;
-//            info.mouts = mOuts;
+        case PluginBridgeMidiCount:
+        {
+            CARLA_BRIDGE_CHECK_OSC_TYPES(3, "iii");
 
-//            break;
-//            Q_UNUSED(mTotal);
-//        }
+            const int32_t mIns   = argv[0]->i;
+            const int32_t mOuts  = argv[1]->i;
+            const int32_t mTotal = argv[2]->i;
 
-//        case PluginBridgeParameterCount:
-//        {
-//            int pIns   = argv[0]->i;
-//            int pOuts  = argv[1]->i;
-//            int pTotal = argv[2]->i;
+            info.mIns  = mIns;
+            info.mOuts = mOuts;
 
-//            // delete old data
-//            if (param.count > 0)
-//            {
-//                delete[] param.data;
-//                delete[] param.ranges;
-//                delete[] params;
-//            }
+            break;
+            Q_UNUSED(mTotal);
+        }
 
-//            // create new if needed
-//            param.count = (pTotal < (int)carlaOptions.maxParameters) ? pTotal : 0;
+        case PluginBridgeParameterCount:
+        {
+            CARLA_BRIDGE_CHECK_OSC_TYPES(3, "iii");
 
-//            if (param.count > 0)
-//            {
-//                param.data   = new ParameterData[param.count];
-//                param.ranges = new ParameterRanges[param.count];
-//                params       = new BridgeParamInfo[param.count];
-//            }
-//            else
-//            {
-//                param.data = nullptr;
-//                param.ranges = nullptr;
-//                params = nullptr;
-//            }
+            const int32_t pIns   = argv[0]->i;
+            const int32_t pOuts  = argv[1]->i;
+            const int32_t pTotal = argv[2]->i;
 
-//            // initialize
-//            for (uint32_t i=0; i < param.count; i++)
-//            {
-//                param.data[i].type   = PARAMETER_UNKNOWN;
-//                param.data[i].index  = -1;
-//                param.data[i].rindex = -1;
-//                param.data[i].hints  = 0;
-//                param.data[i].midiChannel = 0;
-//                param.data[i].midiCC = -1;
+            // delete old data
+            if (param.count > 0)
+            {
+                delete[] param.data;
+                delete[] param.ranges;
+                delete[] params;
+            }
 
-//                param.ranges[i].def  = 0.0;
-//                param.ranges[i].min  = 0.0;
-//                param.ranges[i].max  = 1.0;
-//                param.ranges[i].step = 0.01;
-//                param.ranges[i].stepSmall = 0.0001;
-//                param.ranges[i].stepLarge = 0.1;
+            // create new if needed
+            param.count = (pTotal < (int32_t)carlaOptions.maxParameters) ? pTotal : 0;
 
-//                params[i].value = 0.0;
-//                params[i].name = QString();
-//                params[i].unit = QString();
-//            }
+            if (param.count > 0)
+            {
+                param.data   = new ParameterData[param.count];
+                param.ranges = new ParameterRanges[param.count];
+                params       = new BridgeParamInfo[param.count];
+            }
+            else
+            {
+                param.data = nullptr;
+                param.ranges = nullptr;
+                params = nullptr;
+            }
 
-//            break;
-//            Q_UNUSED(pIns);
-//            Q_UNUSED(pOuts);
-//        }
+            break;
+            Q_UNUSED(pIns);
+            Q_UNUSED(pOuts);
+        }
 
-//        case PluginBridgeProgramCount:
-//        {
-//            int count = argv[0]->i;
+        case PluginBridgeProgramCount:
+        {
+            CARLA_BRIDGE_CHECK_OSC_TYPES(1, "i");
 
-//            // Delete old programs
-//            if (prog.count > 0)
-//            {
-//                for (uint32_t i=0; i < prog.count; i++)
-//                    free((void*)prog.names[i]);
+            const int32_t count = argv[0]->i;
 
-//                delete[] prog.names;
-//            }
+            // Delete old programs
+            if (prog.count > 0)
+            {
+                for (uint32_t i=0; i < prog.count; i++)
+                {
+                    if (prog.names[i])
+                        free((void*)prog.names[i]);
+                }
 
-//            prog.count = 0;
-//            prog.names = nullptr;
+                delete[] prog.names;
+            }
 
-//            // Query new programs
-//            prog.count = count;
+            prog.count = 0;
+            prog.names = nullptr;
 
-//            if (prog.count > 0)
-//                prog.names = new const char* [prog.count];
+            // Query new programs
+            prog.count = count;
 
-//            // Update names (NULL)
-//            for (uint32_t i=0; i < prog.count; i++)
-//                prog.names[i] = nullptr;
+            if (prog.count > 0)
+                prog.names = new const char* [prog.count];
 
-//            break;
-//        }
+            // Update names (NULL)
+            for (uint32_t i=0; i < prog.count; i++)
+                prog.names[i] = nullptr;
 
-//        case PluginBridgeMidiProgramCount:
-//        {
-//            int count = argv[0]->i;
+            break;
+        }
 
-//            // Delete old programs
-//            if (midiprog.count > 0)
-//            {
-//                for (uint32_t i=0; i < midiprog.count; i++)
-//                    free((void*)midiprog.data[i].name);
+        case PluginBridgeMidiProgramCount:
+        {
+            CARLA_BRIDGE_CHECK_OSC_TYPES(1, "i");
 
-//                delete[] midiprog.data;
-//            }
+            const int32_t count = argv[0]->i;
 
-//            midiprog.count = 0;
-//            midiprog.data  = nullptr;
+            // Delete old programs
+            if (midiprog.count > 0)
+            {
+                for (uint32_t i=0; i < midiprog.count; i++)
+                {
+                    if (midiprog.data[i].name)
+                        free((void*)midiprog.data[i].name);
+                }
 
-//            // Query new programs
-//            midiprog.count = count;
+                delete[] midiprog.data;
+            }
 
-//            if (midiprog.count > 0)
-//                midiprog.data = new midi_program_t [midiprog.count];
+            midiprog.count = 0;
+            midiprog.data  = nullptr;
 
-//            // Update data (NULL)
-//            for (uint32_t i=0; i < midiprog.count; i++)
-//            {
-//                midiprog.data[i].bank    = 0;
-//                midiprog.data[i].program = 0;
-//                midiprog.data[i].name    = nullptr;
-//            }
+            // Query new programs
+            midiprog.count = count;
 
-//            break;
-//        }
+            if (midiprog.count > 0)
+                midiprog.data = new midi_program_t [midiprog.count];
+
+            break;
+        }
 
         case PluginBridgePluginInfo:
         {
-            int category = argv[0]->i;
-            int hints    = argv[1]->i;
-            const char* name  = (const char*)&argv[2]->s;
-            const char* label = (const char*)&argv[3]->s;
-            const char* maker = (const char*)&argv[4]->s;
-            const char* copyright = (const char*)&argv[5]->s;
-            long uniqueId = argv[6]->i;
+            CARLA_BRIDGE_CHECK_OSC_TYPES(7, "iissssh");
+
+            const int32_t category  = argv[0]->i;
+            const int32_t hints     = argv[1]->i;
+            const char* const name  = (const char*)&argv[2]->s;
+            const char* const label = (const char*)&argv[3]->s;
+            const char* const maker = (const char*)&argv[4]->s;
+            const char* const copyright = (const char*)&argv[5]->s;
+            const int64_t uniqueId      = argv[6]->i;
+
+            Q_ASSERT(name);
+            Q_ASSERT(label);
+            Q_ASSERT(maker);
+            Q_ASSERT(copyright);
 
             m_hints = hints | PLUGIN_IS_BRIDGE;
             info.category = (PluginCategory)category;
@@ -397,108 +414,188 @@ public:
             break;
         }
 
-//        case PluginBridgeParameterInfo:
-//        {
-//            int index = argv[0]->i;
-//            const char* name = (const char*)&argv[1]->s;
-//            const char* unit = (const char*)&argv[2]->s;
+        case PluginBridgeParameterInfo:
+        {
+            CARLA_BRIDGE_CHECK_OSC_TYPES(3, "iss");
 
-//            if (index >= 0 && index < (int32_t)param.count)
-//            {
-//                params[index].name = QString(name);
-//                params[index].unit = QString(unit);
-//            }
+            const int32_t index    = argv[0]->i;
+            const char* const name = (const char*)&argv[1]->s;
+            const char* const unit = (const char*)&argv[2]->s;
 
-//            break;
-//        }
+            Q_ASSERT(index >= 0 && index < (int32_t)param.count);
+            Q_ASSERT(name);
+            Q_ASSERT(unit);
 
-//        case PluginBridgeParameterDataInfo:
-//        {
-//            int index   = argv[0]->i;
-//            int type    = argv[1]->i;
-//            int rindex  = argv[2]->i;
-//            int hints   = argv[3]->i;
-//            int channel = argv[4]->i;
-//            int cc      = argv[5]->i;
+            if (index >= 0 && index < (int32_t)param.count)
+            {
+                params[index].name = QString(name);
+                params[index].unit = QString(unit);
+            }
+
+            break;
+        }
+
+        case PluginBridgeParameterData:
+        {
+            CARLA_BRIDGE_CHECK_OSC_TYPES(6, "iiiiii");
+
+            const int32_t index   = argv[0]->i;
+            const int32_t type    = argv[1]->i;
+            const int32_t rindex  = argv[2]->i;
+            const int32_t hints   = argv[3]->i;
+            const int32_t channel = argv[4]->i;
+            const int32_t cc      = argv[5]->i;
+
+            Q_ASSERT(index >= 0 && index < (int32_t)param.count);
+
+            if (index >= 0 && index < (int32_t)param.count)
+            {
+                param.data[index].type    = (ParameterType)type;
+                param.data[index].index   = index;
+                param.data[index].rindex  = rindex;
+                param.data[index].hints   = hints;
+                param.data[index].midiChannel = channel;
+                param.data[index].midiCC  = cc;
+            }
+
+            break;
+        }
+
+        case PluginBridgeParameterRanges:
+        {
+            CARLA_BRIDGE_CHECK_OSC_TYPES(7, "idddddd");
+
+            const int32_t index = argv[0]->i;
+            const double def    = argv[1]->d;
+            const double min    = argv[2]->d;
+            const double max    = argv[3]->d;
+            const double step   = argv[4]->d;
+            const double stepSmall = argv[5]->d;
+            const double stepLarge = argv[6]->d;
+
+            Q_ASSERT(index >= 0 && index < (int32_t)param.count);
+
+            if (index >= 0 && index < (int32_t)param.count)
+            {
+                param.ranges[index].def  = def;
+                param.ranges[index].min  = min;
+                param.ranges[index].max  = max;
+                param.ranges[index].step = step;
+                param.ranges[index].stepSmall = stepSmall;
+                param.ranges[index].stepLarge = stepLarge;
+                params[index].value = def;
+            }
+
+            break;
+        }
+
+        case PluginBridgeProgramInfo:
+        {
+            CARLA_BRIDGE_CHECK_OSC_TYPES(2, "is");
+
+            const int32_t index    = argv[0]->i;
+            const char* const name = (const char*)&argv[1]->s;
+
+            Q_ASSERT(name);
+
+            if (index >= 0 && index < (int32_t)prog.count)
+            {
+                if (prog.names[index])
+                    free((void*)prog.names[index]);
+
+                prog.names[index] = strdup(name);
+            }
+
+            break;
+        }
+
+        case PluginBridgeMidiProgramInfo:
+        {
+            CARLA_BRIDGE_CHECK_OSC_TYPES(4, "iiis");
+
+            const int32_t index    = argv[0]->i;
+            const int32_t bank     = argv[1]->i;
+            const int32_t program  = argv[2]->i;
+            const char* const name = (const char*)&argv[3]->s;
+
+            Q_ASSERT(name);
+
+            if (index >= 0 && index < (int32_t)midiprog.count)
+            {
+                if (midiprog.data[index].name)
+                    free((void*)midiprog.data[index].name);
+
+                midiprog.data[index].bank    = bank;
+                midiprog.data[index].program = program;
+                midiprog.data[index].name    = strdup(name);
+            }
+
+            break;
+        }
+
+        case PluginBridgeSetParameterValue:
+        {
+            CARLA_BRIDGE_CHECK_OSC_TYPES(2, "id");
+
+            const int32_t index = argv[0]->i;
+            const double  value = argv[1]->d;
+
+            setParameterValueByRIndex(index, value, false, true, true);
+
+            break;
+        }
+
+        case PluginBridgeSetDefaultValue:
+        {
+            CARLA_BRIDGE_CHECK_OSC_TYPES(2, "id");
+
+            const int32_t index = argv[0]->i;
+            const double  value = argv[1]->d;
 
 
-//            if (index >= 0 && index < (int32_t)param.count)
-//            {
-//                param.data[index].type    = (ParameterType)type;
-//                param.data[index].index   = index;
-//                param.data[index].rindex  = rindex;
-//                param.data[index].hints   = hints;
-//                param.data[index].midiChannel = channel;
-//                param.data[index].midiCC  = cc;
-//            }
+            Q_ASSERT(index >= 0 && index < (int32_t)param.count);
 
-//            break;
-//        }
+            if (index >= 0 && index < (int32_t)param.count)
+                param.ranges[index].def = value;
 
-//        case PluginBridgeParameterRangesInfo:
-//        {
-//            int index = argv[0]->i;
-//            float def = argv[1]->f;
-//            float min = argv[2]->f;
-//            float max = argv[3]->f;
-//            float step = argv[4]->f;
-//            float stepSmall = argv[5]->f;
-//            float stepLarge = argv[6]->f;
+            break;
+        }
 
-//            if (index >= 0 && index < (int32_t)param.count)
-//            {
-//                param.ranges[index].def  = def;
-//                param.ranges[index].min  = min;
-//                param.ranges[index].max  = max;
-//                param.ranges[index].step = step;
-//                param.ranges[index].stepSmall = stepSmall;
-//                param.ranges[index].stepLarge = stepLarge;
-//            }
+        case PluginBridgeSetProgram:
+        {
+            CARLA_BRIDGE_CHECK_OSC_TYPES(1, "i");
 
-//            break;
-//        }
+            const int32_t index = argv[0]->i;
 
-//        case PluginBridgeProgramInfo:
-//        {
-//            int index = argv[0]->i;
-//            const char* name = (const char*)&argv[1]->s;
+            setProgram(index, false, true, true, true);
 
-//            if (index >= 0 && index < (int32_t)prog.count)
-//                prog.names[index] = strdup(name);
+            break;
+        }
 
-//            break;
-//        }
+        case PluginBridgeSetMidiProgram:
+        {
+            CARLA_BRIDGE_CHECK_OSC_TYPES(1, "i");
 
-//        case PluginBridgeMidiProgramInfo:
-//        {
-//            int index   = argv[0]->i;
-//            int bank    = argv[1]->i;
-//            int program = argv[2]->i;
-//            const char* name = (const char*)&argv[3]->s;
+            const int32_t index = argv[0]->i;
 
-//            if (index >= 0 && index < (int32_t)midiprog.count)
-//            {
-//                midiprog.data[index].bank    = bank;
-//                midiprog.data[index].program = program;
-//                midiprog.data[index].name    = strdup(name);
-//            }
+            setMidiProgram(index, false, true, true, true);
 
-//            break;
-//        }
+            break;
+        }
 
-//        case PluginBridgeCustomData:
-//        {
+        case PluginBridgeSetCustomData:
+        {
 //            const char* stype = (const char*)&argv[0]->s;
 //            const char* key   = (const char*)&argv[1]->s;
 //            const char* value = (const char*)&argv[2]->s;
 
 //            setCustomData(getCustomDataStringType(stype), key, value, false);
 
-//            break;
-//        }
+            break;
+        }
 
-//        case PluginBridgeChunkData:
-//        {
+        case PluginBridgeSetChunkData:
+        {
 //            const char* const filePath = (const char*)&argv[0]->s;
 //            QFile file(filePath);
 
@@ -508,8 +605,8 @@ public:
 //                file.remove();
 //            }
 
-//            break;
-//        }
+            break;
+        }
 
         case PluginBridgeUpdateNow:
             m_initiated = true;
@@ -526,7 +623,7 @@ public:
     // -------------------------------------------------------------------
     // Set data (plugin-specific stuff)
 
-    void setParameterValue(uint32_t parameterId, double value, bool sendGui, bool sendOsc, bool sendCallback)
+    void setParameterValue(const uint32_t parameterId, double value, const bool sendGui, const bool sendOsc, const bool sendCallback)
     {
         Q_ASSERT(parameterId < param.count);
 
@@ -535,7 +632,7 @@ public:
         CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
     }
 
-    void setCustomData(CustomDataType type, const char* const key, const char* const value, bool sendGui)
+    void setCustomData(const CustomDataType type, const char* const key, const char* const value, const bool sendGui)
     {
         Q_ASSERT(key);
         Q_ASSERT(value);
@@ -560,7 +657,7 @@ public:
         Q_ASSERT(stringData);
 
         QString filePath;
-        filePath += "/tmp/.CarlaChunk_";
+        filePath += "/tmp/.CarlaChunk_"; // FIXME - cross-platform
         filePath += m_name;
 
         QFile file(filePath);
@@ -593,11 +690,11 @@ public:
         m_saved = false;
         osc_send_configure(&osc.data, CARLA_BRIDGE_MSG_SAVE_NOW, "");
 
-        for (int i=0; i < 100; i++)
+        for (int i=0; i < 200; i++)
         {
             if (m_saved)
                 break;
-            carla_msleep(100);
+            carla_msleep(50);
         }
 
         if (! m_saved)
@@ -613,6 +710,11 @@ public:
     {
         Q_ASSERT(index < param.count);
 
+        if (index >= param.count)
+            return;
+        if (! osc.data.target)
+            return;
+
         osc_send_control(&osc.data, param.data[index].rindex, value);
     }
 
@@ -620,12 +722,22 @@ public:
     {
         Q_ASSERT(index < prog.count);
 
+        if (index >= prog.count)
+            return;
+        if (! osc.data.target)
+            return;
+
         osc_send_program(&osc.data, index);
     }
 
     void uiMidiProgramChange(const uint32_t index)
     {
         Q_ASSERT(index < midiprog.count);
+
+        if (index >= midiprog.count)
+            return;
+        if (! osc.data.target)
+            return;
 
         osc_send_midi_program(&osc.data, index);
     }
@@ -636,10 +748,14 @@ public:
         Q_ASSERT(note < 128);
         Q_ASSERT(velo > 0 && velo < 128);
 
-        // TODO
-        Q_UNUSED(channel);
-        Q_UNUSED(note);
-        Q_UNUSED(velo);
+        if (! osc.data.target)
+            return;
+
+        uint8_t midiData[4] = { 0 };
+        midiData[1] = MIDI_STATUS_NOTE_ON + channel;
+        midiData[2] = note;
+        midiData[3] = velo;
+        osc_send_midi(&osc.data, midiData);
     }
 
     void uiNoteOff(const uint8_t channel, const uint8_t note)
@@ -647,9 +763,13 @@ public:
         Q_ASSERT(channel < 16);
         Q_ASSERT(note < 128);
 
-        // TODO
-        Q_UNUSED(channel);
-        Q_UNUSED(note);
+        if (! osc.data.target)
+            return;
+
+        uint8_t midiData[4] = { 0 };
+        midiData[1] = MIDI_STATUS_NOTE_OFF + channel;
+        midiData[2] = note;
+        osc_send_midi(&osc.data, midiData);
     }
 
     // -------------------------------------------------------------------
@@ -717,8 +837,8 @@ private:
     bool m_saved;
 
     struct {
-        uint32_t ains, aouts;
-        uint32_t mins, mouts;
+        uint32_t aIns, aOuts;
+        uint32_t mIns, mOuts;
         PluginCategory category;
         long uniqueId;
         const char* name;
@@ -737,7 +857,7 @@ CarlaPlugin* CarlaPlugin::newBridge(const initializer& init, BinaryType btype, P
 
     short id = init.engine->getNewPluginId();
 
-    if (id < 0 || id > MAX_PLUGINS)
+    if (id < 0 || id > CarlaEngine::maxPluginNumber())
     {
         setLastError("Maximum number of plugins reached");
         return nullptr;

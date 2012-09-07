@@ -266,7 +266,7 @@ void CarlaEngineJack::handleFreewheelCallback(bool isFreewheel)
 
 void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
 {
-    if (maxPluginNumber == 0)
+    if (maxPluginNumber() == 0)
         return;
 
     state = jackbridge_transport_query(client, &pos);
@@ -302,7 +302,7 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
 #ifndef BUILD_BRIDGE
     if (carlaOptions.processMode == PROCESS_MODE_SINGLE_CLIENT)
     {
-        for (unsigned short i=0; i < maxPluginNumber; i++)
+        for (unsigned short i=0, max=maxPluginNumber(); i < max; i++)
         {
             CarlaPlugin* const plugin = getPluginUnchecked(i);
 
@@ -436,7 +436,7 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
         bool processed = false;
 
         // process plugins
-        for (unsigned short i=0; i < maxPluginNumber; i++)
+        for (unsigned short i=0, max=maxPluginNumber(); i < max; i++)
         {
             CarlaPlugin* const plugin = getPluginUnchecked(i);
 
@@ -581,7 +581,7 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
 
 void CarlaEngineJack::handleShutdownCallback()
 {
-    //for (unsigned short i=0; i < maxPluginNumber; i++)
+    //for (unsigned short i=0, max=maxPluginNumber(); i < max; i++)
     //{
         //CarlaPlugin* const plugin = getPluginUnchecked(i);
         //plugin->x_client

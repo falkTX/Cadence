@@ -24,12 +24,12 @@
 // -----------------------------------------------------------------------
 // CarlaCheckThread
 
-CarlaCheckThread::CarlaCheckThread(CarlaBackend::CarlaEngine* const engine_, QObject* const parent) :
-    QThread(parent),
-    engine(engine_)
+CarlaCheckThread::CarlaCheckThread(CarlaBackend::CarlaEngine* const engine_, QObject* const parent)
+    : QThread(parent),
+      engine(engine_)
 {
-    maxPluginNumber = 0;
-    qDebug("CarlaCheckThread::CarlaCheckThread(%p)", parent);
+    qDebug("CarlaCheckThread::CarlaCheckThread(%p, %p)", engine, parent);
+    Q_ASSERT(engine);
 }
 
 CarlaCheckThread::~CarlaCheckThread()
@@ -37,9 +37,8 @@ CarlaCheckThread::~CarlaCheckThread()
     qDebug("CarlaCheckThread::~CarlaCheckThread()");
 }
 
-void CarlaCheckThread::startNow(const unsigned short maxPluginNumber_)
+void CarlaCheckThread::startNow()
 {
-    maxPluginNumber = maxPluginNumber_;
     start(QThread::HighPriority);
 }
 
@@ -63,7 +62,10 @@ void CarlaCheckThread::run()
 {
     qDebug("CarlaCheckThread::run()");
 
+    using namespace CarlaBackend;
+
     bool oscControllerRegisted, usesSingleThread;
+    unsigned short id, maxPluginNumber = CarlaEngine::maxPluginNumber();
     double value;
 
     m_stopNow = false;
@@ -80,14 +82,12 @@ void CarlaCheckThread::run()
 
         for (unsigned short i=0; i < maxPluginNumber; i++)
         {
-            CarlaBackend::CarlaPlugin* const plugin = engine->getPluginUnchecked(i);
+            CarlaPlugin* const plugin = engine->getPluginUnchecked(i);
 
             if (plugin && plugin->enabled())
             {
-#ifndef BUILD_BRIDGE
-                unsigned short id = plugin->id();
-#endif
-                usesSingleThread = (plugin->hints() & CarlaBackend::PLUGIN_USES_SINGLE_THREAD);
+                id = plugin->id();
+                usesSingleThread = (plugin->hints() & PLUGIN_USES_SINGLE_THREAD);
 
                 // -------------------------------------------------------
                 // Process postponed events
@@ -121,7 +121,6 @@ void CarlaCheckThread::run()
                     }
                 }
 
-#ifndef BUILD_BRIDGE
                 // -------------------------------------------------------
                 // Update OSC control client
 
@@ -130,16 +129,25 @@ void CarlaCheckThread::run()
                     // Peak values
                     if (plugin->audioInCount() > 0)
                     {
+#ifdef BUILD_BRIDGE
+                        engine->osc_send_bridge_set_input_peak_value(1, engine->getInputPeak(id, 0));
+                        engine->osc_send_bridge_set_input_peak_value(2, engine->getInputPeak(id, 1));
+#else
                         engine->osc_send_control_set_input_peak_value(id, 1, engine->getInputPeak(id, 0));
                         engine->osc_send_control_set_input_peak_value(id, 2, engine->getInputPeak(id, 1));
+#endif
                     }
                     if (plugin->audioOutCount() > 0)
                     {
+#ifdef BUILD_BRIDGE
+                        engine->osc_send_bridge_set_output_peak_value(1, engine->getOutputPeak(id, 0));
+                        engine->osc_send_bridge_set_output_peak_value(2, engine->getOutputPeak(id, 1));
+#else
                         engine->osc_send_control_set_output_peak_value(id, 1, engine->getOutputPeak(id, 0));
                         engine->osc_send_control_set_output_peak_value(id, 2, engine->getOutputPeak(id, 1));
+#endif
                     }
                 }
-#endif
             }
         }
 

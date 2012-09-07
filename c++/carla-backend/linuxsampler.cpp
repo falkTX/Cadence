@@ -254,13 +254,16 @@ public:
 
 #ifndef BUILD_BRIDGE
         // Update OSC Names
-        //osc_global_send_set_midi_program_count(m_id, midiprog.count);
+        if (x_engine->isOscControllerRegisted())
+        {
+            x_engine->osc_send_control_set_midi_program_count(m_id, midiprog.count);
 
-        //for (i=0; i < midiprog.count; i++)
-        //    osc_global_send_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
-
-        x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
+            for (i=0; i < midiprog.count; i++)
+                x_engine->osc_send_control_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
+        }
 #endif
+
+        // TODO
 
         if (init)
         {
@@ -578,7 +581,7 @@ CarlaPlugin* LinuxSamplerPlugin::newLinuxSampler(const initializer& init, bool i
 
     short id = init.engine->getNewPluginId();
 
-    if (id < 0 || id > MAX_PLUGINS)
+    if (id < 0 || id > CarlaEngine::maxPluginNumber())
     {
         setLastError("Maximum number of plugins reached");
         return nullptr;

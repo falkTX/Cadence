@@ -93,6 +93,9 @@ public:
 
     void setStuff(CarlaBackend::CarlaEngine* const engine_, CarlaBackend::CarlaPlugin* const plugin_)
     {
+        Q_ASSERT(engine_);
+        Q_ASSERT(plugin_);
+
         engine = engine_;
         plugin = plugin_;
     }
@@ -114,25 +117,47 @@ public:
     void setProgram(const uint32_t index)
     {
         qDebug("CarlaPluginClient::setProgram(%i)", index);
-        Q_ASSERT(plugin && index < plugin->programCount());
+        Q_ASSERT(engine);
+        Q_ASSERT(plugin);
+        Q_ASSERT(index < plugin->programCount());
 
-        if (! plugin)
+        if (! (plugin && engine))
             return;
         if (index >= plugin->programCount())
             return;
 
         plugin->setProgram(index, true, true, false, true);
+
+        double value;
+        for (uint32_t i=0; i < plugin->parameterCount(); i++)
+        {
+            value = plugin->getParameterValue(i);
+            engine->osc_send_bridge_set_parameter_value(i, value);
+            engine->osc_send_bridge_set_default_value(i, value);
+        }
     }
 
-    void setMidiProgram(const uint32_t bank, const uint32_t program)
+    void setMidiProgram(const uint32_t index, const uint32_t test)
     {
-        qDebug("CarlaPluginClient::setMidiProgram(%i, %i)", bank, program);
+        qDebug("CarlaPluginClient::setMidiProgram(%i, %i)", index, test);
+        Q_ASSERT(engine);
         Q_ASSERT(plugin);
+        Q_ASSERT(test == -1);
 
-        if (! plugin)
+        if (! (plugin && engine))
             return;
+        if (test != -1)
+          return;
 
-        plugin->setMidiProgramById(bank, program, true, true, false, true);
+        plugin->setMidiProgram(index, true, true, false, true);
+
+        double value;
+        for (uint32_t i=0; i < plugin->parameterCount(); i++)
+        {
+            value = plugin->getParameterValue(i);
+            engine->osc_send_bridge_set_parameter_value(i, value);
+            engine->osc_send_bridge_set_default_value(i, value);
+        }
     }
 
     void noteOn(const uint8_t channel, const uint8_t note, const uint8_t velo)
@@ -149,7 +174,7 @@ public:
 
     void noteOff(const uint8_t channel, const uint8_t note)
     {
-        qDebug("CarlaPluginClient::noteOn(%i, %i)", channel, note);
+        qDebug("CarlaPluginClient::noteOff(%i, %i)", channel, note);
         Q_ASSERT(plugin);
 
         if (! plugin)
@@ -163,6 +188,7 @@ public:
 
     void saveNow()
     {
+        qDebug("CarlaPluginClient::saveNow()");
         Q_ASSERT(plugin);
 
         if (! plugin)
@@ -206,6 +232,7 @@ public:
 
     void setCustomData(const char* const type, const char* const key, const char* const value)
     {
+        qDebug("CarlaPluginClient::setCustomData(\"%s\", \"%s\", \"%s\")", type, key, value);
         Q_ASSERT(plugin);
 
         if (! plugin)
@@ -216,6 +243,7 @@ public:
 
     void setChunkData(const char* const filePath)
     {
+        qDebug("CarlaPluginClient::setChunkData(\"%s\")", filePath);
         Q_ASSERT(plugin);
 
         if (! plugin)
@@ -391,6 +419,7 @@ public:
         qDebug("CarlaToolkitPlugin::CarlaToolkitPlugin()");
         app = nullptr;
         dialog = nullptr;
+        m_resizable = false;
     }
 
     ~CarlaToolkitPlugin()
@@ -478,16 +507,26 @@ public:
         qDebug("CarlaToolkitPlugin::resize(%i, %i)", width, height);
         Q_ASSERT(dialog);
 
-        if (dialog)
+        if (! dialog)
+            return;
+
+        if (m_resizable)
+            dialog->resize(width, height);
+        else
             dialog->setFixedSize(width, height);
     }
 
     // ---------------------------------------------------------------------
 
-    void createWindow(const char* const pluginName, const bool createLayout)
+    void createWindow(const char* const pluginName, const bool createLayout, const bool resizable)
     {
+        qDebug("CarlaToolkitPlugin::createWindow(%s, %s, %s)", pluginName, bool2str(createLayout), bool2str(resizable));
+        Q_ASSERT(pluginName);
+
+        m_resizable = resizable;
+
         dialog = new QDialog(nullptr);
-        dialog->resize(10, 10);
+        resize(10, 10);
 
         if (createLayout)
         {
@@ -497,6 +536,11 @@ public:
         }
 
         dialog->setWindowTitle(QString("%1 (GUI)").arg(pluginName));
+
+#ifdef Q_OS_WIN
+        if (! resizable)
+            dialog->setWindowFlags(dialog->windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
+#endif
     }
 
     CarlaBackend::GuiDataHandle getWindowHandle() const
@@ -509,6 +553,7 @@ public:
 private:
     BridgeApplication* app;
     QDialog* dialog;
+    bool m_resizable;
 };
 
 CarlaToolkit* CarlaToolkit::createNew(const char* const)
@@ -608,7 +653,7 @@ int main(int argc, char* argv[])
 
         if (guiType == CarlaBackend::GUI_INTERNAL_QT4 || guiType == CarlaBackend::GUI_INTERNAL_COCOA || guiType == CarlaBackend::GUI_INTERNAL_HWND || guiType == CarlaBackend::GUI_INTERNAL_X11)
         {
-            toolkit.createWindow(plugin->name(), (guiType == CarlaBackend::GUI_INTERNAL_QT4));
+            toolkit.createWindow(plugin->name(), (guiType == CarlaBackend::GUI_INTERNAL_QT4), guiResizable);
             plugin->setGuiData(toolkit.getWindowHandle());
         }
 

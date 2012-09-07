@@ -64,6 +64,7 @@ public:
         gui.height = 0;
 
         isProcessing = false;
+        needIdle = false;
 
         memset(midiEvents, 0, sizeof(VstMidiEvent)*MAX_MIDI_EVENTS*2);
 
@@ -422,10 +423,11 @@ public:
 
     void idleGui()
     {
-        //effect->dispatcher(effect, effIdle, 0, 0, nullptr, 0.0f);
-
-        if (gui.type != GUI_EXTERNAL_OSC && gui.visible)
+        if (gui.type != GUI_EXTERNAL_OSC)
             effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
+
+        if (needIdle)
+            effect->dispatcher(effect, effIdle, 0, 0, nullptr, 0.0f);
 
         CarlaPlugin::idleGui();
     }
@@ -743,10 +745,13 @@ public:
 
 #ifndef BUILD_BRIDGE
         // Update OSC Names
-        x_engine->osc_send_control_set_program_count(m_id, prog.count);
+        if (x_engine->isOscControllerRegisted())
+        {
+            x_engine->osc_send_control_set_program_count(m_id, prog.count);
 
-        for (i=0; i < prog.count; i++)
-            x_engine->osc_send_control_set_program_name(m_id, i, prog.names[i]);
+            for (i=0; i < prog.count; i++)
+                x_engine->osc_send_control_set_program_name(m_id, i, prog.names[i]);
+        }
 #endif
 
         if (init)
@@ -1011,7 +1016,6 @@ public:
             // ----------------------------------------------------------------------------------------------------
             // MIDI Input (External)
 
-            if (m_ctrlInChannel >= 0 && m_ctrlInChannel < 16)
             {
                 engineMidiLock();
 
@@ -1165,7 +1169,7 @@ public:
 
             // FIXME - make this a global option
             // don't process if not needed
-            //if ((effect->flags & effFlagsNoSoundInStop) > 0 && aInsPeak[0] == 0.0 && aInsPeak[1] == 0.0 && midiEventCount == 0 && ! midi.port_mout)
+            //if ((effect->flags & effFlagsNoSoundInStop) > 0 && aInsPeak[0] == 0.0 && aInsPeak[1] == 0.0 && midiEventCount == 0 && ! midi.portMout)
             //{
             if (m_hints & PLUGIN_CAN_PROCESS_REPLACING)
             {
@@ -1438,7 +1442,7 @@ public:
         if (timeInfo->playing)
             vstTimeInfo.flags |= kVstTransportPlaying;
 
-        vstTimeInfo.samplePos  = timeInfo->frame;
+        //vstTimeInfo.samplePos  = timeInfo->frame; // FIXME - currentSamplePosition ?
         vstTimeInfo.sampleRate = x_engine->getSampleRate();
 
         vstTimeInfo.nanoSeconds = timeInfo->time;
@@ -1531,6 +1535,11 @@ public:
         x_engine->callback(CALLBACK_RELOAD_ALL, m_id, 0, 0, 0.0);
 
         return 1;
+    }
+
+    void handleAudioMasterNeedIdle()
+    {
+        needIdle = true;
     }
 
     intptr_t handleAudioMasterProcessEvents(const VstEvents* const vstEvents)
@@ -1726,6 +1735,8 @@ public:
         case audioMasterAutomate:
             if (self)
                 self->handleAudioMasterAutomate(index, opt);
+            else
+                qWarning("VstPlugin::hostCallback::audioMasterAutomate called without valid object");
             break;
 
         case audioMasterVersion:
@@ -1737,8 +1748,10 @@ public:
             break;
 
         case audioMasterIdle:
-            //if (effect)
-            //    effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
+            if (effect)
+                effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
+            else
+                qWarning("VstPlugin::hostCallback::audioMasterIdle called without valid object");
             break;
 
 #if ! VST_FORCE_DEPRECATED
@@ -1751,6 +1764,8 @@ public:
             // Deprecated in VST SDK 2.4
             if (self)
                 self->handleAudioMasterWantMidi();
+            else
+                qWarning("VstPlugin::hostCallback::audioMasterWantMidi called without valid object");
             break;
 #endif
 
@@ -1761,6 +1776,8 @@ public:
             }
             else
             {
+                qWarning("VstPlugin::hostCallback::audioMasterGetTime called without valid object");
+
                 static VstTimeInfo_R timeInfo;
                 memset(&timeInfo, 0, sizeof(VstTimeInfo_R));
                 timeInfo.sampleRate = 44100.0;
@@ -1779,8 +1796,15 @@ public:
             break;
 
         case audioMasterProcessEvents:
-            if (self && ptr)
-                ret = self->handleAudioMasterProcessEvents((const VstEvents*)ptr);
+            if (self)
+            {
+                if (ptr)
+                    ret = self->handleAudioMasterProcessEvents((const VstEvents*)ptr);
+                else
+                    qWarning("VstPlugin::hostCallback::audioMasterProcessEvents called with invalid pointer");
+            }
+            else
+                qWarning("VstPlugin::hostCallback::audioMasterProcessEvents called without valid object");
             break;
 
 #if ! VST_FORCE_DEPRECATED
@@ -1792,6 +1816,8 @@ public:
             // Deprecated in VST SDK 2.4
             if (self)
                 ret = self->handleAudioMasterTempoAt();
+            else
+                qWarning("stPlugin::hostCallback::audioMasterTempoAt called without valid object");
             if (ret == 0)
                 ret = 120 * 10000;
             break;
@@ -1814,30 +1840,48 @@ public:
         case audioMasterIOChanged:
             if (self)
                 ret = self->handleAudioMasterIOChanged();
+            else
+                qWarning("VstPlugin::hostCallback::audioMasterIOChanged called without valid object");
             break;
 
         case audioMasterNeedIdle:
             // Deprecated in VST SDK 2.4
-            // TODO
+            if (self)
+                self->handleAudioMasterNeedIdle();
+            else
+                qWarning("VstPlugin::hostCallback::audioMasterNeedIdle called without valid object");
             break;
 
         case audioMasterSizeWindow:
-            if (self && index > 0 && value > 0)
-                ret = self->handleAdioMasterSizeWindow(index, value);
+            if (self)
+            {
+                if (index > 0 && value > 0)
+                    ret = self->handleAdioMasterSizeWindow(index, value);
+                else
+                    qWarning("VstPlugin::hostCallback::audioMasterSizeWindow called with invalid size");
+            }
+            else
+                qWarning("VstPlugin::hostCallback::audioMasterSizeWindow called without valid object");
             break;
 
         case audioMasterGetSampleRate:
             if (self)
                 ret = self->handleAudioMasterGetSampleRate();
             else
+            {
+                qWarning("stPlugin::hostCallback::audioMasterGetSampleRate called without valid object");
                 ret = 44100;
+            }
             break;
 
         case audioMasterGetBlockSize:
             if (self)
                 ret = self->handleAudioMasterGetBlockSize();
             else
+            {
+                qWarning("stPlugin::hostCallback::audioMasterGetBlockSize called without valid object");
                 ret = 512;
+            }
             break;
 
         case audioMasterGetInputLatency:
@@ -1868,7 +1912,10 @@ public:
             if (self)
                 ret = self->handleAudioMasterGetCurrentProcessLevel();
             else
+            {
+                qWarning("VstPlugin::hostCallback::audioMasterGetCurrentProcessLevel called without valid object");
                 ret = kVstProcessLevelUnknown;
+            }
             break;
 
         case audioMasterGetAutomationState:
@@ -1901,11 +1948,15 @@ public:
         case audioMasterGetVendorString:
             if (ptr)
                 strcpy((char*)ptr, "Cadence");
+            else
+                qWarning("VstPlugin::hostCallback::audioMasterGetVendorString called with invalid pointer");
             break;
 
         case audioMasterGetProductString:
             if (ptr)
                 strcpy((char*)ptr, "Carla");
+            else
+                qWarning("VstPlugin::hostCallback::audioMasterGetProductString called with invalid pointer");
             break;
 
         case audioMasterGetVendorVersion:
@@ -1925,6 +1976,8 @@ public:
         case audioMasterCanDo:
             if (ptr)
                 ret = hostCanDo((const char*)ptr);
+            else
+                qWarning("VstPlugin::hostCallback::audioMasterCanDo called with invalid pointer");
             break;
 
         case audioMasterGetLanguage:
@@ -1946,6 +1999,10 @@ public:
         case audioMasterUpdateDisplay:
             if (self)
                 self->handleAudioMasterUpdateDisplay();
+            else
+                qWarning("VstPlugin::hostCallback::audioMasterUpdateDisplay called without valid object");
+            if (effect)
+                effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
             break;
 
         case audioMasterBeginEdit:
@@ -2048,6 +2105,12 @@ public:
         // ---------------------------------------------------------------
         // initialize VST stuff
 
+#ifdef VESTIGE_HEADER
+        effect->ptr1 = this;
+#else
+        effect->resvd1 = (intptr_t)this;
+#endif
+
         effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
 #if ! VST_FORCE_DEPRECATED
         effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, x_engine->getBufferSize(), nullptr, x_engine->getSampleRate());
@@ -2055,12 +2118,6 @@ public:
         effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, x_engine->getSampleRate());
         effect->dispatcher(effect, effSetBlockSize, 0, x_engine->getBufferSize(), nullptr, 0.0f);
         effect->dispatcher(effect, effSetProcessPrecision, 0, kVstProcessPrecision32, nullptr, 0.0f);
-
-#ifdef VESTIGE_HEADER
-        effect->ptr1 = this;
-#else
-        effect->resvd1 = (intptr_t)this;
-#endif
 
 #if ! VST_FORCE_DEPRECATED
         // dummy pre-start to catch possible wantEvents() call on old plugins
@@ -2145,6 +2202,7 @@ private:
     } gui;
 
     bool isProcessing;
+    bool needIdle;
 
     int unique2;
 };
@@ -2155,7 +2213,7 @@ CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
 
     short id = init.engine->getNewPluginId();
 
-    if (id < 0 || id > MAX_PLUGINS)
+    if (id < 0 || id > CarlaEngine::maxPluginNumber())
     {
         setLastError("Maximum number of plugins reached");
         return nullptr;

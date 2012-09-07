@@ -73,12 +73,16 @@ enum PluginBridgeInfoType {
     PluginBridgeMidiProgramCount,
     PluginBridgePluginInfo,
     PluginBridgeParameterInfo,
-    PluginBridgeParameterDataInfo,
-    PluginBridgeParameterRangesInfo,
+    PluginBridgeParameterData,
+    PluginBridgeParameterRanges,
     PluginBridgeProgramInfo,
     PluginBridgeMidiProgramInfo,
-    PluginBridgeCustomData,
-    PluginBridgeChunkData,
+    PluginBridgeSetParameterValue,
+    PluginBridgeSetDefaultValue,
+    PluginBridgeSetProgram,
+    PluginBridgeSetMidiProgram,
+    PluginBridgeSetCustomData,
+    PluginBridgeSetChunkData,
     PluginBridgeUpdateNow,
     PluginBridgeSaved
 };
@@ -198,7 +202,7 @@ public:
      * This is the constructor of the base plugin class.
      *
      * \param engine The engine which this plugin belongs to, must not be null
-     * \param id     The 'id' of this plugin, must between 0 and MAX_PLUGINS
+     * \param id     The 'id' of this plugin, must between 0 and CarlaEngine::maxPluginNumber()
      */
     CarlaPlugin(CarlaEngine* const engine, const unsigned short id)
         : m_id(id),
@@ -210,7 +214,7 @@ public:
           x_balanceRight(1.0)
     {
         Q_ASSERT(engine);
-        Q_ASSERT(id < MAX_PLUGINS);
+        Q_ASSERT(id < CarlaEngine::maxPluginNumber());
         qDebug("CarlaPlugin::CarlaPlugin(%p, %i)", engine, id);
 
         m_type  = PLUGIN_NONE;
@@ -690,7 +694,7 @@ public:
     {
         Q_ASSERT(index < prog.count);
 
-        if (index < prog.count)
+        if (index < prog.count && prog.names[index])
             strncpy(strBuf, prog.names[index], STR_MAX);
         else
             *strBuf = 0;
@@ -705,7 +709,7 @@ public:
     {
         Q_ASSERT(index < midiprog.count);
 
-        if (index < midiprog.count)
+        if (index < midiprog.count && midiprog.data[index].name)
             strncpy(strBuf, midiprog.data[index].name, STR_MAX);
         else
             *strBuf = 0;
@@ -787,18 +791,17 @@ public:
 
 #ifndef BUILD_BRIDGE
         if (sendOsc)
-        {
             x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_ACTIVE, value);
-
-            if (m_hints & PLUGIN_IS_BRIDGE)
-                osc_send_control(&osc.data, PARAMETER_ACTIVE, value);
-        }
 #else
         Q_UNUSED(sendOsc);
 #endif
 
         if (sendCallback)
             x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_ACTIVE, 0, value);
+#ifndef BUILD_BRIDGE
+        else if (m_hints & PLUGIN_IS_BRIDGE)
+            osc_send_control(&osc.data, PARAMETER_ACTIVE, value);
+#endif
     }
 
     /*!
@@ -821,18 +824,17 @@ public:
 
 #ifndef BUILD_BRIDGE
         if (sendOsc)
-        {
             x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_DRYWET, value);
-
-            if (m_hints & PLUGIN_IS_BRIDGE)
-                osc_send_control(&osc.data, PARAMETER_DRYWET, value);
-        }
 #else
         Q_UNUSED(sendOsc);
 #endif
 
         if (sendCallback)
             x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_DRYWET, 0, value);
+#ifndef BUILD_BRIDGE
+        else if (m_hints & PLUGIN_IS_BRIDGE)
+            osc_send_control(&osc.data, PARAMETER_DRYWET, value);
+#endif
     }
 
     /*!
@@ -855,18 +857,17 @@ public:
 
 #ifndef BUILD_BRIDGE
         if (sendOsc)
-        {
             x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_VOLUME, value);
-
-            if (m_hints & PLUGIN_IS_BRIDGE)
-                osc_send_control(&osc.data, PARAMETER_VOLUME, value);
-        }
 #else
         Q_UNUSED(sendOsc);
 #endif
 
         if (sendCallback)
             x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_VOLUME, 0, value);
+#ifndef BUILD_BRIDGE
+        else if (m_hints & PLUGIN_IS_BRIDGE)
+            osc_send_control(&osc.data, PARAMETER_VOLUME, value);
+#endif
     }
 
     /*!
@@ -889,18 +890,17 @@ public:
 
 #ifndef BUILD_BRIDGE
         if (sendOsc)
-        {
             x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_BALANCE_LEFT, value);
-
-            if (m_hints & PLUGIN_IS_BRIDGE)
-                osc_send_control(&osc.data, PARAMETER_BALANCE_LEFT, value);
-        }
 #else
         Q_UNUSED(sendOsc);
 #endif
 
         if (sendCallback)
             x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_BALANCE_LEFT, 0, value);
+#ifndef BUILD_BRIDGE
+        else if (m_hints & PLUGIN_IS_BRIDGE)
+            osc_send_control(&osc.data, PARAMETER_BALANCE_LEFT, value);
+#endif
     }
 
     /*!
@@ -923,29 +923,30 @@ public:
 
 #ifndef BUILD_BRIDGE
         if (sendOsc)
-        {
             x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_BALANCE_RIGHT, value);
-
-            if (m_hints & PLUGIN_IS_BRIDGE)
-                osc_send_control(&osc.data, PARAMETER_BALANCE_RIGHT, value);
-        }
 #else
         Q_UNUSED(sendOsc);
 #endif
 
         if (sendCallback)
             x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_BALANCE_RIGHT, 0, value);
+#ifndef BUILD_BRIDGE
+        else if (m_hints & PLUGIN_IS_BRIDGE)
+            osc_send_control(&osc.data, PARAMETER_BALANCE_RIGHT, value);
+#endif
     }
 
 #ifndef BUILD_BRIDGE
     /*!
      * BridgePlugin call used to set internal data.
      */
-    virtual int setOscBridgeInfo(const PluginBridgeInfoType type, const lo_arg* const* const argv)
+    virtual int setOscBridgeInfo(const PluginBridgeInfoType type, const int argc, const lo_arg* const* const argv, const char* const types)
     {
         return 1;
         Q_UNUSED(type);
+        Q_UNUSED(argc);
         Q_UNUSED(argv);
+        Q_UNUSED(types);
     }
 #endif
 
@@ -972,12 +973,7 @@ public:
 
 #ifndef BUILD_BRIDGE
         if (sendOsc)
-        {
             x_engine->osc_send_control_set_parameter_value(m_id, parameterId, value);
-
-            if (m_hints & PLUGIN_IS_BRIDGE)
-                osc_send_control(&osc.data, parameterId, value);
-        }
 #else
         Q_UNUSED(sendOsc);
 #endif
@@ -1174,12 +1170,7 @@ public:
 
 #ifndef BUILD_BRIDGE
         if (sendOsc)
-        {
             x_engine->osc_send_control_set_program(m_id, index);
-
-            if (m_hints & PLUGIN_IS_BRIDGE)
-                osc_send_program(&osc.data, index);
-        }
 #else
         Q_UNUSED(sendOsc);
 #endif
@@ -1232,12 +1223,7 @@ public:
 
 #ifndef BUILD_BRIDGE
         if (sendOsc)
-        {
             x_engine->osc_send_control_set_midi_program(m_id, index);
-
-            if (m_hints & PLUGIN_IS_BRIDGE)
-                osc_send_midi_program(&osc.data, index);
-        }
 #else
         Q_UNUSED(sendOsc);
 #endif
@@ -1485,9 +1471,9 @@ public:
                 getParameterUnit(i, bufUnit);
 
 #ifdef BUILD_BRIDGE
-                x_engine->osc_send_bridge_param_info(i, bufName, bufUnit);
-                x_engine->osc_send_bridge_param_data(i, param.data[i].type, param.data[i].rindex, param.data[i].hints, param.data[i].midiChannel, param.data[i].midiCC);
-                x_engine->osc_send_bridge_param_ranges(i, param.ranges[i].def, param.ranges[i].min, param.ranges[i].max, param.ranges[i].step, param.ranges[i].stepSmall, param.ranges[i].stepLarge);
+                x_engine->osc_send_bridge_parameter_info(i, bufName, bufUnit);
+                x_engine->osc_send_bridge_parameter_data(i, param.data[i].type, param.data[i].rindex, param.data[i].hints, param.data[i].midiChannel, param.data[i].midiCC);
+                x_engine->osc_send_bridge_parameter_ranges(i, param.ranges[i].def, param.ranges[i].min, param.ranges[i].max, param.ranges[i].step, param.ranges[i].stepSmall, param.ranges[i].stepLarge);
                 x_engine->osc_send_bridge_set_parameter_value(i, getParameterValue(i));
 #else
                 x_engine->osc_send_control_set_parameter_data(m_id, i, param.data[i].type, param.data[i].hints, bufName, bufUnit, getParameterValue(i));
@@ -1655,7 +1641,7 @@ public:
 
         if (sendGui)
         {
-            if (note > 0)
+            if (velo > 0)
                 uiNoteOn(channel, note, velo);
             else
                 uiNoteOff(channel, note);
@@ -1664,19 +1650,10 @@ public:
 #ifndef BUILD_BRIDGE
         if (sendOsc)
         {
-            if (velo)
+            if (velo > 0)
                 x_engine->osc_send_control_note_on(m_id, channel, note, velo);
             else
                 x_engine->osc_send_control_note_off(m_id, channel, note);
-
-            if (m_hints & PLUGIN_IS_BRIDGE)
-            {
-                uint8_t midiData[4] = { 0 };
-                midiData[1] = (velo ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF) + channel;
-                midiData[2] = note;
-                midiData[3] = velo;
-                osc_send_midi(&osc.data, midiData);
-            }
         }
 #else
         Q_UNUSED(sendOsc);

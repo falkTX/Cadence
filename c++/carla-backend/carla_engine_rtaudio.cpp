@@ -42,8 +42,6 @@ CarlaEngineRtAudio::CarlaEngineRtAudio(RtAudio::Api api)
     qDebug("CarlaEngineRtAudio::CarlaEngineRtAudio()");
 
     type = CarlaEngineTypeRtAudio;
-
-    procThread = nullptr;
 }
 
 CarlaEngineRtAudio::~CarlaEngineRtAudio()
@@ -54,8 +52,6 @@ CarlaEngineRtAudio::~CarlaEngineRtAudio()
 bool CarlaEngineRtAudio::init(const char* const clientName)
 {
     qDebug("CarlaEngineRtAudio::init(\"%s\")", clientName);
-
-    procThread = nullptr;
 
     if (adac.getDeviceCount() < 1)
     {
@@ -134,11 +130,6 @@ bool CarlaEngineRtAudio::close()
     return true;
 }
 
-bool CarlaEngineRtAudio::isOnAudioThread()
-{
-    return (QThread::currentThread() == procThread);
-}
-
 bool CarlaEngineRtAudio::isOffline()
 {
     return false;
@@ -180,10 +171,7 @@ CarlaEngineClient* CarlaEngineRtAudio::addClient(CarlaPlugin* const plugin)
 
 void CarlaEngineRtAudio::handleProcessCallback(void* outputBuffer, void* inputBuffer, unsigned int nframes, double streamTime, RtAudioStreamStatus status)
 {
-    if (procThread == nullptr)
-        procThread = QThread::currentThread();
-
-    if (maxPluginNumber == 0)
+    if (maxPluginNumber() == 0)
         return;
 
     // get buffers from RtAudio
@@ -233,7 +221,7 @@ void CarlaEngineRtAudio::handleProcessCallback(void* outputBuffer, void* inputBu
     bool processed = false;
 
     // process plugins
-    for (unsigned short i=0; i < maxPluginNumber; i++)
+    for (unsigned short i=0, max=maxPluginNumber(); i < max; i++)
     {
         CarlaPlugin* const plugin = getPluginUnchecked(i);
 

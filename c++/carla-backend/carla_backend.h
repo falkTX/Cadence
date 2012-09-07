@@ -511,8 +511,8 @@ struct ParameterRanges {
 
     ParameterRanges()
         : def(0.0),
-          //min(0.0),
-          //max(1.0),
+          min(0.0),
+          max(1.0),
           step(0.01),
           stepSmall(0.0001),
           stepLarge(0.1) {}

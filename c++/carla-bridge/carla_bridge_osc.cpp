@@ -250,14 +250,23 @@ int CarlaOsc::handleMsgProgram(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 int CarlaOsc::handleMsgMidiProgram(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 {
     qDebug("CarlaOsc::handleMsgMidiProgram()");
+#ifdef BUILD_BRIDGE_PLUGIN
+    CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(1, "i");
+#else
     CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(2, "ii");
+#endif
 
     if (! client)
         return 1;
 
+#ifdef BUILD_BRIDGE_PLUGIN
+    const int32_t index = argv[0]->i;
+    client->quequeMessage(MESSAGE_MIDI_PROGRAM, index, -1, 0.0);
+#else
     const int32_t bank    = argv[0]->i;
     const int32_t program = argv[1]->i;
     client->quequeMessage(MESSAGE_MIDI_PROGRAM, bank, program, 0.0);
+#endif
 
     return 0;
 }

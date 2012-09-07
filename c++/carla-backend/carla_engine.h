@@ -192,6 +192,7 @@ public:
 
     static int maxClientNameSize();
     static int maxPortNameSize();
+    static unsigned short maxPluginNumber();
 
     // -------------------------------------------------------------------
     // Virtual, per-engine type calls
@@ -270,20 +271,19 @@ public:
     void osc_send_bridge_program_count(const int32_t count);
     void osc_send_bridge_midi_program_count(const int32_t count);
     void osc_send_bridge_plugin_info(const int32_t category, const int32_t hints, const char* const name, const char* const label, const char* const maker, const char* const copyright, const int64_t uniqueId);
-    void osc_send_bridge_param_info(const int32_t index, const char* const name, const char* const unit);
-    void osc_send_bridge_param_data(const int32_t index, const int32_t type, const int32_t rindex, const int32_t hints, const int32_t midiChannel, const int32_t midiCC);
-    void osc_send_bridge_param_ranges(const int32_t index, const double def, const double min, const double max, const double step, const double stepSmall, const double stepLarge);
+    void osc_send_bridge_parameter_info(const int32_t index, const char* const name, const char* const unit);
+    void osc_send_bridge_parameter_data(const int32_t index, const int32_t type, const int32_t rindex, const int32_t hints, const int32_t midiChannel, const int32_t midiCC);
+    void osc_send_bridge_parameter_ranges(const int32_t index, const double def, const double min, const double max, const double step, const double stepSmall, const double stepLarge);
     void osc_send_bridge_program_info(const int32_t index, const char* const name);
     void osc_send_bridge_midi_program_info(const int32_t index, const int32_t bank, const int32_t program, const char* const label);
     void osc_send_bridge_set_parameter_value(const int32_t index, const double value);
     void osc_send_bridge_set_default_value(const int32_t index, const double value);
     void osc_send_bridge_set_program(const int32_t index);
     void osc_send_bridge_set_midi_program(const int32_t index);
-    //void osc_send_bridge_program(const int32_t index);
-    //void osc_send_bridge_midi_program(const int32_t index);
+    void osc_send_bridge_set_input_peak_value(const int32_t portId, const double value);
+    void osc_send_bridge_set_output_peak_value(const int32_t portId, const double value);
     //void osc_send_bridge_custom_data(const char* const stype, const char* const key, const char* const value);
     //void osc_send_bridge_chunk_data(const char* const stringData);
-    //void osc_send_bridge_update();
 #else
     void osc_send_control_add_plugin(const int32_t pluginId, const char* const pluginName);
     void osc_send_control_remove_plugin(const int32_t pluginId);
@@ -366,7 +366,6 @@ protected:
     uint32_t bufferSize;
     double   sampleRate;
     CarlaTimeInfo timeInfo;
-    unsigned short maxPluginNumber;
 
     void bufferSizeChanged(uint32_t newBufferSize);
 
@@ -389,6 +388,8 @@ private:
 
     double m_insPeak[MAX_PLUGINS * MAX_PEAKS];
     double m_outsPeak[MAX_PLUGINS * MAX_PEAKS];
+
+    static unsigned short m_maxPluginNumber;
 };
 
 // -----------------------------------------------------------------------

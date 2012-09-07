@@ -1125,7 +1125,7 @@ CarlaPlugin* CarlaPlugin::newLADSPA(const initializer& init, const void* const e
 
     short id = init.engine->getNewPluginId();
 
-    if (id < 0 || id > MAX_PLUGINS)
+    if (id < 0 || id > CarlaEngine::maxPluginNumber())
     {
         setLastError("Maximum number of plugins reached");
         return nullptr;

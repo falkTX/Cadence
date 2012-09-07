@@ -121,8 +121,8 @@ private:
     int handle_lv2_atom_transfer(CARLA_OSC_HANDLE_ARGS2);
     int handle_lv2_event_transfer(CARLA_OSC_HANDLE_ARGS2);
 
-    int handle_bridge_ains_peak(CARLA_OSC_HANDLE_ARGS2);
-    int handle_bridge_aouts_peak(CARLA_OSC_HANDLE_ARGS2);
+    int handle_bridge_set_input_peak_value(CARLA_OSC_HANDLE_ARGS2);
+    int handle_bridge_set_output_peak_value(CARLA_OSC_HANDLE_ARGS2);
 };
 
 CARLA_BACKEND_END_NAMESPACE

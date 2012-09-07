@@ -23,6 +23,8 @@ moc_*.cpp
 ui_*.h
 
 carla-bridge-qtcreator
+carla-bridge-posix32
+carla-bridge-posix64
 carla-bridge-lv2-gtk2
 carla-bridge-lv2-gtk3
 carla-bridge-lv2-qt4
