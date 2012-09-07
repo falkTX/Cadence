@@ -15,7 +15,5 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "sord-0.8.0/src/sord.c"
-#include "sord-0.8.0/src/syntax.c"
-#include "sord-0.8.0/src/zix/hash.c"
-#include "sord-0.8.0/src/zix/tree.c"
+#include "src/sord.c"
+#include "src/syntax.c"

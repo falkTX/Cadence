@@ -15,9 +15,9 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "serd-0.14.0/src/env.c"
-#include "serd-0.14.0/src/node.c"
-#include "serd-0.14.0/src/reader.c"
-#include "serd-0.14.0/src/string.c"
-#include "serd-0.14.0/src/uri.c"
-#include "serd-0.14.0/src/writer.c"
+#include "src/env.c"
+#include "src/node.c"
+#include "src/reader.c"
+#include "src/string.c"
+#include "src/uri.c"
+#include "src/writer.c"

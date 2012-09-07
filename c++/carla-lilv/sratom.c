@@ -15,4 +15,4 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "sratom-0.2.0/src/sratom.c"
+#include "src/sratom.c"
