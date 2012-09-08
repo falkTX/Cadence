@@ -110,7 +110,7 @@ intptr_t vstHostCanDo(const char* const feature)
 intptr_t VSTCALLBACK vstHostCallback(AEffect* const effect, const int32_t opcode, const int32_t index, const intptr_t value, void* const ptr, const float opt)
 {
 #if DEBUG
-    qDebug("vstHostCallback(%p, %s, %i, " P_INTPTR ", %p, %f", effect, vstMasterOpcode2str(opcode), index, value, ptr, opt);
+    qDebug("vstHostCallback(%p, %s, %i, " P_INTPTR ", %p, %f)", effect, vstMasterOpcode2str(opcode), index, value, ptr, opt);
 #endif
 
     intptr_t ret = 0;
@@ -196,7 +196,7 @@ intptr_t VSTCALLBACK vstHostCallback(AEffect* const effect, const int32_t opcode
         break;
 
     default:
-        qDebug("vstHostCallback(%p, %s, %i, " P_INTPTR ", %p, %f", effect, vstMasterOpcode2str(opcode), index, value, ptr, opt);
+        qDebug("vstHostCallback(%p, %s, %i, " P_INTPTR ", %p, %f)", effect, vstMasterOpcode2str(opcode), index, value, ptr, opt);
         break;
     }
 
@@ -774,9 +774,7 @@ void do_vst_check(void* const libHandle, const bool init)
     vstCurrentUniqueId = effect->uniqueID;
     intptr_t vstCategory = effect->dispatcher(effect, effGetPlugCategory, 0, 0, nullptr, 0.0f);
 
-    // only init if required
-    if (init || vstCategory == kPlugCategShell)
-        effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
+    effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
 
     while (true)
     {
@@ -917,9 +915,7 @@ void do_vst_check(void* const libHandle, const bool init)
             break;
     }
 
-    // only close if required
-    if (init || vstCategory == kPlugCategShell)
-        effect->dispatcher(effect, effClose, 0, 0, nullptr, 0.0f);
+    effect->dispatcher(effect, effClose, 0, 0, nullptr, 0.0f);
 
     free((void*)cName);
     free((void*)cProduct);

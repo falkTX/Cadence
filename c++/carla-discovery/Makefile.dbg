@@ -56,7 +56,7 @@ win64:   carla-discovery-win64.exe
 OBJS = carla-discovery.cpp
 
 carla-discovery-native: carla-discovery.cpp ../carla-lilv/carla_lilv.a
-	$(CXX) $^ $(BUILD_FLAGS) $(LINK_FLAGS) -o $@ && $(STRIP) $@
+	$(CXX) $^ $(BUILD_FLAGS) $(LINK_FLAGS) -o $@
 
 carla-discovery-posix32: $(OBJS) ../carla-lilv/carla_lilv_posix32.a
 	$(CXX) $^ $(POSIX_BUILD_FLAGS) $(POSIX_32BIT_FLAGS) $(POSIX_LINK_FLAGS) -o $@
