@@ -261,7 +261,7 @@ int CarlaOsc::handleMsgMidiProgram(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 
 #ifdef BUILD_BRIDGE_PLUGIN
     const int32_t index = argv[0]->i;
-    client->quequeMessage(MESSAGE_MIDI_PROGRAM, index, -1, 0.0);
+    client->quequeMessage(MESSAGE_MIDI_PROGRAM, index, 0, 0.0);
 #else
     const int32_t bank    = argv[0]->i;
     const int32_t program = argv[1]->i;

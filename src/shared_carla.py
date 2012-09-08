@@ -1667,7 +1667,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
     def loadStateDict(self, content):
         # ---------------------------------------------------------------------
-        # Part 1 - set custom data (non-binary/chunks)
+        # Part 1 - set custom data (except binary/chunks)
 
         for customData in content['CustomData']:
             if customData['type'] not in (CUSTOM_DATA_BINARY, CUSTOM_DATA_CHUNK):

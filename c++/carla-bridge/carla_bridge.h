@@ -40,7 +40,7 @@ enum MessageType {
     MESSAGE_NULL = 0,
     MESSAGE_PARAMETER,    // index, 0, value
     MESSAGE_PROGRAM,      // index, 0, 0
-    MESSAGE_MIDI_PROGRAM, // bank, program, 0
+    MESSAGE_MIDI_PROGRAM, // index, 0, 0 | bank, program, 0
     MESSAGE_NOTE_ON,      // note, velocity, 0
     MESSAGE_NOTE_OFF,     // note, 0, 0
     MESSAGE_SHOW_GUI,     // show, 0, 0

@@ -137,17 +137,14 @@ public:
         }
     }
 
-    void setMidiProgram(const uint32_t index, const uint32_t test)
+    void setMidiProgram(const uint32_t index)
     {
-        qDebug("CarlaPluginClient::setMidiProgram(%i, %i)", index, test);
+        qDebug("CarlaPluginClient::setMidiProgram(%i)", index);
         Q_ASSERT(engine);
         Q_ASSERT(plugin);
-        Q_ASSERT(test == -1);
 
         if (! (plugin && engine))
             return;
-        if (test != -1)
-          return;
 
         plugin->setMidiProgram(index, true, true, false, true);
 

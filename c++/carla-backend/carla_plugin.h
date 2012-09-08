@@ -1568,7 +1568,7 @@ public:
             if (m_type == PLUGIN_DSSI)
                 osc_send_program(&osc.data, midiprog.data[midiprog.current].bank, midiprog.data[midiprog.current].program);
             else
-                osc_send_midi_program(&osc.data, midiprog.current);
+                osc_send_midi_program(&osc.data, midiprog.data[midiprog.current].bank, midiprog.data[midiprog.current].program);
         }
 
         for (uint32_t i=0; i < param.count; i++)

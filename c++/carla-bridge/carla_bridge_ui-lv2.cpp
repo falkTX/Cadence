@@ -328,9 +328,35 @@ public:
     }
 
     // ---------------------------------------------------------------------
+    // ui management
+
+    void* getWidget() const
+    {
+#ifdef BRIDGE_LV2_X11
+        return x11_widget;
+#else
+        return widget;
+#endif
+    }
+
+    bool isResizable() const
+    {
+        return m_resizable;
+    }
+
+    bool needsReparent() const
+    {
+#ifdef BRIDGE_LV2_X11
+        return true;
+#else
+        return false;
+#endif
+    }
+
+    // ---------------------------------------------------------------------
     // processing
 
-    void setParameter(int32_t rindex, double value)
+    void setParameter(const int32_t rindex, const double value)
     {
         Q_ASSERT(handle && descriptor);
 
@@ -341,11 +367,11 @@ public:
         }
     }
 
-    void setProgram(uint32_t)
+    void setProgram(const uint32_t)
     {
     }
 
-    void setMidiProgram(uint32_t bank, uint32_t program)
+    void setMidiProgram(const uint32_t bank, const uint32_t program)
     {
         Q_ASSERT(handle);
 
@@ -373,32 +399,6 @@ public:
             uint8_t buf[3] = { uint8_t(0x80 + channel), note, 0 };
             descriptor->port_event(handle, 0, 3, CARLA_URI_MAP_ID_MIDI_EVENT, buf);
         }
-    }
-
-    // ---------------------------------------------------------------------
-    // gui
-
-    void* getWidget() const
-    {
-#ifdef BRIDGE_LV2_X11
-        return x11_widget;
-#else
-        return widget;
-#endif
-    }
-
-    bool isResizable() const
-    {
-        return m_resizable;
-    }
-
-    bool needsReparent() const
-    {
-#ifdef BRIDGE_LV2_X11
-        return true;
-#else
-        return false;
-#endif
     }
 
     // ---------------------------------------------------------------------

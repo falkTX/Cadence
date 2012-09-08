@@ -110,7 +110,11 @@ public:
                 break;
 
             case MESSAGE_MIDI_PROGRAM:
+#ifdef BUILD_BRIDGE_PLUGIN
+                setMidiProgram(m->value1);
+#else
                 setMidiProgram(m->value1, m->value2);
+#endif
                 break;
 
             case MESSAGE_NOTE_ON:
@@ -165,7 +169,11 @@ public:
     // processing
     virtual void setParameter(const int32_t rindex, const double value) = 0;
     virtual void setProgram(const uint32_t index) = 0;
+#ifdef BUILD_BRIDGE_PLUGIN
+    virtual void setMidiProgram(const uint32_t index) = 0;
+#else
     virtual void setMidiProgram(const uint32_t bank, const uint32_t program) = 0;
+#endif
     virtual void noteOn(const uint8_t channel, const uint8_t note, const uint8_t velo) = 0;
     virtual void noteOff(const uint8_t channel, const uint8_t note) = 0;
 

@@ -2562,7 +2562,7 @@ public:
         if (gui.type == GUI_EXTERNAL_OSC)
         {
             if (osc.data.target)
-                osc_send_program(&osc.data, midiprog.data[index].bank, midiprog.data[index].program);
+                osc_send_midi_program(&osc.data, midiprog.data[index].bank, midiprog.data[index].program);
         }
         else
 #endif

@@ -146,6 +146,24 @@ public:
     }
 
     // ---------------------------------------------------------------------
+    // ui management
+
+    void* getWidget() const
+    {
+        return widget;
+    }
+
+    bool isResizable() const
+    {
+        return false;
+    }
+
+    bool needsReparent() const
+    {
+        return true;
+    }
+
+    // ---------------------------------------------------------------------
     // processing
 
     void setParameter(const int32_t rindex, const double value)
@@ -170,24 +188,6 @@ public:
 
     void noteOff(const uint8_t, const uint8_t)
     {
-    }
-
-    // ---------------------------------------------------------------------
-    // gui
-
-    void* getWidget() const
-    {
-        return widget;
-    }
-
-    bool isResizable() const
-    {
-        return false;
-    }
-
-    bool needsReparent() const
-    {
-        return true;
     }
 
     // ---------------------------------------------------------------------

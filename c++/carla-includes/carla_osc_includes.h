@@ -135,6 +135,23 @@ void osc_send_midi_program(const CarlaOscData* const oscData, const int32_t inde
 }
 
 static inline
+void osc_send_midi_program(const CarlaOscData* const oscData, const int32_t bank, const int32_t program)
+{
+    Q_ASSERT(oscData && oscData->path);
+    Q_ASSERT(program >= 0 && program < 128);
+    Q_ASSERT(bank >= 0);
+    qDebug("osc_send_midi_program(path:\"%s\", %i, %i)", oscData->path, bank, program);
+
+    if (oscData->target)
+    {
+        char targetPath[strlen(oscData->path)+14];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/midi_program");
+        lo_send(oscData->target, targetPath, "ii", bank, program);
+    }
+}
+
+static inline
 void osc_send_midi(const CarlaOscData* const oscData, const uint8_t buf[4])
 {
     Q_ASSERT(oscData && oscData->path);
