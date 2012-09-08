@@ -149,18 +149,18 @@ src/resources_rc.py: resources/resources.qrc
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-CPP: carla_backend carla_bridge carla_discovery carla_lilv jackmeter xycontroller
+CPP: carla-backend carla-bridge carla-discovery carla-lilv jackmeter xycontroller
 
-carla_backend: carla_lilv
+carla-backend: carla-lilv
 	$(MAKE) -C c++/carla-backend
 
-carla_bridge: carla_lilv
+carla-bridge: carla-lilv
 	$(MAKE) -C c++/carla-bridge
 
-carla_discovery:
+carla-discovery:
 	$(MAKE) -C c++/carla-discovery NATIVE=1
 
-carla_lilv:
+carla-lilv:
 	$(MAKE) -C c++/carla-lilv
 
 jackmeter:
