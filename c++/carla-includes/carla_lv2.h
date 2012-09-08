@@ -608,7 +608,7 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                         else if (strncmp(designation, LV2_PORT_GROUPS_PREFIX, strlen(LV2_PORT_GROUPS_PREFIX)) == 0)
                             pass();
                         else
-                            qWarning("lv2_rdf_new(%s) - got unknown Port Designation '%s'", URI, designation);
+                            qWarning("lv2_rdf_new(\"%s\") - got unknown Port Designation '%s'", URI, designation);
                     }
                 }
 
@@ -642,7 +642,7 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                                 else if (strcmp(midiMapType, LV2_MIDI_Map__NRPN) == 0)
                                     rdf_port->MidiMap.Type = LV2_PORT_MIDI_MAP_NRPN;
                                 else
-                                    qWarning("lv2_rdf_new(%s) - got unknown Port Midi Map type '%s'", URI, midiMapType);
+                                    qWarning("lv2_rdf_new(\"%s\") - got unknown Port Midi Map type '%s'", URI, midiMapType);
 
                                 rdf_port->MidiMap.Number = midiMapNumberNodes.get_first().as_int();
                             }
@@ -738,7 +738,7 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                         else if (strcmp(unitType, LV2_UNITS__semitone12TET) == 0)
                             rdf_port->Unit.Type = LV2_UNIT_SEMITONE;
                         else
-                            qWarning("lv2_rdf_new(%s) - got unknown Unit type '%s'", URI, unitType);
+                            qWarning("lv2_rdf_new(\"%s\") - got unknown Unit type '%s'", URI, unitType);
                     }
 
                     Lilv::Nodes unitNameNodes(lilvPort.get_value(Lv2World.unit_name));
@@ -981,7 +981,7 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                         else if (lilvUI.is_a(Lv2World.ui_external_old))
                             rdf_ui->Type = LV2_UI_OLD_EXTERNAL;
                         else
-                            qWarning("lv2_rdf_new(%s) - got unknown UI type '%s'", URI, lilvUI.get_uri().as_uri());
+                            qWarning("lv2_rdf_new(\"%s\") - got unknown UI type '%s'", URI, lilvUI.get_uri().as_uri());
                     }
 
                     // --------------------------------------

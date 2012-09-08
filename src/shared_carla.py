@@ -556,8 +556,9 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
-        self.m_geometry = None
-        self.m_pluginId = pluginId
+        self.m_firstShow = True
+        self.m_geometry  = None
+        self.m_pluginId  = pluginId
         self.m_pluginInfo = None
 
         self.m_parameterCount = 0
@@ -996,7 +997,10 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
     def setVisible(self, yesNo):
         if yesNo:
-            if self.m_geometry and not self.m_geometry.isNull():
+            if self.m_firstShow:
+                self.m_firstShow = False
+                self.restoreGeometry("")
+            elif self.m_geometry and not self.m_geometry.isNull():
                 self.restoreGeometry(self.m_geometry)
         else:
             self.m_geometry = self.saveGeometry()
@@ -1979,6 +1983,7 @@ class PluginGUI(QDialog):
     def __init__(self, parent, pluginName, resizable):
         QDialog.__init__(self, parent)
 
+        self.m_firstShow = True
         self.m_geometry  = None
         self.m_resizable = resizable
 
@@ -1988,7 +1993,7 @@ class PluginGUI(QDialog):
         self.setNewSize(50, 50)
         self.setWindowTitle("%s (GUI)" % pluginName)
 
-        if (WINDOWS and not resizable):
+        if WINDOWS and not resizable:
             self.setWindowFlags(self.windowFlags() | Qt.MSWindowsFixedSizeDialogHint)
 
         self.connect(self, SIGNAL("finished(int)"), SLOT("slot_finished()"))
@@ -2006,7 +2011,10 @@ class PluginGUI(QDialog):
 
     def setVisible(self, yesNo):
         if yesNo:
-            if self.m_geometry and not self.m_geometry.isNull():
+            if self.m_firstShow:
+                self.m_firstShow = False
+                self.restoreGeometry("")
+            elif self.m_geometry and not self.m_geometry.isNull():
                 self.restoreGeometry(self.m_geometry)
         else:
             self.m_geometry = self.saveGeometry()
