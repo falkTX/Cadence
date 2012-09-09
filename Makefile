@@ -243,6 +243,7 @@ install:
 		data/cadence-logs \
 		data/cadence-pulse2jack \
 		data/cadence-render \
+		data/cadence-session-start \
 		data/catarina \
 		data/catia \
 		data/claudia \
@@ -323,6 +324,7 @@ install:
 		$(DESTDIR)$(PREFIX)/bin/cadence-logs \
 		$(DESTDIR)$(PREFIX)/bin/cadence-pulse2jack \
 		$(DESTDIR)$(PREFIX)/bin/cadence-render \
+		$(DESTDIR)$(PREFIX)/bin/cadence-session-start \
 		$(DESTDIR)$(PREFIX)/bin/catarina \
 		$(DESTDIR)$(PREFIX)/bin/catia \
 		$(DESTDIR)$(PREFIX)/bin/claudia \
