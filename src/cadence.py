@@ -24,12 +24,12 @@ except:
 
 # Imports (Global)
 from platform import architecture
-from PyQt4.QtCore import QSettings
 from PyQt4.QtGui import QApplication, QLabel, QMainWindow, QSizePolicy
 
 # Imports (Custom Stuff)
 import ui_cadence
 import systray
+from shared_cadence import *
 from shared_jack import *
 from shared_settings import *
 
@@ -49,30 +49,6 @@ if haveWine:
         WINEPREFIX = os.path.join(HOME, ".wine")
 
 # ---------------------------------------------------------------------
-
-DEFAULT_LADSPA_PATH = [
-    os.path.join(HOME, ".ladspa"),
-    os.path.join("/", "usr", "lib", "ladspa"),
-    os.path.join("/", "usr", "local", "lib", "ladspa")
-]
-
-DEFAULT_DSSI_PATH = [
-    os.path.join(HOME, ".dssi"),
-    os.path.join("/", "usr", "lib", "dssi"),
-    os.path.join("/", "usr", "local", "lib", "dssi")
-]
-
-DEFAULT_LV2_PATH = [
-    os.path.join(HOME, ".lv2"),
-    os.path.join("/", "usr", "lib", "lv2"),
-    os.path.join("/", "usr", "local", "lib", "lv2")
-]
-
-DEFAULT_VST_PATH = [
-    os.path.join(HOME, ".vst"),
-    os.path.join("/", "usr", "lib", "vst"),
-    os.path.join("/", "usr", "local", "lib", "vst")
-]
 
 DESKTOP_X_IMAGE = [
     "eog.desktop",
@@ -111,9 +87,6 @@ XDG_APPLICATIONS_PATH = [
 ]
 
 WINEASIO_PREFIX = "HKEY_CURRENT_USER\Software\Wine\WineASIO"
-
-# Global Settings
-GlobalSettings = QSettings("Cadence", "GlobalSettings")
 
 # ---------------------------------------------------------------------
 

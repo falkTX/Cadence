@@ -2,20 +2,14 @@
 # -*- coding: utf-8 -*-
 
 # Imports (Global)
-import dbus, os, sys
-from PyQt4.QtCore import QCoreApplication, QProcess, QSettings
-from time import sleep
+import dbus, sys
+from PyQt4.QtCore import QCoreApplication
 
 # Imports (Custom Stuff)
-from shared import *
+from shared_cadence import *
 
 # Cadence Global Settings
 GlobalSettings = QSettings("Cadence", "GlobalSettings")
-
-DEFAULT_LADSPA_PATH = "/usr/lib/ladspa:/usr/local/lib/ladspa:/usr/lib32/ladspa:"+HOME+"/.ladspa"
-DEFAULT_DSSI_PATH = "/usr/lib/dssi:/usr/local/lib/dssi:/usr/lib32/dssi:"+HOME+"/.dssi"
-DEFAULT_LV2_PATH  = "/usr/lib/lv2:/usr/local/lib/lv2:"+HOME+"/.lv2"
-DEFAULT_VST_PATH  = "/usr/lib/vst:/usr/local/lib/vst:/usr/lib32/vst:"+HOME+"/.vst"
 
 # DBus
 class DBus(object):
@@ -28,7 +22,83 @@ DBus = DBus()
 
 # Start JACK, A2J and Pulse, according to user settings
 def startSession():
-    pass
+    # Kill all audio processes first
+    stopAllAudioProcesses()
+
+    # Connect to DBus
+    DBus.bus  = dbus.SessionBus()
+    DBus.jack = DBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
+
+    try:
+        DBus.a2j = dbus.Interface(DBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
+    except:
+        DBus.a2j = None
+
+    # Load settings (JACK etc)
+    if not GlobalSettings.value("JACK/AutoStart", True, type=bool):
+        print("JACK is set to NOT auto-start on login")
+        return True
+
+    if GlobalSettings.value("JACK/AutoLoadLadishStudio", False, type=bool):
+        try:
+            ladish_control = DBus.bus.get_object("org.ladish", "/org/ladish/Control")
+        except:
+            startJack()
+            return False
+
+        try:
+            ladish_conf = DBus.bus.get_object("org.ladish.conf", "/org/ladish/conf")
+        except:
+            ladish_conf = None
+
+        ladishNotifyHack = False
+        ladishStudioName = dbus.String(GlobalSettings.value("JACK/LadishStudioName", "", type=str))
+        ladishStudioListDump = ladish_control.GetStudioList()
+
+        for thisStudioName, thisStudioDict in ladishStudioListDump:
+            if ladishStudioName == thisStudioName:
+                if ladish_conf and ladish_conf.get('/org/ladish/daemon/notify')[0] == "true":
+                    ladish_conf.set('/org/ladish/daemon/notify', "false")
+                    ladishNotifyHack = True
+
+                ladish_control.LoadStudio(thisStudioName)
+                ladish_studio = DBus.bus.get_object("org.ladish", "/org/ladish/Studio")
+
+                if not bool(ladish_studio.IsStarted()):
+                    ladish_studio.Start()
+
+                if ladishNotifyHack:
+                    ladish_conf.set('/org/ladish/daemon/notify', "true")
+
+                break
+
+        else:
+            startJack()
+
+    else:
+        startJack()
+
+    if not bool(DBus.jack.IsStarted()):
+        print("JACK Failed to Start")
+        return False
+
+    if GlobalSettings.value("A2J/AutoStart", True, type=bool) and DBus.a2j and not bool(DBus.a2j.is_started()):
+        a2jExportHW = GlobalSettings.value("A2J/ExportHW", True, type=bool)
+        DBus.a2j.set_hw_export(a2jExportHW)
+        DBus.a2j.start()
+
+    if GlobalSettings.value("Pulse2JACK/AutoStart", True, type=bool):
+        if GlobalSettings.value("Pulse2JACK/PlaybackModeOnly", False, type=bool):
+            os.system("cadence-pulse2jack -p")
+        else:
+            os.system("cadence-pulse2jack")
+
+    print("JACK Started Successfully")
+    return True
+
+def startJack():
+    if not bool(DBus.jack.IsStarted()):
+        DBus.jack.StartServer()
 
 def printLADSPA_PATH():
     EXTRA_LADSPA_DIRS = GlobalSettings.value("AudioPlugins/EXTRA_LADSPA_PATH", "", type=str).split(":")
