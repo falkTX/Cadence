@@ -36,11 +36,12 @@ carla-discovery-native
 carla-discovery-posix32
 carla-discovery-posix64
 
+c++/jackmeter/cadence-jackmeter
+c++/xycontroller/cadence-xycontroller
+
 c++/carla-backend/doxygen/
 c++/carla-bridge/doxygen/
 c++/carla-includes/vst/
-c++/jackmeter/cadence_jackmeter
-c++/xycontroller/cadence_xycontroller
 
 *-build-*Debug/
 *-build-*Release/
@@ -57,5 +58,8 @@ c++/carla-backend/carla-dynamic.lv2/
 c++/carla-backend/carla_backend_lv2.cpp
 c++/carla-backend/carla_backend_vst.cpp
 c++/carla-bridge/qt-plugin/
+c++/carla-bridge/qtcreator/Makefile
+c++/carla-jackbridge/jack
 c++/flmixer/
 c++/widgets/ledbutton.*
+src/ui/carla_driver.ui

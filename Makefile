@@ -230,10 +230,11 @@ install:
 	# Install script files and binaries
 	install -m 755 \
 		data/cadence \
-		data/cadence_jacksettings \
-		data/cadence_logs \
-		data/cadence_pulse2jack \
-		data/cadence_render \
+		data/cadence-aloop-daemon \
+		data/cadence-jacksettings \
+		data/cadence-logs \
+		data/cadence-pulse2jack \
+		data/cadence-render \
 		data/catarina \
 		data/catia \
 		data/claudia \
@@ -242,9 +243,8 @@ install:
 		data/carla-control \
 		c++/carla-bridge/carla-bridge-* \
 		c++/carla-discovery/carla-discovery-* \
-		c++/jackmeter/cadence_jackmeter \
-		c++/xycontroller/cadence_xycontroller \
-		src/cadence-aloop-daemon \
+		c++/jackmeter/cadence-jackmeter \
+		c++/xycontroller/cadence-xycontroller \
 		$(DESTDIR)$(PREFIX)/bin/
 
 	# Install desktop files
@@ -307,10 +307,11 @@ install:
 	# Adjust PREFIX value in script files
 	sed -i "s/X-PREFIX-X/$(SED_PREFIX)/" \
 		$(DESTDIR)$(PREFIX)/bin/cadence \
-		$(DESTDIR)$(PREFIX)/bin/cadence_jacksettings \
-		$(DESTDIR)$(PREFIX)/bin/cadence_logs \
-		$(DESTDIR)$(PREFIX)/bin/cadence_pulse2jack \
-		$(DESTDIR)$(PREFIX)/bin/cadence_render \
+		$(DESTDIR)$(PREFIX)/bin/cadence-aloop-daemon \
+		$(DESTDIR)$(PREFIX)/bin/cadence-jacksettings \
+		$(DESTDIR)$(PREFIX)/bin/cadence-logs \
+		$(DESTDIR)$(PREFIX)/bin/cadence-pulse2jack \
+		$(DESTDIR)$(PREFIX)/bin/cadence-render \
 		$(DESTDIR)$(PREFIX)/bin/catarina \
 		$(DESTDIR)$(PREFIX)/bin/catia \
 		$(DESTDIR)$(PREFIX)/bin/claudia \

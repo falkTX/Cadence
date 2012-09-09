@@ -25,12 +25,12 @@ OBJS = jackmeter.o \
 
 # --------------------------------------------------------------
 
-all: cadence_jackmeter
+all: cadence-jackmeter
 
-cadence_jackmeter: $(OBJS)
+cadence-jackmeter: $(OBJS)
 	$(CXX) $^ $(LINK_FLAGS) -o $@ && strip $@
 
-cadence_jackmeter.exe: $(OBJS)
+cadence-jackmeter.exe: $(OBJS)
 	$(CXX) $^ -static -mwindows $(LINK_FLAGS) -o $@ && strip $@
 
 # --------------------------------------------------------------

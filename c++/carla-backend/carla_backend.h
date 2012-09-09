@@ -474,8 +474,8 @@ enum ProcessModeType {
 typedef void (*CallbackFunc)(void* ptr, CallbackType action, unsigned short pluginId, int value1, int value2, double value3);
 
 struct midi_program_t {
-    quint32 bank;
-    quint32 program;
+    uint32_t bank;
+    uint32_t program;
     const char* name;
 
     midi_program_t()
@@ -486,11 +486,11 @@ struct midi_program_t {
 
 struct ParameterData {
     ParameterType type;
-    qint32 index;
-    qint32 rindex;
-    qint32 hints;
-    quint8 midiChannel;
-    qint16 midiCC;
+    int32_t index;
+    int32_t rindex;
+    int32_t hints;
+    uint8_t midiChannel;
+    int16_t midiCC;
 
     ParameterData()
         : type(PARAMETER_UNKNOWN),

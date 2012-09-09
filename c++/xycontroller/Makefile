@@ -38,12 +38,12 @@ OBJS  = xycontroller.o \
 
 # --------------------------------------------------------------
 
-all: cadence_xycontroller
+all: cadence-xycontroller
 
-cadence_xycontroller: $(FILES) $(OBJS)
+cadence-xycontroller: $(FILES) $(OBJS)
 	$(CXX) $(OBJS) $(LINK_FLAGS) -o $@ && strip $@
 
-cadence_xycontroller.exe: $(FILES) $(OBJS) icon.o
+cadence-xycontroller.exe: $(FILES) $(OBJS) icon.o
 	$(CXX) $(OBJS) icon.o -static -mwindows $(LINK_FLAGS) -o $@ && strip $@
 
 # --------------------------------------------------------------
