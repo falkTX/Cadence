@@ -69,4 +69,4 @@ icon.o: ../../resources/ico/cadence.rc
 	$(CXX) -c $< $(BUILD_FLAGS) -o $@
 
 clean:
-	rm -f $(FILES) $(OBJS) icon.o cadence_xycontroller*
+	rm -f $(FILES) $(OBJS) icon.o cadence-xycontroller*

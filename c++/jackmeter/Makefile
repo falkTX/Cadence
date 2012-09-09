@@ -39,4 +39,4 @@ cadence-jackmeter.exe: $(OBJS)
 	$(CXX) -c $< $(BUILD_FLAGS) -o $@
 
 clean:
-	rm -f $(OBJS) cadence_jackmeter*
+	rm -f $(OBJS) cadence-jackmeter*

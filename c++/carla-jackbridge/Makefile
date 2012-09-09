@@ -58,4 +58,4 @@ libcarla-jackbridge-win64.dll.so: $(OBJS)
 # --------------------------------------------------------------
 
 clean:
-	rm -f libcarla-jackbridge-*
+	rm -f *.o *.exe *.so libcarla-jackbridge-*
