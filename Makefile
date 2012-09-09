@@ -12,6 +12,13 @@ SED_PREFIX = $(shell echo $(PREFIX) | sed "s/\//\\\\\\\\\//g")
 PYUIC = pyuic4
 PYRCC = pyrcc4 -py3
 
+# Detect X11 rules dir
+ifeq "$(wildcard /etc/X11/xinit/xinitrc.d/ )" ""
+	X11_RC_DIR = $(DESTDIR)/etc/X11/Xsession.d/
+else
+	X11_RC_DIR = $(DESTDIR)/etc/X11/xinit/xinitrc.d/
+endif
+
 
 all: UI RES CPP
 
@@ -226,6 +233,7 @@ install:
 	install -d $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
 	install -d $(DESTDIR)$(PREFIX)/share/cadence/icons/
 	install -d $(DESTDIR)$(PREFIX)/share/cadence/templates/
+	install -d $(X11_RC_DIR)
 
 	# Install script files and binaries
 	install -m 755 \
@@ -299,8 +307,11 @@ install:
 	install -m 755 src/*.py $(DESTDIR)$(PREFIX)/share/cadence/src/
 	install -m 755 c++/carla-backend/*.so $(DESTDIR)$(PREFIX)/lib/carla/
 
-	# Install addtional stuff
+	# Install addtional stuff for Cadence
 	install -m 644 data/pulse2jack/* $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
+	install -m 644 data/99cadence-session-start $(X11_RC_DIR)
+
+	# Install addtional stuff for Claudia
 	cp -r data/icons/*     $(DESTDIR)$(PREFIX)/share/cadence/icons/
 	cp -r data/templates/* $(DESTDIR)$(PREFIX)/share/cadence/templates/
 
@@ -317,7 +328,8 @@ install:
 		$(DESTDIR)$(PREFIX)/bin/claudia \
 		$(DESTDIR)$(PREFIX)/bin/claudia-launcher \
 		$(DESTDIR)$(PREFIX)/bin/carla \
-		$(DESTDIR)$(PREFIX)/bin/carla-control
+		$(DESTDIR)$(PREFIX)/bin/carla-control \
+		$(X11_RC_DIR)/99cadence-session-start
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/cadence*
@@ -346,5 +358,6 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/claudia-launcher.svg
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/carla.svg
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/carla-control.svg
+	rm -f $(X11_RC_DIR)/99cadence-session-start
 	rm -rf $(DESTDIR)$(PREFIX)/lib/carla/
 	rm -rf $(DESTDIR)$(PREFIX)/share/cadence/
