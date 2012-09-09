@@ -455,7 +455,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QToolButton" name="toolButton">
+                <widget class="QToolButton" name="tb_jack_options">
                  <property name="text">
                   <string>...</string>
                  </property>
@@ -474,7 +474,15 @@
             <layout class="QGridLayout" name="gridLayout_5">
              <item row="0" column="0">
               <widget class="QToolBox" name="toolBox_2">
-               <widget class="QWidget" name="toolBox_alsaaudio" native="true">
+               <widget class="QWidget" name="toolBox_alsaaudio">
+                <property name="geometry">
+                 <rect>
+                  <x>0</x>
+                  <y>0</y>
+                  <width>343</width>
+                  <height>89</height>
+                 </rect>
+                </property>
                 <attribute name="label">
                  <string>ALSA Audio</string>
                 </attribute>
@@ -586,7 +594,15 @@
                  </item>
                 </layout>
                </widget>
-               <widget class="QWidget" name="toolBox_alsamidi" native="true">
+               <widget class="QWidget" name="toolBox_alsamidi">
+                <property name="geometry">
+                 <rect>
+                  <x>0</x>
+                  <y>0</y>
+                  <width>298</width>
+                  <height>81</height>
+                 </rect>
+                </property>
                 <attribute name="label">
                  <string>ALSA MIDI</string>
                 </attribute>
@@ -691,7 +707,15 @@
                  </item>
                 </layout>
                </widget>
-               <widget class="QWidget" name="toolBox_pulseaudio" native="true">
+               <widget class="QWidget" name="toolBox_pulseaudio">
+                <property name="geometry">
+                 <rect>
+                  <x>0</x>
+                  <y>0</y>
+                  <width>212</width>
+                  <height>81</height>
+                 </rect>
+                </property>
                 <attribute name="label">
                  <string>PulseAudio</string>
                 </attribute>
@@ -1382,7 +1406,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>76</width>
+                  <width>94</width>
                   <height>76</height>
                  </rect>
                 </property>
@@ -1400,7 +1424,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>89</width>
+                  <width>94</width>
                   <height>76</height>
                  </rect>
                 </property>
@@ -1418,7 +1442,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>89</width>
+                  <width>94</width>
                   <height>76</height>
                  </rect>
                 </property>
@@ -1436,7 +1460,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>89</width>
+                  <width>94</width>
                   <height>76</height>
                  </rect>
                 </property>

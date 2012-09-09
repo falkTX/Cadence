@@ -24,10 +24,12 @@ except:
 
 # Imports (Global)
 from platform import architecture
+from PyQt4.QtCore import QThread
 from PyQt4.QtGui import QApplication, QLabel, QMainWindow, QSizePolicy
 
 # Imports (Custom Stuff)
 import ui_cadence
+import ui_cadence_tb_jack, ui_cadence_rwait
 import systray
 from shared_cadence import *
 from shared_jack import *
@@ -319,6 +321,140 @@ def initSystemChecks():
 
 # ---------------------------------------------------------------------
 
+# Wait while JACK restarts
+class ForceRestartThread(QThread):
+    def __init__(self, parent):
+        QThread.__init__(self, parent)
+
+        self.m_wasStarted = False
+
+    def wasJackStarted(self):
+        return self.m_wasStarted
+
+    def run(self):
+        # Not started yet
+        self.m_wasStarted = False
+        self.emit(SIGNAL("progressChanged(int)"), 0)
+
+        # Kill All
+        stopAllAudioProcesses()
+        self.emit(SIGNAL("progressChanged(int)"), 30)
+
+        # Connect to jackdbus
+        self.parent().DBusReconnect()
+
+        if not DBus.jack:
+            return
+
+        for x in range(30):
+            self.emit(SIGNAL("progressChanged(int)"), 30+x*2)
+            procsList = getProcList()
+            if "jackdbus" in procsList:
+                break
+            else:
+                sleep(0.1)
+
+        self.emit(SIGNAL("progressChanged(int)"), 90)
+
+        # Start it
+        DBus.jack.StartServer()
+        self.emit(SIGNAL("progressChanged(int)"), 95)
+
+        # If we made it this far, then JACK is started
+        self.m_wasStarted = True
+
+        # Start A2J and Pulse according to user settings
+        if GlobalSettings.value("A2J/AutoStart", True, type=bool) and DBus.a2j and not bool(DBus.a2j.is_started()):
+            a2jExportHW = GlobalSettings.value("A2J/ExportHW", True, type=bool)
+            DBus.a2j.set_hw_export(a2jExportHW)
+            DBus.a2j.start()
+
+        self.emit(SIGNAL("progressChanged(int)"), 100)
+
+        # TODO
+        #if GlobalSettings.value("Pulse2JACK/AutoStart", True, type=bool) and not PA_is_bridged():
+            #if GlobalSettings.value("Pulse2JACK/PlaybackModeOnly", False, type=bool):
+                #os.system("cadence-pulse2jack -p")
+            #else:
+                #os.system("cadence-pulse2jack")
+
+# Force Restart Dialog
+class ForceWaitDialog(QDialog, ui_cadence_rwait.Ui_Dialog):
+    def __init__(self, parent):
+        QDialog.__init__(self, parent)
+        self.setupUi(self)
+        self.setWindowFlags(Qt.Dialog|Qt.WindowCloseButtonHint)
+
+        self.rThread = ForceRestartThread(self)
+        self.rThread.start()
+
+        self.connect(self.rThread, SIGNAL("progressChanged(int)"), self.progressBar, SLOT("setValue(int)"))
+        self.connect(self.rThread, SIGNAL("finished()"), SLOT("slot_rThreadFinished()"))
+
+    def DBusReconnect(self):
+        self.parent().DBusReconnect()
+
+    @pyqtSlot()
+    def slot_rThreadFinished(self):
+        self.close()
+
+        if self.rThread.wasJackStarted():
+            QMessageBox.information(self, self.tr("Info"), self.tr("JACK was re-started sucessfully"))
+        else:
+            QMessageBox.critical(self, self.tr("Error"), self.tr("Could not start JACK!"))
+
+# Additional JACK options
+class ToolBarJackDialog(QDialog, ui_cadence_tb_jack.Ui_Dialog):
+    def __init__(self, parent):
+        QDialog.__init__(self, parent)
+        self.setupUi(self)
+
+        self.m_ladishLoaded = False
+
+        if haveDBus:
+            if GlobalSettings.value("JACK/AutoLoadLadishStudio", False, type=bool):
+                self.rb_ladish.setChecked(True)
+                self.m_ladishLoaded = True
+            elif "org.ladish" in DBus.bus.list_names():
+                self.m_ladishLoaded = True
+        else:
+            self.rb_ladish.setEnabled(False)
+            self.rb_jack.setChecked(True)
+
+        if self.m_ladishLoaded:
+            self.fillStudioNames()
+
+        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setOptions()"))
+        self.connect(self.rb_ladish, SIGNAL("clicked()"), SLOT("slot_maybeFillStudioNames()"))
+
+    def fillStudioNames(self):
+        DBus.ladish_control = DBus.bus.get_object("org.ladish", "/org/ladish/Control")
+
+        ladishStudioName = dbus.String(GlobalSettings.value("JACK/LadishStudioName", "", type=str))
+        ladishStudioListDump = DBus.ladish_control.GetStudioList()
+
+        if len(ladishStudioListDump) == 0:
+            self.rb_ladish.setEnabled(False)
+            self.rb_jack.setChecked(True)
+        else:
+            i=0
+            for thisStudioName, thisStudioDict in ladishStudioListDump:
+                self.cb_studio_name.addItem(thisStudioName)
+                if ladishStudioName and thisStudioName == ladishStudioName:
+                    self.cb_studio_name.setCurrentIndex(i)
+                i += 1
+
+    @pyqtSlot()
+    def slot_maybeFillStudioNames(self):
+        if not self.m_ladishLoaded:
+            self.fillStudioNames()
+            self.m_ladishLoaded = True
+
+    @pyqtSlot()
+    def slot_setOptions(self):
+        GlobalSettings.setValue("JACK/AutoLoadLadishStudio", self.rb_ladish.isChecked())
+        GlobalSettings.setValue("JACK/LadishStudioName", self.cb_studio_name.currentText())
+
 # Main Window
 class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
     def __init__(self, parent=None):
@@ -327,9 +463,6 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         self.settings = QSettings("Cadence", "Cadence")
         self.loadSettings(True)
-
-        # TODO
-        self.b_jack_restart.setEnabled(False)
 
         self.pix_apply   = QIcon(getIcon("dialog-ok-apply", 16)).pixmap(16, 16)
         self.pix_cancel  = QIcon(getIcon("dialog-cancel", 16)).pixmap(16, 16)
@@ -584,6 +717,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.connect(self.b_jack_stop, SIGNAL("clicked()"), SLOT("slot_JackServerStop()"))
         self.connect(self.b_jack_restart, SIGNAL("clicked()"), SLOT("slot_JackServerForceRestart()"))
         self.connect(self.b_jack_configure, SIGNAL("clicked()"), SLOT("slot_JackServerConfigure()"))
+        self.connect(self.tb_jack_options, SIGNAL("clicked()"), SLOT("slot_JackOptions()"))
 
         self.connect(self.act_tools_catarina, SIGNAL("triggered()"), lambda tool="catarina": self.func_start_tool(tool))
         self.connect(self.act_tools_catia, SIGNAL("triggered()"), lambda tool="catia": self.func_start_tool(tool))
@@ -793,13 +927,29 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_JackServerForceRestart(self):
-        pass
+        if DBus.jack.IsStarted():
+            ask = CustomMessageBox(self, QMessageBox.Warning, self.tr("Warning"),
+                                  self.tr("This will force kill all JACK applications!<br>Make sure to save your projects before continue."),
+                                  self.tr("Are you sure you want to force the restart of JACK?"))
+
+            if ask != QMessageBox.Yes:
+                return
+
+        if self.m_timer250:
+            self.killTimer(self.m_timer250)
+            self.m_timer250 = None
+
+        ForceWaitDialog(self).exec_()
 
     @pyqtSlot()
     def slot_JackServerConfigure(self):
         jacksettingsW = jacksettings.JackSettingsW(self)
         jacksettingsW.exec_()
         del jacksettingsW
+
+    @pyqtSlot()
+    def slot_JackOptions(self):
+        ToolBarJackDialog(self).exec_()
 
     @pyqtSlot()
     def slot_JackClearXruns(self):
