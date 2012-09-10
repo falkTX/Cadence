@@ -85,9 +85,7 @@ elif not os.path.exists(HOME):
 PATH_env = os.getenv("PATH")
 if PATH_env is None:
     qWarning("PATH variable not set")
-    if LINUX:
-        PATH = ("/usr/local/bin", "/usr/bin", "/bin")
-    elif MACOS:
+    if MACOS:
         PATH = ("/opt/local/bin", "/usr/local/bin", "/usr/bin", "/bin")
     elif WINDOWS:
         WINDIR = os.getenv("WINDIR")

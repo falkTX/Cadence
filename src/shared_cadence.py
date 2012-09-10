@@ -38,6 +38,7 @@ DEFAULT_VST_PATH = [
 GlobalSettings = QSettings("Cadence", "GlobalSettings")
 
 # Get Process list
+# TODO - Windows support, others
 def getProcList():
     retProcs = []
 
