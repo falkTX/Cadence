@@ -61,7 +61,7 @@ except:
 VERSION = "0.5.0"
 
 # Set Debug mode
-DEBUG = True
+DEBUG = bool("-d" in sys.argv or "-debug" in sys.argv or "--debug" in sys.argv)
 
 # Global variables
 global x_gui
