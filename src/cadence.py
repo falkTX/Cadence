@@ -456,6 +456,9 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         QMainWindow.__init__(self, parent)
         self.setupUi(self)
 
+        # TODO - uninplemented
+        self.groupBox_bridges.setEnabled(False)
+
         self.settings = QSettings("Cadence", "Cadence")
         self.loadSettings(True)
 

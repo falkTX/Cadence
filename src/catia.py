@@ -39,7 +39,8 @@ try:
 except:
     haveDBus = False
 
-if LINUX:
+# Disabled for Beta
+if LINUX and False:
     for iPATH in PATH:
         if os.path.exists(os.path.join(iPATH, "aconnect")):
             from subprocess import getoutput
