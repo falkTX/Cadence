@@ -2356,7 +2356,7 @@ class CanvasBox(QGraphicsItem):
                 elif port.port_mode == PORT_MODE_OUTPUT:
                     haveOuts = True
 
-        if not (self.m_splitted and bool(haveIns and haveOuts)):
+        if not (self.m_splitted or bool(haveIns and haveOuts)):
             act_x_sep2.setVisible(False)
             act_x_split_join.setVisible(False)
 
