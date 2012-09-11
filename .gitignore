@@ -13,7 +13,6 @@
 *.carxp
 *.carxs
 *.pro.user
-*.xml
 
 *.pyc
 ui_*.py
