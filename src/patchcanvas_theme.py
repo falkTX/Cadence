@@ -21,7 +21,7 @@ from PyQt4.QtGui import QColor, QFont, QPen, QPixmap
 
 class Theme(object):
     # enum PortType
-    THEME_PORT_SQUARE = 0
+    THEME_PORT_SQUARE  = 0
     THEME_PORT_POLYGON = 1
 
     # enum List

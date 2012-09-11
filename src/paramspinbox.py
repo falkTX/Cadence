@@ -45,7 +45,7 @@ class CustomInputDialog(QDialog, ui_inputdialog_value.Ui_Dialog):
         else:
             text = "<table>"
             for scalePoint in scalePoints:
-                text += "<tr><td align='right'>%f</td><td align='left'> - %s</td></tr>" % (scalePoint['value'], scalepoint['label'])
+                text += "<tr><td align='right'>%f</td><td align='left'> - %s</td></tr>" % (scalePoint['value'], scalePoint['label'])
             text += "</table>"
             self.textBrowser.setText(text)
             self.resize(200, 300)

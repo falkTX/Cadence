@@ -18,7 +18,7 @@
 
 # Imports (Global)
 import json
-from PyQt4.QtCore import Qt, QThread
+from PyQt4.QtCore import QThread
 from PyQt4.QtGui import QApplication, QMainWindow, QTableWidgetItem
 
 # Imports (Custom Stuff)

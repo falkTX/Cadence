@@ -48,7 +48,7 @@ try:
 
         TrayEngine = "AppIndicator"
 
-    elif getenv("KDE_FULL_SESSION") or getenv("DESKTOP_SESSION") == "kde-plasma":
+    elif os.getenv("KDE_FULL_SESSION") or os.getenv("DESKTOP_SESSION") == "kde-plasma":
         from PyKDE4.kdeui import KAction, KIcon, KMenu, KStatusNotifierItem
         TrayEngine = "KDE"
 
@@ -628,7 +628,6 @@ class GlobalSysTray(object):
 
 #--------------- main ------------------
 if __name__ == '__main__':
-    import sys
     from PyQt4.QtGui import QApplication, QDialog, QMessageBox
 
     class ExampleGUI(QDialog):

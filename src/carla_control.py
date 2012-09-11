@@ -22,7 +22,7 @@ from liblo import make_method, Address, ServerError, ServerThread
 from liblo import send as lo_send
 
 # Imports (Custom)
-import ui_carla_about, ui_carla_control, ui_carla_edit, ui_carla_parameter, ui_carla_plugin
+import ui_carla_about, ui_carla_control
 from shared_carla import *
 
 global carla_name, lo_target

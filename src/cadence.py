@@ -16,16 +16,11 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
-# FIXME - py3 later
-try:
-    from commands import getoutput
-except:
-    from subprocess import getoutput
-
 # Imports (Global)
 from platform import architecture
 from PyQt4.QtCore import QThread
 from PyQt4.QtGui import QApplication, QLabel, QMainWindow, QSizePolicy
+from subprocess import getoutput
 
 # Imports (Custom Stuff)
 import ui_cadence

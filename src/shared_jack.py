@@ -26,7 +26,7 @@ from shared import *
 from jacklib_helpers import *
 
 # Have JACK2 ?
-if jacklib.JACK2:
+if jacklib.JACK2 and DEBUG:
     print("Using JACK2, version %s" % cString(jacklib.get_version_string()))
 
 # Can Render ?

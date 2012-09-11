@@ -20,7 +20,7 @@
 import platform, sys
 from copy import deepcopy
 from sip import unwrapinstance
-from PyQt4.QtCore import pyqtSlot, QSettings, QTimer
+from PyQt4.QtCore import pyqtSlot, Qt, QSettings, QTimer
 from PyQt4.QtGui import QColor, QCursor, QDialog, QFontMetrics, QFrame, QInputDialog, QMenu, QPainter, QVBoxLayout, QWidget
 from PyQt4.QtXml import QDomDocument
 
