@@ -256,8 +256,6 @@ install:
 		data/claudia-launcher \
 		data/carla \
 		data/carla-control \
-		c++/carla-bridge/carla-bridge-* \
-		c++/carla-discovery/carla-discovery-* \
 		c++/jackmeter/cadence-jackmeter \
 		c++/xycontroller/cadence-xycontroller \
 		$(DESTDIR)$(PREFIX)/bin/
@@ -312,7 +310,12 @@ install:
 
 	# Install main code
 	install -m 755 src/*.py $(DESTDIR)$(PREFIX)/share/cadence/src/
-	install -m 755 c++/carla-backend/*.so $(DESTDIR)$(PREFIX)/lib/carla/
+
+	install -m 755 \
+		c++/carla-backend/*.so \
+		c++/carla-bridge/carla-bridge-* \
+		c++/carla-discovery/carla-discovery-* \
+		$(DESTDIR)$(PREFIX)/lib/carla/
 
 	# Install addtional stuff for Cadence
 	install -m 644 data/pulse2jack/* $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
