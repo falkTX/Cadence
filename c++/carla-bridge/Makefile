@@ -7,13 +7,13 @@
 CXX     ?= g++
 STRIP   ?= strip
 
-# BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -mfpmath=sse -Wall
-BASE_FLAGS   = -O0 -g
+BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -mfpmath=sse -Wall
+# BASE_FLAGS   = -O0 -g
 
 BUILD_FLAGS  = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
 BUILD_FLAGS += -I. -I../carla-includes $(shell pkg-config --cflags liblo QtCore)
-# BUILD_FLAGS += -DBUILD_BRIDGE -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT -DNDEBUG
-BUILD_FLAGS += -DBUILD_BRIDGE -DDEBUG
+BUILD_FLAGS += -DBUILD_BRIDGE -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT -DNDEBUG
+# BUILD_FLAGS += -DBUILD_BRIDGE -DDEBUG
 BUILD_FLAGS += -DVESTIGE_HEADER # Comment this line to not use vestige header
 
 32BIT_FLAGS  = -m32

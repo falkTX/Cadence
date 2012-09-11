@@ -17,7 +17,7 @@ BASE_FLAGS        = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -m
 
 CARLA_CXX_FLAGS   = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
 CARLA_CXX_FLAGS  += $(shell pkg-config --cflags liblo QtCore QtGui)
-CARLA_CXX_FLAGS  += -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT # -DNDEBUG
+CARLA_CXX_FLAGS  += -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT -DNDEBUG
 CARLA_CXX_FLAGS  += -DVESTIGE_HEADER # Comment this line to not use vestige header
 
 CARLA_LD_FLAGS    = -shared -ldl -lm -fPIC $(LDFLAGS)
