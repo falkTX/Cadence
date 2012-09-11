@@ -818,10 +818,10 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
         content += " <Groups>\n"
         for i in range(len(self.m_group_list)):
             group = self.m_group_list[i]
-            group_id = group[iGroupId]
-            group_name = group[iGroupName]
+            group_id    = group[iGroupId]
+            group_name  = group[iGroupName]
             group_split = group[iGroupSplit]
-            group_icon = group[iGroupIcon]
+            group_icon  = group[iGroupIcon]
             group_pos_i = patchcanvas.getGroupPos(group_id, patchcanvas.PORT_MODE_INPUT)
             group_pos_o = patchcanvas.getGroupPos(group_id, patchcanvas.PORT_MODE_OUTPUT)
             content    += "  <g%i> <name>%s</name> <data>%i:%i:%i:%f:%f:%f:%f</data> </g%i>\n" % (i, group_name, group_id, group_split, group_icon, group_pos_o.x(), group_pos_o.y(), group_pos_i.x(), group_pos_i.y(), i)
@@ -842,7 +842,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
         content += "</CATARINA>\n"
 
         try:
-            fd = open(path, "w")
+            fd = uopen(path, "w")
             fd.write(content)
             fd.close()
         except:
@@ -855,7 +855,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
             return
 
         try:
-            fd = open(path, "r")
+            fd = uopen(path, "r")
             readState = fd.read()
             fd.close()
         except:
@@ -863,17 +863,17 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
             self.m_save_path = None
             return
 
-        self.m_save_path = path
-        self.m_group_list = []
-        self.m_group_list_pos = []
-        self.m_port_list = []
+        self.m_save_path       = path
+        self.m_group_list      = []
+        self.m_group_list_pos  = []
+        self.m_port_list       = []
         self.m_connection_list = []
-        self.m_last_group_id = 1
-        self.m_last_port_id = 1
+        self.m_last_group_id   = 1
+        self.m_last_port_id    = 1
         self.m_last_connection_id = 1
 
         xml = QDomDocument()
-        xml.setContent(readState)
+        xml.setContent(readState.encode("utf-8"))
 
         content = xml.documentElement()
         if content.tagName() != "CATARINA":
@@ -1033,7 +1033,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
             if dialog.exec_():
                 group_id = dialog.ret_group_id
 
-                # Remove ports and connections of this group first
+                # Remove port connections first
                 for port in self.m_port_list:
                     if port[iPortGroup] == group_id:
                         port_id = port[iPortId]
@@ -1042,6 +1042,11 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
                             if connection[iConnOutput] == port_id or connection[iConnInput] == port_id:
                                 patchcanvas.disconnectPorts(connection[iConnId])
                                 self.m_connection_list.remove(connection)
+
+                # Remove ports
+                for port in self.m_port_list:
+                    if port[iPortGroup] == group_id:
+                        port_id = port[iPortId]
 
                         patchcanvas.removePort(port[iPortId])
                         self.m_port_list.remove(port)

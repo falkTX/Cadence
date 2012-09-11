@@ -1544,7 +1544,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         content += "</CARLA-PROJECT>\n"
 
         try:
-            fd = open(self.m_project_filename, "w")
+            fd = uopen(self.m_project_filename, "w")
             fd.write(content)
             fd.close()
         except:
@@ -1552,7 +1552,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
     def load_project(self):
         try:
-            fd = open(self.m_project_filename, "r")
+            fd = uopen(self.m_project_filename, "r")
             projectRead = fd.read()
             fd.close()
         except:
@@ -1563,7 +1563,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             return
 
         xml = QDomDocument()
-        xml.setContent(projectRead)
+        xml.setContent(projectRead.encode("utf-8"))
 
         xml_node = xml.documentElement()
         if xml_node.tagName() != "CARLA-PROJECT":

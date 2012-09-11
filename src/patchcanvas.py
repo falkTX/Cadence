@@ -740,8 +740,8 @@ def addPort(group_id, port_id, port_name, port_mode, port_type):
         CanvasItemFX(port_widget, True)
 
     port_dict = port_dict_t()
-    port_dict.group_id = group_id
-    port_dict.port_id = port_id
+    port_dict.group_id  = group_id
+    port_dict.port_id   = port_id
     port_dict.port_name = port_name
     port_dict.port_mode = port_mode
     port_dict.port_type = port_type

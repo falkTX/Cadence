@@ -949,7 +949,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         content += "</CARLA-PRESET>\n"
 
         try:
-            fd = open(self.m_currentStateFilename, "w")
+            fd = uopen(self.m_currentStateFilename, "w")
             fd.write(content)
             fd.close()
         except:
@@ -963,7 +963,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
     def loadState(self):
         try:
-            fd = open(self.m_currentStateFilename, "r")
+            fd = uopen(self.m_currentStateFilename, "r")
             stateRead = fd.read()
             fd.close()
         except:
@@ -971,7 +971,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
             return
 
         xml = QDomDocument()
-        xml.setContent(stateRead)
+        xml.setContent(stateRead.encode("utf-8"))
 
         xmlNode = xml.documentElement()
 

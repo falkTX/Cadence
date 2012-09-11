@@ -21,6 +21,7 @@ import os, sys
 from unicodedata import normalize
 from PyQt4.QtCore import qWarning, SIGNAL, SLOT
 from PyQt4.QtGui import QFileDialog, QIcon, QMessageBox
+from codecs import open as codecopen
 
 # Set Platform
 if sys.platform == "darwin":
@@ -220,6 +221,9 @@ def toList(value):
         return [value]
     else:
         return value
+
+def uopen(filename, mode="r"):
+    return codecopen(filename, encoding="utf-8", mode=mode)
 
 # QLineEdit and QPushButton combo
 def getAndSetPath(self_, currentPath, lineEdit):
