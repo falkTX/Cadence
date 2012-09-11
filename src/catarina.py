@@ -1038,18 +1038,24 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
                     if port[iPortGroup] == group_id:
                         port_id = port[iPortId]
 
-                        for connection in self.m_connection_list:
+                        h = 0
+                        for i in range(len(self.m_connection_list)):
+                            connection = self.m_connection_list[i-h]
                             if connection[iConnOutput] == port_id or connection[iConnInput] == port_id:
                                 patchcanvas.disconnectPorts(connection[iConnId])
-                                self.m_connection_list.remove(connection)
+                                self.m_connection_list.pop(i-h)
+                                h += 1
 
                 # Remove ports
-                for port in self.m_port_list:
+                h = 0
+                for i in range(len(self.m_port_list)):
+                    port = self.m_port_list[i-h]
                     if port[iPortGroup] == group_id:
                         port_id = port[iPortId]
 
                         patchcanvas.removePort(port[iPortId])
-                        self.m_port_list.remove(port)
+                        self.m_port_list.pop(i-h)
+                        h += 1
 
                 # Now remove group
                 patchcanvas.removeGroup(group_id)
@@ -1110,10 +1116,13 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
             if dialog.exec_():
                 port_id = dialog.ret_port_id
 
-                for connection in self.m_connection_list:
+                h = 0
+                for i in range(len(self.m_connection_list)):
+                    connection = self.m_connection_list[i-h]
                     if connection[iConnOutput] == port_id or connection[iConnInput] == port_id:
                         patchcanvas.disconnectPorts(connection[iConnId])
-                        self.m_connection_list.remove(connection)
+                        self.m_connection_list.pop(i-h)
+                        h += 1
 
                 patchcanvas.removePort(port_id)
 
