@@ -307,11 +307,11 @@ public:
 
     void init()
     {
-        if (needInit)
-        {
-            needInit = false;
-            load_all();
-        }
+        if (! needInit)
+            return;
+
+        load_all();
+        needInit = false;
     }
 
 private:
