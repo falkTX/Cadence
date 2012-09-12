@@ -24,12 +24,11 @@
 
 typedef unsigned char jackbridge_midi_data_t;
 
-typedef struct _jackbridge_midi_event
-{
+struct jackbridge_midi_event_t {
     jack_nframes_t          time;
     size_t                  size;
     jackbridge_midi_data_t* buffer;
-} jackbridge_midi_event_t;
+};
 
 CARLA_EXPORT jack_client_t* jackbridge_client_open(const char* client_name, jack_options_t options, jack_status_t* status);
 CARLA_EXPORT int jackbridge_client_close(jack_client_t* client);

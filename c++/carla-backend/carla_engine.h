@@ -100,37 +100,39 @@ struct CarlaEngineMidiEvent {
       #endif
 };
 
+struct CarlaTimeInfoBBT {
+    int32_t bar;
+    int32_t beat;
+    int32_t tick;
+    double bar_start_tick;
+    float  beats_per_bar;
+    float  beat_type;
+    double ticks_per_beat;
+    double beats_per_minute;
+    
+    CarlaTimeInfoBBT()
+        : bar(0),
+          beat(0),
+          tick(0),
+          bar_start_tick(0.0),
+          beats_per_bar(0.0f),
+          beat_type(0.0f),
+          ticks_per_beat(0.0),
+          beats_per_minute(0.0) {}
+};
+
 struct CarlaTimeInfo {
     bool playing;
     uint32_t frame;
     uint32_t time;
     uint32_t valid;
-    struct {
-        int32_t bar;
-        int32_t beat;
-        int32_t tick;
-        double bar_start_tick;
-        float  beats_per_bar;
-        float  beat_type;
-        double ticks_per_beat;
-        double beats_per_minute;
-    } bbt;
+    CarlaTimeInfoBBT bbt;
 
     CarlaTimeInfo()
         : playing(false),
           frame(0),
           time(0),
-      #ifdef Q_COMPILER_INITIALIZER_LISTS
-          valid(0),
-          bbt{0, 0, 0, 0.0, 0.0f, 0.0f, 0.0, 0.0} {}
-      #else
-          valid(0)
-    {
-        bbt.bar = bbt.beat = bbt.tick = 0;
-        bbt.beats_per_bar  = bbt.beat_type = 0.0f;
-        bbt.bar_start_tick = bbt.ticks_per_beat = bbt.beats_per_minute = 0.0;
-    }
-      #endif
+          valid(0) {}
 };
 
 struct CarlaEngineClientNativeHandle {
@@ -227,6 +229,7 @@ public:
     // -------------------------------------------------------------------
     // Information (base)
 
+    CarlaEngineType getType() const;
     const char* getName() const;
     double   getSampleRate() const;
     uint32_t getBufferSize() const;
@@ -406,7 +409,7 @@ public:
     bool isActive() const;
     bool isOk() const;
 
-    const CarlaEngineBasePort* addPort(const CarlaEnginePortType type, const char* const name, const bool isInput);
+    const CarlaEngineBasePort* addPort(const CarlaEnginePortType portType, const char* const name, const bool isInput);
 
 private:
     bool m_active;

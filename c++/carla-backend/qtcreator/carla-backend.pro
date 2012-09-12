@@ -10,7 +10,7 @@ PKGCONFIG += fluidsynth linuxsampler
 PKGCONFIG += suil-0
 
 TARGET   = carla_backend
-TEMPLATE = lib #app
+TEMPLATE = lib # app
 VERSION  = 0.5.0
 
 SOURCES = \

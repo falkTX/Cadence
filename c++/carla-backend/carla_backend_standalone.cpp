@@ -1426,35 +1426,8 @@ void run_tests_standalone(short idMax)
         get_output_peak_value(id, 1);
         get_output_peak_value(id, 2);
 
-        qDebug("------------------- TEST @%i: set internal data --------------------", id);
-        set_active(id, false);
-        set_active(id, true);
-        set_active(id, true);
-
-        set_drywet(id, -999);
-        set_volume(id, -999);
-        set_balance_left(id, -999);
-        set_balance_right(id, 999);
-
-        qDebug("------------------- TEST @%i: set parameter data [-1] --------------------", id);
-        set_parameter_value(id, -1, -999);
-        set_parameter_midi_channel(id, -1, -1);
-        set_parameter_midi_cc(id, -1, -1);
-        set_program(id, -1);
-        set_midi_program(id, -1);
-
-        qDebug("------------------- TEST @%i: set parameter data [0] --------------------", id);
-        set_parameter_value(id, 0, -999);
-        set_parameter_midi_channel(id, 0, -1);
-        set_parameter_midi_channel(id, 0, 0);
-        set_parameter_midi_cc(id, 0, -1);
-        set_parameter_midi_cc(id, 0, 0);
-        set_program(id, 0);
-        set_midi_program(id, 0);
-
         qDebug("------------------- TEST @%i: set extra data --------------------", id);
-        //set_custom_data(id, CarlaBackend::CUSTOM_DATA_INVALID, nullptr, nullptr);
-        set_custom_data(id, CarlaBackend::CUSTOM_DATA_INVALID, "", "");
+        set_custom_data(id, CarlaBackend::CUSTOM_DATA_STRING, "", "");
         set_chunk_data(id, nullptr);
         set_gui_data(id, (uintptr_t)1);
 
@@ -1535,7 +1508,10 @@ int main(int argc, char* argv[])
     run_tests_standalone(id_dssi+1);
 
     // lock
-    //app.exec();
+    app.exec();
+    
+    delete vstGui;
+    vstGui = nullptr;
 
     remove_plugin(id_ladspa);
     remove_plugin(id_dssi);
