@@ -17,6 +17,7 @@
 
 #include "carla_plugin.h"
 #include "carla_lv2.h"
+#include "rtmempool/rtmempool.h"
 
 #include <QtCore/QDir>
 
@@ -79,21 +80,22 @@ const uint32_t lv2_feature_id_event            =  3;
 const uint32_t lv2_feature_id_logs             =  4;
 const uint32_t lv2_feature_id_options          =  5;
 const uint32_t lv2_feature_id_programs         =  6;
-const uint32_t lv2_feature_id_state_make_path  =  7;
-const uint32_t lv2_feature_id_state_map_path   =  8;
-const uint32_t lv2_feature_id_strict_bounds    =  9;
-const uint32_t lv2_feature_id_uri_map          = 10;
-const uint32_t lv2_feature_id_urid_map         = 11;
-const uint32_t lv2_feature_id_urid_unmap       = 12;
-const uint32_t lv2_feature_id_worker           = 13;
-const uint32_t lv2_feature_id_data_access      = 14;
-const uint32_t lv2_feature_id_instance_access  = 15;
-const uint32_t lv2_feature_id_ui_parent        = 16;
-const uint32_t lv2_feature_id_ui_port_map      = 17;
-const uint32_t lv2_feature_id_ui_resize        = 18;
-const uint32_t lv2_feature_id_external_ui      = 19;
-const uint32_t lv2_feature_id_external_ui_old  = 20;
-const uint32_t lv2_feature_count               = 21;
+const uint32_t lv2_feature_id_rtmempool        =  7;
+const uint32_t lv2_feature_id_state_make_path  =  8;
+const uint32_t lv2_feature_id_state_map_path   =  9;
+const uint32_t lv2_feature_id_strict_bounds    = 10;
+const uint32_t lv2_feature_id_uri_map          = 11;
+const uint32_t lv2_feature_id_urid_map         = 12;
+const uint32_t lv2_feature_id_urid_unmap       = 13;
+const uint32_t lv2_feature_id_worker           = 14;
+const uint32_t lv2_feature_id_data_access      = 15;
+const uint32_t lv2_feature_id_instance_access  = 16;
+const uint32_t lv2_feature_id_ui_parent        = 17;
+const uint32_t lv2_feature_id_ui_port_map      = 18;
+const uint32_t lv2_feature_id_ui_resize        = 19;
+const uint32_t lv2_feature_id_external_ui      = 20;
+const uint32_t lv2_feature_id_external_ui_old  = 21;
+const uint32_t lv2_feature_count               = 22;
 /**@}*/
 
 /*!
@@ -400,6 +402,13 @@ public:
 
         if (features[lv2_feature_id_programs] && features[lv2_feature_id_programs]->data)
             delete (LV2_Programs_Host*)features[lv2_feature_id_programs]->data;
+
+        if (features[lv2_feature_id_rtmempool] && features[lv2_feature_id_rtmempool]->data)
+        {
+            const LV2_RtMemPool_Pool* const rtmempool = (const LV2_RtMemPool_Pool*)features[lv2_feature_id_rtmempool]->data;
+            rtmempool_allocator_free(rtmempool);
+            delete rtmempool;
+        }
 
         if (features[lv2_feature_id_state_make_path] && features[lv2_feature_id_state_make_path]->data)
             delete (LV2_State_Make_Path*)features[lv2_feature_id_state_make_path]->data;
@@ -3736,6 +3745,9 @@ public:
         logFt->printf                    = carla_lv2_log_printf;
         logFt->vprintf                   = carla_lv2_log_vprintf;
 
+        LV2_RtMemPool_Pool* const rtMemPoolFt      = new LV2_RtMemPool_Pool;
+        rtmempool_allocator_init(rtMemPoolFt);
+
         LV2_Programs_Host* const programsFt        = new LV2_Programs_Host;
         programsFt->handle                         = this;
         programsFt->program_changed                = carla_lv2_program_changed;
@@ -3810,6 +3822,10 @@ public:
         features[lv2_feature_id_programs]       = new LV2_Feature;
         features[lv2_feature_id_programs]->URI  = LV2_PROGRAMS__Host;
         features[lv2_feature_id_programs]->data = programsFt;
+
+        features[lv2_feature_id_rtmempool]       = new LV2_Feature;
+        features[lv2_feature_id_rtmempool]->URI  = LV2_RTSAFE_MEMORY_POOL__Pool;
+        features[lv2_feature_id_rtmempool]->data = rtMemPoolFt;
 
         features[lv2_feature_id_state_make_path]       = new LV2_Feature;
         features[lv2_feature_id_state_make_path]->URI  = LV2_STATE__makePath;

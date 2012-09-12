@@ -396,7 +396,7 @@ rtmempool_allocator_init(
 
 void
 rtmempool_allocator_free(
-  struct _LV2_RtMemPool_Pool * allocator_ptr)
+  const struct _LV2_RtMemPool_Pool * allocator_ptr)
 {
   if (allocator_ptr->handle)
     free((struct rtsafe_memory_pool *)allocator_ptr->handle);

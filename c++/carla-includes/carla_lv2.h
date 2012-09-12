@@ -51,6 +51,7 @@
 #include "lv2/lv2-midifunctions.h"
 #include "lv2/lv2_external_ui.h"
 #include "lv2/lv2_programs.h"
+#include "lv2/lv2_rtmempool.h"
 
 #include "lv2_rdf.h"
 
@@ -1457,6 +1458,8 @@ bool is_lv2_feature_supported(const LV2_URI uri)
     if (strcmp(uri, LV2_OPTIONS__options) == 0)
         return true;
     if (strcmp(uri, LV2_PROGRAMS__Host) == 0)
+        return true;
+    if (strcmp(uri, LV2_RTSAFE_MEMORY_POOL__Pool) == 0)
         return true;
     if (strcmp(uri, LV2_STATE__makePath) == 0)
         return true;

@@ -29,6 +29,7 @@ SOURCES = \
     ../vst.cpp \
     ../fluidsynth.cpp \
     ../linuxsampler.cpp \
+    ../rtmempool/rtmempool.c \
     ../../carla-jackbridge/carla_jackbridge.cpp
 
 HEADERS = \

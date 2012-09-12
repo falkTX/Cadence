@@ -24,12 +24,20 @@
 #ifndef RTMEMPOOL_H__1FA54215_11CF_4659_9CF3_C17A10A67A1F__INCLUDED
 #define RTMEMPOOL_H__1FA54215_11CF_4659_9CF3_C17A10A67A1F__INCLUDED
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 rtmempool_allocator_init(
   struct _LV2_RtMemPool_Pool * allocator_ptr);
 
 void
 rtmempool_allocator_free(
-  struct _LV2_RtMemPool_Pool * allocator_ptr);
+  const struct _LV2_RtMemPool_Pool * allocator_ptr);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* #ifndef RTMEMPOOL_H__1FA54215_11CF_4659_9CF3_C17A10A67A1F__INCLUDED */
