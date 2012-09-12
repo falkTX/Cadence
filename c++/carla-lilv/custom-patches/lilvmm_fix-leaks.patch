@@ -1,0 +1,12 @@
+diff -U 3 -H -b -B -d -r -N -- lilv-0.14.4.old/lilv/lilvmm.hpp lilv-0.14.4/lilv/lilvmm.hpp
+--- lilv-0.14.4.old/lilv/lilvmm.hpp	2012-09-12 12:20:08.000000000 +0100
++++ lilv-0.14.4/lilv/lilvmm.hpp	2012-09-12 12:20:15.257530963 +0100
+@@ -60,7 +60,7 @@
+ #endif
+ 
+ struct Node {
+-	inline Node(const LilvNode* node) : me(lilv_node_duplicate(node)) {}
++	inline Node(const LilvNode* node) : me(lilv_node_duplicate(node)) { lilv_node_free((LilvNode*)node); }
+ 	inline Node(const Node& copy)     : me(lilv_node_duplicate(copy.me)) {}
+ 
+ 	inline ~Node() { lilv_node_free(me); }
