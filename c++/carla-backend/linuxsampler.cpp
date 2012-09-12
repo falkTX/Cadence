@@ -154,7 +154,8 @@ public:
         aOut.ports    = new CarlaEngineAudioPort*[aOuts];
         aOut.rindexes = new uint32_t[aOuts];
 
-        char portName[STR_MAX];
+        const int portNameSize = CarlaEngine::maxPortNameSize() - 1;
+        char portName[portNameSize];
 
         // ---------------------------------------
         // Audio Outputs
@@ -238,6 +239,9 @@ public:
         uint32_t i = 0;
         midiprog.count += instrumentIds.size();
 
+        // sound kits must always have at least 1 midi-program
+        Q_ASSERT(midiprog.count > 0);
+
         if (midiprog.count > 0)
             midiprog.data = new midi_program_t [midiprog.count];
 
@@ -263,12 +267,14 @@ public:
         }
 #endif
 
-        // TODO
-
         if (init)
         {
             if (midiprog.count > 0)
                 setMidiProgram(0, false, false, false, true);
+        }
+        else
+        {
+            x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
         }
     }
 
@@ -280,100 +286,112 @@ public:
         uint32_t i, k;
         uint32_t midiEventCount = 0;
 
-        double aouts_peak_tmp[2] = { 0.0 };
+        double aOutsPeak[2] = { 0.0 };
 
         CARLA_PROCESS_CONTINUE_CHECK;
 
         // --------------------------------------------------------------------------------------------------------
-        // MIDI Input (External)
-
-        if (m_ctrlInChannel >= 0 && m_ctrlInChannel < 16 && m_active && m_activeBefore)
-        {
-            engineMidiLock();
-
-            for (i=0; i < MAX_MIDI_EVENTS && midiEventCount < MAX_MIDI_EVENTS; i++)
-            {
-                if (extMidiNotes[i].channel < 0)
-                    break;
-
-                if (extMidiNotes[i].velo)
-                    midiInputPort->DispatchNoteOn(extMidiNotes[i].note, extMidiNotes[i].velo, m_ctrlInChannel, 0);
-                else
-                    midiInputPort->DispatchNoteOff(extMidiNotes[i].note, extMidiNotes[i].velo, m_ctrlInChannel, 0);
-
-                extMidiNotes[i].channel = -1;
-                midiEventCount += 1;
-            }
-
-            engineMidiUnlock();
-
-        } // End of MIDI Input (External)
-
-        CARLA_PROCESS_CONTINUE_CHECK;
-
-        // --------------------------------------------------------------------------------------------------------
-        // MIDI Input (System)
+        // MIDI Input
 
         if (m_active && m_activeBefore)
         {
-            const CarlaEngineMidiEvent* minEvent;
-            uint32_t time, nEvents = midi.portMin->getEventCount();
+            // ----------------------------------------------------------------------------------------------------
+            // MIDI Input (External)
 
-            for (i=0; i < nEvents && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
-                minEvent = midi.portMin->getEvent(i);
+                engineMidiLock();
 
-                if (! minEvent)
-                    continue;
-
-                time = minEvent->time - framesOffset;
-
-                if (time >= frames)
-                    continue;
-
-                uint8_t status  = minEvent->data[0];
-                uint8_t channel = status & 0x0F;
-
-                // Fix bad note-off
-                if (MIDI_IS_STATUS_NOTE_ON(status) && minEvent->data[2] == 0)
-                    status -= 0x10;
-
-                if (MIDI_IS_STATUS_NOTE_OFF(status))
+                for (i=0; i < MAX_MIDI_EVENTS && midiEventCount < MAX_MIDI_EVENTS; i++)
                 {
-                    uint8_t note = minEvent->data[1];
+                    if (extMidiNotes[i].channel < 0)
+                        break;
 
-                    midiInputPort->DispatchNoteOff(note, 0, channel, time);
+                    if (extMidiNotes[i].velo)
+                        midiInputPort->DispatchNoteOn(extMidiNotes[i].note, extMidiNotes[i].velo, m_ctrlInChannel, 0);
+                    else
+                        midiInputPort->DispatchNoteOff(extMidiNotes[i].note, extMidiNotes[i].velo, m_ctrlInChannel, 0);
 
-                    postponeEvent(PluginPostEventNoteOff, channel, note, 0.0);
+                    extMidiNotes[i].channel = -1; // mark as invalid
+                    midiEventCount += 1;
                 }
-                else if (MIDI_IS_STATUS_NOTE_ON(status))
+
+                engineMidiUnlock();
+
+            } // End of MIDI Input (External)
+
+            CARLA_PROCESS_CONTINUE_CHECK;
+
+            // ----------------------------------------------------------------------------------------------------
+            // MIDI Input (System)
+
+            {
+                const CarlaEngineMidiEvent* minEvent;
+                uint32_t time, nEvents = midi.portMin->getEventCount();
+
+                for (i=0; i < nEvents && midiEventCount < MAX_MIDI_EVENTS; i++)
                 {
-                    uint8_t note = minEvent->data[1];
-                    uint8_t velo = minEvent->data[2];
+                    minEvent = midi.portMin->getEvent(i);
 
-                    midiInputPort->DispatchNoteOn(note, velo, channel, time);
+                    if (! minEvent)
+                        continue;
 
-                    postponeEvent(PluginPostEventNoteOn, channel, note, velo);
+                    time = minEvent->time - framesOffset;
+
+                    if (time >= frames)
+                        continue;
+
+                    uint8_t status  = minEvent->data[0];
+                    uint8_t channel = status & 0x0F;
+
+                    // Fix bad note-off
+                    if (MIDI_IS_STATUS_NOTE_ON(status) && minEvent->data[2] == 0)
+                        status -= 0x10;
+
+                    if (MIDI_IS_STATUS_NOTE_OFF(status))
+                    {
+                        uint8_t note = minEvent->data[1];
+
+                        midiInputPort->DispatchNoteOff(note, 0, channel, time);
+
+                        postponeEvent(PluginPostEventNoteOff, channel, note, 0.0);
+                    }
+                    else if (MIDI_IS_STATUS_NOTE_ON(status))
+                    {
+                        uint8_t note = minEvent->data[1];
+                        uint8_t velo = minEvent->data[2];
+
+                        midiInputPort->DispatchNoteOn(note, velo, channel, time);
+
+                        postponeEvent(PluginPostEventNoteOn, channel, note, velo);
+                    }
+                    else if (MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status))
+                    {
+                        //uint8_t note     = minEvent->data[1];
+                        //uint8_t pressure = minEvent->data[2];
+
+                        // TODO, not in linuxsampler API?
+                    }
+                    else if (MIDI_IS_STATUS_AFTERTOUCH(status))
+                    {
+                        uint8_t pressure = minEvent->data[1];
+
+                        midiInputPort->DispatchControlChange(MIDI_STATUS_AFTERTOUCH, pressure, channel, time);
+                    }
+                    else if (MIDI_IS_STATUS_PITCH_WHEEL_CONTROL(status))
+                    {
+                        uint8_t lsb = minEvent->data[1];
+                        uint8_t msb = minEvent->data[2];
+
+                        midiInputPort->DispatchPitchbend(((msb << 7) | lsb) - 8192, channel, time);
+                    }
+                    else
+                        continue;
+
+                    midiEventCount += 1;
                 }
-                else if (MIDI_IS_STATUS_AFTERTOUCH(status))
-                {
-                    uint8_t pressure = minEvent->data[1];
+            } // End of MIDI Input (System)
 
-                    midiInputPort->DispatchControlChange(MIDI_STATUS_AFTERTOUCH, pressure, channel, time);
-                }
-                else if (MIDI_IS_STATUS_PITCH_WHEEL_CONTROL(status))
-                {
-                    uint8_t lsb = minEvent->data[1];
-                    uint8_t msb = minEvent->data[2];
-
-                    midiInputPort->DispatchPitchbend(((msb << 7) | lsb) - 8192, channel, time);
-                }
-                else
-                    continue;
-
-                midiEventCount += 1;
-            }
-        } // End of MIDI Input (System)
+        } // End of MIDI Input
 
         CARLA_PROCESS_CONTINUE_CHECK;
 
@@ -448,8 +466,8 @@ public:
                 // Output VU
                 for (k=0; i < 2 && k < frames; k++)
                 {
-                    if (abs(outBuffer[i][k]) > aouts_peak_tmp[i])
-                        aouts_peak_tmp[i] = abs(outBuffer[i][k]);
+                    if (abs(outBuffer[i][k]) > aOutsPeak[i])
+                        aOutsPeak[i] = abs(outBuffer[i][k]);
                 }
             }
         }
@@ -459,8 +477,8 @@ public:
             for (i=0; i < aOut.count; i++)
                 memset(outBuffer[i], 0.0f, sizeof(float)*frames);
 
-            aouts_peak_tmp[0] = 0.0;
-            aouts_peak_tmp[1] = 0.0;
+            aOutsPeak[0] = 0.0;
+            aOutsPeak[1] = 0.0;
 
         } // End of Post-processing
 
@@ -469,8 +487,8 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Peak Values
 
-        x_engine->setOutputPeak(m_id, 0, aouts_peak_tmp[0]);
-        x_engine->setOutputPeak(m_id, 1, aouts_peak_tmp[1]);
+        x_engine->setOutputPeak(m_id, 0, aOutsPeak[0]);
+        x_engine->setOutputPeak(m_id, 1, aOutsPeak[1]);
 
         m_activeBefore = m_active;
     }

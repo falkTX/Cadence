@@ -98,7 +98,7 @@ public:
     // -------------------------------------------------------------------
     // Information (count)
 
-    uint32_t parameterScalePointCount(uint32_t parameterId)
+    uint32_t parameterScalePointCount(const uint32_t parameterId)
     {
         Q_ASSERT(parameterId < param.count);
 
@@ -116,13 +116,14 @@ public:
     // -------------------------------------------------------------------
     // Information (per-plugin data)
 
-    double getParameterValue(uint32_t parameterId)
+    double getParameterValue(const uint32_t parameterId)
     {
         Q_ASSERT(parameterId < param.count);
-        return param_buffers[parameterId];
+
+        return paramBuffers[parameterId];
     }
 
-    double getParameterScalePointValue(uint32_t parameterId, uint32_t scalePointId)
+    double getParameterScalePointValue(const uint32_t parameterId, const uint32_t scalePointId)
     {
         Q_ASSERT(parameterId < param.count);
         Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
@@ -160,7 +161,10 @@ public:
 
     void getLabel(char* const strBuf)
     {
-        strncpy(strBuf, m_label, STR_MAX);
+        if (m_label)
+            strncpy(strBuf, m_label, STR_MAX);
+        else
+            CarlaPlugin::getLabel(strBuf);
     }
 
     void getMaker(char* const strBuf)
@@ -178,7 +182,7 @@ public:
         getLabel(strBuf);
     }
 
-    void getParameterName(uint32_t parameterId, char* const strBuf)
+    void getParameterName(const uint32_t parameterId, char* const strBuf)
     {
         Q_ASSERT(parameterId < param.count);
 
@@ -227,12 +231,12 @@ public:
             strncpy(strBuf, "Voice Count", STR_MAX);
             break;
         default:
-            *strBuf = 0;
+            CarlaPlugin::getParameterName(parameterId, strBuf);
             break;
         }
     }
 
-    void getParameterUnit(uint32_t parameterId, char* const strBuf)
+    void getParameterUnit(const uint32_t parameterId, char* const strBuf)
     {
         Q_ASSERT(parameterId < param.count);
 
@@ -245,12 +249,12 @@ public:
             strncpy(strBuf, "ms", STR_MAX);
             break;
         default:
-            *strBuf = 0;
+            CarlaPlugin::getParameterUnit(parameterId, strBuf);
             break;
         }
     }
 
-    void getParameterScalePointLabel(uint32_t parameterId, uint32_t scalePointId, char* const strBuf)
+    void getParameterScalePointLabel(const uint32_t parameterId, const uint32_t scalePointId, char* const strBuf)
     {
         Q_ASSERT(parameterId < param.count);
         Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
@@ -285,16 +289,16 @@ public:
             }
         }
 
-        *strBuf = 0;
+        CarlaPlugin::getParameterScalePointLabel(parameterId, scalePointId, strBuf);
     }
 
     // -------------------------------------------------------------------
     // Set data (plugin-specific stuff)
 
-    void setParameterValue(uint32_t parameterId, double value, bool sendGui, bool sendOsc, bool sendCallback)
+    void setParameterValue(const uint32_t parameterId, double value, const bool sendGui, const bool sendOsc, const bool sendCallback)
     {
         Q_ASSERT(parameterId < param.count);
-        param_buffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
+        paramBuffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
 
         switch (parameterId)
         {
@@ -307,7 +311,7 @@ public:
         case FluidSynthReverbDamp:
         case FluidSynthReverbLevel:
         case FluidSynthReverbWidth:
-            fluid_synth_set_reverb(f_synth, param_buffers[FluidSynthReverbRoomSize], param_buffers[FluidSynthReverbDamp], param_buffers[FluidSynthReverbWidth], param_buffers[FluidSynthReverbLevel]);
+            fluid_synth_set_reverb(f_synth, paramBuffers[FluidSynthReverbRoomSize], paramBuffers[FluidSynthReverbDamp], paramBuffers[FluidSynthReverbWidth], paramBuffers[FluidSynthReverbLevel]);
             break;
 
         case FluidSynthChorusOnOff:
@@ -325,7 +329,7 @@ public:
         case FluidSynthChorusType:
         {
             const ScopedDisabler m(this, ! x_engine->isOffline());
-            fluid_synth_set_chorus(f_synth, rint(param_buffers[FluidSynthChorusNr]), param_buffers[FluidSynthChorusLevel], param_buffers[FluidSynthChorusSpeedHz], param_buffers[FluidSynthChorusDepthMs], rint(param_buffers[FluidSynthChorusType]));
+            fluid_synth_set_chorus(f_synth, rint(paramBuffers[FluidSynthChorusNr]), paramBuffers[FluidSynthChorusLevel], paramBuffers[FluidSynthChorusSpeedHz], paramBuffers[FluidSynthChorusDepthMs], rint(paramBuffers[FluidSynthChorusType]));
             break;
         }
 
@@ -351,9 +355,14 @@ public:
         CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
     }
 
-    void setMidiProgram(int32_t index, bool sendGui, bool sendOsc, bool sendCallback, bool block)
+    void setMidiProgram(int32_t index, const bool sendGui, const bool sendOsc, const bool sendCallback, const bool block)
     {
-        Q_ASSERT(index < (int32_t)midiprog.count);
+        Q_ASSERT(index >= -1 && index < (int32_t)midiprog.count);
+
+        if (index < -1)
+            index = -1;
+        else if (index > (int32_t)midiprog.count)
+            return;
 
         if (m_ctrlInChannel < 0 || m_ctrlInChannel > 15)
             return;
@@ -405,8 +414,8 @@ public:
         param.data    = new ParameterData[params];
         param.ranges  = new ParameterRanges[params];
 
-        //const int portNameSize = CarlaEngine::maxPortNameSize() - 1;
-        char portName[STR_MAX];
+        const int portNameSize = CarlaEngine::maxPortNameSize() - 1;
+        char portName[portNameSize];
 
         // ---------------------------------------
         // Audio Outputs
@@ -489,11 +498,11 @@ public:
         param.data[j].midiCC = -1;
         param.ranges[j].min = 0.0;
         param.ranges[j].max = 1.0;
-        param.ranges[j].def = 0.0;
+        param.ranges[j].def = 0.0; // off
         param.ranges[j].step = 1.0;
         param.ranges[j].stepSmall = 1.0;
         param.ranges[j].stepLarge = 1.0;
-        param_buffers[j] = param.ranges[j].def;
+        paramBuffers[j] = param.ranges[j].def;
 
         // ----------------------
         j = FluidSynthReverbRoomSize;
@@ -509,7 +518,7 @@ public:
         param.ranges[j].step = 0.01;
         param.ranges[j].stepSmall = 0.0001;
         param.ranges[j].stepLarge = 0.1;
-        param_buffers[j] = param.ranges[j].def;
+        paramBuffers[j] = param.ranges[j].def;
 
         // ----------------------
         j = FluidSynthReverbDamp;
@@ -525,7 +534,7 @@ public:
         param.ranges[j].step = 0.01;
         param.ranges[j].stepSmall = 0.0001;
         param.ranges[j].stepLarge = 0.1;
-        param_buffers[j] = param.ranges[j].def;
+        paramBuffers[j] = param.ranges[j].def;
 
         // ----------------------
         j = FluidSynthReverbLevel;
@@ -541,7 +550,7 @@ public:
         param.ranges[j].step = 0.01;
         param.ranges[j].stepSmall = 0.0001;
         param.ranges[j].stepLarge = 0.1;
-        param_buffers[j] = param.ranges[j].def;
+        paramBuffers[j] = param.ranges[j].def;
 
         // ----------------------
         j = FluidSynthReverbWidth;
@@ -557,7 +566,7 @@ public:
         param.ranges[j].step = 0.01;
         param.ranges[j].stepSmall = 0.0001;
         param.ranges[j].stepLarge = 0.1;
-        param_buffers[j] = param.ranges[j].def;
+        paramBuffers[j] = param.ranges[j].def;
 
         // ----------------------
         j = FluidSynthChorusOnOff;
@@ -569,11 +578,11 @@ public:
         param.data[j].midiCC = -1;
         param.ranges[j].min = 0.0;
         param.ranges[j].max = 1.0;
-        param.ranges[j].def = 0.0;
+        param.ranges[j].def = 0.0; // off
         param.ranges[j].step = 1.0;
         param.ranges[j].stepSmall = 1.0;
         param.ranges[j].stepLarge = 1.0;
-        param_buffers[j] = param.ranges[j].def;
+        paramBuffers[j] = param.ranges[j].def;
 
         // ----------------------
         j = FluidSynthChorusNr;
@@ -589,7 +598,7 @@ public:
         param.ranges[j].step = 1.0;
         param.ranges[j].stepSmall = 1.0;
         param.ranges[j].stepLarge = 10.0;
-        param_buffers[j] = param.ranges[j].def;
+        paramBuffers[j] = param.ranges[j].def;
 
         // ----------------------
         j = FluidSynthChorusLevel;
@@ -605,7 +614,7 @@ public:
         param.ranges[j].step = 0.01;
         param.ranges[j].stepSmall = 0.0001;
         param.ranges[j].stepLarge = 0.1;
-        param_buffers[j] = param.ranges[j].def;
+        paramBuffers[j] = param.ranges[j].def;
 
         // ----------------------
         j = FluidSynthChorusSpeedHz;
@@ -621,7 +630,7 @@ public:
         param.ranges[j].step = 0.01;
         param.ranges[j].stepSmall = 0.0001;
         param.ranges[j].stepLarge = 0.1;
-        param_buffers[j] = param.ranges[j].def;
+        paramBuffers[j] = param.ranges[j].def;
 
         // ----------------------
         j = FluidSynthChorusDepthMs;
@@ -637,7 +646,7 @@ public:
         param.ranges[j].step = 0.01;
         param.ranges[j].stepSmall = 0.0001;
         param.ranges[j].stepLarge = 0.1;
-        param_buffers[j] = param.ranges[j].def;
+        paramBuffers[j] = param.ranges[j].def;
 
         // ----------------------
         j = FluidSynthChorusType;
@@ -653,7 +662,7 @@ public:
         param.ranges[j].step = 1;
         param.ranges[j].stepSmall = 1;
         param.ranges[j].stepLarge = 1;
-        param_buffers[j] = param.ranges[j].def;
+        paramBuffers[j] = param.ranges[j].def;
 
         // ----------------------
         j = FluidSynthPolyphony;
@@ -669,7 +678,7 @@ public:
         param.ranges[j].step = 1;
         param.ranges[j].stepSmall = 1;
         param.ranges[j].stepLarge = 10;
-        param_buffers[j] = param.ranges[j].def;
+        paramBuffers[j] = param.ranges[j].def;
 
         // ----------------------
         j = FluidSynthInterpolation;
@@ -685,7 +694,7 @@ public:
         param.ranges[j].step = 1;
         param.ranges[j].stepSmall = 1;
         param.ranges[j].stepLarge = 1;
-        param_buffers[j] = param.ranges[j].def;
+        paramBuffers[j] = param.ranges[j].def;
 
         // ----------------------
         j = FluidSynthVoiceCount;
@@ -701,7 +710,7 @@ public:
         param.ranges[j].step = 1;
         param.ranges[j].stepSmall = 1;
         param.ranges[j].stepLarge = 1;
-        param_buffers[j] = param.ranges[j].def;
+        paramBuffers[j] = param.ranges[j].def;
 
         // ---------------------------------------
 
@@ -722,7 +731,7 @@ public:
         qDebug("FluidSynthPlugin::reload() - end");
     }
 
-    void reloadPrograms(bool init)
+    void reloadPrograms(const bool init)
     {
         qDebug("FluidSynthPlugin::reloadPrograms(%s)", bool2str(init));
 
@@ -741,6 +750,7 @@ public:
         // Query new programs
         fluid_sfont_t* f_sfont;
         fluid_preset_t f_preset;
+        bool hasDrums = false;
 
         f_sfont = fluid_synth_get_sfont_by_id(f_synth, f_id);
 
@@ -749,8 +759,11 @@ public:
         while (f_sfont->iteration_next(f_sfont, &f_preset))
             midiprog.count += 1;
 
+        // soundfonts must always have at least 1 midi-program
+        Q_ASSERT(midiprog.count > 0);
+
         if (midiprog.count > 0)
-            midiprog.data = new midi_program_t [midiprog.count];
+            midiprog.data = new midi_program_t[midiprog.count];
 
         // Update data
         uint32_t i = 0;
@@ -761,6 +774,10 @@ public:
             midiprog.data[i].bank    = f_preset.get_banknum(&f_preset);
             midiprog.data[i].program = f_preset.get_num(&f_preset);
             midiprog.data[i].name    = strdup(f_preset.get_name(&f_preset));
+
+            if (midiprog.data[i].bank == 128)
+                hasDrums = true;
+
             i++;
         }
 
@@ -777,30 +794,38 @@ public:
         }
 #endif
 
-        // FIXME
-        x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
-
         if (init)
         {
             fluid_synth_program_reset(f_synth);
 
-            if (midiprog.count > 0)
+            for (i=0; i < 16 && i != 9; i++)
             {
-                for (i=0; i < 16 && i != 9; i++)
-                {
-                    fluid_synth_program_select(f_synth, i, f_id, midiprog.data[0].bank, midiprog.data[0].program);
+                fluid_synth_program_select(f_synth, i, f_id, midiprog.data[0].bank, midiprog.data[0].program);
 #ifdef FLUIDSYNTH_VERSION_NEW_API
-                    fluid_synth_set_channel_type(f_synth, i, CHANNEL_TYPE_MELODIC);
+                fluid_synth_set_channel_type(f_synth, i, CHANNEL_TYPE_MELODIC);
 #endif
-                }
+            }
 
+            if (hasDrums)
+            {
                 fluid_synth_program_select(f_synth, 9, f_id, 128, 0);
 #ifdef FLUIDSYNTH_VERSION_NEW_API
                 fluid_synth_set_channel_type(f_synth, 9, CHANNEL_TYPE_DRUM);
 #endif
-
-                setMidiProgram(0, false, false, false, true);
             }
+            else
+            {
+                fluid_synth_program_select(f_synth, 9, f_id, midiprog.data[0].bank, midiprog.data[0].program);
+#ifdef FLUIDSYNTH_VERSION_NEW_API
+                fluid_synth_set_channel_type(f_synth, 9, CHANNEL_TYPE_MELODIC);
+#endif
+            }
+
+            setMidiProgram(0, false, false, false, true);
+        }
+        else
+        {
+            x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
         }
     }
 
@@ -812,7 +837,7 @@ public:
         uint32_t i, k;
         uint32_t midiEventCount = 0;
 
-        double aouts_peak_tmp[2] = { 0.0 };
+        double aOutsPeak[2] = { 0.0 };
 
         CARLA_PROCESS_CONTINUE_CHECK;
 
@@ -877,12 +902,12 @@ public:
                             double left, right;
                             value = cinEvent->value/0.5 - 1.0;
 
-                            if (value < 0)
+                            if (value < 0.0)
                             {
                                 left  = -1.0;
                                 right = (value*2)+1.0;
                             }
-                            else if (value > 0)
+                            else if (value > 0.0)
                             {
                                 left  = (value*2)-1.0;
                                 right = 1.0;
@@ -1006,95 +1031,104 @@ public:
         CARLA_PROCESS_CONTINUE_CHECK;
 
         // --------------------------------------------------------------------------------------------------------
-        // MIDI Input (External)
-
-        if (m_ctrlInChannel >= 0 && m_ctrlInChannel < 16 && m_active && m_activeBefore)
-        {
-            engineMidiLock();
-
-            for (i=0; i < MAX_MIDI_EVENTS && midiEventCount < MAX_MIDI_EVENTS; i++)
-            {
-                if (extMidiNotes[i].channel < 0)
-                    break;
-
-                if (extMidiNotes[i].velo)
-                    fluid_synth_noteon(f_synth, m_ctrlInChannel, extMidiNotes[i].note, extMidiNotes[i].velo);
-                else
-                    fluid_synth_noteoff(f_synth, m_ctrlInChannel, extMidiNotes[i].note);
-
-                extMidiNotes[i].channel = -1;
-                midiEventCount += 1;
-            }
-
-            engineMidiUnlock();
-
-        } // End of MIDI Input (External)
-
-        CARLA_PROCESS_CONTINUE_CHECK;
-
-        // --------------------------------------------------------------------------------------------------------
-        // MIDI Input (System)
+        // MIDI Input
 
         if (m_active && m_activeBefore)
         {
-            const CarlaEngineMidiEvent* minEvent;
-            uint32_t time, nEvents = midi.portMin->getEventCount();
+            // ----------------------------------------------------------------------------------------------------
+            // MIDI Input (External)
 
-            for (i=0; i < nEvents && midiEventCount < MAX_MIDI_EVENTS; i++)
             {
-                minEvent = midi.portMin->getEvent(i);
+                engineMidiLock();
 
-                if (! minEvent)
-                    continue;
-
-                time = minEvent->time - framesOffset;
-
-                if (time >= frames)
-                    continue;
-
-                uint8_t status  = minEvent->data[0];
-                uint8_t channel = status & 0x0F;
-
-                // Fix bad note-off
-                if (MIDI_IS_STATUS_NOTE_ON(status) && minEvent->data[2] == 0)
-                    status -= 0x10;
-
-                if (MIDI_IS_STATUS_NOTE_OFF(status))
+                for (i=0; i < MAX_MIDI_EVENTS && midiEventCount < MAX_MIDI_EVENTS; i++)
                 {
-                    uint8_t note = minEvent->data[1];
+                    if (extMidiNotes[i].channel < 0)
+                        break;
 
-                    fluid_synth_noteoff(f_synth, channel, note);
+                    if (extMidiNotes[i].velo)
+                        fluid_synth_noteon(f_synth, m_ctrlInChannel, extMidiNotes[i].note, extMidiNotes[i].velo);
+                    else
+                        fluid_synth_noteoff(f_synth, m_ctrlInChannel, extMidiNotes[i].note);
 
-                    postponeEvent(PluginPostEventNoteOff, channel, note, 0.0);
+                    extMidiNotes[i].channel = -1; // mark as invalid
+                    midiEventCount += 1;
                 }
-                else if (MIDI_IS_STATUS_NOTE_ON(status))
+
+                engineMidiUnlock();
+
+            } // End of MIDI Input (External)
+
+            CARLA_PROCESS_CONTINUE_CHECK;
+
+            // ----------------------------------------------------------------------------------------------------
+            // MIDI Input (System)
+
+            {
+                const CarlaEngineMidiEvent* minEvent;
+                uint32_t time, nEvents = midi.portMin->getEventCount();
+
+                for (i=0; i < nEvents && midiEventCount < MAX_MIDI_EVENTS; i++)
                 {
-                    uint8_t note = minEvent->data[1];
-                    uint8_t velo = minEvent->data[2];
+                    minEvent = midi.portMin->getEvent(i);
 
-                    fluid_synth_noteon(f_synth, channel, note, velo);
+                    if (! minEvent)
+                        continue;
 
-                    postponeEvent(PluginPostEventNoteOn, channel, note, velo);
+                    time = minEvent->time - framesOffset;
+
+                    if (time >= frames)
+                        continue;
+
+                    uint8_t status  = minEvent->data[0];
+                    uint8_t channel = status & 0x0F;
+
+                    // Fix bad note-off
+                    if (MIDI_IS_STATUS_NOTE_ON(status) && minEvent->data[2] == 0)
+                        status -= 0x10;
+
+                    if (MIDI_IS_STATUS_NOTE_OFF(status))
+                    {
+                        uint8_t note = minEvent->data[1];
+
+                        fluid_synth_noteoff(f_synth, channel, note);
+
+                        postponeEvent(PluginPostEventNoteOff, channel, note, 0.0);
+                    }
+                    else if (MIDI_IS_STATUS_NOTE_ON(status))
+                    {
+                        uint8_t note = minEvent->data[1];
+                        uint8_t velo = minEvent->data[2];
+
+                        fluid_synth_noteon(f_synth, channel, note, velo);
+
+                        postponeEvent(PluginPostEventNoteOn, channel, note, velo);
+                    }
+                    else if (MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status))
+                    {
+                        // TODO, not in fluidsynth API?
+                    }
+                    else if (MIDI_IS_STATUS_AFTERTOUCH(status))
+                    {
+                        uint8_t pressure = minEvent->data[1];
+
+                        fluid_synth_channel_pressure(f_synth, channel, pressure);
+                    }
+                    else if (MIDI_IS_STATUS_PITCH_WHEEL_CONTROL(status))
+                    {
+                        uint8_t lsb = minEvent->data[1];
+                        uint8_t msb = minEvent->data[2];
+
+                        fluid_synth_pitch_bend(f_synth, channel, (msb << 7) | lsb);
+                    }
+                    else
+                        continue;
+
+                    midiEventCount += 1;
                 }
-                else if (MIDI_IS_STATUS_AFTERTOUCH(status))
-                {
-                    uint8_t pressure = minEvent->data[1];
+            } // End of MIDI Input (System)
 
-                    fluid_synth_channel_pressure(f_synth, channel, pressure);
-                }
-                else if (MIDI_IS_STATUS_PITCH_WHEEL_CONTROL(status))
-                {
-                    uint8_t lsb = minEvent->data[1];
-                    uint8_t msb = minEvent->data[2];
-
-                    fluid_synth_pitch_bend(f_synth, channel, (msb << 7) | lsb);
-                }
-                else
-                    continue;
-
-                midiEventCount += 1;
-            }
-        } // End of MIDI Input (System)
+        } // End of MIDI Input
 
         CARLA_PROCESS_CONTINUE_CHECK;
 
@@ -1169,8 +1203,8 @@ public:
                 // Output VU
                 for (k=0; i < 2 && k < frames; k++)
                 {
-                    if (abs(outBuffer[i][k]) > aouts_peak_tmp[i])
-                        aouts_peak_tmp[i] = abs(outBuffer[i][k]);
+                    if (abs(outBuffer[i][k]) > aOutsPeak[i])
+                        aOutsPeak[i] = abs(outBuffer[i][k]);
                 }
             }
         }
@@ -1180,8 +1214,8 @@ public:
             for (i=0; i < aOut.count; i++)
                 memset(outBuffer[i], 0.0f, sizeof(float)*frames);
 
-            aouts_peak_tmp[0] = 0.0;
-            aouts_peak_tmp[1] = 0.0;
+            aOutsPeak[0] = 0.0;
+            aOutsPeak[1] = 0.0;
 
         } // End of Post-processing
 
@@ -1193,12 +1227,12 @@ public:
         if (m_active)
         {
             k = FluidSynthVoiceCount;
-            param_buffers[k] = fluid_synth_get_active_voice_count(f_synth);
-            fixParameterValue(param_buffers[k], param.ranges[k]);
+            paramBuffers[k] = fluid_synth_get_active_voice_count(f_synth);
+            fixParameterValue(paramBuffers[k], param.ranges[k]);
 
             if (param.data[k].midiCC > 0)
             {
-                double value = (param_buffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
+                double value = (paramBuffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
                 param.portCout->writeEvent(CarlaEngineEventControlChange, framesOffset, param.data[k].midiChannel, param.data[k].midiCC, value);
             }
         } // End of Control Output
@@ -1208,8 +1242,8 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Peak Values
 
-        x_engine->setOutputPeak(m_id, 0, aouts_peak_tmp[0]);
-        x_engine->setOutputPeak(m_id, 1, aouts_peak_tmp[1]);
+        x_engine->setOutputPeak(m_id, 0, aOutsPeak[0]);
+        x_engine->setOutputPeak(m_id, 1, aOutsPeak[1]);
 
         m_activeBefore = m_active;
     }
@@ -1277,7 +1311,8 @@ private:
     fluid_synth_t* f_synth;
     int f_id;
 
-    double param_buffers[FluidSynthParametersMax];
+    double paramBuffers[FluidSynthParametersMax];
+
     const char* m_label;
 };
 #endif // WANT_FLUIDSYNTH
