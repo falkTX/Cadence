@@ -102,40 +102,40 @@ def startJack():
 
 def printLADSPA_PATH():
     EXTRA_LADSPA_DIRS = GlobalSettings.value("AudioPlugins/EXTRA_LADSPA_PATH", "", type=str).split(":")
-    LADSPA_PATH_str = DEFAULT_LADSPA_PATH
+    LADSPA_PATH_str   = ":".join(DEFAULT_LADSPA_PATH)
 
     for i in range(len(EXTRA_LADSPA_DIRS)):
-        if (EXTRA_LADSPA_DIRS[i]):
+        if EXTRA_LADSPA_DIRS[i]:
             LADSPA_PATH_str += ":"+EXTRA_LADSPA_DIRS[i]
 
     print(LADSPA_PATH_str)
 
 def printDSSI_PATH():
     EXTRA_DSSI_DIRS = GlobalSettings.value("AudioPlugins/EXTRA_DSSI_PATH", "", type=str).split(":")
-    DSSI_PATH_str = DEFAULT_DSSI_PATH
+    DSSI_PATH_str   = ":".join(DEFAULT_DSSI_PATH)
 
     for i in range(len(EXTRA_DSSI_DIRS)):
-        if (EXTRA_DSSI_DIRS[i]):
+        if EXTRA_DSSI_DIRS[i]:
             DSSI_PATH_str += ":"+EXTRA_DSSI_DIRS[i]
 
     print(DSSI_PATH_str)
 
 def printLV2_PATH():
     EXTRA_LV2_DIRS = GlobalSettings.value("AudioPlugins/EXTRA_LV2_PATH", "", type=str).split(":")
-    LV2_PATH_str = DEFAULT_LV2_PATH
+    LV2_PATH_str   = ":".join(DEFAULT_LV2_PATH)
 
     for i in range(len(EXTRA_LV2_DIRS)):
-        if (EXTRA_LV2_DIRS[i]):
+        if EXTRA_LV2_DIRS[i]:
             LV2_PATH_str += ":"+EXTRA_LV2_DIRS[i]
 
     print(LV2_PATH_str)
 
 def printVST_PATH():
     EXTRA_VST_DIRS = GlobalSettings.value("AudioPlugins/EXTRA_VST_PATH", "", type=str).split(":")
-    VST_PATH_str = DEFAULT_VST_PATH
+    VST_PATH_str   = ":".join(DEFAULT_VST_PATH)
 
     for i in range(len(EXTRA_VST_DIRS)):
-      if (EXTRA_VST_DIRS[i]):
+      if EXTRA_VST_DIRS[i]:
         VST_PATH_str += ":"+EXTRA_VST_DIRS[i]
 
     print(VST_PATH_str)
