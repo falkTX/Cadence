@@ -16,7 +16,7 @@ import jacklib
 
 global doLoop, doRunNow
 doLoop   = True
-doRunNow = True
+doRunNow = False
 
 # --------------------------------------------------
 # Global JACK variables
@@ -62,7 +62,7 @@ def run_alsa_bridge():
       #system("env JACK_SAMPLE_RATE=%i JACK_PERIOD_SIZE=%i zita-j2a -j jack2alsa -d hw:Loopback,1,1 -r 44100 &" % (sample_rate, buffer_size))
 
     # Pause it for a bit, and connect to the system ports
-    sleep(1)
+    sleep(2)
     jacklib.connect(client, "alsa2jack:capture_1", "system:playback_1")
     jacklib.connect(client, "alsa2jack:capture_2", "system:playback_2")
     jacklib.connect(client, "system:capture_1", "jack2alsa:playback_1")
@@ -72,14 +72,13 @@ def run_alsa_bridge():
 if __name__ == '__main__':
 
     # Init JACK client
-    client = jacklib.client_open("jack-aloop-daemon", 0, None)
+    client = jacklib.client_open("cadence-aloop-daemon", 0, None)
 
     if not client:
         quit()
 
     jacklib.set_buffer_size_callback(client, buffer_size_callback, None)
     jacklib.on_shutdown(client, shutdown_callback, None)
-
     jacklib.activate(client)
 
     # Quit when requested
@@ -89,6 +88,9 @@ if __name__ == '__main__':
     # Get initial values
     sampleRate = jacklib.get_sample_rate(client)
     bufferSize = jacklib.get_buffer_size(client)
+
+    # Run first-time
+    run_alsa_bridge()
 
     # Keep running until told otherwise
     while doLoop:
