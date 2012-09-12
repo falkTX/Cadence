@@ -16,7 +16,7 @@ import jacklib
 
 global doLoop, doRunNow
 doLoop   = True
-doRunNow = False
+doRunNow = True
 
 # --------------------------------------------------
 # Global JACK variables
@@ -88,9 +88,6 @@ if __name__ == '__main__':
     # Get initial values
     sampleRate = jacklib.get_sample_rate(client)
     bufferSize = jacklib.get_buffer_size(client)
-
-    # Run first-time
-    run_alsa_bridge()
 
     # Keep running until told otherwise
     while doLoop:
