@@ -36,25 +36,25 @@ TargetEnvironment=Unity
 
 [JackMeter Shortcut Group]
 Name=JACK Meter
-Exec=cadence_jackmeter
+Exec=cadence-jackmeter
 TargetEnvironment=Unity
 
 [JackSettings Shortcut Group]
 Name=JACK Settings
-Exec=cadence_jacksettings
+Exec=cadence-jacksettings
 TargetEnvironment=Unity
 
 [Logs Shortcut Group]
 Name=Logs
-Exec=cadence_logs
+Exec=cadence-logs
 TargetEnvironment=Unity
 
 [Render Shortcut Group]
 Name=Render
-Exec=cadence_render
+Exec=cadence-render
 TargetEnvironment=Unity
 
 [XYController Shortcut Group]
 Name=XY-Controller
-Exec=cadence_xycontroller
+Exec=cadence-xycontroller
 TargetEnvironment=Unity
