@@ -44,7 +44,6 @@ CARLA_BACKEND_START_NAMESPACE
 
 // static max values
 const unsigned int MAX_EVENT_BUFFER = 8192; // 0x2000
-//const unsigned int MAX_EVENT_BUFFER = (sizeof(LV2_Atom_Event) + 4) * MAX_MIDI_EVENTS;
 
 /*!
  * @defgroup PluginHints Plugin Hints
@@ -123,19 +122,30 @@ const uint32_t CARLA_URI_MAP_ID_ATOM_INT            = 3;
 const uint32_t CARLA_URI_MAP_ID_ATOM_PATH           = 4;
 const uint32_t CARLA_URI_MAP_ID_ATOM_SEQUENCE       = 5;
 const uint32_t CARLA_URI_MAP_ID_ATOM_STRING         = 6;
-const uint32_t CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM  = 7;
-const uint32_t CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT = 8;
-const uint32_t CARLA_URI_MAP_ID_BUF_MAX_LENGTH      = 9;
-const uint32_t CARLA_URI_MAP_ID_BUF_MIN_LENGTH      = 10;
-const uint32_t CARLA_URI_MAP_ID_BUF_SEQUENCE_SIZE   = 11;
-const uint32_t CARLA_URI_MAP_ID_LOG_ERROR           = 12;
-const uint32_t CARLA_URI_MAP_ID_LOG_NOTE            = 13;
-const uint32_t CARLA_URI_MAP_ID_LOG_TRACE           = 14;
-const uint32_t CARLA_URI_MAP_ID_LOG_WARNING         = 15;
-const uint32_t CARLA_URI_MAP_ID_MIDI_EVENT          = 16;
-const uint32_t CARLA_URI_MAP_ID_PARAM_SAMPLE_RATE   = 17;
-const uint32_t CARLA_URI_MAP_ID_COUNT               = 18;
+const uint32_t CARLA_URI_MAP_ID_ATOM_WORKER         = 7;
+const uint32_t CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM  = 8;
+const uint32_t CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT = 9;
+const uint32_t CARLA_URI_MAP_ID_BUF_MAX_LENGTH      = 10;
+const uint32_t CARLA_URI_MAP_ID_BUF_MIN_LENGTH      = 11;
+const uint32_t CARLA_URI_MAP_ID_BUF_SEQUENCE_SIZE   = 12;
+const uint32_t CARLA_URI_MAP_ID_LOG_ERROR           = 13;
+const uint32_t CARLA_URI_MAP_ID_LOG_NOTE            = 14;
+const uint32_t CARLA_URI_MAP_ID_LOG_TRACE           = 15;
+const uint32_t CARLA_URI_MAP_ID_LOG_WARNING         = 16;
+const uint32_t CARLA_URI_MAP_ID_MIDI_EVENT          = 17;
+const uint32_t CARLA_URI_MAP_ID_PARAM_SAMPLE_RATE   = 18;
+const uint32_t CARLA_URI_MAP_ID_COUNT               = 19;
 /**@}*/
+
+struct LV2_Atom_Worker_Body {
+    uint32_t    size;
+    const void* data;
+};
+
+struct LV2_Atom_Worker {
+    LV2_Atom atom;
+    LV2_Atom_Worker_Body body;
+};
 
 struct Lv2EventData {
     uint32_t type;
@@ -189,6 +199,8 @@ const char* lv2bridge2str(const LV2_Property type)
 #ifndef BUILD_BRIDGE
     case LV2_UI_GTK2:
         return carlaOptions.bridge_lv2gtk2;
+    case LV2_UI_GTK3:
+        return carlaOptions.bridge_lv2gtk3;
     case LV2_UI_QT4:
         return carlaOptions.bridge_lv2qt4;
     case LV2_UI_COCOA:
@@ -270,8 +282,8 @@ public:
 
     void put(const uint32_t portIndex, const LV2_Atom* const atom, const bool lock = true)
     {
-        qDebug("Lv2AtomQueue::put(%i, %p, %s)", portIndex, atom, bool2str(lock));
-        Q_ASSERT(atom->size > 0);
+        qDebug("Lv2AtomQueue::put(%i, size:%i, type:%i, %s)", portIndex, atom->size, atom->type, bool2str(lock));
+        Q_ASSERT(atom && atom->size > 0);
         Q_ASSERT(indexPool + atom->size < MAX_POOL_SIZE); //  overflow
 
         if (full || atom->size == 0 || indexPool + atom->size >= MAX_POOL_SIZE)
@@ -288,7 +300,7 @@ public:
                 data[i].size       = atom->size;
                 data[i].type       = atom->type;
                 data[i].poolOffset = indexPool;
-                memcpy(dataPool + indexPool, (const unsigned char*)LV2_ATOM_BODY_CONST(&atom), atom->size);
+                memcpy(dataPool + indexPool, (const unsigned char*)LV2_ATOM_BODY_CONST(atom), atom->size);
                 empty = false;
                 full  = (i == MAX_SIZE-1);
                 indexPool += atom->size;
@@ -369,8 +381,7 @@ private:
         unsigned char data[MAX_POOL_SIZE];
     } retAtom;
 
-    unsigned short index;
-    uint32_t indexPool;
+    unsigned short index, indexPool;
     bool empty, full;
 
     QMutex mutex;
@@ -1195,7 +1206,7 @@ public:
         if (haveUI)
         {
             // Update event ports
-            if (! atomQueueIn.isEmpty())
+            if (! atomQueueOut.isEmpty())
             {
                 static Lv2AtomQueue queue;
                 queue.copyDataFrom(&atomQueueOut);
@@ -1205,7 +1216,6 @@ public:
 
                 while (queue.get(&portIndex, &atom, false))
                 {
-                    qDebug("idle Got atom, size: %i, content: %s", atom->size, (char*)LV2_ATOM_BODY(atom));
 #ifndef BUILD_BRIDGE
                     if (gui.type == GUI_EXTERNAL_OSC)
                     {
@@ -2447,7 +2457,12 @@ public:
 
                         while (atomQueueIn.get(&portIndex, &atom, false))
                         {
-                            qDebug("proc, in, send, Got atom, size: %i, content: %s", atom->size, (unsigned char*)LV2_ATOM_BODY(atom));
+                            if (atom->type == CARLA_URI_MAP_ID_ATOM_WORKER)
+                            {
+                                const LV2_Atom_Worker* const atomWorker = (const LV2_Atom_Worker*)atom;
+                                ext.worker->work_response(handle, atomWorker->body.size, atomWorker->body.data);
+                                continue;
+                            }
 
                             LV2_Atom_Event* const aev = getLv2AtomEvent(evIn.data[i].atom, evInAtomOffsets[i]);
                             aev->time.frames = framesOffset;
@@ -2620,16 +2635,10 @@ public:
             descriptor->run(handle, frames);
             if (h2) descriptor->run(h2, frames);
 
-            if (ext.worker)
+            if (ext.worker && ext.worker->end_run)
             {
-                // TODO
-                //ext.worker->work_response();
-
-                if (ext.worker->end_run)
-                {
-                    ext.worker->end_run(handle);
-                    if (h2) ext.worker->end_run(h2);
-                }
+                ext.worker->end_run(handle);
+                if (h2) ext.worker->end_run(h2);
             }
         }
         else
@@ -2765,15 +2774,18 @@ public:
 
                 if (evOut.data[i].type & CARLA_EVENT_DATA_ATOM)
                 {
-                    uint32_t size   = evOut.data[i].atom->atom.size - sizeof(LV2_Atom_Sequence_Body);
-                    uint32_t offset = 0;
+                    int32_t size   = evOut.data[i].atom->atom.size - sizeof(LV2_Atom_Sequence_Body);
+                    int32_t offset = 0;
 
                     while (offset < size)
                     {
+                        qDebug("output event??, offset:%i, size:%i", offset, size);
                         const LV2_Atom_Event* const aev = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evOut.data[i].atom) + offset);
 
                         if ((! aev) || aev->body.type == CARLA_URI_MAP_ID_NULL)
                             break;
+
+                        qDebug("output event ------------------------------ YES!");
 
                         if (aev->body.type == CARLA_URI_MAP_ID_MIDI_EVENT)
                         {
@@ -2847,6 +2859,15 @@ public:
 
     // -------------------------------------------------------------------
     // Post-poned events
+
+    void postEventHandleCustom(const int32_t size, const int32_t, const double, const void* const data)
+    {
+        qDebug("Lv2Plugin::postEventHandleCustom(%i, %p)", size, data);
+        Q_ASSERT(ext.worker && ext.worker->work);
+
+        if (ext.worker && ext.worker->work)
+            ext.worker->work(handle, carla_lv2_worker_respond, this, size, data);
+    }
 
     void uiParameterChange(const uint32_t index, const double value)
     {
@@ -3094,7 +3115,7 @@ public:
         Q_ASSERT(atom);
 
         // FIXME - is this correct?
-        //atomQueueIn.put(portIndex, atom->type, atom);
+        //atomQueueIn.put(portIndex, atom);
     }
 
     void handleTransferEvent(const uint32_t portIndex, const LV2_Atom* const atom)
@@ -3261,19 +3282,33 @@ public:
         return nullptr;
     }
 
-    LV2_Worker_Status handleWorkerSchedule(const uint32_t /*size*/, const void* const /*data*/)
+    LV2_Worker_Status handleWorkerSchedule(const uint32_t size, const void* const data)
     {
-        // TODO
+        if (! ext.worker)
+        {
+            qWarning("Lv2Plugin::handleWorkerSchedule(%i, %p) - plugin has no worker", size, data);
+            return LV2_WORKER_ERR_UNKNOWN;
+        }
+
+        if (x_engine->isOffline())
+            ext.worker->work(handle, carla_lv2_worker_respond, this, size, data);
+        else
+            postponeEvent(PluginPostEventCustom, size, 0, 0.0, data);
+
         return LV2_WORKER_SUCCESS;
     }
 
-    LV2_Worker_Status handleWorkerRespond(const uint32_t /*size*/, const void* const /*data*/)
+    LV2_Worker_Status handleWorkerRespond(const uint32_t size, const void* const data)
     {
-        // TODO
-        if (ext.worker)
-            return LV2_WORKER_SUCCESS;
+        LV2_Atom_Worker workerAtom;
+        workerAtom.atom.type = CARLA_URI_MAP_ID_ATOM_WORKER;
+        workerAtom.atom.size = sizeof(LV2_Atom_Worker_Body);
+        workerAtom.body.size = size;
+        workerAtom.body.data = data;
 
-        return LV2_WORKER_ERR_UNKNOWN;
+        atomQueueIn.put(0, (const LV2_Atom*)&workerAtom);
+
+        return LV2_WORKER_SUCCESS;
     }
 
     void handleExternalUiClosed()
@@ -3337,9 +3372,6 @@ public:
 
             const LV2_Atom* const atom = (const LV2_Atom*)buffer;
             handleTransferAtom(rindex, atom);
-
-            //if (ui.handle && ui.descriptor && ui.descriptor->port_event)
-            //    ui.descriptor->port_event(ui.handle, 0, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM, atom);
         }
         else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT)
         {
@@ -3347,9 +3379,6 @@ public:
 
             const LV2_Atom* const atom = (const LV2_Atom*)buffer;
             handleTransferEvent(rindex, atom);
-
-            //if (ui.handle && ui.descriptor && ui.descriptor->port_event)
-            //    ui.descriptor->port_event(ui.handle, 0, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
         }
     }
 
@@ -3464,8 +3493,6 @@ public:
 
     void updateUi()
     {
-        qDebug("Lv2Plugin::updateUi()");
-
         ext.uiprograms = nullptr;
 
         if (ui.handle && ui.descriptor)
@@ -3484,19 +3511,12 @@ public:
 
             if (ui.descriptor->port_event)
             {
-                // get&store custom data to be sent to the UI
-                //prepareForSave();
-
-                // update state (custom data)
-                //for (size_t i=0; i < custom.size(); i++)
-                //    uiTransferEvent(&custom[i]);
-
                 // update control ports
                 float valueF;
                 for (uint32_t i=0; i < param.count; i++)
                 {
                     valueF = getParameterValue(i);
-                    ui.descriptor->port_event(ui.handle, param.data[i].rindex, sizeof(float), 0, &valueF);
+                    ui.descriptor->port_event(ui.handle, param.data[i].rindex, sizeof(float), CARLA_URI_MAP_ID_NULL, &valueF);
                 }
             }
         }
@@ -3752,6 +3772,8 @@ public:
             return LV2_ATOM__Sequence;
         if (urid == CARLA_URI_MAP_ID_ATOM_STRING)
             return LV2_ATOM__String;
+        if (urid == CARLA_URI_MAP_ID_ATOM_WORKER)
+            return nullptr; // not a valid URID, only used internally
         if (urid == CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM)
             return LV2_ATOM__atomTransfer;
         if (urid == CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT)
@@ -3839,7 +3861,7 @@ public:
         if (! handle)
             return 1;
 
-        Lv2Plugin* const plugin  = (Lv2Plugin*)handle;
+        Lv2Plugin* const plugin = (Lv2Plugin*)handle;
         return plugin->handleUiResize(width, height);
     }
 
@@ -4153,8 +4175,6 @@ public:
         // ---------------------------------------------------------------
         // gui stuff
 
-        qDebug("LV2 UI ----------------------------------------------------- 001");
-
         if (rdf_descriptor->UICount == 0)
             return true;
 
@@ -4164,7 +4184,6 @@ public:
         int eQt4, eCocoa, eHWND, eX11, eGtk2, eGtk3, iCocoa, iHWND, iX11, iQt4, iExt, iSuil, iFinal;
         eQt4 = eCocoa = eHWND = eX11 = eGtk2 = eGtk3 = iQt4 = iCocoa = iHWND = iX11 = iExt = iSuil = iFinal = -1;
 
-        qDebug("LV2 UI ----------------------------------------------------- 002");
         for (i=0; i < rdf_descriptor->UICount; i++)
         {
             switch (rdf_descriptor->UIs[i].Type)
@@ -4271,7 +4290,6 @@ public:
             qWarning("Failed to find an appropriate LV2 UI for this plugin");
             return true;
         }
-        qDebug("LV2 UI ----------------------------------------------------- 003");
 
         ui.rdf_descriptor = &rdf_descriptor->UIs[iFinal];
 
@@ -4295,14 +4313,12 @@ public:
             ui.rdf_descriptor = nullptr;
             return true;
         }
-        qDebug("LV2 UI ----------------------------------------------------- 004");
 
 #ifdef HAVE_SUIL
         if (isSuil)
         {
             // -------------------------------------------------------
             // init suil host
-            qDebug("LV2 UI ----------------------------------------------------- 005a");
 
             suil.host = suil_host_new(carla_lv2_ui_write_function, carla_lv2_ui_port_map, nullptr, nullptr);
         }
@@ -4311,7 +4327,6 @@ public:
         {
             // -------------------------------------------------------
             // open DLL
-            qDebug("LV2 UI ----------------------------------------------------- 005b");
 
             if (! uiLibOpen(ui.rdf_descriptor->Binary))
             {
@@ -4354,7 +4369,6 @@ public:
             }
         }
 
-        qDebug("LV2 UI ----------------------------------------------------- 006");
         // -----------------------------------------------------------
         // initialize ui according to type
 
@@ -4376,7 +4390,6 @@ public:
         else
 #endif
         {
-            qDebug("LV2 UI ----------------------------------------------------- 007b");
             // -------------------------------------------------------
             // initialize ui features
 

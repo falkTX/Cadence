@@ -86,7 +86,8 @@ enum PluginPostEventType {
     PluginPostEventProgramChange,     // index
     PluginPostEventMidiProgramChange, // index
     PluginPostEventNoteOn,            // channel, note, velo
-    PluginPostEventNoteOff            // channel, note
+    PluginPostEventNoteOff,           // channel, note
+    PluginPostEventCustom
 };
 
 struct PluginAudioData {
@@ -151,12 +152,14 @@ struct PluginPostEvent {
     int32_t value1;
     int32_t value2;
     double  value3;
+    const void* cdata;
 
     PluginPostEvent()
         : type(PluginPostEventNull),
           value1(-1),
           value2(-1),
-          value3(0.0) {}
+          value3(0.0),
+          cdata(nullptr) {}
 };
 
 struct ExternalMidiNote {
@@ -1703,7 +1706,7 @@ public:
      * Post pone an event of type \a type.\n
      * The event will be processed later, but as soon as possible.
      */
-    void postponeEvent(const PluginPostEventType type, const int32_t value1, const int32_t value2, const double value3)
+    void postponeEvent(const PluginPostEventType type, const int32_t value1, const int32_t value2, const double value3, const void* const cdata = nullptr)
     {
         postEvents.mutex.lock();
         for (unsigned short i=0; i < MAX_POST_EVENTS; i++)
@@ -1714,6 +1717,7 @@ public:
                 postEvents.data[i].value1 = value1;
                 postEvents.data[i].value2 = value2;
                 postEvents.data[i].value3 = value3;
+                postEvents.data[i].cdata  = cdata;
                 break;
             }
         }
@@ -1822,8 +1826,26 @@ public:
                 // Update Host
                 x_engine->callback(CALLBACK_NOTE_OFF, m_id, event->value1, event->value2, 0.0);
                 break;
+
+            case PluginPostEventCustom:
+                // Handle custom event
+                postEventHandleCustom(event->value1, event->value2, event->value3, event->cdata);
+                break;
             }
         }
+    }
+
+
+    /*!
+     * Handle custom post event.\n
+     * Implementation depends on plugin type.
+     */
+    virtual void postEventHandleCustom(const int32_t value1, const int32_t value2, const double value3, const void* const cdata)
+    {
+        Q_UNUSED(value1);
+        Q_UNUSED(value2);
+        Q_UNUSED(value3);
+        Q_UNUSED(cdata);
     }
 
     /*!
