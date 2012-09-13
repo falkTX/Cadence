@@ -139,6 +139,7 @@ const uint32_t CARLA_URI_MAP_ID_COUNT               = 18;
 
 struct Lv2EventData {
     uint32_t type;
+    uint32_t rindex;
     CarlaEngineMidiPort* port;
     union {
         LV2_Atom_Sequence* atom;
@@ -148,6 +149,7 @@ struct Lv2EventData {
 
     Lv2EventData()
         : type(0),
+          rindex(0),
           port(nullptr) {}
 };
 
@@ -205,6 +207,173 @@ LV2_Atom_Event* getLv2AtomEvent(LV2_Atom_Sequence* const atom, const uint32_t of
 {
     return (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, atom) + offset);
 }
+
+class Lv2AtomQueue
+{
+public:
+    Lv2AtomQueue()
+    {
+        index = indexPool = 0;
+        empty = true;
+        full  = false;
+
+        memset(dataPool, 0, sizeof(unsigned char)*MAX_POOL_SIZE);
+    }
+
+    void copyDataFrom(Lv2AtomQueue* const queue)
+    {
+        // lock mutexes
+        queue->mutex.lock();
+        mutex.lock();
+
+        // copy data from queue
+        memcpy(data, queue->data, sizeof(datatype)*MAX_SIZE);
+        memcpy(dataPool, queue->dataPool, sizeof(unsigned char)*MAX_POOL_SIZE);
+        index = queue->index;
+        indexPool = queue->indexPool;
+        empty = queue->empty;
+        full  = queue->full;
+
+        // unlock our mutex, no longer needed
+        mutex.unlock();
+
+        // reset queque
+        memset(queue->data, 0, sizeof(datatype)*MAX_SIZE);
+        memset(queue->dataPool, 0, sizeof(unsigned char)*MAX_POOL_SIZE);
+        queue->index = queue->indexPool = 0;
+        queue->empty = true;
+        queue->full  = false;
+
+        // unlock queque mutex
+        queue->mutex.unlock();
+    }
+
+    bool isEmpty()
+    {
+        return empty;
+    }
+
+    bool isFull()
+    {
+        return full;
+    }
+
+    void lock()
+    {
+        mutex.lock();
+    }
+
+    void unlock()
+    {
+        mutex.unlock();
+    }
+
+    void put(const uint32_t portIndex, const LV2_Atom& atom, const bool lock = true)
+    {
+        qDebug("Lv2AtomQueue::put(%i, size:%i, %s)", portIndex, atom.size, bool2str(lock));
+        Q_ASSERT(atom.size > 0);
+        Q_ASSERT(indexPool + atom.size < MAX_POOL_SIZE); //  overflow
+
+        if (full || atom.size == 0 || indexPool + atom.size >= MAX_POOL_SIZE)
+            return;
+
+        if (lock)
+            mutex.lock();
+
+        for (unsigned short i=0; i < MAX_SIZE; i++)
+        {
+            if (data[i].size == 0)
+            {
+                data[i].portIndex  = portIndex;
+                data[i].size       = atom.size;
+                data[i].poolOffset = indexPool;
+                memcpy(dataPool + indexPool, (const unsigned char*)LV2_ATOM_BODY_CONST(&atom), atom.size);
+                empty = false;
+                full  = (i == MAX_SIZE-1);
+                indexPool += atom.size;
+                break;
+            }
+        }
+
+        if (lock)
+            mutex.unlock();
+    }
+
+    bool get(uint32_t* const portIndex, LV2_Atom** const atom, const bool lock = true)
+    {
+        qDebug("Lv2AtomQueue::get(%p, %p, %s)", portIndex, atom, bool2str(lock));
+        Q_ASSERT(portIndex && atom);
+
+        if (empty || ! (portIndex && atom))
+            return false;
+
+        if (lock)
+            mutex.lock();
+
+        full = false;
+
+        if (data[index].size == 0)
+        {
+            index = indexPool = 0;
+            empty = true;
+
+            if (lock)
+                mutex.lock();
+
+            return false;
+        }
+
+        static struct {
+            uint32_t size;
+            uint32_t type;
+            unsigned char* data;
+        } thisAtom;
+        thisAtom.size = data[index].size;
+        thisAtom.type = data[index].type;
+        thisAtom.data = dataPool + data[index].poolOffset;
+
+        *portIndex = data[index].portIndex;
+        *atom      = (LV2_Atom*)&thisAtom;
+
+        data[index].portIndex  = 0;
+        data[index].size       = 0;
+        data[index].type       = 0;
+        data[index].poolOffset = 0;
+        index++;
+        empty = false;
+
+        if (lock)
+            mutex.unlock();
+
+        return true;
+    }
+
+private:
+    struct datatype {
+        size_t   size;
+        LV2_URID type;
+        uint32_t portIndex;
+        uint32_t poolOffset;
+
+        datatype()
+            : size(0),
+              type(CARLA_URI_MAP_ID_NULL),
+              portIndex(0),
+              poolOffset(0) {}
+    };
+
+    static const unsigned short MAX_SIZE = 32;
+    static const unsigned short MAX_POOL_SIZE = 8192;
+
+    datatype data[MAX_SIZE];
+    unsigned char dataPool[MAX_POOL_SIZE];
+
+    unsigned short index;
+    uint32_t indexPool;
+    bool empty, full;
+
+    QMutex mutex;
+};
 
 class Lv2Plugin : public CarlaPlugin
 {
@@ -1018,9 +1187,36 @@ public:
 
     void idleGui()
     {
-        // Update external UI
-        if (gui.type == GUI_EXTERNAL_LV2 && ui.handle && ui.descriptor && ui.widget)
-            LV2_EXTERNAL_UI_RUN((LV2_External_UI_Widget*)ui.widget);
+        const bool haveUI = (gui.type == GUI_EXTERNAL_OSC && osc.data.target) || (ui.handle && ui.descriptor);
+
+        if (haveUI)
+        {
+            // Update event ports
+            static Lv2AtomQueue queue;
+            queue.copyDataFrom(&atomQueueOut);
+
+            uint32_t portIndex;
+            LV2_Atom* atom;
+
+            while (atomQueueIn.get(&portIndex, &atom, false))
+            {
+#ifndef BUILD_BRIDGE
+                if (gui.type == GUI_EXTERNAL_OSC)
+                {
+                        osc_send_lv2_transfer_event(&osc.data, nullptr, nullptr);
+                }
+                else
+#endif
+                {
+                    if (ui.descriptor->port_event)
+                        ui.descriptor->port_event(ui.handle, portIndex, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
+                }
+            }
+
+            // Update external UI
+            if (gui.type == GUI_EXTERNAL_LV2 && ui.widget)
+                LV2_EXTERNAL_UI_RUN((LV2_External_UI_Widget*)ui.widget);
+        }
 
         CarlaPlugin::idleGui();
     }
@@ -1283,6 +1479,8 @@ public:
                     descriptor->connect_port(handle, i, evIn.data[j].atom);
                     if (h2) descriptor->connect_port(h2, i, evIn.data[j].atom);
 
+                    evIn.data[j].rindex = i;
+
                     if (portType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
                         evIn.data[j].type |= CARLA_EVENT_TYPE_MIDI;
@@ -1298,6 +1496,8 @@ public:
                     j = evOut.count++;
                     descriptor->connect_port(handle, i, evOut.data[j].atom);
                     if (h2) descriptor->connect_port(h2, i, evOut.data[j].atom);
+
+                    evOut.data[j].rindex = i;
 
                     if (portType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
@@ -1320,6 +1520,8 @@ public:
                     descriptor->connect_port(handle, i, evIn.data[j].event);
                     if (h2) descriptor->connect_port(h2, i, evIn.data[j].event);
 
+                    evIn.data[j].rindex = i;
+
                     if (portType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
                         evIn.data[j].type |= CARLA_EVENT_TYPE_MIDI;
@@ -1331,6 +1533,8 @@ public:
                     j = evOut.count++;
                     descriptor->connect_port(handle, i, evOut.data[j].event);
                     if (h2) descriptor->connect_port(h2, i, evOut.data[j].event);
+
+                    evOut.data[j].rindex = i;
 
                     if (portType & LV2_PORT_SUPPORTS_MIDI_EVENT)
                     {
@@ -1349,8 +1553,9 @@ public:
                     descriptor->connect_port(handle, i, evIn.data[j].midi);
                     if (h2) descriptor->connect_port(h2, i, evIn.data[j].midi);
 
-                    evIn.data[j].type |= CARLA_EVENT_TYPE_MIDI;
-                    evIn.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
+                    evIn.data[j].type  |= CARLA_EVENT_TYPE_MIDI;
+                    evIn.data[j].port   = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
+                    evIn.data[j].rindex = i;
                 }
                 else if (LV2_IS_PORT_OUTPUT(portType))
                 {
@@ -1358,8 +1563,9 @@ public:
                     descriptor->connect_port(handle, i, evOut.data[j].midi);
                     if (h2) descriptor->connect_port(h2, i, evOut.data[j].midi);
 
-                    evOut.data[j].type |= CARLA_EVENT_TYPE_MIDI;
-                    evOut.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
+                    evOut.data[j].type  |= CARLA_EVENT_TYPE_MIDI;
+                    evOut.data[j].port   = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
+                    evOut.data[j].rindex = i;
                 }
                 else
                     qWarning("WARNING - Got a broken Port (Midi, but not input or output)");
@@ -2225,13 +2431,24 @@ public:
                     }
 #endif
 
-                    // TODO - get messages from ringbuffer
+                    atomQueueIn.lock();
 
-                    //LV2_Atom_Event* const aev = getLv2AtomEvent(evIn.data[i].atom, evInAtomOffsets[i]);
-                    //aev->time.frames = framesOffset;
-                    //aev->body.type   = CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT;
-                    //aev->body.size   = 0; // message size
-                    //memcpy(LV2_ATOM_BODY(&aev->body), nullptr /* message data body */, 0 /* message size */);
+                    if (! atomQueueIn.isEmpty())
+                    {
+                        uint32_t portIndex;
+                        LV2_Atom* atom;
+
+                        while (atomQueueIn.get(&portIndex, &atom, false))
+                        {
+                            LV2_Atom_Event* const aev = getLv2AtomEvent(evIn.data[i].atom, evInAtomOffsets[i]);
+                            aev->time.frames = framesOffset;
+                            aev->body.type   = CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT;
+                            aev->body.size   = atom->size;
+                            memcpy(LV2_ATOM_BODY(&aev->body), LV2_ATOM_BODY(atom), atom->size);
+                        }
+                    }
+
+                    atomQueueIn.unlock();
                 }
             }
 
@@ -2525,12 +2742,12 @@ public:
 
         if (evOut.count > 0 && m_active)
         {
-            // ----------------------------------------------------------------------------------------------------
-            // MIDI Output
+            atomQueueOut.lock();
 
             for (i=0; i < evOut.count; i++)
             {
-                if (! evOut.data[i].port)
+                // midi events need the midi port to send events to
+                if ((evOut.data[i].type & CARLA_EVENT_TYPE_MIDI) > 0 && ! evOut.data[i].port)
                     continue;
 
                 if (evOut.data[i].type & CARLA_EVENT_DATA_ATOM)
@@ -2549,6 +2766,11 @@ public:
                         {
                             const unsigned char* const data = (unsigned char*)LV2_ATOM_BODY(&aev->body);
                             evOut.data[i].port->writeEvent(aev->time.frames, data, aev->body.size);
+                        }
+                        else if (aev->body.type == CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT)
+                        {
+                            if (! atomQueueOut.isFull())
+                                atomQueueOut.put(evOut.data[i].rindex, aev->body);
                         }
 
                         offset += lv2_atom_pad_size(sizeof(LV2_Atom_Event) + aev->body.size);
@@ -2588,10 +2810,7 @@ public:
                 }
             }
 
-            // ----------------------------------------------------------------------------------------------------
-            // Message Output
-
-            // TODO
+            atomQueueOut.unlock();
 
         } // End of Event Output
 
@@ -2856,20 +3075,18 @@ public:
 
     // -------------------------------------------------------------------
 
-    void handleTransferAtom(const LV2_Atom* const atom, const char* const stype)
+    void handleTransferAtom(const uint32_t portIndex, const LV2_Atom* const atom)
     {
-        qDebug("Lv2Plugin::handleAtomTransfer(%p, \"%s\")", atom, stype);
+        qDebug("Lv2Plugin::handleAtomTransfer(%i, %p)", portIndex, atom);
         Q_ASSERT(atom);
-        Q_ASSERT(stype);
 
         // TODO
     }
 
-    void handleTransferEvent(const LV2_Atom* const atom, const char* const stype)
+    void handleTransferEvent(const uint32_t portIndex, const LV2_Atom* const atom)
     {
-        qDebug("Lv2Plugin::handleEventTransfer(%p, \"%s\")", atom, stype);
+        qDebug("Lv2Plugin::handleEventTransfer(%i, %p)", portIndex, atom);
         Q_ASSERT(atom);
-        Q_ASSERT(stype);
 
         const LV2_URID uridAtomBlank = getCustomURID(LV2_ATOM__Blank);
         const LV2_URID uridPatchBody = getCustomURID(LV2_PATCH__body);
@@ -2877,7 +3094,7 @@ public:
 
         if (atom->type != uridAtomBlank)
         {
-            qWarning("Lv2Plugin::handleEventTransfer() - Not blank");
+            qWarning("Lv2Plugin::handleEventTransfer() - not blank");
             return;
         }
 
@@ -2885,7 +3102,7 @@ public:
 
         if (obj->body.otype != uridPatchSet)
         {
-            qWarning("Lv2Plugin::handleEventTransfer() - Not Patch Set");
+            qWarning("Lv2Plugin::handleEventTransfer() - not Patch:Set");
             return;
         }
 
@@ -2894,12 +3111,14 @@ public:
 
         if (! body)
         {
-            qWarning("Lv2Plugin::handleEventTransfer() - Has no body");
+            qWarning("Lv2Plugin::handleEventTransfer() - has no body");
             return;
         }
 
         LV2_ATOM_OBJECT_FOREACH(body, iter)
         {
+            atomQueueIn.put(portIndex, iter->value);
+#if 0
             CustomDataType dtype  = CUSTOM_DATA_INVALID;
             const char* const key = getCustomURIString(iter->key);
             const char* value     = nullptr;
@@ -2921,6 +3140,7 @@ public:
             setCustomData(dtype, key, value, false);
 
             free((void*)value);
+#endif
         }
     }
 
@@ -3155,20 +3375,20 @@ public:
             Q_ASSERT(buffer);
 
             const LV2_Atom* const atom = (const LV2_Atom*)buffer;
-            handleTransferAtom(atom, getCustomURIString(atom->type));
+            handleTransferAtom(rindex, atom);
 
-            if (ui.handle && ui.descriptor && ui.descriptor->port_event)
-                ui.descriptor->port_event(ui.handle, 0, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM, atom);
+            //if (ui.handle && ui.descriptor && ui.descriptor->port_event)
+            //    ui.descriptor->port_event(ui.handle, 0, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM, atom);
         }
         else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT)
         {
             Q_ASSERT(buffer);
 
             const LV2_Atom* const atom = (const LV2_Atom*)buffer;
-            handleTransferEvent(atom, getCustomURIString(atom->type));
+            handleTransferEvent(rindex, atom);
 
-            if (ui.handle && ui.descriptor && ui.descriptor->port_event)
-                ui.descriptor->port_event(ui.handle, 0, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
+            //if (ui.handle && ui.descriptor && ui.descriptor->port_event)
+            //    ui.descriptor->port_event(ui.handle, 0, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
         }
     }
 
@@ -4343,6 +4563,8 @@ private:
     } suil;
 #endif
 
+    Lv2AtomQueue atomQueueIn;
+    Lv2AtomQueue atomQueueOut;
     Lv2PluginEventData evIn;
     Lv2PluginEventData evOut;
     float* paramBuffers;
@@ -4404,16 +4626,17 @@ int CarlaOsc::handle_lv2_atom_transfer(CARLA_OSC_HANDLE_ARGS2)
     qDebug("CarlaOsc::handle_lv2_atom_transfer()");
     CARLA_OSC_CHECK_OSC_TYPES(2, "ss");
 
-    const char* const type  = (const char*)&argv[0]->s;
-    const char* const value = (const char*)&argv[1]->s;
+    //const char* const type  = (const char*)&argv[0]->s;
+    //const char* const value = (const char*)&argv[1]->s;
 
-    QByteArray chunk;
-    chunk = QByteArray::fromBase64(value);
+    //QByteArray chunk;
+    //chunk = QByteArray::fromBase64(value);
 
-    const LV2_Atom* const atom = (LV2_Atom*)chunk.constData();
+    //const LV2_Atom* const atom = (LV2_Atom*)chunk.constData();
 
-    CarlaBackend::Lv2Plugin* const lv2plugin = (CarlaBackend::Lv2Plugin*)plugin;
-    lv2plugin->handleTransferAtom(atom, type);
+    //CarlaBackend::Lv2Plugin* const lv2plugin = (CarlaBackend::Lv2Plugin*)plugin;
+    //lv2plugin->handleTransferAtom(atom, type);
+
 
     return 0;
 }
@@ -4423,16 +4646,16 @@ int CarlaOsc::handle_lv2_event_transfer(CARLA_OSC_HANDLE_ARGS2)
     qDebug("CarlaOsc::handle_lv2_event_transfer()");
     CARLA_OSC_CHECK_OSC_TYPES(2, "ss");
 
-    const char* const type  = (const char*)&argv[0]->s;
-    const char* const value = (const char*)&argv[1]->s;
+    //const char* const type  = (const char*)&argv[0]->s;
+    //const char* const value = (const char*)&argv[1]->s;
 
-    QByteArray chunk;
-    chunk = QByteArray::fromBase64(value);
+    //QByteArray chunk;
+    //chunk = QByteArray::fromBase64(value);
 
-    const LV2_Atom* const atom = (LV2_Atom*)chunk.constData();
+    //const LV2_Atom* const atom = (LV2_Atom*)chunk.constData();
 
-    CarlaBackend::Lv2Plugin* const lv2plugin = (CarlaBackend::Lv2Plugin*)plugin;
-    lv2plugin->handleTransferEvent(atom, type);
+    //CarlaBackend::Lv2Plugin* const lv2plugin = (CarlaBackend::Lv2Plugin*)plugin;
+    //lv2plugin->handleTransferEvent(atom, type);
 
     return 0;
 }
