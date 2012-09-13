@@ -268,13 +268,13 @@ public:
         mutex.unlock();
     }
 
-    void put(const uint32_t portIndex, const LV2_Atom& atom, const bool lock = true)
+    void put(const uint32_t portIndex, const LV2_Atom* const atom, const bool lock = true)
     {
-        qDebug("Lv2AtomQueue::put(%i, size:%i, %s)", portIndex, atom.size, bool2str(lock));
-        Q_ASSERT(atom.size > 0);
-        Q_ASSERT(indexPool + atom.size < MAX_POOL_SIZE); //  overflow
+        qDebug("Lv2AtomQueue::put(%i, %p, %s)", portIndex, atom, bool2str(lock));
+        Q_ASSERT(atom->size > 0);
+        Q_ASSERT(indexPool + atom->size < MAX_POOL_SIZE); //  overflow
 
-        if (full || atom.size == 0 || indexPool + atom.size >= MAX_POOL_SIZE)
+        if (full || atom->size == 0 || indexPool + atom->size >= MAX_POOL_SIZE)
             return;
 
         if (lock)
@@ -285,12 +285,13 @@ public:
             if (data[i].size == 0)
             {
                 data[i].portIndex  = portIndex;
-                data[i].size       = atom.size;
+                data[i].size       = atom->size;
+                data[i].type       = atom->type;
                 data[i].poolOffset = indexPool;
-                memcpy(dataPool + indexPool, (const unsigned char*)LV2_ATOM_BODY_CONST(&atom), atom.size);
+                memcpy(dataPool + indexPool, (const unsigned char*)LV2_ATOM_BODY_CONST(&atom), atom->size);
                 empty = false;
                 full  = (i == MAX_SIZE-1);
-                indexPool += atom.size;
+                indexPool += atom->size;
                 break;
             }
         }
@@ -299,7 +300,7 @@ public:
             mutex.unlock();
     }
 
-    bool get(uint32_t* const portIndex, LV2_Atom** const atom, const bool lock = true)
+    bool get(uint32_t* const portIndex, const LV2_Atom** const atom, const bool lock = true)
     {
         qDebug("Lv2AtomQueue::get(%p, %p, %s)", portIndex, atom, bool2str(lock));
         Q_ASSERT(portIndex && atom);
@@ -323,21 +324,16 @@ public:
             return false;
         }
 
-        static struct {
-            uint32_t size;
-            uint32_t type;
-            unsigned char* data;
-        } thisAtom;
-        thisAtom.size = data[index].size;
-        thisAtom.type = data[index].type;
-        thisAtom.data = dataPool + data[index].poolOffset;
+        retAtom.atom.size = data[index].size;
+        retAtom.atom.type = data[index].type;
+        memcpy(retAtom.data, dataPool + data[index].poolOffset, data[index].size);
 
         *portIndex = data[index].portIndex;
-        *atom      = (LV2_Atom*)&thisAtom;
+        *atom      = (LV2_Atom*)&retAtom;
 
         data[index].portIndex  = 0;
         data[index].size       = 0;
-        data[index].type       = 0;
+        data[index].type       = CARLA_URI_MAP_ID_NULL;
         data[index].poolOffset = 0;
         index++;
         empty = false;
@@ -362,11 +358,16 @@ private:
               poolOffset(0) {}
     };
 
-    static const unsigned short MAX_SIZE = 32;
+    static const unsigned short MAX_SIZE = 128;
     static const unsigned short MAX_POOL_SIZE = 8192;
 
     datatype data[MAX_SIZE];
     unsigned char dataPool[MAX_POOL_SIZE];
+
+    struct {
+        LV2_Atom atom;
+        unsigned char data[MAX_POOL_SIZE];
+    } retAtom;
 
     unsigned short index;
     uint32_t indexPool;
@@ -1194,24 +1195,28 @@ public:
         if (haveUI)
         {
             // Update event ports
-            static Lv2AtomQueue queue;
-            queue.copyDataFrom(&atomQueueOut);
-
-            uint32_t portIndex;
-            LV2_Atom* atom;
-
-            while (atomQueueIn.get(&portIndex, &atom, false))
+            if (! atomQueueIn.isEmpty())
             {
+                static Lv2AtomQueue queue;
+                queue.copyDataFrom(&atomQueueOut);
+
+                uint32_t portIndex;
+                const LV2_Atom* atom;
+
+                while (queue.get(&portIndex, &atom, false))
+                {
+                    qDebug("idle Got atom, size: %i, content: %s", atom->size, (char*)LV2_ATOM_BODY(atom));
 #ifndef BUILD_BRIDGE
-                if (gui.type == GUI_EXTERNAL_OSC)
-                {
+                    if (gui.type == GUI_EXTERNAL_OSC)
+                    {
                         osc_send_lv2_transfer_event(&osc.data, nullptr, nullptr);
-                }
-                else
+                    }
+                    else
 #endif
-                {
-                    if (ui.descriptor->port_event)
-                        ui.descriptor->port_event(ui.handle, portIndex, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
+                    {
+                        if (ui.descriptor->port_event)
+                            ui.descriptor->port_event(ui.handle, portIndex, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
+                    }
                 }
             }
 
@@ -2438,15 +2443,21 @@ public:
                     if (! atomQueueIn.isEmpty())
                     {
                         uint32_t portIndex;
-                        LV2_Atom* atom;
+                        const LV2_Atom* atom;
 
                         while (atomQueueIn.get(&portIndex, &atom, false))
                         {
+                            qDebug("proc, in, send, Got atom, size: %i, content: %s", atom->size, (unsigned char*)LV2_ATOM_BODY(atom));
+
                             LV2_Atom_Event* const aev = getLv2AtomEvent(evIn.data[i].atom, evInAtomOffsets[i]);
                             aev->time.frames = framesOffset;
-                            aev->body.type   = CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT;
+                            aev->body.type   = atom->type;
                             aev->body.size   = atom->size;
                             memcpy(LV2_ATOM_BODY(&aev->body), LV2_ATOM_BODY(atom), atom->size);
+
+                            const uint32_t evInPadSize    = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + atom->size);
+                            evInAtomOffsets[i]           += evInPadSize;
+                            evIn.data[i].atom->atom.size += evInPadSize;
                         }
                     }
 
@@ -2551,7 +2562,7 @@ public:
                             if (evIn.data[k].type & CARLA_EVENT_DATA_ATOM)
                             {
                                 // all sound off
-                                LV2_Atom_Event* const aev1 = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evIn.data[k].atom) + evInAtomOffsets[k]);
+                                LV2_Atom_Event* const aev1 = getLv2AtomEvent(evIn.data[k].atom, evInAtomOffsets[k]);
                                 aev1->time.frames = 0;
                                 aev1->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
                                 aev1->body.size   = 2;
@@ -2562,7 +2573,7 @@ public:
                                 evIn.data[k].atom->atom.size += padSize;
 
                                 // all notes off
-                                LV2_Atom_Event* const aev2 = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evIn.data[k].atom) + evInAtomOffsets[k]);
+                                LV2_Atom_Event* const aev2 = getLv2AtomEvent(evIn.data[k].atom, evInAtomOffsets[k]);
                                 aev2->time.frames = 0;
                                 aev2->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
                                 aev2->body.size   = 2;
@@ -2772,7 +2783,7 @@ public:
                         else if (aev->body.type == CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT)
                         {
                             if (! atomQueueOut.isFull())
-                                atomQueueOut.put(evOut.data[i].rindex, aev->body);
+                                atomQueueOut.put(evOut.data[i].rindex, &aev->body);
                         }
 
                         offset += lv2_atom_pad_size(sizeof(LV2_Atom_Event) + aev->body.size);
@@ -3082,7 +3093,8 @@ public:
         qDebug("Lv2Plugin::handleAtomTransfer(%i, %p)", portIndex, atom);
         Q_ASSERT(atom);
 
-        // TODO
+        // FIXME - is this correct?
+        //atomQueueIn.put(portIndex, atom->type, atom);
     }
 
     void handleTransferEvent(const uint32_t portIndex, const LV2_Atom* const atom)
@@ -3090,60 +3102,7 @@ public:
         qDebug("Lv2Plugin::handleEventTransfer(%i, %p)", portIndex, atom);
         Q_ASSERT(atom);
 
-        const LV2_URID uridAtomBlank = getCustomURID(LV2_ATOM__Blank);
-        const LV2_URID uridPatchBody = getCustomURID(LV2_PATCH__body);
-        const LV2_URID uridPatchSet  = getCustomURID(LV2_PATCH__Set);
-
-        if (atom->type != uridAtomBlank)
-        {
-            qWarning("Lv2Plugin::handleEventTransfer() - not blank");
-            return;
-        }
-
-        const LV2_Atom_Object* const obj = (LV2_Atom_Object*)atom;
-
-        if (obj->body.otype != uridPatchSet)
-        {
-            qWarning("Lv2Plugin::handleEventTransfer() - not Patch:Set");
-            return;
-        }
-
-        const LV2_Atom_Object* body = nullptr;
-        lv2_atom_object_get(obj, uridPatchBody, &body, 0);
-
-        if (! body)
-        {
-            qWarning("Lv2Plugin::handleEventTransfer() - has no body");
-            return;
-        }
-
-        LV2_ATOM_OBJECT_FOREACH(body, iter)
-        {
-            atomQueueIn.put(portIndex, iter->value);
-#if 0
-            CustomDataType dtype  = CUSTOM_DATA_INVALID;
-            const char* const key = getCustomURIString(iter->key);
-            const char* value     = nullptr;
-
-            if (iter->value.type == CARLA_URI_MAP_ID_ATOM_STRING || iter->value.type == CARLA_URI_MAP_ID_ATOM_PATH)
-            {
-                value = strdup((const char*)LV2_ATOM_BODY(&iter->value));
-                dtype = (iter->value.type == CARLA_URI_MAP_ID_ATOM_STRING) ? CUSTOM_DATA_STRING : CUSTOM_DATA_PATH;
-            }
-            else if (iter->value.type == CARLA_URI_MAP_ID_ATOM_CHUNK || iter->value.type >= CARLA_URI_MAP_ID_COUNT)
-            {
-                QByteArray chunk((const char*)LV2_ATOM_BODY(&iter->value), iter->value.size);
-                value = strdup(chunk.toBase64().constData());
-                dtype = (iter->value.type == CARLA_URI_MAP_ID_ATOM_CHUNK) ? CUSTOM_DATA_CHUNK : CUSTOM_DATA_BINARY; // FIXME - binary should be custom stype
-            }
-            else
-                value = strdup("");
-
-            setCustomData(dtype, key, value, false);
-
-            free((void*)value);
-#endif
-        }
+        atomQueueIn.put(portIndex, atom);
     }
 
     // -------------------------------------------------------------------
@@ -3494,8 +3453,10 @@ public:
         lv2_atom_forge_pop(&forge, &bodyFrame);
         lv2_atom_forge_pop(&forge, &refFrame);
 
+        uint32_t portIndex = evIn.count > 0 ? evIn.data[0].rindex : 0;
+
         const LV2_Atom* const atom = lv2_atom_forge_deref(&forge, ref);
-        ui.descriptor->port_event(ui.handle, 0, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
+        ui.descriptor->port_event(ui.handle, portIndex, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
 
         free((void*)chunk.buf);
         sratom_free(sratom);
@@ -3524,11 +3485,11 @@ public:
             if (ui.descriptor->port_event)
             {
                 // get&store custom data to be sent to the UI
-                prepareForSave();
+                //prepareForSave();
 
                 // update state (custom data)
-                for (size_t i=0; i < custom.size(); i++)
-                    uiTransferEvent(&custom[i]);
+                //for (size_t i=0; i < custom.size(); i++)
+                //    uiTransferEvent(&custom[i]);
 
                 // update control ports
                 float valueF;
@@ -4192,6 +4153,8 @@ public:
         // ---------------------------------------------------------------
         // gui stuff
 
+        qDebug("LV2 UI ----------------------------------------------------- 001");
+
         if (rdf_descriptor->UICount == 0)
             return true;
 
@@ -4201,6 +4164,7 @@ public:
         int eQt4, eCocoa, eHWND, eX11, eGtk2, eGtk3, iCocoa, iHWND, iX11, iQt4, iExt, iSuil, iFinal;
         eQt4 = eCocoa = eHWND = eX11 = eGtk2 = eGtk3 = iQt4 = iCocoa = iHWND = iX11 = iExt = iSuil = iFinal = -1;
 
+        qDebug("LV2 UI ----------------------------------------------------- 002");
         for (i=0; i < rdf_descriptor->UICount; i++)
         {
             switch (rdf_descriptor->UIs[i].Type)
@@ -4307,6 +4271,7 @@ public:
             qWarning("Failed to find an appropriate LV2 UI for this plugin");
             return true;
         }
+        qDebug("LV2 UI ----------------------------------------------------- 003");
 
         ui.rdf_descriptor = &rdf_descriptor->UIs[iFinal];
 
@@ -4330,12 +4295,14 @@ public:
             ui.rdf_descriptor = nullptr;
             return true;
         }
+        qDebug("LV2 UI ----------------------------------------------------- 004");
 
 #ifdef HAVE_SUIL
         if (isSuil)
         {
             // -------------------------------------------------------
             // init suil host
+            qDebug("LV2 UI ----------------------------------------------------- 005a");
 
             suil.host = suil_host_new(carla_lv2_ui_write_function, carla_lv2_ui_port_map, nullptr, nullptr);
         }
@@ -4344,6 +4311,7 @@ public:
         {
             // -------------------------------------------------------
             // open DLL
+            qDebug("LV2 UI ----------------------------------------------------- 005b");
 
             if (! uiLibOpen(ui.rdf_descriptor->Binary))
             {
@@ -4386,6 +4354,7 @@ public:
             }
         }
 
+        qDebug("LV2 UI ----------------------------------------------------- 006");
         // -----------------------------------------------------------
         // initialize ui according to type
 
@@ -4407,6 +4376,7 @@ public:
         else
 #endif
         {
+            qDebug("LV2 UI ----------------------------------------------------- 007b");
             // -------------------------------------------------------
             // initialize ui features
 
