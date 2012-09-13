@@ -201,6 +201,11 @@ const char* lv2bridge2str(const LV2_Property type)
     }
 }
 
+LV2_Atom_Event* getLv2AtomEvent(LV2_Atom_Sequence* const atom, const uint32_t offset)
+{
+    return (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, atom) + offset);
+}
+
 class Lv2Plugin : public CarlaPlugin
 {
 public:
@@ -242,6 +247,9 @@ public:
         suil.handle = nullptr;
         suil.host   = nullptr;
 #endif
+
+        lastTimePosPlaying = false;
+        lastTimePosFrame   = 0;
 
         for (uint32_t i=0; i < CARLA_URI_MAP_ID_COUNT; i++)
             customURIDs.push_back(nullptr);
@@ -527,9 +535,7 @@ public:
         if (rdf_descriptor && rindex < (int32_t)rdf_descriptor->PortCount)
         {
             const LV2_RDF_Port* const port = &rdf_descriptor->Ports[rindex];
-
-            if (port)
-                return port->ScalePointCount;
+            return port->ScalePointCount;
         }
 
         return 0;
@@ -556,12 +562,10 @@ public:
         {
             const LV2_RDF_Port* const port = &rdf_descriptor->Ports[rindex];
 
-            if (port && scalePointId < port->ScalePointCount)
+            if (scalePointId < port->ScalePointCount)
             {
                 const LV2_RDF_PortScalePoint* const portScalePoint = &port->ScalePoints[scalePointId];
-
-                if (portScalePoint)
-                    return portScalePoint->Value;
+                return portScalePoint->Value;
             }
         }
 
@@ -743,11 +747,11 @@ public:
         {
             const LV2_RDF_Port* const port = &rdf_descriptor->Ports[rindex];
 
-            if (port && scalePointId < port->ScalePointCount)
+            if (scalePointId < port->ScalePointCount)
             {
                 const LV2_RDF_PortScalePoint* const portScalePoint = &port->ScalePoints[scalePointId];
 
-                if (portScalePoint && portScalePoint->Label)
+                if (portScalePoint->Label)
                 {
                     strncpy(strBuf, portScalePoint->Label, STR_MAX);
                     return;
@@ -1772,7 +1776,7 @@ public:
         double aInsPeak[2]  = { 0.0 };
         double aOutsPeak[2] = { 0.0 };
 
-        // handle midi from different APIs
+        // handle events from different APIs
         uint32_t evInAtomOffsets[evIn.count];
         LV2_Event_Iterator evInEventIters[evIn.count];
         LV2_MIDIState evInMidiStates[evIn.count];
@@ -2027,7 +2031,7 @@ public:
         CARLA_PROCESS_CONTINUE_CHECK;
 
         // --------------------------------------------------------------------------------------------------------
-        // MIDI Input
+        // Event Input
 
         if (evIn.count > 0 && m_active && m_activeBefore)
         {
@@ -2054,15 +2058,15 @@ public:
                         {
                             if (evIn.data[k].type & CARLA_EVENT_DATA_ATOM)
                             {
-                                LV2_Atom_Event* const aev = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evIn.data[k].atom) + evInAtomOffsets[k]);
+                                LV2_Atom_Event* const aev = getLv2AtomEvent(evIn.data[k].atom, evInAtomOffsets[k]);
                                 aev->time.frames = 0;
                                 aev->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
                                 aev->body.size   = 3;
                                 memcpy(LV2_ATOM_BODY(&aev->body), midiEvent, 3);
 
-                                const uint32_t padSize = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + 3);
-                                evInAtomOffsets[k]           += padSize;
-                                evIn.data[k].atom->atom.size += padSize;
+                                const uint32_t evInPadSize    = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + 3);
+                                evInAtomOffsets[k]           += evInPadSize;
+                                evIn.data[k].atom->atom.size += evInPadSize;
                             }
                             else if (evIn.data[k].type & CARLA_EVENT_DATA_EVENT)
                             {
@@ -2121,15 +2125,15 @@ public:
                         {
                             if (evIn.data[i].type & CARLA_EVENT_DATA_ATOM)
                             {
-                                LV2_Atom_Event* const aev = (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, evIn.data[i].atom) + evInAtomOffsets[i]);
+                                LV2_Atom_Event* const aev = getLv2AtomEvent(evIn.data[i].atom, evInAtomOffsets[i]);
                                 aev->time.frames = time;
                                 aev->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
                                 aev->body.size   = minEvent->size;
                                 memcpy(LV2_ATOM_BODY(&aev->body), minEvent->data, minEvent->size);
 
-                                const uint32_t padSize = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + minEvent->size);
-                                evInAtomOffsets[i]           += padSize;
-                                evIn.data[i].atom->atom.size += padSize;
+                                const uint32_t evInPadSize    = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + minEvent->size);
+                                evInAtomOffsets[i]           += evInPadSize;
+                                evIn.data[i].atom->atom.size += evInPadSize;
                             }
                             else if (evIn.data[i].type & CARLA_EVENT_DATA_EVENT)
                             {
@@ -2151,7 +2155,87 @@ public:
                 }
             } // End of MIDI Input (System)
 
-        } // End of MIDI Input
+            // ----------------------------------------------------------------------------------------------------
+            // Message Input
+
+            {
+                for (i=0; i < evIn.count; i++)
+                {
+                    if (! evIn.data[i].type & CARLA_EVENT_TYPE_MESSAGE)
+                        continue;
+
+                    // messages only supported in Atom type ports
+                    Q_ASSERT(evIn.data[i].type & CARLA_EVENT_DATA_ATOM);
+
+#if 0
+                     // send transport info if changed
+                    const CarlaTimeInfo* const timeInfo = x_engine->getTimeInfo();
+
+                    if (timeInfo->playing != lastTimePosPlaying || timeInfo->frame != lastTimePosFrame)
+                    {
+                        uint8_t posBuf[256];
+                        LV2_Atom* const lv2Pos = (LV2_Atom*)posBuf;
+
+                        LV2_Atom_Forge tempForge;
+                        LV2_Atom_Forge* const forge = &tempForge;
+                        lv2_atom_forge_set_buffer(forge, posBuf, sizeof(uint8_t)*256);
+
+                        //LV2_Atom_Forge_Frame frame;
+                        //lv2_atom_forge_blank(forge, &frame, 1, jalv->urids.time_Position);
+                        //lv2_atom_forge_property_head(forge, jalv->urids.time_frame, 0);
+                        lv2_atom_forge_long(forge, timeInfo->frame);
+                        //lv2_atom_forge_property_head(forge, jalv->urids.time_position, 0);
+                        lv2_atom_forge_long(forge, timeInfo->time);
+                        //lv2_atom_forge_property_head(forge, jalv->urids.time_speed, 0);
+                        lv2_atom_forge_float(forge, timeInfo->playing ? 1.0 : 0.0);
+
+                        if (timeInfo->valid & CarlaEngineTimeBBT)
+                        {
+                            //lv2_atom_forge_property_head(forge, jalv->urids.time_bar, 0);
+                            lv2_atom_forge_float(forge, timeInfo->bbt.bar - 1);
+
+                            //lv2_atom_forge_property_head(forge, jalv->urids.time_barBeat, 0);
+                            lv2_atom_forge_float(forge, timeInfo->bbt.beat - 1 + (timeInfo->bbt.tick / timeInfo->bbt.ticks_per_beat));
+
+                            //lv2_atom_forge_property_head(forge, jalv->urids.time_beat, 0);
+                            lv2_atom_forge_float(forge, timeInfo->bbt.beat - 1); // FIXME: -1 ?
+
+                            //lv2_atom_forge_property_head(forge, jalv->urids.time_beatUnit, 0);
+                            lv2_atom_forge_float(forge, timeInfo->bbt.beat_type);
+
+                            //lv2_atom_forge_property_head(forge, jalv->urids.time_beatsPerBar, 0);
+                            lv2_atom_forge_float(forge, timeInfo->bbt.beats_per_bar);
+
+                            //lv2_atom_forge_property_head(forge, jalv->urids.time_beatsPerMinute, 0);
+                            lv2_atom_forge_float(forge, timeInfo->bbt.beats_per_minute);
+                        }
+
+                        LV2_Atom_Event* const aev = getLv2AtomEvent(evIn.data[i].atom, evInAtomOffsets[i]);
+                        aev->time.frames = framesOffset;
+                        aev->body.type   = lv2Pos->type;
+                        aev->body.size   = lv2Pos->size;
+                        memcpy(LV2_ATOM_BODY(&aev->body), LV2_ATOM_BODY(lv2Pos), lv2Pos->size);
+
+                        const uint32_t evInPadSize    = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + lv2Pos->size);
+                        evInAtomOffsets[i]           += evInPadSize;
+                        evIn.data[i].atom->atom.size += evInPadSize;
+
+                        lastTimePosPlaying = timeInfo->playing;
+                        lastTimePosFrame   = timeInfo->playing ? timeInfo->frame + frames : timeInfo->frame;
+                    }
+#endif
+
+                    // TODO - get messages from ringbuffer
+
+                    //LV2_Atom_Event* const aev = getLv2AtomEvent(evIn.data[i].atom, evInAtomOffsets[i]);
+                    //aev->time.frames = framesOffset;
+                    //aev->body.type   = CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT;
+                    //aev->body.size   = 0; // message size
+                    //memcpy(LV2_ATOM_BODY(&aev->body), nullptr /* message data body */, 0 /* message size */);
+                }
+            }
+
+        } // End of Event Input
 
         CARLA_PROCESS_CONTINUE_CHECK;
 
@@ -2179,17 +2263,30 @@ public:
 
                     switch (rdf_descriptor->Ports[rindex].Designation)
                     {
+                    // Non-BBT
+                    case LV2_PORT_DESIGNATION_TIME_FRAME:
+                        setParameterValue(k, timeInfo->frame, false, false, false);
+                        break;
+                    case LV2_PORT_DESIGNATION_TIME_FRAMES_PER_SECOND:
+                        break;
+                    case LV2_PORT_DESIGNATION_TIME_POSITION:
+                        setParameterValue(k, timeInfo->time, false, false, false);
+                        break;
+                    case LV2_PORT_DESIGNATION_TIME_SPEED:
+                        setParameterValue(k, timeInfo->playing ? 1.0 : 0.0, false, false, false);
+                        break;
+                    // BBT
                     case LV2_PORT_DESIGNATION_TIME_BAR:
                         if (timeInfo->valid & CarlaEngineTimeBBT)
-                            setParameterValue(k, timeInfo->bbt.bar, false, false, false);
+                            setParameterValue(k, timeInfo->bbt.bar - 1, false, false, false);
                         break;
                     case LV2_PORT_DESIGNATION_TIME_BAR_BEAT:
                         if (timeInfo->valid & CarlaEngineTimeBBT)
-                            setParameterValue(k, timeInfo->bbt.tick, false, false, false);
+                            setParameterValue(k, timeInfo->bbt.beat - 1 + (timeInfo->bbt.tick / timeInfo->bbt.ticks_per_beat), false, false, false);
                         break;
                     case LV2_PORT_DESIGNATION_TIME_BEAT:
-                        if (timeInfo->valid & CarlaEngineTimeBBT)
-                            setParameterValue(k, timeInfo->bbt.beat, false, false, false);
+                        if (timeInfo->valid & CarlaEngineTimeBBT)  // FIXME: -1 ?
+                            setParameterValue(k, timeInfo->bbt.beat - 1, false, false, false);
                         break;
                     case LV2_PORT_DESIGNATION_TIME_BEAT_UNIT:
                         if (timeInfo->valid & CarlaEngineTimeBBT)
@@ -2202,18 +2299,6 @@ public:
                     case LV2_PORT_DESIGNATION_TIME_BEATS_PER_MINUTE:
                         if (timeInfo->valid & CarlaEngineTimeBBT)
                             setParameterValue(k, timeInfo->bbt.beats_per_minute, false, false, false);
-                        break;
-
-                    case LV2_PORT_DESIGNATION_TIME_FRAME:
-                        setParameterValue(k, timeInfo->frame, false, false, false);
-                        break;
-                    case LV2_PORT_DESIGNATION_TIME_FRAMES_PER_SECOND:
-                        break;
-                    case LV2_PORT_DESIGNATION_TIME_POSITION:
-                        setParameterValue(k, timeInfo->time, false, false, false);
-                        break;
-                    case LV2_PORT_DESIGNATION_TIME_SPEED:
-                        setParameterValue(k, timeInfo->playing ? 1.0 : 0.0, false, false, false);
                         break;
                     }
                 }
@@ -2436,10 +2521,13 @@ public:
         CARLA_PROCESS_CONTINUE_CHECK;
 
         // --------------------------------------------------------------------------------------------------------
-        // MIDI Output
+        // Event Output
 
         if (evOut.count > 0 && m_active)
         {
+            // ----------------------------------------------------------------------------------------------------
+            // MIDI Output
+
             for (i=0; i < evOut.count; i++)
             {
                 if (! evOut.data[i].port)
@@ -2499,7 +2587,13 @@ public:
                     }
                 }
             }
-        } // End of MIDI Output
+
+            // ----------------------------------------------------------------------------------------------------
+            // Message Output
+
+            // TODO
+
+        } // End of Event Output
 
         CARLA_PROCESS_CONTINUE_CHECK;
 
@@ -4253,6 +4347,9 @@ private:
     Lv2PluginEventData evOut;
     float* paramBuffers;
     std::vector<const char*> customURIDs;
+
+    bool     lastTimePosPlaying;
+    uint32_t lastTimePosFrame;
 };
 
 CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
