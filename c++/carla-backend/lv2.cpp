@@ -457,6 +457,8 @@ public:
             lv2Options.oSampleRate.type    = CARLA_URI_MAP_ID_ATOM_DOUBLE;
             lv2Options.oSampleRate.value   = &lv2Options.sampleRate;
         }
+
+        Lv2World.init();
     }
 
     ~Lv2Plugin()

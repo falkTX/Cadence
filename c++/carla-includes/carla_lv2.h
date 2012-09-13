@@ -328,7 +328,6 @@ static inline
 const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
 {
     Q_ASSERT(URI);
-    Lv2World.init();
 
     Lilv::Plugins lilvPlugins = Lv2World.get_all_plugins();
 
