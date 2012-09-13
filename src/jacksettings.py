@@ -599,6 +599,7 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
 
         aplay_out = getoutput("aplay -l").split("\n")
         for line in aplay_out:
+            line = line.strip()
             if line.startswith("card "):
                 card_info  = line.split(", ", 1)[0].split(": ")
                 card_index = card_info[0].replace("card ", "")
