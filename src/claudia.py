@@ -2512,11 +2512,11 @@ if __name__ == '__main__':
     # Show GUI
     gui = ClaudiaMainW()
 
-    #if (gui.systray and "--minimized" in app.arguments()):
-    #gui.hide()
-    #gui.systray.setActionText("show", QStringStr(gui.tr("Restore")))
-    #else:
-    gui.show()
+    if gui.systray and "--minimized" in app.arguments():
+        gui.hide()
+        gui.systray.setActionText("show", gui.tr("Restore"))
+    else:
+        gui.show()
 
     # Set-up custom signal handling
     setUpSignals(gui)

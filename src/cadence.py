@@ -705,6 +705,55 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         # Set-up systray
 
         self.systray = systray.GlobalSysTray(self, "Cadence", "cadence")
+
+        self.systray.addAction("jack_start", self.tr("Start JACK"))
+        self.systray.addAction("jack_stop", self.tr("Stop JACK"))
+        self.systray.addAction("jack_configure", self.tr("Configure JACK"))
+        self.systray.addSeparator("sep1")
+        #self.systray.addMenu("a2j", self.tr("A2J Bridge"))
+        #self.systray.addMenuAction("a2j", "a2j_start", self.tr("Start"))
+        #self.systray.addMenuAction("a2j", "a2j_stop", self.tr("Stop"))
+        #self.systray.addMenuAction("a2j", "a2j_export_hw", self.tr("Export Hardware Ports..."))
+        #self.systray.addMenu("pulse", self.tr("Pulse2JACK Bridge"))
+        #self.systray.addMenuAction("pulse", "pulse_start", self.tr("Start"))
+        #self.systray.addMenuAction("pulse", "pulse_stop", self.tr("Stop"))
+        self.systray.addMenu("tools", self.tr("Tools"))
+        self.systray.addMenuAction("tools", "app_catarina", "Catarina")
+        self.systray.addMenuAction("tools", "app_catia", "Catia")
+        self.systray.addMenuAction("tools", "app_claudia", "Claudia")
+        self.systray.addMenuAction("tools", "app_carla", "Carla")
+        self.systray.addMenuSeparator("tools", "tools_sep")
+        self.systray.addMenuAction("tools", "app_logs", "Logs")
+        self.systray.addMenuAction("tools", "app_meter", "Meter")
+        self.systray.addMenuAction("tools", "app_render", "Render")
+        self.systray.addMenuAction("tools", "app_xy-controller", "XY-Controller")
+        self.systray.addSeparator("sep2")
+
+        self.systray.setActionIcon("jack_start", "media-playback-start")
+        self.systray.setActionIcon("jack_stop", "media-playback-stop")
+        self.systray.setActionIcon("jack_configure", "configure")
+        #self.systray.setActionIcon("a2j_start", "media-playback-start")
+        #self.systray.setActionIcon("a2j_stop", "media-playback-stop")
+        #self.systray.setActionIcon("pulse_start", "media-playback-start")
+        #self.systray.setActionIcon("pulse_stop", "media-playback-stop")
+
+        self.systray.connect("jack_start", self.slot_JackServerStart)
+        self.systray.connect("jack_stop", self.slot_JackServerStop)
+        self.systray.connect("jack_configure", self.slot_JackServerConfigure)
+        #self.systray.connect("a2j_start", self.A2JBridgeStart)
+        #self.systray.connect("a2j_stop", self.A2JBridgeStop)
+        #self.systray.connect("a2j_export_hw", self.A2JBridgeExportHW)
+        #self.systray.connect("pulse_start", self.PABridgeStart)
+        #self.systray.connect("pulse_stop", self.PABridgeStop)
+        self.systray.connect("app_catarina", lambda tool="catarina": self.func_start_tool(tool))
+        self.systray.connect("app_catia", lambda tool="catarina": self.func_start_tool(tool))
+        self.systray.connect("app_claudia", lambda tool="claudia": self.func_start_tool(tool))
+        self.systray.connect("app_carla", lambda tool="carla": self.func_start_tool(tool))
+        self.systray.connect("app_logs", lambda tool="cadence-logs": self.func_start_tool(tool))
+        self.systray.connect("app_meter", lambda tool="cadence-jackmeter": self.func_start_tool(tool))
+        self.systray.connect("app_render", lambda tool="cadence-render": self.func_start_tool(tool))
+        self.systray.connect("app_xy-controller", lambda tool="cadence-xycontroller": self.func_start_tool(tool))
+
         self.systray.setToolTip("Cadence")
         self.systray.show()
 
@@ -813,6 +862,9 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             self.b_jack_stop.setEnabled(False)
             self.b_jack_restart.setEnabled(False)
             self.b_jack_configure.setEnabled(False)
+            self.systray.setActionEnabled("jack_start", False)
+            self.systray.setActionEnabled("jack_stop", False)
+            self.systray.setActionEnabled("jack_configure", False)
 
     def DBusSignalReceiver(self, *args, **kwds):
         if kwds['interface'] == "org.freedesktop.DBus" and kwds['path'] == "/org/freedesktop/DBus" and kwds['member'] == "NameOwnerChanged":
@@ -844,6 +896,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         self.b_jack_start.setEnabled(False)
         self.b_jack_stop.setEnabled(True)
+        self.systray.setActionEnabled("jack_start", False)
+        self.systray.setActionEnabled("jack_stop", True)
 
         self.label_jack_status.setText("Started")
         self.label_jack_status_ico.setPixmap(self.pix_apply)
@@ -874,6 +928,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         self.b_jack_start.setEnabled(True)
         self.b_jack_stop.setEnabled(False)
+        self.systray.setActionEnabled("jack_start", True)
+        self.systray.setActionEnabled("jack_stop", False)
 
         self.label_jack_status.setText("Stopped")
         self.label_jack_status_ico.setPixmap(self.pix_cancel)
@@ -1483,7 +1539,11 @@ if __name__ == '__main__':
         gui.menubar.clear()
         gui.systray.hide()
 
-    gui.show()
+    if "--minimized" in app.arguments():
+        gui.hide()
+        gui.systray.setActionText("show", gui.tr("Restore"))
+    else:
+        gui.show()
 
     # Exit properly
     sys.exit(gui.systray.exec_(app))
