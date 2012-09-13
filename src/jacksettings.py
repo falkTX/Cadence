@@ -608,7 +608,7 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
                 device_index = device_info[0].replace("device ", "")
                 device_name  = device_info[1].split(" [")[0]
 
-                if (card_name != "Loopback"):
+                if card_name != "Loopback":
                     full_name = "hw:%s,%s [%s]" % (card_name, device_index, device_name)
                     alsa_dev_list.append(full_name)
 

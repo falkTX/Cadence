@@ -44,14 +44,6 @@ typedef void* LV2_RtMemPool_Handle;
  */
 typedef struct _LV2_RtMemPool_Pool {
   /**
-   * Opaque pointer to host data.
-   *
-   * This MUST be passed to methods in this struct whenever they are called.
-   * Otherwise, it must not be interpreted in any way.
-  */
-  LV2_RtMemPool_Handle handle;
-
-  /**
    * This function is called when plugin wants to create memory pool
    *
    * <b>may/will sleep</b>
@@ -61,9 +53,9 @@ typedef struct _LV2_RtMemPool_Pool {
    * @param min_preallocated min chunks preallocated
    * @param max_preallocated max chunks preallocated
    *
-   * @return Success status
+   * @return Success status, true if successful
    */
-  bool (*create)(LV2_RtMemPool_Handle handle,
+  bool (*create)(LV2_RtMemPool_Handle * handle_ptr,
                  const char * pool_name,
                  size_t data_size,
                  size_t min_preallocated,

@@ -404,11 +404,7 @@ public:
             delete (LV2_Programs_Host*)features[lv2_feature_id_programs]->data;
 
         if (features[lv2_feature_id_rtmempool] && features[lv2_feature_id_rtmempool]->data)
-        {
-            const LV2_RtMemPool_Pool* const rtmempool = (const LV2_RtMemPool_Pool*)features[lv2_feature_id_rtmempool]->data;
-            rtmempool_allocator_free(rtmempool);
-            delete rtmempool;
-        }
+            delete (LV2_RtMemPool_Pool*)features[lv2_feature_id_rtmempool]->data;
 
         if (features[lv2_feature_id_state_make_path] && features[lv2_feature_id_state_make_path]->data)
             delete (LV2_State_Make_Path*)features[lv2_feature_id_state_make_path]->data;

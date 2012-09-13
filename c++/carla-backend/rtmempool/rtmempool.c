@@ -59,12 +59,13 @@ struct rtsafe_memory_pool
 
 static
 void
-rtsafe_memory_pool_sleepy();
+rtsafe_memory_pool_sleepy(
+  LV2_RtMemPool_Handle pool_handle);
 
 static
 bool
 rtsafe_memory_pool_create(
-  LV2_RtMemPool_Handle pool_handle,
+  LV2_RtMemPool_Handle * pool_handle_ptr,
   const char * pool_name,
   size_t data_size,
   size_t min_preallocated,
@@ -86,7 +87,7 @@ rtsafe_memory_pool_create(
     (unsigned int)max_preallocated,
     enforce_thread_safety ? "true" : "false");
 
-  pool_ptr = (struct rtsafe_memory_pool *)pool_handle;
+  pool_ptr = malloc(sizeof(struct rtsafe_memory_pool));
   if (pool_ptr == NULL)
   {
     return false;
@@ -127,7 +128,8 @@ rtsafe_memory_pool_create(
 
   pool_ptr->used_size = 0;
 
-  rtsafe_memory_pool_sleepy();
+  rtsafe_memory_pool_sleepy((LV2_RtMemPool_Handle)pool_ptr);
+  *pool_handle_ptr = (LV2_RtMemPool_Handle)pool_ptr;
 
   return true;
 }
@@ -185,6 +187,8 @@ rtsafe_memory_pool_destroy(
     ret = pthread_mutex_destroy(&pool_ptr->mutex);
     assert(ret == 0);
   }
+
+  free(pool_ptr);
 
   // unused variable
   (void)ret;
@@ -373,31 +377,22 @@ rtsafe_memory_pool_allocate_sleepy(
 static
 bool
 rtsafe_memory_pool_create2(
-    LV2_RtMemPool_Handle pool_handle,
+    LV2_RtMemPool_Handle * pool_handle_ptr,
     const char * pool_name,
     size_t data_size,
     size_t min_preallocated,
     size_t max_preallocated)
 {
-  return rtsafe_memory_pool_create(pool_handle, pool_name, data_size, min_preallocated, max_preallocated, false);
+  return rtsafe_memory_pool_create(pool_handle_ptr, pool_name, data_size, min_preallocated, max_preallocated, false);
 }
 
 void
 rtmempool_allocator_init(
   struct _LV2_RtMemPool_Pool * allocator_ptr)
 {
-  allocator_ptr->handle  = (LV2_RtMemPool_Handle)malloc(sizeof(struct rtsafe_memory_pool));
   allocator_ptr->create  = rtsafe_memory_pool_create2;
   allocator_ptr->destroy = rtsafe_memory_pool_destroy;
   allocator_ptr->allocate_atomic = rtsafe_memory_pool_allocate_atomic;
   allocator_ptr->allocate_sleepy = rtsafe_memory_pool_allocate_sleepy;
   allocator_ptr->deallocate = rtsafe_memory_pool_deallocate;
-}
-
-void
-rtmempool_allocator_free(
-  const struct _LV2_RtMemPool_Pool * allocator_ptr)
-{
-  if (allocator_ptr->handle)
-    free((struct rtsafe_memory_pool *)allocator_ptr->handle);
 }

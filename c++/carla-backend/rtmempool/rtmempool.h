@@ -32,10 +32,6 @@ void
 rtmempool_allocator_init(
   struct _LV2_RtMemPool_Pool * allocator_ptr);
 
-void
-rtmempool_allocator_free(
-  const struct _LV2_RtMemPool_Pool * allocator_ptr);
-
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
