@@ -20,10 +20,7 @@
 #include "rtmempool/rtmempool.h"
 
 #include <QtCore/QDir>
-
-#ifndef __WINE__
 #include <QtGui/QLayout>
-#endif
 
 #ifdef HAVE_SUIL
 #include <suil/suil.h>
@@ -305,7 +302,7 @@ public:
                 break;
 
             case GUI_EXTERNAL_SUIL:
-#if defined(HAVE_SUIL) && ! defined(__WINE__)
+#ifdef HAVE_SUIL
                 if (ui.widget)
                     ((QWidget*)ui.widget)->close();
 #endif
@@ -881,18 +878,16 @@ public:
     // -------------------------------------------------------------------
     // Set gui stuff
 
-    void setGuiData(const GuiDataHandle handle)
+    void setGuiData(QDialog* const dialog)
     {
         switch(gui.type)
         {
         case GUI_NONE:
             break;
 
-#ifndef __WINE__
         case GUI_INTERNAL_QT4:
             if (ui.widget)
             {
-                QDialog* const dialog = handle;
                 QWidget* const widget = (QWidget*)ui.widget;
                 dialog->layout()->addWidget(widget);
                 widget->adjustSize();
@@ -900,18 +895,13 @@ public:
                 widget->show();
             }
             break;
-#endif
 
         case GUI_INTERNAL_COCOA:
         case GUI_INTERNAL_HWND:
         case GUI_INTERNAL_X11:
             if (ui.descriptor)
             {
-#ifdef __WINE__
-                features[lv2_feature_id_ui_parent]->data = (void*)handle;
-#else
-                features[lv2_feature_id_ui_parent]->data = (void*)handle->winId();
-#endif
+                features[lv2_feature_id_ui_parent]->data = (void*)dialog->winId();
                 ui.handle = ui.descriptor->instantiate(ui.descriptor,
                                                        descriptor->URI, ui.rdf_descriptor->Bundle,
                                                        carla_lv2_ui_write_function, this, &ui.widget,features);
@@ -973,7 +963,7 @@ public:
             break;
 
         case GUI_EXTERNAL_SUIL:
-#if defined(HAVE_SUIL) && ! defined(__WINE__)
+#ifdef HAVE_SUIL
             if (ui.widget)
             {
                 QWidget* const widget = (QWidget*)ui.widget;

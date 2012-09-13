@@ -33,10 +33,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
-
-#ifndef __WINE__
-#  include <QtGui/QDialog>
-#endif
+#include <QtGui/QDialog>
 
 CARLA_BACKEND_START_NAMESPACE
 
@@ -48,12 +45,6 @@ CARLA_BACKEND_START_NAMESPACE
  */
 
 #define CARLA_PROCESS_CONTINUE_CHECK if (! m_enabled) { x_engine->callback(CALLBACK_DEBUG, m_id, m_enabled, 0, 0.0); return; }
-
-#ifdef __WINE__
-typedef HWND GuiDataHandle;
-#else
-typedef QDialog* GuiDataHandle;
-#endif
 
 const unsigned short MAX_MIDI_EVENTS = 512;
 const unsigned short MAX_POST_EVENTS = 152;
@@ -1272,9 +1263,9 @@ public:
      *
      * \note This function must be always called from the main thread.
      */
-    virtual void setGuiData(const GuiDataHandle handle)
+    virtual void setGuiData(QDialog* const dialog)
     {
-        Q_UNUSED(handle);
+        Q_UNUSED(dialog);
     }
 
     /*!

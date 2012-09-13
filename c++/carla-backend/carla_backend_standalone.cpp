@@ -1509,7 +1509,7 @@ int main(int argc, char* argv[])
 
     // lock
     app.exec();
-    
+
     delete vstGui;
     vstGui = nullptr;
 

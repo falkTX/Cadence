@@ -18,11 +18,8 @@
 #include "carla_plugin.h"
 #include "carla_vst.h"
 
-#ifndef __WINE__
-#include <QtGui/QDialog>
 #ifdef Q_WS_X11
 #include <QtGui/QX11Info>
-#endif
 #endif
 
 CARLA_BACKEND_START_NAMESPACE
@@ -331,10 +328,9 @@ public:
     // -------------------------------------------------------------------
     // Set gui stuff
 
-    void setGuiData(const GuiDataHandle handle)
+    void setGuiData(QDialog* const dialog)
     {
-        qDebug("VstPlugin::setGuiData(%p)", handle);
-        Q_ASSERT(handle);
+        Q_ASSERT(dialog);
 
         if (gui.type == GUI_EXTERNAL_OSC)
             return;
@@ -344,12 +340,7 @@ public:
         value = (int64_t)QX11Info::display();
 #endif
 
-#ifdef __WINE__
-        if (effect->dispatcher(effect, effEditOpen, 0, value, handle, 0.0f) == 1)
-#else
-        const QDialog* const dialog = handle;
         if (effect->dispatcher(effect, effEditOpen, 0, value, (void*)dialog->winId(), 0.0f) == 1)
-#endif
         {
             ERect* vstRect = nullptr;
             effect->dispatcher(effect, effEditGetRect, 0, 0, &vstRect, 0.0f);
@@ -361,7 +352,7 @@ public:
 
                 if (width <= 0 || height <= 0)
                 {
-                    qCritical("VstPlugin::setGuiData(%p) - failed to get proper window size", handle);
+                    qCritical("VstPlugin::setGuiData(%p) - failed to get proper window size", dialog);
                     return;
                 }
 
@@ -369,7 +360,7 @@ public:
                 gui.height = height;
             }
             else
-                qCritical("VstPlugin::setGuiData(%p) - failed to get plugin window size", handle);
+                qCritical("VstPlugin::setGuiData(%p) - failed to get plugin window size", dialog);
         }
         else
         {
