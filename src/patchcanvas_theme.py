@@ -25,11 +25,12 @@ class Theme(object):
     THEME_PORT_POLYGON = 1
 
     # enum List
-    THEME_MODERN_DARK  = 0
+    THEME_MODERN_DARK      = 0
     THEME_MODERN_DARK_TINY = 1
-    THEME_CLASSIC_DARK = 2
-    THEME_OOSTUDIO     = 3
-    THEME_MAX = 4
+    THEME_MODERN_LIGHT     = 2
+    THEME_CLASSIC_DARK     = 3
+    THEME_OOSTUDIO         = 4
+    THEME_MAX              = 5
 
     # enum BackgroundType
     THEME_BG_SOLID    = 0
@@ -195,6 +196,88 @@ class Theme(object):
             self.line_midi_jack_sel = QColor(159 + 90, 44 + 90, 42 + 90)
             self.line_midi_jack_glow = QColor(200, 100, 100)
             self.line_midi_a2j = QColor(137, 76, 43)
+            self.line_midi_a2j_sel = QColor(137 + 90, 76 + 90, 43 + 90)
+            self.line_midi_a2j_glow = QColor(166, 133, 133)
+            self.line_midi_alsa = QColor(93, 141, 46)
+            self.line_midi_alsa_sel = QColor(93 + 90, 141 + 90, 46 + 90)
+            self.line_midi_alsa_glow = QColor(100, 200, 100)
+
+            self.rubberband_pen = QPen(QColor(206, 207, 208), 1, Qt.SolidLine)
+            self.rubberband_brush = QColor(76, 77, 78, 100)
+
+        elif idx == self.THEME_MODERN_LIGHT:
+            # Canvas
+            self.canvas_bg = QColor(248, 249, 250)
+
+            # Boxes
+            self.box_pen = QPen(QColor(176, 177, 178), 1, Qt.SolidLine)
+            self.box_pen_sel = QPen(QColor(1, 2, 3), 2, Qt.DashLine)
+            self.box_bg_1 = QColor(250, 250, 250)
+            self.box_bg_2 = QColor(200, 200, 200)
+            self.box_shadow = QColor(1, 1, 1, 100)
+            self.box_header_pixmap  = None
+            self.box_header_height  = 24
+            self.box_header_spacing = 0
+
+            self.box_text = QPen(QColor(1, 1, 1), 0)
+            self.box_text_sel  = self.box_text
+            self.box_text_ypos = 16
+            self.box_font_name = "Ubuntu"
+            self.box_font_size = 11
+            self.box_font_state = QFont.Bold
+
+            self.box_bg_type  = self.THEME_BG_GRADIENT
+            self.box_use_icon = True
+
+            # Ports
+            self.port_text = QPen(QColor(255, 255, 255), 1)
+            self.port_text_ypos = 12
+            self.port_bg_pixmap = None
+            self.port_font_name = "Ubuntu"
+            self.port_font_size = 10
+            self.port_font_state = QFont.Bold
+            self.port_mode = self.THEME_PORT_POLYGON
+
+            self.port_audio_jack_pen = QPen(QColor(103, 130, 166), 2)
+            self.port_audio_jack_pen_sel = QPen(QColor(103 + 136, 190 + 130, 226 + 130), 1)
+            self.port_midi_jack_pen = QPen(QColor(159, 44, 42), 1)
+            self.port_midi_jack_pen_sel = QPen(QColor(90 + 30, 44 + 30, 42 + 30), 1)
+            self.port_midi_a2j_pen = QPen(QColor(137, 76, 43), 1)
+            self.port_midi_a2j_pen_sel = QPen(QColor(137 + 30, 76 + 30, 43 + 30), 1)
+            self.port_midi_alsa_pen = QPen(QColor(93, 141, 46), 1)
+            self.port_midi_alsa_pen_sel = QPen(QColor(93 + 30, 141 + 30, 46 + 30), 1)
+
+            self.port_audio_jack_bg = QColor(0, 0, 180)
+            self.port_audio_jack_bg_sel = QColor(135 + 150, 161 + 150, 199 + 150)
+            self.port_midi_jack_bg = QColor(130, 15, 16)
+            self.port_midi_jack_bg_sel = QColor(90 + 30, 15 + 50, 16 + 50)
+            self.port_midi_a2j_bg = QColor(101, 47, 16)
+            self.port_midi_a2j_bg_sel = QColor(101 + 50, 47 + 50, 16 + 50)
+            self.port_midi_alsa_bg = QColor(64, 112, 18)
+            self.port_midi_alsa_bg_sel = QColor(64 + 50, 112 + 50, 18 + 50)
+
+            self.port_audio_jack_text = self.port_text
+            self.port_audio_jack_text_sel = self.port_text
+            self.port_midi_jack_text = self.port_text
+            self.port_midi_jack_text_sel = self.port_text
+            self.port_midi_a2j_text = self.port_text
+            self.port_midi_a2j_text_sel = self.port_text
+            self.port_midi_alsa_text = self.port_text
+            self.port_midi_alsa_text_sel = self.port_text
+
+            self.port_height   = 15
+            self.port_offset   = 0
+            self.port_spacing  = 3
+            self.port_spacingT = 2
+
+            # Lines
+            self.line_audio_jack = QColor(63, 90, 126)
+            self.line_audio_jack_sel = QColor(63 + 63, 90 + 90, 126 + 90)
+            self.line_audio_jack_glow = QColor(100, 100, 200)
+            self.line_midi_jack = QColor(159, 44, 42)
+            self.line_midi_jack_sel = QColor(159 + 44, 44 + 90, 42 + 90)
+            self.line_midi_jack_glow = QColor(200, 100, 100)
+            self.line_midi_a2j = QColor(137, 43, 43)
             self.line_midi_a2j_sel = QColor(137 + 90, 76 + 90, 43 + 90)
             self.line_midi_a2j_glow = QColor(166, 133, 133)
             self.line_midi_alsa = QColor(93, 141, 46)
@@ -380,6 +463,8 @@ def getThemeName(idx):
         return "Modern Dark"
     elif idx == Theme.THEME_MODERN_DARK_TINY:
         return "Modern Dark (Tiny)"
+    elif idx == Theme.THEME_MODERN_LIGHT:
+        return "Modern Light"
     elif idx == Theme.THEME_CLASSIC_DARK:
         return "Classic Dark"
     elif idx == Theme.THEME_OOSTUDIO:
