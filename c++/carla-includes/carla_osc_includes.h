@@ -282,36 +282,38 @@ void osc_send_bridge_update(const CarlaOscData* const oscData, const char* const
 #endif
 
 static inline
-void osc_send_lv2_transfer_atom(const CarlaOscData* const oscData, const int32_t portIndex, const char* const atomBuf)
+void osc_send_lv2_transfer_atom(const CarlaOscData* const oscData, const int32_t portIndex, const char* const typeStr, const char* const atomBuf)
 {
     Q_ASSERT(oscData && oscData->path);
     Q_ASSERT(portIndex >= 0);
+    Q_ASSERT(typeStr);
     Q_ASSERT(atomBuf);
-    qDebug("osc_send_lv2_transfer_atom(path:\"%s\", %i, \"%s\")", oscData->path, portIndex, atomBuf);
+    qDebug("osc_send_lv2_transfer_atom(path:\"%s\", %i, \"%s\", \"%s\")", oscData->path, portIndex, typeStr, atomBuf);
 
     if (oscData->target)
     {
         char targetPath[strlen(oscData->path)+19];
         strcpy(targetPath, oscData->path);
         strcat(targetPath, "/lv2_atom_transfer");
-        lo_send(oscData->target, targetPath, "is", portIndex, atomBuf);
+        lo_send(oscData->target, targetPath, "iss", portIndex, typeStr, atomBuf);
     }
 }
 
 static inline
-void osc_send_lv2_transfer_event(const CarlaOscData* const oscData, const int32_t portIndex, const char* const atomBuf)
+void osc_send_lv2_transfer_event(const CarlaOscData* const oscData, const int32_t portIndex, const char* const typeStr, const char* const atomBuf)
 {
     Q_ASSERT(oscData && oscData->path);
     Q_ASSERT(portIndex >= 0);
+    Q_ASSERT(typeStr);
     Q_ASSERT(atomBuf);
-    qDebug("osc_send_lv2_transfer_event(path:\"%s\", %i, \"%s\")", oscData->path, portIndex, atomBuf);
+    qDebug("osc_send_lv2_transfer_event(path:\"%s\", %i, \"%s\", \"%s\")", oscData->path, portIndex, typeStr, atomBuf);
 
     if (oscData->target)
     {
         char targetPath[strlen(oscData->path)+20];
         strcpy(targetPath, oscData->path);
         strcat(targetPath, "/lv2_event_transfer");
-        lo_send(oscData->target, targetPath, "is", portIndex, atomBuf);
+        lo_send(oscData->target, targetPath, "iss", portIndex, typeStr, atomBuf);
     }
 }
 

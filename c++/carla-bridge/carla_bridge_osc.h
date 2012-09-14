@@ -140,20 +140,20 @@ public:
 #endif
 
 #ifdef BRIDGE_LV2
-    void sendOscLv2TransferAtom(const int32_t portIndex, const char* const atomBuf)
+    void sendOscLv2TransferAtom(const int32_t portIndex, const char* const typeStr, const char* const atomBuf)
     {
         Q_ASSERT(m_controlData.target);
 
         if (m_controlData.target)
-            osc_send_lv2_transfer_atom(&m_controlData, portIndex, atomBuf);
+            osc_send_lv2_transfer_atom(&m_controlData, portIndex, typeStr, atomBuf);
     }
 
-    void sendOscLv2TransferEvent(const int32_t portIndex, const char* const atomBuf)
+    void sendOscLv2TransferEvent(const int32_t portIndex, const char* const typeStr, const char* const atomBuf)
     {
         Q_ASSERT(m_controlData.target);
 
         if (m_controlData.target)
-            osc_send_lv2_transfer_event(&m_controlData, portIndex, atomBuf);
+            osc_send_lv2_transfer_event(&m_controlData, portIndex, typeStr, atomBuf);
     }
 #endif
 

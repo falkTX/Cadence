@@ -91,7 +91,9 @@ win64:   carla-bridge-win64.exe
 # --------------------------------------------------------------
 # ui_lv2-gtk2
 
-OBJS_UI_LV2_GTK2 = carla_bridge_ui-lv2__lv2-gtk2.o carla_bridge_toolkit-gtk2__lv2-gtk2.o carla_bridge_osc__lv2-gtk2.o ../carla-lilv/carla_lilv.a
+OBJS_UI_LV2_GTK2 = \
+	carla_bridge_ui-lv2__lv2-gtk2.o carla_bridge_toolkit-gtk2__lv2-gtk2.o carla_bridge_osc__lv2-gtk2.o \
+	../carla-lilv/carla_lilv.a ../carla-rtmempool/carla_rtmempool.a
 
 carla-bridge-lv2-gtk2: $(OBJS_UI_LV2_GTK2)
 	$(CXX) $^ $(LINK_UI_LV2_GTK2_FLAGS) -o $@ && $(STRIP) $@
@@ -108,7 +110,9 @@ carla_bridge_osc__lv2-gtk2.o: carla_bridge_osc.cpp
 # --------------------------------------------------------------
 # ui_lv2-gtk3
 
-OBJS_UI_LV2_GTK3 = carla_bridge_ui-lv2__lv2-gtk3.o carla_bridge_toolkit-gtk3__lv2-gtk3.o carla_bridge_osc__lv2-gtk3.o ../carla-lilv/carla_lilv.a
+OBJS_UI_LV2_GTK3 = \
+	carla_bridge_ui-lv2__lv2-gtk3.o carla_bridge_toolkit-gtk3__lv2-gtk3.o carla_bridge_osc__lv2-gtk3.o \
+	../carla-lilv/carla_lilv.a ../carla-rtmempool/carla_rtmempool.a
 
 carla-bridge-lv2-gtk3: $(OBJS_UI_LV2_GTK3)
 	$(CXX) $^ $(LINK_UI_LV2_GTK3_FLAGS) -o $@ && $(STRIP) $@
@@ -125,7 +129,9 @@ carla_bridge_osc__lv2-gtk3.o: carla_bridge_osc.cpp
 # --------------------------------------------------------------
 # ui_lv2-qt4
 
-OBJS_UI_LV2_QT4 = carla_bridge_ui-lv2__lv2-qt4.o carla_bridge_toolkit-qt4__lv2-qt4.o carla_bridge_osc__lv2-qt4.o ../carla-lilv/carla_lilv.a
+OBJS_UI_LV2_QT4 = \
+	carla_bridge_ui-lv2__lv2-qt4.o carla_bridge_toolkit-qt4__lv2-qt4.o carla_bridge_osc__lv2-qt4.o \
+	../carla-lilv/carla_lilv.a ../carla-rtmempool/carla_rtmempool.a
 
 carla-bridge-lv2-qt4: $(OBJS_UI_LV2_QT4)
 	$(CXX) $^ $(LINK_UI_LV2_QT4_FLAGS) -o $@ && $(STRIP) $@
@@ -142,7 +148,9 @@ carla_bridge_osc__lv2-qt4.o: carla_bridge_osc.cpp
 # --------------------------------------------------------------
 # ui_lv2-x11
 
-OBJS_UI_LV2_X11 = carla_bridge_ui-lv2__lv2-x11.o carla_bridge_toolkit-qt4__lv2-x11.o carla_bridge_osc__lv2-x11.o ../carla-lilv/carla_lilv.a
+OBJS_UI_LV2_X11 = \
+	carla_bridge_ui-lv2__lv2-x11.o carla_bridge_toolkit-qt4__lv2-x11.o carla_bridge_osc__lv2-x11.o \
+	../carla-lilv/carla_lilv.a ../carla-rtmempool/carla_rtmempool.a
 
 carla-bridge-lv2-x11: $(OBJS_UI_LV2_X11)
 	$(CXX) $^ $(LINK_UI_LV2_X11_FLAGS) -o $@ && $(STRIP) $@
@@ -159,7 +167,8 @@ carla_bridge_osc__lv2-x11.o: carla_bridge_osc.cpp
 # --------------------------------------------------------------
 # ui_vst-hwnd
 
-OBJS_UI_VST_HWND = carla_bridge_ui-vst__vst-hwnd.o carla_bridge_toolkit-qt4__vst-hwnd.o carla_bridge_osc__vst-hwnd.o
+OBJS_UI_VST_HWND = \
+	carla_bridge_ui-vst__vst-hwnd.o carla_bridge_toolkit-qt4__vst-hwnd.o carla_bridge_osc__vst-hwnd.o
 
 carla-bridge-vst-hwnd.exe: $(OBJS_UI_VST_HWND)
 	$(CXX) $^ $(LINK_UI_VST_HWND_FLAGS) -o $@ && $(STRIP) $@
@@ -176,7 +185,8 @@ carla_bridge_osc__vst-hwnd.o: carla_bridge_osc.cpp
 # --------------------------------------------------------------
 # ui_vst-x11
 
-OBJS_UI_VST_X11 = carla_bridge_ui-vst__vst-x11.o carla_bridge_toolkit-qt4__vst-x11.o carla_bridge_osc__vst-x11.o
+OBJS_UI_VST_X11 = \
+	carla_bridge_ui-vst__vst-x11.o carla_bridge_toolkit-qt4__vst-x11.o carla_bridge_osc__vst-x11.o
 
 carla-bridge-vst-x11: $(OBJS_UI_VST_X11)
 	$(CXX) $^ $(LINK_UI_VST_X11_FLAGS) -o $@ && $(STRIP) $@
@@ -196,7 +206,8 @@ carla_bridge_osc__vst-x11.o: carla_bridge_osc.cpp
 OBJS_POSIX32 = \
 	carla_bridge_plugin__posix32.o carla_bridge_osc__posix32.o carla_jackbridge__posix32.o \
 	carla_engine__posix32.o carla_engine_jack__posix32.o carla_shared__posix32.o carla_threads__posix32.o \
-	ladspa__posix32.o dssi__posix32.o lv2__posix32.o vst__posix32.o ../carla-lilv/carla_lilv_posix32.a
+	ladspa__posix32.o dssi__posix32.o lv2__posix32.o vst__posix32.o \
+	../carla-lilv/carla_lilv_posix32.a ../carla-rtmempool/carla_rtmempool_posix32.a
 
 carla-bridge-posix32: $(OBJS_POSIX32)
 	$(CXX) $^ $(POSIX_LINK_FLAGS) $(POSIX_32BIT_FLAGS) -o $@ && $(STRIP) $@
@@ -240,7 +251,8 @@ vst__posix32.o: ../carla-backend/vst.cpp
 OBJS_POSIX64 = \
 	carla_bridge_plugin__posix64.o carla_bridge_osc__posix64.o carla_jackbridge__posix64.o \
 	carla_engine__posix64.o carla_engine_jack__posix64.o carla_shared__posix64.o carla_threads__posix64.o \
-	ladspa__posix64.o dssi__posix64.o lv2__posix64.o vst__posix64.o ../carla-lilv/carla_lilv_posix64.a
+	ladspa__posix64.o dssi__posix64.o lv2__posix64.o vst__posix64.o \
+	../carla-lilv/carla_lilv_posix64.a ../carla-rtmempool/carla_rtmempool_posix64.a
 
 carla-bridge-posix64: $(OBJS_POSIX64)
 	$(CXX) $^ $(POSIX_LINK_FLAGS) $(POSIX_64BIT_FLAGS) -o $@ && $(STRIP) $@
@@ -284,7 +296,8 @@ vst__posix64.o: ../carla-backend/vst.cpp
 OBJS_WIN32 = \
 	carla_bridge_plugin__win32.o carla_bridge_osc__win32.o \
 	carla_engine__win32.o carla_engine_jack__win32.o carla_shared__win32.o carla_threads__win32.o \
-	ladspa__win32.o dssi__win32.o lv2__win32.o vst__win32.o ../carla-lilv/carla_lilv_win32.a
+	ladspa__win32.o dssi__win32.o lv2__win32.o vst__win32.o \
+	../carla-lilv/carla_lilv_win32.a ../carla-rtmempool/carla_rtmempool_win32.a
 
 carla-bridge-win32.exe: $(OBJS_WIN32) ../carla-jackbridge/libcarla-jackbridge-win32.dll
 	$(CXX) $(OBJS_WIN32) $(WIN_LINK_FLAGS) $(WIN_32BIT_FLAGS) -lcarla-jackbridge-win32 -o $@ && $(STRIP) $@
@@ -325,7 +338,8 @@ vst__win32.o: ../carla-backend/vst.cpp
 OBJS_WIN64 = \
 	carla_bridge_plugin__win64.o carla_bridge_osc__win64.o \
 	carla_engine__win64.o carla_engine_jack__win64.o carla_shared__win64.o carla_threads__win64.o \
-	ladspa__win64.o dssi__win64.o lv2__win64.o vst__win64.o ../carla-lilv/carla_lilv_win64.a
+	ladspa__win64.o dssi__win64.o lv2__win64.o vst__win64.o \
+	../carla-lilv/carla_lilv_win64.a ../carla-rtmempool/carla_rtmempool_win64.a
 
 carla-bridge-win64.exe: $(OBJS_WIN64) ../carla-jackbridge/libcarla-jackbridge-win64.dll
 	$(CXX) $(OBJS_WIN64) $(WIN_LINK_FLAGS) $(WIN_64BIT_FLAGS) -lcarla-jackbridge-win64 -o $@ && $(STRIP) $@
@@ -362,6 +376,9 @@ vst__win64.o: ../carla-backend/vst.cpp
 
 # --------------------------------------------------------------
 
+../carla-lilv/carla_lilv.a:
+	$(MAKE) -C ../carla-lilv
+
 ../carla-lilv/carla_lilv_posix32.a:
 	$(MAKE) -C ../carla-lilv posix32
 
@@ -373,6 +390,21 @@ vst__win64.o: ../carla-backend/vst.cpp
 
 ../carla-lilv/carla_lilv_win64.a:
 	$(MAKE) -C ../carla-lilv win64
+
+../carla-rtmempool/carla_rtmempool.a:
+	$(MAKE) -C ../carla-rtmempool
+
+../carla-rtmempool/carla_rtmempool_posix32.a:
+	$(MAKE) -C ../carla-rtmempool posix32
+
+../carla-rtmempool/carla_rtmempool_posix64.a:
+	$(MAKE) -C ../carla-rtmempool posix64
+
+../carla-rtmempool/carla_rtmempool_win32.a:
+	$(MAKE) -C ../carla-rtmempool win32
+
+../carla-rtmempool/carla_rtmempool_win64.a:
+	$(MAKE) -C ../carla-rtmempool win64
 
 ../carla-jackbridge/libcarla-jackbridge-win32.dll:
 	$(MAKE) -C ../carla-jackbridge win32
@@ -386,6 +418,6 @@ doc: carla_bridge.doxygen
 	doxygen $<
 
 clean:
-	rm -f *.o *.so *.exe
+	rm -f *.o *.dll *.so *.exe
 	rm -f carla-bridge-lv2-gtk2 carla-bridge-lv2-gtk3 carla-bridge-lv2-qt4 carla-bridge-lv2-x11 carla-bridge-vst-x11
 	rm -f carla-bridge-posix32 carla-bridge-posix64

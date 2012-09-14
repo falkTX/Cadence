@@ -77,6 +77,21 @@
 
 #define LV2_UI__makeResident  LV2_UI_PREFIX "makeResident"
 
+struct LV2_Atom_MidiEvent {
+    LV2_Atom_Event event;
+    uint8_t data[3];
+};
+
+struct LV2_Atom_Worker_Body {
+    uint32_t    size;
+    const void* data;
+};
+
+struct LV2_Atom_Worker {
+    LV2_Atom atom;
+    LV2_Atom_Worker_Body body;
+};
+
 class Lv2WorldClass : public Lilv::World
 {
 public:

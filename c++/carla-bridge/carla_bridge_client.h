@@ -258,16 +258,16 @@ public:
 #endif
 
 #ifdef BRIDGE_LV2
-    void sendOscLv2TransferAtom(const int32_t portIndex, const char* const atomBuf)
+    void sendOscLv2TransferAtom(const int32_t portIndex, const char* const typeStr, const char* const atomBuf)
     {
-        qDebug("CarlaClient::sendOscLv2TransferAtom(%i, \"%s\")", portIndex, atomBuf);
-        m_osc.sendOscLv2TransferAtom(portIndex, atomBuf);
+        qDebug("CarlaClient::sendOscLv2TransferAtom(%i, \"%s\", \"%s\")", portIndex, typeStr, atomBuf);
+        m_osc.sendOscLv2TransferAtom(portIndex, typeStr, atomBuf);
     }
 
-    void sendOscLv2TransferEvent(const int32_t portIndex, const char* const atomBuf)
+    void sendOscLv2TransferEvent(const int32_t portIndex, const char* const typeStr, const char* const atomBuf)
     {
-        qDebug("CarlaClient::sendOscLv2TransferEvent(%i, \"%s\")", portIndex, atomBuf);
-        m_osc.sendOscLv2TransferEvent(portIndex, atomBuf);
+        qDebug("CarlaClient::sendOscLv2TransferEvent(%i, \"%s\", \"%s\")", portIndex, typeStr, atomBuf);
+        m_osc.sendOscLv2TransferEvent(portIndex, typeStr, atomBuf);
     }
 #endif
 
