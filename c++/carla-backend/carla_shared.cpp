@@ -202,6 +202,8 @@ const char* OptionsType2str(const OptionsType type)
 {
     switch (type)
     {
+    case OPTION_PROCESS_NAME:
+        return "OPTION_PROCESS_NAME";
     case OPTION_PROCESS_MODE:
         return "OPTION_PROCESS_MODE";
     case OPTION_PROCESS_HIGH_PRECISION:
@@ -524,6 +526,9 @@ void setOption(const OptionsType option, const int value, const char* const valu
 
     switch (option)
     {
+    case OPTION_PROCESS_NAME:
+        carla_setprocname(valueStr);
+        break;
     case OPTION_PROCESS_MODE:
         if (value < PROCESS_MODE_SINGLE_CLIENT || value > PROCESS_MODE_CONTINUOUS_RACK)
             return qCritical("CarlaBackend::setOption(%s, %i, \"%s\") - invalid value", OptionsType2str(option), value, valueStr);

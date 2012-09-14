@@ -159,6 +159,13 @@ enum GuiType {
  */
 enum OptionsType {
     /*!
+     * Try to set the current process name.\n
+     *
+     * \note Not available on all platforms.
+     */
+    OPTION_PROCESS_NAME = 0,
+
+    /*!
      * Set the engine processing mode.\n
      * Default is PROCESS_MODE_MULTIPLE_CLIENTS.
      *

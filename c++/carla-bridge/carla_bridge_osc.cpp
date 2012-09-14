@@ -40,10 +40,10 @@ void osc_error_handler(const int num, const char* const msg, const char* const p
 
 // -----------------------------------------------------------------------
 
-CarlaOsc::CarlaOsc(CarlaClient* const client_, const char* const name)
+CarlaBridgeOsc::CarlaBridgeOsc(CarlaClient* const client_, const char* const name)
     : client(client_)
 {
-    qDebug("CarlaOsc::CarlaOsc(%p, \"%s\")", client, name);
+    qDebug("CarlaBridgeOsc::CarlaOsc(%p, \"%s\")", client, name);
     Q_ASSERT(client);
     Q_ASSERT(name);
 
@@ -57,17 +57,17 @@ CarlaOsc::CarlaOsc(CarlaClient* const client_, const char* const name)
     m_nameSize = strlen(m_name);
 }
 
-CarlaOsc::~CarlaOsc()
+CarlaBridgeOsc::~CarlaBridgeOsc()
 {
-    qDebug("CarlaOsc::~CarlaOsc()");
+    qDebug("CarlaBridgeOsc::~CarlaOsc()");
 
     if (m_name)
         free(m_name);
 }
 
-bool CarlaOsc::init(const char* const url)
+bool CarlaBridgeOsc::init(const char* const url)
 {
-    qDebug("CarlaOsc::init(\"%s\")", url);
+    qDebug("CarlaBridgeOsc::init(\"%s\")", url);
     Q_ASSERT(! m_serverPath);
     Q_ASSERT(! m_serverThread);
     Q_ASSERT(url);
@@ -83,7 +83,7 @@ bool CarlaOsc::init(const char* const url)
 
     if (! m_controlData.path)
     {
-        qCritical("CarlaOsc::init(\"%s\") - failed to init OSC", url);
+        qCritical("CarlaBridgeOsc::init(\"%s\") - failed to init OSC", url);
         return false;
     }
 
@@ -102,9 +102,9 @@ bool CarlaOsc::init(const char* const url)
     return true;
 }
 
-void CarlaOsc::close()
+void CarlaBridgeOsc::close()
 {
-    qDebug("CarlaOsc::close()");
+    qDebug("CarlaBridgeOsc::close()");
     Q_ASSERT(m_serverPath);
     Q_ASSERT(m_serverThread);
 
@@ -120,9 +120,9 @@ void CarlaOsc::close()
 
 // -----------------------------------------------------------------------
 
-int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg)
+int CarlaBridgeOsc::handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg)
 {
-    qDebug("CarlaOsc::handleMessage(\"%s\", %i, %p, \"%s\", %p)", path, argc, argv, types, msg);
+    qDebug("CarlaBridgeOsc::handleMessage(\"%s\", %i, %p, \"%s\", %p)", path, argc, argv, types, msg);
     Q_ASSERT(m_serverPath);
     Q_ASSERT(m_serverThread);
     Q_ASSERT(path);
@@ -130,7 +130,7 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
     // Check if message is for this client
     if ((! path) || strlen(path) <= m_nameSize || strncmp(path+1, m_name, m_nameSize) != 0)
     {
-        qWarning("CarlaOsc::handleMessage() - message not for this client: '%s' != '/%s/'", path, m_name);
+        qWarning("CarlaBridgeOsc::handleMessage() - message not for this client: '%s' != '/%s/'", path, m_name);
         return 1;
     }
 
@@ -174,13 +174,13 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
         return osc_set_parameter_midi_channel_handler(argv);
 #endif
 
-    qWarning("CarlaOsc::handleMessage(\"%s\", ...) - got unsupported OSC method '%s'", path, method);
+    qWarning("CarlaBridgeOsc::handleMessage(\"%s\", ...) - got unsupported OSC method '%s'", path, method);
     return 1;
 }
 
-int CarlaOsc::handleMsgConfigure(CARLA_BRIDGE_OSC_HANDLE_ARGS)
+int CarlaBridgeOsc::handleMsgConfigure(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 {
-    qDebug("CarlaOsc::handleMsgConfigure()");
+    qDebug("CarlaBridgeOsc::handleMsgConfigure()");
     CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(2, "ss");
 
     if (! client)
@@ -218,9 +218,9 @@ int CarlaOsc::handleMsgConfigure(CARLA_BRIDGE_OSC_HANDLE_ARGS)
     return 0;
 }
 
-int CarlaOsc::handleMsgControl(CARLA_BRIDGE_OSC_HANDLE_ARGS)
+int CarlaBridgeOsc::handleMsgControl(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 {
-    qDebug("CarlaOsc::handleMsgControl()");
+    qDebug("CarlaBridgeOsc::handleMsgControl()");
     CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(2, "if");
 
     if (! client)
@@ -233,9 +233,9 @@ int CarlaOsc::handleMsgControl(CARLA_BRIDGE_OSC_HANDLE_ARGS)
     return 0;
 }
 
-int CarlaOsc::handleMsgProgram(CARLA_BRIDGE_OSC_HANDLE_ARGS)
+int CarlaBridgeOsc::handleMsgProgram(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 {
-    qDebug("CarlaOsc::handleMsgProgram()");
+    qDebug("CarlaBridgeOsc::handleMsgProgram()");
     CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(1, "i");
 
     if (! client)
@@ -247,9 +247,9 @@ int CarlaOsc::handleMsgProgram(CARLA_BRIDGE_OSC_HANDLE_ARGS)
     return 0;
 }
 
-int CarlaOsc::handleMsgMidiProgram(CARLA_BRIDGE_OSC_HANDLE_ARGS)
+int CarlaBridgeOsc::handleMsgMidiProgram(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 {
-    qDebug("CarlaOsc::handleMsgMidiProgram()");
+    qDebug("CarlaBridgeOsc::handleMsgMidiProgram()");
 #ifdef BUILD_BRIDGE_PLUGIN
     CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(1, "i");
 #else
@@ -271,9 +271,9 @@ int CarlaOsc::handleMsgMidiProgram(CARLA_BRIDGE_OSC_HANDLE_ARGS)
     return 0;
 }
 
-int CarlaOsc::handleMsgMidi(CARLA_BRIDGE_OSC_HANDLE_ARGS)
+int CarlaBridgeOsc::handleMsgMidi(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 {
-    qDebug("CarlaOsc::handleMsgMidi()");
+    qDebug("CarlaBridgeOsc::handleMsgMidi()");
     CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(1, "m");
 
     if (! client)
@@ -304,9 +304,9 @@ int CarlaOsc::handleMsgMidi(CARLA_BRIDGE_OSC_HANDLE_ARGS)
     return 0;
 }
 
-int CarlaOsc::handleMsgShow()
+int CarlaBridgeOsc::handleMsgShow()
 {
-    qDebug("CarlaOsc::handleMsgShow()");
+    qDebug("CarlaBridgeOsc::handleMsgShow()");
 
     if (! client)
         return 1;
@@ -316,9 +316,9 @@ int CarlaOsc::handleMsgShow()
     return 0;
 }
 
-int CarlaOsc::handleMsgHide()
+int CarlaBridgeOsc::handleMsgHide()
 {
-    qDebug("CarlaOsc::handleMsgHide()");
+    qDebug("CarlaBridgeOsc::handleMsgHide()");
 
     if (! client)
         return 1;
@@ -328,9 +328,9 @@ int CarlaOsc::handleMsgHide()
     return 0;
 }
 
-int CarlaOsc::handleMsgQuit()
+int CarlaBridgeOsc::handleMsgQuit()
 {
-    qDebug("CarlaOsc::handleMsgQuit()");
+    qDebug("CarlaBridgeOsc::handleMsgQuit()");
 
     if (! client)
         return 1;

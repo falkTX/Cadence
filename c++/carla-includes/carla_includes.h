@@ -93,6 +93,22 @@
 #  endif
 #endif
 
+// carla_setprocname
+#ifdef Q_OS_LINUX
+#  include <sys/prctl.h>
+#  include <linux/prctl.h>
+static inline
+void carla_setprocname(const char* const name)
+{
+    prctl(PR_SET_NAME, name);
+}
+#else
+static inline
+void carla_setprocname(const char* const /*name*/)
+{
+}
+#endif
+
 static inline
 const char* bool2str(bool yesno)
 {

@@ -18,6 +18,8 @@
 #include "carla_backend_standalone.h"
 #include "carla_plugin.h"
 
+// -------------------------------------------------------------------------------------------------------------------
+
 // Single, standalone engine
 static CarlaBackend::CarlaEngine* carlaEngine = nullptr;
 static CarlaBackend::CallbackFunc carlaFunc = nullptr;

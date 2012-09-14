@@ -1223,7 +1223,8 @@ public:
 #ifndef BUILD_BRIDGE
                     if (gui.type == GUI_EXTERNAL_OSC)
                     {
-                        osc_send_lv2_transfer_event(&osc.data, nullptr, nullptr);
+                        QByteArray chunk((const char*)atom, sizeof(LV2_Atom) + atom->size);
+                        osc_send_lv2_transfer_event(&osc.data, portIndex, chunk.toBase64().constData());
                     }
                     else
 #endif

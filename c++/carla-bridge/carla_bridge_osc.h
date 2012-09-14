@@ -29,7 +29,7 @@
     /* check argument count */                                                                                              \
     if (argc != argcToCompare)                                                                                              \
     {                                                                                                                       \
-        qCritical("CarlaOsc::%s() - argument count mismatch: %i != %i", __FUNCTION__, argc, argcToCompare);                 \
+        qCritical("CarlaBridgeOsc::%s() - argument count mismatch: %i != %i", __FUNCTION__, argc, argcToCompare);           \
         return 1;                                                                                                           \
     }                                                                                                                       \
     if (argc > 0)                                                                                                           \
@@ -37,13 +37,13 @@
         /* check for nullness */                                                                                            \
         if (! (types && typesToCompare))                                                                                    \
         {                                                                                                                   \
-            qCritical("CarlaOsc::%s() - argument types are null", __FUNCTION__);                                            \
+            qCritical("CarlaBridgeOsc::%s() - argument types are null", __FUNCTION__);                                      \
             return 1;                                                                                                       \
         }                                                                                                                   \
         /* check argument types */                                                                                          \
         if (strcmp(types, typesToCompare) != 0)                                                                             \
         {                                                                                                                   \
-            qCritical("CarlaOsc::%s() - argument types mismatch: '%s' != '%s'", __FUNCTION__, types, typesToCompare);       \
+            qCritical("CarlaBridgeOsc::%s() - argument types mismatch: '%s' != '%s'", __FUNCTION__, types, typesToCompare); \
             return 1;                                                                                                       \
         }                                                                                                                   \
     }
@@ -57,11 +57,11 @@ CARLA_BRIDGE_START_NAMESPACE
  * @{
  */
 
-class CarlaOsc
+class CarlaBridgeOsc
 {
 public:
-    CarlaOsc(CarlaClient* const client, const char* const name);
-    ~CarlaOsc();
+    CarlaBridgeOsc(CarlaClient* const client, const char* const name);
+    ~CarlaBridgeOsc();
 
     bool init(const char* const url);
     void close();
@@ -140,20 +140,20 @@ public:
 #endif
 
 #ifdef BRIDGE_LV2
-    void sendOscLv2TransferAtom(const char* const type, const char* const value)
+    void sendOscLv2TransferAtom(const int32_t portIndex, const char* const atomBuf)
     {
         Q_ASSERT(m_controlData.target);
 
         if (m_controlData.target)
-            osc_send_lv2_transfer_atom(&m_controlData, type, value);
+            osc_send_lv2_transfer_atom(&m_controlData, portIndex, atomBuf);
     }
 
-    void sendOscLv2TransferEvent(const char* const type, const char* const value)
+    void sendOscLv2TransferEvent(const int32_t portIndex, const char* const atomBuf)
     {
         Q_ASSERT(m_controlData.target);
 
         if (m_controlData.target)
-            osc_send_lv2_transfer_event(&m_controlData, type, value);
+            osc_send_lv2_transfer_event(&m_controlData, portIndex, atomBuf);
     }
 #endif
 
@@ -191,7 +191,8 @@ private:
 
     static int osc_message_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg, void* const user_data)
     {
-        CarlaOsc* const _this_ = (CarlaOsc*)user_data;
+        Q_ASSERT(user_data);
+        CarlaBridgeOsc* const _this_ = (CarlaBridgeOsc*)user_data;
         return _this_->handleMessage(path, argc, argv, types, msg);
     }
 };

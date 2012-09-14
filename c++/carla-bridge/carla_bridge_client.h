@@ -171,7 +171,8 @@ public:
     virtual void setProgram(const uint32_t index) = 0;
 #ifdef BUILD_BRIDGE_PLUGIN
     virtual void setMidiProgram(const uint32_t index) = 0;
-#else
+#endif
+#ifdef BUILD_BRIDGE_UI
     virtual void setMidiProgram(const uint32_t bank, const uint32_t program) = 0;
 #endif
     virtual void noteOn(const uint8_t channel, const uint8_t note, const uint8_t velo) = 0;
@@ -257,16 +258,16 @@ public:
 #endif
 
 #ifdef BRIDGE_LV2
-    void sendOscLv2TransferAtom(const char* const type, const char* const value)
+    void sendOscLv2TransferAtom(const int32_t portIndex, const char* const atomBuf)
     {
-        qDebug("CarlaClient::sendOscLv2TransferAtom(\"%s\", \"%s\")", type, value);
-        m_osc.sendOscLv2TransferAtom(type, value);
+        qDebug("CarlaClient::sendOscLv2TransferAtom(%i, \"%s\")", portIndex, atomBuf);
+        m_osc.sendOscLv2TransferAtom(portIndex, atomBuf);
     }
 
-    void sendOscLv2TransferEvent(const char* const type, const char* const value)
+    void sendOscLv2TransferEvent(const int32_t portIndex, const char* const atomBuf)
     {
-        qDebug("CarlaClient::sendOscLv2TransferEvent(\"%s\", \"%s\")", type, value);
-        m_osc.sendOscLv2TransferEvent(type, value);
+        qDebug("CarlaClient::sendOscLv2TransferEvent(%i, \"%s\")", portIndex, atomBuf);
+        m_osc.sendOscLv2TransferEvent(portIndex, atomBuf);
     }
 #endif
 
@@ -316,7 +317,7 @@ protected:
     // ---------------------------------------------------------------------
 
 private:
-    CarlaOsc m_osc;
+    CarlaBridgeOsc m_osc;
     CarlaToolkit* const m_toolkit;
 
     struct {

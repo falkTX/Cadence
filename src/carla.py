@@ -2021,6 +2021,7 @@ if __name__ == '__main__':
 
     Carla.Host = Host(libPrefix)
     Carla.Host.set_callback_function(callback_function)
+    Carla.Host.set_option(OPTION_PROCESS_NAME, 0, "carla")
 
     # Set available drivers
     driverCount = Carla.Host.get_engine_driver_count()

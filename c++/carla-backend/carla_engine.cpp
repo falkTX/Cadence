@@ -111,6 +111,8 @@ bool CarlaEngine::init(const char* const clientName)
     m_oscData = m_osc.getControllerData();
 #endif
 
+    carla_setprocname(clientName);
+
     return true;
 }
 
