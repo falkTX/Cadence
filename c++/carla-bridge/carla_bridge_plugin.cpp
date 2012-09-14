@@ -540,7 +540,7 @@ public:
 #endif
     }
 
-    CarlaBackend::GuiDataHandle getWindowHandle() const
+    QDialog* getWindowHandle() const
     {
         return dialog;
     }

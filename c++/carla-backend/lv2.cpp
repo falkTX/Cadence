@@ -1201,7 +1201,11 @@ public:
 
     void idleGui()
     {
+#ifdef BUILD_BRIDGE
+        const bool haveUI = (gui.type != GUI_EXTERNAL_OSC && ui.handle && ui.descriptor);
+#else
         const bool haveUI = (gui.type == GUI_EXTERNAL_OSC && osc.data.target) || (ui.handle && ui.descriptor);
+#endif
 
         if (haveUI)
         {
