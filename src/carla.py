@@ -1799,12 +1799,11 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
     @pyqtSlot()
     def slot_file_open(self):
-        file_filter = self.tr("Carla Project File (*.carxp)")
-        filename = QFileDialog.getOpenFileName(self, self.tr("Open Carla Project File"),
-            self.m_savedSettings["Main/DefaultProjectFolder"], filter=file_filter)
+        fileFilter  = self.tr("Carla Project File (*.carxp)")
+        filenameTry = QFileDialog.getOpenFileName(self, self.tr("Open Carla Project File"), self.m_savedSettings["Main/DefaultProjectFolder"], filter=fileFilter)
 
-        if filename:
-            self.m_project_filename = filename
+        if filenameTry:
+            self.m_project_filename = filenameTry
             self.slot_remove_all()
             self.load_project()
             self.setWindowTitle("Carla - %s" % os.path.basename(self.m_project_filename))
@@ -1812,12 +1811,14 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
     @pyqtSlot()
     def slot_file_save(self, saveAs=False):
         if self.m_project_filename == None or saveAs:
-            file_filter = self.tr("Carla Project File (*.carxp)")
-            filename = QFileDialog.getSaveFileName(self, self.tr("Save Carla Project File"),
-                self.m_savedSettings["Main/DefaultProjectFolder"], filter=file_filter)
+            fileFilter  = self.tr("Carla Project File (*.carxp)")
+            filenameTry = QFileDialog.getSaveFileName(self, self.tr("Save Carla Project File"), self.m_savedSettings["Main/DefaultProjectFolder"], filter=fileFilter)
 
-            if filename:
-                self.m_project_filename = filename
+            if filenameTry:
+                if not filenameTry.endswith(".carxp"):
+                    filenameTry += ".carxp"
+
+                self.m_project_filename = filenameTry
                 self.save_project()
                 self.setWindowTitle("Carla - %s" % os.path.basename(self.m_project_filename))
 

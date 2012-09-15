@@ -1056,7 +1056,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
     @pyqtSlot()
     def slot_saveState(self):
         if self.m_pluginInfo['type'] == PLUGIN_LV2:
-            # FIXME - remove this
+            # TODO
             QMessageBox.warning(self, self.tr("Warning"), self.tr("LV2 Presets is not implemented yet"))
             return self.saveStateLV2()
 
@@ -1076,13 +1076,16 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
             filenameTry = QFileDialog.getSaveFileName(self, self.tr("Save Plugin State File"), filter=fileFilter)
 
             if filenameTry:
+                if not filenameTry.endswith(".carxs"):
+                    filenameTry += ".carxs"
+
                 self.m_currentStateFilename = filenameTry
                 self.saveState()
 
     @pyqtSlot()
     def slot_loadState(self):
         if self.m_pluginInfo['type'] == PLUGIN_LV2:
-            # FIXME - remove this
+            # TODO
             QMessageBox.warning(self, self.tr("Warning"), self.tr("LV2 Presets is not implemented yet"))
             return self.loadStateLV2()
 
