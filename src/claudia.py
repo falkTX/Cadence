@@ -476,7 +476,7 @@ class ClaudiaLauncherW(QDialog):
         QDialog.__init__(self, parent)
 
         self.launcher  = claudia_launcher.ClaudiaLauncher(self)
-        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Close, Qt.Horizontal, self)
 
         self.layoutR = QVBoxLayout(self)
         self.layoutR.addWidget(self.launcher)
@@ -498,7 +498,7 @@ class ClaudiaLauncherW(QDialog):
         self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
 
         self.connect(self.buttonBox.button(QDialogButtonBox.Ok), SIGNAL("clicked()"), SLOT("slot_addAppToLADISH()"))
-        self.connect(self.buttonBox.button(QDialogButtonBox.Cancel), SIGNAL("clicked()"), self, SLOT("reject()"))
+        self.connect(self.buttonBox.button(QDialogButtonBox.Close), SIGNAL("clicked()"), self, SLOT("reject()"))
 
     # ----------------------------------------
     # Callbacks
