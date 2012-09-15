@@ -822,8 +822,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.m_last_xruns    = None
         self.m_last_buffer_size = None
 
-        self.m_timer250  = None
-        self.m_timer1000 = self.startTimer(1000)
+        self.m_timer500  = None
+        self.m_timer2000 = self.startTimer(2000)
 
         self.DBusReconnect()
 
@@ -865,6 +865,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             self.systray.setActionEnabled("jack_start", False)
             self.systray.setActionEnabled("jack_stop", False)
             self.systray.setActionEnabled("jack_configure", False)
+
+        self.updateSystrayTooltip()
 
     def DBusSignalReceiver(self, *args, **kwds):
         if kwds['interface'] == "org.freedesktop.DBus" and kwds['path'] == "/org/freedesktop/DBus" and kwds['member'] == "NameOwnerChanged":
@@ -915,12 +917,12 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.label_jack_srate.setText("%i Hz" % DBus.jack.GetSampleRate())
         self.label_jack_latency.setText("%.1f ms" % DBus.jack.GetLatency())
 
-        self.m_timer250 = self.startTimer(250)
+        self.m_timer500 = self.startTimer(500)
 
     def jackStopped(self):
-        if self.m_timer250:
-            self.killTimer(self.m_timer250)
-            self.m_timer250 = None
+        if self.m_timer500:
+            self.killTimer(self.m_timer500)
+            self.m_timer500 = None
 
         self.m_last_dsp_load = None
         self.m_last_xruns    = None
@@ -957,7 +959,22 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.label_app_name.setText(name)
         self.label_app_comment.setText(comment)
 
+    def updateSystrayTooltip(self):
+        systrayText  = "<table>"
+        #systrayText += "<tr><td align='center' colspan='2'><h4>Cadence</h4></td></tr>"
+        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("JACK Status"), self.label_jack_status.text())
+        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Realtime"), self.label_jack_realtime.text())
+        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("DSP Load"), self.label_jack_dsp.text())
+        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Xruns"), self.label_jack_xruns.text())
+        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Buffer Size"), self.label_jack_bfsize.text())
+        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Sample Rate"), self.label_jack_srate.text())
+        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Latency"), self.label_jack_latency.text())
+        systrayText += "</table>"
+
+        self.systray.setToolTip(systrayText)
+
     def func_start_tool(self, tool):
+        # TODO - multiplatform
         os.system("%s &" % tool)
 
     def func_settings_changed(self, stype):
@@ -989,9 +1006,9 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             if ask != QMessageBox.Yes:
                 return
 
-        if self.m_timer250:
-            self.killTimer(self.m_timer250)
-            self.m_timer250 = None
+        if self.m_timer500:
+            self.killTimer(self.m_timer500)
+            self.m_timer500 = None
 
         ForceWaitDialog(self).exec_()
 
@@ -1477,20 +1494,26 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         #self.cb_pulse_autostart.setChecked(GlobalSettings.value("Pulse2JACK/AutoStart", havePulseAudio).toBool())
 
     def timerEvent(self, event):
-        if event.timerId() == self.m_timer250:
+        if event.timerId() == self.m_timer500:
             if DBus.jack and self.m_last_dsp_load != None:
                 next_dsp_load = DBus.jack.GetLoad()
                 next_xruns    = DBus.jack.GetXruns()
+                needUpdateTip = False
 
                 if self.m_last_dsp_load != next_dsp_load:
                     self.m_last_dsp_load = next_dsp_load
                     self.label_jack_dsp.setText("%.2f%%" % self.m_last_dsp_load)
+                    needUpdateTip = True
 
                 if self.m_last_xruns != next_xruns:
                     self.m_last_xruns = next_xruns
                     self.label_jack_xruns.setText(str(self.m_last_xruns))
+                    needUpdateTip = True
 
-        elif event.timerId() == self.m_timer1000:
+                if needUpdateTip:
+                    self.updateSystrayTooltip()
+
+        elif event.timerId() == self.m_timer2000:
             if DBus.jack and self.m_last_buffer_size != None:
                 next_buffer_size = DBus.jack.GetBufferSize()
 
