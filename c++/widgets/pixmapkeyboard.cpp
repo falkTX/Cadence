@@ -1,6 +1,6 @@
 /*
  * Pixmap Keyboard, a custom Qt4 widget
- * Copyright (C) 2011-2012 Filipe Coelho <falktx@gmail.com>
+ * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
