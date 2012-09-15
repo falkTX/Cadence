@@ -18,6 +18,8 @@
 #ifndef CARLA_BACKEND_H
 #define CARLA_BACKEND_H
 
+#include <cstdint>
+
 #include "carla_includes.h"
 
 #define CARLA_BACKEND_START_NAMESPACE namespace CarlaBackend {
