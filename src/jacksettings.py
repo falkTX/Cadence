@@ -597,7 +597,7 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
     def getAlsaDeviceList(self):
         alsa_dev_list = []
 
-        aplay_out = getoutput("aplay -l").split("\n")
+        aplay_out = getoutput("env LANG=C aplay -l").split("\n")
         for line in aplay_out:
             line = line.strip()
             if line.startswith("card "):
