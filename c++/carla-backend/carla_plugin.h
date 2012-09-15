@@ -1472,6 +1472,7 @@ public:
         }
 
         // Programs
+        if (prog.count > 0)
         {
 #ifdef BUILD_BRIDGE
             x_engine->osc_send_bridge_program_count(prog.count);
@@ -1491,6 +1492,7 @@ public:
         }
 
         // MIDI Programs
+        if (midiprog.count > 0)
         {
 #ifdef BUILD_BRIDGE
             x_engine->osc_send_bridge_midi_program_count(midiprog.count);

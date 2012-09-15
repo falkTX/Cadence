@@ -291,7 +291,6 @@ public:
     void handleCallback(const CarlaBackend::CallbackType action, const int value1, const int value2, const double value3)
     {
         qDebug("CarlaPluginClient::handleCallback(%s, %i, %i, %g)", CarlaBackend::CallbackType2str(action), value1, value2, value3);
-        Q_ASSERT(engine);
 
         if (! engine)
             return;

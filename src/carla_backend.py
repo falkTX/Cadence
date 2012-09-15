@@ -323,7 +323,7 @@ if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-win32.
     carla_discovery_win32 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-win32.exe")
 else:
     for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-discovery-wine32.exe")):
+        if os.path.exists(os.path.join(p, "carla-discovery-win32.exe")):
             carla_discovery_win32 = os.path.join(p, "carla-discovery-win32.exe")
             break
 
@@ -359,7 +359,7 @@ if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-win32.exe"))
     carla_bridge_win32 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-win32.exe")
 else:
     for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-bridge-wine32.exe")):
+        if os.path.exists(os.path.join(p, "carla-bridge-win32.exe")):
             carla_bridge_win32 = os.path.join(p, "carla-bridge-win32.exe")
             break
 
