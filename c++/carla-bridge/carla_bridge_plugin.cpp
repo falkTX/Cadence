@@ -26,6 +26,7 @@
 #include <QtGui/QApplication>
 #include <QtGui/QDialog>
 #include <QtGui/QVBoxLayout>
+#include <QtGui/QtEvents>
 
 #ifdef Q_OS_UNIX
 #include <signal.h>
@@ -400,6 +401,12 @@ public:
         msgTimer = 0;
     }
 
+    void hideHostGUI()
+    {
+        if (m_client)
+            m_client->handleCallback(CarlaBackend::CALLBACK_SHOW_GUI, 0, 0, 0.0);
+    }
+
 protected:
     void timerEvent(QTimerEvent* const event)
     {
@@ -428,6 +435,85 @@ private:
     CarlaPluginClient* m_client;
 };
 
+class BridgePluginGUI : public QDialog
+{
+public:
+    BridgePluginGUI(QWidget* const parent, BridgeApplication* const app, const char* const pluginName, const bool resizable)
+        : QDialog(parent),
+          m_app(app),
+          vbLayout(this)
+    {
+        m_firstShow = true;
+        m_resizable = resizable;
+
+        vbLayout.setContentsMargins(0, 0, 0, 0);
+        setLayout(&vbLayout);
+        setNewSize(50, 50);
+        setWindowTitle(QString("%1 (GUI)").arg(pluginName));
+
+#ifdef Q_OS_WIN
+        if (! resizable)
+            setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
+#endif
+    }
+
+    void setNewSize(int width, int height)
+    {
+        if (width < 30)
+            width = 30;
+        if (height < 30)
+            height = 30;
+
+        if (m_resizable)
+            resize(width, height);
+        else
+            setFixedSize(width, height);
+    }
+
+    void setVisible(const bool yesNo)
+    {
+        if (yesNo)
+        {
+            if (m_firstShow)
+            {
+                m_firstShow = false;
+                restoreGeometry(QByteArray());
+            }
+            else if (! m_geometry.isNull())
+                restoreGeometry(m_geometry);
+        }
+        else
+            m_geometry = saveGeometry();
+
+        QDialog::setVisible(yesNo);
+    }
+
+protected:
+    void hideEvent(QHideEvent* const event)
+    {
+        // FIXME
+        event->accept();
+        close();
+
+        m_app->hideHostGUI();
+    }
+
+    void done(int r)
+    {
+        QDialog::done(r);
+        close();
+    }
+
+private:
+    BridgeApplication* const m_app;
+
+    bool m_firstShow;
+    bool m_resizable;
+
+    QByteArray m_geometry;
+    QVBoxLayout vbLayout;
+};
+
 class CarlaToolkitPlugin : public CarlaToolkit
 {
 public:
@@ -436,8 +522,7 @@ public:
     {
         qDebug("CarlaToolkitPlugin::CarlaToolkitPlugin()");
         app = nullptr;
-        dialog = nullptr;
-        m_resizable = false;
+        gui = nullptr;
     }
 
     ~CarlaToolkitPlugin()
@@ -481,12 +566,12 @@ public:
         qDebug("CarlaToolkitPlugin::quit()");
         Q_ASSERT(app);
 
-        if (dialog)
+        if (gui)
         {
-            dialog->close();
+            gui->close();
 
-            delete dialog;
-            dialog = nullptr;
+            delete gui;
+            gui = nullptr;
         }
 
         if (app)
@@ -508,16 +593,16 @@ public:
         if (m_client)
             ((CarlaPluginClient*)m_client)->showGui(true);
 
-        if (dialog)
-            dialog->show();
+        if (gui)
+            gui->show();
     }
 
     void hide()
     {
         qDebug("CarlaToolkitPlugin::hide()");
 
-        if (dialog)
-            dialog->hide();
+        if (gui)
+            gui->hide();
 
         if (m_client)
             ((CarlaPluginClient*)m_client)->showGui(false);
@@ -526,55 +611,34 @@ public:
     void resize(int width, int height)
     {
         qDebug("CarlaToolkitPlugin::resize(%i, %i)", width, height);
-        Q_ASSERT(dialog);
+        Q_ASSERT(gui);
 
-        if (! dialog)
+        if (! gui)
             return;
 
-        if (m_resizable)
-            dialog->resize(width, height);
-        else
-            dialog->setFixedSize(width, height);
+        gui->setNewSize(width, height);
     }
 
     // ---------------------------------------------------------------------
 
-    void createWindow(const char* const pluginName, const bool createLayout, const bool resizable)
+    void createWindow(const char* const pluginName, const bool resizable)
     {
-        qDebug("CarlaToolkitPlugin::createWindow(%s, %s, %s)", pluginName, bool2str(createLayout), bool2str(resizable));
+        qDebug("CarlaToolkitPlugin::createWindow(%s, %s)", pluginName, bool2str(resizable));
         Q_ASSERT(pluginName);
 
-        m_resizable = resizable;
-
-        dialog = new QDialog(nullptr);
-        resize(10, 10);
-
-        if (createLayout)
-        {
-            QVBoxLayout* const layout = new QVBoxLayout(dialog);
-            dialog->setContentsMargins(0, 0, 0, 0);
-            dialog->setLayout(layout);
-        }
-
-        dialog->setWindowTitle(QString("%1 (GUI)").arg(pluginName));
-
-#ifdef Q_OS_WIN
-        if (! resizable)
-            dialog->setWindowFlags(dialog->windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
-#endif
+        gui = new BridgePluginGUI(nullptr, app, pluginName, resizable);
     }
 
     QDialog* getWindowHandle() const
     {
-        return dialog;
+        return gui;
     }
 
     // ---------------------------------------------------------------------
 
 private:
     BridgeApplication* app;
-    QDialog* dialog;
-    bool m_resizable;
+    BridgePluginGUI* gui;
 };
 
 CarlaToolkit* CarlaToolkit::createNew(const char* const)
@@ -674,7 +738,7 @@ int main(int argc, char* argv[])
 
         if (guiType == CarlaBackend::GUI_INTERNAL_QT4 || guiType == CarlaBackend::GUI_INTERNAL_COCOA || guiType == CarlaBackend::GUI_INTERNAL_HWND || guiType == CarlaBackend::GUI_INTERNAL_X11)
         {
-            toolkit.createWindow(plugin->name(), (guiType == CarlaBackend::GUI_INTERNAL_QT4), guiResizable);
+            toolkit.createWindow(plugin->name(), guiResizable);
             plugin->setGuiData(toolkit.getWindowHandle());
         }
 
