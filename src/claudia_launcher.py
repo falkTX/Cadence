@@ -307,7 +307,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             os.mkdir(os.path.join(tmplte_folder, "peaks"))
 
             tmplte_cmd  = binary
-            tmplte_cmd += " '%s'" % os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder
+            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder)
             tmplte_lvl  = "1"
 
         elif app == "ardour3":
@@ -330,7 +330,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             os.mkdir(os.path.join(tmplte_folder, "plugins"))
 
             tmplte_cmd  = binary
-            tmplte_cmd += " '%s'" % os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder
+            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder)
 
             if self.callback_isLadishRoom():
                 tmplte_lvl = "jacksession"
@@ -342,7 +342,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "CalfJackHost"), tmplte_file))
 
             tmplte_cmd  = binary
-            tmplte_cmd += " --load '%s'" % os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file
+            tmplte_cmd += " --load '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
             tmplte_lvl  = "1"
 
             #elif (app == "hydrogen"):
