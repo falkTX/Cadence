@@ -18,6 +18,12 @@
 #ifndef CARLA_INCLUDES_H
 #define CARLA_INCLUDES_H
 
+#ifdef __WINE__
+#  define Q_CORE_EXPORT
+#  define Q_GUI_EXPORT
+#  define QT_NO_STL
+#endif
+
 #include <QtCore/Qt>
 
 // TESTING - remove later
