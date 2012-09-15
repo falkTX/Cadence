@@ -162,7 +162,7 @@ src/resources_rc.py: resources/resources.qrc
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-CPP: carla-backend carla-bridge carla-discovery carla-lilv carla-rtmempool jackmeter xycontroller
+CPP: carla-backend carla-bridge carla-discovery jackmeter xycontroller
 
 carla-backend: carla-lilv carla-rtmempool
 	$(MAKE) -C c++/carla-backend
@@ -170,7 +170,7 @@ carla-backend: carla-lilv carla-rtmempool
 carla-bridge: carla-lilv carla-rtmempool
 	$(MAKE) -C c++/carla-bridge
 
-carla-discovery:
+carla-discovery: carla-lilv
 	$(MAKE) -C c++/carla-discovery NATIVE=1
 
 carla-lilv:
@@ -184,6 +184,17 @@ jackmeter:
 
 xycontroller:
 	$(MAKE) -C c++/xycontroller
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CPP_debug:
+	$(MAKE) -f Makefile.dbg -C c++/carla-backend
+	$(MAKE) -f Makefile.dbg -C c++/carla-bridge
+	$(MAKE) -f Makefile.dbg -C c++/carla-discovery NATIVE=1
+
+doc:
+	$(MAKE) doc -C c++/carla-backend
+	$(MAKE) doc -C c++/carla-bridge
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -223,10 +234,6 @@ clean:
 	$(MAKE) clean -C c++/jackmeter
 	$(MAKE) clean -C c++/xycontroller
 	rm -f *~ src/*~ src/*.pyc src/ui_*.py src/resources_rc.py
-
-doc:
-	$(MAKE) doc -C c++/carla-backend
-	$(MAKE) doc -C c++/carla-bridge
 
 install:
 	# Create directories

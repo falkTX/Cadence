@@ -57,7 +57,7 @@ carla_rtmempool_win32.a: $(OBJS_win32)
 	$(AR) rs $@ $^
 
 rtmempool_win32.o: rtmempool.c
-	$(CC) $< $(BUILD_FLAGS) $(32BIT_FLAGS) -c -o $@
+	$(CC) $< $(BUILD_FLAGS) -DPTW32_STATIC_LIB $(32BIT_FLAGS) -c -o $@
 
 # --------------------------------------------------------------
 
@@ -67,7 +67,7 @@ carla_rtmempool_win64.a: $(OBJS_win64)
 	$(AR) rs $@ $^
 
 rtmempool_win64.o: rtmempool.c
-	$(CC) $< $(BUILD_FLAGS) $(64BIT_FLAGS) -c -o $@
+	$(CC) $< $(BUILD_FLAGS) -DPTW32_STATIC_LIB $(64BIT_FLAGS) -c -o $@
 
 # --------------------------------------------------------------
 
