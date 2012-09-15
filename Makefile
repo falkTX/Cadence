@@ -162,12 +162,12 @@ src/resources_rc.py: resources/resources.qrc
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-CPP: carla-backend carla-bridge carla-discovery carla-lilv jackmeter xycontroller
+CPP: carla-backend carla-bridge carla-discovery carla-lilv carla-rtmempool jackmeter xycontroller
 
-carla-backend: carla-lilv
+carla-backend: carla-lilv carla-rtmempool
 	$(MAKE) -C c++/carla-backend
 
-carla-bridge: carla-lilv
+carla-bridge: carla-lilv carla-rtmempool
 	$(MAKE) -C c++/carla-bridge
 
 carla-discovery:
@@ -175,6 +175,9 @@ carla-discovery:
 
 carla-lilv:
 	$(MAKE) -C c++/carla-lilv
+
+carla-rtmempool:
+	$(MAKE) -C c++/carla-rtmempool
 
 jackmeter:
 	$(MAKE) -C c++/jackmeter
@@ -216,6 +219,7 @@ clean:
 	$(MAKE) clean -C c++/carla-discovery
 	$(MAKE) clean -C c++/carla-lilv
 	$(MAKE) clean -C c++/carla-jackbridge
+	$(MAKE) clean -C c++/carla-rtmempool
 	$(MAKE) clean -C c++/jackmeter
 	$(MAKE) clean -C c++/xycontroller
 	rm -f *~ src/*~ src/*.pyc src/ui_*.py src/resources_rc.py
