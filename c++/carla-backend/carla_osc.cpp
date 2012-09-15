@@ -224,6 +224,8 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
             return plugin->setOscBridgeInfo(PluginBridgeProgramInfo, argc, argv, types);
         if (strcmp(method, "/bridge_midi_program_info") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeMidiProgramInfo, argc, argv, types);
+        if (strcmp(method, "/bridge_configure") == 0)
+            return plugin->setOscBridgeInfo(PluginBridgeConfigure, argc, argv, types);
         if (strcmp(method, "/bridge_set_parameter_value") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeSetParameterValue, argc, argv, types);
         if (strcmp(method, "/bridge_set_default_value") == 0)
@@ -321,20 +323,6 @@ int CarlaOsc::handle_configure(CARLA_OSC_HANDLE_ARGS2)
 
     const char* const key   = (const char*)&argv[0]->s;
     const char* const value = (const char*)&argv[1]->s;
-
-//    if (plugin->hints() & PLUGIN_IS_BRIDGE)
-//    {
-//        if (strcmp(key, CARLA_BRIDGE_MSG_HIDE_GUI) == 0)
-//        {
-//            engine->callback(CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
-//            return 0;
-//        }
-
-//        if (strcmp(key, CARLA_BRIDGE_MSG_SAVED) == 0)
-//        {
-//            return plugin->setOscBridgeInfo(PluginBridgeSaved, nullptr);
-//        }
-//    }
 
     plugin->setCustomData(CUSTOM_DATA_STRING, key, value, false);
 

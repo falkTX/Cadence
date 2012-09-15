@@ -17,7 +17,9 @@
 
 #include "carla_plugin.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QStringList>
 #include <QtCore/QTextStream>
 
 #define CARLA_BRIDGE_CHECK_OSC_TYPES(/* argc, types, */ argcToCompare, typesToCompare)                                    \
@@ -533,6 +535,28 @@ public:
             break;
         }
 
+        case PluginBridgeConfigure:
+        {
+            CARLA_BRIDGE_CHECK_OSC_TYPES(2, "ss");
+
+            const char* const key   = (const char*)&argv[0]->s;
+            const char* const value = (const char*)&argv[1]->s;
+
+            Q_ASSERT(key);
+            Q_ASSERT(value);
+
+            if (strcmp(key, CARLA_BRIDGE_MSG_HIDE_GUI) == 0)
+            {
+                x_engine->callback(CALLBACK_SHOW_GUI, m_id, 0, 0, 0.0);
+            }
+            else if (strcmp(key, CARLA_BRIDGE_MSG_SAVED) == 0)
+            {
+                m_saved = true;
+            }
+
+            break;
+        }
+
         case PluginBridgeSetParameterValue:
         {
             CARLA_BRIDGE_CHECK_OSC_TYPES(2, "id");
@@ -551,7 +575,6 @@ public:
 
             const int32_t index = argv[0]->i;
             const double  value = argv[1]->d;
-
 
             Q_ASSERT(index >= 0 && index < (int32_t)param.count);
 
@@ -585,35 +608,73 @@ public:
 
         case PluginBridgeSetCustomData:
         {
-//            const char* stype = (const char*)&argv[0]->s;
-//            const char* key   = (const char*)&argv[1]->s;
-//            const char* value = (const char*)&argv[2]->s;
+            CARLA_BRIDGE_CHECK_OSC_TYPES(3, "sss");
 
-//            setCustomData(getCustomDataStringType(stype), key, value, false);
+            const char* const stype = (const char*)&argv[0]->s;
+            const char* const key   = (const char*)&argv[1]->s;
+            const char* const value = (const char*)&argv[2]->s;
+
+            Q_ASSERT(stype);
+            Q_ASSERT(key);
+            Q_ASSERT(value);
+
+            setCustomData(getCustomDataStringType(stype), key, value, false);
 
             break;
         }
 
         case PluginBridgeSetChunkData:
         {
-//            const char* const filePath = (const char*)&argv[0]->s;
-//            QFile file(filePath);
+            CARLA_BRIDGE_CHECK_OSC_TYPES(1, "s");
 
-//            if (file.open(QIODevice::ReadOnly))
-//            {
-//                info.chunk = file.readAll();
-//                file.remove();
-//            }
+            const char* const chunkFileChar = (const char*)&argv[0]->s;
+
+            Q_ASSERT(chunkFileChar);
+
+            QString chunkFileStr(chunkFileChar);
+
+#ifndef Q_OS_WIN
+            // Using Wine, fix temp dir
+            if (m_binary == BINARY_WIN32 || m_binary == BINARY_WIN64)
+            {
+                // Get WINEPREFIX
+                QString wineDir;
+                if (const char* const WINEPREFIX = getenv("WINEPREFIX"))
+                    wineDir = QString(WINEPREFIX);
+                else
+                    wineDir = QDir::homePath() + "/.wine";
+
+                QStringList chunkFileStrSplit1 = chunkFileStr.split(":/");
+                QStringList chunkFileStrSplit2 = chunkFileStrSplit1.at(1).split("\\");
+
+                QString wineDrive = chunkFileStrSplit1.at(0).toLower();
+                QString wineTMP   = chunkFileStrSplit2.at(0);
+                QString baseName  = chunkFileStrSplit2.at(1);
+
+                chunkFileStr  = wineDir;
+                chunkFileStr += "/drive_";
+                chunkFileStr += wineDrive;
+                chunkFileStr += "/";
+                chunkFileStr += wineTMP;
+                chunkFileStr += "/";
+                chunkFileStr += baseName;
+                chunkFileStr  = QDir::toNativeSeparators(chunkFileStr);
+            }
+#endif
+
+            QFile chunkFile(chunkFileStr);
+
+            if (chunkFile.open(QIODevice::ReadOnly))
+            {
+                info.chunk = chunkFile.readAll();
+                chunkFile.remove();
+            }
 
             break;
         }
 
         case PluginBridgeUpdateNow:
             m_initiated = true;
-            break;
-
-        case PluginBridgeSaved:
-            m_saved = true;
             break;
         }
 

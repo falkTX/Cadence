@@ -30,7 +30,8 @@ INCLUDEPATH = .. \
     ../../carla-includes
 
 LIBS    = \
-    ../../carla-lilv/carla_lilv.a
+    ../../carla-lilv/carla_lilv.a \
+    ../../carla-rtmempool/carla_rtmempool.a
 
 DEFINES  = DEBUG
 DEFINES += BUILD_BRIDGE BUILD_BRIDGE_UI BRIDGE_LV2 BRIDGE_LV2_QT4

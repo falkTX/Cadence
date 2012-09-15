@@ -4,7 +4,7 @@
 # Created by falkTX
 #
 
-CXX     ?= g++
+CXX ?= g++
 
 BASE_FLAGS   = -O0 -g
 
@@ -415,6 +415,6 @@ doc: carla_bridge.doxygen
 	doxygen $<
 
 clean:
-	rm -f *.o *.dll *.so *.exe
+	rm -f *.o *.so *.exe
 	rm -f carla-bridge-lv2-gtk2 carla-bridge-lv2-gtk3 carla-bridge-lv2-qt4 carla-bridge-lv2-x11 carla-bridge-vst-x11
 	rm -f carla-bridge-posix32 carla-bridge-posix64

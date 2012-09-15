@@ -20,6 +20,7 @@
 #include "carla_bridge_client.h"
 #include "carla_plugin.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QTimerEvent>
 #include <QtGui/QApplication>
@@ -187,29 +188,34 @@ public:
     {
         qDebug("CarlaPluginClient::saveNow()");
         Q_ASSERT(plugin);
+        Q_ASSERT(engine);
 
-        if (! plugin)
+        if (! (plugin && engine))
             return;
 
         plugin->prepareForSave();
 
-#if 0
-        for (uint32_t i=0; i < CARLA_PLUGIN->customDataCount(); i++)
+        for (uint32_t i=0; i < plugin->customDataCount(); i++)
         {
-            const CustomData* const cdata = CARLA_PLUGIN->customData(i);
-            osc_send_bridge_custom_data(customdatatype2str(cdata->type), cdata->key, cdata->value);
+            const CarlaBackend::CustomData* const cdata = plugin->customData(i);
+            engine->osc_send_bridge_set_custom_data(CarlaBackend::getCustomDataTypeString(cdata->type), cdata->key, cdata->value);
         }
 
-        if (CARLA_PLUGIN->hints() & PLUGIN_USES_CHUNKS)
+        if (plugin->hints() & CarlaBackend::PLUGIN_USES_CHUNKS)
         {
             void* data = nullptr;
-            int32_t dataSize = CARLA_PLUGIN->chunkData(&data);
+            int32_t dataSize = plugin->chunkData(&data);
 
             if (data && dataSize >= 4)
             {
                 QString filePath;
-                filePath += "/tmp/.CarlaChunk_";
-                filePath += CARLA_PLUGIN->name();
+                filePath = QDir::tempPath();
+#ifdef Q_OS_WIN
+                filePath += "\\.CarlaChunk_";
+#else
+                filePath += "/.CarlaChunk_";
+#endif
+                filePath += plugin->name();
 
                 QFile file(filePath);
 
@@ -218,13 +224,12 @@ public:
                     QByteArray chunk((const char*)data, dataSize);
                     file.write(chunk);
                     file.close();
-                    osc_send_bridge_chunk_data(filePath.toUtf8().constData());
+                    engine->osc_send_bridge_set_chunk_data(filePath.toUtf8().constData());
                 }
             }
         }
 
-        osc_send_configure(CARLA_BRIDGE_MSG_SAVED, "");
-#endif
+        engine->osc_send_bridge_configure(CarlaBackend::CARLA_BRIDGE_MSG_SAVED, "");
     }
 
     void setCustomData(const char* const type, const char* const key, const char* const value)
@@ -267,7 +272,6 @@ public:
             return;
 
         plugin->idleGui();
-        //plugin->showGui(true);
     }
 
     void showGui(const bool yesNo)
@@ -287,42 +291,49 @@ public:
     void handleCallback(const CarlaBackend::CallbackType action, const int value1, const int value2, const double value3)
     {
         qDebug("CarlaPluginClient::handleCallback(%s, %i, %i, %g)", CarlaBackend::CallbackType2str(action), value1, value2, value3);
+        Q_ASSERT(engine);
 
-        // FIXME - those OSC calls should be on the engine
+        if (! engine)
+            return;
+
         switch (action)
         {
         case CarlaBackend::CALLBACK_PARAMETER_VALUE_CHANGED:
             engine->osc_send_bridge_set_parameter_value(value1, value3);
             break;
+
         case CarlaBackend::CALLBACK_PROGRAM_CHANGED:
             engine->osc_send_bridge_set_program(value1);
             break;
+
         case CarlaBackend::CALLBACK_MIDI_PROGRAM_CHANGED:
             engine->osc_send_bridge_set_midi_program(value1);
             break;
+
         case CarlaBackend::CALLBACK_NOTE_ON:
         {
             //uint8_t mdata[4] = { 0, MIDI_STATUS_NOTE_ON, (uint8_t)value1, (uint8_t)value2 };
             //osc_send_midi(mdata);
             break;
         }
+
         case CarlaBackend::CALLBACK_NOTE_OFF:
         {
             //uint8_t mdata[4] = { 0, MIDI_STATUS_NOTE_OFF, (uint8_t)value1, (uint8_t)value2 };
             //osc_send_midi(mdata);
             break;
         }
+
         case CarlaBackend::CALLBACK_SHOW_GUI:
-            //if (value1 == 0)
-                //sendOscConfigure(CarlaBackend::CARLA_BRIDGE_MSG_HIDE_GUI, "");
-                //quequeMessage(MESSAGE_QUIT, 0, 0, 0.0);
+            if (value1 == 0)
+                engine->osc_send_bridge_configure(CarlaBackend::CARLA_BRIDGE_MSG_HIDE_GUI, "");
             break;
+
         case CarlaBackend::CALLBACK_RESIZE_GUI:
-            qDebug("resize callback-------------------------------------------------------------------------------");
-            quequeMessage(MESSAGE_RESIZE_GUI, value1, value2, 0.0);
-            //if (m_toolkit)
-            //    m_toolkit->resize(value1, value2);
+            if (m_toolkit)
+                m_toolkit->resize(value1, value2);
             break;
+
         case CarlaBackend::CALLBACK_RELOAD_PARAMETERS:
             //if (CARLA_PLUGIN)
             //{
@@ -332,14 +343,14 @@ public:
             //    }
             //}
             break;
+
         case CarlaBackend::CALLBACK_QUIT:
             //quequeMessage(MESSAGE_QUIT, 0, 0, 0.0);
             break;
+
         default:
             break;
         }
-        Q_UNUSED(value1);
-        Q_UNUSED(value2);
         Q_UNUSED(value3);
     }
 
@@ -382,6 +393,14 @@ public:
         QApplication::exec();
     }
 
+    void killMsgTimer()
+    {
+        Q_ASSERT(msgTimer != 0);
+
+        killTimer(msgTimer);
+        msgTimer = 0;
+    }
+
 protected:
     void timerEvent(QTimerEvent* const event)
     {
@@ -395,7 +414,10 @@ protected:
                 m_client->idle();
 
                 if (! m_client->runMessages())
-                    killTimer(msgTimer);
+                {
+                    msgTimer = 0;
+                    return;
+                }
             }
         }
 
@@ -449,6 +471,7 @@ public:
         {
             m_client->sendOscUpdate();
             m_client->sendOscBridgeUpdate();
+            app->setQuitOnLastWindowClosed(false);
         }
 
         app->exec((CarlaPluginClient*)client);
@@ -469,6 +492,8 @@ public:
 
         if (app)
         {
+            app->killMsgTimer();
+
             if (! app->closingDown())
                 app->quit();
 
@@ -492,11 +517,11 @@ public:
     {
         qDebug("CarlaToolkitPlugin::hide()");
 
+        if (dialog)
+            dialog->hide();
+
         if (m_client)
             ((CarlaPluginClient*)m_client)->showGui(false);
-
-        if (dialog)
-            dialog->show();
     }
 
     void resize(int width, int height)
@@ -674,15 +699,18 @@ int main(int argc, char* argv[])
     engine.removeAllPlugins();
     engine.close();
 
-    // Close OSC
     if (useOsc)
     {
+        // Close OSC
         client.sendOscExiting();
         client.oscClose();
+        // toolkit can't be closed manually, only by host
     }
-
-    // Close toolkit
-    toolkit.quit();
+    else
+    {
+        // Close toolkit
+        toolkit.quit();
+    }
 
     return ret;
 }

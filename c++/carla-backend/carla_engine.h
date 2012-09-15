@@ -109,7 +109,7 @@ struct CarlaTimeInfoBBT {
     float  beat_type;
     double ticks_per_beat;
     double beats_per_minute;
-    
+
     CarlaTimeInfoBBT()
         : bar(0),
           beat(0),
@@ -279,14 +279,15 @@ public:
     void osc_send_bridge_parameter_ranges(const int32_t index, const double def, const double min, const double max, const double step, const double stepSmall, const double stepLarge);
     void osc_send_bridge_program_info(const int32_t index, const char* const name);
     void osc_send_bridge_midi_program_info(const int32_t index, const int32_t bank, const int32_t program, const char* const label);
+    void osc_send_bridge_configure(const char* const key, const char* const value);
     void osc_send_bridge_set_parameter_value(const int32_t index, const double value);
     void osc_send_bridge_set_default_value(const int32_t index, const double value);
     void osc_send_bridge_set_program(const int32_t index);
     void osc_send_bridge_set_midi_program(const int32_t index);
+    void osc_send_bridge_set_custom_data(const char* const stype, const char* const key, const char* const value);
+    void osc_send_bridge_set_chunk_data(const char* const chunkFile);
     void osc_send_bridge_set_input_peak_value(const int32_t portId, const double value);
     void osc_send_bridge_set_output_peak_value(const int32_t portId, const double value);
-    //void osc_send_bridge_custom_data(const char* const stype, const char* const key, const char* const value);
-    //void osc_send_bridge_chunk_data(const char* const stringData);
 #else
     void osc_send_control_add_plugin(const int32_t pluginId, const char* const pluginName);
     void osc_send_control_remove_plugin(const int32_t pluginId);

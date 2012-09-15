@@ -49,12 +49,6 @@ CARLA_BACKEND_START_NAMESPACE
 const unsigned short MAX_MIDI_EVENTS = 512;
 const unsigned short MAX_POST_EVENTS = 152;
 
-const char* const CARLA_BRIDGE_MSG_HIDE_GUI   = "CarlaBridgeHideGUI";   //!< Plugin -> Host call, tells host GUI is now hidden
-const char* const CARLA_BRIDGE_MSG_SAVED      = "CarlaBridgeSaved";     //!< Plugin -> Host call, tells host state is saved
-const char* const CARLA_BRIDGE_MSG_SAVE_NOW   = "CarlaBridgeSaveNow";   //!< Host -> Plugin call, tells plugin to save state now
-const char* const CARLA_BRIDGE_MSG_SET_CHUNK  = "CarlaBridgeSetChunk";  //!< Host -> Plugin call, tells plugin to set chunk in file \a value
-const char* const CARLA_BRIDGE_MSG_SET_CUSTOM = "CarlaBridgeSetCustom"; //!< Host -> Plugin call, tells plugin to set a custom data set using \a value ("type·key·rvalue").\n If \a type is 'chunk' or 'binary' \a rvalue refers to chunk file.
-
 #ifndef BUILD_BRIDGE
 enum PluginBridgeInfoType {
     PluginBridgeAudioCount,
@@ -68,14 +62,14 @@ enum PluginBridgeInfoType {
     PluginBridgeParameterRanges,
     PluginBridgeProgramInfo,
     PluginBridgeMidiProgramInfo,
+    PluginBridgeConfigure,
     PluginBridgeSetParameterValue,
     PluginBridgeSetDefaultValue,
     PluginBridgeSetProgram,
     PluginBridgeSetMidiProgram,
     PluginBridgeSetCustomData,
     PluginBridgeSetChunkData,
-    PluginBridgeUpdateNow,
-    PluginBridgeSaved
+    PluginBridgeUpdateNow
 };
 #endif
 

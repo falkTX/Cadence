@@ -79,6 +79,19 @@ const unsigned int PARAMETER_USES_CUSTOM_TEXT = 0x80; //!< Parameter uses custom
 /**@}*/
 
 /*!
+ * @defgroup BridgeMessages Bridge Messages
+ *
+ * Various bridge related messages, used as configure(<message>, value).
+ * @{
+ */
+const char* const CARLA_BRIDGE_MSG_HIDE_GUI   = "CarlaBridgeHideGUI";   //!< Plugin -> Host call, tells host GUI is now hidden
+const char* const CARLA_BRIDGE_MSG_SAVED      = "CarlaBridgeSaved";     //!< Plugin -> Host call, tells host state is saved
+const char* const CARLA_BRIDGE_MSG_SAVE_NOW   = "CarlaBridgeSaveNow";   //!< Host -> Plugin call, tells plugin to save state now
+const char* const CARLA_BRIDGE_MSG_SET_CHUNK  = "CarlaBridgeSetChunk";  //!< Host -> Plugin call, tells plugin to set chunk in file \a value
+const char* const CARLA_BRIDGE_MSG_SET_CUSTOM = "CarlaBridgeSetCustom"; //!< Host -> Plugin call, tells plugin to set a custom data set using \a value ("type·key·rvalue").\n If \a type is 'chunk' or 'binary' \a rvalue refers to chunk file.
+/**@}*/
+
+/*!
  * The binary type of a plugin.
  */
 enum BinaryType {

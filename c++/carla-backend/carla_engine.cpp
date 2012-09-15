@@ -1685,6 +1685,22 @@ void CarlaEngine::osc_send_bridge_midi_program_info(const int32_t index, const i
     }
 }
 
+void CarlaEngine::osc_send_bridge_configure(const char* const key, const char* const value)
+{
+    qDebug("CarlaEngine::osc_send_bridge_configure(\"%s\", \"%s\")", key, value);
+    Q_ASSERT(m_oscData);
+    Q_ASSERT(key);
+    Q_ASSERT(value);
+
+    if (m_oscData && m_oscData->target)
+    {
+        char target_path[strlen(m_oscData->path)+18];
+        strcpy(target_path, m_oscData->path);
+        strcat(target_path, "/bridge_configure");
+        lo_send(m_oscData->target, target_path, "ss", key, value);
+    }
+}
+
 void CarlaEngine::osc_send_bridge_set_parameter_value(const int32_t index, const double value)
 {
     qDebug("CarlaEngine::osc_send_bridge_set_parameter_value(%i, %g)", index, value);
@@ -1738,6 +1754,34 @@ void CarlaEngine::osc_send_bridge_set_midi_program(const int32_t index)
         strcpy(target_path, m_oscData->path);
         strcat(target_path, "/bridge_set_midi_program");
         lo_send(m_oscData->target, target_path, "i", index);
+    }
+}
+
+void CarlaEngine::osc_send_bridge_set_custom_data(const char* const stype, const char* const key, const char* const value)
+{
+    qDebug("CarlaEngine::osc_send_bridge_set_custom_data(\"%s\", \"%s\", \"%s\")", stype, key, value);
+    Q_ASSERT(m_oscData);
+
+    if (m_oscData && m_oscData->target)
+    {
+        char target_path[strlen(m_oscData->path)+24];
+        strcpy(target_path, m_oscData->path);
+        strcat(target_path, "/bridge_set_custom_data");
+        lo_send(m_oscData->target, target_path, "sss", stype, key, value);
+    }
+}
+
+void CarlaEngine::osc_send_bridge_set_chunk_data(const char* const chunkFile)
+{
+    qDebug("CarlaEngine::osc_send_bridge_set_chunk_data(\"%s\")", chunkFile);
+    Q_ASSERT(m_oscData);
+
+    if (m_oscData && m_oscData->target)
+    {
+        char target_path[strlen(m_oscData->path)+23];
+        strcpy(target_path, m_oscData->path);
+        strcat(target_path, "/bridge_set_chunk_data");
+        lo_send(m_oscData->target, target_path, "s", chunkFile);
     }
 }
 

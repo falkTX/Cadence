@@ -30,6 +30,11 @@ struct CarlaOscData {
     const char* path;
     lo_address source;
     lo_address target;
+
+    CarlaOscData()
+        : path(nullptr),
+          source(nullptr),
+          target(nullptr) {}
 };
 
 static inline

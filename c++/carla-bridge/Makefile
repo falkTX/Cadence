@@ -4,8 +4,8 @@
 # Created by falkTX
 #
 
-CXX     ?= g++
-STRIP   ?= strip
+CXX   ?= g++
+STRIP ?= strip
 
 BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -mfpmath=sse -Wall
 
@@ -416,6 +416,6 @@ doc: carla_bridge.doxygen
 	doxygen $<
 
 clean:
-	rm -f *.o *.dll *.so *.exe
+	rm -f *.o *.so *.exe
 	rm -f carla-bridge-lv2-gtk2 carla-bridge-lv2-gtk3 carla-bridge-lv2-qt4 carla-bridge-lv2-x11 carla-bridge-vst-x11
 	rm -f carla-bridge-posix32 carla-bridge-posix64

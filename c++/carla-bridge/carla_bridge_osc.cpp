@@ -19,10 +19,6 @@
 #include "carla_bridge_client.h"
 #include "carla_midi.h"
 
-#ifdef BUILD_BRIDGE_PLUGIN
-#include "carla_plugin.h" // FIXME - put msg defines somewhere else
-#endif
-
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 

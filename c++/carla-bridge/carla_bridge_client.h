@@ -328,6 +328,8 @@ private:
 #ifdef BUILD_BRIDGE_UI
     char* m_filename;
     void* m_lib;
+#else
+    friend class CarlaPluginClient;
 #endif
 };
 
