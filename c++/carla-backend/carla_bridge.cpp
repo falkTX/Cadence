@@ -733,7 +733,7 @@ public:
 
     void setCustomData(const CustomDataType type, const char* const key, const char* const value, const bool sendGui)
     {
-        Q_ASSERT(type != customDataNull);
+        Q_ASSERT(type != CUSTOM_DATA_INVALID);
         Q_ASSERT(key);
         Q_ASSERT(value);
 
