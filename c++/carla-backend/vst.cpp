@@ -1719,11 +1719,17 @@ public:
                self = nullptr;
         }
 
+#ifdef DEBUG
+        if (self)
+            Q_ASSERT(self->effect == effect);
+#endif
+
         intptr_t ret = 0;
 
         switch (opcode)
         {
         case audioMasterAutomate:
+            Q_ASSERT(self);
             if (self)
                 self->handleAudioMasterAutomate(index, opt);
             else
@@ -1739,6 +1745,7 @@ public:
             break;
 
         case audioMasterIdle:
+            Q_ASSERT(effect);
             if (effect)
                 effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
             else
@@ -1753,6 +1760,7 @@ public:
 
         case audioMasterWantMidi:
             // Deprecated in VST SDK 2.4
+            Q_ASSERT(self);
             if (self)
                 self->handleAudioMasterWantMidi();
             else
@@ -1761,6 +1769,7 @@ public:
 #endif
 
         case audioMasterGetTime:
+            Q_ASSERT(self);
             if (self)
             {
                 ret = (intptr_t)self->handleAudioMasterGetTime();
@@ -1787,6 +1796,7 @@ public:
             break;
 
         case audioMasterProcessEvents:
+            Q_ASSERT(self && ptr);
             if (self)
             {
                 if (ptr)
@@ -1804,6 +1814,7 @@ public:
             break;
 
         case audioMasterTempoAt:
+            Q_ASSERT(self);
             // Deprecated in VST SDK 2.4
             if (self)
                 ret = self->handleAudioMasterTempoAt();
@@ -1829,6 +1840,7 @@ public:
 #endif
 
         case audioMasterIOChanged:
+            Q_ASSERT(self);
             if (self)
                 ret = self->handleAudioMasterIOChanged();
             else
@@ -1837,6 +1849,7 @@ public:
 
         case audioMasterNeedIdle:
             // Deprecated in VST SDK 2.4
+            Q_ASSERT(self);
             if (self)
                 self->handleAudioMasterNeedIdle();
             else
@@ -1844,6 +1857,7 @@ public:
             break;
 
         case audioMasterSizeWindow:
+            Q_ASSERT(self);
             if (self)
             {
                 if (index > 0 && value > 0)
@@ -1856,6 +1870,7 @@ public:
             break;
 
         case audioMasterGetSampleRate:
+            Q_ASSERT(self);
             if (self)
                 ret = self->handleAudioMasterGetSampleRate();
             else
@@ -1866,6 +1881,7 @@ public:
             break;
 
         case audioMasterGetBlockSize:
+            Q_ASSERT(self);
             if (self)
                 ret = self->handleAudioMasterGetBlockSize();
             else
@@ -1900,6 +1916,7 @@ public:
 #endif
 
         case audioMasterGetCurrentProcessLevel:
+            Q_ASSERT(self);
             if (self)
                 ret = self->handleAudioMasterGetCurrentProcessLevel();
             else
@@ -1937,6 +1954,7 @@ public:
 #endif
 
         case audioMasterGetVendorString:
+            Q_ASSERT(ptr);
             if (ptr)
                 strcpy((char*)ptr, "Cadence");
             else
@@ -1944,6 +1962,7 @@ public:
             break;
 
         case audioMasterGetProductString:
+            Q_ASSERT(ptr);
             if (ptr)
                 strcpy((char*)ptr, "Carla");
             else
@@ -1965,6 +1984,7 @@ public:
 #endif
 
         case audioMasterCanDo:
+            Q_ASSERT(ptr);
             if (ptr)
                 ret = hostCanDo((const char*)ptr);
             else
@@ -1988,6 +2008,7 @@ public:
             break;
 
         case audioMasterUpdateDisplay:
+            Q_ASSERT(self && effect);
             if (self)
                 self->handleAudioMasterUpdateDisplay();
             else
