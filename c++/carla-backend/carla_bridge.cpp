@@ -261,6 +261,10 @@ public:
             const int32_t aOuts  = argv[1]->i;
             const int32_t aTotal = argv[2]->i;
 
+            Q_ASSERT(aIns >= 0);
+            Q_ASSERT(aOuts >= 0);
+            Q_ASSERT(aIns + aOuts == aTotal);
+
             info.aIns  = aIns;
             info.aOuts = aOuts;
 
@@ -276,6 +280,10 @@ public:
             const int32_t mOuts  = argv[1]->i;
             const int32_t mTotal = argv[2]->i;
 
+            Q_ASSERT(mIns >= 0);
+            Q_ASSERT(mOuts >= 0);
+            Q_ASSERT(mIns + mOuts == mTotal);
+
             info.mIns  = mIns;
             info.mOuts = mOuts;
 
@@ -290,6 +298,10 @@ public:
             const int32_t pIns   = argv[0]->i;
             const int32_t pOuts  = argv[1]->i;
             const int32_t pTotal = argv[2]->i;
+
+            Q_ASSERT(pIns >= 0);
+            Q_ASSERT(pOuts >= 0);
+            Q_ASSERT(pIns + pOuts <= pTotal);
 
             // delete old data
             if (param.count > 0)
@@ -326,7 +338,9 @@ public:
 
             const int32_t count = argv[0]->i;
 
-            // Delete old programs
+            Q_ASSERT(count >= 0);
+
+            // delete old programs
             if (prog.count > 0)
             {
                 for (uint32_t i=0; i < prog.count; i++)
@@ -338,18 +352,18 @@ public:
                 delete[] prog.names;
             }
 
-            prog.count = 0;
-            prog.names = nullptr;
-
-            // Query new programs
             prog.count = count;
 
+            // create new if needed
             if (prog.count > 0)
+            {
                 prog.names = new const char* [prog.count];
 
-            // Update names (NULL)
-            for (uint32_t i=0; i < prog.count; i++)
-                prog.names[i] = nullptr;
+                for (uint32_t i=0; i < prog.count; i++)
+                    prog.names[i] = nullptr;
+            }
+            else
+                prog.names = nullptr;
 
             break;
         }
@@ -360,7 +374,7 @@ public:
 
             const int32_t count = argv[0]->i;
 
-            // Delete old programs
+            // delete old programs
             if (midiprog.count > 0)
             {
                 for (uint32_t i=0; i < midiprog.count; i++)
@@ -372,14 +386,13 @@ public:
                 delete[] midiprog.data;
             }
 
-            midiprog.count = 0;
-            midiprog.data  = nullptr;
-
-            // Query new programs
+            // create new if needed
             midiprog.count = count;
 
             if (midiprog.count > 0)
                 midiprog.data = new midi_program_t [midiprog.count];
+            else
+                midiprog.data = nullptr;
 
             break;
         }
@@ -394,8 +407,10 @@ public:
             const char* const label = (const char*)&argv[3]->s;
             const char* const maker = (const char*)&argv[4]->s;
             const char* const copyright = (const char*)&argv[5]->s;
-            const int64_t uniqueId      = argv[6]->i;
+            const int64_t uniqueId      = argv[6]->h;
 
+            Q_ASSERT(category >= 0);
+            Q_ASSERT(hints >= 0);
             Q_ASSERT(name);
             Q_ASSERT(label);
             Q_ASSERT(maker);
@@ -449,6 +464,11 @@ public:
             const int32_t cc      = argv[5]->i;
 
             Q_ASSERT(index >= 0 && index < (int32_t)param.count);
+            Q_ASSERT(type >= 0);
+            Q_ASSERT(rindex >= 0);
+            Q_ASSERT(hints >= 0);
+            Q_ASSERT(channel >= 0 && channel < 16);
+            Q_ASSERT(cc >= -1);
 
             if (index >= 0 && index < (int32_t)param.count)
             {
@@ -476,6 +496,9 @@ public:
             const double stepLarge = argv[6]->d;
 
             Q_ASSERT(index >= 0 && index < (int32_t)param.count);
+            Q_ASSERT(min < max);
+            Q_ASSERT(def > min);
+            Q_ASSERT(def < max);
 
             if (index >= 0 && index < (int32_t)param.count)
             {
@@ -498,6 +521,7 @@ public:
             const int32_t index    = argv[0]->i;
             const char* const name = (const char*)&argv[1]->s;
 
+            Q_ASSERT(index >= 0 && index < (int32_t)prog.count);
             Q_ASSERT(name);
 
             if (index >= 0 && index < (int32_t)prog.count)
@@ -520,6 +544,9 @@ public:
             const int32_t program  = argv[2]->i;
             const char* const name = (const char*)&argv[3]->s;
 
+            Q_ASSERT(index >= 0 && index < (int32_t)midiprog.count);
+            Q_ASSERT(bank >= 0);
+            Q_ASSERT(program >= 0 && program < 128);
             Q_ASSERT(name);
 
             if (index >= 0 && index < (int32_t)midiprog.count)
@@ -545,7 +572,12 @@ public:
             Q_ASSERT(key);
             Q_ASSERT(value);
 
-            if (strcmp(key, CARLA_BRIDGE_MSG_HIDE_GUI) == 0)
+            if (! (key && value))
+            {
+                // invalid
+                pass();
+            }
+            else if (strcmp(key, CARLA_BRIDGE_MSG_HIDE_GUI) == 0)
             {
                 x_engine->callback(CALLBACK_SHOW_GUI, m_id, 0, 0, 0.0);
             }
@@ -563,6 +595,8 @@ public:
 
             const int32_t index = argv[0]->i;
             const double  value = argv[1]->d;
+
+            Q_ASSERT(index != PARAMETER_NULL);
 
             setParameterValueByRIndex(index, value, false, true, true);
 
@@ -590,6 +624,8 @@ public:
 
             const int32_t index = argv[0]->i;
 
+            Q_ASSERT(index < (int32_t)prog.count);
+
             setProgram(index, false, true, true, true);
 
             break;
@@ -600,6 +636,8 @@ public:
             CARLA_BRIDGE_CHECK_OSC_TYPES(1, "i");
 
             const int32_t index = argv[0]->i;
+
+            Q_ASSERT(index < (int32_t)midiprog.count);
 
             setMidiProgram(index, false, true, true, true);
 
@@ -695,13 +733,15 @@ public:
 
     void setCustomData(const CustomDataType type, const char* const key, const char* const value, const bool sendGui)
     {
+        Q_ASSERT(type != customDataNull);
         Q_ASSERT(key);
         Q_ASSERT(value);
 
         if (sendGui)
         {
+            // TODO - if type is chunk|binary, store it in a file and send path instead
             QString cData;
-            cData += getCustomDataTypeString(type);
+            cData  = getCustomDataTypeString(type);
             cData += "·";
             cData += key;
             cData += "·";

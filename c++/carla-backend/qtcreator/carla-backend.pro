@@ -6,7 +6,7 @@ CONFIG     = debug link_pkgconfig qt warn_on plugin shared
 PKGCONFIG  = liblo
 PKGCONFIG += jack
 PKGCONFIG += alsa libpulse-simple
-PKGCONFIG += fluidsynth linuxsampler
+#PKGCONFIG += fluidsynth linuxsampler
 PKGCONFIG += suil-0
 
 TARGET   = carla_backend
@@ -29,7 +29,6 @@ SOURCES = \
     ../vst.cpp \
     ../fluidsynth.cpp \
     ../linuxsampler.cpp \
-    ../rtmempool/rtmempool.c \
     ../../carla-jackbridge/carla_jackbridge.cpp
 
 HEADERS = \
@@ -58,14 +57,18 @@ INCLUDEPATH = .. \
     ../../carla-jackbridge \
     ../../carla-includes
 
+LIBS     =  -ldl \
+    ../../carla-lilv/carla_lilv.a \
+    ../../carla-rtmempool/carla_rtmempool.a
+
 DEFINES  = QTCREATOR_TEST
 DEFINES += DEBUG # NDEBUG
 DEFINES += CARLA_ENGINE_JACK
 DEFINES += CARLA_ENGINE_RTAUDIO HAVE_GETTIMEOFDAY __LINUX_ALSA__ __LINUX_ALSASEQ__ __LINUX_PULSE__ __RTAUDIO_DEBUG__ __RTMIDI_DEBUG__
 DEFINES += CARLA_ENGINE_LV2
 DEFINES += HAVE_SUIL
-DEFINES += WANT_FLUIDSYNTH WANT_LINUXSAMPLER
-LIBS     = ../../carla-lilv/carla_lilv.a -ldl
+#DEFINES += WANT_FLUIDSYNTH WANT_LINUXSAMPLER
+
 #LIBS    += -L../../carla-jackbridge -lcarla-jackbridge-native
 
 INCLUDEPATH += ../rtaudio-4.0.11
