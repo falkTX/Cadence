@@ -109,9 +109,9 @@ bool CarlaEngine::init(const char* const clientName)
 #ifndef BUILD_BRIDGE
     m_osc.init(clientName);
     m_oscData = m_osc.getControllerData();
-#endif
 
     carla_setprocname(clientName);
+#endif
 
     return true;
 }
