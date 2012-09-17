@@ -1209,7 +1209,7 @@ void CarlaEngine::osc_send_control_remove_plugin(const int32_t pluginId)
 
 void CarlaEngine::osc_send_control_set_plugin_data(const int32_t pluginId, const int32_t type, const int32_t category, const int32_t hints, const char* const realName, const char* const label, const char* const maker, const char* const copyright, const int64_t uniqueId)
 {
-    qDebug("CarlaEngine::osc_send_control_set_plugin_data(%i, %i, %i, %i, \"%s\", \"%s\", \"%s\", \"%s\", %li)", pluginId, type, category, hints, realName, label, maker, copyright, uniqueId);
+    qDebug("CarlaEngine::osc_send_control_set_plugin_data(%i, %i, %i, %i, \"%s\", \"%s\", \"%s\", \"%s\", " P_INT64 ")", pluginId, type, category, hints, realName, label, maker, copyright, uniqueId);
     Q_ASSERT(m_oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(type != PLUGIN_NONE);
@@ -1597,7 +1597,7 @@ void CarlaEngine::osc_send_bridge_midi_program_count(const int32_t count)
 
 void CarlaEngine::osc_send_bridge_plugin_info(const int32_t category, const int32_t hints, const char* const name, const char* const label, const char* const maker, const char* const copyright, const int64_t uniqueId)
 {
-    qDebug("CarlaEngine::osc_send_bridge_plugin_info(%i, %i, \"%s\", \"%s\", \"%s\", \"%s\", %li)", category, hints, name, label, maker, copyright, uniqueId);
+    qDebug("CarlaEngine::osc_send_bridge_plugin_info(%i, %i, \"%s\", \"%s\", \"%s\", \"%s\", " P_INT64 ")", category, hints, name, label, maker, copyright, uniqueId);
     Q_ASSERT(m_oscData);
     Q_ASSERT(name);
     Q_ASSERT(label);
