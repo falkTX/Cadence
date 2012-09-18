@@ -95,36 +95,36 @@ private:
 
     int handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg);
 
-    int handle_register(const int argc, const lo_arg* const* const argv, const char* const types, const lo_address source);
-    int handle_unregister();
+    int handleMsgRegister(const int argc, const lo_arg* const* const argv, const char* const types, const lo_address source);
+    int handleMsgUnregister();
 
-    int handle_update(CARLA_OSC_HANDLE_ARGS2, const lo_address source);
-    int handle_configure(CARLA_OSC_HANDLE_ARGS2);
-    int handle_control(CARLA_OSC_HANDLE_ARGS2);
-    int handle_program(CARLA_OSC_HANDLE_ARGS2);
-    int handle_midi(CARLA_OSC_HANDLE_ARGS2);
-    int handle_exiting(CARLA_OSC_HANDLE_ARGS1);
+    int handleMsgUpdate(CARLA_OSC_HANDLE_ARGS2, const lo_address source);
+    int handleMsgConfigure(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgControl(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgProgram(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgMidi(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgExiting(CARLA_OSC_HANDLE_ARGS1);
 
-    int handle_set_active(CARLA_OSC_HANDLE_ARGS2);
-    int handle_set_drywet(CARLA_OSC_HANDLE_ARGS2);
-    int handle_set_volume(CARLA_OSC_HANDLE_ARGS2);
-    int handle_set_balance_left(CARLA_OSC_HANDLE_ARGS2);
-    int handle_set_balance_right(CARLA_OSC_HANDLE_ARGS2);
-    int handle_set_parameter_value(CARLA_OSC_HANDLE_ARGS2);
-    int handle_set_parameter_midi_cc(CARLA_OSC_HANDLE_ARGS2);
-    int handle_set_parameter_midi_channel(CARLA_OSC_HANDLE_ARGS2);
-    int handle_set_program(CARLA_OSC_HANDLE_ARGS2);
-    int handle_set_midi_program(CARLA_OSC_HANDLE_ARGS2);
-    int handle_note_on(CARLA_OSC_HANDLE_ARGS2);
-    int handle_note_off(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgSetActive(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgSetDryWet(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgSetVolume(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgSetBalanceLeft(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgSetBalanceRight(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgSetParameterValue(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgSetParameterMidiCC(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgSetParameterMidiChannel(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgSetProgram(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgSetMidiProgram(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgNoteOn(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgNoteOff(CARLA_OSC_HANDLE_ARGS2);
 
 #ifdef WANT_LV2
-    int handle_lv2_atom_transfer(CARLA_OSC_HANDLE_ARGS2);
-    int handle_lv2_event_transfer(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgLv2AtomTransfer(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgLv2EventTransfer(CARLA_OSC_HANDLE_ARGS2);
 #endif
 
-    int handle_bridge_set_input_peak_value(CARLA_OSC_HANDLE_ARGS2);
-    int handle_bridge_set_output_peak_value(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgBridgeSetInputPeakValue(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgBridgeSetOutputPeakValue(CARLA_OSC_HANDLE_ARGS2);
 };
 
 CARLA_BACKEND_END_NAMESPACE

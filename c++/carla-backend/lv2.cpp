@@ -4417,9 +4417,9 @@ private:
 
 // -------------------------------------------------------------------------------------------------------------------
 
-int CarlaOsc::handle_lv2_atom_transfer(CARLA_OSC_HANDLE_ARGS2)
+int CarlaOsc::handleMsgLv2AtomTransfer(CARLA_OSC_HANDLE_ARGS2)
 {
-    qDebug("CarlaOsc::handle_lv2_atom_transfer()");
+    qDebug("CarlaOsc::handleMsgLv2AtomTransfer()");
     CARLA_OSC_CHECK_OSC_TYPES(3, "iss");
 
     const int32_t portIndex   = argv[0]->i;
@@ -4438,9 +4438,9 @@ int CarlaOsc::handle_lv2_atom_transfer(CARLA_OSC_HANDLE_ARGS2)
     return 0;
 }
 
-int CarlaOsc::handle_lv2_event_transfer(CARLA_OSC_HANDLE_ARGS2)
+int CarlaOsc::handleMsgLv2EventTransfer(CARLA_OSC_HANDLE_ARGS2)
 {
-    qDebug("CarlaOsc::handle_lv2_event_transfer()");
+    qDebug("CarlaOsc::handleMsgLv2EventTransfer()");
     CARLA_OSC_CHECK_OSC_TYPES(3, "iss");
 
     const int32_t portIndex   = argv[0]->i;
