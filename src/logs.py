@@ -104,6 +104,7 @@ class LogsReadThread(QThread):
     def __init__(self, parent):
         QThread.__init__(self, parent)
 
+        self.m_closeNow  = False
         self.m_purgeLogs = False
 
         # -------------------------------------------------------------
@@ -141,6 +142,9 @@ class LogsReadThread(QThread):
             self.log_ladish_stream = QTextStream(self.log_ladish_file)
             self.log_ladish_stream.setCodec("UTF-8")
 
+    def closeNow(self):
+        self.m_closeNow = True
+
     def purgeLogs(self):
         self.m_purgeLogs = True
 
@@ -148,7 +152,7 @@ class LogsReadThread(QThread):
         # -------------------------------------------------------------
         # Read logs and set text in main thread
 
-        while self.isRunning():
+        while not self.m_closeNow:
             if self.m_purgeLogs:
                 if self.LOG_FILE_JACK:
                     self.log_jack_stream.flush()
@@ -351,7 +355,12 @@ class LogsW(QDialog, ui_logs.Ui_LogsW):
         self.pte_ladish.clear()
 
     def closeEvent(self, event):
-        self.m_readThread.quit()
+        if self.m_readThread.isRunning():
+            self.m_readThread.closeNow()
+
+            if not self.m_readThread.wait(2000):
+                self.m_readThread.terminate()
+
         QDialog.closeEvent(self, event)
 
     def done(self, r):
