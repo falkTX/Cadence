@@ -73,12 +73,7 @@ void CarlaCheckThread::run()
     while (engine->isRunning() && ! m_stopNow)
     {
         const ScopedLocker m(this);
-
-#ifdef BUILD_BRIDGE
-        oscControllerRegisted = true;
-#else
         oscControllerRegisted = engine->isOscControllerRegisted();
-#endif
 
         for (unsigned short i=0; i < maxPluginNumber; i++)
         {

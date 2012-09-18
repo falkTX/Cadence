@@ -57,7 +57,9 @@ public:
     virtual void hide() = 0;
     virtual void resize(int width, int height) = 0;
 
+#if BUILD_BRIDGE_UI
     static CarlaToolkit* createNew(const char* const title);
+#endif
 
 protected:
     char* m_title;

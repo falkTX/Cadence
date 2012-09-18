@@ -28,8 +28,8 @@ CarlaEngine::CarlaEngine()
     : m_checkThread(this),
 #ifndef BUILD_BRIDGE
       m_osc(this),
-      m_oscData(nullptr),
 #endif
+      m_oscData(nullptr),
       m_callback(nullptr),
 #ifdef Q_COMPILER_INITIALIZER_LISTS
       m_callbackPtr(nullptr),
@@ -529,12 +529,16 @@ void CarlaEngine::midiUnlock()
 // -----------------------------------------------------------------------
 // OSC Stuff
 
-#ifndef BUILD_BRIDGE
 bool CarlaEngine::isOscControllerRegisted() const
 {
+#ifndef BUILD_BRIDGE
     return m_osc.isControllerRegistered();
+#else
+    return bool(m_oscData);
+#endif
 }
 
+#ifndef BUILD_BRIDGE
 const char* CarlaEngine::getOscServerPath() const
 {
     return m_osc.getServerPath();

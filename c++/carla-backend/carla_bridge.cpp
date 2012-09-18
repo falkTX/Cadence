@@ -497,8 +497,8 @@ public:
 
             Q_ASSERT(index >= 0 && index < (int32_t)param.count);
             Q_ASSERT(min < max);
-            Q_ASSERT(def > min);
-            Q_ASSERT(def < max);
+            Q_ASSERT(def >= min);
+            Q_ASSERT(def <= max);
 
             if (index >= 0 && index < (int32_t)param.count)
             {

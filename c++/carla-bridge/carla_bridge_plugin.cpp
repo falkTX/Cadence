@@ -32,22 +32,21 @@
 #include <signal.h>
 #endif
 
-static int    qargc = 0;
-static char** qargv = nullptr;
-
-bool qcloseNow = false;
+static int    qargc     = 0;
+static char** qargv     = nullptr;
+static bool   qCloseNow = false;
 
 #if defined(Q_OS_UNIX)
 void closeSignalHandler(int)
 {
-    qcloseNow = true;
+    qCloseNow = true;
 }
 #elif defined(Q_OS_WIN)
 BOOL WINAPI closeSignalHandler(DWORD dwCtrlType)
 {
     if (dwCtrlType == CTRL_C_EVENT)
     {
-        qcloseNow = true;
+        qCloseNow = true;
         return TRUE;
     }
 
@@ -77,29 +76,273 @@ void initSignalHandler()
 CARLA_BRIDGE_START_NAMESPACE
 
 // -------------------------------------------------------------------------
-// client
 
-class CarlaPluginClient : public CarlaClient
+class BridgePluginGUI : public QDialog
 {
 public:
-    CarlaPluginClient(CarlaToolkit* const toolkit)
-        : CarlaClient(toolkit)
+    class Callback
     {
-        engine = nullptr;
-        plugin = nullptr;
+    public:
+        virtual ~Callback() {}
+        virtual void guiClosedCallback() = 0;
+    };
+
+    BridgePluginGUI(QWidget* const parent, Callback* const callback_, const char* const pluginName, const bool resizable)
+        : QDialog(parent),
+          callback(callback_)
+    {
+        qDebug("BridgePluginGUI::BridgePluginGUI(%p, %p, \"%s\", %s", parent, callback, pluginName, bool2str(resizable));
+        Q_ASSERT(callback);
+        Q_ASSERT(pluginName);
+
+        m_firstShow = true;
+        m_resizable = resizable;
+
+        vbLayout = new QVBoxLayout(this);
+        vbLayout->setContentsMargins(0, 0, 0, 0);
+        setLayout(vbLayout);
+
+        container = new GuiContainer(this);
+        vbLayout->addWidget(container);
+
+        setNewSize(50, 50);
+        setWindowTitle(QString("%1 (GUI)").arg(pluginName));
+
+#ifdef Q_OS_WIN
+        //if (! resizable)
+            //setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
+#endif
     }
 
-    ~CarlaPluginClient()
+    ~BridgePluginGUI()
     {
+        qDebug("BridgePluginGUI::~BridgePluginGUI()");
+        Q_ASSERT(container);
+        Q_ASSERT(vbLayout);
+
+        delete container;
+        delete vbLayout;
     }
 
-    void setStuff(CarlaBackend::CarlaEngine* const engine_, CarlaBackend::CarlaPlugin* const plugin_)
+    GuiContainer* getContainer()
     {
-        Q_ASSERT(engine_);
-        Q_ASSERT(plugin_);
+        return container;
+    }
 
-        engine = engine_;
-        plugin = plugin_;
+    void setNewSize(int width, int height)
+    {
+        qDebug("BridgePluginGUI::setNewSize(%i, %i)", width, height);
+
+        if (width < 30)
+            width = 30;
+        if (height < 30)
+            height = 30;
+
+        if (m_resizable)
+        {
+            resize(width, height);
+        }
+        else
+        {
+            setFixedSize(width, height);
+            container->setFixedSize(width, height);
+        }
+    }
+
+    void setVisible(const bool yesNo)
+    {
+        qDebug("BridgePluginGUI::setVisible(%s)", bool2str(yesNo));
+
+        if (yesNo)
+        {
+            if (m_firstShow)
+            {
+                m_firstShow = false;
+                restoreGeometry(QByteArray());
+            }
+            else if (! m_geometry.isNull())
+                restoreGeometry(m_geometry);
+        }
+        else
+            m_geometry = saveGeometry();
+
+        QDialog::setVisible(yesNo);
+    }
+
+protected:
+    void hideEvent(QHideEvent* const event)
+    {
+        qDebug("BridgePluginGUI::hideEvent(%p)", event);
+
+        event->accept();
+        close();
+    }
+
+    void closeEvent(QCloseEvent* const event)
+    {
+        qDebug("BridgePluginGUI::closeEvent(%p)", event);
+
+        if (event->spontaneous())
+            callback->guiClosedCallback();
+
+        QDialog::closeEvent(event);
+    }
+
+    void done(int r)
+    {
+        QDialog::done(r);
+        close();
+    }
+
+private:
+    Callback* const callback;
+
+    QVBoxLayout*  vbLayout;
+    GuiContainer* container;
+
+    bool m_firstShow;
+    bool m_resizable;
+    QByteArray m_geometry;
+};
+
+// -------------------------------------------------------------------------
+
+class BridgePluginClient : public CarlaToolkit,
+                           public CarlaClient,
+                           public BridgePluginGUI::Callback,
+                           public QApplication
+{
+public:
+    BridgePluginClient()
+        : CarlaToolkit("carla-bridge-plugin"),
+          CarlaClient(this),
+          QApplication(qargc, qargv)
+    {
+        qDebug("BridgePluginClient::BridgePluginClient()");
+
+        msgTimer   = 0;
+        nextWidth  = 0;
+        nextHeight = 0;
+
+        engine     = nullptr;
+        plugin     = nullptr;
+        pluginGui  = nullptr;
+
+        m_client   = this;
+    }
+
+    ~BridgePluginClient()
+    {
+        qDebug("BridgePluginClient::~BridgePluginClient()");
+        Q_ASSERT(msgTimer == 0);
+        Q_ASSERT(! pluginGui);
+    }
+
+    void setStuff(CarlaBackend::CarlaEngine* const engine, CarlaBackend::CarlaPlugin* const plugin)
+    {
+        qDebug("BridgePluginClient::setStuff(%p, %p)", engine, plugin);
+        Q_ASSERT(engine);
+        Q_ASSERT(plugin);
+
+        this->engine = engine;
+        this->plugin = plugin;
+    }
+
+    // ---------------------------------------------------------------------
+    // toolkit
+
+    void init()
+    {
+        qDebug("BridgePluginClient::init()");
+    }
+
+    void exec(CarlaClient* const, const bool showGui)
+    {
+        qDebug("BridgePluginClient::exec()");
+
+        if (showGui)
+        {
+            show();
+        }
+        else
+        {
+            CarlaClient::sendOscUpdate();
+            CarlaClient::sendOscBridgeUpdate();
+            QApplication::setQuitOnLastWindowClosed(false);
+        }
+
+        msgTimer = startTimer(50);
+
+        QApplication::exec();
+    }
+
+    void quit()
+    {
+        qDebug("BridgePluginClient::quit()");
+
+        if (msgTimer != 0)
+        {
+            QApplication::killTimer(msgTimer);
+            msgTimer = 0;
+        }
+
+        if (pluginGui)
+        {
+            if (pluginGui->isVisible())
+                hide();
+
+            pluginGui->close();
+
+            delete pluginGui;
+            pluginGui = nullptr;
+        }
+
+        if (! QApplication::closingDown())
+            QApplication::quit();
+    }
+
+    void show()
+    {
+        qDebug("BridgePluginClient::show()");
+        Q_ASSERT(pluginGui);
+
+        if (plugin)
+            plugin->showGui(true);
+
+        if (pluginGui)
+            pluginGui->show();
+    }
+
+    void hide()
+    {
+        qDebug("BridgePluginClient::hide()");
+        Q_ASSERT(pluginGui);
+
+        if (pluginGui)
+            pluginGui->hide();
+
+        if (plugin)
+            plugin->showGui(false);
+    }
+
+    void resize(int width, int height)
+    {
+        qDebug("BridgePluginClient::resize(%i, %i)", width, height);
+        Q_ASSERT(pluginGui);
+
+        if (pluginGui)
+            pluginGui->setNewSize(width, height);
+    }
+
+    // ---------------------------------------------------------------------
+
+    void createWindow(const bool resizable)
+    {
+        qDebug("BridgePluginClient::createWindow(%s)", bool2str(resizable));
+        Q_ASSERT(plugin);
+
+        pluginGui = new BridgePluginGUI(nullptr, this, plugin->name(), resizable);
+        plugin->setGuiContainer(pluginGui->getContainer());
     }
 
     // ---------------------------------------------------------------------
@@ -263,30 +506,6 @@ public:
     }
 
     // ---------------------------------------------------------------------
-    // idle
-
-    void idle()
-    {
-        Q_ASSERT(plugin);
-
-        if (! plugin)
-            return;
-
-        plugin->idleGui();
-    }
-
-    void showGui(const bool yesNo)
-    {
-        qDebug("CarlaPluginClient::showGui(%s)", bool2str(yesNo));
-        Q_ASSERT(plugin);
-
-        if (! plugin)
-            return;
-
-        plugin->showGui(yesNo);
-    }
-
-    // ---------------------------------------------------------------------
     // callback
 
     void handleCallback(const CarlaBackend::CallbackType action, const int value1, const int value2, const double value3)
@@ -330,8 +549,9 @@ public:
             break;
 
         case CarlaBackend::CALLBACK_RESIZE_GUI:
-            if (m_toolkit)
-                m_toolkit->resize(value1, value2);
+            Q_ASSERT(value1 > 0 && value2 > 0);
+            nextWidth  = value1;
+            nextHeight = value2;
             break;
 
         case CarlaBackend::CALLBACK_RELOAD_PARAMETERS:
@@ -345,7 +565,7 @@ public:
             break;
 
         case CarlaBackend::CALLBACK_QUIT:
-            //quequeMessage(MESSAGE_QUIT, 0, 0, 0.0);
+            //QApplication::quit();
             break;
 
         default:
@@ -363,288 +583,54 @@ public:
         if (! ptr)
             return;
 
-        CarlaPluginClient* const client = (CarlaPluginClient*)ptr;
-        client->handleCallback(action, value1, value2, value3);
-    }
-
-private:
-    CarlaBackend::CarlaEngine* engine;
-    CarlaBackend::CarlaPlugin* plugin;
-};
-
-// -------------------------------------------------------------------------
-// toolkit
-
-class BridgeApplication : public QApplication
-{
-public:
-    BridgeApplication()
-        : QApplication(qargc, qargv)
-    {
-        msgTimer = 0;
-        m_client = nullptr;
-    }
-
-    void exec(CarlaPluginClient* const client)
-    {
-        m_client = client;
-        msgTimer = startTimer(50);
-
-        QApplication::exec();
-    }
-
-    void killMsgTimer()
-    {
-        Q_ASSERT(msgTimer != 0);
-
-        killTimer(msgTimer);
-        msgTimer = 0;
-    }
-
-    void hideHostGUI()
-    {
-        if (m_client)
-            m_client->handleCallback(CarlaBackend::CALLBACK_SHOW_GUI, 0, 0, 0.0);
+        BridgePluginClient* const _this_ = (BridgePluginClient*)ptr;
+        _this_->handleCallback(action, value1, value2, value3);
     }
 
 protected:
+    void guiClosedCallback()
+    {
+    }
+
     void timerEvent(QTimerEvent* const event)
     {
-        if (qcloseNow)
+        if (qCloseNow)
             return quit();
 
         if (event->timerId() == msgTimer)
         {
-            if (m_client)
+            if (nextWidth > 0 && nextHeight > 0 && pluginGui)
             {
-                m_client->idle();
+                pluginGui->setNewSize(nextWidth, nextHeight);
+                nextWidth  = 0;
+                nextHeight = 0;
+            }
 
-                if (! m_client->runMessages())
-                {
-                    msgTimer = 0;
-                    return;
-                }
+            if (plugin)
+                plugin->idleGui();
+
+            if (! CarlaClient::runMessages())
+            {
+                Q_ASSERT(msgTimer == 0);
+                msgTimer = 0;
+                return;
             }
         }
 
         QApplication::timerEvent(event);
     }
 
+    // ---------------------------------------------------------------------
+
 private:
     int msgTimer;
-    CarlaPluginClient* m_client;
+    int nextWidth, nextHeight;
+
+    CarlaBackend::CarlaEngine* engine;
+    CarlaBackend::CarlaPlugin* plugin;
+
+    BridgePluginGUI* pluginGui;
 };
-
-class BridgePluginGUI : public QDialog
-{
-public:
-    BridgePluginGUI(QWidget* const parent, BridgeApplication* const app, const char* const pluginName, const bool resizable)
-        : QDialog(parent),
-          m_app(app),
-          vbLayout(this)
-    {
-        m_firstShow = true;
-        m_resizable = resizable;
-
-        vbLayout.setContentsMargins(0, 0, 0, 0);
-        setLayout(&vbLayout);
-        setNewSize(50, 50);
-        setWindowTitle(QString("%1 (GUI)").arg(pluginName));
-
-#ifdef Q_OS_WIN
-        if (! resizable)
-            setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
-#endif
-    }
-
-    void setNewSize(int width, int height)
-    {
-        if (width < 30)
-            width = 30;
-        if (height < 30)
-            height = 30;
-
-        if (m_resizable)
-            resize(width, height);
-        else
-            setFixedSize(width, height);
-    }
-
-    void setVisible(const bool yesNo)
-    {
-        if (yesNo)
-        {
-            if (m_firstShow)
-            {
-                m_firstShow = false;
-                restoreGeometry(QByteArray());
-            }
-            else if (! m_geometry.isNull())
-                restoreGeometry(m_geometry);
-        }
-        else
-            m_geometry = saveGeometry();
-
-        QDialog::setVisible(yesNo);
-    }
-
-protected:
-    void hideEvent(QHideEvent* const event)
-    {
-        // FIXME
-        event->accept();
-        close();
-
-        m_app->hideHostGUI();
-    }
-
-    void done(int r)
-    {
-        QDialog::done(r);
-        close();
-    }
-
-private:
-    BridgeApplication* const m_app;
-
-    bool m_firstShow;
-    bool m_resizable;
-
-    QByteArray m_geometry;
-    QVBoxLayout vbLayout;
-};
-
-class CarlaToolkitPlugin : public CarlaToolkit
-{
-public:
-    CarlaToolkitPlugin()
-        : CarlaToolkit("carla-bridge-plugin")
-    {
-        qDebug("CarlaToolkitPlugin::CarlaToolkitPlugin()");
-        app = nullptr;
-        gui = nullptr;
-    }
-
-    ~CarlaToolkitPlugin()
-    {
-        qDebug("CarlaToolkitPlugin::~CarlaToolkitPlugin()");
-        Q_ASSERT(! app);
-    }
-
-    void init()
-    {
-        qDebug("CarlaToolkitPlugin::init()");
-        Q_ASSERT(! app);
-
-        app = new BridgeApplication;
-    }
-
-    void exec(CarlaClient* const client, const bool showGui)
-    {
-        qDebug("CarlaToolkitPlugin::exec(%p)", client);
-        Q_ASSERT(app);
-        Q_ASSERT(client);
-
-        m_client = client;
-
-        if (showGui)
-        {
-            show();
-        }
-        else
-        {
-            m_client->sendOscUpdate();
-            m_client->sendOscBridgeUpdate();
-            app->setQuitOnLastWindowClosed(false);
-        }
-
-        app->exec((CarlaPluginClient*)client);
-    }
-
-    void quit()
-    {
-        qDebug("CarlaToolkitPlugin::quit()");
-        Q_ASSERT(app);
-
-        if (gui)
-        {
-            gui->close();
-
-            delete gui;
-            gui = nullptr;
-        }
-
-        if (app)
-        {
-            app->killMsgTimer();
-
-            if (! app->closingDown())
-                app->quit();
-
-            delete app;
-            app = nullptr;
-        }
-    }
-
-    void show()
-    {
-        qDebug("CarlaToolkitPlugin::show()");
-
-        if (m_client)
-            ((CarlaPluginClient*)m_client)->showGui(true);
-
-        if (gui)
-            gui->show();
-    }
-
-    void hide()
-    {
-        qDebug("CarlaToolkitPlugin::hide()");
-
-        if (gui)
-            gui->hide();
-
-        if (m_client)
-            ((CarlaPluginClient*)m_client)->showGui(false);
-    }
-
-    void resize(int width, int height)
-    {
-        qDebug("CarlaToolkitPlugin::resize(%i, %i)", width, height);
-        Q_ASSERT(gui);
-
-        if (! gui)
-            return;
-
-        gui->setNewSize(width, height);
-    }
-
-    // ---------------------------------------------------------------------
-
-    void createWindow(const char* const pluginName, const bool resizable)
-    {
-        qDebug("CarlaToolkitPlugin::createWindow(%s, %s)", pluginName, bool2str(resizable));
-        Q_ASSERT(pluginName);
-
-        gui = new BridgePluginGUI(nullptr, app, pluginName, resizable);
-    }
-
-    QDialog* getWindowHandle() const
-    {
-        return gui;
-    }
-
-    // ---------------------------------------------------------------------
-
-private:
-    BridgeApplication* app;
-    BridgePluginGUI* gui;
-};
-
-CarlaToolkit* CarlaToolkit::createNew(const char* const)
-{
-    return new CarlaToolkitPlugin;
-}
 
 // -------------------------------------------------------------------------
 
@@ -689,18 +675,15 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    // Init toolkit
-    CarlaBridge::CarlaToolkitPlugin toolkit;
-    toolkit.init();
-
-    // Init client
-    CarlaBridge::CarlaPluginClient client(&toolkit);
+    // Init bridge client
+    CarlaBridge::BridgePluginClient client;
+    client.init();
 
     // Init OSC
     if (useOsc && ! client.oscInit(oscUrl))
     {
-       toolkit.quit();
-       return -1;
+        client.quit();
+        return -1;
     }
 
     // Init backend engine
@@ -718,7 +701,7 @@ int main(int argc, char* argv[])
     {
         qWarning("Bridge engine failed to start, error was:\n%s", CarlaBackend::getLastError());
         engine.close();
-        toolkit.quit();
+        client.quit();
         return 2;
     }
 
@@ -738,8 +721,7 @@ int main(int argc, char* argv[])
 
         if (guiType == CarlaBackend::GUI_INTERNAL_QT4 || guiType == CarlaBackend::GUI_INTERNAL_COCOA || guiType == CarlaBackend::GUI_INTERNAL_HWND || guiType == CarlaBackend::GUI_INTERNAL_X11)
         {
-            toolkit.createWindow(plugin->name(), guiResizable);
-            plugin->setGuiData(toolkit.getWindowHandle());
+            client.createWindow(guiResizable);
         }
 
         if (! useOsc)
@@ -756,7 +738,7 @@ int main(int argc, char* argv[])
     if (ret == 0)
     {
         initSignalHandler();
-        toolkit.exec(&client, !useOsc);
+        client.exec(nullptr, !useOsc);
     }
 
     engine.removeAllPlugins();
@@ -767,12 +749,12 @@ int main(int argc, char* argv[])
         // Close OSC
         client.sendOscExiting();
         client.oscClose();
-        // toolkit can't be closed manually, only by host
+        // bridge client can't be closed manually, only by host
     }
     else
     {
-        // Close toolkit
-        toolkit.quit();
+        // Close bridge client
+        client.quit();
     }
 
     return ret;

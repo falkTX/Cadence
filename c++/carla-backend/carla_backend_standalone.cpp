@@ -1066,23 +1066,16 @@ void set_chunk_data(unsigned short plugin_id, const char* chunk_data)
     qCritical("CarlaBackendStandalone::set_chunk_data(%i, \"%s\") - could not find plugin", plugin_id, chunk_data);
 }
 
-void set_gui_data(unsigned short plugin_id, uintptr_t gui_addr)
+void set_gui_container(unsigned short plugin_id, uintptr_t gui_addr)
 {
-    qDebug("CarlaBackendStandalone::set_gui_data(%i, " P_UINTPTR ")", plugin_id, gui_addr);
+    qDebug("CarlaBackendStandalone::set_gui_container(%i, " P_UINTPTR ")", plugin_id, gui_addr);
 
     CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
 
     if (plugin)
-    {
-#ifdef __WINE__
-        plugin->setGuiData((HWND)gui_addr);
-#else
-        plugin->setGuiData((QDialog*)CarlaBackend::getPointer(gui_addr));
-#endif
-        return;
-    }
+        return plugin->setGuiContainer((GuiContainer*)CarlaBackend::getPointer(gui_addr));
 
-    qCritical("CarlaBackendStandalone::set_gui_data(%i, " P_UINTPTR ") - could not find plugin", plugin_id, gui_addr);
+    qCritical("CarlaBackendStandalone::set_gui_container(%i, " P_UINTPTR ") - could not find plugin", plugin_id, gui_addr);
 }
 
 // -------------------------------------------------------------------------------------------------------------------

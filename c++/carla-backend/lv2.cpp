@@ -887,8 +887,11 @@ public:
     // -------------------------------------------------------------------
     // Set gui stuff
 
-    void setGuiData(QDialog* const dialog)
+    void setGuiContainer(GuiContainer* const container)
     {
+        qDebug("Lv2Plugin::setGuiContainer(%p)", container);
+        Q_ASSERT(container);
+
         switch(gui.type)
         {
         case GUI_NONE:
@@ -898,9 +901,11 @@ public:
             if (ui.widget)
             {
                 QWidget* const widget = (QWidget*)ui.widget;
-                dialog->layout()->addWidget(widget);
+                Q_ASSERT(container->layout());
+                Q_ASSERT(widget);
+                container->layout()->addWidget(widget);
                 widget->adjustSize();
-                widget->setParent(dialog);
+                widget->setParent(container);
                 widget->show();
             }
             break;
@@ -910,10 +915,8 @@ public:
         case GUI_INTERNAL_X11:
             if (ui.descriptor)
             {
-                features[lv2_feature_id_ui_parent]->data = (void*)dialog->winId();
-                ui.handle = ui.descriptor->instantiate(ui.descriptor,
-                                                       descriptor->URI, ui.rdf_descriptor->Bundle,
-                                                       carla_lv2_ui_write_function, this, &ui.widget,features);
+                features[lv2_feature_id_ui_parent]->data = (void*)container->winId();
+                ui.handle = ui.descriptor->instantiate(ui.descriptor, descriptor->URI, ui.rdf_descriptor->Bundle, carla_lv2_ui_write_function, this, &ui.widget, features);
                 updateUi();
             }
             break;

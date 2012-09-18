@@ -328,19 +328,22 @@ public:
     // -------------------------------------------------------------------
     // Set gui stuff
 
-    void setGuiData(QDialog* const dialog)
+    void setGuiContainer(GuiContainer* const container)
     {
-        Q_ASSERT(dialog);
+        qDebug("VstPlugin::setGuiContainer(%p)", container);
+        Q_ASSERT(container);
 
         if (gui.type == GUI_EXTERNAL_OSC)
             return;
 
-        int32_t value = 0;
+        int32_t value   = 0;
+        void* const ptr = (void*)container->winId();
+
 #ifdef Q_WS_X11
-        value = (int64_t)QX11Info::display();
+        value = (intptr_t)QX11Info::display();
 #endif
 
-        if (effect->dispatcher(effect, effEditOpen, 0, value, (void*)dialog->winId(), 0.0f) == 1)
+        if (effect->dispatcher(effect, effEditOpen, 0, value, ptr, 0.0f) == 1)
         {
             ERect* vstRect = nullptr;
             effect->dispatcher(effect, effEditGetRect, 0, 0, &vstRect, 0.0f);
@@ -352,19 +355,24 @@ public:
 
                 if (width <= 0 || height <= 0)
                 {
-                    qCritical("VstPlugin::setGuiData(%p) - failed to get proper window size", dialog);
+                    qCritical("VstPlugin::setGuiContainer(%p) - failed to get proper window size", container);
                     return;
                 }
 
                 gui.width  = width;
                 gui.height = height;
+
+                container->setFixedSize(width, height);
+                qDebug("VstPlugin::setGuiContainer(%p) -> setFixedSize(%i, %i)", container, width, height);
             }
             else
-                qCritical("VstPlugin::setGuiData(%p) - failed to get plugin window size", dialog);
+                qCritical("VstPlugin::setGuiContainer(%p) - failed to get plugin window size", container);
         }
         else
         {
             // failed to open UI
+            qWarning("VstPlugin::setGuiContainer(%p) - failed to open UI", container);
+
             m_hints &= ~PLUGIN_HAS_GUI;
             x_engine->callback(CALLBACK_SHOW_GUI, m_id, -1, 0, 0.0);
 
@@ -2008,11 +2016,9 @@ public:
             break;
 
         case audioMasterUpdateDisplay:
-            Q_ASSERT(self && effect);
+            Q_ASSERT(effect);
             if (self)
                 self->handleAudioMasterUpdateDisplay();
-            else
-                qWarning("VstPlugin::hostCallback::audioMasterUpdateDisplay called without valid object");
             if (effect)
                 effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
             break;

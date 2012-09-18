@@ -35,6 +35,13 @@
 #include <vector>
 #include <QtGui/QDialog>
 
+#ifdef Q_WS_X11
+#include <QtGui/QX11EmbedContainer>
+typedef QX11EmbedContainer GuiContainer;
+#else
+typedef QWidget GuiContainer;
+#endif
+
 CARLA_BACKEND_START_NAMESPACE
 
 /*!
@@ -1255,14 +1262,13 @@ public:
     // Set gui stuff
 
     /*!
-     * Set the plugin's custom GUI data.\n
-     * Parameters change between plugin types.
+     * Set the plugin's custom GUI container.\n
      *
      * \note This function must be always called from the main thread.
      */
-    virtual void setGuiData(QDialog* const dialog)
+    virtual void setGuiContainer(GuiContainer* const container)
     {
-        Q_UNUSED(dialog);
+        Q_UNUSED(container);
     }
 
     /*!
@@ -1393,10 +1399,10 @@ public:
      */
     void registerToOsc()
     {
-#ifndef BUILD_BRIDGE
         if (! x_engine->isOscControllerRegisted())
             return;
 
+#ifndef BUILD_BRIDGE
         x_engine->osc_send_control_add_plugin(m_id, m_name);
 #endif
 

@@ -24,6 +24,12 @@ from PyQt4.QtCore import pyqtSlot, Qt, QSettings, QTimer
 from PyQt4.QtGui import QColor, QCursor, QDialog, QFontMetrics, QFrame, QInputDialog, QMenu, QPainter, QVBoxLayout, QWidget
 from PyQt4.QtXml import QDomDocument
 
+try:
+    from PyQt4.QtGui import QX11EmbedContainer
+    GuiContainer = QX11EmbedContainer
+except:
+    GuiContainer = QWidget
+
 # Imports (Custom)
 import ui_carla_edit, ui_carla_parameter, ui_carla_plugin
 from shared import *
@@ -1278,7 +1284,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
                 self.gui_dialog = PluginGUI(self, self.m_pluginInfo['name'], guiInfo['resizable'])
                 self.gui_dialog.hide()
 
-                Carla.Host.set_gui_data(self.m_pluginId, unwrapinstance(self.gui_dialog))
+                Carla.Host.set_gui_container(self.m_pluginId, unwrapinstance(self.gui_dialog.getContainer()))
 
             elif guiType in (GUI_EXTERNAL_LV2, GUI_EXTERNAL_SUIL, GUI_EXTERNAL_OSC):
                 pass
@@ -1988,19 +1994,24 @@ class PluginGUI(QDialog):
         QDialog.__init__(self, parent)
 
         self.m_firstShow = True
-        self.m_geometry  = None
         self.m_resizable = resizable
+        self.m_geometry  = None
 
         self.vbLayout = QVBoxLayout(self)
         self.vbLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.vbLayout)
+
+        self.container = GuiContainer(self)
+        self.vbLayout.addWidget(self.container)
+
         self.setNewSize(50, 50)
         self.setWindowTitle("%s (GUI)" % pluginName)
 
         if WINDOWS and not resizable:
             self.setWindowFlags(self.windowFlags() | Qt.MSWindowsFixedSizeDialogHint)
 
-        self.connect(self, SIGNAL("finished(int)"), SLOT("slot_finished()"))
+    def getContainer(self):
+        return self.container
 
     def setNewSize(self, width, height):
         if width < 30:
@@ -2012,6 +2023,7 @@ class PluginGUI(QDialog):
             self.resize(width, height)
         else:
             self.setFixedSize(width, height)
+            self.container.setFixedSize(width, height)
 
     def setVisible(self, yesNo):
         if yesNo:
@@ -2025,14 +2037,15 @@ class PluginGUI(QDialog):
 
         QDialog.setVisible(self, yesNo)
 
-    @pyqtSlot()
-    def slot_finished(self):
-        self.parent().b_gui.setChecked(False)
-
     def hideEvent(self, event):
-        # FIXME
         event.accept()
         self.close()
+
+    def closeEvent(self, event):
+        if event.spontaneous():
+            self.parent().b_gui.setChecked(False)
+
+        QDialog.closeEvent(self, event)
 
     def done(self, r):
         QDialog.done(self, r)

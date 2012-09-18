@@ -152,7 +152,7 @@ CARLA_EXPORT void set_midi_program(unsigned short plugin_id, uint32_t midi_progr
 
 CARLA_EXPORT void set_custom_data(unsigned short plugin_id, CarlaBackend::CustomDataType dtype, const char* key, const char* value);
 CARLA_EXPORT void set_chunk_data(unsigned short plugin_id, const char* chunk_data);
-CARLA_EXPORT void set_gui_data(unsigned short plugin_id, uintptr_t gui_addr);
+CARLA_EXPORT void set_gui_container(unsigned short plugin_id, uintptr_t gui_addr);
 
 CARLA_EXPORT void show_gui(unsigned short plugin_id, bool yesno);
 CARLA_EXPORT void idle_guis();
