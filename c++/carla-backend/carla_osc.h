@@ -118,8 +118,10 @@ private:
     int handle_note_on(CARLA_OSC_HANDLE_ARGS2);
     int handle_note_off(CARLA_OSC_HANDLE_ARGS2);
 
+#ifdef WANT_LV2
     int handle_lv2_atom_transfer(CARLA_OSC_HANDLE_ARGS2);
     int handle_lv2_event_transfer(CARLA_OSC_HANDLE_ARGS2);
+#endif
 
     int handle_bridge_set_input_peak_value(CARLA_OSC_HANDLE_ARGS2);
     int handle_bridge_set_output_peak_value(CARLA_OSC_HANDLE_ARGS2);

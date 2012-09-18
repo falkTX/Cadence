@@ -16,20 +16,17 @@
  */
 
 #ifdef BUILD_BRIDGE
-#error Should not use fluidsynth for bridges!
+#  error Should not use fluidsynth for bridges!
 #endif
 
 #include "carla_plugin.h"
 
 #ifdef WANT_FLUIDSYNTH
+
 #include "carla_fluidsynth.h"
-#else
-#warning fluidsynth not available (no SF2 support)
-#endif
 
 CARLA_BACKEND_START_NAMESPACE
 
-#ifdef WANT_FLUIDSYNTH
 
 /*!
  * @defgroup CarlaBackendFluidSynthPlugin Carla Backend FluidSynth Plugin
@@ -1315,7 +1312,16 @@ private:
 
     const char* m_label;
 };
-#endif // WANT_FLUIDSYNTH
+
+/**@}*/
+
+CARLA_BACKEND_END_NAMESPACE
+
+#else // WANT_FLUIDSYNTH
+#  warning fluidsynth not available (no SF2 support)
+#endif
+
+CARLA_BACKEND_START_NAMESPACE
 
 CarlaPlugin* CarlaPlugin::newSF2(const initializer& init)
 {
@@ -1353,7 +1359,5 @@ CarlaPlugin* CarlaPlugin::newSF2(const initializer& init)
     return nullptr;
 #endif
 }
-
-/**@}*/
 
 CARLA_BACKEND_END_NAMESPACE

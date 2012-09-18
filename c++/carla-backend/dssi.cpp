@@ -16,6 +16,9 @@
  */
 
 #include "carla_plugin.h"
+
+#ifdef WANT_DSSI
+
 #include "carla_dssi.h"
 
 CARLA_BACKEND_START_NAMESPACE
@@ -1511,10 +1514,21 @@ private:
     float* paramBuffers;
 };
 
+/**@}*/
+
+CARLA_BACKEND_END_NAMESPACE
+
+#else // WANT_DSSI
+#  warning Building without DSSI support
+#endif
+
+CARLA_BACKEND_START_NAMESPACE
+
 CarlaPlugin* CarlaPlugin::newDSSI(const initializer& init, const void* const extra)
 {
     qDebug("CarlaPlugin::newDSSI(%p, \"%s\", \"%s\", \"%s\", %p)", init.engine, init.filename, init.name, init.label, extra);
 
+#ifdef WANT_DSSI
     short id = init.engine->getNewPluginId();
 
     if (id < 0 || id > CarlaEngine::maxPluginNumber())
@@ -1551,8 +1565,10 @@ CarlaPlugin* CarlaPlugin::newDSSI(const initializer& init, const void* const ext
     plugin->registerToOsc();
 
     return plugin;
+#else
+    setLastError("DSSI support not available");
+    return nullptr;
+#endif
 }
-
-/**@}*/
 
 CARLA_BACKEND_END_NAMESPACE

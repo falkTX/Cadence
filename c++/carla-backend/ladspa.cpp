@@ -16,6 +16,9 @@
  */
 
 #include "carla_plugin.h"
+
+#ifdef WANT_LADSPA
+
 #include "carla_ladspa.h"
 
 CARLA_BACKEND_START_NAMESPACE
@@ -1119,10 +1122,21 @@ private:
     float* paramBuffers;
 };
 
+/**@}*/
+
+CARLA_BACKEND_END_NAMESPACE
+
+#else // WANT_LADSPA
+#  warning Building without LADSPA support
+#endif
+
+CARLA_BACKEND_START_NAMESPACE
+
 CarlaPlugin* CarlaPlugin::newLADSPA(const initializer& init, const void* const extra)
 {
     qDebug("CarlaPlugin::newLADSPA(%p, \"%s\", \"%s\", \"%s\", %p)", init.engine, init.filename, init.name, init.label, extra);
 
+#ifdef WANT_LADSPA
     short id = init.engine->getNewPluginId();
 
     if (id < 0 || id > CarlaEngine::maxPluginNumber())
@@ -1159,8 +1173,10 @@ CarlaPlugin* CarlaPlugin::newLADSPA(const initializer& init, const void* const e
     plugin->registerToOsc();
 
     return plugin;
+#else
+    setLastError("LADSPA support not available");
+    return nullptr;
+#endif
 }
-
-/**@}*/
 
 CARLA_BACKEND_END_NAMESPACE

@@ -16,6 +16,9 @@
  */
 
 #include "carla_plugin.h"
+
+#ifdef WANT_LV2
+
 #include "carla_lv2.h"
 
 #include "lv2_atom_queue.h"
@@ -4410,49 +4413,6 @@ private:
     uint32_t lastTimePosFrame;
 };
 
-CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
-{
-    qDebug("CarlaPlugin::newLV2(%p, \"%s\", \"%s\", \"%s\")", init.engine, init.filename, init.name, init.label);
-
-    short id = init.engine->getNewPluginId();
-
-    if (id < 0 || id > CarlaEngine::maxPluginNumber())
-    {
-        setLastError("Maximum number of plugins reached");
-        return nullptr;
-    }
-
-    Lv2Plugin* const plugin = new Lv2Plugin(init.engine, id);
-
-    if (! plugin->init(init.filename, init.name, init.label))
-    {
-        delete plugin;
-        return nullptr;
-    }
-
-    plugin->reload();
-
-#ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
-    {
-        const uint32_t ins  = plugin->audioInCount();
-        const uint32_t outs = plugin->audioOutCount();
-
-        if (ins > 2 || outs > 2 || (ins != outs && ins != 0 && outs != 0))
-        {
-            setLastError("Carla's rack mode can only work with Mono or Stereo LV2 plugins, sorry!");
-            delete plugin;
-            return nullptr;
-        }
-    }
-#endif
-
-    plugin->registerToOsc();
-    plugin->updateUi();
-
-    return plugin;
-}
-
 /**@}*/
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -4497,6 +4457,62 @@ int CarlaOsc::handle_lv2_event_transfer(CARLA_OSC_HANDLE_ARGS2)
     lv2plugin->handleTransferEvent(portIndex, atom);
 
     return 0;
+}
+
+CARLA_BACKEND_END_NAMESPACE
+
+#else // WANT_LV2
+#  warning Building without LV2 support
+#endif
+
+CARLA_BACKEND_START_NAMESPACE
+
+CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
+{
+    qDebug("CarlaPlugin::newLV2(%p, \"%s\", \"%s\", \"%s\")", init.engine, init.filename, init.name, init.label);
+
+#ifdef WANT_LV2
+    short id = init.engine->getNewPluginId();
+
+    if (id < 0 || id > CarlaEngine::maxPluginNumber())
+    {
+        setLastError("Maximum number of plugins reached");
+        return nullptr;
+    }
+
+    Lv2Plugin* const plugin = new Lv2Plugin(init.engine, id);
+
+    if (! plugin->init(init.filename, init.name, init.label))
+    {
+        delete plugin;
+        return nullptr;
+    }
+
+    plugin->reload();
+
+#ifndef BUILD_BRIDGE
+    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    {
+        const uint32_t ins  = plugin->audioInCount();
+        const uint32_t outs = plugin->audioOutCount();
+
+        if (ins > 2 || outs > 2 || (ins != outs && ins != 0 && outs != 0))
+        {
+            setLastError("Carla's rack mode can only work with Mono or Stereo LV2 plugins, sorry!");
+            delete plugin;
+            return nullptr;
+        }
+    }
+#endif
+
+    plugin->registerToOsc();
+    plugin->updateUi();
+
+    return plugin;
+#else
+    setLastError("LV2 support not available");
+    return nullptr;
+#endif
 }
 
 CARLA_BACKEND_END_NAMESPACE

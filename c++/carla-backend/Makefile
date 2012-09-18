@@ -16,11 +16,13 @@ HAVE_SUIL         = $(shell pkg-config --exists suil-0 && echo true)
 
 BASE_FLAGS        = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -mfpmath=sse -Wall -I. -I../carla-includes -I../carla-jackbridge
 
-# CARLA_C_FLAGS     = $(BASE_FLAGS) -std=c99 $(CFLAGS)
+CARLA_C_FLAGS     = $(BASE_FLAGS) -std=c99 $(CFLAGS)
 
 CARLA_CXX_FLAGS   = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
 CARLA_CXX_FLAGS  += $(shell pkg-config --cflags liblo QtCore QtGui)
 CARLA_CXX_FLAGS  += -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT -DNDEBUG
+
+CARLA_CXX_FLAGS  += WANT_LADSPA WANT_DSSI WANT_LV2 WANT_VST
 CARLA_CXX_FLAGS  += -DVESTIGE_HEADER # Comment this line to not use vestige header
 
 CARLA_LD_FLAGS    = -shared -ldl -lm -fPIC $(LDFLAGS)
@@ -90,8 +92,8 @@ carla_backend.so: $(OBJS)
 
 # --------------------------------------------------------------
 
-# .c.o:
-# 	$(CC) -c $< $(CARLA_C_FLAGS) -o $@
+.c.o:
+	$(CC) -c $< $(CARLA_C_FLAGS) -o $@
 
 .cpp.o:
 	$(CXX) -c $< $(CARLA_CXX_FLAGS) -o $@

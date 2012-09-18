@@ -15,29 +15,21 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifdef BUILD_BRIDGE
-#error Should not use linuxsampler for bridges!
-#endif
-
 // TODO - setMidiProgram()
+
+#ifdef BUILD_BRIDGE
+#  error Should not use linuxsampler for bridges!
+#endif
 
 #include "carla_plugin.h"
 
 #ifdef WANT_LINUXSAMPLER
+
 #include "carla_linuxsampler.h"
-#else
-#warning linuxsampler not available (no GIG and SFZ support)
-#endif
 
 #include <QtCore/QFileInfo>
 
 CARLA_BACKEND_START_NAMESPACE
-
-#if 0
-} /* adjust editor indent */
-#endif
-
-#ifdef WANT_LINUXSAMPLER
 
 /*!
  * @defgroup CarlaBackendLinuxSamplerPlugin Carla Backend LinuxSampler Plugin
@@ -618,7 +610,16 @@ CarlaPlugin* LinuxSamplerPlugin::newLinuxSampler(const initializer& init, bool i
 
     return plugin;
 }
-#endif // WANT_LINUXSAMPLER
+
+/**@}*/
+
+CARLA_BACKEND_END_NAMESPACE
+
+#else // WANT_LINUXSAMPLER
+#  warning linuxsampler not available (no GIG and SFZ support)
+#endif
+
+CARLA_BACKEND_START_NAMESPACE
 
 CarlaPlugin* CarlaPlugin::newGIG(const initializer& init)
 {
@@ -641,7 +642,5 @@ CarlaPlugin* CarlaPlugin::newSFZ(const initializer& init)
     return nullptr;
 #endif
 }
-
-/**@}*/
 
 CARLA_BACKEND_END_NAMESPACE

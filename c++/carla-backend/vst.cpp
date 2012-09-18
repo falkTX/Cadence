@@ -16,10 +16,13 @@
  */
 
 #include "carla_plugin.h"
+
+#ifdef WANT_VST
+
 #include "carla_vst.h"
 
 #ifdef Q_WS_X11
-#include <QtGui/QX11Info>
+#  include <QtGui/QX11Info>
 #endif
 
 CARLA_BACKEND_START_NAMESPACE
@@ -2225,10 +2228,21 @@ private:
     int unique2;
 };
 
+/**@}*/
+
+CARLA_BACKEND_END_NAMESPACE
+
+#else // WANT_VST
+#  warning Building without VST support
+#endif
+
+CARLA_BACKEND_START_NAMESPACE
+
 CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
 {
     qDebug("CarlaPlugin::newVST(%p, \"%s\", \"%s\", \"%s\")", init.engine, init.filename, init.name, init.label);
 
+#ifdef WANT_VST
     short id = init.engine->getNewPluginId();
 
     if (id < 0 || id > CarlaEngine::maxPluginNumber())
@@ -2268,8 +2282,10 @@ CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
     plugin->registerToOsc();
 
     return plugin;
+#else
+    setLastError("VST support not available");
+    return nullptr;
+#endif
 }
-
-/**@}*/
 
 CARLA_BACKEND_END_NAMESPACE

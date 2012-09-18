@@ -1424,7 +1424,7 @@ void run_tests_standalone(short idMax)
         qDebug("------------------- TEST @%i: set extra data --------------------", id);
         set_custom_data(id, CarlaBackend::CUSTOM_DATA_STRING, "", "");
         set_chunk_data(id, nullptr);
-        set_gui_data(id, (uintptr_t)1);
+        set_gui_container(id, (uintptr_t)1);
 
         qDebug("------------------- TEST @%i: gui stuff --------------------", id);
         show_gui(id, false);
