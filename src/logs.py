@@ -101,6 +101,8 @@ class SyntaxHighlighter_LADISH(QSyntaxHighlighter):
 
 # Lock-less file read thread
 class LogsReadThread(QThread):
+    MAX_INITIAL_SIZE = 2*1024*1024 # 2Mb
+
     def __init__(self, parent):
         QThread.__init__(self, parent)
 
@@ -124,11 +126,17 @@ class LogsReadThread(QThread):
             self.log_jack_stream = QTextStream(self.log_jack_file)
             self.log_jack_stream.setCodec("UTF-8")
 
+            if self.log_jack_file.size() > self.MAX_INITIAL_SIZE:
+                self.log_jack_stream.seek(self.log_jack_file.size() - self.MAX_INITIAL_SIZE)
+
         if self.LOG_FILE_A2J:
             self.log_a2j_file = QFile(self.LOG_FILE_A2J)
             self.log_a2j_file.open(QIODevice.ReadOnly)
             self.log_a2j_stream = QTextStream(self.log_a2j_file)
             self.log_a2j_stream.setCodec("UTF-8")
+
+            if self.log_a2j_file.size() > self.MAX_INITIAL_SIZE:
+                self.log_a2j_stream.seek(self.log_a2j_file.size() - self.MAX_INITIAL_SIZE)
 
         if self.LOG_FILE_LASH:
             self.log_lash_file = QFile(self.LOG_FILE_LASH)
@@ -136,11 +144,17 @@ class LogsReadThread(QThread):
             self.log_lash_stream = QTextStream(self.log_lash_file)
             self.log_lash_stream.setCodec("UTF-8")
 
+            if self.log_lash_file.size() > self.MAX_INITIAL_SIZE:
+                self.log_lash_stream.seek(self.log_lash_file.size() - self.MAX_INITIAL_SIZE)
+
         if self.LOG_FILE_LADISH:
             self.log_ladish_file = QFile(self.LOG_FILE_LADISH)
             self.log_ladish_file.open(QIODevice.ReadOnly)
             self.log_ladish_stream = QTextStream(self.log_ladish_file)
             self.log_ladish_stream.setCodec("UTF-8")
+
+            if self.log_ladish_file.size() > self.MAX_INITIAL_SIZE:
+                self.log_ladish_stream.seek(self.log_ladish_file.size() - self.MAX_INITIAL_SIZE)
 
     def closeNow(self):
         self.m_closeNow = True
