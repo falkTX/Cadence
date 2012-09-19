@@ -109,8 +109,8 @@ public:
         setWindowTitle(QString("%1 (GUI)").arg(pluginName));
 
 #ifdef Q_OS_WIN
-        //if (! resizable)
-            //setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
+        if (! resizable)
+            setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
 #endif
     }
 
@@ -699,8 +699,10 @@ int main(int argc, char* argv[])
 
     if (! engine.init(engName.toUtf8().constData()))
     {
-        qWarning("Bridge engine failed to start, error was:\n%s", CarlaBackend::getLastError());
+        const char* const lastError = CarlaBackend::getLastError();
+        qWarning("Bridge engine failed to start, error was:\n%s", lastError);
         engine.close();
+        client.sendOscBridgeError(lastError);
         client.quit();
         return 2;
     }
@@ -731,7 +733,9 @@ int main(int argc, char* argv[])
     }
     else
     {
-        qWarning("Plugin failed to load, error was:\n%s", CarlaBackend::getLastError());
+        const char* const lastError = CarlaBackend::getLastError();
+        qWarning("Plugin failed to load, error was:\n%s", lastError);
+        client.sendOscBridgeError(lastError);
         ret = 1;
     }
 

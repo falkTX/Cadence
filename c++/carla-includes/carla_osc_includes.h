@@ -284,6 +284,22 @@ void osc_send_bridge_update(const CarlaOscData* const oscData, const char* const
         lo_send(oscData->target, targetPath, "s", url);
     }
 }
+
+static inline
+void osc_send_bridge_error(const CarlaOscData* const oscData, const char* const error)
+{
+    Q_ASSERT(oscData && oscData->path);
+    Q_ASSERT(error);
+    qDebug("osc_send_bridge_error(path:\"%s\", \"%s\")", oscData->path, error);
+
+    if (oscData->target)
+    {
+        char targetPath[strlen(oscData->path)+14];
+        strcpy(targetPath, oscData->path);
+        strcat(targetPath, "/bridge_error");
+        lo_send(oscData->target, targetPath, "s", error);
+    }
+}
 #endif
 
 static inline

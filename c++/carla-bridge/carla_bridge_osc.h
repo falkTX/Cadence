@@ -137,6 +137,15 @@ public:
         if (m_controlData.target && m_serverPath)
             osc_send_bridge_update(&m_controlData, m_serverPath);
     }
+
+    void sendOscBridgeError(const char* const error)
+    {
+        Q_ASSERT(m_controlData.target && m_serverPath);
+        Q_ASSERT(error);
+
+        if (m_controlData.target && m_serverPath)
+            osc_send_bridge_error(&m_controlData, error);
+    }
 #endif
 
 #ifdef BRIDGE_LV2

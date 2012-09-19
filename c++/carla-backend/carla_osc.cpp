@@ -242,6 +242,8 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
             return plugin->setOscBridgeInfo(PluginBridgeSetChunkData, argc, argv, types);
         if (strcmp(method, "/bridge_update") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeUpdateNow, argc, argv, types);
+        if (strcmp(method, "/bridge_error") == 0)
+            return plugin->setOscBridgeInfo(PluginBridgeError, argc, argv, types);
     }
 
     qWarning("CarlaOsc::handleMessage() - unsupported OSC method '%s'", method);

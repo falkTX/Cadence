@@ -255,6 +255,12 @@ public:
         qDebug("CarlaClient::sendOscBridgeUpdate()");
         m_osc.sendOscBridgeUpdate();
     }
+
+    void sendOscBridgeError(const char* const error)
+    {
+        qDebug("CarlaClient::sendOscBridgeError(\"%s\")", error);
+        m_osc.sendOscBridgeError(error);
+    }
 #endif
 
 #ifdef BRIDGE_LV2

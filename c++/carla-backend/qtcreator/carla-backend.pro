@@ -6,7 +6,7 @@ CONFIG     = debug link_pkgconfig qt warn_on plugin shared
 PKGCONFIG  = liblo
 PKGCONFIG += jack
 PKGCONFIG += alsa libpulse-simple
-#PKGCONFIG += fluidsynth linuxsampler
+PKGCONFIG += fluidsynth linuxsampler
 PKGCONFIG += suil-0
 
 TARGET   = carla_backend

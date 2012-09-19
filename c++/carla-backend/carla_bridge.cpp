@@ -69,6 +69,7 @@ public:
         m_hints  = PLUGIN_IS_BRIDGE;
 
         m_initiated = false;
+        m_initError = false;
         m_saved = false;
 
         info.aIns  = 0;
@@ -712,8 +713,26 @@ public:
         }
 
         case PluginBridgeUpdateNow:
+        {
             m_initiated = true;
             break;
+        }
+
+        case PluginBridgeError:
+        {
+            CARLA_BRIDGE_CHECK_OSC_TYPES(1, "s");
+
+            const char* const error = (const char*)&argv[0]->s;
+
+            Q_ASSERT(error);
+
+            m_initiated = true;
+            m_initError = true;
+
+            setLastError(error);
+
+            break;
+        }
         }
 
         return 0;
@@ -927,6 +946,15 @@ public:
             setLastError("Timeout while waiting for a response from plugin-bridge");
             return false;
         }
+        else if (m_initError)
+        {
+            // unregister so it gets handled properly
+            x_engine->__bridgePluginRegister(m_id, nullptr);
+
+            osc.thread->quit();
+            // last error was set before
+            return false;
+        }
 
         return true;
     }
@@ -935,6 +963,7 @@ private:
     const BinaryType m_binary;
 
     bool m_initiated;
+    bool m_initError;
     bool m_saved;
 
     struct {

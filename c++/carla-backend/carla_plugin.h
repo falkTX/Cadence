@@ -76,7 +76,8 @@ enum PluginBridgeInfoType {
     PluginBridgeSetMidiProgram,
     PluginBridgeSetCustomData,
     PluginBridgeSetChunkData,
-    PluginBridgeUpdateNow
+    PluginBridgeUpdateNow,
+    PluginBridgeError
 };
 #endif
 
