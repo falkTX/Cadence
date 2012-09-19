@@ -1927,9 +1927,10 @@ public:
 #endif
 
         case audioMasterGetCurrentProcessLevel:
-            Q_ASSERT(self);
             if (self)
+            {
                 ret = self->handleAudioMasterGetCurrentProcessLevel();
+            }
             else
             {
                 qWarning("VstPlugin::hostCallback::audioMasterGetCurrentProcessLevel called without valid object");

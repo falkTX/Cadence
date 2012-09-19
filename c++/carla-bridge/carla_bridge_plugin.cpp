@@ -22,6 +22,7 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QTextStream>
 #include <QtCore/QTimerEvent>
 #include <QtGui/QApplication>
 #include <QtGui/QDialog>
@@ -495,14 +496,10 @@ public:
         if (! plugin)
             return;
 
-        Q_UNUSED(filePath);
+        nextChunkFilePath = QString(filePath);
 
-#if 0
-        nextChunkFilePath = strdup(filePath);
-
-        while (nextChunkFilePath)
+        while (! nextChunkFilePath.isEmpty())
             carla_msleep(25);
-#endif
     }
 
     // ---------------------------------------------------------------------
@@ -599,6 +596,31 @@ protected:
 
         if (event->timerId() == msgTimer)
         {
+            if (! nextChunkFilePath.isEmpty())
+            {
+#ifdef Q_OS_WIN
+                if (nextChunkFilePath.startsWith("/"))
+                {
+                    // running under Wine, posix host
+                    nextChunkFilePath = nextChunkFilePath.replace(0, 1, "Z:/");
+                    nextChunkFilePath = QDir::toNativeSeparators(nextChunkFilePath);
+                }
+#endif
+                QFile chunkFile(nextChunkFilePath);
+
+                if (plugin && chunkFile.open(QIODevice::ReadOnly | QIODevice::Text))
+                {
+                    QTextStream in(&chunkFile);
+                    QString stringData(in.readAll());
+                    chunkFile.close();
+                    chunkFile.remove();
+
+                    plugin->setChunkData(stringData.toUtf8().constData());
+                }
+
+                nextChunkFilePath.clear();
+            }
+
             if (nextWidth > 0 && nextHeight > 0 && pluginGui)
             {
                 pluginGui->setNewSize(nextWidth, nextHeight);
@@ -625,6 +647,7 @@ protected:
 private:
     int msgTimer;
     int nextWidth, nextHeight;
+    QString nextChunkFilePath;
 
     CarlaBackend::CarlaEngine* engine;
     CarlaBackend::CarlaPlugin* plugin;

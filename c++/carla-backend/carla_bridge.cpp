@@ -706,6 +706,7 @@ public:
             if (chunkFile.open(QIODevice::ReadOnly))
             {
                 info.chunk = chunkFile.readAll();
+                chunkFile.close();
                 chunkFile.remove();
             }
 
@@ -777,8 +778,11 @@ public:
         Q_ASSERT(stringData);
 
         QString filePath;
-        filePath += "/tmp/.CarlaChunk_"; // FIXME - cross-platform
+        filePath  = QDir::tempPath();
+        filePath += "/.CarlaChunk_";
         filePath += m_name;
+
+        filePath = QDir::toNativeSeparators(filePath);
 
         QFile file(filePath);
 
