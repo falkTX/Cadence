@@ -944,7 +944,7 @@ public:
 
         for (int i=0; i < 200; i++)
         {
-            if (m_initiated)
+            if (m_initiated || osc.thread->isFinished())
                 break;
             carla_msleep(50);
         }
