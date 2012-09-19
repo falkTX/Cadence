@@ -806,6 +806,14 @@ public:
             osc_send_hide(&osc.data);
     }
 
+    void idleGui()
+    {
+        if (! osc.thread->isRunning())
+            qWarning("TESTING: Bridge has closed!");
+
+        CarlaPlugin::idleGui();
+    }
+
     // -------------------------------------------------------------------
     // Plugin state
 

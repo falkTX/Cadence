@@ -63,8 +63,8 @@ public:
         gui.width  = 0;
         gui.height = 0;
 
-        isProcessing = false;
-        needIdle = false;
+        isProcessing  = false;
+        needIdle      = false;
 
         memset(midiEvents, 0, sizeof(VstMidiEvent)*MAX_MIDI_EVENTS*2);
 
@@ -1678,7 +1678,7 @@ public:
     {
 #ifdef DEBUG
         if (opcode != audioMasterGetTime)
-            qDebug("VstPlugin::hostCallback(%p, %s, %i, " P_INTPTR ", %p, %f", effect, vstMasterOpcode2str(opcode), index, value, ptr, opt);
+            qDebug("VstPlugin::hostCallback(%p, %s, %i, " P_INTPTR ", %p, %f)", effect, vstMasterOpcode2str(opcode), index, value, ptr, opt);
 #endif
 
 #if 0
@@ -1714,26 +1714,39 @@ public:
         }
 #endif
 
-        // Check if 'resvd1' points to this plugin
+        // Check if 'resvd1' points to this plugin, or register ourselfs if possible
         VstPlugin* self = nullptr;
 
+        if (effect)
+        {
 #ifdef VESTIGE_HEADER
-        if (effect && effect->ptr1)
-        {
-            self = (VstPlugin*)effect->ptr1;
+            if (effect->ptr1)
+            {
+                self = (VstPlugin*)effect->ptr1;
 #else
-        if (effect && effect->resvd1)
-        {
-            self = (VstPlugin*)effect->resvd1;
+            if (effect->resvd1)
+            {
+                self = FromVstPtr<VstPlugin>(effect->resvd1);
 #endif
-            if (self->unique1 != self->unique2)
-               self = nullptr;
-        }
+                if (self->unique1 != self->unique2)
+                    self = nullptr;
+            }
 
 #ifdef DEBUG
-        if (self)
-            Q_ASSERT(self->effect == effect);
+            if (self)
+                Q_ASSERT(self->effect == effect);
 #endif
+
+            if (lastVstPlugin && ! self)
+            {
+#ifdef VESTIGE_HEADER
+                effect->ptr1 = lastVstPlugin;
+#else
+                effect->resvd1 = ToVstPtr(lastVstPlugin);
+#endif
+                self = lastVstPlugin;
+            }
+        }
 
         intptr_t ret = 0;
 
@@ -1886,7 +1899,7 @@ public:
                 ret = self->handleAudioMasterGetSampleRate();
             else
             {
-                qWarning("stPlugin::hostCallback::audioMasterGetSampleRate called without valid object");
+                qWarning("VstPlugin::hostCallback::audioMasterGetSampleRate called without valid object");
                 ret = 44100;
             }
             break;
@@ -2056,7 +2069,7 @@ public:
 
         default:
 #ifdef DEBUG
-            qDebug("VstPlugin::hostCallback(%p, %s, %i, " P_INTPTR ", %p, %f", effect, vstMasterOpcode2str(opcode), index, value, ptr, opt);
+            qDebug("VstPlugin::hostCallback(%p, %s, %i, " P_INTPTR ", %p, %f)", effect, vstMasterOpcode2str(opcode), index, value, ptr, opt);
 #endif
             break;
         }
@@ -2096,7 +2109,9 @@ public:
         // ---------------------------------------------------------------
         // initialize plugin
 
+        lastVstPlugin = this;
         effect = vstFn(hostCallback);
+        lastVstPlugin = nullptr;
 
         if ((! effect) || effect->magic != kEffectMagic)
         {
@@ -2130,7 +2145,7 @@ public:
 #ifdef VESTIGE_HEADER
         effect->ptr1 = this;
 #else
-        effect->resvd1 = (intptr_t)this;
+        effect->resvd1 = ToVstPtr(this);
 #endif
 
         effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
@@ -2225,9 +2240,12 @@ private:
 
     bool isProcessing;
     bool needIdle;
+    static VstPlugin* lastVstPlugin;
 
     int unique2;
 };
+
+VstPlugin* VstPlugin::lastVstPlugin = nullptr;
 
 /**@}*/
 
