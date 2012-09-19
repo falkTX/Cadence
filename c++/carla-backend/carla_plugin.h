@@ -1177,6 +1177,7 @@ public:
             for (uint32_t i=0; i < param.count; i++)
             {
                 param.ranges[i].def = getParameterValue(i);
+                fixParameterValue(param.ranges[i].def, param.ranges[i]);
 
 #ifndef BUILD_BRIDGE
                 if (sendOsc)
@@ -1230,6 +1231,7 @@ public:
             for (uint32_t i=0; i < param.count; i++)
             {
                 param.ranges[i].def = getParameterValue(i);
+                fixParameterValue(param.ranges[i].def, param.ranges[i]);
 
 #ifndef BUILD_BRIDGE
                 if (sendOsc)
