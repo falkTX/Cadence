@@ -546,6 +546,7 @@ def runCarlaDiscovery(itype, stype, filename, tool, isWine=False):
     pinfo = None
 
     for line in output:
+        line = line.strip()
         if line == "carla-discovery::init::-----------":
             pinfo = deepcopy(PyPluginInfo)
             pinfo['type'] = itype
