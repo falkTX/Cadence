@@ -1732,12 +1732,20 @@ public:
                     self = nullptr;
             }
 
-#ifdef DEBUG
             if (self)
-                Q_ASSERT(self->effect == effect);
-#endif
+            {
+                if (! self->effect)
+                    self->effect = effect;
 
-            if (lastVstPlugin && ! self)
+                Q_ASSERT(self->effect == effect);
+
+                if (self->effect != effect)
+                {
+                    qWarning("VstPlugin::hostCallback() - host pointer mismatch: %p != %p", self->effect, effect);
+                    self = nullptr;
+                }
+            }
+            else if (lastVstPlugin)
             {
 #ifdef VESTIGE_HEADER
                 effect->ptr1 = lastVstPlugin;
@@ -1896,7 +1904,9 @@ public:
         case audioMasterGetSampleRate:
             Q_ASSERT(self);
             if (self)
+            {
                 ret = self->handleAudioMasterGetSampleRate();
+            }
             else
             {
                 qWarning("VstPlugin::hostCallback::audioMasterGetSampleRate called without valid object");
@@ -1907,7 +1917,9 @@ public:
         case audioMasterGetBlockSize:
             Q_ASSERT(self);
             if (self)
+            {
                 ret = self->handleAudioMasterGetBlockSize();
+            }
             else
             {
                 qWarning("stPlugin::hostCallback::audioMasterGetBlockSize called without valid object");

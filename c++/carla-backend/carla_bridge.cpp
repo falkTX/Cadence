@@ -955,7 +955,7 @@ public:
             x_engine->__bridgePluginRegister(m_id, nullptr);
 
             osc.thread->terminate();
-            setLastError("Timeout while waiting for a response from plugin-bridge");
+            setLastError("Timeout while waiting for a response from plugin-bridge\n(or the plugin crashed on initialization?)");
             return false;
         }
         else if (m_initError)
