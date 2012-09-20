@@ -187,10 +187,12 @@ xycontroller:
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-CPP_debug:
+debug:
 	$(MAKE) -f Makefile.dbg -C c++/carla-backend
 	$(MAKE) -f Makefile.dbg -C c++/carla-bridge
 	$(MAKE) -f Makefile.dbg -C c++/carla-discovery NATIVE=1
+	$(MAKE) -f Makefile.dbg -C c++/jackmeter
+	$(MAKE) -f Makefile.dbg -C c++/xycontroller
 
 doc:
 	$(MAKE) doc -C c++/carla-backend

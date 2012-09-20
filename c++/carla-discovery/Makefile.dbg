@@ -4,7 +4,7 @@
 # Created by falkTX
 #
 
-CXX     ?= g++
+CXX ?= g++
 
 BASE_FLAGS   = -O0 -g -Wall
 BASE_FLAGS  += -I../carla-backend -I../carla-includes

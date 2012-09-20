@@ -39,7 +39,8 @@ CARLA_BACKEND_START_NAMESPACE
 class FluidSynthPlugin : public CarlaPlugin
 {
 public:
-    FluidSynthPlugin(CarlaEngine* const engine, unsigned short id) : CarlaPlugin(engine, id)
+    FluidSynthPlugin(CarlaEngine* const engine, const unsigned short id)
+        : CarlaPlugin(engine, id)
     {
         qDebug("FluidSynthPlugin::FluidSynthPlugin()");
 

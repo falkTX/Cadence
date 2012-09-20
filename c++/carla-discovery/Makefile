@@ -4,8 +4,8 @@
 # Created by falkTX
 #
 
-CXX     ?= g++
-STRIP   ?= strip
+CXX   ?= g++
+STRIP ?= strip
 
 BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -mfpmath=sse -Wall
 BASE_FLAGS  += -I../carla-backend -I../carla-includes

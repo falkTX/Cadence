@@ -42,7 +42,8 @@ CARLA_BACKEND_START_NAMESPACE
 class LinuxSamplerPlugin : public CarlaPlugin
 {
 public:
-    LinuxSamplerPlugin(CarlaEngine* const engine_, unsigned short id, bool isGIG) : CarlaPlugin(engine_, id)
+    LinuxSamplerPlugin(CarlaEngine* const engine_, const unsigned short id, const bool isGIG)
+        : CarlaPlugin(engine_, id)
     {
         qDebug("LinuxSamplerPlugin::LinuxSamplerPlugin()");
 
