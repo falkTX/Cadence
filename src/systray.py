@@ -18,7 +18,7 @@
 
 # Imports (Global)
 import os, sys
-from PyQt4.QtCore import SIGNAL
+from PyQt4.QtCore import QTimer, SIGNAL
 from PyQt4.QtGui import QAction, QIcon, QMenu, QSystemTrayIcon
 
 try:
@@ -618,13 +618,20 @@ class GlobalSysTray(object):
             self._parent.hide()
         else:
             self.setActionText("show", self._parent.tr("Minimize"))
+
             if self._parent.isMaximized():
                 self._parent.showMaximized()
             else:
                 self._parent.showNormal()
 
+            QTimer.singleShot(100, self.__raiseWindow)
+
     def __quitCall(self):
         self._parent.close()
+
+    def __raiseWindow(self):
+        self._parent.activateWindow()
+        self._parent.raise_()
 
 #--------------- main ------------------
 if __name__ == '__main__':
