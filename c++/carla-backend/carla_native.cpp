@@ -118,20 +118,20 @@ public:
     {
         Q_ASSERT(descriptor);
 
-        //if (descriptor && descriptor->maker)
-        //    strncpy(strBuf, descriptor->maker, STR_MAX);
-        //else
-        CarlaPlugin::getMaker(strBuf);
+        if (descriptor && descriptor->maker)
+            strncpy(strBuf, descriptor->maker, STR_MAX);
+        else
+            CarlaPlugin::getMaker(strBuf);
     }
 
     void getCopyright(char* const strBuf)
     {
         Q_ASSERT(descriptor);
 
-        //if (descriptor && descriptor->copyright)
-        //    strncpy(strBuf, descriptor->copyright, STR_MAX);
-        //else
-        CarlaPlugin::getCopyright(strBuf);
+        if (descriptor && descriptor->copyright)
+            strncpy(strBuf, descriptor->copyright, STR_MAX);
+        else
+            CarlaPlugin::getCopyright(strBuf);
     }
 
     void getRealName(char* const strBuf)
@@ -262,6 +262,5 @@ CARLA_BACKEND_END_NAMESPACE
 
 void carla_register_native_plugin(const PluginDescriptor* desc)
 {
-    printf("contructing plugin, THERE \"%s\"\n", desc->name);
     CarlaBackend::NativePlugin::registerPlugin(desc);
 }

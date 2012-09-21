@@ -161,6 +161,7 @@ typedef struct _PluginDescriptor {
 
 void carla_register_native_plugin(const PluginDescriptor* desc);
 
+// remove?
 #define CARLA_NATIVE_PARAMETER_RANGES_INIT { 0.0, 0.0, 1.0, 0.01, 0.0001, 0.1 }
 
 #define CARLA_NATIVE_PLUGIN_INIT           {         \

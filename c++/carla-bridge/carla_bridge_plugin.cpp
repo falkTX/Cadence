@@ -74,6 +74,26 @@ void initSignalHandler()
 #endif
 }
 
+#ifdef PTW32_STATIC_LIB
+#include <pthread.h>
+
+class PThreadScopedInitializer
+{
+public:
+    PThreadScopedInitializer()
+    {
+        pthread_win32_process_attach_np();
+        pthread_win32_thread_attach_np();
+    };
+
+    ~PThreadScopedInitializer()
+    {
+        pthread_win32_thread_detach_np();
+        pthread_win32_process_detach_np();
+    };
+};
+#endif
+
 CARLA_BRIDGE_START_NAMESPACE
 
 // -------------------------------------------------------------------------
@@ -698,6 +718,10 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+#ifdef PTW32_STATIC_LIB
+    PThreadScopedInitializer pthreadScopedInitializer();
+#endif
+
     // Init bridge client
     CarlaBridge::BridgePluginClient client;
     client.init();
@@ -758,7 +782,10 @@ int main(int argc, char* argv[])
     {
         const char* const lastError = CarlaBackend::getLastError();
         qWarning("Plugin failed to load, error was:\n%s", lastError);
-        client.sendOscBridgeError(lastError);
+
+        if (useOsc)
+            client.sendOscBridgeError(lastError);
+
         ret = 1;
     }
 
