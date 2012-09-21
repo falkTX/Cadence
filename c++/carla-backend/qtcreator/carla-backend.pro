@@ -13,13 +13,14 @@ TARGET   = carla_backend
 TEMPLATE = lib # app
 VERSION  = 0.5.0
 
-SOURCES = \
+SOURCES  = \
     ../carla_backend_standalone.cpp \
 #    ../carla_backend_lv2.cpp \
     ../carla_bridge.cpp \
     ../carla_engine.cpp \
     ../carla_engine_jack.cpp \
     ../carla_engine_rtaudio.cpp \
+    ../carla_native.cpp \
     ../carla_osc.cpp \
     ../carla_shared.cpp \
     ../carla_threads.cpp \
@@ -31,6 +32,10 @@ SOURCES = \
     ../linuxsampler.cpp \
     ../../carla-jackbridge/carla_jackbridge.cpp
 
+SOURCES += \
+    ../plugins/bypass.c \
+    ../plugins/midi-split.cpp
+
 HEADERS = \
     ../carla_backend.h \
     ../carla_backend_standalone.h \
@@ -39,6 +44,8 @@ HEADERS = \
     ../carla_plugin.h \
     ../carla_shared.h \
     ../carla_threads.h \
+    ../plugins/carla_native.h \
+    ../plugins/carla_nativemm.h \
     ../../carla-jackbridge/carla_jackbridge.h \
     ../../carla-includes/carla_includes.h \
     ../../carla-includes/carla_lib_includes.h \
@@ -77,4 +84,5 @@ INCLUDEPATH += ../rtmidi-2.0.0
 SOURCES += ../rtaudio-4.0.11/RtAudio.cpp
 SOURCES += ../rtmidi-2.0.0/RtMidi.cpp
 
+QMAKE_CFLAGS   *= -fPIC -std=c99
 QMAKE_CXXFLAGS *= -fPIC -std=c++0x

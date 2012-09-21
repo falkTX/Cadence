@@ -1860,7 +1860,7 @@ public:
     virtual void uiParameterChange(const uint32_t index, const double value)
     {
         Q_ASSERT(index < param.count);
-        Q_UNUSED(index);
+
         Q_UNUSED(value);
     }
 
@@ -1870,7 +1870,6 @@ public:
     virtual void uiProgramChange(const uint32_t index)
     {
         Q_ASSERT(index < prog.count);
-        Q_UNUSED(index);
     }
 
     /*!
@@ -1879,7 +1878,6 @@ public:
     virtual void uiMidiProgramChange(const uint32_t index)
     {
         Q_ASSERT(index < midiprog.count);
-        Q_UNUSED(index);
     }
 
     /*!
@@ -1890,10 +1888,6 @@ public:
         Q_ASSERT(channel < 16);
         Q_ASSERT(note < 128);
         Q_ASSERT(velo > 0 && velo < 128);
-
-        Q_UNUSED(channel);
-        Q_UNUSED(note);
-        Q_UNUSED(velo);
     }
 
     /*!
@@ -1903,9 +1897,6 @@ public:
     {
         Q_ASSERT(channel < 16);
         Q_ASSERT(note < 128);
-
-        Q_UNUSED(channel);
-        Q_UNUSED(note);
     }
 
     // -------------------------------------------------------------------
@@ -2114,6 +2105,9 @@ public:
 #ifndef BUILD_BRIDGE
     static CarlaPlugin* newBridge(const initializer& init, const BinaryType btype, const PluginType ptype);
 #endif
+    static CarlaPlugin* newNative(const initializer& init);
+
+    static size_t getNativePluginCount();
 
     // -------------------------------------------------------------------
 
