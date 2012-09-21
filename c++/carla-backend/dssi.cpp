@@ -1411,6 +1411,8 @@ public:
 
         paramBuffers = nullptr;
 
+        CarlaPlugin::deleteBuffers();
+
         qDebug("DssiPlugin::deleteBuffers() - end");
     }
 

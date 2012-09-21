@@ -38,28 +38,9 @@ public:
         desc.midiProgramCount = 0;
         desc.midiPrograms     = nullptr;
 
-        desc.instantiate = _instantiate;
-        desc.activate    = _activate;
-        desc.deactivate  = _deactivate;
-        desc.cleanup     = _cleanup;
+        host = nullptr;
 
-        desc.get_parameter_ranges = _get_parameter_ranges;
-        desc.get_parameter_value  = _get_parameter_value;
-        desc.get_parameter_text   = _get_parameter_text;
-        desc.get_parameter_unit   = _get_parameter_unit;
-
-        desc.set_parameter_value  = _set_parameter_value;
-        desc.set_midi_program     = _set_midi_program;
-        desc.set_custom_data      = _set_custom_data;
-
-        desc.show_gui = _show_gui;
-        desc.idle_gui = _idle_gui;
-
-        desc.process = _process;
-
-        desc._handle = this;
-        desc._init   = _init;
-        desc._fini   = _fini;
+        _initDescriptor();
     }
 
     PluginDescriptorClass(PluginDescriptorClass* that)
@@ -77,28 +58,9 @@ public:
         desc.midiProgramCount = that->desc.midiProgramCount;
         desc.midiPrograms     = that->desc.midiPrograms;
 
-        desc.instantiate = _instantiate;
-        desc.activate    = _activate;
-        desc.deactivate  = _deactivate;
-        desc.cleanup     = _cleanup;
+        host = that->host;
 
-        desc.get_parameter_ranges = _get_parameter_ranges;
-        desc.get_parameter_value  = _get_parameter_value;
-        desc.get_parameter_text   = _get_parameter_text;
-        desc.get_parameter_unit   = _get_parameter_unit;
-
-        desc.set_parameter_value  = _set_parameter_value;
-        desc.set_midi_program     = _set_midi_program;
-        desc.set_custom_data      = _set_custom_data;
-
-        desc.show_gui = _show_gui;
-        desc.idle_gui = _idle_gui;
-
-        desc.process = _process;
-
-        desc._handle = this;
-        desc._init   = _init;
-        desc._fini   = _fini;
+        _initDescriptor();
     }
 
     virtual ~PluginDescriptorClass()
@@ -277,10 +239,40 @@ protected:
 
 private:
     PluginDescriptor desc;
+    const HostDescriptor* host;
 
-    static PluginHandle _instantiate(struct _PluginDescriptor* _this_)
+    void _initDescriptor()
     {
-        return ((PluginDescriptorClass*)_this_->_handle)->createMe();
+
+        desc.instantiate = _instantiate;
+        desc.activate    = _activate;
+        desc.deactivate  = _deactivate;
+        desc.cleanup     = _cleanup;
+
+        desc.get_parameter_ranges = _get_parameter_ranges;
+        desc.get_parameter_value  = _get_parameter_value;
+        desc.get_parameter_text   = _get_parameter_text;
+        desc.get_parameter_unit   = _get_parameter_unit;
+
+        desc.set_parameter_value  = _set_parameter_value;
+        desc.set_midi_program     = _set_midi_program;
+        desc.set_custom_data      = _set_custom_data;
+
+        desc.show_gui = _show_gui;
+        desc.idle_gui = _idle_gui;
+
+        desc.process = _process;
+
+        desc._singleton = this;
+        desc._init   = _init;
+        desc._fini   = _fini;
+    }
+
+    static PluginHandle _instantiate(struct _PluginDescriptor* _this_, HostDescriptor* host)
+    {
+        PluginDescriptorClass* handle = ((PluginDescriptorClass*)_this_->_singleton)->createMe();
+        handle->host = host;
+        return handle;
     }
 
     static void _activate(PluginHandle handle)
@@ -350,12 +342,12 @@ private:
 
     static void _init(PluginDescriptor* const _this_)
     {
-        ((PluginDescriptorClass*)_this_->_handle)->handleInit();
+        ((PluginDescriptorClass*)_this_->_singleton)->handleInit();
     }
 
     static void _fini(PluginDescriptor* const _this_)
     {
-        ((PluginDescriptorClass*)_this_->_handle)->handleFini();
+        ((PluginDescriptorClass*)_this_->_singleton)->handleFini();
     }
 
     void handleInit()

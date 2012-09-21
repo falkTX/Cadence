@@ -1031,6 +1031,8 @@ public:
 
         paramBuffers = nullptr;
 
+        CarlaPlugin::deleteBuffers();
+
         qDebug("LadspaPlugin::deleteBuffers() - end");
     }
 

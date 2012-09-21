@@ -102,6 +102,13 @@ typedef struct _TimeInfo {
     TimeInfoBBT bbt;
 } TimeInfo;
 
+typedef struct _HostDescriptor {
+    uint32_t        (*get_buffer_size)();
+    double          (*get_sample_rate)();
+    const TimeInfo* (*get_time_info)();
+    bool            (*write_midi_event)(uint32_t port_offset, MidiEvent* event);
+} HostDescriptor;
+
 typedef struct _PluginPortScalePoint {
     const char* label;
     double value;
@@ -130,7 +137,7 @@ typedef struct _PluginDescriptor {
     uint32_t     midiProgramCount;
     MidiProgram* midiPrograms;
 
-    PluginHandle (*instantiate)(struct _PluginDescriptor* _this_);
+    PluginHandle (*instantiate)(struct _PluginDescriptor* _this_, HostDescriptor* host);
     void         (*activate)(PluginHandle handle);
     void         (*deactivate)(PluginHandle handle);
     void         (*cleanup)(PluginHandle handle);
@@ -152,7 +159,7 @@ typedef struct _PluginDescriptor {
     void (*process)(PluginHandle handle, float** inBuffer, float** outBuffer, uint32_t frames, uint32_t midiEventCount, MidiEvent* midiEvents);
     // TODO - midi stuff^
 
-    PluginHandle _handle;
+    void* _singleton;
     void (*_init)(struct _PluginDescriptor* _this_);
     void (*_fini)(struct _PluginDescriptor* _this_);
 } PluginDescriptor;
@@ -160,20 +167,6 @@ typedef struct _PluginDescriptor {
 // -----------------------------------------------------------------------
 
 void carla_register_native_plugin(const PluginDescriptor* desc);
-
-// remove?
-#define CARLA_NATIVE_PARAMETER_RANGES_INIT { 0.0, 0.0, 1.0, 0.01, 0.0001, 0.1 }
-
-#define CARLA_NATIVE_PLUGIN_INIT           {         \
-    PLUGIN_CATEGORY_NONE, 0, NULL, NULL, NULL, NULL, \
-    0, NULL, 0, NULL,                                \
-    NULL, NULL, NULL, NULL,                          \
-    NULL, NULL, NULL, NULL,                          \
-    NULL, NULL, NULL,                                \
-    NULL, NULL,                                      \
-    NULL,                                            \
-    NULL, NULL, NULL                                 \
-    }
 
 #define CARLA_REGISTER_NATIVE_PLUGIN(label, desc)                              \
     void carla_register_native_plugin_##label () __attribute__((constructor)); \

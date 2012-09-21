@@ -148,11 +148,26 @@ protected:
 
     // -------------------------------------------------------------------
 
-    void process(float** inBuffer, float** outBuffer, const uint32_t frames, uint32_t midiEventCount, MidiEvent* midiEvents)
+    void process(float**, float**, uint32_t, uint32_t midiEventCount, MidiEvent* midiEvents)
     {
-        Q_UNUSED(inBuffer);
-        Q_UNUSED(outBuffer);
-        Q_UNUSED(frames);
+        MidiEvent midiEvent;
+
+        for (uint32_t i=0; i < midiEventCount; i++)
+        {
+            memcpy(&midiEvent, &midiEvents[i], sizeof(MidiEvent));
+
+            uint8_t status  = midiEvent.data[0];
+            uint8_t channel = status & 0x0F;
+
+            Q_ASSERT(channel < 16);
+
+            if (channel >= 16)
+                continue;
+
+            status -= channel;
+            midiEvent.data[0] = status;
+            //writeMidiEvent(channel, midiEvent);
+        }
     }
 
     // -------------------------------------------------------------------

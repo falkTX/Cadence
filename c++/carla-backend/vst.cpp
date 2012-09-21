@@ -425,11 +425,18 @@ public:
 
     void idleGui()
     {
-        if (gui.type != GUI_EXTERNAL_OSC)
-            effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
+#ifdef VESTIGE_HEADER
+        if (effect && effect->ptr1)
+#else
+        if (effect && effect->resvd1)
+#endif
+        {
+            if (gui.type != GUI_EXTERNAL_OSC)
+                effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
 
-        if (needIdle)
-            effect->dispatcher(effect, effIdle, 0, 0, nullptr, 0.0f);
+            if (needIdle)
+                effect->dispatcher(effect, effIdle, 0, 0, nullptr, 0.0f);
+        }
 
         CarlaPlugin::idleGui();
     }

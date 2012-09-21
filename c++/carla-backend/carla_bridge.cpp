@@ -916,6 +916,8 @@ public:
 
         params = nullptr;
 
+        CarlaPlugin::deleteBuffers();
+
         qDebug("BridgePlugin::delete_buffers() - end");
     }
 

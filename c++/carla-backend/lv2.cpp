@@ -2925,6 +2925,8 @@ public:
 
         paramBuffers = nullptr;
 
+        CarlaPlugin::deleteBuffers();
+
         qDebug("Lv2Plugin::deleteBuffers() - end");
     }
 
