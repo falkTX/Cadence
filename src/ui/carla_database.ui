@@ -61,6 +61,48 @@
       <enum>QFrame::Sunken</enum>
      </property>
      <layout class="QGridLayout" name="gridLayout">
+      <item row="2" column="0">
+       <widget class="QCheckBox" name="ch_dssi">
+        <property name="text">
+         <string>DSSI</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QCheckBox" name="ch_lv2">
+        <property name="text">
+         <string>LV2</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QCheckBox" name="ch_vst">
+        <property name="text">
+         <string>VST</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QCheckBox" name="ch_ladspa">
+        <property name="text">
+         <string>LADSPA</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QCheckBox" name="ch_kits">
+        <property name="text">
+         <string>Sound Kits</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QCheckBox" name="ch_internal">
+        <property name="text">
+         <string>Internal</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="1">
        <widget class="QCheckBox" name="ch_effects">
         <property name="text">
@@ -86,41 +128,6 @@
        <widget class="QCheckBox" name="ch_other">
         <property name="text">
          <string>Other/Misc</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QCheckBox" name="ch_kits">
-        <property name="text">
-         <string>Sound Kits</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QCheckBox" name="ch_lv2">
-        <property name="text">
-         <string>LV2</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QCheckBox" name="ch_vst">
-        <property name="text">
-         <string>VST</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QCheckBox" name="ch_ladspa">
-        <property name="text">
-         <string>LADSPA</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QCheckBox" name="ch_dssi">
-        <property name="text">
-         <string>DSSI</string>
         </property>
        </widget>
       </item>

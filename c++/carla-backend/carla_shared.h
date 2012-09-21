@@ -51,6 +51,8 @@ const char* getLastError();
 void setLastError(const char* const error);
 
 #ifndef BUILD_BRIDGE
+uint32_t getPluginHintsFromNative(const uint32_t nativeHints);
+
 void setOption(const OptionsType option, const int value, const char* const valueStr);
 void resetOptions();
 

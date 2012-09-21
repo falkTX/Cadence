@@ -17,6 +17,10 @@
 
 #include "carla_shared.h"
 
+#ifndef BUILD_BRIDGE
+#  include "plugins/carla_native.h"
+#endif
+
 #include <QtCore/QString>
 
 CARLA_BACKEND_START_NAMESPACE
@@ -58,6 +62,8 @@ const char* PluginType2str(const PluginType type)
     {
     case PLUGIN_NONE:
         return "PLUGIN_NONE";
+    case PLUGIN_INTERNAL:
+        return "PLUGIN_INTERNAL";
     case PLUGIN_LADSPA:
         return "PLUGIN_LADSPA";
     case PLUGIN_DSSI:
@@ -393,6 +399,8 @@ const char* getPluginTypeString(const PluginType type)
     {
     case PLUGIN_NONE:
         return "NONE";
+    case PLUGIN_INTERNAL:
+        return "INTERNAL";
     case PLUGIN_LADSPA:
         return "LADSPA";
     case PLUGIN_DSSI:
@@ -520,6 +528,20 @@ void setLastError(const char* const error)
 // -------------------------------------------------------------------------------------------------------------------
 
 #ifndef BUILD_BRIDGE
+uint32_t getPluginHintsFromNative(const uint32_t nativeHints)
+{
+    uint32_t realHints = 0;
+
+    if (nativeHints & ::PLUGIN_IS_SYNTH)
+        realHints |= PLUGIN_IS_SYNTH;
+    if (nativeHints & ::PLUGIN_HAS_GUI)
+        realHints |= PLUGIN_HAS_GUI;
+    if (nativeHints & ::PLUGIN_USES_SINGLE_THREAD)
+        realHints |= PLUGIN_USES_SINGLE_THREAD;
+
+    return realHints;
+}
+
 void setOption(const OptionsType option, const int value, const char* const valueStr)
 {
     qDebug("CarlaBackend::setOption(%s, %i, \"%s\")", OptionsType2str(option), value, valueStr);

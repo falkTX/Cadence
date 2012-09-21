@@ -285,6 +285,9 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
         {
         case PLUGIN_NONE:
             break;
+        case PLUGIN_INTERNAL:
+            plugin = CarlaPlugin::newNative(init);
+            break;
         case PLUGIN_LADSPA:
             plugin = CarlaPlugin::newLADSPA(init, extra);
             break;

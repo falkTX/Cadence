@@ -615,6 +615,21 @@ def runCarlaDiscovery(itype, stype, filename, tool, isWine=False):
 
     return plugins
 
+def checkPluginInternal(desc):
+    plugins = []
+
+    pinfo = deepcopy(PyPluginInfo)
+    pinfo['type']  = PLUGIN_INTERNAL
+    pinfo['name']  = cString(desc['name'])
+    pinfo['label'] = cString(desc['label'])
+    pinfo['maker'] = cString(desc['maker'])
+    pinfo['copyright'] = cString(desc['copyright'])
+    pinfo['hints'] = int(desc['hints'])
+    pinfo['build'] = BINARY_NATIVE
+
+    plugins.append(pinfo)
+    return plugins
+
 def checkPluginLADSPA(filename, tool, isWine=False):
     return runCarlaDiscovery(PLUGIN_LADSPA, "LADSPA", filename, tool, isWine)
 
@@ -749,6 +764,12 @@ class Host(object):
 
         self.lib.get_engine_driver_name.argtypes = [c_uint]
         self.lib.get_engine_driver_name.restype = c_char_p
+
+        self.lib.get_internal_plugin_count.argtypes = None
+        self.lib.get_internal_plugin_count.restype = c_uint
+
+        self.lib.get_internal_plugin_info.argtypes = [c_uint]
+        self.lib.get_internal_plugin_info.restype = POINTER(PluginInfo)
 
         self.lib.engine_init.argtypes = [c_char_p, c_char_p]
         self.lib.engine_init.restype = c_bool
@@ -926,6 +947,12 @@ class Host(object):
 
     def get_engine_driver_name(self, index):
         return self.lib.get_engine_driver_name(index)
+
+    def get_internal_plugin_count(self):
+        return self.lib.get_internal_plugin_count()
+
+    def get_internal_plugin_info(self, index):
+        return struct_to_dict(self.lib.get_internal_plugin_info(index).contents)
 
     def engine_init(self, driver_name, client_name):
         return self.lib.engine_init(driver_name.encode("utf-8"), client_name.encode("utf-8"))

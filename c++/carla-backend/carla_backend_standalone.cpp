@@ -17,6 +17,7 @@
 
 #include "carla_backend_standalone.h"
 #include "carla_plugin.h"
+#include "plugins/carla_native.h"
 
 // -------------------------------------------------------------------------------------------------------------------
 
@@ -86,6 +87,39 @@ const char* get_engine_driver_name(unsigned int index)
 
     qDebug("CarlaBackendStandalone::get_engine_driver_name(%i) - invalid index", index);
     return nullptr;
+}
+
+// -------------------------------------------------------------------------------------------------------------------
+
+unsigned int get_internal_plugin_count()
+{
+    qDebug("CarlaBackendStandalone::get_internal_plugin_count()");
+
+    return CarlaBackend::CarlaPlugin::getNativePluginCount();
+}
+
+const PluginInfo* get_internal_plugin_info(unsigned int plugin_id)
+{
+    qDebug("CarlaBackendStandalone::get_internal_plugin_info(%i)", plugin_id);
+
+    static PluginInfo info;
+
+    const PluginDescriptor* const nativePlugin = CarlaBackend::CarlaPlugin::getNativePlugin(plugin_id);
+
+    Q_ASSERT(nativePlugin);
+
+    if (! nativePlugin)
+        return nullptr;
+
+    info.type      = CarlaBackend::PLUGIN_NONE;
+    info.category  = (CarlaBackend::PluginCategory)nativePlugin->category;
+    info.hints     = CarlaBackend::getPluginHintsFromNative(nativePlugin->hints);
+    info.name      = nativePlugin->name;
+    info.label     = nativePlugin->label;
+    info.maker     = nativePlugin->maker;
+    info.copyright = nativePlugin->copyright;
+
+    return &info;
 }
 
 // -------------------------------------------------------------------------------------------------------------------

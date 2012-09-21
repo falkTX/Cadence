@@ -87,14 +87,15 @@ BINARY_WIN64   = 4
 BINARY_OTHER   = 5
 
 # enum PluginType
-PLUGIN_NONE   = 0
-PLUGIN_LADSPA = 1
-PLUGIN_DSSI   = 2
-PLUGIN_LV2    = 3
-PLUGIN_VST    = 4
-PLUGIN_GIG    = 5
-PLUGIN_SF2    = 6
-PLUGIN_SFZ    = 7
+PLUGIN_NONE     = 0
+PLUGIN_INTERNAL = 1
+PLUGIN_LADSPA   = 2
+PLUGIN_DSSI     = 3
+PLUGIN_LV2      = 4
+PLUGIN_VST      = 5
+PLUGIN_GIG      = 6
+PLUGIN_SF2      = 7
+PLUGIN_SFZ      = 8
 
 # enum PluginCategory
 PLUGIN_CATEGORY_NONE      = 0
@@ -632,7 +633,9 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
             self.tab_programs.setCurrentIndex(1)
 
         # Set Meta-Data
-        if pluginType == PLUGIN_LADSPA:
+        if pluginType == PLUGIN_INTERNAL:
+            self.le_type.setText(self.tr("Internal"))
+        elif pluginType == PLUGIN_LADSPA:
             self.le_type.setText("LADSPA")
         elif pluginType == PLUGIN_DSSI:
             self.le_type.setText("DSSI")
@@ -1488,7 +1491,9 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
     def getSaveXMLContent(self):
         Carla.Host.prepare_for_save(self.m_pluginId)
 
-        if self.m_pluginInfo['type'] == PLUGIN_LADSPA:
+        if self.m_pluginInfo['type'] == PLUGIN_INTERNAL:
+            typeStr = "Internal"
+        elif self.m_pluginInfo['type'] == PLUGIN_LADSPA:
             typeStr = "LADSPA"
         elif self.m_pluginInfo['type'] == PLUGIN_DSSI:
             typeStr = "DSSI"

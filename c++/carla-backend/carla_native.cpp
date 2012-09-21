@@ -65,7 +65,7 @@ public:
     {
         qDebug("NativePlugin::NativePlugin()");
 
-        m_type = PLUGIN_NONE;
+        m_type = PLUGIN_INTERNAL;
 
         descriptor = nullptr;
         handle     = nullptr;
@@ -164,6 +164,16 @@ public:
         return pluginDescriptors.size();
     }
 
+    static const PluginDescriptor* getPlugin(size_t index)
+    {
+        Q_ASSERT(index < pluginDescriptors.size());
+
+        if (index < pluginDescriptors.size())
+            return pluginDescriptors[index];
+
+        return nullptr;
+    }
+
     static void registerPlugin(const PluginDescriptor* desc)
     {
         pluginDescriptors.push_back(desc);
@@ -256,6 +266,11 @@ CarlaPlugin* CarlaPlugin::newNative(const initializer& init)
 size_t CarlaPlugin::getNativePluginCount()
 {
     return NativePlugin::getPluginCount();
+}
+
+const PluginDescriptor* CarlaPlugin::getNativePlugin(size_t index)
+{
+    return NativePlugin::getPlugin(index);
 }
 
 CARLA_BACKEND_END_NAMESPACE

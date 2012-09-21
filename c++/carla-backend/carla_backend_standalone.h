@@ -98,6 +98,9 @@ struct GuiInfo {
 CARLA_EXPORT unsigned int get_engine_driver_count();
 CARLA_EXPORT const char*  get_engine_driver_name(unsigned int index);
 
+CARLA_EXPORT unsigned int get_internal_plugin_count();
+CARLA_EXPORT const PluginInfo* get_internal_plugin_info(unsigned int plugin_id);
+
 CARLA_EXPORT bool engine_init(const char* driver_name, const char* client_name);
 CARLA_EXPORT bool engine_close();
 CARLA_EXPORT bool is_engine_running();

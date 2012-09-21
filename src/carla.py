@@ -576,8 +576,8 @@ class PluginRefreshW(QDialog, ui_carla_refresh.Ui_PluginRefreshW):
         self.b_close.setVisible(False)
 
         native, posix32, posix64, win32, win64 = (self.ch_native.isChecked(), self.ch_posix32.isChecked(), self.ch_posix64.isChecked(), self.ch_win32.isChecked(), self.ch_win64.isChecked())
-        ladspa, dssi, lv2, vst, gig, sf2, sfz = (self.ch_ladspa.isChecked(), self.ch_dssi.isChecked(), self.ch_lv2.isChecked(), self.ch_vst.isChecked(),
-                                                 self.ch_gig.isChecked(), self.ch_sf2.isChecked(), self.ch_sfz.isChecked())
+        ladspa, dssi, lv2, vst, gig, sf2, sfz  = (self.ch_ladspa.isChecked(), self.ch_dssi.isChecked(), self.ch_lv2.isChecked(), self.ch_vst.isChecked(),
+                                                  self.ch_gig.isChecked(), self.ch_sf2.isChecked(), self.ch_sfz.isChecked())
 
         self.pThread.setSearchBinaryTypes(native, posix32, posix64, win32, win64)
         self.pThread.setSearchPluginTypes(ladspa, dssi, lv2, vst, gig, sf2, sfz)
@@ -693,6 +693,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.connect(self.ch_midi, SIGNAL("clicked()"), SLOT("slot_checkFilters()"))
         self.connect(self.ch_other, SIGNAL("clicked()"), SLOT("slot_checkFilters()"))
         self.connect(self.ch_kits, SIGNAL("clicked()"), SLOT("slot_checkFilters()"))
+        self.connect(self.ch_internal, SIGNAL("clicked()"), SLOT("slot_checkFilters()"))
         self.connect(self.ch_ladspa, SIGNAL("clicked()"), SLOT("slot_checkFilters()"))
         self.connect(self.ch_dssi, SIGNAL("clicked()"), SLOT("slot_checkFilters()"))
         self.connect(self.ch_lv2, SIGNAL("clicked()"), SLOT("slot_checkFilters()"))
@@ -709,6 +710,28 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.tb_filters.setArrowType(Qt.UpArrow if yesno else Qt.DownArrow)
         self.frame.setVisible(yesno)
 
+    def checkInternalPlugins(self):
+        internals = toList(self.settings_db.value("Plugins/Internal", []))
+
+        count = 0
+
+        for plugins in internals:
+            for plugin in plugins:
+                count += 1
+
+        if count != Carla.Host.get_internal_plugin_count():
+            internal_plugins = []
+
+            for i in range(Carla.Host.get_internal_plugin_count()):
+                descInfo = Carla.Host.get_internal_plugin_info(i)
+                plugins  = checkPluginInternal(descInfo)
+
+                if plugins:
+                    internal_plugins.append(plugins)
+
+            self.settings_db.setValue("Plugins/Internal", internal_plugins)
+            self.settings_db.sync()
+
     def reAddPlugins(self):
         row_count = self.tableWidget.rowCount()
         for x in range(row_count):
@@ -716,6 +739,10 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
 
         self.last_table_index = 0
         self.tableWidget.setSortingEnabled(False)
+
+        self.checkInternalPlugins()
+
+        internals = toList(self.settings_db.value("Plugins/Internal", []))
 
         ladspa_plugins  = []
         ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_native", []))
@@ -749,11 +776,17 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         sf2s = toList(self.settings_db.value("Plugins/SF2", []))
         sfzs = toList(self.settings_db.value("Plugins/SFZ", []))
 
+        internal_count = 0
         ladspa_count = 0
         dssi_count = 0
         lv2_count = 0
         vst_count = 0
         kit_count = 0
+
+        for plugins in internals:
+            for plugin in plugins:
+                self.addPluginToTable(plugin, self.tr("Internal"))
+                internal_count += 1
 
         for plugins in ladspa_plugins:
             for plugin in plugins:
@@ -794,7 +827,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.tableWidget.setSortingEnabled(True)
         self.tableWidget.sortByColumn(0, Qt.AscendingOrder)
 
-        self.label.setText(self.tr("Have %i LADSPA, %i DSSI, %i LV2, %i VST and %i Sound Kits" % (ladspa_count, dssi_count, lv2_count, vst_count, kit_count)))
+        self.label.setText(self.tr("Have %i %s, %i LADSPA, %i DSSI, %i LV2, %i VST and %i Sound Kits" % (internal_count, self.tr("Internal"), ladspa_count, dssi_count, lv2_count, vst_count, kit_count)))
 
     def addPluginToTable(self, plugin, ptype):
         index = self.last_table_index
@@ -888,11 +921,12 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         hide_midi        = not self.ch_midi.isChecked()
         hide_other       = not self.ch_other.isChecked()
 
-        hide_ladspa = not self.ch_ladspa.isChecked()
-        hide_dssi   = not self.ch_dssi.isChecked()
-        hide_lv2    = not self.ch_lv2.isChecked()
-        hide_vst    = not self.ch_vst.isChecked()
-        hide_kits   = not self.ch_kits.isChecked()
+        hide_internal = not self.ch_internal.isChecked()
+        hide_ladspa   = not self.ch_ladspa.isChecked()
+        hide_dssi     = not self.ch_dssi.isChecked()
+        hide_lv2      = not self.ch_lv2.isChecked()
+        hide_vst      = not self.ch_vst.isChecked()
+        hide_kits     = not self.ch_kits.isChecked()
 
         hide_native  = not self.ch_native.isChecked()
         hide_bridged = not self.ch_bridged.isChecked()
@@ -943,6 +977,8 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
                 self.tableWidget.hideRow(i)
             elif (hide_kits and is_kit):
                 self.tableWidget.hideRow(i)
+            elif (hide_internal and ptype == self.tr("Internal")):
+                self.tableWidget.hideRow(i)
             elif (hide_ladspa and ptype == "LADSPA"):
                 self.tableWidget.hideRow(i)
             elif (hide_dssi and ptype == "DSSI"):
@@ -977,6 +1013,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.settings.setValue("PluginDatabase/ShowInstruments", self.ch_instruments.isChecked())
         self.settings.setValue("PluginDatabase/ShowMIDI", self.ch_midi.isChecked())
         self.settings.setValue("PluginDatabase/ShowOther", self.ch_other.isChecked())
+        self.settings.setValue("PluginDatabase/ShowInternal", self.ch_internal.isChecked())
         self.settings.setValue("PluginDatabase/ShowLADSPA", self.ch_ladspa.isChecked())
         self.settings.setValue("PluginDatabase/ShowDSSI", self.ch_dssi.isChecked())
         self.settings.setValue("PluginDatabase/ShowLV2", self.ch_lv2.isChecked())
@@ -996,6 +1033,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.ch_instruments.setChecked(self.settings.value("PluginDatabase/ShowInstruments", True, type=bool))
         self.ch_midi.setChecked(self.settings.value("PluginDatabase/ShowMIDI", True, type=bool))
         self.ch_other.setChecked(self.settings.value("PluginDatabase/ShowOther", True, type=bool))
+        self.ch_internal.setChecked(self.settings.value("PluginDatabase/ShowInternal", True, type=bool))
         self.ch_ladspa.setChecked(self.settings.value("PluginDatabase/ShowLADSPA", True, type=bool))
         self.ch_dssi.setChecked(self.settings.value("PluginDatabase/ShowDSSI", True, type=bool))
         self.ch_lv2.setChecked(self.settings.value("PluginDatabase/ShowLV2", True, type=bool))
@@ -1570,6 +1608,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             QMessageBox.critical(self, self.tr("Error"), self.tr("Not a valid Carla project file"))
             return
 
+        x_internal_plugins = None
         x_ladspa_plugins = None
         x_dssi_plugins = None
         x_lv2_plugins = None
@@ -1595,7 +1634,11 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             binaryS = os.path.basename(binary)
             unique_id = x_save_state_dict['UniqueID']
 
-            if ptype == "LADSPA":
+            if ptype == "Internal":
+                if not x_internal_plugins: x_internal_plugins = toList(self.settings_db.value("Plugins/Internal", []))
+                x_plugins = x_internal_plugins
+
+            elif ptype == "LADSPA":
                 if not x_ladspa_plugins:
                     x_ladspa_plugins  = []
                     x_ladspa_plugins += toList(self.settings_db.value("Plugins/LADSPA_native", []))
@@ -1648,7 +1691,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
                 x_plugins = x_sfz_plugins
 
             else:
-                print("load_project() - ptype '%s' not recognized", ptype)
+                print("load_project() - ptype '%s' not recognized" % ptype)
                 x_failed_plugins.append(x_save_state_dict['Name'])
                 continue
 
@@ -1721,26 +1764,27 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
                 plugin_ul = None
                 plugin_u = None
                 plugin_l = None
+                plugin_B = binary
 
-            if (plugin_ulB):
+            if plugin_ulB:
                 plugin = plugin_ulB
-            elif (plugin_ulb):
+            elif plugin_ulb:
                 plugin = plugin_ulb
-            elif (plugin_ul):
+            elif plugin_ul:
                 plugin = plugin_ul
-            elif (plugin_uB):
+            elif plugin_uB:
                 plugin = plugin_uB
-            elif (plugin_ub):
+            elif plugin_ub:
                 plugin = plugin_ub
-            elif (plugin_lB):
+            elif plugin_lB:
                 plugin = plugin_lB
-            elif (plugin_lb):
+            elif plugin_lb:
                 plugin = plugin_lb
-            elif (plugin_u):
+            elif plugin_u:
                 plugin = plugin_u
-            elif (plugin_l):
+            elif plugin_l:
                 plugin = plugin_l
-            elif (plugin_B):
+            elif plugin_B:
                 plugin = plugin_B
             else:
                 plugin = None

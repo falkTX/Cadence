@@ -108,14 +108,15 @@ enum BinaryType {
  * \note Some plugin classes might provide more than 1 plugin type.
  */
 enum PluginType {
-    PLUGIN_NONE   = 0, //!< Null plugin type.
-    PLUGIN_LADSPA = 1, //!< LADSPA plugin.\see LadspaPlugin
-    PLUGIN_DSSI   = 2, //!< DSSI plugin.\see DssiPlugin
-    PLUGIN_LV2    = 3, //!< LV2 plugin.\see Lv2Plugin
-    PLUGIN_VST    = 4, //!< VST plugin.\see VstPlugin
-    PLUGIN_GIG    = 5, //!< GIG sound kit, implemented via LinuxSampler.\see LinuxSamplerPlugin
-    PLUGIN_SF2    = 6, //!< SF2 sound kit (aka SoundFont), implemented via FluidSynth.\see FluidSynthPlugin
-    PLUGIN_SFZ    = 7  //!< SFZ sound kit, implemented via LinuxSampler.\see LinuxSamplerPlugin
+    PLUGIN_NONE     = 0, //!< Null plugin type.
+    PLUGIN_INTERNAL = 1, //!< Internal plugin.
+    PLUGIN_LADSPA   = 2, //!< LADSPA plugin.\see LadspaPlugin
+    PLUGIN_DSSI     = 3, //!< DSSI plugin.\see DssiPlugin
+    PLUGIN_LV2      = 4, //!< LV2 plugin.\see Lv2Plugin
+    PLUGIN_VST      = 5, //!< VST plugin.\see VstPlugin
+    PLUGIN_GIG      = 6, //!< GIG sound kit, implemented via LinuxSampler.\see LinuxSamplerPlugin
+    PLUGIN_SF2      = 7, //!< SF2 sound kit (aka SoundFont), implemented via FluidSynth.\see FluidSynthPlugin
+    PLUGIN_SFZ      = 8  //!< SFZ sound kit, implemented via LinuxSampler.\see LinuxSamplerPlugin
 };
 
 enum PluginCategory {

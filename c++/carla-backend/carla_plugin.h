@@ -42,6 +42,8 @@ typedef QX11EmbedContainer GuiContainer;
 typedef QWidget GuiContainer;
 #endif
 
+typedef struct _PluginDescriptor PluginDescriptor;
+
 CARLA_BACKEND_START_NAMESPACE
 
 /*!
@@ -2108,6 +2110,7 @@ public:
     static CarlaPlugin* newNative(const initializer& init);
 
     static size_t getNativePluginCount();
+    static const PluginDescriptor* getNativePlugin(size_t index);
 
     // -------------------------------------------------------------------
 
