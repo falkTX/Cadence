@@ -1038,7 +1038,7 @@ public:
 
                     midiEvent->type = kVstMidiType;
                     midiEvent->byteSize = sizeof(VstMidiEvent);
-                    midiEvent->midiData[0] = m_ctrlInChannel + extMidiNotes[i].velo ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF;
+                    midiEvent->midiData[0] = uint8_t(extMidiNotes[i].velo ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF) + extMidiNotes[i].channel;
                     midiEvent->midiData[1] = extMidiNotes[i].note;
                     midiEvent->midiData[2] = extMidiNotes[i].velo;
 
@@ -1295,7 +1295,7 @@ public:
 
         if (midi.portMout && m_active)
         {
-            uint8_t data[4] = { 0 };
+            uint8_t data[3] = { 0 };
 
             for (int32_t i = midiEventCount; i < events.numEvents; i++)
             {

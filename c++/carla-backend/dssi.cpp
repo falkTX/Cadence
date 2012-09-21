@@ -1032,7 +1032,7 @@ public:
                     memset(midiEvent, 0, sizeof(snd_seq_event_t));
 
                     midiEvent->type = extMidiNotes[i].velo ? SND_SEQ_EVENT_NOTEON : SND_SEQ_EVENT_NOTEOFF;
-                    midiEvent->data.note.channel  = m_ctrlInChannel;
+                    midiEvent->data.note.channel  = extMidiNotes[i].channel;
                     midiEvent->data.note.note     = extMidiNotes[i].note;
                     midiEvent->data.note.velocity = extMidiNotes[i].velo;
 

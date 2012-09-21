@@ -22,12 +22,10 @@
 class MidiSplitPlugin : public PluginDescriptorClass
 {
 public:
-    MidiSplitPlugin() : PluginDescriptorClass()
+    MidiSplitPlugin(const PluginDescriptorClass* master) : PluginDescriptorClass(master)
     {
-    }
-
-    MidiSplitPlugin(PluginDescriptorClass* that) : PluginDescriptorClass(that)
-    {
+        if (! master)
+            return;
     }
 
     ~MidiSplitPlugin()
@@ -199,6 +197,6 @@ private:
     MidiEvent events[MAX_MIDI_EVENTS];
 };
 
-static MidiSplitPlugin midiSplitPlugin;
+static MidiSplitPlugin midiSplitPlugin(nullptr);
 
 CARLA_REGISTER_NATIVE_PLUGIN_MM(midiSplit, midiSplitPlugin)

@@ -21,9 +21,11 @@
 #include <string.h>
 
 enum ByPassPorts {
-    PORT_IN,
-    PORT_OUT,
-    PORT_MAX
+    PORT_IN1  = 0,
+    PORT_IN2  = 1,
+    PORT_OUT1 = 2,
+    PORT_OUT2 = 3,
+    PORT_MAX  = 4
 };
 
 void bypass_init(struct _PluginDescriptor* _this_)
@@ -31,13 +33,21 @@ void bypass_init(struct _PluginDescriptor* _this_)
     _this_->portCount = PORT_MAX;
     _this_->ports = malloc(sizeof(PluginPort) * PORT_MAX);
 
-    _this_->ports[PORT_IN].type  = PORT_TYPE_AUDIO;
-    _this_->ports[PORT_IN].hints = 0;
-    _this_->ports[PORT_IN].name  = "in";
+    _this_->ports[PORT_IN1].type  = PORT_TYPE_AUDIO;
+    _this_->ports[PORT_IN1].hints = 0;
+    _this_->ports[PORT_IN1].name  = "in1";
 
-    _this_->ports[PORT_OUT].type  = PORT_TYPE_AUDIO;
-    _this_->ports[PORT_OUT].hints = PORT_HINT_IS_OUTPUT;
-    _this_->ports[PORT_OUT].name  = "out";
+    _this_->ports[PORT_IN2].type  = PORT_TYPE_AUDIO;
+    _this_->ports[PORT_IN2].hints = 0;
+    _this_->ports[PORT_IN2].name  = "in2";
+
+    _this_->ports[PORT_OUT1].type  = PORT_TYPE_AUDIO;
+    _this_->ports[PORT_OUT1].hints = PORT_HINT_IS_OUTPUT;
+    _this_->ports[PORT_OUT1].name  = "out1";
+
+    _this_->ports[PORT_OUT2].type  = PORT_TYPE_AUDIO;
+    _this_->ports[PORT_OUT2].hints = PORT_HINT_IS_OUTPUT;
+    _this_->ports[PORT_OUT2].name  = "out2";
 }
 
 void bypass_fini(struct _PluginDescriptor* _this_)
@@ -62,7 +72,7 @@ void bypass_process(PluginHandle handle, float** inBuffer, float** outBuffer, ui
 {
     float* input1  = inBuffer[0];
     float* input2  = inBuffer[1];
-    float* output1 = outBuffer[1];
+    float* output1 = outBuffer[0];
     float* output2 = outBuffer[1];
 
     memcpy(output1, input1, sizeof(float)*frames);

@@ -27,6 +27,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
+typedef void* HostHandle;
 typedef void* PluginHandle;
 
 const uint32_t PLUGIN_IS_SYNTH            = 1 << 0;
@@ -103,10 +104,11 @@ typedef struct _TimeInfo {
 } TimeInfo;
 
 typedef struct _HostDescriptor {
-    uint32_t        (*get_buffer_size)();
-    double          (*get_sample_rate)();
-    const TimeInfo* (*get_time_info)();
-    bool            (*write_midi_event)(uint32_t port_offset, MidiEvent* event);
+    HostHandle handle;
+    uint32_t        (*get_buffer_size)(HostHandle handle);
+    double          (*get_sample_rate)(HostHandle handle);
+    const TimeInfo* (*get_time_info)(HostHandle handle);
+    bool            (*write_midi_event)(HostHandle handle, uint32_t port_offset, MidiEvent* event);
 } HostDescriptor;
 
 typedef struct _PluginPortScalePoint {
@@ -157,7 +159,6 @@ typedef struct _PluginDescriptor {
     // TODO - ui_set_*
 
     void (*process)(PluginHandle handle, float** inBuffer, float** outBuffer, uint32_t frames, uint32_t midiEventCount, MidiEvent* midiEvents);
-    // TODO - midi stuff^
 
     void* _singleton;
     void (*_init)(struct _PluginDescriptor* _this_);

@@ -23,42 +23,42 @@
 
 class PluginDescriptorClass {
 public:
-    PluginDescriptorClass()
+    PluginDescriptorClass(const PluginDescriptorClass* master)
     {
-        desc.category  = PLUGIN_CATEGORY_NONE;
-        desc.hints     = 0;
-        desc.name      = nullptr;
-        desc.label     = nullptr;
-        desc.maker     = nullptr;
-        desc.copyright = nullptr;
+        if (master)
+        {
+            desc.category  = master->desc.category;
+            desc.hints     = master->desc.hints;
+            desc.name      = master->desc.name;
+            desc.label     = master->desc.label;
+            desc.maker     = master->desc.maker;
+            desc.copyright = master->desc.copyright;
 
-        desc.portCount = 0;
-        desc.ports     = nullptr;
+            desc.portCount = master->desc.portCount;
+            desc.ports     = master->desc.ports;
 
-        desc.midiProgramCount = 0;
-        desc.midiPrograms     = nullptr;
+            desc.midiProgramCount = master->desc.midiProgramCount;
+            desc.midiPrograms     = master->desc.midiPrograms;
 
-        host = nullptr;
+            host = master->host;
+        }
+        else
+        {
+            desc.category  = PLUGIN_CATEGORY_NONE;
+            desc.hints     = 0;
+            desc.name      = nullptr;
+            desc.label     = nullptr;
+            desc.maker     = nullptr;
+            desc.copyright = nullptr;
 
-        _initDescriptor();
-    }
+            desc.portCount = 0;
+            desc.ports     = nullptr;
 
-    PluginDescriptorClass(PluginDescriptorClass* that)
-    {
-        desc.category  = that->desc.category;
-        desc.hints     = that->desc.hints;
-        desc.name      = that->desc.name;
-        desc.label     = that->desc.label;
-        desc.maker     = that->desc.maker;
-        desc.copyright = that->desc.copyright;
+            desc.midiProgramCount = 0;
+            desc.midiPrograms     = nullptr;
 
-        desc.portCount = that->desc.portCount;
-        desc.ports     = that->desc.ports;
-
-        desc.midiProgramCount = that->desc.midiProgramCount;
-        desc.midiPrograms     = that->desc.midiPrograms;
-
-        host = that->host;
+            host = nullptr;
+        }
 
         _initDescriptor();
     }
@@ -66,6 +66,46 @@ public:
     virtual ~PluginDescriptorClass()
     {
     }
+
+    uint32_t getBufferSize() const
+    {
+        Q_ASSERT(host);
+
+        if (host)
+            return host->get_buffer_size(host->handle);
+
+        return 0;
+    }
+
+    double getSampleRate() const
+    {
+        Q_ASSERT(host);
+
+        if (host)
+            return host->get_sample_rate(host->handle);
+
+        return 0.0;
+    }
+
+    const TimeInfo* getTimeInfo() const
+    {
+        Q_ASSERT(host);
+
+        if (host)
+            return host->get_time_info(host->handle);
+
+        return nullptr;
+    }
+
+    void writeMidiEvent(uint32_t portOffset, MidiEvent* event)
+    {
+        Q_ASSERT(host);
+
+        if (host)
+            host->write_midi_event(host->handle, portOffset, event);
+    }
+
+    // -------------------------------------------------------------------
 
     PluginDescriptor* descriptorInit()
     {
@@ -243,7 +283,6 @@ private:
 
     void _initDescriptor()
     {
-
         desc.instantiate = _instantiate;
         desc.activate    = _activate;
         desc.deactivate  = _deactivate;
@@ -270,9 +309,9 @@ private:
 
     static PluginHandle _instantiate(struct _PluginDescriptor* _this_, HostDescriptor* host)
     {
-        PluginDescriptorClass* handle = ((PluginDescriptorClass*)_this_->_singleton)->createMe();
-        handle->host = host;
-        return handle;
+        PluginDescriptorClass* singleton = (PluginDescriptorClass*)_this_->_singleton;
+        singleton->host = host;
+        return singleton->createMe();
     }
 
     static void _activate(PluginHandle handle)
@@ -342,15 +381,15 @@ private:
 
     static void _init(PluginDescriptor* const _this_)
     {
-        ((PluginDescriptorClass*)_this_->_singleton)->handleInit();
+        ((PluginDescriptorClass*)_this_->_singleton)->_handleInit();
     }
 
     static void _fini(PluginDescriptor* const _this_)
     {
-        ((PluginDescriptorClass*)_this_->_singleton)->handleFini();
+        ((PluginDescriptorClass*)_this_->_singleton)->_handleFini();
     }
 
-    void handleInit()
+    void _handleInit()
     {
         desc.portCount = getPortCount();
 
@@ -379,7 +418,7 @@ private:
         }
     }
 
-    void handleFini()
+    void _handleFini()
     {
         if (desc.midiProgramCount > 0 && desc.midiPrograms)
             delete[] desc.midiPrograms;
