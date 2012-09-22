@@ -24,8 +24,57 @@
 // Single, standalone engine
 static CarlaBackend::CarlaEngine* carlaEngine = nullptr;
 static CarlaBackend::CallbackFunc carlaFunc = nullptr;
+static const char* extendedLicenseText = nullptr;
 
 // -------------------------------------------------------------------------------------------------------------------
+
+const char* get_extended_license_text()
+{
+    qDebug("CarlaBackendStandalone::get_extended_license_text()");
+
+    QString text("<p>This current Carla build is using the following features and 3rd-party code:</p>");
+    text += "<ul>";
+
+#ifdef WANT_LADSPA
+    text += "<li>LADSPA plugin support, http://www.ladspa.org/</li>";
+#endif
+#ifdef WANT_DSSI
+    text += "<li>DSSI plugin support, http://dssi.sourceforge.net/</li>";
+#endif
+#ifdef WANT_LV2
+    text += "<li>LV2 plugin support, http://lv2plug.in/</li>";
+#endif
+#ifdef WANT_VST
+#  ifdef VESTIGE_HEADER
+    text += "<li>VST plugin support, using VeSTige header by Javier Serrano Polo</li>";
+#  else
+    text += "<li>VST plugin support, using official VST SDK 2.4 trademark of Steinberg Media Technologies GmbH</li>";
+#  endif
+#endif
+#ifdef WANT_FLUIDSYNTH
+    text += "<li>FluidSynth library for SF2 support, http://www.fluidsynth.org/</li>";
+#endif
+#ifdef WANT_LINUXSAMPLER
+    text += "<li>LinuxSampler library for GIG and SFZ support*, http://www.linuxsampler.org/</li>";
+#endif
+    text += "<li>liblo library for OSC support, http://liblo.sourceforge.net/</li>";
+#ifdef WANT_LV2
+    text += "<li>serd, sord, sratom and lilv libraries for LV2 discovery, http://drobilla.net/software/lilv/</li>";
+#endif
+#ifdef CARLA_ENGINE_RTAUDIO
+    text += "<li>RtAudio and RtMidi libraries for extra Audio and MIDI support, http://www.music.mcgill.ca/~gary/rtaudio/</li>";
+#endif
+    text += "</ul>";
+
+#ifdef WANT_LINUXSAMPLER
+    text += "<p>(*) Using LinuxSampler code in commercial hardware or software products is not allowed without prior written authorization by the authors.</p>";
+#endif
+
+    if (! extendedLicenseText)
+        extendedLicenseText = strdup(text.toUtf8().constData());
+
+    return extendedLicenseText;
+}
 
 unsigned int get_engine_driver_count()
 {
@@ -223,6 +272,12 @@ bool engine_close()
 
     delete carlaEngine;
     carlaEngine = nullptr;
+
+    if (extendedLicenseText)
+    {
+        free((void*)extendedLicenseText);
+        extendedLicenseText = nullptr;
+    }
 
     return closed;
 }

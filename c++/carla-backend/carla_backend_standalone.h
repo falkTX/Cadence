@@ -95,6 +95,8 @@ struct GuiInfo {
           resizable(false) {}
 };
 
+CARLA_EXPORT const char* get_extended_license_text();
+
 CARLA_EXPORT unsigned int get_engine_driver_count();
 CARLA_EXPORT const char*  get_engine_driver_name(unsigned int index);
 

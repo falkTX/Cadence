@@ -762,6 +762,9 @@ class Host(object):
 
         self.lib = cdll.LoadLibrary(carla_library_path)
 
+        self.lib.get_extended_license_text.argtypes = None
+        self.lib.get_extended_license_text.restype = c_char_p
+
         self.lib.get_engine_driver_count.argtypes = None
         self.lib.get_engine_driver_count.restype = c_uint
 
@@ -944,6 +947,9 @@ class Host(object):
 
         self.lib.nsm_reply_save.argtypes = None
         self.lib.nsm_reply_save.restype = None
+
+    def get_extended_license_text(self):
+        return self.lib.get_extended_license_text()
 
     def get_engine_driver_count(self):
         return self.lib.get_engine_driver_count()
