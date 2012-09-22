@@ -648,17 +648,18 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
-        self.warning_old_shown = False
+        self.m_showOldWarning = False
+
+        self.settings = self.parent().settings
+        self.settings_db = self.parent().settings_db
+        self.loadSettings()
+
         self.b_add.setEnabled(False)
 
         if BINARY_NATIVE in (BINARY_POSIX32, BINARY_WIN32):
             self.ch_bridged.setText(self.tr("Bridged (64bit)"))
         else:
             self.ch_bridged.setText(self.tr("Bridged (32bit)"))
-
-        self.settings = self.parent().settings
-        self.settings_db = self.parent().settings_db
-        self.loadSettings()
 
         if not (LINUX or MACOS):
             self.ch_bridged_wine.setChecked(False)
@@ -705,6 +706,9 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         self.connect(self.ch_stereo, SIGNAL("clicked()"), SLOT("slot_checkFilters()"))
 
         self.ret_plugin = None
+
+        if self.m_showOldWarning:
+            QTimer.singleShot(0, self, SLOT("slot_showOldWarning()"))
 
     def showFilters(self, yesno):
         self.tb_filters.setArrowType(Qt.UpArrow if yesno else Qt.DownArrow)
@@ -832,10 +836,8 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
     def addPluginToTable(self, plugin, ptype):
         index = self.last_table_index
 
-        if "build" not in plugin.keys():
-            if not self.warning_old_shown:
-                QMessageBox.warning(self, self.tr("Warning"), self.tr("You're using a Carla-Database from an old version of Carla, please update *all* the plugins"))
-                self.warning_old_shown = True
+        if self.m_showOldWarning or 'API' not in plugin.keys() or plugin['API'] < PLUGIN_QUERY_API_VERSION:
+            self.m_showOldWarning = True
             return
 
         if plugin['build'] == BINARY_NATIVE:
@@ -1004,6 +1006,10 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
                 text in self.tableWidget.item(i, 3).text().lower() or
                 text in self.tableWidget.item(i, 13).text().lower())):
                 self.tableWidget.hideRow(i)
+
+    @pyqtSlot()
+    def slot_showOldWarning(self):
+        QMessageBox.warning(self, self.tr("Warning"), self.tr("You're using a Carla-Database from an old version of Carla, please update *all* the plugins"))
 
     def saveSettings(self):
         self.settings.setValue("PluginDatabase/Geometry", self.saveGeometry())
@@ -1790,8 +1796,8 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
                 plugin = None
 
             if plugin:
-                btype = plugin['build']
-                ptype = plugin['type']
+                btype    = plugin['build']
+                ptype    = plugin['type']
                 filename = plugin['binary']
                 name     = x_save_state_dict['Name']
                 label    = plugin['label']

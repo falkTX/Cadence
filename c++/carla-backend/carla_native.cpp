@@ -91,7 +91,6 @@ public:
 
         midiEventCount = 0;
         memset(midiEvents, 0, sizeof(::MidiEvent) * MAX_MIDI_EVENTS * 2);
-        memset(midiEventOffsets, 0, sizeof(uint32_t) * MAX_MIDI_EVENTS * 2);
     }
 
     ~NativePlugin()
@@ -540,13 +539,13 @@ public:
             {
                 if (portHints & PORT_HINT_IS_OUTPUT)
                 {
-                    j = aOut.count++;
+                    j = mOut.count++;
                     mOut.ports[j]    = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
                     mOut.rindexes[j] = i;
                 }
                 else
                 {
-                    j = aIn.count++;
+                    j = mIn.count++;
                     mIn.ports[j]    = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
                     mIn.rindexes[j] = i;
                 }
@@ -684,6 +683,8 @@ public:
 
         aIn.count   = aIns;
         aOut.count  = aOuts;
+        mIn.count   = mIns;
+        mOut.count  = mOuts;
         param.count = params;
 
         // plugin checks
@@ -811,7 +812,6 @@ public:
         // reset MIDI
         midiEventCount = 0;
         memset(midiEvents, 0, sizeof(::MidiEvent) * MAX_MIDI_EVENTS * 2);
-        memset(midiEventOffsets, 0, sizeof(uint32_t) * MAX_MIDI_EVENTS * 2);
 
         CARLA_PROCESS_CONTINUE_CHECK;
 
@@ -984,7 +984,7 @@ public:
                 case CarlaEngineEventAllSoundOff:
                     if (cinEvent->channel == m_ctrlInChannel)
                     {
-                        if (midi.portMin && ! allNotesOffSent)
+                        if (mIn.count > 0 && ! allNotesOffSent)
                             sendMidiAllNotesOff();
 
                         if (descriptor->deactivate)
@@ -1006,7 +1006,7 @@ public:
                 case CarlaEngineEventAllNotesOff:
                     if (cinEvent->channel == m_ctrlInChannel)
                     {
-                        if (midi.portMin && ! allNotesOffSent)
+                        if (mIn.count > 0 && ! allNotesOffSent)
                             sendMidiAllNotesOff();
 
                         allNotesOffSent = true;
@@ -1055,13 +1055,17 @@ public:
             // ----------------------------------------------------------------------------------------------------
             // MIDI Input (System)
 
+            for (i=0; i < mIn.count; i++)
             {
-                const CarlaEngineMidiEvent* minEvent;
-                uint32_t time, nEvents = midi.portMin->getEventCount();
+                if (! mIn.ports[i])
+                    continue;
 
-                for (i=0; i < nEvents && midiEventCount < MAX_MIDI_EVENTS; i++)
+                const CarlaEngineMidiEvent* minEvent;
+                uint32_t time, nEvents = mIn.ports[i]->getEventCount();
+
+                for (k=0; k < nEvents && midiEventCount < MAX_MIDI_EVENTS; k++)
                 {
-                    minEvent = midi.portMin->getEvent(i);
+                    minEvent = mIn.ports[i]->getEvent(k);
 
                     if (! minEvent)
                         continue;
@@ -1081,8 +1085,9 @@ public:
                     ::MidiEvent* const midiEvent = &midiEvents[midiEventCount];
                     memset(midiEvent, 0, sizeof(::MidiEvent));
 
-                    midiEvent->size = minEvent->size;
+                    midiEvent->portOffset = i;
                     midiEvent->time = minEvent->time;
+                    midiEvent->size = minEvent->size;
 
                     if (MIDI_IS_STATUS_NOTE_OFF(status))
                     {
@@ -1287,7 +1292,7 @@ public:
                 if (MIDI_IS_STATUS_NOTE_ON(data[0]) && data[2] == 0)
                     data[0] -= 0x10;
 
-                const uint32_t portOffset = midiEventOffsets[i];
+                const uint32_t portOffset = midiEvents[i].portOffset;
 
                 if (portOffset < mOut.count)
                     mOut.ports[portOffset]->writeEvent(midiEvents[i].time, data, 3);
@@ -1420,7 +1425,7 @@ public:
         return nullptr;
     }
 
-    bool handleWriteMidiEvent(uint32_t portOffset, MidiEvent* event)
+    bool handleWriteMidiEvent(MidiEvent* event)
     {
         Q_ASSERT(m_enabled);
         Q_ASSERT(mOut.count > 0);
@@ -1435,7 +1440,7 @@ public:
 
         if (! isProcessing)
         {
-            qCritical("NativePlugin::handleWriteMidiEvent(%i, %p) - received MIDI out events outside audio thread, ignoring", portOffset, event);
+            qCritical("NativePlugin::handleWriteMidiEvent(%p) - received MIDI out events outside audio thread, ignoring", event);
             return false;
         }
 
@@ -1443,7 +1448,6 @@ public:
             return false;
 
         memcpy(&midiEvents[midiEventCount], event, sizeof(::MidiEvent));
-        midiEventOffsets[midiEventCount] = portOffset;
         midiEventCount += 1;
 
         return true;
@@ -1467,10 +1471,10 @@ public:
         return ((NativePlugin*)handle)->handleGetTimeInfo();
     }
 
-    static bool carla_host_write_midi_event(HostHandle handle, uint32_t port_offset, MidiEvent* event)
+    static bool carla_host_write_midi_event(HostHandle handle, MidiEvent* event)
     {
         Q_ASSERT(handle);
-        return ((NativePlugin*)handle)->handleWriteMidiEvent(port_offset, event);
+        return ((NativePlugin*)handle)->handleWriteMidiEvent(event);
     }
 
     // -------------------------------------------------------------------
@@ -1567,7 +1571,6 @@ private:
 
     uint32_t    midiEventCount;
     ::MidiEvent midiEvents[MAX_MIDI_EVENTS*2];
-    uint32_t    midiEventOffsets[MAX_MIDI_EVENTS*2];
 
     static std::vector<const PluginDescriptor*> pluginDescriptors;
 };

@@ -73,6 +73,7 @@ typedef struct _ParameterRanges {
 } ParameterRanges;
 
 typedef struct _MidiEvent {
+    uint32_t portOffset;
     uint32_t time;
     uint8_t  size;
     uint8_t  data[4];
@@ -108,7 +109,7 @@ typedef struct _HostDescriptor {
     uint32_t        (*get_buffer_size)(HostHandle handle);
     double          (*get_sample_rate)(HostHandle handle);
     const TimeInfo* (*get_time_info)(HostHandle handle);
-    bool            (*write_midi_event)(HostHandle handle, uint32_t port_offset, MidiEvent* event);
+    bool            (*write_midi_event)(HostHandle handle, MidiEvent* event);
 } HostDescriptor;
 
 typedef struct _PluginPortScalePoint {

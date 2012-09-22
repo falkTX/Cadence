@@ -97,12 +97,12 @@ public:
         return nullptr;
     }
 
-    void writeMidiEvent(uint32_t portOffset, MidiEvent* event)
+    void writeMidiEvent(MidiEvent* event)
     {
         Q_ASSERT(host);
 
         if (host)
-            host->write_midi_event(host->handle, portOffset, event);
+            host->write_midi_event(host->handle, event);
     }
 
     // -------------------------------------------------------------------

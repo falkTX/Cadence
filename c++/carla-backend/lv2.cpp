@@ -2052,7 +2052,7 @@ public:
                 case CarlaEngineEventAllSoundOff:
                     if (cinEvent->channel == m_ctrlInChannel)
                     {
-                        if (midi.portMin && ! allNotesOffSent)
+                        if (evIn.count > 0 && ! allNotesOffSent)
                             sendMidiAllNotesOff();
 
                         if (descriptor->deactivate)
@@ -2074,7 +2074,7 @@ public:
                 case CarlaEngineEventAllNotesOff:
                     if (cinEvent->channel == m_ctrlInChannel)
                     {
-                        if (midi.portMin && ! allNotesOffSent)
+                        if (evIn.count > 0 && ! allNotesOffSent)
                             sendMidiAllNotesOff();
 
                         allNotesOffSent = true;
@@ -2107,7 +2107,7 @@ public:
                     midiEvent[1] = extMidiNotes[i].note;
                     midiEvent[2] = extMidiNotes[i].velo;
 
-                    // send to all midi inputs
+                    // send to first midi input
                     for (k=0; k < evIn.count; k++)
                     {
                         if (evIn.data[k].type & CARLA_EVENT_TYPE_MIDI)
@@ -2132,6 +2132,8 @@ public:
                             {
                                 lv2midi_put_event(&evInMidiStates[k], 0, 3, midiEvent);
                             }
+
+                            break;
                         }
                     }
 
@@ -2148,66 +2150,64 @@ public:
             // ----------------------------------------------------------------------------------------------------
             // MIDI Input (System)
 
+            for (i=0; i < evIn.count; i++)
             {
-                for (i=0; i < evIn.count; i++)
+                if (! evIn.data[i].port)
+                    continue;
+
+                const CarlaEngineMidiEvent* minEvent;
+                uint32_t time, nEvents = evIn.data[i].port->getEventCount();
+
+                for (k=0; k < nEvents && midiEventCount < MAX_MIDI_EVENTS; k++)
                 {
-                    if (! evIn.data[i].port)
+                    minEvent = evIn.data[i].port->getEvent(k);
+
+                    if (! minEvent)
                         continue;
 
-                    const CarlaEngineMidiEvent* minEvent;
-                    uint32_t time, nEvents = evIn.data[i].port->getEventCount();
+                    time = minEvent->time - framesOffset;
 
-                    for (k=0; k < nEvents && midiEventCount < MAX_MIDI_EVENTS; k++)
+                    if (time >= frames)
+                        continue;
+
+                    uint8_t status  = minEvent->data[0];
+                    uint8_t channel = status & 0x0F;
+
+                    // Fix bad note-off
+                    if (MIDI_IS_STATUS_NOTE_ON(status) && minEvent->data[2] == 0)
+                        status -= 0x10;
+
+                    // only write supported status types
+                    if (MIDI_IS_STATUS_NOTE_OFF(status) || MIDI_IS_STATUS_NOTE_ON(status) || MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status) || MIDI_IS_STATUS_AFTERTOUCH(status) || MIDI_IS_STATUS_PITCH_WHEEL_CONTROL(status))
                     {
-                        minEvent = evIn.data[i].port->getEvent(k);
-
-                        if (! minEvent)
-                            continue;
-
-                        time = minEvent->time - framesOffset;
-
-                        if (time >= frames)
-                            continue;
-
-                        uint8_t status  = minEvent->data[0];
-                        uint8_t channel = status & 0x0F;
-
-                        // Fix bad note-off
-                        if (MIDI_IS_STATUS_NOTE_ON(status) && minEvent->data[2] == 0)
-                            status -= 0x10;
-
-                        // only write supported status types
-                        if (MIDI_IS_STATUS_NOTE_OFF(status) || MIDI_IS_STATUS_NOTE_ON(status) || MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status) || MIDI_IS_STATUS_AFTERTOUCH(status) || MIDI_IS_STATUS_PITCH_WHEEL_CONTROL(status))
+                        if (evIn.data[i].type & CARLA_EVENT_DATA_ATOM)
                         {
-                            if (evIn.data[i].type & CARLA_EVENT_DATA_ATOM)
-                            {
-                                LV2_Atom_Event* const aev = getLv2AtomEvent(evIn.data[i].atom, evInAtomOffsets[i]);
-                                aev->time.frames = time;
-                                aev->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
-                                aev->body.size   = minEvent->size;
-                                memcpy(LV2_ATOM_BODY(&aev->body), minEvent->data, minEvent->size);
+                            LV2_Atom_Event* const aev = getLv2AtomEvent(evIn.data[i].atom, evInAtomOffsets[i]);
+                            aev->time.frames = time;
+                            aev->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
+                            aev->body.size   = minEvent->size;
+                            memcpy(LV2_ATOM_BODY(&aev->body), minEvent->data, minEvent->size);
 
-                                const uint32_t evInPadSize    = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + minEvent->size);
-                                evInAtomOffsets[i]           += evInPadSize;
-                                evIn.data[i].atom->atom.size += evInPadSize;
-                            }
-                            else if (evIn.data[i].type & CARLA_EVENT_DATA_EVENT)
-                            {
-                                lv2_event_write(&evInEventIters[i], time, 0, CARLA_URI_MAP_ID_MIDI_EVENT, minEvent->size, minEvent->data);
-                            }
-                            else if (evIn.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
-                            {
-                                lv2midi_put_event(&evInMidiStates[i], time, minEvent->size, minEvent->data);
-                            }
-
-                            if (MIDI_IS_STATUS_NOTE_OFF(status))
-                                postponeEvent(PluginPostEventNoteOff, channel, minEvent->data[1], 0.0);
-                            else if (MIDI_IS_STATUS_NOTE_ON(status))
-                                postponeEvent(PluginPostEventNoteOn, channel, minEvent->data[1], minEvent->data[2]);
+                            const uint32_t evInPadSize    = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + minEvent->size);
+                            evInAtomOffsets[i]           += evInPadSize;
+                            evIn.data[i].atom->atom.size += evInPadSize;
+                        }
+                        else if (evIn.data[i].type & CARLA_EVENT_DATA_EVENT)
+                        {
+                            lv2_event_write(&evInEventIters[i], time, 0, CARLA_URI_MAP_ID_MIDI_EVENT, minEvent->size, minEvent->data);
+                        }
+                        else if (evIn.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
+                        {
+                            lv2midi_put_event(&evInMidiStates[i], time, minEvent->size, minEvent->data);
                         }
 
-                        midiEventCount += 1;
+                        if (MIDI_IS_STATUS_NOTE_OFF(status))
+                            postponeEvent(PluginPostEventNoteOff, channel, minEvent->data[1], 0.0);
+                        else if (MIDI_IS_STATUS_NOTE_ON(status))
+                            postponeEvent(PluginPostEventNoteOn, channel, minEvent->data[1], minEvent->data[2]);
                     }
+
+                    midiEventCount += 1;
                 }
             } // End of MIDI Input (System)
 

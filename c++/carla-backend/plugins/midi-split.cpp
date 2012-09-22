@@ -163,8 +163,11 @@ protected:
                 continue;
 
             status -= channel;
-            midiEvent.data[0] = status;
-            //writeMidiEvent(channel, midiEvent);
+
+            midiEvent.portOffset = channel;
+            midiEvent.data[0]    = status;
+
+            writeMidiEvent(&midiEvent);
         }
     }
 

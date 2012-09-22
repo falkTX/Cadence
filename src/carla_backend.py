@@ -502,7 +502,10 @@ def findDSSIGUI(filename, name, label):
 # ------------------------------------------------------------------------------------------------
 # Plugin Query
 
+PLUGIN_QUERY_API_VERSION = 1
+
 PyPluginInfo = {
+    'API': PLUGIN_QUERY_API_VERSION,
     'build': 0, # BINARY_NONE
     'type': 0, # PLUGIN_NONE,
     'hints': 0x0,
