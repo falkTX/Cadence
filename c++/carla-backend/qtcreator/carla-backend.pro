@@ -80,9 +80,9 @@ DEFINES += WANT_FLUIDSYNTH WANT_LINUXSAMPLER
 #LIBS    += -L../../carla-jackbridge -lcarla-jackbridge-native
 
 INCLUDEPATH += ../rtaudio-4.0.11
-INCLUDEPATH += ../rtmidi-2.0.0
+INCLUDEPATH += ../rtmidi-2.0.1
 SOURCES += ../rtaudio-4.0.11/RtAudio.cpp
-SOURCES += ../rtmidi-2.0.0/RtMidi.cpp
+SOURCES += ../rtmidi-2.0.1/RtMidi.cpp
 
 QMAKE_CFLAGS   *= -fPIC -std=c99
 QMAKE_CXXFLAGS *= -fPIC -std=c++0x

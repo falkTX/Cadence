@@ -80,9 +80,9 @@ OBJS += \
 	plugins/midi-split.o
 
 ifeq ($(WANT_RTAUDIO),true)
-CARLA_CXX_FLAGS += -Irtaudio-4.0.11 -Irtmidi-2.0.0 -DCARLA_ENGINE_RTAUDIO -DHAVE_GETTIMEOFDAY -D_FORTIFY_SOURCE=2
+CARLA_CXX_FLAGS += -Irtaudio-4.0.11 -Irtmidi-2.0.1 -DCARLA_ENGINE_RTAUDIO -DHAVE_GETTIMEOFDAY -D_FORTIFY_SOURCE=2
 OBJS += rtaudio-4.0.11/RtAudio.o
-OBJS += rtmidi-2.0.0/RtMidi.o
+OBJS += rtmidi-2.0.1/RtMidi.o
 endif
 
 # --------------------------------------------------------------
