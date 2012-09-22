@@ -341,8 +341,13 @@ public:
         Q_ASSERT(handle);
         Q_ASSERT(parameterId < param.count);
 
-        if (descriptor && handle)
-            descriptor->set_parameter_value(handle, parameterId, fixParameterValue(value, param.ranges[parameterId]));
+        if (descriptor)
+        {
+            fixParameterValue(value, param.ranges[parameterId]);
+
+            descriptor->set_parameter_value(handle, parameterId, value);
+            if (h2) descriptor->set_parameter_value(h2, parameterId, value);
+        }
 
         CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
     }
@@ -364,8 +369,11 @@ public:
         if (! value)
             return qCritical("Nativelugin::setCustomData(%s, \"%s\", \"%s\", %s) - value is null", CustomDataType2str(type), key, value, bool2str(sendGui));
 
-        if (descriptor && handle)
+        if (descriptor)
+        {
             descriptor->set_custom_data(handle, key, value);
+            if (h2) descriptor->set_custom_data(h2, key, value);
+        }
 
         CarlaPlugin::setCustomData(type, key, value, sendGui);
     }
@@ -387,11 +395,13 @@ public:
             {
                 const CarlaEngine::ScopedLocker m(x_engine, block);
                 descriptor->set_midi_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
+                if (h2) descriptor->set_midi_program(h2, midiprog.data[index].bank, midiprog.data[index].program);
             }
             else
             {
                 const ScopedDisabler m(this, block);
                 descriptor->set_midi_program(handle, midiprog.data[index].bank, midiprog.data[index].program);
+                if (h2) descriptor->set_midi_program(h2, midiprog.data[index].bank, midiprog.data[index].program);
             }
         }
 
@@ -444,6 +454,9 @@ public:
         const double sampleRate  = x_engine->getSampleRate();
         const uint32_t portCount = descriptor->portCount;
 
+        bool forcedStereoIn, forcedStereoOut;
+        forcedStereoIn = forcedStereoOut = false;
+
         for (uint32_t i=0; i < portCount; i++)
         {
             const PortType portType  = descriptor->ports[i].type;
@@ -465,6 +478,23 @@ public:
             }
             else if (portType == PORT_TYPE_PARAMETER)
                 params += 1;
+        }
+
+        if (carlaOptions.forceStereo && (aIns == 1 || aOuts == 1) && mIns <= 1 && mOuts <= 1 && ! h2)
+        {
+            h2 = descriptor->instantiate((struct _PluginDescriptor*)descriptor, &host);
+
+            if (aIns == 1)
+            {
+                aIns = 2;
+                forcedStereoIn = true;
+            }
+
+            if (aOuts == 1)
+            {
+                aOuts = 2;
+                forcedStereoOut = true;
+            }
         }
 
         if (aIns > 0)
@@ -527,12 +557,26 @@ public:
                     aOut.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
                     aOut.rindexes[j] = i;
                     needsCtrlIn = true;
+
+                    if (forcedStereoOut)
+                    {
+                        strcat(portName, "_");
+                        aOut.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
+                        aOut.rindexes[1] = i;
+                    }
                 }
                 else
                 {
                     j = aIn.count++;
                     aIn.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
                     aIn.rindexes[j] = i;
+
+                    if (forcedStereoIn)
+                    {
+                        strcat(portName, "_");
+                        aIn.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
+                        aIn.rindexes[1] = i;
+                    }
                 }
             }
             else if (portType == PORT_TYPE_MIDI)
@@ -993,13 +1037,13 @@ public:
                         if (descriptor->deactivate)
                         {
                             descriptor->deactivate(handle);
-                            //if (h2) ldescriptor->deactivate(h2);
+                            if (h2) descriptor->deactivate(h2);
                         }
 
                         if (descriptor->activate)
                         {
                             descriptor->activate(handle);
-                            //if (h2) ldescriptor->activate(h2);
+                            if (h2) descriptor->activate(h2);
                         }
 
                         allNotesOffSent = true;
@@ -1175,13 +1219,20 @@ public:
                 if (descriptor->activate)
                 {
                     descriptor->activate(handle);
-                    //if (h2) descriptor->activate(h2);
+                    if (h2) descriptor->activate(h2);
                 }
             }
 
             isProcessing = true;
-            descriptor->process(handle, inBuffer, outBuffer, frames, midiEventCountBefore, midiEvents);
-            //if (h2) descriptor->process(h2, inBuffer, outBuffer, frames, midiEventCount, midiEvents);
+
+            if (h2)
+            {
+                descriptor->process(handle, inBuffer? &inBuffer[0] : nullptr, outBuffer? &outBuffer[0] : nullptr, frames, midiEventCountBefore, midiEvents);
+                descriptor->process(h2,     inBuffer? &inBuffer[1] : nullptr, outBuffer? &outBuffer[1] : nullptr, frames, midiEventCountBefore, midiEvents);
+            }
+            else
+                descriptor->process(handle, inBuffer, outBuffer, frames, midiEventCountBefore, midiEvents);
+
             isProcessing = false;
         }
         else
@@ -1191,7 +1242,7 @@ public:
                 if (descriptor->deactivate)
                 {
                     descriptor->deactivate(handle);
-                    //if (h2) descriptor->deactivate(h2);
+                    if (h2) descriptor->deactivate(h2);
                 }
             }
         }
