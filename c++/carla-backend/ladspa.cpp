@@ -651,7 +651,7 @@ public:
         param.count = params;
 
         // plugin checks
-        m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
+        m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE | PLUGIN_CAN_FORCE_STEREO);
 
         if (aOuts > 0 && (aIns == aOuts || aIns == 1))
             m_hints |= PLUGIN_CAN_DRYWET;
@@ -661,6 +661,9 @@ public:
 
         if (aOuts >= 2 && aOuts%2 == 0)
             m_hints |= PLUGIN_CAN_BALANCE;
+
+        if (aIns <= 2 && aOuts <= 2 && (aIns == aOuts || aIns == 0 || aOuts == 0))
+            m_hints |= PLUGIN_CAN_FORCE_STEREO;
 
         x_client->activate();
 
@@ -1160,10 +1163,7 @@ CarlaPlugin* CarlaPlugin::newLADSPA(const initializer& init, const void* const e
 #ifndef BUILD_BRIDGE
     if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
-        const uint32_t ins  = plugin->audioInCount();
-        const uint32_t outs = plugin->audioOutCount();
-
-        if (ins > 2 || outs > 2 || (ins != outs && ins != 0 && outs != 0))
+        if (! plugin->hints() & PLUGIN_CAN_FORCE_STEREO)
         {
             setLastError("Carla's rack mode can only work with Mono or Stereo LADSPA plugins, sorry!");
             delete plugin;

@@ -38,10 +38,10 @@ CARLA_BACKEND_START_NAMESPACE
  * @defgroup PluginHints Plugin Hints
  * @{
  */
-const unsigned int PLUGIN_CAN_PROCESS_REPLACING = 0x100; //!< VST Plugin cas use processReplacing()
-const unsigned int PLUGIN_HAS_COCKOS_EXTENSIONS = 0x200; //!< VST Plugin has Cockos extensions
-const unsigned int PLUGIN_USES_OLD_VSTSDK       = 0x400; //!< VST Plugin uses an old VST SDK
-const unsigned int PLUGIN_WANTS_MIDI_INPUT      = 0x800; //!< VST Plugin wants MIDI input
+const unsigned int PLUGIN_CAN_PROCESS_REPLACING = 0x1000; //!< VST Plugin cas use processReplacing()
+const unsigned int PLUGIN_HAS_COCKOS_EXTENSIONS = 0x2000; //!< VST Plugin has Cockos extensions
+const unsigned int PLUGIN_USES_OLD_VSTSDK       = 0x4000; //!< VST Plugin uses an old VST SDK
+const unsigned int PLUGIN_WANTS_MIDI_INPUT      = 0x8000; //!< VST Plugin wants MIDI input
 /**@}*/
 
 class VstPlugin : public CarlaPlugin
@@ -687,7 +687,7 @@ public:
         param.count = params;
 
         // plugin checks
-        m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
+        m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE | PLUGIN_CAN_FORCE_STEREO);
 
         intptr_t vstCategory = effect->dispatcher(effect, effGetPlugCategory, 0, 0, nullptr, 0.0f);
 
@@ -705,6 +705,9 @@ public:
 
         if (aOuts >= 2 && aOuts%2 == 0)
             m_hints |= PLUGIN_CAN_BALANCE;
+
+        if ((aIns == 0 || aIns == 2) && (aOuts == 0 || aOuts == 2))
+            m_hints |= PLUGIN_CAN_FORCE_STEREO;
 
         reloadPrograms(true);
 
@@ -2302,13 +2305,7 @@ CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
 #ifndef BUILD_BRIDGE
     if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
-        const uint32_t ins  = plugin->audioInCount();
-        const uint32_t outs = plugin->audioOutCount();
-
-        const bool stereoInput = ins == 0 || ins == 2;
-        const bool stereoOutput = outs == 0 || outs == 2;
-
-        if (! (stereoInput && stereoOutput))
+        if (! plugin->hints() & PLUGIN_CAN_FORCE_STEREO)
         {
             setLastError("Carla's rack mode can only work with Stereo VST plugins, sorry!");
             delete plugin;

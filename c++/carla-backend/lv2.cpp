@@ -54,9 +54,9 @@ const unsigned int MAX_EVENT_BUFFER = 8192; // 0x2000
  * @defgroup PluginHints Plugin Hints
  * @{
  */
-const unsigned int PLUGIN_HAS_EXTENSION_PROGRAMS = 0x100; //!< LV2 Plugin has Programs extension
-const unsigned int PLUGIN_HAS_EXTENSION_STATE    = 0x200; //!< LV2 Plugin has State extension
-const unsigned int PLUGIN_HAS_EXTENSION_WORKER   = 0x400; //!< LV2 Plugin has Worker extension
+const unsigned int PLUGIN_HAS_EXTENSION_PROGRAMS = 0x1000; //!< LV2 Plugin has Programs extension
+const unsigned int PLUGIN_HAS_EXTENSION_STATE    = 0x2000; //!< LV2 Plugin has State extension
+const unsigned int PLUGIN_HAS_EXTENSION_WORKER   = 0x4000; //!< LV2 Plugin has Worker extension
 /**@}*/
 
 /*!
@@ -1144,8 +1144,25 @@ public:
                 params += 1;
         }
 
+        // check extensions
+        ext.state      = nullptr;
+        ext.worker     = nullptr;
+        ext.programs   = nullptr;
+
+        if (descriptor->extension_data)
+        {
+            if (m_hints & PLUGIN_HAS_EXTENSION_PROGRAMS)
+                ext.programs = (const LV2_Programs_Interface*)descriptor->extension_data(LV2_PROGRAMS__Interface);
+
+            if (m_hints & PLUGIN_HAS_EXTENSION_STATE)
+                ext.state = (const LV2_State_Interface*)descriptor->extension_data(LV2_STATE__interface);
+
+            if (m_hints & PLUGIN_HAS_EXTENSION_WORKER)
+                ext.worker = (const LV2_Worker_Interface*)descriptor->extension_data(LV2_WORKER__interface);
+        }
+
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.forceStereo && (aIns == 1 || aOuts == 1) && ! h2)
+        if (carlaOptions.forceStereo && (aIns == 1 || aOuts == 1) && ! (h2 || ext.state || ext.worker))
         {
             h2 = descriptor->instantiate(descriptor, sampleRate, rdf_descriptor->Bundle, features);
 
@@ -1678,7 +1695,7 @@ public:
         param.count = params;
 
         // plugin checks
-        m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
+        m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE | PLUGIN_CAN_FORCE_STEREO);
 
         if (LV2_IS_GENERATOR(rdf_descriptor->Type))
             m_hints |= PLUGIN_IS_SYNTH;
@@ -1692,21 +1709,15 @@ public:
         if (aOuts >= 2 && aOuts%2 == 0)
             m_hints |= PLUGIN_CAN_BALANCE;
 
-        // check extensions
-        ext.state      = nullptr;
-        ext.worker     = nullptr;
-        ext.programs   = nullptr;
-
-        if (descriptor->extension_data)
+        if (ext.state || ext.worker)
         {
-            if (m_hints & PLUGIN_HAS_EXTENSION_PROGRAMS)
-                ext.programs = (const LV2_Programs_Interface*)descriptor->extension_data(LV2_PROGRAMS__Interface);
-
-            if (m_hints & PLUGIN_HAS_EXTENSION_STATE)
-                ext.state = (const LV2_State_Interface*)descriptor->extension_data(LV2_STATE__interface);
-
-            if (m_hints & PLUGIN_HAS_EXTENSION_WORKER)
-                ext.worker = (const LV2_Worker_Interface*)descriptor->extension_data(LV2_WORKER__interface);
+            if ((aIns == 0 || aIns == 2) && (aOuts == 0 || aOuts == 2) && evIn.count <= 1 && evOut.count <= 1)
+                m_hints |= PLUGIN_CAN_FORCE_STEREO;
+        }
+        else
+        {
+            if (aIns <= 2 && aOuts <= 2 && (aIns == aOuts || aIns == 0 || aOuts == 0) && evIn.count <= 1 && evOut.count <= 1)
+                m_hints |= PLUGIN_CAN_FORCE_STEREO;
         }
 
         reloadPrograms(true);
@@ -4495,12 +4506,9 @@ CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
 #ifndef BUILD_BRIDGE
     if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
-        const uint32_t ins  = plugin->audioInCount();
-        const uint32_t outs = plugin->audioOutCount();
-
-        if (ins > 2 || outs > 2 || (ins != outs && ins != 0 && outs != 0))
+        if (! plugin->hints() & PLUGIN_CAN_FORCE_STEREO)
         {
-            setLastError("Carla's rack mode can only work with Mono or Stereo LV2 plugins, sorry!");
+            setLastError("Carla's rack mode can only work with Mono (simple) or Stereo LV2 plugins, sorry!");
             delete plugin;
             return nullptr;
         }

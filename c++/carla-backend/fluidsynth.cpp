@@ -716,11 +716,12 @@ public:
         param.count = params;
 
         // plugin checks
-        m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
+        m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE | PLUGIN_CAN_FORCE_STEREO);
 
         m_hints |= PLUGIN_IS_SYNTH;
         m_hints |= PLUGIN_CAN_VOLUME;
         m_hints |= PLUGIN_CAN_BALANCE;
+        m_hints |= PLUGIN_CAN_FORCE_STEREO;
 
         reloadPrograms(true);
 

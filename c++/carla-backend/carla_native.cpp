@@ -78,8 +78,8 @@ public:
 
         m_type = PLUGIN_INTERNAL;
 
-        descriptor = nullptr;
-        handle     = nullptr;
+        descriptor  = nullptr;
+        handle = h2 = nullptr;
 
         host.handle = this;
         host.get_buffer_size  = carla_host_get_buffer_size;
@@ -103,16 +103,16 @@ public:
             {
                 if (handle)
                     descriptor->deactivate(handle);
-                //if (h2)
-                //    descriptor->deactivate(h2);
+                if (h2)
+                    descriptor->deactivate(h2);
             }
 
             if (descriptor->cleanup)
             {
                 if (handle)
                     descriptor->cleanup(handle);
-                //if (h2)
-                //    descriptor->cleanup(h2);
+                if (h2)
+                    descriptor->cleanup(h2);
             }
         }
     }
@@ -688,7 +688,7 @@ public:
         param.count = params;
 
         // plugin checks
-        m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE);
+        m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE | PLUGIN_CAN_FORCE_STEREO);
 
         if (aOuts > 0 && (aIns == aOuts || aIns == 1))
             m_hints |= PLUGIN_CAN_DRYWET;
@@ -698,6 +698,9 @@ public:
 
         if (aOuts >= 2 && aOuts%2 == 0)
             m_hints |= PLUGIN_CAN_BALANCE;
+
+        if (aIns <= 2 && aOuts <= 2 && (aIns == aOuts || aIns == 0 || aOuts == 0) && mIns <= 1 && mOuts <= 1)
+            m_hints |= PLUGIN_CAN_FORCE_STEREO;
 
         m_hints |= getPluginHintsFromNative(descriptor->hints);
 
@@ -1561,7 +1564,7 @@ public:
 
 private:
     const PluginDescriptor* descriptor;
-    PluginHandle handle;
+    PluginHandle handle, h2;
     HostDescriptor host;
 
     bool isProcessing;
@@ -1598,6 +1601,17 @@ CarlaPlugin* CarlaPlugin::newNative(const initializer& init)
     }
 
     plugin->reload();
+
+    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    {
+        if (! plugin->hints() & PLUGIN_CAN_FORCE_STEREO)
+        {
+            setLastError("Carla's rack mode can only work with Mono or Stereo Internal plugins, sorry!");
+            delete plugin;
+            return nullptr;
+        }
+    }
+
     plugin->registerToOsc();
 
     return plugin;
