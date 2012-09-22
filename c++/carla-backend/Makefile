@@ -66,6 +66,7 @@ OBJS = \
 	carla_engine.o \
 	carla_engine_jack.o \
 	carla_engine_rtaudio.o \
+	carla_native.o \
 	carla_osc.o \
 	carla_shared.o \
 	carla_threads.o \
@@ -73,6 +74,10 @@ OBJS = \
 	../carla-jackbridge/carla_jackbridge.o \
 	../carla-lilv/carla_lilv.a \
 	../carla-rtmempool/carla_rtmempool.a
+
+OBJS += \
+	plugins/bypass.o \
+	plugins/midi-split.o
 
 ifeq ($(WANT_RTAUDIO),true)
 CARLA_CXX_FLAGS += -Irtaudio-4.0.11 -Irtmidi-2.0.0 -DCARLA_ENGINE_RTAUDIO -DHAVE_GETTIMEOFDAY -D_FORTIFY_SOURCE=2

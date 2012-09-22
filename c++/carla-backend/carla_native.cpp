@@ -612,7 +612,7 @@ public:
                 min = ranges.min;
 
                 // max value
-                min = ranges.max;
+                max = ranges.max;
 
                 if (min > max)
                     max = min;
