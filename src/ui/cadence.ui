@@ -480,7 +480,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>343</width>
-                  <height>89</height>
+                  <height>108</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -1961,81 +1961,12 @@ Default is off</string>
     </item>
    </layout>
   </widget>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>753</width>
-     <height>19</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menu_File">
-    <property name="title">
-     <string>&amp;File</string>
-    </property>
-    <addaction name="act_quit"/>
-   </widget>
-   <widget class="QMenu" name="menu_Tools">
-    <property name="title">
-     <string>&amp;Tools</string>
-    </property>
-    <addaction name="act_tools_catarina"/>
-    <addaction name="act_tools_catia"/>
-    <addaction name="act_tools_claudia"/>
-    <addaction name="act_tools_carla"/>
-    <addaction name="separator"/>
-    <addaction name="act_tools_logs"/>
-    <addaction name="act_tools_meter"/>
-    <addaction name="act_tools_render"/>
-    <addaction name="act_tools_xycontroller"/>
-   </widget>
-   <addaction name="menu_File"/>
-   <addaction name="menu_Tools"/>
-  </widget>
   <action name="act_quit">
    <property name="text">
     <string>&amp;Quit</string>
    </property>
-  </action>
-  <action name="act_tools_catia">
-   <property name="text">
-    <string>Catia</string>
-   </property>
-  </action>
-  <action name="act_tools_claudia">
-   <property name="text">
-    <string>Claudia</string>
-   </property>
-  </action>
-  <action name="act_tools_carla">
-   <property name="text">
-    <string>Carla</string>
-   </property>
-  </action>
-  <action name="act_tools_logs">
-   <property name="text">
-    <string>Logs</string>
-   </property>
-  </action>
-  <action name="act_tools_render">
-   <property name="text">
-    <string>Render</string>
-   </property>
-  </action>
-  <action name="act_tools_xycontroller">
-   <property name="text">
-    <string>XY-Controller</string>
-   </property>
-  </action>
-  <action name="act_tools_catarina">
-   <property name="text">
-    <string>Catarina</string>
-   </property>
-  </action>
-  <action name="act_tools_meter">
-   <property name="text">
-    <string>Meter</string>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
    </property>
   </action>
  </widget>

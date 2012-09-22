@@ -208,6 +208,19 @@ def smartHex(value, length):
 
   return hexStr
 
+def PA_is_started():
+    return bool("pulseaudio" in getProcList())
+
+#def PA_is_bridged():
+  #if (jack.client):
+    #port_list = jacklib.get_ports(jack.client, "", "", 0)
+    #if ("PulseAudio JACK Sink:front-left" in port_list):
+      #return True
+    #else:
+      #return False
+  #else:
+    #return False
+
 # ---------------------------------------------------------------------
 
 cadenceSystemChecks = []
@@ -450,6 +463,32 @@ class ToolBarJackDialog(QDialog, ui_cadence_tb_jack.Ui_Dialog):
         GlobalSettings.setValue("JACK/AutoLoadLadishStudio", self.rb_ladish.isChecked())
         GlobalSettings.setValue("JACK/LadishStudioName", self.cb_studio_name.currentText())
 
+# Additional A2J MIDI options
+#class ToolBarA2JDialog(QDialog, ui_cadence_tb_a2j.Ui_Dialog):
+    #def __init__(self, parent=None):
+        #super(ToolBarA2JDialog, self).__init__(parent)
+        #self.setupUi(self)
+
+        #self.cb_export_hw.setChecked(GlobalSettings.value("A2J/ExportHW", True).toBool())
+
+        #self.connect(self, SIGNAL("accepted()"), self.setOptions)
+
+    #def setOptions(self):
+        #GlobalSettings.setValue("A2J/ExportHW", self.cb_export_hw.isChecked())
+
+# Additional Pulse-JACK options
+#class ToolBarPADialog(QDialog, ui_cadence_tb_pa.Ui_Dialog):
+    #def __init__(self, parent=None):
+        #super(ToolBarPADialog, self).__init__(parent)
+        #self.setupUi(self)
+
+        #self.cb_playback_only.setChecked(GlobalSettings.value("Pulse2JACK/PlaybackModeOnly", False).toBool())
+
+        #self.connect(self, SIGNAL("accepted()"), self.setOptions)
+
+    #def setOptions(self):
+        #GlobalSettings.setValue("Pulse2JACK/PlaybackModeOnly", self.cb_playback_only.isChecked())
+
 # Main Window
 class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
     def __init__(self, parent=None):
@@ -470,15 +509,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         # -------------------------------------------------------------
         # Set-up icons
 
-        self.act_quit.setIcon(getIcon("application-exit"))
-        #self.act_jack_start.setIcon(getIcon("media-playback-start"))
-        #self.act_jack_stop.setIcon(getIcon("media-playback-stop"))
-        #self.act_jack_clear_xruns.setIcon(getIcon("edit-clear"))
-        #self.act_jack_configure.setIcon(getIcon("configure"))
-        #self.act_a2j_start.setIcon(getIcon("media-playback-start"))
-        #self.act_a2j_stop.setIcon(getIcon("media-playback-stop"))
-        #self.act_pulse_start.setIcon(getIcon("media-playback-start"))
-        #self.act_pulse_stop.setIcon(getIcon("media-playback-stop"))
+        # none yet
 
         # -------------------------------------------------------------
         # Set-up GUI (System Information)
@@ -766,14 +797,6 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.connect(self.b_jack_configure, SIGNAL("clicked()"), SLOT("slot_JackServerConfigure()"))
         self.connect(self.tb_jack_options, SIGNAL("clicked()"), SLOT("slot_JackOptions()"))
 
-        self.connect(self.act_tools_catarina, SIGNAL("triggered()"), lambda tool="catarina": self.func_start_tool(tool))
-        self.connect(self.act_tools_catia, SIGNAL("triggered()"), lambda tool="catia": self.func_start_tool(tool))
-        self.connect(self.act_tools_claudia, SIGNAL("triggered()"), lambda tool="claudia": self.func_start_tool(tool))
-        self.connect(self.act_tools_carla, SIGNAL("triggered()"), lambda tool="carla": self.func_start_tool(tool))
-        self.connect(self.act_tools_logs, SIGNAL("triggered()"), lambda tool="cadence-logs": self.func_start_tool(tool))
-        self.connect(self.act_tools_meter, SIGNAL("triggered()"), lambda tool="cadence-jackmeter": self.func_start_tool(tool))
-        self.connect(self.act_tools_render, SIGNAL("triggered()"), lambda tool="cadence-render": self.func_start_tool(tool))
-        self.connect(self.act_tools_xycontroller, SIGNAL("triggered()"), lambda tool="cadence-xycontroller": self.func_start_tool(tool))
         self.connect(self.pic_catia, SIGNAL("clicked()"), lambda tool="catia": self.func_start_tool(tool))
         self.connect(self.pic_claudia, SIGNAL("clicked()"), lambda tool="claudia": self.func_start_tool(tool))
         self.connect(self.pic_carla, SIGNAL("clicked()"), lambda tool="carla": self.func_start_tool(tool))
@@ -1554,12 +1577,10 @@ if __name__ == '__main__':
     setUpSignals(gui)
 
     if "--gnome-settings" in app.arguments():
-        gui.setMenuBar(None)
         gui.tabWidget.removeTab(0)
         gui.tabWidget.removeTab(0)
         gui.tabWidget.tabBar().hide()
         gui.label_tweaks.setText(gui.tr("Cadence Tweaks"))
-        gui.menubar.clear()
         gui.systray.hide()
 
     if "--minimized" in app.arguments():
