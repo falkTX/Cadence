@@ -779,7 +779,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         #self.systray.connect("pulse_start", self.PABridgeStart)
         #self.systray.connect("pulse_stop", self.PABridgeStop)
         self.systray.connect("app_catarina", lambda tool="catarina": self.func_start_tool(tool))
-        self.systray.connect("app_catia", lambda tool="catarina": self.func_start_tool(tool))
+        self.systray.connect("app_catia", lambda tool="catia": self.func_start_tool(tool))
         self.systray.connect("app_claudia", lambda tool="claudia": self.func_start_tool(tool))
         self.systray.connect("app_carla", lambda tool="carla": self.func_start_tool(tool))
         self.systray.connect("app_logs", lambda tool="cadence-logs": self.func_start_tool(tool))
