@@ -78,8 +78,10 @@ static void carla_jack_shutdown_callback(void* arg)
 
 CarlaEngineJack::CarlaEngineJack()
     : CarlaEngine()
-#ifdef Q_COMPILER_INITIALIZER_LISTS
+#ifndef BUILD_BRIDGE
+#  ifdef Q_COMPILER_INITIALIZER_LISTS
     , rackJackPorts{nullptr}
+#  endif
 #endif
 {
     qDebug("CarlaEngineJack::CarlaEngineJack()");
@@ -92,9 +94,11 @@ CarlaEngineJack::CarlaEngineJack()
 
     memset(&pos, 0, sizeof(jack_position_t));
 
-#ifndef Q_COMPILER_INITIALIZER_LISTS
+#ifndef BUILD_BRIDGE
+#  ifndef Q_COMPILER_INITIALIZER_LISTS
     for (unsigned short i=0; i < rackPortCount; i++)
         rackJackPorts[i] = nullptr;
+#  endif
 #endif
 }
 
