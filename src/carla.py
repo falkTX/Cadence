@@ -1077,11 +1077,11 @@ class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
 
         self.l_osc_cmds.setText(
                                 " /set_active                 <i-value>\n"
-                                " /set_drywet                 <d-value>\n"
-                                " /set_volume                 <d-value>\n"
-                                " /set_balance_left           <d-value>\n"
-                                " /set_balance_right          <d-value>\n"
-                                " /set_parameter_value        <i-index> <d-value>\n"
+                                " /set_drywet                 <f-value>\n"
+                                " /set_volume                 <f-value>\n"
+                                " /set_balance_left           <f-value>\n"
+                                " /set_balance_right          <f-value>\n"
+                                " /set_parameter_value        <i-index> <f-value>\n"
                                 #" /set_parameter_midi_cc      <i-index> <i-cc>\n"
                                 #" /set_parameter_midi_channel <i-index> <i-channel>\n"
                                 " /set_program                <i-index>\n"

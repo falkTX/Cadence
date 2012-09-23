@@ -357,9 +357,13 @@ bool CarlaEngine::removePlugin(const unsigned short id)
         m_carlaPlugins[id] = nullptr;
         m_uniqueNames[id]  = nullptr;
 
+        osc_send_control_remove_plugin(id);
+
 #ifndef BUILD_BRIDGE
         if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
         {
+            // TODO - handle OSC server comm
+
             for (unsigned short i=id; i < m_maxPluginNumber-1; i++)
             {
                 m_carlaPlugins[i] = m_carlaPlugins[i+1];
@@ -1186,19 +1190,34 @@ void CarlaEngineMidiPort::writeEvent(uint32_t time, const uint8_t* data, uint8_t
 // Carla Engine OSC stuff
 
 #ifndef BUILD_BRIDGE
-void CarlaEngine::osc_send_control_add_plugin(const int32_t pluginId, const char* const pluginName)
+void CarlaEngine::osc_send_control_add_plugin_start(const int32_t pluginId, const char* const pluginName)
 {
-    qDebug("CarlaEngine::osc_send_control_add_plugin(%i, \"%s\")", pluginId, pluginName);
+    qDebug("CarlaEngine::osc_send_control_add_plugin_start(%i, \"%s\")", pluginId, pluginName);
     Q_ASSERT(m_oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(pluginName);
 
     if (m_oscData && m_oscData->target)
     {
-        char target_path[strlen(m_oscData->path)+12];
+        char target_path[strlen(m_oscData->path)+18];
         strcpy(target_path, m_oscData->path);
-        strcat(target_path, "/add_plugin");
+        strcat(target_path, "/add_plugin_start");
         lo_send(m_oscData->target, target_path, "is", pluginId, pluginName);
+    }
+}
+
+void CarlaEngine::osc_send_control_add_plugin_end(const int32_t pluginId)
+{
+    qDebug("CarlaEngine::osc_send_control_add_plugin_end(%i)", pluginId);
+    Q_ASSERT(m_oscData);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
+
+    if (m_oscData && m_oscData->target)
+    {
+        char target_path[strlen(m_oscData->path)+16];
+        strcpy(target_path, m_oscData->path);
+        strcat(target_path, "/add_plugin_end");
+        lo_send(m_oscData->target, target_path, "i", pluginId);
     }
 }
 
@@ -1206,6 +1225,7 @@ void CarlaEngine::osc_send_control_remove_plugin(const int32_t pluginId)
 {
     qDebug("CarlaEngine::osc_send_control_remove_plugin(%i)", pluginId);
     Q_ASSERT(m_oscData);
+    Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
 
     if (m_oscData && m_oscData->target)
     {

@@ -95,6 +95,7 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
     if (! QString(path).contains("put_peak_value"))
         qDebug("CarlaOsc::handleMessage(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
 #endif
+    qWarning("CarlaOsc::handleMessage(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
 
     Q_ASSERT(m_serverThread);
     Q_ASSERT(path);
@@ -438,9 +439,9 @@ int CarlaOsc::handleMsgSetActive(CARLA_OSC_HANDLE_ARGS2)
 int CarlaOsc::handleMsgSetDryWet(CARLA_OSC_HANDLE_ARGS2)
 {
     qDebug("CarlaOsc::handleMsgSetDryWet()");
-    CARLA_OSC_CHECK_OSC_TYPES(1, "d");
+    CARLA_OSC_CHECK_OSC_TYPES(1, "f");
 
-    const double value = argv[0]->d;
+    const float value = argv[0]->f;
     plugin->setDryWet(value, false, true);
 
     return 0;
@@ -449,9 +450,9 @@ int CarlaOsc::handleMsgSetDryWet(CARLA_OSC_HANDLE_ARGS2)
 int CarlaOsc::handleMsgSetVolume(CARLA_OSC_HANDLE_ARGS2)
 {
     qDebug("CarlaOsc::handleMsgSetVolume()");
-    CARLA_OSC_CHECK_OSC_TYPES(1, "d");
+    CARLA_OSC_CHECK_OSC_TYPES(1, "f");
 
-    const double value = argv[0]->d;
+    const float value = argv[0]->f;
     plugin->setVolume(value, false, true);
 
     return 0;
@@ -460,9 +461,9 @@ int CarlaOsc::handleMsgSetVolume(CARLA_OSC_HANDLE_ARGS2)
 int CarlaOsc::handleMsgSetBalanceLeft(CARLA_OSC_HANDLE_ARGS2)
 {
     qDebug("CarlaOsc::handleMsgSetBalanceLeft()");
-    CARLA_OSC_CHECK_OSC_TYPES(1, "d");
+    CARLA_OSC_CHECK_OSC_TYPES(1, "f");
 
-    const double value = argv[0]->d;
+    const float value = argv[0]->f;
     plugin->setBalanceLeft(value, false, true);
 
     return 0;
@@ -471,9 +472,9 @@ int CarlaOsc::handleMsgSetBalanceLeft(CARLA_OSC_HANDLE_ARGS2)
 int CarlaOsc::handleMsgSetBalanceRight(CARLA_OSC_HANDLE_ARGS2)
 {
     qDebug("CarlaOsc::handleMsgSetBalanceRight()");
-    CARLA_OSC_CHECK_OSC_TYPES(1, "d");
+    CARLA_OSC_CHECK_OSC_TYPES(1, "f");
 
-    const double value = argv[0]->d;
+    const float value = argv[0]->f;
     plugin->setBalanceRight(value, false, true);
 
     return 0;
@@ -482,10 +483,10 @@ int CarlaOsc::handleMsgSetBalanceRight(CARLA_OSC_HANDLE_ARGS2)
 int CarlaOsc::handleMsgSetParameterValue(CARLA_OSC_HANDLE_ARGS2)
 {
     qDebug("CarlaOsc::handleMsgSetParameterValue()");
-    CARLA_OSC_CHECK_OSC_TYPES(2, "id");
+    CARLA_OSC_CHECK_OSC_TYPES(2, "if");
 
     const int32_t index = argv[0]->i;
-    const double  value = argv[1]->d;
+    const float   value = argv[1]->f;
     plugin->setParameterValue(index, value, true, false, true);
 
     return 0;

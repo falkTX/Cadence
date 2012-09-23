@@ -1408,7 +1408,7 @@ public:
             return;
 
 #ifndef BUILD_BRIDGE
-        x_engine->osc_send_control_add_plugin(m_id, m_name);
+        x_engine->osc_send_control_add_plugin_start(m_id, m_name);
 #endif
 
         // Base data
@@ -1440,17 +1440,6 @@ public:
             x_engine->osc_send_bridge_parameter_count(cIns, cOuts, cTotals);
 #else
             x_engine->osc_send_control_set_plugin_ports(m_id, audioInCount(), audioOutCount(), midiInCount(), midiOutCount(), cIns, cOuts, cTotals);
-#endif
-        }
-
-        // Internal Parameters
-        {
-#ifndef BUILD_BRIDGE
-            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_ACTIVE, m_active ? 1.0 : 0.0);
-            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_DRYWET, x_dryWet);
-            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_VOLUME, x_volume);
-            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_BALANCE_LEFT, x_balanceLeft);
-            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_BALANCE_RIGHT, x_balanceRight);
 #endif
         }
 
@@ -1521,6 +1510,21 @@ public:
             x_engine->osc_send_control_set_midi_program(m_id, midiprog.current);
 #endif
         }
+
+#ifndef BUILD_BRIDGE
+        x_engine->osc_send_control_add_plugin_end(m_id);
+#endif
+
+#ifndef BUILD_BRIDGE
+        // Internal Parameters
+        {
+            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_ACTIVE, m_active ? 1.0 : 0.0);
+            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_DRYWET, x_dryWet);
+            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_VOLUME, x_volume);
+            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_BALANCE_LEFT, x_balanceLeft);
+            x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_BALANCE_RIGHT, x_balanceRight);
+        }
+#endif
     }
 
 #ifndef BUILD_BRIDGE

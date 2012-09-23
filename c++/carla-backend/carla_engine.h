@@ -290,7 +290,8 @@ public:
     void osc_send_bridge_set_input_peak_value(const int32_t portId, const double value);
     void osc_send_bridge_set_output_peak_value(const int32_t portId, const double value);
 #else
-    void osc_send_control_add_plugin(const int32_t pluginId, const char* const pluginName);
+    void osc_send_control_add_plugin_start(const int32_t pluginId, const char* const pluginName);
+    void osc_send_control_add_plugin_end(const int32_t pluginId);
     void osc_send_control_remove_plugin(const int32_t pluginId);
     void osc_send_control_set_plugin_data(const int32_t pluginId, const int32_t type, const int32_t category, const int32_t hints, const char* const realName, const char* const label, const char* const maker, const char* const copyright, const int64_t uniqueId);
     void osc_send_control_set_plugin_ports(const int32_t pluginId, const int32_t audioIns, const int32_t audioOuts, const int32_t midiIns, const int32_t midiOuts, const int32_t cIns, const int32_t cOuts, const int32_t cTotals);
@@ -511,6 +512,7 @@ private:
 
     // -------------------------------------
 
+#ifndef BUILD_BRIDGE
     static const unsigned short rackPortAudioIn1   = 0;
     static const unsigned short rackPortAudioIn2   = 1;
     static const unsigned short rackPortAudioOut1  = 2;
@@ -521,6 +523,7 @@ private:
     static const unsigned short rackPortMidiOut    = 7;
     static const unsigned short rackPortCount      = 8;
     jack_port_t* rackJackPorts[rackPortCount];
+#endif
 };
 #endif
 

@@ -203,6 +203,8 @@ def asciiString(string):
 def cString(value):
     if not value:
         return ""
+    if isinstance(value, str):
+        return value
     return value.decode("utf-8", errors="ignore")
 
 # Check if a value is a number (float support)
