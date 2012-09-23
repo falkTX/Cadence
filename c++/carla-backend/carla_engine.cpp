@@ -357,9 +357,9 @@ bool CarlaEngine::removePlugin(const unsigned short id)
         m_carlaPlugins[id] = nullptr;
         m_uniqueNames[id]  = nullptr;
 
+#ifndef BUILD_BRIDGE
         osc_send_control_remove_plugin(id);
 
-#ifndef BUILD_BRIDGE
         if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
         {
             // TODO - handle OSC server comm
