@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Claudia Launcher
+GenericName=Claudia Launcher
+Comment=Multimedia Applications Launcher
+Exec=claudia-launcher
+Icon=claudia-launcher
+Terminal=false
+Type=Application
+Categories=AudioVideo;AudioEditing;Qt;
