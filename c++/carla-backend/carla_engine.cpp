@@ -122,10 +122,11 @@ bool CarlaEngine::close()
 
     m_checkThread.stopNow();
 
-    m_oscData = nullptr;
 #ifndef BUILD_BRIDGE
+    osc_send_control_exit();
     m_osc.close();
 #endif
+    m_oscData = nullptr;
 
     m_maxPluginNumber = 0;
 

@@ -564,10 +564,10 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         self.TIMER_GUI_STUFF  = self.startTimer(50)     # Peaks
         self.TIMER_GUI_STUFF2 = self.startTimer(50 * 2) # LEDs and edit dialog
 
-    #def func_remove_all(self):
-        #for i in range(MAX_PLUGINS):
-          #if (self.plugin_list[i] != None):
-            #self.handleRemovePluginCallback(i)
+    def remove_all(self):
+        for i in range(MAX_PLUGINS):
+            if self.m_plugin_list[i]:
+                self.slot_handleRemovePlugin(i)
 
     @pyqtSlot()
     def slot_doConnect(self):
@@ -576,7 +576,7 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         if lo_target and self.lo_server:
             urlText = self.lo_address
         else:
-            urlText = "osc.udp://falkTX-Laptop:16215/Carla" #"osc.udp://127.0.0.1:19000/Carla"
+            urlText = "osc.udp://falkTX-Laptop:15352/Carla" #"osc.udp://127.0.0.1:19000/Carla"
 
         askValue = QInputDialog.getText(self, self.tr("Carla Control - Connect"), self.tr("Address"), text=urlText)
 
@@ -606,7 +606,7 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
     def slot_doRefresh(self):
         global lo_target
         if lo_target and self.lo_server:
-            #self.func_remove_all()
+            self.remove_all()
             lo_send(lo_target, "/unregister")
             lo_send(lo_target, "/register", self.lo_server.getFullURL())
 
@@ -811,16 +811,17 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
 
     @pyqtSlot()
     def slot_handleExit(self):
-        pass
+        self.remove_all()
 
-    #def handleExitCallback(self):
-        #self.func_remove_all()
-        #self.act_file_refresh.setEnabled(False)
+        if self.lo_server:
+            self.lo_server.stop()
+            self.lo_server = None
+            self.act_file_refresh.setEnabled(False)
 
-        #global lo_targetName, lo_target
-        #lo_targetName = ""
-        #lo_target = None
-        #self.lo_address = ""
+        global lo_target, lo_targetName
+        lo_target     = None
+        lo_targetName = ""
+        self.lo_address = ""
 
     def saveSettings(self):
         self.settings.setValue("Geometry", self.saveGeometry())
