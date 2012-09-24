@@ -512,7 +512,7 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
 
     def set_parameter_midi_channel(self, channel):
         self.m_midiChannel = channel
-        self.sb_channel.setValue(channel - 1)
+        self.sb_channel.setValue(channel)
 
     def add_MIDI_CCs_to_ComboBox(self):
         for MIDI_CC in MIDI_CC_LIST:
@@ -929,16 +929,23 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         if index not in self.m_parameterIdsToUpdate:
             self.m_parameterIdsToUpdate.append(index)
 
-    def set_parameter_midi_channel(self, index, midiChannel):
+    #def set_parameter_default_value(self, index, value):
+        #self.m_parameterList[index].set_default_value(value)
+
+    def set_parameter_midi_channel(self, index, midiChannel, blockSignals = False):
         for paramType, paramId, paramWidget in self.m_parameterList:
             if paramId == index:
+                if (blockSignals): paramWidget.blockSignals(True)
                 paramWidget.set_parameter_midi_channel(midiChannel)
+                if (blockSignals): paramWidget.blockSignals(False)
                 break
 
-    def set_parameter_midi_cc(self, index, midiCC):
+    def set_parameter_midi_cc(self, index, midiCC, blockSignals = False):
         for paramType, paramId, paramWidget in self.m_parameterList:
             if paramId == index:
+                if (blockSignals): paramWidget.blockSignals(True)
                 paramWidget.set_parameter_midi_cc(midiCC)
+                if (blockSignals): paramWidget.blockSignals(False)
                 break
 
     def set_program(self, index):
@@ -1114,7 +1121,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
     @pyqtSlot(int, int)
     def slot_parameterMidiChannelChanged(self, parameter_id, channel):
-        Carla.Host.set_parameter_midi_channel(self.m_pluginId, parameter_id, channel - 1)
+        Carla.Host.set_parameter_midi_channel(self.m_pluginId, parameter_id, channel)
 
     @pyqtSlot(int, int)
     def slot_parameterMidiCcChanged(self, parameter_id, cc_index):
@@ -1789,7 +1796,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
                 Carla.Host.set_parameter_value(self.m_pluginId, index, parameter['value'])
                 Carla.Host.set_parameter_midi_cc(self.m_pluginId, index, parameter['midiCC'])
-                Carla.Host.set_parameter_midi_channel(self.m_pluginId, index, parameter['midiChannel'] - 1)
+                Carla.Host.set_parameter_midi_channel(self.m_pluginId, index, parameter['midiChannel'])
 
             else:
                 print("Could not set parameter data for '%s')" % parameter['name'])

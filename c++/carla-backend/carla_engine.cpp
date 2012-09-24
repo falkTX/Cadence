@@ -1505,7 +1505,7 @@ void CarlaEngine::osc_send_control_note_off(const int32_t pluginId, const int32_
 
 void CarlaEngine::osc_send_control_set_input_peak_value(const int32_t pluginId, const int32_t portId, const double value)
 {
-    qDebug("CarlaEngine::osc_send_control_set_input_peak_value(%i, %i, %g)", pluginId, portId, value);
+    //qDebug("CarlaEngine::osc_send_control_set_input_peak_value(%i, %i, %g)", pluginId, portId, value);
     Q_ASSERT(m_oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(portId == 1 || portId == 2);
@@ -1521,7 +1521,7 @@ void CarlaEngine::osc_send_control_set_input_peak_value(const int32_t pluginId, 
 
 void CarlaEngine::osc_send_control_set_output_peak_value(const int32_t pluginId, const int32_t portId, const double value)
 {
-    qDebug("CarlaEngine::osc_send_control_set_output_peak_value(%i, %i, %g)", pluginId, portId, value);
+    //qDebug("CarlaEngine::osc_send_control_set_output_peak_value(%i, %i, %g)", pluginId, portId, value);
     Q_ASSERT(m_oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(portId == 1 || portId == 2);

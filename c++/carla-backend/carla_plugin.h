@@ -1166,13 +1166,6 @@ public:
         if (sendGui && index >= 0)
             uiProgramChange(index);
 
-#ifndef BUILD_BRIDGE
-        if (sendOsc)
-            x_engine->osc_send_control_set_program(m_id, index);
-#else
-        Q_UNUSED(sendOsc);
-#endif
-
         // Change default parameter values
         if (index >= 0)
         {
@@ -1183,10 +1176,20 @@ public:
 
 #ifndef BUILD_BRIDGE
                 if (sendOsc)
+                {
                     x_engine->osc_send_control_set_default_value(m_id, i, param.ranges[i].def);
+                    x_engine->osc_send_control_set_parameter_value(m_id, i, param.ranges[i].def);
+                }
 #endif
             }
         }
+
+#ifndef BUILD_BRIDGE
+        if (sendOsc)
+            x_engine->osc_send_control_set_program(m_id, index);
+#else
+        Q_UNUSED(sendOsc);
+#endif
 
         if (sendCallback)
             x_engine->callback(CALLBACK_PROGRAM_CHANGED, m_id, index, 0, 0.0);
@@ -1220,13 +1223,6 @@ public:
         if (sendGui && index >= 0)
             uiMidiProgramChange(index);
 
-#ifndef BUILD_BRIDGE
-        if (sendOsc)
-            x_engine->osc_send_control_set_midi_program(m_id, index);
-#else
-        Q_UNUSED(sendOsc);
-#endif
-
         // Change default parameter values (sound banks never change defaults)
         if (index >= 0 && m_type != PLUGIN_GIG && m_type != PLUGIN_SF2 && m_type != PLUGIN_SFZ)
         {
@@ -1237,10 +1233,20 @@ public:
 
 #ifndef BUILD_BRIDGE
                 if (sendOsc)
+                {
                     x_engine->osc_send_control_set_default_value(m_id, i, param.ranges[i].def);
+                    x_engine->osc_send_control_set_parameter_value(m_id, i, param.ranges[i].def);
+                }
 #endif
             }
         }
+
+#ifndef BUILD_BRIDGE
+        if (sendOsc)
+            x_engine->osc_send_control_set_midi_program(m_id, index);
+#else
+        Q_UNUSED(sendOsc);
+#endif
 
         if (sendCallback)
             x_engine->callback(CALLBACK_MIDI_PROGRAM_CHANGED, m_id, index, 0, 0.0);
@@ -1466,6 +1472,8 @@ public:
 #else
                 x_engine->osc_send_control_set_parameter_data(m_id, i, param.data[i].type, param.data[i].hints, bufName, bufUnit, getParameterValue(i));
                 x_engine->osc_send_control_set_parameter_ranges(m_id, i, param.ranges[i].min, param.ranges[i].max, param.ranges[i].def, param.ranges[i].step, param.ranges[i].stepSmall, param.ranges[i].stepLarge);
+                x_engine->osc_send_control_set_parameter_midi_cc(m_id, i, param.data[i].midiCC);
+                x_engine->osc_send_control_set_parameter_midi_channel(m_id, i, param.data[i].midiChannel);
                 x_engine->osc_send_control_set_parameter_value(m_id, i, getParameterValue(i));
 #endif
             }
@@ -1513,9 +1521,7 @@ public:
 
 #ifndef BUILD_BRIDGE
         x_engine->osc_send_control_add_plugin_end(m_id);
-#endif
 
-#ifndef BUILD_BRIDGE
         // Internal Parameters
         {
             x_engine->osc_send_control_set_parameter_value(m_id, PARAMETER_ACTIVE, m_active ? 1.0 : 0.0);

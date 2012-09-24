@@ -109,8 +109,10 @@ class ControlPluginInfo(object):
         'parameterRangeS',
         'parameterValueS',
         'programCount',
+        'programCurrent',
         'programNameS',
         'midiProgramCount',
+        'midiProgramCurrent',
         'midiProgramDataS',
         'inPeak',
         'outPeak'
@@ -122,24 +124,29 @@ class Host(object):
         object.__init__(self)
 
         self.pluginInfo = []
-        for x in range(MAX_PLUGINS):
-            info = ControlPluginInfo()
-            info.pluginInfo = PluginInfo
-            info.pluginRealName = None
-            info.audioCountInfo = PortCountInfo
-            info.midiCountInfo  = PortCountInfo
-            info.parameterCountInfo = PortCountInfo
-            info.parameterInfoS  = []
-            info.parameterDataS  = []
-            info.parameterRangeS = []
-            info.parameterValueS = []
-            info.programCount = 0
-            info.programNameS = []
-            info.midiProgramCount = 0
-            info.midiProgramDataS = []
-            info.inPeak  = [0.0, 0.0]
-            info.outPeak = [0.0, 0.0]
-            self.pluginInfo.append(info)
+
+        for i in range(MAX_PLUGINS):
+            self.pluginInfo.append(ControlPluginInfo())
+            self._clear(i)
+
+    def _clear(self, index):
+        self.pluginInfo[index].pluginInfo = PluginInfo
+        self.pluginInfo[index].pluginRealName = None
+        self.pluginInfo[index].audioCountInfo = PortCountInfo
+        self.pluginInfo[index].midiCountInfo  = PortCountInfo
+        self.pluginInfo[index].parameterCountInfo = PortCountInfo
+        self.pluginInfo[index].parameterInfoS  = []
+        self.pluginInfo[index].parameterDataS  = []
+        self.pluginInfo[index].parameterRangeS = []
+        self.pluginInfo[index].parameterValueS = []
+        self.pluginInfo[index].programCount = 0
+        self.pluginInfo[index].programCurrent = -1
+        self.pluginInfo[index].programNameS = []
+        self.pluginInfo[index].midiProgramCount = 0
+        self.pluginInfo[index].midiProgramCurrent = -1
+        self.pluginInfo[index].midiProgramDataS = []
+        self.pluginInfo[index].inPeak  = [0.0, 0.0]
+        self.pluginInfo[index].outPeak = [0.0, 0.0]
 
     def _set_pluginInfo(self, index, info):
         self.pluginInfo[index].pluginInfo = info
@@ -170,6 +177,21 @@ class Host(object):
 
     def _set_parameterValue(self, index, paramIndex, value):
         self.pluginInfo[index].parameterValueS[paramIndex] = value
+
+    def _set_parameterDefaultValue(self, index, paramIndex, value):
+        self.pluginInfo[index].parameterRangeS[paramIndex]['def'] = value
+
+    def _set_parameterMidiCC(self, index, paramIndex, cc):
+        self.pluginInfo[index].parameterDataS[paramIndex]['midiCC'] = cc
+
+    def _set_parameterMidiChannel(self, index, paramIndex, channel):
+        self.pluginInfo[index].parameterDataS[paramIndex]['midiChannel'] = channel
+
+    def _set_currentProgram(self, index, pIndex):
+        self.pluginInfo[index].programCurrent = pIndex
+
+    def _set_currentMidiProgram(self, index, mpIndex):
+        self.pluginInfo[index].midiProgramCurrent = mpIndex
 
     def _append_parameterInfoS(self, index, data):
         self.pluginInfo[index].parameterInfoS.append(data)
@@ -250,10 +272,10 @@ class Host(object):
         return self.pluginInfo[plugin_id].pluginRealName
 
     def get_current_program_index(self, plugin_id):
-        return -1
+        return self.pluginInfo[plugin_id].programCurrent
 
     def get_current_midi_program_index(self, plugin_id):
-        return -1
+        return self.pluginInfo[plugin_id].midiProgramCurrent
 
     def get_default_parameter_value(self, plugin_id, parameter_id):
         return self.pluginInfo[plugin_id].parameterRangeS[parameter_id]['def']
@@ -419,7 +441,7 @@ class ControlServer(ServerThread):
     @make_method('/carla-control/set_midi_program_data', 'iiiiis')
     def set_midi_program_data_callback(self, path, args):
         pluginId, index, bank, program, name = args
-        self.parent.emit(SIGNAL("SetMidiProgramData(int, int, int, int, int, QString)"), pluginId, index, bank, program, name)
+        self.parent.emit(SIGNAL("SetMidiProgramData(int, int, int, int, QString)"), pluginId, index, bank, program, name)
 
     @make_method('/carla-control/set_input_peak_value', 'iid')
     def set_input_peak_value_callback(self, path, args):
@@ -461,7 +483,7 @@ class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
                                      "<br>Copyright (C) 2011-2012 falkTX<br>"
                                      "" % VERSION))
 
-        self.l_extended.setVisible(False)
+        self.l_extended.setVisible(False) # TODO - write about this special OSC version
 
         self.tabWidget.removeTab(1)
         self.tabWidget.removeTab(1)
@@ -532,7 +554,7 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         self.connect(self, SIGNAL("SetProgramName(int, int, QString)"), SLOT("slot_handleSetProgramName(int, int, QString)"))
         self.connect(self, SIGNAL("SetMidiProgram(int, int)"), SLOT("slot_handleSetMidiProgram(int, int)"))
         self.connect(self, SIGNAL("SetMidiProgramCount(int, int)"), SLOT("slot_handleSetMidiProgramCount(int, int)"))
-        self.connect(self, SIGNAL("SetMidiProgramData(int, int, int, int, int, QString)"), SLOT("slot_handleSetMidiProgramData(int, int, int, int, int, QString)"))
+        self.connect(self, SIGNAL("SetMidiProgramData(int, int, int, int, QString)"), SLOT("slot_handleSetMidiProgramData(int, int, int, int, QString)"))
         self.connect(self, SIGNAL("SetInputPeakValue(int, int, double)"), SLOT("slot_handleSetInputPeakValue(int, int, double)"))
         self.connect(self, SIGNAL("SetOutputPeakValue(int, int, double)"), SLOT("slot_handleSetOutputPeakValue(int, int, double)"))
         self.connect(self, SIGNAL("NoteOn(int, int, int, int)"), SLOT("slot_handleNoteOn(int, int, int, int)"))
@@ -542,6 +564,11 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         self.TIMER_GUI_STUFF  = self.startTimer(50)     # Peaks
         self.TIMER_GUI_STUFF2 = self.startTimer(50 * 2) # LEDs and edit dialog
 
+    #def func_remove_all(self):
+        #for i in range(MAX_PLUGINS):
+          #if (self.plugin_list[i] != None):
+            #self.handleRemovePluginCallback(i)
+
     @pyqtSlot()
     def slot_doConnect(self):
         global lo_target, lo_targetName
@@ -549,7 +576,7 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         if lo_target and self.lo_server:
             urlText = self.lo_address
         else:
-            urlText = "osc.udp://falkTX-Laptop:16963/Carla" #"osc.udp://127.0.0.1:19000/Carla"
+            urlText = "osc.udp://falkTX-Laptop:16215/Carla" #"osc.udp://127.0.0.1:19000/Carla"
 
         askValue = QInputDialog.getText(self, self.tr("Carla Control - Connect"), self.tr("Address"), text=urlText)
 
@@ -586,11 +613,6 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
     @pyqtSlot()
     def slot_aboutCarlaControl(self):
         CarlaAboutW(self).exec_()
-
-    #def func_remove_all(self):
-        #for i in range(MAX_PLUGINS):
-          #if (self.plugin_list[i] != None):
-            #self.handleRemovePluginCallback(i)
 
     @pyqtSlot(int, str)
     def slot_handleAddPluginStart(self, pluginId, pluginName):
@@ -679,15 +701,22 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
 
         Carla.Host._append_parameterRangeS(pluginId, ranges)
 
-    #@pyqtSlot(int, int, int)
-    #def slot_handleSetParameterMidiCC(self, pluginId, index, cc):
-        #info =
-        #Carla.Host._set_(pluginId, info)
+    @pyqtSlot(int, int, int)
+    def slot_handleSetParameterMidiCC(self, pluginId, index, cc):
+        Carla.Host._set_parameterMidiCC(pluginId, index, cc)
 
-    #@pyqtSlot(int, int, int)
-    #def slot_handleSetParameterMidiChannel(self, pluginId, index, channel):
-        #info =
-        #Carla.Host._set_(pluginId, info)
+        pwidget = self.m_plugin_list[pluginId]
+        if pwidget:
+            pwidget.edit_dialog.set_parameter_midi_cc(index, cc, True)
+
+    @pyqtSlot(int, int, int)
+    def slot_handleSetParameterMidiChannel(self, pluginId, index, channel):
+        channel += 1
+        Carla.Host._set_parameterMidiChannel(pluginId, index, channel)
+
+        pwidget = self.m_plugin_list[pluginId]
+        if pwidget:
+            pwidget.edit_dialog.set_parameter_midi_channel(index, channel, True)
 
     @pyqtSlot(int, int, float)
     def slot_handleSetParameterValue(self, pluginId, parameterId, value):
@@ -717,6 +746,50 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
                 pwidget.edit_dialog.set_parameter_to_update(parameterId)
 
     @pyqtSlot(int, int, float)
+    def slot_handleSetDefaultValue(self, pluginId, parameterId, value):
+        Carla.Host._set_parameterDefaultValue(pluginId, parameterId, value)
+
+        #pwidget = self.m_plugin_list[pluginId]
+        #if pwidget:
+            #pwidget.edit_dialog.set_parameter_default_value(parameterId, value)
+
+    @pyqtSlot(int, int)
+    def slot_handleSetProgram(self, pluginId, index):
+        Carla.Host._set_currentProgram(pluginId, index)
+
+        pwidget = self.m_plugin_list[pluginId]
+        if pwidget:
+            pwidget.edit_dialog.set_program(index)
+
+    @pyqtSlot(int, int)
+    def slot_handleSetProgramCount(self, pluginId, count):
+        Carla.Host._set_programCount(pluginId, count)
+
+    @pyqtSlot(int, int, str)
+    def slot_handleSetProgramName(self, pluginId, index, name):
+        Carla.Host._append_programNameS(pluginId, name)
+
+    @pyqtSlot(int, int)
+    def slot_handleSetMidiProgram(self, pluginId, index):
+        Carla.Host._set_currentMidiProgram(pluginId, index)
+
+        pwidget = self.m_plugin_list[pluginId]
+        if pwidget:
+            pwidget.edit_dialog.set_midi_program(index)
+
+    @pyqtSlot(int, int)
+    def slot_handleSetMidiProgramCount(self, pluginId, count):
+        Carla.Host._set_midiProgramCount(pluginId, count)
+
+    @pyqtSlot(int, int, int, int, str)
+    def slot_handleSetMidiProgramData(self, pluginId, index, bank, program, name):
+        data = deepcopy(midi_program_t)
+        data['bank'] = bank
+        data['program'] = program
+        data['label'] = name
+        Carla.Host._append_midiProgramDataS(pluginId, data)
+
+    @pyqtSlot(int, int, float)
     def slot_handleSetInputPeakValue(self, pluginId, portId, value):
         Carla.Host._set_inPeak(pluginId, portId-1, value)
 
@@ -724,63 +797,21 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
     def slot_handleSetOutputPeakValue(self, pluginId, portId, value):
         Carla.Host._set_outPeak(pluginId, portId-1, value)
 
-        #self.connect(self, SIGNAL("SetParameterValue(int, int, double)"), SLOT("slot_handleSetParameterValue(int, int, double)"))
-        #self.connect(self, SIGNAL("SetDefaultValue(int, int, double)"), SLOT("slot_handleSetDefaultValue(int, int, double)"))
-        #self.connect(self, SIGNAL("SetProgram(int, int)"), SLOT("slot_handleSetProgram(int, int)"))
-        #self.connect(self, SIGNAL("SetProgramCount(int, int)"), SLOT("slot_handleSetProgramCount(int, int)"))
-        #self.connect(self, SIGNAL("SetProgramName(int, int, QString)"), SLOT("slot_handleSetProgramName(int, int, QString)"))
-        #self.connect(self, SIGNAL("SetMidiProgram(int, int)"), SLOT("slot_handleSetMidiProgram(int, int)"))
-        #self.connect(self, SIGNAL("SetMidiProgramCount(int, int)"), SLOT("slot_handleSetMidiProgramCount(int, int)"))
-        #self.connect(self, SIGNAL("SetMidiProgramData(int, int, int, int, int, QString)"), SLOT("slot_handleSetMidiProgramData(int, int, int, int, int, QString)"))
+    @pyqtSlot(int, int, int, int)
+    def slot_handleNoteOn(self, pluginId, channel, note, velo):
+        pwidget = self.m_plugin_list[pluginId]
+        if pwidget:
+            pwidget.edit_dialog.keyboard.sendNoteOn(note, False)
 
-        #self.connect(self, SIGNAL("NoteOn(int, int, int, int)"), SLOT("slot_handleNoteOn(int, int, int, int)"))
-        #self.connect(self, SIGNAL("NoteOff(int, int, int)"), SLOT("slot_handleNoteOff(int, int, int)"))
-        #self.connect(self, SIGNAL("Exit()"), SLOT("slot_handleExit()"))
+    @pyqtSlot(int, int, int)
+    def slot_handleNoteOff(self, pluginId, channel, note):
+        pwidget = self.m_plugin_list[pluginId]
+        if pwidget:
+            pwidget.edit_dialog.keyboard.sendNoteOff(note, False)
 
-    #def handleSetDefaultValueCallback(self, plugin_id, param_id, value):
-        #pwidget = self.plugin_list[plugin_id]
-        #if (pwidget):
-          #pwidget.edit_dialog.set_parameter_default_value(param_id, value)
-
-    #def handleSetProgramCallback(self, plugin_id, program_id):
-        #pwidget = self.plugin_list[plugin_id]
-        #if (pwidget):
-          #pwidget.edit_dialog.set_program(program_id)
-
-    #def handleSetProgramCountCallback(self, plugin_id, program_count):
-        #pwidget = self.plugin_list[plugin_id]
-        #if (pwidget):
-          #pwidget.edit_dialog.set_program_count(program_count)
-
-    #def handleSetProgramNameCallback(self, plugin_id, program_id, program_name):
-        #pwidget = self.plugin_list[plugin_id]
-        #if (pwidget):
-          #pwidget.edit_dialog.set_program_name(program_id, program_name)
-
-    #def handleSetMidiProgramCallback(self, plugin_id, midi_program_id):
-        #pwidget = self.plugin_list[plugin_id]
-        #if (pwidget):
-          #pwidget.edit_dialog.set_midi_program(midi_program_id)
-
-    #def handleSetMidiProgramCountCallback(self, plugin_id, midi_program_count):
-        #pwidget = self.plugin_list[plugin_id]
-        #if (pwidget):
-          #pwidget.edit_dialog.set_midi_program_count(midi_program_count)
-
-    #def handleSetMidiProgramDataCallback(self, plugin_id, midi_program_id, bank_id, program_id, midi_program_name):
-        #pwidget = self.plugin_list[plugin_id]
-        #if (pwidget):
-          #pwidget.edit_dialog.set_midi_program_data(midi_program_id, bank_id, program_id, midi_program_name)
-
-    #def handleNoteOnCallback(self, plugin_id, note, velo):
-        #pwidget = self.plugin_list[plugin_id]
-        #if (pwidget):
-          #pwidget.edit_dialog.keyboard.noteOn(note, False)
-
-    #def handleNoteOffCallback(self, plugin_id, note, velo):
-        #pwidget = self.plugin_list[plugin_id]
-        #if (pwidget):
-          #pwidget.edit_dialog.keyboard.noteOff(note, False)
+    @pyqtSlot()
+    def slot_handleExit(self):
+        pass
 
     #def handleExitCallback(self):
         #self.func_remove_all()

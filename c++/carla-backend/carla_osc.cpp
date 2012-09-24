@@ -524,6 +524,12 @@ int CarlaOsc::handleMsgSetProgram(CARLA_OSC_HANDLE_ARGS2)
     const int32_t index = argv[0]->i;
     plugin->setProgram(index, true, false, true, true);
 
+    if (index >= 0)
+    {
+        for (uint32_t i=0; i < plugin->parameterCount(); i++)
+            engine->osc_send_control_set_parameter_value(plugin->id(), i, plugin->getParameterValue(i));
+    }
+
     return 0;
 }
 
@@ -534,6 +540,12 @@ int CarlaOsc::handleMsgSetMidiProgram(CARLA_OSC_HANDLE_ARGS2)
 
     const int32_t index = argv[0]->i;
     plugin->setMidiProgram(index, true, false, true, true);
+
+    if (index >= 0)
+    {
+        for (uint32_t i=0; i < plugin->parameterCount(); i++)
+            engine->osc_send_control_set_parameter_value(plugin->id(), i, plugin->getParameterValue(i));
+    }
 
     return 0;
 }

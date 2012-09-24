@@ -1275,7 +1275,10 @@ if __name__ == '__main__':
     gui.show()
 
     if len(app.arguments()) > 1:
-        gui.loadFile(app.arguments()[1])
+        if not app.arguments()[0].endswith("Python.exe"):
+            gui.loadFile(app.arguments()[1])
+        elif len(app.arguments()) > 2:
+            gui.loadFile(app.arguments()[2])
 
     # App-Loop
     sys.exit(app.exec_())
