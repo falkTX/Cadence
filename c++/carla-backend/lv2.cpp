@@ -2231,9 +2231,6 @@ public:
                     if (! evIn.data[i].type & CARLA_EVENT_TYPE_MESSAGE)
                         continue;
 
-                    // messages only supported in Atom type ports
-                    Q_ASSERT(evIn.data[i].type & CARLA_EVENT_DATA_ATOM);
-
 #if 0
                      // send transport info if changed
                     const CarlaTimeInfo* const timeInfo = x_engine->getTimeInfo();
