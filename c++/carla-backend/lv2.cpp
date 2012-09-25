@@ -903,12 +903,15 @@ public:
         case GUI_INTERNAL_QT4:
             if (ui.widget)
             {
+                QDialog* const dialog = (QDialog*)container->parent();
                 QWidget* const widget = (QWidget*)ui.widget;
-                Q_ASSERT(container->layout());
+                Q_ASSERT(dialog);
+                Q_ASSERT(dialog->layout());
                 Q_ASSERT(widget);
-                container->layout()->addWidget(widget);
+                container->setVisible(false);
+                dialog->layout()->addWidget(widget);
                 widget->adjustSize();
-                widget->setParent(container);
+                widget->setParent(dialog);
                 widget->show();
             }
             break;
