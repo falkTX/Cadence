@@ -163,19 +163,49 @@ class Host(object):
     def _set_parameterCountInfo(self, index, info):
         self.pluginInfo[index].parameterCountInfo = info
 
+        # clear
+        self.pluginInfo[index].parameterInfoS  = []
+        self.pluginInfo[index].parameterDataS  = []
+        self.pluginInfo[index].parameterRangeS = []
+        self.pluginInfo[index].parameterValueS = []
+
+        # add placeholders
+        for x in range(info['total']):
+            self.pluginInfo[index].parameterInfoS.append(ParameterInfo)
+            self.pluginInfo[index].parameterDataS.append(ParameterData)
+            self.pluginInfo[index].parameterRangeS.append(ParameterRanges)
+            self.pluginInfo[index].parameterValueS.append(0.0)
+
     def _set_programCount(self, index, count):
         self.pluginInfo[index].programCount = count
+
+        # clear
+        self.pluginInfo[index].programNameS = []
+
+        # add placeholders
+        for x in range(count):
+            self.pluginInfo[index].programNameS.append(None)
 
     def _set_midiProgramCount(self, index, count):
         self.pluginInfo[index].midiProgramCount = count
 
-    def _set_inPeak(self, index, port, value):
-        self.pluginInfo[index].inPeak[port] = value
+        # clear
+        self.pluginInfo[index].midiProgramDataS = []
 
-    def _set_outPeak(self, index, port, value):
-        self.pluginInfo[index].outPeak[port] = value
+        # add placeholders
+        for x in range(count):
+            self.pluginInfo[index].midiProgramDataS.append(midi_program_t)
 
-    def _set_parameterValue(self, index, paramIndex, value):
+    def _set_parameterInfoS(self, index, paramIndex, data):
+        self.pluginInfo[index].parameterInfoS[paramIndex] = data
+
+    def _set_parameterDataS(self, index, paramIndex, data):
+        self.pluginInfo[index].parameterDataS[paramIndex] = data
+
+    def _set_parameterRangeS(self, index, paramIndex, data):
+        self.pluginInfo[index].parameterRangeS[paramIndex] = data
+
+    def _set_parameterValueS(self, index, paramIndex, value):
         self.pluginInfo[index].parameterValueS[paramIndex] = value
 
     def _set_parameterDefaultValue(self, index, paramIndex, value):
@@ -193,23 +223,17 @@ class Host(object):
     def _set_currentMidiProgram(self, index, mpIndex):
         self.pluginInfo[index].midiProgramCurrent = mpIndex
 
-    def _append_parameterInfoS(self, index, data):
-        self.pluginInfo[index].parameterInfoS.append(data)
+    def _set_programNameS(self, index, pIndex, data):
+        self.pluginInfo[index].programNameS[pIndex] = data
 
-    def _append_parameterDataS(self, index, data):
-        self.pluginInfo[index].parameterDataS.append(data)
+    def _set_midiProgramDataS(self, index, mpIndex, data):
+        self.pluginInfo[index].midiProgramDataS[mpIndex] = data
 
-    def _append_parameterRangeS(self, index, data):
-        self.pluginInfo[index].parameterRangeS.append(data)
+    def _set_inPeak(self, index, port, value):
+        self.pluginInfo[index].inPeak[port] = value
 
-    def _append_parameterValueS(self, index, value):
-        self.pluginInfo[index].parameterValueS.append(value)
-
-    def _append_programNameS(self, index, data):
-        self.pluginInfo[index].programNameS.append(data)
-
-    def _append_midiProgramDataS(self, index, data):
-        self.pluginInfo[index].midiProgramDataS.append(data)
+    def _set_outPeak(self, index, port, value):
+        self.pluginInfo[index].outPeak[port] = value
 
     def get_plugin_info(self, plugin_id):
         return self.pluginInfo[plugin_id].pluginInfo
@@ -685,9 +709,9 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         info['name']  = name
         info['label'] = label
 
-        Carla.Host._append_parameterDataS(pluginId, data)
-        Carla.Host._append_parameterInfoS(pluginId, info)
-        Carla.Host._append_parameterValueS(pluginId, current)
+        Carla.Host._set_parameterDataS(pluginId, index, data)
+        Carla.Host._set_parameterInfoS(pluginId, index, info)
+        Carla.Host._set_parameterValueS(pluginId, index, current)
 
     @pyqtSlot(int, int, float, float, float, float, float, float)
     def slot_handleSetParameterRanges(self, pluginId, index, min_, max_, def_, step, stepSmall, stepLarge):
@@ -699,7 +723,7 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         ranges['stepSmall'] = stepSmall
         ranges['stepLarge'] = stepLarge
 
-        Carla.Host._append_parameterRangeS(pluginId, ranges)
+        Carla.Host._set_parameterRangeS(pluginId, index, ranges)
 
     @pyqtSlot(int, int, int)
     def slot_handleSetParameterMidiCC(self, pluginId, index, cc):
@@ -720,6 +744,9 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
 
     @pyqtSlot(int, int, float)
     def slot_handleSetParameterValue(self, pluginId, parameterId, value):
+        if parameterId >= 0:
+            Carla.Host._set_parameterValueS(pluginId, parameterId, value)
+
         pwidget = self.m_plugin_list[pluginId]
         if pwidget:
             if parameterId < PARAMETER_NULL:
@@ -742,7 +769,6 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
             elif parameterId == PARAMETER_BALANCE_RIGHT:
                 pwidget.set_balance_right(value * 1000, True, False)
             elif parameterId >= 0:
-                Carla.Host._set_parameterValue(pluginId, parameterId, value)
                 pwidget.edit_dialog.set_parameter_to_update(parameterId)
 
     @pyqtSlot(int, int, float)
@@ -767,7 +793,7 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
 
     @pyqtSlot(int, int, str)
     def slot_handleSetProgramName(self, pluginId, index, name):
-        Carla.Host._append_programNameS(pluginId, name)
+        Carla.Host._set_programNameS(pluginId, index, name)
 
     @pyqtSlot(int, int)
     def slot_handleSetMidiProgram(self, pluginId, index):
@@ -784,10 +810,10 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
     @pyqtSlot(int, int, int, int, str)
     def slot_handleSetMidiProgramData(self, pluginId, index, bank, program, name):
         data = deepcopy(midi_program_t)
-        data['bank'] = bank
+        data['bank']    = bank
         data['program'] = program
-        data['label'] = name
-        Carla.Host._append_midiProgramDataS(pluginId, data)
+        data['label']   = name
+        Carla.Host._set_midiProgramDataS(pluginId, index, data)
 
     @pyqtSlot(int, int, float)
     def slot_handleSetInputPeakValue(self, pluginId, portId, value):
