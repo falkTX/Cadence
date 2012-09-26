@@ -996,6 +996,9 @@ public:
                             if (h2) ldescriptor->activate(h2);
                         }
 
+                        postponeEvent(PluginPostEventParameterChange, PARAMETER_ACTIVE, 0, 0.0);
+                        postponeEvent(PluginPostEventParameterChange, PARAMETER_ACTIVE, 0, 1.0);
+
                         allNotesOffSent = true;
                     }
                     break;
@@ -1162,19 +1165,22 @@ public:
         {
             if (! m_activeBefore)
             {
-                if (midi.portMin && m_ctrlInChannel >= 0 && m_ctrlInChannel < 16)
+                if (midi.portMin)
                 {
-                    memset(&midiEvents[0], 0, sizeof(snd_seq_event_t));
-                    midiEvents[0].type      = SND_SEQ_EVENT_CONTROLLER;
-                    midiEvents[0].data.control.channel = m_ctrlInChannel;
-                    midiEvents[0].data.control.param   = MIDI_CONTROL_ALL_SOUND_OFF;
+                    for (k=0; k < MAX_MIDI_CHANNELS; k++)
+                    {
+                        memset(&midiEvents[k], 0, sizeof(snd_seq_event_t));
+                        midiEvents[k].type      = SND_SEQ_EVENT_CONTROLLER;
+                        midiEvents[k].data.control.channel = k;
+                        midiEvents[k].data.control.param   = MIDI_CONTROL_ALL_SOUND_OFF;
 
-                    memset(&midiEvents[1], 0, sizeof(snd_seq_event_t));
-                    midiEvents[1].type      = SND_SEQ_EVENT_CONTROLLER;
-                    midiEvents[1].data.control.channel = m_ctrlInChannel;
-                    midiEvents[1].data.control.param   = MIDI_CONTROL_ALL_NOTES_OFF;
+                        memset(&midiEvents[k*2], 0, sizeof(snd_seq_event_t));
+                        midiEvents[k*2].type      = SND_SEQ_EVENT_CONTROLLER;
+                        midiEvents[k*2].data.control.channel = k;
+                        midiEvents[k*2].data.control.param   = MIDI_CONTROL_ALL_NOTES_OFF;
+                    }
 
-                    midiEventCount = 2;
+                    midiEventCount = MAX_MIDI_CHANNELS;
                 }
 
                 if (ldescriptor->activate)

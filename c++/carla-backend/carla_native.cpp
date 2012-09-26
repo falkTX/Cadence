@@ -1046,6 +1046,9 @@ public:
                             if (h2) descriptor->activate(h2);
                         }
 
+                        postponeEvent(PluginPostEventParameterChange, PARAMETER_ACTIVE, 0, 0.0);
+                        postponeEvent(PluginPostEventParameterChange, PARAMETER_ACTIVE, 0, 1.0);
+
                         allNotesOffSent = true;
                     }
                     break;
@@ -1201,19 +1204,22 @@ public:
         {
             if (! m_activeBefore)
             {
-                if (mIn.count > 0 && m_ctrlInChannel >= 0 && m_ctrlInChannel < 16)
+                if (mIn.count > 0)
                 {
-                    memset(&midiEvents[0], 0, sizeof(::MidiEvent));
-                    midiEvents[0].data[0] = MIDI_STATUS_CONTROL_CHANGE + m_ctrlInChannel;
-                    midiEvents[0].data[1] = MIDI_CONTROL_ALL_SOUND_OFF;
-                    midiEvents[0].size = 2;
+                    for (k=0; k < MAX_MIDI_CHANNELS; k++)
+                    {
+                        memset(&midiEvents[k], 0, sizeof(::MidiEvent));
+                        midiEvents[k].data[0] = MIDI_STATUS_CONTROL_CHANGE + k;
+                        midiEvents[k].data[1] = MIDI_CONTROL_ALL_SOUND_OFF;
+                        midiEvents[k].size = 2;
 
-                    memset(&midiEvents[1], 0, sizeof(::MidiEvent));
-                    midiEvents[1].data[0] = MIDI_STATUS_CONTROL_CHANGE + m_ctrlInChannel;
-                    midiEvents[1].data[1] = MIDI_CONTROL_ALL_NOTES_OFF;
-                    midiEvents[1].size = 2;
+                        memset(&midiEvents[k*2], 0, sizeof(::MidiEvent));
+                        midiEvents[k*2].data[0] = MIDI_STATUS_CONTROL_CHANGE + k;
+                        midiEvents[k*2].data[1] = MIDI_CONTROL_ALL_NOTES_OFF;
+                        midiEvents[k*2].size = 2;
+                    }
 
-                    midiEventCount = 2;
+                    midiEventCount = MAX_MIDI_CHANNELS*2;
                 }
 
                 if (descriptor->activate)

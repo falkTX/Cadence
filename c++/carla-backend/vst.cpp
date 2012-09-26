@@ -1001,6 +1001,9 @@ public:
                         effect->dispatcher(effect, effMainsChanged, 0, 1, nullptr, 0.0f);
                         effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
 
+                        postponeEvent(PluginPostEventParameterChange, PARAMETER_ACTIVE, 0, 0.0);
+                        postponeEvent(PluginPostEventParameterChange, PARAMETER_ACTIVE, 0, 1.0);
+
                         allNotesOffSent = true;
                     }
                     break;
@@ -1151,21 +1154,24 @@ public:
         {
             if (! m_activeBefore)
             {
-                if (midi.portMin && m_ctrlInChannel >= 0 && m_ctrlInChannel < 16)
+                if (midi.portMin)
                 {
-                    memset(&midiEvents[0], 0, sizeof(VstMidiEvent));
-                    midiEvents[0].type = kVstMidiType;
-                    midiEvents[0].byteSize = sizeof(VstMidiEvent);
-                    midiEvents[0].midiData[0] = MIDI_STATUS_CONTROL_CHANGE + m_ctrlInChannel;
-                    midiEvents[0].midiData[1] = MIDI_CONTROL_ALL_SOUND_OFF;
+                    for (k=0; k < MAX_MIDI_CHANNELS; k++)
+                    {
+                        memset(&midiEvents[k], 0, sizeof(VstMidiEvent));
+                        midiEvents[k].type = kVstMidiType;
+                        midiEvents[k].byteSize = sizeof(VstMidiEvent);
+                        midiEvents[k].midiData[0] = MIDI_STATUS_CONTROL_CHANGE + k;
+                        midiEvents[k].midiData[1] = MIDI_CONTROL_ALL_SOUND_OFF;
 
-                    memset(&midiEvents[1], 0, sizeof(VstMidiEvent));
-                    midiEvents[1].type = kVstMidiType;
-                    midiEvents[1].byteSize = sizeof(VstMidiEvent);
-                    midiEvents[1].midiData[0] = MIDI_STATUS_CONTROL_CHANGE + m_ctrlInChannel;
-                    midiEvents[1].midiData[1] = MIDI_CONTROL_ALL_NOTES_OFF;
+                        memset(&midiEvents[k*2], 0, sizeof(VstMidiEvent));
+                        midiEvents[k*2].type = kVstMidiType;
+                        midiEvents[k*2].byteSize = sizeof(VstMidiEvent);
+                        midiEvents[k*2].midiData[0] = MIDI_STATUS_CONTROL_CHANGE + k;
+                        midiEvents[k*2].midiData[1] = MIDI_CONTROL_ALL_NOTES_OFF;
+                    }
 
-                    midiEventCount = 2;
+                    midiEventCount = MAX_MIDI_CHANNELS*2;
                 }
 
                 effect->dispatcher(effect, effMainsChanged, 0, 1, nullptr, 0.0f);

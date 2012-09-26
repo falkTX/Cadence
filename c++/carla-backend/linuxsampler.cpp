@@ -443,6 +443,9 @@ public:
                         audioOutputDevice->Stop();
                         audioOutputDevice->Play();
 
+                        postponeEvent(PluginPostEventParameterChange, PARAMETER_ACTIVE, 0, 0.0);
+                        postponeEvent(PluginPostEventParameterChange, PARAMETER_ACTIVE, 0, 1.0);
+
                         allNotesOffSent = true;
                     }
                     break;
@@ -574,10 +577,10 @@ public:
         {
             if (! m_activeBefore)
             {
-                if (m_ctrlInChannel >= 0 && m_ctrlInChannel < 16)
+                for (int c=0; c < MAX_MIDI_CHANNELS; c++)
                 {
-                    midiInputPort->DispatchControlChange(MIDI_CONTROL_ALL_SOUND_OFF, 0, m_ctrlInChannel);
-                    midiInputPort->DispatchControlChange(MIDI_CONTROL_ALL_NOTES_OFF, 0, m_ctrlInChannel);
+                    midiInputPort->DispatchControlChange(MIDI_CONTROL_ALL_SOUND_OFF, 0, c);
+                    midiInputPort->DispatchControlChange(MIDI_CONTROL_ALL_NOTES_OFF, 0, c);
                 }
 
                 audioOutputDevice->Play();

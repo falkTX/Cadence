@@ -2081,6 +2081,9 @@ public:
                             if (h2) descriptor->activate(h2);
                         }
 
+                        postponeEvent(PluginPostEventParameterChange, PARAMETER_ACTIVE, 0, 0.0);
+                        postponeEvent(PluginPostEventParameterChange, PARAMETER_ACTIVE, 0, 1.0);
+
                         allNotesOffSent = true;
                     }
                     break;
@@ -2403,58 +2406,62 @@ public:
         {
             if (! m_activeBefore)
             {
-                if (evIn.count > 0 && m_ctrlInChannel >= 0 && m_ctrlInChannel < 16)
+                if (evIn.count > 0)
                 {
-                    uint8_t midiEvent1[2] = { 0 };
-                    midiEvent1[0] = MIDI_STATUS_CONTROL_CHANGE + m_ctrlInChannel;
-                    midiEvent1[1] = MIDI_CONTROL_ALL_SOUND_OFF;
-
-                    uint8_t midiEvent2[2] = { 0 };
-                    midiEvent2[0] = MIDI_STATUS_CONTROL_CHANGE + m_ctrlInChannel;
-                    midiEvent2[1] = MIDI_CONTROL_ALL_SOUND_OFF;
-
-                    // send to all midi inputs
-                    for (k=0; k < evIn.count; k++)
+                    for (i=0; i < MAX_MIDI_CHANNELS; i++)
                     {
-                        if (evIn.data[k].type & CARLA_EVENT_TYPE_MIDI)
+                        uint8_t midiEvent1[2] = { 0 };
+                        midiEvent1[0] = MIDI_STATUS_CONTROL_CHANGE + i;
+                        midiEvent1[1] = MIDI_CONTROL_ALL_SOUND_OFF;
+
+                        uint8_t midiEvent2[2] = { 0 };
+                        midiEvent2[0] = MIDI_STATUS_CONTROL_CHANGE + i;
+                        midiEvent2[1] = MIDI_CONTROL_ALL_SOUND_OFF;
+
+                        // send to all midi inputs
+                        for (k=0; k < evIn.count; k++)
                         {
-                            if (evIn.data[k].type & CARLA_EVENT_DATA_ATOM)
+                            if (evIn.data[k].type & CARLA_EVENT_TYPE_MIDI)
                             {
-                                // all sound off
-                                LV2_Atom_Event* const aev1 = getLv2AtomEvent(evIn.data[k].atom, evInAtomOffsets[k]);
-                                aev1->time.frames = 0;
-                                aev1->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
-                                aev1->body.size   = 2;
-                                memcpy(LV2_ATOM_BODY(&aev1->body), midiEvent1, 2);
+                                if (evIn.data[k].type & CARLA_EVENT_DATA_ATOM)
+                                {
+                                    const uint32_t padSize = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + 2);
 
-                                const uint32_t padSize = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + 2);
-                                evInAtomOffsets[k]           += padSize;
-                                evIn.data[k].atom->atom.size += padSize;
+                                    // all sound off
+                                    LV2_Atom_Event* const aev1 = getLv2AtomEvent(evIn.data[k].atom, evInAtomOffsets[k]);
+                                    aev1->time.frames = 0;
+                                    aev1->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
+                                    aev1->body.size   = 2;
+                                    memcpy(LV2_ATOM_BODY(&aev1->body), midiEvent1, 2);
 
-                                // all notes off
-                                LV2_Atom_Event* const aev2 = getLv2AtomEvent(evIn.data[k].atom, evInAtomOffsets[k]);
-                                aev2->time.frames = 0;
-                                aev2->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
-                                aev2->body.size   = 2;
-                                memcpy(LV2_ATOM_BODY(&aev2->body), midiEvent2, 2);
+                                    evInAtomOffsets[k]           += padSize;
+                                    evIn.data[k].atom->atom.size += padSize;
 
-                                evInAtomOffsets[k]           += padSize;
-                                evIn.data[k].atom->atom.size += padSize;
-                            }
-                            else if (evIn.data[k].type & CARLA_EVENT_DATA_EVENT)
-                            {
-                                lv2_event_write(&evInEventIters[k], 0, 0, CARLA_URI_MAP_ID_MIDI_EVENT, 2, midiEvent1);
-                                lv2_event_write(&evInEventIters[k], 0, 0, CARLA_URI_MAP_ID_MIDI_EVENT, 2, midiEvent2);
-                            }
-                            else if (evIn.data[k].type & CARLA_EVENT_DATA_MIDI_LL)
-                            {
-                                lv2midi_put_event(&evInMidiStates[k], 0, 2, midiEvent1);
-                                lv2midi_put_event(&evInMidiStates[k], 0, 2, midiEvent2);
+                                    // all notes off
+                                    LV2_Atom_Event* const aev2 = getLv2AtomEvent(evIn.data[k].atom, evInAtomOffsets[k]);
+                                    aev2->time.frames = 0;
+                                    aev2->body.type   = CARLA_URI_MAP_ID_MIDI_EVENT;
+                                    aev2->body.size   = 2;
+                                    memcpy(LV2_ATOM_BODY(&aev2->body), midiEvent2, 2);
+
+                                    evInAtomOffsets[k]           += padSize;
+                                    evIn.data[k].atom->atom.size += padSize;
+                                }
+                                else if (evIn.data[k].type & CARLA_EVENT_DATA_EVENT)
+                                {
+                                    lv2_event_write(&evInEventIters[k], 0, 0, CARLA_URI_MAP_ID_MIDI_EVENT, 2, midiEvent1);
+                                    lv2_event_write(&evInEventIters[k], 0, 0, CARLA_URI_MAP_ID_MIDI_EVENT, 2, midiEvent2);
+                                }
+                                else if (evIn.data[k].type & CARLA_EVENT_DATA_MIDI_LL)
+                                {
+                                    lv2midi_put_event(&evInMidiStates[k], 0, 2, midiEvent1);
+                                    lv2midi_put_event(&evInMidiStates[k], 0, 2, midiEvent2);
+                                }
                             }
                         }
                     }
 
-                    midiEventCount = 2;
+                    midiEventCount = MAX_MIDI_CHANNELS*2;
                 }
 
                 if (descriptor->activate)

@@ -1715,9 +1715,9 @@ public:
             extMidiNotes[i].note = i;
             extMidiNotes[i].velo = 0;
 
-            postEvents.data[i + postPad].type  = PluginPostEventNoteOff;
-            postEvents.data[i + postPad].value1 = i;
-            postEvents.data[i + postPad].value2 = 0;
+            postEvents.data[i + postPad].type   = PluginPostEventNoteOff;
+            postEvents.data[i + postPad].value1 = m_ctrlInChannel;
+            postEvents.data[i + postPad].value2 = i;
             postEvents.data[i + postPad].value3 = 0.0;
         }
 

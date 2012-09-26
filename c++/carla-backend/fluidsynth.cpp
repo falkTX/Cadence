@@ -992,17 +992,10 @@ public:
                         if (! allNotesOffSent)
                             sendMidiAllNotesOff();
 
-                        allNotesOffSent = true;
+                        postponeEvent(PluginPostEventParameterChange, PARAMETER_ACTIVE, 0, 0.0);
+                        postponeEvent(PluginPostEventParameterChange, PARAMETER_ACTIVE, 0, 1.0);
 
-#ifdef FLUIDSYNTH_VERSION_NEW_API
-                        fluid_synth_all_notes_off(f_synth, m_ctrlInChannel);
-                        fluid_synth_all_sounds_off(f_synth, m_ctrlInChannel);
-                    }
-                    else if (cinEvent->channel < 16)
-                    {
-                        fluid_synth_all_notes_off(f_synth, cinEvent->channel);
-                        fluid_synth_all_sounds_off(f_synth, cinEvent->channel);
-#endif
+                        allNotesOffSent = true;
                     }
                     break;
 
@@ -1013,14 +1006,6 @@ public:
                             sendMidiAllNotesOff();
 
                         allNotesOffSent = true;
-
-#ifdef FLUIDSYNTH_VERSION_NEW_API
-                        fluid_synth_all_notes_off(f_synth, m_ctrlInChannel);
-                    }
-                    else if (cinEvent->channel < 16)
-                    {
-                        fluid_synth_all_notes_off(f_synth, cinEvent->channel);
-#endif
                     }
                     break;
                 }
@@ -1138,19 +1123,16 @@ public:
         {
             if (! m_activeBefore)
             {
-                if (m_ctrlInChannel >= 0 && m_ctrlInChannel < 16)
+                for (int c=0; c < MAX_MIDI_CHANNELS; c++)
                 {
-                    fluid_synth_cc(f_synth, m_ctrlInChannel, MIDI_CONTROL_ALL_SOUND_OFF, 0);
-                    fluid_synth_cc(f_synth, m_ctrlInChannel, MIDI_CONTROL_ALL_NOTES_OFF, 0);
-                }
-
 #ifdef FLUIDSYNTH_VERSION_NEW_API
-                for (i=0; i < 16; i++)
-                {
-                    fluid_synth_all_notes_off(f_synth, i);
-                    fluid_synth_all_sounds_off(f_synth, i);
-                }
+                    fluid_synth_all_notes_off(f_synth, c);
+                    fluid_synth_all_sounds_off(f_synth, c);
+#else
+                    fluid_synth_cc(f_synth, c, MIDI_CONTROL_ALL_SOUND_OFF, 0);
+                    fluid_synth_cc(f_synth, c, MIDI_CONTROL_ALL_NOTES_OFF, 0);
 #endif
+                }
             }
 
             fluid_synth_process(f_synth, frames, 0, nullptr, 2, outBuffer);

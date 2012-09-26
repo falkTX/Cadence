@@ -838,6 +838,9 @@ public:
                             descriptor->activate(handle);
                             if (h2) descriptor->activate(h2);
                         }
+
+                        postponeEvent(PluginPostEventParameterChange, PARAMETER_ACTIVE, 0, 0.0);
+                        postponeEvent(PluginPostEventParameterChange, PARAMETER_ACTIVE, 0, 1.0);
                     }
                     break;
 
