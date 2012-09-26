@@ -113,6 +113,16 @@ PixmapKeyboard::PixmapKeyboard(QWidget* parent)
     setMode(HORIZONTAL);
 }
 
+void PixmapKeyboard::allNotesOff()
+{
+    m_enabledKeys.clear();
+
+    m_needsUpdate = true;
+    QTimer::singleShot(0, this, SLOT(updateOnce()));
+
+    emit notesOff();
+}
+
 void PixmapKeyboard::sendNoteOn(int note, bool sendSignal)
 {
     if (0 <= note && note <= 127 && ! m_enabledKeys.contains(note))

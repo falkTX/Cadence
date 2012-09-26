@@ -38,6 +38,7 @@ public:
 
     PixmapKeyboard(QWidget* parent);
 
+    void allNotesOff();
     void sendNoteOn(int note, bool sendSignal=true);
     void sendNoteOff(int note, bool sendSignal=true);
 

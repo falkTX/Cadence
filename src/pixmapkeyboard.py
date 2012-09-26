@@ -104,6 +104,14 @@ class PixmapKeyboard(QWidget):
         self.setCursor(Qt.PointingHandCursor)
         self.setMode(self.HORIZONTAL)
 
+    def allNotesOff(self):
+        self.m_enabledKeys = []
+
+        self.m_needsUpdate = True
+        QTimer.singleShot(0, self, SLOT("slot_updateOnce()"))
+
+        self.emit(SIGNAL("notesOff()"))
+
     def sendNoteOn(self, note, sendSignal=True):
         if 0 <= note <= 127 and note not in self.m_enabledKeys:
             self.m_enabledKeys.append(note)

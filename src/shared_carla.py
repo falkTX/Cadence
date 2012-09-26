@@ -1323,6 +1323,9 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         if sendGui:      self.led_enable.setChecked(active)
         if sendCallback: Carla.Host.set_active(self.m_pluginId, active)
 
+        if active:
+            self.edit_dialog.keyboard.allNotesOff()
+
     def set_drywet(self, value, sendGui=False, sendCallback=True):
         if sendGui:      self.dial_drywet.setValue(value)
         if sendCallback: Carla.Host.set_drywet(self.m_pluginId, float(value)/1000)
