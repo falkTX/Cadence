@@ -113,8 +113,8 @@ public:
           callback(callback_)
     {
         qDebug("BridgePluginGUI::BridgePluginGUI(%p, %p, \"%s\", %s", parent, callback, pluginName, bool2str(resizable));
-        Q_ASSERT(callback);
-        Q_ASSERT(pluginName);
+        CARLA_ASSERT(callback);
+        CARLA_ASSERT(pluginName);
 
         m_firstShow = true;
         m_resizable = resizable;
@@ -138,8 +138,8 @@ public:
     ~BridgePluginGUI()
     {
         qDebug("BridgePluginGUI::~BridgePluginGUI()");
-        Q_ASSERT(container);
-        Q_ASSERT(vbLayout);
+        CARLA_ASSERT(container);
+        CARLA_ASSERT(vbLayout);
 
         delete container;
         delete vbLayout;
@@ -255,15 +255,15 @@ public:
     ~BridgePluginClient()
     {
         qDebug("BridgePluginClient::~BridgePluginClient()");
-        Q_ASSERT(msgTimer == 0);
-        Q_ASSERT(! pluginGui);
+        CARLA_ASSERT(msgTimer == 0);
+        CARLA_ASSERT(! pluginGui);
     }
 
     void setStuff(CarlaBackend::CarlaEngine* const engine, CarlaBackend::CarlaPlugin* const plugin)
     {
         qDebug("BridgePluginClient::setStuff(%p, %p)", engine, plugin);
-        Q_ASSERT(engine);
-        Q_ASSERT(plugin);
+        CARLA_ASSERT(engine);
+        CARLA_ASSERT(plugin);
 
         this->engine = engine;
         this->plugin = plugin;
@@ -325,7 +325,7 @@ public:
     void show()
     {
         qDebug("BridgePluginClient::show()");
-        Q_ASSERT(pluginGui);
+        CARLA_ASSERT(pluginGui);
 
         if (plugin)
             plugin->showGui(true);
@@ -337,7 +337,7 @@ public:
     void hide()
     {
         qDebug("BridgePluginClient::hide()");
-        Q_ASSERT(pluginGui);
+        CARLA_ASSERT(pluginGui);
 
         if (pluginGui)
             pluginGui->hide();
@@ -349,7 +349,7 @@ public:
     void resize(int width, int height)
     {
         qDebug("BridgePluginClient::resize(%i, %i)", width, height);
-        Q_ASSERT(pluginGui);
+        CARLA_ASSERT(pluginGui);
 
         if (pluginGui)
             pluginGui->setNewSize(width, height);
@@ -360,7 +360,7 @@ public:
     void createWindow(const bool resizable)
     {
         qDebug("BridgePluginClient::createWindow(%s)", bool2str(resizable));
-        Q_ASSERT(plugin);
+        CARLA_ASSERT(plugin);
 
         pluginGui = new BridgePluginGUI(nullptr, this, plugin->name(), resizable);
         plugin->setGuiContainer(pluginGui->getContainer());
@@ -372,7 +372,7 @@ public:
     void setParameter(const int32_t rindex, const double value)
     {
         qDebug("CarlaPluginClient::setParameter(%i, %g)", rindex, value);
-        Q_ASSERT(plugin);
+        CARLA_ASSERT(plugin);
 
         if (! plugin)
             return;
@@ -383,9 +383,9 @@ public:
     void setProgram(const uint32_t index)
     {
         qDebug("CarlaPluginClient::setProgram(%i)", index);
-        Q_ASSERT(engine);
-        Q_ASSERT(plugin);
-        Q_ASSERT(index < plugin->programCount());
+        CARLA_ASSERT(engine);
+        CARLA_ASSERT(plugin);
+        CARLA_ASSERT(index < plugin->programCount());
 
         if (! (plugin && engine))
             return;
@@ -406,8 +406,8 @@ public:
     void setMidiProgram(const uint32_t index)
     {
         qDebug("CarlaPluginClient::setMidiProgram(%i)", index);
-        Q_ASSERT(engine);
-        Q_ASSERT(plugin);
+        CARLA_ASSERT(engine);
+        CARLA_ASSERT(plugin);
 
         if (! (plugin && engine))
             return;
@@ -426,8 +426,8 @@ public:
     void noteOn(const uint8_t channel, const uint8_t note, const uint8_t velo)
     {
         qDebug("CarlaPluginClient::noteOn(%i, %i, %i)", channel, note, velo);
-        Q_ASSERT(plugin);
-        Q_ASSERT(velo > 0);
+        CARLA_ASSERT(plugin);
+        CARLA_ASSERT(velo > 0);
 
         if (! plugin)
             return;
@@ -438,7 +438,7 @@ public:
     void noteOff(const uint8_t channel, const uint8_t note)
     {
         qDebug("CarlaPluginClient::noteOff(%i, %i)", channel, note);
-        Q_ASSERT(plugin);
+        CARLA_ASSERT(plugin);
 
         if (! plugin)
             return;
@@ -452,8 +452,8 @@ public:
     void saveNow()
     {
         qDebug("CarlaPluginClient::saveNow()");
-        Q_ASSERT(plugin);
-        Q_ASSERT(engine);
+        CARLA_ASSERT(plugin);
+        CARLA_ASSERT(engine);
 
         if (! (plugin && engine))
             return;
@@ -500,7 +500,7 @@ public:
     void setCustomData(const char* const type, const char* const key, const char* const value)
     {
         qDebug("CarlaPluginClient::setCustomData(\"%s\", \"%s\", \"%s\")", type, key, value);
-        Q_ASSERT(plugin);
+        CARLA_ASSERT(plugin);
 
         if (! plugin)
             return;
@@ -511,7 +511,7 @@ public:
     void setChunkData(const char* const filePath)
     {
         qDebug("CarlaPluginClient::setChunkData(\"%s\")", filePath);
-        Q_ASSERT(plugin);
+        CARLA_ASSERT(plugin);
 
         if (! plugin)
             return;
@@ -566,7 +566,7 @@ public:
             break;
 
         case CarlaBackend::CALLBACK_RESIZE_GUI:
-            Q_ASSERT(value1 > 0 && value2 > 0);
+            CARLA_ASSERT(value1 > 0 && value2 > 0);
             nextWidth  = value1;
             nextHeight = value2;
             break;
@@ -595,7 +595,7 @@ public:
 
     static void callback(void* const ptr, CarlaBackend::CallbackType const action, const unsigned short, const int value1, const int value2, const double value3)
     {
-        Q_ASSERT(ptr);
+        CARLA_ASSERT(ptr);
 
         if (! ptr)
             return;
@@ -653,7 +653,7 @@ protected:
 
             if (! CarlaClient::runMessages())
             {
-                Q_ASSERT(msgTimer == 0);
+                CARLA_ASSERT(msgTimer == 0);
                 msgTimer = 0;
                 return;
             }

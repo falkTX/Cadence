@@ -462,7 +462,7 @@ public:
 
     void setParameter(const int32_t rindex, const double value)
     {
-        Q_ASSERT(handle && descriptor);
+        CARLA_ASSERT(handle && descriptor);
 
         if (handle && descriptor && descriptor->port_event)
         {
@@ -477,7 +477,7 @@ public:
 
     void setMidiProgram(const uint32_t bank, const uint32_t program)
     {
-        Q_ASSERT(handle);
+        CARLA_ASSERT(handle);
 
         if (handle && programs)
             programs->select_program(handle, bank, program);
@@ -485,7 +485,7 @@ public:
 
     void noteOn(const uint8_t channel, const uint8_t note, const uint8_t velo)
     {
-        Q_ASSERT(handle && descriptor);
+        CARLA_ASSERT(handle && descriptor);
 
         if (handle && descriptor && descriptor->port_event)
         {
@@ -503,7 +503,7 @@ public:
 
     void noteOff(const uint8_t channel, const uint8_t note)
     {
-        Q_ASSERT(handle && descriptor);
+        CARLA_ASSERT(handle && descriptor);
 
         if (handle && descriptor && descriptor->port_event)
         {
@@ -524,7 +524,7 @@ public:
     uint32_t getCustomURID(const char* const uri)
     {
         qDebug("CarlaLv2Client::getCustomURID(%s)", uri);
-        Q_ASSERT(uri);
+        CARLA_ASSERT(uri);
 
         if (! uri)
             return CARLA_URI_MAP_ID_NULL;
@@ -543,7 +543,7 @@ public:
     const char* getCustomURIString(const LV2_URID urid) const
     {
         qDebug("CarlaLv2Client::getCustomURIString(%i)", urid);
-        Q_ASSERT(urid > CARLA_URI_MAP_ID_NULL);
+        CARLA_ASSERT(urid > CARLA_URI_MAP_ID_NULL);
 
         if (urid == CARLA_URI_MAP_ID_NULL)
             return nullptr;
@@ -558,8 +558,8 @@ public:
     void handleTransferAtom(const int32_t portIndex, const LV2_Atom* const atom)
     {
         qDebug("CarlaLv2Client::handleTransferEvent(%i, %p)", portIndex, atom);
-        Q_ASSERT(portIndex >= 0);
-        Q_ASSERT(atom);
+        CARLA_ASSERT(portIndex >= 0);
+        CARLA_ASSERT(atom);
 
         if (handle && descriptor && descriptor->port_event)
             descriptor->port_event(handle, portIndex, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM, atom);
@@ -568,8 +568,8 @@ public:
     void handleTransferEvent(const int32_t portIndex, const LV2_Atom* const atom)
     {
         qDebug("CarlaLv2Client::handleTransferEvent(%i, %p)", portIndex, atom);
-        Q_ASSERT(portIndex >= 0);
-        Q_ASSERT(atom);
+        CARLA_ASSERT(portIndex >= 0);
+        CARLA_ASSERT(atom);
 
         if (handle && descriptor && descriptor->port_event)
             descriptor->port_event(handle, portIndex, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
@@ -625,7 +625,7 @@ public:
 
     uint32_t handleUiPortMap(const char* const symbol)
     {
-        Q_ASSERT(symbol);
+        CARLA_ASSERT(symbol);
 
         if (! symbol)
             return LV2UI_INVALID_PORT_INDEX;
@@ -642,8 +642,8 @@ public:
 
     int handleUiResize(int width, int height)
     {
-        Q_ASSERT(width > 0);
-        Q_ASSERT(height > 0);
+        CARLA_ASSERT(width > 0);
+        CARLA_ASSERT(height > 0);
 
         if (width <= 0 || height <= 0)
             return 1;
@@ -658,8 +658,8 @@ public:
     {
         if (format == 0)
         {
-            Q_ASSERT(buffer);
-            Q_ASSERT(bufferSize == sizeof(float));
+            CARLA_ASSERT(buffer);
+            CARLA_ASSERT(bufferSize == sizeof(float));
 
             if (bufferSize != sizeof(float))
                 return;
@@ -669,7 +669,7 @@ public:
         }
         else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM)
         {
-            Q_ASSERT(buffer);
+            CARLA_ASSERT(buffer);
             const LV2_Atom* const atom = (const LV2_Atom*)buffer;
 
             QByteArray chunk((const char*)buffer, bufferSize);
@@ -677,7 +677,7 @@ public:
         }
         else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT)
         {
-            Q_ASSERT(buffer);
+            CARLA_ASSERT(buffer);
             const LV2_Atom* const atom = (const LV2_Atom*)buffer;
 
             QByteArray chunk((const char*)buffer, bufferSize);
@@ -690,8 +690,8 @@ public:
     static uint32_t carla_lv2_event_ref(const LV2_Event_Callback_Data callback_data, LV2_Event* const event)
     {
         qDebug("CarlaLv2Client::carla_lv2_event_ref(%p, %p)", callback_data, event);
-        Q_ASSERT(callback_data);
-        Q_ASSERT(event);
+        CARLA_ASSERT(callback_data);
+        CARLA_ASSERT(event);
 
         return 0;
     }
@@ -699,8 +699,8 @@ public:
     static uint32_t carla_lv2_event_unref(const LV2_Event_Callback_Data callback_data, LV2_Event* const event)
     {
         qDebug("CarlaLv2Client::carla_lv2_event_unref(%p, %p)", callback_data, event);
-        Q_ASSERT(callback_data);
-        Q_ASSERT(event);
+        CARLA_ASSERT(callback_data);
+        CARLA_ASSERT(event);
 
         return 0;
     }
@@ -710,8 +710,8 @@ public:
     static int carla_lv2_log_printf(const LV2_Log_Handle handle, const LV2_URID type, const char* const fmt, ...)
     {
         qDebug("CarlaLv2Client::carla_lv2_log_printf(%p, %i, %s, ...)", handle, type, fmt);
-        Q_ASSERT(handle);
-        Q_ASSERT(type > 0);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(type > 0);
 
 #ifndef DEBUG
         if (type == CARLA_URI_MAP_ID_LOG_TRACE)
@@ -729,8 +729,8 @@ public:
     static int carla_lv2_log_vprintf(const LV2_Log_Handle handle, const LV2_URID type, const char* const fmt, va_list ap)
     {
         qDebug("CarlaLv2Client::carla_lv2_log_vprintf(%p, %i, %s, ...)", handle, type, fmt);
-        Q_ASSERT(handle);
-        Q_ASSERT(type > 0);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(type > 0);
 
 #ifndef DEBUG
         if (type == CARLA_URI_MAP_ID_LOG_TRACE)
@@ -769,7 +769,7 @@ public:
     static void carla_lv2_program_changed(const LV2_Programs_Handle handle, const int32_t index)
     {
         qDebug("CarlaLv2Client::carla_lv2_program_changed(%p, %i)", handle, index);
-        Q_ASSERT(handle);
+        CARLA_ASSERT(handle);
 
         if (! handle)
             return;
@@ -783,8 +783,8 @@ public:
     static char* carla_lv2_state_make_path(const LV2_State_Make_Path_Handle handle, const char* const path)
     {
         qDebug("CarlaLv2Client::carla_lv2_state_make_path(%p, %p)", handle, path);
-        Q_ASSERT(handle);
-        Q_ASSERT(path);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(path);
 
         if (! path)
             return nullptr;
@@ -797,8 +797,8 @@ public:
     static char* carla_lv2_state_map_abstract_path(const LV2_State_Map_Path_Handle handle, const char* const absolute_path)
     {
         qDebug("CarlaLv2Client::carla_lv2_state_map_abstract_path(%p, %p)", handle, absolute_path);
-        Q_ASSERT(handle);
-        Q_ASSERT(absolute_path);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(absolute_path);
 
         if (! absolute_path)
             return nullptr;
@@ -810,8 +810,8 @@ public:
     static char* carla_lv2_state_map_absolute_path(const LV2_State_Map_Path_Handle handle, const char* const abstract_path)
     {
         qDebug("CarlaLv2Client::carla_lv2_state_map_absolute_path(%p, %p)", handle, abstract_path);
-        Q_ASSERT(handle);
-        Q_ASSERT(abstract_path);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(abstract_path);
 
         if (! abstract_path)
             return nullptr;
@@ -833,8 +833,8 @@ public:
     static LV2_URID carla_lv2_urid_map(const LV2_URID_Map_Handle handle, const char* const uri)
     {
         qDebug("CarlaLv2Client::carla_lv2_urid_map(%p, %s)", handle, uri);
-        Q_ASSERT(handle);
-        Q_ASSERT(uri);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(uri);
 
         if (! uri)
             return CARLA_URI_MAP_ID_NULL;
@@ -892,8 +892,8 @@ public:
     static const char* carla_lv2_urid_unmap(const LV2_URID_Map_Handle handle, const LV2_URID urid)
     {
         qDebug("CarlaLv2Client::carla_lv2_urid_unmap(%p, %i)", handle, urid);
-        Q_ASSERT(handle);
-        Q_ASSERT(urid > CARLA_URI_MAP_ID_NULL);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(urid > CARLA_URI_MAP_ID_NULL);
 
         if (urid == CARLA_URI_MAP_ID_NULL)
             return nullptr;
@@ -953,7 +953,7 @@ public:
     static uint32_t carla_lv2_ui_port_map(const LV2UI_Feature_Handle handle, const char* const symbol)
     {
         qDebug("CarlaLv2Client::carla_lv2_ui_port_map(%p, %s)", handle, symbol);
-        Q_ASSERT(handle);
+        CARLA_ASSERT(handle);
 
         if (! handle)
             return LV2UI_INVALID_PORT_INDEX;
@@ -968,7 +968,7 @@ public:
     static int carla_lv2_ui_resize(const LV2UI_Feature_Handle handle, const int width, const int height)
     {
         qDebug("CarlaLv2Client::carla_lv2_ui_resize(%p, %i, %i)", handle, width, height);
-        Q_ASSERT(handle);
+        CARLA_ASSERT(handle);
 
         if (! handle)
             return 1;
@@ -982,7 +982,7 @@ public:
     static void carla_lv2_ui_write_function(const LV2UI_Controller controller, const uint32_t port_index, const uint32_t buffer_size, const uint32_t format, const void* const buffer)
     {
         qDebug("CarlaLv2Client::carla_lv2_ui_write_function(%p, %i, %i, %i, %p)", controller, port_index, buffer_size, format, buffer);
-        Q_ASSERT(controller);
+        CARLA_ASSERT(controller);
 
         if (! controller)
             return;

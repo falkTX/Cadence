@@ -91,13 +91,13 @@ public:
     ~CarlaToolkitQt4()
     {
         qDebug("CarlaToolkitQt4::~CarlaToolkitQt4()");
-        Q_ASSERT(! app);
+        CARLA_ASSERT(! app);
     }
 
     void init()
     {
         qDebug("CarlaToolkitQt4::init()");
-        Q_ASSERT(! app);
+        CARLA_ASSERT(! app);
 
         app = new BridgeApplication;
     }
@@ -105,8 +105,8 @@ public:
     void exec(CarlaClient* const client, const bool showGui)
     {
         qDebug("CarlaToolkitQt4::exec(%p)", client);
-        Q_ASSERT(app);
-        Q_ASSERT(client);
+        CARLA_ASSERT(app);
+        CARLA_ASSERT(client);
 
         m_client = client;
 
@@ -163,7 +163,7 @@ public:
     void quit()
     {
         qDebug("CarlaToolkitQt4::quit()");
-        Q_ASSERT(app);
+        CARLA_ASSERT(app);
 
         if (window)
         {
@@ -197,7 +197,7 @@ public:
     void show()
     {
         qDebug("CarlaToolkitQt4::show()");
-        Q_ASSERT(window);
+        CARLA_ASSERT(window);
 
         if (window)
             window->show();
@@ -206,7 +206,7 @@ public:
     void hide()
     {
         qDebug("CarlaToolkitQt4::hide()");
-        Q_ASSERT(window);
+        CARLA_ASSERT(window);
 
         if (window)
             window->hide();
@@ -215,7 +215,7 @@ public:
     void resize(int width, int height)
     {
         qDebug("CarlaToolkitQt4::resize(%i, %i)", width, height);
-        Q_ASSERT(window);
+        CARLA_ASSERT(window);
 
         if (window)
             window->setFixedSize(width, height);

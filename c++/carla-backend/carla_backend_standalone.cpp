@@ -155,7 +155,7 @@ const PluginInfo* get_internal_plugin_info(unsigned int plugin_id)
 
     const PluginDescriptor* const nativePlugin = CarlaBackend::CarlaPlugin::getNativePlugin(plugin_id);
 
-    Q_ASSERT(nativePlugin);
+    CARLA_ASSERT(nativePlugin);
 
     if (! nativePlugin)
         return nullptr;

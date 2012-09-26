@@ -40,8 +40,8 @@ CarlaBridgeOsc::CarlaBridgeOsc(CarlaClient* const client_, const char* const nam
     : client(client_)
 {
     qDebug("CarlaBridgeOsc::CarlaOsc(%p, \"%s\")", client, name);
-    Q_ASSERT(client);
-    Q_ASSERT(name);
+    CARLA_ASSERT(client);
+    CARLA_ASSERT(name);
 
     m_serverPath = nullptr;
     m_serverThread = nullptr;
@@ -64,9 +64,9 @@ CarlaBridgeOsc::~CarlaBridgeOsc()
 bool CarlaBridgeOsc::init(const char* const url)
 {
     qDebug("CarlaBridgeOsc::init(\"%s\")", url);
-    Q_ASSERT(! m_serverPath);
-    Q_ASSERT(! m_serverThread);
-    Q_ASSERT(url);
+    CARLA_ASSERT(! m_serverPath);
+    CARLA_ASSERT(! m_serverThread);
+    CARLA_ASSERT(url);
 
     char* host = lo_url_get_hostname(url);
     char* port = lo_url_get_port(url);
@@ -101,8 +101,8 @@ bool CarlaBridgeOsc::init(const char* const url)
 void CarlaBridgeOsc::close()
 {
     qDebug("CarlaBridgeOsc::close()");
-    Q_ASSERT(m_serverPath);
-    Q_ASSERT(m_serverThread);
+    CARLA_ASSERT(m_serverPath);
+    CARLA_ASSERT(m_serverThread);
 
     osc_clear_data(&m_controlData);
 
@@ -119,9 +119,9 @@ void CarlaBridgeOsc::close()
 int CarlaBridgeOsc::handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg)
 {
     qDebug("CarlaBridgeOsc::handleMessage(\"%s\", %i, %p, \"%s\", %p)", path, argc, argv, types, msg);
-    Q_ASSERT(m_serverPath);
-    Q_ASSERT(m_serverThread);
-    Q_ASSERT(path);
+    CARLA_ASSERT(m_serverPath);
+    CARLA_ASSERT(m_serverThread);
+    CARLA_ASSERT(path);
 
     // Check if message is for this client
     if ((! path) || strlen(path) <= m_nameSize || strncmp(path+1, m_name, m_nameSize) != 0)

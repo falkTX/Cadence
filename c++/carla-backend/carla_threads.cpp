@@ -29,7 +29,7 @@ CarlaCheckThread::CarlaCheckThread(CarlaBackend::CarlaEngine* const engine_, QOb
       engine(engine_)
 {
     qDebug("CarlaCheckThread::CarlaCheckThread(%p, %p)", engine, parent);
-    Q_ASSERT(engine);
+    CARLA_ASSERT(engine);
 }
 
 CarlaCheckThread::~CarlaCheckThread()

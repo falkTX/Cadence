@@ -179,8 +179,8 @@ void CarlaEngineRtAudio::handleProcessCallback(void* outputBuffer, void* inputBu
     float* outsPtr = (float*)outputBuffer;
 
     // assert buffers
-    Q_ASSERT(insPtr);
-    Q_ASSERT(outsPtr);
+    CARLA_ASSERT(insPtr);
+    CARLA_ASSERT(outsPtr);
 
     // create temporary audio buffers
     float ains_tmp_buf1[nframes];

@@ -220,7 +220,7 @@ void do_ladspa_check(void* const libHandle, const bool init)
 
     while ((descriptor = descFn(i++)))
     {
-        Q_ASSERT(descriptor->run);
+        CARLA_ASSERT(descriptor->run);
 
         int hints = 0;
         int audioIns = 0;
@@ -385,8 +385,8 @@ void do_dssi_check(void* const libHandle, const bool init)
     while ((descriptor = descFn(i++)))
     {
         const LADSPA_Descriptor* const ldescriptor = descriptor->LADSPA_Plugin;
-        Q_ASSERT(ldescriptor);
-        Q_ASSERT(ldescriptor->run || descriptor->run_synth || descriptor->run_multiple_synths);
+        CARLA_ASSERT(ldescriptor);
+        CARLA_ASSERT(ldescriptor->run || descriptor->run_synth || descriptor->run_multiple_synths);
 
         int hints = 0;
         int audioIns = 0;
@@ -608,7 +608,7 @@ void do_lv2_check(const char* const bundle, const bool init)
     for (int i=0; i < URIs.count(); i++)
     {
         const LV2_RDF_Descriptor* const rdf_descriptor = lv2_rdf_new(URIs.at(i).toUtf8().constData());
-        Q_ASSERT(rdf_descriptor && rdf_descriptor->URI);
+        CARLA_ASSERT(rdf_descriptor && rdf_descriptor->URI);
 
         if (init)
         {

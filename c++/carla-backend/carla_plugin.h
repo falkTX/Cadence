@@ -211,8 +211,8 @@ public:
           x_balanceLeft(-1.0),
           x_balanceRight(1.0)
     {
-        Q_ASSERT(engine);
-        Q_ASSERT(id < CarlaEngine::maxPluginNumber());
+        CARLA_ASSERT(engine);
+        CARLA_ASSERT(id < CarlaEngine::maxPluginNumber());
         qDebug("CarlaPlugin::CarlaPlugin(%p, %i)", engine, id);
 
         m_type  = PLUGIN_NONE;
@@ -438,7 +438,7 @@ public:
      */
     virtual uint32_t parameterScalePointCount(const uint32_t parameterId)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         return 0;
     }
@@ -496,7 +496,7 @@ public:
      */
     const ParameterData* parameterData(const uint32_t parameterId) const
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         if (parameterId < param.count)
             return &param.data[parameterId];
@@ -509,7 +509,7 @@ public:
      */
     const ParameterRanges* parameterRanges(const uint32_t parameterId) const
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         if (parameterId < param.count)
             return &param.ranges[parameterId];
@@ -522,7 +522,7 @@ public:
      */
     bool parameterIsOutput(const uint32_t parameterId) const
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         if (parameterId < param.count)
             return (param.data[parameterId].type == PARAMETER_OUTPUT);
@@ -537,7 +537,7 @@ public:
      */
     const midi_program_t* midiProgramData(const uint32_t index) const
     {
-        Q_ASSERT(index < midiprog.count);
+        CARLA_ASSERT(index < midiprog.count);
 
         if (index < midiprog.count)
             return &midiprog.data[index];
@@ -552,7 +552,7 @@ public:
      */
     const CustomData* customData(const size_t index) const
     {
-        Q_ASSERT(index < custom.size());
+        CARLA_ASSERT(index < custom.size());
 
         if (index < custom.size())
             return &custom[index];
@@ -571,7 +571,7 @@ public:
      */
     virtual int32_t chunkData(void** const dataPtr)
     {
-        Q_ASSERT(dataPtr);
+        CARLA_ASSERT(dataPtr);
 
         return 0;
     }
@@ -584,7 +584,7 @@ public:
      */
     virtual double getParameterValue(const uint32_t parameterId)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         return 0.0;
     }
@@ -594,8 +594,8 @@ public:
      */
     virtual double getParameterScalePointValue(const uint32_t parameterId, const uint32_t scalePointId)
     {
-        Q_ASSERT(parameterId < param.count);
-        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
+        CARLA_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(scalePointId < parameterScalePointCount(parameterId));
 
         return 0.0;
     }
@@ -639,7 +639,7 @@ public:
      */
     virtual void getParameterName(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         *strBuf = 0;
     }
@@ -649,7 +649,7 @@ public:
      */
     virtual void getParameterSymbol(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         *strBuf = 0;
     }
@@ -659,7 +659,7 @@ public:
      */
     virtual void getParameterText(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         *strBuf = 0;
     }
@@ -669,7 +669,7 @@ public:
      */
     virtual void getParameterUnit(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         *strBuf = 0;
     }
@@ -679,8 +679,8 @@ public:
      */
     virtual void getParameterScalePointLabel(const uint32_t parameterId, const uint32_t scalePointId, char* const strBuf)
     {
-        Q_ASSERT(parameterId < param.count);
-        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
+        CARLA_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(scalePointId < parameterScalePointCount(parameterId));
 
         *strBuf = 0;
     }
@@ -690,7 +690,7 @@ public:
      */
     void getProgramName(const uint32_t index, char* const strBuf)
     {
-        Q_ASSERT(index < prog.count);
+        CARLA_ASSERT(index < prog.count);
 
         if (index < prog.count && prog.names[index])
             strncpy(strBuf, prog.names[index], STR_MAX);
@@ -705,7 +705,7 @@ public:
      */
     void getMidiProgramName(const uint32_t index, char* const strBuf)
     {
-        Q_ASSERT(index < midiprog.count);
+        CARLA_ASSERT(index < midiprog.count);
 
         if (index < midiprog.count && midiprog.data[index].name)
             strncpy(strBuf, midiprog.data[index].name, STR_MAX);
@@ -811,7 +811,7 @@ public:
      */
     void setDryWet(double value, const bool sendOsc, const bool sendCallback)
     {
-        Q_ASSERT(value >= 0.0 && value <= 1.0);
+        CARLA_ASSERT(value >= 0.0 && value <= 1.0);
 
         if (value < 0.0)
             value = 0.0;
@@ -844,7 +844,7 @@ public:
      */
     void setVolume(double value, const bool sendOsc, const bool sendCallback)
     {
-        Q_ASSERT(value >= 0.0 && value <= 1.27);
+        CARLA_ASSERT(value >= 0.0 && value <= 1.27);
 
         if (value < 0.0)
             value = 0.0;
@@ -877,7 +877,7 @@ public:
      */
     void setBalanceLeft(double value, const bool sendOsc, const bool sendCallback)
     {
-        Q_ASSERT(value >= -1.0 && value <= 1.0);
+        CARLA_ASSERT(value >= -1.0 && value <= 1.0);
 
         if (value < -1.0)
             value = -1.0;
@@ -910,7 +910,7 @@ public:
      */
     void setBalanceRight(double value, const bool sendOsc, const bool sendCallback)
     {
-        Q_ASSERT(value >= -1.0 && value <= 1.0);
+        CARLA_ASSERT(value >= -1.0 && value <= 1.0);
 
         if (value < -1.0)
             value = -1.0;
@@ -964,7 +964,7 @@ public:
      */
     virtual void setParameterValue(const uint32_t parameterId, double value, const bool sendGui, const bool sendOsc, const bool sendCallback)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         if (sendGui)
             uiParameterChange(parameterId, value);
@@ -993,7 +993,7 @@ public:
      */
     void setParameterValueByRIndex(const int32_t rindex, const double value, const bool sendGui, const bool sendOsc, const bool sendCallback)
     {
-        Q_ASSERT(rindex >= PARAMETER_BALANCE_RIGHT && rindex != PARAMETER_NULL);
+        CARLA_ASSERT(rindex >= PARAMETER_BALANCE_RIGHT && rindex != PARAMETER_NULL);
 
         if (rindex == PARAMETER_ACTIVE)
             return setActive(value > 0.0, sendOsc, sendCallback);
@@ -1019,7 +1019,7 @@ public:
      */
     void setParameterMidiChannel(const uint32_t parameterId, uint8_t channel, const bool sendOsc, const bool sendCallback)
     {
-        Q_ASSERT(parameterId < param.count && channel < 16);
+        CARLA_ASSERT(parameterId < param.count && channel < 16);
 
         if (channel >= 16)
             channel = 16;
@@ -1043,7 +1043,7 @@ public:
      */
     void setParameterMidiCC(const uint32_t parameterId, int16_t cc, const bool sendOsc, const bool sendCallback)
     {
-        Q_ASSERT(parameterId < param.count && cc >= -1);
+        CARLA_ASSERT(parameterId < param.count && cc >= -1);
 
         if (cc < -1 || cc > 0x5F)
             cc = -1;
@@ -1074,9 +1074,9 @@ public:
      */
     virtual void setCustomData(const CustomDataType type, const char* const key, const char* const value, const bool sendGui)
     {
-        Q_ASSERT(type != CUSTOM_DATA_INVALID);
-        Q_ASSERT(key);
-        Q_ASSERT(value);
+        CARLA_ASSERT(type != CUSTOM_DATA_INVALID);
+        CARLA_ASSERT(key);
+        CARLA_ASSERT(value);
 
         if (type == CUSTOM_DATA_INVALID)
             return qCritical("CarlaPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - type is invalid", CustomDataType2str(type), key, value, bool2str(sendGui));
@@ -1137,7 +1137,7 @@ public:
      */
     virtual void setChunkData(const char* const stringData)
     {
-        Q_ASSERT(stringData);
+        CARLA_ASSERT(stringData);
     }
 
     /*!
@@ -1154,7 +1154,7 @@ public:
      */
     virtual void setProgram(int32_t index, const bool sendGui, const bool sendOsc, const bool sendCallback, const bool block)
     {
-        Q_ASSERT(index >= -1 && index < (int32_t)prog.count);
+        CARLA_ASSERT(index >= -1 && index < (int32_t)prog.count);
 
         if (index < -1)
             index = -1;
@@ -1211,7 +1211,7 @@ public:
      */
     virtual void setMidiProgram(int32_t index, const bool sendGui, const bool sendOsc, const bool sendCallback, const bool block)
     {
-        Q_ASSERT(index >= -1 && index < (int32_t)midiprog.count);
+        CARLA_ASSERT(index >= -1 && index < (int32_t)midiprog.count);
 
         if (index < -1)
             index = -1;
@@ -1260,7 +1260,7 @@ public:
      */
     void setMidiProgramById(const uint32_t bank, const uint32_t program, const bool sendGui, const bool sendOsc, const bool sendCallback, const bool block)
     {
-        Q_ASSERT(program < 128);
+        CARLA_ASSERT(program < 128);
 
         for (uint32_t i=0; i < midiprog.count; i++)
         {
@@ -1642,9 +1642,9 @@ public:
      */
     void sendMidiSingleNote(const uint8_t channel, const uint8_t note, const uint8_t velo, const bool sendGui, const bool sendOsc, const bool sendCallback)
     {
-        Q_ASSERT(channel < 16);
-        Q_ASSERT(note < 128);
-        Q_ASSERT(velo < 128);
+        CARLA_ASSERT(channel < 16);
+        CARLA_ASSERT(note < 128);
+        CARLA_ASSERT(velo < 128);
 
         engineMidiLock();
         for (unsigned short i=0; i < MAX_MIDI_EVENTS; i++)
@@ -1879,7 +1879,7 @@ public:
      */
     virtual void uiParameterChange(const uint32_t index, const double value)
     {
-        Q_ASSERT(index < param.count);
+        CARLA_ASSERT(index < param.count);
 
         Q_UNUSED(value);
     }
@@ -1889,7 +1889,7 @@ public:
      */
     virtual void uiProgramChange(const uint32_t index)
     {
-        Q_ASSERT(index < prog.count);
+        CARLA_ASSERT(index < prog.count);
     }
 
     /*!
@@ -1897,7 +1897,7 @@ public:
      */
     virtual void uiMidiProgramChange(const uint32_t index)
     {
-        Q_ASSERT(index < midiprog.count);
+        CARLA_ASSERT(index < midiprog.count);
     }
 
     /*!
@@ -1905,9 +1905,9 @@ public:
      */
     virtual void uiNoteOn(const uint8_t channel, const uint8_t note, const uint8_t velo)
     {
-        Q_ASSERT(channel < 16);
-        Q_ASSERT(note < 128);
-        Q_ASSERT(velo > 0 && velo < 128);
+        CARLA_ASSERT(channel < 16);
+        CARLA_ASSERT(note < 128);
+        CARLA_ASSERT(velo > 0 && velo < 128);
     }
 
     /*!
@@ -1915,8 +1915,8 @@ public:
      */
     virtual void uiNoteOff(const uint8_t channel, const uint8_t note)
     {
-        Q_ASSERT(channel < 16);
-        Q_ASSERT(note < 128);
+        CARLA_ASSERT(channel < 16);
+        CARLA_ASSERT(note < 128);
     }
 
     // -------------------------------------------------------------------

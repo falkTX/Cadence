@@ -98,7 +98,7 @@ public:
 
     uint32_t parameterScalePointCount(const uint32_t parameterId)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         switch (parameterId)
         {
@@ -116,15 +116,15 @@ public:
 
     double getParameterValue(const uint32_t parameterId)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         return paramBuffers[parameterId];
     }
 
     double getParameterScalePointValue(const uint32_t parameterId, const uint32_t scalePointId)
     {
-        Q_ASSERT(parameterId < param.count);
-        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
+        CARLA_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(scalePointId < parameterScalePointCount(parameterId));
 
         switch (parameterId)
         {
@@ -182,7 +182,7 @@ public:
 
     void getParameterName(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         switch (parameterId)
         {
@@ -236,7 +236,7 @@ public:
 
     void getParameterUnit(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         switch (parameterId)
         {
@@ -254,8 +254,8 @@ public:
 
     void getParameterScalePointLabel(const uint32_t parameterId, const uint32_t scalePointId, char* const strBuf)
     {
-        Q_ASSERT(parameterId < param.count);
-        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
+        CARLA_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(scalePointId < parameterScalePointCount(parameterId));
 
         switch (parameterId)
         {
@@ -295,7 +295,7 @@ public:
 
     void setParameterValue(const uint32_t parameterId, double value, const bool sendGui, const bool sendOsc, const bool sendCallback)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
         paramBuffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
 
         switch (parameterId)
@@ -355,7 +355,7 @@ public:
 
     void setMidiProgram(int32_t index, const bool sendGui, const bool sendOsc, const bool sendCallback, const bool block)
     {
-        Q_ASSERT(index >= -1 && index < (int32_t)midiprog.count);
+        CARLA_ASSERT(index >= -1 && index < (int32_t)midiprog.count);
 
         if (index < -1)
             index = -1;
@@ -388,7 +388,7 @@ public:
     void reload()
     {
         qDebug("FluidSynthPlugin::reload() - start");
-        Q_ASSERT(f_synth);
+        CARLA_ASSERT(f_synth);
 
         // Safely disable plugin for reload
         const ScopedDisabler m(this);
@@ -759,7 +759,7 @@ public:
             midiprog.count += 1;
 
         // soundfonts must always have at least 1 midi-program
-        Q_ASSERT(midiprog.count > 0);
+        CARLA_ASSERT(midiprog.count > 0);
 
         if (midiprog.count > 0)
             midiprog.data = new midi_program_t[midiprog.count];
@@ -769,7 +769,7 @@ public:
         f_sfont->iteration_start(f_sfont);
         while (f_sfont->iteration_next(f_sfont, &f_preset))
         {
-            Q_ASSERT(i < midiprog.count);
+            CARLA_ASSERT(i < midiprog.count);
             midiprog.data[i].bank    = f_preset.get_banknum(&f_preset);
             midiprog.data[i].program = f_preset.get_num(&f_preset);
             midiprog.data[i].name    = strdup(f_preset.get_name(&f_preset));

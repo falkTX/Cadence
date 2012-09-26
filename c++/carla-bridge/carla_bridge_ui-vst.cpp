@@ -230,7 +230,7 @@ public:
 
     intptr_t handleAdioMasterSizeWindow(int32_t width, int32_t height)
     {
-        Q_ASSERT(widget);
+        CARLA_ASSERT(widget);
 
         widget->setFixedSize(width, height);
 

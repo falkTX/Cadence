@@ -122,7 +122,7 @@ public:
 
     PluginCategory category()
     {
-        Q_ASSERT(descriptor);
+        CARLA_ASSERT(descriptor);
 
         if (descriptor)
             return (PluginCategory)descriptor->category;
@@ -145,8 +145,8 @@ public:
 
     uint32_t parameterScalePointCount(const uint32_t parameterId)
     {
-        Q_ASSERT(descriptor);
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(parameterId < param.count);
 
         int32_t rindex = param.data[parameterId].rindex;
 
@@ -166,9 +166,9 @@ public:
 
     double getParameterValue(const uint32_t parameterId)
     {
-        Q_ASSERT(descriptor);
-        Q_ASSERT(handle);
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(parameterId < param.count);
 
         if (descriptor && handle)
             return descriptor->get_parameter_value(handle, parameterId);
@@ -178,9 +178,9 @@ public:
 
     double getParameterScalePointValue(const uint32_t parameterId, const uint32_t scalePointId)
     {
-        Q_ASSERT(descriptor);
-        Q_ASSERT(parameterId < param.count);
-        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
+        CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(scalePointId < parameterScalePointCount(parameterId));
 
         const int32_t rindex = param.data[parameterId].rindex;
 
@@ -202,7 +202,7 @@ public:
 
     void getLabel(char* const strBuf)
     {
-        Q_ASSERT(descriptor);
+        CARLA_ASSERT(descriptor);
 
         if (descriptor && descriptor->label)
             strncpy(strBuf, descriptor->label, STR_MAX);
@@ -212,7 +212,7 @@ public:
 
     void getMaker(char* const strBuf)
     {
-        Q_ASSERT(descriptor);
+        CARLA_ASSERT(descriptor);
 
         if (descriptor && descriptor->maker)
             strncpy(strBuf, descriptor->maker, STR_MAX);
@@ -222,7 +222,7 @@ public:
 
     void getCopyright(char* const strBuf)
     {
-        Q_ASSERT(descriptor);
+        CARLA_ASSERT(descriptor);
 
         if (descriptor && descriptor->copyright)
             strncpy(strBuf, descriptor->copyright, STR_MAX);
@@ -232,7 +232,7 @@ public:
 
     void getRealName(char* const strBuf)
     {
-        Q_ASSERT(descriptor);
+        CARLA_ASSERT(descriptor);
 
         if (descriptor && descriptor->name)
             strncpy(strBuf, descriptor->name, STR_MAX);
@@ -242,8 +242,8 @@ public:
 
     void getParameterName(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(descriptor);
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(parameterId < param.count);
 
         const int32_t rindex = param.data[parameterId].rindex;
 
@@ -263,9 +263,9 @@ public:
 
     void getParameterText(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(descriptor);
-        Q_ASSERT(handle);
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(parameterId < param.count);
 
         if (descriptor && handle)
         {
@@ -285,9 +285,9 @@ public:
 
     void getParameterUnit(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(descriptor);
-        Q_ASSERT(handle);
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(parameterId < param.count);
 
         if (descriptor && handle)
         {
@@ -307,9 +307,9 @@ public:
 
     void getParameterScalePointLabel(const uint32_t parameterId, const uint32_t scalePointId, char* const strBuf)
     {
-        Q_ASSERT(descriptor);
-        Q_ASSERT(parameterId < param.count);
-        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
+        CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(scalePointId < parameterScalePointCount(parameterId));
 
         int32_t rindex = param.data[parameterId].rindex;
 
@@ -337,9 +337,9 @@ public:
 
     void setParameterValue(const uint32_t parameterId, double value, const bool sendGui, const bool sendOsc, const bool sendCallback)
     {
-        Q_ASSERT(descriptor);
-        Q_ASSERT(handle);
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(parameterId < param.count);
 
         if (descriptor)
         {
@@ -354,11 +354,11 @@ public:
 
     void setCustomData(const CustomDataType type, const char* const key, const char* const value, const bool sendGui)
     {
-        Q_ASSERT(descriptor);
-        Q_ASSERT(handle);
-        Q_ASSERT(type == CUSTOM_DATA_STRING);
-        Q_ASSERT(key);
-        Q_ASSERT(value);
+        CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(type == CUSTOM_DATA_STRING);
+        CARLA_ASSERT(key);
+        CARLA_ASSERT(value);
 
         if (type != CUSTOM_DATA_STRING)
             return qCritical("NativePlugin::setCustomData(%s, \"%s\", \"%s\", %s) - type is not string", CustomDataType2str(type), key, value, bool2str(sendGui));
@@ -380,9 +380,9 @@ public:
 
     void setMidiProgram(int32_t index, const bool sendGui, const bool sendOsc, const bool sendCallback, const bool block)
     {
-        Q_ASSERT(descriptor);
-        Q_ASSERT(handle);
-        Q_ASSERT(index >= -1 && index < (int32_t)midiprog.count);
+        CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(index >= -1 && index < (int32_t)midiprog.count);
 
         if (index < -1)
             index = -1;
@@ -413,7 +413,7 @@ public:
 
     void showGui(const bool yesNo)
     {
-        Q_ASSERT(descriptor);
+        CARLA_ASSERT(descriptor);
 
         if (descriptor && handle)
             descriptor->show_gui(handle, yesNo);
@@ -422,7 +422,7 @@ public:
     void idleGui()
     {
         // FIXME - this should not be called if there's no GUI!
-        Q_ASSERT(descriptor);
+        CARLA_ASSERT(descriptor);
 
         if (descriptor && descriptor->idle_gui && handle)
             descriptor->idle_gui(handle);
@@ -434,7 +434,7 @@ public:
     void reload()
     {
         qDebug("NativePlugin::reload() - start");
-        Q_ASSERT(descriptor);
+        CARLA_ASSERT(descriptor);
 
         // Safely disable plugin for reload
         const ScopedDisabler m(this);
@@ -785,8 +785,8 @@ public:
         for (i=0; i < midiprog.count; i++)
         {
             const MidiProgram* const mpDesc = &descriptor->midiPrograms[i];
-            Q_ASSERT(mpDesc->program < 128);
-            Q_ASSERT(mpDesc->name);
+            CARLA_ASSERT(mpDesc->program < 128);
+            CARLA_ASSERT(mpDesc->name);
 
             midiprog.data[i].bank    = mpDesc->bank;
             midiprog.data[i].program = mpDesc->program;
@@ -1481,10 +1481,10 @@ public:
 
     bool handleWriteMidiEvent(MidiEvent* event)
     {
-        Q_ASSERT(m_enabled);
-        Q_ASSERT(mOut.count > 0);
-        Q_ASSERT(isProcessing);
-        Q_ASSERT(event);
+        CARLA_ASSERT(m_enabled);
+        CARLA_ASSERT(mOut.count > 0);
+        CARLA_ASSERT(isProcessing);
+        CARLA_ASSERT(event);
 
         if (! m_enabled)
             return false;
@@ -1509,25 +1509,25 @@ public:
 
     static uint32_t carla_host_get_buffer_size(HostHandle handle)
     {
-        Q_ASSERT(handle);
+        CARLA_ASSERT(handle);
         return ((NativePlugin*)handle)->handleGetBufferSize();
     }
 
     static double carla_host_get_sample_rate(HostHandle handle)
     {
-        Q_ASSERT(handle);
+        CARLA_ASSERT(handle);
         return ((NativePlugin*)handle)->handleGetSampleRate();
     }
 
     static const TimeInfo* carla_host_get_time_info(HostHandle handle)
     {
-        Q_ASSERT(handle);
+        CARLA_ASSERT(handle);
         return ((NativePlugin*)handle)->handleGetTimeInfo();
     }
 
     static bool carla_host_write_midi_event(HostHandle handle, MidiEvent* event)
     {
-        Q_ASSERT(handle);
+        CARLA_ASSERT(handle);
         return ((NativePlugin*)handle)->handleWriteMidiEvent(event);
     }
 
@@ -1540,7 +1540,7 @@ public:
 
     static const PluginDescriptor* getPlugin(size_t index)
     {
-        Q_ASSERT(index < pluginDescriptors.size());
+        CARLA_ASSERT(index < pluginDescriptors.size());
 
         if (index < pluginDescriptors.size())
             return pluginDescriptors[index];

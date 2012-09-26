@@ -102,6 +102,12 @@
 #  endif
 #endif
 
+#ifdef NDEBUG
+#  define CARLA_ASSERT(cond) ((!(cond)) ? carla_assert(#cond,__FILE__,__LINE__) : pass())
+#else
+#  define CARLA_ASSERT Q_ASSERT
+#endif
+
 // carla_setprocname
 #ifdef Q_OS_LINUX
 #  include <sys/prctl.h>
@@ -119,7 +125,13 @@ void carla_setprocname(const char* const /*name*/)
 #endif
 
 static inline
-const char* bool2str(bool yesno)
+void carla_assert(const char* const assertion, const char* const file, const int line)
+{
+    qCritical("Carla assertion failure: \"%s\" in file %s, line %i", assertion, file, line);
+}
+
+static inline
+const char* bool2str(const bool yesno)
 {
     return yesno ? "true" : "false";
 }

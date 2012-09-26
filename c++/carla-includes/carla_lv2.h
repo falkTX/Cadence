@@ -342,7 +342,7 @@ static Lv2WorldClass Lv2World;
 static inline
 const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
 {
-    Q_ASSERT(URI);
+    CARLA_ASSERT(URI);
 
     Lilv::Plugins lilvPlugins = Lv2World.get_all_plugins();
 
@@ -1065,7 +1065,7 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
 static inline
 const LV2_RDF_Descriptor* lv2_rdf_dup(const LV2_RDF_Descriptor* const rdf_descriptor)
 {
-    Q_ASSERT(rdf_descriptor);
+    CARLA_ASSERT(rdf_descriptor);
 
     LV2_RDF_Descriptor* const new_descriptor = new LV2_RDF_Descriptor;
 

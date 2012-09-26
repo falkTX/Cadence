@@ -37,7 +37,7 @@ class CarlaToolkit
 public:
     CarlaToolkit(const char* const title)
     {
-        Q_ASSERT(title);
+        CARLA_ASSERT(title);
 
         m_title  = strdup(title ? title : "(null)");
         m_client = nullptr;

@@ -465,7 +465,7 @@ public:
 
     PluginCategory category()
     {
-        Q_ASSERT(rdf_descriptor);
+        CARLA_ASSERT(rdf_descriptor);
 
         LV2_Property category = rdf_descriptor->Type;
 
@@ -499,7 +499,7 @@ public:
 
     long uniqueId()
     {
-        Q_ASSERT(rdf_descriptor);
+        CARLA_ASSERT(rdf_descriptor);
 
         return rdf_descriptor->UniqueID;
     }
@@ -535,8 +535,8 @@ public:
 
     uint32_t parameterScalePointCount(const uint32_t parameterId)
     {
-        Q_ASSERT(parameterId < param.count);
-        Q_ASSERT(rdf_descriptor);
+        CARLA_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(rdf_descriptor);
 
         int32_t rindex = param.data[parameterId].rindex;
 
@@ -554,15 +554,15 @@ public:
 
     double getParameterValue(const uint32_t parameterId)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         return paramBuffers[parameterId];
     }
 
     double getParameterScalePointValue(const uint32_t parameterId, const uint32_t scalePointId)
     {
-        Q_ASSERT(parameterId < param.count);
-        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
+        CARLA_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(scalePointId < parameterScalePointCount(parameterId));
 
         int32_t rindex = param.data[parameterId].rindex;
 
@@ -582,7 +582,7 @@ public:
 
     void getLabel(char* const strBuf)
     {
-        Q_ASSERT(rdf_descriptor);
+        CARLA_ASSERT(rdf_descriptor);
 
         if (rdf_descriptor && rdf_descriptor->URI)
             strncpy(strBuf, rdf_descriptor->URI, STR_MAX);
@@ -592,7 +592,7 @@ public:
 
     void getMaker(char* const strBuf)
     {
-        Q_ASSERT(rdf_descriptor);
+        CARLA_ASSERT(rdf_descriptor);
 
         if (rdf_descriptor && rdf_descriptor->Author)
             strncpy(strBuf, rdf_descriptor->Author, STR_MAX);
@@ -602,7 +602,7 @@ public:
 
     void getCopyright(char* const strBuf)
     {
-        Q_ASSERT(rdf_descriptor);
+        CARLA_ASSERT(rdf_descriptor);
 
         if (rdf_descriptor && rdf_descriptor->License)
             strncpy(strBuf, rdf_descriptor->License, STR_MAX);
@@ -612,7 +612,7 @@ public:
 
     void getRealName(char* const strBuf)
     {
-        Q_ASSERT(rdf_descriptor);
+        CARLA_ASSERT(rdf_descriptor);
 
         if (rdf_descriptor && rdf_descriptor->Name)
             strncpy(strBuf, rdf_descriptor->Name, STR_MAX);
@@ -622,8 +622,8 @@ public:
 
     void getParameterName(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(rdf_descriptor);
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(rdf_descriptor);
+        CARLA_ASSERT(parameterId < param.count);
 
         int32_t rindex = param.data[parameterId].rindex;
 
@@ -635,8 +635,8 @@ public:
 
     void getParameterSymbol(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(rdf_descriptor);
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(rdf_descriptor);
+        CARLA_ASSERT(parameterId < param.count);
 
         int32_t rindex = param.data[parameterId].rindex;
 
@@ -648,8 +648,8 @@ public:
 
     void getParameterUnit(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(rdf_descriptor);
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(rdf_descriptor);
+        CARLA_ASSERT(parameterId < param.count);
 
         int32_t rindex = param.data[parameterId].rindex;
 
@@ -745,9 +745,9 @@ public:
 
     void getParameterScalePointLabel(const uint32_t parameterId, const uint32_t scalePointId, char* const strBuf)
     {
-        Q_ASSERT(rdf_descriptor);
-        Q_ASSERT(parameterId < param.count);
-        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
+        CARLA_ASSERT(rdf_descriptor);
+        CARLA_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(scalePointId < parameterScalePointCount(parameterId));
 
         int32_t rindex = param.data[parameterId].rindex;
 
@@ -772,8 +772,8 @@ public:
 
     void getGuiInfo(GuiType* const type, bool* const resizable)
     {
-        Q_ASSERT(type);
-        Q_ASSERT(resizable);
+        CARLA_ASSERT(type);
+        CARLA_ASSERT(resizable);
 
         *type      = gui.type;
         *resizable = gui.resizable;
@@ -784,7 +784,7 @@ public:
 
     void setParameterValue(const uint32_t parameterId, double value, const bool sendGui, const bool sendOsc, const bool sendCallback)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         paramBuffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
 
@@ -793,9 +793,9 @@ public:
 
     void setCustomData(const CustomDataType type, const char* const key, const char* const value, const bool sendGui)
     {
-        Q_ASSERT(type != CUSTOM_DATA_INVALID);
-        Q_ASSERT(key);
-        Q_ASSERT(value);
+        CARLA_ASSERT(type != CUSTOM_DATA_INVALID);
+        CARLA_ASSERT(key);
+        CARLA_ASSERT(value);
 
         if (type == CUSTOM_DATA_INVALID)
             return qCritical("Lv2Plugin::setCustomData(%s, \"%s\", \"%s\", %s) - type is invalid", CustomDataType2str(type), key, value, bool2str(sendGui));
@@ -861,7 +861,7 @@ public:
 
     void setMidiProgram(int32_t index, const bool sendGui, const bool sendOsc, const bool sendCallback, const bool block)
     {
-        Q_ASSERT(index >= -1 && index < (int32_t)midiprog.count);
+        CARLA_ASSERT(index >= -1 && index < (int32_t)midiprog.count);
 
         if (index < -1)
             index = -1;
@@ -893,7 +893,7 @@ public:
     void setGuiContainer(GuiContainer* const container)
     {
         qDebug("Lv2Plugin::setGuiContainer(%p)", container);
-        Q_ASSERT(container);
+        CARLA_ASSERT(container);
 
         switch(gui.type)
         {
@@ -905,9 +905,9 @@ public:
             {
                 QDialog* const dialog = (QDialog*)container->parent();
                 QWidget* const widget = (QWidget*)ui.widget;
-                Q_ASSERT(dialog);
-                Q_ASSERT(dialog->layout());
-                Q_ASSERT(widget);
+                CARLA_ASSERT(dialog);
+                CARLA_ASSERT(dialog->layout());
+                CARLA_ASSERT(widget);
                 container->setVisible(false);
                 dialog->layout()->addWidget(widget);
                 widget->adjustSize();
@@ -1001,7 +1001,7 @@ public:
 
         case GUI_EXTERNAL_OSC:
 #ifndef BUILD_BRIDGE
-            Q_ASSERT(osc.thread);
+            CARLA_ASSERT(osc.thread);
 
             if (! osc.thread)
             {
@@ -1080,7 +1080,7 @@ public:
     void reload()
     {
         qDebug("Lv2Plugin::reload() - start");
-        Q_ASSERT(descriptor && rdf_descriptor);
+        CARLA_ASSERT(descriptor && rdf_descriptor);
 
         // Safely disable plugin for reload
         const ScopedDisabler m(this);
@@ -1764,9 +1764,9 @@ public:
         for (i=0; i < midiprog.count; i++)
         {
             const LV2_Program_Descriptor* const pdesc = ext.programs->get_program(handle, i);
-            Q_ASSERT(pdesc);
-            Q_ASSERT(pdesc->program < 128);
-            Q_ASSERT(pdesc->name);
+            CARLA_ASSERT(pdesc);
+            CARLA_ASSERT(pdesc->program < 128);
+            CARLA_ASSERT(pdesc->name);
 
             midiprog.data[i].bank    = pdesc->bank;
             midiprog.data[i].program = pdesc->program;
@@ -2348,7 +2348,7 @@ public:
                 else if (param.data[k].type == PARAMETER_LV2_TIME)
                 {
                     rindex = param.data[k].rindex;
-                    Q_ASSERT(rindex >= 0 && rindex < (int32_t)rdf_descriptor->PortCount);
+                    CARLA_ASSERT(rindex >= 0 && rindex < (int32_t)rdf_descriptor->PortCount);
 
                     switch (rdf_descriptor->Ports[rindex].Designation)
                     {
@@ -2707,7 +2707,7 @@ public:
     void postEventHandleCustom(const int32_t size, const int32_t, const double, const void* const data)
     {
         qDebug("Lv2Plugin::postEventHandleCustom(%i, %p)", size, data);
-        Q_ASSERT(ext.worker && ext.worker->work);
+        CARLA_ASSERT(ext.worker && ext.worker->work);
 
         if (ext.worker && ext.worker->work)
             ext.worker->work(handle, carla_lv2_worker_respond, this, size, data);
@@ -2715,7 +2715,7 @@ public:
 
     void uiParameterChange(const uint32_t index, const double value)
     {
-        Q_ASSERT(index < param.count);
+        CARLA_ASSERT(index < param.count);
 
         if (index >= param.count)
             return;
@@ -2739,7 +2739,7 @@ public:
 
     void uiMidiProgramChange(const uint32_t index)
     {
-        Q_ASSERT(index < midiprog.count);
+        CARLA_ASSERT(index < midiprog.count);
 
         if (index >= midiprog.count)
             return;
@@ -2760,9 +2760,9 @@ public:
 
     void uiNoteOn(const uint8_t channel, const uint8_t note, const uint8_t velo)
     {
-        Q_ASSERT(channel < 16);
-        Q_ASSERT(note < 128);
-        Q_ASSERT(velo > 0 && velo < 128);
+        CARLA_ASSERT(channel < 16);
+        CARLA_ASSERT(note < 128);
+        CARLA_ASSERT(velo > 0 && velo < 128);
 
 #ifndef BUILD_BRIDGE
         if (gui.type == GUI_EXTERNAL_OSC)
@@ -2796,8 +2796,8 @@ public:
 
     void uiNoteOff(const uint8_t channel, const uint8_t note)
     {
-        Q_ASSERT(channel < 16);
-        Q_ASSERT(note < 128);
+        CARLA_ASSERT(channel < 16);
+        CARLA_ASSERT(note < 128);
 
 #ifndef BUILD_BRIDGE
         if (gui.type == GUI_EXTERNAL_OSC)
@@ -2946,7 +2946,7 @@ public:
     uint32_t getCustomURID(const char* const uri)
     {
         qDebug("Lv2Plugin::getCustomURID(%s)", uri);
-        Q_ASSERT(uri);
+        CARLA_ASSERT(uri);
 
         if (! uri)
             return CARLA_URI_MAP_ID_NULL;
@@ -2965,7 +2965,7 @@ public:
     const char* getCustomURIString(const LV2_URID urid) const
     {
         qDebug("Lv2Plugin::getCustomURIString(%i)", urid);
-        Q_ASSERT(urid > CARLA_URI_MAP_ID_NULL);
+        CARLA_ASSERT(urid > CARLA_URI_MAP_ID_NULL);
 
         if (urid == CARLA_URI_MAP_ID_NULL)
             return nullptr;
@@ -2980,8 +2980,8 @@ public:
     void handleTransferAtom(const int32_t portIndex, const LV2_Atom* const atom)
     {
         qDebug("Lv2Plugin::handleTransferAtom(%i, %p)", portIndex, atom);
-        Q_ASSERT(portIndex >= 0);
-        Q_ASSERT(atom);
+        CARLA_ASSERT(portIndex >= 0);
+        CARLA_ASSERT(atom);
 
         atomQueueIn.put(portIndex, atom);
     }
@@ -2989,8 +2989,8 @@ public:
     void handleTransferEvent(const int32_t portIndex, const LV2_Atom* const atom)
     {
         qDebug("Lv2Plugin::handleTransferEvent(%i, %p)", portIndex, atom);
-        Q_ASSERT(portIndex >= 0);
-        Q_ASSERT(atom);
+        CARLA_ASSERT(portIndex >= 0);
+        CARLA_ASSERT(atom);
 
         atomQueueIn.put(portIndex, atom);
     }
@@ -3009,7 +3009,7 @@ public:
             if (index >= 0 && index < (int32_t)prog.count && ext.programs)
             {
                 const char* const progName = ext.programs->get_program(handle, index)->name;
-                Q_ASSERT(progName);
+                CARLA_ASSERT(progName);
 
                 if (prog.names[index])
                     free((void*)prog.names[index]);
@@ -3023,8 +3023,8 @@ public:
 
     LV2_State_Status handleStateStore(const uint32_t key, const void* const value, const size_t size, const uint32_t type, const uint32_t flags)
     {
-        Q_ASSERT(key > 0);
-        Q_ASSERT(value);
+        CARLA_ASSERT(key > 0);
+        CARLA_ASSERT(value);
 
         CustomDataType dtype;
         const char* const uriKey = getCustomURIString(key);
@@ -3092,7 +3092,7 @@ public:
 
     const void* handleStateRetrieve(const uint32_t key, size_t* const size, uint32_t* const type, uint32_t* const flags)
     {
-        Q_ASSERT(key > CARLA_URI_MAP_ID_NULL);
+        CARLA_ASSERT(key > CARLA_URI_MAP_ID_NULL);
 
         const char* const uriKey = getCustomURIString(key);
 
@@ -3191,7 +3191,7 @@ public:
 
     uint32_t handleUiPortMap(const char* const symbol)
     {
-        Q_ASSERT(symbol);
+        CARLA_ASSERT(symbol);
 
         if (! symbol)
             return LV2UI_INVALID_PORT_INDEX;
@@ -3207,8 +3207,8 @@ public:
 
     int handleUiResize(const int width, const int height)
     {
-        Q_ASSERT(width > 0);
-        Q_ASSERT(height > 0);
+        CARLA_ASSERT(width > 0);
+        CARLA_ASSERT(height > 0);
 
         if (width <= 0 || height <= 0)
             return 1;
@@ -3224,8 +3224,8 @@ public:
     {
         if (format == 0)
         {
-            Q_ASSERT(buffer);
-            Q_ASSERT(bufferSize == sizeof(float));
+            CARLA_ASSERT(buffer);
+            CARLA_ASSERT(bufferSize == sizeof(float));
 
             if (bufferSize != sizeof(float))
                 return;
@@ -3240,14 +3240,14 @@ public:
         }
         else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM)
         {
-            Q_ASSERT(buffer);
+            CARLA_ASSERT(buffer);
 
             const LV2_Atom* const atom = (const LV2_Atom*)buffer;
             handleTransferAtom(rindex, atom);
         }
         else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT)
         {
-            Q_ASSERT(buffer);
+            CARLA_ASSERT(buffer);
 
             const LV2_Atom* const atom = (const LV2_Atom*)buffer;
             handleTransferEvent(rindex, atom);
@@ -3259,8 +3259,8 @@ public:
 #ifndef BUILD_BRIDGE
     bool isUiBridgeable(const uint32_t uiId)
     {
-        Q_ASSERT(rdf_descriptor);
-        Q_ASSERT(uiId < rdf_descriptor->UICount);
+        CARLA_ASSERT(rdf_descriptor);
+        CARLA_ASSERT(uiId < rdf_descriptor->UICount);
 
         if (uiId >= rdf_descriptor->UICount)
             return false;
@@ -3279,7 +3279,7 @@ public:
 
     bool isUiResizable()
     {
-        Q_ASSERT(ui.rdf_descriptor);
+        CARLA_ASSERT(ui.rdf_descriptor);
 
         if (! ui.rdf_descriptor)
             return false;
@@ -3394,8 +3394,8 @@ public:
     static uint32_t carla_lv2_event_ref(const LV2_Event_Callback_Data callback_data, LV2_Event* const event)
     {
         qDebug("Lv2Plugin::carla_lv2_event_ref(%p, %p)", callback_data, event);
-        Q_ASSERT(callback_data);
-        Q_ASSERT(event);
+        CARLA_ASSERT(callback_data);
+        CARLA_ASSERT(event);
 
         return 0;
     }
@@ -3403,8 +3403,8 @@ public:
     static uint32_t carla_lv2_event_unref(const LV2_Event_Callback_Data callback_data, LV2_Event* const event)
     {
         qDebug("Lv2Plugin::carla_lv2_event_unref(%p, %p)", callback_data, event);
-        Q_ASSERT(callback_data);
-        Q_ASSERT(event);
+        CARLA_ASSERT(callback_data);
+        CARLA_ASSERT(event);
 
         return 0;
     }
@@ -3414,8 +3414,8 @@ public:
     static int carla_lv2_log_printf(const LV2_Log_Handle handle, const LV2_URID type, const char* const fmt, ...)
     {
         qDebug("Lv2Plugin::carla_lv2_log_printf(%p, %i, \"%s\", ...)", handle, type, fmt);
-        Q_ASSERT(handle);
-        Q_ASSERT(type > 0);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(type > 0);
 
 #ifndef DEBUG
         if (type == CARLA_URI_MAP_ID_LOG_TRACE)
@@ -3433,8 +3433,8 @@ public:
     static int carla_lv2_log_vprintf(const LV2_Log_Handle handle, const LV2_URID type, const char* const fmt, va_list ap)
     {
         qDebug("Lv2Plugin::carla_lv2_log_vprintf(%p, %i, \"%s\", ...)", handle, type, fmt);
-        Q_ASSERT(handle);
-        Q_ASSERT(type > 0);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(type > 0);
 
 #ifndef DEBUG
         if (type == CARLA_URI_MAP_ID_LOG_TRACE)
@@ -3473,7 +3473,7 @@ public:
     static void carla_lv2_program_changed(const LV2_Programs_Handle handle, const int32_t index)
     {
         qDebug("Lv2Plugin::carla_lv2_program_changed(%p, %i)", handle, index);
-        Q_ASSERT(handle);
+        CARLA_ASSERT(handle);
 
         if (! handle)
             return;
@@ -3487,8 +3487,8 @@ public:
     static char* carla_lv2_state_make_path(const LV2_State_Make_Path_Handle handle, const char* const path)
     {
         qDebug("Lv2Plugin::carla_lv2_state_make_path(%p, \"%s\")", handle, path);
-        Q_ASSERT(handle);
-        Q_ASSERT(path);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(path);
 
         if (! path)
             return nullptr;
@@ -3501,8 +3501,8 @@ public:
     static char* carla_lv2_state_map_abstract_path(const LV2_State_Map_Path_Handle handle, const char* const absolute_path)
     {
         qDebug("Lv2Plugin::carla_lv2_state_map_abstract_path(%p, \"%s\")", handle, absolute_path);
-        Q_ASSERT(handle);
-        Q_ASSERT(absolute_path);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(absolute_path);
 
         if (! absolute_path)
             return nullptr;
@@ -3514,8 +3514,8 @@ public:
     static char* carla_lv2_state_map_absolute_path(const LV2_State_Map_Path_Handle handle, const char* const abstract_path)
     {
         qDebug("Lv2Plugin::carla_lv2_state_map_absolute_path(%p, \"%s\")", handle, abstract_path);
-        Q_ASSERT(handle);
-        Q_ASSERT(abstract_path);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(abstract_path);
 
         if (! abstract_path)
             return nullptr;
@@ -3527,7 +3527,7 @@ public:
     static LV2_State_Status carla_lv2_state_store(const LV2_State_Handle handle, const uint32_t key, const void* const value, const size_t size, const uint32_t type, const uint32_t flags)
     {
         qDebug("Lv2Plugin::carla_lv2_state_store(%p, %i, %p, " P_SIZE ", %i, %i)", handle, key, value, size, type, flags);
-        Q_ASSERT(handle);
+        CARLA_ASSERT(handle);
 
         if (! handle)
             return LV2_STATE_ERR_UNKNOWN;
@@ -3539,7 +3539,7 @@ public:
     static const void* carla_lv2_state_retrieve(const LV2_State_Handle handle, const uint32_t key, size_t* const size, uint32_t* const type, uint32_t* const flags)
     {
         qDebug("Lv2Plugin::carla_lv2_state_retrieve(%p, %i, %p, %p, %p)", handle, key, size, type, flags);
-        Q_ASSERT(handle);
+        CARLA_ASSERT(handle);
 
         if (! handle)
             return nullptr;
@@ -3561,8 +3561,8 @@ public:
     static LV2_URID carla_lv2_urid_map(const LV2_URID_Map_Handle handle, const char* const uri)
     {
         qDebug("Lv2Plugin::carla_lv2_urid_map(%p, \"%s\")", handle, uri);
-        Q_ASSERT(handle);
-        Q_ASSERT(uri);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(uri);
 
         if (! uri)
             return CARLA_URI_MAP_ID_NULL;
@@ -3620,8 +3620,8 @@ public:
     static const char* carla_lv2_urid_unmap(const LV2_URID_Map_Handle handle, const LV2_URID urid)
     {
         qDebug("Lv2Plugin::carla_lv2_urid_unmap(%p, %i)", handle, urid);
-        Q_ASSERT(handle);
-        Q_ASSERT(urid > CARLA_URI_MAP_ID_NULL);
+        CARLA_ASSERT(handle);
+        CARLA_ASSERT(urid > CARLA_URI_MAP_ID_NULL);
 
         if (urid == CARLA_URI_MAP_ID_NULL)
             return nullptr;
@@ -3683,7 +3683,7 @@ public:
     static LV2_Worker_Status carla_lv2_worker_schedule(const LV2_Worker_Schedule_Handle handle, const uint32_t size, const void* const data)
     {
         qDebug("Lv2Plugin::carla_lv2_worker_schedule(%p, %i, %p)", handle, size, data);
-        Q_ASSERT(handle);
+        CARLA_ASSERT(handle);
 
         if (! handle)
             return LV2_WORKER_ERR_UNKNOWN;
@@ -3695,7 +3695,7 @@ public:
     static LV2_Worker_Status carla_lv2_worker_respond(const LV2_Worker_Respond_Handle handle, const uint32_t size, const void* const data)
     {
         qDebug("Lv2Plugin::carla_lv2_worker_respond(%p, %i, %p)", handle, size, data);
-        Q_ASSERT(handle);
+        CARLA_ASSERT(handle);
 
         if (! handle)
             return LV2_WORKER_ERR_UNKNOWN;
@@ -3709,7 +3709,7 @@ public:
     static uint32_t carla_lv2_ui_port_map(const LV2UI_Feature_Handle handle, const char* const symbol)
     {
         qDebug("Lv2Plugin::carla_lv2_ui_port_map(%p, \"%s\")", handle, symbol);
-        Q_ASSERT(handle);
+        CARLA_ASSERT(handle);
 
         if (! handle)
             return LV2UI_INVALID_PORT_INDEX;
@@ -3723,7 +3723,7 @@ public:
     static int carla_lv2_ui_resize(const LV2UI_Feature_Handle handle, const int width, const int height)
     {
         qDebug("Lv2Plugin::carla_lv2_ui_resize(%p, %i, %i)", handle, width, height);
-        Q_ASSERT(handle);
+        CARLA_ASSERT(handle);
 
         if (! handle)
             return 1;
@@ -3737,7 +3737,7 @@ public:
     static void carla_lv2_external_ui_closed(const LV2UI_Controller controller)
     {
         qDebug("Lv2Plugin::carla_lv2_external_ui_closed(%p)", controller);
-        Q_ASSERT(controller);
+        CARLA_ASSERT(controller);
 
         if (! controller)
             return;
@@ -3751,7 +3751,7 @@ public:
     static void carla_lv2_ui_write_function(const LV2UI_Controller controller, const uint32_t port_index, const uint32_t buffer_size, const uint32_t format, const void* const buffer)
     {
         qDebug("Lv2Plugin::carla_lv2_ui_write_function(%p, %i, %i, %i, %p)", controller, port_index, buffer_size, format, buffer);
-        Q_ASSERT(controller);
+        CARLA_ASSERT(controller);
 
         if (! controller)
             return;

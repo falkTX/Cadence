@@ -84,8 +84,8 @@ public:
 
     void put(const uint32_t portIndex, const LV2_Atom* const atom, const bool lock = true)
     {
-        Q_ASSERT(atom && atom->size > 0);
-        Q_ASSERT(indexPool + atom->size < MAX_POOL_SIZE); //  overflow
+        CARLA_ASSERT(atom && atom->size > 0);
+        CARLA_ASSERT(indexPool + atom->size < MAX_POOL_SIZE); //  overflow
 
         if (full || atom->size == 0 || indexPool + atom->size >= MAX_POOL_SIZE)
             return;
@@ -115,7 +115,7 @@ public:
 
     bool get(uint32_t* const portIndex, const LV2_Atom** const atom, const bool lock = true)
     {
-        Q_ASSERT(portIndex && atom);
+        CARLA_ASSERT(portIndex && atom);
 
         if (empty || ! (portIndex && atom))
             return false;

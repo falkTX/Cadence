@@ -125,7 +125,7 @@ public:
 
     PluginCategory category()
     {
-        Q_ASSERT(effect);
+        CARLA_ASSERT(effect);
 
         intptr_t category = effect->dispatcher(effect, effGetPlugCategory, 0, 0, nullptr, 0.0f);
 
@@ -153,7 +153,7 @@ public:
 
     long uniqueId()
     {
-        Q_ASSERT(effect);
+        CARLA_ASSERT(effect);
 
         return effect->uniqueID;
     }
@@ -163,8 +163,8 @@ public:
 
     int32_t chunkData(void** const dataPtr)
     {
-        Q_ASSERT(dataPtr);
-        Q_ASSERT(effect);
+        CARLA_ASSERT(dataPtr);
+        CARLA_ASSERT(effect);
 
         if (effect)
             return effect->dispatcher(effect, effGetChunk, 0 /* bank */, 0, dataPtr, 0.0f);
@@ -177,8 +177,8 @@ public:
 
     double getParameterValue(const uint32_t parameterId)
     {
-        Q_ASSERT(effect);
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(effect);
+        CARLA_ASSERT(parameterId < param.count);
 
         if (effect)
             return effect->getParameter(effect, parameterId);
@@ -188,7 +188,7 @@ public:
 
     void getLabel(char* const strBuf)
     {
-        Q_ASSERT(effect);
+        CARLA_ASSERT(effect);
 
         if (effect)
             effect->dispatcher(effect, effGetProductString, 0, 0, strBuf, 0.0f);
@@ -198,7 +198,7 @@ public:
 
     void getMaker(char* const strBuf)
     {
-        Q_ASSERT(effect);
+        CARLA_ASSERT(effect);
 
         if (effect)
             effect->dispatcher(effect, effGetVendorString, 0, 0, strBuf, 0.0f);
@@ -208,7 +208,7 @@ public:
 
     void getCopyright(char* const strBuf)
     {
-        Q_ASSERT(effect);
+        CARLA_ASSERT(effect);
 
         if (effect)
             effect->dispatcher(effect, effGetVendorString, 0, 0, strBuf, 0.0f);
@@ -218,7 +218,7 @@ public:
 
     void getRealName(char* const strBuf)
     {
-        Q_ASSERT(effect);
+        CARLA_ASSERT(effect);
 
         if (effect)
             effect->dispatcher(effect, effGetEffectName, 0, 0, strBuf, 0.0f);
@@ -228,8 +228,8 @@ public:
 
     void getParameterName(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(effect);
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(effect);
+        CARLA_ASSERT(parameterId < param.count);
 
         if (effect)
             effect->dispatcher(effect, effGetParamName, parameterId, 0, strBuf, 0.0f);
@@ -239,8 +239,8 @@ public:
 
     void getParameterText(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(effect);
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(effect);
+        CARLA_ASSERT(parameterId < param.count);
 
         if (effect)
         {
@@ -255,8 +255,8 @@ public:
 
     void getParameterUnit(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(effect);
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(effect);
+        CARLA_ASSERT(parameterId < param.count);
 
         if (effect)
             effect->dispatcher(effect, effGetParamLabel, parameterId, 0, strBuf, 0.0f);
@@ -275,7 +275,7 @@ public:
 
     void setParameterValue(const uint32_t parameterId, double value, const bool sendGui, const bool sendOsc, const bool sendCallback)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         effect->setParameter(effect, parameterId, fixParameterValue(value, param.ranges[parameterId]));
 
@@ -284,8 +284,8 @@ public:
 
     void setChunkData(const char* const stringData)
     {
-        Q_ASSERT(m_hints & PLUGIN_USES_CHUNKS);
-        Q_ASSERT(stringData);
+        CARLA_ASSERT(m_hints & PLUGIN_USES_CHUNKS);
+        CARLA_ASSERT(stringData);
 
         static QByteArray chunk;
         chunk = QByteArray::fromBase64(stringData);
@@ -304,7 +304,7 @@ public:
 
     void setProgram(int32_t index, const bool sendGui, const bool sendOsc, const bool sendCallback, const bool block)
     {
-        Q_ASSERT(index >= -1 && index < (int32_t)prog.count);
+        CARLA_ASSERT(index >= -1 && index < (int32_t)prog.count);
 
         if (index < -1)
             index = -1;
@@ -334,7 +334,7 @@ public:
     void setGuiContainer(GuiContainer* const container)
     {
         qDebug("VstPlugin::setGuiContainer(%p)", container);
-        Q_ASSERT(container);
+        CARLA_ASSERT(container);
 
         if (gui.type == GUI_EXTERNAL_OSC)
             return;
@@ -388,7 +388,7 @@ public:
         if (gui.type == GUI_EXTERNAL_OSC)
         {
 #ifndef BUILD_BRIDGE
-            Q_ASSERT(osc.thread);
+            CARLA_ASSERT(osc.thread);
 
             if (! osc.thread)
             {
@@ -447,7 +447,7 @@ public:
     void reload()
     {
         qDebug("VstPlugin::reload() - start");
-        Q_ASSERT(effect);
+        CARLA_ASSERT(effect);
 
         // Safely disable plugin for reload
         const ScopedDisabler m(this);
@@ -1353,7 +1353,7 @@ public:
 #ifndef BUILD_BRIDGE
     void uiParameterChange(const uint32_t index, const double value)
     {
-        Q_ASSERT(index < param.count);
+        CARLA_ASSERT(index < param.count);
 
         if (index >= param.count)
             return;
@@ -1364,7 +1364,7 @@ public:
 
     void uiProgramChange(const uint32_t index)
     {
-        Q_ASSERT(index < prog.count);
+        CARLA_ASSERT(index < prog.count);
 
         if (index >= prog.count)
             return;
@@ -1375,9 +1375,9 @@ public:
 
     void uiNoteOn(const uint8_t channel, const uint8_t note, const uint8_t velo)
     {
-        Q_ASSERT(channel < 16);
-        Q_ASSERT(note < 128);
-        Q_ASSERT(velo > 0 && velo < 128);
+        CARLA_ASSERT(channel < 16);
+        CARLA_ASSERT(note < 128);
+        CARLA_ASSERT(velo > 0 && velo < 128);
 
         if (gui.type == GUI_EXTERNAL_OSC && osc.data.target)
         {
@@ -1391,8 +1391,8 @@ public:
 
     void uiNoteOff(const uint8_t channel, const uint8_t note)
     {
-        Q_ASSERT(channel < 16);
-        Q_ASSERT(note < 128);
+        CARLA_ASSERT(channel < 16);
+        CARLA_ASSERT(note < 128);
 
         if (gui.type == GUI_EXTERNAL_OSC && osc.data.target)
         {
@@ -1408,8 +1408,8 @@ public:
 
     void handleAudioMasterAutomate(const uint32_t index, const double value)
     {
-        //Q_ASSERT(m_enabled);
-        Q_ASSERT(index < param.count);
+        //CARLA_ASSERT(m_enabled);
+        CARLA_ASSERT(index < param.count);
 
         if (index >= param.count /*|| ! m_enabled*/)
             return;
@@ -1511,7 +1511,7 @@ public:
     intptr_t handleAudioMasterIOChanged()
     {
         qDebug("VstPlugin::handleAudioMasterIOChanged()");
-        Q_ASSERT(m_enabled);
+        CARLA_ASSERT(m_enabled);
 
         // TESTING
 
@@ -1556,9 +1556,9 @@ public:
 
     intptr_t handleAudioMasterProcessEvents(const VstEvents* const vstEvents)
     {
-        Q_ASSERT(m_enabled);
-        Q_ASSERT(midi.portMout);
-        Q_ASSERT(isProcessing);
+        CARLA_ASSERT(m_enabled);
+        CARLA_ASSERT(midi.portMout);
+        CARLA_ASSERT(isProcessing);
 
         if (! m_enabled)
             return 0;
@@ -1747,7 +1747,7 @@ public:
                 if (! self->effect)
                     self->effect = effect;
 
-                Q_ASSERT(self->effect == effect);
+                CARLA_ASSERT(self->effect == effect);
 
                 if (self->effect != effect)
                 {
@@ -1771,7 +1771,7 @@ public:
         switch (opcode)
         {
         case audioMasterAutomate:
-            Q_ASSERT(self);
+            CARLA_ASSERT(self);
             if (self)
                 self->handleAudioMasterAutomate(index, opt);
             else
@@ -1787,7 +1787,7 @@ public:
             break;
 
         case audioMasterIdle:
-            Q_ASSERT(effect);
+            CARLA_ASSERT(effect);
             if (effect)
                 effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
             else
@@ -1802,7 +1802,7 @@ public:
 
         case audioMasterWantMidi:
             // Deprecated in VST SDK 2.4
-            Q_ASSERT(self);
+            CARLA_ASSERT(self);
             if (self)
                 self->handleAudioMasterWantMidi();
             else
@@ -1811,7 +1811,7 @@ public:
 #endif
 
         case audioMasterGetTime:
-            Q_ASSERT(self);
+            CARLA_ASSERT(self);
             if (self)
             {
                 ret = (intptr_t)self->handleAudioMasterGetTime();
@@ -1838,7 +1838,7 @@ public:
             break;
 
         case audioMasterProcessEvents:
-            Q_ASSERT(self && ptr);
+            CARLA_ASSERT(self && ptr);
             if (self)
             {
                 if (ptr)
@@ -1856,7 +1856,7 @@ public:
             break;
 
         case audioMasterTempoAt:
-            Q_ASSERT(self);
+            CARLA_ASSERT(self);
             // Deprecated in VST SDK 2.4
             if (self)
                 ret = self->handleAudioMasterTempoAt();
@@ -1882,7 +1882,7 @@ public:
 #endif
 
         case audioMasterIOChanged:
-            Q_ASSERT(self);
+            CARLA_ASSERT(self);
             if (self)
                 ret = self->handleAudioMasterIOChanged();
             else
@@ -1891,7 +1891,7 @@ public:
 
         case audioMasterNeedIdle:
             // Deprecated in VST SDK 2.4
-            Q_ASSERT(self);
+            CARLA_ASSERT(self);
             if (self)
                 self->handleAudioMasterNeedIdle();
             else
@@ -1899,7 +1899,7 @@ public:
             break;
 
         case audioMasterSizeWindow:
-            Q_ASSERT(self);
+            CARLA_ASSERT(self);
             if (self)
             {
                 if (index > 0 && value > 0)
@@ -1912,7 +1912,7 @@ public:
             break;
 
         case audioMasterGetSampleRate:
-            Q_ASSERT(self);
+            CARLA_ASSERT(self);
             if (self)
             {
                 ret = self->handleAudioMasterGetSampleRate();
@@ -1925,7 +1925,7 @@ public:
             break;
 
         case audioMasterGetBlockSize:
-            Q_ASSERT(self);
+            CARLA_ASSERT(self);
             if (self)
             {
                 ret = self->handleAudioMasterGetBlockSize();
@@ -2001,7 +2001,7 @@ public:
 #endif
 
         case audioMasterGetVendorString:
-            Q_ASSERT(ptr);
+            CARLA_ASSERT(ptr);
             if (ptr)
                 strcpy((char*)ptr, "Cadence");
             else
@@ -2009,7 +2009,7 @@ public:
             break;
 
         case audioMasterGetProductString:
-            Q_ASSERT(ptr);
+            CARLA_ASSERT(ptr);
             if (ptr)
                 strcpy((char*)ptr, "Carla");
             else
@@ -2031,7 +2031,7 @@ public:
 #endif
 
         case audioMasterCanDo:
-            Q_ASSERT(ptr);
+            CARLA_ASSERT(ptr);
             if (ptr)
                 ret = hostCanDo((const char*)ptr);
             else
@@ -2055,7 +2055,7 @@ public:
             break;
 
         case audioMasterUpdateDisplay:
-            Q_ASSERT(effect);
+            CARLA_ASSERT(effect);
             if (self)
                 self->handleAudioMasterUpdateDisplay();
             if (effect)

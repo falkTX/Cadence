@@ -107,7 +107,7 @@ public:
 
     long uniqueId()
     {
-        Q_ASSERT(ldescriptor);
+        CARLA_ASSERT(ldescriptor);
 
         return ldescriptor->UniqueID;
     }
@@ -117,9 +117,9 @@ public:
 
     int32_t chunkData(void** const dataPtr)
     {
-        Q_ASSERT(dataPtr);
-        Q_ASSERT(descriptor);
-        Q_ASSERT(descriptor->get_custom_data);
+        CARLA_ASSERT(dataPtr);
+        CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(descriptor->get_custom_data);
 
         unsigned long dataSize = 0;
 
@@ -134,14 +134,14 @@ public:
 
     double getParameterValue(const uint32_t parameterId)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         return paramBuffers[parameterId];
     }
 
     void getLabel(char* const strBuf)
     {
-        Q_ASSERT(ldescriptor);
+        CARLA_ASSERT(ldescriptor);
 
         if (ldescriptor && ldescriptor->Label)
             strncpy(strBuf, ldescriptor->Label, STR_MAX);
@@ -151,7 +151,7 @@ public:
 
     void getMaker(char* const strBuf)
     {
-        Q_ASSERT(ldescriptor);
+        CARLA_ASSERT(ldescriptor);
 
         if (ldescriptor && ldescriptor->Maker)
             strncpy(strBuf, ldescriptor->Maker, STR_MAX);
@@ -161,7 +161,7 @@ public:
 
     void getCopyright(char* const strBuf)
     {
-        Q_ASSERT(ldescriptor);
+        CARLA_ASSERT(ldescriptor);
 
         if (ldescriptor && ldescriptor->Copyright)
             strncpy(strBuf, ldescriptor->Copyright, STR_MAX);
@@ -171,7 +171,7 @@ public:
 
     void getRealName(char* const strBuf)
     {
-        Q_ASSERT(ldescriptor);
+        CARLA_ASSERT(ldescriptor);
 
         if (ldescriptor && ldescriptor->Name)
             strncpy(strBuf, ldescriptor->Name, STR_MAX);
@@ -181,8 +181,8 @@ public:
 
     void getParameterName(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(ldescriptor);
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(ldescriptor);
+        CARLA_ASSERT(parameterId < param.count);
 
         int32_t rindex = param.data[parameterId].rindex;
 
@@ -194,8 +194,8 @@ public:
 
     void getGuiInfo(GuiType* const type, bool* const resizable)
     {
-        Q_ASSERT(type);
-        Q_ASSERT(resizable);
+        CARLA_ASSERT(type);
+        CARLA_ASSERT(resizable);
 
         *type = (m_hints & PLUGIN_HAS_GUI) ? GUI_EXTERNAL_OSC : GUI_NONE;
         *resizable = false;
@@ -206,7 +206,7 @@ public:
 
     void setParameterValue(const uint32_t parameterId, double value, const bool sendGui, const bool sendOsc, const bool sendCallback)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         paramBuffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
 
@@ -215,9 +215,9 @@ public:
 
     void setCustomData(const CustomDataType type, const char* const key, const char* const value, const bool sendGui)
     {
-        Q_ASSERT(type == CUSTOM_DATA_STRING);
-        Q_ASSERT(key);
-        Q_ASSERT(value);
+        CARLA_ASSERT(type == CUSTOM_DATA_STRING);
+        CARLA_ASSERT(key);
+        CARLA_ASSERT(value);
 
         if (type != CUSTOM_DATA_STRING)
             return qCritical("DssiPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - type is not string", CustomDataType2str(type), key, value, bool2str(sendGui));
@@ -247,8 +247,8 @@ public:
 
     void setChunkData(const char* const stringData)
     {
-        Q_ASSERT(m_hints & PLUGIN_USES_CHUNKS);
-        Q_ASSERT(stringData);
+        CARLA_ASSERT(m_hints & PLUGIN_USES_CHUNKS);
+        CARLA_ASSERT(stringData);
 
         static QByteArray chunk;
         chunk = QByteArray::fromBase64(stringData);
@@ -269,7 +269,7 @@ public:
 
     void setMidiProgram(int32_t index, const bool sendGui, const bool sendOsc, const bool sendCallback, const bool block)
     {
-        Q_ASSERT(index >= -1 && index < (int32_t)midiprog.count);
+        CARLA_ASSERT(index >= -1 && index < (int32_t)midiprog.count);
 
         if (index < -1)
             index = -1;
@@ -301,7 +301,7 @@ public:
 #ifndef BUILD_BRIDGE
     void showGui(const bool yesNo)
     {
-        Q_ASSERT(osc.thread);
+        CARLA_ASSERT(osc.thread);
 
         if (! osc.thread)
         {
@@ -334,7 +334,7 @@ public:
     void reload()
     {
         qDebug("DssiPlugin::reload() - start");
-        Q_ASSERT(descriptor && ldescriptor);
+        CARLA_ASSERT(descriptor && ldescriptor);
 
         // Safely disable plugin for reload
         const ScopedDisabler m(this);
@@ -737,9 +737,9 @@ public:
         for (i=0; i < midiprog.count; i++)
         {
             const DSSI_Program_Descriptor* const pdesc = descriptor->get_program(handle, i);
-            Q_ASSERT(pdesc);
-            Q_ASSERT(pdesc->Program < 128);
-            Q_ASSERT(pdesc->Name);
+            CARLA_ASSERT(pdesc);
+            CARLA_ASSERT(pdesc->Program < 128);
+            CARLA_ASSERT(pdesc->Name);
 
             midiprog.data[i].bank    = pdesc->Bank;
             midiprog.data[i].program = pdesc->Program;
@@ -1349,7 +1349,7 @@ public:
 #ifndef BUILD_BRIDGE
     void uiParameterChange(const uint32_t index, const double value)
     {
-        Q_ASSERT(index < param.count);
+        CARLA_ASSERT(index < param.count);
 
         if (index >= param.count)
             return;
@@ -1361,7 +1361,7 @@ public:
 
     void uiMidiProgramChange(const uint32_t index)
     {
-        Q_ASSERT(index < midiprog.count);
+        CARLA_ASSERT(index < midiprog.count);
 
         if (index >= midiprog.count)
             return;
@@ -1373,9 +1373,9 @@ public:
 
     void uiNoteOn(const uint8_t channel, const uint8_t note, const uint8_t velo)
     {
-        Q_ASSERT(channel < 16);
-        Q_ASSERT(note < 128);
-        Q_ASSERT(velo > 0 && velo < 128);
+        CARLA_ASSERT(channel < 16);
+        CARLA_ASSERT(note < 128);
+        CARLA_ASSERT(velo > 0 && velo < 128);
 
         if (! osc.data.target)
             return;
@@ -1389,8 +1389,8 @@ public:
 
     void uiNoteOff(const uint8_t channel, const uint8_t note)
     {
-        Q_ASSERT(channel < 16);
-        Q_ASSERT(note < 128);
+        CARLA_ASSERT(channel < 16);
+        CARLA_ASSERT(note < 128);
 
         if (! osc.data.target)
             return;

@@ -283,7 +283,7 @@ public:
 protected:
     bool libOpen(const char* const filename)
     {
-        Q_ASSERT(filename);
+        CARLA_ASSERT(filename);
 
         if (m_filename)
             free(m_filename);

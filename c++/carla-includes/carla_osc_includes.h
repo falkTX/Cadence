@@ -40,7 +40,7 @@ struct CarlaOscData {
 static inline
 void osc_clear_data(CarlaOscData* const oscData)
 {
-    Q_ASSERT(oscData);
+    CARLA_ASSERT(oscData);
     qDebug("osc_clear_data(path:\"%s\")", oscData->path);
 
     if (oscData->path)
@@ -60,9 +60,9 @@ void osc_clear_data(CarlaOscData* const oscData)
 static inline
 void osc_send_configure(const CarlaOscData* const oscData, const char* const key, const char* const value)
 {
-    Q_ASSERT(oscData && oscData->path);
-    Q_ASSERT(key);
-    Q_ASSERT(value);
+    CARLA_ASSERT(oscData && oscData->path);
+    CARLA_ASSERT(key);
+    CARLA_ASSERT(value);
     qDebug("osc_send_configure(path:\"%s\", \"%s\", \"%s\")", oscData->path, key, value);
 
     if (oscData->target)
@@ -77,8 +77,8 @@ void osc_send_configure(const CarlaOscData* const oscData, const char* const key
 static inline
 void osc_send_control(const CarlaOscData* const oscData, const int32_t index, const float value)
 {
-    Q_ASSERT(oscData && oscData->path);
-    Q_ASSERT(index != -1);
+    CARLA_ASSERT(oscData && oscData->path);
+    CARLA_ASSERT(index != -1);
     qDebug("osc_send_control(path:\"%s\", %i, %f)", oscData->path, index, value);
 
     if (oscData->target)
@@ -93,8 +93,8 @@ void osc_send_control(const CarlaOscData* const oscData, const int32_t index, co
 static inline
 void osc_send_program(const CarlaOscData* const oscData, const int32_t index)
 {
-    Q_ASSERT(oscData && oscData->path);
-    Q_ASSERT(index >= 0);
+    CARLA_ASSERT(oscData && oscData->path);
+    CARLA_ASSERT(index >= 0);
     qDebug("osc_send_program(path:\"%s\", %i)", oscData->path, index);
 
     if (oscData->target)
@@ -109,9 +109,9 @@ void osc_send_program(const CarlaOscData* const oscData, const int32_t index)
 static inline
 void osc_send_program(const CarlaOscData* const oscData, const int32_t bank, const int32_t program)
 {
-    Q_ASSERT(oscData && oscData->path);
-    Q_ASSERT(program >= 0 && program < 128);
-    Q_ASSERT(bank >= 0);
+    CARLA_ASSERT(oscData && oscData->path);
+    CARLA_ASSERT(program >= 0 && program < 128);
+    CARLA_ASSERT(bank >= 0);
     qDebug("osc_send_program(path:\"%s\", %i, %i)", oscData->path, bank, program);
 
     if (oscData->target)
@@ -126,8 +126,8 @@ void osc_send_program(const CarlaOscData* const oscData, const int32_t bank, con
 static inline
 void osc_send_midi_program(const CarlaOscData* const oscData, const int32_t index)
 {
-    Q_ASSERT(oscData && oscData->path);
-    Q_ASSERT(index >= 0);
+    CARLA_ASSERT(oscData && oscData->path);
+    CARLA_ASSERT(index >= 0);
     qDebug("osc_send_midi_program(path:\"%s\", %i)", oscData->path, index);
 
     if (oscData->target)
@@ -142,9 +142,9 @@ void osc_send_midi_program(const CarlaOscData* const oscData, const int32_t inde
 static inline
 void osc_send_midi_program(const CarlaOscData* const oscData, const int32_t bank, const int32_t program)
 {
-    Q_ASSERT(oscData && oscData->path);
-    Q_ASSERT(program >= 0 && program < 128);
-    Q_ASSERT(bank >= 0);
+    CARLA_ASSERT(oscData && oscData->path);
+    CARLA_ASSERT(program >= 0 && program < 128);
+    CARLA_ASSERT(bank >= 0);
     qDebug("osc_send_midi_program(path:\"%s\", %i, %i)", oscData->path, bank, program);
 
     if (oscData->target)
@@ -159,9 +159,9 @@ void osc_send_midi_program(const CarlaOscData* const oscData, const int32_t bank
 static inline
 void osc_send_midi(const CarlaOscData* const oscData, const uint8_t buf[4])
 {
-    Q_ASSERT(oscData && oscData->path);
-    Q_ASSERT(buf[0] == 0);
-    Q_ASSERT(buf[1] != 0);
+    CARLA_ASSERT(oscData && oscData->path);
+    CARLA_ASSERT(buf[0] == 0);
+    CARLA_ASSERT(buf[1] != 0);
     qDebug("osc_send_midi(path:\"%s\", 0x%X, %03u, %03u)", oscData->path, buf[1], buf[2], buf[3]);
 
     if (oscData->target)
@@ -176,8 +176,8 @@ void osc_send_midi(const CarlaOscData* const oscData, const uint8_t buf[4])
 static inline
 void osc_send_sample_rate(const CarlaOscData* const oscData, const float sampleRate)
 {
-    Q_ASSERT(oscData && oscData->path);
-    Q_ASSERT(sampleRate > 0.0f);
+    CARLA_ASSERT(oscData && oscData->path);
+    CARLA_ASSERT(sampleRate > 0.0f);
     qDebug("osc_send_sample_rate(path:\"%s\", %f)", oscData->path, sampleRate);
 
     if (oscData->target)
@@ -193,8 +193,8 @@ void osc_send_sample_rate(const CarlaOscData* const oscData, const float sampleR
 static inline
 void osc_send_update(const CarlaOscData* const oscData, const char* const url)
 {
-    Q_ASSERT(oscData && oscData->path);
-    Q_ASSERT(url);
+    CARLA_ASSERT(oscData && oscData->path);
+    CARLA_ASSERT(url);
     qDebug("osc_send_update(path:\"%s\", \"%s\")", oscData->path, url);
 
     if (oscData->target)
@@ -209,7 +209,7 @@ void osc_send_update(const CarlaOscData* const oscData, const char* const url)
 static inline
 void osc_send_exiting(const CarlaOscData* const oscData)
 {
-    Q_ASSERT(oscData && oscData->path);
+    CARLA_ASSERT(oscData && oscData->path);
     qDebug("osc_send_exiting(path:\"%s\")", oscData->path);
 
     if (oscData->target)
@@ -225,7 +225,7 @@ void osc_send_exiting(const CarlaOscData* const oscData)
 static inline
 void osc_send_show(const CarlaOscData* const oscData)
 {
-    Q_ASSERT(oscData && oscData->path);
+    CARLA_ASSERT(oscData && oscData->path);
     qDebug("osc_send_show(path:\"%s\")", oscData->path);
 
     if (oscData->target)
@@ -240,7 +240,7 @@ void osc_send_show(const CarlaOscData* const oscData)
 static inline
 void osc_send_hide(const CarlaOscData* const oscData)
 {
-    Q_ASSERT(oscData && oscData->path);
+    CARLA_ASSERT(oscData && oscData->path);
     qDebug("osc_send_hide(path:\"%s\")", oscData->path);
 
     if (oscData->target)
@@ -255,7 +255,7 @@ void osc_send_hide(const CarlaOscData* const oscData)
 static inline
 void osc_send_quit(const CarlaOscData* const oscData)
 {
-    Q_ASSERT(oscData && oscData->path);
+    CARLA_ASSERT(oscData && oscData->path);
     qDebug("osc_send_quit(path:\"%s\")", oscData->path);
 
     if (oscData->target)
@@ -272,8 +272,8 @@ void osc_send_quit(const CarlaOscData* const oscData)
 static inline
 void osc_send_bridge_update(const CarlaOscData* const oscData, const char* const url)
 {
-    Q_ASSERT(oscData && oscData->path);
-    Q_ASSERT(url);
+    CARLA_ASSERT(oscData && oscData->path);
+    CARLA_ASSERT(url);
     qDebug("osc_send_bridge_update(path:\"%s\", \"%s\")", oscData->path, url);
 
     if (oscData->target)
@@ -288,8 +288,8 @@ void osc_send_bridge_update(const CarlaOscData* const oscData, const char* const
 static inline
 void osc_send_bridge_error(const CarlaOscData* const oscData, const char* const error)
 {
-    Q_ASSERT(oscData && oscData->path);
-    Q_ASSERT(error);
+    CARLA_ASSERT(oscData && oscData->path);
+    CARLA_ASSERT(error);
     qDebug("osc_send_bridge_error(path:\"%s\", \"%s\")", oscData->path, error);
 
     if (oscData->target)
@@ -305,10 +305,10 @@ void osc_send_bridge_error(const CarlaOscData* const oscData, const char* const 
 static inline
 void osc_send_lv2_transfer_atom(const CarlaOscData* const oscData, const int32_t portIndex, const char* const typeStr, const char* const atomBuf)
 {
-    Q_ASSERT(oscData && oscData->path);
-    Q_ASSERT(portIndex >= 0);
-    Q_ASSERT(typeStr);
-    Q_ASSERT(atomBuf);
+    CARLA_ASSERT(oscData && oscData->path);
+    CARLA_ASSERT(portIndex >= 0);
+    CARLA_ASSERT(typeStr);
+    CARLA_ASSERT(atomBuf);
     qDebug("osc_send_lv2_transfer_atom(path:\"%s\", %i, \"%s\", \"%s\")", oscData->path, portIndex, typeStr, atomBuf);
 
     if (oscData->target)
@@ -323,10 +323,10 @@ void osc_send_lv2_transfer_atom(const CarlaOscData* const oscData, const int32_t
 static inline
 void osc_send_lv2_transfer_event(const CarlaOscData* const oscData, const int32_t portIndex, const char* const typeStr, const char* const atomBuf)
 {
-    Q_ASSERT(oscData && oscData->path);
-    Q_ASSERT(portIndex >= 0);
-    Q_ASSERT(typeStr);
-    Q_ASSERT(atomBuf);
+    CARLA_ASSERT(oscData && oscData->path);
+    CARLA_ASSERT(portIndex >= 0);
+    CARLA_ASSERT(typeStr);
+    CARLA_ASSERT(atomBuf);
     qDebug("osc_send_lv2_transfer_event(path:\"%s\", %i, \"%s\", \"%s\")", oscData->path, portIndex, typeStr, atomBuf);
 
     if (oscData->target)

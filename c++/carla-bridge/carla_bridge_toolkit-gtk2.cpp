@@ -60,7 +60,7 @@ public:
     void exec(CarlaClient* const client, const bool showGui)
     {
         qDebug("CarlaToolkitGtk2::exec(%p)", client);
-        Q_ASSERT(client);
+        CARLA_ASSERT(client);
 
         m_client = client;
 
@@ -117,7 +117,7 @@ public:
     void show()
     {
         qDebug("CarlaToolkitGtk2::show()");
-        Q_ASSERT(window);
+        CARLA_ASSERT(window);
 
         if (window)
             gtk_widget_show_all(window);
@@ -126,7 +126,7 @@ public:
     void hide()
     {
         qDebug("CarlaToolkitGtk2::hide()");
-        Q_ASSERT(window);
+        CARLA_ASSERT(window);
 
         if (window)
             gtk_widget_hide_all(window);
@@ -135,7 +135,7 @@ public:
     void resize(int width, int height)
     {
         qDebug("CarlaToolkitGtk2::resize(%i, %i)", width, height);
-        Q_ASSERT(window);
+        CARLA_ASSERT(window);
 
         if (window)
             gtk_window_resize(GTK_WINDOW(window), width, height);

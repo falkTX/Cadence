@@ -424,7 +424,7 @@ const char* getPluginTypeString(const PluginType type)
 
 void* getPointer(const uintptr_t addr)
 {
-    Q_ASSERT(addr != 0);
+    CARLA_ASSERT(addr != 0);
     qDebug("CarlaBackend::getPointer(" P_UINTPTR ")", addr);
 
     uintptr_t* const ptr = (uintptr_t*)addr;
@@ -433,7 +433,7 @@ void* getPointer(const uintptr_t addr)
 
 PluginCategory getPluginCategoryFromName(const char* const name)
 {
-    Q_ASSERT(name);
+    CARLA_ASSERT(name);
     qDebug("CarlaBackend::getPluginCategoryFromName(\"%s\")", name);
 
     QString qname(name);

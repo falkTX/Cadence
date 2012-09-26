@@ -157,7 +157,7 @@ protected:
             uint8_t status  = midiEvent.data[0];
             uint8_t channel = status & 0x0F;
 
-            Q_ASSERT(channel < 16);
+            CARLA_ASSERT(channel < 16);
 
             if (channel >= 16)
                 continue;

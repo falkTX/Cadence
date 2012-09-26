@@ -69,7 +69,7 @@ public:
 
     uint32_t getBufferSize() const
     {
-        Q_ASSERT(host);
+        CARLA_ASSERT(host);
 
         if (host)
             return host->get_buffer_size(host->handle);
@@ -79,7 +79,7 @@ public:
 
     double getSampleRate() const
     {
-        Q_ASSERT(host);
+        CARLA_ASSERT(host);
 
         if (host)
             return host->get_sample_rate(host->handle);
@@ -89,7 +89,7 @@ public:
 
     const TimeInfo* getTimeInfo() const
     {
-        Q_ASSERT(host);
+        CARLA_ASSERT(host);
 
         if (host)
             return host->get_time_info(host->handle);
@@ -99,7 +99,7 @@ public:
 
     void writeMidiEvent(MidiEvent* event)
     {
-        Q_ASSERT(host);
+        CARLA_ASSERT(host);
 
         if (host)
             host->write_midi_event(host->handle, event);
@@ -163,48 +163,48 @@ protected:
 
     virtual PortType getPortType(uint32_t index)
     {
-        Q_ASSERT(index < getPortCount());
+        CARLA_ASSERT(index < getPortCount());
 
         return PORT_TYPE_NULL;
     }
 
     virtual uint32_t getPortHints(uint32_t index)
     {
-        Q_ASSERT(index < getPortCount());
+        CARLA_ASSERT(index < getPortCount());
 
         return 0;
     }
 
     virtual const char* getPortName(uint32_t index)
     {
-        Q_ASSERT(index < getPortCount());
+        CARLA_ASSERT(index < getPortCount());
 
         return nullptr;
     }
 
     virtual void getParameterRanges(uint32_t index, ParameterRanges* ranges)
     {
-        Q_ASSERT(index < getPortCount());
-        Q_ASSERT(ranges);
+        CARLA_ASSERT(index < getPortCount());
+        CARLA_ASSERT(ranges);
     }
 
     virtual double getParameterValue(uint32_t index)
     {
-        Q_ASSERT(index < getPortCount());
+        CARLA_ASSERT(index < getPortCount());
 
         return 0.0;
     }
 
     virtual const char* getParameterText(uint32_t index)
     {
-        Q_ASSERT(index < getPortCount());
+        CARLA_ASSERT(index < getPortCount());
 
         return nullptr;
     }
 
     virtual const char* getParameterUnit(uint32_t index)
     {
-        Q_ASSERT(index < getPortCount());
+        CARLA_ASSERT(index < getPortCount());
 
         return nullptr;
     }
@@ -218,28 +218,28 @@ protected:
 
     virtual void getMidiProgram(uint32_t index, MidiProgram* midiProgram)
     {
-        Q_ASSERT(index < getMidiProgramCount());
-        Q_ASSERT(midiProgram);
+        CARLA_ASSERT(index < getMidiProgramCount());
+        CARLA_ASSERT(midiProgram);
     }
 
     // -------------------------------------------------------------------
 
     virtual void setParameterValue(uint32_t index, double value)
     {
-        Q_ASSERT(index < getPortCount());
+        CARLA_ASSERT(index < getPortCount());
         Q_UNUSED(value);
     }
 
     virtual void setMidiProgram(uint32_t bank, uint32_t program)
     {
-        Q_ASSERT(program < 128);
+        CARLA_ASSERT(program < 128);
         Q_UNUSED(bank);
     }
 
     virtual void setCustomData(const char* key, const char* value)
     {
-        Q_ASSERT(key);
-        Q_ASSERT(value);
+        CARLA_ASSERT(key);
+        CARLA_ASSERT(value);
     }
 
     // -------------------------------------------------------------------
@@ -267,9 +267,9 @@ protected:
 
     virtual void process(float** inBuffer, float** outBuffer, const uint32_t frames, uint32_t midiEventCount, MidiEvent* midiEvents)
     {
-        Q_ASSERT(inBuffer);
-        Q_ASSERT(outBuffer);
-        Q_ASSERT(midiEvents);
+        CARLA_ASSERT(inBuffer);
+        CARLA_ASSERT(outBuffer);
+        CARLA_ASSERT(midiEvents);
 
         Q_UNUSED(frames);
         Q_UNUSED(midiEventCount);

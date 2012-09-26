@@ -118,7 +118,7 @@ public:
 
     long uniqueId()
     {
-        Q_ASSERT(descriptor);
+        CARLA_ASSERT(descriptor);
 
         return descriptor->UniqueID;
     }
@@ -128,7 +128,7 @@ public:
 
     uint32_t parameterScalePointCount(const uint32_t parameterId)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         int32_t rindex = param.data[parameterId].rindex;
 
@@ -148,15 +148,15 @@ public:
 
     double getParameterValue(const uint32_t parameterId)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         return paramBuffers[parameterId];
     }
 
     double getParameterScalePointValue(const uint32_t parameterId, const uint32_t scalePointId)
     {
-        Q_ASSERT(parameterId < param.count);
-        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
+        CARLA_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(scalePointId < parameterScalePointCount(parameterId));
 
         int32_t rindex = param.data[parameterId].rindex;
 
@@ -178,7 +178,7 @@ public:
 
     void getLabel(char* const strBuf)
     {
-        Q_ASSERT(descriptor);
+        CARLA_ASSERT(descriptor);
 
         if (descriptor && descriptor->Label)
             strncpy(strBuf, descriptor->Label, STR_MAX);
@@ -188,7 +188,7 @@ public:
 
     void getMaker(char* const strBuf)
     {
-        Q_ASSERT(descriptor);
+        CARLA_ASSERT(descriptor);
 
         if (rdf_descriptor && rdf_descriptor->Creator)
             strncpy(strBuf, rdf_descriptor->Creator, STR_MAX);
@@ -200,7 +200,7 @@ public:
 
     void getCopyright(char* const strBuf)
     {
-        Q_ASSERT(descriptor);
+        CARLA_ASSERT(descriptor);
 
         if (descriptor && descriptor->Copyright)
             strncpy(strBuf, descriptor->Copyright, STR_MAX);
@@ -210,7 +210,7 @@ public:
 
     void getRealName(char* const strBuf)
     {
-        Q_ASSERT(descriptor);
+        CARLA_ASSERT(descriptor);
 
         if (rdf_descriptor && rdf_descriptor->Title)
             strncpy(strBuf, rdf_descriptor->Title, STR_MAX);
@@ -222,8 +222,8 @@ public:
 
     void getParameterName(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(descriptor);
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(parameterId < param.count);
 
         int32_t rindex = param.data[parameterId].rindex;
 
@@ -235,7 +235,7 @@ public:
 
     void getParameterSymbol(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         int32_t rindex = param.data[parameterId].rindex;
 
@@ -255,7 +255,7 @@ public:
 
     void getParameterUnit(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         int32_t rindex = param.data[parameterId].rindex;
 
@@ -294,8 +294,8 @@ public:
 
     void getParameterScalePointLabel(const uint32_t parameterId, const uint32_t scalePointId, char* const strBuf)
     {
-        Q_ASSERT(parameterId < param.count);
-        Q_ASSERT(scalePointId < parameterScalePointCount(parameterId));
+        CARLA_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(scalePointId < parameterScalePointCount(parameterId));
 
         int32_t rindex = param.data[parameterId].rindex;
 
@@ -323,7 +323,7 @@ public:
 
     void setParameterValue(const uint32_t parameterId, double value, const bool sendGui, const bool sendOsc, const bool sendCallback)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         paramBuffers[parameterId] = fixParameterValue(value, param.ranges[parameterId]);
 
@@ -336,7 +336,7 @@ public:
     void reload()
     {
         qDebug("LadspaPlugin::reload() - start");
-        Q_ASSERT(descriptor);
+        CARLA_ASSERT(descriptor);
 
         // Safely disable plugin for reload
         const ScopedDisabler m(this);

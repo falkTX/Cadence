@@ -24,8 +24,8 @@
 #define CARLA_BRIDGE_OSC_HANDLE_ARGS const int argc, const lo_arg* const* const argv, const char* const types
 
 #define CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(/* argc, types, */ argcToCompare, typesToCompare)                                  \
-    Q_ASSERT(m_serverPath);                                                                                                 \
-    Q_ASSERT(m_serverThread);                                                                                               \
+    CARLA_ASSERT(m_serverPath);                                                                                             \
+    CARLA_ASSERT(m_serverThread);                                                                                           \
     /* check argument count */                                                                                              \
     if (argc != argcToCompare)                                                                                              \
     {                                                                                                                       \
@@ -75,7 +75,7 @@ public:
 
     void sendOscConfigure(const char* const key, const char* const value)
     {
-        Q_ASSERT(m_controlData.target);
+        CARLA_ASSERT(m_controlData.target);
 
         if (m_controlData.target)
             osc_send_configure(&m_controlData, key, value);
@@ -83,7 +83,7 @@ public:
 
     void sendOscControl(const int32_t index, const float value)
     {
-        Q_ASSERT(m_controlData.target);
+        CARLA_ASSERT(m_controlData.target);
 
         if (m_controlData.target)
             osc_send_control(&m_controlData, index, value);
@@ -91,7 +91,7 @@ public:
 
     void sendOscProgram(const int32_t index)
     {
-        Q_ASSERT(m_controlData.target);
+        CARLA_ASSERT(m_controlData.target);
 
         if (m_controlData.target)
             osc_send_program(&m_controlData, index);
@@ -99,7 +99,7 @@ public:
 
     void sendOscMidiProgram(const int32_t index)
     {
-        Q_ASSERT(m_controlData.target);
+        CARLA_ASSERT(m_controlData.target);
 
         if (m_controlData.target)
             osc_send_midi_program(&m_controlData, index);
@@ -107,7 +107,7 @@ public:
 
     void sendOscMidi(const uint8_t midiBuf[4])
     {
-        Q_ASSERT(m_controlData.target);
+        CARLA_ASSERT(m_controlData.target);
 
         if (m_controlData.target)
             osc_send_midi(&m_controlData, midiBuf);
@@ -115,7 +115,7 @@ public:
 
     void sendOscUpdate()
     {
-        Q_ASSERT(m_controlData.target);
+        CARLA_ASSERT(m_controlData.target);
 
         if (m_controlData.target)
             osc_send_update(&m_controlData, m_serverPath);
@@ -123,7 +123,7 @@ public:
 
     void sendOscExiting()
     {
-        Q_ASSERT(m_controlData.target);
+        CARLA_ASSERT(m_controlData.target);
 
         if (m_controlData.target)
             osc_send_exiting(&m_controlData);
@@ -132,7 +132,7 @@ public:
 #ifdef BUILD_BRIDGE_PLUGIN
     void sendOscBridgeUpdate()
     {
-        Q_ASSERT(m_controlData.target && m_serverPath);
+        CARLA_ASSERT(m_controlData.target && m_serverPath);
 
         if (m_controlData.target && m_serverPath)
             osc_send_bridge_update(&m_controlData, m_serverPath);
@@ -140,8 +140,8 @@ public:
 
     void sendOscBridgeError(const char* const error)
     {
-        Q_ASSERT(m_controlData.target && m_serverPath);
-        Q_ASSERT(error);
+        CARLA_ASSERT(m_controlData.target && m_serverPath);
+        CARLA_ASSERT(error);
 
         if (m_controlData.target && m_serverPath)
             osc_send_bridge_error(&m_controlData, error);
@@ -151,7 +151,7 @@ public:
 #ifdef BRIDGE_LV2
     void sendOscLv2TransferAtom(const int32_t portIndex, const char* const typeStr, const char* const atomBuf)
     {
-        Q_ASSERT(m_controlData.target);
+        CARLA_ASSERT(m_controlData.target);
 
         if (m_controlData.target)
             osc_send_lv2_transfer_atom(&m_controlData, portIndex, typeStr, atomBuf);
@@ -159,7 +159,7 @@ public:
 
     void sendOscLv2TransferEvent(const int32_t portIndex, const char* const typeStr, const char* const atomBuf)
     {
-        Q_ASSERT(m_controlData.target);
+        CARLA_ASSERT(m_controlData.target);
 
         if (m_controlData.target)
             osc_send_lv2_transfer_event(&m_controlData, portIndex, typeStr, atomBuf);
@@ -200,7 +200,7 @@ private:
 
     static int osc_message_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg, void* const user_data)
     {
-        Q_ASSERT(user_data);
+        CARLA_ASSERT(user_data);
         CarlaBridgeOsc* const _this_ = (CarlaBridgeOsc*)user_data;
         return _this_->handleMessage(path, argc, argv, types, msg);
     }

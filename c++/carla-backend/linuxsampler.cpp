@@ -127,7 +127,7 @@ public:
     void reload()
     {
         qDebug("LinuxSamplerPlugin::reload() - start");
-        Q_ASSERT(instrument);
+        CARLA_ASSERT(instrument);
 
         // Safely disable plugin for reload
         const ScopedDisabler m(this);
@@ -234,7 +234,7 @@ public:
         midiprog.count += instrumentIds.size();
 
         // sound kits must always have at least 1 midi-program
-        Q_ASSERT(midiprog.count > 0);
+        CARLA_ASSERT(midiprog.count > 0);
 
         if (midiprog.count > 0)
             midiprog.data = new midi_program_t [midiprog.count];

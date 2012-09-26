@@ -28,7 +28,7 @@ void osc_error_handler(const int num, const char* const msg, const char* const p
 CarlaOsc::CarlaOsc(CarlaEngine* const engine_) :
     engine(engine_)
 {
-    Q_ASSERT(engine);
+    CARLA_ASSERT(engine);
     qDebug("CarlaOsc::CarlaOsc(%p)", engine_);
 
     m_serverPathTCP = nullptr;
@@ -50,8 +50,8 @@ CarlaOsc::~CarlaOsc()
 
 void CarlaOsc::init(const char* const name)
 {
-    Q_ASSERT(name);
-    Q_ASSERT(m_name_len == 0);
+    CARLA_ASSERT(name);
+    CARLA_ASSERT(m_name_len == 0);
     qDebug("CarlaOsc::init(\"%s\")", name);
 
     m_name = strdup(name);
@@ -79,7 +79,7 @@ void CarlaOsc::init(const char* const name)
 
 void CarlaOsc::close()
 {
-    Q_ASSERT(m_name);
+    CARLA_ASSERT(m_name);
     qDebug("CarlaOsc::close()");
 
     osc_clear_data(&m_controlData);
@@ -110,8 +110,8 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
         qDebug("CarlaOsc::handleMessage(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
 #endif
 
-    Q_ASSERT(m_serverThreadTCP || m_serverPathUDP);
-    Q_ASSERT(path);
+    CARLA_ASSERT(m_serverThreadTCP || m_serverPathUDP);
+    CARLA_ASSERT(path);
 
     // Initial path check
     if (strcmp(path, "/register") == 0)

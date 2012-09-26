@@ -169,7 +169,7 @@ public:
 
     int32_t chunkData(void** const dataPtr)
     {
-        Q_ASSERT(dataPtr);
+        CARLA_ASSERT(dataPtr);
 
         if (! info.chunk.isEmpty())
         {
@@ -185,7 +185,7 @@ public:
 
     double getParameterValue(const uint32_t parameterId)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         return params[parameterId].value;
     }
@@ -224,14 +224,14 @@ public:
 
     void getParameterName(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         strncpy(strBuf, params[parameterId].name.toUtf8().constData(), STR_MAX);
     }
 
     void getParameterUnit(const uint32_t parameterId, char* const strBuf)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         strncpy(strBuf, params[parameterId].unit.toUtf8().constData(), STR_MAX);
     }
@@ -262,9 +262,9 @@ public:
             const int32_t aOuts  = argv[1]->i;
             const int32_t aTotal = argv[2]->i;
 
-            Q_ASSERT(aIns >= 0);
-            Q_ASSERT(aOuts >= 0);
-            Q_ASSERT(aIns + aOuts == aTotal);
+            CARLA_ASSERT(aIns >= 0);
+            CARLA_ASSERT(aOuts >= 0);
+            CARLA_ASSERT(aIns + aOuts == aTotal);
 
             info.aIns  = aIns;
             info.aOuts = aOuts;
@@ -281,9 +281,9 @@ public:
             const int32_t mOuts  = argv[1]->i;
             const int32_t mTotal = argv[2]->i;
 
-            Q_ASSERT(mIns >= 0);
-            Q_ASSERT(mOuts >= 0);
-            Q_ASSERT(mIns + mOuts == mTotal);
+            CARLA_ASSERT(mIns >= 0);
+            CARLA_ASSERT(mOuts >= 0);
+            CARLA_ASSERT(mIns + mOuts == mTotal);
 
             info.mIns  = mIns;
             info.mOuts = mOuts;
@@ -300,9 +300,9 @@ public:
             const int32_t pOuts  = argv[1]->i;
             const int32_t pTotal = argv[2]->i;
 
-            Q_ASSERT(pIns >= 0);
-            Q_ASSERT(pOuts >= 0);
-            Q_ASSERT(pIns + pOuts <= pTotal);
+            CARLA_ASSERT(pIns >= 0);
+            CARLA_ASSERT(pOuts >= 0);
+            CARLA_ASSERT(pIns + pOuts <= pTotal);
 
             // delete old data
             if (param.count > 0)
@@ -339,7 +339,7 @@ public:
 
             const int32_t count = argv[0]->i;
 
-            Q_ASSERT(count >= 0);
+            CARLA_ASSERT(count >= 0);
 
             // delete old programs
             if (prog.count > 0)
@@ -410,12 +410,12 @@ public:
             const char* const copyright = (const char*)&argv[5]->s;
             const int64_t uniqueId      = argv[6]->h;
 
-            Q_ASSERT(category >= 0);
-            Q_ASSERT(hints >= 0);
-            Q_ASSERT(name);
-            Q_ASSERT(label);
-            Q_ASSERT(maker);
-            Q_ASSERT(copyright);
+            CARLA_ASSERT(category >= 0);
+            CARLA_ASSERT(hints >= 0);
+            CARLA_ASSERT(name);
+            CARLA_ASSERT(label);
+            CARLA_ASSERT(maker);
+            CARLA_ASSERT(copyright);
 
             m_hints = hints | PLUGIN_IS_BRIDGE;
             info.category = (PluginCategory)category;
@@ -440,9 +440,9 @@ public:
             const char* const name = (const char*)&argv[1]->s;
             const char* const unit = (const char*)&argv[2]->s;
 
-            Q_ASSERT(index >= 0 && index < (int32_t)param.count);
-            Q_ASSERT(name);
-            Q_ASSERT(unit);
+            CARLA_ASSERT(index >= 0 && index < (int32_t)param.count);
+            CARLA_ASSERT(name);
+            CARLA_ASSERT(unit);
 
             if (index >= 0 && index < (int32_t)param.count)
             {
@@ -464,12 +464,12 @@ public:
             const int32_t channel = argv[4]->i;
             const int32_t cc      = argv[5]->i;
 
-            Q_ASSERT(index >= 0 && index < (int32_t)param.count);
-            Q_ASSERT(type >= 0);
-            Q_ASSERT(rindex >= 0);
-            Q_ASSERT(hints >= 0);
-            Q_ASSERT(channel >= 0 && channel < 16);
-            Q_ASSERT(cc >= -1);
+            CARLA_ASSERT(index >= 0 && index < (int32_t)param.count);
+            CARLA_ASSERT(type >= 0);
+            CARLA_ASSERT(rindex >= 0);
+            CARLA_ASSERT(hints >= 0);
+            CARLA_ASSERT(channel >= 0 && channel < 16);
+            CARLA_ASSERT(cc >= -1);
 
             if (index >= 0 && index < (int32_t)param.count)
             {
@@ -496,10 +496,10 @@ public:
             const double stepSmall = argv[5]->d;
             const double stepLarge = argv[6]->d;
 
-            Q_ASSERT(index >= 0 && index < (int32_t)param.count);
-            Q_ASSERT(min < max);
-            Q_ASSERT(def >= min);
-            Q_ASSERT(def <= max);
+            CARLA_ASSERT(index >= 0 && index < (int32_t)param.count);
+            CARLA_ASSERT(min < max);
+            CARLA_ASSERT(def >= min);
+            CARLA_ASSERT(def <= max);
 
             if (index >= 0 && index < (int32_t)param.count)
             {
@@ -522,8 +522,8 @@ public:
             const int32_t index    = argv[0]->i;
             const char* const name = (const char*)&argv[1]->s;
 
-            Q_ASSERT(index >= 0 && index < (int32_t)prog.count);
-            Q_ASSERT(name);
+            CARLA_ASSERT(index >= 0 && index < (int32_t)prog.count);
+            CARLA_ASSERT(name);
 
             if (index >= 0 && index < (int32_t)prog.count)
             {
@@ -545,10 +545,10 @@ public:
             const int32_t program  = argv[2]->i;
             const char* const name = (const char*)&argv[3]->s;
 
-            Q_ASSERT(index >= 0 && index < (int32_t)midiprog.count);
-            Q_ASSERT(bank >= 0);
-            Q_ASSERT(program >= 0 && program < 128);
-            Q_ASSERT(name);
+            CARLA_ASSERT(index >= 0 && index < (int32_t)midiprog.count);
+            CARLA_ASSERT(bank >= 0);
+            CARLA_ASSERT(program >= 0 && program < 128);
+            CARLA_ASSERT(name);
 
             if (index >= 0 && index < (int32_t)midiprog.count)
             {
@@ -570,8 +570,8 @@ public:
             const char* const key   = (const char*)&argv[0]->s;
             const char* const value = (const char*)&argv[1]->s;
 
-            Q_ASSERT(key);
-            Q_ASSERT(value);
+            CARLA_ASSERT(key);
+            CARLA_ASSERT(value);
 
             if (! (key && value))
             {
@@ -597,7 +597,7 @@ public:
             const int32_t index = argv[0]->i;
             const double  value = argv[1]->d;
 
-            Q_ASSERT(index != PARAMETER_NULL);
+            CARLA_ASSERT(index != PARAMETER_NULL);
 
             setParameterValueByRIndex(index, value, false, true, true);
 
@@ -611,7 +611,7 @@ public:
             const int32_t index = argv[0]->i;
             const double  value = argv[1]->d;
 
-            Q_ASSERT(index >= 0 && index < (int32_t)param.count);
+            CARLA_ASSERT(index >= 0 && index < (int32_t)param.count);
 
             if (index >= 0 && index < (int32_t)param.count)
                 param.ranges[index].def = value;
@@ -625,7 +625,7 @@ public:
 
             const int32_t index = argv[0]->i;
 
-            Q_ASSERT(index < (int32_t)prog.count);
+            CARLA_ASSERT(index < (int32_t)prog.count);
 
             setProgram(index, false, true, true, true);
 
@@ -638,7 +638,7 @@ public:
 
             const int32_t index = argv[0]->i;
 
-            Q_ASSERT(index < (int32_t)midiprog.count);
+            CARLA_ASSERT(index < (int32_t)midiprog.count);
 
             setMidiProgram(index, false, true, true, true);
 
@@ -653,9 +653,9 @@ public:
             const char* const key   = (const char*)&argv[1]->s;
             const char* const value = (const char*)&argv[2]->s;
 
-            Q_ASSERT(stype);
-            Q_ASSERT(key);
-            Q_ASSERT(value);
+            CARLA_ASSERT(stype);
+            CARLA_ASSERT(key);
+            CARLA_ASSERT(value);
 
             setCustomData(getCustomDataStringType(stype), key, value, false);
 
@@ -668,7 +668,7 @@ public:
 
             const char* const chunkFileChar = (const char*)&argv[0]->s;
 
-            Q_ASSERT(chunkFileChar);
+            CARLA_ASSERT(chunkFileChar);
 
             QString chunkFileStr(chunkFileChar);
 
@@ -725,7 +725,7 @@ public:
 
             const char* const error = (const char*)&argv[0]->s;
 
-            Q_ASSERT(error);
+            CARLA_ASSERT(error);
 
             m_initiated = true;
             m_initError = true;
@@ -744,7 +744,7 @@ public:
 
     void setParameterValue(const uint32_t parameterId, double value, const bool sendGui, const bool sendOsc, const bool sendCallback)
     {
-        Q_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(parameterId < param.count);
 
         params[parameterId].value = fixParameterValue(value, param.ranges[parameterId]);
 
@@ -753,9 +753,9 @@ public:
 
     void setCustomData(const CustomDataType type, const char* const key, const char* const value, const bool sendGui)
     {
-        Q_ASSERT(type != CUSTOM_DATA_INVALID);
-        Q_ASSERT(key);
-        Q_ASSERT(value);
+        CARLA_ASSERT(type != CUSTOM_DATA_INVALID);
+        CARLA_ASSERT(key);
+        CARLA_ASSERT(value);
 
         if (sendGui)
         {
@@ -774,8 +774,8 @@ public:
 
     void setChunkData(const char* const stringData)
     {
-        Q_ASSERT(m_hints & PLUGIN_USES_CHUNKS);
-        Q_ASSERT(stringData);
+        CARLA_ASSERT(m_hints & PLUGIN_USES_CHUNKS);
+        CARLA_ASSERT(stringData);
 
         QString filePath;
         filePath  = QDir::tempPath();
@@ -840,7 +840,7 @@ public:
 
     void uiParameterChange(const uint32_t index, const double value)
     {
-        Q_ASSERT(index < param.count);
+        CARLA_ASSERT(index < param.count);
 
         if (index >= param.count)
             return;
@@ -852,7 +852,7 @@ public:
 
     void uiProgramChange(const uint32_t index)
     {
-        Q_ASSERT(index < prog.count);
+        CARLA_ASSERT(index < prog.count);
 
         if (index >= prog.count)
             return;
@@ -864,7 +864,7 @@ public:
 
     void uiMidiProgramChange(const uint32_t index)
     {
-        Q_ASSERT(index < midiprog.count);
+        CARLA_ASSERT(index < midiprog.count);
 
         if (index >= midiprog.count)
             return;
@@ -876,9 +876,9 @@ public:
 
     void uiNoteOn(const uint8_t channel, const uint8_t note, const uint8_t velo)
     {
-        Q_ASSERT(channel < 16);
-        Q_ASSERT(note < 128);
-        Q_ASSERT(velo > 0 && velo < 128);
+        CARLA_ASSERT(channel < 16);
+        CARLA_ASSERT(note < 128);
+        CARLA_ASSERT(velo > 0 && velo < 128);
 
         if (! osc.data.target)
             return;
@@ -892,8 +892,8 @@ public:
 
     void uiNoteOff(const uint8_t channel, const uint8_t note)
     {
-        Q_ASSERT(channel < 16);
-        Q_ASSERT(note < 128);
+        CARLA_ASSERT(channel < 16);
+        CARLA_ASSERT(note < 128);
 
         if (! osc.data.target)
             return;

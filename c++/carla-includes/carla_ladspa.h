@@ -30,7 +30,7 @@
 static inline
 const LADSPA_RDF_Descriptor* ladspa_rdf_dup(const LADSPA_RDF_Descriptor* const rdf_descriptor)
 {
-    Q_ASSERT(rdf_descriptor);
+    CARLA_ASSERT(rdf_descriptor);
 
     LADSPA_RDF_Descriptor* const new_descriptor = new LADSPA_RDF_Descriptor;
 
@@ -135,7 +135,7 @@ bool is_ladspa_port_good(const LADSPA_PortDescriptor port1, const LADSPA_PortDes
 static inline
 bool is_ladspa_rdf_descriptor_valid(const LADSPA_RDF_Descriptor* const rdf_descriptor, const LADSPA_Descriptor* const descriptor)
 {
-    Q_ASSERT(descriptor);
+    CARLA_ASSERT(descriptor);
 
     if (! rdf_descriptor)
         return false;
