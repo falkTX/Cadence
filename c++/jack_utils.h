@@ -23,7 +23,7 @@
 #include <jack/transport.h>
 
 #ifdef HAVE_JACKSESSION
-# include <jack/session.h>
+ #include <jack/session.h>
 #endif
 
 #include <cstring>

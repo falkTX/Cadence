@@ -24,7 +24,7 @@
 #define VERSION "0.5.0"
 
 #include "../jack_utils.h"
-#include "../queue.h"
+#include "../midi_queue.h"
 #include "ui_xycontroller.h"
 
 #include <QtCore/QSettings>
@@ -624,7 +624,7 @@ protected slots:
         ui->act_ch_16->setChecked(true);
 
 #ifdef Q_COMPILER_INITIALIZER_LISTS
-        m_channels = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+        m_channels = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
 #else
         m_channels.clear();
 
@@ -746,11 +746,13 @@ protected:
             }
         }
         else
+        {
 #ifdef Q_COMPILER_INITIALIZER_LISTS
             m_channels = { 1 };
 #else
             m_channels << 1;
 #endif
+        }
 
         scene.setChannels(m_channels);
 
@@ -920,7 +922,7 @@ int process_callback(const jack_nframes_t nframes, void*)
 void session_callback(jack_session_event_t* const event, void* const arg)
 {
 #ifdef Q_OS_LINUX
-    QString filepath("cadence_xycontroller");
+    QString filepath("cadence-xycontroller");
     Q_UNUSED(arg);
 #else
     QString filepath((char*)arg);

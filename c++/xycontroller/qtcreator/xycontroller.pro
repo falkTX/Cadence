@@ -18,6 +18,7 @@ SOURCES  = \
 
 HEADERS  = \
     ../../jack_utils.h \
+    ../../midi_queue.h \
     ../../widgets/pixmapdial.h \
     ../../widgets/pixmapkeyboard.h
 

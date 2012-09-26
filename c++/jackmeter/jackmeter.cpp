@@ -74,7 +74,7 @@ void port_callback(jack_port_id_t, jack_port_id_t, int, void*)
 void session_callback(jack_session_event_t* const event, void* const arg)
 {
 #ifdef Q_OS_LINUX
-    QString filepath("cadence_jackmeter");
+    QString filepath("cadence-jackmeter");
     Q_UNUSED(arg);
 #else
     QString filepath((char*)arg);
