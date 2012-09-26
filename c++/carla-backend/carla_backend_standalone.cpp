@@ -1239,7 +1239,7 @@ const char* get_host_osc_url()
 {
     qDebug("CarlaBackendStandalone::get_host_osc_url()");
 
-    return carlaEngine->getOscServerPath();
+    return carlaEngine->getOscServerPathTCP();
 }
 
 // -------------------------------------------------------------------------------------------------------------------

@@ -1408,9 +1408,9 @@ public:
     /*!
      * Register this plugin to the engine's OSC controller.
      */
-    void registerToOsc()
+    void registerToOscControl()
     {
-        if (! x_engine->isOscControllerRegisted())
+        if (! x_engine->isOscControlRegisted())
             return;
 
 #ifndef BUILD_BRIDGE
@@ -1547,12 +1547,20 @@ public:
 
         host = lo_address_get_hostname(source);
         port = lo_address_get_port(source);
-        osc.data.source = lo_address_new(host, port);
+
+        if (m_type == PLUGIN_DSSI)
+            osc.data.source = lo_address_new_with_proto(LO_UDP, host, port);
+        else
+            osc.data.source = lo_address_new_with_proto(LO_TCP, host, port);
 
         host = lo_url_get_hostname(url);
         port = lo_url_get_port(url);
         osc.data.path   = lo_url_get_path(url);
-        osc.data.target = lo_address_new(host, port);
+
+        if (m_type == PLUGIN_DSSI)
+            osc.data.target = lo_address_new_with_proto(LO_UDP, host, port);
+        else
+            osc.data.target = lo_address_new_with_proto(LO_TCP, host, port);
 
         free((void*)host);
         free((void*)port);

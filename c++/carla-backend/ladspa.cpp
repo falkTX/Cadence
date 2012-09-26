@@ -1172,7 +1172,7 @@ CarlaPlugin* CarlaPlugin::newLADSPA(const initializer& init, const void* const e
     }
 #endif
 
-    plugin->registerToOsc();
+    plugin->registerToOscControl();
 
     return plugin;
 #else

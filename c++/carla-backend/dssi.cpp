@@ -748,7 +748,7 @@ public:
 
 #ifndef BUILD_BRIDGE
         // Update OSC Names
-        if (x_engine->isOscControllerRegisted())
+        if (x_engine->isOscControlRegisted())
         {
             x_engine->osc_send_control_set_midi_program_count(m_id, midiprog.count);
 
@@ -1564,7 +1564,7 @@ CarlaPlugin* CarlaPlugin::newDSSI(const initializer& init, const void* const ext
     }
 #endif
 
-    plugin->registerToOsc();
+    plugin->registerToOscControl();
 
     return plugin;
 #else

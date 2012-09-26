@@ -108,7 +108,7 @@ bool CarlaEngine::init(const char* const clientName)
 
 #ifndef BUILD_BRIDGE
     m_osc.init(clientName);
-    m_oscData = m_osc.getControllerData();
+    m_oscData = m_osc.getControlData();
 
     carla_setprocname(clientName);
 #endif
@@ -539,19 +539,24 @@ void CarlaEngine::midiUnlock()
 // -----------------------------------------------------------------------
 // OSC Stuff
 
-bool CarlaEngine::isOscControllerRegisted() const
+bool CarlaEngine::isOscControlRegisted() const
 {
 #ifndef BUILD_BRIDGE
-    return m_osc.isControllerRegistered();
+    return m_osc.isControlRegistered();
 #else
     return bool(m_oscData);
 #endif
 }
 
 #ifndef BUILD_BRIDGE
-const char* CarlaEngine::getOscServerPath() const
+const char* CarlaEngine::getOscServerPathTCP() const
 {
-    return m_osc.getServerPath();
+    return m_osc.getServerPathTCP();
+}
+
+const char* CarlaEngine::getOscServerPathUDP() const
+{
+    return m_osc.getServerPathUDP();
 }
 #else
 void CarlaEngine::setOscBridgeData(const CarlaOscData* const oscData)

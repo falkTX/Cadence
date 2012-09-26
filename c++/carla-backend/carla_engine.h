@@ -260,10 +260,11 @@ public:
     // -------------------------------------------------------------------
     // OSC Stuff
 
-    bool isOscControllerRegisted() const;
+    bool isOscControlRegisted() const;
 
 #ifndef BUILD_BRIDGE
-    const char* getOscServerPath() const;
+    const char* getOscServerPathTCP() const;
+    const char* getOscServerPathUDP() const;
 #else
     void setOscBridgeData(const CarlaOscData* const oscData);
 #endif

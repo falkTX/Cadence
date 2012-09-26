@@ -252,7 +252,7 @@ public:
 
 #ifndef BUILD_BRIDGE
         // Update OSC Names
-        if (x_engine->isOscControllerRegisted())
+        if (x_engine->isOscControlRegisted())
         {
             x_engine->osc_send_control_set_midi_program_count(m_id, midiprog.count);
 
@@ -608,7 +608,7 @@ CarlaPlugin* LinuxSamplerPlugin::newLinuxSampler(const initializer& init, bool i
     }
 
     plugin->reload();
-    plugin->registerToOsc();
+    plugin->registerToOscControl();
 
     return plugin;
 }

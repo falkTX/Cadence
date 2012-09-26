@@ -72,7 +72,7 @@ bool CarlaBridgeOsc::init(const char* const url)
     char* port = lo_url_get_port(url);
 
     m_controlData.path   = lo_url_get_path(url);
-    m_controlData.target = lo_address_new(host, port);
+    m_controlData.target = lo_address_new_with_proto(LO_TCP, host, port);
 
     free(host);
     free(port);
@@ -84,7 +84,7 @@ bool CarlaBridgeOsc::init(const char* const url)
     }
 
     // create new OSC thread
-    m_serverThread = lo_server_thread_new(nullptr, osc_error_handler);
+    m_serverThread = lo_server_thread_new_with_proto(nullptr, LO_TCP, osc_error_handler);
 
     // get our full OSC server path
     char* const threadPath = lo_server_thread_get_url(m_serverThread);

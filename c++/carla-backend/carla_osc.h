@@ -60,27 +60,34 @@ public:
 
     // -------------------------------------------------------------------
 
-    bool isControllerRegistered() const
+    bool isControlRegistered() const
     {
-        return bool(m_controllerData.target);
+        return bool(m_controlData.target);
     }
 
-    const CarlaOscData* getControllerData() const
+    const CarlaOscData* getControlData() const
     {
-        return &m_controllerData;
+        return &m_controlData;
     }
 
-    const char* getServerPath() const
+    const char* getServerPathTCP() const
     {
-        return m_serverPath;
+        return m_serverPathTCP;
+    }
+
+    const char* getServerPathUDP() const
+    {
+        return m_serverPathUDP;
     }
 
 private:
     CarlaEngine* const engine;
 
-    const char* m_serverPath;
-    lo_server_thread m_serverThread;
-    CarlaOscData m_controllerData;
+    const char* m_serverPathTCP;
+    const char* m_serverPathUDP;
+    lo_server_thread m_serverThreadTCP;
+    lo_server_thread m_serverThreadUDP;
+    CarlaOscData m_controlData; // for carla-control
 
     const char* m_name;
     size_t m_name_len;

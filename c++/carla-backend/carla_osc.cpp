@@ -31,11 +31,13 @@ CarlaOsc::CarlaOsc(CarlaEngine* const engine_) :
     Q_ASSERT(engine);
     qDebug("CarlaOsc::CarlaOsc(%p)", engine_);
 
-    m_serverPath = nullptr;
-    m_serverThread = nullptr;
-    m_controllerData.path = nullptr;
-    m_controllerData.source = nullptr;
-    m_controllerData.target = nullptr;
+    m_serverPathTCP = nullptr;
+    m_serverPathUDP = nullptr;
+    m_serverThreadTCP = nullptr;
+    m_serverThreadUDP = nullptr;
+    m_controlData.path = nullptr;
+    m_controlData.source = nullptr;
+    m_controlData.target = nullptr;
 
     m_name = nullptr;
     m_name_len = 0;
@@ -56,16 +58,23 @@ void CarlaOsc::init(const char* const name)
     m_name_len = strlen(name);
 
     // create new OSC thread
-    m_serverThread = lo_server_thread_new_with_proto(nullptr, LO_TCP, osc_error_handler);
+    m_serverThreadTCP = lo_server_thread_new_with_proto(nullptr, LO_TCP, osc_error_handler);
+    m_serverThreadUDP = lo_server_thread_new_with_proto(nullptr, LO_UDP, osc_error_handler);
 
     // get our full OSC server path
-    char* const threadPath = lo_server_thread_get_url(m_serverThread);
-    m_serverPath = strdup(QString("%1%2").arg(threadPath).arg(name).toUtf8().constData());
-    free(threadPath);
+    char* const threadPathTCP = lo_server_thread_get_url(m_serverThreadTCP);
+    m_serverPathTCP = strdup(QString("%1%2").arg(threadPathTCP).arg(name).toUtf8().constData());
+    free(threadPathTCP);
+
+    char* const threadPathUDP = lo_server_thread_get_url(m_serverThreadUDP);
+    m_serverPathUDP = strdup(QString("%1%2").arg(threadPathUDP).arg(name).toUtf8().constData());
+    free(threadPathUDP);
 
     // register message handler and start OSC thread
-    lo_server_thread_add_method(m_serverThread, nullptr, nullptr, osc_message_handler, this);
-    lo_server_thread_start(m_serverThread);
+    lo_server_thread_add_method(m_serverThreadTCP, nullptr, nullptr, osc_message_handler, this);
+    lo_server_thread_add_method(m_serverThreadUDP, nullptr, nullptr, osc_message_handler, this);
+    lo_server_thread_start(m_serverThreadTCP);
+    lo_server_thread_start(m_serverThreadUDP);
 }
 
 void CarlaOsc::close()
@@ -73,14 +82,19 @@ void CarlaOsc::close()
     Q_ASSERT(m_name);
     qDebug("CarlaOsc::close()");
 
-    osc_clear_data(&m_controllerData);
+    osc_clear_data(&m_controlData);
 
-    lo_server_thread_stop(m_serverThread);
-    lo_server_thread_del_method(m_serverThread, nullptr, nullptr);
-    lo_server_thread_free(m_serverThread);
+    lo_server_thread_stop(m_serverThreadTCP);
+    lo_server_thread_stop(m_serverThreadUDP);
+    lo_server_thread_del_method(m_serverThreadTCP, nullptr, nullptr);
+    lo_server_thread_del_method(m_serverThreadUDP, nullptr, nullptr);
+    lo_server_thread_free(m_serverThreadTCP);
+    lo_server_thread_free(m_serverThreadUDP);
 
-    free((void*)m_serverPath);
-    m_serverPath = nullptr;
+    free((void*)m_serverPathTCP);
+    free((void*)m_serverPathUDP);
+    m_serverPathTCP = nullptr;
+    m_serverPathUDP = nullptr;
 
     free((void*)m_name);
     m_name = nullptr;
@@ -95,9 +109,8 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
     if (! QString(path).contains("put_peak_value"))
         qDebug("CarlaOsc::handleMessage(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
 #endif
-    qWarning("CarlaOsc::handleMessage(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
 
-    Q_ASSERT(m_serverThread);
+    Q_ASSERT(m_serverThreadTCP || m_serverPathUDP);
     Q_ASSERT(path);
 
     // Initial path check
@@ -258,9 +271,9 @@ int CarlaOsc::handleMsgRegister(const int argc, const lo_arg* const* const argv,
     qDebug("CarlaOsc::handleMsgRegister()");
     CARLA_OSC_CHECK_OSC_TYPES(1, "s");
 
-    if (m_controllerData.path)
+    if (m_controlData.path)
     {
-        qWarning("CarlaOsc::handleMsgRegister() - OSC backend already registered to %s", m_controllerData.path);
+        qWarning("CarlaOsc::handleMsgRegister() - OSC backend already registered to %s", m_controlData.path);
         return 1;
     }
 
@@ -272,12 +285,12 @@ int CarlaOsc::handleMsgRegister(const int argc, const lo_arg* const* const argv,
 
     host = lo_address_get_hostname(source);
     port = lo_address_get_port(source);
-    m_controllerData.source = lo_address_new_with_proto(LO_TCP, host, port);
+    m_controlData.source = lo_address_new_with_proto(LO_TCP, host, port);
 
     host = lo_url_get_hostname(url);
     port = lo_url_get_port(url);
-    m_controllerData.path   = lo_url_get_path(url);
-    m_controllerData.target = lo_address_new_with_proto(LO_TCP, host, port);
+    m_controlData.path   = lo_url_get_path(url);
+    m_controlData.target = lo_address_new_with_proto(LO_TCP, host, port);
 
     free((void*)host);
     free((void*)port);
@@ -288,7 +301,7 @@ int CarlaOsc::handleMsgRegister(const int argc, const lo_arg* const* const argv,
         CarlaPlugin* const plugin = engine->getPluginUnchecked(i);
 
         if (plugin && plugin->enabled())
-            plugin->registerToOsc();
+            plugin->registerToOscControl();
     }
 
     return 0;
@@ -298,13 +311,13 @@ int CarlaOsc::handleMsgUnregister()
 {
     qDebug("CarlaOsc::handleMsgUnregister()");
 
-    if (! m_controllerData.path)
+    if (! m_controlData.path)
     {
         qWarning("CarlaOsc::handleMsgUnregister() - OSC backend is not registered yet");
         return 1;
     }
 
-    osc_clear_data(&m_controllerData);
+    osc_clear_data(&m_controlData);
     return 0;
 }
 

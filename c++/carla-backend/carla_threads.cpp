@@ -64,7 +64,7 @@ void CarlaCheckThread::run()
 
     using namespace CarlaBackend;
 
-    bool oscControllerRegisted, usesSingleThread;
+    bool oscControlRegisted, usesSingleThread;
     unsigned short id, maxPluginNumber = CarlaEngine::maxPluginNumber();
     double value;
 
@@ -73,7 +73,7 @@ void CarlaCheckThread::run()
     while (engine->isRunning() && ! m_stopNow)
     {
         const ScopedLocker m(this);
-        oscControllerRegisted = engine->isOscControllerRegisted();
+        oscControlRegisted = engine->isOscControlRegisted();
 
         for (unsigned short i=0; i < maxPluginNumber; i++)
         {
@@ -93,7 +93,7 @@ void CarlaCheckThread::run()
                 // -------------------------------------------------------
                 // Update parameter outputs
 
-                if (oscControllerRegisted || ! usesSingleThread)
+                if (oscControlRegisted || ! usesSingleThread)
                 {
                     for (uint32_t i=0; i < plugin->parameterCount(); i++)
                     {
@@ -106,12 +106,14 @@ void CarlaCheckThread::run()
                                 plugin->uiParameterChange(i, value);
 
                             // Update OSC control client
-                            if (oscControllerRegisted)
+                            if (oscControlRegisted)
+                            {
 #ifdef BUILD_BRIDGE
                                 engine->osc_send_bridge_set_parameter_value(i, value);
 #else
                                 engine->osc_send_control_set_parameter_value(id, i, value);
 #endif
+                            }
                         }
                     }
                 }
@@ -119,7 +121,7 @@ void CarlaCheckThread::run()
                 // -------------------------------------------------------
                 // Update OSC control client
 
-                if (oscControllerRegisted)
+                if (oscControlRegisted)
                 {
                     // Peak values
                     if (plugin->audioInCount() > 0)
@@ -211,21 +213,21 @@ void CarlaPluginThread::run()
     switch (mode)
     {
     case PLUGIN_THREAD_DSSI_GUI:
-        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath()).arg(plugin->id());
+        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPathUDP()).arg(plugin->id());
         /* filename */ arguments << plugin->filename();
         /* label    */ arguments << m_label;
         /* ui-title */ arguments << QString("%1 (GUI)").arg(plugin->name());
         break;
 
     case PLUGIN_THREAD_LV2_GUI:
-        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath()).arg(plugin->id());
+        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPathTCP()).arg(plugin->id());
         /* URI      */ arguments << m_label;
         /* ui-URI   */ arguments << m_data1;
         /* ui-title */ arguments << QString("%1 (GUI)").arg(plugin->name());
         break;
 
     case PLUGIN_THREAD_VST_GUI:
-        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath()).arg(plugin->id());
+        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPathTCP()).arg(plugin->id());
         /* filename */ arguments << plugin->filename();
         /* ui-title */ arguments << QString("%1 (GUI)").arg(plugin->name());
         break;
@@ -237,7 +239,7 @@ void CarlaPluginThread::run()
         if (! name)
             name = "(none)";
 
-        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPath()).arg(plugin->id());
+        /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPathTCP()).arg(plugin->id());
         /* stype    */ arguments << m_data1;
         /* filename */ arguments << plugin->filename();
         /* name     */ arguments << name;
