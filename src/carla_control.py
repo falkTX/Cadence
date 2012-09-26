@@ -197,25 +197,32 @@ class Host(object):
             self.pluginInfo[index].midiProgramDataS.append(midi_program_t)
 
     def _set_parameterInfoS(self, index, paramIndex, data):
-        self.pluginInfo[index].parameterInfoS[paramIndex] = data
+        if paramIndex < self.pluginInfo[index].parameterCountInfo['total']:
+            self.pluginInfo[index].parameterInfoS[paramIndex] = data
 
     def _set_parameterDataS(self, index, paramIndex, data):
-        self.pluginInfo[index].parameterDataS[paramIndex] = data
+        if paramIndex < self.pluginInfo[index].parameterCountInfo['total']:
+            self.pluginInfo[index].parameterDataS[paramIndex] = data
 
     def _set_parameterRangeS(self, index, paramIndex, data):
-        self.pluginInfo[index].parameterRangeS[paramIndex] = data
+        if paramIndex < self.pluginInfo[index].parameterCountInfo['total']:
+            self.pluginInfo[index].parameterRangeS[paramIndex] = data
 
     def _set_parameterValueS(self, index, paramIndex, value):
-        self.pluginInfo[index].parameterValueS[paramIndex] = value
+        if paramIndex < self.pluginInfo[index].parameterCountInfo['total']:
+            self.pluginInfo[index].parameterValueS[paramIndex] = value
 
     def _set_parameterDefaultValue(self, index, paramIndex, value):
-        self.pluginInfo[index].parameterRangeS[paramIndex]['def'] = value
+        if paramIndex < self.pluginInfo[index].parameterCountInfo['total']:
+            self.pluginInfo[index].parameterRangeS[paramIndex]['def'] = value
 
     def _set_parameterMidiCC(self, index, paramIndex, cc):
-        self.pluginInfo[index].parameterDataS[paramIndex]['midiCC'] = cc
+        if paramIndex < self.pluginInfo[index].parameterCountInfo['total']:
+            self.pluginInfo[index].parameterDataS[paramIndex]['midiCC'] = cc
 
     def _set_parameterMidiChannel(self, index, paramIndex, channel):
-        self.pluginInfo[index].parameterDataS[paramIndex]['midiChannel'] = channel
+        if paramIndex < self.pluginInfo[index].parameterCountInfo['total']:
+            self.pluginInfo[index].parameterDataS[paramIndex]['midiChannel'] = channel
 
     def _set_currentProgram(self, index, pIndex):
         self.pluginInfo[index].programCurrent = pIndex
@@ -224,10 +231,12 @@ class Host(object):
         self.pluginInfo[index].midiProgramCurrent = mpIndex
 
     def _set_programNameS(self, index, pIndex, data):
-        self.pluginInfo[index].programNameS[pIndex] = data
+        if pIndex < self.pluginInfo[index].programCount:
+            self.pluginInfo[index].programNameS[pIndex] = data
 
     def _set_midiProgramDataS(self, index, mpIndex, data):
-        self.pluginInfo[index].midiProgramDataS[mpIndex] = data
+        if mpIndex < self.pluginInfo[index].midiProgramCount:
+            self.pluginInfo[index].midiProgramDataS[mpIndex] = data
 
     def _set_inPeak(self, index, port, value):
         self.pluginInfo[index].inPeak[port] = value
@@ -462,7 +471,7 @@ class ControlServer(ServerThread):
         pluginId, count = args
         self.parent.emit(SIGNAL("SetMidiProgramCount(int, int)"), pluginId, count)
 
-    @make_method('/carla-control/set_midi_program_data', 'iiiiis')
+    @make_method('/carla-control/set_midi_program_data', 'iiiis')
     def set_midi_program_data_callback(self, path, args):
         pluginId, index, bank, program, name = args
         self.parent.emit(SIGNAL("SetMidiProgramData(int, int, int, int, QString)"), pluginId, index, bank, program, name)
@@ -600,15 +609,14 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         if lo_target and self.lo_server:
             urlText = self.lo_address
         else:
-            urlText = "osc.udp://falkTX-Laptop:15352/Carla" #"osc.udp://127.0.0.1:19000/Carla"
+            urlText = "osc.udp://falkTX-Laptop:12342/Carla" #"osc.udp://127.0.0.1:19000/Carla"
 
         askValue = QInputDialog.getText(self, self.tr("Carla Control - Connect"), self.tr("Address"), text=urlText)
 
         if not askValue[1]:
             return
 
-        if lo_target and self.lo_server:
-            lo_send(lo_target, "/unregister")
+        self.slot_handleExit()
 
         self.lo_address = askValue[0]
         lo_target       = Address(self.lo_address)
@@ -620,6 +628,7 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         except: # ServerError, err:
             print("Connecting error!")
             #print str(err)
+            QMessageBox.critical(self, self.tr("Error"), self.tr("Failed to connect, operation failed."))
 
         if self.lo_server:
             self.lo_server.start()
