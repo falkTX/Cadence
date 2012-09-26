@@ -20,6 +20,7 @@
 from PyQt4.QtGui import QApplication, QMainWindow
 from liblo import make_method, Address, ServerError, ServerThread
 from liblo import send as lo_send
+from liblo import TCP as LO_TCP
 
 # Imports (Custom)
 import ui_carla_about, ui_carla_control
@@ -384,7 +385,7 @@ class Host(object):
 # OSC Control server
 class ControlServer(ServerThread):
     def __init__(self, parent):
-        ServerThread.__init__(self, 8087)
+        ServerThread.__init__(self, 8087, LO_TCP)
 
         self.parent = parent
 

@@ -56,7 +56,7 @@ void CarlaOsc::init(const char* const name)
     m_name_len = strlen(name);
 
     // create new OSC thread
-    m_serverThread = lo_server_thread_new(nullptr, osc_error_handler);
+    m_serverThread = lo_server_thread_new_with_proto(nullptr, LO_TCP, osc_error_handler);
 
     // get our full OSC server path
     char* const threadPath = lo_server_thread_get_url(m_serverThread);
@@ -272,12 +272,12 @@ int CarlaOsc::handleMsgRegister(const int argc, const lo_arg* const* const argv,
 
     host = lo_address_get_hostname(source);
     port = lo_address_get_port(source);
-    m_controllerData.source = lo_address_new(host, port);
+    m_controllerData.source = lo_address_new_with_proto(LO_TCP, host, port);
 
     host = lo_url_get_hostname(url);
     port = lo_url_get_port(url);
     m_controllerData.path   = lo_url_get_path(url);
-    m_controllerData.target = lo_address_new(host, port);
+    m_controllerData.target = lo_address_new_with_proto(LO_TCP, host, port);
 
     free((void*)host);
     free((void*)port);

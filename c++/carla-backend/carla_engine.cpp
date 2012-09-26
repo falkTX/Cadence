@@ -1404,7 +1404,7 @@ void CarlaEngine::osc_send_control_set_program_count(const int32_t pluginId, con
 
 void CarlaEngine::osc_send_control_set_program_name(const int32_t pluginId, const int32_t index, const char* const name)
 {
-    qDebug("CarlaEngine::osc_send_control_set_program_name(%i, %i, %s)", pluginId, index, name);
+    qDebug("CarlaEngine::osc_send_control_set_program_name(%i, %i, \"%s\")", pluginId, index, name);
     Q_ASSERT(m_oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(index >= 0);
@@ -1452,7 +1452,7 @@ void CarlaEngine::osc_send_control_set_midi_program_count(const int32_t pluginId
 
 void CarlaEngine::osc_send_control_set_midi_program_data(const int32_t pluginId, const int32_t index, const int32_t bank, const int32_t program, const char* const name)
 {
-    qDebug("CarlaEngine::osc_send_control_set_midi_program_data(%i, %i, %i, %i, %s)", pluginId, index, bank, program, name);
+    qDebug("CarlaEngine::osc_send_control_set_midi_program_data(%i, %i, %i, %i, \"%s\")", pluginId, index, bank, program, name);
     Q_ASSERT(m_oscData);
     Q_ASSERT(pluginId >= 0 && pluginId < m_maxPluginNumber);
     Q_ASSERT(index >= 0);
