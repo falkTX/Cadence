@@ -610,7 +610,7 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         if lo_target and self.lo_server:
             urlText = self.lo_address
         else:
-            urlText = "osc.udp://falkTX-Laptop:12342/Carla" #"osc.udp://127.0.0.1:19000/Carla"
+            urlText = "osc.tcp://127.0.0.1:19000/Carla"
 
         askValue = QInputDialog.getText(self, self.tr("Carla Control - Connect"), self.tr("Address"), text=urlText)
 

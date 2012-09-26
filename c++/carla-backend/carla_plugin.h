@@ -1672,7 +1672,7 @@ public:
 #endif
 
         if (sendCallback)
-            x_engine->callback(velo ? CALLBACK_NOTE_ON : CALLBACK_NOTE_OFF, m_id, note, velo, 0.0);
+            x_engine->callback(velo ? CALLBACK_NOTE_ON : CALLBACK_NOTE_OFF, m_id, channel, note, velo);
     }
 
     /*!
@@ -1829,7 +1829,7 @@ public:
 #endif
 
                 // Update Host
-                x_engine->callback(CALLBACK_NOTE_ON, m_id, event->value1, event->value2, event->value3);
+                x_engine->callback(CALLBACK_NOTE_ON, m_id, event->value1, event->value2, rint(event->value3));
                 break;
 
             case PluginPostEventNoteOff:
