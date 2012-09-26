@@ -69,6 +69,9 @@ public:
     {
         qDebug("LinuxSamplerPlugin::~LinuxSamplerPlugin()");
 
+        if (m_activeBefore)
+            audioOutputDevice->Stop();
+
         if (sampler_channel)
         {
             midiInputPort->Disconnect(sampler_channel->GetEngineChannel());
@@ -153,43 +156,50 @@ public:
         // ---------------------------------------
         // Audio Outputs
 
-#ifndef BUILD_BRIDGE
         if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":out-left");
         }
         else
-#endif
             strcpy(portName, "out-left");
 
         aOut.ports[0]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
         aOut.rindexes[0] = 0;
 
-#ifndef BUILD_BRIDGE
         if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":out-right");
         }
         else
-#endif
             strcpy(portName, "out-right");
 
         aOut.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
         aOut.rindexes[1] = 1;
 
         // ---------------------------------------
+        // Control Input
+
+        if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        {
+            strcpy(portName, m_name);
+            strcat(portName, ":control-in");
+        }
+        else
+            strcpy(portName, "control-in");
+
+        param.portCin = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, true);
+
+        // ---------------------------------------
         // MIDI Input
 
-#ifndef BUILD_BRIDGE
         if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":midi-in");
         }
         else
-#endif
             strcpy(portName, "midi-in");
 
         midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
@@ -281,6 +291,174 @@ public:
         uint32_t midiEventCount = 0;
 
         double aOutsPeak[2] = { 0.0 };
+
+        CARLA_PROCESS_CONTINUE_CHECK;
+
+        // --------------------------------------------------------------------------------------------------------
+        // Parameters Input [Automation]
+
+        if (m_active && m_activeBefore)
+        {
+            bool allNotesOffSent = false;
+
+            const CarlaEngineControlEvent* cinEvent;
+            uint32_t time, nEvents = param.portCin->getEventCount();
+
+            uint32_t nextBankId = 0;
+            if (midiprog.current >= 0 && midiprog.count > 0)
+                nextBankId = midiprog.data[midiprog.current].bank;
+
+            for (i=0; i < nEvents; i++)
+            {
+                cinEvent = param.portCin->getEvent(i);
+
+                if (! cinEvent)
+                    continue;
+
+                time = cinEvent->time - framesOffset;
+
+                if (time >= frames)
+                    continue;
+
+                // Control change
+                switch (cinEvent->type)
+                {
+                case CarlaEngineEventNull:
+                    break;
+
+                case CarlaEngineEventControlChange:
+                {
+                    double value;
+
+                    // Control backend stuff
+                    if (cinEvent->channel == m_ctrlInChannel)
+                    {
+                        if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cinEvent->controller) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
+                        {
+                            value = cinEvent->value;
+                            setDryWet(value, false, false);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_DRYWET, 0, value);
+                            continue;
+                        }
+
+                        if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cinEvent->controller) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
+                        {
+                            value = cinEvent->value*127/100;
+                            setVolume(value, false, false);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_VOLUME, 0, value);
+                            continue;
+                        }
+
+                        if (MIDI_IS_CONTROL_BALANCE(cinEvent->controller) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
+                        {
+                            double left, right;
+                            value = cinEvent->value/0.5 - 1.0;
+
+                            if (value < 0.0)
+                            {
+                                left  = -1.0;
+                                right = (value*2)+1.0;
+                            }
+                            else if (value > 0.0)
+                            {
+                                left  = (value*2)-1.0;
+                                right = 1.0;
+                            }
+                            else
+                            {
+                                left  = -1.0;
+                                right = 1.0;
+                            }
+
+                            setBalanceLeft(left, false, false);
+                            setBalanceRight(right, false, false);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_LEFT, 0, left);
+                            postponeEvent(PluginPostEventParameterChange, PARAMETER_BALANCE_RIGHT, 0, right);
+                            continue;
+                        }
+                    }
+
+#if 0
+                    // Control plugin parameters
+                    for (k=0; k < param.count; k++)
+                    {
+                        if (param.data[k].midiChannel != cinEvent->channel)
+                            continue;
+                        if (param.data[k].midiCC != cinEvent->controller)
+                            continue;
+                        if (param.data[k].type != PARAMETER_INPUT)
+                            continue;
+
+                        if (param.data[k].hints & PARAMETER_IS_AUTOMABLE)
+                        {
+                            if (param.data[k].hints & PARAMETER_IS_BOOLEAN)
+                            {
+                                value = cinEvent->value < 0.5 ? param.ranges[k].min : param.ranges[k].max;
+                            }
+                            else
+                            {
+                                value = cinEvent->value * (param.ranges[k].max - param.ranges[k].min) + param.ranges[k].min;
+
+                                if (param.data[k].hints & PARAMETER_IS_INTEGER)
+                                    value = rint(value);
+                            }
+
+                            setParameterValue(k, value, false, false, false);
+                            postponeEvent(PluginPostEventParameterChange, k, 0, value);
+                        }
+                    }
+#endif
+
+                    break;
+                }
+
+                case CarlaEngineEventMidiBankChange:
+                    if (cinEvent->channel == m_ctrlInChannel)
+                        nextBankId = rint(cinEvent->value);
+                    break;
+
+                case CarlaEngineEventMidiProgramChange:
+                    if (cinEvent->channel == m_ctrlInChannel)
+                    {
+                        uint32_t nextProgramId = rint(cinEvent->value);
+
+                        for (k=0; k < midiprog.count; k++)
+                        {
+                            if (midiprog.data[k].bank == nextBankId && midiprog.data[k].program == nextProgramId)
+                            {
+                                setMidiProgram(k, false, false, false, false);
+                                postponeEvent(PluginPostEventMidiProgramChange, k, 0, 0.0);
+                                break;
+                            }
+                        }
+                    }
+                    break;
+
+                case CarlaEngineEventAllSoundOff:
+                    if (cinEvent->channel == m_ctrlInChannel)
+                    {
+                        if (midi.portMin && ! allNotesOffSent)
+                            sendMidiAllNotesOff();
+
+                        audioOutputDevice->Stop();
+                        audioOutputDevice->Play();
+
+                        allNotesOffSent = true;
+                    }
+                    break;
+
+                case CarlaEngineEventAllNotesOff:
+                    if (cinEvent->channel == m_ctrlInChannel)
+                    {
+                        if (midi.portMin && ! allNotesOffSent)
+                            sendMidiAllNotesOff();
+
+                        allNotesOffSent = true;
+                    }
+                    break;
+                }
+            }
+        } // End of Parameters Input
 
         CARLA_PROCESS_CONTINUE_CHECK;
 
@@ -401,12 +579,19 @@ public:
                     midiInputPort->DispatchControlChange(MIDI_CONTROL_ALL_SOUND_OFF, 0, m_ctrlInChannel);
                     midiInputPort->DispatchControlChange(MIDI_CONTROL_ALL_NOTES_OFF, 0, m_ctrlInChannel);
                 }
+
+                audioOutputDevice->Play();
             }
 
             audioOutputDevice->Channel(0)->SetBuffer(outBuffer[0]);
             audioOutputDevice->Channel(1)->SetBuffer(outBuffer[1]);
             // QUESTION: Need to clear it before?
             audioOutputDevice->Render(frames);
+        }
+        else
+        {
+            if (m_activeBefore)
+                audioOutputDevice->Stop();
         }
 
         CARLA_PROCESS_CONTINUE_CHECK;
