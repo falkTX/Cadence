@@ -52,7 +52,9 @@ const uint32_t CarlaEngineTimeBBT = 0x1;
 enum CarlaEngineType {
     CarlaEngineTypeNull,
     CarlaEngineTypeJack,
-    CarlaEngineTypeRtAudio
+    CarlaEngineTypeRtAudio,
+    CarlaEngineTypePluginLv2,
+    CarlaEngineTypePluginVst
 };
 
 enum CarlaEnginePortType {
@@ -96,7 +98,7 @@ struct CarlaEngineMidiEvent {
           size(0),
           data{0} {}
       #else
-          size(0) { memset(data, 0, sizeof(uint8_t)*4); }
+          size(0) { data[0] = data[1] = data[2] = data[3] = 0; }
       #endif
 };
 
@@ -136,6 +138,7 @@ struct CarlaTimeInfo {
 };
 
 struct CarlaEngineClientNativeHandle {
+    CarlaEngineType type;
 #ifdef CARLA_ENGINE_JACK
     jack_client_t* jackClient;
 #endif
@@ -145,6 +148,7 @@ struct CarlaEngineClientNativeHandle {
 
     CarlaEngineClientNativeHandle()
     {
+        type = CarlaEngineTypeNull;
 #ifdef CARLA_ENGINE_JACK
         jackClient = nullptr;
 #endif
@@ -374,7 +378,7 @@ protected:
     double   sampleRate;
     CarlaTimeInfo timeInfo;
 
-    void bufferSizeChanged(uint32_t newBufferSize);
+    void bufferSizeChanged(const uint32_t newBufferSize);
 
 private:
     CarlaCheckThread m_checkThread;
@@ -404,7 +408,7 @@ private:
 class CarlaEngineClient
 {
 public:
-    CarlaEngineClient(const CarlaEngineType& type, const CarlaEngineClientNativeHandle& handle);
+    CarlaEngineClient(const CarlaEngineClientNativeHandle& handle);
     ~CarlaEngineClient();
 
     void activate();
@@ -417,7 +421,6 @@ public:
 
 private:
     bool m_active;
-    const CarlaEngineType type;
     const CarlaEngineClientNativeHandle handle;
 };
 
@@ -489,7 +492,6 @@ public:
     bool init(const char* const clientName);
     bool close();
 
-    bool isOnAudioThread();
     bool isOffline();
     bool isRunning();
 

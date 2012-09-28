@@ -569,7 +569,7 @@ void CarlaEngine::setOscBridgeData(const CarlaOscData* const oscData)
 // -----------------------------------------------------------------------
 // protected calls
 
-void CarlaEngine::bufferSizeChanged(uint32_t newBufferSize)
+void CarlaEngine::bufferSizeChanged(const uint32_t newBufferSize)
 {
     qDebug("CarlaEngine::bufferSizeChanged(%i)", newBufferSize);
 
@@ -585,12 +585,11 @@ void CarlaEngine::bufferSizeChanged(uint32_t newBufferSize)
 // -------------------------------------------------------------------------------------------------------------------
 // Carla Engine Client
 
-CarlaEngineClient::CarlaEngineClient(const CarlaEngineType& type_, const CarlaEngineClientNativeHandle& handle_)
-    : type(type_),
-      handle(handle_)
+CarlaEngineClient::CarlaEngineClient(const CarlaEngineClientNativeHandle& handle_)
+    : handle(handle_)
 {
     qDebug("CarlaEngineClient::CarlaEngineClient()");
-    CARLA_ASSERT(type != CarlaEngineTypeNull);
+    CARLA_ASSERT(handle.type != CarlaEngineTypeNull);
 
     m_active = false;
 }
@@ -681,11 +680,11 @@ bool CarlaEngineClient::isOk() const
 #endif
     {
 #ifdef CARLA_ENGINE_JACK
-        if (type == CarlaEngineTypeJack)
+        if (handle.type == CarlaEngineTypeJack)
             return bool(handle.jackClient);
 #endif
 #ifdef CARLA_ENGINE_RTAUDIO
-        if (type == CarlaEngineTypeRtAudio)
+        if (handle.type == CarlaEngineTypeRtAudio)
             return bool(handle.rtAudioPtr);
 #endif
     }
@@ -695,7 +694,7 @@ bool CarlaEngineClient::isOk() const
 
 const CarlaEngineBasePort* CarlaEngineClient::addPort(const CarlaEnginePortType portType, const char* const name, const bool isInput)
 {
-    qDebug("CarlaEngineClient::addPort(%i, \"%s\", %s)", type, name, bool2str(isInput));
+    qDebug("CarlaEngineClient::addPort(%i, \"%s\", %s)", portType, name, bool2str(isInput));
 
     CarlaEnginePortNativeHandle portHandle;
 #ifdef CARLA_ENGINE_JACK
@@ -707,7 +706,7 @@ const CarlaEngineBasePort* CarlaEngineClient::addPort(const CarlaEnginePortType 
 #endif
     {
 #ifdef CARLA_ENGINE_JACK
-        if (type == CarlaEngineTypeJack)
+        if (handle.type == CarlaEngineTypeJack)
         {
             switch (portType)
             {
@@ -723,7 +722,7 @@ const CarlaEngineBasePort* CarlaEngineClient::addPort(const CarlaEnginePortType 
 #endif
 
 #ifdef CARLA_ENGINE_RTAUDIO
-        if (type == CarlaEngineTypeRtAudio)
+        if (handle.type == CarlaEngineTypeRtAudio)
         {
             // TODO
         }
@@ -740,7 +739,7 @@ const CarlaEngineBasePort* CarlaEngineClient::addPort(const CarlaEnginePortType 
         return new CarlaEngineMidiPort(portHandle, isInput);
     }
 
-    qCritical("CarlaEngineClient::addPort(%i, \"%s\", %s) - invalid type", type, name, bool2str(isInput));
+    qCritical("CarlaEngineClient::addPort(%i, \"%s\", %s) - invalid type", portType, name, bool2str(isInput));
     return nullptr;
 }
 

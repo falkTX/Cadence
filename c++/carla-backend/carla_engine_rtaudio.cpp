@@ -143,6 +143,7 @@ bool CarlaEngineRtAudio::isRunning()
 CarlaEngineClient* CarlaEngineRtAudio::addClient(CarlaPlugin* const plugin)
 {
     CarlaEngineClientNativeHandle handle;
+    handle.type = type;
 
 //    unsigned int rtBufferFrames = getBufferSize();
 
@@ -163,7 +164,7 @@ CarlaEngineClient* CarlaEngineRtAudio::addClient(CarlaPlugin* const plugin)
 //        return false;
 //    }
 
-    return new CarlaEngineClient(CarlaEngineTypeRtAudio, handle);
+    return new CarlaEngineClient(handle);
     Q_UNUSED(plugin);
 }
 

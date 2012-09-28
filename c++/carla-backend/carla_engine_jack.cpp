@@ -227,6 +227,7 @@ bool CarlaEngineJack::isRunning()
 CarlaEngineClient* CarlaEngineJack::addClient(CarlaPlugin* const plugin)
 {
     CarlaEngineClientNativeHandle handle;
+    handle.type = type;
 
 #ifndef BUILD_BRIDGE
     if (carlaOptions.processMode == PROCESS_MODE_SINGLE_CLIENT)
@@ -243,7 +244,7 @@ CarlaEngineClient* CarlaEngineJack::addClient(CarlaPlugin* const plugin)
     //{
     //}
 
-    return new CarlaEngineClient(CarlaEngineTypeJack, handle);
+    return new CarlaEngineClient(handle);
 }
 
 // -------------------------------------------------------------------------------------------------------------------

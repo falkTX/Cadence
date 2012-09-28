@@ -15,7 +15,7 @@ VERSION  = 0.5.0
 
 SOURCES  = \
     ../carla_backend_standalone.cpp \
-#    ../carla_backend_lv2.cpp \
+    ../carla_backend_vst.cpp \
     ../carla_bridge.cpp \
     ../carla_engine.cpp \
     ../carla_engine_jack.cpp \
@@ -73,6 +73,7 @@ DEFINES += DEBUG NDEBUG
 DEFINES += CARLA_ENGINE_JACK
 DEFINES += CARLA_ENGINE_RTAUDIO HAVE_GETTIMEOFDAY __LINUX_ALSA__ __LINUX_ALSASEQ__ __LINUX_PULSE__ __RTAUDIO_DEBUG__ __RTMIDI_DEBUG__
 DEFINES += CARLA_ENGINE_LV2
+DEFINES += CARLA_ENGINE_VST
 DEFINES += HAVE_SUIL
 DEFINES += WANT_LADSPA WANT_DSSI WANT_LV2 WANT_VST
 DEFINES += WANT_FLUIDSYNTH WANT_LINUXSAMPLER
