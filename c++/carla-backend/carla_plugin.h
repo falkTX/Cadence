@@ -1646,6 +1646,9 @@ public:
         CARLA_ASSERT(note < 128);
         CARLA_ASSERT(velo < 128);
 
+        if (! m_active)
+            return;
+
         engineMidiLock();
         for (unsigned short i=0; i < MAX_MIDI_EVENTS; i++)
         {
