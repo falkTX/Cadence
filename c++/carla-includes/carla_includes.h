@@ -139,4 +139,11 @@ const char* bool2str(const bool yesNo)
 static inline
 void pass() {}
 
+static inline
+void zeroF(float* data, const unsigned int size)
+{
+    for (unsigned int i=0; i < size; i++)
+        *data++ = 0.0f;
+}
+
 #endif // CARLA_INCLUDES_H

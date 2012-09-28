@@ -20,6 +20,11 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
+unsigned int uintMin(unsigned int value1, unsigned int value2)
+{
+    return value1 < value2 ? value1 : value2;
+}
+
 void osc_error_handler(const int num, const char* const msg, const char* const path)
 {
     qCritical("CarlaBackend::osc_error_handler(%i, \"%s\", \"%s\")", num, msg, path);
@@ -28,8 +33,8 @@ void osc_error_handler(const int num, const char* const msg, const char* const p
 CarlaOsc::CarlaOsc(CarlaEngine* const engine_)
     : engine(engine_)
 {
-    CARLA_ASSERT(engine);
     qDebug("CarlaOsc::CarlaOsc(%p)", engine_);
+    CARLA_ASSERT(engine);
 
     m_serverPathTCP = nullptr;
     m_serverPathUDP = nullptr;
@@ -40,7 +45,7 @@ CarlaOsc::CarlaOsc(CarlaEngine* const engine_)
     m_controlData.target = nullptr;
 
     m_name = nullptr;
-    m_name_len = 0;
+    m_nameSize = 0;
 }
 
 CarlaOsc::~CarlaOsc()
@@ -50,12 +55,16 @@ CarlaOsc::~CarlaOsc()
 
 void CarlaOsc::init(const char* const name)
 {
-    CARLA_ASSERT(name);
-    CARLA_ASSERT(m_name_len == 0);
     qDebug("CarlaOsc::init(\"%s\")", name);
+    CARLA_ASSERT(! m_serverPathTCP);
+    CARLA_ASSERT(! m_serverPathUDP);
+    CARLA_ASSERT(! m_serverThreadUDP);
+    CARLA_ASSERT(! m_serverThreadUDP);
+    CARLA_ASSERT(name);
+    CARLA_ASSERT(m_nameSize == 0);
 
-    m_name = strdup(name);
-    m_name_len = strlen(name);
+    m_name = strdup(name ? name : "");
+    m_nameSize = strlen(m_name);
 
     // create new OSC thread
     m_serverThreadTCP = lo_server_thread_new_with_proto(nullptr, LO_TCP, osc_error_handler);
@@ -63,11 +72,11 @@ void CarlaOsc::init(const char* const name)
 
     // get our full OSC server path
     char* const threadPathTCP = lo_server_thread_get_url(m_serverThreadTCP);
-    m_serverPathTCP = strdup(QString("%1%2").arg(threadPathTCP).arg(name).toUtf8().constData());
+    m_serverPathTCP = strdup(QString("%1%2").arg(threadPathTCP).arg(m_name).toUtf8().constData());
     free(threadPathTCP);
 
     char* const threadPathUDP = lo_server_thread_get_url(m_serverThreadUDP);
-    m_serverPathUDP = strdup(QString("%1%2").arg(threadPathUDP).arg(name).toUtf8().constData());
+    m_serverPathUDP = strdup(QString("%1%2").arg(threadPathUDP).arg(m_name).toUtf8().constData());
     free(threadPathUDP);
 
     // register message handler and start OSC thread
@@ -79,8 +88,12 @@ void CarlaOsc::init(const char* const name)
 
 void CarlaOsc::close()
 {
-    CARLA_ASSERT(m_name);
     qDebug("CarlaOsc::close()");
+    CARLA_ASSERT(m_serverPathTCP);
+    CARLA_ASSERT(m_serverPathUDP);
+    CARLA_ASSERT(m_serverThreadUDP);
+    CARLA_ASSERT(m_serverThreadUDP);
+    CARLA_ASSERT(m_name);
 
     osc_clear_data(&m_controlData);
 
@@ -96,9 +109,9 @@ void CarlaOsc::close()
     m_serverPathTCP = nullptr;
     m_serverPathUDP = nullptr;
 
-    free((void*)m_name);
+    free(m_name);
     m_name = nullptr;
-    m_name_len = 0;
+    m_nameSize = 0;
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -109,9 +122,12 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
     if (! QString(path).contains("put_peak_value"))
         qDebug("CarlaOsc::handleMessage(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
 #endif
-
-    CARLA_ASSERT(m_serverThreadTCP || m_serverPathUDP);
+    CARLA_ASSERT(m_serverPathTCP || m_serverPathUDP);
+    CARLA_ASSERT(m_serverThreadTCP || m_serverThreadUDP);
     CARLA_ASSERT(path);
+
+    if (! path)
+        return 1;
 
     // Initial path check
     if (strcmp(path, "/register") == 0)
@@ -125,7 +141,7 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
     }
 
     // Check if message is for this client
-    if (strlen(path) <= m_name_len || strncmp(path+1, m_name, m_name_len) != 0)
+    if (strlen(path) <= m_nameSize || strncmp(path+1, m_name, m_nameSize) != 0)
     {
         qWarning("CarlaOsc::handleMessage() - message not for this client -> '%s' != '/%s/'", path, m_name);
         return 1;
@@ -134,11 +150,11 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
     // Get plugin id from message
     int pluginId = 0;
 
-    if (std::isdigit(path[m_name_len+2]))
-        pluginId += path[m_name_len+2]-'0';
+    if (std::isdigit(path[m_nameSize+2]))
+        pluginId += path[m_nameSize+2]-'0';
 
-    if (std::isdigit(path[m_name_len+3]))
-        pluginId += (path[m_name_len+3]-'0')*10;
+    if (std::isdigit(path[m_nameSize+3]))
+        pluginId += (path[m_nameSize+3]-'0')*10;
 
     if (pluginId < 0 || pluginId > CarlaEngine::maxPluginNumber())
     {
@@ -158,7 +174,10 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
     // Get method from path, "/Carla/i/method"
     int offset = (pluginId >= 10) ? 4 : 3;
     char method[32] = { 0 };
-    memcpy(method, path + (m_name_len + offset), 32);
+    memcpy(method, path + (m_nameSize + offset), uintMin(strlen(path), 32));
+
+    if (method[0] == 0)
+        return 1;
 
     // Common OSC methods
     if (strcmp(method, "/update") == 0)

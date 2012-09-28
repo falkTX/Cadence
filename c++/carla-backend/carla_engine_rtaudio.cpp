@@ -213,8 +213,8 @@ void CarlaEngineRtAudio::handleProcessCallback(void* outputBuffer, void* inputBu
     }
 
     // initialize outputs (zero)
-    memset(aouts_tmp_buf1, 0, sizeof(float)*nframes);
-    memset(aouts_tmp_buf2, 0, sizeof(float)*nframes);
+    zeroF(aouts_tmp_buf1, nframes);
+    zeroF(aouts_tmp_buf2, nframes);
     memset(rackControlEventsOut, 0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
     memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
 
@@ -235,8 +235,8 @@ void CarlaEngineRtAudio::handleProcessCallback(void* outputBuffer, void* inputBu
                 memcpy(rackMidiEventsIn, rackMidiEventsOut, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
 
                 // initialize outputs (zero)
-                memset(aouts_tmp_buf1, 0, sizeof(float)*nframes);
-                memset(aouts_tmp_buf2, 0, sizeof(float)*nframes);
+                zeroF(aouts_tmp_buf1, nframes);
+                zeroF(aouts_tmp_buf2, nframes);
                 memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
             }
 

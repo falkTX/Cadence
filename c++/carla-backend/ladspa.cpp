@@ -981,7 +981,7 @@ public:
         {
             // disable any output sound if not active
             for (i=0; i < aOut.count; i++)
-                memset(outBuffer[i], 0.0f, sizeof(float)*frames);
+                zeroF(outBuffer[i], frames);
 
             aOutsPeak[0] = 0.0;
             aOutsPeak[1] = 0.0;

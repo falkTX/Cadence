@@ -1019,7 +1019,8 @@ public:
      */
     void setParameterMidiChannel(const uint32_t parameterId, uint8_t channel, const bool sendOsc, const bool sendCallback)
     {
-        CARLA_ASSERT(parameterId < param.count && channel < 16);
+        CARLA_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(channel < 16);
 
         if (channel >= 16)
             channel = 16;
@@ -1043,7 +1044,8 @@ public:
      */
     void setParameterMidiCC(const uint32_t parameterId, int16_t cc, const bool sendOsc, const bool sendCallback)
     {
-        CARLA_ASSERT(parameterId < param.count && cc >= -1);
+        CARLA_ASSERT(parameterId < param.count);
+        CARLA_ASSERT(cc >= -1);
 
         if (cc < -1 || cc > 0x5F)
             cc = -1;
@@ -1542,25 +1544,18 @@ public:
     {
         const char* host;
         const char* port;
+        const int proto = lo_address_get_protocol(source);
 
         osc_clear_data(&osc.data);
 
         host = lo_address_get_hostname(source);
         port = lo_address_get_port(source);
-
-        if (m_type == PLUGIN_DSSI)
-            osc.data.source = lo_address_new_with_proto(LO_UDP, host, port);
-        else
-            osc.data.source = lo_address_new_with_proto(LO_TCP, host, port);
+        osc.data.source = lo_address_new_with_proto(proto, host, port);
 
         host = lo_url_get_hostname(url);
         port = lo_url_get_port(url);
         osc.data.path   = lo_url_get_path(url);
-
-        if (m_type == PLUGIN_DSSI)
-            osc.data.target = lo_address_new_with_proto(LO_UDP, host, port);
-        else
-            osc.data.target = lo_address_new_with_proto(LO_TCP, host, port);
+        osc.data.target = lo_address_new_with_proto(proto, host, port);
 
         free((void*)host);
         free((void*)port);
@@ -1789,7 +1784,8 @@ public:
 
 #ifndef BUILD_BRIDGE
                 // Update OSC control client
-                x_engine->osc_send_control_set_parameter_value(m_id, event->value1, event->value3);
+                if (x_engine->isOscControlRegisted())
+                    x_engine->osc_send_control_set_parameter_value(m_id, event->value1, event->value3);
 #endif
 
                 // Update Host
@@ -1803,10 +1799,13 @@ public:
 
 #ifndef BUILD_BRIDGE
                 // Update OSC control client
-                x_engine->osc_send_control_set_program(m_id, event->value1);
+                if (x_engine->isOscControlRegisted())
+                {
+                    x_engine->osc_send_control_set_program(m_id, event->value1);
 
-                for (uint32_t j=0; j < param.count; j++)
-                    x_engine->osc_send_control_set_default_value(m_id, j, param.ranges[j].def);
+                    for (uint32_t j=0; j < param.count; j++)
+                        x_engine->osc_send_control_set_default_value(m_id, j, param.ranges[j].def);
+                }
 #endif
 
                 // Update Host
@@ -1820,10 +1819,13 @@ public:
 
 #ifndef BUILD_BRIDGE
                 // Update OSC control client
-                x_engine->osc_send_control_set_midi_program(m_id, event->value1);
+                if (x_engine->isOscControlRegisted())
+                {
+                    x_engine->osc_send_control_set_midi_program(m_id, event->value1);
 
-                for (uint32_t j=0; j < param.count; j++)
-                    x_engine->osc_send_control_set_default_value(m_id, j, param.ranges[j].def);
+                    for (uint32_t j=0; j < param.count; j++)
+                        x_engine->osc_send_control_set_default_value(m_id, j, param.ranges[j].def);
+                }
 #endif
 
                 // Update Host
@@ -1836,7 +1838,8 @@ public:
 
 #ifndef BUILD_BRIDGE
                 // Update OSC control client
-                x_engine->osc_send_control_note_on(m_id, event->value1, event->value2, rint(event->value3));
+                if (x_engine->isOscControlRegisted())
+                    x_engine->osc_send_control_note_on(m_id, event->value1, event->value2, rint(event->value3));
 #endif
 
                 // Update Host
@@ -1849,7 +1852,8 @@ public:
 
 #ifndef BUILD_BRIDGE
                 // Update OSC control client
-                x_engine->osc_send_control_note_off(m_id, event->value1, event->value2);
+                if (x_engine->isOscControlRegisted())
+                    x_engine->osc_send_control_note_off(m_id, event->value1, event->value2);
 #endif
 
                 // Update Host
@@ -1972,19 +1976,17 @@ public:
     }
 
     /*!
-     * Initializes all RT buffers of the plugin.
+     * Initialize all RT buffers of the plugin.
      */
     virtual void initBuffers()
     {
-        uint32_t i;
-
-        for (i=0; i < aIn.count; i++)
+        for (uint32_t i=0; i < aIn.count; i++)
         {
             if (aIn.ports[i])
                 aIn.ports[i]->initBuffer(x_engine);
         }
 
-        for (i=0; i < aOut.count; i++)
+        for (uint32_t i=0; i < aOut.count; i++)
         {
             if (aOut.ports[i])
                 aOut.ports[i]->initBuffer(x_engine);
@@ -2136,7 +2138,7 @@ public:
     // -------------------------------------------------------------------
 
     /*!
-     * \class CarlaPluginScopedDisabler
+     * \class ScopedDisabler
      *
      * \brief Carla plugin scoped disabler
      *
@@ -2144,7 +2146,7 @@ public:
      * It should be used when the plugin needs reload or state change, something like this:
      * \code
      * {
-     *      const CarlaPluginScopedDisabler m(plugin);
+     *      const CarlaPlugin::ScopedDisabler m(plugin);
      *      plugin->setChunkData(data);
      * }
      * \endcode

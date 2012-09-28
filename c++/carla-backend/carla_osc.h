@@ -89,8 +89,8 @@ private:
     lo_server_thread m_serverThreadUDP;
     CarlaOscData m_controlData; // for carla-control
 
-    const char* m_name;
-    size_t m_name_len;
+    char*  m_name;
+    size_t m_nameSize;
 
     // -------------------------------------------------------------------
 
