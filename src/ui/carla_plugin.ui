@@ -135,7 +135,7 @@
          </size>
         </property>
         <property name="statusTip">
-         <string>Parameter Activity LED</string>
+         <string>Parameter/Program Activity LED</string>
         </property>
        </widget>
       </item>
