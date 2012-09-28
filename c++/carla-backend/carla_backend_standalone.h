@@ -44,7 +44,7 @@ struct PluginInfo {
     PluginInfo()
         : type(CarlaBackend::PLUGIN_NONE),
           category(CarlaBackend::PLUGIN_CATEGORY_NONE),
-          hints(0),
+          hints(0x0),
           binary(nullptr),
           name(nullptr),
           label(nullptr),

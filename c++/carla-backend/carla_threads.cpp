@@ -44,6 +44,9 @@ void CarlaCheckThread::startNow()
 
 void CarlaCheckThread::stopNow()
 {
+    if (m_stopNow)
+        return;
+
     m_stopNow = true;
 
     // TESTING - let processing finish first
