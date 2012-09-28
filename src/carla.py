@@ -1373,12 +1373,14 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         pwidget = self.m_plugin_list[plugin_id]
         if pwidget:
             pwidget.edit_dialog.set_program(program_id)
+            pwidget.m_parameterIconTimer = ICON_STATE_ON
 
     @pyqtSlot(int, int)
     def slot_handleMidiProgramCallback(self, plugin_id, midi_program_id):
         pwidget = self.m_plugin_list[plugin_id]
         if pwidget:
             pwidget.edit_dialog.set_midi_program(midi_program_id)
+            pwidget.m_parameterIconTimer = ICON_STATE_ON
 
     @pyqtSlot(int, int, int, int)
     def slot_handleNoteOnCallback(self, plugin_id, channel, note, velo):

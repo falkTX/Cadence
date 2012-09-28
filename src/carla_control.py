@@ -796,6 +796,7 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         pwidget = self.m_plugin_list[pluginId]
         if pwidget:
             pwidget.edit_dialog.set_program(index)
+            pwidget.m_parameterIconTimer = ICON_STATE_ON
 
     @pyqtSlot(int, int)
     def slot_handleSetProgramCount(self, pluginId, count):
@@ -812,6 +813,7 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         pwidget = self.m_plugin_list[pluginId]
         if pwidget:
             pwidget.edit_dialog.set_midi_program(index)
+            pwidget.m_parameterIconTimer = ICON_STATE_ON
 
     @pyqtSlot(int, int)
     def slot_handleSetMidiProgramCount(self, pluginId, count):
