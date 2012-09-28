@@ -508,6 +508,7 @@ void CarlaEngine::callback(const CallbackType action, const unsigned short plugi
 void CarlaEngine::setCallback(const CallbackFunc func, void* const ptr)
 {
     qDebug("CarlaEngine::setCallback(%p, %p)", func, ptr);
+    CARLA_ASSERT(func);
 
     m_callback = func;
     m_callbackPtr = ptr;

@@ -25,8 +25,8 @@ void osc_error_handler(const int num, const char* const msg, const char* const p
     qCritical("osc_error_handler(%i, %s, %s)", num, msg, path);
 }
 
-CarlaOsc::CarlaOsc(CarlaEngine* const engine_) :
-    engine(engine_)
+CarlaOsc::CarlaOsc(CarlaEngine* const engine_)
+    : engine(engine_)
 {
     CARLA_ASSERT(engine);
     qDebug("CarlaOsc::CarlaOsc(%p)", engine_);

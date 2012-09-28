@@ -25,7 +25,7 @@
 /*!
  * @defgroup CarlaBackendStandalone Carla Backend Standalone
  *
- * The Carla Backend Standalone
+ * The Carla Backend Standalone API
  *
  * @{
  */
@@ -120,7 +120,7 @@ CARLA_EXPORT const GuiInfo* get_gui_info(unsigned short plugin_id);
 
 CARLA_EXPORT const CarlaBackend::ParameterData* get_parameter_data(unsigned short plugin_id, uint32_t parameter_id);
 CARLA_EXPORT const CarlaBackend::ParameterRanges* get_parameter_ranges(unsigned short plugin_id, uint32_t parameter_id);
-CARLA_EXPORT const CarlaBackend::midi_program_t* get_midi_program_data(unsigned short plugin_id, uint32_t midi_program_id);
+CARLA_EXPORT const CarlaBackend::MidiProgramData* get_midi_program_data(unsigned short plugin_id, uint32_t midi_program_id);
 CARLA_EXPORT const CarlaBackend::CustomData* get_custom_data(unsigned short plugin_id, uint32_t custom_data_id);
 CARLA_EXPORT const char* get_chunk_data(unsigned short plugin_id);
 
@@ -172,7 +172,7 @@ CARLA_EXPORT const char* get_last_error();
 CARLA_EXPORT const char* get_host_osc_url();
 
 CARLA_EXPORT void set_callback_function(CarlaBackend::CallbackFunc func);
-CARLA_EXPORT void set_option(CarlaBackend::OptionsType option, int value, const char* valueStr);
+CARLA_EXPORT void set_option(CarlaBackend::OptionsType option, int value, const char* value_str);
 
 CARLA_EXPORT void nsm_announce(const char* url, int pid);
 CARLA_EXPORT void nsm_reply_open();

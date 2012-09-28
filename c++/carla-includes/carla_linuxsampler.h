@@ -50,10 +50,10 @@ static const float VOLUME_MIN = 0.0f;        // -inf dB
 class AudioOutputDevicePlugin : public AudioOutputDevice
 {
 public:
-    AudioOutputDevicePlugin(CarlaBackend::CarlaEngine* const engine, CarlaBackend::CarlaPlugin* const plugin) :
-        AudioOutputDevice(std::map<String, DeviceCreationParameter*>()),
-        m_engine(engine),
-        m_plugin(plugin)
+    AudioOutputDevicePlugin(CarlaBackend::CarlaEngine* const engine, CarlaBackend::CarlaPlugin* const plugin)
+        : AudioOutputDevice(std::map<String, DeviceCreationParameter*>()),
+          m_engine(engine),
+          m_plugin(plugin)
     {
     }
 
@@ -108,8 +108,8 @@ private:
 class MidiInputDevicePlugin : public MidiInputDevice
 {
 public:
-    MidiInputDevicePlugin(Sampler* const sampler) :
-        MidiInputDevice(std::map<String, DeviceCreationParameter*>(), sampler)
+    MidiInputDevicePlugin(Sampler* const sampler)
+        : MidiInputDevice(std::map<String, DeviceCreationParameter*>(), sampler)
     {
     }
 
@@ -147,8 +147,8 @@ public:
     class MidiInputPortPlugin : public MidiInputPort
     {
     protected:
-        MidiInputPortPlugin(MidiInputDevicePlugin* const device, const int portNumber) :
-            MidiInputPort(device, portNumber)
+        MidiInputPortPlugin(MidiInputDevicePlugin* const device, const int portNumber)
+            : MidiInputPort(device, portNumber)
         {
         }
         friend class MidiInputDevicePlugin;

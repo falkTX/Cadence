@@ -55,7 +55,7 @@ const unsigned int PLUGIN_IS_BRIDGE          = 0x001; //!< Plugin is a bridge (i
 const unsigned int PLUGIN_IS_SYNTH           = 0x002; //!< Plugin is a synthesizer (produces sound).
 const unsigned int PLUGIN_HAS_GUI            = 0x004; //!< Plugin has its own custom GUI.
 const unsigned int PLUGIN_USES_CHUNKS        = 0x008; //!< Plugin uses chunks to save internal data.\see CarlaPlugin::chunkData()
-const unsigned int PLUGIN_USES_SINGLE_THREAD = 0x010; //!< Plugin has its own custom GUI.
+const unsigned int PLUGIN_USES_SINGLE_THREAD = 0x010; //!< Plugin needs a single thread for both DSP processing and UI events.
 const unsigned int PLUGIN_CAN_DRYWET         = 0x020; //!< Plugin can make use of Dry/Wet controls.
 const unsigned int PLUGIN_CAN_VOLUME         = 0x040; //!< Plugin can make use of Volume controls.
 const unsigned int PLUGIN_CAN_BALANCE        = 0x080; //!< Plugin can make use of Left & Right Balance controls.
@@ -83,6 +83,7 @@ const unsigned int PARAMETER_USES_CUSTOM_TEXT = 0x80; //!< Parameter uses custom
  * @defgroup BridgeMessages Bridge Messages
  *
  * Various bridge related messages, used as configure(<message>, value).
+ * \note This is for internal use only.
  * @{
  */
 const char* const CARLA_BRIDGE_MSG_HIDE_GUI   = "CarlaBridgeHideGUI";   //!< Plugin -> Host call, tells host GUI is now hidden
@@ -110,7 +111,7 @@ enum BinaryType {
  */
 enum PluginType {
     PLUGIN_NONE     = 0, //!< Null plugin type.
-    PLUGIN_INTERNAL = 1, //!< Internal plugin.
+    PLUGIN_INTERNAL = 1, //!< Internal plugin.\see NativePlugin
     PLUGIN_LADSPA   = 2, //!< LADSPA plugin.\see LadspaPlugin
     PLUGIN_DSSI     = 3, //!< DSSI plugin.\see DssiPlugin
     PLUGIN_LV2      = 4, //!< LV2 plugin.\see Lv2Plugin
@@ -120,6 +121,10 @@ enum PluginType {
     PLUGIN_SFZ      = 8  //!< SFZ sound kit, implemented via LinuxSampler.\see LinuxSamplerPlugin
 };
 
+/*!
+ * Plugin category, describing the funtionality of a plugin.\n
+ * When a plugin fails to tell his own category, one is atributted to it based on its name.
+ */
 enum PluginCategory {
     PLUGIN_CATEGORY_NONE      = 0, //!< Null plugin category.
     PLUGIN_CATEGORY_SYNTH     = 1, //!< A synthesizer or generator.
@@ -132,52 +137,67 @@ enum PluginCategory {
     PLUGIN_CATEGORY_OTHER     = 8  //!< Misc plugin (used to check if the plugin has a category).
 };
 
+/*!
+ * Plugin parameter type.
+ */
 enum ParameterType {
-    PARAMETER_UNKNOWN       = 0,
-    PARAMETER_INPUT         = 1,
-    PARAMETER_OUTPUT        = 2,
-    PARAMETER_LATENCY       = 3,
-    PARAMETER_SAMPLE_RATE   = 4,
-    PARAMETER_LV2_FREEWHEEL = 5,
-    PARAMETER_LV2_TIME      = 6
-};
-
-enum InternalParametersIndex {
-    PARAMETER_NULL   = -1,
-    PARAMETER_ACTIVE = -2,
-    PARAMETER_DRYWET = -3,
-    PARAMETER_VOLUME = -4,
-    PARAMETER_BALANCE_LEFT  = -5,
-    PARAMETER_BALANCE_RIGHT = -6
-};
-
-enum CustomDataType {
-    CUSTOM_DATA_INVALID = 0,
-    CUSTOM_DATA_STRING  = 1,
-    CUSTOM_DATA_PATH    = 2,
-    CUSTOM_DATA_CHUNK   = 3,
-    CUSTOM_DATA_BINARY  = 4
-};
-
-enum GuiType {
-    GUI_NONE = 0,
-    GUI_INTERNAL_QT4   = 1,
-    GUI_INTERNAL_COCOA = 2,
-    GUI_INTERNAL_HWND  = 3,
-    GUI_INTERNAL_X11   = 4,
-    GUI_EXTERNAL_LV2   = 5,
-    GUI_EXTERNAL_SUIL  = 6,
-    GUI_EXTERNAL_OSC   = 7
+    PARAMETER_UNKNOWN       = 0, //!< Null parameter type.
+    PARAMETER_INPUT         = 1, //!< Input parameter.
+    PARAMETER_OUTPUT        = 2, //!< Ouput parameter.
+    PARAMETER_LATENCY       = 3, //!< Special latency parameter, used in LADSPA, DSSI and LV2 plugins.
+    PARAMETER_SAMPLE_RATE   = 4, //!< Special sample-rate parameter, used in LADSPA, DSSI and LV2 plugins.
+    PARAMETER_LV2_FREEWHEEL = 5, //!< Special LV2 Plugin parameter used to report freewheel (offline) mode.
+    PARAMETER_LV2_TIME      = 6  //!< Special LV2 Plugin parameter used to report time information.
 };
 
 /*!
- * Options used in the setOption() call.\n
- * These options must be set before calling CarlaEngine::init() or after CarlaEngine::close().
+ * Internal parameter indexes.\n
+ * These are special parameters used internally, plugins do not know about their existence.
+ */
+enum InternalParametersIndex {
+    PARAMETER_NULL          = -1, //!< Null parameter.
+    PARAMETER_ACTIVE        = -2, //!< Active parameter, can only be 'true' or 'false'; default is 'false'.
+    PARAMETER_DRYWET        = -3, //!< Dry/Wet parameter, range 0.0...1.0; default is 1.0.
+    PARAMETER_VOLUME        = -4, //!< Volume parameter, range 0.0...1.27; default is 1.0.
+    PARAMETER_BALANCE_LEFT  = -5, //!< Balance-Left parameter, range -1.0...1.0; default is -1.0.
+    PARAMETER_BALANCE_RIGHT = -6  //!< Balance-Right parameter, range -1.0...1.0; default is 1.0.
+};
+
+/*!
+ * Custom Data types.\n
+ * The type defines how the value in CustomData is stored.\n
+ * Binary chunks are stored in base64 format.
+ */
+enum CustomDataType {
+    CUSTOM_DATA_INVALID = 0, //!< Null/Invalid data.
+    CUSTOM_DATA_STRING  = 1, //!< String
+    CUSTOM_DATA_PATH    = 2, //!< Path (same as string, but used for filenames).
+    CUSTOM_DATA_CHUNK   = 3, //!< Binary chunk (known type).
+    CUSTOM_DATA_BINARY  = 4  //!< Binary chunk, used to store any unknown type.
+};
+
+/*!
+ * Plugin custom GUI type.
+ * \see OPTION_PREFER_UI_BRIDGES
+ */
+enum GuiType {
+    GUI_NONE           = 0, //!< Null type, plugin has no custom GUI.
+    GUI_INTERNAL_QT4   = 1, //!< Qt4 type, handled internally.
+    GUI_INTERNAL_COCOA = 2, //!< Reparented MacOS native type, handled internally.
+    GUI_INTERNAL_HWND  = 3, //!< Reparented Windows native type, handled internally.
+    GUI_INTERNAL_X11   = 4, //!< Reparented X11 native type, handled internally.
+    GUI_EXTERNAL_LV2   = 5, //!< External LV2-UI type, handled internally.
+    GUI_EXTERNAL_SUIL  = 6, //!< SUIL type, currently used only for lv2 gtk2 direct-access UIs.\note This type will be removed in the future!
+    GUI_EXTERNAL_OSC   = 7  //!< External, osc-bridge controlled, UI.
+};
+
+/*!
+ * Options used in the set_option() call.\n
+ * These options must be set before calling engine_init() or after engine_close().
  */
 enum OptionsType {
     /*!
      * Try to set the current process name.\n
-     *
      * \note Not available on all platforms.
      */
     OPTION_PROCESS_NAME = 0,
@@ -185,7 +205,6 @@ enum OptionsType {
     /*!
      * Set the engine processing mode.\n
      * Default is PROCESS_MODE_MULTIPLE_CLIENTS.
-     *
      * \see ProcessModeType
      */
     OPTION_PROCESS_MODE = 1,
@@ -205,12 +224,12 @@ enum OptionsType {
     OPTION_MAX_PARAMETERS = 3,
 
     /*!
-     * Prefered buffer size.
+     * Prefered buffer size, currently unused.
      */
     OPTION_PREFERRED_BUFFER_SIZE = 4,
 
     /*!
-     * Prefered sample rate.
+     * Prefered sample rate, currently unused.
      */
     OPTION_PREFERRED_SAMPLE_RATE = 5,
 
@@ -222,7 +241,7 @@ enum OptionsType {
 
     /*!
      * Use (unofficial) dssi-vst chunks feature.\n
-     * Default is no.
+     * Default is no.\n
      * EXPERIMENTAL!
      */
     OPTION_USE_DSSI_VST_CHUNKS = 7,
@@ -345,7 +364,7 @@ enum OptionsType {
 /*!
  * Opcodes sent from the engine callback, as defined by CallbackFunc.
  *
- * \see CarlaEngine::setCallback()
+ * \see set_callback_function()
  */
 enum CallbackType {
     /*!
@@ -459,12 +478,12 @@ enum CallbackType {
     CALLBACK_NSM_ANNOUNCE = 15,
 
     /*!
-     * Non-Session-Manager Open message.
+     * Non-Session-Manager Open message #1.
      */
     CALLBACK_NSM_OPEN1 = 16,
 
     /*!
-     * Non-Session-Manager Open message.
+     * Non-Session-Manager Open message #2.
      */
     CALLBACK_NSM_OPEN2 = 17,
 
@@ -480,33 +499,22 @@ enum CallbackType {
 };
 
 /*!
- * Engine process mode, changed using setOption().
+ * Engine process mode, changed using set_option().
  *
  * \see OPTION_PROCESS_MODE
  */
 enum ProcessModeType {
-    PROCESS_MODE_SINGLE_CLIENT    = 0, //!< Single client mode (dynamic audio input/outputs as needed by plugins)
-    PROCESS_MODE_MULTIPLE_CLIENTS = 1, //!< Multiple client mode (1 client per plugin)
+    PROCESS_MODE_SINGLE_CLIENT    = 0, //!< Single client mode (dynamic input/outputs as needed by plugins)
+    PROCESS_MODE_MULTIPLE_CLIENTS = 1, //!< Multiple client mode (1 master client + 1 client per plugin)
     PROCESS_MODE_CONTINUOUS_RACK  = 2  //!< Single client, "rack" mode. Processes plugins in order of id, with forced stereo.
 };
 
 /*!
  * Callback function the backend will call when something interesting happens.
  *
- * \see CarlaEngine::setCallback()
+ * \see set_callback_function()
  */
 typedef void (*CallbackFunc)(void* ptr, CallbackType action, unsigned short pluginId, int value1, int value2, double value3);
-
-struct midi_program_t {
-    uint32_t bank;
-    uint32_t program;
-    const char* name;
-
-    midi_program_t()
-        : bank(0),
-          program(0),
-          name(nullptr) {}
-};
 
 struct ParameterData {
     ParameterType type;
@@ -540,6 +548,17 @@ struct ParameterRanges {
           step(0.01),
           stepSmall(0.0001),
           stepLarge(0.1) {}
+};
+
+struct MidiProgramData {
+    uint32_t bank;
+    uint32_t program;
+    const char* name;
+
+    MidiProgramData()
+        : bank(0),
+          program(0),
+          name(nullptr) {}
 };
 
 struct CustomData {

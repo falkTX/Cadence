@@ -779,7 +779,7 @@ public:
         midiprog.count = descriptor->midiProgramCount;
 
         if (midiprog.count > 0)
-            midiprog.data = new midi_program_t[midiprog.count];
+            midiprog.data = new MidiProgramData[midiprog.count];
 
         // Update data
         for (i=0; i < midiprog.count; i++)

@@ -391,7 +391,7 @@ public:
             midiprog.count = count;
 
             if (midiprog.count > 0)
-                midiprog.data = new midi_program_t [midiprog.count];
+                midiprog.data = new MidiProgramData[midiprog.count];
             else
                 midiprog.data = nullptr;
 

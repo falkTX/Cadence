@@ -1694,7 +1694,7 @@ public:
     {
 #ifdef DEBUG
         if (opcode != audioMasterGetTime)
-            qDebug("VstPlugin::hostCallback(%p, %s, %i, " P_INTPTR ", %p, %f)", effect, vstMasterOpcode2str(opcode), index, value, ptr, opt);
+            qDebug("VstPlugin::hostCallback(%p, %02i:%s, %i, " P_INTPTR ", %p, %f)", effect, opcode, vstMasterOpcode2str(opcode), index, value, ptr, opt);
 #endif
 
 #if 0
@@ -2097,7 +2097,7 @@ public:
 
         default:
 #ifdef DEBUG
-            qDebug("VstPlugin::hostCallback(%p, %s, %i, " P_INTPTR ", %p, %f)", effect, vstMasterOpcode2str(opcode), index, value, ptr, opt);
+            qDebug("VstPlugin::hostCallback(%p, %02i:%s, %i, " P_INTPTR ", %p, %f)", effect, opcode, vstMasterOpcode2str(opcode), index, value, ptr, opt);
 #endif
             break;
         }

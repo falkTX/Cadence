@@ -103,7 +103,7 @@
 #endif
 
 #ifdef NDEBUG
-#  define CARLA_ASSERT(cond) ((!(cond)) ? carla_assert(#cond,__FILE__,__LINE__) : pass())
+#  define CARLA_ASSERT(cond) ((!(cond)) ? carla_assert(#cond, __FILE__, __LINE__) : pass())
 #else
 #  define CARLA_ASSERT Q_ASSERT
 #endif
@@ -131,9 +131,9 @@ void carla_assert(const char* const assertion, const char* const file, const int
 }
 
 static inline
-const char* bool2str(const bool yesno)
+const char* bool2str(const bool yesNo)
 {
-    return yesno ? "true" : "false";
+    return yesNo ? "true" : "false";
 }
 
 static inline

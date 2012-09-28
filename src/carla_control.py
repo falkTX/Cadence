@@ -33,7 +33,7 @@ lo_targetName = ""
 Carla.isControl = True
 
 # Python Object dicts compatible to carla-backend struct ctypes
-midi_program_t = {
+MidiProgramData = {
     'bank': 0,
     'program': 0,
     'label': None
@@ -195,7 +195,7 @@ class Host(object):
 
         # add placeholders
         for x in range(count):
-            self.pluginInfo[index].midiProgramDataS.append(midi_program_t)
+            self.pluginInfo[index].midiProgramDataS.append(MidiProgramData)
 
     def _set_parameterInfoS(self, index, paramIndex, data):
         if paramIndex < self.pluginInfo[index].parameterCountInfo['total']:
@@ -819,7 +819,7 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
 
     @pyqtSlot(int, int, int, int, str)
     def slot_handleSetMidiProgramData(self, pluginId, index, bank, program, name):
-        data = deepcopy(midi_program_t)
+        data = deepcopy(MidiProgramData)
         data['bank']    = bank
         data['program'] = program
         data['label']   = name

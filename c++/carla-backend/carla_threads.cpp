@@ -175,11 +175,11 @@ const char* PluginThreadMode2str(const CarlaPluginThread::PluginThreadMode mode)
     return nullptr;
 }
 
-CarlaPluginThread::CarlaPluginThread(CarlaBackend::CarlaEngine* const engine_, CarlaBackend::CarlaPlugin* const plugin_, const PluginThreadMode mode_, QObject* const parent) :
-    QThread(parent),
-    engine(engine_),
-    plugin(plugin_),
-    mode(mode_)
+CarlaPluginThread::CarlaPluginThread(CarlaBackend::CarlaEngine* const engine_, CarlaBackend::CarlaPlugin* const plugin_, const PluginThreadMode mode_, QObject* const parent)
+    : QThread(parent),
+      engine(engine_),
+      plugin(plugin_),
+      mode(mode_)
 {
     qDebug("CarlaPluginThread::CarlaPluginThread(plugin:\"%s\", engine:\"%s\", %s)", plugin->name(), engine->getName(), PluginThreadMode2str(mode));
 

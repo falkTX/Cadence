@@ -346,9 +346,9 @@ public:
          * \param engine The engine to lock
          * \param lock Wherever to lock the engine or not, true by default
          */
-        ScopedLocker(CarlaEngine* const engine, bool lock = true) :
-            m_engine(engine),
-            m_lock(lock)
+        ScopedLocker(CarlaEngine* const engine, bool lock = true)
+            : m_engine(engine),
+              m_lock(lock)
         {
             if (m_lock)
                 m_engine->processLock();

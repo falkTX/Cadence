@@ -22,7 +22,8 @@
 class MidiSplitPlugin : public PluginDescriptorClass
 {
 public:
-    MidiSplitPlugin(const PluginDescriptorClass* master) : PluginDescriptorClass(master)
+    MidiSplitPlugin(const PluginDescriptorClass* master)
+        : PluginDescriptorClass(master)
     {
         if (! master)
             return;

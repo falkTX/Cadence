@@ -32,46 +32,48 @@ const char* get_extended_license_text()
 {
     qDebug("CarlaBackendStandalone::get_extended_license_text()");
 
-    QString text("<p>This current Carla build is using the following features and 3rd-party code:</p>");
-    text += "<ul>";
+    if (! extendedLicenseText)
+    {
+        QString text("<p>This current Carla build is using the following features and 3rd-party code:</p>");
+        text += "<ul>";
 
 #ifdef WANT_LADSPA
-    text += "<li>LADSPA plugin support, http://www.ladspa.org/</li>";
+        text += "<li>LADSPA plugin support, http://www.ladspa.org/</li>";
 #endif
 #ifdef WANT_DSSI
-    text += "<li>DSSI plugin support, http://dssi.sourceforge.net/</li>";
+        text += "<li>DSSI plugin support, http://dssi.sourceforge.net/</li>";
 #endif
 #ifdef WANT_LV2
-    text += "<li>LV2 plugin support, http://lv2plug.in/</li>";
+        text += "<li>LV2 plugin support, http://lv2plug.in/</li>";
 #endif
 #ifdef WANT_VST
 #  ifdef VESTIGE_HEADER
-    text += "<li>VST plugin support, using VeSTige header by Javier Serrano Polo</li>";
+        text += "<li>VST plugin support, using VeSTige header by Javier Serrano Polo</li>";
 #  else
-    text += "<li>VST plugin support, using official VST SDK 2.4 trademark of Steinberg Media Technologies GmbH</li>";
+        text += "<li>VST plugin support, using official VST SDK 2.4 (trademark of Steinberg Media Technologies GmbH)</li>";
 #  endif
 #endif
 #ifdef WANT_FLUIDSYNTH
-    text += "<li>FluidSynth library for SF2 support, http://www.fluidsynth.org/</li>";
+        text += "<li>FluidSynth library for SF2 support, http://www.fluidsynth.org/</li>";
 #endif
 #ifdef WANT_LINUXSAMPLER
-    text += "<li>LinuxSampler library for GIG and SFZ support*, http://www.linuxsampler.org/</li>";
+        text += "<li>LinuxSampler library for GIG and SFZ support*, http://www.linuxsampler.org/</li>";
 #endif
-    text += "<li>liblo library for OSC support, http://liblo.sourceforge.net/</li>";
+        text += "<li>liblo library for OSC support, http://liblo.sourceforge.net/</li>";
 #ifdef WANT_LV2
-    text += "<li>serd, sord, sratom and lilv libraries for LV2 discovery, http://drobilla.net/software/lilv/</li>";
+        text += "<li>serd, sord, sratom and lilv libraries for LV2 discovery, http://drobilla.net/software/lilv/</li>";
 #endif
 #ifdef CARLA_ENGINE_RTAUDIO
-    text += "<li>RtAudio and RtMidi libraries for extra Audio and MIDI support, http://www.music.mcgill.ca/~gary/rtaudio/</li>";
+        text += "<li>RtAudio and RtMidi libraries for extra Audio and MIDI support, http://www.music.mcgill.ca/~gary/rtaudio/</li>";
 #endif
-    text += "</ul>";
+        text += "</ul>";
 
 #ifdef WANT_LINUXSAMPLER
-    text += "<p>(*) Using LinuxSampler code in commercial hardware or software products is not allowed without prior written authorization by the authors.</p>";
+        text += "<p>(*) Using LinuxSampler code in commercial hardware or software products is not allowed without prior written authorization by the authors.</p>";
 #endif
 
-    if (! extendedLicenseText)
         extendedLicenseText = strdup(text.toUtf8().constData());
+    }
 
     return extendedLicenseText;
 }
@@ -99,7 +101,8 @@ const char* get_engine_driver_name(unsigned int index)
 #ifdef CARLA_ENGINE_JACK
     if (index == 0)
         return "JACK";
-    index -= 1;
+    else
+        index -= 1;
 #endif
 
 #ifdef CARLA_ENGINE_RTAUDIO
@@ -586,11 +589,11 @@ const CarlaBackend::ParameterRanges* get_parameter_ranges(unsigned short plugin_
     return &ranges;
 }
 
-const CarlaBackend::midi_program_t* get_midi_program_data(unsigned short plugin_id, uint32_t midi_program_id)
+const CarlaBackend::MidiProgramData* get_midi_program_data(unsigned short plugin_id, uint32_t midi_program_id)
 {
     qDebug("CarlaBackendStandalone::get_midi_program_data(%i, %i)", plugin_id, midi_program_id);
 
-    static CarlaBackend::midi_program_t data;
+    static CarlaBackend::MidiProgramData data;
 
     CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
 
@@ -1254,11 +1257,11 @@ void set_callback_function(CarlaBackend::CallbackFunc func)
         carlaEngine->setCallback(func, nullptr);
 }
 
-void set_option(CarlaBackend::OptionsType option, int value, const char* valueStr)
+void set_option(CarlaBackend::OptionsType option, int value, const char* value_str)
 {
-    qDebug("CarlaBackendStandalone::set_option(%s, %i, \"%s\")", CarlaBackend::OptionsType2str(option), value, valueStr);
+    qDebug("CarlaBackendStandalone::set_option(%s, %i, \"%s\")", CarlaBackend::OptionsType2str(option), value, value_str);
 
-    CarlaBackend::setOption(option, value, valueStr);
+    CarlaBackend::setOption(option, value, value_str);
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -1340,7 +1343,7 @@ protected:
 
     int nsm_open_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg)
     {
-        qDebug("CarlaNSM::nsm_open_handler(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
+        qDebug("CarlaNSM::nsm_open_handler(\"%s\", \"%s\", %p, %i, %p)", path, types, argv, argc, msg);
 
         if (! carlaFunc)
             return 1;
@@ -1365,7 +1368,7 @@ protected:
 
     int nsm_save_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg)
     {
-        qDebug("CarlaNSM::nsm_save_handler(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
+        qDebug("CarlaNSM::nsm_save_handler(\"%s\", \"%s\", %p, %i, %p)", path, types, argv, argc, msg);
 
         if (! carlaFunc)
             return 1;

@@ -665,13 +665,6 @@ if is64bit:
 else:
     c_uintptr = c_uint32
 
-class midi_program_t(Structure):
-    _fields_ = [
-        ("bank", c_uint32),
-        ("program", c_uint32),
-        ("label", c_char_p)
-    ]
-
 class ParameterData(Structure):
     _fields_ = [
         ("type", c_enum),
@@ -690,6 +683,13 @@ class ParameterRanges(Structure):
         ("step", c_double),
         ("stepSmall", c_double),
         ("stepLarge", c_double)
+    ]
+
+class MidiProgramData(Structure):
+    _fields_ = [
+        ("bank", c_uint32),
+        ("program", c_uint32),
+        ("label", c_char_p)
     ]
 
 class CustomData(Structure):
@@ -820,7 +820,7 @@ class Host(object):
         self.lib.get_parameter_ranges.restype = POINTER(ParameterRanges)
 
         self.lib.get_midi_program_data.argtypes = [c_ushort, c_uint32]
-        self.lib.get_midi_program_data.restype = POINTER(midi_program_t)
+        self.lib.get_midi_program_data.restype = POINTER(MidiProgramData)
 
         self.lib.get_custom_data.argtypes = [c_ushort, c_uint32]
         self.lib.get_custom_data.restype = POINTER(CustomData)

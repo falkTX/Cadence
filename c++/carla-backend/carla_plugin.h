@@ -143,7 +143,7 @@ struct PluginProgramData {
 struct PluginMidiProgramData {
     uint32_t count;
     int32_t current;
-    midi_program_t* data;
+    MidiProgramData* data;
 
     PluginMidiProgramData()
         : count(0),
@@ -178,10 +178,10 @@ struct ExternalMidiNote {
 };
 
 // fallback data
-static ParameterData   paramDataNull;
-static ParameterRanges paramRangesNull;
-static midi_program_t  midiProgramNull;
-static CustomData      customDataNull;
+static ParameterData    paramDataNull;
+static ParameterRanges  paramRangesNull;
+static MidiProgramData  midiProgramDataNull;
+static CustomData       customDataNull;
 
 /*!
  * \class CarlaPlugin
@@ -535,14 +535,14 @@ public:
      *
      * \see getMidiProgramName()
      */
-    const midi_program_t* midiProgramData(const uint32_t index) const
+    const MidiProgramData* midiProgramData(const uint32_t index) const
     {
         CARLA_ASSERT(index < midiprog.count);
 
         if (index < midiprog.count)
             return &midiprog.data[index];
 
-        return &midiProgramNull;
+        return &midiProgramDataNull;
     }
 
     /*!
@@ -2156,9 +2156,9 @@ public:
          * \param plugin The plugin to disable
          * \param disable Wherever to disable the plugin or not, true by default
          */
-        ScopedDisabler(CarlaPlugin* const plugin, const bool disable = true) :
-            m_plugin(plugin),
-            m_disable(disable)
+        ScopedDisabler(CarlaPlugin* const plugin, const bool disable = true)
+            : m_plugin(plugin),
+              m_disable(disable)
         {
             if (m_disable)
             {
