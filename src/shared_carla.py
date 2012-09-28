@@ -511,8 +511,8 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
         self.set_MIDI_CC_in_ComboBox(cc)
 
     def set_parameter_midi_channel(self, channel):
-        self.m_midiChannel = channel
-        self.sb_channel.setValue(channel)
+        self.m_midiChannel = channel+1
+        self.sb_channel.setValue(channel+1)
 
     def add_MIDI_CCs_to_ComboBox(self):
         for MIDI_CC in MIDI_CC_LIST:
@@ -1121,7 +1121,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
     @pyqtSlot(int, int)
     def slot_parameterMidiChannelChanged(self, parameter_id, channel):
-        Carla.Host.set_parameter_midi_channel(self.m_pluginId, parameter_id, channel)
+        Carla.Host.set_parameter_midi_channel(self.m_pluginId, parameter_id, channel-1)
 
     @pyqtSlot(int, int)
     def slot_parameterMidiCcChanged(self, parameter_id, cc_index):
@@ -1799,7 +1799,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
                 Carla.Host.set_parameter_value(self.m_pluginId, index, parameter['value'])
                 Carla.Host.set_parameter_midi_cc(self.m_pluginId, index, parameter['midiCC'])
-                Carla.Host.set_parameter_midi_channel(self.m_pluginId, index, parameter['midiChannel'])
+                Carla.Host.set_parameter_midi_channel(self.m_pluginId, index, parameter['midiChannel']-1)
 
             else:
                 print("Could not set parameter data for '%s')" % parameter['name'])

@@ -745,7 +745,6 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
 
     @pyqtSlot(int, int, int)
     def slot_handleSetParameterMidiChannel(self, pluginId, index, channel):
-        channel += 1
         Carla.Host._set_parameterMidiChannel(pluginId, index, channel)
 
         pwidget = self.m_plugin_list[pluginId]

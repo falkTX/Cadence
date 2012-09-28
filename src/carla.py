@@ -1082,8 +1082,8 @@ class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
                                 " /set_balance_left           <f-value>\n"
                                 " /set_balance_right          <f-value>\n"
                                 " /set_parameter_value        <i-index> <f-value>\n"
-                                #" /set_parameter_midi_cc      <i-index> <i-cc>\n"
-                                #" /set_parameter_midi_channel <i-index> <i-channel>\n"
+                                " /set_parameter_midi_cc      <i-index> <i-cc>\n"
+                                " /set_parameter_midi_channel <i-index> <i-channel>\n"
                                 " /set_program                <i-index>\n"
                                 " /set_midi_program           <i-index>\n"
                                 " /note_on                    <i-note> <i-velo>\n"
@@ -1202,7 +1202,9 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
         self.connect(self, SIGNAL("SIGUSR1()"), SLOT("slot_handleSIGUSR1()"))
         self.connect(self, SIGNAL("DebugCallback(int, int, int, double)"), SLOT("slot_handleDebugCallback(int, int, int, double)"))
-        self.connect(self, SIGNAL("ParameterCallback(int, int, double)"), SLOT("slot_handleParameterCallback(int, int, double)"))
+        self.connect(self, SIGNAL("ParameterValueCallback(int, int, double)"), SLOT("slot_handleParameterValueCallback(int, int, double)"))
+        self.connect(self, SIGNAL("ParameterMidiChannelCallback(int, int, int)"), SLOT("slot_handleParameterMidiChannelCallback(int, int, int)"))
+        self.connect(self, SIGNAL("ParameterMidiCcCallback(int, int, int)"), SLOT("slot_handleParameterMidiCcCallback(int, int, int)"))
         self.connect(self, SIGNAL("ProgramCallback(int, int)"), SLOT("slot_handleProgramCallback(int, int)"))
         self.connect(self, SIGNAL("MidiProgramCallback(int, int)"), SLOT("slot_handleMidiProgramCallback(int, int)"))
         self.connect(self, SIGNAL("NoteOnCallback(int, int, int, int)"), SLOT("slot_handleNoteOnCallback(int, int, int, int)"))
@@ -1350,7 +1352,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         print("DEBUG :: %i, %i, %i, %f)" % (plugin_id, value1, value2, value3))
 
     @pyqtSlot(int, int, float)
-    def slot_handleParameterCallback(self, pluginId, parameterId, value):
+    def slot_handleParameterValueCallback(self, pluginId, parameterId, value):
         pwidget = self.m_plugin_list[pluginId]
         if pwidget:
             pwidget.m_parameterIconTimer = ICON_STATE_ON
@@ -1367,6 +1369,18 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
                 pwidget.set_balance_right(value * 1000, True, False)
             elif parameterId >= 0:
                 pwidget.edit_dialog.set_parameter_to_update(parameterId)
+
+    @pyqtSlot(int, int, int)
+    def slot_handleParameterMidiChannelCallback(self, pluginId, parameterId, channel):
+        pwidget = self.m_plugin_list[pluginId]
+        if pwidget:
+            pwidget.edit_dialog.set_parameter_midi_channel(parameterId, channel, True)
+
+    @pyqtSlot(int, int, int)
+    def slot_handleParameterMidiCcCallback(self, pluginId, parameterId, cc):
+        pwidget = self.m_plugin_list[pluginId]
+        if pwidget:
+            pwidget.edit_dialog.set_parameter_midi_cc(parameterId, cc, True)
 
     @pyqtSlot(int, int)
     def slot_handleProgramCallback(self, plugin_id, program_id):
@@ -2017,8 +2031,11 @@ def callback_function(ptr, action, pluginId, value1, value2, value3):
     if action == CALLBACK_DEBUG:
         Carla.gui.emit(SIGNAL("DebugCallback(int, int, int, double)"), pluginId, value1, value2, value3)
     elif action == CALLBACK_PARAMETER_VALUE_CHANGED:
-        Carla.gui.emit(SIGNAL("ParameterCallback(int, int, double)"), pluginId, value1, value3)
-    # TODO param midi callbacks
+        Carla.gui.emit(SIGNAL("ParameterValueCallback(int, int, double)"), pluginId, value1, value3)
+    elif action == CALLBACK_PARAMETER_MIDI_CHANNEL_CHANGED:
+        Carla.gui.emit(SIGNAL("ParameterMidiChannelCallback(int, int, int)"), pluginId, value1, value2)
+    elif action == CALLBACK_PARAMETER_MIDI_CC_CHANGED:
+        Carla.gui.emit(SIGNAL("ParameterMidiCcCallback(int, int, int)"), pluginId, value1, value2)
     elif action == CALLBACK_PROGRAM_CHANGED:
         Carla.gui.emit(SIGNAL("ProgramCallback(int, int)"), pluginId, value1)
     elif action == CALLBACK_MIDI_PROGRAM_CHANGED:
