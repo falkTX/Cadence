@@ -24,7 +24,7 @@ from subprocess import getoutput
 
 # Imports (Custom Stuff)
 import ui_cadence
-import ui_cadence_tb_jack, ui_cadence_tb_a2j, ui_cadence_rwait
+import ui_cadence_tb_jack, ui_cadence_tb_a2j, ui_cadence_tb_pa, ui_cadence_rwait
 import systray
 from shared_cadence import *
 from shared_jack import *
@@ -471,7 +471,7 @@ class ToolBarJackDialog(QDialog, ui_cadence_tb_jack.Ui_Dialog):
         GlobalSettings.setValue("JACK/AutoLoadLadishStudio", self.rb_ladish.isChecked())
         GlobalSettings.setValue("JACK/LadishStudioName", self.cb_studio_name.currentText())
 
-# Additional A2J MIDI options
+# Additional ALSA MIDI options
 class ToolBarA2JDialog(QDialog, ui_cadence_tb_a2j.Ui_Dialog):
     def __init__(self, parent):
         QDialog.__init__(self, parent)
@@ -485,18 +485,19 @@ class ToolBarA2JDialog(QDialog, ui_cadence_tb_a2j.Ui_Dialog):
     def slot_setOptions(self):
         GlobalSettings.setValue("A2J/ExportHW", self.cb_export_hw.isChecked())
 
-# Additional Pulse-JACK options
-#class ToolBarPADialog(QDialog, ui_cadence_tb_pa.Ui_Dialog):
-    #def __init__(self, parent=None):
-        #super(ToolBarPADialog, self).__init__(parent)
-        #self.setupUi(self)
+# Additional PulseAudio options
+class ToolBarPADialog(QDialog, ui_cadence_tb_pa.Ui_Dialog):
+    def __init__(self, parent):
+        QDialog.__init__(self, parent)
+        self.setupUi(self)
 
-        #self.cb_playback_only.setChecked(GlobalSettings.value("Pulse2JACK/PlaybackModeOnly", False).toBool())
+        self.cb_playback_only.setChecked(GlobalSettings.value("Pulse2JACK/PlaybackModeOnly", False, type=bool))
 
-        #self.connect(self, SIGNAL("accepted()"), self.setOptions)
+        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setOptions()"))
 
-    #def setOptions(self):
-        #GlobalSettings.setValue("Pulse2JACK/PlaybackModeOnly", self.cb_playback_only.isChecked())
+    @pyqtSlot()
+    def slot_setOptions(self):
+        GlobalSettings.setValue("Pulse2JACK/PlaybackModeOnly", self.cb_playback_only.isChecked())
 
 # Main Window
 class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
@@ -1225,7 +1226,10 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_PulseAudioBridgeStart(self):
-        os.system("cadence-pulse2jack")
+        if GlobalSettings.value("Pulse2JACK/PlaybackModeOnly", False, type=bool):
+            os.system("cadence-pulse2jack -p")
+        else:
+            os.system("cadence-pulse2jack")
 
     @pyqtSlot()
     def slot_PulseAudioBridgeStop(self):
@@ -1233,7 +1237,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_PulseAudioBridgeOptions(self):
-        pass #ToolBarA2JDialog(self).exec_()
+        ToolBarPADialog(self).exec_()
 
     @pyqtSlot()
     def slot_handleCrash_jack(self):

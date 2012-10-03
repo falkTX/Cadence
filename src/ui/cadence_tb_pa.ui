@@ -6,18 +6,18 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>319</width>
-    <height>68</height>
+    <width>317</width>
+    <height>72</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>ALSA MIDI Options</string>
+   <string>PulseAudio Options</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QCheckBox" name="cb_export_hw">
+    <widget class="QCheckBox" name="cb_playback_only">
      <property name="text">
-      <string>Export Hardware ports before starting</string>
+      <string>Playback Mode only</string>
      </property>
     </widget>
    </item>

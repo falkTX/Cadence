@@ -26,7 +26,8 @@ all: UI RES CPP
 
 UI: cadence catarina catia claudia carla tools
 
-cadence: src/ui_cadence.py src/ui_cadence_tb_jack.py src/ui_cadence_tb_a2j.py src/ui_cadence_rwait.py
+cadence: src/ui_cadence.py \
+	src/ui_cadence_tb_jack.py src/ui_cadence_tb_a2j.py src/ui_cadence_tb_pa.py src/ui_cadence_rwait.py
 
 catarina: src/ui_catarina.py \
 	src/ui_catarina_addgroup.py src/ui_catarina_removegroup.py src/ui_catarina_renamegroup.py \
@@ -55,6 +56,9 @@ src/ui_cadence_tb_jack.py: src/ui/cadence_tb_jack.ui
 	$(PYUIC) $< -o $@
 
 src/ui_cadence_tb_a2j.py: src/ui/cadence_tb_a2j.ui
+	$(PYUIC) $< -o $@
+
+src/ui_cadence_tb_pa.py: src/ui/cadence_tb_pa.ui
 	$(PYUIC) $< -o $@
 
 src/ui_cadence_rwait.py: src/ui/cadence_rwait.ui
