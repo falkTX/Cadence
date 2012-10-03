@@ -136,8 +136,8 @@ void MIDI_CC_LIST__init()
     MIDI_CC_LIST << "0x4F Control 10 [Undefined]";
     MIDI_CC_LIST << "0x50 General Purpose 5";
     MIDI_CC_LIST << "0x51 General Purpose 6";
-    MIDI_CC_LIST << "0x52 General Purpose 8";
-    MIDI_CC_LIST << "0x53 General Purpose 9";
+    MIDI_CC_LIST << "0x52 General Purpose 7";
+    MIDI_CC_LIST << "0x53 General Purpose 8";
     MIDI_CC_LIST << "0x54 Portamento Control";
     MIDI_CC_LIST << "0x5B FX 1 Depth [Reverb]";
     MIDI_CC_LIST << "0x5C FX 2 Depth [Tremolo]";

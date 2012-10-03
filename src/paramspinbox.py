@@ -64,15 +64,15 @@ class ParamProgressBar(QProgressBar):
     def __init__(self, parent):
         QProgressBar.__init__(self, parent)
 
-        self._minimum = 0.0
-        self._maximum = 1.0
-        self._step_small = 0.0
-        self._rvalue = 0.0
+        self.m_leftClickDown = False
 
-        self._label = ""
-        self._pre_label = " "
-        self._left_click_down = False
-        self._textCall = None
+        self.m_minimum = 0.0
+        self.m_maximum = 1.0
+        self.m_rvalue  = 0.0
+
+        self.m_label = ""
+        self.m_preLabel = " "
+        self.m_textCall = None
 
         self.setMinimum(0)
         self.setMaximum(1000)
@@ -80,61 +80,62 @@ class ParamProgressBar(QProgressBar):
         self.setFormat("(none)")
 
     def set_minimum(self, value):
-        self._minimum = value
+        self.m_minimum = value
 
     def set_maximum(self, value):
-        self._maximum = value
+        self.m_maximum = value
 
     def set_value(self, value):
-        self._rvalue = value
-        vper = (value - self._minimum) / (self._maximum - self._minimum)
+        self.m_rvalue = value
+        vper = (value - self.m_minimum) / (self.m_maximum - self.m_minimum)
         self.setValue(vper * 1000)
 
     def set_label(self, label):
-        self._label = label.strip()
+        self.m_label = label.strip()
 
-        if self._label == "(coef)":
-            self._label = ""
-            self._pre_label = "*"
+        if self.m_label == "(coef)":
+            self.m_label = ""
+            self.m_preLabel = "*"
 
         self.update()
 
     def set_text_call(self, textCall):
-        self._textCall = textCall
+        self.m_textCall = textCall
 
     def handleMouseEventPos(self, pos):
         xper = float(pos.x()) / self.width()
-        value = xper * (self._maximum - self._minimum) + self._minimum
+        value = xper * (self.m_maximum - self.m_minimum) + self.m_minimum
 
-        if value < self._minimum:
-            value = self._minimum
-        elif value > self._maximum:
-            value = self._maximum
+        if value < self.m_minimum:
+            value = self.m_minimum
+        elif value > self.m_maximum:
+            value = self.m_maximum
 
         self.emit(SIGNAL("valueChangedFromBar(double)"), value)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.handleMouseEventPos(event.pos())
-            self._left_click_down = True
+            self.m_leftClickDown = True
         else:
-            self._left_click_down = False
+            self.m_leftClickDown = False
         QProgressBar.mousePressEvent(self, event)
 
     def mouseMoveEvent(self, event):
-        if self._left_click_down:
+        if self.m_leftClickDown:
             self.handleMouseEventPos(event.pos())
         QProgressBar.mouseMoveEvent(self, event)
 
     def mouseReleaseEvent(self, event):
-        self._left_click_down = False
+        self.m_leftClickDown = False
         QProgressBar.mouseReleaseEvent(self, event)
 
     def paintEvent(self, event):
-        if self._textCall:
-            self.setFormat("%s %s %s" % (self._pre_label, self._textCall(), self._label))
+        if self.m_textCall:
+            self.setFormat("%s %s %s" % (self.m_preLabel, self.m_textCall(), self.m_label))
         else:
-            self.setFormat("%s %f %s" % (self._pre_label, self._rvalue, self._label))
+            self.setFormat("%s %f %s" % (self.m_preLabel, self.m_rvalue, self.m_label))
+
         QProgressBar.paintEvent(self, event)
 
 # Special SpinBox used for parameters

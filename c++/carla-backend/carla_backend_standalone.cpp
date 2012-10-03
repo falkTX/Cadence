@@ -1538,7 +1538,9 @@ public:
         if (m_serverThread)
         {
             lo_server_thread_stop(m_serverThread);
-            lo_server_thread_del_method(m_serverThread, nullptr, nullptr);
+            lo_server_thread_del_method(m_serverThread, "/reply", "ssss");
+            lo_server_thread_del_method(m_serverThread, "/nsm/client/open", "sss");
+            lo_server_thread_del_method(m_serverThread, "/nsm/client/save", "");
             lo_server_thread_free(m_serverThread);
         }
     }
