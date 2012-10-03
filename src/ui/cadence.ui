@@ -531,14 +531,14 @@
                     </spacer>
                    </item>
                    <item>
-                    <widget class="QPushButton" name="pushButton_3">
+                    <widget class="QPushButton" name="b_alsa_start">
                      <property name="text">
                       <string>Start</string>
                      </property>
                     </widget>
                    </item>
                    <item>
-                    <widget class="QPushButton" name="pushButton_4">
+                    <widget class="QPushButton" name="b_alsa_stop">
                      <property name="text">
                       <string>Stop</string>
                      </property>
@@ -575,10 +575,15 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QComboBox" name="comboBox">
+                    <widget class="QComboBox" name="cb_alsa_type">
                      <item>
                       <property name="text">
                        <string>(None)</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>ALSA -&gt; Loop -&gt; JACK</string>
                       </property>
                      </item>
                      <item>
@@ -591,15 +596,10 @@
                        <string>ALSA -&gt; PulseAudio -&gt; JACK (Plugin)</string>
                       </property>
                      </item>
-                     <item>
-                      <property name="text">
-                       <string>ALSA -&gt; Loop -&gt; JACK</string>
-                      </property>
-                     </item>
                     </widget>
                    </item>
                    <item>
-                    <widget class="QToolButton" name="toolButton_2">
+                    <widget class="QToolButton" name="tb_alsa_options">
                      <property name="text">
                       <string>...</string>
                      </property>

@@ -2,11 +2,10 @@
 # -*- coding: utf-8 -*-
 
 # Imports (Global)
-from ctypes import *
-from os import path, system
-from sys import version_info
+import os
 from signal import signal, SIGINT, SIGTERM
 from time import sleep
+from PyQt4.QtCore import QProcess
 
 # Imports (Custom Stuff)
 import jacklib
@@ -14,9 +13,12 @@ import jacklib
 # --------------------------------------------------
 # Global loop check
 
-global doLoop, doRunNow
-doLoop   = True
-doRunNow = True
+global doLoop, doRunNow, procIn, procOut
+doLoop    = True
+doRunNow  = True
+procIn    = QProcess()
+procOut   = QProcess()
+checkFile = "/tmp/.cadence-aloop-daemon.x"
 
 # --------------------------------------------------
 # Global JACK variables
@@ -51,24 +53,22 @@ def shutdown_callback(arg):
 # --------------------------------------------------
 # run alsa_in and alsa_out
 def run_alsa_bridge():
-    global sample_rate, buffer_size
-    killList = "alsa_in alsa_out zita-a2j zita-j2a"
+    global bufferSize, sampleRate
+    global procIn, procOut
 
-    # On KXStudio, pulseaudio is nicely bridged & configured to work with JACK
-    if not path.exists("/usr/share/kxstudio/config/pulse/daemon.conf"):
-        killList += " pulseaudio"
+    if procIn.state() != QProcess.NotRunning:
+        procIn.terminate()
+    if procOut.state() != QProcess.NotRunning:
+        procOut.terminate()
 
-    system("killall %s" % killList)
+    procIn.start("env",  ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_in",  "-j", "alsa2jack", "-d", "cloop", "-q", "1"])
+    procOut.start("env", ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_out", "-j", "jack2alsa", "-d", "ploop", "-q", "1"])
 
-    #if (False):
-    system("env JACK_SAMPLE_RATE=%i JACK_PERIOD_SIZE=%i alsa_in  -j alsa2jack -d cloop -q 1 2>&1 1> /dev/null &" % (sampleRate, bufferSize))
-    system("env JACK_SAMPLE_RATE=%i JACK_PERIOD_SIZE=%i alsa_out -j jack2alsa -d ploop -q 1 2>&1 1> /dev/null &" % (sampleRate, bufferSize))
-    #else:
-      #system("env JACK_SAMPLE_RATE=%i JACK_PERIOD_SIZE=%i zita-a2j -j alsa2jack -d hw:Loopback,1,0 -r 44100 &" % (sample_rate, buffer_size))
-      #system("env JACK_SAMPLE_RATE=%i JACK_PERIOD_SIZE=%i zita-j2a -j jack2alsa -d hw:Loopback,1,1 -r 44100 &" % (sample_rate, buffer_size))
+    procIn.waitForStarted()
+    procOut.waitForStarted()
 
     # Pause it for a bit, and connect to the system ports
-    sleep(2)
+    sleep(1)
     jacklib.connect(client, "alsa2jack:capture_1", "system:playback_1")
     jacklib.connect(client, "alsa2jack:capture_2", "system:playback_2")
     jacklib.connect(client, "system:capture_1", "jack2alsa:playback_1")
@@ -78,7 +78,7 @@ def run_alsa_bridge():
 if __name__ == '__main__':
 
     # Init JACK client
-    client = jacklib.client_open("cadence-aloop-daemon", 0, None)
+    client = jacklib.client_open("cadence-aloop-daemon", jacklib.JackUseExactName, None)
 
     if not client:
         quit()
@@ -95,8 +95,12 @@ if __name__ == '__main__':
     sampleRate = jacklib.get_sample_rate(client)
     bufferSize = jacklib.get_buffer_size(client)
 
+    # Create check file
+    if not os.path.exists(checkFile):
+        os.mknod(checkFile)
+
     # Keep running until told otherwise
-    while doLoop:
+    while doLoop and os.path.exists(checkFile):
         if doRunNow:
             doRunNow = False
             run_alsa_bridge()
@@ -105,3 +109,11 @@ if __name__ == '__main__':
     # Close JACK client
     jacklib.deactivate(client)
     jacklib.client_close(client)
+
+    if os.path.exists(checkFile):
+        os.remove(checkFile)
+
+    if procIn.state() != QProcess.NotRunning:
+        procIn.terminate()
+    if procOut.state() != QProcess.NotRunning:
+        procOut.terminate()
