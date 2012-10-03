@@ -1043,37 +1043,46 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.checkPulseAudio()
 
     def a2jStarted(self):
-        self.label_bridge_a2j.setText(self.tr("ALSA MIDI Bridge is running"))
         self.b_a2j_start.setEnabled(False)
         self.b_a2j_stop.setEnabled(True)
         self.b_a2j_export_hw.setEnabled(False)
         self.systray.setActionEnabled("a2j_start", False)
         self.systray.setActionEnabled("a2j_stop", True)
         self.systray.setActionEnabled("a2j_export_hw", False)
+        self.label_bridge_a2j.setText(self.tr("ALSA MIDI Bridge is running"))
 
     def a2jStopped(self):
-        self.label_bridge_a2j.setText(self.tr("ALSA MIDI Bridge is stopped"))
-        self.b_a2j_start.setEnabled(True)
+        jackRunning = bool(DBus.jack and DBus.jack.IsStarted())
+        self.b_a2j_start.setEnabled(jackRunning)
         self.b_a2j_stop.setEnabled(False)
         self.b_a2j_export_hw.setEnabled(True)
-        self.systray.setActionEnabled("a2j_start", True)
+        self.systray.setActionEnabled("a2j_start", jackRunning)
         self.systray.setActionEnabled("a2j_stop", False)
         self.systray.setActionEnabled("a2j_export_hw", True)
+        self.label_bridge_a2j.setText(self.tr("ALSA MIDI Bridge is stopped"))
 
     def checkPulseAudio(self):
         if PA_is_started():
             global PA_clientId
             if PA_clientId != -1:
-                self.label_bridge_pulse.setText(self.tr("PulseAudio is started and bridged to JACK"))
                 self.b_pulse_start.setEnabled(False)
                 self.b_pulse_stop.setEnabled(True)
+                self.systray.setActionEnabled("pulse_start", False)
+                self.systray.setActionEnabled("pulse_stop", True)
+                self.label_bridge_pulse.setText(self.tr("PulseAudio is started and bridged to JACK"))
             else:
-                self.label_bridge_pulse.setText(self.tr("PulseAudio is started but not bridged"))
+                jackRunning = bool(DBus.jack and DBus.jack.IsStarted())
                 self.b_pulse_start.setEnabled(DBus.jack and DBus.jack.IsStarted())
                 self.b_pulse_stop.setEnabled(False)
+                self.systray.setActionEnabled("pulse_start", jackRunning)
+                self.systray.setActionEnabled("pulse_stop", False)
+                self.label_bridge_pulse.setText(self.tr("PulseAudio is started but not bridged"))
         else:
-            self.b_pulse_start.setEnabled(DBus.jack and DBus.jack.IsStarted())
+            jackRunning = bool(DBus.jack and DBus.jack.IsStarted())
+            self.b_pulse_start.setEnabled(jackRunning)
             self.b_pulse_stop.setEnabled(False)
+            self.systray.setActionEnabled("pulse_start", jackRunning)
+            self.systray.setActionEnabled("pulse_stop", False)
             self.label_bridge_pulse.setText(self.tr("PulseAudio is not started"))
 
     def setAppDetails(self, desktop):
