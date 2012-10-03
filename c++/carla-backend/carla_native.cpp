@@ -1661,7 +1661,7 @@ CarlaPlugin* CarlaPlugin::newNative(const initializer& init)
 
     if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
-        if (! plugin->hints() & PLUGIN_CAN_FORCE_STEREO)
+        if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
         {
             setLastError("Carla's rack mode can only work with Mono or Stereo Internal plugins, sorry!");
             delete plugin;

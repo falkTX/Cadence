@@ -1163,17 +1163,17 @@ CarlaPlugin* CarlaPlugin::newLADSPA(const initializer& init, const void* const e
 
     plugin->reload();
 
-#ifndef BUILD_BRIDGE
+#  ifndef BUILD_BRIDGE
     if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
-        if (! plugin->hints() & PLUGIN_CAN_FORCE_STEREO)
+        if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
         {
             setLastError("Carla's rack mode can only work with Mono or Stereo LADSPA plugins, sorry!");
             delete plugin;
             return nullptr;
         }
     }
-#endif
+#  endif
 
     plugin->registerToOscControl();
 
