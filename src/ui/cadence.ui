@@ -483,7 +483,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>351</width>
-                  <height>114</height>
+                  <height>117</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -628,7 +628,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>351</width>
-                  <height>114</height>
+                  <height>115</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -766,7 +766,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>351</width>
-                  <height>114</height>
+                  <height>115</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -814,14 +814,14 @@
                     </spacer>
                    </item>
                    <item>
-                    <widget class="QPushButton" name="pushButton_7">
+                    <widget class="QPushButton" name="b_pulse_start">
                      <property name="text">
                       <string>Start</string>
                      </property>
                     </widget>
                    </item>
                    <item>
-                    <widget class="QPushButton" name="pushButton_8">
+                    <widget class="QPushButton" name="b_pulse_stop">
                      <property name="text">
                       <string>Stop</string>
                      </property>
@@ -868,7 +868,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QToolButton" name="toolButton_4">
+                    <widget class="QToolButton" name="tb_pulse_options">
                      <property name="text">
                       <string>...</string>
                      </property>

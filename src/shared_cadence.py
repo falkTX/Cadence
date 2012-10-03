@@ -50,8 +50,8 @@ def getProcList():
 
     for i in range(len(processDump)):
         if (i == 0): continue
-        dumpTest = str(processDump[i]).rsplit(":", 1)[-1].split(" ")
-        if len(dumpTest) > 1:
+        dumpTest = str(processDump[i], encoding="utf-8").rsplit(":", 1)[-1].split(" ")
+        if len(dumpTest) > 1 and dumpTest[1]:
             retProcs.append(dumpTest[1])
 
     return retProcs
