@@ -3,7 +3,7 @@
 
 # Imports (Global)
 from ctypes import *
-from os import system
+from os import path, system
 from sys import version_info
 from signal import signal, SIGINT, SIGTERM
 from time import sleep
@@ -52,7 +52,13 @@ def shutdown_callback(arg):
 # run alsa_in and alsa_out
 def run_alsa_bridge():
     global sample_rate, buffer_size
-    system("killall alsa_in alsa_out zita-a2j zita-j2a pulseaudio")
+    killList = "alsa_in alsa_out zita-a2j zita-j2a"
+
+    # On KXStudio, pulseaudio is nicely bridged & configured to work with JACK
+    if not path.exists("/usr/share/kxstudio/config/pulse/daemon.conf"):
+        killList += " pulseaudio"
+
+    system("killall %s" % killList)
 
     #if (False):
     system("env JACK_SAMPLE_RATE=%i JACK_PERIOD_SIZE=%i alsa_in  -j alsa2jack -d cloop -q 1 2>&1 1> /dev/null &" % (sampleRate, bufferSize))

@@ -1,42 +1,53 @@
 #!/bin/bash
-# Script to stop current pulseaudio and restart it in JACK mode
+# Script to bridge/start pulseaudio into JACK mode
 
 INSTALL_PREFIX="X-PREFIX-X"
 
-IsPulseAudioRunning()
-{
-  PROCESS=`ps -e | grep pulseaudio`
-  if [ "$PROCESS" == "" ]; then
-      false
-  else
-      true
-  fi
-}
+# ----------------------------------------------
 
 if [ ! -d ~/.pulse ]; then
-  mkdir -p ~/.pulse
+    mkdir -p ~/.pulse
 fi
 
 if [ ! -f ~/.pulse/client.conf ]; then
-  echo "autospawn = no" > ~/.pulse/client.conf
+    echo "autospawn = no" > ~/.pulse/client.conf
 else
-  if (! cat ~/.pulse/client.conf | grep "autospawn = no" > /dev/null); then
-    sed -i '/autospawn =/d' ~/.pulse/client.conf
-    echo "autospawn = no" >> ~/.pulse/client.conf
-  fi
+    if (! cat ~/.pulse/client.conf | grep "autospawn = no" > /dev/null); then
+        sed -i '/autospawn =/d' ~/.pulse/client.conf
+        echo "autospawn = no" >> ~/.pulse/client.conf
+    fi
 fi
 
 if [ ! -f ~/.pulse/daemon.conf ]; then
-  echo "rlimit-rttime = -1" > ~/.pulse/daemon.conf
-else
-  if (! cat ~/.pulse/daemon.conf | grep "rlimit-rttime = -1" > /dev/null); then
-    sed -i '/rlimit-rttime =/d' ~/.pulse/daemon.conf
+    echo "default-sample-format = float32le" > ~/.pulse/daemon.conf
+    echo "realtime-scheduling = yes" >> ~/.pulse/daemon.conf
     echo "rlimit-rttime = -1" >> ~/.pulse/daemon.conf
-  fi
+    echo "exit-idle-time = -1" >> ~/.pulse/daemon.conf
+else
+    if (! cat ~/.pulse/daemon.conf | grep "default-sample-format = float32le" > /dev/null); then
+        sed -i '/default-sample-format = /d' ~/.pulse/daemon.conf
+        echo "default-sample-format = float32le" >> ~/.pulse/daemon.conf
+    fi
+    if (! cat ~/.pulse/daemon.conf | grep "realtime-scheduling = yes" > /dev/null); then
+        sed -i '/realtime-scheduling = /d' ~/.pulse/daemon.conf
+        echo "realtime-scheduling = yes" >> ~/.pulse/daemon.conf
+    fi
+    if (! cat ~/.pulse/daemon.conf | grep "rlimit-rttime = -1" > /dev/null); then
+        sed -i '/rlimit-rttime =/d' ~/.pulse/daemon.conf
+        echo "rlimit-rttime = -1" >> ~/.pulse/daemon.conf
+    fi
+    if (! cat ~/.pulse/daemon.conf | grep "exit-idle-time = -1" > /dev/null); then
+        sed -i '/exit-idle-time =/d' ~/.pulse/daemon.conf
+        echo "exit-idle-time = -1" >> ~/.pulse/daemon.conf
+    fi
 fi
 
+# ----------------------------------------------
+
+PLAY_ONLY="no"
+
 case $1 in
-  -h|--h|--help)
+    -h|--h|--help)
 echo "usage: $0 [command]
 
   -p, --play    Playback mode only
@@ -49,37 +60,64 @@ NOTE:
  activate PulseAudio with both playback and record modes.
 "
 exit
-  ;;
+    ;;
 
-  -p|--p|--play)
+    -p|--p|--play)
+PLAY_ONLY="yes"
 FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/play.pa
-  ;;
+    ;;
 
-  *)
+    *)
 FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/play+rec.pa
-  ;;
+    ;;
 esac
+
+# ----------------------------------------------
+
+IsPulseAudioRunning()
+{
+    PROCESS=`ps -e | grep pulseaudio`
+    if [ "$PROCESS" == "" ]; then
+        false
+    else
+        true
+    fi
+}
 
 if (IsPulseAudioRunning); then
 {
-  echo "PulseAudio is running, stopping it..."
-  killall pulseaudio
-  env sleep 0.2
+    if (`jack_lsp | grep "PulseAudio JACK Sink:" > /dev/null`); then
+    {
+        echo "PulseAudio is already running and bridged to JACK"
+    }
+    else
+    {
+        echo "PulseAudio is already running, bridge it..."
 
-  if (IsPulseAudioRunning); then
-  {
-    echo "Failed, force kill..."
-    pkill -KILL pulseaudio
-    env sleep 0.2
-  }
-  else
-    echo "Success!"
-  fi
+        if [ "$PLAY_ONLY" == "yes" ]; then
+        {
+            pactl load-module module-jack-sink > /dev/null
+            pacmd set-default-source jack_in > /dev/null
+        }
+        else
+        {
+            pactl load-module module-jack-sink > /dev/null
+            pactl load-module module-jack-source > /dev/null
+            pacmd set-default-sink jack_out > /dev/null
+            pacmd set-default-source jack_in > /dev/null
+        }
+        fi
+
+        echo "Done"
+    }
+    fi
 }
-fi
-
-if (`pulseaudio --daemonize --high-priority --realtime --disallow-module-loading --exit-idle-time=-1 --file=$FILE -n`); then
-  echo "Initiated PulseAudio successfully!"
 else
-  echo "Failed to initialize PulseAudio!"
+{
+    if (`pulseaudio --daemonize --high-priority --realtime --disallow-module-loading --exit-idle-time=-1 --file=$FILE -n`); then
+        echo "Initiated PulseAudio successfully!"
+    else
+        echo "Failed to initialize PulseAudio!"
+    fi
+}
 fi
