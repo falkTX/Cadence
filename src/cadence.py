@@ -1148,6 +1148,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_JackServerStart(self):
+        self.saveSettings()
         try:
             DBus.jack.StartServer()
         except:
@@ -1174,6 +1175,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             self.killTimer(self.m_timer500)
             self.m_timer500 = None
 
+        self.saveSettings()
         ForceWaitDialog(self).exec_()
 
     @pyqtSlot()
