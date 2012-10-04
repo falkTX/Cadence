@@ -894,20 +894,44 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         self.systray = systray.GlobalSysTray(self, "Cadence", "cadence")
 
-        self.systray.addAction("jack_start", self.tr("Start JACK"))
-        self.systray.addAction("jack_stop", self.tr("Stop JACK"))
-        self.systray.addAction("jack_configure", self.tr("Configure JACK"))
-        self.systray.addSeparator("sep1")
-        self.systray.addMenu("alsa", self.tr("ALSA Audio Bridge"))
-        self.systray.addMenuAction("alsa", "alsa_start", self.tr("Start"))
-        self.systray.addMenuAction("alsa", "alsa_stop", self.tr("Stop"))
-        self.systray.addMenu("a2j", self.tr("ALSA MIDI Bridge"))
-        self.systray.addMenuAction("a2j", "a2j_start", self.tr("Start"))
-        self.systray.addMenuAction("a2j", "a2j_stop", self.tr("Stop"))
-        self.systray.addMenuAction("a2j", "a2j_export_hw", self.tr("Export Hardware Ports..."))
-        self.systray.addMenu("pulse", self.tr("PulseAudio Bridge"))
-        self.systray.addMenuAction("pulse", "pulse_start", self.tr("Start"))
-        self.systray.addMenuAction("pulse", "pulse_stop", self.tr("Stop"))
+        if haveDBus:
+            self.systray.addAction("jack_start", self.tr("Start JACK"))
+            self.systray.addAction("jack_stop", self.tr("Stop JACK"))
+            self.systray.addAction("jack_configure", self.tr("Configure JACK"))
+            self.systray.addSeparator("sep1")
+
+            self.systray.addMenu("alsa", self.tr("ALSA Audio Bridge"))
+            self.systray.addMenuAction("alsa", "alsa_start", self.tr("Start"))
+            self.systray.addMenuAction("alsa", "alsa_stop", self.tr("Stop"))
+            self.systray.addMenu("a2j", self.tr("ALSA MIDI Bridge"))
+            self.systray.addMenuAction("a2j", "a2j_start", self.tr("Start"))
+            self.systray.addMenuAction("a2j", "a2j_stop", self.tr("Stop"))
+            self.systray.addMenuAction("a2j", "a2j_export_hw", self.tr("Export Hardware Ports..."))
+            self.systray.addMenu("pulse", self.tr("PulseAudio Bridge"))
+            self.systray.addMenuAction("pulse", "pulse_start", self.tr("Start"))
+            self.systray.addMenuAction("pulse", "pulse_stop", self.tr("Stop"))
+
+            self.systray.setActionIcon("jack_start", "media-playback-start")
+            self.systray.setActionIcon("jack_stop", "media-playback-stop")
+            self.systray.setActionIcon("jack_configure", "configure")
+            self.systray.setActionIcon("alsa_start", "media-playback-start")
+            self.systray.setActionIcon("alsa_stop", "media-playback-stop")
+            self.systray.setActionIcon("a2j_start", "media-playback-start")
+            self.systray.setActionIcon("a2j_stop", "media-playback-stop")
+            self.systray.setActionIcon("pulse_start", "media-playback-start")
+            self.systray.setActionIcon("pulse_stop", "media-playback-stop")
+
+            self.systray.connect("jack_start", self.slot_JackServerStart)
+            self.systray.connect("jack_stop", self.slot_JackServerStop)
+            self.systray.connect("jack_configure", self.slot_JackServerConfigure)
+            self.systray.connect("alsa_start", self.slot_AlsaBridgeStart)
+            self.systray.connect("alsa_stop", self.slot_AlsaBridgeStop)
+            self.systray.connect("a2j_start", self.slot_A2JBridgeStart)
+            self.systray.connect("a2j_stop", self.slot_A2JBridgeStop)
+            self.systray.connect("a2j_export_hw", self.slot_A2JBridgeExportHW)
+            self.systray.connect("pulse_start", self.slot_PulseAudioBridgeStart)
+            self.systray.connect("pulse_stop", self.slot_PulseAudioBridgeStop)
+
         self.systray.addMenu("tools", self.tr("Tools"))
         self.systray.addMenuAction("tools", "app_catarina", "Catarina")
         self.systray.addMenuAction("tools", "app_catia", "Catia")
@@ -920,26 +944,6 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.systray.addMenuAction("tools", "app_xy-controller", "XY-Controller")
         self.systray.addSeparator("sep2")
 
-        self.systray.setActionIcon("jack_start", "media-playback-start")
-        self.systray.setActionIcon("jack_stop", "media-playback-stop")
-        self.systray.setActionIcon("jack_configure", "configure")
-        self.systray.setActionIcon("alsa_start", "media-playback-start")
-        self.systray.setActionIcon("alsa_stop", "media-playback-stop")
-        self.systray.setActionIcon("a2j_start", "media-playback-start")
-        self.systray.setActionIcon("a2j_stop", "media-playback-stop")
-        self.systray.setActionIcon("pulse_start", "media-playback-start")
-        self.systray.setActionIcon("pulse_stop", "media-playback-stop")
-
-        self.systray.connect("jack_start", self.slot_JackServerStart)
-        self.systray.connect("jack_stop", self.slot_JackServerStop)
-        self.systray.connect("jack_configure", self.slot_JackServerConfigure)
-        self.systray.connect("alsa_start", self.slot_AlsaBridgeStart)
-        self.systray.connect("alsa_stop", self.slot_AlsaBridgeStop)
-        self.systray.connect("a2j_start", self.slot_A2JBridgeStart)
-        self.systray.connect("a2j_stop", self.slot_A2JBridgeStop)
-        self.systray.connect("a2j_export_hw", self.slot_A2JBridgeExportHW)
-        self.systray.connect("pulse_start", self.slot_PulseAudioBridgeStart)
-        self.systray.connect("pulse_stop", self.slot_PulseAudioBridgeStop)
         self.systray.connect("app_catarina", lambda tool="catarina": self.func_start_tool(tool))
         self.systray.connect("app_catia", lambda tool="catia": self.func_start_tool(tool))
         self.systray.connect("app_claudia", lambda tool="claudia": self.func_start_tool(tool))
@@ -1087,9 +1091,6 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             self.b_jack_stop.setEnabled(False)
             self.b_jack_restart.setEnabled(False)
             self.b_jack_configure.setEnabled(False)
-            self.systray.setActionEnabled("jack_start", False)
-            self.systray.setActionEnabled("jack_stop", False)
-            self.systray.setActionEnabled("jack_configure", False)
             self.groupBox_bridges.setEnabled(False)
 
         if DBus.a2j:
@@ -1184,8 +1185,10 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         self.b_jack_start.setEnabled(True)
         self.b_jack_stop.setEnabled(False)
-        self.systray.setActionEnabled("jack_start", True)
-        self.systray.setActionEnabled("jack_stop", False)
+
+        if haveDBus:
+            self.systray.setActionEnabled("jack_start", True)
+            self.systray.setActionEnabled("jack_stop", False)
 
         self.label_jack_status.setText("Stopped")
         self.label_jack_status_ico.setPixmap(self.pix_cancel)
@@ -1203,8 +1206,10 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         global jackClientIdALSA, jackClientIdPulse
         jackClientIdALSA  = -1
         jackClientIdPulse = -1
-        self.checkAlsaAudio()
-        self.checkPulseAudio()
+
+        if haveDBus:
+            self.checkAlsaAudio()
+            self.checkPulseAudio()
 
     def a2jStarted(self):
         self.b_a2j_start.setEnabled(False)
