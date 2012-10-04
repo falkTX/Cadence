@@ -1249,11 +1249,15 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             if isAlsaAudioBridged():
                 self.b_alsa_start.setEnabled(False)
                 self.b_alsa_stop.setEnabled(True)
+                self.systray.setActionEnabled("alsa_start", False)
+                self.systray.setActionEnabled("alsa_stop", True)
                 self.label_bridge_alsa.setText(self.tr("Using Cadence snd-aloop daemon, started"))
             else:
                 jackRunning = bool(DBus.jack and DBus.jack.IsStarted())
                 self.b_alsa_start.setEnabled(jackRunning)
                 self.b_alsa_stop.setEnabled(False)
+                self.systray.setActionEnabled("alsa_start", jackRunning)
+                self.systray.setActionEnabled("alsa_stop", False)
                 self.label_bridge_alsa.setText(self.tr("Using Cadence snd-aloop daemon, stopped"))
 
             self.cb_alsa_type.setCurrentIndex(iAlsaFileLoop)
@@ -1262,6 +1266,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         elif asoundrcRead == asoundrc_jack:
             self.b_alsa_start.setEnabled(False)
             self.b_alsa_stop.setEnabled(False)
+            self.systray.setActionEnabled("alsa_start", False)
+            self.systray.setActionEnabled("alsa_stop", False)
             self.cb_alsa_type.setCurrentIndex(iAlsaFileJACK)
             self.tb_alsa_options.setEnabled(False)
             self.label_bridge_alsa.setText(self.tr("Using JACK plugin bridge"))
@@ -1269,6 +1275,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         elif asoundrcRead == asoundrc_pulse:
             self.b_alsa_start.setEnabled(False)
             self.b_alsa_stop.setEnabled(False)
+            self.systray.setActionEnabled("alsa_start", False)
+            self.systray.setActionEnabled("alsa_stop", False)
             self.cb_alsa_type.setCurrentIndex(iAlsaFilePulse)
             self.tb_alsa_options.setEnabled(False)
             self.label_bridge_alsa.setText(self.tr("Using PulseAudio plugin bridge"))
@@ -1276,6 +1284,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         else:
             self.b_alsa_start.setEnabled(False)
             self.b_alsa_stop.setEnabled(False)
+            self.systray.setActionEnabled("alsa_start", False)
+            self.systray.setActionEnabled("alsa_stop", False)
             self.cb_alsa_type.addItem(self.tr("Custom"))
             self.cb_alsa_type.setCurrentIndex(iAlsaFileMax)
             self.tb_alsa_options.setEnabled(True)
