@@ -58,8 +58,10 @@ def run_alsa_bridge():
 
     if procIn.state() != QProcess.NotRunning:
         procIn.terminate()
+        procIn.waitForFinished(1000)
     if procOut.state() != QProcess.NotRunning:
         procOut.terminate()
+        procOut.waitForFinished(1000)
 
     procIn.start("env",  ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_in",  "-j", "alsa2jack", "-d", "cloop", "-q", "1"])
     procOut.start("env", ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_out", "-j", "jack2alsa", "-d", "ploop", "-q", "1"])
@@ -115,5 +117,7 @@ if __name__ == '__main__':
 
     if procIn.state() != QProcess.NotRunning:
         procIn.terminate()
+        procIn.waitForFinished(1000)
     if procOut.state() != QProcess.NotRunning:
         procOut.terminate()
+        procOut.waitForFinished(1000)

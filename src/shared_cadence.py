@@ -34,6 +34,13 @@ DEFAULT_VST_PATH = [
     os.path.join("/", "usr", "local", "lib", "vst")
 ]
 
+# ALSA file-type indexes
+iAlsaFileNone  = 0
+iAlsaFileLoop  = 1
+iAlsaFileJACK  = 2
+iAlsaFilePulse = 3
+iAlsaFileMax   = 4
+
 # Global Settings
 GlobalSettings = QSettings("Cadence", "GlobalSettings")
 

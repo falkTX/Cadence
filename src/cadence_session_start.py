@@ -82,11 +82,20 @@ def startSession():
         print("JACK Failed to Start")
         return False
 
+    # Start bridges according to user settings
+
+    # ALSA-Audio
+    if GlobalSettings.value("ALSA-Audio/BridgeIndexType", iAlsaFileNone, type=int) == iAlsaFileLoop:
+        os.system("cadence-aloop-daemon &")
+        sleep(0.5)
+
+    # ALSA-MIDI
     if GlobalSettings.value("A2J/AutoStart", True, type=bool) and DBus.a2j and not bool(DBus.a2j.is_started()):
         a2jExportHW = GlobalSettings.value("A2J/ExportHW", True, type=bool)
         DBus.a2j.set_hw_export(a2jExportHW)
         DBus.a2j.start()
 
+    # PulseAudio
     if GlobalSettings.value("Pulse2JACK/AutoStart", True, type=bool):
         if GlobalSettings.value("Pulse2JACK/PlaybackModeOnly", False, type=bool):
             os.system("cadence-pulse2jack -p")

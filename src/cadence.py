@@ -24,7 +24,7 @@ from subprocess import getoutput
 
 # Imports (Custom Stuff)
 import ui_cadence
-import ui_cadence_tb_jack, ui_cadence_tb_a2j, ui_cadence_tb_pa, ui_cadence_rwait
+import ui_cadence_tb_jack, ui_cadence_tb_alsa, ui_cadence_tb_a2j, ui_cadence_tb_pa, ui_cadence_rwait
 import systray
 from shared_cadence import *
 from shared_jack import *
@@ -90,12 +90,6 @@ WINEASIO_PREFIX = "HKEY_CURRENT_USER\Software\Wine\WineASIO"
 global jackClientIdALSA, jackClientIdPulse
 jackClientIdALSA  = -1
 jackClientIdPulse = -1
-
-iAlsaFileNone  = 0
-iAlsaFileLoop  = 1
-iAlsaFileJACK  = 2
-iAlsaFilePulse = 3
-iAlsaFileMax   = 4
 
 # jackdbus indexes
 iGraphVersion    = 0
@@ -528,7 +522,16 @@ class ForceRestartThread(QThread):
         # If we made it this far, then JACK is started
         self.m_wasStarted = True
 
-        # Start A2J and Pulse according to user settings
+        # Start bridges according to user settings
+
+        # ALSA-Audio
+        if GlobalSettings.value("ALSA-Audio/BridgeIndexType", iAlsaFileNone, type=int) == iAlsaFileLoop:
+            os.system("cadence-aloop-daemon &")
+            sleep(0.5)
+
+        self.emit(SIGNAL("progressChanged(int)"), 94)
+
+        # ALSA-MIDI
         if GlobalSettings.value("A2J/AutoStart", True, type=bool) and DBus.a2j and not bool(DBus.a2j.is_started()):
             a2jExportHW = GlobalSettings.value("A2J/ExportHW", True, type=bool)
             DBus.a2j.set_hw_export(a2jExportHW)
@@ -536,6 +539,7 @@ class ForceRestartThread(QThread):
 
         self.emit(SIGNAL("progressChanged(int)"), 96)
 
+        # PulseAudio
         if GlobalSettings.value("Pulse2JACK/AutoStart", True, type=bool) and not isPulseAudioBridged():
             if GlobalSettings.value("Pulse2JACK/PlaybackModeOnly", False, type=bool):
                 os.system("cadence-pulse2jack -p")
@@ -568,6 +572,10 @@ class ForceWaitDialog(QDialog, ui_cadence_rwait.Ui_Dialog):
             QMessageBox.information(self, self.tr("Info"), self.tr("JACK was re-started sucessfully"))
         else:
             QMessageBox.critical(self, self.tr("Error"), self.tr("Could not start JACK!"))
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
 
 # Additional JACK options
 class ToolBarJackDialog(QDialog, ui_cadence_tb_jack.Ui_Dialog):
@@ -621,6 +629,27 @@ class ToolBarJackDialog(QDialog, ui_cadence_tb_jack.Ui_Dialog):
         GlobalSettings.setValue("JACK/AutoLoadLadishStudio", self.rb_ladish.isChecked())
         GlobalSettings.setValue("JACK/LadishStudioName", self.cb_studio_name.currentText())
 
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
+
+# Additional ALSA Audio options
+class ToolBarAlsaAudioDialog(QDialog, ui_cadence_tb_alsa.Ui_Dialog):
+    def __init__(self, parent):
+        QDialog.__init__(self, parent)
+        self.setupUi(self)
+
+        asoundrcFile = os.path.join(HOME, ".asoundrc")
+        asoundrcFd   = open(asoundrcFile, "r")
+        asoundrcRead = asoundrcFd.read().strip()
+        asoundrcFd.close()
+
+        self.textBrowser.setPlainText(asoundrcRead)
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
+
 # Additional ALSA MIDI options
 class ToolBarA2JDialog(QDialog, ui_cadence_tb_a2j.Ui_Dialog):
     def __init__(self, parent):
@@ -634,6 +663,10 @@ class ToolBarA2JDialog(QDialog, ui_cadence_tb_a2j.Ui_Dialog):
     @pyqtSlot()
     def slot_setOptions(self):
         GlobalSettings.setValue("A2J/ExportHW", self.cb_export_hw.isChecked())
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
 
 # Additional PulseAudio options
 class ToolBarPADialog(QDialog, ui_cadence_tb_pa.Ui_Dialog):
@@ -649,6 +682,10 @@ class ToolBarPADialog(QDialog, ui_cadence_tb_pa.Ui_Dialog):
     def slot_setOptions(self):
         GlobalSettings.setValue("Pulse2JACK/PlaybackModeOnly", self.cb_playback_only.isChecked())
 
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
+
 # Main Window
 class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
     def __init__(self, parent=None):
@@ -662,6 +699,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.pix_cancel  = QIcon(getIcon("dialog-cancel", 16)).pixmap(16, 16)
         self.pix_error   = QIcon(getIcon("dialog-error", 16)).pixmap(16, 16)
         self.pix_warning = QIcon(getIcon("dialog-warning", 16)).pixmap(16, 16)
+
+        self.m_lastAlsaIndexType = -2 # invalid
 
         # -------------------------------------------------------------
         # Set-up icons
@@ -967,6 +1006,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         self.connect(self.b_alsa_start, SIGNAL("clicked()"), SLOT("slot_AlsaBridgeStart()"))
         self.connect(self.b_alsa_stop, SIGNAL("clicked()"), SLOT("slot_AlsaBridgeStop()"))
+        self.connect(self.cb_alsa_type, SIGNAL("currentIndexChanged(int)"), SLOT("slot_AlsaBridgeChanged(int)"))
+        self.connect(self.tb_alsa_options, SIGNAL("clicked()"), SLOT("slot_AlsaAudioBridgeOptions()"))
 
         self.connect(self.b_a2j_start, SIGNAL("clicked()"), SLOT("slot_A2JBridgeStart()"))
         self.connect(self.b_a2j_stop, SIGNAL("clicked()"), SLOT("slot_A2JBridgeStop()"))
@@ -1239,6 +1280,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             self.cb_alsa_type.setCurrentIndex(iAlsaFileNone)
             self.tb_alsa_options.setEnabled(False)
             self.label_bridge_alsa.setText(self.tr("No bridge in use"))
+            self.m_lastAlsaIndexType = -1 # null
             return
 
         asoundrcFd   = open(asoundrcFile, "r")
@@ -1290,6 +1332,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             self.cb_alsa_type.setCurrentIndex(iAlsaFileMax)
             self.tb_alsa_options.setEnabled(True)
             self.label_bridge_alsa.setText(self.tr("Using custom asoundrc, not managed by Cadence"))
+
+        self.m_lastAlsaIndexType = self.cb_alsa_type.currentIndex()
 
     def checkPulseAudio(self):
         if isPulseAudioStarted():
@@ -1447,6 +1491,59 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         checkFile = "/tmp/.cadence-aloop-daemon.x"
         if os.path.exists(checkFile):
             os.remove(checkFile)
+
+    @pyqtSlot(int)
+    def slot_AlsaBridgeChanged(self, index):
+        if self.m_lastAlsaIndexType == -2 or self.m_lastAlsaIndexType == index:
+            return
+
+        if self.m_lastAlsaIndexType == iAlsaFileMax:
+            ask = CustomMessageBox(self, QMessageBox.Warning, self.tr("Warning"),
+                                   self.tr(""
+                                           "You're using a custom ~/.asoundrc file not managed by Cadence.<br/>"
+                                           "By choosing to use a Cadence ALSA-Audio bridge, <b>the file will be replaced</b>."
+                                           ""),
+                                   self.tr("Are you sure you want to do this?"))
+
+            if ask == QMessageBox.Yes:
+                self.cb_alsa_type.blockSignals(True)
+                self.cb_alsa_type.removeItem(iAlsaFileMax)
+                self.cb_alsa_type.setCurrentIndex(index)
+                self.cb_alsa_type.blockSignals(False)
+            else:
+                self.cb_alsa_type.blockSignals(True)
+                self.cb_alsa_type.setCurrentIndex(iAlsaFileMax)
+                self.cb_alsa_type.blockSignals(False)
+                return
+
+        asoundrcFile = os.path.join(HOME, ".asoundrc")
+
+        if index == iAlsaFileNone:
+            os.remove(asoundrcFile)
+
+        elif index == iAlsaFileLoop:
+            asoundrcFd = open(asoundrcFile, "w")
+            asoundrcFd.write(asoundrc_aloop+"\n")
+            asoundrcFd.close()
+
+        elif index == iAlsaFileJACK:
+            asoundrcFd = open(asoundrcFile, "w")
+            asoundrcFd.write(asoundrc_jack+"\n")
+            asoundrcFd.close()
+
+        elif index == iAlsaFilePulse:
+            asoundrcFd = open(asoundrcFile, "w")
+            asoundrcFd.write(asoundrc_pulse+"\n")
+            asoundrcFd.close()
+
+        else:
+            print("Cadence::AlsaBridgeChanged(%i) - invalid index" % index)
+
+        self.checkAlsaAudio()
+
+    @pyqtSlot()
+    def slot_AlsaAudioBridgeOptions(self):
+        ToolBarAlsaAudioDialog(self).exec_()
 
     @pyqtSlot()
     def slot_A2JBridgeStart(self):
@@ -1934,6 +2031,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.settings.setValue("Geometry", self.saveGeometry())
 
         GlobalSettings.setValue("JACK/AutoStart", self.cb_jack_autostart.isChecked())
+        GlobalSettings.setValue("ALSA-Audio/BridgeIndexType", self.cb_alsa_type.currentIndex())
         GlobalSettings.setValue("A2J-MIDI/AutoStart", self.cb_a2j_autostart.isChecked())
         GlobalSettings.setValue("Pulse2JACK/AutoStart", (havePulseAudio and self.cb_pulse_autostart.isChecked()))
 
