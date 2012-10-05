@@ -58,17 +58,20 @@ BOOL WINAPI closeSignalHandler(DWORD dwCtrlType)
 void initSignalHandler()
 {
 #if defined(Q_OS_UNIX)
-    struct sigaction sint, sterm;
+    struct sigaction sint;
+    struct sigaction sterm;
 
-    sint.sa_handler = closeSignalHandler;
+    sint.sa_handler  = closeSignalHandler;
+    sint.sa_flags    = SA_RESTART;
+    sint.sa_restorer = nullptr;
     sigemptyset(&sint.sa_mask);
-    sint.sa_flags |= SA_RESTART;
-    sigaction(SIGINT, &sint, 0);
+    sigaction(SIGINT, &sint, nullptr);
 
-    sterm.sa_handler = closeSignalHandler;
+    sterm.sa_handler  = closeSignalHandler;
+    sterm.sa_flags    = SA_RESTART;
+    sterm.sa_restorer = nullptr;
     sigemptyset(&sterm.sa_mask);
-    sterm.sa_flags |= SA_RESTART;
-    sigaction(SIGTERM, &sterm, 0);
+    sigaction(SIGTERM, &sterm, nullptr);
 #elif defined(Q_OS_WIN)
     SetConsoleCtrlHandler(closeSignalHandler, TRUE);
 #endif
@@ -108,16 +111,15 @@ public:
         virtual void guiClosedCallback() = 0;
     };
 
-    BridgePluginGUI(QWidget* const parent, Callback* const callback_, const char* const pluginName, const bool resizable)
+    BridgePluginGUI(QWidget* const parent, Callback* const callback_)
         : QDialog(parent),
           callback(callback_)
     {
-        qDebug("BridgePluginGUI::BridgePluginGUI(%p, %p, \"%s\", %s", parent, callback, pluginName, bool2str(resizable));
+        qDebug("BridgePluginGUI::BridgePluginGUI(%p, %p", parent, callback);
         CARLA_ASSERT(callback);
-        CARLA_ASSERT(pluginName);
 
         m_firstShow = true;
-        m_resizable = resizable;
+        m_resizable = true;
 
         vbLayout = new QVBoxLayout(this);
         vbLayout->setContentsMargins(0, 0, 0, 0);
@@ -127,7 +129,6 @@ public:
         vbLayout->addWidget(container);
 
         setNewSize(50, 50);
-        setWindowTitle(QString("%1 (GUI)").arg(pluginName));
 
 #ifdef Q_OS_WIN
         if (! resizable)
@@ -148,6 +149,18 @@ public:
     GuiContainer* getContainer()
     {
         return container;
+    }
+
+    void setResizable(bool resizable)
+    {
+        m_resizable = resizable;
+        setNewSize(width(), height());
+    }
+
+    void setTitle(const char* title)
+    {
+        CARLA_ASSERT(title);
+        setWindowTitle(QString("%1 (GUI)").arg(title));
     }
 
     void setNewSize(int width, int height)
@@ -245,11 +258,11 @@ public:
         nextWidth  = 0;
         nextHeight = 0;
 
-        engine     = nullptr;
-        plugin     = nullptr;
-        pluginGui  = nullptr;
+        engine    = nullptr;
+        plugin    = nullptr;
+        pluginGui = new BridgePluginGUI(nullptr, this);
 
-        m_client   = this;
+        m_client  = this;
     }
 
     ~BridgePluginClient()
@@ -361,8 +374,14 @@ public:
     {
         qDebug("BridgePluginClient::createWindow(%s)", bool2str(resizable));
         CARLA_ASSERT(plugin);
+        CARLA_ASSERT(pluginGui);
 
-        pluginGui = new BridgePluginGUI(nullptr, this, plugin->name(), resizable);
+        if (! (plugin && pluginGui))
+            return;
+
+        pluginGui->setResizable(resizable);
+        pluginGui->setTitle(plugin->name());
+
         plugin->setGuiContainer(pluginGui->getContainer());
     }
 

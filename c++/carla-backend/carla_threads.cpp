@@ -39,6 +39,7 @@ CarlaCheckThread::~CarlaCheckThread()
 
 void CarlaCheckThread::startNow()
 {
+    qDebug("CarlaCheckThread::startNow()");
     start(QThread::HighPriority);
 }
 
