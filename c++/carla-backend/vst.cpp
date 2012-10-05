@@ -1790,6 +1790,7 @@ public:
 
         case audioMasterCurrentId:
             // TODO
+            // if using old sdk, return effect->uniqueID
             break;
 
         case audioMasterIdle:
@@ -1797,7 +1798,7 @@ public:
             if (effect)
                 effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
             else
-                qWarning("VstPlugin::hostCallback::audioMasterIdle called without valid object");
+                qWarning("VstPlugin::hostCallback::audioMasterIdle called without valid effect");
             break;
 
 #if ! VST_FORCE_DEPRECATED
@@ -1862,12 +1863,12 @@ public:
             break;
 
         case audioMasterTempoAt:
-            CARLA_ASSERT(self);
             // Deprecated in VST SDK 2.4
+            CARLA_ASSERT(self);
             if (self)
                 ret = self->handleAudioMasterTempoAt();
             else
-                qWarning("stPlugin::hostCallback::audioMasterTempoAt called without valid object");
+                qWarning("VstPlugin::hostCallback::audioMasterTempoAt called without valid object");
             if (ret == 0)
                 ret = 120 * 10000;
             break;
@@ -1879,11 +1880,13 @@ public:
 #else
             ret = carlaOptions.maxParameters;
 #endif
+            if (effect && ret > effect->numParams)
+                ret = effect->numParams;
             break;
 
         case audioMasterGetParameterQuantization:
             // Deprecated in VST SDK 2.4
-            // TODO
+            ret = 1; // full single float precision
             break;
 #endif
 
@@ -1920,35 +1923,33 @@ public:
         case audioMasterGetSampleRate:
             CARLA_ASSERT(self);
             if (self)
-            {
                 ret = self->handleAudioMasterGetSampleRate();
-            }
             else
-            {
                 qWarning("VstPlugin::hostCallback::audioMasterGetSampleRate called without valid object");
+            if (ret == 0)
                 ret = 44100;
-            }
             break;
 
         case audioMasterGetBlockSize:
             CARLA_ASSERT(self);
             if (self)
-            {
                 ret = self->handleAudioMasterGetBlockSize();
-            }
             else
-            {
-                qWarning("stPlugin::hostCallback::audioMasterGetBlockSize called without valid object");
+                qWarning("VstPlugin::hostCallback::audioMasterGetBlockSize called without valid object");
+            if (ret == 0)
+#ifndef BUILD_BRIDGE
+                ret = carlaOptions.processHighPrecision ? 8 : 512;
+#else
                 ret = 512;
-            }
+#endif
             break;
 
         case audioMasterGetInputLatency:
-            // TODO
+            ret = 0;
             break;
 
         case audioMasterGetOutputLatency:
-            // TODO
+            ret = 0;
             break;
 
 #if ! VST_FORCE_DEPRECATED
@@ -1964,6 +1965,7 @@ public:
 
         case audioMasterWillReplaceOrAccumulate:
             // Deprecated in VST SDK 2.4
+            ret = 1; // replace
             break;
 #endif
 
@@ -1996,11 +1998,7 @@ public:
             // Deprecated in VST SDK 2.4
             break;
 
-//#ifdef VESTIGE_HEADER
-//        case audioMasterGetSpeakerArrangement:
-//#else
         case audioMasterGetOutputSpeakerArrangement:
-//#endif
             // Deprecated in VST SDK 2.4
             // TODO
             break;
@@ -2009,7 +2007,10 @@ public:
         case audioMasterGetVendorString:
             CARLA_ASSERT(ptr);
             if (ptr)
+            {
                 strcpy((char*)ptr, "Cadence");
+                ret = 1;
+            }
             else
                 qWarning("VstPlugin::hostCallback::audioMasterGetVendorString called with invalid pointer");
             break;
@@ -2017,7 +2018,10 @@ public:
         case audioMasterGetProductString:
             CARLA_ASSERT(ptr);
             if (ptr)
+            {
                 strcpy((char*)ptr, "Carla");
+                ret = 1;
+            }
             else
                 qWarning("VstPlugin::hostCallback::audioMasterGetProductString called with invalid pointer");
             break;
@@ -2058,6 +2062,10 @@ public:
 
         case audioMasterGetDirectory:
             // TODO
+            //if (ptr)
+            //    strcpy((char*)ptr, "stuff");
+            //else
+            //    qWarning("VstPlugin::hostCallback::audioMasterGetDirectory called with invalid pointer");
             break;
 
         case audioMasterUpdateDisplay:
@@ -2066,6 +2074,7 @@ public:
                 self->handleAudioMasterUpdateDisplay();
             if (effect)
                 effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
+            ret = 1;
             break;
 
         case audioMasterBeginEdit:
