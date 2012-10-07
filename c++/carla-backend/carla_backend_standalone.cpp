@@ -293,7 +293,6 @@ bool engine_close()
 bool is_engine_running()
 {
     qDebug("CarlaBackendStandalone::is_engine_running()");
-    CARLA_ASSERT(carlaEngine);
 
     return carlaEngine && carlaEngine->isRunning();
 }
