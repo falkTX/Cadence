@@ -389,6 +389,18 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             # No decimal bpm support
             proj_bpm = proj_bpm.split(".")[0]
 
+        elif app == "lmms":
+            tmplte_file = os.path.join(proj_folder, "LMMS_%i.mmp" % rand_check)
+
+            # Create template
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "LMMS.mmp"), tmplte_file))
+
+            tmplte_cmd  = binary
+            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
+
+            # No decimal bpm support
+            proj_bpm = proj_bpm.split(".")[0]
+
         elif app == "calfjackhost":
             tmplte_file = os.path.join(proj_folder, "CalfJackHost_%i" % rand_check)
 
