@@ -326,7 +326,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             tmplte_cmd  = binary
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder)
-            tmplte_lvl  = "1"
+            #tmplte_lvl  = "1" # TODO - kxstudio only
 
         elif app == "ardour3":
             tmplte_folder = os.path.join(proj_folder, "Ardour3_%i" % rand_check)
@@ -354,13 +354,27 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
                 tmplte_lvl = "jacksession"
 
         elif app == "composite":
-            tmplte_file = os.path.join(proj_folder, "composite_%i.h2song" % rand_check)
+            tmplte_file = os.path.join(proj_folder, "Composite_%i.h2song" % rand_check)
 
             # Create template
-            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "composite.h2song"), tmplte_file))
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Composite.h2song"), tmplte_file))
 
             tmplte_cmd  = binary
             tmplte_cmd += " -s '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
+
+        elif app == "hydrogen":
+            tmplte_file = os.path.join(proj_folder, "Hydrogen_%i.h2song" % rand_check)
+
+            # Create template
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Hydrogen.h2song"), tmplte_file))
+
+            tmplte_cmd  = binary
+            tmplte_cmd += " -s '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
+
+            if self.callback_isLadishRoom():
+                tmplte_lvl = "jacksession"
+            else:
+                tmplte_lvl = "1"
 
         elif app == "calfjackhost":
             tmplte_file = os.path.join(proj_folder, "CalfJackHost_%i" % rand_check)

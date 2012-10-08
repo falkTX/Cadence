@@ -31,8 +31,8 @@ list_DAW = [
 
   ( "energyxt2",     "EnergyXT2",       "DAW",            "energyxt2",       "energyxt2",      TEMPLATE_NO,  LEVEL_0,   "Demo",       (0, 0, 0, 1, "Native",  0, 1, "JACK"),        ("file:///usr/share/kxstudio/docs/EnergyXT_Manual_EN.pdf",         "http://www.energy-xt.com/") ),
 
-  ( "hydrogen",      "Hydrogen",        "Drum Sequencer", "hydrogen -d jack", "h2-icon",       TEMPLATE_NO,  LEVEL_JS,  "OpenSource", (1, 0, 0, 0, "",        1, 1, "ALSA | JACK"), ("file:///usr/share/hydrogen/data/doc/manual_en.html.upstream",    "http://www.hydrogen-music.org/") ),
-  ( "hydrogen-svn",  "Hydrogen (SVN)",  "Drum Sequencer", "hydrogen -d jack", "h2-icon",       TEMPLATE_NO,  LEVEL_JS,  "OpenSource", (1, 0, 0, 0, "",        1, 1, "ALSA | JACK"), ("file:///usr/share/hydrogen/data/doc/manual_en.html.upstream",    "http://www.hydrogen-music.org/") ),
+  ( "hydrogen",      "Hydrogen",        "Drum Sequencer", "hydrogen -d jack", "h2-icon",       TEMPLATE_YES, LEVEL_JS,  "OpenSource", (1, 0, 0, 0, "",        1, 1, "ALSA | JACK"), ("file:///usr/share/hydrogen/data/doc/manual_en.html.upstream",    "http://www.hydrogen-music.org/") ),
+  ( "hydrogen-svn",  "Hydrogen (SVN)",  "Drum Sequencer", "hydrogen -d jack", "h2-icon",       TEMPLATE_YES, LEVEL_JS,  "OpenSource", (1, 0, 0, 0, "",        1, 1, "ALSA | JACK"), ("file:///usr/share/hydrogen/data/doc/manual_en.html.upstream",    "http://www.hydrogen-music.org/") ),
 
   ( "jacker",        "Jacker",          "MIDI Sequencer", "jacker",           "jacker",        TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        1, 1, "JACK"),        ("",                                                               "https://bitbucket.org/paniq/jacker/wiki/Home") ),
 
