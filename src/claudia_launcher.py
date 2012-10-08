@@ -725,19 +725,21 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
         if not SHOW_ALL:
             if os.path.exists("/usr/bin/yaourt"):
-                pkg_out = getoutput("/usr/bin/yaourt -Qsq").split("\n")
+                pkg_out = getoutput("env LANG=C /usr/bin/yaourt -Qsq").split("\n")
                 for package in pkg_out:
                     pkglist.append(package)
 
             elif os.path.exists("/usr/bin/pacman"):
-                pkg_out = getoutput("/usr/bin/pacman -Qsq").split("\n")
+                pkg_out = getoutput("env LANG=C /usr/bin/pacman -Qsq").split("\n")
                 for package in pkg_out:
                     pkglist.append(package)
 
-            elif os.path.exists("/usr/bin/dpkg-query"):
-                pkg_out = getoutput("/usr/bin/dpkg-query -W --showformat='${Package}\n'").split("\n")
-                for package in pkg_out:
-                    pkglist.append(package)
+            elif os.path.exists("/usr/bin/dpkg"):
+                pkg_out = getoutput("env LANG=C /usr/bin/dpkg --get-selections").split("\n")
+                for pkg_info in pkg_out:
+                    package, installed = pkg_info.rsplit("\t", 1)
+                    if installed == "install":
+                        pkglist.append(package.strip())
 
             if not "bristol" in pkglist:
                 self.tabWidget.setTabEnabled(TAB_INDEX_BRISTOL, False)
