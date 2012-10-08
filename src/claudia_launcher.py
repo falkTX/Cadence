@@ -426,13 +426,13 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder)
 
         elif app == "non-sequencer":
-            tmplte_file = os.path.join(proj_folder, "Non-Sequencer_%i.non" % rand_check)
+            tmplte_file_r = os.path.join(proj_folder, "Non-Sequencer_%i.non" % rand_check)
 
             # Create template
-            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Non-Sequencer.non"), tmplte_file))
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Non-Sequencer.non"), tmplte_file_r))
 
             tmplte_cmd  = binary
-            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
+            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
 
         elif app == "qtractor":
             tmplte_file = os.path.join(proj_folder, "Qtractor_%i.qtr" % rand_check)
@@ -461,6 +461,26 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             tmplte_cmd  = binary
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
+
+        elif app == "rosegarden":
+            tmplte_file = os.path.join(proj_folder, "Rosegarden_%i.rg" % rand_check)
+
+            # Create template
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Rosegarden.rg"), tmplte_file))
+
+            tmplte_cmd  = binary
+            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
+            tmplte_lvl  = "1"
+
+        elif app == "seq24":
+            tmplte_file_r = os.path.join(proj_folder, "Seq24_%i.midi" % rand_check)
+
+            # Create template
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Seq24.midi"), tmplte_file_r))
+
+            tmplte_cmd  = binary
+            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
+            #tmplte_lvl  = "1" # TODO - broken??
 
         elif app == "calfjackhost":
             tmplte_file = os.path.join(proj_folder, "CalfJackHost_%i" % rand_check)

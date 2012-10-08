@@ -42,19 +42,19 @@ list_DAW = [
 
   ( "musescore",     "MuseScore",       "MIDI Composer",  "mscore",           "mscore",        TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        0, 1, "ALSA | JACK"), ("file:///usr/share/kxstudio/docs/MuseScore-en.pdf",               "http://www.musescore.org/") ),
 
-  ( "non-daw",       "Non-DAW",         "DAW",            "non-daw",          "non-daw",       TEMPLATE_NO,  LEVEL_NSM, "OpenSource", (0, 0, 0, 0, "",        1, 0, "CV"),          ("file:///usr/share/doc/non-daw/MANUAL.html",                      "http://non-daw.tuxfamily.org/") ),
-  ( "non-sequencer", "Non-Sequencer",   "MIDI Sequencer", "non-sequencer",    "non-sequencer", TEMPLATE_NO,  LEVEL_NSM, "OpenSource", (0, 0, 0, 0, "",        1, 1, "JACK"),        ("file:///usr/share/doc/non-sequencer/MANUAL.html",                "http://non-sequencer.tuxfamily.org/") ),
+  ( "non-daw",       "Non-DAW",         "DAW",            "non-daw",          "non-daw",       TEMPLATE_YES, LEVEL_NSM, "OpenSource", (0, 0, 0, 0, "",        1, 0, "CV"),          ("file:///usr/share/doc/non-daw/MANUAL.html",                      "http://non-daw.tuxfamily.org/") ),
+  ( "non-sequencer", "Non-Sequencer",   "MIDI Sequencer", "non-sequencer",    "non-sequencer", TEMPLATE_YES, LEVEL_NSM, "OpenSource", (0, 0, 0, 0, "",        1, 1, "JACK"),        ("file:///usr/share/doc/non-sequencer/MANUAL.html",                "http://non-sequencer.tuxfamily.org/") ),
 
-  ( "qtractor",      "Qtractor",        "DAW",            "qtractor",         "qtractor",      TEMPLATE_NO,  LEVEL_JS,  "OpenSource", (1, 1, 1, 1, "Native",  1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/qtractor-0.5.x-user-manual.pdf", "http://qtractor.sourceforge.net/") ),
-  ( "qtractor-svn",  "Qtractor (SVN)",  "DAW",            "qtractor",         "qtractor",      TEMPLATE_NO,  LEVEL_JS,  "OpenSource", (1, 1, 1, 1, "Native",  1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/qtractor-0.5.x-user-manual.pdf", "http://qtractor.sourceforge.net/") ),
+  ( "qtractor",      "Qtractor",        "DAW",            "qtractor",         "qtractor",      TEMPLATE_YES, LEVEL_JS,  "OpenSource", (1, 1, 1, 1, "Native",  1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/qtractor-0.5.x-user-manual.pdf", "http://qtractor.sourceforge.net/") ),
+  ( "qtractor-svn",  "Qtractor (SVN)",  "DAW",            "qtractor",         "qtractor",      TEMPLATE_YES, LEVEL_JS,  "OpenSource", (1, 1, 1, 1, "Native",  1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/qtractor-0.5.x-user-manual.pdf", "http://qtractor.sourceforge.net/") ),
 
   ( "reaper",        "REAPER",          "DAW",            "reaper",           "reaper",        TEMPLATE_NO,  LEVEL_0,   "Demo",       (0, 0, 0, 1, "Windows", 1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/ReaperUserGuide426C.pdf",        "http://www.reaper.fm/") ),
 
-  ( "renoise",       "Renoise",         "Tracker",        "renoise",          "renoise",       TEMPLATE_NO,  LEVEL_0,   "ShareWare",  (1, 1, 0, 1, "Native",  1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/Renoise User Manual.pdf",        "http://www.renoise.com/") ),
+  ( "renoise",       "Renoise",         "Tracker",        "renoise",          "renoise",       TEMPLATE_YES, LEVEL_0,   "ShareWare",  (1, 1, 0, 1, "Native",  1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/Renoise User Manual.pdf",        "http://www.renoise.com/") ),
 
-  ( "rosegarden",    "Rosegarden",      "MIDI Sequencer", "rosegarden",       "rosegarden",    TEMPLATE_NO,  LEVEL_1,   "OpenSource", (1, 1, 0, 0, "",        1, 1, "ALSA"),        ("",                                                               "http://www.rosegardenmusic.com/") ),
+  ( "rosegarden",    "Rosegarden",      "MIDI Sequencer", "rosegarden",       "rosegarden",    TEMPLATE_YES, LEVEL_1,   "OpenSource", (1, 1, 0, 0, "",        1, 1, "ALSA"),        ("",                                                               "http://www.rosegardenmusic.com/") ),
 
-  ( "seq24",         "Seq24",           "MIDI Sequencer", "seq24",            "seq24",         TEMPLATE_NO,  LEVEL_JS,  "OpenSource", (0, 0, 0, 0, "",        1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/SEQ24",                          "http://www.filter24.org/seq24/") ),
+  ( "seq24",         "Seq24",           "MIDI Sequencer", "seq24",            "seq24",         TEMPLATE_YES, LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/SEQ24",                          "http://www.filter24.org/seq24/") ),
 
   ( "traverso",      "Traverso",        "DAW",            "traverso",         "traverso",      TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, 1, 0, "",        1, 0, ""),            ("file:///usr/share/kxstudio/docs/traverso-manual-0.49.0.pdf",     "http://traverso-daw.org/") ),
 ]
