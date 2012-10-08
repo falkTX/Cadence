@@ -34,11 +34,11 @@ list_DAW = [
   ( "hydrogen",      "Hydrogen",        "Drum Sequencer", "hydrogen -d jack", "h2-icon",       TEMPLATE_YES, LEVEL_JS,  "OpenSource", (1, 0, 0, 0, "",        1, 1, "ALSA | JACK"), ("file:///usr/share/hydrogen/data/doc/manual_en.html.upstream",    "http://www.hydrogen-music.org/") ),
   ( "hydrogen-svn",  "Hydrogen (SVN)",  "Drum Sequencer", "hydrogen -d jack", "h2-icon",       TEMPLATE_YES, LEVEL_JS,  "OpenSource", (1, 0, 0, 0, "",        1, 1, "ALSA | JACK"), ("file:///usr/share/hydrogen/data/doc/manual_en.html.upstream",    "http://www.hydrogen-music.org/") ),
 
-  ( "jacker",        "Jacker",          "MIDI Sequencer", "jacker",           "jacker",        TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        1, 1, "JACK"),        ("",                                                               "https://bitbucket.org/paniq/jacker/wiki/Home") ),
+  ( "jacker",        "Jacker",          "MIDI Sequencer", "jacker",           "jacker",        TEMPLATE_YES, LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        1, 1, "JACK"),        ("",                                                               "https://bitbucket.org/paniq/jacker/wiki/Home") ),
 
-  ( "lmms",          "LMMS",            "DAW",            "lmms",             "lmms",          TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, 0, 1, "Windows", 0, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/LMMS_UserManual_0.4.12.1.pdf",   "http://lmms.sourceforge.net/") ),
+  ( "lmms",          "LMMS",            "DAW",            "lmms",             "lmms",          TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 0, 1, "Windows", 0, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/LMMS_UserManual_0.4.12.1.pdf",   "http://lmms.sourceforge.net/") ),
 
-  ( "muse",          "MusE",            "DAW",            "muse",             "muse",          TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 1, 0, 0, "",        1, 1, "ALSA + JACK"), ("file:///usr/share/doc/muse/html/window_ref.html",                "http://www.muse-sequencer.org/") ),
+  ( "muse",          "MusE",            "DAW",            "muse",             "muse",          TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 1, 0, 0, "",        1, 1, "ALSA + JACK"), ("file:///usr/share/doc/muse/html/window_ref.html",                "http://www.muse-sequencer.org/") ),
 
   ( "musescore",     "MuseScore",       "MIDI Composer",  "mscore",           "mscore",        TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        0, 1, "ALSA | JACK"), ("file:///usr/share/kxstudio/docs/MuseScore-en.pdf",               "http://www.musescore.org/") ),
 

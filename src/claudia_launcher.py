@@ -330,7 +330,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
         elif app == "ardour3":
             tmplte_folder = os.path.join(proj_folder, "Ardour3_%i" % rand_check)
-            tmplte_file = os.path.join(tmplte_folder, "Ardour3_%i.ardour" % rand_check)
+            tmplte_file   = os.path.join(tmplte_folder, "Ardour3_%i.ardour" % rand_check)
             os.mkdir(tmplte_folder)
 
             # Create template
@@ -410,6 +410,30 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             tmplte_cmd  = binary
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
 
+        elif app == "non-daw":
+            tmplte_folder = os.path.join(proj_folder, "Non-DAW_%i" % rand_check)
+            os.mkdir(tmplte_folder)
+
+            # Create template
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Non-DAW", "history"), tmplte_folder))
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Non-DAW", "info"), tmplte_folder))
+            os.mkdir(os.path.join(tmplte_folder, "sources"))
+
+            os.system('sed -i "s/X_SR_X-CLAUDIA-X_SR_X/%s/" "%s"' % (proj_srate, os.path.join(tmplte_folder, "info")))
+            os.system('sed -i "s/X_BPM_X-CLAUDIA-X_BPM_X/%s/" "%s"' % (proj_bpm, os.path.join(tmplte_folder, "history")))
+
+            tmplte_cmd  = binary
+            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder)
+
+        elif app == "non-sequencer":
+            tmplte_file = os.path.join(proj_folder, "Non-Sequencer_%i.non" % rand_check)
+
+            # Create template
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Non-Sequencer.non"), tmplte_file))
+
+            tmplte_cmd  = binary
+            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
+
         elif app == "calfjackhost":
             tmplte_file = os.path.join(proj_folder, "CalfJackHost_%i" % rand_check)
 
@@ -449,19 +473,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             #tmplte_cmd = binary
             #tmplte_cmd += " -f '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
 
-            #elif (app == "non-daw"):
-            #tmplte_folder = os.path.join(proj_folder, "Non-DAW_%i" % (rand_check))
-
-            ## Create template
-            #os.system("cp -r '%s' '%s'" % (os.path.join(sys.path[0], "..", "templates", "Non-DAW"), tmplte_folder))
-            #os.mkdir(os.path.join(tmplte_folder, "sources"))
-
-            #os.system('sed -i "s/X_SR_X-KLAUDIA-X_SR_X/%s/" "%s"' % (proj_srate, os.path.join(tmplte_folder, "info")))
-            #os.system('sed -i "s/X_BPM_X-KLAUDIA-X_BPM_X/%s/" "%s"' % (proj_bpm, os.path.join(tmplte_folder, "history")))
-
-            #tmplte_cmd = binary
-            #tmplte_cmd += " '%s'" % (os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder)
-
             #elif (app == "non-mixer"):
             #tmplte_folder = os.path.join(proj_folder, "Non-Mixer_%i" % (rand_check))
 
@@ -470,15 +481,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             #tmplte_cmd = binary
             #tmplte_cmd += " '%s'" % (os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder)
-
-            #elif (app == "non-sequencer"):
-            #tmplte_file_r = os.path.join(proj_folder, "Non-Sequencer_%i.non" % (rand_check))
-
-            ## Create template
-            #os.system("cp '%s' '%s'" % (os.path.join(sys.path[0], "..", "templates", "Non-Sequencer.non"), tmplte_file_r))
-
-            #tmplte_cmd = binary
-            #tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
 
             #elif (app == "qsampler"):
             #tmplte_file_r = os.path.join(proj_folder, "Qsampler_%i.lscp" % (rand_check))
@@ -556,8 +558,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         if tmplte_file != None:
             os.system('sed -i "s/X_SR_X-CLAUDIA-X_SR_X/%s/" "%s"' % (proj_srate, tmplte_file))
             os.system('sed -i "s/X_BPM_X-CLAUDIA-X_BPM_X/%s/" "%s"' % (proj_bpm, tmplte_file))
-            os.system('sed -i "s/X_FOLDER_X-CLAUDIA-X_FOLDER_X/%s/" "%s"' % (
-            proj_folder.replace("/", "\/").replace("$", "\$"), tmplte_file))
+            os.system('sed -i "s/X_FOLDER_X-CLAUDIA-X_FOLDER_X/%s/" "%s"' % (proj_folder.replace("/", "\/").replace("$", "\$"), tmplte_file))
 
         appBus = self.callback_getAppBus()
         appBus.RunCustom2(False, tmplte_cmd, app_name, tmplte_lvl)
