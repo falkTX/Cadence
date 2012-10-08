@@ -203,11 +203,50 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "Ardour 3.0":
             self.createAppTemplate("ardour3", app, binary)
 
+        elif app == "Composite":
+            self.createAppTemplate("composite", app, binary)
+
+        elif app == "EnergyXT2":
+            self.createAppTemplate("energyxt2", app, binary)
+
+        elif app in ("Hydrogen", "Hydrogen (SVN)"):
+            self.createAppTemplate("hydrogen", app, binary)
+
+        elif app == "Jacker":
+            self.createAppTemplate("jacker", app, binary)
+
+        elif app == "LMMS":
+            self.createAppTemplate("lmms", app, binary)
+
+        elif app == "MusE":
+            self.createAppTemplate("muse", app, binary)
+
+        elif app == "MuseScore":
+            self.createAppTemplate("musescore", app, binary)
+
+        elif app == "Non-DAW":
+            self.createAppTemplate("non-daw", app, binary)
+
+        elif app == "Non-Sequencer":
+            self.createAppTemplate("non-sequencer", app, binary)
+
+        elif app in ("Qtractor", "Qtractor (SVN)"):
+            self.createAppTemplate("qtractor", app, binary)
+
+        elif app == "REAPER":
+            self.createAppTemplate("reaper", app, binary)
+
+        elif app == "Renoise":
+            self.createAppTemplate("renoise", app, binary)
+
+        elif app == "Rosegarden":
+            self.createAppTemplate("rosegarden", app, binary)
+
+        elif app == "Seq24":
+            self.createAppTemplate("seq24", app, binary)
+
         elif app == "Calf Jack Host (GIT)":
             self.createAppTemplate("calfjackhost", app, binary)
-
-        #elif (app in ("Hydrogen", "Hydrogen (SVN)")):
-            #self.createAppTemplate("hydrogen", app, binary)
 
         #elif (app == "Jack Mixer"):
             #self.createAppTemplate("jack-mixer", app, binary)
@@ -215,35 +254,14 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         #elif (app == "Jack Rack"):
             #self.createAppTemplate("jack-rack", app, binary)
 
-        #elif (app == "Jacker"):
-            #self.createAppTemplate("jacker", app, binary)
-
         #elif (app == "Jamin"):
             #self.createAppTemplate("jamin", app, binary)
-
-        #elif (app == "Non-DAW"):
-            #self.createAppTemplate("non-daw", app, binary)
 
         #elif (app == "Non-Mixer"):
             #self.createAppTemplate("non-mixer", app, binary)
 
-        #elif (app == "Non-Sequencer"):
-            #self.createAppTemplate("non-sequencer", app, binary)
-
         #elif (app == "Qsampler"):
             #self.createAppTemplate("qsampler", app, binary)
-
-        #elif (app in ("Qtractor", "Qtractor (SVN)")):
-            #self.createAppTemplate("qtractor", app, binary)
-
-        #elif (app == "Renoise"):
-            #self.createAppTemplate("renoise", app, binary)
-
-        #elif (app == "Rosegarden"):
-            #self.createAppTemplate("rosegarden", app, binary)
-
-        #elif (app == "Seq24"):
-            #self.createAppTemplate("seq24", app, binary)
 
         #elif (app == "Yoshimi"):
             #self.createAppTemplate("yoshimi", app, binary)
@@ -334,6 +352,15 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             if self.callback_isLadishRoom():
                 tmplte_lvl = "jacksession"
+
+        elif app == "composite":
+            tmplte_file = os.path.join(proj_folder, "composite_%i.h2song" % rand_check)
+
+            # Create template
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "composite.h2song"), tmplte_file))
+
+            tmplte_cmd  = binary
+            tmplte_cmd += " -s '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
 
         elif app == "calfjackhost":
             tmplte_file = os.path.join(proj_folder, "CalfJackHost_%i" % rand_check)

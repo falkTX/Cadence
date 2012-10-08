@@ -20,14 +20,14 @@ TEMPLATE_NO  = "No"
 
 # (L, D, L, V, VST-Mode, T, M, MIDI-Mode) -> ( LADSPA, DSSI, LV2, VST, VST-Mode, Transport, MIDI, MIDI-Mode)
 
-# TODO - on kxstudio, set ardour2 and jacker to lvl1
+# TODO - on kxstudio, set ardour2 and jacker to LEVEL_1
 
 list_DAW = [
   # Package          AppName            Type              Binary             Icon              Template?     Level      Rel.-Model    (L, D, L, V, VST-Mode,  T, M, MIDI-Mode)      (doc-file,                                                         website)
   ( "ardour",        "Ardour 2.8",      "DAW",            "ardour2",         "ardour",         TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 1, 0, "",        1, 0, "ALSA"),        ("file:///usr/share/kxstudio/docs/ardour.pdf",                     "http://www.ardour.org/") ),
   ( "ardour3",       "Ardour 3.0",      "DAW",            "ardour3",         "ardour",         TEMPLATE_YES, LEVEL_JS,  "OpenSource", (1, 0, 1, 1, "Native",  1, 1, "JACK"),        ("file:///usr/share/kxstudio/docs/ardour.pdf",                     "http://www.ardour.org/") ),
 
-  ( "composite",     "Composite",       "Drum Sequencer", "composite-gui",   "composite32x32", TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, 0, 0, "",        1, 1, "JACK"),        ("file:///usr/share/composite/data/doc/manual.html",               "http://gabe.is-a-geek.org/composite/") ),
+  ( "composite",     "Composite",       "Drum Sequencer", "composite-gui",   "composite32x32", TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 0, 0, "",        1, 1, "JACK"),        ("file:///usr/share/composite/data/doc/manual.html",               "http://gabe.is-a-geek.org/composite/") ),
 
   ( "energyxt2",     "EnergyXT2",       "DAW",            "energyxt2",       "energyxt2",      TEMPLATE_NO,  LEVEL_0,   "Demo",       (0, 0, 0, 1, "Native",  0, 1, "JACK"),        ("file:///usr/share/kxstudio/docs/EnergyXT_Manual_EN.pdf",         "http://www.energy-xt.com/") ),
 
