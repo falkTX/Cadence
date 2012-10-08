@@ -97,7 +97,7 @@
           </column>
           <column>
            <property name="text">
-            <string>Save Mode</string>
+            <string>Template?</string>
            </property>
           </column>
           <column>
@@ -478,7 +478,7 @@
           </column>
           <column>
            <property name="text">
-            <string>Save Mode</string>
+            <string>Template?</string>
            </property>
           </column>
           <column>
@@ -841,7 +841,7 @@
           </column>
           <column>
            <property name="text">
-            <string>Save Mode</string>
+            <string>Template?</string>
            </property>
           </column>
           <column>
@@ -1405,7 +1405,7 @@
           </column>
           <column>
            <property name="text">
-            <string>Save Mode</string>
+            <string>Template?</string>
            </property>
           </column>
           <column>
@@ -1675,7 +1675,7 @@
           </column>
           <column>
            <property name="text">
-            <string>Save Mode</string>
+            <string>Template?</string>
            </property>
           </column>
           <column>
