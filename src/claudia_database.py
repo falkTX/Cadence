@@ -20,7 +20,7 @@ TEMPLATE_NO  = "No"
 
 # (L, D, L, V, VST-Mode, T, M, MIDI-Mode) -> ( LADSPA, DSSI, LV2, VST, VST-Mode, Transport, MIDI, MIDI-Mode)
 
-# TODO - on kxstudio, set ardour2 and jacker to LEVEL_1
+# TODO - on kxstudio, set ardour2, jacker and qsampler to LEVEL_1
 
 list_DAW = [
   # Package          AppName            Type              Binary             Icon              Template?     Level      Rel.-Model    (L, D, L, V, VST-Mode,  T, M, MIDI-Mode)      (doc-file,                                                         website)
@@ -119,7 +119,7 @@ list_Instrument = [
   ( "pianoteq",             "Pianoteq",          "Synth",            "Pianoteq",               "pianoteq",         TEMPLATE_NO,  LEVEL_0, "Demo",       (1, 0, "ALSA + JACK"), ("file:///usr/local/bin/Documentation/pianoteq-english.pdf",   "http://www.pianoteq.com/pianoteq3_standard") ),
   ( "pianoteq-play",        "Pianoteq Play",     "Synth",            "Pianoteq-PLAY",          "pianoteq",         TEMPLATE_NO,  LEVEL_0, "Demo",       (1, 0, "ALSA + JACK"), ("file:///usr/local/bin/Documentation/pianoteq-english.pdf",   "http://www.pianoteq.com/pianoteq3_play") ),
 
-  ( "qsampler",             "Qsampler",          "Sampler",          "qsampler",               "qsampler",         TEMPLATE_NO,  LEVEL_1, "OpenSource", (0, 0, "ALSA + JACK"), ("",                                                           "http://qsampler.sourceforge.net/") ),
+  ( "qsampler",             "Qsampler",          "Sampler",          "qsampler",               "qsampler",         TEMPLATE_NO,  LEVEL_0, "OpenSource", (0, 0, "ALSA + JACK"), ("",                                                           "http://qsampler.sourceforge.net/") ),
 
   ( "qsynth",               "Qsynth",            "SoundFont Player", "qsynth -a jack -m jack", "qsynth",           TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 0, "ALSA | JACK"), ("",                                                           "http://qsynth.sourceforge.net/") ),
 

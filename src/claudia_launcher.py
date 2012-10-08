@@ -254,6 +254,12 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "Jack Rack":
             self.createAppTemplate("jack-rack", app, binary)
 
+        elif app == "Qsampler":
+            self.createAppTemplate("qsampler", app, binary)
+
+        #elif app == "Yoshimi":
+            #self.createAppTemplate("yoshimi", app, binary)
+
         #elif (app == "Jack Mixer"):
             #self.createAppTemplate("jack-mixer", app, binary)
 
@@ -262,12 +268,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
         #elif (app == "Non-Mixer"):
             #self.createAppTemplate("non-mixer", app, binary)
-
-        #elif (app == "Qsampler"):
-            #self.createAppTemplate("qsampler", app, binary)
-
-        #elif (app == "Yoshimi"):
-            #self.createAppTemplate("yoshimi", app, binary)
 
         else:
             appBus = self.callback_getAppBus()
@@ -514,6 +514,27 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             tmplte_cmd  = binary
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
 
+        elif app == "qsampler":
+            tmplte_file = os.path.join(proj_folder, "Qsampler_%i.lscp" % rand_check)
+
+            # Create template
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Qsampler.lscp"), tmplte_file))
+
+            tmplte_cmd  = binary
+            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
+            #tmplte_lvl  = "1" # TODO - broken??
+
+            #elif (app == "yoshimi"):
+            #tmplte_file = os.path.join(proj_folder, "Yoshimi_%i.state" % (rand_check))
+
+            ## Create template
+            #os.system("cp '%s' '%s'" % (os.path.join(sys.path[0], "..", "templates", "Yoshimi.state"), tmplte_file))
+
+            #tmplte_cmd = binary
+            #tmplte_cmd += " --state='%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
+
+            #tmplte_lvl = "1"
+
             #elif (app == "jack-mixer"):
             #tmplte_file_r = os.path.join(proj_folder, "Jack-Mixer_%i.xml" % (rand_check))
 
@@ -542,28 +563,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             #tmplte_cmd = binary
             #tmplte_cmd += " '%s'" % (os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder)
-
-            #elif (app == "qsampler"):
-            #tmplte_file_r = os.path.join(proj_folder, "Qsampler_%i.lscp" % (rand_check))
-
-            ## Create template
-            #os.system("cp '%s' '%s'" % (os.path.join(sys.path[0], "..", "templates", "Qsampler.lscp"), tmplte_file_r))
-
-            #tmplte_cmd = binary
-            #tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
-
-            #tmplte_lvl = "1" if (app_name == "Qsampler (SVN)") else "0"
-
-            #elif (app == "yoshimi"):
-            #tmplte_file = os.path.join(proj_folder, "Yoshimi_%i.state" % (rand_check))
-
-            ## Create template
-            #os.system("cp '%s' '%s'" % (os.path.join(sys.path[0], "..", "templates", "Yoshimi.state"), tmplte_file))
-
-            #tmplte_cmd = binary
-            #tmplte_cmd += " --state='%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
-
-            #tmplte_lvl = "1"
 
             #else:
             #print("ERROR: Failed to parse app name")
