@@ -401,6 +401,15 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             # No decimal bpm support
             proj_bpm = proj_bpm.split(".")[0]
 
+        elif app == "muse":
+            tmplte_file = os.path.join(proj_folder, "MusE_%i.med" % rand_check)
+
+            # Create template
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "MusE.med"), tmplte_file))
+
+            tmplte_cmd  = binary
+            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
+
         elif app == "calfjackhost":
             tmplte_file = os.path.join(proj_folder, "CalfJackHost_%i" % rand_check)
 
@@ -439,15 +448,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             #tmplte_cmd = binary
             #tmplte_cmd += " -f '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
-
-            #elif (app == "muse"):
-            #tmplte_file_r = os.path.join(proj_folder, "MusE_%i.med" % (rand_check))
-
-            ## Create template
-            #os.system("cp '%s' '%s'" % (os.path.join(sys.path[0], "..", "templates", "MusE.med"), tmplte_file_r))
-
-            #tmplte_cmd = binary
-            #tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
 
             #elif (app == "non-daw"):
             #tmplte_folder = os.path.join(proj_folder, "Non-DAW_%i" % (rand_check))
