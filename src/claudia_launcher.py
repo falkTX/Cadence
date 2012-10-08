@@ -311,7 +311,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
         elif app == "ardour2":
             tmplte_folder = os.path.join(proj_folder, "Ardour2_%i" % rand_check)
-            tmplte_file = os.path.join(tmplte_folder, "Ardour2_%i.ardour" % rand_check)
+            tmplte_file   = os.path.join(tmplte_folder, "Ardour2_%i.ardour" % rand_check)
             os.mkdir(tmplte_folder)
 
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Ardour2", "Ardour2.ardour"), tmplte_file))
@@ -376,6 +376,19 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             else:
                 tmplte_lvl = "1"
 
+        elif app == "jacker":
+            tmplte_file = os.path.join(proj_folder, "Jacker_%i.jsong" % rand_check)
+
+            # Create template
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Jacker.jsong"), tmplte_file))
+
+            tmplte_cmd  = binary
+            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
+            #tmplte_lvl  = "1" # TODO - kxstudio only
+
+            # No decimal bpm support
+            proj_bpm = proj_bpm.split(".")[0]
+
         elif app == "calfjackhost":
             tmplte_file = os.path.join(proj_folder, "CalfJackHost_%i" % rand_check)
 
@@ -385,17 +398,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             tmplte_cmd  = binary
             tmplte_cmd += " --load '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
             tmplte_lvl  = "1"
-
-            #elif (app == "hydrogen"):
-            #tmplte_file = os.path.join(proj_folder, "Hydrogen_%i.h2song" % (rand_check))
-
-            ## Create template
-            #os.system("cp '%s' '%s'" % (os.path.join(sys.path[0], "..", "templates", "Hydrogen.h2song"), tmplte_file))
-
-            #tmplte_cmd = binary
-            #tmplte_cmd += " -s '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
-
-            #tmplte_lvl = "1"
 
             #elif (app == "jack-mixer"):
             #tmplte_file_r = os.path.join(proj_folder, "Jack-Mixer_%i.xml" % (rand_check))
@@ -416,20 +418,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             #tmplte_cmd = binary
             #tmplte_cmd += " -s '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
-
-            #elif (app == "jacker"):
-            #tmplte_file = os.path.join(proj_folder, "Jacker_%i.jsong" % (rand_check))
-
-            ## Create template
-            #os.system("cp '%s' '%s'" % (os.path.join(sys.path[0], "..", "templates", "Jacker.jsong"), tmplte_file))
-
-            #tmplte_cmd = binary
-            #tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
-
-            ## No decimal bpm support
-            #proj_bpm = proj_bpm.split(".")[0]
-
-            #tmplte_lvl = "1"
 
             #elif (app == "jamin"):
             #tmplte_file_r = os.path.join(proj_folder, "Jamin_%i.jam" % (rand_check))

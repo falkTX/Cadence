@@ -1,0 +1,130 @@
+
+{
+	"beats_per_bar" : 4,
+	"beats_per_minute" : X_BPM_X-CLAUDIA-X_BPM_X,
+	"enable_loop" : true,
+	"end_cue" : 0,
+	"format" : "jacker-song",
+	"frames_per_beat" : 4,
+	"loop" : 
+	{
+		"begin" : 64,
+		"end" : 128
+	},
+	"tracks" : 
+	[
+		
+		{
+			"midi_channel" : 0,
+			"midi_port" : 0,
+			"mute" : false,
+			"name" : ""
+		},
+		
+		{
+			"midi_channel" : 1,
+			"midi_port" : 0,
+			"mute" : false,
+			"name" : ""
+		},
+		
+		{
+			"midi_channel" : 2,
+			"midi_port" : 0,
+			"mute" : false,
+			"name" : ""
+		},
+		
+		{
+			"midi_channel" : 3,
+			"midi_port" : 0,
+			"mute" : false,
+			"name" : ""
+		},
+		
+		{
+			"midi_channel" : 4,
+			"midi_port" : 0,
+			"mute" : false,
+			"name" : ""
+		},
+		
+		{
+			"midi_channel" : 5,
+			"midi_port" : 0,
+			"mute" : false,
+			"name" : ""
+		},
+		
+		{
+			"midi_channel" : 6,
+			"midi_port" : 0,
+			"mute" : false,
+			"name" : ""
+		},
+		
+		{
+			"midi_channel" : 7,
+			"midi_port" : 0,
+			"mute" : false,
+			"name" : ""
+		},
+		
+		{
+			"midi_channel" : 8,
+			"midi_port" : 0,
+			"mute" : false,
+			"name" : ""
+		},
+		
+		{
+			"midi_channel" : 9,
+			"midi_port" : 0,
+			"mute" : false,
+			"name" : ""
+		},
+		
+		{
+			"midi_channel" : 10,
+			"midi_port" : 0,
+			"mute" : false,
+			"name" : ""
+		},
+		
+		{
+			"midi_channel" : 11,
+			"midi_port" : 0,
+			"mute" : false,
+			"name" : ""
+		},
+		
+		{
+			"midi_channel" : 12,
+			"midi_port" : 0,
+			"mute" : false,
+			"name" : ""
+		},
+		
+		{
+			"midi_channel" : 13,
+			"midi_port" : 0,
+			"mute" : false,
+			"name" : ""
+		},
+		
+		{
+			"midi_channel" : 14,
+			"midi_port" : 0,
+			"mute" : false,
+			"name" : ""
+		},
+		
+		{
+			"midi_channel" : 15,
+			"midi_port" : 0,
+			"mute" : false,
+			"name" : ""
+		}
+	],
+	"version" : 2
+}
