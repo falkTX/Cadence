@@ -206,8 +206,8 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "Composite":
             self.createAppTemplate("composite", app, binary)
 
-        elif app == "EnergyXT2":
-            self.createAppTemplate("energyxt2", app, binary)
+        #elif app == "EnergyXT2":
+            #self.createAppTemplate("energyxt2", app, binary)
 
         elif app in ("Hydrogen", "Hydrogen (SVN)"):
             self.createAppTemplate("hydrogen", app, binary)
@@ -233,8 +233,8 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app in ("Qtractor", "Qtractor (SVN)"):
             self.createAppTemplate("qtractor", app, binary)
 
-        elif app == "REAPER":
-            self.createAppTemplate("reaper", app, binary)
+        #elif app == "REAPER":
+            #self.createAppTemplate("reaper", app, binary)
 
         elif app == "Renoise":
             self.createAppTemplate("renoise", app, binary)
@@ -448,6 +448,20 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             else:
                 tmplte_lvl = "1"
 
+        elif app == "renoise":
+            tmplte_file_r = os.path.join(proj_folder, "Renoise_%i.xrns" % rand_check)
+            tmplte_folder = os.path.join(proj_folder, "tmp_renoise_%i" % rand_check)
+
+            # Create template
+            os.mkdir(tmplte_folder)
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Renoise.xml"), tmplte_folder))
+            os.system('sed -i "s/X_BPM_X-CLAUDIA-X_BPM_X/%s/" "%s"' % (proj_bpm, os.path.join(tmplte_folder, "Renoise.xml")))
+            os.system("cd '%s' && mv Renoise.xml Song.xml && zip '%s' Song.xml" % (tmplte_folder, tmplte_file_r))
+            os.system("rm -rf '%s'" % tmplte_folder)
+
+            tmplte_cmd  = binary
+            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
+
         elif app == "calfjackhost":
             tmplte_file = os.path.join(proj_folder, "CalfJackHost_%i" % rand_check)
 
@@ -506,53 +520,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             #tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
 
             #tmplte_lvl = "1" if (app_name == "Qsampler (SVN)") else "0"
-
-            #elif (app == "qtractor"):
-            #tmplte_file = os.path.join(proj_folder, "Qtractor_%i.qtr" % (rand_check))
-
-            ## Create template
-            #os.system("cp '%s' '%s'" % (os.path.join(sys.path[0], "..", "templates", "Qtractor.qtr"), tmplte_file))
-
-            #tmplte_cmd = binary
-            #tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
-
-            #tmplte_lvl = "1"
-
-            #elif (app == "renoise"):
-            #tmplte_file_r = os.path.join(proj_folder, "Renoise_%i.xrns" % (rand_check))
-            #tmplte_folder = os.path.join(proj_folder, "tmp_renoise_%i" % (rand_check))
-
-            ## Create template
-            #os.mkdir(tmplte_folder)
-            #os.system("cp '%s' '%s'" % (os.path.join(sys.path[0], "..", "templates", "Renoise.xml"), tmplte_folder))
-            #os.system('sed -i "s/X_SR_X-KLAUDIA-X_SR_X/%s/" "%s"' % (proj_srate, os.path.join(tmplte_folder, "Renoise.xml")))
-            #os.system("cd '%s' && mv Renoise.xml Song.xml && zip '%s' Song.xml" % (tmplte_folder, tmplte_file_r))
-            #os.system("rm -rf '%s'" % (tmplte_folder))
-
-            #tmplte_cmd = binary
-            #tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
-
-            #elif (app == "rosegarden"):
-            #tmplte_file = os.path.join(proj_folder, "Rosegarden_%i.rg" % (rand_check))
-
-            ## Create template
-            #os.system("cp '%s' '%s'" % (os.path.join(sys.path[0], "..", "templates", "Rosegarden.rg"), tmplte_file))
-
-            #tmplte_cmd = binary
-            #tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
-
-            #tmplte_lvl = "1"
-
-            #elif (app == "seq24"):
-            #tmplte_file_r = os.path.join(proj_folder, "Seq24_%i.midi" % (rand_check))
-
-            ## Create template
-            #os.system("cp '%s' '%s'" % (os.path.join(sys.path[0], "..", "templates", "Seq24.midi"), tmplte_file_r))
-
-            #tmplte_cmd = binary
-            #tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
-
-            #tmplte_lvl = "1"
 
             #elif (app == "yoshimi"):
             #tmplte_file = os.path.join(proj_folder, "Yoshimi_%i.state" % (rand_check))
