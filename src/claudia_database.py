@@ -71,14 +71,14 @@ list_Host = [
   ( "calf-plugins",     "Calf Jack Host",       "Yes", "Yes", "calfjackhost",  "calf",      TEMPLATE_NO,  LEVEL_0,    "OpenSource", (1, 0, 0, 0, 0, "",        "JACK"),        ("",                                     "http://calf.sourceforge.net/") ),
   ( "calf-plugins-git", "Calf Jack Host (GIT)", "Yes", "Yes", "calfjackhost",  "calf",      TEMPLATE_YES, LEVEL_1,    "OpenSource", (1, 0, 0, 0, 0, "",        "JACK"),        ("file:///usr/share/doc/calf/Calf.html", "http://calf.sourceforge.net/") ),
 
-  ( "carla",            "Carla",                "Yes", "Yes", "carla",         "carla",     TEMPLATE_NO,  LEVEL_1,    "OpenSource", (0, 1, 1, 1, 1, "Native",  "JACK"),        ("",                                     "http://kxstudio.sourceforge.net/KXStudio:Applications:Carla") ),
+  ( "carla",            "Carla",                "Yes", "Yes", "carla",         "carla",     TEMPLATE_YES, LEVEL_1,    "OpenSource", (1, 1, 1, 1, 1, "Native",  "JACK"),        ("",                                     "http://kxstudio.sourceforge.net/KXStudio:Applications:Carla") ),
 
   ( "festige",          "FeSTige",              "Yes", "Yes", "festige",       "festige",   TEMPLATE_NO,  LEVEL_1,    "OpenSource", (0, 0, 0, 0, 1, "Windows", "ALSA | JACK"), ("",                                     "http://festige.sourceforge.net/") ),
 
- #( "ingen",            "Ingen",                "Yes", "Yes", "ingen -eg",     "ingen",     TEMPLATE_NO,  LEVEL_JS,   "OpenSource", (1, 0, 0, 1, 0, "",        "JACK"),        ("",                                     "http://drobilla.net/blog/software/ingen/") ),
+  ( "ingen",            "Ingen",                "Yes", "Yes", "ingen -eg",     "ingen",     TEMPLATE_NO,  LEVEL_JS,   "OpenSource", (1, 0, 0, 1, 0, "",        "JACK"),        ("",                                     "http://drobilla.net/blog/software/ingen/") ),
   ( "ingen-svn",        "Ingen (SVN)",          "Yes", "Yes", "ingen-svn -eg", "ingen",     TEMPLATE_NO,  LEVEL_JS,   "OpenSource", (1, 0, 0, 1, 0, "",        "JACK"),        ("",                                     "http://drobilla.net/blog/software/ingen/") ),
 
-  ( "jack-rack",        "Jack Rack",            "No",  "Yes", "jack-rack",     "jack-rack", TEMPLATE_NO,  LEVEL_0,    "OpenSource", (0, 1, 0, 0, 0, "",        "ALSA"),        ("",                                     "http://jack-rack.sourceforge.net/") ),
+  ( "jack-rack",        "Jack Rack",            "No",  "Yes", "jack-rack",     "jack-rack", TEMPLATE_YES, LEVEL_0,    "OpenSource", (0, 1, 0, 0, 0, "",        "ALSA"),        ("",                                     "http://jack-rack.sourceforge.net/") ),
 
   ( "zynjacku",         "LV2 Rack",             "No",  "Yes", "lv2rack",       "zynjacku",  TEMPLATE_NO,  LEVEL_LASH, "OpenSource", (0, 0, 0, 1, 0, "",        "JACK"),        ("",                                     "http://home.gna.org/zynjacku/") ),
   ( "zynjacku",         "ZynJackU",             "Yes", "No",  "zynjacku",      "zynjacku",  TEMPLATE_NO,  LEVEL_LASH, "OpenSource", (0, 0, 0, 1, 0, "",        "JACK"),        ("",                                     "http://home.gna.org/zynjacku/") ),

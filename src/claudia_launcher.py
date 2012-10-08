@@ -248,11 +248,14 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "Calf Jack Host (GIT)":
             self.createAppTemplate("calfjackhost", app, binary)
 
+        elif app == "Carla":
+            self.createAppTemplate("carla", app, binary)
+
+        elif app == "Jack Rack":
+            self.createAppTemplate("jack-rack", app, binary)
+
         #elif (app == "Jack Mixer"):
             #self.createAppTemplate("jack-mixer", app, binary)
-
-        #elif (app == "Jack Rack"):
-            #self.createAppTemplate("jack-rack", app, binary)
 
         #elif (app == "Jamin"):
             #self.createAppTemplate("jamin", app, binary)
@@ -491,6 +494,25 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             tmplte_cmd  = binary
             tmplte_cmd += " --load '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
             tmplte_lvl  = "1"
+
+        elif app == "carla":
+            tmplte_file = os.path.join(proj_folder, "Carla_%i.carxp" % rand_check)
+
+            # Create template
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Carla.carxp"), tmplte_file))
+
+            tmplte_cmd  = binary
+            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
+            tmplte_lvl  = "1"
+
+        elif app == "jack-rack":
+            tmplte_file = os.path.join(proj_folder, "Jack-Rack_%i" % rand_check)
+
+            # Create template
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Jack-Rack"), tmplte_file))
+
+            tmplte_cmd  = binary
+            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
 
             #elif (app == "jack-mixer"):
             #tmplte_file_r = os.path.join(proj_folder, "Jack-Mixer_%i.xml" % (rand_check))
