@@ -506,13 +506,13 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             tmplte_lvl  = "1"
 
         elif app == "jack-rack":
-            tmplte_file_r = os.path.join(proj_folder, "Jack-Rack_%i" % rand_check)
+            tmplte_file = os.path.join(proj_folder, "Jack-Rack_%i.xml" % rand_check)
 
             # Create template
-            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Jack-Rack"), tmplte_file_r))
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Jack-Rack.xml"), tmplte_file))
 
             tmplte_cmd  = binary
-            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
+            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
 
         elif app == "qsampler":
             tmplte_file = os.path.join(proj_folder, "Qsampler_%i.lscp" % rand_check)
