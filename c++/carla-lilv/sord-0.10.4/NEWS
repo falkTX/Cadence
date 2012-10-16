@@ -1,3 +1,13 @@
+sord (0.10.4) stable;
+
+  * Implement better data type validation in sord_validate conformant with
+    the XSD and OWL specifications
+  * Fix memory leaks in sord_validate
+  * Install sord_validate man page
+  * Disable timestamps in HTML documentation for reproducible build
+
+ -- David Robillard <d@drobilla.net>  Sun, 14 Oct 2012 18:23:55 -0400
+
 sord (0.10.0) stable;
 
   * Add error callback to world for custom error reporting

@@ -51,7 +51,11 @@ typedef struct {
 	SordNode* owl_OntologyProperty;
 	SordNode* owl_Thing;
 	SordNode* owl_equivalentClass;
+	SordNode* owl_onDatatype;
+	SordNode* owl_withRestrictions;
 	SordNode* rdf_Property;
+	SordNode* rdf_first;
+	SordNode* rdf_rest;
 	SordNode* rdf_type;
 	SordNode* rdfs_Class;
 	SordNode* rdfs_Literal;
@@ -59,11 +63,15 @@ typedef struct {
 	SordNode* rdfs_domain;
 	SordNode* rdfs_range;
 	SordNode* rdfs_subClassOf;
+	SordNode* xsd_decimal;
+	SordNode* xsd_maxInclusive;
+	SordNode* xsd_minInclusive;
 	SordNode* xsd_pattern;
 	SordNode* xsd_string;
 } URIs;
 
 int  n_errors        = 0;
+int  n_restrictions  = 0;
 bool one_line_errors = false;
 
 static int
@@ -84,7 +92,9 @@ print_usage(const char* name, bool error)
 	FILE* const os = error ? stderr : stdout;
 	fprintf(os, "Usage: %s [OPTION]... INPUT...\n", name);
 	fprintf(os, "Validate RDF data\n\n");
+	fprintf(os, "  -h  Display this help and exit\n");
 	fprintf(os, "  -l  Print errors on a single line.\n");
+	fprintf(os, "  -v  Display version information and exit\n");
 	fprintf(os,
 	        "Validate RDF data.  This is a simple validator which checks\n"
 	        "that all used properties are actually defined.  It does not do\n"
@@ -119,25 +129,26 @@ error(const char* msg, const SordQuad quad)
 }
 
 static bool
-is_subclass_of(SordModel*      model,
-               const URIs*     uris,
-               const SordNode* klass,
-               const SordNode* super)
+is_descendant_of(SordModel*      model,
+                 const URIs*     uris,
+                 const SordNode* child,
+                 const SordNode* parent,
+                 const SordNode* pred)
 {
-	if (!klass) {
+	if (!child) {
 		return false;
-	} else if (sord_node_equals(klass, super) ||
-	           sord_ask(model, klass, uris->owl_equivalentClass, super, NULL)) {
+	} else if (sord_node_equals(child, parent) ||
+	           sord_ask(model, child, uris->owl_equivalentClass, parent, NULL)) {
 		return true;
 	}
 
-	SordIter* i = sord_search(model, klass, uris->rdfs_subClassOf, NULL, NULL);
+	SordIter* i = sord_search(model, child, pred, NULL, NULL);
 	for (; !sord_iter_end(i); sord_iter_next(i)) {
 		const SordNode* o = sord_iter_get_node(i, SORD_OBJECT);
-		if (sord_node_equals(klass, o)) {
-			continue;  // Class is explicitly subClassOf itself
+		if (sord_node_equals(child, o)) {
+			continue;  // Weird class is explicitly a descendent of itself
 		}
-		if (is_subclass_of(model, uris, o, super)) {
+		if (is_descendant_of(model, uris, o, parent, pred)) {
 			sord_iter_free(i);
 			return true;
 		}
@@ -148,25 +159,120 @@ is_subclass_of(SordModel*      model,
 }
 
 static bool
-regexp_match(const char* pat, const char* str)
+regexp_match(const uint8_t* pat, const char* str)
 {
 #ifdef HAVE_PCRE
+	// Append a $ to the pattern so we only match if the entire string matches
+	const size_t len  = strlen((const char*)pat);
+	char* const  regx = malloc(len + 2);
+	memcpy(regx, pat, len);
+	regx[len]     = '$';
+	regx[len + 1] = '\0';
+
 	const char* err;
 	int         erroffset;
-	pcre*       re = pcre_compile(pat, PCRE_ANCHORED, &err, &erroffset, NULL);
+	pcre*       re = pcre_compile(regx, PCRE_ANCHORED, &err, &erroffset, NULL);
+	free(regx);
 	if (!re) {
-		fprintf(stderr, "Error in regexp \"%s\" at offset %d (%s)\n",
+		fprintf(stderr, "Error in pattern `%s' at offset %d (%s)\n",
 		        pat, erroffset, err);
 		return false;
 	}
 
-	int st = pcre_exec(re, NULL, str, strlen(str), 0, 0, NULL, 0);
-	if (st < 0) {
-		fprintf(stderr, "Error %d executing regexp \"%s\"\n", st, pat);
-		return false;
-	}
+	const bool ret = pcre_exec(re, NULL, str, strlen(str), 0, 0, NULL, 0) >= 0;
+	pcre_free(re);
+	return ret;
 #endif  // HAVE_PCRE
 	return true;
+}
+
+static bool
+check_restriction(SordModel*      model,
+                  const URIs*     uris,
+                  const SordNode* literal,
+                  const SordNode* type,
+                  const SordNode* restriction)
+{
+	size_t      len = 0;
+	const char* str = (const char*)sord_node_get_string_counted(literal, &len);
+	++n_restrictions;
+
+	// Check xsd:pattern
+	SordIter* p = sord_search(model, restriction, uris->xsd_pattern, 0, 0);
+	if (p) {
+		const SordNode* pat  = sord_iter_get_node(p, SORD_OBJECT);
+		const bool      good = regexp_match(sord_node_get_string(pat), str);
+		if (!good) {
+			fprintf(stderr, "`%s' does not match <%s> pattern `%s'\n",
+			        sord_node_get_string(literal),
+			        sord_node_get_string(type),
+			        sord_node_get_string(pat));
+		}
+
+		sord_iter_free(p);
+		return good;
+	}
+
+	/* We'll do some comparison tricks for xsd:decimal types, where
+	   lexicographical comparison would be incorrect.  Note that if the
+	   literal's type is a descendant of xsd:decimal, we'll end up checking it
+	   against the xsd:decimal pattern so there's no need to validate digits
+	   here.  At worst we'll get a false positive but it will fail later. */
+	const bool is_decimal = is_descendant_of(
+		model, uris, type, uris->xsd_decimal, uris->owl_onDatatype);
+
+	// Check xsd:minInclusive
+	SordIter* l = sord_search(model, restriction, uris->xsd_minInclusive, 0, 0);
+	if (l) {
+		const SordNode* lower     = sord_iter_get_node(l, SORD_OBJECT);
+		size_t          lower_len = 0;
+		const char*     lower_str = (const char*)sord_node_get_string_counted(lower, &lower_len);
+		bool            good      = false;
+		if (!is_decimal || len == lower_len) {
+			 // Not decimal, or equal lengths, strcmp
+			good = (strcmp(str, lower_str) >= 0);
+		} else {
+			// Decimal with different length, only good if longer than the min
+			good = (len > lower_len);
+		}
+		if (!good) {
+			fprintf(stderr, "`%s' is not >= <%s> minimum `%s'\n",
+			        sord_node_get_string(literal),
+			        sord_node_get_string(type),
+			        sord_node_get_string(lower));
+		}
+			        
+		sord_iter_free(l);
+		return good;
+	}
+
+	// Check xsd:maxInclusive
+	SordIter* u = sord_search(model, restriction, uris->xsd_maxInclusive, 0, 0);
+	if (u) {
+		const SordNode* upper     = sord_iter_get_node(u, SORD_OBJECT);
+		size_t          upper_len = 0;
+		const char*     upper_str = (const char*)sord_node_get_string_counted(upper, &upper_len);
+		bool            good      = false;
+		if (!is_decimal || len == upper_len) {
+			 // Not decimal, or equal lengths, strcmp
+			good = (strcmp(str, upper_str) <= 0);
+		} else {
+			// Decimal with different length, only good if shorter than the max
+			good = (len < upper_len);
+		}
+		if (!good) {
+			fprintf(stderr, "`%s' is not <= <%s> maximum `%s'\n",
+			        sord_node_get_string(literal),
+			        sord_node_get_string(type),
+			        sord_node_get_string(upper));
+		}
+			        
+		sord_iter_free(u);
+		return good;
+	}
+
+	--n_restrictions;
+	return true;  // Unknown restriction, be quietly tolerant
 }
 
 static bool
@@ -179,22 +285,47 @@ literal_is_valid(SordModel*      model,
 		return true;
 	}
 
-	SordIter*       p       = sord_search(model, type, uris->xsd_pattern, 0, 0);
-	const SordNode* pattern = sord_iter_get_node(p, SORD_OBJECT);
-	if (!pattern) {
-		fprintf(stderr, "warning: No pattern for datatype <%s>\n",
-		        sord_node_get_string(type));
-		return true;
+	// Find restrictions list
+	SordIter* rs = sord_search(model, type, uris->owl_withRestrictions, 0, 0);
+	if (sord_iter_end(rs)) {
+		return true;  // No restrictions
 	}
-	if (regexp_match((const char*)sord_node_get_string(pattern),
-	                 (const char*)sord_node_get_string(literal))) {
-		return true;
+
+	// Walk list, checking each restriction
+	const SordNode* head = sord_iter_get_node(rs, SORD_OBJECT);
+	while (head) {
+		SordIter* f = sord_search(model, head, uris->rdf_first, 0, 0);
+		if (!f) {
+			break;  // Reached end of restrictions list without failure
+		}
+
+		// Check this restriction
+		const bool good = check_restriction(
+			 model, uris, literal, type, sord_iter_get_node(f, SORD_OBJECT));
+		sord_iter_free(f);
+
+		if (!good) {
+			sord_iter_free(rs);
+			return false;  // Failed, literal is invalid
+		}
+
+		// Seek to next list node
+		SordIter* n = sord_search(model, head, uris->rdf_rest, 0, 0);
+		head = n ? sord_iter_get_node(n, SORD_OBJECT) : NULL;
+		sord_iter_free(n);
 	}
-	fprintf(stderr, "Literal \"%s\" does not match <%s> pattern \"%s\"\n",
-	        sord_node_get_string(literal),
-	        sord_node_get_string(type),
-	        sord_node_get_string(pattern));
-	return false;
+
+	sord_iter_free(rs);
+
+	SordIter* s = sord_search(model, type, uris->owl_onDatatype, 0, 0);
+	if (s) {
+		const SordNode* super = sord_iter_get_node(s, SORD_OBJECT);
+		const bool      good  = literal_is_valid(model, uris, literal, super);
+		sord_iter_free(s);
+		return good;  // Match iff literal also matches supertype
+	}
+
+	return true;  // Matches top level type
 }
 
 static bool
@@ -213,9 +344,7 @@ check_type(SordModel*      model,
 		    sord_node_equals(type, uris->xsd_string)) {
 			return true;
 		} else {
-			const SordNode* datatype = sord_node_get_datatype(node);
-			return is_subclass_of(model, uris, datatype, type) ||
-				literal_is_valid(model, uris, node, type);
+			return literal_is_valid(model, uris, node, type);
 		}
 	} else if (sord_node_get_type(node) == SORD_URI) {
 		if (sord_node_equals(type, uris->foaf_Document)) {
@@ -223,9 +352,10 @@ check_type(SordModel*      model,
 		} else {
 			SordIter* t = sord_search(model, node, uris->rdf_type, NULL, NULL);
 			for (; !sord_iter_end(t); sord_iter_next(t)) {
-				if (is_subclass_of(model, uris,
-				                   sord_iter_get_node(t, SORD_OBJECT),
-				                   type)) {
+				if (is_descendant_of(model, uris,
+				                     sord_iter_get_node(t, SORD_OBJECT),
+				                     type,
+				                     uris->rdfs_subClassOf)) {
 					sord_iter_free(t);
 					return true;
 				}
@@ -285,7 +415,10 @@ main(int argc, char** argv)
 		}
 
 		serd_node_free(&base_uri_node);
+		free(in_path);
 	}
+	serd_reader_free(reader);
+	serd_env_free(env);
 
 #define URI(prefix, suffix) \
 	uris.prefix##_##suffix = sord_new_uri(world, NS_##prefix #suffix)
@@ -301,7 +434,11 @@ main(int argc, char** argv)
 	URI(owl, OntologyProperty);
 	URI(owl, Thing);
 	URI(owl, equivalentClass);
+	URI(owl, onDatatype);
+	URI(owl, withRestrictions);
 	URI(rdf, Property);
+	URI(rdf, first);
+	URI(rdf, rest);
 	URI(rdf, type);
 	URI(rdfs, Class);
 	URI(rdfs, Literal);
@@ -309,6 +446,9 @@ main(int argc, char** argv)
 	URI(rdfs, domain);
 	URI(rdfs, range);
 	URI(rdfs, subClassOf);
+	URI(xsd, decimal);
+	URI(xsd, maxInclusive);
+	URI(xsd, minInclusive);
 	URI(xsd, pattern);
 	URI(xsd, string);
 
@@ -385,6 +525,7 @@ main(int argc, char** argv)
 				fprintf(stderr, "note: Range is <%s>\n",
 				        sord_node_get_string(range));
 			}
+			sord_iter_free(r);
 		}
 
 		SordIter* d = sord_search(model, pred, uris.rdfs_domain, NULL, NULL);
@@ -395,10 +536,15 @@ main(int argc, char** argv)
 				fprintf(stderr, "note: Domain is <%s>\n",
 				        sord_node_get_string(domain));
 			}
+			sord_iter_free(d);
 		}
 	}
 	sord_iter_free(i);
 
-	printf("Found %d errors among %d files\n", n_errors, argc - 1);
+	printf("Found %d errors among %d files (checked %d restrictions)\n",
+	       n_errors, argc - 1, n_restrictions);
+
+	sord_free(model);
+	sord_world_free(world);
 	return 0;
 }
