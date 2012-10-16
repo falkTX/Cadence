@@ -535,6 +535,15 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             #tmplte_lvl = "1"
 
+            #elif (app == "jamin"):
+            #tmplte_file_r = os.path.join(proj_folder, "Jamin_%i.jam" % (rand_check))
+
+            ## Create template
+            #os.system("cp '%s' '%s'" % (os.path.join(sys.path[0], "..", "templates", "Jamin.jam"), tmplte_file_r))
+
+            #tmplte_cmd = binary
+            #tmplte_cmd += " -f '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
+
             #elif (app == "jack-mixer"):
             #tmplte_file_r = os.path.join(proj_folder, "Jack-Mixer_%i.xml" % (rand_check))
 
@@ -545,15 +554,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             #tmplte_cmd += " -c '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
 
             #tmplte_lvl = "1"
-
-            #elif (app == "jamin"):
-            #tmplte_file_r = os.path.join(proj_folder, "Jamin_%i.jam" % (rand_check))
-
-            ## Create template
-            #os.system("cp '%s' '%s'" % (os.path.join(sys.path[0], "..", "templates", "Jamin.jam"), tmplte_file_r))
-
-            #tmplte_cmd = binary
-            #tmplte_cmd += " -f '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
 
             #elif (app == "non-mixer"):
             #tmplte_folder = os.path.join(proj_folder, "Non-Mixer_%i" % (rand_check))

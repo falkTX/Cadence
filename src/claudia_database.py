@@ -101,7 +101,6 @@ list_Instrument = [
 
   ( "distrho-plugin-ports", "Vex",               "Synth",            "vex",                    generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 1, "ALSA"),        ("",                                                           "") ),
   ( "highlife",             "HighLife",          "Sampler",          "highlife",               generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 1, "ALSA"),        ("",                                                           "http://www.discodsp.com/highlife/") ),
-  ( "juced-plugins",        "Capsaicin",         "Synth",            "capsaicin",              "juced_plugins",    TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 1, "ALSA"),        ("",                                                           "") ),
   ( "juced-plugins",        "DrumSynth",         "Synth",            "drumsynth",              "juced_plugins",    TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 1, "ALSA"),        ("",                                                           "") ),
   ( "tal-plugins",          "TAL NoiseMaker",    "Synth",            "TAL-NoiseMaker",         "tal_plugins",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 1, "ALSA"),        ("",                                                           "http://kunz.corrupt.ch/products/tal-noisemaker") ),
   ( "wolpertinger",         "Wolpertinger",      "Synth",            "Wolpertinger",           "wolpertinger",     TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 0, "ALSA"),        ("",                                                           "http://tumbetoene.tuxfamily.org") ),
@@ -117,7 +116,7 @@ list_Instrument = [
   ( "phasex",               "Phasex",            "Synth",            "phasex",                 "phasex",           TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 1, "ALSA"),        ("file:///usr/share/phasex/help/parameters.help",              "") ),
 
   ( "pianoteq",             "Pianoteq",          "Synth",            "Pianoteq",               "pianoteq",         TEMPLATE_NO,  LEVEL_0, "Demo",       (1, 0, "ALSA + JACK"), ("file:///usr/local/bin/Documentation/pianoteq-english.pdf",   "http://www.pianoteq.com/pianoteq3_standard") ),
-  ( "pianoteq-play",        "Pianoteq Play",     "Synth",            "Pianoteq-PLAY",          "pianoteq",         TEMPLATE_NO,  LEVEL_0, "Demo",       (1, 0, "ALSA + JACK"), ("file:///usr/local/bin/Documentation/pianoteq-english.pdf",   "http://www.pianoteq.com/pianoteq3_play") ),
+  ( "pianoteq-stage",       "Pianoteq Stage",    "Synth",            "Pianoteq-STAGE",         "pianoteq",         TEMPLATE_NO,  LEVEL_0, "Demo",       (1, 0, "ALSA + JACK"), ("file:///usr/local/bin/Documentation/pianoteq-english.pdf",   "http://www.pianoteq.com/pianoteq3_play") ),
 
   ( "qsampler",             "Qsampler",          "Sampler",          "qsampler",               "qsampler",         TEMPLATE_NO,  LEVEL_0, "OpenSource", (0, 0, "ALSA + JACK"), ("",                                                           "http://qsampler.sourceforge.net/") ),
 
@@ -197,7 +196,6 @@ list_Effect = [
 
   ( "distrho-plugins",      "3 BandEQ",                      "EQ",                  "3BandEQ",                                      "distrho_plugins",  TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "") ),
   ( "distrho-plugins",      "Ping Pong Pan",                 "Pan",                 "PingPongPan",                                  "distrho_plugins",  TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "") ),
- #( "distrho-plugins",      "Stereo Audio Gain",             "Amplifier",           "StereoAudioGain",                              "distrho_plugins",  TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "") ),
 
   ( "distrho-plugin-ports", "Argotlunar",                    "Granularor",          "argotlunar",                                   generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://argotlunar.info/") ),
   ( "distrho-plugin-ports", "BitMangler",                    "Misc",                "bitmangler",                                   generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "") ),
@@ -216,7 +214,7 @@ list_Effect = [
 
   ( "jamin",                "Jamin",                         "Mastering",           "jamin",                                        "jamin",            TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "---"),         ("",                                                                   "http://jamin.sourceforge.net/") ),
 
-  ( "jcgui",                "Jc_Gui",                        "Convolver",           "Jc_Gui",                                       "Jc_Gui",           TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "---"),         ("",                                                                   "") ),
+  #( "jcgui",                "Jc_Gui",                        "Convolver",           "Jc_Gui",                                       "Jc_Gui",           TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "---"),         ("",                                                                   "") ),
 
   ( "juced-plugins",        "EQinox",                        "EQ",                  "eqinox",                                       "juced_plugins",    TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "") ),
 
@@ -258,15 +256,13 @@ iEffect_Package, iEffect_AppName, iEffect_Type, iEffect_Binary, iEffect_Icon, iE
 
 list_Tool = [
   # Package              AppName                         Type                   Binary                    Icon                Template?     Level    Rel.-Model    (MIDI-Mode, T)      (doc,                                                             website)
-  ( "a2jmidid",          "ALSA -> Jack MIDI",            "Bridge",              "a2j -e",                 generic_midi_icon,  TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        0), ("",                                                              "http://home.gna.org/a2jmidid/") ),
-
   ( "arpage",            "Arpage",                       "MIDI Arpeggiator",    "arpage",                 "arpage",           TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        1), ("",                                                              "") ),
   ( "arpage",            "Zonage",                       "MIDI Mapper",         "zonage",                 "zonage",           TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        0), ("",                                                              "") ),
 
   ( "audacity",          "Audacity",                     "Audio Editor",        "audacity",               "audacity",         TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         0), ("",                                                              "http://audacity.sourceforge.net/") ),
 
   ( "cadence",           "Cadence",                      "Multi-Feature",       "cadence",                "cadence",          TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         0), ("",                                                              "") ),
-  ( "cadence-py3-tools", "JACK XY Controller",           "XY Controller",       "jack_xycontroller",      generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        0), ("",                                                              "") ),
+  ( "cadence-tools",     "Cadence XY-Controller",        "XY Controller",       "cadence-xycontroller",   generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        0), ("",                                                              "") ),
   ( "catia",             "Catia",                        "Patch Bay",           "catia",                  "catia",            TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        1), ("",                                                              "") ),
   ( "claudia",           "Claudia",                      "Session Handler",     "claudia",                "claudia",          TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        1), ("",                                                              "") ),
   ( "carla-control",     "Carla OSC Control",            "OSC Control",         "carla-control",          "carla-control",    TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        1), ("",                                                              "") ),
@@ -284,13 +280,9 @@ list_Tool = [
 
   ( "gninjam",           "Gtk NINJAM client",            "Music Collaboration", "gninjam",                generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         1), ("",                                                              "") ),
 
-  ( "jack-capture",      "Jack Capture",                 "Recorder",            "jack_capture_gui2",      "media-record",     TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         0), ("",                                                              "") ),
-
   ( "jack-keyboard",     "Jack Keyboard",                "Virtual Keyboard",    "jack-keyboard",          "jack-keyboard",    TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        0), ("file:///usr/share/kxstudio/docs/jack-keyboard/manual.html",     "http://jack-keyboard.sourceforge.net/") ),
 
   ( "jack-mixer",        "Jack Mixer",                   "Mixer",               "jack_mixer",             "jack_mixer",       TEMPLATE_NO,  LEVEL_1, "OpenSource", ("JACK",        0), ("",                                                              "http://home.gna.org/jackmixer/") ),
-
-  ( "jack-trans2midi",   "Jack-Transport -> MIDI Clock", "Bridge",              "trans2midi",             generic_midi_icon,  TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        1), ("",                                                              "") ),
 
   ( "kmetronome",        "KMetronome",                   "Metronome",           "kmetronome",             "kmetronome",       TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA",        0), ("",                                                              "http://kmetronome.sourceforge.net/kmetronome.shtml") ),
   ( "kmidimon",          "KMidimon",                     "Monitor",             "kmidimon",               "kmidimon",         TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA",        0), ("",                                                              "http://kmidimon.sourceforge.net/") ),
@@ -302,8 +294,6 @@ list_Tool = [
 
   ( "lives",             "LiVES",                        "VJ / Video Editor",   "lives",                  "lives",            TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         1), ("",                                                              "http://lives.sourceforge.net/") ),
 
-  ( "ltc2amidi",         "LTC -> MIDI Clock",            "Bridge",              "ltc2amidi",              generic_midi_icon,  TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA",        0), ("",                                                              "") ),
-
   ( "mhwaveedit",        "MhWaveEdit",                   "Audio Editor",        "mhwaveedit",             "mhwaveedit",       TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         0), ("",                                                              "http://gna.org/projects/mhwaveedit/") ),
 
   ( "mixxx",             "Mixxx",                        "DJ",                  "mixxx",                  "mixxx",            TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA",        0), ("file:///usr/share/kxstudio/docs/Mixxx-Manual.pdf",              "http://mixxx.sourceforge.net/") ),
@@ -311,8 +301,6 @@ list_Tool = [
   ( "non-mixer",         "Non-Mixer",                    "Mixer",               "non-mixer",              "non-mixer",        TEMPLATE_NO,  LEVEL_0, "OpenSource", ("CV",          0), ("file:///usr/share/doc/non-mixer/MANUAL.html",                   "http://non-daw.tuxfamily.org/") ),
 
   ( "openmovieeditor",   "OpenMovieEditor",              "Video Editor",        "openmovieeditor",        "openmovieeditor",  TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         1), ("file:///usr/share/kxstudio/docs/openmovieeditor/tutorial.html", "http://www.openmovieeditor.org/") ),
-
-  ( "oomidi-2011",       "OpenOctave Studio",            "Session Handler",     "oostudio-2011",          "oomidi-2011",      TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         0), ("",                                                              "https://github.com/ccherrett/oom/wiki/OOStudio") ),
 
   ( "patchage",          "Patchage",                     "Patch Bay",           "patchage",               "patchage",         TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA + JACK", 0), ("",                                                              "http://drobilla.net/blog/software/patchage/") ),
   ( "patchage",          "Patchage (ALSA Only)",         "Patch Bay",           "patchage -J",            "patchage",         TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA",        0), ("",                                                              "http://drobilla.net/blog/software/patchage/") ),
