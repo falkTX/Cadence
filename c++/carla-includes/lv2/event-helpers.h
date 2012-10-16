@@ -22,7 +22,6 @@
 #ifndef LV2_EVENT_HELPERS_H
 #define LV2_EVENT_HELPERS_H
 
-#include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -124,7 +123,9 @@ lv2_event_is_valid(LV2_Event_Iterator* iter)
 static inline bool
 lv2_event_increment(LV2_Event_Iterator* iter)
 {
-	assert(lv2_event_is_valid(iter));
+	if (!lv2_event_is_valid(iter)) {
+		return false;
+	}
 
 	LV2_Event* const ev = (LV2_Event*)(
 			(uint8_t*)iter->buf->data + iter->offset);
@@ -146,7 +147,9 @@ static inline LV2_Event*
 lv2_event_get(LV2_Event_Iterator* iter,
               uint8_t**           data)
 {
-	assert(lv2_event_is_valid(iter));
+	if (!lv2_event_is_valid(iter)) {
+		return false;
+	}
 
 	LV2_Event* const ev = (LV2_Event*)(
 			(uint8_t*)iter->buf->data + iter->offset);
