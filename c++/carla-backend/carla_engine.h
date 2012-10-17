@@ -223,6 +223,9 @@ public:
     bool  removePlugin(const unsigned short id);
     void  removeAllPlugins();
     void  idlePluginGuis();
+#ifndef BUILD_BRIDGE
+    void  processRack(float* inBuf[2], float* outBuf[2], uint32_t frames);
+#endif
 
     // bridge, internal use only
     void __bridgePluginRegister(const unsigned short id, CarlaPlugin* const plugin)

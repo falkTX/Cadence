@@ -342,24 +342,15 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
         CARLA_ASSERT(midiIn);
         CARLA_ASSERT(midiOut);
 
-        // create temporary audio buffers
-        float ains_tmp_buf1[nframes];
-        float ains_tmp_buf2[nframes];
-        float aouts_tmp_buf1[nframes];
-        float aouts_tmp_buf2[nframes];
-
-        float* ains_tmp[2]  = { ains_tmp_buf1, ains_tmp_buf2 };
-        float* aouts_tmp[2] = { aouts_tmp_buf1, aouts_tmp_buf2 };
-
-        // initialize audio input
-        memcpy(ains_tmp_buf1, audioIn1, sizeof(float)*nframes);
-        memcpy(ains_tmp_buf2, audioIn2, sizeof(float)*nframes);
+        // create audio buffers
+        float* inBuf[2]  = { audioIn1, audioIn2 };
+        float* outBuf[2] = { audioOut1, audioOut2 };
 
         // initialize control input
         memset(rackControlEventsIn, 0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
         {
             jackbridge_midi_event_t jackEvent;
-            const uint32_t    jackEventCount = jackbridge_midi_get_event_count(controlIn);
+            const uint32_t jackEventCount = jackbridge_midi_get_event_count(controlIn);
 
             uint32_t carlaEventIndex = 0;
 
@@ -432,91 +423,8 @@ void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
             }
         }
 
-        // initialize outputs (zero)
-        zeroF(aouts_tmp_buf1, nframes);
-        zeroF(aouts_tmp_buf2, nframes);
-        memset(rackControlEventsOut, 0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
-        memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
-
-        bool processed = false;
-
-        // process plugins
-        for (unsigned short i=0, max=maxPluginNumber(); i < max; i++)
-        {
-            CarlaPlugin* const plugin = getPluginUnchecked(i);
-
-            if (plugin && plugin->enabled())
-            {
-                if (processed)
-                {
-                    // initialize inputs (from previous outputs)
-                    memcpy(ains_tmp_buf1, aouts_tmp_buf1, sizeof(float)*nframes);
-                    memcpy(ains_tmp_buf2, aouts_tmp_buf2, sizeof(float)*nframes);
-                    memcpy(rackMidiEventsIn, rackMidiEventsOut, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
-
-                    // initialize outputs (zero)
-                    zeroF(aouts_tmp_buf1, nframes);
-                    zeroF(aouts_tmp_buf2, nframes);
-                    memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
-                }
-
-                // process
-                plugin->engineProcessLock();
-
-                plugin->initBuffers();
-
-                if (carlaOptions.processHighPrecision)
-                {
-                    float* ains_buffer2[2];
-                    float* aouts_buffer2[2];
-
-                    for (uint32_t j=0; j < nframes; j += 8)
-                    {
-                        ains_buffer2[0] = ains_tmp_buf1 + j;
-                        ains_buffer2[1] = ains_tmp_buf2 + j;
-
-                        aouts_buffer2[0] = aouts_tmp_buf1 + j;
-                        aouts_buffer2[1] = aouts_tmp_buf2 + j;
-
-                        plugin->process(ains_buffer2, aouts_buffer2, 8, j);
-                    }
-                }
-                else
-                    plugin->process(ains_tmp, aouts_tmp, nframes);
-
-                plugin->engineProcessUnlock();
-
-                // if plugin has no audio inputs, add previous buffers
-                if (plugin->audioInCount() == 0)
-                {
-                    for (uint32_t j=0; j < nframes; j++)
-                    {
-                        aouts_tmp_buf1[j] += ains_tmp_buf1[j];
-                        aouts_tmp_buf2[j] += ains_tmp_buf2[j];
-                    }
-                }
-
-                // if plugin has no midi output, add previous midi input
-                if (plugin->midiOutCount() == 0)
-                {
-                    memcpy(rackMidiEventsOut, rackMidiEventsIn, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
-                }
-
-                processed = true;
-            }
-        }
-
-        // if no plugins in the rack, copy inputs over outputs
-        if (! processed)
-        {
-            memcpy(aouts_tmp_buf1, ains_tmp_buf1, sizeof(float)*nframes);
-            memcpy(aouts_tmp_buf2, ains_tmp_buf2, sizeof(float)*nframes);
-            memcpy(rackMidiEventsOut, rackMidiEventsIn, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
-        }
-
-        // output audio
-        memcpy(audioOut1, aouts_tmp_buf1, sizeof(float)*nframes);
-        memcpy(audioOut2, aouts_tmp_buf2, sizeof(float)*nframes);
+        // process rack
+        processRack(inBuf, outBuf, nframes);
 
         // output control
         {

@@ -425,6 +425,93 @@ void CarlaEngine::idlePluginGuis()
     }
 }
 
+#ifndef BUILD_BRIDGE
+void CarlaEngine::processRack(float* inBuf[2], float* outBuf[2], uint32_t frames)
+{
+    // initialize outputs (zero)
+    zeroF(outBuf[0], frames);
+    zeroF(outBuf[1], frames);
+    memset(rackControlEventsOut, 0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
+    memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+
+    bool processed = false;
+
+    // process plugins
+    for (unsigned short i=0, max=maxPluginNumber(); i < max; i++)
+    {
+        CarlaPlugin* const plugin = getPluginUnchecked(i);
+
+        if (plugin && plugin->enabled())
+        {
+            if (processed)
+            {
+                // initialize inputs (from previous outputs)
+                memcpy(inBuf[0], outBuf[0], sizeof(float)*frames);
+                memcpy(inBuf[1], outBuf[1], sizeof(float)*frames);
+                memcpy(rackMidiEventsIn, rackMidiEventsOut, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+
+                // initialize outputs (zero)
+                zeroF(outBuf[0], frames);
+                zeroF(outBuf[1], frames);
+                memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+            }
+
+            // process
+            plugin->engineProcessLock();
+
+            plugin->initBuffers();
+
+            if (carlaOptions.processHighPrecision)
+            {
+                float* inBuf2[2];
+                float* outBuf2[2];
+
+                for (uint32_t j=0; j < frames; j += 8)
+                {
+                    inBuf2[0] = inBuf[0] + j;
+                    inBuf2[1] = inBuf[1] + j;
+
+                    outBuf2[0] = outBuf[0] + j;
+                    outBuf2[1] = outBuf[1] + j;
+
+                    plugin->process(inBuf2, outBuf2, 8, j);
+                }
+            }
+            else
+                plugin->process(inBuf, outBuf, frames);
+
+            plugin->engineProcessUnlock();
+
+            // if plugin has no audio inputs, add previous buffers
+            if (plugin->audioInCount() == 0)
+            {
+                for (uint32_t j=0; j < frames; j++)
+                {
+                    outBuf[0][j] += inBuf[0][j];
+                    outBuf[1][j] += inBuf[1][j];
+                }
+            }
+
+            // if plugin has no midi output, add previous midi input
+            if (plugin->midiOutCount() == 0)
+            {
+                memcpy(rackMidiEventsOut, rackMidiEventsIn, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+            }
+
+            processed = true;
+        }
+    }
+
+    // if no plugins in the rack, copy inputs over outputs
+    if (! processed)
+    {
+        memcpy(outBuf[0], inBuf[0], sizeof(float)*frames);
+        memcpy(outBuf[1], inBuf[1], sizeof(float)*frames);
+        memcpy(rackMidiEventsOut, rackMidiEventsIn, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+    }
+}
+#endif
+
 // -----------------------------------------------------------------------
 // Information (base)
 
