@@ -271,8 +271,10 @@ void CarlaEngineJack::handleFreewheelCallback(bool isFreewheel)
 
 void CarlaEngineJack::handleProcessCallback(uint32_t nframes)
 {
+#ifndef BUILD_BRIDGE
     if (maxPluginNumber() == 0)
         return;
+#endif
 
     state = jackbridge_transport_query(client, &pos);
 

@@ -184,22 +184,23 @@ void CarlaEngineRtAudio::handleProcessCallback(void* outputBuffer, void* inputBu
     CARLA_ASSERT(outsPtr);
 
     // create temporary audio buffers
-    float ains_tmp_buf1[nframes];
-    float ains_tmp_buf2[nframes];
-    float aouts_tmp_buf1[nframes];
-    float aouts_tmp_buf2[nframes];
-
-    float* ains_tmp[2]  = { ains_tmp_buf1, ains_tmp_buf2 };
-    float* aouts_tmp[2] = { aouts_tmp_buf1, aouts_tmp_buf2 };
+    float inBuf1[nframes];
+    float inBuf2[nframes];
+    float outBuf1[nframes];
+    float outBuf2[nframes];
 
     // initialize audio input
     for (unsigned int i=0; i < nframes*2; i++)
     {
         if (i % 2)
-            ains_tmp_buf2[i/2] = insPtr[i];
+            inBuf2[i/2] = insPtr[i];
         else
-            ains_tmp_buf1[i/2] = insPtr[i];
+            inBuf1[i/2] = insPtr[i];
     }
+
+    // create (real) audio buffers
+    float* inBuf[2]  = { inBuf1, inBuf2 };
+    float* outBuf[2] = { outBuf1, outBuf2 };
 
     // initialize control input
     memset(rackControlEventsIn, 0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
@@ -213,89 +214,15 @@ void CarlaEngineRtAudio::handleProcessCallback(void* outputBuffer, void* inputBu
         // TODO
     }
 
-    // initialize outputs (zero)
-    zeroF(aouts_tmp_buf1, nframes);
-    zeroF(aouts_tmp_buf2, nframes);
-    memset(rackControlEventsOut, 0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
-    memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
-
-    bool processed = false;
-
-    // process plugins
-    for (unsigned short i=0, max=maxPluginNumber(); i < max; i++)
-    {
-        CarlaPlugin* const plugin = getPluginUnchecked(i);
-
-        if (plugin && plugin->enabled())
-        {
-            if (processed)
-            {
-                // initialize inputs (from previous outputs)
-                memcpy(ains_tmp_buf1, aouts_tmp_buf1, sizeof(float)*nframes);
-                memcpy(ains_tmp_buf2, aouts_tmp_buf2, sizeof(float)*nframes);
-                memcpy(rackMidiEventsIn, rackMidiEventsOut, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
-
-                // initialize outputs (zero)
-                zeroF(aouts_tmp_buf1, nframes);
-                zeroF(aouts_tmp_buf2, nframes);
-                memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
-            }
-
-            // process
-            plugin->engineProcessLock();
-
-            plugin->initBuffers();
-
-            if (carlaOptions.processHighPrecision)
-            {
-                float* ains_buffer2[2];
-                float* aouts_buffer2[2];
-
-                for (uint32_t j=0; j < nframes; j += 8)
-                {
-                    ains_buffer2[0] = ains_tmp_buf1 + j;
-                    ains_buffer2[1] = ains_tmp_buf2 + j;
-
-                    aouts_buffer2[0] = aouts_tmp_buf1 + j;
-                    aouts_buffer2[1] = aouts_tmp_buf2 + j;
-
-                    plugin->process(ains_buffer2, aouts_buffer2, 8, j);
-                }
-            }
-            else
-                plugin->process(ains_tmp, aouts_tmp, nframes);
-
-            plugin->engineProcessUnlock();
-
-            // if plugin has no audio inputs, add previous buffers
-            if (plugin->audioInCount() == 0)
-            {
-                for (uint32_t j=0; j < nframes; j++)
-                {
-                    aouts_tmp_buf1[j] += ains_tmp_buf1[j];
-                    aouts_tmp_buf2[j] += ains_tmp_buf2[j];
-                }
-            }
-
-            processed = true;
-        }
-    }
-
-    // if no plugins in the rack, copy inputs over outputs
-    if (! processed)
-    {
-        memcpy(aouts_tmp_buf1, ains_tmp_buf1, sizeof(float)*nframes);
-        memcpy(aouts_tmp_buf2, ains_tmp_buf2, sizeof(float)*nframes);
-        memcpy(rackMidiEventsOut, rackMidiEventsIn, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
-    }
+    processRack(inBuf, outBuf, nframes);
 
     // output audio
     for (unsigned int i=0; i < nframes*2; i++)
     {
         if (i % 2)
-            outsPtr[i] = aouts_tmp_buf2[i/2];
+            outsPtr[i] = outBuf2[i/2];
         else
-            outsPtr[i] = aouts_tmp_buf1[i/2];
+            outsPtr[i] = outBuf1[i/2];
     }
 
     // output control
