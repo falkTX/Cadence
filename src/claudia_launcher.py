@@ -221,9 +221,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "MusE":
             self.createAppTemplate("muse", app, binary)
 
-        elif app == "MuseScore":
-            self.createAppTemplate("musescore", app, binary)
-
         elif app == "Non-DAW":
             self.createAppTemplate("non-daw", app, binary)
 
@@ -320,7 +317,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             tmplte_cmd  = binary
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder)
-            #tmplte_lvl  = "1" # TODO - kxstudio only
+            tmplte_lvl  = "1"
 
         elif app == "ardour3":
             tmplte_folder = os.path.join(proj_folder, "Ardour3_%i" % rand_check)
@@ -378,7 +375,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             tmplte_cmd  = binary
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
-            #tmplte_lvl  = "1" # TODO - kxstudio only
+            tmplte_lvl  = "1"
 
             # No decimal bpm support
             proj_bpm = proj_bpm.split(".")[0]
@@ -437,10 +434,10 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             tmplte_cmd  = binary
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
 
-            if self.callback_isLadishRoom():
-                tmplte_lvl = "jacksession"
-            else:
-                tmplte_lvl = "1"
+            #if self.callback_isLadishRoom():
+                #tmplte_lvl = "jacksession"
+            #else:
+            tmplte_lvl = "1"
 
         elif app == "renoise":
             tmplte_file_r = os.path.join(proj_folder, "Renoise_%i.xrns" % rand_check)
@@ -474,7 +471,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             tmplte_cmd  = binary
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
-            #tmplte_lvl  = "1" # TODO - broken??
+            tmplte_lvl  = "1"
 
         elif app == "calfjackhost":
             tmplte_file = os.path.join(proj_folder, "CalfJackHost_%i" % rand_check)
@@ -513,7 +510,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             tmplte_cmd  = binary
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
-            #tmplte_lvl  = "1" # TODO - broken??
+            tmplte_lvl  = "1"
 
         elif app == "jack-mixer":
             tmplte_file = os.path.join(proj_folder, "Jack-Mixer_%i.xml" % rand_check)
