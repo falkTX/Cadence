@@ -1,0 +1,4 @@
+<?xml version="1.0" ?>
+<jack_mixer geometry="122x300">
+	<main_mix_channel balance="0.000000" balance_midi_cc="8" volume="0.000000" volume_midi_cc="7"/>
+</jack_mixer>
