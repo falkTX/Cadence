@@ -25,10 +25,6 @@
 #include <vector>
 #include <QtCore/QDir>
 
-#ifdef BRIDGE_LV2_X11
-#  include <QtGui/QDialog>
-#endif
-
 CARLA_BRIDGE_START_NAMESPACE
 
 // -------------------------------------------------------------------------
@@ -119,7 +115,6 @@ public:
 
 #ifdef BRIDGE_LV2_X11
         m_resizable = false;
-        x11_widget = new QDialog;
 #else
         m_resizable = true;
 #endif
@@ -276,7 +271,7 @@ public:
         features[lv2_feature_id_ui_parent]         = new LV2_Feature;
         features[lv2_feature_id_ui_parent]->URI    = LV2_UI__parent;
 #ifdef BRIDGE_LV2_X11
-        features[lv2_feature_id_ui_parent]->data   = (void*)x11_widget->winId();
+        features[lv2_feature_id_ui_parent]->data   = getContainerId();
 #else
         features[lv2_feature_id_ui_parent]->data   = nullptr;
 #endif
@@ -330,6 +325,11 @@ public:
 
     bool init(const char* pluginURI, const char* uiURI)
     {
+        // -----------------------------------------------------------------
+        // init
+
+        CarlaClient::init(pluginURI, uiURI);
+
         // -----------------------------------------------------------------
         // get plugin from lv2_rdf (lilv)
 
@@ -423,8 +423,16 @@ public:
         return true;
     }
 
+    bool idle()
+    {
+
+        return true;
+    }
+
     void close()
     {
+        CarlaClient::close();
+
         if (handle && descriptor && descriptor->cleanup)
             descriptor->cleanup(handle);
 
@@ -436,11 +444,7 @@ public:
 
     void* getWidget() const
     {
-#ifdef BRIDGE_LV2_X11
-        return x11_widget;
-#else
         return widget;
-#endif
     }
 
     bool isResizable() const
@@ -648,7 +652,7 @@ public:
         if (width <= 0 || height <= 0)
             return 1;
 
-        quequeMessage(MESSAGE_RESIZE_GUI, width, height, 0.0);
+        toolkitResize(width, height);
 
         return 0;
     }
@@ -1002,10 +1006,6 @@ private:
 
     const LV2_Programs_UI_Interface* programs;
 
-#ifdef BRIDGE_LV2_X11
-    QDialog* x11_widget;
-#endif
-
     bool m_resizable;
     std::vector<const char*> customURIDs;
 };
@@ -1115,7 +1115,6 @@ int main(int argc, char* argv[])
     // Close OSC
     if (useOsc)
     {
-        client.sendOscExiting();
         client.oscClose();
     }
 

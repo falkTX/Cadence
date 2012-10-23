@@ -58,12 +58,18 @@ public:
     virtual void resize(int width, int height) = 0;
 
 #if BUILD_BRIDGE_UI
+    virtual void* getContainerId()
+    {
+        return nullptr;
+    }
+
     static CarlaToolkit* createNew(const char* const title);
 #endif
 
 protected:
     char* m_title;
     CarlaClient* m_client;
+    friend class CarlaClient;
 };
 
 /**@}*/

@@ -56,7 +56,9 @@ public:
 #ifdef BUILD_BRIDGE_UI
         m_filename = nullptr;
         m_lib = nullptr;
+        m_quit = false;
 #endif
+        m_toolkit->m_client = this;
     }
 
     virtual ~CarlaClient()
@@ -69,6 +71,7 @@ public:
 
     // ---------------------------------------------------------------------
 
+#if 0
     void quequeMessage(const MessageType type, const int32_t value1, const int32_t value2, const double value3)
     {
         const QMutexLocker locker(&m_messages.lock);
@@ -152,13 +155,26 @@ public:
 
         return true;
     }
+#endif
 
     // ---------------------------------------------------------------------
 
 #ifdef BUILD_BRIDGE_UI
     // ui initialization
-    virtual bool init(const char* const, const char* const) = 0;
-    virtual void close() = 0;
+    virtual bool init(const char* const, const char* const)
+    {
+        m_quit = false;
+        return false;
+    }
+
+    virtual void close()
+    {
+        if (! m_quit)
+        {
+            m_quit = true;
+            sendOscExiting();
+        }
+    }
 
     // ui management
     virtual void* getWidget() const = 0;
@@ -193,12 +209,55 @@ public:
         return m_osc.init(url);
     }
 
+    bool oscIdle()
+    {
+        if (m_osc.m_server)
+            while (lo_server_recv_noblock(m_osc.m_server, 0) != 0) {}
+
+        return ! m_quit;
+    }
+
     void oscClose()
     {
         qDebug("CarlaClient::oscClose()");
         m_osc.close();
     }
 
+    void sendOscUpdate()
+    {
+        qDebug("CarlaClient::sendOscUpdate()");
+        CARLA_ASSERT(m_osc.m_controlData.target);
+
+        if (m_osc.m_controlData.target)
+            osc_send_update(&m_osc.m_controlData, m_osc.m_serverPath);
+    }
+
+    // ---------------------------------------------------------------------
+
+    void toolkitShow()
+    {
+        m_toolkit->show();
+    }
+
+    void toolkitHide()
+    {
+        m_toolkit->hide();
+    }
+
+    void toolkitResize(int width, int height)
+    {
+        m_toolkit->resize(width, height);
+    }
+
+    void toolkitQuit()
+    {
+        m_quit = true;
+        m_toolkit->quit();
+    }
+
+    // ---------------------------------------------------------------------
+
+protected:
 #ifdef BUILD_BRIDGE_PLUGIN
     void registerOscEngine(CarlaBackend::CarlaEngine* const engine)
     {
@@ -210,56 +269,69 @@ public:
     void sendOscConfigure(const char* const key, const char* const value)
     {
         qDebug("CarlaClient::sendOscConfigure(\"%s\", \"%s\")", key, value);
-        m_osc.sendOscConfigure(key, value);
+
+        if (m_osc.m_controlData.target)
+            osc_send_configure(&m_osc.m_controlData, key, value);
     }
 
     void sendOscControl(const int32_t index, const float value)
     {
         qDebug("CarlaClient::sendOscControl(%i, %f)", index, value);
-        m_osc.sendOscControl(index, value);
+
+        if (m_osc.m_controlData.target)
+            osc_send_control(&m_osc.m_controlData, index, value);
     }
 
     void sendOscProgram(const int32_t index)
     {
         qDebug("CarlaClient::sendOscProgram(%i)", index);
-        m_osc.sendOscProgram(index);
+
+        if (m_osc.m_controlData.target)
+            osc_send_program(&m_osc.m_controlData, index);
     }
 
     void sendOscMidiProgram(const int32_t index)
     {
         qDebug("CarlaClient::sendOscMidiProgram(%i)", index);
-        m_osc.sendOscMidiProgram(index);
+
+        if (m_osc.m_controlData.target)
+            osc_send_midi_program(&m_osc.m_controlData, index);
     }
 
     void sendOscMidi(const uint8_t midiBuf[4])
     {
         qDebug("CarlaClient::sendOscMidi(%p)", midiBuf);
-        m_osc.sendOscMidi(midiBuf);
-    }
 
-    void sendOscUpdate()
-    {
-        qDebug("CarlaClient::sendOscUpdate()");
-        m_osc.sendOscUpdate();
+        if (m_osc.m_controlData.target)
+            osc_send_midi(&m_osc.m_controlData, midiBuf);
     }
 
     void sendOscExiting()
     {
         qDebug("CarlaClient::sendOscExiting()");
-        m_osc.sendOscExiting();
+
+        if (m_osc.m_controlData.target)
+            osc_send_exiting(&m_osc.m_controlData);
     }
 
 #ifdef BUILD_BRIDGE_PLUGIN
     void sendOscBridgeUpdate()
     {
         qDebug("CarlaClient::sendOscBridgeUpdate()");
-        m_osc.sendOscBridgeUpdate();
+        CARLA_ASSERT(m_osc.m_controlData.target && m_serverPath);
+
+        if (m_osc.m_controlData.target && m_osc.m_serverPath)
+            osc_send_bridge_update(&m_osc.m_controlData, m_osc.m_serverPath);
     }
 
     void sendOscBridgeError(const char* const error)
     {
         qDebug("CarlaClient::sendOscBridgeError(\"%s\")", error);
-        m_osc.sendOscBridgeError(error);
+        CARLA_ASSERT(m_osc.m_controlData.target);
+        CARLA_ASSERT(error);
+
+        if (m_osc.m_controlData.target)
+            osc_send_bridge_error(&m_osc.m_controlData, error);
     }
 #endif
 
@@ -267,20 +339,28 @@ public:
     void sendOscLv2TransferAtom(const int32_t portIndex, const char* const typeStr, const char* const atomBuf)
     {
         qDebug("CarlaClient::sendOscLv2TransferAtom(%i, \"%s\", \"%s\")", portIndex, typeStr, atomBuf);
-        m_osc.sendOscLv2TransferAtom(portIndex, typeStr, atomBuf);
+
+        if (m_osc.m_controlData.target)
+            osc_send_lv2_transfer_atom(&m_osc.m_controlData, portIndex, typeStr, atomBuf);
     }
 
     void sendOscLv2TransferEvent(const int32_t portIndex, const char* const typeStr, const char* const atomBuf)
     {
         qDebug("CarlaClient::sendOscLv2TransferEvent(%i, \"%s\", \"%s\")", portIndex, typeStr, atomBuf);
-        m_osc.sendOscLv2TransferEvent(portIndex, typeStr, atomBuf);
+
+        if (m_osc.m_controlData.target)
+            osc_send_lv2_transfer_event(&m_osc.m_controlData, portIndex, typeStr, atomBuf);
     }
 #endif
 
     // ---------------------------------------------------------------------
 
 #ifdef BUILD_BRIDGE_UI
-protected:
+    void* getContainerId()
+    {
+        return m_toolkit->getContainerId();
+    }
+
     bool libOpen(const char* const filename)
     {
         CARLA_ASSERT(filename);
@@ -326,14 +406,10 @@ private:
     CarlaBridgeOsc m_osc;
     CarlaToolkit* const m_toolkit;
 
-    struct {
-        Message data[MAX_BRIDGE_MESSAGES];
-        QMutex lock;
-    } m_messages;
-
 #ifdef BUILD_BRIDGE_UI
     char* m_filename;
     void* m_lib;
+    bool  m_quit;
 #endif
 };
 

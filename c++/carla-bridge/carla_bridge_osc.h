@@ -24,8 +24,8 @@
 #define CARLA_BRIDGE_OSC_HANDLE_ARGS const int argc, const lo_arg* const* const argv, const char* const types
 
 #define CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(/* argc, types, */ argcToCompare, typesToCompare)                                  \
+    CARLA_ASSERT(m_server);                                                                                                 \
     CARLA_ASSERT(m_serverPath);                                                                                             \
-    CARLA_ASSERT(m_serverThread);                                                                                           \
     /* check argument count */                                                                                              \
     if (argc != argcToCompare)                                                                                              \
     {                                                                                                                       \
@@ -68,106 +68,6 @@ public:
 
     // -------------------------------------------------------------------
 
-    const CarlaOscData* getControllerData() const
-    {
-        return &m_controlData;
-    }
-
-    void sendOscConfigure(const char* const key, const char* const value)
-    {
-        CARLA_ASSERT(m_controlData.target);
-
-        if (m_controlData.target)
-            osc_send_configure(&m_controlData, key, value);
-    }
-
-    void sendOscControl(const int32_t index, const float value)
-    {
-        CARLA_ASSERT(m_controlData.target);
-
-        if (m_controlData.target)
-            osc_send_control(&m_controlData, index, value);
-    }
-
-    void sendOscProgram(const int32_t index)
-    {
-        CARLA_ASSERT(m_controlData.target);
-
-        if (m_controlData.target)
-            osc_send_program(&m_controlData, index);
-    }
-
-    void sendOscMidiProgram(const int32_t index)
-    {
-        CARLA_ASSERT(m_controlData.target);
-
-        if (m_controlData.target)
-            osc_send_midi_program(&m_controlData, index);
-    }
-
-    void sendOscMidi(const uint8_t midiBuf[4])
-    {
-        CARLA_ASSERT(m_controlData.target);
-
-        if (m_controlData.target)
-            osc_send_midi(&m_controlData, midiBuf);
-    }
-
-    void sendOscUpdate()
-    {
-        CARLA_ASSERT(m_controlData.target);
-
-        if (m_controlData.target)
-            osc_send_update(&m_controlData, m_serverPath);
-    }
-
-    void sendOscExiting()
-    {
-        CARLA_ASSERT(m_controlData.target);
-
-        if (m_controlData.target)
-            osc_send_exiting(&m_controlData);
-    }
-
-#ifdef BUILD_BRIDGE_PLUGIN
-    void sendOscBridgeUpdate()
-    {
-        CARLA_ASSERT(m_controlData.target && m_serverPath);
-
-        if (m_controlData.target && m_serverPath)
-            osc_send_bridge_update(&m_controlData, m_serverPath);
-    }
-
-    void sendOscBridgeError(const char* const error)
-    {
-        CARLA_ASSERT(m_controlData.target && m_serverPath);
-        CARLA_ASSERT(error);
-
-        if (m_controlData.target && m_serverPath)
-            osc_send_bridge_error(&m_controlData, error);
-    }
-#endif
-
-#ifdef BRIDGE_LV2
-    void sendOscLv2TransferAtom(const int32_t portIndex, const char* const typeStr, const char* const atomBuf)
-    {
-        CARLA_ASSERT(m_controlData.target);
-
-        if (m_controlData.target)
-            osc_send_lv2_transfer_atom(&m_controlData, portIndex, typeStr, atomBuf);
-    }
-
-    void sendOscLv2TransferEvent(const int32_t portIndex, const char* const typeStr, const char* const atomBuf)
-    {
-        CARLA_ASSERT(m_controlData.target);
-
-        if (m_controlData.target)
-            osc_send_lv2_transfer_event(&m_controlData, portIndex, typeStr, atomBuf);
-    }
-#endif
-
-    // -------------------------------------------------------------------
-
 protected:
     int handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg);
     int handleMsgConfigure(CARLA_BRIDGE_OSC_HANDLE_ARGS);
@@ -189,8 +89,8 @@ protected:
 private:
     CarlaClient* const client;
 
-    const char* m_serverPath;
-    lo_server_thread m_serverThread;
+    lo_server    m_server;
+    const char*  m_serverPath;
     CarlaOscData m_controlData;
 
     char*  m_name;
@@ -204,6 +104,8 @@ private:
         CarlaBridgeOsc* const _this_ = (CarlaBridgeOsc*)user_data;
         return _this_->handleMessage(path, argc, argv, types, msg);
     }
+
+    friend class CarlaClient;
 };
 
 /**@}*/

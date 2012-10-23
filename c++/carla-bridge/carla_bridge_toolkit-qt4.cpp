@@ -22,13 +22,17 @@
 
 #include <QtCore/QTimerEvent>
 #include <QtGui/QApplication>
-#include <QtGui/QDialog>
+#include <QtGui/QMainWindow>
 #include <QtGui/QVBoxLayout>
+
+#ifdef Q_WS_X11
+# include <QtGui/QX11EmbedContainer>
+#endif
 
 CARLA_BRIDGE_START_NAMESPACE
 
 static int qargc = 0;
-static char* qargv[] = { nullptr };
+static char* qargv[0] = {};
 
 class BridgeApplication : public QApplication
 {
@@ -53,7 +57,7 @@ protected:
     {
         if (event->timerId() == msgTimer)
         {
-            if (m_client && ! m_client->runMessages())
+            if (m_client && ! m_client->oscIdle())
                 killTimer(msgTimer);
         }
 
@@ -86,20 +90,35 @@ public:
 
         app = nullptr;
         window = nullptr;
+
+#ifdef Q_WS_X11
+        x11Container = nullptr;
+#endif
     }
 
     ~CarlaToolkitQt4()
     {
         qDebug("CarlaToolkitQt4::~CarlaToolkitQt4()");
         CARLA_ASSERT(! app);
+
+        if (window)
+        {
+            window->close();
+            delete window;
+        }
     }
 
     void init()
     {
         qDebug("CarlaToolkitQt4::init()");
         CARLA_ASSERT(! app);
+        CARLA_ASSERT(! window);
 
         app = new BridgeApplication;
+
+        window = new QMainWindow(nullptr);
+        window->resize(10, 10);
+        window->hide();
     }
 
     void exec(CarlaClient* const client, const bool showGui)
@@ -108,27 +127,15 @@ public:
         CARLA_ASSERT(app);
         CARLA_ASSERT(client);
 
-        m_client = client;
+#ifndef BRIDGE_LV2_X11
+        QWidget* const widget = (QWidget*)client->getWidget();
 
-        if (client->needsReparent())
-        {
-            window = (QDialog*)client->getWidget();
-            window->resize(10, 10);
-        }
-        else
-        {
-            // TODO - window->setCentralWidget(widget); or other simpler method
-            window = new QDialog(nullptr);
-            window->resize(10, 10);
-            window->setLayout(new QVBoxLayout(window));
+        window->setCentralWidget(widget);
+        window->adjustSize();
 
-            QWidget* const widget = (QWidget*)client->getWidget();
-            window->layout()->addWidget(widget);
-            window->layout()->setContentsMargins(0, 0, 0, 0);
-            window->adjustSize();
-            widget->setParent(window);
-            widget->show();
-        }
+        widget->setParent(window);
+        widget->show();
+#endif
 
         if (! client->isResizable())
             window->setFixedSize(window->width(), window->height());
@@ -148,8 +155,6 @@ public:
                 window->resize(width, height);
             }
         }
-
-        app->connect(window, SIGNAL(finished(int)), app, SLOT(quit()));
 
         if (showGui)
             show();
@@ -219,12 +224,41 @@ public:
 
         if (window)
             window->setFixedSize(width, height);
+
+#ifdef BRIDGE_LV2_X11
+        if (x11Container)
+            x11Container->setFixedSize(width, height);
+#endif
+    }
+
+    void* getContainerId()
+    {
+#ifdef Q_WS_X11
+        if (! x11Container)
+        {
+            x11Container = new QX11EmbedContainer(window);
+
+            window->setCentralWidget(x11Container);
+            window->adjustSize();
+
+            x11Container->setParent(window);
+            x11Container->show();
+        }
+
+        return (void*)x11Container->winId();
+#else
+        return nullptr;
+#endif
     }
 
 private:
     BridgeApplication* app;
-    QDialog* window;
+    QMainWindow* window;
     QSettings settings;
+
+#ifdef Q_WS_X11
+    QX11EmbedContainer* x11Container;
+#endif
 };
 
 // -------------------------------------------------------------------------

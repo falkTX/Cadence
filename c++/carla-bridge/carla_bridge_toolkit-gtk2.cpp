@@ -166,7 +166,7 @@ protected:
             gtk_window_get_size(GTK_WINDOW(window), &lastWidth, &lastHeight);
         }
 
-        return m_client ? m_client->runMessages() : false;
+        return m_client ? m_client->oscIdle() : false;
     }
 
     // ---------------------------------------------------------------------
