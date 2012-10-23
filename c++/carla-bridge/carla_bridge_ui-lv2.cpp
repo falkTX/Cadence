@@ -423,12 +423,6 @@ public:
         return true;
     }
 
-    bool idle()
-    {
-
-        return true;
-    }
-
     void close()
     {
         CarlaClient::close();

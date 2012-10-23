@@ -63,6 +63,11 @@ public:
     bool init(const char* binary, const char*)
     {
         // -----------------------------------------------------------------
+        // init
+
+        CarlaClient::init(binary, nullptr);
+
+        // -----------------------------------------------------------------
         // open DLL
 
         if (! libOpen(binary))
@@ -140,6 +145,8 @@ public:
 
     void close()
     {
+        CarlaClient::close();
+
         if (effect)
         {
             effect->dispatcher(effect, effEditClose, 0, 0, nullptr, 0.0f);
