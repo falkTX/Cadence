@@ -214,7 +214,11 @@ public:
         if (m_osc.m_server)
             while (lo_server_recv_noblock(m_osc.m_server, 0) != 0) {}
 
+#ifdef BUILD_BRIDGE_UI
         return ! m_quit;
+#else
+        return true;
+#endif
     }
 
     void oscClose()
@@ -231,6 +235,24 @@ public:
         if (m_osc.m_controlData.target)
             osc_send_update(&m_osc.m_controlData, m_osc.m_serverPath);
     }
+
+#ifdef BUILD_BRIDGE_PLUGIN
+    void sendOscBridgeError(const char* const error)
+    {
+        qDebug("CarlaClient::sendOscBridgeError(\"%s\")", error);
+        CARLA_ASSERT(m_osc.m_controlData.target);
+        CARLA_ASSERT(error);
+
+        if (m_osc.m_controlData.target)
+            osc_send_bridge_error(&m_osc.m_controlData, error);
+    }
+
+    void registerOscEngine(CarlaBackend::CarlaEngine* const engine)
+    {
+        qDebug("CarlaClient::registerOscEngine(%p)", engine);
+        engine->setOscBridgeData(&m_osc.m_controlData);
+    }
+#endif
 
     // ---------------------------------------------------------------------
 
@@ -251,21 +273,15 @@ public:
 
     void toolkitQuit()
     {
+#ifdef BUILD_BRIDGE_UI
         m_quit = true;
+#endif
         m_toolkit->quit();
     }
 
     // ---------------------------------------------------------------------
 
 protected:
-#ifdef BUILD_BRIDGE_PLUGIN
-    void registerOscEngine(CarlaBackend::CarlaEngine* const engine)
-    {
-        qDebug("CarlaClient::registerOscEngine(%p)", engine);
-        engine->setOscBridgeData(m_osc.getControllerData());
-    }
-#endif
-
     void sendOscConfigure(const char* const key, const char* const value)
     {
         qDebug("CarlaClient::sendOscConfigure(\"%s\", \"%s\")", key, value);
@@ -318,20 +334,10 @@ protected:
     void sendOscBridgeUpdate()
     {
         qDebug("CarlaClient::sendOscBridgeUpdate()");
-        CARLA_ASSERT(m_osc.m_controlData.target && m_serverPath);
+        CARLA_ASSERT(m_osc.m_controlData.target && m_osc.m_serverPath);
 
         if (m_osc.m_controlData.target && m_osc.m_serverPath)
             osc_send_bridge_update(&m_osc.m_controlData, m_osc.m_serverPath);
-    }
-
-    void sendOscBridgeError(const char* const error)
-    {
-        qDebug("CarlaClient::sendOscBridgeError(\"%s\")", error);
-        CARLA_ASSERT(m_osc.m_controlData.target);
-        CARLA_ASSERT(error);
-
-        if (m_osc.m_controlData.target)
-            osc_send_bridge_error(&m_osc.m_controlData, error);
     }
 #endif
 

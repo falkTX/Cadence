@@ -25,12 +25,11 @@
 #include <QtCore/QTextStream>
 #include <QtCore/QTimerEvent>
 #include <QtGui/QApplication>
-#include <QtGui/QDialog>
-#include <QtGui/QVBoxLayout>
+#include <QtGui/QMainWindow>
 #include <QtGui/QtEvents>
 
 #ifdef Q_OS_UNIX
-#include <signal.h>
+# include <signal.h>
 #endif
 
 static int    qargc     = 0;
@@ -77,31 +76,11 @@ void initSignalHandler()
 #endif
 }
 
-#ifdef PTW32_STATIC_LIB
-#include <pthread.h>
-
-class PThreadScopedInitializer
-{
-public:
-    PThreadScopedInitializer()
-    {
-        pthread_win32_process_attach_np();
-        pthread_win32_thread_attach_np();
-    };
-
-    ~PThreadScopedInitializer()
-    {
-        pthread_win32_thread_detach_np();
-        pthread_win32_process_detach_np();
-    };
-};
-#endif
-
 CARLA_BRIDGE_START_NAMESPACE
 
 // -------------------------------------------------------------------------
 
-class BridgePluginGUI : public QDialog
+class BridgePluginGUI : public QMainWindow
 {
 public:
     class Callback
@@ -112,7 +91,7 @@ public:
     };
 
     BridgePluginGUI(QWidget* const parent, Callback* const callback_)
-        : QDialog(parent),
+        : QMainWindow(parent),
           callback(callback_)
     {
         qDebug("BridgePluginGUI::BridgePluginGUI(%p, %p", parent, callback);
@@ -121,29 +100,18 @@ public:
         m_firstShow = true;
         m_resizable = true;
 
-        vbLayout = new QVBoxLayout(this);
-        vbLayout->setContentsMargins(0, 0, 0, 0);
-        setLayout(vbLayout);
-
         container = new GuiContainer(this);
-        vbLayout->addWidget(container);
+        setCentralWidget(container);
 
         setNewSize(50, 50);
-
-#ifdef Q_OS_WIN
-        if (! resizable)
-            setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
-#endif
     }
 
     ~BridgePluginGUI()
     {
         qDebug("BridgePluginGUI::~BridgePluginGUI()");
         CARLA_ASSERT(container);
-        CARLA_ASSERT(vbLayout);
 
         delete container;
-        delete vbLayout;
     }
 
     GuiContainer* getContainer()
@@ -155,6 +123,11 @@ public:
     {
         m_resizable = resizable;
         setNewSize(width(), height());
+
+#ifdef Q_OS_WIN
+        if (! resizable)
+            setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
+#endif
     }
 
     void setTitle(const char* title)
@@ -200,7 +173,7 @@ public:
         else
             m_geometry = saveGeometry();
 
-        QDialog::setVisible(yesNo);
+        QMainWindow::setVisible(yesNo);
     }
 
 protected:
@@ -219,19 +192,12 @@ protected:
         if (event->spontaneous())
             callback->guiClosedCallback();
 
-        QDialog::closeEvent(event);
-    }
-
-    void done(int r)
-    {
-        QDialog::done(r);
-        close();
+        QMainWindow::closeEvent(event);
     }
 
 private:
     Callback* const callback;
 
-    QVBoxLayout*  vbLayout;
     GuiContainer* container;
 
     bool m_firstShow;
@@ -250,7 +216,7 @@ public:
     BridgePluginClient()
         : CarlaToolkit("carla-bridge-plugin"),
           CarlaClient(this),
-          QApplication(qargc, qargv)
+          QApplication(qargc, qargv, true)
     {
         qDebug("BridgePluginClient::BridgePluginClient()");
 
@@ -670,7 +636,7 @@ protected:
             if (plugin)
                 plugin->idleGui();
 
-            if (! CarlaClient::runMessages())
+            if (! CarlaClient::oscIdle())
             {
                 CARLA_ASSERT(msgTimer == 0);
                 msgTimer = 0;
@@ -736,10 +702,6 @@ int main(int argc, char* argv[])
         qWarning("Invalid plugin type '%s'", stype);
         return 1;
     }
-
-#ifdef PTW32_STATIC_LIB
-    PThreadScopedInitializer pthreadScopedInitializer();
-#endif
 
     // Init bridge client
     CarlaBridge::BridgePluginClient client;
@@ -820,7 +782,6 @@ int main(int argc, char* argv[])
     if (useOsc)
     {
         // Close OSC
-        client.sendOscExiting();
         client.oscClose();
         // bridge client can't be closed manually, only by host
     }

@@ -186,7 +186,7 @@ int CarlaBridgeOsc::handleMsgConfigure(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 
     if (strcmp(key, CarlaBackend::CARLA_BRIDGE_MSG_SAVE_NOW) == 0)
     {
-        client->quequeMessage(MESSAGE_SAVE_NOW, 0, 0, 0.0);
+        client->saveNow();
     }
     else if (strcmp(key, CarlaBackend::CARLA_BRIDGE_MSG_SET_CHUNK) == 0)
     {

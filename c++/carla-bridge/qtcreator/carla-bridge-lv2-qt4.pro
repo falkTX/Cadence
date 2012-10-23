@@ -33,8 +33,8 @@ LIBS    = \
     ../../carla-lilv/carla_lilv.a \
     ../../carla-rtmempool/carla_rtmempool.a
 
-DEFINES  = DEBUG
+DEFINES  = QTCREATOR_TEST
+DEFINES += DEBUG
 DEFINES += BUILD_BRIDGE BUILD_BRIDGE_UI BRIDGE_LV2 BRIDGE_LV2_QT4
-DEFINES += QTCREATOR_TEST
 
 QMAKE_CXXFLAGS *= -std=c++0x
