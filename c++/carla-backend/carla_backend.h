@@ -247,118 +247,125 @@ enum OptionsType {
     OPTION_USE_DSSI_VST_CHUNKS = 7,
 
     /*!
+     * Use plugin bridges whenever possible.\n
+     * Default is no, and not recommended at this point!.
+     * EXPERIMENTAL!
+     */
+    OPTION_PREFER_PLUGIN_BRIDGES = 8,
+
+    /*!
      * Use OSC-UI bridges whenever possible, otherwise UIs will be handled in the main thread.\n
      * Default is yes.
      */
-    OPTION_PREFER_UI_BRIDGES = 8,
+    OPTION_PREFER_UI_BRIDGES = 9,
 
     /*!
      * Timeout value in ms for how much to wait for OSC-UIs to respond.\n
      * Default is 4000 ms (4 secs).
      */
-    OPTION_OSC_UI_TIMEOUT = 9,
+    OPTION_OSC_UI_TIMEOUT = 10,
 
     /*!
      * Set LADSPA_PATH environment variable.\n
      * Default undefined.
      */
-    OPTION_PATH_LADSPA = 10,
+    OPTION_PATH_LADSPA = 11,
 
     /*!
      * Set DSSI_PATH environment variable.\n
      * Default undefined.
      */
-    OPTION_PATH_DSSI = 11,
+    OPTION_PATH_DSSI = 12,
 
     /*!
      * Set LV2_PATH environment variable.\n
      * Default undefined.
      */
-    OPTION_PATH_LV2 = 12,
+    OPTION_PATH_LV2 = 13,
 
     /*!
      * Set VST_PATH environment variable.\n
      * Default undefined.
      */
-    OPTION_PATH_VST = 13,
+    OPTION_PATH_VST = 14,
 
     /*!
      * Set GIG_PATH environment variable.\n
      * Default undefined.
      */
-    OPTION_PATH_GIG = 14,
+    OPTION_PATH_GIG = 15,
 
     /*!
      * Set SF2_PATH environment variable.\n
      * Default undefined.
      */
-    OPTION_PATH_SF2 = 15,
+    OPTION_PATH_SF2 = 16,
 
     /*!
      * Set SFZ_PATH environment variable.\n
      * Default undefined.
      */
-    OPTION_PATH_SFZ = 16,
+    OPTION_PATH_SFZ = 17,
 
     /*!
      * Set path to the POSIX 32bit plugin bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_POSIX32 = 17,
+    OPTION_PATH_BRIDGE_POSIX32 = 18,
 
     /*!
      * Set path to the POSIX 64bit plugin bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_POSIX64 = 18,
+    OPTION_PATH_BRIDGE_POSIX64 = 19,
 
     /*!
      * Set path to the Windows 32bit plugin bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_WIN32 = 19,
+    OPTION_PATH_BRIDGE_WIN32 = 20,
 
     /*!
      * Set path to the Windows 64bit plugin bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_WIN64 = 20,
+    OPTION_PATH_BRIDGE_WIN64 = 21,
 
     /*!
      * Set path to the LV2 Gtk2 UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_LV2_GTK2 = 21,
+    OPTION_PATH_BRIDGE_LV2_GTK2 = 22,
 
     /*!
      * Set path to the LV2 Gtk3 UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_LV2_GTK3 = 22,
+    OPTION_PATH_BRIDGE_LV2_GTK3 = 23,
 
     /*!
      * Set path to the LV2 Qt4 UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_LV2_QT4 = 23,
+    OPTION_PATH_BRIDGE_LV2_QT4 = 24,
 
     /*!
      * Set path to the LV2 X11 UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_LV2_X11 = 24,
+    OPTION_PATH_BRIDGE_LV2_X11 = 25,
 
     /*!
      * Set path to the VST HWND UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_VST_HWND = 25,
+    OPTION_PATH_BRIDGE_VST_HWND = 26,
 
     /*!
      * Set path to the VST X11 UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_VST_X11 = 26
+    OPTION_PATH_BRIDGE_VST_X11 = 27
 };
 
 /*!

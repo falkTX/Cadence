@@ -224,6 +224,8 @@ const char* OptionsType2str(const OptionsType type)
         return "OPTION_FORCE_STEREO";
     case OPTION_USE_DSSI_VST_CHUNKS:
         return "OPTION_USE_DSSI_VST_CHUNKS";
+    case OPTION_PREFER_PLUGIN_BRIDGES:
+        return "OPTION_PREFER_PLUGIN_BRIDGES";
     case OPTION_PREFER_UI_BRIDGES:
         return "OPTION_PREFER_UI_BRIDGES";
     case OPTION_OSC_UI_TIMEOUT:
@@ -574,6 +576,9 @@ void setOption(const OptionsType option, const int value, const char* const valu
     case OPTION_USE_DSSI_VST_CHUNKS:
         carlaOptions.useDssiVstChunks = value;
         break;
+    case OPTION_PREFER_PLUGIN_BRIDGES:
+        carlaOptions.preferPluginBridges = value;
+        break;
     case OPTION_PREFER_UI_BRIDGES:
         carlaOptions.preferUiBridges = value;
         break;
@@ -675,6 +680,7 @@ void resetOptions()
     carlaOptions.preferredSampleRate  = 44100;
     carlaOptions.forceStereo          = false;
     carlaOptions.useDssiVstChunks     = false;
+    carlaOptions.preferPluginBridges  = false;
     carlaOptions.preferUiBridges      = true;
     carlaOptions.oscUiTimeout         = 4000/100;
 

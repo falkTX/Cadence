@@ -245,11 +245,13 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
     CARLA_ASSERT(label);
 
     if (m_maxPluginNumber == 0)
+    {
 #ifdef BUILD_BRIDGE
         m_maxPluginNumber = MAX_PLUGINS;
 #else
         m_maxPluginNumber = (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK) ? 16 : MAX_PLUGINS;
 #endif
+    }
 
     CarlaPlugin::initializer init = {
         this,
@@ -261,7 +263,7 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
     CarlaPlugin* plugin = nullptr;
 
 #ifndef BUILD_BRIDGE
-    if (btype != BINARY_NATIVE /*|| true*/)
+    if (btype != BINARY_NATIVE || carlaOptions.preferPluginBridges)
     {
 #  ifdef CARLA_ENGINE_JACK
         if (carlaOptions.processMode != CarlaBackend::PROCESS_MODE_MULTIPLE_CLIENTS)

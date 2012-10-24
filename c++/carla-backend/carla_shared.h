@@ -68,6 +68,7 @@ struct carla_options_t {
     bool forceStereo;
     bool useDssiVstChunks;
 
+    bool preferPluginBridges;
     bool preferUiBridges;
     uint oscUiTimeout;
 
@@ -90,6 +91,7 @@ struct carla_options_t {
           preferredSampleRate(44100),
           forceStereo(false),
           useDssiVstChunks(false),
+          preferPluginBridges(false),
           preferUiBridges(true),
           oscUiTimeout(4000/100),
           bridge_posix32(nullptr),
