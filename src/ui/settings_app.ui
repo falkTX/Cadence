@@ -203,7 +203,7 @@
         <number>0</number>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="page_main">
         <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -931,7 +931,7 @@
              </spacer>
             </item>
             <item row="0" column="0" colspan="3">
-             <widget class="QCheckBox" name="ch_engine_prefer_bridges">
+             <widget class="QCheckBox" name="ch_engine_prefer_ui_bridges">
               <property name="toolTip">
                <string>Use OSC-GUI bridges when possible, this way separating the UI from DSP code</string>
               </property>
@@ -968,6 +968,16 @@ You can disable these checks to get a faster scanning time (at your own risk).</
              </widget>
             </item>
             <item>
+             <widget class="QCheckBox" name="ch_engine_prefer_plugin_bridges">
+              <property name="toolTip">
+               <string>Whenever possible, run the plugins in bridge mode.</string>
+              </property>
+              <property name="text">
+               <string>Run plugins in bridge mode when possible (EXPERIMENTAL)</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QCheckBox" name="ch_engine_force_stereo">
               <property name="toolTip">
                <string>Force mono plugins as stereo by running 2 instances at the same time.
@@ -981,7 +991,7 @@ This mode is not available for VST plugins.</string>
             <item>
              <widget class="QCheckBox" name="ch_engine_process_hp">
               <property name="toolTip">
-               <string>Process audio in blocks of 8 samples, allowing &quot;per-sample&quot; automation.
+               <string>Process audio in blocks of 8 samples, allowing a higher precision automation.
 Recommended to use when 'rendering' a project.
 Some plugins might not work properly under this mode.</string>
               </property>

@@ -220,10 +220,11 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
 
             self.cb_engine_process_mode.setCurrentIndex(self.settings.value("Engine/ProcessMode", PROCESS_MODE_MULTIPLE_CLIENTS, type=int))
             self.sb_engine_max_params.setValue(self.settings.value("Engine/MaxParameters", 200, type=int))
-            self.ch_engine_prefer_bridges.setChecked(self.settings.value("Engine/PreferUiBridges", True, type=bool))
+            self.ch_engine_prefer_ui_bridges.setChecked(self.settings.value("Engine/PreferUiBridges", True, type=bool))
             self.sb_engine_oscgui_timeout.setValue(self.settings.value("Engine/OscUiTimeout", 4000, type=int))
             self.ch_engine_disable_checks.setChecked(self.settings.value("Engine/DisableChecks", bool(not WINDOWS), type=bool))
             self.ch_engine_dssi_chunks.setChecked(self.settings.value("Engine/UseDssiVstChunks", False, type=bool))
+            self.ch_engine_prefer_plugin_bridges.setChecked(self.settings.value("Engine/PreferPluginBridges", False, type=bool))
             self.ch_engine_force_stereo.setChecked(self.settings.value("Engine/ForceStereo", False, type=bool))
             self.ch_engine_process_hp.setChecked(self.settings.value("Engine/ProcessHighPrecision", False, type=bool))
 
@@ -415,10 +416,11 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             self.settings.setValue("Engine/AudioDriver", self.cb_engine_audio_driver.currentText())
             self.settings.setValue("Engine/ProcessMode", self.cb_engine_process_mode.currentIndex())
             self.settings.setValue("Engine/MaxParameters", self.sb_engine_max_params.value())
-            self.settings.setValue("Engine/PreferUiBridges", self.ch_engine_prefer_bridges.isChecked())
+            self.settings.setValue("Engine/PreferUiBridges", self.ch_engine_prefer_ui_bridges.isChecked())
             self.settings.setValue("Engine/OscUiTimeout", self.sb_engine_oscgui_timeout.value())
             self.settings.setValue("Engine/DisableChecks", self.ch_engine_disable_checks.isChecked())
             self.settings.setValue("Engine/UseDssiVstChunks", self.ch_engine_dssi_chunks.isChecked())
+            self.settings.setValue("Engine/PreferPluginBridges", self.ch_engine_prefer_plugin_bridges.isChecked())
             self.settings.setValue("Engine/ForceStereo", self.ch_engine_force_stereo.isChecked())
             self.settings.setValue("Engine/ProcessHighPrecision", self.ch_engine_process_hp.isChecked())
 
@@ -490,10 +492,11 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             self.cb_engine_audio_driver.setCurrentIndex(0)
             self.cb_engine_process_mode.setCurrentIndex(PROCESS_MODE_MULTIPLE_CLIENTS)
             self.sb_engine_max_params.setValue(200)
-            self.ch_engine_prefer_bridges.setChecked(True)
+            self.ch_engine_prefer_ui_bridges.setChecked(True)
             self.sb_engine_oscgui_timeout.setValue(4000)
-            self.ch_engine_disable_checks.setChecked(bool(not WINDOWS)) # pre-enable checks for Windows only
+            self.ch_engine_disable_checks.setChecked(False)
             self.ch_engine_dssi_chunks.setChecked(False)
+            self.ch_engine_prefer_plugin_bridges.setChecked(False)
             self.ch_engine_force_stereo.setChecked(False)
             self.ch_engine_process_hp.setChecked(False)
 

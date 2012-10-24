@@ -256,7 +256,7 @@ int CarlaBridgeOsc::handleMsgMidiProgram(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 
 #ifdef BUILD_BRIDGE_PLUGIN
     const int32_t index = argv[0]->i;
-    client->setProgram(index);
+    client->setMidiProgram(index);
 #else
     const int32_t bank    = argv[0]->i;
     const int32_t program = argv[1]->i;

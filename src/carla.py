@@ -1246,8 +1246,9 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         preferredBufferSize  = self.settings.value("Engine/PreferredBufferSize", 512, type=int)
         preferredSampleRate  = self.settings.value("Engine/PreferredSampleRate", 44100, type=int)
 
-        forceStereo      = self.settings.value("Engine/ForceStereo", False, type=bool)
-        useDssiVstChunks = self.settings.value("Engine/UseDssiVstChunks", False, type=bool)
+        forceStereo          = self.settings.value("Engine/ForceStereo", False, type=bool)
+        useDssiVstChunks     = self.settings.value("Engine/UseDssiVstChunks", False, type=bool)
+        preferPluginBridges  = self.settings.value("Engine/PreferPluginBridges", False, type=bool)
 
         preferUiBridges = self.settings.value("Engine/PreferUiBridges", True, type=bool)
         oscUiTimeout    = self.settings.value("Engine/OscUiTimeout", 40, type=int)
@@ -1267,6 +1268,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
         Carla.Host.set_option(OPTION_FORCE_STEREO, forceStereo, "")
         Carla.Host.set_option(OPTION_USE_DSSI_VST_CHUNKS, useDssiVstChunks, "")
+        Carla.Host.set_option(OPTION_PREFER_PLUGIN_BRIDGES, preferPluginBridges, "")
 
         Carla.Host.set_option(OPTION_PREFER_UI_BRIDGES, preferUiBridges, "")
         Carla.Host.set_option(OPTION_OSC_UI_TIMEOUT, oscUiTimeout, "")
