@@ -24,8 +24,6 @@
 #define CARLA_BRIDGE_OSC_HANDLE_ARGS const int argc, const lo_arg* const* const argv, const char* const types
 
 #define CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(/* argc, types, */ argcToCompare, typesToCompare)                                  \
-    CARLA_ASSERT(m_server);                                                                                                 \
-    CARLA_ASSERT(m_serverPath);                                                                                             \
     /* check argument count */                                                                                              \
     if (argc != argcToCompare)                                                                                              \
     {                                                                                                                       \

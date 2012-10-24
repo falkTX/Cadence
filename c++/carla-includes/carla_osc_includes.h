@@ -35,27 +35,23 @@ struct CarlaOscData {
         : path(nullptr),
           source(nullptr),
           target(nullptr) {}
+
+    void free()
+    {
+        if (path)
+            ::free((void*)path);
+
+        if (source)
+            lo_address_free(source);
+
+        if (target)
+            lo_address_free(target);
+
+        path   = nullptr;
+        source = nullptr;
+        target = nullptr;
+    }
 };
-
-static inline
-void osc_clear_data(CarlaOscData* const oscData)
-{
-    CARLA_ASSERT(oscData);
-    qDebug("osc_clear_data(path:\"%s\")", oscData->path);
-
-    if (oscData->path)
-        free((void*)oscData->path);
-
-    if (oscData->source)
-        lo_address_free(oscData->source);
-
-    if (oscData->target)
-        lo_address_free(oscData->target);
-
-    oscData->path   = nullptr;
-    oscData->source = nullptr;
-    oscData->target = nullptr;
-}
 
 static inline
 void osc_send_configure(const CarlaOscData* const oscData, const char* const key, const char* const value)
@@ -184,7 +180,7 @@ void osc_send_sample_rate(const CarlaOscData* const oscData, const float sampleR
     {
         char targetPath[strlen(oscData->path)+12];
         strcpy(targetPath, oscData->path);
-        strcat(targetPath, "/sample_rate");
+        strcat(targetPath, "/sample-rate");
         lo_send(oscData->target, targetPath, "f", sampleRate);
     }
 }

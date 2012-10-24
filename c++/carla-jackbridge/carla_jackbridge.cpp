@@ -16,8 +16,8 @@
  */
 
 #ifndef JACKBRIDGE_DUMMY
- #include <jack/jack.h>
- #include <jack/midiport.h>
+# include <jack/jack.h>
+# include <jack/midiport.h>
 #endif
 
 #include "carla_jackbridge.h"

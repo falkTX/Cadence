@@ -213,6 +213,7 @@ void CarlaPluginThread::run()
     m_process->setProcessChannelMode(QProcess::ForwardedChannels);
 
     QStringList arguments;
+    const char* name = plugin->name() ? plugin->name() : "(none)";
 
     switch (mode)
     {
@@ -237,12 +238,6 @@ void CarlaPluginThread::run()
         break;
 
     case PLUGIN_THREAD_BRIDGE:
-    {
-        const char* name = plugin->name();
-
-        if (! name)
-            name = "(none)";
-
         /* osc_url  */ arguments << QString("%1/%2").arg(engine->getOscServerPathTCP()).arg(plugin->id());
         /* stype    */ arguments << m_data1;
         /* filename */ arguments << plugin->filename();
@@ -250,10 +245,6 @@ void CarlaPluginThread::run()
         /* label    */ arguments << m_label;
         break;
     }
-    }
-
-    qDebug() << m_binary;
-    qDebug() << arguments;
 
     m_process->start(m_binary, arguments);
     m_process->waitForStarted();
@@ -289,18 +280,10 @@ void CarlaPluginThread::run()
         break;
 
     case PLUGIN_THREAD_BRIDGE:
-        qDebug("CarlaPluginThread::run() - bridge starting...");
         m_process->waitForFinished(-1);
-        qDebug("CarlaPluginThread::run() - bridge ended");
 
-#ifdef DEBUG
-        if (m_process->exitCode() == 0)
-            qDebug("CarlaPluginThread::run() - bridge closed");
-        else
-            qDebug("CarlaPluginThread::run() - bridge crashed");
-
-        qDebug("%s", QString(m_process->readAllStandardOutput()).toUtf8().constData());
-#endif
+        if (m_process->exitCode() != 0)
+            qWarning("CarlaPluginThread::run() - bridge crashed");
 
         break;
     }

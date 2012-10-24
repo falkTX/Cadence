@@ -103,13 +103,14 @@ void CarlaBridgeOsc::close()
     CARLA_ASSERT(m_server);
     CARLA_ASSERT(m_serverPath);
 
-    osc_clear_data(&m_controlData);
+    m_controlData.free();
 
     lo_server_del_method(m_server, nullptr, nullptr);
     lo_server_free(m_server);
 
     free((void*)m_serverPath);
     m_serverPath = nullptr;
+    m_server = nullptr;
 }
 
 // -----------------------------------------------------------------------
@@ -131,7 +132,7 @@ int CarlaBridgeOsc::handleMessage(const char* const path, const int argc, const 
     char method[32] = { 0 };
     memcpy(method, path + (m_nameSize + 1), uintMin(strlen(path), 32));
 
-    if (method[0] == 0)
+    if (method[0] == 0 || method[0] != '/')
         return 1;
 
     // Common OSC methods

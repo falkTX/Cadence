@@ -94,12 +94,6 @@ private:
 
     // -------------------------------------------------------------------
 
-    static int osc_message_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg, void* const user_data)
-    {
-        CarlaOsc* const _this_ = (CarlaOsc*)user_data;
-        return _this_->handleMessage(path, argc, argv, types, msg);
-    }
-
     int handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg);
 
     int handleMsgRegister(const int argc, const lo_arg* const* const argv, const char* const types, const lo_address source);
@@ -132,6 +126,13 @@ private:
 
     int handleMsgBridgeSetInputPeakValue(CARLA_OSC_HANDLE_ARGS2);
     int handleMsgBridgeSetOutputPeakValue(CARLA_OSC_HANDLE_ARGS2);
+
+    static int osc_message_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg, void* const userData)
+    {
+        CARLA_ASSERT(userData);
+        CarlaOsc* const _this_ = (CarlaOsc*)userData;
+        return _this_->handleMessage(path, argc, argv, types, msg);
+    }
 };
 
 CARLA_BACKEND_END_NAMESPACE

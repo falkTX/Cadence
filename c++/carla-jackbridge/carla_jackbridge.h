@@ -21,7 +21,7 @@
 #include "carla_includes.h"
 
 #include <jack/types.h>
-#include <jack/transport.h>
+#include <jack/transport.h> // needed for JACK1
 
 typedef unsigned char jackbridge_midi_data_t;
 

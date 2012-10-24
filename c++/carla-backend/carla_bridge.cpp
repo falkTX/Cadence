@@ -98,7 +98,7 @@ public:
         {
             osc_send_hide(&osc.data);
             osc_send_quit(&osc.data);
-            osc_clear_data(&osc.data);
+            osc.data.free();
         }
 
         if (osc.thread)

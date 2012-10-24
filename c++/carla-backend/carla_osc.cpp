@@ -25,15 +25,22 @@ unsigned int uintMin(unsigned int value1, unsigned int value2)
     return value1 < value2 ? value1 : value2;
 }
 
-void osc_error_handler(const int num, const char* const msg, const char* const path)
+void osc_error_handlerTCP(const int num, const char* const msg, const char* const path)
 {
-    qCritical("CarlaBackend::osc_error_handler(%i, \"%s\", \"%s\")", num, msg, path);
+    qCritical("CarlaBackend::osc_error_handlerTCP(%i, \"%s\", \"%s\")", num, msg, path);
 }
+
+void osc_error_handlerUDP(const int num, const char* const msg, const char* const path)
+{
+    qCritical("CarlaBackend::osc_error_handlerUDP(%i, \"%s\", \"%s\")", num, msg, path);
+}
+
+// -----------------------------------------------------------------------
 
 CarlaOsc::CarlaOsc(CarlaEngine* const engine_)
     : engine(engine_)
 {
-    qDebug("CarlaOsc::CarlaOsc(%p)", engine_);
+    qDebug("CarlaOsc::CarlaOsc(%p)", engine);
     CARLA_ASSERT(engine);
 
     m_serverPathTCP = nullptr;
@@ -58,7 +65,7 @@ void CarlaOsc::init(const char* const name)
     qDebug("CarlaOsc::init(\"%s\")", name);
     CARLA_ASSERT(! m_serverPathTCP);
     CARLA_ASSERT(! m_serverPathUDP);
-    CARLA_ASSERT(! m_serverThreadUDP);
+    CARLA_ASSERT(! m_serverThreadTCP);
     CARLA_ASSERT(! m_serverThreadUDP);
     CARLA_ASSERT(name);
     CARLA_ASSERT(m_nameSize == 0);
@@ -67,8 +74,8 @@ void CarlaOsc::init(const char* const name)
     m_nameSize = strlen(m_name);
 
     // create new OSC thread
-    m_serverThreadTCP = lo_server_thread_new_with_proto(nullptr, LO_TCP, osc_error_handler);
-    m_serverThreadUDP = lo_server_thread_new_with_proto(nullptr, LO_UDP, osc_error_handler);
+    m_serverThreadTCP = lo_server_thread_new_with_proto(nullptr, LO_TCP, osc_error_handlerTCP);
+    m_serverThreadUDP = lo_server_thread_new_with_proto(nullptr, LO_UDP, osc_error_handlerUDP);
 
     // get our full OSC server path
     char* const threadPathTCP = lo_server_thread_get_url(m_serverThreadTCP);
@@ -91,11 +98,11 @@ void CarlaOsc::close()
     qDebug("CarlaOsc::close()");
     CARLA_ASSERT(m_serverPathTCP);
     CARLA_ASSERT(m_serverPathUDP);
-    CARLA_ASSERT(m_serverThreadUDP);
+    CARLA_ASSERT(m_serverThreadTCP);
     CARLA_ASSERT(m_serverThreadUDP);
     CARLA_ASSERT(m_name);
 
-    osc_clear_data(&m_controlData);
+    m_controlData.free();
 
     lo_server_thread_stop(m_serverThreadTCP);
     lo_server_thread_stop(m_serverThreadUDP);
@@ -108,13 +115,15 @@ void CarlaOsc::close()
     free((void*)m_serverPathUDP);
     m_serverPathTCP = nullptr;
     m_serverPathUDP = nullptr;
+    m_serverThreadTCP = nullptr;
+    m_serverThreadUDP = nullptr;
 
     free(m_name);
     m_name = nullptr;
     m_nameSize = 0;
 }
 
-// -------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 
 int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg)
 {
@@ -158,7 +167,7 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
 
     if (pluginId < 0 || pluginId > CarlaEngine::maxPluginNumber())
     {
-        qCritical("CarlaOsc::handleMessage() - failed to get plugin, wrong id -> %i", pluginId);
+        qCritical("CarlaOsc::handleMessage() - failed to get plugin, wrong id '%i'", pluginId);
         return 1;
     }
 
@@ -167,19 +176,19 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
 
     if (plugin == nullptr || plugin->id() != pluginId)
     {
-        qWarning("CarlaOsc::handleMessage() - invalid plugin '%i', probably has been removed", pluginId);
+        qWarning("CarlaOsc::handleMessage() - invalid plugin id '%i', probably has been removed", pluginId);
         return 1;
     }
 
     // Get method from path, "/Carla/i/method"
-    int offset = (pluginId >= 10) ? 4 : 3;
-    char method[32] = { 0 };
+    const int offset = (pluginId >= 10) ? 4 : 3;
+    char  method[32] = { 0 };
     memcpy(method, path + (m_nameSize + offset), uintMin(strlen(path), 32));
 
-    if (method[0] == 0)
+    if (method[0] == 0 || method[0] != '/')
         return 1;
 
-    // Common OSC methods
+    // Common OSC methods (DSSI and internal UIs)
     if (strcmp(method, "/update") == 0)
     {
         const lo_address source = lo_message_get_source(msg);
@@ -231,51 +240,51 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
 #endif
 
     // Plugin Bridges
-    if (plugin->hints() & PLUGIN_IS_BRIDGE)
+    if (strncmp(method, "/bridge_", 8) == 0 && (plugin->hints() & PLUGIN_IS_BRIDGE) > 0)
     {
-        if (strcmp(method, "/bridge_set_input_peak_value") == 0)
+        if (strcmp(method+8, "set_input_peak_value") == 0)
             return handleMsgBridgeSetInputPeakValue(plugin, argc, argv, types);
-        if (strcmp(method, "/bridge_set_output_peak_value") == 0)
+        if (strcmp(method+8, "set_output_peak_value") == 0)
             return handleMsgBridgeSetOutputPeakValue(plugin, argc, argv, types);
-        if (strcmp(method, "/bridge_audio_count") == 0)
+        if (strcmp(method+8, "audio_count") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeAudioCount, argc, argv, types);
-        if (strcmp(method, "/bridge_midi_count") == 0)
+        if (strcmp(method+8, "midi_count") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeMidiCount, argc, argv, types);
-        if (strcmp(method, "/bridge_parameter_count") == 0)
+        if (strcmp(method+8, "parameter_count") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeParameterCount, argc, argv, types);
-        if (strcmp(method, "/bridge_program_count") == 0)
+        if (strcmp(method+8, "program_count") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeProgramCount, argc, argv, types);
-        if (strcmp(method, "/bridge_midi_program_count") == 0)
+        if (strcmp(method+8, "midi_program_count") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeMidiProgramCount, argc, argv, types);
-        if (strcmp(method, "/bridge_plugin_info") == 0)
+        if (strcmp(method+8, "plugin_info") == 0)
             return plugin->setOscBridgeInfo(PluginBridgePluginInfo, argc, argv, types);
-        if (strcmp(method, "/bridge_parameter_info") == 0)
+        if (strcmp(method+8, "parameter_info") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeParameterInfo, argc, argv, types);
-        if (strcmp(method, "/bridge_parameter_data") == 0)
+        if (strcmp(method+8, "parameter_data") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeParameterData, argc, argv, types);
-        if (strcmp(method, "/bridge_parameter_ranges") == 0)
+        if (strcmp(method+8, "parameter_ranges") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeParameterRanges, argc, argv, types);
-        if (strcmp(method, "/bridge_program_info") == 0)
+        if (strcmp(method+8, "program_info") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeProgramInfo, argc, argv, types);
-        if (strcmp(method, "/bridge_midi_program_info") == 0)
+        if (strcmp(method+8, "midi_program_info") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeMidiProgramInfo, argc, argv, types);
-        if (strcmp(method, "/bridge_configure") == 0)
+        if (strcmp(method+8, "configure") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeConfigure, argc, argv, types);
-        if (strcmp(method, "/bridge_set_parameter_value") == 0)
+        if (strcmp(method+8, "set_parameter_value") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeSetParameterValue, argc, argv, types);
-        if (strcmp(method, "/bridge_set_default_value") == 0)
+        if (strcmp(method+8, "set_default_value") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeSetDefaultValue, argc, argv, types);
-        if (strcmp(method, "/bridge_set_program") == 0)
+        if (strcmp(method+8, "set_program") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeSetProgram, argc, argv, types);
-        if (strcmp(method, "/bridge_set_midi_program") == 0)
+        if (strcmp(method+8, "set_midi_program") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeSetMidiProgram, argc, argv, types);
-        if (strcmp(method, "/bridge_set_custom_data") == 0)
+        if (strcmp(method+8, "set_custom_data") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeSetCustomData, argc, argv, types);
-        if (strcmp(method, "/bridge_set_chunk_data") == 0)
+        if (strcmp(method+8, "set_chunk_data") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeSetChunkData, argc, argv, types);
-        if (strcmp(method, "/bridge_update") == 0)
+        if (strcmp(method+8, "update") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeUpdateNow, argc, argv, types);
-        if (strcmp(method, "/bridge_error") == 0)
+        if (strcmp(method+8, "error") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeError, argc, argv, types);
     }
 
@@ -283,7 +292,7 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
     return 1;
 }
 
-// -------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 
 int CarlaOsc::handleMsgRegister(const int argc, const lo_arg* const* const argv, const char* const types, const lo_address source)
 {
@@ -336,11 +345,11 @@ int CarlaOsc::handleMsgUnregister()
         return 1;
     }
 
-    osc_clear_data(&m_controlData);
+    m_controlData.free();
     return 0;
 }
 
-// -------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 
 int CarlaOsc::handleMsgUpdate(CARLA_OSC_HANDLE_ARGS2, const lo_address source)
 {
@@ -450,12 +459,12 @@ int CarlaOsc::handleMsgExiting(CARLA_OSC_HANDLE_ARGS1)
 
     // TODO - check for non-UIs (dssi-vst) and set to -1 instead
     engine->callback(CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
-    plugin->clearOscData();
+    plugin->freeOscData();
 
     return 0;
 }
 
-// -------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 
 int CarlaOsc::handleMsgSetActive(CARLA_OSC_HANDLE_ARGS2)
 {

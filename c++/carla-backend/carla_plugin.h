@@ -1542,20 +1542,25 @@ public:
      */
     void updateOscData(const lo_address source, const char* const url)
     {
+        // FIXME - remove debug prints later
+        qWarning("CarlaPlugin::updateOscData(%p, \"%s\")", source, url);
+
         const char* host;
         const char* port;
         const int proto = lo_address_get_protocol(source);
 
-        osc_clear_data(&osc.data);
+        osc.data.free();
 
         host = lo_address_get_hostname(source);
         port = lo_address_get_port(source);
         osc.data.source = lo_address_new_with_proto(proto, host, port);
+        qWarning("CarlaPlugin::updateOscData() - source: host \"%s\", port \"%s\"", host, port);
 
         host = lo_url_get_hostname(url);
         port = lo_url_get_port(url);
         osc.data.path   = lo_url_get_path(url);
         osc.data.target = lo_address_new_with_proto(proto, host, port);
+        qWarning("CarlaPlugin::updateOscData() - target: host \"%s\", port \"%s\", path \"%s\"", host, port, osc.data.path);
 
         free((void*)host);
         free((void*)port);
@@ -1589,22 +1594,15 @@ public:
         for (uint32_t i=0; i < param.count; i++)
             osc_send_control(&osc.data, param.data[i].rindex, getParameterValue(i));
 
-//        if (m_hints & PLUGIN_IS_BRIDGE)
-//        {
-//            osc_send_control(&osc.data, PARAMETER_ACTIVE, m_active ? 1.0 : 0.0);
-//            osc_send_control(&osc.data, PARAMETER_DRYWET, x_dryWet);
-//            osc_send_control(&osc.data, PARAMETER_VOLUME, x_volume);
-//            osc_send_control(&osc.data, PARAMETER_BALANCE_LEFT, x_balanceLeft);
-//            osc_send_control(&osc.data, PARAMETER_BALANCE_RIGHT, x_balanceRight);
-//        }
+        qWarning("CarlaPlugin::updateOscData() - done");
     }
 
     /*!
-     * Clear the plugin's internal OSC data.
+     * Free the plugin's internal OSC memory data.
      */
-    void clearOscData()
+    void freeOscData()
     {
-        osc_clear_data(&osc.data);
+        osc.data.free();
     }
 
     /*!
@@ -1613,17 +1611,22 @@ public:
      */
     bool showOscGui()
     {
+        qWarning("CarlaPlugin::showOscGui()");
+
         // wait for UI 'update' call
         for (uint i=0; i < carlaOptions.oscUiTimeout; i++)
         {
             if (osc.data.target)
             {
+                qWarning("CarlaPlugin::showOscGui() - got response, asking UI to show itself now");
                 osc_send_show(&osc.data);
                 return true;
             }
             else
                 carla_msleep(100);
         }
+
+        qWarning("CarlaPlugin::showOscGui() - Timeout while waiting for UI to respond");
         return false;
     }
 #endif

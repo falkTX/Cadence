@@ -406,7 +406,7 @@ public:
                 {
                     osc_send_hide(&osc.data);
                     osc_send_quit(&osc.data);
-                    osc_clear_data(&osc.data);
+                    osc.data.free();
                 }
 
                 if (! osc.thread->wait(500))
@@ -2200,7 +2200,7 @@ public:
 #endif
 
         // special checks
-        if (effect->dispatcher(effect, effCanDo, 0, 0, (void*)"hasCockosExtensions", 0.0f) == 0xbeef0000)
+        if ((uintptr_t)effect->dispatcher(effect, effCanDo, 0, 0, (void*)"hasCockosExtensions", 0.0f) == 0xbeef0000)
         {
             qDebug("Plugin has Cockos extensions!");
             m_hints |= PLUGIN_HAS_COCKOS_EXTENSIONS;

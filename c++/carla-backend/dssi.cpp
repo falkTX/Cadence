@@ -319,7 +319,7 @@ public:
             {
                 osc_send_hide(&osc.data);
                 osc_send_quit(&osc.data);
-                osc_clear_data(&osc.data);
+                osc.data.free();
             }
 
             if (! osc.thread->wait(500))
@@ -1193,19 +1193,19 @@ public:
             for (i=0; i < aIn.count; i++)
             {
                 if (i == 0 || ! h2) ldescriptor->connect_port(handle, aIn.rindexes[i], inBuffer[i]);
-                if (i == 1 && h2)   ldescriptor->connect_port(h2, aIn.rindexes[i], inBuffer[i]);
+                else if (i == 1)    ldescriptor->connect_port(h2, aIn.rindexes[i], inBuffer[i]);
             }
 
             for (i=0; i < aOut.count; i++)
             {
                 if (i == 0 || ! h2) ldescriptor->connect_port(handle, aOut.rindexes[i], outBuffer[i]);
-                if (i == 1 && h2)   ldescriptor->connect_port(h2, aOut.rindexes[i], outBuffer[i]);
+                else if (i == 1)    ldescriptor->connect_port(h2, aOut.rindexes[i], outBuffer[i]);
             }
 
             if (descriptor->run_synth)
             {
                 descriptor->run_synth(handle, frames, midiEvents, midiEventCount);
-                if (h2) descriptor->run_synth(handle, frames, midiEvents, midiEventCount);
+                if (h2) descriptor->run_synth(h2, frames, midiEvents, midiEventCount);
             }
             else if (descriptor->run_multiple_synths)
             {
