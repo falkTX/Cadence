@@ -1102,11 +1102,11 @@ public:
             rdf_descriptor = ladspa_rdf_dup(rdf_descriptor_);
 
         if (name)
-            m_name = x_engine->getUniqueName(name);
+            m_name = x_engine->getUniquePluginName(name);
         else if (rdf_descriptor && rdf_descriptor->Title)
-            m_name = x_engine->getUniqueName(rdf_descriptor->Title);
+            m_name = x_engine->getUniquePluginName(rdf_descriptor->Title);
         else
-            m_name = x_engine->getUniqueName(descriptor->Name);
+            m_name = x_engine->getUniquePluginName(descriptor->Name);
 
         // ---------------------------------------------------------------
         // register client

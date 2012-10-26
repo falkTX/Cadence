@@ -427,7 +427,7 @@ public:
             info.copyright = strdup(copyright);
 
             if (! m_name)
-                m_name = x_engine->getUniqueName(name);
+                m_name = x_engine->getUniquePluginName(name);
 
             break;
         }
@@ -936,7 +936,7 @@ public:
         m_filename = strdup(filename);
 
         if (name)
-            m_name = x_engine->getUniqueName(name);
+            m_name = x_engine->getUniquePluginName(name);
 
         // register plugin now so we can receive OSC (and wait for it)
         x_engine->__bridgePluginRegister(m_id, this);

@@ -436,8 +436,7 @@ private:
 
 // -----------------------------------------------------------------------
 
-#define CARLA_REGISTER_NATIVE_PLUGIN_MM(label, descMM)                         \
-    void carla_register_native_plugin_##label () __attribute__((constructor)); \
+#define CARLA_REGISTER_NATIVE_PLUGIN_MM(label, descMM) \
     void carla_register_native_plugin_##label () { carla_register_native_plugin(descMM.descriptorInit()); }
 
 #endif // CARLA_NATIVE_MM_H

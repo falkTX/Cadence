@@ -2163,7 +2163,7 @@ public:
 
         if (name)
         {
-            m_name = x_engine->getUniqueName(name);
+            m_name = x_engine->getUniquePluginName(name);
         }
         else
         {
@@ -2171,9 +2171,9 @@ public:
             effect->dispatcher(effect, effGetEffectName, 0, 0, strBuf, 0.0f);
 
             if (strBuf[0] != 0)
-                m_name = x_engine->getUniqueName(strBuf);
+                m_name = x_engine->getUniquePluginName(strBuf);
             else
-                m_name = x_engine->getUniqueName(label);
+                m_name = x_engine->getUniquePluginName(label);
         }
 
         // ---------------------------------------------------------------

@@ -142,18 +142,12 @@ struct CarlaEngineClientNativeHandle {
 #ifdef CARLA_ENGINE_JACK
     jack_client_t* jackClient;
 #endif
-#ifdef CARLA_ENGINE_RTAUDIO
-    RtAudio* rtAudioPtr;
-#endif
 
     CarlaEngineClientNativeHandle()
     {
         type = CarlaEngineTypeNull;
 #ifdef CARLA_ENGINE_JACK
         jackClient = nullptr;
-#endif
-#ifdef CARLA_ENGINE_RTAUDIO
-        rtAudioPtr = nullptr;
 #endif
     }
 };
@@ -199,6 +193,11 @@ public:
     static int maxClientNameSize();
     static int maxPortNameSize();
     static unsigned short maxPluginNumber();
+    static const char* getFixedClientName(const char* const clientName);
+
+    static unsigned int getDriverCount();
+    static const char* getDriverName(unsigned int index);
+    static CarlaEngine* newDriverByName(const char* driverName);
 
     // -------------------------------------------------------------------
     // Virtual, per-engine type calls
@@ -216,7 +215,7 @@ public:
     short        getNewPluginId() const;
     CarlaPlugin* getPlugin(const unsigned short id) const;
     CarlaPlugin* getPluginUnchecked(const unsigned short id) const;
-    const char*  getUniqueName(const char* const name);
+    const char*  getUniquePluginName(const char* const name);
 
     short addPlugin(const BinaryType btype, const PluginType ptype, const char* const filename, const char* const name, const char* const label, void* const extra = nullptr);
     short addPlugin(const PluginType ptype, const char* const filename, const char* const name, const char* const label, void* const extra = nullptr);
@@ -404,6 +403,13 @@ private:
     double m_outsPeak[MAX_PLUGINS * MAX_PEAKS];
 
     static unsigned short m_maxPluginNumber;
+
+#ifdef CARLA_ENGINE_JACK
+    static CarlaEngine* newJack();
+#endif
+#ifdef CARLA_ENGINE_RTAUDIO
+    static CarlaEngine* newRtAudio(RtAudio::Api api);
+#endif
 };
 
 // -----------------------------------------------------------------------
@@ -429,6 +435,7 @@ private:
 
 // -----------------------------------------------------------------------
 
+// base
 class CarlaEngineBasePort
 {
 public:
@@ -443,6 +450,7 @@ protected:
     const CarlaEnginePortNativeHandle handle;
 };
 
+// audio
 class CarlaEngineAudioPort : public CarlaEngineBasePort
 {
 public:
@@ -455,6 +463,7 @@ public:
 #endif
 };
 
+// control
 class CarlaEngineControlPort : public CarlaEngineBasePort
 {
 public:
@@ -468,6 +477,7 @@ public:
     void writeEvent(CarlaEngineControlEventType type, uint32_t time, uint8_t channel, uint8_t controller, double value);
 };
 
+// midi
 class CarlaEngineMidiPort : public CarlaEngineBasePort
 {
 public:
@@ -482,84 +492,6 @@ public:
 };
 
 // -----------------------------------------------------------------------
-
-#ifdef CARLA_ENGINE_JACK
-class CarlaEngineJack : public CarlaEngine
-{
-public:
-    CarlaEngineJack();
-    ~CarlaEngineJack();
-
-    // -------------------------------------
-
-    bool init(const char* const clientName);
-    bool close();
-
-    bool isOffline();
-    bool isRunning();
-
-    CarlaEngineClient* addClient(CarlaPlugin* const plugin);
-
-    // -------------------------------------
-
-    void handleSampleRateCallback(double newSampleRate);
-    void handleBufferSizeCallback(uint32_t newBufferSize);
-    void handleFreewheelCallback(bool isFreewheel);
-    void handleProcessCallback(uint32_t nframes);
-    void handleShutdownCallback();
-
-    // -------------------------------------
-
-private:
-    jack_client_t* client;
-    jack_transport_state_t state;
-    jack_position_t pos;
-    bool freewheel;
-
-    // -------------------------------------
-
-#ifndef BUILD_BRIDGE
-    static const unsigned short rackPortAudioIn1   = 0;
-    static const unsigned short rackPortAudioIn2   = 1;
-    static const unsigned short rackPortAudioOut1  = 2;
-    static const unsigned short rackPortAudioOut2  = 3;
-    static const unsigned short rackPortControlIn  = 4;
-    static const unsigned short rackPortControlOut = 5;
-    static const unsigned short rackPortMidiIn     = 6;
-    static const unsigned short rackPortMidiOut    = 7;
-    static const unsigned short rackPortCount      = 8;
-    jack_port_t* rackJackPorts[rackPortCount];
-#endif
-};
-#endif
-
-// -----------------------------------------------------------------------
-
-#ifdef CARLA_ENGINE_RTAUDIO
-class CarlaEngineRtAudio : public CarlaEngine
-{
-public:
-    CarlaEngineRtAudio(RtAudio::Api api);
-    ~CarlaEngineRtAudio();
-
-    // -------------------------------------
-
-    bool init(const char* const clientName);
-    bool close();
-
-    bool isOffline();
-    bool isRunning();
-
-    CarlaEngineClient* addClient(CarlaPlugin* const plugin);
-
-    // -------------------------------------
-
-    void handleProcessCallback(void* outputBuffer, void* inputBuffer, unsigned int nframes, double streamTime, RtAudioStreamStatus status);
-
-private:
-    RtAudio adac;
-};
-#endif
 
 /**@}*/
 

@@ -18,6 +18,14 @@
 #include "carla_plugin.h"
 #include "plugins/carla_native.h"
 
+// Internal C plugins
+extern "C" {
+extern void carla_register_native_plugin_bypass();
+}
+
+// Internal C++ plugins
+extern void carla_register_native_plugin_midiSplit();
+
 CARLA_BACKEND_START_NAMESPACE
 
 struct NativePluginMidiData {
@@ -36,6 +44,7 @@ class NativePluginScopedInitiliazer
 public:
     NativePluginScopedInitiliazer()
     {
+        firstInit = true;
     }
 
     ~NativePluginScopedInitiliazer()
@@ -51,6 +60,16 @@ public:
         descriptors.clear();
     }
 
+    void maybeFirstInit()
+    {
+        if (firstInit)
+        {
+            firstInit = false;
+            carla_register_native_plugin_bypass();
+            carla_register_native_plugin_midiSplit();
+        }
+    }
+
     void initializeIfNeeded(const PluginDescriptor* const desc)
     {
         if (descriptors.empty() || std::find(descriptors.begin(), descriptors.end(), desc) == descriptors.end())
@@ -63,6 +82,7 @@ public:
     }
 
 private:
+    bool firstInit;
     std::vector<const PluginDescriptor*> descriptors;
 };
 
@@ -1541,6 +1561,7 @@ public:
 
     static size_t getPluginCount()
     {
+        scopedInitliazer.maybeFirstInit();
         return pluginDescriptors.size();
     }
 
@@ -1601,9 +1622,9 @@ public:
         // get info
 
         if (name)
-            m_name = x_engine->getUniqueName(name);
+            m_name = x_engine->getUniquePluginName(name);
         else
-            m_name = x_engine->getUniqueName(descriptor->name);
+            m_name = x_engine->getUniquePluginName(descriptor->name);
 
         // ---------------------------------------------------------------
         // register client

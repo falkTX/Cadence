@@ -1251,9 +1251,9 @@ public:
         m_label    = strdup(label);
 
         if (name)
-            m_name = x_engine->getUniqueName(name);
+            m_name = x_engine->getUniquePluginName(name);
         else
-            m_name = x_engine->getUniqueName(label);
+            m_name = x_engine->getUniquePluginName(label);
 
         // ---------------------------------------------------------------
         // register client

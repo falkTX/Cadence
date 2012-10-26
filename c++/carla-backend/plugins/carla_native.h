@@ -170,8 +170,7 @@ typedef struct _PluginDescriptor {
 
 void carla_register_native_plugin(const PluginDescriptor* desc);
 
-#define CARLA_REGISTER_NATIVE_PLUGIN(label, desc)                              \
-    void carla_register_native_plugin_##label () __attribute__((constructor)); \
+#define CARLA_REGISTER_NATIVE_PLUGIN(label, desc) \
     void carla_register_native_plugin_##label () { carla_register_native_plugin(&desc); }
 
 #ifdef __cplusplus

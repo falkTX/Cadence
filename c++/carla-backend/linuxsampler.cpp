@@ -721,9 +721,9 @@ public:
                 m_filename = strdup(filename);
 
                 if (name)
-                    m_name = x_engine->getUniqueName(name);
+                    m_name = x_engine->getUniquePluginName(name);
                 else
-                    m_name = x_engine->getUniqueName(label && label[0] ? label : info.InstrumentName.c_str());
+                    m_name = x_engine->getUniquePluginName(label && label[0] ? label : info.InstrumentName.c_str());
 
                 sampler_channel = sampler->AddSamplerChannel();
                 sampler_channel->SetEngineType(stype);

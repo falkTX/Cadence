@@ -1483,9 +1483,9 @@ public:
         m_filename = strdup(filename);
 
         if (name)
-            m_name = x_engine->getUniqueName(name);
+            m_name = x_engine->getUniquePluginName(name);
         else
-            m_name = x_engine->getUniqueName(ldescriptor->Name);
+            m_name = x_engine->getUniquePluginName(ldescriptor->Name);
 
         // ---------------------------------------------------------------
         // register client

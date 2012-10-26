@@ -1358,44 +1358,6 @@ public:
         Q_UNUSED(framesOffset);
     }
 
-#ifdef CARLA_ENGINE_JACK
-    /*!
-     * Plugin process callback, JACK helper version.
-     */
-    void process_jack(const uint32_t nframes)
-    {
-        float* inBuffer[aIn.count];
-        float* outBuffer[aOut.count];
-
-        for (uint32_t i=0; i < aIn.count; i++)
-            inBuffer[i] = aIn.ports[i]->getJackAudioBuffer(nframes);
-
-        for (uint32_t i=0; i < aOut.count; i++)
-            outBuffer[i] = aOut.ports[i]->getJackAudioBuffer(nframes);
-
-#ifndef BUILD_BRIDGE
-        if (carlaOptions.processHighPrecision)
-        {
-            float* inBuffer2[aIn.count];
-            float* outBuffer2[aOut.count];
-
-            for (uint32_t i=0, j; i < nframes; i += 8)
-            {
-                for (j=0; j < aIn.count; j++)
-                    inBuffer2[j] = inBuffer[j] + i;
-
-                for (j=0; j < aOut.count; j++)
-                    outBuffer2[j] = outBuffer[j] + i;
-
-                process(inBuffer2, outBuffer2, 8, i);
-            }
-        }
-        else
-#endif
-            process(inBuffer, outBuffer, nframes);
-    }
-#endif
-
     /*!
      * Tell the plugin the current buffer size has changed.
      */
@@ -2266,6 +2228,8 @@ protected:
     {
         return (value < 0.0) ? -value : value;
     }
+
+    friend class CarlaEngineJack;
 };
 
 /**@}*/

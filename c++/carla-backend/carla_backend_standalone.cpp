@@ -83,63 +83,14 @@ unsigned int get_engine_driver_count()
 {
     qDebug("CarlaBackendStandalone::get_engine_driver_count()");
 
-    unsigned int count = 0;
-#ifdef CARLA_ENGINE_JACK
-    count += 1;
-#endif
-#ifdef CARLA_ENGINE_RTAUDIO
-    std::vector<RtAudio::Api> apis;
-    RtAudio::getCompiledApi(apis);
-    count += apis.size();
-#endif
-    return count;
+    return CarlaBackend::CarlaEngine::getDriverCount();
 }
 
 const char* get_engine_driver_name(unsigned int index)
 {
     qDebug("CarlaBackendStandalone::get_engine_driver_name(%i)", index);
 
-#ifdef CARLA_ENGINE_JACK
-    if (index == 0)
-        return "JACK";
-    else
-        index -= 1;
-#endif
-
-#ifdef CARLA_ENGINE_RTAUDIO
-    std::vector<RtAudio::Api> apis;
-    RtAudio::getCompiledApi(apis);
-
-    if (index < apis.size())
-    {
-        RtAudio::Api api = apis[index];
-
-        switch (api)
-        {
-        case RtAudio::UNSPECIFIED:
-            return "Unspecified";
-        case RtAudio::LINUX_ALSA:
-            return "ALSA";
-        case RtAudio::LINUX_PULSE:
-            return "PulseAudio";
-        case RtAudio::LINUX_OSS:
-            return "OSS";
-        case RtAudio::UNIX_JACK:
-            return "JACK (RtAudio)";
-        case RtAudio::MACOSX_CORE:
-            return "CoreAudio";
-        case RtAudio::WINDOWS_ASIO:
-            return "ASIO";
-        case RtAudio::WINDOWS_DS:
-            return "DirectSound";
-        case RtAudio::RTAUDIO_DUMMY:
-            return "Dummy";
-        }
-    }
-#endif
-
-    qWarning("CarlaBackendStandalone::get_engine_driver_name(%i) - invalid index", index);
-    return nullptr;
+    return CarlaBackend::CarlaEngine::getDriverName(index);
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -183,49 +134,9 @@ bool engine_init(const char* driver_name, const char* client_name)
     qDebug("CarlaBackendStandalone::engine_init(\"%s\", \"%s\")", driver_name, client_name);
     CARLA_ASSERT(! carlaEngine);
 
-#ifdef CARLA_ENGINE_JACK
-    if (strcmp(driver_name, "JACK") == 0)
-        carlaEngine = new CarlaBackend::CarlaEngineJack;
-#else
-    if (false)
-        pass();
-#endif
+    carlaEngine = CarlaBackend::CarlaEngine::newDriverByName(driver_name);
 
-#ifdef CARLA_ENGINE_RTAUDIO
-#ifdef __LINUX_ALSA__
-    else if (strcmp(driver_name, "ALSA") == 0)
-        carlaEngine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::LINUX_ALSA);
-#endif
-#ifdef __LINUX_PULSE__
-    else if (strcmp(driver_name, "PulseAudio") == 0)
-        carlaEngine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::LINUX_PULSE);
-#endif
-#ifdef __LINUX_OSS__
-    else if (strcmp(driver_name, "OSS") == 0)
-        carlaEngine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::LINUX_OSS);
-#endif
-#ifdef __UNIX_JACK__
-    else if (strcmp(driver_name, "JACK (RtAudio)") == 0)
-        carlaEngine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::UNIX_JACK);
-#endif
-#ifdef __MACOSX_CORE__
-    else if (strcmp(driver_name, "CoreAudio") == 0)
-        carlaEngine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::MACOSX_CORE);
-#endif
-#ifdef __WINDOWS_ASIO__
-    else if (strcmp(driver_name, "ASIO") == 0)
-        carlaEngine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::WINDOWS_ASIO);
-#endif
-#ifdef __WINDOWS_DS__
-    else if (strcmp(driver_name, "DirectSound") == 0)
-        carlaEngine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::WINDOWS_DS);
-#endif
-#ifdef __RTAUDIO_DUMMY__
-    else if (strcmp(driver_name, "Dummy") == 0)
-        carlaEngine = new CarlaBackend::CarlaEngineRtAudio(RtAudio::RTAUDIO_DUMMY);
-#endif
-#endif
-    else
+    if (! carlaEngine)
     {
         CarlaBackend::setLastError("The seleted audio driver is not available!");
         return false;
@@ -245,7 +156,14 @@ bool engine_init(const char* driver_name, const char* client_name)
     carlaEngineStarted = carlaEngine->init(client_name);
 
     if (carlaEngineStarted)
+    {
         CarlaBackend::setLastError("no error");
+    }
+    else if (carlaEngine)
+    {
+        delete carlaEngine;
+        carlaEngine = nullptr;
+    }
 
     return carlaEngineStarted;
 }

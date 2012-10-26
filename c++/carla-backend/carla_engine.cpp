@@ -102,6 +102,127 @@ unsigned short CarlaEngine::maxPluginNumber()
     return m_maxPluginNumber;
 }
 
+const char* CarlaEngine::getFixedClientName(const char* const clientName)
+{
+    char* fixedName = strdup(clientName);
+    for (size_t i=0; i < strlen(fixedName); i++)
+    {
+        if (! (std::isalpha(fixedName[i]) || std::isdigit(fixedName[i])))
+            fixedName[i] = '_';
+    }
+    return fixedName;
+}
+
+unsigned int CarlaEngine::getDriverCount()
+{
+    unsigned int count = 0;
+#ifdef CARLA_ENGINE_JACK
+    count += 1;
+#endif
+#ifdef CARLA_ENGINE_RTAUDIO
+    std::vector<RtAudio::Api> apis;
+    RtAudio::getCompiledApi(apis);
+    count += apis.size();
+#endif
+    return count;
+}
+
+const char* CarlaEngine::getDriverName(unsigned int index)
+{
+#ifdef CARLA_ENGINE_JACK
+    if (index == 0)
+        return "JACK";
+    else
+        index -= 1;
+#endif
+
+#ifdef CARLA_ENGINE_RTAUDIO
+    std::vector<RtAudio::Api> apis;
+    RtAudio::getCompiledApi(apis);
+
+    if (index < apis.size())
+    {
+        RtAudio::Api api = apis[index];
+
+        switch (api)
+        {
+        case RtAudio::UNSPECIFIED:
+            return "Unspecified";
+        case RtAudio::LINUX_ALSA:
+            return "ALSA";
+        case RtAudio::LINUX_PULSE:
+            return "PulseAudio";
+        case RtAudio::LINUX_OSS:
+            return "OSS";
+        case RtAudio::UNIX_JACK:
+            return "JACK (RtAudio)";
+        case RtAudio::MACOSX_CORE:
+            return "CoreAudio";
+        case RtAudio::WINDOWS_ASIO:
+            return "ASIO";
+        case RtAudio::WINDOWS_DS:
+            return "DirectSound";
+        case RtAudio::RTAUDIO_DUMMY:
+            return "Dummy";
+        }
+    }
+#endif
+
+    qWarning("CarlaEngine::getDriverName(%i) - invalid index", index);
+    return nullptr;
+}
+
+CarlaEngine* CarlaEngine::newDriverByName(const char* driverName)
+{
+#ifdef CARLA_ENGINE_JACK
+    if (strcmp(driverName, "JACK") == 0)
+        return newJack();
+#else
+    if (false)
+        pass();
+#endif
+
+#ifdef CARLA_ENGINE_RTAUDIO
+#ifdef __LINUX_ALSA__
+    else if (strcmp(driverName, "ALSA") == 0)
+        return newRtAudio(RtAudio::LINUX_ALSA);
+#endif
+#ifdef __LINUX_PULSE__
+    else if (strcmp(driverName, "PulseAudio") == 0)
+        return newRtAudio(RtAudio::LINUX_PULSE);
+#endif
+#ifdef __LINUX_OSS__
+    else if (strcmp(driverName, "OSS") == 0)
+        return newRtAudio(RtAudio::LINUX_OSS);
+#endif
+#ifdef __UNIX_JACK__
+    else if (strcmp(driverName, "JACK (RtAudio)") == 0)
+        return newRtAudio(RtAudio::UNIX_JACK);
+#endif
+#ifdef __MACOSX_CORE__
+    else if (strcmp(driverName, "CoreAudio") == 0)
+        return newRtAudio(RtAudio::MACOSX_CORE);
+#endif
+#ifdef __WINDOWS_ASIO__
+    else if (strcmp(driverName, "ASIO") == 0)
+        return newRtAudio(RtAudio::WINDOWS_ASIO);
+#endif
+#ifdef __WINDOWS_DS__
+    else if (strcmp(driverName, "DirectSound") == 0)
+        return newRtAudio(RtAudio::WINDOWS_DS);
+#endif
+#ifdef __RTAUDIO_DUMMY__
+    else if (strcmp(driverName, "Dummy") == 0)
+        return newRtAudio(RtAudio::RTAUDIO_DUMMY);
+#endif
+#endif
+
+    return nullptr;
+}
+
+// -----------------------------------------------------------------------
+// Virtual, per-engine type calls
+
 bool CarlaEngine::init(const char* const clientName)
 {
     qDebug("CarlaEngine::init(\"%s\")", clientName);
@@ -169,9 +290,10 @@ CarlaPlugin* CarlaEngine::getPluginUnchecked(const unsigned short id) const
     return m_carlaPlugins[id];
 }
 
-const char* CarlaEngine::getUniqueName(const char* const name)
+const char* CarlaEngine::getUniquePluginName(const char* const name)
 {
-    qDebug("CarlaEngine::getUniqueName(\"%s\")", name);
+    qDebug("CarlaEngine::getUniquePluginName(\"%s\")", name);
+    CARLA_ASSERT(name);
 
     QString qname(name);
 
@@ -696,10 +818,6 @@ CarlaEngineClient::~CarlaEngineClient()
         if (handle.jackClient)
             jackbridge_client_close(handle.jackClient);
 #endif
-#ifdef CARLA_ENGINE_RTAUDIO
-        if (handle.rtAudioPtr)
-            delete handle.rtAudioPtr;
-#endif
     }
 }
 
@@ -717,10 +835,6 @@ void CarlaEngineClient::activate()
 #ifdef CARLA_ENGINE_JACK
             if (handle.jackClient)
                 jackbridge_activate(handle.jackClient);
-#endif
-#ifdef CARLA_ENGINE_RTAUDIO
-            if (handle.rtAudioPtr)
-                handle.rtAudioPtr->startStream();
 #endif
         }
     }
@@ -742,10 +856,6 @@ void CarlaEngineClient::deactivate()
 #ifdef CARLA_ENGINE_JACK
             if (handle.jackClient)
                 jackbridge_deactivate(handle.jackClient);
-#endif
-#ifdef CARLA_ENGINE_RTAUDIO
-            if (handle.rtAudioPtr)
-                handle.rtAudioPtr->stopStream();
 #endif
         }
     }
@@ -771,10 +881,6 @@ bool CarlaEngineClient::isOk() const
 #ifdef CARLA_ENGINE_JACK
         if (handle.type == CarlaEngineTypeJack)
             return bool(handle.jackClient);
-#endif
-#ifdef CARLA_ENGINE_RTAUDIO
-        if (handle.type == CarlaEngineTypeRtAudio)
-            return bool(handle.rtAudioPtr);
 #endif
     }
 
@@ -807,13 +913,6 @@ const CarlaEngineBasePort* CarlaEngineClient::addPort(const CarlaEnginePortType 
                 portHandle.jackPort = jackbridge_port_register(handle.jackClient, name, JACK_DEFAULT_MIDI_TYPE, isInput ? JackPortIsInput : JackPortIsOutput, 0);
                 break;
             }
-        }
-#endif
-
-#ifdef CARLA_ENGINE_RTAUDIO
-        if (handle.type == CarlaEngineTypeRtAudio)
-        {
-            // TODO
         }
 #endif
     }
@@ -856,10 +955,6 @@ CarlaEngineBasePort::~CarlaEngineBasePort()
 #ifdef CARLA_ENGINE_JACK
     if (handle.jackClient && handle.jackPort)
         jackbridge_port_unregister(handle.jackClient, handle.jackPort);
-#endif
-
-#ifdef CARLA_ENGINE_RTAUDIO
-    // TODO
 #endif
 }
 
@@ -918,10 +1013,6 @@ void CarlaEngineControlPort::initBuffer(CarlaEngine* const engine)
             jackbridge_midi_clear_buffer(buffer);
     }
 #endif
-
-#ifdef CARLA_ENGINE_RTAUDIO
-    // TODO
-#endif
 }
 
 uint32_t CarlaEngineControlPort::getEventCount()
@@ -952,10 +1043,6 @@ uint32_t CarlaEngineControlPort::getEventCount()
 #ifdef CARLA_ENGINE_JACK
     if (handle.jackPort)
         return jackbridge_midi_get_event_count(buffer);
-#endif
-
-#ifdef CARLA_ENGINE_RTAUDIO
-    // TODO
 #endif
 
     return 0;
@@ -1037,10 +1124,6 @@ const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(uint32_t index)
     }
 #endif
 
-#ifdef CARLA_ENGINE_RTAUDIO
-    // TODO
-#endif
-
     return nullptr;
 }
 
@@ -1116,10 +1199,6 @@ void CarlaEngineControlPort::writeEvent(CarlaEngineControlEventType type, uint32
         }
     }
 #endif
-
-#ifdef CARLA_ENGINE_RTAUDIO
-    // TODO
-#endif
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -1152,10 +1231,6 @@ void CarlaEngineMidiPort::initBuffer(CarlaEngine* const engine)
             jackbridge_midi_clear_buffer(buffer);
     }
 #endif
-
-#ifdef CARLA_ENGINE_RTAUDIO
-    // TODO
-#endif
 }
 
 uint32_t CarlaEngineMidiPort::getEventCount()
@@ -1186,10 +1261,6 @@ uint32_t CarlaEngineMidiPort::getEventCount()
 #ifdef CARLA_ENGINE_JACK
     if (handle.jackPort)
         return jackbridge_midi_get_event_count(buffer);
-#endif
-
-#ifdef CARLA_ENGINE_RTAUDIO
-    // TODO
 #endif
 
     return 0;
@@ -1232,10 +1303,6 @@ const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(uint32_t index)
     }
 #endif
 
-#ifdef CARLA_ENGINE_RTAUDIO
-    // TODO
-#endif
-
     return nullptr;
 }
 
@@ -1274,10 +1341,6 @@ void CarlaEngineMidiPort::writeEvent(uint32_t time, const uint8_t* data, uint8_t
 #ifdef CARLA_ENGINE_JACK
     if (handle.jackPort)
         jackbridge_midi_event_write(buffer, time, data, size);
-#endif
-
-#ifdef CARLA_ENGINE_RTAUDIO
-    // TODO
 #endif
 }
 
