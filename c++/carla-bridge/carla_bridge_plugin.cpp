@@ -220,6 +220,8 @@ public:
     {
         qDebug("BridgePluginClient::BridgePluginClient()");
 
+        hasUI = false;
+
         msgTimer   = 0;
         nextWidth  = 0;
         nextHeight = 0;
@@ -265,7 +267,8 @@ public:
 
         if (showGui)
         {
-            show();
+            if (hasUI)
+                show();
         }
         else
         {
@@ -347,6 +350,8 @@ public:
 
         if (! (plugin && pluginGui))
             return;
+
+        hasUI = true;
 
         pluginGui->setResizable(resizable);
         pluginGui->setTitle(plugin->name());
@@ -662,6 +667,7 @@ protected:
     // ---------------------------------------------------------------------
 
 private:
+    bool hasUI;
     int msgTimer;
     int nextWidth, nextHeight;
     QString nextChunkFilePath;

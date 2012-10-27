@@ -1692,7 +1692,7 @@ public:
     static intptr_t VSTCALLBACK hostCallback(AEffect* const effect, const int32_t opcode, const int32_t index, const intptr_t value, void* const ptr, const float opt)
     {
 #ifdef DEBUG
-        if (opcode != audioMasterGetTime)
+        if (opcode != audioMasterGetTime && opcode != audioMasterProcessEvents && opcode != audioMasterGetCurrentProcessLevel && opcode != audioMasterGetOutputLatency)
             qDebug("VstPlugin::hostCallback(%p, %02i:%s, %i, " P_INTPTR ", %p, %f)", effect, opcode, vstMasterOpcode2str(opcode), index, value, ptr, opt);
 #endif
 
@@ -2153,6 +2153,15 @@ public:
             return false;
         }
 
+#ifdef VESTIGE_HEADER
+        effect->ptr1 = this;
+#else
+        effect->resvd1 = ToVstPtr(this);
+#endif
+
+        effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
+        effect->dispatcher(effect, effMainsChanged, 0, 1, nullptr, 0.0f);
+
         // ---------------------------------------------------------------
         // get info
 
@@ -2174,16 +2183,18 @@ public:
         }
 
         // ---------------------------------------------------------------
+        // register client
+
+        x_client = x_engine->addClient(this);
+
+        if (! x_client->isOk())
+        {
+            setLastError("Failed to register plugin client");
+            return false;
+        }
+
+        // ---------------------------------------------------------------
         // initialize VST stuff
-
-#ifdef VESTIGE_HEADER
-        effect->ptr1 = this;
-#else
-        effect->resvd1 = ToVstPtr(this);
-#endif
-
-        effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
-        effect->dispatcher(effect, effMainsChanged, 0, 1, nullptr, 0.0f);
 
 #if ! VST_FORCE_DEPRECATED
         effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, x_engine->getBufferSize(), nullptr, x_engine->getSampleRate());
@@ -2210,17 +2221,6 @@ public:
 
         if ((effect->flags & effFlagsCanReplacing) > 0 && effect->processReplacing != effect->process)
             m_hints |= PLUGIN_CAN_PROCESS_REPLACING;
-
-        // ---------------------------------------------------------------
-        // register client
-
-        x_client = x_engine->addClient(this);
-
-        if (! x_client->isOk())
-        {
-            setLastError("Failed to register plugin client");
-            return false;
-        }
 
         // ---------------------------------------------------------------
         // gui stuff

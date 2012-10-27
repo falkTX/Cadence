@@ -23,6 +23,8 @@
 #include <jack/types.h>
 #include <jack/transport.h> // needed for JACK1
 
+#ifdef BUILD_BRIDGE
+
 typedef unsigned char jackbridge_midi_data_t;
 
 struct jackbridge_midi_event_t {
@@ -38,7 +40,6 @@ CARLA_EXPORT char* jackbridge_get_client_name(jack_client_t* client);
 CARLA_EXPORT int jackbridge_port_name_size();
 CARLA_EXPORT int jackbridge_activate(jack_client_t* client);
 CARLA_EXPORT int jackbridge_deactivate(jack_client_t* client);
-CARLA_EXPORT int jackbridge_set_process_thread(jack_client_t* client, JackThreadCallback thread_callback, void *arg);
 CARLA_EXPORT void jackbridge_on_shutdown(jack_client_t* client, JackShutdownCallback shutdown_callback, void* arg);
 CARLA_EXPORT int jackbridge_set_process_callback(jack_client_t* client, JackProcessCallback process_callback, void* arg);
 CARLA_EXPORT int jackbridge_set_freewheel_callback(jack_client_t* client, JackFreewheelCallback freewheel_callback, void* arg);
@@ -57,5 +58,38 @@ CARLA_EXPORT jackbridge_midi_data_t* jackbridge_midi_event_reserve(void* port_bu
 CARLA_EXPORT int jackbridge_midi_event_write(void* port_buffer, jack_nframes_t time, const jackbridge_midi_data_t* data, size_t data_size);
 
 CARLA_EXPORT jack_transport_state_t jackbridge_transport_query(const jack_client_t* client, jack_position_t* pos);
+
+#else
+
+#define jackbridge_midi_data_t jack_midi_data_t
+#define jackbridge_midi_event_t jack_midi_event_t
+
+#define jackbridge_client_open jack_client_open
+#define jackbridge_client_close jack_client_close
+#define jackbridge_client_name_size jack_client_name_size
+#define jackbridge_get_client_name jack_get_client_name
+#define jackbridge_port_name_size jack_port_name_size
+#define jackbridge_activate jack_activate
+#define jackbridge_deactivate jack_deactivate
+#define jackbridge_on_shutdown jack_on_shutdown
+#define jackbridge_set_process_callback jack_set_process_callback
+#define jackbridge_set_freewheel_callback jack_set_freewheel_callback
+#define jackbridge_set_buffer_size_callback jack_set_buffer_size_callback
+#define jackbridge_set_sample_rate_callback jack_set_sample_rate_callback
+#define jackbridge_get_sample_rate jack_get_sample_rate
+#define jackbridge_get_buffer_size jack_get_buffer_size
+#define jackbridge_port_register jack_port_register
+#define jackbridge_port_unregister jack_port_unregister
+#define jackbridge_port_get_buffer jack_port_get_buffer
+
+#define jackbridge_midi_get_event_count jack_midi_get_event_count
+#define jackbridge_midi_event_get jack_midi_event_get
+#define jackbridge_midi_clear_buffer jack_midi_clear_buffer
+#define jackbridge_midi_event_reserve jack_midi_event_reserve
+#define jackbridge_midi_event_write jack_midi_event_write
+
+#define jackbridge_transport_query jack_transport_query
+
+#endif
 
 #endif // CARLA_JACKBRIDGE_H
