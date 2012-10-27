@@ -226,7 +226,7 @@ public:
 
         engine    = nullptr;
         plugin    = nullptr;
-        pluginGui = new BridgePluginGUI(nullptr, this);
+        pluginGui = nullptr;
 
         m_client  = this;
     }
@@ -254,6 +254,9 @@ public:
     void init()
     {
         qDebug("BridgePluginClient::init()");
+
+        pluginGui = new BridgePluginGUI(nullptr, this);
+        pluginGui->hide();
     }
 
     void exec(CarlaClient* const, const bool showGui)
@@ -552,8 +555,17 @@ public:
 
         case CarlaBackend::CALLBACK_RESIZE_GUI:
             CARLA_ASSERT(value1 > 0 && value2 > 0);
-            nextWidth  = value1;
-            nextHeight = value2;
+            if (value3 == 1.0)
+            {
+                nextWidth  = 0;
+                nextHeight = 0;
+                pluginGui->setFixedSize(value1, value2);
+            }
+            else if (nextWidth != value1 && nextHeight != value2)
+            {
+                nextWidth  = value1;
+                nextHeight = value2;
+            }
             break;
 
         case CarlaBackend::CALLBACK_RELOAD_PARAMETERS:
@@ -674,7 +686,6 @@ int main(int argc, char* argv[])
 
     qargc = argc;
     qargv = argv;
-    initSignalHandler();
 
     const char* const oscUrl   = argv[1];
     const char* const stype    = argv[2];
@@ -715,6 +726,9 @@ int main(int argc, char* argv[])
         return -1;
     }
 
+    // Listen for ctrl+c or sigint/sigterm events
+    initSignalHandler();
+
     // Init backend engine
     CarlaBackend::CarlaEngine* engine = CarlaBackend::CarlaEngine::newDriverByName("JACK");
     engine->setCallback(client.callback, &client);
@@ -737,7 +751,7 @@ int main(int argc, char* argv[])
         return 2;
     }
 
-    /// Init plugin
+    // Init plugin
     short id = engine->addPlugin(itype, filename, name, label);
     int ret;
 

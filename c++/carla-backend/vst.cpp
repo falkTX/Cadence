@@ -341,14 +341,34 @@ public:
 
         int32_t value   = 0;
         void* const ptr = (void*)container->winId();
+        ERect* vstRect  = nullptr;
 
 #ifdef Q_WS_X11
         value = (intptr_t)QX11Info::display();
 #endif
 
+        // get UI size before opening UI, plugin may refuse this
+        effect->dispatcher(effect, effEditGetRect, 0, 0, &vstRect, 0.0f);
+
+        if (vstRect)
+        {
+            int width  = vstRect->right  - vstRect->left;
+            int height = vstRect->bottom - vstRect->top;
+
+            if (width > 0 || height > 0)
+            {
+                container->setFixedSize(width, height);
+#ifdef BUILD_BRIDGE
+                x_engine->callback(CALLBACK_RESIZE_GUI, m_id, width, height, 1.0);
+#endif
+            }
+        }
+
+        // open UI
         if (effect->dispatcher(effect, effEditOpen, 0, value, ptr, 0.0f) == 1)
         {
-            ERect* vstRect = nullptr;
+            // get UI size again, can't fail now
+            vstRect = nullptr;
             effect->dispatcher(effect, effEditGetRect, 0, 0, &vstRect, 0.0f);
 
             if (vstRect)
@@ -358,7 +378,7 @@ public:
 
                 if (width <= 0 || height <= 0)
                 {
-                    qCritical("VstPlugin::setGuiContainer(%p) - failed to get proper window size", container);
+                    qCritical("VstPlugin::setGuiContainer(%p) - failed to get proper editor size", container);
                     return;
                 }
 
@@ -369,7 +389,7 @@ public:
                 qDebug("VstPlugin::setGuiContainer(%p) -> setFixedSize(%i, %i)", container, width, height);
             }
             else
-                qCritical("VstPlugin::setGuiContainer(%p) - failed to get plugin window size", container);
+                qCritical("VstPlugin::setGuiContainer(%p) - failed to get plugin editor size", container);
         }
         else
         {
