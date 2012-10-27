@@ -20,8 +20,9 @@
 
 #include "carla_includes.h"
 
-#include <jack/types.h>
-#include <jack/transport.h> // needed for JACK1
+#include <jack/jack.h>
+#include <jack/midiport.h>
+#include <jack/transport.h>
 
 #ifdef BUILD_BRIDGE
 

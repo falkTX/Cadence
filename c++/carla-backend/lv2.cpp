@@ -2374,10 +2374,10 @@ public:
                         break;
                     case LV2_PORT_DESIGNATION_TIME_BAR_BEAT:
                         if (timeInfo->valid & CarlaEngineTimeBBT)
-                            setParameterValue(k, timeInfo->bbt.beat - 1 + (timeInfo->bbt.tick / timeInfo->bbt.ticks_per_beat), false, false, false);
+                            setParameterValue(k, float(timeInfo->bbt.beat - 1) + (float(timeInfo->bbt.tick) / timeInfo->bbt.ticks_per_beat), false, false, false);
                         break;
                     case LV2_PORT_DESIGNATION_TIME_BEAT:
-                        if (timeInfo->valid & CarlaEngineTimeBBT)  // FIXME: -1 ?
+                        if (timeInfo->valid & CarlaEngineTimeBBT)
                             setParameterValue(k, timeInfo->bbt.beat - 1, false, false, false);
                         break;
                     case LV2_PORT_DESIGNATION_TIME_BEAT_UNIT:

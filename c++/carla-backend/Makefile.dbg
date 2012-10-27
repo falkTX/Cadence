@@ -71,7 +71,6 @@ OBJS = \
 	carla_shared.o \
 	carla_threads.o \
 	ladspa.o dssi.o lv2.o vst.o fluidsynth.o linuxsampler.o \
-	../carla-jackbridge/carla_jackbridge.o \
 	../carla-lilv/carla_lilv.a \
 	../carla-rtmempool/carla_rtmempool.a
 

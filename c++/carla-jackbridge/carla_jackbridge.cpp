@@ -15,11 +15,6 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef JACKBRIDGE_DUMMY
-# include <jack/jack.h>
-# include <jack/midiport.h>
-#endif
-
 #include "carla_jackbridge.h"
 
 jack_client_t* jackbridge_client_open(const char* client_name, jack_options_t options, jack_status_t* status)

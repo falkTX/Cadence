@@ -66,6 +66,8 @@ public:
         isProcessing  = false;
         needIdle      = false;
 
+        vstTimeOffset = 0;
+
         memset(midiEvents, 0, sizeof(VstMidiEvent)*MAX_MIDI_EVENTS*2);
 
         for (unsigned short i=0; i < MAX_MIDI_EVENTS*2; i++)
@@ -842,6 +844,8 @@ public:
         uint32_t i, k;
         uint32_t midiEventCount = 0;
 
+        vstTimeOffset = framesOffset;
+
         double aInsPeak[2]  = { 0.0 };
         double aOutsPeak[2] = { 0.0 };
 
@@ -1420,7 +1424,7 @@ public:
     void handleAudioMasterAutomate(const uint32_t index, const double value)
     {
         //CARLA_ASSERT(m_enabled);
-        CARLA_ASSERT(index < param.count);
+        //CARLA_ASSERT(index < param.count);
 
         if (index >= param.count /*|| ! m_enabled*/)
             return;
@@ -1464,7 +1468,7 @@ public:
         if (timeInfo->playing)
             vstTimeInfo.flags |= kVstTransportPlaying;
 
-        //vstTimeInfo.samplePos  = timeInfo->frame; // FIXME - currentSamplePosition ?
+        vstTimeInfo.samplePos  = timeInfo->frame + vstTimeOffset;
         vstTimeInfo.sampleRate = x_engine->getSampleRate();
 
         vstTimeInfo.nanoSeconds = timeInfo->time;
@@ -1472,12 +1476,12 @@ public:
 
         if (timeInfo->valid & CarlaEngineTimeBBT)
         {
-            double ppqBar  = double(timeInfo->bbt.bar) * timeInfo->bbt.beats_per_bar - timeInfo->bbt.beats_per_bar;
-            double ppqBeat = double(timeInfo->bbt.beat) - 1.0;
+            double ppqBar  = double(timeInfo->bbt.bar - 1) * timeInfo->bbt.beats_per_bar;
+            double ppqBeat = double(timeInfo->bbt.beat - 1);
             double ppqTick = double(timeInfo->bbt.tick) / timeInfo->bbt.ticks_per_beat;
 
             // Bars
-            vstTimeInfo.barStartPos = ppqBar + ppqBeat;
+            vstTimeInfo.barStartPos = ppqBar;
             vstTimeInfo.flags |= kVstBarsValid;
 
             // PPQ Pos
@@ -2265,7 +2269,9 @@ private:
         intptr_t reserved;
         VstEvent* data[MAX_MIDI_EVENTS*2];
     } events;
-    VstMidiEvent  midiEvents[MAX_MIDI_EVENTS*2];
+    VstMidiEvent midiEvents[MAX_MIDI_EVENTS*2];
+
+    uint32_t vstTimeOffset;
     VstTimeInfo_R vstTimeInfo;
 
     struct {
