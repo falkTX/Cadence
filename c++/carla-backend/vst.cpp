@@ -1424,7 +1424,7 @@ public:
     void handleAudioMasterAutomate(const uint32_t index, const double value)
     {
         //CARLA_ASSERT(m_enabled);
-        //CARLA_ASSERT(index < param.count);
+        CARLA_ASSERT(index < param.count);
 
         if (index >= param.count /*|| ! m_enabled*/)
             return;

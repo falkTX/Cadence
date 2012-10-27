@@ -509,10 +509,27 @@ public:
         if (! plugin)
             return;
 
-        nextChunkFilePath = QString(filePath);
+        QString chunkFilePath(filePath);
 
-        while (! nextChunkFilePath.isEmpty())
-            carla_msleep(25);
+#ifdef Q_OS_WIN
+        if (chunkFilePath.startsWith("/"))
+        {
+            // running under Wine, posix host
+            chunkFilePath = chunkFilePath.replace(0, 1, "Z:/");
+            chunkFilePath = QDir::toNativeSeparators(chunkFilePath);
+        }
+#endif
+        QFile chunkFile(chunkFilePath);
+
+        if (plugin && chunkFile.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            QTextStream in(&chunkFile);
+            QString stringData(in.readAll());
+            chunkFile.close();
+            chunkFile.remove();
+
+            plugin->setChunkData(stringData.toUtf8().constData());
+        }
     }
 
     // ---------------------------------------------------------------------
@@ -618,31 +635,6 @@ protected:
 
         if (event->timerId() == msgTimer)
         {
-            if (! nextChunkFilePath.isEmpty())
-            {
-#ifdef Q_OS_WIN
-                if (nextChunkFilePath.startsWith("/"))
-                {
-                    // running under Wine, posix host
-                    nextChunkFilePath = nextChunkFilePath.replace(0, 1, "Z:/");
-                    nextChunkFilePath = QDir::toNativeSeparators(nextChunkFilePath);
-                }
-#endif
-                QFile chunkFile(nextChunkFilePath);
-
-                if (plugin && chunkFile.open(QIODevice::ReadOnly | QIODevice::Text))
-                {
-                    QTextStream in(&chunkFile);
-                    QString stringData(in.readAll());
-                    chunkFile.close();
-                    chunkFile.remove();
-
-                    plugin->setChunkData(stringData.toUtf8().constData());
-                }
-
-                nextChunkFilePath.clear();
-            }
-
             if (nextWidth > 0 && nextHeight > 0 && pluginGui)
             {
                 pluginGui->setNewSize(nextWidth, nextHeight);
@@ -670,7 +662,6 @@ private:
     bool hasUI;
     int msgTimer;
     int nextWidth, nextHeight;
-    QString nextChunkFilePath;
 
     CarlaBackend::CarlaEngine* engine;
     CarlaBackend::CarlaPlugin* plugin;
