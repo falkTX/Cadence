@@ -104,8 +104,10 @@
 
 #ifdef NDEBUG
 #  define CARLA_ASSERT(cond) ((!(cond)) ? carla_assert(#cond, __FILE__, __LINE__) : pass())
+#  define CARLA_ASSERT_INT(cond, value) ((!(cond)) ? carla_assert_int(#cond, __FILE__, __LINE__, value) : pass())
 #else
 #  define CARLA_ASSERT Q_ASSERT
+#  define CARLA_ASSERT_INT(cond, value) Q_ASSERT(cond)
 #endif
 
 // carla_setprocname
@@ -128,6 +130,12 @@ static inline
 void carla_assert(const char* const assertion, const char* const file, const int line)
 {
     qCritical("Carla assertion failure: \"%s\" in file %s, line %i", assertion, file, line);
+}
+
+static inline
+void carla_assert_int(const char* const assertion, const char* const file, const int line, const int value)
+{
+    qCritical("Carla assertion failure: \"%s\" in file %s, line %i, value %i", assertion, file, line, value);
 }
 
 static inline
