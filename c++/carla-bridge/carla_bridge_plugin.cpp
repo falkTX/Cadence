@@ -674,6 +674,7 @@ int main(int argc, char* argv[])
 
     qargc = argc;
     qargv = argv;
+    initSignalHandler();
 
     const char* const oscUrl   = argv[1];
     const char* const stype    = argv[2];
@@ -715,34 +716,35 @@ int main(int argc, char* argv[])
     }
 
     // Init backend engine
-    CarlaBackend::CarlaEngineJack engine;
-    engine.setCallback(client.callback, &client);
+    CarlaBackend::CarlaEngine* engine = CarlaBackend::CarlaEngine::newDriverByName("JACK");
+    engine->setCallback(client.callback, &client);
 
     // bridge client <-> engine
-    client.registerOscEngine(&engine);
+    client.registerOscEngine(engine);
 
     // Init engine
     QString engName = QString("%1 (master)").arg(name ? name : label);
-    engName.truncate(engine.maxClientNameSize());
+    engName.truncate(engine->maxClientNameSize());
 
-    if (! engine.init(engName.toUtf8().constData()))
+    if (! engine->init(engName.toUtf8().constData()))
     {
         const char* const lastError = CarlaBackend::getLastError();
         qWarning("Bridge engine failed to start, error was:\n%s", lastError);
-        engine.close();
+        engine->close();
+        delete engine;
         client.sendOscBridgeError(lastError);
         client.quit();
         return 2;
     }
 
     /// Init plugin
-    short id = engine.addPlugin(itype, filename, name, label);
+    short id = engine->addPlugin(itype, filename, name, label);
     int ret;
 
     if (id >= 0 && id < CarlaBackend::MAX_PLUGINS)
     {
-        CarlaBackend::CarlaPlugin* const plugin = engine.getPlugin(id);
-        client.setStuff(&engine, plugin);
+        CarlaBackend::CarlaPlugin* const plugin = engine->getPlugin(id);
+        client.setStuff(engine, plugin);
 
         // create window if needed
         bool guiResizable;
@@ -757,6 +759,8 @@ int main(int argc, char* argv[])
         if (! useOsc)
             plugin->setActive(true, false, false);
 
+        client.exec(nullptr, !useOsc);
+
         ret = 0;
     }
     else
@@ -770,14 +774,9 @@ int main(int argc, char* argv[])
         ret = 1;
     }
 
-    if (ret == 0)
-    {
-        initSignalHandler();
-        client.exec(nullptr, !useOsc);
-    }
-
-    engine.removeAllPlugins();
-    engine.close();
+    engine->removeAllPlugins();
+    engine->close();
+    delete engine;
 
     if (useOsc)
     {

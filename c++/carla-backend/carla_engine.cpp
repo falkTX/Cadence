@@ -410,11 +410,11 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
         {
         case PLUGIN_NONE:
             break;
-        case PLUGIN_INTERNAL:
 #ifndef BUILD_BRIDGE
+        case PLUGIN_INTERNAL:
             plugin = CarlaPlugin::newNative(init);
-#endif
             break;
+#endif
         case PLUGIN_LADSPA:
             plugin = CarlaPlugin::newLADSPA(init, extra);
             break;
@@ -427,12 +427,7 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
         case PLUGIN_VST:
             plugin = CarlaPlugin::newVST(init);
             break;
-#ifdef BUILD_BRIDGE
-        case PLUGIN_GIG:
-        case PLUGIN_SF2:
-        case PLUGIN_SFZ:
-            break;
-#else
+#ifndef BUILD_BRIDGE
         case PLUGIN_GIG:
             plugin = CarlaPlugin::newGIG(init);
             break;
@@ -441,6 +436,9 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
             break;
         case PLUGIN_SFZ:
             plugin = CarlaPlugin::newSFZ(init);
+            break;
+#else
+        default:
             break;
 #endif
         }

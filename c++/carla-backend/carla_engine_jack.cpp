@@ -64,9 +64,11 @@ public:
     {
         qDebug("CarlaEngineJack::init(\"%s\")", clientName);
 
-        client = jackbridge_client_open(clientName, JackNullOption, nullptr);
-        state  = JackTransportStopped;
         freewheel = false;
+        state = JackTransportStopped;
+
+#ifndef BUILD_BRIDGE
+        client = jackbridge_client_open(clientName, JackNullOption, nullptr);
 
         if (client)
         {
@@ -79,7 +81,6 @@ public:
             jackbridge_set_process_callback(client, carla_jack_process_callback, this);
             jackbridge_on_shutdown(client, carla_jack_shutdown_callback, this);
 
-#ifndef BUILD_BRIDGE
             if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
             {
                 rackJackPorts[rackPortAudioIn1]   = jackbridge_port_register(client, "in1", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
@@ -91,7 +92,6 @@ public:
                 rackJackPorts[rackPortMidiIn]     = jackbridge_port_register(client, "midi-in", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
                 rackJackPorts[rackPortMidiOut]    = jackbridge_port_register(client, "midi-out", JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
             }
-#endif
 
             if (jackbridge_activate(client) == 0)
             {
@@ -109,6 +109,11 @@ public:
             setLastError("Failed to create new JACK client");
 
         return false;
+#else
+        name = getFixedClientName(clientName);
+        CarlaEngine::init(name);
+        return true;
+#endif
     }
 
     bool close()
@@ -122,9 +127,12 @@ public:
             name = nullptr;
         }
 
+#ifdef BUILD_BRIDGE
+        client = nullptr;
+        return true;
+#else
         if (jackbridge_deactivate(client) == 0)
         {
-#ifndef BUILD_BRIDGE
             if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
             {
                 jackbridge_port_unregister(client, rackJackPorts[rackPortAudioIn1]);
@@ -136,7 +144,6 @@ public:
                 jackbridge_port_unregister(client, rackJackPorts[rackPortMidiIn]);
                 jackbridge_port_unregister(client, rackJackPorts[rackPortMidiOut]);
             }
-#endif
 
             if (jackbridge_client_close(client) == 0)
             {
@@ -150,6 +157,7 @@ public:
             setLastError("Failed to deactivate the JACK client");
 
         client = nullptr;
+#endif
         return false;
     }
 
@@ -168,17 +176,28 @@ public:
         CarlaEngineClientNativeHandle handle;
         handle.type = CarlaEngineTypeJack;
 
-#ifndef BUILD_BRIDGE
+#ifdef BUILD_BRIDGE
+        client = handle.jackClient = jackbridge_client_open(plugin->name(), JackNullOption, nullptr);
+
+        sampleRate = jackbridge_get_sample_rate(client);
+        bufferSize = jackbridge_get_buffer_size(client);
+
+        jackbridge_set_sample_rate_callback(client, carla_jack_srate_callback, this);
+        jackbridge_set_buffer_size_callback(client, carla_jack_bufsize_callback, this);
+        jackbridge_set_freewheel_callback(client, carla_jack_freewheel_callback, this);
+        jackbridge_set_process_callback(handle.jackClient, carla_jack_process_callback, this);
+        jackbridge_on_shutdown(client, carla_jack_shutdown_callback, this);
+#else
         if (carlaOptions.processMode == PROCESS_MODE_SINGLE_CLIENT)
         {
             handle.jackClient = client;
         }
         else if (carlaOptions.processMode == PROCESS_MODE_MULTIPLE_CLIENTS)
-#endif
         {
             handle.jackClient = jackbridge_client_open(plugin->name(), JackNullOption, nullptr);
             jackbridge_set_process_callback(handle.jackClient, carla_jack_process_callback_plugin, plugin);
         }
+#endif
 
         return new CarlaEngineClient(handle);
     }
@@ -212,7 +231,6 @@ protected:
         if (maxPluginNumber() == 0)
             return;
 #endif
-
         state = jackbridge_transport_query(client, &pos);
 
         timeInfo.playing = (state != JackTransportStopped);
@@ -427,7 +445,15 @@ protected:
             }
         }
 #else
-        Q_UNUSED(nframes);
+        CarlaPlugin* const plugin = getPluginUnchecked(0);
+
+        if (plugin && plugin->enabled())
+        {
+            plugin->engineProcessLock();
+            plugin->initBuffers();
+            processPlugin(plugin, nframes);
+            plugin->engineProcessUnlock();
+        }
 #endif
     }
 
