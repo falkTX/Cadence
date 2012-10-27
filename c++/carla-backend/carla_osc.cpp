@@ -128,7 +128,7 @@ void CarlaOsc::close()
 int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg)
 {
 #if DEBUG
-    if (! QString(path).contains("put_peak_value"))
+    if (! QString(path).endsWith("peak"))
         qDebug("CarlaOsc::handleMessage(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
 #endif
     CARLA_ASSERT(m_serverPathTCP || m_serverPathUDP);
@@ -242,10 +242,10 @@ int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg
     // Plugin Bridges
     if (strncmp(method, "/bridge_", 8) == 0 && (plugin->hints() & PLUGIN_IS_BRIDGE) > 0)
     {
-        if (strcmp(method+8, "set_input_peak_value") == 0)
-            return handleMsgBridgeSetInputPeakValue(plugin, argc, argv, types);
-        if (strcmp(method+8, "set_output_peak_value") == 0)
-            return handleMsgBridgeSetOutputPeakValue(plugin, argc, argv, types);
+        if (strcmp(method+8, "set_inpeak") == 0)
+            return handleMsgBridgeSetInPeak(plugin, argc, argv, types);
+        if (strcmp(method+8, "set_outpeak") == 0)
+            return handleMsgBridgeSetOutPeak(plugin, argc, argv, types);
         if (strcmp(method+8, "audio_count") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeAudioCount, argc, argv, types);
         if (strcmp(method+8, "midi_count") == 0)
@@ -616,7 +616,7 @@ int CarlaOsc::handleMsgNoteOff(CARLA_OSC_HANDLE_ARGS2)
     return 0;
 }
 
-int CarlaOsc::handleMsgBridgeSetInputPeakValue(CARLA_OSC_HANDLE_ARGS2)
+int CarlaOsc::handleMsgBridgeSetInPeak(CARLA_OSC_HANDLE_ARGS2)
 {
     CARLA_OSC_CHECK_OSC_TYPES(2, "id");
 
@@ -627,7 +627,7 @@ int CarlaOsc::handleMsgBridgeSetInputPeakValue(CARLA_OSC_HANDLE_ARGS2)
     return 0;
 }
 
-int CarlaOsc::handleMsgBridgeSetOutputPeakValue(CARLA_OSC_HANDLE_ARGS2)
+int CarlaOsc::handleMsgBridgeSetOutPeak(CARLA_OSC_HANDLE_ARGS2)
 {
     CARLA_OSC_CHECK_OSC_TYPES(2, "id");
 

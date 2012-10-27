@@ -1970,7 +1970,7 @@ void CarlaEngine::osc_send_bridge_set_chunk_data(const char* const chunkFile)
     }
 }
 
-void CarlaEngine::osc_send_bridge_set_input_peak_value(const int32_t portId, const double value)
+void CarlaEngine::osc_send_bridge_set_inpeak(const int32_t portId, const double value)
 {
     CARLA_ASSERT(m_oscData);
     CARLA_ASSERT(portId == 1 || portId == 2);
@@ -1979,12 +1979,12 @@ void CarlaEngine::osc_send_bridge_set_input_peak_value(const int32_t portId, con
     {
         char target_path[strlen(m_oscData->path)+28];
         strcpy(target_path, m_oscData->path);
-        strcat(target_path, "/bridge_set_input_peak_value");
+        strcat(target_path, "/bridge_set_inpeak");
         lo_send(m_oscData->target, target_path, "id", portId, value);
     }
 }
 
-void CarlaEngine::osc_send_bridge_set_output_peak_value(const int32_t portId, const double value)
+void CarlaEngine::osc_send_bridge_set_outpeak(const int32_t portId, const double value)
 {
     CARLA_ASSERT(m_oscData);
     CARLA_ASSERT(portId == 1 || portId == 2);
@@ -1993,7 +1993,7 @@ void CarlaEngine::osc_send_bridge_set_output_peak_value(const int32_t portId, co
     {
         char target_path[strlen(m_oscData->path)+29];
         strcpy(target_path, m_oscData->path);
-        strcat(target_path, "/bridge_set_output_peak_value");
+        strcat(target_path, "/bridge_set_outpeak");
         lo_send(m_oscData->target, target_path, "id", portId, value);
     }
 }

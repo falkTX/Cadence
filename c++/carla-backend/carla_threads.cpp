@@ -131,8 +131,8 @@ void CarlaCheckThread::run()
                     if (plugin->audioInCount() > 0)
                     {
 #ifdef BUILD_BRIDGE
-                        engine->osc_send_bridge_set_input_peak_value(1, engine->getInputPeak(id, 0));
-                        engine->osc_send_bridge_set_input_peak_value(2, engine->getInputPeak(id, 1));
+                        engine->osc_send_bridge_set_inpeak(1, engine->getInputPeak(id, 0));
+                        engine->osc_send_bridge_set_inpeak(2, engine->getInputPeak(id, 1));
 #else
                         engine->osc_send_control_set_input_peak_value(id, 1, engine->getInputPeak(id, 0));
                         engine->osc_send_control_set_input_peak_value(id, 2, engine->getInputPeak(id, 1));
@@ -141,8 +141,8 @@ void CarlaCheckThread::run()
                     if (plugin->audioOutCount() > 0)
                     {
 #ifdef BUILD_BRIDGE
-                        engine->osc_send_bridge_set_output_peak_value(1, engine->getOutputPeak(id, 0));
-                        engine->osc_send_bridge_set_output_peak_value(2, engine->getOutputPeak(id, 1));
+                        engine->osc_send_bridge_set_outpeak(1, engine->getOutputPeak(id, 0));
+                        engine->osc_send_bridge_set_outpeak(2, engine->getOutputPeak(id, 1));
 #else
                         engine->osc_send_control_set_output_peak_value(id, 1, engine->getOutputPeak(id, 0));
                         engine->osc_send_control_set_output_peak_value(id, 2, engine->getOutputPeak(id, 1));

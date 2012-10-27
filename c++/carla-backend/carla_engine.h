@@ -294,8 +294,8 @@ public:
     void osc_send_bridge_set_midi_program(const int32_t index);
     void osc_send_bridge_set_custom_data(const char* const stype, const char* const key, const char* const value);
     void osc_send_bridge_set_chunk_data(const char* const chunkFile);
-    void osc_send_bridge_set_input_peak_value(const int32_t portId, const double value);
-    void osc_send_bridge_set_output_peak_value(const int32_t portId, const double value);
+    void osc_send_bridge_set_inpeak(const int32_t portId, const double value);
+    void osc_send_bridge_set_outpeak(const int32_t portId, const double value);
 #else
     void osc_send_control_add_plugin_start(const int32_t pluginId, const char* const pluginName);
     void osc_send_control_add_plugin_end(const int32_t pluginId);

@@ -124,8 +124,8 @@ private:
     int handleMsgLv2EventTransfer(CARLA_OSC_HANDLE_ARGS2);
 #endif
 
-    int handleMsgBridgeSetInputPeakValue(CARLA_OSC_HANDLE_ARGS2);
-    int handleMsgBridgeSetOutputPeakValue(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgBridgeSetInPeak(CARLA_OSC_HANDLE_ARGS2);
+    int handleMsgBridgeSetOutPeak(CARLA_OSC_HANDLE_ARGS2);
 
     static int osc_message_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg, void* const userData)
     {
