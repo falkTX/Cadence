@@ -4015,17 +4015,6 @@ public:
         features[lv2_feature_id_worker]->data     = workerFt;
 
         // ---------------------------------------------------------------
-        // initialize plugin
-
-        handle = descriptor->instantiate(descriptor, x_engine->getSampleRate(), rdf_descriptor->Bundle, features);
-
-        if (! handle)
-        {
-            setLastError("Plugin failed to initialize");
-            return false;
-        }
-
-        // ---------------------------------------------------------------
         // get info
 
         m_filename = strdup(bundle);
@@ -4043,6 +4032,17 @@ public:
         if (! x_client->isOk())
         {
             setLastError("Failed to register plugin client");
+            return false;
+        }
+
+        // ---------------------------------------------------------------
+        // initialize plugin
+
+        handle = descriptor->instantiate(descriptor, x_engine->getSampleRate(), rdf_descriptor->Bundle, features);
+
+        if (! handle)
+        {
+            setLastError("Plugin failed to initialize");
             return false;
         }
 

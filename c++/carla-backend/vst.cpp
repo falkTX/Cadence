@@ -2145,7 +2145,7 @@ public:
         }
 
         // ---------------------------------------------------------------
-        // initialize plugin
+        // initialize plugin (part 1)
 
         lastVstPlugin = this;
         effect = vstFn(hostCallback);
@@ -2198,7 +2198,7 @@ public:
         }
 
         // ---------------------------------------------------------------
-        // initialize VST stuff
+        // initialize plugin (part 2)
 
 #if ! VST_FORCE_DEPRECATED
         effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, x_engine->getBufferSize(), nullptr, x_engine->getSampleRate());

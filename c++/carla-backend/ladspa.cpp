@@ -1083,17 +1083,6 @@ public:
         }
 
         // ---------------------------------------------------------------
-        // initialize plugin
-
-        handle = descriptor->instantiate(descriptor, x_engine->getSampleRate());
-
-        if (! handle)
-        {
-            setLastError("Plugin failed to initialize");
-            return false;
-        }
-
-        // ---------------------------------------------------------------
         // get info
 
         m_filename = strdup(filename);
@@ -1116,6 +1105,17 @@ public:
         if (! x_client->isOk())
         {
             setLastError("Failed to register plugin client");
+            return false;
+        }
+
+        // ---------------------------------------------------------------
+        // initialize plugin
+
+        handle = descriptor->instantiate(descriptor, x_engine->getSampleRate());
+
+        if (! handle)
+        {
+            setLastError("Plugin failed to initialize");
             return false;
         }
 
