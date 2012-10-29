@@ -729,6 +729,13 @@ public:
         if ((aIns == 0 || aIns == 2) && (aOuts == 0 || aOuts == 2))
             m_hints |= PLUGIN_CAN_FORCE_STEREO;
 
+        // check latency
+        {
+            uint32_t latency = effect->initialDelay;
+
+            // TODO - adjust latency now
+        }
+
         reloadPrograms(true);
 
         x_client->activate();

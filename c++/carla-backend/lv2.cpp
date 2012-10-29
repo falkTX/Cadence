@@ -1737,6 +1737,41 @@ public:
                 m_hints |= PLUGIN_CAN_FORCE_STEREO;
         }
 
+        // check latency
+        {
+            bool hasLatency = false;
+            uint32_t latency = 0;
+
+            for (uint32_t i=0; i < param.count; i++)
+            {
+                if (param.data[i].type == PARAMETER_LATENCY)
+                {
+                    // pre-run so plugin can update latency control-port
+                    for (j=0; j < aIn.count; j++)
+                    {
+                        if (j == 0 || ! h2)
+                            descriptor->connect_port(handle, aIn.rindexes[j], nullptr);
+                    }
+
+                    for (j=0; j < aOut.count; j++)
+                    {
+                        if (j == 0 || ! h2)
+                            descriptor->connect_port(handle, aOut.rindexes[j], nullptr);
+                    }
+
+                    descriptor->activate(handle);
+                    descriptor->run(handle, 0);
+                    descriptor->deactivate(handle);
+
+                    latency = rint(paramBuffers[i]);
+                    hasLatency = true;
+                    break;
+                }
+            }
+
+            // TODO - adjust latency now
+        }
+
         reloadPrograms(true);
 
         x_client->activate();
