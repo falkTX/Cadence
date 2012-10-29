@@ -239,6 +239,8 @@ public:
         osc.data.target = nullptr;
         osc.thread = nullptr;
 #endif
+
+        m_count += 1;
     }
 
     /*!
@@ -302,6 +304,8 @@ public:
             }
             custom.clear();
         }
+
+        m_count -= 1;
     }
 
     // -------------------------------------------------------------------
@@ -2205,6 +2209,8 @@ protected:
 
     // -------------------------------------------------------------------
     // Utilities
+
+    static unsigned int m_count;
 
     static double fixParameterValue(double& value, const ParameterRanges& ranges)
     {

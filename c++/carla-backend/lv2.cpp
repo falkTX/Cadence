@@ -24,6 +24,8 @@
 #include "lv2_atom_queue.h"
 #include "rtmempool/rtmempool.h"
 
+#include <set>
+
 #include <QtCore/QDir>
 #include <QtGui/QLayout>
 
@@ -458,6 +460,18 @@ public:
         }
 
         customURIDs.clear();
+
+        // cleanup all descriptors if this is the last plugin loaded
+        if (m_count == 1)
+        {
+            for (auto it = libDescs.begin(); it != libDescs.end(); it++)
+            {
+                const LV2_Lib_Descriptor* libDesc(*it);
+                libDesc->cleanup(libDesc->handle);
+            }
+
+            libDescs.clear();
+        }
     }
 
     // -------------------------------------------------------------------
@@ -3814,84 +3828,6 @@ public:
         }
 
         // ---------------------------------------------------------------
-        // get DLL main entry
-
-        const LV2_Descriptor_Function descFn = (LV2_Descriptor_Function)libSymbol("lv2_descriptor");
-
-        if (! descFn)
-        {
-            setLastError("Could not find the LV2 Descriptor in the plugin library");
-            return false;
-        }
-
-        // ---------------------------------------------------------------
-        // get descriptor that matches URI
-
-        uint32_t i = 0;
-        while ((descriptor = descFn(i++)))
-        {
-            if (strcmp(descriptor->URI, URI) == 0)
-                break;
-        }
-
-        if (! descriptor)
-        {
-            setLastError("Could not find the requested plugin URI in the plugin library");
-            return false;
-        }
-
-        // ---------------------------------------------------------------
-        // check supported port-types and features
-
-        bool canContinue = true;
-
-        // Check supported ports
-        for (i=0; i < rdf_descriptor->PortCount; i++)
-        {
-            LV2_Property PortType = rdf_descriptor->Ports[i].Type;
-            if (! bool(LV2_IS_PORT_AUDIO(PortType) || LV2_IS_PORT_CONTROL(PortType) || LV2_IS_PORT_ATOM_SEQUENCE(PortType) || LV2_IS_PORT_EVENT(PortType) || LV2_IS_PORT_MIDI_LL(PortType)))
-            {
-                if (! LV2_IS_PORT_OPTIONAL(rdf_descriptor->Ports[i].Properties))
-                {
-                    setLastError("Plugin requires a port that is not currently supported");
-                    canContinue = false;
-                    break;
-                }
-            }
-        }
-
-        // Check supported features
-        for (i=0; i < rdf_descriptor->FeatureCount && canContinue; i++)
-        {
-            if (LV2_IS_FEATURE_REQUIRED(rdf_descriptor->Features[i].Type) && ! is_lv2_feature_supported(rdf_descriptor->Features[i].URI))
-            {
-                QString msg = QString("Plugin requires a feature that is not supported:\n%1").arg(rdf_descriptor->Features[i].URI);
-                setLastError(msg.toUtf8().constData());
-                canContinue = false;
-                break;
-            }
-        }
-
-        // Check extensions
-        for (i=0; i < rdf_descriptor->ExtensionCount; i++)
-        {
-            if (strcmp(rdf_descriptor->Extensions[i], LV2_PROGRAMS__Interface) == 0)
-                m_hints |= PLUGIN_HAS_EXTENSION_PROGRAMS;
-            else if (strcmp(rdf_descriptor->Extensions[i], LV2_STATE__interface) == 0)
-                m_hints |= PLUGIN_HAS_EXTENSION_STATE;
-            else if (strcmp(rdf_descriptor->Extensions[i], LV2_WORKER__interface) == 0)
-                m_hints |= PLUGIN_HAS_EXTENSION_WORKER;
-            else
-                qDebug("Plugin has non-supported extension: '%s'", rdf_descriptor->Extensions[i]);
-        }
-
-        if (! canContinue)
-        {
-            // error already set
-            return false;
-        }
-
-        // ---------------------------------------------------------------
         // initialize features
 
         LV2_Event_Feature* const eventFt = new LV2_Event_Feature;
@@ -4015,6 +3951,123 @@ public:
         features[lv2_feature_id_worker]->data     = workerFt;
 
         // ---------------------------------------------------------------
+        // get DLL main entry
+
+        const LV2_Lib_Descriptor_Function descLibFn = (LV2_Lib_Descriptor_Function)libSymbol("lv2_lib_descriptor");
+
+        if (descLibFn)
+        {
+            // -----------------------------------------------------------
+            // get lib descriptor
+
+            const LV2_Lib_Descriptor* libDesc = descLibFn(rdf_descriptor->Bundle, features);
+
+            if (! libDesc)
+            {
+                setLastError("Plugin failed to return library descriptor");
+                return false;
+            }
+
+            // -----------------------------------------------------------
+            // get descriptor that matches URI
+
+            uint32_t i = 0;
+            while ((descriptor = libDesc->get_plugin(libDesc->handle, i++)))
+            {
+                if (strcmp(descriptor->URI, URI) == 0)
+                    break;
+            }
+
+            if (libDescs.count(libDesc) > 0)
+            {
+                if (! descriptor)
+                    libDesc->cleanup(libDesc->handle);
+            }
+            else
+                libDescs.insert(libDesc);
+        }
+        else
+        {
+            const LV2_Descriptor_Function descFn = (LV2_Descriptor_Function)libSymbol("lv2_descriptor");
+
+            // -----------------------------------------------------------
+            // if no descriptor function found, return error
+
+            if (! descFn)
+            {
+                setLastError("Could not find the LV2 Descriptor in the plugin library");
+                return false;
+            }
+
+            // -----------------------------------------------------------
+            // get descriptor that matches URI
+
+            uint32_t i = 0;
+            while ((descriptor = descFn(i++)))
+            {
+                if (strcmp(descriptor->URI, URI) == 0)
+                    break;
+            }
+        }
+
+        if (! descriptor)
+        {
+            setLastError("Could not find the requested plugin URI in the plugin library");
+            return false;
+        }
+
+        // ---------------------------------------------------------------
+        // check supported port-types and features
+
+        bool canContinue = true;
+
+        // Check supported ports
+        for (uint32_t i=0; i < rdf_descriptor->PortCount; i++)
+        {
+            LV2_Property PortType = rdf_descriptor->Ports[i].Type;
+            if (! bool(LV2_IS_PORT_AUDIO(PortType) || LV2_IS_PORT_CONTROL(PortType) || LV2_IS_PORT_ATOM_SEQUENCE(PortType) || LV2_IS_PORT_EVENT(PortType) || LV2_IS_PORT_MIDI_LL(PortType)))
+            {
+                if (! LV2_IS_PORT_OPTIONAL(rdf_descriptor->Ports[i].Properties))
+                {
+                    setLastError("Plugin requires a port that is not currently supported");
+                    canContinue = false;
+                    break;
+                }
+            }
+        }
+
+        // Check supported features
+        for (uint32_t i=0; i < rdf_descriptor->FeatureCount && canContinue; i++)
+        {
+            if (LV2_IS_FEATURE_REQUIRED(rdf_descriptor->Features[i].Type) && ! is_lv2_feature_supported(rdf_descriptor->Features[i].URI))
+            {
+                QString msg = QString("Plugin requires a feature that is not supported:\n%1").arg(rdf_descriptor->Features[i].URI);
+                setLastError(msg.toUtf8().constData());
+                canContinue = false;
+                break;
+            }
+        }
+
+        // Check extensions
+        for (uint32_t i=0; i < rdf_descriptor->ExtensionCount; i++)
+        {
+            if (strcmp(rdf_descriptor->Extensions[i], LV2_PROGRAMS__Interface) == 0)
+                m_hints |= PLUGIN_HAS_EXTENSION_PROGRAMS;
+            else if (strcmp(rdf_descriptor->Extensions[i], LV2_STATE__interface) == 0)
+                m_hints |= PLUGIN_HAS_EXTENSION_STATE;
+            else if (strcmp(rdf_descriptor->Extensions[i], LV2_WORKER__interface) == 0)
+                m_hints |= PLUGIN_HAS_EXTENSION_WORKER;
+            else
+                qDebug("Plugin has non-supported extension: '%s'", rdf_descriptor->Extensions[i]);
+        }
+
+        if (! canContinue)
+        {
+            // error already set
+            return false;
+        }
+
+        // ---------------------------------------------------------------
         // get info
 
         m_filename = strdup(bundle);
@@ -4058,7 +4111,7 @@ public:
         int eQt4, eCocoa, eHWND, eX11, eGtk2, eGtk3, iCocoa, iHWND, iX11, iQt4, iExt, iSuil, iFinal;
         eQt4 = eCocoa = eHWND = eX11 = eGtk2 = eGtk3 = iQt4 = iCocoa = iHWND = iX11 = iExt = iSuil = iFinal = -1;
 
-        for (i=0; i < rdf_descriptor->UICount; i++)
+        for (uint32_t i=0; i < rdf_descriptor->UICount; i++)
         {
             switch (rdf_descriptor->UIs[i].Type)
             {
@@ -4172,7 +4225,7 @@ public:
 
         canContinue = true;
 
-        for (i=0; i < ui.rdf_descriptor->FeatureCount; i++)
+        for (uint32_t i=0; i < ui.rdf_descriptor->FeatureCount; i++)
         {
             if (LV2_IS_FEATURE_REQUIRED(ui.rdf_descriptor->Features[i].Type) && is_lv2_ui_feature_supported(ui.rdf_descriptor->Features[i].URI) == false)
             {
@@ -4226,7 +4279,7 @@ public:
             // -------------------------------------------------------
             // get descriptor that matches URI
 
-            i = 0;
+            uint32_t i = 0;
             while ((ui.descriptor = ui_descFn(i++)))
             {
                 if (strcmp(ui.descriptor->URI, ui.rdf_descriptor->URI) == 0)
@@ -4431,7 +4484,11 @@ private:
 
     bool     lastTimePosPlaying;
     uint32_t lastTimePosFrame;
+
+    static std::set<const LV2_Lib_Descriptor*> libDescs;
 };
+
+std::set<const LV2_Lib_Descriptor*> Lv2Plugin::libDescs;
 
 /**@}*/
 
