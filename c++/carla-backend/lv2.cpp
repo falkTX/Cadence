@@ -2572,7 +2572,7 @@ public:
             bool do_balance = (m_hints & PLUGIN_CAN_BALANCE) > 0 && (x_balanceLeft != -1.0 || x_balanceRight != 1.0);
 
             double bal_rangeL, bal_rangeR;
-            float oldBufLeft[do_balance ? frames : 0];
+            float bufValue, oldBufLeft[do_balance ? frames : 0];
 
             for (i=0; i < aOut.count; i++)
             {
@@ -2581,10 +2581,12 @@ public:
                 {
                     for (k=0; k < frames; k++)
                     {
-                        if (aIn.count == 1)
-                            outBuffer[i][k] = (outBuffer[i][k]*x_dryWet)+(inBuffer[0][k]*(1.0-x_dryWet));
+                        if (k < m_latency && m_latency < frames)
+                            bufValue = (aIn.count == 1) ? m_tempBufferIn[0][k] : m_tempBufferIn[i][k];
                         else
-                            outBuffer[i][k] = (outBuffer[i][k]*x_dryWet)+(inBuffer[i][k]*(1.0-x_dryWet));
+                            bufValue = (aIn.count == 1) ? inBuffer[0][k-m_latency] : inBuffer[i][k-m_latency];
+
+                        outBuffer[i][k] = (outBuffer[i][k]*x_dryWet)+(bufValue*(1.0-x_dryWet));
                     }
                 }
 
@@ -2627,6 +2629,13 @@ public:
                     if (abs(outBuffer[i][k]) > aOutsPeak[i])
                         aOutsPeak[i] = abs(outBuffer[i][k]);
                 }
+            }
+
+            // Latency, save values for next callback
+            if (m_latency > 0 && m_latency < frames)
+            {
+                for (i=0; i < aIn.count; i++)
+                    memcpy(m_tempBufferIn[i], inBuffer[i] + (frames - m_latency), sizeof(float)*m_latency);
             }
         }
         else
