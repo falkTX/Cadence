@@ -1294,7 +1294,7 @@ public:
                 {
                     for (k=0; k < frames; k++)
                     {
-                        if (aOut.count == 1)
+                        if (aIn.count == 1)
                             outBuffer[i][k] = (outBuffer[i][k]*x_dryWet)+(inBuffer[0][k]*(1.0-x_dryWet));
                         else
                             outBuffer[i][k] = (outBuffer[i][k]*x_dryWet)+(inBuffer[i][k]*(1.0-x_dryWet));

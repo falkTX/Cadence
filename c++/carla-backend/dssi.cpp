@@ -699,7 +699,7 @@ public:
         // check latency
         {
             bool hasLatency = false;
-            uint32_t latency = 0;
+            m_latency = 0;
 
             for (uint32_t i=0; i < param.count; i++)
             {
@@ -731,7 +731,7 @@ public:
                     ldescriptor->run(handle, 2);
                     ldescriptor->deactivate(handle);
 
-                    latency = rint(paramBuffers[i]);
+                    m_latency = rint(paramBuffers[i]);
                     hasLatency = true;
                     break;
                 }
@@ -740,7 +740,7 @@ public:
             if (hasLatency)
             {
                 for (uint32_t i=0; i < aIn.count; i++)
-                    aIn.ports[i]->setLatency(latency);
+                    aIn.ports[i]->setLatency(m_latency);
 
                 x_client->recomputeLatencies();
             }
@@ -748,6 +748,7 @@ public:
 
         reloadPrograms(true);
 
+        recreateTempBuffers(x_engine->getBufferSize());
         x_client->activate();
 
         qDebug("DssiPlugin::reload() - end");
@@ -1303,7 +1304,7 @@ public:
                 {
                     for (k=0; k < frames; k++)
                     {
-                        if (aOut.count == 1)
+                        if (aIn.count == 1)
                             outBuffer[i][k] = (outBuffer[i][k]*x_dryWet)+(inBuffer[0][k]*(1.0-x_dryWet));
                         else
                             outBuffer[i][k] = (outBuffer[i][k]*x_dryWet)+(inBuffer[i][k]*(1.0-x_dryWet));
