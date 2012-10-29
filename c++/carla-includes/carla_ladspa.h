@@ -79,43 +79,6 @@ const LADSPA_RDF_Descriptor* ladspa_rdf_dup(const LADSPA_RDF_Descriptor* const r
     return new_descriptor;
 }
 
-// Delete object
-static inline
-void ladspa_rdf_free(const LADSPA_RDF_Descriptor* const rdf_descriptor)
-{
-    if (rdf_descriptor->Title)
-        free((void*)rdf_descriptor->Title);
-
-    if (rdf_descriptor->Creator)
-        free((void*)rdf_descriptor->Creator);
-
-    if (rdf_descriptor->PortCount > 0)
-    {
-        for (unsigned long i=0; i < rdf_descriptor->PortCount; i++)
-        {
-            const LADSPA_RDF_Port* const Port = &rdf_descriptor->Ports[i];
-
-            if (Port->Label)
-                free((void*)Port->Label);
-
-            if (Port->ScalePointCount > 0)
-            {
-                for (unsigned long j=0; j < Port->ScalePointCount; j++)
-                {
-                    const LADSPA_RDF_ScalePoint* const ScalePoint = &Port->ScalePoints[j];
-
-                    if (ScalePoint->Label)
-                        free((void*)ScalePoint->Label);
-                }
-                delete[] Port->ScalePoints;
-            }
-        }
-        delete[] rdf_descriptor->Ports;
-    }
-
-    delete rdf_descriptor;
-}
-
 // ------------------------------------------------------------------------------------------------
 
 static inline

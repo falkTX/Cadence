@@ -72,7 +72,7 @@ public:
         }
 
         if (rdf_descriptor)
-            ladspa_rdf_free(rdf_descriptor);
+            delete rdf_descriptor;
     }
 
     // -------------------------------------------------------------------

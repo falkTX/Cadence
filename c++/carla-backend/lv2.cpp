@@ -150,7 +150,7 @@ struct Lv2EventData {
     };
 
     Lv2EventData()
-        : type(0),
+        : type(0x0),
           rindex(0),
           port(nullptr) {}
 };
@@ -399,7 +399,7 @@ public:
         }
 
         if (rdf_descriptor)
-            lv2_rdf_free(rdf_descriptor);
+            delete rdf_descriptor;
 
         if (features[lv2_feature_id_event] && features[lv2_feature_id_event]->data)
             delete (LV2_Event_Feature*)features[lv2_feature_id_event]->data;

@@ -308,7 +308,7 @@ struct LV2_RDF_PortPoints {
     LV2_Data Maximum;
 
     LV2_RDF_PortPoints()
-        : Hints(0),
+        : Hints(0x0),
           Default(0.0f),
           Minimum(0.0f),
           Maximum(1.0f) {}
@@ -324,10 +324,22 @@ struct LV2_RDF_PortUnit {
 
     LV2_RDF_PortUnit()
         : Type(0),
-          Hints(0),
+          Hints(0x0),
           Name(nullptr),
           Render(nullptr),
           Symbol(nullptr) {}
+
+    ~LV2_RDF_PortUnit()
+    {
+        if (Name)
+            free((void*)Name);
+
+        if (Render)
+            free((void*)Render);
+
+        if (Symbol)
+            free((void*)Symbol);
+    }
 };
 
 // Port Scale Point
@@ -338,6 +350,12 @@ struct LV2_RDF_PortScalePoint {
     LV2_RDF_PortScalePoint()
         : Label(nullptr),
           Value(0.0f) {}
+
+    ~LV2_RDF_PortScalePoint()
+    {
+        if (Label)
+            free((void*)Label);
+    }
 };
 
 // Port
@@ -356,16 +374,25 @@ struct LV2_RDF_Port {
     LV2_RDF_PortScalePoint* ScalePoints;
 
     LV2_RDF_Port()
-        : Type(0),
-          Properties(0),
+        : Type(0x0),
+          Properties(0x0),
           Designation(0),
           Name(nullptr),
           Symbol(nullptr),
-          MidiMap(),
-          Points(),
-          Unit(),
           ScalePointCount(0),
           ScalePoints(nullptr) {}
+
+    ~LV2_RDF_Port()
+    {
+        if (Name)
+            free((void*)Name);
+
+        if (Symbol)
+            free((void*)Symbol);
+
+        if (ScalePoints)
+            delete[] ScalePoints;
+    }
 };
 
 // Preset Port
@@ -376,6 +403,12 @@ struct LV2_RDF_PresetPort {
     LV2_RDF_PresetPort()
         : Symbol(nullptr),
           Value(0.0f) {}
+
+    ~LV2_RDF_PresetPort()
+    {
+        if (Symbol)
+            free((void*)Symbol);
+    }
 };
 
 // Preset State
@@ -389,6 +422,12 @@ struct LV2_RDF_PresetState {
     LV2_RDF_PresetState()
         : Type(0),
           Key(nullptr) {}
+
+    ~LV2_RDF_PresetState()
+    {
+        if (Key)
+            free((void*)Key);
+    }
 };
 
 // Preset
@@ -409,6 +448,21 @@ struct LV2_RDF_Preset {
           Ports(nullptr),
           StateCount(0),
           States(nullptr) {}
+
+    ~LV2_RDF_Preset()
+    {
+        if (URI)
+            free((void*)URI);
+
+        if (Label)
+            free((void*)Label);
+
+        if (Ports)
+            delete[] Ports;
+
+        if (States)
+            delete[] States;
+    }
 };
 
 // Feature
@@ -419,6 +473,12 @@ struct LV2_RDF_Feature {
     LV2_RDF_Feature()
         : Type(0),
           URI(nullptr) {}
+
+    ~LV2_RDF_Feature()
+    {
+        if (URI)
+            free((void*)URI);
+    }
 };
 
 // UI
@@ -443,6 +503,24 @@ struct LV2_RDF_UI {
           Features(nullptr),
           ExtensionCount(0),
           Extensions(nullptr) {}
+
+    ~LV2_RDF_UI()
+    {
+        if (URI)
+            free((void*)URI);
+
+        if (Binary)
+            free((void*)Binary);
+
+        if (Bundle)
+            free((void*)Bundle);
+
+        if (Features)
+            delete[] Features;
+
+        if (Extensions)
+            delete[] Extensions;
+    }
 };
 
 // Plugin
@@ -472,7 +550,7 @@ struct LV2_RDF_Descriptor {
     LV2_RDF_UI* UIs;
 
     LV2_RDF_Descriptor()
-        : Type(0),
+        : Type(0x0),
           URI(nullptr),
           Name(nullptr),
           Author(nullptr),
@@ -490,6 +568,42 @@ struct LV2_RDF_Descriptor {
           Extensions(nullptr),
           UICount(0),
           UIs(nullptr) {}
+
+    ~LV2_RDF_Descriptor()
+    {
+        if (URI)
+            free((void*)URI);
+
+        if (Name)
+            free((void*)Name);
+
+        if (Author)
+            free((void*)Author);
+
+        if (License)
+            free((void*)License);
+
+        if (Binary)
+            free((void*)Binary);
+
+        if (Bundle)
+            free((void*)Bundle);
+
+        if (Ports)
+            delete[] Ports;
+
+        if (Presets)
+            delete[] Presets;
+
+        if (Features)
+            delete[] Features;
+
+        if (Extensions)
+            delete[] Extensions;
+
+        if (UIs)
+            delete[] UIs;
+    }
 };
 
 #endif /* LV2_RDF_INCLUDED */

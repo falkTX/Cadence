@@ -123,6 +123,12 @@ struct LADSPA_RDF_ScalePoint {
     LADSPA_RDF_ScalePoint()
         : Value(0.0f),
           Label(nullptr) {}
+
+    ~LADSPA_RDF_ScalePoint()
+    {
+        if (Label)
+            free((void*)Label);
+    }
 };
 
 // Port
@@ -137,13 +143,22 @@ struct LADSPA_RDF_Port {
     LADSPA_RDF_ScalePoint* ScalePoints;
 
     LADSPA_RDF_Port()
-        : Type(0),
-          Hints(0),
+        : Type(0x0),
+          Hints(0x0),
           Label(nullptr),
           Default(0.0f),
           Unit(0),
           ScalePointCount(0),
           ScalePoints(nullptr) {}
+
+    ~LADSPA_RDF_Port()
+    {
+        if (Label)
+            free((void*)Label);
+
+        if (ScalePoints)
+            delete[] ScalePoints;
+    }
 };
 
 // Plugin
@@ -157,12 +172,24 @@ struct LADSPA_RDF_Descriptor {
     LADSPA_RDF_Port* Ports;
 
     LADSPA_RDF_Descriptor()
-        : Type(0),
+        : Type(0x0),
           UniqueID(0),
           Title(nullptr),
           Creator(nullptr),
           PortCount(0),
           Ports(nullptr) {}
+
+    ~LADSPA_RDF_Descriptor()
+    {
+        if (Title)
+            free((void*)Title);
+
+        if (Creator)
+            free((void*)Creator);
+
+        if (Ports)
+            delete[] Ports;
+    }
 };
 
 #endif // LADSPA_RDF_INCLUDED
