@@ -271,13 +271,21 @@ protected:
             {
                 CarlaPlugin* const plugin = getPluginUnchecked(i);
 
-                if (plugin && plugin->enabled())
+                if (! plugin)
+                    continue;
+
+                plugin->engineProcessLock();
+
+                if (plugin->enabled())
                 {
-                    plugin->engineProcessLock();
                     plugin->initBuffers();
                     processPlugin(plugin, nframes);
-                    plugin->engineProcessUnlock();
                 }
+                else
+                    processPluginNOT(plugin, nframes);
+
+                plugin->engineProcessUnlock();
+
             }
         }
         else if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
@@ -450,13 +458,20 @@ protected:
 #else
         CarlaPlugin* const plugin = getPluginUnchecked(0);
 
-        if (plugin && plugin->enabled())
+        if (! plugin)
+            return;
+
+        plugin->engineProcessLock();
+
+        if (plugin->enabled())
         {
-            plugin->engineProcessLock();
             plugin->initBuffers();
             processPlugin(plugin, nframes);
-            plugin->engineProcessUnlock();
         }
+        else
+            processPluginNOT(plugin, nframes);
+
+        plugin->engineProcessUnlock();
 #endif
     }
 
@@ -545,6 +560,15 @@ private:
             p->process(inBuffer, outBuffer, nframes);
     }
 
+    static void processPluginNOT(CarlaPlugin* const p, const uint32_t nframes)
+    {
+        for (uint32_t i=0; i < p->aIn.count; i++)
+            zeroF(p->aIn.ports[i]->getJackAudioBuffer(nframes), nframes);
+
+        for (uint32_t i=0; i < p->aOut.count; i++)
+            zeroF(p->aOut.ports[i]->getJackAudioBuffer(nframes), nframes);
+    }
+
     static void latencyPlugin(CarlaPlugin* const p)
     {
         for (uint32_t i=0; i < p->aIn.count; i++)
@@ -593,13 +617,20 @@ private:
     {
         CarlaPlugin* const plugin = (CarlaPlugin*)arg;
 
-        if (plugin && plugin->enabled())
+        if (! plugin)
+            return 0;
+
+        plugin->engineProcessLock();
+
+        if (plugin->enabled())
         {
-            plugin->engineProcessLock();
             plugin->initBuffers();
             processPlugin(plugin, nframes);
-            plugin->engineProcessUnlock();
         }
+        else
+            processPluginNOT(plugin, nframes);
+
+        plugin->engineProcessUnlock();
 
         return 0;
     }

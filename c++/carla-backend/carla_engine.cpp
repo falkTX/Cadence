@@ -475,11 +475,11 @@ bool CarlaEngine::removePlugin(const unsigned short id)
 
         processLock();
         plugin->setEnabled(false);
+        m_carlaPlugins[id] = nullptr;
+        m_uniqueNames[id]  = nullptr;
         processUnlock();
 
         delete plugin;
-        m_carlaPlugins[id] = nullptr;
-        m_uniqueNames[id]  = nullptr;
 
 #ifndef BUILD_BRIDGE
         osc_send_control_remove_plugin(id);
