@@ -29,8 +29,7 @@ SOURCES  = \
     ../lv2.cpp \
     ../vst.cpp \
     ../fluidsynth.cpp \
-    ../linuxsampler.cpp \
-    ../../carla-jackbridge/carla_jackbridge.cpp
+    ../linuxsampler.cpp
 
 SOURCES += \
     ../plugins/bypass.c \

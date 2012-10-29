@@ -58,8 +58,9 @@
 #include "lilv/lilvmm.hpp"
 #include "sratom/sratom.h"
 
+#include "carla_includes.h"
+
 #include <QtCore/QMap>
-#include <QtCore/QString>
 #include <QtCore/QStringList>
 
 // ------------------------------------------------------------------------------------------------
@@ -95,122 +96,11 @@ struct LV2_Atom_Worker {
 class Lv2WorldClass : public Lilv::World
 {
 public:
-    Lv2WorldClass()
-        : Lilv::World(),
-          port                (new_uri(LV2_CORE__port)),
-          symbol              (new_uri(LV2_CORE__symbol)),
-          designation         (new_uri(LV2_CORE__designation)),
-          freewheeling        (new_uri(LV2_CORE__freeWheeling)),
-          reportsLatency      (new_uri(LV2_CORE__reportsLatency)),
-
-          class_allpass       (new_uri(LV2_CORE__AllpassPlugin)),
-          class_amplifier     (new_uri(LV2_CORE__AmplifierPlugin)),
-          class_analyzer      (new_uri(LV2_CORE__AnalyserPlugin)),
-          class_bandpass      (new_uri(LV2_CORE__BandpassPlugin)),
-          class_chorus        (new_uri(LV2_CORE__ChorusPlugin)),
-          class_comb          (new_uri(LV2_CORE__CombPlugin)),
-          class_compressor    (new_uri(LV2_CORE__CompressorPlugin)),
-          class_constant      (new_uri(LV2_CORE__ConstantPlugin)),
-          class_converter     (new_uri(LV2_CORE__ConverterPlugin)),
-          class_delay         (new_uri(LV2_CORE__DelayPlugin)),
-          class_distortion    (new_uri(LV2_CORE__DistortionPlugin)),
-          class_dynamics      (new_uri(LV2_CORE__DynamicsPlugin)),
-          class_eq            (new_uri(LV2_CORE__EQPlugin)),
-          class_expander      (new_uri(LV2_CORE__ExpanderPlugin)),
-          class_filter        (new_uri(LV2_CORE__FilterPlugin)),
-          class_flanger       (new_uri(LV2_CORE__FlangerPlugin)),
-          class_function      (new_uri(LV2_CORE__FunctionPlugin)),
-          class_gate          (new_uri(LV2_CORE__GatePlugin)),
-          class_generator     (new_uri(LV2_CORE__GeneratorPlugin)),
-          class_highpass      (new_uri(LV2_CORE__HighpassPlugin)),
-          class_instrument    (new_uri(LV2_CORE__InstrumentPlugin)),
-          class_limiter       (new_uri(LV2_CORE__LimiterPlugin)),
-          class_lowpass       (new_uri(LV2_CORE__LowpassPlugin)),
-          class_mixer         (new_uri(LV2_CORE__MixerPlugin)),
-          class_modulator     (new_uri(LV2_CORE__ModulatorPlugin)),
-          class_multi_eq      (new_uri(LV2_CORE__MultiEQPlugin)),
-          class_oscillator    (new_uri(LV2_CORE__OscillatorPlugin)),
-          class_para_eq       (new_uri(LV2_CORE__ParaEQPlugin)),
-          class_phaser        (new_uri(LV2_CORE__PhaserPlugin)),
-          class_pitch         (new_uri(LV2_CORE__PitchPlugin)),
-          class_reverb        (new_uri(LV2_CORE__ReverbPlugin)),
-          class_simulator     (new_uri(LV2_CORE__SimulatorPlugin)),
-          class_spatial       (new_uri(LV2_CORE__SpatialPlugin)),
-          class_spectral      (new_uri(LV2_CORE__SpectralPlugin)),
-          class_utility       (new_uri(LV2_CORE__UtilityPlugin)),
-          class_waveshaper    (new_uri(LV2_CORE__WaveshaperPlugin)),
-
-          port_input          (new_uri(LV2_CORE__InputPort)),
-          port_output         (new_uri(LV2_CORE__OutputPort)),
-          port_control        (new_uri(LV2_CORE__ControlPort)),
-          port_audio          (new_uri(LV2_CORE__AudioPort)),
-          port_cv             (new_uri(LV2_CORE__CVPort)),
-          port_atom           (new_uri(LV2_ATOM__AtomPort)),
-          port_event          (new_uri(LV2_EVENT__EventPort)),
-          port_midi_ll        (new_uri(LV2_MIDI_LL__MidiPort)),
-
-          pprop_optional      (new_uri(LV2_CORE__connectionOptional)),
-          pprop_enumeration   (new_uri(LV2_CORE__enumeration)),
-          pprop_integer       (new_uri(LV2_CORE__integer)),
-          pprop_sample_rate   (new_uri(LV2_CORE__sampleRate)),
-          pprop_toggled       (new_uri(LV2_CORE__toggled)),
-          pprop_artifacts     (new_uri(LV2_PORT_PROPS__causesArtifacts)),
-          pprop_continuous_cv (new_uri(LV2_PORT_PROPS__continuousCV)),
-          pprop_discrete_cv   (new_uri(LV2_PORT_PROPS__discreteCV)),
-          pprop_expensive     (new_uri(LV2_PORT_PROPS__expensive)),
-          pprop_strict_bounds (new_uri(LV2_PORT_PROPS__hasStrictBounds)),
-          pprop_logarithmic   (new_uri(LV2_PORT_PROPS__logarithmic)),
-          pprop_not_automatic (new_uri(LV2_PORT_PROPS__notAutomatic)),
-          pprop_not_on_gui    (new_uri(LV2_PORT_PROPS__notOnGUI)),
-          pprop_trigger       (new_uri(LV2_PORT_PROPS__trigger)),
-
-          unit_unit           (new_uri(LV2_UNITS__unit)),
-          unit_name           (new_uri(LV2_UNITS__name)),
-          unit_render         (new_uri(LV2_UNITS__render)),
-          unit_symbol         (new_uri(LV2_UNITS__symbol)),
-
-          ui_gtk2             (new_uri(LV2_UI__GtkUI)),
-          ui_gtk3             (new_uri(LV2_UI__Gtk3UI)),
-          ui_qt4              (new_uri(LV2_UI__Qt4UI)),
-          ui_cocoa            (new_uri(LV2_UI__CocoaUI)),
-          ui_windows          (new_uri(LV2_UI__WindowsUI)),
-          ui_x11              (new_uri(LV2_UI__X11UI)),
-          ui_external         (new_uri(LV2_EXTERNAL_UI__Widget)),
-          ui_external_old     (new_uri(LV2_EXTERNAL_UI_DEPRECATED_URI)),
-
-          preset_preset       (new_uri(LV2_PRESETS__Preset)),
-          preset_value        (new_uri(LV2_PRESETS__value)),
-
-          state_state         (new_uri(LV2_STATE__state)),
-
-          value_default       (new_uri(LV2_CORE__default)),
-          value_minimum       (new_uri(LV2_CORE__minimum)),
-          value_maximum       (new_uri(LV2_CORE__maximum)),
-
-          atom_sequence       (new_uri(LV2_ATOM__Sequence)),
-          atom_buffer_type    (new_uri(LV2_ATOM__bufferType)),
-          atom_supports       (new_uri(LV2_ATOM__supports)),
-
-          midi_event          (new_uri(LV2_MIDI__MidiEvent)),
-          patch_message       (new_uri(LV2_PATCH__Message)),
-
-          mm_default_control  (new_uri(NS_llmm "defaultMidiController")),
-          mm_control_type     (new_uri(NS_llmm "controllerType")),
-          mm_control_number   (new_uri(NS_llmm "controllerNumber")),
-
-          dct_replaces        (new_uri(NS_dct "replaces")),
-          doap_license        (new_uri(NS_doap "license")),
-          rdf_type            (new_uri(NS_rdf "type")),
-          rdfs_label          (new_uri(NS_rdfs "label"))
-    {
-        needInit = true;
-    }
-
     // Base Types
     Lilv::Node port;
     Lilv::Node symbol;
     Lilv::Node designation;
-    Lilv::Node freewheeling;
+    Lilv::Node freeWheeling;
     Lilv::Node reportsLatency;
 
     // Plugin Types
@@ -239,9 +129,9 @@ public:
     Lilv::Node class_lowpass;
     Lilv::Node class_mixer;
     Lilv::Node class_modulator;
-    Lilv::Node class_multi_eq;
+    Lilv::Node class_multiEQ;
     Lilv::Node class_oscillator;
-    Lilv::Node class_para_eq;
+    Lilv::Node class_paraEQ;
     Lilv::Node class_phaser;
     Lilv::Node class_pitch;
     Lilv::Node class_reverb;
@@ -259,22 +149,22 @@ public:
     Lilv::Node port_cv;
     Lilv::Node port_atom;
     Lilv::Node port_event;
-    Lilv::Node port_midi_ll;
+    Lilv::Node port_midi;
 
     // Port Properties
     Lilv::Node pprop_optional;
     Lilv::Node pprop_enumeration;
     Lilv::Node pprop_integer;
-    Lilv::Node pprop_sample_rate;
+    Lilv::Node pprop_sampleRate;
     Lilv::Node pprop_toggled;
     Lilv::Node pprop_artifacts;
-    Lilv::Node pprop_continuous_cv;
-    Lilv::Node pprop_discrete_cv;
+    Lilv::Node pprop_continuousCV;
+    Lilv::Node pprop_discreteCV;
     Lilv::Node pprop_expensive;
-    Lilv::Node pprop_strict_bounds;
+    Lilv::Node pprop_strictBounds;
     Lilv::Node pprop_logarithmic;
-    Lilv::Node pprop_not_automatic;
-    Lilv::Node pprop_not_on_gui;
+    Lilv::Node pprop_notAutomatic;
+    Lilv::Node pprop_notOnGUI;
     Lilv::Node pprop_trigger;
 
     // Unit Hints
@@ -291,10 +181,10 @@ public:
     Lilv::Node ui_windows;
     Lilv::Node ui_x11;
     Lilv::Node ui_external;
-    Lilv::Node ui_external_old;
+    Lilv::Node ui_externalOld;
 
     // Misc
-    Lilv::Node preset_preset;
+    Lilv::Node preset_Preset;
     Lilv::Node preset_value;
 
     Lilv::Node state_state;
@@ -303,8 +193,8 @@ public:
     Lilv::Node value_minimum;
     Lilv::Node value_maximum;
 
-    Lilv::Node atom_sequence;
-    Lilv::Node atom_buffer_type;
+    Lilv::Node atom_Sequence;
+    Lilv::Node atom_bufferType;
     Lilv::Node atom_supports;
 
     // Event Data/Types
@@ -312,9 +202,9 @@ public:
     Lilv::Node patch_message;
 
     // MIDI CC
-    Lilv::Node mm_default_control;
-    Lilv::Node mm_control_type;
-    Lilv::Node mm_control_number;
+    Lilv::Node mm_defaultControl;
+    Lilv::Node mm_controlType;
+    Lilv::Node mm_controlNumber;
 
     // Other
     Lilv::Node dct_replaces;
@@ -322,13 +212,126 @@ public:
     Lilv::Node rdf_type;
     Lilv::Node rdfs_label;
 
+    // ----------------------------------------------------------
+
+    Lv2WorldClass()
+        : Lilv::World(),
+          port               (new_uri(LV2_CORE__port)),
+          symbol             (new_uri(LV2_CORE__symbol)),
+          designation        (new_uri(LV2_CORE__designation)),
+          freeWheeling       (new_uri(LV2_CORE__freeWheeling)),
+          reportsLatency     (new_uri(LV2_CORE__reportsLatency)),
+
+          class_allpass      (new_uri(LV2_CORE__AllpassPlugin)),
+          class_amplifier    (new_uri(LV2_CORE__AmplifierPlugin)),
+          class_analyzer     (new_uri(LV2_CORE__AnalyserPlugin)),
+          class_bandpass     (new_uri(LV2_CORE__BandpassPlugin)),
+          class_chorus       (new_uri(LV2_CORE__ChorusPlugin)),
+          class_comb         (new_uri(LV2_CORE__CombPlugin)),
+          class_compressor   (new_uri(LV2_CORE__CompressorPlugin)),
+          class_constant     (new_uri(LV2_CORE__ConstantPlugin)),
+          class_converter    (new_uri(LV2_CORE__ConverterPlugin)),
+          class_delay        (new_uri(LV2_CORE__DelayPlugin)),
+          class_distortion   (new_uri(LV2_CORE__DistortionPlugin)),
+          class_dynamics     (new_uri(LV2_CORE__DynamicsPlugin)),
+          class_eq           (new_uri(LV2_CORE__EQPlugin)),
+          class_expander     (new_uri(LV2_CORE__ExpanderPlugin)),
+          class_filter       (new_uri(LV2_CORE__FilterPlugin)),
+          class_flanger      (new_uri(LV2_CORE__FlangerPlugin)),
+          class_function     (new_uri(LV2_CORE__FunctionPlugin)),
+          class_gate         (new_uri(LV2_CORE__GatePlugin)),
+          class_generator    (new_uri(LV2_CORE__GeneratorPlugin)),
+          class_highpass     (new_uri(LV2_CORE__HighpassPlugin)),
+          class_instrument   (new_uri(LV2_CORE__InstrumentPlugin)),
+          class_limiter      (new_uri(LV2_CORE__LimiterPlugin)),
+          class_lowpass      (new_uri(LV2_CORE__LowpassPlugin)),
+          class_mixer        (new_uri(LV2_CORE__MixerPlugin)),
+          class_modulator    (new_uri(LV2_CORE__ModulatorPlugin)),
+          class_multiEQ      (new_uri(LV2_CORE__MultiEQPlugin)),
+          class_oscillator   (new_uri(LV2_CORE__OscillatorPlugin)),
+          class_paraEQ       (new_uri(LV2_CORE__ParaEQPlugin)),
+          class_phaser       (new_uri(LV2_CORE__PhaserPlugin)),
+          class_pitch        (new_uri(LV2_CORE__PitchPlugin)),
+          class_reverb       (new_uri(LV2_CORE__ReverbPlugin)),
+          class_simulator    (new_uri(LV2_CORE__SimulatorPlugin)),
+          class_spatial      (new_uri(LV2_CORE__SpatialPlugin)),
+          class_spectral     (new_uri(LV2_CORE__SpectralPlugin)),
+          class_utility      (new_uri(LV2_CORE__UtilityPlugin)),
+          class_waveshaper   (new_uri(LV2_CORE__WaveshaperPlugin)),
+
+          port_input         (new_uri(LV2_CORE__InputPort)),
+          port_output        (new_uri(LV2_CORE__OutputPort)),
+          port_control       (new_uri(LV2_CORE__ControlPort)),
+          port_audio         (new_uri(LV2_CORE__AudioPort)),
+          port_cv            (new_uri(LV2_CORE__CVPort)),
+          port_atom          (new_uri(LV2_ATOM__AtomPort)),
+          port_event         (new_uri(LV2_EVENT__EventPort)),
+          port_midi          (new_uri(LV2_MIDI_LL__MidiPort)),
+
+          pprop_optional     (new_uri(LV2_CORE__connectionOptional)),
+          pprop_enumeration  (new_uri(LV2_CORE__enumeration)),
+          pprop_integer      (new_uri(LV2_CORE__integer)),
+          pprop_sampleRate   (new_uri(LV2_CORE__sampleRate)),
+          pprop_toggled      (new_uri(LV2_CORE__toggled)),
+          pprop_artifacts    (new_uri(LV2_PORT_PROPS__causesArtifacts)),
+          pprop_continuousCV (new_uri(LV2_PORT_PROPS__continuousCV)),
+          pprop_discreteCV   (new_uri(LV2_PORT_PROPS__discreteCV)),
+          pprop_expensive    (new_uri(LV2_PORT_PROPS__expensive)),
+          pprop_strictBounds (new_uri(LV2_PORT_PROPS__hasStrictBounds)),
+          pprop_logarithmic  (new_uri(LV2_PORT_PROPS__logarithmic)),
+          pprop_notAutomatic (new_uri(LV2_PORT_PROPS__notAutomatic)),
+          pprop_notOnGUI     (new_uri(LV2_PORT_PROPS__notOnGUI)),
+          pprop_trigger      (new_uri(LV2_PORT_PROPS__trigger)),
+
+          unit_unit          (new_uri(LV2_UNITS__unit)),
+          unit_name          (new_uri(LV2_UNITS__name)),
+          unit_render        (new_uri(LV2_UNITS__render)),
+          unit_symbol        (new_uri(LV2_UNITS__symbol)),
+
+          ui_gtk2            (new_uri(LV2_UI__GtkUI)),
+          ui_gtk3            (new_uri(LV2_UI__Gtk3UI)),
+          ui_qt4             (new_uri(LV2_UI__Qt4UI)),
+          ui_cocoa           (new_uri(LV2_UI__CocoaUI)),
+          ui_windows         (new_uri(LV2_UI__WindowsUI)),
+          ui_x11             (new_uri(LV2_UI__X11UI)),
+          ui_external        (new_uri(LV2_EXTERNAL_UI__Widget)),
+          ui_externalOld     (new_uri(LV2_EXTERNAL_UI_DEPRECATED_URI)),
+
+          preset_Preset      (new_uri(LV2_PRESETS__Preset)),
+          preset_value       (new_uri(LV2_PRESETS__value)),
+
+          state_state        (new_uri(LV2_STATE__state)),
+
+          value_default      (new_uri(LV2_CORE__default)),
+          value_minimum      (new_uri(LV2_CORE__minimum)),
+          value_maximum      (new_uri(LV2_CORE__maximum)),
+
+          atom_Sequence      (new_uri(LV2_ATOM__Sequence)),
+          atom_bufferType    (new_uri(LV2_ATOM__bufferType)),
+          atom_supports      (new_uri(LV2_ATOM__supports)),
+
+          midi_event         (new_uri(LV2_MIDI__MidiEvent)),
+          patch_message      (new_uri(LV2_PATCH__Message)),
+
+          mm_defaultControl  (new_uri(NS_llmm "defaultMidiController")),
+          mm_controlType     (new_uri(NS_llmm "controllerType")),
+          mm_controlNumber   (new_uri(NS_llmm "controllerNumber")),
+
+          dct_replaces       (new_uri(NS_dct "replaces")),
+          doap_license       (new_uri(NS_doap "license")),
+          rdf_type           (new_uri(NS_rdf "type")),
+          rdfs_label         (new_uri(NS_rdfs "label"))
+    {
+        needInit = true;
+    }
+
     void init()
     {
         if (! needInit)
             return;
 
-        load_all();
         needInit = false;
+        Lilv::World::load_all();
     }
 
 private:
@@ -351,7 +354,7 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
     {
         Lilv::Plugin lilvPlugin(lilvPlugins.get(i));
 
-        if (strcmp(lilvPlugin.get_uri().as_string(), URI) != 0)
+        if (strcmp(lilvPlugin.get_uri().as_string(), URI))
             continue;
 
         LV2_RDF_Descriptor* const rdf_descriptor = new LV2_RDF_Descriptor;
@@ -413,11 +416,11 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                     rdf_descriptor->Type |= LV2_CLASS_MIXER;
                 if (typeNodes.contains(Lv2World.class_modulator))
                     rdf_descriptor->Type |= LV2_CLASS_MODULATOR;
-                if (typeNodes.contains(Lv2World.class_multi_eq))
+                if (typeNodes.contains(Lv2World.class_multiEQ))
                     rdf_descriptor->Type |= LV2_CLASS_MULTI_EQ;
                 if (typeNodes.contains(Lv2World.class_oscillator))
                     rdf_descriptor->Type |= LV2_CLASS_OSCILLATOR;
-                if (typeNodes.contains(Lv2World.class_para_eq))
+                if (typeNodes.contains(Lv2World.class_paraEQ))
                     rdf_descriptor->Type |= LV2_CLASS_PARA_EQ;
                 if (typeNodes.contains(Lv2World.class_phaser))
                     rdf_descriptor->Type |= LV2_CLASS_PHASER;
@@ -449,7 +452,7 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                 rdf_descriptor->Name = strdup(lilvPlugin.get_name().as_string());
 
             if (lilvPlugin.get_author_name())
-                rdf_descriptor->Author  = strdup(lilvPlugin.get_author_name().as_string());
+                rdf_descriptor->Author = strdup(lilvPlugin.get_author_name().as_string());
 
             Lilv::Nodes licenseNodes(lilvPlugin.get_value(Lv2World.doap_license));
 
@@ -498,30 +501,42 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                 LV2_RDF_Port* const rdf_port = &rdf_descriptor->Ports[j];
 
                 // --------------------------------------
-                // Set Port Type
+                // Set Port Information (first)
                 {
+                    rdf_port->Name   = strdup(Lilv::Node(lilvPort.get_name()).as_string());
+                    rdf_port->Symbol = strdup(Lilv::Node(lilvPort.get_symbol()).as_string());
+                }
+
+                // --------------------------------------
+                // Set Port Mode and Type
+                {
+                    // Mode
                     if (lilvPort.is_a(Lv2World.port_input))
                         rdf_port->Type |= LV2_PORT_INPUT;
 
-                    if (lilvPort.is_a(Lv2World.port_output))
+                    else if (lilvPort.is_a(Lv2World.port_output))
                         rdf_port->Type |= LV2_PORT_OUTPUT;
 
+                    else
+                        qWarning("lv2_rdf_new(\"%s\") - port '%s' is not input or output", URI, rdf_port->Name);
+
+                    // Type
                     if (lilvPort.is_a(Lv2World.port_control))
                         rdf_port->Type |= LV2_PORT_CONTROL;
 
-                    if (lilvPort.is_a(Lv2World.port_audio))
+                    else if (lilvPort.is_a(Lv2World.port_audio))
                         rdf_port->Type |= LV2_PORT_AUDIO;
 
-                    if (lilvPort.is_a(Lv2World.port_cv))
+                    else if (lilvPort.is_a(Lv2World.port_cv))
                         rdf_port->Type |= LV2_PORT_CV;
 
-                    if (lilvPort.is_a(Lv2World.port_atom))
+                    else if (lilvPort.is_a(Lv2World.port_atom))
                     {
                         rdf_port->Type |= LV2_PORT_ATOM;
 
-                        Lilv::Nodes bufferTypeNodes(lilvPort.get_value(Lv2World.atom_buffer_type));
+                        Lilv::Nodes bufferTypeNodes(lilvPort.get_value(Lv2World.atom_bufferType));
 
-                        if (bufferTypeNodes.contains(Lv2World.atom_sequence))
+                        if (bufferTypeNodes.contains(Lv2World.atom_Sequence))
                             rdf_port->Type |= LV2_PORT_ATOM_SEQUENCE;
 
                         Lilv::Nodes supportNodes(lilvPort.get_value(Lv2World.atom_supports));
@@ -532,7 +547,7 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                             rdf_port->Type |= LV2_PORT_SUPPORTS_PATCH_MESSAGE;
                     }
 
-                    if (lilvPort.is_a(Lv2World.port_event))
+                    else if (lilvPort.is_a(Lv2World.port_event))
                     {
                         rdf_port->Type |= LV2_PORT_EVENT;
 
@@ -540,11 +555,14 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                             rdf_port->Type |= LV2_PORT_SUPPORTS_MIDI_EVENT;
                     }
 
-                    if (lilvPort.is_a(Lv2World.port_midi_ll))
+                    else if (lilvPort.is_a(Lv2World.port_midi))
                     {
                         rdf_port->Type |= LV2_PORT_MIDI_LL;
                         rdf_port->Type |= LV2_PORT_SUPPORTS_MIDI_EVENT;
                     }
+
+                    else
+                        qWarning("lv2_rdf_new(\"%s\") - port '%s' is of unkown type", URI, rdf_port->Name);
                 }
 
                 // --------------------------------------
@@ -556,26 +574,26 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                         rdf_port->Properties = LV2_PORT_ENUMERATION;
                     if (lilvPort.has_property(Lv2World.pprop_integer))
                         rdf_port->Properties = LV2_PORT_INTEGER;
-                    if (lilvPort.has_property(Lv2World.pprop_sample_rate))
+                    if (lilvPort.has_property(Lv2World.pprop_sampleRate))
                         rdf_port->Properties = LV2_PORT_SAMPLE_RATE;
                     if (lilvPort.has_property(Lv2World.pprop_toggled))
                         rdf_port->Properties = LV2_PORT_TOGGLED;
 
                     if (lilvPort.has_property(Lv2World.pprop_artifacts))
                         rdf_port->Properties = LV2_PORT_CAUSES_ARTIFACTS;
-                    if (lilvPort.has_property(Lv2World.pprop_continuous_cv))
+                    if (lilvPort.has_property(Lv2World.pprop_continuousCV))
                         rdf_port->Properties = LV2_PORT_CONTINUOUS_CV;
-                    if (lilvPort.has_property(Lv2World.pprop_discrete_cv))
+                    if (lilvPort.has_property(Lv2World.pprop_discreteCV))
                         rdf_port->Properties = LV2_PORT_DISCRETE_CV;
                     if (lilvPort.has_property(Lv2World.pprop_expensive))
                         rdf_port->Properties = LV2_PORT_EXPENSIVE;
-                    if (lilvPort.has_property(Lv2World.pprop_strict_bounds))
+                    if (lilvPort.has_property(Lv2World.pprop_strictBounds))
                         rdf_port->Properties = LV2_PORT_STRICT_BOUNDS;
                     if (lilvPort.has_property(Lv2World.pprop_logarithmic))
                         rdf_port->Properties = LV2_PORT_LOGARITHMIC;
-                    if (lilvPort.has_property(Lv2World.pprop_not_automatic))
+                    if (lilvPort.has_property(Lv2World.pprop_notAutomatic))
                         rdf_port->Properties = LV2_PORT_NOT_AUTOMATIC;
-                    if (lilvPort.has_property(Lv2World.pprop_not_on_gui))
+                    if (lilvPort.has_property(Lv2World.pprop_notOnGUI))
                         rdf_port->Properties = LV2_PORT_NOT_ON_GUI;
                     if (lilvPort.has_property(Lv2World.pprop_trigger))
                         rdf_port->Properties = LV2_PORT_TRIGGER;
@@ -629,16 +647,9 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                 }
 
                 // --------------------------------------
-                // Set Port Information
-                {
-                    rdf_port->Name   = strdup(Lilv::Node(lilvPort.get_name()).as_string());
-                    rdf_port->Symbol = strdup(Lilv::Node(lilvPort.get_symbol()).as_string());
-                }
-
-                // --------------------------------------
                 // Set Port MIDI Map
                 {
-                    Lilv::Nodes midiMapNodes(lilvPort.get_value(Lv2World.mm_default_control));
+                    Lilv::Nodes midiMapNodes(lilvPort.get_value(Lv2World.mm_defaultControl));
 
                     if (midiMapNodes.size() > 0)
                     {
@@ -646,8 +657,8 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
 
                         if (midiMapNode.is_blank())
                         {
-                            Lilv::Nodes midiMapTypeNodes(Lv2World.find_nodes(midiMapNode, Lv2World.mm_control_type, nullptr));
-                            Lilv::Nodes midiMapNumberNodes(Lv2World.find_nodes(midiMapNode, Lv2World.mm_control_number, nullptr));
+                            Lilv::Nodes midiMapTypeNodes(Lv2World.find_nodes(midiMapNode, Lv2World.mm_controlType, nullptr));
+                            Lilv::Nodes midiMapNumberNodes(Lv2World.find_nodes(midiMapNode, Lv2World.mm_controlNumber, nullptr));
 
                             if (midiMapTypeNodes.size() == 1 && midiMapNumberNodes.size() == 1)
                             {
@@ -994,10 +1005,10 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI URI)
                             rdf_ui->Type = LV2_UI_X11;
                         else if (lilvUI.is_a(Lv2World.ui_external))
                             rdf_ui->Type = LV2_UI_EXTERNAL;
-                        else if (lilvUI.is_a(Lv2World.ui_external_old))
+                        else if (lilvUI.is_a(Lv2World.ui_externalOld))
                             rdf_ui->Type = LV2_UI_OLD_EXTERNAL;
                         else
-                            qWarning("lv2_rdf_new(\"%s\") - got unknown UI type '%s'", URI, lilvUI.get_uri().as_uri());
+                            qWarning("lv2_rdf_new(\"%s\") - got unknown UI type for '%s'", URI, lilvUI.get_uri().as_uri());
                     }
 
                     // --------------------------------------
