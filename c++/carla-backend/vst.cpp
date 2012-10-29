@@ -731,9 +731,18 @@ public:
 
         // check latency
         {
+#ifdef VESTIGE_HEADER
+            char* const empty3Ptr = &effect->empty3[0];
+            int32_t* initialDelayPtr = (int32_t*)empty3Ptr;
+            uint32_t latency = *initialDelayPtr;
+#else
             uint32_t latency = effect->initialDelay;
+#endif
 
-            // TODO - adjust latency now
+            for (uint32_t i=0; i < aIn.count; i++)
+                aIn.ports[i]->setLatency(latency);
+
+            x_client->recomputeLatencies();
         }
 
         reloadPrograms(true);

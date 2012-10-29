@@ -1769,7 +1769,13 @@ public:
                 }
             }
 
-            // TODO - adjust latency now
+            if (hasLatency)
+            {
+                for (uint32_t i=0; i < aIn.count; i++)
+                    aIn.ports[i]->setLatency(latency);
+
+                x_client->recomputeLatencies();
+            }
         }
 
         reloadPrograms(true);

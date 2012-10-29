@@ -426,6 +426,8 @@ public:
     bool isActive() const;
     bool isOk() const;
 
+    void recomputeLatencies();
+
     const CarlaEngineBasePort* addPort(const CarlaEnginePortType portType, const char* const name, const bool isInput);
 
 private:
@@ -444,6 +446,11 @@ public:
 
     virtual void initBuffer(CarlaEngine* const engine) = 0;
 
+    const CarlaEnginePortNativeHandle& getHandle() const
+    {
+        return handle;
+    }
+
 protected:
     void* buffer;
     const bool isInput;
@@ -458,9 +465,15 @@ public:
 
     void initBuffer(CarlaEngine* const engine);
 
+    uint32_t getLatency() const;
+    void setLatency(const uint32_t samples);
+
 #ifdef CARLA_ENGINE_JACK
     float* getJackAudioBuffer(uint32_t nframes);
 #endif
+
+private:
+    uint32_t latency;
 };
 
 // control

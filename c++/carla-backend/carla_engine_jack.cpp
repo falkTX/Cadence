@@ -79,6 +79,7 @@ public:
             jackbridge_set_buffer_size_callback(client, carla_jack_bufsize_callback, this);
             jackbridge_set_freewheel_callback(client, carla_jack_freewheel_callback, this);
             jackbridge_set_process_callback(client, carla_jack_process_callback, this);
+            jackbridge_set_latency_callback(client, carla_jack_latency_callback, this);
             jackbridge_on_shutdown(client, carla_jack_shutdown_callback, this);
 
             if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
@@ -186,6 +187,7 @@ public:
         jackbridge_set_buffer_size_callback(client, carla_jack_bufsize_callback, this);
         jackbridge_set_freewheel_callback(client, carla_jack_freewheel_callback, this);
         jackbridge_set_process_callback(handle.jackClient, carla_jack_process_callback, this);
+        jackbridge_set_latency_callback(handle.jackClient, carla_jack_latency_callback, this);
         jackbridge_on_shutdown(client, carla_jack_shutdown_callback, this);
 #else
         if (carlaOptions.processMode == PROCESS_MODE_SINGLE_CLIENT)
@@ -196,6 +198,7 @@ public:
         {
             handle.jackClient = jackbridge_client_open(plugin->name(), JackNullOption, nullptr);
             jackbridge_set_process_callback(handle.jackClient, carla_jack_process_callback_plugin, plugin);
+            jackbridge_set_latency_callback(handle.jackClient, carla_jack_latency_callback_plugin, plugin);
         }
 #endif
 
@@ -457,6 +460,20 @@ protected:
 #endif
     }
 
+    void handleLatencyCallback()
+    {
+#ifndef BUILD_BRIDGE
+        if (carlaOptions.processMode != PROCESS_MODE_SINGLE_CLIENT)
+            return;
+#endif
+
+        for (unsigned short i=0, max=maxPluginNumber(); i < max; i++)
+        {
+            CarlaPlugin* const plugin = getPluginUnchecked(i);
+            latencyPlugin(plugin);
+        }
+    }
+
     void handleShutdownCallback()
     {
         for (unsigned short i=0, max=maxPluginNumber(); i < max; i++)
@@ -528,6 +545,23 @@ private:
             p->process(inBuffer, outBuffer, nframes);
     }
 
+    static void latencyPlugin(CarlaPlugin* const p)
+    {
+        for (uint32_t i=0; i < p->aIn.count; i++)
+        {
+            const CarlaEngineAudioPort* const port = p->aIn.ports[i];
+            jack_port_t* const jackPort = port->getHandle().jackPort;
+            jack_latency_range_t range;
+
+            jackbridge_port_get_latency_range(jackPort, JackPlaybackLatency, &range);
+
+            range.min += port->getLatency();
+            range.max += port->getLatency();
+
+            jackbridge_port_set_latency_range(jackPort, JackPlaybackLatency, &range);
+        }
+    }
+
     static int carla_jack_srate_callback(jack_nframes_t newSampleRate, void* arg)
     {
         CarlaEngineJack* const _this_ = (CarlaEngineJack*)arg;
@@ -568,6 +602,26 @@ private:
         }
 
         return 0;
+    }
+
+    static void carla_jack_latency_callback(jack_latency_callback_mode_t mode, void* arg)
+    {
+        if (mode != JackPlaybackLatency)
+            return;
+
+        CarlaEngineJack* const _this_ = (CarlaEngineJack*)arg;
+        _this_->handleLatencyCallback();
+    }
+
+    static void carla_jack_latency_callback_plugin(jack_latency_callback_mode_t mode, void* arg)
+    {
+        if (mode != JackPlaybackLatency)
+            return;
+
+        CarlaPlugin* const plugin = (CarlaPlugin*)arg;
+
+        if (plugin && plugin->enabled())
+            latencyPlugin(plugin);
     }
 
     static void carla_jack_shutdown_callback(void* arg)

@@ -62,6 +62,29 @@ int jackbridge_port_name_size()
 #endif
 }
 
+int jackbridge_recompute_total_latencies(jack_client_t* client)
+{
+#ifndef JACKBRIDGE_DUMMY
+    return jack_recompute_total_latencies(client);
+#else
+    return 0;
+#endif
+}
+
+void jackbridge_port_get_latency_range(jack_port_t* port, jack_latency_callback_mode_t mode, jack_latency_range_t* range)
+{
+#ifndef JACKBRIDGE_DUMMY
+    jack_port_get_latency_range(port, mode, range);
+#endif
+}
+
+void jackbridge_port_set_latency_range(jack_port_t* port, jack_latency_callback_mode_t mode, jack_latency_range_t* range)
+{
+#ifndef JACKBRIDGE_DUMMY
+    jack_port_set_latency_range(port, mode, range);
+#endif
+}
+
 int jackbridge_activate(jack_client_t* client)
 {
 #ifndef JACKBRIDGE_DUMMY
@@ -93,6 +116,15 @@ void jackbridge_on_shutdown(jack_client_t* client, JackShutdownCallback shutdown
 {
 #ifndef JACKBRIDGE_DUMMY
     jack_on_shutdown(client, shutdown_callback, arg);
+#endif
+}
+
+void jackbridge_set_latency_callback(jack_client_t* client, JackLatencyCallback latency_callback, void* arg)
+{
+#ifndef JACKBRIDGE_DUMMY
+    return jack_set_latency_callback(client, latency_callback, arg);
+#else
+    return 0;
 #endif
 }
 

@@ -39,9 +39,13 @@ CARLA_EXPORT int jackbridge_client_close(jack_client_t* client);
 CARLA_EXPORT int jackbridge_client_name_size();
 CARLA_EXPORT char* jackbridge_get_client_name(jack_client_t* client);
 CARLA_EXPORT int jackbridge_port_name_size();
+CARLA_EXPORT int jackbridge_recompute_total_latencies(jack_client_t* client);
+CARLA_EXPORT void jackbridge_port_get_latency_range(jack_port_t* port, jack_latency_callback_mode_t mode, jack_latency_range_t* range);
+CARLA_EXPORT void jackbridge_port_set_latency_range(jack_port_t* port, jack_latency_callback_mode_t mode, jack_latency_range_t* range);
 CARLA_EXPORT int jackbridge_activate(jack_client_t* client);
 CARLA_EXPORT int jackbridge_deactivate(jack_client_t* client);
 CARLA_EXPORT void jackbridge_on_shutdown(jack_client_t* client, JackShutdownCallback shutdown_callback, void* arg);
+CARLA_EXPORT void jackbridge_set_latency_callback(jack_client_t* client, JackLatencyCallback latency_callback, void* arg);
 CARLA_EXPORT int jackbridge_set_process_callback(jack_client_t* client, JackProcessCallback process_callback, void* arg);
 CARLA_EXPORT int jackbridge_set_freewheel_callback(jack_client_t* client, JackFreewheelCallback freewheel_callback, void* arg);
 CARLA_EXPORT int jackbridge_set_buffer_size_callback(jack_client_t* client, JackBufferSizeCallback bufsize_callback, void* arg);
@@ -70,9 +74,13 @@ CARLA_EXPORT jack_transport_state_t jackbridge_transport_query(const jack_client
 #define jackbridge_client_name_size jack_client_name_size
 #define jackbridge_get_client_name jack_get_client_name
 #define jackbridge_port_name_size jack_port_name_size
+#define jackbridge_recompute_total_latencies jack_recompute_total_latencies
+#define jackbridge_port_get_latency_range jack_port_get_latency_range
+#define jackbridge_port_set_latency_range jack_port_set_latency_range
 #define jackbridge_activate jack_activate
 #define jackbridge_deactivate jack_deactivate
 #define jackbridge_on_shutdown jack_on_shutdown
+#define jackbridge_set_latency_callback jack_set_latency_callback
 #define jackbridge_set_process_callback jack_set_process_callback
 #define jackbridge_set_freewheel_callback jack_set_freewheel_callback
 #define jackbridge_set_buffer_size_callback jack_set_buffer_size_callback
