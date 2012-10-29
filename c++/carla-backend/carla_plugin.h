@@ -234,8 +234,7 @@ public:
             m_ctrlInChannel = 0;
 
         m_latency = 0;
-        m_tempBufferIn  = nullptr;
-        m_tempBufferOut = nullptr;
+        m_latencyBuffers = nullptr;
 
 #ifndef BUILD_BRIDGE
         osc.data.path   = nullptr;
@@ -309,20 +308,12 @@ public:
             custom.clear();
         }
 
-        if (m_tempBufferIn)
+        if (m_latencyBuffers)
         {
             for (uint32_t i=0; i < aIn.count; i++)
-                delete[] m_tempBufferIn[i];
+                delete[] m_latencyBuffers[i];
 
-            delete[] m_tempBufferIn;
-        }
-
-        if (m_tempBufferOut)
-        {
-            for (uint32_t i=0; i < aOut.count; i++)
-                delete[] m_tempBufferOut[i];
-
-            delete[] m_tempBufferOut;
+            delete[] m_latencyBuffers;
         }
 
         m_count -= 1;
@@ -1387,49 +1378,31 @@ public:
      */
     virtual void bufferSizeChanged(const uint32_t newBufferSize)
     {
-        recreateTempBuffers(newBufferSize);
+        Q_UNUSED(newBufferSize);
     }
 
     /*!
-     * Recreate temporary audio buffers.
+     * Recreate latency audio buffers.
      */
-    void recreateTempBuffers(const uint32_t bufferSize)
+    void recreateLatencyBuffers()
     {
-        if (m_tempBufferIn)
+        if (m_latencyBuffers)
         {
             for (uint32_t i=0; i < aIn.count; i++)
-                delete[] m_tempBufferIn[i];
+                delete[] m_latencyBuffers[i];
 
-            delete[] m_tempBufferIn;
+            delete[] m_latencyBuffers;
         }
 
-        if (m_tempBufferOut)
+        if (aIn.count > 0 && m_latency > 0)
         {
-            for (uint32_t i=0; i < aOut.count; i++)
-                delete[] m_tempBufferOut[i];
-
-            delete[] m_tempBufferOut;
-        }
-
-        if (aIn.count > 0)
-        {
-            m_tempBufferIn = new float* [aIn.count];
+            m_latencyBuffers = new float* [aIn.count];
 
             for (uint32_t i=0; i < aIn.count; i++)
-                m_tempBufferIn[i] = new float [bufferSize];
+                m_latencyBuffers[i] = new float [m_latency];
         }
         else
-            m_tempBufferIn = nullptr;
-
-        if (aOut.count > 0)
-        {
-            m_tempBufferOut = new float* [aOut.count];
-
-            for (uint32_t i=0; i < aOut.count; i++)
-                m_tempBufferOut[i] = new float [bufferSize];
-        }
-        else
-            m_tempBufferOut = nullptr;
+            m_latencyBuffers = nullptr;
     }
 
     // -------------------------------------------------------------------
@@ -2242,8 +2215,7 @@ protected:
     int8_t  m_ctrlInChannel;
 
     uint32_t m_latency;
-    float**  m_tempBufferIn;
-    float**  m_tempBufferOut;
+    float**  m_latencyBuffers;
 
     // -------------------------------------------------------------------
     // Storage Data

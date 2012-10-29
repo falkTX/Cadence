@@ -743,11 +743,11 @@ public:
                 aIn.ports[i]->setLatency(m_latency);
 
             x_client->recomputeLatencies();
+            recreateLatencyBuffers();
         }
 
         reloadPrograms(true);
 
-        recreateTempBuffers(x_engine->getBufferSize());
         x_client->activate();
 
         qDebug("VstPlugin::reload() - end");
@@ -1210,11 +1210,11 @@ public:
                     midiEventCount = MAX_MIDI_CHANNELS*2;
                 }
 
-                for (i=0; i < aIn.count; i++)
-                    memset(m_tempBufferIn[i], 0, sizeof(float)*x_engine->getBufferSize());
-
-                for (i=0; i < aOut.count; i++)
-                    memset(m_tempBufferOut[i], 0, sizeof(float)*x_engine->getBufferSize());
+                if (m_latency > 0)
+                {
+                    for (i=0; i < aIn.count; i++)
+                        memset(m_latencyBuffers[i], 0, sizeof(float)*m_latency);
+                }
 
                 effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
             }
@@ -1277,7 +1277,7 @@ public:
                     for (k=0; k < frames; k++)
                     {
                         if (k < m_latency && m_latency < frames)
-                            bufValue = (aIn.count == 1) ? m_tempBufferIn[0][k] : m_tempBufferIn[i][k];
+                            bufValue = (aIn.count == 1) ? m_latencyBuffers[0][k] : m_latencyBuffers[i][k];
                         else
                             bufValue = (aIn.count == 1) ? inBuffer[0][k-m_latency] : inBuffer[i][k-m_latency];
 
@@ -1330,7 +1330,7 @@ public:
             if (m_latency > 0 && m_latency < frames)
             {
                 for (i=0; i < aIn.count; i++)
-                    memcpy(m_tempBufferIn[i], inBuffer[i] + (frames - m_latency), sizeof(float)*m_latency);
+                    memcpy(m_latencyBuffers[i], inBuffer[i] + (frames - m_latency), sizeof(float)*m_latency);
             }
         }
         else
@@ -1392,8 +1392,6 @@ public:
 
         if (m_active)
             effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
-
-        CarlaPlugin::bufferSizeChanged(newBufferSize);
     }
 
     // -------------------------------------------------------------------

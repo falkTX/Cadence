@@ -1775,12 +1775,12 @@ public:
                     aIn.ports[i]->setLatency(m_latency);
 
                 x_client->recomputeLatencies();
+                recreateLatencyBuffers();
             }
         }
 
         reloadPrograms(true);
 
-        recreateTempBuffers(x_engine->getBufferSize());
         x_client->activate();
 
         qDebug("Lv2Plugin::reload() - end");
@@ -2520,6 +2520,12 @@ public:
                     midiEventCount = MAX_MIDI_CHANNELS*2;
                 }
 
+                if (m_latency > 0)
+                {
+                    for (i=0; i < aIn.count; i++)
+                        memset(m_latencyBuffers[i], 0, sizeof(float)*m_latency);
+                }
+
                 if (descriptor->activate)
                 {
                     descriptor->activate(handle);
@@ -2582,7 +2588,7 @@ public:
                     for (k=0; k < frames; k++)
                     {
                         if (k < m_latency && m_latency < frames)
-                            bufValue = (aIn.count == 1) ? m_tempBufferIn[0][k] : m_tempBufferIn[i][k];
+                            bufValue = (aIn.count == 1) ? m_latencyBuffers[0][k] : m_latencyBuffers[i][k];
                         else
                             bufValue = (aIn.count == 1) ? inBuffer[0][k-m_latency] : inBuffer[i][k-m_latency];
 
@@ -2635,7 +2641,7 @@ public:
             if (m_latency > 0 && m_latency < frames)
             {
                 for (i=0; i < aIn.count; i++)
-                    memcpy(m_tempBufferIn[i], inBuffer[i] + (frames - m_latency), sizeof(float)*m_latency);
+                    memcpy(m_latencyBuffers[i], inBuffer[i] + (frames - m_latency), sizeof(float)*m_latency);
             }
         }
         else
@@ -2771,8 +2777,6 @@ public:
     void bufferSizeChanged(const uint32_t newBufferSize)
     {
         lv2Options.bufferSize = newBufferSize;
-
-        CarlaPlugin::bufferSizeChanged(newBufferSize);
     }
 
     // -------------------------------------------------------------------
