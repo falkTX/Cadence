@@ -1584,6 +1584,11 @@ public:
     bool init(const char* const name, const char* const label)
     {
         // ---------------------------------------------------------------
+        // initialize native-plugins descriptors
+
+        scopedInitliazer.maybeFirstInit();
+
+        // ---------------------------------------------------------------
         // get descriptor that matches label
 
         for (size_t i=0; i < pluginDescriptors.size(); i++)
