@@ -1,0 +1,40 @@
+
+GENERAL:
+ - add lv2-cocoa+hwmd ui paths
+ - add direct program access on ui-dialogs (needed for standalone bridges), maybe add extra buttons too
+ - implement osc-based uis in bridge mode
+ - implement midi-learn (new dialog)
+ - implement midi-cc automation special rules (invert, half, logarithmic, etc)
+ - allow to change position of plugins (up/down)
+ - allow to set m_ctrlInChannel from GUI (needs GUI widget)
+
+ENGINE:
+ - complete RtAudio+RtMidi support
+ - implement Haiku Media support (based from JACK?)
+ - implement latency in continuos-rack mode
+ - pre-allocate audio buffers in continuos-rack mode
+
+LADSPA:
+
+DSSI:
+
+LV2:
+ - implement lv2-preset support
+ - complete lv2-atom messages support
+ - complete lv2-worker support
+ - use m_count directly, remove from CarlaPlugin
+ - make some features static, init/delete based on m_count
+
+VST:
+ - add support for old X11 UIs
+ - implement cockos extensions
+ - compare with dssi-vst code
+
+LinuxSampler:
+ - implement midi-program changes
+
+FluidSynth:
+
+Native:
+ - Cleanup API
+ - Document API
