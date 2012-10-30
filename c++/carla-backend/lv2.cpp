@@ -222,7 +222,8 @@ public:
     {
         qDebug("Lv2Plugin::Lv2Plugin()");
 
-        m_type = PLUGIN_LV2;
+        m_type   = PLUGIN_LV2;
+        m_count += 1;
 
         handle = h2 = nullptr;
         descriptor  = nullptr;
@@ -297,12 +298,46 @@ public:
             lv2Options.oSampleRate.value   = &lv2Options.sampleRate;
         }
 
+        // init static data if this is the first lv2-plugin loaded
+        if (m_count == 1)
+        {
+            ft.event                  = new LV2_Event_Feature;
+            ft.event->callback_data   = this;
+            ft.event->lv2_event_ref   = carla_lv2_event_ref;
+            ft.event->lv2_event_unref = carla_lv2_event_unref;
+
+            ft.log          = new LV2_Log_Log;
+            ft.log->handle  = this;
+            ft.log->printf  = carla_lv2_log_printf;
+            ft.log->vprintf = carla_lv2_log_vprintf;
+
+            ft.rtMemPool = new LV2_RtMemPool_Pool;
+            rtmempool_allocator_init(ft.rtMemPool);
+
+            ft.stateMakePath         = new LV2_State_Make_Path;
+            ft.stateMakePath->handle = this;
+            ft.stateMakePath->path   = carla_lv2_state_make_path;
+
+            ft.stateMapPath                = new LV2_State_Map_Path;
+            ft.stateMapPath->handle        = this;
+            ft.stateMapPath->abstract_path = carla_lv2_state_map_abstract_path;
+            ft.stateMapPath->absolute_path = carla_lv2_state_map_absolute_path;
+
+            ft.options    = new LV2_Options_Option [5];
+            ft.options[0] = lv2Options.oMaxBlockLenth;
+            ft.options[1] = lv2Options.oMinBlockLenth;
+            ft.options[2] = lv2Options.oSequenceSize;
+            ft.options[3] = lv2Options.oSampleRate;
+            ft.options[4] = lv2Options.oNull;
+        }
+
         Lv2World.init();
     }
 
     ~Lv2Plugin()
     {
         qDebug("Lv2Plugin::~Lv2Plugin()");
+        m_count -= 1;
 
         // close UI
         if (m_hints & PLUGIN_HAS_GUI)
@@ -403,29 +438,8 @@ public:
         if (rdf_descriptor)
             delete rdf_descriptor;
 
-        if (features[lv2_feature_id_event] && features[lv2_feature_id_event]->data)
-            delete (LV2_Event_Feature*)features[lv2_feature_id_event]->data;
-
-        if (features[lv2_feature_id_logs] && features[lv2_feature_id_logs]->data)
-            delete (LV2_Log_Log*)features[lv2_feature_id_logs]->data;
-
-        if (features[lv2_feature_id_options] && features[lv2_feature_id_options]->data)
-        {
-            const LV2_Options_Option* const options = (const LV2_Options_Option*)features[lv2_feature_id_options]->data;
-            delete[] options;
-        }
-
         if (features[lv2_feature_id_programs] && features[lv2_feature_id_programs]->data)
             delete (LV2_Programs_Host*)features[lv2_feature_id_programs]->data;
-
-        if (features[lv2_feature_id_rtmempool] && features[lv2_feature_id_rtmempool]->data)
-            delete (LV2_RtMemPool_Pool*)features[lv2_feature_id_rtmempool]->data;
-
-        if (features[lv2_feature_id_state_make_path] && features[lv2_feature_id_state_make_path]->data)
-            delete (LV2_State_Make_Path*)features[lv2_feature_id_state_make_path]->data;
-
-        if (features[lv2_feature_id_state_map_path] && features[lv2_feature_id_state_map_path]->data)
-            delete (LV2_State_Map_Path*)features[lv2_feature_id_state_map_path]->data;
 
         if (features[lv2_feature_id_uri_map] && features[lv2_feature_id_uri_map]->data)
             delete (LV2_URI_Map_Feature*)features[lv2_feature_id_uri_map]->data;
@@ -461,8 +475,8 @@ public:
 
         customURIDs.clear();
 
-        // cleanup all descriptors if this is the last plugin loaded
-        if (m_count == 1)
+        // cleanup all static data if this is the last lv2-plugin loaded
+        if (m_count == 0)
         {
             for (auto it = libDescs.begin(); it != libDescs.end(); it++)
             {
@@ -471,6 +485,31 @@ public:
             }
 
             libDescs.clear();
+
+            if (ft.event)
+                delete ft.event;
+
+            if (ft.log)
+                delete ft.log;
+
+            if (ft.options)
+                delete[] ft.options;
+
+            if (ft.rtMemPool)
+                delete ft.rtMemPool;
+
+            if (ft.stateMakePath)
+                delete ft.stateMakePath;
+
+            if (ft.stateMapPath)
+                delete ft.stateMapPath;
+
+            ft.event = nullptr;
+            ft.log   = nullptr;
+            ft.options   = nullptr;
+            ft.rtMemPool = nullptr;
+            ft.stateMakePath = nullptr;
+            ft.stateMapPath  = nullptr;
         }
     }
 
@@ -3885,33 +3924,11 @@ public:
         }
 
         // ---------------------------------------------------------------
-        // initialize features
+        // initialize features (part 1)
 
-        LV2_Event_Feature* const eventFt = new LV2_Event_Feature;
-        eventFt->callback_data           = this;
-        eventFt->lv2_event_ref           = carla_lv2_event_ref;
-        eventFt->lv2_event_unref         = carla_lv2_event_unref;
-
-        LV2_Log_Log* const logFt         = new LV2_Log_Log;
-        logFt->handle                    = this;
-        logFt->printf                    = carla_lv2_log_printf;
-        logFt->vprintf                   = carla_lv2_log_vprintf;
-
-        LV2_Programs_Host* const programsFt        = new LV2_Programs_Host;
-        programsFt->handle                         = this;
-        programsFt->program_changed                = carla_lv2_program_changed;
-
-        LV2_RtMemPool_Pool* const rtMemPoolFt      = new LV2_RtMemPool_Pool;
-        rtmempool_allocator_init(rtMemPoolFt);
-
-        LV2_State_Make_Path* const stateMakePathFt = new LV2_State_Make_Path;
-        stateMakePathFt->handle                    = this;
-        stateMakePathFt->path                      = carla_lv2_state_make_path;
-
-        LV2_State_Map_Path* const stateMapPathFt   = new LV2_State_Map_Path;
-        stateMapPathFt->handle                     = this;
-        stateMapPathFt->abstract_path              = carla_lv2_state_map_abstract_path;
-        stateMapPathFt->absolute_path              = carla_lv2_state_map_absolute_path;
+        LV2_Programs_Host* const programsFt = new LV2_Programs_Host;
+        programsFt->handle                  = this;
+        programsFt->program_changed         = carla_lv2_program_changed;
 
         LV2_URI_Map_Feature* const uriMapFt = new LV2_URI_Map_Feature;
         uriMapFt->callback_data             = this;
@@ -3929,12 +3946,8 @@ public:
         workerFt->handle                    = this;
         workerFt->schedule_work             = carla_lv2_worker_schedule;
 
-        LV2_Options_Option* const optionsFt = new LV2_Options_Option [5];
-        optionsFt[0] = lv2Options.oMaxBlockLenth;
-        optionsFt[1] = lv2Options.oMinBlockLenth;
-        optionsFt[2] = lv2Options.oSequenceSize;
-        optionsFt[3] = lv2Options.oSampleRate;
-        optionsFt[4] = lv2Options.oNull;
+        // ---------------------------------------------------------------
+        // initialize features (part 2)
 
         features[lv2_feature_id_bufsize_bounded]       = new LV2_Feature;
         features[lv2_feature_id_bufsize_bounded]->URI  = LV2_BUF_SIZE__boundedBlockLength;
@@ -3954,22 +3967,22 @@ public:
         else
 #endif
         {
-            // fake, used to keep a valid array
+            // fake, used only to keep a valid features-array
             features[lv2_feature_id_bufsize_fixed]    = features[lv2_feature_id_bufsize_bounded];
             features[lv2_feature_id_bufsize_powerof2] = features[lv2_feature_id_bufsize_bounded];
         }
 
         features[lv2_feature_id_event]          = new LV2_Feature;
         features[lv2_feature_id_event]->URI     = LV2_EVENT_URI;
-        features[lv2_feature_id_event]->data    = eventFt;
+        features[lv2_feature_id_event]->data    = ft.event;
 
         features[lv2_feature_id_logs]           = new LV2_Feature;
         features[lv2_feature_id_logs]->URI      = LV2_LOG__log;
-        features[lv2_feature_id_logs]->data     = logFt;
+        features[lv2_feature_id_logs]->data     = ft.log;
 
         features[lv2_feature_id_options]        = new LV2_Feature;
         features[lv2_feature_id_options]->URI   = LV2_OPTIONS__options;
-        features[lv2_feature_id_options]->data  = optionsFt;
+        features[lv2_feature_id_options]->data  = ft.options;
 
         features[lv2_feature_id_programs]       = new LV2_Feature;
         features[lv2_feature_id_programs]->URI  = LV2_PROGRAMS__Host;
@@ -3977,15 +3990,15 @@ public:
 
         features[lv2_feature_id_rtmempool]       = new LV2_Feature;
         features[lv2_feature_id_rtmempool]->URI  = LV2_RTSAFE_MEMORY_POOL__Pool;
-        features[lv2_feature_id_rtmempool]->data = rtMemPoolFt;
+        features[lv2_feature_id_rtmempool]->data = ft.rtMemPool;
 
         features[lv2_feature_id_state_make_path]       = new LV2_Feature;
         features[lv2_feature_id_state_make_path]->URI  = LV2_STATE__makePath;
-        features[lv2_feature_id_state_make_path]->data = stateMakePathFt;
+        features[lv2_feature_id_state_make_path]->data = ft.stateMakePath;
 
         features[lv2_feature_id_state_map_path]        = new LV2_Feature;
         features[lv2_feature_id_state_map_path]->URI   = LV2_STATE__mapPath;
-        features[lv2_feature_id_state_map_path]->data  = stateMapPathFt;
+        features[lv2_feature_id_state_map_path]->data  = ft.stateMapPath;
 
         features[lv2_feature_id_strict_bounds]         = new LV2_Feature;
         features[lv2_feature_id_strict_bounds]->URI    = LV2_PORT_PROPS__supportsStrictBounds;
@@ -4542,12 +4555,28 @@ private:
     bool     lastTimePosPlaying;
     uint32_t lastTimePosFrame;
 
+    static unsigned int m_count;
     static std::set<const LV2_Lib_Descriptor*> libDescs;
+
+    static struct Ft {
+        LV2_Event_Feature* event;
+        LV2_Log_Log* log;
+        LV2_Options_Option* options;
+        LV2_RtMemPool_Pool* rtMemPool;
+        LV2_State_Make_Path* stateMakePath;
+        LV2_State_Map_Path* stateMapPath;
+    } ft;
 };
 
+/**@}*/
+
+// -------------------------------------------------------------------
+// static data
+
+unsigned int Lv2Plugin::m_count = 0;
 std::set<const LV2_Lib_Descriptor*> Lv2Plugin::libDescs;
 
-/**@}*/
+Lv2Plugin::Ft Lv2Plugin::ft = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
 
 // -------------------------------------------------------------------------------------------------------------------
 

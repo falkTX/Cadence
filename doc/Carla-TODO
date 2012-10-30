@@ -22,8 +22,6 @@ LV2:
  - implement lv2-preset support
  - complete lv2-atom messages support
  - complete lv2-worker support
- - use m_count directly, remove from CarlaPlugin
- - make some features static, init/delete based on m_count
 
 VST:
  - add support for old X11 UIs

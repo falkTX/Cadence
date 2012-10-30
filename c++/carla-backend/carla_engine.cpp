@@ -22,7 +22,6 @@ CARLA_BACKEND_START_NAMESPACE
 
 // -----------------------------------------------------------------------
 
-unsigned int   CarlaPlugin::m_count = 0;
 unsigned short CarlaEngine::m_maxPluginNumber = 0;
 
 CarlaEngine::CarlaEngine()
