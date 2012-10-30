@@ -730,6 +730,7 @@ public:
             m_hints |= PLUGIN_CAN_FORCE_STEREO;
 
         // check latency
+        if (m_hints & PLUGIN_CAN_DRYWET)
         {
 #ifdef VESTIGE_HEADER
             char* const empty3Ptr = &effect->empty3[0];
@@ -739,10 +740,7 @@ public:
             m_latency = effect->initialDelay;
 #endif
 
-            for (uint32_t i=0; i < aIn.count; i++)
-                aIn.ports[i]->setLatency(m_latency);
-
-            x_client->recomputeLatencies();
+            x_client->setLatency(m_latency);
             recreateLatencyBuffers();
         }
 

@@ -475,7 +475,7 @@ protected:
 #endif
     }
 
-    void handleLatencyCallback()
+    void handleLatencyCallback(jack_latency_callback_mode_t mode)
     {
 #ifndef BUILD_BRIDGE
         if (carlaOptions.processMode != PROCESS_MODE_SINGLE_CLIENT)
@@ -485,7 +485,9 @@ protected:
         for (unsigned short i=0, max=maxPluginNumber(); i < max; i++)
         {
             CarlaPlugin* const plugin = getPluginUnchecked(i);
-            latencyPlugin(plugin);
+
+            if (plugin && plugin->enabled())
+                latencyPlugin(plugin, mode);
         }
     }
 
@@ -494,7 +496,9 @@ protected:
         for (unsigned short i=0, max=maxPluginNumber(); i < max; i++)
         {
             CarlaPlugin* const plugin = getPluginUnchecked(i);
-            plugin->x_client = nullptr;
+
+            if (plugin)
+                plugin->x_client = nullptr;
         }
 
         client = nullptr;
@@ -569,20 +573,41 @@ private:
             zeroF(p->aOut.ports[i]->getJackAudioBuffer(nframes), nframes);
     }
 
-    static void latencyPlugin(CarlaPlugin* const p)
+    static void latencyPlugin(CarlaPlugin* const p, jack_latency_callback_mode_t mode)
     {
-        for (uint32_t i=0; i < p->aIn.count; i++)
+        jack_latency_range_t range;
+        uint32_t pluginLatency = p->x_client->getLatency();
+
+        if (pluginLatency == 0)
+            return;
+
+        if (mode == JackCaptureLatency)
         {
-            const CarlaEngineAudioPort* const port = p->aIn.ports[i];
-            jack_port_t* const jackPort = port->getHandle().jackPort;
-            jack_latency_range_t range;
+            for (uint32_t i=0; i < p->aIn.count; i++)
+            {
+                uint aOutI = (i >= p->aOut.count) ? p->aOut.count : i;
+                jack_port_t* const portIn  = p->aIn.ports[i]->getHandle().jackPort;
+                jack_port_t* const portOut = p->aOut.ports[aOutI]->getHandle().jackPort;
 
-            jackbridge_port_get_latency_range(jackPort, JackPlaybackLatency, &range);
+                jackbridge_port_get_latency_range(portIn, mode, &range);
+                range.min += pluginLatency;
+                range.max += pluginLatency;
+                jackbridge_port_set_latency_range(portOut, mode, &range);
+            }
+        }
+        else
+        {
+            for (uint32_t i=0; i < p->aOut.count; i++)
+            {
+                uint aInI = (i >= p->aIn.count) ? p->aIn.count : i;
+                jack_port_t* const portIn  = p->aIn.ports[aInI]->getHandle().jackPort;
+                jack_port_t* const portOut = p->aOut.ports[i]->getHandle().jackPort;
 
-            range.min += port->getLatency();
-            range.max += port->getLatency();
-
-            jackbridge_port_set_latency_range(jackPort, JackPlaybackLatency, &range);
+                jackbridge_port_get_latency_range(portOut, mode, &range);
+                range.min += pluginLatency;
+                range.max += pluginLatency;
+                jackbridge_port_set_latency_range(portIn, mode, &range);
+            }
         }
     }
 
@@ -637,22 +662,16 @@ private:
 
     static void carla_jack_latency_callback(jack_latency_callback_mode_t mode, void* arg)
     {
-        if (mode != JackPlaybackLatency)
-            return;
-
         CarlaEngineJack* const _this_ = (CarlaEngineJack*)arg;
-        _this_->handleLatencyCallback();
+        _this_->handleLatencyCallback(mode);
     }
 
     static void carla_jack_latency_callback_plugin(jack_latency_callback_mode_t mode, void* arg)
     {
-        if (mode != JackPlaybackLatency)
-            return;
-
         CarlaPlugin* const plugin = (CarlaPlugin*)arg;
 
         if (plugin && plugin->enabled())
-            latencyPlugin(plugin);
+            latencyPlugin(plugin, mode);
     }
 
     static void carla_jack_shutdown_callback(void* arg)

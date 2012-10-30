@@ -810,7 +810,8 @@ CarlaEngineClient::CarlaEngineClient(const CarlaEngineClientNativeHandle& handle
     qDebug("CarlaEngineClient::CarlaEngineClient()");
     CARLA_ASSERT(handle.type != CarlaEngineTypeNull);
 
-    m_active = false;
+    m_active  = false;
+    m_latency = 0;
 }
 
 CarlaEngineClient::~CarlaEngineClient()
@@ -895,8 +896,15 @@ bool CarlaEngineClient::isOk() const
     return true;
 }
 
-void CarlaEngineClient::recomputeLatencies()
+uint32_t CarlaEngineClient::getLatency() const
 {
+    return m_latency;
+}
+
+void CarlaEngineClient::setLatency(const uint32_t samples)
+{
+    m_latency = samples;
+
 #ifndef BUILD_BRIDGE
     if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #endif
@@ -986,21 +994,10 @@ CarlaEngineAudioPort::CarlaEngineAudioPort(const CarlaEnginePortNativeHandle& ha
     : CarlaEngineBasePort(handle, isInput)
 {
     qDebug("CarlaEngineAudioPort::CarlaEngineAudioPort(%s)", bool2str(isInput));
-    latency = 0;
 }
 
 void CarlaEngineAudioPort::initBuffer(CarlaEngine* const /*engine*/)
 {
-}
-
-uint32_t CarlaEngineAudioPort::getLatency() const
-{
-    return latency;
-}
-
-void CarlaEngineAudioPort::setLatency(const uint32_t samples)
-{
-    latency = samples;
 }
 
 #ifdef CARLA_ENGINE_JACK

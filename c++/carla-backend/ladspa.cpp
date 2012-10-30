@@ -666,6 +666,7 @@ public:
             m_hints |= PLUGIN_CAN_FORCE_STEREO;
 
         // check latency
+        if (m_hints & PLUGIN_CAN_DRYWET)
         {
             bool hasLatency = false;
             m_latency = 0;
@@ -708,10 +709,7 @@ public:
 
             if (hasLatency)
             {
-                for (uint32_t i=0; i < aIn.count; i++)
-                    aIn.ports[i]->setLatency(m_latency);
-
-                x_client->recomputeLatencies();
+                x_client->setLatency(m_latency);
                 recreateLatencyBuffers();
             }
         }
