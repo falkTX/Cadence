@@ -12,7 +12,7 @@ ENGINE:
  - complete RtAudio+RtMidi support
  - implement Haiku Media support (based from JACK?)
  - implement latency in continuos-rack mode
- - pre-allocate audio buffers in continuos-rack mode
+ - pre-allocate audio buffers in continuous-rack mode
 
 LADSPA:
 

@@ -1484,6 +1484,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_AlsaBridgeStart(self):
+        self.slot_AlsaBridgeStop()
         self.func_start_tool("cadence-aloop-daemon")
 
     @pyqtSlot()
