@@ -1182,10 +1182,15 @@ public:
                 fluid_synth_set_gain(f_synth, x_volume);
 
                 // Output VU
-                for (k=0; i < 2 && k < frames; k++)
+#ifndef BUILD_BRIDGE
+                if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
+#endif
                 {
-                    if (abs(outBuffer[i][k]) > aOutsPeak[i])
-                        aOutsPeak[i] = abs(outBuffer[i][k]);
+                    for (k=0; i < 2 && k < frames; k++)
+                    {
+                        if (abs(outBuffer[i][k]) > aOutsPeak[i])
+                            aOutsPeak[i] = abs(outBuffer[i][k]);
+                    }
                 }
             }
         }

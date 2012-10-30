@@ -734,7 +734,11 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Input VU
 
+#ifndef BUILD_BRIDGE
+        if (aIn.count > 0 && carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
+#else
         if (aIn.count > 0)
+#endif
         {
             if (aIn.count == 1)
             {
@@ -1027,10 +1031,15 @@ public:
                 }
 
                 // Output VU
-                for (k=0; i < 2 && k < frames; k++)
+#ifndef BUILD_BRIDGE
+                if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
+#endif
                 {
-                    if (abs(outBuffer[i][k]) > aOutsPeak[i])
-                        aOutsPeak[i] = abs(outBuffer[i][k]);
+                    for (k=0; i < 2 && k < frames; k++)
+                    {
+                        if (abs(outBuffer[i][k]) > aOutsPeak[i])
+                            aOutsPeak[i] = abs(outBuffer[i][k]);
+                    }
                 }
             }
 

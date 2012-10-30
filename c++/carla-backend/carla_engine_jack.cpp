@@ -285,7 +285,6 @@ protected:
                     processPluginNOT(plugin, nframes);
 
                 plugin->engineProcessUnlock();
-
             }
         }
         else if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
