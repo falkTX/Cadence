@@ -119,7 +119,7 @@ void jackbridge_on_shutdown(jack_client_t* client, JackShutdownCallback shutdown
 #endif
 }
 
-void jackbridge_set_latency_callback(jack_client_t* client, JackLatencyCallback latency_callback, void* arg)
+int jackbridge_set_latency_callback(jack_client_t* client, JackLatencyCallback latency_callback, void* arg)
 {
 #ifndef JACKBRIDGE_DUMMY
     return jack_set_latency_callback(client, latency_callback, arg);

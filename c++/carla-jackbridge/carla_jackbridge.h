@@ -45,7 +45,7 @@ CARLA_EXPORT void jackbridge_port_set_latency_range(jack_port_t* port, jack_late
 CARLA_EXPORT int jackbridge_activate(jack_client_t* client);
 CARLA_EXPORT int jackbridge_deactivate(jack_client_t* client);
 CARLA_EXPORT void jackbridge_on_shutdown(jack_client_t* client, JackShutdownCallback shutdown_callback, void* arg);
-CARLA_EXPORT void jackbridge_set_latency_callback(jack_client_t* client, JackLatencyCallback latency_callback, void* arg);
+CARLA_EXPORT int jackbridge_set_latency_callback(jack_client_t* client, JackLatencyCallback latency_callback, void* arg);
 CARLA_EXPORT int jackbridge_set_process_callback(jack_client_t* client, JackProcessCallback process_callback, void* arg);
 CARLA_EXPORT int jackbridge_set_freewheel_callback(jack_client_t* client, JackFreewheelCallback freewheel_callback, void* arg);
 CARLA_EXPORT int jackbridge_set_buffer_size_callback(jack_client_t* client, JackBufferSizeCallback bufsize_callback, void* arg);
