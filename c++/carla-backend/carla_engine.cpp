@@ -500,7 +500,17 @@ bool CarlaEngine::removePlugin(const unsigned short id)
 #endif
 
         if (isRunning())
-            m_checkThread.startNow();
+        {
+            // only re-start check thread if there are still plugins left
+            for (unsigned short i=0; i < m_maxPluginNumber; i++)
+            {
+                if (m_carlaPlugins[i])
+                {
+                    m_checkThread.startNow();
+                    break;
+                }
+            }
+        }
 
         return true;
     }
