@@ -2033,7 +2033,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         GlobalSettings.setValue("JACK/AutoStart", self.cb_jack_autostart.isChecked())
         GlobalSettings.setValue("ALSA-Audio/BridgeIndexType", self.cb_alsa_type.currentIndex())
-        GlobalSettings.setValue("A2J-MIDI/AutoStart", self.cb_a2j_autostart.isChecked())
+        GlobalSettings.setValue("A2J/AutoStart", self.cb_a2j_autostart.isChecked())
         GlobalSettings.setValue("Pulse2JACK/AutoStart", (havePulseAudio and self.cb_pulse_autostart.isChecked()))
 
     def loadSettings(self, geometry):
