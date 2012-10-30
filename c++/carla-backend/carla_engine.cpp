@@ -20,6 +20,11 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
+double abs_d(const double& value)
+{
+    return (value < 0.0) ? -value : value;
+}
+
 // -----------------------------------------------------------------------
 
 unsigned short CarlaEngine::m_maxPluginNumber = 0;
@@ -628,6 +633,31 @@ void CarlaEngine::processRack(float* inBuf[2], float* outBuf[2], uint32_t frames
             if (plugin->midiOutCount() == 0)
             {
                 memcpy(rackMidiEventsOut, rackMidiEventsIn, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+            }
+
+            // set peaks
+            {
+                double inPeak1  = 0.0;
+                double inPeak2  = 0.0;
+                double outPeak1 = 0.0;
+                double outPeak2 = 0.0;
+
+                for (uint32_t k=0; k < frames; k++)
+                {
+                    if (abs_d(inBuf[0][k]) > inPeak1)
+                        inPeak1 = abs_d(inBuf[0][k]);
+                    if (abs_d(inBuf[1][k]) > inPeak2)
+                        inPeak2 = abs_d(inBuf[1][k]);
+                    if (abs_d(outBuf[0][k]) > outPeak1)
+                        outPeak1 = abs_d(outBuf[0][k]);
+                    if (abs_d(outBuf[1][k]) > outPeak2)
+                        outPeak2 = abs_d(outBuf[1][k]);
+                }
+
+                m_insPeak[i*MAX_PEAKS + 0] = inPeak1;
+                m_insPeak[i*MAX_PEAKS + 1] = inPeak2;
+                m_outsPeak[i*MAX_PEAKS + 0] = outPeak1;
+                m_outsPeak[i*MAX_PEAKS + 1] = outPeak2;
             }
 
             processed = true;

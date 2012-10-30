@@ -11,8 +11,9 @@ GENERAL:
 ENGINE:
  - complete RtAudio+RtMidi support
  - implement Haiku Media support (based from JACK?)
- - implement latency in continuos-rack mode
- - pre-allocate audio buffers in continuous-rack mode
+ - implement latency in continuous-rack mode
+ - pre-allocate audio buffers in continuous-rack mode (RtAudio only)
+ - DSSI/LV2/VST version (needs add-new support on control side)
 
 LADSPA:
 
