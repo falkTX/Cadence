@@ -288,7 +288,7 @@ public:
     ~CarlaLv2Client()
     {
         if (rdf_descriptor)
-            lv2_rdf_free(rdf_descriptor);
+            delete rdf_descriptor;
 
         const LV2_Options_Option* const options = (const LV2_Options_Option*)features[lv2_feature_id_options]->data;
         delete[] options;

@@ -65,8 +65,8 @@ public:
     {
         qDebug("BridgePlugin::BridgePlugin()");
 
-        m_type   = ptype;
-        m_hints  = PLUGIN_IS_BRIDGE;
+        m_type  = ptype;
+        m_hints = PLUGIN_IS_BRIDGE;
 
         m_initiated = false;
         m_initError = false;
