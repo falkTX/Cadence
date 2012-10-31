@@ -57,7 +57,7 @@ CARLA_LD_FLAGS   += $(shell pkg-config --libs linuxsampler)
 endif
 
 ifeq ($(HAVE_ZYN_DEPS),true)
-CARLA_CXX_FLAGS  += $(shell pkg-config --cflags fftw3 mxml) -DWANT_ZYNADDSUBFX -Iplugins/zynaddsubfx
+CARLA_CXX_FLAGS  += $(shell pkg-config --cflags fftw3 mxml) -DWANT_ZYNADDSUBFX
 CARLA_LD_FLAGS   += $(shell pkg-config --libs fftw3 mxml)
 endif
 
@@ -91,7 +91,7 @@ OBJS += rtmidi-2.0.1/RtMidi.o
 endif
 
 ifeq ($(HAVE_ZYN_DEPS),true)
-OBJS += plugins/zynaddsubfx.o
+OBJS += plugins/zynaddsubfx.o plugins/zynaddsubfx-src.o
 endif
 
 # --------------------------------------------------------------

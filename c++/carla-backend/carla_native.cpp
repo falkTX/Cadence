@@ -802,7 +802,11 @@ public:
         midiprog.data  = nullptr;
 
         // Query new programs
-        midiprog.count = descriptor->midiProgramCount;
+        if (descriptor->get_midi_program && descriptor->set_midi_program)
+        {
+            while (descriptor->get_midi_program(handle, midiprog.count))
+                midiprog.count += 1;
+        }
 
         if (midiprog.count > 0)
             midiprog.data = new MidiProgramData[midiprog.count];
@@ -810,8 +814,8 @@ public:
         // Update data
         for (i=0; i < midiprog.count; i++)
         {
-            const MidiProgram* const mpDesc = &descriptor->midiPrograms[i];
-            CARLA_ASSERT(mpDesc->program < 128);
+            const MidiProgram* const mpDesc = descriptor->get_midi_program(handle, i);
+            CARLA_ASSERT(mpDesc);
             CARLA_ASSERT(mpDesc->name);
 
             midiprog.data[i].bank    = mpDesc->bank;

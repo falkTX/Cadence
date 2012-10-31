@@ -137,9 +137,6 @@ typedef struct _PluginDescriptor {
     uint32_t    portCount;
     PluginPort* ports;
 
-    uint32_t     midiProgramCount;
-    MidiProgram* midiPrograms;
-
     PluginHandle (*instantiate)(struct _PluginDescriptor* _this_, HostDescriptor* host);
     void         (*activate)(PluginHandle handle);
     void         (*deactivate)(PluginHandle handle);
@@ -149,6 +146,8 @@ typedef struct _PluginDescriptor {
     double      (*get_parameter_value)(PluginHandle handle, uint32_t index);
     const char* (*get_parameter_text)(PluginHandle handle, uint32_t index);
     const char* (*get_parameter_unit)(PluginHandle handle, uint32_t index);
+
+    const MidiProgram* (*get_midi_program)(PluginHandle handle, uint32_t index);
 
     void (*set_parameter_value)(PluginHandle handle, uint32_t index, double value);
     void (*set_midi_program)(PluginHandle handle, uint32_t bank, uint32_t program);

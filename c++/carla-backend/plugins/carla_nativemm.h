@@ -37,9 +37,6 @@ public:
             desc.portCount = master->desc.portCount;
             desc.ports     = master->desc.ports;
 
-            desc.midiProgramCount = master->desc.midiProgramCount;
-            desc.midiPrograms     = master->desc.midiPrograms;
-
             host = master->host;
         }
         else
@@ -53,9 +50,6 @@ public:
 
             desc.portCount = 0;
             desc.ports     = nullptr;
-
-            desc.midiProgramCount = 0;
-            desc.midiPrograms     = nullptr;
 
             host = nullptr;
         }
@@ -107,7 +101,7 @@ public:
 
     // -------------------------------------------------------------------
 
-    PluginDescriptor* descriptorInit()
+    const PluginDescriptor* descriptorInit()
     {
         desc.category  = getCategory();
         desc.hints     = getHints();
@@ -211,15 +205,10 @@ protected:
 
     // -------------------------------------------------------------------
 
-    virtual uint32_t getMidiProgramCount()
+    virtual const MidiProgram* getMidiProgram(uint32_t index)
     {
-        return 0;
-    }
-
-    virtual void getMidiProgram(uint32_t index, MidiProgram* midiProgram)
-    {
-        CARLA_ASSERT(index < getMidiProgramCount());
-        CARLA_ASSERT(midiProgram);
+        Q_UNUSED(index);
+        return nullptr;
     }
 
     // -------------------------------------------------------------------
@@ -293,6 +282,8 @@ private:
         desc.get_parameter_text   = _get_parameter_text;
         desc.get_parameter_unit   = _get_parameter_unit;
 
+        desc.get_midi_program     = _get_midi_program;
+
         desc.set_parameter_value  = _set_parameter_value;
         desc.set_midi_program     = _set_midi_program;
         desc.set_custom_data      = _set_custom_data;
@@ -347,6 +338,11 @@ private:
     static const char* _get_parameter_unit(PluginHandle handle, uint32_t index)
     {
         return ((PluginDescriptorClass*)handle)->getParameterUnit(index);
+    }
+
+    static const MidiProgram* _get_midi_program(PluginHandle handle, uint32_t index)
+    {
+        return ((PluginDescriptorClass*)handle)->getMidiProgram(index);
     }
 
     static void _set_parameter_value(PluginHandle handle, uint32_t index, double value)
@@ -406,26 +402,10 @@ private:
                 port->name  = getPortName(i);
             }
         }
-
-        desc.midiProgramCount = getMidiProgramCount();
-
-        if (desc.midiProgramCount > 0)
-        {
-            desc.midiPrograms = new MidiProgram [desc.midiProgramCount];
-
-            for (uint32_t i=0; i < desc.midiProgramCount; i++)
-                getMidiProgram(i, &desc.midiPrograms[i]);
-        }
     }
 
     void _handleFini()
     {
-        if (desc.midiProgramCount > 0 && desc.midiPrograms)
-            delete[] desc.midiPrograms;
-
-        desc.midiProgramCount = 0;
-        desc.midiPrograms = nullptr;
-
         if (desc.portCount > 0 && desc.ports)
             delete[] desc.ports;
 

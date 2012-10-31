@@ -83,9 +83,6 @@ static PluginDescriptor bypassDesc = {
     .portCount  = 0,
     .ports      = NULL,
 
-    .midiProgramCount  = 0,
-    .midiPrograms      = NULL,
-
     .instantiate = bypass_instantiate,
     .activate    = NULL,
     .deactivate  = NULL,
@@ -95,6 +92,8 @@ static PluginDescriptor bypassDesc = {
     .get_parameter_value  = NULL,
     .get_parameter_text   = NULL,
     .get_parameter_unit   = NULL,
+
+    .get_midi_program    = NULL,
 
     .set_parameter_value = NULL,
     .set_midi_program    = NULL,
