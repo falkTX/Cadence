@@ -316,12 +316,16 @@ public:
             if (x_engine->isOffline())
             {
                 const CarlaEngine::ScopedLocker m(x_engine, block);
+                effect->dispatcher(effect, effBeginSetProgram, 0, 0, nullptr, 0.0f);
                 effect->dispatcher(effect, effSetProgram, 0, index, nullptr, 0.0f);
+                effect->dispatcher(effect, effEndSetProgram, 0, 0, nullptr, 0.0f);
             }
             else
             {
                 const ScopedDisabler m(this, block);
+                effect->dispatcher(effect, effBeginSetProgram, 0, 0, nullptr, 0.0f);
                 effect->dispatcher(effect, effSetProgram, 0, index, nullptr, 0.0f);
+                effect->dispatcher(effect, effEndSetProgram, 0, 0, nullptr, 0.0f);
             }
         }
 
@@ -743,6 +747,21 @@ public:
             x_client->setLatency(m_latency);
             recreateLatencyBuffers();
         }
+
+        // special plugin fixes
+#ifdef __WINE__
+        // 1. IL Harmless - disable threaded processing
+        if (effect->uniqueID == 1229484653)
+        {
+            char strBuf[255] = { 0 };
+            getLabel(strBuf);
+
+            if (strcmp(strBuf, "IL Harmless") == 0)
+            {
+                // TODO - disable threaded processing
+            }
+        }
+#endif
 
         reloadPrograms(true);
 
