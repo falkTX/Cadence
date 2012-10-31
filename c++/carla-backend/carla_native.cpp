@@ -25,6 +25,9 @@ extern void carla_register_native_plugin_bypass();
 
 // Internal C++ plugins
 extern void carla_register_native_plugin_midiSplit();
+#ifdef WANT_ZYNADDSUBFX
+extern void carla_register_native_plugin_zynAddSubFx();
+#endif
 
 CARLA_BACKEND_START_NAMESPACE
 
@@ -67,6 +70,9 @@ public:
             firstInit = false;
             carla_register_native_plugin_bypass();
             carla_register_native_plugin_midiSplit();
+#ifdef WANT_ZYNADDSUBFX
+            carla_register_native_plugin_zynAddSubFx();
+#endif
         }
     }
 

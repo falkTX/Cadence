@@ -1735,13 +1735,14 @@ int main(int argc, char* argv[])
     short id_ladspa = add_plugin(BINARY_NATIVE, PLUGIN_LADSPA, "/usr/lib/ladspa/LEET_eqbw2x2.so", "LADSPA plug name, test long name - "
                                  "------- name ------------ name2 ----------- name3 ------------ name4 ------------ name5 ---------- name6", "leet_equalizer_bw2x2", nullptr);
 
-    short id_dssi = add_plugin(BINARY_NATIVE, PLUGIN_DSSI, "/usr/lib/dssi/fluidsynth-dssi.so", "DSSI pname, short-utf8 _ \xAE", "FluidSynth-DSSI", (void*)"/usr/lib/dssi/fluidsynth-dssi/FluidSynth-DSSI_gtk");
+    short id_dssi   = add_plugin(BINARY_NATIVE, PLUGIN_DSSI, "/usr/lib/dssi/fluidsynth-dssi.so", "DSSI pname, short-utf8 _ \xAE", "FluidSynth-DSSI", (void*)"/usr/lib/dssi/fluidsynth-dssi/FluidSynth-DSSI_gtk");
+    short id_native = add_plugin(BINARY_NATIVE, PLUGIN_INTERNAL, "", "ZynHere", "zynaddsubfx", nullptr);
 
     //short id_lv2 = add_plugin(BINARY_NATIVE, PLUGIN_LV2, "FILENAME", "HAHA name!!!", "http://studionumbersix.com/foo/lv2/yc20", nullptr);
 
     //short id_vst = add_plugin(BINARY_NATIVE, PLUGIN_LV2, "FILENAME", "HAHA name!!!", "http://studionumbersix.com/foo/lv2/yc20", nullptr);
 
-    if (id_ladspa < 0 || id_dssi < 0)
+    if (id_ladspa < 0 || id_dssi < 0 || id_native < 0)
     {
         qCritical("failed to start load plugins, reason:\n%s", get_last_error());
         delete vstGui;
@@ -1758,6 +1759,7 @@ int main(int argc, char* argv[])
     // activate
     set_active(id_ladspa, true);
     set_active(id_dssi, true);
+    set_active(id_native, true);
 
     // start guis
     show_gui(id_dssi, true);
@@ -1774,6 +1776,7 @@ int main(int argc, char* argv[])
 
     remove_plugin(id_ladspa);
     remove_plugin(id_dssi);
+    remove_plugin(id_native);
     engine_close();
 
     return 0;

@@ -12,6 +12,7 @@ HAVE_JACK         = $(shell pkg-config --exists jack && echo true)
 # HAVE_PULSEAUDIO   = $(shell pkg-config --exists libpulse-simple && echo true)
 HAVE_FLUIDSYNTH   = $(shell pkg-config --exists fluidsynth && echo true)
 HAVE_LINUXSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
+HAVE_ZYN_DEPS     = $(shell pkg-config --exists fftw3 mxml && echo true)
 HAVE_SUIL         = $(shell pkg-config --exists suil-0 && echo true)
 
 BASE_FLAGS        = -O0 -g -fPIC -Wall -I. -I../carla-includes -I../carla-jackbridge
@@ -55,6 +56,11 @@ CARLA_CXX_FLAGS  += $(shell pkg-config --cflags linuxsampler) -DWANT_LINUXSAMPLE
 CARLA_LD_FLAGS   += $(shell pkg-config --libs linuxsampler)
 endif
 
+ifeq ($(HAVE_ZYN_DEPS),true)
+CARLA_CXX_FLAGS  += $(shell pkg-config --cflags fftw3 mxml) -DWANT_ZYNADDSUBFX -Iplugins/zynaddsubfx
+CARLA_LD_FLAGS   += $(shell pkg-config --libs fftw3 mxml)
+endif
+
 ifeq ($(HAVE_SUIL),true)
 CARLA_CXX_FLAGS  += $(shell pkg-config --cflags suil-0) -DHAVE_SUIL
 CARLA_LD_FLAGS   += $(shell pkg-config --libs suil-0)
@@ -82,6 +88,10 @@ ifeq ($(WANT_RTAUDIO),true)
 CARLA_CXX_FLAGS += -Irtaudio-4.0.11 -Irtmidi-2.0.1 -DCARLA_ENGINE_RTAUDIO -DHAVE_GETTIMEOFDAY -D__RTAUDIO_DEBUG__ -D__RTMIDI_DEBUG__
 OBJS += rtaudio-4.0.11/RtAudio.o
 OBJS += rtmidi-2.0.1/RtMidi.o
+endif
+
+ifeq ($(HAVE_ZYN_DEPS),true)
+OBJS += plugins/zynaddsubfx.o
 endif
 
 # --------------------------------------------------------------
