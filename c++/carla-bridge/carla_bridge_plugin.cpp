@@ -222,7 +222,9 @@ public:
 
         hasUI = false;
 
-        msgTimer   = 0;
+        msgTimerGUI = 0;
+        msgTimerOSC = 0;
+
         nextWidth  = 0;
         nextHeight = 0;
 
@@ -236,7 +238,8 @@ public:
     ~BridgePluginClient()
     {
         qDebug("BridgePluginClient::~BridgePluginClient()");
-        CARLA_ASSERT(msgTimer == 0);
+        CARLA_ASSERT(msgTimerGUI == 0);
+        CARLA_ASSERT(msgTimerOSC == 0);
         CARLA_ASSERT(! pluginGui);
     }
 
@@ -277,7 +280,8 @@ public:
             QApplication::setQuitOnLastWindowClosed(false);
         }
 
-        msgTimer = startTimer(50);
+        msgTimerGUI = startTimer(50);
+        msgTimerOSC = startTimer(25);
 
         QApplication::exec();
     }
@@ -286,10 +290,16 @@ public:
     {
         qDebug("BridgePluginClient::quit()");
 
-        if (msgTimer != 0)
+        if (msgTimerGUI != 0)
         {
-            QApplication::killTimer(msgTimer);
-            msgTimer = 0;
+            QApplication::killTimer(msgTimerGUI);
+            msgTimerGUI = 0;
+        }
+
+        if (msgTimerOSC != 0)
+        {
+            QApplication::killTimer(msgTimerOSC);
+            msgTimerOSC = 0;
         }
 
         if (pluginGui)
@@ -633,7 +643,7 @@ protected:
         if (qCloseNow)
             return quit();
 
-        if (event->timerId() == msgTimer)
+        if (event->timerId() == msgTimerGUI)
         {
             if (nextWidth > 0 && nextHeight > 0 && pluginGui)
             {
@@ -644,11 +654,13 @@ protected:
 
             if (plugin)
                 plugin->idleGui();
-
+        }
+        else if (event->timerId() == msgTimerOSC)
+        {
             if (! CarlaClient::oscIdle())
             {
-                CARLA_ASSERT(msgTimer == 0);
-                msgTimer = 0;
+                CARLA_ASSERT(msgTimerOSC == 0);
+                msgTimerOSC = 0;
                 return;
             }
         }
@@ -660,7 +672,7 @@ protected:
 
 private:
     bool hasUI;
-    int msgTimer;
+    int msgTimerGUI, msgTimerOSC;
     int nextWidth, nextHeight;
 
     CarlaBackend::CarlaEngine* engine;
