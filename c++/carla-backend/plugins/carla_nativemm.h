@@ -176,7 +176,7 @@ protected:
         return nullptr;
     }
 
-    virtual void getParameterRanges(uint32_t index, ParameterRanges* ranges)
+    virtual void getParameterRanges(uint32_t index, ParameterRanges* const ranges)
     {
         CARLA_ASSERT(index < getPortCount());
         CARLA_ASSERT(ranges);
@@ -400,6 +400,9 @@ private:
                 port->type  = getPortType(i);
                 port->hints = getPortHints(i);
                 port->name  = getPortName(i);
+
+                port->scalePointCount = 0;
+                port->scalePoints = nullptr;
             }
         }
     }
@@ -407,7 +410,17 @@ private:
     void _handleFini()
     {
         if (desc.portCount > 0 && desc.ports)
+        {
+            for (uint32_t i=0; i < desc.portCount; i++)
+            {
+                PluginPort* const port = &desc.ports[i];
+
+                if (port->scalePointCount > 0 && port->scalePoints)
+                    delete[] port->scalePoints;
+            }
+
             delete[] desc.ports;
+        }
 
         desc.portCount = 0;
         desc.ports = nullptr;

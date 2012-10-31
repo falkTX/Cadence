@@ -371,8 +371,8 @@ public:
         {
             fixParameterValue(value, param.ranges[parameterId]);
 
-            descriptor->set_parameter_value(handle, parameterId, value);
-            if (h2) descriptor->set_parameter_value(h2, parameterId, value);
+            descriptor->set_parameter_value(handle, param.data[parameterId].rindex, value);
+            if (h2) descriptor->set_parameter_value(h2, param.data[parameterId].rindex, value);
         }
 
         CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
