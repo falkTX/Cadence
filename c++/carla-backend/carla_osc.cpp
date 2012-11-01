@@ -123,6 +123,21 @@ void CarlaOsc::close()
     m_nameSize = 0;
 }
 
+void CarlaOsc::waitForEvents()
+{
+    if (m_serverThreadTCP)
+    {
+        while (lo_server_thread_events_pending(m_serverThreadTCP))
+            carla_msleep(10);
+    }
+
+    if (m_serverThreadUDP)
+    {
+        while (lo_server_thread_events_pending(m_serverThreadUDP))
+            carla_msleep(10);
+    }
+}
+
 // -----------------------------------------------------------------------
 
 int CarlaOsc::handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg)

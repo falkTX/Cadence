@@ -269,6 +269,7 @@ public:
     bool isOscControlRegisted() const;
 
 #ifndef BUILD_BRIDGE
+    void oscWaitEvents();
     const char* getOscServerPathTCP() const;
     const char* getOscServerPathUDP() const;
 #else

@@ -1056,6 +1056,8 @@ public:
                             sendMidiAllNotesOff();
 
                         effect->dispatcher(effect, effStopProcess, 0, 0, nullptr, 0.0f);
+                        effect->dispatcher(effect, effMainsChanged, 0, 0, nullptr, 0.0f);
+                        effect->dispatcher(effect, effMainsChanged, 0, 1, nullptr, 0.0f);
                         effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
 
                         postponeEvent(PluginPostEventParameterChange, PARAMETER_ACTIVE, 0, 0.0);
@@ -1237,6 +1239,7 @@ public:
                         memset(m_latencyBuffers[i], 0, sizeof(float)*m_latency);
                 }
 
+                effect->dispatcher(effect, effMainsChanged, 0, 1, nullptr, 0.0f);
                 effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
             }
 
@@ -1273,7 +1276,10 @@ public:
         else
         {
             if (m_activeBefore)
+            {
                 effect->dispatcher(effect, effStopProcess, 0, 0, nullptr, 0.0f);
+                effect->dispatcher(effect, effMainsChanged, 0, 0, nullptr, 0.0f);
+            }
         }
 
         CARLA_PROCESS_CONTINUE_CHECK;
@@ -1409,7 +1415,10 @@ public:
     void bufferSizeChanged(uint32_t newBufferSize)
     {
         if (m_active)
+        {
             effect->dispatcher(effect, effStopProcess, 0, 0, nullptr, 0.0f);
+            effect->dispatcher(effect, effMainsChanged, 0, 0, nullptr, 0.0f);
+        }
 
 #if ! VST_FORCE_DEPRECATED
         effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, newBufferSize, nullptr, x_engine->getSampleRate());
@@ -1417,7 +1426,10 @@ public:
         effect->dispatcher(effect, effSetBlockSize, 0, newBufferSize, nullptr, 0.0f);
 
         if (m_active)
+        {
+            effect->dispatcher(effect, effMainsChanged, 0, 1, nullptr, 0.0f);
             effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
+        }
     }
 
     // -------------------------------------------------------------------
@@ -1603,12 +1615,18 @@ public:
         engineProcessUnlock();
 
         if (m_active)
+        {
             effect->dispatcher(effect, effStopProcess, 0, 0, nullptr, 0.0f);
+            effect->dispatcher(effect, effMainsChanged, 0, 0, nullptr, 0.0f);
+        }
 
         reload();
 
         if (m_active)
+        {
+            effect->dispatcher(effect, effMainsChanged, 0, 1, nullptr, 0.0f);
             effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
+        }
 
         x_engine->callback(CALLBACK_RELOAD_ALL, m_id, 0, 0, 0.0);
 
@@ -2222,7 +2240,7 @@ public:
 #endif
 
         effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
-        effect->dispatcher(effect, effMainsChanged, 0, 1, nullptr, 0.0f);
+        effect->dispatcher(effect, effMainsChanged, 0, 0, nullptr, 0.0f);
 
         // ---------------------------------------------------------------
         // get info
@@ -2267,8 +2285,10 @@ public:
 
 #if ! VST_FORCE_DEPRECATED
         // dummy pre-start to catch possible wantEvents() call on old plugins
+        effect->dispatcher(effect, effMainsChanged, 0, 1, nullptr, 0.0f);
         effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
         effect->dispatcher(effect, effStopProcess, 0, 0, nullptr, 0.0f);
+        effect->dispatcher(effect, effMainsChanged, 0, 0, nullptr, 0.0f);
 #endif
 
         // special checks

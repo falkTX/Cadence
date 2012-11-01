@@ -799,6 +799,11 @@ bool CarlaEngine::isOscControlRegisted() const
 }
 
 #ifndef BUILD_BRIDGE
+void CarlaEngine::oscWaitEvents()
+{
+    m_osc.waitForEvents();
+}
+
 const char* CarlaEngine::getOscServerPathTCP() const
 {
     return m_osc.getServerPathTCP();

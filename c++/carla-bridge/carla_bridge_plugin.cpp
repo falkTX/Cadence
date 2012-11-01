@@ -20,6 +20,7 @@
 #include "carla_bridge_client.h"
 #include "carla_plugin.h"
 
+#include <set>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QTextStream>
@@ -224,9 +225,6 @@ public:
 
         msgTimerGUI = 0;
         msgTimerOSC = 0;
-
-        nextWidth  = 0;
-        nextHeight = 0;
 
         engine    = nullptr;
         plugin    = nullptr;
@@ -555,6 +553,9 @@ public:
         switch (action)
         {
         case CarlaBackend::CALLBACK_PARAMETER_VALUE_CHANGED:
+#if 0
+            parametersToUpdate.insert(value1);
+#endif
             engine->osc_send_bridge_set_parameter_value(value1, value3);
             break;
 
@@ -587,17 +588,11 @@ public:
 
         case CarlaBackend::CALLBACK_RESIZE_GUI:
             CARLA_ASSERT(value1 > 0 && value2 > 0);
-            if (value3 == 1.0)
-            {
-                nextWidth  = 0;
-                nextHeight = 0;
-                pluginGui->setFixedSize(value1, value2);
-            }
-            else if (nextWidth != value1 && nextHeight != value2)
-            {
-                nextWidth  = value1;
-                nextHeight = value2;
-            }
+            CARLA_ASSERT(pluginGui);
+
+            if (value1 > 0 && value2 > 0 && pluginGui)
+                pluginGui->setNewSize(value1, value2);
+
             break;
 
         case CarlaBackend::CALLBACK_RELOAD_PARAMETERS:
@@ -617,7 +612,6 @@ public:
         default:
             break;
         }
-        Q_UNUSED(value3);
     }
 
     // ---------------------------------------------------------------------
@@ -636,6 +630,8 @@ public:
 protected:
     void guiClosedCallback()
     {
+        if (engine)
+            engine->osc_send_bridge_configure(CarlaBackend::CARLA_BRIDGE_MSG_HIDE_GUI, "");
     }
 
     void timerEvent(QTimerEvent* const event)
@@ -645,12 +641,18 @@ protected:
 
         if (event->timerId() == msgTimerGUI)
         {
-            if (nextWidth > 0 && nextHeight > 0 && pluginGui)
+#if 0
+            if (parametersToUpdate.size() > 0)
             {
-                pluginGui->setNewSize(nextWidth, nextHeight);
-                nextWidth  = 0;
-                nextHeight = 0;
+                for (auto it = parametersToUpdate.begin(); it != parametersToUpdate.end(); it++)
+                {
+                    const int32_t paramId(*it);
+                    engine->osc_send_bridge_set_parameter_value(paramId, plugin->getParameterValue(paramId));
+                }
+
+                parametersToUpdate.clear();
             }
+#endif
 
             if (plugin)
                 plugin->idleGui();
@@ -673,7 +675,9 @@ protected:
 private:
     bool hasUI;
     int msgTimerGUI, msgTimerOSC;
-    int nextWidth, nextHeight;
+#if 0
+    std::set<int32_t> parametersToUpdate;
+#endif
 
     CarlaBackend::CarlaEngine* engine;
     CarlaBackend::CarlaPlugin* plugin;

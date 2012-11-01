@@ -79,6 +79,10 @@ void CarlaCheckThread::run()
         const ScopedLocker m(this);
         oscControlRegisted = engine->isOscControlRegisted();
 
+#ifndef BUILD_BRIDGE
+        engine->oscWaitEvents();
+#endif
+
         for (unsigned short i=0; i < maxPluginNumber; i++)
         {
             CarlaPlugin* const plugin = engine->getPluginUnchecked(i);

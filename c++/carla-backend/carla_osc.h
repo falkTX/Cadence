@@ -57,6 +57,7 @@ public:
 
     void init(const char* const name);
     void close();
+    void waitForEvents();
 
     // -------------------------------------------------------------------
 
