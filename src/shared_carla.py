@@ -193,7 +193,8 @@ CALLBACK_NSM_ANNOUNCE      = 15
 CALLBACK_NSM_OPEN1         = 16
 CALLBACK_NSM_OPEN2         = 17
 CALLBACK_NSM_SAVE          = 18
-CALLBACK_QUIT              = 19
+CALLBACK_ERROR             = 19
+CALLBACK_QUIT              = 20
 
 # enum ProcessModeType
 PROCESS_MODE_SINGLE_CLIENT    = 0

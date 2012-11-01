@@ -500,9 +500,14 @@ enum CallbackType {
     CALLBACK_NSM_SAVE = 18,
 
     /*!
+     * An error occurred, show last error to user.
+     */
+    CALLBACK_ERROR = 19,
+
+    /*!
      * The engine has crashed or malfunctioned and will no longer work.
      */
-    CALLBACK_QUIT = 19
+    CALLBACK_QUIT = 20
 };
 
 /*!

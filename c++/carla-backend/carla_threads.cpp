@@ -287,7 +287,16 @@ void CarlaPluginThread::run()
         m_process->waitForFinished(-1);
 
         if (m_process->exitCode() != 0)
+        {
             qWarning("CarlaPluginThread::run() - bridge crashed");
+
+            QString errorString = QString("Plugin '%1' has crashed!\n"
+                                          "Saving now will lose its current settings.\n"
+                                          "Please remove this plugin, and not rely on it from this point.").arg(plugin->name());
+            CarlaBackend::setLastError(errorString.toUtf8().constData());
+
+            engine->callback(CarlaBackend::CALLBACK_ERROR, plugin->id(), 0, 0, 0.0);
+        }
 
         break;
     }

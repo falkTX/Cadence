@@ -1220,6 +1220,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.connect(self, SIGNAL("NSM_Open1Callback()"), SLOT("slot_handleNSM_Open1Callback()"))
         self.connect(self, SIGNAL("NSM_Open2Callback()"), SLOT("slot_handleNSM_Open2Callback()"))
         self.connect(self, SIGNAL("NSM_SaveCallback()"), SLOT("slot_handleNSM_SaveCallback()"))
+        self.connect(self, SIGNAL("ErrorCallback(QString)"), SLOT("slot_handleErrorCallback(QString)"))
         self.connect(self, SIGNAL("QuitCallback()"), SLOT("slot_handleQuitCallback()"))
 
         self.TIMER_GUI_STUFF  = self.startTimer(self.m_savedSettings["Main/RefreshInterval"])     # Peaks
@@ -1502,6 +1503,10 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
     def slot_handleNSM_SaveCallback(self):
         self.save_project()
         Carla.Host.nsm_reply_save()
+
+    @pyqtSlot(str)
+    def slot_handleErrorCallback(self, error):
+        QMessageBox.critical(self, self.tr("Error"), error)
 
     @pyqtSlot()
     def slot_handleQuitCallback(self):
@@ -2071,6 +2076,8 @@ def callback_function(ptr, action, pluginId, value1, value2, value3):
         Carla.gui.emit(SIGNAL("NSM_Open2Callback()"))
     elif action == CALLBACK_NSM_SAVE:
         Carla.gui.emit(SIGNAL("NSM_SaveCallback()"))
+    elif action == CALLBACK_ERROR:
+        Carla.gui.emit(SIGNAL("ErrorCallback(QString)"), cString(Carla.Host.get_last_error()))
     elif action == CALLBACK_QUIT:
         Carla.gui.emit(SIGNAL("QuitCallback()"))
 
