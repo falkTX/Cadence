@@ -19,6 +19,7 @@
 # Imports (Global)
 import platform, sys
 from copy import deepcopy
+from decimal import Decimal
 from sip import unwrapinstance
 from PyQt4.QtCore import pyqtSlot, Qt, QSettings, QTimer
 from PyQt4.QtGui import QColor, QCursor, QDialog, QFontMetrics, QFrame, QInputDialog, QMenu, QPainter, QVBoxLayout, QWidget
@@ -1636,10 +1637,10 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         content += "\n"
         content += "  <Data>\n"
         content += "   <Active>%s</Active>\n" % "Yes" if x_save_state_dict['Active'] else "No"
-        content += "   <DryWet>%g</DryWet>\n" % x_save_state_dict['DryWet']
-        content += "   <Volume>%g</Volume>\n" % x_save_state_dict['Volume']
-        content += "   <Balance-Left>%g</Balance-Left>\n" % x_save_state_dict['Balance-Left']
-        content += "   <Balance-Right>%g</Balance-Right>\n" % x_save_state_dict['Balance-Right']
+        content += "   <DryWet>%f</DryWet>\n" % x_save_state_dict['DryWet']
+        content += "   <Volume>%f</Volume>\n" % x_save_state_dict['Volume']
+        content += "   <Balance-Left>%f</Balance-Left>\n" % x_save_state_dict['Balance-Left']
+        content += "   <Balance-Right>%f</Balance-Right>\n" % x_save_state_dict['Balance-Right']
 
         for parameter in x_save_state_dict['Parameters']:
             content += "\n"
@@ -1650,7 +1651,8 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             if parameter['symbol']:
                 content += "    <symbol>%s</symbol>\n" % xmlSafeString(parameter['symbol'], True)
 
-            content += "    <value>%g</value>\n" % parameter['value']
+            strValue = "{0:f}".format(Decimal("%g" % parameter['value']))
+            content += "    <value>%s</value>\n" % strValue
 
             if parameter['midiCC'] > 0:
                 content += "    <midiCC>%i</midiCC>\n" % parameter['midiCC']
