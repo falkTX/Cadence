@@ -697,9 +697,13 @@ public:
                             descriptor->connect_port(handle, aOut.rindexes[j], tmpOut[j]);
                     }
 
-                    descriptor->activate(handle);
+                    if (descriptor->activate)
+                        descriptor->activate(handle);
+
                     descriptor->run(handle, 2);
-                    descriptor->deactivate(handle);
+
+                    if (descriptor->deactivate)
+                        descriptor->deactivate(handle);
 
                     m_latency = rint(paramBuffers[i]);
                     hasLatency = true;
