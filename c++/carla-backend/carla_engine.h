@@ -53,8 +53,7 @@ enum CarlaEngineType {
     CarlaEngineTypeNull,
     CarlaEngineTypeJack,
     CarlaEngineTypeRtAudio,
-    CarlaEngineTypePluginLv2,
-    CarlaEngineTypePluginVst
+    CarlaEngineTypePlugin
 };
 
 enum CarlaEnginePortType {
@@ -382,6 +381,7 @@ protected:
     CarlaTimeInfo timeInfo;
 
     void bufferSizeChanged(const uint32_t newBufferSize);
+    void startCheckThread();
 
 private:
     CarlaCheckThread m_checkThread;

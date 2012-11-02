@@ -80,7 +80,8 @@ void CarlaCheckThread::run()
         oscControlRegisted = engine->isOscControlRegisted();
 
 #ifndef BUILD_BRIDGE
-        engine->oscWaitEvents();
+        if (engine->getType() != CarlaEngineTypePlugin)
+            engine->oscWaitEvents();
 #endif
 
         for (unsigned short i=0; i < maxPluginNumber; i++)

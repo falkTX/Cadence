@@ -104,6 +104,9 @@ doc: carla_backend.doxygen
 carla_backend.so: $(OBJS)
 	$(CXX) $^ $(CARLA_LD_FLAGS) -o $@ && strip $@
 
+carla_backend-dssi.so: $(OBJS) carla_backend_plugin.cpp
+	$(CXX) $^ -DDISTRHO_PLUGIN_TARGET_DSSI -Idistrho-plugin-toolkit $(CARLA_CXX_FLAGS) $(CARLA_LD_FLAGS) -o $@ && strip $@
+
 # --------------------------------------------------------------
 
 .c.o:

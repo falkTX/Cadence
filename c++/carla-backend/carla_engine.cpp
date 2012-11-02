@@ -236,7 +236,8 @@ bool CarlaEngine::init(const char* const clientName)
     m_osc.init(clientName);
     m_oscData = m_osc.getControlData();
 
-    carla_setprocname(clientName);
+    if (strcmp(clientName, "Carla"))
+        carla_setprocname(clientName);
 #endif
 
     return true;
@@ -834,6 +835,12 @@ void CarlaEngine::bufferSizeChanged(const uint32_t newBufferSize)
         if (m_carlaPlugins[i] && m_carlaPlugins[i]->enabled())
             m_carlaPlugins[i]->bufferSizeChanged(newBufferSize);
     }
+}
+
+void CarlaEngine::startCheckThread()
+{
+    if (! m_checkThread.isRunning())
+        m_checkThread.startNow();
 }
 
 // -------------------------------------------------------------------------------------------------------------------
