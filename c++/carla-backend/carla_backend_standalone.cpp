@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_backend_standalone.h"
-#include "carla_plugin.h"
+#include "carla_backend_standalone.hpp"
+#include "carla_plugin.hpp"
 #include "plugins/carla_native.h"
 
 // -------------------------------------------------------------------------------------------------------------------

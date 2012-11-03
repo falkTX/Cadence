@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_shared.h"
-#include "carla_engine.h"
+#include "carla_shared.hpp"
+#include "carla_engine.hpp"
 
 #ifndef BUILD_BRIDGE
 #  include "plugins/carla_native.h"

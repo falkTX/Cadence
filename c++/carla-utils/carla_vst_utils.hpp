@@ -15,13 +15,15 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_VST_UTILS_H
-#define CARLA_VST_UTILS_H
+#ifndef CARLA_VST_UTILS_HPP
+#define CARLA_VST_UTILS_HPP
 
-// disable deprecated VST features (not)
+// Disable deprecated VST features (NOT)
 #define VST_FORCE_DEPRECATED 0
 
 #include <cstdint>
+
+// ------------------------------------------------------------------------------------------------
 
 #if VESTIGE_HEADER
 #include "vestige/aeffectx.h"
@@ -113,6 +115,10 @@ struct VstTimeInfo_R {
 typedef VstTimeInfo VstTimeInfo_R;
 #endif
 
+#include "carla_defines.hpp"
+
+// ------------------------------------------------------------------------------------------------
+
 typedef AEffect* (*VST_Function)(audioMasterCallback);
 
 static inline
@@ -120,6 +126,8 @@ bool vstPluginCanDo(AEffect* const effect, const char* const feature)
 {
     return (effect->dispatcher(effect, effCanDo, 0, 0, (void*)feature, 0.0f) == 1);
 }
+
+// ------------------------------------------------------------------------------------------------
 
 static inline
 const char* vstEffectOpcode2str(const int32_t opcode)
@@ -307,6 +315,8 @@ const char* vstEffectOpcode2str(const int32_t opcode)
     }
 }
 
+// ------------------------------------------------------------------------------------------------
+
 static inline
 const char* vstMasterOpcode2str(const int32_t opcode)
 {
@@ -431,4 +441,6 @@ const char* vstMasterOpcode2str(const int32_t opcode)
     }
 }
 
-#endif // CARLA_VST_UTILS_H
+// ------------------------------------------------------------------------------------------------
+
+#endif // CARLA_VST_UTILS_HPP

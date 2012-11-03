@@ -19,7 +19,7 @@
 # error Should not use fluidsynth for bridges!
 #endif
 
-#include "carla_plugin.h"
+#include "carla_plugin.hpp"
 
 #ifdef WANT_FLUIDSYNTH
 

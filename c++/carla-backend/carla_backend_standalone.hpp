@@ -20,7 +20,7 @@
 
 #include <cstdint>
 
-#include "carla_backend.h"
+#include "carla_backend.hpp"
 
 /*!
  * @defgroup CarlaBackendStandalone Carla Backend Standalone

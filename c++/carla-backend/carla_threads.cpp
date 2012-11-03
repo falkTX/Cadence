@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_threads.h"
-#include "carla_plugin.h"
+#include "carla_threads.hpp"
+#include "carla_plugin.hpp"
 
 #include <QtCore/QDebug>
 #include <QtCore/QProcess>

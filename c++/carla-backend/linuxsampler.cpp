@@ -21,7 +21,7 @@
 # error Should not use linuxsampler for bridges!
 #endif
 
-#include "carla_plugin.h"
+#include "carla_plugin.hpp"
 
 #ifdef WANT_LINUXSAMPLER
 

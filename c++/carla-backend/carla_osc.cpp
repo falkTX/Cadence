@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_osc.h"
-#include "carla_plugin.h"
+#include "carla_osc.hpp"
+#include "carla_plugin.hpp"
 
 CARLA_BACKEND_START_NAMESPACE
 

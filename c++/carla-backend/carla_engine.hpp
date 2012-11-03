@@ -18,9 +18,9 @@
 #ifndef CARLA_ENGINE_H
 #define CARLA_ENGINE_H
 
-#include "carla_osc.h"
-#include "carla_shared.h"
-#include "carla_threads.h"
+#include "carla_osc.hpp"
+#include "carla_shared.hpp"
+#include "carla_threads.hpp"
 
 #ifdef CARLA_ENGINE_JACK
 #include "carla_jackbridge.h"

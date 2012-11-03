@@ -17,8 +17,8 @@
 
 #ifdef CARLA_ENGINE_JACK
 
-#include "carla_engine.h"
-#include "carla_plugin.h"
+#include "carla_engine.hpp"
+#include "carla_plugin.hpp"
 
 CARLA_BACKEND_START_NAMESPACE
 

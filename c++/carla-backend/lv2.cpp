@@ -15,7 +15,7 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_plugin.h"
+#include "carla_plugin.hpp"
 
 #ifdef WANT_LV2
 
@@ -333,7 +333,7 @@ public:
             ft.options[4] = lv2Options.oNull;
         }
 
-        Lv2World.init();
+        lv2World.init();
     }
 
     ~Lv2Plugin()

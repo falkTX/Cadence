@@ -18,7 +18,7 @@
 #ifndef CARLA_OSC_H
 #define CARLA_OSC_H
 
-#include "carla_backend.h"
+#include "carla_backend.hpp"
 #include "carla_osc_utils.hpp"
 
 #define CARLA_OSC_HANDLE_ARGS1 CarlaPlugin* const plugin

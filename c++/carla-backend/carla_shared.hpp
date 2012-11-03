@@ -18,7 +18,7 @@
 #ifndef CARLA_SHARED_H
 #define CARLA_SHARED_H
 
-#include "carla_backend.h"
+#include "carla_backend.hpp"
 
 CARLA_BACKEND_START_NAMESPACE
 

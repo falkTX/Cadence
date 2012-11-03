@@ -39,17 +39,17 @@ SOURCES += \
     ../plugins/zynaddsubfx-src.cpp
 
 HEADERS = \
-    ../carla_backend.h \
-    ../carla_backend_standalone.h \
-    ../carla_engine.h \
-    ../carla_osc.h \
-    ../carla_plugin.h \
-    ../carla_shared.h \
-    ../carla_threads.h \
+    ../carla_backend.hpp \
+    ../carla_backend_standalone.hpp \
+    ../carla_engine.hpp \
+    ../carla_osc.hpp \
+    ../carla_plugin.hpp \
+    ../carla_shared.hpp \
+    ../carla_threads.hpp \
     ../plugins/carla_native.h \
     ../plugins/carla_nativemm.h \
     ../../carla-includes/carla_defines.hpp \
-    ../../carla-includes/carla_midi.h \
+    ../../carla-includes/carla_midi.hpp \
     ../../carla-includes/ladspa_rdf.hpp \
     ../../carla-includes/lv2_rdf.hpp \
     ../../carla-utils/carla_utils.hpp \
@@ -57,8 +57,7 @@ HEADERS = \
     ../../carla-utils/carla_osc_utils.hpp \
     ../../carla-utils/carla_ladspa_utils.hpp \
     ../../carla-utils/carla_lv2_utils.hpp \
-    ../../carla-utils/carla_vst_utils.hpp \
-    ../../carla-utils/carla_linuxsampler_utils.hpp
+    ../../carla-utils/carla_vst_utils.hpp
 
 INCLUDEPATH = .. \
     ../../carla-jackbridge \

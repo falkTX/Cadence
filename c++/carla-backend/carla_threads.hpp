@@ -18,7 +18,7 @@
 #ifndef CARLA_THREADS_H
 #define CARLA_THREADS_H
 
-#include "carla_backend.h"
+#include "carla_backend.hpp"
 
 #include <QtCore/QMutex>
 #include <QtCore/QThread>

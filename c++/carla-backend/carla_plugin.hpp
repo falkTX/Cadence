@@ -18,9 +18,9 @@
 #ifndef CARLA_PLUGIN_H
 #define CARLA_PLUGIN_H
 
-#include "carla_engine.h"
-#include "carla_midi.h"
-#include "carla_shared.h"
+#include "carla_engine.hpp"
+#include "carla_shared.hpp"
+#include "carla_midi.hpp"
 
 #include "carla_lib_utils.hpp"
 
