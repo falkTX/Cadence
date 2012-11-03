@@ -19,10 +19,10 @@
 
 #ifdef WANT_VST
 
-#include "carla_vst.h"
+#include "carla_vst_utils.h"
 
 #ifdef Q_WS_X11
-#  include <QtGui/QX11Info>
+# include <QtGui/QX11Info>
 #endif
 
 CARLA_BACKEND_START_NAMESPACE

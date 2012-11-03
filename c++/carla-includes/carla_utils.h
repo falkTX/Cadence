@@ -31,6 +31,19 @@
 # include <linux/prctl.h>
 #endif
 
+// carla_assert*
+static inline
+void carla_assert(const char* const assertion, const char* const file, const int line)
+{
+    qCritical("Carla assertion failure: \"%s\" in file %s, line %i", assertion, file, line);
+}
+
+static inline
+void carla_assert_int(const char* const assertion, const char* const file, const int line, const int value)
+{
+    qCritical("Carla assertion failure: \"%s\" in file %s, line %i, value %i", assertion, file, line, value);
+}
+
 // carla_*sleep
 #ifdef Q_OS_WIN
 # define carla_sleep(t)  Sleep(t * 1000)
@@ -49,19 +62,6 @@
 # define carla_setenv(key, value) setenv(key, value, 1)
 #endif
 
-// carla_assert*
-static inline
-void carla_assert(const char* const assertion, const char* const file, const int line)
-{
-    qCritical("Carla assertion failure: \"%s\" in file %s, line %i", assertion, file, line);
-}
-
-static inline
-void carla_assert_int(const char* const assertion, const char* const file, const int line, const int value)
-{
-    qCritical("Carla assertion failure: \"%s\" in file %s, line %i, value %i", assertion, file, line, value);
-}
-
 // carla_setprocname (not available on all platforms)
 static inline
 void carla_setprocname(const char* const name)
@@ -79,19 +79,19 @@ void carla_setprocname(const char* const name)
 }
 
 // math functions
-inline
+static inline
 float carla_absF(const float& value)
 {
     return (value < 0.0f) ? -value : value;
 }
 
-inline
+static inline
 float carla_minF(const float& x, const float& y)
 {
     return (x < y ? x : y);
 }
 
-inline
+static inline
 float carla_maxF(const float& x, const float& y)
 {
     return (x > y ? x : y);
@@ -114,7 +114,9 @@ const char* bool2str(const bool yesNo)
 static inline
 void pass() {}
 
+// -------------------------------------------------
 // carla_string class
+
 class carla_string
 {
 public:
@@ -131,14 +133,9 @@ public:
         buffer = ::strdup(strBuf ? strBuf : "");
     }
 
-    carla_string(const char* const strBuf)
+    explicit carla_string(const char* const strBuf)
     {
         buffer = ::strdup(strBuf ? strBuf : "");
-    }
-
-    explicit carla_string(const carla_string& str)
-    {
-        buffer = ::strdup(str.buffer);
     }
 
     explicit carla_string(const int value)
@@ -191,6 +188,14 @@ public:
         ::snprintf(strBuf, 0xff, "%g", value);
 
         buffer = ::strdup(strBuf);
+    }
+
+    // ---------------------------------------------
+    // non-explicit constructor
+
+    carla_string(const carla_string& str)
+    {
+        buffer = ::strdup(str.buffer);
     }
 
     // ---------------------------------------------

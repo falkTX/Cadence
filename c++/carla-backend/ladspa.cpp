@@ -1,5 +1,5 @@
 /*
- * Carla Backend
+ * Carla Backend, LADSPA plugin code
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 #ifdef WANT_LADSPA
 
-#include "carla_ladspa.h"
+#include "carla_ladspa_utils.h"
 
 CARLA_BACKEND_START_NAMESPACE
 

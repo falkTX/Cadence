@@ -18,6 +18,8 @@
 #ifndef LADSPA_RDF_INCLUDED
 #define LADSPA_RDF_INCLUDED
 
+#include <cstdlib>
+
 // Base Types
 typedef float LADSPA_Data;
 typedef int LADSPA_Property;
@@ -62,38 +64,38 @@ typedef unsigned long long LADSPA_PluginType;
 #define LADSPA_PORT_HAS_LABEL(x)          ((x) & LADSPA_PORT_LABEL)
 
 // Plugin Types
-#define LADSPA_CLASS_UTILITY              0x000000001
-#define LADSPA_CLASS_GENERATOR            0x000000002
-#define LADSPA_CLASS_SIMULATOR            0x000000004
-#define LADSPA_CLASS_OSCILLATOR           0x000000008
-#define LADSPA_CLASS_TIME                 0x000000010
-#define LADSPA_CLASS_DELAY                0x000000020
-#define LADSPA_CLASS_PHASER               0x000000040
-#define LADSPA_CLASS_FLANGER              0x000000080
-#define LADSPA_CLASS_CHORUS               0x000000100
-#define LADSPA_CLASS_REVERB               0x000000200
-#define LADSPA_CLASS_FREQUENCY            0x000000400
-#define LADSPA_CLASS_FREQUENCY_METER      0x000000800
-#define LADSPA_CLASS_FILTER               0x000001000
-#define LADSPA_CLASS_LOWPASS              0x000002000
-#define LADSPA_CLASS_HIGHPASS             0x000004000
-#define LADSPA_CLASS_BANDPASS             0x000008000
-#define LADSPA_CLASS_COMB                 0x000010000
-#define LADSPA_CLASS_ALLPASS              0x000020000
-#define LADSPA_CLASS_EQ                   0x000040000
-#define LADSPA_CLASS_PARAEQ               0x000080000
-#define LADSPA_CLASS_MULTIEQ              0x000100000
-#define LADSPA_CLASS_AMPLITUDE            0x000200000
-#define LADSPA_CLASS_PITCH                0x000400000
-#define LADSPA_CLASS_AMPLIFIER            0x000800000
-#define LADSPA_CLASS_WAVESHAPER           0x001000000
-#define LADSPA_CLASS_MODULATOR            0x002000000
-#define LADSPA_CLASS_DISTORTION           0x004000000
-#define LADSPA_CLASS_DYNAMICS             0x008000000
-#define LADSPA_CLASS_COMPRESSOR           0x010000000
-#define LADSPA_CLASS_EXPANDER             0x020000000
-#define LADSPA_CLASS_LIMITER              0x040000000
-#define LADSPA_CLASS_GATE                 0x080000000
+#define LADSPA_CLASS_UTILITY              0x000000001LL
+#define LADSPA_CLASS_GENERATOR            0x000000002LL
+#define LADSPA_CLASS_SIMULATOR            0x000000004LL
+#define LADSPA_CLASS_OSCILLATOR           0x000000008LL
+#define LADSPA_CLASS_TIME                 0x000000010LL
+#define LADSPA_CLASS_DELAY                0x000000020LL
+#define LADSPA_CLASS_PHASER               0x000000040LL
+#define LADSPA_CLASS_FLANGER              0x000000080LL
+#define LADSPA_CLASS_CHORUS               0x000000100LL
+#define LADSPA_CLASS_REVERB               0x000000200LL
+#define LADSPA_CLASS_FREQUENCY            0x000000400LL
+#define LADSPA_CLASS_FREQUENCY_METER      0x000000800LL
+#define LADSPA_CLASS_FILTER               0x000001000LL
+#define LADSPA_CLASS_LOWPASS              0x000002000LL
+#define LADSPA_CLASS_HIGHPASS             0x000004000LL
+#define LADSPA_CLASS_BANDPASS             0x000008000LL
+#define LADSPA_CLASS_COMB                 0x000010000LL
+#define LADSPA_CLASS_ALLPASS              0x000020000LL
+#define LADSPA_CLASS_EQ                   0x000040000LL
+#define LADSPA_CLASS_PARAEQ               0x000080000LL
+#define LADSPA_CLASS_MULTIEQ              0x000100000LL
+#define LADSPA_CLASS_AMPLITUDE            0x000200000LL
+#define LADSPA_CLASS_PITCH                0x000400000LL
+#define LADSPA_CLASS_AMPLIFIER            0x000800000LL
+#define LADSPA_CLASS_WAVESHAPER           0x001000000LL
+#define LADSPA_CLASS_MODULATOR            0x002000000LL
+#define LADSPA_CLASS_DISTORTION           0x004000000LL
+#define LADSPA_CLASS_DYNAMICS             0x008000000LL
+#define LADSPA_CLASS_COMPRESSOR           0x010000000LL
+#define LADSPA_CLASS_EXPANDER             0x020000000LL
+#define LADSPA_CLASS_LIMITER              0x040000000LL
+#define LADSPA_CLASS_GATE                 0x080000000LL
 #define LADSPA_CLASS_SPECTRAL             0x100000000LL
 #define LADSPA_CLASS_NOTCH                0x200000000LL
 
@@ -127,7 +129,7 @@ struct LADSPA_RDF_ScalePoint {
     ~LADSPA_RDF_ScalePoint()
     {
         if (Label)
-            free((void*)Label);
+            ::free((void*)Label);
     }
 };
 
@@ -154,7 +156,7 @@ struct LADSPA_RDF_Port {
     ~LADSPA_RDF_Port()
     {
         if (Label)
-            free((void*)Label);
+            ::free((void*)Label);
 
         if (ScalePoints)
             delete[] ScalePoints;
@@ -182,10 +184,10 @@ struct LADSPA_RDF_Descriptor {
     ~LADSPA_RDF_Descriptor()
     {
         if (Title)
-            free((void*)Title);
+            ::free((void*)Title);
 
         if (Creator)
-            free((void*)Creator);
+            ::free((void*)Creator);
 
         if (Ports)
             delete[] Ports;

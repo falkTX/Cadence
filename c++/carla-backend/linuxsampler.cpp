@@ -18,14 +18,14 @@
 // TODO - setMidiProgram()
 
 #ifdef BUILD_BRIDGE
-#  error Should not use linuxsampler for bridges!
+# error Should not use linuxsampler for bridges!
 #endif
 
 #include "carla_plugin.h"
 
 #ifdef WANT_LINUXSAMPLER
 
-#include "carla_linuxsampler.h"
+#include "carla_linuxsampler_utils.h"
 
 #include <QtCore/QFileInfo>
 

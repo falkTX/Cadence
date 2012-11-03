@@ -21,6 +21,7 @@
 // TODO - presets
 
 #include <cstdint>
+#include <cstdlib>
 
 // Base Types
 typedef float LV2_Data;
@@ -189,11 +190,11 @@ typedef unsigned long long LV2_PluginType;
 #define LV2_IS_PORT_DESIGNATION_TIME_FRAMES_PER_SECOND(x) ((x) == LV2_PORT_DESIGNATION_TIME_FRAMES_PER_SECOND)
 #define LV2_IS_PORT_DESIGNATION_TIME_POSITION(x)          ((x) == LV2_PORT_DESIGNATION_TIME_POSITION)
 #define LV2_IS_PORT_DESIGNATION_TIME_SPEED(x)             ((x) == LV2_PORT_DESIGNATION_TIME_SPEED)
-#define LV2_IS_PORT_DESIGNATION_TIME(x)                   ((x) == LV2_PORT_DESIGNATION_TIME_BAR || (x) == LV2_PORT_DESIGNATION_TIME_BAR_BEAT ||                   \
-                                                           (x) == LV2_PORT_DESIGNATION_TIME_BEAT || (x) == LV2_PORT_DESIGNATION_TIME_BEAT_UNIT ||                 \
-                                                           (x) == LV2_PORT_DESIGNATION_TIME_BEATS_PER_BAR || (x) == LV2_PORT_DESIGNATION_TIME_BEATS_PER_MINUTE || \
-                                                           (x) == LV2_PORT_DESIGNATION_TIME_FRAME || (x) == LV2_PORT_DESIGNATION_TIME_FRAMES_PER_SECOND ||        \
-                                                           (x) == LV2_PORT_DESIGNATION_TIME_POSITION || (x) == LV2_PORT_DESIGNATION_TIME_SPEED)
+#define LV2_IS_PORT_DESIGNATION_TIME(x)                   ((x) == LV2_PORT_DESIGNATION_TIME_BAR           || (x) == LV2_PORT_DESIGNATION_TIME_BAR_BEAT          || \
+                                                           (x) == LV2_PORT_DESIGNATION_TIME_BEAT          || (x) == LV2_PORT_DESIGNATION_TIME_BEAT_UNIT         || \
+                                                           (x) == LV2_PORT_DESIGNATION_TIME_BEATS_PER_BAR || (x) == LV2_PORT_DESIGNATION_TIME_BEATS_PER_MINUTE  || \
+                                                           (x) == LV2_PORT_DESIGNATION_TIME_FRAME         || (x) == LV2_PORT_DESIGNATION_TIME_FRAMES_PER_SECOND || \
+                                                           (x) == LV2_PORT_DESIGNATION_TIME_POSITION      || (x) == LV2_PORT_DESIGNATION_TIME_SPEED)
 
 // Preset State Types (TODO: Null is not a type, this is just a placeholder)
 #define LV2_PRESET_STATE_NULL            0x0
@@ -332,13 +333,13 @@ struct LV2_RDF_PortUnit {
     ~LV2_RDF_PortUnit()
     {
         if (Name)
-            free((void*)Name);
+            ::free((void*)Name);
 
         if (Render)
-            free((void*)Render);
+            ::free((void*)Render);
 
         if (Symbol)
-            free((void*)Symbol);
+            ::free((void*)Symbol);
     }
 };
 
@@ -354,7 +355,7 @@ struct LV2_RDF_PortScalePoint {
     ~LV2_RDF_PortScalePoint()
     {
         if (Label)
-            free((void*)Label);
+            ::free((void*)Label);
     }
 };
 
@@ -385,10 +386,10 @@ struct LV2_RDF_Port {
     ~LV2_RDF_Port()
     {
         if (Name)
-            free((void*)Name);
+            ::free((void*)Name);
 
         if (Symbol)
-            free((void*)Symbol);
+            ::free((void*)Symbol);
 
         if (ScalePoints)
             delete[] ScalePoints;
@@ -407,7 +408,7 @@ struct LV2_RDF_PresetPort {
     ~LV2_RDF_PresetPort()
     {
         if (Symbol)
-            free((void*)Symbol);
+            ::free((void*)Symbol);
     }
 };
 
@@ -426,7 +427,7 @@ struct LV2_RDF_PresetState {
     ~LV2_RDF_PresetState()
     {
         if (Key)
-            free((void*)Key);
+            ::free((void*)Key);
     }
 };
 
@@ -452,10 +453,10 @@ struct LV2_RDF_Preset {
     ~LV2_RDF_Preset()
     {
         if (URI)
-            free((void*)URI);
+            ::free((void*)URI);
 
         if (Label)
-            free((void*)Label);
+            ::free((void*)Label);
 
         if (Ports)
             delete[] Ports;
@@ -477,7 +478,7 @@ struct LV2_RDF_Feature {
     ~LV2_RDF_Feature()
     {
         if (URI)
-            free((void*)URI);
+            ::free((void*)URI);
     }
 };
 
@@ -507,13 +508,13 @@ struct LV2_RDF_UI {
     ~LV2_RDF_UI()
     {
         if (URI)
-            free((void*)URI);
+            ::free((void*)URI);
 
         if (Binary)
-            free((void*)Binary);
+            ::free((void*)Binary);
 
         if (Bundle)
-            free((void*)Bundle);
+            ::free((void*)Bundle);
 
         if (Features)
             delete[] Features;
@@ -572,22 +573,22 @@ struct LV2_RDF_Descriptor {
     ~LV2_RDF_Descriptor()
     {
         if (URI)
-            free((void*)URI);
+            ::free((void*)URI);
 
         if (Name)
-            free((void*)Name);
+            ::free((void*)Name);
 
         if (Author)
-            free((void*)Author);
+            ::free((void*)Author);
 
         if (License)
-            free((void*)License);
+            ::free((void*)License);
 
         if (Binary)
-            free((void*)Binary);
+            ::free((void*)Binary);
 
         if (Bundle)
-            free((void*)Bundle);
+            ::free((void*)Bundle);
 
         if (Ports)
             delete[] Ports;
@@ -606,4 +607,4 @@ struct LV2_RDF_Descriptor {
     }
 };
 
-#endif /* LV2_RDF_INCLUDED */
+#endif // LV2_RDF_INCLUDED

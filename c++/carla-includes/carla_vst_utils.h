@@ -1,5 +1,5 @@
 /*
- * Carla common VST code
+ * Carla VST utils
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_VST_INCLUDES_H
-#define CARLA_VST_INCLUDES_H
+#ifndef CARLA_VST_UTILS_H
+#define CARLA_VST_UTILS_H
 
 // disable deprecated VST features (not)
 #define VST_FORCE_DEPRECATED 0
@@ -102,7 +102,7 @@
 #define kVstVersion 2400
 #define VSTCALLBACK
 struct ERect {
-    short top, left, bottom, right;
+    int16_t top, left, bottom, right;
 };
 struct VstTimeInfo_R {
     double samplePos, sampleRate, nanoSeconds, ppqPos, tempo, barStartPos, cycleStartPos, cycleEndPos;
@@ -431,4 +431,4 @@ const char* vstMasterOpcode2str(const int32_t opcode)
     }
 }
 
-#endif // CARLA_VST_INCLUDES_H
+#endif // CARLA_VST_UTILS_H

@@ -54,12 +54,10 @@ HEADERS = \
     ../../carla-includes/carla_utils.h \
     ../../carla-includes/carla_lib_utils.h \
     ../../carla-includes/carla_osc_utils.h \
-    ../../carla-includes/carla_ladspa.h \
-    ../../carla-includes/carla_dssi.h \
+    ../../carla-includes/carla_ladspa_utils.h \
     ../../carla-includes/carla_lv2.h \
-    ../../carla-includes/carla_vst.h \
-    ../../carla-includes/carla_fluidsynth.h \
-    ../../carla-includes/carla_linuxsampler.h \
+    ../../carla-includes/carla_vst_utils.h \
+    ../../carla-includes/carla_linuxsampler_utils.h \
     ../../carla-includes/ladspa_rdf.h \
     ../../carla-includes/lv2_rdf.h
 

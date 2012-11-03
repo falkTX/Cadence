@@ -16,14 +16,16 @@
  */
 
 #ifdef BUILD_BRIDGE
-#  error Should not use fluidsynth for bridges!
+# error Should not use fluidsynth for bridges!
 #endif
 
 #include "carla_plugin.h"
 
 #ifdef WANT_FLUIDSYNTH
 
-#include "carla_fluidsynth.h"
+#include <fluidsynth.h>
+
+#define FLUIDSYNTH_VERSION_NEW_API (FLUIDSYNTH_VERSION_MAJOR >= 1 && FLUIDSYNTH_VERSION_MINOR >= 1 && FLUIDSYNTH_VERSION_MICRO >= 4)
 
 CARLA_BACKEND_START_NAMESPACE
 

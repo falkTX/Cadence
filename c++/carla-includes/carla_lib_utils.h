@@ -18,11 +18,9 @@
 #ifndef CARLA_LIBRARY_UTILS_H
 #define CARLA_LIBRARY_UTILS_H
 
-#include "carla_defines.h"
+#include "carla_utils.h"
 
-#ifdef Q_OS_WIN
-# include <cstdio>
-#else
+#ifndef Q_OS_WIN
 # include <dlfcn.h>
 #endif
 

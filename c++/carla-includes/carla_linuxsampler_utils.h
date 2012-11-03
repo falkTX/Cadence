@@ -1,5 +1,5 @@
 /*
- * Carla common LinuxSampler code
+ * Carla LinuxSampler utils
  * Copyright (C) 2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_LINUXSAMPLER_INCLUDES_H
-#define CARLA_LINUXSAMPLER_INCLUDES_H
+#ifndef CARLA_LINUXSAMPLER_UTILS_H
+#define CARLA_LINUXSAMPLER_UTILS_H
 
 #include <linuxsampler/engines/Engine.h>
 #include <linuxsampler/Sampler.h>
@@ -25,6 +25,8 @@
 #include <vector>
 
 namespace LinuxSampler {
+
+// -----------------------------------------------------------------------
 
 class EngineFactory
 {
@@ -44,8 +46,14 @@ protected:
 
 #include "carla_plugin.h"
 
+// -----------------------------------------------------------------------
+// LinuxSampler static values
+
 static const float VOLUME_MAX = 3.16227766f; // +10 dB
 static const float VOLUME_MIN = 0.0f;        // -inf dB
+
+// -----------------------------------------------------------------------
+// LinuxSampler AudioOutputDevice Plugin
 
 class AudioOutputDevicePlugin : public AudioOutputDevice
 {
@@ -55,6 +63,8 @@ public:
           m_engine(engine),
           m_plugin(plugin)
     {
+        CARLA_ASSERT(engine);
+        CARLA_ASSERT(plugin);
     }
 
     // -------------------------------------------------------------------
@@ -94,6 +104,7 @@ public:
     }
 
     // -------------------------------------------------------------------
+    // Give public access to the RenderAudio call
 
     int Render(uint samples)
     {
@@ -104,6 +115,9 @@ private:
     CarlaBackend::CarlaEngine* const m_engine;
     CarlaBackend::CarlaPlugin* const m_plugin;
 };
+
+// -----------------------------------------------------------------------
+// LinuxSampler MidiInputDevice Plugin
 
 class MidiInputDevicePlugin : public MidiInputDevice
 {
@@ -135,6 +149,7 @@ public:
     }
 
     // -------------------------------------------------------------------
+    // Properly delete port (deconstructor is protected)
 
     void DeleteMidiPort(MidiInputPort* const port)
     {
@@ -143,6 +158,7 @@ public:
 
     // -------------------------------------------------------------------
     // MIDI Port implementation for this plugin MIDI input driver
+    // (Constructor and deconstructor are protected)
 
     class MidiInputPortPlugin : public MidiInputPort
     {
@@ -155,8 +171,10 @@ public:
     };
 };
 
+// -----------------------------------------------------------------------
+
 #endif // ! BUILD_NATIVE
 
 } // namespace LinuxSampler
 
-#endif // CARLA_LINUXSAMPLER_INCLUDES_H
+#endif // CARLA_LINUXSAMPLER_UTILS_H
