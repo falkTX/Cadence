@@ -82,7 +82,7 @@ public:
             jackbridge_set_latency_callback(client, carla_jack_latency_callback, this);
             jackbridge_on_shutdown(client, carla_jack_shutdown_callback, this);
 
-            if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+            if (processMode == PROCESS_MODE_CONTINUOUS_RACK)
             {
                 rackJackPorts[rackPortAudioIn1]   = jackbridge_port_register(client, "in1", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
                 rackJackPorts[rackPortAudioIn2]   = jackbridge_port_register(client, "in2", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
@@ -134,7 +134,7 @@ public:
 #else
         if (jackbridge_deactivate(client) == 0)
         {
-            if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+            if (processMode == PROCESS_MODE_CONTINUOUS_RACK)
             {
                 jackbridge_port_unregister(client, rackJackPorts[rackPortAudioIn1]);
                 jackbridge_port_unregister(client, rackJackPorts[rackPortAudioIn2]);
@@ -190,11 +190,11 @@ public:
         jackbridge_set_latency_callback(handle.jackClient, carla_jack_latency_callback, this);
         jackbridge_on_shutdown(client, carla_jack_shutdown_callback, this);
 #else
-        if (carlaOptions.processMode == PROCESS_MODE_SINGLE_CLIENT)
+        if (processMode == PROCESS_MODE_SINGLE_CLIENT)
         {
             handle.jackClient = client;
         }
-        else if (carlaOptions.processMode == PROCESS_MODE_MULTIPLE_CLIENTS)
+        else if (processMode == PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             handle.jackClient = jackbridge_client_open(plugin->name(), JackNullOption, nullptr);
             jackbridge_set_process_callback(handle.jackClient, carla_jack_process_callback_plugin, plugin);
@@ -216,7 +216,7 @@ protected:
     void handleBufferSizeCallback(uint32_t newBufferSize)
     {
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.processHighPrecision)
+        if (options.processHighPrecision)
             return;
 #endif
 
@@ -265,7 +265,7 @@ protected:
         }
 
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.processMode == PROCESS_MODE_SINGLE_CLIENT)
+        if (processMode == PROCESS_MODE_SINGLE_CLIENT)
         {
             for (unsigned short i=0, max=maxPluginNumber(); i < max; i++)
             {
@@ -287,7 +287,7 @@ protected:
                 plugin->engineProcessUnlock();
             }
         }
-        else if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+        else if (processMode == PROCESS_MODE_CONTINUOUS_RACK)
         {
             // get buffers from jack
             float* audioIn1  = (float*)jackbridge_port_get_buffer(rackJackPorts[rackPortAudioIn1], nframes);
@@ -477,7 +477,7 @@ protected:
     void handleLatencyCallback(jack_latency_callback_mode_t mode)
     {
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.processMode != PROCESS_MODE_SINGLE_CLIENT)
+        if (processMode != PROCESS_MODE_SINGLE_CLIENT)
             return;
 #endif
 
@@ -542,7 +542,7 @@ private:
             outBuffer[i] = p->aOut.ports[i]->getJackAudioBuffer(nframes);
 
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.processHighPrecision)
+        if (/*options.processHighPrecision*/ 0)
         {
             float* inBuffer2[p->aIn.count];
             float* outBuffer2[p->aOut.count];

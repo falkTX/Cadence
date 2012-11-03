@@ -84,7 +84,7 @@ int CarlaEngine::maxClientNameSize()
 {
 #ifdef CARLA_ENGINE_JACK
 #  ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
+    if (processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #  endif
         return jackbridge_client_name_size();
 #endif
@@ -95,7 +95,7 @@ int CarlaEngine::maxPortNameSize()
 {
 #ifdef CARLA_ENGINE_JACK
 #  ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
+    if (processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #  endif
         return jackbridge_port_name_size();
 #endif
@@ -224,6 +224,165 @@ CarlaEngine* CarlaEngine::newDriverByName(const char* driverName)
 
     return nullptr;
 }
+
+// -----------------------------------------------------------------------
+// Global options
+
+#ifndef BUILD_BRIDGE
+ProcessModeType CarlaEngine::processMode = PROCESS_MODE_MULTIPLE_CLIENTS;
+
+void CarlaEngine::setOption(const OptionsType option, const int value, const char* const valueStr)
+{
+    qDebug("CarlaEngine::setOption(%s, %i, \"%s\")", OptionsType2str(option), value, valueStr);
+
+    switch (option)
+    {
+    case OPTION_PROCESS_NAME:
+        carla_setprocname(valueStr);
+        break;
+    case OPTION_PROCESS_MODE:
+        if (value < PROCESS_MODE_SINGLE_CLIENT || value > PROCESS_MODE_CONTINUOUS_RACK)
+            return qCritical("CarlaEngine::setOption(%s, %i, \"%s\") - invalid value", OptionsType2str(option), value, valueStr);
+        processMode = (ProcessModeType)value;
+        break;
+    case OPTION_PROCESS_HIGH_PRECISION:
+        options.processHighPrecision = value;
+        break;
+    case OPTION_MAX_PARAMETERS:
+        options.maxParameters = (value > 0) ? value : MAX_PARAMETERS;
+        break;
+    case OPTION_PREFERRED_BUFFER_SIZE:
+        options.preferredBufferSize = value;
+        break;
+    case OPTION_PREFERRED_SAMPLE_RATE:
+        options.preferredSampleRate = value;
+        break;
+    case OPTION_FORCE_STEREO:
+        options.forceStereo = value;
+        break;
+    case OPTION_USE_DSSI_VST_CHUNKS:
+        options.useDssiVstChunks = value;
+        break;
+    case OPTION_PREFER_PLUGIN_BRIDGES:
+        options.preferPluginBridges = value;
+        break;
+    case OPTION_PREFER_UI_BRIDGES:
+        options.preferUiBridges = value;
+        break;
+    case OPTION_OSC_UI_TIMEOUT:
+        options.oscUiTimeout = value/100;
+        break;
+    case OPTION_PATH_LADSPA:
+        carla_setenv("LADSPA_PATH", valueStr);
+        break;
+    case OPTION_PATH_DSSI:
+        carla_setenv("DSSI_PATH", valueStr);
+        break;
+    case OPTION_PATH_LV2:
+        carla_setenv("LV2_PATH", valueStr);
+        break;
+    case OPTION_PATH_VST:
+        carla_setenv("VST_PATH", valueStr);
+        break;
+    case OPTION_PATH_GIG:
+        carla_setenv("GIG_PATH", valueStr);
+        break;
+    case OPTION_PATH_SF2:
+        carla_setenv("SF2_PATH", valueStr);
+        break;
+    case OPTION_PATH_SFZ:
+        carla_setenv("SFZ_PATH", valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_POSIX32:
+        options.bridge_posix32 = strdup(valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_POSIX64:
+        options.bridge_posix64 = strdup(valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_WIN32:
+        options.bridge_win32 = strdup(valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_WIN64:
+        options.bridge_win64 = strdup(valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_LV2_GTK2:
+        options.bridge_lv2gtk2 = strdup(valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_LV2_GTK3:
+        options.bridge_lv2gtk3 = strdup(valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_LV2_QT4:
+        options.bridge_lv2qt4 = strdup(valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_LV2_X11:
+        options.bridge_lv2x11 = strdup(valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_VST_HWND:
+        options.bridge_vsthwnd = strdup(valueStr);
+        break;
+    case OPTION_PATH_BRIDGE_VST_X11:
+        options.bridge_vstx11 = strdup(valueStr);
+        break;
+    }
+}
+
+void CarlaEngine::resetOptions()
+{
+    qDebug("CarlaEngine::resetOptions()");
+
+    if (options.bridge_posix32)
+        free((void*)options.bridge_posix32);
+
+    if (options.bridge_posix64)
+        free((void*)options.bridge_posix64);
+
+    if (options.bridge_win32)
+        free((void*)options.bridge_win32);
+
+    if (options.bridge_win64)
+        free((void*)options.bridge_win64);
+
+    if (options.bridge_lv2gtk2)
+        free((void*)options.bridge_lv2gtk2);
+
+    if (options.bridge_lv2gtk3)
+        free((void*)options.bridge_lv2gtk3);
+
+    if (options.bridge_lv2qt4)
+        free((void*)options.bridge_lv2qt4);
+
+    if (options.bridge_lv2x11)
+        free((void*)options.bridge_lv2x11);
+
+    if (options.bridge_vsthwnd)
+        free((void*)options.bridge_vsthwnd);
+
+    if (options.bridge_vstx11)
+        free((void*)options.bridge_vstx11);
+
+    processMode                  = PROCESS_MODE_MULTIPLE_CLIENTS;
+    options.processHighPrecision = false;
+    options.maxParameters        = MAX_PARAMETERS;
+    options.preferredBufferSize  = 512;
+    options.preferredSampleRate  = 44100;
+    options.forceStereo          = false;
+    options.useDssiVstChunks     = false;
+    options.preferPluginBridges  = false;
+    options.preferUiBridges      = true;
+    options.oscUiTimeout         = 4000/100;
+
+    options.bridge_posix32 = nullptr;
+    options.bridge_posix64 = nullptr;
+    options.bridge_win32   = nullptr;
+    options.bridge_win64   = nullptr;
+    options.bridge_lv2gtk2 = nullptr;
+    options.bridge_lv2gtk3 = nullptr;
+    options.bridge_lv2qt4  = nullptr;
+    options.bridge_lv2x11  = nullptr;
+    options.bridge_vsthwnd = nullptr;
+    options.bridge_vstx11  = nullptr;
+}
+#endif
 
 // -----------------------------------------------------------------------
 // Virtual, per-engine type calls
@@ -377,7 +536,7 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
 #ifdef BUILD_BRIDGE
         m_maxPluginNumber = MAX_PLUGINS;
 #else
-        m_maxPluginNumber = (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK) ? 16 : MAX_PLUGINS;
+        m_maxPluginNumber = (processMode == PROCESS_MODE_CONTINUOUS_RACK) ? 16 : MAX_PLUGINS;
 #endif
     }
 
@@ -391,10 +550,10 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
     CarlaPlugin* plugin = nullptr;
 
 #ifndef BUILD_BRIDGE
-    if (btype != BINARY_NATIVE || (carlaOptions.preferPluginBridges && getBinaryBidgePath(btype) && type == CarlaEngineTypeJack))
+    if (btype != BINARY_NATIVE || (options.preferPluginBridges && getBinaryBidgePath(btype) && type == CarlaEngineTypeJack))
     {
 #  ifdef CARLA_ENGINE_JACK
-        if (carlaOptions.processMode != CarlaBackend::PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (processMode != CarlaBackend::PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             setLastError("Can only use bridged plugins in JACK Multi-Client mode");
             return -1;
@@ -489,7 +648,7 @@ bool CarlaEngine::removePlugin(const unsigned short id)
 #ifndef BUILD_BRIDGE
         osc_send_control_remove_plugin(id);
 
-        if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+        if (processMode == PROCESS_MODE_CONTINUOUS_RACK)
         {
             // TODO - handle OSC server comm
 
@@ -599,7 +758,7 @@ void CarlaEngine::processRack(float* inBuf[2], float* outBuf[2], uint32_t frames
 
             plugin->initBuffers();
 
-            if (carlaOptions.processHighPrecision)
+            if (options.processHighPrecision)
             {
                 float* inBuf2[2];
                 float* outBuf2[2];
@@ -862,7 +1021,7 @@ CarlaEngineClient::~CarlaEngineClient()
     CARLA_ASSERT(! m_active);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode == PROCESS_MODE_MULTIPLE_CLIENTS)
+    if (CarlaEngine::processMode == PROCESS_MODE_MULTIPLE_CLIENTS)
 #endif
     {
 #ifdef CARLA_ENGINE_JACK
@@ -878,7 +1037,7 @@ void CarlaEngineClient::activate()
     CARLA_ASSERT(! m_active);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode == PROCESS_MODE_MULTIPLE_CLIENTS)
+    if (CarlaEngine::processMode == PROCESS_MODE_MULTIPLE_CLIENTS)
 #endif
     {
         if (! m_active)
@@ -899,7 +1058,7 @@ void CarlaEngineClient::deactivate()
     CARLA_ASSERT(m_active);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode == PROCESS_MODE_MULTIPLE_CLIENTS)
+    if (CarlaEngine::processMode == PROCESS_MODE_MULTIPLE_CLIENTS)
 #endif
     {
         if (m_active)
@@ -926,7 +1085,7 @@ bool CarlaEngineClient::isOk() const
     qDebug("CarlaEngineClient::isOk()");
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
+    if (CarlaEngine::processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #endif
     {
 #ifdef CARLA_ENGINE_JACK
@@ -948,7 +1107,7 @@ void CarlaEngineClient::setLatency(const uint32_t samples)
     m_latency = samples;
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
+    if (CarlaEngine::processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #endif
     {
 #ifdef CARLA_ENGINE_JACK
@@ -968,7 +1127,7 @@ const CarlaEngineBasePort* CarlaEngineClient::addPort(const CarlaEnginePortType 
 #endif
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
+    if (CarlaEngine::processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #endif
     {
 #ifdef CARLA_ENGINE_JACK
@@ -1019,7 +1178,7 @@ CarlaEngineBasePort::~CarlaEngineBasePort()
     qDebug("CarlaEngineBasePort::~CarlaEngineBasePort()");
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
         return;
 #endif
 
@@ -1046,7 +1205,7 @@ void CarlaEngineAudioPort::initBuffer(CarlaEngine* const /*engine*/)
 float* CarlaEngineAudioPort::getJackAudioBuffer(uint32_t nframes)
 {
 #  ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
         return nullptr;
 #  endif
     CARLA_ASSERT(handle.jackPort);
@@ -1068,7 +1227,7 @@ void CarlaEngineControlPort::initBuffer(CarlaEngine* const engine)
     CARLA_ASSERT(engine);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         buffer = isInput ? engine->rackControlEventsIn : engine->rackControlEventsOut;
         return;
@@ -1094,7 +1253,7 @@ uint32_t CarlaEngineControlPort::getEventCount()
     CARLA_ASSERT(buffer);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         uint32_t count = 0;
         const CarlaEngineControlEvent* const events = (CarlaEngineControlEvent*)buffer;
@@ -1129,7 +1288,7 @@ const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(uint32_t index)
 #ifndef BUILD_BRIDGE
     CARLA_ASSERT(index < CarlaEngine::MAX_ENGINE_CONTROL_EVENTS);
 
-    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         const CarlaEngineControlEvent* const events = (CarlaEngineControlEvent*)buffer;
 
@@ -1207,7 +1366,7 @@ void CarlaEngineControlPort::writeEvent(CarlaEngineControlEventType type, uint32
     CARLA_ASSERT(type != CarlaEngineEventNull);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         CarlaEngineControlEvent* const events = (CarlaEngineControlEvent*)buffer;
 
@@ -1286,7 +1445,7 @@ void CarlaEngineMidiPort::initBuffer(CarlaEngine* const engine)
     CARLA_ASSERT(engine);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         buffer = isInput ? engine->rackMidiEventsIn : engine->rackMidiEventsOut;
         return;
@@ -1312,7 +1471,7 @@ uint32_t CarlaEngineMidiPort::getEventCount()
     CARLA_ASSERT(buffer);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         uint32_t count = 0;
         const CarlaEngineMidiEvent* const events = (CarlaEngineMidiEvent*)buffer;
@@ -1347,7 +1506,7 @@ const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(uint32_t index)
 #ifndef BUILD_BRIDGE
     CARLA_ASSERT(index < CarlaEngine::MAX_ENGINE_MIDI_EVENTS);
 
-    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         const CarlaEngineMidiEvent* const events = (CarlaEngineMidiEvent*)buffer;
 
@@ -1387,7 +1546,7 @@ void CarlaEngineMidiPort::writeEvent(uint32_t time, const uint8_t* data, uint8_t
     CARLA_ASSERT(size > 0);
 
 #ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         if (size > 4)
             return;

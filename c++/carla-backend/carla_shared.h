@@ -52,60 +52,6 @@ void setLastError(const char* const error);
 
 #ifndef BUILD_BRIDGE
 uint32_t getPluginHintsFromNative(const uint32_t nativeHints);
-
-void setOption(const OptionsType option, const int value, const char* const valueStr);
-void resetOptions();
-
-// Global options
-struct carla_options_t {
-    ProcessModeType processMode;
-    bool            processHighPrecision;
-
-    uint maxParameters;
-    uint preferredBufferSize;
-    uint preferredSampleRate;
-
-    bool forceStereo;
-    bool useDssiVstChunks;
-
-    bool preferPluginBridges;
-    bool preferUiBridges;
-    uint oscUiTimeout;
-
-    const char* bridge_posix32;
-    const char* bridge_posix64;
-    const char* bridge_win32;
-    const char* bridge_win64;
-    const char* bridge_lv2gtk2;
-    const char* bridge_lv2gtk3;
-    const char* bridge_lv2qt4;
-    const char* bridge_lv2x11;
-    const char* bridge_vsthwnd;
-    const char* bridge_vstx11;
-
-    carla_options_t()
-        : processMode(PROCESS_MODE_MULTIPLE_CLIENTS),
-          processHighPrecision(false),
-          maxParameters(MAX_PARAMETERS),
-          preferredBufferSize(512),
-          preferredSampleRate(44100),
-          forceStereo(false),
-          useDssiVstChunks(false),
-          preferPluginBridges(false),
-          preferUiBridges(true),
-          oscUiTimeout(4000/100),
-          bridge_posix32(nullptr),
-          bridge_posix64(nullptr),
-          bridge_win32(nullptr),
-          bridge_win64(nullptr),
-          bridge_lv2gtk2(nullptr),
-          bridge_lv2gtk3(nullptr),
-          bridge_lv2qt4(nullptr),
-          bridge_lv2x11(nullptr),
-          bridge_vsthwnd(nullptr),
-          bridge_vstx11(nullptr) {}
-};
-extern carla_options_t carlaOptions;
 #endif
 
 /**@}*/

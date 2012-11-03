@@ -313,7 +313,7 @@ public:
             }
 
             // create new if needed
-            param.count = (pTotal < (int32_t)carlaOptions.maxParameters) ? pTotal : 0;
+            param.count = (pTotal < (int32_t)x_engine->options.maxParameters) ? pTotal : 0;
 
             if (param.count > 0)
             {

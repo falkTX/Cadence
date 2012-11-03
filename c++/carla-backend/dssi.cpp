@@ -63,7 +63,7 @@ public:
             if (osc.thread)
             {
                 // Wait a bit first, try safe quit, then force kill
-                if (osc.thread->isRunning() && ! osc.thread->wait(carlaOptions.oscUiTimeout * 100))
+                if (osc.thread->isRunning() && ! osc.thread->wait(x_engine->options.oscUiTimeout * 100))
                 {
                     qWarning("Failed to properly stop DSSI GUI thread");
                     osc.thread->terminate();
@@ -373,7 +373,7 @@ public:
         }
 
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.forceStereo && (aIns == 1 || aOuts == 1) && ! h2)
+        if (x_engine->options.forceStereo && (aIns == 1 || aOuts == 1) && ! h2)
         {
             h2 = ldescriptor->instantiate(ldescriptor, sampleRate);
 
@@ -426,7 +426,7 @@ public:
             if (LADSPA_IS_PORT_AUDIO(portType))
             {
 #ifndef BUILD_BRIDGE
-                if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+                if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
                 {
                     strcpy(portName, m_name);
                     strcat(portName, ":");
@@ -624,7 +624,7 @@ public:
         if (needsCtrlIn)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-in");
@@ -639,7 +639,7 @@ public:
         if (needsCtrlOut)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-out");
@@ -654,7 +654,7 @@ public:
         if (mIns == 1)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":midi-in");
@@ -677,7 +677,7 @@ public:
             m_hints |= PLUGIN_IS_SYNTH;
 
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.useDssiVstChunks && QString(m_filename).endsWith("dssi-vst.so", Qt::CaseInsensitive))
+        if (x_engine->options.useDssiVstChunks && QString(m_filename).endsWith("dssi-vst.so", Qt::CaseInsensitive))
         {
             if (descriptor->get_custom_data && descriptor->set_custom_data)
                 m_hints |= PLUGIN_USES_CHUNKS;
@@ -869,7 +869,7 @@ public:
         // Input VU
 
 #ifndef BUILD_BRIDGE
-        if (aIn.count > 0 && carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
+        if (aIn.count > 0 && CarlaEngine::processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #else
         if (aIn.count > 0)
 #endif
@@ -1360,7 +1360,7 @@ public:
 
                 // Output VU
 #ifndef BUILD_BRIDGE
-                if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
+                if (CarlaEngine::processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #endif
                 {
                     for (k=0; i < 2 && k < frames; k++)
@@ -1636,7 +1636,7 @@ CarlaPlugin* CarlaPlugin::newDSSI(const initializer& init, const void* const ext
     plugin->reload();
 
 #  ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
         {

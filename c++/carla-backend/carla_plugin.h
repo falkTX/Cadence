@@ -227,7 +227,7 @@ public:
         m_filename = nullptr;
 
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+        if (engine->processMode == PROCESS_MODE_CONTINUOUS_RACK)
             m_ctrlInChannel = m_id;
         else
 #endif
@@ -769,7 +769,7 @@ public:
     {
         m_id = id;
 
-        if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+        if (x_engine->processMode == PROCESS_MODE_CONTINUOUS_RACK)
             m_ctrlInChannel = id;
     }
 #endif
@@ -1452,7 +1452,7 @@ public:
 #ifdef BUILD_BRIDGE
         uint32_t maxParameters = MAX_PARAMETERS;
 #else
-        uint32_t maxParameters = carlaOptions.maxParameters;
+        uint32_t maxParameters = x_engine->options.maxParameters;
 #endif
         if (param.count > 0 && param.count < maxParameters)
         {
@@ -1611,7 +1611,7 @@ public:
         qWarning("CarlaPlugin::showOscGui()");
 
         // wait for UI 'update' call
-        for (uint i=0; i < carlaOptions.oscUiTimeout; i++)
+        for (uint i=0; i < x_engine->options.oscUiTimeout; i++)
         {
             if (osc.data.target)
             {

@@ -193,7 +193,7 @@ bool engine_close()
     get_midi_program_name(0, 0);
     get_real_plugin_name(0);
 
-    CarlaBackend::resetOptions();
+    carlaEngine->resetOptions();
     CarlaBackend::setLastError(nullptr);
 
     delete carlaEngine;
@@ -1428,7 +1428,8 @@ void set_option(CarlaBackend::OptionsType option, int value, const char* value_s
 {
     qDebug("CarlaBackendStandalone::set_option(%s, %i, \"%s\")", CarlaBackend::OptionsType2str(option), value, value_str);
 
-    CarlaBackend::setOption(option, value, value_str);
+    if (carlaEngine)
+        carlaEngine->setOption(option, value, value_str);
 }
 
 // -------------------------------------------------------------------------------------------------------------------

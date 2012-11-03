@@ -166,6 +166,56 @@ struct CarlaEnginePortNativeHandle {
     }
 };
 
+#ifndef BUILD_BRIDGE
+// Global options
+struct CarlaEngineOptions {
+    bool processHighPrecision;
+
+    uint maxParameters;
+    uint preferredBufferSize;
+    uint preferredSampleRate;
+
+    bool forceStereo;
+    bool useDssiVstChunks;
+
+    bool preferPluginBridges;
+    bool preferUiBridges;
+    uint oscUiTimeout;
+
+    const char* bridge_posix32;
+    const char* bridge_posix64;
+    const char* bridge_win32;
+    const char* bridge_win64;
+    const char* bridge_lv2gtk2;
+    const char* bridge_lv2gtk3;
+    const char* bridge_lv2qt4;
+    const char* bridge_lv2x11;
+    const char* bridge_vsthwnd;
+    const char* bridge_vstx11;
+
+    CarlaEngineOptions()
+        : processHighPrecision(false),
+          maxParameters(MAX_PARAMETERS),
+          preferredBufferSize(512),
+          preferredSampleRate(44100),
+          forceStereo(false),
+          useDssiVstChunks(false),
+          preferPluginBridges(false),
+          preferUiBridges(true),
+          oscUiTimeout(4000/100),
+          bridge_posix32(nullptr),
+          bridge_posix64(nullptr),
+          bridge_win32(nullptr),
+          bridge_win64(nullptr),
+          bridge_lv2gtk2(nullptr),
+          bridge_lv2gtk3(nullptr),
+          bridge_lv2qt4(nullptr),
+          bridge_lv2x11(nullptr),
+          bridge_vsthwnd(nullptr),
+          bridge_vstx11(nullptr) {}
+};
+#endif
+
 // -----------------------------------------------------------------------
 
 class CarlaEngineClient;
@@ -197,6 +247,17 @@ public:
     static unsigned int getDriverCount();
     static const char* getDriverName(unsigned int index);
     static CarlaEngine* newDriverByName(const char* driverName);
+
+#ifndef BUILD_BRIDGE
+    // -------------------------------------------------------------------
+    // Global options
+
+    CarlaEngineOptions options;
+    static ProcessModeType processMode;
+
+    void setOption(const OptionsType option, const int value, const char* const valueStr);
+    void resetOptions();
+#endif
 
     // -------------------------------------------------------------------
     // Virtual, per-engine type calls

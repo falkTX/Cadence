@@ -156,7 +156,7 @@ public:
         // ---------------------------------------
         // Audio Outputs
 
-        if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":out-left");
@@ -167,7 +167,7 @@ public:
         aOut.ports[0]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
         aOut.rindexes[0] = 0;
 
-        if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":out-right");
@@ -181,7 +181,7 @@ public:
         // ---------------------------------------
         // Control Input
 
-        if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":control-in");
@@ -194,7 +194,7 @@ public:
         // ---------------------------------------
         // MIDI Input
 
-        if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
         {
             strcpy(portName, m_name);
             strcat(portName, ":midi-in");
@@ -647,7 +647,7 @@ public:
 
                 // Output VU
 #ifndef BUILD_BRIDGE
-                if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
+                if (CarlaEngine::processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #endif
                 {
                     for (k=0; i < 2 && k < frames; k++)

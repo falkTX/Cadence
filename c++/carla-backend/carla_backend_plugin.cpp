@@ -64,10 +64,10 @@ public:
         memcpy(prevParamBuffers, paramBuffers, sizeof(float)*paramCount);
 
         // set-up engine
-        carlaOptions.forceStereo = true;
-        carlaOptions.processMode = PROCESS_MODE_CONTINUOUS_RACK;
-        carlaOptions.preferPluginBridges = false;
-        carlaOptions.preferUiBridges = false;
+        processMode = PROCESS_MODE_CONTINUOUS_RACK;
+        options.forceStereo = true;
+        options.preferPluginBridges = false;
+        options.preferUiBridges = false;
         init("Carla");
 
         // Force thread start so we get some OSC usage

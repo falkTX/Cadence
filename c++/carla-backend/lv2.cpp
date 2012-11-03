@@ -191,18 +191,18 @@ const char* lv2bridge2str(const LV2_Property type)
     switch (type)
     {
 #ifndef BUILD_BRIDGE
-    case LV2_UI_GTK2:
-        return carlaOptions.bridge_lv2gtk2;
-    case LV2_UI_GTK3:
-        return carlaOptions.bridge_lv2gtk3;
-    case LV2_UI_QT4:
-        return carlaOptions.bridge_lv2qt4;
-    case LV2_UI_COCOA:
-        return nullptr; //carlaOptions.bridge_lv2cocoa;
-    case LV2_UI_WINDOWS:
-        return nullptr; //carlaOptions.bridge_lv2hwnd;
-    case LV2_UI_X11:
-        return carlaOptions.bridge_lv2x11;
+//    case LV2_UI_GTK2:
+//        return x_engine->options.bridge_lv2gtk2;
+//    case LV2_UI_GTK3:
+//        return x_engine->options.bridge_lv2gtk3;
+//    case LV2_UI_QT4:
+//        return x_engine->options.bridge_lv2qt4;
+//    case LV2_UI_COCOA:
+//        return nullptr; //x_engine->options.bridge_lv2cocoa;
+//    case LV2_UI_WINDOWS:
+//        return nullptr; //x_engine->options.bridge_lv2hwnd;
+//    case LV2_UI_X11:
+//        return x_engine->options.bridge_lv2x11;
 #endif
     default:
         return nullptr;
@@ -368,7 +368,7 @@ public:
                 if (osc.thread)
                 {
                     // Wait a bit first, try safe quit, then force kill
-                    if (osc.thread->isRunning() && ! osc.thread->wait(carlaOptions.oscUiTimeout * 100))
+                    if (osc.thread->isRunning() && ! osc.thread->wait(x_engine->options.oscUiTimeout * 100))
                     {
                         qWarning("Failed to properly stop LV2 OSC GUI thread");
                         osc.thread->terminate();
@@ -456,7 +456,7 @@ public:
             delete (LV2_Worker_Schedule*)features[lv2_feature_id_worker]->data;
 
 #ifndef BUILD_BRIDGE
-        if (! carlaOptions.processHighPrecision)
+        if (! x_engine->options.processHighPrecision)
 #endif
         {
             features[lv2_feature_id_bufsize_fixed]    = nullptr;
@@ -1220,7 +1220,7 @@ public:
         }
 
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.forceStereo && (aIns == 1 || aOuts == 1) && ! (h2 || ext.state || ext.worker))
+        if (x_engine->options.forceStereo && (aIns == 1 || aOuts == 1) && ! (h2 || ext.state || ext.worker))
         {
             h2 = descriptor->instantiate(descriptor, sampleRate, rdf_descriptor->Bundle, features);
 
@@ -1337,7 +1337,7 @@ public:
             if (LV2_IS_PORT_AUDIO(portType) || LV2_IS_PORT_ATOM_SEQUENCE(portType) || LV2_IS_PORT_CV(portType) || LV2_IS_PORT_EVENT(portType) || LV2_IS_PORT_MIDI_LL(portType))
             {
 #ifndef BUILD_BRIDGE
-                if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+                if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
                 {
                     strcpy(portName, m_name);
                     strcat(portName, ":");
@@ -1719,7 +1719,7 @@ public:
         if (needsCtrlIn)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-in");
@@ -1734,7 +1734,7 @@ public:
         if (needsCtrlOut)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-out");
@@ -2000,7 +2000,7 @@ public:
         // Input VU
 
 #ifndef BUILD_BRIDGE
-        if (aIn.count > 0 && carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
+        if (aIn.count > 0 && CarlaEngine::processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #else
         if (aIn.count > 0)
 #endif
@@ -2692,7 +2692,7 @@ public:
 
                 // Output VU
 #ifndef BUILD_BRIDGE
-                if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
+                if (CarlaEngine::processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #endif
                 {
                     for (k=0; i < 2 && k < frames; k++)
@@ -3981,7 +3981,7 @@ public:
         features[lv2_feature_id_bufsize_bounded]->data = nullptr;
 
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.processHighPrecision)
+        if (x_engine->options.processHighPrecision)
         {
             features[lv2_feature_id_bufsize_fixed]          = new LV2_Feature;
             features[lv2_feature_id_bufsize_fixed]->URI     = LV2_BUF_SIZE__fixedBlockLength;
@@ -4218,7 +4218,7 @@ public:
             {
             case LV2_UI_QT4:
 #ifndef BUILD_BRIDGE
-                if (isUiBridgeable(i) && carlaOptions.preferUiBridges)
+                if (isUiBridgeable(i) && x_engine->options.preferUiBridges)
                     eQt4 = i;
 #endif
                 iQt4 = i;
@@ -4226,7 +4226,7 @@ public:
 
             case LV2_UI_COCOA:
 #ifndef BUILD_BRIDGE
-                if (isUiBridgeable(i) && carlaOptions.preferUiBridges)
+                if (isUiBridgeable(i) && x_engine->options.preferUiBridges)
                     eCocoa = i;
 #endif
                 iCocoa = i;
@@ -4234,7 +4234,7 @@ public:
 
             case LV2_UI_WINDOWS:
 #ifndef BUILD_BRIDGE
-                if (isUiBridgeable(i) && carlaOptions.preferUiBridges)
+                if (isUiBridgeable(i) && x_engine->options.preferUiBridges)
                     eHWND = i;
 #endif
                 iHWND = i;
@@ -4242,7 +4242,7 @@ public:
 
             case LV2_UI_X11:
 #ifndef BUILD_BRIDGE
-                if (isUiBridgeable(i) && carlaOptions.preferUiBridges)
+                if (isUiBridgeable(i) && x_engine->options.preferUiBridges)
                     eX11 = i;
 #endif
                 iX11 = i;
@@ -4253,7 +4253,7 @@ public:
                 if (false)
 #else
 #  ifdef HAVE_SUIL
-                if (isUiBridgeable(i) && carlaOptions.preferUiBridges)
+                if (isUiBridgeable(i) && x_engine->options.preferUiBridges)
 #  else
                 if (isUiBridgeable(i))
 #  endif
@@ -4688,7 +4688,7 @@ CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
     plugin->reload();
 
 #  ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
         {

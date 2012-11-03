@@ -16,6 +16,7 @@
  */
 
 #include "carla_shared.h"
+#include "carla_engine.h"
 
 #ifndef BUILD_BRIDGE
 #  include "plugins/carla_native.h"
@@ -26,11 +27,6 @@
 CARLA_BACKEND_START_NAMESPACE
 
 static const char* carlaLastError = nullptr;
-
-#ifndef BUILD_BRIDGE
-// Global options
-carla_options_t carlaOptions;
-#endif
 
 // -------------------------------------------------------------------------------------------------------------------
 
@@ -312,6 +308,8 @@ const char* CallbackType2str(const CallbackType type)
         return "CALLBACK_NSM_OPEN2";
     case CALLBACK_NSM_SAVE:
         return "CALLBACK_NSM_SAVE";
+    case CALLBACK_ERROR:
+        return "CALLBACK_ERROR";
     case CALLBACK_QUIT:
         return "CALLBACK_QUIT";
     }
@@ -379,14 +377,14 @@ const char* getBinaryBidgePath(const BinaryType type)
     switch (type)
     {
 #ifndef BUILD_BRIDGE
-    case BINARY_POSIX32:
-        return carlaOptions.bridge_posix32;
-    case BINARY_POSIX64:
-        return carlaOptions.bridge_posix64;
-    case BINARY_WIN32:
-        return carlaOptions.bridge_win32;
-    case BINARY_WIN64:
-        return carlaOptions.bridge_win64;
+//    case BINARY_POSIX32:
+//        return CarlaEngine::options.bridge_posix32;
+//    case BINARY_POSIX64:
+//        return CarlaEngine::options.bridge_posix64;
+//    case BINARY_WIN32:
+//        return CarlaEngine::options.bridge_win32;
+//    case BINARY_WIN64:
+//        return CarlaEngine::options.bridge_win64;
 #endif
     default:
         return nullptr;
@@ -542,158 +540,6 @@ uint32_t getPluginHintsFromNative(const uint32_t nativeHints)
         realHints |= PLUGIN_USES_SINGLE_THREAD;
 
     return realHints;
-}
-
-void setOption(const OptionsType option, const int value, const char* const valueStr)
-{
-    qDebug("CarlaBackend::setOption(%s, %i, \"%s\")", OptionsType2str(option), value, valueStr);
-
-    switch (option)
-    {
-    case OPTION_PROCESS_NAME:
-        carla_setprocname(valueStr);
-        break;
-    case OPTION_PROCESS_MODE:
-        if (value < PROCESS_MODE_SINGLE_CLIENT || value > PROCESS_MODE_CONTINUOUS_RACK)
-            return qCritical("CarlaBackend::setOption(%s, %i, \"%s\") - invalid value", OptionsType2str(option), value, valueStr);
-        carlaOptions.processMode = (ProcessModeType)value;
-        break;
-    case OPTION_PROCESS_HIGH_PRECISION:
-        carlaOptions.processHighPrecision = value;
-        break;
-    case OPTION_MAX_PARAMETERS:
-        carlaOptions.maxParameters = (value > 0) ? value : MAX_PARAMETERS;
-        break;
-    case OPTION_PREFERRED_BUFFER_SIZE:
-        carlaOptions.preferredBufferSize = value;
-        break;
-    case OPTION_PREFERRED_SAMPLE_RATE:
-        carlaOptions.preferredSampleRate = value;
-        break;
-    case OPTION_FORCE_STEREO:
-        carlaOptions.forceStereo = value;
-        break;
-    case OPTION_USE_DSSI_VST_CHUNKS:
-        carlaOptions.useDssiVstChunks = value;
-        break;
-    case OPTION_PREFER_PLUGIN_BRIDGES:
-        carlaOptions.preferPluginBridges = value;
-        break;
-    case OPTION_PREFER_UI_BRIDGES:
-        carlaOptions.preferUiBridges = value;
-        break;
-    case OPTION_OSC_UI_TIMEOUT:
-        carlaOptions.oscUiTimeout = value/100;
-        break;
-    case OPTION_PATH_LADSPA:
-        carla_setenv("LADSPA_PATH", valueStr);
-        break;
-    case OPTION_PATH_DSSI:
-        carla_setenv("DSSI_PATH", valueStr);
-        break;
-    case OPTION_PATH_LV2:
-        carla_setenv("LV2_PATH", valueStr);
-        break;
-    case OPTION_PATH_VST:
-        carla_setenv("VST_PATH", valueStr);
-        break;
-    case OPTION_PATH_GIG:
-        carla_setenv("GIG_PATH", valueStr);
-        break;
-    case OPTION_PATH_SF2:
-        carla_setenv("SF2_PATH", valueStr);
-        break;
-    case OPTION_PATH_SFZ:
-        carla_setenv("SFZ_PATH", valueStr);
-        break;
-    case OPTION_PATH_BRIDGE_POSIX32:
-        carlaOptions.bridge_posix32 = strdup(valueStr);
-        break;
-    case OPTION_PATH_BRIDGE_POSIX64:
-        carlaOptions.bridge_posix64 = strdup(valueStr);
-        break;
-    case OPTION_PATH_BRIDGE_WIN32:
-        carlaOptions.bridge_win32 = strdup(valueStr);
-        break;
-    case OPTION_PATH_BRIDGE_WIN64:
-        carlaOptions.bridge_win64 = strdup(valueStr);
-        break;
-    case OPTION_PATH_BRIDGE_LV2_GTK2:
-        carlaOptions.bridge_lv2gtk2 = strdup(valueStr);
-        break;
-    case OPTION_PATH_BRIDGE_LV2_GTK3:
-        carlaOptions.bridge_lv2gtk3 = strdup(valueStr);
-        break;
-    case OPTION_PATH_BRIDGE_LV2_QT4:
-        carlaOptions.bridge_lv2qt4 = strdup(valueStr);
-        break;
-    case OPTION_PATH_BRIDGE_LV2_X11:
-        carlaOptions.bridge_lv2x11 = strdup(valueStr);
-        break;
-    case OPTION_PATH_BRIDGE_VST_HWND:
-        carlaOptions.bridge_vsthwnd = strdup(valueStr);
-        break;
-    case OPTION_PATH_BRIDGE_VST_X11:
-        carlaOptions.bridge_vstx11 = strdup(valueStr);
-        break;
-    }
-}
-
-void resetOptions()
-{
-    qDebug("CarlaBackend::resetOptions()");
-
-    if (carlaOptions.bridge_posix32)
-        free((void*)carlaOptions.bridge_posix32);
-
-    if (carlaOptions.bridge_posix64)
-        free((void*)carlaOptions.bridge_posix64);
-
-    if (carlaOptions.bridge_win32)
-        free((void*)carlaOptions.bridge_win32);
-
-    if (carlaOptions.bridge_win64)
-        free((void*)carlaOptions.bridge_win64);
-
-    if (carlaOptions.bridge_lv2gtk2)
-        free((void*)carlaOptions.bridge_lv2gtk2);
-
-    if (carlaOptions.bridge_lv2gtk3)
-        free((void*)carlaOptions.bridge_lv2gtk3);
-
-    if (carlaOptions.bridge_lv2qt4)
-        free((void*)carlaOptions.bridge_lv2qt4);
-
-    if (carlaOptions.bridge_lv2x11)
-        free((void*)carlaOptions.bridge_lv2x11);
-
-    if (carlaOptions.bridge_vsthwnd)
-        free((void*)carlaOptions.bridge_vsthwnd);
-
-    if (carlaOptions.bridge_vstx11)
-        free((void*)carlaOptions.bridge_vstx11);
-
-    carlaOptions.processMode          = PROCESS_MODE_MULTIPLE_CLIENTS;
-    carlaOptions.processHighPrecision = false;
-    carlaOptions.maxParameters        = MAX_PARAMETERS;
-    carlaOptions.preferredBufferSize  = 512;
-    carlaOptions.preferredSampleRate  = 44100;
-    carlaOptions.forceStereo          = false;
-    carlaOptions.useDssiVstChunks     = false;
-    carlaOptions.preferPluginBridges  = false;
-    carlaOptions.preferUiBridges      = true;
-    carlaOptions.oscUiTimeout         = 4000/100;
-
-    carlaOptions.bridge_posix32 = nullptr;
-    carlaOptions.bridge_posix64 = nullptr;
-    carlaOptions.bridge_win32   = nullptr;
-    carlaOptions.bridge_win64   = nullptr;
-    carlaOptions.bridge_lv2gtk2 = nullptr;
-    carlaOptions.bridge_lv2gtk3 = nullptr;
-    carlaOptions.bridge_lv2qt4  = nullptr;
-    carlaOptions.bridge_lv2x11  = nullptr;
-    carlaOptions.bridge_vsthwnd = nullptr;
-    carlaOptions.bridge_vstx11  = nullptr;
 }
 #endif // BUILD_BRIDGE
 

@@ -39,8 +39,8 @@ public:
         midiOut = nullptr;
 
         // just to make sure
-        carlaOptions.forceStereo = true;
-        carlaOptions.processMode = PROCESS_MODE_CONTINUOUS_RACK;
+        options.forceStereo = true;
+        processMode = PROCESS_MODE_CONTINUOUS_RACK;
     }
 
     ~CarlaEngineRtAudio()
@@ -60,8 +60,8 @@ public:
             return false;
         }
 
-        bufferSize = carlaOptions.preferredBufferSize;
-        sampleRate = carlaOptions.preferredSampleRate;
+        bufferSize = options.preferredBufferSize;
+        sampleRate = options.preferredSampleRate;
 
         RtAudio::StreamParameters iParams, oParams;
         //iParams.deviceId = 3;

@@ -375,7 +375,7 @@ public:
         }
 
 #ifndef BUILD_BRIDGE
-        if (carlaOptions.forceStereo && (aIns == 1 || aOuts == 1) && ! h2)
+        if (x_engine->options.forceStereo && (aIns == 1 || aOuts == 1) && ! h2)
         {
             h2 = descriptor->instantiate(descriptor, sampleRate);
 
@@ -426,7 +426,7 @@ public:
             if (LADSPA_IS_PORT_AUDIO(portType))
             {
 #ifndef BUILD_BRIDGE
-                if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+                if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
                 {
                     strcpy(portName, m_name);
                     strcat(portName, ":");
@@ -619,7 +619,7 @@ public:
         if (needsCtrlIn)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-in");
@@ -634,7 +634,7 @@ public:
         if (needsCtrlOut)
         {
 #ifndef BUILD_BRIDGE
-            if (carlaOptions.processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-out");
@@ -739,7 +739,7 @@ public:
         // Input VU
 
 #ifndef BUILD_BRIDGE
-        if (aIn.count > 0 && carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
+        if (aIn.count > 0 && CarlaEngine::processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #else
         if (aIn.count > 0)
 #endif
@@ -1036,7 +1036,7 @@ public:
 
                 // Output VU
 #ifndef BUILD_BRIDGE
-                if (carlaOptions.processMode != PROCESS_MODE_CONTINUOUS_RACK)
+                if (CarlaEngine::processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #endif
                 {
                     for (k=0; i < 2 && k < frames; k++)
@@ -1241,7 +1241,7 @@ CarlaPlugin* CarlaPlugin::newLADSPA(const initializer& init, const void* const e
     plugin->reload();
 
 #  ifndef BUILD_BRIDGE
-    if (carlaOptions.processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
         {
