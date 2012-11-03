@@ -15,10 +15,10 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_UTILS_H
-#define CARLA_UTILS_H
+#ifndef CARLA_UTILS_HPP
+#define CARLA_UTILS_HPP
 
-#include "carla_defines.h"
+#include "carla_defines.hpp"
 
 #include <cstdio>
 #include <cstdlib>
@@ -317,4 +317,4 @@ carla_string operator+(const char* const strBufBefore, const carla_string& strAf
 
 // -------------------------------------------------
 
-#endif // CARLA_UTILS_H
+#endif // CARLA_UTILS_HPP

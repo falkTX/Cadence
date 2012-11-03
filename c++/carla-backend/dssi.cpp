@@ -19,7 +19,7 @@
 
 #ifdef WANT_DSSI
 
-#include "carla_ladspa_utils.h"
+#include "carla_ladspa_utils.hpp"
 #include "dssi/dssi.h"
 
 CARLA_BACKEND_START_NAMESPACE

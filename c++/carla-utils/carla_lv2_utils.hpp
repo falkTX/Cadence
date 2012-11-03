@@ -1,5 +1,5 @@
 /*
- * Carla common LV2 code
+ * Carla LV2 utils
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_LV2_INCLUDES_H
-#define CARLA_LV2_INCLUDES_H
+#ifndef CARLA_LV2_UTILS_H
+#define CARLA_LV2_UTILS_H
 
 // TODO - presets state
 
@@ -53,12 +53,12 @@
 #include "lv2/lv2_programs.h"
 #include "lv2/lv2_rtmempool.h"
 
-#include "lv2_rdf.h"
+#include "lv2_rdf.hpp"
 
 #include "lilv/lilvmm.hpp"
 #include "sratom/sratom.h"
 
-#include "carla_defines.h"
+#include "carla_defines.hpp"
 
 #include <QtCore/QMap>
 #include <QtCore/QStringList>
@@ -1169,4 +1169,4 @@ LV2_URI get_lv2_ui_uri(const LV2_Property type)
     }
 }
 
-#endif // CARLA_LV2_INCLUDES_H
+#endif // CARLA_LV2_UTILS_H

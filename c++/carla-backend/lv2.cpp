@@ -19,9 +19,9 @@
 
 #ifdef WANT_LV2
 
-#include "carla_lv2.h"
+#include "carla_lv2_utils.hpp"
 
-#include "lv2_atom_queue.h"
+#include "lv2_atom_queue.hpp"
 #include "rtmempool/rtmempool.h"
 
 #include <set>

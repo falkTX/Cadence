@@ -48,22 +48,22 @@ HEADERS = \
     ../carla_threads.h \
     ../plugins/carla_native.h \
     ../plugins/carla_nativemm.h \
-    ../../carla-jackbridge/carla_jackbridge.h \
-    ../../carla-includes/carla_defines.h \
+    ../../carla-includes/carla_defines.hpp \
     ../../carla-includes/carla_midi.h \
-    ../../carla-includes/carla_utils.h \
-    ../../carla-includes/carla_lib_utils.h \
-    ../../carla-includes/carla_osc_utils.h \
-    ../../carla-includes/carla_ladspa_utils.h \
-    ../../carla-includes/carla_lv2.h \
-    ../../carla-includes/carla_vst_utils.h \
-    ../../carla-includes/carla_linuxsampler_utils.h \
-    ../../carla-includes/ladspa_rdf.h \
-    ../../carla-includes/lv2_rdf.h
+    ../../carla-includes/ladspa_rdf.hpp \
+    ../../carla-includes/lv2_rdf.hpp \
+    ../../carla-utils/carla_utils.hpp \
+    ../../carla-utils/carla_lib_utils.hpp \
+    ../../carla-utils/carla_osc_utils.hpp \
+    ../../carla-utils/carla_ladspa_utils.hpp \
+    ../../carla-utils/carla_lv2_utils.hpp \
+    ../../carla-utils/carla_vst_utils.hpp \
+    ../../carla-utils/carla_linuxsampler_utils.hpp
 
 INCLUDEPATH = .. \
     ../../carla-jackbridge \
     ../../carla-includes \
+    ../../carla-utils \
     ../distrho-plugin-toolkit
 
 LIBS     =  -ldl \

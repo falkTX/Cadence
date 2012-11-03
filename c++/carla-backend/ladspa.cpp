@@ -19,7 +19,7 @@
 
 #ifdef WANT_LADSPA
 
-#include "carla_ladspa_utils.h"
+#include "carla_ladspa_utils.hpp"
 
 CARLA_BACKEND_START_NAMESPACE
 

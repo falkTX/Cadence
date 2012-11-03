@@ -22,7 +22,7 @@
 #include "carla_midi.h"
 #include "carla_shared.h"
 
-#include "carla_lib_utils.h"
+#include "carla_lib_utils.hpp"
 
 #ifdef BUILD_BRIDGE
 #  include "carla_bridge_osc.h"

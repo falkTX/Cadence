@@ -18,7 +18,7 @@
 #ifndef CARLA_JACKBRIDGE_H
 #define CARLA_JACKBRIDGE_H
 
-#include "carla_defines.h"
+#include "carla_defines.hpp"
 
 #include <jack/jack.h>
 #include <jack/midiport.h>

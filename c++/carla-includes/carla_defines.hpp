@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_DEFINES_H
-#define CARLA_DEFINES_H
+#ifndef CARLA_DEFINES_HPP
+#define CARLA_DEFINES_HPP
 
 #ifdef __WINE__
 # define Q_CORE_EXPORT
@@ -26,7 +26,7 @@
 
 #include <QtCore/Qt>
 
-// TESTING - remove later (QtCreator doesn't fully support this)
+// TESTING - remove later (QtCreator doesn't fully support this yet)
 #ifdef QTCREATOR_TEST
 # undef Q_COMPILER_INITIALIZER_LISTS
 #endif
@@ -39,7 +39,6 @@
 // Common includes and macros
 #ifdef Q_OS_WIN
 # include <windows.h>
-//# define uintptr_t size_t // FIXME
 #else
 # include <unistd.h>
 # ifndef __cdecl
@@ -103,4 +102,4 @@
 # endif
 #endif
 
-#endif // CARLA_DEFINES_H
+#endif // CARLA_DEFINES_HPP

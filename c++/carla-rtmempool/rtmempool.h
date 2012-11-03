@@ -24,6 +24,8 @@
 #ifndef RTMEMPOOL_H__1FA54215_11CF_4659_9CF3_C17A10A67A1F__INCLUDED
 #define RTMEMPOOL_H__1FA54215_11CF_4659_9CF3_C17A10A67A1F__INCLUDED
 
+#include "lv2/lv2_rtmempool.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

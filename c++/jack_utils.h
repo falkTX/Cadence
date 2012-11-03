@@ -23,7 +23,7 @@
 #include <jack/transport.h>
 
 #ifdef HAVE_JACKSESSION
- #include <jack/session.h>
+# include <jack/session.h>
 #endif
 
 #include <cstring>
@@ -79,7 +79,7 @@ std::string jack_status_get_error_string(const jack_status_t& status)
     if (status & JackClientZombie)
         errorString += "Client is being shutdown against its will;\n";
 
-    if (errorString.size() > 0)
+    if (errorString.size() > 2)
         errorString.replace(errorString.size()-2, 2, ".");
 
     return errorString;

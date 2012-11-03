@@ -15,14 +15,16 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_OSC_UTILS_H
-#define CARLA_OSC_UTILS_H
+#ifndef CARLA_OSC_UTILS_HPP
+#define CARLA_OSC_UTILS_HPP
 
-#include "carla_utils.h"
+#include "carla_utils.hpp"
 
 #include <cstdint>
 
 #include <lo/lo.h>
+
+// ------------------------------------------------------------------------------------------------
 
 struct CarlaOscData {
     const char* path;
@@ -50,6 +52,8 @@ struct CarlaOscData {
         target = nullptr;
     }
 };
+
+// ------------------------------------------------------------------------------------------------
 
 static inline
 void osc_send_configure(const CarlaOscData* const oscData, const char* const key, const char* const value)
@@ -261,6 +265,8 @@ void osc_send_quit(const CarlaOscData* const oscData)
 }
 #endif
 
+// ------------------------------------------------------------------------------------------------
+
 #ifdef BUILD_BRIDGE_PLUGIN
 static inline
 void osc_send_bridge_update(const CarlaOscData* const oscData, const char* const url)
@@ -331,4 +337,6 @@ void osc_send_lv2_transfer_event(const CarlaOscData* const oscData, const int32_
     }
 }
 
-#endif // CARLA_OSC_UTILS_H
+// ------------------------------------------------------------------------------------------------
+
+#endif // CARLA_OSC_UTILS_HPP

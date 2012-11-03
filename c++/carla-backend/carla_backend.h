@@ -20,7 +20,7 @@
 
 #include <cstdint>
 
-#include "carla_defines.h"
+#include "carla_defines.hpp"
 
 #define CARLA_BACKEND_START_NAMESPACE namespace CarlaBackend {
 #define CARLA_BACKEND_END_NAMESPACE }

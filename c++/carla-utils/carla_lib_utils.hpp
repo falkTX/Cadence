@@ -15,14 +15,16 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_LIBRARY_UTILS_H
-#define CARLA_LIBRARY_UTILS_H
+#ifndef CARLA_LIBRARY_UTILS_HPP
+#define CARLA_LIBRARY_UTILS_HPP
 
-#include "carla_utils.h"
+#include "carla_utils.hpp"
 
 #ifndef Q_OS_WIN
 # include <dlfcn.h>
 #endif
+
+// ------------------------------------------------------------------------------------------------
 
 static inline
 void* lib_open(const char* const filename)
@@ -90,4 +92,6 @@ const char* lib_error(const char* const filename)
 #endif
 }
 
-#endif // CARLA_LIBRARY_UTILS_H
+// ------------------------------------------------------------------------------------------------
+
+#endif // CARLA_LIBRARY_UTILS_HPP

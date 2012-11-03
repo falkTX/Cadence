@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <pthread.h>
-#include "lv2/lv2_rtmempool.h"
 
 #include "rtmempool.h"
 

@@ -15,13 +15,13 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_LADSPA_UTILS_H
-#define CARLA_LADSPA_UTILS_H
+#ifndef CARLA_LADSPA_UTILS_HPP
+#define CARLA_LADSPA_UTILS_HPP
 
-#include "carla_utils.h"
+#include "carla_utils.hpp"
 
 #include "ladspa/ladspa.h"
-#include "ladspa_rdf.h"
+#include "ladspa_rdf.hpp"
 
 #include <cmath>
 #include <cstring>
@@ -202,4 +202,4 @@ LADSPA_Data get_default_ladspa_port_value(const LADSPA_PortRangeHintDescriptor h
 
 // ------------------------------------------------------------------------------------------------
 
-#endif // CARLA_LADSPA_UTILS_H
+#endif // CARLA_LADSPA_UTILS_HPP

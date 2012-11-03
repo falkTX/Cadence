@@ -19,7 +19,7 @@
 
 #ifdef WANT_VST
 
-#include "carla_vst_utils.h"
+#include "carla_vst_utils.hpp"
 
 #ifdef Q_WS_X11
 # include <QtGui/QX11Info>

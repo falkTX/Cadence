@@ -25,7 +25,139 @@
 
 #ifdef WANT_LINUXSAMPLER
 
-#include "carla_linuxsampler_utils.h"
+#include "linuxsampler/EngineFactory.h"
+#include <linuxsampler/Sampler.h>
+
+namespace LinuxSampler {
+
+// -----------------------------------------------------------------------
+// LinuxSampler static values
+
+static const float VOLUME_MAX = 3.16227766f; // +10 dB
+static const float VOLUME_MIN = 0.0f;        // -inf dB
+
+// -----------------------------------------------------------------------
+// LinuxSampler AudioOutputDevice Plugin
+
+class AudioOutputDevicePlugin : public AudioOutputDevice
+{
+public:
+    AudioOutputDevicePlugin(CarlaBackend::CarlaEngine* const engine, CarlaBackend::CarlaPlugin* const plugin)
+        : AudioOutputDevice(std::map<String, DeviceCreationParameter*>()),
+          m_engine(engine),
+          m_plugin(plugin)
+    {
+        CARLA_ASSERT(engine);
+        CARLA_ASSERT(plugin);
+    }
+
+    // -------------------------------------------------------------------
+    // LinuxSampler virtual methods
+
+    void Play()
+    {
+    }
+
+    bool IsPlaying()
+    {
+        return m_engine->isRunning() && m_plugin->enabled();
+    }
+
+    void Stop()
+    {
+    }
+
+    uint MaxSamplesPerCycle()
+    {
+        return m_engine->getBufferSize();
+    }
+
+    uint SampleRate()
+    {
+        return m_engine->getSampleRate();
+    }
+
+    String Driver()
+    {
+        return "AudioOutputDevicePlugin";
+    }
+
+    AudioChannel* CreateChannel(uint channelNr)
+    {
+        return new AudioChannel(channelNr, nullptr, 0);
+    }
+
+    // -------------------------------------------------------------------
+    // Give public access to the RenderAudio call
+
+    int Render(uint samples)
+    {
+        return RenderAudio(samples);
+    }
+
+private:
+    CarlaBackend::CarlaEngine* const m_engine;
+    CarlaBackend::CarlaPlugin* const m_plugin;
+};
+
+// -----------------------------------------------------------------------
+// LinuxSampler MidiInputDevice Plugin
+
+class MidiInputDevicePlugin : public MidiInputDevice
+{
+public:
+    MidiInputDevicePlugin(Sampler* const sampler)
+        : MidiInputDevice(std::map<String, DeviceCreationParameter*>(), sampler)
+    {
+    }
+
+    // -------------------------------------------------------------------
+    // LinuxSampler virtual methods
+
+    void Listen()
+    {
+    }
+
+    void StopListen()
+    {
+    }
+
+    String Driver()
+    {
+        return "MidiInputDevicePlugin";
+    }
+
+    MidiInputPort* CreateMidiPort()
+    {
+        return new MidiInputPortPlugin(this, Ports.size());
+    }
+
+    // -------------------------------------------------------------------
+    // Properly delete port (deconstructor is protected)
+
+    void DeleteMidiPort(MidiInputPort* const port)
+    {
+        delete (MidiInputPortPlugin*)port;
+    }
+
+    // -------------------------------------------------------------------
+    // MIDI Port implementation for this plugin MIDI input driver
+    // (Constructor and deconstructor are protected)
+
+    class MidiInputPortPlugin : public MidiInputPort
+    {
+    protected:
+        MidiInputPortPlugin(MidiInputDevicePlugin* const device, const int portNumber)
+            : MidiInputPort(device, portNumber)
+        {
+        }
+        friend class MidiInputDevicePlugin;
+    };
+};
+
+} // namespace LinuxSampler
+
+// -----------------------------------------------------------------------
 
 #include <QtCore/QFileInfo>
 

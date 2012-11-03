@@ -19,7 +19,7 @@
 #define CARLA_OSC_H
 
 #include "carla_backend.h"
-#include "carla_osc_utils.h"
+#include "carla_osc_utils.hpp"
 
 #define CARLA_OSC_HANDLE_ARGS1 CarlaPlugin* const plugin
 #define CARLA_OSC_HANDLE_ARGS2 CARLA_OSC_HANDLE_ARGS1, const int argc, const lo_arg* const* const argv, const char* const types
