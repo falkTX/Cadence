@@ -32,7 +32,7 @@ mark_as_advanced(LIBLO_LIBRARIES)
 # NOTE: These cache variables should normally not be changed in this
 # file, but either in in CMakeCache.txt before compile, or by passing
 # parameters directly into cmake using the -D flag.
-SET (GuiModule fltk CACHE STRING "GUI module, either fltk, qt or off")
+SET (GuiModule fltk CACHE STRING "GUI module, either fltk, ntk or off")
 SET (CompileTests ${CXXTEST_FOUND} CACHE BOOL "whether tests should be compiled in or not")
 SET (AlsaEnable ${ALSA_FOUND} CACHE BOOL
     "Enable support for Advanced Linux Sound Architecture")
@@ -221,7 +221,7 @@ if(NTK_FOUND)
 	mark_as_advanced(FORCE NTK_BASE_LIBRARY)
 	mark_as_advanced(FORCE NTK_CONFIG_SCRIPT)
 	mark_as_advanced(FORCE NTK_DIR)
-	mark_as_advanced(FORCE NTK_FLUID_EXECUTABLE)
+	mark_as_advanced(FORCE FLTK_FLUID_EXECUTABLE)
 	mark_as_advanced(FORCE NTK_FORMS_LIBRARY)
 	mark_as_advanced(FORCE NTK_GL_LIBRARY)
 	mark_as_advanced(FORCE NTK_IMAGES_LIBRARY)
@@ -366,6 +366,7 @@ install(TARGETS zynaddsubfx
 if(NtkGui)
 install(DIRECTORY ../pixmaps DESTINATION share/zynaddsubfx)
 add_definitions(-DPIXMAP_PATH="${CMAKE_INSTALL_PREFIX}/share/zynaddsubfx/pixmaps/")
+add_definitions(-DSOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 endif(NtkGui)
 
 include(CTest)

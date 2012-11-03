@@ -13,8 +13,8 @@ enum midi_type {
 };    //type=1 for note, type=2 for controller, type=3 for program change
 //type=4 for polyphonic aftertouch
 
-struct zMidiEvent {
-    zMidiEvent();
+struct MidiEvent {
+    MidiEvent();
     int channel; //the midi channel for the event
     int type;    //type=1 for note, type=2 for controller
     int num;     //note, controller or program number
@@ -28,7 +28,7 @@ class InMgr
         static InMgr &getInstance();
         ~InMgr();
 
-        void putEvent(zMidiEvent ev);
+        void putEvent(MidiEvent ev);
 
         /**Flush the Midi Queue*/
         void flush();
@@ -41,7 +41,7 @@ class InMgr
     private:
         InMgr();
         class MidiIn *getIn(std::string name);
-        SafeQueue<zMidiEvent> queue;
+        SafeQueue<MidiEvent> queue;
         sem_t work;
         class MidiIn * current;
 

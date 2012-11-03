@@ -6,7 +6,7 @@
 
 using namespace std;
 
-ostream &operator<<(ostream &out, const zMidiEvent &ev)
+ostream &operator<<(ostream &out, const MidiEvent &ev)
 {
     switch(ev.type) {
         case M_NOTE:
@@ -30,7 +30,7 @@ ostream &operator<<(ostream &out, const zMidiEvent &ev)
     return out;
 }
 
-zMidiEvent::zMidiEvent()
+MidiEvent::MidiEvent()
     :channel(0), type(0), num(0), value(0)
 {}
 
@@ -53,7 +53,7 @@ InMgr::~InMgr()
     sem_destroy(&work);
 }
 
-void InMgr::putEvent(zMidiEvent ev)
+void InMgr::putEvent(MidiEvent ev)
 {
     if(queue.push(ev)) //check for error
         cerr << "ERROR: Midi Ringbuffer is FULL" << endl;
@@ -63,7 +63,7 @@ void InMgr::putEvent(zMidiEvent ev)
 
 void InMgr::flush()
 {
-    zMidiEvent ev;
+    MidiEvent ev;
     while(!sem_trywait(&work)) {
         queue.pop(ev);
         //cout << ev << endl;
