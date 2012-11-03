@@ -1,5 +1,5 @@
 /*
- * Carla common includes
+ * Carla common defines
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_INCLUDES_H
-#define CARLA_INCLUDES_H
+#ifndef CARLA_DEFINES_H
+#define CARLA_DEFINES_H
 
 #ifdef __WINE__
 # define Q_CORE_EXPORT
@@ -38,26 +38,16 @@
 
 // Common includes and macros
 #ifdef Q_OS_WIN
-# include <winsock2.h>
 # include <windows.h>
 //# define uintptr_t size_t // FIXME
-# define carla_sleep(t)  Sleep(t * 1000)
-# define carla_msleep(t) Sleep(t)
-# define carla_usleep(t) Sleep(t / 1000)
-# define carla_setenv(key, value) SetEnvironmentVariableA(key, value)
 #else
-# include <dlfcn.h>
 # include <unistd.h>
-# define carla_sleep(t)  sleep(t)
-# define carla_msleep(t) usleep(t * 1000)
-# define carla_usleep(t) usleep(t)
-# define carla_setenv(key, value) setenv(key, value, 1)
 # ifndef __cdecl
 #  define __cdecl
 # endif
 #endif
 
-// ..., needed for qDebug/Warning/Critical sections
+// Define various string format types, needed for qDebug/Warning/Critical sections
 #if defined(Q_OS_WIN64) && ! defined(__WINE__)
 # define P_INT64   "%I64i"
 # define P_INTPTR  "%I64i"
@@ -95,14 +85,14 @@
 
 // Define CARLA_ASSERT*
 #ifdef NDEBUG
-# define CARLA_ASSERT(cond) ((!(cond)) ? carla_assert(#cond, __FILE__, __LINE__) : pass())
-# define CARLA_ASSERT_INT(cond, value) ((!(cond)) ? carla_assert_int(#cond, __FILE__, __LINE__, value) : pass())
+# define CARLA_ASSERT(cond) ((!(cond)) ? carla_assert(#cond, __FILE__, __LINE__) : qt_noop())
+# define CARLA_ASSERT_INT(cond, value) ((!(cond)) ? carla_assert_int(#cond, __FILE__, __LINE__, value) : qt_noop())
 #else
 # define CARLA_ASSERT Q_ASSERT
 # define CARLA_ASSERT_INT(cond, value) Q_ASSERT(cond)
 #endif
 
-// Export symbols if needed
+// Define CARLA_EXPORT
 #ifdef BUILD_BRIDGE
 # define CARLA_EXPORT extern "C"
 #else
@@ -113,48 +103,4 @@
 # endif
 #endif
 
-// Inline functions
-#ifdef Q_OS_LINUX
-# include <sys/prctl.h>
-# include <linux/prctl.h>
-static inline
-void carla_setprocname(const char* const name)
-{
-    prctl(PR_SET_NAME, name);
-}
-#else
-static inline
-void carla_setprocname(const char* const)
-{
-}
-#endif
-
-static inline
-void carla_assert(const char* const assertion, const char* const file, const int line)
-{
-    qCritical("Carla assertion failure: \"%s\" in file %s, line %i", assertion, file, line);
-}
-
-static inline
-void carla_assert_int(const char* const assertion, const char* const file, const int line, const int value)
-{
-    qCritical("Carla assertion failure: \"%s\" in file %s, line %i, value %i", assertion, file, line, value);
-}
-
-static inline
-const char* bool2str(const bool yesNo)
-{
-    return yesNo ? "true" : "false";
-}
-
-static inline
-void pass() {}
-
-static inline
-void zeroF(float* data, const unsigned int size)
-{
-    for (unsigned int i=0; i < size; i++)
-        *data++ = 0.0f;
-}
-
-#endif // CARLA_INCLUDES_H
+#endif // CARLA_DEFINES_H

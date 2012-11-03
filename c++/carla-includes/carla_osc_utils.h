@@ -1,5 +1,5 @@
 /*
- * Carla common OSC code
+ * Carla OSC utils
  * Copyright (C) 2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,14 +15,12 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_OSC_INCLUDES_H
-#define CARLA_OSC_INCLUDES_H
+#ifndef CARLA_OSC_UTILS_H
+#define CARLA_OSC_UTILS_H
 
-#include "carla_includes.h"
+#include "carla_utils.h"
 
 #include <cstdint>
-#include <cstdlib>
-#include <cstring>
 
 #include <lo/lo.h>
 
@@ -42,10 +40,10 @@ struct CarlaOscData {
             ::free((void*)path);
 
         if (source)
-            lo_address_free(source);
+            ::lo_address_free(source);
 
         if (target)
-            lo_address_free(target);
+            ::lo_address_free(target);
 
         path   = nullptr;
         source = nullptr;
@@ -61,7 +59,7 @@ void osc_send_configure(const CarlaOscData* const oscData, const char* const key
     CARLA_ASSERT(value);
     qDebug("osc_send_configure(path:\"%s\", \"%s\", \"%s\")", oscData->path, key, value);
 
-    if (oscData->target)
+    if (oscData && oscData->path && oscData->target && key && value)
     {
         char targetPath[strlen(oscData->path)+11];
         strcpy(targetPath, oscData->path);
@@ -74,10 +72,10 @@ static inline
 void osc_send_control(const CarlaOscData* const oscData, const int32_t index, const float value)
 {
     CARLA_ASSERT(oscData && oscData->path);
-    CARLA_ASSERT(index != -1);
+    CARLA_ASSERT(index != -1); // -1 == PARAMETER_NULL
     qDebug("osc_send_control(path:\"%s\", %i, %f)", oscData->path, index, value);
 
-    if (oscData->target)
+    if (oscData && oscData->path && oscData->target && index != -1)
     {
         char targetPath[strlen(oscData->path)+9];
         strcpy(targetPath, oscData->path);
@@ -93,7 +91,7 @@ void osc_send_program(const CarlaOscData* const oscData, const int32_t index)
     CARLA_ASSERT(index >= 0);
     qDebug("osc_send_program(path:\"%s\", %i)", oscData->path, index);
 
-    if (oscData->target)
+    if (oscData && oscData->path && oscData->target && index >= 0)
     {
         char targetPath[strlen(oscData->path)+9];
         strcpy(targetPath, oscData->path);
@@ -106,11 +104,11 @@ static inline
 void osc_send_program(const CarlaOscData* const oscData, const int32_t bank, const int32_t program)
 {
     CARLA_ASSERT(oscData && oscData->path);
-    CARLA_ASSERT(program >= 0 && program < 128);
+    CARLA_ASSERT(program >= 0);
     CARLA_ASSERT(bank >= 0);
     qDebug("osc_send_program(path:\"%s\", %i, %i)", oscData->path, bank, program);
 
-    if (oscData->target)
+    if (oscData && oscData->path && oscData->target && bank >= 0 && program >= 0)
     {
         char targetPath[strlen(oscData->path)+9];
         strcpy(targetPath, oscData->path);
@@ -126,7 +124,7 @@ void osc_send_midi_program(const CarlaOscData* const oscData, const int32_t inde
     CARLA_ASSERT(index >= 0);
     qDebug("osc_send_midi_program(path:\"%s\", %i)", oscData->path, index);
 
-    if (oscData->target)
+    if (oscData && oscData->path && oscData->target && index >= 0)
     {
         char targetPath[strlen(oscData->path)+14];
         strcpy(targetPath, oscData->path);
@@ -139,11 +137,11 @@ static inline
 void osc_send_midi_program(const CarlaOscData* const oscData, const int32_t bank, const int32_t program)
 {
     CARLA_ASSERT(oscData && oscData->path);
-    CARLA_ASSERT(program >= 0 && program < 128);
+    CARLA_ASSERT(program >= 0);
     CARLA_ASSERT(bank >= 0);
     qDebug("osc_send_midi_program(path:\"%s\", %i, %i)", oscData->path, bank, program);
 
-    if (oscData->target)
+    if (oscData && oscData->path && oscData->target && bank >= 0 && program >= 0)
     {
         char targetPath[strlen(oscData->path)+14];
         strcpy(targetPath, oscData->path);
@@ -160,7 +158,7 @@ void osc_send_midi(const CarlaOscData* const oscData, const uint8_t buf[4])
     CARLA_ASSERT(buf[1] != 0);
     qDebug("osc_send_midi(path:\"%s\", 0x%X, %03u, %03u)", oscData->path, buf[1], buf[2], buf[3]);
 
-    if (oscData->target)
+    if (oscData && oscData->path && oscData->target && buf[0] == 0 && buf[1] != 0)
     {
         char targetPath[strlen(oscData->path)+6];
         strcpy(targetPath, oscData->path);
@@ -176,9 +174,9 @@ void osc_send_sample_rate(const CarlaOscData* const oscData, const float sampleR
     CARLA_ASSERT(sampleRate > 0.0f);
     qDebug("osc_send_sample_rate(path:\"%s\", %f)", oscData->path, sampleRate);
 
-    if (oscData->target)
+    if (oscData && oscData->path && oscData->target && sampleRate > 0.0f)
     {
-        char targetPath[strlen(oscData->path)+12];
+        char targetPath[strlen(oscData->path)+13];
         strcpy(targetPath, oscData->path);
         strcat(targetPath, "/sample-rate");
         lo_send(oscData->target, targetPath, "f", sampleRate);
@@ -193,7 +191,7 @@ void osc_send_update(const CarlaOscData* const oscData, const char* const url)
     CARLA_ASSERT(url);
     qDebug("osc_send_update(path:\"%s\", \"%s\")", oscData->path, url);
 
-    if (oscData->target)
+    if (oscData && oscData->path && oscData->target && url)
     {
         char targetPath[strlen(oscData->path)+8];
         strcpy(targetPath, oscData->path);
@@ -208,7 +206,7 @@ void osc_send_exiting(const CarlaOscData* const oscData)
     CARLA_ASSERT(oscData && oscData->path);
     qDebug("osc_send_exiting(path:\"%s\")", oscData->path);
 
-    if (oscData->target)
+    if (oscData && oscData->path && oscData->target)
     {
         char targetPath[strlen(oscData->path)+9];
         strcpy(targetPath, oscData->path);
@@ -216,7 +214,6 @@ void osc_send_exiting(const CarlaOscData* const oscData)
         lo_send(oscData->target, targetPath, "");
     }
 }
-
 #else
 static inline
 void osc_send_show(const CarlaOscData* const oscData)
@@ -224,7 +221,7 @@ void osc_send_show(const CarlaOscData* const oscData)
     CARLA_ASSERT(oscData && oscData->path);
     qDebug("osc_send_show(path:\"%s\")", oscData->path);
 
-    if (oscData->target)
+    if (oscData && oscData->path && oscData->target)
     {
         char targetPath[strlen(oscData->path)+6];
         strcpy(targetPath, oscData->path);
@@ -239,7 +236,7 @@ void osc_send_hide(const CarlaOscData* const oscData)
     CARLA_ASSERT(oscData && oscData->path);
     qDebug("osc_send_hide(path:\"%s\")", oscData->path);
 
-    if (oscData->target)
+    if (oscData && oscData->path && oscData->target)
     {
         char targetPath[strlen(oscData->path)+6];
         strcpy(targetPath, oscData->path);
@@ -254,7 +251,7 @@ void osc_send_quit(const CarlaOscData* const oscData)
     CARLA_ASSERT(oscData && oscData->path);
     qDebug("osc_send_quit(path:\"%s\")", oscData->path);
 
-    if (oscData->target)
+    if (oscData && oscData->path && oscData->target)
     {
         char targetPath[strlen(oscData->path)+6];
         strcpy(targetPath, oscData->path);
@@ -272,7 +269,7 @@ void osc_send_bridge_update(const CarlaOscData* const oscData, const char* const
     CARLA_ASSERT(url);
     qDebug("osc_send_bridge_update(path:\"%s\", \"%s\")", oscData->path, url);
 
-    if (oscData->target)
+    if (oscData && oscData->path && oscData->target && url)
     {
         char targetPath[strlen(oscData->path)+15];
         strcpy(targetPath, oscData->path);
@@ -288,7 +285,7 @@ void osc_send_bridge_error(const CarlaOscData* const oscData, const char* const 
     CARLA_ASSERT(error);
     qDebug("osc_send_bridge_error(path:\"%s\", \"%s\")", oscData->path, error);
 
-    if (oscData->target)
+    if (oscData && oscData->path && oscData->target && error)
     {
         char targetPath[strlen(oscData->path)+14];
         strcpy(targetPath, oscData->path);
@@ -305,9 +302,9 @@ void osc_send_lv2_transfer_atom(const CarlaOscData* const oscData, const int32_t
     CARLA_ASSERT(portIndex >= 0);
     CARLA_ASSERT(typeStr);
     CARLA_ASSERT(atomBuf);
-    qDebug("osc_send_lv2_transfer_atom(path:\"%s\", %i, \"%s\", \"%s\")", oscData->path, portIndex, typeStr, atomBuf);
+    qDebug("osc_send_lv2_transfer_atom(path:\"%s\", %i, \"%s\", <atomBuf:%p>)", oscData->path, portIndex, typeStr, atomBuf);
 
-    if (oscData->target)
+    if (oscData && oscData->path && oscData->target && portIndex >= 0 && typeStr && atomBuf)
     {
         char targetPath[strlen(oscData->path)+19];
         strcpy(targetPath, oscData->path);
@@ -323,9 +320,9 @@ void osc_send_lv2_transfer_event(const CarlaOscData* const oscData, const int32_
     CARLA_ASSERT(portIndex >= 0);
     CARLA_ASSERT(typeStr);
     CARLA_ASSERT(atomBuf);
-    qDebug("osc_send_lv2_transfer_event(path:\"%s\", %i, \"%s\", \"%s\")", oscData->path, portIndex, typeStr, atomBuf);
+    qDebug("osc_send_lv2_transfer_event(path:\"%s\", %i, \"%s\", <atomBuf:%p>)", oscData->path, portIndex, typeStr, atomBuf);
 
-    if (oscData->target)
+    if (oscData && oscData->path && oscData->target && portIndex >= 0 && typeStr && atomBuf)
     {
         char targetPath[strlen(oscData->path)+20];
         strcpy(targetPath, oscData->path);
@@ -334,4 +331,4 @@ void osc_send_lv2_transfer_event(const CarlaOscData* const oscData, const int32_
     }
 }
 
-#endif // CARLA_OSC_INCLUDES_H
+#endif // CARLA_OSC_UTILS_H

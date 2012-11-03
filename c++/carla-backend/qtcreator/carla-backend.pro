@@ -49,10 +49,11 @@ HEADERS = \
     ../plugins/carla_native.h \
     ../plugins/carla_nativemm.h \
     ../../carla-jackbridge/carla_jackbridge.h \
-    ../../carla-includes/carla_includes.h \
-    ../../carla-includes/carla_lib_includes.h \
-    ../../carla-includes/carla_osc_includes.h \
+    ../../carla-includes/carla_defines.h \
     ../../carla-includes/carla_midi.h \
+    ../../carla-includes/carla_utils.h \
+    ../../carla-includes/carla_lib_utils.h \
+    ../../carla-includes/carla_osc_utils.h \
     ../../carla-includes/carla_ladspa.h \
     ../../carla-includes/carla_dssi.h \
     ../../carla-includes/carla_lv2.h \

@@ -34,19 +34,19 @@
 // -------------------------------------------------
 
 inline
-float d_absf(float value)
+float d_absf(const float& value)
 {
     return (value < 0.0f) ? -value : value;
 }
 
 inline
-float d_minf(float x, float y)
+float d_minf(const float& x, const float& y)
 {
     return (x < y ? x : y);
 }
 
 inline
-float d_maxf(float x, float y)
+float d_maxf(const float& x, const float& y)
 {
     return (x > y ? x : y);
 }

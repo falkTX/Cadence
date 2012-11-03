@@ -1263,7 +1263,7 @@ public:
             else
             {
                 for (i=0; i < aOut.count; i++)
-                    zeroF(outBuffer[i], frames);
+                    carla_zeroF(outBuffer[i], frames);
 
 #if ! VST_FORCE_DEPRECATED
                 isProcessing = true;
@@ -1369,7 +1369,7 @@ public:
         {
             // disable any output sound if not active
             for (i=0; i < aOut.count; i++)
-                zeroF(outBuffer[i], frames);
+                carla_zeroF(outBuffer[i], frames);
 
             aOutsPeak[0] = 0.0;
             aOutsPeak[1] = 0.0;

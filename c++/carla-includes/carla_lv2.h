@@ -58,7 +58,7 @@
 #include "lilv/lilvmm.hpp"
 #include "sratom/sratom.h"
 
-#include "carla_includes.h"
+#include "carla_defines.h"
 
 #include <QtCore/QMap>
 #include <QtCore/QStringList>

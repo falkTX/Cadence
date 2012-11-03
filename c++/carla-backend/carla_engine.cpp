@@ -726,8 +726,8 @@ void CarlaEngine::idlePluginGuis()
 void CarlaEngine::processRack(float* inBuf[2], float* outBuf[2], uint32_t frames)
 {
     // initialize outputs (zero)
-    zeroF(outBuf[0], frames);
-    zeroF(outBuf[1], frames);
+    carla_zeroF(outBuf[0], frames);
+    carla_zeroF(outBuf[1], frames);
     memset(rackControlEventsOut, 0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
     memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
 
@@ -748,8 +748,8 @@ void CarlaEngine::processRack(float* inBuf[2], float* outBuf[2], uint32_t frames
                 memcpy(rackMidiEventsIn, rackMidiEventsOut, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
 
                 // initialize outputs (zero)
-                zeroF(outBuf[0], frames);
-                zeroF(outBuf[1], frames);
+                carla_zeroF(outBuf[0], frames);
+                carla_zeroF(outBuf[1], frames);
                 memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
             }
 

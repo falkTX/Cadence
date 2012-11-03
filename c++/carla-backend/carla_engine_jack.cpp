@@ -566,10 +566,10 @@ private:
     static void processPluginNOT(CarlaPlugin* const p, const uint32_t nframes)
     {
         for (uint32_t i=0; i < p->aIn.count; i++)
-            zeroF(p->aIn.ports[i]->getJackAudioBuffer(nframes), nframes);
+            carla_zeroF(p->aIn.ports[i]->getJackAudioBuffer(nframes), nframes);
 
         for (uint32_t i=0; i < p->aOut.count; i++)
-            zeroF(p->aOut.ports[i]->getJackAudioBuffer(nframes), nframes);
+            carla_zeroF(p->aOut.ports[i]->getJackAudioBuffer(nframes), nframes);
     }
 
     static void latencyPlugin(CarlaPlugin* const p, jack_latency_callback_mode_t mode)
