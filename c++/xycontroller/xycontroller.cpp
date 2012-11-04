@@ -23,8 +23,8 @@
 
 #define VERSION "0.5.0"
 
-#include "../jack_utils.h"
-#include "../midi_queue.h"
+#include "../jack_utils.hpp"
+#include "../midi_queue.hpp"
 #include "ui_xycontroller.h"
 
 #include <QtCore/QSettings>

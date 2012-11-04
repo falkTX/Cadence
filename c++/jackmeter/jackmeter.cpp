@@ -21,7 +21,7 @@
 # define nullptr (0)
 #endif
 
-#include "../jack_utils.h"
+#include "../jack_utils.hpp"
 #include "../widgets/digitalpeakmeter.h"
 
 #include <QtGui/QApplication>

@@ -16,7 +16,7 @@
  */
 
 #include "carla_midi.hpp"
-#include "carla_nativemm.h"
+#include "carla_native.hpp"
 
 #include "zynaddsubfx/Misc/Master.h"
 #include "zynaddsubfx/Misc/Util.h"

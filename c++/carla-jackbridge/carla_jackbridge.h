@@ -34,7 +34,7 @@ struct jackbridge_midi_event_t {
     jackbridge_midi_data_t* buffer;
 };
 
-CARLA_EXPORT jack_client_t* jackbridge_client_open(const char* client_name, jack_options_t options, jack_status_t* status);
+CARLA_EXPORT jack_client_t* jackbridge_client_open(const char* client_name, jack_options_t options, jack_status_t* status, ...);
 CARLA_EXPORT int jackbridge_client_close(jack_client_t* client);
 CARLA_EXPORT int jackbridge_client_name_size();
 CARLA_EXPORT char* jackbridge_get_client_name(jack_client_t* client);

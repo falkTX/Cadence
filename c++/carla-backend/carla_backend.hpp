@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_BACKEND_H
-#define CARLA_BACKEND_H
+#ifndef CARLA_BACKEND_HPP
+#define CARLA_BACKEND_HPP
 
 #include <cstdint>
 
@@ -166,7 +166,7 @@ enum InternalParametersIndex {
 /*!
  * Custom Data types.\n
  * The type defines how the value in CustomData is stored.\n
- * Binary chunks are stored in base64 format.
+ * Binary/chunks are stored in a base64 format string.
  */
 enum CustomDataType {
     CUSTOM_DATA_INVALID = 0, //!< Null/Invalid data.
@@ -586,10 +586,6 @@ struct CustomData {
 
 /**@}*/
 
-class CarlaEngine;
-class CarlaPlugin;
-class CarlaOsc;
-
 CARLA_BACKEND_END_NAMESPACE
 
-#endif // CARLA_BACKEND_H
+#endif // CARLA_BACKEND_HPP

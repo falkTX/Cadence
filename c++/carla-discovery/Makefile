@@ -4,41 +4,36 @@
 # Created by falkTX
 #
 
-CXX   ?= g++
-STRIP ?= strip
+include ../Makefile.mk
 
-BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -mfpmath=sse -Wall
-BASE_FLAGS  += -I../carla-backend -I../carla-includes
+BUILD_CXX_FLAGS += -I../carla-backend -I../carla-includes -I../carla-utils
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags QtCore)
+LINK_FLAGS      += $(shell pkg-config --libs QtCore)
 
-BUILD_FLAGS  = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
-BUILD_FLAGS += $(shell pkg-config --cflags QtCore)
-BUILD_FLAGS += -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT # -DNDEBUG
-BUILD_FLAGS += -DVESTIGE_HEADER # Comment this line to not use vestige header
+ifeq ($(CARLA_PLUGIN_SUPPORT),true)
+BUILD_CXX_FLAGS += -DWANT_LADSPA -DWANT_DSSI -DWANT_LV2 -DWANT_VST
+endif
 
-32BIT_FLAGS  = -m32
-64BIT_FLAGS  = -m64
-LINK_FLAGS   = $(shell pkg-config --libs QtCore) $(LDFLAGS)
-
+ifeq ($(CARLA_SAMPLERS_SUPPORT),true)
 ifneq ($(NATIVE),)
-BUILD_FLAGS += -DBUILD_NATIVE
-
 ifeq ($(shell pkg-config --exists fluidsynth && echo true),true)
-BUILD_FLAGS += $(shell pkg-config --cflags fluidsynth) -DWANT_FLUIDSYNTH
-LINK_FLAGS  += $(shell pkg-config --libs fluidsynth)
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags fluidsynth) -DWANT_FLUIDSYNTH
+LINK_FLAGS      += $(shell pkg-config --libs fluidsynth)
 endif
 
 ifeq ($(shell pkg-config --exists linuxsampler && echo true),true)
-BUILD_FLAGS += $(shell pkg-config --cflags linuxsampler) -DWANT_LINUXSAMPLER
-LINK_FLAGS  += $(shell pkg-config --libs linuxsampler)
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags linuxsampler) -DWANT_LINUXSAMPLER
+LINK_FLAGS      += $(shell pkg-config --libs linuxsampler)
 endif
-endif
+endif # NATIVE
+endif # CARLA_SAMPLERS_SUPPORT
 
-POSIX_BUILD_FLAGS = $(BUILD_FLAGS)
+POSIX_BUILD_FLAGS = $(BUILD_CXX_FLAGS)
 POSIX_32BIT_FLAGS = $(32BIT_FLAGS) -L/usr/lib32 -L/usr/lib/i386-linux-gnu
 POSIX_64BIT_FLAGS = $(64BIT_FLAGS) -L/usr/lib64 -L/usr/lib/x86_64-linux-gnu
 POSIX_LINK_FLAGS  = $(LINK_FLAGS) -ldl -lpthread
 
-WIN_BUILD_FLAGS   = $(BUILD_FLAGS)
+WIN_BUILD_FLAGS   = $(BUILD_CXX_FLAGS)
 WIN_32BIT_FLAGS   = $(32BIT_FLAGS)
 WIN_64BIT_FLAGS   = $(64BIT_FLAGS)
 WIN_LINK_FLAGS    = $(LINK_FLAGS) -static -mwindows

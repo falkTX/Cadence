@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_NATIVE_MM_H
-#define CARLA_NATIVE_MM_H
+#ifndef CARLA_NATIVE_HPP
+#define CARLA_NATIVE_HPP
 
 #include "carla_native.h"
 #include "carla_utils.hpp"
@@ -432,4 +432,4 @@ private:
 #define CARLA_REGISTER_NATIVE_PLUGIN_MM(label, descMM) \
     void carla_register_native_plugin_##label () { carla_register_native_plugin(descMM.descriptorInit()); }
 
-#endif // CARLA_NATIVE_MM_H
+#endif // CARLA_NATIVE_HPP

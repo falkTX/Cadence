@@ -25,7 +25,7 @@
 #include "carla_lib_utils.hpp"
 
 #ifdef BUILD_BRIDGE
-#  include "carla_bridge_osc.h"
+# include "carla_bridge_osc.h"
 #endif
 
 // common includes

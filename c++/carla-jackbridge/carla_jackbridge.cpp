@@ -17,7 +17,7 @@
 
 #include "carla_jackbridge.h"
 
-jack_client_t* jackbridge_client_open(const char* client_name, jack_options_t options, jack_status_t* status)
+jack_client_t* jackbridge_client_open(const char* client_name, jack_options_t options, jack_status_t* status, ...)
 {
 #ifndef JACKBRIDGE_DUMMY
     return jack_client_open(client_name, options, status);
@@ -98,15 +98,6 @@ int jackbridge_deactivate(jack_client_t* client)
 {
 #ifndef JACKBRIDGE_DUMMY
     return jack_deactivate(client);
-#else
-    return 0;
-#endif
-}
-
-int jackbridge_set_process_thread(jack_client_t* client, JackThreadCallback thread_callback, void *arg)
-{
-#ifndef JACKBRIDGE_DUMMY
-    return jack_set_process_thread(client, thread_callback, arg);
 #else
     return 0;
 #endif

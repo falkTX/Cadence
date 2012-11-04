@@ -173,7 +173,8 @@ src/resources_rc.py: resources/resources.qrc
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-CPP: carla-backend carla-bridge carla-discovery jackmeter xycontroller
+# CPP: carla-backend carla-bridge carla-discovery
+CPP: carla-discovery jackmeter xycontroller
 
 carla-backend: carla-lilv carla-rtmempool
 	$(MAKE) -C c++/carla-backend
@@ -199,11 +200,7 @@ xycontroller:
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 debug:
-	$(MAKE) -f Makefile.dbg -C c++/carla-backend
-	$(MAKE) -f Makefile.dbg -C c++/carla-bridge
-	$(MAKE) -f Makefile.dbg -C c++/carla-discovery NATIVE=1
-	$(MAKE) -f Makefile.dbg -C c++/jackmeter
-	$(MAKE) -f Makefile.dbg -C c++/xycontroller
+	$(MAKE) DEBUG=true
 
 doc:
 	$(MAKE) doc -C c++/carla-backend

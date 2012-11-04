@@ -4,24 +4,14 @@
 # Created by falkTX
 #
 
-CXX   ?= g++
-MOC   ?= moc
-RCC   ?= rcc
-UIC   ?= uic
-STRIP ?= strip
-WINDRES ?= windres
+include ../Makefile.mk
 
-BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -mfpmath=sse -Wall -I../widgets
-
-BUILD_FLAGS  = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
-BUILD_FLAGS += $(shell pkg-config --cflags QtCore QtGui jack)
-BUILD_FLAGS += -DNDEBUG -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT
-
-LINK_FLAGS   = $(LDFLAGS)
-LINK_FLAGS  += $(shell pkg-config --libs QtCore QtGui jack)
+BUILD_CXX_FLAGS += -I../widgets
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags QtCore QtGui jack)
+LINK_FLAGS      += $(shell pkg-config --libs QtCore QtGui jack)
 
 ifeq ($(shell pkg-config --atleast-version=0.121.0 jack && echo true),true)
-BUILD_FLAGS += -DHAVE_JACKSESSION
+BUILD_CXX_FLAGS += -DHAVE_JACKSESSION
 endif
 
 FILES = \
@@ -41,10 +31,10 @@ OBJS  = xycontroller.o \
 all: cadence-xycontroller
 
 cadence-xycontroller: $(FILES) $(OBJS)
-	$(CXX) $(OBJS) $(LINK_FLAGS) -o $@ && strip $@
+	$(CXX) $(OBJS) $(LINK_FLAGS) -o $@ && $(STRIP) $@
 
 cadence-xycontroller.exe: $(FILES) $(OBJS) icon.o
-	$(CXX) $(OBJS) icon.o -static -mwindows $(LINK_FLAGS) -o $@ && strip $@
+	$(CXX) $(OBJS) icon.o -static -mwindows $(LINK_FLAGS) -o $@ && $(STRIP) $@
 
 # --------------------------------------------------------------
 
@@ -66,7 +56,7 @@ icon.o: ../../resources/ico/cadence.rc
 # --------------------------------------------------------------
 
 .cpp.o:
-	$(CXX) -c $< $(BUILD_FLAGS) -o $@
+	$(CXX) -c $< $(BUILD_CXX_FLAGS) -o $@
 
 clean:
 	rm -f $(FILES) $(OBJS) icon.o cadence-xycontroller*

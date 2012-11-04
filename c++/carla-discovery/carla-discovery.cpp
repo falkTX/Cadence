@@ -15,37 +15,37 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_includes.h"
-#include "carla_lib_includes.h"
-
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
 #include <iostream>
-
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QUrl>
 
-#include "carla_backend.h"
+#include "carla_backend.hpp"
+#include "carla_lib_utils.hpp"
 
-#include "carla_ladspa.h"
-#include "carla_dssi.h"
-#include "carla_lv2.h"
-#include "carla_vst.h"
-
-#ifdef BUILD_NATIVE
- #ifdef WANT_FLUIDSYNTH
-  #include "carla_fluidsynth.h"
- #endif
- #ifdef WANT_LINUXSAMPLER
-  #include "carla_linuxsampler.h"
- #endif
+#ifdef WANT_LADSPA
+# include "carla_ladspa_utils.hpp"
+#endif
+#ifdef WANT_DSSI
+# include "carla_ladspa_utils.hpp"
+# include "dssi/dssi.h"
+#endif
+#ifdef WANT_LV2
+# include "carla_lv2_utils.hpp"
+#endif
+#ifdef WANT_VST
+# include "carla_vst_utils.hpp"
+#endif
+#ifdef WANT_FLUIDSYNTH
+# include <fluidsynth.h>
+#endif
+#ifdef WANT_LINUXSAMPLER
+# include "linuxsampler/EngineFactory.h"
 #endif
 
 #define DISCOVERY_OUT(x, y) std::cout << "\ncarla-discovery::" << x << "::" << y << std::endl;
 
-// fake values to test plugins with
+// Fake values to test plugins with
 const uint32_t bufferSize = 512;
 const double   sampleRate = 44100.0;
 
@@ -61,6 +61,7 @@ using namespace CarlaBackend;
 
 // ------------------------------ VST Stuff ------------------------------
 
+#ifdef WANT_VST
 intptr_t vstCurrentUniqueId = 0;
 
 intptr_t vstHostCanDo(const char* const feature)
@@ -202,11 +203,13 @@ intptr_t VSTCALLBACK vstHostCallback(AEffect* const effect, const int32_t opcode
 
     return ret;
 }
+#endif
 
 // ------------------------------ Plugin Checks -----------------------------
 
 void do_ladspa_check(void* const libHandle, const bool init)
 {
+#ifdef WANT_LADSPA
     const LADSPA_Descriptor_Function descFn = (LADSPA_Descriptor_Function)lib_symbol(libHandle, "ladspa_descriptor");
 
     if (! descFn)
@@ -367,10 +370,16 @@ void do_ladspa_check(void* const libHandle, const bool init)
         DISCOVERY_OUT("build", BINARY_NATIVE);
         DISCOVERY_OUT("end", "------------");
     }
+#else
+    DISCOVERY_OUT("error", "LADSPA support not available");
+    Q_UNUSED(libHandle);
+    Q_UNUSED(init);
+#endif
 }
 
 void do_dssi_check(void* const libHandle, const bool init)
 {
+#ifdef WANT_DSSI
     const DSSI_Descriptor_Function descFn = (DSSI_Descriptor_Function)lib_symbol(libHandle, "dssi_descriptor");
 
     if (! descFn)
@@ -579,21 +588,27 @@ void do_dssi_check(void* const libHandle, const bool init)
         DISCOVERY_OUT("build", BINARY_NATIVE);
         DISCOVERY_OUT("end", "------------");
     }
+#else
+    DISCOVERY_OUT("error", "DSSI support not available");
+    Q_UNUSED(libHandle);
+    Q_UNUSED(init);
+#endif
 }
 
 void do_lv2_check(const char* const bundle, const bool init)
 {
+#ifdef WANT_LV2
     // Convert bundle filename to URI
     QString qBundle(QUrl::fromLocalFile(bundle).toString());
     if (! qBundle.endsWith(QDir::separator()))
         qBundle += QDir::separator();
 
     // Load bundle
-    Lilv::Node lilvBundle(Lv2World.new_uri(qBundle.toUtf8().constData()));
-    Lv2World.load_bundle(lilvBundle);
+    Lilv::Node lilvBundle(lv2World.new_uri(qBundle.toUtf8().constData()));
+    lv2World.load_bundle(lilvBundle);
 
     // Load plugins in this bundle
-    const Lilv::Plugins lilvPlugins = Lv2World.get_all_plugins();
+    const Lilv::Plugins lilvPlugins = lv2World.get_all_plugins();
 
     // Get all plugin URIs in this bundle
     QStringList URIs;
@@ -732,10 +747,16 @@ void do_lv2_check(const char* const bundle, const bool init)
         DISCOVERY_OUT("build", BINARY_NATIVE);
         DISCOVERY_OUT("end", "------------");
     }
+#else
+    DISCOVERY_OUT("error", "LV2 support not available");
+    Q_UNUSED(bundle);
+    Q_UNUSED(init);
+#endif
 }
 
 void do_vst_check(void* const libHandle, const bool init)
 {
+#ifdef WANT_VST
     VST_Function vstFn = (VST_Function)lib_symbol(libHandle, "VSTPluginMain");
 
     if (! vstFn)
@@ -920,6 +941,11 @@ void do_vst_check(void* const libHandle, const bool init)
     free((void*)cName);
     free((void*)cProduct);
     free((void*)cVendor);
+#else
+    DISCOVERY_OUT("error", "VST support not available");
+    Q_UNUSED(libHandle);
+    Q_UNUSED(init);
+#endif
 }
 
 void do_fluidsynth_check(const char* const filename, const bool init)
@@ -1095,7 +1121,6 @@ void do_linuxsampler_check(const char* const filename, const char* const stype, 
         const LinuxSamplerScopedEngine engine(filename, stype);
     else
         LinuxSamplerScopedEngine::outputInfo(nullptr, 0, file.baseName().toUtf8().constData());
-
 #else
     DISCOVERY_OUT("error", stype << " support not available");
     Q_UNUSED(filename);
@@ -1107,6 +1132,57 @@ void do_linuxsampler_check(const char* const filename, const char* const stype, 
 
 int main(int argc, char* argv[])
 {
+    if (argc == 2 && strcmp(argv[1], "-formats") == 0)
+    {
+        printf("Available plugin formats:\n");
+        printf("LADSPA: ");
+#ifdef WANT_LADSPA
+        printf("yes\n");
+#else
+        printf("no\n");
+#endif
+        printf("DSSI:   ");
+#ifdef WANT_DSSI
+        printf("yes\n");
+#else
+        printf("no\n");
+#endif
+        printf("LV2:    ");
+#ifdef WANT_LV2
+        printf("yes\n");
+#else
+        printf("no\n");
+#endif
+        printf("VST:    ");
+#ifdef WANT_VST
+        printf("yes\n");
+#else
+        printf("no\n");
+#endif
+        printf("\n");
+
+        printf("Available sampler formats:\n");
+        printf("GIG (LinuxSampler): ");
+#ifdef WANT_LINUXSAMPLER
+        printf("yes\n");
+#else
+        printf("no\n");
+#endif
+        printf("SF2 (FluidSynth):   ");
+#ifdef WANT_FLUIDSYNTH
+        printf("yes\n");
+#else
+        printf("no\n");
+#endif
+        printf("SFZ (LinuxSampler): ");
+#ifdef WANT_LINUXSAMPLER
+        printf("yes\n");
+#else
+        printf("no\n");
+#endif
+        return 0;
+    }
+
     if (argc != 3)
     {
         qWarning("usage: %s <type> </path/to/plugin>", argv[0]);
