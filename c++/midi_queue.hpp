@@ -15,6 +15,10 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
+#ifndef MIDI_QUEUE_HPP
+#define MIDI_QUEUE_HPP
+
+#include <cstring>
 #include <QtCore/QMutex>
 
 class Queue
@@ -34,7 +38,7 @@ public:
         mutex.lock();
 
         // copy data from queue
-        memcpy(data, queue->data, sizeof(datatype)*MAX_SIZE);
+        ::memcpy(data, queue->data, sizeof(datatype)*MAX_SIZE);
         index = queue->index;
         empty = queue->empty;
         full  = queue->full;
@@ -43,7 +47,7 @@ public:
         mutex.unlock();
 
         // reset queque
-        memset(queue->data, 0, sizeof(datatype)*MAX_SIZE);
+        ::memset(queue->data, 0, sizeof(datatype)*MAX_SIZE);
         queue->index = 0;
         queue->empty = true;
         queue->full  = false;
@@ -117,7 +121,7 @@ public:
             empty = true;
 
             if (lock)
-                mutex.lock();
+                mutex.unlock();
 
             return false;
         }
@@ -151,3 +155,5 @@ private:
 
     QMutex mutex;
 };
+
+#endif // MIDI_QUEUE_HPP

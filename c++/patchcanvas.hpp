@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef PATCHCANVAS_API_H
-#define PATCHCANVAS_API_H
+#ifndef PATCHCANVAS_API_HPP
+#define PATCHCANVAS_API_HPP
 
 #define START_NAMESPACE_PATCHCANVAS namespace PatchCanvas {
 #define END_NAMESPACE_PATCHCANVAS }
@@ -135,4 +135,4 @@ QString getDefaultThemeName();
 
 END_NAMESPACE_PATCHCANVAS
 
-#endif // PATCHCANVAS_API_H
+#endif // PATCHCANVAS_API_HPP

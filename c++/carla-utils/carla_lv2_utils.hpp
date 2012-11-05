@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_LV2_UTILS_H
-#define CARLA_LV2_UTILS_H
+#ifndef CARLA_LV2_UTILS_HPP
+#define CARLA_LV2_UTILS_HPP
 
 // TODO - presets state
 
@@ -1171,4 +1171,4 @@ LV2_URI get_lv2_ui_uri(const LV2_Property type)
     }
 }
 
-#endif // CARLA_LV2_UTILS_H
+#endif // CARLA_LV2_UTILS_HPP

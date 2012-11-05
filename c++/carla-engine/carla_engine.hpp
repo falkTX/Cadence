@@ -23,12 +23,12 @@
 #include "carla_threads.hpp"
 
 #ifdef CARLA_ENGINE_JACK
-#include "carla_jackbridge.h"
+# include "carla_jackbridge.h"
 #endif
 
 #ifdef CARLA_ENGINE_RTAUDIO
-#include "RtAudio.h"
-#include "RtMidi.h"
+# include "RtAudio.h"
+# include "RtMidi.h"
 #endif
 
 CARLA_BACKEND_START_NAMESPACE

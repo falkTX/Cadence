@@ -19,7 +19,8 @@ endif
 # Plugin bridges
 
 BUILD_PLUGIN_FLAGS  = $(BUILD_CXX_FLAGS)
-BUILD_PLUGIN_FLAGS += -DBUILD_BRIDGE_PLUGIN -DCARLA_ENGINE_JACK -I../carla-backend -I../carla-jackbridge
+BUILD_PLUGIN_FLAGS += -DBUILD_BRIDGE_PLUGIN
+BUILD_PLUGIN_FLAGS += -DCARLA_ENGINE_JACK -I../carla-backend -I../carla-jackbridge
 BUILD_PLUGIN_FLAGS += $(shell pkg-config --cflags jack QtGui)
 
 LINK_PLUGIN_FLAGS   = $(LINK_FLAGS)

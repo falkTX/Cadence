@@ -15,11 +15,12 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef LV2_ATOM_QUEUE_H
-#define LV2_ATOM_QUEUE_H
+#ifndef LV2_ATOM_QUEUE_HPP
+#define LV2_ATOM_QUEUE_HPP
 
 #include "lv2/atom.h"
 
+#include <cstring>
 #include <QtCore/QMutex>
 
 class Lv2AtomQueue
@@ -31,7 +32,7 @@ public:
         empty = true;
         full  = false;
 
-        memset(dataPool, 0, sizeof(unsigned char)*MAX_POOL_SIZE);
+        ::memset(dataPool, 0, sizeof(unsigned char)*MAX_POOL_SIZE);
     }
 
     void copyDataFrom(Lv2AtomQueue* const queue)
@@ -41,8 +42,8 @@ public:
         mutex.lock();
 
         // copy data from queue
-        memcpy(data, queue->data, sizeof(datatype)*MAX_SIZE);
-        memcpy(dataPool, queue->dataPool, sizeof(unsigned char)*MAX_POOL_SIZE);
+        ::memcpy(data, queue->data, sizeof(datatype)*MAX_SIZE);
+        ::memcpy(dataPool, queue->dataPool, sizeof(unsigned char)*MAX_POOL_SIZE);
         index = queue->index;
         indexPool = queue->indexPool;
         empty = queue->empty;
@@ -52,8 +53,8 @@ public:
         mutex.unlock();
 
         // reset queque
-        memset(queue->data, 0, sizeof(datatype)*MAX_SIZE);
-        memset(queue->dataPool, 0, sizeof(unsigned char)*MAX_POOL_SIZE);
+        ::memset(queue->data, 0, sizeof(datatype)*MAX_SIZE);
+        ::memset(queue->dataPool, 0, sizeof(unsigned char)*MAX_POOL_SIZE);
         queue->index = queue->indexPool = 0;
         queue->empty = true;
         queue->full  = false;
@@ -101,7 +102,7 @@ public:
                 data[i].size       = atom->size;
                 data[i].type       = atom->type;
                 data[i].poolOffset = indexPool;
-                memcpy(dataPool + indexPool, (const unsigned char*)LV2_ATOM_BODY_CONST(atom), atom->size);
+                ::memcpy(dataPool + indexPool, (const unsigned char*)LV2_ATOM_BODY_CONST(atom), atom->size);
                 empty = false;
                 full  = (i == MAX_SIZE-1);
                 indexPool += atom->size;
@@ -131,14 +132,14 @@ public:
             empty = true;
 
             if (lock)
-                mutex.lock();
+                mutex.unlock();
 
             return false;
         }
 
         retAtom.atom.size = data[index].size;
         retAtom.atom.type = data[index].type;
-        memcpy(retAtom.data, dataPool + data[index].poolOffset, data[index].size);
+        ::memcpy(retAtom.data, dataPool + data[index].poolOffset, data[index].size);
 
         *portIndex = data[index].portIndex;
         *atom      = (LV2_Atom*)&retAtom;
@@ -187,4 +188,4 @@ private:
     QMutex mutex;
 };
 
-#endif // LV2_ATOM_QUEUE_H
+#endif // LV2_ATOM_QUEUE_HPP
