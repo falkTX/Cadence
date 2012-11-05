@@ -20,35 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum ByPassPorts {
-    PORT_IN  = 0,
-    PORT_OUT = 1,
-    PORT_MAX = 2
-};
-
-void bypass_init(struct _PluginDescriptor* _this_)
-{
-    _this_->portCount = PORT_MAX;
-    _this_->ports = malloc(sizeof(PluginPort) * PORT_MAX);
-
-    _this_->ports[PORT_IN].type  = PORT_TYPE_AUDIO;
-    _this_->ports[PORT_IN].hints = 0;
-    _this_->ports[PORT_IN].name  = "in";
-
-    _this_->ports[PORT_OUT].type  = PORT_TYPE_AUDIO;
-    _this_->ports[PORT_OUT].hints = PORT_HINT_IS_OUTPUT;
-    _this_->ports[PORT_OUT].name  = "out";
-}
-
-void bypass_fini(struct _PluginDescriptor* _this_)
-{
-    free(_this_->ports);
-
-    _this_->portCount = 0;
-    _this_->ports     = NULL;
-}
-
-PluginHandle bypass_instantiate(struct _PluginDescriptor* _this_, HostDescriptor* host)
+static PluginHandle bypass_instantiate(struct _PluginDescriptor* _this_, HostDescriptor* host)
 {
     // dummy, return non-NULL
     return (PluginHandle)1;
@@ -58,13 +30,12 @@ PluginHandle bypass_instantiate(struct _PluginDescriptor* _this_, HostDescriptor
     (void)host;
 }
 
-void bypass_process(PluginHandle handle, float** inBuffer, float** outBuffer, uint32_t frames, uint32_t midiEventCount, MidiEvent* midiEvents)
+static void bypass_process(PluginHandle handle, float** inBuffer, float** outBuffer, uint32_t frames, uint32_t midiEventCount, MidiEvent* midiEvents)
 {
-    float* input1  = inBuffer[0];
-    float* output1 = outBuffer[0];
+    float* in  = inBuffer[0];
+    float* out = outBuffer[0];
 
-    memcpy(output1, input1, sizeof(float)*frames);
-
+    memcpy(out, in, sizeof(float)*frames);
     return;
 
     // unused
@@ -74,26 +45,28 @@ void bypass_process(PluginHandle handle, float** inBuffer, float** outBuffer, ui
 }
 
 static PluginDescriptor bypassDesc = {
-    .category   = PLUGIN_CATEGORY_NONE,
+    .category  = PLUGIN_CATEGORY_NONE,
+    .hints     = 0x0,
+    .audioIns  = 1,
+    .audioOuts = 1,
+    .midiIns   = 0,
+    .midiOuts  = 0,
+    .parameterIns  = 0,
+    .parameterOuts = 0,
     .name       = "ByPass",
     .label      = "bypass",
     .maker      = "falkTX",
     .copyright  = "GNU GPL v2+",
 
-    .portCount  = 0,
-    .ports      = NULL,
-
     .instantiate = bypass_instantiate,
-    .activate    = NULL,
-    .deactivate  = NULL,
-    .cleanup     = NULL,
 
-    .get_parameter_ranges = NULL,
+    .get_parameter_count  = NULL,
+    .get_parameter_info   = NULL,
     .get_parameter_value  = NULL,
     .get_parameter_text   = NULL,
-    .get_parameter_unit   = NULL,
 
-    .get_midi_program    = NULL,
+    .get_midi_program_count = NULL,
+    .get_midi_program_info  = NULL,
 
     .set_parameter_value = NULL,
     .set_midi_program    = NULL,
@@ -102,11 +75,10 @@ static PluginDescriptor bypassDesc = {
     .show_gui = NULL,
     .idle_gui = NULL,
 
-    .process  = bypass_process,
-
-    ._singleton = NULL,
-    ._init      = bypass_init,
-    ._fini      = bypass_fini
+    .activate   = NULL,
+    .deactivate = NULL,
+    .cleanup    = NULL,
+    .process    = bypass_process
 };
 
 CARLA_REGISTER_NATIVE_PLUGIN(bypass, bypassDesc)

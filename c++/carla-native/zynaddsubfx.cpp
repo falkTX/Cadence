@@ -28,15 +28,14 @@ SYNTH_T* synth = nullptr;
 class ZynAddSubFxPlugin : public PluginDescriptorClass
 {
 public:
-    ZynAddSubFxPlugin(const PluginDescriptorClass* master)
-        : PluginDescriptorClass(master)
+    enum Parameters {
+        PARAMETER_MASTER,
+        PARAMETER_MAX
+    };
+
+    ZynAddSubFxPlugin(const HostDescriptor* host)
+        : PluginDescriptorClass(host)
     {
-        zyn_master = nullptr;
-
-        // first init, ignore
-        if (! master)
-            return;
-
         if (s_instanceCount == 0)
         {
             synth = new SYNTH_T;
@@ -55,22 +54,22 @@ public:
                 denormalkillbuf[i] = (RND - 0.5f) * 1e-16;
         }
 
-        zyn_master = new Master();
-        zyn_master->defaults();
-        zyn_master->swaplr = false;
+        master = new Master();
+        master->defaults();
+        master->swaplr = false;
 
         // refresh banks
-        zyn_master->bank.rescanforbanks();
+        master->bank.rescanforbanks();
 
-        for (size_t i=0, size = zyn_master->bank.banks.size(); i < size; i++)
+        for (size_t i=0, size = master->bank.banks.size(); i < size; i++)
         {
-            if (! zyn_master->bank.banks[i].dir.empty())
+            if (! master->bank.banks[i].dir.empty())
             {
-                zyn_master->bank.loadbank(zyn_master->bank.banks[i].dir);
+                master->bank.loadbank(master->bank.banks[i].dir);
 
                 for (unsigned int instrument = 0; instrument < BANK_SIZE; instrument++)
                 {
-                    const std::string insName = zyn_master->bank.getname(instrument);
+                    const std::string insName = master->bank.getname(instrument);
 
                     if (insName.empty() || insName[0] == '\0' || insName[0] == ' ')
                         continue;
@@ -89,12 +88,9 @@ public:
 
     ~ZynAddSubFxPlugin()
     {
-        if (! zyn_master)
-            return;
-
         programs.clear();
 
-        delete zyn_master;
+        delete master;
 
         if (--s_instanceCount == 0)
         {
@@ -106,144 +102,68 @@ public:
         }
     }
 
-    // -------------------------------------------------------------------
-
 protected:
-    PluginDescriptorClass* createMe()
-    {
-        return new ZynAddSubFxPlugin(this);
-    }
-
-    void deleteMe()
-    {
-        delete this;
-    }
-
     // -------------------------------------------------------------------
+    // Plugin parameter calls
 
-    PluginCategory getCategory()
+    uint32_t getParameterCount()
     {
-        return PLUGIN_CATEGORY_SYNTH;
+        return PARAMETER_MAX;
     }
 
-    uint32_t getHints()
+    const Parameter* getParameterInfo(uint32_t index)
     {
-        return (PLUGIN_IS_SYNTH | PLUGIN_HAS_GUI | PLUGIN_USES_SINGLE_THREAD);
-    }
+        CARLA_ASSERT(index < getParameterCount());
 
-    const char* getName()
-    {
-        return "ZynAddSubFX";
-    }
+        if (index >= PARAMETER_MAX)
+            return nullptr;
 
-    const char* getLabel()
-    {
-        return "zynaddsubfx";
-    }
+        static Parameter param;
 
-    const char* getMaker()
-    {
-        return "falkTX";
-    }
+        param.ranges.step      = PARAMETER_RANGES_DEFAULT_STEP;
+        param.ranges.stepSmall = PARAMETER_RANGES_DEFAULT_STEP_SMALL;
+        param.ranges.stepLarge = PARAMETER_RANGES_DEFAULT_STEP_LARGE;
+        param.scalePointCount  = 0;
+        param.scalePoints      = nullptr;
 
-    const char* getCopyright()
-    {
-        return "GNU GPL v2+";
-    }
-
-    // -------------------------------------------------------------------
-
-    uint32_t getPortCount()
-    {
-        return PORT_MAX;
-    }
-
-    PortType getPortType(uint32_t index)
-    {
         switch (index)
         {
-        case ZYN_PORT_INPUT_MIDI:
-            return PORT_TYPE_MIDI;
-        case ZYN_PORT_OUTPUT_AUDIO_L:
-        case ZYN_PORT_OUTPUT_AUDIO_R:
-            return PORT_TYPE_AUDIO;
-        default:
-            return PORT_TYPE_PARAMETER;
-        }
-    }
-
-    uint32_t getPortHints(uint32_t index)
-    {
-        switch (index)
-        {
-        case ZYN_PORT_INPUT_MIDI:
-            return 0;
-        case ZYN_PORT_OUTPUT_AUDIO_L:
-        case ZYN_PORT_OUTPUT_AUDIO_R:
-            return PORT_HINT_IS_OUTPUT;
-        default:
-            return (PORT_HINT_IS_ENABLED | PORT_HINT_IS_AUTOMABLE);
-        }
-    }
-
-    const char* getPortName(const uint32_t index)
-    {
-        switch (index)
-        {
-        case ZYN_PORT_INPUT_MIDI:
-            return "midi-in";
-        case ZYN_PORT_OUTPUT_AUDIO_L:
-            return "output-left";
-        case ZYN_PORT_OUTPUT_AUDIO_R:
-            return "output-right";
-        case ZYN_PARAMETER_MASTER:
-            return "Master Volume";
-        default:
-            return "";
-        }
-    }
-
-    void getParameterRanges(uint32_t index, ParameterRanges* const ranges)
-    {
-        switch (index)
-        {
-        case ZYN_PARAMETER_MASTER:
-            ranges->min = 0.0f;
-            ranges->max = 100.0f;
-            ranges->def = 100.0f;
+        case PARAMETER_MASTER:
+            param.hints = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE;
+            param.name  = "Master Volume";
+            param.unit  = nullptr;
+            param.ranges.min = 0.0f;
+            param.ranges.max = 100.0f;
+            param.ranges.def = 100.0f;
             break;
         }
+
+        return &param;
     }
 
-    double getParameterValue(uint32_t index)
-    {
-        if (! zyn_master)
-            return 0.0;
-
-        switch (index)
-        {
-        case ZYN_PARAMETER_MASTER:
-            return zyn_master->Pvolume;
-        default:
-            return 0.0;
-        }
-    }
-
-    const char* getParameterUnit(uint32_t index)
+    float getParameterValue(uint32_t index)
     {
         switch (index)
         {
-        case ZYN_PARAMETER_MASTER:
-            return "dB - test";
+        case PARAMETER_MASTER:
+            return master->Pvolume;
         default:
-            return nullptr;
+            return 0.0f;
         }
     }
 
     // -------------------------------------------------------------------
+    // Plugin midi-program calls
 
-    const MidiProgram* getMidiProgram(uint32_t index)
+    uint32_t getMidiProgramCount()
     {
+        return programs.size();
+    }
+
+    const MidiProgram* getMidiProgramInfo(uint32_t index)
+    {
+        CARLA_ASSERT(index < getMidiProgramCount());
+
         if (index >= programs.size())
             return nullptr;
 
@@ -257,65 +177,54 @@ protected:
         return &midiProgram;
     }
 
-    void setParameterValue(uint32_t index, double value)
-    {
-        if (! zyn_master)
-            return;
+    // -------------------------------------------------------------------
+    // Plugin state calls
 
+    void setParameterValue(uint32_t index, float value)
+    {
         switch (index)
         {
-        case ZYN_PARAMETER_MASTER:
-            zyn_master->setPvolume((char)rint(value));
+        case PARAMETER_MASTER:
+            master->setPvolume((char)rint(value));
             break;
         }
     }
 
-    // -------------------------------------------------------------------
-
     void setMidiProgram(uint32_t bank, uint32_t program)
     {
-        if (! zyn_master)
-            return;
-        if (bank >= zyn_master->bank.banks.size())
+        if (bank >= master->bank.banks.size())
             return;
         if (program >= BANK_SIZE)
             return;
 
-        const std::string bankdir = zyn_master->bank.banks[bank].dir;
+        const std::string bankdir = master->bank.banks[bank].dir;
 
         if (! bankdir.empty())
         {
-            pthread_mutex_lock(&zyn_master->mutex);
+            pthread_mutex_lock(&master->mutex);
 
-            zyn_master->bank.loadbank(bankdir);
-            zyn_master->bank.loadfromslot(program, zyn_master->part[0]);
+            master->bank.loadbank(bankdir);
+            master->bank.loadfromslot(program, master->part[0]);
 
-            pthread_mutex_unlock(&zyn_master->mutex);
+            pthread_mutex_unlock(&master->mutex);
         }
     }
 
     // -------------------------------------------------------------------
+    // Plugin process calls
 
     void activate()
     {
-        if (! zyn_master)
-            return;
-
-        zyn_master->setController(0, MIDI_CONTROL_ALL_SOUND_OFF, 0);
+        master->setController(0, MIDI_CONTROL_ALL_SOUND_OFF, 0);
     }
-
-    // -------------------------------------------------------------------
 
     void process(float**, float** outBuffer, uint32_t frames, uint32_t midiEventCount, MidiEvent* midiEvents)
     {
-        if (! zyn_master)
-            return;
-
         unsigned long from_frame       = 0;
         unsigned long event_index      = 0;
         unsigned long next_event_frame = 0;
         unsigned long to_frame = 0;
-        pthread_mutex_lock(&zyn_master->mutex);
+        pthread_mutex_lock(&master->mutex);
 
         do {
             /* Find the time of the next event, if any */
@@ -336,7 +245,7 @@ protected:
             if (from_frame < to_frame)
             {
                 // call master to fill from `from_frame` to `to_frame`:
-                zyn_master->GetAudioOutSamples(to_frame - from_frame, (int)getSampleRate(), &outBuffer[0][from_frame], &outBuffer[1][from_frame]);
+                master->GetAudioOutSamples(to_frame - from_frame, (int)getSampleRate(), &outBuffer[0][from_frame], &outBuffer[1][from_frame]);
                 // next sub-sample please...
                 from_frame = to_frame;
             }
@@ -351,21 +260,21 @@ protected:
                 {
                     uint8_t note = midiEvents[event_index].data[1];
 
-                    zyn_master->noteOff(channel, note);
+                    master->noteOff(channel, note);
                 }
                 else if (MIDI_IS_STATUS_NOTE_ON(status))
                 {
                     uint8_t note = midiEvents[event_index].data[1];
                     uint8_t velo = midiEvents[event_index].data[2];
 
-                    zyn_master->noteOn(channel, note, velo);
+                    master->noteOn(channel, note, velo);
                 }
                 else if (MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status))
                 {
                     uint8_t note     = midiEvents[event_index].data[1];
                     uint8_t pressure = midiEvents[event_index].data[2];
 
-                    zyn_master->polyphonicAftertouch(channel, note, pressure);
+                    master->polyphonicAftertouch(channel, note, pressure);
                 }
 
                 event_index++;
@@ -374,20 +283,12 @@ protected:
         // Keep going until we have the desired total length of sample...
         } while (to_frame < frames);
 
-        pthread_mutex_unlock(&zyn_master->mutex);
+        pthread_mutex_unlock(&master->mutex);
     }
 
     // -------------------------------------------------------------------
 
 private:
-    enum Ports {
-        ZYN_PORT_INPUT_MIDI = 0,
-        ZYN_PORT_OUTPUT_AUDIO_L,
-        ZYN_PORT_OUTPUT_AUDIO_R,
-        ZYN_PARAMETER_MASTER,
-        PORT_MAX
-    };
-
     struct ProgramInfo {
         uint32_t bank;
         uint32_t prog;
@@ -395,13 +296,31 @@ private:
     };
     std::vector<ProgramInfo> programs;
 
-    Master* zyn_master;
+    Master* master;
 
     static int s_instanceCount;
+
+    PluginDescriptorClassEND(ZynAddSubFxPlugin)
 };
 
 int ZynAddSubFxPlugin::s_instanceCount = 0;
 
-static ZynAddSubFxPlugin zynAddSubFxPlugin(nullptr);
+// -----------------------------------------------------------------------
 
-CARLA_REGISTER_NATIVE_PLUGIN_MM(zynAddSubFx, zynAddSubFxPlugin)
+static PluginDescriptor zynAddSubFxDesc = {
+    /* category  */ PLUGIN_CATEGORY_SYNTH,
+    /* hints     */ PLUGIN_IS_SYNTH | /*PLUGIN_HAS_GUI |*/ PLUGIN_USES_SINGLE_THREAD,
+    /* audioIns  */ 2,
+    /* audioOuts */ 2,
+    /* midiIns   */ 1,
+    /* midiOuts  */ 0,
+    /* paramIns  */ ZynAddSubFxPlugin::PARAMETER_MAX,
+    /* paramOuts */ 0,
+    /* name      */ "ZynAddSubFX",
+    /* label     */ "zynaddsubfx",
+    /* maker     */ "falkTX",
+    /* copyright */ "GNU GPL v2+",
+    PluginDescriptorFILL(ZynAddSubFxPlugin)
+};
+
+CARLA_REGISTER_NATIVE_PLUGIN(zynaddsubfx, zynAddSubFxDesc)

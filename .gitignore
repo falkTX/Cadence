@@ -40,6 +40,7 @@ c++/xycontroller/cadence-xycontroller
 
 c++/carla-backend/doxygen/
 c++/carla-bridge/doxygen/
+c++/carla-native/doxygen/
 c++/carla-includes/vst/
 
 *-build-*Debug/

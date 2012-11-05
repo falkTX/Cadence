@@ -27,6 +27,14 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
+/*!
+ * @defgroup CarlaNativeAPI Carla Native API
+ *
+ * The Carla Native API
+ *
+ * @{
+ */
+
 typedef void* HostHandle;
 typedef void* PluginHandle;
 
@@ -34,15 +42,15 @@ const uint32_t PLUGIN_IS_SYNTH            = 1 << 0;
 const uint32_t PLUGIN_HAS_GUI             = 1 << 1;
 const uint32_t PLUGIN_USES_SINGLE_THREAD  = 1 << 2;
 
-const uint32_t PORT_HINT_IS_OUTPUT        = 1 << 0;
-const uint32_t PORT_HINT_IS_ENABLED       = 1 << 1;
-const uint32_t PORT_HINT_IS_AUTOMABLE     = 1 << 2;
-const uint32_t PORT_HINT_IS_BOOLEAN       = 1 << 3;
-const uint32_t PORT_HINT_IS_INTEGER       = 1 << 4;
-const uint32_t PORT_HINT_IS_LOGARITHMIC   = 1 << 5;
-const uint32_t PORT_HINT_USES_SAMPLE_RATE = 1 << 6;
-const uint32_t PORT_HINT_USES_SCALEPOINTS = 1 << 7;
-const uint32_t PORT_HINT_USES_CUSTOM_TEXT = 1 << 8;
+const uint32_t PARAMETER_IS_OUTPUT        = 1 << 0;
+const uint32_t PARAMETER_IS_ENABLED       = 1 << 1;
+const uint32_t PARAMETER_IS_AUTOMABLE     = 1 << 2;
+const uint32_t PARAMETER_IS_BOOLEAN       = 1 << 3;
+const uint32_t PARAMETER_IS_INTEGER       = 1 << 4;
+const uint32_t PARAMETER_IS_LOGARITHMIC   = 1 << 5;
+const uint32_t PARAMETER_USES_SAMPLE_RATE = 1 << 6;
+const uint32_t PARAMETER_USES_SCALEPOINTS = 1 << 7;
+const uint32_t PARAMETER_USES_CUSTOM_TEXT = 1 << 8;
 
 typedef enum _PluginCategory {
     PLUGIN_CATEGORY_NONE      = 0, //!< Null plugin category.
@@ -56,27 +64,38 @@ typedef enum _PluginCategory {
     PLUGIN_CATEGORY_OTHER     = 8  //!< Misc plugin (used to check if the plugin has a category).
 } PluginCategory;
 
-typedef enum _PortType {
-    PORT_TYPE_NULL      = 0,
-    PORT_TYPE_AUDIO     = 1,
-    PORT_TYPE_MIDI      = 2,
-    PORT_TYPE_PARAMETER = 3
-} PortType;
+typedef struct _ParameterScalePoint {
+    const char* label;
+    float value;
+} ParameterScalePoint;
 
 typedef struct _ParameterRanges {
-    double def;
-    double min;
-    double max;
-    double step;
-    double stepSmall;
-    double stepLarge;
+    float def;
+    float min;
+    float max;
+    float step;
+    float stepSmall;
+    float stepLarge;
 } ParameterRanges;
 
+#define PARAMETER_RANGES_DEFAULT_STEP       0.01f
+#define PARAMETER_RANGES_DEFAULT_STEP_SMALL 0.0001f
+#define PARAMETER_RANGES_DEFAULT_STEP_LARGE 0.1f
+
+typedef struct _Parameter {
+    uint32_t hints;
+    const char* name;
+    const char* unit;
+    ParameterRanges ranges;
+
+    uint32_t scalePointCount;
+    ParameterScalePoint* scalePoints;
+} Parameter;
+
 typedef struct _MidiEvent {
-    uint32_t portOffset;
+    uint32_t port;
     uint32_t time;
-    uint8_t  size;
-    uint8_t  data[4];
+    uint8_t  data[3];
 } MidiEvent;
 
 typedef struct _MidiProgram {
@@ -112,57 +131,42 @@ typedef struct _HostDescriptor {
     bool            (*write_midi_event)(HostHandle handle, MidiEvent* event);
 } HostDescriptor;
 
-typedef struct _PluginPortScalePoint {
-    const char* label;
-    double value;
-} PluginPortScalePoint;
-
-typedef struct _PluginPort {
-    PortType type;
-    uint32_t hints;
-    const char* name;
-
-    uint32_t scalePointCount;
-    PluginPortScalePoint* scalePoints;
-} PluginPort;
-
 typedef struct _PluginDescriptor {
     PluginCategory category;
-    uint32_t    hints;
+    uint32_t hints;
+    uint32_t audioIns;
+    uint32_t audioOuts;
+    uint32_t midiIns;
+    uint32_t midiOuts;
+    uint32_t parameterIns;
+    uint32_t parameterOuts;
     const char* name;
     const char* label;
     const char* maker;
     const char* copyright;
 
-    uint32_t    portCount;
-    PluginPort* ports;
-
     PluginHandle (*instantiate)(struct _PluginDescriptor* _this_, HostDescriptor* host);
-    void         (*activate)(PluginHandle handle);
-    void         (*deactivate)(PluginHandle handle);
-    void         (*cleanup)(PluginHandle handle);
 
-    void        (*get_parameter_ranges)(PluginHandle handle, uint32_t index, ParameterRanges* ranges);
-    double      (*get_parameter_value)(PluginHandle handle, uint32_t index);
-    const char* (*get_parameter_text)(PluginHandle handle, uint32_t index);
-    const char* (*get_parameter_unit)(PluginHandle handle, uint32_t index);
+    uint32_t         (*get_parameter_count)(PluginHandle handle);
+    const Parameter* (*get_parameter_info)(PluginHandle handle, uint32_t index);
+    float            (*get_parameter_value)(PluginHandle handle, uint32_t index);
+    const char*      (*get_parameter_text)(PluginHandle handle, uint32_t index);
 
-    const MidiProgram* (*get_midi_program)(PluginHandle handle, uint32_t index);
+    uint32_t           (*get_midi_program_count)(PluginHandle handle);
+    const MidiProgram* (*get_midi_program_info)(PluginHandle handle, uint32_t index);
 
-    void (*set_parameter_value)(PluginHandle handle, uint32_t index, double value);
+    void (*set_parameter_value)(PluginHandle handle, uint32_t index, float value);
     void (*set_midi_program)(PluginHandle handle, uint32_t bank, uint32_t program);
     void (*set_custom_data)(PluginHandle handle, const char* key, const char* value);
 
     void (*show_gui)(PluginHandle handle, bool show);
     void (*idle_gui)(PluginHandle handle);
 
-    // TODO - ui_set_*
-
+    void (*activate)(PluginHandle handle);
+    void (*deactivate)(PluginHandle handle);
+    void (*cleanup)(PluginHandle handle);
     void (*process)(PluginHandle handle, float** inBuffer, float** outBuffer, uint32_t frames, uint32_t midiEventCount, MidiEvent* midiEvents);
 
-    void* _singleton;
-    void (*_init)(struct _PluginDescriptor* _this_);
-    void (*_fini)(struct _PluginDescriptor* _this_);
 } PluginDescriptor;
 
 // -----------------------------------------------------------------------
@@ -171,6 +175,8 @@ void carla_register_native_plugin(const PluginDescriptor* desc);
 
 #define CARLA_REGISTER_NATIVE_PLUGIN(label, desc) \
     void carla_register_native_plugin_##label () { carla_register_native_plugin(&desc); }
+
+/**@}*/
 
 #ifdef __cplusplus
 } /* extern "C" */
