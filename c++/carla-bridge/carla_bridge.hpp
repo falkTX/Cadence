@@ -15,10 +15,10 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_BRIDGE_H
-#define CARLA_BRIDGE_H
+#ifndef CARLA_BRIDGE_HPP
+#define CARLA_BRIDGE_HPP
 
-#include "carla_includes.h"
+#include "carla_defines.hpp"
 
 #define CARLA_BRIDGE_START_NAMESPACE namespace CarlaBridge {
 #define CARLA_BRIDGE_END_NAMESPACE }
@@ -30,4 +30,4 @@ class CarlaToolkit;
 
 CARLA_BRIDGE_END_NAMESPACE
 
-#endif // CARLA_BRIDGE_H
+#endif // CARLA_BRIDGE_HPP

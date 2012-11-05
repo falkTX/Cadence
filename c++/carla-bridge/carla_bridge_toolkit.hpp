@@ -18,7 +18,7 @@
 #ifndef CARLA_BRIDGE_TOOLKIT_H
 #define CARLA_BRIDGE_TOOLKIT_H
 
-#include "carla_bridge.h"
+#include "carla_bridge.hpp"
 
 #include <cstdlib>
 #include <cstring>

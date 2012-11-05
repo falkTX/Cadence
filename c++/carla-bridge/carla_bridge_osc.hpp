@@ -18,8 +18,8 @@
 #ifndef CARLA_BRIDGE_OSC_H
 #define CARLA_BRIDGE_OSC_H
 
-#include "carla_bridge.h"
-#include "carla_osc_includes.h"
+#include "carla_bridge.hpp"
+#include "carla_osc_utils.hpp"
 
 #define CARLA_BRIDGE_OSC_HANDLE_ARGS const int argc, const lo_arg* const* const argv, const char* const types
 

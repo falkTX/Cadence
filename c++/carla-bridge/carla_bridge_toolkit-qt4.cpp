@@ -15,7 +15,7 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_bridge_client.h"
+#include "carla_bridge_client.hpp"
 
 #include <QtCore/QSettings>
 #include <QtCore/QTimer>

@@ -4,26 +4,26 @@
 # Created by falkTX
 #
 
-CXX   ?= g++
-STRIP ?= strip
+include ../Makefile.mk
 
-BASE_FLAGS   = -O2 -ffast-math -fomit-frame-pointer -mtune=generic -msse -mfpmath=sse -Wall
+BUILD_CXX_FLAGS += -DBUILD_BRIDGE
+BUILD_CXX_FLAGS += -I. -I../carla-includes -I../carla-utils
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags liblo QtCore)
+LINK_FLAGS      += $(shell pkg-config --libs liblo QtCore)
 
-BUILD_FLAGS  = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
-BUILD_FLAGS += -I. -I../carla-includes $(shell pkg-config --cflags liblo QtCore)
-BUILD_FLAGS += -DBUILD_BRIDGE -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT -DNDEBUG
-
-BUILD_FLAGS += -DWANT_LADSPA -DWANT_DSSI -DWANT_LV2 -DWANT_VST
-BUILD_FLAGS += -DVESTIGE_HEADER # Comment this line to not use vestige header
-
-32BIT_FLAGS  = -m32
-64BIT_FLAGS  = -m64
-LINK_FLAGS   = $(shell pkg-config --libs liblo QtCore) $(LDFLAGS)
+ifeq ($(CARLA_PLUGIN_SUPPORT),true)
+BUILD_CXX_FLAGS += -DWANT_LADSPA -DWANT_DSSI -DWANT_LV2 -DWANT_VST
+endif
 
 # --------------------------------------------------------------
+# Plugin bridges
 
-BUILD_PLUGIN_FLAGS = $(BUILD_FLAGS) -DBUILD_BRIDGE_PLUGIN -DCARLA_ENGINE_JACK -I../carla-backend -I../carla-jackbridge $(shell pkg-config --cflags jack QtGui)
-LINK_PLUGIN_FLAGS  = $(LINK_FLAGS) $(shell pkg-config --libs QtGui)
+BUILD_PLUGIN_FLAGS  = $(BUILD_CXX_FLAGS)
+BUILD_PLUGIN_FLAGS += -DBUILD_BRIDGE_PLUGIN -DCARLA_ENGINE_JACK -I../carla-backend -I../carla-jackbridge
+BUILD_PLUGIN_FLAGS += $(shell pkg-config --cflags jack QtGui)
+
+LINK_PLUGIN_FLAGS   = $(LINK_FLAGS)
+LINK_PLUGIN_FLAGS  += $(shell pkg-config --libs QtGui)
 
 POSIX_BUILD_FLAGS  = $(BUILD_PLUGIN_FLAGS)
 POSIX_32BIT_FLAGS  = $(32BIT_FLAGS) -L/usr/lib32 -L/usr/lib/i386-linux-gnu
@@ -33,36 +33,39 @@ POSIX_LINK_FLAGS   = $(LINK_PLUGIN_FLAGS) $(shell pkg-config --libs jack) -ldl
 WIN_BUILD_FLAGS    = $(BUILD_PLUGIN_FLAGS) -DPTW32_STATIC_LIB
 WIN_32BIT_FLAGS    = $(32BIT_FLAGS)
 WIN_64BIT_FLAGS    = $(64BIT_FLAGS)
-WIN_LINK_FLAGS     = $(LINK_PLUGIN_FLAGS) -mwindows -L../carla-jackbridge -lpthread
+WIN_LINK_FLAGS     = $(LINK_PLUGIN_FLAGS) -static -mwindows -L../carla-jackbridge -lpthread
 
 # --------------------------------------------------------------
+# UI bridges
 
-BUILD_UI_FLAGS = $(BUILD_FLAGS) -DBUILD_BRIDGE_UI
+BUILD_UI_FLAGS = $(BUILD_CXX_FLAGS) -DBUILD_BRIDGE_UI
 LINK_UI_FLAGS  = $(LINK_FLAGS) -ldl
 
-BUILD_UI_LV2_GTK2_FLAGS = $(BUILD_UI_FLAGS) -DBRIDGE_LV2 -DBRIDGE_LV2_GTK2 $(shell pkg-config --cflags gtk+-2.0)
+BUILD_UI_LV2_FLAGS = $(BUILD_UI_FLAGS) -DBRIDGE_LV2
+BUILD_UI_VST_FLAGS = $(BUILD_UI_FLAGS) -DBRIDGE_VST
+
+BUILD_UI_LV2_GTK2_FLAGS = $(BUILD_UI_LV2_FLAGS) -DBRIDGE_LV2_GTK2 $(shell pkg-config --cflags gtk+-2.0)
 LINK_UI_LV2_GTK2_FLAGS  = $(LINK_UI_FLAGS) $(shell pkg-config --libs gtk+-2.0)
 
-BUILD_UI_LV2_GTK3_FLAGS = $(BUILD_UI_FLAGS) -DBRIDGE_LV2 -DBRIDGE_LV2_GTK3 $(shell pkg-config --cflags gtk+-3.0)
+BUILD_UI_LV2_GTK3_FLAGS = $(BUILD_UI_LV2_FLAGS) -DBRIDGE_LV2_GTK3 $(shell pkg-config --cflags gtk+-3.0)
 LINK_UI_LV2_GTK3_FLAGS  = $(LINK_UI_FLAGS) $(shell pkg-config --libs gtk+-3.0)
 
-BUILD_UI_LV2_QT4_FLAGS  = $(BUILD_UI_FLAGS) -DBRIDGE_LV2 -DBRIDGE_LV2_QT4 $(shell pkg-config --cflags QtGui)
+BUILD_UI_LV2_QT4_FLAGS  = $(BUILD_UI_LV2_FLAGS) -DBRIDGE_LV2_QT4 $(shell pkg-config --cflags QtGui)
 LINK_UI_LV2_QT4_FLAGS   = $(LINK_UI_FLAGS) $(shell pkg-config --libs QtGui)
 
-BUILD_UI_LV2_X11_FLAGS  = $(BUILD_UI_FLAGS) -DBRIDGE_LV2 -DBRIDGE_LV2_X11 $(shell pkg-config --cflags QtGui)
+BUILD_UI_LV2_X11_FLAGS  = $(BUILD_UI_LV2_FLAGS) -DBRIDGE_LV2_X11 $(shell pkg-config --cflags QtGui)
 LINK_UI_LV2_X11_FLAGS   = $(LINK_UI_FLAGS) $(shell pkg-config --libs QtGui)
 
-BUILD_UI_VST_HWND_FLAGS = $(BUILD_UI_FLAGS) -DBRIDGE_VST -DBRIDGE_VST_HWND $(shell pkg-config --cflags QtGui)
+BUILD_UI_VST_HWND_FLAGS = $(BUILD_UI_VST_FLAGS) -DBRIDGE_VST_HWND $(shell pkg-config --cflags QtGui)
 LINK_UI_VST_HWND_FLAGS  = $(LINK_FLAGS) $(shell pkg-config --libs QtGui) -mwindows -static
 
-BUILD_UI_VST_X11_FLAGS  = $(BUILD_UI_FLAGS) -DBRIDGE_VST -DBRIDGE_VST_X11 $(shell pkg-config --cflags QtGui)
+BUILD_UI_VST_X11_FLAGS  = $(BUILD_UI_VST_FLAGS) -DBRIDGE_VST_X11 $(shell pkg-config --cflags QtGui)
 LINK_UI_VST_X11_FLAGS   = $(LINK_UI_FLAGS) $(shell pkg-config --libs QtGui)
 
 # --------------------------------------------------------------
 
-all: ui
-
-ui: ui_lv2-gtk2 ui_lv2-gtk3 ui_lv2-qt4 ui_lv2-x11 ui_vst-x11
+ifeq ($(CARLA_PLUGIN_SUPPORT),true)
+all: ui_lv2-gtk2 ui_lv2-gtk3 ui_lv2-qt4 ui_lv2-x11 ui_vst-x11
 
 ifeq ($(shell pkg-config --exists gtk+-2.0 && echo true),true)
 ui_lv2-gtk2: carla-bridge-lv2-gtk2
@@ -81,6 +84,10 @@ ui_lv2-x11:  carla-bridge-lv2-x11
 ui_vst-hwnd: carla-bridge-vst-hwnd.exe
 ui_vst-x11:  carla-bridge-vst-x11
 
+else # CARLA_PLUGIN_SUPPORT
+all:
+endif
+
 # --------------------------------------------------------------
 
 posix32: carla-bridge-posix32
@@ -89,10 +96,19 @@ win32:   carla-bridge-win32.exe
 win64:   carla-bridge-win64.exe
 
 # --------------------------------------------------------------
+# common
+
+carla_bridge_osc__lv2.o: carla_bridge_osc.cpp
+	$(CXX) $< $(BUILD_UI_LV2_FLAGS) -c -o $@
+
+carla_bridge_osc__vst.o: carla_bridge_osc.cpp
+	$(CXX) $< $(BUILD_UI_VST_FLAGS) -c -o $@
+
+# --------------------------------------------------------------
 # ui_lv2-gtk2
 
 OBJS_UI_LV2_GTK2 = \
-	carla_bridge_ui-lv2__lv2-gtk2.o carla_bridge_toolkit-gtk2__lv2-gtk2.o carla_bridge_osc__lv2-gtk2.o \
+	carla_bridge_ui-lv2__lv2-gtk2.o carla_bridge_toolkit-gtk2__lv2-gtk2.o carla_bridge_osc__lv2.o \
 	../carla-lilv/carla_lilv.a ../carla-rtmempool/carla_rtmempool.a
 
 carla-bridge-lv2-gtk2: $(OBJS_UI_LV2_GTK2)
@@ -104,14 +120,11 @@ carla_bridge_ui-lv2__lv2-gtk2.o: carla_bridge_ui-lv2.cpp
 carla_bridge_toolkit-gtk2__lv2-gtk2.o: carla_bridge_toolkit-gtk2.cpp
 	$(CXX) $< $(BUILD_UI_LV2_GTK2_FLAGS) -c -o $@
 
-carla_bridge_osc__lv2-gtk2.o: carla_bridge_osc.cpp
-	$(CXX) $< $(BUILD_UI_LV2_GTK2_FLAGS) -c -o $@
-
 # --------------------------------------------------------------
 # ui_lv2-gtk3
 
 OBJS_UI_LV2_GTK3 = \
-	carla_bridge_ui-lv2__lv2-gtk3.o carla_bridge_toolkit-gtk3__lv2-gtk3.o carla_bridge_osc__lv2-gtk3.o \
+	carla_bridge_ui-lv2__lv2-gtk3.o carla_bridge_toolkit-gtk3__lv2-gtk3.o carla_bridge_osc__lv2.o \
 	../carla-lilv/carla_lilv.a ../carla-rtmempool/carla_rtmempool.a
 
 carla-bridge-lv2-gtk3: $(OBJS_UI_LV2_GTK3)
@@ -130,7 +143,7 @@ carla_bridge_osc__lv2-gtk3.o: carla_bridge_osc.cpp
 # ui_lv2-qt4
 
 OBJS_UI_LV2_QT4 = \
-	carla_bridge_ui-lv2__lv2-qt4.o carla_bridge_toolkit-qt4__lv2-qt4.o carla_bridge_osc__lv2-qt4.o \
+	carla_bridge_ui-lv2__lv2-qt4.o carla_bridge_toolkit-qt4__lv2-qt4.o carla_bridge_osc__lv2.o \
 	../carla-lilv/carla_lilv.a ../carla-rtmempool/carla_rtmempool.a
 
 carla-bridge-lv2-qt4: $(OBJS_UI_LV2_QT4)
@@ -149,7 +162,7 @@ carla_bridge_osc__lv2-qt4.o: carla_bridge_osc.cpp
 # ui_lv2-x11
 
 OBJS_UI_LV2_X11 = \
-	carla_bridge_ui-lv2__lv2-x11.o carla_bridge_toolkit-qt4__lv2-x11.o carla_bridge_osc__lv2-x11.o \
+	carla_bridge_ui-lv2__lv2-x11.o carla_bridge_toolkit-qt4__lv2-x11.o carla_bridge_osc__lv2.o \
 	../carla-lilv/carla_lilv.a ../carla-rtmempool/carla_rtmempool.a
 
 carla-bridge-lv2-x11: $(OBJS_UI_LV2_X11)
@@ -168,7 +181,7 @@ carla_bridge_osc__lv2-x11.o: carla_bridge_osc.cpp
 # ui_vst-hwnd
 
 OBJS_UI_VST_HWND = \
-	carla_bridge_ui-vst__vst-hwnd.o carla_bridge_toolkit-qt4__vst-hwnd.o carla_bridge_osc__vst-hwnd.o
+	carla_bridge_ui-vst__vst-hwnd.o carla_bridge_toolkit-qt4__vst-hwnd.o carla_bridge_osc__vst.o
 
 carla-bridge-vst-hwnd.exe: $(OBJS_UI_VST_HWND)
 	$(CXX) $^ $(LINK_UI_VST_HWND_FLAGS) -o $@ && $(STRIP) $@
@@ -179,14 +192,11 @@ carla_bridge_ui-vst__vst-hwnd.o: carla_bridge_ui-vst.cpp
 carla_bridge_toolkit-qt4__vst-hwnd.o: carla_bridge_toolkit-qt4.cpp
 	$(CXX) $< $(BUILD_UI_VST_HWND_FLAGS) -c -o $@
 
-carla_bridge_osc__vst-hwnd.o: carla_bridge_osc.cpp
-	$(CXX) $< $(BUILD_UI_VST_HWND_FLAGS) -c -o $@
-
 # --------------------------------------------------------------
 # ui_vst-x11
 
 OBJS_UI_VST_X11 = \
-	carla_bridge_ui-vst__vst-x11.o carla_bridge_toolkit-qt4__vst-x11.o carla_bridge_osc__vst-x11.o
+	carla_bridge_ui-vst__vst-x11.o carla_bridge_toolkit-qt4__vst-x11.o carla_bridge_osc__vst.o
 
 carla-bridge-vst-x11: $(OBJS_UI_VST_X11)
 	$(CXX) $^ $(LINK_UI_VST_X11_FLAGS) -o $@ && $(STRIP) $@
@@ -195,9 +205,6 @@ carla_bridge_ui-vst__vst-x11.o: carla_bridge_ui-vst.cpp
 	$(CXX) $< $(BUILD_UI_VST_X11_FLAGS) -c -o $@
 
 carla_bridge_toolkit-qt4__vst-x11.o: carla_bridge_toolkit-qt4.cpp
-	$(CXX) $< $(BUILD_UI_VST_X11_FLAGS) -c -o $@
-
-carla_bridge_osc__vst-x11.o: carla_bridge_osc.cpp
 	$(CXX) $< $(BUILD_UI_VST_X11_FLAGS) -c -o $@
 
 # --------------------------------------------------------------

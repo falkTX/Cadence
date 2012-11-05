@@ -15,9 +15,9 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_bridge_osc.h"
-#include "carla_bridge_client.h"
-#include "carla_midi.h"
+#include "carla_bridge_osc.hpp"
+#include "carla_bridge_client.hpp"
+#include "carla_midi.hpp"
 
 #include <QtCore/QString>
 #include <QtCore/QStringList>

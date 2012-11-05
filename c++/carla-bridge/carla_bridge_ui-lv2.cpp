@@ -17,9 +17,9 @@
 
 #ifdef BRIDGE_LV2
 
-#include "carla_bridge_client.h"
-#include "carla_lv2.h"
-#include "carla_midi.h"
+#include "carla_bridge_client.hpp"
+#include "carla_lv2_utils.hpp"
+#include "carla_midi.hpp"
 #include "rtmempool/rtmempool.h"
 
 #include <vector>
@@ -333,7 +333,7 @@ public:
         // -----------------------------------------------------------------
         // get plugin from lv2_rdf (lilv)
 
-        Lv2World.init();
+        lv2World.init();
         rdf_descriptor = lv2_rdf_new(pluginURI);
 
         if (! rdf_descriptor)

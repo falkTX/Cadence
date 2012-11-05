@@ -18,13 +18,13 @@
 #ifndef CARLA_BRIDGE_CLIENT_H
 #define CARLA_BRIDGE_CLIENT_H
 
-#include "carla_bridge_osc.h"
-#include "carla_bridge_toolkit.h"
+#include "carla_bridge_osc.hpp"
+#include "carla_bridge_toolkit.hpp"
 
 #ifdef BUILD_BRIDGE_PLUGIN
-#  include "carla_engine.h"
+# include "carla_engine.hpp"
 #else
-#  include "carla_lib_includes.h"
+# include "carla_lib_utils.hpp"
 #endif
 
 #include <cmath>

@@ -17,15 +17,15 @@
 
 #ifdef BRIDGE_VST
 
-#include "carla_bridge_client.h"
-#include "carla_vst.h"
-#include "carla_midi.h"
+#include "carla_bridge_client.hpp"
+#include "carla_vst_utils.hpp"
+#include "carla_midi.hpp"
 
 #include <QtCore/QTimerEvent>
 #include <QtGui/QDialog>
 
 #ifdef Q_WS_X11
-#include <QtGui/QX11Info>
+# include <QtGui/QX11Info>
 #endif
 
 CARLA_BRIDGE_START_NAMESPACE

@@ -15,10 +15,10 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_bridge_client.h"
+#include "carla_bridge_client.hpp"
 
 #ifdef BRIDGE_LV2_X11
-#  error X11 UI uses Qt4
+# error X11 UI uses Qt4
 #endif
 
 #include <gtk/gtk.h>
