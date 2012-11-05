@@ -26,14 +26,6 @@
 
 #ifdef BUILD_BRIDGE
 
-typedef unsigned char jackbridge_midi_data_t;
-
-struct jackbridge_midi_event_t {
-    jack_nframes_t          time;
-    size_t                  size;
-    jackbridge_midi_data_t* buffer;
-};
-
 CARLA_EXPORT jack_client_t* jackbridge_client_open(const char* client_name, jack_options_t options, jack_status_t* status, ...);
 CARLA_EXPORT int jackbridge_client_close(jack_client_t* client);
 CARLA_EXPORT int jackbridge_client_name_size();
@@ -57,17 +49,14 @@ CARLA_EXPORT int jackbridge_port_unregister(jack_client_t* client, jack_port_t* 
 CARLA_EXPORT void* jackbridge_port_get_buffer(jack_port_t* port, jack_nframes_t nframes);
 
 CARLA_EXPORT uint32_t jackbridge_midi_get_event_count(void* port_buffer);
-CARLA_EXPORT int jackbridge_midi_event_get(jackbridge_midi_event_t* event, void* port_buffer, uint32_t event_index);
+CARLA_EXPORT int jackbridge_midi_event_get(jack_midi_event_t* event, void* port_buffer, uint32_t event_index);
 CARLA_EXPORT void jackbridge_midi_clear_buffer(void* port_buffer);
-CARLA_EXPORT jackbridge_midi_data_t* jackbridge_midi_event_reserve(void* port_buffer, jack_nframes_t time, size_t data_size);
-CARLA_EXPORT int jackbridge_midi_event_write(void* port_buffer, jack_nframes_t time, const jackbridge_midi_data_t* data, size_t data_size);
+CARLA_EXPORT jack_midi_data_t* jackbridge_midi_event_reserve(void* port_buffer, jack_nframes_t time, size_t data_size);
+CARLA_EXPORT int jackbridge_midi_event_write(void* port_buffer, jack_nframes_t time, const jack_midi_data_t* data, size_t data_size);
 
 CARLA_EXPORT jack_transport_state_t jackbridge_transport_query(const jack_client_t* client, jack_position_t* pos);
 
 #else
-
-#define jackbridge_midi_data_t jack_midi_data_t
-#define jackbridge_midi_event_t jack_midi_event_t
 
 #define jackbridge_client_open jack_client_open
 #define jackbridge_client_close jack_client_close

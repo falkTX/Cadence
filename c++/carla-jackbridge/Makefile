@@ -8,7 +8,7 @@ include ../Makefile.mk
 
 WINECXX ?= wineg++
 
-BUILD_CXX_FLAGS += -I../carla-includes
+BUILD_CXX_FLAGS += -I. -I../carla-includes
 BUILD_CXX_FLAGS += $(shell pkg-config --cflags jack QtCore)
 LINK_FLAGS      += -shared
 
@@ -41,11 +41,11 @@ libcarla-jackbridge-win32.dll: $(OBJS)
 libcarla-jackbridge-win64.dll: $(OBJS)
 	$(CXX) $^ $(WIN_BUILD_FLAGS) $(WIN_64BIT_FLAGS) $(WIN_LINK_FLAGS) -Wl,--output-def,$@.def,--out-implib,$@.a -o $@ && $(STRIP) $@
 
-libcarla-jackbridge-win32.dll.so: $(OBJS)
-	$(WINECXX) $^ libcarla-jackbridge-win32.dll.def $(WINE_BUILD_FLAGS) $(WINE_32BIT_FLAGS) $(WINE_LINK_FLAGS) -mno-cygwin -o $@ && $(STRIP) $@
+libcarla-jackbridge-win32.dll.so: $(OBJS) libcarla-jackbridge-win32.dll.def
+	$(WINECXX) $^ $(WINE_BUILD_FLAGS) $(WINE_32BIT_FLAGS) $(WINE_LINK_FLAGS) -mno-cygwin -o $@ && $(STRIP) $@
 
-libcarla-jackbridge-win64.dll.so: $(OBJS)
-	$(WINECXX) $^ libcarla-jackbridge-win64.dll.def $(WINE_BUILD_FLAGS) $(WINE_64BIT_FLAGS) $(WINE_LINK_FLAGS) -mno-cygwin -o $@ && $(STRIP) $@
+libcarla-jackbridge-win64.dll.so: $(OBJS) libcarla-jackbridge-win64.dll.def
+	$(WINECXX) $^ $(WINE_BUILD_FLAGS) $(WINE_64BIT_FLAGS) $(WINE_LINK_FLAGS) -mno-cygwin -o $@ && $(STRIP) $@
 
 # --------------------------------------------------------------
 

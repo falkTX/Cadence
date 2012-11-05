@@ -211,10 +211,10 @@ uint32_t jackbridge_midi_get_event_count(void* port_buffer)
 #endif
 }
 
-int jackbridge_midi_event_get(jackbridge_midi_event_t* event, void* port_buffer, uint32_t event_index)
+int jackbridge_midi_event_get(jack_midi_event_t* event, void* port_buffer, uint32_t event_index)
 {
 #ifndef JACKBRIDGE_DUMMY
-    return jack_midi_event_get((jack_midi_event_t*)event, port_buffer, event_index);
+    return jack_midi_event_get(event, port_buffer, event_index);
 #else
     return 0;
 #endif
@@ -227,7 +227,7 @@ void jackbridge_midi_clear_buffer(void* port_buffer)
 #endif
 }
 
-jackbridge_midi_data_t* jackbridge_midi_event_reserve(void* port_buffer, jack_nframes_t time, size_t data_size)
+jack_midi_data_t* jackbridge_midi_event_reserve(void* port_buffer, jack_nframes_t time, size_t data_size)
 {
 #ifndef JACKBRIDGE_DUMMY
     return jack_midi_event_reserve(port_buffer, time, data_size);
@@ -236,10 +236,10 @@ jackbridge_midi_data_t* jackbridge_midi_event_reserve(void* port_buffer, jack_nf
 #endif
 }
 
-int jackbridge_midi_event_write(void* port_buffer, jack_nframes_t time, const jackbridge_midi_data_t* data, size_t data_size)
+int jackbridge_midi_event_write(void* port_buffer, jack_nframes_t time, const jack_midi_data_t* data, size_t data_size)
 {
 #ifndef JACKBRIDGE_DUMMY
-    return jack_midi_event_write(port_buffer, time, (jack_midi_data_t*)data, data_size);
+    return jack_midi_event_write(port_buffer, time, data, data_size);
 #else
     return 0;
 #endif

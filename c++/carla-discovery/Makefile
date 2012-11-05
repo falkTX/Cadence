@@ -66,6 +66,8 @@ carla-discovery-win32.exe: $(OBJS) ../carla-lilv/carla_lilv_win32.a
 carla-discovery-win64.exe: $(OBJS) ../carla-lilv/carla_lilv_win64.a
 	$(CXX) $^ $(WIN_BUILD_FLAGS) $(WIN_64BIT_FLAGS) $(WIN_LINK_FLAGS) -o $@ && $(STRIP) $@
 
+# --------------------------------------------------------------
+
 ../carla-lilv/carla_lilv.a:
 	$(MAKE) -C ../carla-lilv
 

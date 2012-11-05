@@ -35,10 +35,10 @@ ifneq ($(DEBUG),true)
 BUILD_CXX_FLAGS += -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT
 endif
 
-# Comment this line to not use vestige header in Carla
+# Comment this line to not use vestige header
 BUILD_CXX_FLAGS += -DVESTIGE_HEADER
 
-# Modify to enable/disable features
+# Modify to enable/disable specific features
 CARLA_PLUGIN_SUPPORT   = true
 CARLA_SAMPLERS_SUPPORT = true
 CARLA_RTAUDIO_SUPPORT  = false
