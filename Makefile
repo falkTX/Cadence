@@ -50,118 +50,118 @@ tools: \
 	src/ui_logs.py src/ui_render.py \
 	src/ui_settings_app.py src/ui_settings_jack.py
 
-src/ui_cadence.py: src/ui/cadence.ui
+src/ui_cadence.py: resources/ui/cadence.ui
 	$(PYUIC) $< -o $@
 
-src/ui_cadence_tb_jack.py: src/ui/cadence_tb_jack.ui
+src/ui_cadence_tb_jack.py: resources/ui/cadence_tb_jack.ui
 	$(PYUIC) $< -o $@
 
-src/ui_cadence_tb_alsa.py: src/ui/cadence_tb_alsa.ui
+src/ui_cadence_tb_alsa.py: resources/ui/cadence_tb_alsa.ui
 	$(PYUIC) $< -o $@
 
-src/ui_cadence_tb_a2j.py: src/ui/cadence_tb_a2j.ui
+src/ui_cadence_tb_a2j.py: resources/ui/cadence_tb_a2j.ui
 	$(PYUIC) $< -o $@
 
-src/ui_cadence_tb_pa.py: src/ui/cadence_tb_pa.ui
+src/ui_cadence_tb_pa.py: resources/ui/cadence_tb_pa.ui
 	$(PYUIC) $< -o $@
 
-src/ui_cadence_rwait.py: src/ui/cadence_rwait.ui
+src/ui_cadence_rwait.py: resources/ui/cadence_rwait.ui
 	$(PYUIC) $< -o $@
 
-src/ui_catarina.py: src/ui/catarina.ui
+src/ui_catarina.py: resources/ui/catarina.ui
 	$(PYUIC) $< -o $@
 
-src/ui_catarina_addgroup.py: src/ui/catarina_addgroup.ui
+src/ui_catarina_addgroup.py: resources/ui/catarina_addgroup.ui
 	$(PYUIC) $< -o $@
 
-src/ui_catarina_removegroup.py: src/ui/catarina_removegroup.ui
+src/ui_catarina_removegroup.py: resources/ui/catarina_removegroup.ui
 	$(PYUIC) $< -o $@
 
-src/ui_catarina_renamegroup.py: src/ui/catarina_renamegroup.ui
+src/ui_catarina_renamegroup.py: resources/ui/catarina_renamegroup.ui
 	$(PYUIC) $< -o $@
 
-src/ui_catarina_addport.py: src/ui/catarina_addport.ui
+src/ui_catarina_addport.py: resources/ui/catarina_addport.ui
 	$(PYUIC) $< -o $@
 
-src/ui_catarina_removeport.py: src/ui/catarina_removeport.ui
+src/ui_catarina_removeport.py: resources/ui/catarina_removeport.ui
 	$(PYUIC) $< -o $@
 
-src/ui_catarina_renameport.py: src/ui/catarina_renameport.ui
+src/ui_catarina_renameport.py: resources/ui/catarina_renameport.ui
 	$(PYUIC) $< -o $@
 
-src/ui_catarina_connectports.py: src/ui/catarina_connectports.ui
+src/ui_catarina_connectports.py: resources/ui/catarina_connectports.ui
 	$(PYUIC) $< -o $@
 
-src/ui_catarina_disconnectports.py: src/ui/catarina_disconnectports.ui
+src/ui_catarina_disconnectports.py: resources/ui/catarina_disconnectports.ui
 	$(PYUIC) $< -o $@
 
-src/ui_catia.py: src/ui/catia.ui
+src/ui_catia.py: resources/ui/catia.ui
 	$(PYUIC) $< -o $@
 
-src/ui_claudia.py: src/ui/claudia.ui
+src/ui_claudia.py: resources/ui/claudia.ui
 	$(PYUIC) $< -o $@
 
-src/ui_claudia_studioname.py: src/ui/claudia_studioname.ui
+src/ui_claudia_studioname.py: resources/ui/claudia_studioname.ui
 	$(PYUIC) $< -o $@
 
-src/ui_claudia_studiolist.py: src/ui/claudia_studiolist.ui
+src/ui_claudia_studiolist.py: resources/ui/claudia_studiolist.ui
 	$(PYUIC) $< -o $@
 
-src/ui_claudia_createroom.py: src/ui/claudia_createroom.ui
+src/ui_claudia_createroom.py: resources/ui/claudia_createroom.ui
 	$(PYUIC) $< -o $@
 
-src/ui_claudia_projectname.py: src/ui/claudia_projectname.ui
+src/ui_claudia_projectname.py: resources/ui/claudia_projectname.ui
 	$(PYUIC) $< -o $@
 
-src/ui_claudia_projectproperties.py: src/ui/claudia_projectproperties.ui
+src/ui_claudia_projectproperties.py: resources/ui/claudia_projectproperties.ui
 	$(PYUIC) $< -o $@
 
-src/ui_claudia_runcustom.py: src/ui/claudia_runcustom.ui
+src/ui_claudia_runcustom.py: resources/ui/claudia_runcustom.ui
 	$(PYUIC) $< -o $@
 
-src/ui_claudia_launcher.py: src/ui/claudia_launcher.ui
+src/ui_claudia_launcher.py: resources/ui/claudia_launcher.ui
 	$(PYUIC) $< -o $@
 
-src/ui_claudia_launcher_app.py: src/ui/claudia_launcher_app.ui
+src/ui_claudia_launcher_app.py: resources/ui/claudia_launcher_app.ui
 	$(PYUIC) $< -o $@
 
-src/ui_carla.py: src/ui/carla.ui
+src/ui_carla.py: resources/ui/carla.ui
 	$(PYUIC) $< -o $@
 
-src/ui_carla_control.py: src/ui/carla_control.ui
+src/ui_carla_control.py: resources/ui/carla_control.ui
 	$(PYUIC) $< -o $@
 
-src/ui_carla_about.py: src/ui/carla_about.ui
+src/ui_carla_about.py: resources/ui/carla_about.ui
 	$(PYUIC) $< -o $@
 
-src/ui_carla_database.py: src/ui/carla_database.ui
+src/ui_carla_database.py: resources/ui/carla_database.ui
 	$(PYUIC) $< -o $@
 
-src/ui_carla_edit.py: src/ui/carla_edit.ui
+src/ui_carla_edit.py: resources/ui/carla_edit.ui
 	$(PYUIC) $< -o $@
 
-src/ui_carla_parameter.py: src/ui/carla_parameter.ui
+src/ui_carla_parameter.py: resources/ui/carla_parameter.ui
 	$(PYUIC) $< -o $@
 
-src/ui_carla_plugin.py: src/ui/carla_plugin.ui
+src/ui_carla_plugin.py: resources/ui/carla_plugin.ui
 	$(PYUIC) $< -o $@
 
-src/ui_carla_refresh.py: src/ui/carla_refresh.ui
+src/ui_carla_refresh.py: resources/ui/carla_refresh.ui
 	$(PYUIC) $< -o $@
 
-src/ui_logs.py: src/ui/logs.ui
+src/ui_logs.py: resources/ui/logs.ui
 	$(PYUIC) $< -o $@
 
-src/ui_render.py: src/ui/render.ui
+src/ui_render.py: resources/ui/render.ui
 	$(PYUIC) $< -o $@
 
-src/ui_settings_app.py: src/ui/settings_app.ui
+src/ui_settings_app.py: resources/ui/settings_app.ui
 	$(PYUIC) $< -o $@
 
-src/ui_settings_jack.py: src/ui/settings_jack.ui
+src/ui_settings_jack.py: resources/ui/settings_jack.ui
 	$(PYUIC) $< -o $@
 
-src/ui_inputdialog_value.py: src/ui/inputdialog_value.ui
+src/ui_inputdialog_value.py: resources/ui/inputdialog_value.ui
 	$(PYUIC) $< -o $@
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------

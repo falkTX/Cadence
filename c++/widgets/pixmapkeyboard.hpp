@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef PIXMAPKEYBOARD_H
-#define PIXMAPKEYBOARD_H
+#ifndef PIXMAPKEYBOARD_HPP
+#define PIXMAPKEYBOARD_HPP
 
 #include <QtGui/QPixmap>
 #include <QtGui/QWidget>
@@ -82,4 +82,4 @@ private:
     QRectF _getRectFromMidiNote(int note);
 };
 
-#endif // PIXMAPKEYBOARD_H
+#endif // PIXMAPKEYBOARD_HPP

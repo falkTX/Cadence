@@ -22,7 +22,7 @@
 #define END_NAMESPACE_PATCHCANVAS }
 
 #ifndef PATCHCANVAS_ORGANISATION_NAME
-#define PATCHCANVAS_ORGANISATION_NAME "PatchCanvas"
+# define PATCHCANVAS_ORGANISATION_NAME "PatchCanvas"
 #endif
 
 #include "patchcanvas/patchcanvas-theme.h"

@@ -21,10 +21,13 @@
 # define nullptr (0)
 #endif
 
+#define VERSION "0.5.0"
+
 #include "../jack_utils.hpp"
-#include "../widgets/digitalpeakmeter.h"
+#include "../widgets/digitalpeakmeter.hpp"
 
 #include <QtGui/QApplication>
+#include <QtGui/QIcon>
 #include <QtGui/QMessageBox>
 
 // -------------------------------
@@ -39,13 +42,6 @@ jack_port_t* jPort1 = nullptr;
 jack_port_t* jPort2 = nullptr;
 
 // -------------------------------
-
-float abs_f(const float value)
-{
-    return (value < 1.0f) ? -value : value;
-}
-
-// -------------------------------
 // JACK callbacks
 
 int process_callback(const jack_nframes_t nframes, void*)
@@ -55,11 +51,11 @@ int process_callback(const jack_nframes_t nframes, void*)
 
     for (jack_nframes_t i = 0; i < nframes; i++)
     {
-        if (abs_f(jOut1[i]) > x_portValue1)
-            x_portValue1 = abs_f(jOut1[i]);
+        if (std::abs(jOut1[i]) > x_portValue1)
+            x_portValue1 = std::abs(jOut1[i]);
 
-        if (abs_f(jOut2[i]) > x_portValue2)
-            x_portValue2 = abs_f(jOut2[i]);
+        if (std::abs(jOut2[i]) > x_portValue2)
+            x_portValue2 = std::abs(jOut2[i]);
     }
 
     return 0;
@@ -185,16 +181,16 @@ int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
     app.setApplicationName("JackMeter");
-    //app.setApplicationVersion(VERSION);
+    app.setApplicationVersion(VERSION);
     app.setOrganizationName("Cadence");
-    //app.setWindowIcon(QIcon(":/scalable/meter.svg"));
+    app.setWindowIcon(QIcon(":/scalable/cadence.svg"));
 
     // JACK initialization
     jack_status_t jStatus;
 #ifdef HAVE_JACKSESSION
-    jack_options_t jOptions = static_cast<JackOptions>(JackNoStartServer|JackUseExactName|JackSessionID);
+    jack_options_t jOptions = static_cast<jack_options_t>(JackNoStartServer|JackUseExactName|JackSessionID);
 #else
-    jack_options_t jOptions = static_cast<JackOptions>(JackNoStartServer|JackUseExactName);
+    jack_options_t jOptions = static_cast<jack_options_t>(JackNoStartServer|JackUseExactName);
 #endif
     jClient = jack_client_open("M", jOptions, &jStatus);
 

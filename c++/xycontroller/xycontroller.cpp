@@ -953,14 +953,14 @@ int main(int argc, char* argv[])
     app.setApplicationName("XY-Controller");
     app.setApplicationVersion(VERSION);
     app.setOrganizationName("Cadence");
-    //app.setWindowIcon(QIcon(":/48x48/xy-controller.png"));
+    app.setWindowIcon(QIcon(":/scalable/cadence.svg"));
 
     // JACK initialization
     jack_status_t jStatus;
 #ifdef HAVE_JACKSESSION
-    jack_options_t jOptions = static_cast<JackOptions>(JackNoStartServer|JackSessionID);
+    jack_options_t jOptions = static_cast<jack_options_t>(JackNoStartServer|JackSessionID);
 #else
-    jack_options_t jOptions = static_cast<JackOptions>(JackNoStartServer);
+    jack_options_t jOptions = static_cast<jack_options_t>(JackNoStartServer);
 #endif
     jClient = jack_client_open("XY-Controller", jOptions, &jStatus);
 

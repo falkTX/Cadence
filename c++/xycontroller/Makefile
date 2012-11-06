@@ -17,14 +17,14 @@ endif
 FILES = \
 	xycontroller.moc \
 	ui_xycontroller.h \
-	../widgets/moc_pixmapkeyboard.cpp \
-	../../resources/qrc_resources.cpp
+	qrc_resources-xycontroller.cpp \
+	../widgets/moc_pixmapkeyboard.cpp
 
 OBJS  = xycontroller.o \
+	qrc_resources-xycontroller.o \
 	../widgets/pixmapdial.o \
 	../widgets/pixmapkeyboard.o \
-	../widgets/moc_pixmapkeyboard.o \
-	../../resources/qrc_resources.o
+	../widgets/moc_pixmapkeyboard.o
 
 # --------------------------------------------------------------
 
@@ -41,17 +41,17 @@ cadence-xycontroller.exe: $(FILES) $(OBJS) icon.o
 xycontroller.moc: xycontroller.cpp
 	$(MOC) $< -o $@
 
-ui_xycontroller.h: ../../src/ui/xycontroller.ui
+ui_xycontroller.h: ../../resources/ui/xycontroller.ui
 	$(UIC) $< -o $@
+
+qrc_resources-xycontroller.cpp: ../../resources/resources-xycontroller.qrc
+	$(RCC) -name resources-xycontroller $< -o $@
 
 icon.o: ../../resources/ico/cadence.rc
 	$(WINDRES) -i $< -o $@ -O coff
 
-../widgets/moc_pixmapkeyboard.cpp: ../widgets/pixmapkeyboard.h
+../widgets/moc_pixmapkeyboard.cpp: ../widgets/pixmapkeyboard.hpp
 	$(MOC) $< -o $@
-
-../../resources/qrc_resources.cpp: ../../resources/resources.qrc
-	$(RCC) -name resources $< -o $@
 
 # --------------------------------------------------------------
 

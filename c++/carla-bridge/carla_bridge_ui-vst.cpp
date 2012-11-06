@@ -19,7 +19,7 @@
 
 #include "carla_bridge_client.hpp"
 #include "carla_vst_utils.hpp"
-#include "carla_midi.hpp"
+#include "carla_midi.h"
 
 #include <QtCore/QTimerEvent>
 #include <QtGui/QDialog>

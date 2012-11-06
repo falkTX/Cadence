@@ -19,7 +19,7 @@
 
 #include "carla_bridge_client.hpp"
 #include "carla_lv2_utils.hpp"
-#include "carla_midi.hpp"
+#include "carla_midi.h"
 #include "rtmempool/rtmempool.h"
 
 #include <vector>

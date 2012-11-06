@@ -47,7 +47,7 @@ c++/carla-includes/vst/
 *-build-*Release/
 
 src/resources_rc.py
-resources/qrc_resources.cpp
+qrc_resources*.cpp
 
 
 # incoming

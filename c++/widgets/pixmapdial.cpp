@@ -15,7 +15,7 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "pixmapdial.h"
+#include "pixmapdial.hpp"
 
 #include <cmath>
 

@@ -235,12 +235,6 @@
      <height>19</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menu_File">
-    <property name="title">
-     <string>&amp;File</string>
-    </property>
-    <addaction name="act_quit"/>
-   </widget>
    <widget class="QMenu" name="menu_Help">
     <property name="title">
      <string>&amp;Help</string>
@@ -277,6 +271,12 @@
     </widget>
     <addaction name="menu_Channels"/>
     <addaction name="act_show_keyboard"/>
+   </widget>
+   <widget class="QMenu" name="menu_File">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="act_quit"/>
    </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_Settings"/>
@@ -450,7 +450,7 @@
   </action>
   <action name="act_quit">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources-xycontroller.qrc">
      <normaloff>:/16x16/application-exit.png</normaloff>:/16x16/application-exit.png</iconset>
    </property>
    <property name="text">
@@ -467,17 +467,17 @@
   <customwidget>
    <class>PixmapKeyboard</class>
    <extends>QWidget</extends>
-   <header>pixmapkeyboard.h</header>
+   <header>pixmapkeyboard.hpp</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>PixmapDial</class>
    <extends>QDial</extends>
-   <header>pixmapdial.h</header>
+   <header>pixmapdial.hpp</header>
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../resources/resources.qrc"/>
+  <include location="../resources-xycontroller.qrc"/>
  </resources>
  <connections>
   <connection>

@@ -1,0 +1,14 @@
+<RCC version="1.0">
+    <qresource prefix="/">
+        <file>16x16/application-exit.png</file>
+        <file>scalable/cadence.svg</file>
+        <file>bitmaps/dial_01.png</file>
+        <file>bitmaps/dial_01d.png</file>
+        <file>bitmaps/dial_02.png</file>
+        <file>bitmaps/dial_02d.png</file>
+        <file>bitmaps/kbd_h_classic.png</file>
+        <file>bitmaps/kbd_h_orange.png</file>
+        <file>bitmaps/kbd_v_classic.png</file>
+        <file>bitmaps/kbd_v_orange.png</file>
+    </qresource>
+</RCC>

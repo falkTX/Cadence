@@ -15,7 +15,7 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "digitalpeakmeter.h"
+#include "digitalpeakmeter.hpp"
 
 #include <QtGui/QPainter>
 

@@ -14,19 +14,28 @@ ifeq ($(shell pkg-config --atleast-version=0.121.0 jack && echo true),true)
 BUILD_CXX_FLAGS += -DHAVE_JACKSESSION
 endif
 
+FILES = \
+	qrc_resources-jackmeter.cpp
+
 OBJS = \
 	jackmeter.o \
+	qrc_resources-jackmeter.o \
 	../widgets/digitalpeakmeter.o
 
 # --------------------------------------------------------------
 
 all: cadence-jackmeter
 
-cadence-jackmeter: $(OBJS)
+cadence-jackmeter: $(FILES) $(OBJS)
 	$(CXX) $(OBJS) $(LINK_FLAGS) -o $@ && $(STRIP) $@
 
-cadence-jackmeter.exe: $(OBJS) icon.o
+cadence-jackmeter.exe: $(FILES) $(OBJS) icon.o
 	$(CXX) $(OBJS) icon.o $(LINK_FLAGS) -static -mwindows -o $@ && $(STRIP) $@
+
+# --------------------------------------------------------------
+
+qrc_resources-jackmeter.cpp: ../../resources/resources-jackmeter.qrc
+	$(RCC) -name resources-jackmeter $< -o $@
 
 icon.o: ../../resources/ico/cadence.rc
 	$(WINDRES) -i $< -o $@ -O coff
@@ -37,4 +46,4 @@ icon.o: ../../resources/ico/cadence.rc
 	$(CXX) -c $< $(BUILD_CXX_FLAGS) -o $@
 
 clean:
-	rm -f $(OBJS) cadence-jackmeter*
+	rm -f $(FILES) $(OBJS) cadence-jackmeter*

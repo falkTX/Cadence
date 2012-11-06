@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef PIXMAPDIAL_H
-#define PIXMAPDIAL_H
+#ifndef PIXMAPDIAL_HPP
+#define PIXMAPDIAL_HPP
 
 #include <QtGui/QDial>
 #include <QtGui/QPixmap>
@@ -86,4 +86,4 @@ private:
     int p_width, p_height, p_size, p_count;
 };
 
-#endif // PIXMAPDIAL_H
+#endif // PIXMAPDIAL_HPP

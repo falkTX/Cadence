@@ -17,7 +17,7 @@
 
 #include "carla_bridge_osc.hpp"
 #include "carla_bridge_client.hpp"
-#include "carla_midi.hpp"
+#include "carla_midi.h"
 
 #include <QtCore/QString>
 #include <QtCore/QStringList>
