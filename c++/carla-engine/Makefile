@@ -6,30 +6,32 @@
 
 include ../Makefile.mk
 
-HAVE_JACK         = $(shell pkg-config --exists jack && echo true)
+HAVE_JACK        = $(shell pkg-config --exists jack && echo true)
 
 ifeq ($(CARLA_RTAUDIO_SUPPORT),true)
-HAVE_ALSA         = $(shell pkg-config --exists alsa && echo true)
-HAVE_PULSEAUDIO   = $(shell pkg-config --exists libpulse-simple && echo true)
+HAVE_ALSA        = $(shell pkg-config --exists alsa && echo true)
+HAVE_PULSEAUDIO  = $(shell pkg-config --exists libpulse-simple && echo true)
 endif
 
 # --------------------------------------------------------------
 
-BUILD_CXX_FLAGS  += -I. -I../carla-backend -I../carla-includes -I../carla-jackbridge -I../carla-plugin -I../carla-utils -fPIC
-BUILD_CXX_FLAGS  += $(shell pkg-config --cflags jack liblo QtCore)
+BUILD_CXX_FLAGS += -fvisibility=hidden -fPIC
+BUILD_CXX_FLAGS += -I. -I../carla-backend -I../carla-includes -I../carla-plugin -I../carla-utils -fPIC
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags liblo QtCore)
 
 ifeq ($(HAVE_JACK),true)
-BUILD_CXX_FLAGS  += -DCARLA_ENGINE_JACK
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags jack)
+WANT_JACK        = true
 endif
 
 ifeq ($(HAVE_ALSA),true)
-BUILD_CXX_FLAGS  += $(shell pkg-config --cflags alsa) -D__LINUX_ALSA__ -D__LINUX_ALSASEQ__
-WANT_RTAUDIO      = true
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags alsa) -D__LINUX_ALSA__ -D__LINUX_ALSASEQ__
+WANT_RTAUDIO     = true
 endif
 
 ifeq ($(HAVE_PULSEAUDIO),true)
-BUILD_CXX_FLAGS  += $(shell pkg-config --cflags libpulse-simple) -D__LINUX_PULSE__
-WANT_RTAUDIO      = true
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags libpulse-simple) -D__LINUX_PULSE__
+WANT_RTAUDIO     = true
 endif
 
 OBJS = \
@@ -38,9 +40,19 @@ OBJS = \
      carla_engine_rtaudio.o \
      carla_osc.o
 
+# --------------------------------------------------------------
+
+ifeq ($(WANT_JACK),true)
+BUILD_CXX_FLAGS += -DCARLA_ENGINE_JACK
+BUILD_CXX_FLAGS += -I../carla-jackbridge
+endif
+
 ifeq ($(WANT_RTAUDIO),true)
 BUILD_CXX_FLAGS += -DCARLA_ENGINE_RTAUDIO -DHAVE_GETTIMEOFDAY -D_FORTIFY_SOURCE=2
 BUILD_CXX_FLAGS += -I../carla-engine/rtaudio-4.0.11 -I../carla-engine/rtmidi-2.0.1
+ifeq ($(DEBUG),true)
+BUILD_CXX_FLAGS += __RTAUDIO_DEBUG__ __RTMIDI_DEBUG__
+endif
 OBJS += ../carla-engine/rtaudio-4.0.11/RtAudio.o
 OBJS += ../carla-engine/rtmidi-2.0.1/RtMidi.o
 endif

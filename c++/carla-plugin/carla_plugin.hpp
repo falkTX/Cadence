@@ -1,5 +1,5 @@
 /*
- * Carla Backend
+ * Carla Plugin
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_PLUGIN_H
-#define CARLA_PLUGIN_H
+#ifndef CARLA_PLUGIN_HPP
+#define CARLA_PLUGIN_HPP
 
 #include "carla_engine.hpp"
 #include "carla_shared.hpp" // FIXME - remove
@@ -2274,4 +2274,4 @@ protected:
 
 CARLA_BACKEND_END_NAMESPACE
 
-#endif // CARLA_PLUGIN_H
+#endif // CARLA_PLUGIN_HPP

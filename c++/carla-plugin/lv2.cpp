@@ -1,5 +1,5 @@
 /*
- * Carla Backend
+ * Carla LV2 Plugin
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -4614,10 +4614,10 @@ Lv2Plugin::Ft Lv2Plugin::ft = { nullptr, nullptr, nullptr, nullptr, nullptr, nul
 
 // -------------------------------------------------------------------------------------------------------------------
 
-int CarlaOsc::handleMsgLv2AtomTransfer(CARLA_OSC_HANDLE_ARGS2)
+int CarlaEngineOsc::handleMsgLv2AtomTransfer(CARLA_ENGINE_OSC_HANDLE_ARGS2)
 {
     qDebug("CarlaOsc::handleMsgLv2AtomTransfer()");
-    CARLA_OSC_CHECK_OSC_TYPES(3, "iss");
+    CARLA_ENGINE_OSC_CHECK_OSC_TYPES(3, "iss");
 
     const int32_t portIndex   = argv[0]->i;
     const char* const typeStr = (const char*)&argv[1]->s;
@@ -4635,10 +4635,10 @@ int CarlaOsc::handleMsgLv2AtomTransfer(CARLA_OSC_HANDLE_ARGS2)
     return 0;
 }
 
-int CarlaOsc::handleMsgLv2EventTransfer(CARLA_OSC_HANDLE_ARGS2)
+int CarlaEngineOsc::handleMsgLv2EventTransfer(CARLA_ENGINE_OSC_HANDLE_ARGS2)
 {
     qDebug("CarlaOsc::handleMsgLv2EventTransfer()");
-    CARLA_OSC_CHECK_OSC_TYPES(3, "iss");
+    CARLA_ENGINE_OSC_CHECK_OSC_TYPES(3, "iss");
 
     const int32_t portIndex   = argv[0]->i;
     const char* const typeStr = (const char*)&argv[1]->s;
@@ -4659,7 +4659,7 @@ int CarlaOsc::handleMsgLv2EventTransfer(CARLA_OSC_HANDLE_ARGS2)
 CARLA_BACKEND_END_NAMESPACE
 
 #else // WANT_LV2
-#  warning Building without LV2 support
+# warning Building without LV2 support
 #endif
 
 CARLA_BACKEND_START_NAMESPACE

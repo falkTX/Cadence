@@ -6,13 +6,41 @@
 
 include ../Makefile.mk
 
-HAVE_ZYN_DEPS     = $(shell pkg-config --exists fftw3 mxml && echo true)
+HAVE_ZYN_DEPS    = $(shell pkg-config --exists fftw3 mxml && echo true)
 
-BUILD_CXX_FLAGS  += -I. -I../carla-includes -I../carla-engine -I../carla-utils -fPIC
-BUILD_CXX_FLAGS  += $(shell pkg-config --cflags QtCore)
+ifeq ($(CARLA_PLUGIN_SUPPORT),true)
+HAVE_SUIL        = $(shell pkg-config --exists suil-0 && echo true)
+endif
+
+ifeq ($(CARLA_SAMPLERS_SUPPORT),true)
+HAVE_FLUIDSYNTH  = $(shell pkg-config --exists fluidsynth && echo true)
+HAVE_LINUSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
+endif
+
+# --------------------------------------------------------------
+
+BUILD_CXX_FLAGS += -fvisibility=hidden -fPIC
+BUILD_CXX_FLAGS += -I. -I../carla-backend -I../carla-engine -I../carla-includes -I../carla-native -I../carla-utils
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags liblo QtCore)
+
+ifeq ($(CARLA_PLUGIN_SUPPORT),true)
+BUILD_CXX_FLAGS += -DWANT_LADSPA -DWANT_DSSI -DWANT_LV2 -DWANT_VST
+endif
 
 ifeq ($(HAVE_ZYN_DEPS),true)
-BUILD_CXX_FLAGS  += -DWANT_ZYNADDSUBFX
+BUILD_CXX_FLAGS += -DWANT_ZYNADDSUBFX
+endif
+
+ifeq ($(HAVE_SUIL),true)
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags suil-0) -DWANT_SUIL
+endif
+
+ifeq ($(HAVE_FLUIDSYNTH),true)
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags fluidsynth) -DWANT_FLUIDSYNTH
+endif
+
+ifeq ($(HAVE_LINUSAMPLER),true)
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags linuxsampler) -DWANT_LINUXSAMPLER
 endif
 
 OBJS = \
@@ -41,4 +69,4 @@ carla_plugin.a: $(OBJS)
 	$(CXX) -c $< $(BUILD_CXX_FLAGS) -o $@
 
 clean:
-	rm -f *.a *.o
+	rm -f *.a $(OBJS)

@@ -27,6 +27,8 @@ OBJS = \
 	bypass.o \
 	midi-split.o
 
+# --------------------------------------------------------------
+
 ifeq ($(HAVE_ZYN_DEPS),true)
 OBJS += \
 	zynaddsubfx.o \
