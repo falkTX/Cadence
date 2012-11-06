@@ -90,4 +90,11 @@ static PluginDescriptor midiSplitDesc = {
     PluginDescriptorFILL(MidiSplitPlugin)
 };
 
-CARLA_REGISTER_NATIVE_PLUGIN(midiSplit, midiSplitDesc)
+// -----------------------------------------------------------------------
+
+void carla_register_native_plugin_midiSplit()
+{
+    carla_register_native_plugin(&midiSplitDesc);
+}
+
+// -----------------------------------------------------------------------

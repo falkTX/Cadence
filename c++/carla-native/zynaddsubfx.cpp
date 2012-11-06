@@ -327,4 +327,11 @@ static PluginDescriptor zynAddSubFxDesc = {
     PluginDescriptorFILL(ZynAddSubFxPlugin)
 };
 
-CARLA_REGISTER_NATIVE_PLUGIN(zynaddsubfx, zynAddSubFxDesc)
+// -----------------------------------------------------------------------
+
+void carla_register_native_plugin_zynaddsubfx()
+{
+    carla_register_native_plugin(&zynAddSubFxDesc);
+}
+
+// -----------------------------------------------------------------------

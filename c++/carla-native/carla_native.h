@@ -171,10 +171,17 @@ typedef struct _PluginDescriptor {
 
 // -----------------------------------------------------------------------
 
+// Register plugin
 void carla_register_native_plugin(const PluginDescriptor* desc);
 
-#define CARLA_REGISTER_NATIVE_PLUGIN(label, desc) \
-    void carla_register_native_plugin_##label () { carla_register_native_plugin(&desc); }
+// Available plugins
+void carla_register_native_plugin_bypass();
+void carla_register_native_plugin_midiSplit();
+#ifdef WANT_ZYNADDSUBFX
+void carla_register_native_plugin_zynaddsubfx();
+#endif
+
+// -----------------------------------------------------------------------
 
 /**@}*/
 

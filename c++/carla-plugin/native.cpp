@@ -18,17 +18,6 @@
 #include "carla_plugin.hpp"
 #include "carla_native.h"
 
-// Internal C plugins
-extern "C" {
-//extern void carla_register_native_plugin_bypass();
-}
-
-// Internal C++ plugins
-//extern void carla_register_native_plugin_midiSplit();
-#ifdef WANT_ZYNADDSUBFX
-//extern void carla_register_native_plugin_zynaddsubfx();
-#endif
-
 CARLA_BACKEND_START_NAMESPACE
 
 struct NativePluginMidiData {
@@ -60,10 +49,12 @@ public:
             return;
 
         firstInit = false;
-        //carla_register_native_plugin_bypass();
-        //carla_register_native_plugin_midiSplit();
+#if 1 // FIXME!
+        carla_register_native_plugin_bypass();
+        carla_register_native_plugin_midiSplit();
 #ifdef WANT_ZYNADDSUBFX
-        //carla_register_native_plugin_zynaddsubfx();
+        carla_register_native_plugin_zynaddsubfx();
+#endif
 #endif
     }
 

@@ -58,6 +58,10 @@ OBJS += \
 	../carla-native/carla_native.a \
 	../carla-plugin/carla_plugin.a
 
+# FIXME!!
+OBJS += \
+	../carla-native/*.o
+
 # others
 ifeq ($(CARLA_PLUGIN_SUPPORT),true)
 OBJS += ../carla-lilv/carla_lilv.a

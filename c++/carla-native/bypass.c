@@ -43,6 +43,8 @@ static void bypass_process(PluginHandle handle, float** inBuffer, float** outBuf
     (void)midiEvents;
 }
 
+// -----------------------------------------------------------------------
+
 static PluginDescriptor bypassDesc = {
     .category  = PLUGIN_CATEGORY_NONE,
     .hints     = 0x0,
@@ -80,4 +82,11 @@ static PluginDescriptor bypassDesc = {
     .process    = bypass_process
 };
 
-CARLA_REGISTER_NATIVE_PLUGIN(bypass, bypassDesc)
+// -----------------------------------------------------------------------
+
+void carla_register_native_plugin_bypass()
+{
+    carla_register_native_plugin(&bypassDesc);
+}
+
+// -----------------------------------------------------------------------

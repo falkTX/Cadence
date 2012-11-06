@@ -16,7 +16,7 @@ BUILD_CXX_FLAGS  += -fvisibility=hidden -fPIC -I. -I../carla-includes -I../carla
 BUILD_CXX_FLAGS  += $(shell pkg-config --cflags QtCore)
 
 ifeq ($(HAVE_ZYN_DEPS),true)
-BUILD_CXX_FLAGS  += $(shell pkg-config --cflags fftw3 mxml)
+BUILD_CXX_FLAGS  += $(shell pkg-config --cflags fftw3 mxml) -DWANT_ZYNADDSUBFX
 
 ifeq ($(HAVE_ZYN_GUI_DEPS),true)
 BUILD_CXX_FLAGS  += $(shell pkg-config --cflags ntk) -DWANT_ZYNADDSUBFX_GUI
