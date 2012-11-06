@@ -20,13 +20,13 @@
 
 // Internal C plugins
 extern "C" {
-extern void carla_register_native_plugin_bypass();
+//extern void carla_register_native_plugin_bypass();
 }
 
 // Internal C++ plugins
-extern void carla_register_native_plugin_midiSplit();
+//extern void carla_register_native_plugin_midiSplit();
 #ifdef WANT_ZYNADDSUBFX
-extern void carla_register_native_plugin_zynaddsubfx();
+//extern void carla_register_native_plugin_zynaddsubfx();
 #endif
 
 CARLA_BACKEND_START_NAMESPACE
@@ -60,10 +60,10 @@ public:
             return;
 
         firstInit = false;
-        carla_register_native_plugin_bypass();
-        carla_register_native_plugin_midiSplit();
+        //carla_register_native_plugin_bypass();
+        //carla_register_native_plugin_midiSplit();
 #ifdef WANT_ZYNADDSUBFX
-        carla_register_native_plugin_zynaddsubfx();
+        //carla_register_native_plugin_zynaddsubfx();
 #endif
     }
 

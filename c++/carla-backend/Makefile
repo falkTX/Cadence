@@ -21,7 +21,7 @@ HAVE_ZYN_GUI_DEPS = $(shell pkg-config --exists ntk && echo true)
 # --------------------------------------------------------------
 
 BUILD_CXX_FLAGS += -I. -I../carla-includes -I../carla-engine -I../carla-jackbridge -I../carla-native -I../carla-plugin -I../carla-utils
-BUILD_CXX_FLAGS += -fPIC
+BUILD_CXX_FLAGS += -fvisibility=hidden -fPIC
 BUILD_CXX_FLAGS += $(shell pkg-config --cflags jack liblo QtCore QtGui)
 
 LINK_FLAGS      += -fPIC -shared -ldl -lm
