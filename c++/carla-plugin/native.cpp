@@ -16,7 +16,7 @@
  */
 
 #include "carla_plugin.hpp"
-#include "plugins/carla_native.h"
+#include "carla_native.h"
 
 // Internal C plugins
 extern "C" {
@@ -26,7 +26,7 @@ extern void carla_register_native_plugin_bypass();
 // Internal C++ plugins
 extern void carla_register_native_plugin_midiSplit();
 #ifdef WANT_ZYNADDSUBFX
-extern void carla_register_native_plugin_zynAddSubFx();
+extern void carla_register_native_plugin_zynaddsubfx();
 #endif
 
 CARLA_BACKEND_START_NAMESPACE
@@ -52,44 +52,23 @@ public:
 
     ~NativePluginScopedInitiliazer()
     {
-        for (size_t i=0; i < descriptors.size(); i++)
-        {
-            const PluginDescriptor* const desc = descriptors[i];
-
-            if (desc->_fini)
-                desc->_fini((struct _PluginDescriptor*)desc);
-        }
-
-        descriptors.clear();
     }
 
     void maybeFirstInit()
     {
-        if (firstInit)
-        {
-            firstInit = false;
-            carla_register_native_plugin_bypass();
-            carla_register_native_plugin_midiSplit();
+        if (! firstInit)
+            return;
+
+        firstInit = false;
+        carla_register_native_plugin_bypass();
+        carla_register_native_plugin_midiSplit();
 #ifdef WANT_ZYNADDSUBFX
-            carla_register_native_plugin_zynAddSubFx();
+        carla_register_native_plugin_zynaddsubfx();
 #endif
-        }
-    }
-
-    void initializeIfNeeded(const PluginDescriptor* const desc)
-    {
-        if (descriptors.empty() || std::find(descriptors.begin(), descriptors.end(), desc) == descriptors.end())
-        {
-            if (desc->_init)
-                desc->_init((struct _PluginDescriptor*)desc);
-
-            descriptors.push_back(desc);
-        }
     }
 
 private:
     bool firstInit;
-    std::vector<const PluginDescriptor*> descriptors;
 };
 
 static NativePluginScopedInitiliazer scopedInitliazer;
@@ -176,12 +155,12 @@ public:
 
         int32_t rindex = param.data[parameterId].rindex;
 
-        if (descriptor && rindex < (int32_t)descriptor->portCount)
+        if (descriptor && descriptor->get_parameter_count && rindex < (int32_t)descriptor->get_parameter_count(handle))
         {
-            const PluginPort* const port = &descriptor->ports[rindex];
+            const Parameter* const param = descriptor->get_parameter_info(handle, rindex);
 
-            if (port)
-                return port->scalePointCount;
+            if (param)
+                return param->scalePointCount;
         }
 
         return 0;
@@ -208,6 +187,7 @@ public:
         CARLA_ASSERT(parameterId < param.count);
         CARLA_ASSERT(scalePointId < parameterScalePointCount(parameterId));
 
+#if 0
         const int32_t rindex = param.data[parameterId].rindex;
 
         if (descriptor && rindex < (int32_t)descriptor->portCount)
@@ -222,6 +202,7 @@ public:
                     return scalePoint->value;
             }
         }
+#endif
 
         return 0.0;
     }
@@ -271,6 +252,7 @@ public:
         CARLA_ASSERT(descriptor);
         CARLA_ASSERT(parameterId < param.count);
 
+#if 0
         const int32_t rindex = param.data[parameterId].rindex;
 
         if (descriptor && rindex < (int32_t)descriptor->portCount)
@@ -283,6 +265,7 @@ public:
                 return;
             }
         }
+#endif
 
         CarlaPlugin::getParameterName(parameterId, strBuf);
     }
@@ -315,6 +298,7 @@ public:
         CARLA_ASSERT(handle);
         CARLA_ASSERT(parameterId < param.count);
 
+#if 0
         if (descriptor && handle)
         {
             const int32_t rindex = param.data[parameterId].rindex;
@@ -327,6 +311,7 @@ public:
                 return;
             }
         }
+#endif
 
         CarlaPlugin::getParameterUnit(parameterId, strBuf);
     }
@@ -337,6 +322,7 @@ public:
         CARLA_ASSERT(parameterId < param.count);
         CARLA_ASSERT(scalePointId < parameterScalePointCount(parameterId));
 
+#if 0
         int32_t rindex = param.data[parameterId].rindex;
 
         if (descriptor && rindex < (int32_t)descriptor->portCount)
@@ -354,6 +340,7 @@ public:
                 }
             }
         }
+#endif
 
         CarlaPlugin::getParameterScalePointLabel(parameterId, scalePointId, strBuf);
     }
@@ -474,6 +461,7 @@ public:
         // Delete old data
         deleteBuffers();
 
+#if 0
         uint32_t aIns, aOuts, mIns, mOuts, params, j;
         aIns = aOuts = mIns = mOuts = params = 0;
 
@@ -775,6 +763,7 @@ public:
         m_hints |= getPluginHintsFromNative(descriptor->hints);
 
         reloadPrograms(true);
+#endif
 
         x_client->activate();
 
@@ -801,6 +790,7 @@ public:
         midiprog.count = 0;
         midiprog.data  = nullptr;
 
+#if 0
         // Query new programs
         if (descriptor->get_midi_program && descriptor->set_midi_program)
         {
@@ -874,6 +864,7 @@ public:
             if (programChanged)
                 setMidiProgram(midiprog.current, true, true, true, true);
         }
+#endif
     }
 
     // -------------------------------------------------------------------
@@ -1124,7 +1115,6 @@ public:
                     midiEvent->data[0] = uint8_t(extMidiNotes[i].velo ? MIDI_STATUS_NOTE_ON : MIDI_STATUS_NOTE_OFF) + extMidiNotes[i].channel;
                     midiEvent->data[1] = extMidiNotes[i].note;
                     midiEvent->data[2] = extMidiNotes[i].velo;
-                    midiEvent->size = 3;
 
                     extMidiNotes[i].channel = -1; // mark as invalid
                     midiEventCount += 1;
@@ -1169,9 +1159,8 @@ public:
                     ::MidiEvent* const midiEvent = &midiEvents[midiEventCount];
                     memset(midiEvent, 0, sizeof(::MidiEvent));
 
-                    midiEvent->portOffset = i;
+                    midiEvent->port = i;
                     midiEvent->time = minEvent->time;
-                    midiEvent->size = minEvent->size;
 
                     if (MIDI_IS_STATUS_NOTE_OFF(status))
                     {
@@ -1245,12 +1234,10 @@ public:
                         memset(&midiEvents[k], 0, sizeof(::MidiEvent));
                         midiEvents[k].data[0] = MIDI_STATUS_CONTROL_CHANGE + k;
                         midiEvents[k].data[1] = MIDI_CONTROL_ALL_SOUND_OFF;
-                        midiEvents[k].size = 2;
 
                         memset(&midiEvents[k*2], 0, sizeof(::MidiEvent));
                         midiEvents[k*2].data[0] = MIDI_STATUS_CONTROL_CHANGE + k;
                         midiEvents[k*2].data[1] = MIDI_CONTROL_ALL_NOTES_OFF;
-                        midiEvents[k*2].size = 2;
                     }
 
                     midiEventCount = MAX_MIDI_CHANNELS*2;
@@ -1390,10 +1377,10 @@ public:
                 if (MIDI_IS_STATUS_NOTE_ON(data[0]) && data[2] == 0)
                     data[0] -= 0x10;
 
-                const uint32_t portOffset = midiEvents[i].portOffset;
+                const uint32_t port = midiEvents[i].port;
 
-                if (portOffset < mOut.count)
-                    mOut.ports[portOffset]->writeEvent(midiEvents[i].time, data, 3);
+                if (port < mOut.count)
+                    mOut.ports[port]->writeEvent(midiEvents[i].time, data, 3);
             }
 
         } // End of MIDI Output
@@ -1627,8 +1614,6 @@ public:
             setLastError("Invalid internal plugin");
             return false;
         }
-
-        scopedInitliazer.initializeIfNeeded(descriptor);
 
         // ---------------------------------------------------------------
         // initialize plugin

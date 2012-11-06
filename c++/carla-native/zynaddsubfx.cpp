@@ -15,7 +15,7 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_midi.hpp"
+#include "carla_midi.h"
 #include "carla_native.hpp"
 
 #include "zynaddsubfx/Misc/Master.h"

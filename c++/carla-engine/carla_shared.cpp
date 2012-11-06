@@ -19,7 +19,7 @@
 #include "carla_engine.hpp"
 
 #ifndef BUILD_BRIDGE
-#  include "plugins/carla_native.h"
+# include "carla_native.h"
 #endif
 
 #include <QtCore/QString>

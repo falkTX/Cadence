@@ -4,94 +4,111 @@
 # Created by falkTX
 #
 
-CC  ?= gcc
-CXX ?= g++
+include ../Makefile.mk
 
-# HAVE_ALSA         = $(shell pkg-config --exists alsa && echo true)
-HAVE_JACK         = $(shell pkg-config --exists jack && echo true)
-# HAVE_PULSEAUDIO   = $(shell pkg-config --exists libpulse-simple && echo true)
+ifeq ($(CARLA_PLUGIN_SUPPORT),true)
+HAVE_SUIL         = $(shell pkg-config --exists suil-0 && echo true)
+endif
+
+ifeq ($(CARLA_SAMPLERS_SUPPORT),true)
 HAVE_FLUIDSYNTH   = $(shell pkg-config --exists fluidsynth && echo true)
 HAVE_LINUXSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
+endif
+
+ifeq ($(CARLA_RTAUDIO_SUPPORT),true)
+HAVE_ALSA         = $(shell pkg-config --exists alsa && echo true)
+HAVE_PULSEAUDIO   = $(shell pkg-config --exists libpulse-simple && echo true)
+endif
+
 HAVE_ZYN_DEPS     = $(shell pkg-config --exists fftw3 mxml && echo true)
-HAVE_SUIL         = $(shell pkg-config --exists suil-0 && echo true)
+HAVE_ZYN_GUI_DEPS = $(shell pkg-config --exists fftw3 mxml ntk && echo true)
 
-BASE_FLAGS        = -O2 -ffast-math -fomit-frame-pointer -fPIC -mtune=generic -msse -mfpmath=sse -Wall -I. -I../carla-includes -I../carla-jackbridge
+# --------------------------------------------------------------
 
-CARLA_C_FLAGS     = $(BASE_FLAGS) -std=c99 $(CFLAGS)
+BUILD_CXX_FLAGS += -I. -I../carla-includes -I../carla-engine -I../carla-jackbridge -I../carla-native -I../carla-plugin -I../carla-utils
+BUILD_CXX_FLAGS += -fPIC -DCARLA_ENGINE_JACK
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags jack liblo QtCore QtGui)
 
-CARLA_CXX_FLAGS   = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)
-CARLA_CXX_FLAGS  += $(shell pkg-config --cflags liblo QtCore QtGui)
-CARLA_CXX_FLAGS  += -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT -DNDEBUG
+LINK_FLAGS      += -fPIC -shared -ldl -lm
+LINK_FLAGS      += $(shell pkg-config --libs jack liblo QtCore QtGui)
 
-CARLA_CXX_FLAGS  += -DWANT_LADSPA -DWANT_DSSI -DWANT_LV2 -DWANT_VST
-CARLA_CXX_FLAGS  += -DVESTIGE_HEADER # Comment this line to not use vestige header
-
-CARLA_LD_FLAGS    = -shared -ldl -lm -fPIC $(LDFLAGS)
-CARLA_LD_FLAGS   += $(shell pkg-config --libs liblo QtCore QtGui)
-
-ifeq ($(HAVE_ALSA),true)
-WANT_RTAUDIO      = true
-CARLA_CXX_FLAGS  += $(shell pkg-config --cflags alsa) -D__LINUX_ALSA__ -D__LINUX_ALSASEQ__
-CARLA_LD_FLAGS   += $(shell pkg-config --libs alsa)
-endif
-
-ifeq ($(HAVE_JACK),true)
-CARLA_CXX_FLAGS  += $(shell pkg-config --cflags jack) -DCARLA_ENGINE_JACK
-CARLA_LD_FLAGS   += $(shell pkg-config --libs jack)
-endif
-
-ifeq ($(HAVE_PULSEAUDIO),true)
-WANT_RTAUDIO      = true
-CARLA_CXX_FLAGS  += $(shell pkg-config --cflags libpulse-simple) -D__LINUX_PULSE__
-CARLA_LD_FLAGS   += $(shell pkg-config --libs libpulse-simple)
-endif
-
-ifeq ($(HAVE_FLUIDSYNTH),true)
-CARLA_CXX_FLAGS  += $(shell pkg-config --cflags fluidsynth) -DWANT_FLUIDSYNTH
-CARLA_LD_FLAGS   += $(shell pkg-config --libs fluidsynth)
-endif
-
-ifeq ($(HAVE_LINUXSAMPLER),true)
-CARLA_CXX_FLAGS  += $(shell pkg-config --cflags linuxsampler) -DWANT_LINUXSAMPLER
-CARLA_LD_FLAGS   += $(shell pkg-config --libs linuxsampler)
-endif
-
-ifeq ($(HAVE_ZYN_DEPS),true)
-CARLA_CXX_FLAGS  += $(shell pkg-config --cflags fftw3 mxml) -DWANT_ZYNADDSUBFX
-CARLA_LD_FLAGS   += $(shell pkg-config --libs fftw3 mxml)
+ifeq ($(CARLA_PLUGIN_SUPPORT),true)
+BUILD_CXX_FLAGS += -DWANT_LADSPA -DWANT_DSSI -DWANT_LV2 -DWANT_VST
 endif
 
 ifeq ($(HAVE_SUIL),true)
-CARLA_CXX_FLAGS  += $(shell pkg-config --cflags suil-0) -DHAVE_SUIL
-CARLA_LD_FLAGS   += $(shell pkg-config --libs suil-0)
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags suil-0) -DWANT_SUIL
+LINK_FLAGS      += $(shell pkg-config --libs suil-0)
 endif
 
-OBJS = \
-	carla_backend_standalone.o \
-	carla_bridge.o \
-	carla_engine.o \
-	carla_engine_jack.o \
-	carla_engine_rtaudio.o \
-	carla_native.o \
-	carla_osc.o \
-	carla_shared.o \
-	carla_threads.o \
-	ladspa.o dssi.o lv2.o vst.o fluidsynth.o linuxsampler.o \
-	../carla-lilv/carla_lilv.a \
-	../carla-rtmempool/carla_rtmempool.a
+ifeq ($(HAVE_FLUIDSYNTH),true)
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags fluidsynth) -DWANT_FLUIDSYNTH
+LINK_FLAGS      += $(shell pkg-config --libs fluidsynth)
+endif
 
-OBJS += \
-	plugins/bypass.o \
-	plugins/midi-split.o
+ifeq ($(HAVE_LINUXSAMPLER),true)
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags linuxsampler) -DWANT_LINUXSAMPLER
+LINK_FLAGS      += $(shell pkg-config --libs linuxsampler)
+endif
 
-ifeq ($(WANT_RTAUDIO),true)
-CARLA_CXX_FLAGS += -Irtaudio-4.0.11 -Irtmidi-2.0.1 -DCARLA_ENGINE_RTAUDIO -DHAVE_GETTIMEOFDAY -D_FORTIFY_SOURCE=2
-OBJS += rtaudio-4.0.11/RtAudio.o
-OBJS += rtmidi-2.0.1/RtMidi.o
+ifeq ($(HAVE_ALSA),true)
+BUILD_CXX_FLAGS  += $(shell pkg-config --cflags alsa) -D__LINUX_ALSA__ -D__LINUX_ALSASEQ__
+LINK_FLAGS       += $(shell pkg-config --libs alsa)
+WANT_RTAUDIO      = true
+endif
+
+ifeq ($(HAVE_PULSEAUDIO),true)
+BUILD_CXX_FLAGS  += $(shell pkg-config --cflags libpulse-simple) -D__LINUX_PULSE__
+LINK_FLAGS       += $(shell pkg-config --libs libpulse-simple)
+WANT_RTAUDIO      = true
 endif
 
 ifeq ($(HAVE_ZYN_DEPS),true)
-OBJS += plugins/zynaddsubfx.o plugins/zynaddsubfx-src.o
+LINK_FLAGS       += $(shell pkg-config --libs fftw3 mxml)
+endif
+
+ifeq ($(HAVE_ZYN_GUI_DEPS),true)
+LINK_FLAGS       += $(shell pkg-config --libs ntk)
+endif
+
+# backend
+OBJS = \
+	carla_backend_standalone.o
+
+# engine
+OBJS += \
+     ../carla-engine/carla_engine.o \
+     ../carla-engine/carla_engine_jack.o \
+     ../carla-engine/carla_engine_rtaudio.o \
+     ../carla-engine/carla_osc.o \
+     ../carla-engine/carla_shared.o \
+     ../carla-engine/carla_threads.o
+
+# plugins
+OBJS += \
+     ../carla-plugin/carla_bridge.o \
+     ../carla-plugin/native.o \
+     ../carla-plugin/ladspa.o \
+     ../carla-plugin/dssi.o \
+     ../carla-plugin/lv2.o \
+     ../carla-plugin/vst.o \
+     ../carla-plugin/fluidsynth.o \
+     ../carla-plugin/linuxsampler.o
+
+# native
+OBJS += ../carla-native/carla_native.a
+
+# others
+ifeq ($(CARLA_PLUGIN_SUPPORT),true)
+OBJS += ../carla-lilv/carla_lilv.a
+OBJS += ../carla-rtmempool/carla_rtmempool.a
+endif
+
+ifeq ($(WANT_RTAUDIO),true)
+BUILD_CXX_FLAGS += -DCARLA_ENGINE_RTAUDIO -DHAVE_GETTIMEOFDAY -D_FORTIFY_SOURCE=2
+BUILD_CXX_FLAGS += -I../carla-engine/rtaudio-4.0.11 -I../carla-engine/rtmidi-2.0.1
+OBJS += ../carla-engine/rtaudio-4.0.11/RtAudio.o
+OBJS += ../carla-engine/rtmidi-2.0.1/RtMidi.o
 endif
 
 # --------------------------------------------------------------
@@ -102,21 +119,21 @@ doc: carla_backend.doxygen
 	doxygen $<
 
 carla_backend.so: $(OBJS)
-	$(CXX) $^ $(CARLA_LD_FLAGS) -o $@ && strip $@
+	$(CXX) $^ $(LINK_FLAGS) -o $@ && strip $@
 
-carla_backend-dssi.so: $(OBJS) carla_backend_plugin.cpp
-	$(CXX) $^ -DDISTRHO_PLUGIN_TARGET_DSSI -Idistrho-plugin-toolkit $(CARLA_CXX_FLAGS) $(CARLA_LD_FLAGS) -o $@ && strip $@
+# carla_backend-dssi.so: $(OBJS) carla_backend_plugin.cpp
+# 	$(CXX) $^ -DDISTRHO_PLUGIN_TARGET_DSSI -Idistrho-plugin-toolkit $(CARLA_CXX_FLAGS) $(CARLA_LD_FLAGS) -o $@ && strip $@
 
 # --------------------------------------------------------------
 
-.c.o:
-	$(CC) -c $< $(CARLA_C_FLAGS) -o $@
-
 .cpp.o:
-	$(CXX) -c $< $(CARLA_CXX_FLAGS) -o $@
+	$(CXX) -c $< $(BUILD_CXX_FLAGS) -o $@
 
 ../carla-lilv/carla_lilv.a:
 	$(MAKE) -C ../carla-lilv
+
+../carla-native/carla_native.a:
+	$(MAKE) -C ../carla-native
 
 ../carla-rtmempool/carla_rtmempool.a:
 	$(MAKE) -C ../carla-rtmempool

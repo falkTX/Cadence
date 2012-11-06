@@ -6,13 +6,19 @@
 
 include ../Makefile.mk
 
-HAVE_ZYN_DEPS    = $(shell pkg-config --exists fftw3 mxml && echo true)
+HAVE_ZYN_DEPS     = $(shell pkg-config --exists fftw3 mxml && echo true)
+HAVE_ZYN_GUI_DEPS = $(shell pkg-config --exists fftw3 mxml ntk && echo true)
 
-BUILD_CXX_FLAGS += -I. -I../carla-includes -I../carla-utils -fPIC
-BUILD_CXX_FLAGS += $(shell pkg-config --cflags QtCore)
+BUILD_C_FLAGS    += -I. -fPIC
+BUILD_CXX_FLAGS  += -I. -I../carla-includes -I../carla-utils -fPIC
+BUILD_CXX_FLAGS  += $(shell pkg-config --cflags QtCore)
 
 ifeq ($(HAVE_ZYN_DEPS),true)
-BUILD_CXX_FLAGS += $(shell pkg-config --cflags fftw3 mxml)
+BUILD_CXX_FLAGS  += $(shell pkg-config --cflags fftw3 mxml)
+endif
+
+ifeq ($(HAVE_ZYN_GUI_DEPS),true)
+BUILD_CXX_FLAGS  += $(shell pkg-config --cflags ntk) -DWANT_ZYNADDSUBFX_GUI
 endif
 
 OBJS = \

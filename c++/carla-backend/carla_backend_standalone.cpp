@@ -17,7 +17,7 @@
 
 #include "carla_backend_standalone.hpp"
 #include "carla_plugin.hpp"
-#include "plugins/carla_native.h"
+#include "carla_native.h"
 
 // -------------------------------------------------------------------------------------------------------------------
 

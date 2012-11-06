@@ -23,6 +23,11 @@
 #include <QtCore/QMutex>
 #include <QtCore/QThread>
 
+CARLA_BACKEND_START_NAMESPACE
+class CarlaEngine;
+class CarlaPlugin;
+CARLA_BACKEND_END_NAMESPACE
+
 // --------------------------------------------------------------------------------------------------------
 // CarlaCheckThread
 

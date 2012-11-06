@@ -41,4 +41,4 @@ BUILD_CXX_FLAGS += -DVESTIGE_HEADER
 # Modify to enable/disable specific features
 CARLA_PLUGIN_SUPPORT   = true
 CARLA_SAMPLERS_SUPPORT = true
-CARLA_RTAUDIO_SUPPORT  = false
+CARLA_RTAUDIO_SUPPORT  = true

@@ -316,7 +316,7 @@ protected:
             // initialize control input
             memset(rackControlEventsIn, 0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
             {
-                jackbridge_midi_event_t jackEvent;
+                jack_midi_event_t jackEvent;
                 const uint32_t jackEventCount = jackbridge_midi_get_event_count(controlIn);
 
                 uint32_t carlaEventIndex = 0;
@@ -373,7 +373,7 @@ protected:
             memset(rackMidiEventsIn, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
             {
                 uint32_t i = 0, j = 0;
-                jackbridge_midi_event_t jackEvent;
+                jack_midi_event_t jackEvent;
 
                 while (jackbridge_midi_event_get(&jackEvent, midiIn, j++) == 0)
                 {

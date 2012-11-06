@@ -49,6 +49,9 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
+class CarlaEngine;
+class CarlaPlugin;
+
 class CarlaOsc
 {
 public:

@@ -1301,7 +1301,7 @@ const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(uint32_t index)
 #ifdef CARLA_ENGINE_JACK
     if (handle.jackPort)
     {
-        static jackbridge_midi_event_t jackEvent;
+        static jack_midi_event_t jackEvent;
         static CarlaEngineControlEvent carlaEvent;
 
         if (jackbridge_midi_event_get(&jackEvent, buffer, index) != 0)
@@ -1520,7 +1520,7 @@ const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(uint32_t index)
 #ifdef CARLA_ENGINE_JACK
     if (handle.jackPort)
     {
-        static jackbridge_midi_event_t jackEvent;
+        static jack_midi_event_t jackEvent;
         static CarlaEngineMidiEvent carlaEvent;
 
         if (jackbridge_midi_event_get(&jackEvent, buffer, index) == 0 && jackEvent.size <= 4)
