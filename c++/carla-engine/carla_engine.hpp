@@ -1,5 +1,5 @@
 /*
- * Carla Backend
+ * Carla Engine
  * Copyright (C) 2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,20 +15,20 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_ENGINE_H
-#define CARLA_ENGINE_H
+#ifndef CARLA_ENGINE_HPP
+#define CARLA_ENGINE_HPP
 
-#include "carla_osc.hpp"
-#include "carla_shared.hpp"
-#include "carla_threads.hpp"
+#include "carla_engine_osc.hpp"
+#include "carla_shared.hpp" // FIXME - remove
+#include "carla_threads.hpp" // FIXME - remove
 
 #ifdef CARLA_ENGINE_JACK
-# include "carla_jackbridge.h"
+typedef struct _jack_client jack_client_t;
+typedef struct _jack_port jack_port_t;
 #endif
 
 #ifdef CARLA_ENGINE_RTAUDIO
-# include "RtAudio.h"
-# include "RtMidi.h"
+typedef int RtAudioApi;
 #endif
 
 CARLA_BACKEND_START_NAMESPACE
@@ -448,7 +448,7 @@ private:
     CarlaCheckThread m_checkThread;
 
 #ifndef BUILD_BRIDGE
-    CarlaOsc m_osc;
+    CarlaEngineOsc m_osc;
 #endif
     const CarlaOscData* m_oscData;
 
@@ -470,7 +470,7 @@ private:
     static CarlaEngine* newJack();
 #endif
 #ifdef CARLA_ENGINE_RTAUDIO
-    static CarlaEngine* newRtAudio(RtAudio::Api api);
+    static CarlaEngine* newRtAudio(RtAudioApi api);
 #endif
 };
 
@@ -568,4 +568,4 @@ public:
 
 CARLA_BACKEND_END_NAMESPACE
 
-#endif // CARLA_ENGINE_H
+#endif // CARLA_ENGINE_HPP

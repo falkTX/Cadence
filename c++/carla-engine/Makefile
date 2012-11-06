@@ -1,0 +1,64 @@
+#!/usr/bin/make -f
+# Makefile for carla-engine #
+# ------------------------------------ #
+# Created by falkTX
+#
+
+include ../Makefile.mk
+
+HAVE_JACK         = $(shell pkg-config --exists jack && echo true)
+
+ifeq ($(CARLA_RTAUDIO_SUPPORT),true)
+HAVE_ALSA         = $(shell pkg-config --exists alsa && echo true)
+HAVE_PULSEAUDIO   = $(shell pkg-config --exists libpulse-simple && echo true)
+endif
+
+# --------------------------------------------------------------
+
+BUILD_CXX_FLAGS  += -I. -I../carla-backend -I../carla-includes -I../carla-jackbridge -I../carla-plugin -I../carla-utils -fPIC
+BUILD_CXX_FLAGS  += $(shell pkg-config --cflags jack liblo QtCore)
+
+ifeq ($(HAVE_JACK),true)
+BUILD_CXX_FLAGS  += -DCARLA_ENGINE_JACK
+endif
+
+ifeq ($(HAVE_ALSA),true)
+BUILD_CXX_FLAGS  += $(shell pkg-config --cflags alsa) -D__LINUX_ALSA__ -D__LINUX_ALSASEQ__
+WANT_RTAUDIO      = true
+endif
+
+ifeq ($(HAVE_PULSEAUDIO),true)
+BUILD_CXX_FLAGS  += $(shell pkg-config --cflags libpulse-simple) -D__LINUX_PULSE__
+WANT_RTAUDIO      = true
+endif
+
+OBJS = \
+     carla_engine.o \
+     carla_engine_jack.o \
+     carla_engine_rtaudio.o \
+     carla_osc.o
+
+ifeq ($(WANT_RTAUDIO),true)
+BUILD_CXX_FLAGS += -DCARLA_ENGINE_RTAUDIO -DHAVE_GETTIMEOFDAY -D_FORTIFY_SOURCE=2
+BUILD_CXX_FLAGS += -I../carla-engine/rtaudio-4.0.11 -I../carla-engine/rtmidi-2.0.1
+OBJS += ../carla-engine/rtaudio-4.0.11/RtAudio.o
+OBJS += ../carla-engine/rtmidi-2.0.1/RtMidi.o
+endif
+
+# --------------------------------------------------------------
+
+all: carla_engine.a
+
+doc: carla_engine.doxygen
+	doxygen $<
+
+carla_engine.a: $(OBJS)
+	$(AR) rs $@ $^
+
+# --------------------------------------------------------------
+
+.cpp.o:
+	$(CXX) -c $< $(BUILD_CXX_FLAGS) -o $@
+
+clean:
+	rm -f *.a $(OBJS)

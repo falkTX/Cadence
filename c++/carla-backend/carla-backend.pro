@@ -8,10 +8,6 @@ CONFIG    += link_pkgconfig qt warn_on # plugin shared
 DEFINES    = DEBUG
 DEFINES   += QTCREATOR_TEST
 
-DEFINES   += CARLA_ENGINE_JACK
-DEFINES   += CARLA_ENGINE_RTAUDIO HAVE_GETTIMEOFDAY __LINUX_ALSA__ __LINUX_ALSASEQ__ __LINUX_PULSE__
-DEFINES   += __RTAUDIO_DEBUG__ __RTMIDI_DEBUG__
-
 DEFINES   += WANT_LADSPA WANT_DSSI WANT_LV2 WANT_VST
 DEFINES   += WANT_SUIL
 DEFINES   += WANT_FLUIDSYNTH WANT_LINUXSAMPLER
@@ -85,11 +81,6 @@ LIBS = \
     ../carla-lilv/carla_lilv.a \
     ../carla-native/carla_native.a \
     ../carla-rtmempool/carla_rtmempool.a
-
-INCLUDEPATH += ../carla-engine/rtaudio-4.0.11
-INCLUDEPATH += ../carla-engine/rtmidi-2.0.1
-SOURCES     += ../carla-engine/rtaudio-4.0.11/RtAudio.cpp
-SOURCES     += ../carla-engine/rtmidi-2.0.1/RtMidi.cpp
 
 QMAKE_CFLAGS   *= -fPIC -std=c99
 QMAKE_CXXFLAGS *= -fPIC -std=c++0x

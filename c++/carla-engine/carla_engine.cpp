@@ -1,5 +1,5 @@
 /*
- * Carla Backend
+ * Carla Engine
  * Copyright (C) 2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,15 @@
 
 #include "carla_engine.hpp"
 #include "carla_plugin.hpp"
+
+#ifdef CARLA_ENGINE_JACK
+# include "carla_jackbridge.h"
+#endif
+
+#ifdef CARLA_ENGINE_RTAUDIO
+# include "RtAudio.h"
+# include "RtMidi.h"
+#endif
 
 CARLA_BACKEND_START_NAMESPACE
 

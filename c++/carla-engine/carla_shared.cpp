@@ -18,9 +18,9 @@
 #include "carla_shared.hpp"
 #include "carla_engine.hpp"
 
-#ifndef BUILD_BRIDGE
-# include "carla_native.h"
-#endif
+//#ifndef BUILD_BRIDGE
+//# include "carla_native.h"
+//#endif
 
 #include <QtCore/QString>
 
@@ -527,20 +527,20 @@ void setLastError(const char* const error)
 
 // -------------------------------------------------------------------------------------------------------------------
 
-#ifndef BUILD_BRIDGE
-uint32_t getPluginHintsFromNative(const uint32_t nativeHints)
-{
-    uint32_t realHints = 0;
+//#ifndef BUILD_BRIDGE
+//uint32_t getPluginHintsFromNative(const uint32_t nativeHints)
+//{
+//    uint32_t realHints = 0;
 
-    if (nativeHints & ::PLUGIN_IS_SYNTH)
-        realHints |= PLUGIN_IS_SYNTH;
-    if (nativeHints & ::PLUGIN_HAS_GUI)
-        realHints |= PLUGIN_HAS_GUI;
-    if (nativeHints & ::PLUGIN_USES_SINGLE_THREAD)
-        realHints |= PLUGIN_USES_SINGLE_THREAD;
+//    if (nativeHints & ::PLUGIN_IS_SYNTH)
+//        realHints |= PLUGIN_IS_SYNTH;
+//    if (nativeHints & ::PLUGIN_HAS_GUI)
+//        realHints |= PLUGIN_HAS_GUI;
+//    if (nativeHints & ::PLUGIN_USES_SINGLE_THREAD)
+//        realHints |= PLUGIN_USES_SINGLE_THREAD;
 
-    return realHints;
-}
-#endif // BUILD_BRIDGE
+//    return realHints;
+//}
+//#endif // BUILD_BRIDGE
 
 CARLA_BACKEND_END_NAMESPACE

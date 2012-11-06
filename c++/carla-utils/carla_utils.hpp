@@ -104,6 +104,12 @@ void carla_zeroF(float* data, const unsigned int size)
         *data++ = 0.0f;
 }
 
+static inline
+unsigned int carla_minU(const unsigned int& x, const unsigned int& y)
+{
+    return (x < y ? x : y);
+}
+
 // other misc functions
 static inline
 const char* bool2str(const bool yesNo)

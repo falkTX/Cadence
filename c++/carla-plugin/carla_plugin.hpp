@@ -19,7 +19,7 @@
 #define CARLA_PLUGIN_H
 
 #include "carla_engine.hpp"
-#include "carla_shared.hpp"
+#include "carla_shared.hpp" // FIXME - remove
 #include "carla_midi.h"
 
 #include "carla_lib_utils.hpp"
