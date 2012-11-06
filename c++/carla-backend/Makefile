@@ -16,7 +16,7 @@ HAVE_LINUXSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
 endif
 
 HAVE_ZYN_DEPS     = $(shell pkg-config --exists fftw3 mxml && echo true)
-HAVE_ZYN_GUI_DEPS = $(shell pkg-config --exists fftw3 mxml ntk && echo true)
+HAVE_ZYN_GUI_DEPS = $(shell pkg-config --exists ntk && echo true)
 
 # --------------------------------------------------------------
 
@@ -43,33 +43,20 @@ LINK_FLAGS      += $(shell pkg-config --libs linuxsampler)
 endif
 
 ifeq ($(HAVE_ZYN_DEPS),true)
-LINK_FLAGS       += $(shell pkg-config --libs fftw3 mxml)
-endif
+LINK_FLAGS      += $(shell pkg-config --libs fftw3 mxml)
 
 ifeq ($(HAVE_ZYN_GUI_DEPS),true)
 LINK_FLAGS       += $(shell pkg-config --libs ntk)
 endif
+endif
 
-# backend
 OBJS = \
-	carla_backend_standalone.o
+	carla_backend_standalone.o \
 
-# engine
-OBJS += ../carla-engine/carla_engine.a
-
-# plugins
 OBJS += \
-     ../carla-plugin/carla_bridge.o \
-     ../carla-plugin/native.o \
-     ../carla-plugin/ladspa.o \
-     ../carla-plugin/dssi.o \
-     ../carla-plugin/lv2.o \
-     ../carla-plugin/vst.o \
-     ../carla-plugin/fluidsynth.o \
-     ../carla-plugin/linuxsampler.o
-
-# native
-OBJS += ../carla-native/carla_native.a
+	../carla-engine/carla_engine.a \
+	../carla-native/carla_native.a \
+	../carla-plugin/carla_plugin.a
 
 # others
 ifeq ($(CARLA_PLUGIN_SUPPORT),true)
@@ -95,11 +82,17 @@ carla_backend.so: $(OBJS)
 .cpp.o:
 	$(CXX) -c $< $(BUILD_CXX_FLAGS) -o $@
 
+../carla-engine/carla_engine.a:
+	$(MAKE) -C ../carla-engine
+
 ../carla-lilv/carla_lilv.a:
 	$(MAKE) -C ../carla-lilv
 
 ../carla-native/carla_native.a:
 	$(MAKE) -C ../carla-native
+
+../carla-plugin/carla_plugin.a:
+	$(MAKE) -C ../carla-plugin
 
 ../carla-rtmempool/carla_rtmempool.a:
 	$(MAKE) -C ../carla-rtmempool

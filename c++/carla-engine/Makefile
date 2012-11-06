@@ -36,9 +36,14 @@ endif
 
 OBJS = \
      carla_engine.o \
-     carla_engine_jack.o \
-     carla_engine_rtaudio.o \
-     carla_osc.o
+     carla_engine_osc.o \
+     jack.o \
+     rtaudio.o
+
+# FIXME - remove these
+OBJS += \
+     carla_shared.o \
+     carla_threads.o
 
 # --------------------------------------------------------------
 
