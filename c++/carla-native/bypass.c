@@ -17,7 +17,6 @@
 
 #include "carla_native.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 static PluginHandle bypass_instantiate(struct _PluginDescriptor* _this_, HostDescriptor* host)

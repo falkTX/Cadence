@@ -309,7 +309,11 @@ int ZynAddSubFxPlugin::s_instanceCount = 0;
 
 static PluginDescriptor zynAddSubFxDesc = {
     /* category  */ PLUGIN_CATEGORY_SYNTH,
-    /* hints     */ PLUGIN_IS_SYNTH | /*PLUGIN_HAS_GUI |*/ PLUGIN_USES_SINGLE_THREAD,
+#ifdef WANT_ZYNADDSUBFX_GUI
+    /* hints     */ PLUGIN_IS_SYNTH | PLUGIN_HAS_GUI | PLUGIN_USES_SINGLE_THREAD,
+#else
+    /* hints     */ PLUGIN_IS_SYNTH | PLUGIN_USES_SINGLE_THREAD,
+#endif
     /* audioIns  */ 2,
     /* audioOuts */ 2,
     /* midiIns   */ 1,

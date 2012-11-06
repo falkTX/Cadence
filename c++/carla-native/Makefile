@@ -7,18 +7,20 @@
 include ../Makefile.mk
 
 HAVE_ZYN_DEPS     = $(shell pkg-config --exists fftw3 mxml && echo true)
-HAVE_ZYN_GUI_DEPS = $(shell pkg-config --exists fftw3 mxml ntk && echo true)
+HAVE_ZYN_GUI_DEPS = $(shell pkg-config --exists ntk && echo true)
 
-BUILD_C_FLAGS    += -I. -fPIC
-BUILD_CXX_FLAGS  += -I. -I../carla-includes -I../carla-utils -fPIC
+# --------------------------------------------------------------
+
+BUILD_C_FLAGS    += -fvisibility=hidden -fPIC -I.
+BUILD_CXX_FLAGS  += -fvisibility=hidden -fPIC -I. -I../carla-includes -I../carla-utils
 BUILD_CXX_FLAGS  += $(shell pkg-config --cflags QtCore)
 
 ifeq ($(HAVE_ZYN_DEPS),true)
 BUILD_CXX_FLAGS  += $(shell pkg-config --cflags fftw3 mxml)
-endif
 
 ifeq ($(HAVE_ZYN_GUI_DEPS),true)
 BUILD_CXX_FLAGS  += $(shell pkg-config --cflags ntk) -DWANT_ZYNADDSUBFX_GUI
+endif
 endif
 
 OBJS = \
@@ -50,4 +52,4 @@ carla_native.a: $(OBJS)
 	$(CXX) -c $< $(BUILD_CXX_FLAGS) -o $@
 
 clean:
-	rm -f *.a *.o
+	rm -f *.a $(OBJS)

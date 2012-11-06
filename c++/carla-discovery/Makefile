@@ -6,6 +6,13 @@
 
 include ../Makefile.mk
 
+ifneq ($(NATIVE),)
+HAVE_FLUIDSYNTH  = $(shell pkg-config --exists fluidsynth && echo true)
+HAVE_LINUSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
+endif
+
+# --------------------------------------------------------------
+
 BUILD_CXX_FLAGS += -I../carla-backend -I../carla-includes -I../carla-utils
 BUILD_CXX_FLAGS += $(shell pkg-config --cflags QtCore)
 LINK_FLAGS      += $(shell pkg-config --libs QtCore)
@@ -15,18 +22,16 @@ BUILD_CXX_FLAGS += -DWANT_LADSPA -DWANT_DSSI -DWANT_LV2 -DWANT_VST
 endif
 
 ifeq ($(CARLA_SAMPLERS_SUPPORT),true)
-ifneq ($(NATIVE),)
-ifeq ($(shell pkg-config --exists fluidsynth && echo true),true)
+ifeq ($(HAVE_FLUIDSYNTH),true)
 BUILD_CXX_FLAGS += $(shell pkg-config --cflags fluidsynth) -DWANT_FLUIDSYNTH
 LINK_FLAGS      += $(shell pkg-config --libs fluidsynth)
 endif
 
-ifeq ($(shell pkg-config --exists linuxsampler && echo true),true)
+ifeq ($(HAVE_LINUSAMPLER),true)
 BUILD_CXX_FLAGS += $(shell pkg-config --cflags linuxsampler) -DWANT_LINUXSAMPLER
 LINK_FLAGS      += $(shell pkg-config --libs linuxsampler)
 endif
-endif # NATIVE
-endif # CARLA_SAMPLERS_SUPPORT
+endif
 
 POSIX_BUILD_FLAGS = $(BUILD_CXX_FLAGS)
 POSIX_32BIT_FLAGS = $(32BIT_FLAGS) -L/usr/lib32 -L/usr/lib/i386-linux-gnu
@@ -51,7 +56,7 @@ win64:   carla-discovery-win64.exe
 
 OBJS = carla-discovery.cpp
 
-carla-discovery-native: carla-discovery.cpp ../carla-lilv/carla_lilv.a
+carla-discovery-native: $(OBJS) ../carla-lilv/carla_lilv.a
 	$(CXX) $^ $(POSIX_BUILD_FLAGS) $(POSIX_LINK_FLAGS) -o $@ && $(STRIP) $@
 
 carla-discovery-posix32: $(OBJS) ../carla-lilv/carla_lilv_posix32.a

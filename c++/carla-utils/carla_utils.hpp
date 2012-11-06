@@ -74,7 +74,7 @@ void carla_setprocname(const char* const name)
 #elif defined(Q_OS_LINUX)
     prctl(PR_SET_NAME, name);
 #else
-    qWarning("carla_setprocname(\"%s\") - unsupported on this platform");
+    qWarning("carla_setprocname(\"%s\") - unsupported on this platform", name);
 #endif
 }
 

@@ -7,7 +7,8 @@ CONFIG   += static
 CONFIG   += link_pkgconfig qt warn_on
 
 DEFINES   = DEBUG
-PKGCONFIG = fftw3 mxml
+DEFINES  += WANT_ZYNADDSUBFX_GUI
+PKGCONFIG = fftw3 mxml ntk
 
 TARGET   = carla_native
 TEMPLATE = lib
@@ -26,8 +27,5 @@ HEADERS = \
 INCLUDEPATH = . \
     ../carla-includes \
     ../carla-utils
-
-LIBS = \
-    ../carla-lilv/carla_lilv.a
 
 QMAKE_CXXFLAGS *= -std=c++0x
