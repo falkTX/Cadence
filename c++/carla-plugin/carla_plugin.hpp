@@ -834,6 +834,7 @@ public:
         const char* const label;
     };
 
+    static CarlaPlugin* newNative(const initializer& init);
     static CarlaPlugin* newLADSPA(const initializer& init, const void* const extra);
     static CarlaPlugin* newDSSI(const initializer& init, const void* const extra);
     static CarlaPlugin* newLV2(const initializer& init);
@@ -844,7 +845,6 @@ public:
 #ifndef BUILD_BRIDGE
     static CarlaPlugin* newBridge(const initializer& init, const BinaryType btype, const PluginType ptype);
 #endif
-    static CarlaPlugin* newNative(const initializer& init);
 
     static size_t getNativePluginCount();
     static const PluginDescriptor* getNativePlugin(size_t index);

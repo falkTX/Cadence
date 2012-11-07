@@ -15,7 +15,7 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_engine_osc.hpp"
+#include "carla_engine.hpp"
 #include "carla_plugin.hpp"
 
 CARLA_BACKEND_START_NAMESPACE
@@ -38,10 +38,10 @@ CarlaEngineOsc::CarlaEngineOsc(CarlaEngine* const engine_)
     qDebug("CarlaEngineOsc::CarlaEngineOsc(%p)", engine);
     CARLA_ASSERT(engine);
 
+    m_serverTCP = nullptr;
+    m_serverUDP = nullptr;
     m_serverPathTCP = nullptr;
     m_serverPathUDP = nullptr;
-    m_serverThreadTCP = nullptr;
-    m_serverThreadUDP = nullptr;
     m_controlData.path = nullptr;
     m_controlData.source = nullptr;
     m_controlData.target = nullptr;
@@ -58,10 +58,10 @@ CarlaEngineOsc::~CarlaEngineOsc()
 void CarlaEngineOsc::init(const char* const name)
 {
     qDebug("CarlaEngineOsc::init(\"%s\")", name);
+    CARLA_ASSERT(! m_serverTCP);
+    CARLA_ASSERT(! m_serverUDP);
     CARLA_ASSERT(! m_serverPathTCP);
     CARLA_ASSERT(! m_serverPathUDP);
-    CARLA_ASSERT(! m_serverThreadTCP);
-    CARLA_ASSERT(! m_serverThreadUDP);
     CARLA_ASSERT(name);
     CARLA_ASSERT(m_nameSize == 0);
 
@@ -69,68 +69,69 @@ void CarlaEngineOsc::init(const char* const name)
     m_nameSize = strlen(m_name);
 
     // create new OSC thread
-    m_serverThreadTCP = lo_server_thread_new_with_proto(nullptr, LO_TCP, osc_error_handlerTCP);
-    m_serverThreadUDP = lo_server_thread_new_with_proto(nullptr, LO_UDP, osc_error_handlerUDP);
+    m_serverTCP = lo_server_new_with_proto(nullptr, LO_TCP, osc_error_handlerTCP);
+    m_serverUDP = lo_server_new_with_proto(nullptr, LO_UDP, osc_error_handlerUDP);
 
     // get our full OSC server path
-    char* const threadPathTCP = lo_server_thread_get_url(m_serverThreadTCP);
-    m_serverPathTCP = strdup(QString("%1%2").arg(threadPathTCP).arg(m_name).toUtf8().constData());
-    free(threadPathTCP);
+    char* const serverPathTCP = lo_server_get_url(m_serverTCP);
+    m_serverPathTCP = strdup(QString("%1%2").arg(serverPathTCP).arg(m_name).toUtf8().constData());
+    free(serverPathTCP);
 
-    char* const threadPathUDP = lo_server_thread_get_url(m_serverThreadUDP);
-    m_serverPathUDP = strdup(QString("%1%2").arg(threadPathUDP).arg(m_name).toUtf8().constData());
-    free(threadPathUDP);
+    char* const serverPathUDP = lo_server_get_url(m_serverUDP);
+    m_serverPathUDP = strdup(QString("%1%2").arg(serverPathUDP).arg(m_name).toUtf8().constData());
+    free(serverPathUDP);
 
     // register message handler and start OSC thread
-    lo_server_thread_add_method(m_serverThreadTCP, nullptr, nullptr, osc_message_handler, this);
-    lo_server_thread_add_method(m_serverThreadUDP, nullptr, nullptr, osc_message_handler, this);
-    lo_server_thread_start(m_serverThreadTCP);
-    lo_server_thread_start(m_serverThreadUDP);
+    lo_server_add_method(m_serverTCP, nullptr, nullptr, osc_message_handler, this);
+    lo_server_add_method(m_serverUDP, nullptr, nullptr, osc_message_handler, this);
+}
+
+bool CarlaEngineOsc::idle()
+{
+    bool msgReceived = false;
+
+    if (m_serverTCP)
+    {
+        while (lo_server_recv_noblock(m_serverTCP, 25) != 0)
+            msgReceived = true;
+    }
+
+    if (m_serverUDP)
+    {
+        while (lo_server_recv_noblock(m_serverUDP, 25) != 0)
+            msgReceived = true;
+    }
+
+    return msgReceived;
 }
 
 void CarlaEngineOsc::close()
 {
     qDebug("CarlaEngineOsc::close()");
+    CARLA_ASSERT(m_serverTCP);
+    CARLA_ASSERT(m_serverUDP);
     CARLA_ASSERT(m_serverPathTCP);
     CARLA_ASSERT(m_serverPathUDP);
-    CARLA_ASSERT(m_serverThreadTCP);
-    CARLA_ASSERT(m_serverThreadUDP);
     CARLA_ASSERT(m_name);
 
     m_controlData.free();
 
-    lo_server_thread_stop(m_serverThreadTCP);
-    lo_server_thread_stop(m_serverThreadUDP);
-    lo_server_thread_del_method(m_serverThreadTCP, nullptr, nullptr);
-    lo_server_thread_del_method(m_serverThreadUDP, nullptr, nullptr);
-    lo_server_thread_free(m_serverThreadTCP);
-    lo_server_thread_free(m_serverThreadUDP);
+    lo_server_thread_del_method(m_serverTCP, nullptr, nullptr);
+    lo_server_thread_del_method(m_serverUDP, nullptr, nullptr);
+    lo_server_thread_free(m_serverTCP);
+    lo_server_thread_free(m_serverUDP);
 
     free((void*)m_serverPathTCP);
     free((void*)m_serverPathUDP);
+
+    m_serverTCP = nullptr;
+    m_serverUDP = nullptr;
     m_serverPathTCP = nullptr;
     m_serverPathUDP = nullptr;
-    m_serverThreadTCP = nullptr;
-    m_serverThreadUDP = nullptr;
 
     free(m_name);
     m_name = nullptr;
     m_nameSize = 0;
-}
-
-void CarlaEngineOsc::waitForEvents()
-{
-    if (m_serverThreadTCP)
-    {
-        while (lo_server_thread_events_pending(m_serverThreadTCP))
-            carla_msleep(10);
-    }
-
-    if (m_serverThreadUDP)
-    {
-        while (lo_server_thread_events_pending(m_serverThreadUDP))
-            carla_msleep(10);
-    }
 }
 
 // -----------------------------------------------------------------------
@@ -141,8 +142,8 @@ int CarlaEngineOsc::handleMessage(const char* const path, const int argc, const 
     if (! QString(path).endsWith("peak"))
         qDebug("CarlaEngineOsc::handleMessage(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
 #endif
+    CARLA_ASSERT(m_serverTCP || m_serverUDP);
     CARLA_ASSERT(m_serverPathTCP || m_serverPathUDP);
-    CARLA_ASSERT(m_serverThreadTCP || m_serverThreadUDP);
     CARLA_ASSERT(path);
 
     if (! path)
@@ -195,7 +196,7 @@ int CarlaEngineOsc::handleMessage(const char* const path, const int argc, const 
     char  method[32] = { 0 };
     memcpy(method, path + (m_nameSize + offset), carla_minU(strlen(path), 32));
 
-    if (method[0] == 0 || method[0] != '/')
+    if (method[0] == 0 || method[0] != '/' || strlen(method) < 5)
         return 1;
 
     // Common OSC methods (DSSI and internal UIs)
@@ -250,7 +251,7 @@ int CarlaEngineOsc::handleMessage(const char* const path, const int argc, const 
 #endif
 
     // Plugin Bridges
-    if (strncmp(method, "/bridge_", 8) == 0 && (plugin->hints() & PLUGIN_IS_BRIDGE) > 0)
+    if ((plugin->hints() & PLUGIN_IS_BRIDGE) > 0 && strlen(method) > 12 && strncmp(method, "/bridge_", 8) == 0)
     {
         if (strcmp(method+8, "set_inpeak") == 0)
             return handleMsgBridgeSetInPeak(plugin, argc, argv, types);

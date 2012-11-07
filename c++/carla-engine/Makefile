@@ -19,6 +19,10 @@ BUILD_CXX_FLAGS += -fvisibility=hidden -fPIC
 BUILD_CXX_FLAGS += -I. -I../carla-backend -I../carla-includes -I../carla-plugin -I../carla-utils
 BUILD_CXX_FLAGS += $(shell pkg-config --cflags liblo QtCore)
 
+ifeq ($(CARLA_PLUGIN_SUPPORT),true)
+BUILD_CXX_FLAGS += -DWANT_LV2
+endif
+
 ifeq ($(HAVE_JACK),true)
 BUILD_CXX_FLAGS += $(shell pkg-config --cflags jack)
 WANT_JACK        = true
@@ -37,13 +41,9 @@ endif
 OBJS = \
      carla_engine.o \
      carla_engine_osc.o \
+     carla_engine_thread.o \
      jack.o \
      rtaudio.o
-
-# FIXME - remove these
-OBJS += \
-     carla_shared.o \
-     carla_threads.o
 
 # --------------------------------------------------------------
 

@@ -18,20 +18,19 @@
 #ifndef CARLA_ENGINE_THREAD_HPP
 #define CARLA_ENGINE_THREAD_HPP
 
-#include "carla_backend_utils.hpp"
-
-class CarlaEngine;
-class CarlaPlugin;
+#include "carla_backend.hpp"
 
 #include <QtCore/QMutex>
 #include <QtCore/QThread>
 
 CARLA_BACKEND_START_NAMESPACE
 
+class CarlaEngine;
+
 class CarlaEngineThread : public QThread
 {
 public:
-    CarlaEngineThread(CarlaBackend::CarlaEngine* const engine, QObject* const parent = nullptr);
+    CarlaEngineThread(CarlaEngine* const engine, QObject* const parent = nullptr);
     ~CarlaEngineThread();
 
     void startNow();
@@ -41,9 +40,10 @@ protected:
     void run();
 
 private:
-    CarlaBackend::CarlaEngine* const engine;
-    QMutex mutex;
-    bool m_stopNow;
+    CarlaEngine* const engine;
+
+    QMutex m_mutex;
+    bool   m_stopNow;
 
     // ----------------------------------------------
 
@@ -51,18 +51,18 @@ private:
     {
     public:
         ScopedLocker(CarlaEngineThread* const thread)
-            : m_thread(thread)
+            : mutex(&thread->m_mutex)
         {
-            m_thread->mutex.lock();
+            mutex->lock();
         }
 
         ~ScopedLocker()
         {
-            m_thread->mutex.unlock();
+            mutex->unlock();
         }
 
     private:
-        CarlaEngineThread* const m_thread;
+        QMutex* const mutex;
     };
 };
 

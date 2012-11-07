@@ -1657,6 +1657,8 @@ private:
 
 std::vector<const PluginDescriptor*> NativePlugin::pluginDescriptors;
 
+// -----------------------------------------------------------------------
+
 CarlaPlugin* CarlaPlugin::newNative(const initializer& init)
 {
     qDebug("CarlaPlugin::newNative(%p, \"%s\", \"%s\", \"%s\")", init.engine, init.filename, init.name, init.label);
@@ -1694,6 +1696,8 @@ CarlaPlugin* CarlaPlugin::newNative(const initializer& init)
     return plugin;
 }
 
+// -----------------------------------------------------------------------
+
 size_t CarlaPlugin::getNativePluginCount()
 {
     return NativePlugin::getPluginCount();
@@ -1704,9 +1708,12 @@ const PluginDescriptor* CarlaPlugin::getNativePlugin(size_t index)
     return NativePlugin::getPlugin(index);
 }
 
+// -----------------------------------------------------------------------
+
 CARLA_BACKEND_END_NAMESPACE
 
 void carla_register_native_plugin(const PluginDescriptor* desc)
 {
-    CarlaBackend::NativePlugin::registerPlugin(desc);
+    CARLA_BACKEND_USE_NAMESPACE
+    NativePlugin::registerPlugin(desc);
 }

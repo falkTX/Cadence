@@ -25,6 +25,21 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
+struct CarlaEngineClientNativeHandle {
+    CarlaEngineType type;
+#ifdef CARLA_ENGINE_JACK
+    void* jackClient;
+#endif
+
+    CarlaEngineClientNativeHandle()
+    {
+        type = CarlaEngineTypeNull;
+#ifdef CARLA_ENGINE_JACK
+        jackClient = nullptr;
+#endif
+    }
+};
+
 // -----------------------------------------
 
 class CarlaEngineRtAudio : public CarlaEngine
@@ -153,13 +168,12 @@ public:
         return audio.isStreamRunning();
     }
 
-    CarlaEngineClient* addClient(CarlaPlugin* const plugin)
+    CarlaEngineClient* addClient(CarlaPlugin* const)
     {
-        CarlaEngineClientNativeHandle handle;
-        handle.type = CarlaEngineTypeRtAudio;
+        CarlaEngineClientNativeHandle* handle = new CarlaEngineClientNativeHandle;
+        handle->type = CarlaEngineTypeRtAudio;
 
         return new CarlaEngineClient(handle);
-        Q_UNUSED(plugin);
     }
 
     // -------------------------------------

@@ -59,8 +59,8 @@ public:
     ~CarlaEngineOsc();
 
     void init(const char* const name);
+    bool idle();
     void close();
-    void waitForEvents();
 
     // -------------------------------------------------------------------
 
@@ -84,13 +84,15 @@ public:
         return m_serverPathUDP;
     }
 
+    // -------------------------------------------------------------------
+
 private:
     CarlaEngine* const engine;
 
+    lo_server m_serverTCP;
+    lo_server m_serverUDP;
     const char* m_serverPathTCP;
     const char* m_serverPathUDP;
-    lo_server_thread m_serverThreadTCP;
-    lo_server_thread m_serverThreadUDP;
     CarlaOscData m_controlData; // for carla-control
 
     char*  m_name;
@@ -130,6 +132,8 @@ private:
 
     int handleMsgBridgeSetInPeak(CARLA_ENGINE_OSC_HANDLE_ARGS2);
     int handleMsgBridgeSetOutPeak(CARLA_ENGINE_OSC_HANDLE_ARGS2);
+
+    // -------------------------------------------------------------------
 
     static int osc_message_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg, void* const userData)
     {

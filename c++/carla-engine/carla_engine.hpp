@@ -21,10 +21,10 @@
 #include "carla_engine_osc.hpp"
 #include "carla_engine_thread.hpp"
 
-#ifdef CARLA_ENGINE_JACK
-typedef struct _jack_client jack_client_t;
-typedef struct _jack_port jack_port_t;
-#endif
+//#ifdef CARLA_ENGINE_JACK
+//typedef struct _jack_client jack_client_t;
+//typedef struct _jack_port jack_port_t;
+//#endif
 
 #ifdef CARLA_ENGINE_RTAUDIO
 typedef int RtAudioApi;
@@ -135,35 +135,8 @@ struct CarlaTimeInfo {
           valid(0) {}
 };
 
-struct CarlaEngineClientNativeHandle {
-    CarlaEngineType type;
-#ifdef CARLA_ENGINE_JACK
-    jack_client_t* jackClient;
-#endif
-
-    CarlaEngineClientNativeHandle()
-    {
-        type = CarlaEngineTypeNull;
-#ifdef CARLA_ENGINE_JACK
-        jackClient = nullptr;
-#endif
-    }
-};
-
-struct CarlaEnginePortNativeHandle {
-#ifdef CARLA_ENGINE_JACK
-    jack_client_t* jackClient;
-    jack_port_t* jackPort;
-#endif
-
-    CarlaEnginePortNativeHandle()
-    {
-#ifdef CARLA_ENGINE_JACK
-        jackClient = nullptr;
-        jackPort = nullptr;
-#endif
-    }
-};
+struct CarlaEngineClientNativeHandle;
+struct CarlaEnginePortNativeHandle;
 
 #ifndef BUILD_BRIDGE
 // Global options
@@ -317,8 +290,8 @@ public:
     // -------------------------------------------------------------------
     // Error handling
 
-    void setLastError(const char* error);
-    const char* getLastError();
+    const char* getLastError() const;
+    void setLastError(const char* const error);
 
     // -------------------------------------------------------------------
     // Mutex locks
@@ -332,9 +305,9 @@ public:
     // OSC Stuff
 
     bool isOscControlRegisted() const;
+    bool idleOsc();
 
 #ifndef BUILD_BRIDGE
-    void oscWaitEvents();
     const char* getOscServerPathTCP() const;
     const char* getOscServerPathUDP() const;
 #else
@@ -457,11 +430,13 @@ private:
 #endif
     const CarlaOscData* m_oscData;
 
-    QMutex m_procLock;
-    QMutex m_midiLock;
-
     CallbackFunc m_callback;
     void*        m_callbackPtr;
+
+    carla_string m_lastError;
+
+    QMutex m_procLock;
+    QMutex m_midiLock;
 
     CarlaPlugin* m_carlaPlugins[MAX_PLUGINS];
     const char*  m_uniqueNames[MAX_PLUGINS];
@@ -484,7 +459,7 @@ private:
 class CarlaEngineClient
 {
 public:
-    CarlaEngineClient(const CarlaEngineClientNativeHandle& handle);
+    CarlaEngineClient(const CarlaEngineClientNativeHandle* handle);
     ~CarlaEngineClient();
 
     void activate();
@@ -501,7 +476,7 @@ public:
 private:
     bool m_active;
     uint32_t m_latency;
-    const CarlaEngineClientNativeHandle handle;
+    const CarlaEngineClientNativeHandle* handle;
 };
 
 // -----------------------------------------------------------------------
@@ -510,12 +485,12 @@ private:
 class CarlaEngineBasePort
 {
 public:
-    CarlaEngineBasePort(const CarlaEnginePortNativeHandle& handle, const bool isInput);
+    CarlaEngineBasePort(const CarlaEnginePortNativeHandle* handle, const bool isInput);
     virtual ~CarlaEngineBasePort();
 
     virtual void initBuffer(CarlaEngine* const engine) = 0;
 
-    const CarlaEnginePortNativeHandle& getHandle() const
+    const CarlaEnginePortNativeHandle* getHandle() const
     {
         return handle;
     }
@@ -523,14 +498,14 @@ public:
 protected:
     void* buffer;
     const bool isInput;
-    const CarlaEnginePortNativeHandle handle;
+    const CarlaEnginePortNativeHandle* handle;
 };
 
 // audio
 class CarlaEngineAudioPort : public CarlaEngineBasePort
 {
 public:
-    CarlaEngineAudioPort(const CarlaEnginePortNativeHandle& handle, const bool isInput);
+    CarlaEngineAudioPort(const CarlaEnginePortNativeHandle* handle, const bool isInput);
 
     void initBuffer(CarlaEngine* const engine);
 
@@ -543,7 +518,7 @@ public:
 class CarlaEngineControlPort : public CarlaEngineBasePort
 {
 public:
-    CarlaEngineControlPort(const CarlaEnginePortNativeHandle& handle, const bool isInput);
+    CarlaEngineControlPort(const CarlaEnginePortNativeHandle* handle, const bool isInput);
 
     void initBuffer(CarlaEngine* const engine);
 
@@ -557,7 +532,7 @@ public:
 class CarlaEngineMidiPort : public CarlaEngineBasePort
 {
 public:
-    CarlaEngineMidiPort(const CarlaEnginePortNativeHandle& handle, const bool isInput);
+    CarlaEngineMidiPort(const CarlaEnginePortNativeHandle* handle, const bool isInput);
 
     void initBuffer(CarlaEngine* const engine);
 

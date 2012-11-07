@@ -15,37 +15,47 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_engine_thread.hpp"
+#include "carla_engine.hpp"
 #include "carla_plugin.hpp"
 
-CarlaCheckThread::CarlaCheckThread(CarlaBackend::CarlaEngine* const engine_, QObject* const parent)
+CARLA_BACKEND_START_NAMESPACE
+
+CarlaEngineThread::CarlaEngineThread(CarlaEngine* const engine_, QObject* const parent)
     : QThread(parent),
       engine(engine_)
 {
-    qDebug("CarlaCheckThread::CarlaCheckThread(%p, %p)", engine, parent);
+    qDebug("CarlaEngineThread::CarlaEngineThread(%p, %p)", engine, parent);
     CARLA_ASSERT(engine);
+
+    m_stopNow = true;
 }
 
-CarlaCheckThread::~CarlaCheckThread()
+CarlaEngineThread::~CarlaEngineThread()
 {
-    qDebug("CarlaCheckThread::~CarlaCheckThread()");
+    qDebug("CarlaEngineThread::~CarlaEngineThread()");
+    CARLA_ASSERT(m_stopNow);
 }
 
-void CarlaCheckThread::startNow()
+void CarlaEngineThread::startNow()
 {
-    qDebug("CarlaCheckThread::startNow()");
+    qDebug("CarlaEngineThread::startNow()");
+    CARLA_ASSERT(m_stopNow);
+
+    m_stopNow = false;
+
     start(QThread::HighPriority);
 }
 
-void CarlaCheckThread::stopNow()
+void CarlaEngineThread::stopNow()
 {
+    qDebug("CarlaEngineThread::stopNow()");
+
     if (m_stopNow)
         return;
 
     m_stopNow = true;
 
-    // TESTING - let processing finish first
-    QMutexLocker(&this->mutex); // FIXME
+    const ScopedLocker m(this);
 
     if (isRunning() && ! wait(200))
     {
@@ -56,29 +66,21 @@ void CarlaCheckThread::stopNow()
     }
 }
 
-void CarlaCheckThread::run()
+void CarlaEngineThread::run()
 {
-    qDebug("CarlaCheckThread::run()");
-
-    using namespace CarlaBackend;
+    qDebug("CarlaEngineThread::run()");
+    CARLA_ASSERT(engine->isRunning());
 
     bool oscControlRegisted, usesSingleThread;
-    unsigned short id, maxPluginNumber = CarlaEngine::maxPluginNumber();
+    unsigned short id;
     double value;
-
-    m_stopNow = false;
 
     while (engine->isRunning() && ! m_stopNow)
     {
         const ScopedLocker m(this);
         oscControlRegisted = engine->isOscControlRegisted();
 
-#ifndef BUILD_BRIDGE
-        if (engine->getType() != CarlaEngineTypePlugin)
-            engine->oscWaitEvents();
-#endif
-
-        for (unsigned short i=0; i < maxPluginNumber; i++)
+        for (unsigned short i=0, max = CarlaEngine::maxPluginNumber(); i < max; i++)
         {
             CarlaPlugin* const plugin = engine->getPluginUnchecked(i);
 
@@ -100,23 +102,23 @@ void CarlaCheckThread::run()
                 {
                     for (uint32_t i=0; i < plugin->parameterCount(); i++)
                     {
-                        if (plugin->parameterIsOutput(i))
+                        if (! plugin->parameterIsOutput(i))
+                            continue;
+
+                        value = plugin->getParameterValue(i);
+
+                        // Update UI
+                        if (! usesSingleThread)
+                            plugin->uiParameterChange(i, value);
+
+                        // Update OSC control client
+                        if (oscControlRegisted)
                         {
-                            value = plugin->getParameterValue(i);
-
-                            // Update UI
-                            if (! usesSingleThread)
-                                plugin->uiParameterChange(i, value);
-
-                            // Update OSC control client
-                            if (oscControlRegisted)
-                            {
 #ifdef BUILD_BRIDGE
-                                engine->osc_send_bridge_set_parameter_value(i, value);
+                            engine->osc_send_bridge_set_parameter_value(i, value);
 #else
-                                engine->osc_send_control_set_parameter_value(id, i, value);
+                            engine->osc_send_control_set_parameter_value(id, i, value);
 #endif
-                            }
                         }
                     }
                 }
@@ -151,6 +153,9 @@ void CarlaCheckThread::run()
             }
         }
 
-        msleep(50);
+        if (! engine->idleOsc())
+            QThread::msleep(50);
     }
 }
+
+CARLA_BACKEND_END_NAMESPACE

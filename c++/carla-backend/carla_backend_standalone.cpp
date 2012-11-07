@@ -24,6 +24,7 @@
 // Single, standalone engine
 static CarlaBackend::CarlaEngine* carlaEngine = nullptr;
 static CarlaBackend::CallbackFunc carlaFunc = nullptr;
+static carla_string carlaStandaloneError;
 static const char* extendedLicenseText = nullptr;
 static bool carlaEngineStarted = false;
 
@@ -138,7 +139,7 @@ bool engine_init(const char* driver_name, const char* client_name)
 
     if (! carlaEngine)
     {
-        CarlaBackend::setLastError("The seleted audio driver is not available!");
+        carlaStandaloneError = "The seleted audio driver is not available!";
         return false;
     }
 
@@ -157,7 +158,7 @@ bool engine_init(const char* driver_name, const char* client_name)
 
     if (carlaEngineStarted)
     {
-        CarlaBackend::setLastError("no error");
+        carlaStandaloneError = "no error";
     }
     else if (carlaEngine)
     {
@@ -175,7 +176,7 @@ bool engine_close()
 
     if (! carlaEngine)
     {
-        CarlaBackend::setLastError("Engine is not started");
+        carlaStandaloneError = "Engine is not started";
         return false;
     }
 
@@ -194,7 +195,6 @@ bool engine_close()
     get_real_plugin_name(0);
 
     carlaEngine->resetOptions();
-    CarlaBackend::setLastError(nullptr);
 
     delete carlaEngine;
     carlaEngine = nullptr;
@@ -219,13 +219,13 @@ bool is_engine_running()
 
 short add_plugin(CarlaBackend::BinaryType btype, CarlaBackend::PluginType ptype, const char* filename, const char* const name, const char* label, void* extra_stuff)
 {
-    qDebug("CarlaBackendStandalone::add_plugin(%s, %s, \"%s\", \"%s\", \"%s\", %p)", CarlaBackend::BinaryType2str(btype), CarlaBackend::PluginType2str(ptype), filename, name, label, extra_stuff);
+    qDebug("CarlaBackendStandalone::add_plugin(%s, %s, \"%s\", \"%s\", \"%s\", %p)", CarlaBackend::BinaryType2Str(btype), CarlaBackend::PluginType2Str(ptype), filename, name, label, extra_stuff);
     CARLA_ASSERT(carlaEngine);
 
     if (carlaEngine && carlaEngine->isRunning())
         return carlaEngine->addPlugin(btype, ptype, filename, name, label, extra_stuff);
 
-    CarlaBackend::setLastError("Engine is not started");
+    carlaStandaloneError = "Engine is not started";
     return -1;
 }
 
@@ -237,7 +237,7 @@ bool remove_plugin(unsigned short plugin_id)
     if (carlaEngine)
         return carlaEngine->removePlugin(plugin_id);
 
-    CarlaBackend::setLastError("Engine is not started");
+    carlaStandaloneError = "Engine is not started";
     return false;
 }
 
@@ -1305,7 +1305,7 @@ void set_gui_container(unsigned short plugin_id, uintptr_t gui_addr)
     CarlaBackend::CarlaPlugin* const plugin = carlaEngine->getPlugin(plugin_id);
 
     if (plugin)
-        return plugin->setGuiContainer((GuiContainer*)CarlaBackend::getPointer(gui_addr));
+        return plugin->setGuiContainer((GuiContainer*)CarlaBackend::getPointerFromAddress(gui_addr));
 
     qCritical("CarlaBackendStandalone::set_gui_container(%i, " P_UINTPTR ") - could not find plugin", plugin_id, gui_addr);
 }
@@ -1398,7 +1398,10 @@ double get_sample_rate()
 
 const char* get_last_error()
 {
-    return CarlaBackend::getLastError();
+    if (carlaEngine)
+        return carlaEngine->getLastError();
+
+    return carlaStandaloneError;
 }
 
 const char* get_host_osc_url()
@@ -1426,7 +1429,7 @@ void set_callback_function(CarlaBackend::CallbackFunc func)
 
 void set_option(CarlaBackend::OptionsType option, int value, const char* value_str)
 {
-    qDebug("CarlaBackendStandalone::set_option(%s, %i, \"%s\")", CarlaBackend::OptionsType2str(option), value, value_str);
+    qDebug("CarlaBackendStandalone::set_option(%s, %i, \"%s\")", CarlaBackend::OptionsType2Str(option), value, value_str);
 
     if (carlaEngine)
         carlaEngine->setOption(option, value, value_str);
@@ -1521,10 +1524,10 @@ protected:
         const char* const projectPath = &argv[0]->s;
         const char* const clientId    = &argv[2]->s;
 
-        CarlaBackend::setLastError(clientId);
+        carlaStandaloneError = clientId;
         carlaFunc(nullptr, CarlaBackend::CALLBACK_NSM_OPEN1, 0, 0, 0, 0.0);
 
-        CarlaBackend::setLastError(projectPath);
+        carlaStandaloneError = projectPath;
         carlaFunc(nullptr, CarlaBackend::CALLBACK_NSM_OPEN2, 0, 0, 0, 0.0);
 
         for (int i=0; i < 30 && ! m_isOpened; i++)

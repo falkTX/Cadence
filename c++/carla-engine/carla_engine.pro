@@ -10,9 +10,10 @@ DEFINES   = DEBUG
 DEFINES  += QTCREATOR_TEST
 
 DEFINES  += CARLA_ENGINE_JACK
-DEFINES  += CARLA_ENGINE_RTAUDIO HAVE_GETTIMEOFDAY -D_FORTIFY_SOURCE=2
+DEFINES  += CARLA_ENGINE_RTAUDIO HAVE_GETTIMEOFDAY _FORTIFY_SOURCE=2
 DEFINES  += __LINUX_ALSA__ __LINUX_ALSASEQ__ __LINUX_PULSE__
 DEFINES  += __RTAUDIO_DEBUG__ __RTMIDI_DEBUG__
+DEFINES  += WANT_LV2
 
 PKGCONFIG = liblo jack alsa libpulse-simple
 
@@ -26,11 +27,6 @@ SOURCES = \
     carla_engine_thread.cpp \
     jack.cpp \
     rtaudio.cpp
-
-# FIXME - remove these
-SOURCES += \
-    carla_shared.cpp \
-    carla_threads.cpp
 
 HEADERS = \
     carla_engine.hpp \

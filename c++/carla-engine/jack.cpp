@@ -24,6 +24,36 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
+struct CarlaEngineClientNativeHandle {
+    CarlaEngineType type;
+#ifdef CARLA_ENGINE_JACK
+    jack_client_t* jackClient;
+#endif
+
+    CarlaEngineClientNativeHandle()
+    {
+        type = CarlaEngineTypeNull;
+#ifdef CARLA_ENGINE_JACK
+        jackClient = nullptr;
+#endif
+    }
+};
+
+struct CarlaEnginePortNativeHandle {
+#ifdef CARLA_ENGINE_JACK
+    jack_client_t* jackClient;
+    jack_port_t* jackPort;
+#endif
+
+    CarlaEnginePortNativeHandle()
+    {
+#ifdef CARLA_ENGINE_JACK
+        jackClient = nullptr;
+        jackPort = nullptr;
+#endif
+    }
+};
+
 // -----------------------------------------
 
 class CarlaEngineJack : public CarlaEngine
@@ -176,8 +206,8 @@ public:
 
     CarlaEngineClient* addClient(CarlaPlugin* const plugin)
     {
-        CarlaEngineClientNativeHandle handle;
-        handle.type = CarlaEngineTypeJack;
+        CarlaEngineClientNativeHandle* handle = new CarlaEngineClientNativeHandle;
+        handle->type = CarlaEngineTypeJack;
 
 #ifdef BUILD_BRIDGE
         client = handle.jackClient = jackbridge_client_open(plugin->name(), JackNullOption, nullptr);
@@ -194,13 +224,13 @@ public:
 #else
         if (processMode == PROCESS_MODE_SINGLE_CLIENT)
         {
-            handle.jackClient = client;
+            handle->jackClient = client;
         }
         else if (processMode == PROCESS_MODE_MULTIPLE_CLIENTS)
         {
-            handle.jackClient = jackbridge_client_open(plugin->name(), JackNullOption, nullptr);
-            jackbridge_set_process_callback(handle.jackClient, carla_jack_process_callback_plugin, plugin);
-            jackbridge_set_latency_callback(handle.jackClient, carla_jack_latency_callback_plugin, plugin);
+            handle->jackClient = jackbridge_client_open(plugin->name(), JackNullOption, nullptr);
+            jackbridge_set_process_callback(handle->jackClient, carla_jack_process_callback_plugin, plugin);
+            jackbridge_set_latency_callback(handle->jackClient, carla_jack_latency_callback_plugin, plugin);
         }
 #endif
 
@@ -587,8 +617,8 @@ private:
             for (uint32_t i=0; i < p->aIn.count; i++)
             {
                 uint aOutI = (i >= p->aOut.count) ? p->aOut.count : i;
-                jack_port_t* const portIn  = p->aIn.ports[i]->getHandle().jackPort;
-                jack_port_t* const portOut = p->aOut.ports[aOutI]->getHandle().jackPort;
+                jack_port_t* const portIn  = p->aIn.ports[i]->getHandle()->jackPort;
+                jack_port_t* const portOut = p->aOut.ports[aOutI]->getHandle()->jackPort;
 
                 jackbridge_port_get_latency_range(portIn, mode, &range);
                 range.min += pluginLatency;
@@ -601,8 +631,8 @@ private:
             for (uint32_t i=0; i < p->aOut.count; i++)
             {
                 uint aInI = (i >= p->aIn.count) ? p->aIn.count : i;
-                jack_port_t* const portIn  = p->aIn.ports[aInI]->getHandle().jackPort;
-                jack_port_t* const portOut = p->aOut.ports[i]->getHandle().jackPort;
+                jack_port_t* const portIn  = p->aIn.ports[aInI]->getHandle()->jackPort;
+                jack_port_t* const portOut = p->aOut.ports[i]->getHandle()->jackPort;
 
                 jackbridge_port_get_latency_range(portOut, mode, &range);
                 range.min += pluginLatency;
