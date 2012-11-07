@@ -17,7 +17,7 @@
 
 #include "carla_backend_standalone.hpp"
 #include "carla_plugin.hpp"
-#include "carla_native.h"
+//#include "carla_native.h"
 
 // -------------------------------------------------------------------------------------------------------------------
 
@@ -116,13 +116,13 @@ const PluginInfo* get_internal_plugin_info(unsigned int plugin_id)
     if (! nativePlugin)
         return nullptr;
 
-    info.type      = CarlaBackend::PLUGIN_NONE;
-    info.category  = (CarlaBackend::PluginCategory)nativePlugin->category;
-    info.hints     = CarlaBackend::getPluginHintsFromNative(nativePlugin->hints);
-    info.name      = nativePlugin->name;
-    info.label     = nativePlugin->label;
-    info.maker     = nativePlugin->maker;
-    info.copyright = nativePlugin->copyright;
+//     info.type      = CarlaBackend::PLUGIN_NONE;
+//     info.category  = (CarlaBackend::PluginCategory)nativePlugin->category;
+//     info.hints     = CarlaBackend::getPluginHintsFromNative(nativePlugin->hints);
+//     info.name      = nativePlugin->name;
+//     info.label     = nativePlugin->label;
+//     info.maker     = nativePlugin->maker;
+//     info.copyright = nativePlugin->copyright;
 
     return &info;
 }

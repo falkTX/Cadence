@@ -246,8 +246,11 @@ clean:
 	$(MAKE) clean -C c++/carla-backend
 	$(MAKE) clean -C c++/carla-bridge
 	$(MAKE) clean -C c++/carla-discovery
-	$(MAKE) clean -C c++/carla-lilv
+	$(MAKE) clean -C c++/carla-engine
 	$(MAKE) clean -C c++/carla-jackbridge
+	$(MAKE) clean -C c++/carla-lilv
+	$(MAKE) clean -C c++/carla-native
+	$(MAKE) clean -C c++/carla-plugin
 	$(MAKE) clean -C c++/carla-rtmempool
 	$(MAKE) clean -C c++/jackmeter
 	$(MAKE) clean -C c++/xycontroller
