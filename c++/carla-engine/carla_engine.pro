@@ -21,19 +21,21 @@ TEMPLATE = lib
 VERSION  = 0.5.0
 
 SOURCES = \
-     carla_engine.cpp \
-     carla_engine_osc.cpp \
-     jack.cpp \
-     rtaudio.cpp
+    carla_engine.cpp \
+    carla_engine_osc.cpp \
+    carla_engine_thread.cpp \
+    jack.cpp \
+    rtaudio.cpp
 
 # FIXME - remove these
 SOURCES += \
-     carla_shared.cpp \
-     carla_threads.cpp
+    carla_shared.cpp \
+    carla_threads.cpp
 
 HEADERS = \
     carla_engine.hpp \
-    carla_engine_osc.hpp
+    carla_engine_osc.hpp \
+    carla_engine_thread.hpp
 
 INCLUDEPATH = . \
     ../carla-backend \

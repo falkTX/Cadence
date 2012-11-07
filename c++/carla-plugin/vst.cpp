@@ -2200,7 +2200,7 @@ public:
 
         if (! libOpen(filename))
         {
-            setLastError(libError(filename));
+            x_engine->setLastError(libError(filename));
             return false;
         }
 
@@ -2215,7 +2215,7 @@ public:
 
             if (! vstFn)
             {
-                setLastError("Could not find the VST main entry in the plugin library");
+                x_engine->setLastError("Could not find the VST main entry in the plugin library");
                 return false;
             }
         }
@@ -2229,7 +2229,7 @@ public:
 
         if ((! effect) || effect->magic != kEffectMagic)
         {
-            setLastError("Plugin failed to initialize");
+            x_engine->setLastError("Plugin failed to initialize");
             return false;
         }
 
@@ -2269,7 +2269,7 @@ public:
 
         if (! x_client->isOk())
         {
-            setLastError("Failed to register plugin client");
+            x_engine->setLastError("Failed to register plugin client");
             return false;
         }
 
@@ -2387,7 +2387,7 @@ CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
 
     if (id < 0 || id > CarlaEngine::maxPluginNumber())
     {
-        setLastError("Maximum number of plugins reached");
+        init.engine->setLastError("Maximum number of plugins reached");
         return nullptr;
     }
 
@@ -2406,7 +2406,7 @@ CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
     {
         if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
         {
-            setLastError("Carla's rack mode can only work with Stereo VST plugins, sorry!");
+            init.engine->setLastError("Carla's rack mode can only work with Stereo VST plugins, sorry!");
             delete plugin;
             return nullptr;
         }

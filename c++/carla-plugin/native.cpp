@@ -365,13 +365,13 @@ public:
         CARLA_ASSERT(value);
 
         if (type != CUSTOM_DATA_STRING)
-            return qCritical("NativePlugin::setCustomData(%s, \"%s\", \"%s\", %s) - type is not string", CustomDataType2str(type), key, value, bool2str(sendGui));
+            return qCritical("NativePlugin::setCustomData(%s, \"%s\", \"%s\", %s) - type is not string", CustomDataType2Str(type), key, value, bool2str(sendGui));
 
         if (! key)
-            return qCritical("NativePlugin::setCustomData(%s, \"%s\", \"%s\", %s) - key is null", CustomDataType2str(type), key, value, bool2str(sendGui));
+            return qCritical("NativePlugin::setCustomData(%s, \"%s\", \"%s\", %s) - key is null", CustomDataType2Str(type), key, value, bool2str(sendGui));
 
         if (! value)
-            return qCritical("Nativelugin::setCustomData(%s, \"%s\", \"%s\", %s) - value is null", CustomDataType2str(type), key, value, bool2str(sendGui));
+            return qCritical("Nativelugin::setCustomData(%s, \"%s\", \"%s\", %s) - value is null", CustomDataType2Str(type), key, value, bool2str(sendGui));
 
         if (descriptor)
         {
@@ -1602,7 +1602,7 @@ public:
 
         if (! descriptor)
         {
-            setLastError("Invalid internal plugin");
+            x_engine->setLastError("Invalid internal plugin");
             return false;
         }
 
@@ -1613,7 +1613,7 @@ public:
 
         if (! handle)
         {
-            setLastError("Plugin failed to initialize");
+            x_engine->setLastError("Plugin failed to initialize");
             return false;
         }
 
@@ -1632,7 +1632,7 @@ public:
 
         if (! x_client->isOk())
         {
-            setLastError("Failed to register plugin client");
+            x_engine->setLastError("Failed to register plugin client");
             return false;
         }
 
@@ -1665,7 +1665,7 @@ CarlaPlugin* CarlaPlugin::newNative(const initializer& init)
 
     if (id < 0 || id > CarlaEngine::maxPluginNumber())
     {
-        setLastError("Maximum number of plugins reached");
+        init.engine->setLastError("Maximum number of plugins reached");
         return nullptr;
     }
 
@@ -1683,7 +1683,7 @@ CarlaPlugin* CarlaPlugin::newNative(const initializer& init)
     {
         if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
         {
-            setLastError("Carla's rack mode can only work with Mono or Stereo Internal plugins, sorry!");
+            init.engine->setLastError("Carla's rack mode can only work with Mono or Stereo Internal plugins, sorry!");
             delete plugin;
             return nullptr;
         }

@@ -19,6 +19,7 @@
 
 #ifdef WANT_LV2
 
+#include "carla_lib_utils.hpp"
 #include "carla_lv2_utils.hpp"
 
 #include "lv2_atom_queue.hpp"
@@ -27,6 +28,7 @@
 #include <set>
 
 #include <QtCore/QDir>
+#include <QtGui/QDialog>
 #include <QtGui/QLayout>
 
 #ifdef HAVE_SUIL
@@ -853,13 +855,13 @@ public:
         CARLA_ASSERT(value);
 
         if (type == CUSTOM_DATA_INVALID)
-            return qCritical("Lv2Plugin::setCustomData(%s, \"%s\", \"%s\", %s) - type is invalid", CustomDataType2str(type), key, value, bool2str(sendGui));
+            return qCritical("Lv2Plugin::setCustomData(%s, \"%s\", \"%s\", %s) - type is invalid", CustomDataType2Str(type), key, value, bool2str(sendGui));
 
         if (! key)
-            return qCritical("Lv2Plugin::setCustomData(%s, \"%s\", \"%s\", %s) - key is null", CustomDataType2str(type), key, value, bool2str(sendGui));
+            return qCritical("Lv2Plugin::setCustomData(%s, \"%s\", \"%s\", %s) - key is null", CustomDataType2Str(type), key, value, bool2str(sendGui));
 
         if (! value)
-            return qCritical("Lv2Plugin::setCustomData(%s, \"%s\", \"%s\", %s) - value is null", CustomDataType2str(type), key, value, bool2str(sendGui));
+            return qCritical("Lv2Plugin::setCustomData(%s, \"%s\", \"%s\", %s) - value is null", CustomDataType2Str(type), key, value, bool2str(sendGui));
 
         CarlaPlugin::setCustomData(type, key, value, sendGui);
 
@@ -3199,7 +3201,7 @@ public:
 
         if (dtype == CUSTOM_DATA_INVALID)
         {
-            qCritical("Lv2Plugin::handleStateStore(%i, %p, " P_SIZE ", %i, %i) - invalid type '%s'", key, value, size, type, flags, CustomDataType2str(dtype));
+            qCritical("Lv2Plugin::handleStateStore(%i, %p, " P_SIZE ", %i, %i) - invalid type '%s'", key, value, size, type, flags, CustomDataType2Str(dtype));
             return LV2_STATE_ERR_BAD_TYPE;
         }
 
@@ -3291,7 +3293,7 @@ public:
             return chunk.constData();
         }
 
-        qCritical("Lv2Plugin::handleStateRetrieve(%i, %p, %p, %p) - invalid key type '%s'", key, size, type, flags, CustomDataType2str(dtype));
+        qCritical("Lv2Plugin::handleStateRetrieve(%i, %p, %p, %p) - invalid key type '%s'", key, size, type, flags, CustomDataType2Str(dtype));
         return nullptr;
     }
 
@@ -3937,7 +3939,7 @@ public:
 
         if (! rdf_descriptor)
         {
-            setLastError("Failed to find the requested plugin in the LV2 Bundle");
+            x_engine->setLastError("Failed to find the requested plugin in the LV2 Bundle");
             return false;
         }
 
@@ -3946,7 +3948,7 @@ public:
 
         if (! libOpen(rdf_descriptor->Binary))
         {
-            setLastError(libError(rdf_descriptor->Binary));
+            x_engine->setLastError(libError(rdf_descriptor->Binary));
             return false;
         }
 
@@ -4061,7 +4063,7 @@ public:
 
             if (! libDesc)
             {
-                setLastError("Plugin failed to return library descriptor");
+                x_engine->setLastError("Plugin failed to return library descriptor");
                 return false;
             }
 
@@ -4092,7 +4094,7 @@ public:
 
             if (! descFn)
             {
-                setLastError("Could not find the LV2 Descriptor in the plugin library");
+                x_engine->setLastError("Could not find the LV2 Descriptor in the plugin library");
                 return false;
             }
 
@@ -4109,7 +4111,7 @@ public:
 
         if (! descriptor)
         {
-            setLastError("Could not find the requested plugin URI in the plugin library");
+            x_engine->setLastError("Could not find the requested plugin URI in the plugin library");
             return false;
         }
 
@@ -4126,7 +4128,7 @@ public:
             {
                 if (! LV2_IS_PORT_OPTIONAL(rdf_descriptor->Ports[i].Properties))
                 {
-                    setLastError("Plugin requires a port that is not currently supported");
+                    x_engine->setLastError("Plugin requires a port that is not currently supported");
                     canContinue = false;
                     break;
                 }
@@ -4139,7 +4141,7 @@ public:
             if (LV2_IS_FEATURE_REQUIRED(rdf_descriptor->Features[i].Type) && ! is_lv2_feature_supported(rdf_descriptor->Features[i].URI))
             {
                 QString msg = QString("Plugin requires a feature that is not supported:\n%1").arg(rdf_descriptor->Features[i].URI);
-                setLastError(msg.toUtf8().constData());
+                x_engine->setLastError(msg.toUtf8().constData());
                 canContinue = false;
                 break;
             }
@@ -4185,7 +4187,7 @@ public:
 
         if (! x_client->isOk())
         {
-            setLastError("Failed to register plugin client");
+            x_engine->setLastError("Failed to register plugin client");
             return false;
         }
 
@@ -4196,7 +4198,7 @@ public:
 
         if (! handle)
         {
-            setLastError("Plugin failed to initialize");
+            x_engine->setLastError("Plugin failed to initialize");
             return false;
         }
 
@@ -4673,7 +4675,7 @@ CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
 
     if (id < 0 || id > CarlaEngine::maxPluginNumber())
     {
-        setLastError("Maximum number of plugins reached");
+        init.engine->setLastError("Maximum number of plugins reached");
         return nullptr;
     }
 
@@ -4692,7 +4694,7 @@ CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
     {
         if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
         {
-            setLastError("Carla's rack mode can only work with Mono (simple) or Stereo LV2 plugins, sorry!");
+            init.engine->setLastError("Carla's rack mode can only work with Mono (simple) or Stereo LV2 plugins, sorry!");
             delete plugin;
             return nullptr;
         }

@@ -15,22 +15,20 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_shared.hpp"
-#include "carla_engine.hpp"
+#ifndef CARLA_BACKEND_UTILS_HPP
+#define CARLA_BACKEND_UTILS_HPP
 
-//#ifndef BUILD_BRIDGE
-//# include "carla_native.h"
-//#endif
+#include "carla_backend.hpp"
 
 #include <QtCore/QString>
 
 CARLA_BACKEND_START_NAMESPACE
 
-static const char* carlaLastError = nullptr;
+class CarlaEngine;
+class CarlaPlugin;
 
-// -------------------------------------------------------------------------------------------------------------------
-
-const char* BinaryType2str(const BinaryType type)
+static inline
+const char* BinaryType2Str(const BinaryType type)
 {
     switch (type)
     {
@@ -52,7 +50,8 @@ const char* BinaryType2str(const BinaryType type)
     return nullptr;
 }
 
-const char* PluginType2str(const PluginType type)
+static inline
+const char* PluginType2Str(const PluginType type)
 {
     switch (type)
     {
@@ -80,7 +79,8 @@ const char* PluginType2str(const PluginType type)
     return nullptr;
 }
 
-const char* PluginCategory2str(const PluginCategory category)
+static inline
+const char* PluginCategory2Str(const PluginCategory category)
 {
     switch (category)
     {
@@ -108,7 +108,8 @@ const char* PluginCategory2str(const PluginCategory category)
     return nullptr;
 }
 
-const char* ParameterType2str(const ParameterType type)
+static inline
+const char* ParameterType2Str(const ParameterType type)
 {
     switch (type)
     {
@@ -132,7 +133,8 @@ const char* ParameterType2str(const ParameterType type)
     return nullptr;
 }
 
-const char* InternalParametersIndex2str(const InternalParametersIndex index)
+static inline
+const char* InternalParametersIndex2Str(const InternalParametersIndex index)
 {
     switch (index)
     {
@@ -154,7 +156,8 @@ const char* InternalParametersIndex2str(const InternalParametersIndex index)
     return nullptr;
 }
 
-const char* CustomDataType2str(const CustomDataType type)
+static inline
+const char* CustomDataType2Str(const CustomDataType type)
 {
     switch (type)
     {
@@ -174,7 +177,8 @@ const char* CustomDataType2str(const CustomDataType type)
     return nullptr;
 }
 
-const char* GuiType2str(const GuiType type)
+static inline
+const char* GuiType2Str(const GuiType type)
 {
     switch (type)
     {
@@ -200,7 +204,8 @@ const char* GuiType2str(const GuiType type)
     return nullptr;
 }
 
-const char* OptionsType2str(const OptionsType type)
+static inline
+const char* OptionsType2Str(const OptionsType type)
 {
     switch (type)
     {
@@ -266,7 +271,8 @@ const char* OptionsType2str(const OptionsType type)
     return nullptr;
 }
 
-const char* CallbackType2str(const CallbackType type)
+static inline
+const char* CallbackType2Str(const CallbackType type)
 {
     switch (type)
     {
@@ -318,7 +324,8 @@ const char* CallbackType2str(const CallbackType type)
     return nullptr;
 }
 
-const char* ProcessModeType2str(const ProcessModeType type)
+static inline
+const char* ProcessModeType2Str(const ProcessModeType type)
 {
     switch (type)
     {
@@ -336,6 +343,7 @@ const char* ProcessModeType2str(const ProcessModeType type)
 
 // -------------------------------------------------------------------------------------------------------------------
 
+static inline
 CustomDataType getCustomDataStringType(const char* const stype)
 {
     qDebug("CarlaBackend::getCustomDataStringType(\"%s\")", stype);
@@ -351,9 +359,10 @@ CustomDataType getCustomDataStringType(const char* const stype)
     return CUSTOM_DATA_INVALID;
 }
 
+static inline
 const char* getCustomDataTypeString(const CustomDataType type)
 {
-    qDebug("CarlaBackend::getCustomDataTypeString(%s)", CustomDataType2str(type));
+    qDebug("CarlaBackend::getCustomDataTypeString(%s)", CustomDataType2Str(type));
 
     switch (type)
     {
@@ -370,30 +379,10 @@ const char* getCustomDataTypeString(const CustomDataType type)
     }
 }
 
-const char* getBinaryBidgePath(const BinaryType type)
-{
-    qDebug("CarlaBackend::getBinaryBidgePath(%s)", BinaryType2str(type));
-
-    switch (type)
-    {
-#ifndef BUILD_BRIDGE
-//    case BINARY_POSIX32:
-//        return CarlaEngine::options.bridge_posix32;
-//    case BINARY_POSIX64:
-//        return CarlaEngine::options.bridge_posix64;
-//    case BINARY_WIN32:
-//        return CarlaEngine::options.bridge_win32;
-//    case BINARY_WIN64:
-//        return CarlaEngine::options.bridge_win64;
-#endif
-    default:
-        return nullptr;
-    }
-}
-
+static inline
 const char* getPluginTypeString(const PluginType type)
 {
-    qDebug("CarlaBackend::getPluginTypeString(%s)", PluginType2str(type));
+    qDebug("CarlaBackend::getPluginTypeString(%s)", PluginType2Str(type));
 
     switch (type)
     {
@@ -422,6 +411,7 @@ const char* getPluginTypeString(const PluginType type)
 
 // -------------------------------------------------------------------------------------------------------------------
 
+static inline
 void* getPointer(const uintptr_t addr)
 {
     CARLA_ASSERT(addr != 0);
@@ -431,6 +421,7 @@ void* getPointer(const uintptr_t addr)
     return (void*)ptr;
 }
 
+static inline
 PluginCategory getPluginCategoryFromName(const char* const name)
 {
     CARLA_ASSERT(name);
@@ -506,41 +497,6 @@ PluginCategory getPluginCategoryFromName(const char* const name)
     return PLUGIN_CATEGORY_NONE;
 }
 
-// -------------------------------------------------------------------------------------------------------------------
-
-const char* getLastError()
-{
-    qDebug("CarlaBackend::getLastError()");
-
-    return carlaLastError;
-}
-
-void setLastError(const char* const error)
-{
-    qDebug("CarlaBackend::setLastError(\"%s\")", error);
-
-    if (carlaLastError)
-        free((void*)carlaLastError);
-
-    carlaLastError = error ? strdup(error) : nullptr;
-}
-
-// -------------------------------------------------------------------------------------------------------------------
-
-#ifndef BUILD_BRIDGE
-uint32_t getPluginHintsFromNative(const uint32_t nativeHints)
-{
-   uint32_t realHints = 0;
-
-//    if (nativeHints & ::PLUGIN_IS_SYNTH)
-//        realHints |= PLUGIN_IS_SYNTH;
-//    if (nativeHints & ::PLUGIN_HAS_GUI)
-//        realHints |= PLUGIN_HAS_GUI;
-//    if (nativeHints & ::PLUGIN_USES_SINGLE_THREAD)
-//        realHints |= PLUGIN_USES_SINGLE_THREAD;
-
-   return realHints;
-}
-#endif // BUILD_BRIDGE
-
 CARLA_BACKEND_END_NAMESPACE
+
+#endif // CARLA_BACKEND_UTILS_HPP

@@ -827,7 +827,7 @@ public:
             }
             catch (LinuxSampler::Exception& e)
             {
-                setLastError(e.what());
+                x_engine->setLastError(e.what());
                 return false;
             }
 
@@ -836,7 +836,7 @@ public:
             }
             catch (LinuxSampler::Exception& e)
             {
-                setLastError(e.what());
+                x_engine->setLastError(e.what());
                 return false;
             }
 
@@ -845,7 +845,7 @@ public:
             }
             catch (LinuxSampler::Exception& e)
             {
-                setLastError(e.what());
+                x_engine->setLastError(e.what());
                 return false;
             }
 
@@ -880,13 +880,13 @@ public:
                 if (x_client->isOk())
                     return true;
                 else
-                    setLastError("Failed to register plugin client");
+                    x_engine->setLastError("Failed to register plugin client");
             }
             else
-                setLastError("Failed to find any instruments");
+                x_engine->setLastError("Failed to find any instruments");
         }
         else
-            setLastError("Requested file is not valid or does not exist");
+            x_engine->setLastError("Requested file is not valid or does not exist");
 
         return false;
     }
@@ -920,7 +920,7 @@ CarlaPlugin* LinuxSamplerPlugin::newLinuxSampler(const initializer& init, bool i
 
     if (id < 0 || id > CarlaEngine::maxPluginNumber())
     {
-        setLastError("Maximum number of plugins reached");
+        init.engine->setLastError("Maximum number of plugins reached");
         return nullptr;
     }
 

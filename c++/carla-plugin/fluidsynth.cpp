@@ -1247,7 +1247,7 @@ public:
 
         if (f_id < 0)
         {
-            setLastError("Failed to load SoundFont file");
+            x_engine->setLastError("Failed to load SoundFont file");
             return false;
         }
 
@@ -1269,7 +1269,7 @@ public:
 
         if (! x_client->isOk())
         {
-            setLastError("Failed to register plugin client");
+            x_engine->setLastError("Failed to register plugin client");
             return false;
         }
 
@@ -1323,13 +1323,13 @@ CarlaPlugin* CarlaPlugin::newSF2(const initializer& init)
 
     if (id < 0 || id > CarlaEngine::maxPluginNumber())
     {
-        setLastError("Maximum number of plugins reached");
+        init.engine->setLastError("Maximum number of plugins reached");
         return nullptr;
     }
 
     if (! fluid_is_soundfont(init.filename))
     {
-        setLastError("Requested file is not a valid SoundFont");
+        init.engine->setLastError("Requested file is not a valid SoundFont");
         return nullptr;
     }
 

@@ -21,17 +21,20 @@ TEMPLATE = lib
 VERSION  = 0.5.0
 
 SOURCES = \
-     carla_bridge.cpp \
-     native.cpp \
-     ladspa.cpp \
-     dssi.cpp \
-     lv2.cpp \
-     vst.cpp \
-     fluidsynth.cpp \
-     linuxsampler.cpp
+    carla_plugin.cpp \
+    carla_plugin_thread.cpp \
+    carla_bridge.cpp \
+    native.cpp \
+    ladspa.cpp \
+    dssi.cpp \
+    lv2.cpp \
+    vst.cpp \
+    fluidsynth.cpp \
+    linuxsampler.cpp
 
 HEADERS = \
-    carla_plugin.hpp
+    carla_plugin.hpp \
+    carla_plugin_thread.hpp
 
 INCLUDEPATH = . \
     ../carla-backend \

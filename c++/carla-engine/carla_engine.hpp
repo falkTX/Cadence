@@ -19,8 +19,7 @@
 #define CARLA_ENGINE_HPP
 
 #include "carla_engine_osc.hpp"
-#include "carla_shared.hpp" // FIXME - remove
-#include "carla_threads.hpp" // FIXME - remove
+#include "carla_engine_thread.hpp"
 
 #ifdef CARLA_ENGINE_JACK
 typedef struct _jack_client jack_client_t;
@@ -316,6 +315,12 @@ public:
     void setCallback(const CallbackFunc func, void* const ptr);
 
     // -------------------------------------------------------------------
+    // Error handling
+
+    void setLastError(const char* error);
+    const char* getLastError();
+
+    // -------------------------------------------------------------------
     // Mutex locks
 
     void processLock();
@@ -445,7 +450,7 @@ protected:
     void startCheckThread();
 
 private:
-    CarlaCheckThread m_checkThread;
+    CarlaEngineThread m_thread;
 
 #ifndef BUILD_BRIDGE
     CarlaEngineOsc m_osc;

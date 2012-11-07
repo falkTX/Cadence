@@ -44,14 +44,16 @@ BUILD_CXX_FLAGS += $(shell pkg-config --cflags linuxsampler) -DWANT_LINUXSAMPLER
 endif
 
 OBJS = \
-     carla_bridge.o \
-     native.o \
-     ladspa.o \
-     dssi.o \
-     lv2.o \
-     vst.o \
-     fluidsynth.o \
-     linuxsampler.o
+	carla_plugin.o \
+	carla_plugin_thread.o \
+	carla_bridge.o \
+	native.o \
+	ladspa.o \
+	dssi.o \
+	lv2.o \
+	vst.o \
+	fluidsynth.o \
+	linuxsampler.o
 
 # --------------------------------------------------------------
 

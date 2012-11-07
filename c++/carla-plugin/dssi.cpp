@@ -221,13 +221,13 @@ public:
         CARLA_ASSERT(value);
 
         if (type != CUSTOM_DATA_STRING)
-            return qCritical("DssiPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - type is not string", CustomDataType2str(type), key, value, bool2str(sendGui));
+            return qCritical("DssiPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - type is not string", CustomDataType2Str(type), key, value, bool2str(sendGui));
 
         if (! key)
-            return qCritical("DssiPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - key is null", CustomDataType2str(type), key, value, bool2str(sendGui));
+            return qCritical("DssiPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - key is null", CustomDataType2Str(type), key, value, bool2str(sendGui));
 
         if (! value)
-            return qCritical("DssiPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - value is null", CustomDataType2str(type), key, value, bool2str(sendGui));
+            return qCritical("DssiPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - value is null", CustomDataType2Str(type), key, value, bool2str(sendGui));
 
         descriptor->configure(handle, key, value);
         if (h2) descriptor->configure(h2, key, value);
@@ -1512,7 +1512,7 @@ public:
 
         if (! libOpen(filename))
         {
-            setLastError(libError(filename));
+            x_engine->setLastError(libError(filename));
             return false;
         }
 
@@ -1523,7 +1523,7 @@ public:
 
         if (! descFn)
         {
-            setLastError("Could not find the DSSI Descriptor in the plugin library");
+            x_engine->setLastError("Could not find the DSSI Descriptor in the plugin library");
             return false;
         }
 
@@ -1540,7 +1540,7 @@ public:
 
         if (! descriptor)
         {
-            setLastError("Could not find the requested plugin Label in the plugin library");
+            x_engine->setLastError("Could not find the requested plugin Label in the plugin library");
             return false;
         }
 
@@ -1561,7 +1561,7 @@ public:
 
         if (! x_client->isOk())
         {
-            setLastError("Failed to register plugin client");
+            x_engine->setLastError("Failed to register plugin client");
             return false;
         }
 
@@ -1572,7 +1572,7 @@ public:
 
         if (! handle)
         {
-            setLastError("Plugin failed to initialize");
+            x_engine->setLastError("Plugin failed to initialize");
             return false;
         }
 
@@ -1622,7 +1622,7 @@ CarlaPlugin* CarlaPlugin::newDSSI(const initializer& init, const void* const ext
 
     if (id < 0 || id > CarlaEngine::maxPluginNumber())
     {
-        setLastError("Maximum number of plugins reached");
+        init.engine->setLastError("Maximum number of plugins reached");
         return nullptr;
     }
 
@@ -1641,7 +1641,7 @@ CarlaPlugin* CarlaPlugin::newDSSI(const initializer& init, const void* const ext
     {
         if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
         {
-            setLastError("Carla's rack mode can only work with Mono or Stereo DSSI plugins, sorry!");
+            init.engine->setLastError("Carla's rack mode can only work with Mono or Stereo DSSI plugins, sorry!");
             delete plugin;
             return nullptr;
         }

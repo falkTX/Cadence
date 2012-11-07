@@ -56,6 +56,27 @@ struct BridgeParamInfo {
         : value(0.0) {}
 };
 
+const char* getBinaryBidgePath(const BinaryType type)
+{
+    qDebug("CarlaBackend::getBinaryBidgePath(%s)", BinaryType2Str(type));
+
+    switch (type)
+    {
+#ifndef BUILD_BRIDGE
+//    case BINARY_POSIX32:
+//        return CarlaEngine::options.bridge_posix32;
+//    case BINARY_POSIX64:
+//        return CarlaEngine::options.bridge_posix64;
+//    case BINARY_WIN32:
+//        return CarlaEngine::options.bridge_win32;
+//    case BINARY_WIN64:
+//        return CarlaEngine::options.bridge_win64;
+#endif
+    default:
+        return nullptr;
+    }
+}
+
 class BridgePlugin : public CarlaPlugin
 {
 public:
@@ -730,7 +751,7 @@ public:
             m_initiated = true;
             m_initError = true;
 
-            setLastError(error);
+            x_engine->setLastError(error);
 
             break;
         }
@@ -929,7 +950,7 @@ public:
 
         if (! bridgeBinary)
         {
-            setLastError("Bridge not possible, bridge-binary not found");
+            x_engine->setLastError("Bridge not possible, bridge-binary not found");
             return false;
         }
 
@@ -957,7 +978,7 @@ public:
             x_engine->__bridgePluginRegister(m_id, nullptr);
 
             osc.thread->terminate();
-            setLastError("Timeout while waiting for a response from plugin-bridge\n(or the plugin crashed on initialization?)");
+            x_engine->setLastError("Timeout while waiting for a response from plugin-bridge\n(or the plugin crashed on initialization?)");
             return false;
         }
         else if (m_initError)
@@ -997,13 +1018,13 @@ private:
 
 CarlaPlugin* CarlaPlugin::newBridge(const initializer& init, BinaryType btype, PluginType ptype)
 {
-    qDebug("CarlaPlugin::newBridge(%p, \"%s\", \"%s\", \"%s\", %s, %s)", init.engine, init.filename, init.name, init.label, BinaryType2str(btype), PluginType2str(ptype));
+    qDebug("CarlaPlugin::newBridge(%p, \"%s\", \"%s\", \"%s\", %s, %s)", init.engine, init.filename, init.name, init.label, BinaryType2Str(btype), PluginType2Str(ptype));
 
     short id = init.engine->getNewPluginId();
 
     if (id < 0 || id > CarlaEngine::maxPluginNumber())
     {
-        setLastError("Maximum number of plugins reached");
+        init.engine->setLastError("Maximum number of plugins reached");
         return nullptr;
     }
 

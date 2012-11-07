@@ -34,6 +34,45 @@ double abs_d(const double& value)
     return (value < 0.0) ? -value : value;
 }
 
+static const char* carlaLastError = nullptr;
+
+// -------------------------------------------------------------------------------------------------------------------
+
+// -------------------------------------------------------------------------------------------------------------------
+
+const char* getLastError()
+{
+    qDebug("CarlaBackend::getLastError()");
+
+    return carlaLastError;
+}
+
+void setLastError(const char* const error)
+{
+    qDebug("CarlaBackend::setLastError(\"%s\")", error);
+
+    if (carlaLastError)
+        free((void*)carlaLastError);
+
+    carlaLastError = error ? strdup(error) : nullptr;
+}
+
+#ifndef BUILD_BRIDGE
+uint32_t getPluginHintsFromNative(const uint32_t nativeHints)
+{
+   uint32_t realHints = 0;
+
+//    if (nativeHints & ::PLUGIN_IS_SYNTH)
+//        realHints |= PLUGIN_IS_SYNTH;
+//    if (nativeHints & ::PLUGIN_HAS_GUI)
+//        realHints |= PLUGIN_HAS_GUI;
+//    if (nativeHints & ::PLUGIN_USES_SINGLE_THREAD)
+//        realHints |= PLUGIN_USES_SINGLE_THREAD;
+
+   return realHints;
+}
+#endif // BUILD_BRIDGE
+
 // -----------------------------------------------------------------------
 
 unsigned short CarlaEngine::m_maxPluginNumber = 0;
