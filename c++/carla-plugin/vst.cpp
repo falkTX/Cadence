@@ -1821,7 +1821,7 @@ public:
 #else
             if (effect->resvd1)
             {
-                self = FromVstPtr<VstPlugin>(effect->resvd1);
+                self = (VstPlugin*)getPointerFromAddress(effect->resvd1);
 #endif
                 if (self->unique1 != self->unique2)
                     self = nullptr;
@@ -1845,7 +1845,7 @@ public:
 #ifdef VESTIGE_HEADER
                 effect->ptr1 = lastVstPlugin;
 #else
-                effect->resvd1 = ToVstPtr(lastVstPlugin);
+                effect->resvd1 = getAddressFromPointer(lastVstPlugin);
 #endif
                 self = lastVstPlugin;
             }

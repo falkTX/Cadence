@@ -19,16 +19,14 @@
 #define CARLA_BACKEND_UTILS_HPP
 
 #include "carla_backend.hpp"
+#include "carla_utils.hpp"
 
 #include <QtCore/QString>
 
 CARLA_BACKEND_START_NAMESPACE
 
-class CarlaEngine;
-class CarlaPlugin;
-
 static inline
-const char* BinaryType2Str(const BinaryType type)
+const char* BinaryType2Str(const BinaryType& type)
 {
     switch (type)
     {
@@ -46,12 +44,12 @@ const char* BinaryType2Str(const BinaryType type)
         return "BINARY_OTHER";
     }
 
-    qWarning("CarlaBackend::BinaryType2str(%i) - invalid type", type);
+    qWarning("CarlaBackend::BinaryType2Str(%i) - invalid type", type);
     return nullptr;
 }
 
 static inline
-const char* PluginType2Str(const PluginType type)
+const char* PluginType2Str(const PluginType& type)
 {
     switch (type)
     {
@@ -75,12 +73,12 @@ const char* PluginType2Str(const PluginType type)
         return "PLUGIN_SFZ";
     }
 
-    qWarning("CarlaBackend::PluginType2str(%i) - invalid type", type);
+    qWarning("CarlaBackend::PluginType2Str(%i) - invalid type", type);
     return nullptr;
 }
 
 static inline
-const char* PluginCategory2Str(const PluginCategory category)
+const char* PluginCategory2Str(const PluginCategory& category)
 {
     switch (category)
     {
@@ -104,12 +102,12 @@ const char* PluginCategory2Str(const PluginCategory category)
         return "PLUGIN_CATEGORY_OTHER";
     }
 
-    qWarning("CarlaBackend::PluginCategory2str(%i) - invalid category", category);
+    qWarning("CarlaBackend::PluginCategory2Str(%i) - invalid category", category);
     return nullptr;
 }
 
 static inline
-const char* ParameterType2Str(const ParameterType type)
+const char* ParameterType2Str(const ParameterType& type)
 {
     switch (type)
     {
@@ -129,12 +127,12 @@ const char* ParameterType2Str(const ParameterType type)
         return "PARAMETER_LV2_TIME";
     }
 
-    qWarning("CarlaBackend::ParameterType2str(%i) - invalid type", type);
+    qWarning("CarlaBackend::ParameterType2Str(%i) - invalid type", type);
     return nullptr;
 }
 
 static inline
-const char* InternalParametersIndex2Str(const InternalParametersIndex index)
+const char* InternalParametersIndex2Str(const InternalParametersIndex& index)
 {
     switch (index)
     {
@@ -152,12 +150,12 @@ const char* InternalParametersIndex2Str(const InternalParametersIndex index)
         return "PARAMETER_BALANCE_RIGHT";
     }
 
-    qWarning("CarlaBackend::InternalParametersIndex2str(%i) - invalid index", index);
+    qWarning("CarlaBackend::InternalParametersIndex2Str(%i) - invalid index", index);
     return nullptr;
 }
 
 static inline
-const char* CustomDataType2Str(const CustomDataType type)
+const char* CustomDataType2Str(const CustomDataType& type)
 {
     switch (type)
     {
@@ -173,12 +171,12 @@ const char* CustomDataType2Str(const CustomDataType type)
         return "CUSTOM_DATA_BINARY";
     }
 
-    qWarning("CarlaBackend::CustomDataType2str(%i) - invalid type", type);
+    qWarning("CarlaBackend::CustomDataType2Str(%i) - invalid type", type);
     return nullptr;
 }
 
 static inline
-const char* GuiType2Str(const GuiType type)
+const char* GuiType2Str(const GuiType& type)
 {
     switch (type)
     {
@@ -200,12 +198,12 @@ const char* GuiType2Str(const GuiType type)
         return "GUI_EXTERNAL_OSC";
     }
 
-    qWarning("CarlaBackend::GuiType2str(%i) - invalid type", type);
+    qWarning("CarlaBackend::GuiType2Str(%i) - invalid type", type);
     return nullptr;
 }
 
 static inline
-const char* OptionsType2Str(const OptionsType type)
+const char* OptionsType2Str(const OptionsType& type)
 {
     switch (type)
     {
@@ -267,12 +265,12 @@ const char* OptionsType2Str(const OptionsType type)
         return "OPTION_PATH_BRIDGE_VST_X11";
     }
 
-    qWarning("CarlaBackend::OptionsType2str(%i) - invalid type", type);
+    qWarning("CarlaBackend::OptionsType2Str(%i) - invalid type", type);
     return nullptr;
 }
 
 static inline
-const char* CallbackType2Str(const CallbackType type)
+const char* CallbackType2Str(const CallbackType& type)
 {
     switch (type)
     {
@@ -320,12 +318,12 @@ const char* CallbackType2Str(const CallbackType type)
         return "CALLBACK_QUIT";
     }
 
-    qWarning("CarlaBackend::CallbackType2str(%i) - invalid type", type);
+    qWarning("CarlaBackend::CallbackType2Str(%i) - invalid type", type);
     return nullptr;
 }
 
 static inline
-const char* ProcessModeType2Str(const ProcessModeType type)
+const char* ProcessModeType2Str(const ProcessModeType& type)
 {
     switch (type)
     {
@@ -337,7 +335,7 @@ const char* ProcessModeType2Str(const ProcessModeType type)
         return "PROCESS_MODE_CONTINUOUS_RACK";
     }
 
-    qWarning("CarlaBackend::ProcessModeType2str(%i) - invalid type", type);
+    qWarning("CarlaBackend::ProcessModeType2Str(%i) - invalid type", type);
     return nullptr;
 }
 
@@ -347,6 +345,10 @@ static inline
 CustomDataType getCustomDataStringType(const char* const stype)
 {
     qDebug("CarlaBackend::getCustomDataStringType(\"%s\")", stype);
+    CARLA_ASSERT(stype);
+
+    if (! stype)
+        return CUSTOM_DATA_INVALID;
 
     if (strcmp(stype, "string") == 0)
         return CUSTOM_DATA_STRING;
@@ -356,11 +358,12 @@ CustomDataType getCustomDataStringType(const char* const stype)
         return CUSTOM_DATA_CHUNK;
     if (strcmp(stype, "binary") == 0)
         return CUSTOM_DATA_BINARY;
+
     return CUSTOM_DATA_INVALID;
 }
 
 static inline
-const char* getCustomDataTypeString(const CustomDataType type)
+const char* getCustomDataTypeString(const CustomDataType& type)
 {
     qDebug("CarlaBackend::getCustomDataTypeString(%s)", CustomDataType2Str(type));
 
@@ -380,7 +383,7 @@ const char* getCustomDataTypeString(const CustomDataType type)
 }
 
 static inline
-const char* getPluginTypeString(const PluginType type)
+const char* getPluginTypeString(const PluginType& type)
 {
     qDebug("CarlaBackend::getPluginTypeString(%s)", PluginType2Str(type));
 
@@ -412,86 +415,99 @@ const char* getPluginTypeString(const PluginType type)
 // -------------------------------------------------------------------------------------------------------------------
 
 static inline
-void* getPointer(const uintptr_t addr)
+void* getPointerFromAddress(const uintptr_t& addr)
 {
+    qDebug("CarlaBackend::getPointerFromAddress(" P_UINTPTR ")", addr);
     CARLA_ASSERT(addr != 0);
-    qDebug("CarlaBackend::getPointer(" P_UINTPTR ")", addr);
 
-    uintptr_t* const ptr = (uintptr_t*)addr;
-    return (void*)ptr;
+    uintptr_t** const ptr = (uintptr_t**)&addr;
+    return *ptr;
+}
+
+static inline
+uintptr_t getAddressFromPointer(void* const ptr)
+{
+    qDebug("CarlaBackend::getAddressFromPointer(%p)", ptr);
+    CARLA_ASSERT(ptr != nullptr);
+
+    uintptr_t* addr = (uintptr_t*)&ptr;
+    return *addr;
 }
 
 static inline
 PluginCategory getPluginCategoryFromName(const char* const name)
 {
-    CARLA_ASSERT(name);
     qDebug("CarlaBackend::getPluginCategoryFromName(\"%s\")", name);
+    CARLA_ASSERT(name);
 
-    QString qname(name);
-
-    if (qname.isEmpty())
+    if (! name)
         return PLUGIN_CATEGORY_NONE;
 
-    qname = qname.toLower();
+    carla_string sname(name);
+
+    if (sname.isEmpty())
+        return PLUGIN_CATEGORY_NONE;
+
+    sname.toLower();
 
     // generic tags first
-    if (qname.contains("delay", Qt::CaseSensitive))
+    if (sname.contains("delay"))
         return PLUGIN_CATEGORY_DELAY;
-    if (qname.contains("reverb", Qt::CaseSensitive))
+    if (sname.contains("reverb"))
         return PLUGIN_CATEGORY_DELAY;
 
     // filter
-    if (qname.contains("filter", Qt::CaseSensitive))
+    if (sname.contains("filter"))
         return PLUGIN_CATEGORY_FILTER;
 
     // dynamics
-    if (qname.contains("dynamics", Qt::CaseSensitive))
+    if (sname.contains("dynamics"))
         return PLUGIN_CATEGORY_DYNAMICS;
-    if (qname.contains("amplifier", Qt::CaseSensitive))
+    if (sname.contains("amplifier"))
         return PLUGIN_CATEGORY_DYNAMICS;
-    if (qname.contains("compressor", Qt::CaseSensitive))
+    if (sname.contains("compressor"))
         return PLUGIN_CATEGORY_DYNAMICS;
-    if (qname.contains("enhancer", Qt::CaseSensitive))
+    if (sname.contains("enhancer"))
         return PLUGIN_CATEGORY_DYNAMICS;
-    if (qname.contains("exciter", Qt::CaseSensitive))
+    if (sname.contains("exciter"))
         return PLUGIN_CATEGORY_DYNAMICS;
-    if (qname.contains("gate", Qt::CaseSensitive))
+    if (sname.contains("gate"))
         return PLUGIN_CATEGORY_DYNAMICS;
-    if (qname.contains("limiter", Qt::CaseSensitive))
+    if (sname.contains("limiter"))
         return PLUGIN_CATEGORY_DYNAMICS;
 
     // modulator
-    if (qname.contains("modulator", Qt::CaseSensitive))
+    if (sname.contains("modulator"))
         return PLUGIN_CATEGORY_MODULATOR;
-    if (qname.contains("chorus", Qt::CaseSensitive))
+    if (sname.contains("chorus"))
         return PLUGIN_CATEGORY_MODULATOR;
-    if (qname.contains("flanger", Qt::CaseSensitive))
+    if (sname.contains("flanger"))
         return PLUGIN_CATEGORY_MODULATOR;
-    if (qname.contains("phaser", Qt::CaseSensitive))
+    if (sname.contains("phaser"))
         return PLUGIN_CATEGORY_MODULATOR;
-    if (qname.contains("saturator", Qt::CaseSensitive))
+    if (sname.contains("saturator"))
         return PLUGIN_CATEGORY_MODULATOR;
 
-    // unitily
-    if (qname.contains("utility", Qt::CaseSensitive))
+    // utility
+    if (sname.contains("utility"))
         return PLUGIN_CATEGORY_UTILITY;
-    if (qname.contains("analyzer", Qt::CaseSensitive))
+    if (sname.contains("analyzer"))
         return PLUGIN_CATEGORY_UTILITY;
-    if (qname.contains("converter", Qt::CaseSensitive))
+    if (sname.contains("converter"))
         return PLUGIN_CATEGORY_UTILITY;
-    if (qname.contains("deesser", Qt::CaseSensitive))
+    if (sname.contains("deesser"))
         return PLUGIN_CATEGORY_UTILITY;
-    if (qname.contains("mixer", Qt::CaseSensitive))
+    if (sname.contains("mixer"))
         return PLUGIN_CATEGORY_UTILITY;
 
     // common tags
-    if (qname.contains("verb", Qt::CaseSensitive))
+    if (sname.contains("verb"))
         return PLUGIN_CATEGORY_DELAY;
 
-    if (qname.contains("eq", Qt::CaseSensitive))
+    if (sname.contains("eq"))
         return PLUGIN_CATEGORY_EQ;
 
-    if (qname.contains("tool", Qt::CaseSensitive))
+    if (sname.contains("tool"))
         return PLUGIN_CATEGORY_UTILITY;
 
     return PLUGIN_CATEGORY_NONE;

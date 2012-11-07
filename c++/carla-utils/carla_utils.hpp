@@ -225,6 +225,53 @@ public:
         return (*buffer == 0);
     }
 
+    bool contains(const char* const strBuf) const
+    {
+        if (! strBuf)
+            return false;
+        if (*strBuf == 0)
+            return false;
+
+        size_t thisLen = ::strlen(buffer);
+        size_t thatLen = ::strlen(strBuf)-1;
+
+        for (size_t i=0, j=0; i < thisLen; i++)
+        {
+            if (buffer[i] == strBuf[j])
+                j++;
+            else
+                j = 0;
+
+            if (j == thatLen)
+                return true;
+        }
+
+        return false;
+    }
+
+    bool contains(const carla_string& str) const
+    {
+        return contains(str.buffer);
+    }
+
+    void toLower()
+    {
+        for (size_t i=0, len = ::strlen(buffer); i < len; i++)
+        {
+            if (buffer[i] >= 'A' && buffer[i] <= 'Z')
+                buffer[i] += 32;
+        }
+    }
+
+    void toUpper()
+    {
+        for (size_t i=0, len = ::strlen(buffer); i < len; i++)
+        {
+            if (buffer[i] >= 'a' && buffer[i] <= 'z')
+                buffer[i] -= 32;
+        }
+    }
+
     // ---------------------------------------------
     // public operators
 
