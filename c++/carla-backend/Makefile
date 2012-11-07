@@ -6,6 +6,13 @@
 
 include ../Makefile.mk
 
+HAVE_JACK         = $(shell pkg-config --exists jack && echo true)
+
+ifeq ($(CARLA_RTAUDIO_SUPPORT),true)
+HAVE_ALSA         = $(shell pkg-config --exists alsa && echo true)
+HAVE_PULSEAUDIO   = $(shell pkg-config --exists libpulse-simple && echo true)
+endif
+
 ifeq ($(CARLA_PLUGIN_SUPPORT),true)
 HAVE_SUIL         = $(shell pkg-config --exists suil-0 && echo true)
 endif
@@ -20,30 +27,39 @@ HAVE_ZYN_GUI_DEPS = $(shell pkg-config --exists ntk && echo true)
 
 # --------------------------------------------------------------
 
-BUILD_CXX_FLAGS += -I. -I../carla-includes -I../carla-engine -I../carla-jackbridge -I../carla-native -I../carla-plugin -I../carla-utils
-BUILD_CXX_FLAGS += -fvisibility=hidden -fPIC
-BUILD_CXX_FLAGS += $(shell pkg-config --cflags jack liblo QtCore QtGui)
+BUILD_CXX_FLAGS  += -I. -I../carla-engine -I../carla-includes -I../carla-plugin -I../carla-utils
+BUILD_CXX_FLAGS  += -fvisibility=hidden -fPIC
+BUILD_CXX_FLAGS  += $(shell pkg-config --cflags liblo QtCore)
 
-LINK_FLAGS      += -fPIC -shared -ldl -lm
-LINK_FLAGS      += $(shell pkg-config --libs jack liblo QtCore QtGui)
+LINK_FLAGS       += -fPIC -shared -ldl -lm
+LINK_FLAGS       += $(shell pkg-config --libs liblo QtCore QtGui)
+
+ifeq ($(HAVE_JACK),true)
+LINK_FLAGS       += $(shell pkg-config --libs jack)
+endif
+
+ifeq ($(HAVE_ALSA),true)
+LINK_FLAGS       += $(shell pkg-config --libs alsa)
+endif
+
+ifeq ($(HAVE_PULSEAUDIO),true)
+LINK_FLAGS       += $(shell pkg-config --libs libpulse-simple)
+endif
 
 ifeq ($(HAVE_SUIL),true)
-BUILD_CXX_FLAGS += $(shell pkg-config --cflags suil-0) -DWANT_SUIL
-LINK_FLAGS      += $(shell pkg-config --libs suil-0)
+LINK_FLAGS       += $(shell pkg-config --libs suil-0)
 endif
 
 ifeq ($(HAVE_FLUIDSYNTH),true)
-BUILD_CXX_FLAGS += $(shell pkg-config --cflags fluidsynth) -DWANT_FLUIDSYNTH
-LINK_FLAGS      += $(shell pkg-config --libs fluidsynth)
+LINK_FLAGS       += $(shell pkg-config --libs fluidsynth)
 endif
 
 ifeq ($(HAVE_LINUXSAMPLER),true)
-BUILD_CXX_FLAGS += $(shell pkg-config --cflags linuxsampler) -DWANT_LINUXSAMPLER
-LINK_FLAGS      += $(shell pkg-config --libs linuxsampler)
+LINK_FLAGS       += $(shell pkg-config --libs linuxsampler)
 endif
 
 ifeq ($(HAVE_ZYN_DEPS),true)
-LINK_FLAGS      += $(shell pkg-config --libs fftw3 mxml)
+LINK_FLAGS       += $(shell pkg-config --libs fftw3 mxml)
 
 ifeq ($(HAVE_ZYN_GUI_DEPS),true)
 LINK_FLAGS       += $(shell pkg-config --libs ntk)
@@ -76,15 +92,9 @@ doc: carla_backend.doxygen
 	doxygen $<
 
 carla_backend.so: $(OBJS)
-	$(CXX) $^ $(LINK_FLAGS) -o $@ && strip $@
-
-# carla_backend-dssi.so: $(OBJS) carla_backend_plugin.cpp
-# 	$(CXX) $^ -DDISTRHO_PLUGIN_TARGET_DSSI -Idistrho-plugin-toolkit $(CARLA_CXX_FLAGS) $(CARLA_LD_FLAGS) -o $@ && strip $@
+	$(CXX) $^ $(LINK_FLAGS) -o $@ && $(STRIP) $@
 
 # --------------------------------------------------------------
-
-.cpp.o:
-	$(CXX) -c $< $(BUILD_CXX_FLAGS) -o $@
 
 ../carla-engine/carla_engine.a:
 	$(MAKE) -C ../carla-engine
@@ -101,5 +111,10 @@ carla_backend.so: $(OBJS)
 ../carla-rtmempool/carla_rtmempool.a:
 	$(MAKE) -C ../carla-rtmempool
 
+# --------------------------------------------------------------
+
+.cpp.o:
+	$(CXX) -c $< $(BUILD_CXX_FLAGS) -o $@
+
 clean:
-	rm -f $(OBJS) *.a *.so *.dll
+	rm -f $(OBJS) *.so *.dll

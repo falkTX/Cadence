@@ -16,7 +16,7 @@ endif
 # --------------------------------------------------------------
 
 BUILD_CXX_FLAGS += -fvisibility=hidden -fPIC
-BUILD_CXX_FLAGS += -I. -I../carla-backend -I../carla-includes -I../carla-plugin -I../carla-utils -fPIC
+BUILD_CXX_FLAGS += -I. -I../carla-backend -I../carla-includes -I../carla-plugin -I../carla-utils
 BUILD_CXX_FLAGS += $(shell pkg-config --cflags liblo QtCore)
 
 ifeq ($(HAVE_JACK),true)
@@ -54,12 +54,12 @@ endif
 
 ifeq ($(WANT_RTAUDIO),true)
 BUILD_CXX_FLAGS += -DCARLA_ENGINE_RTAUDIO -DHAVE_GETTIMEOFDAY -D_FORTIFY_SOURCE=2
-BUILD_CXX_FLAGS += -I../carla-engine/rtaudio-4.0.11 -I../carla-engine/rtmidi-2.0.1
+BUILD_CXX_FLAGS += -Irtaudio-4.0.11 -Irtmidi-2.0.1
 ifeq ($(DEBUG),true)
 BUILD_CXX_FLAGS += __RTAUDIO_DEBUG__ __RTMIDI_DEBUG__
 endif
-OBJS += ../carla-engine/rtaudio-4.0.11/RtAudio.o
-OBJS += ../carla-engine/rtmidi-2.0.1/RtMidi.o
+OBJS += rtaudio-4.0.11/RtAudio.o
+OBJS += rtmidi-2.0.1/RtMidi.o
 endif
 
 # --------------------------------------------------------------

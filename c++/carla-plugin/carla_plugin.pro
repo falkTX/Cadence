@@ -1,6 +1,6 @@
 # QtCreator project file
 
-QT = core
+QT = core gui
 
 CONFIG    = debug
 CONFIG   += static

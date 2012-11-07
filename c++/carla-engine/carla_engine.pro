@@ -10,10 +10,11 @@ DEFINES   = DEBUG
 DEFINES  += QTCREATOR_TEST
 
 DEFINES  += CARLA_ENGINE_JACK
-DEFINES  += CARLA_ENGINE_RTAUDIO HAVE_GETTIMEOFDAY __LINUX_ALSA__ __LINUX_ALSASEQ__ __LINUX_PULSE__
+DEFINES  += CARLA_ENGINE_RTAUDIO HAVE_GETTIMEOFDAY -D_FORTIFY_SOURCE=2
+DEFINES  += __LINUX_ALSA__ __LINUX_ALSASEQ__ __LINUX_PULSE__
 DEFINES  += __RTAUDIO_DEBUG__ __RTMIDI_DEBUG__
 
-PKGCONFIG = alsa jack liblo libpulse-simple
+PKGCONFIG = liblo jack alsa libpulse-simple
 
 TARGET   = carla_engine
 TEMPLATE = lib
@@ -25,6 +26,11 @@ SOURCES = \
      jack.cpp \
      rtaudio.cpp
 
+# FIXME - remove these
+SOURCES += \
+     carla_shared.cpp \
+     carla_threads.cpp
+
 HEADERS = \
     carla_engine.hpp \
     carla_engine_osc.hpp
@@ -32,9 +38,11 @@ HEADERS = \
 INCLUDEPATH = . \
     ../carla-backend \
     ../carla-includes \
-    ../carla-jackbridge \
     ../carla-plugin \
     ../carla-utils
+
+# Jack
+INCLUDEPATH += ../carla-jackbridge
 
 # RtAudio/RtMidi
 INCLUDEPATH += rtaudio-4.0.11

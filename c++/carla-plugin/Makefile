@@ -21,7 +21,7 @@ endif
 
 BUILD_CXX_FLAGS += -fvisibility=hidden -fPIC
 BUILD_CXX_FLAGS += -I. -I../carla-backend -I../carla-engine -I../carla-includes -I../carla-native -I../carla-utils
-BUILD_CXX_FLAGS += $(shell pkg-config --cflags liblo QtCore)
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags liblo QtCore QtGui)
 
 ifeq ($(CARLA_PLUGIN_SUPPORT),true)
 BUILD_CXX_FLAGS += -DWANT_LADSPA -DWANT_DSSI -DWANT_LV2 -DWANT_VST

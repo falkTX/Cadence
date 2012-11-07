@@ -7,7 +7,10 @@ CONFIG   += static
 CONFIG   += link_pkgconfig qt warn_on
 
 DEFINES   = DEBUG
-DEFINES  += WANT_ZYNADDSUBFX_GUI
+DEFINES  += QTCREATOR_TEST
+
+DEFINES  += WANT_ZYNADDSUBFX WANT_ZYNADDSUBFX_GUI
+
 PKGCONFIG = fftw3 mxml ntk
 
 TARGET   = carla_native
@@ -28,4 +31,5 @@ INCLUDEPATH = . \
     ../carla-includes \
     ../carla-utils
 
+QMAKE_CFLAGS   *= -std=c99
 QMAKE_CXXFLAGS *= -std=c++0x
