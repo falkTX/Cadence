@@ -323,9 +323,9 @@ const char* CallbackType2Str(const CallbackType& type)
 }
 
 static inline
-const char* ProcessModeType2Str(const ProcessModeType& type)
+const char* ProcessMode2Str(const ProcessMode& mode)
 {
-    switch (type)
+    switch (mode)
     {
     case PROCESS_MODE_SINGLE_CLIENT:
         return "PROCESS_MODE_SINGLE_CLIENT";
@@ -333,9 +333,11 @@ const char* ProcessModeType2Str(const ProcessModeType& type)
         return "PROCESS_MODE_MULTIPLE_CLIENTS";
     case PROCESS_MODE_CONTINUOUS_RACK:
         return "PROCESS_MODE_CONTINUOUS_RACK";
+    case PROCESS_MODE_PATCHBAY:
+        return "PROCESS_MODE_PATCHBAY";
     }
 
-    qWarning("CarlaBackend::ProcessModeType2Str(%i) - invalid type", type);
+    qWarning("CarlaBackend::ProcessModeType2Str(%i) - invalid type", mode);
     return nullptr;
 }
 
@@ -415,16 +417,6 @@ const char* getPluginTypeString(const PluginType& type)
 // -------------------------------------------------------------------------------------------------------------------
 
 static inline
-void* getPointerFromAddress(const uintptr_t& addr)
-{
-    qDebug("CarlaBackend::getPointerFromAddress(" P_UINTPTR ")", addr);
-    CARLA_ASSERT(addr != 0);
-
-    uintptr_t** const ptr = (uintptr_t**)&addr;
-    return *ptr;
-}
-
-static inline
 uintptr_t getAddressFromPointer(void* const ptr)
 {
     qDebug("CarlaBackend::getAddressFromPointer(%p)", ptr);
@@ -432,6 +424,16 @@ uintptr_t getAddressFromPointer(void* const ptr)
 
     uintptr_t* addr = (uintptr_t*)&ptr;
     return *addr;
+}
+
+static inline
+void* getPointerFromAddress(const uintptr_t& addr)
+{
+    qDebug("CarlaBackend::getPointerFromAddress(" P_UINTPTR ")", addr);
+    CARLA_ASSERT(addr != 0);
+
+    uintptr_t** const ptr = (uintptr_t**)&addr;
+    return *ptr;
 }
 
 static inline
@@ -443,7 +445,7 @@ PluginCategory getPluginCategoryFromName(const char* const name)
     if (! name)
         return PLUGIN_CATEGORY_NONE;
 
-    carla_string sname(name);
+    CarlaString sname(name);
 
     if (sname.isEmpty())
         return PLUGIN_CATEGORY_NONE;

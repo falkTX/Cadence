@@ -26,7 +26,8 @@ SOURCES = \
     carla_engine_osc.cpp \
     carla_engine_thread.cpp \
     jack.cpp \
-    rtaudio.cpp
+    rtaudio.cpp \
+    plugin.cpp
 
 HEADERS = \
     carla_engine.hpp \
@@ -47,5 +48,8 @@ INCLUDEPATH += rtaudio-4.0.11
 INCLUDEPATH += rtmidi-2.0.1
 SOURCES     += rtaudio-4.0.11/RtAudio.cpp
 SOURCES     += rtmidi-2.0.1/RtMidi.cpp
+
+# Plugin
+INCLUDEPATH += distrho-plugin-toolkit
 
 QMAKE_CXXFLAGS *= -std=c++0x

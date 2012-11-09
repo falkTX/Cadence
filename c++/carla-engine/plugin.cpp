@@ -39,6 +39,42 @@ static const unsigned int paramPan     = 8;
 static const unsigned int paramCount   = sizeof(paramMap);
 static const unsigned int programCount = 128;
 
+// -------------------------------------------------------------------------------------------------------------------
+// Plugin Engine client
+
+class CarlaEnginePluginClient : public CarlaEngineClient
+{
+public:
+    CarlaEnginePluginClient(const CarlaEngineType engineType, const ProcessMode processMode)
+        : CarlaEngineClient(engineType, processMode)
+    {
+    }
+
+    ~CarlaEnginePluginClient()
+    {
+    }
+
+    const CarlaEngineBasePort* addPort(const CarlaEnginePortType portType, const char* const name, const bool isInput)
+    {
+        qDebug("CarlaEnginePluginClient::addPort(%i, \"%s\", %s)", portType, name, bool2str(isInput));
+
+        switch (portType)
+        {
+        case CarlaEnginePortTypeNull:
+            break;
+        case CarlaEnginePortTypeAudio:
+            return new CarlaEngineAudioPort(isInput, processMode);
+        case CarlaEnginePortTypeControl:
+            return new CarlaEngineControlPort(isInput, processMode);
+        case CarlaEnginePortTypeMIDI:
+            return new CarlaEngineMidiPort(isInput, processMode);
+        }
+
+        qCritical("CarlaEnginePluginClient::addPort(%i, \"%s\", %s) - invalid type", portType, name, bool2str(isInput));
+        return nullptr;
+    }
+};
+
 // -----------------------------------------
 
 class CarlaEnginePlugin : public CarlaEngine,
@@ -64,7 +100,7 @@ public:
         memcpy(prevParamBuffers, paramBuffers, sizeof(float)*paramCount);
 
         // set-up engine
-        processMode = PROCESS_MODE_CONTINUOUS_RACK;
+        options.processMode = PROCESS_MODE_CONTINUOUS_RACK;
         options.forceStereo = true;
         options.preferPluginBridges = false;
         options.preferUiBridges = false;
@@ -96,9 +132,10 @@ public:
         bufferSize = d_bufferSize();
         sampleRate = d_sampleRate();
 
-        name = strdup(clientName);
-        CarlaEngine::init(name);
+        name = clientName;
+        name.toBasic();
 
+        CarlaEngine::init(name);
         return true;
     }
 
@@ -107,32 +144,27 @@ public:
         qDebug("CarlaEnginePlugin::close()");
         CarlaEngine::close();
 
-        if (name)
-        {
-            free((void*)name);
-            name = nullptr;
-        }
-
         return true;
     }
 
-    bool isOffline()
+    bool isOffline() const
     {
         return false;
     }
 
-    bool isRunning()
+    bool isRunning() const
     {
         return true;
     }
 
-    CarlaEngineClient* addClient(CarlaPlugin* const plugin)
+    CarlaEngineType type() const
     {
-        CarlaEngineClientNativeHandle handle;
-        handle.type = CarlaEngineTypeRtAudio;
+        return CarlaEngineTypeRtAudio;
+    }
 
-        return new CarlaEngineClient(handle);
-        Q_UNUSED(plugin);
+    CarlaEngineClient* addClient(CarlaPlugin* const)
+    {
+        return new CarlaEnginePluginClient(CarlaEngineTypeRtAudio, options.processMode);
     }
 
 protected:
@@ -441,7 +473,7 @@ protected:
 
                 CarlaEngineControlEvent* const carlaEvent = &rackControlEventsIn[carlaEventIndex++];
 
-                carlaEvent->type       = CarlaEngineEventControlChange;
+                carlaEvent->type       = CarlaEngineParameterChangeEvent;
                 carlaEvent->controller = paramMap[i];
                 carlaEvent->value      = paramBuffers[i]/127;
             }

@@ -740,7 +740,7 @@ public:
 
     /*!
      * Process all the post-poned events.
-     * This function will only be called from the main thread if PLUGIN_USES_SINGLE_THREAD is set.
+     * This function must be called from the main thread (ie, idleGui()) if PLUGIN_USES_SINGLE_THREAD is set.
      */
     void postEventsRun();
 
@@ -847,7 +847,7 @@ public:
 #endif
 
     static size_t getNativePluginCount();
-    static const PluginDescriptor* getNativePlugin(size_t index);
+    static const PluginDescriptor* getNativePluginDescriptor(const size_t index);
 
     // -------------------------------------------------------------------
 
@@ -974,11 +974,6 @@ protected:
         else if (value > ranges.max)
             value = ranges.max;
         return value;
-    }
-
-    static double abs(const double& value)
-    {
-        return (value < 0.0) ? -value : value;
     }
 
     friend class CarlaEngineJack;

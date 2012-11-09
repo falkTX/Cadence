@@ -1,5 +1,5 @@
 /*
- * Carla Engine
+ * Carla Engine Thread
  * Copyright (C) 2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -80,7 +80,7 @@ void CarlaEngineThread::run()
         const ScopedLocker m(this);
         oscControlRegisted = engine->isOscControlRegisted();
 
-        for (unsigned short i=0, max = CarlaEngine::maxPluginNumber(); i < max; i++)
+        for (unsigned short i=0; i < engine->maxPluginNumber(); i++)
         {
             CarlaPlugin* const plugin = engine->getPluginUnchecked(i);
 
@@ -124,7 +124,7 @@ void CarlaEngineThread::run()
                 }
 
                 // -------------------------------------------------------
-                // Update OSC control client
+                // Update OSC control client (peaks)
 
                 if (oscControlRegisted)
                 {
@@ -132,21 +132,21 @@ void CarlaEngineThread::run()
                     if (plugin->audioInCount() > 0)
                     {
 #ifdef BUILD_BRIDGE
-                        engine->osc_send_bridge_set_inpeak(1, engine->getInputPeak(id, 0));
-                        engine->osc_send_bridge_set_inpeak(2, engine->getInputPeak(id, 1));
+                        engine->osc_send_bridge_set_inpeak(1);
+                        engine->osc_send_bridge_set_inpeak(2);
 #else
-                        engine->osc_send_control_set_input_peak_value(id, 1, engine->getInputPeak(id, 0));
-                        engine->osc_send_control_set_input_peak_value(id, 2, engine->getInputPeak(id, 1));
+                        engine->osc_send_control_set_input_peak_value(id, 1);
+                        engine->osc_send_control_set_input_peak_value(id, 2);
 #endif
                     }
                     if (plugin->audioOutCount() > 0)
                     {
 #ifdef BUILD_BRIDGE
-                        engine->osc_send_bridge_set_outpeak(1, engine->getOutputPeak(id, 0));
-                        engine->osc_send_bridge_set_outpeak(2, engine->getOutputPeak(id, 1));
+                        engine->osc_send_bridge_set_outpeak(1);
+                        engine->osc_send_bridge_set_outpeak(2);
 #else
-                        engine->osc_send_control_set_output_peak_value(id, 1, engine->getOutputPeak(id, 0));
-                        engine->osc_send_control_set_output_peak_value(id, 2, engine->getOutputPeak(id, 1));
+                        engine->osc_send_control_set_output_peak_value(id, 1);
+                        engine->osc_send_control_set_output_peak_value(id, 2);
 #endif
                     }
                 }
@@ -154,7 +154,7 @@ void CarlaEngineThread::run()
         }
 
         if (! engine->idleOsc())
-            QThread::msleep(50);
+            msleep(50);
     }
 }
 

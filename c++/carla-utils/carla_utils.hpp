@@ -121,30 +121,30 @@ static inline
 void pass() {}
 
 // -------------------------------------------------
-// carla_string class
+// CarlaString class
 
-class carla_string
+class CarlaString
 {
 public:
     // ---------------------------------------------
     // constructors (no explicit conversions allowed)
 
-    explicit carla_string()
+    explicit CarlaString()
     {
         buffer = ::strdup("");
     }
 
-    explicit carla_string(char* const strBuf)
+    explicit CarlaString(char* const strBuf)
     {
         buffer = ::strdup(strBuf ? strBuf : "");
     }
 
-    explicit carla_string(const char* const strBuf)
+    explicit CarlaString(const char* const strBuf)
     {
         buffer = ::strdup(strBuf ? strBuf : "");
     }
 
-    explicit carla_string(const int value)
+    explicit CarlaString(const int value)
     {
         const size_t strBufSize = ::abs(value/10) + 3;
         char         strBuf[strBufSize];
@@ -153,7 +153,7 @@ public:
         buffer = ::strdup(strBuf);
     }
 
-    explicit carla_string(const unsigned int value, const bool hexadecimal = false)
+    explicit CarlaString(const unsigned int value, const bool hexadecimal = false)
     {
         const size_t strBufSize = value/10 + 2 + (hexadecimal ? 2 : 0);
         char         strBuf[strBufSize];
@@ -162,7 +162,7 @@ public:
         buffer = ::strdup(strBuf);
     }
 
-    explicit carla_string(const long int value)
+    explicit CarlaString(const long int value)
     {
         const size_t strBufSize = ::labs(value/10) + 3;
         char         strBuf[strBufSize];
@@ -171,7 +171,7 @@ public:
         buffer = ::strdup(strBuf);
     }
 
-    explicit carla_string(const unsigned long int value, const bool hexadecimal = false)
+    explicit CarlaString(const unsigned long int value, const bool hexadecimal = false)
     {
         const size_t strBufSize = value/10 + 2 + (hexadecimal ? 2 : 0);
         char         strBuf[strBufSize];
@@ -180,7 +180,7 @@ public:
         buffer = ::strdup(strBuf);
     }
 
-    explicit carla_string(const float value)
+    explicit CarlaString(const float value)
     {
         char strBuf[0xff];
         ::snprintf(strBuf, 0xff, "%f", value);
@@ -188,7 +188,7 @@ public:
         buffer = ::strdup(strBuf);
     }
 
-    explicit carla_string(const double value)
+    explicit CarlaString(const double value)
     {
         char strBuf[0xff];
         ::snprintf(strBuf, 0xff, "%g", value);
@@ -199,7 +199,7 @@ public:
     // ---------------------------------------------
     // non-explicit constructor
 
-    carla_string(const carla_string& str)
+    CarlaString(const CarlaString& str)
     {
         buffer = ::strdup(str.buffer);
     }
@@ -207,7 +207,7 @@ public:
     // ---------------------------------------------
     // deconstructor
 
-    ~carla_string()
+    ~CarlaString()
     {
         ::free(buffer);
     }
@@ -223,6 +223,11 @@ public:
     bool isEmpty() const
     {
         return (*buffer == 0);
+    }
+
+    bool isNotEmpty() const
+    {
+        return !isEmpty();
     }
 
     bool contains(const char* const strBuf) const
@@ -249,9 +254,49 @@ public:
         return false;
     }
 
-    bool contains(const carla_string& str) const
+    bool contains(const CarlaString& str) const
     {
         return contains(str.buffer);
+    }
+
+    bool isDigit(size_t pos) const
+    {
+        if (pos >= length())
+            return false;
+
+        return (buffer[pos] >= '0' && buffer[pos] <= '9');
+    }
+
+    void clear()
+    {
+        for (size_t i=0, len = ::strlen(buffer); i < len; i++)
+            buffer[i] = 0;
+    }
+
+    void replace(char before, char after)
+    {
+        for (size_t i=0, len = ::strlen(buffer); i < len; i++)
+        {
+            if (buffer[i] == before)
+                buffer[i] = after;
+        }
+    }
+
+    void truncate(unsigned int n)
+    {
+        for (size_t i=n, len = ::strlen(buffer); i < len; i++)
+            buffer[i] = 0;
+    }
+
+    void toBasic()
+    {
+        for (size_t i=0, len = ::strlen(buffer); i < len; i++)
+        {
+            if ((buffer[i] >= '0' && buffer[i] <= '9') || (buffer[i] >= 'A' && buffer[i] <= 'Z') || (buffer[i] >= 'a' && buffer[i] <= '<'))
+                continue;
+
+            buffer[i] = '_';
+        }
     }
 
     void toLower()
@@ -280,12 +325,17 @@ public:
         return buffer;
     }
 
+    char& operator[](int pos)
+    {
+        return buffer[pos];
+    }
+
     bool operator==(const char* const strBuf) const
     {
         return (strBuf && ::strcmp(buffer, strBuf) == 0);
     }
 
-    bool operator==(const carla_string& str) const
+    bool operator==(const CarlaString& str) const
     {
         return operator==(str.buffer);
     }
@@ -295,12 +345,12 @@ public:
         return !operator==(strBuf);
     }
 
-    bool operator!=(const carla_string& str) const
+    bool operator!=(const CarlaString& str) const
     {
         return !operator==(str.buffer);
     }
 
-    carla_string& operator=(const char* const strBuf)
+    CarlaString& operator=(const char* const strBuf)
     {
         ::free(buffer);
 
@@ -309,12 +359,12 @@ public:
         return *this;
     }
 
-    carla_string& operator=(const carla_string& str)
+    CarlaString& operator=(const CarlaString& str)
     {
         return operator=(str.buffer);
     }
 
-    carla_string& operator+=(const char* const strBuf)
+    CarlaString& operator+=(const char* const strBuf)
     {
         const size_t newBufSize = ::strlen(buffer) + (strBuf ? ::strlen(strBuf) : 0) + 1;
         char         newBuf[newBufSize];
@@ -328,12 +378,12 @@ public:
         return *this;
     }
 
-    carla_string& operator+=(const carla_string& str)
+    CarlaString& operator+=(const CarlaString& str)
     {
         return operator+=(str.buffer);
     }
 
-    carla_string operator+(const char* const strBuf)
+    CarlaString operator+(const char* const strBuf)
     {
         const size_t newBufSize = ::strlen(buffer) + (strBuf ? ::strlen(strBuf) : 0) + 1;
         char         newBuf[newBufSize];
@@ -341,10 +391,10 @@ public:
         ::strcpy(newBuf, buffer);
         ::strcat(newBuf, strBuf);
 
-        return carla_string(newBuf);
+        return CarlaString(newBuf);
     }
 
-    carla_string operator+(const carla_string& str)
+    CarlaString operator+(const CarlaString& str)
     {
         return operator+(str.buffer);
     }
@@ -356,7 +406,7 @@ private:
 };
 
 static inline
-carla_string operator+(const char* const strBufBefore, const carla_string& strAfter)
+CarlaString operator+(const char* const strBufBefore, const CarlaString& strAfter)
 {
     const char* const strBufAfter = (const char*)strAfter;
     const size_t newBufSize = (strBufBefore ? ::strlen(strBufBefore) : 0) + ::strlen(strBufAfter) + 1;
@@ -365,7 +415,7 @@ carla_string operator+(const char* const strBufBefore, const carla_string& strAf
     ::strcpy(newBuf, strBufBefore);
     ::strcat(newBuf, strBufAfter);
 
-    return carla_string(newBuf);
+    return CarlaString(newBuf);
 }
 
 // -------------------------------------------------

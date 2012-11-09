@@ -1,5 +1,5 @@
 /*
- * Carla Engine
+ * Carla Engine OSC
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -40,8 +40,6 @@ CarlaEngineOsc::CarlaEngineOsc(CarlaEngine* const engine_)
 
     m_serverTCP = nullptr;
     m_serverUDP = nullptr;
-    m_serverPathTCP = nullptr;
-    m_serverPathUDP = nullptr;
     m_controlData.path = nullptr;
     m_controlData.source = nullptr;
     m_controlData.target = nullptr;
@@ -60,28 +58,30 @@ void CarlaEngineOsc::init(const char* const name)
     qDebug("CarlaEngineOsc::init(\"%s\")", name);
     CARLA_ASSERT(! m_serverTCP);
     CARLA_ASSERT(! m_serverUDP);
-    CARLA_ASSERT(! m_serverPathTCP);
-    CARLA_ASSERT(! m_serverPathUDP);
-    CARLA_ASSERT(name);
+    CARLA_ASSERT(m_serverPathTCP.isEmpty());
+    CARLA_ASSERT(m_serverPathUDP.isEmpty());
     CARLA_ASSERT(m_nameSize == 0);
+    CARLA_ASSERT(name);
 
     m_name = strdup(name ? name : "");
     m_nameSize = strlen(m_name);
 
-    // create new OSC thread
+    // create new OSC severs
     m_serverTCP = lo_server_new_with_proto(nullptr, LO_TCP, osc_error_handlerTCP);
     m_serverUDP = lo_server_new_with_proto(nullptr, LO_UDP, osc_error_handlerUDP);
 
-    // get our full OSC server path
+    // get our full OSC servers path
     char* const serverPathTCP = lo_server_get_url(m_serverTCP);
-    m_serverPathTCP = strdup(QString("%1%2").arg(serverPathTCP).arg(m_name).toUtf8().constData());
+    m_serverPathTCP  = serverPathTCP;
+    m_serverPathTCP += m_name;
     free(serverPathTCP);
 
     char* const serverPathUDP = lo_server_get_url(m_serverUDP);
-    m_serverPathUDP = strdup(QString("%1%2").arg(serverPathUDP).arg(m_name).toUtf8().constData());
+    m_serverPathUDP  = serverPathUDP;
+    m_serverPathUDP += m_name;
     free(serverPathUDP);
 
-    // register message handler and start OSC thread
+    // register message handler
     lo_server_add_method(m_serverTCP, nullptr, nullptr, osc_message_handler, this);
     lo_server_add_method(m_serverUDP, nullptr, nullptr, osc_message_handler, this);
 }
@@ -110,8 +110,8 @@ void CarlaEngineOsc::close()
     qDebug("CarlaEngineOsc::close()");
     CARLA_ASSERT(m_serverTCP);
     CARLA_ASSERT(m_serverUDP);
-    CARLA_ASSERT(m_serverPathTCP);
-    CARLA_ASSERT(m_serverPathUDP);
+    CARLA_ASSERT(m_serverPathTCP.isNotEmpty());
+    CARLA_ASSERT(m_serverPathUDP.isNotEmpty());
     CARLA_ASSERT(m_name);
 
     m_controlData.free();
@@ -121,13 +121,10 @@ void CarlaEngineOsc::close()
     lo_server_thread_free(m_serverTCP);
     lo_server_thread_free(m_serverUDP);
 
-    free((void*)m_serverPathTCP);
-    free((void*)m_serverPathUDP);
-
     m_serverTCP = nullptr;
     m_serverUDP = nullptr;
-    m_serverPathTCP = nullptr;
-    m_serverPathUDP = nullptr;
+    m_serverPathTCP.clear();
+    m_serverPathUDP.clear();
 
     free(m_name);
     m_name = nullptr;
@@ -143,7 +140,8 @@ int CarlaEngineOsc::handleMessage(const char* const path, const int argc, const 
         qDebug("CarlaEngineOsc::handleMessage(%s, %i, %p, %s, %p)", path, argc, argv, types, msg);
 #endif
     CARLA_ASSERT(m_serverTCP || m_serverUDP);
-    CARLA_ASSERT(m_serverPathTCP || m_serverPathUDP);
+    CARLA_ASSERT(m_serverPathTCP.isNotEmpty() || m_serverPathUDP.isNotEmpty());
+    CARLA_ASSERT(m_name);
     CARLA_ASSERT(path);
 
     if (! path)
@@ -176,7 +174,7 @@ int CarlaEngineOsc::handleMessage(const char* const path, const int argc, const 
     if (std::isdigit(path[m_nameSize+3]))
         pluginId += (path[m_nameSize+3]-'0')*10;
 
-    if (pluginId < 0 || pluginId > CarlaEngine::maxPluginNumber())
+    if (pluginId < 0 || pluginId > engine->maxPluginNumber())
     {
         qCritical("CarlaEngineOsc::handleMessage() - failed to get plugin, wrong id '%i'", pluginId);
         return 1;
@@ -334,8 +332,7 @@ int CarlaEngineOsc::handleMsgRegister(const int argc, const lo_arg* const* const
     free((void*)host);
     free((void*)port);
 
-    // FIXME - max plugins
-    for (unsigned short i=0; i < CarlaEngine::maxPluginNumber(); i++)
+    for (unsigned short i=0; i < engine->maxPluginNumber(); i++)
     {
         CarlaPlugin* const plugin = engine->getPluginUnchecked(i);
 

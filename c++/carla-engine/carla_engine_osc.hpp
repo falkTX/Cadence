@@ -1,6 +1,6 @@
 /*
- * Carla Engine
- * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
+ * Carla Engine OSC
+ * Copyright (C) 2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 #include "carla_osc_utils.hpp"
 
 #define CARLA_ENGINE_OSC_HANDLE_ARGS1 CarlaPlugin* const plugin
-#define CARLA_ENGINE_OSC_HANDLE_ARGS2 CARLA_ENGINE_OSC_HANDLE_ARGS1, const int argc, const lo_arg* const* const argv, const char* const types
+#define CARLA_ENGINE_OSC_HANDLE_ARGS2 CarlaPlugin* const plugin, const int argc, const lo_arg* const* const argv, const char* const types
 
 #define CARLA_ENGINE_OSC_CHECK_OSC_TYPES(/* argc, types, */ argcToCompare, typesToCompare)                                  \
     /* check argument count */                                                                                              \
@@ -91,8 +91,8 @@ private:
 
     lo_server m_serverTCP;
     lo_server m_serverUDP;
-    const char* m_serverPathTCP;
-    const char* m_serverPathUDP;
+    CarlaString m_serverPathTCP;
+    CarlaString m_serverPathUDP;
     CarlaOscData m_controlData; // for carla-control
 
     char*  m_name;

@@ -25,22 +25,44 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
-struct CarlaEngineClientNativeHandle {
-    CarlaEngineType type;
-#ifdef CARLA_ENGINE_JACK
-    void* jackClient;
-#endif
+// -------------------------------------------------------------------------------------------------------------------
+// RtAudio Engine client
 
-    CarlaEngineClientNativeHandle()
+class CarlaEngineRtAudioClient : public CarlaEngineClient
+{
+public:
+    CarlaEngineRtAudioClient(const CarlaEngineType engineType, const ProcessMode processMode)
+        : CarlaEngineClient(engineType, processMode)
     {
-        type = CarlaEngineTypeNull;
-#ifdef CARLA_ENGINE_JACK
-        jackClient = nullptr;
-#endif
+    }
+
+    ~CarlaEngineRtAudioClient()
+    {
+    }
+
+    const CarlaEngineBasePort* addPort(const CarlaEnginePortType portType, const char* const name, const bool isInput)
+    {
+        qDebug("CarlaEngineRtAudioClient::addPort(%i, \"%s\", %s)", portType, name, bool2str(isInput));
+
+        switch (portType)
+        {
+        case CarlaEnginePortTypeNull:
+            break;
+        case CarlaEnginePortTypeAudio:
+            return new CarlaEngineAudioPort(isInput, processMode);
+        case CarlaEnginePortTypeControl:
+            return new CarlaEngineControlPort(isInput, processMode);
+        case CarlaEnginePortTypeMIDI:
+            return new CarlaEngineMidiPort(isInput, processMode);
+        }
+
+        qCritical("CarlaEngineRtAudioClient::addPort(%i, \"%s\", %s) - invalid type", portType, name, bool2str(isInput));
+        return nullptr;
     }
 };
 
-// -----------------------------------------
+// -------------------------------------------------------------------------------------------------------------------
+// RtAudio Engine
 
 class CarlaEngineRtAudio : public CarlaEngine
 {
@@ -51,14 +73,12 @@ public:
     {
         qDebug("CarlaEngineRtAudio::CarlaEngineRtAudio()");
 
-        type = CarlaEngineTypeRtAudio;
-
         midiIn  = nullptr;
         midiOut = nullptr;
 
         // just to make sure
         options.forceStereo = true;
-        processMode = PROCESS_MODE_CONTINUOUS_RACK;
+        options.processMode = PROCESS_MODE_CONTINUOUS_RACK;
     }
 
     ~CarlaEngineRtAudio()
@@ -118,7 +138,9 @@ public:
         midiOut->openVirtualPort("control-out");
         midiOut->openVirtualPort("midi-out");
 
-        name = getFixedClientName(clientName);
+        name = clientName;
+        name.toBasic();
+
         CarlaEngine::init(name);
         return true;
     }
@@ -127,12 +149,6 @@ public:
     {
         qDebug("CarlaEngineRtAudio::close()");
         CarlaEngine::close();
-
-        if (name)
-        {
-            free((void*)name);
-            name = nullptr;
-        }
 
         if (audio.isStreamRunning())
             audio.stopStream();
@@ -158,22 +174,24 @@ public:
         return true;
     }
 
-    bool isOffline()
+    bool isOffline() const
     {
         return false;
     }
 
-    bool isRunning()
+    bool isRunning() const
     {
         return audio.isStreamRunning();
     }
 
+    CarlaEngineType type() const
+    {
+        return CarlaEngineTypeRtAudio;
+    }
+
     CarlaEngineClient* addClient(CarlaPlugin* const)
     {
-        CarlaEngineClientNativeHandle* handle = new CarlaEngineClientNativeHandle;
-        handle->type = CarlaEngineTypeRtAudio;
-
-        return new CarlaEngineClient(handle);
+        return new CarlaEngineRtAudioClient(CarlaEngineTypeRtAudio, options.processMode);
     }
 
     // -------------------------------------
@@ -267,10 +285,80 @@ private:
 
 CarlaEngine* CarlaEngine::newRtAudio(RtAudioApi api)
 {
-    return new CarlaEngineRtAudio(static_cast<RtAudio::Api>(api));
+    RtAudio::Api rtApi = RtAudio::UNSPECIFIED;
+
+    switch (api)
+    {
+    case RTAUDIO_DUMMY:
+        rtApi = RtAudio::RTAUDIO_DUMMY;
+        break;
+    case RTAUDIO_LINUX_ALSA:
+        rtApi = RtAudio::LINUX_ALSA;
+        break;
+    case RTAUDIO_LINUX_PULSE:
+        rtApi = RtAudio::LINUX_PULSE;
+        break;
+    case RTAUDIO_LINUX_OSS:
+        rtApi = RtAudio::LINUX_OSS;
+        break;
+    case RTAUDIO_UNIX_JACK:
+        rtApi = RtAudio::UNIX_JACK;
+        break;
+    case RTAUDIO_MACOSX_CORE:
+        rtApi = RtAudio::MACOSX_CORE;
+        break;
+    case RTAUDIO_WINDOWS_ASIO:
+        rtApi = RtAudio::WINDOWS_ASIO;
+        break;
+    case RTAUDIO_WINDOWS_DS:
+        rtApi = RtAudio::WINDOWS_DS;
+        break;
+    }
+
+    return new CarlaEngineRtAudio(rtApi);
 }
 
-// -----------------------------------------
+unsigned int CarlaEngine::getRtAudioApiCount()
+{
+    std::vector<RtAudio::Api> apis;
+    RtAudio::getCompiledApi(apis);
+    return apis.size();
+}
+
+const char* CarlaEngine::getRtAudioApiName(unsigned int index)
+{
+    std::vector<RtAudio::Api> apis;
+    RtAudio::getCompiledApi(apis);
+
+    if (index < apis.size())
+    {
+        const RtAudio::Api& api(apis[index]);
+
+        switch (api)
+        {
+        case RtAudio::UNSPECIFIED:
+            return "Unspecified";
+        case RtAudio::LINUX_ALSA:
+            return "ALSA";
+        case RtAudio::LINUX_PULSE:
+            return "PulseAudio";
+        case RtAudio::LINUX_OSS:
+            return "OSS";
+        case RtAudio::UNIX_JACK:
+            return "JACK (RtAudio)";
+        case RtAudio::MACOSX_CORE:
+            return "CoreAudio";
+        case RtAudio::WINDOWS_ASIO:
+            return "ASIO";
+        case RtAudio::WINDOWS_DS:
+            return "DirectSound";
+        case RtAudio::RTAUDIO_DUMMY:
+            return "Dummy";
+        }
+    }
+
+    return nullptr;
+}
 
 CARLA_BACKEND_END_NAMESPACE
 

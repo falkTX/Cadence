@@ -201,11 +201,12 @@ CALLBACK_QUIT              = 20
 PROCESS_MODE_SINGLE_CLIENT    = 0
 PROCESS_MODE_MULTIPLE_CLIENTS = 1
 PROCESS_MODE_CONTINUOUS_RACK  = 2
+PROCESS_MODE_PATCHBAY         = 3
 
 # ------------------------------------------------------------------------------------------------
 # Carla GUI stuff
 
-Carla.processMode   = PROCESS_MODE_MULTIPLE_CLIENTS
+Carla.processMode   = PROCESS_MODE_CONTINUOUS_RACK
 Carla.maxParameters = MAX_PARAMETERS
 
 # set native binary type
