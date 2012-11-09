@@ -334,7 +334,7 @@ public:
             }
 
             // create new if needed
-            param.count = (pTotal < (int32_t)x_engine->options.maxParameters) ? pTotal : 0;
+            param.count = (pTotal < (int32_t)x_engine->maxParameters()) ? pTotal : 0;
 
             if (param.count > 0)
             {
@@ -1022,7 +1022,7 @@ CarlaPlugin* CarlaPlugin::newBridge(const initializer& init, BinaryType btype, P
 
     short id = init.engine->getNewPluginId();
 
-    if (id < 0 || id > CarlaEngine::maxPluginNumber())
+    if (id < 0 || id > init.engine->maxPluginNumber())
     {
         init.engine->setLastError("Maximum number of plugins reached");
         return nullptr;

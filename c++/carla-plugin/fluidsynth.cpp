@@ -1346,7 +1346,7 @@ CarlaPlugin* CarlaPlugin::newSF2(const initializer& init)
 
     return plugin;
 #else
-    setLastError("fluidsynth support not available");
+    init.engine->setLastError("fluidsynth support not available");
     return nullptr;
 #endif
 }

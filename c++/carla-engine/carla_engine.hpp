@@ -647,6 +647,16 @@ public:
     {
         return options.processMode;
     }
+
+    uint maxParameters() const
+    {
+        return options.maxParameters;
+    }
+
+    uint oscUiTimeout() const
+    {
+        return options.oscUiTimeout;
+    }
 #endif
 
     // -------------------------------------------------------------------

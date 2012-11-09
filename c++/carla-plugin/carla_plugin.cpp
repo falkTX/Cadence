@@ -40,7 +40,7 @@ CarlaPlugin::CarlaPlugin(CarlaEngine* const engine, const unsigned short id)
       x_balanceRight(1.0)
 {
     CARLA_ASSERT(engine);
-    CARLA_ASSERT(id < CarlaEngine::maxPluginNumber());
+    CARLA_ASSERT(id < x_engine->maxPluginNumber());
     qDebug("CarlaPlugin::CarlaPlugin(%p, %i)", engine, id);
 
     m_type  = PLUGIN_NONE;
@@ -55,7 +55,7 @@ CarlaPlugin::CarlaPlugin(CarlaEngine* const engine, const unsigned short id)
     m_filename = nullptr;
 
 #ifndef BUILD_BRIDGE
-    if (engine->processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (engine->processMode() == PROCESS_MODE_CONTINUOUS_RACK)
         m_ctrlInChannel = m_id;
     else
 #endif
@@ -426,7 +426,7 @@ void CarlaPlugin::setId(const unsigned short id)
 {
     m_id = id;
 
-    if (x_engine->processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (x_engine->processMode() == PROCESS_MODE_CONTINUOUS_RACK)
         m_ctrlInChannel = id;
 }
 #endif
@@ -950,7 +950,7 @@ void CarlaPlugin::registerToOscControl()
 #ifdef BUILD_BRIDGE
     uint32_t maxParameters = MAX_PARAMETERS;
 #else
-    uint32_t maxParameters = x_engine->options.maxParameters;
+    uint32_t maxParameters = x_engine->maxParameters();
 #endif
     if (param.count > 0 && param.count < maxParameters)
     {
@@ -1098,7 +1098,7 @@ bool CarlaPlugin::showOscGui()
     qWarning("CarlaPlugin::showOscGui()");
 
     // wait for UI 'update' call
-    for (uint i=0; i < x_engine->options.oscUiTimeout; i++)
+    for (uint i=0; i < x_engine->oscUiTimeout(); i++)
     {
         if (osc.data.target)
         {

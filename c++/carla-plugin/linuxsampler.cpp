@@ -954,7 +954,7 @@ CarlaPlugin* CarlaPlugin::newGIG(const initializer& init)
 #ifdef WANT_LINUXSAMPLER
     return LinuxSamplerPlugin::newLinuxSampler(init, true);
 #else
-    setLastError("linuxsampler support not available");
+    init.engine->setLastError("linuxsampler support not available");
     return nullptr;
 #endif
 }
@@ -965,7 +965,7 @@ CarlaPlugin* CarlaPlugin::newSFZ(const initializer& init)
 #ifdef WANT_LINUXSAMPLER
     return LinuxSamplerPlugin::newLinuxSampler(init, false);
 #else
-    setLastError("linuxsampler support not available");
+    init.engine->setLastError("linuxsampler support not available");
     return nullptr;
 #endif
 }

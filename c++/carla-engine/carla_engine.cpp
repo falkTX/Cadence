@@ -64,6 +64,10 @@ CarlaEngineControlPort::CarlaEngineControlPort(const bool isInput, const Process
     qDebug("CarlaEngineControlPort::CarlaEngineControlPort(%s, %s)", bool2str(isInput), ProcessMode2Str(processMode));
 }
 
+CarlaEngineControlPort::~CarlaEngineControlPort()
+{
+}
+
 void CarlaEngineControlPort::initBuffer(CarlaEngine* const engine)
 {
     CARLA_ASSERT(engine);
@@ -158,6 +162,10 @@ CarlaEngineMidiPort::CarlaEngineMidiPort(const bool isInput, const ProcessMode p
     : CarlaEngineBasePort(isInput, processMode)
 {
     qDebug("CarlaEngineMidiPort::CarlaEngineMidiPort(%s, %s)", bool2str(isInput), ProcessMode2Str(processMode));
+}
+
+CarlaEngineMidiPort::~CarlaEngineMidiPort()
+{
 }
 
 void CarlaEngineMidiPort::initBuffer(CarlaEngine* const engine)

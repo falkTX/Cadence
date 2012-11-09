@@ -2417,7 +2417,7 @@ CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
 
     return plugin;
 #else
-    setLastError("VST support not available");
+    init.engine->setLastError("VST support not available");
     return nullptr;
 #endif
 }

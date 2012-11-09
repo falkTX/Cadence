@@ -878,7 +878,7 @@ public:
         // Input VU
 
 #ifndef BUILD_BRIDGE
-        if (aIn.count > 0 && CarlaEngine::processMode != PROCESS_MODE_CONTINUOUS_RACK)
+        if (aIn.count > 0 && x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
 #else
         if (aIn.count > 0)
 #endif
@@ -935,10 +935,10 @@ public:
                 // Control change
                 switch (cinEvent->type)
                 {
-                case CarlaEngineEventNull:
+                case CarlaEngineNullEvent:
                     break;
 
-                case CarlaEngineEventControlChange:
+                case CarlaEngineParameterChangeEvent:
                 {
                     double value;
 
@@ -1022,12 +1022,12 @@ public:
                     break;
                 }
 
-                case CarlaEngineEventMidiBankChange:
+                case CarlaEngineMidiBankChangeEvent:
                     if (cinEvent->channel == m_ctrlInChannel)
                         nextBankId = rint(cinEvent->value);
                     break;
 
-                case CarlaEngineEventMidiProgramChange:
+                case CarlaEngineMidiProgramChangeEvent:
                     if (cinEvent->channel == m_ctrlInChannel)
                     {
                         uint32_t nextProgramId = rint(cinEvent->value);
@@ -1044,7 +1044,7 @@ public:
                     }
                     break;
 
-                case CarlaEngineEventAllSoundOff:
+                case CarlaEngineAllSoundOffEvent:
                     if (cinEvent->channel == m_ctrlInChannel)
                     {
                         if (mIn.count > 0 && ! allNotesOffSent)
@@ -1069,7 +1069,7 @@ public:
                     }
                     break;
 
-                case CarlaEngineEventAllNotesOff:
+                case CarlaEngineAllNotesOffEvent:
                     if (cinEvent->channel == m_ctrlInChannel)
                     {
                         if (mIn.count > 0 && ! allNotesOffSent)
@@ -1327,7 +1327,7 @@ public:
 
                 // Output VU
 #ifndef BUILD_BRIDGE
-                if (CarlaEngine::processMode != PROCESS_MODE_CONTINUOUS_RACK)
+                if (x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
 #endif
                 {
                     for (k=0; i < 2 && k < frames; k++)
@@ -1392,7 +1392,7 @@ public:
                     if (param.data[k].midiCC > 0)
                     {
                         valueControl = (value - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
-                        param.portCout->writeEvent(CarlaEngineEventControlChange, framesOffset, param.data[k].midiChannel, param.data[k].midiCC, valueControl);
+                        param.portCout->writeEvent(CarlaEngineParameterChangeEvent, framesOffset, param.data[k].midiChannel, param.data[k].midiCC, valueControl);
                     }
                 }
             }
@@ -1665,7 +1665,7 @@ CarlaPlugin* CarlaPlugin::newNative(const initializer& init)
 
     short id = init.engine->getNewPluginId();
 
-    if (id < 0 || id > CarlaEngine::maxPluginNumber())
+    if (id < 0 || id > init.engine->maxPluginNumber())
     {
         init.engine->setLastError("Maximum number of plugins reached");
         return nullptr;
@@ -1681,7 +1681,7 @@ CarlaPlugin* CarlaPlugin::newNative(const initializer& init)
 
     plugin->reload();
 
-    if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (init.engine->processMode() == PROCESS_MODE_CONTINUOUS_RACK)
     {
         if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
         {
@@ -1703,7 +1703,7 @@ size_t CarlaPlugin::getNativePluginCount()
     return NativePlugin::getPluginCount();
 }
 
-const PluginDescriptor* CarlaPlugin::getNativePlugin(size_t index)
+const PluginDescriptor* CarlaPlugin::getNativePluginDescriptor(size_t index)
 {
     return NativePlugin::getPlugin(index);
 }

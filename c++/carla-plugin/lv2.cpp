@@ -4706,7 +4706,7 @@ CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
 
     return plugin;
 #else
-    setLastError("LV2 support not available");
+    init.engine->setLastError("LV2 support not available");
     return nullptr;
 #endif
 }

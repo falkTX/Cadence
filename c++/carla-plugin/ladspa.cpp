@@ -1256,7 +1256,7 @@ CarlaPlugin* CarlaPlugin::newLADSPA(const initializer& init, const void* const e
 
     return plugin;
 #else
-    setLastError("LADSPA support not available");
+    init.engine->setLastError("LADSPA support not available");
     return nullptr;
 #endif
 }

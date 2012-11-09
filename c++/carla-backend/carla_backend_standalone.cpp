@@ -24,7 +24,7 @@
 // Single, standalone engine
 static CarlaBackend::CarlaEngine* carlaEngine = nullptr;
 static CarlaBackend::CallbackFunc carlaFunc = nullptr;
-static carla_string carlaStandaloneError;
+static CarlaString carlaStandaloneError;
 static const char* extendedLicenseText = nullptr;
 static bool carlaEngineStarted = false;
 
@@ -109,7 +109,7 @@ const PluginInfo* get_internal_plugin_info(unsigned int plugin_id)
 
     static PluginInfo info;
 
-    const PluginDescriptor* const nativePlugin = CarlaBackend::CarlaPlugin::getNativePlugin(plugin_id);
+    const PluginDescriptor* const nativePlugin = CarlaBackend::CarlaPlugin::getNativePluginDescriptor(plugin_id);
 
     CARLA_ASSERT(nativePlugin);
 
@@ -193,8 +193,6 @@ bool engine_close()
     get_program_name(0, 0);
     get_midi_program_name(0, 0);
     get_real_plugin_name(0);
-
-    carlaEngine->resetOptions();
 
     delete carlaEngine;
     carlaEngine = nullptr;
@@ -1001,13 +999,12 @@ double get_current_parameter_value(unsigned short plugin_id, uint32_t parameter_
 double get_input_peak_value(unsigned short plugin_id, unsigned short port_id)
 {
     CARLA_ASSERT(carlaEngine);
-    CARLA_ASSERT(plugin_id < CarlaBackend::CarlaEngine::maxPluginNumber());
     CARLA_ASSERT(port_id == 1 || port_id == 2);
 
     if (! carlaEngine)
         return 0.0;
 
-    if (plugin_id >= CarlaBackend::CarlaEngine::maxPluginNumber())
+    if (plugin_id >= carlaEngine->maxPluginNumber())
     {
         qCritical("CarlaBackendStandalone::get_input_peak_value(%i, %i) - invalid plugin value", plugin_id, port_id);
         return 0.0;
@@ -1023,13 +1020,12 @@ double get_input_peak_value(unsigned short plugin_id, unsigned short port_id)
 double get_output_peak_value(unsigned short plugin_id, unsigned short port_id)
 {
     CARLA_ASSERT(carlaEngine);
-    CARLA_ASSERT(plugin_id < CarlaBackend::CarlaEngine::maxPluginNumber());
     CARLA_ASSERT(port_id == 1 || port_id == 2);
 
     if (! carlaEngine)
         return 0.0;
 
-    if (plugin_id >= CarlaBackend::CarlaEngine::maxPluginNumber())
+    if (plugin_id >= carlaEngine->maxPluginNumber())
     {
         qCritical("CarlaBackendStandalone::get_input_peak_value(%i, %i) - invalid plugin value", plugin_id, port_id);
         return 0.0;

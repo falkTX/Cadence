@@ -1652,7 +1652,7 @@ CarlaPlugin* CarlaPlugin::newDSSI(const initializer& init, const void* const ext
 
     return plugin;
 #else
-    setLastError("DSSI support not available");
+    init.engine->setLastError("DSSI support not available");
     return nullptr;
 #endif
 }
