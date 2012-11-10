@@ -27,12 +27,20 @@ HAVE_ZYN_GUI_DEPS = $(shell which ntk-config)
 
 # --------------------------------------------------------------
 
-BUILD_CXX_FLAGS  += -I. -I../carla-engine -I../carla-includes -I../carla-plugin -I../carla-utils
+BUILD_CXX_FLAGS  += -I. -I../carla-engine -I../carla-includes -I../carla-native -I../carla-plugin -I../carla-utils
 BUILD_CXX_FLAGS  += -fvisibility=hidden -fPIC
 BUILD_CXX_FLAGS  += $(shell pkg-config --cflags liblo QtCore)
 
 LINK_FLAGS       += -fPIC -shared -ldl -lm
 LINK_FLAGS       += $(shell pkg-config --libs liblo QtCore QtGui)
+
+ifeq ($(CARLA_PLUGIN_SUPPORT),true)
+BUILD_CXX_FLAGS  += -DWANT_LADSPA -DWANT_DSSI -DWANT_LV2 -DWANT_VST
+endif
+
+ifeq ($(CARLA_RTAUDIO_SUPPORT),true)
+BUILD_CXX_FLAGS  += -DCARLA_ENGINE_RTAUDIO
+endif
 
 ifeq ($(HAVE_JACK),true)
 LINK_FLAGS       += $(shell pkg-config --libs jack)
@@ -51,10 +59,12 @@ LINK_FLAGS       += $(shell pkg-config --libs suil-0)
 endif
 
 ifeq ($(HAVE_FLUIDSYNTH),true)
+BUILD_CXX_FLAGS  += -DWANT_FLUIDSYNTH
 LINK_FLAGS       += $(shell pkg-config --libs fluidsynth)
 endif
 
 ifeq ($(HAVE_LINUXSAMPLER),true)
+BUILD_CXX_FLAGS  += -DWANT_LINUXSAMPLER
 LINK_FLAGS       += $(shell pkg-config --libs linuxsampler)
 endif
 

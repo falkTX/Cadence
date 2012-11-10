@@ -8,6 +8,10 @@ CONFIG    += link_pkgconfig qt warn_on # plugin shared
 DEFINES    = DEBUG
 DEFINES   += QTCREATOR_TEST
 
+DEFINES   += CARLA_ENGINE_RTAUDIO
+DEFINES   += WANT_LADSPA WANT_DSSI WANT_LV2 WANT_VST
+DEFINES   += WANT_FLUIDSYNTH WANT_LINUXSAMPLER
+
 PKGCONFIG  = liblo
 PKGCONFIG += jack
 PKGCONFIG += alsa libpulse-simple
@@ -29,6 +33,7 @@ HEADERS = \
 INCLUDEPATH = . \
     ../carla-engine \
     ../carla-includes \
+    ../carla-native \
     ../carla-plugin \
     ../carla-utils
 
