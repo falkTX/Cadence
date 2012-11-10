@@ -34,6 +34,7 @@ CarlaEngineThread::~CarlaEngineThread()
 {
     qDebug("CarlaEngineThread::~CarlaEngineThread()");
     CARLA_ASSERT(m_stopNow);
+    CARLA_ASSERT(! engine->isRunning());
 }
 
 void CarlaEngineThread::startNow()
@@ -72,7 +73,7 @@ void CarlaEngineThread::run()
     CARLA_ASSERT(engine->isRunning());
 
     bool oscControlRegisted, usesSingleThread;
-    unsigned short id;
+    unsigned short i, id;
     double value;
 
     while (engine->isRunning() && ! m_stopNow)
@@ -80,7 +81,7 @@ void CarlaEngineThread::run()
         const ScopedLocker m(this);
         oscControlRegisted = engine->isOscControlRegisted();
 
-        for (unsigned short i=0; i < engine->maxPluginNumber(); i++)
+        for (i=0; i < engine->maxPluginNumber(); i++)
         {
             CarlaPlugin* const plugin = engine->getPluginUnchecked(i);
 

@@ -102,7 +102,7 @@ bool CarlaEngineOsc::idle()
             msgReceived = true;
     }
 
-    return msgReceived;
+    return !msgReceived;
 }
 
 void CarlaEngineOsc::close()

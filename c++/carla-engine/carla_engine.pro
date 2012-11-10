@@ -50,6 +50,7 @@ SOURCES     += rtaudio-4.0.11/RtAudio.cpp
 SOURCES     += rtmidi-2.0.1/RtMidi.cpp
 
 # Plugin
+DEFINES += DISTRHO_PLUGIN_TARGET_DSSI
 INCLUDEPATH += distrho-plugin-toolkit
 
 QMAKE_CXXFLAGS *= -std=c++0x

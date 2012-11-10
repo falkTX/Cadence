@@ -210,9 +210,12 @@ xycontroller:
 debug:
 	$(MAKE) DEBUG=true
 
-doc:
+doxygen:
 	$(MAKE) doc -C c++/carla-backend
 	$(MAKE) doc -C c++/carla-bridge
+	$(MAKE) doc -C c++/carla-engine
+	$(MAKE) doc -C c++/carla-native
+# 	$(MAKE) doc -C c++/carla-plugin
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -255,6 +258,7 @@ clean:
 	$(MAKE) clean -C c++/jackmeter
 	$(MAKE) clean -C c++/xycontroller
 	rm -f *~ src/*~ src/*.pyc src/ui_*.py src/resources_rc.py
+	rm -rf c++/*/doxygen
 
 install:
 	# Create directories
