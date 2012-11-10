@@ -66,6 +66,7 @@ CarlaEngineControlPort::CarlaEngineControlPort(const bool isInput, const Process
 
 CarlaEngineControlPort::~CarlaEngineControlPort()
 {
+    qDebug("CarlaEngineControlPort::~CarlaEngineControlPort()");
 }
 
 void CarlaEngineControlPort::initBuffer(CarlaEngine* const engine)
@@ -166,6 +167,7 @@ CarlaEngineMidiPort::CarlaEngineMidiPort(const bool isInput, const ProcessMode p
 
 CarlaEngineMidiPort::~CarlaEngineMidiPort()
 {
+    qDebug("CarlaEngineMidiPort::~CarlaEngineMidiPort()");
 }
 
 void CarlaEngineMidiPort::initBuffer(CarlaEngine* const engine)
@@ -411,6 +413,7 @@ CarlaEngine::CarlaEngine()
     bufferSize = 0;
     sampleRate = 0.0;
 
+    m_aboutToClose = false;
     m_maxPluginNumber = 0;
 
 #ifndef Q_COMPILER_INITIALIZER_LISTS
@@ -547,6 +550,8 @@ bool CarlaEngine::init(const char* const clientName)
 {
     qDebug("CarlaEngine::init(\"%s\")", clientName);
 
+    m_aboutToClose = false;
+
 #ifndef BUILD_BRIDGE
     m_osc.init(clientName);
     m_oscData = m_osc.getControlData();
@@ -564,6 +569,7 @@ bool CarlaEngine::close()
 {
     qDebug("CarlaEngine::close()");
 
+    m_aboutToClose = true;
     m_thread.stopNow();
 
 #ifndef BUILD_BRIDGE
@@ -781,9 +787,6 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
     m_carlaPlugins[id] = plugin;
     m_uniqueNames[id]  = plugin->name();
 
-    if (! m_thread.isRunning())
-        m_thread.startNow();
-
     return id;
 }
 
@@ -827,18 +830,8 @@ bool CarlaEngine::removePlugin(const unsigned short id)
         }
 #endif
 
-        if (isRunning())
-        {
-            // only re-start check thread if there are still plugins left
-            for (unsigned short i=0; i < m_maxPluginNumber; i++)
-            {
-                if (m_carlaPlugins[i])
-                {
-                    m_thread.startNow();
-                    break;
-                }
-            }
-        }
+        if (isRunning() && ! m_aboutToClose)
+            m_thread.startNow();
 
         return true;
     }
@@ -871,6 +864,9 @@ void CarlaEngine::removeAllPlugins()
     }
 
     m_maxPluginNumber = 0;
+
+    if (isRunning() && ! m_aboutToClose)
+        m_thread.startNow();
 }
 
 void CarlaEngine::idlePluginGuis()
@@ -1025,6 +1021,12 @@ uint32_t CarlaEngine::getBufferSize() const
 const CarlaEngineTimeInfo* CarlaEngine::getTimeInfo() const
 {
     return &timeInfo;
+}
+
+void CarlaEngine::aboutToClose()
+{
+    qDebug("CarlaEngine::aboutToClose()");
+    m_aboutToClose = true;
 }
 
 // -----------------------------------------------------------------------

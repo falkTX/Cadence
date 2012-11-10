@@ -34,7 +34,6 @@ CarlaEngineThread::~CarlaEngineThread()
 {
     qDebug("CarlaEngineThread::~CarlaEngineThread()");
     CARLA_ASSERT(m_stopNow);
-    CARLA_ASSERT(! engine->isRunning());
 }
 
 void CarlaEngineThread::startNow()

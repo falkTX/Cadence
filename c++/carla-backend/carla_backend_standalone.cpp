@@ -180,6 +180,7 @@ bool engine_close()
         return false;
     }
 
+    carlaEngine->aboutToClose();
     carlaEngine->removeAllPlugins();
     bool closed = carlaEngine->close();
 

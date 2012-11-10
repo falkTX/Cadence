@@ -70,20 +70,26 @@ void CarlaEngineOsc::init(const char* const name)
     m_serverTCP = lo_server_new_with_proto(nullptr, LO_TCP, osc_error_handlerTCP);
     m_serverUDP = lo_server_new_with_proto(nullptr, LO_UDP, osc_error_handlerUDP);
 
-    // get our full OSC servers path
-    char* const serverPathTCP = lo_server_get_url(m_serverTCP);
-    m_serverPathTCP  = serverPathTCP;
-    m_serverPathTCP += m_name;
-    free(serverPathTCP);
+    if (m_serverTCP)
+    {
+        // get our full OSC servers path
+        char* const serverPathTCP = lo_server_get_url(m_serverTCP);
+        m_serverPathTCP  = serverPathTCP;
+        m_serverPathTCP += m_name;
+        free(serverPathTCP);
 
-    char* const serverPathUDP = lo_server_get_url(m_serverUDP);
-    m_serverPathUDP  = serverPathUDP;
-    m_serverPathUDP += m_name;
-    free(serverPathUDP);
+        lo_server_add_method(m_serverTCP, nullptr, nullptr, osc_message_handler, this);
+    }
 
-    // register message handler
-    lo_server_add_method(m_serverTCP, nullptr, nullptr, osc_message_handler, this);
-    lo_server_add_method(m_serverUDP, nullptr, nullptr, osc_message_handler, this);
+    if (m_serverUDP)
+    {
+        char* const serverPathUDP = lo_server_get_url(m_serverUDP);
+        m_serverPathUDP  = serverPathUDP;
+        m_serverPathUDP += m_name;
+        free(serverPathUDP);
+
+        lo_server_add_method(m_serverUDP, nullptr, nullptr, osc_message_handler, this);
+    }
 }
 
 bool CarlaEngineOsc::idle()
@@ -116,13 +122,20 @@ void CarlaEngineOsc::close()
 
     m_controlData.free();
 
-    lo_server_thread_del_method(m_serverTCP, nullptr, nullptr);
-    lo_server_thread_del_method(m_serverUDP, nullptr, nullptr);
-    lo_server_thread_free(m_serverTCP);
-    lo_server_thread_free(m_serverUDP);
+    if (m_serverTCP)
+    {
+        lo_server_del_method(m_serverTCP, nullptr, nullptr);
+        lo_server_free(m_serverTCP);
+        m_serverTCP = nullptr;
+    }
 
-    m_serverTCP = nullptr;
-    m_serverUDP = nullptr;
+    if (m_serverUDP)
+    {
+        lo_server_del_method(m_serverUDP, nullptr, nullptr);
+        lo_server_free(m_serverUDP);
+        m_serverUDP = nullptr;
+    }
+
     m_serverPathTCP.clear();
     m_serverPathUDP.clear();
 

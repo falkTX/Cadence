@@ -35,12 +35,16 @@ public:
           client(client_),
           port(port_)
     {
+        qDebug("CarlaEngineJackAudioPort::CarlaEngineJackAudioPort(%s, %s)", bool2str(isInput), ProcessMode2Str(processMode));
+
         if (processMode == PROCESS_MODE_CONTINUOUS_RACK || processMode == PROCESS_MODE_PATCHBAY)
             CARLA_ASSERT(! port);
     }
 
     ~CarlaEngineJackAudioPort()
     {
+        qDebug("CarlaEngineJackAudioPort::~CarlaEngineJackAudioPort()");
+
         if (client && port)
             jackbridge_port_unregister(client, port);
     }
@@ -71,12 +75,16 @@ public:
           client(client_),
           port(port_)
     {
+        qDebug("CarlaEngineJackControlPort::CarlaEngineJackControlPort(%s, %s)", bool2str(isInput), ProcessMode2Str(processMode));
+
         if (processMode == PROCESS_MODE_CONTINUOUS_RACK || processMode == PROCESS_MODE_PATCHBAY)
             CARLA_ASSERT(! port);
     }
 
     ~CarlaEngineJackControlPort()
     {
+        qDebug("CarlaEngineJackControlPort::~CarlaEngineJackControlPort()");
+
         if (client && port)
             jackbridge_port_unregister(client, port);
     }
@@ -228,12 +236,16 @@ public:
           client(client_),
           port(port_)
     {
+        qDebug("CarlaEngineJackMidiPort::CarlaEngineJackMidiPort(%s, %s)", bool2str(isInput), ProcessMode2Str(processMode));
+
         if (processMode == PROCESS_MODE_CONTINUOUS_RACK || processMode == PROCESS_MODE_PATCHBAY)
             CARLA_ASSERT(! port);
     }
 
     ~CarlaEngineJackMidiPort()
     {
+        qDebug("CarlaEngineJackMidiPort::~CarlaEngineJackMidiPort()");
+
         if (client && port)
             jackbridge_port_unregister(client, port);
     }

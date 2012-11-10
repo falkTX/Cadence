@@ -617,6 +617,8 @@ public:
     uint32_t getBufferSize() const;
     const CarlaEngineTimeInfo* getTimeInfo() const;
 
+    void aboutToClose();
+
     // -------------------------------------------------------------------
     // Information (audio peaks)
 
@@ -810,6 +812,7 @@ private:
     double m_insPeak[MAX_PLUGINS * MAX_PEAKS];
     double m_outsPeak[MAX_PLUGINS * MAX_PEAKS];
 
+    bool m_aboutToClose;
     unsigned short m_maxPluginNumber;
 
 #ifdef CARLA_ENGINE_JACK
