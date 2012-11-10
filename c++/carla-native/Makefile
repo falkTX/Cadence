@@ -7,7 +7,7 @@
 include ../Makefile.mk
 
 HAVE_ZYN_DEPS     = $(shell pkg-config --exists fftw3 mxml && echo true)
-HAVE_ZYN_GUI_DEPS = $(shell pkg-config --exists ntk && echo true)
+HAVE_ZYN_GUI_DEPS = $(shell which ntk-config)
 
 # --------------------------------------------------------------
 
@@ -18,8 +18,8 @@ BUILD_CXX_FLAGS  += $(shell pkg-config --cflags QtCore)
 ifeq ($(HAVE_ZYN_DEPS),true)
 BUILD_CXX_FLAGS  += $(shell pkg-config --cflags fftw3 mxml) -DWANT_ZYNADDSUBFX
 
-ifeq ($(HAVE_ZYN_GUI_DEPS),true)
-BUILD_CXX_FLAGS  += $(shell pkg-config --cflags ntk) -DWANT_ZYNADDSUBFX_GUI
+ifneq ($(HAVE_ZYN_GUI_DEPS))
+BUILD_CXX_FLAGS  += $(shell ntk-config --cxxflags) -DWANT_ZYNADDSUBFX_GUI
 endif
 endif
 

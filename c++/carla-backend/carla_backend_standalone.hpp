@@ -22,6 +22,8 @@
 
 #include "carla_backend.hpp"
 
+CARLA_BACKEND_USE_NAMESPACE
+
 /*!
  * @defgroup CarlaBackendStandalone Carla Backend Standalone
  *
@@ -31,8 +33,8 @@
  */
 
 struct PluginInfo {
-    CarlaBackend::PluginType type;
-    CarlaBackend::PluginCategory category;
+    PluginType type;
+    PluginCategory category;
     unsigned int hints;
     const char* binary;
     const char* name;
@@ -42,8 +44,8 @@ struct PluginInfo {
     long uniqueId;
 
     PluginInfo()
-        : type(CarlaBackend::PLUGIN_NONE),
-          category(CarlaBackend::PLUGIN_CATEGORY_NONE),
+        : type(PLUGIN_NONE),
+          category(PLUGIN_CATEGORY_NONE),
           hints(0x0),
           binary(nullptr),
           name(nullptr),
@@ -87,11 +89,11 @@ struct ScalePointInfo {
 };
 
 struct GuiInfo {
-    CarlaBackend::GuiType type;
+    GuiType type;
     bool resizable;
 
     GuiInfo()
-        : type(CarlaBackend::GUI_NONE),
+        : type(GUI_NONE),
           resizable(false) {}
 };
 
@@ -107,7 +109,7 @@ CARLA_EXPORT bool engine_init(const char* driver_name, const char* client_name);
 CARLA_EXPORT bool engine_close();
 CARLA_EXPORT bool is_engine_running();
 
-CARLA_EXPORT short add_plugin(CarlaBackend::BinaryType btype, CarlaBackend::PluginType ptype, const char* filename, const char* name, const char* label, void* extra_stuff);
+CARLA_EXPORT short add_plugin(BinaryType btype, PluginType ptype, const char* filename, const char* name, const char* label, void* extra_stuff);
 CARLA_EXPORT bool  remove_plugin(unsigned short plugin_id);
 
 CARLA_EXPORT const PluginInfo* get_plugin_info(unsigned short plugin_id);
@@ -118,10 +120,10 @@ CARLA_EXPORT const ParameterInfo* get_parameter_info(unsigned short plugin_id, u
 CARLA_EXPORT const ScalePointInfo* get_parameter_scalepoint_info(unsigned short plugin_id, uint32_t parameter_id, uint32_t scalepoint_id);
 CARLA_EXPORT const GuiInfo* get_gui_info(unsigned short plugin_id);
 
-CARLA_EXPORT const CarlaBackend::ParameterData* get_parameter_data(unsigned short plugin_id, uint32_t parameter_id);
-CARLA_EXPORT const CarlaBackend::ParameterRanges* get_parameter_ranges(unsigned short plugin_id, uint32_t parameter_id);
-CARLA_EXPORT const CarlaBackend::MidiProgramData* get_midi_program_data(unsigned short plugin_id, uint32_t midi_program_id);
-CARLA_EXPORT const CarlaBackend::CustomData* get_custom_data(unsigned short plugin_id, uint32_t custom_data_id);
+CARLA_EXPORT const ParameterData* get_parameter_data(unsigned short plugin_id, uint32_t parameter_id);
+CARLA_EXPORT const ParameterRanges* get_parameter_ranges(unsigned short plugin_id, uint32_t parameter_id);
+CARLA_EXPORT const MidiProgramData* get_midi_program_data(unsigned short plugin_id, uint32_t midi_program_id);
+CARLA_EXPORT const CustomData* get_custom_data(unsigned short plugin_id, uint32_t custom_data_id);
 CARLA_EXPORT const char* get_chunk_data(unsigned short plugin_id);
 
 CARLA_EXPORT uint32_t get_parameter_count(unsigned short plugin_id);
@@ -155,7 +157,7 @@ CARLA_EXPORT void set_parameter_midi_cc(unsigned short plugin_id, uint32_t param
 CARLA_EXPORT void set_program(unsigned short plugin_id, uint32_t program_id);
 CARLA_EXPORT void set_midi_program(unsigned short plugin_id, uint32_t midi_program_id);
 
-CARLA_EXPORT void set_custom_data(unsigned short plugin_id, CarlaBackend::CustomDataType dtype, const char* key, const char* value);
+CARLA_EXPORT void set_custom_data(unsigned short plugin_id, CustomDataType dtype, const char* key, const char* value);
 CARLA_EXPORT void set_chunk_data(unsigned short plugin_id, const char* chunk_data);
 CARLA_EXPORT void set_gui_container(unsigned short plugin_id, uintptr_t gui_addr);
 
@@ -171,8 +173,8 @@ CARLA_EXPORT double   get_sample_rate();
 CARLA_EXPORT const char* get_last_error();
 CARLA_EXPORT const char* get_host_osc_url();
 
-CARLA_EXPORT void set_callback_function(CarlaBackend::CallbackFunc func);
-CARLA_EXPORT void set_option(CarlaBackend::OptionsType option, int value, const char* value_str);
+CARLA_EXPORT void set_callback_function(CallbackFunc func);
+CARLA_EXPORT void set_option(OptionsType option, int value, const char* value_str);
 
 CARLA_EXPORT void nsm_announce(const char* url, int pid);
 CARLA_EXPORT void nsm_reply_open();

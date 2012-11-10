@@ -23,7 +23,7 @@ HAVE_LINUXSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
 endif
 
 HAVE_ZYN_DEPS     = $(shell pkg-config --exists fftw3 mxml && echo true)
-HAVE_ZYN_GUI_DEPS = $(shell pkg-config --exists ntk && echo true)
+HAVE_ZYN_GUI_DEPS = $(shell which ntk-config)
 
 # --------------------------------------------------------------
 
@@ -61,22 +61,17 @@ endif
 ifeq ($(HAVE_ZYN_DEPS),true)
 LINK_FLAGS       += $(shell pkg-config --libs fftw3 mxml)
 
-ifeq ($(HAVE_ZYN_GUI_DEPS),true)
-LINK_FLAGS       += $(shell pkg-config --libs ntk)
+ifneq ($(HAVE_ZYN_GUI_DEPS),)
+LINK_FLAGS       += $(shell ntk-config --ldflags)
 endif
 endif
 
 OBJS = \
 	carla_backend_standalone.o \
 
-OBJS += \
-	../carla-engine/carla_engine.a \
-	../carla-native/carla_native.a \
-	../carla-plugin/carla_plugin.a
-
-# FIXME!!
-OBJS += \
-	../carla-native/*.o
+OBJS += ../carla-engine/carla_engine.a
+OBJS += ../carla-plugin/carla_plugin.a
+OBJS += ../carla-native/carla_native.a
 
 # others
 ifeq ($(CARLA_PLUGIN_SUPPORT),true)
@@ -92,6 +87,7 @@ doc: carla_backend.doxygen
 	doxygen $<
 
 carla_backend.so: $(OBJS)
+	echo $(LINK_FLAGS)
 	$(CXX) $^ $(LINK_FLAGS) -o $@ && $(STRIP) $@
 
 # --------------------------------------------------------------

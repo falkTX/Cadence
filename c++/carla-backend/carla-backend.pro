@@ -13,7 +13,7 @@ PKGCONFIG += jack
 PKGCONFIG += alsa libpulse-simple
 PKGCONFIG += suil-0
 PKGCONFIG += fluidsynth linuxsampler
-PKGCONFIG += fftw3 mxml ntk
+PKGCONFIG += fftw3 mxml
 
 TARGET   = carla_backend
 TEMPLATE = app # lib
@@ -34,14 +34,19 @@ INCLUDEPATH = . \
 
 LIBS = \
     ../carla-engine/carla_engine.a \
-    ../carla-native/carla_native.a \
-    ../carla-plugin/carla_plugin.a
+    ../carla-plugin/carla_plugin.a \
+    ../carla-native/carla_native.a
 
-LIBS = \
+LIBS += \
     ../carla-lilv/carla_lilv.a \
     ../carla-rtmempool/carla_rtmempool.a
 
 QMAKE_CXXFLAGS *= -std=c++0x
+
+# NTK
+QMAKE_CXXFLAGS *= `ntk-config --cxxflags`
+QMAKE_LFLAGS *= `ntk-config --ldflags`
+LIBS += `ntk-config --libs`
 
 unix {
 LIBS += -ldl -lm
