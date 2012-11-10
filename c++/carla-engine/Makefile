@@ -66,7 +66,7 @@ endif
 
 all: carla_engine.a
 
-doc: carla_engine.doxygen
+doxygen: carla_engine.doxygen
 	doxygen $<
 
 carla_engine.a: $(OBJS)

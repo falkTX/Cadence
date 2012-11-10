@@ -15,6 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
+#ifdef CARLA_ENGINE_PLUGIN
+
 #include "carla_engine.hpp"
 #include "carla_plugin.hpp"
 
@@ -530,4 +532,8 @@ Plugin* createPlugin()
 
 END_NAMESPACE_DISTRHO
 
+// -------------------------------------------------
+
 #include "DistrhoPluginMain.cpp"
+
+#endif // CARLA_ENGINE_PLUGIN

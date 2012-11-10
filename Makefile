@@ -211,11 +211,11 @@ debug:
 	$(MAKE) DEBUG=true
 
 doxygen:
-	$(MAKE) doc -C c++/carla-backend
-	$(MAKE) doc -C c++/carla-bridge
-	$(MAKE) doc -C c++/carla-engine
-	$(MAKE) doc -C c++/carla-native
-# 	$(MAKE) doc -C c++/carla-plugin
+	$(MAKE) doxygen -C c++/carla-backend
+	$(MAKE) doxygen -C c++/carla-bridge
+	$(MAKE) doxygen -C c++/carla-engine
+	$(MAKE) doxygen -C c++/carla-native
+	$(MAKE) doxygen -C c++/carla-plugin
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 

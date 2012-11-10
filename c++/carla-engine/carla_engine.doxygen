@@ -8,7 +8,7 @@ PROJECT_NAME           = "Carla Engine"
 PROJECT_NUMBER         =
 PROJECT_BRIEF          =
 PROJECT_LOGO           =
-OUTPUT_DIRECTORY       = doxygen
+OUTPUT_DIRECTORY       = ../../doc/carla-engine
 CREATE_SUBDIRS         = NO
 OUTPUT_LANGUAGE        = English
 BRIEF_MEMBER_DESC      = YES
@@ -99,7 +99,7 @@ INPUT                  =
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          =
 RECURSIVE              = NO
-EXCLUDE                =
+EXCLUDE                = carla_engine.cpp carla_engine_osc.hpp carla_engine_osc.cpp carla_engine_thread.hpp carla_engine_thread.cpp DistrhoPluginInfo.h
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       =
 EXCLUDE_SYMBOLS        =
@@ -132,7 +132,7 @@ IGNORE_PREFIX          =
 # configuration options related to the HTML output
 #---------------------------------------------------------------------------
 GENERATE_HTML          = YES
-HTML_OUTPUT            = html
+HTML_OUTPUT            = .
 HTML_FILE_EXTENSION    = .html
 HTML_HEADER            =
 HTML_FOOTER            =
@@ -241,7 +241,7 @@ EXPAND_ONLY_PREDEF     = NO
 SEARCH_INCLUDES        = YES
 INCLUDE_PATH           =
 INCLUDE_FILE_PATTERNS  =
-PREDEFINED             = DOXYGEN CARLA_ENGINE_JACK CARLA_ENGINE_RTAUDIO
+PREDEFINED             = DOXYGEN CARLA_ENGINE_JACK CARLA_ENGINE_RTAUDIO CARLA_ENGINE_PLUGIN
 EXPAND_AS_DEFINED      =
 SKIP_FUNCTION_MACROS   = YES
 #---------------------------------------------------------------------------

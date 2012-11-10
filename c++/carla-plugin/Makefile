@@ -59,7 +59,7 @@ OBJS = \
 
 all: carla_plugin.a
 
-doc: carla_plugin.doxygen
+doxygen: carla_plugin.doxygen
 	doxygen $<
 
 carla_plugin.a: $(OBJS)

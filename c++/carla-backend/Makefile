@@ -83,11 +83,10 @@ endif
 
 all: carla_backend.so
 
-doc: carla_backend.doxygen
+doxygen: carla_backend.doxygen
 	doxygen $<
 
 carla_backend.so: $(OBJS)
-	echo $(LINK_FLAGS)
 	$(CXX) $^ $(LINK_FLAGS) -o $@ && $(STRIP) $@
 
 # --------------------------------------------------------------

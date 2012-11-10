@@ -422,7 +422,7 @@ vst__win64.o: ../carla-backend/vst.cpp
 
 # --------------------------------------------------------------
 
-doc: carla_bridge.doxygen
+doxygen: carla_bridge.doxygen
 	doxygen $<
 
 clean:

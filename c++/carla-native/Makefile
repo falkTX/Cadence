@@ -39,7 +39,7 @@ endif
 
 all: carla_native.a
 
-doc: carla_native.doxygen
+doxygen: carla_native.doxygen
 	doxygen $<
 
 carla_native.a: $(OBJS)
