@@ -92,7 +92,7 @@ uint32_t CarlaEngineControlPort::getEventCount()
         uint32_t count = 0;
         const CarlaEngineControlEvent* const events = (CarlaEngineControlEvent*)buffer;
 
-        for (unsigned short i=0; i < CarlaEngine::MAX_ENGINE_CONTROL_EVENTS; i++, count++)
+        for (unsigned short i=0; i < CarlaEngine::MAX_CONTROL_EVENTS; i++, count++)
         {
             if (events[i].type == CarlaEngineNullEvent)
                 break;
@@ -115,11 +115,11 @@ const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(uint32_t index)
 #ifndef BUILD_BRIDGE
     if (processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
-        CARLA_ASSERT(index < CarlaEngine::MAX_ENGINE_CONTROL_EVENTS);
+        CARLA_ASSERT(index < CarlaEngine::MAX_CONTROL_EVENTS);
 
         const CarlaEngineControlEvent* const events = (CarlaEngineControlEvent*)buffer;
 
-        if (index < CarlaEngine::MAX_ENGINE_CONTROL_EVENTS)
+        if (index < CarlaEngine::MAX_CONTROL_EVENTS)
             return &events[index];
     }
 #endif
@@ -140,7 +140,7 @@ void CarlaEngineControlPort::writeEvent(CarlaEngineControlEventType type, uint32
     {
         CarlaEngineControlEvent* const events = (CarlaEngineControlEvent*)buffer;
 
-        for (unsigned short i=0; i < CarlaEngine::MAX_ENGINE_CONTROL_EVENTS; i++)
+        for (unsigned short i=0; i < CarlaEngine::MAX_CONTROL_EVENTS; i++)
         {
             if (events[i].type != CarlaEngineNullEvent)
                 continue;
@@ -193,7 +193,7 @@ uint32_t CarlaEngineMidiPort::getEventCount()
         uint32_t count = 0;
         const CarlaEngineMidiEvent* const events = (CarlaEngineMidiEvent*)buffer;
 
-        for (unsigned short i=0; i < CarlaEngine::MAX_ENGINE_MIDI_EVENTS; i++, count++)
+        for (unsigned short i=0; i < CarlaEngine::MAX_MIDI_EVENTS; i++, count++)
         {
             if (events[i].size == 0)
                 break;
@@ -216,11 +216,11 @@ const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(uint32_t index)
 #ifndef BUILD_BRIDGE
     if (processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
-        CARLA_ASSERT(index < CarlaEngine::MAX_ENGINE_MIDI_EVENTS);
+        CARLA_ASSERT(index < CarlaEngine::MAX_MIDI_EVENTS);
 
         const CarlaEngineMidiEvent* const events = (CarlaEngineMidiEvent*)buffer;
 
-        if (index < CarlaEngine::MAX_ENGINE_MIDI_EVENTS)
+        if (index < CarlaEngine::MAX_MIDI_EVENTS)
             return &events[index];
     }
 #endif
@@ -245,7 +245,7 @@ void CarlaEngineMidiPort::writeEvent(uint32_t time, const uint8_t* data, uint8_t
 
         CarlaEngineMidiEvent* const events = (CarlaEngineMidiEvent*)buffer;
 
-        for (unsigned short i=0; i < CarlaEngine::MAX_ENGINE_MIDI_EVENTS; i++)
+        for (unsigned short i=0; i < CarlaEngine::MAX_MIDI_EVENTS; i++)
         {
             if (events[i].size != 0)
                 continue;
@@ -437,7 +437,7 @@ CarlaEngine::~CarlaEngine()
 }
 
 // -----------------------------------------------------------------------
-// Static values
+// Static values and calls
 
 unsigned int CarlaEngine::getDriverCount()
 {
@@ -888,8 +888,8 @@ void CarlaEngine::processRack(float* inBuf[2], float* outBuf[2], uint32_t frames
     // initialize outputs (zero)
     carla_zeroF(outBuf[0], frames);
     carla_zeroF(outBuf[1], frames);
-    memset(rackControlEventsOut, 0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
-    memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+    memset(rackControlEventsOut, 0, sizeof(CarlaEngineControlEvent)*MAX_CONTROL_EVENTS);
+    memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
 
     bool processed = false;
 
@@ -905,12 +905,12 @@ void CarlaEngine::processRack(float* inBuf[2], float* outBuf[2], uint32_t frames
                 // initialize inputs (from previous outputs)
                 memcpy(inBuf[0], outBuf[0], sizeof(float)*frames);
                 memcpy(inBuf[1], outBuf[1], sizeof(float)*frames);
-                memcpy(rackMidiEventsIn, rackMidiEventsOut, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+                memcpy(rackMidiEventsIn, rackMidiEventsOut, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
 
                 // initialize outputs (zero)
                 carla_zeroF(outBuf[0], frames);
                 carla_zeroF(outBuf[1], frames);
-                memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+                memset(rackMidiEventsOut, 0, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
             }
 
             // process
@@ -952,7 +952,7 @@ void CarlaEngine::processRack(float* inBuf[2], float* outBuf[2], uint32_t frames
             // if plugin has no midi output, add previous midi input
             if (plugin->midiOutCount() == 0)
             {
-                memcpy(rackMidiEventsOut, rackMidiEventsIn, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+                memcpy(rackMidiEventsOut, rackMidiEventsIn, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
             }
 
             // set peaks
@@ -989,7 +989,7 @@ void CarlaEngine::processRack(float* inBuf[2], float* outBuf[2], uint32_t frames
     {
         memcpy(outBuf[0], inBuf[0], sizeof(float)*frames);
         memcpy(outBuf[1], inBuf[1], sizeof(float)*frames);
-        memcpy(rackMidiEventsOut, rackMidiEventsIn, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+        memcpy(rackMidiEventsOut, rackMidiEventsIn, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
     }
 }
 #endif

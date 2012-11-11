@@ -705,7 +705,7 @@ protected:
             float* outBuf[2] = { audioOut1, audioOut2 };
 
             // initialize control input
-            memset(rackControlEventsIn, 0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
+            memset(rackControlEventsIn, 0, sizeof(CarlaEngineControlEvent)*MAX_CONTROL_EVENTS);
             {
                 jack_midi_event_t jackEvent;
                 const uint32_t jackEventCount = jackbridge_midi_get_event_count(controlIn);
@@ -761,14 +761,14 @@ protected:
             }
 
             // initialize midi input
-            memset(rackMidiEventsIn, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+            memset(rackMidiEventsIn, 0, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
             {
                 uint32_t i = 0, j = 0;
                 jack_midi_event_t jackEvent;
 
                 while (jackbridge_midi_event_get(&jackEvent, midiIn, j++) == 0)
                 {
-                    if (i == MAX_ENGINE_MIDI_EVENTS)
+                    if (i == MAX_MIDI_EVENTS)
                         break;
 
                     if (jackEvent.size < 4)
@@ -788,7 +788,7 @@ protected:
             {
                 jackbridge_midi_clear_buffer(controlOut);
 
-                for (unsigned short i=0; i < MAX_ENGINE_CONTROL_EVENTS; i++)
+                for (unsigned short i=0; i < MAX_CONTROL_EVENTS; i++)
                 {
                     CarlaEngineControlEvent* const event = &rackControlEventsOut[i];
 
@@ -836,7 +836,7 @@ protected:
             {
                 jackbridge_midi_clear_buffer(midiOut);
 
-                for (unsigned short i=0; i < MAX_ENGINE_MIDI_EVENTS; i++)
+                for (unsigned short i=0; i < MAX_MIDI_EVENTS; i++)
                 {
                     if (rackMidiEventsOut[i].size == 0)
                         break;

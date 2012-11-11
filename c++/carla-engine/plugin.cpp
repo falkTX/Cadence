@@ -464,7 +464,7 @@ protected:
         float* outBuf[2] = { outputs[0], outputs[1] };
 
         // initialize control input
-        memset(rackControlEventsIn, 0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
+        memset(rackControlEventsIn, 0, sizeof(CarlaEngineControlEvent)*CarlaEngine::MAX_CONTROL_EVENTS);
         {
             uint32_t carlaEventIndex = 0;
 
@@ -483,13 +483,13 @@ protected:
         memcpy(prevParamBuffers, paramBuffers, sizeof(float)*paramCount);
 
         // initialize midi input
-        memset(rackMidiEventsIn, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+        memset(rackMidiEventsIn, 0, sizeof(CarlaEngineMidiEvent)*CarlaEngine::MAX_MIDI_EVENTS);
         {
             const DISTRHO::MidiEvent* event;
 
             for (uint32_t i=0, j=0; j < midiEventCount; j++)
             {
-                if (i == MAX_ENGINE_MIDI_EVENTS)
+                if (i == CarlaEngine::MAX_MIDI_EVENTS)
                     break;
 
                 event = &midiEvents[j];

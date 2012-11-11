@@ -230,13 +230,13 @@ protected:
         float* outBuf[2] = { outBuf1, outBuf2 };
 
         // initialize control input
-        memset(rackControlEventsIn, 0, sizeof(CarlaEngineControlEvent)*MAX_ENGINE_CONTROL_EVENTS);
+        memset(rackControlEventsIn, 0, sizeof(CarlaEngineControlEvent)*MAX_CONTROL_EVENTS);
         {
             // TODO
         }
 
         // initialize midi input
-        memset(rackMidiEventsIn, 0, sizeof(CarlaEngineMidiEvent)*MAX_ENGINE_MIDI_EVENTS);
+        memset(rackMidiEventsIn, 0, sizeof(CarlaEngineMidiEvent)*MAX_MIDI_EVENTS);
         {
             // TODO
         }

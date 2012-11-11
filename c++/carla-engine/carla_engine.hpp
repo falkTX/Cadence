@@ -247,31 +247,6 @@ struct CarlaEngineOptions {
           preferPluginBridges(false),
           preferUiBridges(true),
           oscUiTimeout(4000/100) {}
-
-//    void reset()
-//    {
-//        processMode          = PROCESS_MODE_CONTINUOUS_RACK;
-//        processHighPrecision = false;
-//        maxParameters        = MAX_PARAMETERS;
-//        preferredBufferSize  = 512;
-//        preferredSampleRate  = 44100;
-//        forceStereo          = false;
-//        useDssiVstChunks     = false;
-//        preferPluginBridges  = false;
-//        preferUiBridges      = true;
-//        oscUiTimeout         = 4000/100;
-
-//        bridge_posix32.clear();
-//        bridge_posix64.clear();
-//        bridge_win32.clear();
-//        bridge_win64.clear();
-//        bridge_lv2gtk2.clear();
-//        bridge_lv2gtk3.clear();
-//        bridge_lv2qt4.clear();
-//        bridge_lv2x11.clear();
-//        bridge_vsthwnd.clear();
-//        bridge_vstx11.clear();
-//    }
 };
 #endif
 
@@ -545,7 +520,7 @@ public:
     virtual ~CarlaEngine();
 
     // -------------------------------------------------------------------
-    // Static values
+    // Static values and calls
 
     /*!
      * Maximum number of peaks per plugin.\n
@@ -732,12 +707,12 @@ public:
     // -------------------------------------------------------------------
     // Rack mode
 
-    static const unsigned short MAX_ENGINE_CONTROL_EVENTS = 512;
-    static const unsigned short MAX_ENGINE_MIDI_EVENTS    = 512;
-    CarlaEngineControlEvent rackControlEventsIn[MAX_ENGINE_CONTROL_EVENTS];
-    CarlaEngineControlEvent rackControlEventsOut[MAX_ENGINE_CONTROL_EVENTS];
-    CarlaEngineMidiEvent rackMidiEventsIn[MAX_ENGINE_MIDI_EVENTS];
-    CarlaEngineMidiEvent rackMidiEventsOut[MAX_ENGINE_MIDI_EVENTS];
+    static const unsigned short MAX_CONTROL_EVENTS = 512;
+    static const unsigned short MAX_MIDI_EVENTS    = 512;
+    CarlaEngineControlEvent rackControlEventsIn[MAX_CONTROL_EVENTS];
+    CarlaEngineControlEvent rackControlEventsOut[MAX_CONTROL_EVENTS];
+    CarlaEngineMidiEvent rackMidiEventsIn[MAX_MIDI_EVENTS];
+    CarlaEngineMidiEvent rackMidiEventsOut[MAX_MIDI_EVENTS];
 #endif
 
     // -------------------------------------
