@@ -414,14 +414,14 @@ public:
         param.data    = new ParameterData[params];
         param.ranges  = new ParameterRanges[params];
 
-        const int portNameSize = CarlaEngine::maxPortNameSize() - 1;
+        const int portNameSize = x_engine->maxPortNameSize() - 1;
         char portName[portNameSize];
 
         // ---------------------------------------
         // Audio Outputs
 
 #ifndef BUILD_BRIDGE
-        if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
         {
             strcpy(portName, m_name);
             strcat(portName, ":out-left");
@@ -434,7 +434,7 @@ public:
         aOut.rindexes[0] = 0;
 
 #ifndef BUILD_BRIDGE
-        if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
         {
             strcpy(portName, m_name);
             strcat(portName, ":out-right");
@@ -450,7 +450,7 @@ public:
         // MIDI Input
 
 #ifndef BUILD_BRIDGE
-        if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
         {
             strcpy(portName, m_name);
             strcat(portName, ":midi-in");
@@ -465,7 +465,7 @@ public:
         // Parameters
 
 #ifndef BUILD_BRIDGE
-        if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
         {
             strcpy(portName, m_name);
             strcat(portName, ":control-in");
@@ -477,7 +477,7 @@ public:
         param.portCin = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, true);
 
 #ifndef BUILD_BRIDGE
-        if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+        if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
         {
             strcpy(portName, m_name);
             strcat(portName, ":control-out");
@@ -872,17 +872,17 @@ public:
                 // Control change
                 switch (cinEvent->type)
                 {
-                case CarlaEngineEventNull:
+                case CarlaEngineNullEvent:
                     break;
 
-                case CarlaEngineEventControlChange:
+                case CarlaEngineParameterChangeEvent:
                 {
                     double value;
 
                     // Control backend stuff
                     if (cinEvent->channel == m_ctrlInChannel)
                     {
-                        if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cinEvent->controller) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
+                        if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cinEvent->parameter) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
                             value = cinEvent->value;
                             setDryWet(value, false, false);
@@ -890,7 +890,7 @@ public:
                             continue;
                         }
 
-                        if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cinEvent->controller) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
+                        if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cinEvent->parameter) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
                         {
                             value = cinEvent->value*127/100;
                             setVolume(value, false, false);
@@ -898,7 +898,7 @@ public:
                             continue;
                         }
 
-                        if (MIDI_IS_CONTROL_BALANCE(cinEvent->controller) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
+                        if (MIDI_IS_CONTROL_BALANCE(cinEvent->parameter) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
                         {
                             double left, right;
                             value = cinEvent->value/0.5 - 1.0;
@@ -932,7 +932,7 @@ public:
                     {
                         if (param.data[k].midiChannel != cinEvent->channel)
                             continue;
-                        if (param.data[k].midiCC != cinEvent->controller)
+                        if (param.data[k].midiCC != cinEvent->parameter)
                             continue;
                         if (param.data[k].type != PARAMETER_INPUT)
                             continue;
@@ -959,12 +959,12 @@ public:
                     break;
                 }
 
-                case CarlaEngineEventMidiBankChange:
+                case CarlaEngineMidiBankChangeEvent:
                     if (cinEvent->channel < 16)
                         nextBankIds[cinEvent->channel] = rint(cinEvent->value);
                     break;
 
-                case CarlaEngineEventMidiProgramChange:
+                case CarlaEngineMidiProgramChangeEvent:
                     if (cinEvent->channel < 16)
                     {
                         uint32_t bankId = nextBankIds[cinEvent->channel];
@@ -988,7 +988,7 @@ public:
                     }
                     break;
 
-                case CarlaEngineEventAllSoundOff:
+                case CarlaEngineAllSoundOffEvent:
                     if (cinEvent->channel == m_ctrlInChannel)
                     {
                         if (! allNotesOffSent)
@@ -1001,7 +1001,7 @@ public:
                     }
                     break;
 
-                case CarlaEngineEventAllNotesOff:
+                case CarlaEngineAllNotesOffEvent:
                     if (cinEvent->channel == m_ctrlInChannel)
                     {
                         if (! allNotesOffSent)
@@ -1185,7 +1185,7 @@ public:
 
                 // Output VU
 #ifndef BUILD_BRIDGE
-                if (CarlaEngine::processMode != PROCESS_MODE_CONTINUOUS_RACK)
+                if (x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
 #endif
                 {
                     for (k=0; i < 2 && k < frames; k++)
@@ -1221,7 +1221,7 @@ public:
             if (param.data[k].midiCC > 0)
             {
                 double value = (paramBuffers[k] - param.ranges[k].min) / (param.ranges[k].max - param.ranges[k].min);
-                param.portCout->writeEvent(CarlaEngineEventControlChange, framesOffset, param.data[k].midiChannel, param.data[k].midiCC, value);
+                param.portCout->writeEvent(CarlaEngineParameterChangeEvent, framesOffset, param.data[k].midiChannel, param.data[k].midiCC, value);
             }
         } // End of Control Output
 
@@ -1321,7 +1321,7 @@ CarlaPlugin* CarlaPlugin::newSF2(const initializer& init)
 #ifdef WANT_FLUIDSYNTH
     short id = init.engine->getNewPluginId();
 
-    if (id < 0 || id > CarlaEngine::maxPluginNumber())
+    if (id < 0 || id > init.engine->maxPluginNumber())
     {
         init.engine->setLastError("Maximum number of plugins reached");
         return nullptr;

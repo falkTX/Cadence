@@ -54,13 +54,20 @@ CarlaPlugin::CarlaPlugin(CarlaEngine* const engine, const unsigned short id)
     m_name = nullptr;
     m_filename = nullptr;
 
-#ifndef BUILD_BRIDGE
+    // options
+    m_ctrlInChannel = 0;
+    m_fixedBufferSize = true;
+
+#ifdef BUILD_BRIDGE
+    m_processHighPrecision = false;
+#else
+    m_processHighPrecision = x_engine->processHighPrecision();
+
     if (engine->processMode() == PROCESS_MODE_CONTINUOUS_RACK)
         m_ctrlInChannel = m_id;
-    else
 #endif
-        m_ctrlInChannel = 0;
 
+    // latency
     m_latency = 0;
     m_latencyBuffers = nullptr;
 
@@ -1110,7 +1117,7 @@ bool CarlaPlugin::showOscGui()
             carla_msleep(100);
     }
 
-    qWarning("CarlaPlugin::showOscGui() - Timeout while waiting for UI to respond");
+    qWarning("CarlaPlugin::showOscGui() - Timeout while waiting for UI to respond (waited %i msecs)", x_engine->oscUiTimeout());
     return false;
 }
 #endif

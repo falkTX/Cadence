@@ -315,11 +315,6 @@ public:
         {
             carlaEvent.time = jackEvent.time;
             carlaEvent.size = jackEvent.size;
-#ifdef Q_COMPILER_INITIALIZER_LISTS
-            carlaEvent.data = { 0 };
-#else
-            carlaEvent.data[0] = carlaEvent.data[1] = carlaEvent.data[2] = 0;
-#endif
             memcpy(carlaEvent.data, jackEvent.buffer, jackEvent.size);
             return &carlaEvent;
         }
@@ -821,11 +816,6 @@ protected:
                     {
                         rackMidiEventsIn[i].time = jackEvent.time;
                         rackMidiEventsIn[i].size = jackEvent.size;
-#ifdef Q_COMPILER_INITIALIZER_LISTS
-                        rackMidiEventsIn[i].data = { 0 };
-#else
-                        rackMidiEventsIn[i].data[0] = rackMidiEventsIn[i].data[1] = rackMidiEventsIn[i].data[2] = 0;
-#endif
                         memcpy(rackMidiEventsIn[i].data, jackEvent.buffer, jackEvent.size);
                         i += 1;
                     }

@@ -98,7 +98,7 @@ public:
                     if (osc.thread)
                     {
                         // Wait a bit first, try safe quit, then force kill
-                        if (osc.thread->isRunning() && ! osc.thread->wait(x_engine->options.oscUiTimeout * 100))
+                        if (osc.thread->isRunning() && ! osc.thread->wait(x_engine->oscUiTimeout() * 100))
                         {
                             qWarning("Failed to properly stop VST OSC GUI thread");
                             osc.thread->terminate();
@@ -516,14 +516,14 @@ public:
             param.ranges  = new ParameterRanges[params];
         }
 
-        const int portNameSize = CarlaEngine::maxPortNameSize() - 1;
+        const int portNameSize = x_engine->maxPortNameSize() - 1;
         char portName[portNameSize];
         bool needsCtrlIn = (aOuts > 0 || params > 0);
 
         for (j=0; j < aIns; j++)
         {
 #ifndef BUILD_BRIDGE
-            if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
                 sprintf(portName, "%s:input_%02i", m_name, j+1);
             else
 #endif
@@ -536,7 +536,7 @@ public:
         for (j=0; j < aOuts; j++)
         {
 #ifndef BUILD_BRIDGE
-            if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
                 sprintf(portName, "%s:output_%02i", m_name, j+1);
             else
 #endif
@@ -664,7 +664,7 @@ public:
         if (needsCtrlIn)
         {
 #ifndef BUILD_BRIDGE
-            if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-in");
@@ -679,7 +679,7 @@ public:
         if (mIns == 1)
         {
 #ifndef BUILD_BRIDGE
-            if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":midi-in");
@@ -694,7 +694,7 @@ public:
         if (mOuts == 1)
         {
 #ifndef BUILD_BRIDGE
-            if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":midi-out");
@@ -893,7 +893,7 @@ public:
         // Input VU
 
 #ifndef BUILD_BRIDGE
-        if (aIn.count > 0 && CarlaEngine::processMode != PROCESS_MODE_CONTINUOUS_RACK)
+        if (aIn.count > 0 && x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
 #else
         if (aIn.count > 0)
 #endif
@@ -946,17 +946,17 @@ public:
                 // Control change
                 switch (cinEvent->type)
                 {
-                case CarlaEngineEventNull:
+                case CarlaEngineNullEvent:
                     break;
 
-                case CarlaEngineEventControlChange:
+                case CarlaEngineParameterChangeEvent:
                 {
                     double value;
 
                     // Control backend stuff
                     if (cinEvent->channel == m_ctrlInChannel)
                     {
-                        if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cinEvent->controller) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
+                        if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cinEvent->parameter) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
                             value = cinEvent->value;
                             setDryWet(value, false, false);
@@ -964,7 +964,7 @@ public:
                             continue;
                         }
 
-                        if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cinEvent->controller) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
+                        if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cinEvent->parameter) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
                         {
                             value = cinEvent->value*127/100;
                             setVolume(value, false, false);
@@ -972,7 +972,7 @@ public:
                             continue;
                         }
 
-                        if (MIDI_IS_CONTROL_BALANCE(cinEvent->controller) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
+                        if (MIDI_IS_CONTROL_BALANCE(cinEvent->parameter) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
                         {
                             double left, right;
                             value = cinEvent->value/0.5 - 1.0;
@@ -1006,7 +1006,7 @@ public:
                     {
                         if (param.data[k].midiChannel != cinEvent->channel)
                             continue;
-                        if (param.data[k].midiCC != cinEvent->controller)
+                        if (param.data[k].midiCC != cinEvent->parameter)
                             continue;
                         if (param.data[k].type != PARAMETER_INPUT)
                             continue;
@@ -1033,10 +1033,10 @@ public:
                     break;
                 }
 
-                case CarlaEngineEventMidiBankChange:
+                case CarlaEngineMidiBankChangeEvent:
                     break;
 
-                case CarlaEngineEventMidiProgramChange:
+                case CarlaEngineMidiProgramChangeEvent:
                     if (cinEvent->channel == m_ctrlInChannel)
                     {
                         uint32_t progId = rint(cinEvent->value);
@@ -1049,7 +1049,7 @@ public:
                     }
                     break;
 
-                case CarlaEngineEventAllSoundOff:
+                case CarlaEngineAllSoundOffEvent:
                     if (cinEvent->channel == m_ctrlInChannel)
                     {
                         if (midi.portMin && ! allNotesOffSent)
@@ -1067,7 +1067,7 @@ public:
                     }
                     break;
 
-                case CarlaEngineEventAllNotesOff:
+                case CarlaEngineAllNotesOffEvent:
                     if (cinEvent->channel == m_ctrlInChannel)
                     {
                         if (midi.portMin && ! allNotesOffSent)
@@ -1347,7 +1347,7 @@ public:
 
                 // Output VU
 #ifndef BUILD_BRIDGE
-                if (CarlaEngine::processMode != PROCESS_MODE_CONTINUOUS_RACK)
+                if (x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
 #endif
                 {
                     for (k=0; i < 2 && k < frames; k++)
@@ -1531,7 +1531,7 @@ public:
     {
         memset(&vstTimeInfo, 0, sizeof(VstTimeInfo_R));
 
-        const CarlaTimeInfo* const timeInfo = x_engine->getTimeInfo();
+        const CarlaEngineTimeInfo* const timeInfo = x_engine->getTimeInfo();
 
         vstTimeInfo.flags |= kVstTransportChanged;
 
@@ -1584,7 +1584,7 @@ public:
 
     intptr_t handleAudioMasterTempoAt()
     {
-        const CarlaTimeInfo* const timeInfo = x_engine->getTimeInfo();
+        const CarlaEngineTimeInfo* const timeInfo = x_engine->getTimeInfo();
 
         if (timeInfo->valid & CarlaEngineTimeBBT)
             return timeInfo->bbt.beats_per_minute * 10000;
@@ -1603,7 +1603,7 @@ public:
             return 1;
 
 #ifndef BUILD_BRIDGE
-        if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
+        if (x_engine->processMode() == PROCESS_MODE_CONTINUOUS_RACK)
         {
             qCritical("VstPlugin::handleAudioMasterIOChanged() - plugin asked IO change, but it's not supported in rack mode");
             return 0;
@@ -1744,8 +1744,8 @@ public:
         if (strcmp(feature, "acceptIOChanges") == 0)
         {
 #ifndef BUILD_BRIDGE
-            if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
-                return -1;
+            //if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
+            //    return -1;
 #endif
             return 1;
         }
@@ -2311,8 +2311,8 @@ public:
         {
             m_hints |= PLUGIN_HAS_GUI;
 
-#if defined(Q_OS_LINUX) && ! defined(BUILD_BRIDGE)
-            if (x_engine->options.bridge_vstx11 && x_engine->options.preferUiBridges && ! (effect->flags & effFlagsProgramChunks))
+#if defined(Q_OS_LINUX) && ! defined(BUILD_BRIDGE) && 0 // FIXME
+            if (x_engine->options.bridge_vstx11 && x_engine->preferUiBridges() && ! (effect->flags & effFlagsProgramChunks))
             {
                 osc.thread = new CarlaPluginThread(x_engine, this, CarlaPluginThread::PLUGIN_THREAD_VST_GUI);
                 osc.thread->setOscData(x_engine->options.bridge_vstx11, label);
@@ -2385,7 +2385,7 @@ CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
 #ifdef WANT_VST
     short id = init.engine->getNewPluginId();
 
-    if (id < 0 || id > CarlaEngine::maxPluginNumber())
+    if (id < 0 || id > init.engine->maxPluginNumber())
     {
         init.engine->setLastError("Maximum number of plugins reached");
         return nullptr;
@@ -2402,7 +2402,7 @@ CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
     plugin->reload();
 
 #  ifndef BUILD_BRIDGE
-    if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
+    if (init.engine->processMode() == PROCESS_MODE_CONTINUOUS_RACK)
     {
         if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
         {

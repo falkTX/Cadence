@@ -575,7 +575,7 @@ public:
     void  removeAllPlugins();
     void  idlePluginGuis();
 #ifndef BUILD_BRIDGE
-    void  processRack(float* inBuf[2], float* outBuf[2], uint32_t frames);
+    void  processRack(float* inBuf[2], float* outBuf[2], const uint32_t frames);
 #endif
 
     // bridge, internal use only
@@ -633,6 +633,21 @@ public:
     uint maxParameters() const
     {
         return options.maxParameters;
+    }
+
+    bool forceStereo() const
+    {
+        return options.forceStereo;
+    }
+
+    bool useDssiVstChunks() const
+    {
+        return options.useDssiVstChunks;
+    }
+
+    bool preferUiBridges() const
+    {
+        return options.preferUiBridges;
     }
 
     uint oscUiTimeout() const

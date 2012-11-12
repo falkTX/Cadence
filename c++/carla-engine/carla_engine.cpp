@@ -844,7 +844,7 @@ void CarlaEngine::idlePluginGuis()
 }
 
 #ifndef BUILD_BRIDGE
-void CarlaEngine::processRack(float* inBuf[2], float* outBuf[2], uint32_t frames)
+void CarlaEngine::processRack(float* inBuf[2], float* outBuf[2], const uint32_t frames)
 {
     // initialize outputs (zero)
     carla_zeroF(outBuf[0], frames);
@@ -1124,7 +1124,7 @@ void CarlaEngine::setOption(const OptionsType option, const int value, const cha
 
     case OPTION_OSC_UI_TIMEOUT:
         CARLA_ENGINE_SET_OPTION_RUNNING_CHECK
-        options.oscUiTimeout = value/100;
+        options.oscUiTimeout = value;
         break;
 
     case OPTION_PATH_LADSPA:

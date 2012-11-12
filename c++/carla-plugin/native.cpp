@@ -485,7 +485,7 @@ public:
                 params += 1;
         }
 
-        if (x_engine->options.forceStereo && (aIns == 1 || aOuts == 1) && mIns <= 1 && mOuts <= 1 && ! h2)
+        if (x_engine->forceStereo() && (aIns == 1 || aOuts == 1) && mIns <= 1 && mOuts <= 1 && ! h2)
         {
             h2 = descriptor->instantiate((struct _PluginDescriptor*)descriptor, &host);
 
@@ -532,7 +532,7 @@ public:
             param.ranges = new ParameterRanges[params];
         }
 
-        const int portNameSize = CarlaEngine::maxPortNameSize() - 2;
+        const int portNameSize = x_engine->maxPortNameSize() - 2;
         char portName[portNameSize];
         bool needsCtrlIn  = false;
         bool needsCtrlOut = false;
@@ -544,7 +544,7 @@ public:
 
             if (portType == PORT_TYPE_AUDIO || portType == PORT_TYPE_MIDI)
             {
-                if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+                if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
                 {
                     strcpy(portName, m_name);
                     strcat(portName, ":");
@@ -706,7 +706,7 @@ public:
 
         if (needsCtrlIn)
         {
-            if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-in");
@@ -719,7 +719,7 @@ public:
 
         if (needsCtrlOut)
         {
-            if (CarlaEngine::processMode != PROCESS_MODE_MULTIPLE_CLIENTS)
+            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-out");
@@ -945,7 +945,7 @@ public:
                     // Control backend stuff
                     if (cinEvent->channel == m_ctrlInChannel)
                     {
-                        if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cinEvent->controller) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
+                        if (MIDI_IS_CONTROL_BREATH_CONTROLLER(cinEvent->parameter) && (m_hints & PLUGIN_CAN_DRYWET) > 0)
                         {
                             value = cinEvent->value;
                             setDryWet(value, false, false);
@@ -953,7 +953,7 @@ public:
                             continue;
                         }
 
-                        if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cinEvent->controller) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
+                        if (MIDI_IS_CONTROL_CHANNEL_VOLUME(cinEvent->parameter) && (m_hints & PLUGIN_CAN_VOLUME) > 0)
                         {
                             value = cinEvent->value*127/100;
                             setVolume(value, false, false);
@@ -961,7 +961,7 @@ public:
                             continue;
                         }
 
-                        if (MIDI_IS_CONTROL_BALANCE(cinEvent->controller) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
+                        if (MIDI_IS_CONTROL_BALANCE(cinEvent->parameter) && (m_hints & PLUGIN_CAN_BALANCE) > 0)
                         {
                             double left, right;
                             value = cinEvent->value/0.5 - 1.0;
@@ -995,7 +995,7 @@ public:
                     {
                         if (param.data[k].midiChannel != cinEvent->channel)
                             continue;
-                        if (param.data[k].midiCC != cinEvent->controller)
+                        if (param.data[k].midiCC != cinEvent->parameter)
                             continue;
                         if (param.data[k].type != PARAMETER_INPUT)
                             continue;
