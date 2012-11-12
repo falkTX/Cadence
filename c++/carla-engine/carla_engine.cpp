@@ -1218,12 +1218,12 @@ bool CarlaEngine::isOscControlRegisted() const
 #endif
 }
 
+#ifndef BUILD_BRIDGE
 bool CarlaEngine::idleOsc()
 {
     return m_osc.idle();
 }
 
-#ifndef BUILD_BRIDGE
 const char* CarlaEngine::getOscServerPathTCP() const
 {
     return m_osc.getServerPathTCP();

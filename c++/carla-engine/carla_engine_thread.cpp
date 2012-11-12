@@ -72,7 +72,7 @@ void CarlaEngineThread::run()
     CARLA_ASSERT(engine->isRunning());
 
     bool oscControlRegisted, usesSingleThread;
-    unsigned short i, id;
+    unsigned short i;
     double value;
 
     while (engine->isRunning() && ! m_stopNow)
@@ -86,7 +86,9 @@ void CarlaEngineThread::run()
 
             if (plugin && plugin->enabled())
             {
-                id = plugin->id();
+#ifndef BUILD_BRIDGE
+                const unsigned short id = plugin->id();
+#endif
                 usesSingleThread = (plugin->hints() & PLUGIN_USES_SINGLE_THREAD);
 
                 // -------------------------------------------------------
@@ -153,7 +155,9 @@ void CarlaEngineThread::run()
             }
         }
 
+#ifndef BUILD_BRIDGE
         if (! engine->idleOsc())
+#endif
             msleep(50);
     }
 }

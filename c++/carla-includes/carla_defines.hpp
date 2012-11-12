@@ -38,6 +38,7 @@
 
 // Common includes and macros
 #ifdef Q_OS_WIN
+# include <winsock2.h>
 # include <windows.h>
 #else
 # include <unistd.h>

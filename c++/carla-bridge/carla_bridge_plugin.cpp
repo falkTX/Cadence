@@ -17,8 +17,8 @@
 
 #ifdef BUILD_BRIDGE_PLUGIN
 
-#include "carla_bridge_client.h"
-#include "carla_plugin.h"
+#include "carla_bridge_client.hpp"
+#include "carla_plugin.hpp"
 
 #include <set>
 #include <QtCore/QDir>
@@ -545,7 +545,7 @@ public:
 
     void handleCallback(const CarlaBackend::CallbackType action, const int value1, const int value2, const double value3)
     {
-        qDebug("CarlaPluginClient::handleCallback(%s, %i, %i, %g)", CarlaBackend::CallbackType2str(action), value1, value2, value3);
+        qDebug("CarlaPluginClient::handleCallback(%s, %i, %i, %g)", CarlaBackend::CallbackType2Str(action), value1, value2, value3);
 
         if (! engine)
             return;
@@ -755,7 +755,7 @@ int main(int argc, char* argv[])
 
     if (! engine->init(engName.toUtf8().constData()))
     {
-        const char* const lastError = CarlaBackend::getLastError();
+        const char* const lastError = engine->getLastError();
         qWarning("Bridge engine failed to start, error was:\n%s", lastError);
         engine->close();
         delete engine;
@@ -792,7 +792,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        const char* const lastError = CarlaBackend::getLastError();
+        const char* const lastError = engine->getLastError();
         qWarning("Plugin failed to load, error was:\n%s", lastError);
 
         if (useOsc)

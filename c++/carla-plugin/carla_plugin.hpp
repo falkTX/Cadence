@@ -24,7 +24,7 @@
 #include "carla_plugin_thread.hpp"
 
 #ifdef BUILD_BRIDGE
-# include "carla_bridge_osc.h"
+# include "carla_bridge_osc.hpp"
 #endif
 
 // common includes
@@ -36,6 +36,7 @@
 #include <QtGui/QX11EmbedContainer>
 typedef QX11EmbedContainer GuiContainer;
 #else
+#include <QtGui/QWidget>
 typedef QWidget GuiContainer;
 #endif
 

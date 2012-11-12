@@ -617,8 +617,8 @@ public:
         jackbridge_set_buffer_size_callback(client, carla_jack_bufsize_callback, this);
         jackbridge_set_sample_rate_callback(client, carla_jack_srate_callback, this);
         jackbridge_set_freewheel_callback(client, carla_jack_freewheel_callback, this);
-        jackbridge_set_process_callback(handle.jackClient, carla_jack_process_callback, this);
-        jackbridge_set_latency_callback(handle.jackClient, carla_jack_latency_callback, this);
+        jackbridge_set_process_callback(client, carla_jack_process_callback, this);
+        jackbridge_set_latency_callback(client, carla_jack_latency_callback, this);
         jackbridge_on_shutdown(client, carla_jack_shutdown_callback, this);
 #else
         if (options.processMode == PROCESS_MODE_SINGLE_CLIENT)
@@ -633,7 +633,11 @@ public:
         }
 #endif
 
+#ifdef BUILD_BRIDGE
+        return new CarlaEngineJackClient(client, CarlaEngineTypeJack, PROCESS_MODE_MULTIPLE_CLIENTS);
+#else
         return new CarlaEngineJackClient(client, CarlaEngineTypeJack, options.processMode);
+#endif
     }
 
     // -------------------------------------
@@ -704,10 +708,10 @@ protected:
         {
             for (unsigned short i=0, max=maxPluginNumber(); i < max; i++)
             {
+                CarlaPlugin* const plugin = getPluginUnchecked(i);
 #else
                 CarlaPlugin* const plugin = getPluginUnchecked(0);
 #endif
-                CarlaPlugin* const plugin = getPluginUnchecked(i);
 
                 if (plugin && plugin->enabled())
                 {

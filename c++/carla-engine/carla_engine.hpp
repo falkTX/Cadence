@@ -668,9 +668,9 @@ public:
     // OSC Stuff
 
     bool isOscControlRegisted() const;
-    bool idleOsc();
 
 #ifndef BUILD_BRIDGE
+    bool idleOsc();
     const char* getOscServerPathTCP() const;
     const char* getOscServerPathUDP() const;
 #else
@@ -776,7 +776,9 @@ public:
     // -------------------------------------
 
 protected:
+#ifndef BUILD_BRIDGE
     CarlaEngineOptions options;
+#endif
 
     CarlaString name;
     uint32_t bufferSize;
