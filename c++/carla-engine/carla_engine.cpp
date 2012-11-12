@@ -697,7 +697,7 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
             return -1;
         }
 
-        plugin = CarlaPlugin::newBridge(init, btype, ptype);
+        plugin = CarlaPlugin::newBridge(init, btype, ptype, extra);
     }
     else
 #endif

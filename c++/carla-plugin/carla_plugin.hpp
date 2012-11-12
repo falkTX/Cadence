@@ -844,7 +844,7 @@ public:
     static CarlaPlugin* newSF2(const initializer& init);
     static CarlaPlugin* newSFZ(const initializer& init);
 #ifndef BUILD_BRIDGE
-    static CarlaPlugin* newBridge(const initializer& init, const BinaryType btype, const PluginType ptype);
+    static CarlaPlugin* newBridge(const initializer& init, const BinaryType btype, const PluginType ptype, const void* const extra);
 #endif
 
     static size_t getNativePluginCount();

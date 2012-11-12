@@ -257,6 +257,28 @@ short add_plugin(CarlaBackend::BinaryType btype, CarlaBackend::PluginType ptype,
     qDebug("CarlaBackendStandalone::add_plugin(%s, %s, \"%s\", \"%s\", \"%s\", %p)", CarlaBackend::BinaryType2Str(btype), CarlaBackend::PluginType2Str(ptype), filename, name, label, extra_stuff);
     CARLA_ASSERT(standalone.engine);
 
+    if (btype != CarlaBackend::BINARY_NATIVE && ! extra_stuff)
+    {
+        switch (btype)
+        {
+        case CarlaBackend::BINARY_NONE:
+        case CarlaBackend::BINARY_OTHER:
+            break;
+        case CarlaBackend::BINARY_POSIX32:
+            extra_stuff = (void*)(const char*)standalone.options.bridge_posix32;
+            break;
+        case CarlaBackend::BINARY_POSIX64:
+            extra_stuff = (void*)(const char*)standalone.options.bridge_posix64;
+            break;
+        case CarlaBackend::BINARY_WIN32:
+            extra_stuff = (void*)(const char*)standalone.options.bridge_win32;
+            break;
+        case CarlaBackend::BINARY_WIN64:
+            extra_stuff = (void*)(const char*)standalone.options.bridge_win64;
+            break;
+        }
+    }
+
     if (standalone.engine && standalone.engine->isRunning())
         return standalone.engine->addPlugin(btype, ptype, filename, name, label, extra_stuff);
 

@@ -48,11 +48,16 @@
 #endif
 
 // Define various string format types, needed for qDebug/Warning/Critical sections
-#if defined(Q_OS_WIN64) && ! defined(__WINE__)
+#if defined(Q_OS_WIN64)
 # define P_INT64   "%I64i"
 # define P_INTPTR  "%I64i"
 # define P_UINTPTR "%I64x"
 # define P_SIZE    "%I64u"
+#elif defined(Q_OS_WIN32)
+# define P_INT64   "%I64i"
+# define P_INTPTR  "%i"
+# define P_UINTPTR "%x"
+# define P_SIZE    "%u"
 #elif __WORDSIZE == 64
 # define P_INT64   "%li"
 # define P_INTPTR  "%li"

@@ -56,27 +56,6 @@ struct BridgeParamInfo {
         : value(0.0) {}
 };
 
-const char* getBinaryBidgePath(const BinaryType type)
-{
-    qDebug("CarlaBackend::getBinaryBidgePath(%s)", BinaryType2Str(type));
-
-    switch (type)
-    {
-#ifndef BUILD_BRIDGE
-//    case BINARY_POSIX32:
-//        return CarlaEngine::options.bridge_posix32;
-//    case BINARY_POSIX64:
-//        return CarlaEngine::options.bridge_posix64;
-//    case BINARY_WIN32:
-//        return CarlaEngine::options.bridge_win32;
-//    case BINARY_WIN64:
-//        return CarlaEngine::options.bridge_win64;
-#endif
-    default:
-        return nullptr;
-    }
-}
-
 class BridgePlugin : public CarlaPlugin
 {
 public:
@@ -944,16 +923,8 @@ public:
 
     // -------------------------------------------------------------------
 
-    bool init(const char* const filename, const char* const name, const char* const label)
+    bool init(const char* const filename, const char* const name, const char* const label, const char* const bridgeBinary)
     {
-        const char* const bridgeBinary = getBinaryBidgePath(m_binary);
-
-        if (! bridgeBinary)
-        {
-            x_engine->setLastError("Bridge not possible, bridge-binary not found");
-            return false;
-        }
-
         m_filename = strdup(filename);
 
         if (name)
@@ -1016,9 +987,15 @@ private:
     BridgeParamInfo* params;
 };
 
-CarlaPlugin* CarlaPlugin::newBridge(const initializer& init, BinaryType btype, PluginType ptype)
+CarlaPlugin* CarlaPlugin::newBridge(const initializer& init, BinaryType btype, PluginType ptype, const void* const extra)
 {
     qDebug("CarlaPlugin::newBridge(%p, \"%s\", \"%s\", \"%s\", %s, %s)", init.engine, init.filename, init.name, init.label, BinaryType2Str(btype), PluginType2Str(ptype));
+
+    if (! extra)
+    {
+        init.engine->setLastError("Bridge not possible, bridge-binary not found");
+        return false;
+    }
 
     short id = init.engine->getNewPluginId();
 
@@ -1030,7 +1007,7 @@ CarlaPlugin* CarlaPlugin::newBridge(const initializer& init, BinaryType btype, P
 
     BridgePlugin* const plugin = new BridgePlugin(init.engine, id, btype, ptype);
 
-    if (! plugin->init(init.filename, init.name, init.label))
+    if (! plugin->init(init.filename, init.name, init.label, (const char*)extra))
     {
         delete plugin;
         return nullptr;
