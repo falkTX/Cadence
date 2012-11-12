@@ -8,6 +8,7 @@ GENERAL:
  - implement midi-cc automation special rules (invert, half, logarithmic, etc)
  - allow to change position of plugins (up/down)
  - allow to set m_ctrlInChannel from GUI (needs GUI widget)
+ - add macro to get midi channel (status & 0x0F)
 
 ENGINE:
  - complete RtAudio+RtMidi support

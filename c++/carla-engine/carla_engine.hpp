@@ -136,14 +136,14 @@ struct CarlaEngineControlEvent {
     CarlaEngineControlEventType type;
     uint32_t time;
     uint8_t  channel;
-    uint16_t controller;
+    uint16_t parameter;
     double   value;
 
     CarlaEngineControlEvent()
         : type(CarlaEngineNullEvent),
           time(0),
           channel(0),
-          controller(0),
+          parameter(0),
           value(0.0) {}
 };
 
@@ -274,7 +274,7 @@ public:
     /*!
      * Get the type of the port, as provided by the respective subclasses.
      */
-    virtual CarlaEnginePortType type() = 0;
+    virtual CarlaEnginePortType type() const = 0;
 
     /*!
      * Initialize the port's internal buffer for \a engine.
@@ -310,7 +310,7 @@ public:
     /*!
      * Get the type of the port, in this case CarlaEnginePortTypeAudio.
      */
-    CarlaEnginePortType type()
+    CarlaEnginePortType type() const
     {
         return CarlaEnginePortTypeAudio;
     }
@@ -344,7 +344,7 @@ public:
     /*!
      * Get the type of the port, in this case CarlaEnginePortTypeControl.
      */
-    CarlaEnginePortType type()
+    CarlaEnginePortType type() const
     {
         return CarlaEnginePortTypeControl;
     }
@@ -364,14 +364,14 @@ public:
      * Get the control event at \a index.
      ** \note You must only call this for input ports.
      */
-    virtual const CarlaEngineControlEvent* getEvent(uint32_t index);
+    virtual const CarlaEngineControlEvent* getEvent(const uint32_t index);
 
     /*!
      * Write a control event to the buffer.\n
      * Arguments are the same as in the CarlaEngineControlEvent struct.
      ** \note You must only call this for output ports.
      */
-    virtual void writeEvent(CarlaEngineControlEventType type, uint32_t time, uint8_t channel, uint16_t controller, double value);
+    virtual void writeEvent(const CarlaEngineControlEventType type, const uint32_t time, const uint8_t channel, const uint16_t parameter, const double value);
 };
 
 // -----------------------------------------------------------------------
@@ -397,7 +397,7 @@ public:
     /*!
      * Get the type of the port, in this case CarlaEnginePortTypeMIDI.
      */
-    CarlaEnginePortType type()
+    CarlaEnginePortType type() const
     {
         return CarlaEnginePortTypeMIDI;
     }
@@ -417,14 +417,14 @@ public:
      * Get the MIDI event at \a index.
      ** \note You must only call this for input ports.
      */
-    virtual const CarlaEngineMidiEvent* getEvent(uint32_t index);
+    virtual const CarlaEngineMidiEvent* getEvent(const uint32_t index);
 
     /*!
      * Write a MIDI event to the buffer.\n
      * Arguments are the same as in the CarlaEngineMidiEvent struct.
      ** \note You must only call this for output ports.
      */
-    virtual void writeEvent(uint32_t time, const uint8_t* data, uint8_t size);
+    virtual void writeEvent(const uint32_t time, const uint8_t* const data, const uint8_t size);
 };
 
 // -----------------------------------------------------------------------
@@ -623,6 +623,11 @@ public:
     ProcessMode processMode() const
     {
         return options.processMode;
+    }
+
+    bool processHighPrecision() const
+    {
+        return options.processHighPrecision;
     }
 
     uint maxParameters() const

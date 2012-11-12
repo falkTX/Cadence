@@ -475,9 +475,9 @@ protected:
 
                 CarlaEngineControlEvent* const carlaEvent = &rackControlEventsIn[carlaEventIndex++];
 
-                carlaEvent->type       = CarlaEngineParameterChangeEvent;
-                carlaEvent->controller = paramMap[i];
-                carlaEvent->value      = paramBuffers[i]/127;
+                carlaEvent->type      = CarlaEngineParameterChangeEvent;
+                carlaEvent->parameter = paramMap[i];
+                carlaEvent->value     = paramBuffers[i]/127;
             }
         }
         memcpy(prevParamBuffers, paramBuffers, sizeof(float)*paramCount);

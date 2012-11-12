@@ -922,8 +922,12 @@ protected:
     const char* m_name;
     const char* m_filename;
 
-    int8_t  m_ctrlInChannel;
+    // options
+    int8_t m_ctrlInChannel;
+    bool   m_fixedBufferSize;
+    bool   m_processHighPrecision;
 
+    // latency
     uint32_t m_latency;
     float**  m_latencyBuffers;
 
@@ -976,6 +980,7 @@ protected:
         return value;
     }
 
+    friend class CarlaEngine; // FIXME
     friend class CarlaEngineJack;
 };
 

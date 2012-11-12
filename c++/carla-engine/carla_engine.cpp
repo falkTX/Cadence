@@ -21,6 +21,27 @@
 CARLA_BACKEND_START_NAMESPACE
 
 // -------------------------------------------------------------------------------------------------------------------
+// Utils
+
+const char* CarlaEngineType2Str(const CarlaEngineType type)
+{
+    switch (type)
+    {
+    case CarlaEngineTypeNull:
+        return "CarlaEngineTypeNull";
+    case CarlaEngineTypeJack:
+        return "CarlaEngineTypeJack";
+    case CarlaEngineTypeRtAudio:
+        return "CarlaEngineTypeRtAudio";
+    case CarlaEngineTypePlugin:
+        return "CarlaEngineTypePlugin";
+    }
+
+    qWarning("CarlaBackend::CarlaEngineType2Str(%i) - invalid type", type);
+    return nullptr;
+}
+
+// -------------------------------------------------------------------------------------------------------------------
 // Engine port (Base)
 
 CarlaEngineBasePort::CarlaEngineBasePort(const bool isInput_, const ProcessMode processMode_)
@@ -105,7 +126,7 @@ uint32_t CarlaEngineControlPort::getEventCount()
     return 0;
 }
 
-const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(uint32_t index)
+const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(const uint32_t index)
 {
     if (! isInput)
         return nullptr;
@@ -127,13 +148,18 @@ const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(uint32_t index)
     return nullptr;
 }
 
-void CarlaEngineControlPort::writeEvent(CarlaEngineControlEventType type, uint32_t time, uint8_t channel, uint16_t controller, double value)
+void CarlaEngineControlPort::writeEvent(const CarlaEngineControlEventType type, const uint32_t time, const uint8_t channel, const uint16_t parameter, const double value)
 {
     if (isInput)
         return;
 
     CARLA_ASSERT(buffer);
     CARLA_ASSERT(type != CarlaEngineNullEvent);
+
+    if (type == CarlaEngineNullEvent)
+        return;
+    if (type == CarlaEngineParameterChangeEvent)
+        CARLA_ASSERT(! MIDI_IS_CONTROL_BANK_SELECT(parameter));
 
 #ifndef BUILD_BRIDGE
     if (processMode == PROCESS_MODE_CONTINUOUS_RACK)
@@ -148,10 +174,12 @@ void CarlaEngineControlPort::writeEvent(CarlaEngineControlEventType type, uint32
             events[i].type  = type;
             events[i].time  = time;
             events[i].value = value;
-            events[i].channel    = channel;
-            events[i].controller = controller;
+            events[i].channel   = channel;
+            events[i].parameter = parameter;
             break;
         }
+
+        qWarning("CarlaEngineControlPort::writeEvent() - buffer full");
     }
 #endif
 }
@@ -228,7 +256,7 @@ const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(uint32_t index)
     return nullptr;
 }
 
-void CarlaEngineMidiPort::writeEvent(uint32_t time, const uint8_t* data, uint8_t size)
+void CarlaEngineMidiPort::writeEvent(const uint32_t time, const uint8_t* const data, const uint8_t size)
 {
     if (isInput)
         return;
@@ -255,21 +283,11 @@ void CarlaEngineMidiPort::writeEvent(uint32_t time, const uint8_t* data, uint8_t
             memcpy(events[i].data, data, size);
             break;
         }
+
+        qWarning("CarlaEngineMidiPort::writeEvent() - buffer full");
     }
 #endif
 }
-
-//#ifdef CARLA_ENGINE_JACK
-//float* CarlaEngineAudioPort::getJackAudioBuffer(uint32_t nframes)
-//{
-//#  ifndef BUILD_BRIDGE
-//    if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
-//        return nullptr;
-//#  endif
-//    CARLA_ASSERT(handle.jackPort);
-//    return (float*)jackbridge_port_get_buffer(handle.jackPort, nframes);
-//}
-//#endif
 
 // -------------------------------------------------------------------------------------------------------------------
 // Carla Engine Client
@@ -278,7 +296,7 @@ CarlaEngineClient::CarlaEngineClient(const CarlaEngineType engineType_, const Pr
     : engineType(engineType_),
       processMode(processMode_)
 {
-    qDebug("CarlaEngineClient::CarlaEngineClient(%s, %s)", "" /* TODO */, ProcessMode2Str(processMode));
+    qDebug("CarlaEngineClient::CarlaEngineClient(%s, %s)", CarlaEngineType2Str(engineType), ProcessMode2Str(processMode));
     CARLA_ASSERT(engineType != CarlaEngineTypeNull);
 
     m_active  = false;
@@ -330,63 +348,6 @@ void CarlaEngineClient::setLatency(const uint32_t samples)
 {
     m_latency = samples;
 }
-
-//const CarlaEngineBasePort* CarlaEngineClient::addPort(const CarlaEnginePortType portType, const char* const name, const bool isInput)
-//{
-//    qDebug("CarlaEngineClient::addPort(%i, \"%s\", %s)", portType, name, bool2str(isInput));
-
-//    CarlaEngineBasePort::Handle portHandle;
-
-//#ifndef BUILD_BRIDGE
-//    if (CarlaEngine::processMode != PROCESS_MODE_CONTINUOUS_RACK)
-//#endif
-//    {
-//#ifdef CARLA_ENGINE_JACK
-//        if (engineType == CarlaEngineTypeJack)
-//        {
-//            switch (portType)
-//            {
-//            case CarlaEnginePortTypeAudio:
-//                portHandle = jackbridge_port_register((jack_client_t*)handle, name, JACK_DEFAULT_AUDIO_TYPE, isInput ? JackPortIsInput : JackPortIsOutput, 0);
-//                break;
-//            case CarlaEnginePortTypeControl:
-//            case CarlaEnginePortTypeMIDI:
-//                portHandle = jackbridge_port_register((jack_client_t*)handle, name, JACK_DEFAULT_MIDI_TYPE, isInput ? JackPortIsInput : JackPortIsOutput, 0);
-//                break;
-//            }
-//        }
-//#endif
-//    }
-
-//    switch (portType)
-//    {
-//    case CarlaEnginePortTypeAudio:
-//        return new CarlaEngineAudioPort(portHandle, isInput);
-//    case CarlaEnginePortTypeControl:
-//        return new CarlaEngineControlPort(portHandle, isInput);
-//    case CarlaEnginePortTypeMIDI:
-//        return new CarlaEngineMidiPort(portHandle, isInput);
-//    }
-
-//    qCritical("CarlaEngineClient::addPort(%i, \"%s\", %s) - invalid type", portType, name, bool2str(isInput));
-//    return nullptr;
-//}
-
-//void CarlaEngineClient::removePort(CarlaEngineBasePort* const port)
-//{
-//#ifndef BUILD_BRIDGE
-//    if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
-//        return;
-//#endif
-
-//#ifdef CARLA_ENGINE_JACK
-//    if (engineType == CarlaEngineTypeJack)
-//    {
-//        if (handle && port->handle)
-//            jackbridge_port_unregister((jack_client_t*)handle, (jack_port_t*)port->handle);
-//    }
-//#endif
-//}
 
 // -------------------------------------------------------------------------------------------------------------------
 // Carla Engine Client
@@ -914,11 +875,10 @@ void CarlaEngine::processRack(float* inBuf[2], float* outBuf[2], uint32_t frames
             }
 
             // process
-            plugin->engineProcessLock();
-
+            processLock();
             plugin->initBuffers();
 
-            if (options.processHighPrecision)
+            if (plugin->m_processHighPrecision)
             {
                 float* inBuf2[2];
                 float* outBuf2[2];
@@ -937,7 +897,7 @@ void CarlaEngine::processRack(float* inBuf[2], float* outBuf[2], uint32_t frames
             else
                 plugin->process(inBuf, outBuf, frames);
 
-            plugin->engineProcessUnlock();
+            processUnlock();
 
             // if plugin has no audio inputs, add previous buffers
             if (plugin->audioInCount() == 0)
@@ -1000,21 +960,18 @@ void CarlaEngine::processRack(float* inBuf[2], float* outBuf[2], uint32_t frames
 const char* CarlaEngine::getName() const
 {
     CARLA_ASSERT(name);
-
     return name;
 }
 
 double CarlaEngine::getSampleRate() const
 {
-    //CARLA_ASSERT(sampleRate != 0.0);
-
+    CARLA_ASSERT(sampleRate != 0.0);
     return sampleRate;
 }
 
 uint32_t CarlaEngine::getBufferSize() const
 {
-    //CARLA_ASSERT(bufferSize != 0);
-
+    CARLA_ASSERT(bufferSize != 0);
     return bufferSize;
 }
 
@@ -1096,6 +1053,7 @@ void CarlaEngine::setLastError(const char* const error)
 {
     m_lastError = error;
 }
+
 // -----------------------------------------------------------------------
 // Global options
 
@@ -1289,11 +1247,9 @@ void CarlaEngine::bufferSizeChanged(const uint32_t newBufferSize)
 {
     qDebug("CarlaEngine::bufferSizeChanged(%i)", newBufferSize);
 
-    bufferSize = newBufferSize;
-
     for (unsigned short i=0; i < m_maxPluginNumber; i++)
     {
-        if (m_carlaPlugins[i] && m_carlaPlugins[i]->enabled())
+        if (m_carlaPlugins[i] && m_carlaPlugins[i]->enabled() && ! m_carlaPlugins[i]->m_processHighPrecision)
             m_carlaPlugins[i]->bufferSizeChanged(newBufferSize);
     }
 }
@@ -1449,7 +1405,7 @@ void CarlaEngine::osc_send_control_set_parameter_midi_channel(const int32_t plug
 void CarlaEngine::osc_send_control_set_parameter_value(const int32_t pluginId, const int32_t index, const double value)
 {
 #if DEBUG
-    if (index < -1)
+    if (index < 0)
         qDebug("CarlaEngine::osc_send_control_set_parameter_value(%i, %s, %g)", pluginId, InternalParametersIndex2Str((InternalParametersIndex)index), value);
     else
         qDebug("CarlaEngine::osc_send_control_set_parameter_value(%i, %i, %g)", pluginId, index, value);
