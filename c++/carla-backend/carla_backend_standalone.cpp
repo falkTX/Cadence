@@ -1470,10 +1470,117 @@ void set_option(CarlaBackend::OptionsType option, int value, const char* value_s
 {
     qDebug("CarlaBackendStandalone::set_option(%s, %i, \"%s\")", CarlaBackend::OptionsType2Str(option), value, value_str);
 
-    // TODO
-
     if (standalone.engine)
+    {
         standalone.engine->setOption(option, value, value_str);
+
+        if (option >= CarlaBackend::OPTION_PATH_LADSPA && option <= CarlaBackend::OPTION_PATH_SFZ)
+            // no need to set twice
+            return;
+    }
+
+    switch (option)
+    {
+    case CarlaBackend::OPTION_PROCESS_NAME:
+        standalone.procName = value_str;
+        break;
+
+    case CarlaBackend::OPTION_PROCESS_MODE:
+        if (value < CarlaBackend::PROCESS_MODE_SINGLE_CLIENT || value > CarlaBackend::PROCESS_MODE_PATCHBAY)
+            return qCritical("CarlaBackendStandalone::set_option(%s, %i, \"%s\") - invalid value", OptionsType2Str(option), value, value_str);
+
+        standalone.options.processMode = static_cast<CarlaBackend::ProcessMode>(value);
+        break;
+
+    case CarlaBackend::OPTION_PROCESS_HIGH_PRECISION:
+        standalone.options.processHighPrecision = value;
+        break;
+
+    case CarlaBackend::OPTION_MAX_PARAMETERS:
+        standalone.options.maxParameters = (value > 0) ? value : CarlaBackend::MAX_PARAMETERS;
+        break;
+
+    case CarlaBackend::OPTION_PREFERRED_BUFFER_SIZE:
+        standalone.options.preferredBufferSize = value;
+        break;
+
+    case CarlaBackend::OPTION_PREFERRED_SAMPLE_RATE:
+        standalone.options.preferredSampleRate = value;
+        break;
+
+    case CarlaBackend::OPTION_FORCE_STEREO:
+        standalone.options.forceStereo = value;
+        break;
+
+    case CarlaBackend::OPTION_USE_DSSI_VST_CHUNKS:
+        standalone.options.useDssiVstChunks = value;
+        break;
+
+    case CarlaBackend::OPTION_PREFER_PLUGIN_BRIDGES:
+        standalone.options.preferPluginBridges = value;
+        break;
+
+    case CarlaBackend::OPTION_PREFER_UI_BRIDGES:
+        standalone.options.preferUiBridges = value;
+        break;
+
+    case CarlaBackend::OPTION_OSC_UI_TIMEOUT:
+        standalone.options.oscUiTimeout = value;
+        break;
+
+    case CarlaBackend::OPTION_PATH_LADSPA:
+        carla_setenv("LADSPA_PATH", value_str);
+        break;
+    case CarlaBackend::OPTION_PATH_DSSI:
+        carla_setenv("DSSI_PATH", value_str);
+        break;
+    case CarlaBackend::OPTION_PATH_LV2:
+        carla_setenv("LV2_PATH", value_str);
+        break;
+    case CarlaBackend::OPTION_PATH_VST:
+        carla_setenv("VST_PATH", value_str);
+        break;
+    case CarlaBackend::OPTION_PATH_GIG:
+        carla_setenv("GIG_PATH", value_str);
+        break;
+    case CarlaBackend::OPTION_PATH_SF2:
+        carla_setenv("SF2_PATH", value_str);
+        break;
+    case CarlaBackend::OPTION_PATH_SFZ:
+        carla_setenv("SFZ_PATH", value_str);
+        break;
+
+    case CarlaBackend::OPTION_PATH_BRIDGE_POSIX32:
+        standalone.options.bridge_posix32 = value_str;
+        break;
+    case CarlaBackend::OPTION_PATH_BRIDGE_POSIX64:
+        standalone.options.bridge_posix64 = value_str;
+        break;
+    case CarlaBackend::OPTION_PATH_BRIDGE_WIN32:
+        standalone.options.bridge_win32 = value_str;
+        break;
+    case CarlaBackend::OPTION_PATH_BRIDGE_WIN64:
+        standalone.options.bridge_win64 = value_str;
+        break;
+    case CarlaBackend::OPTION_PATH_BRIDGE_LV2_GTK2:
+        standalone.options.bridge_lv2gtk2 = value_str;
+        break;
+    case CarlaBackend::OPTION_PATH_BRIDGE_LV2_GTK3:
+        standalone.options.bridge_lv2gtk3 = value_str;
+        break;
+    case CarlaBackend::OPTION_PATH_BRIDGE_LV2_QT4:
+        standalone.options.bridge_lv2qt4 = value_str;
+        break;
+    case CarlaBackend::OPTION_PATH_BRIDGE_LV2_X11:
+        standalone.options.bridge_lv2x11 = value_str;
+        break;
+    case CarlaBackend::OPTION_PATH_BRIDGE_VST_HWND:
+        standalone.options.bridge_vsthwnd = value_str;
+        break;
+    case CarlaBackend::OPTION_PATH_BRIDGE_VST_X11:
+        standalone.options.bridge_vstx11 = value_str;
+        break;
+    }
 }
 
 // -------------------------------------------------------------------------------------------------------------------
