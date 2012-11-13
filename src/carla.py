@@ -1284,6 +1284,9 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             QMessageBox.critical(self, self.tr("Error"), self.tr("Could not connect to Audio backend '%s', possible reasons: %s" % (audioDriver, cString(Carla.Host.get_last_error()))))
             return
 
+        if self.m_firstEngineInit:
+            self.m_firstEngineInit = False
+
         self.m_engine_started = True
 
     def stopEngine(self):
