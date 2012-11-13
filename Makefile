@@ -46,6 +46,8 @@ carla: src/ui_carla.py src/ui_carla_control.py \
 	src/ui_carla_about.py src/ui_carla_database.py src/ui_carla_edit.py src/ui_carla_parameter.py src/ui_carla_plugin.py src/ui_carla_refresh.py \
 	src/ui_inputdialog_value.py
 
+caitlyn: src/ui_caitlyn.py
+
 tools: \
 	src/ui_logs.py src/ui_render.py \
 	src/ui_settings_app.py src/ui_settings_jack.py
@@ -123,6 +125,9 @@ src/ui_claudia_launcher.py: resources/ui/claudia_launcher.ui
 	$(PYUIC) $< -o $@
 
 src/ui_claudia_launcher_app.py: resources/ui/claudia_launcher_app.ui
+	$(PYUIC) $< -o $@
+
+src/ui_caitlyn.py: resources/ui/caitlyn.ui
 	$(PYUIC) $< -o $@
 
 src/ui_carla.py: resources/ui/carla.ui
