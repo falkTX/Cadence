@@ -252,12 +252,17 @@ carla_bridge_posix64 = ""
 carla_bridge_win32   = ""
 carla_bridge_win64   = ""
 
-carla_bridge_lv2_gtk2 = ""
-carla_bridge_lv2_gtk3 = ""
-carla_bridge_lv2_qt4  = ""
-carla_bridge_lv2_x11  = ""
-carla_bridge_vst_hwnd = ""
-carla_bridge_vst_x11  = ""
+carla_bridge_lv2_gtk2    = ""
+carla_bridge_lv2_gtk3    = ""
+carla_bridge_lv2_qt4     = ""
+carla_bridge_lv2_qt5     = ""
+carla_bridge_lv2_cocoa   = ""
+carla_bridge_lv2_windows = ""
+carla_bridge_lv2_x11     = ""
+
+carla_bridge_vst_cocoa = ""
+carla_bridge_vst_hwnd  = ""
+carla_bridge_vst_x11   = ""
 
 if WINDOWS:
     carla_libname = "carla_backend.dll"
@@ -291,33 +296,6 @@ else:
             carla_library_path = os.path.join(p, "carla", carla_libname)
             break
 
-# find carla_discovery_native
-if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-native")):
-    carla_discovery_native = os.path.join(CWDpp, "carla-discovery", "carla-discovery-native")
-else:
-    for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-discovery-native")):
-            carla_discovery_native = os.path.join(p, "carla-discovery-native")
-            break
-
-# find carla_discovery_posix32
-if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-posix32")):
-    carla_discovery_posix32 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-posix32")
-else:
-    for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-discovery-posix32")):
-            carla_discovery_posix32 = os.path.join(p, "carla-discovery-posix32")
-            break
-
-# find carla_discovery_posix64
-if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-posix64")):
-    carla_discovery_posix64 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-posix64")
-else:
-    for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-discovery-posix64")):
-            carla_discovery_posix64 = os.path.join(p, "carla-discovery-posix64")
-            break
-
 # find carla_discovery_win32
 if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-win32.exe")):
     carla_discovery_win32 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-win32.exe")
@@ -334,24 +312,6 @@ else:
     for p in PATH:
         if os.path.exists(os.path.join(p, "carla-discovery-win64.exe")):
             carla_discovery_win64 = os.path.join(p, "carla-discovery-win64.exe")
-            break
-
-# find carla_bridge_posix32
-if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-posix32")):
-    carla_bridge_posix32 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-posix32")
-else:
-    for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-bridge-posix32")):
-            carla_bridge_posix32 = os.path.join(p, "carla-bridge-posix32")
-            break
-
-# find carla_bridge_posix64
-if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-posix64")):
-    carla_bridge_posix64 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-posix64")
-else:
-    for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-bridge-posix64")):
-            carla_bridge_posix64 = os.path.join(p, "carla-bridge-posix64")
             break
 
 # find carla_bridge_win32
@@ -372,59 +332,145 @@ else:
             carla_bridge_win64 = os.path.join(p, "carla-bridge-win64.exe")
             break
 
-# find carla_bridge_lv2_gtk2
-if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-gtk2")):
-    carla_bridge_lv2_gtk2 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-gtk2")
-else:
-    for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-bridge-lv2-gtk2")):
-            carla_bridge_lv2_gtk2 = os.path.join(p, "carla-bridge-lv2-gtk2")
-            break
+if not WINDOWS:
+    # find carla_discovery_native
+    if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-native")):
+        carla_discovery_native = os.path.join(CWDpp, "carla-discovery", "carla-discovery-native")
+    else:
+        for p in PATH:
+            if os.path.exists(os.path.join(p, "carla-discovery-native")):
+                carla_discovery_native = os.path.join(p, "carla-discovery-native")
+                break
 
-# find carla_bridge_lv2_gtk3
-if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-gtk3")):
-    carla_bridge_lv2_gtk3 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-gtk3")
-else:
-    for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-bridge-lv2-gtk3")):
-            carla_bridge_lv2_gtk3 = os.path.join(p, "carla-bridge-lv2-gtk3")
-            break
+    # find carla_discovery_posix32
+    if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-posix32")):
+        carla_discovery_posix32 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-posix32")
+    else:
+        for p in PATH:
+            if os.path.exists(os.path.join(p, "carla-discovery-posix32")):
+                carla_discovery_posix32 = os.path.join(p, "carla-discovery-posix32")
+                break
 
-# find carla_bridge_lv2_qt4
-if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-qt4")):
-    carla_bridge_lv2_qt4 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-qt4")
-else:
-    for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-bridge-lv2-qt4")):
-            carla_bridge_lv2_qt4 = os.path.join(p, "carla-bridge-lv2-qt4")
-            break
+    # find carla_discovery_posix64
+    if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-posix64")):
+        carla_discovery_posix64 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-posix64")
+    else:
+        for p in PATH:
+            if os.path.exists(os.path.join(p, "carla-discovery-posix64")):
+                carla_discovery_posix64 = os.path.join(p, "carla-discovery-posix64")
+                break
 
-# find carla_bridge_lv2_x11
-if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-x11")):
-    carla_bridge_lv2_x11 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-x11")
-else:
-    for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-bridge-lv2-x11")):
-            carla_bridge_lv2_x11 = os.path.join(p, "carla-bridge-lv2-x11")
-            break
+    # find carla_bridge_posix32
+    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-posix32")):
+        carla_bridge_posix32 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-posix32")
+    else:
+        for p in PATH:
+            if os.path.exists(os.path.join(p, "carla-bridge-posix32")):
+                carla_bridge_posix32 = os.path.join(p, "carla-bridge-posix32")
+                break
 
-# find carla_bridge_vst_hwnd
-if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-hwnd.exe")):
-    carla_bridge_vst_hwnd = os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-hwnd.exe")
-else:
-    for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-bridge-vst-hwnd.exe")):
-            carla_bridge_vst_hwnd = os.path.join(p, "carla-bridge-vst-hwnd.exe")
-            break
+    # find carla_bridge_posix64
+    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-posix64")):
+        carla_bridge_posix64 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-posix64")
+    else:
+        for p in PATH:
+            if os.path.exists(os.path.join(p, "carla-bridge-posix64")):
+                carla_bridge_posix64 = os.path.join(p, "carla-bridge-posix64")
+                break
 
-# find carla_bridge_vst_x11
-if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-x11")):
-    carla_bridge_vst_x11 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-x11")
+if WINDOWS:
+    # find carla_bridge_lv2_windows
+    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-windows.exe")):
+        carla_bridge_lv2_windows = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-windows.exe")
+    else:
+        for p in PATH:
+            if os.path.exists(os.path.join(p, "carla-bridge-lv2-windows.exe")):
+                carla_bridge_lv2_windows = os.path.join(p, "carla-bridge-lv2-windows.exe")
+                break
+
+    # find carla_bridge_vst_hwnd
+    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-hwnd.exe")):
+        carla_bridge_vst_hwnd = os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-hwnd.exe")
+    else:
+        for p in PATH:
+            if os.path.exists(os.path.join(p, "carla-bridge-vst-hwnd.exe")):
+                carla_bridge_vst_hwnd = os.path.join(p, "carla-bridge-vst-hwnd.exe")
+                break
+
+elif MACOS:
+    # find carla_bridge_lv2_cocoa
+    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-cocoa")):
+        carla_bridge_lv2_cocoa = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-cocoa")
+    else:
+        for p in PATH:
+            if os.path.exists(os.path.join(p, "carla-bridge-lv2-cocoa")):
+                carla_bridge_lv2_cocoa = os.path.join(p, "carla-bridge-lv2-cocoa")
+                break
+
+    # find carla_bridge_vst_cocoa
+    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-cocoa")):
+        carla_bridge_vst_cocoa = os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-cocoa")
+    else:
+        for p in PATH:
+            if os.path.exists(os.path.join(p, "carla-bridge-vst-cocoa")):
+                carla_bridge_vst_cocoa = os.path.join(p, "carla-bridge-vst-cocoa")
+                break
+
 else:
-    for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-bridge-vst-x11")):
-            carla_bridge_vst_x11 = os.path.join(p, "carla-bridge-vst-x11")
-            break
+    # find carla_bridge_lv2_gtk2
+    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-gtk2")):
+        carla_bridge_lv2_gtk2 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-gtk2")
+    else:
+        for p in PATH:
+            if os.path.exists(os.path.join(p, "carla-bridge-lv2-gtk2")):
+                carla_bridge_lv2_gtk2 = os.path.join(p, "carla-bridge-lv2-gtk2")
+                break
+
+    # find carla_bridge_lv2_gtk3
+    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-gtk3")):
+        carla_bridge_lv2_gtk3 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-gtk3")
+    else:
+        for p in PATH:
+            if os.path.exists(os.path.join(p, "carla-bridge-lv2-gtk3")):
+                carla_bridge_lv2_gtk3 = os.path.join(p, "carla-bridge-lv2-gtk3")
+                break
+
+    # find carla_bridge_lv2_qt4
+    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-qt4")):
+        carla_bridge_lv2_qt4 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-qt4")
+    else:
+        for p in PATH:
+            if os.path.exists(os.path.join(p, "carla-bridge-lv2-qt4")):
+                carla_bridge_lv2_qt4 = os.path.join(p, "carla-bridge-lv2-qt4")
+                break
+
+    # find carla_bridge_lv2_qt5
+    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-qt5")):
+        carla_bridge_lv2_qt5 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-qt5")
+    else:
+        for p in PATH:
+            if os.path.exists(os.path.join(p, "carla-bridge-lv2-qt5")):
+                carla_bridge_lv2_qt5 = os.path.join(p, "carla-bridge-lv2-qt5")
+                break
+
+if LINUX:
+    # find carla_bridge_lv2_x11
+    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-x11")):
+        carla_bridge_lv2_x11 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-x11")
+    else:
+        for p in PATH:
+            if os.path.exists(os.path.join(p, "carla-bridge-lv2-x11")):
+                carla_bridge_lv2_x11 = os.path.join(p, "carla-bridge-lv2-x11")
+                break
+
+    # find carla_bridge_vst_x11
+    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-x11")):
+        carla_bridge_vst_x11 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-x11")
+    else:
+        for p in PATH:
+            if os.path.exists(os.path.join(p, "carla-bridge-vst-x11")):
+                carla_bridge_vst_x11 = os.path.join(p, "carla-bridge-vst-x11")
+                break
 
 # ------------------------------------------------------------------------------------------------
 # Plugin Query (helper functions)
@@ -447,7 +493,7 @@ def findBinaries(bPATH, OS):
 
 def findLV2Bundles(bPATH):
     bundles = []
-    extensions = (".lv2", ".lV2", ".LV2", ".Lv2")
+    extensions = (".lv2", ".lV2", ".LV2", ".Lv2") if not WINDOWS else (".lv2",)
 
     for root, dirs, files in os.walk(bPATH):
         for dir_ in [dir_ for dir_ in dirs if dir_.endswith(extensions)]:
@@ -459,11 +505,11 @@ def findSoundKits(bPATH, stype):
     soundfonts = []
 
     if stype == "gig":
-        extensions = (".gig", ".giG", ".gIG", ".GIG", ".GIg", ".Gig")
+        extensions = (".gig", ".giG", ".gIG", ".GIG", ".GIg", ".Gig") if not WINDOWS else (".gig",)
     elif stype == "sf2":
-        extensions = (".sf2", ".sF2", ".SF2", ".Sf2")
+        extensions = (".sf2", ".sF2", ".SF2", ".Sf2") if not WINDOWS else (".sf2",)
     elif stype == "sfz":
-        extensions = (".sfz", ".sfZ", ".sFZ", ".SFZ", ".SFz", ".Sfz")
+        extensions = (".sfz", ".sfZ", ".sFZ", ".SFZ", ".SFz", ".Sfz") if not WINDOWS else (".sfz",)
     else:
         return []
 
@@ -482,7 +528,7 @@ def findDSSIGUI(filename, name, label):
     check_label = label
     check_sname = short_name
 
-    if check_name[-1]  != "_": check_name += "_"
+    if check_name[-1]  != "_": check_name  += "_"
     if check_label[-1] != "_": check_label += "_"
     if check_sname[-1] != "_": check_sname += "_"
 
@@ -507,7 +553,7 @@ PLUGIN_QUERY_API_VERSION = 1
 PyPluginInfo = {
     'API': PLUGIN_QUERY_API_VERSION,
     'build': 0, # BINARY_NONE
-    'type': 0, # PLUGIN_NONE,
+    'type': 0, # PLUGIN_NONE
     'hints': 0x0,
     'binary': "",
     'name': "",
@@ -528,7 +574,7 @@ PyPluginInfo = {
 }
 
 def runCarlaDiscovery(itype, stype, filename, tool, isWine=False):
-    fake_label = os.path.basename(filename).rsplit(".", 1)[0]
+    fakeLabel = os.path.basename(filename).rsplit(".", 1)[0]
     plugins = []
     command = []
 
@@ -576,9 +622,9 @@ def runCarlaDiscovery(itype, stype, filename, tool, isWine=False):
             prop, value = line.replace("carla-discovery::", "").split("::", 1)
 
             if prop == "name":
-                pinfo['name'] = value if value else fake_label
+                pinfo['name'] = value if value else fakeLabel
             elif prop == "label":
-                pinfo['label'] = value if value else fake_label
+                pinfo['label'] = value if value else fakeLabel
             elif prop == "maker":
                 pinfo['maker'] = value
             elif prop == "copyright":

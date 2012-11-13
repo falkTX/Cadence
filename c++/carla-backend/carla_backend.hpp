@@ -267,106 +267,88 @@ enum OptionsType {
     OPTION_OSC_UI_TIMEOUT = 10,
 
     /*!
-     * Set LADSPA_PATH environment variable.\n
-     * Default undefined.
-     */
-    OPTION_PATH_LADSPA = 11,
-
-    /*!
-     * Set DSSI_PATH environment variable.\n
-     * Default undefined.
-     */
-    OPTION_PATH_DSSI = 12,
-
-    /*!
-     * Set LV2_PATH environment variable.\n
-     * Default undefined.
-     */
-    OPTION_PATH_LV2 = 13,
-
-    /*!
-     * Set VST_PATH environment variable.\n
-     * Default undefined.
-     */
-    OPTION_PATH_VST = 14,
-
-    /*!
-     * Set GIG_PATH environment variable.\n
-     * Default undefined.
-     */
-    OPTION_PATH_GIG = 15,
-
-    /*!
-     * Set SF2_PATH environment variable.\n
-     * Default undefined.
-     */
-    OPTION_PATH_SF2 = 16,
-
-    /*!
-     * Set SFZ_PATH environment variable.\n
-     * Default undefined.
-     */
-    OPTION_PATH_SFZ = 17,
-
-    /*!
      * Set path to the POSIX 32bit plugin bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_POSIX32 = 18,
+    OPTION_PATH_BRIDGE_POSIX32 = 11,
 
     /*!
      * Set path to the POSIX 64bit plugin bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_POSIX64 = 19,
+    OPTION_PATH_BRIDGE_POSIX64 = 12,
 
     /*!
      * Set path to the Windows 32bit plugin bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_WIN32 = 20,
+    OPTION_PATH_BRIDGE_WIN32 = 13,
 
     /*!
      * Set path to the Windows 64bit plugin bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_WIN64 = 21,
+    OPTION_PATH_BRIDGE_WIN64 = 14,
 
     /*!
      * Set path to the LV2 Gtk2 UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_LV2_GTK2 = 22,
+    OPTION_PATH_BRIDGE_LV2_GTK2 = 15,
 
     /*!
      * Set path to the LV2 Gtk3 UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_LV2_GTK3 = 23,
+    OPTION_PATH_BRIDGE_LV2_GTK3 = 16,
 
     /*!
      * Set path to the LV2 Qt4 UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_LV2_QT4 = 24,
+    OPTION_PATH_BRIDGE_LV2_QT4 = 17,
+
+    /*!
+     * Set path to the LV2 Qt5 UI bridge executable.\n
+     * Default unset.
+     */
+    OPTION_PATH_BRIDGE_LV2_QT5 = 18,
+
+    /*!
+     * Set path to the LV2 Cocoa UI bridge executable.\n
+     * Default unset.
+     */
+    OPTION_PATH_BRIDGE_LV2_COCOA = 19,
+
+    /*!
+     * Set path to the LV2 Windows UI bridge executable.\n
+     * Default unset.
+     */
+    OPTION_PATH_BRIDGE_LV2_WINDOWS = 20,
 
     /*!
      * Set path to the LV2 X11 UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_LV2_X11 = 25,
+    OPTION_PATH_BRIDGE_LV2_X11 = 21,
+
+    /*!
+     * Set path to the VST Cocoa UI bridge executable.\n
+     * Default unset.
+     */
+    OPTION_PATH_BRIDGE_VST_COCOA = 22,
 
     /*!
      * Set path to the VST HWND UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_VST_HWND = 26,
+    OPTION_PATH_BRIDGE_VST_HWND = 23,
 
     /*!
      * Set path to the VST X11 UI bridge executable.\n
      * Default unset.
      */
-    OPTION_PATH_BRIDGE_VST_X11 = 27
+    OPTION_PATH_BRIDGE_VST_X11 = 24
 };
 
 /*!

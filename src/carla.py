@@ -253,13 +253,6 @@ class SearchPluginsThread(QThread):
 
     def run(self):
         global LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, GIG_PATH, SF2_PATH, SFZ_PATH
-        os.environ['LADSPA_PATH'] = splitter.join(LADSPA_PATH)
-        os.environ['DSSI_PATH'] = splitter.join(DSSI_PATH)
-        os.environ['LV2_PATH'] = splitter.join(LV2_PATH)
-        os.environ['VST_PATH'] = splitter.join(VST_PATH)
-        os.environ['GIG_PATH'] = splitter.join(GIG_PATH)
-        os.environ['SF2_PATH'] = splitter.join(SF2_PATH)
-        os.environ['SFZ_PATH'] = splitter.join(SFZ_PATH)
 
         self.blacklist = toList(self.settings_db.value("Plugins/Blacklisted", []))
 
@@ -1275,33 +1268,6 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         Carla.Host.set_option(OPTION_OSC_UI_TIMEOUT, oscUiTimeout, "")
 
         # ---------------------------------------------
-        # bridge paths
-
-        if carla_bridge_posix32:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_POSIX32, 0, carla_bridge_posix32)
-
-        if carla_bridge_posix64:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_POSIX64, 0, carla_bridge_posix64)
-
-        if carla_bridge_win32:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_WIN32, 0, carla_bridge_win32)
-
-        if carla_bridge_win64:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_WIN64, 0, carla_bridge_win64)
-
-        if carla_bridge_lv2_gtk2:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_LV2_GTK2, 0, carla_bridge_lv2_gtk2)
-
-        if carla_bridge_lv2_qt4:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_LV2_QT4, 0, carla_bridge_lv2_qt4)
-
-        if carla_bridge_lv2_x11:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_LV2_X11, 0, carla_bridge_lv2_x11)
-
-        if carla_bridge_vst_x11:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_VST_X11, 0, carla_bridge_vst_x11)
-
-        # ---------------------------------------------
         # start
 
         audioDriver = self.settings.value("Engine/AudioDriver", "JACK", type=str)
@@ -1980,15 +1946,13 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         # ---------------------------------------------
         # plugin checks
 
-        disableChecks = self.settings.value("Engine/DisableChecks", bool(not WINDOWS), type=bool)
+        disableChecks = self.settings.value("Engine/DisableChecks", False, type=bool)
 
         if disableChecks:
             os.environ["CARLA_DISCOVERY_NO_PROCESSING_CHECKS"] = "true"
-        else:
-            try:
-                os.environ.pop("CARLA_DISCOVERY_NO_PROCESSING_CHECKS")
-            except:
-                pass
+
+        elif os.getenv("CARLA_DISCOVERY_NO_PROCESSING_CHECKS"):
+            os.environ.pop("CARLA_DISCOVERY_NO_PROCESSING_CHECKS")
 
         # ---------------------------------------------
         # plugin paths
@@ -2002,13 +1966,13 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         SF2_PATH = toList(self.settings.value("Paths/SF2", SF2_PATH))
         SFZ_PATH = toList(self.settings.value("Paths/SFZ", SFZ_PATH))
 
-        Carla.Host.set_option(OPTION_PATH_LADSPA, 0, splitter.join(LADSPA_PATH))
-        Carla.Host.set_option(OPTION_PATH_DSSI, 0, splitter.join(DSSI_PATH))
-        Carla.Host.set_option(OPTION_PATH_LV2, 0, splitter.join(LV2_PATH))
-        Carla.Host.set_option(OPTION_PATH_VST, 0, splitter.join(VST_PATH))
-        Carla.Host.set_option(OPTION_PATH_GIG, 0, splitter.join(GIG_PATH))
-        Carla.Host.set_option(OPTION_PATH_SF2, 0, splitter.join(SF2_PATH))
-        Carla.Host.set_option(OPTION_PATH_SFZ, 0, splitter.join(SFZ_PATH))
+        os.environ["LADSPA_PATH"] = splitter.join(LADSPA_PATH)
+        os.environ["DSSI_PATH"] = splitter.join(DSSI_PATH)
+        os.environ["LV2_PATH"] = splitter.join(LV2_PATH)
+        os.environ["VST_PATH"] = splitter.join(VST_PATH)
+        os.environ["GIG_PATH"] = splitter.join(GIG_PATH)
+        os.environ["SF2_PATH"] = splitter.join(SF2_PATH)
+        os.environ["SFZ_PATH"] = splitter.join(SFZ_PATH)
 
     def timerEvent(self, event):
         if event.timerId() == self.TIMER_GUI_STUFF:
@@ -2016,9 +1980,11 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
                 if pwidget: pwidget.check_gui_stuff()
             if self.m_engine_started and self.m_pluginCount > 0:
                 Carla.Host.idle_guis()
+
         elif event.timerId() == self.TIMER_GUI_STUFF2:
             for pwidget in self.m_plugin_list:
                 if pwidget: pwidget.check_gui_stuff2()
+
         QMainWindow.timerEvent(self, event)
 
     def closeEvent(self, event):
@@ -2103,9 +2069,56 @@ if __name__ == '__main__':
         elif os.path.exists(argument):
             projectFilename = argument
 
+    # Init backend
     Carla.Host = Host(libPrefix)
     Carla.Host.set_callback_function(callback_function)
     Carla.Host.set_option(OPTION_PROCESS_NAME, 0, "carla")
+
+    # Set bridge paths
+    if carla_bridge_posix32:
+        Carla.Host.set_option(OPTION_PATH_BRIDGE_POSIX32, 0, carla_bridge_posix32)
+
+    if carla_bridge_posix64:
+        Carla.Host.set_option(OPTION_PATH_BRIDGE_POSIX64, 0, carla_bridge_posix64)
+
+    if carla_bridge_win32:
+        Carla.Host.set_option(OPTION_PATH_BRIDGE_WIN32, 0, carla_bridge_win32)
+
+    if carla_bridge_win64:
+        Carla.Host.set_option(OPTION_PATH_BRIDGE_WIN64, 0, carla_bridge_win64)
+
+    if WINDOWS:
+        if carla_bridge_lv2_windows:
+            Carla.Host.set_option(OPTION_PATH_BRIDGE_LV2_WINDOWS, 0, carla_bridge_lv2_windows)
+
+        if carla_bridge_vst_hwnd:
+            Carla.Host.set_option(OPTION_PATH_BRIDGE_VST_HWND, 0, carla_bridge_vst_hwnd)
+
+    elif MACOS:
+        if carla_bridge_lv2_cocoa:
+            Carla.Host.set_option(OPTION_PATH_BRIDGE_LV2_COCOA, 0, carla_bridge_lv2_cocoa)
+
+        if carla_bridge_vst_cocoa:
+            Carla.Host.set_option(OPTION_PATH_BRIDGE_VST_COCOA, 0, carla_bridge_vst_cocoa)
+
+    else:
+        if carla_bridge_lv2_gtk2:
+            Carla.Host.set_option(OPTION_PATH_BRIDGE_LV2_GTK2, 0, carla_bridge_lv2_gtk2)
+
+        if carla_bridge_lv2_gtk3:
+            Carla.Host.set_option(OPTION_PATH_BRIDGE_LV2_GTK3, 0, carla_bridge_lv2_gtk3)
+
+        if carla_bridge_lv2_qt4:
+            Carla.Host.set_option(OPTION_PATH_BRIDGE_LV2_QT4, 0, carla_bridge_lv2_qt4)
+
+        if carla_bridge_lv2_qt5:
+            Carla.Host.set_option(OPTION_PATH_BRIDGE_LV2_QT5, 0, carla_bridge_lv2_qt5)
+
+        if carla_bridge_lv2_x11:
+            Carla.Host.set_option(OPTION_PATH_BRIDGE_LV2_X11, 0, carla_bridge_lv2_x11)
+
+        if carla_bridge_vst_x11:
+            Carla.Host.set_option(OPTION_PATH_BRIDGE_VST_X11, 0, carla_bridge_vst_x11)
 
     # Set available drivers
     driverCount = Carla.Host.get_engine_driver_count()
@@ -2125,6 +2138,7 @@ if __name__ == '__main__':
     # Show GUI
     Carla.gui.show()
 
+    # Load project file if set
     if projectFilename:
         Carla.gui.m_project_filename = projectFilename
         Carla.gui.loadProjectLater()

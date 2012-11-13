@@ -21,9 +21,15 @@
 #include "carla_backend.hpp"
 #include "carla_utils.hpp"
 
-#include <QtCore/QString>
-
 CARLA_BACKEND_START_NAMESPACE
+
+/*!
+ * @defgroup CarlaBackendUtils Carla Backend Utils
+ *
+ * Carla Backend Utils
+ *
+ * @{
+ */
 
 static inline
 const char* BinaryType2Str(const BinaryType& type)
@@ -229,20 +235,6 @@ const char* OptionsType2Str(const OptionsType& type)
         return "OPTION_PREFER_UI_BRIDGES";
     case OPTION_OSC_UI_TIMEOUT:
         return "OPTION_OSC_UI_TIMEOUT";
-    case OPTION_PATH_LADSPA:
-        return "OPTION_PATH_LADSPA";
-    case OPTION_PATH_DSSI:
-        return "OPTION_PATH_DSSI";
-    case OPTION_PATH_LV2:
-        return "OPTION_PATH_LV2";
-    case OPTION_PATH_VST:
-        return "OPTION_PATH_VST";
-    case OPTION_PATH_GIG:
-        return "OPTION_PATH_GIG";
-    case OPTION_PATH_SF2:
-        return "OPTION_PATH_SF2";
-    case OPTION_PATH_SFZ:
-        return "OPTION_PATH_SFZ";
     case OPTION_PATH_BRIDGE_POSIX32:
         return "OPTION_PATH_BRIDGE_POSIX32";
     case OPTION_PATH_BRIDGE_POSIX64:
@@ -257,8 +249,16 @@ const char* OptionsType2Str(const OptionsType& type)
         return "OPTION_PATH_BRIDGE_LV2_GTK3";
     case OPTION_PATH_BRIDGE_LV2_QT4:
         return "OPTION_PATH_BRIDGE_LV2_QT4";
+    case OPTION_PATH_BRIDGE_LV2_QT5:
+        return "OPTION_PATH_BRIDGE_LV2_QT5";
+    case OPTION_PATH_BRIDGE_LV2_COCOA:
+        return "OPTION_PATH_BRIDGE_LV2_COCOA";
+    case OPTION_PATH_BRIDGE_LV2_WINDOWS:
+        return "OPTION_PATH_BRIDGE_LV2_WINDOWS";
     case OPTION_PATH_BRIDGE_LV2_X11:
         return "OPTION_PATH_BRIDGE_LV2_X11";
+    case OPTION_PATH_BRIDGE_VST_COCOA:
+        return "OPTION_PATH_BRIDGE_VST_COCOA";
     case OPTION_PATH_BRIDGE_VST_HWND:
         return "OPTION_PATH_BRIDGE_VST_HWND";
     case OPTION_PATH_BRIDGE_VST_X11:
@@ -514,6 +514,8 @@ PluginCategory getPluginCategoryFromName(const char* const name)
 
     return PLUGIN_CATEGORY_NONE;
 }
+
+/**@}*/
 
 CARLA_BACKEND_END_NAMESPACE
 

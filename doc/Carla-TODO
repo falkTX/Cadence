@@ -1,7 +1,6 @@
 # Carla TODO
 
 GENERAL:
- - add lv2-cocoa+hwmd ui paths
  - add direct program access on ui-dialogs (needed for standalone bridges), maybe add extra buttons too
  - implement osc-based uis in bridge mode
  - implement midi-learn (new dialog)

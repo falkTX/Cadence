@@ -232,7 +232,11 @@ struct CarlaEngineOptions {
     CarlaString bridge_lv2gtk2;
     CarlaString bridge_lv2gtk3;
     CarlaString bridge_lv2qt4;
+    CarlaString bridge_lv2qt5;
+    CarlaString bridge_lv2cocoa;
+    CarlaString bridge_lv2win;
     CarlaString bridge_lv2x11;
+    CarlaString bridge_vstcocoa;
     CarlaString bridge_vsthwnd;
     CarlaString bridge_vstx11;
 

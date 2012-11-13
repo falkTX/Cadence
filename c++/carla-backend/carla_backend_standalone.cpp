@@ -186,12 +186,16 @@ bool engine_init(const char* driver_name, const char* client_name)
     standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_POSIX64,  0, standalone.options.bridge_posix64);
     standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_WIN32,    0, standalone.options.bridge_win32);
     standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_WIN64,    0, standalone.options.bridge_win64);
-    standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_LV2_GTK2, 0, standalone.options.bridge_lv2gtk2);
-    standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_LV2_GTK3, 0, standalone.options.bridge_lv2gtk3);
-    standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_LV2_QT4,  0, standalone.options.bridge_lv2qt4);
-    standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_LV2_X11,  0, standalone.options.bridge_lv2qt4);
-    standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_VST_HWND, 0, standalone.options.bridge_vsthwnd);
-    standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_VST_X11,  0, standalone.options.bridge_vstx11);
+    standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_LV2_GTK2,    0, standalone.options.bridge_lv2gtk2);
+    standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_LV2_GTK3,    0, standalone.options.bridge_lv2gtk3);
+    standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_LV2_QT4,     0, standalone.options.bridge_lv2qt4);
+    standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_LV2_QT5,     0, standalone.options.bridge_lv2qt5);
+    standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_LV2_COCOA,   0, standalone.options.bridge_lv2cocoa);
+    standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_LV2_WINDOWS, 0, standalone.options.bridge_lv2win);
+    standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_LV2_X11,     0, standalone.options.bridge_lv2qt4);
+    standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_VST_COCOA, 0, standalone.options.bridge_vstcocoa);
+    standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_VST_HWND,  0, standalone.options.bridge_vsthwnd);
+    standalone.engine->setOption(CarlaBackend::OPTION_PATH_BRIDGE_VST_X11,   0, standalone.options.bridge_vstx11);
 
     if (standalone.procName.isNotEmpty())
         standalone.engine->setOption(CarlaBackend::OPTION_PROCESS_NAME, 0, standalone.procName);
@@ -1493,13 +1497,7 @@ void set_option(CarlaBackend::OptionsType option, int value, const char* value_s
     qDebug("CarlaBackendStandalone::set_option(%s, %i, \"%s\")", CarlaBackend::OptionsType2Str(option), value, value_str);
 
     if (standalone.engine)
-    {
         standalone.engine->setOption(option, value, value_str);
-
-        if (option >= CarlaBackend::OPTION_PATH_LADSPA && option <= CarlaBackend::OPTION_PATH_SFZ)
-            // no need to set twice
-            return;
-    }
 
     switch (option)
     {
@@ -1550,28 +1548,6 @@ void set_option(CarlaBackend::OptionsType option, int value, const char* value_s
         standalone.options.oscUiTimeout = value;
         break;
 
-    case CarlaBackend::OPTION_PATH_LADSPA:
-        carla_setenv("LADSPA_PATH", value_str);
-        break;
-    case CarlaBackend::OPTION_PATH_DSSI:
-        carla_setenv("DSSI_PATH", value_str);
-        break;
-    case CarlaBackend::OPTION_PATH_LV2:
-        carla_setenv("LV2_PATH", value_str);
-        break;
-    case CarlaBackend::OPTION_PATH_VST:
-        carla_setenv("VST_PATH", value_str);
-        break;
-    case CarlaBackend::OPTION_PATH_GIG:
-        carla_setenv("GIG_PATH", value_str);
-        break;
-    case CarlaBackend::OPTION_PATH_SF2:
-        carla_setenv("SF2_PATH", value_str);
-        break;
-    case CarlaBackend::OPTION_PATH_SFZ:
-        carla_setenv("SFZ_PATH", value_str);
-        break;
-
     case CarlaBackend::OPTION_PATH_BRIDGE_POSIX32:
         standalone.options.bridge_posix32 = value_str;
         break;
@@ -1584,6 +1560,7 @@ void set_option(CarlaBackend::OptionsType option, int value, const char* value_s
     case CarlaBackend::OPTION_PATH_BRIDGE_WIN64:
         standalone.options.bridge_win64 = value_str;
         break;
+
     case CarlaBackend::OPTION_PATH_BRIDGE_LV2_GTK2:
         standalone.options.bridge_lv2gtk2 = value_str;
         break;
@@ -1593,8 +1570,21 @@ void set_option(CarlaBackend::OptionsType option, int value, const char* value_s
     case CarlaBackend::OPTION_PATH_BRIDGE_LV2_QT4:
         standalone.options.bridge_lv2qt4 = value_str;
         break;
+    case CarlaBackend::OPTION_PATH_BRIDGE_LV2_QT5:
+        standalone.options.bridge_lv2qt5 = value_str;
+        break;
+    case CarlaBackend::OPTION_PATH_BRIDGE_LV2_COCOA:
+        standalone.options.bridge_lv2cocoa = value_str;
+        break;
+    case CarlaBackend::OPTION_PATH_BRIDGE_LV2_WINDOWS:
+        standalone.options.bridge_lv2win = value_str;
+        break;
     case CarlaBackend::OPTION_PATH_BRIDGE_LV2_X11:
         standalone.options.bridge_lv2x11 = value_str;
+        break;
+
+    case CarlaBackend::OPTION_PATH_BRIDGE_VST_COCOA:
+        standalone.options.bridge_vstcocoa = value_str;
         break;
     case CarlaBackend::OPTION_PATH_BRIDGE_VST_HWND:
         standalone.options.bridge_vsthwnd = value_str;

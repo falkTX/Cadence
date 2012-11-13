@@ -1127,28 +1127,6 @@ void CarlaEngine::setOption(const OptionsType option, const int value, const cha
         options.oscUiTimeout = value;
         break;
 
-    case OPTION_PATH_LADSPA:
-        carla_setenv("LADSPA_PATH", valueStr);
-        break;
-    case OPTION_PATH_DSSI:
-        carla_setenv("DSSI_PATH", valueStr);
-        break;
-    case OPTION_PATH_LV2:
-        carla_setenv("LV2_PATH", valueStr);
-        break;
-    case OPTION_PATH_VST:
-        carla_setenv("VST_PATH", valueStr);
-        break;
-    case OPTION_PATH_GIG:
-        carla_setenv("GIG_PATH", valueStr);
-        break;
-    case OPTION_PATH_SF2:
-        carla_setenv("SF2_PATH", valueStr);
-        break;
-    case OPTION_PATH_SFZ:
-        carla_setenv("SFZ_PATH", valueStr);
-        break;
-
     case OPTION_PATH_BRIDGE_POSIX32:
         options.bridge_posix32 = valueStr;
         break;
@@ -1161,6 +1139,7 @@ void CarlaEngine::setOption(const OptionsType option, const int value, const cha
     case OPTION_PATH_BRIDGE_WIN64:
         options.bridge_win64 = valueStr;
         break;
+
     case OPTION_PATH_BRIDGE_LV2_GTK2:
         options.bridge_lv2gtk2 = valueStr;
         break;
@@ -1170,8 +1149,21 @@ void CarlaEngine::setOption(const OptionsType option, const int value, const cha
     case OPTION_PATH_BRIDGE_LV2_QT4:
         options.bridge_lv2qt4 = valueStr;
         break;
+    case OPTION_PATH_BRIDGE_LV2_QT5:
+        options.bridge_lv2qt5 = valueStr;
+        break;
+    case OPTION_PATH_BRIDGE_LV2_COCOA:
+        options.bridge_lv2cocoa = valueStr;
+        break;
+    case OPTION_PATH_BRIDGE_LV2_WINDOWS:
+        options.bridge_lv2win = valueStr;
+        break;
     case OPTION_PATH_BRIDGE_LV2_X11:
         options.bridge_lv2x11 = valueStr;
+        break;
+
+    case OPTION_PATH_BRIDGE_VST_COCOA:
+        options.bridge_vstcocoa = valueStr;
         break;
     case OPTION_PATH_BRIDGE_VST_HWND:
         options.bridge_vsthwnd = valueStr;

@@ -28,6 +28,7 @@ SOURCES  = \
 
 HEADERS = \
     carla_backend.hpp \
+    carla_backend_utils.hpp \
     carla_backend_standalone.hpp
 
 INCLUDEPATH = . \
