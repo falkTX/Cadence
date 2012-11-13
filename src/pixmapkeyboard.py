@@ -98,7 +98,7 @@ class PixmapKeyboard(QWidget):
         self.m_needsUpdate = False
         self.m_enabledKeys = []
 
-        self.m_font = QFont("Monospace", 8, QFont.Normal)
+        self.m_font   = QFont("Monospace", 8, QFont.Normal)
         self.m_pixmap = QPixmap("")
 
         self.setCursor(Qt.PointingHandCursor)
@@ -166,8 +166,8 @@ class PixmapKeyboard(QWidget):
     def setOctaves(self, octaves):
         if octaves < 1:
             octaves = 1
-        elif octaves > 6:
-            octaves = 6
+        elif octaves > 8:
+            octaves = 8
         self.m_octaves = octaves
 
         if self.m_pixmap_mode == self.HORIZONTAL:
@@ -308,6 +308,10 @@ class PixmapKeyboard(QWidget):
                 octave = 4
             elif note < 108:
                 octave = 5
+            elif note < 120:
+                octave = 6
+            elif note < 132:
+                octave = 7
             else:
                 # cannot paint this note either
                 continue
@@ -370,6 +374,10 @@ class PixmapKeyboard(QWidget):
                 octave = 4
             elif note < 108:
                 octave = 5
+            elif note < 120:
+                octave = 6
+            elif note < 132:
+                octave = 7
             else:
                 # cannot paint this note either
                 continue

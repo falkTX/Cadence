@@ -22,7 +22,7 @@ from copy import deepcopy
 from decimal import Decimal
 from sip import unwrapinstance
 from PyQt4.QtCore import pyqtSlot, Qt, QSettings, QTimer
-from PyQt4.QtGui import QColor, QCursor, QDialog, QFontMetrics, QFrame, QInputDialog, QMenu, QPainter, QVBoxLayout, QWidget
+from PyQt4.QtGui import QColor, QCursor, QDialog, QFontMetrics, QFrame, QInputDialog, QMenu, QPainter, QPainterPath, QVBoxLayout, QWidget
 from PyQt4.QtXml import QDomDocument
 
 try:
@@ -566,10 +566,11 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
-        self.m_firstShow = True
-        self.m_geometry  = None
-        self.m_pluginId  = pluginId
+        self.m_firstShow  = True
+        self.m_geometry   = None
+        self.m_pluginId   = pluginId
         self.m_pluginInfo = None
+        self.m_realParent = parent if pluginId != -1 else None
 
         self.m_parameterCount = 0
         self.m_parameterList  = [] # (type, id, widget)
@@ -584,34 +585,26 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.m_tabIconCount = 0
         self.m_tabIconTimers = []
 
-        self.keyboard.setMode(self.keyboard.HORIZONTAL)
-        self.keyboard.setOctaves(6)
-        self.scrollArea.ensureVisible(self.keyboard.width() * 1 / 5, 0)
-        self.scrollArea.setVisible(False)
-
         # TODO - not implemented yet
         self.b_reload_program.setEnabled(False)
         self.b_reload_midi_program.setEnabled(False)
 
         # Not available for carla-control
-        if Carla.isControl:
+        if Carla.isControl or pluginId == -1:
             self.b_load_state.setEnabled(False)
             self.b_save_state.setEnabled(False)
 
-        self.connect(self.b_save_state, SIGNAL("clicked()"), SLOT("slot_saveState()"))
-        self.connect(self.b_load_state, SIGNAL("clicked()"), SLOT("slot_loadState()"))
+        else:
+            self.connect(self.b_save_state, SIGNAL("clicked()"), SLOT("slot_saveState()"))
+            self.connect(self.b_load_state, SIGNAL("clicked()"), SLOT("slot_loadState()"))
 
-        self.connect(self.keyboard, SIGNAL("noteOn(int)"), SLOT("slot_noteOn(int)"))
-        self.connect(self.keyboard, SIGNAL("noteOff(int)"), SLOT("slot_noteOff(int)"))
-        self.connect(self.keyboard, SIGNAL("notesOn()"), SLOT("slot_notesOn()"))
-        self.connect(self.keyboard, SIGNAL("notesOff()"), SLOT("slot_notesOff()"))
+        if pluginId != -1:
+            self.connect(self.cb_programs, SIGNAL("currentIndexChanged(int)"), SLOT("slot_programIndexChanged(int)"))
+            self.connect(self.cb_midi_programs, SIGNAL("currentIndexChanged(int)"), SLOT("slot_midiProgramIndexChanged(int)"))
 
-        self.connect(self.cb_programs, SIGNAL("currentIndexChanged(int)"), SLOT("slot_programIndexChanged(int)"))
-        self.connect(self.cb_midi_programs, SIGNAL("currentIndexChanged(int)"), SLOT("slot_midiProgramIndexChanged(int)"))
+            self.connect(self, SIGNAL("finished(int)"), SLOT("slot_finished()"))
 
-        self.connect(self, SIGNAL("finished(int)"), SLOT("slot_finished()"))
-
-        self.do_reload_all()
+            self.do_reload_all()
 
     def do_reload_all(self):
         self.m_pluginInfo = Carla.host.get_plugin_info(self.m_pluginId)
@@ -631,7 +624,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         pluginHints = self.m_pluginInfo['hints']
 
         # Automatically change to MidiProgram tab
-        if pluginType in (PLUGIN_DSSI, PLUGIN_LV2, PLUGIN_GIG, PLUGIN_SF2, PLUGIN_SFZ) and not self.le_name.text():
+        if pluginType != PLUGIN_VST and not self.le_name.text():
             self.tab_programs.setCurrentIndex(1)
 
         # Set Meta-Data
@@ -680,11 +673,8 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.le_is_synth.setText(self.tr("Yes") if bool(pluginHints & PLUGIN_IS_SYNTH) else self.tr("No"))
         self.le_has_gui.setText(self.tr("Yes") if bool(pluginHints & PLUGIN_HAS_GUI) else self.tr("No"))
 
-        # Show/hide keyboard
-        self.scrollArea.setVisible((pluginHints & PLUGIN_IS_SYNTH) > 0 or (midiCountInfo['ins'] > 0 < midiCountInfo['outs']))
-
         # Force-Update parent for new hints (knobs)
-        self.parent().recheck_hints(pluginHints)
+        self.m_realParent.recheck_hints(pluginHints)
 
     def do_reload_parameters(self):
         parameterCount = Carla.host.get_parameter_count(self.m_pluginId)
@@ -964,7 +954,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         content += "<?xml version='1.0' encoding='UTF-8'?>\n"
         content += "<!DOCTYPE CARLA-PRESET>\n"
         content += "<CARLA-PRESET VERSION='%s'>\n" % VERSION
-        content += self.parent().getSaveXMLContent()
+        content += self.m_realParent.getSaveXMLContent()
         content += "</CARLA-PRESET>\n"
 
         try:
@@ -1000,7 +990,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
         saveState = getSaveStateDictFromXML(xmlNode)
 
-        self.parent().loadStateDict(saveState)
+        self.m_realParent.loadStateDict(saveState)
 
     def loadStateLV2(self):
         pass
@@ -1146,29 +1136,13 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
         self.m_currentMidiProgram = index
 
-    @pyqtSlot(int)
-    def slot_noteOn(self, note):
-        Carla.host.send_midi_note(self.m_pluginId, 0, note, 100)
-
-    @pyqtSlot(int)
-    def slot_noteOff(self, note):
-        Carla.host.send_midi_note(self.m_pluginId, 0, note, 0)
-
-    @pyqtSlot()
-    def slot_notesOn(self):
-        self.parent().led_midi.setChecked(True)
-
-    @pyqtSlot()
-    def slot_notesOff(self):
-        self.parent().led_midi.setChecked(False)
-
     @pyqtSlot()
     def slot_checkInputControlParameters(self):
         self.updateParametersInputs()
 
     @pyqtSlot()
     def slot_finished(self):
-        self.parent().b_edit.setChecked(False)
+        self.m_realParent.b_edit.setChecked(False)
 
     def done(self, r):
         QDialog.done(self, r)
@@ -1179,6 +1153,8 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
     def __init__(self, parent, pluginId):
         QFrame.__init__(self, parent)
         self.setupUi(self)
+
+        self.frame_controls.setVisible(False)
 
         self.m_pluginId   = pluginId
         self.m_pluginInfo = Carla.host.get_plugin_info(pluginId)
@@ -1196,7 +1172,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         if Carla.processMode == PROCESS_MODE_CONTINUOUS_RACK:
             self.m_peaksInputCount  = 2
             self.m_peaksOutputCount = 2
-            self.stackedWidget.setCurrentIndex(0)
+            #self.stackedWidget.setCurrentIndex(0)
         else:
             audioCountInfo = Carla.host.get_audio_port_count_info(self.m_pluginId)
 
@@ -1209,17 +1185,16 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             if self.m_peaksOutputCount > 2:
                 self.m_peaksOutputCount = 2
 
-            if audioCountInfo['total'] == 0:
-                self.stackedWidget.setCurrentIndex(1)
-            else:
-                self.stackedWidget.setCurrentIndex(0)
+            #if audioCountInfo['total'] == 0:
+                #self.stackedWidget.setCurrentIndex(1)
+            #else:
+                #self.stackedWidget.setCurrentIndex(0)
 
         midiCountInfo = Carla.host.get_midi_port_count_info(self.m_pluginId)
 
-        if (self.m_pluginInfo['hints'] & PLUGIN_IS_SYNTH) > 0 or (midiCountInfo['ins'] > 0 < midiCountInfo['outs']):
-            self.led_audio_in.setVisible(False)
-        else:
-            self.led_midi.setVisible(False)
+        # Background
+        self.m_colorTop    = QColor(60, 60, 60)
+        self.m_colorBottom = QColor(47, 47, 47)
 
         # Colorify
         if self.m_pluginInfo['category'] == PLUGIN_CATEGORY_SYNTH:
@@ -1240,12 +1215,6 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             self.setWidgetColor(PALETTE_COLOR_BROWN)
         else:
             self.setWidgetColor(PALETTE_COLOR_NONE)
-
-        # Fake effect
-        self.m_color1 = QColor(0, 0, 0, 220)
-        self.m_color2 = QColor(0, 0, 0, 170)
-        self.m_color3 = QColor(7, 7, 7, 250)
-        self.m_color4 = QColor(14, 14, 14, 255)
 
         self.led_enable.setColor(self.led_enable.BIG_RED)
         self.led_enable.setChecked(False)
@@ -1320,12 +1289,15 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
         self.check_gui_stuff()
 
+        # FIXME
+        self.setMaximumHeight(40)
+
     def set_active(self, active, sendGui=False, sendCallback=True):
         if sendGui:      self.led_enable.setChecked(active)
         if sendCallback: Carla.host.set_active(self.m_pluginId, active)
 
         if active:
-            self.edit_dialog.keyboard.allNotesOff()
+            Carla.gui.pluginWidgetActivated(self.edit_dialog)
 
     def set_drywet(self, value, sendGui=False, sendCallback=True):
         if sendGui:      self.dial_drywet.setValue(value)
@@ -1440,57 +1412,57 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             borderG = 60
             borderB = 60
 
-        self.setStyleSheet("""
-        QFrame#PluginWidget {
-            background-image: url(:/bitmaps/textures/metal_9-512px.jpg);
-            background-repeat: repeat-x;
-            background-position: top left;
-        }
-        QLabel#label_name {
-            color: white;
-        }
-        QWidget#widget_buttons {
-            background-color: rgb(%i, %i, %i);
-            border-left: 1px solid rgb(%i, %i, %i);
-            border-right: 1px solid rgb(%i, %i, %i);
-            border-bottom: 1px solid rgb(%i, %i, %i);
-            border-bottom-left-radius: 3px;
-            border-bottom-right-radius: 3px;
-        }
-        QPushButton#b_gui:hover, QPushButton#b_edit:hover, QPushButton#b_remove:hover {
-            background-color: rgb(%i, %i, %i);
-            border: 1px solid rgb(%i, %i, %i);
-            border-radius: 3px;
-        }
-        QFrame#frame_name {
-            background-color: rgb(%i, %i, %i);
-            border: 1px solid rgb(%i, %i, %i);
-            border-radius: 4px;
-        }
-        QFrame#frame_controls {
-            background-image: url(:/bitmaps/carla_knobs1.png);
-            background-color: rgb(35, 35, 35);
-            border: 1px solid rgb(35, 35, 35);
-            border-radius: 4px;
-        }
-        QFrame#frame_peaks {
-            background-color: rgb(35, 35, 35);
-            border: 1px solid rgb(35, 35, 35);
-            border-radius: 4px;
-        }
-        """ % (
-        # QWidget#widget_buttons
-        borderR, borderG, borderB,
-        borderR, borderG, borderB,
-        borderR, borderG, borderB,
-        borderR, borderG, borderB,
-        # QPushButton#b_*
-        r, g, b,
-        borderR, borderG, borderB,
-        # QFrame#frame_name
-        r, g, b,
-        borderR, borderG, borderB
-        ))
+        #self.setStyleSheet("""
+        #QFrame#PluginWidget {
+            #background-image: url(:/bitmaps/textures/metal_9-512px.jpg);
+            #background-repeat: repeat-x;
+            #background-position: top left;
+        #}
+        #QLabel#label_name {
+            #color: white;
+        #}
+        #QWidget#widget_buttons {
+            #background-color: rgb(%i, %i, %i);
+            #border-left: 1px solid rgb(%i, %i, %i);
+            #border-right: 1px solid rgb(%i, %i, %i);
+            #border-bottom: 1px solid rgb(%i, %i, %i);
+            #border-bottom-left-radius: 3px;
+            #border-bottom-right-radius: 3px;
+        #}
+        #QPushButton#b_gui:hover, QPushButton#b_edit:hover, QPushButton#b_remove:hover {
+            #background-color: rgb(%i, %i, %i);
+            #border: 1px solid rgb(%i, %i, %i);
+            #border-radius: 3px;
+        #}
+        #QFrame#frame_name {
+            #background-color: rgb(%i, %i, %i);
+            #border: 1px solid rgb(%i, %i, %i);
+            #border-radius: 4px;
+        #}
+        #QFrame#frame_controls {
+            #background-image: url(:/bitmaps/carla_knobs1.png);
+            #background-color: rgb(35, 35, 35);
+            #border: 1px solid rgb(35, 35, 35);
+            #border-radius: 4px;
+        #}
+        #QFrame#frame_peaks {
+            #background-color: rgb(35, 35, 35);
+            #border: 1px solid rgb(35, 35, 35);
+            #border-radius: 4px;
+        #}
+        #""" % (
+        ## QWidget#widget_buttons
+        #borderR, borderG, borderB,
+        #borderR, borderG, borderB,
+        #borderR, borderG, borderB,
+        #borderR, borderG, borderB,
+        ## QPushButton#b_*
+        #r, g, b,
+        #borderR, borderG, borderB,
+        ## QFrame#frame_name
+        #r, g, b,
+        #borderR, borderG, borderB
+        #))
 
     def recheck_hints(self, hints):
         self.m_pluginInfo['hints'] = hints
@@ -1990,20 +1962,49 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         elif label == "Balance-Right":
             self.set_balance_right(value, True, True)
 
+    def mousePressEvent(self, event):
+        Carla.gui.pluginWidgetClicked(self.edit_dialog)
+        QFrame.mousePressEvent(self, event)
+
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setPen(self.m_color1)
-        painter.drawLine(0, 3, self.width(), 3)
-        painter.drawLine(0, self.height() - 4, self.width(), self.height() - 4)
-        painter.setPen(self.m_color2)
-        painter.drawLine(0, 2, self.width(), 2)
-        painter.drawLine(0, self.height() - 3, self.width(), self.height() - 3)
-        painter.setPen(self.m_color3)
-        painter.drawLine(0, 1, self.width(), 1)
-        painter.drawLine(0, self.height() - 2, self.width(), self.height() - 2)
-        painter.setPen(self.m_color4)
-        painter.drawLine(0, 0, self.width(), 0)
-        painter.drawLine(0, self.height() - 1, self.width(), self.height() - 1)
+
+        areaX = self.area_right.x()
+
+        # background
+        #painter.setPen(self.m_colorTop)
+        #painter.setBrush(self.m_colorTop)
+        #painter.drawRect(0, 0, areaX+40, self.height())
+
+        # bottom line
+        painter.setPen(self.m_colorBottom)
+        painter.setBrush(self.m_colorBottom)
+        painter.drawRect(0, self.height()-5, areaX, 5)
+
+        # top line
+        painter.drawLine(0, 0, areaX+40, 0)
+
+        # name -> leds arc
+        path = QPainterPath()
+        path.moveTo(areaX-80, self.height())
+        path.cubicTo(areaX+40, self.height()-5, areaX-40, 30, areaX+20, 0)
+        path.lineTo(areaX+20, self.height())
+        painter.drawPath(path)
+
+        # fill the rest
+        painter.drawRect(areaX+20, 0, self.width(), self.height())
+
+        #painter.drawLine(0, 3, self.width(), 3)
+        #painter.drawLine(0, self.height() - 4, self.width(), self.height() - 4)
+        #painter.setPen(self.m_color2)
+        #painter.drawLine(0, 2, self.width(), 2)
+        #painter.drawLine(0, self.height() - 3, self.width(), self.height() - 3)
+        #painter.setPen(self.m_color3)
+        #painter.drawLine(0, 1, self.width(), 1)
+        #painter.drawLine(0, self.height() - 2, self.width(), self.height() - 2)
+        #painter.setPen(self.m_color4)
+        #painter.drawLine(0, 0, self.width(), 0)
+        #painter.drawLine(0, self.height() - 1, self.width(), self.height() - 1)
         QFrame.paintEvent(self, event)
 
 # Plugin GUI
