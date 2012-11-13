@@ -1155,6 +1155,8 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
         self.m_engine_started = False
         self.m_project_filename = None
+
+        self.m_firstEngineInit = True
         self.m_pluginCount = 0
 
         self._nsmAnnounce2str = ""
@@ -1273,6 +1275,10 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         audioDriver = self.settings.value("Engine/AudioDriver", "JACK", type=str)
 
         if not Carla.Host.engine_init(audioDriver, clientName):
+            if self.m_firstEngineInit:
+                self.m_firstEngineInit = False
+                return
+
             self.act_engine_start.setEnabled(True)
             self.act_engine_stop.setEnabled(False)
             QMessageBox.critical(self, self.tr("Error"), self.tr("Could not connect to Audio backend '%s', possible reasons: %s" % (audioDriver, cString(Carla.Host.get_last_error()))))
