@@ -24,7 +24,7 @@ ifeq ($(CARLA_PLUGIN_SUPPORT),true)
 endif
 
 ifeq ($(HAVE_JACK),true)
-BUILD_CXX_FLAGS += $(shell pkg-config --cflags jack)
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags jack) -D__UNIX_JACK__
 WANT_JACK        = true
 endif
 

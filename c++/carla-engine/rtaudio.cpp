@@ -130,13 +130,13 @@ public:
             return false;
         }
 
-        midiIn = new MidiInAlsa(clientName, 512);
-        midiIn->openVirtualPort("control-in");
-        midiIn->openVirtualPort("midi-in");
+        //midiIn = new MidiInAlsa(clientName, 512);
+        //midiIn->openVirtualPort("control-in");
+        //midiIn->openVirtualPort("midi-in");
 
-        midiOut = new MidiOutAlsa(clientName);
-        midiOut->openVirtualPort("control-out");
-        midiOut->openVirtualPort("midi-out");
+        //midiOut = new MidiOutAlsa(clientName);
+        //midiOut->openVirtualPort("control-out");
+        //midiOut->openVirtualPort("midi-out");
 
         name = clientName;
         name.toBasic();
@@ -156,6 +156,7 @@ public:
         if (audio.isStreamOpen())
             audio.closeStream();
 
+#if 0
         if (midiIn)
         {
             midiIn->cancelCallback();
@@ -170,6 +171,7 @@ public:
             delete midiOut;
             midiOut = nullptr;
         }
+#endif
 
         return true;
     }
