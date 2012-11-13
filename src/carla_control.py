@@ -679,8 +679,8 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         info['maker']     = maker
         info['copyright'] = copyright
         info['uniqueId']  = uniqueId
-        Carla.Host._set_pluginInfo(pluginId, info)
-        Carla.Host._set_pluginRealName(pluginId, realName)
+        Carla.host._set_pluginInfo(pluginId, info)
+        Carla.host._set_pluginRealName(pluginId, realName)
 
     @pyqtSlot(int, int, int, int, int, int, int, int)
     def slot_handleSetPluginPorts(self, pluginId, audioIns, audioOuts, midiIns, midiOuts, cIns, cOuts, cTotals):
@@ -700,9 +700,9 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         paramInfo['outs']  = cOuts
         paramInfo['total'] = cTotals
 
-        Carla.Host._set_audioCountInfo(pluginId, audioInfo)
-        Carla.Host._set_midiCountInfo(pluginId, midiInfo)
-        Carla.Host._set_parameterCountInfo(pluginId, paramInfo)
+        Carla.host._set_audioCountInfo(pluginId, audioInfo)
+        Carla.host._set_midiCountInfo(pluginId, midiInfo)
+        Carla.host._set_parameterCountInfo(pluginId, paramInfo)
 
     @pyqtSlot(int, int, int, int, str, str, float)
     def slot_handleSetParameterData(self, pluginId, index, type_, hints, name, label, current):
@@ -719,9 +719,9 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         info['name']  = name
         info['label'] = label
 
-        Carla.Host._set_parameterDataS(pluginId, index, data)
-        Carla.Host._set_parameterInfoS(pluginId, index, info)
-        Carla.Host._set_parameterValueS(pluginId, index, current)
+        Carla.host._set_parameterDataS(pluginId, index, data)
+        Carla.host._set_parameterInfoS(pluginId, index, info)
+        Carla.host._set_parameterValueS(pluginId, index, current)
 
     @pyqtSlot(int, int, float, float, float, float, float, float)
     def slot_handleSetParameterRanges(self, pluginId, index, min_, max_, def_, step, stepSmall, stepLarge):
@@ -733,11 +733,11 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         ranges['stepSmall'] = stepSmall
         ranges['stepLarge'] = stepLarge
 
-        Carla.Host._set_parameterRangeS(pluginId, index, ranges)
+        Carla.host._set_parameterRangeS(pluginId, index, ranges)
 
     @pyqtSlot(int, int, int)
     def slot_handleSetParameterMidiCC(self, pluginId, index, cc):
-        Carla.Host._set_parameterMidiCC(pluginId, index, cc)
+        Carla.host._set_parameterMidiCC(pluginId, index, cc)
 
         pwidget = self.m_plugin_list[pluginId]
         if pwidget:
@@ -745,7 +745,7 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
 
     @pyqtSlot(int, int, int)
     def slot_handleSetParameterMidiChannel(self, pluginId, index, channel):
-        Carla.Host._set_parameterMidiChannel(pluginId, index, channel)
+        Carla.host._set_parameterMidiChannel(pluginId, index, channel)
 
         pwidget = self.m_plugin_list[pluginId]
         if pwidget:
@@ -754,7 +754,7 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
     @pyqtSlot(int, int, float)
     def slot_handleSetParameterValue(self, pluginId, parameterId, value):
         if parameterId >= 0:
-            Carla.Host._set_parameterValueS(pluginId, parameterId, value)
+            Carla.host._set_parameterValueS(pluginId, parameterId, value)
 
         pwidget = self.m_plugin_list[pluginId]
         if pwidget:
@@ -782,7 +782,7 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
 
     @pyqtSlot(int, int, float)
     def slot_handleSetDefaultValue(self, pluginId, parameterId, value):
-        Carla.Host._set_parameterDefaultValue(pluginId, parameterId, value)
+        Carla.host._set_parameterDefaultValue(pluginId, parameterId, value)
 
         #pwidget = self.m_plugin_list[pluginId]
         #if pwidget:
@@ -790,7 +790,7 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
 
     @pyqtSlot(int, int)
     def slot_handleSetProgram(self, pluginId, index):
-        Carla.Host._set_currentProgram(pluginId, index)
+        Carla.host._set_currentProgram(pluginId, index)
 
         pwidget = self.m_plugin_list[pluginId]
         if pwidget:
@@ -799,15 +799,15 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
 
     @pyqtSlot(int, int)
     def slot_handleSetProgramCount(self, pluginId, count):
-        Carla.Host._set_programCount(pluginId, count)
+        Carla.host._set_programCount(pluginId, count)
 
     @pyqtSlot(int, int, str)
     def slot_handleSetProgramName(self, pluginId, index, name):
-        Carla.Host._set_programNameS(pluginId, index, name)
+        Carla.host._set_programNameS(pluginId, index, name)
 
     @pyqtSlot(int, int)
     def slot_handleSetMidiProgram(self, pluginId, index):
-        Carla.Host._set_currentMidiProgram(pluginId, index)
+        Carla.host._set_currentMidiProgram(pluginId, index)
 
         pwidget = self.m_plugin_list[pluginId]
         if pwidget:
@@ -816,7 +816,7 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
 
     @pyqtSlot(int, int)
     def slot_handleSetMidiProgramCount(self, pluginId, count):
-        Carla.Host._set_midiProgramCount(pluginId, count)
+        Carla.host._set_midiProgramCount(pluginId, count)
 
     @pyqtSlot(int, int, int, int, str)
     def slot_handleSetMidiProgramData(self, pluginId, index, bank, program, name):
@@ -824,15 +824,15 @@ class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):
         data['bank']    = bank
         data['program'] = program
         data['label']   = name
-        Carla.Host._set_midiProgramDataS(pluginId, index, data)
+        Carla.host._set_midiProgramDataS(pluginId, index, data)
 
     @pyqtSlot(int, int, float)
     def slot_handleSetInputPeakValue(self, pluginId, portId, value):
-        Carla.Host._set_inPeak(pluginId, portId-1, value)
+        Carla.host._set_inPeak(pluginId, portId-1, value)
 
     @pyqtSlot(int, int, float)
     def slot_handleSetOutputPeakValue(self, pluginId, portId, value):
-        Carla.Host._set_outPeak(pluginId, portId-1, value)
+        Carla.host._set_outPeak(pluginId, portId-1, value)
 
     @pyqtSlot(int, int, int, int)
     def slot_handleNoteOn(self, pluginId, channel, note, velo):
@@ -899,7 +899,7 @@ if __name__ == '__main__':
     app.setOrganizationName("Cadence")
     app.setWindowIcon(QIcon(":/scalable/carla-control.svg"))
 
-    Carla.Host = Host()
+    Carla.host = Host()
 
     # Create GUI
     Carla.gui = CarlaControlW()

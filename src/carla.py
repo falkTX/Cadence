@@ -716,11 +716,11 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
             for plugin in plugins:
                 count += 1
 
-        if count != Carla.Host.get_internal_plugin_count():
+        if count != Carla.host.get_internal_plugin_count():
             internal_plugins = []
 
-            for i in range(Carla.Host.get_internal_plugin_count()):
-                descInfo = Carla.Host.get_internal_plugin_info(i)
+            for i in range(Carla.host.get_internal_plugin_count()):
+                descInfo = Carla.host.get_internal_plugin_info(i)
                 plugins  = checkPluginInternal(descInfo)
 
                 if plugins:
@@ -1065,8 +1065,8 @@ class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
                                      "<br>Copyright (C) 2011-2012 falkTX<br>"
                                      "" % VERSION))
 
-        self.l_extended.setText(cString(Carla.Host.get_extended_license_text()))
-        self.le_osc_url.setText(cString(Carla.Host.get_host_osc_url()))
+        self.l_extended.setText(cString(Carla.host.get_extended_license_text()))
+        self.le_osc_url.setText(cString(Carla.host.get_host_osc_url()))
 
         self.l_osc_cmds.setText(
                                 " /set_active                 <i-value>\n"
@@ -1224,7 +1224,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         NSM_URL = os.getenv("NSM_URL")
 
         if NSM_URL:
-            Carla.Host.nsm_announce(NSM_URL, os.getpid())
+            Carla.host.nsm_announce(NSM_URL, os.getpid())
         else:
             QTimer.singleShot(0, self, SLOT("slot_engine_start()"))
 
@@ -1255,26 +1255,26 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             print("LADISH detected but using multiple clients (not allowed), forcing single client now")
             Carla.processMode = PROCESS_MODE_SINGLE_CLIENT
 
-        Carla.Host.set_option(OPTION_PROCESS_MODE, Carla.processMode, "")
-        Carla.Host.set_option(OPTION_PROCESS_HIGH_PRECISION, processHighPrecision, "")
+        Carla.host.set_option(OPTION_PROCESS_MODE, Carla.processMode, "")
+        Carla.host.set_option(OPTION_PROCESS_HIGH_PRECISION, processHighPrecision, "")
 
-        Carla.Host.set_option(OPTION_MAX_PARAMETERS, Carla.maxParameters, "")
-        Carla.Host.set_option(OPTION_PREFERRED_BUFFER_SIZE, preferredBufferSize, "")
-        Carla.Host.set_option(OPTION_PREFERRED_SAMPLE_RATE, preferredSampleRate, "")
+        Carla.host.set_option(OPTION_MAX_PARAMETERS, Carla.maxParameters, "")
+        Carla.host.set_option(OPTION_PREFERRED_BUFFER_SIZE, preferredBufferSize, "")
+        Carla.host.set_option(OPTION_PREFERRED_SAMPLE_RATE, preferredSampleRate, "")
 
-        Carla.Host.set_option(OPTION_FORCE_STEREO, forceStereo, "")
-        Carla.Host.set_option(OPTION_USE_DSSI_VST_CHUNKS, useDssiVstChunks, "")
-        Carla.Host.set_option(OPTION_PREFER_PLUGIN_BRIDGES, preferPluginBridges, "")
+        Carla.host.set_option(OPTION_FORCE_STEREO, forceStereo, "")
+        Carla.host.set_option(OPTION_USE_DSSI_VST_CHUNKS, useDssiVstChunks, "")
+        Carla.host.set_option(OPTION_PREFER_PLUGIN_BRIDGES, preferPluginBridges, "")
 
-        Carla.Host.set_option(OPTION_PREFER_UI_BRIDGES, preferUiBridges, "")
-        Carla.Host.set_option(OPTION_OSC_UI_TIMEOUT, oscUiTimeout, "")
+        Carla.host.set_option(OPTION_PREFER_UI_BRIDGES, preferUiBridges, "")
+        Carla.host.set_option(OPTION_OSC_UI_TIMEOUT, oscUiTimeout, "")
 
         # ---------------------------------------------
         # start
 
         audioDriver = self.settings.value("Engine/AudioDriver", "JACK", type=str)
 
-        if not Carla.Host.engine_init(audioDriver, clientName):
+        if not Carla.host.engine_init(audioDriver, clientName):
             if self.m_firstEngineInit:
                 self.m_firstEngineInit = False
                 return
@@ -1282,7 +1282,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             self.act_engine_start.setEnabled(True)
             self.act_engine_stop.setEnabled(False)
 
-            audioError = cString(Carla.Host.get_last_error())
+            audioError = cString(Carla.host.get_last_error())
 
             if audioError:
                 QMessageBox.critical(self, self.tr("Error"), self.tr("Could not connect to Audio backend '%s', possible reasons: %s" % (audioDriver, audioError)))
@@ -1305,15 +1305,15 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             else:
                 return
 
-        if Carla.Host.is_engine_running() and not Carla.Host.engine_close():
-            print(cString(Carla.Host.get_last_error()))
+        if Carla.host.is_engine_running() and not Carla.host.engine_close():
+            print(cString(Carla.host.get_last_error()))
 
         self.m_engine_started = False
 
     @pyqtSlot()
     def slot_engine_start(self):
         self.startEngine()
-        check = Carla.Host.is_engine_running()
+        check = Carla.host.is_engine_running()
         self.act_file_open.setEnabled(check)
         self.act_engine_start.setEnabled(not check)
         self.act_engine_stop.setEnabled(check)
@@ -1321,7 +1321,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
     @pyqtSlot()
     def slot_engine_stop(self):
         self.stopEngine()
-        check = Carla.Host.is_engine_running()
+        check = Carla.host.is_engine_running()
         self.act_file_open.setEnabled(check)
         self.act_engine_start.setEnabled(not check)
         self.act_engine_stop.setEnabled(check)
@@ -1461,7 +1461,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.slot_remove_all()
 
         # restart engine
-        if Carla.Host.is_engine_running():
+        if Carla.host.is_engine_running():
             self.stopEngine()
 
         self.startEngine(clientId)
@@ -1478,12 +1478,12 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             self.save_project()
 
         self.setWindowTitle("Carla - %s" % os.path.basename(self.m_project_filename))
-        Carla.Host.nsm_reply_open()
+        Carla.host.nsm_reply_open()
 
     @pyqtSlot()
     def slot_handleNSM_SaveCallback(self):
         self.save_project()
-        Carla.Host.nsm_reply_save()
+        Carla.host.nsm_reply_save()
 
     @pyqtSlot(str)
     def slot_handleErrorCallback(self, error):
@@ -1501,10 +1501,10 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
                 QMessageBox.warning(self, self.tr("Warning"), self.tr("Cannot add new plugins while engine is stopped"))
             return -1
 
-        new_plugin_id = Carla.Host.add_plugin(btype, ptype, filename, name, label, extra_stuff)
+        new_plugin_id = Carla.host.add_plugin(btype, ptype, filename, name, label, extra_stuff)
 
         if new_plugin_id < 0:
-            CustomMessageBox(self, QMessageBox.Critical, self.tr("Error"), self.tr("Failed to load plugin"), cString(Carla.Host.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
+            CustomMessageBox(self, QMessageBox.Critical, self.tr("Error"), self.tr("Failed to load plugin"), cString(Carla.host.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
             return -1
         else:
             pwidget = PluginWidget(self, new_plugin_id)
@@ -1528,7 +1528,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         if pwidget.gui_dialog:
             pwidget.gui_dialog.close()
 
-        if Carla.Host.remove_plugin(plugin_id):
+        if Carla.host.remove_plugin(plugin_id):
             pwidget.close()
             pwidget.deleteLater()
             self.w_plugins.layout().removeWidget(pwidget)
@@ -1536,7 +1536,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             self.m_pluginCount -= 1
 
         elif showError:
-            CustomMessageBox(self, QMessageBox.Critical, self.tr("Error"), self.tr("Failed to remove plugin"), cString(Carla.Host.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
+            CustomMessageBox(self, QMessageBox.Critical, self.tr("Error"), self.tr("Failed to remove plugin"), cString(Carla.host.get_last_error()), QMessageBox.Ok, QMessageBox.Ok)
 
         # push all plugins 1 slot if rack mode
         if Carla.processMode == PROCESS_MODE_CONTINUOUS_RACK:
@@ -1584,7 +1584,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
                 if not first_plugin:
                     content += "\n"
 
-                real_plugin_name = cString(Carla.Host.get_real_plugin_name(pwidget.m_pluginId))
+                real_plugin_name = cString(Carla.host.get_real_plugin_name(pwidget.m_pluginId))
                 if real_plugin_name:
                     content += " <!-- %s -->\n" % xmlSafeString(real_plugin_name, True)
 
@@ -1632,22 +1632,22 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         x_sf2_plugins = None
         x_sfz_plugins = None
 
-        x_failed_plugins = []
-        x_save_state_dicts = []
+        x_failedPlugins = []
+        x_saveStates = []
 
         node = xml_node.firstChild()
         while not node.isNull():
             if node.toElement().tagName() == "Plugin":
-                x_save_state_dict = getSaveStateDictFromXML(node)
-                x_save_state_dicts.append(x_save_state_dict)
+                x_saveState = getSaveStateDictFromXML(node)
+                x_saveStates.append(x_saveState)
             node = node.nextSibling()
 
-        for x_save_state_dict in x_save_state_dicts:
-            ptype = x_save_state_dict['Type']
-            label = x_save_state_dict['Label']
-            binary = x_save_state_dict['Binary']
+        for x_saveState in x_saveStates:
+            ptype = x_saveState['Type']
+            label = x_saveState['Label']
+            binary = x_saveState['Binary']
             binaryS = os.path.basename(binary)
-            unique_id = x_save_state_dict['UniqueID']
+            unique_id = x_saveState['UniqueID']
 
             if ptype == "Internal":
                 if not x_internal_plugins: x_internal_plugins = toList(self.settings_db.value("Plugins/Internal", []))
@@ -1707,7 +1707,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
             else:
                 print("load_project() - ptype '%s' not recognized" % ptype)
-                x_failed_plugins.append(x_save_state_dict['Name'])
+                x_failedPlugins.append(x_saveState['Name'])
                 continue
 
             # Try UniqueID -> Label -> Binary (full) -> Binary (short)
@@ -1808,24 +1808,24 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
                 btype    = plugin['build']
                 ptype    = plugin['type']
                 filename = plugin['binary']
-                name     = x_save_state_dict['Name']
+                name     = x_saveState['Name']
                 label    = plugin['label']
                 extra_stuff   = self.get_extra_stuff(plugin)
                 new_plugin_id = self.add_plugin(btype, ptype, filename, name, label, extra_stuff, False)
 
                 if new_plugin_id >= 0:
                     pwidget = self.m_plugin_list[new_plugin_id]
-                    pwidget.loadStateDict(x_save_state_dict)
+                    pwidget.loadStateDict(x_saveState)
 
                 else:
-                    x_failed_plugins.append(x_save_state_dict['Name'])
+                    x_failedPlugins.append(x_saveState['Name'])
 
             else:
-                x_failed_plugins.append(x_save_state_dict['Name'])
+                x_failedPlugins.append(x_saveState['Name'])
 
-        if len(x_failed_plugins) > 0:
+        if len(x_failedPlugins) > 0:
             text = self.tr("The following plugins were not found or failed to initialize:\n")
-            for plugin in x_failed_plugins:
+            for plugin in x_failedPlugins:
                 text += " - %s\n" % plugin
 
             self.statusBar().showMessage("State file loaded with errors")
@@ -1914,7 +1914,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             if pwidget.gui_dialog:
                 pwidget.gui_dialog.close()
 
-            if Carla.Host.remove_plugin(i-h):
+            if Carla.host.remove_plugin(i-h):
                 pwidget.close()
                 pwidget.deleteLater()
                 self.w_plugins.layout().removeWidget(pwidget)
@@ -1994,7 +1994,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
             for pwidget in self.m_plugin_list:
                 if pwidget: pwidget.check_gui_stuff()
             if self.m_engine_started and self.m_pluginCount > 0:
-                Carla.Host.idle_guis()
+                Carla.host.idle_guis()
 
         elif event.timerId() == self.TIMER_GUI_STUFF2:
             for pwidget in self.m_plugin_list:
@@ -2047,18 +2047,18 @@ def callback_function(ptr, action, pluginId, value1, value2, value3):
     elif action == CALLBACK_RELOAD_ALL:
         Carla.gui.emit(SIGNAL("ReloadAllCallback(int)"), pluginId)
     elif action == CALLBACK_NSM_ANNOUNCE:
-        Carla.gui._nsmAnnounce2str = cString(Carla.Host.get_last_error())
+        Carla.gui._nsmAnnounce2str = cString(Carla.host.get_last_error())
         Carla.gui.emit(SIGNAL("NSM_AnnounceCallback()"))
     elif action == CALLBACK_NSM_OPEN1:
-        Carla.gui._nsmOpen1str = cString(Carla.Host.get_last_error())
+        Carla.gui._nsmOpen1str = cString(Carla.host.get_last_error())
         Carla.gui.emit(SIGNAL("NSM_Open1Callback()"))
     elif action == CALLBACK_NSM_OPEN2:
-        Carla.gui._nsmOpen2str = cString(Carla.Host.get_last_error())
+        Carla.gui._nsmOpen2str = cString(Carla.host.get_last_error())
         Carla.gui.emit(SIGNAL("NSM_Open2Callback()"))
     elif action == CALLBACK_NSM_SAVE:
         Carla.gui.emit(SIGNAL("NSM_SaveCallback()"))
     elif action == CALLBACK_ERROR:
-        Carla.gui.emit(SIGNAL("ErrorCallback(QString)"), cString(Carla.Host.get_last_error()))
+        Carla.gui.emit(SIGNAL("ErrorCallback(QString)"), cString(Carla.host.get_last_error()))
     elif action == CALLBACK_QUIT:
         Carla.gui.emit(SIGNAL("QuitCallback()"))
 
@@ -2085,61 +2085,61 @@ if __name__ == '__main__':
             projectFilename = argument
 
     # Init backend
-    Carla.Host = Host(libPrefix)
-    Carla.Host.set_callback_function(callback_function)
-    Carla.Host.set_option(OPTION_PROCESS_NAME, 0, "carla")
+    Carla.host = Host(libPrefix)
+    Carla.host.set_callback_function(callback_function)
+    Carla.host.set_option(OPTION_PROCESS_NAME, 0, "carla")
 
     # Set bridge paths
     if carla_bridge_posix32:
-        Carla.Host.set_option(OPTION_PATH_BRIDGE_POSIX32, 0, carla_bridge_posix32)
+        Carla.host.set_option(OPTION_PATH_BRIDGE_POSIX32, 0, carla_bridge_posix32)
 
     if carla_bridge_posix64:
-        Carla.Host.set_option(OPTION_PATH_BRIDGE_POSIX64, 0, carla_bridge_posix64)
+        Carla.host.set_option(OPTION_PATH_BRIDGE_POSIX64, 0, carla_bridge_posix64)
 
     if carla_bridge_win32:
-        Carla.Host.set_option(OPTION_PATH_BRIDGE_WIN32, 0, carla_bridge_win32)
+        Carla.host.set_option(OPTION_PATH_BRIDGE_WIN32, 0, carla_bridge_win32)
 
     if carla_bridge_win64:
-        Carla.Host.set_option(OPTION_PATH_BRIDGE_WIN64, 0, carla_bridge_win64)
+        Carla.host.set_option(OPTION_PATH_BRIDGE_WIN64, 0, carla_bridge_win64)
 
     if WINDOWS:
         if carla_bridge_lv2_windows:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_LV2_WINDOWS, 0, carla_bridge_lv2_windows)
+            Carla.host.set_option(OPTION_PATH_BRIDGE_LV2_WINDOWS, 0, carla_bridge_lv2_windows)
 
         if carla_bridge_vst_hwnd:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_VST_HWND, 0, carla_bridge_vst_hwnd)
+            Carla.host.set_option(OPTION_PATH_BRIDGE_VST_HWND, 0, carla_bridge_vst_hwnd)
 
     elif MACOS:
         if carla_bridge_lv2_cocoa:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_LV2_COCOA, 0, carla_bridge_lv2_cocoa)
+            Carla.host.set_option(OPTION_PATH_BRIDGE_LV2_COCOA, 0, carla_bridge_lv2_cocoa)
 
         if carla_bridge_vst_cocoa:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_VST_COCOA, 0, carla_bridge_vst_cocoa)
+            Carla.host.set_option(OPTION_PATH_BRIDGE_VST_COCOA, 0, carla_bridge_vst_cocoa)
 
     else:
         if carla_bridge_lv2_gtk2:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_LV2_GTK2, 0, carla_bridge_lv2_gtk2)
+            Carla.host.set_option(OPTION_PATH_BRIDGE_LV2_GTK2, 0, carla_bridge_lv2_gtk2)
 
         if carla_bridge_lv2_gtk3:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_LV2_GTK3, 0, carla_bridge_lv2_gtk3)
+            Carla.host.set_option(OPTION_PATH_BRIDGE_LV2_GTK3, 0, carla_bridge_lv2_gtk3)
 
         if carla_bridge_lv2_qt4:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_LV2_QT4, 0, carla_bridge_lv2_qt4)
+            Carla.host.set_option(OPTION_PATH_BRIDGE_LV2_QT4, 0, carla_bridge_lv2_qt4)
 
         if carla_bridge_lv2_qt5:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_LV2_QT5, 0, carla_bridge_lv2_qt5)
+            Carla.host.set_option(OPTION_PATH_BRIDGE_LV2_QT5, 0, carla_bridge_lv2_qt5)
 
         if carla_bridge_lv2_x11:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_LV2_X11, 0, carla_bridge_lv2_x11)
+            Carla.host.set_option(OPTION_PATH_BRIDGE_LV2_X11, 0, carla_bridge_lv2_x11)
 
         if carla_bridge_vst_x11:
-            Carla.Host.set_option(OPTION_PATH_BRIDGE_VST_X11, 0, carla_bridge_vst_x11)
+            Carla.host.set_option(OPTION_PATH_BRIDGE_VST_X11, 0, carla_bridge_vst_x11)
 
     # Set available drivers
-    driverCount = Carla.Host.get_engine_driver_count()
+    driverCount = Carla.host.get_engine_driver_count()
     driverList  = []
     for i in range(driverCount):
-        driver = cString(Carla.Host.get_engine_driver_name(i))
+        driver = cString(Carla.host.get_engine_driver_name(i))
         if driver:
             driverList.append(driver)
     setAvailableEngineDrivers(driverList)

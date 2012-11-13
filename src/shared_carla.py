@@ -38,7 +38,7 @@ from shared import *
 # Carla Host object
 class CarlaHostObject(object):
     __slots__ = [
-        'Host',
+        'host',
         'gui',
         'isControl',
         'processMode',
@@ -46,7 +46,7 @@ class CarlaHostObject(object):
     ]
 
 Carla = CarlaHostObject()
-Carla.Host = None
+Carla.host = None
 Carla.gui  = None
 Carla.isControl = False
 
@@ -229,7 +229,7 @@ PALETTE_COLOR_ORANGE = 6
 PALETTE_COLOR_BROWN  = 7
 PALETTE_COLOR_PINK   = 8
 
-save_state_dict = {
+CarlaSaveState = {
     'Type': "",
     'Name': "",
     'Label': "",
@@ -249,7 +249,7 @@ save_state_dict = {
     'Chunk': None
 }
 
-save_state_parameter = {
+CarlaSaveStateParameter = {
     'index': 0,
     'name': "",
     'symbol': "",
@@ -258,7 +258,7 @@ save_state_parameter = {
     'midiCC': -1
 }
 
-save_state_custom_data = {
+CarlaSaveStateCustomData = {
     'type': CUSTOM_DATA_INVALID,
     'key': "",
     'value': ""
@@ -287,7 +287,7 @@ def getCustomDataStringType(stype):
     return CUSTOM_DATA_INVALID
 
 def getSaveStateDictFromXML(xmlNode):
-    x_save_state_dict = deepcopy(save_state_dict)
+    saveState = deepcopy(CarlaSaveState)
 
     node = xmlNode.firstChild()
     while not node.isNull():
@@ -302,15 +302,15 @@ def getSaveStateDictFromXML(xmlNode):
                 text = xmlInfo.toElement().text().strip()
 
                 if tag == "Type":
-                    x_save_state_dict['Type'] = text
+                    saveState['Type'] = text
                 elif tag == "Name":
-                    x_save_state_dict['Name'] = xmlSafeString(text, False)
+                    saveState['Name'] = xmlSafeString(text, False)
                 elif tag in ("Label", "URI"):
-                    x_save_state_dict['Label'] = xmlSafeString(text, False)
+                    saveState['Label'] = xmlSafeString(text, False)
                 elif tag == "Binary":
-                    x_save_state_dict['Binary'] = xmlSafeString(text, False)
+                    saveState['Binary'] = xmlSafeString(text, False)
                 elif tag == "UniqueID":
-                    if text.isdigit(): x_save_state_dict['UniqueID'] = int(text)
+                    if text.isdigit(): saveState['UniqueID'] = int(text)
 
                 xmlInfo = xmlInfo.nextSibling()
 
@@ -328,37 +328,37 @@ def getSaveStateDictFromXML(xmlNode):
                 # Internal Data
 
                 if tag == "Active":
-                    x_save_state_dict['Active'] = bool(text == "Yes")
+                    saveState['Active'] = bool(text == "Yes")
                 elif tag == "DryWet":
-                    if isNumber(text): x_save_state_dict['DryWet'] = float(text)
+                    if isNumber(text): saveState['DryWet'] = float(text)
                 elif tag == "Volume":
-                    if isNumber(text): x_save_state_dict['Volume'] = float(text)
+                    if isNumber(text): saveState['Volume'] = float(text)
                 elif tag == "Balance-Left":
-                    if isNumber(text): x_save_state_dict['Balance-Left'] = float(text)
+                    if isNumber(text): saveState['Balance-Left'] = float(text)
                 elif tag == "Balance-Right":
-                    if isNumber(text): x_save_state_dict['Balance-Right'] = float(text)
+                    if isNumber(text): saveState['Balance-Right'] = float(text)
 
                 # ----------------------------------------------
                 # Program (current)
 
                 elif tag == "CurrentProgramIndex":
-                    if text.isdigit(): x_save_state_dict['CurrentProgramIndex'] = int(text)
+                    if text.isdigit(): saveState['CurrentProgramIndex'] = int(text)
                 elif tag == "CurrentProgramName":
-                    x_save_state_dict['CurrentProgramName'] = xmlSafeString(text, False)
+                    saveState['CurrentProgramName'] = xmlSafeString(text, False)
 
                 # ----------------------------------------------
                 # Midi Program (current)
 
                 elif tag == "CurrentMidiBank":
-                    if text.isdigit(): x_save_state_dict['CurrentMidiBank'] = int(text)
+                    if text.isdigit(): saveState['CurrentMidiBank'] = int(text)
                 elif tag == "CurrentMidiProgram":
-                    if text.isdigit(): x_save_state_dict['CurrentMidiProgram'] = int(text)
+                    if text.isdigit(): saveState['CurrentMidiProgram'] = int(text)
 
                 # ----------------------------------------------
                 # Parameters
 
                 elif tag == "Parameter":
-                    x_save_state_parameter = deepcopy(save_state_parameter)
+                    saveStateParameter = deepcopy(CarlaSaveStateParameter)
 
                     xmlSubData = xmlData.toElement().firstChild()
 
@@ -367,27 +367,27 @@ def getSaveStateDictFromXML(xmlNode):
                         pText = xmlSubData.toElement().text().strip()
 
                         if pTag == "index":
-                            if pText.isdigit(): x_save_state_parameter['index'] = int(pText)
+                            if pText.isdigit(): saveStateParameter['index'] = int(pText)
                         elif pTag == "name":
-                            x_save_state_parameter['name'] = xmlSafeString(pText, False)
+                            saveStateParameter['name'] = xmlSafeString(pText, False)
                         elif pTag == "symbol":
-                            x_save_state_parameter['symbol'] = xmlSafeString(pText, False)
+                            saveStateParameter['symbol'] = xmlSafeString(pText, False)
                         elif pTag == "value":
-                            if isNumber(pText): x_save_state_parameter['value'] = float(pText)
+                            if isNumber(pText): saveStateParameter['value'] = float(pText)
                         elif pTag == "midiChannel":
-                            if pText.isdigit(): x_save_state_parameter['midiChannel'] = int(pText)
+                            if pText.isdigit(): saveStateParameter['midiChannel'] = int(pText)
                         elif pTag == "midiCC":
-                            if pText.isdigit(): x_save_state_parameter['midiCC'] = int(pText)
+                            if pText.isdigit(): saveStateParameter['midiCC'] = int(pText)
 
                         xmlSubData = xmlSubData.nextSibling()
 
-                    x_save_state_dict['Parameters'].append(x_save_state_parameter)
+                    saveState['Parameters'].append(saveStateParameter)
 
                 # ----------------------------------------------
                 # Custom Data
 
                 elif tag == "CustomData":
-                    x_save_state_custom_data = deepcopy(save_state_custom_data)
+                    saveStateCustomData = deepcopy(CarlaSaveStateCustomData)
 
                     xmlSubData = xmlData.toElement().firstChild()
 
@@ -396,21 +396,21 @@ def getSaveStateDictFromXML(xmlNode):
                         cText = xmlSubData.toElement().text().strip()
 
                         if cTag == "type":
-                            x_save_state_custom_data['type'] = getCustomDataStringType(cText)
+                            saveStateCustomData['type'] = getCustomDataStringType(cText)
                         elif cTag == "key":
-                            x_save_state_custom_data['key'] = xmlSafeString(cText, False)
+                            saveStateCustomData['key'] = xmlSafeString(cText, False)
                         elif cTag == "value":
-                            x_save_state_custom_data['value'] = xmlSafeString(cText, False)
+                            saveStateCustomData['value'] = xmlSafeString(cText, False)
 
                         xmlSubData = xmlSubData.nextSibling()
 
-                    x_save_state_dict['CustomData'].append(x_save_state_custom_data)
+                    saveState['CustomData'].append(saveStateCustomData)
 
                 # ----------------------------------------------
                 # Chunk
 
                 elif tag == "Chunk":
-                    x_save_state_dict['Chunk'] = xmlSafeString(text, False)
+                    saveState['Chunk'] = xmlSafeString(text, False)
 
                 # ----------------------------------------------
 
@@ -420,7 +420,7 @@ def getSaveStateDictFromXML(xmlNode):
 
         node = node.nextSibling()
 
-    return x_save_state_dict
+    return saveState
 
 def xmlSafeString(string, toXml):
     if toXml:
@@ -534,7 +534,7 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
         return self.m_tabIndex
 
     def textCallFunction(self):
-        return cString(Carla.Host.get_parameter_text(self.m_pluginId, self.m_parameterId))
+        return cString(Carla.host.get_parameter_text(self.m_pluginId, self.m_parameterId))
 
     @pyqtSlot(float)
     def slot_valueChanged(self, value):
@@ -614,7 +614,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.do_reload_all()
 
     def do_reload_all(self):
-        self.m_pluginInfo = Carla.Host.get_plugin_info(self.m_pluginId)
+        self.m_pluginInfo = Carla.host.get_plugin_info(self.m_pluginId)
         self.m_pluginInfo["binary"]    = cString(self.m_pluginInfo["binary"])
         self.m_pluginInfo["name"]      = cString(self.m_pluginInfo["name"])
         self.m_pluginInfo["label"]     = cString(self.m_pluginInfo["label"])
@@ -626,7 +626,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.do_reload_programs()
 
     def do_reload_info(self):
-        pluginName  = cString(Carla.Host.get_real_plugin_name(self.m_pluginId))
+        pluginName  = cString(Carla.host.get_real_plugin_name(self.m_pluginId))
         pluginType  = self.m_pluginInfo['type']
         pluginHints = self.m_pluginInfo['hints']
 
@@ -668,9 +668,9 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.setWindowTitle(self.m_pluginInfo['name'])
 
         # Set Processing Data
-        audioCountInfo = Carla.Host.get_audio_port_count_info(self.m_pluginId)
-        midiCountInfo  = Carla.Host.get_midi_port_count_info(self.m_pluginId)
-        paramCountInfo = Carla.Host.get_parameter_count_info(self.m_pluginId)
+        audioCountInfo = Carla.host.get_audio_port_count_info(self.m_pluginId)
+        midiCountInfo  = Carla.host.get_midi_port_count_info(self.m_pluginId)
+        paramCountInfo = Carla.host.get_parameter_count_info(self.m_pluginId)
 
         self.le_ains.setText(str(audioCountInfo['ins']))
         self.le_aouts.setText(str(audioCountInfo['outs']))
@@ -687,7 +687,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.parent().recheck_hints(pluginHints)
 
     def do_reload_parameters(self):
-        parameterCount = Carla.Host.get_parameter_count(self.m_pluginId)
+        parameterCount = Carla.host.get_parameter_count(self.m_pluginId)
 
         self.m_parameterList = []
         self.m_parameterIdsToUpdate = []
@@ -714,9 +714,9 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
             paramOutputWidth = 0
 
             for i in range(parameterCount):
-                paramInfo = Carla.Host.get_parameter_info(self.m_pluginId, i)
-                paramData = Carla.Host.get_parameter_data(self.m_pluginId, i)
-                paramRanges = Carla.Host.get_parameter_ranges(self.m_pluginId, i)
+                paramInfo = Carla.host.get_parameter_info(self.m_pluginId, i)
+                paramData = Carla.host.get_parameter_data(self.m_pluginId, i)
+                paramRanges = Carla.host.get_parameter_ranges(self.m_pluginId, i)
 
                 if paramData['type'] not in (PARAMETER_INPUT, PARAMETER_OUTPUT):
                     continue
@@ -738,11 +738,11 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
                     'midiCC':    paramData['midiCC'],
                     'midiChannel': paramData['midiChannel'],
 
-                    'current': Carla.Host.get_current_parameter_value(self.m_pluginId, i)
+                    'current': Carla.host.get_current_parameter_value(self.m_pluginId, i)
                 }
 
                 for j in range(paramInfo['scalePointCount']):
-                    scalePointInfo = Carla.Host.get_parameter_scalepoint_info(self.m_pluginId, i, j)
+                    scalePointInfo = Carla.host.get_parameter_scalepoint_info(self.m_pluginId, i, j)
 
                     parameter['scalepoints'].append(
                         {
@@ -863,16 +863,16 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.cb_programs.blockSignals(True)
         self.cb_programs.clear()
 
-        programCount = Carla.Host.get_program_count(self.m_pluginId)
+        programCount = Carla.host.get_program_count(self.m_pluginId)
 
         if programCount > 0:
             self.cb_programs.setEnabled(True)
 
             for i in range(programCount):
-                pName = cString(Carla.Host.get_program_name(self.m_pluginId, i))
+                pName = cString(Carla.host.get_program_name(self.m_pluginId, i))
                 self.cb_programs.addItem(pName)
 
-            self.m_currentProgram = Carla.Host.get_current_program_index(self.m_pluginId)
+            self.m_currentProgram = Carla.host.get_current_program_index(self.m_pluginId)
             self.cb_programs.setCurrentIndex(self.m_currentProgram)
 
         else:
@@ -885,19 +885,19 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.cb_midi_programs.blockSignals(True)
         self.cb_midi_programs.clear()
 
-        midiProgramCount = Carla.Host.get_midi_program_count(self.m_pluginId)
+        midiProgramCount = Carla.host.get_midi_program_count(self.m_pluginId)
 
         if midiProgramCount > 0:
             self.cb_midi_programs.setEnabled(True)
 
             for i in range(midiProgramCount):
-                mpData  = Carla.Host.get_midi_program_data(self.m_pluginId, i)
+                mpData  = Carla.host.get_midi_program_data(self.m_pluginId, i)
                 mpBank  = int(mpData['bank'])
                 mpProg  = int(mpData['program'])
                 mpLabel = cString(mpData['label'])
                 self.cb_midi_programs.addItem("%03i:%03i - %s" % (mpBank, mpProg, mpLabel))
 
-            self.m_currentMidiProgram = Carla.Host.get_current_midi_program_index(self.m_pluginId)
+            self.m_currentMidiProgram = Carla.host.get_current_midi_program_index(self.m_pluginId)
             self.cb_midi_programs.setCurrentIndex(self.m_currentMidiProgram)
 
         else:
@@ -910,20 +910,20 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         # Update current program text
         if self.cb_programs.count() > 0:
             pIndex = self.cb_programs.currentIndex()
-            pName  = cString(Carla.Host.get_program_name(self.m_pluginId, pIndex))
+            pName  = cString(Carla.host.get_program_name(self.m_pluginId, pIndex))
             self.cb_programs.setItemText(pIndex, pName)
 
         # Update current midi program text
         if self.cb_midi_programs.count() > 0:
             mpIndex = self.cb_midi_programs.currentIndex()
-            mpData  = Carla.Host.get_midi_program_data(self.m_pluginId, mpIndex)
+            mpData  = Carla.host.get_midi_program_data(self.m_pluginId, mpIndex)
             mpBank  = int(mpData['bank'])
             mpProg  = int(mpData['program'])
             mpLabel = cString(mpData['label'])
             self.cb_midi_programs.setItemText(mpIndex, "%03i:%03i - %s" % (mpBank, mpProg, mpLabel))
 
         for paramType, paramId, paramWidget in self.m_parameterList:
-            paramWidget.set_parameter_value(Carla.Host.get_current_parameter_value(self.m_pluginId, paramId), False)
+            paramWidget.set_parameter_value(Carla.host.get_current_parameter_value(self.m_pluginId, paramId), False)
             paramWidget.update()
 
     def set_parameter_to_update(self, index):
@@ -998,9 +998,9 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
             QMessageBox.critical(self, self.tr("Error"), self.tr("Not a valid Carla state file"))
             return
 
-        x_save_state_dict = getSaveStateDictFromXML(xmlNode)
+        saveState = getSaveStateDictFromXML(xmlNode)
 
-        self.parent().loadStateDict(x_save_state_dict)
+        self.parent().loadStateDict(saveState)
 
     def loadStateLV2(self):
         pass
@@ -1029,17 +1029,17 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
     def updateParametersDefaultValues(self):
         for paramType, paramId, paramWidget in self.m_parameterList:
             if self.m_pluginInfo["type"] not in (PLUGIN_GIG, PLUGIN_SF2, PLUGIN_SFZ):
-                paramWidget.set_default_value(Carla.Host.get_default_parameter_value(self.m_pluginId, paramId))
+                paramWidget.set_default_value(Carla.host.get_default_parameter_value(self.m_pluginId, paramId))
 
     def updateParametersInputs(self):
         for paramType, paramId, paramWidget in self.m_parameterList:
             if paramType == PARAMETER_INPUT:
-                paramWidget.set_parameter_value(Carla.Host.get_current_parameter_value(self.m_pluginId, paramId), False)
+                paramWidget.set_parameter_value(Carla.host.get_current_parameter_value(self.m_pluginId, paramId), False)
 
     def updateParametersOutputs(self):
         for paramType, paramId, paramWidget in self.m_parameterList:
             if paramType == PARAMETER_OUTPUT:
-                paramWidget.set_parameter_value(Carla.Host.get_current_parameter_value(self.m_pluginId, paramId), False)
+                paramWidget.set_parameter_value(Carla.host.get_current_parameter_value(self.m_pluginId, paramId), False)
 
     def updatePlugin(self):
         # Check Tab icons
@@ -1054,7 +1054,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
         # Check parameters needing update
         for index in self.m_parameterIdsToUpdate:
-            value = Carla.Host.get_current_parameter_value(self.m_pluginId, index)
+            value = Carla.host.get_current_parameter_value(self.m_pluginId, index)
 
             for paramType, paramId, paramWidget in self.m_parameterList:
                 if paramId == index:
@@ -1118,20 +1118,20 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
     @pyqtSlot(int, float)
     def slot_parameterValueChanged(self, parameter_id, value):
-        Carla.Host.set_parameter_value(self.m_pluginId, parameter_id, value)
+        Carla.host.set_parameter_value(self.m_pluginId, parameter_id, value)
 
     @pyqtSlot(int, int)
     def slot_parameterMidiChannelChanged(self, parameter_id, channel):
-        Carla.Host.set_parameter_midi_channel(self.m_pluginId, parameter_id, channel-1)
+        Carla.host.set_parameter_midi_channel(self.m_pluginId, parameter_id, channel-1)
 
     @pyqtSlot(int, int)
     def slot_parameterMidiCcChanged(self, parameter_id, cc_index):
-        Carla.Host.set_parameter_midi_cc(self.m_pluginId, parameter_id, cc_index)
+        Carla.host.set_parameter_midi_cc(self.m_pluginId, parameter_id, cc_index)
 
     @pyqtSlot(int)
     def slot_programIndexChanged(self, index):
         if self.m_currentProgram != index:
-            Carla.Host.set_program(self.m_pluginId, index)
+            Carla.host.set_program(self.m_pluginId, index)
             self.updateParametersDefaultValues()
             self.updateParametersInputs()
 
@@ -1140,7 +1140,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
     @pyqtSlot(int)
     def slot_midiProgramIndexChanged(self, index):
         if self.m_currentMidiProgram != index:
-            Carla.Host.set_midi_program(self.m_pluginId, index)
+            Carla.host.set_midi_program(self.m_pluginId, index)
             self.updateParametersDefaultValues()
             self.updateParametersInputs()
 
@@ -1148,11 +1148,11 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
     @pyqtSlot(int)
     def slot_noteOn(self, note):
-        Carla.Host.send_midi_note(self.m_pluginId, 0, note, 100)
+        Carla.host.send_midi_note(self.m_pluginId, 0, note, 100)
 
     @pyqtSlot(int)
     def slot_noteOff(self, note):
-        Carla.Host.send_midi_note(self.m_pluginId, 0, note, 0)
+        Carla.host.send_midi_note(self.m_pluginId, 0, note, 0)
 
     @pyqtSlot()
     def slot_notesOn(self):
@@ -1181,7 +1181,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.setupUi(self)
 
         self.m_pluginId   = pluginId
-        self.m_pluginInfo = Carla.Host.get_plugin_info(pluginId)
+        self.m_pluginInfo = Carla.host.get_plugin_info(pluginId)
         self.m_pluginInfo["binary"]    = cString(self.m_pluginInfo["binary"])
         self.m_pluginInfo["name"]      = cString(self.m_pluginInfo["name"])
         self.m_pluginInfo["label"]     = cString(self.m_pluginInfo["label"])
@@ -1198,7 +1198,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             self.m_peaksOutputCount = 2
             self.stackedWidget.setCurrentIndex(0)
         else:
-            audioCountInfo = Carla.Host.get_audio_port_count_info(self.m_pluginId)
+            audioCountInfo = Carla.host.get_audio_port_count_info(self.m_pluginId)
 
             self.m_peaksInputCount  = int(audioCountInfo['ins'])
             self.m_peaksOutputCount = int(audioCountInfo['outs'])
@@ -1214,7 +1214,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             else:
                 self.stackedWidget.setCurrentIndex(0)
 
-        midiCountInfo = Carla.Host.get_midi_port_count_info(self.m_pluginId)
+        midiCountInfo = Carla.host.get_midi_port_count_info(self.m_pluginId)
 
         if (self.m_pluginInfo['hints'] & PLUGIN_IS_SYNTH) > 0 or (midiCountInfo['ins'] > 0 < midiCountInfo['outs']):
             self.led_audio_in.setVisible(False)
@@ -1289,14 +1289,14 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.gui_dialog = None
 
         if self.m_pluginInfo['hints'] & PLUGIN_HAS_GUI:
-            guiInfo = Carla.Host.get_gui_info(self.m_pluginId)
+            guiInfo = Carla.host.get_gui_info(self.m_pluginId)
             guiType = guiInfo['type']
 
             if guiType in (GUI_INTERNAL_QT4, GUI_INTERNAL_COCOA, GUI_INTERNAL_HWND, GUI_INTERNAL_X11):
                 self.gui_dialog = PluginGUI(self, self.m_pluginInfo['name'], guiInfo['resizable'])
                 self.gui_dialog.hide()
 
-                Carla.Host.set_gui_container(self.m_pluginId, unwrapinstance(self.gui_dialog.getContainer()))
+                Carla.host.set_gui_container(self.m_pluginId, unwrapinstance(self.gui_dialog.getContainer()))
 
             elif guiType in (GUI_EXTERNAL_LV2, GUI_EXTERNAL_SUIL, GUI_EXTERNAL_OSC):
                 pass
@@ -1322,14 +1322,14 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
     def set_active(self, active, sendGui=False, sendCallback=True):
         if sendGui:      self.led_enable.setChecked(active)
-        if sendCallback: Carla.Host.set_active(self.m_pluginId, active)
+        if sendCallback: Carla.host.set_active(self.m_pluginId, active)
 
         if active:
             self.edit_dialog.keyboard.allNotesOff()
 
     def set_drywet(self, value, sendGui=False, sendCallback=True):
         if sendGui:      self.dial_drywet.setValue(value)
-        if sendCallback: Carla.Host.set_drywet(self.m_pluginId, float(value)/1000)
+        if sendCallback: Carla.host.set_drywet(self.m_pluginId, float(value)/1000)
 
         message = self.tr("Output dry/wet (%i%%)" % int(value / 10))
         self.dial_drywet.setStatusTip(message)
@@ -1337,7 +1337,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
     def set_volume(self, value, sendGui=False, sendCallback=True):
         if sendGui:      self.dial_vol.setValue(value)
-        if sendCallback: Carla.Host.set_volume(self.m_pluginId, float(value)/1000)
+        if sendCallback: Carla.host.set_volume(self.m_pluginId, float(value)/1000)
 
         message = self.tr("Output volume (%i%%)" % int(value / 10))
         self.dial_vol.setStatusTip(message)
@@ -1345,7 +1345,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
     def set_balance_left(self, value, sendGui=False, sendCallback=True):
         if sendGui:      self.dial_b_left.setValue(value)
-        if sendCallback: Carla.Host.set_balance_left(self.m_pluginId, float(value)/1000)
+        if sendCallback: Carla.host.set_balance_left(self.m_pluginId, float(value)/1000)
 
         if value < 0:
             message = self.tr("Left Panning (%i%% Left)" % int(-value / 10))
@@ -1359,7 +1359,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
     def set_balance_right(self, value, sendGui=False, sendCallback=True):
         if sendGui:      self.dial_b_right.setValue(value)
-        if sendCallback: Carla.Host.set_balance_right(self.m_pluginId, float(value)/1000)
+        if sendCallback: Carla.host.set_balance_right(self.m_pluginId, float(value)/1000)
 
         if value < 0:
             message = self.tr("Right Panning (%i%% Left)" % int(-value / 10))
@@ -1501,7 +1501,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         self.b_gui.setEnabled(hints & PLUGIN_HAS_GUI)
 
     def getSaveXMLContent(self):
-        Carla.Host.prepare_for_save(self.m_pluginId)
+        Carla.host.prepare_for_save(self.m_pluginId)
 
         if self.m_pluginInfo['type'] == PLUGIN_INTERNAL:
             typeStr = "Internal"
@@ -1522,92 +1522,92 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         else:
             typeStr = "Unknown"
 
-        x_save_state_dict = deepcopy(save_state_dict)
+        saveState = deepcopy(CarlaSaveState)
 
         # ----------------------------
         # Basic info
 
-        x_save_state_dict['Type'] = typeStr
-        x_save_state_dict['Name'] = self.m_pluginInfo['name']
-        x_save_state_dict['Label'] = self.m_pluginInfo['label']
-        x_save_state_dict['Binary'] = self.m_pluginInfo['binary']
-        x_save_state_dict['UniqueID'] = self.m_pluginInfo['uniqueId']
+        saveState['Type'] = typeStr
+        saveState['Name'] = self.m_pluginInfo['name']
+        saveState['Label'] = self.m_pluginInfo['label']
+        saveState['Binary'] = self.m_pluginInfo['binary']
+        saveState['UniqueID'] = self.m_pluginInfo['uniqueId']
 
         # ----------------------------
         # Internals
 
-        x_save_state_dict['Active'] = self.led_enable.isChecked()
-        x_save_state_dict['DryWet'] = float(self.dial_drywet.value()) / 1000
-        x_save_state_dict['Volume'] = float(self.dial_vol.value()) / 1000
-        x_save_state_dict['Balance-Left'] = float(self.dial_b_left.value()) / 1000
-        x_save_state_dict['Balance-Right'] = float(self.dial_b_right.value()) / 1000
+        saveState['Active'] = self.led_enable.isChecked()
+        saveState['DryWet'] = float(self.dial_drywet.value()) / 1000
+        saveState['Volume'] = float(self.dial_vol.value()) / 1000
+        saveState['Balance-Left'] = float(self.dial_b_left.value()) / 1000
+        saveState['Balance-Right'] = float(self.dial_b_right.value()) / 1000
 
         # ----------------------------
         # Current Program
 
         if self.edit_dialog.cb_programs.currentIndex() >= 0:
-            x_save_state_dict['CurrentProgramIndex'] = self.edit_dialog.cb_programs.currentIndex()
-            x_save_state_dict['CurrentProgramName']  = self.edit_dialog.cb_programs.currentText()
+            saveState['CurrentProgramIndex'] = self.edit_dialog.cb_programs.currentIndex()
+            saveState['CurrentProgramName']  = self.edit_dialog.cb_programs.currentText()
 
         # ----------------------------
         # Current MIDI Program
 
         if self.edit_dialog.cb_midi_programs.currentIndex() >= 0:
-            midiProgramData = Carla.Host.get_midi_program_data(self.m_pluginId, self.edit_dialog.cb_midi_programs.currentIndex())
-            x_save_state_dict['CurrentMidiBank']    = midiProgramData['bank']
-            x_save_state_dict['CurrentMidiProgram'] = midiProgramData['program']
+            midiProgramData = Carla.host.get_midi_program_data(self.m_pluginId, self.edit_dialog.cb_midi_programs.currentIndex())
+            saveState['CurrentMidiBank']    = midiProgramData['bank']
+            saveState['CurrentMidiProgram'] = midiProgramData['program']
 
         # ----------------------------
         # Parameters
 
-        sampleRate = Carla.Host.get_sample_rate()
-        parameterCount = Carla.Host.get_parameter_count(self.m_pluginId)
+        sampleRate = Carla.host.get_sample_rate()
+        parameterCount = Carla.host.get_parameter_count(self.m_pluginId)
 
         for i in range(parameterCount):
-            parameterInfo = Carla.Host.get_parameter_info(self.m_pluginId, i)
-            parameterData = Carla.Host.get_parameter_data(self.m_pluginId, i)
+            parameterInfo = Carla.host.get_parameter_info(self.m_pluginId, i)
+            parameterData = Carla.host.get_parameter_data(self.m_pluginId, i)
 
             if parameterData['type'] != PARAMETER_INPUT:
                 continue
 
-            x_save_state_parameter = deepcopy(save_state_parameter)
+            saveStateParameter = deepcopy(CarlaSaveStateParameter)
 
-            x_save_state_parameter['index']  = parameterData['index']
-            x_save_state_parameter['name']   = cString(parameterInfo['name'])
-            x_save_state_parameter['symbol'] = cString(parameterInfo['symbol'])
-            x_save_state_parameter['value']  = Carla.Host.get_current_parameter_value(self.m_pluginId, parameterData['index'])
-            x_save_state_parameter['midiCC'] = parameterData['midiCC']
-            x_save_state_parameter['midiChannel'] = parameterData['midiChannel'] + 1
+            saveStateParameter['index']  = parameterData['index']
+            saveStateParameter['name']   = cString(parameterInfo['name'])
+            saveStateParameter['symbol'] = cString(parameterInfo['symbol'])
+            saveStateParameter['value']  = Carla.host.get_current_parameter_value(self.m_pluginId, parameterData['index'])
+            saveStateParameter['midiCC'] = parameterData['midiCC']
+            saveStateParameter['midiChannel'] = parameterData['midiChannel'] + 1
 
             if parameterData['hints'] & PARAMETER_USES_SAMPLERATE:
-                x_save_state_parameter['value'] /= sampleRate
+                saveStateParameter['value'] /= sampleRate
 
-            x_save_state_dict['Parameters'].append(x_save_state_parameter)
+            saveState['Parameters'].append(saveStateParameter)
 
         # ----------------------------
         # Custom Data
 
-        customDataCount = Carla.Host.get_custom_data_count(self.m_pluginId)
+        customDataCount = Carla.host.get_custom_data_count(self.m_pluginId)
 
         for i in range(customDataCount):
-            customData = Carla.Host.get_custom_data(self.m_pluginId, i)
+            customData = Carla.host.get_custom_data(self.m_pluginId, i)
 
             if customData['type'] == CUSTOM_DATA_INVALID:
                 continue
 
-            x_save_state_custom_data = deepcopy(save_state_custom_data)
+            saveStateCustomData = deepcopy(CarlaSaveStateCustomData)
 
-            x_save_state_custom_data['type']  = getCustomDataTypeString(customData['type'])
-            x_save_state_custom_data['key']   = cString(customData['key'])
-            x_save_state_custom_data['value'] = cString(customData['value'])
+            saveStateCustomData['type']  = getCustomDataTypeString(customData['type'])
+            saveStateCustomData['key']   = cString(customData['key'])
+            saveStateCustomData['value'] = cString(customData['value'])
 
-            x_save_state_dict['CustomData'].append(x_save_state_custom_data)
+            saveState['CustomData'].append(saveStateCustomData)
 
         # ----------------------------
         # Chunk
 
         if self.m_pluginInfo['hints'] & PLUGIN_USES_CHUNKS:
-            x_save_state_dict['Chunk'] = cString(Carla.Host.get_chunk_data(self.m_pluginId))
+            saveState['Chunk'] = cString(Carla.host.get_chunk_data(self.m_pluginId))
 
         # ----------------------------
         # Generate XML for this plugin
@@ -1615,32 +1615,32 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         content  = ""
 
         content += "  <Info>\n"
-        content += "   <Type>%s</Type>\n" % x_save_state_dict['Type']
-        content += "   <Name>%s</Name>\n" % xmlSafeString(x_save_state_dict['Name'], True)
+        content += "   <Type>%s</Type>\n" % saveState['Type']
+        content += "   <Name>%s</Name>\n" % xmlSafeString(saveState['Name'], True)
 
         if self.m_pluginInfo['type'] == PLUGIN_LV2:
-            content += "   <URI>%s</URI>\n" % xmlSafeString(x_save_state_dict['Label'], True)
+            content += "   <URI>%s</URI>\n" % xmlSafeString(saveState['Label'], True)
 
         else:
-            if x_save_state_dict['Label'] and self.m_pluginInfo['type'] not in (PLUGIN_GIG, PLUGIN_SF2, PLUGIN_SFZ):
-                content += "   <Label>%s</Label>\n" % xmlSafeString(x_save_state_dict['Label'], True)
+            if saveState['Label'] and self.m_pluginInfo['type'] not in (PLUGIN_GIG, PLUGIN_SF2, PLUGIN_SFZ):
+                content += "   <Label>%s</Label>\n" % xmlSafeString(saveState['Label'], True)
 
-            content += "   <Binary>%s</Binary>\n" % xmlSafeString(x_save_state_dict['Binary'], True)
+            content += "   <Binary>%s</Binary>\n" % xmlSafeString(saveState['Binary'], True)
 
         if self.m_pluginInfo['type'] in (PLUGIN_LADSPA, PLUGIN_VST):
-            content += "   <UniqueID>%li</UniqueID>\n" % x_save_state_dict['UniqueID']
+            content += "   <UniqueID>%li</UniqueID>\n" % saveState['UniqueID']
 
         content += "  </Info>\n"
 
         content += "\n"
         content += "  <Data>\n"
-        content += "   <Active>%s</Active>\n" % "Yes" if x_save_state_dict['Active'] else "No"
-        content += "   <DryWet>%f</DryWet>\n" % x_save_state_dict['DryWet']
-        content += "   <Volume>%f</Volume>\n" % x_save_state_dict['Volume']
-        content += "   <Balance-Left>%f</Balance-Left>\n" % x_save_state_dict['Balance-Left']
-        content += "   <Balance-Right>%f</Balance-Right>\n" % x_save_state_dict['Balance-Right']
+        content += "   <Active>%s</Active>\n" % "Yes" if saveState['Active'] else "No"
+        content += "   <DryWet>%f</DryWet>\n" % saveState['DryWet']
+        content += "   <Volume>%f</Volume>\n" % saveState['Volume']
+        content += "   <Balance-Left>%f</Balance-Left>\n" % saveState['Balance-Left']
+        content += "   <Balance-Right>%f</Balance-Right>\n" % saveState['Balance-Right']
 
-        for parameter in x_save_state_dict['Parameters']:
+        for parameter in saveState['Parameters']:
             content += "\n"
             content += "   <Parameter>\n"
             content += "    <index>%i</index>\n" % parameter['index']
@@ -1658,17 +1658,17 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
             content += "   </Parameter>\n"
 
-        if x_save_state_dict['CurrentProgramIndex'] >= 0:
+        if saveState['CurrentProgramIndex'] >= 0:
             content += "\n"
-            content += "   <CurrentProgramIndex>%i</CurrentProgramIndex>\n" % x_save_state_dict['CurrentProgramIndex']
-            content += "   <CurrentProgramName>%s</CurrentProgramName>\n" % xmlSafeString(x_save_state_dict['CurrentProgramName'], True)
+            content += "   <CurrentProgramIndex>%i</CurrentProgramIndex>\n" % saveState['CurrentProgramIndex']
+            content += "   <CurrentProgramName>%s</CurrentProgramName>\n" % xmlSafeString(saveState['CurrentProgramName'], True)
 
-        if x_save_state_dict['CurrentMidiBank'] >= 0 and x_save_state_dict['CurrentMidiProgram'] >= 0:
+        if saveState['CurrentMidiBank'] >= 0 and saveState['CurrentMidiProgram'] >= 0:
             content += "\n"
-            content += "   <CurrentMidiBank>%i</CurrentMidiBank>\n" % x_save_state_dict['CurrentMidiBank']
-            content += "   <CurrentMidiProgram>%i</CurrentMidiProgram>\n" % x_save_state_dict['CurrentMidiProgram']
+            content += "   <CurrentMidiBank>%i</CurrentMidiBank>\n" % saveState['CurrentMidiBank']
+            content += "   <CurrentMidiProgram>%i</CurrentMidiProgram>\n" % saveState['CurrentMidiProgram']
 
-        for customData in x_save_state_dict['CustomData']:
+        for customData in saveState['CustomData']:
             content += "\n"
             content += "   <CustomData>\n"
             content += "    <type>%s</type>\n" % customData['type']
@@ -1683,10 +1683,10 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
             content += "   </CustomData>\n"
 
-        if x_save_state_dict['Chunk']:
+        if saveState['Chunk']:
             content += "\n"
             content += "   <Chunk>\n"
-            content += "%s\n" % x_save_state_dict['Chunk']
+            content += "%s\n" % saveState['Chunk']
             content += "   </Chunk>\n"
 
         content += "  </Data>\n"
@@ -1699,7 +1699,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
         for customData in content['CustomData']:
             if customData['type'] not in (CUSTOM_DATA_BINARY, CUSTOM_DATA_CHUNK):
-                Carla.Host.set_custom_data(self.m_pluginId, customData['type'], customData['key'], customData['value'])
+                Carla.host.set_custom_data(self.m_pluginId, customData['type'], customData['key'], customData['value'])
 
         # ---------------------------------------------------------------------
         # Part 2 - set program
@@ -1707,8 +1707,8 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         programId = -1
 
         if content['CurrentProgramName']:
-            programCount = Carla.Host.get_program_count(self.m_pluginId)
-            testProgramName = cString(Carla.Host.get_program_name(self.m_pluginId, content['CurrentProgramIndex']))
+            programCount = Carla.host.get_program_count(self.m_pluginId)
+            testProgramName = cString(Carla.host.get_program_name(self.m_pluginId, content['CurrentProgramIndex']))
 
             # Program index and name matches
             if content['CurrentProgramName'] == testProgramName:
@@ -1721,7 +1721,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             # index not valid, try to find by name
             else:
                 for i in range(programCount):
-                    testProgramName = cString(Carla.Host.get_program_name(self.m_pluginId, i))
+                    testProgramName = cString(Carla.host.get_program_name(self.m_pluginId, i))
 
                     if content['CurrentProgramName'] == testProgramName:
                         programId = i
@@ -1729,19 +1729,19 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
         # set program now, if valid
         if programId >= 0:
-            Carla.Host.set_program(self.m_pluginId, programId)
+            Carla.host.set_program(self.m_pluginId, programId)
             self.edit_dialog.set_program(programId)
 
         # ---------------------------------------------------------------------
         # Part 3 - set midi program
 
         if content['CurrentMidiBank'] >= 0 and content['CurrentMidiProgram'] >= 0:
-            midiProgramCount = Carla.Host.get_midi_program_count(self.m_pluginId)
+            midiProgramCount = Carla.host.get_midi_program_count(self.m_pluginId)
 
             for i in range(midiProgramCount):
-                midiProgramData = Carla.Host.get_midi_program_data(self.m_pluginId, i)
+                midiProgramData = Carla.host.get_midi_program_data(self.m_pluginId, i)
                 if midiProgramData['bank'] == content['CurrentMidiBank'] and midiProgramData['program'] == content['CurrentMidiProgram']:
-                    Carla.Host.set_midi_program(self.m_pluginId, i)
+                    Carla.host.set_midi_program(self.m_pluginId, i)
                     self.edit_dialog.set_midi_program(i)
                     break
 
@@ -1752,7 +1752,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
         for parameter in content['Parameters']:
             if parameter['symbol']:
-                paramInfo = Carla.Host.get_parameter_info(self.m_pluginId, parameter['index'])
+                paramInfo = Carla.host.get_parameter_info(self.m_pluginId, parameter['index'])
 
                 if paramInfo['symbol']:
                     paramSymbols.append((parameter['index'], cString(paramInfo['symbol'])))
@@ -1760,7 +1760,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         # ---------------------------------------------------------------------
         # Part 4b - set parameter values (carefully)
 
-        sampleRate = Carla.Host.get_sample_rate()
+        sampleRate = Carla.host.get_sample_rate()
 
         for parameter in content['Parameters']:
             index = -1
@@ -1795,13 +1795,13 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
             # Now set parameter
             if index >= 0:
-                paramData = Carla.Host.get_parameter_data(self.m_pluginId, parameter['index'])
+                paramData = Carla.host.get_parameter_data(self.m_pluginId, parameter['index'])
                 if paramData['hints'] & PARAMETER_USES_SAMPLERATE:
                     parameter['value'] *= sampleRate
 
-                Carla.Host.set_parameter_value(self.m_pluginId, index, parameter['value'])
-                Carla.Host.set_parameter_midi_cc(self.m_pluginId, index, parameter['midiCC'])
-                Carla.Host.set_parameter_midi_channel(self.m_pluginId, index, parameter['midiChannel']-1)
+                Carla.host.set_parameter_value(self.m_pluginId, index, parameter['value'])
+                Carla.host.set_parameter_midi_cc(self.m_pluginId, index, parameter['midiCC'])
+                Carla.host.set_parameter_midi_channel(self.m_pluginId, index, parameter['midiChannel']-1)
 
             else:
                 print("Could not set parameter data for '%s')" % parameter['name'])
@@ -1811,10 +1811,10 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
 
         for customData in content['CustomData']:
             if customData['type'] in (CUSTOM_DATA_BINARY, CUSTOM_DATA_CHUNK):
-                Carla.Host.set_custom_data(self.m_pluginId, customData['type'], customData['key'], customData['value'])
+                Carla.host.set_custom_data(self.m_pluginId, customData['type'], customData['key'], customData['value'])
 
         if content['Chunk']:
-            Carla.Host.set_chunk_data(self.m_pluginId, content['Chunk'])
+            Carla.host.set_chunk_data(self.m_pluginId, content['Chunk'])
 
         # ---------------------------------------------------------------------
         # Part 6 - set internal stuff
@@ -1830,15 +1830,15 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         # Input peaks
         if self.m_peaksInputCount > 0:
             if self.m_peaksInputCount > 1:
-                peak1 = Carla.Host.get_input_peak_value(self.m_pluginId, 1)
-                peak2 = Carla.Host.get_input_peak_value(self.m_pluginId, 2)
+                peak1 = Carla.host.get_input_peak_value(self.m_pluginId, 1)
+                peak2 = Carla.host.get_input_peak_value(self.m_pluginId, 2)
                 ledState = bool(peak1 != 0.0 or peak2 != 0.0)
 
                 self.peak_in.displayMeter(1, peak1)
                 self.peak_in.displayMeter(2, peak2)
 
             else:
-                peak = Carla.Host.get_input_peak_value(self.m_pluginId, 1)
+                peak = Carla.host.get_input_peak_value(self.m_pluginId, 1)
                 ledState = bool(peak != 0.0)
 
                 self.peak_in.displayMeter(1, peak)
@@ -1851,15 +1851,15 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         # Output peaks
         if self.m_peaksOutputCount > 0:
             if self.m_peaksOutputCount > 1:
-                peak1 = Carla.Host.get_output_peak_value(self.m_pluginId, 1)
-                peak2 = Carla.Host.get_output_peak_value(self.m_pluginId, 2)
+                peak1 = Carla.host.get_output_peak_value(self.m_pluginId, 1)
+                peak2 = Carla.host.get_output_peak_value(self.m_pluginId, 2)
                 ledState = bool(peak1 != 0.0 or peak2 != 0.0)
 
                 self.peak_out.displayMeter(1, peak1)
                 self.peak_out.displayMeter(2, peak2)
 
             else:
-                peak = Carla.Host.get_output_peak_value(self.m_pluginId, 1)
+                peak = Carla.host.get_output_peak_value(self.m_pluginId, 1)
                 ledState = bool(peak != 0.0)
 
                 self.peak_out.displayMeter(1, peak)
@@ -1908,7 +1908,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         if self.gui_dialog:
             self.gui_dialog.setVisible(show)
 
-        Carla.Host.show_gui(self.m_pluginId, show)
+        Carla.host.show_gui(self.m_pluginId, show)
 
     @pyqtSlot(bool)
     def slot_editClicked(self, show):
