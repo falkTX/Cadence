@@ -152,6 +152,7 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
 
         self.connect(self, SIGNAL("accepted()"), SLOT("slot_saveSettings()"))
         self.connect(self.b_main_def_folder_open, SIGNAL("clicked()"), SLOT("slot_getAndSetPath_project()"))
+        self.connect(self.cb_engine_audio_driver, SIGNAL("currentIndexChanged(int)"), SLOT("slot_audioDriverChanged()"))
         self.connect(self.b_paths_add, SIGNAL("clicked()"), SLOT("slot_addPath()"))
         self.connect(self.b_paths_remove, SIGNAL("clicked()"), SLOT("slot_removePath()"))
         self.connect(self.b_paths_change, SIGNAL("clicked()"), SLOT("slot_changePath()"))
@@ -218,7 +219,13 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             else:
                 self.cb_engine_audio_driver.setCurrentIndex(-1)
 
-            self.cb_engine_process_mode.setCurrentIndex(self.settings.value("Engine/ProcessMode", PROCESS_MODE_MULTIPLE_CLIENTS, type=int))
+            if audioDriver == "JACK":
+                self.cb_engine_process_mode_jack.setCurrentIndex(self.settings.value("Engine/ProcessMode", PROCESS_MODE_MULTIPLE_CLIENTS, type=int))
+                self.sw_engine_process_mode.setCurrentIndex(0)
+            else:
+                self.cb_engine_process_mode_other.setCurrentIndex(self.settings.value("Engine/ProcessMode", PROCESS_MODE_CONTINUOUS_RACK, type=int)-2)
+                self.sw_engine_process_mode.setCurrentIndex(1)
+
             self.sb_engine_max_params.setValue(self.settings.value("Engine/MaxParameters", 200, type=int))
             self.ch_engine_prefer_ui_bridges.setChecked(self.settings.value("Engine/PreferUiBridges", True, type=bool))
             self.sb_engine_oscgui_timeout.setValue(self.settings.value("Engine/OscUiTimeout", 4000, type=int))
@@ -271,6 +278,13 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
     @pyqtSlot()
     def slot_getAndSetPath_project(self):
         getAndSetPath(self, self.le_main_def_folder.text(), self.le_main_def_folder)
+
+    @pyqtSlot()
+    def slot_audioDriverChanged(self):
+        if self.cb_engine_audio_driver.currentText() == "JACK":
+            self.sw_engine_process_mode.setCurrentIndex(0)
+        else:
+            self.sw_engine_process_mode.setCurrentIndex(1)
 
     @pyqtSlot()
     def slot_addPath(self):
@@ -413,8 +427,14 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
         # --------------------------------------------
 
         if not self.lw_page.isRowHidden(TAB_INDEX_CARLA_ENGINE):
-            self.settings.setValue("Engine/AudioDriver", self.cb_engine_audio_driver.currentText())
-            self.settings.setValue("Engine/ProcessMode", self.cb_engine_process_mode.currentIndex())
+            audioDriver = self.cb_engine_audio_driver.currentText()
+            self.settings.setValue("Engine/AudioDriver", audioDriver)
+
+            if audioDriver == "JACK":
+                self.settings.setValue("Engine/ProcessMode", self.cb_engine_process_mode_jack.currentIndex())
+            else:
+                self.settings.setValue("Engine/ProcessMode", self.cb_engine_process_mode_other.currentIndex()+2)
+
             self.settings.setValue("Engine/MaxParameters", self.sb_engine_max_params.value())
             self.settings.setValue("Engine/PreferUiBridges", self.ch_engine_prefer_ui_bridges.isChecked())
             self.settings.setValue("Engine/OscUiTimeout", self.sb_engine_oscgui_timeout.value())
@@ -490,7 +510,6 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
 
         elif self.lw_page.currentRow() == TAB_INDEX_CARLA_ENGINE:
             self.cb_engine_audio_driver.setCurrentIndex(0)
-            self.cb_engine_process_mode.setCurrentIndex(PROCESS_MODE_MULTIPLE_CLIENTS)
             self.sb_engine_max_params.setValue(200)
             self.ch_engine_prefer_ui_bridges.setChecked(True)
             self.sb_engine_oscgui_timeout.setValue(4000)
@@ -499,6 +518,13 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             self.ch_engine_prefer_plugin_bridges.setChecked(False)
             self.ch_engine_force_stereo.setChecked(False)
             self.ch_engine_process_hp.setChecked(False)
+
+            if self.cb_engine_audio_driver.currentText() == "JACK":
+                self.cb_engine_process_mode_jack.setCurrentIndex(PROCESS_MODE_MULTIPLE_CLIENTS)
+                self.sw_engine_process_mode.setCurrentIndex(0)
+            else:
+                self.cb_engine_process_mode_other.setCurrentIndex(PROCESS_MODE_CONTINUOUS_RACK-2)
+                self.sw_engine_process_mode.setCurrentIndex(1)
 
         elif self.lw_page.currentRow() == TAB_INDEX_CARLA_PATHS:
             ladspas, dssis, lv2s, vsts, gigs, sf2s, sfzs = SETTINGS_DEFAULT_PLUGINS_PATHS

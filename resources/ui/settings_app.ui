@@ -116,7 +116,7 @@
          <set>AlignLeft|AlignVCenter</set>
         </property>
         <property name="icon">
-         <iconset resource="../../resources/resources.qrc">
+         <iconset resource="../resources.qrc">
           <normaloff>:/48x48/exec.png</normaloff>:/48x48/exec.png</iconset>
         </property>
         <property name="flags">
@@ -134,7 +134,7 @@
          </font>
         </property>
         <property name="icon">
-         <iconset resource="../../resources/resources.qrc">
+         <iconset resource="../resources.qrc">
           <normaloff>:/48x48/canvas.png</normaloff>:/48x48/canvas.png</iconset>
         </property>
         <property name="flags">
@@ -152,7 +152,7 @@
          </font>
         </property>
         <property name="icon">
-         <iconset resource="../../resources/resources.qrc">
+         <iconset resource="../resources.qrc">
           <normaloff>:/48x48/ladish.png</normaloff>:/48x48/ladish.png</iconset>
         </property>
         <property name="flags">
@@ -170,7 +170,7 @@
          </font>
         </property>
         <property name="icon">
-         <iconset resource="../../resources/resources.qrc">
+         <iconset resource="../resources.qrc">
           <normaloff>:/48x48/jack.png</normaloff>:/48x48/jack.png</iconset>
         </property>
         <property name="flags">
@@ -188,7 +188,7 @@
          </font>
         </property>
         <property name="icon">
-         <iconset resource="../../resources/resources.qrc">
+         <iconset resource="../resources.qrc">
           <normaloff>:/48x48/folder.png</normaloff>:/48x48/folder.png</iconset>
         </property>
         <property name="flags">
@@ -241,7 +241,7 @@
               <string notr="true"/>
              </property>
              <property name="pixmap">
-              <pixmap resource="../../resources/resources.qrc">:/48x48/exec.png</pixmap>
+              <pixmap resource="../resources.qrc">:/48x48/exec.png</pixmap>
              </property>
              <property name="alignment">
               <set>Qt::AlignHCenter|Qt::AlignTop</set>
@@ -280,7 +280,7 @@
                  <string/>
                 </property>
                 <property name="icon">
-                 <iconset resource="../../resources/resources.qrc">
+                 <iconset resource="../resources.qrc">
                   <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
                 </property>
                </widget>
@@ -447,7 +447,7 @@
               <string notr="true"/>
              </property>
              <property name="pixmap">
-              <pixmap resource="../../resources/resources.qrc">:/48x48/canvas.png</pixmap>
+              <pixmap resource="../resources.qrc">:/48x48/canvas.png</pixmap>
              </property>
              <property name="alignment">
               <set>Qt::AlignHCenter|Qt::AlignTop</set>
@@ -637,7 +637,7 @@
               <string notr="true"/>
              </property>
              <property name="pixmap">
-              <pixmap resource="../../resources/resources.qrc">:/48x48/ladish.png</pixmap>
+              <pixmap resource="../resources.qrc">:/48x48/ladish.png</pixmap>
              </property>
              <property name="alignment">
               <set>Qt::AlignHCenter|Qt::AlignTop</set>
@@ -773,7 +773,7 @@
               <string notr="true"/>
              </property>
              <property name="pixmap">
-              <pixmap resource="../../resources/resources.qrc">:/48x48/exec.png</pixmap>
+              <pixmap resource="../resources.qrc">:/48x48/exec.png</pixmap>
              </property>
              <property name="alignment">
               <set>Qt::AlignHCenter|Qt::AlignTop</set>
@@ -788,7 +788,84 @@
             <string>Core</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_7">
-            <item row="0" column="0">
+            <item row="1" column="2">
+             <widget class="QStackedWidget" name="sw_engine_process_mode">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="currentIndex">
+               <number>1</number>
+              </property>
+              <widget class="QWidget" name="page_engine_process_mode_jack">
+               <layout class="QHBoxLayout" name="horizontalLayout_4">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetMinimumSize</enum>
+                </property>
+                <property name="margin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QComboBox" name="cb_engine_process_mode_jack">
+                  <property name="currentIndex">
+                   <number>1</number>
+                  </property>
+                  <item>
+                   <property name="text">
+                    <string>Single Client</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Multiple Clients</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Continuous Rack (EXPERIMENTAL)</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QWidget" name="page_engine_process_mode_other">
+               <layout class="QHBoxLayout" name="horizontalLayout_7">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetMinimumSize</enum>
+                </property>
+                <property name="margin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QComboBox" name="cb_engine_process_mode_other">
+                  <item>
+                   <property name="text">
+                    <string>Continuous Rack (EXPERIMENTAL)</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <spacer name="horizontalSpacer_11">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="0" column="1">
              <widget class="QLabel" name="label_21">
               <property name="text">
                <string>Audio driver:</string>
@@ -798,10 +875,7 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="1">
-             <widget class="QComboBox" name="cb_engine_audio_driver"/>
-            </item>
-            <item row="1" column="0">
+            <item row="1" column="1">
              <widget class="QLabel" name="label_20">
               <property name="text">
                <string>Process mode:</string>
@@ -811,26 +885,7 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="1">
-             <widget class="QComboBox" name="cb_engine_process_mode">
-              <item>
-               <property name="text">
-                <string>Single Client</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Multiple Clients</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Continuous Rack (EXPERIMENTAL)</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-            <item row="2" column="0">
+            <item row="2" column="1">
              <widget class="QLabel" name="label_7">
               <property name="toolTip">
                <string>Maximum number of parameters to allow in the built-in 'Edit' dialog</string>
@@ -843,17 +898,7 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="1">
-             <widget class="QSpinBox" name="sb_engine_max_params">
-              <property name="toolTip">
-               <string>Maximum number of parameters to allow in the built-in 'Edit' dialog</string>
-              </property>
-              <property name="maximum">
-               <number>1000</number>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="2">
+            <item row="2" column="3">
              <spacer name="horizontalSpacer_2">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
@@ -869,7 +914,17 @@
               </property>
              </spacer>
             </item>
-            <item row="0" column="2">
+            <item row="2" column="2">
+             <widget class="QSpinBox" name="sb_engine_max_params">
+              <property name="toolTip">
+               <string>Maximum number of parameters to allow in the built-in 'Edit' dialog</string>
+              </property>
+              <property name="maximum">
+               <number>1000</number>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="3">
              <widget class="QToolButton" name="tb_engine_driver_config">
               <property name="enabled">
                <bool>false</bool>
@@ -878,6 +933,22 @@
                <string>...</string>
               </property>
              </widget>
+            </item>
+            <item row="0" column="2">
+             <widget class="QComboBox" name="cb_engine_audio_driver"/>
+            </item>
+            <item row="1" column="4">
+             <spacer name="horizontalSpacer_14">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
             </item>
            </layout>
           </widget>
@@ -1054,7 +1125,7 @@ Some plugins might not work properly under this mode.</string>
               <string notr="true"/>
              </property>
              <property name="pixmap">
-              <pixmap resource="../../resources/resources.qrc">:/48x48/folder.png</pixmap>
+              <pixmap resource="../resources.qrc">:/48x48/folder.png</pixmap>
              </property>
              <property name="alignment">
               <set>Qt::AlignHCenter|Qt::AlignTop</set>
@@ -1108,7 +1179,7 @@ Some plugins might not work properly under this mode.</string>
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../../resources/resources.qrc">:/16x16/dialog-information.png</pixmap>
+                <pixmap resource="../resources.qrc">:/16x16/dialog-information.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1190,7 +1261,7 @@ Some plugins might not work properly under this mode.</string>
               <string>Add...</string>
              </property>
              <property name="icon">
-              <iconset resource="../../resources/resources.qrc">
+              <iconset resource="../resources.qrc">
                <normaloff>:/16x16/list-add.png</normaloff>:/16x16/list-add.png</iconset>
              </property>
             </widget>
@@ -1201,7 +1272,7 @@ Some plugins might not work properly under this mode.</string>
               <string>Remove</string>
              </property>
              <property name="icon">
-              <iconset resource="../../resources/resources.qrc">
+              <iconset resource="../resources.qrc">
                <normaloff>:/16x16/list-remove.png</normaloff>:/16x16/list-remove.png</iconset>
              </property>
             </widget>
@@ -1228,7 +1299,7 @@ Some plugins might not work properly under this mode.</string>
               <string>Change...</string>
              </property>
              <property name="icon">
-              <iconset resource="../../resources/resources.qrc">
+              <iconset resource="../resources.qrc">
                <normaloff>:/16x16/edit-rename.png</normaloff>:/16x16/edit-rename.png</iconset>
              </property>
             </widget>
@@ -1268,10 +1339,10 @@ Some plugins might not work properly under this mode.</string>
   </layout>
  </widget>
  <resources>
-  <include location="../../resources/resources.qrc"/>
-  <include location="../../resources/resources.qrc"/>
-  <include location="../../resources/resources.qrc"/>
-  <include location="../../resources/resources.qrc"/>
+  <include location="../resources.qrc"/>
+  <include location="../resources.qrc"/>
+  <include location="../resources.qrc"/>
+  <include location="../resources.qrc"/>
  </resources>
  <connections>
   <connection>
@@ -1281,8 +1352,8 @@ Some plugins might not work properly under this mode.</string>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>414</y>
+     <x>254</x>
+     <y>458</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -1297,8 +1368,8 @@ Some plugins might not work properly under this mode.</string>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>414</y>
+     <x>254</x>
+     <y>458</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -1329,12 +1400,12 @@ Some plugins might not work properly under this mode.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>237</x>
-     <y>36</y>
+     <x>385</x>
+     <y>227</y>
     </hint>
     <hint type="destinationlabel">
-     <x>237</x>
-     <y>36</y>
+     <x>385</x>
+     <y>299</y>
     </hint>
    </hints>
   </connection>
