@@ -487,7 +487,31 @@ public:
         CARLA_ASSERT(! m_client);
     }
 
-    // -------------------------------------
+    // -------------------------------------------------------------------
+    // Maximum values
+
+    int maxClientNameSize()
+    {
+#ifndef BUILD_BRIDGE
+        if (options.processMode == PROCESS_MODE_SINGLE_CLIENT || options.processMode == PROCESS_MODE_MULTIPLE_CLIENTS)
+#endif
+            return jackbridge_client_name_size();
+
+        return CarlaEngine::maxClientNameSize();
+    }
+
+    int maxPortNameSize()
+    {
+#ifndef BUILD_BRIDGE
+        if (options.processMode == PROCESS_MODE_SINGLE_CLIENT || options.processMode == PROCESS_MODE_MULTIPLE_CLIENTS)
+#endif
+            return jackbridge_port_name_size();
+
+        return CarlaEngine::maxPortNameSize();
+    }
+
+    // -------------------------------------------------------------------
+    // Virtual, per-engine type calls
 
     bool init(const char* const clientName)
     {

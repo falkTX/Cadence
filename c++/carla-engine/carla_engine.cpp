@@ -479,23 +479,11 @@ CarlaEngine* CarlaEngine::newDriverByName(const char* const driverName)
 
 int CarlaEngine::maxClientNameSize()
 {
-//#ifdef CARLA_ENGINE_JACK
-//# ifndef BUILD_BRIDGE
-//    if (type() == CarlaEngineTypeJack && processMode != PROCESS_MODE_CONTINUOUS_RACK)
-//# endif
-//        return jackbridge_client_name_size();
-//#endif
     return STR_MAX/2;
 }
 
 int CarlaEngine::maxPortNameSize()
 {
-//#ifdef CARLA_ENGINE_JACK
-//# ifndef BUILD_BRIDGE
-//    if (type() == CarlaEngineTypeJack && processMode != PROCESS_MODE_CONTINUOUS_RACK)
-//# endif
-//        return jackbridge_port_name_size();
-//#endif
     return STR_MAX;
 }
 

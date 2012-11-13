@@ -14,7 +14,6 @@ ENGINE:
  - implement Haiku Media support (based from JACK?)
  - implement latency in continuous-rack mode
  - DSSI/LV2/VST version (needs add-new support on control side)
- - virtual maxClientNameSize() for JACK
 
 LADSPA:
 
