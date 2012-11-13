@@ -76,6 +76,12 @@ public:
         midiIn  = nullptr;
         midiOut = nullptr;
 
+        m_audioInterleaved = false;
+        m_inBuf1  = nullptr;
+        m_inBuf2  = nullptr;
+        m_outBuf1 = nullptr;
+        m_outBuf2 = nullptr;
+
         // just to make sure
         options.forceStereo = true;
         options.processMode = PROCESS_MODE_CONTINUOUS_RACK;
@@ -102,18 +108,30 @@ public:
         sampleRate = options.preferredSampleRate;
 
         RtAudio::StreamParameters iParams, oParams;
-        //iParams.deviceId = 3;
-        //oParams.deviceId = 2;
+        iParams.deviceId = audio.getDefaultInputDevice();
+        oParams.deviceId = audio.getDefaultOutputDevice();
         iParams.nChannels = 2;
         oParams.nChannels = 2;
 
-        RtAudio::StreamOptions options;
-        options.flags = /*RTAUDIO_NONINTERLEAVED |*/ RTAUDIO_MINIMIZE_LATENCY /*| RTAUDIO_HOG_DEVICE*/ | RTAUDIO_SCHEDULE_REALTIME | RTAUDIO_ALSA_USE_DEFAULT;
-        options.streamName = clientName;
-        options.priority = 85;
+        RtAudio::StreamOptions rtOptions;
+        rtOptions.flags = RTAUDIO_MINIMIZE_LATENCY | RTAUDIO_HOG_DEVICE | RTAUDIO_SCHEDULE_REALTIME;
+        rtOptions.numberOfBuffers = 2;
+        rtOptions.streamName = clientName;
+        rtOptions.priority = 85;
+
+        if (audio.getCurrentApi() != RtAudio::LINUX_PULSE)
+        {
+            rtOptions.flags |= RTAUDIO_NONINTERLEAVED;
+            m_audioInterleaved = false;
+
+            if (audio.getCurrentApi() == RtAudio::LINUX_ALSA)
+                rtOptions.flags |= RTAUDIO_ALSA_USE_DEFAULT;
+        }
+        else
+            m_audioInterleaved = true;
 
         try {
-            audio.openStream(&oParams, &iParams, RTAUDIO_FLOAT32, sampleRate, &bufferSize, carla_rtaudio_process_callback, this, &options);
+            audio.openStream(&oParams, &iParams, RTAUDIO_FLOAT32, sampleRate, &bufferSize, carla_rtaudio_process_callback, this, &rtOptions);
         }
         catch (RtError& e)
         {
@@ -129,6 +147,13 @@ public:
             setLastError(e.what());
             return false;
         }
+
+        sampleRate = audio.getStreamSampleRate();
+
+        m_inBuf1  = new float [bufferSize];
+        m_inBuf2  = new float [bufferSize];
+        m_outBuf1 = new float [bufferSize];
+        m_outBuf2 = new float [bufferSize];
 
         //midiIn = new MidiInAlsa(clientName, 512);
         //midiIn->openVirtualPort("control-in");
@@ -173,6 +198,30 @@ public:
         }
 #endif
 
+        if (m_inBuf1)
+        {
+            delete[] m_inBuf1;
+            m_inBuf1 = nullptr;
+        }
+
+        if (m_inBuf2)
+        {
+            delete[] m_inBuf2;
+            m_inBuf2 = nullptr;
+        }
+
+        if (m_outBuf1)
+        {
+            delete[] m_outBuf1;
+            m_outBuf1 = nullptr;
+        }
+
+        if (m_outBuf2)
+        {
+            delete[] m_outBuf2;
+            m_outBuf2 = nullptr;
+        }
+
         return true;
     }
 
@@ -212,24 +261,29 @@ protected:
         CARLA_ASSERT(insPtr);
         CARLA_ASSERT(outsPtr);
 
-        // create temporary audio buffers
-        float inBuf1[nframes];
-        float inBuf2[nframes];
-        float outBuf1[nframes];
-        float outBuf2[nframes];
-
         // initialize audio input
-        for (unsigned int i=0; i < nframes*2; i++)
+        if (m_audioInterleaved)
         {
-            if (i % 2)
-                inBuf2[i/2] = insPtr[i];
-            else
-                inBuf1[i/2] = insPtr[i];
+            for (unsigned int i=0; i < nframes*2; i++)
+            {
+                if (i % 2)
+                    m_inBuf2[i/2] = insPtr[i];
+                else
+                    m_inBuf1[i/2] = insPtr[i];
+            }
+        }
+        else
+        {
+            for (unsigned int i=0; i < nframes; i++)
+                m_inBuf1[i] = insPtr[i];
+
+            for (unsigned int i=0, j=nframes; i < nframes; i++, j++)
+                m_inBuf2[i] = insPtr[j];
         }
 
-        // create (real) audio buffers
-        float* inBuf[2]  = { inBuf1, inBuf2 };
-        float* outBuf[2] = { outBuf1, outBuf2 };
+        // create audio buffers
+        float* inBuf[2]  = { m_inBuf1, m_inBuf2 };
+        float* outBuf[2] = { m_outBuf1, m_outBuf2 };
 
         // initialize control input
         memset(rackControlEventsIn, 0, sizeof(CarlaEngineControlEvent)*MAX_CONTROL_EVENTS);
@@ -246,12 +300,23 @@ protected:
         processRack(inBuf, outBuf, nframes);
 
         // output audio
-        for (unsigned int i=0; i < nframes*2; i++)
+        if (m_audioInterleaved)
         {
-            if (i % 2)
-                outsPtr[i] = outBuf2[i/2];
-            else
-                outsPtr[i] = outBuf1[i/2];
+            for (unsigned int i=0; i < nframes*2; i++)
+            {
+                if (i % 2)
+                    outsPtr[i] = m_outBuf2[i/2];
+                else
+                    outsPtr[i] = m_outBuf1[i/2];
+            }
+        }
+        else
+        {
+            for (unsigned int i=0; i < nframes; i++)
+                outsPtr[i] = m_outBuf1[i];
+
+            for (unsigned int i=0, j=nframes; i < nframes; i++, j++)
+                outsPtr[j] = m_outBuf2[i];
         }
 
         // output control
@@ -274,6 +339,12 @@ private:
     RtAudio audio;
     MidiInApi*  midiIn;
     MidiOutApi* midiOut;
+
+    bool   m_audioInterleaved;
+    float* m_inBuf1;
+    float* m_inBuf2;
+    float* m_outBuf1;
+    float* m_outBuf2;
 
     static int carla_rtaudio_process_callback(void* outputBuffer, void* inputBuffer, unsigned int nframes, double streamTime, RtAudioStreamStatus status, void* userData)
     {
