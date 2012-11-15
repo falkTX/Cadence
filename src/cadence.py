@@ -703,11 +703,6 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.m_lastAlsaIndexType = -2 # invalid
 
         # -------------------------------------------------------------
-        # Set-up icons
-
-        # none yet
-
-        # -------------------------------------------------------------
         # Set-up GUI (System Information)
 
         if HAIKU:

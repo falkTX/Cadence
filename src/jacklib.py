@@ -24,7 +24,7 @@ from sys import platform
 try:
     if platform == "darwin":
         jacklib = cdll.LoadLibrary("libjack.dylib")
-    elif platform in ("win32", "win64"):
+    elif platform in ("win32", "win64", "cygwin"):
         jacklib = cdll.LoadLibrary("libjack.dll")
     else:
         jacklib = cdll.LoadLibrary("libjack.so.0")
