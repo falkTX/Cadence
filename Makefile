@@ -178,7 +178,10 @@ src/resources_rc.py: resources/resources.qrc
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-CPP: carla-backend carla-bridge carla-discovery jackmeter xycontroller
+CPP: caitlib carla-backend carla-bridge carla-discovery jackmeter xycontroller
+
+caitlib:
+	$(MAKE) -C c++/caitlib
 
 carla-backend: carla-engine carla-native carla-plugin
 	$(MAKE) -C c++/carla-backend
@@ -216,6 +219,7 @@ debug:
 	$(MAKE) DEBUG=true
 
 doxygen:
+	$(MAKE) doxygen -C c++/caitlib
 	$(MAKE) doxygen -C c++/carla-backend
 	$(MAKE) doxygen -C c++/carla-bridge
 	$(MAKE) doxygen -C c++/carla-engine
@@ -251,6 +255,7 @@ wine64:
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 clean:
+	$(MAKE) clean -C c++/caitlib
 	$(MAKE) clean -C c++/carla-backend
 	$(MAKE) clean -C c++/carla-bridge
 	$(MAKE) clean -C c++/carla-discovery
@@ -268,7 +273,7 @@ clean:
 install:
 	# Create directories
 	install -d $(DESTDIR)$(PREFIX)/bin/
-	install -d $(DESTDIR)$(PREFIX)/lib/carla/
+	install -d $(DESTDIR)$(PREFIX)/lib/cadence/
 	install -d $(DESTDIR)$(PREFIX)/share/applications/
 	install -d $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
 	install -d $(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/
@@ -353,10 +358,11 @@ install:
 	install -m 755 src/*.py $(DESTDIR)$(PREFIX)/share/cadence/src/
 
 	install -m 755 \
+		c++/caitlib/*.so \
 		c++/carla-backend/*.so \
 		c++/carla-bridge/carla-bridge-* \
 		c++/carla-discovery/carla-discovery-* \
-		$(DESTDIR)$(PREFIX)/lib/carla/
+		$(DESTDIR)$(PREFIX)/lib/cadence/
 
 	# Install addtional stuff for Cadence
 	install -m 644 data/pulse2jack/* $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
@@ -411,5 +417,5 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/carla.svg
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/carla-control.svg
 	rm -f $(X11_RC_DIR)/99cadence-session-start
-	rm -rf $(DESTDIR)$(PREFIX)/lib/carla/
+	rm -rf $(DESTDIR)$(PREFIX)/lib/cadence/
 	rm -rf $(DESTDIR)$(PREFIX)/share/cadence/

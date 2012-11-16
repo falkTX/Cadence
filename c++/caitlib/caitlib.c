@@ -46,6 +46,7 @@ typedef struct _RawMidiEvent {
     jack_midi_data_t data[MAX_EVENT_DATA_SIZE];
     size_t           dataSize;
     jack_nframes_t   time;
+    double           value; // used for special events
 } RawMidiEvent;
 
 typedef struct _CaitlibOutPort {

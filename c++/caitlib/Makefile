@@ -19,16 +19,13 @@ OBJS = \
 
 # --------------------------------------------------------------
 
-all: caitlib.so test
-
-doxygen: caitlib.doxygen
-	doxygen $<
+all: caitlib.so
 
 caitlib.so: $(OBJS)
 	$(CC) $^ $(LINK_FLAGS) -o $@ && $(STRIP) $@
 
-test: $(OBJS) test.o
-	$(CC) $^ -lm -lpthread -ljack -o $@ && $(STRIP) $@
+doxygen: caitlib.doxygen
+	doxygen $<
 
 # --------------------------------------------------------------
 

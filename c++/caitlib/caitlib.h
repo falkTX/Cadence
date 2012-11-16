@@ -58,6 +58,7 @@ typedef void* CaitlibHandle;
 #define MIDI_EVENT_TYPE_PROGRAM          0xC0 //!< Program Event, uses Program data.
 #define MIDI_EVENT_TYPE_CHANNEL_PRESSURE 0xD0 //!< Channel Pressure Event, uses Pressure data.
 #define MIDI_EVENT_TYPE_PITCH_WHEEL      0xE0 //!< PitchWheel Event, uses PitchWheel data.
+#define MIDI_EVENT_TYPE_TIME             0xF1 //!< Time Event, uses Time Data.
 /**@}*/
 
 /*!
@@ -76,7 +77,8 @@ typedef struct _MidiEvent
     uint8_t channel;
 
     /*!
-     * MidiEvent Data (values depend on type)
+     * MidiEvent Data (values depend on type).
+     * \note Time event types ignore channel value.
      */
     union MidiEventData {
         struct MidiEventControl {
@@ -100,6 +102,12 @@ typedef struct _MidiEvent
         struct MidiEventPitchWheel {
             int16_t value;
         } pitchwheel;
+
+        struct MidiEventTime {
+            double  bpm;
+            uint8_t sigNum;
+            uint8_t sigDenum;
+        } time;
 
 #ifndef DOXYGEN
         // padding for future events
@@ -240,6 +248,12 @@ void caitlib_put_program(CaitlibHandle handle, uint32_t port, uint32_t time, uin
  */
 CAITLIB_EXPORT
 void caitlib_put_pitchwheel(CaitlibHandle handle, uint32_t port, uint32_t time, uint8_t channel, int16_t value);
+
+/*!
+ * Put a MIDI Time event into a Caitlib instance.
+ */
+CAITLIB_EXPORT
+void caitlib_put_time(CaitlibHandle handle, uint32_t time, double bpm, uint8_t sigNum, uint8_t sigDenum);
 
 /**@}*/
 
