@@ -40,11 +40,13 @@ c++/xycontroller/cadence-xycontroller
 
 c++/carla-includes/vst/
 
+doc/caitlib/
 doc/carla-backend/
 doc/carla-bridge/
 doc/carla-engine/
 doc/carla-native/
 doc/carla-plugin/
+doc/distrho/
 
 *-build-*Debug/
 *-build-*Release/
