@@ -23,13 +23,19 @@ SOURCES = \
     zynaddsubfx.cpp \
     zynaddsubfx-src.cpp
 
+SOURCES += \
+    3bandeq.cpp \
+    3bandsplitter.cpp \
+    distrho/pugl.cpp
+
 HEADERS = \
     carla_native.h \
     carla_native.hpp
 
-INCLUDEPATH = . \
+INCLUDEPATH = . distrho \
     ../carla-includes \
-    ../carla-utils
+    ../carla-utils \
+    ../distrho-plugin-toolkit
 
 QMAKE_CFLAGS   *= -std=c99
 QMAKE_CXXFLAGS *= -std=c++0x

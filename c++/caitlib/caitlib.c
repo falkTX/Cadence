@@ -423,69 +423,65 @@ MidiEvent* caitlib_get_event(CaitlibHandle handle)
 
     pthread_mutex_unlock(&handlePtr->mutex);
 
+    midiEvent.channel = rawEventPtr->data[0] & 0x0F;
+    midiEvent.time    = rawEventPtr->time;
+
     // note off
-    if (rawEventPtr->dataSize == 3 && (rawEventPtr->data[0] & 0xF0) == 0x80)
+    if (rawEventPtr->dataSize == 3 && (rawEventPtr->data[0] & 0xF0) == MIDI_EVENT_TYPE_NOTE_OFF)
     {
-        midiEvent.type    = MIDI_EVENT_TYPE_NOTE_OFF;
-        midiEvent.channel = rawEventPtr->data[0] & 0x0F;
+        midiEvent.type = MIDI_EVENT_TYPE_NOTE_OFF;
         midiEvent.data.note.note     = rawEventPtr->data[1];
         midiEvent.data.note.velocity = rawEventPtr->data[2];
     }
 
     // note on
-    else if (rawEventPtr->dataSize == 3 && (rawEventPtr->data[0] & 0xF0) == 0x90)
+    else if (rawEventPtr->dataSize == 3 && (rawEventPtr->data[0] & 0xF0) == MIDI_EVENT_TYPE_NOTE_ON)
     {
-        midiEvent.type    = MIDI_EVENT_TYPE_NOTE_ON;
-        midiEvent.channel = rawEventPtr->data[0] & 0x0F;
+        midiEvent.type = MIDI_EVENT_TYPE_NOTE_ON;
         midiEvent.data.note.note     = rawEventPtr->data[1];
         midiEvent.data.note.velocity = rawEventPtr->data[2];
     }
 
     // aftertouch
-    else if (rawEventPtr->dataSize == 3 && (rawEventPtr->data[0] & 0xF0) == 0xA0)
+    else if (rawEventPtr->dataSize == 3 && (rawEventPtr->data[0] & 0xF0) == MIDI_EVENT_TYPE_AFTER_TOUCH)
     {
-        midiEvent.type    = MIDI_EVENT_TYPE_AFTER_TOUCH;
-        midiEvent.channel = rawEventPtr->data[0] & 0x0F;
+        midiEvent.type = MIDI_EVENT_TYPE_AFTER_TOUCH;
         midiEvent.data.note.note     = rawEventPtr->data[1];
         midiEvent.data.note.velocity = rawEventPtr->data[2];
     }
 
     // control
-    else if (rawEventPtr->dataSize == 3 && (rawEventPtr->data[0] & 0xF0) == 0xB0)
+    else if (rawEventPtr->dataSize == 3 && (rawEventPtr->data[0] & 0xF0) == MIDI_EVENT_TYPE_CONTROL)
     {
-        midiEvent.type    = MIDI_EVENT_TYPE_CONTROL;
-        midiEvent.channel = rawEventPtr->data[0] & 0x0F;
+        midiEvent.type = MIDI_EVENT_TYPE_CONTROL;
         midiEvent.data.control.controller = rawEventPtr->data[1];
         midiEvent.data.control.value      = rawEventPtr->data[2];
     }
 
     // program
-    else if (rawEventPtr->dataSize == 2 && (rawEventPtr->data[0] & 0xF0) == 0xC0)
+    else if (rawEventPtr->dataSize == 2 && (rawEventPtr->data[0] & 0xF0) == MIDI_EVENT_TYPE_PROGRAM)
     {
-        midiEvent.type    = MIDI_EVENT_TYPE_PROGRAM;
-        midiEvent.channel = rawEventPtr->data[0] & 0x0F;
+        midiEvent.type = MIDI_EVENT_TYPE_PROGRAM;
         midiEvent.data.program.value = rawEventPtr->data[1];
     }
 
     // channel pressure
-    else if (rawEventPtr->dataSize == 2 && (rawEventPtr->data[0] & 0xF0) == 0xD0)
+    else if (rawEventPtr->dataSize == 2 && (rawEventPtr->data[0] & 0xF0) == MIDI_EVENT_TYPE_CHANNEL_PRESSURE)
     {
-        midiEvent.type    = MIDI_EVENT_TYPE_CHANNEL_PRESSURE;
-        midiEvent.channel = rawEventPtr->data[0] & 0x0F;
+        midiEvent.typ = MIDI_EVENT_TYPE_CHANNEL_PRESSURE;
         midiEvent.data.pressure.value = rawEventPtr->data[1];
     }
 
     // pitch wheel
-    else if (rawEventPtr->dataSize == 3 && (rawEventPtr->data[0] & 0xF0) == 0xE0)
+    else if (rawEventPtr->dataSize == 3 && (rawEventPtr->data[0] & 0xF0) == MIDI_EVENT_TYPE_PITCH_WHEEL)
     {
-        midiEvent.type    = MIDI_EVENT_TYPE_PITCH_WHEEL;
-        midiEvent.channel = rawEventPtr->data[0] & 0x0F;
+        midiEvent.type = MIDI_EVENT_TYPE_PITCH_WHEEL;
         midiEvent.data.pitchwheel.value = ((rawEventPtr->data[2] << 7) | rawEventPtr->data[1]) - 8192;
     }
 
     else
     {
-        return NULL;
+        midiEvent.type = MIDI_EVENT_TYPE_NULL;
     }
 
     rtsafe_memory_pool_deallocate(handlePtr->mempool, rawEventPtr);
