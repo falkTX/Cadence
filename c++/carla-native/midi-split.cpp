@@ -35,7 +35,7 @@ protected:
 
     void activate()
     {
-        memset(events, 0, sizeof(MidiEvent) * MAX_MIDI_EVENTS);
+        //memset(events, 0, sizeof(MidiEvent) * MAX_MIDI_EVENTS);
     }
 
     void process(float**, float**, uint32_t, uint32_t midiEventCount, MidiEvent* midiEvents)
@@ -66,8 +66,8 @@ protected:
     // -------------------------------------------------------------------
 
 private:
-    static const unsigned short MAX_MIDI_EVENTS = 512;
-    MidiEvent events[MAX_MIDI_EVENTS];
+    //static const unsigned short MAX_MIDI_EVENTS = 512;
+    //MidiEvent events[MAX_MIDI_EVENTS];
 
     PluginDescriptorClassEND(MidiSplitPlugin)
 };

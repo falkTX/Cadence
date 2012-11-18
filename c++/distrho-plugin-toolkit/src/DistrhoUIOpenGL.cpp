@@ -69,12 +69,14 @@ void OpenGLUI::d_uiIdle()
 
 END_NAMESPACE_DISTRHO
 
-#if DISTRHO_OS_WINDOWS
-# include "pugl/pugl_win.cpp"
-#elif DISTRHO_OS_MAC
-# include "pugl/pugl_osx.m"
-#else
-# include "pugl/pugl_x11.c"
+#ifndef DISTRHO_NAMESPACE
+# if DISTRHO_OS_WINDOWS
+#  include "pugl/pugl_win.cpp"
+# elif DISTRHO_OS_MAC
+#  include "pugl/pugl_osx.m"
+# else
+#  include "pugl/pugl_x11.c"
+# endif
 #endif
 
 #endif // DISTRHO_UI_OPENGL

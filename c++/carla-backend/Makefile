@@ -31,7 +31,7 @@ BUILD_CXX_FLAGS  += -I. -I../carla-engine -I../carla-includes -I../carla-native 
 BUILD_CXX_FLAGS  += -fvisibility=hidden -fPIC
 BUILD_CXX_FLAGS  += $(shell pkg-config --cflags liblo QtCore)
 
-LINK_FLAGS       += -fPIC -shared -ldl -lm
+LINK_FLAGS       += -fPIC -shared -ldl -lm -lGL
 LINK_FLAGS       += $(shell pkg-config --libs liblo QtCore QtGui)
 
 ifeq ($(CARLA_PLUGIN_SUPPORT),true)

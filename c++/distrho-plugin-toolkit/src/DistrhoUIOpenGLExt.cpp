@@ -19,7 +19,7 @@
 
 #ifdef DISTRHO_UI_OPENGL
 
-# include "DistrhoUIOpenGLExt.h"
+#include "DistrhoUIOpenGLExt.h"
 
 #include <cassert>
 #include <cmath>
@@ -660,7 +660,7 @@ public:
     OpenGLDialog(PuglView* parentView, const Size& parentSize, const Image& image_, const char* title)
         : image(image_)
     {
-#if DISTRHO_OS_LINUX
+#if 0 //DISTRHO_OS_LINUX
         bool addToDesktop = false;
 #else
         bool addToDesktop = true;
@@ -682,7 +682,7 @@ public:
         puglSetReshapeFunc(view, onReshapeCallback);
         puglSetCloseFunc(view, onCloseCallback);
 
-#if DISTRHO_OS_LINUX
+#if 0 //DISTRHO_OS_LINUX
         Display* display    = view->impl->display;
         Window thisWindow   = view->impl->win;
         Window parentWindow = parentView->impl->win;
@@ -722,7 +722,7 @@ public:
     {
         if (view)
         {
-#if DISTRHO_OS_LINUX
+#if 0 //DISTRHO_OS_LINUX
             Display* display = view->impl->display;
             Window   window  = view->impl->win;
             XRaiseWindow(display, window);
@@ -841,7 +841,7 @@ enum ObjectType {
     OBJECT_SLIDER = 3
 };
 
-#if DISTRHO_OS_LINUX
+#if 0 //DISTRHO_OS_LINUX
 struct LinuxData {
     Display* display;
     Window   window;
@@ -879,7 +879,7 @@ struct OpenGLExtUIPrivateData {
     std::vector<ImageSlider*> sliders;
     OpenGLDialog* dialog;
 
-#if DISTRHO_OS_LINUX
+#if 0 //DISTRHO_OS_LINUX
     LinuxData linuxData;
 #endif
 
@@ -896,7 +896,7 @@ struct OpenGLExtUIPrivateData {
 
     void showCursor()
     {
-#if DISTRHO_OS_LINUX
+#if 0 //DISTRHO_OS_LINUX
         if (lastCursorPos != Point(-1, -2))
             XWarpPointer(linuxData.display, None, DefaultRootWindow(linuxData.display), 0, 0, 0, 0, lastCursorPos.getX(), lastCursorPos.getY());
 
@@ -906,7 +906,7 @@ struct OpenGLExtUIPrivateData {
 
     void hideCursor()
     {
-#if DISTRHO_OS_LINUX
+#if 0 //DISTRHO_OS_LINUX
         Window root, child;
         int rootX, rootY, winX, winY;
         unsigned int mask;
@@ -1022,7 +1022,7 @@ void OpenGLExtUI::d_onInit()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-#if DISTRHO_OS_LINUX
+#if 0 //DISTRHO_OS_LINUX
     data->linuxData.display = OpenGLUI::data->widget->impl->display;
     data->linuxData.window  = OpenGLUI::data->widget->impl->win;
     data->linuxData.pixmapBlack = XCreateBitmapFromData(data->linuxData.display, data->linuxData.window, data->linuxData.colorData, 8, 8);

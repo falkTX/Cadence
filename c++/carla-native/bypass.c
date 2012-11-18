@@ -61,10 +61,10 @@ static PluginDescriptor bypassDesc = {
 
     .instantiate = bypass_instantiate,
 
-    .get_parameter_count  = NULL,
-    .get_parameter_info   = NULL,
-    .get_parameter_value  = NULL,
-    .get_parameter_text   = NULL,
+    .get_parameter_count = NULL,
+    .get_parameter_info  = NULL,
+    .get_parameter_value = NULL,
+    .get_parameter_text  = NULL,
 
     .get_midi_program_count = NULL,
     .get_midi_program_info  = NULL,

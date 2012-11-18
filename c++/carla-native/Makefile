@@ -12,7 +12,7 @@ HAVE_ZYN_GUI_DEPS = $(shell which ntk-config)
 # --------------------------------------------------------------
 
 BUILD_C_FLAGS    += -fvisibility=hidden -fPIC -I.
-BUILD_CXX_FLAGS  += -fvisibility=hidden -fPIC -I. -I../carla-includes -I../carla-utils
+BUILD_CXX_FLAGS  += -fvisibility=hidden -fPIC -I. -Idistrho -I../carla-includes -I../carla-utils -I../distrho-plugin-toolkit
 BUILD_CXX_FLAGS  += $(shell pkg-config --cflags QtCore)
 
 ifeq ($(HAVE_ZYN_DEPS),true)
@@ -23,9 +23,14 @@ BUILD_CXX_FLAGS  += $(shell ntk-config --cxxflags) -DWANT_ZYNADDSUBFX_GUI
 endif
 endif
 
-OBJS = \
+OBJS  = \
 	bypass.o \
 	midi-split.o
+
+OBJS += \
+	3bandeq.o \
+	3bandsplitter.o \
+	distrho/pugl.o
 
 # --------------------------------------------------------------
 

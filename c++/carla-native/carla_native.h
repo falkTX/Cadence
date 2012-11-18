@@ -181,6 +181,10 @@ void carla_register_native_plugin_midiSplit();
 void carla_register_native_plugin_zynaddsubfx();
 #endif
 
+// DISTRHO based plugins
+void carla_register_native_plugin_3BandEQ();
+void carla_register_native_plugin_3BandSplitter();
+
 // -----------------------------------------------------------------------
 
 /**@}*/

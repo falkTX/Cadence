@@ -1,7 +1,7 @@
 # Carla TODO
 
 GENERAL:
- - add direct program access on ui-dialogs (needed for standalone bridges), maybe add extra buttons too
+ - add direct program access on ui-dialogs (needed for standalone bridges), maybe add extra buttons too (reset plugin, fix ui size)
  - implement osc-based uis in bridge mode
  - implement midi-learn (new dialog)
  - implement midi-cc automation special rules (invert, half, logarithmic, etc)
@@ -21,6 +21,7 @@ DSSI:
 
 LV2:
  - implement lv2-preset support
+ - implement lv2-time messages support
  - complete lv2-atom messages support
  - complete lv2-worker support
 
