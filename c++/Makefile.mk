@@ -7,9 +7,9 @@
 AR  ?= ar
 CC  ?= gcc
 CXX ?= g++
-MOC ?= $(shell pkg-config QtCore --variable=moc_location)
-RCC ?= $(shell pkg-config QtCore --variable=rcc_location)
-UIC ?= $(shell pkg-config QtCore --variable=uic_location)
+MOC ?= $(shell pkg-config --variable=moc_location QtCore)
+RCC ?= $(shell pkg-config --variable=rcc_location QtCore)
+UIC ?= $(shell pkg-config --variable=uic_location QtCore)
 STRIP ?= strip
 WINDRES ?= windres
 

@@ -18,7 +18,7 @@ BUILD_CXX_FLAGS  += $(shell pkg-config --cflags QtCore)
 ifeq ($(HAVE_ZYN_DEPS),true)
 BUILD_CXX_FLAGS  += $(shell pkg-config --cflags fftw3 mxml) -DWANT_ZYNADDSUBFX
 
-ifneq ($(HAVE_ZYN_GUI_DEPS),)
+ifeq ($(HAVE_ZYN_GUI_DEPS),true)
 BUILD_CXX_FLAGS  += $(shell pkg-config --cflags ntk) -DWANT_ZYNADDSUBFX_GUI
 endif
 endif
