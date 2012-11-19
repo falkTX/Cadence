@@ -124,7 +124,7 @@ public:
 
         unsigned long dataSize = 0;
 
-        if (descriptor->get_custom_data(handle, dataPtr, &dataSize))
+        if (descriptor->get_custom_data && descriptor->get_custom_data(handle, dataPtr, &dataSize))
             return dataSize;
 
         return 0;

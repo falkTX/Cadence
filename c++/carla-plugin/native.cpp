@@ -49,6 +49,8 @@ public:
         host.get_sample_rate  = carla_host_get_sample_rate;
         host.get_time_info    = carla_host_get_time_info;
         host.write_midi_event = carla_host_write_midi_event;
+        host.ui_parameter_changed   = carla_host_ui_parameter_changed;
+        host.ui_custom_data_changed = carla_host_ui_custom_data_changed;
 
         isProcessing = false;
 
@@ -285,6 +287,12 @@ public:
         }
 
         CarlaPlugin::getParameterScalePointLabel(parameterId, scalePointId, strBuf);
+    }
+
+    void getGuiInfo(GuiType* const type, bool* const resizable)
+    {
+        *type = GUI_EXTERNAL_OSC; // FIXME, should be _LV2 but as _PLUGIN
+        *resizable = false;
     }
 
     // -------------------------------------------------------------------
@@ -1455,6 +1463,16 @@ public:
         return true;
     }
 
+    void handleUiParameterChanged(uint32_t index, float value)
+    {
+        setParameterValue(index, value, false, true, true);
+    }
+
+    void handleUiCustomDataChanged(const char* key, const char* value)
+    {
+        setCustomData(CUSTOM_DATA_STRING, key, value, false);
+    }
+
     static uint32_t carla_host_get_buffer_size(HostHandle handle)
     {
         CARLA_ASSERT(handle);
@@ -1477,6 +1495,18 @@ public:
     {
         CARLA_ASSERT(handle);
         return ((NativePlugin*)handle)->handleWriteMidiEvent(event);
+    }
+
+    static void carla_host_ui_parameter_changed(HostHandle handle, uint32_t index, float value)
+    {
+        CARLA_ASSERT(handle);
+        ((NativePlugin*)handle)->handleUiParameterChanged(index, value);
+    }
+
+    static void carla_host_ui_custom_data_changed(HostHandle handle, const char* key, const char* value)
+    {
+        CARLA_ASSERT(handle);
+        ((NativePlugin*)handle)->handleUiCustomDataChanged(key, value);
     }
 
     // -------------------------------------------------------------------

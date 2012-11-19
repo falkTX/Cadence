@@ -17,7 +17,7 @@ TARGET   = carla_native
 TEMPLATE = lib
 VERSION  = 0.5.0
 
-SOURCES = \
+SOURCES  = \
     bypass.c \
     midi-split.cpp \
     zynaddsubfx.cpp \
@@ -27,11 +27,15 @@ SOURCES += \
     3bandeq.cpp \
     3bandeq-src.cpp \
     3bandsplitter.cpp \
+    3bandsplitter-src.cpp \
     distrho/pugl.cpp
 
-HEADERS = \
+HEADERS  = \
     carla_native.h \
     carla_native.hpp
+
+HEADERS += \
+    distrho/DistrhoPluginCarla.cpp
 
 INCLUDEPATH = . distrho \
     ../carla-includes \

@@ -129,21 +129,25 @@ typedef struct _HostDescriptor {
     double          (*get_sample_rate)(HostHandle handle);
     const TimeInfo* (*get_time_info)(HostHandle handle);
     bool            (*write_midi_event)(HostHandle handle, MidiEvent* event);
+
+    void (*ui_parameter_changed)(PluginHandle handle, uint32_t index, float value);
+    //void (*ui_midi_program_changed)(PluginHandle handle, uint32_t bank, uint32_t program);
+    void (*ui_custom_data_changed)(PluginHandle handle, const char* key, const char* value);
 } HostDescriptor;
 
 typedef struct _PluginDescriptor {
-    PluginCategory category;
-    uint32_t hints;
-    uint32_t audioIns;
-    uint32_t audioOuts;
-    uint32_t midiIns;
-    uint32_t midiOuts;
-    uint32_t parameterIns;
-    uint32_t parameterOuts;
-    const char* name;
-    const char* label;
-    const char* maker;
-    const char* copyright;
+    const PluginCategory category;
+    const uint32_t hints;
+    const uint32_t audioIns;
+    const uint32_t audioOuts;
+    const uint32_t midiIns;
+    const uint32_t midiOuts;
+    const uint32_t parameterIns;
+    const uint32_t parameterOuts;
+    const char* const name;
+    const char* const label;
+    const char* const maker;
+    const char* const copyright;
 
     PluginHandle (*instantiate)(struct _PluginDescriptor* _this_, HostDescriptor* host);
 

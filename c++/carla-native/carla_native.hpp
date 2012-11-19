@@ -78,6 +78,22 @@ public:
             host->write_midi_event(host->handle, event);
     }
 
+    void uiParameterChanged(uint32_t index, float value)
+    {
+        CARLA_ASSERT(host);
+
+        if (host)
+            host->ui_parameter_changed(host->handle, index, value);
+    }
+
+    void uiCustomDataChanged(const char* key, const char* value)
+    {
+        CARLA_ASSERT(host);
+
+        if (host)
+            host->ui_custom_data_changed(host->handle, key, value);
+    }
+
 protected:
     // -------------------------------------------------------------------
     // Plugin parameter calls
@@ -126,7 +142,7 @@ protected:
     // -------------------------------------------------------------------
     // Plugin state calls
 
-    virtual void setParameterValue(uint32_t index, double value)
+    virtual void setParameterValue(uint32_t index, float value)
     {
         CARLA_ASSERT(index < getParameterCount());
         Q_UNUSED(value);
@@ -156,7 +172,7 @@ protected:
     {
     }
 
-    virtual void uiSetParameterValue(uint32_t index, double value)
+    virtual void uiSetParameterValue(uint32_t index, float value)
     {
         CARLA_ASSERT(index < getParameterCount());
         Q_UNUSED(value);

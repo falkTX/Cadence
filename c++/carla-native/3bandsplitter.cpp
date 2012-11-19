@@ -35,8 +35,8 @@ START_NAMESPACE_DISTRHO
 // -----------------------------------------------------------------------
 
 static PluginDescriptor tBandSplitterDesc = {
-    /* category  */ PLUGIN_CATEGORY_EQ,
-    /* hints     */ 0x0,
+    /* category  */ ::PLUGIN_CATEGORY_EQ,
+    /* hints     */ ::PLUGIN_HAS_GUI,
     /* audioIns  */ DISTRHO_PLUGIN_NUM_INPUTS,
     /* audioOuts */ DISTRHO_PLUGIN_NUM_OUTPUTS,
     /* midiIns   */ 0,
@@ -47,7 +47,7 @@ static PluginDescriptor tBandSplitterDesc = {
     /* label     */ "3BandSplitter",
     /* maker     */ "falkTX",
     /* copyright */ "LGPL",
-    PluginDescriptorFILL(CarlaDistrhoPlugin)
+    PluginDescriptorFILL(PluginCarla)
 };
 
 END_NAMESPACE_DISTRHO
