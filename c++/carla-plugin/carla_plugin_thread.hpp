@@ -26,6 +26,9 @@ class QProcess;
 
 CARLA_BACKEND_START_NAMESPACE
 
+class CarlaEngine;
+class CarlaPlugin;
+
 class CarlaPluginThread : public QThread
 {
 public:

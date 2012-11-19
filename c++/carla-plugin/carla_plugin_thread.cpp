@@ -73,8 +73,8 @@ void CarlaPluginThread::run()
 
     m_process->setProcessChannelMode(QProcess::ForwardedChannels);
 
+    QString name(plugin->name() ? plugin->name() : "(none)");
     QStringList arguments;
-    const char* name = plugin->name() ? plugin->name() : "(none)";
 
     switch (mode)
     {
@@ -115,7 +115,7 @@ void CarlaPluginThread::run()
     case PLUGIN_THREAD_DSSI_GUI:
     case PLUGIN_THREAD_LV2_GUI:
     case PLUGIN_THREAD_VST_GUI:
-        if (plugin->showOscGui())
+        if (plugin->waitForOscGuiShow())
         {
             m_process->waitForFinished(-1);
 
@@ -150,8 +150,7 @@ void CarlaPluginThread::run()
             QString errorString = QString("Plugin '%1' has crashed!\n"
                                           "Saving now will lose its current settings.\n"
                                           "Please remove this plugin, and not rely on it from this point.").arg(plugin->name());
-            //CarlaBackend::setLastError(errorString.toUtf8().constData());
-
+            engine->setLastError(errorString.toUtf8().constData());
             engine->callback(CarlaBackend::CALLBACK_ERROR, plugin->id(), 0, 0, 0.0);
         }
 

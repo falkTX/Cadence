@@ -29,8 +29,10 @@ OBJS  = \
 
 OBJS += \
 	3bandeq.o \
-	3bandsplitter.o \
+	3bandeq-src.o \
 	distrho/pugl.o
+
+# 	3bandsplitter.o
 
 # --------------------------------------------------------------
 

@@ -11,7 +11,7 @@ DEFINES  += QTCREATOR_TEST
 
 DEFINES  += WANT_ZYNADDSUBFX WANT_ZYNADDSUBFX_GUI
 
-PKGCONFIG = fftw3 mxml
+PKGCONFIG = fftw3 mxml ntk
 
 TARGET   = carla_native
 TEMPLATE = lib
@@ -25,6 +25,7 @@ SOURCES = \
 
 SOURCES += \
     3bandeq.cpp \
+    3bandeq-src.cpp \
     3bandsplitter.cpp \
     distrho/pugl.cpp
 
@@ -39,4 +40,3 @@ INCLUDEPATH = . distrho \
 
 QMAKE_CFLAGS   *= -std=c99
 QMAKE_CXXFLAGS *= -std=c++0x
-QMAKE_CXXFLAGS *= `ntk-config --cxxflags`

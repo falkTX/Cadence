@@ -520,6 +520,7 @@ public:
         char portName[portNameSize];
         bool needsCtrlIn = (aOuts > 0 || params > 0);
 
+        // Audio Ins
         for (j=0; j < aIns; j++)
         {
 #ifndef BUILD_BRIDGE
@@ -533,6 +534,7 @@ public:
             aIn.rindexes[j] = j;
         }
 
+        // Audio Outs
         for (j=0; j < aOuts; j++)
         {
 #ifndef BUILD_BRIDGE
@@ -546,7 +548,7 @@ public:
             aOut.rindexes[j] = j;
         }
 
-        for (j=0; j<params; j++)
+        for (j=0; j < params; j++)
         {
             param.data[j].type   = PARAMETER_INPUT;
             param.data[j].index  = j;

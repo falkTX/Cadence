@@ -147,13 +147,31 @@ protected:
     // -------------------------------------------------------------------
     // Plugin UI calls
 
-    virtual void showGui(bool show)
+    virtual void uiShow(bool show)
     {
         Q_UNUSED(show);
     }
 
-    virtual void idleGui()
+    virtual void uiIdle()
     {
+    }
+
+    virtual void uiSetParameterValue(uint32_t index, double value)
+    {
+        CARLA_ASSERT(index < getParameterCount());
+        Q_UNUSED(value);
+    }
+
+    virtual void uiSetMidiProgram(uint32_t bank, uint32_t program)
+    {
+        Q_UNUSED(bank);
+        Q_UNUSED(program);
+    }
+
+    virtual void uiSetCustomData(const char* key, const char* value)
+    {
+        CARLA_ASSERT(key);
+        CARLA_ASSERT(value);
     }
 
     // -------------------------------------------------------------------
@@ -223,14 +241,29 @@ public:
         return ((PluginDescriptorClass*)handle)->setCustomData(key, value);
     }
 
-    static void _show_gui(PluginHandle handle, bool show)
+    static void _ui_show(PluginHandle handle, bool show)
     {
-        return ((PluginDescriptorClass*)handle)->showGui(show);
+        return ((PluginDescriptorClass*)handle)->uiShow(show);
     }
 
-    static void _idle_gui(PluginHandle handle)
+    static void _ui_idle(PluginHandle handle)
     {
-        return ((PluginDescriptorClass*)handle)->idleGui();
+        return ((PluginDescriptorClass*)handle)->uiIdle();
+    }
+
+    static void _ui_set_parameter_value(PluginHandle handle, uint32_t index, float value)
+    {
+        return ((PluginDescriptorClass*)handle)->uiSetParameterValue(index, value);
+    }
+
+    static void _ui_set_midi_program(PluginHandle handle, uint32_t bank, uint32_t program)
+    {
+        return ((PluginDescriptorClass*)handle)->uiSetMidiProgram(bank, program);
+    }
+
+    static void _ui_set_custom_data(PluginHandle handle, const char* key, const char* value)
+    {
+        return ((PluginDescriptorClass*)handle)->uiSetCustomData(key, value);
     }
 
     static void _activate(PluginHandle handle)
@@ -276,8 +309,11 @@ public:                                                                         
     CLASS::_set_parameter_value,    \
     CLASS::_set_midi_program,       \
     CLASS::_set_custom_data,        \
-    CLASS::_show_gui,               \
-    CLASS::_idle_gui,               \
+    CLASS::_ui_show,                \
+    CLASS::_ui_idle,                \
+    CLASS::_ui_set_parameter_value, \
+    CLASS::_ui_set_midi_program,    \
+    CLASS::_ui_set_custom_data,     \
     CLASS::_activate,               \
     CLASS::_deactivate,             \
     CLASS::_cleanup,                \

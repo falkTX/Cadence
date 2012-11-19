@@ -250,11 +250,9 @@ void DistrhoPlugin3BandEQ::d_run(const float** inputs, float** outputs, uint32_t
 
 // -------------------------------------------------
 
-#ifndef DISTRHO_NAMESPACE
 Plugin* createPlugin()
 {
     return new DistrhoPlugin3BandEQ();
 }
-#endif
 
 END_NAMESPACE_DISTRHO

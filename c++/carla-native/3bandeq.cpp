@@ -23,33 +23,45 @@
 /// Set namespace for this plugin
 #define DISTRHO_NAMESPACE DISTRHO_3BEQ
 
+// Include Plugin code
+#include "3bandeq/DistrhoPlugin3BandEQ.h"
+#include "3bandeq/DistrhoUI3BandEQ.h"
+
 // Include DISTRHO code
 #include "DistrhoPluginCarla.cpp"
 
-// Include Plugin code
-#include "3bandeq/DistrhoArtwork3BandEQ.cpp"
-#include "3bandeq/DistrhoPlugin3BandEQ.cpp"
-#include "3bandeq/DistrhoUI3BandEQ.cpp"
+START_NAMESPACE_DISTRHO
 
 // -----------------------------------------------------------------------
 
-class CarlaDistrhoPlugin3BandEQ : public CarlaDistrhoPlugin
-{
-public:
-    CarlaDistrhoPlugin3BandEQ(const HostDescriptor* host)
-        : CarlaDistrhoPlugin(host)
-    {
-    }
+//class CarlaDistrhoPlugin : public PluginDescriptorClass
+//{
+//public:
+//    CarlaDistrhoPlugin(const HostDescriptor* host)
+//        : PluginDescriptorClass(host)
+//    {
+//    }
 
-    ~CarlaDistrhoPlugin3BandEQ()
-    {
-    }
+//    ~CarlaDistrhoPlugin()
+//    {
+//    }
 
-    // -------------------------------------------------------------------
+//protected:
+//    // -------------------------------------------------------------------
+//    // Plugin process calls
 
-private:
-    PluginDescriptorClassEND(CarlaDistrhoPlugin3BandEQ)
-};
+//    // -------------------------------------------------------------------
+
+//public:
+//    static PluginHandle _instantiate(struct _PluginDescriptor*, HostDescriptor* host)
+//    {
+//        return new CarlaDistrhoPlugin(host);
+//    }
+//    static void _cleanup(PluginHandle handle)
+//    {
+//        delete (CarlaDistrhoPlugin*)handle;
+//    }
+//};
 
 // -----------------------------------------------------------------------
 
@@ -60,19 +72,22 @@ static PluginDescriptor tBandEqDesc = {
     /* audioOuts */ DISTRHO_PLUGIN_NUM_OUTPUTS,
     /* midiIns   */ 0,
     /* midiOuts  */ 0,
-    /* paramIns  */ DISTRHO_NAMESPACE::DistrhoPlugin3BandEQ::paramCount,
+    /* paramIns  */ DistrhoPlugin3BandEQ::paramCount,
     /* paramOuts */ 0,
     /* name      */ DISTRHO_PLUGIN_NAME,
     /* label     */ "3BandEQ",
     /* maker     */ "falkTX",
     /* copyright */ "LGPL",
-    PluginDescriptorFILL(CarlaDistrhoPlugin3BandEQ)
+    PluginDescriptorFILL(CarlaDistrhoPlugin)
 };
+
+END_NAMESPACE_DISTRHO
 
 // -----------------------------------------------------------------------
 
 void carla_register_native_plugin_3BandEQ()
 {
+    USE_NAMESPACE_DISTRHO
     carla_register_native_plugin(&tBandEqDesc);
 }
 

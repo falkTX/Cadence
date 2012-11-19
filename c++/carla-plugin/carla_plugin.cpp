@@ -1100,16 +1100,16 @@ void CarlaPlugin::freeOscData()
     osc.data.free();
 }
 
-bool CarlaPlugin::showOscGui()
+bool CarlaPlugin::waitForOscGuiShow()
 {
-    qWarning("CarlaPlugin::showOscGui()");
+    qWarning("CarlaPlugin::waitForOscGuiShow()");
 
     // wait for UI 'update' call
     for (uint i=0; i < x_engine->oscUiTimeout(); i++)
     {
         if (osc.data.target)
         {
-            qWarning("CarlaPlugin::showOscGui() - got response, asking UI to show itself now");
+            qWarning("CarlaPlugin::waitForOscGuiShow() - got response, asking UI to show itself now");
             osc_send_show(&osc.data);
             return true;
         }
@@ -1117,7 +1117,7 @@ bool CarlaPlugin::showOscGui()
             carla_msleep(100);
     }
 
-    qWarning("CarlaPlugin::showOscGui() - Timeout while waiting for UI to respond (waited %i msecs)", x_engine->oscUiTimeout());
+    qWarning("CarlaPlugin::waitForOscGuiShow() - Timeout while waiting for UI to respond (waited %i msecs)", x_engine->oscUiTimeout());
     return false;
 }
 #endif

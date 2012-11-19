@@ -219,12 +219,10 @@ void DistrhoUI3BandEQ::imageSliderValueChanged(ImageSlider* slider, float value)
 
 // -------------------------------------------------
 
-#ifndef DISTRHO_NAMESPACE
 UI* createUI()
 {
     return new DistrhoUI3BandEQ;
 }
-#endif
 
 // -------------------------------------------------
 

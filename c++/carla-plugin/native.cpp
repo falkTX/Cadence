@@ -31,41 +31,6 @@ struct NativePluginMidiData {
           ports(nullptr) {}
 };
 
-class NativePluginScopedInitiliazer
-{
-public:
-    NativePluginScopedInitiliazer()
-    {
-        firstInit = true;
-    }
-
-    ~NativePluginScopedInitiliazer()
-    {
-    }
-
-    void maybeFirstInit()
-    {
-        if (! firstInit)
-            return;
-
-        firstInit = false;
-
-        carla_register_native_plugin_bypass();
-        carla_register_native_plugin_midiSplit();
-#ifdef WANT_ZYNADDSUBFX
-        carla_register_native_plugin_zynaddsubfx();
-#endif
-
-        carla_register_native_plugin_3BandEQ();
-        carla_register_native_plugin_3BandSplitter();
-    }
-
-private:
-    bool firstInit;
-};
-
-static NativePluginScopedInitiliazer scopedInitliazer;
-
 class NativePlugin : public CarlaPlugin
 {
 public:
@@ -123,7 +88,7 @@ public:
         CARLA_ASSERT(descriptor);
 
         if (descriptor)
-            return (PluginCategory)descriptor->category;
+            return static_cast<PluginCategory>(descriptor->category);
 
         return getPluginCategoryFromName(m_name);
     }
@@ -144,13 +109,12 @@ public:
     uint32_t parameterScalePointCount(const uint32_t parameterId)
     {
         CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(handle);
         CARLA_ASSERT(parameterId < param.count);
 
-        int32_t rindex = param.data[parameterId].rindex;
-
-        if (descriptor && descriptor->get_parameter_count && rindex < (int32_t)descriptor->get_parameter_count(handle))
+        if (descriptor && handle && parameterId < param.count && descriptor->get_parameter_info)
         {
-            const Parameter* const param = descriptor->get_parameter_info(handle, rindex);
+            const ::Parameter* const param = descriptor->get_parameter_info(handle, parameterId);
 
             if (param)
                 return param->scalePointCount;
@@ -168,7 +132,7 @@ public:
         CARLA_ASSERT(handle);
         CARLA_ASSERT(parameterId < param.count);
 
-        if (descriptor && handle)
+        if (descriptor && handle && parameterId < param.count && descriptor->get_parameter_value)
             return descriptor->get_parameter_value(handle, parameterId);
 
         return 0.0;
@@ -177,25 +141,22 @@ public:
     double getParameterScalePointValue(const uint32_t parameterId, const uint32_t scalePointId)
     {
         CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(handle);
         CARLA_ASSERT(parameterId < param.count);
         CARLA_ASSERT(scalePointId < parameterScalePointCount(parameterId));
 
-#if 0
-        const int32_t rindex = param.data[parameterId].rindex;
-
-        if (descriptor && rindex < (int32_t)descriptor->portCount)
+        if (descriptor && handle && parameterId < param.count && descriptor->get_parameter_info)
         {
-            const PluginPort* const port = &descriptor->ports[rindex];
+            const ::Parameter* const param = descriptor->get_parameter_info(handle, parameterId);
 
-            if (port && scalePointId < port->scalePointCount)
+            if (param && scalePointId < param->scalePointCount && param->scalePoints)
             {
-                const PluginPortScalePoint* const scalePoint = &port->scalePoints[scalePointId];
+                const ::ParameterScalePoint* const scalePoint = &param->scalePoints[scalePointId];
 
                 if (scalePoint)
                     return scalePoint->value;
             }
         }
-#endif
 
         return 0.0;
     }
@@ -243,22 +204,19 @@ public:
     void getParameterName(const uint32_t parameterId, char* const strBuf)
     {
         CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(handle);
         CARLA_ASSERT(parameterId < param.count);
 
-#if 0
-        const int32_t rindex = param.data[parameterId].rindex;
-
-        if (descriptor && rindex < (int32_t)descriptor->portCount)
+        if (descriptor && handle && parameterId < param.count && descriptor->get_parameter_info)
         {
-            const PluginPort* const port = &descriptor->ports[rindex];
+            const ::Parameter* const param = descriptor->get_parameter_info(handle, parameterId);
 
-            if (port && port->name)
+            if (param && param->name)
             {
-                strncpy(strBuf, port->name, STR_MAX);
+                strncpy(strBuf, param->name, STR_MAX);
                 return;
             }
         }
-#endif
 
         CarlaPlugin::getParameterName(parameterId, strBuf);
     }
@@ -269,11 +227,9 @@ public:
         CARLA_ASSERT(handle);
         CARLA_ASSERT(parameterId < param.count);
 
-        if (descriptor && handle)
+        if (descriptor && handle && parameterId < param.count && descriptor->get_parameter_text)
         {
-            const int32_t rindex = param.data[parameterId].rindex;
-
-            const char* const text = descriptor->get_parameter_text(handle, rindex);
+            const char* const text = descriptor->get_parameter_text(handle, parameterId);
 
             if (text)
             {
@@ -291,20 +247,16 @@ public:
         CARLA_ASSERT(handle);
         CARLA_ASSERT(parameterId < param.count);
 
-#if 0
-        if (descriptor && handle)
+        if (descriptor && handle && parameterId < param.count && descriptor->get_parameter_info)
         {
-            const int32_t rindex = param.data[parameterId].rindex;
+            const ::Parameter* const param = descriptor->get_parameter_info(handle, parameterId);
 
-            const char* const unit = descriptor->get_parameter_unit(handle, rindex);
-
-            if (unit)
+            if (param && param->unit)
             {
-                strncpy(strBuf, unit, STR_MAX);
+                strncpy(strBuf, param->unit, STR_MAX);
                 return;
             }
         }
-#endif
 
         CarlaPlugin::getParameterUnit(parameterId, strBuf);
     }
@@ -312,19 +264,17 @@ public:
     void getParameterScalePointLabel(const uint32_t parameterId, const uint32_t scalePointId, char* const strBuf)
     {
         CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(handle);
         CARLA_ASSERT(parameterId < param.count);
         CARLA_ASSERT(scalePointId < parameterScalePointCount(parameterId));
 
-#if 0
-        int32_t rindex = param.data[parameterId].rindex;
-
-        if (descriptor && rindex < (int32_t)descriptor->portCount)
+        if (descriptor && handle && parameterId < param.count && descriptor->get_parameter_info)
         {
-            const PluginPort* const port = &descriptor->ports[rindex];
+            const ::Parameter* const param = descriptor->get_parameter_info(handle, parameterId);
 
-            if (port && scalePointId < port->scalePointCount)
+            if (param && scalePointId < param->scalePointCount && param->scalePoints)
             {
-                const PluginPortScalePoint* const scalePoint = &port->scalePoints[scalePointId];
+                const ::ParameterScalePoint* const scalePoint = &param->scalePoints[scalePointId];
 
                 if (scalePoint && scalePoint->label)
                 {
@@ -333,7 +283,6 @@ public:
                 }
             }
         }
-#endif
 
         CarlaPlugin::getParameterScalePointLabel(parameterId, scalePointId, strBuf);
     }
@@ -347,7 +296,7 @@ public:
         CARLA_ASSERT(handle);
         CARLA_ASSERT(parameterId < param.count);
 
-        if (descriptor)
+        if (descriptor && handle && parameterId < param.count)
         {
             fixParameterValue(value, param.ranges[parameterId]);
 
@@ -375,10 +324,17 @@ public:
         if (! value)
             return qCritical("Nativelugin::setCustomData(%s, \"%s\", \"%s\", %s) - value is null", CustomDataType2Str(type), key, value, bool2str(sendGui));
 
-        if (descriptor)
+        if (descriptor && handle)
         {
-            descriptor->set_custom_data(handle, key, value);
-            if (h2) descriptor->set_custom_data(h2, key, value);
+            if (descriptor->set_custom_data)
+            {
+                descriptor->set_custom_data(handle, key, value);
+                if (h2) descriptor->set_custom_data(h2, key, value);
+            }
+
+            // FIXME - only if gui was started before
+            if (sendGui && descriptor->ui_set_custom_data)
+                descriptor->ui_set_custom_data(handle, key, value);
         }
 
         CarlaPlugin::setCustomData(type, key, value, sendGui);
@@ -420,18 +376,20 @@ public:
     void showGui(const bool yesNo)
     {
         CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(handle);
 
-        if (descriptor && handle)
-            descriptor->show_gui(handle, yesNo);
+        if (descriptor && handle && descriptor->ui_show)
+            descriptor->ui_show(handle, yesNo);
     }
 
     void idleGui()
     {
         // FIXME - this should not be called if there's no GUI!
         CARLA_ASSERT(descriptor);
+        CARLA_ASSERT(handle);
 
-        if (descriptor && descriptor->idle_gui && handle)
-            descriptor->idle_gui(handle);
+        if (descriptor && handle && descriptor->ui_idle)
+            descriptor->ui_idle(handle);
     }
 
     // -------------------------------------------------------------------
@@ -454,38 +412,19 @@ public:
         // Delete old data
         deleteBuffers();
 
-#if 0
         uint32_t aIns, aOuts, mIns, mOuts, params, j;
         aIns = aOuts = mIns = mOuts = params = 0;
 
-        const double sampleRate  = x_engine->getSampleRate();
-        const uint32_t portCount = descriptor->portCount;
+        const double sampleRate = x_engine->getSampleRate();
+
+        aIns   = descriptor->audioIns;
+        aOuts  = descriptor->audioOuts;
+        mIns   = descriptor->midiIns;
+        mOuts  = descriptor->midiOuts;
+        params = descriptor->get_parameter_count ? descriptor->get_parameter_count(handle) : 0;
 
         bool forcedStereoIn, forcedStereoOut;
         forcedStereoIn = forcedStereoOut = false;
-
-        for (uint32_t i=0; i < portCount; i++)
-        {
-            const PortType portType  = descriptor->ports[i].type;
-            const uint32_t portHints = descriptor->ports[i].hints;
-
-            if (portType == PORT_TYPE_AUDIO)
-            {
-                if (portHints & PORT_HINT_IS_OUTPUT)
-                    aOuts += 1;
-                else
-                    aIns += 1;
-            }
-            else if (portType == PORT_TYPE_MIDI)
-            {
-                if (portHints & PORT_HINT_IS_OUTPUT)
-                    mOuts += 1;
-                else
-                    mIns += 1;
-            }
-            else if (portType == PORT_TYPE_PARAMETER)
-                params += 1;
-        }
 
         if (x_engine->forceStereo() && (aIns == 1 || aOuts == 1) && mIns <= 1 && mOuts <= 1 && ! h2)
         {
@@ -539,171 +478,160 @@ public:
         bool needsCtrlIn  = false;
         bool needsCtrlOut = false;
 
-        for (uint32_t i=0; i < portCount; i++)
+        // Audio Ins
+        for (j=0; j < aIns; j++)
         {
-            const PortType portType  = descriptor->ports[i].type;
-            const uint32_t portHints = descriptor->ports[i].hints;
+            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+                sprintf(portName, "%s:input_%02i", m_name, j+1);
+            else
+                sprintf(portName, "input_%02i", j+1);
 
-            if (portType == PORT_TYPE_AUDIO || portType == PORT_TYPE_MIDI)
+            aIn.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
+            aIn.rindexes[j] = j;
+
+            if (forcedStereoIn)
             {
-                if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
-                {
-                    strcpy(portName, m_name);
-                    strcat(portName, ":");
-                    strncat(portName, descriptor->ports[i].name, portNameSize/2);
-                }
-                else
-                    strncpy(portName, descriptor->ports[i].name, portNameSize);
+                strcat(portName, "_");
+                aIn.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
+                aIn.rindexes[1] = j;
+            }
+        }
+
+        // Audio Outs
+        for (j=0; j < aOuts; j++)
+        {
+            aOut.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
+            aOut.rindexes[j] = j;
+            needsCtrlIn = true;
+
+            if (forcedStereoOut)
+            {
+                strcat(portName, "_");
+                aOut.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
+                aOut.rindexes[1] = j;
+            }
+        }
+
+        // MIDI Input
+        for (j=0; j < mIns; j++)
+        {
+            mIn.ports[j]    = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
+            mIn.rindexes[j] = j;
+        }
+
+        // MIDI Output
+        for (j=0; j < mOuts; j++)
+        {
+            mOut.ports[j]    = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
+            mOut.rindexes[j] = j;
+        }
+
+        for (j=0; j < params; j++)
+        {
+            if (! descriptor->get_parameter_info)
+                break;
+
+            const ::Parameter* const paramInfo = descriptor->get_parameter_info(handle, j);
+
+            //const uint32_t paramHints  = param->hints;
+            //const bool     paramOutput = paramHins;
+
+            param.data[j].index  = j;
+            param.data[j].rindex = j;
+            param.data[j].hints  = 0;
+            param.data[j].midiChannel = 0;
+            param.data[j].midiCC = -1;
+
+            double min, max, def, step, stepSmall, stepLarge;
+
+            // min value
+            min = paramInfo->ranges.min;
+
+            // max value
+            max = paramInfo->ranges.max;
+
+            if (min > max)
+                max = min;
+            else if (max < min)
+                min = max;
+
+            if (max - min == 0.0)
+            {
+                qWarning("Broken plugin parameter: max - min == 0");
+                max = min + 0.1;
             }
 
-            if (portType == PORT_TYPE_AUDIO)
+            // default value
+            def = paramInfo->ranges.def;
+
+            if (def < min)
+                def = min;
+            else if (def > max)
+                def = max;
+
+            if (paramInfo->hints & ::PARAMETER_USES_SAMPLE_RATE)
             {
-                if (portHints & PORT_HINT_IS_OUTPUT)
-                {
-                    j = aOut.count++;
-                    aOut.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
-                    aOut.rindexes[j] = i;
-                    needsCtrlIn = true;
-
-                    if (forcedStereoOut)
-                    {
-                        strcat(portName, "_");
-                        aOut.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
-                        aOut.rindexes[1] = i;
-                    }
-                }
-                else
-                {
-                    j = aIn.count++;
-                    aIn.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
-                    aIn.rindexes[j] = i;
-
-                    if (forcedStereoIn)
-                    {
-                        strcat(portName, "_");
-                        aIn.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
-                        aIn.rindexes[1] = i;
-                    }
-                }
+                min *= sampleRate;
+                max *= sampleRate;
+                def *= sampleRate;
+                param.data[j].hints |= PARAMETER_USES_SAMPLERATE;
             }
-            else if (portType == PORT_TYPE_MIDI)
+
+            if (paramInfo->hints & ::PARAMETER_IS_BOOLEAN)
             {
-                if (portHints & PORT_HINT_IS_OUTPUT)
-                {
-                    j = mOut.count++;
-                    mOut.ports[j]    = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
-                    mOut.rindexes[j] = i;
-                }
-                else
-                {
-                    j = mIn.count++;
-                    mIn.ports[j]    = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
-                    mIn.rindexes[j] = i;
-                }
+                step = max - min;
+                stepSmall = step;
+                stepLarge = step;
+                param.data[j].hints |= PARAMETER_IS_BOOLEAN;
             }
-            else if (portType == PORT_TYPE_PARAMETER)
+            else if (paramInfo->hints & ::PARAMETER_IS_INTEGER)
             {
-                j = param.count++;
-                param.data[j].index  = j;
-                param.data[j].rindex = i;
-                param.data[j].hints  = 0;
-                param.data[j].midiChannel = 0;
-                param.data[j].midiCC = -1;
-
-                double min, max, def, step, stepSmall, stepLarge;
-
-                ::ParameterRanges ranges = { 0.0, 0.0, 1.0, 0.01, 0.0001, 0.1 };
-                descriptor->get_parameter_ranges(handle, i, &ranges);
-
-                // min value
-                min = ranges.min;
-
-                // max value
-                max = ranges.max;
-
-                if (min > max)
-                    max = min;
-                else if (max < min)
-                    min = max;
-
-                if (max - min == 0.0)
-                {
-                    qWarning("Broken plugin parameter: max - min == 0");
-                    max = min + 0.1;
-                }
-
-                // default value
-                def = ranges.def;
-
-                if (def < min)
-                    def = min;
-                else if (def > max)
-                    def = max;
-
-                if (portHints & PORT_HINT_USES_SAMPLE_RATE)
-                {
-                    min *= sampleRate;
-                    max *= sampleRate;
-                    def *= sampleRate;
-                    param.data[j].hints |= PARAMETER_USES_SAMPLERATE;
-                }
-
-                if (portHints & PORT_HINT_IS_BOOLEAN)
-                {
-                    step = max - min;
-                    stepSmall = step;
-                    stepLarge = step;
-                    param.data[j].hints |= PARAMETER_IS_BOOLEAN;
-                }
-                else if (portHints & PORT_HINT_IS_INTEGER)
-                {
-                    step = 1.0;
-                    stepSmall = 1.0;
-                    stepLarge = 10.0;
-                    param.data[j].hints |= PARAMETER_IS_INTEGER;
-                }
-                else
-                {
-                    double range = max - min;
-                    step = range/100.0;
-                    stepSmall = range/1000.0;
-                    stepLarge = range/10.0;
-                }
-
-                if (portHints & PORT_HINT_IS_OUTPUT)
-                {
-                    param.data[j].type = PARAMETER_OUTPUT;
-                    needsCtrlOut = true;
-                }
-                else
-                {
-                    param.data[j].type = PARAMETER_INPUT;
-                    needsCtrlIn = true;
-                }
-
-                // extra parameter hints
-                if (portHints & PORT_HINT_IS_ENABLED)
-                    param.data[j].hints |= PARAMETER_IS_ENABLED;
-
-                if (portHints & PORT_HINT_IS_AUTOMABLE)
-                    param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
-
-                if (portHints & PORT_HINT_IS_LOGARITHMIC)
-                    param.data[j].hints |= PARAMETER_IS_LOGARITHMIC;
-
-                if (portHints & PORT_HINT_USES_SCALEPOINTS)
-                    param.data[j].hints |= PARAMETER_USES_SCALEPOINTS;
-
-                if (portHints & PORT_HINT_USES_CUSTOM_TEXT)
-                    param.data[j].hints |= PARAMETER_USES_CUSTOM_TEXT;
-
-                param.ranges[j].min = min;
-                param.ranges[j].max = max;
-                param.ranges[j].def = def;
-                param.ranges[j].step = step;
-                param.ranges[j].stepSmall = stepSmall;
-                param.ranges[j].stepLarge = stepLarge;
+                step = 1.0;
+                stepSmall = 1.0;
+                stepLarge = 10.0;
+                param.data[j].hints |= PARAMETER_IS_INTEGER;
             }
+            else
+            {
+                double range = max - min;
+                step = range/100.0;
+                stepSmall = range/1000.0;
+                stepLarge = range/10.0;
+            }
+
+            if (paramInfo->hints & ::PARAMETER_IS_OUTPUT)
+            {
+                param.data[j].type = PARAMETER_OUTPUT;
+                needsCtrlOut = true;
+            }
+            else
+            {
+                param.data[j].type = PARAMETER_INPUT;
+                needsCtrlIn = true;
+            }
+
+            // extra parameter hints
+            if (paramInfo->hints & ::PARAMETER_IS_ENABLED)
+                param.data[j].hints |= PARAMETER_IS_ENABLED;
+
+            if (paramInfo->hints & ::PARAMETER_IS_AUTOMABLE)
+                param.data[j].hints |= PARAMETER_IS_AUTOMABLE;
+
+            if (paramInfo->hints & ::PARAMETER_IS_LOGARITHMIC)
+                param.data[j].hints |= PARAMETER_IS_LOGARITHMIC;
+
+            if (paramInfo->hints & ::PARAMETER_USES_SCALEPOINTS)
+                param.data[j].hints |= PARAMETER_USES_SCALEPOINTS;
+
+            if (paramInfo->hints & ::PARAMETER_USES_CUSTOM_TEXT)
+                param.data[j].hints |= PARAMETER_USES_CUSTOM_TEXT;
+
+            param.ranges[j].min = min;
+            param.ranges[j].max = max;
+            param.ranges[j].def = def;
+            param.ranges[j].step = step;
+            param.ranges[j].stepSmall = stepSmall;
+            param.ranges[j].stepLarge = stepLarge;
         }
 
         if (needsCtrlIn)
@@ -753,10 +681,15 @@ public:
         if (aIns <= 2 && aOuts <= 2 && (aIns == aOuts || aIns == 0 || aOuts == 0) && mIns <= 1 && mOuts <= 1)
             m_hints |= PLUGIN_CAN_FORCE_STEREO;
 
-        m_hints |= getPluginHintsFromNative(descriptor->hints);
+        // native plugin hints
+        if (descriptor->hints & ::PLUGIN_IS_SYNTH)
+            m_hints |= PLUGIN_IS_SYNTH;
+        if (descriptor->hints & ::PLUGIN_HAS_GUI)
+            m_hints |= PLUGIN_HAS_GUI;
+        if (descriptor->hints & ::PLUGIN_USES_SINGLE_THREAD)
+            m_hints |= PLUGIN_USES_SINGLE_THREAD;
 
         reloadPrograms(true);
-#endif
 
         x_client->activate();
 
@@ -780,16 +713,8 @@ public:
             delete[] midiprog.data;
         }
 
-        midiprog.count = 0;
+        midiprog.count = (descriptor->get_midi_program_count && descriptor->get_midi_program_info) ? descriptor->get_midi_program_count(handle) : 0;
         midiprog.data  = nullptr;
-
-#if 0
-        // Query new programs
-        if (descriptor->get_midi_program && descriptor->set_midi_program)
-        {
-            while (descriptor->get_midi_program(handle, midiprog.count))
-                midiprog.count += 1;
-        }
 
         if (midiprog.count > 0)
             midiprog.data = new MidiProgramData[midiprog.count];
@@ -797,7 +722,7 @@ public:
         // Update data
         for (i=0; i < midiprog.count; i++)
         {
-            const MidiProgram* const mpDesc = descriptor->get_midi_program(handle, i);
+            const ::MidiProgram* const mpDesc = descriptor->get_midi_program_info(handle, i);
             CARLA_ASSERT(mpDesc);
             CARLA_ASSERT(mpDesc->name);
 
@@ -857,7 +782,6 @@ public:
             if (programChanged)
                 setMidiProgram(midiprog.current, true, true, true, true);
         }
-#endif
     }
 
     // -------------------------------------------------------------------
@@ -1559,11 +1483,11 @@ public:
 
     static size_t getPluginCount()
     {
-        scopedInitliazer.maybeFirstInit();
+        maybeFirstInit();
         return pluginDescriptors.size();
     }
 
-    static const PluginDescriptor* getPlugin(size_t index)
+    static const PluginDescriptor* getPlugin(const size_t index)
     {
         CARLA_ASSERT(index < pluginDescriptors.size());
 
@@ -1578,6 +1502,23 @@ public:
         pluginDescriptors.push_back(desc);
     }
 
+    static void maybeFirstInit()
+    {
+        if (! firstInit)
+            return;
+
+        firstInit = false;
+
+        carla_register_native_plugin_bypass();
+        carla_register_native_plugin_midiSplit();
+#ifdef WANT_ZYNADDSUBFX
+        carla_register_native_plugin_zynaddsubfx();
+#endif
+
+        carla_register_native_plugin_3BandEQ();
+        //carla_register_native_plugin_3BandSplitter();
+    }
+
     // -------------------------------------------------------------------
 
     bool init(const char* const name, const char* const label)
@@ -1585,7 +1526,7 @@ public:
         // ---------------------------------------------------------------
         // initialize native-plugins descriptors
 
-        scopedInitliazer.maybeFirstInit();
+        maybeFirstInit();
 
         // ---------------------------------------------------------------
         // get descriptor that matches label
@@ -1654,9 +1595,11 @@ private:
     uint32_t    midiEventCount;
     ::MidiEvent midiEvents[MAX_MIDI_EVENTS*2];
 
+    static bool firstInit;
     static std::vector<const PluginDescriptor*> pluginDescriptors;
 };
 
+bool NativePlugin::firstInit = true;
 std::vector<const PluginDescriptor*> NativePlugin::pluginDescriptors;
 
 // -----------------------------------------------------------------------
@@ -1705,7 +1648,7 @@ size_t CarlaPlugin::getNativePluginCount()
     return NativePlugin::getPluginCount();
 }
 
-const PluginDescriptor* CarlaPlugin::getNativePluginDescriptor(size_t index)
+const PluginDescriptor* CarlaPlugin::getNativePluginDescriptor(const size_t index)
 {
     return NativePlugin::getPlugin(index);
 }

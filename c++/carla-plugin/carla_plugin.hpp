@@ -712,7 +712,7 @@ public:
      * Show the plugin's OSC based GUI.\n
      * This is a handy function that waits for the GUI to respond and automatically asks it to show itself.
      */
-    bool showOscGui();
+    bool waitForOscGuiShow();
 #endif
 
     // -------------------------------------------------------------------
@@ -843,9 +843,9 @@ public:
     static CarlaPlugin* newGIG(const initializer& init);
     static CarlaPlugin* newSF2(const initializer& init);
     static CarlaPlugin* newSFZ(const initializer& init);
-#ifndef BUILD_BRIDGE
+//#ifndef BUILD_BRIDGE
     static CarlaPlugin* newBridge(const initializer& init, const BinaryType btype, const PluginType ptype, const void* const extra);
-#endif
+//#endif
 
     static size_t getNativePluginCount();
     static const PluginDescriptor* getNativePluginDescriptor(const size_t index);

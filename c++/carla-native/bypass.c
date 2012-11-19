@@ -73,8 +73,12 @@ static PluginDescriptor bypassDesc = {
     .set_midi_program    = NULL,
     .set_custom_data     = NULL,
 
-    .show_gui = NULL,
-    .idle_gui = NULL,
+    .ui_show = NULL,
+    .ui_idle = NULL,
+
+    .ui_set_parameter_value = NULL,
+    .ui_set_midi_program    = NULL,
+    .ui_set_custom_data     = NULL,
 
     .activate   = NULL,
     .deactivate = NULL,

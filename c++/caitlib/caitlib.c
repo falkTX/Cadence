@@ -468,7 +468,7 @@ MidiEvent* caitlib_get_event(CaitlibHandle handle)
     // channel pressure
     else if (rawEventPtr->dataSize == 2 && (rawEventPtr->data[0] & 0xF0) == MIDI_EVENT_TYPE_CHANNEL_PRESSURE)
     {
-        midiEvent.typ = MIDI_EVENT_TYPE_CHANNEL_PRESSURE;
+        midiEvent.type = MIDI_EVENT_TYPE_CHANNEL_PRESSURE;
         midiEvent.data.pressure.value = rawEventPtr->data[1];
     }
 
