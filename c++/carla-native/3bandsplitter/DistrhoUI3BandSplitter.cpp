@@ -219,12 +219,10 @@ void DistrhoUI3BandSplitter::imageSliderValueChanged(ImageSlider* slider, float 
 
 // -------------------------------------------------
 
-#ifndef DISTRHO_NAMESPACE
 UI* createUI()
 {
     return new DistrhoUI3BandSplitter;
 }
-#endif
 
 // -------------------------------------------------
 

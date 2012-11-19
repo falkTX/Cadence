@@ -23,7 +23,7 @@
 /// Set namespace for this plugin
 #define DISTRHO_NAMESPACE DISTRHO_3BEQ
 
-// Include Plugin code
+// Include Plugin headers
 #include "3bandeq/DistrhoPlugin3BandEQ.h"
 #include "3bandeq/DistrhoUI3BandEQ.h"
 
@@ -31,37 +31,6 @@
 #include "DistrhoPluginCarla.cpp"
 
 START_NAMESPACE_DISTRHO
-
-// -----------------------------------------------------------------------
-
-//class CarlaDistrhoPlugin : public PluginDescriptorClass
-//{
-//public:
-//    CarlaDistrhoPlugin(const HostDescriptor* host)
-//        : PluginDescriptorClass(host)
-//    {
-//    }
-
-//    ~CarlaDistrhoPlugin()
-//    {
-//    }
-
-//protected:
-//    // -------------------------------------------------------------------
-//    // Plugin process calls
-
-//    // -------------------------------------------------------------------
-
-//public:
-//    static PluginHandle _instantiate(struct _PluginDescriptor*, HostDescriptor* host)
-//    {
-//        return new CarlaDistrhoPlugin(host);
-//    }
-//    static void _cleanup(PluginHandle handle)
-//    {
-//        delete (CarlaDistrhoPlugin*)handle;
-//    }
-//};
 
 // -----------------------------------------------------------------------
 

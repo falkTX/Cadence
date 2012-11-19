@@ -21,35 +21,16 @@
 #include "3bandsplitter/DistrhoPluginInfo.h"
 
 /// Set namespace for this plugin
-#define DISTRHO_NAMESPACE DISTRHO_3BSP
+#define DISTRHO_NAMESPACE DISTRHO_3BSPILT
+
+// Include Plugin headers
+#include "3bandsplitter/DistrhoPlugin3BandSplitter.h"
+#include "3bandsplitter/DistrhoUI3BandSplitter.h"
 
 // Include DISTRHO code
 #include "DistrhoPluginCarla.cpp"
 
-// Include Plugin code
-#include "3bandsplitter/DistrhoArtwork3BandSplitter.cpp"
-#include "3bandsplitter/DistrhoPlugin3BandSplitter.cpp"
-#include "3bandsplitter/DistrhoUI3BandSplitter.cpp"
-
-// -----------------------------------------------------------------------
-
-class CarlaDistrhoPlugin3BandSplitter : public CarlaDistrhoPlugin
-{
-public:
-    CarlaDistrhoPlugin3BandSplitter(const HostDescriptor* host)
-        : CarlaDistrhoPlugin(host)
-    {
-    }
-
-    ~CarlaDistrhoPlugin3BandSplitter()
-    {
-    }
-
-    // -------------------------------------------------------------------
-
-private:
-    PluginDescriptorClassEND(CarlaDistrhoPlugin3BandSplitter)
-};
+START_NAMESPACE_DISTRHO
 
 // -----------------------------------------------------------------------
 
@@ -60,19 +41,22 @@ static PluginDescriptor tBandSplitterDesc = {
     /* audioOuts */ DISTRHO_PLUGIN_NUM_OUTPUTS,
     /* midiIns   */ 0,
     /* midiOuts  */ 0,
-    /* paramIns  */ DISTRHO_NAMESPACE::DistrhoPlugin3BandSplitter::paramCount,
+    /* paramIns  */ DistrhoPlugin3BandSplitter::paramCount,
     /* paramOuts */ 0,
     /* name      */ DISTRHO_PLUGIN_NAME,
     /* label     */ "3BandSplitter",
     /* maker     */ "falkTX",
     /* copyright */ "LGPL",
-    PluginDescriptorFILL(CarlaDistrhoPlugin3BandSplitter)
+    PluginDescriptorFILL(CarlaDistrhoPlugin)
 };
+
+END_NAMESPACE_DISTRHO
 
 // -----------------------------------------------------------------------
 
 void carla_register_native_plugin_3BandSplitter()
 {
+    USE_NAMESPACE_DISTRHO
     carla_register_native_plugin(&tBandSplitterDesc);
 }
 

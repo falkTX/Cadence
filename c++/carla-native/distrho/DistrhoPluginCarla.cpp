@@ -17,8 +17,6 @@
 
 #include "carla_native.hpp"
 
-//#include "src/DistrhoDefines.h"
-
 #include "DistrhoPluginMain.cpp"
 #include "DistrhoUIMain.cpp"
 
@@ -32,9 +30,6 @@ public:
     CarlaDistrhoPlugin(const HostDescriptor* host)
         : PluginDescriptorClass(host)
     {
-        d_lastBufferSize = getBufferSize();
-        d_lastSampleRate = getSampleRate();
-        setLastUiSampleRate(d_lastSampleRate);
     }
 
     ~CarlaDistrhoPlugin()
@@ -190,9 +185,28 @@ protected:
 protected:
     PluginInternal plugin;
 
-    PluginDescriptorClassEND(CarlaDistrhoPlugin)
+private:
+    void createUiIfNeeded()
+    {
+        setLastUiSampleRate(d_lastSampleRate);
+    }
+
+    // -------------------------------------------------------------------
+
+public:
+    static PluginHandle _instantiate(struct _PluginDescriptor*, HostDescriptor* host)
+    {
+        d_lastBufferSize = host->get_buffer_size(host->handle);
+        d_lastSampleRate = host->get_sample_rate(host->handle);
+        return new CarlaDistrhoPlugin(host);
+    }
+
+    static void _cleanup(PluginHandle handle)
+    {
+        delete (CarlaDistrhoPlugin*)handle;
+    }
 };
 
- END_NAMESPACE_DISTRHO
+END_NAMESPACE_DISTRHO
 
 // -----------------------------------------------------------------------
