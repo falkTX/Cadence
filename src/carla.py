@@ -713,7 +713,7 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         count = 0
 
         for plugins in internals:
-            for plugin in plugins:
+            for x in plugins:
                 count += 1
 
         if count != Carla.host.get_internal_plugin_count():
@@ -1177,20 +1177,10 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.act_plugin_remove_all.setEnabled(False)
         self.resize(self.width(), 0)
 
-        self.m_fakeEdit = PluginEdit(self, -1)
-        self.m_curEdit  = self.m_fakeEdit
-        self.w_edit.layout().addWidget(self.m_curEdit)
-        self.w_edit.layout().addStretch()
-
-        self.keyboard.setMode(self.keyboard.HORIZONTAL)
-        self.keyboard.setOctaves(8)
-        self.keyboardScrollArea.ensureVisible(self.keyboard.width() * 1 / 5, 0)
-        #self.scrollArea.setVisible(False)
-
-        self.connect(self.keyboard, SIGNAL("noteOn(int)"), SLOT("slot_noteOn(int)"))
-        self.connect(self.keyboard, SIGNAL("noteOff(int)"), SLOT("slot_noteOff(int)"))
-        self.connect(self.keyboard, SIGNAL("notesOn()"), SLOT("slot_notesOn()"))
-        self.connect(self.keyboard, SIGNAL("notesOff()"), SLOT("slot_notesOff()"))
+        #self.m_fakeEdit = PluginEdit(self, -1)
+        #self.m_curEdit  = self.m_fakeEdit
+        #self.w_edit.layout().addWidget(self.m_curEdit)
+        #self.w_edit.layout().addStretch()
 
         # -------------------------------------------------------------
         # Connect actions to functions
@@ -1325,21 +1315,21 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
         self.m_engine_started = False
 
-    def pluginWidgetActivated(self, widget):
-        if self.m_curEdit == widget:
-            self.keyboard.allNotesOff()
+    #def pluginWidgetActivated(self, widget):
+        #if self.m_curEdit == widget:
+            #self.keyboard.allNotesOff()
 
-    def pluginWidgetClicked(self, widget):
-        if self.m_curEdit == widget:
-            return
+    #def pluginWidgetClicked(self, widget):
+        #if self.m_curEdit == widget:
+            #return
 
-        self.w_edit.layout().removeWidget(self.m_curEdit)
-        self.w_edit.layout().insertWidget(0, widget)
+        #self.w_edit.layout().removeWidget(self.m_curEdit)
+        #self.w_edit.layout().insertWidget(0, widget)
 
-        widget.show()
-        self.m_curEdit.hide()
+        #widget.show()
+        #self.m_curEdit.hide()
 
-        self.m_curEdit = widget
+        #self.m_curEdit = widget
 
     @pyqtSlot()
     def slot_engine_start(self):
@@ -1356,26 +1346,6 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.act_file_open.setEnabled(check)
         self.act_engine_start.setEnabled(not check)
         self.act_engine_stop.setEnabled(check)
-
-    @pyqtSlot(int)
-    def slot_noteOn(self, note):
-        if self.m_curEdit.m_pluginId >= 0:
-            Carla.host.send_midi_note(self.m_curEdit.m_pluginId, 0, note, 100)
-
-    @pyqtSlot(int)
-    def slot_noteOff(self, note):
-        if self.m_curEdit.m_pluginId >= 0:
-            Carla.host.send_midi_note(self.m_curEdit.m_pluginId, 0, note, 0)
-
-    @pyqtSlot()
-    def slot_notesOn(self):
-        if self.m_curEdit.m_realParent:
-            self.m_curEdit.m_realParent.led_midi.setChecked(True)
-
-    @pyqtSlot()
-    def slot_notesOff(self):
-        if self.m_curEdit.m_realParent:
-            self.m_curEdit.m_realParent.led_midi.setChecked(False)
 
     @pyqtSlot()
     def slot_handleSIGUSR1(self):
@@ -1575,14 +1545,14 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
     def remove_plugin(self, plugin_id, showError):
         pwidget = self.m_plugin_list[plugin_id]
 
-        if pwidget.edit_dialog == self.m_curEdit:
-            self.w_edit.layout().removeWidget(self.m_curEdit)
-            self.w_edit.layout().insertWidget(0, self.m_fakeEdit)
+        #if pwidget.edit_dialog == self.m_curEdit:
+            #self.w_edit.layout().removeWidget(self.m_curEdit)
+            #self.w_edit.layout().insertWidget(0, self.m_fakeEdit)
 
-            self.m_fakeEdit.show()
-            self.m_curEdit.hide()
+            #self.m_fakeEdit.show()
+            #self.m_curEdit.hide()
 
-            self.m_curEdit = self.m_fakeEdit
+            #self.m_curEdit = self.m_fakeEdit
 
         pwidget.edit_dialog.close()
 

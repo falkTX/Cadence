@@ -137,5 +137,8 @@ int main(int argc, char* argv[])
         if (desc->cleanup)
             desc->cleanup(handle);
     }
+
+    // test 3BandEQ GUI
+    // TODO
 }
 #endif
