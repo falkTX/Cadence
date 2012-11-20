@@ -21,13 +21,13 @@
 CARLA_BACKEND_START_NAMESPACE
 
 struct NativePluginMidiData {
-    uint32_t count;
-    uint32_t* rindexes;
+    uint32_t  count;
+    uint32_t* indexes;
     CarlaEngineMidiPort** ports;
 
     NativePluginMidiData()
         : count(0),
-          rindexes(nullptr),
+          indexes(nullptr),
           ports(nullptr) {}
 };
 
@@ -291,7 +291,7 @@ public:
 
     void getGuiInfo(GuiType* const type, bool* const resizable)
     {
-        *type = GUI_EXTERNAL_OSC; // FIXME, should be _LV2 but as _PLUGIN
+        *type = GUI_EXTERNAL_LV2; // FIXME, should be as _PLUGIN
         *resizable = false;
     }
 
@@ -436,7 +436,7 @@ public:
 
         if (x_engine->forceStereo() && (aIns == 1 || aOuts == 1) && mIns <= 1 && mOuts <= 1 && ! h2)
         {
-            h2 = descriptor->instantiate((struct _PluginDescriptor*)descriptor, &host);
+            h2 = descriptor->instantiate(descriptor, &host);
 
             if (aIns == 1)
             {
@@ -465,14 +465,14 @@ public:
 
         if (mIns > 0)
         {
-            mIn.ports    = new CarlaEngineMidiPort*[mIns];
-            mIn.rindexes = new uint32_t[mIns];
+            mIn.ports   = new CarlaEngineMidiPort*[mIns];
+            mIn.indexes = new uint32_t[mIns];
         }
 
         if (mOuts > 0)
         {
-            mOut.ports    = new CarlaEngineMidiPort*[mOuts];
-            mOut.rindexes = new uint32_t[mOuts];
+            mOut.ports   = new CarlaEngineMidiPort*[mOuts];
+            mOut.indexes = new uint32_t[mOuts];
         }
 
         if (params > 0)
@@ -487,7 +487,7 @@ public:
         bool needsCtrlOut = false;
 
         // Audio Ins
-        for (j=0; j < aIns; j++)
+        for (j=0; j < descriptor->audioIns; j++)
         {
             if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
                 sprintf(portName, "%s:input_%02i", m_name, j+1);
@@ -506,8 +506,14 @@ public:
         }
 
         // Audio Outs
-        for (j=0; j < aOuts; j++)
+        for (j=0; j < descriptor->audioOuts; j++)
         {
+            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+                sprintf(portName, "%s:output_%02i", m_name, j+1);
+            else
+                sprintf(portName, "output_%02i", j+1);
+
+            qDebug("Audio Out #%i", j);
             aOut.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
             aOut.rindexes[j] = j;
             needsCtrlIn = true;
@@ -523,15 +529,25 @@ public:
         // MIDI Input
         for (j=0; j < mIns; j++)
         {
-            mIn.ports[j]    = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
-            mIn.rindexes[j] = j;
+            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+                sprintf(portName, "%s:midi-in_%02i", m_name, j+1);
+            else
+                sprintf(portName, "midi-in_%02i", j+1);
+
+            mIn.ports[j]   = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
+            mIn.indexes[j] = j;
         }
 
         // MIDI Output
         for (j=0; j < mOuts; j++)
         {
-            mOut.ports[j]    = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
-            mOut.rindexes[j] = j;
+            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+                sprintf(portName, "%s:midi-out_%02i", m_name, j+1);
+            else
+                sprintf(portName, "midi-out_%02i", j+1);
+
+            mOut.ports[j]   = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
+            mOut.indexes[j] = j;
         }
 
         for (j=0; j < params; j++)
@@ -1371,15 +1387,13 @@ public:
 
     void initBuffers()
     {
-        uint32_t i;
-
-        for (i=0; i < mIn.count; i++)
+        for (uint32_t i=0; i < mIn.count; i++)
         {
             if (mIn.ports[i])
                 mIn.ports[i]->initBuffer(x_engine);
         }
 
-        for (i=0; i < mOut.count; i++)
+        for (uint32_t i=0; i < mOut.count; i++)
         {
             if (mOut.ports[i])
                 mOut.ports[i]->initBuffer(x_engine);
@@ -1395,22 +1409,22 @@ public:
         if (mIn.count > 0)
         {
             delete[] mIn.ports;
-            delete[] mIn.rindexes;
+            delete[] mIn.indexes;
         }
 
         if (mOut.count > 0)
         {
             delete[] mOut.ports;
-            delete[] mOut.rindexes;
+            delete[] mOut.indexes;
         }
 
         mIn.count = 0;
         mIn.ports = nullptr;
-        mIn.rindexes = nullptr;
+        mIn.indexes = nullptr;
 
         mOut.count = 0;
         mOut.ports = nullptr;
-        mOut.rindexes = nullptr;
+        mOut.indexes = nullptr;
 
         CarlaPlugin::deleteBuffers();
 
@@ -1567,7 +1581,7 @@ public:
 
             if (! descriptor)
                 break;
-            if (strcmp(descriptor->label, label) == 0)
+            if (descriptor->label && strcmp(descriptor->label, label) == 0)
                 break;
 
             descriptor = nullptr;
@@ -1576,17 +1590,6 @@ public:
         if (! descriptor)
         {
             x_engine->setLastError("Invalid internal plugin");
-            return false;
-        }
-
-        // ---------------------------------------------------------------
-        // initialize plugin
-
-        handle = descriptor->instantiate(descriptor, &host);
-
-        if (! handle)
-        {
-            x_engine->setLastError("Plugin failed to initialize");
             return false;
         }
 
@@ -1606,6 +1609,17 @@ public:
         if (! x_client->isOk())
         {
             x_engine->setLastError("Failed to register plugin client");
+            return false;
+        }
+
+        // ---------------------------------------------------------------
+        // initialize plugin
+
+        handle = descriptor->instantiate(descriptor, &host);
+
+        if (! handle)
+        {
+            x_engine->setLastError("Plugin failed to initialize");
             return false;
         }
 
