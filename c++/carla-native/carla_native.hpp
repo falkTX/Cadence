@@ -303,15 +303,15 @@ public:
 
 // -----------------------------------------------------------------------
 
-#define PluginDescriptorClassEND(CLASS)                                               \
-public:                                                                               \
-    static PluginHandle _instantiate(struct _PluginDescriptor*, HostDescriptor* host) \
-    {                                                                                 \
-        return new CLASS(host);                                                       \
-    }                                                                                 \
-    static void _cleanup(PluginHandle handle)                                         \
-    {                                                                                 \
-        delete (CLASS*)handle;                                                        \
+#define PluginDescriptorClassEND(CLASS)                                             \
+public:                                                                             \
+    static PluginHandle _instantiate(const PluginDescriptor*, HostDescriptor* host) \
+    {                                                                               \
+        return new CLASS(host);                                                     \
+    }                                                                               \
+    static void _cleanup(PluginHandle handle)                                       \
+    {                                                                               \
+        delete (CLASS*)handle;                                                      \
     }
 
 #define PluginDescriptorFILL(CLASS) \

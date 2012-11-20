@@ -149,7 +149,7 @@ typedef struct _PluginDescriptor {
     const char* const maker;
     const char* const copyright;
 
-    PluginHandle (*instantiate)(struct _PluginDescriptor* _this_, HostDescriptor* host);
+    PluginHandle (*instantiate)(const struct _PluginDescriptor* _this_, HostDescriptor* host);
 
     uint32_t         (*get_parameter_count)(PluginHandle handle);
     const Parameter* (*get_parameter_info)(PluginHandle handle, uint32_t index);

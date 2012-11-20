@@ -1,6 +1,6 @@
 # QtCreator project file
 
-QT = core
+QT = core gui
 
 CONFIG    = debug
 CONFIG   += static
@@ -14,7 +14,7 @@ DEFINES  += WANT_ZYNADDSUBFX WANT_ZYNADDSUBFX_GUI
 PKGCONFIG = fftw3 mxml ntk
 
 TARGET   = carla_native
-TEMPLATE = lib
+TEMPLATE = app #lib
 VERSION  = 0.5.0
 
 SOURCES  = \
@@ -41,6 +41,8 @@ INCLUDEPATH = . distrho \
     ../carla-includes \
     ../carla-utils \
     ../distrho-plugin-toolkit
+
+LIBS = -lGL
 
 QMAKE_CFLAGS   *= -std=c99
 QMAKE_CXXFLAGS *= -std=c++0x

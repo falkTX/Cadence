@@ -342,7 +342,7 @@ private:
     // -------------------------------------------------------------------
 
 public:
-    static PluginHandle _instantiate(struct _PluginDescriptor*, HostDescriptor* host)
+    static PluginHandle _instantiate(const PluginDescriptor*, HostDescriptor* host)
     {
         d_lastBufferSize = host->get_buffer_size(host->handle);
         d_lastSampleRate = host->get_sample_rate(host->handle);

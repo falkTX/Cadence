@@ -1582,7 +1582,7 @@ public:
         // ---------------------------------------------------------------
         // initialize plugin
 
-        handle = descriptor->instantiate((struct _PluginDescriptor*)descriptor, &host);
+        handle = descriptor->instantiate(descriptor, &host);
 
         if (! handle)
         {

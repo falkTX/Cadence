@@ -36,70 +36,41 @@ public:
     ZynAddSubFxPlugin(const HostDescriptor* host)
         : PluginDescriptorClass(host)
     {
-        if (s_instanceCount == 0)
-        {
-            synth = new SYNTH_T;
-            synth->buffersize = getBufferSize();
-            synth->samplerate = getSampleRate();
-            synth->alias();
+        qDebug("ZynAddSubFxPlugin::ZynAddSubFxPlugin(), s_instanceCount=%i", s_instanceCount);
 
-            config.init();
-            config.cfg.SoundBufferSize = getBufferSize();
-            config.cfg.SampleRate      = getSampleRate();
-            config.cfg.GzipCompression = 0;
-
-            sprng(time(NULL));
-            denormalkillbuf = new float [synth->buffersize];
-            for (int i=0; i < synth->buffersize; i++)
-                denormalkillbuf[i] = (RND - 0.5f) * 1e-16;
-        }
-
-        master = new Master();
-        master->defaults();
-        master->swaplr = false;
+        m_master = new Master;
 
         // refresh banks
-        master->bank.rescanforbanks();
+        m_master->bank.rescanforbanks();
 
-        for (size_t i=0, size = master->bank.banks.size(); i < size; i++)
+        for (size_t i=0, size = m_master->bank.banks.size(); i < size; i++)
         {
-            if (! master->bank.banks[i].dir.empty())
+            if (m_master->bank.banks[i].dir.empty())
+                continue;
+
+            m_master->bank.loadbank(m_master->bank.banks[i].dir);
+
+            for (unsigned int instrument = 0; instrument < BANK_SIZE; instrument++)
             {
-                master->bank.loadbank(master->bank.banks[i].dir);
+                const std::string insName = m_master->bank.getname(instrument);
 
-                for (unsigned int instrument = 0; instrument < BANK_SIZE; instrument++)
-                {
-                    const std::string insName = master->bank.getname(instrument);
+                if (insName.empty() || insName[0] == '\0' || insName[0] == ' ')
+                    continue;
 
-                    if (insName.empty() || insName[0] == '\0' || insName[0] == ' ')
-                        continue;
-
-                    ProgramInfo pInfo;
-                    pInfo.bank = i;
-                    pInfo.prog = instrument;
-                    pInfo.name = insName;
-                    programs.push_back(pInfo);
-                }
+                ProgramInfo pInfo;
+                pInfo.bank = i;
+                pInfo.prog = instrument;
+                pInfo.name = insName;
+                m_programs.push_back(pInfo);
             }
         }
-
-        s_instanceCount++;
     }
 
     ~ZynAddSubFxPlugin()
     {
-        programs.clear();
+        qDebug("ZynAddSubFxPlugin::~ZynAddSubFxPlugin(), s_instanceCount=%i", s_instanceCount);
 
-        delete master;
-
-        if (--s_instanceCount == 0)
-        {
-            delete[] denormalkillbuf;
-            denormalkillbuf = nullptr;
-
-            delete synth;
-            synth = nullptr;
-        }
+        m_programs.clear();
     }
 
 protected:
@@ -146,7 +117,7 @@ protected:
         switch (index)
         {
         case PARAMETER_MASTER:
-            return master->Pvolume;
+            return m_master->Pvolume;
         default:
             return 0.0f;
         }
@@ -157,17 +128,17 @@ protected:
 
     uint32_t getMidiProgramCount()
     {
-        return programs.size();
+        return m_programs.size();
     }
 
     const MidiProgram* getMidiProgramInfo(uint32_t index)
     {
         CARLA_ASSERT(index < getMidiProgramCount());
 
-        if (index >= programs.size())
+        if (index >= m_programs.size())
             return nullptr;
 
-        const ProgramInfo pInfo(programs[index]);
+        const ProgramInfo pInfo(m_programs[index]);
 
         static MidiProgram midiProgram;
         midiProgram.bank    = pInfo.bank;
@@ -185,28 +156,28 @@ protected:
         switch (index)
         {
         case PARAMETER_MASTER:
-            master->setPvolume((char)rint(value));
+            m_master->setPvolume((char)rint(value));
             break;
         }
     }
 
     void setMidiProgram(uint32_t bank, uint32_t program)
     {
-        if (bank >= master->bank.banks.size())
+        if (bank >= m_master->bank.banks.size())
             return;
         if (program >= BANK_SIZE)
             return;
 
-        const std::string bankdir = master->bank.banks[bank].dir;
+        const std::string bankdir = m_master->bank.banks[bank].dir;
 
         if (! bankdir.empty())
         {
-            pthread_mutex_lock(&master->mutex);
+            pthread_mutex_lock(&m_master->mutex);
 
-            master->bank.loadbank(bankdir);
-            master->bank.loadfromslot(program, master->part[0]);
+            m_master->bank.loadbank(bankdir);
+            m_master->bank.loadfromslot(program, m_master->part[0]);
 
-            pthread_mutex_unlock(&master->mutex);
+            pthread_mutex_unlock(&m_master->mutex);
         }
     }
 
@@ -215,7 +186,7 @@ protected:
 
     void activate()
     {
-        master->setController(0, MIDI_CONTROL_ALL_SOUND_OFF, 0);
+        m_master->setController(0, MIDI_CONTROL_ALL_SOUND_OFF, 0);
     }
 
     void process(float**, float** outBuffer, uint32_t frames, uint32_t midiEventCount, MidiEvent* midiEvents)
@@ -224,7 +195,7 @@ protected:
         unsigned long event_index      = 0;
         unsigned long next_event_frame = 0;
         unsigned long to_frame = 0;
-        pthread_mutex_lock(&master->mutex);
+        pthread_mutex_lock(&m_master->mutex);
 
         do {
             /* Find the time of the next event, if any */
@@ -245,7 +216,7 @@ protected:
             if (from_frame < to_frame)
             {
                 // call master to fill from `from_frame` to `to_frame`:
-                master->GetAudioOutSamples(to_frame - from_frame, (int)getSampleRate(), &outBuffer[0][from_frame], &outBuffer[1][from_frame]);
+                m_master->GetAudioOutSamples(to_frame - from_frame, (int)getSampleRate(), &outBuffer[0][from_frame], &outBuffer[1][from_frame]);
                 // next sub-sample please...
                 from_frame = to_frame;
             }
@@ -260,21 +231,21 @@ protected:
                 {
                     uint8_t note = midiEvents[event_index].data[1];
 
-                    master->noteOff(channel, note);
+                    m_master->noteOff(channel, note);
                 }
                 else if (MIDI_IS_STATUS_NOTE_ON(status))
                 {
                     uint8_t note = midiEvents[event_index].data[1];
                     uint8_t velo = midiEvents[event_index].data[2];
 
-                    master->noteOn(channel, note, velo);
+                    m_master->noteOn(channel, note, velo);
                 }
                 else if (MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status))
                 {
                     uint8_t note     = midiEvents[event_index].data[1];
                     uint8_t pressure = midiEvents[event_index].data[2];
 
-                    master->polyphonicAftertouch(channel, note, pressure);
+                    m_master->polyphonicAftertouch(channel, note, pressure);
                 }
 
                 event_index++;
@@ -283,7 +254,7 @@ protected:
         // Keep going until we have the desired total length of sample...
         } while (to_frame < frames);
 
-        pthread_mutex_unlock(&master->mutex);
+        pthread_mutex_unlock(&m_master->mutex);
     }
 
     // -------------------------------------------------------------------
@@ -294,13 +265,53 @@ private:
         uint32_t prog;
         std::string name;
     };
-    std::vector<ProgramInfo> programs;
+    std::vector<ProgramInfo> m_programs;
 
-    Master* master;
+    Master* m_master;
 
+public:
     static int s_instanceCount;
 
-    PluginDescriptorClassEND(ZynAddSubFxPlugin)
+    static PluginHandle _instantiate(const PluginDescriptor*, HostDescriptor* host)
+    {
+        if (s_instanceCount++ == 0)
+        {
+            synth = new SYNTH_T;
+            synth->buffersize = host->get_buffer_size(host->handle);
+            synth->samplerate = host->get_sample_rate(host->handle);
+            synth->alias();
+
+            config.init();
+            config.cfg.SoundBufferSize = synth->buffersize;
+            config.cfg.SampleRate      = synth->samplerate;
+            config.cfg.GzipCompression = 0;
+
+            sprng(time(NULL));
+            denormalkillbuf = new float [synth->buffersize];
+            for (int i=0; i < synth->buffersize; i++)
+                denormalkillbuf[i] = (RND - 0.5f) * 1e-16;
+
+            Master::getInstance();
+        }
+
+        return new ZynAddSubFxPlugin(host);
+    }
+
+    static void _cleanup(PluginHandle handle)
+    {
+        delete (ZynAddSubFxPlugin*)handle;
+
+        if (--s_instanceCount == 0)
+        {
+            Master::deleteInstance();
+
+            delete[] denormalkillbuf;
+            denormalkillbuf = nullptr;
+
+            delete synth;
+            synth = nullptr;
+        }
+    }
 };
 
 int ZynAddSubFxPlugin::s_instanceCount = 0;
