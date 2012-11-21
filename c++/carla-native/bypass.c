@@ -19,7 +19,7 @@
 
 #include <string.h> // for memcpy
 
-static PluginHandle bypass_instantiate(struct _PluginDescriptor* _this_, HostDescriptor* host)
+static PluginHandle bypass_instantiate(const PluginDescriptor* _this_, HostDescriptor* host)
 {
     // dummy, return non-NULL
     return (PluginHandle)1;
