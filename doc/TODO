@@ -12,9 +12,6 @@ GUI:
 -------------------
 - APPS -
 
-Catia:
- - Add ALSA-MIDI option via settings, label it experimental
-
 Claudia:
  - Cleanup DB
  - Auto-recover crashes

@@ -40,12 +40,13 @@ except:
     haveDBus = False
 
 # Disabled for Beta
-if LINUX and False:
+if LINUX:
     for iPATH in PATH:
         if os.path.exists(os.path.join(iPATH, "aconnect")):
             from subprocess import getoutput
             haveALSA = True
-            print("Using experimental ALSA-MIDI support")
+            if DEBUG:
+                print("Using experimental ALSA-MIDI support")
             break
     else:
         haveALSA = False
@@ -85,6 +86,9 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
         self.act_quit.setIcon(getIcon("application-exit"))
         self.act_configure.setIcon(getIcon("configure"))
+
+        if not haveALSA:
+            self.act_settings_show_alsa.setEnabled(False)
 
         self.m_group_list = []
         self.m_group_split_list = []
@@ -189,6 +193,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.connect(self.act_tools_a2j_stop, SIGNAL("triggered()"), SLOT("slot_A2JBridgeStop()"))
         self.connect(self.act_tools_a2j_export_hw, SIGNAL("triggered()"), SLOT("slot_A2JBridgeExportHW()"))
 
+        self.connect(self.act_settings_show_alsa, SIGNAL("triggered(bool)"), SLOT("slot_showAlsaMIDI(bool)"))
         self.connect(self.act_configure, SIGNAL("triggered()"), SLOT("slot_configureCatia()"))
 
         self.connect(self.act_help_about, SIGNAL("triggered()"), SLOT("slot_aboutCatia()"))
@@ -506,7 +511,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
                 self.canvas_connect_ports_by_name(port_name, port_con_name)
 
     def init_alsa_ports(self):
-        if not haveALSA:
+        if not (haveALSA and self.act_settings_show_alsa.isChecked()):
             return
 
         # Get ALSA MIDI ports (outputs)
@@ -1040,6 +1045,12 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.emit(SIGNAL("ShutdownCallback()"))
         return 0
 
+    @pyqtSlot(bool)
+    def slot_showAlsaMIDI(self, yesNo):
+        # refresh canvas (remove jack ports)
+        patchcanvas.clear()
+        self.init_ports()
+
     @pyqtSlot()
     def slot_JackServerStart(self):
         if DBus.jack:
@@ -1239,6 +1250,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
     def saveSettings(self):
         self.settings.setValue("Geometry", self.saveGeometry())
+        self.settings.setValue("ShowAlsaMIDI", self.act_settings_show_alsa.isChecked())
         self.settings.setValue("ShowToolbar", self.frame_toolbar.isVisible())
         self.settings.setValue("ShowStatusbar", self.frame_statusbar.isVisible())
         self.settings.setValue("TransportView", self.m_selected_transport_view)
@@ -1246,6 +1258,9 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
     def loadSettings(self, geometry):
         if geometry:
             self.restoreGeometry(self.settings.value("Geometry", ""))
+
+            show_alsamidi = self.settings.value("ShowAlsaMIDI", False, type=bool)
+            self.act_settings_show_alsa.setChecked(show_alsamidi)
 
             show_toolbar = self.settings.value("ShowToolbar", True, type=bool)
             self.act_settings_show_toolbar.setChecked(show_toolbar)
@@ -1312,7 +1327,7 @@ if __name__ == '__main__':
             DBus.a2j = None
             a2j_client_name = None
 
-        if DBus.jack or DBus.a2j:
+        if DEBUG and (DBus.jack or DBus.a2j):
             string = "Using DBus for "
             if DBus.jack:
                 string += "JACK"
@@ -1326,7 +1341,8 @@ if __name__ == '__main__':
         DBus.jack = None
         DBus.a2j  = None
         a2j_client_name = None
-        print("Not using DBus")
+        if DEBUG:
+            print("Not using DBus")
 
     # Show GUI
     gui = CatiaMainW()

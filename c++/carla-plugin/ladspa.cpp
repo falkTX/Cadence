@@ -412,10 +412,11 @@ public:
             paramBuffers = new float[params];
         }
 
-        const int portNameSize = x_engine->maxPortNameSize() - 2;
-        char portName[portNameSize];
         bool needsCtrlIn  = false;
         bool needsCtrlOut = false;
+
+        const int   portNameSize = x_engine->maxPortNameSize() - 3;
+        CarlaString portName;
 
         for (unsigned long i=0; i < portCount; i++)
         {
@@ -425,16 +426,18 @@ public:
 
             if (LADSPA_IS_PORT_AUDIO(portType))
             {
+                portName.clear();
+
 #ifndef BUILD_BRIDGE
                 if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
                 {
-                    strcpy(portName, m_name);
-                    strcat(portName, ":");
-                    strncat(portName, descriptor->PortNames[i], portNameSize/2);
+                    portName  = m_name;
+                    portName += ":";
                 }
-                else
 #endif
-                    strncpy(portName, descriptor->PortNames[i], portNameSize);
+
+                portName += descriptor->PortNames[i];
+                portName.truncate(portNameSize);
 
                 if (LADSPA_IS_PORT_INPUT(portType))
                 {
@@ -444,7 +447,7 @@ public:
 
                     if (forcedStereoIn)
                     {
-                        strcat(portName, "_");
+                        portName += "_2";
                         aIn.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
                         aIn.rindexes[1] = i;
                     }
@@ -458,7 +461,7 @@ public:
 
                     if (forcedStereoOut)
                     {
-                        strcat(portName, "_");
+                        portName += "_2";
                         aOut.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
                         aOut.rindexes[1] = i;
                     }
@@ -618,30 +621,34 @@ public:
 
         if (needsCtrlIn)
         {
+            portName.clear();
+
 #ifndef BUILD_BRIDGE
             if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
             {
-                strcpy(portName, m_name);
-                strcat(portName, ":control-in");
+                portName  = m_name;
+                portName += ":";
             }
-            else
 #endif
-                strcpy(portName, "control-in");
+            portName += "control-in";
+            portName.truncate(portNameSize);
 
             param.portCin = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, true);
         }
 
         if (needsCtrlOut)
         {
+            portName.clear();
+
 #ifndef BUILD_BRIDGE
             if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
             {
-                strcpy(portName, m_name);
-                strcat(portName, ":control-out");
+                portName  = m_name;
+                portName += ":";
             }
-            else
 #endif
-                strcpy(portName, "control-out");
+            portName += "control-out";
+            portName.truncate(portNameSize);
 
             param.portCout = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, false);
         }

@@ -269,8 +269,10 @@ public:
 
     void clear()
     {
-        for (size_t i=0, len = ::strlen(buffer); i < len; i++)
-            buffer[i] = 0;
+        if (::strcmp(buffer, "") == 0)
+            return;
+
+        buffer = ::strdup("");
     }
 
     void replace(char before, char after)

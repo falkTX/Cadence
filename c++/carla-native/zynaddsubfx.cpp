@@ -71,6 +71,8 @@ public:
         qDebug("ZynAddSubFxPlugin::~ZynAddSubFxPlugin(), s_instanceCount=%i", s_instanceCount);
 
         m_programs.clear();
+
+        delete m_master;
     }
 
 protected:
