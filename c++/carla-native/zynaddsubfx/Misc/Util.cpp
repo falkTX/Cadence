@@ -211,11 +211,6 @@ float interpolate(const float *data, size_t len, float pos)
               r_pos      = l_pos + 1;
     const float leftness = pos - l_pos;
     return data[l_pos] * leftness + data[r_pos] * (1.0f - leftness);
-
-#ifdef NDEBUG
-    // unused
-    (void)len;
-#endif
 }
 
 float cinterpolate(const float *data, size_t len, float pos)

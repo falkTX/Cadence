@@ -40,8 +40,6 @@
 
 using namespace std;
 
-static Master* masterInstance = nullptr;
-
 vuData::vuData(void)
     :outpeakl(0.0f), outpeakr(0.0f), maxoutpeakl(0.0f), maxoutpeakr(0.0f),
       rmspeakl(0.0f), rmspeakr(0.0f), clipped(0)
@@ -121,21 +119,13 @@ bool Master::mutexLock(lockset request)
     return false;
 }
 
-Master& Master::getInstance()
+Master &Master::getInstance()
 {
-    if (! masterInstance)
-        masterInstance = new Master;
+    static Master *instance = NULL;
+    if(!instance)
+        instance = new Master;
 
-    return *masterInstance;
-}
-
-void Master::deleteInstance()
-{
-    if (masterInstance)
-    {
-        delete masterInstance;
-        masterInstance = nullptr;
-    }
+    return *instance;
 }
 
 /*
@@ -529,7 +519,6 @@ Master::~Master()
         delete sysefx[nefx];
 
     delete fft;
-    FFT_cleanup();
 
     pthread_mutex_destroy(&mutex);
     pthread_mutex_destroy(&vumutex);

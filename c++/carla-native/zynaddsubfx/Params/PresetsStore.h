@@ -20,8 +20,8 @@
 
 */
 
-#ifndef _PRESETSTORE_H_
-#define _PRESETSTORE_H_
+#ifndef PRESETSTORE_H
+#define PRESETSTORE_H
 
 #include <string>
 #include <vector>
@@ -67,5 +67,4 @@ class PresetsStore
 };
 
 extern PresetsStore presetsstore;
-
-#endif // _PRESETSTORE_H_
+#endif

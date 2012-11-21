@@ -4,6 +4,7 @@
 #include "EngineMgr.h"
 #include "MidiIn.h"
 #include "AudioOut.h"
+#include "WavEngine.h"
 #include <iostream>
 #include <algorithm>
 using std::string;
@@ -17,8 +18,8 @@ EngineMgr *eng = NULL;
 string     postfix;
 
 bool   Nio::autoConnect   = false;
-string Nio::defaultSource = ""; //IN_DEFAULT;
-string Nio::defaultSink   = ""; //OUT_DEFAULT;
+string Nio::defaultSource = IN_DEFAULT;
+string Nio::defaultSink   = OUT_DEFAULT;
 
 void Nio::init(void)
 {
@@ -115,3 +116,23 @@ void Nio::preferedSampleRate(unsigned &rate)
 void Nio::preferedSampleRate(unsigned &)
 {}
 #endif
+
+void Nio::waveNew(class WavFile *wave)
+{
+    out->wave->newFile(wave);
+}
+
+void Nio::waveStart(void)
+{
+    out->wave->Start();
+}
+
+void Nio::waveStop(void)
+{
+    out->wave->Stop();
+}
+
+void Nio::waveEnd(void)
+{
+    out->wave->destroyFile();
+}

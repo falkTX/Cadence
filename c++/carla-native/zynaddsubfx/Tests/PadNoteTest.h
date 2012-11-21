@@ -1,9 +1,9 @@
 /*
   ZynAddSubFX - a software synthesizer
 
-  AdNoteTest.h - CxxTest for Synth/SUBnote
-  Copyright (C) 2009-2011 Mark McCurry
-  Author: Mark McCurry
+  PadNoteTest.h - CxxTest for Synth/PADnote
+  Copyright (C) 20012 zco
+  Author: zco
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of version 2 of the GNU General Public License
@@ -20,7 +20,8 @@
 
 */
 
-//Based Upon AdNoteTest.h
+
+//Based Upon AdNoteTest.h and SubNoteTest.h
 #include <cxxtest/TestSuite.h>
 #include <iostream>
 #include <fstream>
@@ -28,19 +29,20 @@
 #include <string>
 #include "../Misc/Master.h"
 #include "../Misc/Util.h"
-#include "../Synth/SUBnote.h"
+#include "../Synth/PADnote.h"
 #include "../Params/Presets.h"
+#include "../DSP/FFTwrapper.h"
 #include "../globals.h"
 SYNTH_T *synth;
 
 using namespace std;
 
-class SubNoteTest:public CxxTest::TestSuite
+class PadNoteTest:public CxxTest::TestSuite
 {
     public:
-
-        SUBnote      *note;
+        PADnote      *note;
         Master       *master;
+        FFTwrapper   *fft;
         Controller   *controller;
         unsigned char testnote;
 
@@ -65,18 +67,37 @@ class SubNoteTest:public CxxTest::TestSuite
             for(int i = 0; i < synth->buffersize; ++i)
                 denormalkillbuf[i] = 0;
 
+            //phew, glad to get thouse out of my way. took me a lot of sweat and gdb to get this far...
+
+            fft = new FFTwrapper(synth->oscilsize);
             //prepare the default settings
-            SUBnoteParameters *defaultPreset = new SUBnoteParameters();
+            PADnoteParameters *defaultPreset = new PADnoteParameters(fft,NULL);
+
+
+            //Assert defaults
+            ///TS_ASSERT(!defaultPreset->VoicePar[1].Enabled);
+
             XMLwrapper *wrap = new XMLwrapper();
+            cout << string(SOURCE_DIR) + string("/guitar-adnote.xmz")
+                 << endl;
             wrap->loadXMLfile(string(SOURCE_DIR)
                               + string("/guitar-adnote.xmz"));
             TS_ASSERT(wrap->enterbranch("MASTER"));
-            TS_ASSERT(wrap->enterbranch("PART", 1));
+            TS_ASSERT(wrap->enterbranch("PART", 2));
             TS_ASSERT(wrap->enterbranch("INSTRUMENT"));
             TS_ASSERT(wrap->enterbranch("INSTRUMENT_KIT"));
             TS_ASSERT(wrap->enterbranch("INSTRUMENT_KIT_ITEM", 0));
-            TS_ASSERT(wrap->enterbranch("SUB_SYNTH_PARAMETERS"));
+            TS_ASSERT(wrap->enterbranch("PAD_SYNTH_PARAMETERS"));
             defaultPreset->getfromXML(wrap);
+
+
+            //defaultPreset->defaults();
+            defaultPreset->applyparameters(false);
+
+            //verify xml was loaded
+            ///TS_ASSERT(defaultPreset->VoicePar[1].Enabled);
+
+
 
             controller = new Controller();
 
@@ -84,15 +105,16 @@ class SubNoteTest:public CxxTest::TestSuite
             testnote = 50;
             float freq = 440.0f * powf(2.0f, (testnote - 69.0f) / 12.0f);
 
-            note = new SUBnote(defaultPreset,
-                               controller,
-                               freq,
-                               120,
-                               0,
-                               testnote,
-                               false);
+            note = new PADnote(defaultPreset,
+                              controller,
+                              freq,
+                              120,
+                              0,
+                              testnote,
+                              false);
+
+            //delete defaultPreset;
             delete wrap;
-            delete defaultPreset;
         }
 
         void willNoteBeRunButIsHereForLinkingReasonsHowsThisForCamelCaseEh()
@@ -101,27 +123,27 @@ class SubNoteTest:public CxxTest::TestSuite
         }
 
         void tearDown() {
-            delete controller;
             delete note;
+            delete controller;
+            delete fft;
             delete [] outL;
             delete [] outR;
             delete [] denormalkillbuf;
-            clearTmpBuffers();
+            FFT_cleanup();
             delete synth;
         }
 
         void testDefaults() {
-            //Note: if these tests fail it is due to the relationship between
-            //global.h::RND and SUBnote.cpp
-
             int sampleCount = 0;
+
 
 //#define WRITE_OUTPUT
 
 #ifdef WRITE_OUTPUT
-            ofstream file("subnoteout", ios::out);
+            ofstream file("padnoteout", ios::out);
 #endif
             note->noteout(outL, outR);
+
 #ifdef WRITE_OUTPUT
             for(int i = 0; i < synth->buffersize; ++i)
                 file << outL[i] << std::endl;
@@ -129,29 +151,31 @@ class SubNoteTest:public CxxTest::TestSuite
 #endif
             sampleCount += synth->buffersize;
 
-            TS_ASSERT_DELTA(outL[255], 0.0000f, 0.0001f);
+            TS_ASSERT_DELTA(outL[255], 0.0660f, 0.0001f);
+
 
             note->relasekey();
 
 
             note->noteout(outL, outR);
             sampleCount += synth->buffersize;
-            TS_ASSERT_DELTA(outL[255], 0.0016f, 0.0001f);
+            TS_ASSERT_DELTA(outL[255], -0.0729f, 0.0001f);
 
             note->noteout(outL, outR);
             sampleCount += synth->buffersize;
-            TS_ASSERT_DELTA(outL[255], -0.0000f, 0.0001f);
+            TS_ASSERT_DELTA(outL[255], 0.0613f, 0.0001f);
 
             note->noteout(outL, outR);
             sampleCount += synth->buffersize;
-            TS_ASSERT_DELTA(outL[255], -0.0013f, 0.0001f);
+            TS_ASSERT_DELTA(outL[255], 0.0378f, 0.0005f);
 
             note->noteout(outL, outR);
             sampleCount += synth->buffersize;
-            TS_ASSERT_DELTA(outL[255], -0.0002f, 0.0001f);
+            TS_ASSERT_DELTA(outL[255], -0.0070f, 0.0001f);
 
             while(!note->finished()) {
                 note->noteout(outL, outR);
+
 #ifdef WRITE_OUTPUT
                 for(int i = 0; i < synth->buffersize; ++i)
                     file << outL[i] << std::endl;
@@ -176,7 +200,7 @@ class SubNoteTest:public CxxTest::TestSuite
                 note->noteout(outL, outR);
             int t_off = clock(); // timer when func returns
 
-            printf("SubNoteTest: %f seconds for %d Samples to be generated.\n",
+            printf("PadNoteTest: %f seconds for %d Samples to be generated.\n",
                    (static_cast<float>(t_off - t_on)) / CLOCKS_PER_SEC, samps);
         }
 #endif
