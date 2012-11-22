@@ -18,9 +18,6 @@
 #include "carla_midi.h"
 #include "carla_native.hpp"
 
-#define NTK_GUI 1
-#define VSTAUDIOOUT 1
-
 #include "zynaddsubfx/Misc/Master.h"
 #include "zynaddsubfx/Misc/Util.h"
 #include "zynaddsubfx/Nio/Nio.h"
@@ -35,19 +32,26 @@
 # include <FL/Fl_Shared_Image.H>
 # include <FL/Fl_Tiled_Image.H>
 # include <FL/Fl_Dial.H>
-# include "zynaddsubfx/UI/common.H"
 # include "zynaddsubfx/UI/MasterUI.h"
 
+#ifdef NTK_GUI
 // this is used to know wherever gui stuff is initialized
 static Fl_Tiled_Image* s_moduleBackdrop = nullptr;
+#endif
 
 void set_module_parameters(Fl_Widget* o)
 {
+#ifdef NTK_GUI
     o->box(FL_DOWN_FRAME);
     o->align(o->align() | FL_ALIGN_IMAGE_BACKDROP);
-    o->color(FL_BLACK );
-    o->image(s_moduleBackdrop);
+    o->color(FL_BLACK);
+    o->image(module_backdrop);
     o->labeltype(FL_SHADOW_LABEL);
+#else
+    o->box(FL_PLASTIC_UP_BOX);
+    o->color(FL_CYAN);
+    o->labeltype(FL_EMBOSSED_LABEL);
+#endif
 }
 #endif
 
@@ -238,8 +242,6 @@ protected:
     {
         if (! m_masterUI)
         {
-            if (! s_moduleBackdrop)
-            {
                 //Fl::visual();
                 //fltk::xdisplay = _disp_ptr;
                 //fltk::xscreen = _screenID;
@@ -250,11 +252,14 @@ protected:
                 //fl_screen   = QX11Info::appScreen();
                 //fl_visual   = (XVisualInfo*)QX11Info::appVisual(fl_screen);
                 //fl_colormap = QX11Info::appColormap(fl_screen);
-//                //fl_gc       =
+                //fl_gc       =
                 //fl_window   = QX11Info::appRootWindow(fl_screen);
 
                 //Fl::own_colormap();
 
+#ifdef NTK_GUI
+            if (! s_moduleBackdrop)
+            {
                 fl_register_images();
 
                 Fl_Dial::default_style(Fl_Dial::PIXMAP_DIAL);
@@ -278,6 +283,7 @@ protected:
                 Fl::background2(70, 70, 70);
                 Fl::foreground(255, 255, 255);
             }
+#endif
 
             m_uiClosed = 0;
             qWarning("TEST - master: %p", m_master);
@@ -316,9 +322,10 @@ protected:
         }
         else if (m_masterUI)
         {
-            pthread_mutex_lock(&m_master->mutex);
+            qWarning("IDLE");
+            //pthread_mutex_lock(&m_master->mutex);
             Fl::check();
-            pthread_mutex_unlock(&m_master->mutex);
+            //pthread_mutex_unlock(&m_master->mutex);
         }
     }
 #endif
@@ -451,7 +458,7 @@ public:
 
         if (--s_instanceCount == 0)
         {
-#ifdef WANT_ZYNADDSUBFX_GUI
+#ifdef NTK_GUI
             if (s_moduleBackdrop)
             {
                 delete s_moduleBackdrop;
@@ -461,7 +468,7 @@ public:
 
             Nio::stop();
 
-            Master::deleteInstance();
+            //Master::deleteInstance();
 
             delete[] denormalkillbuf;
             denormalkillbuf = nullptr;

@@ -11,9 +11,11 @@ WANT_GUI = $(shell pkg-config --exists ntk ntk_images && echo true)
 # --------------------------------------------------------------
 
 BUILD_CXX_FLAGS += -fvisibility=hidden -fPIC -I.
-BUILD_CXX_FLAGS += -DVERSION=\"2.4.3\"
-BUILD_CXX_FLAGS += $(shell pkg-config --cflags fftw3 mxml)
-LINK_FLAGS      += $(shell pkg-config --libs fftw3 mxml)
+BUILD_CXX_FLAGS += -DASM_F2I_YES -DVERSION=\"2.4.3\"
+# BUILD_CXX_FLAGS += -DIN_DEFAULT=\"\" -DOUT_DEFAULT=\"\"
+BUILD_CXX_FLAGS += -DIN_DEFAULT=\"JACK\" -DOUT_DEFAULT=\"JACK\" -DJACK=1
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags fftw3 mxml jack)
+LINK_FLAGS      += $(shell pkg-config --libs fftw3 mxml jack)
 
 OBJS = \
 	DSP/AnalogFilter.o \
@@ -73,11 +75,17 @@ OBJS = \
 # 	Misc/Stereo.o
 # 	Nio/MidiIn.o
 
-ifeq ($(WANT_GUI),true)
+OBJS += Nio/JackEngine.o
+
+# ifeq ($(WANT_GUI),true)
+# BUILD_CXX_FLAGS += -DFLTK_GUI=1
 BUILD_CXX_FLAGS += -DNTK_GUI=1
 # BUILD_CXX_FLAGS += -DVSTAUDIOOUT=1 # TESTING
 BUILD_CXX_FLAGS += -DPIXMAP_PATH=\"/usr/share/zynaddsubfx/pixmaps/\"
 BUILD_CXX_FLAGS += -DSOURCE_DIR=\"/usr/share/zynaddsubfx/pixmaps/nothing-here\"
+
+# BUILD_CXX_FLAGS += $(shell fltk-config --use-images --cxxflags)
+# LINK_FLAGS      += $(shell fltk-config --use-images --ldflags)
 
 BUILD_CXX_FLAGS += $(shell pkg-config --cflags ntk ntk_images)
 LINK_FLAGS      += $(shell pkg-config --libs ntk ntk_images)
@@ -137,7 +145,7 @@ OBJS += \
 	UI/VirKeyboard.o \
 	UI/WidgetPDial.o \
 	UI/NioUI.o
-endif
+# endif
 
 TARGET = ../zynaddsubfx.a
 
@@ -156,6 +164,7 @@ test: $(FILES) $(OBJS) main.o
 %.cc: %.fl
 	# FIXME
 	cd UI; ntk-fluid -c ../$<; cd ..
+# 	cd UI; fluid -c ../$<; cd ..
 
 .cc.o:
 	$(CXX) -c $< $(BUILD_CXX_FLAGS) -o $@
@@ -164,4 +173,4 @@ test: $(FILES) $(OBJS) main.o
 	$(CXX) -c $< $(BUILD_CXX_FLAGS) -o $@
 
 clean:
-	rm -f $(TARGET) $(FILES) $(HEADERS) $(OBJS)
+	rm -f $(TARGET) $(FILES) $(HEADERS) $(OBJS) main.o

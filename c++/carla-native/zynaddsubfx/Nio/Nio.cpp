@@ -17,9 +17,6 @@ OutMgr    *out = NULL;
 EngineMgr *eng = NULL;
 string     postfix;
 
-#define IN_DEFAULT  ""
-#define OUT_DEFAULT ""
-
 bool   Nio::autoConnect   = false;
 string Nio::defaultSource = IN_DEFAULT;
 string Nio::defaultSink   = OUT_DEFAULT;

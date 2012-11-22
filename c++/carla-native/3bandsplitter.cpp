@@ -21,14 +21,14 @@
 #include "3bandsplitter/DistrhoPluginInfo.h"
 
 /// Set namespace for this plugin
-#define DISTRHO_NAMESPACE DISTRHO_3BSPILT
+#define DISTRHO_NAMESPACE DISTRHO_3BandSplitter
 
 // Include Plugin headers
 #include "3bandsplitter/DistrhoPlugin3BandSplitter.h"
 #include "3bandsplitter/DistrhoUI3BandSplitter.h"
 
 // Include DISTRHO code
-#include "DistrhoPluginCarla.cpp"
+#include "distrho/DistrhoPluginCarla.cpp"
 
 START_NAMESPACE_DISTRHO
 

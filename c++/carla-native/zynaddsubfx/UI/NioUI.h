@@ -1,5 +1,5 @@
-#ifndef NIOUT_H
-#define NIOUT_H
+#ifndef NIOUI_H
+#define NIOUI_H
 
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>

@@ -18,7 +18,7 @@ ifeq ($(HAVE_ZYN_DEPS),true)
 BUILD_CXX_FLAGS  += $(shell pkg-config --cflags fftw3 mxml) -DWANT_ZYNADDSUBFX
 ifeq ($(HAVE_ZYN_GUI_DEPS),true)
 BUILD_CXX_FLAGS  += $(shell pkg-config --cflags ntk ntk_images) -DWANT_ZYNADDSUBFX_GUI
-BUILD_CXX_FLAGS  += -DNTK_GUI=1 -DVSTAUDIOOUT=1
+# BUILD_CXX_FLAGS  += $(shell fltk-config --use-images --cxxflags) -DWANT_ZYNADDSUBFX_GUI
 endif
 endif
 
@@ -26,14 +26,14 @@ OBJS  = \
 	bypass.o \
 	midi-split.o
 
-# OBJS += \
-# 	3bandeq.o \
-# 	3bandsplitter.o \
-# 	distrho/pugl.o
+OBJS += \
+	3bandeq.o \
+	3bandsplitter.o \
+	distrho/pugl.o
 
-# OBJS += \
-# 	3bandeq.a \
-# 	3bandsplitter.a
+OBJS += \
+	3bandeq.a \
+	3bandsplitter.a
 
 # --------------------------------------------------------------
 

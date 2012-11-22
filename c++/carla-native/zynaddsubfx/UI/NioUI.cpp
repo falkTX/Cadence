@@ -28,7 +28,6 @@ NioUI::NioUI()
 
     //initialize midi list
     {
-#if 1
         set<string> midiList = Nio::getSources();
         string      source   = Nio::getSource();
         int midival = 0;
@@ -38,15 +37,11 @@ NioUI::NioUI()
             if(*itr == source)
                 midival = midi->size() - 2;
         }
-#else
-        int midival = 0;
-#endif
         midi->value(midival);
     }
 
     //initialize audio list
     {
-#if 1
         set<string> audioList = Nio::getSinks();
         string      sink      = Nio::getSink();
         int audioval = 0;
@@ -56,9 +51,6 @@ NioUI::NioUI()
             if(*itr == sink)
                 audioval = audio->size() - 2;
         }
-#else
-        int audioval = 0;
-#endif
         audio->value(audioval);
     }
     resizable(this);

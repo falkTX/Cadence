@@ -21,14 +21,14 @@
 #include "3bandeq/DistrhoPluginInfo.h"
 
 /// Set namespace for this plugin
-#define DISTRHO_NAMESPACE DISTRHO_3BEQ
+#define DISTRHO_NAMESPACE DISTRHO_3BandEQ
 
 // Include Plugin headers
 #include "3bandeq/DistrhoPlugin3BandEQ.h"
 #include "3bandeq/DistrhoUI3BandEQ.h"
 
 // Include DISTRHO code
-#include "DistrhoPluginCarla.cpp"
+#include "distrho/DistrhoPluginCarla.cpp"
 
 START_NAMESPACE_DISTRHO
 

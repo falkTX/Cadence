@@ -73,6 +73,7 @@ LINK_FLAGS       += $(shell pkg-config --libs fftw3 mxml)
 
 ifeq ($(HAVE_ZYN_GUI_DEPS),true)
 LINK_FLAGS       += $(shell pkg-config --libs ntk ntk_images)
+# LINK_FLAGS      += $(shell fltk-config --use-images --ldflags)
 endif
 endif
 
@@ -82,6 +83,11 @@ OBJS = \
 OBJS += ../carla-engine/carla_engine.a
 OBJS += ../carla-plugin/carla_plugin.a
 OBJS += ../carla-native/carla_native.a
+
+# FIXME
+OBJS += ../carla-native/3bandeq.a
+OBJS += ../carla-native/3bandsplitter.a
+OBJS += ../carla-native/zynaddsubfx.a
 
 # others
 ifeq ($(CARLA_PLUGIN_SUPPORT),true)
