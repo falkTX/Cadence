@@ -20,6 +20,7 @@
 # include "carla_native.h"
 # include <vector>
 //# include <QApplication>
+//# include <QDialog>
 #endif
 
 #if defined(__WIN32__) || defined(__WIN64__)
@@ -62,6 +63,12 @@ static bool write_midi_event(HostHandle, MidiEvent*)
 static void ui_parameter_changed(PluginHandle, uint32_t, float) {}
 static void ui_custom_data_changed(PluginHandle, const char*, const char*) {}
 
+static bool uiClosed = false;
+static void ui_closed(PluginHandle)
+{
+    uiClosed = true;
+}
+
 void carla_register_native_plugin(const PluginDescriptor* desc)
 {
     descs.push_back(desc);
@@ -69,13 +76,63 @@ void carla_register_native_plugin(const PluginDescriptor* desc)
 
 #include <FL/Fl.H>
 
+#if 0
+static int qargc = 0;
+static char* qargv[0] = {};
+
+class TestApplication : public QApplication
+{
+public:
+    TestApplication(int argc, char** argv)
+        : QApplication(qargc, qargv, true)
+    {
+        msgTimer  = 0;
+
+        zynDesc   = nullptr;
+        zynHandle = nullptr;
+    }
+
+    void startNow()
+    {
+        msgTimer = startTimer(50);
+    }
+
+    void setHandle(const PluginDescriptor* desc, PluginHandle handle)
+    {
+        zynDesc   = desc;
+        zynHandle = handle;
+    }
+
+protected:
+    void timerEvent(QTimerEvent* const event)
+    {
+        if (event->timerId() == msgTimer)
+        {
+            if (zynDesc && zynHandle)
+                zynDesc->ui_idle(zynHandle);
+            //Fl::check();
+        }
+
+        QApplication::timerEvent(event);
+    }
+
+private:
+    int msgTimer;
+
+    const PluginDescriptor* zynDesc;
+    PluginHandle zynHandle;
+};
+#endif
+
 int main(int argc, char* argv[])
 {
-    //QApplication app(argc, argv, true);
+    //TestApplication app(argc, argv);
+    //QApplication app(argc, argv);
 
     Fl::args(argc, argv);
 
     //QDialog guiTest;
+    //guiTest.setFixedSize(150, 150);
 
     // Available plugins
     carla_register_native_plugin_bypass();
@@ -91,7 +148,7 @@ int main(int argc, char* argv[])
     HostDescriptor host = {
         nullptr,
         get_buffer_size, get_sample_rate, get_time_info, write_midi_event,
-        ui_parameter_changed, ui_custom_data_changed
+        ui_parameter_changed, ui_custom_data_changed, ui_closed
     };
 
 #if 0
@@ -146,26 +203,31 @@ int main(int argc, char* argv[])
     }
 #endif
 
+    // close app when this dialog is closed
+    //guiTest.show();
+
     const PluginDescriptor* zynDesc = descs[2];
     PluginHandle zynHandle = zynDesc->instantiate(zynDesc, &host);
     zynDesc->activate(zynHandle);
     zynDesc->ui_show(zynHandle, true);
 
-    // close app when this dialog is closed
-    //guiTest.show();
+    //app.setHandle(zynDesc, zynHandle);
+    //app.startNow();
 
     //fl_display
     //int ret = app.exec();
 
-    Fl::redraw();
+    //app.setHandle(nullptr, nullptr);
 
-    int ret = Fl::run();
+    while (! uiClosed)
+    {
+        Fl::wait(0.02f);
+        carla_msleep(100);
+    }
 
     zynDesc->ui_show(zynHandle, false);
     zynDesc->activate(zynHandle);
     zynDesc->cleanup(zynHandle);
-
-    return ret;
 
     // test 3BandEQ GUI
     // TODO

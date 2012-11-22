@@ -94,6 +94,12 @@ public:
             host->ui_custom_data_changed(host->handle, key, value);
     }
 
+    void uiClosed()
+    {
+        if (host)
+            host->ui_closed(host->handle);
+    }
+
 protected:
     // -------------------------------------------------------------------
     // Plugin parameter calls

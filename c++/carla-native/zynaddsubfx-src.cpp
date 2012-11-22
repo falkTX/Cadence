@@ -1,5 +1,6 @@
 
 #define NTK_GUI 1
+#define VSTAUDIOOUT 1
 
 #define PIXMAP_PATH "/usr/share/zynaddsubfx/pixmaps/"
 #define SOURCE_DIR  "/usr/share/zynaddsubfx/pixmaps/nothing-here"

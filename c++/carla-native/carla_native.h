@@ -130,9 +130,10 @@ typedef struct _HostDescriptor {
     const TimeInfo* (*get_time_info)(HostHandle handle);
     bool            (*write_midi_event)(HostHandle handle, MidiEvent* event);
 
-    void (*ui_parameter_changed)(PluginHandle handle, uint32_t index, float value);
-    //void (*ui_midi_program_changed)(PluginHandle handle, uint32_t bank, uint32_t program);
-    void (*ui_custom_data_changed)(PluginHandle handle, const char* key, const char* value);
+    void (*ui_parameter_changed)(HostHandle handle, uint32_t index, float value);
+    //void (*ui_midi_program_changed)(HostHandle handle, uint32_t bank, uint32_t program);
+    void (*ui_custom_data_changed)(HostHandle handle, const char* key, const char* value);
+    void (*ui_closed)(HostHandle handle);
 } HostDescriptor;
 
 typedef struct _PluginDescriptor {

@@ -28,7 +28,7 @@ NioUI::NioUI()
 
     //initialize midi list
     {
-#if 0
+#if 1
         set<string> midiList = Nio::getSources();
         string      source   = Nio::getSource();
         int midival = 0;
@@ -46,7 +46,7 @@ NioUI::NioUI()
 
     //initialize audio list
     {
-#if 0
+#if 1
         set<string> audioList = Nio::getSinks();
         string      sink      = Nio::getSink();
         int audioval = 0;
