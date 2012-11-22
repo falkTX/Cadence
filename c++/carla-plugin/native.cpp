@@ -1559,8 +1559,8 @@ public:
         carla_register_native_plugin_zynaddsubfx();
 #endif
 
-        carla_register_native_plugin_3BandEQ();
-        carla_register_native_plugin_3BandSplitter();
+        //carla_register_native_plugin_3BandEQ();
+        //carla_register_native_plugin_3BandSplitter();
     }
 
     // -------------------------------------------------------------------

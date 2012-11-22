@@ -221,7 +221,7 @@ void DistrhoUI3BandSplitter::imageSliderValueChanged(ImageSlider* slider, float 
 
 UI* createUI()
 {
-    return new DistrhoUI3BandSplitter;
+    return new DistrhoUI3BandSplitter();
 }
 
 // -------------------------------------------------

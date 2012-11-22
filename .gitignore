@@ -54,17 +54,55 @@ doc/distrho/
 src/resources_rc.py
 qrc_resources*.cpp
 
+# ZynAddSubFX UI
+c++/carla-native/zynaddsubfx/UI/ADnoteUI.cc
+c++/carla-native/zynaddsubfx/UI/ADnoteUI.h
+c++/carla-native/zynaddsubfx/UI/BankUI.cc
+c++/carla-native/zynaddsubfx/UI/BankUI.h
+c++/carla-native/zynaddsubfx/UI/ConfigUI.cc
+c++/carla-native/zynaddsubfx/UI/ConfigUI.h
+c++/carla-native/zynaddsubfx/UI/EffUI.cc
+c++/carla-native/zynaddsubfx/UI/EffUI.h
+c++/carla-native/zynaddsubfx/UI/EnvelopeUI.cc
+c++/carla-native/zynaddsubfx/UI/EnvelopeUI.h
+c++/carla-native/zynaddsubfx/UI/FilterUI.cc
+c++/carla-native/zynaddsubfx/UI/FilterUI.h
+c++/carla-native/zynaddsubfx/UI/LFOUI.cc
+c++/carla-native/zynaddsubfx/UI/LFOUI.h
+c++/carla-native/zynaddsubfx/UI/MasterUI.cc
+c++/carla-native/zynaddsubfx/UI/MasterUI.h
+c++/carla-native/zynaddsubfx/UI/MicrotonalUI.cc
+c++/carla-native/zynaddsubfx/UI/MicrotonalUI.h
+c++/carla-native/zynaddsubfx/UI/OscilGenUI.cc
+c++/carla-native/zynaddsubfx/UI/OscilGenUI.h
+c++/carla-native/zynaddsubfx/UI/PADnoteUI.cc
+c++/carla-native/zynaddsubfx/UI/PADnoteUI.h
+c++/carla-native/zynaddsubfx/UI/PartUI.cc
+c++/carla-native/zynaddsubfx/UI/PartUI.h
+c++/carla-native/zynaddsubfx/UI/PresetsUI.cc
+c++/carla-native/zynaddsubfx/UI/PresetsUI.h
+c++/carla-native/zynaddsubfx/UI/ResonanceUI.cc
+c++/carla-native/zynaddsubfx/UI/ResonanceUI.h
+c++/carla-native/zynaddsubfx/UI/SUBnoteUI.cc
+c++/carla-native/zynaddsubfx/UI/SUBnoteUI.h
+c++/carla-native/zynaddsubfx/UI/VirKeyboard.cc
+c++/carla-native/zynaddsubfx/UI/VirKeyboard.h
 
 # incoming
 _/
 all-recheck
+c++/caitlyn/
 c++/carla/
 c++/carla-backend/carla-dynamic.lv2/
 c++/carla-backend/carla_backend_lv2.cpp
 c++/carla-backend/carla_backend_vst.cpp
+c++/carla-backend/old/
 c++/carla-bridge/qt-plugin/
 c++/carla-bridge/qtcreator/Makefile
+c++/carla-includes/lv2/dynmanifest.h
+c++/carla-includes/lv2/morph.h
 c++/carla-jackbridge/jack
 c++/flmixer/
 c++/widgets/ledbutton.*
+data/templates/energyXT.xt
 src/ui/carla_driver.ui

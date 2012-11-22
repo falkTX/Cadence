@@ -221,7 +221,7 @@ void DistrhoUI3BandEQ::imageSliderValueChanged(ImageSlider* slider, float value)
 
 UI* createUI()
 {
-    return new DistrhoUI3BandEQ;
+    return new DistrhoUI3BandEQ();
 }
 
 // -------------------------------------------------

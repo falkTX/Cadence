@@ -19,9 +19,9 @@
 
 #include <cmath>
 
-const float cfAMP_DB = 8.656170245f;
-const float cfDC_ADD = 1e-30f;
-const float cfPI     = 3.141592654f;
+static const float cfAMP_DB = 8.656170245f;
+static const float cfDC_ADD = 1e-30f;
+static const float cfPI     = 3.141592654f;
 
 START_NAMESPACE_DISTRHO
 
@@ -262,5 +262,7 @@ Plugin* createPlugin()
 {
     return new DistrhoPlugin3BandSplitter();
 }
+
+// -------------------------------------------------
 
 END_NAMESPACE_DISTRHO

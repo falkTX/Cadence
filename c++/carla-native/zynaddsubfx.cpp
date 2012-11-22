@@ -21,9 +21,6 @@
 #define NTK_GUI 1
 #define VSTAUDIOOUT 1
 
-#define PIXMAP_PATH "/usr/share/zynaddsubfx/pixmaps/"
-#define SOURCE_DIR  "/usr/share/zynaddsubfx/pixmaps/nothing-here"
-
 #include "zynaddsubfx/Misc/Master.h"
 #include "zynaddsubfx/Misc/Util.h"
 #include "zynaddsubfx/Nio/Nio.h"
@@ -38,6 +35,7 @@
 # include <FL/Fl_Shared_Image.H>
 # include <FL/Fl_Tiled_Image.H>
 # include <FL/Fl_Dial.H>
+# include "zynaddsubfx/UI/common.H"
 # include "zynaddsubfx/UI/MasterUI.h"
 
 // this is used to know wherever gui stuff is initialized
