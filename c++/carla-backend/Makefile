@@ -23,7 +23,7 @@ HAVE_LINUXSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
 endif
 
 HAVE_ZYN_DEPS     = $(shell pkg-config --exists fftw3 mxml && echo true)
-HAVE_ZYN_GUI_DEPS = $(shell pkg-config --exists ntk && echo true)
+HAVE_ZYN_GUI_DEPS = $(shell pkg-config --exists ntk ntk_images && echo true)
 
 # --------------------------------------------------------------
 
@@ -72,7 +72,7 @@ ifeq ($(HAVE_ZYN_DEPS),true)
 LINK_FLAGS       += $(shell pkg-config --libs fftw3 mxml)
 
 ifeq ($(HAVE_ZYN_GUI_DEPS),true)
-LINK_FLAGS       += $(shell pkg-config --libs ntk)
+LINK_FLAGS       += $(shell pkg-config --libs ntk ntk_images)
 endif
 endif
 

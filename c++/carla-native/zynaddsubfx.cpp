@@ -23,6 +23,29 @@
 
 #include <climits>
 
+#ifdef WANT_ZYNADDSUBFX_GUI
+# define PIXMAP_PATH "/usr/share/zynaddsubfx/pixmaps"
+# define SOURCE_DIR  ""
+
+# include <FL/Fl.H>
+# include <FL/Fl_Shared_Image.H>
+# include <FL/Fl_Tiled_Image.H>
+# include <FL/Fl_Dial.H>
+# include "zynaddsubfx/UI/MasterUI.h"
+
+// this is used to know wherever gui stuff is initialized
+static Fl_Tiled_Image* s_moduleBackdrop = nullptr;
+
+void set_module_parameters(Fl_Widget* o)
+{
+    o->box(FL_DOWN_FRAME);
+    o->align(o->align() | FL_ALIGN_IMAGE_BACKDROP);
+    o->color(FL_BLACK );
+    o->image(s_moduleBackdrop);
+    o->labeltype(FL_SHADOW_LABEL);
+}
+#endif
+
 SYNTH_T* synth = nullptr;
 
 class ZynAddSubFxPlugin : public PluginDescriptorClass
@@ -38,7 +61,11 @@ public:
     {
         qDebug("ZynAddSubFxPlugin::ZynAddSubFxPlugin(), s_instanceCount=%i", s_instanceCount);
 
-        m_master = new Master;
+        m_master   = new Master;
+#ifdef WANT_ZYNADDSUBFX_GUI
+        m_masterUI = nullptr;
+        m_uiClosed = 0;
+#endif
 
         // refresh banks
         m_master->bank.rescanforbanks();
@@ -70,7 +97,16 @@ public:
     {
         qDebug("ZynAddSubFxPlugin::~ZynAddSubFxPlugin(), s_instanceCount=%i", s_instanceCount);
 
+        //ensure that everything has stopped with the mutex wait
+        pthread_mutex_lock(&m_master->mutex);
+        pthread_mutex_unlock(&m_master->mutex);
+
         m_programs.clear();
+
+#ifdef WANT_ZYNADDSUBFX_GUI
+        if (m_masterUI)
+            delete m_masterUI;
+#endif
 
         delete m_master;
     }
@@ -184,6 +220,72 @@ protected:
     }
 
     // -------------------------------------------------------------------
+    // Plugin UI calls
+
+#ifdef WANT_ZYNADDSUBFX_GUI
+    void uiShow(bool show)
+    {
+        if (! m_masterUI)
+        {
+            if (! s_moduleBackdrop)
+            {
+                fl_register_images();
+
+                Fl_Dial::default_style(Fl_Dial::PIXMAP_DIAL);
+
+                if (Fl_Shared_Image* img = Fl_Shared_Image::get(PIXMAP_PATH "/knob.png"))
+                    Fl_Dial::default_image(img);
+                else
+                    Fl_Dial::default_image(Fl_Shared_Image::get(SOURCE_DIR "/../pixmaps/knob.png"));
+
+                if (Fl_Shared_Image* img = Fl_Shared_Image::get(PIXMAP_PATH "/window_backdrop.png"))
+                    Fl::scheme_bg(new Fl_Tiled_Image(img));
+                else
+                    Fl::scheme_bg(new Fl_Tiled_Image(Fl_Shared_Image::get(SOURCE_DIR "/../pixmaps/window_backdrop.png")));
+
+                if (Fl_Shared_Image* img = Fl_Shared_Image::get(PIXMAP_PATH "/module_backdrop.png"))
+                    s_moduleBackdrop = new Fl_Tiled_Image(img);
+                else
+                    s_moduleBackdrop = new Fl_Tiled_Image(Fl_Shared_Image::get(SOURCE_DIR "/../pixmaps/module_backdrop.png"));
+
+                Fl::background(50, 50, 50);
+                Fl::background2(70, 70, 70);
+                Fl::foreground(255, 255, 255);
+            }
+
+            m_masterUI = new MasterUI(m_master, &m_uiClosed);
+        }
+
+        if (show)
+        {
+            m_masterUI->showUI();
+        }
+        else
+        {
+            // same as showUI
+            switch (config.cfg.UserInterfaceMode)
+            {
+            case 0:
+                m_masterUI->selectuiwindow->hide();
+                break;
+            case 1:
+                m_masterUI->masterwindow->hide();
+                break;
+            case 2:
+                m_masterUI->simplemasterwindow->hide();
+                break;
+            };
+        }
+    }
+
+    void uiIdle()
+    {
+        if (m_masterUI)
+            Fl::check();
+    }
+#endif
+
+    // -------------------------------------------------------------------
     // Plugin process calls
 
     void activate()
@@ -269,7 +371,11 @@ private:
     };
     std::vector<ProgramInfo> m_programs;
 
-    Master* m_master;
+    Master*   m_master;
+#ifdef WANT_ZYNADDSUBFX_GUI
+    MasterUI* m_masterUI;
+    int m_uiClosed;
+#endif
 
 public:
     static int s_instanceCount;
@@ -288,6 +394,8 @@ public:
             config.cfg.SampleRate      = synth->samplerate;
             config.cfg.GzipCompression = 0;
 
+            //Nio::preferedSampleRate(synth->samplerate);
+
             sprng(time(NULL));
             denormalkillbuf = new float [synth->buffersize];
             for (int i=0; i < synth->buffersize; i++)
@@ -305,6 +413,12 @@ public:
 
         if (--s_instanceCount == 0)
         {
+            if (s_moduleBackdrop)
+            {
+                delete s_moduleBackdrop;
+                s_moduleBackdrop = nullptr;
+            }
+
             Master::deleteInstance();
 
             delete[] denormalkillbuf;

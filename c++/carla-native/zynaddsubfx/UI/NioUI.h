@@ -1,4 +1,4 @@
-#ifndef NIOUI_H
+#ifndef NIOUT_H
 #define NIOUT_H
 
 #include <FL/Fl.H>

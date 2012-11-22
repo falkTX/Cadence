@@ -1,6 +1,6 @@
 # QtCreator project file
 
-QT = core gui
+QT = core # gui
 
 CONFIG    = debug
 CONFIG   += static
@@ -11,7 +11,7 @@ DEFINES  += QTCREATOR_TEST
 
 DEFINES  += WANT_ZYNADDSUBFX WANT_ZYNADDSUBFX_GUI
 
-PKGCONFIG = fftw3 mxml ntk
+PKGCONFIG = fftw3 mxml ntk ntk_images
 
 TARGET   = carla_native
 TEMPLATE = app #lib
@@ -41,6 +41,9 @@ INCLUDEPATH = . distrho \
     ../carla-includes \
     ../carla-utils \
     ../distrho-plugin-toolkit
+
+# FIX
+INCLUDEPATH += /usr/include/ntk
 
 LIBS = -lGL
 

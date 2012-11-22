@@ -1,4 +1,9 @@
 
+#define NTK_GUI 1
+
+#define PIXMAP_PATH "/usr/share/zynaddsubfx/pixmaps/"
+#define SOURCE_DIR  "/usr/share/zynaddsubfx/pixmaps/nothing-here"
+
 // zynaddsubfx includes
 #include "zynaddsubfx/DSP/AnalogFilter.cpp"
 #include "zynaddsubfx/DSP/FFTwrapper.cpp"
@@ -56,3 +61,25 @@
 #include "zynaddsubfx/Synth/Resonance.cpp"
 #include "zynaddsubfx/Synth/SUBnote.cpp"
 #include "zynaddsubfx/Synth/SynthNote.cpp"
+
+#ifdef WANT_ZYNADDSUBFX_GUI
+# include "zynaddsubfx/UI/NioUI.h"
+# include "zynaddsubfx/UI/ADnoteUI.cc"
+# include "zynaddsubfx/UI/BankUI.cc"
+# include "zynaddsubfx/UI/ConfigUI.cc"
+# include "zynaddsubfx/UI/EffUI.cc"
+# include "zynaddsubfx/UI/EnvelopeUI.cc"
+# include "zynaddsubfx/UI/FilterUI.cc"
+# include "zynaddsubfx/UI/LFOUI.cc"
+# include "zynaddsubfx/UI/MasterUI.cc"
+# include "zynaddsubfx/UI/MicrotonalUI.cc"
+# include "zynaddsubfx/UI/OscilGenUI.cc"
+# include "zynaddsubfx/UI/PADnoteUI.cc"
+# include "zynaddsubfx/UI/PartUI.cc"
+# include "zynaddsubfx/UI/PresetsUI.cc"
+# include "zynaddsubfx/UI/ResonanceUI.cc"
+# include "zynaddsubfx/UI/SUBnoteUI.cc"
+# include "zynaddsubfx/UI/VirKeyboard.cc"
+# include "zynaddsubfx/UI/WidgetPDial.cpp"
+# include "zynaddsubfx/UI/NioUI.cpp"
+#endif

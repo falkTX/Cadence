@@ -19,7 +19,7 @@
 # include "carla_utils.hpp"
 # include "carla_native.h"
 # include <vector>
-# include <QApplication>
+//# include <QApplication>
 #endif
 
 #if defined(__WIN32__) || defined(__WIN64__)
@@ -67,9 +67,15 @@ void carla_register_native_plugin(const PluginDescriptor* desc)
     descs.push_back(desc);
 }
 
+#include <FL/Fl.H>
+
 int main(int argc, char* argv[])
 {
-    QApplication app(argc, argv, true);
+    //QApplication app(argc, argv, true);
+
+    Fl::args(argc, argv);
+
+    //QDialog guiTest;
 
     // Available plugins
     carla_register_native_plugin_bypass();
@@ -88,6 +94,7 @@ int main(int argc, char* argv[])
         ui_parameter_changed, ui_custom_data_changed
     };
 
+#if 0
     // test fast init & cleanup
     for (auto it = descs.begin(); it != descs.end(); it++)
     {
@@ -137,6 +144,28 @@ int main(int argc, char* argv[])
         if (desc->cleanup)
             desc->cleanup(handle);
     }
+#endif
+
+    const PluginDescriptor* zynDesc = descs[2];
+    PluginHandle zynHandle = zynDesc->instantiate(zynDesc, &host);
+    zynDesc->activate(zynHandle);
+    zynDesc->ui_show(zynHandle, true);
+
+    // close app when this dialog is closed
+    //guiTest.show();
+
+    //fl_display
+    //int ret = app.exec();
+
+    Fl::redraw();
+
+    int ret = Fl::run();
+
+    zynDesc->ui_show(zynHandle, false);
+    zynDesc->activate(zynHandle);
+    zynDesc->cleanup(zynHandle);
+
+    return ret;
 
     // test 3BandEQ GUI
     // TODO
