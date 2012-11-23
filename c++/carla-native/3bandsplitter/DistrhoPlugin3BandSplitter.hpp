@@ -1,5 +1,5 @@
 /*
- * DISTRHO 3BandEQ Plugin, based on 3BandEQ by Michael Gruhn
+ * DISTRHO 3BandSplitter Plugin, based on 3BandSplitter by Michael Gruhn
  * Copyright (C) 2007 Michael Gruhn <michael-gruhn@web.de>
  * Copyright (C) 2012 Filipe Coelho <falktx@falktx.com>
  *
@@ -10,19 +10,19 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
  * For a full copy of the license see the LGPL.txt file
  */
 
-#ifndef __DISTRHO_PLUGIN_3BANDEQ_H__
-#define __DISTRHO_PLUGIN_3BANDEQ_H__
+#ifndef __DISTRHO_PLUGIN_3BANDSPLITTER_HPP__
+#define __DISTRHO_PLUGIN_3BANDSPLITTER_HPP__
 
 #include "DistrhoPlugin.h"
 
 START_NAMESPACE_DISTRHO
 
-class DistrhoPlugin3BandEQ : public Plugin
+class DistrhoPlugin3BandSplitter : public Plugin
 {
 public:
     enum Parameters
@@ -36,8 +36,8 @@ public:
         paramCount
     };
 
-    DistrhoPlugin3BandEQ();
-    ~DistrhoPlugin3BandEQ();
+    DistrhoPlugin3BandSplitter();
+    ~DistrhoPlugin3BandSplitter();
 
     // ---------------------------------------------
 
@@ -45,7 +45,7 @@ protected:
     // Information
     const char* d_label()
     {
-        return "3BandEQ";
+        return "3BandSplitter";
     }
 
     const char* d_maker()
@@ -65,7 +65,7 @@ protected:
 
     long d_uniqueId()
     {
-        return d_cconst('D', '3', 'E', 'Q');
+        return d_cconst('D', '3', 'E', 'S');
     }
 
     // Init
@@ -99,4 +99,4 @@ private:
 
 END_NAMESPACE_DISTRHO
 
-#endif  // __DISTRHO_PLUGIN_3BANDEQ_H__
+#endif  // __DISTRHO_PLUGIN_3BANDSPLITTER_HPP__

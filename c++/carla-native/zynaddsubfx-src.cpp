@@ -1,9 +1,5 @@
 
-#define NTK_GUI 1
-#define VSTAUDIOOUT 1
-
-#define PIXMAP_PATH "/usr/share/zynaddsubfx/pixmaps/"
-#define SOURCE_DIR  "/usr/share/zynaddsubfx/pixmaps/nothing-here"
+// TODO - merge this into zynaddsubfx.cpp once the native plugin is finished
 
 // zynaddsubfx includes
 #include "zynaddsubfx/DSP/AnalogFilter.cpp"
@@ -35,15 +31,6 @@
 #include "zynaddsubfx/Misc/WavFile.cpp"
 #include "zynaddsubfx/Misc/WaveShapeSmps.cpp"
 #include "zynaddsubfx/Misc/XMLwrapper.cpp"
-#include "zynaddsubfx/Nio/AudioOut.cpp"
-#include "zynaddsubfx/Nio/Engine.cpp"
-#include "zynaddsubfx/Nio/EngineMgr.cpp"
-//#include "zynaddsubfx/Nio/MidiIn.cpp"
-#include "zynaddsubfx/Nio/Nio.cpp"
-#include "zynaddsubfx/Nio/NulEngine.cpp"
-#include "zynaddsubfx/Nio/InMgr.cpp"
-#include "zynaddsubfx/Nio/OutMgr.cpp"
-#include "zynaddsubfx/Nio/WavEngine.cpp"
 #include "zynaddsubfx/Params/ADnoteParameters.cpp"
 #include "zynaddsubfx/Params/Controller.cpp"
 #include "zynaddsubfx/Params/EnvelopeParams.cpp"
@@ -62,25 +49,3 @@
 #include "zynaddsubfx/Synth/Resonance.cpp"
 #include "zynaddsubfx/Synth/SUBnote.cpp"
 #include "zynaddsubfx/Synth/SynthNote.cpp"
-
-#ifdef WANT_ZYNADDSUBFX_GUI
-# include "zynaddsubfx/UI/NioUI.h"
-# include "zynaddsubfx/UI/ADnoteUI.cc"
-# include "zynaddsubfx/UI/BankUI.cc"
-# include "zynaddsubfx/UI/ConfigUI.cc"
-# include "zynaddsubfx/UI/EffUI.cc"
-# include "zynaddsubfx/UI/EnvelopeUI.cc"
-# include "zynaddsubfx/UI/FilterUI.cc"
-# include "zynaddsubfx/UI/LFOUI.cc"
-# include "zynaddsubfx/UI/MasterUI.cc"
-# include "zynaddsubfx/UI/MicrotonalUI.cc"
-# include "zynaddsubfx/UI/OscilGenUI.cc"
-# include "zynaddsubfx/UI/PADnoteUI.cc"
-# include "zynaddsubfx/UI/PartUI.cc"
-# include "zynaddsubfx/UI/PresetsUI.cc"
-# include "zynaddsubfx/UI/ResonanceUI.cc"
-# include "zynaddsubfx/UI/SUBnoteUI.cc"
-# include "zynaddsubfx/UI/VirKeyboard.cc"
-# include "zynaddsubfx/UI/WidgetPDial.cpp"
-# include "zynaddsubfx/UI/NioUI.cpp"
-#endif

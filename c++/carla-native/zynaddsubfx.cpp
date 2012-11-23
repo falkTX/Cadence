@@ -18,42 +18,21 @@
 #include "carla_midi.h"
 #include "carla_native.hpp"
 
-#include "zynaddsubfx/Misc/Master.h"
-#include "zynaddsubfx/Misc/Util.h"
-#include "zynaddsubfx/Nio/Nio.h"
-
 #include <climits>
 
-#ifdef WANT_ZYNADDSUBFX_GUI
-//# ifdef Q_WS_X11
-//#  include <QtGui/QX11Info>
-//# endif
-# include <FL/Fl.H>
-# include <FL/Fl_Shared_Image.H>
-# include <FL/Fl_Tiled_Image.H>
-# include <FL/Fl_Dial.H>
-# include "zynaddsubfx/UI/MasterUI.h"
+#include "zynaddsubfx/Misc/Master.h"
+#include "zynaddsubfx/Misc/Util.h"
 
-#ifdef NTK_GUI
-// this is used to know wherever gui stuff is initialized
-static Fl_Tiled_Image* s_moduleBackdrop = nullptr;
-#endif
-
-void set_module_parameters(Fl_Widget* o)
-{
-#ifdef NTK_GUI
-    o->box(FL_DOWN_FRAME);
-    o->align(o->align() | FL_ALIGN_IMAGE_BACKDROP);
-    o->color(FL_BLACK);
-    o->image(module_backdrop);
-    o->labeltype(FL_SHADOW_LABEL);
-#else
-    o->box(FL_PLASTIC_UP_BOX);
-    o->color(FL_CYAN);
-    o->labeltype(FL_EMBOSSED_LABEL);
-#endif
+//Dummy variables and functions for linking purposes
+class WavFile;
+namespace Nio {
+   bool start(void){return 1;}
+   void stop(void){}
+   void waveNew(WavFile*){}
+   void waveStart(void){}
+   void waveStop(void){}
+   void waveEnd(void){}
 }
-#endif
 
 SYNTH_T* synth = nullptr;
 
@@ -70,11 +49,7 @@ public:
     {
         qDebug("ZynAddSubFxPlugin::ZynAddSubFxPlugin(), s_instanceCount=%i", s_instanceCount);
 
-        m_master   = new Master;
-#ifdef WANT_ZYNADDSUBFX_GUI
-        m_masterUI = nullptr;
-        m_uiClosed = 0;
-#endif
+        m_master = new Master;
 
         // refresh banks
         m_master->bank.rescanforbanks();
@@ -111,11 +86,6 @@ public:
         pthread_mutex_unlock(&m_master->mutex);
 
         m_programs.clear();
-
-#ifdef WANT_ZYNADDSUBFX_GUI
-        if (m_masterUI)
-            delete m_masterUI;
-#endif
 
         delete m_master;
     }
@@ -229,108 +199,6 @@ protected:
     }
 
     // -------------------------------------------------------------------
-    // Plugin UI calls
-
-    static void cb_simplemasterwindow(Fl_Double_Window*, void* ptr)
-    {
-        qWarning("CLOSED");
-        ((ZynAddSubFxPlugin*)ptr)->uiClosed();
-    }
-
-#ifdef WANT_ZYNADDSUBFX_GUI
-    void uiShow(bool show)
-    {
-        if (! m_masterUI)
-        {
-                //Fl::visual();
-                //fltk::xdisplay = _disp_ptr;
-                //fltk::xscreen = _screenID;
-                //fltk::xvisual = _vis_ptr;
-                //fltk::xcolormap = _colorMap;
-
-                //fl_display  = QX11Info::display();
-                //fl_screen   = QX11Info::appScreen();
-                //fl_visual   = (XVisualInfo*)QX11Info::appVisual(fl_screen);
-                //fl_colormap = QX11Info::appColormap(fl_screen);
-                //fl_gc       =
-                //fl_window   = QX11Info::appRootWindow(fl_screen);
-
-                //Fl::own_colormap();
-
-#ifdef NTK_GUI
-            if (! s_moduleBackdrop)
-            {
-                fl_register_images();
-
-                Fl_Dial::default_style(Fl_Dial::PIXMAP_DIAL);
-
-                if (Fl_Shared_Image* img = Fl_Shared_Image::get(PIXMAP_PATH "/knob.png"))
-                    Fl_Dial::default_image(img);
-                else
-                    Fl_Dial::default_image(Fl_Shared_Image::get(SOURCE_DIR "/../pixmaps/knob.png"));
-
-                if (Fl_Shared_Image* img = Fl_Shared_Image::get(PIXMAP_PATH "/window_backdrop.png"))
-                    Fl::scheme_bg(new Fl_Tiled_Image(img));
-                else
-                    Fl::scheme_bg(new Fl_Tiled_Image(Fl_Shared_Image::get(SOURCE_DIR "/../pixmaps/window_backdrop.png")));
-
-                if (Fl_Shared_Image* img = Fl_Shared_Image::get(PIXMAP_PATH "/module_backdrop.png"))
-                    s_moduleBackdrop = new Fl_Tiled_Image(img);
-                else
-                    s_moduleBackdrop = new Fl_Tiled_Image(Fl_Shared_Image::get(SOURCE_DIR "/../pixmaps/module_backdrop.png"));
-
-                Fl::background(50, 50, 50);
-                Fl::background2(70, 70, 70);
-                Fl::foreground(255, 255, 255);
-            }
-#endif
-
-            m_uiClosed = 0;
-            qWarning("TEST - master: %p", m_master);
-            m_masterUI = new MasterUI(m_master, &m_uiClosed);
-
-            m_masterUI->simplemasterwindow->callback((Fl_Callback*)cb_simplemasterwindow, this);
-        }
-
-        if (show)
-        {
-            m_masterUI->showUI();
-        }
-        else
-        {
-            // same as showUI
-            switch (config.cfg.UserInterfaceMode)
-            {
-            case 0:
-                m_masterUI->selectuiwindow->hide();
-                break;
-            case 1:
-                m_masterUI->masterwindow->hide();
-                break;
-            case 2:
-                m_masterUI->simplemasterwindow->hide();
-                break;
-            };
-        }
-    }
-
-    void uiIdle()
-    {
-        if (m_uiClosed)
-        {
-            qWarning("Closed!!");
-        }
-        else if (m_masterUI)
-        {
-            qWarning("IDLE");
-            //pthread_mutex_lock(&m_master->mutex);
-            Fl::check();
-            //pthread_mutex_unlock(&m_master->mutex);
-        }
-    }
-#endif
-
-    // -------------------------------------------------------------------
     // Plugin process calls
 
     void activate()
@@ -416,11 +284,7 @@ private:
     };
     std::vector<ProgramInfo> m_programs;
 
-    Master*   m_master;
-#ifdef WANT_ZYNADDSUBFX_GUI
-    MasterUI* m_masterUI;
-    int m_uiClosed;
-#endif
+    Master* m_master;
 
 public:
     static int s_instanceCount;
@@ -443,10 +307,6 @@ public:
             denormalkillbuf = new float [synth->buffersize];
             for (int i=0; i < synth->buffersize; i++)
                 denormalkillbuf[i] = (RND - 0.5f) * 1e-16;
-
-            Master::getInstance();
-
-            Nio::start();
         }
 
         return new ZynAddSubFxPlugin(host);
@@ -458,18 +318,6 @@ public:
 
         if (--s_instanceCount == 0)
         {
-#ifdef NTK_GUI
-            if (s_moduleBackdrop)
-            {
-                delete s_moduleBackdrop;
-                s_moduleBackdrop = nullptr;
-            }
-#endif
-
-            Nio::stop();
-
-            //Master::deleteInstance();
-
             delete[] denormalkillbuf;
             denormalkillbuf = nullptr;
 
@@ -485,11 +333,7 @@ int ZynAddSubFxPlugin::s_instanceCount = 0;
 
 static PluginDescriptor zynAddSubFxDesc = {
     /* category  */ PLUGIN_CATEGORY_SYNTH,
-#ifdef WANT_ZYNADDSUBFX_GUI
-    /* hints     */ PLUGIN_IS_SYNTH | PLUGIN_HAS_GUI | PLUGIN_USES_SINGLE_THREAD,
-#else
     /* hints     */ PLUGIN_IS_SYNTH | PLUGIN_USES_SINGLE_THREAD,
-#endif
     /* audioIns  */ 2,
     /* audioOuts */ 2,
     /* midiIns   */ 1,

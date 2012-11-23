@@ -84,10 +84,14 @@ OBJS += ../carla-engine/carla_engine.a
 OBJS += ../carla-plugin/carla_plugin.a
 OBJS += ../carla-native/carla_native.a
 
+# LINK_FLAGS       += -L../carla-native/ -lcarla_native
+# LINK_FLAGS       += -Wl,-whole-archive ../carla-native/carla_native.a
+# OBJS += -Wl,-whole-archive ../carla-native/carla_native.a -Wl,-no-whole-archive
+
 # FIXME
-OBJS += ../carla-native/3bandeq.a
-OBJS += ../carla-native/3bandsplitter.a
-OBJS += ../carla-native/zynaddsubfx.a
+# OBJS += ../carla-native/3bandeq.a
+# OBJS += ../carla-native/3bandsplitter.a
+# OBJS += ../carla-native/zynaddsubfx.a
 
 # others
 ifeq ($(CARLA_PLUGIN_SUPPORT),true)

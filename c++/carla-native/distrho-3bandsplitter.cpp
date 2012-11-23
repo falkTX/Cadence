@@ -17,34 +17,29 @@
 
 #include "carla_native.hpp"
 
-// Set plugin data
-#include "3bandeq/DistrhoPluginInfo.h"
+// Plugin Code
+#include "3bandsplitter/DistrhoArtwork3BandSplitter.cpp"
+#include "3bandsplitter/DistrhoPlugin3BandSplitter.cpp"
+#include "3bandsplitter/DistrhoUI3BandSplitter.cpp"
 
-/// Set namespace for this plugin
-#define DISTRHO_NAMESPACE DISTRHO_3BandEQ
-
-// Include Plugin headers
-#include "3bandeq/DistrhoPlugin3BandEQ.h"
-#include "3bandeq/DistrhoUI3BandEQ.h"
-
-// Include DISTRHO code
+// Carla DISTRHO Plugin
 #include "distrho/DistrhoPluginCarla.cpp"
 
 START_NAMESPACE_DISTRHO
 
 // -----------------------------------------------------------------------
 
-static PluginDescriptor tBandEqDesc = {
+static PluginDescriptor tBandSplitterDesc = {
     /* category  */ ::PLUGIN_CATEGORY_EQ,
     /* hints     */ ::PLUGIN_HAS_GUI,
     /* audioIns  */ DISTRHO_PLUGIN_NUM_INPUTS,
     /* audioOuts */ DISTRHO_PLUGIN_NUM_OUTPUTS,
     /* midiIns   */ 0,
     /* midiOuts  */ 0,
-    /* paramIns  */ DistrhoPlugin3BandEQ::paramCount,
+    /* paramIns  */ DistrhoPlugin3BandSplitter::paramCount,
     /* paramOuts */ 0,
     /* name      */ DISTRHO_PLUGIN_NAME,
-    /* label     */ "3BandEQ",
+    /* label     */ "3BandSplitter",
     /* maker     */ "falkTX",
     /* copyright */ "LGPL",
     PluginDescriptorFILL(PluginCarla)
@@ -54,10 +49,10 @@ END_NAMESPACE_DISTRHO
 
 // -----------------------------------------------------------------------
 
-void carla_register_native_plugin_3BandEQ()
+void carla_register_native_plugin_3BandSplitter()
 {
     USE_NAMESPACE_DISTRHO
-    carla_register_native_plugin(&tBandEqDesc);
+    carla_register_native_plugin(&tBandSplitterDesc);
 }
 
 // -----------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /* (Auto-generated binary data file). */
 
-#ifndef BINARY_DISTRHOARTWORK3BANDSPLITTER_H
-#define BINARY_DISTRHOARTWORK3BANDSPLITTER_H
+#ifndef BINARY_DISTRHOARTWORK3BANDSPLITTER_HPP
+#define BINARY_DISTRHOARTWORK3BANDSPLITTER_HPP
 
 namespace DistrhoArtwork3BandSplitter
 {
@@ -36,5 +36,5 @@ namespace DistrhoArtwork3BandSplitter
     const unsigned int sliderHeight   = 30;
 }
 
-#endif // BINARY_DISTRHOARTWORK3BANDSPLITTER_H
+#endif // BINARY_DISTRHOARTWORK3BANDSPLITTER_HPP
 

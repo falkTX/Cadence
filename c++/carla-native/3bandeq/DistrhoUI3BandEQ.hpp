@@ -1,5 +1,5 @@
 /*
- * DISTRHO 3BandSplitter Plugin, based on 3BandSplitter by Michael Gruhn
+ * DISTRHO 3BandEQ Plugin, based on 3BandEQ by Michael Gruhn
  * Copyright (C) 2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -9,28 +9,28 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
  * For a full copy of the license see the LGPL.txt file
  */
 
-#ifndef __DISTRHO_UI_3BANDSPLITTER_H__
-#define __DISTRHO_UI_3BANDSPLITTER_H__
+#ifndef __DISTRHO_UI_3BANDEQ_HPP__
+#define __DISTRHO_UI_3BANDEQ_HPP__
 
 #include "DistrhoUIOpenGLExt.h"
 
-#include "DistrhoArtwork3BandSplitter.h"
-#include "DistrhoPlugin3BandSplitter.h"
+#include "DistrhoArtwork3BandEQ.hpp"
+#include "DistrhoPlugin3BandEQ.hpp"
 
 START_NAMESPACE_DISTRHO
 
 // -------------------------------------------------
 
-class DistrhoUI3BandSplitter : public OpenGLExtUI
+class DistrhoUI3BandEQ : public OpenGLExtUI
 {
 public:
-    DistrhoUI3BandSplitter();
-    ~DistrhoUI3BandSplitter();
+    DistrhoUI3BandEQ();
+    ~DistrhoUI3BandEQ();
 
     // ---------------------------------------------
 protected:
@@ -38,12 +38,12 @@ protected:
     // Information
     unsigned int d_width()
     {
-        return DistrhoArtwork3BandSplitter::backgroundWidth;
+        return DistrhoArtwork3BandEQ::backgroundWidth;
     }
 
     unsigned int d_height()
     {
-        return DistrhoArtwork3BandSplitter::backgroundHeight;
+        return DistrhoArtwork3BandEQ::backgroundHeight;
     }
 
     // DSP Callbacks
@@ -73,4 +73,4 @@ private:
 
 END_NAMESPACE_DISTRHO
 
-#endif // __DISTRHO_UI_3BANDSPLITTER_H__
+#endif // __DISTRHO_UI_3BANDEQ_HPP__

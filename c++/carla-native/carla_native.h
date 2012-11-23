@@ -186,9 +186,7 @@ void carla_register_native_plugin(const PluginDescriptor* desc);
 // Available plugins
 void carla_register_native_plugin_bypass();
 void carla_register_native_plugin_midiSplit();
-#ifdef WANT_ZYNADDSUBFX
 void carla_register_native_plugin_zynaddsubfx();
-#endif
 
 // DISTRHO based plugins
 void carla_register_native_plugin_3BandEQ();

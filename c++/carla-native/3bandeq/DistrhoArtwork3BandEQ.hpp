@@ -1,7 +1,7 @@
 /* (Auto-generated binary data file). */
 
-#ifndef BINARY_DISTRHOARTWORK3BANDEQ_H
-#define BINARY_DISTRHOARTWORK3BANDEQ_H
+#ifndef BINARY_DISTRHOARTWORK3BANDEQ_HPP
+#define BINARY_DISTRHOARTWORK3BANDEQ_HPP
 
 namespace DistrhoArtwork3BandEQ
 {
@@ -36,5 +36,5 @@ namespace DistrhoArtwork3BandEQ
     const unsigned int sliderHeight   = 30;
 }
 
-#endif // BINARY_DISTRHOARTWORK3BANDEQ_H
+#endif // BINARY_DISTRHOARTWORK3BANDEQ_HPP
 

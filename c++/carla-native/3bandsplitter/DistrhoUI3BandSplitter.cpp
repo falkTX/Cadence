@@ -9,12 +9,12 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
  * For a full copy of the license see the LGPL.txt file
  */
 
-#include "DistrhoUI3BandSplitter.h"
+#include "DistrhoUI3BandSplitter.hpp"
 
 START_NAMESPACE_DISTRHO
 
