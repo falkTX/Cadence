@@ -35,13 +35,30 @@ def signal_handler(sig, frame=0):
     doLoop = False
 
 # --------------------------------------------------
-# listen to jack buffer size changes
+# listen to jack buffer-size and sample-rate changes
 
 def buffer_size_callback(newBufferSize, arg):
     global doRunNow, bufferSize
     bufferSize = newBufferSize
     doRunNow = True
     return 0
+
+def sample_rate_callback(newSampleRate, arg):
+    global doRunNow, sampleRate
+    sampleRate = newSampleRate
+    doRunNow = True
+    return 0
+
+# --------------------------------------------------
+# listen to jack2 master switch
+
+def client_registration_callback(clientName, register, arg):
+    if register and clientName == b"system":
+        print("NOTICE: Possible JACK2 master switch")
+        global doRunNow, bufferSize, sampleRate
+        doRunNow   = True
+        sampleRate = jacklib.get_sample_rate(client)
+        bufferSize = jacklib.get_buffer_size(client)
 
 # --------------------------------------------------
 # listen to jack shutdown
@@ -83,9 +100,14 @@ if __name__ == '__main__':
     client = jacklib.client_open("cadence-aloop-daemon", jacklib.JackUseExactName, None)
 
     if not client:
+        print("cadence-aloop-daemon is already running, delete \"/tmp/.cadence-aloop-daemon.x\" to close it")
         quit()
 
+    if jacklib.JACK2:
+        jacklib.set_client_registration_callback(client, client_registration_callback, None)
+
     jacklib.set_buffer_size_callback(client, buffer_size_callback, None)
+    jacklib.set_sample_rate_callback(client, sample_rate_callback, None)
     jacklib.on_shutdown(client, shutdown_callback, None)
     jacklib.activate(client)
 
