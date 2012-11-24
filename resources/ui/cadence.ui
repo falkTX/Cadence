@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>739</width>
-    <height>549</height>
+    <height>529</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -515,7 +515,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>366</width>
-                  <height>120</height>
+                  <height>100</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -663,7 +663,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>366</width>
-                  <height>117</height>
+                  <height>97</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -804,7 +804,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>366</width>
-                  <height>117</height>
+                  <height>97</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -1511,7 +1511,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>76</width>
+                  <width>94</width>
                   <height>76</height>
                  </rect>
                 </property>
@@ -1529,7 +1529,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>89</width>
+                  <width>94</width>
                   <height>76</height>
                  </rect>
                 </property>
@@ -1547,7 +1547,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>89</width>
+                  <width>94</width>
                   <height>76</height>
                  </rect>
                 </property>
@@ -1565,7 +1565,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>89</width>
+                  <width>94</width>
                   <height>76</height>
                  </rect>
                 </property>
@@ -2066,14 +2066,6 @@ Default is off</string>
     </item>
    </layout>
   </widget>
-  <action name="act_quit">
-   <property name="text">
-    <string>&amp;Quit</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Q</string>
-   </property>
-  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -2087,22 +2079,6 @@ Default is off</string>
   <include location="../resources.qrc"/>
  </resources>
  <connections>
-  <connection>
-   <sender>act_quit</sender>
-   <signal>triggered()</signal>
-   <receiver>CadenceMainW</receiver>
-   <slot>close()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>399</x>
-     <y>299</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>tw_tweaks</sender>
    <signal>currentCellChanged(int,int,int,int)</signal>

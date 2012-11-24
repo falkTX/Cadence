@@ -2494,11 +2494,10 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
     def closeEvent(self, event):
         self.saveSettings()
         if self.systray:
-            #if self.saved_settings["Main/CloseToTray"] and self.systray.isTrayAvailable() and self.isVisible():
-                #self.hide()
-                #self.systray.setActionText("show", QStringStr(gui.tr("Restore")))
-                #event.ignore()
-                #return
+            if self.m_savedSettings["Main/CloseToTray"]:
+                if self.systray.handleQtCloseEvent(event):
+                    patchcanvas.clear()
+                return
             self.systray.close()
         patchcanvas.clear()
         QMainWindow.closeEvent(self, event)
@@ -2542,10 +2541,10 @@ if __name__ == '__main__':
     setUpSignals(gui)
 
     # App-Loop
-    #if gui.systray:
-        #ret = gui.systray.exec_(app)
-    #else:
-    ret = app.exec_()
+    if gui.systray:
+        ret = gui.systray.exec_(app)
+    else:
+        ret = app.exec_()
 
     # Close Jack
     if jack.client:

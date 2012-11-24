@@ -21,6 +21,3 @@ Claudia:
 
 PatchCanvas:
   - Implement export to Catarina file
-
-Systray:
-  - Implement hide-on-close

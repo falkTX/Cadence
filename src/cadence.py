@@ -2052,11 +2052,6 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         if geometry:
             self.restoreGeometry(self.settings.value("Geometry", ""))
 
-        self.m_savedSettings = {
-            "Main/UseSystemTray": self.settings.value("Main/UseSystemTray", True, type=bool),
-            "Main/CloseToTray": self.settings.value("Main/CloseToTray", True, type=bool)
-        }
-
         self.cb_jack_autostart.setChecked(GlobalSettings.value("JACK/AutoStart", True, type=bool))
         self.cb_a2j_autostart.setChecked(GlobalSettings.value("A2J/AutoStart", True, type=bool))
         self.cb_pulse_autostart.setChecked(GlobalSettings.value("Pulse2JACK/AutoStart", havePulseAudio, type=bool))
@@ -2097,8 +2092,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     def closeEvent(self, event):
         self.saveSettings()
-        self.systray.close()
-        QMainWindow.closeEvent(self, event)
+        self.systray.handleQtCloseEvent(event)
 
 #--------------- main ------------------
 if __name__ == '__main__':

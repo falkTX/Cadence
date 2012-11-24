@@ -19,7 +19,7 @@
 # Imports (Global)
 import os, sys
 from PyQt4.QtCore import QTimer, SIGNAL
-from PyQt4.QtGui import QAction, QIcon, QMenu, QSystemTrayIcon
+from PyQt4.QtGui import QAction, QIcon, QMainWindow, QMenu, QSystemTrayIcon
 
 try:
     if os.getenv("DESKTOP_SESSION") in ("ubuntu", "ubuntu-2d") and not os.path.exists("/var/cadence/no_app_indicators"):
@@ -81,6 +81,7 @@ class GlobalSysTray(object):
     def __init__(self, parent, name, icon):
         object.__init__(self)
 
+        self._app    = None
         self._parent = parent
         self._gtk_running = False
         self._quit_added  = False
@@ -491,6 +492,17 @@ class GlobalSysTray(object):
         else:
             return False
 
+    def handleQtCloseEvent(self, event):
+        if self.isTrayAvailable() and self._parent.isVisible():
+            event.ignore()
+            self.__hideShowCall()
+            return False
+        else:
+            self.close()
+
+        QMainWindow.closeEvent(self._parent, event)
+        return True
+
     # -------------------------------------------------------------------------------------------
 
     def show(self):
@@ -531,6 +543,7 @@ class GlobalSysTray(object):
             self.menu.close()
 
     def exec_(self, app):
+        self._app = app
         if TrayEngine == "AppIndicator":
             self._gtk_running = True
             return Gtk.main()
@@ -616,6 +629,10 @@ class GlobalSysTray(object):
         if self._parent.isVisible():
             self.setActionText("show", self._parent.tr("Restore"))
             self._parent.hide()
+
+            if self._app:
+                self._app.setQuitOnLastWindowClosed(False)
+
         else:
             self.setActionText("show", self._parent.tr("Minimize"))
 
@@ -624,9 +641,16 @@ class GlobalSysTray(object):
             else:
                 self._parent.showNormal()
 
-            QTimer.singleShot(100, self.__raiseWindow)
+            if self._app:
+                self._app.setQuitOnLastWindowClosed(True)
+
+            QTimer.singleShot(500, self.__raiseWindow)
 
     def __quitCall(self):
+        if self._app:
+            self._app.setQuitOnLastWindowClosed(True)
+
+        self._parent.hide()
         self._parent.close()
 
     def __raiseWindow(self):
