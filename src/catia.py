@@ -463,13 +463,13 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         jacklib.set_buffer_size_callback(jack.client, self.JackBufferSizeCallback, None)
         jacklib.set_sample_rate_callback(jack.client, self.JackSampleRateCallback, None)
         jacklib.set_xrun_callback(jack.client, self.JackXRunCallback, None)
-        jacklib.set_client_registration_callback(jack.client, self.JackClientRegistrationCallback, None)
         jacklib.set_port_registration_callback(jack.client, self.JackPortRegistrationCallback, None)
         jacklib.set_port_connect_callback(jack.client, self.JackPortConnectCallback, None)
         jacklib.set_session_callback(jack.client, self.JackSessionCallback, None)
         jacklib.on_shutdown(jack.client, self.JackShutdownCallback, None)
 
         if jacklib.JACK2:
+            jacklib.set_client_registration_callback(jack.client, self.JackClientRegistrationCallback, None)
             jacklib.set_port_rename_callback(jack.client, self.JackPortRenameCallback, None)
 
     def init_jack_ports(self):
