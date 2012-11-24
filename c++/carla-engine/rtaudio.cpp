@@ -17,6 +17,14 @@
 
 #ifdef CARLA_ENGINE_RTAUDIO
 
+#if defined(Q_OS_MAC)
+# define __MACOSX_CORE__
+#elif defined(Q_OS_WIN)
+# define __WINDOWS_DS__
+# define __WINDOWS_ASIO__
+# define __WINDOWS_MM__
+#endif
+
 #include "carla_engine.hpp"
 #include "carla_plugin.hpp"
 
