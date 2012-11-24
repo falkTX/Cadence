@@ -6,8 +6,6 @@
 
 include ../Makefile.mk
 
-HAVE_ZYN_DEPS    = $(shell pkg-config --exists fftw3 mxml && echo true)
-
 # --------------------------------------------------------------
 
 BUILD_C_FLAGS   += -fvisibility=hidden -fPIC -I.

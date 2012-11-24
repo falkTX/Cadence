@@ -6,11 +6,6 @@
 
 include ../Makefile.mk
 
-ifneq ($(NATIVE),)
-HAVE_FLUIDSYNTH  = $(shell pkg-config --exists fluidsynth && echo true)
-HAVE_LINUSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
-endif
-
 # --------------------------------------------------------------
 
 BUILD_CXX_FLAGS += -I../carla-backend -I../carla-includes -I../carla-utils
@@ -21,7 +16,7 @@ ifeq ($(CARLA_PLUGIN_SUPPORT),true)
 BUILD_CXX_FLAGS += -DWANT_LADSPA -DWANT_DSSI -DWANT_LV2 -DWANT_VST
 endif
 
-ifeq ($(CARLA_SAMPLERS_SUPPORT),true)
+ifneq ($(NATIVE),)
 ifeq ($(HAVE_FLUIDSYNTH),true)
 BUILD_CXX_FLAGS += $(shell pkg-config --cflags fluidsynth) -DWANT_FLUIDSYNTH
 LINK_FLAGS      += $(shell pkg-config --libs fluidsynth)
@@ -32,6 +27,8 @@ BUILD_CXX_FLAGS += $(shell pkg-config --cflags linuxsampler) -DWANT_LINUXSAMPLER
 LINK_FLAGS      += $(shell pkg-config --libs linuxsampler)
 endif
 endif
+
+# --------------------------------------------------------------
 
 POSIX_BUILD_FLAGS = $(BUILD_CXX_FLAGS)
 POSIX_32BIT_FLAGS = $(32BIT_FLAGS) -L/usr/lib32 -L/usr/lib/i386-linux-gnu

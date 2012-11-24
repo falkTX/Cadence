@@ -6,17 +6,6 @@
 
 include ../Makefile.mk
 
-HAVE_ZYN_DEPS    = $(shell pkg-config --exists fftw3 mxml && echo true)
-
-ifeq ($(CARLA_PLUGIN_SUPPORT),true)
-HAVE_SUIL        = $(shell pkg-config --exists suil-0 && echo true)
-endif
-
-ifeq ($(CARLA_SAMPLERS_SUPPORT),true)
-HAVE_FLUIDSYNTH  = $(shell pkg-config --exists fluidsynth && echo true)
-HAVE_LINUSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
-endif
-
 # --------------------------------------------------------------
 
 BUILD_CXX_FLAGS += -fvisibility=hidden -fPIC

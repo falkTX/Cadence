@@ -6,11 +6,13 @@
 
 include ../Makefile.mk
 
+# --------------------------------------------------------------
+
 BUILD_CXX_FLAGS += -I../widgets
 BUILD_CXX_FLAGS += $(shell pkg-config --cflags QtCore QtGui jack)
 LINK_FLAGS      += $(shell pkg-config --libs QtCore QtGui jack)
 
-ifeq ($(shell pkg-config --atleast-version=0.121.0 jack && echo true),true)
+ifeq ($(HAVE_JACKSESSION),true)
 BUILD_CXX_FLAGS += -DHAVE_JACKSESSION
 endif
 

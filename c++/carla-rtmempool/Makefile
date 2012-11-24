@@ -6,6 +6,8 @@
 
 include ../Makefile.mk
 
+# --------------------------------------------------------------
+
 BUILD_C_FLAGS += -fvisibility=hidden -fPIC
 BUILD_C_FLAGS += -I. -I../carla-includes
 

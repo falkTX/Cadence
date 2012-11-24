@@ -6,25 +6,6 @@
 
 include ../Makefile.mk
 
-HAVE_JACK         = $(shell pkg-config --exists jack && echo true)
-
-ifeq ($(CARLA_RTAUDIO_SUPPORT),true)
-HAVE_ALSA         = $(shell pkg-config --exists alsa && echo true)
-HAVE_PULSEAUDIO   = $(shell pkg-config --exists libpulse-simple && echo true)
-endif
-
-ifeq ($(CARLA_PLUGIN_SUPPORT),true)
-HAVE_SUIL         = $(shell pkg-config --exists suil-0 && echo true)
-endif
-
-ifeq ($(CARLA_SAMPLERS_SUPPORT),true)
-HAVE_FLUIDSYNTH   = $(shell pkg-config --exists fluidsynth && echo true)
-HAVE_LINUXSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
-endif
-
-HAVE_ZYN_DEPS     = $(shell pkg-config --exists fftw3 mxml && echo true)
-HAVE_ZYN_GUI_DEPS = $(shell pkg-config --exists ntk ntk_images && echo true)
-
 # --------------------------------------------------------------
 
 BUILD_CXX_FLAGS  += -I. -I../carla-engine -I../carla-includes -I../carla-native -I../carla-plugin -I../carla-utils
@@ -70,11 +51,6 @@ endif
 
 ifeq ($(HAVE_ZYN_DEPS),true)
 LINK_FLAGS       += $(shell pkg-config --libs fftw3 mxml)
-
-ifeq ($(HAVE_ZYN_GUI_DEPS),true)
-LINK_FLAGS       += $(shell pkg-config --libs ntk ntk_images)
-# LINK_FLAGS      += $(shell fltk-config --use-images --ldflags)
-endif
 endif
 
 OBJS = \
@@ -83,15 +59,6 @@ OBJS = \
 OBJS += ../carla-engine/carla_engine.a
 OBJS += ../carla-plugin/carla_plugin.a
 OBJS += ../carla-native/carla_native.a
-
-# LINK_FLAGS       += -L../carla-native/ -lcarla_native
-# LINK_FLAGS       += -Wl,-whole-archive ../carla-native/carla_native.a
-# OBJS += -Wl,-whole-archive ../carla-native/carla_native.a -Wl,-no-whole-archive
-
-# FIXME
-# OBJS += ../carla-native/3bandeq.a
-# OBJS += ../carla-native/3bandsplitter.a
-# OBJS += ../carla-native/zynaddsubfx.a
 
 # others
 ifeq ($(CARLA_PLUGIN_SUPPORT),true)

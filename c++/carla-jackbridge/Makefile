@@ -6,6 +6,8 @@
 
 include ../Makefile.mk
 
+# --------------------------------------------------------------
+
 WINECC ?= winegcc
 
 BUILD_C_FLAGS += -DJACKBRIDGE_EXPORT -I.

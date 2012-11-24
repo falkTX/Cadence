@@ -13,6 +13,8 @@ UIC ?= $(shell pkg-config --variable=uic_location QtCore)
 STRIP ?= strip
 WINDRES ?= windres
 
+# --------------------------------------------------------------
+
 DEBUG ?= false
 
 ifeq ($(DEBUG),true)
@@ -35,6 +37,8 @@ ifneq ($(DEBUG),true)
 BUILD_CXX_FLAGS += -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT
 endif
 
+# --------------------------------------------------------------
+
 # Comment this line to not use vestige header
 BUILD_CXX_FLAGS += -DVESTIGE_HEADER
 
@@ -42,3 +46,24 @@ BUILD_CXX_FLAGS += -DVESTIGE_HEADER
 CARLA_PLUGIN_SUPPORT   = true
 CARLA_SAMPLERS_SUPPORT = true
 CARLA_RTAUDIO_SUPPORT  = true
+
+# --------------------------------------------------------------
+
+HAVE_JACK        = $(shell pkg-config --exists jack && echo true)
+HAVE_JACKSESSION = $(shell pkg-config --atleast-version=0.121.0 jack && echo true)
+
+ifeq ($(CARLA_PLUGIN_SUPPORT),true)
+HAVE_SUIL        = $(shell pkg-config --exists suil-0 && echo true)
+endif
+
+ifeq ($(CARLA_SAMPLERS_SUPPORT),true)
+HAVE_FLUIDSYNTH  = $(shell pkg-config --exists fluidsynth && echo true)
+HAVE_LINUSAMPLER = $(shell pkg-config --exists linuxsampler && echo true)
+endif
+
+ifeq ($(CARLA_RTAUDIO_SUPPORT),true)
+HAVE_ALSA        = $(shell pkg-config --exists alsa && echo true)
+HAVE_PULSEAUDIO  = $(shell pkg-config --exists libpulse-simple && echo true)
+endif
+
+HAVE_ZYN_DEPS    = $(shell pkg-config --exists fftw3 mxml && echo true)

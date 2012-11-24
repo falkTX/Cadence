@@ -6,6 +6,8 @@
 
 include ../Makefile.mk
 
+# --------------------------------------------------------------
+
 SERD_VERSION   = 0.18.0
 SORD_VERSION   = 0.10.4
 SRATOM_VERSION = 0.4.0

@@ -6,6 +6,8 @@
 
 include ../Makefile.mk
 
+# --------------------------------------------------------------
+
 BUILD_CXX_FLAGS += -DBUILD_BRIDGE
 BUILD_CXX_FLAGS += -I. -I../carla-includes -I../carla-utils
 BUILD_CXX_FLAGS += $(shell pkg-config --cflags liblo QtCore)

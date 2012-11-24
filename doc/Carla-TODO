@@ -1,5 +1,9 @@
 # Carla TODO
 
+CODE CLEANUP:
+ - Use CarlaString in portNameSize stuff
+ - Create PluginGUI class in C++ code, remove python one (need to handle parent somehow)
+
 GENERAL:
  - add direct program access on ui-dialogs (needed for standalone bridges), maybe add extra buttons too (reset plugin, fix ui size)
  - implement osc-based uis in bridge mode
