@@ -601,6 +601,9 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
             self.connect(self.b_save_state, SIGNAL("clicked()"), SLOT("slot_saveState()"))
             self.connect(self.b_load_state, SIGNAL("clicked()"), SLOT("slot_loadState()"))
 
+        self.connect(self.keyboard, SIGNAL("noteOn(int)"), SLOT("slot_noteOn(int)"))
+        self.connect(self.keyboard, SIGNAL("noteOff(int)"), SLOT("slot_noteOff(int)"))
+
         self.connect(self.cb_programs, SIGNAL("currentIndexChanged(int)"), SLOT("slot_programIndexChanged(int)"))
         self.connect(self.cb_midi_programs, SIGNAL("currentIndexChanged(int)"), SLOT("slot_midiProgramIndexChanged(int)"))
 
