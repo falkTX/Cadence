@@ -20,7 +20,7 @@
 import os, sys
 from unicodedata import normalize
 from PyQt4.QtCore import qWarning, SIGNAL, SLOT
-from PyQt4.QtGui import QFileDialog, QIcon, QMessageBox
+from PyQt4.QtGui import QApplication, QFileDialog, QIcon, QMessageBox
 from codecs import open as codecopen
 
 # Set Platform
@@ -263,8 +263,8 @@ def setUpSignals(self_):
     signal(SIGUSR1, signalHandler)
     signal(SIGUSR2, signalHandler)
 
+    x_gui.connect(x_gui, SIGNAL("SIGTERM()"), lambda: closeWindowHandler())
     x_gui.connect(x_gui, SIGNAL("SIGUSR2()"), lambda: showWindowHandler())
-    x_gui.connect(x_gui, SIGNAL("SIGTERM()"), SLOT("close()"))
 
 def signalHandler(sig, frame):
     global x_gui
@@ -274,6 +274,12 @@ def signalHandler(sig, frame):
         x_gui.emit(SIGNAL("SIGUSR1()"))
     elif sig == SIGUSR2:
         x_gui.emit(SIGNAL("SIGUSR2()"))
+
+def closeWindowHandler():
+    global x_gui
+    x_gui.hide()
+    x_gui.close()
+    QApplication.instance().quit()
 
 def showWindowHandler():
     global x_gui
