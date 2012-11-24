@@ -202,6 +202,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.connect(self, SIGNAL("XRunCallback()"), SLOT("slot_XRunCallback()"))
         self.connect(self, SIGNAL("BufferSizeCallback(int)"), SLOT("slot_BufferSizeCallback(int)"))
         self.connect(self, SIGNAL("SampleRateCallback(int)"), SLOT("slot_SampleRateCallback(int)"))
+        self.connect(self, SIGNAL("ClientRegistrationCallback(QString, bool)"), SLOT("slot_ClientRegistrationCallback(QString, bool)"))
         self.connect(self, SIGNAL("PortRegistrationCallback(int, bool)"), SLOT("slot_PortRegistrationCallback(int, bool)"))
         self.connect(self, SIGNAL("PortConnectCallback(int, int, bool)"), SLOT("slot_PortConnectCallback(int, int, bool)"))
         self.connect(self, SIGNAL("PortRenameCallback(int, QString, QString)"), SLOT("slot_PortRenameCallback(int, QString, QString)"))
@@ -462,6 +463,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         jacklib.set_buffer_size_callback(jack.client, self.JackBufferSizeCallback, None)
         jacklib.set_sample_rate_callback(jack.client, self.JackSampleRateCallback, None)
         jacklib.set_xrun_callback(jack.client, self.JackXRunCallback, None)
+        jacklib.set_client_registration_callback(jack.client, self.JackClientRegistrationCallback, None)
         jacklib.set_port_registration_callback(jack.client, self.JackPortRegistrationCallback, None)
         jacklib.set_port_connect_callback(jack.client, self.JackPortConnectCallback, None)
         jacklib.set_session_callback(jack.client, self.JackSessionCallback, None)
@@ -1008,6 +1010,11 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.emit(SIGNAL("SampleRateCallback(int)"), sample_rate)
         return 0
 
+    def JackClientRegistrationCallback(self, client_name, register_yesno, arg):
+        if DEBUG: print("JackClientRegistrationCallback(\"%s\", %i)" % (client_name, register_yesno))
+        self.emit(SIGNAL("ClientRegistrationCallback(QString, bool)"), str(client_name, encoding="utf-8"), bool(register_yesno))
+        return 0
+
     def JackPortRegistrationCallback(self, port_id, register_yesno, arg):
         if DEBUG: print("JackPortRegistrationCallback(%i, %i)" % (port_id, register_yesno))
         self.emit(SIGNAL("PortRegistrationCallback(int, bool)"), port_id, bool(register_yesno))
@@ -1019,7 +1026,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         return 0
 
     def JackPortRenameCallback(self, port_id, old_name, new_name, arg):
-        if DEBUG: print("JackPortRenameCallback(%i, %s, %s)" % (port_id, old_name, new_name))
+        if DEBUG: print("JackPortRenameCallback(%i, \"%s\", \"%s\")" % (port_id, old_name, new_name))
         self.emit(SIGNAL("PortRenameCallback(int, QString, QString)"), port_id, str(old_name, encoding="utf-8"), str(new_name, encoding="utf-8"))
         return 0
 
@@ -1110,6 +1117,18 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
     @pyqtSlot(int)
     def slot_SampleRateCallback(self, sample_rate):
         setSampleRate(self, sample_rate)
+
+    @pyqtSlot(str, bool)
+    def slot_ClientRegistrationCallback(self, client_name, register_yesno):
+        if register_yesno and client_name == "system" and jack.client:
+            buffer_size = int(jacklib.get_buffer_size(jack.client))
+            sample_rate = int(jacklib.get_sample_rate(jack.client))
+            realtime = bool(int(jacklib.is_realtime(jack.client)))
+
+            setBufferSize(self, buffer_size)
+            setSampleRate(self, sample_rate)
+            setRealTime(self, realtime)
+            setXruns(self, 0)
 
     @pyqtSlot(int, bool)
     def slot_PortRegistrationCallback(self, port_id_jack, register_yesno):
