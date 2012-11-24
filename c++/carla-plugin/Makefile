@@ -28,7 +28,7 @@ ifeq ($(HAVE_FLUIDSYNTH),true)
 BUILD_CXX_FLAGS += $(shell pkg-config --cflags fluidsynth) -DWANT_FLUIDSYNTH
 endif
 
-ifeq ($(HAVE_LINUSAMPLER),true)
+ifeq ($(HAVE_LINUXSAMPLER),true)
 BUILD_CXX_FLAGS += $(shell pkg-config --cflags linuxsampler) -DWANT_LINUXSAMPLER
 endif
 
