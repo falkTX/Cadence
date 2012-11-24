@@ -755,7 +755,6 @@ public:
             midiprog.data[i].name    = strdup(mpDesc->name);
         }
 
-#ifndef BUILD_BRIDGE
         // Update OSC Names
         if (x_engine->isOscControlRegisted())
         {
@@ -764,7 +763,6 @@ public:
             for (i=0; i < midiprog.count; i++)
                 x_engine->osc_send_control_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
         }
-#endif
 
         if (init)
         {
@@ -827,11 +825,7 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Input VU
 
-#ifndef BUILD_BRIDGE
         if (aIn.count > 0 && x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
-#else
-        if (aIn.count > 0)
-#endif
         {
             if (aIn.count == 1)
             {
@@ -1276,9 +1270,7 @@ public:
                 }
 
                 // Output VU
-#ifndef BUILD_BRIDGE
                 if (x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
-#endif
                 {
                     for (k=0; i < 2 && k < frames; k++)
                     {

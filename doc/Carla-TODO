@@ -1,7 +1,6 @@
 # Carla TODO
 
 CODE CLEANUP:
- - Use CarlaString in portNameSize stuff
  - Create PluginGUI class in C++ code, remove python one (need to handle parent somehow)
 
 GENERAL:

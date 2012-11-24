@@ -282,59 +282,79 @@ public:
         aOut.ports    = new CarlaEngineAudioPort*[aOuts];
         aOut.rindexes = new uint32_t[aOuts];
 
-        const int portNameSize = x_engine->maxPortNameSize() - 1;
-        char portName[portNameSize];
+        const int   portNameSize = x_engine->maxPortNameSize();
+        CarlaString portName;
 
         // ---------------------------------------
         // Audio Outputs
 
-        if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
         {
-            strcpy(portName, m_name);
-            strcat(portName, ":out-left");
+            portName.clear();
+
+            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            {
+                portName  = m_name;
+                portName += ":";
+            }
+
+            portName += "out-left";
+            portName.truncate(portNameSize);
+
+            aOut.ports[0]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
+            aOut.rindexes[0] = 0;
         }
-        else
-            strcpy(portName, "out-left");
 
-        aOut.ports[0]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
-        aOut.rindexes[0] = 0;
-
-        if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
         {
-            strcpy(portName, m_name);
-            strcat(portName, ":out-right");
-        }
-        else
-            strcpy(portName, "out-right");
+            portName.clear();
 
-        aOut.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
-        aOut.rindexes[1] = 1;
+            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            {
+                portName  = m_name;
+                portName += ":";
+            }
+
+            portName += "out-right";
+            portName.truncate(portNameSize);
+
+            aOut.ports[1]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
+            aOut.rindexes[1] = 1;
+        }
 
         // ---------------------------------------
         // Control Input
 
-        if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
         {
-            strcpy(portName, m_name);
-            strcat(portName, ":control-in");
-        }
-        else
-            strcpy(portName, "control-in");
+            portName.clear();
 
-        param.portCin = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, true);
+            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            {
+                portName  = m_name;
+                portName += ":";
+            }
+
+            portName += "control-in";
+            portName.truncate(portNameSize);
+
+            param.portCin = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, true);
+        }
 
         // ---------------------------------------
         // MIDI Input
 
-        if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
         {
-            strcpy(portName, m_name);
-            strcat(portName, ":midi-in");
-        }
-        else
-            strcpy(portName, "midi-in");
+            portName.clear();
 
-        midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
+            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            {
+                portName  = m_name;
+                portName += ":";
+            }
+
+            portName += "midi-in";
+            portName.truncate(portNameSize);
+
+            midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
+        }
 
         // ---------------------------------------
 
@@ -392,7 +412,6 @@ public:
             midiprog.data[i].name    = strdup(info.InstrumentName.c_str());
         }
 
-#ifndef BUILD_BRIDGE
         // Update OSC Names
         if (x_engine->isOscControlRegisted())
         {
@@ -401,7 +420,6 @@ public:
             for (i=0; i < midiprog.count; i++)
                 x_engine->osc_send_control_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
         }
-#endif
 
         if (init)
         {
@@ -778,9 +796,7 @@ public:
                 }
 
                 // Output VU
-#ifndef BUILD_BRIDGE
                 if (x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
-#endif
                 {
                     for (k=0; i < 2 && k < frames; k++)
                     {

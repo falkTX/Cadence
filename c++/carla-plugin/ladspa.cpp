@@ -415,7 +415,7 @@ public:
         bool needsCtrlIn  = false;
         bool needsCtrlOut = false;
 
-        const int   portNameSize = x_engine->maxPortNameSize() - 3;
+        const int   portNameSize = x_engine->maxPortNameSize();
         CarlaString portName;
 
         for (unsigned long i=0; i < portCount; i++)
@@ -435,7 +435,6 @@ public:
                     portName += ":";
                 }
 #endif
-
                 portName += descriptor->PortNames[i];
                 portName.truncate(portNameSize);
 

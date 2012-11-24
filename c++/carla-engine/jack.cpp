@@ -495,7 +495,7 @@ public:
 #ifndef BUILD_BRIDGE
         if (options.processMode == PROCESS_MODE_SINGLE_CLIENT || options.processMode == PROCESS_MODE_MULTIPLE_CLIENTS)
 #endif
-            return jackbridge_client_name_size();
+            return jackbridge_client_name_size() - 3; // reserve space for "_2" forced-stereo ports
 
         return CarlaEngine::maxClientNameSize();
     }

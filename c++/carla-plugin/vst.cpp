@@ -516,19 +516,26 @@ public:
             param.ranges  = new ParameterRanges[params];
         }
 
-        const int portNameSize = x_engine->maxPortNameSize() - 1;
-        char portName[portNameSize];
         bool needsCtrlIn = (aOuts > 0 || params > 0);
+
+        const int   portNameSize = x_engine->maxPortNameSize();
+        CarlaString portName;
 
         // Audio Ins
         for (j=0; j < aIns; j++)
         {
+            portName.clear();
+
 #ifndef BUILD_BRIDGE
             if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
-                sprintf(portName, "%s:input_%02i", m_name, j+1);
-            else
+            {
+                portName  = m_name;
+                portName += ":";
+            }
 #endif
-                sprintf(portName, "input_%02i", j+1);
+            char tmp[12] = { 0 };
+            sprintf(tmp, "input_%02i", j+1);
+            portName += tmp;
 
             aIn.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
             aIn.rindexes[j] = j;
@@ -537,12 +544,18 @@ public:
         // Audio Outs
         for (j=0; j < aOuts; j++)
         {
+            portName.clear();
+
 #ifndef BUILD_BRIDGE
             if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
-                sprintf(portName, "%s:output_%02i", m_name, j+1);
-            else
+            {
+                portName  = m_name;
+                portName += ":";
+            }
 #endif
-                sprintf(portName, "output_%02i", j+1);
+            char tmp[12] = { 0 };
+            sprintf(tmp, "output_%02i", j+1);
+            portName += tmp;
 
             aOut.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
             aOut.rindexes[j] = j;
@@ -665,45 +678,51 @@ public:
 
         if (needsCtrlIn)
         {
+            portName.clear();
+
 #ifndef BUILD_BRIDGE
             if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
             {
-                strcpy(portName, m_name);
-                strcat(portName, ":control-in");
+                portName  = m_name;
+                portName += ":";
             }
-            else
 #endif
-                strcpy(portName, "control-in");
+            portName += "control-in";
+            portName.truncate(portNameSize);
 
             param.portCin = (CarlaEngineControlPort*)x_client->addPort(CarlaEnginePortTypeControl, portName, true);
         }
 
         if (mIns == 1)
         {
+            portName.clear();
+
 #ifndef BUILD_BRIDGE
             if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
             {
-                strcpy(portName, m_name);
-                strcat(portName, ":midi-in");
+                portName  = m_name;
+                portName += ":";
             }
-            else
 #endif
-                strcpy(portName, "midi-in");
+            portName += "midi-in";
+            portName.truncate(portNameSize);
 
             midi.portMin = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
         }
 
         if (mOuts == 1)
         {
+            portName.clear();
+
 #ifndef BUILD_BRIDGE
             if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
             {
-                strcpy(portName, m_name);
-                strcat(portName, ":midi-out");
+                portName  = m_name;
+                portName += ":";
             }
-            else
 #endif
-                strcpy(portName, "midi-out");
+            portName += "midi-out";
+            portName.truncate(portNameSize);
 
             midi.portMout = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
         }
