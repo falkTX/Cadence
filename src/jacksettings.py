@@ -51,6 +51,11 @@ else:
 # Init DBus
 def initBus(bus):
     global jackctl
+
+    if not bus:
+        jackctl = None
+        return 1
+
     try:
         jackctl = dbus.Interface(bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller"), "org.jackaudio.Configure")
         return 0
@@ -87,10 +92,13 @@ def engineHasFeature(feature):
     return bool(dbus.String(feature) in featureList)
 
 def getEngineParameter(parameter, fallback):
-    if not engineHasFeature(parameter):
+    if jackctl is None or not engineHasFeature(parameter):
         return fallback
     else:
-        return jackctl.GetParameterValue(["engine", parameter])[2]
+        try:
+            return jackctl.GetParameterValue(["engine", parameter])[2]
+        except:
+            return fallback
 
 def setEngineParameter(parameter, value, optional=True):
     if not engineHasFeature(parameter):
@@ -111,10 +119,13 @@ def driverHasFeature(feature):
     return bool(dbus.String(feature) in featureList)
 
 def getDriverParameter(parameter, fallback):
-    if not driverHasFeature(parameter):
+    if jackctl is None or not driverHasFeature(parameter):
         return fallback
     else:
-        return jackctl.GetParameterValue(["driver", parameter])[2]
+        try:
+            return jackctl.GetParameterValue(["driver", parameter])[2]
+        except:
+            return fallback
 
 def setDriverParameter(parameter, value, optional=True):
     if not driverHasFeature(parameter):

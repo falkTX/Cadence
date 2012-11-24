@@ -662,6 +662,9 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.m_last_item_type = None
         self.m_last_room_path = None
 
+        self.m_crashedJACK   = False
+        self.m_crashedLADISH = False
+
         self.cb_buffer_size.clear()
         self.cb_sample_rate.clear()
 
@@ -1210,6 +1213,8 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         self.init_jack()
 
+        self.m_crashedJACK = False
+
     def jackStopped(self):
         #self.DBusReconnect()
 
@@ -1311,6 +1316,8 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         self.init_studio()
 
+        self.m_crashedLADISH = False
+
     def studioUnloaded(self):
         DBus.ladish_studio  = None
         DBus.ladish_graph   = None
@@ -1368,6 +1375,10 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             if not newId:
                 # Something crashed
                 if appInterface in ("org.jackaudio.service", "org.ladish"):
+                    # Prevent any more dbus calls
+                    DBus.jack = None
+                    jack.client = None
+                    jacksettings.initBus(None)
                     self.emit(SIGNAL("DBusCrashCallback(QString)"), appInterface)
 
         elif kwds['interface'] == "org.jackaudio.JackControl":
@@ -1460,6 +1471,11 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         jacksettings.initBus(DBus.bus)
 
     def refreshXruns(self):
+        if not DBus.jack:
+            #if not self.m_crashedJACK:
+                #self.DBusReconnect()
+            return
+
         xruns = int(DBus.jack.GetXruns())
         if self.m_xruns != xruns:
             setXruns(self, xruns)
@@ -1998,10 +2014,10 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
     @pyqtSlot()
     def slot_handleCrash_ladish(self):
-        QMessageBox.warning(self, self.tr("Error"), self.tr("ladish daemon has crashed"))
         self.treeWidget.clear()
         patchcanvas.clear()
         self.DBusReconnect()
+        QMessageBox.warning(self, self.tr("Error"), self.tr("ladish daemon has crashed"))
 
     @pyqtSlot()
     def slot_handleCrash_studio(self):
@@ -2010,9 +2026,13 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
     @pyqtSlot(str)
     def slot_DBusCrashCallback(self, appInterface):
         if appInterface == "org.jackaudio.service":
-            QTimer.singleShot(0, self, SLOT("slot_handleCrash_jack()"))
+            if not (self.m_crashedJACK or self.m_crashedLADISH):
+                self.m_crashedJACK = True
+                QTimer.singleShot(1000, self, SLOT("slot_handleCrash_jack()"))
         elif appInterface == "org.ladish":
-            QTimer.singleShot(0, self, SLOT("slot_handleCrash_ladish()"))
+            if not (self.m_crashedJACK or self.m_crashedLADISH):
+                self.m_crashedLADISH = True
+                QTimer.singleShot(1000, self, SLOT("slot_handleCrash_ladish()"))
 
     @pyqtSlot()
     def slot_DBusServerStartedCallback(self):
