@@ -38,14 +38,19 @@ BUILD_CXX_FLAGS += -DQT_NO_DEBUG -DQT_NO_DEBUG_STREAM -DQT_NO_DEBUG_OUTPUT
 endif
 
 # --------------------------------------------------------------
+# Modify to enable/disable specific features
+
+# Support for LADSPA, DSSI, LV2 and VST plugins
+CARLA_PLUGIN_SUPPORT = true
+
+# Support for GIG, SF2 and SFZ sample banks (through fluidsynth and linuxsampler)
+CARLA_SAMPLERS_SUPPORT = true
+
+# Support for Native Audio (ALSA and/or PulseAudio in Linux)
+CARLA_RTAUDIO_SUPPORT = true
 
 # Comment this line to not use vestige header
 BUILD_CXX_FLAGS += -DVESTIGE_HEADER
-
-# Modify to enable/disable specific features
-CARLA_PLUGIN_SUPPORT   = true
-CARLA_SAMPLERS_SUPPORT = true
-CARLA_RTAUDIO_SUPPORT  = true
 
 # --------------------------------------------------------------
 

@@ -2,6 +2,7 @@
 
 CODE CLEANUP:
  - Create PluginGUI class in C++ code, remove python one (need to handle parent somehow)
+ - Smarter audio/midi port names (count == 1: "audio-in" else: "audio-in-x")
 
 GENERAL:
  - add direct program access on ui-dialogs (needed for standalone bridges), maybe add extra buttons too (reset plugin, fix ui size)
