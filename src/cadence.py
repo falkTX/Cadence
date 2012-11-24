@@ -702,6 +702,9 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         self.m_lastAlsaIndexType = -2 # invalid
 
+        if not jacklib.JACK2:
+            self.b_jack_switchmaster.setEnabled(False)
+
         # -------------------------------------------------------------
         # Set-up GUI (System Information)
 
@@ -997,6 +1000,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.connect(self.b_jack_stop, SIGNAL("clicked()"), SLOT("slot_JackServerStop()"))
         self.connect(self.b_jack_restart, SIGNAL("clicked()"), SLOT("slot_JackServerForceRestart()"))
         self.connect(self.b_jack_configure, SIGNAL("clicked()"), SLOT("slot_JackServerConfigure()"))
+        self.connect(self.b_jack_switchmaster, SIGNAL("clicked()"), SLOT("slot_JackServerSwitchMaster()"))
         self.connect(self.tb_jack_options, SIGNAL("clicked()"), SLOT("slot_JackOptions()"))
 
         self.connect(self.b_alsa_start, SIGNAL("clicked()"), SLOT("slot_AlsaBridgeStart()"))
@@ -1127,6 +1131,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             self.b_jack_stop.setEnabled(False)
             self.b_jack_restart.setEnabled(False)
             self.b_jack_configure.setEnabled(False)
+            self.b_jack_switchmaster.setEnabled(False)
             self.groupBox_bridges.setEnabled(False)
 
         if DBus.a2j:
@@ -1182,6 +1187,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         self.b_jack_start.setEnabled(False)
         self.b_jack_stop.setEnabled(True)
+        self.b_jack_switchmaster.setEnabled(True)
         self.systray.setActionEnabled("jack_start", False)
         self.systray.setActionEnabled("jack_stop", True)
 
@@ -1221,6 +1227,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         self.b_jack_start.setEnabled(True)
         self.b_jack_stop.setEnabled(False)
+        self.b_jack_switchmaster.setEnabled(False)
 
         if haveDBus:
             self.systray.setActionEnabled("jack_start", True)
@@ -1467,6 +1474,16 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         jacksettingsW = jacksettings.JackSettingsW(self)
         jacksettingsW.exec_()
         del jacksettingsW
+
+    @pyqtSlot()
+    def slot_JackServerSwitchMaster(self):
+        try:
+            DBus.jack.SwitchMaster()
+        except:
+            QMessageBox.warning(self, self.tr("Warning"), self.tr("Failed to switch JACK master, please check the logs for more information."))
+            return
+
+        self.jackStarted()
 
     @pyqtSlot()
     def slot_JackOptions(self):

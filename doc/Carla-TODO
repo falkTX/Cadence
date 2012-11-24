@@ -18,6 +18,7 @@ ENGINE:
  - implement Haiku Media support (based from JACK?)
  - implement latency in continuous-rack mode
  - DSSI/LV2/VST version (needs add-new support on control side)
+ - Handle sample-rate changes in JACK (made possible by switch-master)
 
 LADSPA:
 
