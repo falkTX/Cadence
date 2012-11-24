@@ -196,6 +196,7 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
         self.obj_server_realtime_priority.setEnabled(engineHasFeature("realtime-priority"))
         self.obj_server_temporary.setEnabled(engineHasFeature("temporary"))
         self.obj_server_verbose.setEnabled(engineHasFeature("verbose"))
+        self.obj_server_alias.setEnabled(engineHasFeature("alias"))
         self.obj_server_client_timeout.setEnabled(engineHasFeature("client-timeout"))
         self.obj_server_clock_source.setEnabled(engineHasFeature("clock-source"))
         self.obj_server_port_max.setEnabled(engineHasFeature("port-max"))
@@ -230,6 +231,10 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
         if self.obj_server_verbose.isEnabled():
             value = dbus.Boolean(self.obj_server_verbose.isChecked())
             setEngineParameter("verbose", value, True)
+
+        if self.obj_server_alias.isEnabled():
+            value = dbus.Boolean(self.obj_server_alias.isChecked())
+            setEngineParameter("alias", value, True)
 
         if self.obj_server_client_timeout.isEnabled():
             value = dbus.Int32(int(self.obj_server_client_timeout.currentText()))
@@ -310,6 +315,8 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
                 self.obj_server_temporary.setChecked(bool(value))
             elif attribute == "verbose":
                 self.obj_server_verbose.setChecked(bool(value))
+            elif attribute == "alias":
+                self.obj_server_alias.setChecked(bool(value))
             elif attribute == "client-timeout":
                 self.setComboBoxValue(self.obj_server_client_timeout, str(value))
             elif attribute == "clock-source":
@@ -429,6 +436,10 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
             value = dbus.Boolean(self.obj_driver_duplex.isChecked())
             setDriverParameter("duplex", value, True)
 
+        if self.obj_driver_hw_alias.isEnabled():
+            value = dbus.Boolean(self.obj_driver_hw_alias.isChecked())
+            setDriverParameter("hw-alias", value, True)
+
         if self.obj_driver_softmode.isEnabled():
             value = dbus.Boolean(self.obj_driver_softmode.isChecked())
             setDriverParameter("softmode", value, True)
@@ -542,6 +553,8 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
                 self.obj_driver_hwmeter.setChecked(bool(value))
             elif attribute == "duplex":
                 self.obj_driver_duplex.setChecked(bool(value))
+            elif attribute == "hw-alias":
+                self.obj_driver_hw_alias.setChecked(bool(value))
             elif attribute == "softmode":
                 self.obj_driver_softmode.setChecked(bool(value))
             elif attribute == "monitor":
@@ -721,6 +734,7 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
         self.obj_driver_hwmon.setEnabled(driverHasFeature("hwmon"))
         self.obj_driver_hwmeter.setEnabled(driverHasFeature("hwmeter"))
         self.obj_driver_duplex.setEnabled(driverHasFeature("duplex"))
+        self.obj_driver_hw_alias.setEnabled(driverHasFeature("hw-alias"))
         self.obj_driver_softmode.setEnabled(driverHasFeature("softmode"))
         self.obj_driver_monitor.setEnabled(driverHasFeature("monitor"))
         self.obj_driver_dither.setEnabled(driverHasFeature("dither"))

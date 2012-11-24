@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>680</width>
-    <height>513</height>
+    <height>464</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -85,38 +85,8 @@
          <property name="title">
           <string>Properties</string>
          </property>
-         <layout class="QGridLayout" name="gridLayout_11">
-          <item row="0" column="1">
-           <widget class="QCheckBox" name="obj_server_realtime">
-            <property name="toolTip">
-             <string>Whether to use realtime scheduling</string>
-            </property>
-            <property name="text">
-             <string>Realtime</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QCheckBox" name="obj_server_temporary">
-            <property name="toolTip">
-             <string>Exit once all clients have closed their connections</string>
-            </property>
-            <property name="text">
-             <string>Temporary</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QCheckBox" name="obj_server_verbose">
-            <property name="toolTip">
-             <string>Verbose mode</string>
-            </property>
-            <property name="text">
-             <string>Verbose</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
            <spacer name="horizontalSpacer_11">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
@@ -132,27 +102,181 @@
             </property>
            </spacer>
           </item>
-          <item row="0" column="2">
-           <widget class="QLabel" name="label_23">
-            <property name="toolTip">
-             <string>Scheduler priority when running in realtime mode</string>
-            </property>
-            <property name="text">
-             <string>Realtime priority:</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_2">
+            <item>
+             <widget class="QCheckBox" name="obj_server_realtime">
+              <property name="toolTip">
+               <string>Whether to use realtime scheduling</string>
+              </property>
+              <property name="text">
+               <string>Realtime</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="obj_server_temporary">
+              <property name="toolTip">
+               <string>Exit once all clients have closed their connections</string>
+              </property>
+              <property name="text">
+               <string>Temporary</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="obj_server_verbose">
+              <property name="toolTip">
+               <string>Verbose mode</string>
+              </property>
+              <property name="text">
+               <string>Verbose</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="obj_server_alias">
+              <property name="toolTip">
+               <string>Use system port aliases instead of system:playback_*</string>
+              </property>
+              <property name="text">
+               <string>Use aliases</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
-          <item row="0" column="3">
-           <widget class="QSpinBox" name="obj_server_realtime_priority">
-            <property name="toolTip">
-             <string>Scheduler priority when running in realtime mode</string>
-            </property>
-           </widget>
+          <item>
+           <layout class="QGridLayout" name="gridLayout_11">
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_23">
+              <property name="toolTip">
+               <string>Scheduler priority when running in realtime mode</string>
+              </property>
+              <property name="text">
+               <string>Realtime priority:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QSpinBox" name="obj_server_realtime_priority">
+              <property name="toolTip">
+               <string>Scheduler priority when running in realtime mode</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_25">
+              <property name="toolTip">
+               <string>Client timeout limit in milliseconds</string>
+              </property>
+              <property name="text">
+               <string>Client timeout (ms):</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QComboBox" name="obj_server_client_timeout">
+              <property name="toolTip">
+               <string>Client timeout limit in milliseconds</string>
+              </property>
+              <property name="editable">
+               <bool>true</bool>
+              </property>
+              <item>
+               <property name="text">
+                <string>0</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>200</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>500</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>1000</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>2000</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>5000</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>10000</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="obj_server_port_max_label">
+              <property name="toolTip">
+               <string>Maximum number of ports</string>
+              </property>
+              <property name="text">
+               <string>Port Max:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QComboBox" name="obj_server_port_max">
+              <property name="toolTip">
+               <string>Maximum number of ports</string>
+              </property>
+              <property name="editable">
+               <bool>true</bool>
+              </property>
+              <item>
+               <property name="text">
+                <string>128</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>256</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>512</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>1024</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>2048</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+           </layout>
           </item>
-          <item row="0" column="4">
+          <item>
            <spacer name="horizontalSpacer_12">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
@@ -167,112 +291,6 @@
              </size>
             </property>
            </spacer>
-          </item>
-          <item row="2" column="2">
-           <widget class="QLabel" name="obj_server_port_max_label">
-            <property name="toolTip">
-             <string>Maximum number of ports</string>
-            </property>
-            <property name="text">
-             <string>Port Max:</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="3">
-           <widget class="QComboBox" name="obj_server_port_max">
-            <property name="toolTip">
-             <string>Maximum number of ports</string>
-            </property>
-            <property name="editable">
-             <bool>true</bool>
-            </property>
-            <item>
-             <property name="text">
-              <string>128</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>256</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>512</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>1024</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>2048</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QLabel" name="label_25">
-            <property name="toolTip">
-             <string>Client timeout limit in milliseconds</string>
-            </property>
-            <property name="text">
-             <string>Client timeout (ms):</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="3">
-           <widget class="QComboBox" name="obj_server_client_timeout">
-            <property name="toolTip">
-             <string>Client timeout limit in milliseconds</string>
-            </property>
-            <property name="editable">
-             <bool>true</bool>
-            </property>
-            <item>
-             <property name="text">
-              <string>0</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>200</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>500</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>1000</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>2000</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>5000</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>10000</string>
-             </property>
-            </item>
-           </widget>
           </item>
          </layout>
         </widget>
@@ -760,6 +778,19 @@ On ALSA you can here set an alternate device for playback</string>
             </property>
             <property name="text">
              <string>Hardware Monitoring</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QCheckBox" name="obj_driver_hw_alias">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="toolTip">
+             <string>Use hardware device name for alias instead of alsa_pcm</string>
+            </property>
+            <property name="text">
+             <string>Hardware Aliases</string>
             </property>
            </widget>
           </item>
