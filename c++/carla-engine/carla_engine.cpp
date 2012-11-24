@@ -143,6 +143,8 @@ const CarlaEngineControlEvent* CarlaEngineControlPort::getEvent(const uint32_t i
         if (index < CarlaEngine::MAX_CONTROL_EVENTS)
             return &events[index];
     }
+#else
+    Q_UNUSED(index);
 #endif
 
     return nullptr;
@@ -181,6 +183,11 @@ void CarlaEngineControlPort::writeEvent(const CarlaEngineControlEventType type, 
 
         qWarning("CarlaEngineControlPort::writeEvent() - buffer full");
     }
+#else
+    Q_UNUSED(time);
+    Q_UNUSED(channel);
+    Q_UNUSED(parameter);
+    Q_UNUSED(value);
 #endif
 }
 
@@ -251,6 +258,8 @@ const CarlaEngineMidiEvent* CarlaEngineMidiPort::getEvent(uint32_t index)
         if (index < CarlaEngine::MAX_MIDI_EVENTS)
             return &events[index];
     }
+#else
+    Q_UNUSED(index);
 #endif
 
     return nullptr;
@@ -286,6 +295,8 @@ void CarlaEngineMidiPort::writeEvent(const uint32_t time, const uint8_t* const d
 
         qWarning("CarlaEngineMidiPort::writeEvent() - buffer full");
     }
+#else
+    Q_UNUSED(time);
 #endif
 }
 
