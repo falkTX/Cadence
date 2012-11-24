@@ -122,7 +122,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../../resources/resources.qrc">:/16x16/dialog-information.png</pixmap>
+                <pixmap resource="../resources.qrc">:/16x16/dialog-information.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -200,7 +200,7 @@
                    <string/>
                   </property>
                   <property name="pixmap">
-                   <pixmap resource="../../resources/resources.qrc">:/16x16/dialog-ok-apply.png</pixmap>
+                   <pixmap resource="../resources.qrc">:/16x16/dialog-ok-apply.png</pixmap>
                   </property>
                  </widget>
                 </item>
@@ -271,7 +271,7 @@
                    <string/>
                   </property>
                   <property name="pixmap">
-                   <pixmap resource="../../resources/resources.qrc">:/16x16/dialog-ok-apply.png</pixmap>
+                   <pixmap resource="../resources.qrc">:/16x16/dialog-ok-apply.png</pixmap>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignCenter</set>
@@ -450,7 +450,7 @@
                <item>
                 <widget class="QCheckBox" name="cb_jack_autostart">
                  <property name="text">
-                  <string>Auto-start JACK at login</string>
+                  <string>Auto-start JACK or LADISH at login</string>
                  </property>
                 </widget>
                </item>
@@ -627,8 +627,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>351</width>
-                  <height>115</height>
+                  <width>290</width>
+                  <height>77</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -765,8 +765,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>351</width>
-                  <height>115</height>
+                  <width>204</width>
+                  <height>77</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -973,7 +973,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../../resources/resources.qrc">:/screens/catia.png</pixmap>
+                <pixmap resource="../resources.qrc">:/screens/catia.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -1008,7 +1008,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../../resources/resources.qrc">:/screens/claudia.png</pixmap>
+                <pixmap resource="../resources.qrc">:/screens/claudia.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -1043,7 +1043,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../../resources/resources.qrc">:/screens/carla.png</pixmap>
+                <pixmap resource="../resources.qrc">:/screens/carla.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -1122,7 +1122,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../../resources/resources.qrc">:/screens/cadence-logs.png</pixmap>
+                <pixmap resource="../resources.qrc">:/screens/cadence-logs.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -1157,7 +1157,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../../resources/resources.qrc">:/screens/cadence-render.png</pixmap>
+                <pixmap resource="../resources.qrc">:/screens/cadence-render.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -1192,7 +1192,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap resource="../../resources/resources.qrc">:/screens/cadence-xycontroller.png</pixmap>
+                <pixmap resource="../resources.qrc">:/screens/cadence-xycontroller.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -1755,7 +1755,7 @@
                    <string/>
                   </property>
                   <property name="pixmap">
-                   <pixmap resource="../../resources/resources.qrc">:/48x48/exec.png</pixmap>
+                   <pixmap resource="../resources.qrc">:/48x48/exec.png</pixmap>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignHCenter|Qt::AlignTop</set>
@@ -2056,8 +2056,8 @@ Default is off</string>
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../resources/resources.qrc"/>
-  <include location="../../resources/resources.qrc"/>
+  <include location="../resources.qrc"/>
+  <include location="../resources.qrc"/>
  </resources>
  <connections>
   <connection>
