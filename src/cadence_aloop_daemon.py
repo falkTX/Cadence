@@ -53,12 +53,17 @@ def sample_rate_callback(newSampleRate, arg):
 # listen to jack2 master switch
 
 def client_registration_callback(clientName, register, arg):
-    if register and clientName == b"system":
+    if clientName == b"system" and register:
         print("NOTICE: Possible JACK2 master switch")
         global doRunNow, bufferSize, sampleRate
         doRunNow   = True
         sampleRate = jacklib.get_sample_rate(client)
         bufferSize = jacklib.get_buffer_size(client)
+    elif clientName in (b"alsa2jack", b"jack2alsa") and not register:
+        global doLoop
+        if doLoop:
+            doLoop = False
+            print("NOTICE: alsa_in/out have been stopped, quitting now...")
 
 # --------------------------------------------------
 # listen to jack shutdown
@@ -83,15 +88,15 @@ def run_alsa_bridge():
     procIn.start("env",  ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_in",  "-j", "alsa2jack", "-d", "cloop", "-q", "1"])
     procOut.start("env", ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_out", "-j", "jack2alsa", "-d", "ploop", "-q", "1"])
 
-    procIn.waitForStarted()
-    procOut.waitForStarted()
+    if procIn.waitForStarted():
+        sleep(1)
+        jacklib.connect(client, "alsa2jack:capture_1", "system:playback_1")
+        jacklib.connect(client, "alsa2jack:capture_2", "system:playback_2")
 
-    # Pause it for a bit, and connect to the system ports
-    sleep(1)
-    jacklib.connect(client, "alsa2jack:capture_1", "system:playback_1")
-    jacklib.connect(client, "alsa2jack:capture_2", "system:playback_2")
-    jacklib.connect(client, "system:capture_1", "jack2alsa:playback_1")
-    jacklib.connect(client, "system:capture_2", "jack2alsa:playback_2")
+    if procOut.waitForStarted():
+        sleep(1)
+        jacklib.connect(client, "system:capture_1", "jack2alsa:playback_1")
+        jacklib.connect(client, "system:capture_2", "jack2alsa:playback_2")
 
 #--------------- main ------------------
 if __name__ == '__main__':
