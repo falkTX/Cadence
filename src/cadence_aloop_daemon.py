@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Imports (Global)
-import os
+import os, sys
 from signal import signal, SIGINT, SIGTERM
 from time import sleep
 from PyQt4.QtCore import QProcess
@@ -13,9 +13,10 @@ import jacklib
 # --------------------------------------------------
 # Global loop check
 
-global doLoop, doRunNow, procIn, procOut
+global doLoop, doRunNow, useZita, procIn, procOut
 doLoop    = True
 doRunNow  = True
+useZita   = False
 procIn    = QProcess()
 procOut   = QProcess()
 checkFile = "/tmp/.cadence-aloop-daemon.x"
@@ -60,10 +61,10 @@ def client_registration_callback(clientName, register, arg):
         sampleRate = jacklib.get_sample_rate(client)
         bufferSize = jacklib.get_buffer_size(client)
     elif clientName in (b"alsa2jack", b"jack2alsa") and not register:
-        global doLoop
+        global doLoop, useZita
         if doLoop:
             doLoop = False
-            print("NOTICE: alsa_in/out have been stopped, quitting now...")
+            print("NOTICE: %s have been stopped, quitting now..." % ("zita-a2j/j2a" if useZita else "alsa_in/out"))
 
 # --------------------------------------------------
 # listen to jack shutdown
@@ -75,6 +76,7 @@ def shutdown_callback(arg):
 # --------------------------------------------------
 # run alsa_in and alsa_out
 def run_alsa_bridge():
+    global useZita
     global bufferSize, sampleRate
     global procIn, procOut
 
@@ -85,8 +87,12 @@ def run_alsa_bridge():
         procOut.terminate()
         procOut.waitForFinished(1000)
 
-    procIn.start("env",  ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_in",  "-j", "alsa2jack", "-d", "cloop", "-q", "1"])
-    procOut.start("env", ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_out", "-j", "jack2alsa", "-d", "ploop", "-q", "1"])
+    if useZita:
+        procIn.start("env",  ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "zita-a2j", "-L", "-j", "alsa2jack", "-d", "hw:Loopback,1,0"])
+        procOut.start("env", ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "zita-j2a", "-L", "-j", "jack2alsa", "-d", "hw:Loopback,1,1"])
+    else:
+        procIn.start("env",  ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_in",  "-j", "alsa2jack", "-d", "cloop", "-q", "1"])
+        procOut.start("env", ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_out", "-j", "jack2alsa", "-d", "ploop", "-q", "1"])
 
     if procIn.waitForStarted():
         sleep(1)
@@ -100,6 +106,8 @@ def run_alsa_bridge():
 
 #--------------- main ------------------
 if __name__ == '__main__':
+
+    useZita = bool(len(sys.argv) == 2 and sys.argv[1] in ("-zita", "--zita"))
 
     # Init JACK client
     client = jacklib.client_open("cadence-aloop-daemon", jacklib.JackUseExactName, None)
@@ -129,10 +137,16 @@ if __name__ == '__main__':
         os.mknod(checkFile)
 
     # Keep running until told otherwise
+    firstStart = True
     while doLoop and os.path.exists(checkFile):
         if doRunNow:
             doRunNow = False
             run_alsa_bridge()
+
+            if firstStart:
+                firstStart = False
+                print("cadence-aloop-daemon started, using %s" % ("zita-a2j/j2a" if useZita else "alsa_in/out"))
+
         sleep(1)
 
     # Close JACK client
