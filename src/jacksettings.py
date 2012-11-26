@@ -63,6 +63,10 @@ def initBus(bus):
         jackctl = None
         return 1
 
+def needsInit():
+    global jackctl
+    return bool(jackctl is None)
+
 # -------------------------------------------------------------
 # Helper functions
 
@@ -88,7 +92,10 @@ def setSampleRate(srate):
 # Helper functions (engine)
 
 def engineHasFeature(feature):
-    featureList = jackctl.ReadContainer(["engine"])[1]
+    try:
+        featureList = jackctl.ReadContainer(["engine"])[1]
+    except:
+        featureList = ()
     return bool(dbus.String(feature) in featureList)
 
 def getEngineParameter(parameter, fallback):
@@ -115,7 +122,10 @@ def setEngineParameter(parameter, value, optional=True):
 # Helper functions (driver)
 
 def driverHasFeature(feature):
-    featureList = jackctl.ReadContainer(["driver"])[1]
+    try:
+        featureList = jackctl.ReadContainer(["driver"])[1]
+    except:
+        featureList = ()
     return bool(dbus.String(feature) in featureList)
 
 def getDriverParameter(parameter, fallback):

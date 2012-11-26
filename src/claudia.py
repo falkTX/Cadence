@@ -1190,7 +1190,8 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         QTimer.singleShot(0, self.miniCanvasPreview, SLOT("update()"))
 
     def jackStarted(self):
-        #self.DBusReconnect()
+        if jacksettings.needsInit():
+            self.DBusReconnect()
 
         if not jack.client:
             jack.client = jacklib.client_open("claudia", jacklib.JackNoStartServer, None)
