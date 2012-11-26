@@ -22,7 +22,7 @@ from PyQt4.QtCore import QThread
 from PyQt4.QtGui import QApplication, QMainWindow, QTableWidgetItem
 
 # Imports (Custom Stuff)
-import ui_carla, ui_carla_about, ui_carla_database, ui_carla_refresh
+import ui_carla, ui_carla_database, ui_carla_refresh
 from carla_backend import *
 from shared_settings import *
 
@@ -1053,77 +1053,6 @@ class PluginDatabaseW(QDialog, ui_carla_database.Ui_PluginDatabaseW):
         QDialog.done(self, r)
         self.close()
 
-# About Carla Dialog
-class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
-    def __init__(self, parent):
-        QDialog.__init__(self, parent)
-        self.setupUi(self)
-
-        self.l_about.setText(self.tr(""
-                                     "<br>Version %s"
-                                     "<br>Carla is a Multi-Plugin Host for JACK.<br>"
-                                     "<br>Copyright (C) 2011-2012 falkTX<br>"
-                                     "" % VERSION))
-
-        self.l_extended.setText(cString(Carla.host.get_extended_license_text()))
-        self.le_osc_url.setText(cString(Carla.host.get_host_osc_url()))
-
-        self.l_osc_cmds.setText(
-                                " /set_active                 <i-value>\n"
-                                " /set_drywet                 <f-value>\n"
-                                " /set_volume                 <f-value>\n"
-                                " /set_balance_left           <f-value>\n"
-                                " /set_balance_right          <f-value>\n"
-                                " /set_parameter_value        <i-index> <f-value>\n"
-                                " /set_parameter_midi_cc      <i-index> <i-cc>\n"
-                                " /set_parameter_midi_channel <i-index> <i-channel>\n"
-                                " /set_program                <i-index>\n"
-                                " /set_midi_program           <i-index>\n"
-                                " /note_on                    <i-note> <i-velo>\n"
-                                " /note_off                   <i-note>\n"
-                               )
-
-        self.l_example.setText("/Carla/2/set_parameter_value 5 1.0")
-        self.l_example_help.setText("<i>(as in this example, \"2\" is the plugin number and \"5\" the parameter)</i>")
-
-        self.l_ladspa.setText(self.tr("Everything! (Including LRDF)"))
-        self.l_dssi.setText(self.tr("Everything! (Including CustomData/Chunks)"))
-        self.l_lv2.setText(self.tr("About 95&#37; complete (using custom extensions).<br/>"
-                                   "Implemented Feature/Extensions:"
-                                   "<ul>"
-                                   "<li>http://lv2plug.in/ns/ext/atom</li>"
-                                   "<li>http://lv2plug.in/ns/ext/buf-size</li>"
-                                   "<li>http://lv2plug.in/ns/ext/data-access</li>"
-                                   #"<li>http://lv2plug.in/ns/ext/dynmanifest</li>"
-                                   "<li>http://lv2plug.in/ns/ext/event</li>"
-                                   "<li>http://lv2plug.in/ns/ext/instance-access</li>"
-                                   "<li>http://lv2plug.in/ns/ext/log</li>"
-                                   "<li>http://lv2plug.in/ns/ext/midi</li>"
-                                   "<li>http://lv2plug.in/ns/ext/options</li>"
-                                   #"<li>http://lv2plug.in/ns/ext/parameters</li>"
-                                   "<li>http://lv2plug.in/ns/ext/patch</li>"
-                                   #"<li>http://lv2plug.in/ns/ext/port-groups</li>"
-                                   "<li>http://lv2plug.in/ns/ext/port-props</li>"
-                                   #"<li>http://lv2plug.in/ns/ext/presets</li>"
-                                   "<li>http://lv2plug.in/ns/ext/state</li>"
-                                   "<li>http://lv2plug.in/ns/ext/time</li>"
-                                   "<li>http://lv2plug.in/ns/ext/uri-map</li>"
-                                   "<li>http://lv2plug.in/ns/ext/urid</li>"
-                                   "<li>http://lv2plug.in/ns/ext/worker</li>"
-                                   "<li>http://lv2plug.in/ns/extensions/ui</li>"
-                                   "<li>http://lv2plug.in/ns/extensions/units</li>"
-                                   "<li>http://kxstudio.sf.net/ns/lv2ext/external-ui</li>"
-                                   "<li>http://kxstudio.sf.net/ns/lv2ext/programs</li>"
-                                   "<li>http://kxstudio.sf.net/ns/lv2ext/rtmempool</li>"
-                                   "<li>http://ll-plugins.nongnu.org/lv2/ext/midimap</li>"
-                                   "<li>http://ll-plugins.nongnu.org/lv2/ext/miditype</li>"
-                                   "</ul>"))
-        self.l_vst.setText(self.tr("<p>About 85&#37; complete (missing vst bank/presets and some minor stuff)</p>"))
-
-    def done(self, r):
-        QDialog.done(self, r)
-        self.close()
-
 # Main Window
 class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
     def __init__(self, parent=None):
@@ -1175,6 +1104,10 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.act_engine_start.setEnabled(False)
         self.act_engine_stop.setEnabled(False)
         self.act_plugin_remove_all.setEnabled(False)
+
+        #self.m_scene = CarlaScene(self, self.graphicsView)
+        #self.graphicsView.setScene(self.m_scene)
+
         self.resize(self.width(), 0)
 
         #self.m_fakeEdit = PluginEdit(self, -1)
@@ -1530,6 +1463,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         else:
             pwidget = PluginWidget(self, new_plugin_id)
             self.w_plugins.layout().addWidget(pwidget)
+            #self.m_scene.addWidget(new_plugin_id, pwidget)
             self.m_plugin_list[new_plugin_id] = pwidget
             self.act_plugin_remove_all.setEnabled(True)
 
@@ -2019,6 +1953,10 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         os.environ["GIG_PATH"] = splitter.join(GIG_PATH)
         os.environ["SF2_PATH"] = splitter.join(SF2_PATH)
         os.environ["SFZ_PATH"] = splitter.join(SFZ_PATH)
+
+    #def resizeEvent(self, event):
+        #self.m_scene.resize()
+        #QMainWindow.resizeEvent(self, event)
 
     def timerEvent(self, event):
         if event.timerId() == self.TIMER_GUI_STUFF:

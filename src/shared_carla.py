@@ -22,7 +22,7 @@ from copy import deepcopy
 from decimal import Decimal
 from sip import unwrapinstance
 from PyQt4.QtCore import pyqtSlot, Qt, QSettings, QTimer
-from PyQt4.QtGui import QColor, QCursor, QDialog, QFontMetrics, QFrame, QInputDialog, QMenu, QPainter, QPainterPath, QVBoxLayout, QWidget
+from PyQt4.QtGui import QColor, QCursor, QDialog, QFontMetrics, QFrame, QGraphicsScene, QInputDialog, QLinearGradient, QMenu, QPainter, QPainterPath, QVBoxLayout, QWidget
 from PyQt4.QtXml import QDomDocument
 
 try:
@@ -32,7 +32,7 @@ except:
     GuiContainer = QWidget
 
 # Imports (Custom)
-import ui_carla_edit, ui_carla_parameter, ui_carla_plugin
+import ui_carla_about, ui_carla_edit, ui_carla_parameter, ui_carla_plugin
 from shared import *
 
 # Carla Host object
@@ -229,6 +229,21 @@ PALETTE_COLOR_ORANGE = 6
 PALETTE_COLOR_BROWN  = 7
 PALETTE_COLOR_PINK   = 8
 
+CarlaStateParameter = {
+    'index': 0,
+    'name': "",
+    'symbol': "",
+    'value': 0.0,
+    'midiChannel': 1,
+    'midiCC': -1
+}
+
+CarlaStateCustomData = {
+    'type': CUSTOM_DATA_INVALID,
+    'key': "",
+    'value': ""
+}
+
 CarlaSaveState = {
     'Type': "",
     'Name': "",
@@ -247,21 +262,6 @@ CarlaSaveState = {
     'CurrentMidiProgram': -1,
     'CustomData': [],
     'Chunk': None
-}
-
-CarlaSaveStateParameter = {
-    'index': 0,
-    'name': "",
-    'symbol': "",
-    'value': 0.0,
-    'midiChannel': 1,
-    'midiCC': -1
-}
-
-CarlaSaveStateCustomData = {
-    'type': CUSTOM_DATA_INVALID,
-    'key': "",
-    'value': ""
 }
 
 def getCustomDataTypeString(dtype):
@@ -290,6 +290,7 @@ def getSaveStateDictFromXML(xmlNode):
     saveState = deepcopy(CarlaSaveState)
 
     node = xmlNode.firstChild()
+
     while not node.isNull():
         # ------------------------------------------------------
         # Info
@@ -298,7 +299,7 @@ def getSaveStateDictFromXML(xmlNode):
             xmlInfo = node.toElement().firstChild()
 
             while not xmlInfo.isNull():
-                tag = xmlInfo.toElement().tagName()
+                tag  = xmlInfo.toElement().tagName()
                 text = xmlInfo.toElement().text().strip()
 
                 if tag == "Type":
@@ -321,7 +322,7 @@ def getSaveStateDictFromXML(xmlNode):
             xmlData = node.toElement().firstChild()
 
             while not xmlData.isNull():
-                tag = xmlData.toElement().tagName()
+                tag  = xmlData.toElement().tagName()
                 text = xmlData.toElement().text().strip()
 
                 # ----------------------------------------------
@@ -358,53 +359,53 @@ def getSaveStateDictFromXML(xmlNode):
                 # Parameters
 
                 elif tag == "Parameter":
-                    saveStateParameter = deepcopy(CarlaSaveStateParameter)
+                    stateParameter = deepcopy(CarlaStateParameter)
 
                     xmlSubData = xmlData.toElement().firstChild()
 
                     while not xmlSubData.isNull():
-                        pTag = xmlSubData.toElement().tagName()
+                        pTag  = xmlSubData.toElement().tagName()
                         pText = xmlSubData.toElement().text().strip()
 
                         if pTag == "index":
-                            if pText.isdigit(): saveStateParameter['index'] = int(pText)
+                            if pText.isdigit(): stateParameter['index'] = int(pText)
                         elif pTag == "name":
-                            saveStateParameter['name'] = xmlSafeString(pText, False)
+                            stateParameter['name'] = xmlSafeString(pText, False)
                         elif pTag == "symbol":
-                            saveStateParameter['symbol'] = xmlSafeString(pText, False)
+                            stateParameter['symbol'] = xmlSafeString(pText, False)
                         elif pTag == "value":
-                            if isNumber(pText): saveStateParameter['value'] = float(pText)
+                            if isNumber(pText): stateParameter['value'] = float(pText)
                         elif pTag == "midiChannel":
-                            if pText.isdigit(): saveStateParameter['midiChannel'] = int(pText)
+                            if pText.isdigit(): stateParameter['midiChannel'] = int(pText)
                         elif pTag == "midiCC":
-                            if pText.isdigit(): saveStateParameter['midiCC'] = int(pText)
+                            if pText.isdigit(): stateParameter['midiCC'] = int(pText)
 
                         xmlSubData = xmlSubData.nextSibling()
 
-                    saveState['Parameters'].append(saveStateParameter)
+                    saveState['Parameters'].append(stateParameter)
 
                 # ----------------------------------------------
                 # Custom Data
 
                 elif tag == "CustomData":
-                    saveStateCustomData = deepcopy(CarlaSaveStateCustomData)
+                    stateCustomData = deepcopy(CarlaStateCustomData)
 
                     xmlSubData = xmlData.toElement().firstChild()
 
                     while not xmlSubData.isNull():
-                        cTag = xmlSubData.toElement().tagName()
+                        cTag  = xmlSubData.toElement().tagName()
                         cText = xmlSubData.toElement().text().strip()
 
                         if cTag == "type":
-                            saveStateCustomData['type'] = getCustomDataStringType(cText)
+                            stateCustomData['type'] = getCustomDataStringType(cText)
                         elif cTag == "key":
-                            saveStateCustomData['key'] = xmlSafeString(cText, False)
+                            stateCustomData['key'] = xmlSafeString(cText, False)
                         elif cTag == "value":
-                            saveStateCustomData['value'] = xmlSafeString(cText, False)
+                            stateCustomData['value'] = xmlSafeString(cText, False)
 
                         xmlSubData = xmlSubData.nextSibling()
 
-                    saveState['CustomData'].append(saveStateCustomData)
+                    saveState['CustomData'].append(stateCustomData)
 
                 # ----------------------------------------------
                 # Chunk
@@ -429,7 +430,86 @@ def xmlSafeString(string, toXml):
         return string.replace("&amp;", "&").replace("&lt;","<").replace("&gt;",">").replace("&apos;","'").replace("&quot;","\"")
 
 # ------------------------------------------------------------------------------------------------
-# Common widgets
+# carla_about.cpp
+
+class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
+    def __init__(self, parent):
+        QDialog.__init__(self, parent)
+        self.setupUi(self)
+
+        self.l_about.setText(self.tr(""
+                                     "<br>Version %s"
+                                     "<br>Carla is a Multi-Plugin Host for JACK%s.<br>"
+                                     "<br>Copyright (C) 2011-2012 falkTX<br>"
+                                     "" % (VERSION, " - <b>OSC Bridge Version</b>" if Carla.isControl else "")))
+
+        if Carla.isControl:
+            self.l_extended.setVisible(False) # TODO - write about this special OSC version
+            self.tabWidget.removeTab(1)
+            self.tabWidget.removeTab(1)
+
+        else:
+            self.l_extended.setText(cString(Carla.host.get_extended_license_text()))
+            self.le_osc_url.setText(cString(Carla.host.get_host_osc_url()) if Carla.host.is_engine_running() else self.tr("(Engine not running)"))
+
+            self.l_osc_cmds.setText(
+                                    " /set_active                 <i-value>\n"
+                                    " /set_drywet                 <f-value>\n"
+                                    " /set_volume                 <f-value>\n"
+                                    " /set_balance_left           <f-value>\n"
+                                    " /set_balance_right          <f-value>\n"
+                                    " /set_parameter_value        <i-index> <f-value>\n"
+                                    " /set_parameter_midi_cc      <i-index> <i-cc>\n"
+                                    " /set_parameter_midi_channel <i-index> <i-channel>\n"
+                                    " /set_program                <i-index>\n"
+                                    " /set_midi_program           <i-index>\n"
+                                    " /note_on                    <i-note> <i-velo>\n"
+                                    " /note_off                   <i-note>\n"
+                                  )
+
+            self.l_example.setText("/Carla/2/set_parameter_value 5 1.0")
+            self.l_example_help.setText("<i>(as in this example, \"2\" is the plugin number and \"5\" the parameter)</i>")
+
+            self.l_ladspa.setText(self.tr("Everything! (Including LRDF)"))
+            self.l_dssi.setText(self.tr("Everything! (Including CustomData/Chunks)"))
+            self.l_lv2.setText(self.tr("About 95&#37; complete (using custom extensions).<br/>"
+                                      "Implemented Feature/Extensions:"
+                                      "<ul>"
+                                      "<li>http://lv2plug.in/ns/ext/atom</li>"
+                                      "<li>http://lv2plug.in/ns/ext/buf-size</li>"
+                                      "<li>http://lv2plug.in/ns/ext/data-access</li>"
+                                      #"<li>http://lv2plug.in/ns/ext/dynmanifest</li>"
+                                      "<li>http://lv2plug.in/ns/ext/event</li>"
+                                      "<li>http://lv2plug.in/ns/ext/instance-access</li>"
+                                      "<li>http://lv2plug.in/ns/ext/log</li>"
+                                      "<li>http://lv2plug.in/ns/ext/midi</li>"
+                                      "<li>http://lv2plug.in/ns/ext/options</li>"
+                                      #"<li>http://lv2plug.in/ns/ext/parameters</li>"
+                                      "<li>http://lv2plug.in/ns/ext/patch</li>"
+                                      #"<li>http://lv2plug.in/ns/ext/port-groups</li>"
+                                      "<li>http://lv2plug.in/ns/ext/port-props</li>"
+                                      #"<li>http://lv2plug.in/ns/ext/presets</li>"
+                                      "<li>http://lv2plug.in/ns/ext/state</li>"
+                                      "<li>http://lv2plug.in/ns/ext/time</li>"
+                                      "<li>http://lv2plug.in/ns/ext/uri-map</li>"
+                                      "<li>http://lv2plug.in/ns/ext/urid</li>"
+                                      "<li>http://lv2plug.in/ns/ext/worker</li>"
+                                      "<li>http://lv2plug.in/ns/extensions/ui</li>"
+                                      "<li>http://lv2plug.in/ns/extensions/units</li>"
+                                      "<li>http://kxstudio.sf.net/ns/lv2ext/external-ui</li>"
+                                      "<li>http://kxstudio.sf.net/ns/lv2ext/programs</li>"
+                                      "<li>http://kxstudio.sf.net/ns/lv2ext/rtmempool</li>"
+                                      "<li>http://ll-plugins.nongnu.org/lv2/ext/midimap</li>"
+                                      "<li>http://ll-plugins.nongnu.org/lv2/ext/miditype</li>"
+                                      "</ul>"))
+            self.l_vst.setText(self.tr("<p>About 85&#37; complete (missing vst bank/presets and some minor stuff)</p>"))
+
+    def done(self, r):
+        QDialog.done(self, r)
+        self.close()
+
+# ------------------------------------------------------------------------------------------------
+# PluginParameter.cpp
 
 # Plugin Parameter
 class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
@@ -446,9 +526,10 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
         self.m_parameterId = pInfo['index']
         self.m_tabIndex    = tabIndex
 
-        self.add_MIDI_CCs_to_ComboBox()
-
         self.label.setText(pInfo['name'])
+
+        for MIDI_CC in MIDI_CC_LIST:
+            self.combo.addItem(MIDI_CC)
 
         if pType == PARAMETER_INPUT:
             self.widget.set_minimum(pInfo['minimum'])
@@ -497,11 +578,11 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
         #self.widget.force_plastique_style()
 
         if pHints & PARAMETER_USES_CUSTOM_TEXT:
-            self.widget.set_text_call(self.textCallFunction)
+            self.widget.set_text_call(self.textCallBack)
 
         self.widget.updateAll()
 
-    def set_default_value(self, value):
+    def setDefaultValue(self, value):
         self.widget.set_default(value)
 
     def set_parameter_value(self, value, send=True):
@@ -514,10 +595,6 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
     def set_parameter_midi_channel(self, channel):
         self.m_midiChannel = channel+1
         self.sb_channel.setValue(channel+1)
-
-    def add_MIDI_CCs_to_ComboBox(self):
-        for MIDI_CC in MIDI_CC_LIST:
-            self.combo.addItem(MIDI_CC)
 
     def set_MIDI_CC_in_ComboBox(self, cc):
         for i in range(len(MIDI_CC_LIST)):
@@ -533,7 +610,7 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
     def tabIndex(self):
         return self.m_tabIndex
 
-    def textCallFunction(self):
+    def textCallBack(self):
         return cString(Carla.host.get_parameter_text(self.m_pluginId, self.m_parameterId))
 
     @pyqtSlot(float)
@@ -563,13 +640,14 @@ class PluginParameter(QWidget, ui_carla_parameter.Ui_PluginParameter):
 # Plugin Editor (Built-in)
 class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
     def __init__(self, parent, pluginId):
-        QDialog.__init__(self, parent)
+        QDialog.__init__(self, Carla.gui)
         self.setupUi(self)
 
         self.m_firstShow  = True
         self.m_geometry   = None
         self.m_pluginId   = pluginId
         self.m_pluginInfo = None
+        self.m_realParent = parent
 
         self.m_parameterCount = 0
         self.m_parameterList  = [] # (type, id, widget)
@@ -682,7 +760,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         self.scrollArea.setVisible((pluginHints & PLUGIN_IS_SYNTH) > 0 or (midiCountInfo['ins'] > 0 < midiCountInfo['outs']))
 
         # Force-Update parent for new hints (knobs)
-        self.parent().recheck_hints(pluginHints)
+        self.m_realParent.recheck_hints(pluginHints)
 
     def do_reload_parameters(self):
         parameterCount = Carla.host.get_parameter_count(self.m_pluginId)
@@ -929,7 +1007,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
             self.m_parameterIdsToUpdate.append(index)
 
     #def set_parameter_default_value(self, index, value):
-        #self.m_parameterList[index].set_default_value(value)
+        #self.m_parameterList[index].setDefaultValue(value)
 
     def set_parameter_midi_channel(self, index, midiChannel, blockSignals = False):
         for paramType, paramId, paramWidget in self.m_parameterList:
@@ -962,7 +1040,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
         content += "<?xml version='1.0' encoding='UTF-8'?>\n"
         content += "<!DOCTYPE CARLA-PRESET>\n"
         content += "<CARLA-PRESET VERSION='%s'>\n" % VERSION
-        content += self.parent().getSaveXMLContent()
+        content += self.m_realParent.getSaveXMLContent()
         content += "</CARLA-PRESET>\n"
 
         try:
@@ -998,7 +1076,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
         saveState = getSaveStateDictFromXML(xmlNode)
 
-        self.parent().loadStateDict(saveState)
+        self.m_realParent.loadStateDict(saveState)
 
     def loadStateLV2(self):
         pass
@@ -1027,7 +1105,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
     def updateParametersDefaultValues(self):
         for paramType, paramId, paramWidget in self.m_parameterList:
             if self.m_pluginInfo["type"] not in (PLUGIN_GIG, PLUGIN_SF2, PLUGIN_SFZ):
-                paramWidget.set_default_value(Carla.host.get_default_parameter_value(self.m_pluginId, paramId))
+                paramWidget.setDefaultValue(Carla.host.get_default_parameter_value(self.m_pluginId, paramId))
 
     def updateParametersInputs(self):
         for paramType, paramId, paramWidget in self.m_parameterList:
@@ -1154,11 +1232,11 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
     @pyqtSlot()
     def slot_notesOn(self):
-        self.parent().led_midi.setChecked(True)
+        self.m_realParent.led_midi.setChecked(True)
 
     @pyqtSlot()
     def slot_notesOff(self):
-        self.parent().led_midi.setChecked(False)
+        self.m_realParent.led_midi.setChecked(False)
 
     @pyqtSlot()
     def slot_checkInputControlParameters(self):
@@ -1166,7 +1244,7 @@ class PluginEdit(QDialog, ui_carla_edit.Ui_PluginEdit):
 
     @pyqtSlot()
     def slot_finished(self):
-        self.parent().b_edit.setChecked(False)
+        self.m_realParent.b_edit.setChecked(False)
 
     def done(self, r):
         QDialog.done(self, r)
@@ -1564,19 +1642,19 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             if parameterData['type'] != PARAMETER_INPUT:
                 continue
 
-            saveStateParameter = deepcopy(CarlaSaveStateParameter)
+            stateParameter = deepcopy(CarlaStateParameter)
 
-            saveStateParameter['index']  = parameterData['index']
-            saveStateParameter['name']   = cString(parameterInfo['name'])
-            saveStateParameter['symbol'] = cString(parameterInfo['symbol'])
-            saveStateParameter['value']  = Carla.host.get_current_parameter_value(self.m_pluginId, parameterData['index'])
-            saveStateParameter['midiCC'] = parameterData['midiCC']
-            saveStateParameter['midiChannel'] = parameterData['midiChannel'] + 1
+            stateParameter['index']  = parameterData['index']
+            stateParameter['name']   = cString(parameterInfo['name'])
+            stateParameter['symbol'] = cString(parameterInfo['symbol'])
+            stateParameter['value']  = Carla.host.get_current_parameter_value(self.m_pluginId, parameterData['index'])
+            stateParameter['midiCC'] = parameterData['midiCC']
+            stateParameter['midiChannel'] = parameterData['midiChannel'] + 1
 
             if parameterData['hints'] & PARAMETER_USES_SAMPLERATE:
-                saveStateParameter['value'] /= sampleRate
+                stateParameter['value'] /= sampleRate
 
-            saveState['Parameters'].append(saveStateParameter)
+            saveState['Parameters'].append(stateParameter)
 
         # ----------------------------
         # Custom Data
@@ -1589,13 +1667,13 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             if customData['type'] == CUSTOM_DATA_INVALID:
                 continue
 
-            saveStateCustomData = deepcopy(CarlaSaveStateCustomData)
+            stateCustomData = deepcopy(CarlaStateCustomData)
 
-            saveStateCustomData['type']  = getCustomDataTypeString(customData['type'])
-            saveStateCustomData['key']   = cString(customData['key'])
-            saveStateCustomData['value'] = cString(customData['value'])
+            stateCustomData['type']  = getCustomDataTypeString(customData['type'])
+            stateCustomData['key']   = cString(customData['key'])
+            stateCustomData['value'] = cString(customData['value'])
 
-            saveState['CustomData'].append(saveStateCustomData)
+            saveState['CustomData'].append(stateCustomData)
 
         # ----------------------------
         # Chunk
@@ -2029,14 +2107,59 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         #painter.drawLine(0, self.height() - 1, self.width(), self.height() - 1)
         QFrame.paintEvent(self, event)
 
+# Carla Scene
+class CarlaScene(QGraphicsScene):
+    def __init__(self, parent, view):
+        QGraphicsScene.__init__(self, parent)
+
+        self.m_view = view
+        if not self.m_view:
+            qFatal("CarlaScene() - invalid view")
+
+        self.m_itemList = []
+        for x in range(MAX_PLUGINS):
+            self.m_itemList.append(None)
+
+        bgGradient = QLinearGradient(0.0, 0.0, 0.2, 1.0)
+        bgGradient.setColorAt(0, QColor(7, 7, 7))
+        bgGradient.setColorAt(1, QColor(28, 28, 28))
+        self.setBackgroundBrush(bgGradient)
+
+    def addWidget(self, idx, widget):
+        newItem = QGraphicsScene.addWidget(self, widget)
+        newPosY = 0
+
+        for item in self.m_itemList:
+            if item:
+                newPosY += item.widget().height()
+                print(item.widget().height())
+
+        print("fin", newPosY)
+        newItem.setPos(0, newPosY)
+        newItem.resize(widget.width(), widget.height())
+        self.m_itemList[idx] = newItem
+
+    def resize(self):
+        width  = self.m_view.width()
+        height = self.m_view.height()
+        print("Resize", 0, 0, width, height)
+        self.setSceneRect(0, 0, width, height)
+
+        for item in self.m_itemList:
+            if not item:
+                continue
+
+            item.resize(width, item.widget().height())
+
 # Plugin GUI
 class PluginGUI(QDialog):
     def __init__(self, parent, pluginName, resizable):
-        QDialog.__init__(self, parent)
+        QDialog.__init__(self, Carla.gui)
 
-        self.m_firstShow = True
-        self.m_resizable = resizable
-        self.m_geometry  = None
+        self.m_firstShow  = True
+        self.m_resizable  = resizable
+        self.m_geometry   = None
+        self.m_realParent = parent
 
         self.vbLayout = QVBoxLayout(self)
         self.vbLayout.setContentsMargins(0, 0, 0, 0)
@@ -2084,7 +2207,7 @@ class PluginGUI(QDialog):
 
     def closeEvent(self, event):
         if event.spontaneous():
-            self.parent().b_gui.setChecked(False)
+            self.m_realParent.b_gui.setChecked(False)
 
         QDialog.closeEvent(self, event)
 

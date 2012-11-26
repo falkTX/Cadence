@@ -206,7 +206,7 @@ enum OptionsType {
     /*!
      * Set the engine processing mode.\n
      * Default is PROCESS_MODE_MULTIPLE_CLIENTS.
-     * \see ProcessModeType
+     * \see ProcessMode
      */
     OPTION_PROCESS_MODE = 1,
 

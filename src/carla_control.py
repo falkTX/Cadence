@@ -23,7 +23,7 @@ from liblo import send as lo_send
 from liblo import TCP as LO_TCP
 
 # Imports (Custom)
-import ui_carla_about, ui_carla_control
+import ui_carla_control
 from shared_carla import *
 
 global lo_target, lo_targetName
@@ -504,23 +504,6 @@ class ControlServer(ServerThread):
     @make_method(None, None)
     def fallback(self, path, args):
         print("ControlServer::fallback(\"%s\") - unknown message, args =" % path, args)
-
-# About Carla Dialog
-class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
-    def __init__(self, parent):
-        QDialog.__init__(self, parent)
-        self.setupUi(self)
-
-        self.l_about.setText(self.tr(""
-                                     "<br>Version %s"
-                                     "<br>Carla is a Multi-Plugin Host for JACK - <b>OSC Bridge Version</b>.<br>"
-                                     "<br>Copyright (C) 2011-2012 falkTX<br>"
-                                     "" % VERSION))
-
-        self.l_extended.setVisible(False) # TODO - write about this special OSC version
-
-        self.tabWidget.removeTab(1)
-        self.tabWidget.removeTab(1)
 
 # Main Window
 class CarlaControlW(QMainWindow, ui_carla_control.Ui_CarlaControlW):

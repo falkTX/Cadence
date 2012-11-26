@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>791</width>
+    <width>731</width>
     <height>46</height>
    </rect>
   </property>
@@ -25,7 +25,7 @@
   <property name="maximumSize">
    <size>
     <width>16777215</width>
-    <height>46</height>
+    <height>16777215</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -52,6 +52,12 @@
    </property>
    <item>
     <widget class="QWidget" name="area_left" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <property name="spacing">
        <number>0</number>
@@ -179,20 +185,13 @@
     </widget>
    </item>
    <item>
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item>
     <widget class="QFrame" name="frame_controls">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="minimumSize">
       <size>
        <width>160</width>
@@ -357,6 +356,12 @@
    </item>
    <item>
     <widget class="QWidget" name="area_right" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <property name="spacing">
        <number>0</number>
@@ -594,7 +599,6 @@
   <zorder>frame_controls</zorder>
   <zorder>area_right</zorder>
   <zorder>area_left</zorder>
-  <zorder>horizontalSpacer</zorder>
  </widget>
  <customwidgets>
   <customwidget>

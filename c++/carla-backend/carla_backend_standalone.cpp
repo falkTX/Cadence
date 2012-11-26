@@ -1768,7 +1768,7 @@ void nsm_reply_save()
 
 // -------------------------------------------------------------------------------------------------------------------
 
-#ifdef QTCREATOR_TEST
+#if 0 //def QTCREATOR_TEST
 
 #include <QtGui/QApplication>
 #include <QtGui/QDialog>

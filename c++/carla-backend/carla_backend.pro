@@ -49,11 +49,6 @@ LIBS += \
 
 QMAKE_CXXFLAGS *= -std=c++0x
 
-# NTK
-QMAKE_CXXFLAGS *= `ntk-config --cxxflags`
-QMAKE_LFLAGS *= `ntk-config --ldflags`
-LIBS += `ntk-config --libs`
-
 unix {
 LIBS += -ldl -lm
 }
