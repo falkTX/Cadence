@@ -205,16 +205,25 @@ class ParamSpinBox(QAbstractSpinBox):
             self._step = 0.001
         else:
             self._step = value
+        
+        if self._step_small > value:
+            self._step_small = value
+        if self._step_large < value:
+            self._step_large = value
 
     def set_step_small(self, value):
         if value == 0.0:
             self._step_small = 0.0001
+        elif value > self._step:
+            self._step_small = self._step
         else:
             self._step_small = value
 
     def set_step_large(self, value):
         if value == 0.0:
             self._step_large = 0.1
+        elif value < self._step:
+            self._step_large = self._step
         else:
             self._step_large = value
 

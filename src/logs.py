@@ -16,20 +16,28 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
+
 from PyQt4.QtCore import pyqtSlot, Qt, QFile, QIODevice, QTextStream, QThread
 from PyQt4.QtGui import QDialog, QPalette, QSyntaxHighlighter
 from time import sleep
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
+
 import ui_logs
 from shared import *
 
+# ------------------------------------------------------------------------------------------------------------
 # Fix log text output (get rid of terminal colors stuff)
+
 def fixLogText(text):
     return text.replace("[1m[31m", "").replace("[1m[33m", "").replace("[31m", "").replace("[33m", "").replace("[0m", "")
 
+# ------------------------------------------------------------------------------------------------------------
 # Syntax Highlighter for JACK
+
 class SyntaxHighlighter_JACK(QSyntaxHighlighter):
     def __init__(self, parent):
         QSyntaxHighlighter.__init__(self, parent)
@@ -50,7 +58,9 @@ class SyntaxHighlighter_JACK(QSyntaxHighlighter):
         #elif (": New client " in text):
             #self.setFormat(text.find(" New client "), len(text), self.m_palette.color(QPalette.Active, QPalette.Link))
 
+# ------------------------------------------------------------------------------------------------------------
 # Syntax Highlighter for A2J
+
 class SyntaxHighlighter_A2J(QSyntaxHighlighter):
     def __init__(self, parent):
         QSyntaxHighlighter.__init__(self, parent)
@@ -69,7 +79,9 @@ class SyntaxHighlighter_A2J(QSyntaxHighlighter):
         elif ": port deleted: " in text:
             self.setFormat(text.find(" port deleted: "), len(text), self.m_palette.color(QPalette.Active, QPalette.LinkVisited))
 
+# ------------------------------------------------------------------------------------------------------------
 # Syntax Highlighter for LASH
+
 class SyntaxHighlighter_LASH(QSyntaxHighlighter):
     def __init__(self, parent):
         QSyntaxHighlighter.__init__(self, parent)
@@ -84,7 +96,9 @@ class SyntaxHighlighter_LASH(QSyntaxHighlighter):
         elif ": ------------------" in text:
             self.setFormat(text.find(" ------------------"), len(text), self.m_palette.color(QPalette.Active, QPalette.Mid))
 
+# ------------------------------------------------------------------------------------------------------------
 # Syntax Highlighter for LADISH
+
 class SyntaxHighlighter_LADISH(QSyntaxHighlighter):
     def __init__(self, parent):
         QSyntaxHighlighter.__init__(self, parent)
@@ -99,7 +113,9 @@ class SyntaxHighlighter_LADISH(QSyntaxHighlighter):
         elif ": -------" in text:
             self.setFormat(text.find(" -------"), len(text), self.m_palette.color(QPalette.Active, QPalette.Mid))
 
+# ------------------------------------------------------------------------------------------------------------
 # Lock-less file read thread
+
 class LogsReadThread(QThread):
     MAX_INITIAL_SIZE = 2*1024*1024 # 2Mb
 
@@ -112,10 +128,10 @@ class LogsReadThread(QThread):
         # -------------------------------------------------------------
         # Take some values from parent
 
-        self.LOG_FILE_JACK   = self.parent().LOG_FILE_JACK
-        self.LOG_FILE_A2J    = self.parent().LOG_FILE_A2J
-        self.LOG_FILE_LASH   = self.parent().LOG_FILE_LASH
-        self.LOG_FILE_LADISH = self.parent().LOG_FILE_LADISH
+        self.LOG_FILE_JACK   = LogsW.LOG_FILE_JACK
+        self.LOG_FILE_A2J    = LogsW.LOG_FILE_A2J
+        self.LOG_FILE_LASH   = LogsW.LOG_FILE_LASH
+        self.LOG_FILE_LADISH = LogsW.LOG_FILE_LADISH
 
         # -------------------------------------------------------------
         # Init logs
@@ -236,7 +252,9 @@ class LogsReadThread(QThread):
         if self.LOG_FILE_LADISH:
             self.log_ladish_file.close()
 
+# ------------------------------------------------------------------------------------------------------------
 # Logs Window
+
 class LogsW(QDialog, ui_logs.Ui_LogsW):
     LOG_PATH = os.path.join(HOME, ".log")
 
@@ -381,8 +399,9 @@ class LogsW(QDialog, ui_logs.Ui_LogsW):
         QDialog.done(self, r)
         self.close()
 
-# -------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Allow to use this as a standalone app
+
 if __name__ == '__main__':
     # Additional imports
     from PyQt4.QtGui import QApplication
