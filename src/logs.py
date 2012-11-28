@@ -42,7 +42,7 @@ class SyntaxHighlighter_JACK(QSyntaxHighlighter):
     def __init__(self, parent):
         QSyntaxHighlighter.__init__(self, parent)
 
-        self.m_palette = self.parent().palette()
+        self.m_palette = parent.palette()
 
     def highlightBlock(self, text):
         if ": ERROR: " in text:
@@ -65,7 +65,7 @@ class SyntaxHighlighter_A2J(QSyntaxHighlighter):
     def __init__(self, parent):
         QSyntaxHighlighter.__init__(self, parent)
 
-        self.m_palette = self.parent().palette()
+        self.m_palette = parent.palette()
 
     def highlightBlock(self, text):
         if ": error: " in text:
@@ -86,7 +86,7 @@ class SyntaxHighlighter_LASH(QSyntaxHighlighter):
     def __init__(self, parent):
         QSyntaxHighlighter.__init__(self, parent)
 
-        self.m_palette = self.parent().palette()
+        self.m_palette = parent.palette()
 
     def highlightBlock(self, text):
         if ": ERROR: " in text:
@@ -103,7 +103,7 @@ class SyntaxHighlighter_LADISH(QSyntaxHighlighter):
     def __init__(self, parent):
         QSyntaxHighlighter.__init__(self, parent)
 
-        self.m_palette = self.parent().palette()
+        self.m_palette = parent.palette()
 
     def highlightBlock(self, text):
         if ": ERROR: " in text:
@@ -126,7 +126,7 @@ class LogsReadThread(QThread):
         self.m_purgeLogs = False
 
         # -------------------------------------------------------------
-        # Take some values from parent
+        # Take some values from Logs Window
 
         self.LOG_FILE_JACK   = LogsW.LOG_FILE_JACK
         self.LOG_FILE_A2J    = LogsW.LOG_FILE_A2J
@@ -281,46 +281,46 @@ class LogsW(QDialog, ui_logs.Ui_LogsW):
         # -------------------------------------------------------------
         # Check for non-existing logs and remove tabs for those
 
-        tab_index = 0
+        tabIndex = 0
 
         if not os.path.exists(self.LOG_FILE_JACK):
             self.LOG_FILE_JACK = None
-            self.tabWidget.removeTab(0 - tab_index)
-            tab_index += 1
+            self.tabWidget.removeTab(0 - tabIndex)
+            tabIndex += 1
 
         if not os.path.exists(self.LOG_FILE_A2J):
             self.LOG_FILE_A2J = None
-            self.tabWidget.removeTab(1 - tab_index)
-            tab_index += 1
+            self.tabWidget.removeTab(1 - tabIndex)
+            tabIndex += 1
 
         if not os.path.exists(self.LOG_FILE_LASH):
             self.LOG_FILE_LASH = None
-            self.tabWidget.removeTab(2 - tab_index)
-            tab_index += 1
+            self.tabWidget.removeTab(2 - tabIndex)
+            tabIndex += 1
 
         if not os.path.exists(self.LOG_FILE_LADISH):
             self.LOG_FILE_LADISH = None
-            self.tabWidget.removeTab(3 - tab_index)
-            tab_index += 1
+            self.tabWidget.removeTab(3 - tabIndex)
+            tabIndex += 1
 
         # -------------------------------------------------------------
         # Init logs viewers
 
         if self.LOG_FILE_JACK:
-            syntax_jack = SyntaxHighlighter_JACK(self.pte_jack)
-            syntax_jack.setDocument(self.pte_jack.document())
+            self.syntax_jack = SyntaxHighlighter_JACK(self.pte_jack)
+            self.syntax_jack.setDocument(self.pte_jack.document())
 
         if self.LOG_FILE_A2J:
-            syntax_a2j = SyntaxHighlighter_A2J(self.pte_a2j)
-            syntax_a2j.setDocument(self.pte_a2j.document())
+            self.syntax_a2j = SyntaxHighlighter_A2J(self.pte_a2j)
+            self.syntax_a2j.setDocument(self.pte_a2j.document())
 
         if self.LOG_FILE_LASH:
-            syntax_lash = SyntaxHighlighter_LASH(self.pte_lash)
-            syntax_lash.setDocument(self.pte_lash.document())
+            self.syntax_lash = SyntaxHighlighter_LASH(self.pte_lash)
+            self.syntax_lash.setDocument(self.pte_lash.document())
 
         if self.LOG_FILE_LADISH:
-            syntax_ladish = SyntaxHighlighter_LADISH(self.pte_ladish)
-            syntax_ladish.setDocument(self.pte_ladish.document())
+            self.syntax_ladish = SyntaxHighlighter_LADISH(self.pte_ladish)
+            self.syntax_ladish.setDocument(self.pte_ladish.document())
 
         # -------------------------------------------------------------
         # Init file read thread
