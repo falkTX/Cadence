@@ -26,6 +26,7 @@
 #include "../jack_utils.hpp"
 #include "../widgets/digitalpeakmeter.hpp"
 
+#include <cmath>
 #include <QtGui/QApplication>
 #include <QtGui/QIcon>
 #include <QtGui/QMessageBox>
