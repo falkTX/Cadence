@@ -267,9 +267,6 @@ class LogsW(QDialog, ui_logs.Ui_LogsW):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
-        self.b_close.setIcon(getIcon("window-close"))
-        self.b_purge.setIcon(getIcon("user-trash"))
-
         self.m_firstRun = True
         self.m_textLock = False
 
@@ -277,6 +274,12 @@ class LogsW(QDialog, ui_logs.Ui_LogsW):
         self.m_text_a2j    = ""
         self.m_text_lash   = ""
         self.m_text_ladish = ""
+
+        # -------------------------------------------------------------
+        # Set-up GUI
+
+        self.b_close.setIcon(getIcon("window-close"))
+        self.b_purge.setIcon(getIcon("user-trash"))
 
         # -------------------------------------------------------------
         # Check for non-existing logs and remove tabs for those

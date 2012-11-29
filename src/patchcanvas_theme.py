@@ -16,8 +16,14 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# ------------------------------------------------------------------------------------------------------------
+# Imports (Global)
+
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QColor, QFont, QPen, QPixmap
+
+# ------------------------------------------------------------------------------------------------------------
+# patchcanvas-theme.cpp
 
 class Theme(object):
     # enum PortType
