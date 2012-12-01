@@ -31,10 +31,30 @@ from shared import *
 from jacklib_helpers import *
 
 # ------------------------------------------------------------------------------------------------------------
-# Global JACK client (used in standalone mode)
+# Global variables
 
-global jackClient
-jackClient = None
+global jackCapture, jackClient
+jackCapture = None
+jackClient  = None
+
+# ------------------------------------------------------------------------------------------------------------
+# Find 'jack_capture'
+
+def canRender():
+    return bool(jackCapture is not None)
+
+# Check for cxfreeze
+if sys.path[0].endswith("%srender" % os.sep):
+    CWD = sys.path[0].rsplit("%srender" % os.sep, 1)[0]
+    if os.path.exists(os.path.join(CWD, "jack_capture")):
+        jackCapture = os.path.join(CWD, "jack_capture")
+    del CWD
+
+# Check in PATH
+for iPATH in PATH:
+    if os.path.exists(os.path.join(iPATH, "jack_capture")):
+        jackCapture = os.path.join(iPATH, "jack_capture")
+        break
 
 # ------------------------------------------------------------------------------------------------------------
 # Render Window
@@ -78,7 +98,7 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
         # Set-up GUI stuff
 
         # Get List of formats
-        self.m_process.start("jack_capture", ["-pf"])
+        self.m_process.start(jackCapture, ["-pf"])
         self.m_process.waitForFinished()
 
         formats     = str(self.m_process.readAllStandardOutput(), encoding="utf-8").split(" ")
@@ -196,7 +216,7 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
         jacklib.transport_locate(self.m_jackClient, minTime * self.m_sampleRate)
         self.m_last_time = -1
 
-        self.m_process.start("jack_capture", arguments)
+        self.m_process.start(jackCapture, arguments)
         self.m_process.waitForStarted()
 
         if self.m_freewheel:
@@ -310,10 +330,7 @@ if __name__ == '__main__':
             "JACK is not available in this system, cannot use this application."))
         sys.exit(1)
 
-    for iPATH in PATH:
-        if os.path.exists(os.path.join(iPATH, "jack_capture")):
-            break
-    else:
+    if jackCapture is None:
         QMessageBox.critical(None, app.translate("RenderW", "Error"), app.translate("RenderW",
             "The 'jack_capture' application is not available.\n"
             "Is not possible to render without it!"))
