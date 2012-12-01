@@ -16,8 +16,10 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
-import platform, sys
+
+import platform
 from copy import deepcopy
 from decimal import Decimal
 from sip import unwrapinstance
@@ -31,24 +33,11 @@ try:
 except:
     GuiContainer = QWidget
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Custom)
+
 import ui_carla_about, ui_carla_edit, ui_carla_parameter, ui_carla_plugin
 from shared import *
-
-# Carla Host object
-class CarlaHostObject(object):
-    __slots__ = [
-        'host',
-        'gui',
-        'isControl',
-        'processMode',
-        'maxParameters'
-    ]
-
-Carla = CarlaHostObject()
-Carla.host = None
-Carla.gui  = None
-Carla.isControl = False
 
 is64bit = bool(platform.architecture()[0] == "64bit" and sys.maxsize > 2**32)
 
@@ -59,7 +48,7 @@ is64bit = bool(platform.architecture()[0] == "64bit" and sys.maxsize > 2**32)
 MAX_PLUGINS    = 99
 MAX_PARAMETERS = 200
 
-# plugin hints
+# group plugin hints
 PLUGIN_IS_BRIDGE          = 0x001
 PLUGIN_IS_SYNTH           = 0x002
 PLUGIN_HAS_GUI            = 0x004
@@ -70,7 +59,7 @@ PLUGIN_CAN_VOLUME         = 0x040
 PLUGIN_CAN_BALANCE        = 0x080
 PLUGIN_CAN_FORCE_STEREO   = 0x100
 
-# parameter hints
+# group parameter hints
 PARAMETER_IS_BOOLEAN       = 0x01
 PARAMETER_IS_INTEGER       = 0x02
 PARAMETER_IS_LOGARITHMIC   = 0x04
@@ -200,19 +189,35 @@ PROCESS_MODE_MULTIPLE_CLIENTS = 1
 PROCESS_MODE_CONTINUOUS_RACK  = 2
 PROCESS_MODE_PATCHBAY         = 3
 
-# ------------------------------------------------------------------------------------------------
-# Carla GUI stuff
-
-Carla.processMode   = PROCESS_MODE_CONTINUOUS_RACK
-Carla.maxParameters = MAX_PARAMETERS
-
-# set native binary type
+# TODO ...
 if HAIKU or LINUX or MACOS:
     BINARY_NATIVE = BINARY_POSIX64 if is64bit else BINARY_POSIX32
 elif WINDOWS:
     BINARY_NATIVE = BINARY_WIN64 if is64bit else BINARY_WIN32
 else:
     BINARY_NATIVE = BINARY_OTHER
+
+# ------------------------------------------------------------------------------------------------------------
+# Carla Host object
+
+class CarlaHostObject(object):
+    __slots__ = [
+        'host',
+        'gui',
+        'isControl',
+        'processMode',
+        'maxParameters'
+    ]
+
+Carla = CarlaHostObject()
+Carla.host = None
+Carla.gui  = None
+Carla.isControl = False
+Carla.processMode   = PROCESS_MODE_CONTINUOUS_RACK
+Carla.maxParameters = MAX_PARAMETERS
+
+# ------------------------------------------------------------------------------------------------------------
+# Carla GUI stuff
 
 ICON_STATE_NULL = 0
 ICON_STATE_WAIT = 1
@@ -429,8 +434,8 @@ def xmlSafeString(string, toXml):
     else:
         return string.replace("&amp;", "&").replace("&lt;","<").replace("&gt;",">").replace("&apos;","'").replace("&quot;","\"")
 
-# ------------------------------------------------------------------------------------------------
-# carla_about.cpp
+# ------------------------------------------------------------------------------------------------------------
+# CarlaAbout.cpp
 
 class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
     def __init__(self, parent):
@@ -508,7 +513,7 @@ class CarlaAboutW(QDialog, ui_carla_about.Ui_CarlaAboutW):
         QDialog.done(self, r)
         self.close()
 
-# ------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # PluginParameter.cpp
 
 # Plugin Parameter

@@ -58,7 +58,7 @@ else:
     WINDOWS = False
 
 # ------------------------------------------------------------------------------------------------------------
-# Try import Signal
+# Try Import Signal
 
 try:
     from signal import signal, SIGINT, SIGTERM, SIGUSR1, SIGUSR2

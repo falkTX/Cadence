@@ -411,6 +411,10 @@ if __name__ == '__main__':
 
     # App initialization
     app = QApplication(sys.argv)
+    app.setApplicationName("Cadence-Logs")
+    app.setApplicationVersion(VERSION)
+    app.setOrganizationName("Cadence")
+    app.setWindowIcon(QIcon(":/scalable/cadence.svg"))
 
     # Show GUI
     gui = LogsW(None)

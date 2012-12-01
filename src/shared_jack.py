@@ -16,20 +16,28 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
+
 from PyQt4.QtCore import pyqtSlot, QTimer
 from PyQt4.QtGui import QCursor, QFontMetrics, QMenu
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
+
 import jacksettings, logs, render
 from shared import *
 from jacklib_helpers import *
 
+# ------------------------------------------------------------------------------------------------------------
 # Have JACK2 ?
+
 if jacklib.JACK2 and DEBUG:
     print("Using JACK2, version %s" % cString(jacklib.get_version_string()))
 
+# ------------------------------------------------------------------------------------------------------------
 # Can Render ?
+
 for iPATH in PATH:
     if os.path.exists(os.path.join(iPATH, "jack_capture")):
         canRender = True
@@ -37,7 +45,9 @@ for iPATH in PATH:
 else:
     canRender = False
 
-# Variables
+# ------------------------------------------------------------------------------------------------------------
+# Global Variables
+
 TRANSPORT_VIEW_HMS = 0
 TRANSPORT_VIEW_BBT = 1
 TRANSPORT_VIEW_FRAMES = 2
@@ -45,7 +55,9 @@ TRANSPORT_VIEW_FRAMES = 2
 buffer_sizes = (16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192)
 sample_rates = (22050, 32000, 44100, 48000, 88200, 96000, 192000)
 
-# DBus object
+# ------------------------------------------------------------------------------------------------------------
+# Global DBus object
+
 class DBusObject(object):
     __slots__ = [
         'loop',
@@ -63,16 +75,6 @@ class DBusObject(object):
     ]
 
 DBus = DBusObject()
-
-# Jack object
-class JackObject(object):
-    __slots__ = [
-        'client'
-    ]
-
-jack = JackObject()
-
-# Init objects
 DBus.loop = None
 DBus.bus  = None
 DBus.a2j  = None
@@ -85,9 +87,18 @@ DBus.ladish_app_iface  = None
 DBus.ladish_app_daemon = None
 DBus.patchbay = None
 
+# ------------------------------------------------------------------------------------------------------------
+# Global JACK object
+
+class JackObject(object):
+    __slots__ = [
+        'client'
+    ]
+
+jack = JackObject()
 jack.client = None
 
-# -------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Property change calls
 
 def jack_buffer_size(self_, buffer_size):
@@ -121,7 +132,7 @@ def slot_jackSampleRate_ComboBox(self_, text):
     if text and text.isdigit():
         jack_sample_rate(self_, int(text))
 
-# -------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Transport calls
 
 def setTransportView(self_, view):
@@ -194,7 +205,7 @@ def slot_transportViewMenu(self_):
     elif act_selected == act_t_fr:
         setTransportView(self_, TRANSPORT_VIEW_FRAMES)
 
-# -------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Refresh GUI stuff
 
 def refreshDSPLoad(self_):
@@ -262,7 +273,7 @@ def refreshTransport(self_):
 
     self_.m_last_transport_state = state
 
-# -------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Set GUI stuff
 
 def setBufferSize(self_, buffer_size, forced=False):
@@ -349,7 +360,7 @@ def setDSPLoad(self_, dsp_load):
 def setXruns(self_, xruns):
     self_.b_xruns.setText("%s Xrun%s" % (str(xruns) if (xruns >= 0) else "--", "" if (xruns == 1) else "s"))
 
-# -------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # External Dialogs
 
 global logsW
@@ -378,7 +389,7 @@ def slot_showRender(self_):
     renderW.exec_()
     del renderW
 
-# -------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Shared Connections
 
 def setJackConnections(self_, modes):
