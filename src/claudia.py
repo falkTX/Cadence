@@ -324,7 +324,7 @@ class ProjectNameW(QDialog, ui_claudia_projectname.Ui_ProjectNameW):
 
     @pyqtSlot()
     def slot_checkFolder(self):
-        # Create default project folder if the project has not been set yet 
+        # Create default project folder if the project has not been set yet
         if not self.le_path.text():
             if not os.path.exists(self.m_proj_folder):
                 os.mkdir(self.m_proj_folder)
@@ -1197,6 +1197,8 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             jack.client = jacklib.client_open("claudia", jacklib.JackNoStartServer, None)
             if not jack.client:
                 return self.jackStopped()
+
+        canRender = render.canRender()
 
         self.act_jack_render.setEnabled(canRender)
         self.b_jack_render.setEnabled(canRender)

@@ -857,6 +857,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
                 self.jackStopped()
                 return False
 
+        canRender = render.canRender()
+
         self.act_jack_render.setEnabled(canRender)
         self.b_jack_render.setEnabled(canRender)
         self.menuJackServer(True)

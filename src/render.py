@@ -41,20 +41,23 @@ jackClient  = None
 # Find 'jack_capture'
 
 def canRender():
+    global jackCapture
     return bool(jackCapture is not None)
 
 # Check for cxfreeze
-if sys.path[0].endswith("%srender" % os.sep):
-    CWD = sys.path[0].rsplit("%srender" % os.sep, 1)[0]
-    if os.path.exists(os.path.join(CWD, "jack_capture")):
-        jackCapture = os.path.join(CWD, "jack_capture")
-    del CWD
+if sys.path[0].rsplit(os.sep, 1)[-1] in ("catia", "claudia", "render"):
+    name = sys.path[0].rsplit(os.sep, 1)[-1]
+    cwd  = sys.path[0].rsplit(name, 1)[0]
+    if os.path.exists(os.path.join(cwd, "jack_capture")):
+        jackCapture = os.path.join(cwd, "jack_capture")
+    del cwd, name
 
 # Check in PATH
-for iPATH in PATH:
-    if os.path.exists(os.path.join(iPATH, "jack_capture")):
-        jackCapture = os.path.join(iPATH, "jack_capture")
-        break
+if jackCapture is None:
+    for iPATH in PATH:
+        if os.path.exists(os.path.join(iPATH, "jack_capture")):
+            jackCapture = os.path.join(iPATH, "jack_capture")
+            break
 
 # ------------------------------------------------------------------------------------------------------------
 # Render Window
@@ -87,9 +90,9 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
         # -------------------------------------------------------------
         # Internal stuff
 
+        self.m_freewheel = False
         self.m_lastTime  = 0
         self.m_maxTime   = 180
-        self.m_freewheel = False
 
         self.m_timer   = QTimer(self)
         self.m_process = QProcess(self)
@@ -164,8 +167,8 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
 
         newBufferSize = int(self.cb_buffer_size.currentText())
 
-        self.m_maxTime   = maxTime
         self.m_freewheel = bool(self.cb_render_mode.currentIndex() == 1)
+        self.m_maxTime   = maxTime
 
         self.progressBar.setMinimum(minTime)
         self.progressBar.setMaximum(maxTime)
