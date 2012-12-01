@@ -18,8 +18,8 @@
 
 # Imports (Global)
 from time import ctime
-from PyQt4.QtCore import QPointF, QSettings
-from PyQt4.QtGui import QAction, QApplication, QMainWindow, QVBoxLayout, QTableWidgetItem, QTreeWidgetItem
+from PyQt4.QtCore import QPointF
+from PyQt4.QtGui import QAction, QApplication, QVBoxLayout, QTableWidgetItem, QTreeWidgetItem
 
 # Imports (Custom Stuff)
 import claudia_launcher
@@ -490,7 +490,7 @@ class ClaudiaLauncherW(QDialog):
         self.m_proj_folder = proj_folder
         self.m_is_room = is_room
         self.m_bpm = bpm
-        self.m_sample_rate = sample_rate
+        self.m_sampleRate = sample_rate
 
         self.test_url = True
         self.test_selected = False
@@ -525,7 +525,7 @@ class ClaudiaLauncherW(QDialog):
             return self.m_bpm
 
     def callback_getSampleRate(self):
-        return self.m_sample_rate
+        return self.m_sampleRate
 
     def callback_isLadishRoom(self):
         return self.m_is_room
@@ -553,12 +553,11 @@ class ClaudiaLauncherW(QDialog):
         self.close()
 
 # Main Window
-class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
+class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
     def __init__(self, parent=None):
-        QMainWindow.__init__(self, parent)
+        AbstractJackW.__init__(self, parent, "Claudia")
         self.setupUi(self)
 
-        self.settings = QSettings("Cadence", "Claudia")
         self.loadSettings(True)
 
         setIcons(self, ["canvas", "jack", "transport"])
@@ -639,9 +638,9 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             self.systray.connect("studio_save_as", self.slot_studio_save_as)
             self.systray.connect("studio_rename", self.slot_studio_rename)
             self.systray.connect("studio_unload", self.slot_studio_unload)
-            self.systray.connect("tools_configure_jack", lambda: slot_showJackSettings(self))
-            self.systray.connect("tools_render", lambda: slot_showRender(self))
-            self.systray.connect("tools_logs", lambda: slot_showLogs(self))
+            self.systray.connect("tools_configure_jack", self.slot_showJackSettings)
+            self.systray.connect("tools_render", self.slot_showRender)
+            self.systray.connect("tools_logs", self.slot_showLogs)
             self.systray.connect("tools_clear_xruns", self.slot_JackClearXruns)
             self.systray.connect("configure", self.slot_configureClaudia)
 
@@ -651,28 +650,14 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         else:
             self.systray = None
 
-        self.m_xruns = -1
-        self.m_buffer_size = 0
-        self.m_sample_rate = 0
-        self.m_next_sample_rate = 0
-
-        self.m_last_bpm = None
-        self.m_last_transport_state = None
-
         self.m_last_item_type = None
         self.m_last_room_path = None
 
         self.m_crashedJACK   = False
         self.m_crashedLADISH = False
 
-        self.cb_buffer_size.clear()
-        self.cb_sample_rate.clear()
-
-        for buffer_size in buffer_sizes:
-            self.cb_buffer_size.addItem(str(buffer_size))
-
-        for sample_rate in sample_rates:
-            self.cb_sample_rate.addItem(str(sample_rate))
+        # -------------------------------------------------------------
+        # Set-up Canvas
 
         self.scene = patchcanvas.PatchScene(self, self.graphicsView)
         self.graphicsView.setScene(self.scene)
@@ -704,9 +689,27 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         patchcanvas.setCanvasSize(0, 0, DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT)
         self.graphicsView.setSceneRect(0, 0, DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT)
 
+        # -------------------------------------------------------------
+        # Set-up Canvas Preview
+
         self.miniCanvasPreview.setRealParent(self)
         self.miniCanvasPreview.setViewTheme(patchcanvas.canvas.theme.rubberband_brush, patchcanvas.canvas.theme.rubberband_pen.color())
         self.miniCanvasPreview.init(self.scene, DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT)
+
+        # -------------------------------------------------------------
+        # Set-up GUI
+
+        self.cb_buffer_size.clear()
+        self.cb_sample_rate.clear()
+
+        for buffer_size in BUFFER_SIZE_LIST:
+            self.cb_buffer_size.addItem(str(buffer_size))
+
+        for sample_rate in SAMPLE_RATE_LIST:
+            self.cb_sample_rate.addItem(str(sample_rate))
+
+        # -------------------------------------------------------------
+        # ...
 
         if DBus.jack.IsStarted():
             self.jackStarted()
@@ -937,21 +940,21 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
     def init_jack(self):
         self.m_xruns = -1
-        self.m_next_sample_rate = 0
+        self.m_nextSampleRate = 0
 
-        self.m_last_bpm = None
-        self.m_last_transport_state = None
+        self.m_lastBPM = None
+        self.m_lastTransportState = None
 
-        buffer_size = int(jacklib.get_buffer_size(jack.client))
-        sample_rate = int(jacklib.get_sample_rate(jack.client))
+        bufferSize = int(jacklib.get_buffer_size(jack.client))
+        sampleRate = int(jacklib.get_sample_rate(jack.client))
         realtime = bool(int(jacklib.is_realtime(jack.client)))
 
-        setBufferSize(self, buffer_size)
-        setSampleRate(self, sample_rate)
-        setRealTime(self, realtime)
+        self.setBufferSize(bufferSize)
+        self.setSampleRate(sampleRate)
+        self.setRealTime(realtime)
 
-        refreshDSPLoad(self)
-        refreshTransport(self)
+        self.refreshDSPLoad()
+        self.refreshTransport()
         self.refreshXruns()
 
         self.init_callbacks()
@@ -1224,8 +1227,8 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         # client already closed
         jack.client = None
 
-        if self.m_next_sample_rate:
-            jack_sample_rate(self, self.m_next_sample_rate)
+        if self.m_nextSampleRate:
+            self.jack_sample_rate(self.m_nextSampleRate)
 
         buffer_size = jacksettings.getBufferSize()
         sample_rate = jacksettings.getSampleRate()
@@ -1233,13 +1236,13 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         sample_rate_test = bool(sample_rate != -1)
 
         if buffer_size_test:
-            setBufferSize(self, buffer_size)
+            self.setBufferSize(buffer_size)
 
         if sample_rate_test:
-            setSampleRate(self, sample_rate)
+            self.setSampleRate(sample_rate)
 
-        setRealTime(self, jacksettings.isRealtime())
-        setXruns(self, -1)
+        self.setRealTime(jacksettings.isRealtime())
+        self.setXruns(-1)
 
         self.cb_buffer_size.setEnabled(buffer_size_test)
         self.cb_sample_rate.setEnabled(sample_rate_test)
@@ -1251,11 +1254,11 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         if self.systray:
             self.systray.setActionEnabled("tools_render", False)
 
-        if self.m_selected_transport_view == TRANSPORT_VIEW_HMS:
+        if self.m_curTransportView == TRANSPORT_VIEW_HMS:
             self.label_time.setText("00:00:00")
-        elif self.m_selected_transport_view == TRANSPORT_VIEW_BBT:
+        elif self.m_curTransportView == TRANSPORT_VIEW_BBT:
             self.label_time.setText("000|0|0000")
-        elif self.m_selected_transport_view == TRANSPORT_VIEW_FRAMES:
+        elif self.m_curTransportView == TRANSPORT_VIEW_FRAMES:
             self.label_time.setText("000'000'000")
 
         self.pb_dsp_load.setValue(0)
@@ -1481,7 +1484,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
 
         xruns = int(DBus.jack.GetXruns())
         if self.m_xruns != xruns:
-            setXruns(self, xruns)
+            self.setXruns(xruns)
             self.m_xruns = xruns
 
     def JackBufferSizeCallback(self, buffer_size, arg):
@@ -1666,7 +1669,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             print("Invalid m_last_item_type value")
             return
 
-        dialog = ClaudiaLauncherW(self, DBus.ladish_app_iface, proj_folder, is_room, self.m_last_bpm, self.m_sample_rate)
+        dialog = ClaudiaLauncherW(self, DBus.ladish_app_iface, proj_folder, is_room, self.m_lastBPM, self.m_sampleRate)
         dialog.exec_()
 
     @pyqtSlot()
@@ -2321,12 +2324,12 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             DBus.jack.ResetXruns()
 
     @pyqtSlot(int)
-    def slot_JackBufferSizeCallback(self, buffer_size):
-        setBufferSize(self, buffer_size)
+    def slot_JackBufferSizeCallback(self, bufferSize):
+        self.setBufferSize(bufferSize)
 
     @pyqtSlot(int)
-    def slot_JackSampleRateCallback(self, sample_rate):
-        setSampleRate(self, sample_rate)
+    def slot_JackSampleRateCallback(self, sampleRate):
+        self.setSampleRate(sampleRate)
 
     @pyqtSlot()
     def slot_JackShutdownCallback(self):
@@ -2437,7 +2440,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
         self.settings.setValue("SplitterSizes", self.splitter.saveState())
         self.settings.setValue("ShowToolbar", self.frame_toolbar.isEnabled())
         self.settings.setValue("ShowStatusbar", self.frame_statusbar.isEnabled())
-        self.settings.setValue("TransportView", self.m_selected_transport_view)
+        self.settings.setValue("TransportView", self.m_curTransportView)
         self.settings.setValue("HorizontalScrollBarValue", self.graphicsView.horizontalScrollBar().value())
         self.settings.setValue("VerticalScrollBarValue", self.graphicsView.verticalScrollBar().value())
 
@@ -2459,7 +2462,7 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
             self.act_settings_show_statusbar.setChecked(show_statusbar)
             self.frame_statusbar.setVisible(show_statusbar)
 
-            setTransportView(self, self.settings.value("TransportView", TRANSPORT_VIEW_HMS, type=int))
+            self.setTransportView(self.settings.value("TransportView", TRANSPORT_VIEW_HMS, type=int))
 
         self.m_savedSettings = {
             "Main/DefaultProjectFolder": self.settings.value("Main/DefaultProjectFolder", DEFAULT_PROJECT_FOLDER, type=str),
@@ -2485,11 +2488,11 @@ class ClaudiaMainW(QMainWindow, ui_claudia.Ui_ClaudiaMainW):
     def timerEvent(self, event):
         if event.timerId() == self.m_timer120:
             if jack.client:
-                refreshTransport(self)
+                self.refreshTransport()
                 self.refreshXruns()
         elif event.timerId() == self.m_timer600:
             if jack.client:
-                refreshDSPLoad(self)
+                self.refreshDSPLoad()
             else:
                 self.update()
         QMainWindow.timerEvent(self, event)

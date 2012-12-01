@@ -16,21 +16,21 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
-from PyQt4.QtCore import QSettings
-from PyQt4.QtGui import QApplication, QMainWindow
 
+from PyQt4.QtGui import QApplication
+
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
+
 import ui_catia
 from shared_jack import *
 from shared_canvas import *
 from shared_settings import *
 
-try:
-    from PyQt4.QtOpenGL import QGLWidget
-    hasGL = True
-except:
-    hasGL = False
+# ------------------------------------------------------------------------------------------------------------
+# Try Import DBus
 
 try:
     import dbus
@@ -39,7 +39,18 @@ try:
 except:
     haveDBus = False
 
-# Disabled for Beta
+# ------------------------------------------------------------------------------------------------------------
+# Try Import OpenGL
+
+try:
+    from PyQt4.QtOpenGL import QGLWidget
+    hasGL = True
+except:
+    hasGL = False
+
+# ------------------------------------------------------------------------------------------------------------
+# Check for ALSA-MIDI
+
 if LINUX:
     for iPATH in PATH:
         if os.path.exists(os.path.join(iPATH, "aconnect")):
@@ -53,8 +64,14 @@ if LINUX:
 else:
     haveALSA = False
 
+# ------------------------------------------------------------------------------------------------------------
+# Global Variables
+
 global a2j_client_name
 a2j_client_name = None
+
+# ------------------------------------------------------------------------------------------------------------
+# Static Variables
 
 GROUP_TYPE_NULL = 0
 GROUP_TYPE_ALSA = 1
@@ -73,13 +90,14 @@ iConnId     = 0
 iConnOutput = 1
 iConnInput  = 2
 
-# Main Window
-class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
+# ------------------------------------------------------------------------------------------------------------
+# Catia Main Window
+
+class CatiaMainW(AbstractJackW, ui_catia.Ui_CatiaMainW):
     def __init__(self, parent=None):
-        QMainWindow.__init__(self, parent)
+        AbstractJackW.__init__(self, parent, "Catia")
         self.setupUi(self)
 
-        self.settings = QSettings("Cadence", "Catia")
         self.loadSettings(True)
 
         setIcons(self, ["canvas", "jack", "transport", "misc"])
@@ -98,26 +116,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.m_last_port_id  = 1
         self.m_last_connection_id = 1
 
-        self.m_xruns = 0
-        self.m_buffer_size = 0
-        self.m_sample_rate = 0
-        self.m_next_sample_rate = 0
-
-        self.m_last_bpm = None
-        self.m_last_transport_state = None
-
-        self.cb_buffer_size.clear()
-        self.cb_sample_rate.clear()
-
-        for buffer_size in buffer_sizes:
-            self.cb_buffer_size.addItem(str(buffer_size))
-
-        for sample_rate in sample_rates:
-            self.cb_sample_rate.addItem(str(sample_rate))
-
-        self.act_jack_bf_list = (self.act_jack_bf_16, self.act_jack_bf_32, self.act_jack_bf_64, self.act_jack_bf_128,
-                                 self.act_jack_bf_256, self.act_jack_bf_512, self.act_jack_bf_1024, self.act_jack_bf_2048,
-                                 self.act_jack_bf_4096, self.act_jack_bf_8192)
+        # -------------------------------------------------------------
+        # Set-up Canvas
 
         self.scene = patchcanvas.PatchScene(self, self.graphicsView)
         self.graphicsView.setScene(self.scene)
@@ -144,6 +144,22 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         patchcanvas.setOptions(p_options)
         patchcanvas.setFeatures(p_features)
         patchcanvas.init("Catia", self.scene, self.canvasCallback, DEBUG)
+
+        # -------------------------------------------------------------
+        # Set-up GUI
+
+        self.cb_buffer_size.clear()
+        self.cb_sample_rate.clear()
+
+        for buffer_size in BUFFER_SIZE_LIST:
+            self.cb_buffer_size.addItem(str(buffer_size))
+
+        for sample_rate in SAMPLE_RATE_LIST:
+            self.cb_sample_rate.addItem(str(sample_rate))
+
+        self.act_jack_bf_list = (self.act_jack_bf_16, self.act_jack_bf_32, self.act_jack_bf_64, self.act_jack_bf_128,
+                                 self.act_jack_bf_256, self.act_jack_bf_512, self.act_jack_bf_1024, self.act_jack_bf_2048,
+                                 self.act_jack_bf_4096, self.act_jack_bf_8192)
 
         # Try to connect to jack
         if self.jackStarted():
@@ -304,8 +320,8 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
                 port_latency = jacklib.port_get_latency(port_ptr)
                 port_total_latency = jacklib.port_get_total_latency(jack.client, port_ptr)
 
-                latency_text = self.tr("%.1f ms (%i frames)" % (port_latency * 1000 / self.m_sample_rate, port_latency))
-                latency_total_text = self.tr("%.1f ms (%i frames)" % (port_total_latency * 1000 / self.m_sample_rate, port_total_latency))
+                latency_text = self.tr("%.1f ms (%i frames)" % (port_latency * 1000 / self.m_sampleRate, port_latency))
+                latency_total_text = self.tr("%.1f ms (%i frames)" % (port_total_latency * 1000 / self.m_sampleRate, port_total_latency))
 
                 info = self.tr(""
                               "<table>"
@@ -434,22 +450,22 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
 
     def init_jack(self):
         self.m_xruns = 0
-        self.m_next_sample_rate = 0
+        self.m_nextSampleRate = 0
 
-        self.m_last_bpm = None
-        self.m_last_transport_state = None
+        self.m_lastBPM = None
+        self.m_lastTransportState = None
 
         buffer_size = int(jacklib.get_buffer_size(jack.client))
         sample_rate = int(jacklib.get_sample_rate(jack.client))
         realtime = bool(int(jacklib.is_realtime(jack.client)))
 
-        setBufferSize(self, buffer_size)
-        setSampleRate(self, sample_rate)
-        setRealTime(self, realtime)
-        setXruns(self, 0)
+        self.setBufferSize(buffer_size)
+        self.setSampleRate(sample_rate)
+        self.setRealTime(realtime)
+        self.setXruns(0)
 
-        refreshDSPLoad(self)
-        refreshTransport(self)
+        self.refreshDSPLoad()
+        self.refreshTransport()
 
         self.init_jack_callbacks()
         self.init_jack_ports()
@@ -887,26 +903,26 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         patchcanvas.clear()
         self.init_ports()
 
-        if self.m_next_sample_rate:
-            jack_sample_rate(self, self.m_next_sample_rate)
+        if self.m_nextSampleRate:
+            self.jack_sample_rate(self.m_nextSampleRate)
 
         if DBus.jack:
-            buffer_size = jacksettings.getBufferSize()
-            sample_rate = jacksettings.getSampleRate()
-            buffer_size_test = bool(buffer_size != -1)
-            sample_rate_test = bool(sample_rate != -1)
+            bufferSize = jacksettings.getBufferSize()
+            sampleRate = jacksettings.getSampleRate()
+            bufferSizeTest = bool(bufferSize != -1)
+            sampleRateTest = bool(sampleRate != -1)
 
-            if buffer_size_test:
-                setBufferSize(self, buffer_size)
+            if bufferSizeTest:
+                self.setBufferSize(bufferSize)
 
-            if sample_rate_test:
-                setSampleRate(self, sample_rate)
+            if sampleRateTest:
+                self.setSampleRate(sampleRate)
 
-            setRealTime(self, jacksettings.isRealtime())
+            self.setRealTime(jacksettings.isRealtime())
 
-            self.cb_buffer_size.setEnabled(buffer_size_test)
-            self.cb_sample_rate.setEnabled(sample_rate_test)
-            self.menu_Jack_Buffer_Size.setEnabled(buffer_size_test)
+            self.cb_buffer_size.setEnabled(bufferSizeTest)
+            self.cb_sample_rate.setEnabled(sampleRateTest)
+            self.menu_Jack_Buffer_Size.setEnabled(bufferSizeTest)
 
         else:
             self.cb_buffer_size.setEnabled(False)
@@ -917,13 +933,13 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.b_jack_render.setEnabled(False)
         self.menuJackServer(False)
         self.menuJackTransport(False)
-        setXruns(self, -1)
+        self.setXruns(-1)
 
-        if self.m_selected_transport_view == TRANSPORT_VIEW_HMS:
+        if self.m_curTransportView == TRANSPORT_VIEW_HMS:
             self.label_time.setText("00:00:00")
-        elif self.m_selected_transport_view == TRANSPORT_VIEW_BBT:
+        elif self.m_curTransportView == TRANSPORT_VIEW_BBT:
             self.label_time.setText("000|0|0000")
-        elif self.m_selected_transport_view == TRANSPORT_VIEW_FRAMES:
+        elif self.m_curTransportView == TRANSPORT_VIEW_FRAMES:
             self.label_time.setText("000'000'000")
 
         self.pb_dsp_load.setValue(0)
@@ -1082,7 +1098,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
     def slot_JackClearXruns(self):
         if jack.client:
             self.m_xruns = 0
-            setXruns(self, 0)
+            self.setXruns(0)
 
     @pyqtSlot()
     def slot_A2JBridgeStart(self):
@@ -1110,27 +1126,27 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
     @pyqtSlot()
     def slot_XRunCallback(self):
         self.m_xruns += 1
-        setXruns(self, self.m_xruns)
+        self.setXruns(self.m_xruns)
 
     @pyqtSlot(int)
-    def slot_BufferSizeCallback(self, buffer_size):
-        setBufferSize(self, buffer_size)
+    def slot_BufferSizeCallback(self, bufferSize):
+        self.setBufferSize(bufferSize)
 
     @pyqtSlot(int)
-    def slot_SampleRateCallback(self, sample_rate):
-        setSampleRate(self, sample_rate)
+    def slot_SampleRateCallback(self, sampleRate):
+        self.setSampleRate(sampleRate)
 
     @pyqtSlot(str, bool)
     def slot_ClientRegistrationCallback(self, client_name, register_yesno):
         if register_yesno and client_name == "system" and jack.client:
-            buffer_size = int(jacklib.get_buffer_size(jack.client))
-            sample_rate = int(jacklib.get_sample_rate(jack.client))
+            bufferSize = int(jacklib.get_buffer_size(jack.client))
+            sampleRate = int(jacklib.get_sample_rate(jack.client))
             realtime = bool(int(jacklib.is_realtime(jack.client)))
 
-            setBufferSize(self, buffer_size)
-            setSampleRate(self, sample_rate)
-            setRealTime(self, realtime)
-            setXruns(self, 0)
+            self.setBufferSize(bufferSize)
+            self.setSampleRate(sampleRate)
+            self.setRealTime(realtime)
+            self.setXruns(0)
 
     @pyqtSlot(int, bool)
     def slot_PortRegistrationCallback(self, port_id_jack, register_yesno):
@@ -1274,7 +1290,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         self.settings.setValue("ShowAlsaMIDI", self.act_settings_show_alsa.isChecked())
         self.settings.setValue("ShowToolbar", self.frame_toolbar.isVisible())
         self.settings.setValue("ShowStatusbar", self.frame_statusbar.isVisible())
-        self.settings.setValue("TransportView", self.m_selected_transport_view)
+        self.settings.setValue("TransportView", self.m_curTransportView)
 
     def loadSettings(self, geometry):
         if geometry:
@@ -1291,7 +1307,7 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
             self.act_settings_show_statusbar.setChecked(show_statusbar)
             self.frame_statusbar.setVisible(show_statusbar)
 
-            setTransportView(self, self.settings.value("TransportView", TRANSPORT_VIEW_HMS, type=int))
+            self.setTransportView(self.settings.value("TransportView", TRANSPORT_VIEW_HMS, type=int))
 
         self.m_savedSettings = {
             "Main/RefreshInterval": self.settings.value("Main/RefreshInterval", 120, type=int),
@@ -1309,10 +1325,10 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
     def timerEvent(self, event):
         if event.timerId() == self.m_timer120:
             if jack.client:
-                refreshTransport(self)
+                self.refreshTransport()
         elif event.timerId() == self.m_timer600:
             if jack.client:
-                refreshDSPLoad(self)
+                self.refreshDSPLoad()
             #else:
                 #self.update()
         QMainWindow.timerEvent(self, event)
@@ -1322,7 +1338,9 @@ class CatiaMainW(QMainWindow, ui_catia.Ui_CatiaMainW):
         patchcanvas.clear()
         QMainWindow.closeEvent(self, event)
 
-#--------------- main ------------------
+# ------------------------------------------------------------------------------------------------------------
+# Main
+
 if __name__ == '__main__':
     # App initialization
     app = QApplication(sys.argv)

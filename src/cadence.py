@@ -702,7 +702,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         self.m_lastAlsaIndexType = -2 # invalid
 
-        if jacklib is not None and not jacklib.JACK2:
+        if jacklib and not jacklib.JACK2:
             self.b_jack_switchmaster.setEnabled(False)
 
         # -------------------------------------------------------------
