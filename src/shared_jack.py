@@ -36,7 +36,7 @@ if DEBUG and jacklib is not None and jacklib.JACK2:
     print("Using JACK2, version %s" % cString(jacklib.get_version_string()))
 
 # ------------------------------------------------------------------------------------------------------------
-# Global Variables
+# Static Variables
 
 TRANSPORT_VIEW_HMS = 0
 TRANSPORT_VIEW_BBT = 1
@@ -369,7 +369,7 @@ def slot_showJackSettings(self_):
 #@pyqtSlot()
 def slot_showLogs(self_):
     global logsW
-    if not logsW:
+    if logsW is None:
         logsW = logs.LogsW(self_)
     logsW.show()
 

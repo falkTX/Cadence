@@ -16,71 +16,83 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# ------------------------------------------------------------------------------------------------------------
+# Try Import jacklib
+
 try:
     import jacklib
 except ImportError:
     jacklib = None
 
-def get_jack_status_error_string(c_status):
-    status = c_status.value
-    error_string = ""
+# ------------------------------------------------------------------------------------------------------------
+# Get JACK error status as string
+
+def get_jack_status_error_string(cStatus):
+    errorString = ""
+    status      = cStatus.value
 
     if status & jacklib.JackFailure:
-        error_string += "Overall operation failed;\n"
+        errorString += "Overall operation failed;\n"
     if status & jacklib.JackInvalidOption:
-        error_string += "The operation contained an invalid or unsupported option;\n"
+        errorString += "The operation contained an invalid or unsupported option;\n"
     if status & jacklib.JackNameNotUnique:
-        error_string += "The desired client name was not unique;\n"
+        errorString += "The desired client name was not unique;\n"
     if status & jacklib.JackServerStarted:
-        error_string += "The JACK server was started as a result of this operation;\n"
+        errorString += "The JACK server was started as a result of this operation;\n"
     if status & jacklib.JackServerFailed:
-        error_string += "Unable to connect to the JACK server;\n"
+        errorString += "Unable to connect to the JACK server;\n"
     if status & jacklib.JackServerError:
-        error_string += "Communication error with the JACK server;\n"
+        errorString += "Communication error with the JACK server;\n"
     if status & jacklib.JackNoSuchClient:
-        error_string += "Requested client does not exist;\n"
+        errorString += "Requested client does not exist;\n"
     if status & jacklib.JackLoadFailure:
-        error_string += "Unable to load internal client;\n"
+        errorString += "Unable to load internal client;\n"
     if status & jacklib.JackInitFailure:
-        error_string += "Unable to initialize client;\n"
+        errorString += "Unable to initialize client;\n"
     if status & jacklib.JackShmFailure:
-        error_string += "Unable to access shared memory;\n"
+        errorString += "Unable to access shared memory;\n"
     if status & jacklib.JackVersionError:
-        error_string += "Client's protocol version does not match;\n"
+        errorString += "Client's protocol version does not match;\n"
     if status & jacklib.JackBackendError:
-        error_string += "Backend Error;\n"
+        errorString += "Backend Error;\n"
     if status & jacklib.JackClientZombie:
-        error_string += "Client is being shutdown against its will;\n"
+        errorString += "Client is being shutdown against its will;\n"
 
-    if error_string:
-        error_string = error_string.strip().rsplit(";", 1)[0] + "."
+    if errorString:
+        errorString = errorString.strip().rsplit(";", 1)[0] + "."
 
-    return error_string
+    return errorString
 
-# C char** -> Python list conversion
+# ------------------------------------------------------------------------------------------------------------
+# Convert C char** -> Python list
+
 def c_char_p_p_to_list(c_char_p_p):
     i = 0
-    final_list = []
+    retList = []
 
     if not c_char_p_p:
-        return final_list
+        return retList
 
     while True:
         new_char_p = c_char_p_p[i]
         if new_char_p:
-            final_list.append(str(new_char_p, encoding="utf-8"))
+            retList.append(str(new_char_p, encoding="utf-8"))
             i += 1
         else:
             break
 
     jacklib.free(c_char_p_p)
-    return final_list
+    return retList
 
-# C cast void* -> jack_default_audio_sample_t*
+# ------------------------------------------------------------------------------------------------------------
+# Convert C void* -> jack_default_audio_sample_t*
+
 def translate_audio_port_buffer(void_p):
     return jacklib.cast(void_p, jacklib.POINTER(jacklib.jack_default_audio_sample_t))
 
-# Convert a jack midi buffer into a variable-size list
+# ------------------------------------------------------------------------------------------------------------
+# Convert a JACK midi buffer into a variable-size list
+
 def translate_midi_event_buffer(void_p, size):
     if not void_p:
         return ()

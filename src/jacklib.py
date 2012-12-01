@@ -16,11 +16,15 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
+
 from ctypes import *
 from sys import platform
 
+# ------------------------------------------------------------------------------------------------------------
 # Load JACK shared library
+
 try:
     if platform == "darwin":
         jacklib = cdll.LoadLibrary("libjack.dylib")
@@ -32,7 +36,9 @@ except:
     jacklib = None
     raise ImportError("JACK not available in this system")
 
+# ------------------------------------------------------------------------------------------------------------
 # JACK2 test
+
 try:
     if jacklib and jacklib.jack_get_version_string:
         JACK2 = True
@@ -41,7 +47,7 @@ try:
 except:
     JACK2 = False
 
-# ---------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Pre-definitions
 
 c_enum = c_int
@@ -56,7 +62,7 @@ class _jack_client(Structure):
 class pthread_t(Structure):
     _fields_ = []
 
-# ---------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Defines
 
 JACK_MAX_FRAMES = 4294967295
@@ -64,7 +70,7 @@ JACK_LOAD_INIT_LIMIT = 1024
 JACK_DEFAULT_AUDIO_TYPE = "32 bit float mono audio"
 JACK_DEFAULT_MIDI_TYPE  = "8 bit raw midi"
 
-# ---------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Types
 
 jack_shmsize_t = c_int32
@@ -157,7 +163,7 @@ JackSessionSaveTemplate = 3
 JackSessionSaveError    = 0x01
 JackSessionNeedTerminal = 0x02
 
-# ---------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Structs
 
 class jack_latency_range_t(Structure):
@@ -236,7 +242,7 @@ class jack_session_command_t(Structure):
         ("flags", jack_session_flags_t)
     ]
 
-# ---------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Callbacks
 
 JackLatencyCallback = CFUNCTYPE(None, jack_latency_callback_mode_t, c_void_p)
@@ -258,7 +264,7 @@ JackSyncCallback = CFUNCTYPE(c_int, jack_transport_state_t, POINTER(jack_positio
 JackTimebaseCallback = CFUNCTYPE(None, jack_transport_state_t, jack_nframes_t, POINTER(jack_position_t), c_int, c_void_p)
 JackSessionCallback = CFUNCTYPE(None, jack_session_event_t, c_void_p)
 
-# ---------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Functions
 
 if JACK2:
@@ -341,7 +347,7 @@ def client_thread_id(client):
 def is_realtime(client):
     return jacklib.jack_is_realtime(client)
 
-
+# ------------------------------------------------------------------------------------------------------------
 # Non Callback API
 
 global _thread_callback
@@ -373,7 +379,7 @@ def set_process_thread(client, thread_callback, arg):
     _thread_callback = JackThreadCallback(thread_callback)
     return jacklib.jack_set_process_thread(client, _thread_callback, arg)
 
-
+# ------------------------------------------------------------------------------------------------------------
 # Client Callbacks
 
 global _thread_init_callback
@@ -518,7 +524,7 @@ def set_latency_callback(client, latency_callback, arg): # JACK_WEAK_EXPORT
         return jacklib.jack_set_latency_callback(client, _latency_callback, arg)
     return -1
 
-
+# ------------------------------------------------------------------------------------------------------------
 # Server Control
 
 jacklib.jack_set_freewheel.argtypes = [POINTER(jack_client_t), c_int]
@@ -557,7 +563,7 @@ def engine_takeover_timebase(client):
 def cpu_load(client):
     return jacklib.jack_cpu_load(client)
 
-
+# ------------------------------------------------------------------------------------------------------------
 # Port Functions
 
 jacklib.jack_port_register.argtypes = [POINTER(jack_client_t), c_char_p, c_char_p, c_ulong, c_ulong]
@@ -747,7 +753,7 @@ def port_type_get_buffer_size(client, port_type): # JACK_WEAK_EXPORT
         return jacklib.jack_port_type_get_buffer_size(client, port_type.encode("utf-8"))
     return 0
 
-
+# ------------------------------------------------------------------------------------------------------------
 # Latency Functions
 
 jacklib.jack_port_set_latency.argtypes = [POINTER(jack_port_t), jack_nframes_t]
@@ -800,7 +806,7 @@ def port_get_total_latency(client, port):
 def recompute_total_latency(client, port):
     return jacklib.jack_recompute_total_latency(client, port)
 
-
+# ------------------------------------------------------------------------------------------------------------
 # Port Searching
 
 jacklib.jack_get_ports.argtypes = [POINTER(jack_client_t), c_char_p, c_char_p, c_ulong]
@@ -821,7 +827,7 @@ def port_by_name(client, port_name):
 def port_by_id(client, port_id):
     return jacklib.jack_port_by_id(client, port_id)
 
-
+# ------------------------------------------------------------------------------------------------------------
 # Time Functions
 
 jacklib.jack_frames_since_cycle_start.argtypes = [POINTER(jack_client_t)]
@@ -871,11 +877,11 @@ def time_to_frames(client, time):
 def get_time():
     return jacklib.jack_get_time()
 
-
+# ------------------------------------------------------------------------------------------------------------
 # Error Output
 # TODO
 
-
+# ------------------------------------------------------------------------------------------------------------
 # Misc
 
 jacklib.jack_free.argtypes = [c_void_p]
@@ -884,7 +890,7 @@ jacklib.jack_free.restype = None
 def free(ptr):
     return jacklib.jack_free(ptr)
 
-
+# ------------------------------------------------------------------------------------------------------------
 # Transport
 
 global _sync_callback
@@ -968,7 +974,7 @@ def get_transport_info(client, tinfo):
 def set_transport_info(client, tinfo):
     return jacklib.jack_set_transport_info(client, tinfo)
 
-
+# ------------------------------------------------------------------------------------------------------------
 # MIDI
 
 jacklib.jack_midi_get_event_count.argtypes = [c_void_p]
@@ -1013,7 +1019,7 @@ def midi_event_write(port_buffer, time, data, data_size):
 def midi_get_lost_event_count(port_buffer):
     return jacklib.jack_midi_get_lost_event_count(port_buffer)
 
-
+# ------------------------------------------------------------------------------------------------------------
 # Session
 
 global _session_callback
