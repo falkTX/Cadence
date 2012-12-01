@@ -305,7 +305,7 @@ if __name__ == '__main__':
     app.setOrganizationName("Cadence")
     app.setWindowIcon(QIcon(":/scalable/cadence.svg"))
 
-    if not jacklib:
+    if jacklib is None:
         QMessageBox.critical(None, app.translate("RenderW", "Error"), app.translate("RenderW",
             "JACK is not available in this system, cannot use this application."))
         sys.exit(1)

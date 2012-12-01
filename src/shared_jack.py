@@ -32,7 +32,7 @@ from jacklib_helpers import *
 # ------------------------------------------------------------------------------------------------------------
 # Have JACK2 ?
 
-if jacklib.JACK2 and DEBUG:
+if DEBUG and jacklib is not None and jacklib.JACK2:
     print("Using JACK2, version %s" % cString(jacklib.get_version_string()))
 
 # ------------------------------------------------------------------------------------------------------------

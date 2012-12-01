@@ -1329,6 +1329,11 @@ if __name__ == '__main__':
     app.setOrganizationName("Cadence")
     app.setWindowIcon(QIcon(":/scalable/catia.svg"))
 
+    if jacklib is None:
+        QMessageBox.critical(None, app.translate("CatiaMainW", "Error"), app.translate("CatiaMainW",
+            "JACK is not available in this system, cannot use this application."))
+        sys.exit(1)
+
     if haveDBus:
         DBus.loop = DBusQtMainLoop(set_as_default=True)
         DBus.bus  = dbus.SessionBus(mainloop=DBus.loop)
