@@ -337,6 +337,8 @@ class LogsW(QDialog, ui_logs.Ui_LogsW):
         self.connect(self.b_purge, SIGNAL("clicked()"), SLOT("slot_purgeLogs()"))
         self.connect(self.m_readThread, SIGNAL("updateLogs()"), SLOT("slot_updateLogs()"))
 
+        # -------------------------------------------------------------
+
     def setLogsText(self, text_jack, text_a2j, text_lash, text_ladish):
         while self.m_textLock:
             sleep(0.5)

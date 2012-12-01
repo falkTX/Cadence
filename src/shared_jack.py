@@ -114,37 +114,42 @@ class AbstractJackW(QMainWindow):
     # -----------------------------------------------------------------
     # Property change calls
 
-    def jack_buffer_size(self, bufferSize):
-        if self.m_bufferSize != bufferSize:
-            if jack.client:
-                failed = bool(jacklib.set_buffer_size(jack.client, bufferSize) != 0)
-            else:
-                failed = bool(jacksettings.setBufferSize(bufferSize))
+    def jack_setBufferSize(self, bufferSize):
+        if self.m_bufferSize == bufferSize:
+            return
 
-            if failed:
-                print("Failed to change buffer-size as %i, reset to %i" % (bufferSize, self.m_bufferSize))
-                self.setBufferSize(self.m_bufferSize, True)
-
-    def jack_sample_rate(self, sampleRate):
         if jack.client:
+            failed = bool(jacklib.set_buffer_size(jack.client, bufferSize) != 0)
+        else:
+            failed = bool(jacksettings.setBufferSize(bufferSize))
+
+        if failed:
+            print("Failed to change buffer-size as %i, reset to %i" % (bufferSize, self.m_bufferSize))
+            self.setBufferSize(self.m_bufferSize, True)
+
+    def jack_setSampleRate(self, sampleRate):
+        if jack.client:
+            # Show change-in-future dialog
             self.setSampleRate(sampleRate, True)
         else:
+            # Try to set sampleRate via dbus now
             if jacksettings.setSampleRate(sampleRate):
                 self.setSampleRate(sampleRate)
 
-    @pyqtSlot(int)
-    def slot_jackBufferSize_Menu(self, bufferSize):
-        self.jack_buffer_size(bufferSize)
+    @pyqtSlot()
+    def slot_jackBufferSize_Menu(self):
+        bufferSize = int(self.sender().text())
+        self.jack_setBufferSize(bufferSize)
 
     @pyqtSlot(str)
     def slot_jackBufferSize_ComboBox(self, text):
         if text and text.isdigit():
-            self.jack_buffer_size(int(text))
+            self.jack_setBufferSize(int(text))
 
     @pyqtSlot(str)
     def slot_jackSampleRate_ComboBox(self, text):
         if text and text.isdigit():
-            self.jack_sample_rate(int(text))
+            self.jack_setSampleRate(int(text))
 
     # -----------------------------------------------------------------
     # Transport calls
@@ -233,8 +238,7 @@ class AbstractJackW(QMainWindow):
         state = jacklib.transport_query(jack.client, jacklib.pointer(pos))
 
         if self.m_curTransportView == TRANSPORT_VIEW_HMS:
-            frame = pos.frame
-            time = frame / self.m_sampleRate
+            time = pos.frame / self.m_sampleRate
             secs = time % 60
             mins = (time / 60) % 60
             hrs  = (time / 3600) % 60
@@ -243,11 +247,8 @@ class AbstractJackW(QMainWindow):
         elif self.m_curTransportView == TRANSPORT_VIEW_BBT:
             if pos.valid & jacklib.JackPositionBBT:
                 bar  = pos.bar
-                beat = pos.beat
-                tick = pos.tick
-                if bar == 0:
-                    beat = 0
-                    tick = 0
+                beat = pos.beat if bar != 0 else 0
+                tick = pos.tick if bar != 0 else 0
                 self.label_time.setText("%03i|%02i|%04i" % (bar, beat, tick))
             else:
                 self.label_time.setText("%03i|%02i|%04i" % (0, 0, 0))
@@ -331,20 +332,20 @@ class AbstractJackW(QMainWindow):
                         if act_bf.isChecked():
                             act_bf.setChecked(False)
             #else:
-                #for i in range(len(self.act_jack_bf_list)):
-                    #self.act_jack_bf_list[i].setEnabled(False)
-                    #if (self.act_jack_bf_list[i].isChecked()):
-                        #self.act_jack_bf_list[i].setChecked(False)
+                #for act_bf in self.act_jack_bf_list:
+                    #act_bf.setEnabled(False)
+                    #if act_bf.isChecked():
+                        #act_bf.setChecked(False)
 
     def setSampleRate(self, sampleRate, future=False):
         if self.m_sampleRate == sampleRate:
             return
 
         if future:
-            if self.sender() == self.cb_sample_rate: # Changed using GUI
+            #if self.sender() == self.cb_sample_rate: # Changed using GUI
                 ask = QMessageBox.question(self, self.tr("Change Sample Rate"),
-                    self.tr("It's not possible to change Sample Rate while JACK is running.\n"
-                            "Do you want to change as soon as JACK stops?"), QMessageBox.Ok | QMessageBox.Cancel)
+                            self.tr("It's not possible to change Sample Rate while JACK is running.\n"
+                                    "Do you want to change as soon as JACK stops?"), QMessageBox.Ok | QMessageBox.Cancel)
                 if ask == QMessageBox.Ok:
                     self.m_nextSampleRate = sampleRate
                 else:
@@ -357,9 +358,8 @@ class AbstractJackW(QMainWindow):
 
         for i in range(len(SAMPLE_RATE_LIST)):
             sampleRate = SAMPLE_RATE_LIST[i]
-            sampleRateStr = str(sampleRate)
-
-            self.cb_sample_rate.setItemText(i, sampleRateStr)
+            #sampleRateStr = str(sampleRate)
+            #self.cb_sample_rate.setItemText(i, sampleRateStr)
 
             if self.m_sampleRate == sampleRate:
                 self.cb_sample_rate.setCurrentIndex(i)
@@ -416,17 +416,17 @@ def setJackConnections(self_, modes):
         self_.connect(self_.cb_sample_rate, SIGNAL("currentIndexChanged(QString)"), SLOT("slot_jackSampleRate_ComboBox(QString)"))
         self_.connect(self_.b_xruns, SIGNAL("clicked()"), SLOT("slot_JackClearXruns()"))
 
-    #if "buffer-size" in modes:
-        #self_.connect(self_.act_jack_bf_16, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self_, 16))
-        #self_.connect(self_.act_jack_bf_32, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self_, 32))
-        #self_.connect(self_.act_jack_bf_64, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self_, 64))
-        #self_.connect(self_.act_jack_bf_128, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self_, 128))
-        #self_.connect(self_.act_jack_bf_256, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self_, 256))
-        #self_.connect(self_.act_jack_bf_512, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self_, 512))
-        #self_.connect(self_.act_jack_bf_1024, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self_, 1024))
-        #self_.connect(self_.act_jack_bf_2048, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self_, 2048))
-        #self_.connect(self_.act_jack_bf_4096, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self_, 4096))
-        #self_.connect(self_.act_jack_bf_8192, SIGNAL("triggered(bool)"), lambda: slot_jackBufferSize_Menu(self_, 8192))
+    if "buffer-size" in modes:
+        self_.connect(self_.act_jack_bf_16, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
+        self_.connect(self_.act_jack_bf_32, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
+        self_.connect(self_.act_jack_bf_64, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
+        self_.connect(self_.act_jack_bf_128, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
+        self_.connect(self_.act_jack_bf_256, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
+        self_.connect(self_.act_jack_bf_512, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
+        self_.connect(self_.act_jack_bf_1024, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
+        self_.connect(self_.act_jack_bf_2048, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
+        self_.connect(self_.act_jack_bf_4096, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
+        self_.connect(self_.act_jack_bf_8192, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
 
     if "transport" in modes:
         self_.connect(self_.act_transport_play, SIGNAL("triggered(bool)"), SLOT("slot_transportPlayPause(bool)"))

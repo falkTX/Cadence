@@ -67,6 +67,13 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
+        self.m_freewheel = False
+        self.m_lastTime  = 0
+        self.m_maxTime   = 180
+
+        self.m_timer   = QTimer(self)
+        self.m_process = QProcess(self)
+
         # -------------------------------------------------------------
         # Get JACK client and base information
 
@@ -86,16 +93,6 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
         else:
             self.cb_buffer_size.addItem(str(self.m_bufferSize))
             self.cb_buffer_size.setCurrentIndex(self.cb_buffer_size.count() - 1)
-
-        # -------------------------------------------------------------
-        # Internal stuff
-
-        self.m_freewheel = False
-        self.m_lastTime  = 0
-        self.m_maxTime   = 180
-
-        self.m_timer   = QTimer(self)
-        self.m_process = QProcess(self)
 
         # -------------------------------------------------------------
         # Set-up GUI stuff
@@ -146,6 +143,8 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
         self.connect(self.te_start, SIGNAL("timeChanged(const QTime)"), SLOT("slot_updateStartTime(const QTime)"))
         self.connect(self.te_end, SIGNAL("timeChanged(const QTime)"), SLOT("slot_updateEndTime(const QTime)"))
         self.connect(self.m_timer, SIGNAL("timeout()"), SLOT("slot_updateProgressbar()"))
+
+        # -------------------------------------------------------------
 
     @pyqtSlot()
     def slot_renderStart(self):

@@ -16,14 +16,17 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
+
 from time import ctime
 from PyQt4.QtCore import QPointF
 from PyQt4.QtGui import QAction, QApplication, QVBoxLayout, QTableWidgetItem, QTreeWidgetItem
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
-import claudia_launcher
-import systray
+
+import claudia_launcher, systray
 import ui_claudia
 import ui_claudia_studioname, ui_claudia_studiolist
 import ui_claudia_createroom, ui_claudia_projectname, ui_claudia_projectproperties
@@ -32,11 +35,8 @@ from shared_jack import *
 from shared_canvas import *
 from shared_settings import *
 
-try:
-    from PyQt4.QtOpenGL import QGLWidget
-    hasGL = True
-except:
-    hasGL = False
+# ------------------------------------------------------------------------------------------------------------
+# Try Import DBus
 
 try:
     import dbus
@@ -44,6 +44,18 @@ try:
     haveDBus = True
 except:
     haveDBus = False
+
+# ------------------------------------------------------------------------------------------------------------
+# Try Import OpenGL
+
+try:
+    from PyQt4.QtOpenGL import QGLWidget
+    hasGL = True
+except:
+    hasGL = False
+
+# ------------------------------------------------------------------------------------------------------------
+# Static Variables
 
 # NOTE - set to true when supported
 USE_CLAUDIA_ADD_NEW = True
@@ -151,11 +163,15 @@ DEFAULT_CANVAS_HEIGHT = 2400
 
 RECENT_PROJECTS_STORE_MAX_ITEMS = 50
 
-# set default project folder
+# ------------------------------------------------------------------------------------------------------------
+# Set default project folder
+
 DEFAULT_PROJECT_FOLDER = os.path.join(HOME, "ladish-projects")
 setDefaultProjectFolder(DEFAULT_PROJECT_FOLDER)
 
+# ------------------------------------------------------------------------------------------------------------
 # Studio Name Dialog
+
 class StudioNameW(QDialog, ui_claudia_studioname.Ui_StudioNameW):
     NEW = 1
     RENAME = 2
@@ -552,13 +568,24 @@ class ClaudiaLauncherW(QDialog):
         QDialog.done(self, r)
         self.close()
 
-# Main Window
+# ------------------------------------------------------------------------------------------------------------
+# Claudia Main Window
+
 class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
     def __init__(self, parent=None):
         AbstractJackW.__init__(self, parent, "Claudia")
         self.setupUi(self)
 
+        self.m_lastItemType = None
+        self.m_lastRoomPath = None
+
+        self.m_crashedJACK   = False
+        self.m_crashedLADISH = False
+
         self.loadSettings(True)
+
+        # -------------------------------------------------------------
+        # Set-up GUI
 
         setIcons(self, ["canvas", "jack", "transport"])
 
@@ -597,7 +624,18 @@ class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
         self.act_quit.setIcon(getIcon("application-exit"))
         self.act_settings_configure.setIcon(getIcon("configure"))
 
-        # Global Systray
+        self.cb_buffer_size.clear()
+        self.cb_sample_rate.clear()
+
+        for buffer_size in BUFFER_SIZE_LIST:
+            self.cb_buffer_size.addItem(str(buffer_size))
+
+        for sample_rate in SAMPLE_RATE_LIST:
+            self.cb_sample_rate.addItem(str(sample_rate))
+
+        # -------------------------------------------------------------
+        # Set-up Systray
+
         if self.m_savedSettings["Main/UseSystemTray"]:
             self.systray = systray.GlobalSysTray(self, "Claudia", "claudia")
 
@@ -650,43 +688,36 @@ class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
         else:
             self.systray = None
 
-        self.m_last_item_type = None
-        self.m_last_room_path = None
-
-        self.m_crashedJACK   = False
-        self.m_crashedLADISH = False
-
         # -------------------------------------------------------------
         # Set-up Canvas
 
         self.scene = patchcanvas.PatchScene(self, self.graphicsView)
         self.graphicsView.setScene(self.scene)
         self.graphicsView.setRenderHint(QPainter.Antialiasing, bool(self.m_savedSettings["Canvas/Antialiasing"] == patchcanvas.ANTIALIASING_FULL))
-        self.graphicsView.setRenderHint(QPainter.TextAntialiasing, self.m_savedSettings["Canvas/TextAntialiasing"])
         if self.m_savedSettings["Canvas/UseOpenGL"] and hasGL:
             self.graphicsView.setViewport(QGLWidget(self.graphicsView))
             self.graphicsView.setRenderHint(QPainter.HighQualityAntialiasing, self.m_savedSettings["Canvas/HighQualityAntialiasing"])
 
-        p_options = patchcanvas.options_t()
-        p_options.theme_name       = self.m_savedSettings["Canvas/Theme"]
-        p_options.auto_hide_groups = self.m_savedSettings["Canvas/AutoHideGroups"]
-        p_options.use_bezier_lines = self.m_savedSettings["Canvas/UseBezierLines"]
-        p_options.antialiasing     = self.m_savedSettings["Canvas/Antialiasing"]
-        p_options.eyecandy         = self.m_savedSettings["Canvas/EyeCandy"]
+        pOptions = patchcanvas.options_t()
+        pOptions.theme_name       = self.m_savedSettings["Canvas/Theme"]
+        pOptions.auto_hide_groups = self.m_savedSettings["Canvas/AutoHideGroups"]
+        pOptions.use_bezier_lines = self.m_savedSettings["Canvas/UseBezierLines"]
+        pOptions.antialiasing     = self.m_savedSettings["Canvas/Antialiasing"]
+        pOptions.eyecandy         = self.m_savedSettings["Canvas/EyeCandy"]
 
-        p_features = patchcanvas.features_t()
-        p_features.group_info   = False
-        p_features.group_rename = True
-        p_features.port_info    = True
-        p_features.port_rename  = True
-        p_features.handle_group_pos = False
+        pFeatures = patchcanvas.features_t()
+        pFeatures.group_info   = False
+        pFeatures.group_rename = True
+        pFeatures.port_info    = True
+        pFeatures.port_rename  = True
+        pFeatures.handle_group_pos = False
 
-        patchcanvas.setOptions(p_options)
-        patchcanvas.setFeatures(p_features)
+        patchcanvas.setOptions(pOptions)
+        patchcanvas.setFeatures(pFeatures)
         patchcanvas.init("Claudia", self.scene, self.canvasCallback, DEBUG)
 
-        patchcanvas.setInitialPos(DEFAULT_CANVAS_WIDTH / 2, DEFAULT_CANVAS_HEIGHT / 2)
         patchcanvas.setCanvasSize(0, 0, DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT)
+        patchcanvas.setInitialPos(DEFAULT_CANVAS_WIDTH / 2, DEFAULT_CANVAS_HEIGHT / 2)
         self.graphicsView.setSceneRect(0, 0, DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT)
 
         # -------------------------------------------------------------
@@ -695,21 +726,10 @@ class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
         self.miniCanvasPreview.setRealParent(self)
         self.miniCanvasPreview.setViewTheme(patchcanvas.canvas.theme.rubberband_brush, patchcanvas.canvas.theme.rubberband_pen.color())
         self.miniCanvasPreview.init(self.scene, DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT)
+        QTimer.singleShot(100, self, SLOT("slot_miniCanvasInit()"))
 
         # -------------------------------------------------------------
-        # Set-up GUI
-
-        self.cb_buffer_size.clear()
-        self.cb_sample_rate.clear()
-
-        for buffer_size in BUFFER_SIZE_LIST:
-            self.cb_buffer_size.addItem(str(buffer_size))
-
-        for sample_rate in SAMPLE_RATE_LIST:
-            self.cb_sample_rate.addItem(str(sample_rate))
-
-        # -------------------------------------------------------------
-        # ...
+        # Check DBus
 
         if DBus.jack.IsStarted():
             self.jackStarted()
@@ -726,8 +746,14 @@ class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
         else:
             self.studioUnloaded()
 
+        # -------------------------------------------------------------
+        # Set-up Timers
+
         self.m_timer120 = self.startTimer(self.m_savedSettings["Main/RefreshInterval"])
         self.m_timer600 = self.startTimer(self.m_savedSettings["Main/RefreshInterval"] * 5)
+
+        # -------------------------------------------------------------
+        # Set-up Connections
 
         setCanvasConnections(self)
         setJackConnections(self, ["jack", "transport", "misc"])
@@ -826,11 +852,13 @@ class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
         self.connect(self, SIGNAL("JackSampleRateCallback(int)"), SLOT("slot_JackSampleRateCallback(int)"))
         self.connect(self, SIGNAL("JackShutdownCallback()"), SLOT("slot_JackShutdownCallback()"))
 
-        # DBus Stuff
+        # -------------------------------------------------------------
+        # Set-up DBus
+
         DBus.bus.add_signal_receiver(self.DBusSignalReceiver, destination_keyword='dest', path_keyword='path',
             member_keyword='member', interface_keyword='interface', sender_keyword='sender', )
 
-        QTimer.singleShot(100, self, SLOT("slot_miniCanvasInit()"))
+        # -------------------------------------------------------------
 
     def canvasCallback(self, action, value1, value2, value_str):
         if action == patchcanvas.ACTION_GROUP_INFO:
@@ -974,8 +1002,8 @@ class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
         self.treeWidget.insertTopLevelItem(0, studio_item)
         self.treeWidget.setCurrentItem(studio_item)
 
-        self.m_last_item_type = ITEM_TYPE_STUDIO
-        self.m_last_room_path = None
+        self.m_lastItemType = ITEM_TYPE_STUDIO
+        self.m_lastRoomPath = None
 
         self.init_apps()
 
@@ -1228,24 +1256,24 @@ class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
         jack.client = None
 
         if self.m_nextSampleRate:
-            self.jack_sample_rate(self.m_nextSampleRate)
+            self.jack_setSampleRate(self.m_nextSampleRate)
 
-        buffer_size = jacksettings.getBufferSize()
-        sample_rate = jacksettings.getSampleRate()
-        buffer_size_test = bool(buffer_size != -1)
-        sample_rate_test = bool(sample_rate != -1)
+        bufferSize = jacksettings.getBufferSize()
+        sampleRate = jacksettings.getSampleRate()
+        bufferSizeTest = bool(bufferSize != -1)
+        sampleRateTest = bool(sampleRate != -1)
 
-        if buffer_size_test:
-            self.setBufferSize(buffer_size)
+        if bufferSizeTest:
+            self.setBufferSize(bufferSize)
 
-        if sample_rate_test:
-            self.setSampleRate(sample_rate)
+        if sampleRateTest:
+            self.setSampleRate(sampleRate)
 
         self.setRealTime(jacksettings.isRealtime())
         self.setXruns(-1)
 
-        self.cb_buffer_size.setEnabled(buffer_size_test)
-        self.cb_sample_rate.setEnabled(sample_rate_test)
+        self.cb_buffer_size.setEnabled(bufferSizeTest)
+        self.cb_sample_rate.setEnabled(sampleRateTest)
 
         self.act_jack_render.setEnabled(False)
         self.b_jack_render.setEnabled(False)
@@ -1331,8 +1359,8 @@ class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
         DBus.ladish_app_iface = None
         DBus.patchbay = None
 
-        self.m_last_item_type = None
-        self.m_last_room_path = None
+        self.m_lastItemType = None
+        self.m_lastRoomPath = None
 
         self.label_first_time.setVisible(True)
         self.graphicsView.setVisible(False)
@@ -1651,11 +1679,11 @@ class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
     def slot_app_add_new(self):
         proj_folder = ""
 
-        if self.m_last_item_type == ITEM_TYPE_STUDIO or self.m_last_item_type == ITEM_TYPE_STUDIO_APP:
+        if self.m_lastItemType == ITEM_TYPE_STUDIO or self.m_lastItemType == ITEM_TYPE_STUDIO_APP:
             proj_folder = self.m_savedSettings['Main/DefaultProjectFolder']
             is_room = False
 
-        elif self.m_last_item_type == ITEM_TYPE_ROOM or self.m_last_item_type == ITEM_TYPE_ROOM_APP:
+        elif self.m_lastItemType == ITEM_TYPE_ROOM or self.m_lastItemType == ITEM_TYPE_ROOM_APP:
             project_graph_version, project_properties = DBus.ladish_room.GetProjectProperties()
 
             if len(project_properties) > 0:
@@ -1674,7 +1702,7 @@ class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
 
     @pyqtSlot()
     def slot_app_run_custom(self):
-        dialog = RunCustomW(self, bool(self.m_last_item_type in (ITEM_TYPE_ROOM, ITEM_TYPE_ROOM_APP)))
+        dialog = RunCustomW(self, bool(self.m_lastItemType in (ITEM_TYPE_ROOM, ITEM_TYPE_ROOM_APP)))
         if dialog.exec_() and dialog.ret_app_obj:
             app_obj = dialog.ret_app_obj
             DBus.ladish_app_iface.RunCustom2(app_obj[iAppTerminal], app_obj[iAppCommand], app_obj[iAppName], app_obj[iAppLevel])
@@ -1725,7 +1753,7 @@ class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
         else:
             return
 
-        if ITEM_TYPE != self.m_last_item_type or room_path != self.m_last_room_path:
+        if ITEM_TYPE != self.m_lastItemType or room_path != self.m_lastRoomPath:
             if ITEM_TYPE == ITEM_TYPE_STUDIO:
                 object_path = DBus.ladish_studio
             elif ITEM_TYPE == ITEM_TYPE_ROOM:
@@ -1739,8 +1767,8 @@ class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
             DBus.ladish_manager = dbus.Interface(object_path, 'org.ladish.GraphManager')
             self.init_ports()
 
-        self.m_last_item_type = ITEM_TYPE
-        self.m_last_room_path = room_path
+        self.m_lastItemType = ITEM_TYPE
+        self.m_lastRoomPath = room_path
 
     @pyqtSlot(QTreeWidgetItem, int)
     def slot_doubleClickedAppList(self, item, row):
@@ -2405,22 +2433,22 @@ class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
             self.loadSettings(False)
             patchcanvas.clear()
 
-            p_options = patchcanvas.options_t()
-            p_options.theme_name       = self.m_savedSettings["Canvas/Theme"]
-            p_options.auto_hide_groups = self.m_savedSettings["Canvas/AutoHideGroups"]
-            p_options.use_bezier_lines = self.m_savedSettings["Canvas/UseBezierLines"]
-            p_options.antialiasing     = self.m_savedSettings["Canvas/Antialiasing"]
-            p_options.eyecandy         = self.m_savedSettings["Canvas/EyeCandy"]
+            pOptions = patchcanvas.options_t()
+            pOptions.theme_name       = self.m_savedSettings["Canvas/Theme"]
+            pOptions.auto_hide_groups = self.m_savedSettings["Canvas/AutoHideGroups"]
+            pOptions.use_bezier_lines = self.m_savedSettings["Canvas/UseBezierLines"]
+            pOptions.antialiasing     = self.m_savedSettings["Canvas/Antialiasing"]
+            pOptions.eyecandy         = self.m_savedSettings["Canvas/EyeCandy"]
 
-            p_features = patchcanvas.features_t()
-            p_features.group_info   = False
-            p_features.group_rename = True
-            p_features.port_info    = True
-            p_features.port_rename  = True
-            p_features.handle_group_pos = False
+            pFeatures = patchcanvas.features_t()
+            pFeatures.group_info   = False
+            pFeatures.group_rename = True
+            pFeatures.port_info    = True
+            pFeatures.port_rename  = True
+            pFeatures.handle_group_pos = False
 
-            patchcanvas.setOptions(p_options)
-            patchcanvas.setFeatures(p_features)
+            patchcanvas.setOptions(pOptions)
+            patchcanvas.setFeatures(pFeatures)
             patchcanvas.init("Claudia", self.scene, self.canvasCallback, DEBUG)
 
             self.miniCanvasPreview.setViewTheme(patchcanvas.canvas.theme.rubberband_brush, patchcanvas.canvas.theme.rubberband_pen.color())
@@ -2475,7 +2503,6 @@ class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
             "Canvas/EyeCandy": self.settings.value("Canvas/EyeCandy", patchcanvas.EYECANDY_SMALL, type=int),
             "Canvas/UseOpenGL": self.settings.value("Canvas/UseOpenGL", False, type=bool),
             "Canvas/Antialiasing": self.settings.value("Canvas/Antialiasing", patchcanvas.ANTIALIASING_SMALL, type=int),
-            "Canvas/TextAntialiasing": self.settings.value("Canvas/TextAntialiasing", True, type=bool),
             "Canvas/HighQualityAntialiasing": self.settings.value("Canvas/HighQualityAntialiasing", False, type=bool)
         }
 
