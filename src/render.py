@@ -305,6 +305,11 @@ if __name__ == '__main__':
     app.setOrganizationName("Cadence")
     app.setWindowIcon(QIcon(":/scalable/cadence.svg"))
 
+    if not jacklib:
+        QMessageBox.critical(None, app.translate("RenderW", "Error"), app.translate("RenderW",
+            "JACK is not available in this system, cannot use this application."))
+        sys.exit(1)
+
     for iPATH in PATH:
         if os.path.exists(os.path.join(iPATH, "jack_capture")):
             break
@@ -312,7 +317,7 @@ if __name__ == '__main__':
         QMessageBox.critical(None, app.translate("RenderW", "Error"), app.translate("RenderW",
             "The 'jack_capture' application is not available.\n"
             "Is not possible to render without it!"))
-        sys.exit(1)
+        sys.exit(2)
 
     jackStatus = jacklib.jack_status_t(0)
     jackClient = jacklib.client_open("Render", jacklib.JackNoStartServer, jacklib.pointer(jackStatus))

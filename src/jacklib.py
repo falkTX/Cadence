@@ -30,6 +30,7 @@ try:
         jacklib = cdll.LoadLibrary("libjack.so.0")
 except:
     jacklib = None
+    raise ImportError("JACK not available in this system")
 
 # JACK2 test
 try:

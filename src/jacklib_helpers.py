@@ -16,7 +16,10 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
-import jacklib
+try:
+    import jacklib
+except ImportError:
+    jacklib = None
 
 def get_jack_status_error_string(c_status):
     status = c_status.value
