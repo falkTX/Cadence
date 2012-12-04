@@ -55,7 +55,7 @@ BUILD_CXX_FLAGS += -DVESTIGE_HEADER
 # --------------------------------------------------------------
 
 HAVE_JACK         = $(shell pkg-config --exists jack && echo true)
-HAVE_JACKSESSION  = $(shell pkg-config --atleast-version=0.121.0 jack && echo true)
+# HAVE_JACKSESSION  = $(shell pkg-config --atleast-version=0.121.0 jack && echo true)
 
 ifeq ($(CARLA_PLUGIN_SUPPORT),true)
 HAVE_SUIL         = $(shell pkg-config --exists suil-0 && echo true)
