@@ -18,7 +18,7 @@
 
 # Imports (Global)
 from PyQt4.QtCore import pyqtSlot, QSettings
-from PyQt4.QtGui import QApplication, QDialog, QDialogButtonBox, QMainWindow, QTableWidgetItem
+from PyQt4.QtGui import QApplication, QDialog, QDialogButtonBox, QTableWidgetItem
 from PyQt4.QtXml import QDomDocument
 
 # Imports (Custom Stuff)
@@ -26,8 +26,7 @@ import ui_catarina
 import ui_catarina_addgroup, ui_catarina_removegroup, ui_catarina_renamegroup
 import ui_catarina_addport, ui_catarina_removeport, ui_catarina_renameport
 import ui_catarina_connectports, ui_catarina_disconnectports
-from shared import *
-from shared_canvas import *
+from shared_canvasjack import *
 from shared_settings import *
 
 try:
@@ -564,9 +563,9 @@ class CatarinaDisconnectPortsW(QDialog, ui_catarina_disconnectports.Ui_CatarinaD
         self.close()
 
 # Main Window
-class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
+class CatarinaMainW(AbstractCanvasJackClass, ui_catarina.Ui_CatarinaMainW):
     def __init__(self, parent=None):
-        QMainWindow.__init__(self, parent)
+        AbstractCanvasJackClass.__init__(self, parent, "Catarina")
         self.setupUi(self)
 
         self.settings = QSettings("Cadence", "Catarina")
@@ -651,7 +650,7 @@ class CatarinaMainW(QMainWindow, ui_catarina.Ui_CatarinaMainW):
         self.connect(self.b_ports_connect, SIGNAL("clicked()"), SLOT("slot_connectPorts()"))
         self.connect(self.b_ports_disconnect, SIGNAL("clicked()"), SLOT("slot_disconnectPorts()"))
 
-        setCanvasConnections(self)
+        self.setCanvasConnections()
 
         self.connect(self.act_settings_configure, SIGNAL("triggered()"), SLOT("slot_configureCatarina()"))
 
