@@ -27,7 +27,7 @@ import ui_cadence
 import ui_cadence_tb_jack, ui_cadence_tb_alsa, ui_cadence_tb_a2j, ui_cadence_tb_pa, ui_cadence_rwait
 import systray
 from shared_cadence import *
-from shared_jack import *
+from shared_canvasjack import *
 from shared_settings import *
 
 try:
@@ -910,7 +910,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             fixed_bsize  = bool(int(getWineAsioKeyValue("Fixed buffersize", "00000001"), 10))
             prefer_bsize = int(getWineAsioKeyValue("Preferred buffersize", "00000400"), 16)
 
-            for bsize in buffer_sizes:
+            for bsize in BUFFER_SIZE_LIST:
                 self.cb_wineasio_bsizes.addItem(str(bsize))
                 if bsize == prefer_bsize:
                     self.cb_wineasio_bsizes.setCurrentIndex(self.cb_wineasio_bsizes.count()-1)
