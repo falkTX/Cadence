@@ -93,9 +93,9 @@ iConnInput  = 2
 # ------------------------------------------------------------------------------------------------------------
 # Catia Main Window
 
-class CatiaMainW(AbstractJackW, ui_catia.Ui_CatiaMainW):
+class CatiaMainW(AbstractCanvasJackClass, ui_catia.Ui_CatiaMainW):
     def __init__(self, parent=None):
-        AbstractJackW.__init__(self, parent, "Catia")
+        AbstractCanvasJackClass.__init__(self, parent, "Catia")
         self.setupUi(self)
 
         self.m_groupList      = []
@@ -210,8 +210,8 @@ class CatiaMainW(AbstractJackW, ui_catia.Ui_CatiaMainW):
         # -------------------------------------------------------------
         # Set-up Connections
 
-        setCanvasConnections(self)
-        setJackConnections(self, ["jack", "buffer-size", "transport", "misc"])
+        self.setCanvasConnections()
+        self.setJackConnections(["jack", "buffer-size", "transport", "misc"])
 
         self.connect(self.act_tools_jack_start, SIGNAL("triggered()"), SLOT("slot_JackServerStart()"))
         self.connect(self.act_tools_jack_stop, SIGNAL("triggered()"), SLOT("slot_JackServerStop()"))

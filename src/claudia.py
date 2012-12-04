@@ -571,9 +571,9 @@ class ClaudiaLauncherW(QDialog):
 # ------------------------------------------------------------------------------------------------------------
 # Claudia Main Window
 
-class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
+class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
     def __init__(self, parent=None):
-        AbstractJackW.__init__(self, parent, "Claudia")
+        AbstractCanvasJackClass.__init__(self, parent, "Claudia")
         self.setupUi(self)
 
         self.m_lastItemType = None
@@ -755,8 +755,8 @@ class ClaudiaMainW(AbstractJackW, ui_claudia.Ui_ClaudiaMainW):
         # -------------------------------------------------------------
         # Set-up Connections
 
-        setCanvasConnections(self)
-        setJackConnections(self, ["jack", "transport", "misc"])
+        self.setCanvasConnections()
+        self.setJackConnections(["jack", "transport", "misc"])
 
         self.connect(self.act_studio_new, SIGNAL("triggered()"), SLOT("slot_studio_new()"))
         self.connect(self.act_studio_start, SIGNAL("triggered()"), SLOT("slot_studio_start()"))
