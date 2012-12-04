@@ -25,8 +25,7 @@ from PyQt4.QtGui import QApplication
 # Imports (Custom Stuff)
 
 import ui_catia
-from shared_jack import *
-from shared_canvas import *
+from shared_canvasjack import *
 from shared_settings import *
 
 # ------------------------------------------------------------------------------------------------------------

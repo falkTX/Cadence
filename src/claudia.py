@@ -31,8 +31,7 @@ import ui_claudia
 import ui_claudia_studioname, ui_claudia_studiolist
 import ui_claudia_createroom, ui_claudia_projectname, ui_claudia_projectproperties
 import ui_claudia_runcustom
-from shared_jack import *
-from shared_canvas import *
+from shared_canvasjack import *
 from shared_settings import *
 
 # ------------------------------------------------------------------------------------------------------------
