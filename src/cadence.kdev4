@@ -1,0 +1,9 @@
+[Project]
+Manager=KDevGenericManager
+Name=Cadence
+
+[Filters]
+Excludes=*/.*,*/*~,*/*.pyc,*/ui_*.py,*/__pycache__/,*/old/
+
+[Project]
+VersionControlSupport=kdevgit
