@@ -680,7 +680,7 @@ short CarlaEngine::addPlugin(const BinaryType btype, const PluginType ptype, con
     CarlaPlugin* plugin = nullptr;
 
 #ifndef BUILD_BRIDGE
-    if (btype != BINARY_NATIVE || (options.preferPluginBridges && /*getBinaryBidgePath(btype) &&*/ type() == CarlaEngineTypeJack))
+    if (btype != BINARY_NATIVE || (options.preferPluginBridges && extra /* extra = bridgeBinary */ && type() == CarlaEngineTypeJack))
     {
 #  ifdef CARLA_ENGINE_JACK
         if (options.processMode != CarlaBackend::PROCESS_MODE_MULTIPLE_CLIENTS)
