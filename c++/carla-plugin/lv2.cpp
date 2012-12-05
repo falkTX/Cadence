@@ -1797,22 +1797,31 @@ public:
                 if (param.data[i].type == PARAMETER_LATENCY)
                 {
                     // pre-run so plugin can update latency control-port
+                    float tmpIn[2][aIns];
+                    float tmpOut[2][aOuts];
+
                     for (j=0; j < aIn.count; j++)
                     {
+                        tmpIn[j][0] = 0.0f;
+                        tmpIn[j][1] = 0.0f;
+
                         if (j == 0 || ! h2)
-                            descriptor->connect_port(handle, aIn.rindexes[j], nullptr);
+                            descriptor->connect_port(handle, aIn.rindexes[j], tmpIn[j]);
                     }
 
                     for (j=0; j < aOut.count; j++)
                     {
+                        tmpOut[j][0] = 0.0f;
+                        tmpOut[j][1] = 0.0f;
+
                         if (j == 0 || ! h2)
-                            descriptor->connect_port(handle, aOut.rindexes[j], nullptr);
+                            descriptor->connect_port(handle, aOut.rindexes[j], tmpOut[j]);
                     }
 
                     if (descriptor->activate)
                         descriptor->activate(handle);
 
-                    descriptor->run(handle, 0);
+                    descriptor->run(handle, 2);
 
                     if (descriptor->deactivate)
                         descriptor->deactivate(handle);
