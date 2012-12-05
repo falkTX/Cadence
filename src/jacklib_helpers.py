@@ -91,7 +91,7 @@ def translate_audio_port_buffer(void_p):
     return jacklib.cast(void_p, jacklib.POINTER(jacklib.jack_default_audio_sample_t))
 
 # ------------------------------------------------------------------------------------------------------------
-# Convert a JACK midi buffer into a variable-size list
+# Convert a JACK midi buffer into a python variable-size list
 
 def translate_midi_event_buffer(void_p, size):
     if not void_p:

@@ -300,11 +300,12 @@ def CustomMessageBox(self_, icon, title, text, extraText="", buttons=QMessageBox
 # Signal handler
 
 def setUpSignals(self_):
+    global x_gui
+    x_gui = self_
+
     if not haveSignal:
         return
 
-    global x_gui
-    x_gui = self_
     signal(SIGINT,  signalHandler)
     signal(SIGTERM, signalHandler)
     signal(SIGUSR1, signalHandler)

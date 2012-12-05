@@ -34,13 +34,13 @@ try:
         jacklib = cdll.LoadLibrary("libjack.so.0")
 except:
     jacklib = None
-    raise ImportError("JACK not available in this system")
+    raise ImportError("JACK is not available in this system")
 
 # ------------------------------------------------------------------------------------------------------------
 # JACK2 test
 
 try:
-    if jacklib and jacklib.jack_get_version_string:
+    if jacklib.jack_get_version_string:
         JACK2 = True
     else:
         JACK2 = False
@@ -48,7 +48,7 @@ except:
     JACK2 = False
 
 # ------------------------------------------------------------------------------------------------------------
-# Pre-definitions
+# Pre-Types
 
 c_enum = c_int
 c_uchar = c_uint8
@@ -879,6 +879,7 @@ def get_time():
 
 # ------------------------------------------------------------------------------------------------------------
 # Error Output
+
 # TODO
 
 # ------------------------------------------------------------------------------------------------------------
