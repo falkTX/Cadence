@@ -1296,6 +1296,9 @@
    <property name="text">
     <string>Auto-Fit</string>
    </property>
+   <property name="shortcut">
+    <string>Home</string>
+   </property>
   </action>
   <action name="act_canvas_zoom_in">
    <property name="icon">
