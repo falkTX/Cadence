@@ -51,7 +51,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/document-new.png</normaloff>:/16x16/document-new.png</iconset>
             </property>
            </widget>
@@ -71,7 +71,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
             </property>
             <property name="shortcut">
@@ -94,7 +94,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/document-save.png</normaloff>:/16x16/document-save.png</iconset>
             </property>
            </widget>
@@ -114,8 +114,48 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/document-save-as.png</normaloff>:/16x16/document-save-as.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_studio_start">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Start Studio</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../resources.qrc">
+              <normaloff>:/16x16/media-playback-start.png</normaloff>:/16x16/media-playback-start.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="b_studio_stop">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Stop Studio</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../resources.qrc">
+              <normaloff>:/16x16/media-playback-stop.png</normaloff>:/16x16/media-playback-stop.png</iconset>
             </property>
            </widget>
           </item>
@@ -143,7 +183,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/document-new.png</normaloff>:/16x16/document-new.png</iconset>
             </property>
            </widget>
@@ -163,7 +203,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
             </property>
            </widget>
@@ -183,7 +223,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/document-save.png</normaloff>:/16x16/document-save.png</iconset>
             </property>
            </widget>
@@ -203,7 +243,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/document-save-as.png</normaloff>:/16x16/document-save-as.png</iconset>
             </property>
            </widget>
@@ -232,7 +272,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/media-playback-start.png</normaloff>:/16x16/media-playback-start.png</iconset>
             </property>
             <property name="checkable">
@@ -255,7 +295,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/media-playback-stop.png</normaloff>:/16x16/media-playback-stop.png</iconset>
             </property>
            </widget>
@@ -275,7 +315,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/media-seek-backward.png</normaloff>:/16x16/media-seek-backward.png</iconset>
             </property>
             <property name="autoRepeat">
@@ -298,7 +338,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/media-seek-forward.png</normaloff>:/16x16/media-seek-forward.png</iconset>
             </property>
             <property name="autoRepeat">
@@ -378,7 +418,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/zoom-fit-best.png</normaloff>:/16x16/zoom-fit-best.png</iconset>
             </property>
            </widget>
@@ -398,7 +438,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/zoom-in.png</normaloff>:/16x16/zoom-in.png</iconset>
             </property>
            </widget>
@@ -418,7 +458,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/zoom-out.png</normaloff>:/16x16/zoom-out.png</iconset>
             </property>
            </widget>
@@ -438,7 +478,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/zoom-original.png</normaloff>:/16x16/zoom-original.png</iconset>
             </property>
            </widget>
@@ -467,7 +507,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/edit-clear.png</normaloff>:/16x16/edit-clear.png</iconset>
             </property>
            </widget>
@@ -487,7 +527,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/configure.png</normaloff>:/16x16/configure.png</iconset>
             </property>
            </widget>
@@ -507,7 +547,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../resources/resources.qrc">
+             <iconset resource="../resources.qrc">
               <normaloff>:/16x16/media-record.png</normaloff>:/16x16/media-record.png</iconset>
             </property>
            </widget>
@@ -742,7 +782,7 @@
       <string>&amp;Load Studio</string>
      </property>
      <property name="icon">
-      <iconset resource="../../resources/resources.qrc">
+      <iconset resource="../resources.qrc">
        <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
      </property>
     </widget>
@@ -751,7 +791,7 @@
       <string>&amp;Delete Studio</string>
      </property>
      <property name="icon">
-      <iconset resource="../../resources/resources.qrc">
+      <iconset resource="../resources.qrc">
        <normaloff>:/16x16/edit-delete.png</normaloff>:/16x16/edit-delete.png</iconset>
      </property>
     </widget>
@@ -778,7 +818,7 @@
       <string>Delete Room</string>
      </property>
      <property name="icon">
-      <iconset resource="../../resources/resources.qrc">
+      <iconset resource="../resources.qrc">
        <normaloff>:/16x16/edit-delete.png</normaloff>:/16x16/edit-delete.png</iconset>
      </property>
     </widget>
@@ -794,7 +834,7 @@
       <string>Load Project</string>
      </property>
      <property name="icon">
-      <iconset resource="../../resources/resources.qrc">
+      <iconset resource="../resources.qrc">
        <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
      </property>
     </widget>
@@ -886,7 +926,7 @@
   </action>
   <action name="act_studio_new">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/document-new.png</normaloff>:/16x16/document-new.png</iconset>
    </property>
    <property name="text">
@@ -898,7 +938,7 @@
   </action>
   <action name="act_studio_start">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/media-playback-start.png</normaloff>:/16x16/media-playback-start.png</iconset>
    </property>
    <property name="text">
@@ -910,7 +950,7 @@
   </action>
   <action name="act_studio_stop">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/media-playback-stop.png</normaloff>:/16x16/media-playback-stop.png</iconset>
    </property>
    <property name="text">
@@ -922,7 +962,7 @@
   </action>
   <action name="act_studio_rename">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/edit-rename.png</normaloff>:/16x16/edit-rename.png</iconset>
    </property>
    <property name="text">
@@ -934,7 +974,7 @@
   </action>
   <action name="act_studio_save">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/document-save.png</normaloff>:/16x16/document-save.png</iconset>
    </property>
    <property name="text">
@@ -946,7 +986,7 @@
   </action>
   <action name="act_studio_save_as">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/document-save-as.png</normaloff>:/16x16/document-save-as.png</iconset>
    </property>
    <property name="text">
@@ -967,7 +1007,7 @@
   </action>
   <action name="act_quit">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/application-exit.png</normaloff>:/16x16/application-exit.png</iconset>
    </property>
    <property name="text">
@@ -979,7 +1019,7 @@
   </action>
   <action name="act_room_create">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/list-add.png</normaloff>:/16x16/list-add.png</iconset>
    </property>
    <property name="text">
@@ -991,7 +1031,7 @@
   </action>
   <action name="act_project_save">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/document-save.png</normaloff>:/16x16/document-save.png</iconset>
    </property>
    <property name="text">
@@ -1003,7 +1043,7 @@
   </action>
   <action name="act_project_save_as">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/document-save-as.png</normaloff>:/16x16/document-save-as.png</iconset>
    </property>
    <property name="text">
@@ -1024,7 +1064,7 @@
   </action>
   <action name="act_app_add_new">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/list-add.png</normaloff>:/16x16/list-add.png</iconset>
    </property>
    <property name="text">
@@ -1036,7 +1076,7 @@
   </action>
   <action name="act_app_run_custom">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/system-run.png</normaloff>:/16x16/system-run.png</iconset>
    </property>
    <property name="text">
@@ -1051,7 +1091,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/media-playback-start.png</normaloff>:/16x16/media-playback-start.png</iconset>
    </property>
    <property name="text">
@@ -1063,7 +1103,7 @@
   </action>
   <action name="act_transport_stop">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/media-playback-stop.png</normaloff>:/16x16/media-playback-stop.png</iconset>
    </property>
    <property name="text">
@@ -1075,7 +1115,7 @@
   </action>
   <action name="act_transport_backwards">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/media-seek-backward.png</normaloff>:/16x16/media-seek-backward.png</iconset>
    </property>
    <property name="text">
@@ -1087,7 +1127,7 @@
   </action>
   <action name="act_transport_forwards">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/media-seek-forward.png</normaloff>:/16x16/media-seek-forward.png</iconset>
    </property>
    <property name="text">
@@ -1099,7 +1139,7 @@
   </action>
   <action name="act_jack_clear_xruns">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/edit-clear.png</normaloff>:/16x16/edit-clear.png</iconset>
    </property>
    <property name="text">
@@ -1108,7 +1148,7 @@
   </action>
   <action name="act_jack_configure">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/configure.png</normaloff>:/16x16/configure.png</iconset>
    </property>
    <property name="text">
@@ -1117,7 +1157,7 @@
   </action>
   <action name="act_tools_reactivate_ladishd">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/view-refresh.png</normaloff>:/16x16/view-refresh.png</iconset>
    </property>
    <property name="text">
@@ -1214,7 +1254,7 @@
   </action>
   <action name="act_settings_configure">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/configure.png</normaloff>:/16x16/configure.png</iconset>
    </property>
    <property name="text">
@@ -1226,7 +1266,7 @@
   </action>
   <action name="act_canvas_arrange">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/view-sort-ascending.png</normaloff>:/16x16/view-sort-ascending.png</iconset>
    </property>
    <property name="text">
@@ -1238,7 +1278,7 @@
   </action>
   <action name="act_canvas_refresh">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/view-refresh.png</normaloff>:/16x16/view-refresh.png</iconset>
    </property>
    <property name="text">
@@ -1250,7 +1290,7 @@
   </action>
   <action name="act_canvas_zoom_fit">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/zoom-fit-best.png</normaloff>:/16x16/zoom-fit-best.png</iconset>
    </property>
    <property name="text">
@@ -1259,7 +1299,7 @@
   </action>
   <action name="act_canvas_zoom_in">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/zoom-in.png</normaloff>:/16x16/zoom-in.png</iconset>
    </property>
    <property name="text">
@@ -1271,7 +1311,7 @@
   </action>
   <action name="act_canvas_zoom_out">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/zoom-out.png</normaloff>:/16x16/zoom-out.png</iconset>
    </property>
    <property name="text">
@@ -1283,7 +1323,7 @@
   </action>
   <action name="act_canvas_zoom_100">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/zoom-original.png</normaloff>:/16x16/zoom-original.png</iconset>
    </property>
    <property name="text">
@@ -1295,7 +1335,7 @@
   </action>
   <action name="act_canvas_print">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/document-print.png</normaloff>:/16x16/document-print.png</iconset>
    </property>
    <property name="text">
@@ -1314,7 +1354,7 @@
   </action>
   <action name="act_jack_render">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/media-record.png</normaloff>:/16x16/media-record.png</iconset>
    </property>
    <property name="text">
@@ -1328,7 +1368,7 @@
   </action>
   <action name="act_project_new">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/document-new.png</normaloff>:/16x16/document-new.png</iconset>
    </property>
    <property name="text">
@@ -1348,7 +1388,7 @@
   </action>
   <action name="act_project_properties">
    <property name="icon">
-    <iconset resource="../../resources/resources.qrc">
+    <iconset resource="../resources.qrc">
      <normaloff>:/16x16/edit-rename.png</normaloff>:/16x16/edit-rename.png</iconset>
    </property>
    <property name="text">
@@ -1365,7 +1405,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../resources/resources.qrc"/>
+  <include location="../resources.qrc"/>
  </resources>
  <connections>
   <connection>

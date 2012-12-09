@@ -601,6 +601,8 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         self.b_studio_load.setIcon(getIcon("document-open"))
         self.b_studio_save.setIcon(getIcon("document-save"))
         self.b_studio_save_as.setIcon(getIcon("document-save-as"))
+        self.b_studio_start.setIcon(getIcon("media-playback-start"))
+        self.b_studio_stop.setIcon(getIcon("media-playback-stop"))
 
         self.act_room_create.setIcon(getIcon("list-add"))
         self.menu_room_delete.setIcon(getIcon("edit-delete"))
@@ -768,6 +770,8 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         self.connect(self.b_studio_load, SIGNAL("clicked()"), SLOT("slot_studio_load_b()"))
         self.connect(self.b_studio_save, SIGNAL("clicked()"), SLOT("slot_studio_save()"))
         self.connect(self.b_studio_save_as, SIGNAL("clicked()"), SLOT("slot_studio_save_as()"))
+        self.connect(self.b_studio_start, SIGNAL("clicked()"), SLOT("slot_studio_start()"))
+        self.connect(self.b_studio_stop, SIGNAL("clicked()"), SLOT("slot_studio_stop()"))
         self.connect(self.menu_studio_load, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuStudioList_Load()"))
         self.connect(self.menu_studio_delete, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuStudioList_Delete()"))
 
@@ -1300,6 +1304,8 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
 
         self.b_studio_save.setEnabled(True)
         self.b_studio_save_as.setEnabled(True)
+        self.b_studio_start.setEnabled(False)
+        self.b_studio_stop.setEnabled(True)
 
         if self.systray:
             self.systray.setActionEnabled("studio_start", False)
@@ -1315,6 +1321,8 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
 
         self.b_studio_save.setEnabled(False)
         self.b_studio_save_as.setEnabled(False)
+        self.b_studio_start.setEnabled(True)
+        self.b_studio_stop.setEnabled(False)
 
         if self.systray:
             self.systray.setActionEnabled("studio_start", True)
@@ -1379,6 +1387,8 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
 
         self.b_studio_save.setEnabled(False)
         self.b_studio_save_as.setEnabled(False)
+        self.b_studio_start.setEnabled(False)
+        self.b_studio_stop.setEnabled(False)
 
         if self.systray:
             self.systray.setActionEnabled("studio_start", False)
