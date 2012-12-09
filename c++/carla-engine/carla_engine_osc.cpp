@@ -391,6 +391,10 @@ int CarlaEngineOsc::handleMsgConfigure(CARLA_ENGINE_OSC_HANDLE_ARGS2)
     const char* const key   = (const char*)&argv[0]->s;
     const char* const value = (const char*)&argv[1]->s;
 
+#ifdef DEBUG
+    qDebug("CarlaEngineOsc::handleMsgConfigure(\"%s\", \"%s\")", key, value);
+#endif
+
     plugin->setCustomData(CUSTOM_DATA_STRING, key, value, false);
 
     return 0;

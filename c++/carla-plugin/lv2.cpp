@@ -262,8 +262,6 @@ public:
         lastTimePosPlaying = false;
         lastTimePosFrame   = 0;
 
-        needsMidiConnectHack = false;
-
         for (uint32_t i=0; i < CARLA_URI_MAP_ID_COUNT; i++)
             customURIDs.push_back(nullptr);
 
@@ -2597,20 +2595,6 @@ public:
                 }
             }
 
-            // HACK: rncbc's plugins require midi connect_port before each run()
-            if (needsMidiConnectHack)
-            {
-                for (i=0; i < evIn.count; i++)
-                {
-                    if (evIn.data[i].type & CARLA_EVENT_DATA_ATOM)
-                        descriptor->connect_port(handle, evIn.data[i].rindex, evIn.data[i].atom);
-                    else if (evIn.data[i].type & CARLA_EVENT_DATA_EVENT)
-                        descriptor->connect_port(handle, evIn.data[i].rindex, evIn.data[i].event);
-                    else if (evIn.data[i].type & CARLA_EVENT_DATA_MIDI_LL)
-                        descriptor->connect_port(handle, evIn.data[i].rindex, evIn.data[i].midi);
-                }
-            }
-
             for (i=0; i < aIn.count; i++)
             {
                 if (i == 0 || ! h2) descriptor->connect_port(handle, aIn.rindexes[i], inBuffer[i]);
@@ -4181,10 +4165,6 @@ public:
             return false;
         }
 
-        // HACK: rncbc's plugins require midi connect_port before each run()
-        if (strcmp(rdf_descriptor->Author, "rncbc aka. Rui Nuno Capela") == 0)
-            needsMidiConnectHack = true;
-
         // ---------------------------------------------------------------
         // get info
 
@@ -4602,9 +4582,6 @@ private:
 
     bool     lastTimePosPlaying;
     uint32_t lastTimePosFrame;
-
-    // HACK: rncbc's plugins require midi connect_port before each run()
-    bool needsMidiConnectHack;
 
     static unsigned int m_count;
     static std::set<const LV2_Lib_Descriptor*> libDescs;
