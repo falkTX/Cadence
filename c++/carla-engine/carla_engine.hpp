@@ -624,6 +624,11 @@ public:
 
     void setOption(const OptionsType option, const int value, const char* const valueStr);
 
+    const CarlaEngineOptions& getOptions() const
+    {
+        return options;
+    }
+
     ProcessMode processMode() const
     {
         return options.processMode;

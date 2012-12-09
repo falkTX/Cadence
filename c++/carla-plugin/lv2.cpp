@@ -31,7 +31,7 @@
 #include <QtGui/QDialog>
 #include <QtGui/QLayout>
 
-#ifdef HAVE_SUIL
+#ifdef WANT_SUIL
 #include <suil/suil.h>
 struct SuilInstanceImpl {
     void*                   lib_handle;
@@ -188,29 +188,6 @@ struct Lv2PluginOptions {
 
 Lv2PluginOptions lv2Options;
 
-const char* lv2bridge2str(const LV2_Property type)
-{
-    switch (type)
-    {
-#ifndef BUILD_BRIDGE
-//    case LV2_UI_GTK2:
-//        return x_engine->options.bridge_lv2gtk2;
-//    case LV2_UI_GTK3:
-//        return x_engine->options.bridge_lv2gtk3;
-//    case LV2_UI_QT4:
-//        return x_engine->options.bridge_lv2qt4;
-//    case LV2_UI_COCOA:
-//        return nullptr; //x_engine->options.bridge_lv2cocoa;
-//    case LV2_UI_WINDOWS:
-//        return nullptr; //x_engine->options.bridge_lv2hwnd;
-//    case LV2_UI_X11:
-//        return x_engine->options.bridge_lv2x11;
-#endif
-    default:
-        return nullptr;
-    }
-}
-
 LV2_Atom_Event* getLv2AtomEvent(LV2_Atom_Sequence* const atom, const uint32_t offset)
 {
     return (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, atom) + offset);
@@ -254,7 +231,7 @@ public:
         gui.width  = 0;
         gui.height = 0;
 
-#ifdef HAVE_SUIL
+#ifdef WANT_SUIL
         suil.handle = nullptr;
         suil.host   = nullptr;
 #endif
@@ -357,7 +334,7 @@ public:
                 break;
 
             case GUI_EXTERNAL_SUIL:
-#ifdef HAVE_SUIL
+#ifdef WANT_SUIL
                 if (ui.widget)
                     ((QWidget*)ui.widget)->close();
 #endif
@@ -380,7 +357,7 @@ public:
                 break;
             }
 
-#ifdef HAVE_SUIL
+#ifdef WANT_SUIL
             if (suil.handle)
             {
                 suil_instance_free(suil.handle);
@@ -1036,7 +1013,7 @@ public:
             break;
 
         case GUI_EXTERNAL_SUIL:
-#ifdef HAVE_SUIL
+#ifdef WANT_SUIL
             if (ui.widget)
             {
                 QWidget* const widget = (QWidget*)ui.widget;
@@ -3402,6 +3379,29 @@ public:
     // -------------------------------------------------------------------
 
 #ifndef BUILD_BRIDGE
+    const char* getUiBridgePath(const LV2_Property type)
+    {
+        const CarlaEngineOptions options(x_engine->getOptions());
+
+        switch (type)
+        {
+        case LV2_UI_GTK2:
+            return options.bridge_lv2gtk2;
+        case LV2_UI_GTK3:
+            return options.bridge_lv2gtk3;
+        case LV2_UI_QT4:
+            return options.bridge_lv2qt4;
+        case LV2_UI_COCOA:
+            return options.bridge_lv2cocoa;
+        case LV2_UI_WINDOWS:
+            return options.bridge_lv2win;
+        case LV2_UI_X11:
+            return options.bridge_lv2x11;
+        default:
+            return nullptr;
+        }
+    }
+
     bool isUiBridgeable(const uint32_t uiId)
     {
         CARLA_ASSERT(rdf_descriptor);
@@ -4249,14 +4249,14 @@ public:
 #ifdef BUILD_BRIDGE
                 if (false)
 #else
-#  ifdef HAVE_SUIL
+# ifdef WANT_SUIL
                 if (isUiBridgeable(i) && x_engine->preferUiBridges())
-#  else
+# else
                 if (isUiBridgeable(i))
-#  endif
+# endif
 #endif
                     eGtk2 = i;
-#ifdef HAVE_SUIL
+#ifdef WANT_SUIL
                 iSuil = i;
 #endif
                 break;
@@ -4306,7 +4306,7 @@ public:
 #ifndef BUILD_BRIDGE
         const bool isBridged = (iFinal == eQt4 || iFinal == eCocoa || iFinal == eHWND || iFinal == eX11 || iFinal == eGtk2 || iFinal == eGtk3);
 #endif
-#ifdef HAVE_SUIL
+#ifdef WANT_SUIL
         const bool isSuil = (iFinal == iSuil && !isBridged);
 #endif
 
@@ -4339,7 +4339,7 @@ public:
             return true;
         }
 
-#ifdef HAVE_SUIL
+#ifdef WANT_SUIL
         if (isSuil)
         {
             // -------------------------------------------------------
@@ -4405,7 +4405,7 @@ public:
             // -------------------------------------------------------
             // initialize ui bridge
 
-            if (const char* const oscBinary = lv2bridge2str(uiType))
+            if (const char* const oscBinary = getUiBridgePath(uiType))
             {
                 gui.type = GUI_EXTERNAL_OSC;
                 osc.thread = new CarlaPluginThread(x_engine, this, CarlaPluginThread::PLUGIN_THREAD_LV2_GUI);
@@ -4495,7 +4495,7 @@ public:
                 break;
 
             case LV2_UI_GTK2:
-#ifdef HAVE_SUIL
+#ifdef WANT_SUIL
                 qDebug("Will use LV2 Gtk2 UI (suil)");
                 gui.type      = GUI_EXTERNAL_SUIL;
                 gui.resizable = isUiResizable();
@@ -4565,7 +4565,7 @@ private:
         int height;
     } gui;
 
-#ifdef HAVE_SUIL
+#ifdef WANT_SUIL
     struct {
         SuilHost* host;
         SuilInstance* handle;
