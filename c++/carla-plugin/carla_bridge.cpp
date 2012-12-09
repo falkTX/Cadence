@@ -994,7 +994,7 @@ CarlaPlugin* CarlaPlugin::newBridge(const initializer& init, BinaryType btype, P
     if (! extra)
     {
         init.engine->setLastError("Bridge not possible, bridge-binary not found");
-        return false;
+        return nullptr;
     }
 
     short id = init.engine->getNewPluginId();
