@@ -53,12 +53,16 @@ echo "usage: $0 [command]
   -p, --play    Playback mode only
 
   -h, --help    Show this help menu
-
+      --dummy   Don't do anything, just create the needed files
 
 NOTE:
  When runned with no arguments, pulse2jack will
  activate PulseAudio with both playback and record modes.
 "
+exit
+    ;;
+
+    --dummy)
 exit
     ;;
 
