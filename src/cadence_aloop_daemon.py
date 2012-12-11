@@ -54,15 +54,16 @@ def sample_rate_callback(newSampleRate, arg):
 # listen to jack2 master switch
 
 def client_registration_callback(clientName, register, arg):
+    global doRunNow
     if clientName == b"system" and register:
         print("NOTICE: Possible JACK2 master switch")
-        global doRunNow, bufferSize, sampleRate
+        global bufferSize, sampleRate
         doRunNow   = True
         sampleRate = jacklib.get_sample_rate(client)
         bufferSize = jacklib.get_buffer_size(client)
     elif clientName in (b"alsa2jack", b"jack2alsa") and not register:
         global doLoop, useZita
-        if doLoop:
+        if doLoop and not doRunNow:
             doLoop = False
             print("NOTICE: %s have been stopped, quitting now..." % ("zita-a2j/j2a" if useZita else "alsa_in/out"))
 
@@ -76,9 +77,9 @@ def shutdown_callback(arg):
 # --------------------------------------------------
 # run alsa_in and alsa_out
 def run_alsa_bridge():
-    global useZita
     global bufferSize, sampleRate
     global procIn, procOut
+    global useZita
 
     if procIn.state() != QProcess.NotRunning:
         procIn.terminate()
@@ -140,8 +141,8 @@ if __name__ == '__main__':
     firstStart = True
     while doLoop and os.path.exists(checkFile):
         if doRunNow:
-            doRunNow = False
             run_alsa_bridge()
+            doRunNow = False
 
             if firstStart:
                 firstStart = False
