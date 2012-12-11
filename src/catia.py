@@ -985,6 +985,7 @@ class CatiaMainW(AbstractCanvasJackClass, ui_catia.Ui_CatiaMainW):
         if DBus.jack and not DBus.jack.IsStarted():
             self.act_tools_a2j_start.setEnabled(False)
             self.act_tools_a2j_stop.setEnabled(False)
+            self.act_tools_a2j_export_hw.setEnabled(DBus.a2j and not DBus.a2j.is_started())
         else:
             self.act_tools_a2j_start.setEnabled(not started)
             self.act_tools_a2j_stop.setEnabled(started)

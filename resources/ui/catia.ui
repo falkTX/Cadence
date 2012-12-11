@@ -535,7 +535,7 @@
     </widget>
     <widget class="QMenu" name="menu_A2J_Bridge">
      <property name="title">
-      <string>&amp;A2J Bridge</string>
+      <string>&amp;ALSA-MIDI Bridge</string>
      </property>
      <addaction name="act_tools_a2j_start"/>
      <addaction name="act_tools_a2j_stop"/>
@@ -912,7 +912,7 @@
      <normaloff>:/16x16/media-playback-start.png</normaloff>:/16x16/media-playback-start.png</iconset>
    </property>
    <property name="text">
-    <string>Start A2J Bridge</string>
+    <string>Start Bridge</string>
    </property>
    <property name="shortcut">
     <string>F7</string>
@@ -924,7 +924,7 @@
      <normaloff>:/16x16/media-playback-stop.png</normaloff>:/16x16/media-playback-stop.png</iconset>
    </property>
    <property name="text">
-    <string>Stop A2J Bridge</string>
+    <string>Stop Bridge</string>
    </property>
    <property name="shortcut">
     <string>F8</string>

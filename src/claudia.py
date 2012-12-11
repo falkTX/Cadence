@@ -737,6 +737,17 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         else:
             self.jackStopped()
 
+        if DBus.a2j:
+            if DBus.a2j.is_started():
+                self.a2jStarted()
+            else:
+                self.a2jStopped()
+        else:
+            self.act_tools_a2j_start.setEnabled(False)
+            self.act_tools_a2j_stop.setEnabled(False)
+            self.act_tools_a2j_export_hw.setEnabled(False)
+            self.menu_A2J_Bridge.setEnabled(False)
+
         if DBus.ladish_control.IsStudioLoaded():
             self.studioLoaded()
             if DBus.ladish_studio.IsStarted():
@@ -766,6 +777,9 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         self.connect(self.act_studio_save_as, SIGNAL("triggered()"), SLOT("slot_studio_save_as()"))
         self.connect(self.act_studio_rename, SIGNAL("triggered()"), SLOT("slot_studio_rename()"))
         self.connect(self.act_studio_unload, SIGNAL("triggered()"), SLOT("slot_studio_unload()"))
+        self.connect(self.act_tools_a2j_start, SIGNAL("triggered()"), SLOT("slot_A2JBridgeStart()"))
+        self.connect(self.act_tools_a2j_stop, SIGNAL("triggered()"), SLOT("slot_A2JBridgeStop()"))
+        self.connect(self.act_tools_a2j_export_hw, SIGNAL("triggered()"), SLOT("slot_A2JBridgeExportHW()"))
         self.connect(self.b_studio_new, SIGNAL("clicked()"), SLOT("slot_studio_new()"))
         self.connect(self.b_studio_load, SIGNAL("clicked()"), SLOT("slot_studio_load_b()"))
         self.connect(self.b_studio_save, SIGNAL("clicked()"), SLOT("slot_studio_save()"))
@@ -858,8 +872,8 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         # -------------------------------------------------------------
         # Set-up DBus
 
-        DBus.bus.add_signal_receiver(self.DBusSignalReceiver, destination_keyword='dest', path_keyword='path',
-            member_keyword='member', interface_keyword='interface', sender_keyword='sender', )
+        DBus.bus.add_signal_receiver(self.DBusSignalReceiver, destination_keyword="dest", path_keyword="path",
+            member_keyword="member", interface_keyword="interface", sender_keyword="sender")
 
         # -------------------------------------------------------------
 
@@ -1237,6 +1251,7 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         self.act_jack_render.setEnabled(canRender)
         self.b_jack_render.setEnabled(canRender)
         self.menuJackTransport(True)
+        self.menuA2JBridge(False)
 
         self.cb_buffer_size.setEnabled(True)
         self.cb_sample_rate.setEnabled(True) # jacksettings.getSampleRate() != -1
@@ -1281,6 +1296,7 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         self.act_jack_render.setEnabled(False)
         self.b_jack_render.setEnabled(False)
         self.menuJackTransport(False)
+        self.menuA2JBridge(False)
 
         if self.systray:
             self.systray.setActionEnabled("tools_render", False)
@@ -1402,6 +1418,12 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
 
         patchcanvas.clear()
 
+    def a2jStarted(self):
+        self.menuA2JBridge(True)
+
+    def a2jStopped(self):
+        self.menuA2JBridge(False)
+
     def menuJackTransport(self, enabled):
         self.act_transport_play.setEnabled(enabled)
         self.act_transport_stop.setEnabled(enabled)
@@ -1410,6 +1432,16 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         self.menu_Transport.setEnabled(enabled)
         self.group_transport.setEnabled(enabled)
 
+    def menuA2JBridge(self, started):
+        if not DBus.jack.IsStarted():
+            self.act_tools_a2j_start.setEnabled(False)
+            self.act_tools_a2j_stop.setEnabled(False)
+            self.act_tools_a2j_export_hw.setEnabled(DBus.a2j and not DBus.a2j.is_started())
+        else:
+            self.act_tools_a2j_start.setEnabled(not started)
+            self.act_tools_a2j_stop.setEnabled(started)
+            self.act_tools_a2j_export_hw.setEnabled(not started)
+
     def DBusSignalReceiver(self, *args, **kwds):
         if kwds['interface'] == "org.freedesktop.DBus" and kwds['path'] == "/org/freedesktop/DBus" and kwds['member'] == "NameOwnerChanged":
             appInterface, appId, newId = args
@@ -1417,7 +1449,9 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
 
             if not newId:
                 # Something crashed
-                if appInterface in ("org.jackaudio.service", "org.ladish"):
+                if appInterface == "org.gna.home.a2jmidid":
+                    QTimer.singleShot(0, self, SLOT("slot_handleCrash_a2j()"))
+                elif appInterface in ("org.jackaudio.service", "org.ladish"):
                     # Prevent any more dbus calls
                     DBus.jack = None
                     jack.client = None
@@ -1496,6 +1530,12 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
             elif kwds['member'] == "AppStateChanged2":
                 self.emit(SIGNAL("DBusAppStateChanged2Callback(QString, int, QString, bool, bool, QString)"), kwds['path'], args[iAppChangedNumber], args[iAppChangedName], args[iAppChangedActive], args[iAppChangedTerminal], args[iAppChangedLevel])
 
+        elif kwds['interface'] == "org.gna.home.a2jmidid.control":
+            if kwds['member'] == "bridge_started":
+                self.a2jStarted()
+            elif kwds['member'] == "bridge_stopped":
+                self.a2jStopped()
+
     def DBusReconnect(self):
         DBus.jack = DBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
         DBus.ladish_control = DBus.bus.get_object("org.ladish", "/org/ladish/Control")
@@ -1510,6 +1550,11 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
             DBus.ladish_app_daemon = DBus.bus.get_object("org.ladish.appdb", "/")
         except:
             DBus.ladish_app_daemon = None
+
+        try:
+            DBus.a2j = dbus.Interface(DBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
+        except:
+            DBus.a2j = None
 
         jacksettings.initBus(DBus.bus)
 
@@ -2055,6 +2100,17 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         self.DBusReconnect()
         self.studioUnloaded()
 
+        if DBus.a2j:
+            if DBus.a2j.is_started():
+                self.a2jStarted()
+            else:
+                self.a2jStopped()
+        else:
+            self.act_tools_a2j_start.setEnabled(False)
+            self.act_tools_a2j_stop.setEnabled(False)
+            self.act_tools_a2j_export_hw.setEnabled(False)
+            self.menu_A2J_Bridge.setEnabled(False)
+
     @pyqtSlot()
     def slot_handleCrash_ladish(self):
         self.treeWidget.clear()
@@ -2065,6 +2121,24 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
     @pyqtSlot()
     def slot_handleCrash_studio(self):
         QMessageBox.warning(self, self.tr("Error"), self.tr("jackdbus has crashed"))
+
+    @pyqtSlot()
+    def slot_handleCrash_a2j(self):
+        try:
+            DBus.a2j = dbus.Interface(DBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
+        except:
+            DBus.a2j = None
+
+        if DBus.a2j:
+            if DBus.a2j.is_started():
+                self.a2jStarted()
+            else:
+                self.a2jStopped()
+        else:
+            self.act_tools_a2j_start.setEnabled(False)
+            self.act_tools_a2j_stop.setEnabled(False)
+            self.act_tools_a2j_export_hw.setEnabled(False)
+            self.menu_A2J_Bridge.setEnabled(False)
 
     @pyqtSlot(str)
     def slot_DBusCrashCallback(self, appInterface):
@@ -2373,6 +2447,29 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         self.jackStopped()
 
     @pyqtSlot()
+    def slot_A2JBridgeStart(self):
+        ret = False
+        if DBus.a2j:
+            ret = bool(DBus.a2j.start())
+        return ret
+
+    @pyqtSlot()
+    def slot_A2JBridgeStop(self):
+        ret = False
+        if DBus.a2j:
+            ret = bool(DBus.a2j.stop())
+        return ret
+
+    @pyqtSlot()
+    def slot_A2JBridgeExportHW(self):
+        if DBus.a2j:
+            ask = QMessageBox.question(self, self.tr("A2J Hardware Export"), self.tr("Enable Hardware Export on the A2J Bridge?"), QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.No)
+            if ask == QMessageBox.Yes:
+                DBus.a2j.set_hw_export(True)
+            elif ask == QMessageBox.No:
+                DBus.a2j.set_hw_export(False)
+
+    @pyqtSlot()
     def slot_configureClaudia(self):
         # Save groups position now
         if DBus.patchbay:
@@ -2567,6 +2664,11 @@ if __name__ == '__main__':
         DBus.ladish_app_daemon = DBus.bus.get_object("org.ladish.appdb", "/")
     except:
         DBus.ladish_app_daemon = None
+
+    try:
+        DBus.a2j = dbus.Interface(DBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
+    except:
+        DBus.a2j = None
 
     jacksettings.initBus(DBus.bus)
 
