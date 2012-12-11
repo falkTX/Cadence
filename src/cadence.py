@@ -1347,7 +1347,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
                 self.label_bridge_pulse.setText(self.tr("PulseAudio is started and bridged to JACK"))
             else:
                 jackRunning = bool(DBus.jack and DBus.jack.IsStarted())
-                self.b_pulse_start.setEnabled(DBus.jack and DBus.jack.IsStarted())
+                self.b_pulse_start.setEnabled(jackRunning)
                 self.b_pulse_stop.setEnabled(False)
                 self.systray.setActionEnabled("pulse_start", jackRunning)
                 self.systray.setActionEnabled("pulse_stop", False)
