@@ -41,9 +41,9 @@ def forceReset():
             os.remove(config)
 
 # Start JACK, A2J and Pulse, according to user settings
-def startSession():
+def startSession(systemStarted):
     # Check if JACK is set to auto-start
-    if not GlobalSettings.value("JACK/AutoStart", False, type=bool):
+    if systemStarted and not GlobalSettings.value("JACK/AutoStart", False, type=bool):
         print("JACK is set to NOT auto-start on login")
         return True
 
@@ -214,8 +214,10 @@ if __name__ == '__main__':
             printVST_PATH()
         elif arg == "--reset":
             forceReset()
+        elif arg == "--system-start":
+            sys.exit(startSession(True))
         elif arg in ["-s", "--s", "-start", "--start"]:
-            sys.exit(startSession())
+            sys.exit(startSession(False))
         elif arg in ["-h", "--h", "-help", "--help"]:
             printHelp(cmd)
         elif arg in ["-v", "--v", "-version", "--version"]:

@@ -14,7 +14,7 @@ export LV2_PATH="$LV2_PATH_str"
 export VST_PATH="$VST_PATH_str"
 
 # Start JACK (or not), according to user settings
-CADENCE_SESSION="$INSTALL_PREFIX/bin/cadence-session-start -s"
+CADENCE_SESSION="$INSTALL_PREFIX/bin/cadence-session-start --system-start"
 exec $CADENCE_SESSION &
 
 unset LADSPA_PATH_str
