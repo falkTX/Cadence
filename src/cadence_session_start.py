@@ -22,6 +22,11 @@ DBus = DBus()
 
 # Start JACK, A2J and Pulse, according to user settings
 def startSession():
+    # Check if JACK is set to auto-start
+    if not GlobalSettings.value("JACK/AutoStart", False, type=bool):
+        print("JACK is set to NOT auto-start on login")
+        return True
+
     # Kill all audio processes first
     stopAllAudioProcesses()
 
@@ -33,11 +38,6 @@ def startSession():
         DBus.a2j = dbus.Interface(DBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
     except:
         DBus.a2j = None
-
-    # Load settings (JACK etc)
-    if not GlobalSettings.value("JACK/AutoStart", True, type=bool):
-        print("JACK is set to NOT auto-start on login")
-        return True
 
     if GlobalSettings.value("JACK/AutoLoadLadishStudio", False, type=bool):
         try:
@@ -51,7 +51,6 @@ def startSession():
         except:
             ladish_conf = None
 
-        ladishNotifyHack = False
         ladishStudioName = dbus.String(GlobalSettings.value("JACK/LadishStudioName", "", type=str))
         ladishStudioListDump = ladish_control.GetStudioList()
 
@@ -60,6 +59,8 @@ def startSession():
                 if ladish_conf and ladish_conf.get('/org/ladish/daemon/notify')[0] == "true":
                     ladish_conf.set('/org/ladish/daemon/notify', "false")
                     ladishNotifyHack = True
+                else:
+                    ladishNotifyHack = False
 
                 ladish_control.LoadStudio(thisStudioName)
                 ladish_studio = DBus.bus.get_object("org.ladish", "/org/ladish/Studio")
