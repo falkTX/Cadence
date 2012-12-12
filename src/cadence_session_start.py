@@ -20,6 +20,26 @@ class DBus(object):
     ]
 DBus = DBus()
 
+def forceReset():
+    # Kill all audio processes
+    stopAllAudioProcesses()
+
+    # Remove configs
+    configFiles = (
+        # Cadence GlobalSettings
+        os.path.join(HOME, ".asoundrc"),
+        # ALSA settings
+        os.path.join(HOME, ".config", "Cadence", "GlobalSettings.conf"),
+        # JACK2 settings
+        os.path.join(HOME, ".config", "jack", "conf.xml"),
+        # JACK1 settings
+        os.path.join(HOME, ".config", "jack", "conf-jack1.xml")
+    )
+
+    for config in configFiles:
+        if os.path.exists(config):
+            os.remove(config)
+
 # Start JACK, A2J and Pulse, according to user settings
 def startSession():
     # Check if JACK is set to auto-start
@@ -152,6 +172,7 @@ def printVST_PATH():
 
 def printArguments():
     print("\t-s|--start  \tStart session")
+    print("\t   --reset  \tForce-reset all JACK daemons and settings (disables auto-start at login)")
     print("")
     print("\t-h|--help   \tShow this help message")
     print("\t-v|--version\tShow version")
@@ -191,6 +212,8 @@ if __name__ == '__main__':
             printLV2_PATH()
         elif arg == "--printVST_PATH":
             printVST_PATH()
+        elif arg == "--reset":
+            forceReset()
         elif arg in ["-s", "--s", "-start", "--start"]:
             sys.exit(startSession())
         elif arg in ["-h", "--h", "-help", "--help"]:
