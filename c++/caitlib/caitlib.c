@@ -144,7 +144,7 @@ int jack_process(jack_nframes_t nframes, void* ptr)
     }
 #else
     // MIDI Out
-    if (handlePtr->midiOutCount > 0 && transportState == JackTransportRolling)
+    if (transportState == JackTransportRolling && handlePtr->midiOutCount > 0)
     {
         ListHead* entryPtr;
         CaitlibOutPort* outPortPtr;

@@ -609,7 +609,7 @@ public:
     // -------------------------------------------------------------------
     // Callback
 
-    void callback(const CallbackType action, const unsigned short pluginId, const int value1, const int value2, const double value3);
+    void callback(const CallbackType action, const unsigned short pluginId, const int value1, const int value2, const double value3, const char* const valueStr);
     void setCallback(const CallbackFunc func, void* const ptr);
 
     // -------------------------------------------------------------------

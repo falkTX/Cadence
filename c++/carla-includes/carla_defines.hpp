@@ -36,7 +36,7 @@
 # define nullptr (0)
 #endif
 
-// Common includes and macros
+// Common includes
 #ifdef Q_OS_WIN
 # include <winsock2.h>
 # include <windows.h>
@@ -82,7 +82,7 @@
 #  define BINARY_NATIVE BINARY_WIN64
 # else
 #  define BINARY_NATIVE BINARY_WIN32
-#  endif
+# endif
 #else
 # warning Unknown binary type
 # define BINARY_NATIVE BINARY_OTHER

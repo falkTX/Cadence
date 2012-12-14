@@ -1134,7 +1134,7 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         self.connect(self.act_help_about_qt, SIGNAL("triggered()"), app, SLOT("aboutQt()"))
 
         self.connect(self, SIGNAL("SIGUSR1()"), SLOT("slot_handleSIGUSR1()"))
-        self.connect(self, SIGNAL("DebugCallback(int, int, int, double)"), SLOT("slot_handleDebugCallback(int, int, int, double)"))
+        self.connect(self, SIGNAL("DebugCallback(int, int, int, double, QString)"), SLOT("slot_handleDebugCallback(int, int, int, double, QString)"))
         self.connect(self, SIGNAL("ParameterValueCallback(int, int, double)"), SLOT("slot_handleParameterValueCallback(int, int, double)"))
         self.connect(self, SIGNAL("ParameterMidiChannelCallback(int, int, int)"), SLOT("slot_handleParameterMidiChannelCallback(int, int, int)"))
         self.connect(self, SIGNAL("ParameterMidiCcCallback(int, int, int)"), SLOT("slot_handleParameterMidiCcCallback(int, int, int)"))
@@ -1285,9 +1285,9 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         print("Got SIGUSR1 -> Saving project now")
         QTimer.singleShot(0, self, SLOT("slot_file_save()"))
 
-    @pyqtSlot(int, int, int, float)
-    def slot_handleDebugCallback(self, plugin_id, value1, value2, value3):
-        print("DEBUG :: %i, %i, %i, %f)" % (plugin_id, value1, value2, value3))
+    @pyqtSlot(int, int, int, float, str)
+    def slot_handleDebugCallback(self, plugin_id, value1, value2, value3, valueStr):
+        print("DEBUG :: %i, %i, %i, %f, \"%s\")" % (plugin_id, value1, value2, value3, valueStr))
 
     @pyqtSlot(int, int, float)
     def slot_handleParameterValueCallback(self, pluginId, parameterId, value):
@@ -1981,12 +1981,12 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
 
 # ------------------------------------------------------------------------------------------------
 
-def callback_function(ptr, action, pluginId, value1, value2, value3):
+def callback_function(ptr, action, pluginId, value1, value2, value3, valueStr):
     if pluginId< 0 or pluginId >= MAX_PLUGINS or not Carla.gui:
         return
 
     if action == CALLBACK_DEBUG:
-        Carla.gui.emit(SIGNAL("DebugCallback(int, int, int, double)"), pluginId, value1, value2, value3)
+        Carla.gui.emit(SIGNAL("DebugCallback(int, int, int, double, QString)"), pluginId, value1, value2, value3, cString(valueStr))
     elif action == CALLBACK_PARAMETER_VALUE_CHANGED:
         Carla.gui.emit(SIGNAL("ParameterValueCallback(int, int, double)"), pluginId, value1, value3)
     elif action == CALLBACK_PARAMETER_MIDI_CHANNEL_CHANGED:

@@ -1023,12 +1023,12 @@ void CarlaEngine::setOutputPeak(const unsigned short pluginId, const unsigned sh
 // -----------------------------------------------------------------------
 // Callback
 
-void CarlaEngine::callback(const CallbackType action, const unsigned short pluginId, const int value1, const int value2, const double value3)
+void CarlaEngine::callback(const CallbackType action, const unsigned short pluginId, const int value1, const int value2, const double value3, const char* const valueStr)
 {
-    qDebug("CarlaEngine::callback(%s, %i, %i, %i, %f)", CallbackType2Str(action), pluginId, value1, value2, value3);
+    qDebug("CarlaEngine::callback(%s, %i, %i, %i, %f, \"%s\")", CallbackType2Str(action), pluginId, value1, value2, value3, valueStr);
 
     if (m_callback)
-        m_callback(m_callbackPtr, action, pluginId, value1, value2, value3);
+        m_callback(m_callbackPtr, action, pluginId, value1, value2, value3, valueStr);
 }
 
 void CarlaEngine::setCallback(const CallbackFunc func, void* const ptr)

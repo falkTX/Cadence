@@ -105,6 +105,7 @@ typedef struct _MidiProgram {
 } MidiProgram;
 
 typedef struct _TimeInfoBBT {
+    bool valid;
     int32_t bar;
     int32_t beat;
     int32_t tick;
@@ -119,19 +120,19 @@ typedef struct _TimeInfo {
     bool playing;
     uint32_t frame;
     uint32_t time;
-    uint32_t valid;
     TimeInfoBBT bbt;
 } TimeInfo;
 
 typedef struct _HostDescriptor {
     HostHandle handle;
+
     uint32_t        (*get_buffer_size)(HostHandle handle);
     double          (*get_sample_rate)(HostHandle handle);
     const TimeInfo* (*get_time_info)(HostHandle handle);
     bool            (*write_midi_event)(HostHandle handle, MidiEvent* event);
 
     void (*ui_parameter_changed)(HostHandle handle, uint32_t index, float value);
-    //void (*ui_midi_program_changed)(HostHandle handle, uint32_t bank, uint32_t program);
+    void (*ui_midi_program_changed)(HostHandle handle, uint32_t bank, uint32_t program);
     void (*ui_custom_data_changed)(HostHandle handle, const char* key, const char* value);
     void (*ui_closed)(HostHandle handle);
 } HostDescriptor;
@@ -183,21 +184,25 @@ typedef struct _PluginDescriptor {
 // Register plugin
 void carla_register_native_plugin(const PluginDescriptor* desc);
 
-// Available plugins
+// Simple plugins
 void carla_register_native_plugin_bypass();
 void carla_register_native_plugin_midiSplit();
-void carla_register_native_plugin_zynaddsubfx();
 
-// DISTRHO based plugins
+// DISTRHO plugins
 void carla_register_native_plugin_3BandEQ();
 void carla_register_native_plugin_3BandSplitter();
+
+#ifdef WANT_ZYNADDSUBFX
+// ZynAddSubFX
+void carla_register_native_plugin_zynaddsubfx();
+#endif
 
 // -----------------------------------------------------------------------
 
 /**@}*/
 
 #ifdef __cplusplus
-} /* extern "C" */
+} // extern "C"
 #endif
 
 #endif // CARLA_NATIVE_H

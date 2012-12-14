@@ -22,15 +22,15 @@
 #ifdef __cplusplus
 extern "C" {
 #else
-#include <stdbool.h>
+# include <stdbool.h>
 #endif
 
 #include <stdint.h>
 
 #ifdef _WIN32
-#define CAITLIB_EXPORT __declspec (dllexport)
+# define CAITLIB_EXPORT __declspec (dllexport)
 #else
-#define CAITLIB_EXPORT __attribute__ ((visibility("default")))
+# define CAITLIB_EXPORT __attribute__ ((visibility("default")))
 #endif
 
 /*!
@@ -112,7 +112,7 @@ typedef struct _MidiEvent
 #ifndef DOXYGEN
         // padding for future events
         struct _MidiEventPadding {
-            uint8_t pad[32];
+            uint8_t pad[128];
         } __padding;
 #endif
     } data;

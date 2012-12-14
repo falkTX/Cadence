@@ -510,7 +510,7 @@ enum ProcessMode {
  *
  * \see set_callback_function()
  */
-typedef void (*CallbackFunc)(void* ptr, CallbackType action, unsigned short pluginId, int value1, int value2, double value3);
+typedef void (*CallbackFunc)(void* ptr, CallbackType action, unsigned short pluginId, int value1, int value2, double value3, const char* valueStr);
 
 struct ParameterData {
     ParameterType type;

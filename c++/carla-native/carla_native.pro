@@ -11,10 +11,10 @@ DEFINES  += QTCREATOR_TEST
 
 DEFINES  += WANT_ZYNADDSUBFX WANT_ZYNADDSUBFX_GUI
 
-PKGCONFIG = fftw3 mxml ntk ntk_images
+PKGCONFIG = fftw3 mxml
 
 TARGET   = carla_native
-TEMPLATE = app #lib
+TEMPLATE = app
 VERSION  = 0.5.0
 
 SOURCES  = \
@@ -41,9 +41,6 @@ INCLUDEPATH = . distrho \
     ../carla-includes \
     ../carla-utils \
     ../distrho-plugin-toolkit
-
-# FIX
-INCLUDEPATH += /usr/include/ntk
 
 LIBS = -lGL
 

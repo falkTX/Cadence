@@ -13,18 +13,22 @@ BUILD_CXX_FLAGS += -fvisibility=hidden -fPIC -I. -I../carla-includes -I../carla-
 BUILD_CXX_FLAGS += $(shell pkg-config --cflags QtCore)
 
 ifeq ($(HAVE_ZYN_DEPS),true)
+BUILD_CXX_FLAGS += -DWANT_ZYNADDSUBFX
 ZYN_CXX_FLAGS    = $(shell pkg-config --cflags fftw3 mxml)
 endif
 
+# Simple plugins
 OBJS  = \
 	bypass.o \
 	midi-split.o
 
+# DISTRHO plugins
 OBJS += \
 	distrho-3bandeq.o \
 	distrho-3bandsplitter.o \
 	distrho-pugl.o
 
+# ZynAddSubFX
 ifeq ($(HAVE_ZYN_DEPS),true)
 OBJS += zynaddsubfx.o zynaddsubfx-src.o
 endif

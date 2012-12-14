@@ -259,7 +259,7 @@ public:
         return contains(str.buffer);
     }
 
-    bool isDigit(size_t pos) const
+    bool isDigit(const size_t pos) const
     {
         if (pos >= length())
             return false;
@@ -275,7 +275,7 @@ public:
         buffer = ::strdup("");
     }
 
-    void replace(char before, char after)
+    void replace(const char before, const char after)
     {
         for (size_t i=0, len = ::strlen(buffer); i < len; i++)
         {
@@ -284,7 +284,8 @@ public:
         }
     }
 
-    void truncate(unsigned int n)
+    // FIXME?
+    void truncate(const unsigned int n)
     {
         for (size_t i=n, len = ::strlen(buffer); i < len; i++)
             buffer[i] = 0;
@@ -294,7 +295,7 @@ public:
     {
         for (size_t i=0, len = ::strlen(buffer); i < len; i++)
         {
-            if ((buffer[i] >= '0' && buffer[i] <= '9') || (buffer[i] >= 'A' && buffer[i] <= 'Z') || (buffer[i] >= 'a' && buffer[i] <= 'z'))
+            if ((buffer[i] >= '0' && buffer[i] <= '9') || (buffer[i] >= 'A' && buffer[i] <= 'Z') || (buffer[i] >= 'a' && buffer[i] <= 'z') || buffer[i] == '_')
                 continue;
 
             buffer[i] = '_';
@@ -327,7 +328,7 @@ public:
         return buffer;
     }
 
-    char& operator[](int pos)
+    char& operator[](const unsigned int pos)
     {
         return buffer[pos];
     }
