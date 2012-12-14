@@ -4,7 +4,7 @@ To install Cadence and its tools, simply run as usual: <br/>
 `$ make` <br/>
 `$ [sudo] make install`
 
-You can also run the tools without installing them, by using instead: <br/>
+You can run the tools without installing them, by using instead: <br/>
 <i>(Replace '&lt;tool&gt;' by a proper name, in lowercase. Some distros may need to use 'python' here)</i> <br/>
 `$ make` <br/>
 `$ python3 src/<tool>.py`
@@ -20,7 +20,6 @@ The required build dependencies are: <i>(devel packages of these)</i>
 
  - JACK
  - liblo
- - Gtk2
  - Qt4
  - PyQt4
 
@@ -29,8 +28,14 @@ Optional but recommended:
  - FluidSynth
  - LinuxSampler
 
+Optional for extended LV2 UIs support:
+
+ - Gtk2
+ - Gtk3
+ - Suil
+
 On Debian and Ubuntu, use these commands to install all dependencies: <br/>
-`$ sudo apt-get install libjack-dev liblo-dev libgtk2.0-dev libqt4-dev libfluidsynth-dev` <br/>
+`$ sudo apt-get install libjack-dev liblo-dev libqt4-dev libfluidsynth-dev` <br/>
 `$ sudo apt-get install qt4-dev-tools python-qt4-dev python3-pyqt4 pyqt4-dev-tools`
 
 NOTE: linuxsampler is not packaged in either Debian or Ubuntu, but it's available in KXStudio. <br/>
@@ -46,11 +51,12 @@ Optional but recommended:
  - a2jmidid
  - jack-capture
  - python3-rdflib
+ - pulseaudio-module-jack
 
-The 'Cadence' and 'Catia' apps rely on jackdbus to work properly (either JACK2 or JACK1 + DBus patch). <br/>
+The 'Cadence' and 'Catia' apps rely on jackdbus to work properly (either JACK2 or JACK1+DBus patch). <br/>
 Claudia is a LADISH frontend, so it will obviously require LADISH to run.
 
-The python version used is always python3.2. <br/>
+The python version used and tested is python3.2. <br/>
 After install, the app/tools will still work on distros with python2 as default, without any additional work.
 
 <br/>
@@ -62,7 +68,7 @@ Here's the required run-time dependencies of each of the main tools:
 
 ### Cadence
 Recommends a2jmidid (>= 8) and jackdbus <br/>
-Suggests pulseaudio <br/>
+Suggests pulseaudio[-module-jack] <br/>
 <br/>
 
 ### Catarina
@@ -79,7 +85,7 @@ Recommends a2jmidid <br/>
 <br/>
 
 ### Carla
-Requires liblo and Gtk2 <br/>
+Requires liblo <br/>
 Recommends python3-rdflib (for LADSPA-RDF support) <br/>
 <br/>
 
