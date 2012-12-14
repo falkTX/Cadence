@@ -1,0 +1,9 @@
+[Project]
+Manager=KDevGenericManager
+Name=Cadence
+
+[Filters]
+Excludes=*/.*,*/*~,*/*.a,*/*.o,*/*.doxygen,*/*.pro,*/*.user
+
+[Project]
+VersionControlSupport=kdevgit

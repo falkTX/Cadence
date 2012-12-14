@@ -1,8 +1,14 @@
+# Hidden files
 .directory
 .fuse-*
 .*.kate-swp
+.kdev4/
 
+# Temp files
 *~
+*.bak
+
+# Binary files
 *.a
 *.o
 *.dll
@@ -10,24 +16,35 @@
 *.exe
 *.so
 
+# Project files
 *.carxp
 *.carxs
 *.pro.user
 
-*.pyc
-ui_*.py
-
+# C++ files
 *.moc
 moc_*.cpp
 ui_*.h
 
+# Python files
+*.pyc
+ui_*.py
+
+# Resource files
+src/resources_rc.py
+qrc_resources*.cpp
+
+# Binaries
 carla-bridge-qtcreator
 carla-bridge-posix32
 carla-bridge-posix64
+carla-bridge-lv2-cocoa
 carla-bridge-lv2-gtk2
 carla-bridge-lv2-gtk3
 carla-bridge-lv2-qt4
+carla-bridge-lv2-qt5
 carla-bridge-lv2-x11
+carla-bridge-vst-cocoa
 carla-bridge-vst-x11
 
 carla-discovery-qtcreator
@@ -38,8 +55,10 @@ carla-discovery-posix64
 c++/jackmeter/cadence-jackmeter
 c++/xycontroller/cadence-xycontroller
 
+# VST SDK
 c++/carla-includes/vst/
 
+# Docs
 doc/caitlib/
 doc/carla-backend/
 doc/carla-bridge/
@@ -48,11 +67,12 @@ doc/carla-native/
 doc/carla-plugin/
 doc/distrho/
 
+# CX-Freeze builds
+src/dist/
+
+# QtCreator builds
 *-build-*Debug/
 *-build-*Release/
-
-src/resources_rc.py
-qrc_resources*.cpp
 
 # ZynAddSubFX UI
 c++/carla-native/zynaddsubfx/UI/ADnoteUI.cc
@@ -88,7 +108,7 @@ c++/carla-native/zynaddsubfx/UI/SUBnoteUI.h
 c++/carla-native/zynaddsubfx/UI/VirKeyboard.cc
 c++/carla-native/zynaddsubfx/UI/VirKeyboard.h
 
-# incoming
+# Incoming
 _/
 all-recheck
 c++/caitlyn/
@@ -104,5 +124,7 @@ c++/carla-includes/lv2/morph.h
 c++/carla-jackbridge/jack
 c++/flmixer/
 c++/widgets/ledbutton.*
+c++/widgets/paramspinbox.*
 data/templates/energyXT.xt
+src/old/
 src/ui/carla_driver.ui
