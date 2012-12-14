@@ -293,7 +293,7 @@ public:
             plugin->d_deactivate();
     }
 
-    void run(const float** inputs, float** outputs, uint32_t frames, uint32_t midiEventCount, const MidiEvent* midiEvents)
+    void run(float** inputs, float** outputs, uint32_t frames, uint32_t midiEventCount, const MidiEvent* midiEvents)
     {
         assert(plugin && frames >= 2);
 

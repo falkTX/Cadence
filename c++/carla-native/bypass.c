@@ -29,7 +29,7 @@ static PluginHandle bypass_instantiate(const PluginDescriptor* _this_, HostDescr
     (void)host;
 }
 
-static void bypass_process(PluginHandle handle, float** inBuffer, float** outBuffer, uint32_t frames, uint32_t midiEventCount, MidiEvent* midiEvents)
+static void bypass_process(PluginHandle handle, float** inBuffer, float** outBuffer, uint32_t frames, uint32_t midiEventCount, const MidiEvent* midiEvents)
 {
     float* in  = inBuffer[0];
     float* out = outBuffer[0];
@@ -45,7 +45,7 @@ static void bypass_process(PluginHandle handle, float** inBuffer, float** outBuf
 
 // -----------------------------------------------------------------------
 
-static PluginDescriptor bypassDesc = {
+static const PluginDescriptor bypassDesc = {
     .category  = PLUGIN_CATEGORY_NONE,
     .hints     = 0x0,
     .audioIns  = 1,

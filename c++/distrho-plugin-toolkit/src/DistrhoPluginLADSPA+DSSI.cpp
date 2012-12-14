@@ -195,9 +195,6 @@ public:
     void ladspa_run(unsigned long bufferSize)
 #endif
     {
-        if (bufferSize <= 1)
-            return;
-
         // Check for updated bufferSize
         if (bufferSize != lastBufferSize)
         {
@@ -230,7 +227,7 @@ public:
             snd_seq_event_t* event = &events[i];
             memset(&midiEvents[midiEventCount], 0, sizeof(MidiEvent));
 
-            if (events[i].type == SND_SEQ_EVENT_NOTEON)
+            if (event->type == SND_SEQ_EVENT_NOTEON)
             {
                 j = midiEventCount++;
                 midiEvents[j].frame     = event->time.tick;
@@ -238,14 +235,14 @@ public:
                 midiEvents[j].buffer[1] = event->data.note.note;
                 midiEvents[j].buffer[2] = event->data.note.velocity;
             }
-            else if (events[i].type == SND_SEQ_EVENT_NOTEOFF)
+            else if (event->type == SND_SEQ_EVENT_NOTEOFF)
             {
                 j = midiEventCount++;
                 midiEvents[j].frame     = event->time.tick;
                 midiEvents[j].buffer[0] = 0x80 + event->data.note.channel;
                 midiEvents[j].buffer[1] = event->data.note.note;
             }
-            else if (events[i].type == SND_SEQ_EVENT_KEYPRESS)
+            else if (event->type == SND_SEQ_EVENT_KEYPRESS)
             {
                 j = midiEventCount++;
                 midiEvents[j].frame     = event->time.tick;
@@ -253,7 +250,7 @@ public:
                 midiEvents[j].buffer[1] = event->data.note.note;
                 midiEvents[j].buffer[2] = event->data.note.velocity;
             }
-            else if (events[i].type == SND_SEQ_EVENT_CONTROLLER)
+            else if (event->type == SND_SEQ_EVENT_CONTROLLER)
             {
                 j = midiEventCount++;
                 midiEvents[j].frame     = event->time.tick;
@@ -261,14 +258,14 @@ public:
                 midiEvents[j].buffer[1] = event->data.control.param;
                 midiEvents[j].buffer[2] = event->data.control.value;
             }
-            else if (events[i].type == SND_SEQ_EVENT_CHANPRESS)
+            else if (event->type == SND_SEQ_EVENT_CHANPRESS)
             {
                 j = midiEventCount++;
                 midiEvents[j].frame     = event->time.tick;
                 midiEvents[j].buffer[0] = 0xD0 + event->data.control.channel;
                 midiEvents[j].buffer[1] = event->data.control.value;
             }
-            else if (events[i].type == SND_SEQ_EVENT_PITCHBEND)
+            else if (event->type == SND_SEQ_EVENT_PITCHBEND)
             {
                 // TODO
                 //j = midiEventCount++;
@@ -348,7 +345,7 @@ private:
 static LADSPA_Handle ladspa_instantiate(const LADSPA_Descriptor*, unsigned long sampleRate)
 {
     if (d_lastBufferSize == 0)
-        d_lastBufferSize = 512;
+        d_lastBufferSize = 2048;
     d_lastSampleRate = sampleRate;
 
     return new PluginLadspaDssi();

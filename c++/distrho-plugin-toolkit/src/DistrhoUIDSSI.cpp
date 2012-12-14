@@ -241,7 +241,7 @@ protected:
             while (lo_server_recv_noblock(oscData->server, 0) != 0) {}
         }
 
-        QObject::timerEvent(event);
+        QMainWindow::timerEvent(event);
     }
 
 private:
@@ -307,7 +307,7 @@ private:
 
 // -------------------------------------------------
 
-static UIDssi* globalUI   = nullptr;
+static UIDssi* globalUI = nullptr;
 
 void osc_error_handler(int num, const char* msg, const char* path)
 {

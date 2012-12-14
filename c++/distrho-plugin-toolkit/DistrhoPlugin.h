@@ -167,7 +167,7 @@ protected:
     // Process
     virtual void d_activate() = 0;
     virtual void d_deactivate() = 0;
-    virtual void d_run(const float** inputs, float** outputs, uint32_t frames, uint32_t midiEventCount, const MidiEvent* midiEvents) = 0;
+    virtual void d_run(float** inputs, float** outputs, uint32_t frames, uint32_t midiEventCount, const MidiEvent* midiEvents) = 0;
 
     // Callbacks
     virtual void d_bufferSizeChanged(uint32_t newBufferSize);

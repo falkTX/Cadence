@@ -26,11 +26,12 @@
  * @{
  */
 
-class PluginDescriptorClass {
+class PluginDescriptorClass
+{
 public:
-    PluginDescriptorClass(const HostDescriptor* host)
+    PluginDescriptorClass(const HostDescriptor* const host)
+        : m_host(host)
     {
-        this->host = host;
     }
 
     virtual ~PluginDescriptorClass()
@@ -40,64 +41,79 @@ public:
     // -------------------------------------------------------------------
     // Host calls
 
+    const HostDescriptor* getHostHandle() const
+    {
+        return m_host;
+    }
+
     uint32_t getBufferSize() const
     {
-        CARLA_ASSERT(host);
+        CARLA_ASSERT(m_host);
 
-        if (host)
-            return host->get_buffer_size(host->handle);
+        if (m_host)
+            return m_host->get_buffer_size(m_host->handle);
 
         return 0;
     }
 
     double getSampleRate() const
     {
-        CARLA_ASSERT(host);
+        CARLA_ASSERT(m_host);
 
-        if (host)
-            return host->get_sample_rate(host->handle);
+        if (m_host)
+            return m_host->get_sample_rate(m_host->handle);
 
         return 0.0;
     }
 
     const TimeInfo* getTimeInfo() const
     {
-        CARLA_ASSERT(host);
+        CARLA_ASSERT(m_host);
 
-        if (host)
-            return host->get_time_info(host->handle);
+        if (m_host)
+            return m_host->get_time_info(m_host->handle);
 
         return nullptr;
     }
 
-    void writeMidiEvent(MidiEvent* event)
+    void writeMidiEvent(MidiEvent* const event)
     {
-        CARLA_ASSERT(host);
+        CARLA_ASSERT(m_host);
 
-        if (host)
-            host->write_midi_event(host->handle, event);
+        if (m_host)
+            m_host->write_midi_event(m_host->handle, event);
     }
 
-    void uiParameterChanged(uint32_t index, float value)
+    void uiParameterChanged(const uint32_t index, const float value)
     {
-        CARLA_ASSERT(host);
+        CARLA_ASSERT(m_host);
 
-        if (host)
-            host->ui_parameter_changed(host->handle, index, value);
+        if (m_host)
+            m_host->ui_parameter_changed(m_host->handle, index, value);
     }
 
-    void uiCustomDataChanged(const char* key, const char* value)
+    void uiMidiProgramChanged(const uint32_t bank, const uint32_t program)
     {
-        CARLA_ASSERT(host);
+        CARLA_ASSERT(m_host);
 
-        if (host)
-            host->ui_custom_data_changed(host->handle, key, value);
+        if (m_host)
+            m_host->ui_midi_program_changed(m_host->handle, bank, program);
+    }
+
+    void uiCustomDataChanged(const char* const key, const char* const value)
+    {
+        CARLA_ASSERT(m_host);
+
+        if (m_host)
+            m_host->ui_custom_data_changed(m_host->handle, key, value);
     }
 
     void uiClosed()
     {
-        if (host)
-            host->ui_closed(host->handle);
+        CARLA_ASSERT(m_host);
+
+        if (m_host)
+            m_host->ui_closed(m_host->handle);
     }
 
 protected:
@@ -109,21 +125,21 @@ protected:
         return 0;
     }
 
-    virtual const Parameter* getParameterInfo(uint32_t index)
+    virtual const Parameter* getParameterInfo(const uint32_t index)
     {
         CARLA_ASSERT(index < getParameterCount());
 
         return nullptr;
     }
 
-    virtual float getParameterValue(uint32_t index)
+    virtual float getParameterValue(const uint32_t index)
     {
         CARLA_ASSERT(index < getParameterCount());
 
         return 0.0f;
     }
 
-    virtual const char* getParameterText(uint32_t index)
+    virtual const char* getParameterText(const uint32_t index)
     {
         CARLA_ASSERT(index < getParameterCount());
 
@@ -138,7 +154,7 @@ protected:
         return 0;
     }
 
-    virtual const MidiProgram* getMidiProgramInfo(uint32_t index)
+    virtual const MidiProgram* getMidiProgramInfo(const uint32_t index)
     {
         CARLA_ASSERT(index < getMidiProgramCount());
 
@@ -148,19 +164,19 @@ protected:
     // -------------------------------------------------------------------
     // Plugin state calls
 
-    virtual void setParameterValue(uint32_t index, float value)
+    virtual void setParameterValue(const uint32_t index, const float value)
     {
         CARLA_ASSERT(index < getParameterCount());
         Q_UNUSED(value);
     }
 
-    virtual void setMidiProgram(uint32_t bank, uint32_t program)
+    virtual void setMidiProgram(const uint32_t bank, const uint32_t program)
     {
         Q_UNUSED(bank);
         Q_UNUSED(program);
     }
 
-    virtual void setCustomData(const char* key, const char* value)
+    virtual void setCustomData(const char* const key, const char* const value)
     {
         CARLA_ASSERT(key);
         CARLA_ASSERT(value);
@@ -169,7 +185,7 @@ protected:
     // -------------------------------------------------------------------
     // Plugin UI calls
 
-    virtual void uiShow(bool show)
+    virtual void uiShow(const bool show)
     {
         Q_UNUSED(show);
     }
@@ -178,19 +194,19 @@ protected:
     {
     }
 
-    virtual void uiSetParameterValue(uint32_t index, float value)
+    virtual void uiSetParameterValue(const uint32_t index, const float value)
     {
         CARLA_ASSERT(index < getParameterCount());
         Q_UNUSED(value);
     }
 
-    virtual void uiSetMidiProgram(uint32_t bank, uint32_t program)
+    virtual void uiSetMidiProgram(const uint32_t bank, const uint32_t program)
     {
         Q_UNUSED(bank);
         Q_UNUSED(program);
     }
 
-    virtual void uiSetCustomData(const char* key, const char* value)
+    virtual void uiSetCustomData(const char* const key, const char* const value)
     {
         CARLA_ASSERT(key);
         CARLA_ASSERT(value);
@@ -207,100 +223,102 @@ protected:
     {
     }
 
-    virtual void process(float** inBuffer, float** outBuffer, const uint32_t frames, uint32_t midiEventCount, MidiEvent* midiEvents) = 0;
+    virtual void process(float** const inBuffer, float** const outBuffer, const uint32_t frames, const uint32_t midiEventCount, const MidiEvent* const midiEvents) = 0;
 
     // -------------------------------------------------------------------
 
 private:
-    const HostDescriptor* host;
+    const HostDescriptor* const m_host;
 
     // -------------------------------------------------------------------
 
 #ifndef DOXYGEN
 public:
+    #define handlePtr ((PluginDescriptorClass*)handle)
+
     static uint32_t _get_parameter_count(PluginHandle handle)
     {
-        return ((PluginDescriptorClass*)handle)->getParameterCount();
+        return handlePtr->getParameterCount();
     }
 
     static const Parameter* _get_parameter_info(PluginHandle handle, uint32_t index)
     {
-        return ((PluginDescriptorClass*)handle)->getParameterInfo(index);
+        return handlePtr->getParameterInfo(index);
     }
 
     static float _get_parameter_value(PluginHandle handle, uint32_t index)
     {
-        return ((PluginDescriptorClass*)handle)->getParameterValue(index);
+        return handlePtr->getParameterValue(index);
     }
 
     static const char* _get_parameter_text(PluginHandle handle, uint32_t index)
     {
-        return ((PluginDescriptorClass*)handle)->getParameterText(index);
+        return handlePtr->getParameterText(index);
     }
 
     static uint32_t _get_midi_program_count(PluginHandle handle)
     {
-        return ((PluginDescriptorClass*)handle)->getMidiProgramCount();
+        return handlePtr->getMidiProgramCount();
     }
 
     static const MidiProgram* _get_midi_program_info(PluginHandle handle, uint32_t index)
     {
-        return ((PluginDescriptorClass*)handle)->getMidiProgramInfo(index);
+        return handlePtr->getMidiProgramInfo(index);
     }
 
     static void _set_parameter_value(PluginHandle handle, uint32_t index, float value)
     {
-        return ((PluginDescriptorClass*)handle)->setParameterValue(index, value);
+        return handlePtr->setParameterValue(index, value);
     }
 
     static void _set_midi_program(PluginHandle handle, uint32_t bank, uint32_t program)
     {
-        return ((PluginDescriptorClass*)handle)->setMidiProgram(bank, program);
+        return handlePtr->setMidiProgram(bank, program);
     }
 
     static void _set_custom_data(PluginHandle handle, const char* key, const char* value)
     {
-        return ((PluginDescriptorClass*)handle)->setCustomData(key, value);
+        return handlePtr->setCustomData(key, value);
     }
 
     static void _ui_show(PluginHandle handle, bool show)
     {
-        return ((PluginDescriptorClass*)handle)->uiShow(show);
+        return handlePtr->uiShow(show);
     }
 
     static void _ui_idle(PluginHandle handle)
     {
-        return ((PluginDescriptorClass*)handle)->uiIdle();
+        return handlePtr->uiIdle();
     }
 
     static void _ui_set_parameter_value(PluginHandle handle, uint32_t index, float value)
     {
-        return ((PluginDescriptorClass*)handle)->uiSetParameterValue(index, value);
+        return handlePtr->uiSetParameterValue(index, value);
     }
 
     static void _ui_set_midi_program(PluginHandle handle, uint32_t bank, uint32_t program)
     {
-        return ((PluginDescriptorClass*)handle)->uiSetMidiProgram(bank, program);
+        return handlePtr->uiSetMidiProgram(bank, program);
     }
 
     static void _ui_set_custom_data(PluginHandle handle, const char* key, const char* value)
     {
-        return ((PluginDescriptorClass*)handle)->uiSetCustomData(key, value);
+        return handlePtr->uiSetCustomData(key, value);
     }
 
     static void _activate(PluginHandle handle)
     {
-        ((PluginDescriptorClass*)handle)->activate();
+        handlePtr->activate();
     }
 
     static void _deactivate(PluginHandle handle)
     {
-        ((PluginDescriptorClass*)handle)->deactivate();
+        handlePtr->deactivate();
     }
 
-    static void _process(PluginHandle handle, float** inBuffer, float** outBuffer, const uint32_t frames, uint32_t midiEventCount, MidiEvent* midiEvents)
+    static void _process(PluginHandle handle, float** inBuffer, float** outBuffer, const uint32_t frames, uint32_t midiEventCount, const MidiEvent* midiEvents)
     {
-        return ((PluginDescriptorClass*)handle)->process(inBuffer, outBuffer, frames, midiEventCount, midiEvents);
+        return handlePtr->process(inBuffer, outBuffer, frames, midiEventCount, midiEvents);
     }
 #endif
 };

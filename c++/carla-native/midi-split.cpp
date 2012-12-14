@@ -20,7 +20,7 @@
 class MidiSplitPlugin : public PluginDescriptorClass
 {
 public:
-    MidiSplitPlugin(const HostDescriptor* host)
+    MidiSplitPlugin(const HostDescriptor* const host)
         : PluginDescriptorClass(host)
     {
     }
@@ -33,48 +33,38 @@ protected:
     // -------------------------------------------------------------------
     // Plugin process calls
 
-    void activate()
+    void process(float**, float**, const uint32_t, const uint32_t midiEventCount, const MidiEvent* const midiEvents)
     {
-        //memset(events, 0, sizeof(MidiEvent) * MAX_MIDI_EVENTS);
-    }
-
-    void process(float**, float**, uint32_t, uint32_t midiEventCount, MidiEvent* midiEvents)
-    {
-        MidiEvent midiEvent;
-
         for (uint32_t i=0; i < midiEventCount; i++)
         {
-            memcpy(&midiEvent, &midiEvents[i], sizeof(MidiEvent));
+            memcpy(&m_midiEvent, &midiEvents[i], sizeof(MidiEvent));
 
-            uint8_t status  = midiEvent.data[0];
-            uint8_t channel = status & 0x0F;
+            const uint8_t status  = m_midiEvent.data[0] & 0xF0;
+            const uint8_t channel = status & 0x0F;
 
             CARLA_ASSERT(channel < 16);
 
             if (channel >= 16)
                 continue;
 
-            status -= channel;
+            m_midiEvent.port    = channel;
+            m_midiEvent.data[0] = status;
 
-            midiEvent.port    = channel;
-            midiEvent.data[0] = status;
-
-            writeMidiEvent(&midiEvent);
+            writeMidiEvent(&m_midiEvent);
         }
     }
 
     // -------------------------------------------------------------------
 
 private:
-    //static const unsigned short MAX_MIDI_EVENTS = 512;
-    //MidiEvent events[MAX_MIDI_EVENTS];
+    MidiEvent m_midiEvent;
 
     PluginDescriptorClassEND(MidiSplitPlugin)
 };
 
 // -----------------------------------------------------------------------
 
-static PluginDescriptor midiSplitDesc = {
+static const PluginDescriptor midiSplitDesc = {
     /* category  */ PLUGIN_CATEGORY_UTILITY,
     /* hints     */ 0x0,
     /* audioIns  */ 0,

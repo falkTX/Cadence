@@ -199,7 +199,7 @@ protected:
 #endif
 
 private:
-    UIInternal  ui;
+    UIInternal ui;
 
     // LV2 Stuff
     LV2UI_Controller     const lv2Controller;

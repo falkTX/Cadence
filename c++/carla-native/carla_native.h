@@ -175,7 +175,7 @@ typedef struct _PluginDescriptor {
     void (*activate)(PluginHandle handle);
     void (*deactivate)(PluginHandle handle);
     void (*cleanup)(PluginHandle handle);
-    void (*process)(PluginHandle handle, float** inBuffer, float** outBuffer, uint32_t frames, uint32_t midiEventCount, MidiEvent* midiEvents);
+    void (*process)(PluginHandle handle, float** inBuffer, float** outBuffer, uint32_t frames, uint32_t midiEventCount, const MidiEvent* midiEvents);
 
 } PluginDescriptor;
 

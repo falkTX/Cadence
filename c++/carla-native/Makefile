@@ -10,11 +10,12 @@ include ../Makefile.mk
 
 BUILD_C_FLAGS   += -fvisibility=hidden -fPIC -I.
 BUILD_CXX_FLAGS += -fvisibility=hidden -fPIC -I. -I../carla-includes -I../carla-utils
-BUILD_CXX_FLAGS += $(shell pkg-config --cflags QtCore)
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags QtCore QtGui)
 
 ifeq ($(HAVE_ZYN_DEPS),true)
 BUILD_CXX_FLAGS += -DWANT_ZYNADDSUBFX
-ZYN_CXX_FLAGS    = $(shell pkg-config --cflags fftw3 mxml)
+ZYN_CXX_FLAGS    = $(BUILD_CXX_FLAGS)
+ZYN_CXX_FLAGS   += $(shell pkg-config --cflags fftw3 mxml)
 endif
 
 # Simple plugins
@@ -51,14 +52,14 @@ distrho-3bandeq.o: distrho-3bandeq.cpp
 distrho-3bandsplitter.o: distrho-3bandsplitter.cpp
 	$(CXX) -c $< $(BUILD_CXX_FLAGS) -I../distrho-plugin-toolkit -I3bandsplitter -DDISTRHO_NAMESPACE=DISTRHO_3BandSplitter -o $@
 
-distrho-pugl.o: distrho/pugl.cpp
+distrho-pugl.o: distrho-pugl.cpp
 	$(CXX) -c $< $(BUILD_CXX_FLAGS) -I../distrho-plugin-toolkit -o $@
 
 zynaddsubfx.o: zynaddsubfx.cpp
-	$(CXX) -c $< $(BUILD_CXX_FLAGS) $(ZYN_CXX_FLAGS) -o $@
+	$(CXX) -c $< $(ZYN_CXX_FLAGS) -o $@
 
 zynaddsubfx-src.o: zynaddsubfx-src.cpp
-	$(CXX) -c $< $(BUILD_CXX_FLAGS) $(ZYN_CXX_FLAGS) -o $@
+	$(CXX) -c $< $(ZYN_CXX_FLAGS) -o $@
 
 # --------------------------------------------------------------
 

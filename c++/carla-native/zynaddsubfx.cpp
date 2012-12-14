@@ -15,10 +15,12 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
+// for UINT32_MAX
+#define __STDC_LIMIT_MACROS
+#include <cstdint>
+
 #include "carla_midi.h"
 #include "carla_native.hpp"
-
-#include <climits>
 
 #include "zynaddsubfx/Misc/Master.h"
 #include "zynaddsubfx/Misc/Util.h"
@@ -40,21 +42,18 @@ class ZynAddSubFxPlugin : public PluginDescriptorClass
 {
 public:
     enum Parameters {
-        PARAMETER_MASTER,
-        PARAMETER_MAX
+        PARAMETER_COUNT = 0
     };
 
-    ZynAddSubFxPlugin(const HostDescriptor* host)
+    ZynAddSubFxPlugin(const HostDescriptor* const host)
         : PluginDescriptorClass(host)
     {
-        qDebug("ZynAddSubFxPlugin::ZynAddSubFxPlugin(), s_instanceCount=%i", s_instanceCount);
-
         m_master = new Master;
 
         // refresh banks
         m_master->bank.rescanforbanks();
 
-        for (size_t i=0, size = m_master->bank.banks.size(); i < size; i++)
+        for (uint32_t i=0, size = m_master->bank.banks.size(); i < size; i++)
         {
             if (m_master->bank.banks[i].dir.empty())
                 continue;
@@ -63,15 +62,12 @@ public:
 
             for (unsigned int instrument = 0; instrument < BANK_SIZE; instrument++)
             {
-                const std::string insName = m_master->bank.getname(instrument);
+                const std::string insName(m_master->bank.getname(instrument));
 
                 if (insName.empty() || insName[0] == '\0' || insName[0] == ' ')
                     continue;
 
-                ProgramInfo pInfo;
-                pInfo.bank = i;
-                pInfo.prog = instrument;
-                pInfo.name = insName;
+                ProgramInfo pInfo = { i, instrument, CarlaString(insName.c_str()) };
                 m_programs.push_back(pInfo);
             }
         }
@@ -79,8 +75,6 @@ public:
 
     ~ZynAddSubFxPlugin()
     {
-        qDebug("ZynAddSubFxPlugin::~ZynAddSubFxPlugin(), s_instanceCount=%i", s_instanceCount);
-
         //ensure that everything has stopped with the mutex wait
         pthread_mutex_lock(&m_master->mutex);
         pthread_mutex_unlock(&m_master->mutex);
@@ -96,15 +90,15 @@ protected:
 
     uint32_t getParameterCount()
     {
-        return PARAMETER_MAX;
+        return PARAMETER_COUNT;
     }
 
-    const Parameter* getParameterInfo(uint32_t index)
+    const Parameter* getParameterInfo(const uint32_t index)
     {
         CARLA_ASSERT(index < getParameterCount());
 
-        if (index >= PARAMETER_MAX)
-            return nullptr;
+        //if (index >= PARAMETER_COUNT)
+        return nullptr;
 
         static Parameter param;
 
@@ -116,6 +110,7 @@ protected:
 
         switch (index)
         {
+#if 0
         case PARAMETER_MASTER:
             param.hints = PARAMETER_IS_ENABLED | PARAMETER_IS_AUTOMABLE;
             param.name  = "Master Volume";
@@ -124,17 +119,20 @@ protected:
             param.ranges.max = 100.0f;
             param.ranges.def = 100.0f;
             break;
+#endif
         }
 
         return &param;
     }
 
-    float getParameterValue(uint32_t index)
+    float getParameterValue(const uint32_t index)
     {
         switch (index)
         {
+#if 0
         case PARAMETER_MASTER:
             return m_master->Pvolume;
+#endif
         default:
             return 0.0f;
         }
@@ -148,19 +146,19 @@ protected:
         return m_programs.size();
     }
 
-    const MidiProgram* getMidiProgramInfo(uint32_t index)
+    const MidiProgram* getMidiProgramInfo(const uint32_t index)
     {
         CARLA_ASSERT(index < getMidiProgramCount());
 
         if (index >= m_programs.size())
             return nullptr;
 
-        const ProgramInfo pInfo(m_programs[index]);
+        const ProgramInfo& pInfo(m_programs[index]);
 
         static MidiProgram midiProgram;
         midiProgram.bank    = pInfo.bank;
         midiProgram.program = pInfo.prog;
-        midiProgram.name    = pInfo.name.c_str();
+        midiProgram.name    = pInfo.name;
 
         return &midiProgram;
     }
@@ -168,17 +166,15 @@ protected:
     // -------------------------------------------------------------------
     // Plugin state calls
 
-    void setParameterValue(uint32_t index, float value)
+    void setParameterValue(const uint32_t index, const float value)
     {
         switch (index)
         {
-        case PARAMETER_MASTER:
-            m_master->setPvolume((char)rint(value));
-            break;
         }
+        Q_UNUSED(value);
     }
 
-    void setMidiProgram(uint32_t bank, uint32_t program)
+    void setMidiProgram(const uint32_t bank, const uint32_t program)
     {
         if (bank >= m_master->bank.banks.size())
             return;
@@ -206,70 +202,70 @@ protected:
         m_master->setController(0, MIDI_CONTROL_ALL_SOUND_OFF, 0);
     }
 
-    void process(float**, float** outBuffer, uint32_t frames, uint32_t midiEventCount, MidiEvent* midiEvents)
+    void process(float**, float** const outBuffer, const uint32_t frames, const uint32_t midiEventCount, const MidiEvent* const midiEvents)
     {
-        unsigned long from_frame       = 0;
-        unsigned long event_index      = 0;
-        unsigned long next_event_frame = 0;
-        unsigned long to_frame = 0;
+        uint32_t fromFrame      = 0;
+        uint32_t eventIndex     = 0;
+        uint32_t nextEventFrame = 0;
+        uint32_t toFrame = 0;
         pthread_mutex_lock(&m_master->mutex);
 
         do {
-            /* Find the time of the next event, if any */
-            if (event_index >= midiEventCount)
-                next_event_frame = ULONG_MAX;
+            // Find the time of the next event, if any
+            if (eventIndex >= midiEventCount)
+                nextEventFrame = UINT32_MAX;
             else
-                next_event_frame = midiEvents[event_index].time;
+                nextEventFrame = midiEvents[eventIndex].time;
 
-            /* find the end of the sub-sample to be processed this time round... */
-            /* if the next event falls within the desired sample interval... */
-            if ((next_event_frame < frames) && (next_event_frame >= to_frame))
-                /* set the end to be at that event */
-                to_frame = next_event_frame;
+            // find the end of the sub-sample to be processed this time round...
+            // if the next event falls within the desired sample interval...
+            if ((nextEventFrame < frames) && (nextEventFrame >= toFrame))
+                // set the end to be at that event
+                toFrame = nextEventFrame;
             else
-                /* ...else go for the whole remaining sample */
-                to_frame = frames;
+                // ...else go for the whole remaining sample
+                toFrame = frames;
 
-            if (from_frame < to_frame)
+            if (fromFrame < toFrame)
             {
-                // call master to fill from `from_frame` to `to_frame`:
-                m_master->GetAudioOutSamples(to_frame - from_frame, (int)getSampleRate(), &outBuffer[0][from_frame], &outBuffer[1][from_frame]);
+                // call master to fill from `fromFrame` to `toFrame`:
+                m_master->GetAudioOutSamples(toFrame - fromFrame, (unsigned)getSampleRate(), &outBuffer[0][fromFrame], &outBuffer[1][fromFrame]);
                 // next sub-sample please...
-                from_frame = to_frame;
+                fromFrame = toFrame;
             }
 
             // Now process any event(s) at the current timing point
-            while (event_index < midiEventCount && midiEvents[event_index].time == to_frame)
+            while (eventIndex < midiEventCount && midiEvents[eventIndex].time == toFrame)
             {
-                uint8_t status  = midiEvents[event_index].data[0];
+                uint8_t status  = midiEvents[eventIndex].data[0];
                 uint8_t channel = status & 0x0F;
 
                 if (MIDI_IS_STATUS_NOTE_OFF(status))
                 {
-                    uint8_t note = midiEvents[event_index].data[1];
+                    uint8_t note = midiEvents[eventIndex].data[1];
 
                     m_master->noteOff(channel, note);
                 }
                 else if (MIDI_IS_STATUS_NOTE_ON(status))
                 {
-                    uint8_t note = midiEvents[event_index].data[1];
-                    uint8_t velo = midiEvents[event_index].data[2];
+                    uint8_t note = midiEvents[eventIndex].data[1];
+                    uint8_t velo = midiEvents[eventIndex].data[2];
 
                     m_master->noteOn(channel, note, velo);
                 }
                 else if (MIDI_IS_STATUS_POLYPHONIC_AFTERTOUCH(status))
                 {
-                    uint8_t note     = midiEvents[event_index].data[1];
-                    uint8_t pressure = midiEvents[event_index].data[2];
+                    uint8_t note     = midiEvents[eventIndex].data[1];
+                    uint8_t pressure = midiEvents[eventIndex].data[2];
 
                     m_master->polyphonicAftertouch(channel, note, pressure);
                 }
 
-                event_index++;
+                eventIndex++;
             }
 
         // Keep going until we have the desired total length of sample...
-        } while (to_frame < frames);
+        } while (toFrame < frames);
 
         pthread_mutex_unlock(&m_master->mutex);
     }
@@ -280,7 +276,7 @@ private:
     struct ProgramInfo {
         uint32_t bank;
         uint32_t prog;
-        std::string name;
+        CarlaString name;
     };
     std::vector<ProgramInfo> m_programs;
 
@@ -331,14 +327,14 @@ int ZynAddSubFxPlugin::s_instanceCount = 0;
 
 // -----------------------------------------------------------------------
 
-static PluginDescriptor zynAddSubFxDesc = {
+static const PluginDescriptor zynAddSubFxDesc = {
     /* category  */ PLUGIN_CATEGORY_SYNTH,
-    /* hints     */ PLUGIN_IS_SYNTH | PLUGIN_USES_SINGLE_THREAD,
+    /* hints     */ PLUGIN_IS_SYNTH,
     /* audioIns  */ 2,
     /* audioOuts */ 2,
     /* midiIns   */ 1,
     /* midiOuts  */ 0,
-    /* paramIns  */ ZynAddSubFxPlugin::PARAMETER_MAX,
+    /* paramIns  */ ZynAddSubFxPlugin::PARAMETER_COUNT,
     /* paramOuts */ 0,
     /* name      */ "ZynAddSubFX",
     /* label     */ "zynaddsubfx",

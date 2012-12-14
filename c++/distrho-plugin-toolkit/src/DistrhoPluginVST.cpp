@@ -507,6 +507,7 @@ static intptr_t vst_dispatcherCallback(AEffect* effect, int32_t opcode, int32_t 
 
     if (doInternalInit)
     {
+        // set valid but dummy values
         d_lastBufferSize = 512;
         d_lastSampleRate = 44100.0;
     }
@@ -516,6 +517,7 @@ static intptr_t vst_dispatcherCallback(AEffect* effect, int32_t opcode, int32_t 
 
     if (doInternalInit)
     {
+        // unset
         d_lastBufferSize = 0;
         d_lastSampleRate = 0.0;
 
