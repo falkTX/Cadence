@@ -161,27 +161,6 @@ const char* InternalParametersIndex2Str(const InternalParametersIndex& index)
 }
 
 static inline
-const char* CustomDataType2Str(const CustomDataType& type)
-{
-    switch (type)
-    {
-    case CUSTOM_DATA_INVALID:
-        return "CUSTOM_DATA_INVALID";
-    case CUSTOM_DATA_STRING:
-        return "CUSTOM_DATA_STRING";
-    case CUSTOM_DATA_PATH:
-        return "CUSTOM_DATA_PATH";
-    case CUSTOM_DATA_CHUNK:
-        return "CUSTOM_DATA_CHUNK";
-    case CUSTOM_DATA_BINARY:
-        return "CUSTOM_DATA_BINARY";
-    }
-
-    qWarning("CarlaBackend::CustomDataType2Str(%i) - invalid type", type);
-    return nullptr;
-}
-
-static inline
 const char* GuiType2Str(const GuiType& type)
 {
     switch (type)
@@ -342,47 +321,6 @@ const char* ProcessMode2Str(const ProcessMode& mode)
 }
 
 // -------------------------------------------------------------------------------------------------------------------
-
-static inline
-CustomDataType getCustomDataStringType(const char* const stype)
-{
-    qDebug("CarlaBackend::getCustomDataStringType(\"%s\")", stype);
-    CARLA_ASSERT(stype);
-
-    if (! stype)
-        return CUSTOM_DATA_INVALID;
-
-    if (strcmp(stype, "string") == 0)
-        return CUSTOM_DATA_STRING;
-    if (strcmp(stype, "path") == 0)
-        return CUSTOM_DATA_PATH;
-    if (strcmp(stype, "chunk") == 0)
-        return CUSTOM_DATA_CHUNK;
-    if (strcmp(stype, "binary") == 0)
-        return CUSTOM_DATA_BINARY;
-
-    return CUSTOM_DATA_INVALID;
-}
-
-static inline
-const char* getCustomDataTypeString(const CustomDataType& type)
-{
-    qDebug("CarlaBackend::getCustomDataTypeString(%s)", CustomDataType2Str(type));
-
-    switch (type)
-    {
-    case CUSTOM_DATA_STRING:
-        return "string";
-    case CUSTOM_DATA_PATH:
-        return "path";
-    case CUSTOM_DATA_CHUNK:
-        return "chunk";
-    case CUSTOM_DATA_BINARY:
-        return "binary";
-    default:
-        return "invalid";
-    }
-}
 
 static inline
 const char* getPluginTypeString(const PluginType& type)

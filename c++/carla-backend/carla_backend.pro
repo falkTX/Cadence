@@ -3,7 +3,7 @@
 QT = core gui
 
 CONFIG     = debug
-CONFIG    += link_pkgconfig qt warn_on # plugin shared
+CONFIG    += link_pkgconfig qt warn_on
 
 DEFINES    = DEBUG
 DEFINES   += QTCREATOR_TEST
@@ -20,7 +20,7 @@ PKGCONFIG += fluidsynth linuxsampler
 PKGCONFIG += fftw3 mxml
 
 TARGET   = carla_backend
-TEMPLATE = app # lib
+TEMPLATE = app
 VERSION  = 0.5.0
 
 SOURCES  = \

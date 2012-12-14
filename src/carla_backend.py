@@ -946,7 +946,7 @@ class Host(object):
         self.lib.set_midi_program.argtypes = [c_ushort, c_uint32]
         self.lib.set_midi_program.restype = None
 
-        self.lib.set_custom_data.argtypes = [c_ushort, c_enum, c_char_p, c_char_p]
+        self.lib.set_custom_data.argtypes = [c_ushort, c_char_p, c_char_p, c_char_p]
         self.lib.set_custom_data.restype = None
 
         self.lib.set_chunk_data.argtypes = [c_ushort, c_char_p]
@@ -1132,8 +1132,8 @@ class Host(object):
     def set_midi_program(self, plugin_id, midi_program_id):
         self.lib.set_midi_program(plugin_id, midi_program_id)
 
-    def set_custom_data(self, plugin_id, dtype, key, value):
-        self.lib.set_custom_data(plugin_id, dtype, key.encode("utf-8"), value.encode("utf-8"))
+    def set_custom_data(self, plugin_id, type_, key, value):
+        self.lib.set_custom_data(plugin_id, type_.encode("utf-8"), key.encode("utf-8"), value.encode("utf-8"))
 
     def set_chunk_data(self, plugin_id, chunk_data):
         self.lib.set_chunk_data(plugin_id, chunk_data.encode("utf-8"))

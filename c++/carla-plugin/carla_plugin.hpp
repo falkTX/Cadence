@@ -581,7 +581,7 @@ public:
      *
      * \see customData()
      */
-    virtual void setCustomData(const CustomDataType type, const char* const key, const char* const value, const bool sendGui);
+    virtual void setCustomData(const char* const type, const char* const key, const char* const value, const bool sendGui);
 
     /*!
      * Set the complete chunk data as \a stringData.\n

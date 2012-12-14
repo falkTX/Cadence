@@ -81,6 +81,18 @@ const unsigned int PARAMETER_USES_CUSTOM_TEXT = 0x80; //!< Parameter uses custom
 /**@}*/
 
 /*!
+ * @defgroup CustomDataTypes Custom Data types
+ *
+ * The type defines how the value in CustomData is stored.
+ *
+ * Types are valid URIs.\n
+ * Any non-string type is saved in a base64 format.
+ */
+const char* const CUSTOM_DATA_INVALID = nullptr;            //!< Null/Invalid data.
+const char* const CUSTOM_DATA_STRING  = "urn:carla:string"; //!< Internal String (s)
+/**@}*/
+
+/*!
  * @defgroup BridgeMessages Bridge Messages
  *
  * Various bridge related messages, used as configure(<message>, value).
@@ -162,19 +174,6 @@ enum InternalParametersIndex {
     PARAMETER_VOLUME        = -4, //!< Volume parameter, range 0.0...1.27; default is 1.0.
     PARAMETER_BALANCE_LEFT  = -5, //!< Balance-Left parameter, range -1.0...1.0; default is -1.0.
     PARAMETER_BALANCE_RIGHT = -6  //!< Balance-Right parameter, range -1.0...1.0; default is 1.0.
-};
-
-/*!
- * Custom Data types.\n
- * The type defines how the value in CustomData is stored.\n
- * Binary/chunks are stored in a base64 format string.
- */
-enum CustomDataType {
-    CUSTOM_DATA_INVALID = 0, //!< Null/Invalid data.
-    CUSTOM_DATA_STRING  = 1, //!< String
-    CUSTOM_DATA_PATH    = 2, //!< Path (same as string, but used for filenames).
-    CUSTOM_DATA_CHUNK   = 3, //!< Binary chunk (known type).
-    CUSTOM_DATA_BINARY  = 4  //!< Binary chunk, used to store any unknown type.
 };
 
 /*!
@@ -558,7 +557,7 @@ struct MidiProgramData {
 };
 
 struct CustomData {
-    CustomDataType type;
+    const char* type;
     const char* key;
     const char* value;
 

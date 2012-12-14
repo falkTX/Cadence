@@ -56,15 +56,15 @@ endif
 OBJS = \
 	carla_backend_standalone.o \
 
-OBJS += ../carla-engine/carla_engine.a
-OBJS += ../carla-plugin/carla_plugin.a
-OBJS += ../carla-native/carla_native.a
-
-# others
-ifeq ($(CARLA_PLUGIN_SUPPORT),true)
-OBJS += ../carla-lilv/carla_lilv.a
-OBJS += ../carla-rtmempool/carla_rtmempool.a
-endif
+# OBJS += ../carla-engine/carla_engine.a
+# OBJS += ../carla-plugin/carla_plugin.a
+# OBJS += ../carla-native/carla_native.a
+# 
+# # others
+# ifeq ($(CARLA_PLUGIN_SUPPORT),true)
+# OBJS += ../carla-lilv/carla_lilv.a
+# OBJS += ../carla-rtmempool/carla_rtmempool.a
+# endif
 
 # --------------------------------------------------------------
 
@@ -73,8 +73,12 @@ all: carla_backend.so
 doxygen: carla_backend.doxygen
 	doxygen $<
 
+carla_backend.dll: $(OBJS)
 carla_backend.so: $(OBJS)
 	$(CXX) $^ $(LINK_FLAGS) -o $@ && $(STRIP) $@
+
+carla_backend.dylib: $(OBJS)
+	$(CXX) $^ $(LINK_FLAGS) -bundle -o $@ && $(STRIP) $@
 
 # --------------------------------------------------------------
 
@@ -99,4 +103,4 @@ carla_backend.so: $(OBJS)
 	$(CXX) -c $< $(BUILD_CXX_FLAGS) -o $@
 
 clean:
-	rm -f $(OBJS) *.so *.dll
+	rm -f $(OBJS) *.dll *.dylib *.so

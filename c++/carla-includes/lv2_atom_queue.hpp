@@ -20,7 +20,7 @@
 
 #include "lv2/atom.h"
 
-#include <cstring>
+#include <cstring> // memset
 #include <QtCore/QMutex>
 
 class Lv2AtomQueue

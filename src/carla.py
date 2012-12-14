@@ -2019,10 +2019,10 @@ def callback_function(ptr, action, pluginId, value1, value2, value3, valueStr):
         Carla.gui._nsmAnnounce2str = cString(Carla.host.get_last_error())
         Carla.gui.emit(SIGNAL("NSM_AnnounceCallback()"))
     elif action == CALLBACK_NSM_OPEN1:
-        Carla.gui._nsmOpen1str = cString(Carla.host.get_last_error())
+        Carla.gui._nsmOpen1str = cString(valueStr)
         Carla.gui.emit(SIGNAL("NSM_Open1Callback()"))
     elif action == CALLBACK_NSM_OPEN2:
-        Carla.gui._nsmOpen2str = cString(Carla.host.get_last_error())
+        Carla.gui._nsmOpen2str = cString(valueStr)
         Carla.gui.emit(SIGNAL("NSM_Open2Callback()"))
     elif action == CALLBACK_NSM_SAVE:
         Carla.gui.emit(SIGNAL("NSM_SaveCallback()"))
