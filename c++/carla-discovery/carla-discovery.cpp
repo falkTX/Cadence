@@ -297,11 +297,7 @@ void do_ladspa_check(void* const libHandle, const bool init)
             }
 
             LADSPA_Data bufferAudio[bufferSize][audioTotal];
-            memset(bufferAudio, 0, sizeof(float)*bufferSize*audioTotal);
-
             LADSPA_Data bufferParams[parametersTotal];
-            memset(bufferParams, 0, sizeof(float)*parametersTotal);
-
             LADSPA_Data min, max, def;
 
             for (unsigned long j=0, iA=0, iP=0; j < descriptor->PortCount; j++)
@@ -311,6 +307,7 @@ void do_ladspa_check(void* const libHandle, const bool init)
 
                 if (LADSPA_IS_PORT_AUDIO(portType))
                 {
+                    carla_zeroF(bufferAudio[iA], bufferSize);
                     descriptor->connect_port(handle, j, bufferAudio[iA++]);
                 }
                 else if (LADSPA_IS_PORT_CONTROL(portType))
@@ -334,7 +331,7 @@ void do_ladspa_check(void* const libHandle, const bool init)
 
                     if (max - min == 0.0f)
                     {
-                        DISCOVERY_OUT("error", "Broken parameter: max - min == 0");
+                        DISCOVERY_OUT("error", "Broken parameter '" << descriptor->PortNames[j] << "': max - min == 0");
                         max = min + 0.1f;
                     }
 
@@ -370,7 +367,8 @@ void do_ladspa_check(void* const libHandle, const bool init)
             if (descriptor->activate)
                 descriptor->activate(handle);
 
-            descriptor->run(handle, bufferSize);
+            if (descriptor->run)
+                descriptor->run(handle, bufferSize);
 
             if (descriptor->deactivate)
                 descriptor->deactivate(handle);
@@ -478,18 +476,14 @@ void do_dssi_check(void* const libHandle, const bool init)
             }
 
             // we can only get program info per-handle
-            if (descriptor->get_program)
+            if (descriptor->get_program && descriptor->select_program)
             {
                 while ((descriptor->get_program(handle, programsTotal++)))
                     continue;
             }
 
             LADSPA_Data bufferAudio[bufferSize][audioTotal];
-            memset(bufferAudio, 0, sizeof(float)*bufferSize*audioTotal);
-
             LADSPA_Data bufferParams[parametersTotal];
-            memset(bufferParams, 0, sizeof(float)*parametersTotal);
-
             LADSPA_Data min, max, def;
 
             for (unsigned long j=0, iA=0, iP=0; j < ldescriptor->PortCount; j++)
@@ -499,6 +493,7 @@ void do_dssi_check(void* const libHandle, const bool init)
 
                 if (LADSPA_IS_PORT_AUDIO(portType))
                 {
+                    carla_zeroF(bufferAudio[iA], bufferSize);
                     ldescriptor->connect_port(handle, j, bufferAudio[iA++]);
                 }
                 else if (LADSPA_IS_PORT_CONTROL(portType))
@@ -522,7 +517,7 @@ void do_dssi_check(void* const libHandle, const bool init)
 
                     if (max - min == 0.0f)
                     {
-                        DISCOVERY_OUT("error", "Broken parameter: max - min == 0");
+                        DISCOVERY_OUT("error", "Broken parameter '" << ldescriptor->PortNames[j] << "': max - min == 0");
                         max = min + 0.1f;
                     }
 
@@ -555,6 +550,16 @@ void do_dssi_check(void* const libHandle, const bool init)
                 }
             }
 
+            // select first midi-program if available
+            if (programsTotal > 0)
+            {
+                const DSSI_Program_Descriptor* pDesc = descriptor->get_program(handle, 0);
+                CARLA_ASSERT(pDesc);
+
+                if (pDesc)
+                    descriptor->select_program(handle, pDesc->Bank, pDesc->Program);
+            }
+
             if (ldescriptor->activate)
                 ldescriptor->activate(handle);
 
@@ -584,7 +589,7 @@ void do_dssi_check(void* const libHandle, const bool init)
                 else
                     descriptor->run_synth(handle, bufferSize, midiEvents, midiEventCount);
             }
-            else
+            else if (ldescriptor->run)
                 ldescriptor->run(handle, bufferSize);
 
             if (ldescriptor->deactivate)
@@ -661,6 +666,7 @@ void do_lv2_check(const char* const bundle, const bool init)
             if (! libHandle)
             {
                 print_lib_error(rdf_descriptor->Binary);
+                delete rdf_descriptor;
                 continue;
             }
 
@@ -695,7 +701,10 @@ void do_lv2_check(const char* const bundle, const bool init)
             }
 
             if (! supported)
+            {
+                delete rdf_descriptor;
                 continue;
+            }
         }
 
         int hints = 0;
@@ -773,6 +782,8 @@ void do_lv2_check(const char* const bundle, const bool init)
         DISCOVERY_OUT("parameters.outs", parametersOuts);
         DISCOVERY_OUT("parameters.total", parametersTotal);
         DISCOVERY_OUT("build", BINARY_NATIVE);
+
+        delete rdf_descriptor;
         DISCOVERY_OUT("end", "------------");
     }
 #else
