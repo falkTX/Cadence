@@ -23,7 +23,7 @@ import platform
 from copy import deepcopy
 from decimal import Decimal
 from sip import unwrapinstance
-from PyQt4.QtCore import pyqtSlot, Qt, QSettings, QTimer
+from PyQt4.QtCore import pyqtSlot, qFatal, Qt, QSettings, QTimer
 from PyQt4.QtGui import QColor, QCursor, QDialog, QFontMetrics, QFrame, QGraphicsScene, QInputDialog, QLinearGradient, QMenu, QPainter, QPainterPath, QVBoxLayout, QWidget
 from PyQt4.QtXml import QDomDocument
 
@@ -68,6 +68,10 @@ PARAMETER_IS_AUTOMABLE     = 0x10
 PARAMETER_USES_SAMPLERATE  = 0x20
 PARAMETER_USES_SCALEPOINTS = 0x40
 PARAMETER_USES_CUSTOM_TEXT = 0x80
+
+# group custom data types
+CUSTOM_DATA_INVALID = None
+CUSTOM_DATA_STRING  = "urn:carla:string"
 
 # enum BinaryType
 BINARY_NONE    = 0
@@ -115,13 +119,6 @@ PARAMETER_DRYWET = -3
 PARAMETER_VOLUME = -4
 PARAMETER_BALANCE_LEFT  = -5
 PARAMETER_BALANCE_RIGHT = -6
-
-# enum CustomDataType
-CUSTOM_DATA_INVALID = 0
-CUSTOM_DATA_STRING  = 1
-CUSTOM_DATA_PATH    = 2
-CUSTOM_DATA_CHUNK   = 3
-CUSTOM_DATA_BINARY  = 4
 
 # enum GuiType
 GUI_NONE = 0
@@ -189,7 +186,7 @@ PROCESS_MODE_MULTIPLE_CLIENTS = 1
 PROCESS_MODE_CONTINUOUS_RACK  = 2
 PROCESS_MODE_PATCHBAY         = 3
 
-# TODO ...
+# Set BINARY_NATIVE
 if HAIKU or LINUX or MACOS:
     BINARY_NATIVE = BINARY_POSIX64 if is64bit else BINARY_POSIX32
 elif WINDOWS:
@@ -268,28 +265,6 @@ CarlaSaveState = {
     'CustomData': [],
     'Chunk': None
 }
-
-def getCustomDataTypeString(dtype):
-    if dtype == CUSTOM_DATA_STRING:
-        return "string"
-    if dtype == CUSTOM_DATA_PATH:
-        return "path"
-    if dtype == CUSTOM_DATA_CHUNK:
-        return "chunk"
-    if dtype == CUSTOM_DATA_BINARY:
-        return "binary"
-    return "null"
-
-def getCustomDataStringType(stype):
-    if stype == "string":
-        return CUSTOM_DATA_STRING
-    if stype == "path":
-        return CUSTOM_DATA_PATH
-    if stype == "chunk":
-        return CUSTOM_DATA_CHUNK
-    if stype == "binary":
-        return CUSTOM_DATA_BINARY
-    return CUSTOM_DATA_INVALID
 
 def getSaveStateDictFromXML(xmlNode):
     saveState = deepcopy(CarlaSaveState)
@@ -402,7 +377,7 @@ def getSaveStateDictFromXML(xmlNode):
                         cText = xmlSubData.toElement().text().strip()
 
                         if cTag == "type":
-                            stateCustomData['type'] = getCustomDataStringType(cText)
+                            stateCustomData['type'] = cText
                         elif cTag == "key":
                             stateCustomData['key'] = xmlSafeString(cText, False)
                         elif cTag == "value":

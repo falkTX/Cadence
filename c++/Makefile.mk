@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 # Makefile for Cadence C++ code #
-# ------------------------------------ #
+# -------------------------------------------- #
 # Created by falkTX
 #
 

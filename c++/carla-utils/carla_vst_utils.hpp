@@ -94,6 +94,7 @@
 #define kPlugCategRestoration 8
 #define kPlugCategShell 10
 #define kPlugCategGenerator 11
+#define kVstAutomationOff 1
 #define kVstAutomationReadWrite 4
 #define kVstProcessLevelUnknown 0
 #define kVstProcessLevelUser 1

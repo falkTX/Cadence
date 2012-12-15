@@ -16,13 +16,17 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
+
 import os
 from ctypes import *
 from copy import deepcopy
 from subprocess import Popen, PIPE
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Custom)
+
 from shared_carla import *
 
 try:
@@ -32,11 +36,13 @@ except:
     print("LRDF Support not available (LADSPA-RDF will be disabled)")
     haveLRDF = False
 
+# ------------------------------------------------------------------------------------------------------------
 # Convert a ctypes struct into a dict
+
 def struct_to_dict(struct):
     return dict((attr, getattr(struct, attr)) for attr, value in struct._fields_)
 
-# ------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Default Plugin Folders
 
 if WINDOWS:
@@ -92,18 +98,41 @@ if WINDOWS:
     ]
 
     if PROGRAMFILESx86:
-        DEFAULT_LADSPA_PATH += [
-            os.path.join(PROGRAMFILESx86, "LADSPA")
-        ]
+        DEFAULT_LADSPA_PATH.append(os.path.join(PROGRAMFILESx86, "LADSPA"))
+        DEFAULT_DSSI_PATH.append(os.path.join(PROGRAMFILESx86, "DSSI"))
+        DEFAULT_VST_PATH.append(os.path.join(PROGRAMFILESx86, "VstPlugins"))
+        DEFAULT_VST_PATH.append(os.path.join(PROGRAMFILESx86, "Steinberg", "VstPlugins"))
 
-        DEFAULT_DSSI_PATH += [
-            os.path.join(PROGRAMFILESx86, "DSSI")
-        ]
+elif HAIKU:
+    splitter = ":"
 
-        DEFAULT_VST_PATH += [
-            os.path.join(PROGRAMFILESx86, "VstPlugins"),
-            os.path.join(PROGRAMFILESx86, "Steinberg", "VstPlugins")
-        ]
+    DEFAULT_LADSPA_PATH = [
+        # TODO
+    ]
+
+    DEFAULT_DSSI_PATH = [
+        # TODO
+    ]
+
+    DEFAULT_LV2_PATH = [
+        # TODO
+    ]
+
+    DEFAULT_VST_PATH = [
+        # TODO
+    ]
+
+    DEFAULT_GIG_PATH = [
+        # TODO
+    ]
+
+    DEFAULT_SF2_PATH = [
+        # TODO
+    ]
+
+    DEFAULT_SFZ_PATH = [
+        # TODO
+    ]
 
 elif MACOS:
     splitter = ":"
@@ -182,10 +211,10 @@ else:
         os.path.join("/", "usr", "share", "sounds", "sfz")
     ]
 
-# ------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Default Plugin Folders (set)
 
-global LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, SF2_PATH
+global LADSPA_PATH, DSSI_PATH, LV2_PATH, VST_PATH, GIG_PATH, SF2_PATH, SFZ_PATH
 
 LADSPA_PATH_env = os.getenv("LADSPA_PATH")
 DSSI_PATH_env = os.getenv("DSSI_PATH")
@@ -234,8 +263,17 @@ if haveLRDF:
     LADSPA_RDF_PATH_env = os.getenv("LADSPA_RDF_PATH")
     if LADSPA_RDF_PATH_env:
         ladspa_rdf.set_rdf_path(LADSPA_RDF_PATH_env.split(splitter))
+    del LADSPA_RDF_PATH_env
 
-# ------------------------------------------------------------------------------------------------
+del LADSPA_PATH_env
+del DSSI_PATH_env
+del LV2_PATH_env
+del VST_PATH_env
+del GIG_PATH_env
+del SF2_PATH_env
+del SFZ_PATH_env
+
+# ------------------------------------------------------------------------------------------------------------
 # Search for Carla library and tools
 
 global carla_library_path
@@ -275,8 +313,8 @@ CWD   = sys.path[0]
 CWDpp = os.path.join(CWD, "..", "c++")
 
 # make it work with cxfreeze
-if CWD.endswith(os.sep+"carla"):
-    CWD   = CWD.rsplit(os.sep+"carla",1)[0]
+if CWD.endswith("%scarla" % os.sep):
+    CWD   = CWD.rsplit("%scarla" % os.sep, 1)[0]
     CWDpp = CWD
 
 # find carla_library_path
@@ -286,193 +324,63 @@ else:
     if WINDOWS:
         CARLA_PATH = (os.path.join(PROGRAMFILES, "Cadence", "carla"),)
     elif MACOS:
-        # TODO
-        CARLA_PATH = ("/usr/lib", "/usr/local/lib/")
+        CARLA_PATH = ("/opt/local/lib", "/usr/local/lib/", "/usr/lib")
     else:
-        CARLA_PATH = ("/usr/lib", "/usr/local/lib/")
+        CARLA_PATH = ("/usr/local/lib/", "/usr/lib")
 
     for p in CARLA_PATH:
         if os.path.exists(os.path.join(p, "cadence", carla_libname)):
             carla_library_path = os.path.join(p, "cadence", carla_libname)
             break
 
-# find carla_discovery_win32
-if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-win32.exe")):
-    carla_discovery_win32 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-win32.exe")
-else:
-    for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-discovery-win32.exe")):
-            carla_discovery_win32 = os.path.join(p, "carla-discovery-win32.exe")
-            break
+# find any tool
+def findTool(tdir, tname):
+    if os.path.exists(os.path.join(CWDpp, tdir, tname)):
+        return os.path.join(CWDpp, tdir, tname)
 
-# find carla_discovery_win64
-if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-win64.exe")):
-    carla_discovery_win64 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-win64.exe")
-else:
     for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-discovery-win64.exe")):
-            carla_discovery_win64 = os.path.join(p, "carla-discovery-win64.exe")
-            break
+        if os.path.exists(os.path.join(p, tname)):
+            return os.path.join(p, tname)
 
-# find carla_bridge_win32
-if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-win32.exe")):
-    carla_bridge_win32 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-win32.exe")
-else:
-    for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-bridge-win32.exe")):
-            carla_bridge_win32 = os.path.join(p, "carla-bridge-win32.exe")
-            break
+    return ""
 
-# find carla_bridge_win64
-if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-win64.exe")):
-    carla_bridge_win64 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-win64.exe")
-else:
-    for p in PATH:
-        if os.path.exists(os.path.join(p, "carla-bridge-win64.exe")):
-            carla_bridge_win64 = os.path.join(p, "carla-bridge-win64.exe")
-            break
+# find wine/windows tools
+carla_discovery_win32 = findTool("carla-discovery", "carla-discovery-win32.exe")
+carla_discovery_win64 = findTool("carla-discovery", "carla-discovery-win64.exe")
+carla_bridge_win32    = findTool("carla-bridge", "carla-bridge-win32.exe")
+carla_bridge_win64    = findTool("carla-bridge", "carla-bridge-win64.exe")
 
+# find native and posix only tools
 if not WINDOWS:
-    # find carla_discovery_native
-    if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-native")):
-        carla_discovery_native = os.path.join(CWDpp, "carla-discovery", "carla-discovery-native")
-    else:
-        for p in PATH:
-            if os.path.exists(os.path.join(p, "carla-discovery-native")):
-                carla_discovery_native = os.path.join(p, "carla-discovery-native")
-                break
+    carla_discovery_native  = findTool("carla-discovery", "carla-discovery-native")
+    carla_discovery_posix32 = findTool("carla-discovery", "carla-discovery-posix32")
+    carla_discovery_posix64 = findTool("carla-discovery", "carla-discovery-posix64")
+    carla_bridge_posix32    = findTool("carla-bridge", "carla-bridge-posix32")
+    carla_bridge_posix64    = findTool("carla-bridge", "carla-bridge-posix64")
 
-    # find carla_discovery_posix32
-    if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-posix32")):
-        carla_discovery_posix32 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-posix32")
-    else:
-        for p in PATH:
-            if os.path.exists(os.path.join(p, "carla-discovery-posix32")):
-                carla_discovery_posix32 = os.path.join(p, "carla-discovery-posix32")
-                break
-
-    # find carla_discovery_posix64
-    if os.path.exists(os.path.join(CWDpp, "carla-discovery", "carla-discovery-posix64")):
-        carla_discovery_posix64 = os.path.join(CWDpp, "carla-discovery", "carla-discovery-posix64")
-    else:
-        for p in PATH:
-            if os.path.exists(os.path.join(p, "carla-discovery-posix64")):
-                carla_discovery_posix64 = os.path.join(p, "carla-discovery-posix64")
-                break
-
-    # find carla_bridge_posix32
-    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-posix32")):
-        carla_bridge_posix32 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-posix32")
-    else:
-        for p in PATH:
-            if os.path.exists(os.path.join(p, "carla-bridge-posix32")):
-                carla_bridge_posix32 = os.path.join(p, "carla-bridge-posix32")
-                break
-
-    # find carla_bridge_posix64
-    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-posix64")):
-        carla_bridge_posix64 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-posix64")
-    else:
-        for p in PATH:
-            if os.path.exists(os.path.join(p, "carla-bridge-posix64")):
-                carla_bridge_posix64 = os.path.join(p, "carla-bridge-posix64")
-                break
-
+# find windows only tools
 if WINDOWS:
-    # find carla_bridge_lv2_windows
-    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-windows.exe")):
-        carla_bridge_lv2_windows = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-windows.exe")
-    else:
-        for p in PATH:
-            if os.path.exists(os.path.join(p, "carla-bridge-lv2-windows.exe")):
-                carla_bridge_lv2_windows = os.path.join(p, "carla-bridge-lv2-windows.exe")
-                break
+    carla_bridge_lv2_windows = findTool("carla-bridge", "carla-bridge-lv2-windows.exe")
+    carla_bridge_vst_hwnd    = findTool("carla-bridge", "carla-bridge-vst-hwnd.exe")
 
-    # find carla_bridge_vst_hwnd
-    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-hwnd.exe")):
-        carla_bridge_vst_hwnd = os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-hwnd.exe")
-    else:
-        for p in PATH:
-            if os.path.exists(os.path.join(p, "carla-bridge-vst-hwnd.exe")):
-                carla_bridge_vst_hwnd = os.path.join(p, "carla-bridge-vst-hwnd.exe")
-                break
-
+# find mac os only tools
 elif MACOS:
-    # find carla_bridge_lv2_cocoa
-    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-cocoa")):
-        carla_bridge_lv2_cocoa = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-cocoa")
-    else:
-        for p in PATH:
-            if os.path.exists(os.path.join(p, "carla-bridge-lv2-cocoa")):
-                carla_bridge_lv2_cocoa = os.path.join(p, "carla-bridge-lv2-cocoa")
-                break
+    carla_bridge_lv2_cocoa = findTool("carla-bridge", "carla-bridge-lv2-cocoa")
+    carla_bridge_vst_cocoa = findTool("carla-bridge", "carla-bridge-vst-cocoa")
 
-    # find carla_bridge_vst_cocoa
-    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-cocoa")):
-        carla_bridge_vst_cocoa = os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-cocoa")
-    else:
-        for p in PATH:
-            if os.path.exists(os.path.join(p, "carla-bridge-vst-cocoa")):
-                carla_bridge_vst_cocoa = os.path.join(p, "carla-bridge-vst-cocoa")
-                break
-
+# find generic tools
 else:
-    # find carla_bridge_lv2_gtk2
-    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-gtk2")):
-        carla_bridge_lv2_gtk2 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-gtk2")
-    else:
-        for p in PATH:
-            if os.path.exists(os.path.join(p, "carla-bridge-lv2-gtk2")):
-                carla_bridge_lv2_gtk2 = os.path.join(p, "carla-bridge-lv2-gtk2")
-                break
+    carla_bridge_lv2_gtk2 = findTool("carla-bridge", "carla-bridge-lv2-gtk2")
+    carla_bridge_lv2_gtk3 = findTool("carla-bridge", "carla-bridge-lv2-gtk3")
+    carla_bridge_lv2_qt4  = findTool("carla-bridge", "carla-bridge-lv2-qt4")
+    carla_bridge_lv2_qt5  = findTool("carla-bridge", "carla-bridge-lv2-qt5")
 
-    # find carla_bridge_lv2_gtk3
-    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-gtk3")):
-        carla_bridge_lv2_gtk3 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-gtk3")
-    else:
-        for p in PATH:
-            if os.path.exists(os.path.join(p, "carla-bridge-lv2-gtk3")):
-                carla_bridge_lv2_gtk3 = os.path.join(p, "carla-bridge-lv2-gtk3")
-                break
-
-    # find carla_bridge_lv2_qt4
-    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-qt4")):
-        carla_bridge_lv2_qt4 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-qt4")
-    else:
-        for p in PATH:
-            if os.path.exists(os.path.join(p, "carla-bridge-lv2-qt4")):
-                carla_bridge_lv2_qt4 = os.path.join(p, "carla-bridge-lv2-qt4")
-                break
-
-    # find carla_bridge_lv2_qt5
-    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-qt5")):
-        carla_bridge_lv2_qt5 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-qt5")
-    else:
-        for p in PATH:
-            if os.path.exists(os.path.join(p, "carla-bridge-lv2-qt5")):
-                carla_bridge_lv2_qt5 = os.path.join(p, "carla-bridge-lv2-qt5")
-                break
-
+# find linux only tools
 if LINUX:
-    # find carla_bridge_lv2_x11
-    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-x11")):
-        carla_bridge_lv2_x11 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-lv2-x11")
-    else:
-        for p in PATH:
-            if os.path.exists(os.path.join(p, "carla-bridge-lv2-x11")):
-                carla_bridge_lv2_x11 = os.path.join(p, "carla-bridge-lv2-x11")
-                break
+    carla_bridge_lv2_x11 = os.path.join("carla-bridge", "carla-bridge-lv2-x11")
+    carla_bridge_vst_x11 = os.path.join("carla-bridge", "carla-bridge-vst-x11")
 
-    # find carla_bridge_vst_x11
-    if os.path.exists(os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-x11")):
-        carla_bridge_vst_x11 = os.path.join(CWDpp, "carla-bridge", "carla-bridge-vst-x11")
-    else:
-        for p in PATH:
-            if os.path.exists(os.path.join(p, "carla-bridge-vst-x11")):
-                carla_bridge_vst_x11 = os.path.join(p, "carla-bridge-vst-x11")
-                break
-
-# ------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Plugin Query (helper functions)
 
 def findBinaries(bPATH, OS):
@@ -520,32 +428,32 @@ def findSoundKits(bPATH, stype):
     return soundfonts
 
 def findDSSIGUI(filename, name, label):
-    plugin_dir = filename.rsplit(".", 1)[0]
-    short_name = os.path.basename(plugin_dir)
-    gui_filename = ""
+    pluginDir = filename.rsplit(".", 1)[0]
+    shortName = os.path.basename(pluginDir)
+    guiFilename = ""
 
-    check_name  = name.replace(" ", "_")
-    check_label = label
-    check_sname = short_name
+    checkName  = name.replace(" ", "_")
+    checkLabel = label
+    checkSName = shortName
 
-    if check_name[-1]  != "_": check_name  += "_"
-    if check_label[-1] != "_": check_label += "_"
-    if check_sname[-1] != "_": check_sname += "_"
+    if checkName[-1]  != "_": checkName  += "_"
+    if checkLabel[-1] != "_": checkLabel += "_"
+    if checkSName[-1] != "_": checkSName += "_"
 
-    for root, dirs, files in os.walk(plugin_dir):
-        gui_files = files
+    for root, dirs, files in os.walk(pluginDir):
+        guiFiles = files
         break
     else:
-        gui_files = []
+        guiFiles = []
 
-    for gui in gui_files:
-        if gui.startswith(check_name) or gui.startswith(check_label) or gui.startswith(check_sname):
-            gui_filename = os.path.join(plugin_dir, gui)
+    for gui in guiFiles:
+        if gui.startswith(checkName) or gui.startswith(checkLabel) or gui.startswith(checkSName):
+            guiFilename = os.path.join(pluginDir, gui)
             break
 
-    return gui_filename
+    return guiFilename
 
-# ------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Plugin Query
 
 PLUGIN_QUERY_API_VERSION = 1
@@ -700,7 +608,7 @@ def checkPluginSF2(filename, tool):
 def checkPluginSFZ(filename, tool):
     return runCarlaDiscovery(PLUGIN_SFZ, "SFZ", filename, tool)
 
-# ------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Backend C++ -> Python variables
 
 c_enum = c_int
@@ -740,7 +648,7 @@ class MidiProgramData(Structure):
 
 class CustomData(Structure):
     _fields_ = [
-        ("type", c_enum),
+        ("type", c_char_p),
         ("key", c_char_p),
         ("value", c_char_p)
     ]
@@ -787,11 +695,8 @@ class GuiInfo(Structure):
 
 CallbackFunc = CFUNCTYPE(None, c_void_p, c_enum, c_ushort, c_int, c_int, c_double, c_char_p)
 
-# ------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Backend C++ -> Python object
-
-global Callback
-Callback = None
 
 class Host(object):
     def __init__(self, lib_prefix_arg):
@@ -1009,8 +914,8 @@ class Host(object):
     def get_internal_plugin_info(self, index):
         return struct_to_dict(self.lib.get_internal_plugin_info(index).contents)
 
-    def engine_init(self, driver_name, client_name):
-        return self.lib.engine_init(driver_name.encode("utf-8"), client_name.encode("utf-8"))
+    def engine_init(self, driverName, clientName):
+        return self.lib.engine_init(driverName.encode("utf-8"), clientName.encode("utf-8"))
 
     def engine_close(self):
         return self.lib.engine_close()
@@ -1018,148 +923,147 @@ class Host(object):
     def is_engine_running(self):
         return self.lib.is_engine_running()
 
-    def add_plugin(self, btype, ptype, filename, name, label, extra_stuff):
-        return self.lib.add_plugin(btype, ptype, filename.encode("utf-8"), name.encode("utf-8") if name else c_nullptr, label.encode("utf-8"), cast(extra_stuff, c_void_p))
+    def add_plugin(self, btype, ptype, filename, name, label, extraStuff):
+        return self.lib.add_plugin(btype, ptype, filename.encode("utf-8"), name.encode("utf-8") if name else c_nullptr, label.encode("utf-8"), cast(extraStuff, c_void_p))
 
-    def remove_plugin(self, plugin_id):
-        return self.lib.remove_plugin(plugin_id)
+    def remove_plugin(self, pluginId):
+        return self.lib.remove_plugin(pluginId)
 
-    def get_plugin_info(self, plugin_id):
-        return struct_to_dict(self.lib.get_plugin_info(plugin_id).contents)
+    def get_plugin_info(self, pluginId):
+        return struct_to_dict(self.lib.get_plugin_info(pluginId).contents)
 
-    def get_audio_port_count_info(self, plugin_id):
-        return struct_to_dict(self.lib.get_audio_port_count_info(plugin_id).contents)
+    def get_audio_port_count_info(self, pluginId):
+        return struct_to_dict(self.lib.get_audio_port_count_info(pluginId).contents)
 
-    def get_midi_port_count_info(self, plugin_id):
-        return struct_to_dict(self.lib.get_midi_port_count_info(plugin_id).contents)
+    def get_midi_port_count_info(self, pluginId):
+        return struct_to_dict(self.lib.get_midi_port_count_info(pluginId).contents)
 
-    def get_parameter_count_info(self, plugin_id):
-        return struct_to_dict(self.lib.get_parameter_count_info(plugin_id).contents)
+    def get_parameter_count_info(self, pluginId):
+        return struct_to_dict(self.lib.get_parameter_count_info(pluginId).contents)
 
-    def get_parameter_info(self, plugin_id, parameter_id):
-        return struct_to_dict(self.lib.get_parameter_info(plugin_id, parameter_id).contents)
+    def get_parameter_info(self, pluginId, parameterId):
+        return struct_to_dict(self.lib.get_parameter_info(pluginId, parameterId).contents)
 
-    def get_parameter_scalepoint_info(self, plugin_id, parameter_id, scalepoint_id):
-        return struct_to_dict(self.lib.get_parameter_scalepoint_info(plugin_id, parameter_id, scalepoint_id).contents)
+    def get_parameter_scalepoint_info(self, pluginId, parameterId, scalePointId):
+        return struct_to_dict(self.lib.get_parameter_scalepoint_info(pluginId, parameterId, scalePointId).contents)
 
-    def get_parameter_data(self, plugin_id, parameter_id):
-        return struct_to_dict(self.lib.get_parameter_data(plugin_id, parameter_id).contents)
+    def get_parameter_data(self, pluginId, parameterId):
+        return struct_to_dict(self.lib.get_parameter_data(pluginId, parameterId).contents)
 
-    def get_parameter_ranges(self, plugin_id, parameter_id):
-        return struct_to_dict(self.lib.get_parameter_ranges(plugin_id, parameter_id).contents)
+    def get_parameter_ranges(self, pluginId, parameterId):
+        return struct_to_dict(self.lib.get_parameter_ranges(pluginId, parameterId).contents)
 
-    def get_midi_program_data(self, plugin_id, midi_program_id):
-        return struct_to_dict(self.lib.get_midi_program_data(plugin_id, midi_program_id).contents)
+    def get_midi_program_data(self, pluginId, midiProgramId):
+        return struct_to_dict(self.lib.get_midi_program_data(pluginId, midiProgramId).contents)
 
-    def get_custom_data(self, plugin_id, custom_data_id):
-        return struct_to_dict(self.lib.get_custom_data(plugin_id, custom_data_id).contents)
+    def get_custom_data(self, pluginId, customDataId):
+        return struct_to_dict(self.lib.get_custom_data(pluginId, customDataId).contents)
 
-    def get_chunk_data(self, plugin_id):
-        return self.lib.get_chunk_data(plugin_id)
+    def get_chunk_data(self, pluginId):
+        return self.lib.get_chunk_data(pluginId)
 
-    def get_gui_info(self, plugin_id):
-        return struct_to_dict(self.lib.get_gui_info(plugin_id).contents)
+    def get_gui_info(self, pluginId):
+        return struct_to_dict(self.lib.get_gui_info(pluginId).contents)
 
-    def get_parameter_count(self, plugin_id):
-        return self.lib.get_parameter_count(plugin_id)
+    def get_parameter_count(self, pluginId):
+        return self.lib.get_parameter_count(pluginId)
 
-    def get_program_count(self, plugin_id):
-        return self.lib.get_program_count(plugin_id)
+    def get_program_count(self, pluginId):
+        return self.lib.get_program_count(pluginId)
 
-    def get_midi_program_count(self, plugin_id):
-        return self.lib.get_midi_program_count(plugin_id)
+    def get_midi_program_count(self, pluginId):
+        return self.lib.get_midi_program_count(pluginId)
 
-    def get_custom_data_count(self, plugin_id):
-        return self.lib.get_custom_data_count(plugin_id)
+    def get_custom_data_count(self, pluginId):
+        return self.lib.get_custom_data_count(pluginId)
 
-    def get_parameter_text(self, plugin_id, program_id):
-        return self.lib.get_parameter_text(plugin_id, program_id)
+    def get_parameter_text(self, pluginId, parameterId):
+        return self.lib.get_parameter_text(pluginId, parameterId)
 
-    def get_program_name(self, plugin_id, program_id):
-        return self.lib.get_program_name(plugin_id, program_id)
+    def get_program_name(self, pluginId, programId):
+        return self.lib.get_program_name(pluginId, programId)
 
-    def get_midi_program_name(self, plugin_id, midi_program_id):
-        return self.lib.get_midi_program_name(plugin_id, midi_program_id)
+    def get_midi_program_name(self, pluginId, midiProgramId):
+        return self.lib.get_midi_program_name(pluginId, midiProgramId)
 
-    def get_real_plugin_name(self, plugin_id):
-        return self.lib.get_real_plugin_name(plugin_id)
+    def get_real_plugin_name(self, pluginId):
+        return self.lib.get_real_plugin_name(pluginId)
 
-    def get_current_program_index(self, plugin_id):
-        return self.lib.get_current_program_index(plugin_id)
+    def get_current_program_index(self, pluginId):
+        return self.lib.get_current_program_index(pluginId)
 
-    def get_current_midi_program_index(self, plugin_id):
-        return self.lib.get_current_midi_program_index(plugin_id)
+    def get_current_midi_program_index(self, pluginId):
+        return self.lib.get_current_midi_program_index(pluginId)
 
-    def get_default_parameter_value(self, plugin_id, parameter_id):
-        return self.lib.get_default_parameter_value(plugin_id, parameter_id)
+    def get_default_parameter_value(self, pluginId, parameterId):
+        return self.lib.get_default_parameter_value(pluginId, parameterId)
 
-    def get_current_parameter_value(self, plugin_id, parameter_id):
-        return self.lib.get_current_parameter_value(plugin_id, parameter_id)
+    def get_current_parameter_value(self, pluginId, parameterId):
+        return self.lib.get_current_parameter_value(pluginId, parameterId)
 
-    def get_input_peak_value(self, plugin_id, port_id):
-        return self.lib.get_input_peak_value(plugin_id, port_id)
+    def get_input_peak_value(self, pluginId, portId):
+        return self.lib.get_input_peak_value(pluginId, portId)
 
-    def get_output_peak_value(self, plugin_id, port_id):
-        return self.lib.get_output_peak_value(plugin_id, port_id)
+    def get_output_peak_value(self, pluginId, portId):
+        return self.lib.get_output_peak_value(pluginId, portId)
 
-    def set_active(self, plugin_id, onoff):
-        self.lib.set_active(plugin_id, onoff)
+    def set_active(self, pluginId, onOff):
+        self.lib.set_active(pluginId, onOff)
 
-    def set_drywet(self, plugin_id, value):
-        self.lib.set_drywet(plugin_id, value)
+    def set_drywet(self, pluginId, value):
+        self.lib.set_drywet(pluginId, value)
 
-    def set_volume(self, plugin_id, value):
-        self.lib.set_volume(plugin_id, value)
+    def set_volume(self, pluginId, value):
+        self.lib.set_volume(pluginId, value)
 
-    def set_balance_left(self, plugin_id, value):
-        self.lib.set_balance_left(plugin_id, value)
+    def set_balance_left(self, pluginId, value):
+        self.lib.set_balance_left(pluginId, value)
 
-    def set_balance_right(self, plugin_id, value):
-        self.lib.set_balance_right(plugin_id, value)
+    def set_balance_right(self, pluginId, value):
+        self.lib.set_balance_right(pluginId, value)
 
-    def set_parameter_value(self, plugin_id, parameter_id, value):
-        self.lib.set_parameter_value(plugin_id, parameter_id, value)
+    def set_parameter_value(self, pluginId, parameterId, value):
+        self.lib.set_parameter_value(pluginId, parameterId, value)
 
-    def set_parameter_midi_cc(self, plugin_id, parameter_id, midi_cc):
-        self.lib.set_parameter_midi_cc(plugin_id, parameter_id, midi_cc)
+    def set_parameter_midi_cc(self, pluginId, parameterId, cc):
+        self.lib.set_parameter_midi_cc(pluginId, parameterId, cc)
 
-    def set_parameter_midi_channel(self, plugin_id, parameter_id, channel):
-        self.lib.set_parameter_midi_channel(plugin_id, parameter_id, channel)
+    def set_parameter_midi_channel(self, pluginId, parameterId, channel):
+        self.lib.set_parameter_midi_channel(pluginId, parameterId, channel)
 
-    def set_program(self, plugin_id, program_id):
-        self.lib.set_program(plugin_id, program_id)
+    def set_program(self, pluginId, programId):
+        self.lib.set_program(pluginId, programId)
 
-    def set_midi_program(self, plugin_id, midi_program_id):
-        self.lib.set_midi_program(plugin_id, midi_program_id)
+    def set_midi_program(self, pluginId, midiProgramId):
+        self.lib.set_midi_program(pluginId, midiProgramId)
 
-    def set_custom_data(self, plugin_id, type_, key, value):
-        self.lib.set_custom_data(plugin_id, type_.encode("utf-8"), key.encode("utf-8"), value.encode("utf-8"))
+    def set_custom_data(self, pluginId, type_, key, value):
+        self.lib.set_custom_data(pluginId, type_.encode("utf-8"), key.encode("utf-8"), value.encode("utf-8"))
 
-    def set_chunk_data(self, plugin_id, chunk_data):
-        self.lib.set_chunk_data(plugin_id, chunk_data.encode("utf-8"))
+    def set_chunk_data(self, pluginId, chunkData):
+        self.lib.set_chunk_data(pluginId, chunkData.encode("utf-8"))
 
-    def set_gui_container(self, plugin_id, gui_addr):
-        self.lib.set_gui_container(plugin_id, gui_addr)
+    def set_gui_container(self, pluginId, guiAddr):
+        self.lib.set_gui_container(pluginId, guiAddr)
 
-    def show_gui(self, plugin_id, yesno):
-        self.lib.show_gui(plugin_id, yesno)
+    def show_gui(self, pluginId, yesNo):
+        self.lib.show_gui(pluginId, yesNo)
 
     def idle_guis(self):
         self.lib.idle_guis()
 
-    def send_midi_note(self, plugin_id, channel, note, velocity):
-        self.lib.send_midi_note(plugin_id, channel, note, velocity)
+    def send_midi_note(self, pluginId, channel, note, velocity):
+        self.lib.send_midi_note(pluginId, channel, note, velocity)
 
-    def prepare_for_save(self, plugin_id):
-        self.lib.prepare_for_save(plugin_id)
+    def prepare_for_save(self, pluginId):
+        self.lib.prepare_for_save(pluginId)
 
     def set_callback_function(self, func):
-        global Callback
-        Callback = CallbackFunc(func)
-        self.lib.set_callback_function(Callback)
+        self.callback = CallbackFunc(func)
+        self.lib.set_callback_function(self.callback)
 
-    def set_option(self, option, value, value_str):
-        self.lib.set_option(option, value, value_str.encode("utf-8"))
+    def set_option(self, option, value, valueStr):
+        self.lib.set_option(option, value, valueStr.encode("utf-8"))
 
     def get_last_error(self):
         return self.lib.get_last_error()

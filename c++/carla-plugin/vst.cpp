@@ -1980,6 +1980,8 @@ public:
 #endif
             if (effect && ret > effect->numParams)
                 ret = effect->numParams;
+	    // FIXME
+	    //ret = carla_minPositiveI(effect->numParams, MAX_PARAMETERS);
             break;
 
         case audioMasterGetParameterQuantization:

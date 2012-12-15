@@ -105,6 +105,12 @@ void carla_zeroF(float* data, const unsigned int size)
 }
 
 static inline
+unsigned int carla_minPositiveI(const int& x, const int& y)
+{
+    return ((x < 0 || y < 0) ? 0 : (x < y ? x : y));
+}
+
+static inline
 unsigned int carla_minU(const unsigned int& x, const unsigned int& y)
 {
     return (x < y ? x : y);

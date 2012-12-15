@@ -62,6 +62,7 @@ using namespace CarlaBackend;
 // ------------------------------ VST Stuff ------------------------------
 
 #ifdef WANT_VST
+bool vstWantsMidi = false;
 intptr_t vstCurrentUniqueId = 0;
 
 intptr_t vstHostCanDo(const char* const feature)
@@ -120,7 +121,10 @@ intptr_t VSTCALLBACK vstHostCallback(AEffect* const effect, const int32_t opcode
     {
     case audioMasterAutomate:
         if (effect)
+        {
             effect->setParameter(effect, index, opt);
+            ret = 1;
+        }
         break;
 
     case audioMasterVersion:
@@ -129,6 +133,11 @@ intptr_t VSTCALLBACK vstHostCallback(AEffect* const effect, const int32_t opcode
 
     case audioMasterCurrentId:
         ret = vstCurrentUniqueId;
+        break;
+
+    case audioMasterWantMidi:
+        vstWantsMidi = true;
+        ret = 1;
         break;
 
     case audioMasterGetTime:
@@ -154,7 +163,11 @@ intptr_t VSTCALLBACK vstHostCallback(AEffect* const effect, const int32_t opcode
         break;
 
     case audioMasterGetNumAutomatableParameters:
-        ret = MAX_PARAMETERS;
+        ret = carla_minPositiveI(effect->numParams, MAX_PARAMETERS);
+        break;
+
+    case audioMasterGetParameterQuantization:
+        ret = 1; // full single float precision
         break;
 
     case audioMasterGetSampleRate:
@@ -165,22 +178,32 @@ intptr_t VSTCALLBACK vstHostCallback(AEffect* const effect, const int32_t opcode
         ret = bufferSize;
         break;
 
+    case audioMasterWillReplaceOrAccumulate:
+        ret = 1; // replace
+        break;
+
     case audioMasterGetCurrentProcessLevel:
         ret = kVstProcessLevelUser;
         break;
 
     case audioMasterGetAutomationState:
-        ret = kVstAutomationReadWrite;
+        ret = kVstAutomationOff;
         break;
 
     case audioMasterGetVendorString:
         if (ptr)
+        {
             strcpy((char*)ptr, "Cadence");
+            ret = 1;
+        }
         break;
 
     case audioMasterGetProductString:
         if (ptr)
+        {
             strcpy((char*)ptr, "Carla-Discovery");
+            ret = 1;
+        }
         break;
 
     case audioMasterGetVendorVersion:
@@ -772,7 +795,7 @@ void do_vst_check(void* const libHandle, const bool init)
 
     if (! (effect && effect->magic == kEffectMagic))
     {
-        DISCOVERY_OUT("error", "Failed to init VST plugin");
+        DISCOVERY_OUT("error", "Failed to init VST plugin, or VST magic failed");
         return;
     }
 
@@ -780,6 +803,8 @@ void do_vst_check(void* const libHandle, const bool init)
     const char* cProduct;
     const char* cVendor;
     char strBuf[255] = { 0 };
+
+    effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
 
     effect->dispatcher(effect, effGetEffectName, 0, 0, strBuf, 0.0f);
     cName = strdup((strBuf[0] != 0) ? strBuf : "");
@@ -794,8 +819,6 @@ void do_vst_check(void* const libHandle, const bool init)
 
     vstCurrentUniqueId = effect->uniqueID;
     intptr_t vstCategory = effect->dispatcher(effect, effGetPlugCategory, 0, 0, nullptr, 0.0f);
-
-    effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
 
     while (true)
     {
@@ -816,7 +839,7 @@ void do_vst_check(void* const libHandle, const bool init)
         if (effect->flags & effFlagsIsSynth)
             hints |= PLUGIN_IS_SYNTH;
 
-        if (vstPluginCanDo(effect, "receiveVstEvents") || vstPluginCanDo(effect, "receiveVstMidiEvent") || (effect->flags & effFlagsIsSynth) > 0)
+        if (vstPluginCanDo(effect, "receiveVstEvents") || vstPluginCanDo(effect, "receiveVstMidiEvent") || vstWantsMidi || (effect->flags & effFlagsIsSynth) > 0)
             midiIns = 1;
 
         if (vstPluginCanDo(effect, "sendVstEvents") || vstPluginCanDo(effect, "sendVstMidiEvent"))
@@ -925,6 +948,7 @@ void do_vst_check(void* const libHandle, const bool init)
             break;
 
         strBuf[0] = 0;
+        vstWantsMidi = false;
         vstCurrentUniqueId = effect->dispatcher(effect, effShellGetNextPlugin, 0, 0, strBuf, 0.0f);
 
         if (vstCurrentUniqueId != 0)
