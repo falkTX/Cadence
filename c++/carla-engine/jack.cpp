@@ -944,7 +944,7 @@ protected:
         }
 
         m_client = nullptr;
-        callback(CALLBACK_QUIT, 0, 0, 0, 0.0);
+        callback(CALLBACK_QUIT, 0, 0, 0, 0.0, nullptr);
     }
 
     // -------------------------------------

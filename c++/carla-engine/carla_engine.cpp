@@ -1845,9 +1845,9 @@ void CarlaEngine::osc_send_bridge_set_midi_program(const int32_t index)
     }
 }
 
-void CarlaEngine::osc_send_bridge_set_custom_data(const char* const stype, const char* const key, const char* const value)
+void CarlaEngine::osc_send_bridge_set_custom_data(const char* const type, const char* const key, const char* const value)
 {
-    qDebug("CarlaEngine::osc_send_bridge_set_custom_data(\"%s\", \"%s\", \"%s\")", stype, key, value);
+    qDebug("CarlaEngine::osc_send_bridge_set_custom_data(\"%s\", \"%s\", \"%s\")", type, key, value);
     CARLA_ASSERT(m_oscData);
 
     if (m_oscData && m_oscData->target)
@@ -1855,7 +1855,7 @@ void CarlaEngine::osc_send_bridge_set_custom_data(const char* const stype, const
         char target_path[strlen(m_oscData->path)+24];
         strcpy(target_path, m_oscData->path);
         strcat(target_path, "/bridge_set_custom_data");
-        lo_send(m_oscData->target, target_path, "sss", stype, key, value);
+        lo_send(m_oscData->target, target_path, "sss", type, key, value);
     }
 }
 

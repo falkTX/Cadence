@@ -456,7 +456,7 @@ void CarlaPlugin::setActive(const bool active, const bool sendOsc, const bool se
 #endif
 
     if (sendCallback)
-        x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_ACTIVE, 0, value);
+        x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_ACTIVE, 0, value, nullptr);
 #ifndef BUILD_BRIDGE
     else if (m_hints & PLUGIN_IS_BRIDGE)
         osc_send_control(&osc.data, PARAMETER_ACTIVE, value);
@@ -482,7 +482,7 @@ void CarlaPlugin::setDryWet(double value, const bool sendOsc, const bool sendCal
 #endif
 
     if (sendCallback)
-        x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_DRYWET, 0, value);
+        x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_DRYWET, 0, value, nullptr);
 #ifndef BUILD_BRIDGE
     else if (m_hints & PLUGIN_IS_BRIDGE)
         osc_send_control(&osc.data, PARAMETER_DRYWET, value);
@@ -508,7 +508,7 @@ void CarlaPlugin::setVolume(double value, const bool sendOsc, const bool sendCal
 #endif
 
     if (sendCallback)
-        x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_VOLUME, 0, value);
+        x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_VOLUME, 0, value, nullptr);
 #ifndef BUILD_BRIDGE
     else if (m_hints & PLUGIN_IS_BRIDGE)
         osc_send_control(&osc.data, PARAMETER_VOLUME, value);
@@ -534,7 +534,7 @@ void CarlaPlugin::setBalanceLeft(double value, const bool sendOsc, const bool se
 #endif
 
     if (sendCallback)
-        x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_BALANCE_LEFT, 0, value);
+        x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_BALANCE_LEFT, 0, value, nullptr);
 #ifndef BUILD_BRIDGE
     else if (m_hints & PLUGIN_IS_BRIDGE)
         osc_send_control(&osc.data, PARAMETER_BALANCE_LEFT, value);
@@ -560,7 +560,7 @@ void CarlaPlugin::setBalanceRight(double value, const bool sendOsc, const bool s
 #endif
 
     if (sendCallback)
-        x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_BALANCE_RIGHT, 0, value);
+        x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, PARAMETER_BALANCE_RIGHT, 0, value, nullptr);
 #ifndef BUILD_BRIDGE
     else if (m_hints & PLUGIN_IS_BRIDGE)
         osc_send_control(&osc.data, PARAMETER_BALANCE_RIGHT, value);
@@ -596,7 +596,7 @@ void CarlaPlugin::setParameterValue(const uint32_t parameterId, double value, co
 #endif
 
     if (sendCallback)
-        x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, parameterId, 0, value);
+        x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, parameterId, 0, value, nullptr);
 }
 
 void CarlaPlugin::setParameterValueByRIndex(const int32_t rindex, const double value, const bool sendGui, const bool sendOsc, const bool sendCallback)
@@ -639,7 +639,7 @@ void CarlaPlugin::setParameterMidiChannel(const uint32_t parameterId, uint8_t ch
 #endif
 
     if (sendCallback)
-        x_engine->callback(CALLBACK_PARAMETER_MIDI_CHANNEL_CHANGED, m_id, parameterId, channel, 0.0);
+        x_engine->callback(CALLBACK_PARAMETER_MIDI_CHANNEL_CHANGED, m_id, parameterId, channel, 0.0, nullptr);
 }
 
 void CarlaPlugin::setParameterMidiCC(const uint32_t parameterId, int16_t cc, const bool sendOsc, const bool sendCallback)
@@ -660,40 +660,33 @@ void CarlaPlugin::setParameterMidiCC(const uint32_t parameterId, int16_t cc, con
 #endif
 
     if (sendCallback)
-        x_engine->callback(CALLBACK_PARAMETER_MIDI_CC_CHANGED, m_id, parameterId, cc, 0.0);
+        x_engine->callback(CALLBACK_PARAMETER_MIDI_CC_CHANGED, m_id, parameterId, cc, 0.0, nullptr);
 }
 
-void CarlaPlugin::setCustomData(const CustomDataType type, const char* const key, const char* const value, const bool sendGui)
+void CarlaPlugin::setCustomData(const char* const type, const char* const key, const char* const value, const bool sendGui)
 {
-    CARLA_ASSERT(type != CUSTOM_DATA_INVALID);
+    CARLA_ASSERT(type);
     CARLA_ASSERT(key);
     CARLA_ASSERT(value);
 
-    if (type == CUSTOM_DATA_INVALID)
-        return qCritical("CarlaPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - type is invalid", CustomDataType2Str(type), key, value, bool2str(sendGui));
+    if (! type)
+        return qCritical("CarlaPlugin::setCustomData(\"%s\", \"%s\", \"%s\", %s) - type is invalid", type, key, value, bool2str(sendGui));
 
     if (! key)
-        return qCritical("CarlaPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - key is null", CustomDataType2Str(type), key, value, bool2str(sendGui));
+        return qCritical("CarlaPlugin::setCustomData(\"%s\", \"%s\", \"%s\", %s) - key is null", type, key, value, bool2str(sendGui));
 
     if (! value)
-        return qCritical("CarlaPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - value is null", CustomDataType2Str(type), key, value, bool2str(sendGui));
+        return qCritical("CarlaPlugin::setCustomData(\"%s\", \"%s\", \"%s\", %s) - value is null", type, key, value, bool2str(sendGui));
 
     bool saveData = true;
 
-    switch (type)
+    if (strcmp(type, CUSTOM_DATA_STRING) == 0)
     {
-    case CUSTOM_DATA_INVALID:
-        saveData = false;
-        break;
-    case CUSTOM_DATA_STRING:
         // Ignore some keys
         if (strncmp(key, "OSC:", 4) == 0 || strcmp(key, "guiVisible") == 0)
             saveData = false;
         else if (strcmp(key, CARLA_BRIDGE_MSG_SAVE_NOW) == 0 || strcmp(key, CARLA_BRIDGE_MSG_SET_CHUNK) == 0 || strcmp(key, CARLA_BRIDGE_MSG_SET_CUSTOM) == 0)
             saveData = false;
-        break;
-    default:
-        break;
     }
 
     if (saveData)
@@ -711,7 +704,7 @@ void CarlaPlugin::setCustomData(const CustomDataType type, const char* const key
 
         // Otherwise store it
         CustomData newData;
-        newData.type  = type;
+        newData.type  = strdup(type);
         newData.key   = strdup(key);
         newData.value = strdup(value);
         custom.push_back(newData);
@@ -763,7 +756,7 @@ void CarlaPlugin::setProgram(int32_t index, const bool sendGui, const bool sendO
 #endif
 
     if (sendCallback)
-        x_engine->callback(CALLBACK_PROGRAM_CHANGED, m_id, index, 0, 0.0);
+        x_engine->callback(CALLBACK_PROGRAM_CHANGED, m_id, index, 0, 0.0, nullptr);
 
     Q_UNUSED(block);
 }
@@ -808,7 +801,7 @@ void CarlaPlugin::setMidiProgram(int32_t index, const bool sendGui, const bool s
 #endif
 
     if (sendCallback)
-        x_engine->callback(CALLBACK_MIDI_PROGRAM_CHANGED, m_id, index, 0, 0.0);
+        x_engine->callback(CALLBACK_MIDI_PROGRAM_CHANGED, m_id, index, 0, 0.0, nullptr);
 
     Q_UNUSED(block);
 }
@@ -1168,7 +1161,7 @@ void CarlaPlugin::sendMidiSingleNote(const uint8_t channel, const uint8_t note, 
 #endif
 
     if (sendCallback)
-        x_engine->callback(velo ? CALLBACK_NOTE_ON : CALLBACK_NOTE_OFF, m_id, channel, note, velo);
+        x_engine->callback(velo ? CALLBACK_NOTE_ON : CALLBACK_NOTE_OFF, m_id, channel, note, velo, nullptr);
 }
 
 void CarlaPlugin::sendMidiAllNotesOff()
@@ -1252,7 +1245,7 @@ void CarlaPlugin::postEventsRun()
             break;
 
         case PluginPostEventDebug:
-            x_engine->callback(CALLBACK_DEBUG, m_id, event->value1, event->value2, event->value3);
+            x_engine->callback(CALLBACK_DEBUG, m_id, event->value1, event->value2, event->value3, nullptr);
             break;
 
         case PluginPostEventParameterChange:
@@ -1267,7 +1260,7 @@ void CarlaPlugin::postEventsRun()
 #endif
 
             // Update Host
-            x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, event->value1, 0, event->value3);
+            x_engine->callback(CALLBACK_PARAMETER_VALUE_CHANGED, m_id, event->value1, 0, event->value3, nullptr);
             break;
 
         case PluginPostEventProgramChange:
@@ -1287,7 +1280,7 @@ void CarlaPlugin::postEventsRun()
 #endif
 
             // Update Host
-            x_engine->callback(CALLBACK_PROGRAM_CHANGED, m_id, event->value1, 0, 0.0);
+            x_engine->callback(CALLBACK_PROGRAM_CHANGED, m_id, event->value1, 0, 0.0, nullptr);
             break;
 
         case PluginPostEventMidiProgramChange:
@@ -1307,7 +1300,7 @@ void CarlaPlugin::postEventsRun()
 #endif
 
             // Update Host
-            x_engine->callback(CALLBACK_MIDI_PROGRAM_CHANGED, m_id, event->value1, 0, 0.0);
+            x_engine->callback(CALLBACK_MIDI_PROGRAM_CHANGED, m_id, event->value1, 0, 0.0, nullptr);
             break;
 
         case PluginPostEventNoteOn:
@@ -1321,7 +1314,7 @@ void CarlaPlugin::postEventsRun()
 #endif
 
             // Update Host
-            x_engine->callback(CALLBACK_NOTE_ON, m_id, event->value1, event->value2, rint(event->value3));
+            x_engine->callback(CALLBACK_NOTE_ON, m_id, event->value1, event->value2, rint(event->value3), nullptr);
             break;
 
         case PluginPostEventNoteOff:
@@ -1335,7 +1328,7 @@ void CarlaPlugin::postEventsRun()
 #endif
 
             // Update Host
-            x_engine->callback(CALLBACK_NOTE_OFF, m_id, event->value1, event->value2, 0.0);
+            x_engine->callback(CALLBACK_NOTE_OFF, m_id, event->value1, event->value2, 0.0, nullptr);
             break;
 
         case PluginPostEventCustom:

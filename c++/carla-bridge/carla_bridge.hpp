@@ -22,6 +22,7 @@
 
 #define CARLA_BRIDGE_START_NAMESPACE namespace CarlaBridge {
 #define CARLA_BRIDGE_END_NAMESPACE }
+#define CARLA_BRIDGE_USE_NAMESPACE using namespace CarlaBridge;
 
 CARLA_BRIDGE_START_NAMESPACE
 

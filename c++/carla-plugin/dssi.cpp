@@ -214,20 +214,23 @@ public:
         CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
     }
 
-    void setCustomData(const CustomDataType type, const char* const key, const char* const value, const bool sendGui)
+    void setCustomData(const char* const type, const char* const key, const char* const value, const bool sendGui)
     {
-        CARLA_ASSERT(type == CUSTOM_DATA_STRING);
+        CARLA_ASSERT(type);
         CARLA_ASSERT(key);
         CARLA_ASSERT(value);
 
-        if (type != CUSTOM_DATA_STRING)
-            return qCritical("DssiPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - type is not string", CustomDataType2Str(type), key, value, bool2str(sendGui));
+        if (! type)
+            return qCritical("DssiPlugin::setCustomData(\"%s\", \"%s\", \"%s\", %s) - type is invalid", type, key, value, bool2str(sendGui));
+
+        if (strcmp(type, CUSTOM_DATA_STRING) != 0)
+            return qCritical("DssiPlugin::setCustomData(\"%s\", \"%s\", \"%s\", %s) - type is not string", type, key, value, bool2str(sendGui));
 
         if (! key)
-            return qCritical("DssiPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - key is null", CustomDataType2Str(type), key, value, bool2str(sendGui));
+            return qCritical("DssiPlugin::setCustomData(\"%s\", \"%s\", \"%s\", %s) - key is null", type, key, value, bool2str(sendGui));
 
         if (! value)
-            return qCritical("DssiPlugin::setCustomData(%s, \"%s\", \"%s\", %s) - value is null", CustomDataType2Str(type), key, value, bool2str(sendGui));
+            return qCritical("DssiPlugin::setCustomData(\"%s\", \"%s\", \"%s\", %s) - value is null", type, key, value, bool2str(sendGui));
 
         descriptor->configure(handle, key, value);
         if (h2) descriptor->configure(h2, key, value);
@@ -826,7 +829,7 @@ public:
         }
         else
         {
-            x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
+            x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0, nullptr);
 
             // Check if current program is invalid
             bool programChanged = false;

@@ -18,10 +18,19 @@
 #ifndef CARLA_ENGINE_HPP
 #define CARLA_ENGINE_HPP
 
-#include "carla_engine_osc.hpp"
 #include "carla_engine_thread.hpp"
 
+#ifdef BUILD_BRIDGE
+# include "carla_osc_utils.hpp"
+#else
+# include "carla_engine_osc.hpp"
+#endif
+
 CARLA_BACKEND_START_NAMESPACE
+
+#ifdef BUILD_BRIDGE
+class CarlaPlugin;
+#endif
 
 /*!
  * @defgroup CarlaBackendEngine Carla Backend Engine
@@ -703,7 +712,7 @@ public:
     void osc_send_bridge_set_default_value(const int32_t index, const double value);
     void osc_send_bridge_set_program(const int32_t index);
     void osc_send_bridge_set_midi_program(const int32_t index);
-    void osc_send_bridge_set_custom_data(const char* const stype, const char* const key, const char* const value);
+    void osc_send_bridge_set_custom_data(const char* const type, const char* const key, const char* const value);
     void osc_send_bridge_set_chunk_data(const char* const chunkFile);
     void osc_send_bridge_set_inpeak(const int32_t portId);
     void osc_send_bridge_set_outpeak(const int32_t portId);

@@ -363,7 +363,7 @@ public:
             {
                 container->setFixedSize(width, height);
 #ifdef BUILD_BRIDGE
-                x_engine->callback(CALLBACK_RESIZE_GUI, m_id, width, height, 1.0);
+                x_engine->callback(CALLBACK_RESIZE_GUI, m_id, width, height, 1.0, nullptr);
 #endif
             }
         }
@@ -401,7 +401,7 @@ public:
             qWarning("VstPlugin::setGuiContainer(%p) - failed to open UI", container);
 
             m_hints &= ~PLUGIN_HAS_GUI;
-            x_engine->callback(CALLBACK_SHOW_GUI, m_id, -1, 0, 0.0);
+            x_engine->callback(CALLBACK_SHOW_GUI, m_id, -1, 0, 0.0, nullptr);
 
             effect->dispatcher(effect, effEditClose, 0, 0, nullptr, 0.0f);
         }
@@ -441,7 +441,7 @@ public:
         else
         {
             if (yesNo && gui.width > 0 && gui.height > 0)
-                x_engine->callback(CALLBACK_RESIZE_GUI, m_id, gui.width, gui.height, 0.0);
+                x_engine->callback(CALLBACK_RESIZE_GUI, m_id, gui.width, gui.height, 0.0, nullptr);
         }
 
         gui.visible = yesNo;
@@ -848,7 +848,7 @@ public:
         }
         else
         {
-            x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
+            x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0, nullptr);
 
             // Check if current program is invalid
             bool programChanged = false;
@@ -1649,7 +1649,7 @@ public:
             effect->dispatcher(effect, effStartProcess, 0, 0, nullptr, 0.0f);
         }
 
-        x_engine->callback(CALLBACK_RELOAD_ALL, m_id, 0, 0, 0.0);
+        x_engine->callback(CALLBACK_RELOAD_ALL, m_id, 0, 0, 0.0, nullptr);
 
         return 1;
     }
@@ -1699,7 +1699,7 @@ public:
         gui.width  = width;
         gui.height = height;
 
-        x_engine->callback(CALLBACK_RESIZE_GUI, m_id, width, height, 0.0);
+        x_engine->callback(CALLBACK_RESIZE_GUI, m_id, width, height, 0.0, nullptr);
 
         return 1;
     }
@@ -1728,7 +1728,7 @@ public:
         }
 
         // Tell backend to update
-        x_engine->callback(CALLBACK_UPDATE, m_id, 0, 0, 0.0);
+        x_engine->callback(CALLBACK_UPDATE, m_id, 0, 0, 0.0, nullptr);
     }
 
     void handleAudioMasterWantMidi()
@@ -1980,8 +1980,8 @@ public:
 #endif
             if (effect && ret > effect->numParams)
                 ret = effect->numParams;
-	    // FIXME
-	    //ret = carla_minPositiveI(effect->numParams, MAX_PARAMETERS);
+        // FIXME
+        //ret = carla_minPositiveI(effect->numParams, MAX_PARAMETERS);
             break;
 
         case audioMasterGetParameterQuantization:

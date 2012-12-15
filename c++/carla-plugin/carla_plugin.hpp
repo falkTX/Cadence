@@ -21,10 +21,12 @@
 #include "carla_midi.h"
 #include "carla_engine.hpp"
 #include "carla_osc_utils.hpp"
-#include "carla_plugin_thread.hpp"
 
 #ifdef BUILD_BRIDGE
+# include "carla_backend_utils.hpp"
 # include "carla_bridge_osc.hpp"
+#else
+# include "carla_plugin_thread.hpp"
 #endif
 
 // common includes
@@ -51,7 +53,7 @@ CARLA_BACKEND_START_NAMESPACE
  * @{
  */
 
-#define CARLA_PROCESS_CONTINUE_CHECK if (! m_enabled) { x_engine->callback(CALLBACK_DEBUG, m_id, m_enabled, 0, 0.0); return; }
+#define CARLA_PROCESS_CONTINUE_CHECK if (! m_enabled) { x_engine->callback(CALLBACK_DEBUG, m_id, m_enabled, 0, 0.0, nullptr); return; }
 
 const unsigned short MAX_MIDI_EVENTS = 512;
 const unsigned short MAX_POST_EVENTS = 152;

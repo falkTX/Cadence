@@ -18,6 +18,7 @@
 #ifdef BUILD_BRIDGE_PLUGIN
 
 #include "carla_bridge_client.hpp"
+#include "carla_backend_utils.hpp"
 #include "carla_plugin.hpp"
 
 #include <set>
@@ -464,7 +465,7 @@ public:
         for (uint32_t i=0; i < plugin->customDataCount(); i++)
         {
             const CarlaBackend::CustomData* const cdata = plugin->customData(i);
-            engine->osc_send_bridge_set_custom_data(CarlaBackend::getCustomDataTypeString(cdata->type), cdata->key, cdata->value);
+            engine->osc_send_bridge_set_custom_data(cdata->type, cdata->key, cdata->value);
         }
 
         if (plugin->hints() & CarlaBackend::PLUGIN_USES_CHUNKS)
@@ -506,7 +507,7 @@ public:
         if (! plugin)
             return;
 
-        plugin->setCustomData(CarlaBackend::getCustomDataStringType(type), key, value, true);
+        plugin->setCustomData(type, key, value, true);
     }
 
     void setChunkData(const char* const filePath)
@@ -543,9 +544,9 @@ public:
     // ---------------------------------------------------------------------
     // callback
 
-    void handleCallback(const CarlaBackend::CallbackType action, const int value1, const int value2, const double value3)
+    void handleCallback(const CarlaBackend::CallbackType action, const int value1, const int value2, const double value3, const char* const valueStr)
     {
-        qDebug("CarlaPluginClient::handleCallback(%s, %i, %i, %g)", CarlaBackend::CallbackType2Str(action), value1, value2, value3);
+        qDebug("CarlaPluginClient::handleCallback(%s, %i, %i, %g \"%s\")", CarlaBackend::CallbackType2Str(action), value1, value2, value3, valueStr);
 
         if (! engine)
             return;
@@ -616,7 +617,7 @@ public:
 
     // ---------------------------------------------------------------------
 
-    static void callback(void* const ptr, CarlaBackend::CallbackType const action, const unsigned short, const int value1, const int value2, const double value3)
+    static void callback(void* const ptr, CarlaBackend::CallbackType const action, const unsigned short, const int value1, const int value2, const double value3, const char* const valueStr)
     {
         CARLA_ASSERT(ptr);
 
@@ -624,7 +625,7 @@ public:
             return;
 
         BridgePluginClient* const _this_ = (BridgePluginClient*)ptr;
-        _this_->handleCallback(action, value1, value2, value3);
+        _this_->handleCallback(action, value1, value2, value3, valueStr);
     }
 
 protected:

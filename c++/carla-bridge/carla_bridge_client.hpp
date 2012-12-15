@@ -44,7 +44,7 @@ CARLA_BRIDGE_START_NAMESPACE
 
 class CarlaClient
 {
-public:
+    public:
     CarlaClient(CarlaToolkit* const toolkit)
 #ifdef BUILD_BRIDGE_PLUGIN
         : m_osc(this, "carla-bridge-plugin"),
