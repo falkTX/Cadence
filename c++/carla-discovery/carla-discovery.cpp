@@ -658,6 +658,12 @@ void do_lv2_check(const char* const bundle, const bool init)
         const LV2_RDF_Descriptor* const rdf_descriptor = lv2_rdf_new(URIs.at(i).toUtf8().constData());
         CARLA_ASSERT(rdf_descriptor && rdf_descriptor->URI);
 
+        if (! (rdf_descriptor && rdf_descriptor->URI))
+        {
+            DISCOVERY_OUT("error", "Failed to find LV2 plugin '" << URIs.at(i).toUtf8().constData() << "'");
+            continue;
+        }
+
         if (init)
         {
             // test if DLL is loadable
@@ -782,9 +788,9 @@ void do_lv2_check(const char* const bundle, const bool init)
         DISCOVERY_OUT("parameters.outs", parametersOuts);
         DISCOVERY_OUT("parameters.total", parametersTotal);
         DISCOVERY_OUT("build", BINARY_NATIVE);
+        DISCOVERY_OUT("end", "------------");
 
         delete rdf_descriptor;
-        DISCOVERY_OUT("end", "------------");
     }
 #else
     DISCOVERY_OUT("error", "LV2 support not available");
@@ -1098,7 +1104,7 @@ void do_linuxsampler_check(const char* const filename, const char* const stype, 
 
             if (! ins)
             {
-                DISCOVERY_OUT("error", "Failed to get LinuxSampeler instrument manager");
+                DISCOVERY_OUT("error", "Failed to get LinuxSampler instrument manager");
                 return;
             }
 
