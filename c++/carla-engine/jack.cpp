@@ -473,7 +473,9 @@ public:
 
         memset(&m_pos, 0, sizeof(jack_position_t));
 
-#ifndef BUILD_BRIDGE
+#ifdef BUILD_BRIDGE
+        hasQuit = false;
+#else
 # ifndef Q_COMPILER_INITIALIZER_LISTS
         for (int i=0; i < rackPortCount; i++)
             m_rackPorts[i] = nullptr;
@@ -580,6 +582,7 @@ public:
         CarlaEngine::close();
 
 #ifdef BUILD_BRIDGE
+        hasQuit = true;
         m_client = nullptr;
         return true;
 #else
@@ -620,7 +623,11 @@ public:
 
     bool isRunning() const
     {
+#ifdef BUILD_BRIDGE
+        return bool(m_client || ! hasQuit);
+#else
         return bool(m_client);
+#endif
     }
 
     CarlaEngineType type() const
@@ -957,7 +964,9 @@ private:
 
     // -------------------------------------
 
-#ifndef BUILD_BRIDGE
+#ifdef BUILD_BRIDGE
+    bool hasQuit;
+#else
     enum RackPorts {
         rackPortAudioIn1   = 0,
         rackPortAudioIn2   = 1,

@@ -367,7 +367,6 @@ uintptr_t getAddressFromPointer(void* const ptr)
 static inline
 void* getPointerFromAddress(const uintptr_t& addr)
 {
-    qDebug("CarlaBackend::getPointerFromAddress(" P_UINTPTR ")", addr);
     CARLA_ASSERT(addr != 0);
 
     uintptr_t** const ptr = (uintptr_t**)&addr;

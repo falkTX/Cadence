@@ -42,15 +42,17 @@ CARLA_BRIDGE_START_NAMESPACE
  * @{
  */
 
+#ifdef BUILD_BRIDGE_PLUGIN
+const char* const carlaClientName = "carla-bridge-plugin";
+#else
+const char* const carlaClientName = "carla-bridge-ui";
+#endif
+
 class CarlaClient
 {
-    public:
+public:
     CarlaClient(CarlaToolkit* const toolkit)
-#ifdef BUILD_BRIDGE_PLUGIN
-        : m_osc(this, "carla-bridge-plugin"),
-#else
-        : m_osc(this, "carla-bridge-ui"),
-#endif
+        : m_osc(this, carlaClientName),
           m_toolkit(toolkit)
     {
 #ifdef BUILD_BRIDGE_UI
@@ -70,97 +72,9 @@ class CarlaClient
     }
 
     // ---------------------------------------------------------------------
-
-#if 0
-    void quequeMessage(const MessageType type, const int32_t value1, const int32_t value2, const double value3)
-    {
-        const QMutexLocker locker(&m_messages.lock);
-
-        for (unsigned int i=0; i < MAX_BRIDGE_MESSAGES; i++)
-        {
-            Message* const m = &m_messages.data[i];
-
-            if (m->type == MESSAGE_NULL)
-            {
-                m->type   = type;
-                m->value1 = value1;
-                m->value2 = value2;
-                m->value3 = value3;
-                break;
-            }
-        }
-    }
-
-    bool runMessages()
-    {
-        const QMutexLocker locker(&m_messages.lock);
-
-        for (unsigned int i=0; i < MAX_BRIDGE_MESSAGES; i++)
-        {
-            Message* const m = &m_messages.data[i];
-
-            switch (m->type)
-            {
-            case MESSAGE_NULL:
-                return true;
-
-            case MESSAGE_PARAMETER:
-                setParameter(m->value1, m->value3);
-                break;
-
-            case MESSAGE_PROGRAM:
-                setProgram(m->value1);
-                break;
-
-            case MESSAGE_MIDI_PROGRAM:
-#ifdef BUILD_BRIDGE_PLUGIN
-                setMidiProgram(m->value1);
-#else
-                setMidiProgram(m->value1, m->value2);
-#endif
-                break;
-
-            case MESSAGE_NOTE_ON:
-                noteOn(m->value1, m->value2, rint(m->value3));
-                break;
-
-            case MESSAGE_NOTE_OFF:
-                noteOff(m->value1, m->value2);
-                break;
-
-            case MESSAGE_SHOW_GUI:
-                if (m->value1)
-                    m_toolkit->show();
-                else
-                    m_toolkit->hide();
-                break;
-
-            case MESSAGE_RESIZE_GUI:
-                m_toolkit->resize(m->value1, m->value2);
-                break;
-
-            case MESSAGE_SAVE_NOW:
-#ifdef BUILD_BRIDGE_PLUGIN
-                saveNow();
-#endif
-                break;
-
-            case MESSAGE_QUIT:
-                m_toolkit->quit();
-                return false;
-            }
-
-            m->type = MESSAGE_NULL;
-        }
-
-        return true;
-    }
-#endif
-
-    // ---------------------------------------------------------------------
+    // ui initialization
 
 #ifdef BUILD_BRIDGE_UI
-    // ui initialization
     virtual bool init(const char* const, const char* const)
     {
         m_quit = false;
@@ -175,14 +89,20 @@ class CarlaClient
             sendOscExiting();
         }
     }
+#endif
 
+    // ---------------------------------------------------------------------
     // ui management
+
+#ifdef BUILD_BRIDGE_UI
     virtual void* getWidget() const = 0;
     virtual bool  isResizable() const = 0;
     virtual bool  needsReparent() const = 0;
 #endif
 
+    // ---------------------------------------------------------------------
     // processing
+
     virtual void setParameter(const int32_t rindex, const double value) = 0;
     virtual void setProgram(const uint32_t index) = 0;
 #ifdef BUILD_BRIDGE_PLUGIN
@@ -194,8 +114,10 @@ class CarlaClient
     virtual void noteOn(const uint8_t channel, const uint8_t note, const uint8_t velo) = 0;
     virtual void noteOff(const uint8_t channel, const uint8_t note) = 0;
 
-#ifdef BUILD_BRIDGE_PLUGIN
+    // ---------------------------------------------------------------------
     // plugin
+
+#ifdef BUILD_BRIDGE_PLUGIN
     virtual void saveNow() = 0;
     virtual void setCustomData(const char* const type, const char* const key, const char* const value) = 0;
     virtual void setChunkData(const char* const filePath) = 0;

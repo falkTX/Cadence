@@ -192,9 +192,13 @@ protected:
         qDebug("BridgePluginGUI::closeEvent(%p)", event);
 
         if (event->spontaneous())
+        {
             callback->guiClosedCallback();
+            QMainWindow::closeEvent(event);
+            return;
+        }
 
-        QMainWindow::closeEvent(event);
+        event->ignore();
     }
 
 private:
@@ -232,6 +236,10 @@ public:
         pluginGui = nullptr;
 
         m_client  = this;
+
+        m_needsResize = false;
+        m_nextSize[0] = 0;
+        m_nextSize[1] = 0;
     }
 
     ~BridgePluginClient()
@@ -592,7 +600,11 @@ public:
             CARLA_ASSERT(pluginGui);
 
             if (value1 > 0 && value2 > 0 && pluginGui)
-                pluginGui->setNewSize(value1, value2);
+            {
+                m_needsResize = true;
+                m_nextSize[0] = value1;
+                m_nextSize[1] = value2;
+            }
 
             break;
 
@@ -657,6 +669,12 @@ protected:
 
             if (plugin)
                 plugin->idleGui();
+
+            if (pluginGui && m_needsResize)
+            {
+                pluginGui->setNewSize(m_nextSize[0], m_nextSize[1]);
+                m_needsResize = false;
+            }
         }
         else if (event->timerId() == msgTimerOSC)
         {
@@ -679,6 +697,9 @@ private:
 #if 0
     std::set<int32_t> parametersToUpdate;
 #endif
+
+    bool m_needsResize;
+    int  m_nextSize[2];
 
     CarlaBackend::CarlaEngine* engine;
     CarlaBackend::CarlaPlugin* plugin;
