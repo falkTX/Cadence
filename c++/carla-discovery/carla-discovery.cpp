@@ -135,10 +135,12 @@ intptr_t VSTCALLBACK vstHostCallback(AEffect* const effect, const int32_t opcode
         ret = vstCurrentUniqueId;
         break;
 
+#if ! VST_FORCE_DEPRECATED
     case audioMasterWantMidi:
         vstWantsMidi = true;
         ret = 1;
         break;
+#endif
 
     case audioMasterGetTime:
         static VstTimeInfo_R timeInfo;
@@ -157,8 +159,8 @@ intptr_t VSTCALLBACK vstHostCallback(AEffect* const effect, const int32_t opcode
         ret = (intptr_t)&timeInfo;
         break;
 
+#if ! VST_FORCE_DEPRECATED
     case audioMasterTempoAt:
-        // Deprecated in VST SDK 2.4
         ret = 120 * 10000;
         break;
 
@@ -169,6 +171,7 @@ intptr_t VSTCALLBACK vstHostCallback(AEffect* const effect, const int32_t opcode
     case audioMasterGetParameterQuantization:
         ret = 1; // full single float precision
         break;
+#endif
 
     case audioMasterGetSampleRate:
         ret = sampleRate;
@@ -178,9 +181,11 @@ intptr_t VSTCALLBACK vstHostCallback(AEffect* const effect, const int32_t opcode
         ret = bufferSize;
         break;
 
+#if ! VST_FORCE_DEPRECATED
     case audioMasterWillReplaceOrAccumulate:
         ret = 1; // replace
         break;
+#endif
 
     case audioMasterGetCurrentProcessLevel:
         ret = kVstProcessLevelUser;
@@ -904,11 +909,15 @@ void do_vst_check(void* const libHandle, const bool init)
             if (midiIns > 0)
                 effect->dispatcher(effect, effProcessEvents, 0, 0, &events, 0.0f);
 
+#if ! VST_FORCE_DEPRECATED
             if ((effect->flags & effFlagsCanReplacing) > 0 && effect->processReplacing != effect->process)
                 effect->processReplacing(effect, bufferAudioIn, bufferAudioOut, bufferSize);
-#if ! VST_FORCE_DEPRECATED
             else
                 effect->process(effect, bufferAudioIn, bufferAudioOut, bufferSize);
+#else
+            CARLA_ASSERT(effect->flags & effFlagsCanReplacing);
+            if (effect->flags & effFlagsCanReplacing)
+                effect->processReplacing(effect, bufferAudioIn, bufferAudioOut, bufferSize);
 #endif
 
             effect->dispatcher(effect, effStopProcess, 0, 0, nullptr, 0.0f);
