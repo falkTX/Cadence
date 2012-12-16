@@ -1,5 +1,5 @@
 /*
- * Carla Engine
+ * Carla JACK Engine
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify

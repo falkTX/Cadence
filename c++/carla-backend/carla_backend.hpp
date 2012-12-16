@@ -83,13 +83,14 @@ const unsigned int PARAMETER_USES_CUSTOM_TEXT = 0x80; //!< Parameter uses custom
 /*!
  * @defgroup CustomDataTypes Custom Data types
  *
- * The type defines how the value in CustomData is stored.
+ * The type defines how the \param value in CustomData is stored.
  *
  * Types are valid URIs.\n
- * Any non-string type is saved in a base64 format.
+ * Any non-string type is saved in a base64 encoded format.
  */
-const char* const CUSTOM_DATA_INVALID = nullptr;            //!< Null/Invalid data.
-const char* const CUSTOM_DATA_STRING  = "urn:carla:string"; //!< Internal String (s)
+const char* const CUSTOM_DATA_INVALID = nullptr;                                  //!< Null/Invalid data.
+const char* const CUSTOM_DATA_CHUNK   = "http://kxstudio.sf.net/ns/carla/chunk";  //!< Carla Chunk
+const char* const CUSTOM_DATA_STRING  = "http://kxstudio.sf.net/ns/carla/string"; //!< Carla String
 /**@}*/
 
 /*!
@@ -562,12 +563,16 @@ struct CustomData {
     const char* value;
 
     CustomData()
-        : type(CUSTOM_DATA_INVALID),
+        : type(nullptr),
           key(nullptr),
           value(nullptr) {}
 };
 
 /**@}*/
+
+// forward declarations of commonly used Carla classes
+class CarlaEngine;
+class CarlaPlugin;
 
 CARLA_BACKEND_END_NAMESPACE
 

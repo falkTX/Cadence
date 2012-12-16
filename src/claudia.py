@@ -153,9 +153,9 @@ URI_CANVAS_WIDTH   = "http://ladish.org/ns/canvas/width"
 URI_CANVAS_HEIGHT  = "http://ladish.org/ns/canvas/height"
 URI_CANVAS_X       = "http://ladish.org/ns/canvas/x"
 URI_CANVAS_Y       = "http://ladish.org/ns/canvas/y"
-URI_CANVAS_SPLIT   = "http://kxstudio.sourceforge.net/ns/canvas/split"
-URI_CANVAS_X_SPLIT = "http://kxstudio.sourceforge.net/ns/canvas/x_split"
-URI_CANVAS_Y_SPLIT = "http://kxstudio.sourceforge.net/ns/canvas/y_split"
+URI_CANVAS_SPLIT   = "http://kxstudio.sf.net/ns/canvas/split"
+URI_CANVAS_X_SPLIT = "http://kxstudio.sf.net/ns/canvas/x_split"
+URI_CANVAS_Y_SPLIT = "http://kxstudio.sf.net/ns/canvas/y_split"
 
 DEFAULT_CANVAS_WIDTH  = 3100
 DEFAULT_CANVAS_HEIGHT = 2400

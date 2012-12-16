@@ -25,7 +25,9 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
-class CarlaEngine;
+#if 0
+} // Fix editor indentation
+#endif
 
 class CarlaEngineThread : public QThread
 {

@@ -71,7 +71,8 @@ PARAMETER_USES_CUSTOM_TEXT = 0x80
 
 # group custom data types
 CUSTOM_DATA_INVALID = None
-CUSTOM_DATA_STRING  = "urn:carla:string"
+CUSTOM_DATA_CHUNK   = "http://kxstudio.sf.net/ns/carla/chunk"
+CUSTOM_DATA_STRING  = "http://kxstudio.sf.net/ns/carla/string"
 
 # enum BinaryType
 BINARY_NONE    = 0

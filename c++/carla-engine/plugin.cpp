@@ -1,5 +1,5 @@
 /*
- * Carla Backend
+ * Carla Plugin Engine
  * Copyright (C) 2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -454,7 +454,7 @@ protected:
 //#endif
     }
 
-    void d_run(const float** inputs, float** outputs, uint32_t frames, uint32_t midiEventCount, const DISTRHO::MidiEvent* midiEvents)
+    void d_run(float** inputs, float** outputs, uint32_t frames, uint32_t midiEventCount, const DISTRHO::MidiEvent* midiEvents)
     {
         if (maxPluginNumber() == 0)
             return;

@@ -34,7 +34,6 @@
 #include <vector>
 
 typedef LADSPA_Data*                LADSPA_DataPtr;
-typedef const LADSPA_Data*          LADSPA_DataConstPtr;
 typedef std::vector<LADSPA_Data>    LADSPA_DataVector;
 typedef std::vector<LADSPA_DataPtr> LADSPA_DataPtrVector;
 
@@ -296,7 +295,7 @@ private:
     PluginInternal plugin;
 
     // LADSPA ports
-    LADSPA_DataConstPtr  portAudioIns[DISTRHO_PLUGIN_NUM_INPUTS];
+    LADSPA_DataPtr       portAudioIns[DISTRHO_PLUGIN_NUM_INPUTS];
     LADSPA_DataPtr       portAudioOuts[DISTRHO_PLUGIN_NUM_INPUTS];
     LADSPA_DataPtrVector portControls;
 #if DISTRHO_PLUGIN_WANT_LATENCY

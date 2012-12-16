@@ -49,8 +49,9 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
-class CarlaEngine;
-class CarlaPlugin;
+#if 0
+} // Fix editor indentation
+#endif
 
 class CarlaEngineOsc
 {

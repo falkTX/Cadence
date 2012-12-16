@@ -84,74 +84,52 @@ void CarlaEngineThread::run()
         {
             CarlaPlugin* const plugin = engine->getPluginUnchecked(i);
 
-            if (plugin && plugin->enabled())
-            {
+            if (! (plugin && plugin->enabled()))
+                continue;
+
 #ifndef BUILD_BRIDGE
-                const unsigned short id = plugin->id();
+            const unsigned short id = plugin->id();
 #endif
-                usesSingleThread = (plugin->hints() & PLUGIN_USES_SINGLE_THREAD);
+            usesSingleThread = (plugin->hints() & PLUGIN_USES_SINGLE_THREAD);
 
-                // -------------------------------------------------------
-                // Process postponed events
+            // -------------------------------------------------------
+            // Process postponed events
 
-                if (! usesSingleThread)
-                    plugin->postEventsRun();
+            if (! usesSingleThread)
+                plugin->postEventsRun();
 
-                // -------------------------------------------------------
+            if (oscControlRegisted || ! usesSingleThread)
+            {
+                // ---------------------------------------------------
                 // Update parameter outputs
 
-                if (oscControlRegisted || ! usesSingleThread)
+                for (uint32_t j=0; j < plugin->parameterCount(); j++)
                 {
-                    for (uint32_t i=0; i < plugin->parameterCount(); i++)
+                    if (! plugin->parameterIsOutput(j))
+                        continue;
+
+                    value = plugin->getParameterValue(j);
+
+                    // Update UI
+                    if (! usesSingleThread)
+                        plugin->uiParameterChange(j, value);
+
+                    // Update OSC control client
+                    if (oscControlRegisted)
                     {
-                        if (! plugin->parameterIsOutput(i))
-                            continue;
-
-                        value = plugin->getParameterValue(i);
-
-                        // Update UI
-                        if (! usesSingleThread)
-                            plugin->uiParameterChange(i, value);
-
-                        // Update OSC control client
-                        if (oscControlRegisted)
-                        {
 #ifdef BUILD_BRIDGE
-                            engine->osc_send_bridge_set_parameter_value(i, value);
+                        engine->osc_send_bridge_set_parameter_value(j, value);
 #else
-                            engine->osc_send_control_set_parameter_value(id, i, value);
+                        engine->osc_send_control_set_parameter_value(id, j, value);
 #endif
-                        }
                     }
                 }
 
-                // -------------------------------------------------------
-                // Update OSC control client (peaks)
+                // ---------------------------------------------------
+                // Update OSC control client peaks
 
                 if (oscControlRegisted)
-                {
-                    // Peak values
-                    if (plugin->audioInCount() > 0)
-                    {
-#ifdef BUILD_BRIDGE
-                        engine->osc_send_bridge_set_inpeak(1);
-                        engine->osc_send_bridge_set_inpeak(2);
-#else
-                        engine->osc_send_control_set_input_peak_value(id, 1);
-                        engine->osc_send_control_set_input_peak_value(id, 2);
-#endif
-                    }
-                    if (plugin->audioOutCount() > 0)
-                    {
-#ifdef BUILD_BRIDGE
-                        engine->osc_send_bridge_set_outpeak(1);
-                        engine->osc_send_bridge_set_outpeak(2);
-#else
-                        engine->osc_send_control_set_output_peak_value(id, 1);
-                        engine->osc_send_control_set_output_peak_value(id, 2);
-#endif
-                    }
-                }
+                    engine->osc_send_peaks(plugin, id);
             }
         }
 

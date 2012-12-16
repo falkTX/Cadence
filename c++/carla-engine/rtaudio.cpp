@@ -1,5 +1,5 @@
 /*
- * Carla Engine
+ * Carla RtAudio Engine
  * Copyright (C) 2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify

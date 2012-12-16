@@ -695,6 +695,8 @@ public:
     void setOscBridgeData(const CarlaOscData* const oscData);
 #endif
 
+    void osc_send_peaks(CarlaPlugin* const plugin, const unsigned short& id);
+
 #ifdef BUILD_BRIDGE
     void osc_send_bridge_audio_count(const int32_t ins, const int32_t outs, const int32_t total);
     void osc_send_bridge_midi_count(const int32_t ins, const int32_t outs, const int32_t total);

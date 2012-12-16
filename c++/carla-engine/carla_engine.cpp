@@ -1248,6 +1248,31 @@ void CarlaEngine::bufferSizeChanged(const uint32_t newBufferSize)
 // -------------------------------------------------------------------------------------------------------------------
 // Carla Engine OSC stuff
 
+void CarlaEngine::osc_send_peaks(CarlaPlugin* const plugin, const unsigned short& id)
+{
+    // Peak values
+    if (plugin->audioInCount() > 0)
+    {
+#ifdef BUILD_BRIDGE
+        osc_send_bridge_set_inpeak(1);
+        osc_send_bridge_set_inpeak(2);
+#else
+        osc_send_control_set_input_peak_value(id, 1);
+        osc_send_control_set_input_peak_value(id, 2);
+#endif
+    }
+    if (plugin->audioOutCount() > 0)
+    {
+#ifdef BUILD_BRIDGE
+        osc_send_bridge_set_outpeak(1);
+        osc_send_bridge_set_outpeak(2);
+#else
+        osc_send_control_set_output_peak_value(id, 1);
+        osc_send_control_set_output_peak_value(id, 2);
+#endif
+    }
+}
+
 #ifndef BUILD_BRIDGE
 void CarlaEngine::osc_send_control_add_plugin_start(const int32_t pluginId, const char* const pluginName)
 {
