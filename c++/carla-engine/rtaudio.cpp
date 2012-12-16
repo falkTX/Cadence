@@ -233,14 +233,14 @@ public:
         return true;
     }
 
-    bool isOffline() const
-    {
-        return false;
-    }
-
     bool isRunning() const
     {
         return audio.isStreamRunning();
+    }
+
+    bool isOffline() const
+    {
+        return false;
     }
 
     CarlaEngineType type() const

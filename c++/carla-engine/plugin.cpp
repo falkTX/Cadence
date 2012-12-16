@@ -149,14 +149,14 @@ public:
         return true;
     }
 
-    bool isOffline() const
-    {
-        return false;
-    }
-
     bool isRunning() const
     {
         return true;
+    }
+
+    bool isOffline() const
+    {
+        return false;
     }
 
     CarlaEngineType type() const

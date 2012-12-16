@@ -64,7 +64,7 @@ public:
             if (osc.thread)
             {
                 // Wait a bit first, try safe quit, then force kill
-                if (osc.thread->isRunning() && ! osc.thread->wait(x_engine->oscUiTimeout() * 100))
+                if (osc.thread->isRunning() && ! osc.thread->wait(x_engine->getOptions().oscUiTimeout * 100))
                 {
                     qWarning("Failed to properly stop DSSI GUI thread");
                     osc.thread->terminate();
@@ -340,6 +340,10 @@ public:
         qDebug("DssiPlugin::reload() - start");
         CARLA_ASSERT(descriptor && ldescriptor);
 
+#ifndef BUILD_BRIDGE
+        const ProcessMode processMode(x_engine->getOptions().processMode);
+#endif
+
         // Safely disable plugin for reload
         const ScopedDisabler m(this);
 
@@ -377,7 +381,7 @@ public:
         }
 
 #ifndef BUILD_BRIDGE
-        if (x_engine->forceStereo() && (aIns == 1 || aOuts == 1) && ! h2)
+        if (x_engine->getOptions().forceStereo && (aIns == 1 || aOuts == 1) && ! h2)
         {
             h2 = ldescriptor->instantiate(ldescriptor, sampleRate);
 
@@ -433,7 +437,7 @@ public:
                 portName.clear();
 
 #ifndef BUILD_BRIDGE
-                if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+                if (processMode == PROCESS_MODE_SINGLE_CLIENT)
                 {
                     portName  = m_name;
                     portName += ":";
@@ -632,7 +636,7 @@ public:
             portName.clear();
 
 #ifndef BUILD_BRIDGE
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
@@ -649,7 +653,7 @@ public:
             portName.clear();
 
 #ifndef BUILD_BRIDGE
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
@@ -666,7 +670,7 @@ public:
             portName.clear();
 
 #ifndef BUILD_BRIDGE
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
@@ -689,7 +693,7 @@ public:
             m_hints |= PLUGIN_IS_SYNTH;
 
 #ifndef BUILD_BRIDGE
-        if (x_engine->useDssiVstChunks() && QString(m_filename).endsWith("dssi-vst.so", Qt::CaseInsensitive))
+        if (x_engine->getOptions().useDssiVstChunks && QString(m_filename).endsWith("dssi-vst.so", Qt::CaseInsensitive))
         {
             if (descriptor->get_custom_data && descriptor->set_custom_data)
                 m_hints |= PLUGIN_USES_CHUNKS;
@@ -881,7 +885,7 @@ public:
         // Input VU
 
 #ifndef BUILD_BRIDGE
-        if (aIn.count > 0 && x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
+        if (aIn.count > 0 && x_engine->getOptions().processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #else
         if (aIn.count > 0)
 #endif
@@ -890,19 +894,19 @@ public:
             {
                 for (k=0; k < frames; k++)
                 {
-                    if (abs(inBuffer[0][k]) > aInsPeak[0])
-                        aInsPeak[0] = abs(inBuffer[0][k]);
+                    if (std::abs(inBuffer[0][k]) > aInsPeak[0])
+                        aInsPeak[0] = std::abs(inBuffer[0][k]);
                 }
             }
             else if (aIn.count > 1)
             {
                 for (k=0; k < frames; k++)
                 {
-                    if (abs(inBuffer[0][k]) > aInsPeak[0])
-                        aInsPeak[0] = abs(inBuffer[0][k]);
+                    if (std::abs(inBuffer[0][k]) > aInsPeak[0])
+                        aInsPeak[0] = std::abs(inBuffer[0][k]);
 
-                    if (abs(inBuffer[1][k]) > aInsPeak[1])
-                        aInsPeak[1] = abs(inBuffer[1][k]);
+                    if (std::abs(inBuffer[1][k]) > aInsPeak[1])
+                        aInsPeak[1] = std::abs(inBuffer[1][k]);
                 }
             }
         }
@@ -1372,13 +1376,13 @@ public:
 
                 // Output VU
 #ifndef BUILD_BRIDGE
-                if (x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
+                if (x_engine->getOptions().processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #endif
                 {
                     for (k=0; i < 2 && k < frames; k++)
                     {
-                        if (abs(outBuffer[i][k]) > aOutsPeak[i])
-                            aOutsPeak[i] = abs(outBuffer[i][k]);
+                        if (std::abs(outBuffer[i][k]) > aOutsPeak[i])
+                            aOutsPeak[i] = std::abs(outBuffer[i][k]);
                     }
                 }
             }
@@ -1648,7 +1652,7 @@ CarlaPlugin* CarlaPlugin::newDSSI(const initializer& init, const void* const ext
     plugin->reload();
 
 # ifndef BUILD_BRIDGE
-    if (init.engine->processMode() == PROCESS_MODE_CONTINUOUS_RACK)
+    if (init.engine->getOptions().processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
         {

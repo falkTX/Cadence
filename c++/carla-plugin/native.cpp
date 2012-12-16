@@ -315,22 +315,22 @@ public:
         CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
     }
 
-    void setCustomData(const CustomDataType type, const char* const key, const char* const value, const bool sendGui)
+    void setCustomData(const char* const type, const char* const key, const char* const value, const bool sendGui)
     {
         CARLA_ASSERT(descriptor);
         CARLA_ASSERT(handle);
-        CARLA_ASSERT(type == CUSTOM_DATA_STRING);
+        CARLA_ASSERT(type);
         CARLA_ASSERT(key);
         CARLA_ASSERT(value);
 
-        if (type != CUSTOM_DATA_STRING)
-            return qCritical("NativePlugin::setCustomData(%s, \"%s\", \"%s\", %s) - type is not string", CustomDataType2Str(type), key, value, bool2str(sendGui));
+        if (! type)
+            return qCritical("NativePlugin::setCustomData(\"%s\", \"%s\", \"%s\", %s) - type is not string", type, key, value, bool2str(sendGui));
 
         if (! key)
-            return qCritical("NativePlugin::setCustomData(%s, \"%s\", \"%s\", %s) - key is null", CustomDataType2Str(type), key, value, bool2str(sendGui));
+            return qCritical("NativePlugin::setCustomData(\"%s\", \"%s\", \"%s\", %s) - key is null", type, key, value, bool2str(sendGui));
 
         if (! value)
-            return qCritical("Nativelugin::setCustomData(%s, \"%s\", \"%s\", %s) - value is null", CustomDataType2Str(type), key, value, bool2str(sendGui));
+            return qCritical("Nativelugin::setCustomData(\"%s\", \"%s\", \"%s\", %s) - value is null", type, key, value, bool2str(sendGui));
 
         if (descriptor && handle)
         {
@@ -408,6 +408,8 @@ public:
         qDebug("NativePlugin::reload() - start");
         CARLA_ASSERT(descriptor);
 
+        const ProcessMode processMode(x_engine->getOptions().processMode);
+
         // Safely disable plugin for reload
         const ScopedDisabler m(this);
 
@@ -434,7 +436,7 @@ public:
         bool forcedStereoIn, forcedStereoOut;
         forcedStereoIn = forcedStereoOut = false;
 
-        if (x_engine->forceStereo() && (aIns == 1 || aOuts == 1) && mIns <= 1 && mOuts <= 1 && ! h2)
+        if (x_engine->getOptions().forceStereo && (aIns == 1 || aOuts == 1) && mIns <= 1 && mOuts <= 1 && ! h2)
         {
             h2 = descriptor->instantiate(descriptor, &host);
 
@@ -489,7 +491,7 @@ public:
         // Audio Ins
         for (j=0; j < descriptor->audioIns; j++)
         {
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
                 sprintf(portName, "%s:input_%02i", m_name, j+1);
             else
                 sprintf(portName, "input_%02i", j+1);
@@ -508,7 +510,7 @@ public:
         // Audio Outs
         for (j=0; j < descriptor->audioOuts; j++)
         {
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
                 sprintf(portName, "%s:output_%02i", m_name, j+1);
             else
                 sprintf(portName, "output_%02i", j+1);
@@ -529,7 +531,7 @@ public:
         // MIDI Input
         for (j=0; j < mIns; j++)
         {
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
                 sprintf(portName, "%s:midi-in_%02i", m_name, j+1);
             else
                 sprintf(portName, "midi-in_%02i", j+1);
@@ -541,7 +543,7 @@ public:
         // MIDI Output
         for (j=0; j < mOuts; j++)
         {
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
                 sprintf(portName, "%s:midi-out_%02i", m_name, j+1);
             else
                 sprintf(portName, "midi-out_%02i", j+1);
@@ -660,7 +662,7 @@ public:
 
         if (needsCtrlIn)
         {
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-in");
@@ -673,7 +675,7 @@ public:
 
         if (needsCtrlOut)
         {
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 strcpy(portName, m_name);
                 strcat(portName, ":control-out");
@@ -771,7 +773,7 @@ public:
         }
         else
         {
-            x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
+            x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0, nullptr);
 
             // Check if current program is invalid
             bool programChanged = false;
@@ -825,25 +827,25 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Input VU
 
-        if (aIn.count > 0 && x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
+        if (aIn.count > 0 && x_engine->getOptions().processMode != PROCESS_MODE_CONTINUOUS_RACK)
         {
             if (aIn.count == 1)
             {
                 for (k=0; k < frames; k++)
                 {
-                    if (abs(inBuffer[0][k]) > aInsPeak[0])
-                        aInsPeak[0] = abs(inBuffer[0][k]);
+                    if (std::abs(inBuffer[0][k]) > aInsPeak[0])
+                        aInsPeak[0] = std::abs(inBuffer[0][k]);
                 }
             }
             else if (aIn.count > 1)
             {
                 for (k=0; k < frames; k++)
                 {
-                    if (abs(inBuffer[0][k]) > aInsPeak[0])
-                        aInsPeak[0] = abs(inBuffer[0][k]);
+                    if (std::abs(inBuffer[0][k]) > aInsPeak[0])
+                        aInsPeak[0] = std::abs(inBuffer[0][k]);
 
-                    if (abs(inBuffer[1][k]) > aInsPeak[1])
-                        aInsPeak[1] = abs(inBuffer[1][k]);
+                    if (std::abs(inBuffer[1][k]) > aInsPeak[1])
+                        aInsPeak[1] = std::abs(inBuffer[1][k]);
                 }
             }
         }
@@ -1270,12 +1272,12 @@ public:
                 }
 
                 // Output VU
-                if (x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
+                if (x_engine->getOptions().processMode != PROCESS_MODE_CONTINUOUS_RACK)
                 {
                     for (k=0; i < 2 && k < frames; k++)
                     {
-                        if (abs(outBuffer[i][k]) > aOutsPeak[i])
-                            aOutsPeak[i] = abs(outBuffer[i][k]);
+                        if (std::abs(outBuffer[i][k]) > aOutsPeak[i])
+                            aOutsPeak[i] = std::abs(outBuffer[i][k]);
                     }
                 }
             }
@@ -1547,12 +1549,13 @@ public:
 
         carla_register_native_plugin_bypass();
         carla_register_native_plugin_midiSplit();
+
+        carla_register_native_plugin_3BandEQ();
+        carla_register_native_plugin_3BandSplitter();
+
 #ifdef WANT_ZYNADDSUBFX
         carla_register_native_plugin_zynaddsubfx();
 #endif
-
-        //carla_register_native_plugin_3BandEQ();
-        //carla_register_native_plugin_3BandSplitter();
     }
 
     // -------------------------------------------------------------------
@@ -1662,7 +1665,7 @@ CarlaPlugin* CarlaPlugin::newNative(const initializer& init)
 
     plugin->reload();
 
-    if (init.engine->processMode() == PROCESS_MODE_CONTINUOUS_RACK)
+    if (init.engine->getOptions().processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
         {

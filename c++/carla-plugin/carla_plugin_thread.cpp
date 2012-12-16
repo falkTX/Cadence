@@ -122,13 +122,13 @@ void CarlaPluginThread::run()
             if (m_process->exitCode() == 0)
             {
                 // Hide
-                engine->callback(CarlaBackend::CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
+                engine->callback(CarlaBackend::CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0, nullptr);
                 qWarning("CarlaPluginThread::run() - GUI closed");
             }
             else
             {
                 // Kill
-                engine->callback(CarlaBackend::CALLBACK_SHOW_GUI, plugin->id(), -1, 0, 0.0);
+                engine->callback(CarlaBackend::CALLBACK_SHOW_GUI, plugin->id(), -1, 0, 0.0, nullptr);
                 qWarning("CarlaPluginThread::run() - GUI crashed");
                 break;
             }
@@ -136,7 +136,7 @@ void CarlaPluginThread::run()
         else
         {
             qDebug("CarlaPluginThread::run() - GUI timeout");
-            engine->callback(CarlaBackend::CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0);
+            engine->callback(CarlaBackend::CALLBACK_SHOW_GUI, plugin->id(), 0, 0, 0.0, nullptr);
         }
         break;
 
@@ -151,7 +151,7 @@ void CarlaPluginThread::run()
                                           "Saving now will lose its current settings.\n"
                                           "Please remove this plugin, and not rely on it from this point.").arg(plugin->name());
             engine->setLastError(errorString.toUtf8().constData());
-            engine->callback(CarlaBackend::CALLBACK_ERROR, plugin->id(), 0, 0, 0.0);
+            engine->callback(CarlaBackend::CALLBACK_ERROR, plugin->id(), 0, 0, 0.0, nullptr);
         }
 
         break;

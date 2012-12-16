@@ -616,11 +616,6 @@ public:
         return false;
     }
 
-    bool isOffline() const
-    {
-        return m_freewheel;
-    }
-
     bool isRunning() const
     {
 #ifdef BUILD_BRIDGE
@@ -628,6 +623,11 @@ public:
 #else
         return bool(m_client);
 #endif
+    }
+
+    bool isOffline() const
+    {
+        return m_freewheel;
     }
 
     CarlaEngineType type() const

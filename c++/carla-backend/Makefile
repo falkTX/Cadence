@@ -56,15 +56,15 @@ endif
 OBJS = \
 	carla_backend_standalone.o \
 
-# OBJS += ../carla-engine/carla_engine.a
-# OBJS += ../carla-plugin/carla_plugin.a
-# OBJS += ../carla-native/carla_native.a
-# 
-# # others
-# ifeq ($(CARLA_PLUGIN_SUPPORT),true)
-# OBJS += ../carla-lilv/carla_lilv.a
-# OBJS += ../carla-rtmempool/carla_rtmempool.a
-# endif
+OBJS += ../carla-engine/carla_engine.a
+OBJS += ../carla-plugin/carla_plugin.a
+OBJS += ../carla-native/carla_native.a
+
+# others
+ifeq ($(CARLA_PLUGIN_SUPPORT),true)
+OBJS += ../carla-lilv/carla_lilv.a
+OBJS += ../carla-rtmempool/carla_rtmempool.a
+endif
 
 # --------------------------------------------------------------
 

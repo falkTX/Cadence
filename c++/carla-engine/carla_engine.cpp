@@ -498,7 +498,7 @@ int CarlaEngine::maxPortNameSize()
     return STR_MAX;
 }
 
-unsigned short CarlaEngine::maxPluginNumber()
+unsigned short CarlaEngine::maxPluginNumber() const
 {
     return m_maxPluginNumber;
 }
@@ -1248,7 +1248,11 @@ void CarlaEngine::bufferSizeChanged(const uint32_t newBufferSize)
 // -------------------------------------------------------------------------------------------------------------------
 // Carla Engine OSC stuff
 
+#ifdef BUILD_BRIDGE
+void CarlaEngine::osc_send_peaks(CarlaPlugin* const plugin)
+#else
 void CarlaEngine::osc_send_peaks(CarlaPlugin* const plugin, const unsigned short& id)
+#endif
 {
     // Peak values
     if (plugin->audioInCount() > 0)

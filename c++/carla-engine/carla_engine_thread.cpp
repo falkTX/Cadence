@@ -129,7 +129,13 @@ void CarlaEngineThread::run()
                 // Update OSC control client peaks
 
                 if (oscControlRegisted)
+                {
+#ifdef BUILD_BRIDGE
+                    engine->osc_send_peaks(plugin);
+#else
                     engine->osc_send_peaks(plugin, id);
+#endif
+                }
             }
         }
 

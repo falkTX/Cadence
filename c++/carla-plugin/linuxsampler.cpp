@@ -264,6 +264,8 @@ public:
         qDebug("LinuxSamplerPlugin::reload() - start");
         CARLA_ASSERT(instrument);
 
+        const ProcessMode processMode(x_engine->getOptions().processMode);
+
         // Safely disable plugin for reload
         const ScopedDisabler m(this);
 
@@ -291,7 +293,7 @@ public:
         {
             portName.clear();
 
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
@@ -307,7 +309,7 @@ public:
         {
             portName.clear();
 
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
@@ -326,7 +328,7 @@ public:
         {
             portName.clear();
 
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
@@ -344,7 +346,7 @@ public:
         {
             portName.clear();
 
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
@@ -428,7 +430,7 @@ public:
         }
         else
         {
-            x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0);
+            x_engine->callback(CALLBACK_RELOAD_PROGRAMS, m_id, 0, 0, 0.0, nullptr);
         }
     }
 
@@ -796,12 +798,12 @@ public:
                 }
 
                 // Output VU
-                if (x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
+                if (x_engine->getOptions().processMode != PROCESS_MODE_CONTINUOUS_RACK)
                 {
                     for (k=0; i < 2 && k < frames; k++)
                     {
-                        if (abs(outBuffer[i][k]) > aOutsPeak[i])
-                            aOutsPeak[i] = abs(outBuffer[i][k]);
+                        if (std::abs(outBuffer[i][k]) > aOutsPeak[i])
+                            aOutsPeak[i] = std::abs(outBuffer[i][k]);
                     }
                 }
             }

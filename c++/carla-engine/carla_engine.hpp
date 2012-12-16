@@ -521,12 +521,6 @@ class CarlaEngine
 {
 public:
     /*!
-     * The contructor.\n
-     * \note This only initializes engine data, it doesn't initialize the engine itself.
-     */
-    CarlaEngine();
-
-    /*!
      * The decontructor.
      * The engine must have been closed before this happens.
      */
@@ -549,49 +543,121 @@ public:
     /*!
      * Get the name of the engine driver at \a index.
      */
-    static const char*  getDriverName(unsigned int index);
+    static const char* getDriverName(unsigned int index);
 
     /*!
-     * Create a new engine, using driver \a driverName.
+     * Create a new engine, using driver \a driverName.\n
+     * Returned variable must be deleted when no longer needed.
      */
     static CarlaEngine* newDriverByName(const char* const driverName);
 
     // -------------------------------------------------------------------
     // Maximum values
 
+    /*!
+     * Maximum client name size.
+     */
     virtual int maxClientNameSize();
+
+    /*!
+     * Maximum port name size.
+     */
     virtual int maxPortNameSize();
-    unsigned short maxPluginNumber();
+
+    /*!
+     * Maximum number of loadable plugins.
+     * \note This function returns 0 if no engine is not started.
+     */
+    unsigned short maxPluginNumber() const;
 
     // -------------------------------------------------------------------
     // Virtual, per-engine type calls
 
+    /*!
+     * Initialize engine, using \a clientName.
+     */
     virtual bool init(const char* const clientName);
+
+    /*!
+     * Close engine.
+     */
     virtual bool close();
-    virtual bool isOffline() const = 0;
+
+    /*!
+     * Check if engine is running.
+     */
     virtual bool isRunning() const = 0;
 
+    /*!
+     * Check if engine is running offline (aka freewheel mode).
+     */
+    virtual bool isOffline() const = 0;
+
+    /*!
+     * Get engine type.
+     */
     virtual CarlaEngineType type() const = 0;
+
+    /*!
+     * Add new engine client.
+     * \note This must only be called within a plugin class.
+     */
     virtual CarlaEngineClient* addClient(CarlaPlugin* const plugin) = 0;
 
     // -------------------------------------------------------------------
     // Plugin management
 
-    short        getNewPluginId() const;
-    CarlaPlugin* getPlugin(const unsigned short id) const;
-    CarlaPlugin* getPluginUnchecked(const unsigned short id) const;
-    const char*  getUniquePluginName(const char* const name);
+    /*!
+     * Get next available plugin id.\n
+     * Returns -1 if no more plugins can be loaded.
+     */
+    short getNewPluginId() const;
 
+    /*!
+     * Get plugin with id \a id.
+     */
+    CarlaPlugin* getPlugin(const unsigned short id) const;
+
+    /*!
+     * Get plugin with id \a id, faster unchecked version.
+     */
+    CarlaPlugin* getPluginUnchecked(const unsigned short id) const;
+
+    /*!
+     * Get a unique plugin name within the engine.\n
+     * Returned variable must be free'd when no longer needed.
+     */
+    const char* getUniquePluginName(const char* const name);
+
+    /*!
+     * Add new plugin.\n
+     * Returns the id of the plugin, or -1 if the operation failed.
+     */
     short addPlugin(const BinaryType btype, const PluginType ptype, const char* const filename, const char* const name, const char* const label, void* const extra = nullptr);
+
+    /*!
+     * Add new plugin, using native binary type.\n
+     * Returns the id of the plugin, or -1 if the operation failed.
+     */
     short addPlugin(const PluginType ptype, const char* const filename, const char* const name, const char* const label, void* const extra = nullptr);
-    bool  removePlugin(const unsigned short id);
-    void  removeAllPlugins();
-    void  idlePluginGuis();
-#ifndef BUILD_BRIDGE
-    void  processRack(float* inBuf[2], float* outBuf[2], const uint32_t frames);
-#endif
+
+    /*!
+     * Remove plugin with id \a id.
+     */
+    bool removePlugin(const unsigned short id);
+
+    /*!
+     * Remove all plugins.
+     */
+    void removeAllPlugins();
+
+    /*!
+     * Idle all plugins GUIs.
+     */
+    void idlePluginGuis();
 
     // bridge, internal use only
+    // TODO - find a better way for this
     void __bridgePluginRegister(const unsigned short id, CarlaPlugin* const plugin)
     {
         m_carlaPlugins[id] = plugin;
@@ -600,11 +666,30 @@ public:
     // -------------------------------------------------------------------
     // Information (base)
 
+    /*!
+     * Get engine name.
+     */
     const char* getName() const;
-    double   getSampleRate() const;
+
+    /*!
+     * Get current sample rate.
+     */
+    double getSampleRate() const;
+
+    /*!
+     * Get current buffer size.
+     */
     uint32_t getBufferSize() const;
+
+    /*!
+     * Get current Time information.
+     */
     const CarlaEngineTimeInfo* getTimeInfo() const;
 
+    /*!
+     * Tell the engine it's about to close.\n
+     * This is used to prevent the engine thread from reactivating.
+     */
     void aboutToClose();
 
     // -------------------------------------------------------------------
@@ -624,78 +709,127 @@ public:
     // -------------------------------------------------------------------
     // Error handling
 
+    /*!
+     * Get last error.
+     */
     const char* getLastError() const;
+
+    /*!
+     * Set last error.
+     */
     void setLastError(const char* const error);
 
 #ifndef BUILD_BRIDGE
     // -------------------------------------------------------------------
     // Options
 
-    void setOption(const OptionsType option, const int value, const char* const valueStr);
-
+    /*!
+     * Get the engine options (read-only).
+     */
     const CarlaEngineOptions& getOptions() const
     {
         return options;
     }
 
-    ProcessMode processMode() const
-    {
-        return options.processMode;
-    }
+    /*!
+     * Set the engine option \a option.
+     */
+    void setOption(const OptionsType option, const int value, const char* const valueStr);
 
-    bool processHighPrecision() const
-    {
-        return options.processHighPrecision;
-    }
+//    ProcessMode processMode() const
+//    {
+//        return options.processMode;
+//    }
 
-    uint maxParameters() const
-    {
-        return options.maxParameters;
-    }
+//    bool processHighPrecision() const
+//    {
+//        return options.processHighPrecision;
+//    }
 
-    bool forceStereo() const
-    {
-        return options.forceStereo;
-    }
+//    uint maxParameters() const
+//    {
+//        return options.maxParameters;
+//    }
 
-    bool useDssiVstChunks() const
-    {
-        return options.useDssiVstChunks;
-    }
+//    bool forceStereo() const
+//    {
+//        return options.forceStereo;
+//    }
 
-    bool preferUiBridges() const
-    {
-        return options.preferUiBridges;
-    }
+//    bool useDssiVstChunks() const
+//    {
+//        return options.useDssiVstChunks;
+//    }
 
-    uint oscUiTimeout() const
-    {
-        return options.oscUiTimeout;
-    }
+//    bool preferUiBridges() const
+//    {
+//        return options.preferUiBridges;
+//    }
+
+//    uint oscUiTimeout() const
+//    {
+//        return options.oscUiTimeout;
+//    }
 #endif
 
     // -------------------------------------------------------------------
     // Mutex locks
 
+    /*!
+     * Lock processing.
+     */
     void processLock();
+
+    /*!
+     * Unlock processing.
+     */
     void processUnlock();
+
+    /*!
+     * Lock MIDI.
+     */
     void midiLock();
+
+    /*!
+     * Unlock MIDI.
+     */
     void midiUnlock();
 
     // -------------------------------------------------------------------
     // OSC Stuff
 
+    /*!
+     * Check if OSC controller is registered.
+     */
     bool isOscControlRegisted() const;
 
 #ifndef BUILD_BRIDGE
+    /*!
+     * Idle OSC.
+     */
     bool idleOsc();
+
+    /*!
+     * Get OSC TCP server path.
+     */
     const char* getOscServerPathTCP() const;
+
+    /*!
+     * Get OSC UDP server path.
+     */
     const char* getOscServerPathUDP() const;
 #else
+    /*!
+     * Set OSC bridge data.
+     */
     void setOscBridgeData(const CarlaOscData* const oscData);
 #endif
 
+#ifdef BUILD_BRIDGE
+    void osc_send_peaks(CarlaPlugin* const plugin);
+#else
     void osc_send_peaks(CarlaPlugin* const plugin, const unsigned short& id);
+#endif
 
 #ifdef BUILD_BRIDGE
     void osc_send_bridge_audio_count(const int32_t ins, const int32_t outs, const int32_t total);
@@ -796,6 +930,19 @@ public:
     // -------------------------------------
 
 protected:
+    /*!
+     * The contructor, protected.\n
+     * \note This only initializes engine data, it doesn't initialize the engine itself.
+     */
+    CarlaEngine();
+
+#ifndef BUILD_BRIDGE
+    /*!
+     * Proccess audio buffer in rack mode, protected.
+     */
+    void processRack(float* inBuf[2], float* outBuf[2], const uint32_t frames);
+#endif
+
 #ifndef BUILD_BRIDGE
     CarlaEngineOptions options;
 #endif
@@ -809,16 +956,15 @@ protected:
 
 private:
     CarlaEngineThread m_thread;
-
 #ifndef BUILD_BRIDGE
     CarlaEngineOsc m_osc;
 #endif
+
     const CarlaOscData* m_oscData;
 
     CallbackFunc m_callback;
     void*        m_callbackPtr;
-
-    CarlaString m_lastError;
+    CarlaString  m_lastError;
 
     QMutex m_procLock;
     QMutex m_midiLock;

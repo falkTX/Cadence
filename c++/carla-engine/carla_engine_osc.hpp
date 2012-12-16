@@ -18,6 +18,10 @@
 #ifndef CARLA_ENGINE_OSC_HPP
 #define CARLA_ENGINE_OSC_HPP
 
+#ifdef BUILD_BRIDGE
+# error Bad use of file! This should never be used in bridge builds
+#endif
+
 #include "carla_backend.hpp"
 #include "carla_osc_utils.hpp"
 
@@ -77,12 +81,12 @@ public:
 
     const char* getServerPathTCP() const
     {
-        return m_serverPathTCP;
+        return (const char*)m_serverPathTCP;
     }
 
     const char* getServerPathUDP() const
     {
-        return m_serverPathUDP;
+        return (const char*)m_serverPathUDP;
     }
 
     // -------------------------------------------------------------------

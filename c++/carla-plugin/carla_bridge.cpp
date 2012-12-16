@@ -313,7 +313,8 @@ public:
             }
 
             // create new if needed
-            param.count = (pTotal < (int32_t)x_engine->maxParameters()) ? pTotal : 0;
+            const int32_t maxParams = x_engine->getOptions().maxParameters;
+            param.count = (pTotal < maxParams) ? pTotal : 0;
 
             if (param.count > 0)
             {
@@ -580,7 +581,7 @@ public:
             }
             else if (strcmp(key, CARLA_BRIDGE_MSG_HIDE_GUI) == 0)
             {
-                x_engine->callback(CALLBACK_SHOW_GUI, m_id, 0, 0, 0.0);
+                x_engine->callback(CALLBACK_SHOW_GUI, m_id, 0, 0, 0.0, nullptr);
             }
             else if (strcmp(key, CARLA_BRIDGE_MSG_SAVED) == 0)
             {
@@ -649,15 +650,15 @@ public:
         {
             CARLA_BRIDGE_CHECK_OSC_TYPES(3, "sss");
 
-            const char* const stype = (const char*)&argv[0]->s;
+            const char* const type  = (const char*)&argv[0]->s;
             const char* const key   = (const char*)&argv[1]->s;
             const char* const value = (const char*)&argv[2]->s;
 
-            CARLA_ASSERT(stype);
+            CARLA_ASSERT(type);
             CARLA_ASSERT(key);
             CARLA_ASSERT(value);
 
-            setCustomData(getCustomDataStringType(stype), key, value, false);
+            setCustomData(type, key, value, false);
 
             break;
         }
@@ -751,9 +752,9 @@ public:
         CarlaPlugin::setParameterValue(parameterId, value, sendGui, sendOsc, sendCallback);
     }
 
-    void setCustomData(const CustomDataType type, const char* const key, const char* const value, const bool sendGui)
+    void setCustomData(const char* const type, const char* const key, const char* const value, const bool sendGui)
     {
-        CARLA_ASSERT(type != CUSTOM_DATA_INVALID);
+        CARLA_ASSERT(type);
         CARLA_ASSERT(key);
         CARLA_ASSERT(value);
 
@@ -761,7 +762,7 @@ public:
         {
             // TODO - if type is chunk|binary, store it in a file and send path instead
             QString cData;
-            cData  = getCustomDataTypeString(type);
+            cData  = type;
             cData += "·";
             cData += key;
             cData += "·";

@@ -98,7 +98,7 @@ public:
                     if (osc.thread)
                     {
                         // Wait a bit first, try safe quit, then force kill
-                        if (osc.thread->isRunning() && ! osc.thread->wait(x_engine->oscUiTimeout() * 100))
+                        if (osc.thread->isRunning() && ! osc.thread->wait(x_engine->getOptions().oscUiTimeout * 100))
                         {
                             qWarning("Failed to properly stop VST OSC GUI thread");
                             osc.thread->terminate();
@@ -473,6 +473,10 @@ public:
         qDebug("VstPlugin::reload() - start");
         CARLA_ASSERT(effect);
 
+#ifndef BUILD_BRIDGE
+        const ProcessMode processMode(x_engine->getOptions().processMode);
+#endif
+
         // Safely disable plugin for reload
         const ScopedDisabler m(this);
 
@@ -527,7 +531,7 @@ public:
             portName.clear();
 
 #ifndef BUILD_BRIDGE
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
@@ -547,7 +551,7 @@ public:
             portName.clear();
 
 #ifndef BUILD_BRIDGE
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
@@ -681,7 +685,7 @@ public:
             portName.clear();
 
 #ifndef BUILD_BRIDGE
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
@@ -698,7 +702,7 @@ public:
             portName.clear();
 
 #ifndef BUILD_BRIDGE
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
@@ -715,7 +719,7 @@ public:
             portName.clear();
 
 #ifndef BUILD_BRIDGE
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
@@ -914,7 +918,7 @@ public:
         // Input VU
 
 #ifndef BUILD_BRIDGE
-        if (aIn.count > 0 && x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
+        if (aIn.count > 0 && x_engine->getOptions().processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #else
         if (aIn.count > 0)
 #endif
@@ -923,19 +927,19 @@ public:
             {
                 for (k=0; k < frames; k++)
                 {
-                    if (abs(inBuffer[0][k]) > aInsPeak[0])
-                        aInsPeak[0] = abs(inBuffer[0][k]);
+                    if (std::abs(inBuffer[0][k]) > aInsPeak[0])
+                        aInsPeak[0] = std::abs(inBuffer[0][k]);
                 }
             }
             else if (aIn.count > 1)
             {
                 for (k=0; k < frames; k++)
                 {
-                    if (abs(inBuffer[0][k]) > aInsPeak[0])
-                        aInsPeak[0] = abs(inBuffer[0][k]);
+                    if (std::abs(inBuffer[0][k]) > aInsPeak[0])
+                        aInsPeak[0] = std::abs(inBuffer[0][k]);
 
-                    if (abs(inBuffer[1][k]) > aInsPeak[1])
-                        aInsPeak[1] = abs(inBuffer[1][k]);
+                    if (std::abs(inBuffer[1][k]) > aInsPeak[1])
+                        aInsPeak[1] = std::abs(inBuffer[1][k]);
                 }
             }
         }
@@ -1368,13 +1372,13 @@ public:
 
                 // Output VU
 #ifndef BUILD_BRIDGE
-                if (x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
+                if (x_engine->getOptions().processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #endif
                 {
                     for (k=0; i < 2 && k < frames; k++)
                     {
-                        if (abs(outBuffer[i][k]) > aOutsPeak[i])
-                            aOutsPeak[i] = abs(outBuffer[i][k]);
+                        if (std::abs(outBuffer[i][k]) > aOutsPeak[i])
+                            aOutsPeak[i] = std::abs(outBuffer[i][k]);
                     }
                 }
             }
@@ -1624,7 +1628,7 @@ public:
             return 1;
 
 #ifndef BUILD_BRIDGE
-        if (x_engine->processMode() == PROCESS_MODE_CONTINUOUS_RACK)
+        if (x_engine->getOptions().processMode == PROCESS_MODE_CONTINUOUS_RACK)
         {
             qCritical("VstPlugin::handleAudioMasterIOChanged() - plugin asked IO change, but it's not supported in rack mode");
             return 0;
@@ -2425,7 +2429,7 @@ CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
     plugin->reload();
 
 #  ifndef BUILD_BRIDGE
-    if (init.engine->processMode() == PROCESS_MODE_CONTINUOUS_RACK)
+    if (init.engine->getOptions().processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
         {

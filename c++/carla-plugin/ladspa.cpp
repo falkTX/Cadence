@@ -338,6 +338,10 @@ public:
         qDebug("LadspaPlugin::reload() - start");
         CARLA_ASSERT(descriptor);
 
+#ifndef BUILD_BRIDGE
+        const ProcessMode processMode(x_engine->getOptions().processMode);
+#endif
+
         // Safely disable plugin for reload
         const ScopedDisabler m(this);
 
@@ -375,7 +379,7 @@ public:
         }
 
 #ifndef BUILD_BRIDGE
-        if (x_engine->forceStereo() && (aIns == 1 || aOuts == 1) && ! h2)
+        if (x_engine->getOptions().forceStereo && (aIns == 1 || aOuts == 1) && ! h2)
         {
             h2 = descriptor->instantiate(descriptor, sampleRate);
 
@@ -429,7 +433,7 @@ public:
                 portName.clear();
 
 #ifndef BUILD_BRIDGE
-                if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+                if (processMode == PROCESS_MODE_SINGLE_CLIENT)
                 {
                     portName  = m_name;
                     portName += ":";
@@ -623,7 +627,7 @@ public:
             portName.clear();
 
 #ifndef BUILD_BRIDGE
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
@@ -640,7 +644,7 @@ public:
             portName.clear();
 
 #ifndef BUILD_BRIDGE
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
@@ -745,7 +749,7 @@ public:
         // Input VU
 
 #ifndef BUILD_BRIDGE
-        if (aIn.count > 0 && x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
+        if (aIn.count > 0 && x_engine->getOptions().processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #else
         if (aIn.count > 0)
 #endif
@@ -754,19 +758,19 @@ public:
             {
                 for (k=0; k < frames; k++)
                 {
-                    if (abs(inBuffer[0][k]) > aInsPeak[0])
-                        aInsPeak[0] = abs(inBuffer[0][k]);
+                    if (std::abs(inBuffer[0][k]) > aInsPeak[0])
+                        aInsPeak[0] = std::abs(inBuffer[0][k]);
                 }
             }
             else if (aIn.count > 1)
             {
                 for (k=0; k < frames; k++)
                 {
-                    if (abs(inBuffer[0][k]) > aInsPeak[0])
-                        aInsPeak[0] = abs(inBuffer[0][k]);
+                    if (std::abs(inBuffer[0][k]) > aInsPeak[0])
+                        aInsPeak[0] = std::abs(inBuffer[0][k]);
 
-                    if (abs(inBuffer[1][k]) > aInsPeak[1])
-                        aInsPeak[1] = abs(inBuffer[1][k]);
+                    if (std::abs(inBuffer[1][k]) > aInsPeak[1])
+                        aInsPeak[1] = std::abs(inBuffer[1][k]);
                 }
             }
         }
@@ -1042,7 +1046,7 @@ public:
 
                 // Output VU
 #ifndef BUILD_BRIDGE
-                if (x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
+                if (x_engine->getOptions().processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #endif
                 {
                     for (k=0; i < 2 && k < frames; k++)
@@ -1247,7 +1251,7 @@ CarlaPlugin* CarlaPlugin::newLADSPA(const initializer& init, const void* const e
     plugin->reload();
 
 # ifndef BUILD_BRIDGE
-    if (init.engine->processMode() == PROCESS_MODE_CONTINUOUS_RACK)
+    if (init.engine->getOptions().processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
         {

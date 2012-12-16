@@ -345,7 +345,7 @@ public:
                 if (osc.thread)
                 {
                     // Wait a bit first, try safe quit, then force kill
-                    if (osc.thread->isRunning() && ! osc.thread->wait(x_engine->oscUiTimeout() * 100))
+                    if (osc.thread->isRunning() && ! osc.thread->wait(x_engine->getOptions().oscUiTimeout * 100))
                     {
                         qWarning("Failed to properly stop LV2 OSC GUI thread");
                         osc.thread->terminate();
@@ -433,7 +433,7 @@ public:
             delete (LV2_Worker_Schedule*)features[lv2_feature_id_worker]->data;
 
 #ifndef BUILD_BRIDGE
-        if (! x_engine->processHighPrecision())
+        if (! x_engine->getOptions().processHighPrecision)
 #endif
         {
             features[lv2_feature_id_bufsize_fixed]    = nullptr;
@@ -1113,6 +1113,10 @@ public:
         qDebug("Lv2Plugin::reload() - start");
         CARLA_ASSERT(descriptor && rdf_descriptor);
 
+#ifndef BUILD_BRIDGE
+        const ProcessMode processMode(x_engine->getOptions().processMode);
+#endif
+
         // Safely disable plugin for reload
         const ScopedDisabler m(this);
 
@@ -1196,7 +1200,7 @@ public:
         }
 
 #ifndef BUILD_BRIDGE
-        if (x_engine->forceStereo() && (aIns == 1 || aOuts == 1) && ! (h2 || ext.state || ext.worker))
+        if (x_engine->getOptions().forceStereo && (aIns == 1 || aOuts == 1) && ! (h2 || ext.state || ext.worker))
         {
             h2 = descriptor->instantiate(descriptor, sampleRate, rdf_descriptor->Bundle, features);
 
@@ -1316,7 +1320,7 @@ public:
                 portName.clear();
 
 #ifndef BUILD_BRIDGE
-                if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+                if (processMode == PROCESS_MODE_SINGLE_CLIENT)
                 {
                     portName  = m_name;
                     portName += ":";
@@ -1699,7 +1703,7 @@ public:
             portName.clear();
 
 #ifndef BUILD_BRIDGE
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
@@ -1716,7 +1720,7 @@ public:
             portName.clear();
 
 #ifndef BUILD_BRIDGE
-            if (x_engine->processMode() == PROCESS_MODE_SINGLE_CLIENT)
+            if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
@@ -1991,7 +1995,7 @@ public:
         // Input VU
 
 #ifndef BUILD_BRIDGE
-        if (aIn.count > 0 && x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
+        if (aIn.count > 0 && x_engine->getOptions().processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #else
         if (aIn.count > 0)
 #endif
@@ -2000,19 +2004,19 @@ public:
             {
                 for (k=0; k < frames; k++)
                 {
-                    if (abs(inBuffer[0][k]) > aInsPeak[0])
-                        aInsPeak[0] = abs(inBuffer[0][k]);
+                    if (std::abs(inBuffer[0][k]) > aInsPeak[0])
+                        aInsPeak[0] = std::abs(inBuffer[0][k]);
                 }
             }
             else if (aIn.count > 1)
             {
                 for (k=0; k < frames; k++)
                 {
-                    if (abs(inBuffer[0][k]) > aInsPeak[0])
-                        aInsPeak[0] = abs(inBuffer[0][k]);
+                    if (std::abs(inBuffer[0][k]) > aInsPeak[0])
+                        aInsPeak[0] = std::abs(inBuffer[0][k]);
 
-                    if (abs(inBuffer[1][k]) > aInsPeak[1])
-                        aInsPeak[1] = abs(inBuffer[1][k]);
+                    if (std::abs(inBuffer[1][k]) > aInsPeak[1])
+                        aInsPeak[1] = std::abs(inBuffer[1][k]);
                 }
             }
         }
@@ -2669,13 +2673,13 @@ public:
 
                 // Output VU
 #ifndef BUILD_BRIDGE
-                if (x_engine->processMode() != PROCESS_MODE_CONTINUOUS_RACK)
+                if (x_engine->getOptions().processMode != PROCESS_MODE_CONTINUOUS_RACK)
 #endif
                 {
                     for (k=0; i < 2 && k < frames; k++)
                     {
-                        if (abs(outBuffer[i][k]) > aOutsPeak[i])
-                            aOutsPeak[i] = abs(outBuffer[i][k]);
+                        if (std::abs(outBuffer[i][k]) > aOutsPeak[i])
+                            aOutsPeak[i] = std::abs(outBuffer[i][k]);
                     }
                 }
             }
@@ -3966,7 +3970,7 @@ public:
         features[lv2_feature_id_bufsize_bounded]->data = nullptr;
 
 #ifndef BUILD_BRIDGE
-        if (x_engine->processHighPrecision())
+        if (x_engine->getOptions().processHighPrecision)
         {
             features[lv2_feature_id_bufsize_fixed]          = new LV2_Feature;
             features[lv2_feature_id_bufsize_fixed]->URI     = LV2_BUF_SIZE__fixedBlockLength;
@@ -4193,13 +4197,17 @@ public:
         int eQt4, eCocoa, eHWND, eX11, eGtk2, eGtk3, iCocoa, iHWND, iX11, iQt4, iExt, iSuil, iFinal;
         eQt4 = eCocoa = eHWND = eX11 = eGtk2 = eGtk3 = iQt4 = iCocoa = iHWND = iX11 = iExt = iSuil = iFinal = -1;
 
+#ifndef BUILD_BRIDGE
+        const bool preferUiBridges = x_engine->getOptions().preferUiBridges;
+#endif
+
         for (uint32_t i=0; i < rdf_descriptor->UICount; i++)
         {
             switch (rdf_descriptor->UIs[i].Type)
             {
             case LV2_UI_QT4:
 #ifndef BUILD_BRIDGE
-                if (isUiBridgeable(i) && x_engine->preferUiBridges())
+                if (isUiBridgeable(i) && preferUiBridges)
                     eQt4 = i;
 #endif
                 iQt4 = i;
@@ -4207,7 +4215,7 @@ public:
 
             case LV2_UI_COCOA:
 #ifndef BUILD_BRIDGE
-                if (isUiBridgeable(i) && x_engine->preferUiBridges())
+                if (isUiBridgeable(i) && preferUiBridges)
                     eCocoa = i;
 #endif
                 iCocoa = i;
@@ -4215,7 +4223,7 @@ public:
 
             case LV2_UI_WINDOWS:
 #ifndef BUILD_BRIDGE
-                if (isUiBridgeable(i) && x_engine->preferUiBridges())
+                if (isUiBridgeable(i) && preferUiBridges)
                     eHWND = i;
 #endif
                 iHWND = i;
@@ -4223,7 +4231,7 @@ public:
 
             case LV2_UI_X11:
 #ifndef BUILD_BRIDGE
-                if (isUiBridgeable(i) && x_engine->preferUiBridges())
+                if (isUiBridgeable(i) && preferUiBridges)
                     eX11 = i;
 #endif
                 iX11 = i;
@@ -4234,7 +4242,7 @@ public:
                 if (false)
 #else
 # ifdef WANT_SUIL
-                if (isUiBridgeable(i) && x_engine->preferUiBridges())
+                if (isUiBridgeable(i) && preferUiBridges)
 # else
                 if (isUiBridgeable(i))
 # endif
@@ -4668,7 +4676,7 @@ CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
     plugin->reload();
 
 # ifndef BUILD_BRIDGE
-    if (init.engine->processMode() == PROCESS_MODE_CONTINUOUS_RACK)
+    if (init.engine->getOptions().processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
         {
