@@ -305,6 +305,7 @@ install:
 		c++/jackmeter/cadence-jackmeter \
 		c++/xycontroller/cadence-xycontroller \
 		$(DESTDIR)$(PREFIX)/bin/
+#		data/cadence-cpufreq
 
 	# Install desktop files
 	install -m 644 data/*.desktop $(DESTDIR)$(PREFIX)/share/applications/
@@ -388,6 +389,7 @@ install:
 		$(DESTDIR)$(PREFIX)/bin/carla \
 		$(DESTDIR)$(PREFIX)/bin/carla-control \
 		$(X11_RC_DIR)/99cadence-session-start
+#		$(DESTDIR)$(PREFIX)/bin/cadence-cpufreq
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/cadence*

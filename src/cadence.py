@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# ...
+# Cadence, JACK utilities
 # Copyright (C) 2010-2012 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
@@ -727,8 +727,16 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.m_availGovPath = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors"
         self.m_curGovPath   = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
         self.m_curGovPaths  = []
+        self.m_curGovCPUs   = []
 
-        if os.path.exists(self.m_availGovPath) and os.path.exists(self.m_curGovPath):
+        try:
+            fBus   = dbus.SystemBus(mainloop=DBus.loop)
+            fProxy = fBus.get_object("com.ubuntu.IndicatorCpufreqSelector", "/Selector", introspect=False)
+            haveFreqSelector = True
+        except:
+            haveFreqSelector = False
+
+        if haveFreqSelector and os.path.exists(self.m_availGovPath) and os.path.exists(self.m_curGovPath):
             self.m_govWatcher = QFileSystemWatcher(self)
             self.m_govWatcher.addPath(self.m_curGovPath)
             self.connect(self.m_govWatcher, SIGNAL("fileChanged(const QString&)"), SLOT("slot_governorFileChanged()"))
@@ -751,6 +759,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
                     if os.path.exists(cpuGovPath):
                         self.m_curGovPaths.append(cpuGovPath)
+                        self.m_curGovCPUs.append(int(dir_.replace("cpu", "", 1)))
 
             self.cb_cpufreq.setCurrentIndex(-1)
 
@@ -1640,7 +1649,11 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot(str)
     def slot_changeGovernorMode(self, newMode):
-        print(newMode)
+        bus   = dbus.SystemBus(mainloop=DBus.loop)
+        #proxy = bus.get_object("org.cadence.CpufreqSelector", "/Selector", introspect=False)
+        #print(proxy.hello())
+        proxy = bus.get_object("com.ubuntu.IndicatorCpufreqSelector", "/Selector", introspect=False)
+        proxy.SetGovernor(self.m_curGovCPUs, newMode, dbus_interface="com.ubuntu.IndicatorCpufreqSelector")
 
     @pyqtSlot()
     def slot_governorFileChanged(self):
