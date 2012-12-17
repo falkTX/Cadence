@@ -18,7 +18,7 @@
 
 # Imports (Global)
 from platform import architecture
-from PyQt4.QtCore import QThread
+from PyQt4.QtCore import QFileSystemWatcher, QThread
 from PyQt4.QtGui import QApplication, QLabel, QMainWindow, QSizePolicy
 from subprocess import getoutput
 
@@ -720,6 +720,44 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.label_info_os.setText(info[0])
         self.label_info_version.setText(info[1])
         self.label_info_arch.setText(get_architecture())
+
+        # -------------------------------------------------------------
+        # Set-up GUI (System Status)
+
+        self.m_availGovPath = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors"
+        self.m_curGovPath   = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
+        self.m_curGovPaths  = []
+
+        if os.path.exists(self.m_availGovPath) and os.path.exists(self.m_curGovPath):
+            self.m_govWatcher = QFileSystemWatcher(self)
+            self.m_govWatcher.addPath(self.m_curGovPath)
+            self.connect(self.m_govWatcher, SIGNAL("fileChanged(const QString&)"), SLOT("slot_governorFileChanged()"))
+            QTimer.singleShot(0, self, SLOT("slot_governorFileChanged()"))
+
+            availGovFd   = open(self.m_availGovPath, "r")
+            availGovRead = availGovFd.read().strip()
+            availGovFd.close()
+
+            self.m_availGovList = availGovRead.split(" ")
+            for availGov in self.m_availGovList:
+                self.cb_cpufreq.addItem(availGov)
+
+            for root, dirs, files in os.walk("/sys/devices/system/cpu/"):
+                for dir_ in [dir_ for dir_ in dirs if dir_.startswith("cpu")]:
+                    if not dir_.replace("cpu", "", 1).isdigit():
+                        continue
+
+                    cpuGovPath = os.path.join(root, dir_, "cpufreq", "scaling_governor")
+
+                    if os.path.exists(cpuGovPath):
+                        self.m_curGovPaths.append(cpuGovPath)
+
+            self.cb_cpufreq.setCurrentIndex(-1)
+
+        else:
+            self.m_govWatcher = None
+            self.cb_cpufreq.setEnabled(False)
+            self.label_cpufreq.setEnabled(False)
 
         # -------------------------------------------------------------
         # Set-up GUI (System Checks)
@@ -1599,6 +1637,38 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
     @pyqtSlot()
     def slot_handleCrash_a2j(self):
         pass
+
+    @pyqtSlot(str)
+    def slot_changeGovernorMode(self, newMode):
+        print(newMode)
+
+    @pyqtSlot()
+    def slot_governorFileChanged(self):
+        curGovFd   = open(self.m_curGovPath, "r")
+        curGovRead = curGovFd.read().strip()
+        curGovFd.close()
+
+        customTr = self.tr("Custom")
+
+        if self.cb_cpufreq.currentIndex() == -1:
+            # First init
+            self.connect(self.cb_cpufreq, SIGNAL("currentIndexChanged(QString)"), SLOT("slot_changeGovernorMode(QString)"))
+
+        self.cb_cpufreq.blockSignals(True)
+
+        if curGovRead in self.m_availGovList:
+            self.cb_cpufreq.setCurrentIndex(self.m_availGovList.index(curGovRead))
+
+            if customTr in self.m_availGovList:
+                self.m_availGovList.remove(customTr)
+        else:
+            if customTr not in self.m_availGovList:
+                self.cb_cpufreq.addItem(customTr)
+                self.m_availGovList.append(customTr)
+
+            self.cb_cpufreq.setCurrentIndex(len(self.m_availGovList)-1)
+
+        self.cb_cpufreq.blockSignals(False)
 
     @pyqtSlot()
     def slot_tweaksApply(self):
