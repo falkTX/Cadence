@@ -769,7 +769,7 @@ public:
     /*!
      * Idle OSC.
      */
-    bool idleOsc();
+    void idleOsc();
 
     /*!
      * Get OSC TCP server path.

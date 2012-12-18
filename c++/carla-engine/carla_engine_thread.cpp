@@ -143,8 +143,8 @@ void CarlaEngineThread::run()
             }
         }
 
-        if (! engine->idleOsc())
-            msleep(50);
+        engine->idleOsc();
+        msleep(oscRegisted ? 40 : 50);
     }
 }
 

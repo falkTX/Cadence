@@ -37,11 +37,16 @@
 static int    qargc     = 0;
 static char** qargv     = nullptr;
 static bool   qCloseNow = false;
+static bool   qSaveNow  = false;
 
-#if defined(Q_OS_UNIX)
+#if defined(Q_OS_HAIKU) || defined(Q_OS_UNIX)
 void closeSignalHandler(int)
 {
     qCloseNow = true;
+}
+void saveSignalHandler(int)
+{
+    qSaveNow = true;
 }
 #elif defined(Q_OS_WIN)
 BOOL WINAPI closeSignalHandler(DWORD dwCtrlType)
@@ -58,9 +63,10 @@ BOOL WINAPI closeSignalHandler(DWORD dwCtrlType)
 
 void initSignalHandler()
 {
-#if defined(Q_OS_UNIX)
+#if defined(Q_OS_HAIKU) || defined(Q_OS_UNIX)
     struct sigaction sint;
     struct sigaction sterm;
+    struct sigaction susr1;
 
     sint.sa_handler  = closeSignalHandler;
     sint.sa_flags    = SA_RESTART;
@@ -73,6 +79,12 @@ void initSignalHandler()
     sterm.sa_restorer = nullptr;
     sigemptyset(&sterm.sa_mask);
     sigaction(SIGTERM, &sterm, nullptr);
+
+    susr1.sa_handler  = saveSignalHandler;
+    susr1.sa_flags    = SA_RESTART;
+    susr1.sa_restorer = nullptr;
+    sigemptyset(&susr1.sa_mask);
+    sigaction(SIGUSR1, &susr1, nullptr);
 #elif defined(Q_OS_WIN)
     SetConsoleCtrlHandler(closeSignalHandler, TRUE);
 #endif
@@ -234,8 +246,9 @@ public:
         pluginGui = nullptr;
 
         m_client = this;
-        m_hasUI  = false;
         m_doQuit = false;
+        m_hasUI  = false;
+        m_qt4UI  = false;
 
         m_needsResize = false;
         m_nextSize[0] = 0;
@@ -334,7 +347,7 @@ public:
         if (plugin)
             plugin->showGui(true);
 
-        if (pluginGui)
+        if (pluginGui && m_qt4UI)
             pluginGui->show();
     }
 
@@ -343,7 +356,7 @@ public:
         qDebug("BridgePluginClient::hide()");
         CARLA_ASSERT(pluginGui);
 
-        if (pluginGui)
+        if (pluginGui && m_qt4UI)
             pluginGui->hide();
 
         if (plugin)
@@ -371,6 +384,7 @@ public:
             return;
 
         m_hasUI = true;
+        m_qt4UI = true;
 
         pluginGui->setResizable(resizable);
         pluginGui->setTitle(plugin->name());
@@ -664,6 +678,12 @@ protected:
         if (qCloseNow)
             return quit();
 
+        if (qSaveNow)
+        {
+            // TODO
+            qSaveNow = false;
+        }
+
         if (event->timerId() == msgTimerGUI)
         {
 #if 0
@@ -711,6 +731,7 @@ private:
 
     bool m_doQuit;
     bool m_hasUI;
+    bool m_qt4UI;
     bool m_needsResize;
     int  m_nextSize[2];
 
@@ -802,7 +823,7 @@ int main(int argc, char* argv[])
     void* extraStuff = nullptr;
 
 #if 1 // TESTING
-    static const char* const dssiGUI = "/usr/lib/dssi/amsynth_dssi/amsynth_dssi_gtk";
+    static const char* const dssiGUI = "/usr/lib/dssi/calf/calf_gtk";
     extraStuff = (void*)dssiGUI;
 #endif
 

@@ -94,23 +94,17 @@ void CarlaEngineOsc::init(const char* const name)
     }
 }
 
-bool CarlaEngineOsc::idle()
+void CarlaEngineOsc::idle()
 {
-    bool msgReceived = false;
-
     if (m_serverTCP)
     {
-        while (lo_server_recv_noblock(m_serverTCP, 25) != 0)
-            msgReceived = true;
+        while (lo_server_recv_noblock(m_serverTCP, 0) != 0) {}
     }
 
     if (m_serverUDP)
     {
-        while (lo_server_recv_noblock(m_serverUDP, 25) != 0)
-            msgReceived = true;
+        while (lo_server_recv_noblock(m_serverUDP, 0) != 0) {}
     }
-
-    return !msgReceived;
 }
 
 void CarlaEngineOsc::close()

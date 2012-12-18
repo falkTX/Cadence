@@ -1212,9 +1212,9 @@ bool CarlaEngine::isOscBridgeRegistered() const
 }
 #endif
 
-bool CarlaEngine::idleOsc()
+void CarlaEngine::idleOsc()
 {
-    return m_osc.idle();
+    m_osc.idle();
 }
 
 const char* CarlaEngine::getOscServerPathTCP() const
