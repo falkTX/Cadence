@@ -1267,7 +1267,7 @@ void CarlaPlugin::postEventsRun()
 
 #ifndef BUILD_BRIDGE
             // Update OSC control client
-            if (x_engine->isOscControlRegisted())
+            if (x_engine->isOscControlRegistered())
                 x_engine->osc_send_control_set_parameter_value(m_id, event->value1, event->value3);
 #endif
 
@@ -1282,7 +1282,7 @@ void CarlaPlugin::postEventsRun()
 
 #ifndef BUILD_BRIDGE
             // Update OSC control client
-            if (x_engine->isOscControlRegisted())
+            if (x_engine->isOscControlRegistered())
             {
                 x_engine->osc_send_control_set_program(m_id, event->value1);
 
@@ -1302,7 +1302,7 @@ void CarlaPlugin::postEventsRun()
 
 #ifndef BUILD_BRIDGE
             // Update OSC control client
-            if (x_engine->isOscControlRegisted())
+            if (x_engine->isOscControlRegistered())
             {
                 x_engine->osc_send_control_set_midi_program(m_id, event->value1);
 
@@ -1321,7 +1321,7 @@ void CarlaPlugin::postEventsRun()
 
 #ifndef BUILD_BRIDGE
             // Update OSC control client
-            if (x_engine->isOscControlRegisted())
+            if (x_engine->isOscControlRegistered())
                 x_engine->osc_send_control_note_on(m_id, event->value1, event->value2, rint(event->value3));
 #endif
 
@@ -1335,7 +1335,7 @@ void CarlaPlugin::postEventsRun()
 
 #ifndef BUILD_BRIDGE
             // Update OSC control client
-            if (x_engine->isOscControlRegisted())
+            if (x_engine->isOscControlRegistered())
                 x_engine->osc_send_control_note_off(m_id, event->value1, event->value2);
 #endif
 

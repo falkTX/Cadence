@@ -415,7 +415,7 @@ public:
         }
 
         // Update OSC Names
-        if (x_engine->isOscControlRegisted())
+        if (x_engine->isOscControlRegistered())
         {
             x_engine->osc_send_control_set_midi_program_count(m_id, midiprog.count);
 
@@ -951,7 +951,7 @@ CarlaPlugin* LinuxSamplerPlugin::newLinuxSampler(const initializer& init, bool i
     }
 
     plugin->reload();
-    plugin->registerToOscControl();
+    plugin->registerToOscClient();
 
     return plugin;
 }

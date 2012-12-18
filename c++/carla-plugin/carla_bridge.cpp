@@ -1015,7 +1015,7 @@ CarlaPlugin* CarlaPlugin::newBridge(const initializer& init, BinaryType btype, P
     }
 
     //plugin->reload();
-    plugin->registerToOscControl();
+    plugin->registerToOscClient();
 
     return plugin;
 }

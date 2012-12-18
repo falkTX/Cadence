@@ -802,7 +802,7 @@ public:
         //f_sfont->free(f_sfont);
 
         // Update OSC Names
-        if (x_engine->isOscControlRegisted())
+        if (x_engine->isOscControlRegistered())
         {
             x_engine->osc_send_control_set_midi_program_count(m_id, midiprog.count);
 
@@ -1355,7 +1355,7 @@ CarlaPlugin* CarlaPlugin::newSF2(const initializer& init)
     }
 
     plugin->reload();
-    plugin->registerToOscControl();
+    plugin->registerToOscClient();
 
     return plugin;
 #else

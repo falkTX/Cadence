@@ -353,7 +353,7 @@ int CarlaEngineOsc::handleMsgRegister(const int argc, const lo_arg* const* const
         CarlaPlugin* const plugin = engine->getPluginUnchecked(i);
 
         if (plugin && plugin->enabled())
-            plugin->registerToOscControl();
+            plugin->registerToOscClient();
     }
 
     return 0;
