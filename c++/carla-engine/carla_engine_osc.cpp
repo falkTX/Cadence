@@ -40,9 +40,11 @@ CarlaEngineOsc::CarlaEngineOsc(CarlaEngine* const engine_)
 
     m_serverTCP = nullptr;
     m_serverUDP = nullptr;
+#ifndef BUILD_BRIDGE
     m_controlData.path = nullptr;
     m_controlData.source = nullptr;
     m_controlData.target = nullptr;
+#endif
 
     m_name = nullptr;
     m_nameSize = 0;
@@ -120,7 +122,9 @@ void CarlaEngineOsc::close()
     CARLA_ASSERT(m_serverPathUDP.isNotEmpty());
     CARLA_ASSERT(m_name);
 
+#ifndef BUILD_BRIDGE
     m_controlData.free();
+#endif
 
     if (m_serverTCP)
     {
@@ -160,6 +164,7 @@ int CarlaEngineOsc::handleMessage(const char* const path, const int argc, const 
     if (! path)
         return 1;
 
+#ifndef BUILD_BRIDGE
     // Initial path check
     if (strcmp(path, "/register") == 0)
     {
@@ -170,6 +175,7 @@ int CarlaEngineOsc::handleMessage(const char* const path, const int argc, const 
     {
         return handleMsgUnregister();
     }
+#endif
 
     // Check if message is for this client
     if (strlen(path) <= m_nameSize || strncmp(path+1, m_name, m_nameSize) != 0)
@@ -227,6 +233,7 @@ int CarlaEngineOsc::handleMessage(const char* const path, const int argc, const 
     if (strcmp(method, "/exiting") == 0)
         return handleMsgExiting(plugin);
 
+#ifndef BUILD_BRIDGE
     // Internal methods
     if (strcmp(method, "/set_active") == 0)
         return handleMsgSetActive(plugin, argc, argv, types);
@@ -252,14 +259,6 @@ int CarlaEngineOsc::handleMessage(const char* const path, const int argc, const 
         return handleMsgNoteOn(plugin, argc, argv, types);
     if (strcmp(method, "/note_off") == 0)
         return handleMsgNoteOff(plugin, argc, argv, types);
-
-    // Plugin-specific methods
-#ifdef WANT_LV2
-    if (strcmp(method, "/lv2_atom_transfer") == 0)
-        return handleMsgLv2AtomTransfer(plugin, argc, argv, types);
-    if (strcmp(method, "/lv2_event_transfer") == 0)
-        return handleMsgLv2EventTransfer(plugin, argc, argv, types);
-#endif
 
     // Plugin Bridges
     if ((plugin->hints() & PLUGIN_IS_BRIDGE) > 0 && strlen(method) > 12 && strncmp(method, "/bridge_", 8) == 0)
@@ -309,6 +308,15 @@ int CarlaEngineOsc::handleMessage(const char* const path, const int argc, const 
         if (strcmp(method+8, "error") == 0)
             return plugin->setOscBridgeInfo(PluginBridgeError, argc, argv, types);
     }
+#endif
+
+    // Plugin-specific methods
+#ifdef WANT_LV2
+    if (strcmp(method, "/lv2_atom_transfer") == 0)
+        return handleMsgLv2AtomTransfer(plugin, argc, argv, types);
+    if (strcmp(method, "/lv2_event_transfer") == 0)
+        return handleMsgLv2EventTransfer(plugin, argc, argv, types);
+#endif
 
     qWarning("CarlaEngineOsc::handleMessage() - unsupported OSC method '%s'", method);
     return 1;
@@ -316,6 +324,7 @@ int CarlaEngineOsc::handleMessage(const char* const path, const int argc, const 
 
 // -----------------------------------------------------------------------
 
+#ifndef BUILD_BRIDGE
 int CarlaEngineOsc::handleMsgRegister(const int argc, const lo_arg* const* const argv, const char* const types, const lo_address source)
 {
     qDebug("CarlaEngineOsc::handleMsgRegister()");
@@ -369,6 +378,7 @@ int CarlaEngineOsc::handleMsgUnregister()
     m_controlData.free();
     return 0;
 }
+#endif
 
 // -----------------------------------------------------------------------
 
@@ -491,6 +501,7 @@ int CarlaEngineOsc::handleMsgExiting(CARLA_ENGINE_OSC_HANDLE_ARGS1)
 
 // -----------------------------------------------------------------------
 
+#ifndef BUILD_BRIDGE
 int CarlaEngineOsc::handleMsgSetActive(CARLA_ENGINE_OSC_HANDLE_ARGS2)
 {
     qDebug("CarlaEngineOsc::handleMsgSetActive()");
@@ -590,11 +601,14 @@ int CarlaEngineOsc::handleMsgSetProgram(CARLA_ENGINE_OSC_HANDLE_ARGS2)
     const int32_t index = argv[0]->i;
     plugin->setProgram(index, true, false, true, true);
 
-    if (index >= 0)
+#ifndef BUILD_BRIDGE
+    // parameters might have changed, send all param values back
+    if (m_controlData.target && index >= 0)
     {
         for (uint32_t i=0; i < plugin->parameterCount(); i++)
             engine->osc_send_control_set_parameter_value(plugin->id(), i, plugin->getParameterValue(i));
     }
+#endif
 
     return 0;
 }
@@ -607,11 +621,14 @@ int CarlaEngineOsc::handleMsgSetMidiProgram(CARLA_ENGINE_OSC_HANDLE_ARGS2)
     const int32_t index = argv[0]->i;
     plugin->setMidiProgram(index, true, false, true, true);
 
-    if (index >= 0)
+#ifndef BUILD_BRIDGE
+    // parameters might have changed, send all param values back
+    if (m_controlData.target && index >= 0)
     {
         for (uint32_t i=0; i < plugin->parameterCount(); i++)
             engine->osc_send_control_set_parameter_value(plugin->id(), i, plugin->getParameterValue(i));
     }
+#endif
 
     return 0;
 }
@@ -662,5 +679,6 @@ int CarlaEngineOsc::handleMsgBridgeSetOutPeak(CARLA_ENGINE_OSC_HANDLE_ARGS2)
 
     return 0;
 }
+#endif
 
 CARLA_BACKEND_END_NAMESPACE

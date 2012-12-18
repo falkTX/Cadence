@@ -18,19 +18,10 @@
 #ifndef CARLA_ENGINE_HPP
 #define CARLA_ENGINE_HPP
 
+#include "carla_engine_osc.hpp"
 #include "carla_engine_thread.hpp"
 
-#ifdef BUILD_BRIDGE
-# include "carla_osc_utils.hpp"
-#else
-# include "carla_engine_osc.hpp"
-#endif
-
 CARLA_BACKEND_START_NAMESPACE
-
-#ifdef BUILD_BRIDGE
-class CarlaPlugin;
-#endif
 
 /*!
  * @defgroup CarlaBackendEngine Carla Backend Engine
@@ -735,41 +726,6 @@ public:
      * Set the engine option \a option.
      */
     void setOption(const OptionsType option, const int value, const char* const valueStr);
-
-//    ProcessMode processMode() const
-//    {
-//        return options.processMode;
-//    }
-
-//    bool processHighPrecision() const
-//    {
-//        return options.processHighPrecision;
-//    }
-
-//    uint maxParameters() const
-//    {
-//        return options.maxParameters;
-//    }
-
-//    bool forceStereo() const
-//    {
-//        return options.forceStereo;
-//    }
-
-//    bool useDssiVstChunks() const
-//    {
-//        return options.useDssiVstChunks;
-//    }
-
-//    bool preferUiBridges() const
-//    {
-//        return options.preferUiBridges;
-//    }
-
-//    uint oscUiTimeout() const
-//    {
-//        return options.oscUiTimeout;
-//    }
 #endif
 
     // -------------------------------------------------------------------
@@ -798,12 +754,18 @@ public:
     // -------------------------------------------------------------------
     // OSC Stuff
 
+#ifndef BUILD_BRIDGE
     /*!
      * Check if OSC controller is registered.
      */
-    bool isOscControlRegisted() const;
+    bool isOscControlRegistered() const;
+#else
+    /*!
+     * Check if OSC bridge is registered.
+     */
+    bool isOscBridgeRegistered() const;
+#endif
 
-#ifndef BUILD_BRIDGE
     /*!
      * Idle OSC.
      */
@@ -818,7 +780,8 @@ public:
      * Get OSC UDP server path.
      */
     const char* getOscServerPathUDP() const;
-#else
+
+#ifdef BUILD_BRIDGE
     /*!
      * Set OSC bridge data.
      */
@@ -955,10 +918,8 @@ protected:
     void bufferSizeChanged(const uint32_t newBufferSize);
 
 private:
-    CarlaEngineThread m_thread;
-#ifndef BUILD_BRIDGE
     CarlaEngineOsc m_osc;
-#endif
+    CarlaEngineThread m_thread;
 
     const CarlaOscData* m_oscData;
 

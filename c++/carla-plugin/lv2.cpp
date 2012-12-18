@@ -4600,7 +4600,6 @@ Lv2Plugin::Ft Lv2Plugin::ft = { nullptr, nullptr, nullptr, nullptr, nullptr, nul
 
 // -------------------------------------------------------------------------------------------------------------------
 
-#ifndef BUILD_BRIDGE
 int CarlaEngineOsc::handleMsgLv2AtomTransfer(CARLA_ENGINE_OSC_HANDLE_ARGS2)
 {
     qDebug("CarlaOsc::handleMsgLv2AtomTransfer()");
@@ -4642,7 +4641,6 @@ int CarlaEngineOsc::handleMsgLv2EventTransfer(CARLA_ENGINE_OSC_HANDLE_ARGS2)
 
     return 0;
 }
-#endif
 
 CARLA_BACKEND_END_NAMESPACE
 
@@ -4687,7 +4685,7 @@ CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
     }
 # endif
 
-    plugin->registerToOscControl();
+    plugin->registerToOscClient();
     plugin->updateUi();
 
     return plugin;

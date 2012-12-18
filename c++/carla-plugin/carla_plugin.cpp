@@ -74,12 +74,11 @@ CarlaPlugin::CarlaPlugin(CarlaEngine* const engine, const unsigned short id)
     m_latency = 0;
     m_latencyBuffers = nullptr;
 
-#ifndef BUILD_BRIDGE
+    // Extra
     osc.data.path   = nullptr;
     osc.data.source = nullptr;
     osc.data.target = nullptr;
     osc.thread = nullptr;
-#endif
 }
 
 CarlaPlugin::~CarlaPlugin()
@@ -908,10 +907,15 @@ void CarlaPlugin::recreateLatencyBuffers()
 // -------------------------------------------------------------------
 // OSC stuff
 
-void CarlaPlugin::registerToOscControl()
+void CarlaPlugin::registerToOscClient()
 {
-    if (! x_engine->isOscControlRegisted())
+#ifndef BUILD_BRIDGE
+    if (! x_engine->isOscControlRegistered())
         return;
+#else
+    if (! x_engine->isOscBridgeRegistered())
+        return;
+#endif
 
 #ifndef BUILD_BRIDGE
     x_engine->osc_send_control_add_plugin_start(m_id, m_name);
@@ -1034,7 +1038,6 @@ void CarlaPlugin::registerToOscControl()
 #endif
 }
 
-#ifndef BUILD_BRIDGE
 void CarlaPlugin::updateOscData(const lo_address source, const char* const url)
 {
     // FIXME - remove debug prints later
@@ -1101,7 +1104,11 @@ bool CarlaPlugin::waitForOscGuiShow()
 {
     qWarning("CarlaPlugin::waitForOscGuiShow()");
 
+#ifndef BUILD_BRIDGE
     const uint oscUiTimeout = x_engine->getOptions().oscUiTimeout;
+#else
+    const uint oscUiTimeout = 40;
+#endif
 
     // wait for UI 'update' call
     for (uint i=0; i < oscUiTimeout; i++)
@@ -1119,7 +1126,6 @@ bool CarlaPlugin::waitForOscGuiShow()
     qWarning("CarlaPlugin::waitForOscGuiShow() - Timeout while waiting for UI to respond (waited %u msecs)", oscUiTimeout);
     return false;
 }
-#endif
 
 // -------------------------------------------------------------------
 // MIDI events

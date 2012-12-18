@@ -23,11 +23,11 @@
 #include "carla_osc_utils.hpp"
 
 #ifdef BUILD_BRIDGE
-# include "carla_backend_utils.hpp"
+//# include "carla_backend_utils.hpp"
 # include "carla_bridge_osc.hpp"
-#else
-# include "carla_plugin_thread.hpp"
+//#else
 #endif
+#include "carla_plugin_thread.hpp"
 
 // common includes
 #include <cmath>
@@ -694,11 +694,10 @@ public:
     // OSC stuff
 
     /*!
-     * Register this plugin to the engine's OSC controller.
+     * Register this plugin to the engine's OSC client (controller or bridge).
      */
-    void registerToOscControl();
+    void registerToOscClient();
 
-#ifndef BUILD_BRIDGE
     /*!
      * Update the plugin's internal OSC data according to \a source and \a url.\n
      * This is used for OSC-GUI bridges.
@@ -715,7 +714,6 @@ public:
      * This is a handy function that waits for the GUI to respond and automatically asks it to show itself.
      */
     bool waitForOscGuiShow();
-#endif
 
     // -------------------------------------------------------------------
     // MIDI events
@@ -948,12 +946,10 @@ protected:
     // -------------------------------------------------------------------
     // Extra
 
-#ifndef BUILD_BRIDGE
     struct {
         CarlaOscData data;
         CarlaPluginThread* thread;
     } osc;
-#endif
 
     struct {
         QMutex mutex;

@@ -55,7 +55,6 @@ public:
     {
         qDebug("DssiPlugin::~DssiPlugin()");
 
-#ifndef BUILD_BRIDGE
         // close UI
         if (m_hints & PLUGIN_HAS_GUI)
         {
@@ -64,7 +63,7 @@ public:
             if (osc.thread)
             {
                 // Wait a bit first, try safe quit, then force kill
-                if (osc.thread->isRunning() && ! osc.thread->wait(x_engine->getOptions().oscUiTimeout * 100))
+                if (osc.thread->isRunning() && ! osc.thread->wait(40 * 100)) // x_engine->getOptions().oscUiTimeout
                 {
                     qWarning("Failed to properly stop DSSI GUI thread");
                     osc.thread->terminate();
@@ -73,7 +72,6 @@ public:
                 delete osc.thread;
             }
         }
-#endif
 
         if (ldescriptor)
         {
@@ -235,10 +233,8 @@ public:
         descriptor->configure(handle, key, value);
         if (h2) descriptor->configure(h2, key, value);
 
-#ifndef BUILD_BRIDGE
         if (sendGui && osc.data.target)
             osc_send_configure(&osc.data, key, value);
-#endif
 
         if (strcmp(key, "reloadprograms") == 0 || strcmp(key, "load") == 0 || strncmp(key, "patches", 7) == 0)
         {
@@ -302,7 +298,6 @@ public:
     // -------------------------------------------------------------------
     // Set gui stuff
 
-#ifndef BUILD_BRIDGE
     void showGui(const bool yesNo)
     {
         CARLA_ASSERT(osc.thread);
@@ -330,7 +325,6 @@ public:
                 osc.thread->quit();
         }
     }
-#endif
 
     // -------------------------------------------------------------------
     // Plugin state
@@ -1445,7 +1439,6 @@ public:
     // -------------------------------------------------------------------
     // Post-poned events
 
-#ifndef BUILD_BRIDGE
     void uiParameterChange(const uint32_t index, const double value)
     {
         CARLA_ASSERT(index < param.count);
@@ -1499,7 +1492,6 @@ public:
         midiData[2] = note;
         osc_send_midi(&osc.data, midiData);
     }
-#endif
 
     // -------------------------------------------------------------------
     // Cleanup
@@ -1594,7 +1586,6 @@ public:
         // ---------------------------------------------------------------
         // gui stuff
 
-#ifndef BUILD_BRIDGE
         if (guiFilename)
         {
             osc.thread = new CarlaPluginThread(x_engine, this, CarlaPluginThread::PLUGIN_THREAD_DSSI_GUI);
@@ -1602,9 +1593,6 @@ public:
 
             m_hints |= PLUGIN_HAS_GUI;
         }
-#else
-        Q_UNUSED(guiFilename);
-#endif
 
         return true;
     }
@@ -1663,7 +1651,7 @@ CarlaPlugin* CarlaPlugin::newDSSI(const initializer& init, const void* const ext
     }
 # endif
 
-    plugin->registerToOscControl();
+    plugin->registerToOscClient();
 
     return plugin;
 #else

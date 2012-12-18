@@ -226,8 +226,6 @@ public:
     {
         qDebug("BridgePluginClient::BridgePluginClient()");
 
-        hasUI = false;
-
         msgTimerGUI = 0;
         msgTimerOSC = 0;
 
@@ -235,7 +233,9 @@ public:
         plugin    = nullptr;
         pluginGui = nullptr;
 
-        m_client  = this;
+        m_client = this;
+        m_hasUI  = false;
+        m_doQuit = false;
 
         m_needsResize = false;
         m_nextSize[0] = 0;
@@ -277,8 +277,10 @@ public:
 
         if (showGui)
         {
-            if (hasUI)
+            if (m_hasUI)
                 show();
+
+            m_doQuit = true;
         }
         else
         {
@@ -368,12 +370,17 @@ public:
         if (! (plugin && pluginGui))
             return;
 
-        hasUI = true;
+        m_hasUI = true;
 
         pluginGui->setResizable(resizable);
         pluginGui->setTitle(plugin->name());
 
         plugin->setGuiContainer(pluginGui->getContainer());
+    }
+
+    void enableUI()
+    {
+        m_hasUI = true;
     }
 
     // ---------------------------------------------------------------------
@@ -592,7 +599,12 @@ public:
 
         case CarlaBackend::CALLBACK_SHOW_GUI:
             if (value1 == 0)
+            {
                 engine->osc_send_bridge_configure(CarlaBackend::CARLA_BRIDGE_MSG_HIDE_GUI, "");
+
+                if (m_doQuit)
+                    qCloseNow = true;
+            }
             break;
 
         case CarlaBackend::CALLBACK_RESIZE_GUI:
@@ -692,12 +704,13 @@ protected:
     // ---------------------------------------------------------------------
 
 private:
-    bool hasUI;
     int msgTimerGUI, msgTimerOSC;
 #if 0
     std::set<int32_t> parametersToUpdate;
 #endif
 
+    bool m_doQuit;
+    bool m_hasUI;
     bool m_needsResize;
     int  m_nextSize[2];
 
@@ -786,8 +799,15 @@ int main(int argc, char* argv[])
         return 2;
     }
 
+    void* extraStuff = nullptr;
+
+#if 1 // TESTING
+    static const char* const dssiGUI = "/usr/lib/dssi/amsynth_dssi/amsynth_dssi_gtk";
+    extraStuff = (void*)dssiGUI;
+#endif
+
     // Init plugin
-    short id = engine->addPlugin(itype, filename, name, label);
+    short id = engine->addPlugin(itype, filename, name, label, extraStuff);
     int ret;
 
     if (id >= 0 && id < CarlaBackend::MAX_PLUGINS)
@@ -801,9 +821,9 @@ int main(int argc, char* argv[])
         plugin->getGuiInfo(&guiType, &guiResizable);
 
         if (guiType == CarlaBackend::GUI_INTERNAL_QT4 || guiType == CarlaBackend::GUI_INTERNAL_COCOA || guiType == CarlaBackend::GUI_INTERNAL_HWND || guiType == CarlaBackend::GUI_INTERNAL_X11)
-        {
             client.createWindow(guiResizable);
-        }
+        else if (guiType == CarlaBackend::GUI_EXTERNAL_LV2 || guiType == CarlaBackend::GUI_EXTERNAL_OSC)
+            client.enableUI();
 
         if (! useOsc)
             plugin->setActive(true, false, false);

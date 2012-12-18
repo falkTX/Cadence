@@ -18,10 +18,6 @@
 #ifndef CARLA_ENGINE_OSC_HPP
 #define CARLA_ENGINE_OSC_HPP
 
-#ifdef BUILD_BRIDGE
-# error Bad use of file! This should never be used in bridge builds
-#endif
-
 #include "carla_backend.hpp"
 #include "carla_osc_utils.hpp"
 
@@ -69,6 +65,7 @@ public:
 
     // -------------------------------------------------------------------
 
+#ifndef BUILD_BRIDGE
     bool isControlRegistered() const
     {
         return bool(m_controlData.target);
@@ -78,6 +75,7 @@ public:
     {
         return &m_controlData;
     }
+#endif
 
     const char* getServerPathTCP() const
     {
@@ -98,7 +96,9 @@ private:
     lo_server m_serverUDP;
     CarlaString m_serverPathTCP;
     CarlaString m_serverPathUDP;
+#ifndef BUILD_BRIDGE
     CarlaOscData m_controlData; // for carla-control
+#endif
 
     char*  m_name;
     size_t m_nameSize;
@@ -107,8 +107,10 @@ private:
 
     int handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg);
 
+#ifndef BUILD_BRIDGE
     int handleMsgRegister(const int argc, const lo_arg* const* const argv, const char* const types, const lo_address source);
     int handleMsgUnregister();
+#endif
 
     int handleMsgUpdate(CARLA_ENGINE_OSC_HANDLE_ARGS2, const lo_address source);
     int handleMsgConfigure(CARLA_ENGINE_OSC_HANDLE_ARGS2);
@@ -117,6 +119,7 @@ private:
     int handleMsgMidi(CARLA_ENGINE_OSC_HANDLE_ARGS2);
     int handleMsgExiting(CARLA_ENGINE_OSC_HANDLE_ARGS1);
 
+#ifndef BUILD_BRIDGE
     int handleMsgSetActive(CARLA_ENGINE_OSC_HANDLE_ARGS2);
     int handleMsgSetDryWet(CARLA_ENGINE_OSC_HANDLE_ARGS2);
     int handleMsgSetVolume(CARLA_ENGINE_OSC_HANDLE_ARGS2);
@@ -130,13 +133,14 @@ private:
     int handleMsgNoteOn(CARLA_ENGINE_OSC_HANDLE_ARGS2);
     int handleMsgNoteOff(CARLA_ENGINE_OSC_HANDLE_ARGS2);
 
+    int handleMsgBridgeSetInPeak(CARLA_ENGINE_OSC_HANDLE_ARGS2);
+    int handleMsgBridgeSetOutPeak(CARLA_ENGINE_OSC_HANDLE_ARGS2);
+#endif
+
 #ifdef WANT_LV2
     int handleMsgLv2AtomTransfer(CARLA_ENGINE_OSC_HANDLE_ARGS2);
     int handleMsgLv2EventTransfer(CARLA_ENGINE_OSC_HANDLE_ARGS2);
 #endif
-
-    int handleMsgBridgeSetInPeak(CARLA_ENGINE_OSC_HANDLE_ARGS2);
-    int handleMsgBridgeSetOutPeak(CARLA_ENGINE_OSC_HANDLE_ARGS2);
 
     // -------------------------------------------------------------------
 

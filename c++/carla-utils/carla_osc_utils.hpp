@@ -217,7 +217,8 @@ void osc_send_exiting(const CarlaOscData* const oscData)
         lo_send(oscData->target, targetPath, "");
     }
 }
-#else
+#endif
+
 static inline
 void osc_send_show(const CarlaOscData* const oscData)
 {
@@ -262,7 +263,6 @@ void osc_send_quit(const CarlaOscData* const oscData)
         lo_send(oscData->target, targetPath, "");
     }
 }
-#endif
 
 // ------------------------------------------------------------------------------------------------
 

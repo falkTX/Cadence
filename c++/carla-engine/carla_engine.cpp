@@ -364,26 +364,25 @@ void CarlaEngineClient::setLatency(const uint32_t samples)
 // Carla Engine Client
 
 CarlaEngine::CarlaEngine()
-    : m_thread(this),
-#ifndef BUILD_BRIDGE
-      m_osc(this),
-#endif
-      m_oscData(nullptr),
-      m_callback(nullptr),
+    : m_osc(this),
+      m_thread(this)
 #ifdef Q_COMPILER_INITIALIZER_LISTS
+      ,
       m_callbackPtr(nullptr),
       m_carlaPlugins{nullptr},
       m_uniqueNames{nullptr},
       m_insPeak{0.0},
       m_outsPeak{0.0}
-#else
-      m_callbackPtr(nullptr)
 #endif
 {
     qDebug("CarlaEngine::CarlaEngine()");
 
     bufferSize = 0;
     sampleRate = 0.0;
+
+    m_oscData = nullptr;
+    m_callback = nullptr;
+    m_callbackPtr = nullptr;
 
     m_aboutToClose = false;
     m_maxPluginNumber = 0;
@@ -512,8 +511,9 @@ bool CarlaEngine::init(const char* const clientName)
 
     m_aboutToClose = false;
 
-#ifndef BUILD_BRIDGE
     m_osc.init(clientName);
+
+#ifndef BUILD_BRIDGE
     m_oscData = m_osc.getControlData();
 
     if (strcmp(clientName, "Carla") != 0)
@@ -534,10 +534,10 @@ bool CarlaEngine::close()
 
 #ifndef BUILD_BRIDGE
     osc_send_control_exit();
-    m_osc.close();
 #endif
-    m_oscData = nullptr;
+    m_osc.close();
 
+    m_oscData = nullptr;
     m_maxPluginNumber = 0;
 
     name.clear();
@@ -1200,16 +1200,18 @@ void CarlaEngine::midiUnlock()
 // -----------------------------------------------------------------------
 // OSC Stuff
 
-bool CarlaEngine::isOscControlRegisted() const
+#ifndef BUILD_BRIDGE
+bool CarlaEngine::isOscControlRegistered() const
 {
-#ifndef BUILD_BRIDGE
     return m_osc.isControlRegistered();
-#else
-    return bool(m_oscData);
-#endif
 }
+#else
+bool CarlaEngine::isOscBridgeRegistered() const
+{
+    return bool(m_oscData);
+}
+#endif
 
-#ifndef BUILD_BRIDGE
 bool CarlaEngine::idleOsc()
 {
     return m_osc.idle();
@@ -1224,7 +1226,8 @@ const char* CarlaEngine::getOscServerPathUDP() const
 {
     return m_osc.getServerPathUDP();
 }
-#else
+
+#ifdef BUILD_BRIDGE
 void CarlaEngine::setOscBridgeData(const CarlaOscData* const oscData)
 {
     m_oscData = oscData;

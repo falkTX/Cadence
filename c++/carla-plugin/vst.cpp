@@ -2440,7 +2440,7 @@ CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
     }
 #  endif
 
-    plugin->registerToOscControl();
+    plugin->registerToOscClient();
 
     return plugin;
 #else

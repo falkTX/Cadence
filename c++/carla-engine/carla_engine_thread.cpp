@@ -71,14 +71,18 @@ void CarlaEngineThread::run()
     qDebug("CarlaEngineThread::run()");
     CARLA_ASSERT(engine->isRunning());
 
-    bool oscControlRegisted, usesSingleThread;
+    bool oscRegisted, usesSingleThread;
     unsigned short i;
     double value;
 
     while (engine->isRunning() && ! m_stopNow)
     {
         const ScopedLocker m(this);
-        oscControlRegisted = engine->isOscControlRegisted();
+#ifndef BUILD_BRIDGE
+        oscRegisted = engine->isOscControlRegistered();
+#else
+        oscRegisted = engine->isOscBridgeRegistered();
+#endif
 
         for (i=0; i < engine->maxPluginNumber(); i++)
         {
@@ -98,7 +102,7 @@ void CarlaEngineThread::run()
             if (! usesSingleThread)
                 plugin->postEventsRun();
 
-            if (oscControlRegisted || ! usesSingleThread)
+            if (oscRegisted || ! usesSingleThread)
             {
                 // ---------------------------------------------------
                 // Update parameter outputs
@@ -114,8 +118,8 @@ void CarlaEngineThread::run()
                     if (! usesSingleThread)
                         plugin->uiParameterChange(j, value);
 
-                    // Update OSC control client
-                    if (oscControlRegisted)
+                    // Update OSC engine client
+                    if (oscRegisted)
                     {
 #ifdef BUILD_BRIDGE
                         engine->osc_send_bridge_set_parameter_value(j, value);
@@ -128,7 +132,7 @@ void CarlaEngineThread::run()
                 // ---------------------------------------------------
                 // Update OSC control client peaks
 
-                if (oscControlRegisted)
+                if (oscRegisted)
                 {
 #ifdef BUILD_BRIDGE
                     engine->osc_send_peaks(plugin);
@@ -139,9 +143,7 @@ void CarlaEngineThread::run()
             }
         }
 
-#ifndef BUILD_BRIDGE
         if (! engine->idleOsc())
-#endif
             msleep(50);
     }
 }

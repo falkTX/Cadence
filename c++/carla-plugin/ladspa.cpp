@@ -1262,7 +1262,7 @@ CarlaPlugin* CarlaPlugin::newLADSPA(const initializer& init, const void* const e
     }
 # endif
 
-    plugin->registerToOscControl();
+    plugin->registerToOscClient();
 
     return plugin;
 #else
