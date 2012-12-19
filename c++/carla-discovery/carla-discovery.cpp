@@ -338,11 +338,6 @@ void do_ladspa_check(void* const libHandle, const bool init)
                     // default value
                     def = get_default_ladspa_port_value(portHints.HintDescriptor, min, max);
 
-                    if (def < min)
-                        def = min;
-                    else if (def > max)
-                        def = max;
-
                     if (LADSPA_IS_HINT_SAMPLE_RATE(portHints.HintDescriptor))
                     {
                         min *= sampleRate;
@@ -357,6 +352,11 @@ void do_ladspa_check(void* const libHandle, const bool init)
                         max = sampleRate;
                         def = 0.0f;
                     }
+
+                    if (def < min)
+                        def = min;
+                    else if (def > max)
+                        def = max;
 
                     bufferParams[iP] = def;
 
@@ -524,11 +524,6 @@ void do_dssi_check(void* const libHandle, const bool init)
                     // default value
                     def = get_default_ladspa_port_value(portHints.HintDescriptor, min, max);
 
-                    if (def < min)
-                        def = min;
-                    else if (def > max)
-                        def = max;
-
                     if (LADSPA_IS_HINT_SAMPLE_RATE(portHints.HintDescriptor))
                     {
                         min *= sampleRate;
@@ -543,6 +538,11 @@ void do_dssi_check(void* const libHandle, const bool init)
                         max = sampleRate;
                         def = 0.0f;
                     }
+
+                    if (def < min)
+                        def = min;
+                    else if (def > max)
+                        def = max;
 
                     bufferParams[iP] = def;
 
