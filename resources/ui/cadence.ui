@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>739</width>
-    <height>529</height>
+    <height>564</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -44,6 +44,12 @@
         </item>
         <item row="1" column="0" rowspan="2" colspan="3">
          <widget class="Line" name="line_welcome">
+          <property name="lineWidth">
+           <number>0</number>
+          </property>
+          <property name="midLineWidth">
+           <number>1</number>
+          </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -51,6 +57,12 @@
         </item>
         <item row="2" column="1" rowspan="2">
          <widget class="Line" name="line">
+          <property name="lineWidth">
+           <number>0</number>
+          </property>
+          <property name="midLineWidth">
+           <number>1</number>
+          </property>
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
@@ -196,6 +208,12 @@
              </item>
              <item row="1" column="0" colspan="3">
               <widget class="Line" name="line_4">
+               <property name="lineWidth">
+                <number>0</number>
+               </property>
+               <property name="midLineWidth">
+                <number>1</number>
+               </property>
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
                </property>
@@ -431,6 +449,12 @@
              </item>
              <item>
               <widget class="Line" name="line_2">
+               <property name="lineWidth">
+                <number>0</number>
+               </property>
+               <property name="midLineWidth">
+                <number>1</number>
+               </property>
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
                </property>
@@ -531,13 +555,25 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="frameShape">
+                <enum>QFrame::Panel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Sunken</enum>
+               </property>
+               <property name="lineWidth">
+                <number>0</number>
+               </property>
+               <property name="midLineWidth">
+                <number>1</number>
+               </property>
                <widget class="QWidget" name="toolBox_alsaaudio">
                 <property name="geometry">
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>366</width>
-                  <height>100</height>
+                  <width>364</width>
+                  <height>98</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -684,8 +720,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>366</width>
-                  <height>97</height>
+                  <width>364</width>
+                  <height>96</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -825,8 +861,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>366</width>
-                  <height>97</height>
+                  <width>364</width>
+                  <height>96</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -1003,6 +1039,12 @@
         </item>
         <item>
          <widget class="Line" name="line_tools_apps">
+          <property name="lineWidth">
+           <number>0</number>
+          </property>
+          <property name="midLineWidth">
+           <number>1</number>
+          </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -1123,12 +1165,12 @@
            <enum>Qt::Vertical</enum>
           </property>
           <property name="sizeType">
-           <enum>QSizePolicy::Preferred</enum>
+           <enum>QSizePolicy::Fixed</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
             <width>20</width>
-            <height>20</height>
+            <height>10</height>
            </size>
           </property>
          </spacer>
@@ -1152,6 +1194,12 @@
         </item>
         <item>
          <widget class="Line" name="line_tools_tools">
+          <property name="lineWidth">
+           <number>0</number>
+          </property>
+          <property name="midLineWidth">
+           <number>1</number>
+          </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -1305,6 +1353,12 @@
         </item>
         <item>
          <widget class="Line" name="line_tweaks">
+          <property name="lineWidth">
+           <number>0</number>
+          </property>
+          <property name="midLineWidth">
+           <number>1</number>
+          </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -1473,7 +1527,7 @@
             </sizepolicy>
            </property>
            <property name="currentIndex">
-            <number>2</number>
+            <number>0</number>
            </property>
            <widget class="QWidget" name="page_plugins">
             <layout class="QGridLayout" name="gridLayout_6">
@@ -1525,22 +1579,46 @@
              </item>
              <item row="0" column="0" rowspan="8">
               <widget class="QToolBox" name="tb_tweak_plugins">
-               <property name="currentIndex">
+               <property name="frameShape">
+                <enum>QFrame::Panel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Sunken</enum>
+               </property>
+               <property name="lineWidth">
                 <number>0</number>
+               </property>
+               <property name="midLineWidth">
+                <number>1</number>
+               </property>
+               <property name="currentIndex">
+                <number>3</number>
                </property>
                <widget class="QWidget" name="page_ladspa">
                 <property name="geometry">
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>94</width>
-                  <height>76</height>
+                  <width>409</width>
+                  <height>322</height>
                  </rect>
                 </property>
                 <attribute name="label">
                  <string>LADSPA</string>
                 </attribute>
                 <layout class="QVBoxLayout" name="verticalLayout">
+                 <property name="leftMargin">
+                  <number>2</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>2</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>2</number>
+                 </property>
                  <item>
                   <widget class="QListWidget" name="list_LADSPA"/>
                  </item>
@@ -1551,14 +1629,26 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>94</width>
-                  <height>76</height>
+                  <width>409</width>
+                  <height>322</height>
                  </rect>
                 </property>
                 <attribute name="label">
                  <string>DSSI</string>
                 </attribute>
                 <layout class="QVBoxLayout" name="verticalLayout_11">
+                 <property name="leftMargin">
+                  <number>2</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>2</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>2</number>
+                 </property>
                  <item>
                   <widget class="QListWidget" name="list_DSSI"/>
                  </item>
@@ -1569,14 +1659,26 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>94</width>
-                  <height>76</height>
+                  <width>409</width>
+                  <height>322</height>
                  </rect>
                 </property>
                 <attribute name="label">
                  <string>LV2</string>
                 </attribute>
                 <layout class="QVBoxLayout" name="verticalLayout_13">
+                 <property name="leftMargin">
+                  <number>2</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>2</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>2</number>
+                 </property>
                  <item>
                   <widget class="QListWidget" name="list_LV2"/>
                  </item>
@@ -1587,14 +1689,26 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>94</width>
-                  <height>76</height>
+                  <width>409</width>
+                  <height>322</height>
                  </rect>
                 </property>
                 <attribute name="label">
                  <string>VST</string>
                 </attribute>
                 <layout class="QVBoxLayout" name="verticalLayout_14">
+                 <property name="leftMargin">
+                  <number>2</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>2</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>2</number>
+                 </property>
                  <item>
                   <widget class="QListWidget" name="list_VST"/>
                  </item>
@@ -1823,6 +1937,12 @@
                 </item>
                 <item>
                  <widget class="Line" name="line_3">
+                  <property name="lineWidth">
+                   <number>0</number>
+                  </property>
+                  <property name="midLineWidth">
+                   <number>1</number>
+                  </property>
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
                   </property>

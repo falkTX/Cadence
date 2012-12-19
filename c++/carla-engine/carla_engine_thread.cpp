@@ -20,6 +20,8 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
+// -----------------------------------------------------------------------
+
 CarlaEngineThread::CarlaEngineThread(CarlaEngine* const engine_, QObject* const parent)
     : QThread(parent),
       engine(engine_)
@@ -35,6 +37,8 @@ CarlaEngineThread::~CarlaEngineThread()
     qDebug("CarlaEngineThread::~CarlaEngineThread()");
     CARLA_ASSERT(m_stopNow);
 }
+
+// -----------------------------------------------------------------------
 
 void CarlaEngineThread::startNow()
 {
@@ -65,6 +69,8 @@ void CarlaEngineThread::stopNow()
             terminate();
     }
 }
+
+// -----------------------------------------------------------------------
 
 void CarlaEngineThread::run()
 {

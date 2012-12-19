@@ -20,6 +20,8 @@
 
 CARLA_BACKEND_START_NAMESPACE
 
+// -----------------------------------------------------------------------
+
 void osc_error_handlerTCP(const int num, const char* const msg, const char* const path)
 {
     qCritical("CarlaEngineOsc::osc_error_handlerTCP(%i, \"%s\", \"%s\")", num, msg, path);
@@ -54,6 +56,8 @@ CarlaEngineOsc::~CarlaEngineOsc()
 {
     qDebug("CarlaEngineOsc::~CarlaEngineOsc()");
 }
+
+// -----------------------------------------------------------------------
 
 void CarlaEngineOsc::init(const char* const name)
 {
