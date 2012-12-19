@@ -779,7 +779,6 @@ int main(int argc, char* argv[])
         itype = CarlaBackend::PLUGIN_VST;
     else
     {
-        itype = CarlaBackend::PLUGIN_NONE;
         qWarning("Invalid plugin type '%s'", stype);
         return 1;
     }

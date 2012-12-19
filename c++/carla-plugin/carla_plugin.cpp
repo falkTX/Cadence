@@ -810,8 +810,6 @@ void CarlaPlugin::setMidiProgram(int32_t index, const bool sendGui, const bool s
 
 void CarlaPlugin::setMidiProgramById(const uint32_t bank, const uint32_t program, const bool sendGui, const bool sendOsc, const bool sendCallback, const bool block)
 {
-    CARLA_ASSERT(program < 128);
-
     for (uint32_t i=0; i < midiprog.count; i++)
     {
         if (midiprog.data[i].bank == bank && midiprog.data[i].program == program)

@@ -120,7 +120,7 @@ public:
     {
         CARLA_ASSERT(descriptor);
 
-        return descriptor->UniqueID;
+        return descriptor ? descriptor->UniqueID : 0;
     }
 
     // -------------------------------------------------------------------
@@ -993,7 +993,7 @@ public:
             bool do_balance = (m_hints & PLUGIN_CAN_BALANCE) > 0 && (x_balanceLeft != -1.0 || x_balanceRight != 1.0);
 
             double bal_rangeL, bal_rangeR;
-            float bufValue, oldBufLeft[do_balance ? frames : 0];
+            float bufValue, oldBufLeft[do_balance ? frames : 1];
 
             for (i=0; i < aOut.count; i++)
             {

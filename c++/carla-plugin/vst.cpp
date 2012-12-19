@@ -94,11 +94,15 @@ public:
 
                 if (gui.type == GUI_EXTERNAL_OSC)
                 {
-#ifndef BUILD_BRIDGE
                     if (osc.thread)
                     {
+#ifndef BUILD_BRIDGE
+                        const uint oscUiTimeout = x_engine->getOptions().oscUiTimeout;
+#else
+                        const uint oscUiTimeout = 40;
+#endif
                         // Wait a bit first, try safe quit, then force kill
-                        if (osc.thread->isRunning() && ! osc.thread->wait(x_engine->getOptions().oscUiTimeout * 100))
+                        if (osc.thread->isRunning() && ! osc.thread->wait(oscUiTimeout))
                         {
                             qWarning("Failed to properly stop VST OSC GUI thread");
                             osc.thread->terminate();
@@ -106,7 +110,6 @@ public:
 
                         delete osc.thread;
                     }
-#endif
                 }
                 else
                     effect->dispatcher(effect, effEditClose, 0, 0, nullptr, 0.0f);
@@ -127,26 +130,29 @@ public:
     {
         CARLA_ASSERT(effect);
 
-        intptr_t category = effect->dispatcher(effect, effGetPlugCategory, 0, 0, nullptr, 0.0f);
-
-        switch (category)
+        if (effect)
         {
-        case kPlugCategSynth:
-            return PLUGIN_CATEGORY_SYNTH;
-        case kPlugCategAnalysis:
-            return PLUGIN_CATEGORY_UTILITY;
-        case kPlugCategMastering:
-            return PLUGIN_CATEGORY_DYNAMICS;
-        case kPlugCategRoomFx:
-            return PLUGIN_CATEGORY_DELAY;
-        case kPlugCategRestoration:
-            return PLUGIN_CATEGORY_UTILITY;
-        case kPlugCategGenerator:
-            return PLUGIN_CATEGORY_SYNTH;
-        }
+            intptr_t category = effect->dispatcher(effect, effGetPlugCategory, 0, 0, nullptr, 0.0f);
 
-        if (effect->flags & effFlagsIsSynth)
-            return PLUGIN_CATEGORY_SYNTH;
+            switch (category)
+            {
+            case kPlugCategSynth:
+                return PLUGIN_CATEGORY_SYNTH;
+            case kPlugCategAnalysis:
+                return PLUGIN_CATEGORY_UTILITY;
+            case kPlugCategMastering:
+                return PLUGIN_CATEGORY_DYNAMICS;
+            case kPlugCategRoomFx:
+                return PLUGIN_CATEGORY_DELAY;
+            case kPlugCategRestoration:
+                return PLUGIN_CATEGORY_UTILITY;
+            case kPlugCategGenerator:
+                return PLUGIN_CATEGORY_SYNTH;
+            }
+
+            if (effect->flags & effFlagsIsSynth)
+                return PLUGIN_CATEGORY_SYNTH;
+        }
 
         return getPluginCategoryFromName(m_name);
     }
@@ -155,7 +161,7 @@ public:
     {
         CARLA_ASSERT(effect);
 
-        return effect->uniqueID;
+        return effect ? effect->uniqueID : 0;
     }
 
     // -------------------------------------------------------------------
@@ -411,7 +417,6 @@ public:
     {
         if (gui.type == GUI_EXTERNAL_OSC)
         {
-#ifndef BUILD_BRIDGE
             CARLA_ASSERT(osc.thread);
 
             if (! osc.thread)
@@ -436,7 +441,6 @@ public:
                 if (! osc.thread->wait(500))
                     osc.thread->quit();
             }
-#endif
         }
         else
         {
@@ -490,7 +494,6 @@ public:
         deleteBuffers();
 
         uint32_t aIns, aOuts, mIns, mOuts, params, j;
-        aIns = aOuts = mIns = mOuts = params = 0;
 
         aIns   = effect->numInputs;
         aOuts  = effect->numOutputs;
@@ -498,9 +501,13 @@ public:
 
         if (vstPluginCanDo(effect, "receiveVstEvents") || vstPluginCanDo(effect, "receiveVstMidiEvent") || (effect->flags & effFlagsIsSynth) > 0 || (m_hints & PLUGIN_WANTS_MIDI_INPUT))
             mIns = 1;
+        else
+            mIns = 0;
 
         if (vstPluginCanDo(effect, "sendVstEvents") || vstPluginCanDo(effect, "sendVstMidiEvent"))
             mOuts = 1;
+        else
+            mOuts = 0;
 
         if (aIns > 0)
         {
@@ -1319,7 +1326,7 @@ public:
             bool do_balance = (m_hints & PLUGIN_CAN_BALANCE) > 0 && (x_balanceLeft != -1.0 || x_balanceRight != 1.0);
 
             double bal_rangeL, bal_rangeR;
-            float bufValue, oldBufLeft[do_balance ? frames : 0];
+            float bufValue, oldBufLeft[do_balance ? frames : 1];
 
             for (i=0; i < aOut.count; i++)
             {
@@ -1460,7 +1467,6 @@ public:
     // -------------------------------------------------------------------
     // Post-poned events
 
-#ifndef BUILD_BRIDGE
     void uiParameterChange(const uint32_t index, const double value)
     {
         CARLA_ASSERT(index < param.count);
@@ -1512,7 +1518,6 @@ public:
             osc_send_midi(&osc.data, midiData);
         }
     }
-#endif
 
     // -------------------------------------------------------------------
 

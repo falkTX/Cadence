@@ -120,10 +120,14 @@ int CarlaBridgeOsc::handleMessage(const char* const path, const int argc, const 
     qDebug("CarlaBridgeOsc::handleMessage(\"%s\", %i, %p, \"%s\", %p)", path, argc, argv, types, msg);
     CARLA_ASSERT(m_server);
     CARLA_ASSERT(m_serverPath);
+    CARLA_ASSERT(m_name);
     CARLA_ASSERT(path);
 
+    if (! (m_name && path))
+        return 1;
+
     // Check if message is for this client
-    if ((! path) || strlen(path) <= m_nameSize || strncmp(path+1, m_name, m_nameSize) != 0)
+    if (strlen(path) <= m_nameSize || strncmp(path+1, m_name, m_nameSize) != 0)
     {
         qWarning("CarlaBridgeOsc::handleMessage() - message not for this client: '%s' != '/%s/'", path, m_name);
         return 1;

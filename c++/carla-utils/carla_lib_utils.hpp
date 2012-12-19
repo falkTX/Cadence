@@ -59,7 +59,7 @@ void* lib_symbol(void* const lib, const char* const symbol)
     CARLA_ASSERT(lib);
     CARLA_ASSERT(symbol);
 
-    if (! lib)
+    if (! (lib && symbol))
         return nullptr;
 
 #ifdef Q_OS_WIN

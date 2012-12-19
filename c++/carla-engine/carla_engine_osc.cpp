@@ -155,7 +155,7 @@ int CarlaEngineOsc::handleMessage(const char* const path, const int argc, const 
     CARLA_ASSERT(m_name);
     CARLA_ASSERT(path);
 
-    if (! path)
+    if (! (m_name && path))
         return 1;
 
 #ifndef BUILD_BRIDGE

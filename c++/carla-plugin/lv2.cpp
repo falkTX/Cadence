@@ -341,11 +341,15 @@ public:
                 break;
 
             case GUI_EXTERNAL_OSC:
-#ifndef BUILD_BRIDGE
                 if (osc.thread)
                 {
+#ifndef BUILD_BRIDGE
+                    const uint oscUiTimeout = x_engine->getOptions().oscUiTimeout;
+#else
+                    const uint oscUiTimeout = 40;
+#endif
                     // Wait a bit first, try safe quit, then force kill
-                    if (osc.thread->isRunning() && ! osc.thread->wait(x_engine->getOptions().oscUiTimeout * 100))
+                    if (osc.thread->isRunning() && ! osc.thread->wait(oscUiTimeout))
                     {
                         qWarning("Failed to properly stop LV2 OSC GUI thread");
                         osc.thread->terminate();
@@ -353,7 +357,6 @@ public:
 
                     delete osc.thread;
                 }
-#endif
                 break;
             }
 
@@ -499,32 +502,35 @@ public:
     {
         CARLA_ASSERT(rdf_descriptor);
 
-        LV2_Property category = rdf_descriptor->Type;
+        if (rdf_descriptor)
+        {
+            LV2_Property category = rdf_descriptor->Type;
 
-        if (LV2_IS_DELAY(category))
-            return PLUGIN_CATEGORY_DELAY;
-        if (LV2_IS_DISTORTION(category))
-            return PLUGIN_CATEGORY_OTHER;
-        if (LV2_IS_DYNAMICS(category))
-            return PLUGIN_CATEGORY_DYNAMICS;
-        if (LV2_IS_EQ(category))
-            return PLUGIN_CATEGORY_EQ;
-        if (LV2_IS_FILTER(category))
-            return PLUGIN_CATEGORY_FILTER;
-        if (LV2_IS_GENERATOR(category))
-            return PLUGIN_CATEGORY_SYNTH;
-        if (LV2_IS_MODULATOR(category))
-            return PLUGIN_CATEGORY_MODULATOR;
-        if (LV2_IS_REVERB(category))
-            return PLUGIN_CATEGORY_DELAY;
-        if (LV2_IS_SIMULATOR(category))
-            return PLUGIN_CATEGORY_OTHER;
-        if (LV2_IS_SPATIAL(category))
-            return PLUGIN_CATEGORY_OTHER;
-        if (LV2_IS_SPECTRAL(category))
-            return PLUGIN_CATEGORY_UTILITY;
-        if (LV2_IS_UTILITY(category))
-            return PLUGIN_CATEGORY_UTILITY;
+            if (LV2_IS_DELAY(category))
+                return PLUGIN_CATEGORY_DELAY;
+            if (LV2_IS_DISTORTION(category))
+                return PLUGIN_CATEGORY_OTHER;
+            if (LV2_IS_DYNAMICS(category))
+                return PLUGIN_CATEGORY_DYNAMICS;
+            if (LV2_IS_EQ(category))
+                return PLUGIN_CATEGORY_EQ;
+            if (LV2_IS_FILTER(category))
+                return PLUGIN_CATEGORY_FILTER;
+            if (LV2_IS_GENERATOR(category))
+                return PLUGIN_CATEGORY_SYNTH;
+            if (LV2_IS_MODULATOR(category))
+                return PLUGIN_CATEGORY_MODULATOR;
+            if (LV2_IS_REVERB(category))
+                return PLUGIN_CATEGORY_DELAY;
+            if (LV2_IS_SIMULATOR(category))
+                return PLUGIN_CATEGORY_OTHER;
+            if (LV2_IS_SPATIAL(category))
+                return PLUGIN_CATEGORY_OTHER;
+            if (LV2_IS_SPECTRAL(category))
+                return PLUGIN_CATEGORY_UTILITY;
+            if (LV2_IS_UTILITY(category))
+                return PLUGIN_CATEGORY_UTILITY;
+        }
 
         return getPluginCategoryFromName(m_name);
     }
@@ -533,7 +539,7 @@ public:
     {
         CARLA_ASSERT(rdf_descriptor);
 
-        return rdf_descriptor->UniqueID;
+        return rdf_descriptor ? rdf_descriptor->UniqueID : 0;
     }
 
     // -------------------------------------------------------------------
@@ -1031,7 +1037,6 @@ public:
             break;
 
         case GUI_EXTERNAL_OSC:
-#ifndef BUILD_BRIDGE
             CARLA_ASSERT(osc.thread);
 
             if (! osc.thread)
@@ -1056,20 +1061,13 @@ public:
                 if (! osc.thread->wait(500))
                     osc.thread->quit();
             }
-#endif
             break;
         }
     }
 
     void idleGui()
     {
-#ifdef BUILD_BRIDGE
-        const bool haveUI = (gui.type != GUI_EXTERNAL_OSC && ui.handle && ui.descriptor);
-#else
-        const bool haveUI = (gui.type == GUI_EXTERNAL_OSC && osc.data.target) || (ui.handle && ui.descriptor);
-#endif
-
-        if (haveUI)
+        if ((gui.type == GUI_EXTERNAL_OSC && osc.data.target) || (ui.handle && ui.descriptor))
         {
             // Update event ports
             if (! atomQueueOut.isEmpty())
@@ -1082,14 +1080,12 @@ public:
 
                 while (queue.get(&portIndex, &atom, false))
                 {
-#ifndef BUILD_BRIDGE
                     if (gui.type == GUI_EXTERNAL_OSC)
                     {
                         QByteArray chunk((const char*)atom, sizeof(LV2_Atom) + atom->size);
                         osc_send_lv2_transfer_event(&osc.data, portIndex, getCustomURIString(atom->type), chunk.toBase64().constData());
                     }
                     else
-#endif
                     {
                         if (ui.descriptor->port_event)
                             ui.descriptor->port_event(ui.handle, portIndex, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
@@ -1859,12 +1855,11 @@ public:
         {
             const LV2_Program_Descriptor* const pdesc = ext.programs->get_program(handle, i);
             CARLA_ASSERT(pdesc);
-            CARLA_ASSERT(pdesc->program < 128);
             CARLA_ASSERT(pdesc->name);
 
             midiprog.data[i].bank    = pdesc->bank;
             midiprog.data[i].program = pdesc->program;
-            midiprog.data[i].name    = strdup(pdesc->name);
+            midiprog.data[i].name    = strdup(pdesc->name ? pdesc->name : "");
         }
 
 #ifndef BUILD_BRIDGE
@@ -2559,7 +2554,7 @@ public:
                         }
                     }
 
-                    midiEventCount = MAX_MIDI_CHANNELS*2;
+                    //midiEventCount = MAX_MIDI_CHANNELS*2;
                 }
 
                 if (m_latency > 0)
@@ -2620,7 +2615,7 @@ public:
             bool do_balance = (m_hints & PLUGIN_CAN_BALANCE) > 0 && (x_balanceLeft != -1.0 || x_balanceRight != 1.0);
 
             double bal_rangeL, bal_rangeR;
-            float bufValue, oldBufLeft[do_balance ? frames : 0];
+            float bufValue, oldBufLeft[do_balance ? frames : 1];
 
             for (i=0; i < aOut.count; i++)
             {
@@ -2845,14 +2840,12 @@ public:
         if (index >= param.count)
             return;
 
-#ifndef BUILD_BRIDGE
         if (gui.type == GUI_EXTERNAL_OSC)
         {
             if (osc.data.target)
                 osc_send_control(&osc.data, param.data[index].rindex, value);
         }
         else
-#endif
         {
             if (ui.handle && ui.descriptor && ui.descriptor->port_event)
             {
@@ -2869,14 +2862,12 @@ public:
         if (index >= midiprog.count)
             return;
 
-#ifndef BUILD_BRIDGE
         if (gui.type == GUI_EXTERNAL_OSC)
         {
             if (osc.data.target)
                 osc_send_midi_program(&osc.data, midiprog.data[index].bank, midiprog.data[index].program);
         }
         else
-#endif
         {
             if (ext.uiprograms)
                 ext.uiprograms->select_program(ui.handle, midiprog.data[index].bank, midiprog.data[index].program);
@@ -2889,7 +2880,6 @@ public:
         CARLA_ASSERT(note < 128);
         CARLA_ASSERT(velo > 0 && velo < 128);
 
-#ifndef BUILD_BRIDGE
         if (gui.type == GUI_EXTERNAL_OSC)
         {
             if (osc.data.target)
@@ -2902,7 +2892,6 @@ public:
             }
         }
         else
-#endif
         {
             if (ui.handle && ui.descriptor && ui.descriptor->port_event)
             {
@@ -2924,7 +2913,6 @@ public:
         CARLA_ASSERT(channel < 16);
         CARLA_ASSERT(note < 128);
 
-#ifndef BUILD_BRIDGE
         if (gui.type == GUI_EXTERNAL_OSC)
         {
             if (osc.data.target)
@@ -2936,7 +2924,6 @@ public:
             }
         }
         else
-#endif
         {
             if (ui.handle && ui.descriptor && ui.descriptor->port_event)
             {
@@ -3139,7 +3126,7 @@ public:
                 if (prog.names[index])
                     free((void*)prog.names[index]);
 
-                prog.names[index] = strdup(progName);
+                prog.names[index] = strdup(progName ? progName : "");
             }
         }
 
@@ -3155,9 +3142,21 @@ public:
         const char* const uriKey = getCustomURIString(key);
 
         // do basic checks
-        if (! uriKey)
+        if (! key)
         {
             qWarning("Lv2Plugin::handleStateStore(%i, %p, " P_SIZE ", %i, %i) - invalid key", key, value, size, type, flags);
+            return LV2_STATE_ERR_NO_PROPERTY;
+        }
+
+        if (! value)
+        {
+            qWarning("Lv2Plugin::handleStateStore(%i, %p, " P_SIZE ", %i, %i) - invalid value", key, value, size, type, flags);
+            return LV2_STATE_ERR_NO_PROPERTY;
+        }
+
+        if (! uriKey)
+        {
+            qWarning("Lv2Plugin::handleStateStore(%i, %p, " P_SIZE ", %i, %i) - invalid key URI", key, value, size, type, flags);
             return LV2_STATE_ERR_NO_PROPERTY;
         }
 
@@ -3178,7 +3177,8 @@ public:
         {
             if (strcmp(custom[i].key, uriKey) == 0)
             {
-                free((void*)custom[i].value);
+                if (custom[i].value)
+                    free((void*)custom[i].value);
 
                 if (strcmp(stype, LV2_ATOM__String) == 0 || strcmp(stype, LV2_ATOM__Path) == 0)
                     custom[i].value = strdup((const char*)value);
@@ -3337,7 +3337,7 @@ public:
             CARLA_ASSERT(buffer);
             CARLA_ASSERT(bufferSize == sizeof(float));
 
-            if (bufferSize != sizeof(float))
+            if (bufferSize != sizeof(float) || ! buffer)
                 return;
 
             float value = *(float*)buffer;
@@ -3352,12 +3352,18 @@ public:
         {
             CARLA_ASSERT(buffer);
 
+            if (! buffer)
+                return;
+
             const LV2_Atom* const atom = (const LV2_Atom*)buffer;
             handleTransferAtom(rindex, atom);
         }
         else if (format == CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT)
         {
             CARLA_ASSERT(buffer);
+
+            if (! buffer)
+                return;
 
             const LV2_Atom* const atom = (const LV2_Atom*)buffer;
             handleTransferEvent(rindex, atom);
@@ -3366,9 +3372,9 @@ public:
 
     // -------------------------------------------------------------------
 
-#ifndef BUILD_BRIDGE
     const char* getUiBridgePath(const LV2_Property type)
     {
+#ifndef BUILD_BRIDGE
         const CarlaEngineOptions options(x_engine->getOptions());
 
         switch (type)
@@ -3388,6 +3394,10 @@ public:
         default:
             return nullptr;
         }
+#else
+        return nullptr;
+        Q_UNUSED(type);
+#endif
     }
 
     bool isUiBridgeable(const uint32_t uiId)
@@ -3408,7 +3418,6 @@ public:
 
         return true;
     }
-#endif
 
     bool isUiResizable()
     {
@@ -3484,8 +3493,8 @@ public:
 
         uint32_t portIndex = evIn.count > 0 ? evIn.data[0].rindex : 0;
 
-        const LV2_Atom* const atom = lv2_atom_forge_deref(&forge, ref);
-        ui.descriptor->port_event(ui.handle, portIndex, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
+        if (const LV2_Atom* const atom = lv2_atom_forge_deref(&forge, ref))
+            ui.descriptor->port_event(ui.handle, portIndex, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
 
         free((void*)chunk.buf);
         sratom_free(sratom);
@@ -4197,7 +4206,9 @@ public:
         int eQt4, eCocoa, eHWND, eX11, eGtk2, eGtk3, iCocoa, iHWND, iX11, iQt4, iExt, iSuil, iFinal;
         eQt4 = eCocoa = eHWND = eX11 = eGtk2 = eGtk3 = iQt4 = iCocoa = iHWND = iX11 = iExt = iSuil = iFinal = -1;
 
-#ifndef BUILD_BRIDGE
+#ifdef BUILD_BRIDGE
+        const bool preferUiBridges = false;
+#else
         const bool preferUiBridges = x_engine->getOptions().preferUiBridges;
 #endif
 
@@ -4206,59 +4217,46 @@ public:
             switch (rdf_descriptor->UIs[i].Type)
             {
             case LV2_UI_QT4:
-#ifndef BUILD_BRIDGE
                 if (isUiBridgeable(i) && preferUiBridges)
                     eQt4 = i;
-#endif
                 iQt4 = i;
                 break;
 
             case LV2_UI_COCOA:
-#ifndef BUILD_BRIDGE
                 if (isUiBridgeable(i) && preferUiBridges)
                     eCocoa = i;
-#endif
                 iCocoa = i;
                 break;
 
             case LV2_UI_WINDOWS:
-#ifndef BUILD_BRIDGE
                 if (isUiBridgeable(i) && preferUiBridges)
                     eHWND = i;
-#endif
                 iHWND = i;
                 break;
 
             case LV2_UI_X11:
-#ifndef BUILD_BRIDGE
                 if (isUiBridgeable(i) && preferUiBridges)
                     eX11 = i;
-#endif
                 iX11 = i;
                 break;
 
             case LV2_UI_GTK2:
-#ifdef BUILD_BRIDGE
-                if (false)
-#else
-# ifdef WANT_SUIL
+#ifdef WANT_SUIL
                 if (isUiBridgeable(i) && preferUiBridges)
-# else
-                if (isUiBridgeable(i))
-# endif
-#endif
                     eGtk2 = i;
+#else
+                if (isUiBridgeable(i))
+                    eGtk2 = i;
+#endif
 #ifdef WANT_SUIL
                 iSuil = i;
 #endif
                 break;
 
-#ifndef BUILD_BRIDGE
             case LV2_UI_GTK3:
                 if (isUiBridgeable(i))
                     eGtk3 = i;
                 break;
-#endif
 
             case LV2_UI_EXTERNAL:
             case LV2_UI_OLD_EXTERNAL:
@@ -4295,9 +4293,7 @@ public:
         else if (iSuil >= 0)
             iFinal = iSuil;
 
-#ifndef BUILD_BRIDGE
         const bool isBridged = (iFinal == eQt4 || iFinal == eCocoa || iFinal == eHWND || iFinal == eX11 || iFinal == eGtk2 || iFinal == eGtk3);
-#endif
 #ifdef WANT_SUIL
         const bool isSuil = (iFinal == iSuil && !isBridged);
 #endif
@@ -4391,7 +4387,6 @@ public:
 
         const LV2_Property uiType = ui.rdf_descriptor->Type;
 
-#ifndef BUILD_BRIDGE
         if (isBridged)
         {
             // -------------------------------------------------------
@@ -4405,7 +4400,6 @@ public:
             }
         }
         else
-#endif
         {
             // -------------------------------------------------------
             // initialize ui features
