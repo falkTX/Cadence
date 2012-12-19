@@ -595,14 +595,12 @@ int CarlaEngineOsc::handleMsgSetProgram(CARLA_ENGINE_OSC_HANDLE_ARGS2)
     const int32_t index = argv[0]->i;
     plugin->setProgram(index, true, false, true, true);
 
-#ifndef BUILD_BRIDGE
     // parameters might have changed, send all param values back
     if (m_controlData.target && index >= 0)
     {
         for (uint32_t i=0; i < plugin->parameterCount(); i++)
             engine->osc_send_control_set_parameter_value(plugin->id(), i, plugin->getParameterValue(i));
     }
-#endif
 
     return 0;
 }
@@ -615,14 +613,12 @@ int CarlaEngineOsc::handleMsgSetMidiProgram(CARLA_ENGINE_OSC_HANDLE_ARGS2)
     const int32_t index = argv[0]->i;
     plugin->setMidiProgram(index, true, false, true, true);
 
-#ifndef BUILD_BRIDGE
     // parameters might have changed, send all param values back
     if (m_controlData.target && index >= 0)
     {
         for (uint32_t i=0; i < plugin->parameterCount(); i++)
             engine->osc_send_control_set_parameter_value(plugin->id(), i, plugin->getParameterValue(i));
     }
-#endif
 
     return 0;
 }
