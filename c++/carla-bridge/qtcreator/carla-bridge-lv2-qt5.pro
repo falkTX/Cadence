@@ -1,11 +1,11 @@
 # QtCreator project file
 
-QT = core gui
+QT = core widgets
 
 CONFIG    = debug link_pkgconfig qt warn_on
 PKGCONFIG = liblo
 
-TARGET   = carla-bridge-lv2-qt4
+TARGET   = carla-bridge-lv2-qt5
 TEMPLATE = app
 VERSION  = 0.5.0
 
@@ -27,7 +27,8 @@ HEADERS = \
     ../../carla-utils/carla_lv2_utils.hpp
 
 INCLUDEPATH = .. \
-    ../../carla-includes
+    ../../carla-includes \
+    ../../carla-utils
 
 LIBS    = \
     ../../carla-lilv/carla_lilv.a \
@@ -35,6 +36,6 @@ LIBS    = \
 
 DEFINES  = QTCREATOR_TEST
 DEFINES += DEBUG
-DEFINES += BUILD_BRIDGE BUILD_BRIDGE_UI BRIDGE_LV2 BRIDGE_LV2_QT4
+DEFINES += BUILD_BRIDGE BUILD_BRIDGE_UI BRIDGE_LV2 BRIDGE_LV2_QT5
 
 QMAKE_CXXFLAGS *= -std=c++0x

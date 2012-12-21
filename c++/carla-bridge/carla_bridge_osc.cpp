@@ -1,5 +1,5 @@
 /*
- * Carla Plugin bridge code
+ * Carla Bridge OSC
  * Copyright (C) 2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,99 +18,154 @@
 #include "carla_bridge_osc.hpp"
 #include "carla_bridge_client.hpp"
 #include "carla_midi.h"
+#include "carla_utils.hpp"
 
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 
 CARLA_BRIDGE_START_NAMESPACE
 
-unsigned int uintMin(unsigned int value1, unsigned int value2)
-{
-    return value1 < value2 ? value1 : value2;
-}
-
-void osc_error_handler(const int num, const char* const msg, const char* const path)
-{
-    qCritical("osc_error_handler(%i, \"%s\", \"%s\")", num, msg, path);
-}
-
 // -----------------------------------------------------------------------
 
-CarlaBridgeOsc::CarlaBridgeOsc(CarlaClient* const client_, const char* const name)
+CarlaBridgeOsc::CarlaBridgeOsc(CarlaBridgeClient* const client_)
     : client(client_)
 {
-    qDebug("CarlaBridgeOsc::CarlaOsc(%p, \"%s\")", client, name);
+    qDebug("CarlaBridgeOsc::CarlaBridgeOsc(%p)", client);
     CARLA_ASSERT(client);
-    CARLA_ASSERT(name);
+
+    m_name = nullptr;
+    m_nameSize = 0;
 
     m_server = nullptr;
     m_serverPath = nullptr;
-    m_controlData.path = nullptr;
-    m_controlData.source = nullptr; // unused
-    m_controlData.target = nullptr;
-
-    m_name = strdup(name ? name : "");
-    m_nameSize = strlen(m_name);
 }
 
 CarlaBridgeOsc::~CarlaBridgeOsc()
 {
-    qDebug("CarlaBridgeOsc::~CarlaOsc()");
-
-    if (m_name)
-        free(m_name);
+    qDebug("CarlaBridgeOsc::~CarlaBridgeOsc()");
+    CARLA_ASSERT(! m_name);
+    CARLA_ASSERT(! m_server);
+    CARLA_ASSERT(! m_serverPath);
 }
 
 bool CarlaBridgeOsc::init(const char* const url)
 {
     qDebug("CarlaBridgeOsc::init(\"%s\")", url);
+    CARLA_ASSERT(! m_name);
     CARLA_ASSERT(! m_server);
     CARLA_ASSERT(! m_serverPath);
     CARLA_ASSERT(url);
 
-    char* host = lo_url_get_hostname(url);
-    char* port = lo_url_get_port(url);
+    if (! url)
+    {
+        qWarning("CarlaBridgeOsc::init(\"%s\") - invalid url", url);
+        return false;
+    }
 
-    m_controlData.path   = lo_url_get_path(url);
+#ifdef BUILD_BRIDGE_PLUGIN
+    m_name = strdup("carla-bridge-plugin");
+#else
+    m_name = strdup("carla-bridge-ui");
+#endif
+    m_nameSize = strlen(m_name);
+
+    char* const host = lo_url_get_hostname(url);
+    char* const path = lo_url_get_path(url);
+    char* const port = lo_url_get_port(url);
+
+    if (! host)
+    {
+        qCritical("CarlaBridgeOsc::init(\"%s\") - failed to get url hostname", url);
+        return false;
+    }
+
+    if (! path)
+    {
+        free(host);
+        qCritical("CarlaBridgeOsc::init(\"%s\") - failed to get url path", url);
+        return false;
+    }
+
+    if (! port)
+    {
+        free(host);
+        free(path);
+        qCritical("CarlaBridgeOsc::init(\"%s\") - failed to get url port", url);
+        return false;
+    }
+
+    m_controlData.path   = path;
     m_controlData.target = lo_address_new_with_proto(LO_TCP, host, port);
 
     free(host);
     free(port);
 
-    if (! m_controlData.path)
+    if (! m_controlData.target)
     {
-        qCritical("CarlaBridgeOsc::init(\"%s\") - failed to init OSC", url);
+        qCritical("CarlaBridgeOsc::init(\"%s\") - failed to get new url address for host '%s' and port '%s'", url, host, port);
         return false;
     }
 
-    // create new OSC thread
     m_server = lo_server_new_with_proto(nullptr, LO_TCP, osc_error_handler);
 
-    // get our full OSC server path
-    char* const threadPath = lo_server_get_url(m_server);
-    m_serverPath = strdup(QString("%1%2").arg(threadPath).arg(m_name).toUtf8().constData());
-    free(threadPath);
+    if (! m_server)
+    {
+        qCritical("CarlaBridgeOsc::init(\"%s\") - failed to create new OSC server", url);
+        return false;
+    }
 
-    // register message handler
+    if (char* const serverUrl = lo_server_get_url(m_server))
+    {
+        m_serverPath = strdup(QString("%1%2").arg(serverUrl).arg(m_name).toUtf8().constData());
+        free(serverUrl);
+    }
+    else
+        m_serverPath = strdup(QString("%1carla-bridge").arg(serverUrl).toUtf8().constData());
+
     lo_server_add_method(m_server, nullptr, nullptr, osc_message_handler, this);
 
     return true;
 }
 
+void CarlaBridgeOsc::idle()
+{
+    CARLA_ASSERT(m_server);
+
+    if (m_server)
+    {
+        while (lo_server_recv_noblock(m_server, 0) != 0) {}
+    }
+}
+
 void CarlaBridgeOsc::close()
 {
     qDebug("CarlaBridgeOsc::close()");
+    CARLA_ASSERT(m_name);
     CARLA_ASSERT(m_server);
     CARLA_ASSERT(m_serverPath);
 
+    m_nameSize = 0;
+
+    if (m_name)
+    {
+        free(m_name);
+        m_name = nullptr;
+    }
+
+    if (m_server)
+    {
+        lo_server_del_method(m_server, nullptr, nullptr);
+        lo_server_free(m_server);
+        m_server = nullptr;
+    }
+
+    if (m_serverPath)
+    {
+        free(m_serverPath);
+        m_serverPath = nullptr;
+    }
+
     m_controlData.free();
-
-    lo_server_del_method(m_server, nullptr, nullptr);
-    lo_server_free(m_server);
-
-    free((void*)m_serverPath);
-    m_serverPath = nullptr;
-    m_server = nullptr;
 }
 
 // -----------------------------------------------------------------------
@@ -118,15 +173,23 @@ void CarlaBridgeOsc::close()
 int CarlaBridgeOsc::handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg)
 {
     qDebug("CarlaBridgeOsc::handleMessage(\"%s\", %i, %p, \"%s\", %p)", path, argc, argv, types, msg);
+    CARLA_ASSERT(m_name);
     CARLA_ASSERT(m_server);
     CARLA_ASSERT(m_serverPath);
-    CARLA_ASSERT(m_name);
     CARLA_ASSERT(path);
 
-    if (! (m_name && path))
+    if (! path)
+    {
+        qCritical("CarlaBridgeOsc::handleMessage() - got invalid path");
         return 1;
+    }
 
-    // Check if message is for this client
+    if (! (m_name && m_server && m_serverPath))
+    {
+        qCritical("CarlaBridgeOsc::handleMessage(\"%s\", ...) - received message but client is offline", path);
+        return 1;
+    }
+
     if (strlen(path) <= m_nameSize || strncmp(path+1, m_name, m_nameSize) != 0)
     {
         qWarning("CarlaBridgeOsc::handleMessage() - message not for this client: '%s' != '/%s/'", path, m_name);
@@ -134,46 +197,51 @@ int CarlaBridgeOsc::handleMessage(const char* const path, const int argc, const 
     }
 
     char method[32] = { 0 };
-    memcpy(method, path + (m_nameSize + 1), uintMin(strlen(path), 32));
+    strncpy(method, path + (m_nameSize + 2), 31);
 
-    if (method[0] == 0 || method[0] != '/')
+    if (method[0] == '\0')
+    {
+        qWarning("CarlaBridgeOsc::handleMessage(\"%s\", ...) - received message without method", path);
         return 1;
+    }
 
     // Common OSC methods
-    if (strcmp(method, "/configure") == 0)
+    if (strcmp(method, "configure") == 0)
         return handleMsgConfigure(argc, argv, types);
-    if (strcmp(method, "/control") == 0)
+    if (strcmp(method, "control") == 0)
         return handleMsgControl(argc, argv, types);
-    if (strcmp(method, "/program") == 0)
+    if (strcmp(method, "program") == 0)
         return handleMsgProgram(argc, argv, types);
-    if (strcmp(method, "/midi_program") == 0)
+    if (strcmp(method, "midi_program") == 0)
         return handleMsgMidiProgram(argc, argv, types);
-    if (strcmp(method, "/midi") == 0)
+    if (strcmp(method, "midi") == 0)
         return handleMsgMidi(argc, argv, types);
-    if (strcmp(method, "/sample-rate") == 0)
+    if (strcmp(method, "sample-rate") == 0)
         return 0; // unused
-    if (strcmp(method, "/show") == 0)
+    if (strcmp(method, "show") == 0)
         return handleMsgShow();
-    if (strcmp(method, "/hide") == 0)
+    if (strcmp(method, "hide") == 0)
         return handleMsgHide();
-    if (strcmp(method, "/quit") == 0)
+    if (strcmp(method, "quit") == 0)
         return handleMsgQuit();
 
 #ifdef BRIDGE_LV2
-    if (strcmp(method, "/lv2_atom_transfer") == 0)
+    // LV2 UI methods
+    if (strcmp(method, "lv2_atom_transfer") == 0)
         return handleMsgLv2TransferAtom(argc, argv, types);
-    if (strcmp(method, "/lv2_event_transfer") == 0)
+    if (strcmp(method, "lv2_event_transfer") == 0)
         return handleMsgLv2TransferEvent(argc, argv, types);
 #endif
 
 #if 0
+    // TODO
     else if (strcmp(method, "set_parameter_midi_channel") == 0)
         return osc_set_parameter_midi_channel_handler(argv);
     else if (strcmp(method, "set_parameter_midi_cc") == 0)
         return osc_set_parameter_midi_channel_handler(argv);
 #endif
 
-    qWarning("CarlaBridgeOsc::handleMessage(\"%s\", ...) - got unsupported OSC method '%s'", path, method);
+    qWarning("CarlaBridgeOsc::handleMessage(\"%s\", ...) - received unsupported OSC method '%s'", path, method);
     return 1;
 }
 

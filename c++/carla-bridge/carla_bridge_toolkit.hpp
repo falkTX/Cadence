@@ -1,5 +1,5 @@
 /*
- * Carla bridge code
+ * Carla Bridge Toolkit
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,15 +15,16 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_BRIDGE_TOOLKIT_H
-#define CARLA_BRIDGE_TOOLKIT_H
+#ifndef CARLA_BRIDGE_TOOLKIT_HPP
+#define CARLA_BRIDGE_TOOLKIT_HPP
 
 #include "carla_bridge.hpp"
 
-#include <cstdlib>
-#include <cstring>
-
 CARLA_BRIDGE_START_NAMESPACE
+
+#if 0
+} // Fix editor indentation
+#endif
 
 /*!
  * @defgroup CarlaBridgeToolkit Carla Bridge Toolkit
@@ -32,48 +33,33 @@ CARLA_BRIDGE_START_NAMESPACE
  * @{
  */
 
-class CarlaToolkit
+class CarlaBridgeToolkit
 {
 public:
-    CarlaToolkit(const char* const title)
-    {
-        CARLA_ASSERT(title);
-
-        m_title  = strdup(title ? title : "(null)");
-        m_client = nullptr;
-    }
-
-    virtual ~CarlaToolkit()
-    {
-        if (m_title)
-            free(m_title);
-    }
+    CarlaBridgeToolkit(CarlaBridgeClient* const client, const char* const title);
+    virtual ~CarlaBridgeToolkit();
 
     virtual void init() = 0;
-    virtual void exec(CarlaClient* const client, const bool showGui) = 0;
+    virtual void exec(const bool showGui) = 0;
     virtual void quit() = 0;
 
     virtual void show() = 0;
     virtual void hide() = 0;
-    virtual void resize(int width, int height) = 0;
+    virtual void resize(const int width, const int height) = 0;
 
 #if BUILD_BRIDGE_UI
-    virtual void* getContainerId()
-    {
-        return nullptr;
-    }
+    virtual void* getContainerId();
 
-    static CarlaToolkit* createNew(const char* const title);
+    static CarlaBridgeToolkit* createNew(CarlaBridgeClient* const client, const char* const title);
 #endif
 
 protected:
-    char* m_title;
-    CarlaClient* m_client;
-    friend class CarlaClient;
+    CarlaBridgeClient* const client;
+    char* title;
 };
 
 /**@}*/
 
 CARLA_BRIDGE_END_NAMESPACE
 
-#endif // CARLA_BRIDGE_TOOLKIT_H
+#endif // CARLA_BRIDGE_TOOLKIT_HPP

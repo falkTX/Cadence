@@ -1,5 +1,5 @@
 /*
- * Carla UI bridge code
+ * Carla Bridge Toolkit, Qt version
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,126 +16,127 @@
  */
 
 #include "carla_bridge_client.hpp"
+#include "carla_bridge_toolkit.hpp"
 
 #include <QtCore/QSettings>
-#include <QtCore/QTimer>
+#include <QtCore/QThread>
 #include <QtCore/QTimerEvent>
 
-#ifdef BRIDGE_LV2_QT5
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
 # include <QtWidgets/QApplication>
 # include <QtWidgets/QMainWindow>
-# include <QtWidgets/QVBoxLayout>
+# ifdef Q_WS_X11
+#  undef Q_WS_X11
+# endif
 #else
 # include <QtGui/QApplication>
 # include <QtGui/QMainWindow>
-# include <QtGui/QVBoxLayout>
+# ifdef Q_WS_X11
+#  include <QtGui/QX11EmbedContainer>
+# endif
 #endif
 
-#ifdef Q_WS_X11
-# include <QtGui/QX11EmbedContainer>
+#if defined(BRIDGE_COCOA) || defined(BRIDGE_HWND) || defined(BRIDGE_X11)
+# define BRIDGE_CONTAINER
+# ifdef Q_WS_X11
+typedef QX11EmbedContainer QEmbedContainer;
+# else
+typedef QWidget QEmbedContainer;
+# endif
 #endif
 
 CARLA_BRIDGE_START_NAMESPACE
 
-static int qargc = 0;
+// -------------------------------------------------------------------------
+
+#if defined(BRIDGE_QT4)
+static const char* const appName = "Carla-Qt4UIs";
+#elif defined(BRIDGE_QT5)
+static const char* const appName = "Carla-Qt5UIs";
+#elif defined(BRIDGE_COCOA)
+static const char* const appName = "Carla-CocoaUIs";
+#elif defined(BRIDGE_HWND)
+static const char* const appName = "Carla-HWNDUIs";
+#elif defined(BRIDGE_X11)
+static const char* const appName = "Carla-X11UIs";
+#else
+static const char* const appName = "Carla-UIs";
+#endif
+
+static int   qargc = 0;
 static char* qargv[0] = {};
-
-class BridgeApplication : public QApplication
-{
-public:
-    BridgeApplication()
-        : QApplication(qargc, qargv, true)
-    {
-        msgTimer = 0;
-        m_client = nullptr;
-    }
-
-    void exec(CarlaClient* const client)
-    {
-        m_client = client;
-        msgTimer = startTimer(50);
-
-        QApplication::exec();
-    }
-
-protected:
-    void timerEvent(QTimerEvent* const event)
-    {
-        if (event->timerId() == msgTimer)
-        {
-            if (m_client && ! m_client->oscIdle())
-                killTimer(msgTimer);
-        }
-
-        QApplication::timerEvent(event);
-    }
-
-private:
-    int msgTimer;
-    CarlaClient* m_client;
-};
 
 // -------------------------------------------------------------------------
 
-class CarlaToolkitQt: public CarlaToolkit
+class CarlaBridgeToolkitQt: public CarlaBridgeToolkit,
+                            public QObject
 {
 public:
-    CarlaToolkitQt(const char* const title)
-        : CarlaToolkit(title),
-#if defined(BRIDGE_LV2_QT4)
-          settings("Cadence", "Carla-Qt4UIs")
-#elif defined(BRIDGE_LV2_QT5)
-          settings("Cadence", "Carla-Qt5UIs")
-#elif defined(BRIDGE_LV2_X11) || defined(BRIDGE_VST_X11)
-          settings("Cadence", "Carla-X11UIs")
-#elif defined(BRIDGE_LV2_HWND) || defined(BRIDGE_VST_HWND)
-          settings("Cadence", "Carla-HWNDUIs")
-#else
-          settings("Cadence", "Carla-UIs")
-#endif
+    CarlaBridgeToolkitQt(CarlaBridgeClient* const client, const char* const title)
+        : CarlaBridgeToolkit(client, title),
+          QObject(nullptr),
+          settings("Cadence", appName)
     {
-        qDebug("CarlaToolkitQt::CarlaToolkitQ4(%s)", title);
+        qDebug("CarlaBridgeToolkitQt::CarlaBridgeToolkitQt(\"%s\")", title);
 
         app = nullptr;
         window = nullptr;
 
-#ifdef Q_WS_X11
-        x11Container = nullptr;
+        msgTimer = 0;
+
+        needsResize = false;
+        nextWidth   = 0;
+        nextHeight  = 0;
+
+#ifdef BRIDGE_CONTAINER
+        embedContainer = nullptr;
 #endif
     }
 
-    ~CarlaToolkitQt()
+    ~CarlaBridgeToolkitQt()
     {
-        qDebug("CarlaToolkitQt::~CarlaToolkitQt()");
+        qDebug("CarlaBridgeToolkitQt::~CarlaBridgeToolkitQt()");
         CARLA_ASSERT(! app);
+        CARLA_ASSERT(! msgTimer);
 
         if (window)
         {
             window->close();
             delete window;
         }
+
+#ifdef BRIDGE_CONTAINER
+        // TESTING
+        if (embedContainer)
+        {
+            embedContainer->close();
+            delete embedContainer;
+        }
+#endif
     }
 
     void init()
     {
-        qDebug("CarlaToolkitQt::init()");
+        qDebug("CarlaBridgeToolkitQt::init()");
         CARLA_ASSERT(! app);
         CARLA_ASSERT(! window);
+        CARLA_ASSERT(! msgTimer);
 
-        app = new BridgeApplication;
+        app = new QApplication(qargc, qargv);
 
         window = new QMainWindow(nullptr);
-        window->resize(10, 10);
+        window->resize(30, 30);
         window->hide();
     }
 
-    void exec(CarlaClient* const client, const bool showGui)
+    void exec(const bool showGui)
     {
-        qDebug("CarlaToolkitQt::exec(%p)", client);
+        qDebug("CarlaBridgeToolkitQt::exec(%s)", bool2str(showGui));
         CARLA_ASSERT(app);
+        CARLA_ASSERT(window);
         CARLA_ASSERT(client);
 
-#ifndef BRIDGE_LV2_X11
+#if defined(BRIDGE_QT4) || defined(BRIDGE_QT5)
         QWidget* const widget = (QWidget*)client->getWidget();
 
         window->setCentralWidget(widget);
@@ -146,46 +147,66 @@ public:
 #endif
 
         if (! client->isResizable())
-            window->setFixedSize(window->width(), window->height());
-
-        window->setWindowTitle(m_title);
-
-        if (settings.contains(QString("%1/pos_x").arg(m_title)))
         {
-            int posX = settings.value(QString("%1/pos_x").arg(m_title), window->x()).toInt();
-            int posY = settings.value(QString("%1/pos_y").arg(m_title), window->y()).toInt();
-            window->move(posX, posY);
+            window->setFixedSize(window->width(), window->height());
+#ifdef Q_OS_WIN
+            window->setWindowFlags(window->windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
+#endif
+        }
+
+        window->setWindowTitle(title);
+
+        if (settings.contains(QString("%1/pos_x").arg(title)))
+        {
+            bool hasX, hasY;
+            int posX = settings.value(QString("%1/pos_x").arg(title), window->x()).toInt(&hasX);
+            int posY = settings.value(QString("%1/pos_y").arg(title), window->y()).toInt(&hasY);
+
+            if (hasX && hasY)
+                window->move(posX, posY);
 
             if (client->isResizable())
             {
-                int width  = settings.value(QString("%1/width").arg(m_title), window->width()).toInt();
-                int height = settings.value(QString("%1/height").arg(m_title), window->height()).toInt();
-                window->resize(width, height);
+                bool hasWidth, hasHeight;
+                int width  = settings.value(QString("%1/width").arg(title), window->width()).toInt(&hasWidth);
+                int height = settings.value(QString("%1/height").arg(title), window->height()).toInt(&hasHeight);
+
+                if (hasWidth && hasHeight)
+                    window->resize(width, height);
             }
         }
 
         if (showGui)
             show();
         else
-            m_client->sendOscUpdate();
+            client->sendOscUpdate();
+
+        // Timer
+        msgTimer = startTimer(50);
 
         // Main loop
-        app->exec(client);
+        app->exec();
     }
 
     void quit()
     {
-        qDebug("CarlaToolkitQt::quit()");
+        qDebug("CarlaBridgeToolkitQt::quit()");
         CARLA_ASSERT(app);
+
+        if (msgTimer != 0)
+        {
+            killTimer(msgTimer);
+            msgTimer = 0;
+        }
 
         if (window)
         {
-            if (m_client)
+            if (client)
             {
-                settings.setValue(QString("%1/pos_x").arg(m_title), window->x());
-                settings.setValue(QString("%1/pos_y").arg(m_title), window->y());
-                settings.setValue(QString("%1/width").arg(m_title), window->width());
-                settings.setValue(QString("%1/height").arg(m_title), window->height());
+                settings.setValue(QString("%1/pos_x").arg(title), window->x());
+                settings.setValue(QString("%1/pos_y").arg(title), window->y());
+                settings.setValue(QString("%1/width").arg(title), window->width());
+                settings.setValue(QString("%1/height").arg(title), window->height());
                 settings.sync();
             }
 
@@ -194,8 +215,6 @@ public:
             delete window;
             window = nullptr;
         }
-
-        m_client = nullptr;
 
         if (app)
         {
@@ -209,7 +228,7 @@ public:
 
     void show()
     {
-        qDebug("CarlaToolkitQt::show()");
+        qDebug("CarlaBridgeToolkitQt::show()");
         CARLA_ASSERT(window);
 
         if (window)
@@ -218,62 +237,95 @@ public:
 
     void hide()
     {
-        qDebug("CarlaToolkitQt::hide()");
+        qDebug("CarlaBridgeToolkitQt::hide()");
         CARLA_ASSERT(window);
 
         if (window)
             window->hide();
     }
 
-    void resize(int width, int height)
+    void resize(const int width, const int height)
     {
-        qDebug("CarlaToolkitQt::resize(%i, %i)", width, height);
+        qDebug("CarlaBridgeToolkitQt::resize(%i, %i)", width, height);
         CARLA_ASSERT(window);
+
+        if (app->thread() != QThread::currentThread())
+        {
+            nextWidth  = width;
+            nextHeight  = height;
+            needsResize = true;
+            return;
+        }
 
         if (window)
             window->setFixedSize(width, height);
 
-#ifdef BRIDGE_LV2_X11
-        if (x11Container)
-            x11Container->setFixedSize(width, height);
+#ifdef BRIDGE_CONTAINER
+        if (embedContainer)
+            embedContainer->setFixedSize(width, height);
 #endif
     }
 
+#ifdef BRIDGE_CONTAINER
     void* getContainerId()
     {
-#ifdef Q_WS_X11
-        if (! x11Container)
-        {
-            x11Container = new QX11EmbedContainer(window);
+        qDebug("CarlaBridgeToolkitQt::getContainerId()");
+        CARLA_ASSERT(window);
 
-            window->setCentralWidget(x11Container);
+        if (! embedContainer)
+        {
+            embedContainer = new QEmbedContainer(window);
+
+            window->setCentralWidget(embedContainer);
             window->adjustSize();
 
-            x11Container->setParent(window);
-            x11Container->show();
+            embedContainer->setParent(window);
+            embedContainer->show();
         }
 
-        return (void*)x11Container->winId();
-#else
-        return nullptr;
-#endif
+        return (void*)embedContainer->winId();
     }
+#endif
 
-private:
-    BridgeApplication* app;
+protected:
+    QApplication* app;
     QMainWindow* window;
     QSettings settings;
+    int msgTimer;
 
-#ifdef Q_WS_X11
-    QX11EmbedContainer* x11Container;
+    bool needsResize;
+    int nextWidth, nextHeight;
+
+#ifdef BRIDGE_CONTAINER
+    QEmbedContainer* embedContainer;
 #endif
+
+    void timerEvent(QTimerEvent* const event)
+    {
+        if (event->timerId() == msgTimer && client)
+        {
+            if (needsResize)
+            {
+                client->toolkitResize(nextWidth, nextHeight);
+                needsResize = false;
+            }
+
+            if (client->isOscControlRegistered() && ! client->oscIdle())
+            {
+                killTimer(msgTimer);
+                msgTimer = 0;
+            }
+        }
+
+        QObject::timerEvent(event);
+    }
 };
 
 // -------------------------------------------------------------------------
 
-CarlaToolkit* CarlaToolkit::createNew(const char* const title)
+CarlaBridgeToolkit* CarlaBridgeToolkit::createNew(CarlaBridgeClient* const client, const char* const title)
 {
-    return new CarlaToolkitQt(title);
+    return new CarlaBridgeToolkitQt(client, title);
 }
 
 CARLA_BRIDGE_END_NAMESPACE

@@ -1,5 +1,5 @@
 /*
- * Carla bridge code
+ * Carla Bridge
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,8 +26,8 @@
 
 CARLA_BRIDGE_START_NAMESPACE
 
-class CarlaClient;
-class CarlaToolkit;
+class CarlaBridgeClient;
+class CarlaBridgeToolkit;
 
 CARLA_BRIDGE_END_NAMESPACE
 

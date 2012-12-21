@@ -1,5 +1,5 @@
 /*
- * Carla bridge code
+ * Carla Bridge OSC
  * Copyright (C) 2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_BRIDGE_OSC_H
-#define CARLA_BRIDGE_OSC_H
+#ifndef CARLA_BRIDGE_OSC_HPP
+#define CARLA_BRIDGE_OSC_HPP
 
 #include "carla_bridge.hpp"
 #include "carla_osc_utils.hpp"
@@ -48,21 +48,36 @@
 
 CARLA_BRIDGE_START_NAMESPACE
 
-/*!
- * @defgroup CarlaBridgeOSC Carla Bridge OSC
- *
- * The Carla Bridge OSC.
- * @{
- */
+#if 0
+} // Fix editor indentation
+#endif
 
 class CarlaBridgeOsc
 {
 public:
-    CarlaBridgeOsc(CarlaClient* const client, const char* const name);
+    CarlaBridgeOsc(CarlaBridgeClient* const client);
     ~CarlaBridgeOsc();
 
     bool init(const char* const url);
+    void idle();
     void close();
+
+    // -------------------------------------------------------------------
+
+    bool isControlRegistered() const
+    {
+        return bool(m_controlData.target);
+    }
+
+    const CarlaOscData* getControlData() const
+    {
+        return &m_controlData;
+    }
+
+    const char* getServerPath() const
+    {
+        return m_serverPath;
+    }
 
     // -------------------------------------------------------------------
 
@@ -84,30 +99,36 @@ protected:
 
     // -------------------------------------------------------------------
 
+protected:
+    CarlaBridgeClient* const client;
+
+    // -------------------------------------------------------------------
+
 private:
-    CarlaClient* const client;
-
-    lo_server    m_server;
-    const char*  m_serverPath;
-    CarlaOscData m_controlData;
-
     char*  m_name;
     size_t m_nameSize;
 
+    lo_server m_server;
+    char*     m_serverPath;
+
+    CarlaOscData m_controlData;
+
     // -------------------------------------------------------------------
+
+    static void osc_error_handler(const int num, const char* const msg, const char* const path)
+    {
+        qWarning("CarlaBridgeOsc::osc_error_handler(%i, \"%s\", \"%s\")", num, msg, path);
+    }
 
     static int osc_message_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg, void* const user_data)
     {
         CARLA_ASSERT(user_data);
-        CarlaBridgeOsc* const _this_ = (CarlaBridgeOsc*)user_data;
-        return _this_->handleMessage(path, argc, argv, types, msg);
+        if (CarlaBridgeOsc* const _this_ = (CarlaBridgeOsc*)user_data)
+            return _this_->handleMessage(path, argc, argv, types, msg);
+        return -1;
     }
-
-    friend class CarlaClient;
 };
-
-/**@}*/
 
 CARLA_BRIDGE_END_NAMESPACE
 
-#endif // CARLA_BRIDGE_OSC_H
+#endif // CARLA_BRIDGE_OSC_HPP

@@ -17,8 +17,8 @@
 
 #include "carla_bridge_client.hpp"
 
-#ifdef BRIDGE_LV2_X11
-# error X11 UI uses Qt4
+#if defined(BRIDGE_COCOA) || defined(BRIDGE_HWND) || defined(BRIDGE_X11)
+# error Cocoa/HWND/X11 UI uses Qt
 #endif
 
 #include <gtk/gtk.h>
@@ -28,14 +28,14 @@ CARLA_BRIDGE_START_NAMESPACE
 
 // -------------------------------------------------------------------------
 
-class CarlaToolkitGtk2 : public CarlaToolkit
+class CarlaToolkitGtk : public CarlaToolkit
 {
 public:
-    CarlaToolkitGtk2(const char* const title)
+    CarlaToolkitGtk(const char* const title)
         : CarlaToolkit(title),
           settings("Cadence", "Carla-Gtk2UIs")
     {
-        qDebug("CarlaToolkitGtk2::CarlaToolkitGtk2(%s)", title);
+        qDebug("CarlaToolkitGtk::CarlaToolkitGtk(%s)", title);
 
         window = nullptr;
 
@@ -43,14 +43,14 @@ public:
         lastWidth = lastHeight = 0;
     }
 
-    ~CarlaToolkitGtk2()
+    ~CarlaToolkitGtk()
     {
-        qDebug("CarlaToolkitGtk2::~CarlaToolkitGtk2()");
+        qDebug("CarlaToolkitGtk::~CarlaToolkitGtk()");
     }
 
     void init()
     {
-        qDebug("CarlaToolkitGtk2::init()");
+        qDebug("CarlaToolkitGtk::init()");
 
         static int argc = 0;
         static char** argv = { nullptr };
@@ -59,7 +59,7 @@ public:
 
     void exec(CarlaClient* const client, const bool showGui)
     {
-        qDebug("CarlaToolkitGtk2::exec(%p)", client);
+        qDebug("CarlaToolkitGtk::exec(%p)", client);
         CARLA_ASSERT(client);
 
         m_client = client;
@@ -101,7 +101,7 @@ public:
 
     void quit()
     {
-        qDebug("CarlaToolkitGtk2::quit()");
+        qDebug("CarlaToolkitGtk::quit()");
 
         if (window)
         {
@@ -116,7 +116,7 @@ public:
 
     void show()
     {
-        qDebug("CarlaToolkitGtk2::show()");
+        qDebug("CarlaToolkitGtk::show()");
         CARLA_ASSERT(window);
 
         if (window)
@@ -125,16 +125,22 @@ public:
 
     void hide()
     {
-        qDebug("CarlaToolkitGtk2::hide()");
+        qDebug("CarlaToolkitGtk::hide()");
         CARLA_ASSERT(window);
 
         if (window)
+        {
+#ifdef BRIDGE_GTK2
             gtk_widget_hide_all(window);
+#else
+            gtk_widget_hide(window);
+#endif
+        }
     }
 
     void resize(int width, int height)
     {
-        qDebug("CarlaToolkitGtk2::resize(%i, %i)", width, height);
+        qDebug("CarlaToolkitGtk::resize(%i, %i)", width, height);
         CARLA_ASSERT(window);
 
         if (window)
@@ -146,7 +152,7 @@ public:
 protected:
     void handleDestroy()
     {
-        qDebug("CarlaToolkitGtk2::handleDestroy()");
+        qDebug("CarlaToolkitGtk::handleDestroy()");
 
         window = nullptr;
         m_client = nullptr;
@@ -179,7 +185,7 @@ private:
 
     static void gtk_ui_destroy(GtkWidget*, gpointer data)
     {
-        CarlaToolkitGtk2* const _this_ = (CarlaToolkitGtk2*)data;
+        CarlaToolkitGtk* const _this_ = (CarlaToolkitGtk*)data;
         _this_->handleDestroy();
 
         gtk_main_quit();
@@ -187,7 +193,7 @@ private:
 
     static gboolean gtk_ui_timeout(gpointer data)
     {
-        CarlaToolkitGtk2* const _this_ = (CarlaToolkitGtk2*)data;
+        CarlaToolkitGtk* const _this_ = (CarlaToolkitGtk*)data;
         return _this_->handleTimeout();
     }
 };
@@ -196,7 +202,7 @@ private:
 
 CarlaToolkit* CarlaToolkit::createNew(const char* const title)
 {
-    return new CarlaToolkitGtk2(title);
+    return new CarlaToolkitGtk(title);
 }
 
 CARLA_BRIDGE_END_NAMESPACE

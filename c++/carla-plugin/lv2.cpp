@@ -4293,7 +4293,7 @@ public:
         else if (iSuil >= 0)
             iFinal = iSuil;
 
-        const bool isBridged = (iFinal == eQt4 || iFinal == eCocoa || iFinal == eHWND || iFinal == eX11 || iFinal == eGtk2 || iFinal == eGtk3);
+        const bool isBridged = false; //(iFinal == eQt4 || iFinal == eCocoa || iFinal == eHWND || iFinal == eX11 || iFinal == eGtk2 || iFinal == eGtk3);
 #ifdef WANT_SUIL
         const bool isSuil = (iFinal == iSuil && !isBridged);
 #endif

@@ -12,19 +12,19 @@ VERSION  = 0.5.0
 SOURCES = \
     ../carla_bridge_osc.cpp \
     ../carla_bridge_ui-lv2.cpp \
-    ../carla_bridge_toolkit-qt4.cpp
+    ../carla_bridge_toolkit-qt.cpp
 
 HEADERS = \
-    ../carla_bridge.h \
-    ../carla_bridge_client.h \
-    ../carla_bridge_osc.h \
-    ../carla_bridge_toolkit.h \
-    ../../carla-includes/carla_includes.h \
-    ../../carla-includes/carla_lib_includes.h \
-    ../../carla-includes/carla_osc_includes.h \
-    ../../carla-includes/carla_lv2.h \
+    ../carla_bridge.hpp \
+    ../carla_bridge_client.hpp \
+    ../carla_bridge_osc.hpp \
+    ../carla_bridge_toolkit.hpp \
+    ../../carla-includes/carla_defines.hpp \
     ../../carla-includes/carla_midi.h \
-    ../../carla-includes/lv2_rdf.h
+    ../../carla-includes/lv2_rdf.hpp \
+    ../../carla-utils/carla_lib_utils.hpp \
+    ../../carla-utils/carla_osc_utils.hpp \
+    ../../carla-utils/carla_lv2_utils.hpp
 
 INCLUDEPATH = .. \
     ../../carla-includes
@@ -35,6 +35,6 @@ LIBS    = \
 
 DEFINES  = QTCREATOR_TEST
 DEFINES += DEBUG
-DEFINES += BUILD_BRIDGE BUILD_BRIDGE_UI BRIDGE_LV2 BRIDGE_LV2_X11
+DEFINES += BUILD_BRIDGE BUILD_BRIDGE_UI BRIDGE_LV2 BRIDGE_X11 BRIDGE_LV2_X11
 
 QMAKE_CXXFLAGS *= -std=c++0x

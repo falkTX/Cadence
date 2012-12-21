@@ -54,6 +54,8 @@ BUILD_CXX_FLAGS += -DVESTIGE_HEADER
 
 # --------------------------------------------------------------
 
+HAVE_QT5          = $(shell pkg-config --atleast-version 5 QtCore && echo true)
+
 HAVE_JACK         = $(shell pkg-config --exists jack && echo true)
 # HAVE_JACKSESSION  = $(shell pkg-config --atleast-version=0.121.0 jack && echo true)
 

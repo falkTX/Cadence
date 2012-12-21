@@ -1,5 +1,5 @@
 /*
- * Carla UI bridge code
+ * Carla Bridge UI, VST version
  * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,13 +18,14 @@
 #ifdef BRIDGE_VST
 
 #include "carla_bridge_client.hpp"
+#include "carla_bridge_toolkit.hpp"
 #include "carla_vst_utils.hpp"
 #include "carla_midi.h"
 
+#include <QtCore/QObject>
 #include <QtCore/QTimerEvent>
-#include <QtGui/QDialog>
 
-#ifdef Q_WS_X11
+#if defined(Q_WS_X11) && (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
 # include <QtGui/QX11Info>
 #endif
 
@@ -36,11 +37,12 @@ CARLA_BRIDGE_START_NAMESPACE
 uint32_t bufferSize = 512;
 double   sampleRate = 44100.0;
 
-class CarlaVstClient : public CarlaClient, QObject
+class CarlaVstClient : public CarlaBridgeClient,
+                       public QObject
 {
 public:
-    CarlaVstClient(CarlaToolkit* const toolkit)
-        : CarlaClient(toolkit),
+    CarlaVstClient(const char* const uiTitle)
+        : CarlaBridgeClient(uiTitle),
           QObject(nullptr)
     {
         effect = nullptr;
@@ -65,24 +67,24 @@ public:
         // -----------------------------------------------------------------
         // init
 
-        CarlaClient::init(binary, nullptr);
+        CarlaBridgeClient::init(binary, nullptr);
 
         // -----------------------------------------------------------------
         // open DLL
 
-        if (! libOpen(binary))
+        if (! uiLibOpen(binary))
         {
-            qWarning("%s", libError());
+            qWarning("%s", uiLibError());
             return false;
         }
 
         // -----------------------------------------------------------------
         // get DLL main entry
 
-        VST_Function vstFn = (VST_Function)libSymbol("VSTPluginMain");
+        VST_Function vstFn = (VST_Function)uiLibSymbol("VSTPluginMain");
 
         if (! vstFn)
-            vstFn = (VST_Function)libSymbol("main");
+            vstFn = (VST_Function)uiLibSymbol("main");
 
         if (! vstFn)
             return false;
@@ -105,7 +107,7 @@ public:
 #endif
 
         int32_t value = 0;
-#ifdef Q_WS_X11
+#if defined(Q_WS_X11) && (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
         value = (int64_t)QX11Info::display();
 #endif
 
@@ -119,8 +121,9 @@ public:
 
         if (effect->dispatcher(effect, effEditOpen, 0, value, getContainerId(), 0.0f) != 1)
         {
-            effect->dispatcher(effect, effClose, 0, 0, nullptr, 0.0f);
-            return false;
+            //effect->dispatcher(effect, effClose, 0, 0, nullptr, 0.0f);
+            //return false;
+            qWarning("VST UI failed to open, trying to init anyway...");
         }
 
         // -----------------------------------------------------------------
@@ -145,7 +148,7 @@ public:
 
     void close()
     {
-        CarlaClient::close();
+        CarlaBridgeClient::close();
 
         if (effect)
         {
@@ -204,7 +207,9 @@ public:
     void handleAudioMasterAutomate(const uint32_t index, const float value)
     {
         effect->setParameter(effect, index, value);
-        sendOscControl(index, value);
+
+        if (isOscControlRegistered())
+            sendOscControl(index, value);
     }
 
     intptr_t handleAudioMasterGetCurrentProcessLevel()
@@ -214,6 +219,9 @@ public:
 
     intptr_t handleAudioMasterProcessEvents(const VstEvents* const vstEvents)
     {
+        if (isOscControlRegistered())
+            return 1;
+
         for (int32_t i=0; i < vstEvents->numEvents; i++)
         {
             if (! vstEvents->events[i])
@@ -246,7 +254,8 @@ public:
 
     void handleAudioMasterUpdateDisplay()
     {
-        sendOscConfigure("reloadprograms", "");
+        if (isOscControlRegistered())
+            sendOscConfigure("reloadprograms", "");
     }
 
     // ---------------------------------------------------------------------
@@ -470,18 +479,12 @@ int main(int argc, char* argv[])
     if (sampleRateStr)
         sampleRate = atof(sampleRateStr);
 
-    // Init toolkit
-    CarlaToolkit* const toolkit = CarlaToolkit::createNew(uiTitle);
-    toolkit->init();
-
-    // Init VST-UI
-    CarlaVstClient client(toolkit);
+    // Init VST client
+    CarlaVstClient client(uiTitle);
 
     // Init OSC
     if (useOsc && ! client.oscInit(oscUrl))
     {
-        toolkit->quit();
-        delete toolkit;
         return -1;
     }
 
@@ -490,7 +493,7 @@ int main(int argc, char* argv[])
 
     if (client.init(binary, nullptr))
     {
-        toolkit->exec(&client, !useOsc);
+        client.toolkitExec(!useOsc);
         ret = 0;
     }
     else
@@ -505,12 +508,8 @@ int main(int argc, char* argv[])
         client.oscClose();
     }
 
-    // Close VST-UI
+    // Close VST client
     client.close();
-
-    // Close toolkit
-    toolkit->quit();
-    delete toolkit;
 
     return ret;
 }
