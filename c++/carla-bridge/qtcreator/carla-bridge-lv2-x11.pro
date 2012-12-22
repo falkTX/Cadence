@@ -1,6 +1,10 @@
 # QtCreator project file
 
+contains(QT_VERSION, ^5.*) {
+QT = core widgets
+} else {
 QT = core gui
+}
 
 CONFIG    = debug link_pkgconfig qt warn_on
 PKGCONFIG = liblo
@@ -10,9 +14,11 @@ TEMPLATE = app
 VERSION  = 0.5.0
 
 SOURCES = \
+    ../carla_bridge_client.cpp \
     ../carla_bridge_osc.cpp \
-    ../carla_bridge_ui-lv2.cpp \
-    ../carla_bridge_toolkit-qt.cpp
+    ../carla_bridge_toolkit.cpp \
+    ../carla_bridge_toolkit-qt.cpp \
+    ../carla_bridge_ui-lv2.cpp
 
 HEADERS = \
     ../carla_bridge.hpp \
@@ -27,9 +33,10 @@ HEADERS = \
     ../../carla-utils/carla_lv2_utils.hpp
 
 INCLUDEPATH = .. \
-    ../../carla-includes
+    ../../carla-includes \
+    ../../carla-utils
 
-LIBS    = \
+LIBS = \
     ../../carla-lilv/carla_lilv.a \
     ../../carla-rtmempool/carla_rtmempool.a
 

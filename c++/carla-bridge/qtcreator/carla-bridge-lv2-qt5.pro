@@ -10,9 +10,11 @@ TEMPLATE = app
 VERSION  = 0.5.0
 
 SOURCES = \
+    ../carla_bridge_client.cpp \
     ../carla_bridge_osc.cpp \
-    ../carla_bridge_ui-lv2.cpp \
-    ../carla_bridge_toolkit-qt.cpp
+    ../carla_bridge_toolkit.cpp \
+    ../carla_bridge_toolkit-qt.cpp \
+    ../carla_bridge_ui-lv2.cpp
 
 HEADERS = \
     ../carla_bridge.hpp \
@@ -36,6 +38,6 @@ LIBS    = \
 
 DEFINES  = QTCREATOR_TEST
 DEFINES += DEBUG
-DEFINES += BUILD_BRIDGE BUILD_BRIDGE_UI BRIDGE_LV2 BRIDGE_LV2_QT5
+DEFINES += BUILD_BRIDGE BUILD_BRIDGE_UI BRIDGE_LV2 BRIDGE_QT5 BRIDGE_LV2_QT5
 
 QMAKE_CXXFLAGS *= -std=c++0x

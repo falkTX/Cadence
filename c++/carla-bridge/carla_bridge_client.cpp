@@ -60,10 +60,10 @@ CarlaBridgeClient::~CarlaBridgeClient()
 #endif
 }
 
+#ifdef BUILD_BRIDGE_UI
 // ---------------------------------------------------------------------
 // ui initialization
 
-#ifdef BUILD_BRIDGE_UI
 bool CarlaBridgeClient::init(const char* const, const char* const)
 {
     qDebug("CarlaBridgeClient::init()");
@@ -131,7 +131,7 @@ void CarlaBridgeClient::sendOscUpdate()
     qDebug("CarlaBridgeClient::sendOscUpdate()");
     CARLA_ASSERT(m_oscData);
 
-    if (m_oscData->target)
+    if (m_oscData && m_oscData->target)
         osc_send_update(m_oscData, m_osc.getServerPath());
 }
 
@@ -142,7 +142,7 @@ void CarlaBridgeClient::sendOscBridgeError(const char* const error)
     CARLA_ASSERT(m_oscData);
     CARLA_ASSERT(error);
 
-    if (m_oscData->target)
+    if (m_oscData && m_oscData->target)
         osc_send_bridge_error(m_oscData, error);
 }
 
@@ -201,7 +201,7 @@ void CarlaBridgeClient::sendOscConfigure(const char* const key, const char* cons
     qDebug("CarlaBridgeClient::sendOscConfigure(\"%s\", \"%s\")", key, value);
     CARLA_ASSERT(m_oscData);
 
-    if (m_oscData->target)
+    if (m_oscData && m_oscData->target)
         osc_send_configure(m_oscData, key, value);
 }
 
@@ -210,7 +210,7 @@ void CarlaBridgeClient::sendOscControl(const int32_t index, const float value)
     qDebug("CarlaBridgeClient::sendOscControl(%i, %f)", index, value);
     CARLA_ASSERT(m_oscData);
 
-    if (m_oscData->target)
+    if (m_oscData && m_oscData->target)
         osc_send_control(m_oscData, index, value);
 }
 
@@ -219,7 +219,7 @@ void CarlaBridgeClient::sendOscProgram(const int32_t index)
     qDebug("CarlaBridgeClient::sendOscProgram(%i)", index);
     CARLA_ASSERT(m_oscData);
 
-    if (m_oscData->target)
+    if (m_oscData && m_oscData->target)
         osc_send_program(m_oscData, index);
 }
 
@@ -228,7 +228,7 @@ void CarlaBridgeClient::sendOscMidiProgram(const int32_t index)
     qDebug("CarlaBridgeClient::sendOscMidiProgram(%i)", index);
     CARLA_ASSERT(m_oscData);
 
-    if (m_oscData->target)
+    if (m_oscData && m_oscData->target)
         osc_send_midi_program(m_oscData, index);
 }
 
@@ -237,7 +237,7 @@ void CarlaBridgeClient::sendOscMidi(const uint8_t midiBuf[4])
     qDebug("CarlaBridgeClient::sendOscMidi(%p)", midiBuf);
     CARLA_ASSERT(m_oscData);
 
-    if (m_oscData->target)
+    if (m_oscData && m_oscData->target)
         osc_send_midi(m_oscData, midiBuf);
 }
 
@@ -246,7 +246,7 @@ void CarlaBridgeClient::sendOscExiting()
     qDebug("CarlaBridgeClient::sendOscExiting()");
     CARLA_ASSERT(m_oscData);
 
-    if (m_oscData->target)
+    if (m_oscData && m_oscData->target)
         osc_send_exiting(m_oscData);
 }
 
@@ -257,7 +257,7 @@ void CarlaBridgeClient::sendOscBridgeUpdate()
     CARLA_ASSERT(m_oscData);
     CARLA_ASSERT(m_oscData->target && m_osc.m_serverPath);
 
-    if (m_oscData->target && m_osc.m_serverPath)
+    if (m_oscData && m_oscData->target && m_osc.m_serverPath)
         osc_send_bridge_update(m_oscData, m_osc.m_serverPath);
 }
 #endif
@@ -268,7 +268,7 @@ void CarlaBridgeClient::sendOscLv2TransferAtom(const int32_t portIndex, const ch
     qDebug("CarlaBridgeClient::sendOscLv2TransferAtom(%i, \"%s\", \"%s\")", portIndex, typeStr, atomBuf);
     CARLA_ASSERT(m_oscData);
 
-    if (m_oscData->target)
+    if (m_oscData && m_oscData->target)
         osc_send_lv2_transfer_atom(m_oscData, portIndex, typeStr, atomBuf);
 }
 
@@ -277,7 +277,7 @@ void CarlaBridgeClient::sendOscLv2TransferEvent(const int32_t portIndex, const c
     qDebug("CarlaBridgeClient::sendOscLv2TransferEvent(%i, \"%s\", \"%s\")", portIndex, typeStr, atomBuf);
     CARLA_ASSERT(m_oscData);
 
-    if (m_oscData->target)
+    if (m_oscData && m_oscData->target)
         osc_send_lv2_transfer_event(m_oscData, portIndex, typeStr, atomBuf);
 }
 #endif

@@ -559,7 +559,7 @@ public:
         CARLA_ASSERT(portIndex >= 0);
         CARLA_ASSERT(atom);
 
-        if (handle && descriptor && descriptor->port_event)
+        if (atom && handle && descriptor && descriptor->port_event)
             descriptor->port_event(handle, portIndex, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_ATOM, atom);
     }
 
@@ -569,7 +569,7 @@ public:
         CARLA_ASSERT(portIndex >= 0);
         CARLA_ASSERT(atom);
 
-        if (handle && descriptor && descriptor->port_event)
+        if (atom && handle && descriptor && descriptor->port_event)
             descriptor->port_event(handle, portIndex, atom->size, CARLA_URI_MAP_ID_ATOM_TRANSFER_EVENT, atom);
 #if 0
         if (handle && descriptor && descriptor->port_event)
@@ -654,6 +654,9 @@ public:
 
     void handleUiWrite(uint32_t portIndex, uint32_t bufferSize, uint32_t format, const void* buffer)
     {
+        if (! buffer)
+            return;
+
         if (format == 0)
         {
             CARLA_ASSERT(buffer);
