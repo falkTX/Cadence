@@ -48,8 +48,10 @@ public:
         effect = nullptr;
 
         idleTimer = 0;
+        needIdle  = false;
 
         // make client valid
+        srand(uiTitle[0]);
         unique1 = unique2 = rand();
     }
 
@@ -92,7 +94,9 @@ public:
         // -----------------------------------------------------------------
         // initialize plugin
 
+        lastVstPlugin = this;
         effect = vstFn(hostCallback);
+        lastVstPlugin = nullptr;
 
         if (! (effect && effect->magic == kEffectMagic))
             return false;
@@ -103,7 +107,7 @@ public:
 #ifdef VESTIGE_HEADER
         effect->ptr1 = this;
 #else
-        effect->resvd1 = (intptr_t)this;
+        effect->resvd1 = ToVstPtr(this);
 #endif
 
         int32_t value = 0;
@@ -112,6 +116,8 @@ public:
 #endif
 
         effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
+        effect->dispatcher(effect, effMainsChanged, 0, 0, nullptr, 0.0f);
+
 #if ! VST_FORCE_DEPRECATED
         effect->dispatcher(effect, effSetBlockSizeAndSampleRate, 0, bufferSize, nullptr, sampleRate);
 #endif
@@ -217,6 +223,39 @@ public:
         return kVstProcessLevelUser;
     }
 
+    intptr_t handleAudioMasterGetBlockSize()
+    {
+        return bufferSize;
+    }
+
+    intptr_t handleAudioMasterGetSampleRate()
+    {
+        return sampleRate;
+    }
+
+    intptr_t handleAudioMasterGetTime()
+    {
+        memset(&vstTimeInfo, 0, sizeof(VstTimeInfo_R));
+
+        vstTimeInfo.sampleRate = sampleRate;
+
+        // Tempo
+        vstTimeInfo.tempo  = 120.0;
+        vstTimeInfo.flags |= kVstTempoValid;
+
+        // Time Signature
+        vstTimeInfo.timeSigNumerator   = 4;
+        vstTimeInfo.timeSigDenominator = 4;
+        vstTimeInfo.flags |= kVstTimeSigValid;
+
+        return (intptr_t)&vstTimeInfo;
+    }
+
+    void handleAudioMasterNeedIdle()
+    {
+        needIdle = true;
+    }
+
     intptr_t handleAudioMasterProcessEvents(const VstEvents* const vstEvents)
     {
         if (isOscControlRegistered())
@@ -310,20 +349,46 @@ public:
         qDebug("CarlaVstClient::hostCallback(%p, %s, %i, " P_INTPTR ", %p, %f", effect, vstMasterOpcode2str(opcode), index, value, ptr, opt);
 #endif
 
-        // Check if 'resvd1' points to this client
+        // Check if 'resvd1' points to this client, or register ourselfs if possible
         CarlaVstClient* self = nullptr;
 
+        if (effect)
+        {
 #ifdef VESTIGE_HEADER
-        if (effect && effect->ptr1)
-        {
-            self = (CarlaVstClient*)effect->ptr1;
+            if (effect && effect->ptr1)
+            {
+                self = (CarlaVstClient*)effect->ptr1;
 #else
-        if (effect && effect->resvd1)
-        {
-            self = (CarlaVstClient*)effect->resvd1;
+            if (effect && effect->resvd1)
+            {
+                self = FromVstPtr<CarlaVstClient>(effect->resvd1);
 #endif
-            if (self->unique1 != self->unique2)
-                self = nullptr;
+                if (self->unique1 != self->unique2)
+                    self = nullptr;
+            }
+
+            if (self)
+            {
+                if (! self->effect)
+                    self->effect = effect;
+
+                CARLA_ASSERT(self->effect == effect);
+
+                if (self->effect != effect)
+                {
+                    qWarning("CarlaVstClient::hostCallback() - host pointer mismatch: %p != %p", self->effect, effect);
+                    self = nullptr;
+                }
+            }
+            else if (lastVstPlugin)
+            {
+#ifdef VESTIGE_HEADER
+                effect->ptr1 = lastVstPlugin;
+#else
+                effect->resvd1 = ToVstPtr(lastVstPlugin);
+#endif
+                self = lastVstPlugin;
+            }
         }
 
         intptr_t ret = 0;
@@ -441,7 +506,9 @@ protected:
     {
         if (event->timerId() == idleTimer && effect)
         {
-            effect->dispatcher(effect, effIdle, 0, 0, nullptr, 0.0f);
+            if (needIdle)
+                effect->dispatcher(effect, effIdle, 0, 0, nullptr, 0.0f);
+
             effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
         }
 
@@ -450,10 +517,18 @@ protected:
 
 private:
     int unique1;
+
     AEffect* effect;
+    VstTimeInfo_R vstTimeInfo;
+
     int idleTimer;
+    bool needIdle;
+    static CarlaVstClient* lastVstPlugin;
+
     int unique2;
 };
+
+CarlaVstClient* CarlaVstClient::lastVstPlugin = nullptr;
 
 CARLA_BRIDGE_END_NAMESPACE
 

@@ -98,11 +98,11 @@ struct Lv2PluginOptions {
 
 Lv2PluginOptions lv2Options;
 
-class CarlaLv2Client : public CarlaClient
+class CarlaLv2Client : public CarlaBridgeClient
 {
 public:
-    CarlaLv2Client(CarlaToolkit* const toolkit)
-        : CarlaClient(toolkit)
+    CarlaLv2Client(const char* const uiTitle)
+        : CarlaBridgeClient(uiTitle)
     {
         handle = nullptr;
         widget = nullptr;
@@ -328,7 +328,7 @@ public:
         // -----------------------------------------------------------------
         // init
 
-        CarlaClient::init(pluginURI, uiURI);
+        CarlaBridgeClient::init(pluginURI, uiURI);
 
         // -----------------------------------------------------------------
         // get plugin from lv2_rdf (lilv)
@@ -357,13 +357,13 @@ public:
         // -----------------------------------------------------------------
         // open DLL
 
-        if (! libOpen(rdf_ui_descriptor->Binary))
+        if (! uiLibOpen(rdf_ui_descriptor->Binary))
             return false;
 
         // -----------------------------------------------------------------
         // get DLL main entry
 
-        const LV2UI_DescriptorFunction ui_descFn = (LV2UI_DescriptorFunction)libSymbol("lv2ui_descriptor");
+        const LV2UI_DescriptorFunction ui_descFn = (LV2UI_DescriptorFunction)uiLibSymbol("lv2ui_descriptor");
 
         if (! ui_descFn)
             return false;
@@ -425,12 +425,12 @@ public:
 
     void close()
     {
-        CarlaClient::close();
+        CarlaBridgeClient::close();
 
         if (handle && descriptor && descriptor->cleanup)
             descriptor->cleanup(handle);
 
-        libClose();
+        uiLibClose();
     }
 
     // ---------------------------------------------------------------------
@@ -1077,18 +1077,12 @@ int main(int argc, char* argv[])
     if (sampleRateStr)
         sampleRate = atof(sampleRateStr);
 
-    // Init toolkit
-    CarlaToolkit* const toolkit = CarlaToolkit::createNew(uiTitle);
-    toolkit->init();
-
-    // Init LV2-UI
-    CarlaLv2Client client(toolkit);
+    // Init LV2 client
+    CarlaLv2Client client(uiTitle);
 
     // Init OSC
     if (useOsc && ! client.oscInit(oscUrl))
     {
-        toolkit->quit();
-        delete toolkit;
         return -1;
     }
 
@@ -1097,7 +1091,7 @@ int main(int argc, char* argv[])
 
     if (client.init(pluginURI, uiURI))
     {
-        toolkit->exec(&client, !useOsc);
+        client.toolkitExec(!useOsc);
         ret = 0;
     }
     else
@@ -1112,12 +1106,8 @@ int main(int argc, char* argv[])
         client.oscClose();
     }
 
-    // Close LV2-UI
+    // Close LV2 client
     client.close();
-
-    // Close toolkit
-    toolkit->quit();
-    delete toolkit;
 
     return ret;
 }

@@ -27,7 +27,8 @@ HEADERS = \
     ../../carla-utils/carla_lv2_utils.hpp
 
 INCLUDEPATH = .. \
-    ../../carla-includes
+    ../../carla-includes \
+    ../../carla-utils
 
 LIBS    = \
     ../../carla-lilv/carla_lilv.a \

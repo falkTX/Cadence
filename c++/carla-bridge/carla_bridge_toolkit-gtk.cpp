@@ -16,9 +16,10 @@
  */
 
 #include "carla_bridge_client.hpp"
+#include "carla_bridge_toolkit.hpp"
 
 #if defined(BRIDGE_COCOA) || defined(BRIDGE_HWND) || defined(BRIDGE_X11)
-# error Cocoa/HWND/X11 UI uses Qt
+# error Embed UI uses Qt
 #endif
 
 #include <gtk/gtk.h>
@@ -28,14 +29,27 @@ CARLA_BRIDGE_START_NAMESPACE
 
 // -------------------------------------------------------------------------
 
-class CarlaToolkitGtk : public CarlaToolkit
+#if defined(BRIDGE_GTK2)
+static const char* const appName = "Carla-Gtk2UIs";
+#elif defined(BRIDGE_GTK3)
+static const char* const appName = "Carla-Gtk3UIs";
+#else
+static const char* const appName = "Carla-UIs";
+#endif
+
+static int    gargc = 0;
+static char** gargv = {};
+
+// -------------------------------------------------------------------------
+
+class CarlaToolkitGtk : public CarlaBridgeToolkit
 {
 public:
-    CarlaToolkitGtk(const char* const title)
-        : CarlaToolkit(title),
-          settings("Cadence", "Carla-Gtk2UIs")
+    CarlaToolkitGtk(CarlaBridgeClient* const client, const char* const uiTitle)
+        : CarlaBridgeToolkit(client, uiTitle),
+          settings("Cadence", appName)
     {
-        qDebug("CarlaToolkitGtk::CarlaToolkitGtk(%s)", title);
+        qDebug("CarlaToolkitGtk::CarlaToolkitGtk(%p, \"%s\")", client, uiTitle);
 
         window = nullptr;
 
@@ -51,38 +65,35 @@ public:
     void init()
     {
         qDebug("CarlaToolkitGtk::init()");
+        CARLA_ASSERT(! window);
 
-        static int argc = 0;
-        static char** argv = { nullptr };
-        gtk_init(&argc, &argv);
+        gtk_init(&gargc, &gargv);
     }
 
-    void exec(CarlaClient* const client, const bool showGui)
+    void exec(const bool showGui)
     {
-        qDebug("CarlaToolkitGtk::exec(%p)", client);
+        qDebug("CarlaToolkitGtk::exec(%s)", bool2str(showGui));
         CARLA_ASSERT(client);
-
-        m_client = client;
 
         window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
         gtk_container_add(GTK_CONTAINER(window), (GtkWidget*)client->getWidget());
 
         gtk_window_set_resizable(GTK_WINDOW(window), client->isResizable());
-        gtk_window_set_title(GTK_WINDOW(window), m_title);
+        gtk_window_set_title(GTK_WINDOW(window), uiTitle);
 
         gtk_window_get_position(GTK_WINDOW(window), &lastX, &lastY);
         gtk_window_get_size(GTK_WINDOW(window), &lastWidth, &lastHeight);
 
-        if (settings.contains(QString("%1/pos_x").arg(m_title)))
+        if (settings.contains(QString("%1/pos_x").arg(uiTitle)))
         {
-            lastX = settings.value(QString("%1/pos_x").arg(m_title), lastX).toInt();
-            lastY = settings.value(QString("%1/pos_y").arg(m_title), lastY).toInt();
+            lastX = settings.value(QString("%1/pos_x").arg(uiTitle), lastX).toInt();
+            lastY = settings.value(QString("%1/pos_y").arg(uiTitle), lastY).toInt();
             gtk_window_move(GTK_WINDOW(window), lastX, lastY);
 
             if (client->isResizable())
             {
-                lastWidth  = settings.value(QString("%1/width").arg(m_title), lastWidth).toInt();
-                lastHeight = settings.value(QString("%1/height").arg(m_title), lastHeight).toInt();
+                lastWidth  = settings.value(QString("%1/width").arg(uiTitle), lastWidth).toInt();
+                lastHeight = settings.value(QString("%1/height").arg(uiTitle), lastHeight).toInt();
                 gtk_window_resize(GTK_WINDOW(window), lastWidth, lastHeight);
             }
         }
@@ -93,7 +104,7 @@ public:
         if (showGui)
             show();
         else
-            m_client->sendOscUpdate();
+            client->sendOscUpdate();
 
         // Main loop
         gtk_main();
@@ -110,8 +121,6 @@ public:
 
             window = nullptr;
         }
-
-        m_client = nullptr;
     }
 
     void show()
@@ -155,12 +164,11 @@ protected:
         qDebug("CarlaToolkitGtk::handleDestroy()");
 
         window = nullptr;
-        m_client = nullptr;
 
-        settings.setValue(QString("%1/pos_x").arg(m_title), lastX);
-        settings.setValue(QString("%1/pos_y").arg(m_title), lastY);
-        settings.setValue(QString("%1/width").arg(m_title), lastWidth);
-        settings.setValue(QString("%1/height").arg(m_title), lastHeight);
+        settings.setValue(QString("%1/pos_x").arg(uiTitle), lastX);
+        settings.setValue(QString("%1/pos_y").arg(uiTitle), lastY);
+        settings.setValue(QString("%1/width").arg(uiTitle), lastWidth);
+        settings.setValue(QString("%1/height").arg(uiTitle), lastHeight);
         settings.sync();
     }
 
@@ -172,7 +180,8 @@ protected:
             gtk_window_get_size(GTK_WINDOW(window), &lastWidth, &lastHeight);
         }
 
-        return m_client ? m_client->oscIdle() : false;
+        // FIXME
+        return client->isOscControlRegistered() ? client->oscIdle() : false;
     }
 
     // ---------------------------------------------------------------------
@@ -200,9 +209,9 @@ private:
 
 // -------------------------------------------------------------------------
 
-CarlaToolkit* CarlaToolkit::createNew(const char* const title)
+CarlaBridgeToolkit* CarlaBridgeToolkit::createNew(CarlaBridgeClient* const client, const char* const uiTitle)
 {
-    return new CarlaToolkitGtk(title);
+    return new CarlaToolkitGtk(client, uiTitle);
 }
 
 CARLA_BRIDGE_END_NAMESPACE

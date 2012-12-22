@@ -454,16 +454,16 @@ public:
     void idleGui()
     {
 #ifdef VESTIGE_HEADER
-        if (effect && effect->ptr1)
+        if (effect /*&& effect->ptr1*/)
 #else
-        if (effect && effect->resvd1)
+        if (effect /*&& effect->resvd1*/)
 #endif
         {
-            if (gui.type != GUI_EXTERNAL_OSC)
-                effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
-
             if (needIdle)
                 effect->dispatcher(effect, effIdle, 0, 0, nullptr, 0.0f);
+
+            if (gui.type != GUI_EXTERNAL_OSC)
+                effect->dispatcher(effect, effEditIdle, 0, 0, nullptr, 0.0f);
         }
 
         CarlaPlugin::idleGui();
@@ -2268,7 +2268,7 @@ public:
 #ifdef VESTIGE_HEADER
         effect->ptr1 = this;
 #else
-        effect->resvd1 = ToVstPtr(this);
+        effect->resvd1 = getAddressFromPointer(this);
 #endif
 
         effect->dispatcher(effect, effOpen, 0, 0, nullptr, 0.0f);
