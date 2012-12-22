@@ -278,6 +278,7 @@ public:
         if (::strcmp(buffer, "") == 0)
             return;
 
+        ::free(buffer);
         buffer = ::strdup("");
     }
 

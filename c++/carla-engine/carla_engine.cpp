@@ -1182,6 +1182,11 @@ void CarlaEngine::processLock()
     m_procLock.lock();
 }
 
+void CarlaEngine::processTryLock()
+{
+    m_procLock.tryLock();
+}
+
 void CarlaEngine::processUnlock()
 {
     m_procLock.unlock();
@@ -1190,6 +1195,11 @@ void CarlaEngine::processUnlock()
 void CarlaEngine::midiLock()
 {
     m_midiLock.lock();
+}
+
+void CarlaEngine::midiTryLock()
+{
+    m_midiLock.tryLock();
 }
 
 void CarlaEngine::midiUnlock()

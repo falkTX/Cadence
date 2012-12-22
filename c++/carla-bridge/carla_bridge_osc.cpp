@@ -54,6 +54,7 @@ bool CarlaBridgeOsc::init(const char* const url)
     CARLA_ASSERT(! m_name);
     CARLA_ASSERT(! m_server);
     CARLA_ASSERT(! m_serverPath);
+    CARLA_ASSERT(m_nameSize == 0);
     CARLA_ASSERT(url);
 
     if (! url)

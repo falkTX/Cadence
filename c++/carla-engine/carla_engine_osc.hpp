@@ -92,16 +92,17 @@ public:
 private:
     CarlaEngine* const engine;
 
+    char*  m_name;
+    size_t m_nameSize;
+
     lo_server m_serverTCP;
     lo_server m_serverUDP;
     CarlaString m_serverPathTCP;
     CarlaString m_serverPathUDP;
+
 #ifndef BUILD_BRIDGE
     CarlaOscData m_controlData; // for carla-control
 #endif
-
-    char*  m_name;
-    size_t m_nameSize;
 
     // -------------------------------------------------------------------
 
@@ -142,13 +143,24 @@ private:
     int handleMsgLv2EventTransfer(CARLA_ENGINE_OSC_HANDLE_ARGS2);
 #endif
 
-    // -------------------------------------------------------------------
+    // -----------------------------------------------------------------------
+
+    static void osc_error_handlerTCP(const int num, const char* const msg, const char* const path)
+    {
+        qWarning("CarlaEngineOsc::osc_error_handlerTCP(%i, \"%s\", \"%s\")", num, msg, path);
+    }
+
+    static void osc_error_handlerUDP(const int num, const char* const msg, const char* const path)
+    {
+        qWarning("CarlaEngineOsc::osc_error_handlerUDP(%i, \"%s\", \"%s\")", num, msg, path);
+    }
 
     static int osc_message_handler(const char* const path, const char* const types, lo_arg** const argv, const int argc, const lo_message msg, void* const userData)
     {
         CARLA_ASSERT(userData);
-        CarlaEngineOsc* const _this_ = (CarlaEngineOsc*)userData;
-        return _this_->handleMessage(path, argc, argv, types, msg);
+        if (CarlaEngineOsc* const _this_ = (CarlaEngineOsc*)userData)
+            return _this_->handleMessage(path, argc, argv, types, msg);
+        return 1;
     }
 };
 

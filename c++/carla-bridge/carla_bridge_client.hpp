@@ -22,6 +22,12 @@
 
 #include <QtCore/QMutex>
 
+#ifdef BUILD_BRIDGE_PLUGIN
+namespace CarlaBackend {
+class CarlaEngine;
+}
+#endif
+
 CARLA_BRIDGE_START_NAMESPACE
 
 #if 0

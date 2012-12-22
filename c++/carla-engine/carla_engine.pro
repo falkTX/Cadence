@@ -52,6 +52,10 @@ INCLUDEPATH = . \
     ../carla-plugin \
     ../carla-utils
 
+# FIXME
+INCLUDEPATH += \
+    /opt/kxstudio/include
+
 # JACK
 INCLUDEPATH += ../carla-jackbridge
 

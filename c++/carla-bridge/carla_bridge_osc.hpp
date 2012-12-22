@@ -81,8 +81,21 @@ public:
 
     // -------------------------------------------------------------------
 
-protected:
+private:
+    CarlaBridgeClient* const client;
+
+    char*  m_name;
+    size_t m_nameSize;
+
+    lo_server m_server;
+    char*     m_serverPath;
+
+    CarlaOscData m_controlData;
+
+    // -------------------------------------------------------------------
+
     int handleMessage(const char* const path, const int argc, const lo_arg* const* const argv, const char* const types, const lo_message msg);
+
     int handleMsgConfigure(CARLA_BRIDGE_OSC_HANDLE_ARGS);
     int handleMsgControl(CARLA_BRIDGE_OSC_HANDLE_ARGS);
     int handleMsgProgram(CARLA_BRIDGE_OSC_HANDLE_ARGS);
@@ -99,22 +112,6 @@ protected:
 
     // -------------------------------------------------------------------
 
-protected:
-    CarlaBridgeClient* const client;
-
-    // -------------------------------------------------------------------
-
-private:
-    char*  m_name;
-    size_t m_nameSize;
-
-    lo_server m_server;
-    char*     m_serverPath;
-
-    CarlaOscData m_controlData;
-
-    // -------------------------------------------------------------------
-
     static void osc_error_handler(const int num, const char* const msg, const char* const path)
     {
         qWarning("CarlaBridgeOsc::osc_error_handler(%i, \"%s\", \"%s\")", num, msg, path);
@@ -125,7 +122,7 @@ private:
         CARLA_ASSERT(user_data);
         if (CarlaBridgeOsc* const _this_ = (CarlaBridgeOsc*)user_data)
             return _this_->handleMessage(path, argc, argv, types, msg);
-        return -1;
+        return 1;
     }
 };
 

@@ -737,6 +737,11 @@ public:
     void processLock();
 
     /*!
+     * Try Lock processing.
+     */
+    void processTryLock();
+
+    /*!
      * Unlock processing.
      */
     void processUnlock();
@@ -745,6 +750,11 @@ public:
      * Lock MIDI.
      */
     void midiLock();
+
+    /*!
+     * Try Lock MIDI.
+     */
+    void midiTryLock();
 
     /*!
      * Unlock MIDI.

@@ -225,15 +225,15 @@ private:
 
 // -------------------------------------------------------------------------
 
-class BridgePluginClient : public CarlaToolkit,
-                           public CarlaClient,
+class BridgePluginClient : public CarlaBridgeToolkit,
+                           public CarlaBridgeClient,
                            public BridgePluginGUI::Callback,
                            public QApplication
 {
 public:
     BridgePluginClient()
-        : CarlaToolkit("carla-bridge-plugin"),
-          CarlaClient(this),
+        : CarlaBridgeToolkit("carla-bridge-plugin"),
+          CarlaBridgeClient("ui title"),
           QApplication(qargc, qargv, true)
     {
         qDebug("BridgePluginClient::BridgePluginClient()");
