@@ -302,6 +302,7 @@ install:
 		data/claudia-launcher \
 		data/carla \
 		data/carla-control \
+		data/caitlyn \
 		c++/jackmeter/cadence-jackmeter \
 		c++/xycontroller/cadence-xycontroller \
 		$(DESTDIR)$(PREFIX)/bin/
@@ -388,8 +389,13 @@ install:
 		$(DESTDIR)$(PREFIX)/bin/claudia-launcher \
 		$(DESTDIR)$(PREFIX)/bin/carla \
 		$(DESTDIR)$(PREFIX)/bin/carla-control \
+		$(DESTDIR)$(PREFIX)/bin/caitlyn \
 		$(X11_RC_DIR)/99cadence-session-start
 #		$(DESTDIR)$(PREFIX)/bin/cadence-cpufreq
+
+	# Remove unfinished
+	rm $(DESTDIR)$(PREFIX)/bin/caitlyn
+	rm $(DESTDIR)$(PREFIX)/share/applications/caitlyn.desktop
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/cadence*
