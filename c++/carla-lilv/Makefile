@@ -13,7 +13,7 @@ SORD_VERSION   = 0.10.4
 SRATOM_VERSION = 0.4.0
 LILV_VERSION   = 0.14.4
 
-BUILD_C_FLAGS += -fvisibility=hidden -fPIC
+BUILD_C_FLAGS += -fvisibility=hidden -fPIC -w
 BUILD_C_FLAGS += -Iconfig -I../carla-includes
 
 OBJS         = serd.o sord.o sratom.o lilv.o
