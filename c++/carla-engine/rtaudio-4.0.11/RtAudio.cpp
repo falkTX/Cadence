@@ -322,6 +322,16 @@ bool RtApi :: probeDeviceOpen( unsigned int device, StreamMode mode, unsigned in
 {
   // MUST be implemented in subclasses!
   return FAILURE;
+
+  // unused
+  (void)device;
+  (void)mode;
+  (void)channels;
+  (void)firstChannel;
+  (void)sampleRate;
+  (void)format;
+  (void)bufferSize;
+  (void)options;
 }
 
 void RtApi :: tickStreamTime( void )
@@ -6371,6 +6381,9 @@ RtAudio::DeviceInfo RtApiPulse::getDeviceInfo( unsigned int device )
   info.nativeFormats = RTAUDIO_SINT16 | RTAUDIO_SINT32 | RTAUDIO_FLOAT32;
 
   return info;
+
+  // unused
+  (void)device;
 }
 
 extern "C" void *pulseaudio_callback( void * user )
