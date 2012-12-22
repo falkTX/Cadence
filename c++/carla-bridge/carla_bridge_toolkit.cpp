@@ -27,16 +27,17 @@ CarlaBridgeToolkit::CarlaBridgeToolkit(CarlaBridgeClient* const client_, const c
     : client(client_)
 {
     qDebug("CarlaBridgeToolkit::CarlaBridgeToolkit(\"%s\")", newTitle);
+    CARLA_ASSERT(client);
     CARLA_ASSERT(newTitle);
 
-    title  = strdup(newTitle ? newTitle : "(null)");
+    uiTitle  = strdup(newTitle ? newTitle : "(null)");
 }
 
 CarlaBridgeToolkit::~CarlaBridgeToolkit()
 {
     qDebug("CarlaBridgeToolkit::~CarlaBridgeToolkit()");
 
-    free(title);
+    free(uiTitle);
 }
 
 #if BUILD_BRIDGE_UI

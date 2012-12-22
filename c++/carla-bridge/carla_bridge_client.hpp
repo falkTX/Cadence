@@ -15,14 +15,18 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_BRIDGE_CLIENT_H
-#define CARLA_BRIDGE_CLIENT_H
+#ifndef CARLA_BRIDGE_CLIENT_HPP
+#define CARLA_BRIDGE_CLIENT_HPP
 
 #include "carla_bridge_osc.hpp"
 
 #include <QtCore/QMutex>
 
 CARLA_BRIDGE_START_NAMESPACE
+
+#if 0
+} // Fix editor indentation
+#endif
 
 /*!
  * @defgroup CarlaBridgeClient Carla Bridge Client
@@ -149,4 +153,4 @@ private:
 
 CARLA_BRIDGE_END_NAMESPACE
 
-#endif // CARLA_BRIDGE_CLIENT_H
+#endif // CARLA_BRIDGE_CLIENT_HPP

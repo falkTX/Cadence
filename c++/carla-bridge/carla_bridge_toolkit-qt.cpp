@@ -72,12 +72,12 @@ class CarlaBridgeToolkitQt: public CarlaBridgeToolkit,
                             public QObject
 {
 public:
-    CarlaBridgeToolkitQt(CarlaBridgeClient* const client, const char* const title)
-        : CarlaBridgeToolkit(client, title),
+    CarlaBridgeToolkitQt(CarlaBridgeClient* const client, const char* const uiTitle)
+        : CarlaBridgeToolkit(client, uiTitle),
           QObject(nullptr),
           settings("Cadence", appName)
     {
-        qDebug("CarlaBridgeToolkitQt::CarlaBridgeToolkitQt(\"%s\")", title);
+        qDebug("CarlaBridgeToolkitQt::CarlaBridgeToolkitQt(%p, \"%s\")", client, uiTitle);
 
         app = nullptr;
         window = nullptr;
@@ -154,13 +154,13 @@ public:
 #endif
         }
 
-        window->setWindowTitle(title);
+        window->setWindowTitle(uiTitle);
 
-        if (settings.contains(QString("%1/pos_x").arg(title)))
+        if (settings.contains(QString("%1/pos_x").arg(uiTitle)))
         {
             bool hasX, hasY;
-            int posX = settings.value(QString("%1/pos_x").arg(title), window->x()).toInt(&hasX);
-            int posY = settings.value(QString("%1/pos_y").arg(title), window->y()).toInt(&hasY);
+            int posX = settings.value(QString("%1/pos_x").arg(uiTitle), window->x()).toInt(&hasX);
+            int posY = settings.value(QString("%1/pos_y").arg(uiTitle), window->y()).toInt(&hasY);
 
             if (hasX && hasY)
                 window->move(posX, posY);
@@ -168,8 +168,8 @@ public:
             if (client->isResizable())
             {
                 bool hasWidth, hasHeight;
-                int width  = settings.value(QString("%1/width").arg(title), window->width()).toInt(&hasWidth);
-                int height = settings.value(QString("%1/height").arg(title), window->height()).toInt(&hasHeight);
+                int width  = settings.value(QString("%1/width").arg(uiTitle), window->width()).toInt(&hasWidth);
+                int height = settings.value(QString("%1/height").arg(uiTitle), window->height()).toInt(&hasHeight);
 
                 if (hasWidth && hasHeight)
                     window->resize(width, height);
@@ -203,10 +203,10 @@ public:
         {
             if (client)
             {
-                settings.setValue(QString("%1/pos_x").arg(title), window->x());
-                settings.setValue(QString("%1/pos_y").arg(title), window->y());
-                settings.setValue(QString("%1/width").arg(title), window->width());
-                settings.setValue(QString("%1/height").arg(title), window->height());
+                settings.setValue(QString("%1/pos_x").arg(uiTitle), window->x());
+                settings.setValue(QString("%1/pos_y").arg(uiTitle), window->y());
+                settings.setValue(QString("%1/width").arg(uiTitle), window->width());
+                settings.setValue(QString("%1/height").arg(uiTitle), window->height());
                 settings.sync();
             }
 
@@ -323,9 +323,9 @@ protected:
 
 // -------------------------------------------------------------------------
 
-CarlaBridgeToolkit* CarlaBridgeToolkit::createNew(CarlaBridgeClient* const client, const char* const title)
+CarlaBridgeToolkit* CarlaBridgeToolkit::createNew(CarlaBridgeClient* const client, const char* const uiTitle)
 {
-    return new CarlaBridgeToolkitQt(client, title);
+    return new CarlaBridgeToolkitQt(client, uiTitle);
 }
 
 CARLA_BRIDGE_END_NAMESPACE

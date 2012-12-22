@@ -36,7 +36,7 @@ CARLA_BRIDGE_START_NAMESPACE
 class CarlaBridgeToolkit
 {
 public:
-    CarlaBridgeToolkit(CarlaBridgeClient* const client, const char* const title);
+    CarlaBridgeToolkit(CarlaBridgeClient* const client, const char* const uiTitle);
     virtual ~CarlaBridgeToolkit();
 
     virtual void init() = 0;
@@ -50,12 +50,12 @@ public:
 #if BUILD_BRIDGE_UI
     virtual void* getContainerId();
 
-    static CarlaBridgeToolkit* createNew(CarlaBridgeClient* const client, const char* const title);
+    static CarlaBridgeToolkit* createNew(CarlaBridgeClient* const client, const char* const uiTitle);
 #endif
 
 protected:
     CarlaBridgeClient* const client;
-    char* title;
+    char* uiTitle;
 };
 
 /**@}*/
