@@ -302,6 +302,7 @@ install:
 		data/claudia-launcher \
 		data/carla \
 		data/carla-control \
+		data/carla-standalone \
 		data/caitlyn \
 		c++/jackmeter/cadence-jackmeter \
 		c++/xycontroller/cadence-xycontroller \
@@ -389,6 +390,7 @@ install:
 		$(DESTDIR)$(PREFIX)/bin/claudia-launcher \
 		$(DESTDIR)$(PREFIX)/bin/carla \
 		$(DESTDIR)$(PREFIX)/bin/carla-control \
+		$(DESTDIR)$(PREFIX)/bin/carla-standalone \
 		$(DESTDIR)$(PREFIX)/bin/caitlyn \
 		$(X11_RC_DIR)/99cadence-session-start
 #		$(DESTDIR)$(PREFIX)/bin/cadence-cpufreq
