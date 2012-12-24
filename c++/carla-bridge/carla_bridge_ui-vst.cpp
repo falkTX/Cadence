@@ -534,7 +534,7 @@ CARLA_BRIDGE_END_NAMESPACE
 
 int main(int argc, char* argv[])
 {
-    using namespace CarlaBridge;
+    CARLA_BRIDGE_USE_NAMESPACE
 
     if (argc != 4)
     {
