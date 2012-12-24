@@ -184,6 +184,9 @@ public:
         // Timer
         msgTimer = startTimer(50);
 
+        // First idle
+        handleTimeout();
+
         // Main loop
         app->exec();
     }
@@ -201,14 +204,11 @@ public:
 
         if (window)
         {
-            if (client)
-            {
-                settings.setValue(QString("%1/pos_x").arg(uiTitle), window->x());
-                settings.setValue(QString("%1/pos_y").arg(uiTitle), window->y());
-                settings.setValue(QString("%1/width").arg(uiTitle), window->width());
-                settings.setValue(QString("%1/height").arg(uiTitle), window->height());
-                settings.sync();
-            }
+            settings.setValue(QString("%1/pos_x").arg(uiTitle), window->x());
+            settings.setValue(QString("%1/pos_y").arg(uiTitle), window->y());
+            settings.setValue(QString("%1/width").arg(uiTitle), window->width());
+            settings.setValue(QString("%1/height").arg(uiTitle), window->height());
+            settings.sync();
 
             window->close();
 
@@ -300,22 +300,29 @@ protected:
     QEmbedContainer* embedContainer;
 #endif
 
+    void handleTimeout()
+    {
+        if (! client)
+            return;
+
+        if (needsResize)
+        {
+            client->toolkitResize(nextWidth, nextHeight);
+            needsResize = false;
+        }
+
+        if (client->isOscControlRegistered() && ! client->oscIdle())
+        {
+            killTimer(msgTimer);
+            msgTimer = 0;
+        }
+    }
+
+private:
     void timerEvent(QTimerEvent* const event)
     {
-        if (event->timerId() == msgTimer && client)
-        {
-            if (needsResize)
-            {
-                client->toolkitResize(nextWidth, nextHeight);
-                needsResize = false;
-            }
-
-            if (client->isOscControlRegistered() && ! client->oscIdle())
-            {
-                killTimer(msgTimer);
-                msgTimer = 0;
-            }
-        }
+        if (event->timerId() == msgTimer)
+            handleTimeout();
 
         QObject::timerEvent(event);
     }

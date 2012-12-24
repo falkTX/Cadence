@@ -18,16 +18,12 @@
 #include "carla_bridge_client.hpp"
 #include "carla_bridge_toolkit.hpp"
 
-#ifdef BUILD_BRIDGE_PLUGIN
-# include "carla_engine.hpp"
-#else
+#ifdef BUILD_BRIDGE_UI
 # include "carla_lib_utils.hpp"
 #endif
 
-#include <cmath>
-#include <cstdio>
-#include <cstdint>
 #include <cstdlib>
+#include <cstring>
 
 CARLA_BRIDGE_START_NAMESPACE
 
@@ -46,8 +42,6 @@ CarlaBridgeClient::CarlaBridgeClient(const char* const uiTitle)
     m_uiLib = nullptr;
     m_uiQuit = false;
 #endif
-
-    m_toolkit->init();
 }
 
 CarlaBridgeClient::~CarlaBridgeClient()
@@ -58,6 +52,8 @@ CarlaBridgeClient::~CarlaBridgeClient()
     if (m_uiFilename)
         free(m_uiFilename);
 #endif
+
+    delete m_toolkit;
 }
 
 #ifdef BUILD_BRIDGE_UI
@@ -68,7 +64,17 @@ bool CarlaBridgeClient::init(const char* const, const char* const)
 {
     qDebug("CarlaBridgeClient::init()");
 
+    // Test for single init
+    {
+        static bool initiated = false;
+        CARLA_ASSERT(! initiated);
+        initiated = true;
+    }
+
     m_uiQuit = false;
+
+    m_toolkit->init();
+
     return false;
 }
 
@@ -95,7 +101,7 @@ bool CarlaBridgeClient::oscInit(const char* const url)
 {
     qDebug("CarlaBridgeClient::oscInit(\"%s\")", url);
 
-    bool ret  = m_osc.init(url);
+    const bool ret = m_osc.init(url);
     m_oscData = m_osc.getControlData();
 
     return ret;
@@ -103,7 +109,7 @@ bool CarlaBridgeClient::oscInit(const char* const url)
 
 bool CarlaBridgeClient::oscIdle()
 {
-    m_osc .idle();
+    m_osc.idle();
 
 #ifdef BUILD_BRIDGE_UI
     return ! m_uiQuit;
@@ -136,6 +142,15 @@ void CarlaBridgeClient::sendOscUpdate()
 }
 
 #ifdef BUILD_BRIDGE_PLUGIN
+void CarlaBridgeClient::registerOscEngine(CarlaBackend::CarlaEngine* const engine)
+{
+    qDebug("CarlaBridgeClient::registerOscEngine(%p)", engine);
+    CARLA_ASSERT(engine);
+
+    if (engine)
+        engine->setOscBridgeData(m_oscData);
+}
+
 void CarlaBridgeClient::sendOscBridgeError(const char* const error)
 {
     qDebug("CarlaBridgeClient::sendOscBridgeError(\"%s\")", error);
@@ -144,12 +159,6 @@ void CarlaBridgeClient::sendOscBridgeError(const char* const error)
 
     if (m_oscData && m_oscData->target)
         osc_send_bridge_error(m_oscData, error);
-}
-
-void CarlaBridgeClient::registerOscEngine(CarlaBackend::CarlaEngine* const engine)
-{
-    qDebug("CarlaBridgeClient::registerOscEngine(%p)", engine);
-    engine->setOscBridgeData(m_oscData);
 }
 #endif
 
@@ -250,18 +259,6 @@ void CarlaBridgeClient::sendOscExiting()
         osc_send_exiting(m_oscData);
 }
 
-#ifdef BUILD_BRIDGE_PLUGIN
-void CarlaBridgeClient::sendOscBridgeUpdate()
-{
-    qDebug("CarlaBridgeClient::sendOscBridgeUpdate()");
-    CARLA_ASSERT(m_oscData);
-    CARLA_ASSERT(m_oscData->target && m_osc.m_serverPath);
-
-    if (m_oscData && m_oscData->target && m_osc.m_serverPath)
-        osc_send_bridge_update(m_oscData, m_osc.m_serverPath);
-}
-#endif
-
 #ifdef BRIDGE_LV2
 void CarlaBridgeClient::sendOscLv2TransferAtom(const int32_t portIndex, const char* const typeStr, const char* const atomBuf)
 {
@@ -282,6 +279,18 @@ void CarlaBridgeClient::sendOscLv2TransferEvent(const int32_t portIndex, const c
 }
 #endif
 
+#ifdef BUILD_BRIDGE_PLUGIN
+void CarlaBridgeClient::sendOscBridgeUpdate()
+{
+    qDebug("CarlaBridgeClient::sendOscBridgeUpdate()");
+    CARLA_ASSERT(m_oscData);
+    CARLA_ASSERT(m_oscData->target && m_osc.m_serverPath);
+
+    if (m_oscData && m_oscData->target && m_osc.m_serverPath)
+        osc_send_bridge_update(m_oscData, m_osc.m_serverPath);
+}
+#endif
+
 // ---------------------------------------------------------------------
 
 #ifdef BUILD_BRIDGE_UI
@@ -292,6 +301,7 @@ void* CarlaBridgeClient::getContainerId()
 
 bool CarlaBridgeClient::uiLibOpen(const char* const filename)
 {
+    CARLA_ASSERT(! m_uiLib);
     CARLA_ASSERT(filename);
 
     if (m_uiFilename)
@@ -305,6 +315,8 @@ bool CarlaBridgeClient::uiLibOpen(const char* const filename)
 
 bool CarlaBridgeClient::uiLibClose()
 {
+    CARLA_ASSERT(m_uiLib);
+
     if (m_uiLib)
     {
         const bool closed = lib_close(m_uiLib);
@@ -317,6 +329,8 @@ bool CarlaBridgeClient::uiLibClose()
 
 void* CarlaBridgeClient::uiLibSymbol(const char* const symbol)
 {
+    CARLA_ASSERT(m_uiLib);
+
     if (m_uiLib)
         return lib_symbol(m_uiLib, symbol);
 

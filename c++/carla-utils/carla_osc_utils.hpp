@@ -35,6 +35,11 @@ struct CarlaOscData {
           source(nullptr),
           target(nullptr) {}
 
+    ~CarlaOscData()
+    {
+        free();
+    }
+
     void free()
     {
         if (path)
@@ -300,6 +305,7 @@ void osc_send_bridge_error(const CarlaOscData* const oscData, const char* const 
 }
 #endif
 
+#if defined(BRIDGE_LV2) || defined(WANT_LV2)
 static inline
 void osc_send_lv2_transfer_atom(const CarlaOscData* const oscData, const int32_t portIndex, const char* const typeStr, const char* const atomBuf)
 {
@@ -335,6 +341,7 @@ void osc_send_lv2_transfer_event(const CarlaOscData* const oscData, const int32_
         lo_send(oscData->target, targetPath, "iss", portIndex, typeStr, atomBuf);
     }
 }
+#endif
 
 // ------------------------------------------------------------------------------------------------
 

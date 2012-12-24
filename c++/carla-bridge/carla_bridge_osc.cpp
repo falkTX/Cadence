@@ -1,6 +1,6 @@
 /*
  * Carla Bridge OSC
- * Copyright (C) 2012 Filipe Coelho <falktx@falktx.com>
+ * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -234,6 +234,16 @@ int CarlaBridgeOsc::handleMessage(const char* const path, const int argc, const 
         return handleMsgLv2TransferEvent(argc, argv, types);
 #endif
 
+#ifdef BUILD_BRIDGE_PLUGIN
+    // Plugin methods
+    if (strcmp(method, "plugin_save_now") == 0)
+        return handleMsgPluginSaveNow();
+    if (strcmp(method, "plugin_set_chunk") == 0)
+        return handleMsgPluginSetChunk(argc, argv, types);
+    if (strcmp(method, "plugin_set_custom_data") == 0)
+        return handleMsgPluginSetCustomData(argc, argv, types);
+#endif
+
 #if 0
     // TODO
     else if (strcmp(method, "set_parameter_midi_channel") == 0)
@@ -254,36 +264,11 @@ int CarlaBridgeOsc::handleMsgConfigure(CARLA_BRIDGE_OSC_HANDLE_ARGS)
     if (! client)
         return 1;
 
-#ifdef BUILD_BRIDGE_PLUGIN
-    const char* const key   = (const char*)&argv[0]->s;
-    const char* const value = (const char*)&argv[1]->s;
-
-    if (strcmp(key, CarlaBackend::CARLA_BRIDGE_MSG_SAVE_NOW) == 0)
-    {
-        client->saveNow();
-    }
-    else if (strcmp(key, CarlaBackend::CARLA_BRIDGE_MSG_SET_CHUNK) == 0)
-    {
-        client->setChunkData(value);
-    }
-    else if (strcmp(key, CarlaBackend::CARLA_BRIDGE_MSG_SET_CUSTOM) == 0)
-    {
-        QStringList vList = QString(value).split("·", QString::KeepEmptyParts);
-
-        if (vList.size() == 3)
-        {
-            const char* const cType  = vList.at(0).toUtf8().constData();
-            const char* const cKey   = vList.at(1).toUtf8().constData();
-            const char* const cValue = vList.at(2).toUtf8().constData();
-
-            client->setCustomData(cType, cKey, cValue);
-        }
-    }
-#else
-    Q_UNUSED(argv);
-#endif
+    // nothing here for now
 
     return 0;
+
+    Q_UNUSED(argv);
 }
 
 int CarlaBridgeOsc::handleMsgControl(CARLA_BRIDGE_OSC_HANDLE_ARGS)
@@ -296,6 +281,7 @@ int CarlaBridgeOsc::handleMsgControl(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 
     const int32_t index = argv[0]->i;
     const float   value = argv[1]->f;
+
     client->setParameter(index, value);
 
     return 0;
@@ -310,34 +296,44 @@ int CarlaBridgeOsc::handleMsgProgram(CARLA_BRIDGE_OSC_HANDLE_ARGS)
         return 1;
 
     const int32_t index = argv[0]->i;
+
     client->setProgram(index);
 
     return 0;
 }
 
+#ifdef BUILD_BRIDGE_PLUGIN
 int CarlaBridgeOsc::handleMsgMidiProgram(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 {
     qDebug("CarlaBridgeOsc::handleMsgMidiProgram()");
-#ifdef BUILD_BRIDGE_PLUGIN
     CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(1, "i");
-#else
-    CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(2, "ii");
-#endif
 
     if (! client)
         return 1;
 
-#ifdef BUILD_BRIDGE_PLUGIN
     const int32_t index = argv[0]->i;
+
     client->setMidiProgram(index);
-#else
-    const int32_t bank    = argv[0]->i;
-    const int32_t program = argv[1]->i;
-    client->setMidiProgram(bank, program);
-#endif
 
     return 0;
 }
+#else
+int CarlaBridgeOsc::handleMsgMidiProgram(CARLA_BRIDGE_OSC_HANDLE_ARGS)
+{
+    qDebug("CarlaBridgeOsc::handleMsgMidiProgram()");
+    CARLA_BRIDGE_OSC_CHECK_OSC_TYPES(2, "ii");
+
+    if (! client)
+        return 1;
+
+    const int32_t bank    = argv[0]->i;
+    const int32_t program = argv[1]->i;
+
+    client->setMidiProgram(bank, program);
+
+    return 0;
+}
+#endif
 
 int CarlaBridgeOsc::handleMsgMidi(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 {
@@ -359,13 +355,15 @@ int CarlaBridgeOsc::handleMsgMidi(CARLA_BRIDGE_OSC_HANDLE_ARGS)
 
     if (MIDI_IS_STATUS_NOTE_OFF(status))
     {
-        uint8_t note = data[2];
+        const uint8_t note = data[2];
+
         client->noteOff(channel, note);
     }
     else if (MIDI_IS_STATUS_NOTE_ON(status))
     {
-        uint8_t note = data[2];
-        uint8_t velo = data[3];
+        const uint8_t note = data[2];
+        const uint8_t velo = data[3];
+
         client->noteOn(channel, note, velo);
     }
 

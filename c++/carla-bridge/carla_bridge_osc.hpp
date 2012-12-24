@@ -1,6 +1,6 @@
 /*
  * Carla Bridge OSC
- * Copyright (C) 2012 Filipe Coelho <falktx@falktx.com>
+ * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -108,6 +108,12 @@ private:
 #ifdef BRIDGE_LV2
     int handleMsgLv2TransferAtom(CARLA_BRIDGE_OSC_HANDLE_ARGS);
     int handleMsgLv2TransferEvent(CARLA_BRIDGE_OSC_HANDLE_ARGS);
+#endif
+
+#ifdef BUILD_BRIDGE_PLUGIN
+    int handleMsgPluginSaveNow();
+    int handleMsgPluginSetChunk(CARLA_BRIDGE_OSC_HANDLE_ARGS);
+    int handleMsgPluginSetCustomData(CARLA_BRIDGE_OSC_HANDLE_ARGS);
 #endif
 
     // -------------------------------------------------------------------

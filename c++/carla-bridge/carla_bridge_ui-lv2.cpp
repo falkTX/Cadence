@@ -618,7 +618,8 @@ public:
 
     void handleProgramChanged(int32_t /*index*/)
     {
-        sendOscConfigure("reloadprograms", "");
+        if (isOscControlRegistered())
+            sendOscConfigure("reloadprograms", "");
     }
 
     uint32_t handleUiPortMap(const char* const symbol)
@@ -651,10 +652,9 @@ public:
         return 0;
     }
 
-
     void handleUiWrite(uint32_t portIndex, uint32_t bufferSize, uint32_t format, const void* buffer)
     {
-        if (! buffer)
+        if (! (buffer && isOscControlRegistered()))
             return;
 
         if (format == 0)

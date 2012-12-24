@@ -20,8 +20,6 @@
 
 #include "carla_bridge_osc.hpp"
 
-#include <QtCore/QMutex>
-
 #ifdef BUILD_BRIDGE_PLUGIN
 namespace CarlaBackend {
 class CarlaEngine;
@@ -98,8 +96,8 @@ public:
     void sendOscUpdate();
 
 #ifdef BUILD_BRIDGE_PLUGIN
-    void sendOscBridgeError(const char* const error);
     void registerOscEngine(CarlaBackend::CarlaEngine* const engine);
+    void sendOscBridgeError(const char* const error);
 #endif
 
     // ---------------------------------------------------------------------
@@ -121,13 +119,13 @@ protected:
     void sendOscMidi(const uint8_t midiBuf[4]);
     void sendOscExiting();
 
-#ifdef BUILD_BRIDGE_PLUGIN
-    void sendOscBridgeUpdate();
-#endif
-
 #ifdef BRIDGE_LV2
     void sendOscLv2TransferAtom(const int32_t portIndex, const char* const typeStr, const char* const atomBuf);
     void sendOscLv2TransferEvent(const int32_t portIndex, const char* const typeStr, const char* const atomBuf);
+#endif
+
+#ifdef BUILD_BRIDGE_PLUGIN
+    void sendOscBridgeUpdate();
 #endif
 
     // ---------------------------------------------------------------------

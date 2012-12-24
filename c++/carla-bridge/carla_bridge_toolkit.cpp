@@ -26,7 +26,7 @@ CARLA_BRIDGE_START_NAMESPACE
 CarlaBridgeToolkit::CarlaBridgeToolkit(CarlaBridgeClient* const client_, const char* const newTitle)
     : client(client_)
 {
-    qDebug("CarlaBridgeToolkit::CarlaBridgeToolkit(\"%s\")", newTitle);
+    qDebug("CarlaBridgeToolkit::CarlaBridgeToolkit(%p, \"%s\")", client, newTitle);
     CARLA_ASSERT(client);
     CARLA_ASSERT(newTitle);
 
