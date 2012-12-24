@@ -98,21 +98,6 @@ public:
         qDebug("CarlaBridgeToolkitQt::~CarlaBridgeToolkitQt()");
         CARLA_ASSERT(! app);
         CARLA_ASSERT(! msgTimer);
-
-        if (window)
-        {
-            window->close();
-            delete window;
-        }
-
-#ifdef BRIDGE_CONTAINER
-        // TESTING
-        if (embedContainer)
-        {
-            embedContainer->close();
-            delete embedContainer;
-        }
-#endif
     }
 
     void init()
@@ -215,6 +200,16 @@ public:
             delete window;
             window = nullptr;
         }
+
+#ifdef BRIDGE_CONTAINER
+        if (embedContainer)
+        {
+            embedContainer->close();
+
+            delete embedContainer;
+            embedContainer = nullptr;
+        }
+#endif
 
         if (app)
         {

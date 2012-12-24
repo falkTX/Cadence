@@ -142,13 +142,14 @@ void CarlaBridgeClient::sendOscUpdate()
 }
 
 #ifdef BUILD_BRIDGE_PLUGIN
-void CarlaBridgeClient::registerOscEngine(CarlaBackend::CarlaEngine* const engine)
+void CarlaBridgeClient::sendOscBridgeUpdate()
 {
-    qDebug("CarlaBridgeClient::registerOscEngine(%p)", engine);
-    CARLA_ASSERT(engine);
+    qDebug("CarlaBridgeClient::sendOscBridgeUpdate()");
+    CARLA_ASSERT(m_oscData);
+    CARLA_ASSERT(m_oscData->target && m_oscData->path);
 
-    if (engine)
-        engine->setOscBridgeData(m_oscData);
+    if (m_oscData && m_oscData->target && m_oscData->path)
+        osc_send_bridge_update(m_oscData, m_oscData->path);
 }
 
 void CarlaBridgeClient::sendOscBridgeError(const char* const error)
@@ -276,18 +277,6 @@ void CarlaBridgeClient::sendOscLv2TransferEvent(const int32_t portIndex, const c
 
     if (m_oscData && m_oscData->target)
         osc_send_lv2_transfer_event(m_oscData, portIndex, typeStr, atomBuf);
-}
-#endif
-
-#ifdef BUILD_BRIDGE_PLUGIN
-void CarlaBridgeClient::sendOscBridgeUpdate()
-{
-    qDebug("CarlaBridgeClient::sendOscBridgeUpdate()");
-    CARLA_ASSERT(m_oscData);
-    CARLA_ASSERT(m_oscData->target && m_osc.m_serverPath);
-
-    if (m_oscData && m_oscData->target && m_osc.m_serverPath)
-        osc_send_bridge_update(m_oscData, m_osc.m_serverPath);
 }
 #endif
 

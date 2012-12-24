@@ -40,12 +40,10 @@ CarlaBridgeToolkit::~CarlaBridgeToolkit()
     free(uiTitle);
 }
 
-#if BUILD_BRIDGE_UI
 void* CarlaBridgeToolkit::getContainerId()
 {
     qDebug("CarlaBridgeToolkit::getContainerId()");
     return nullptr;
 }
-#endif
 
 CARLA_BRIDGE_END_NAMESPACE

@@ -47,11 +47,9 @@ public:
     virtual void hide() = 0;
     virtual void resize(const int width, const int height) = 0;
 
-#if BUILD_BRIDGE_UI
     virtual void* getContainerId();
 
     static CarlaBridgeToolkit* createNew(CarlaBridgeClient* const client, const char* const uiTitle);
-#endif
 
 protected:
     CarlaBridgeClient* const client;

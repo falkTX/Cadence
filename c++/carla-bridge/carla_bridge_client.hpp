@@ -20,12 +20,6 @@
 
 #include "carla_bridge_osc.hpp"
 
-#ifdef BUILD_BRIDGE_PLUGIN
-namespace CarlaBackend {
-class CarlaEngine;
-}
-#endif
-
 CARLA_BRIDGE_START_NAMESPACE
 
 #if 0
@@ -96,7 +90,7 @@ public:
     void sendOscUpdate();
 
 #ifdef BUILD_BRIDGE_PLUGIN
-    void registerOscEngine(CarlaBackend::CarlaEngine* const engine);
+    void sendOscBridgeUpdate();
     void sendOscBridgeError(const char* const error);
 #endif
 
@@ -124,10 +118,6 @@ protected:
     void sendOscLv2TransferEvent(const int32_t portIndex, const char* const typeStr, const char* const atomBuf);
 #endif
 
-#ifdef BUILD_BRIDGE_PLUGIN
-    void sendOscBridgeUpdate();
-#endif
-
     // ---------------------------------------------------------------------
 
 #ifdef BUILD_BRIDGE_UI
@@ -150,6 +140,8 @@ private:
     char* m_uiFilename;
     void* m_uiLib;
     bool  m_uiQuit;
+#else
+    friend class CarlaPluginClient;
 #endif
 };
 

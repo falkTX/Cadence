@@ -530,6 +530,8 @@ private:
 
 CarlaVstClient* CarlaVstClient::lastVstPlugin = nullptr;
 
+// -------------------------------------------------------------------------
+
 CARLA_BRIDGE_END_NAMESPACE
 
 int main(int argc, char* argv[])
@@ -589,4 +591,5 @@ int main(int argc, char* argv[])
     return ret;
 }
 
-#endif
+#endif // BRIDGE_VST
+

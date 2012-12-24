@@ -21,24 +21,23 @@
 #include "carla_midi.h"
 #include "carla_engine.hpp"
 #include "carla_osc_utils.hpp"
+#include "carla_plugin_thread.hpp"
 
 #ifdef BUILD_BRIDGE
-//# include "carla_backend_utils.hpp"
 # include "carla_bridge_osc.hpp"
-//#else
 #endif
-#include "carla_plugin_thread.hpp"
 
 // common includes
 #include <cmath>
 #include <vector>
 #include <QtCore/QMutex>
+#include <QtGui/QMainWindow>
 
 #ifdef Q_WS_X11
-#include <QtGui/QX11EmbedContainer>
+# include <QtGui/QX11EmbedContainer>
 typedef QX11EmbedContainer GuiContainer;
 #else
-#include <QtGui/QWidget>
+# include <QtGui/QWidget>
 typedef QWidget GuiContainer;
 #endif
 
@@ -981,6 +980,90 @@ protected:
 
     friend class CarlaEngine; // FIXME
     friend class CarlaEngineJack;
+};
+
+/*!
+ * \class CarlaPluginGUI
+ *
+ * \brief Carla Backend gui plugin class
+ *
+ * \see CarlaPlugin
+ */
+class CarlaPluginGUI : public QMainWindow
+{
+public:
+    /*!
+     * \class Callback
+     *
+     * \brief Carla plugin GUI callback
+     */
+    class Callback
+    {
+    public:
+        virtual ~Callback() {}
+        virtual void guiClosedCallback() = 0;
+    };
+
+    // -------------------------------------------------------------------
+    // Constructor and destructor
+
+    /*!
+     * TODO
+     */
+    CarlaPluginGUI(QWidget* const parent, Callback* const callback);
+
+    /*!
+     * TODO
+     */
+    ~CarlaPluginGUI();
+
+    // -------------------------------------------------------------------
+    // Get data
+
+    /*!
+     * TODO
+     */
+    GuiContainer* getContainer() const;
+
+    /*!
+     * TODO
+     */
+    WId getWinId() const;
+
+    // -------------------------------------------------------------------
+    // Set data
+
+    /*!
+     * TODO
+     */
+    void setNewSize(const int width, const int height);
+
+    /*!
+     * TODO
+     */
+    void setResizable(const bool resizable);
+
+    /*!
+     * TODO
+     */
+    void setTitle(const char* const title);
+
+    /*!
+     * TODO
+     */
+    void setVisible(const bool yesNo);
+
+    // -------------------------------------------------------------------
+
+private:
+    Callback* const m_callback;
+    GuiContainer*   m_container;
+
+    QByteArray m_geometry;
+    bool m_resizable;
+
+    void hideEvent(QHideEvent* const event);
+    void closeEvent(QCloseEvent* const event);
 };
 
 /**@}*/

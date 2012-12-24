@@ -1023,10 +1023,10 @@ int CarlaBridgeOsc::handleMsgLv2TransferAtom(CARLA_BRIDGE_OSC_HANDLE_ARGS)
     chunk = QByteArray::fromBase64(atomBuf);
 
     LV2_Atom* const atom = (LV2_Atom*)chunk.constData();
-    CarlaLv2Client* const lv2client = (CarlaLv2Client*)client;
+    CarlaLv2Client* const lv2Client = (CarlaLv2Client*)client;
 
-    atom->type = lv2client->getCustomURID(typeStr);
-    lv2client->handleTransferAtom(portIndex, atom);
+    atom->type = lv2Client->getCustomURID(typeStr);
+    lv2Client->handleTransferAtom(portIndex, atom);
 
     return 0;
 }
@@ -1047,10 +1047,10 @@ int CarlaBridgeOsc::handleMsgLv2TransferEvent(CARLA_BRIDGE_OSC_HANDLE_ARGS)
     chunk = QByteArray::fromBase64(atomBuf);
 
     LV2_Atom* const atom = (LV2_Atom*)chunk.constData();
-    CarlaLv2Client* const lv2client = (CarlaLv2Client*)client;
+    CarlaLv2Client* const lv2Client = (CarlaLv2Client*)client;
 
-    atom->type = lv2client->getCustomURID(typeStr);
-    lv2client->handleTransferEvent(portIndex, atom);
+    atom->type = lv2Client->getCustomURID(typeStr);
+    lv2Client->handleTransferEvent(portIndex, atom);
 
     return 0;
 }
@@ -1115,4 +1115,4 @@ int main(int argc, char* argv[])
     return ret;
 }
 
-#endif
+#endif // BRIDGE_LV2

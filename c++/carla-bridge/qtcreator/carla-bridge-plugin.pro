@@ -1,6 +1,10 @@
 # QtCreator project file
 
+contains(QT_VERSION, ^5.*) {
+QT = core widgets
+} else {
 QT = core gui
+}
 
 CONFIG    = debug link_pkgconfig qt warn_on
 PKGCONFIG = jack liblo
@@ -10,15 +14,30 @@ TEMPLATE = app
 VERSION  = 0.5.0
 
 SOURCES  = \
+    ../carla_bridge_client.cpp \
     ../carla_bridge_osc.cpp \
+    ../carla_bridge_toolkit.cpp \
     ../carla_bridge_plugin.cpp
 
+HEADERS  = \
+    ../carla_bridge.hpp \
+    ../carla_bridge_client.hpp \
+    ../carla_bridge_osc.hpp \
+    ../carla_bridge_toolkit.hpp \
+
+# carla-engine
 SOURCES += \
     ../../carla-engine/carla_engine.cpp \
     ../../carla-engine/carla_engine_osc.cpp \
     ../../carla-engine/carla_engine_thread.cpp \
     ../../carla-engine/jack.cpp
 
+HEADERS += \
+    ../../carla-engine/carla_engine.hpp \
+    ../../carla-engine/carla_engine_osc.hpp \
+    ../../carla-engine/carla_engine_thread.hpp \
+
+# carla-plugin
 SOURCES += \
     ../../carla-plugin/carla_plugin.cpp \
     ../../carla-plugin/carla_plugin_thread.cpp \
@@ -27,31 +46,23 @@ SOURCES += \
     ../../carla-plugin/lv2.cpp \
     ../../carla-plugin/vst.cpp
 
-HEADERS  = \
-    ../carla_bridge.hpp \
-    ../carla_bridge_client.hpp \
-    ../carla_bridge_osc.hpp \
-    ../carla_bridge_toolkit.hpp \
+HEADERS += \
+    ../../carla-plugin/carla_plugin.hpp \
+    ../../carla-plugin/carla_plugin_thread.hpp
 
+# carla-backend
+HEADERS += \
+    ../../carla-backend/carla_backend.hpp \
+    ../../carla-backend/carla_backend_utils.hpp
+
+# carla-includes
 HEADERS += \
     ../../carla-includes/carla_defines.hpp \
     ../../carla-includes/carla_midi.h \
     ../../carla-includes/ladspa_rdf.hpp \
     ../../carla-includes/lv2_rdf.hpp
 
-HEADERS += \
-    ../../carla-backend/carla_backend.hpp \
-    ../../carla-backend/carla_backend_utils.hpp
-
-HEADERS += \
-    ../../carla-engine/carla_engine.hpp \
-    ../../carla-engine/carla_engine_osc.hpp \
-    ../../carla-engine/carla_engine_thread.hpp \
-
-HEADERS += \
-    ../../carla-plugin/carla_plugin.hpp \
-    ../../carla-plugin/carla_plugin_thread.hpp
-
+# carla-utils
 HEADERS += \
     ../../carla-utils/carla_lib_utils.hpp \
     ../../carla-utils/carla_osc_utils.hpp \
@@ -70,7 +81,8 @@ INCLUDEPATH = .. \
 DEFINES  = QTCREATOR_TEST
 DEFINES += DEBUG
 #DEFINES += VESTIGE_HEADER
-DEFINES += BUILD_BRIDGE BUILD_BRIDGE_PLUGIN
+DEFINES += BUILD_BRIDGE BUILD_BRIDGE_PLUGIN BRIDGE_PLUGIN
+
 DEFINES += CARLA_ENGINE_JACK
 DEFINES += WANT_LADSPA WANT_DSSI WANT_LV2 WANT_VST
 
