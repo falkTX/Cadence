@@ -1549,12 +1549,16 @@ public:
 
     intptr_t handleAudioMasterGetBlockSize()
     {
-        return x_engine->getBufferSize();
+        const uint32_t bufferSize = x_engine->getBufferSize();
+        effect->dispatcher(effect, effSetBlockSize, 0, bufferSize, nullptr, 0.0f);
+        return bufferSize;
     }
 
     intptr_t handleAudioMasterGetSampleRate()
     {
-        return x_engine->getSampleRate();
+        const double sampleRate = x_engine->getSampleRate();
+        effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, sampleRate);
+        return sampleRate;
     }
 
     intptr_t handleAudioMasterGetTime()

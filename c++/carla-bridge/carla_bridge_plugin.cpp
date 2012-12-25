@@ -21,7 +21,6 @@
 #include "carla_bridge_toolkit.hpp"
 #include "carla_plugin.hpp"
 
-//#include <QtCore/QTimerEvent>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QTextStream>
@@ -110,8 +109,9 @@ public:
         app = nullptr;
         gui = nullptr;
 
+        m_hasUI  = false;
         m_uiQuit = false;
-        m_uiShow = true;
+        m_uiShow = false;
 
         init();
     }
@@ -119,8 +119,23 @@ public:
     ~CarlaBridgeToolkitPlugin()
     {
         qDebug("CarlaBridgeToolkitPlugin::~CarlaBridgeToolkitPlugin()");
-        CARLA_ASSERT(! app);
-        CARLA_ASSERT(! gui);
+
+        if (gui)
+        {
+            gui->close();
+
+            delete gui;
+            gui = nullptr;
+        }
+
+        if (app)
+        {
+            if (! app->closingDown())
+                app->quit();
+
+            delete app;
+            app = nullptr;
+        }
     }
 
     void init()
@@ -143,7 +158,7 @@ public:
 
         if (showGui)
         {
-            if (m_uiShow)
+            if (m_hasUI)
                 show();
         }
         else
@@ -164,41 +179,12 @@ public:
         qDebug("CarlaBridgeToolkitPlugin::quit()");
         CARLA_ASSERT(app);
 
-        if (gui)
-        {
-            gui->close();
-
-            delete gui;
-            gui = nullptr;
-        }
-
-        if (app)
-        {
-            if (! app->closingDown())
-                app->quit();
-
-            delete app;
-            app = nullptr;
-        }
+        if (app && ! app->closingDown())
+            app->quit();
     }
 
-    void show()
-    {
-        qDebug("CarlaBridgeToolkitPlugin::show()");
-        CARLA_ASSERT(gui);
-
-        if (gui && m_uiShow)
-            gui->setVisible(true);
-    }
-
-    void hide()
-    {
-        qDebug("CarlaBridgeToolkitPlugin::hide()");
-        CARLA_ASSERT(gui);
-
-        if (gui && m_uiShow)
-            gui->setVisible(false);
-    }
+    void show();
+    void hide();
 
     void resize(const int width, const int height)
     {
@@ -229,9 +215,10 @@ public:
         return nullptr;
     }
 
-    void hasUI(const bool yesNo)
+    void setHasUI(const bool hasUI, const bool showUI)
     {
-        m_uiShow = yesNo;
+        m_hasUI  = hasUI;
+        m_uiShow = showUI;
     }
 
 protected:
@@ -241,6 +228,7 @@ protected:
     void guiClosedCallback();
 
 private:
+    bool m_hasUI;
     bool m_uiQuit;
     bool m_uiShow;
 };
@@ -294,14 +282,25 @@ public:
         plugin->getGuiInfo(&guiType, &guiResizable);
 
         CarlaBridgeToolkitPlugin* const plugToolkit = (CarlaBridgeToolkitPlugin*)m_toolkit;
-        plugToolkit->hasUI(guiType != CarlaBackend::GUI_NONE);
+
+        qWarning("----------------------------------------------------- trying..., %s", CarlaBackend::GuiType2Str(guiType));
 
         if (guiType == CarlaBackend::GUI_INTERNAL_QT4 || guiType == CarlaBackend::GUI_INTERNAL_COCOA || guiType == CarlaBackend::GUI_INTERNAL_HWND || guiType == CarlaBackend::GUI_INTERNAL_X11)
+        {
             plugin->setGuiContainer(plugToolkit->getContainer());
+            plugToolkit->setHasUI(true, true);
+        }
+        else
+        {
+            plugToolkit->setHasUI(guiType != CarlaBackend::GUI_NONE, false);
+        }
     }
 
     void quit()
     {
+        engine = nullptr;
+        plugin = nullptr;
+
         if (msgTimerGUI != 0)
         {
             killTimer(msgTimerGUI);
@@ -343,6 +342,14 @@ public:
 
         if (engine)
             engine->osc_send_bridge_configure(CarlaBackend::CARLA_BRIDGE_MSG_HIDE_GUI, "");
+    }
+
+    void showPluginGui(const bool yesNo)
+    {
+        CARLA_ASSERT(plugin);
+
+        if (plugin)
+            plugin->showGui(yesNo);
     }
 
     // ---------------------------------------------------------------------
@@ -570,8 +577,37 @@ protected:
 
 // -------------------------------------------------------------------------
 
+void CarlaBridgeToolkitPlugin::show()
+{
+    qDebug("----------------------------------------------------------------------------------------------------------");
+    qDebug("CarlaBridgeToolkitPlugin::show()");
+    CARLA_ASSERT(gui);
+
+    CarlaPluginClient* const plugClient = (CarlaPluginClient*)client;
+
+    plugClient->showPluginGui(true);
+
+    if (gui && m_uiShow)
+        gui->setVisible(true);
+}
+
+void CarlaBridgeToolkitPlugin::hide()
+{
+    qDebug("CarlaBridgeToolkitPlugin::hide()");
+    CARLA_ASSERT(gui);
+
+    CarlaPluginClient* const plugClient = (CarlaPluginClient*)client;
+
+    if (gui && m_uiShow)
+        gui->setVisible(false);
+
+    plugClient->showPluginGui(false);
+}
+
 void CarlaBridgeToolkitPlugin::guiClosedCallback()
 {
+    qDebug("CarlaBridgeToolkitPlugin::guiClosedCallback()");
+
     CarlaPluginClient* const plugClient = (CarlaPluginClient*)client;
 
     if (m_uiQuit)
@@ -692,7 +728,13 @@ int main(int argc, char* argv[])
     engine->setCallback(client.callback, &client);
     client.setEngine(engine);
 
-    if (! engine->init(""))
+    // Init engine
+    CarlaString engName(name ? name : label);
+    engName += " (master)";
+    engName.toBasic();
+    engName.truncate(engine->maxClientNameSize());
+
+    if (! engine->init(engName))
     {
         if (const char* const lastError = engine->getLastError())
         {

@@ -568,6 +568,21 @@ public:
 
         return false;
 #else
+        // open temp client to get initial buffer-size and sample-rate values
+        if (bufferSize == 0 || sampleRate == 0.0)
+        {
+            m_client = jackbridge_client_open(clientName, JackNullOption, nullptr);
+
+            if (m_client)
+            {
+                bufferSize = jackbridge_get_buffer_size(m_client);
+                sampleRate = jackbridge_get_sample_rate(m_client);
+
+                jackbridge_client_close(m_client);
+                m_client = nullptr;
+            }
+        }
+
         name = clientName;
         name.toBasic();
 

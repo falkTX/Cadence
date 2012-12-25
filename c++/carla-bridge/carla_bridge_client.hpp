@@ -99,7 +99,7 @@ public:
 
     void toolkitShow();
     void toolkitHide();
-    void toolkitResize(int width, int height);
+    void toolkitResize(const int width, const int height);
     void toolkitExec(const bool showGui);
     void toolkitQuit();
 
@@ -120,8 +120,9 @@ protected:
 
     // ---------------------------------------------------------------------
 
-#ifdef BUILD_BRIDGE_UI
     void* getContainerId();
+
+#ifdef BUILD_BRIDGE_UI
     bool uiLibOpen(const char* const filename);
     bool uiLibClose();
     void* uiLibSymbol(const char* const symbol);

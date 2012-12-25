@@ -180,7 +180,7 @@ void CarlaBridgeClient::toolkitHide()
     m_toolkit->hide();
 }
 
-void CarlaBridgeClient::toolkitResize(int width, int height)
+void CarlaBridgeClient::toolkitResize(const int width, const int height)
 {
     qDebug("CarlaBridgeClient::toolkitResize(%i, %i)", width, height);
 
@@ -282,12 +282,12 @@ void CarlaBridgeClient::sendOscLv2TransferEvent(const int32_t portIndex, const c
 
 // ---------------------------------------------------------------------
 
-#ifdef BUILD_BRIDGE_UI
 void* CarlaBridgeClient::getContainerId()
 {
     return m_toolkit->getContainerId();
 }
 
+#ifdef BUILD_BRIDGE_UI
 bool CarlaBridgeClient::uiLibOpen(const char* const filename)
 {
     CARLA_ASSERT(! m_uiLib);

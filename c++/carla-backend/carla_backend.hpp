@@ -52,7 +52,9 @@ const unsigned int MAX_PARAMETERS = 200; //!< Default value for the maximum numb
  * \see CarlaPlugin::hints()
  * @{
  */
+#ifndef BUILD_BRIDGE
 const unsigned int PLUGIN_IS_BRIDGE          = 0x001; //!< Plugin is a bridge (ie, BridgePlugin). This hint is required because "bridge" itself is not a plugin type.
+#endif
 const unsigned int PLUGIN_IS_SYNTH           = 0x002; //!< Plugin is a synthesizer (produces sound).
 const unsigned int PLUGIN_HAS_GUI            = 0x004; //!< Plugin has its own custom GUI.
 const unsigned int PLUGIN_USES_CHUNKS        = 0x008; //!< Plugin uses chunks to save internal data.\see CarlaPlugin::chunkData()

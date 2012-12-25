@@ -97,6 +97,7 @@ public:
     {
         qDebug("CarlaBridgeToolkitQt::~CarlaBridgeToolkitQt()");
         CARLA_ASSERT(! app);
+        CARLA_ASSERT(! window);
         CARLA_ASSERT(! msgTimer);
     }
 

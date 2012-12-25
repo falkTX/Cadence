@@ -1063,8 +1063,10 @@ void CarlaPlugin::updateOscData(const lo_address source, const char* const url)
     free((void*)host);
     free((void*)port);
 
+#ifndef BUILD_BRIDGE
     if (m_hints & PLUGIN_IS_BRIDGE)
         return;
+#endif
 
     osc_send_sample_rate(&osc.data, x_engine->getSampleRate());
 
@@ -1581,6 +1583,7 @@ CarlaPluginGUI::~CarlaPluginGUI()
     qDebug("CarlaPluginGUI::~CarlaPluginGUI()");
     CARLA_ASSERT(m_container);
 
+    // FIXME, automatically deleted by parent ?
     delete m_container;
 }
 

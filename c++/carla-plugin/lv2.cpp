@@ -973,6 +973,8 @@ public:
 
     void showGui(const bool yesNo)
     {
+        qDebug("Lv2Plugin::showGui(%s)", bool2str(yesNo));
+
         switch(gui.type)
         {
         case GUI_NONE:
@@ -4241,7 +4243,7 @@ public:
                 break;
 
             case LV2_UI_GTK2:
-#ifdef WANT_SUIL
+#if defined(WANT_SUIL) || defined(BUILD_BRIDGE)
                 if (isUiBridgeable(i) && preferUiBridges)
                     eGtk2 = i;
 #else
@@ -4293,8 +4295,10 @@ public:
         else if (iSuil >= 0)
             iFinal = iSuil;
 
-        const bool isBridged = false; //(iFinal == eQt4 || iFinal == eCocoa || iFinal == eHWND || iFinal == eX11 || iFinal == eGtk2 || iFinal == eGtk3);
-#ifdef WANT_SUIL
+#ifndef WANT_SUIL
+        const bool isBridged = (iFinal == eQt4 || iFinal == eCocoa || iFinal == eHWND || iFinal == eX11 || iFinal == eGtk2 || iFinal == eGtk3);
+#else
+        const bool isBridged = false;
         const bool isSuil = (iFinal == iSuil && !isBridged);
 #endif
 
