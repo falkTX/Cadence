@@ -12,6 +12,10 @@ GUI:
 -------------------
 - APPS -
 
+Cadence:
+ - add freq info to systray tooltip
+ - add freq Hz change
+
 Claudia:
  - Cleanup DB
  - Handle sample-rate changes in JACK (made possible by switch-master)

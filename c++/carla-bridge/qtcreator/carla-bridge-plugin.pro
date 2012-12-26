@@ -1,9 +1,9 @@
 # QtCreator project file
 
 contains(QT_VERSION, ^5.*) {
-QT = core widgets
+QT = core widgets xml
 } else {
-QT = core gui
+QT = core gui xml
 }
 
 CONFIG    = debug link_pkgconfig qt warn_on
@@ -24,6 +24,13 @@ HEADERS  = \
     ../carla_bridge_client.hpp \
     ../carla_bridge_osc.hpp \
     ../carla_bridge_toolkit.hpp \
+
+# carla
+SOURCES += \
+    ../../carla/Shared.cpp
+
+HEADERS += \
+    ../../carla/Shared.hpp
 
 # carla-engine
 SOURCES += \

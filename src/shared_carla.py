@@ -267,6 +267,9 @@ CarlaSaveState = {
     'Chunk': None
 }
 
+# ------------------------------------------------------------------------------------------------------------
+# Carla XML helpers
+
 def getSaveStateDictFromXML(xmlNode):
     saveState = deepcopy(CarlaSaveState)
 
@@ -378,7 +381,7 @@ def getSaveStateDictFromXML(xmlNode):
                         cText = xmlSubData.toElement().text().strip()
 
                         if cTag == "type":
-                            stateCustomData['type'] = cText
+                            stateCustomData['type'] = xmlSafeString(cText, False)
                         elif cTag == "key":
                             stateCustomData['key'] = xmlSafeString(cText, False)
                         elif cTag == "value":
@@ -1751,7 +1754,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         # Part 1 - set custom data (except binary/chunks)
 
         for customData in content['CustomData']:
-            if customData['type'] not in (CUSTOM_DATA_BINARY, CUSTOM_DATA_CHUNK):
+            if customData['type'] != CUSTOM_DATA_CHUNK:
                 Carla.host.set_custom_data(self.m_pluginId, customData['type'], customData['key'], customData['value'])
 
         # ---------------------------------------------------------------------
@@ -1763,7 +1766,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
             programCount = Carla.host.get_program_count(self.m_pluginId)
             testProgramName = cString(Carla.host.get_program_name(self.m_pluginId, content['CurrentProgramIndex']))
 
-            # Program index and name matches
+            # Program name matches
             if content['CurrentProgramName'] == testProgramName:
                 programId = content['CurrentProgramIndex']
 
@@ -1863,7 +1866,7 @@ class PluginWidget(QFrame, ui_carla_plugin.Ui_PluginWidget):
         # Part 5 - set chunk data
 
         for customData in content['CustomData']:
-            if customData['type'] in (CUSTOM_DATA_BINARY, CUSTOM_DATA_CHUNK):
+            if customData['type'] == CUSTOM_DATA_CHUNK:
                 Carla.host.set_custom_data(self.m_pluginId, customData['type'], customData['key'], customData['value'])
 
         if content['Chunk']:

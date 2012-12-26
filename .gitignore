@@ -112,7 +112,6 @@ c++/carla-native/zynaddsubfx/UI/VirKeyboard.h
 _/
 all-recheck
 c++/caitlyn/
-c++/carla/
 c++/carla-backend/carla-dynamic.lv2/
 c++/carla-backend/carla_backend_lv2.cpp
 c++/carla-backend/carla_backend_vst.cpp

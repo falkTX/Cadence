@@ -20,10 +20,14 @@
 #include "carla_bridge_client.hpp"
 #include "carla_bridge_toolkit.hpp"
 #include "carla_plugin.hpp"
+#include "../carla/Shared.hpp"
 
+#include <set>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QTextStream>
+#include <QtCore/QThread>
+#include <QtXml/QDomDocument>
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
 # include <QtWidgets/QApplication>
@@ -221,11 +225,11 @@ public:
         m_uiShow = showUI;
     }
 
+    void guiClosedCallback();
+
 protected:
     QApplication* app;
     CarlaBackend::CarlaPluginGUI* gui;
-
-    void guiClosedCallback();
 
 private:
     bool m_hasUI;
@@ -253,6 +257,10 @@ public:
         msgTimerGUI = 0;
         msgTimerOSC = 0;
 
+        needsResize = 0;
+        nextWidth   = 0;
+        nextHeight  = 0;
+
         engine = nullptr;
         plugin = nullptr;
     }
@@ -276,14 +284,11 @@ public:
         if (! plugin)
             return;
 
-        // create window if needed
         bool guiResizable;
         CarlaBackend::GuiType guiType;
         plugin->getGuiInfo(&guiType, &guiResizable);
 
         CarlaBridgeToolkitPlugin* const plugToolkit = (CarlaBridgeToolkitPlugin*)m_toolkit;
-
-        qWarning("----------------------------------------------------- trying..., %s", CarlaBackend::GuiType2Str(guiType));
 
         if (guiType == CarlaBackend::GUI_INTERNAL_QT4 || guiType == CarlaBackend::GUI_INTERNAL_COCOA || guiType == CarlaBackend::GUI_INTERNAL_HWND || guiType == CarlaBackend::GUI_INTERNAL_X11)
         {
@@ -332,9 +337,263 @@ public:
         CARLA_ASSERT(plugin);
 
         this->plugin = plugin;
+
+        // load carla plugin preset if possible
+        if (const char* const pName = plugin->name())
+        {
+            QFile pFile(QDir::currentPath() + QDir::separator() + pName + ".carxs");
+            qDebug("Trying to load plugin preset file '%s'", pFile.fileName().toUtf8().constData());
+
+            if (! /*(*/pFile.exists() /*&& pFile.isReadable())*/)
+            {
+                qDebug("Plugin preset file doesn't exist or is not readable");
+                return;
+            }
+
+            if (! pFile.open(QFile::ReadOnly))
+            {
+                qWarning("Plugin preset file read failed");
+                return;
+            }
+
+            QDomDocument xml;
+            xml.setContent(pFile.readAll());
+
+            QDomElement xmlNode(xml.documentElement());
+
+            if (xmlNode.tagName() == "CARLA-PRESET")
+            {
+                loadStateDict(getSaveStateDictFromXML(xmlNode));
+            }
+            else
+                qWarning("Plugin preset file is not valid or corrupted");
+
+            pFile.close();
+        }
     }
 
     // ---------------------------------------------------------------------
+
+    void loadStateDict(const CarlaSaveState* const content)
+    {
+        CARLA_ASSERT(content);
+
+        if (! content)
+            return;
+
+        qDebug("Loading plugin state now...");
+
+        // ---------------------------------------------------------------------
+        // Part 1 - set custom data (except chunks)
+
+        foreach (const CarlaStateCustomData& customData, content->customData)
+        {
+            if (customData.type != CUSTOM_DATA_CHUNK)
+            {
+                const char* const type  = customData.type.toUtf8().constData();
+                const char* const key   = customData.key.toUtf8().constData();
+                const char* const value = customData.value.toUtf8().constData();
+
+                plugin->setCustomData(type, key, value, true);
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // Part 2 - set program
+
+        int32_t programId = -1;
+
+        if (! content->currentProgramName.isEmpty())
+        {
+            const uint32_t programCount = plugin->programCount();
+
+            char strBuf[STR_MAX] = { 0 };
+            plugin->getProgramName(content->currentProgramIndex, strBuf);
+            QString testProgramName(strBuf);
+
+            // Program name matches
+            if (content->currentProgramName == testProgramName)
+            {
+                programId = content->currentProgramIndex;
+            }
+
+            // index < count
+            else if (content->currentProgramIndex < (int32_t)programCount)
+            {
+                programId = content->currentProgramIndex;
+            }
+
+            // index not valid, try to find by name
+            else
+            {
+                for (uint32_t i=0; i < programCount;  i++)
+                {
+                    plugin->getProgramName(i, strBuf);
+                    testProgramName = QString(strBuf);
+
+                    if (content->currentProgramName == testProgramName)
+                    {
+                        programId = i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // set program now, if valid
+        if (programId >= 0)
+        {
+            plugin->setProgram(programId, true, true, false, true);
+        }
+
+        // ---------------------------------------------------------------------
+        // Part 3 - set midi program
+
+        if (content->currentMidiBank >= 0 and content->currentMidiProgram >= 0)
+        {
+            const uint32_t midiProgramCount = plugin->midiProgramCount();
+
+            for (uint32_t i=0; i < midiProgramCount;  i++)
+            {
+                const MidiProgramData* const midiProgramData = plugin->midiProgramData(i);
+
+                if ((int32_t)midiProgramData->bank == content->currentMidiBank && (int32_t)midiProgramData->program == content->currentMidiProgram)
+                {
+                    plugin->setMidiProgram(i, true, true, false, true);
+                    break;
+                }
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // Part 4a - get plugin parameter symbols
+
+        struct ParamSymbol {
+            uint32_t index;
+            QString  symbol;
+
+            ParamSymbol() {}
+
+            ParamSymbol(uint32_t index_, const char* symbol_)
+                : index(index_),
+                  symbol(symbol_) {}
+        };
+
+        QVector<ParamSymbol> paramSymbols;
+
+        foreach (const CarlaStateParameter& parameter, content->parameters)
+        {
+            if (! parameter.symbol.isEmpty())
+            {
+                char strBuf[STR_MAX] = { 0 };
+                plugin->getParameterSymbol(parameter.index, strBuf);
+
+                if (strBuf[0] != 0)
+                {
+                    ParamSymbol ps(parameter.index, strBuf);
+                    paramSymbols.append(ps);
+                }
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // Part 4b - set parameter values (carefully)
+
+        const double sampleRate = engine->getSampleRate();
+
+        foreach (const CarlaStateParameter& parameter, content->parameters)
+        {
+            int32_t index = -1;
+
+            if (content->type == "LADSPA")
+            {
+                // Try to set by symbol, otherwise use index
+                if (! parameter.symbol.isEmpty())
+                {
+                    bool breaked = false;
+
+                    foreach (const ParamSymbol& ps, paramSymbols)
+                    {
+                        if (parameter.symbol == ps.symbol)
+                        {
+                            index = ps.index;
+                            breaked = true;
+                            break;
+                        }
+                    }
+
+                    if (! breaked)
+                        index = parameter.index;
+                }
+                else
+                    index = parameter.index;
+            }
+            else if (content->type == "LV2")
+            {
+                // Symbol only
+                if (! parameter.symbol.isEmpty())
+                {
+                    bool breaked = false;
+
+                    foreach (const ParamSymbol& ps, paramSymbols)
+                    {
+                        if (parameter.symbol == ps.symbol)
+                        {
+                            index = ps.index;
+                            breaked = true;
+                            break;
+                        }
+                    }
+
+                    if (! breaked)
+                        qWarning("Failed to find LV2 parameter symbol for '%s')", parameter.symbol.toUtf8().constData());
+                }
+                else
+                    qWarning("LV2 Plugin parameter '%s' has no symbol", parameter.name.toUtf8().constData());
+            }
+            else
+            {
+                // Index only
+                index = parameter.index;
+            }
+
+            // Now set parameter
+            if (index >= 0)
+            {
+                const ParameterData* const paramData = plugin->parameterData(index);
+                double value = parameter.value;
+
+                if (paramData->hints & PARAMETER_USES_SAMPLERATE)
+                    value *= sampleRate;
+
+                plugin->setParameterValue(index, value, true, true, false);
+                plugin->setParameterMidiCC(index, parameter.midiCC, true, false);
+                plugin->setParameterMidiChannel(index, parameter.midiChannel-1, true, false);
+            }
+            else
+                qWarning("Could not set parameter data for '%s')", parameter.name.toUtf8().constData());
+        }
+
+        // ---------------------------------------------------------------------
+        // Part 5 - set chunk data
+
+        foreach (const CarlaStateCustomData& customData, content->customData)
+        {
+            if (customData.type == CUSTOM_DATA_CHUNK)
+            {
+                const char* const type  = customData.type.toUtf8().constData();
+                const char* const key   = customData.key.toUtf8().constData();
+                const char* const value = customData.value.toUtf8().constData();
+
+                plugin->setCustomData(type, key, value, true);
+            }
+        }
+
+        if (! content->chunk.isEmpty())
+            plugin->setChunkData(content->chunk.toUtf8().constData());
+
+        qDebug("Loading plugin state now finished");
+    }
 
     void guiClosed()
     {
@@ -350,16 +609,6 @@ public:
 
         if (plugin)
             plugin->showGui(yesNo);
-    }
-
-    // ---------------------------------------------------------------------
-
-    static void callback(void* const ptr, CarlaBackend::CallbackType const action, const unsigned short, const int value1, const int value2, const double value3, const char* const valueStr)
-    {
-        CARLA_ASSERT(ptr);
-
-        if (CarlaPluginClient* const _this_ = (CarlaPluginClient*)ptr)
-            _this_->handleCallback(action, value1, value2, value3, valueStr);
     }
 
     // ---------------------------------------------------------------------
@@ -534,19 +783,119 @@ public:
     }
 
     // ---------------------------------------------------------------------
+    // callback
+
+    static void callback(void* const ptr, CarlaBackend::CallbackType const action, const unsigned short, const int value1, const int value2, const double value3, const char* const valueStr)
+    {
+        CARLA_ASSERT(ptr);
+
+        if (CarlaPluginClient* const _this_ = (CarlaPluginClient*)ptr)
+            _this_->handleCallback(action, value1, value2, value3, valueStr);
+    }
+
+    // ---------------------------------------------------------------------
 
 protected:
-    int msgTimerGUI, msgTimerOSC;
+    int  msgTimerGUI;
+    int  msgTimerOSC;
+
+    bool needsResize;
+    int  nextWidth;
+    int  nextHeight;
 
     CarlaBackend::CarlaEngine* engine;
     CarlaBackend::CarlaPlugin* plugin;
 
+    std::set<int32_t> parametersToUpdate;
+
     void handleCallback(const CarlaBackend::CallbackType action, const int value1, const int value2, const double value3, const char* const valueStr)
     {
-        qDebug("CarlaPluginClient::handleCallback(%s, %i, %i, %g \"%s\")", CarlaBackend::CallbackType2Str(action), value1, value2, value3, valueStr);
+        CARLA_BACKEND_USE_NAMESPACE
+        qDebug("CarlaPluginClient::handleCallback(%s, %i, %i, %g \"%s\")", CallbackType2Str(action), value1, value2, value3, valueStr);
 
         if (! engine)
             return;
+
+        switch (action)
+        {
+        case CALLBACK_DEBUG:
+            break;
+
+        case CALLBACK_PARAMETER_VALUE_CHANGED:
+            parametersToUpdate.insert(value1);
+            break;
+
+        case CALLBACK_PARAMETER_MIDI_CHANNEL_CHANGED:
+            // todo, unused?
+            break;
+
+        case CALLBACK_PARAMETER_MIDI_CC_CHANGED:
+            // todo, unused?
+            break;
+
+        case CALLBACK_PROGRAM_CHANGED:
+            engine->osc_send_bridge_set_program(value1);
+            break;
+
+        case CALLBACK_MIDI_PROGRAM_CHANGED:
+            engine->osc_send_bridge_set_midi_program(value1);
+            break;
+
+        case CALLBACK_NOTE_ON:
+            // todo
+            break;
+
+        case CALLBACK_NOTE_OFF:
+            // todo
+            break;
+
+        case CALLBACK_SHOW_GUI:
+            if (value1 == 0)
+            {
+                CarlaBridgeToolkitPlugin* const plugToolkit = (CarlaBridgeToolkitPlugin*)m_toolkit;
+                plugToolkit->guiClosedCallback();
+            }
+            break;
+
+        case CALLBACK_RESIZE_GUI:
+            nextWidth   = value1;
+            nextHeight  = value2;
+            needsResize = true;
+            break;
+
+        case CALLBACK_UPDATE:
+            // todo
+            break;
+
+        case CALLBACK_RELOAD_INFO:
+            // todo
+            break;
+
+        case CALLBACK_RELOAD_PARAMETERS:
+            // todo
+            break;
+
+        case CALLBACK_RELOAD_PROGRAMS:
+            // todo
+            break;
+
+        case CALLBACK_RELOAD_ALL:
+            // todo
+            break;
+
+        case CALLBACK_NSM_ANNOUNCE:
+        case CALLBACK_NSM_OPEN1:
+        case CALLBACK_NSM_OPEN2:
+        case CALLBACK_NSM_SAVE:
+            break;
+
+        case CALLBACK_ERROR:
+            break;
+
+        case CALLBACK_QUIT:
+            m_toolkit->quit();
+            break;
+        }
     }
 
     void timerEvent(QTimerEvent* const event)
@@ -579,7 +928,6 @@ protected:
 
 void CarlaBridgeToolkitPlugin::show()
 {
-    qDebug("----------------------------------------------------------------------------------------------------------");
     qDebug("CarlaBridgeToolkitPlugin::show()");
     CARLA_ASSERT(gui);
 
