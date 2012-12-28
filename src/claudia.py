@@ -500,6 +500,7 @@ class ClaudiaLauncherW(QDialog):
         self.settings = QSettings("Cadence", "Claudia-Launcher")
         self.launcher.setCallbackApp(self, self.settings, True)
         self.loadSettings()
+        self.setWindowTitle("Claudia Launcher")
 
         self.m_appBus = appBus
         self.m_proj_folder = proj_folder

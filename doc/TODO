@@ -9,19 +9,32 @@ Artwork:
 GUI:
   - Check shortcut consistency
 
+All:
+  - Only use QSettings in function scope, not always opened (makes config invalid if a crash happens)
+
 -------------------
 - APPS -
 
 Cadence:
  - add freq info to systray tooltip
  - add freq Hz change
+ - set plugin path before DBus starts
+ - add desktop decriptions
 
 Claudia:
- - Cleanup DB
  - Handle sample-rate changes in JACK (made possible by switch-master)
+ - rename canvas client should rename app name
+
+Claudia-Launcher:
+ - Cleanup DB
+ - Add vmpk-jack
+ - Very small horizontal UI, need first fix
+ - Auto-close option
 
 -------------------
 - MODULES -
 
 PatchCanvas:
+  - Cleanup C++
   - Implement export to Catarina file
+  - Implement auto-arrange

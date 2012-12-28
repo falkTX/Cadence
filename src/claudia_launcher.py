@@ -16,12 +16,13 @@ from shared import *
 SHOW_ALL = False
 
 # Tab Indexes
-TAB_INDEX_DAW        = 0
-TAB_INDEX_HOST       = 1
-TAB_INDEX_INSTRUMENT = 2
-TAB_INDEX_BRISTOL    = 3
-TAB_INDEX_EFFECT     = 4
-TAB_INDEX_TOOL       = 5
+iTabDAW        = 0
+iTabHost       = 1
+iTabInstrument = 2
+iTabBristol    = 3
+iTabPlugin     = 4
+iTabEffect     = 5
+iTabTool       = 6
 
 EXTRA_ICON_PATHS = [
     "/usr/share/icons",
@@ -35,9 +36,9 @@ class XIcon(object):
         object.__init__(self)
 
     def addIconPath(self, path):
-        icon_paths = QIcon.themeSearchPaths()
-        icon_paths.append(path)
-        QIcon.setThemeSearchPaths(icon_paths)
+        iconPaths = QIcon.themeSearchPaths()
+        iconPaths.append(path)
+        QIcon.setThemeSearchPaths(iconPaths)
 
     def getIcon(self, name):
         if os.path.exists(name):
@@ -81,6 +82,8 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         self.listInstrument.setColumnWidth(2, 125)
         self.listBristol.setColumnWidth(0, 22)
         self.listBristol.setColumnWidth(1, 100)
+        self.listPlugin.setColumnWidth(0, 22)
+        # TODO, more
         self.listEffect.setColumnWidth(0, 22)
         self.listEffect.setColumnWidth(1, 225)
         self.listEffect.setColumnWidth(2, 125)
@@ -97,23 +100,26 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         self.m_lastThemeName = QIcon.themeName()
 
         # Copy our icons, so we can then set the fallback icon theme as the current theme
-        if not os.path.exists("/tmp/.claudia-icons"):
-            os.mkdir("/tmp/.claudia-icons")
+        iconPath = os.path.join(TMP, ".claudia-icons")
+
+        if not os.path.exists(iconPath):
+            os.mkdir(iconPath)
 
         if os.path.exists(os.path.join(sys.path[0], "..", "icons")):
-            os.system("cp -r '%s' /tmp/.claudia-icons/" % os.path.join(sys.path[0], "..", "icons", "claudia-hicolor"))
+            os.system("cp -r '%s' '%s'" % (os.path.join(sys.path[0], "..", "icons", "claudia-hicolor"), iconPath))
         elif os.path.exists(os.path.join(sys.path[0], "..", "data", "icons")):
-            os.system("cp -r '%s' /tmp/.claudia-icons/" % os.path.join(sys.path[0], "..", "data", "icons", "claudia-hicolor"))
+            os.system("cp -r '%s' '%s'" % (os.path.join(sys.path[0], "..", "data", "icons", "claudia-hicolor"), iconPath))
 
-        os.system("sed -i 's/X-CURRENT-THEME-X/%s/' /tmp/.claudia-icons/claudia-hicolor/index.theme" % self.m_lastThemeName)
+        os.system("sed -i 's/X-CURRENT-THEME-X/%s/' '%s'" % (self.m_lastThemeName, os.path.join(iconPath, "claudia-hicolor", "index.theme")))
 
-        self.ClaudiaIcons.addIconPath("/tmp/.claudia-icons")
+        self.ClaudiaIcons.addIconPath(iconPath)
         QIcon.setThemeName("claudia-hicolor")
 
         self.clearInfo_DAW()
         self.clearInfo_Host()
         self.clearInfo_Intrument()
         self.clearInfo_Bristol()
+        self.clearInfo_Plugin()
         self.clearInfo_Effect()
         self.clearInfo_Tool()
 
@@ -125,30 +131,34 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         self.connect(self.listHost, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedHost(int)"))
         self.connect(self.listInstrument, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedInstrument(int)"))
         self.connect(self.listBristol, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedBristol(int)"))
+        self.connect(self.listPlugin, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedPlugin(int)"))
         self.connect(self.listEffect, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedEffect(int)"))
         self.connect(self.listTool, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedTool(int)"))
         self.connect(self.listDAW, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedListDAW(int)"))
         self.connect(self.listHost, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedListHost(int)"))
         self.connect(self.listInstrument, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedListInstrument(int)"))
         self.connect(self.listBristol, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedListBristol(int)"))
+        self.connect(self.listPlugin, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedListPlugin(int)"))
         self.connect(self.listEffect, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedListEffect(int)"))
         self.connect(self.listTool, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedListTool(int)"))
 
     def getSelectedApp(self):
         tab_index   = self.tabWidget.currentIndex()
-        column_name = 2 if (tab_index == TAB_INDEX_BRISTOL) else 1
+        column_name = 2 if (tab_index == iTabBristol) else 1
 
-        if tab_index == TAB_INDEX_DAW:
+        if tab_index == iTabDAW:
             listSel = self.listDAW
-        elif tab_index == TAB_INDEX_HOST:
+        elif tab_index == iTabHost:
             listSel = self.listHost
-        elif tab_index == TAB_INDEX_INSTRUMENT:
+        elif tab_index == iTabInstrument:
             listSel = self.listInstrument
-        elif tab_index == TAB_INDEX_BRISTOL:
+        elif tab_index == iTabBristol:
             listSel = self.listBristol
-        elif tab_index == TAB_INDEX_EFFECT:
+        elif tab_index == iTabPlugin:
+            listSel = self.listPlugin
+        elif tab_index == iTabEffect:
             listSel = self.listEffect
-        elif tab_index == TAB_INDEX_TOOL:
+        elif tab_index == iTabTool:
             listSel = self.listTool
         else:
             return ""
@@ -172,6 +182,11 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             if appname == AppName:
                 return "startBristol -audio jack -midi jack -%s" % ShortName
 
+        # TODO - plugin
+        #for Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs in database.list_Effect:
+            #if appname == AppName:
+                #return Binary
+
         for Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs in database.list_Effect:
             if appname == AppName:
                 return Binary
@@ -192,6 +207,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
     def addAppToLADISH(self, app=None):
         if not app:
             app = self.getSelectedApp()
+
         binary = self.getBinaryFromAppName(app)
 
         if binary.startswith("startBristol"):
@@ -209,7 +225,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         #elif app == "EnergyXT2":
             #self.createAppTemplate("energyxt2", app, binary)
 
-        elif app in ("Hydrogen", "Hydrogen (SVN)"):
+        elif app in ("Hydrogen", "Hydrogen (GIT)", "Hydrogen (SVN)"):
             self.createAppTemplate("hydrogen", app, binary)
 
         elif app == "Jacker":
@@ -242,7 +258,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "Seq24":
             self.createAppTemplate("seq24", app, binary)
 
-        elif app == "Calf Jack Host (GIT)":
+        elif app == "Calf Jack Host":
             self.createAppTemplate("calfjackhost", app, binary)
 
         elif app == "Carla":
@@ -317,14 +333,15 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             tmplte_cmd  = binary
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder)
-            tmplte_lvl  = "1"
+
+            if database.USING_KXSTUDIO:
+                tmplte_lvl = "1"
 
         elif app == "ardour3":
             tmplte_folder = os.path.join(proj_folder, "Ardour3_%i" % rand_check)
             tmplte_file   = os.path.join(tmplte_folder, "Ardour3_%i.ardour" % rand_check)
             os.mkdir(tmplte_folder)
 
-            # Create template
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Ardour3", "Ardour3.ardour"), tmplte_file))
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Ardour3", "instant.xml"), tmplte_folder))
             os.mkdir(os.path.join(tmplte_folder, "analysis"))
@@ -341,13 +358,13 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             tmplte_cmd  = binary
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder)
 
-            if self.callback_isLadishRoom():
-                tmplte_lvl = "jacksession"
+            # FIXME - broken upstream
+            #if self.callback_isLadishRoom():
+                #tmplte_lvl = "jacksession"
 
         elif app == "composite":
             tmplte_file = os.path.join(proj_folder, "Composite_%i.h2song" % rand_check)
 
-            # Create template
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Composite.h2song"), tmplte_file))
 
             tmplte_cmd  = binary
@@ -356,7 +373,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "hydrogen":
             tmplte_file = os.path.join(proj_folder, "Hydrogen_%i.h2song" % rand_check)
 
-            # Create template
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Hydrogen.h2song"), tmplte_file))
 
             tmplte_cmd  = binary
@@ -370,7 +386,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "jacker":
             tmplte_file = os.path.join(proj_folder, "Jacker_%i.jsong" % rand_check)
 
-            # Create template
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Jacker.jsong"), tmplte_file))
 
             tmplte_cmd  = binary
@@ -383,7 +398,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "lmms":
             tmplte_file = os.path.join(proj_folder, "LMMS_%i.mmp" % rand_check)
 
-            # Create template
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "LMMS.mmp"), tmplte_file))
 
             tmplte_cmd  = binary
@@ -395,7 +409,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "muse":
             tmplte_file = os.path.join(proj_folder, "MusE_%i.med" % rand_check)
 
-            # Create template
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "MusE.med"), tmplte_file))
 
             tmplte_cmd  = binary
@@ -405,7 +418,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             tmplte_folder = os.path.join(proj_folder, "Non-DAW_%i" % rand_check)
             os.mkdir(tmplte_folder)
 
-            # Create template
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Non-DAW", "history"), tmplte_folder))
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Non-DAW", "info"), tmplte_folder))
             os.mkdir(os.path.join(tmplte_folder, "sources"))
@@ -419,7 +431,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "non-sequencer":
             tmplte_file_r = os.path.join(proj_folder, "Non-Sequencer_%i.non" % rand_check)
 
-            # Create template
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Non-Sequencer.non"), tmplte_file_r))
 
             tmplte_cmd  = binary
@@ -428,7 +439,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "qtractor":
             tmplte_file = os.path.join(proj_folder, "Qtractor_%i.qtr" % rand_check)
 
-            # Create template
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Qtractor.qtr"), tmplte_file))
 
             tmplte_cmd  = binary
@@ -443,7 +453,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             tmplte_file_r = os.path.join(proj_folder, "Renoise_%i.xrns" % rand_check)
             tmplte_folder = os.path.join(proj_folder, "tmp_renoise_%i" % rand_check)
 
-            # Create template
             os.mkdir(tmplte_folder)
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Renoise.xml"), tmplte_folder))
             os.system('sed -i "s/X_BPM_X-CLAUDIA-X_BPM_X/%s/" "%s"' % (proj_bpm, os.path.join(tmplte_folder, "Renoise.xml")))
@@ -456,7 +465,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "rosegarden":
             tmplte_file = os.path.join(proj_folder, "Rosegarden_%i.rg" % rand_check)
 
-            # Create template
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Rosegarden.rg"), tmplte_file))
 
             tmplte_cmd  = binary
@@ -466,7 +474,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "seq24":
             tmplte_file_r = os.path.join(proj_folder, "Seq24_%i.midi" % rand_check)
 
-            # Create template
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Seq24.midi"), tmplte_file_r))
 
             tmplte_cmd  = binary
@@ -476,7 +483,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "calfjackhost":
             tmplte_file = os.path.join(proj_folder, "CalfJackHost_%i" % rand_check)
 
-            # Create template
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "CalfJackHost"), tmplte_file))
 
             tmplte_cmd  = binary
@@ -486,7 +492,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "carla":
             tmplte_file = os.path.join(proj_folder, "Carla_%i.carxp" % rand_check)
 
-            # Create template
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Carla.carxp"), tmplte_file))
 
             tmplte_cmd  = binary
@@ -496,7 +501,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "jack-rack":
             tmplte_file = os.path.join(proj_folder, "Jack-Rack_%i.xml" % rand_check)
 
-            # Create template
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Jack-Rack.xml"), tmplte_file))
 
             tmplte_cmd  = binary
@@ -505,7 +509,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "qsampler":
             tmplte_file = os.path.join(proj_folder, "Qsampler_%i.lscp" % rand_check)
 
-            # Create template
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Qsampler.lscp"), tmplte_file))
 
             tmplte_cmd  = binary
@@ -515,7 +518,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "jack-mixer":
             tmplte_file = os.path.join(proj_folder, "Jack-Mixer_%i.xml" % rand_check)
 
-            # Create template
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Jack-Mixer.xml"), tmplte_file))
 
             tmplte_cmd  = binary
@@ -527,7 +529,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         else:
             print("ClaudiaLauncher::createAppTemplate(%s) - Failed to parse app name" % app)
 
-        if tmplte_file != None:
+        if tmplte_file is not None:
             os.system('sed -i "s/X_SR_X-CLAUDIA-X_SR_X/%s/" "%s"' % (proj_srate, tmplte_file))
             os.system('sed -i "s/X_BPM_X-CLAUDIA-X_BPM_X/%s/" "%s"' % (proj_bpm, tmplte_file))
             os.system('sed -i "s/X_FOLDER_X-CLAUDIA-X_FOLDER_X/%s/" "%s"' % (proj_folder.replace("/", "\/").replace("$", "\$"), tmplte_file))
@@ -599,6 +601,15 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         self.frame_Bristol.setEnabled(False)
         self.showDoc_Bristol("", "")
 
+    def clearInfo_Plugin(self):
+        self.ico_app_plugin.setPixmap(self.getIcon("start-here").pixmap(48, 48))
+        self.label_name_plugin.setText("Plugin Name")
+        self.ico_stereo_plugin.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
+        self.ico_midi_input_plugin.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
+        self.ico_presets_plugin.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
+        self.frame_Plugin.setEnabled(False)
+        self.showDoc_Plugin("", "")
+
     def clearInfo_Effect(self):
         self.ico_app_effect.setPixmap(self.getIcon("start-here").pixmap(48, 48))
         self.label_name_effect.setText("App Name")
@@ -648,6 +659,14 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         if doc: self.setDocUrl(self.url_documentation_bristol, doc)
         if web: self.setWebUrl(self.url_website_bristol, web)
 
+    def showDoc_Plugin(self, doc, web):
+        self.url_documentation_plugin.setVisible(bool(doc))
+        self.url_website_plugin.setVisible(bool(web))
+        self.label_no_help_plugin.setVisible(not(doc or web))
+
+        if doc: self.setDocUrl(self.url_documentation_plugin, doc)
+        if web: self.setWebUrl(self.url_website_plugin, web)
+
     def showDoc_Effect(self, doc, web):
         self.url_documentation_effect.setVisible(bool(doc))
         self.url_website_effect.setVisible(bool(web))
@@ -675,6 +694,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         self.listHost.clearContents()
         self.listInstrument.clearContents()
         self.listBristol.clearContents()
+        self.listPlugin.clearContents()
         self.listEffect.clearContents()
         self.listTool.clearContents()
         for x in range(self.listDAW.rowCount()):
@@ -685,6 +705,8 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             self.listInstrument.removeRow(0)
         for x in range(self.listBristol.rowCount()):
             self.listBristol.removeRow(0)
+        for x in range(self.listPlugin.rowCount()):
+            self.listPlugin.removeRow(0)
         for x in range(self.listEffect.rowCount()):
             self.listEffect.removeRow(0)
         for x in range(self.listTool.rowCount()):
@@ -713,7 +735,10 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
                         pkglist.append(package.strip())
 
             if not "bristol" in pkglist:
-                self.tabWidget.setTabEnabled(TAB_INDEX_BRISTOL, False)
+                self.tabWidget.setTabEnabled(iTabBristol, False)
+
+            if not ("carla-bridge-linux32" in pkglist or "carla-bridge-linux64" in pkglist):
+                self.tabWidget.setTabEnabled(iTabPlugin, False)
 
         last_pos = 0
         for Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs in database.list_DAW:
@@ -831,6 +856,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         self.listHost.setCurrentCell(-1, -1)
         self.listInstrument.setCurrentCell(-1, -1)
         self.listBristol.setCurrentCell(-1, -1)
+        self.listPlugin.setCurrentCell(-1, -1)
         self.listEffect.setCurrentCell(-1, -1)
         self.listTool.setCurrentCell(-1, -1)
 
@@ -838,22 +864,25 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         self.listHost.sortByColumn(1, Qt.AscendingOrder)
         self.listInstrument.sortByColumn(1, Qt.AscendingOrder)
         self.listBristol.sortByColumn(2, Qt.AscendingOrder)
+        self.listPlugin.sortByColumn(1, Qt.AscendingOrder)
         self.listEffect.sortByColumn(1, Qt.AscendingOrder)
         self.listTool.sortByColumn(1, Qt.AscendingOrder)
 
     @pyqtSlot(int)
     def slot_checkSelectedTab(self, tab_index):
-        if tab_index == TAB_INDEX_DAW:
+        if tab_index == iTabDAW:
             test_selected = (len(self.listDAW.selectedItems()) > 0)
-        elif tab_index == TAB_INDEX_HOST:
+        elif tab_index == iTabHost:
             test_selected = (len(self.listHost.selectedItems()) > 0)
-        elif tab_index == TAB_INDEX_INSTRUMENT:
+        elif tab_index == iTabInstrument:
             test_selected = (len(self.listInstrument.selectedItems()) > 0)
-        elif tab_index == TAB_INDEX_BRISTOL:
+        elif tab_index == iTabBristol:
             test_selected = (len(self.listBristol.selectedItems()) > 0)
-        elif tab_index == TAB_INDEX_EFFECT:
+        elif tab_index == iTabPlugin:
+            test_selected = (len(self.listPlugin.selectedItems()) > 0)
+        elif tab_index == iTabEffect:
             test_selected = (len(self.listEffect.selectedItems()) > 0)
-        elif tab_index == TAB_INDEX_TOOL:
+        elif tab_index == iTabTool:
             test_selected = (len(self.listTool.selectedItems()) > 0)
         else:
             test_selected = False
@@ -1104,6 +1133,14 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             self.startApp(app)
 
     @pyqtSlot(int)
+    def slot_doubleClickedListPlugin(self, row):
+        app = self.listPlugin.item(row, 1).text()
+        if self.m_ladish_only:
+            self.addAppToLADISH(app)
+        else:
+            self.startApp(app)
+
+    @pyqtSlot(int)
     def slot_doubleClickedListEffect(self, row):
         app = self.listEffect.item(row, 1).text()
         if self.m_ladish_only:
@@ -1125,17 +1162,19 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             self.settings().setValue("SplitterHost", self.splitter_Host.saveState())
             self.settings().setValue("SplitterInstrument", self.splitter_Instrument.saveState())
             self.settings().setValue("SplitterBristol", self.splitter_Bristol.saveState())
+            self.settings().setValue("SplitterPlugin", self.splitter_Plugin.saveState())
             self.settings().setValue("SplitterEffect", self.splitter_Effect.saveState())
             self.settings().setValue("SplitterTool", self.splitter_Tool.saveState())
 
         QIcon.setThemeName(self.m_lastThemeName)
 
     def loadSettings(self):
-        if self.settings() and self.settings().contains("SplitterDAW"):
+        if self.settings() and self.settings().contains("SplitterPlugin"):
             self.splitter_DAW.restoreState(self.settings().value("SplitterDAW", ""))
             self.splitter_Host.restoreState(self.settings().value("SplitterHost", ""))
             self.splitter_Instrument.restoreState(self.settings().value("SplitterInstrument", ""))
             self.splitter_Bristol.restoreState(self.settings().value("SplitterBristol", ""))
+            self.splitter_Plugin.restoreState(self.settings().value("SplitterPlugin", ""))
             self.splitter_Effect.restoreState(self.settings().value("SplitterEffect", ""))
             self.splitter_Tool.restoreState(self.settings().value("SplitterTool", ""))
         else: # First-Run?
@@ -1143,6 +1182,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             self.splitter_Host.setSizes([500, 200])
             self.splitter_Instrument.setSizes([500, 200])
             self.splitter_Bristol.setSizes([500, 200])
+            self.splitter_Plugin.setSizes([500, 200])
             self.splitter_Effect.setSizes([500, 200])
             self.splitter_Tool.setSizes([500, 200])
 

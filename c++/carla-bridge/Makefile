@@ -10,8 +10,8 @@ include ../Makefile.mk
 
 BUILD_CXX_FLAGS += -DBUILD_BRIDGE
 BUILD_CXX_FLAGS += -I. -I../carla-includes -I../carla-utils
-BUILD_CXX_FLAGS += $(shell pkg-config --cflags liblo QtCore)
-LINK_FLAGS      += $(shell pkg-config --libs liblo QtCore)
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags liblo QtCore QtXml)
+LINK_FLAGS      += $(shell pkg-config --libs liblo QtCore QtXml)
 
 ifeq ($(CARLA_PLUGIN_SUPPORT),true)
 BUILD_CXX_FLAGS += -DWANT_LADSPA -DWANT_DSSI -DWANT_LV2 -DWANT_VST
@@ -231,6 +231,10 @@ OBJS_POSIX32  = carla_bridge_plugin__posix32.o \
 	carla_bridge_client__posix32.o carla_bridge_osc__posix32.o \
 	carla_bridge_toolkit__posix32.o
 
+# carla
+OBJS_POSIX32 += \
+	../carla/Shared__posix32.o
+
 # carla-engine
 OBJS_POSIX32 += \
 	../carla-engine/carla_engine__posix32.o \
@@ -264,6 +268,10 @@ carla-bridge-posix32: $(OBJS_POSIX32)
 OBJS_POSIX64  = carla_bridge_plugin__posix64.o \
 	carla_bridge_client__posix64.o carla_bridge_osc__posix64.o \
 	carla_bridge_toolkit__posix64.o
+
+# carla
+OBJS_POSIX64 += \
+	../carla/Shared__posix64.o
 
 # carla-engine
 OBJS_POSIX64 += \
@@ -299,6 +307,10 @@ OBJS_WIN32 = carla_bridge_plugin__win32.o \
 	carla_bridge_client__win32.o carla_bridge_osc__win32.o \
 	carla_bridge_toolkit__win32.o
 
+# carla
+OBJS_WIN32 += \
+	../carla/Shared__win32.o
+
 # carla-engine
 OBJS_WIN32 += \
 	../carla-engine/carla_engine__win32.o \
@@ -332,6 +344,10 @@ carla-bridge-win32.exe: $(OBJS_WIN32) ../carla-jackbridge/libcarla-jackbridge-wi
 OBJS_WIN64 = carla_bridge_plugin__win64.o \
 	carla_bridge_client__win64.o carla_bridge_osc__win64.o \
 	carla_bridge_toolkit__win64.o
+
+# carla
+OBJS_WIN64 += \
+	../carla/Shared__win64.o
 
 # carla-engine
 OBJS_WIN64 += \
