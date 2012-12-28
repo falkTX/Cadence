@@ -390,7 +390,9 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             tmplte_cmd  = binary
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
-            tmplte_lvl  = "1"
+
+            if database.USING_KXSTUDIO:
+                tmplte_lvl  = "1"
 
             # No decimal bpm support
             proj_bpm = proj_bpm.split(".")[0]
@@ -443,11 +445,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             tmplte_cmd  = binary
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
-
-            #if self.callback_isLadishRoom():
-                #tmplte_lvl = "jacksession"
-            #else:
-            tmplte_lvl = "1"
+            tmplte_lvl  = "1"
 
         elif app == "renoise":
             tmplte_file_r = os.path.join(proj_folder, "Renoise_%i.xrns" % rand_check)

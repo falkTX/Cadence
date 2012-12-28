@@ -26,7 +26,6 @@ USING_KXSTUDIO = True
 # ardour3 JS
 
 # TODO - remove level support for kxstudio check
-# jacker
 # qsampler
 
 list_DAW = [
@@ -42,7 +41,7 @@ list_DAW = [
   [ "hydrogen-git",  "Hydrogen (GIT)",  "Drum Sequencer", "hydrogen -d jack", "h2-icon",        TEMPLATE_YES, LEVEL_JS,  "OpenSource", (1, 0, 0, 0, "",        1, 1, "ALSA | JACK"), ("file:///usr/share/hydrogen/data/doc/manual_en.html.upstream",    "http://www.hydrogen-music.org/") ],
   [ "hydrogen-svn",  "Hydrogen (SVN)",  "Drum Sequencer", "hydrogen -d jack", "h2-icon",        TEMPLATE_YES, LEVEL_JS,  "OpenSource", (1, 0, 0, 0, "",        1, 1, "ALSA | JACK"), ("file:///usr/share/hydrogen/data/doc/manual_en.html.upstream",    "http://www.hydrogen-music.org/") ],
 
-  [ "jacker",        "Jacker",          "MIDI Sequencer", "jacker",           "jacker",         TEMPLATE_YES, LEVEL_1,   "OpenSource", (0, 0, 0, 0, "",        1, 1, "JACK"),        ("",                                                               "https://bitbucket.org/paniq/jacker/wiki/Home") ],
+  [ "jacker",        "Jacker",          "MIDI Sequencer", "jacker",           "jacker",         TEMPLATE_YES, LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        1, 1, "JACK"),        ("",                                                               "https://bitbucket.org/paniq/jacker/wiki/Home") ],
 
   [ "lmms",          "LMMS",            "DAW",            "lmms",             "lmms",           TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 0, 1, "Windows", 0, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/LMMS_UserManual_0.4.12.1.pdf",   "http://lmms.sourceforge.net/") ],
 
@@ -71,7 +70,10 @@ list_DAW = [
 iDAW_Package, iDAW_AppName, iDAW_Type, iDAW_Binary, iDAW_Icon, iDAW_Template, iDAW_Level, iDAW_RelModel, iDAW_Features, iDAW_Docs = range(0, len(list_DAW[0]))
 
 if USING_KXSTUDIO:
+    # Ardour 2.8
     list_DAW[0][iDAW_Level] = LEVEL_1
+    # Jacker
+    list_DAW[7][iDAW_Level] = LEVEL_1
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Host
@@ -81,7 +83,6 @@ if USING_KXSTUDIO:
 list_Host = [
   # Package             AppName                 Ins?   FX?    Binary           Icon         Template?     Level       Rel.-Model    (I, L, D, L, V, VST-Mode,  MIDI-Mode)      (doc-file,                               website)
   [ "calf-plugins",     "Calf Jack Host",       "Yes", "Yes", "calfjackhost",  "calf",      TEMPLATE_NO,  LEVEL_0,    "OpenSource", (1, 0, 0, 0, 0, "",        "JACK"),        ("",                                     "http://calf.sourceforge.net/") ],
-  [ "calf-plugins-git", "Calf Jack Host (GIT)", "Yes", "Yes", "calfjackhost",  "calf",      TEMPLATE_YES, LEVEL_1,    "OpenSource", (1, 0, 0, 0, 0, "",        "JACK"),        ("file:///usr/share/doc/calf/Calf.html", "http://calf.sourceforge.net/") ],
 
   [ "carla",            "Carla",                "Yes", "Yes", "carla",         "carla",     TEMPLATE_YES, LEVEL_1,    "OpenSource", (1, 1, 1, 1, 1, "Native",  "JACK"),        ("",                                     "http://kxstudio.sourceforge.net/KXStudio:Applications:Carla") ],
 
@@ -278,7 +279,7 @@ list_Tool = [
   [ "audacity",          "Audacity",                     "Audio Editor",        "audacity",               "audacity",         TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         0), ("",                                                              "http://audacity.sourceforge.net/") ],
 
   [ "cadence",           "Cadence",                      "Multi-Feature",       "cadence",                "cadence",          TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         0), ("",                                                              "") ],
-  [ "cadence-tools",     "Cadence XY-Controller",        "XY Controller",       "cadence-xycontroller",   generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        0), ("",                                                              "") ],
+  [ "cadence-tools",     "Cadence XY-Controller",        "XY Controller",       "cadence-xycontroller",   "cadence",          TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        0), ("",                                                              "") ],
   [ "catia",             "Catia",                        "Patch Bay",           "catia",                  "catia",            TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        1), ("",                                                              "") ],
   [ "claudia",           "Claudia",                      "Session Handler",     "claudia",                "claudia",          TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        1), ("",                                                              "") ],
   [ "carla-control",     "Carla OSC Control",            "OSC Control",         "carla-control",          "carla-control",    TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        1), ("",                                                              "") ],
@@ -331,7 +332,8 @@ list_Tool = [
 
   [ "timemachine",       "TimeMachine",                  "Recorder",            "timemachine",            "timemachine",      TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         0), ("",                                                              "http://plugin.org.uk/timemachine/") ],
 
-  [ "vmpk",              "Virtual MIDI Piano Keyboard",  "Virtual Keyboard",    "vmpk",                   "vmpk",             TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA",        0), ("file:///usr/share/vmpk/help.html",                              "http://vmpk.sourceforge.net/") ],
+  [ "vmpk",              "Virtual MIDI Piano Keyboard (ALSA)",  "Virtual Keyboard",    "vmpk",                   "vmpk",             TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA",        0), ("file:///usr/share/vmpk/help.html",                              "http://vmpk.sourceforge.net/") ],
+  [ "vmpk-jack",         "Virtual MIDI Piano Keyboard (JACK)",  "Virtual Keyboard",    "vmpk-jack",              "vmpk",             TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        0), ("file:///usr/share/vmpk/help.html",                              "http://vmpk.sourceforge.net/") ],
 
   [ "xjadeo",            "XJadeo",                       "Video Player",        "qjadeo",                 "qjadeo",           TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         1), ("",                                                              "http://xjadeo.sourceforge.net/") ],
 ]
