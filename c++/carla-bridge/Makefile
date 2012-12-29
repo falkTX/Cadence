@@ -6,6 +6,9 @@
 
 include ../Makefile.mk
 
+HAVE_GTK2        = $(shell pkg-config --exists gtk+-2.0 && echo true)
+HAVE_GTK3        = $(shell pkg-config --exists gtk+-3.0 && echo true)
+
 # --------------------------------------------------------------
 
 BUILD_CXX_FLAGS += -DBUILD_BRIDGE
@@ -81,15 +84,15 @@ LINK_UI_VST_X11_FLAGS   = $(LINK_UI_FLAGS) $(QT_UI_LIBS)
 # --------------------------------------------------------------
 
 ifeq ($(CARLA_PLUGIN_SUPPORT),true)
-all: ui_lv2-gtk2 ui_lv2-gtk3 ui_lv2-qt4 ui_lv2-qt5 ui_lv2-x11 ui_vst-x11
+all: native ui_lv2-gtk2 ui_lv2-gtk3 ui_lv2-qt4 ui_lv2-qt5 ui_lv2-x11 ui_vst-x11
 
-ifeq ($(shell pkg-config --exists gtk+-2.0 && echo true),true)
+ifeq ($(HAVE_GTK2),true)
 ui_lv2-gtk2: carla-bridge-lv2-gtk2
 else
 ui_lv2-gtk2:
 endif
 
-ifeq ($(shell pkg-config --exists gtk+-3.0 && echo true),true)
+ifeq ($(HAVE_GTK3),true)
 ui_lv2-gtk3: carla-bridge-lv2-gtk3
 else
 ui_lv2-gtk3:
@@ -115,6 +118,7 @@ endif
 
 # --------------------------------------------------------------
 
+native:  carla-bridge-native
 posix32: carla-bridge-posix32
 posix64: carla-bridge-posix64
 win32:   carla-bridge-win32.exe
@@ -223,6 +227,52 @@ carla-bridge-vst-x11: $(OBJS_UI_VST_X11)
 
 %__vst-x11.o: %.cpp
 	$(CXX) $< $(BUILD_UI_VST_X11_FLAGS) -c -o $@
+
+# --------------------------------------------------------------
+# native
+
+NATIVE_BUILD_FLAGS  = $(BUILD_PLUGIN_FLAGS)
+NATIVE_LINK_FLAGS   = $(LINK_PLUGIN_FLAGS) $(shell pkg-config --libs jack) -ldl
+
+ifeq ($(HAVE_SUIL),true)
+NATIVE_BUILD_FLAGS += $(shell pkg-config --cflags suil-0) -DWANT_SUIL
+NATIVE_LINK_FLAGS  += $(shell pkg-config --libs suil-0)
+endif
+
+OBJS_NATIVE  = carla_bridge_plugin__native.o \
+	carla_bridge_client__native.o carla_bridge_osc__native.o \
+	carla_bridge_toolkit__native.o
+
+# carla
+OBJS_NATIVE += \
+	../carla/Shared__native.o
+
+# carla-engine
+OBJS_NATIVE += \
+	../carla-engine/carla_engine__native.o \
+	../carla-engine/carla_engine_osc__native.o \
+	../carla-engine/carla_engine_thread__native.o \
+	../carla-engine/jack__native.o
+
+# carla-plugin
+OBJS_NATIVE += \
+	../carla-plugin/carla_plugin__native.o \
+	../carla-plugin/carla_plugin_thread__native.o \
+	../carla-plugin/ladspa__native.o \
+	../carla-plugin/dssi__native.o \
+	../carla-plugin/lv2__native.o \
+	../carla-plugin/vst__native.o
+
+# libs
+OBJS_NATIVE += \
+	../carla-lilv/carla_lilv.a \
+	../carla-rtmempool/carla_rtmempool.a
+
+carla-bridge-native: $(OBJS_NATIVE)
+	$(CXX) $^ $(NATIVE_LINK_FLAGS) -o $@ && $(STRIP) $@
+
+%__native.o: %.cpp
+	$(CXX) $< $(NATIVE_BUILD_FLAGS) -c -o $@
 
 # --------------------------------------------------------------
 # posix32

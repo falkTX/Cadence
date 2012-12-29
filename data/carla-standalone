@@ -11,6 +11,7 @@ if [ "$3"x == ""x ]; then
   echo "usage: $0 [arch] [mode] [filename] [label/uri]
 
 Possible archs:
+  - \"native\"
   - \"posix32\"
   - \"posix64\"
   - \"win32\"
@@ -23,7 +24,9 @@ Possible modes:
   - \"vst\"
 
 Examples:
-  $0 posix64 lv2 \"/usr/lib/lv2/calf/\" \"http://calf.sourceforge.net/plugins/Compressor\"
+  $0 native dssi \"/usr/lib/dssi/hexter.so\" \"hexter\"
+  $0 native lv2 \"/usr/lib/lv2/calf/\" \"http://calf.sourceforge.net/plugins/Compressor\"
+  $0 native vst \"/usr/lib/vst/TAL-NoiseMaker.so\"
 "
   exit
 fi

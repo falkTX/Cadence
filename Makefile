@@ -412,6 +412,7 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/share/applications/claudia-launcher.desktop
 	rm -f $(DESTDIR)$(PREFIX)/share/applications/carla.desktop
 	rm -f $(DESTDIR)$(PREFIX)/share/applications/carla-control.desktop
+	rm -f $(DESTDIR)$(PREFIX)/share/applications/caitlyn.desktop
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/*/apps/cadence.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/*/apps/catarina.png
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/*/apps/catia.png
