@@ -282,7 +282,7 @@ list_Tool = [
 
   [ "audacity",          "Audacity",                     "Audio Editor",        "audacity",               "audacity",         TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         0), ("",                                                              "http://audacity.sourceforge.net/") ],
 
-  [ "cadence",           "Cadence",                      "Multi-Feature",       "cadence",                "cadence",          TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         0), ("",                                                              "") ],
+  [ "cadence",           "Cadence",                      "JACK Toolbox",        "cadence",                "cadence",          TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         0), ("",                                                              "") ],
   [ "cadence-tools",     "Cadence XY-Controller",        "XY Controller",       "cadence-xycontroller",   "cadence",          TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        0), ("",                                                              "") ],
   [ "catia",             "Catia",                        "Patch Bay",           "catia",                  "catia",            TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        1), ("",                                                              "") ],
   [ "claudia",           "Claudia",                      "Session Handler",     "claudia",                "claudia",          TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        1), ("",                                                              "") ],
@@ -303,7 +303,7 @@ list_Tool = [
 
   [ "jack-keyboard",     "Jack Keyboard",                "Virtual Keyboard",    "jack-keyboard",          "jack-keyboard",    TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        0), ("file:///usr/share/kxstudio/docs/jack-keyboard/manual.html",     "http://jack-keyboard.sourceforge.net/") ],
 
-  [ "jack-mixer",        "Jack Mixer",                   "Mixer",               "jack_mixer",             "jack_mixer",       TEMPLATE_NO,  LEVEL_1, "OpenSource", ("JACK",        0), ("",                                                              "http://home.gna.org/jackmixer/") ],
+  [ "jack-mixer",        "Jack Mixer",                   "Mixer",               "jack_mixer",             "jack_mixer",       TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        0), ("",                                                              "http://home.gna.org/jackmixer/") ],
 
   [ "kmetronome",        "KMetronome",                   "Metronome",           "kmetronome",             "kmetronome",       TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA",        0), ("",                                                              "http://kmetronome.sourceforge.net/kmetronome.shtml") ],
   [ "kmidimon",          "KMidimon",                     "Monitor",             "kmidimon",               "kmidimon",         TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA",        0), ("",                                                              "http://kmidimon.sourceforge.net/") ],
@@ -326,7 +326,7 @@ list_Tool = [
   [ "patchage-svn",      "Patchage (SVN)",               "Patch Bay",           "patchage-svn",           "patchage",         TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA + JACK", 0), ("",                                                              "http://drobilla.net/blog/software/patchage/") ],
   [ "patchage-svn",      "Patchage (SVN, ALSA Only)",    "Patch Bay",           "patchage-svn -J",        "patchage",         TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA + JACK", 0), ("",                                                              "http://drobilla.net/blog/software/patchage/") ],
 
-  [ "qjackctl",          "QJackControl",                 "Jack Control",        "qjackctl",               "qjackctl",         TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA + JACK", 1), ("",                                                              "") ],
+  [ "qjackctl",          "QJackControl",                 "JACK Control",        "qjackctl",               "qjackctl",         TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA + JACK", 1), ("",                                                              "") ],
 
   [ "qamix",             "QAMix",                        "Mixer",               "qamix",                  "qamix",            TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA",        0), ("",                                                              "") ],
   [ "qarecord",          "QARecord",                     "Recorder",            "qarecord --jack",        "qarecord_48",      TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA",        0), ("",                                                              "") ],
