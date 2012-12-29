@@ -26,46 +26,48 @@ USING_KXSTUDIO = True
 # ardour3 JS
 
 list_DAW = [
-  # Package          AppName            Type              Binary              Icon              Template?     Level      Rel.-Model    (L, D, L, V, VST-Mode,  T, M, MIDI-Mode)      (doc-file,                                                         website)
-  [ "ardour",        "Ardour 2.8",      "DAW",            "ardour2",          "ardour",         TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 1, 0, "",        1, 0, "ALSA"),        ("file:///usr/share/kxstudio/docs/ardour.pdf",                     "http://www.ardour.org/") ],
-  [ "ardour3",       "Ardour 3.0",      "DAW",            "ardour3",          "ardour",         TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 1, 1, "Native",  1, 1, "JACK"),        ("file:///usr/share/kxstudio/docs/ardour.pdf",                     "http://www.ardour.org/") ],
+  # Package          AppName            Type              Binary              Icon                Template?     Level      Rel.-Model    (L, D, L, V, VST-Mode,  T, M, MIDI-Mode)      (doc-file,                                                         website)
+  [ "ardour",        "Ardour 2.8",      "DAW",            "ardour2",          "ardour",           TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 1, 0, "",        1, 0, "ALSA"),        ("file:///usr/share/kxstudio/docs/ardour.pdf",                     "http://www.ardour.org/") ],
+  [ "ardour3",       "Ardour 3.0",      "DAW",            "ardour3",          "ardour",           TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 1, 1, "Native",  1, 1, "JACK"),        ("file:///usr/share/kxstudio/docs/ardour.pdf",                     "http://www.ardour.org/") ],
 
-  [ "ariamaestosa",  "Aria Maestosa",   "MIDI Sequencer", "Aria",             "aria",           TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        0, 1, "ALSA | JACK"), ("",                                                               "http://ariamaestosa.sourceforge.net/") ],
+  [ "ariamaestosa",  "Aria Maestosa",   "MIDI Sequencer", "Aria",             "aria",             TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        0, 1, "ALSA | JACK"), ("",                                                               "http://ariamaestosa.sourceforge.net/") ],
 
-  [ "composite",     "Composite",       "Drum Sequencer", "composite-gui",    "composite32x32", TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 0, 0, "",        1, 1, "JACK"),        ("file:///usr/share/composite/data/doc/manual.html",               "http://gabe.is-a-geek.org/composite/") ],
+  [ "composite",     "Composite",       "Drum Sequencer", "composite-gui",    "composite32x32",   TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 0, 0, "",        1, 1, "JACK"),        ("file:///usr/share/composite/data/doc/manual.html",               "http://gabe.is-a-geek.org/composite/") ],
 
-  [ "energyxt2",     "EnergyXT2",       "DAW",            "energyxt2",        "energyxt2",      TEMPLATE_NO,  LEVEL_0,   "Demo",       (0, 0, 0, 1, "Native",  0, 1, "JACK"),        ("file:///usr/share/kxstudio/docs/EnergyXT_Manual_EN.pdf",         "http://www.energy-xt.com/") ],
+  [ "energyxt2",     "EnergyXT2",       "DAW",            "energyxt2",        "energyxt2",        TEMPLATE_NO,  LEVEL_0,   "Demo",       (0, 0, 0, 1, "Native",  0, 1, "JACK"),        ("file:///usr/share/kxstudio/docs/EnergyXT_Manual_EN.pdf",         "http://www.energy-xt.com/") ],
 
-  [ "hydrogen",      "Hydrogen",        "Drum Sequencer", "hydrogen -d jack", "h2-icon",        TEMPLATE_YES, LEVEL_JS,  "OpenSource", (1, 0, 0, 0, "",        1, 1, "ALSA | JACK"), ("file:///usr/share/hydrogen/data/doc/manual_en.html.upstream",    "http://www.hydrogen-music.org/") ],
-  [ "hydrogen-git",  "Hydrogen (GIT)",  "Drum Sequencer", "hydrogen -d jack", "h2-icon",        TEMPLATE_YES, LEVEL_JS,  "OpenSource", (1, 0, 0, 0, "",        1, 1, "ALSA | JACK"), ("file:///usr/share/hydrogen/data/doc/manual_en.html.upstream",    "http://www.hydrogen-music.org/") ],
-  [ "hydrogen-svn",  "Hydrogen (SVN)",  "Drum Sequencer", "hydrogen -d jack", "h2-icon",        TEMPLATE_YES, LEVEL_JS,  "OpenSource", (1, 0, 0, 0, "",        1, 1, "ALSA | JACK"), ("file:///usr/share/hydrogen/data/doc/manual_en.html.upstream",    "http://www.hydrogen-music.org/") ],
+  [ "giada",         "Giada",           "Audio Looper",   "giada",            generic_audio_icon, TEMPLATE_YES, LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        0, 0, ""),            ("",                                                               "http://www.monocasual.com/giada/") ],
 
-  [ "jacker",        "Jacker",          "MIDI Sequencer", "jacker",           "jacker",         TEMPLATE_YES, LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        1, 1, "JACK"),        ("",                                                               "https://bitbucket.org/paniq/jacker/wiki/Home") ],
+  [ "hydrogen",      "Hydrogen",        "Drum Sequencer", "hydrogen -d jack", "h2-icon",          TEMPLATE_YES, LEVEL_JS,  "OpenSource", (1, 0, 0, 0, "",        1, 1, "ALSA | JACK"), ("file:///usr/share/hydrogen/data/doc/manual_en.html.upstream",    "http://www.hydrogen-music.org/") ],
+  [ "hydrogen-git",  "Hydrogen (GIT)",  "Drum Sequencer", "hydrogen -d jack", "h2-icon",          TEMPLATE_YES, LEVEL_JS,  "OpenSource", (1, 0, 0, 0, "",        1, 1, "ALSA | JACK"), ("file:///usr/share/hydrogen/data/doc/manual_en.html.upstream",    "http://www.hydrogen-music.org/") ],
+  [ "hydrogen-svn",  "Hydrogen (SVN)",  "Drum Sequencer", "hydrogen -d jack", "h2-icon",          TEMPLATE_YES, LEVEL_JS,  "OpenSource", (1, 0, 0, 0, "",        1, 1, "ALSA | JACK"), ("file:///usr/share/hydrogen/data/doc/manual_en.html.upstream",    "http://www.hydrogen-music.org/") ],
 
-  [ "lmms",          "LMMS",            "DAW",            "lmms",             "lmms",           TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 0, 1, "Windows", 0, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/LMMS_UserManual_0.4.12.1.pdf",   "http://lmms.sourceforge.net/") ],
+  [ "jacker",        "Jacker",          "MIDI Sequencer", "jacker",           "jacker",           TEMPLATE_YES, LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        1, 1, "JACK"),        ("",                                                               "https://bitbucket.org/paniq/jacker/wiki/Home") ],
 
-  [ "muse",          "MusE",            "DAW",            "muse",             "muse",           TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 1, 0, 0, "",        1, 1, "ALSA + JACK"), ("file:///usr/share/doc/muse/html/window_ref.html",                "http://www.muse-sequencer.org/") ],
+  [ "lmms",          "LMMS",            "DAW",            "lmms",             "lmms",             TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 0, 1, "Windows", 0, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/LMMS_UserManual_0.4.12.1.pdf",   "http://lmms.sourceforge.net/") ],
 
-  [ "musescore",     "MuseScore",       "MIDI Composer",  "mscore",           "mscore",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        0, 1, "ALSA | JACK"), ("file:///usr/share/kxstudio/docs/MuseScore-en.pdf",               "http://www.musescore.org/") ],
+  [ "muse",          "MusE",            "DAW",            "muse",             "muse",             TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 1, 0, 0, "",        1, 1, "ALSA + JACK"), ("file:///usr/share/doc/muse/html/window_ref.html",                "http://www.muse-sequencer.org/") ],
 
-  [ "non-daw",       "Non-DAW",         "DAW",            "non-daw",          "non-daw",        TEMPLATE_YES, LEVEL_NSM, "OpenSource", (0, 0, 0, 0, "",        1, 0, "CV + OSC"),    ("file:///usr/share/doc/non-daw/MANUAL.html",                      "http://non-daw.tuxfamily.org/") ],
-  [ "non-sequencer", "Non-Sequencer",   "MIDI Sequencer", "non-sequencer",    "non-sequencer",  TEMPLATE_YES, LEVEL_NSM, "OpenSource", (0, 0, 0, 0, "",        1, 1, "JACK"),        ("file:///usr/share/doc/non-sequencer/MANUAL.html",                "http://non-sequencer.tuxfamily.org/") ],
+  [ "musescore",     "MuseScore",       "MIDI Composer",  "mscore",           "mscore",           TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        0, 1, "ALSA | JACK"), ("file:///usr/share/kxstudio/docs/MuseScore-en.pdf",               "http://www.musescore.org/") ],
 
-  [ "qtractor",      "Qtractor",        "DAW",            "qtractor",         "qtractor",       TEMPLATE_YES, LEVEL_1,   "OpenSource", (1, 1, 1, 1, "Native",  1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/qtractor-0.5.x-user-manual.pdf", "http://qtractor.sourceforge.net/") ],
-  [ "qtractor-svn",  "Qtractor (SVN)",  "DAW",            "qtractor",         "qtractor",       TEMPLATE_YES, LEVEL_1,   "OpenSource", (1, 1, 1, 1, "Native",  1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/qtractor-0.5.x-user-manual.pdf", "http://qtractor.sourceforge.net/") ],
+  [ "non-daw",       "Non-DAW",         "DAW",            "non-daw",          "non-daw",          TEMPLATE_YES, LEVEL_NSM, "OpenSource", (0, 0, 0, 0, "",        1, 0, "CV + OSC"),    ("file:///usr/share/doc/non-daw/MANUAL.html",                      "http://non-daw.tuxfamily.org/") ],
+  [ "non-sequencer", "Non-Sequencer",   "MIDI Sequencer", "non-sequencer",    "non-sequencer",    TEMPLATE_YES, LEVEL_NSM, "OpenSource", (0, 0, 0, 0, "",        1, 1, "JACK"),        ("file:///usr/share/doc/non-sequencer/MANUAL.html",                "http://non-sequencer.tuxfamily.org/") ],
 
-  [ "radium",        "Radium",          "Tracker",        "radium",           "radium",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, 0, 1, "Native",  0, 1, "ALSA"),        ("",                                                               "http://users.notam02.no/~kjetism/radium/") ],
+  [ "qtractor",      "Qtractor",        "DAW",            "qtractor",         "qtractor",         TEMPLATE_YES, LEVEL_1,   "OpenSource", (1, 1, 1, 1, "Native",  1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/qtractor-0.5.x-user-manual.pdf", "http://qtractor.sourceforge.net/") ],
+  [ "qtractor-svn",  "Qtractor (SVN)",  "DAW",            "qtractor",         "qtractor",         TEMPLATE_YES, LEVEL_1,   "OpenSource", (1, 1, 1, 1, "Native",  1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/qtractor-0.5.x-user-manual.pdf", "http://qtractor.sourceforge.net/") ],
 
-  [ "reaper",        "REAPER",          "DAW",            "reaper",           "reaper",         TEMPLATE_NO,  LEVEL_0,   "Demo",       (0, 0, 0, 1, "Windows", 1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/ReaperUserGuide426C.pdf",        "http://www.reaper.fm/") ],
-  [ "reaper:i386",   "REAPER",          "DAW",            "reaper",           "reaper",         TEMPLATE_NO,  LEVEL_0,   "Demo",       (0, 0, 0, 1, "Windows", 1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/ReaperUserGuide426C.pdf",        "http://www.reaper.fm/") ],
+  [ "radium",        "Radium",          "Tracker",        "radium",           "radium",           TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, 0, 1, "Native",  0, 1, "ALSA"),        ("",                                                               "http://users.notam02.no/~kjetism/radium/") ],
 
-  [ "renoise",       "Renoise",         "Tracker",        "renoise",          "renoise",        TEMPLATE_YES, LEVEL_0,   "ShareWare",  (1, 1, 0, 1, "Native",  1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/Renoise User Manual.pdf",        "http://www.renoise.com/") ],
+  [ "reaper",        "REAPER",          "DAW",            "reaper",           "reaper",           TEMPLATE_NO,  LEVEL_0,   "Demo",       (0, 0, 0, 1, "Windows", 1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/ReaperUserGuide426C.pdf",        "http://www.reaper.fm/") ],
+  [ "reaper:i386",   "REAPER",          "DAW",            "reaper",           "reaper",           TEMPLATE_NO,  LEVEL_0,   "Demo",       (0, 0, 0, 1, "Windows", 1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/ReaperUserGuide426C.pdf",        "http://www.reaper.fm/") ],
 
-  [ "rosegarden",    "Rosegarden",      "MIDI Sequencer", "rosegarden",       "rosegarden",     TEMPLATE_YES, LEVEL_1,   "OpenSource", (1, 1, 0, 0, "",        1, 1, "ALSA"),        ("",                                                               "http://www.rosegardenmusic.com/") ],
+  [ "renoise",       "Renoise",         "Tracker",        "renoise",          "renoise",          TEMPLATE_YES, LEVEL_0,   "ShareWare",  (1, 1, 0, 1, "Native",  1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/Renoise User Manual.pdf",        "http://www.renoise.com/") ],
 
-  [ "seq24",         "Seq24",           "MIDI Sequencer", "seq24",            "seq24",          TEMPLATE_YES, LEVEL_1,   "OpenSource", (0, 0, 0, 0, "",        1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/SEQ24",                          "http://www.filter24.org/seq24/") ],
+  [ "rosegarden",    "Rosegarden",      "MIDI Sequencer", "rosegarden",       "rosegarden",       TEMPLATE_YES, LEVEL_1,   "OpenSource", (1, 1, 0, 0, "",        1, 1, "ALSA"),        ("",                                                               "http://www.rosegardenmusic.com/") ],
 
-  [ "traverso",      "Traverso",        "DAW",            "traverso",         "traverso",       TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, 1, 0, "",        1, 0, ""),            ("file:///usr/share/kxstudio/docs/traverso-manual-0.49.0.pdf",     "http://traverso-daw.org/") ]
+  [ "seq24",         "Seq24",           "MIDI Sequencer", "seq24",            "seq24",            TEMPLATE_YES, LEVEL_1,   "OpenSource", (0, 0, 0, 0, "",        1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/SEQ24",                          "http://www.filter24.org/seq24/") ],
+
+  [ "traverso",      "Traverso",        "DAW",            "traverso",         "traverso",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, 1, 0, "",        1, 0, ""),            ("file:///usr/share/kxstudio/docs/traverso-manual-0.49.0.pdf",     "http://traverso-daw.org/") ]
 ]
 
 iDAW_Package, iDAW_AppName, iDAW_Type, iDAW_Binary, iDAW_Icon, iDAW_Template, iDAW_Level, iDAW_RelModel, iDAW_Features, iDAW_Docs = range(0, len(list_DAW[0]))

@@ -33,7 +33,7 @@
           </size>
          </property>
          <property name="text">
-          <string>Digital Audio Workstations, Sequencers and Trackers</string>
+          <string>Digital Audio Workstations, Loopers, Sequencers and Trackers</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
