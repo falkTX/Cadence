@@ -511,7 +511,9 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             tmplte_cmd  = binary
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
-            tmplte_lvl  = "1"
+
+            if database.USING_KXSTUDIO:
+                tmplte_lvl  = "1"
 
         elif app == "jack-mixer":
             tmplte_file = os.path.join(proj_folder, "Jack-Mixer_%i.xml" % rand_check)

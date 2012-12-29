@@ -25,9 +25,6 @@ USING_KXSTUDIO = True
 # FIXME - broken upstream
 # ardour3 JS
 
-# TODO - remove level support for kxstudio check
-# qsampler
-
 list_DAW = [
   # Package          AppName            Type              Binary              Icon              Template?     Level      Rel.-Model    (L, D, L, V, VST-Mode,  T, M, MIDI-Mode)      (doc-file,                                                         website)
   [ "ardour",        "Ardour 2.8",      "DAW",            "ardour2",          "ardour",         TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 1, 0, "",        1, 0, "ALSA"),        ("file:///usr/share/kxstudio/docs/ardour.pdf",                     "http://www.ardour.org/") ],
@@ -51,7 +48,7 @@ list_DAW = [
 
   [ "musescore",     "MuseScore",       "MIDI Composer",  "mscore",           "mscore",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        0, 1, "ALSA | JACK"), ("file:///usr/share/kxstudio/docs/MuseScore-en.pdf",               "http://www.musescore.org/") ],
 
-  [ "non-daw",       "Non-DAW",         "DAW",            "non-daw",          "non-daw",        TEMPLATE_YES, LEVEL_NSM, "OpenSource", (0, 0, 0, 0, "",        1, 0, "CV"),          ("file:///usr/share/doc/non-daw/MANUAL.html",                      "http://non-daw.tuxfamily.org/") ],
+  [ "non-daw",       "Non-DAW",         "DAW",            "non-daw",          "non-daw",        TEMPLATE_YES, LEVEL_NSM, "OpenSource", (0, 0, 0, 0, "",        1, 0, "CV + OSC"),    ("file:///usr/share/doc/non-daw/MANUAL.html",                      "http://non-daw.tuxfamily.org/") ],
   [ "non-sequencer", "Non-Sequencer",   "MIDI Sequencer", "non-sequencer",    "non-sequencer",  TEMPLATE_YES, LEVEL_NSM, "OpenSource", (0, 0, 0, 0, "",        1, 1, "JACK"),        ("file:///usr/share/doc/non-sequencer/MANUAL.html",                "http://non-sequencer.tuxfamily.org/") ],
 
   [ "qtractor",      "Qtractor",        "DAW",            "qtractor",         "qtractor",       TEMPLATE_YES, LEVEL_1,   "OpenSource", (1, 1, 1, 1, "Native",  1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/qtractor-0.5.x-user-manual.pdf", "http://qtractor.sourceforge.net/") ],
@@ -68,7 +65,7 @@ list_DAW = [
 
   [ "seq24",         "Seq24",           "MIDI Sequencer", "seq24",            "seq24",          TEMPLATE_YES, LEVEL_1,   "OpenSource", (0, 0, 0, 0, "",        1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/SEQ24",                          "http://www.filter24.org/seq24/") ],
 
-  [ "traverso",      "Traverso",        "DAW",            "traverso",         "traverso",       TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, 1, 0, "",        1, 0, ""),            ("file:///usr/share/kxstudio/docs/traverso-manual-0.49.0.pdf",     "http://traverso-daw.org/") ],
+  [ "traverso",      "Traverso",        "DAW",            "traverso",         "traverso",       TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, 1, 0, "",        1, 0, ""),            ("file:///usr/share/kxstudio/docs/traverso-manual-0.49.0.pdf",     "http://traverso-daw.org/") ]
 ]
 
 iDAW_Package, iDAW_AppName, iDAW_Type, iDAW_Binary, iDAW_Icon, iDAW_Template, iDAW_Level, iDAW_RelModel, iDAW_Features, iDAW_Docs = range(0, len(list_DAW[0]))
@@ -77,7 +74,7 @@ if USING_KXSTUDIO:
     # Ardour 2.8
     list_DAW[0][iDAW_Level] = LEVEL_1
     # Jacker
-    list_DAW[7][iDAW_Level] = LEVEL_1
+    list_DAW[8][iDAW_Level] = LEVEL_1
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Host
@@ -85,20 +82,20 @@ if USING_KXSTUDIO:
 # (I, L, D, L, V, VST-Mode, MIDI-Mode) -> (Internal, LADSPA, DSSI, LV2, VST, VST-Mode, MIDI-Mode)
 
 list_Host = [
-  # Package         AppName           Ins?   FX?    Binary           Icon         Template?     Level       Rel.-Model    (I, L, D, L, V, VST-Mode,  MIDI-Mode)      (doc-file,                                website)
-  [ "calf-plugins", "Calf Jack Host", "Yes", "Yes", "calfjackhost",  "calf",      TEMPLATE_NO,  LEVEL_1,    "OpenSource", (1, 0, 0, 0, 0, "",        "JACK"),        ("file:///usr/share/doc/calf/index.html", "http://calf.sourceforge.net/") ],
+  # Package         AppName           Ins?   FX?    Binary           Icon         Template?     Level     Rel.-Model    (I, L, D, L, V, VST-Mode,  MIDI-Mode)      (doc-file,                                website)
+  [ "calf-plugins", "Calf Jack Host", "Yes", "Yes", "calfjackhost",  "calf",      TEMPLATE_NO,  LEVEL_1,  "OpenSource", (1, 0, 0, 0, 0, "",        "JACK"),        ("file:///usr/share/doc/calf/index.html", "http://calf.sourceforge.net/") ],
 
-  [ "carla",        "Carla",          "Yes", "Yes", "carla",         "carla",     TEMPLATE_YES, LEVEL_1,    "OpenSource", (1, 1, 1, 1, 1, "Native",  "JACK"),        ("",                                      "http://kxstudio.sourceforge.net/KXStudio:Applications:Carla") ],
+  [ "carla",        "Carla",          "Yes", "Yes", "carla",         "carla",     TEMPLATE_YES, LEVEL_1,  "OpenSource", (1, 1, 1, 1, 1, "Both",    "ALSA | JACK"), ("",                                      "http://kxstudio.sourceforge.net/KXStudio:Applications:Carla") ],
 
-  [ "festige",      "FeSTige",        "Yes", "Yes", "festige",       "festige",   TEMPLATE_NO,  LEVEL_1,    "OpenSource", (0, 0, 0, 0, 1, "Windows", "ALSA | JACK"), ("",                                      "http://festige.sourceforge.net/") ],
+  [ "festige",      "FeSTige",        "Yes", "Yes", "festige",       "festige",   TEMPLATE_NO,  LEVEL_1,  "OpenSource", (0, 0, 0, 0, 1, "Windows", "ALSA | JACK"), ("",                                      "http://festige.sourceforge.net/") ],
 
-  [ "ingen",        "Ingen",          "Yes", "Yes", "ingen -eg",     "ingen",     TEMPLATE_NO,  LEVEL_JS,   "OpenSource", (1, 0, 0, 1, 0, "",        "JACK"),        ("",                                      "http://drobilla.net/blog/software/ingen/") ],
-  [ "ingen-svn",    "Ingen (SVN)",    "Yes", "Yes", "ingen-svn -eg", "ingen",     TEMPLATE_NO,  LEVEL_JS,   "OpenSource", (1, 0, 0, 1, 0, "",        "JACK"),        ("",                                      "http://drobilla.net/blog/software/ingen/") ],
+  [ "ingen",        "Ingen",          "Yes", "Yes", "ingen -eg",     "ingen",     TEMPLATE_NO,  LEVEL_0,  "OpenSource", (1, 0, 0, 1, 0, "",        "JACK"),        ("",                                      "http://drobilla.net/blog/software/ingen/") ],
+  [ "ingen-svn",    "Ingen (SVN)",    "Yes", "Yes", "ingen-svn -eg", "ingen",     TEMPLATE_NO,  LEVEL_0,  "OpenSource", (1, 0, 0, 1, 0, "",        "JACK"),        ("",                                      "http://drobilla.net/blog/software/ingen/") ],
 
-  [ "jack-rack",    "Jack Rack",      "No",  "Yes", "jack-rack",     "jack-rack", TEMPLATE_YES, LEVEL_0,    "OpenSource", (0, 1, 0, 0, 0, "",        "ALSA"),        ("",                                      "http://jack-rack.sourceforge.net/") ],
+  [ "jack-rack",    "Jack Rack",      "No",  "Yes", "jack-rack",     "jack-rack", TEMPLATE_YES, LEVEL_0,  "OpenSource", (0, 1, 0, 0, 0, "",        "ALSA"),        ("",                                      "http://jack-rack.sourceforge.net/") ],
 
-  [ "zynjacku",     "LV2 Rack",       "No",  "Yes", "lv2rack",       "zynjacku",  TEMPLATE_NO,  LEVEL_0,    "OpenSource", (0, 0, 0, 1, 0, "",        "JACK"),        ("",                                      "http://home.gna.org/zynjacku/") ],
-  [ "zynjacku",     "ZynJackU",       "Yes", "No",  "zynjacku",      "zynjacku",  TEMPLATE_NO,  LEVEL_0,    "OpenSource", (0, 0, 0, 1, 0, "",        "JACK"),        ("",                                      "http://home.gna.org/zynjacku/") ],
+  [ "zynjacku",     "LV2 Rack",       "No",  "Yes", "lv2rack",       "zynjacku",  TEMPLATE_NO,  LEVEL_0,  "OpenSource", (0, 0, 0, 1, 0, "",        "JACK"),        ("",                                      "http://home.gna.org/zynjacku/") ],
+  [ "zynjacku",     "ZynJackU",       "Yes", "No",  "zynjacku",      "zynjacku",  TEMPLATE_NO,  LEVEL_0,  "OpenSource", (0, 0, 0, 1, 0, "",        "JACK"),        ("",                                      "http://home.gna.org/zynjacku/") ]
 ]
 
 iHost_Package, iHost_AppName, iHost_Ins, iHost_FX, iHost_Binary, iHost_Icon, iHost_Template, iHost_Level, iHost_RelModel, iHost_Features, iDAW_Docs = range(0, len(list_Host[0]))
@@ -110,11 +107,11 @@ iHost_Package, iHost_AppName, iHost_Ins, iHost_FX, iHost_Binary, iHost_Icon, iHo
 
 list_Instrument = [
   # Package                 AppName              Type                Binary                    Icon                Template?     Level    Rel.-Model    (F, I, MIDI-Mode)      (doc-file,                                                     website)
-  [ "aeolus",               "Aeolus",            "Synth",            "aeolus",                 generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", (0, 0, "ALSA | JACK"), ("",                                                           "http://www.kokkinizita.net/linuxaudio/aeolus/index.html") ],
+  [ "aeolus",               "Aeolus",            "Synth",            "aeolus -J",              generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", (0, 0, "ALSA | JACK"), ("",                                                           "http://www.kokkinizita.net/linuxaudio/aeolus/index.html") ],
 
-  [ "amsynth",              "Amsynth",           "Synth",            "amsynth",                "amsynth",          TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 0, "ALSA"),        ("",                                                           "") ],
+  [ "amsynth",              "Amsynth",           "Synth",            "amsynth",                "amsynth",          TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 0, "ALSA + JACK"), ("",                                                           "") ],
 
-  [ "azr3-jack",            "AZR3",              "Synth",            "azr3",                   "azr3",             TEMPLATE_NO,  LEVEL_0, "OpenSource", (0, 0, "JACK"),        ("",                                                           "http://ll-plugins.nongnu.org/azr3/") ],
+  [ "azr3-jack",            "AZR3",              "Synth",            "azr3",                   "azr3",             TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 0, "JACK"),        ("",                                                           "http://ll-plugins.nongnu.org/azr3/") ],
 
   [ "distrho-plugin-ports", "Vex",               "Synth",            "vex",                    generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 1, "ALSA"),        ("",                                                           "") ],
   [ "highlife",             "HighLife",          "Sampler",          "highlife",               generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 1, "ALSA"),        ("",                                                           "http://www.discodsp.com/highlife/") ],
@@ -141,10 +138,14 @@ list_Instrument = [
 
   [ "yoshimi",              "Yoshimi",           "Synth",            "yoshimi -j -J",          "yoshimi",          TEMPLATE_NO,  LEVEL_1, "OpenSource", (1, 0, "ALSA | JACK"), ("",                                                           "http://yoshimi.sourceforge.net/") ],
 
-  [ "zynaddsubfx",          "ZynAddSubFX",       "Synth",            "zynaddsubfx",            "zynaddsubfx",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 0, "ALSA + JACK"), ("",                                                           "http://zynaddsubfx.sourceforge.net/") ],
+  [ "zynaddsubfx",          "ZynAddSubFX",       "Synth",            "zynaddsubfx",            "zynaddsubfx",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 0, "ALSA + JACK"), ("",                                                           "http://zynaddsubfx.sourceforge.net/") ]
 ]
 
 iInstrument_Package, iInstrument_AppName, iInstrument_Type, iInstrument_Binary, iInstrument_Icon, iInstrument_Template, iInstrument_Level, iInstrument_RelModel, iInstrument_Features, iInstrument_Docs = range(0, len(list_Instrument[0]))
+
+if USING_KXSTUDIO:
+    # Qsampler
+    list_Instrument[16][iInstrument_Level] = LEVEL_1
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Bristol
@@ -191,10 +192,10 @@ list_Bristol = [
  #[ "bristol", "Bristol BassMaker",              "Synth", "bassmaker",  "bristol_bassmaker",  TEMPLATE_NO,  LEVEL_1, "OpenSource", (1, 1, "ALSA | JACK"), ("", "") ],
   [ "bristol", "Yamaha DX",                      "Synth", "dx",         "bristol_dx",         TEMPLATE_NO,  LEVEL_1, "OpenSource", (1, 1, "ALSA | JACK"), ("", "http://bristol.sourceforge.net/dx.html") ],
  #[ "bristol", "Yamaha CS-80",                   "Synth", "cs80",       "bristol_cs80",       TEMPLATE_NO,  LEVEL_1, "OpenSource", (1, 1, "ALSA | JACK"), ("", "http://bristol.sourceforge.net/cs80.html") ],
-  [ "bristol", "Bristol SID Softsynth",          "Synth", "sidney",     "bristol_sidney",     TEMPLATE_NO,  LEVEL_1, "OpenSource", (1, 1, "ALSA | JACK"), ("", "http://bristol.sourceforge.net/sidney.shtml") ],
+  [ "bristol", "Bristol SID Softsynth",          "Synth", "sidney",     "bristol_sidney",     TEMPLATE_NO,  LEVEL_1, "OpenSource", (1, 1, "ALSA | JACK"), ("", "http://bristol.sourceforge.net/sidney.shtml") ]
  #[ "bristol", "Commodore-64 SID polysynth",     "Synth", "melbourne",  "bristol_sidney",     TEMPLATE_NO,  LEVEL_1, "OpenSource", (1, 1, "ALSA | JACK"), ("", "") ], #FIXME - needs icon
  #[ "bristol", "Bristol Granular Synthesiser",   "Synth", "granular",   "bristol_granular",   TEMPLATE_NO,  LEVEL_1, "OpenSource", (1, 1, "ALSA | JACK"), ("", "") ],
- #[ "bristol", "Bristol Realtime Mixer",         "Synth", "mixer",      "bristol_mixer",      TEMPLATE_NO,  LEVEL_1, "OpenSource", (1, 1, "ALSA | JACK"), ("", "http://bristol.sourceforge.net/mixer.html") ],
+ #[ "bristol", "Bristol Realtime Mixer",         "Synth", "mixer",      "bristol_mixer",      TEMPLATE_NO,  LEVEL_1, "OpenSource", (1, 1, "ALSA | JACK"), ("", "http://bristol.sourceforge.net/mixer.html") ]
 ]
 
 iBristol_Package, iBristol_AppName, iBristol_Type, iBristol_ShortName, iBristol_Icon, iBristol_Template, iBristol_Level, iBristol_RelModel, iBristol_Features, iBristol_Docs = range(0, len(list_Bristol[0]))
@@ -265,7 +266,7 @@ list_Effect = [
   [ "tal-plugins",          "TAL Reverb",                    "Reverb",              "TAL-Reverb",                                   "tal_plugins",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://kunz.corrupt.ch/products/tal-reverb") ],
   [ "tal-plugins",          "TAL Reverb 2",                  "Reverb",              "TAL-Reverb-2",                                 "tal_plugins",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://kunz.corrupt.ch/products/tal-reverb") ],
   [ "tal-plugins",          "TAL Reverb 3",                  "Reverb",              "TAL-Reverb-3",                                 "tal_plugins",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://kunz.corrupt.ch/products/tal-reverb") ],
-  [ "tal-plugins",          "TAL Vocoder 2",                 "Vocoder",             "TAL-Vocoder-2",                                "tal_plugins",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://kunz.corrupt.ch/products/tal-vocoder") ],
+  [ "tal-plugins",          "TAL Vocoder 2",                 "Vocoder",             "TAL-Vocoder-2",                                "tal_plugins",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://kunz.corrupt.ch/products/tal-vocoder") ]
 ]
 
 iEffect_Package, iEffect_AppName, iEffect_Type, iEffect_Binary, iEffect_Icon, iEffect_Template, iEffect_Level, iEffect_RelModel, iEffect_Features, iEffect_Docs = range(0, len(list_Effect[0]))
@@ -336,10 +337,10 @@ list_Tool = [
 
   [ "timemachine",       "TimeMachine",                  "Recorder",            "timemachine",            "timemachine",      TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         0), ("",                                                              "http://plugin.org.uk/timemachine/") ],
 
-  [ "vmpk",              "Virtual MIDI Piano Keyboard (ALSA)",  "Virtual Keyboard",    "vmpk",                   "vmpk",             TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA",        0), ("file:///usr/share/vmpk/help.html",                              "http://vmpk.sourceforge.net/") ],
-  [ "vmpk-jack",         "Virtual MIDI Piano Keyboard (JACK)",  "Virtual Keyboard",    "vmpk-jack",              "vmpk",             TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        0), ("file:///usr/share/vmpk/help.html",                              "http://vmpk.sourceforge.net/") ],
+  [ "vmpk",              "Virtual MIDI Piano Keyboard (ALSA)","Virtual Keyboard","vmpk",                  "vmpk",             TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA",        0), ("file:///usr/share/vmpk/help.html",                              "http://vmpk.sourceforge.net/") ],
+  [ "vmpk-jack",         "Virtual MIDI Piano Keyboard (JACK)","Virtual Keyboard","vmpk-jack",             "vmpk",             TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        0), ("file:///usr/share/vmpk/help.html",                              "http://vmpk.sourceforge.net/") ],
 
-  [ "xjadeo",            "XJadeo",                       "Video Player",        "qjadeo",                 "qjadeo",           TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         1), ("",                                                              "http://xjadeo.sourceforge.net/") ],
+  [ "xjadeo",            "XJadeo",                       "Video Player",        "qjadeo",                 "qjadeo",           TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         1), ("",                                                              "http://xjadeo.sourceforge.net/") ]
 ]
 
 iTool_Package, iTool_AppName, iTool_Type, iTool_Binary, iTool_Icon, iTool_Template, iTool_Level, iTool_RelModel, iTool_Features, iTool_Docs = range(0, len(list_Tool[0]))
