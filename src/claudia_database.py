@@ -33,6 +33,8 @@ list_DAW = [
   [ "ardour",        "Ardour 2.8",      "DAW",            "ardour2",          "ardour",         TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 1, 0, "",        1, 0, "ALSA"),        ("file:///usr/share/kxstudio/docs/ardour.pdf",                     "http://www.ardour.org/") ],
   [ "ardour3",       "Ardour 3.0",      "DAW",            "ardour3",          "ardour",         TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 1, 1, "Native",  1, 1, "JACK"),        ("file:///usr/share/kxstudio/docs/ardour.pdf",                     "http://www.ardour.org/") ],
 
+  [ "ariamaestosa",  "Aria Maestosa",   "MIDI Sequencer", "Aria",             "aria",           TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        0, 1, "ALSA | JACK"), ("",                                                               "http://ariamaestosa.sourceforge.net/") ],
+
   [ "composite",     "Composite",       "Drum Sequencer", "composite-gui",    "composite32x32", TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 0, 0, "",        1, 1, "JACK"),        ("file:///usr/share/composite/data/doc/manual.html",               "http://gabe.is-a-geek.org/composite/") ],
 
   [ "energyxt2",     "EnergyXT2",       "DAW",            "energyxt2",        "energyxt2",      TEMPLATE_NO,  LEVEL_0,   "Demo",       (0, 0, 0, 1, "Native",  0, 1, "JACK"),        ("file:///usr/share/kxstudio/docs/EnergyXT_Manual_EN.pdf",         "http://www.energy-xt.com/") ],
@@ -54,6 +56,8 @@ list_DAW = [
 
   [ "qtractor",      "Qtractor",        "DAW",            "qtractor",         "qtractor",       TEMPLATE_YES, LEVEL_1,   "OpenSource", (1, 1, 1, 1, "Native",  1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/qtractor-0.5.x-user-manual.pdf", "http://qtractor.sourceforge.net/") ],
   [ "qtractor-svn",  "Qtractor (SVN)",  "DAW",            "qtractor",         "qtractor",       TEMPLATE_YES, LEVEL_1,   "OpenSource", (1, 1, 1, 1, "Native",  1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/qtractor-0.5.x-user-manual.pdf", "http://qtractor.sourceforge.net/") ],
+
+  [ "radium",        "Radium",          "Tracker",        "radium",           "radium",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, 0, 1, "Native",  0, 1, "ALSA"),        ("",                                                               "http://users.notam02.no/~kjetism/radium/") ],
 
   [ "reaper",        "REAPER",          "DAW",            "reaper",           "reaper",         TEMPLATE_NO,  LEVEL_0,   "Demo",       (0, 0, 0, 1, "Windows", 1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/ReaperUserGuide426C.pdf",        "http://www.reaper.fm/") ],
   [ "reaper:i386",   "REAPER",          "DAW",            "reaper",           "reaper",         TEMPLATE_NO,  LEVEL_0,   "Demo",       (0, 0, 0, 1, "Windows", 1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/ReaperUserGuide426C.pdf",        "http://www.reaper.fm/") ],
@@ -81,20 +85,20 @@ if USING_KXSTUDIO:
 # (I, L, D, L, V, VST-Mode, MIDI-Mode) -> (Internal, LADSPA, DSSI, LV2, VST, VST-Mode, MIDI-Mode)
 
 list_Host = [
-  # Package             AppName                 Ins?   FX?    Binary           Icon         Template?     Level       Rel.-Model    (I, L, D, L, V, VST-Mode,  MIDI-Mode)      (doc-file,                               website)
-  [ "calf-plugins",     "Calf Jack Host",       "Yes", "Yes", "calfjackhost",  "calf",      TEMPLATE_NO,  LEVEL_0,    "OpenSource", (1, 0, 0, 0, 0, "",        "JACK"),        ("",                                     "http://calf.sourceforge.net/") ],
+  # Package         AppName           Ins?   FX?    Binary           Icon         Template?     Level       Rel.-Model    (I, L, D, L, V, VST-Mode,  MIDI-Mode)      (doc-file,                                website)
+  [ "calf-plugins", "Calf Jack Host", "Yes", "Yes", "calfjackhost",  "calf",      TEMPLATE_NO,  LEVEL_1,    "OpenSource", (1, 0, 0, 0, 0, "",        "JACK"),        ("file:///usr/share/doc/calf/index.html", "http://calf.sourceforge.net/") ],
 
-  [ "carla",            "Carla",                "Yes", "Yes", "carla",         "carla",     TEMPLATE_YES, LEVEL_1,    "OpenSource", (1, 1, 1, 1, 1, "Native",  "JACK"),        ("",                                     "http://kxstudio.sourceforge.net/KXStudio:Applications:Carla") ],
+  [ "carla",        "Carla",          "Yes", "Yes", "carla",         "carla",     TEMPLATE_YES, LEVEL_1,    "OpenSource", (1, 1, 1, 1, 1, "Native",  "JACK"),        ("",                                      "http://kxstudio.sourceforge.net/KXStudio:Applications:Carla") ],
 
-  [ "festige",          "FeSTige",              "Yes", "Yes", "festige",       "festige",   TEMPLATE_NO,  LEVEL_1,    "OpenSource", (0, 0, 0, 0, 1, "Windows", "ALSA | JACK"), ("",                                     "http://festige.sourceforge.net/") ],
+  [ "festige",      "FeSTige",        "Yes", "Yes", "festige",       "festige",   TEMPLATE_NO,  LEVEL_1,    "OpenSource", (0, 0, 0, 0, 1, "Windows", "ALSA | JACK"), ("",                                      "http://festige.sourceforge.net/") ],
 
-  [ "ingen",            "Ingen",                "Yes", "Yes", "ingen -eg",     "ingen",     TEMPLATE_NO,  LEVEL_JS,   "OpenSource", (1, 0, 0, 1, 0, "",        "JACK"),        ("",                                     "http://drobilla.net/blog/software/ingen/") ],
-  [ "ingen-svn",        "Ingen (SVN)",          "Yes", "Yes", "ingen-svn -eg", "ingen",     TEMPLATE_NO,  LEVEL_JS,   "OpenSource", (1, 0, 0, 1, 0, "",        "JACK"),        ("",                                     "http://drobilla.net/blog/software/ingen/") ],
+  [ "ingen",        "Ingen",          "Yes", "Yes", "ingen -eg",     "ingen",     TEMPLATE_NO,  LEVEL_JS,   "OpenSource", (1, 0, 0, 1, 0, "",        "JACK"),        ("",                                      "http://drobilla.net/blog/software/ingen/") ],
+  [ "ingen-svn",    "Ingen (SVN)",    "Yes", "Yes", "ingen-svn -eg", "ingen",     TEMPLATE_NO,  LEVEL_JS,   "OpenSource", (1, 0, 0, 1, 0, "",        "JACK"),        ("",                                      "http://drobilla.net/blog/software/ingen/") ],
 
-  [ "jack-rack",        "Jack Rack",            "No",  "Yes", "jack-rack",     "jack-rack", TEMPLATE_YES, LEVEL_0,    "OpenSource", (0, 1, 0, 0, 0, "",        "ALSA"),        ("",                                     "http://jack-rack.sourceforge.net/") ],
+  [ "jack-rack",    "Jack Rack",      "No",  "Yes", "jack-rack",     "jack-rack", TEMPLATE_YES, LEVEL_0,    "OpenSource", (0, 1, 0, 0, 0, "",        "ALSA"),        ("",                                      "http://jack-rack.sourceforge.net/") ],
 
-  [ "zynjacku",         "LV2 Rack",             "No",  "Yes", "lv2rack",       "zynjacku",  TEMPLATE_NO,  LEVEL_0,    "OpenSource", (0, 0, 0, 1, 0, "",        "JACK"),        ("",                                     "http://home.gna.org/zynjacku/") ],
-  [ "zynjacku",         "ZynJackU",             "Yes", "No",  "zynjacku",      "zynjacku",  TEMPLATE_NO,  LEVEL_0,    "OpenSource", (0, 0, 0, 1, 0, "",        "JACK"),        ("",                                     "http://home.gna.org/zynjacku/") ],
+  [ "zynjacku",     "LV2 Rack",       "No",  "Yes", "lv2rack",       "zynjacku",  TEMPLATE_NO,  LEVEL_0,    "OpenSource", (0, 0, 0, 1, 0, "",        "JACK"),        ("",                                      "http://home.gna.org/zynjacku/") ],
+  [ "zynjacku",     "ZynJackU",       "Yes", "No",  "zynjacku",      "zynjacku",  TEMPLATE_NO,  LEVEL_0,    "OpenSource", (0, 0, 0, 1, 0, "",        "JACK"),        ("",                                      "http://home.gna.org/zynjacku/") ],
 ]
 
 iHost_Package, iHost_AppName, iHost_Ins, iHost_FX, iHost_Binary, iHost_Icon, iHost_Template, iHost_Level, iHost_RelModel, iHost_Features, iDAW_Docs = range(0, len(list_Host[0]))
