@@ -1,24 +1,9 @@
 # Cadence Session Startup
+# Part 2 - Start JACK (or not), according to user settings
 
 INSTALL_PREFIX="X-PREFIX-X"
 
-# Export Plugins PATHs
-LADSPA_PATH_str=`$INSTALL_PREFIX/bin/cadence-session-start --printLADSPA_PATH`
-DSSI_PATH_str=`$INSTALL_PREFIX/bin/cadence-session-start --printDSSI_PATH`
-LV2_PATH_str=`$INSTALL_PREFIX/bin/cadence-session-start --printLV2_PATH`
-VST_PATH_str=`$INSTALL_PREFIX/bin/cadence-session-start --printVST_PATH`
-
-export LADSPA_PATH="$LADSPA_PATH_str"
-export DSSI_PATH="$DSSI_PATH_str"
-export LV2_PATH="$LV2_PATH_str"
-export VST_PATH="$VST_PATH_str"
-
-# Start JACK (or not), according to user settings
 CADENCE_SESSION="$INSTALL_PREFIX/bin/cadence-session-start --system-start"
 exec $CADENCE_SESSION &
 
-unset LADSPA_PATH_str
-unset DSSI_PATH_str
-unset LV2_PATH_str
-unset VST_PATH_str
 unset INSTALL_PREFIX

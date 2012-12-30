@@ -10,7 +10,7 @@ GUI:
   - Check shortcut consistency
 
 All:
-  - Only use QSettings in function scope, not always opened (makes config invalid if a crash happens)
+  - Only use QSettings in function scope, not always opened (makes config still valid if a crash happens)
 
 -------------------
 - APPS -
@@ -18,7 +18,6 @@ All:
 Cadence:
  - add freq info to systray tooltip
  - add freq Hz change
- - set plugin path before DBus starts
  - add desktop decriptions
 
 Claudia:
@@ -26,8 +25,7 @@ Claudia:
  - rename canvas client should rename app name
 
 Claudia-Launcher:
- - Cleanup DB
- - Add vmpk-jack
+ - Finish plugins
  - Very small horizontal UI, need first fix
  - Auto-close option
 

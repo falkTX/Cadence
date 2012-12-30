@@ -369,6 +369,7 @@ install:
 
 	# Install addtional stuff for Cadence
 	install -m 644 data/pulse2jack/* $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
+	install -m 644 data/70cadence-plugin-paths  $(X11_RC_DIR)
 	install -m 644 data/99cadence-session-start $(X11_RC_DIR)
 
 	# Install addtional stuff for Claudia
@@ -392,6 +393,7 @@ install:
 		$(DESTDIR)$(PREFIX)/bin/carla-control \
 		$(DESTDIR)$(PREFIX)/bin/carla-standalone \
 		$(DESTDIR)$(PREFIX)/bin/caitlyn \
+		$(X11_RC_DIR)/70cadence-plugin-paths \
 		$(X11_RC_DIR)/99cadence-session-start
 #		$(DESTDIR)$(PREFIX)/bin/cadence-cpufreq
 
@@ -427,6 +429,7 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/claudia-launcher.svg
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/carla.svg
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/carla-control.svg
+	rm -f $(X11_RC_DIR)/70cadence-plugin-paths
 	rm -f $(X11_RC_DIR)/99cadence-session-start
 	rm -rf $(DESTDIR)$(PREFIX)/lib/cadence/
 	rm -rf $(DESTDIR)$(PREFIX)/share/cadence/
