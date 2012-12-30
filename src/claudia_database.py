@@ -34,7 +34,7 @@ list_DAW = [
 
   [ "composite",     "Composite",       "Drum Sequencer", "composite-gui",    "composite32x32",   TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 0, 0, "",        1, 1, "JACK"),        ("file:///usr/share/composite/data/doc/manual.html",               "http://gabe.is-a-geek.org/composite/") ],
 
-  [ "energyxt2",     "EnergyXT2",       "DAW",            "energyxt2",        "energyxt2",        TEMPLATE_NO,  LEVEL_0,   "Demo",       (0, 0, 0, 1, "Native",  0, 1, "JACK"),        ("file:///usr/share/kxstudio/docs/EnergyXT_Manual_EN.pdf",         "http://www.energy-xt.com/") ],
+  [ "energyxt2",     "energyXT2",       "DAW",            "energyxt2",        "energyxt2",        TEMPLATE_NO,  LEVEL_0,   "Demo",       (0, 0, 0, 1, "Native",  0, 1, "JACK"),        ("file:///usr/share/kxstudio/docs/EnergyXT_Manual_EN.pdf",         "http://www.energy-xt.com/") ],
 
   [ "giada",         "Giada",           "Audio Looper",   "giada",            generic_audio_icon, TEMPLATE_YES, LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        0, 0, ""),            ("",                                                               "http://www.monocasual.com/giada/") ],
 
@@ -108,39 +108,43 @@ iHost_Package, iHost_AppName, iHost_Ins, iHost_FX, iHost_Binary, iHost_Icon, iHo
 # (F, I, MIDI-Mode) -> (Built-in FX, Audio Input, MIDI-Mode)
 
 list_Instrument = [
-  # Package                 AppName              Type                Binary                    Icon                Template?     Level    Rel.-Model    (F, I, MIDI-Mode)      (doc-file,                                                     website)
-  [ "aeolus",               "Aeolus",            "Synth",            "aeolus -J",              generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", (0, 0, "ALSA | JACK"), ("",                                                           "http://www.kokkinizita.net/linuxaudio/aeolus/index.html") ],
+  # Package                 AppName              Type                Binary                    Icon                Template?     Level      Rel.-Model    (F, I, MIDI-Mode)      (doc-file,                                                     website)
+  [ "aeolus",               "Aeolus",            "Synth",            "aeolus -J",              generic_audio_icon, TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, "ALSA | JACK"), ("",                                                           "http://www.kokkinizita.net/linuxaudio/aeolus/index.html") ],
 
-  [ "amsynth",              "amSynth",           "Synth",            "amsynth",                "amsynth",          TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 0, "ALSA + JACK"), ("",                                                           "") ],
+  [ "amsynth",              "amSynth",           "Synth",            "amsynth",                "amsynth",          TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "ALSA + JACK"), ("",                                                           "") ],
 
-  [ "azr3-jack",            "AZR3",              "Synth",            "azr3",                   "azr3",             TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 0, "JACK"),        ("",                                                           "http://ll-plugins.nongnu.org/azr3/") ],
+  [ "azr3-jack",            "AZR3",              "Synth",            "azr3",                   "azr3",             TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "JACK"),        ("",                                                           "http://ll-plugins.nongnu.org/azr3/") ],
 
-  [ "distrho-plugin-ports", "Vex",               "Synth",            "vex",                    generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 1, "ALSA"),        ("",                                                           "") ],
-  [ "highlife",             "HighLife",          "Sampler",          "highlife",               generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 1, "ALSA"),        ("",                                                           "http://www.discodsp.com/highlife/") ],
-  [ "juced-plugins",        "DrumSynth",         "Synth",            "drumsynth",              "juced_plugins",    TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 1, "ALSA"),        ("",                                                           "") ],
-  [ "tal-plugins",          "TAL NoiseMaker",    "Synth",            "TAL-NoiseMaker",         "tal_plugins",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 1, "ALSA"),        ("",                                                           "http://kunz.corrupt.ch/products/tal-noisemaker") ],
-  [ "wolpertinger",         "Wolpertinger",      "Synth",            "Wolpertinger",           "wolpertinger",     TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 0, "ALSA"),        ("",                                                           "http://tumbetoene.tuxfamily.org") ],
+  [ "distrho-plugin-ports", "Vex",               "Synth",            "vex",                    generic_audio_icon, TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 1, "ALSA"),        ("",                                                           "") ],
+  [ "highlife",             "HighLife",          "Sampler",          "highlife",               generic_audio_icon, TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 1, "ALSA"),        ("",                                                           "http://www.discodsp.com/highlife/") ],
+  [ "juced-plugins",        "DrumSynth",         "Synth",            "drumsynth",              "juced_plugins",    TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 1, "ALSA"),        ("",                                                           "") ],
+  [ "tal-plugins",          "TAL NoiseMaker",    "Synth",            "TAL-NoiseMaker",         "tal_plugins",      TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 1, "ALSA"),        ("",                                                           "http://kunz.corrupt.ch/products/tal-noisemaker") ],
+  [ "wolpertinger",         "Wolpertinger",      "Synth",            "Wolpertinger",           "wolpertinger",     TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "ALSA"),        ("",                                                           "http://tumbetoene.tuxfamily.org") ],
 
-  [ "foo-yc20",             "Foo YC20",          "Synth",            "foo-yc20",               "foo-yc20",         TEMPLATE_NO,  LEVEL_0, "OpenSource", (0, 0, "JACK"),        ("",                                                           "http://code.google.com/p/foo-yc20/") ],
+  [ "foo-yc20",             "Foo YC20",          "Synth",            "foo-yc20",               "foo-yc20",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, "JACK"),        ("",                                                           "http://code.google.com/p/foo-yc20/") ],
 
-  [ "jsampler",             "JSampler Fantasia", "Sampler",          "jsampler-bin",           "jsampler",         TEMPLATE_NO,  LEVEL_0, "OpenSource", (0, 0, "ALSA + JACK"), ("file:///usr/share/kxstudio/docs/jsampler/jsampler.html",     "http://www.linuxsampler.org/") ],
+  [ "jsampler",             "JSampler Fantasia", "Sampler",          "jsampler-bin",           "jsampler",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, "ALSA + JACK"), ("file:///usr/share/kxstudio/docs/jsampler/jsampler.html",     "http://www.linuxsampler.org/") ],
 
-  [ "loomer-plugins",       "Aspect",            "Synth",            "Aspect",                 "loomer",           TEMPLATE_NO,  LEVEL_0, "Demo",       (1, 1, "ALSA"),        ("file:///usr/share/doc/loomer-plugins/Aspect Manual.pdf.gz",  "http://www.loomer.co.uk/aspect.htm") ],
-  [ "loomer-plugins",       "Sequent",           "Synth",            "Sequent",                "loomer",           TEMPLATE_NO,  LEVEL_0, "Demo",       (1, 1, "ALSA"),        ("file:///usr/share/doc/loomer-plugins/Sequent Manual.pdf.gz", "http://www.loomer.co.uk/sequent.htm") ],
-  [ "loomer-plugins",       "String",            "Synth",            "String",                 "loomer",           TEMPLATE_NO,  LEVEL_0, "Demo",       (1, 1, "ALSA"),        ("file:///usr/share/doc/loomer-plugins/String Manual.pdf.gz",  "http://www.loomer.co.uk/string.htm") ],
+  [ "loomer-plugins",       "Aspect",            "Synth",            "Aspect",                 "loomer",           TEMPLATE_NO,  LEVEL_0,   "Demo",       (1, 1, "ALSA"),        ("file:///usr/share/doc/loomer-plugins/Aspect Manual.pdf.gz",  "http://www.loomer.co.uk/aspect.htm") ],
+  [ "loomer-plugins",       "Sequent",           "Synth",            "Sequent",                "loomer",           TEMPLATE_NO,  LEVEL_0,   "Demo",       (1, 1, "ALSA"),        ("file:///usr/share/doc/loomer-plugins/Sequent Manual.pdf.gz", "http://www.loomer.co.uk/sequent.htm") ],
+  [ "loomer-plugins",       "String",            "Synth",            "String",                 "loomer",           TEMPLATE_NO,  LEVEL_0,   "Demo",       (1, 1, "ALSA"),        ("file:///usr/share/doc/loomer-plugins/String Manual.pdf.gz",  "http://www.loomer.co.uk/string.htm") ],
 
-  [ "phasex",               "Phasex",            "Synth",            "phasex",                 "phasex",           TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 1, "ALSA"),        ("file:///usr/share/phasex/help/parameters.help",              "") ],
+  [ "petri-foo",            "Petri-Foo",         "Sampler",          "petri-foo",              "petri-foo",        TEMPLATE_NO,  LEVEL_NSM, "OpenSource", (0, 0, "ALSA + JACK"), ("",                                                           "http://petri-foo.sourceforge.net/") ],
 
-  [ "pianoteq",             "Pianoteq",          "Synth",            "Pianoteq",               "pianoteq",         TEMPLATE_NO,  LEVEL_0, "Demo",       (1, 0, "ALSA + JACK"), ("file:///opt/Pianoteq/Documentation/pianoteq-english.pdf",    "http://www.pianoteq.com/pianoteq4") ],
-  [ "pianoteq-stage",       "Pianoteq Stage",    "Synth",            "Pianoteq-STAGE",         "pianoteq",         TEMPLATE_NO,  LEVEL_0, "Demo",       (1, 0, "ALSA + JACK"), ("file:///opt/Pianoteq/Documentation/pianoteq-english.pdf",    "http://www.pianoteq.com/pianoteq_stage") ],
+  [ "phasex",               "Phasex",            "Synth",            "phasex",                 "phasex",           TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 1, "ALSA"),        ("file:///usr/share/phasex/help/parameters.help",              "") ],
 
-  [ "qsampler",             "Qsampler",          "Sampler",          "qsampler",               "qsampler",         TEMPLATE_NO,  LEVEL_0, "OpenSource", (0, 0, "ALSA + JACK"), ("",                                                           "http://qsampler.sourceforge.net/") ],
+  [ "pianoteq",             "Pianoteq",          "Synth",            "Pianoteq",               "pianoteq",         TEMPLATE_NO,  LEVEL_0,   "Demo",       (1, 0, "ALSA + JACK"), ("file:///opt/Pianoteq/Documentation/pianoteq-english.pdf",    "http://www.pianoteq.com/pianoteq4") ],
+  [ "pianoteq-stage",       "Pianoteq Stage",    "Synth",            "Pianoteq-STAGE",         "pianoteq",         TEMPLATE_NO,  LEVEL_0,   "Demo",       (1, 0, "ALSA + JACK"), ("file:///opt/Pianoteq/Documentation/pianoteq-english.pdf",    "http://www.pianoteq.com/pianoteq_stage") ],
 
-  [ "qsynth",               "Qsynth",            "SoundFont Player", "qsynth -a jack -m jack", "qsynth",           TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 0, "ALSA | JACK"), ("",                                                           "http://qsynth.sourceforge.net/") ],
+  [ "qsampler",             "Qsampler",          "Sampler",          "qsampler",               "qsampler",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, "ALSA + JACK"), ("",                                                           "http://qsampler.sourceforge.net/") ],
 
-  [ "yoshimi",              "Yoshimi",           "Synth",            "yoshimi -j -J",          "yoshimi",          TEMPLATE_NO,  LEVEL_1, "OpenSource", (1, 0, "ALSA | JACK"), ("",                                                           "http://yoshimi.sourceforge.net/") ],
+  [ "qsynth",               "Qsynth",            "SoundFont Player", "qsynth -a jack -m jack", "qsynth",           TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "ALSA | JACK"), ("",                                                           "http://qsynth.sourceforge.net/") ],
 
-  [ "zynaddsubfx",          "ZynAddSubFX",       "Synth",            "zynaddsubfx",            "zynaddsubfx",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 0, "ALSA + JACK"), ("",                                                           "http://zynaddsubfx.sourceforge.net/") ]
+  [ "setbfree",             "setBfree",          "Synth",            "setBfree-start",         "setBfree",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "JACK"),        ("",                                                           "http://setbfree.org/") ],
+
+  [ "yoshimi",              "Yoshimi",           "Synth",            "yoshimi -j -J",          "yoshimi",          TEMPLATE_NO,  LEVEL_1,   "OpenSource", (1, 0, "ALSA | JACK"), ("",                                                           "http://yoshimi.sourceforge.net/") ],
+
+  [ "zynaddsubfx",          "ZynAddSubFX",       "Synth",            "zynaddsubfx",            "zynaddsubfx",      TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "ALSA + JACK"), ("",                                                           "http://zynaddsubfx.sourceforge.net/") ]
 ]
 
 iInstrument_Package, iInstrument_AppName, iInstrument_Type, iInstrument_Binary, iInstrument_Icon, iInstrument_Template, iInstrument_Level, iInstrument_RelModel, iInstrument_Features, iInstrument_Docs = range(0, len(list_Instrument[0]))
@@ -409,6 +413,12 @@ list_Tool = [
   [ "linuxdsp-plugins",  "linuxDSP JACK Patch Bay",      "Patch Bay",           "jp1_x86-64 || jp1_i686", "linuxdsp",         TEMPLATE_NO,  LEVEL_0, "FreeWare",   ("JACK",        0), ("file:///usr/share/doc/linuxdsp-plugins/JP1/manual.pdf.gz",      "http://www.linuxdsp.co.uk/download/jack/download_jp1_jack/index.html") ],
 
   [ "lives",             "LiVES",                        "VJ / Video Editor",   "lives",                  "lives",            TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         1), ("",                                                              "http://lives.sourceforge.net/") ],
+
+  [ "meterbridge",       "MeterBridge Classic VU",              "VU / Peak Analyzer", "meterbridge -t vu :",         "meterbridge32x32", TEMPLATE_NO, LEVEL_0, "OpenSource", ("---", 0), ("",                                                            "http://plugin.org.uk/meterbridge/") ],
+  [ "meterbridge",       "MeterBridge PPM Meter",               "VU / Peak Analyzer", "meterbridge -t ppm :",        "meterbridge32x32", TEMPLATE_NO, LEVEL_0, "OpenSource", ("---", 0), ("",                                                            "http://plugin.org.uk/meterbridge/") ],
+  [ "meterbridge",       "MeterBridge Digital Peak Meter",      "VU / Peak Analyzer", "meterbridge -t dpm -c 2 : :", "meterbridge32x32", TEMPLATE_NO, LEVEL_0, "OpenSource", ("---", 0), ("",                                                            "http://plugin.org.uk/meterbridge/") ],
+  [ "meterbridge",       "MeterBridge 'Jellyfish' Phase Meter", "VU / Peak Analyzer", "meterbridge -t jf -c 2 : :",  "meterbridge32x32", TEMPLATE_NO, LEVEL_0, "OpenSource", ("---", 0), ("",                                                            "http://plugin.org.uk/meterbridge/") ],
+  [ "meterbridge",       "MeterBridge Oscilloscope Meter",      "VU / Peak Analyzer", "meterbridge -t sco :",        "meterbridge32x32", TEMPLATE_NO, LEVEL_0, "OpenSource", ("---", 0), ("",                                                            "http://plugin.org.uk/meterbridge/") ],
 
   [ "mhwaveedit",        "MhWaveEdit",                   "Audio Editor",        "mhwaveedit",             "mhwaveedit",       TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         0), ("",                                                              "http://gna.org/projects/mhwaveedit/") ],
 
