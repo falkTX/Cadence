@@ -213,6 +213,9 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         if binary.startswith("startBristol"):
             self.createAppTemplate("bristol", app, binary)
 
+        elif binary.startswith("carla-standalone"):
+            self.createAppTemplate("carla-standalone", app, binary)
+
         elif app == "Ardour 2.8":
             self.createAppTemplate("ardour2", app, binary)
 
@@ -737,7 +740,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             if not "bristol" in pkglist:
                 self.tabWidget.setTabEnabled(iTabBristol, False)
 
-            if not ("carla-bridge-linux32" in pkglist or "carla-bridge-linux64" in pkglist):
+            if not ("carla" in pkglist or "cadence-git" in pkglist):
                 self.tabWidget.setTabEnabled(iTabPlugin, False)
 
         last_pos = 0

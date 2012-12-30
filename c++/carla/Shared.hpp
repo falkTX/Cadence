@@ -148,4 +148,12 @@ const CarlaSaveState* getSaveStateDictFromXML(const QDomNode& xmlNode);
 
 QString xmlSafeString(QString string, const bool toXml);
 
+// ------------------------------------------------------------------------------------------------------------
+// Plugin Query (helper functions)
+
+// needs free() afterwars if valid
+char* findDSSIGUI(const char* const filename, const char* const name, const char* const label);
+
+// ------------------------------------------------------------------------------------------------------------
+
 #endif // SHARED_HPP

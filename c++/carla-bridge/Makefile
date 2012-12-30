@@ -471,9 +471,10 @@ doxygen: carla_bridge.doxygen
 
 clean:
 	rm -f *.o *.dll *.so *.exe
+	rm -f $(OBJS_NATIVE)
 	rm -f $(OBJS_POSIX32)
 	rm -f $(OBJS_POSIX64)
 	rm -f $(OBJS_WIN32)
 	rm -f $(OBJS_WIN64)
 	rm -f carla-bridge-lv2-gtk2 carla-bridge-lv2-gtk3 carla-bridge-lv2-qt4 carla-bridge-lv2-qt5 carla-bridge-lv2-x11 carla-bridge-vst-x11
-	rm -f carla-bridge-posix32 carla-bridge-posix64
+	rm -f carla-bridge-native carla-bridge-posix32 carla-bridge-posix64

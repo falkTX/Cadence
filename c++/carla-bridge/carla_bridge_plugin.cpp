@@ -1098,10 +1098,8 @@ int main(int argc, char* argv[])
 
     void* extraStuff = nullptr;
 
-#if 1 // TESTING
-    static const char* const dssiGUI = "/usr/lib/dssi/calf/calf_gtk";
-    extraStuff = (void*)dssiGUI;
-#endif
+    if (itype == CarlaBackend::PLUGIN_DSSI)
+        extraStuff = findDSSIGUI(filename, name, label);
 
     // Init plugin
     short id = engine->addPlugin(itype, filename, name, label, extraStuff);
@@ -1131,6 +1129,9 @@ int main(int argc, char* argv[])
 
         ret = 1;
     }
+
+    if (extraStuff && itype == CarlaBackend::PLUGIN_DSSI)
+        free((char*)extraStuff);
 
     engine->aboutToClose();
     engine->removeAllPlugins();

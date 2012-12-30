@@ -17,6 +17,9 @@
 
 #include "Shared.hpp"
 
+#include <QtCore/QDir>
+#include <QtCore/QFileInfo>
+
 //#define __STDC_LIMIT_MACROS
 //#include <cstdint>
 
@@ -254,4 +257,43 @@ QString xmlSafeString(QString string, const bool toXml)
         return string.replace("&", "&amp;").replace("<","&lt;").replace(">","&gt;").replace("'","&apos;").replace("\"","&quot;");
     else
         return string.replace("&amp;", "&").replace("&lt;","<").replace("&gt;",">").replace("&apos;","'").replace("&quot;","\"");
+}
+
+// ------------------------------------------------------------------------------------------------------------
+// Plugin Query (helper functions)
+
+char* findDSSIGUI(const char* const filename, const char* const name, const char* const label)
+{
+    static QString guiFilename;
+    guiFilename.clear();
+
+    QString pluginDir(filename);
+    pluginDir.resize(pluginDir.lastIndexOf("."));
+
+    QString shortName = QFileInfo(pluginDir).baseName();
+
+    QString checkName  = QString(name).replace(" ", "_");
+    QString checkLabel = QString(label);
+    QString checkSName = shortName;
+
+    if (! checkName.endsWith("_"))  checkName  += "_";
+    if (! checkLabel.endsWith("_")) checkLabel += "_";
+    if (! checkSName.endsWith("_")) checkSName += "_";
+
+    QStringList guiFiles = QDir(pluginDir).entryList();
+
+    foreach (const QString& gui, guiFiles)
+    {
+        if (gui.startsWith(checkName) || gui.startsWith(checkLabel) || gui.startsWith(checkSName))
+        {
+            QFileInfo finalname(pluginDir + QDir::separator() + gui);
+            guiFilename = finalname.absoluteFilePath();
+            break;
+        }
+    }
+
+    if (guiFilename.isEmpty())
+        return nullptr;
+
+    return strdup(guiFilename.toUtf8().constData());
 }
