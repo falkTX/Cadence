@@ -111,7 +111,7 @@ list_Instrument = [
   # Package                 AppName              Type                Binary                    Icon                Template?     Level    Rel.-Model    (F, I, MIDI-Mode)      (doc-file,                                                     website)
   [ "aeolus",               "Aeolus",            "Synth",            "aeolus -J",              generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", (0, 0, "ALSA | JACK"), ("",                                                           "http://www.kokkinizita.net/linuxaudio/aeolus/index.html") ],
 
-  [ "amsynth",              "Amsynth",           "Synth",            "amsynth",                "amsynth",          TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 0, "ALSA + JACK"), ("",                                                           "") ],
+  [ "amsynth",              "amSynth",           "Synth",            "amsynth",                "amsynth",          TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 0, "ALSA + JACK"), ("",                                                           "") ],
 
   [ "azr3-jack",            "AZR3",              "Synth",            "azr3",                   "azr3",             TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, 0, "JACK"),        ("",                                                           "http://ll-plugins.nongnu.org/azr3/") ],
 
@@ -208,8 +208,95 @@ iBristol_Package, iBristol_AppName, iBristol_Type, iBristol_ShortName, iBristol_
 # (S, M, P) -> (Stereo, MIDI-In, factory Presets)
 
 list_Plugin = [
-  # Package         PluginName         Spec    Type          Filename                  Label/URI                                         Icon    Rel.-Model    (S, M, P)  (doc,                                     website)
-  [ "calf-plugins", "Calf Compressor", "LV2",  "Compressor", "/usr/lib/lv2/calf.lv2/", "http://calf.sourceforge.net/plugins/Compressor", "calf", "OpenSource", (1, 0, 0), ("file:///usr/share/doc/calf/index.html", "http://calf.sourceforge.net/") ]
+  # Package                 PluginName                Spec    Type          Filename                               Label/URI          Icon                Rel.-Model    (S, M, P)  (doc,                                     website)
+
+  # DSSI
+  [ "amsynth",              "amSynth DSSI",           "DSSI", "Synth",      "/usr/lib/dssi/amsynth_dssi.so",       "amsynth",         "amsynth",          "OpenSource", (1, 1, 1), ("", "") ],
+
+  [ "dssi-example-plugins", "Less Trivial synth",     "DSSI", "Synth",      "/usr/lib/dssi/less_trivial_synth.so", "LTS",             generic_audio_icon, "OpenSource", (0, 1, 0), ("", "") ],
+  [ "dssi-example-plugins", "Simple Mono Sampler",    "DSSI", "Sampler",    "/usr/lib/dssi/trivial_sampler.so",    "mono_sampler",    generic_audio_icon, "OpenSource", (0, 1, 0), ("", "") ],
+  [ "dssi-example-plugins", "Simple Stereo Sampler",  "DSSI", "Sampler",    "/usr/lib/dssi/trivial_sampler.so",    "stereo_sampler",  generic_audio_icon, "OpenSource", (1, 1, 0), ("", "") ],
+
+  [ "fluidsynth-dssi",      "FluidSynth DSSI",        "DSSI", "Sampler",    "/usr/lib/dssi/fluidsynth-dssi.so",    "FluidSynth-DSSI", generic_audio_icon, "OpenSource", (1, 1, 0), ("", "") ],
+
+  [ "hexter",               "Hexter DX7 emulation",   "DSSI", "Synth",      "/usr/lib/dssi/hexter.so",             "hexter",          generic_audio_icon, "OpenSource", (0, 1, 1), ("", "") ],
+
+  [ "holap",                "Horgand",                "DSSI", "Synth",      "/usr/lib/dssi/horgand.so",            "horgand",         generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
+
+  [ "ls16",                 "LinuxSampler 16Ch Rack", "DSSI", "Sampler",    "/usr/lib/dssi/ls16.so",               "ls16",            generic_audio_icon, "OpenSource", (1, 1, 0), ("", "") ],
+
+  [ "ll-scope",             "Oscilloscope",           "DSSI", "Util",       "/usr/lib/dssi/ll-scope.so",           "ll-scope",        "/usr/lib/dssi/ll-scope/icon.png", "OpenSource", (1, 0, 0), ("", "") ],
+  [ "nekobee",              "Nekobee DSSI",           "DSSI", "Synth",      "/usr/lib/dssi/nekobee.so",            "nekobee",         generic_audio_icon, "OpenSource", (0, 1, 1), ("", "") ],
+  [ "sineshaper",           "Sineshaper",             "DSSI", "Synth",      "/usr/lib/dssi/sineshaper.so",         "ll-sineshaper",   "sineshaper32x32",  "OpenSource", (0, 1, 1), ("", "") ],
+
+  [ "whysynth",             "WhySynth",               "DSSI", "Synth",      "/usr/lib/dssi/whysynth.so",           "WhySynth",        generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
+  [ "wsynth-dssi",          "Wsynth DSSI",            "DSSI", "Synth",      "/usr/lib/dssi/wsynth-dssi.so",        "Wsynth",          generic_audio_icon, "OpenSource", (0, 1, 1), ("", "") ],
+  [ "xsynth-dssi",          "Xsynth DSSI",            "DSSI", "Synth",      "/usr/lib/dssi/xsynth-dssi.so",        "Xsynth",          generic_audio_icon, "OpenSource", (0, 1, 1), ("", "") ],
+
+  # LV2
+  [ "calf-plugins",         "Calf Compressor",        "LV2",  "Compressor", "/usr/lib/lv2/calf.lv2/",              "http://calf.sourceforge.net/plugins/Compressor", "calf", "OpenSource", (1, 0, 0), ("file:///usr/share/doc/calf/Compressor.html", "http://calf.sourceforge.net/") ],
+
+  # VST
+  [ "arctican-plugins-vst",     "The Function [VST]",               "VST", "Delay",      "/usr/lib/vst/TheFunction.so",                "The Function",               "arctican_plugins", "OpenSource", (1, 0, 1), ("", "http://arcticanaudio.com/plugins/") ],
+  [ "arctican-plugins-vst",     "The Pilgrim [VST]",                "VST", "Filter",     "/usr/lib/vst/ThePilgrim.so",                 "The Pilgrim",                "arctican_plugins", "OpenSource", (1, 1, 0), ("", "http://arcticanaudio.com/plugins/") ],
+
+  [ "distrho-plugins-vst",      "3 Band EQ [VST]",                  "VST", "EQ",         "/usr/lib/vst/3BandEQ.so",                    "3BandEQ",                    "distrho_plugins",  "OpenSource", (1, 0, 0), ("", "") ],
+  [ "distrho-plugins-vst",      "3 Band Splitter [VST]",            "VST", "EQ",         "/usr/lib/vst/3BandSplitter.so",              "3BandSplitter",              "distrho_plugins",  "OpenSource", (0, 0, 0), ("", "") ],
+  [ "distrho-plugins-vst",      "Ping Pong Pan [VST]",              "VST", "Pan",        "/usr/lib/vst/PingPongPan.so",                "Ping Pong Pan",              "distrho_plugins",  "OpenSource", (1, 0, 0), ("", "") ],
+
+  [ "distrho-plugin-ports-vst", "Argotlunar [VST]",                 "VST", "Granulator", "/usr/lib/vst/argotlunar.so",                 "Argotlunar",                 generic_audio_icon, "OpenSource", (1, 0, 1), ("", "http://argotlunar.info/") ],
+  [ "distrho-plugin-ports-vst", "BitMangler [VST]",                 "VST", "Misc",       "/usr/lib/vst/bitmangler.so",                 "BitMangler",                 generic_audio_icon, "OpenSource", (1, 1, 0), ("", "") ],
+  [ "distrho-plugin-ports-vst", "Vex [VST]",                        "VST", "Synth",      "/usr/lib/vst/vex.so",                        "Vex",                        generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
+
+  [ "drowaudio-plugins-vst",    "dRowAudio DistortionShaper [VST]", "VST", "Distortion", "/usr/lib/vst/drowaudio-distortionshaper.so", "dRowAudio DistortionShaper", generic_audio_icon, "OpenSource", (1, 0, 0), ("", "") ],
+  [ "drowaudio-plugins-vst",    "dRowAudio Distortion [VST]",       "VST", "Distortion", "/usr/lib/vst/drowaudio-distortion.so",       "dRowAudio Distortion",       generic_audio_icon, "OpenSource", (1, 0, 0), ("", "") ],
+  [ "drowaudio-plugins-vst",    "dRowAudio Flanger [VST]",          "VST", "Flanger",    "/usr/lib/vst/drowaudio-flanger.so",          "dRowAudio Flanger",          generic_audio_icon, "OpenSource", (1, 0, 0), ("", "") ],
+  [ "drowaudio-plugins-vst",    "dRowAudio Reverb [VST]",           "VST", "Reverb",     "/usr/lib/vst/drowaudio-reverb.so",           "dRowAudio Reverb",           generic_audio_icon, "OpenSource", (1, 1, 0), ("", "") ],
+  [ "drowaudio-plugins-vst",    "dRowAudio Tremolo [VST]",          "VST", "Tremolo",    "/usr/lib/vst/drowaudio-tremolo.so",          "dRowAudio Tremolo",          generic_audio_icon, "OpenSource", (1, 0, 0), ("", "") ],
+
+  [ "highlife-vst",             "Highlife [VST]",                   "VST", "Sampler",    "/usr/lib/vst/highlife.so",                   "Highlife",                   generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
+
+  [ "hybridreverb2-vst",        "HybridReverb2 [VST]",              "VST", "Reverb",     "/usr/lib/vst/HybridReverb2.so",              "HybridReverb2",              generic_audio_icon, "OpenSource", (1, 0, 0), ("", "") ],
+
+  #[ "linuxdsp-plugins-vst",     "MBC2B", "VST", "---", "MBC2B Stereo MultiBand Compressor", "/usr/lib/vst/mbc2b.so", generic_audio_icon, "OpenSource", (1, 0, 1), ("", "") ],
+  #[ "linuxdsp-plugins-vst",     "PEQ-1A", "VST", "---", "Vintage Program EQ", "/usr/lib/vst/peq-1a.so", generic_audio_icon, "OpenSource", (0, 0, 1), ("", "") ],
+  #[ "linuxdsp-plugins-vst",     "PEQ-2A", "VST", "---", "Vintage Program EQ", "/usr/lib/vst/peq-2a.so", generic_audio_icon, "OpenSource", (1, 0, 1), ("", "") ],
+
+  #[ "linuxdsp-plugins-vst",     "VC1B", "VST", "---", "Vintage Compressor", "/usr/lib/vst/vc1b.so", generic_audio_icon, "OpenSource", (0, 0, 1), ("", "") ],
+  #[ "linuxdsp-plugins-vst",     "VC2B", "VST", "---", "Vintage Compressor", "/usr/lib/vst/vc2b.so", generic_audio_icon, "OpenSource", (1, 0, 1), ("", "") ],
+
+  #[ "linuxdsp-plugins-vst",     "BLACK-EQ1", "VST", "---", "Mono Graphical EQ", "/usr/lib/vst/black-eq1.so", generic_audio_icon, "OpenSource", (0, 0, 1), ("", "") ],
+  #[ "linuxdsp-plugins-vst",     "BLACK-EQ2", "VST", "---", "Stereo Graphical EQ", "/usr/lib/vst/black-eq2.so", generic_audio_icon, "OpenSource", (1, 0, 1), ("", "") ],
+  #[ "linuxdsp-plugins-vst",     "DYN500", "VST", "---", "DYN500 Console Dynamics", "/usr/lib/vst/DYN500-1.so", generic_audio_icon, "OpenSource", (0, 0, 1), ("", "") ],
+  #[ "linuxdsp-plugins-vst",     "DYN500", "VST", "---", "DYN500 Console Dynamics", "/usr/lib/vst/DYN500-2.so", generic_audio_icon, "OpenSource", (1, 0, 1), ("", "") ],
+  #[ "linuxdsp-plugins-vst",     "EQ500", "VST", "---", "Stereo Channel EQ", "/usr/lib/vst/EQ500-1.so", generic_audio_icon, "OpenSource", (0, 0, 1), ("", "") ],
+  #[ "linuxdsp-plugins-vst",     "EQ500", "VST", "---", "Stereo Channel EQ", "/usr/lib/vst/EQ500-2.so", generic_audio_icon, "OpenSource", (1, 0, 1), ("", "") ],
+  #[ "linuxdsp-plugins-vst",     "GT500", "VST", "---", "Stereo Gate", "/usr/lib/vst/GT500-1.so", generic_audio_icon, "OpenSource", (0, 0, 1), ("", "") ],
+  #[ "linuxdsp-plugins-vst",     "GT500", "VST", "---", "Stereo Gate", "/usr/lib/vst/GT500-2.so", generic_audio_icon, "OpenSource", (1, 0, 1), ("", "") ],
+
+  #[ "loomer-plugins-vst",       "Aspect [VST]",                     "VST", "Synth",               "Aspect",    "/usr/lib/vst/AspectVST.so", generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
+  #[ "loomer-plugins-vst",       "Manifold [VST]",                   "VST", "Enhancer",            "Manifold",  "/usr/lib/vst/ManifoldVST.so", generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
+  #[ "loomer-plugins-vst",       "Resound [VST]",                    "VST", "Delay",               "Resound",   "/usr/lib/vst/ResoundVST.so", generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
+  #[ "loomer-plugins-vst",       "Sequent [VST]",                    "VST", "Synth",               "Sequent",   "/usr/lib/vst/SequentVST.so", generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
+  #[ "loomer-plugins-vst",       "Shift2 [VST]",                     "VST", "Pitch-Shifter/Delay", "Shift2",    "/usr/lib/vst/Shift2VST.so", generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
+  #[ "loomer-plugins-vst",       "String [VST]",                     "VST", "Synth",               "String",    "/usr/lib/vst/StringVST.so", generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
+  #[ "loomer-plugins-vst",       "String (FX) [VST]",                "VST", "Bundle",              "String_FX", "/usr/lib/vst/String_FXVST.so", generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
+
+  [ "pianoteq-vst",             "Pianoteq 4 [VST]",                 "VST", "Synth", "/usr/lib/vst/Pianoteq 4.so", "Pianoteq 4",       "pianoteq", "OpenSource", (0, 1, 1), ("", "") ],
+  [ "pianoteq-vst",             "Pianoteq 4 [VST, Stereo]",         "VST", "Synth", "/usr/lib/vst/Pianoteq 4_2chan.so", "Pianoteq 4", "pianoteq", "OpenSource", (1, 1, 1), ("", "") ],
+  [ "pianoteq-stage-vst",       "Pianoteq 4 STAGE [VST]",           "VST", "Synth", "/usr/lib/vst/Pianoteq 4 STAGE.so", "Pianoteq 4 STAGE",       "pianoteq", "OpenSource", (0, 1, 1), ("", "") ],
+  [ "pianoteq-stage-vst",       "Pianoteq 4 STAGE [VST, Stereo]",   "VST", "Synth", "/usr/lib/vst/Pianoteq 4 STAGE_2chan.so", "Pianoteq 4 STAGE", "pianoteq", "OpenSource", (1, 1, 1), ("", "") ],
+
+  [ "tal-plugins-vst",          "TAL Dub 3 [VST]",                  "VST", "Delay",   "/usr/lib/vst/TAL-Dub-3.so",      "TAL Dub 2",      "tal_plugins",  "OpenSource", (1, 1, 1), ("", "") ],
+  [ "tal-plugins-vst",          "TAL Filter [VST]",                 "VST", "Filter",  "/usr/lib/vst/TAL-Filter.so",     "TAL Filter",     "tal_plugins",  "OpenSource", (1, 1, 1), ("", "") ],
+  [ "tal-plugins-vst",          "TAL Filter 2 [VST]",               "VST", "Filter",  "/usr/lib/vst/TAL-Filter-2.so",   "TAL Filter 2",   "tal_plugins",  "OpenSource", (1, 1, 1), ("", "") ],
+  [ "tal-plugins-vst",          "TAL NoiseMaker [VST]",             "VST", "Synth",   "/usr/lib/vst/TAL-NoiseMaker.so", "TAL NoiseMaker", "tal_plugins",  "OpenSource", (1, 1, 1), ("", "") ],
+  [ "tal-plugins-vst",          "TAL Reverb [VST]",                 "VST", "Reverb",  "/usr/lib/vst/TAL-Reverb.so",     "TAL Reverb",     "tal_plugins",  "OpenSource", (1, 1, 1), ("", "") ],
+  [ "tal-plugins-vst",          "TAL Reverb 2 [VST]",               "VST", "Reverb",  "/usr/lib/vst/TAL-Reverb-2.so",   "TAL Reverb 2",   "tal_plugins",  "OpenSource", (1, 1, 1), ("", "") ],
+  [ "tal-plugins-vst",          "TAL Reverb 3 [VST]",               "VST", "Reverb",  "/usr/lib/vst/TAL-Reverb-3.so",   "TAL Reverb 3",   "tal_plugins",  "OpenSource", (1, 1, 1), ("", "") ],
+  [ "tal-plugins-vst",          "TAL Vocoder 2 [VST]",              "VST", "Vocoder", "/usr/lib/vst/TAL-Vocoder-2.so",  "TAL Vocoder 2",  "tal_plugins",  "OpenSource", (1, 1, 1), ("", "") ],
+
+  [ "wolpertinger-vst",         "Wolpertinger [VST]",               "VST", "Synth",   "/usr/lib/vst/Wolpertinger.so",   "Wolpertinger",   "wolpertinger", "OpenSource", (1, 1, 1), ("", "") ],
 ]
 
 iPlugin_Package, iPlugin_Name, iPlugin_Spec, iPlugin_Type, iPlugin_Filename, iPlugin_Label, iPlugin_Icon, iPlugin_RelModel, iPlugin_Features, iPlugin_Docs = range(0, len(list_Plugin[0]))
@@ -226,10 +313,10 @@ list_Effect = [
   [ "arctican-plugins",     "The Function",                  "Delay",               "TheFunction",                                  "arctican_plugins", TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://arcticanaudio.com/plugins/") ],
   [ "arctican-plugins",     "The Pilgrim",                   "Filter",              "ThePilgrim",                                   "arctican_plugins", TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://arcticanaudio.com/plugins/") ],
 
-  [ "distrho-plugins",      "3 BandEQ",                      "EQ",                  "3BandEQ",                                      "distrho_plugins",  TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "") ],
+  [ "distrho-plugins",      "3 Band EQ",                     "EQ",                  "3BandEQ",                                      "distrho_plugins",  TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "") ],
   [ "distrho-plugins",      "Ping Pong Pan",                 "Pan",                 "PingPongPan",                                  "distrho_plugins",  TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "") ],
 
-  [ "distrho-plugin-ports", "Argotlunar",                    "Granularor",          "argotlunar",                                   generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://argotlunar.info/") ],
+  [ "distrho-plugin-ports", "Argotlunar",                    "Granulator",          "argotlunar",                                   generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://argotlunar.info/") ],
   [ "distrho-plugin-ports", "BitMangler",                    "Misc",                "bitmangler",                                   generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "") ],
 
   [ "drowaudio-plugins",    "dRowAudio Distortion",          "Distortion",          "drowaudio-distortion",                         generic_audio_icon, TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "") ],

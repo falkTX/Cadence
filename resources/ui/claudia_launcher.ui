@@ -1341,7 +1341,7 @@
           </size>
          </property>
          <property name="text">
-          <string>Audio Plugins, loaded via Carla</string>
+          <string>Audio Plugins, loaded via Carla, &lt;span style=&quot;color: red;&quot;&gt;&lt;b&gt;EXPERIMENTAL&lt;/b&gt;&lt;/span&gt; (no save support yet)</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
