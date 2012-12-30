@@ -1166,6 +1166,8 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         else:
             QTimer.singleShot(0, self, SLOT("slot_engine_start()"))
 
+        QTimer.singleShot(0, self, SLOT("slot_showInitialWarning()"))
+
     def loadProjectLater(self):
         QTimer.singleShot(0, self.load_project)
 
@@ -1263,6 +1265,15 @@ class CarlaMainW(QMainWindow, ui_carla.Ui_CarlaMainW):
         #self.m_curEdit.hide()
 
         #self.m_curEdit = widget
+
+    @pyqtSlot()
+    def slot_showInitialWarning(self):
+        QMessageBox.warning(self, self.tr("Carla is incomplete"), self.tr(""
+            "The version of Carla you're currently running is incomplete.\n"
+            "Although most things work fine, Carla is not yet in a stable state.\n"
+            "\n"
+            "It will be fully functional for the next Cadence beta release."
+            ""))
 
     @pyqtSlot()
     def slot_engine_start(self):
