@@ -557,7 +557,10 @@ class ClaudiaLauncherW(QDialog):
         self.launcher.saveSettings()
 
     def loadSettings(self):
-        self.restoreGeometry(self.settings.value("Geometry", ""))
+        if self.settings.contains("Geometry"):
+            self.restoreGeometry(self.settings.value("Geometry", ""))
+        else:
+            self.resize(850, 500)
         self.launcher.loadSettings()
 
     def closeEvent(self, event):
