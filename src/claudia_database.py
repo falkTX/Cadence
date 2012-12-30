@@ -205,8 +205,14 @@ iBristol_Package, iBristol_AppName, iBristol_Type, iBristol_ShortName, iBristol_
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Plugin, TODO
 
+# (S, M, P) -> (Stereo, MIDI-In, factory Presets)
+
 list_Plugin = [
+  # Package         PluginName         Spec    Type          Filename                  Label/URI                                         Icon    Rel.-Model    (S, M, P)  (doc,                                     website)
+  [ "calf-plugins", "Calf Compressor", "LV2",  "Compressor", "/usr/lib/lv2/calf.lv2/", "http://calf.sourceforge.net/plugins/Compressor", "calf", "OpenSource", (1, 0, 0), ("file:///usr/share/doc/calf/index.html", "http://calf.sourceforge.net/") ]
 ]
+
+iPlugin_Package, iPlugin_Name, iPlugin_Spec, iPlugin_Type, iPlugin_Filename, iPlugin_Label, iPlugin_Icon, iPlugin_RelModel, iPlugin_Features, iPlugin_Docs = range(0, len(list_Plugin[0]))
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Effect

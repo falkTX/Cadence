@@ -83,7 +83,9 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         self.listBristol.setColumnWidth(0, 22)
         self.listBristol.setColumnWidth(1, 100)
         self.listPlugin.setColumnWidth(0, 22)
-        # TODO, more
+        self.listPlugin.setColumnWidth(1, 225)
+        self.listPlugin.setColumnWidth(2, 75)
+        self.listPlugin.setColumnWidth(3, 125)
         self.listEffect.setColumnWidth(0, 22)
         self.listEffect.setColumnWidth(1, 225)
         self.listEffect.setColumnWidth(2, 125)
@@ -182,10 +184,9 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             if appname == AppName:
                 return "startBristol -audio jack -midi jack -%s" % ShortName
 
-        # TODO - plugin
-        #for Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs in database.list_Effect:
-            #if appname == AppName:
-                #return Binary
+        for Package, Name, Spec, Type, Filename, Label, Icon, License, Features, Docs in database.list_Plugin:
+            if appname == Name:
+                return "carla-standalone native %s \"%s\" \"%s\"" % (Spec.lower(), Filename, Label)
 
         for Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs in database.list_Effect:
             if appname == AppName:
@@ -202,7 +203,9 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         if not app:
             app = self.getSelectedApp()
         binary = self.getBinaryFromAppName(app)
-        os.system("cd '%s' && %s &" % (self.callback_getProjectFolder(), binary))
+
+        if app and binary:
+            os.system("cd '%s' && %s &" % (self.callback_getProjectFolder(), binary))
 
     def addAppToLADISH(self, app=None):
         if not app:
@@ -318,6 +321,10 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             tmplte_cmd += " -import '%s'" % os.path.join(tmplte_folder, "memory")
             tmplte_cmd += " -exec"
             tmplte_lvl  = "1"
+
+        elif app == "carla-standalone":
+            tmplte_cmd = binary
+            tmplte_lvl = "1"
 
         elif app == "ardour2":
             tmplte_folder = os.path.join(proj_folder, "Ardour2_%i" % rand_check)
@@ -818,6 +825,25 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
                 last_pos += 1
 
         last_pos = 0
+        for Package, Name, Spec, Type, Filename, Label, Icon, License, Features, Docs in database.list_Plugin:
+            if SHOW_ALL or Package in pkglist:
+                w_icon = QTableWidgetItem("")
+                w_icon.setIcon(QIcon(self.getIcon(Icon)))
+                w_name = QTableWidgetItem(Name)
+                w_spec = QTableWidgetItem(Spec)
+                w_type = QTableWidgetItem(Type)
+                w_licc = QTableWidgetItem(License)
+
+                self.listPlugin.insertRow(last_pos)
+                self.listPlugin.setItem(last_pos, 0, w_icon)
+                self.listPlugin.setItem(last_pos, 1, w_name)
+                self.listPlugin.setItem(last_pos, 2, w_spec)
+                self.listPlugin.setItem(last_pos, 3, w_type)
+                self.listPlugin.setItem(last_pos, 4, w_licc)
+
+                last_pos += 1
+
+        last_pos = 0
         for Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs in database.list_Effect:
             if SHOW_ALL or Package in pkglist:
                 w_icon = QTableWidgetItem("")
@@ -1034,6 +1060,39 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         else:
             selected = False
             self.clearInfo_Bristol()
+
+        self.callback_checkGUI(selected)
+
+    @pyqtSlot(int)
+    def slot_checkSelectedPlugin(self, row):
+        if row >= 0:
+            selected = True
+
+            pluginName = self.listPlugin.item(row, 1).text()
+
+            for plugin in database.list_Plugin:
+                if plugin[1] == pluginName:
+                    appInfo = plugin
+                    break
+            else:
+                print("ERROR: Failed to retrieve plugin info from database")
+                return
+
+            Package, Name, Spec, Type, Filename, Label, Icon, License, Features, Docs = appInfo
+
+            self.frame_Plugin.setEnabled(True)
+            self.ico_app_plugin.setPixmap(self.getIcon(Icon).pixmap(48, 48))
+            self.ico_stereo_plugin.setPixmap(self.getIconForYesNo(Features[0]).pixmap(16, 16))
+            self.ico_midi_input_plugin.setPixmap(self.getIconForYesNo(Features[1]).pixmap(16, 16))
+            self.ico_presets_plugin.setPixmap(self.getIconForYesNo(Features[2]).pixmap(16, 16))
+            self.label_name_plugin.setText(Name)
+
+            Docs0 = Docs[0] if (os.path.exists(Docs[0].replace("file://", ""))) else ""
+            self.showDoc_Plugin(Docs0, Docs[1])
+
+        else:
+            selected = False
+            self.clearInfo_Plugin()
 
         self.callback_checkGUI(selected)
 
