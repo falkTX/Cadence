@@ -242,7 +242,7 @@ list_Plugin = [
   [ "xsynth-dssi",          "Xsynth DSSI",            "DSSI", "Synth",      "/usr/lib/dssi/xsynth-dssi.so",        "Xsynth",          generic_audio_icon, "OpenSource", (0, 1, 1), ("", "") ],
 
   # LV2
-  [ "calf-plugins",         "Calf Analyzer",          "LV2",  "Compressor", "/usr/lib/lv2/calf.lv2/",              "http://calf.sourceforge.net/plugins/Analyzer",   "calf", "OpenSource", (1, 0, 0), ("file:///usr/share/doc/calf/Analyzer.html",   "http://calf.sourceforge.net/") ],
+  [ "calf-plugins",         "Calf Analyzer",          "LV2",  "Analyzer",   "/usr/lib/lv2/calf.lv2/",              "http://calf.sourceforge.net/plugins/Analyzer",   "calf", "OpenSource", (1, 0, 0), ("file:///usr/share/doc/calf/Analyzer.html",   "http://calf.sourceforge.net/") ],
   [ "calf-plugins",         "Calf Compressor",        "LV2",  "Compressor", "/usr/lib/lv2/calf.lv2/",              "http://calf.sourceforge.net/plugins/Compressor", "calf", "OpenSource", (1, 0, 0), ("file:///usr/share/doc/calf/Compressor.html", "http://calf.sourceforge.net/") ],
 
   # VST

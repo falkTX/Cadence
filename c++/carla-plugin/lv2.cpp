@@ -3412,8 +3412,16 @@ public:
 
         const LV2_RDF_UI* const rdf_ui = &rdf_descriptor->UIs[uiId];
 
+        CARLA_ASSERT(rdf_ui && rdf_ui->URI);
+
+        // Calf Analyzer is useless without instance-data
+        if (strcmp(rdf_ui->URI, "http://calf.sourceforge.net/plugins/Analyzer") == 0)
+            return false;
+
         for (uint32_t i=0; i < rdf_ui->FeatureCount; i++)
         {
+            CARLA_ASSERT(rdf_ui->Features[i].URI);
+
             if (strcmp(rdf_ui->Features[i].URI, LV2_INSTANCE_ACCESS_URI) == 0 || strcmp(rdf_ui->Features[i].URI, LV2_DATA_ACCESS_URI) == 0)
                 return false;
         }
@@ -4216,6 +4224,14 @@ public:
 
         for (uint32_t i=0; i < rdf_descriptor->UICount; i++)
         {
+            CARLA_ASSERT(rdf_descriptor->UIs[i].URI);
+
+            if (! rdf_descriptor->UIs[i].URI)
+            {
+                qWarning("Plugin has an UI without a valid URI");
+                continue;
+            }
+
             switch (rdf_descriptor->UIs[i].Type)
             {
             case LV2_UI_QT4:
@@ -4262,7 +4278,9 @@ public:
 
             case LV2_UI_EXTERNAL:
             case LV2_UI_OLD_EXTERNAL:
-                iExt = i;
+                // Calf Analyzer is useless using external-ui
+                if (strcmp(rdf_descriptor->URI, "http://calf.sourceforge.net/plugins/Analyzer") != 0)
+                    iExt = i;
                 break;
 
             default:
