@@ -810,6 +810,13 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             index += 1
 
         # -------------------------------------------------------------
+        # Set-up GUI (JACK Bridges)
+
+        if not havePulseAudio:
+            self.toolBox_pulseaudio.setEnabled(False)
+            self.label_bridge_pulse.setText(self.tr("PulseAudio is not installed"))
+
+        # -------------------------------------------------------------
         # Set-up GUI (Tweaks)
 
         self.settings_changed_types = []
@@ -1383,6 +1390,11 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.m_lastAlsaIndexType = self.cb_alsa_type.currentIndex()
 
     def checkPulseAudio(self):
+        if not havePulseAudio:
+            self.systray.setActionEnabled("pulse_start", False)
+            self.systray.setActionEnabled("pulse_stop", False)
+            return
+
         if isPulseAudioStarted():
             if isPulseAudioBridged():
                 self.b_pulse_start.setEnabled(False)
