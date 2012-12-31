@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# TODO
+# - add lv2 plugins
+# - split linuxdsp plugins into :i386 and :amd64 (some of its plugins are 32bit only)
+
 # Package database
 
 generic_audio_icon = "audio-x-generic"
@@ -108,43 +112,43 @@ iHost_Package, iHost_AppName, iHost_Ins, iHost_FX, iHost_Binary, iHost_Icon, iHo
 # (F, I, MIDI-Mode) -> (Built-in FX, Audio Input, MIDI-Mode)
 
 list_Instrument = [
-  # Package                 AppName              Type                Binary                    Icon                Template?     Level      Rel.-Model    (F, I, MIDI-Mode)      (doc-file,                                                     website)
-  [ "aeolus",               "Aeolus",            "Synth",            "aeolus -J",              generic_audio_icon, TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, "ALSA | JACK"), ("",                                                           "http://www.kokkinizita.net/linuxaudio/aeolus/index.html") ],
+  # Package                 AppName              Type                Binary                    Icon                Template?     Level      Rel.-Model    (F, I, MIDI-Mode)      (doc-file,                                                            website)
+  [ "aeolus",               "Aeolus",            "Synth",            "aeolus -J",              generic_audio_icon, TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, "ALSA | JACK"), ("",                                                                  "http://www.kokkinizita.net/linuxaudio/aeolus/index.html") ],
 
-  [ "amsynth",              "amSynth",           "Synth",            "amsynth",                "amsynth",          TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "ALSA + JACK"), ("",                                                           "") ],
+  [ "amsynth",              "amSynth",           "Synth",            "amsynth",                "amsynth",          TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "ALSA + JACK"), ("",                                                                  "") ],
 
-  [ "azr3-jack",            "AZR3",              "Synth",            "azr3",                   "azr3",             TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "JACK"),        ("",                                                           "http://ll-plugins.nongnu.org/azr3/") ],
+  [ "azr3-jack",            "AZR3",              "Synth",            "azr3",                   "azr3",             TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "JACK"),        ("",                                                                  "http://ll-plugins.nongnu.org/azr3/") ],
 
-  [ "distrho-plugin-ports", "Vex",               "Synth",            "vex",                    generic_audio_icon, TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 1, "ALSA"),        ("",                                                           "") ],
-  [ "highlife",             "HighLife",          "Sampler",          "highlife",               generic_audio_icon, TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 1, "ALSA"),        ("",                                                           "http://www.discodsp.com/highlife/") ],
-  [ "juced-plugins",        "DrumSynth",         "Synth",            "drumsynth",              "juced_plugins",    TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 1, "ALSA"),        ("",                                                           "") ],
-  [ "tal-plugins",          "TAL NoiseMaker",    "Synth",            "TAL-NoiseMaker",         "tal_plugins",      TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 1, "ALSA"),        ("",                                                           "http://kunz.corrupt.ch/products/tal-noisemaker") ],
-  [ "wolpertinger",         "Wolpertinger",      "Synth",            "Wolpertinger",           "wolpertinger",     TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "ALSA"),        ("",                                                           "http://tumbetoene.tuxfamily.org") ],
+  [ "distrho-plugin-ports", "Vex",               "Synth",            "vex",                    generic_audio_icon, TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 1, "ALSA"),        ("",                                                                  "") ],
+  [ "highlife",             "HighLife",          "Sampler",          "highlife",               generic_audio_icon, TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 1, "ALSA"),        ("",                                                                  "http://www.discodsp.com/highlife/") ],
+  [ "juced-plugins",        "DrumSynth",         "Synth",            "drumsynth",              "juced_plugins",    TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 1, "ALSA"),        ("",                                                                  "") ],
+  [ "tal-plugins",          "TAL NoiseMaker",    "Synth",            "TAL-NoiseMaker",         "tal_plugins",      TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/TAL Noisemaker User Guide 1.0.pdf", "http://kunz.corrupt.ch/products/tal-noisemaker") ],
+  [ "wolpertinger",         "Wolpertinger",      "Synth",            "Wolpertinger",           "wolpertinger",     TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "ALSA"),        ("",                                                                  "http://tumbetoene.tuxfamily.org") ],
 
-  [ "foo-yc20",             "Foo YC20",          "Synth",            "foo-yc20",               "foo-yc20",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, "JACK"),        ("",                                                           "http://code.google.com/p/foo-yc20/") ],
+  [ "foo-yc20",             "Foo YC20",          "Synth",            "foo-yc20",               "foo-yc20",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, "JACK"),        ("",                                                                  "http://code.google.com/p/foo-yc20/") ],
 
-  [ "jsampler",             "JSampler Fantasia", "Sampler",          "jsampler-bin",           "jsampler",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, "ALSA + JACK"), ("file:///usr/share/kxstudio/docs/jsampler/jsampler.html",     "http://www.linuxsampler.org/") ],
+  [ "jsampler",             "JSampler Fantasia", "Sampler",          "jsampler-bin",           "jsampler",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, "ALSA + JACK"), ("file:///usr/share/kxstudio/docs/jsampler/jsampler.html",            "http://www.linuxsampler.org/") ],
 
-  [ "loomer-plugins",       "Aspect",            "Synth",            "Aspect",                 "loomer",           TEMPLATE_NO,  LEVEL_0,   "Demo",       (1, 1, "ALSA"),        ("file:///usr/share/doc/loomer-plugins/Aspect Manual.pdf.gz",  "http://www.loomer.co.uk/aspect.htm") ],
-  [ "loomer-plugins",       "Sequent",           "Synth",            "Sequent",                "loomer",           TEMPLATE_NO,  LEVEL_0,   "Demo",       (1, 1, "ALSA"),        ("file:///usr/share/doc/loomer-plugins/Sequent Manual.pdf.gz", "http://www.loomer.co.uk/sequent.htm") ],
-  [ "loomer-plugins",       "String",            "Synth",            "String",                 "loomer",           TEMPLATE_NO,  LEVEL_0,   "Demo",       (1, 1, "ALSA"),        ("file:///usr/share/doc/loomer-plugins/String Manual.pdf.gz",  "http://www.loomer.co.uk/string.htm") ],
+  [ "loomer-plugins",       "Aspect",            "Synth",            "Aspect",                 "loomer",           TEMPLATE_NO,  LEVEL_0,   "Demo",       (1, 1, "ALSA"),        ("file:///usr/share/doc/loomer-plugins/Aspect Manual.pdf.gz",         "http://www.loomer.co.uk/aspect.htm") ],
+  [ "loomer-plugins",       "Sequent",           "Synth",            "Sequent",                "loomer",           TEMPLATE_NO,  LEVEL_0,   "Demo",       (1, 1, "ALSA"),        ("file:///usr/share/doc/loomer-plugins/Sequent Manual.pdf.gz",        "http://www.loomer.co.uk/sequent.htm") ],
+  [ "loomer-plugins",       "String",            "Synth",            "String",                 "loomer",           TEMPLATE_NO,  LEVEL_0,   "Demo",       (1, 1, "ALSA"),        ("file:///usr/share/doc/loomer-plugins/String Manual.pdf.gz",         "http://www.loomer.co.uk/string.htm") ],
 
-  [ "petri-foo",            "Petri-Foo",         "Sampler",          "petri-foo",              "petri-foo",        TEMPLATE_NO,  LEVEL_NSM, "OpenSource", (0, 0, "ALSA + JACK"), ("",                                                           "http://petri-foo.sourceforge.net/") ],
+  [ "petri-foo",            "Petri-Foo",         "Sampler",          "petri-foo",              "petri-foo",        TEMPLATE_NO,  LEVEL_NSM, "OpenSource", (0, 0, "ALSA + JACK"), ("",                                                                  "http://petri-foo.sourceforge.net/") ],
 
-  [ "phasex",               "Phasex",            "Synth",            "phasex",                 "phasex",           TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 1, "ALSA"),        ("file:///usr/share/phasex/help/parameters.help",              "") ],
+  [ "phasex",               "Phasex",            "Synth",            "phasex",                 "phasex",           TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 1, "ALSA"),        ("file:///usr/share/phasex/help/parameters.help",                     "") ],
 
-  [ "pianoteq",             "Pianoteq",          "Synth",            "Pianoteq",               "pianoteq",         TEMPLATE_NO,  LEVEL_0,   "Demo",       (1, 0, "ALSA + JACK"), ("file:///opt/Pianoteq/Documentation/pianoteq-english.pdf",    "http://www.pianoteq.com/pianoteq4") ],
-  [ "pianoteq-stage",       "Pianoteq Stage",    "Synth",            "Pianoteq-STAGE",         "pianoteq",         TEMPLATE_NO,  LEVEL_0,   "Demo",       (1, 0, "ALSA + JACK"), ("file:///opt/Pianoteq/Documentation/pianoteq-english.pdf",    "http://www.pianoteq.com/pianoteq_stage") ],
+  [ "pianoteq",             "Pianoteq",          "Synth",            "Pianoteq",               "pianoteq",         TEMPLATE_NO,  LEVEL_0,   "Demo",       (1, 0, "ALSA + JACK"), ("file:///opt/Pianoteq/Documentation/pianoteq-english.pdf",           "http://www.pianoteq.com/pianoteq4") ],
+  [ "pianoteq-stage",       "Pianoteq Stage",    "Synth",            "Pianoteq-STAGE",         "pianoteq",         TEMPLATE_NO,  LEVEL_0,   "Demo",       (1, 0, "ALSA + JACK"), ("file:///opt/Pianoteq/Documentation/pianoteq-english.pdf",           "http://www.pianoteq.com/pianoteq_stage") ],
 
-  [ "qsampler",             "Qsampler",          "Sampler",          "qsampler",               "qsampler",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, "ALSA + JACK"), ("",                                                           "http://qsampler.sourceforge.net/") ],
+  [ "qsampler",             "Qsampler",          "Sampler",          "qsampler",               "qsampler",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, "ALSA + JACK"), ("",                                                                  "http://qsampler.sourceforge.net/") ],
 
-  [ "qsynth",               "Qsynth",            "SoundFont Player", "qsynth -a jack -m jack", "qsynth",           TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "ALSA | JACK"), ("",                                                           "http://qsynth.sourceforge.net/") ],
+  [ "qsynth",               "Qsynth",            "SoundFont Player", "qsynth -a jack -m jack", "qsynth",           TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "ALSA | JACK"), ("",                                                                  "http://qsynth.sourceforge.net/") ],
 
-  [ "setbfree",             "setBfree",          "Synth",            "setBfree-start",         "setBfree",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "JACK"),        ("",                                                           "http://setbfree.org/") ],
+  [ "setbfree",             "setBfree",          "Synth",            "setBfree-start",         "setBfree",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "JACK"),        ("",                                                                  "http://setbfree.org/") ],
 
-  [ "yoshimi",              "Yoshimi",           "Synth",            "yoshimi -j -J",          "yoshimi",          TEMPLATE_NO,  LEVEL_1,   "OpenSource", (1, 0, "ALSA | JACK"), ("",                                                           "http://yoshimi.sourceforge.net/") ],
+  [ "yoshimi",              "Yoshimi",           "Synth",            "yoshimi -j -J",          "yoshimi",          TEMPLATE_NO,  LEVEL_1,   "OpenSource", (1, 0, "ALSA | JACK"), ("",                                                                  "http://yoshimi.sourceforge.net/") ],
 
-  [ "zynaddsubfx",          "ZynAddSubFX",       "Synth",            "zynaddsubfx",            "zynaddsubfx",      TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "ALSA + JACK"), ("",                                                           "http://zynaddsubfx.sourceforge.net/") ]
+  [ "zynaddsubfx",          "ZynAddSubFX",       "Synth",            "zynaddsubfx",            "zynaddsubfx",      TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, "ALSA + JACK"), ("",                                                                  "http://zynaddsubfx.sourceforge.net/") ]
 ]
 
 iInstrument_Package, iInstrument_AppName, iInstrument_Type, iInstrument_Binary, iInstrument_Icon, iInstrument_Template, iInstrument_Level, iInstrument_RelModel, iInstrument_Features, iInstrument_Docs = range(0, len(list_Instrument[0]))
@@ -238,69 +242,71 @@ list_Plugin = [
   [ "xsynth-dssi",          "Xsynth DSSI",            "DSSI", "Synth",      "/usr/lib/dssi/xsynth-dssi.so",        "Xsynth",          generic_audio_icon, "OpenSource", (0, 1, 1), ("", "") ],
 
   # LV2
+  [ "calf-plugins",         "Calf Analyzer",          "LV2",  "Compressor", "/usr/lib/lv2/calf.lv2/",              "http://calf.sourceforge.net/plugins/Analyzer",   "calf", "OpenSource", (1, 0, 0), ("file:///usr/share/doc/calf/Analyzer.html",   "http://calf.sourceforge.net/") ],
   [ "calf-plugins",         "Calf Compressor",        "LV2",  "Compressor", "/usr/lib/lv2/calf.lv2/",              "http://calf.sourceforge.net/plugins/Compressor", "calf", "OpenSource", (1, 0, 0), ("file:///usr/share/doc/calf/Compressor.html", "http://calf.sourceforge.net/") ],
 
   # VST
-  [ "arctican-plugins-vst",     "The Function [VST]",               "VST", "Delay",      "/usr/lib/vst/TheFunction.so",                "The Function",               "arctican_plugins", "OpenSource", (1, 0, 1), ("", "http://arcticanaudio.com/plugins/") ],
-  [ "arctican-plugins-vst",     "The Pilgrim [VST]",                "VST", "Filter",     "/usr/lib/vst/ThePilgrim.so",                 "The Pilgrim",                "arctican_plugins", "OpenSource", (1, 1, 0), ("", "http://arcticanaudio.com/plugins/") ],
+  [ "arctican-plugins-vst",     "The Function [VST]",                "VST", "Delay",      "/usr/lib/vst/TheFunction.so",                "The Function",               "arctican_plugins", "OpenSource", (1, 0, 1), ("", "http://arcticanaudio.com/plugins/") ],
+  [ "arctican-plugins-vst",     "The Pilgrim [VST]",                 "VST", "Filter",     "/usr/lib/vst/ThePilgrim.so",                 "The Pilgrim",                "arctican_plugins", "OpenSource", (1, 1, 0), ("", "http://arcticanaudio.com/plugins/") ],
 
-  [ "distrho-plugins-vst",      "3 Band EQ [VST]",                  "VST", "EQ",         "/usr/lib/vst/3BandEQ.so",                    "3BandEQ",                    "distrho_plugins",  "OpenSource", (1, 0, 0), ("", "") ],
-  [ "distrho-plugins-vst",      "3 Band Splitter [VST]",            "VST", "EQ",         "/usr/lib/vst/3BandSplitter.so",              "3BandSplitter",              "distrho_plugins",  "OpenSource", (0, 0, 0), ("", "") ],
-  [ "distrho-plugins-vst",      "Ping Pong Pan [VST]",              "VST", "Pan",        "/usr/lib/vst/PingPongPan.so",                "Ping Pong Pan",              "distrho_plugins",  "OpenSource", (1, 0, 0), ("", "") ],
+  [ "distrho-plugins-vst",      "3 Band EQ [VST]",                   "VST", "EQ",         "/usr/lib/vst/3BandEQ.so",                    "3BandEQ",                    "distrho_plugins",  "OpenSource", (1, 0, 0), ("", "") ],
+  [ "distrho-plugins-vst",      "3 Band Splitter [VST]",             "VST", "EQ",         "/usr/lib/vst/3BandSplitter.so",              "3BandSplitter",              "distrho_plugins",  "OpenSource", (0, 0, 0), ("", "") ],
+  [ "distrho-plugins-vst",      "Ping Pong Pan [VST]",               "VST", "Pan",        "/usr/lib/vst/PingPongPan.so",                "Ping Pong Pan",              "distrho_plugins",  "OpenSource", (1, 0, 0), ("", "") ],
 
-  [ "distrho-plugin-ports-vst", "Argotlunar [VST]",                 "VST", "Granulator", "/usr/lib/vst/argotlunar.so",                 "Argotlunar",                 generic_audio_icon, "OpenSource", (1, 0, 1), ("", "http://argotlunar.info/") ],
-  [ "distrho-plugin-ports-vst", "BitMangler [VST]",                 "VST", "Misc",       "/usr/lib/vst/bitmangler.so",                 "BitMangler",                 generic_audio_icon, "OpenSource", (1, 1, 0), ("", "") ],
-  [ "distrho-plugin-ports-vst", "Vex [VST]",                        "VST", "Synth",      "/usr/lib/vst/vex.so",                        "Vex",                        generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
+  [ "distrho-plugin-ports-vst", "Argotlunar [VST]",                  "VST", "Granulator", "/usr/lib/vst/argotlunar.so",                 "Argotlunar",                 generic_audio_icon, "OpenSource", (1, 0, 1), ("", "http://argotlunar.info/") ],
+  [ "distrho-plugin-ports-vst", "BitMangler [VST]",                  "VST", "Misc",       "/usr/lib/vst/bitmangler.so",                 "BitMangler",                 generic_audio_icon, "OpenSource", (1, 1, 0), ("", "") ],
+  [ "distrho-plugin-ports-vst", "Vex [VST]",                         "VST", "Synth",      "/usr/lib/vst/vex.so",                        "Vex",                        generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
 
-  [ "drowaudio-plugins-vst",    "dRowAudio DistortionShaper [VST]", "VST", "Distortion", "/usr/lib/vst/drowaudio-distortionshaper.so", "dRowAudio DistortionShaper", generic_audio_icon, "OpenSource", (1, 0, 0), ("", "") ],
-  [ "drowaudio-plugins-vst",    "dRowAudio Distortion [VST]",       "VST", "Distortion", "/usr/lib/vst/drowaudio-distortion.so",       "dRowAudio Distortion",       generic_audio_icon, "OpenSource", (1, 0, 0), ("", "") ],
-  [ "drowaudio-plugins-vst",    "dRowAudio Flanger [VST]",          "VST", "Flanger",    "/usr/lib/vst/drowaudio-flanger.so",          "dRowAudio Flanger",          generic_audio_icon, "OpenSource", (1, 0, 0), ("", "") ],
-  [ "drowaudio-plugins-vst",    "dRowAudio Reverb [VST]",           "VST", "Reverb",     "/usr/lib/vst/drowaudio-reverb.so",           "dRowAudio Reverb",           generic_audio_icon, "OpenSource", (1, 1, 0), ("", "") ],
-  [ "drowaudio-plugins-vst",    "dRowAudio Tremolo [VST]",          "VST", "Tremolo",    "/usr/lib/vst/drowaudio-tremolo.so",          "dRowAudio Tremolo",          generic_audio_icon, "OpenSource", (1, 0, 0), ("", "") ],
+  [ "drowaudio-plugins-vst",    "dRowAudio Distortion-Shaper [VST]", "VST", "Distortion", "/usr/lib/vst/drowaudio-distortionshaper.so", "dRowAudio DistortionShaper", generic_audio_icon, "OpenSource", (1, 0, 0), ("", "") ],
+  [ "drowaudio-plugins-vst",    "dRowAudio Distortion [VST]",        "VST", "Distortion", "/usr/lib/vst/drowaudio-distortion.so",       "dRowAudio Distortion",       generic_audio_icon, "OpenSource", (1, 0, 0), ("", "") ],
+  [ "drowaudio-plugins-vst",    "dRowAudio Flanger [VST]",           "VST", "Flanger",    "/usr/lib/vst/drowaudio-flanger.so",          "dRowAudio Flanger",          generic_audio_icon, "OpenSource", (1, 0, 0), ("", "") ],
+  [ "drowaudio-plugins-vst",    "dRowAudio Reverb [VST]",            "VST", "Reverb",     "/usr/lib/vst/drowaudio-reverb.so",           "dRowAudio Reverb",           generic_audio_icon, "OpenSource", (1, 1, 0), ("", "") ],
+  [ "drowaudio-plugins-vst",    "dRowAudio Tremolo [VST]",           "VST", "Tremolo",    "/usr/lib/vst/drowaudio-tremolo.so",          "dRowAudio Tremolo",          generic_audio_icon, "OpenSource", (1, 0, 0), ("", "") ],
 
-  [ "highlife-vst",             "Highlife [VST]",                   "VST", "Sampler",    "/usr/lib/vst/highlife.so",                   "Highlife",                   generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
+  [ "highlife-vst",             "Highlife [VST]",                    "VST", "Sampler",    "/usr/lib/vst/highlife.so",                   "Highlife",                   generic_audio_icon, "OpenSource", (1, 1, 1), ("", "http://www.discodsp.com/highlife/") ],
 
-  [ "hybridreverb2-vst",        "HybridReverb2 [VST]",              "VST", "Reverb",     "/usr/lib/vst/HybridReverb2.so",              "HybridReverb2",              generic_audio_icon, "OpenSource", (1, 0, 0), ("", "") ],
+  [ "hybridreverb2-vst",        "HybridReverb2 [VST]",               "VST", "Reverb",     "/usr/lib/vst/HybridReverb2.so",              "HybridReverb2",              generic_audio_icon, "OpenSource", (1, 0, 0), ("", "http://www2.ika.rub.de/HybridReverb2/") ],
 
-  #[ "linuxdsp-plugins-vst",     "MBC2B", "VST", "---", "MBC2B Stereo MultiBand Compressor", "/usr/lib/vst/mbc2b.so", generic_audio_icon, "OpenSource", (1, 0, 1), ("", "") ],
-  #[ "linuxdsp-plugins-vst",     "PEQ-1A", "VST", "---", "Vintage Program EQ", "/usr/lib/vst/peq-1a.so", generic_audio_icon, "OpenSource", (0, 0, 1), ("", "") ],
-  #[ "linuxdsp-plugins-vst",     "PEQ-2A", "VST", "---", "Vintage Program EQ", "/usr/lib/vst/peq-2a.so", generic_audio_icon, "OpenSource", (1, 0, 1), ("", "") ],
+  [ "linuxdsp-plugins-vst",     "linuxDSP Black Equalizer [VST, Mono]",      "VST", "EQ",         "/usr/lib/vst/black-eq1.so", "BLACK-EQ1", "linuxdsp", "Demo", (0, 0, 1), ("file:///usr/share/doc/linuxdsp-plugins/BLACK-EQ/manual.pdf.gz",      "http://www.linuxdsp.co.uk/download/lv2/download_black_eq/index.html") ],
+  [ "linuxdsp-plugins-vst",     "linuxDSP Multiband Compressor [VST]",       "VST", "Compressor", "/usr/lib/vst/mbc2b.so",     "MBC2B",     "linuxdsp", "Demo", (1, 0, 1), ("file:///usr/share/doc/linuxdsp-plugins/MBC2B/manual.pdf.gz",         "http://www.linuxdsp.co.uk/download/lv2/download_mbc2/index.html") ],
+  [ "linuxdsp-plugins-vst",     "linuxDSP Vintage Program EQ [VST, Mono]",   "VST", "EQ",         "/usr/lib/vst/peq-1a.so",    "PEQ-1A",    "linuxdsp", "Demo", (0, 0, 1), ("file:///usr/share/doc/linuxdsp-plugins/PEQ-2A/manual.pdf.gz",        "http://www.linuxdsp.co.uk/download/lv2/download_peq/index.html") ],
+  [ "linuxdsp-plugins-vst",     "linuxDSP Vintage Program EQ [VST, Stereo]", "VST", "EQ",         "/usr/lib/vst/peq-2a.so",    "PEQ-2A",    "linuxdsp", "Demo", (1, 0, 1), ("file:///usr/share/doc/linuxdsp-plugins/PEQ-2A/manual.pdf.gz",        "http://www.linuxdsp.co.uk/download/lv2/download_peq/index.html") ],
+  [ "linuxdsp-plugins-vst",     "linuxDSP Vintage Compressor [VST, Mono]",   "VST", "Compressor", "/usr/lib/vst/vc1b.so",      "VC1B",      "linuxdsp", "Demo", (0, 0, 1), ("file:///usr/share/doc/linuxdsp-plugins/VC2B/manual.pdf.gz",          "http://www.linuxdsp.co.uk/download/lv2/download_vc2b/index.html") ],
+  [ "linuxdsp-plugins-vst",     "linuxDSP Vintage Compressor [VST, Stereo]", "VST", "Compressor", "/usr/lib/vst/vc2b.so",      "VC2B",      "linuxdsp", "Demo", (1, 0, 1), ("file:///usr/share/doc/linuxdsp-plugins/VC2B/manual.pdf.gz",          "http://www.linuxdsp.co.uk/download/lv2/download_vc2b/index.html") ],
 
-  #[ "linuxdsp-plugins-vst",     "VC1B", "VST", "---", "Vintage Compressor", "/usr/lib/vst/vc1b.so", generic_audio_icon, "OpenSource", (0, 0, 1), ("", "") ],
-  #[ "linuxdsp-plugins-vst",     "VC2B", "VST", "---", "Vintage Compressor", "/usr/lib/vst/vc2b.so", generic_audio_icon, "OpenSource", (1, 0, 1), ("", "") ],
+  [ "linuxdsp-plugins-vst",     "linuxDSP DYN500 [VST, Mono]",               "VST", "Dynamics",   "/usr/lib/vst/DYN500-1.so",  "DYN500",    "linuxdsp", "Demo", (0, 0, 1), ("file:///usr/share/doc/linuxdsp-plugins/DYN500/manual.pdf.gz",        "http://www.linuxdsp.co.uk/download/lv2/download_500/index.html") ],
+  [ "linuxdsp-plugins-vst",     "linuxDSP DYN500 [VST, Stereo]",             "VST", "Dynamics",   "/usr/lib/vst/DYN500-2.so",  "DYN500",    "linuxdsp", "Demo", (1, 0, 1), ("file:///usr/share/doc/linuxdsp-plugins/DYN500/manual.pdf.gz",        "http://www.linuxdsp.co.uk/download/lv2/download_500/index.html") ],
+  [ "linuxdsp-plugins-vst",     "linuxDSP EQ500 [VST, Mono]",                "VST", "EQ",         "/usr/lib/vst/EQ500-1.so",   "EQ500",     "linuxdsp", "Demo", (0, 0, 1), ("file:///usr/share/doc/linuxdsp-plugins/EQ500/manual.pdf.gz",         "http://www.linuxdsp.co.uk/download/lv2/download_500/index.html") ],
+  [ "linuxdsp-plugins-vst",     "linuxDSP EQ500 [VST, Stereo]",              "VST", "EQ",         "/usr/lib/vst/EQ500-2.so",   "EQ500",     "linuxdsp", "Demo", (1, 0, 1), ("file:///usr/share/doc/linuxdsp-plugins/EQ500/manual.pdf.gz",         "http://www.linuxdsp.co.uk/download/lv2/download_500/index.html") ],
+  [ "linuxdsp-plugins-vst",     "linuxDSP GT500 [VST, Mono]",                "VST", "Gate",       "/usr/lib/vst/GT500-1.so",   "GT500",     "linuxdsp", "Demo", (0, 0, 1), ("file:///usr/share/doc/linuxdsp-plugins/GT500/manual.pdf.gz",         "http://www.linuxdsp.co.uk/download/lv2/download_500/index.html") ],
+  [ "linuxdsp-plugins-vst",     "linuxDSP GT500 [VST, Stereo]",              "VST", "Gate",       "/usr/lib/vst/GT500-2.so",   "GT500",     "linuxdsp", "Demo", (1, 0, 1), ("file:///usr/share/doc/linuxdsp-plugins/GT500/manual.pdf.gz",         "http://www.linuxdsp.co.uk/download/lv2/download_500/index.html") ],
 
-  #[ "linuxdsp-plugins-vst",     "BLACK-EQ1", "VST", "---", "Mono Graphical EQ", "/usr/lib/vst/black-eq1.so", generic_audio_icon, "OpenSource", (0, 0, 1), ("", "") ],
-  #[ "linuxdsp-plugins-vst",     "BLACK-EQ2", "VST", "---", "Stereo Graphical EQ", "/usr/lib/vst/black-eq2.so", generic_audio_icon, "OpenSource", (1, 0, 1), ("", "") ],
-  #[ "linuxdsp-plugins-vst",     "DYN500", "VST", "---", "DYN500 Console Dynamics", "/usr/lib/vst/DYN500-1.so", generic_audio_icon, "OpenSource", (0, 0, 1), ("", "") ],
-  #[ "linuxdsp-plugins-vst",     "DYN500", "VST", "---", "DYN500 Console Dynamics", "/usr/lib/vst/DYN500-2.so", generic_audio_icon, "OpenSource", (1, 0, 1), ("", "") ],
-  #[ "linuxdsp-plugins-vst",     "EQ500", "VST", "---", "Stereo Channel EQ", "/usr/lib/vst/EQ500-1.so", generic_audio_icon, "OpenSource", (0, 0, 1), ("", "") ],
-  #[ "linuxdsp-plugins-vst",     "EQ500", "VST", "---", "Stereo Channel EQ", "/usr/lib/vst/EQ500-2.so", generic_audio_icon, "OpenSource", (1, 0, 1), ("", "") ],
-  #[ "linuxdsp-plugins-vst",     "GT500", "VST", "---", "Stereo Gate", "/usr/lib/vst/GT500-1.so", generic_audio_icon, "OpenSource", (0, 0, 1), ("", "") ],
-  #[ "linuxdsp-plugins-vst",     "GT500", "VST", "---", "Stereo Gate", "/usr/lib/vst/GT500-2.so", generic_audio_icon, "OpenSource", (1, 0, 1), ("", "") ],
+  # FIXME - plugin UI broken upstream
+  #[ "linuxdsp-plugins-vst",     "linuxDSP Black Equalizer [VST, Stereo]",    "VST", "EQ",         "/usr/lib/vst/black-eq2.so", "BLACK-EQ2", "linuxdsp", "Demo", (1, 0, 1), ("file:///usr/share/doc/linuxdsp-plugins/BLACK-EQ/manual.pdf.gz",      "http://www.linuxdsp.co.uk/download/lv2/download_black_eq/index.html") ],
 
-  #[ "loomer-plugins-vst",       "Aspect [VST]",                     "VST", "Synth",               "Aspect",    "/usr/lib/vst/AspectVST.so", generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
-  #[ "loomer-plugins-vst",       "Manifold [VST]",                   "VST", "Enhancer",            "Manifold",  "/usr/lib/vst/ManifoldVST.so", generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
-  #[ "loomer-plugins-vst",       "Resound [VST]",                    "VST", "Delay",               "Resound",   "/usr/lib/vst/ResoundVST.so", generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
-  #[ "loomer-plugins-vst",       "Sequent [VST]",                    "VST", "Synth",               "Sequent",   "/usr/lib/vst/SequentVST.so", generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
-  #[ "loomer-plugins-vst",       "Shift2 [VST]",                     "VST", "Pitch-Shifter/Delay", "Shift2",    "/usr/lib/vst/Shift2VST.so", generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
-  #[ "loomer-plugins-vst",       "String [VST]",                     "VST", "Synth",               "String",    "/usr/lib/vst/StringVST.so", generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
-  #[ "loomer-plugins-vst",       "String (FX) [VST]",                "VST", "Bundle",              "String_FX", "/usr/lib/vst/String_FXVST.so", generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
+  [ "loomer-plugins-vst",       "Aspect [VST]",                     "VST", "Synth",               "/usr/lib/vst/AspectVST.so",              "Aspect",         "loomer",       "Demo",       (1, 1, 1), ("file:///usr/share/doc/loomer-plugins/Aspect Manual.pdf.gz",         "http://www.loomer.co.uk/aspect.htm") ],
+  [ "loomer-plugins-vst",       "Manifold [VST]",                   "VST", "Enhancer",            "/usr/lib/vst/ManifoldVST.so",            "Manifold",       "loomer",       "Demo",       (1, 1, 1), ("file:///usr/share/doc/loomer-plugins/Manifold Manual.pdf.gz",       "http://www.loomer.co.uk/manifold.htm") ],
+  [ "loomer-plugins-vst",       "Resound [VST]",                    "VST", "Delay",               "/usr/lib/vst/ResoundVST.so",             "Resound",        "loomer",       "Demo",       (1, 1, 1), ("file:///usr/share/doc/loomer-plugins/Resound Manual.pdf.gz",        "http://www.loomer.co.uk/resound.htm") ],
+  [ "loomer-plugins-vst",       "Sequent [VST]",                    "VST", "Synth",               "/usr/lib/vst/SequentVST.so",             "Sequent",        "loomer",       "Demo",       (1, 1, 1), ("file:///usr/share/doc/loomer-plugins/Sequent Manual.pdf.gz",        "http://www.loomer.co.uk/sequent.htm") ],
+  [ "loomer-plugins-vst",       "Shift2 [VST]",                     "VST", "Pitch-Shifter/Delay", "/usr/lib/vst/Shift2VST.so",              "Shift2",         "loomer",       "Demo",       (1, 1, 1), ("file:///usr/share/doc/loomer-plugins/Shift2 Manual.pdf.gz",         "http://www.loomer.co.uk/shift2.htm") ],
+  [ "loomer-plugins-vst",       "String [VST]",                     "VST", "Synth",               "/usr/lib/vst/StringVST.so",              "String",         "loomer",       "Demo",       (1, 1, 1), ("file:///usr/share/doc/loomer-plugins/String Manual.pdf.gz",         "http://www.loomer.co.uk/string.htm") ],
+  [ "loomer-plugins-vst",       "String (FX) [VST]",                "VST", "Bundle",              "/usr/lib/vst/String_FXVST.so",           "String_FX",      "loomer",       "Demo",       (1, 1, 1), ("file:///usr/share/doc/loomer-plugins/String Manual.pdf.gz",         "http://www.loomer.co.uk/string.htm") ],
 
-  [ "pianoteq-vst",             "Pianoteq 4 [VST]",                 "VST", "Synth", "/usr/lib/vst/Pianoteq 4.so", "Pianoteq 4",       "pianoteq", "OpenSource", (0, 1, 1), ("", "") ],
-  [ "pianoteq-vst",             "Pianoteq 4 [VST, Stereo]",         "VST", "Synth", "/usr/lib/vst/Pianoteq 4_2chan.so", "Pianoteq 4", "pianoteq", "OpenSource", (1, 1, 1), ("", "") ],
-  [ "pianoteq-stage-vst",       "Pianoteq 4 STAGE [VST]",           "VST", "Synth", "/usr/lib/vst/Pianoteq 4 STAGE.so", "Pianoteq 4 STAGE",       "pianoteq", "OpenSource", (0, 1, 1), ("", "") ],
-  [ "pianoteq-stage-vst",       "Pianoteq 4 STAGE [VST, Stereo]",   "VST", "Synth", "/usr/lib/vst/Pianoteq 4 STAGE_2chan.so", "Pianoteq 4 STAGE", "pianoteq", "OpenSource", (1, 1, 1), ("", "") ],
+  [ "pianoteq-vst",             "Pianoteq [VST]",                   "VST", "Synth",               "/usr/lib/vst/Pianoteq 4.so",             "Pianoteq",       "pianoteq",     "Demo",       (0, 1, 1), ("file:///opt/Pianoteq/Documentation/pianoteq-english.pdf",           "http://www.pianoteq.com/pianoteq4") ],
+  [ "pianoteq-vst",             "Pianoteq [VST, Stereo]",           "VST", "Synth",               "/usr/lib/vst/Pianoteq 4_2chan.so",       "Pianoteq",       "pianoteq",     "Demo",       (1, 1, 1), ("file:///opt/Pianoteq/Documentation/pianoteq-english.pdf",           "http://www.pianoteq.com/pianoteq4") ],
+  [ "pianoteq-stage-vst",       "Pianoteq STAGE [VST]",             "VST", "Synth",               "/usr/lib/vst/Pianoteq 4 STAGE.so",       "Pianoteq STAGE", "pianoteq",     "Demo",       (0, 1, 1), ("file:///opt/Pianoteq/Documentation/pianoteq-english.pdf",           "http://www.pianoteq.com/pianoteq_stage") ],
+  [ "pianoteq-stage-vst",       "Pianoteq STAGE [VST, Stereo]",     "VST", "Synth",               "/usr/lib/vst/Pianoteq 4 STAGE_2chan.so", "Pianoteq STAGE", "pianoteq",     "Demo",       (1, 1, 1), ("file:///opt/Pianoteq/Documentation/pianoteq-english.pdf",           "http://www.pianoteq.com/pianoteq_stage") ],
 
-  [ "tal-plugins-vst",          "TAL Dub 3 [VST]",                  "VST", "Delay",   "/usr/lib/vst/TAL-Dub-3.so",      "TAL Dub 2",      "tal_plugins",  "OpenSource", (1, 1, 1), ("", "") ],
-  [ "tal-plugins-vst",          "TAL Filter [VST]",                 "VST", "Filter",  "/usr/lib/vst/TAL-Filter.so",     "TAL Filter",     "tal_plugins",  "OpenSource", (1, 1, 1), ("", "") ],
-  [ "tal-plugins-vst",          "TAL Filter 2 [VST]",               "VST", "Filter",  "/usr/lib/vst/TAL-Filter-2.so",   "TAL Filter 2",   "tal_plugins",  "OpenSource", (1, 1, 1), ("", "") ],
-  [ "tal-plugins-vst",          "TAL NoiseMaker [VST]",             "VST", "Synth",   "/usr/lib/vst/TAL-NoiseMaker.so", "TAL NoiseMaker", "tal_plugins",  "OpenSource", (1, 1, 1), ("", "") ],
-  [ "tal-plugins-vst",          "TAL Reverb [VST]",                 "VST", "Reverb",  "/usr/lib/vst/TAL-Reverb.so",     "TAL Reverb",     "tal_plugins",  "OpenSource", (1, 1, 1), ("", "") ],
-  [ "tal-plugins-vst",          "TAL Reverb 2 [VST]",               "VST", "Reverb",  "/usr/lib/vst/TAL-Reverb-2.so",   "TAL Reverb 2",   "tal_plugins",  "OpenSource", (1, 1, 1), ("", "") ],
-  [ "tal-plugins-vst",          "TAL Reverb 3 [VST]",               "VST", "Reverb",  "/usr/lib/vst/TAL-Reverb-3.so",   "TAL Reverb 3",   "tal_plugins",  "OpenSource", (1, 1, 1), ("", "") ],
-  [ "tal-plugins-vst",          "TAL Vocoder 2 [VST]",              "VST", "Vocoder", "/usr/lib/vst/TAL-Vocoder-2.so",  "TAL Vocoder 2",  "tal_plugins",  "OpenSource", (1, 1, 1), ("", "") ],
+  [ "tal-plugins-vst",          "TAL Dub 3 [VST]",                  "VST", "Delay",               "/usr/lib/vst/TAL-Dub-3.so",              "TAL Dub 2",      "tal_plugins",  "OpenSource", (1, 1, 1), ("",                                                                  "http://kunz.corrupt.ch/products/tal-dub") ],
+  [ "tal-plugins-vst",          "TAL Filter [VST]",                 "VST", "Filter",              "/usr/lib/vst/TAL-Filter.so",             "TAL Filter",     "tal_plugins",  "OpenSource", (1, 1, 1), ("",                                                                  "http://kunz.corrupt.ch/products/tal-filter") ],
+  [ "tal-plugins-vst",          "TAL Filter 2 [VST]",               "VST", "Filter",              "/usr/lib/vst/TAL-Filter-2.so",           "TAL Filter 2",   "tal_plugins",  "OpenSource", (1, 1, 1), ("",                                                                  "http://kunz.corrupt.ch/products/tal-filter") ],
+  [ "tal-plugins-vst",          "TAL NoiseMaker [VST]",             "VST", "Synth",               "/usr/lib/vst/TAL-NoiseMaker.so",         "TAL NoiseMaker", "tal_plugins",  "OpenSource", (1, 1, 1), ("file:///usr/share/kxstudio/docs/TAL Noisemaker User Guide 1.0.pdf", "http://kunz.corrupt.ch/products/tal-noisemaker") ],
+  [ "tal-plugins-vst",          "TAL Reverb [VST]",                 "VST", "Reverb",              "/usr/lib/vst/TAL-Reverb.so",             "TAL Reverb",     "tal_plugins",  "OpenSource", (1, 1, 1), ("",                                                                  "http://kunz.corrupt.ch/products/tal-reverb") ],
+  [ "tal-plugins-vst",          "TAL Reverb 2 [VST]",               "VST", "Reverb",              "/usr/lib/vst/TAL-Reverb-2.so",           "TAL Reverb 2",   "tal_plugins",  "OpenSource", (1, 1, 1), ("",                                                                  "http://kunz.corrupt.ch/products/tal-reverb") ],
+  [ "tal-plugins-vst",          "TAL Reverb 3 [VST]",               "VST", "Reverb",              "/usr/lib/vst/TAL-Reverb-3.so",           "TAL Reverb 3",   "tal_plugins",  "OpenSource", (1, 1, 1), ("",                                                                  "http://kunz.corrupt.ch/products/tal-reverb") ],
+  [ "tal-plugins-vst",          "TAL Vocoder 2 [VST]",              "VST", "Vocoder",             "/usr/lib/vst/TAL-Vocoder-2.so",          "TAL Vocoder 2",  "tal_plugins",  "OpenSource", (1, 1, 1), ("file:///usr/share/kxstudio/docs/TAL-Vocoder-UserManual.pdf",        "http://kunz.corrupt.ch/products/tal-vocoder") ],
 
-  [ "wolpertinger-vst",         "Wolpertinger [VST]",               "VST", "Synth",   "/usr/lib/vst/Wolpertinger.so",   "Wolpertinger",   "wolpertinger", "OpenSource", (1, 1, 1), ("", "") ],
+  [ "wolpertinger-vst",         "Wolpertinger [VST]",               "VST", "Synth",               "/usr/lib/vst/Wolpertinger.so",           "Wolpertinger",   "wolpertinger", "OpenSource", (1, 1, 1), ("",                                                                  "http://tumbetoene.tuxfamily.org") ],
 ]
 
 iPlugin_Package, iPlugin_Name, iPlugin_Spec, iPlugin_Type, iPlugin_Filename, iPlugin_Label, iPlugin_Icon, iPlugin_RelModel, iPlugin_Features, iPlugin_Docs = range(0, len(list_Plugin[0]))
@@ -358,13 +364,13 @@ list_Effect = [
 
   [ "rakarrack",            "Rakarrack",                     "Guitar FX",           "rakarrack",                                    "rakarrack",        TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA + JACK"), ("file:///usr/share/doc/rakarrack/html/help.html",                     "http://rakarrack.sourceforge.net") ],
 
-  [ "tal-plugins",          "TAL Dub 3",                     "Delay",               "TAL-Dub-3",                                    "tal_plugins",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://kunz.corrupt.ch/products/tal-noisemaker") ],
+  [ "tal-plugins",          "TAL Dub 3",                     "Delay",               "TAL-Dub-3",                                    "tal_plugins",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://kunz.corrupt.ch/products/tal-dub") ],
   [ "tal-plugins",          "TAL Filter",                    "Filter",              "TAL-Filter",                                   "tal_plugins",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://kunz.corrupt.ch/products/tal-filter") ],
   [ "tal-plugins",          "TAL Filter 2",                  "Filter",              "TAL-Filter-2",                                 "tal_plugins",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://kunz.corrupt.ch/products/tal-filter") ],
   [ "tal-plugins",          "TAL Reverb",                    "Reverb",              "TAL-Reverb",                                   "tal_plugins",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://kunz.corrupt.ch/products/tal-reverb") ],
   [ "tal-plugins",          "TAL Reverb 2",                  "Reverb",              "TAL-Reverb-2",                                 "tal_plugins",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://kunz.corrupt.ch/products/tal-reverb") ],
   [ "tal-plugins",          "TAL Reverb 3",                  "Reverb",              "TAL-Reverb-3",                                 "tal_plugins",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://kunz.corrupt.ch/products/tal-reverb") ],
-  [ "tal-plugins",          "TAL Vocoder 2",                 "Vocoder",             "TAL-Vocoder-2",                                "tal_plugins",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("",                                                                   "http://kunz.corrupt.ch/products/tal-vocoder") ]
+  [ "tal-plugins",          "TAL Vocoder 2",                 "Vocoder",             "TAL-Vocoder-2",                                "tal_plugins",      TEMPLATE_NO,  LEVEL_0, "OpenSource", (1, "ALSA"),        ("file:///usr/share/kxstudio/docs/TAL-Vocoder-UserManual.pdf",         "http://kunz.corrupt.ch/products/tal-vocoder") ]
 ]
 
 iEffect_Package, iEffect_AppName, iEffect_Type, iEffect_Binary, iEffect_Icon, iEffect_Template, iEffect_Level, iEffect_RelModel, iEffect_Features, iEffect_Docs = range(0, len(list_Effect[0]))
@@ -437,7 +443,7 @@ list_Tool = [
   [ "qarecord",          "QARecord",                     "Recorder",            "qarecord --jack",        "qarecord_48",      TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA",        0), ("",                                                              "") ],
   [ "qmidiarp",          "QMidiArp",                     "MIDI Arpeggiator",    "qmidiarp",               generic_midi_icon,  TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA",        0), ("",                                                              "") ],
 
-  [ "timemachine",       "TimeMachine",                  "Recorder",            "timemachine",            "timemachine",      TEMPLATE_NO,  LEVEL_0, "OpenSource", ("---",         0), ("",                                                              "http://plugin.org.uk/timemachine/") ],
+  [ "timemachine",       "TimeMachine",                  "Recorder",            "timemachine",            "/usr/share/timemachine/pixmaps/timemachine-icon.png", TEMPLATE_NO, LEVEL_0, "OpenSource", ("---", 0), ("",                                    "http://plugin.org.uk/timemachine/") ],
 
   [ "vmpk",              "Virtual MIDI Piano Keyboard (ALSA)","Virtual Keyboard","vmpk",                  "vmpk",             TEMPLATE_NO,  LEVEL_0, "OpenSource", ("ALSA",        0), ("file:///usr/share/vmpk/help.html",                              "http://vmpk.sourceforge.net/") ],
   [ "vmpk-jack",         "Virtual MIDI Piano Keyboard (JACK)","Virtual Keyboard","vmpk-jack",             "vmpk",             TEMPLATE_NO,  LEVEL_0, "OpenSource", ("JACK",        0), ("file:///usr/share/vmpk/help.html",                              "http://vmpk.sourceforge.net/") ],
