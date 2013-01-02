@@ -697,6 +697,12 @@ public:
 
         XSetTransientForHint(display, thisWindow, parentWindow);
         XMapRaised(display, thisWindow);
+#else
+        return;
+
+        // unused
+        (void)parentView;
+        (void)parentSize;
 #endif
     }
 

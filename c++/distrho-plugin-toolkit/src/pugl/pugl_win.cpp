@@ -74,7 +74,7 @@ puglCreate(PuglNativeWindow parent,
 
 	impl->hwnd = CreateWindow(
 		"Pugl", title,
-		WS_VISIBLE | (parent ? WS_CHILD : (WS_POPUPWINDOW | WS_CAPTION)),
+		(addToDesktop ? WS_VISIBLE : 0) | (parent ? WS_CHILD : (WS_POPUPWINDOW | WS_CAPTION)),
 		0, 0, width, height,
 		(HWND)parent, NULL, NULL, NULL);
 	if (!impl->hwnd) {
@@ -109,6 +109,7 @@ puglCreate(PuglNativeWindow parent,
 	return view;
 
 	// unused
+	(void)resizable;
 	(void)addToDesktop;
 	(void)x11Display;
 }
@@ -213,7 +214,6 @@ setModifiers(PuglView* view)
 static LRESULT
 handleMessage(PuglView* view, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	MSG         msg;
 	PAINTSTRUCT ps;
 	PuglKey     key;
 
@@ -270,7 +270,7 @@ handleMessage(PuglView* view, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		} // else nobreak
 	case WM_KEYUP:
-		if (key = keySymToSpecial(wParam)) {
+		if ((key = keySymToSpecial(wParam))) {
 			if (view->specialFunc) {
 				view->specialFunc(view, message == WM_KEYDOWN, key);
 			}

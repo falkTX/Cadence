@@ -30,6 +30,14 @@
 # include <GL/glu.h>
 #endif
 
+#if defined(GL_BGR_EXT) && ! defined(GL_BGR)
+# define GL_BGR GL_BGR_EXT
+#endif
+
+#if defined(GL_BGRA_EXT) && ! defined(GL_BGRA)
+# define GL_BGRA GL_BGRA_EXT
+#endif
+
 START_NAMESPACE_DISTRHO
 
 // -------------------------------------------------
@@ -68,11 +76,11 @@ enum Key {
     KEY_SUPER
 };
 
-enum Mod {
-    MOD_SHIFT = 1 << 0, /**< Shift key */
-    MOD_CTRL  = 1 << 1, /**< Control key */
-    MOD_ALT   = 1 << 2, /**< Alt/Option key */
-    MOD_SUPER = 1 << 3  /**< Mod4/Command/Windows key */
+enum Modifier {
+    MODIFIER_SHIFT = 1 << 0, /**< Shift key */
+    MODIFIER_CTRL  = 1 << 1, /**< Control key */
+    MODIFIER_ALT   = 1 << 2, /**< Alt/Option key */
+    MODIFIER_SUPER = 1 << 3  /**< Mod4/Command/Windows key */
 };
 
 // -------------------------------------------------

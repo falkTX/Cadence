@@ -47,7 +47,7 @@ public:
         : QDialog(nullptr),
           m_host(host),
           m_plugin(plugin),
-          ui(this, winId(), setParameterCallback, setStateCallback, uiEditParameterCallback, uiSendNoteCallback, uiResizeCallback)
+          ui(this, realWinId(), setParameterCallback, setStateCallback, uiEditParameterCallback, uiSendNoteCallback, uiResizeCallback)
     {
         setFixedSize(ui.getWidth(), ui.getHeight());
         setWindowTitle("TEST GUI");
@@ -55,6 +55,16 @@ public:
 
     ~UICarla()
     {
+    }
+
+    intptr_t realWinId() const
+    {
+        WId wId = winId();
+#if DISTRHO_OS_WINDOWS
+        return (intptr_t)static_cast<HWND>(wId);
+#else
+        return wId;
+#endif
     }
 
     // ---------------------------------------------
