@@ -29,6 +29,7 @@ OBJS  = \
 OBJS += \
 	distrho-3bandeq.o \
 	distrho-3bandsplitter.o \
+	distrho-pingpongpan.o \
 	distrho-pugl.o
 
 # ZynAddSubFX
@@ -55,6 +56,9 @@ distrho-3bandeq.o: distrho-3bandeq.cpp
 
 distrho-3bandsplitter.o: distrho-3bandsplitter.cpp
 	$(CXX) -c $< $(BUILD_CXX_FLAGS) -I../distrho-plugin-toolkit -I3bandsplitter -DDISTRHO_NAMESPACE=DISTRHO_3BandSplitter -o $@
+
+distrho-pingpongpan.o: distrho-pingpongpan.cpp
+	$(CXX) -c $< $(BUILD_CXX_FLAGS) -I../distrho-plugin-toolkit -Ipingpongpan -DDISTRHO_NAMESPACE=DISTRHO_PingPongPan -o $@
 
 distrho-pugl.o: distrho-pugl.cpp
 	$(CXX) -c $< $(BUILD_CXX_FLAGS) -I../distrho-plugin-toolkit -o $@

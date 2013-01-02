@@ -1176,7 +1176,7 @@ void OpenGLExtUI::d_onMotion(int x, int y)
 
                 if (movX != 0)
                 {
-                    int d = (d_uiGetModifiers() & MOD_SHIFT) ? 2000 : 200;
+                    int d = (d_uiGetModifiers() & MODIFIER_SHIFT) ? 2000 : 200;
                     float value = knob->_value + (knob->_max - knob->_min) / d * movX;
 
                     if (value < knob->_min)
@@ -1199,7 +1199,7 @@ void OpenGLExtUI::d_onMotion(int x, int y)
 
                 if (movY != 0)
                 {
-                    int d = (d_uiGetModifiers() & MOD_SHIFT) ? 2000 : 200;
+                    int d = (d_uiGetModifiers() & MODIFIER_SHIFT) ? 2000 : 200;
                     float value = knob->_value + (knob->_max - knob->_min) / d * movY;
 
                     if (value < knob->_min)

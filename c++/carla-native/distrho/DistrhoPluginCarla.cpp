@@ -130,6 +130,12 @@ protected:
         setFixedSize(width, height);
     }
 
+    void closeEvent(QCloseEvent* event)
+    {
+        m_host->ui_closed(m_host->handle);
+        QDialog::closeEvent(event);
+    }
+
 private:
     // Plugin stuff
     const HostDescriptor* const m_host;

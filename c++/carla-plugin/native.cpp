@@ -51,6 +51,7 @@ public:
         host.write_midi_event = carla_host_write_midi_event;
         host.ui_parameter_changed   = carla_host_ui_parameter_changed;
         host.ui_custom_data_changed = carla_host_ui_custom_data_changed;
+        host.ui_closed = carla_host_ui_closed;
 
         isProcessing = false;
 
@@ -1481,6 +1482,13 @@ public:
         setCustomData(CUSTOM_DATA_STRING, key, value, false);
     }
 
+    void handleUiClosed()
+    {
+        x_engine->callback(CALLBACK_SHOW_GUI, m_id, 0, 0, 0.0, nullptr);
+    }
+
+    // -------------------------------------------------------------------
+
     static uint32_t carla_host_get_buffer_size(HostHandle handle)
     {
         CARLA_ASSERT(handle);
@@ -1515,6 +1523,12 @@ public:
     {
         CARLA_ASSERT(handle);
         ((NativePlugin*)handle)->handleUiCustomDataChanged(key, value);
+    }
+
+    static void carla_host_ui_closed(HostHandle handle)
+    {
+        CARLA_ASSERT(handle);
+        ((NativePlugin*)handle)->handleUiClosed();
     }
 
     // -------------------------------------------------------------------
@@ -1552,6 +1566,7 @@ public:
 
         carla_register_native_plugin_3BandEQ();
         carla_register_native_plugin_3BandSplitter();
+        carla_register_native_plugin_PingPongPan();
 
 #ifdef WANT_ZYNADDSUBFX
         carla_register_native_plugin_zynaddsubfx();
