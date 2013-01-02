@@ -227,7 +227,7 @@ puglCreate(PuglNativeWindow parent,
            int              height,
            bool             resizable,
            bool             addToDesktop = true,
-           long             x11Display = 0);
+           long*            x11Display = NULL);
 
 /**
    Set the handle to be passed to all callbacks.

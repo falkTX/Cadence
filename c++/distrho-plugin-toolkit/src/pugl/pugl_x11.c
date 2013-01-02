@@ -72,7 +72,7 @@ puglCreate(PuglNativeWindow parent,
            int              height,
            bool             resizable,
            bool             addToDesktop,
-           long             x11Display)
+           long*            x11Display)
 {
 	PuglView*      view = (PuglView*)calloc(1, sizeof(PuglView));
 	PuglInternals* impl = (PuglInternals*)calloc(1, sizeof(PuglInternals));
@@ -84,7 +84,7 @@ puglCreate(PuglNativeWindow parent,
 	view->width  = width;
 	view->height = height;
 
-	impl->display = XOpenDisplay(x11Display);
+	impl->display = XOpenDisplay(x11Display ? *x11Display : 0);
 	impl->screen  = DefaultScreen(impl->display);
 
 	XVisualInfo* vi = glXChooseVisual(impl->display, impl->screen, attrListDbl);

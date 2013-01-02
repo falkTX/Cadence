@@ -229,7 +229,7 @@ puglCreate(PuglNativeWindow parent,
            int              height,
            bool             resizable,
            bool             addToDesktop,
-           long             x11Display)
+           long*            x11Display)
 {
 	PuglView*      view = (PuglView*)calloc(1, sizeof(PuglView));
 	PuglInternals* impl = (PuglInternals*)calloc(1, sizeof(PuglInternals));
