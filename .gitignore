@@ -36,6 +36,7 @@ qrc_resources*.cpp
 
 # Binaries
 carla-bridge-qtcreator
+carla-bridge-native
 carla-bridge-posix32
 carla-bridge-posix64
 carla-bridge-lv2-cocoa
@@ -127,3 +128,20 @@ c++/widgets/paramspinbox.*
 data/templates/energyXT.xt
 src/old/
 src/ui/carla_driver.ui
+
+# Other
+c++/carla-backend/carla_backend.kdev4
+c++/carla-bridge/carla_bridge_plugin.cpp,bak
+c++/carla-bridge/carla_bridge_toolkit-plugin.cpp
+c++/carla/CarlaAbout.cpp
+c++/carla/CarlaAbout.hpp
+c++/carla/PluginParameter.cpp
+c++/carla/PluginParameter.hpp
+c++/carla/carla.cpp
+c++/carla/carla.h
+c++/carla/carla.pro
+c++/carla/carla_misc.h
+data/cadence-cpufreq
+data/cpufreq/
+src/cadence_cpufreq.py
+src/cpufreq.py
