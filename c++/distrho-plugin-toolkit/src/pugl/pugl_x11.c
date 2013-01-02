@@ -23,21 +23,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <GL/gl.h>
-#include <GL/glx.h>
-#include <X11/Xatom.h>
-#include <X11/Xlib.h>
-#include <X11/keysym.h>
-
+#include "pugl_x11.h"
 #include "pugl_internal.h"
-
-struct PuglInternalsImpl {
-	Display*   display;
-	int        screen;
-	Window     win;
-	GLXContext ctx;
-	Bool       doubleBuffered;
-};
 
 /**
    Attributes for single-buffered RGBA with at least
@@ -72,7 +59,7 @@ puglCreate(PuglNativeWindow parent,
            int              height,
            bool             resizable,
            bool             addToDesktop,
-           long*            x11Display)
+           const char*      x11Display)
 {
 	PuglView*      view = (PuglView*)calloc(1, sizeof(PuglView));
 	PuglInternals* impl = (PuglInternals*)calloc(1, sizeof(PuglInternals));
@@ -84,7 +71,7 @@ puglCreate(PuglNativeWindow parent,
 	view->width  = width;
 	view->height = height;
 
-	impl->display = XOpenDisplay(x11Display ? *x11Display : 0);
+	impl->display = XOpenDisplay(x11Display);
 	impl->screen  = DefaultScreen(impl->display);
 
 	XVisualInfo* vi = glXChooseVisual(impl->display, impl->screen, attrListDbl);
@@ -383,4 +370,10 @@ PuglNativeWindow
 puglGetNativeWindow(PuglView* view)
 {
 	return view->impl->win;
+}
+
+PuglInternals*
+puglGetInternalsImpl(PuglView* view)
+{
+	return view->impl;
 }

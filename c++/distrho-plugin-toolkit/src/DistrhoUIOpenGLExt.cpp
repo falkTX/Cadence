@@ -26,7 +26,7 @@
 #include <vector>
 
 #if DISTRHO_OS_LINUX
-# include <X11/Xlib.h>
+# include "pugl/pugl_x11.h"
 #endif
 
 START_NAMESPACE_DISTRHO
@@ -660,7 +660,7 @@ public:
     OpenGLDialog(PuglView* parentView, const Size& parentSize, const Image& image_, const char* title)
         : image(image_)
     {
-#if 0 //DISTRHO_OS_LINUX
+#if DISTRHO_OS_LINUX
         bool addToDesktop = false;
 #else
         bool addToDesktop = true;
@@ -682,10 +682,11 @@ public:
         puglSetReshapeFunc(view, onReshapeCallback);
         puglSetCloseFunc(view, onCloseCallback);
 
-#if 0 //DISTRHO_OS_LINUX
-        Display* display    = view->impl->display;
-        Window thisWindow   = view->impl->win;
-        Window parentWindow = parentView->impl->win;
+#if DISTRHO_OS_LINUX
+        PuglInternals* impl = puglGetInternalsImpl(view);
+        Display* display    = impl->display;
+        Window thisWindow   = impl->win;
+        Window parentWindow = puglGetInternalsImpl(parentView)->win;
 
         int x = (parentSize.getWidth()-image.getWidth())/2;
         int y = (parentSize.getHeight()-image.getHeight())/2;
@@ -722,9 +723,10 @@ public:
     {
         if (view)
         {
-#if 0 //DISTRHO_OS_LINUX
-            Display* display = view->impl->display;
-            Window   window  = view->impl->win;
+#if DISTRHO_OS_LINUX
+	    PuglInternals* impl = puglGetInternalsImpl(view);
+            Display* display    = impl->display;
+            Window   window     = impl->win;
             XRaiseWindow(display, window);
             XSetInputFocus(display, window, RevertToPointerRoot, CurrentTime);
 #endif
@@ -841,7 +843,7 @@ enum ObjectType {
     OBJECT_SLIDER = 3
 };
 
-#if 0 //DISTRHO_OS_LINUX
+#if DISTRHO_OS_LINUX
 struct LinuxData {
     Display* display;
     Window   window;
@@ -879,7 +881,7 @@ struct OpenGLExtUIPrivateData {
     std::vector<ImageSlider*> sliders;
     OpenGLDialog* dialog;
 
-#if 0 //DISTRHO_OS_LINUX
+#if DISTRHO_OS_LINUX
     LinuxData linuxData;
 #endif
 
@@ -896,7 +898,7 @@ struct OpenGLExtUIPrivateData {
 
     void showCursor()
     {
-#if 0 //DISTRHO_OS_LINUX
+#if DISTRHO_OS_LINUX
         if (lastCursorPos != Point(-1, -2))
             XWarpPointer(linuxData.display, None, DefaultRootWindow(linuxData.display), 0, 0, 0, 0, lastCursorPos.getX(), lastCursorPos.getY());
 
@@ -906,7 +908,7 @@ struct OpenGLExtUIPrivateData {
 
     void hideCursor()
     {
-#if 0 //DISTRHO_OS_LINUX
+#if DISTRHO_OS_LINUX
         Window root, child;
         int rootX, rootY, winX, winY;
         unsigned int mask;
@@ -1022,9 +1024,10 @@ void OpenGLExtUI::d_onInit()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-#if 0 //DISTRHO_OS_LINUX
-    data->linuxData.display = OpenGLUI::data->widget->impl->display;
-    data->linuxData.window  = OpenGLUI::data->widget->impl->win;
+#if DISTRHO_OS_LINUX
+    PuglInternals* dataImpl = puglGetInternalsImpl(OpenGLUI::data->widget);
+    data->linuxData.display = dataImpl->display;
+    data->linuxData.window  = dataImpl->win;
     data->linuxData.pixmapBlack = XCreateBitmapFromData(data->linuxData.display, data->linuxData.window, data->linuxData.colorData, 8, 8);
     data->linuxData.cursorBlack = XCreatePixmapCursor(data->linuxData.display, data->linuxData.pixmapBlack, data->linuxData.pixmapBlack,
                                                       &data->linuxData.colorBlack, &data->linuxData.colorBlack, 0, 0);
