@@ -325,10 +325,7 @@ merge(SerdChunk* base, SerdChunk* path)
 	const uint8_t* begin = remove_dot_segments(path->buf, path->len, &up);
 	const uint8_t* end   = path->buf + path->len;
 
-	if (base->buf) {
-		assert(base->len > 0);
-		assert(base->buf[0] == '/');
-
+	if (base->buf && base->len > 0) {
 		// Find the up'th last slash
 		const uint8_t* base_last = (base->buf + base->len - 1);
 		++up;

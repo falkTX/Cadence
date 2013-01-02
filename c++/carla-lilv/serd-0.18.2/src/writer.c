@@ -103,7 +103,7 @@ typedef enum {
 } TextContext;
 
 static void
-error2(SerdWriter* writer, SerdStatus st, const char* fmt, ...)
+w_err(SerdWriter* writer, SerdStatus st, const char* fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -219,7 +219,7 @@ write_text(SerdWriter* writer, TextContext ctx,
 			size = 4;
 			c    = in & 0x07;
 		} else {
-			error2(writer, SERD_ERR_BAD_ARG, "invalid UTF-8: %X\n", in);
+			w_err(writer, SERD_ERR_BAD_ARG, "invalid UTF-8: %X\n", in);
 			const uint8_t replacement_char[] = { 0xEF, 0xBF, 0xBD };
 			len += sink(replacement_char, sizeof(replacement_char), writer);
 			return len;
@@ -364,7 +364,7 @@ write_node(SerdWriter*        writer,
 		switch (writer->syntax) {
 		case SERD_NTRIPLES:
 			if (serd_env_expand(writer->env, node, &uri_prefix, &uri_suffix)) {
-				error2(writer, SERD_ERR_BAD_CURIE,
+				w_err(writer, SERD_ERR_BAD_CURIE,
 				      "undefined namespace prefix `%s'\n", node->buf);
 				return false;
 			}
@@ -408,7 +408,7 @@ write_node(SerdWriter*        writer,
 		break;
 	case SERD_URI:
 		has_scheme = serd_uri_string_has_scheme(node->buf);
-		if ((writer->syntax == SERD_TURTLE)
+		if (field == FIELD_PREDICATE && (writer->syntax == SERD_TURTLE)
 		    && !strcmp((const char*)node->buf, NS_RDF "type")) {
 			sink("a", 1, writer);
 			break;
@@ -603,7 +603,7 @@ serd_writer_end_anon(SerdWriter*     writer,
 		return SERD_SUCCESS;
 	}
 	if (serd_stack_is_empty(&writer->anon_stack)) {
-		error2(writer, SERD_ERR_UNKNOWN,
+		w_err(writer, SERD_ERR_UNKNOWN,
 		      "unexpected end of anonymous node\n");
 		return SERD_ERR_UNKNOWN;
 	}

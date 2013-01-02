@@ -25,6 +25,11 @@
 
 #define USTR(s) ((const uint8_t*)(s))
 
+#ifdef _WIN32
+#    define INFINITY (DBL_MAX + DBL_MAX)
+#    define NAN      (INFINITY - INFINITY)
+#endif
+
 static int
 failure(const char* fmt, ...)
 {
@@ -114,20 +119,23 @@ main(void)
 	// Test serd_node_new_decimal
 
 	const double dbl_test_nums[] = {
-		0.0, 9.0, 10.0, .01, 2.05, -16.00001, 5.000000005, 0.0000000001
+		0.0, 9.0, 10.0, .01, 2.05, -16.00001, 5.000000005, 0.0000000001, NAN, INFINITY
 	};
 
 	const char* dbl_test_strs[] = {
-		"0.0", "9.0", "10.0", "0.01", "2.05", "-16.00001", "5.00000001", "0.0"
+		"0.0", "9.0", "10.0", "0.01", "2.05", "-16.00001", "5.00000001", "0.0", NULL, NULL
 	};
 
 	for (unsigned i = 0; i < sizeof(dbl_test_nums) / sizeof(double); ++i) {
-		SerdNode node = serd_node_new_decimal(dbl_test_nums[i], 8);
-		if (strcmp((const char*)node.buf, (const char*)dbl_test_strs[i])) {
+		SerdNode   node = serd_node_new_decimal(dbl_test_nums[i], 8);
+		const bool pass = (node.buf && dbl_test_strs[i])
+			? !strcmp((const char*)node.buf, (const char*)dbl_test_strs[i])
+			: ((const char*)node.buf == dbl_test_strs[i]);
+		if (!pass) {
 			return failure("Serialised `%s' != %s\n",
 			               node.buf, dbl_test_strs[i]);
 		}
-		const size_t len = strlen((const char*)node.buf);
+		const size_t len = node.buf ? strlen((const char*)node.buf) : 0;
 		if (node.n_bytes != len || node.n_chars != len) {
 			return failure("Length %zu,%zu != %zu\n",
 			               node.n_bytes, node.n_chars, len);

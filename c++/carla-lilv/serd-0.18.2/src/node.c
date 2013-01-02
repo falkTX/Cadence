@@ -22,6 +22,11 @@
 #include <math.h>
 #include <float.h>
 
+#ifdef _WIN32
+#    define isnan(x) _isnan(x)
+#    define isinf(x) (!_finite(x))
+#endif
+
 SERD_API
 SerdNode
 serd_node_from_string(SerdType type, const uint8_t* buf)
@@ -211,6 +216,10 @@ SERD_API
 SerdNode
 serd_node_new_decimal(double d, unsigned frac_digits)
 {
+	if (isnan(d) || isinf(d)) {
+		return SERD_NODE_NULL;
+	}
+
 	const double   abs_d      = fabs(d);
 	const unsigned int_digits = (unsigned)fmax(1.0, ceil(log10(abs_d + 1)));
 	char*          buf        = (char*)calloc(int_digits + frac_digits + 3, 1);

@@ -3,28 +3,22 @@ import glob
 import os
 import shutil
 import subprocess
+import waflib.Logs as Logs
+import waflib.Options as Options
+import waflib.extras.autowaf as autowaf
 
-from waflib.extras import autowaf as autowaf
-import waflib.Logs as Logs, waflib.Options as Options
-
-# Version of this package (even if built as a child)
-SERD_VERSION       = '0.18.0'
-SERD_MAJOR_VERSION = '0'
-
-# Library version (UNIX style major, minor, micro)
+# Library and package version (UNIX style major, minor, micro)
 # major increment <=> incompatible changes
 # minor increment <=> compatible changes (additions)
 # micro increment <=> no interface changes
-# Serd uses the same version number for both library and package
-SERD_LIB_VERSION = SERD_VERSION
+SERD_VERSION       = '0.18.2'
+SERD_MAJOR_VERSION = '0'
 
-# Variables for 'waf dist'
-APPNAME = 'serd'
-VERSION = SERD_VERSION
-
-# Mandatory variables
-top = '.'
-out = 'build'
+# Mandatory waf variables
+APPNAME = 'serd'        # Package name for waf dist
+VERSION = SERD_VERSION  # Package version for waf dist
+top     = '.'           # Source directory
+out     = 'build'       # Build directory
 
 def options(opt):
     opt.load('compiler_c')
@@ -66,47 +60,38 @@ def configure(conf):
     if Options.options.largefile:
         conf.env.append_unique('DEFINES', ['_FILE_OFFSET_BITS=64'])
 
-    # Check for gcov library (for test coverage)
     if conf.env.BUILD_TESTS:
-        conf.check_cc(lib='gcov',
-                      define_name='HAVE_GCOV',
-                      mandatory=False)
+        conf.check(lib         = 'gcov',
+                   define_name = 'HAVE_GCOV',
+                   mandatory   = False)
 
-    # Check for fmax
-    conf.check(function_name='fmax',
-               header_name='math.h',
-               define_name='HAVE_FMAX',
-               lib=['m'],
-               mandatory=False)
+    conf.check(function_name = 'fmax',
+               header_name   = 'math.h',
+               define_name   = 'HAVE_FMAX',
+               lib           = ['m'],
+               mandatory     = False)
 
-    # Check for posix_memalign
-    conf.check(function_name='posix_memalign',
-               header_name='stdlib.h',
-               define_name='HAVE_POSIX_MEMALIGN',
-               defines=['_POSIX_C_SOURCE=201112L'],
-               mandatory=False)
+    conf.check(function_name = 'posix_memalign',
+               header_name   = 'stdlib.h',
+               define_name   = 'HAVE_POSIX_MEMALIGN',
+               defines       = ['_POSIX_C_SOURCE=201112L'],
+               mandatory     = False)
 
-    # Check for posix_fadvise
-    conf.check(function_name='posix_fadvise',
-               header_name='fcntl.h',
-               define_name='HAVE_POSIX_FADVISE',
-               defines=['_POSIX_C_SOURCE=201112L'],
-               mandatory=False)
+    conf.check(function_name = 'posix_fadvise',
+               header_name   = 'fcntl.h',
+               define_name   = 'HAVE_POSIX_FADVISE',
+               defines       = ['_POSIX_C_SOURCE=201112L'],
+               mandatory     = False)
 
-    # Check for fileno
-    conf.check(function_name='fileno',
-               header_name='stdio.h',
-               define_name='HAVE_FILENO',
-               defines=['_POSIX_C_SOURCE=201112L'],
-               mandatory=False)
+    conf.check(function_name = 'fileno',
+               header_name   = 'stdio.h',
+               define_name   = 'HAVE_FILENO',
+               defines       = ['_POSIX_C_SOURCE=201112L'],
+               mandatory     = False)
 
     autowaf.define(conf, 'SERD_VERSION', SERD_VERSION)
+    autowaf.set_lib_env(conf, 'serd', SERD_VERSION)
     conf.write_config_header('serd_config.h', remove=False)
-
-    conf.env.INCLUDES_SERD = ['%s/serd-%s' % (conf.env.INCLUDEDIR,
-                                              SERD_MAJOR_VERSION)]
-    conf.env.LIBPATH_SERD = [conf.env.LIBDIR]
-    conf.env.LIB_SERD = ['serd-%s' % SERD_MAJOR_VERSION];
 
     autowaf.display_msg(conf, 'Utilities', str(conf.env.BUILD_UTILS))
     autowaf.display_msg(conf, 'Unit tests', str(conf.env.BUILD_TESTS))
@@ -147,7 +132,7 @@ def build(bld):
             lib             = libs,
             name            = 'libserd',
             target          = 'serd-%s' % SERD_MAJOR_VERSION,
-            vnum            = SERD_LIB_VERSION,
+            vnum            = SERD_VERSION,
             install_path    = '${LIBDIR}',
             defines         = defines + ['SERD_SHARED', 'SERD_INTERNAL'],
             cflags          = libflags)
@@ -161,7 +146,7 @@ def build(bld):
             lib             = libs,
             name            = 'libserd_static',
             target          = 'serd-%s' % SERD_MAJOR_VERSION,
-            vnum            = SERD_LIB_VERSION,
+            vnum            = SERD_VERSION,
             install_path    = '${LIBDIR}',
             defines         = defines + ['SERD_INTERNAL'])
 

@@ -1,3 +1,14 @@
+serd (0.18.2) stable;
+
+  * Fix crash when serd_node_new_decimal is called with infinity or NaN
+  * Fix crash when resolving against non-standard base URIs
+  * Fix bug that caused "a" abbreviation in non-predicate position
+  * Disable timestamps in HTML documentation for reproducible build
+  * Fix clashing symbol "error" in amalgamation build
+  * Update to waf 1.7.8 and autowaf r90 (install docs to versioned directory)
+
+ -- David Robillard <d@drobilla.net>  Sat, 22 Dec 2012 21:32:15 -0500
+
 serd (0.18.0) stable;
 
   * Support digits at start of local names as per new Turtle grammar
