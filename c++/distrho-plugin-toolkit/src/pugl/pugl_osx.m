@@ -227,7 +227,9 @@ puglCreate(PuglNativeWindow parent,
            const char*      title,
            int              width,
            int              height,
-           bool             resizable)
+           bool             resizable,
+           bool             addToDesktop,
+           long             x11Display)
 {
 	PuglView*      view = (PuglView*)calloc(1, sizeof(PuglView));
 	PuglInternals* impl = (PuglInternals*)calloc(1, sizeof(PuglInternals));
@@ -270,6 +272,10 @@ puglCreate(PuglNativeWindow parent,
 	impl->session = [NSApp beginModalSessionForWindow:view->impl->window];
 
 	return view;
+
+	// unused
+	(void)addToDesktop;
+	(void)x11Display;
 }
 
 void

@@ -18,6 +18,8 @@ ZYN_CXX_FLAGS    = $(BUILD_CXX_FLAGS)
 ZYN_CXX_FLAGS   += $(shell pkg-config --cflags fftw3 mxml)
 endif
 
+# --------------------------------------------------------------
+
 # Simple plugins
 OBJS  = \
 	bypass.o \
@@ -31,7 +33,9 @@ OBJS += \
 
 # ZynAddSubFX
 ifeq ($(HAVE_ZYN_DEPS),true)
-OBJS += zynaddsubfx.o zynaddsubfx-src.o
+OBJS += \
+	zynaddsubfx.o \
+	zynaddsubfx-src.o
 endif
 
 # --------------------------------------------------------------

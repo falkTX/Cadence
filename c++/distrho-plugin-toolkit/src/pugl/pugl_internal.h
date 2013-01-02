@@ -27,106 +27,109 @@
 typedef struct PuglInternalsImpl PuglInternals;
 
 struct PuglViewImpl {
-    PuglHandle       handle;
-    PuglCloseFunc    closeFunc;
-    PuglDisplayFunc  displayFunc;
-    PuglKeyboardFunc keyboardFunc;
-    PuglMotionFunc   motionFunc;
-    PuglMouseFunc    mouseFunc;
-    PuglReshapeFunc  reshapeFunc;
-    PuglScrollFunc   scrollFunc;
-    PuglSpecialFunc  specialFunc;
+	PuglHandle       handle;
+	PuglCloseFunc    closeFunc;
+	PuglDisplayFunc  displayFunc;
+	PuglKeyboardFunc keyboardFunc;
+	PuglMotionFunc   motionFunc;
+	PuglMouseFunc    mouseFunc;
+	PuglReshapeFunc  reshapeFunc;
+	PuglScrollFunc   scrollFunc;
+	PuglSpecialFunc  specialFunc;
 
-    PuglInternals* impl;
+	PuglInternals* impl;
 
-    int  width;
-    int  height;
-    int  mods;
-    bool ignoreKeyRepeat;
-    bool redisplay;
+	int  width;
+	int  height;
+	int  mods;
+	bool ignoreKeyRepeat;
+	bool redisplay;
 };
 
 void
 puglSetHandle(PuglView* view, PuglHandle handle)
 {
-    view->handle = handle;
+	view->handle = handle;
 }
 
 PuglHandle
 puglGetHandle(PuglView* view)
 {
-    return view->handle;
+	return view->handle;
 }
 
 int
 puglGetModifiers(PuglView* view)
 {
-    return view->mods;
+	return view->mods;
 }
 
 static inline void
 puglDefaultReshape(PuglView* view, int width, int height)
 {
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, width, height, 0, 0, 1);
-    glViewport(0, 0, width, height);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, width, height, 0, 0, 1);
+	glViewport(0, 0, width, height);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    (void)view;
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	return;
+
+	// unused
+	(void)view;
 }
 
 void
 puglIgnoreKeyRepeat(PuglView* view, bool ignore)
 {
-    view->ignoreKeyRepeat = ignore;
+	view->ignoreKeyRepeat = ignore;
 }
 
 void
 puglSetCloseFunc(PuglView* view, PuglCloseFunc closeFunc)
 {
-    view->closeFunc = closeFunc;
+	view->closeFunc = closeFunc;
 }
 
 void
 puglSetDisplayFunc(PuglView* view, PuglDisplayFunc displayFunc)
 {
-    view->displayFunc = displayFunc;
+	view->displayFunc = displayFunc;
 }
 
 void
 puglSetKeyboardFunc(PuglView* view, PuglKeyboardFunc keyboardFunc)
 {
-    view->keyboardFunc = keyboardFunc;
+	view->keyboardFunc = keyboardFunc;
 }
 
 void
 puglSetMotionFunc(PuglView* view, PuglMotionFunc motionFunc)
 {
-    view->motionFunc = motionFunc;
+	view->motionFunc = motionFunc;
 }
 
 void
 puglSetMouseFunc(PuglView* view, PuglMouseFunc mouseFunc)
 {
-    view->mouseFunc = mouseFunc;
+	view->mouseFunc = mouseFunc;
 }
 
 void
 puglSetReshapeFunc(PuglView* view, PuglReshapeFunc reshapeFunc)
 {
-    view->reshapeFunc = reshapeFunc;
+	view->reshapeFunc = reshapeFunc;
 }
 
 void
 puglSetScrollFunc(PuglView* view, PuglScrollFunc scrollFunc)
 {
-    view->scrollFunc = scrollFunc;
+	view->scrollFunc = scrollFunc;
 }
 
 void
 puglSetSpecialFunc(PuglView* view, PuglSpecialFunc specialFunc)
 {
-    view->specialFunc = specialFunc;
+	view->specialFunc = specialFunc;
 }

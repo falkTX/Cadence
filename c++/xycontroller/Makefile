@@ -16,6 +16,8 @@ ifeq ($(HAVE_JACKSESSION),true)
 BUILD_CXX_FLAGS += -DHAVE_JACKSESSION
 endif
 
+# --------------------------------------------------------------
+
 FILES = \
 	xycontroller.moc \
 	ui_xycontroller.h \

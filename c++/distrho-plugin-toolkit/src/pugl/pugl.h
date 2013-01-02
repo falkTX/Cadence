@@ -84,59 +84,59 @@ typedef intptr_t PuglNativeWindow;
    Return status code.
 */
 typedef enum {
-    PUGL_SUCCESS = 0
+	PUGL_SUCCESS = 0
 } PuglStatus;
 
 /**
    Convenience symbols for ASCII control characters.
 */
 typedef enum {
-    PUGL_CHAR_BACKSPACE = 0x08,
-    PUGL_CHAR_ESCAPE    = 0x1B,
-    PUGL_CHAR_DELETE    = 0x7F
+	PUGL_CHAR_BACKSPACE = 0x08,
+	PUGL_CHAR_ESCAPE    = 0x1B,
+	PUGL_CHAR_DELETE    = 0x7F
 } PuglChar;
-
+	
 /**
    Special (non-Unicode) keyboard keys.
 */
 typedef enum {
-    PUGL_KEY_F1 = 1,
-    PUGL_KEY_F2,
-    PUGL_KEY_F3,
-    PUGL_KEY_F4,
-    PUGL_KEY_F5,
-    PUGL_KEY_F6,
-    PUGL_KEY_F7,
-    PUGL_KEY_F8,
-    PUGL_KEY_F9,
-    PUGL_KEY_F10,
-    PUGL_KEY_F11,
-    PUGL_KEY_F12,
-    PUGL_KEY_LEFT,
-    PUGL_KEY_UP,
-    PUGL_KEY_RIGHT,
-    PUGL_KEY_DOWN,
-    PUGL_KEY_PAGE_UP,
-    PUGL_KEY_PAGE_DOWN,
-    PUGL_KEY_HOME,
-    PUGL_KEY_END,
-    PUGL_KEY_INSERT,
-    PUGL_KEY_SHIFT,
-    PUGL_KEY_CTRL,
-    PUGL_KEY_ALT,
-    PUGL_KEY_SUPER,
+	PUGL_KEY_F1 = 1,
+	PUGL_KEY_F2,
+	PUGL_KEY_F3,
+	PUGL_KEY_F4,
+	PUGL_KEY_F5,
+	PUGL_KEY_F6,
+	PUGL_KEY_F7,
+	PUGL_KEY_F8,
+	PUGL_KEY_F9,
+	PUGL_KEY_F10,
+	PUGL_KEY_F11,
+	PUGL_KEY_F12,
+	PUGL_KEY_LEFT,
+	PUGL_KEY_UP,
+	PUGL_KEY_RIGHT,
+	PUGL_KEY_DOWN,
+	PUGL_KEY_PAGE_UP,
+	PUGL_KEY_PAGE_DOWN,
+	PUGL_KEY_HOME,
+	PUGL_KEY_END,
+	PUGL_KEY_INSERT,
+	PUGL_KEY_SHIFT,
+	PUGL_KEY_CTRL,
+	PUGL_KEY_ALT,
+	PUGL_KEY_SUPER,
 } PuglKey;
 
 /**
    Keyboard modifier flags.
 */
 typedef enum {
-    PUGL_MOD_SHIFT = 1,       /**< Shift key */
-    PUGL_MOD_CTRL  = 1 << 1,  /**< Control key */
-    PUGL_MOD_ALT   = 1 << 2,  /**< Alt/Option key */
-    PUGL_MOD_SUPER = 1 << 3,  /**< Mod4/Command/Windows key */
+	PUGL_MOD_SHIFT = 1,       /**< Shift key */ 
+	PUGL_MOD_CTRL  = 1 << 1,  /**< Control key */
+	PUGL_MOD_ALT   = 1 << 2,  /**< Alt/Option key */
+	PUGL_MOD_SUPER = 1 << 3,  /**< Mod4/Command/Windows key */
 } PuglMod;
-
+	
 /**
    Handle for opaque user data.
 */
@@ -177,7 +177,7 @@ typedef void (*PuglMotionFunc)(PuglView* view, int x, int y);
    @param y The window-relative y coordinate of the pointer.
 */
 typedef void (*PuglMouseFunc)(
-    PuglView* view, int button, bool press, int x, int y);
+	PuglView* view, int button, bool press, int x, int y);
 
 /**
    A function called when the view is resized.
@@ -205,7 +205,7 @@ typedef void (*PuglScrollFunc)(PuglView* view, float dx, float dy);
    A function called when a special key is pressed or released.
 
    This callback allows the use of keys that do not have unicode points.  Note
-   that some non-printable keys
+   that some non-printable keys 
    @param view The view the event occured in.
    @param press True if the key was pressed, false if released.
    @param key The key pressed.
@@ -226,7 +226,8 @@ puglCreate(PuglNativeWindow parent,
            int              width,
            int              height,
            bool             resizable,
-           bool             addToDesktop = true);
+           bool             addToDesktop = true,
+           long             x11Display = 0);
 
 /**
    Set the handle to be passed to all callbacks.
