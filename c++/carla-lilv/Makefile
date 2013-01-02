@@ -26,17 +26,15 @@ OBJS_win64   = serd_win64.o sord_win64.o sratom_win64.o lilv_win64.o
 
 all: carla_lilv.a
 
-carla_lilv.a: $(OBJS)
-	$(AR) rs $@ $^
-
-# --------------------------------------------------------------
-
 posix32: carla_lilv_posix32.a
 posix64: carla_lilv_posix64.a
 win32:   carla_lilv_win32.a
 win64:   carla_lilv_win64.a
 
 # --------------------------------------------------------------
+
+carla_lilv.a: $(OBJS)
+	$(AR) rs $@ $^
 
 carla_lilv_posix32.a: $(OBJS_posix32)
 	$(AR) rs $@ $^

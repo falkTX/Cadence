@@ -27,10 +27,10 @@ WINE_LINK_FLAGS  = $(LINK_FLAGS) $(shell pkg-config --libs jack) -ldl
 
 all:
 
-win32:   libcarla-jackbridge-win32.dll
-win64:   libcarla-jackbridge-win64.dll
-wine32:  libcarla-jackbridge-win32.dll.so
-wine64:  libcarla-jackbridge-win64.dll.so
+win32:  libcarla-jackbridge-win32.dll
+win64:  libcarla-jackbridge-win64.dll
+wine32: libcarla-jackbridge-win32.dll.so
+wine64: libcarla-jackbridge-win64.dll.so
 
 # --------------------------------------------------------------
 
