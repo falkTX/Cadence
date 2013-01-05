@@ -21,6 +21,8 @@
 #include "carla_engine_osc.hpp"
 #include "carla_engine_thread.hpp"
 
+#include <QtCore/QProcessEnvironment>
+
 CARLA_BACKEND_START_NAMESPACE
 
 /*!
@@ -206,7 +208,6 @@ struct CarlaEngineTimeInfo {
           valid(0) {}
 };
 
-#ifndef BUILD_BRIDGE
 /*!
  * Engine options.
  */
@@ -252,7 +253,6 @@ struct CarlaEngineOptions {
           preferUiBridges(true),
           oscUiTimeout(4000/100) {}
 };
-#endif
 
 // -----------------------------------------------------------------------
 
@@ -557,7 +557,7 @@ public:
 
     /*!
      * Maximum number of loadable plugins.
-     * \note This function returns 0 if no engine is not started.
+     * \note This function returns 0 if engine is not started.
      */
     unsigned short maxPluginNumber() const;
 
@@ -710,7 +710,6 @@ public:
      */
     void setLastError(const char* const error);
 
-#ifndef BUILD_BRIDGE
     // -------------------------------------------------------------------
     // Options
 
@@ -720,6 +719,15 @@ public:
     const CarlaEngineOptions& getOptions() const
     {
         return options;
+    }
+
+#ifndef BUILD_BRIDGE
+    /*!
+     * Get the engine options as process environment.
+     */
+    const QProcessEnvironment& getOptionsAsProcessEnvironment() const
+    {
+        return m_procEnv;
     }
 
     /*!
@@ -916,9 +924,7 @@ protected:
     void processRack(float* inBuf[2], float* outBuf[2], const uint32_t frames);
 #endif
 
-#ifndef BUILD_BRIDGE
     CarlaEngineOptions options;
-#endif
 
     CarlaString name;
     uint32_t bufferSize;
@@ -936,6 +942,10 @@ private:
     CallbackFunc m_callback;
     void*        m_callbackPtr;
     CarlaString  m_lastError;
+
+#ifndef BUILD_BRIDGE
+    QProcessEnvironment m_procEnv;
+#endif
 
     QMutex m_procLock;
     QMutex m_midiLock;

@@ -61,7 +61,6 @@ CarlaPlugin::CarlaPlugin(CarlaEngine* const engine, const unsigned short id)
     m_fixedBufferSize = true;
     m_processHighPrecision = false;
 
-#ifndef BUILD_BRIDGE
     {
         const CarlaEngineOptions& options(x_engine->getOptions());
 
@@ -70,7 +69,6 @@ CarlaPlugin::CarlaPlugin(CarlaEngine* const engine, const unsigned short id)
         if (options.processMode == PROCESS_MODE_CONTINUOUS_RACK)
             m_ctrlInChannel = m_id;
     }
-#endif
 
     // latency
     m_latency = 0;
@@ -432,7 +430,6 @@ void CarlaPlugin::getGuiInfo(GuiType* const type, bool* const resizable)
 // -------------------------------------------------------------------
 // Set data (internal stuff)
 
-#ifndef BUILD_BRIDGE
 void CarlaPlugin::setId(const unsigned short id)
 {
     m_id = id;
@@ -440,7 +437,6 @@ void CarlaPlugin::setId(const unsigned short id)
     if (x_engine->getOptions().processMode == PROCESS_MODE_CONTINUOUS_RACK)
         m_ctrlInChannel = id;
 }
-#endif
 
 void CarlaPlugin::setEnabled(const bool yesNo)
 {
@@ -954,13 +950,7 @@ void CarlaPlugin::registerToOscClient()
     }
 
     // Plugin Parameters
-#ifdef BUILD_BRIDGE
-    const uint32_t maxParameters = MAX_PARAMETERS;
-#else
-    const uint32_t maxParameters = x_engine->getOptions().maxParameters;
-#endif
-
-    if (param.count > 0 && param.count < maxParameters)
+    if (param.count > 0 && param.count < x_engine->getOptions().maxParameters)
     {
         char bufName[STR_MAX], bufUnit[STR_MAX];
 
@@ -1106,14 +1096,8 @@ bool CarlaPlugin::waitForOscGuiShow()
 {
     qWarning("CarlaPlugin::waitForOscGuiShow()");
 
-#ifndef BUILD_BRIDGE
-    const uint oscUiTimeout = x_engine->getOptions().oscUiTimeout;
-#else
-    const uint oscUiTimeout = 40;
-#endif
-
     // wait for UI 'update' call
-    for (uint i=0; i < oscUiTimeout; i++)
+    for (uint i=0, oscUiTimeout = x_engine->getOptions().oscUiTimeout; i < oscUiTimeout; i++)
     {
         if (osc.data.target)
         {
@@ -1125,7 +1109,7 @@ bool CarlaPlugin::waitForOscGuiShow()
             carla_msleep(100);
     }
 
-    qWarning("CarlaPlugin::waitForOscGuiShow() - Timeout while waiting for UI to respond (waited %u msecs)", oscUiTimeout);
+    qWarning("CarlaPlugin::waitForOscGuiShow() - Timeout while waiting for UI to respond (waited %u msecs)", x_engine->getOptions().oscUiTimeout);
     return false;
 }
 

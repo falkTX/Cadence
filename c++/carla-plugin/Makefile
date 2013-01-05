@@ -60,4 +60,4 @@ carla_plugin.a: $(OBJS)
 	$(CXX) -c $< $(BUILD_CXX_FLAGS) -o $@
 
 clean:
-	rm -f *.a $(OBJS)
+	rm -f *.a *.o

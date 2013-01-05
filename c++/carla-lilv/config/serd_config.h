@@ -2,7 +2,7 @@
 #ifndef _SERD_CONFIG_H_
 #define _SERD_CONFIG_H_
 
-#define SERD_VERSION "0.18.0"
+#define SERD_VERSION "0.18.2"
 
 #if defined(__APPLE__) || defined(__HAIKU__)
  #define HAVE_FMAX   1

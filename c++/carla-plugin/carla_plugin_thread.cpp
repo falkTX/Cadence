@@ -15,7 +15,6 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#include "carla_engine.hpp"
 #include "carla_plugin.hpp"
 
 #include <QtCore/QProcess>
@@ -69,9 +68,11 @@ void CarlaPluginThread::run()
     qDebug("CarlaPluginThread::run()");
 
     if (! m_process)
+    {
         m_process = new QProcess(nullptr);
-
-    m_process->setProcessChannelMode(QProcess::ForwardedChannels);
+        m_process->setProcessChannelMode(QProcess::ForwardedChannels);
+        m_process->setProcessEnvironment(engine->getOptionsAsProcessEnvironment());
+    }
 
     QString name(plugin->name() ? plugin->name() : "(none)");
     QStringList arguments;

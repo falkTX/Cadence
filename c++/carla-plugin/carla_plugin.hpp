@@ -460,14 +460,12 @@ public:
     // -------------------------------------------------------------------
     // Set data (internal stuff)
 
-#ifndef BUILD_BRIDGE
     /*!
      * Set the plugin's id to \a id.
      *
      * \see id()
      */
     void setId(const unsigned short id);
-#endif
 
     /*!
      * Enable or disable the plugin according to \a yesNo.
@@ -834,15 +832,17 @@ public:
         const char* const label;
     };
 
+//#ifndef BUILD_BRIDGE
     static CarlaPlugin* newNative(const initializer& init);
+//#endif
     static CarlaPlugin* newLADSPA(const initializer& init, const void* const extra);
     static CarlaPlugin* newDSSI(const initializer& init, const void* const extra);
     static CarlaPlugin* newLV2(const initializer& init);
     static CarlaPlugin* newVST(const initializer& init);
+//#ifndef BUILD_BRIDGE
     static CarlaPlugin* newGIG(const initializer& init);
     static CarlaPlugin* newSF2(const initializer& init);
     static CarlaPlugin* newSFZ(const initializer& init);
-//#ifndef BUILD_BRIDGE
     static CarlaPlugin* newBridge(const initializer& init, const BinaryType btype, const PluginType ptype, const void* const extra);
 //#endif
 

@@ -62,13 +62,8 @@ public:
 
             if (osc.thread)
             {
-#ifndef BUILD_BRIDGE
-                    const uint oscUiTimeout = x_engine->getOptions().oscUiTimeout;
-#else
-                    const uint oscUiTimeout = 40;
-#endif
                 // Wait a bit first, try safe quit, then force kill
-                if (osc.thread->isRunning() && ! osc.thread->wait(oscUiTimeout))
+                if (osc.thread->isRunning() && ! osc.thread->wait(x_engine->getOptions().oscUiTimeout))
                 {
                     qWarning("Failed to properly stop DSSI GUI thread");
                     osc.thread->terminate();
@@ -339,9 +334,7 @@ public:
         qDebug("DssiPlugin::reload() - start");
         CARLA_ASSERT(descriptor && ldescriptor);
 
-#ifndef BUILD_BRIDGE
         const ProcessMode processMode(x_engine->getOptions().processMode);
-#endif
 
         // Safely disable plugin for reload
         const ScopedDisabler m(this);
@@ -379,7 +372,6 @@ public:
                 params += 1;
         }
 
-#ifndef BUILD_BRIDGE
         if (x_engine->getOptions().forceStereo && (aIns == 1 || aOuts == 1) && ! h2)
         {
             h2 = ldescriptor->instantiate(ldescriptor, sampleRate);
@@ -396,7 +388,6 @@ public:
                 forcedStereoOut = true;
             }
         }
-#endif
 
         if (descriptor->run_synth || descriptor->run_multiple_synths)
             mIns = 1;
@@ -435,13 +426,12 @@ public:
             {
                 portName.clear();
 
-#ifndef BUILD_BRIDGE
                 if (processMode == PROCESS_MODE_SINGLE_CLIENT)
                 {
                     portName  = m_name;
                     portName += ":";
                 }
-#endif
+
                 portName += ldescriptor->PortNames[i];
                 portName.truncate(portNameSize);
 
@@ -634,13 +624,12 @@ public:
         {
             portName.clear();
 
-#ifndef BUILD_BRIDGE
             if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
             }
-#endif
+
             portName += "control-in";
             portName.truncate(portNameSize);
 
@@ -651,13 +640,12 @@ public:
         {
             portName.clear();
 
-#ifndef BUILD_BRIDGE
             if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
             }
-#endif
+
             portName += "control-out";
             portName.truncate(portNameSize);
 
@@ -668,13 +656,12 @@ public:
         {
             portName.clear();
 
-#ifndef BUILD_BRIDGE
             if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
             }
-#endif
+
             portName += "midi-in";
             portName.truncate(portNameSize);
 
@@ -691,13 +678,11 @@ public:
         if (midi.portMin && aOut.count > 0)
             m_hints |= PLUGIN_IS_SYNTH;
 
-#ifndef BUILD_BRIDGE
         if (x_engine->getOptions().useDssiVstChunks && QString(m_filename).endsWith("dssi-vst.so", Qt::CaseInsensitive))
         {
             if (descriptor->get_custom_data && descriptor->set_custom_data)
                 m_hints |= PLUGIN_USES_CHUNKS;
         }
-#endif
 
         if (aOuts > 0 && (aIns == aOuts || aIns == 1))
             m_hints |= PLUGIN_CAN_DRYWET;
@@ -813,7 +798,6 @@ public:
             midiprog.data[i].name    = strdup(pdesc->Name ? pdesc->Name : "");
         }
 
-#ifndef BUILD_BRIDGE
         // Update OSC Names
         if (x_engine->isOscControlRegistered())
         {
@@ -822,7 +806,6 @@ public:
             for (i=0; i < midiprog.count; i++)
                 x_engine->osc_send_control_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
         }
-#endif
 
         if (init)
         {
@@ -882,11 +865,7 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Input VU
 
-#ifndef BUILD_BRIDGE
         if (aIn.count > 0 && x_engine->getOptions().processMode != PROCESS_MODE_CONTINUOUS_RACK)
-#else
-        if (aIn.count > 0)
-#endif
         {
             if (aIn.count == 1)
             {
@@ -1373,9 +1352,7 @@ public:
                 }
 
                 // Output VU
-#ifndef BUILD_BRIDGE
                 if (x_engine->getOptions().processMode != PROCESS_MODE_CONTINUOUS_RACK)
-#endif
                 {
                     for (k=0; i < 2 && k < frames; k++)
                     {
@@ -1643,7 +1620,6 @@ CarlaPlugin* CarlaPlugin::newDSSI(const initializer& init, const void* const ext
 
     plugin->reload();
 
-# ifndef BUILD_BRIDGE
     if (init.engine->getOptions().processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
@@ -1653,7 +1629,6 @@ CarlaPlugin* CarlaPlugin::newDSSI(const initializer& init, const void* const ext
             return nullptr;
         }
     }
-# endif
 
     plugin->registerToOscClient();
 

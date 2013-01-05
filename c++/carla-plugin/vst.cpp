@@ -96,13 +96,8 @@ public:
                 {
                     if (osc.thread)
                     {
-#ifndef BUILD_BRIDGE
-                        const uint oscUiTimeout = x_engine->getOptions().oscUiTimeout;
-#else
-                        const uint oscUiTimeout = 40;
-#endif
                         // Wait a bit first, try safe quit, then force kill
-                        if (osc.thread->isRunning() && ! osc.thread->wait(oscUiTimeout))
+                        if (osc.thread->isRunning() && ! osc.thread->wait(x_engine->getOptions().oscUiTimeout))
                         {
                             qWarning("Failed to properly stop VST OSC GUI thread");
                             osc.thread->terminate();
@@ -477,9 +472,7 @@ public:
         qDebug("VstPlugin::reload() - start");
         CARLA_ASSERT(effect);
 
-#ifndef BUILD_BRIDGE
         const ProcessMode processMode(x_engine->getOptions().processMode);
-#endif
 
         // Safely disable plugin for reload
         const ScopedDisabler m(this);
@@ -537,13 +530,12 @@ public:
         {
             portName.clear();
 
-#ifndef BUILD_BRIDGE
             if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
             }
-#endif
+
             char tmp[12] = { 0 };
             sprintf(tmp, "input_%02i", j+1);
             portName += tmp;
@@ -557,13 +549,12 @@ public:
         {
             portName.clear();
 
-#ifndef BUILD_BRIDGE
             if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
             }
-#endif
+
             char tmp[12] = { 0 };
             sprintf(tmp, "output_%02i", j+1);
             portName += tmp;
@@ -691,13 +682,12 @@ public:
         {
             portName.clear();
 
-#ifndef BUILD_BRIDGE
             if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
             }
-#endif
+
             portName += "control-in";
             portName.truncate(portNameSize);
 
@@ -708,13 +698,12 @@ public:
         {
             portName.clear();
 
-#ifndef BUILD_BRIDGE
             if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
             }
-#endif
+
             portName += "midi-in";
             portName.truncate(portNameSize);
 
@@ -725,13 +714,12 @@ public:
         {
             portName.clear();
 
-#ifndef BUILD_BRIDGE
             if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
             }
-#endif
+
             portName += "midi-out";
             portName.truncate(portNameSize);
 
@@ -924,11 +912,7 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Input VU
 
-#ifndef BUILD_BRIDGE
         if (aIn.count > 0 && x_engine->getOptions().processMode != PROCESS_MODE_CONTINUOUS_RACK)
-#else
-        if (aIn.count > 0)
-#endif
         {
             if (aIn.count == 1)
             {
@@ -1378,9 +1362,7 @@ public:
                 }
 
                 // Output VU
-#ifndef BUILD_BRIDGE
                 if (x_engine->getOptions().processMode != PROCESS_MODE_CONTINUOUS_RACK)
-#endif
                 {
                     for (k=0; i < 2 && k < frames; k++)
                     {
@@ -1636,13 +1618,11 @@ public:
         if (! m_enabled)
             return 1;
 
-#ifndef BUILD_BRIDGE
         if (x_engine->getOptions().processMode == PROCESS_MODE_CONTINUOUS_RACK)
         {
             qCritical("VstPlugin::handleAudioMasterIOChanged() - plugin asked IO change, but it's not supported in rack mode");
             return 0;
         }
-#endif
 
         engineProcessLock();
         m_enabled = false;
@@ -1777,10 +1757,8 @@ public:
             return -1;
         if (strcmp(feature, "acceptIOChanges") == 0)
         {
-#ifndef BUILD_BRIDGE
             //if (CarlaEngine::processMode == PROCESS_MODE_CONTINUOUS_RACK)
             //    return -1;
-#endif
             return 1;
         }
         if (strcmp(feature, "sizeWindow") == 0)
@@ -1986,11 +1964,8 @@ public:
 
         case audioMasterGetNumAutomatableParameters:
             // Deprecated in VST SDK 2.4
-#ifdef BUILD_BRIDGE
-            ret = MAX_PARAMETERS;
-#else
             ret = 0; //x_engine->options.maxParameters;
-#endif
+
             if (effect && ret > effect->numParams)
                 ret = effect->numParams;
         // FIXME
@@ -2050,11 +2025,8 @@ public:
             else
                 qWarning("VstPlugin::hostCallback::audioMasterGetBlockSize called without valid object");
             if (ret == 0)
-//#ifndef BUILD_BRIDGE
 //                ret = CarlaEngine::processHighPrecision ? 8 : 512;
-//#else
                 ret = 512;
-//#endif
             break;
 
         case audioMasterGetInputLatency:
@@ -2347,7 +2319,7 @@ public:
         {
             m_hints |= PLUGIN_HAS_GUI;
 
-#if defined(Q_OS_LINUX) && ! defined(BUILD_BRIDGE) && 0 // FIXME
+#if defined(Q_OS_LINUX) && 0 // FIXME
             if (x_engine->options.bridge_vstx11 && x_engine->preferUiBridges() && ! (effect->flags & effFlagsProgramChunks))
             {
                 osc.thread = new CarlaPluginThread(x_engine, this, CarlaPluginThread::PLUGIN_THREAD_VST_GUI);
@@ -2437,7 +2409,6 @@ CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
 
     plugin->reload();
 
-#  ifndef BUILD_BRIDGE
     if (init.engine->getOptions().processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
@@ -2447,7 +2418,6 @@ CarlaPlugin* CarlaPlugin::newVST(const initializer& init)
             return nullptr;
         }
     }
-#  endif
 
     plugin->registerToOscClient();
 

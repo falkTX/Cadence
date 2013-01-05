@@ -343,13 +343,8 @@ public:
             case GUI_EXTERNAL_OSC:
                 if (osc.thread)
                 {
-#ifndef BUILD_BRIDGE
-                    const uint oscUiTimeout = x_engine->getOptions().oscUiTimeout;
-#else
-                    const uint oscUiTimeout = 40;
-#endif
                     // Wait a bit first, try safe quit, then force kill
-                    if (osc.thread->isRunning() && ! osc.thread->wait(oscUiTimeout))
+                    if (osc.thread->isRunning() && ! osc.thread->wait(x_engine->getOptions().oscUiTimeout))
                     {
                         qWarning("Failed to properly stop LV2 OSC GUI thread");
                         osc.thread->terminate();
@@ -435,9 +430,7 @@ public:
         if (features[lv2_feature_id_worker] && features[lv2_feature_id_worker]->data)
             delete (LV2_Worker_Schedule*)features[lv2_feature_id_worker]->data;
 
-#ifndef BUILD_BRIDGE
         if (! x_engine->getOptions().processHighPrecision)
-#endif
         {
             features[lv2_feature_id_bufsize_fixed]    = nullptr;
             features[lv2_feature_id_bufsize_powerof2] = nullptr;
@@ -695,83 +688,83 @@ public:
         {
             const LV2_RDF_Port* const port = &rdf_descriptor->Ports[rindex];
 
-            if (LV2_HAVE_UNIT_SYMBOL(port->Unit.Hints) && port->Unit.Symbol)
+            if (LV2_HAVE_PORT_UNIT_SYMBOL(port->Unit.Hints) && port->Unit.Symbol)
                 strncpy(strBuf, port->Unit.Symbol, STR_MAX);
 
-            else if (LV2_HAVE_UNIT(port->Unit.Hints))
+            else if (LV2_HAVE_PORT_UNIT_UNIT(port->Unit.Hints))
             {
-                switch (port->Unit.Type)
+                switch (port->Unit.Unit)
                 {
-                case LV2_UNIT_BAR:
+                case LV2_PORT_UNIT_BAR:
                     strncpy(strBuf, "bars", STR_MAX);
                     return;
-                case LV2_UNIT_BEAT:
+                case LV2_PORT_UNIT_BEAT:
                     strncpy(strBuf, "beats", STR_MAX);
                     return;
-                case LV2_UNIT_BPM:
+                case LV2_PORT_UNIT_BPM:
                     strncpy(strBuf, "BPM", STR_MAX);
                     return;
-                case LV2_UNIT_CENT:
+                case LV2_PORT_UNIT_CENT:
                     strncpy(strBuf, "ct", STR_MAX);
                     return;
-                case LV2_UNIT_CM:
+                case LV2_PORT_UNIT_CM:
                     strncpy(strBuf, "cm", STR_MAX);
                     return;
-                case LV2_UNIT_COEF:
+                case LV2_PORT_UNIT_COEF:
                     strncpy(strBuf, "(coef)", STR_MAX);
                     return;
-                case LV2_UNIT_DB:
+                case LV2_PORT_UNIT_DB:
                     strncpy(strBuf, "dB", STR_MAX);
                     return;
-                case LV2_UNIT_DEGREE:
+                case LV2_PORT_UNIT_DEGREE:
                     strncpy(strBuf, "deg", STR_MAX);
                     return;
-                case LV2_UNIT_FRAME:
+                case LV2_PORT_UNIT_FRAME:
                     strncpy(strBuf, "frames", STR_MAX);
                     return;
-                case LV2_UNIT_HZ:
+                case LV2_PORT_UNIT_HZ:
                     strncpy(strBuf, "Hz", STR_MAX);
                     return;
-                case LV2_UNIT_INCH:
+                case LV2_PORT_UNIT_INCH:
                     strncpy(strBuf, "in", STR_MAX);
                     return;
-                case LV2_UNIT_KHZ:
+                case LV2_PORT_UNIT_KHZ:
                     strncpy(strBuf, "kHz", STR_MAX);
                     return;
-                case LV2_UNIT_KM:
+                case LV2_PORT_UNIT_KM:
                     strncpy(strBuf, "km", STR_MAX);
                     return;
-                case LV2_UNIT_M:
+                case LV2_PORT_UNIT_M:
                     strncpy(strBuf, "m", STR_MAX);
                     return;
-                case LV2_UNIT_MHZ:
+                case LV2_PORT_UNIT_MHZ:
                     strncpy(strBuf, "MHz", STR_MAX);
                     return;
-                case LV2_UNIT_MIDINOTE:
+                case LV2_PORT_UNIT_MIDINOTE:
                     strncpy(strBuf, "note", STR_MAX);
                     return;
-                case LV2_UNIT_MILE:
+                case LV2_PORT_UNIT_MILE:
                     strncpy(strBuf, "mi", STR_MAX);
                     return;
-                case LV2_UNIT_MIN:
+                case LV2_PORT_UNIT_MIN:
                     strncpy(strBuf, "min", STR_MAX);
                     return;
-                case LV2_UNIT_MM:
+                case LV2_PORT_UNIT_MM:
                     strncpy(strBuf, "mm", STR_MAX);
                     return;
-                case LV2_UNIT_MS:
+                case LV2_PORT_UNIT_MS:
                     strncpy(strBuf, "ms", STR_MAX);
                     return;
-                case LV2_UNIT_OCT:
+                case LV2_PORT_UNIT_OCT:
                     strncpy(strBuf, "oct", STR_MAX);
                     return;
-                case LV2_UNIT_PC:
+                case LV2_PORT_UNIT_PC:
                     strncpy(strBuf, "%", STR_MAX);
                     return;
-                case LV2_UNIT_S:
+                case LV2_PORT_UNIT_S:
                     strncpy(strBuf, "s", STR_MAX);
                     return;
-                case LV2_UNIT_SEMITONE:
+                case LV2_PORT_UNIT_SEMITONE:
                     strncpy(strBuf, "semi", STR_MAX);
                     return;
                 }
@@ -1111,9 +1104,7 @@ public:
         qDebug("Lv2Plugin::reload() - start");
         CARLA_ASSERT(descriptor && rdf_descriptor);
 
-#ifndef BUILD_BRIDGE
         const ProcessMode processMode(x_engine->getOptions().processMode);
-#endif
 
         // Safely disable plugin for reload
         const ScopedDisabler m(this);
@@ -1139,7 +1130,7 @@ public:
 
         for (uint32_t i=0; i < portCount; i++)
         {
-            const LV2_Property portType = rdf_descriptor->Ports[i].Type;
+            const LV2_Property portType = rdf_descriptor->Ports[i].Type.Value;
 
             if (LV2_IS_PORT_AUDIO(portType))
             {
@@ -1197,7 +1188,6 @@ public:
                 ext.worker = (const LV2_Worker_Interface*)descriptor->extension_data(LV2_WORKER__interface);
         }
 
-#ifndef BUILD_BRIDGE
         if (x_engine->getOptions().forceStereo && (aIns == 1 || aOuts == 1) && ! (h2 || ext.state || ext.worker))
         {
             h2 = descriptor->instantiate(descriptor, sampleRate, rdf_descriptor->Bundle, features);
@@ -1214,7 +1204,6 @@ public:
                 forcedStereoOut = true;
             }
         }
-#endif
 
         if (aIns > 0)
         {
@@ -1311,19 +1300,18 @@ public:
 
         for (uint32_t i=0; i < portCount; i++)
         {
-            const LV2_Property portType = rdf_descriptor->Ports[i].Type;
+            const LV2_Property portType = rdf_descriptor->Ports[i].Type.Value;
 
             if (LV2_IS_PORT_AUDIO(portType) || LV2_IS_PORT_ATOM_SEQUENCE(portType) || LV2_IS_PORT_CV(portType) || LV2_IS_PORT_EVENT(portType) || LV2_IS_PORT_MIDI_LL(portType))
             {
                 portName.clear();
 
-#ifndef BUILD_BRIDGE
                 if (processMode == PROCESS_MODE_SINGLE_CLIENT)
                 {
                     portName  = m_name;
                     portName += ":";
                 }
-#endif
+
                 portName += rdf_descriptor->Ports[i].Name;
                 portName.truncate(portNameSize);
             }
@@ -1386,12 +1374,12 @@ public:
 
                     evIn.data[j].rindex = i;
 
-                    if (portType & LV2_PORT_SUPPORTS_MIDI_EVENT)
+                    if (portType & LV2_PORT_DATA_MIDI_EVENT)
                     {
                         evIn.data[j].type |= CARLA_EVENT_TYPE_MIDI;
                         evIn.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
                     }
-                    if (portType & LV2_PORT_SUPPORTS_PATCH_MESSAGE)
+                    if (portType & LV2_PORT_DATA_PATCH_MESSAGE)
                     {
                         evIn.data[j].type |= CARLA_EVENT_TYPE_MESSAGE;
                     }
@@ -1404,12 +1392,12 @@ public:
 
                     evOut.data[j].rindex = i;
 
-                    if (portType & LV2_PORT_SUPPORTS_MIDI_EVENT)
+                    if (portType & LV2_PORT_DATA_MIDI_EVENT)
                     {
                         evOut.data[j].type |= CARLA_EVENT_TYPE_MIDI;
                         evOut.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
                     }
-                    if (portType & LV2_PORT_SUPPORTS_PATCH_MESSAGE)
+                    if (portType & LV2_PORT_DATA_PATCH_MESSAGE)
                     {
                         evOut.data[j].type |= CARLA_EVENT_TYPE_MESSAGE;
                     }
@@ -1427,7 +1415,7 @@ public:
 
                     evIn.data[j].rindex = i;
 
-                    if (portType & LV2_PORT_SUPPORTS_MIDI_EVENT)
+                    if (portType & LV2_PORT_DATA_MIDI_EVENT)
                     {
                         evIn.data[j].type |= CARLA_EVENT_TYPE_MIDI;
                         evIn.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
@@ -1441,7 +1429,7 @@ public:
 
                     evOut.data[j].rindex = i;
 
-                    if (portType & LV2_PORT_SUPPORTS_MIDI_EVENT)
+                    if (portType & LV2_PORT_DATA_MIDI_EVENT)
                     {
                         evOut.data[j].type |= CARLA_EVENT_TYPE_MIDI;
                         evOut.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
@@ -1700,13 +1688,12 @@ public:
         {
             portName.clear();
 
-#ifndef BUILD_BRIDGE
             if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
             }
-#endif
+
             portName += "control-in";
             portName.truncate(portNameSize);
 
@@ -1717,13 +1704,12 @@ public:
         {
             portName.clear();
 
-#ifndef BUILD_BRIDGE
             if (processMode == PROCESS_MODE_SINGLE_CLIENT)
             {
                 portName  = m_name;
                 portName += ":";
             }
-#endif
+
             portName += "control-out";
             portName.truncate(portNameSize);
 
@@ -1864,7 +1850,6 @@ public:
             midiprog.data[i].name    = strdup(pdesc->name ? pdesc->name : "");
         }
 
-#ifndef BUILD_BRIDGE
         // Update OSC Names
         if (x_engine->isOscControlRegistered())
         {
@@ -1873,7 +1858,6 @@ public:
             for (i=0; i < midiprog.count; i++)
                 x_engine->osc_send_control_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
         }
-#endif
 
         if (init)
         {
@@ -1991,11 +1975,7 @@ public:
         // --------------------------------------------------------------------------------------------------------
         // Input VU
 
-#ifndef BUILD_BRIDGE
         if (aIn.count > 0 && x_engine->getOptions().processMode != PROCESS_MODE_CONTINUOUS_RACK)
-#else
-        if (aIn.count > 0)
-#endif
         {
             if (aIn.count == 1)
             {
@@ -2669,9 +2649,7 @@ public:
                 }
 
                 // Output VU
-#ifndef BUILD_BRIDGE
                 if (x_engine->getOptions().processMode != PROCESS_MODE_CONTINUOUS_RACK)
-#endif
                 {
                     for (k=0; i < 2 && k < frames; k++)
                     {
@@ -3376,7 +3354,6 @@ public:
 
     const char* getUiBridgePath(const LV2_Property type)
     {
-#ifndef BUILD_BRIDGE
         const CarlaEngineOptions options(x_engine->getOptions());
 
         switch (type)
@@ -3396,10 +3373,6 @@ public:
         default:
             return nullptr;
         }
-#else
-        return nullptr;
-        Q_UNUSED(type);
-#endif
     }
 
     bool isUiBridgeable(const uint32_t uiId)
@@ -3988,7 +3961,6 @@ public:
         features[lv2_feature_id_bufsize_bounded]->URI  = LV2_BUF_SIZE__boundedBlockLength;
         features[lv2_feature_id_bufsize_bounded]->data = nullptr;
 
-#ifndef BUILD_BRIDGE
         if (x_engine->getOptions().processHighPrecision)
         {
             features[lv2_feature_id_bufsize_fixed]          = new LV2_Feature;
@@ -4000,7 +3972,6 @@ public:
             features[lv2_feature_id_bufsize_powerof2]->data = nullptr;
         }
         else
-#endif
         {
             // fake, used only to keep a valid features-array
             features[lv2_feature_id_bufsize_fixed]    = features[lv2_feature_id_bufsize_bounded];
@@ -4129,7 +4100,7 @@ public:
         // Check supported ports
         for (uint32_t i=0; i < rdf_descriptor->PortCount; i++)
         {
-            LV2_Property PortType = rdf_descriptor->Ports[i].Type;
+            LV2_Property PortType = rdf_descriptor->Ports[i].Type.Value;
             if (! bool(LV2_IS_PORT_AUDIO(PortType) || LV2_IS_PORT_CONTROL(PortType) || LV2_IS_PORT_ATOM_SEQUENCE(PortType) || LV2_IS_PORT_EVENT(PortType) || LV2_IS_PORT_MIDI_LL(PortType)))
             {
                 if (! LV2_IS_PORT_OPTIONAL(rdf_descriptor->Ports[i].Properties))
@@ -4216,11 +4187,7 @@ public:
         int eQt4, eCocoa, eHWND, eX11, eGtk2, eGtk3, iCocoa, iHWND, iX11, iQt4, iExt, iSuil, iFinal;
         eQt4 = eCocoa = eHWND = eX11 = eGtk2 = eGtk3 = iQt4 = iCocoa = iHWND = iX11 = iExt = iSuil = iFinal = -1;
 
-#ifdef BUILD_BRIDGE
-        const bool preferUiBridges = false;
-#else
-        const bool preferUiBridges = x_engine->getOptions().preferUiBridges;
-#endif
+        const bool preferUiBridges = (x_engine->getOptions().preferUiBridges && (m_hints & PLUGIN_IS_BRIDGE) == 0);
 
         for (uint32_t i=0; i < rdf_descriptor->UICount; i++)
         {
@@ -4232,7 +4199,7 @@ public:
                 continue;
             }
 
-            switch (rdf_descriptor->UIs[i].Type)
+            switch (rdf_descriptor->UIs[i].Type.Value)
             {
             case LV2_UI_QT4:
                 if (isUiBridgeable(i) && preferUiBridges)
@@ -4259,7 +4226,7 @@ public:
                 break;
 
             case LV2_UI_GTK2:
-#if defined(WANT_SUIL) || defined(BUILD_BRIDGE)
+#ifdef WANT_SUIL // FIXME
                 if (isUiBridgeable(i) && preferUiBridges)
                     eGtk2 = i;
 #else
@@ -4407,7 +4374,7 @@ public:
         // -----------------------------------------------------------
         // initialize ui according to type
 
-        const LV2_Property uiType = ui.rdf_descriptor->Type;
+        const LV2_Property uiType = ui.rdf_descriptor->Type.Value;
 
         if (isBridged)
         {
@@ -4507,7 +4474,7 @@ public:
                 qDebug("Will use LV2 Gtk2 UI (suil)");
                 gui.type      = GUI_EXTERNAL_SUIL;
                 gui.resizable = isUiResizable();
-                suil.handle   = suil_instance_new(suil.host, this, LV2_UI__Qt4UI, rdf_descriptor->URI, ui.rdf_descriptor->URI, get_lv2_ui_uri(ui.rdf_descriptor->Type), ui.rdf_descriptor->Bundle, ui.rdf_descriptor->Binary, features);
+                suil.handle   = suil_instance_new(suil.host, this, LV2_UI__Qt4UI, rdf_descriptor->URI, ui.rdf_descriptor->URI, ui.rdf_descriptor->Type.URI, ui.rdf_descriptor->Bundle, ui.rdf_descriptor->Binary, features);
                 m_hints      |= PLUGIN_USES_SINGLE_THREAD;
 
                 if (suil.handle)
@@ -4689,7 +4656,6 @@ CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
 
     plugin->reload();
 
-# ifndef BUILD_BRIDGE
     if (init.engine->getOptions().processMode == PROCESS_MODE_CONTINUOUS_RACK)
     {
         if (! (plugin->hints() & PLUGIN_CAN_FORCE_STEREO))
@@ -4699,7 +4665,6 @@ CarlaPlugin* CarlaPlugin::newLV2(const initializer& init)
             return nullptr;
         }
     }
-# endif
 
     plugin->registerToOscClient();
     plugin->updateUi();
