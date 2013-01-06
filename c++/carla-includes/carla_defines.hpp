@@ -18,11 +18,11 @@
 #ifndef CARLA_DEFINES_HPP
 #define CARLA_DEFINES_HPP
 
-#ifdef __WINE__
-# define Q_CORE_EXPORT
-# define Q_GUI_EXPORT
-# define QT_NO_STL
-#endif
+//#ifdef __WINE__
+//# define Q_CORE_EXPORT
+//# define Q_GUI_EXPORT
+//# define QT_NO_STL
+//#endif
 
 #include <QtCore/Qt>
 

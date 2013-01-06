@@ -18,8 +18,6 @@
 #ifndef LADSPA_RDF_INCLUDED
 #define LADSPA_RDF_INCLUDED
 
-// FIXME - use LADSPA_PORT_UNIT_xxx
-
 #include <cstdlib>
 
 // Base Types

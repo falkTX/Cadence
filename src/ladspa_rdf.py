@@ -23,6 +23,9 @@
 from ctypes import *
 from copy import deepcopy
 
+# Null type
+c_nullptr = None
+
 # Base Types
 LADSPA_Data = c_float
 LADSPA_Property = c_int
@@ -164,9 +167,9 @@ PyLADSPA_RDF_Descriptor = {
 #  RDF data and conversions
 
 # Namespaces
-NS_dc   = "http://purl.org/dc/elements/1.1/"
-NS_rdf  = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-NS_rdfs = "http://www.w3.org/2000/01/rdf-schema#"
+NS_dc     = "http://purl.org/dc/elements/1.1/"
+NS_rdf    = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+NS_rdfs   = "http://www.w3.org/2000/01/rdf-schema#"
 NS_ladspa = "http://ladspa.org/ontology#"
 
 # Prefixes (sorted alphabetically and by type)
@@ -179,10 +182,10 @@ rdf_prefix = {
     'rdf:type':   NS_rdf + "type",
 
     # LADSPA Stuff
-    'ladspa:forPort':  NS_ladspa + "forPort",
-    'ladspa:hasLabel': NS_ladspa + "hasLabel",
-    'ladspa:hasPoint': NS_ladspa + "hasPoint",
-    'ladspa:hasPort':  NS_ladspa + "hasPort",
+    'ladspa:forPort':      NS_ladspa + "forPort",
+    'ladspa:hasLabel':     NS_ladspa + "hasLabel",
+    'ladspa:hasPoint':     NS_ladspa + "hasPoint",
+    'ladspa:hasPort':      NS_ladspa + "hasPort",
     'ladspa:hasPortValue': NS_ladspa + "hasPortValue",
     'ladspa:hasScale':     NS_ladspa + "hasScale",
     'ladspa:hasSetting':   NS_ladspa + "hasSetting",
@@ -194,129 +197,129 @@ rdf_prefix = {
 }
 
 def get_c_plugin_class(value):
-    value_str = value.replace(NS_ladspa, "")
+    valueStr = value.replace(NS_ladspa, "")
 
-    if value_str == "Plugin":
-        return 0
-    elif value_str == "UtilityPlugin":
+    if valueStr == "Plugin":
+        return 0x0
+    elif valueStr == "UtilityPlugin":
         return LADSPA_CLASS_UTILITY
-    elif value_str == "GeneratorPlugin":
+    elif valueStr == "GeneratorPlugin":
         return LADSPA_CLASS_GENERATOR
-    elif value_str == "SimulatorPlugin":
+    elif valueStr == "SimulatorPlugin":
         return LADSPA_CLASS_SIMULATOR
-    elif value_str == "OscillatorPlugin":
+    elif valueStr == "OscillatorPlugin":
         return LADSPA_CLASS_OSCILLATOR
-    elif value_str == "TimePlugin":
+    elif valueStr == "TimePlugin":
         return LADSPA_CLASS_TIME
-    elif value_str == "DelayPlugin":
+    elif valueStr == "DelayPlugin":
         return LADSPA_CLASS_DELAY
-    elif value_str == "PhaserPlugin":
+    elif valueStr == "PhaserPlugin":
         return LADSPA_CLASS_PHASER
-    elif value_str == "FlangerPlugin":
+    elif valueStr == "FlangerPlugin":
         return LADSPA_CLASS_FLANGER
-    elif value_str == "ChorusPlugin":
+    elif valueStr == "ChorusPlugin":
         return LADSPA_CLASS_CHORUS
-    elif value_str == "ReverbPlugin":
+    elif valueStr == "ReverbPlugin":
         return LADSPA_CLASS_REVERB
-    elif value_str == "FrequencyPlugin":
+    elif valueStr == "FrequencyPlugin":
         return LADSPA_CLASS_FREQUENCY
-    elif value_str == "FrequencyMeterPlugin":
+    elif valueStr == "FrequencyMeterPlugin":
         return LADSPA_CLASS_FREQUENCY_METER
-    elif value_str == "FilterPlugin":
+    elif valueStr == "FilterPlugin":
         return LADSPA_CLASS_FILTER
-    elif value_str == "LowpassPlugin":
+    elif valueStr == "LowpassPlugin":
         return LADSPA_CLASS_LOWPASS
-    elif value_str == "HighpassPlugin":
+    elif valueStr == "HighpassPlugin":
         return LADSPA_CLASS_HIGHPASS
-    elif value_str == "BandpassPlugin":
+    elif valueStr == "BandpassPlugin":
         return LADSPA_CLASS_BANDPASS
-    elif value_str == "CombPlugin":
+    elif valueStr == "CombPlugin":
         return LADSPA_CLASS_COMB
-    elif value_str == "AllpassPlugin":
+    elif valueStr == "AllpassPlugin":
         return LADSPA_CLASS_ALLPASS
-    elif value_str == "EQPlugin":
+    elif valueStr == "EQPlugin":
         return LADSPA_CLASS_EQ
-    elif value_str == "ParaEQPlugin":
+    elif valueStr == "ParaEQPlugin":
         return LADSPA_CLASS_PARAEQ
-    elif value_str == "MultiEQPlugin":
+    elif valueStr == "MultiEQPlugin":
         return LADSPA_CLASS_MULTIEQ
-    elif value_str == "AmplitudePlugin":
+    elif valueStr == "AmplitudePlugin":
         return LADSPA_CLASS_AMPLITUDE
-    elif value_str == "PitchPlugin":
+    elif valueStr == "PitchPlugin":
         return LADSPA_CLASS_PITCH
-    elif value_str == "AmplifierPlugin":
+    elif valueStr == "AmplifierPlugin":
         return LADSPA_CLASS_AMPLIFIER
-    elif value_str == "WaveshaperPlugin":
+    elif valueStr == "WaveshaperPlugin":
         return LADSPA_CLASS_WAVESHAPER
-    elif value_str == "ModulatorPlugin":
+    elif valueStr == "ModulatorPlugin":
         return LADSPA_CLASS_MODULATOR
-    elif value_str == "DistortionPlugin":
+    elif valueStr == "DistortionPlugin":
         return LADSPA_CLASS_DISTORTION
-    elif value_str == "DynamicsPlugin":
+    elif valueStr == "DynamicsPlugin":
         return LADSPA_CLASS_DYNAMICS
-    elif value_str == "CompressorPlugin":
+    elif valueStr == "CompressorPlugin":
         return LADSPA_CLASS_COMPRESSOR
-    elif value_str == "ExpanderPlugin":
+    elif valueStr == "ExpanderPlugin":
         return LADSPA_CLASS_EXPANDER
-    elif value_str == "LimiterPlugin":
+    elif valueStr == "LimiterPlugin":
         return LADSPA_CLASS_LIMITER
-    elif value_str == "GatePlugin":
+    elif valueStr == "GatePlugin":
         return LADSPA_CLASS_GATE
-    elif value_str == "SpectralPlugin":
+    elif valueStr == "SpectralPlugin":
         return LADSPA_CLASS_SPECTRAL
-    elif value_str == "NotchPlugin":
+    elif valueStr == "NotchPlugin":
         return LADSPA_CLASS_NOTCH
-    elif value_str == "MixerPlugin":
+    elif valueStr == "MixerPlugin":
         return LADSPA_CLASS_EQ
     else:
-        print("LADSPA_RDF - Got an unknown plugin type '%s'" % value_str)
-        return 0
+        print("LADSPA_RDF - Got an unknown plugin type '%s'" % valueStr)
+        return 0x0
 
 def get_c_port_type(value):
-    value_str = value.replace(NS_ladspa, "")
+    valueStr = value.replace(NS_ladspa, "")
 
-    if value_str == "Port":
-        return 0
-    elif value_str == "ControlPort":
+    if valueStr == "Port":
+        return 0x0
+    elif valueStr == "ControlPort":
         return LADSPA_PORT_CONTROL
-    elif value_str == "AudioPort":
+    elif valueStr == "AudioPort":
         return LADSPA_PORT_AUDIO
-    elif value_str == "InputPort":
+    elif valueStr == "InputPort":
         return LADSPA_PORT_INPUT
-    elif value_str == "OutputPort":
+    elif valueStr == "OutputPort":
         return LADSPA_PORT_OUTPUT
-    elif value_str in ("ControlInputPort", "InputControlPort"):
+    elif valueStr in ("ControlInputPort", "InputControlPort"):
         return LADSPA_PORT_CONTROL|LADSPA_PORT_INPUT
-    elif value_str in ("ControlOutputPort", "OutputControlPort"):
+    elif valueStr in ("ControlOutputPort", "OutputControlPort"):
         return LADSPA_PORT_CONTROL|LADSPA_PORT_OUTPUT
-    elif value_str in ("AudioInputPort", "InputAudioPort"):
+    elif valueStr in ("AudioInputPort", "InputAudioPort"):
         return LADSPA_PORT_AUDIO|LADSPA_PORT_INPUT
-    elif value_str in ("AudioOutputPort", "OutputAudioPort"):
+    elif valueStr in ("AudioOutputPort", "OutputAudioPort"):
         return LADSPA_PORT_AUDIO|LADSPA_PORT_OUTPUT
     else:
-        print("LADSPA_RDF - Got an unknown port type '%s'" % value_str)
-        return 0
+        print("LADSPA_RDF - Got an unknown port type '%s'" % valueStr)
+        return 0x0
 
 def get_c_unit_type(value):
-    value_str = value.replace(NS_ladspa, "")
+    valueStr = value.replace(NS_ladspa, "")
 
-    if value_str in ("Unit", "Units", "AmplitudeUnits", "FrequencyUnits", "TimeUnits"):
-        return 0
-    elif value_str == "dB":
+    if valueStr in ("Unit", "Units", "AmplitudeUnits", "FrequencyUnits", "TimeUnits"):
+        return 0x0
+    elif valueStr == "dB":
         return LADSPA_UNIT_DB
-    elif value_str == "coef":
+    elif valueStr == "coef":
         return LADSPA_UNIT_COEF
-    elif value_str == "Hz":
+    elif valueStr == "Hz":
         return LADSPA_UNIT_HZ
-    elif value_str == "seconds":
+    elif valueStr == "seconds":
         return LADSPA_UNIT_S
-    elif value_str == "milliseconds":
+    elif valueStr == "milliseconds":
         return LADSPA_UNIT_MS
-    elif value_str == "minutes":
+    elif valueStr == "minutes":
         return LADSPA_UNIT_MIN
     else:
-        print("LADSPA_RDF - Got an unknown unit type '%s'" % value_str)
-        return 0
+        print("LADSPA_RDF - Got an unknown unit type '%s'" % valueStr)
+        return 0x0
 
 # -------------------------------------------------------------------------------
 #  Global objects
@@ -337,123 +340,123 @@ LADSPA_RDF_TYPE_PLUGIN = 1
 LADSPA_RDF_TYPE_PORT = 2
 
 # Check RDF Type
-def rdf_is_type(_subject, compare):
-    if type(_subject) == URIRef and NS_ladspa in _subject:
+def rdf_is_type(subject, compare):
+    if isinstance(subject, URIRef) and NS_ladspa in subject:
         if compare == LADSPA_RDF_TYPE_PLUGIN:
-            return bool(to_plugin_number(_subject).isdigit())
+            return bool(to_plugin_number(subject).isdigit())
         elif compare == LADSPA_RDF_TYPE_PORT:
-            return bool("." in to_plugin_number(_subject))
+            return bool("." in to_plugin_number(subject))
     else:
         return False
 
-def to_float(rdf_item):
-    return float(str(rdf_item).replace("f", ""))
+def to_float(rdfItem):
+    return float(str(rdfItem).replace("f", ""))
 
 # Convert RDF LADSPA subject into a number
-def to_plugin_number(_subject):
-    return str(_subject).replace(NS_ladspa, "")
+def to_plugin_number(subject):
+    return str(subject).replace(NS_ladspa, "")
 
 # Convert RDF LADSPA subject into a plugin and port number
-def to_plugin_and_port_number(_subject):
-    numbers = str(_subject).replace(NS_ladspa, "").split(".")
+def to_plugin_and_port_number(subject):
+    numbers = str(subject).replace(NS_ladspa, "").split(".")
     return (numbers[0], numbers[1])
 
 # Convert RDF LADSPA subject into a port number
-def to_plugin_port(_subject):
-    return to_plugin_and_port_number(_subject)[1]
+def to_plugin_port(subject):
+    return to_plugin_and_port_number(subject)[1]
 
 # -------------------------------------------------------------------------------
 #  RDF store/retrieve data methods
 
-def check_and_add_plugin(plugin_id):
+def check_and_add_plugin(pluginId):
     global LADSPA_Plugins
     for i in range(len(LADSPA_Plugins)):
-        if LADSPA_Plugins[i]['UniqueID'] == plugin_id:
+        if LADSPA_Plugins[i]['UniqueID'] == pluginId:
             return i
     else:
         plugin = deepcopy(PyLADSPA_RDF_Descriptor)
-        plugin['UniqueID'] = plugin_id
+        plugin['UniqueID'] = pluginId
         LADSPA_Plugins.append(plugin)
         return len(LADSPA_Plugins) - 1
 
-def set_plugin_value(plugin_id, key, value):
+def set_plugin_value(pluginId, key, value):
     global LADSPA_Plugins
-    index = check_and_add_plugin(plugin_id)
+    index = check_and_add_plugin(pluginId)
     LADSPA_Plugins[index][key] = value
 
-def add_plugin_value(plugin_id, key, value):
+def add_plugin_value(pluginId, key, value):
     global LADSPA_Plugins
-    index = check_and_add_plugin(plugin_id)
+    index = check_and_add_plugin(pluginId)
     LADSPA_Plugins[index][key] += value
 
-def or_plugin_value(plugin_id, key, value):
+def or_plugin_value(pluginId, key, value):
     global LADSPA_Plugins
-    index = check_and_add_plugin(plugin_id)
+    index = check_and_add_plugin(pluginId)
     LADSPA_Plugins[index][key] |= value
 
-def append_plugin_value(plugin_id, key, value):
+def append_plugin_value(pluginId, key, value):
     global LADSPA_Plugins
-    index = check_and_add_plugin(plugin_id)
+    index = check_and_add_plugin(pluginId)
     LADSPA_Plugins[index][key].append(value)
 
-def check_and_add_port(plugin_id, port_id):
+def check_and_add_port(pluginId, portId):
     global LADSPA_Plugins
-    index = check_and_add_plugin(plugin_id)
-    Ports = LADSPA_Plugins[index]['Ports']
-    for i in range(len(Ports)):
-        if Ports[i]['index'] == port_id:
+    index = check_and_add_plugin(pluginId)
+    ports = LADSPA_Plugins[index]['Ports']
+    for i in range(len(ports)):
+        if ports[i]['index'] == portId:
             return (index, i)
     else:
-        pcount = LADSPA_Plugins[index]['PortCount']
+        portCount = LADSPA_Plugins[index]['PortCount']
         port = deepcopy(PyLADSPA_RDF_Port)
-        port['index'] = port_id
-        Ports.append(port)
+        port['index'] = portId
+        ports.append(port)
         LADSPA_Plugins[index]['PortCount'] += 1
-        return (index, pcount)
+        return (index, portCount)
 
-def set_port_value(plugin_id, port_id, key, value):
+def set_port_value(pluginId, portId, key, value):
     global LADSPA_Plugins
-    i, j = check_and_add_port(plugin_id, port_id)
+    i, j = check_and_add_port(pluginId, portId)
     LADSPA_Plugins[i]['Ports'][j][key] = value
 
-def add_port_value(plugin_id, port_id, key, value):
+def add_port_value(pluginId, portId, key, value):
     global LADSPA_Plugins
-    i, j = check_and_add_port(plugin_id, port_id)
+    i, j = check_and_add_port(pluginId, portId)
     LADSPA_Plugins[i]['Ports'][j][key] += value
 
-def or_port_value(plugin_id, port_id, key, value):
+def or_port_value(pluginId, portId, key, value):
     global LADSPA_Plugins
-    i, j = check_and_add_port(plugin_id, port_id)
+    i, j = check_and_add_port(pluginId, portId)
     LADSPA_Plugins[i]['Ports'][j][key] |= value
 
-def append_port_value(plugin_id, port_id, key, value):
+def append_port_value(pluginId, portId, key, value):
     global LADSPA_Plugins
-    i, j = check_and_add_port(plugin_id, port_id)
+    i, j = check_and_add_port(pluginId, portId)
     LADSPA_Plugins[i]['Ports'][j][key].append(value)
 
-def add_scalepoint(plugin_id, port_id, value, label):
+def add_scalepoint(pluginId, portId, value, label):
     global LADSPA_Plugins
-    i, j = check_and_add_port(plugin_id, port_id)
-    Port = LADSPA_Plugins[i]['Ports'][j]
-    scalepoint = deepcopy(PyLADSPA_RDF_ScalePoint)
-    scalepoint['Value'] = value
-    scalepoint['Label'] = label
-    Port['ScalePoints'].append(scalepoint)
-    Port['ScalePointCount'] += 1
+    i, j = check_and_add_port(pluginId, portId)
+    port = LADSPA_Plugins[i]['Ports'][j]
+    scalePoint = deepcopy(PyLADSPA_RDF_ScalePoint)
+    scalePoint['Value'] = value
+    scalePoint['Label'] = label
+    port['ScalePoints'].append(scalePoint)
+    port['ScalePointCount'] += 1
 
-def set_port_default(plugin_id, port_id, value):
+def set_port_default(pluginId, portId, value):
     global LADSPA_Plugins
-    i, j = check_and_add_port(plugin_id, port_id)
-    Port = LADSPA_Plugins[i]['Ports'][j]
-    Port['Default'] = value
-    Port['Hints'] |= LADSPA_PORT_DEFAULT
+    i, j = check_and_add_port(pluginId, portId)
+    port = LADSPA_Plugins[i]['Ports'][j]
+    port['Default'] = value
+    port['Hints'] |= LADSPA_PORT_DEFAULT
 
-def get_node_objects(value_nodes, n_subject):
-    ret_nodes = []
-    for _subject, _predicate, _object in value_nodes:
-        if _subject == n_subject:
-            ret_nodes.append((_predicate, _object))
-    return ret_nodes
+def get_node_objects(valueNodes, nSubject):
+    retNodes = []
+    for subject, predicate, object_ in valueNodes:
+        if subject == nSubject:
+            retNodes.append((predicate, object_))
+    return retNodes
 
 def append_and_sort(value, vlist):
     if len(vlist) == 0:
@@ -484,45 +487,45 @@ def get_value_index(value, vlist):
 #  RDF sort data methods
 
 # Sort the plugin's port's ScalePoints by value
-def SORT_PyLADSPA_RDF_ScalePoints(old_dict_list):
-    new_dict_list = []
-    indexes_list = []
+def SORT_PyLADSPA_RDF_ScalePoints(oldDictList):
+    newDictList = []
+    indexesList = []
 
-    for i in range(len(old_dict_list)):
-        new_dict_list.append(deepcopy(PyLADSPA_RDF_ScalePoint))
-        append_and_sort(old_dict_list[i]['Value'], indexes_list)
+    for i in range(len(oldDictList)):
+        newDictList.append(deepcopy(PyLADSPA_RDF_ScalePoint))
+        append_and_sort(oldDictList[i]['Value'], indexesList)
 
-    for i in range(len(old_dict_list)):
-        index = get_value_index(old_dict_list[i]['Value'], indexes_list)
-        new_dict_list[index]['Value'] = old_dict_list[i]['Value']
-        new_dict_list[index]['Label'] = old_dict_list[i]['Label']
+    for i in range(len(oldDictList)):
+        index = get_value_index(oldDictList[i]['Value'], indexesList)
+        newDictList[index]['Value'] = oldDictList[i]['Value']
+        newDictList[index]['Label'] = oldDictList[i]['Label']
 
-    return new_dict_list
+    return newDictList
 
 # Sort the plugin's port by index
-def SORT_PyLADSPA_RDF_Ports(old_dict_list):
-    new_dict_list = []
-    max_index = -1
+def SORT_PyLADSPA_RDF_Ports(oldDictList):
+    newDictList = []
+    maxIndex = -1
 
-    for i in range(len(old_dict_list)):
-        if old_dict_list[i]['index'] > max_index:
-            max_index = old_dict_list[i]['index']
+    for i in range(len(oldDictList)):
+        if oldDictList[i]['index'] > maxIndex:
+            maxIndex = oldDictList[i]['index']
 
-    for i in range(max_index + 1):
-        new_dict_list.append(deepcopy(PyLADSPA_RDF_Port))
+    for i in range(maxIndex + 1):
+        newDictList.append(deepcopy(PyLADSPA_RDF_Port))
 
-    for i in range(len(old_dict_list)):
-        index = old_dict_list[i]['index']
-        new_dict_list[index]['index'] = old_dict_list[i]['index']
-        new_dict_list[index]['Type'] = old_dict_list[i]['Type']
-        new_dict_list[index]['Hints'] = old_dict_list[i]['Hints']
-        new_dict_list[index]['Unit'] = old_dict_list[i]['Unit']
-        new_dict_list[index]['Default'] = old_dict_list[i]['Default']
-        new_dict_list[index]['Label'] = old_dict_list[i]['Label']
-        new_dict_list[index]['ScalePointCount'] = old_dict_list[i]['ScalePointCount']
-        new_dict_list[index]['ScalePoints'] = SORT_PyLADSPA_RDF_ScalePoints(old_dict_list[i]['ScalePoints'])
+    for i in range(len(oldDictList)):
+        index = oldDictList[i]['index']
+        newDictList[index]['index']   = oldDictList[i]['index']
+        newDictList[index]['Type']    = oldDictList[i]['Type']
+        newDictList[index]['Hints']   = oldDictList[i]['Hints']
+        newDictList[index]['Unit']    = oldDictList[i]['Unit']
+        newDictList[index]['Default'] = oldDictList[i]['Default']
+        newDictList[index]['Label']   = oldDictList[i]['Label']
+        newDictList[index]['ScalePointCount'] = oldDictList[i]['ScalePointCount']
+        newDictList[index]['ScalePoints'] = SORT_PyLADSPA_RDF_ScalePoints(oldDictList[i]['ScalePoints'])
 
-    return new_dict_list
+    return newDictList
 
 # -------------------------------------------------------------------------------
 #  RDF data parsing
@@ -535,141 +538,141 @@ def parse_rdf_file(filename):
 
     try:
         primer.parse(filename, format='xml')
-        rdf_list = [(x, y, z) for x, y, z in primer]
+        rdfList = [(x, y, z) for x, y, z in primer]
     except:
-        rdf_list = []
+        rdfList = []
 
     # For BNodes
-    index_nodes = [] # Subject (index), Predicate, Plugin, Port
-    value_nodes = [] # Subject (index), Predicate, Object
+    indexNodes = [] # Subject (index), Predicate, Plugin, Port
+    valueNodes = [] # Subject (index), Predicate, Object
 
     # Parse RDF list
-    for _subject, _predicate, _object in rdf_list:
+    for subject, predicate, object_ in rdfList:
         # Fix broken or old plugins
-        if _predicate == URIRef("http://ladspa.org/ontology#hasUnits"):
-            _predicate = URIRef(rdf_prefix['ladspa:hasUnit'])
+        if predicate == URIRef("http://ladspa.org/ontology#hasUnits"):
+            predicate = URIRef(rdf_prefix['ladspa:hasUnit'])
 
         # Plugin information
-        if rdf_is_type(_subject, LADSPA_RDF_TYPE_PLUGIN):
-            plugin_id = int(to_plugin_number(_subject))
+        if rdf_is_type(subject, LADSPA_RDF_TYPE_PLUGIN):
+            pluginId = int(to_plugin_number(subject))
 
-            if _predicate == URIRef(rdf_prefix['dc:creator']):
-                set_plugin_value(plugin_id, 'Creator', str(_object))
+            if predicate == URIRef(rdf_prefix['dc:creator']):
+                set_plugin_value(pluginId, 'Creator', str(object_))
 
-            elif _predicate == URIRef(rdf_prefix['dc:rights']):
+            elif predicate == URIRef(rdf_prefix['dc:rights']):
                 # No useful information here
                 pass
 
-            elif _predicate == URIRef(rdf_prefix['dc:title']):
-                set_plugin_value(plugin_id, 'Title', str(_object))
+            elif predicate == URIRef(rdf_prefix['dc:title']):
+                set_plugin_value(pluginId, 'Title', str(object_))
 
-            elif _predicate == URIRef(rdf_prefix['rdf:type']):
-                c_class = get_c_plugin_class(str(_object))
-                or_plugin_value(plugin_id, 'Type', c_class)
+            elif predicate == URIRef(rdf_prefix['rdf:type']):
+                c_class = get_c_plugin_class(str(object_))
+                or_plugin_value(pluginId, 'Type', c_class)
 
-            elif _predicate == URIRef(rdf_prefix['ladspa:hasPort']):
+            elif predicate == URIRef(rdf_prefix['ladspa:hasPort']):
                 # No useful information here
                 pass
 
-            elif _predicate == URIRef(rdf_prefix['ladspa:hasSetting']):
-                index_nodes.append((_object, _predicate, plugin_id, None))
+            elif predicate == URIRef(rdf_prefix['ladspa:hasSetting']):
+                indexNodes.append((object_, predicate, pluginId, None))
 
             else:
-                print("LADSPA_RDF - Plugin predicate '%s' not handled" % _predicate)
+                print("LADSPA_RDF - Plugin predicate '%s' not handled" % predicate)
 
         # Port information
-        elif rdf_is_type(_subject, LADSPA_RDF_TYPE_PORT):
-            plugin_port = to_plugin_and_port_number(_subject)
-            plugin_id = int(plugin_port[0])
-            port_id = int(plugin_port[1])
+        elif rdf_is_type(subject, LADSPA_RDF_TYPE_PORT):
+            portInfo = to_plugin_and_port_number(subject)
+            pluginId = int(portInfo[0])
+            portId   = int(portInfo[1])
 
-            if _predicate == URIRef(rdf_prefix['rdf:type']):
-                c_class = get_c_port_type(str(_object))
-                or_port_value(plugin_id, port_id, 'Type', c_class)
+            if predicate == URIRef(rdf_prefix['rdf:type']):
+                c_class = get_c_port_type(str(object_))
+                or_port_value(pluginId, portId, 'Type', c_class)
 
-            elif _predicate == URIRef(rdf_prefix['ladspa:hasLabel']):
-                set_port_value(plugin_id, port_id, 'Label', str(_object))
-                or_port_value(plugin_id, port_id, 'Hints', LADSPA_PORT_LABEL)
+            elif predicate == URIRef(rdf_prefix['ladspa:hasLabel']):
+                set_port_value(pluginId, portId, 'Label', str(object_))
+                or_port_value(pluginId, portId, 'Hints', LADSPA_PORT_LABEL)
 
-            elif _predicate == URIRef(rdf_prefix['ladspa:hasScale']):
-                index_nodes.append((_object, _predicate, plugin_id, port_id))
+            elif predicate == URIRef(rdf_prefix['ladspa:hasScale']):
+                indexNodes.append((object_, predicate, pluginId, portId))
 
-            elif _predicate == URIRef(rdf_prefix['ladspa:hasUnit']):
-                c_unit = get_c_unit_type(str(_object))
-                set_port_value(plugin_id, port_id, 'Unit', c_unit)
-                or_port_value(plugin_id, port_id, 'Hints', LADSPA_PORT_UNIT)
+            elif predicate == URIRef(rdf_prefix['ladspa:hasUnit']):
+                c_unit = get_c_unit_type(str(object_))
+                set_port_value(pluginId, portId, 'Unit', c_unit)
+                or_port_value(pluginId, portId, 'Hints', LADSPA_PORT_UNIT)
 
             else:
-                print("LADSPA_RDF - Port predicate '%s' not handled" % _predicate)
+                print("LADSPA_RDF - Port predicate '%s' not handled" % predicate)
 
         # These "extensions" are already implemented
-        elif _subject in (URIRef(rdf_prefix['ladspa:NotchPlugin']), URIRef(rdf_prefix['ladspa:SpectralPlugin'])):
+        elif subject in (URIRef(rdf_prefix['ladspa:NotchPlugin']), URIRef(rdf_prefix['ladspa:SpectralPlugin'])):
             pass
 
-        elif type(_subject) == BNode:
-            value_nodes.append((_subject, _predicate, _object))
+        elif type(subject) == BNode:
+            valueNodes.append((subject, predicate, object_))
 
         else:
-            print("LADSPA_RDF - Unknown subject type '%s'" % _subject)
+            print("LADSPA_RDF - Unknown subject type '%s'" % subject)
 
     # Parse BNodes, indexes
-    bnodes_data_dump = []
+    bnodesDataDump = []
 
-    for n_subject, n_predicate, plugin_id, port_id in index_nodes:
-        n_objects = get_node_objects(value_nodes, n_subject)
+    for nSubject, nPredicate, pluginId, portId in indexNodes:
+        nObjects = get_node_objects(valueNodes, nSubject)
 
-        for subn_predicate, subn_subject in n_objects:
-            subn_objects = get_node_objects(value_nodes, subn_subject)
+        for subPredicate, subSubject in nObjects:
+            subObjects = get_node_objects(valueNodes, subSubject)
 
-            for real_predicate, real_object in subn_objects:
-                if n_predicate == URIRef(rdf_prefix['ladspa:hasScale']) and subn_predicate == URIRef(rdf_prefix['ladspa:hasPoint']):
-                    bnodes_data_dump.append(("scalepoint", subn_subject, plugin_id, port_id, real_predicate, real_object))
-                elif n_predicate == URIRef(rdf_prefix['ladspa:hasSetting']) and subn_predicate == URIRef(rdf_prefix['ladspa:hasPortValue']):
-                    bnodes_data_dump.append(("port_default", subn_subject, plugin_id, port_id, real_predicate, real_object))
+            for realPredicate, realObject in subObjects:
+                if nPredicate == URIRef(rdf_prefix['ladspa:hasScale']) and subPredicate == URIRef(rdf_prefix['ladspa:hasPoint']):
+                    bnodesDataDump.append(("scalepoint", subSubject, pluginId, portId, realPredicate, realObject))
+                elif nPredicate == URIRef(rdf_prefix['ladspa:hasSetting']) and subPredicate == URIRef(rdf_prefix['ladspa:hasPortValue']):
+                    bnodesDataDump.append(("port_default", subSubject, pluginId, portId, realPredicate, realObject))
                 else:
-                    print("LADSPA_RDF - Unknown BNode combo - '%s' + '%s'" % (n_predicate, subn_predicate))
+                    print("LADSPA_RDF - Unknown BNode combo - '%s' + '%s'" % (nPredicate, subPredicate))
 
     # Process BNodes, values
-    scalepoints = [] # subject, plugin, port, value, label
-    port_defaults = [] # subject, plugin, port, def-value
+    scalePoints  = [] # subject, plugin, port, value, label
+    portDefaults = [] # subject, plugin, port, def-value
 
-    for n_type, n_subject, n_plugin, n_port, n_predicate, n_object in bnodes_data_dump:
-        if n_type == "scalepoint":
-            for i in range(len(scalepoints)):
-                if scalepoints[i][0] == n_subject:
+    for nType, nSubject, nPlugin, nPort, nPredicate, nObject in bnodesDataDump:
+        if nType == "scalepoint":
+            for i in range(len(scalePoints)):
+                if scalePoints[i][0] == nSubject:
                     index = i
                     break
             else:
-                scalepoints.append([n_subject, n_plugin, n_port, None, None])
-                index = len(scalepoints) - 1
+                scalePoints.append([nSubject, nPlugin, nPort, None, None])
+                index = len(scalePoints) - 1
 
-            if n_predicate == URIRef(rdf_prefix['rdf:value']):
-                scalepoints[index][3] = to_float(n_object)
-            elif n_predicate == URIRef(rdf_prefix['ladspa:hasLabel']):
-                scalepoints[index][4] = str(n_object)
+            if nPredicate == URIRef(rdf_prefix['rdf:value']):
+                scalePoints[index][3] = to_float(nObject)
+            elif nPredicate == URIRef(rdf_prefix['ladspa:hasLabel']):
+                scalePoints[index][4] = str(nObject)
 
-        elif n_type == "port_default":
-            for i in range(len(port_defaults)):
-                if port_defaults[i][0] == n_subject:
+        elif nType == "port_default":
+            for i in range(len(portDefaults)):
+                if portDefaults[i][0] == nSubject:
                     index = i
                     break
             else:
-                port_defaults.append([n_subject, n_plugin, None, None])
-                index = len(port_defaults) - 1
+                portDefaults.append([nSubject, nPlugin, None, None])
+                index = len(portDefaults) - 1
 
-            if n_predicate == URIRef(rdf_prefix['ladspa:forPort']):
-                port_defaults[index][2] = int(to_plugin_port(n_object))
-            elif n_predicate == URIRef(rdf_prefix['rdf:value']):
-                port_defaults[index][3] = to_float(n_object)
+            if nPredicate == URIRef(rdf_prefix['ladspa:forPort']):
+                portDefaults[index][2] = int(to_plugin_port(nObject))
+            elif nPredicate == URIRef(rdf_prefix['rdf:value']):
+                portDefaults[index][3] = to_float(nObject)
 
     # Now add the last information
-    for scalepoint in scalepoints:
-        index, plugin_id, port_id, value, label = scalepoint
-        add_scalepoint(plugin_id, port_id, value, label)
+    for scalePoint in scalePoints:
+        index, pluginId, portId, value, label = scalePoint
+        add_scalepoint(pluginId, portId, value, label)
 
-    for port_default in port_defaults:
-        index, plugin_id, port_id, value = port_default
-        set_port_default(plugin_id, port_id, value)
+    for portDefault in portDefaults:
+        index, pluginId, portId, value = portDefault
+        set_port_default(pluginId, portId, value)
 
 # -------------------------------------------------------------------------------
 #  LADSPA_RDF main methods
@@ -677,41 +680,41 @@ def parse_rdf_file(filename):
 import os
 
 # Main function - check all rdfs for information about ladspa plugins
-def recheck_all_plugins(qobject, start_value, percent_value, m_value):
+def recheck_all_plugins(qobject, startValue, percentValue, curValue):
     global LADSPA_RDF_PATH, LADSPA_Plugins
 
     LADSPA_Plugins = []
-    rdf_files      = []
-    rdf_extensions = (".rdf", ".rdF", ".rDF", ".RDF", ".RDf", "Rdf")
+    rdfFiles       = []
+    rdfExtensions  = (".rdf", ".rdF", ".rDF", ".RDF", ".RDf", "Rdf")
 
     # Get all RDF files
     for PATH in LADSPA_RDF_PATH:
         for root, dirs, files in os.walk(PATH):
-            for filename in [filename for filename in files if filename.endswith(rdf_extensions)]:
-                rdf_files.append(os.path.join(root, filename))
+            for filename in [filename for filename in files if filename.endswith(rdfExtensions)]:
+                rdfFiles.append(os.path.join(root, filename))
 
     # Parse all RDF files
-    for i in range(len(rdf_files)):
-        rdf_file = rdf_files[i]
+    for i in range(len(rdfFiles)):
+        rdfFile = rdfFiles[i]
 
         # Tell GUI we're parsing this bundle
         if qobject:
-            percent = (float(i) / len(rdf_files) ) * percent_value
-            qobject.pluginLook(start_value + (percent * m_value), rdf_file)
+            percent = (float(i) / len(rdfFiles) ) * percentValue
+            qobject.pluginLook(startValue + (percent * curValue), rdfFile)
 
         # Parse RDF
-        parse_rdf_file(rdf_file)
+        parse_rdf_file(rdfFile)
 
     return LADSPA_Plugins
 
 # Convert PyLADSPA_Plugins into ctype structs
-def get_c_ladspa_rdfs(PyPluginList):
-    C_LADSPA_Plugins = []
-    c_unicode_error_str = "(unicode error)".encode("utf-8")
+def get_c_ladspa_rdfs(pyPluginList):
+    C_LADSPA_Plugins  = []
+    c_unicodeErrorStr = "(unicode error)".encode("utf-8")
 
-    for plugin in PyPluginList:
+    for plugin in pyPluginList:
         # Sort the ports by index
-        ladspa_ports = SORT_PyLADSPA_RDF_Ports(plugin['Ports'])
+        pyLadspaPorts = SORT_PyLADSPA_RDF_Ports(plugin['Ports'])
 
         # Initial data
         desc = LADSPA_RDF_Descriptor()
@@ -722,57 +725,63 @@ def get_c_ladspa_rdfs(PyPluginList):
             if plugin['Title']:
                 desc.Title = plugin['Title'].encode("utf-8")
             else:
-                desc.Title = None
+                desc.Title = c_nullptr
         except:
-            desc.Title = c_unicode_error_str
+            desc.Title = c_unicodeErrorStr
 
         try:
             if plugin['Creator']:
                 desc.Creator = plugin['Creator'].encode("utf-8")
             else:
-                desc.Creator = None
+                desc.Creator = c_nullptr
         except:
-            desc.Creator = c_unicode_error_str
+            desc.Creator = c_unicodeErrorStr
 
         desc.PortCount = plugin['PortCount']
 
         # Ports
-        _PortType = LADSPA_RDF_Port * desc.PortCount
+        _PortType  = LADSPA_RDF_Port * desc.PortCount
         desc.Ports = _PortType()
 
         for i in range(desc.PortCount):
-            port = LADSPA_RDF_Port()
-            py_port = ladspa_ports[i]
+            port   = LADSPA_RDF_Port()
+            pyPort = pyLadspaPorts[i]
 
-            port.Type = py_port['Type']
-            port.Hints = py_port['Hints']
+            port.Type  = pyPort['Type']
+            port.Hints = pyPort['Hints']
 
             try:
-                port.Label = py_port['Label'].encode("utf-8")
+                if pyPort['Label']:
+                    port.Label = pyPort['Label'].encode("utf-8")
+                else:
+                    port.Label = c_nullptr
             except:
-                port.Label = c_unicode_error_str
+                port.Label = c_unicodeErrorStr
 
-            port.Default = py_port['Default']
-            port.Unit = py_port['Unit']
+            port.Default = pyPort['Default']
+            port.Unit    = pyPort['Unit']
 
             # ScalePoints
-            port.ScalePointCount = py_port['ScalePointCount']
+            port.ScalePointCount = pyPort['ScalePointCount']
 
-            _ScalePointType = LADSPA_RDF_ScalePoint * port.ScalePointCount
+            _ScalePointType  = LADSPA_RDF_ScalePoint * port.ScalePointCount
             port.ScalePoints = _ScalePointType()
 
             for j in range(port.ScalePointCount):
-                scalepoint = LADSPA_RDF_ScalePoint()
-                py_scalepoint = py_port['ScalePoints'][j]
+                scalePoint   = LADSPA_RDF_ScalePoint()
+                pyScalePoint = pyPort['ScalePoints'][j]
 
                 try:
-                    scalepoint.Label = py_scalepoint['Label'].encode("utf-8")
+                    if pyScalePoint['Label']:
+                        scalePoint.Label = pyScalePoint['Label'].encode("utf-8")
+                    else:
+                        scalePoint.Label = c_nullptr
                 except:
-                    scalepoint.Label = c_unicode_error_str
+                    scalePoint.Label = c_unicodeErrorStr
 
-                scalepoint.Value = py_scalepoint['Value']
+                scalePoint.Value = pyScalePoint['Value']
 
-                port.ScalePoints[j] = scalepoint
+                port.ScalePoints[j] = scalePoint
 
             desc.Ports[i] = port
 
