@@ -5,8 +5,6 @@
         <file>16x16/catia.png</file>
         <file>16x16/claudia.png</file>
         <file>16x16/claudia-launcher.png</file>
-        <file>16x16/carla.png</file>
-        <file>16x16/carla-control.png</file>
 
         <file>16x16/application-exit.png</file>
         <file>16x16/arrow-right.png</file>
@@ -48,8 +46,6 @@
         <file>48x48/catia.png</file>
         <file>48x48/claudia.png</file>
         <file>48x48/claudia-launcher.png</file>
-        <file>48x48/carla.png</file>
-        <file>48x48/carla-control.png</file>
 
         <file>48x48/canvas.png</file>
         <file>48x48/exec.png</file>
@@ -63,8 +59,6 @@
         <file>scalable/catia.svg</file>
         <file>scalable/claudia.svg</file>
         <file>scalable/claudia-launcher.svg</file>
-        <file>scalable/carla.svg</file>
-        <file>scalable/carla-control.svg</file>
         <file>scalable/jack.svg</file>
 
         <file>scalable/pb_generic.svg</file>
@@ -79,33 +73,18 @@
         <file>bitmaps/dial_01d.png</file>
         <file>bitmaps/dial_02.png</file>
         <file>bitmaps/dial_02d.png</file>
-        <file>bitmaps/dial_03.png</file>
-        <file>bitmaps/dial_03d.png</file>
-        <file>bitmaps/dial_04.png</file>
-        <file>bitmaps/dial_04d.png</file>
         <file>bitmaps/kbd_h_classic.png</file>
         <file>bitmaps/kbd_h_orange.png</file>
         <file>bitmaps/kbd_v_classic.png</file>
         <file>bitmaps/kbd_v_orange.png</file>
-        <file>bitmaps/led_off.png</file>
-        <file>bitmaps/led_blue.png</file>
-        <file>bitmaps/led_green.png</file>
-        <file>bitmaps/led_red.png</file>
-        <file>bitmaps/led_yellow.png</file>
-        <file>bitmaps/led-big_on.png</file>
-        <file>bitmaps/led-big_off.png</file>
-        <file>bitmaps/carla_about.png</file>
-        <file>bitmaps/carla_knobs1.png</file>
 
         <file>bitmaps/canvas/frame_node_header.png</file>
         <file>bitmaps/canvas/frame_port_bg.png</file>
-        <file>bitmaps/textures/metal_9-512px.jpg</file>
 
         <file>screens/cadence-logs.png</file>
         <file>screens/cadence-render.png</file>
         <file>screens/cadence-xycontroller.png</file>
         <file>screens/catia.png</file>
         <file>screens/claudia.png</file>
-        <file>screens/carla.png</file>
     </qresource>
 </RCC>
