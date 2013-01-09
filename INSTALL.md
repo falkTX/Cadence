@@ -73,10 +73,9 @@ Requires jack <br/>
 No special requirements <br/>
 
 ### Catia
+Requires jack <br/>
 Recommends a2jmidid (>= 7) and jackdbus <br/>
 
 ### Claudia [Linux only] <br/>
 Requires jackdbus and ladish <br/>
 Recommends a2jmidid <br/>
-
-<br/>
