@@ -497,31 +497,32 @@ public:
 
         if (rdf_descriptor)
         {
-            LV2_Property category = rdf_descriptor->Type;
+            LV2_Property cat1 = rdf_descriptor->Type[0];
+            LV2_Property cat2 = rdf_descriptor->Type[1];
 
-            if (LV2_IS_DELAY(category))
+            if (LV2_IS_DELAY(cat1, cat2))
                 return PLUGIN_CATEGORY_DELAY;
-            if (LV2_IS_DISTORTION(category))
+            if (LV2_IS_DISTORTION(cat1, cat2))
                 return PLUGIN_CATEGORY_OTHER;
-            if (LV2_IS_DYNAMICS(category))
+            if (LV2_IS_DYNAMICS(cat1, cat2))
                 return PLUGIN_CATEGORY_DYNAMICS;
-            if (LV2_IS_EQ(category))
+            if (LV2_IS_EQ(cat1, cat2))
                 return PLUGIN_CATEGORY_EQ;
-            if (LV2_IS_FILTER(category))
+            if (LV2_IS_FILTER(cat1, cat2))
                 return PLUGIN_CATEGORY_FILTER;
-            if (LV2_IS_GENERATOR(category))
+            if (LV2_IS_GENERATOR(cat1, cat2))
                 return PLUGIN_CATEGORY_SYNTH;
-            if (LV2_IS_MODULATOR(category))
+            if (LV2_IS_MODULATOR(cat1, cat2))
                 return PLUGIN_CATEGORY_MODULATOR;
-            if (LV2_IS_REVERB(category))
+            if (LV2_IS_REVERB(cat1, cat2))
                 return PLUGIN_CATEGORY_DELAY;
-            if (LV2_IS_SIMULATOR(category))
+            if (LV2_IS_SIMULATOR(cat1, cat2))
                 return PLUGIN_CATEGORY_OTHER;
-            if (LV2_IS_SPATIAL(category))
+            if (LV2_IS_SPATIAL(cat1, cat2))
                 return PLUGIN_CATEGORY_OTHER;
-            if (LV2_IS_SPECTRAL(category))
+            if (LV2_IS_SPECTRAL(cat1, cat2))
                 return PLUGIN_CATEGORY_UTILITY;
-            if (LV2_IS_UTILITY(category))
+            if (LV2_IS_UTILITY(cat1, cat2))
                 return PLUGIN_CATEGORY_UTILITY;
         }
 
@@ -1067,13 +1068,13 @@ public:
             // Update event ports
             if (! atomQueueOut.isEmpty())
             {
-                static Lv2AtomQueue queue;
+                Lv2AtomQueue queue;
                 queue.copyDataFrom(&atomQueueOut);
 
                 uint32_t portIndex;
                 const LV2_Atom* atom;
 
-                while (queue.get(&portIndex, &atom, false))
+                while (queue.get(&portIndex, &atom))
                 {
                     if (gui.type == GUI_EXTERNAL_OSC)
                     {
@@ -1130,44 +1131,44 @@ public:
 
         for (uint32_t i=0; i < portCount; i++)
         {
-            const LV2_Property portType = rdf_descriptor->Ports[i].Type.Value;
+            const LV2_Property portTypes = rdf_descriptor->Ports[i].Types;
 
-            if (LV2_IS_PORT_AUDIO(portType))
+            if (LV2_IS_PORT_AUDIO(portTypes))
             {
-                if (LV2_IS_PORT_INPUT(portType))
+                if (LV2_IS_PORT_INPUT(portTypes))
                     aIns += 1;
-                else if (LV2_IS_PORT_OUTPUT(portType))
+                else if (LV2_IS_PORT_OUTPUT(portTypes))
                     aOuts += 1;
             }
-            else if (LV2_IS_PORT_CV(portType))
+            else if (LV2_IS_PORT_CV(portTypes))
             {
-                if (LV2_IS_PORT_INPUT(portType))
+                if (LV2_IS_PORT_INPUT(portTypes))
                     cvIns += 1;
-                else if (LV2_IS_PORT_OUTPUT(portType))
+                else if (LV2_IS_PORT_OUTPUT(portTypes))
                     cvOuts += 1;
             }
-            else if (LV2_IS_PORT_ATOM_SEQUENCE(portType))
+            else if (LV2_IS_PORT_ATOM_SEQUENCE(portTypes))
             {
-                if (LV2_IS_PORT_INPUT(portType))
+                if (LV2_IS_PORT_INPUT(portTypes))
                     evIns.push_back(CARLA_EVENT_DATA_ATOM);
-                else if (LV2_IS_PORT_OUTPUT(portType))
+                else if (LV2_IS_PORT_OUTPUT(portTypes))
                     evOuts.push_back(CARLA_EVENT_DATA_ATOM);
             }
-            else if (LV2_IS_PORT_EVENT(portType))
+            else if (LV2_IS_PORT_EVENT(portTypes))
             {
-                if (LV2_IS_PORT_INPUT(portType))
+                if (LV2_IS_PORT_INPUT(portTypes))
                     evIns.push_back(CARLA_EVENT_DATA_EVENT);
-                else if (LV2_IS_PORT_OUTPUT(portType))
+                else if (LV2_IS_PORT_OUTPUT(portTypes))
                     evOuts.push_back(CARLA_EVENT_DATA_EVENT);
             }
-            else if (LV2_IS_PORT_MIDI_LL(portType))
+            else if (LV2_IS_PORT_MIDI_LL(portTypes))
             {
-                if (LV2_IS_PORT_INPUT(portType))
+                if (LV2_IS_PORT_INPUT(portTypes))
                     evIns.push_back(CARLA_EVENT_DATA_MIDI_LL);
-                else if (LV2_IS_PORT_OUTPUT(portType))
+                else if (LV2_IS_PORT_OUTPUT(portTypes))
                     evOuts.push_back(CARLA_EVENT_DATA_MIDI_LL);
             }
-            else if (LV2_IS_PORT_CONTROL(portType))
+            else if (LV2_IS_PORT_CONTROL(portTypes))
                 params += 1;
         }
 
@@ -1300,9 +1301,9 @@ public:
 
         for (uint32_t i=0; i < portCount; i++)
         {
-            const LV2_Property portType = rdf_descriptor->Ports[i].Type.Value;
+            const LV2_Property portTypes = rdf_descriptor->Ports[i].Types;
 
-            if (LV2_IS_PORT_AUDIO(portType) || LV2_IS_PORT_ATOM_SEQUENCE(portType) || LV2_IS_PORT_CV(portType) || LV2_IS_PORT_EVENT(portType) || LV2_IS_PORT_MIDI_LL(portType))
+            if (LV2_IS_PORT_AUDIO(portTypes) || LV2_IS_PORT_ATOM_SEQUENCE(portTypes) || LV2_IS_PORT_CV(portTypes) || LV2_IS_PORT_EVENT(portTypes) || LV2_IS_PORT_MIDI_LL(portTypes))
             {
                 portName.clear();
 
@@ -1316,9 +1317,9 @@ public:
                 portName.truncate(portNameSize);
             }
 
-            if (LV2_IS_PORT_AUDIO(portType))
+            if (LV2_IS_PORT_AUDIO(portTypes))
             {
-                if (LV2_IS_PORT_INPUT(portType))
+                if (LV2_IS_PORT_INPUT(portTypes))
                 {
                     j = aIn.count++;
                     aIn.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, true);
@@ -1331,7 +1332,7 @@ public:
                         aIn.rindexes[1] = i;
                     }
                 }
-                else if (LV2_IS_PORT_OUTPUT(portType))
+                else if (LV2_IS_PORT_OUTPUT(portTypes))
                 {
                     j = aOut.count++;
                     aOut.ports[j]    = (CarlaEngineAudioPort*)x_client->addPort(CarlaEnginePortTypeAudio, portName, false);
@@ -1348,13 +1349,13 @@ public:
                 else
                     qWarning("WARNING - Got a broken Port (Audio, but not input or output)");
             }
-            else if (LV2_IS_PORT_CV(portType))
+            else if (LV2_IS_PORT_CV(portTypes))
             {
-                if (LV2_IS_PORT_INPUT(portType))
+                if (LV2_IS_PORT_INPUT(portTypes))
                 {
                     qWarning("WARNING - CV Ports are not supported yet");
                 }
-                else if (LV2_IS_PORT_OUTPUT(portType))
+                else if (LV2_IS_PORT_OUTPUT(portTypes))
                 {
                     qWarning("WARNING - CV Ports are not supported yet");
                 }
@@ -1364,9 +1365,9 @@ public:
                 descriptor->connect_port(handle, i, nullptr);
                 if (h2) descriptor->connect_port(h2, i, nullptr);
             }
-            else if (LV2_IS_PORT_ATOM_SEQUENCE(portType))
+            else if (LV2_IS_PORT_ATOM_SEQUENCE(portTypes))
             {
-                if (LV2_IS_PORT_INPUT(portType))
+                if (LV2_IS_PORT_INPUT(portTypes))
                 {
                     j = evIn.count++;
                     descriptor->connect_port(handle, i, evIn.data[j].atom);
@@ -1374,17 +1375,17 @@ public:
 
                     evIn.data[j].rindex = i;
 
-                    if (portType & LV2_PORT_DATA_MIDI_EVENT)
+                    if (portTypes & LV2_PORT_DATA_MIDI_EVENT)
                     {
                         evIn.data[j].type |= CARLA_EVENT_TYPE_MIDI;
                         evIn.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
                     }
-                    if (portType & LV2_PORT_DATA_PATCH_MESSAGE)
+                    if (portTypes & LV2_PORT_DATA_PATCH_MESSAGE)
                     {
                         evIn.data[j].type |= CARLA_EVENT_TYPE_MESSAGE;
                     }
                 }
-                else if (LV2_IS_PORT_OUTPUT(portType))
+                else if (LV2_IS_PORT_OUTPUT(portTypes))
                 {
                     j = evOut.count++;
                     descriptor->connect_port(handle, i, evOut.data[j].atom);
@@ -1392,12 +1393,12 @@ public:
 
                     evOut.data[j].rindex = i;
 
-                    if (portType & LV2_PORT_DATA_MIDI_EVENT)
+                    if (portTypes & LV2_PORT_DATA_MIDI_EVENT)
                     {
                         evOut.data[j].type |= CARLA_EVENT_TYPE_MIDI;
                         evOut.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
                     }
-                    if (portType & LV2_PORT_DATA_PATCH_MESSAGE)
+                    if (portTypes & LV2_PORT_DATA_PATCH_MESSAGE)
                     {
                         evOut.data[j].type |= CARLA_EVENT_TYPE_MESSAGE;
                     }
@@ -1405,9 +1406,9 @@ public:
                 else
                     qWarning("WARNING - Got a broken Port (Atom Sequence, but not input or output)");
             }
-            else if (LV2_IS_PORT_EVENT(portType))
+            else if (LV2_IS_PORT_EVENT(portTypes))
             {
-                if (LV2_IS_PORT_INPUT(portType))
+                if (LV2_IS_PORT_INPUT(portTypes))
                 {
                     j = evIn.count++;
                     descriptor->connect_port(handle, i, evIn.data[j].event);
@@ -1415,13 +1416,13 @@ public:
 
                     evIn.data[j].rindex = i;
 
-                    if (portType & LV2_PORT_DATA_MIDI_EVENT)
+                    if (portTypes & LV2_PORT_DATA_MIDI_EVENT)
                     {
                         evIn.data[j].type |= CARLA_EVENT_TYPE_MIDI;
                         evIn.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
                     }
                 }
-                else if (LV2_IS_PORT_OUTPUT(portType))
+                else if (LV2_IS_PORT_OUTPUT(portTypes))
                 {
                     j = evOut.count++;
                     descriptor->connect_port(handle, i, evOut.data[j].event);
@@ -1429,7 +1430,7 @@ public:
 
                     evOut.data[j].rindex = i;
 
-                    if (portType & LV2_PORT_DATA_MIDI_EVENT)
+                    if (portTypes & LV2_PORT_DATA_MIDI_EVENT)
                     {
                         evOut.data[j].type |= CARLA_EVENT_TYPE_MIDI;
                         evOut.data[j].port  = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, false);
@@ -1438,9 +1439,9 @@ public:
                 else
                     qWarning("WARNING - Got a broken Port (Event, but not input or output)");
             }
-            else if (LV2_IS_PORT_MIDI_LL(portType))
+            else if (LV2_IS_PORT_MIDI_LL(portTypes))
             {
-                if (LV2_IS_PORT_INPUT(portType))
+                if (LV2_IS_PORT_INPUT(portTypes))
                 {
                     j = evIn.count++;
                     descriptor->connect_port(handle, i, evIn.data[j].midi);
@@ -1450,7 +1451,7 @@ public:
                     evIn.data[j].port   = (CarlaEngineMidiPort*)x_client->addPort(CarlaEnginePortTypeMIDI, portName, true);
                     evIn.data[j].rindex = i;
                 }
-                else if (LV2_IS_PORT_OUTPUT(portType))
+                else if (LV2_IS_PORT_OUTPUT(portTypes))
                 {
                     j = evOut.count++;
                     descriptor->connect_port(handle, i, evOut.data[j].midi);
@@ -1463,7 +1464,7 @@ public:
                 else
                     qWarning("WARNING - Got a broken Port (Midi, but not input or output)");
             }
-            else if (LV2_IS_PORT_CONTROL(portType))
+            else if (LV2_IS_PORT_CONTROL(portTypes))
             {
                 const LV2_Property portProps = rdf_descriptor->Ports[i].Properties;
                 const LV2_Property portDesignation = rdf_descriptor->Ports[i].Designation;
@@ -1557,7 +1558,7 @@ public:
                     stepLarge = range/10.0;
                 }
 
-                if (LV2_IS_PORT_INPUT(portType))
+                if (LV2_IS_PORT_INPUT(portTypes))
                 {
                     if (LV2_IS_PORT_DESIGNATION_LATENCY(portDesignation))
                     {
@@ -1597,7 +1598,7 @@ public:
                             param.data[j].midiCC = portMidiMap->Number;
                     }
                 }
-                else if (LV2_IS_PORT_OUTPUT(portType))
+                else if (LV2_IS_PORT_OUTPUT(portTypes))
                 {
                     if (LV2_IS_PORT_DESIGNATION_LATENCY(portDesignation))
                     {
@@ -1725,7 +1726,7 @@ public:
         // plugin checks
         m_hints &= ~(PLUGIN_IS_SYNTH | PLUGIN_USES_CHUNKS | PLUGIN_CAN_DRYWET | PLUGIN_CAN_VOLUME | PLUGIN_CAN_BALANCE | PLUGIN_CAN_FORCE_STEREO);
 
-        if (LV2_IS_GENERATOR(rdf_descriptor->Type))
+        if (LV2_IS_GENERATOR(rdf_descriptor->Type[0], rdf_descriptor->Type[1]))
             m_hints |= PLUGIN_IS_SYNTH;
 
         if (aOuts > 0 && (aIns == aOuts || aIns == 1))
@@ -1850,6 +1851,7 @@ public:
             midiprog.data[i].name    = strdup(pdesc->name ? pdesc->name : "");
         }
 
+#ifndef BUILD_BRIDGE
         // Update OSC Names
         if (x_engine->isOscControlRegistered())
         {
@@ -1858,6 +1860,7 @@ public:
             for (i=0; i < midiprog.count; i++)
                 x_engine->osc_send_control_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
         }
+#endif
 
         if (init)
         {
@@ -2377,7 +2380,7 @@ public:
                         uint32_t portIndex;
                         const LV2_Atom* atom;
 
-                        while (atomQueueIn.get(&portIndex, &atom, false))
+                        while (atomQueueIn.get(&portIndex, &atom))
                         {
                             if (atom->type == CARLA_URI_MAP_ID_ATOM_WORKER)
                             {
@@ -4100,8 +4103,8 @@ public:
         // Check supported ports
         for (uint32_t i=0; i < rdf_descriptor->PortCount; i++)
         {
-            LV2_Property PortType = rdf_descriptor->Ports[i].Type.Value;
-            if (! bool(LV2_IS_PORT_AUDIO(PortType) || LV2_IS_PORT_CONTROL(PortType) || LV2_IS_PORT_ATOM_SEQUENCE(PortType) || LV2_IS_PORT_EVENT(PortType) || LV2_IS_PORT_MIDI_LL(PortType)))
+            LV2_Property portTypes = rdf_descriptor->Ports[i].Types;
+            if (! bool(LV2_IS_PORT_AUDIO(portTypes) || LV2_IS_PORT_CONTROL(portTypes) || LV2_IS_PORT_ATOM_SEQUENCE(portTypes) || LV2_IS_PORT_EVENT(portTypes) || LV2_IS_PORT_MIDI_LL(portTypes)))
             {
                 if (! LV2_IS_PORT_OPTIONAL(rdf_descriptor->Ports[i].Properties))
                 {
@@ -4187,7 +4190,11 @@ public:
         int eQt4, eCocoa, eHWND, eX11, eGtk2, eGtk3, iCocoa, iHWND, iX11, iQt4, iExt, iSuil, iFinal;
         eQt4 = eCocoa = eHWND = eX11 = eGtk2 = eGtk3 = iQt4 = iCocoa = iHWND = iX11 = iExt = iSuil = iFinal = -1;
 
+#ifdef BUILD_BRIDGE
+        const bool preferUiBridges = x_engine->getOptions().preferUiBridges;
+#else
         const bool preferUiBridges = (x_engine->getOptions().preferUiBridges && (m_hints & PLUGIN_IS_BRIDGE) == 0);
+#endif
 
         for (uint32_t i=0; i < rdf_descriptor->UICount; i++)
         {

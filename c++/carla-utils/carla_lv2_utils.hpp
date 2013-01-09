@@ -1,6 +1,6 @@
 /*
  * Carla LV2 utils
- * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
+ * Copyright (C) 2011-2013 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,10 +15,7 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_LV2_UTILS_HPP
-#define CARLA_LV2_UTILS_HPP
-
-// TODO - presets state
+// TODO - presets handling
 
 #include "lv2/lv2.h"
 #include "lv2/atom.h"
@@ -58,7 +55,7 @@
 #include "lilv/lilvmm.hpp"
 #include "sratom/sratom.h"
 
-#include "carla_defines.hpp"
+//#include "carla_defines.hpp"
 
 #include <QtCore/QMap>
 #include <QtCore/QStringList>
@@ -76,6 +73,7 @@
 
 #define LV2_MIDI_LL__MidiPort "http://ll-plugins.nongnu.org/lv2/ext/MidiPort"
 
+#define LV2_UI__Qt5UI         LV2_UI_PREFIX "Qt5UI"
 #define LV2_UI__makeResident  LV2_UI_PREFIX "makeResident"
 
 // ------------------------------------------------------------------------------------------------
@@ -170,15 +168,16 @@ public:
     Lilv::Node pprop_trigger;
 
     // Unit Hints
-    Lilv::Node unit_unit;
     Lilv::Node unit_name;
     Lilv::Node unit_render;
     Lilv::Node unit_symbol;
+    Lilv::Node unit_unit;
 
     // UI Types
     Lilv::Node ui_gtk2;
     Lilv::Node ui_gtk3;
     Lilv::Node ui_qt4;
+    Lilv::Node ui_qt5;
     Lilv::Node ui_cocoa;
     Lilv::Node ui_windows;
     Lilv::Node ui_x11;
@@ -186,8 +185,11 @@ public:
     Lilv::Node ui_externalOld;
 
     // Misc
-    Lilv::Node preset_Preset;
-    Lilv::Node preset_value;
+    Lilv::Node atom_bufferType;
+    Lilv::Node atom_sequence;
+    Lilv::Node atom_supports;
+
+    Lilv::Node preset_preset;
 
     Lilv::Node state_state;
 
@@ -195,11 +197,7 @@ public:
     Lilv::Node value_minimum;
     Lilv::Node value_maximum;
 
-    Lilv::Node atom_Sequence;
-    Lilv::Node atom_bufferType;
-    Lilv::Node atom_supports;
-
-    // Event Data/Types
+    // Port Data Types
     Lilv::Node midi_event;
     Lilv::Node patch_message;
 
@@ -285,32 +283,32 @@ public:
           pprop_notOnGUI     (new_uri(LV2_PORT_PROPS__notOnGUI)),
           pprop_trigger      (new_uri(LV2_PORT_PROPS__trigger)),
 
-          unit_unit          (new_uri(LV2_UNITS__unit)),
           unit_name          (new_uri(LV2_UNITS__name)),
           unit_render        (new_uri(LV2_UNITS__render)),
           unit_symbol        (new_uri(LV2_UNITS__symbol)),
+          unit_unit          (new_uri(LV2_UNITS__unit)),
 
           ui_gtk2            (new_uri(LV2_UI__GtkUI)),
           ui_gtk3            (new_uri(LV2_UI__Gtk3UI)),
           ui_qt4             (new_uri(LV2_UI__Qt4UI)),
+          ui_qt5             (new_uri(LV2_UI__Qt5UI)),
           ui_cocoa           (new_uri(LV2_UI__CocoaUI)),
           ui_windows         (new_uri(LV2_UI__WindowsUI)),
           ui_x11             (new_uri(LV2_UI__X11UI)),
           ui_external        (new_uri(LV2_EXTERNAL_UI__Widget)),
           ui_externalOld     (new_uri(LV2_EXTERNAL_UI_DEPRECATED_URI)),
 
-          preset_Preset      (new_uri(LV2_PRESETS__Preset)),
-          preset_value       (new_uri(LV2_PRESETS__value)),
+          atom_bufferType    (new_uri(LV2_ATOM__bufferType)),
+          atom_sequence      (new_uri(LV2_ATOM__Sequence)),
+          atom_supports      (new_uri(LV2_ATOM__supports)),
+
+          preset_preset      (new_uri(LV2_PRESETS__Preset)),
 
           state_state        (new_uri(LV2_STATE__state)),
 
           value_default      (new_uri(LV2_CORE__default)),
           value_minimum      (new_uri(LV2_CORE__minimum)),
           value_maximum      (new_uri(LV2_CORE__maximum)),
-
-          atom_Sequence      (new_uri(LV2_ATOM__Sequence)),
-          atom_bufferType    (new_uri(LV2_ATOM__bufferType)),
-          atom_supports      (new_uri(LV2_ATOM__supports)),
 
           midi_event         (new_uri(LV2_MIDI__MidiEvent)),
           patch_message      (new_uri(LV2_PATCH__Message)),
@@ -350,6 +348,9 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI uri)
 {
     CARLA_ASSERT(uri);
 
+    if (! uri)
+        return nullptr;
+
     Lilv::Plugins lilvPlugins = lv2World.get_all_plugins();
 
     LILV_FOREACH(plugins, i, lilvPlugins)
@@ -368,6 +369,7 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI uri)
 
             if (typeNodes.size() > 0)
             {
+#if 0
                 if (typeNodes.contains(lv2World.class_allpass))
                     rdfDescriptor->Type |= LV2_PLUGIN_ALLPASS;
                 if (typeNodes.contains(lv2World.class_amplifier))
@@ -440,6 +442,7 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI uri)
                     rdfDescriptor->Type |= LV2_PLUGIN_UTILITY;
                 if (typeNodes.contains(lv2World.class_waveshaper))
                     rdfDescriptor->Type |= LV2_PLUGIN_WAVESHAPER;
+#endif
             }
         }
 
@@ -1174,5 +1177,3 @@ LV2_URI get_lv2_ui_uri(const LV2_Property type)
         return "UI URI type not supported";
     }
 }
-
-#endif // CARLA_LV2_UTILS_HPP

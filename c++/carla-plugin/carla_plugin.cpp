@@ -223,8 +223,10 @@ uint32_t CarlaPlugin::parameterCount() const
 uint32_t CarlaPlugin::parameterScalePointCount(const uint32_t parameterId)
 {
     CARLA_ASSERT(parameterId < param.count);
-
     return 0;
+
+    // unused
+    Q_UNUSED(parameterId);
 }
 
 uint32_t CarlaPlugin::programCount() const
@@ -308,8 +310,10 @@ const CustomData* CarlaPlugin::customData(const size_t index) const
 int32_t CarlaPlugin::chunkData(void** const dataPtr)
 {
     CARLA_ASSERT(dataPtr);
-
     return 0;
+
+    // unused
+    Q_UNUSED(dataPtr);
 }
 
 // -------------------------------------------------------------------
@@ -318,16 +322,21 @@ int32_t CarlaPlugin::chunkData(void** const dataPtr)
 double CarlaPlugin::getParameterValue(const uint32_t parameterId)
 {
     CARLA_ASSERT(parameterId < param.count);
-
     return 0.0;
+
+    // unused
+    Q_UNUSED(parameterId);
 }
 
 double CarlaPlugin::getParameterScalePointValue(const uint32_t parameterId, const uint32_t scalePointId)
 {
     CARLA_ASSERT(parameterId < param.count);
     CARLA_ASSERT(scalePointId < parameterScalePointCount(parameterId));
-
     return 0.0;
+
+    // unused
+    Q_UNUSED(parameterId);
+    Q_UNUSED(scalePointId);
 }
 
 void CarlaPlugin::getLabel(char* const strBuf)
@@ -353,37 +362,53 @@ void CarlaPlugin::getRealName(char* const strBuf)
 void CarlaPlugin::getParameterName(const uint32_t parameterId, char* const strBuf)
 {
     CARLA_ASSERT(parameterId < param.count);
-
     *strBuf = 0;
+    return;
+
+    // unused
+    Q_UNUSED(parameterId);
 }
 
 void CarlaPlugin::getParameterSymbol(const uint32_t parameterId, char* const strBuf)
 {
     CARLA_ASSERT(parameterId < param.count);
-
     *strBuf = 0;
+    return;
+
+    // unused
+    Q_UNUSED(parameterId);
 }
 
 void CarlaPlugin::getParameterText(const uint32_t parameterId, char* const strBuf)
 {
     CARLA_ASSERT(parameterId < param.count);
-
     *strBuf = 0;
+    return;
+
+    // unused
+    Q_UNUSED(parameterId);
 }
 
 void CarlaPlugin::getParameterUnit(const uint32_t parameterId, char* const strBuf)
 {
     CARLA_ASSERT(parameterId < param.count);
-
     *strBuf = 0;
+    return;
+
+    // unused
+    Q_UNUSED(parameterId);
 }
 
 void CarlaPlugin::getParameterScalePointLabel(const uint32_t parameterId, const uint32_t scalePointId, char* const strBuf)
 {
     CARLA_ASSERT(parameterId < param.count);
     CARLA_ASSERT(scalePointId < parameterScalePointCount(parameterId));
-
     *strBuf = 0;
+    return;
+
+    // unused
+    Q_UNUSED(parameterId);
+    Q_UNUSED(scalePointId);
 }
 
 void CarlaPlugin::getProgramName(const uint32_t index, char* const strBuf)
@@ -408,6 +433,13 @@ void CarlaPlugin::getMidiProgramName(const uint32_t index, char* const strBuf)
 
 void CarlaPlugin::getParameterCountInfo(uint32_t* const ins, uint32_t* const outs, uint32_t* const total)
 {
+    CARLA_ASSERT(ins);
+    CARLA_ASSERT(outs);
+    CARLA_ASSERT(total);
+
+    if (! (ins && outs && total))
+        return;
+
     *ins   = 0;
     *outs  = 0;
     *total = param.count;
@@ -423,6 +455,12 @@ void CarlaPlugin::getParameterCountInfo(uint32_t* const ins, uint32_t* const out
 
 void CarlaPlugin::getGuiInfo(GuiType* const type, bool* const resizable)
 {
+    CARLA_ASSERT(type);
+    CARLA_ASSERT(resizable);
+
+    if (! (type && resizable))
+        return;
+
     *type = GUI_NONE;
     *resizable = false;
 }
@@ -714,6 +752,10 @@ void CarlaPlugin::setCustomData(const char* const type, const char* const key, c
 void CarlaPlugin::setChunkData(const char* const stringData)
 {
     CARLA_ASSERT(stringData);
+    return;
+
+    // unused
+    Q_UNUSED(stringData);
 }
 
 void CarlaPlugin::setProgram(int32_t index, const bool sendGui, const bool sendOsc, const bool sendCallback, const bool block)
@@ -1339,6 +1381,9 @@ void CarlaPlugin::postEventsRun()
 
 void CarlaPlugin::postEventHandleCustom(const int32_t value1, const int32_t value2, const double value3, const void* const cdata)
 {
+    return;
+
+    // unused
     Q_UNUSED(value1);
     Q_UNUSED(value2);
     Q_UNUSED(value3);
@@ -1348,18 +1393,29 @@ void CarlaPlugin::postEventHandleCustom(const int32_t value1, const int32_t valu
 void CarlaPlugin::uiParameterChange(const uint32_t index, const double value)
 {
     CARLA_ASSERT(index < param.count);
+    return;
 
+    // unused
+    Q_UNUSED(index);
     Q_UNUSED(value);
 }
 
 void CarlaPlugin::uiProgramChange(const uint32_t index)
 {
     CARLA_ASSERT(index < prog.count);
+    return;
+
+    // unused
+    Q_UNUSED(index);
 }
 
 void CarlaPlugin::uiMidiProgramChange(const uint32_t index)
 {
     CARLA_ASSERT(index < midiprog.count);
+    return;
+
+    // unused
+    Q_UNUSED(index);
 }
 
 void CarlaPlugin::uiNoteOn(const uint8_t channel, const uint8_t note, const uint8_t velo)
@@ -1367,12 +1423,23 @@ void CarlaPlugin::uiNoteOn(const uint8_t channel, const uint8_t note, const uint
     CARLA_ASSERT(channel < 16);
     CARLA_ASSERT(note < 128);
     CARLA_ASSERT(velo > 0 && velo < 128);
+    return;
+
+    // unused
+    Q_UNUSED(channel);
+    Q_UNUSED(note);
+    Q_UNUSED(velo);
 }
 
 void CarlaPlugin::uiNoteOff(const uint8_t channel, const uint8_t note)
 {
     CARLA_ASSERT(channel < 16);
     CARLA_ASSERT(note < 128);
+    return;
+
+    // unused
+    Q_UNUSED(channel);
+    Q_UNUSED(note);
 }
 
 // -------------------------------------------------------------------

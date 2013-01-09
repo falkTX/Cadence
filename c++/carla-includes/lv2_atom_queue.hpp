@@ -15,18 +15,20 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef LV2_ATOM_QUEUE_HPP
-#define LV2_ATOM_QUEUE_HPP
+#ifndef __LV2_ATOM_QUEUE_HPP__
+#define __LV2_ATOM_QUEUE_HPP__
 
+#include "carla_utils.hpp"
 #include "lv2/atom.h"
 
-#include <cstring> // memset
-#include <QtCore/QMutex>
+#include <cstring> // memcpy, memset
+#include <pthread.h>
 
 class Lv2AtomQueue
 {
 public:
     Lv2AtomQueue()
+        : mutex(PTHREAD_MUTEX_INITIALIZER)
     {
         index = indexPool = 0;
         empty = true;
@@ -38,8 +40,8 @@ public:
     void copyDataFrom(Lv2AtomQueue* const queue)
     {
         // lock mutexes
-        queue->mutex.lock();
-        mutex.lock();
+        queue->lock();
+        lock();
 
         // copy data from queue
         ::memcpy(data, queue->data, sizeof(datatype)*MAX_SIZE);
@@ -50,7 +52,7 @@ public:
         full  = queue->full;
 
         // unlock our mutex, no longer needed
-        mutex.unlock();
+        unlock();
 
         // reset queque
         ::memset(queue->data, 0, sizeof(datatype)*MAX_SIZE);
@@ -60,7 +62,7 @@ public:
         queue->full  = false;
 
         // unlock queque mutex
-        queue->mutex.unlock();
+        queue->unlock();
     }
 
     bool isEmpty()
@@ -73,17 +75,22 @@ public:
         return full;
     }
 
-    void lock()
+    bool lock()
     {
-        mutex.lock();
+        return (pthread_mutex_lock(&mutex) == 0);
     }
 
-    void unlock()
+    bool tryLock()
     {
-        mutex.unlock();
+        return (pthread_mutex_trylock(&mutex) == 0);
     }
 
-    void put(const uint32_t portIndex, const LV2_Atom* const atom, const bool lock = true)
+    bool unlock()
+    {
+        return (pthread_mutex_unlock(&mutex) == 0);
+    }
+
+    void put(const uint32_t portIndex, const LV2_Atom* const atom)
     {
         CARLA_ASSERT(atom && atom->size > 0);
         CARLA_ASSERT(indexPool + atom->size < MAX_POOL_SIZE); //  overflow
@@ -91,8 +98,7 @@ public:
         if (full || atom->size == 0 || indexPool + atom->size >= MAX_POOL_SIZE)
             return;
 
-        if (lock)
-            mutex.lock();
+        lock();
 
         for (unsigned short i=0; i < MAX_SIZE; i++)
         {
@@ -110,19 +116,18 @@ public:
             }
         }
 
-        if (lock)
-            mutex.unlock();
+        unlock();
     }
 
-    bool get(uint32_t* const portIndex, const LV2_Atom** const atom, const bool lock = true)
+    bool get(uint32_t* const portIndex, const LV2_Atom** const atom)
     {
         CARLA_ASSERT(portIndex && atom);
 
         if (empty || ! (portIndex && atom))
             return false;
 
-        if (lock)
-            mutex.lock();
+        if (! tryLock())
+            return false;
 
         full = false;
 
@@ -131,9 +136,7 @@ public:
             index = indexPool = 0;
             empty = true;
 
-            if (lock)
-                mutex.unlock();
-
+            unlock();
             return false;
         }
 
@@ -151,9 +154,7 @@ public:
         index++;
         empty = false;
 
-        if (lock)
-            mutex.unlock();
-
+        unlock();
         return true;
     }
 
@@ -185,7 +186,7 @@ private:
     unsigned short index, indexPool;
     bool empty, full;
 
-    QMutex mutex;
+    pthread_mutex_t mutex;
 };
 
-#endif // LV2_ATOM_QUEUE_HPP
+#endif // __LV2_ATOM_QUEUE_HPP__

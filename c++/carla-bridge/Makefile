@@ -46,7 +46,7 @@ POSIX_LINK_FLAGS    = $(LINK_PLUGIN_FLAGS) $(shell pkg-config --libs jack) -ldl
 WIN_BUILD_FLAGS     = $(BUILD_PLUGIN_FLAGS) -DJACKBRIDGE_EXPORT -DPTW32_STATIC_LIB
 WIN_32BIT_FLAGS     = $(32BIT_FLAGS)
 WIN_64BIT_FLAGS     = $(64BIT_FLAGS)
-WIN_LINK_FLAGS      = $(LINK_PLUGIN_FLAGS) -mwindows -L../carla-jackbridge -lpthread
+WIN_LINK_FLAGS      = $(LINK_PLUGIN_FLAGS) -mwindows -L../carla-jackbridge -lpthread -lwinspool -lole32 -luuid -limm32 -lshell32 -lws2_32
 
 # --------------------------------------------------------------
 # UI bridges

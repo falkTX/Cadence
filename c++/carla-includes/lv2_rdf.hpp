@@ -1,6 +1,6 @@
 /*
  * Custom types to store LV2 information
- * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
+ * Copyright (C) 2011-2013 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,18 +18,15 @@
 #ifndef LV2_RDF_INCLUDED
 #define LV2_RDF_INCLUDED
 
-// TODO - presets
-
 #include <cstdint>
 #include <cstdlib>
 
 // Base Types
 typedef const char* LV2_URI;
 typedef uint32_t LV2_Property;
-typedef unsigned long long LV2_PluginType;
 
 struct LV2_Type {
-    LV2_Property Value; //...
+    LV2_Property Value;
     LV2_URI URI;
 
     LV2_Type()
@@ -209,11 +206,6 @@ struct LV2_Type {
 #define LV2_IS_PORT_DESIGNATION_TIME_SPEED(x)             ((x) == LV2_PORT_DESIGNATION_TIME_SPEED)
 #define LV2_IS_PORT_DESIGNATION_TIME(x)                   ((x) >= LV2_PORT_DESIGNATION_TIME_BAR && (x) <= LV2_PORT_DESIGNATION_TIME_SPEED)
 
-// Preset State Types (TODO: Null is not a type, this is just a placeholder)
-#define LV2_PRESET_STATE_NULL            0x0
-
-#define LV2_IS_PRESET_STATE_NULL(x)      ((x) == LV2_PRESET_STATE_NULL)
-
 // Feature Types
 #define LV2_FEATURE_OPTIONAL             0x1
 #define LV2_FEATURE_REQUIRED             0x2
@@ -243,47 +235,49 @@ struct LV2_Type {
 #define LV2_IS_UI_OLD_EXTERNAL(x)        ((x) == LV2_UI_OLD_EXTERNAL)
 
 // Plugin Types
-#define LV2_PLUGIN_ALLPASS               0x000000001LL
-#define LV2_PLUGIN_AMPLIFIER             0x000000002LL
-#define LV2_PLUGIN_ANALYSER              0x000000004LL
-#define LV2_PLUGIN_BANDPASS              0x000000008LL
-#define LV2_PLUGIN_CHORUS                0x000000010LL
-#define LV2_PLUGIN_COMB                  0x000000020LL
-#define LV2_PLUGIN_COMPRESSOR            0x000000040LL
-#define LV2_PLUGIN_CONSTANT              0x000000080LL
-#define LV2_PLUGIN_CONVERTER             0x000000100LL
-#define LV2_PLUGIN_DELAY                 0x000000200LL
-#define LV2_PLUGIN_DISTORTION            0x000000400LL
-#define LV2_PLUGIN_DYNAMICS              0x000000800LL
-#define LV2_PLUGIN_EQ                    0x000001000LL
-#define LV2_PLUGIN_EXPANDER              0x000002000LL
-#define LV2_PLUGIN_FILTER                0x000004000LL
-#define LV2_PLUGIN_FLANGER               0x000008000LL
-#define LV2_PLUGIN_FUNCTION              0x000010000LL
-#define LV2_PLUGIN_GATE                  0x000020000LL
-#define LV2_PLUGIN_GENERATOR             0x000040000LL
-#define LV2_PLUGIN_HIGHPASS              0x000080000LL
-#define LV2_PLUGIN_INSTRUMENT            0x000100000LL
-#define LV2_PLUGIN_LIMITER               0x000200000LL
-#define LV2_PLUGIN_LOWPASS               0x000400000LL
-#define LV2_PLUGIN_MIXER                 0x000800000LL
-#define LV2_PLUGIN_MODULATOR             0x001000000LL
-#define LV2_PLUGIN_MULTI_EQ              0x002000000LL
-#define LV2_PLUGIN_OSCILLATOR            0x004000000LL
-#define LV2_PLUGIN_PARA_EQ               0x008000000LL
-#define LV2_PLUGIN_PHASER                0x010000000LL
-#define LV2_PLUGIN_PITCH                 0x020000000LL
-#define LV2_PLUGIN_REVERB                0x040000000LL
-#define LV2_PLUGIN_SIMULATOR             0x080000000LL
-#define LV2_PLUGIN_SPATIAL               0x100000000LL
-#define LV2_PLUGIN_SPECTRAL              0x200000000LL
-#define LV2_PLUGIN_UTILITY               0x400000000LL
-#define LV2_PLUGIN_WAVESHAPER            0x800000000LL
+#define LV2_PLUGIN_DELAY                 0x000001
+#define LV2_PLUGIN_REVERB                0x000002
+#define LV2_PLUGIN_SIMULATOR             0x000004
+#define LV2_PLUGIN_DISTORTION            0x000008
+#define LV2_PLUGIN_WAVESHAPER            0x000010
+#define LV2_PLUGIN_DYNAMICS              0x000020
+#define LV2_PLUGIN_AMPLIFIER             0x000040
+#define LV2_PLUGIN_COMPRESSOR            0x000080
+#define LV2_PLUGIN_ENVELOPE              0x000100
+#define LV2_PLUGIN_EXPANDER              0x000200
+#define LV2_PLUGIN_GATE                  0x000400
+#define LV2_PLUGIN_LIMITER               0x000800
+#define LV2_PLUGIN_EQ                    0x001000
+#define LV2_PLUGIN_MULTI_EQ              0x002000
+#define LV2_PLUGIN_PARA_EQ               0x004000
+#define LV2_PLUGIN_FILTER                0x008000
+#define LV2_PLUGIN_ALLPASS               0x010000
+#define LV2_PLUGIN_BANDPASS              0x020000
+#define LV2_PLUGIN_COMB                  0x040000
+#define LV2_PLUGIN_HIGHPASS              0x080000
+#define LV2_PLUGIN_LOWPASS               0x100000
+
+#define LV2_PLUGIN_GENERATOR             0x000001
+#define LV2_PLUGIN_CONSTANT              0x000002
+#define LV2_PLUGIN_INSTRUMENT            0x000004
+#define LV2_PLUGIN_OSCILLATOR            0x000008
+#define LV2_PLUGIN_MODULATOR             0x000010
+#define LV2_PLUGIN_CHORUS                0x000020
+#define LV2_PLUGIN_FLANGER               0x000040
+#define LV2_PLUGIN_PHASER                0x000080
+#define LV2_PLUGIN_SPATIAL               0x000100
+#define LV2_PLUGIN_SPECTRAL              0x000200
+#define LV2_PLUGIN_PITCH                 0x000400
+#define LV2_PLUGIN_UTILITY               0x000800
+#define LV2_PLUGIN_ANALYSER              0x001000
+#define LV2_PLUGIN_CONVERTER             0x002000
+#define LV2_PLUGIN_FUNCTION              0x008000
+#define LV2_PLUGIN_MIXER                 0x010000
 
 #define LV2_GROUP_DELAY                  (LV2_PLUGIN_DELAY|LV2_PLUGIN_REVERB)
 #define LV2_GROUP_DISTORTION             (LV2_PLUGIN_DISTORTION|LV2_PLUGIN_WAVESHAPER)
-#define LV2_GROUP_DYNAMICS               (LV2_PLUGIN_DYNAMICS|LV2_PLUGIN_AMPLIFIER|LV2_PLUGIN_COMPRESSOR|LV2_PLUGIN_EXPANDER|LV2_PLUGIN_GATE|LV2_PLUGIN_LIMITER)
-#define LV2_GROUP_EQ                     (LV2_PLUGIN_EQ|LV2_PLUGIN_PARA_EQ|LV2_PLUGIN_MULTI_EQ)
+#define LV2_GROUP_DYNAMICS               (LV2_PLUGIN_DYNAMICS|LV2_PLUGIN_AMPLIFIER|LV2_PLUGIN_COMPRESSOR|LV2_PLUGIN_ENVELOPE|LV2_PLUGIN_EXPANDER|LV2_PLUGIN_GATE|LV2_PLUGIN_LIMITER)
+#define LV2_GROUP_EQ                     (LV2_PLUGIN_EQ|LV2_PLUGIN_MULTI_EQ|LV2_PLUGIN_PARA_EQ)
 #define LV2_GROUP_FILTER                 (LV2_PLUGIN_FILTER|LV2_PLUGIN_ALLPASS|LV2_PLUGIN_BANDPASS|LV2_PLUGIN_COMB|LV2_GROUP_EQ|LV2_PLUGIN_HIGHPASS|LV2_PLUGIN_LOWPASS)
 #define LV2_GROUP_GENERATOR              (LV2_PLUGIN_GENERATOR|LV2_PLUGIN_CONSTANT|LV2_PLUGIN_INSTRUMENT|LV2_PLUGIN_OSCILLATOR)
 #define LV2_GROUP_MODULATOR              (LV2_PLUGIN_MODULATOR|LV2_PLUGIN_CHORUS|LV2_PLUGIN_FLANGER|LV2_PLUGIN_PHASER)
@@ -293,18 +287,18 @@ struct LV2_Type {
 #define LV2_GROUP_SPECTRAL               (LV2_PLUGIN_SPECTRAL|LV2_PLUGIN_PITCH)
 #define LV2_GROUP_UTILITY                (LV2_PLUGIN_UTILITY|LV2_PLUGIN_ANALYSER|LV2_PLUGIN_CONVERTER|LV2_PLUGIN_FUNCTION|LV2_PLUGIN_MIXER)
 
-#define LV2_IS_DELAY(x)                  ((x) & LV2_GROUP_DELAY)
-#define LV2_IS_DISTORTION(x)             ((x) & LV2_GROUP_DISTORTION)
-#define LV2_IS_DYNAMICS(x)               ((x) & LV2_GROUP_DYNAMICS)
-#define LV2_IS_EQ(x)                     ((x) & LV2_GROUP_EQ)
-#define LV2_IS_FILTER(x)                 ((x) & LV2_GROUP_FILTER)
-#define LV2_IS_GENERATOR(x)              ((x) & LV2_GROUP_GENERATOR)
-#define LV2_IS_MODULATOR(x)              ((x) & LV2_GROUP_MODULATOR)
-#define LV2_IS_REVERB(x)                 ((x) & LV2_GROUP_REVERB)
-#define LV2_IS_SIMULATOR(x)              ((x) & LV2_GROUP_SIMULATOR)
-#define LV2_IS_SPATIAL(x)                ((x) & LV2_GROUP_SPATIAL)
-#define LV2_IS_SPECTRAL(x)               ((x) & LV2_GROUP_SPECTRAL)
-#define LV2_IS_UTILITY(x)                ((x) & LV2_GROUP_UTILITY)
+#define LV2_IS_DELAY(x, y)               (((x) & LV2_GROUP_DELAY)      || ((y) & LV2_GROUP_DELAY))
+#define LV2_IS_DISTORTION(x, y)          (((x) & LV2_GROUP_DISTORTION) || ((y) & LV2_GROUP_DISTORTION))
+#define LV2_IS_DYNAMICS(x, y)            (((x) & LV2_GROUP_DYNAMICS)   || ((y) & LV2_GROUP_DYNAMICS))
+#define LV2_IS_EQ(x, y)                  (((x) & LV2_GROUP_EQ)         || ((y) & LV2_GROUP_EQ))
+#define LV2_IS_FILTER(x, y)              (((x) & LV2_GROUP_FILTER)     || ((y) & LV2_GROUP_FILTER))
+#define LV2_IS_GENERATOR(x, y)           (((x) & LV2_GROUP_GENERATOR)  || ((y) & LV2_GROUP_GENERATOR))
+#define LV2_IS_MODULATOR(x, y)           (((x) & LV2_GROUP_MODULATOR)  || ((y) & LV2_GROUP_MODULATOR))
+#define LV2_IS_REVERB(x, y)              (((x) & LV2_GROUP_REVERB)     || ((y) & LV2_GROUP_REVERB))
+#define LV2_IS_SIMULATOR(x, y)           (((x) & LV2_GROUP_SIMULATOR)  || ((y) & LV2_GROUP_SIMULATOR))
+#define LV2_IS_SPATIAL(x, y)             (((x) & LV2_GROUP_SPATIAL)    || ((y) & LV2_GROUP_SPATIAL))
+#define LV2_IS_SPECTRAL(x, y)            (((x) & LV2_GROUP_SPECTRAL)   || ((y) & LV2_GROUP_SPECTRAL))
+#define LV2_IS_UTILITY(x, y)             (((x) & LV2_GROUP_UTILITY)    || ((y) & LV2_GROUP_UTILITY))
 
 // Port Midi Map
 struct LV2_RDF_PortMidiMap {
@@ -376,7 +370,7 @@ struct LV2_RDF_PortScalePoint {
 
 // Port
 struct LV2_RDF_Port {
-    LV2_Type Type;
+    LV2_Property Types;
     LV2_Property Properties;
     LV2_Property Designation;
     const char* Name;
@@ -390,7 +384,8 @@ struct LV2_RDF_Port {
     LV2_RDF_PortScalePoint* ScalePoints;
 
     LV2_RDF_Port()
-        : Properties(0x0),
+        : Types(0x0),
+          Properties(0x0),
           Designation(0),
           Name(nullptr),
           Symbol(nullptr),
@@ -410,59 +405,14 @@ struct LV2_RDF_Port {
     }
 };
 
-// Preset Port
-struct LV2_RDF_PresetPort {
-    const char* Symbol;
-    float Value;
-
-    LV2_RDF_PresetPort()
-        : Symbol(nullptr),
-          Value(0.0f) {}
-
-    ~LV2_RDF_PresetPort()
-    {
-        if (Symbol)
-            ::free((void*)Symbol);
-    }
-};
-
-// Preset State
-struct LV2_RDF_PresetState {
-    LV2_Property Type;
-    const char* Key;
-    union {
-        // TODO
-    } Value;
-
-    LV2_RDF_PresetState()
-        : Type(0),
-          Key(nullptr) {}
-
-    ~LV2_RDF_PresetState()
-    {
-        if (Key)
-            ::free((void*)Key);
-    }
-};
-
 // Preset
 struct LV2_RDF_Preset {
     LV2_URI URI;
     const char* Label;
 
-    uint32_t PortCount;
-    LV2_RDF_PresetPort* Ports;
-
-    uint32_t StateCount;
-    LV2_RDF_PresetState* States;
-
     LV2_RDF_Preset()
         : URI(nullptr),
-          Label(nullptr),
-          PortCount(0),
-          Ports(nullptr),
-          StateCount(0),
-          States(nullptr) {}
+          Label(nullptr) {}
 
     ~LV2_RDF_Preset()
     {
@@ -471,12 +421,6 @@ struct LV2_RDF_Preset {
 
         if (Label)
             ::free((void*)Label);
-
-        if (Ports)
-            delete[] Ports;
-
-        if (States)
-            delete[] States;
     }
 };
 
@@ -539,7 +483,7 @@ struct LV2_RDF_UI {
 
 // Plugin
 struct LV2_RDF_Descriptor {
-    LV2_PluginType Type;
+    LV2_Property Type[2];
     LV2_URI URI;
     const char* Name;
     const char* Author;
@@ -564,7 +508,7 @@ struct LV2_RDF_Descriptor {
     LV2_RDF_UI* UIs;
 
     LV2_RDF_Descriptor()
-        : Type(0x0),
+        : Type{0x0, 0x0},
           URI(nullptr),
           Name(nullptr),
           Author(nullptr),

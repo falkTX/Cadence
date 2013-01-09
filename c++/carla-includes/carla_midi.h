@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_MIDI_H
-#define CARLA_MIDI_H
+#ifndef __CARLA_MIDI_H__
+#define __CARLA_MIDI_H__
 
 #define MAX_MIDI_CHANNELS 16
 
@@ -135,4 +135,4 @@
 #define MIDI_IS_CONTROL_EFFECT_CONTROL_1(control)      ((control) == MIDI_CONTROL_EFFECT_CONTROL_1      || (control) == MIDI_CONTROL_EFFECT_CONTROL_1__LSB)
 #define MIDI_IS_CONTROL_EFFECT_CONTROL_2(control)      ((control) == MIDI_CONTROL_EFFECT_CONTROL_2      || (control) == MIDI_CONTROL_EFFECT_CONTROL_2__LSB)
 
-#endif // CARLA_MIDI_H
+#endif // __CARLA_MIDI_H__

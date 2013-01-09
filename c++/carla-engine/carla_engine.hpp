@@ -159,12 +159,8 @@ struct CarlaEngineMidiEvent {
 
     CarlaEngineMidiEvent()
         : time(0),
-#ifdef Q_COMPILER_INITIALIZER_LISTS
           size(0),
           data{0} {}
-#else
-          size(0) { data[0] = data[1] = data[2] = 0; }
-#endif
 };
 
 /*!

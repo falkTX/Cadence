@@ -15,8 +15,8 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef JACK_UTILS_H
-#define JACK_UTILS_H
+#ifndef __JACK_UTILS_HPP__
+#define __JACK_UTILS_HPP__
 
 #include <jack/jack.h>
 #include <jack/midiport.h>
@@ -85,4 +85,4 @@ std::string jack_status_get_error_string(const jack_status_t& status)
     return errorString;
 }
 
-#endif // JACK_UTILS_H
+#endif // __JACK_UTILS_HPP__

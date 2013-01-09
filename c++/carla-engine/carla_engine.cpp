@@ -365,15 +365,12 @@ void CarlaEngineClient::setLatency(const uint32_t samples)
 
 CarlaEngine::CarlaEngine()
     : m_osc(this),
-      m_thread(this)
-#ifdef Q_COMPILER_INITIALIZER_LISTS
-      ,
+      m_thread(this),
       m_callbackPtr(nullptr),
       m_carlaPlugins{nullptr},
       m_uniqueNames{nullptr},
       m_insPeak{0.0},
       m_outsPeak{0.0}
-#endif
 {
     qDebug("CarlaEngine::CarlaEngine()");
 
@@ -386,20 +383,6 @@ CarlaEngine::CarlaEngine()
 
     m_aboutToClose = false;
     m_maxPluginNumber = 0;
-
-#ifndef Q_COMPILER_INITIALIZER_LISTS
-    for (unsigned short i=0; i < MAX_PLUGINS; i++)
-    {
-        m_carlaPlugins[i] = nullptr;
-        m_uniqueNames[i]  = nullptr;
-    }
-
-    for (unsigned short i=0; i < MAX_PLUGINS * MAX_PEAKS; i++)
-    {
-        m_insPeak[i]  = 0.0;
-        m_outsPeak[i] = 0.0;
-    }
-#endif
 }
 
 CarlaEngine::~CarlaEngine()

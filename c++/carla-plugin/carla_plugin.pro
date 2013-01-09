@@ -2,9 +2,9 @@
 
 QT = core gui
 
-CONFIG    = debug
-CONFIG   += static
+#CONFIG    = debug
 CONFIG   += link_pkgconfig qt warn_on
+CONFIG   += dll shared
 
 DEFINES   = DEBUG
 DEFINES  += QTCREATOR_TEST
@@ -13,15 +13,17 @@ DEFINES  += QTCREATOR_TEST
 DEFINES  += WANT_LADSPA WANT_DSSI WANT_LV2 WANT_VST
 
 # Samplers
-DEFINES  += WANT_FLUIDSYNTH WANT_LINUXSAMPLER
+DEFINES  += WANT_FLUIDSYNTH
+# WANT_LINUXSAMPLER
 
 # ZynAddSubFX
 DEFINES  += WANT_ZYNADDSUBFX
 
 # Misc
-DEFINES  += WANT_SUIL
+#DEFINES  += WANT_SUIL
 
-PKGCONFIG = liblo suil-0 fluidsynth linuxsampler
+PKGCONFIG = liblo fluidsynth
+#suil-0 linuxsampler
 
 TARGET   = carla_plugin
 TEMPLATE = lib

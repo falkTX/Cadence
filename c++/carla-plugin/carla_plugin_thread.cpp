@@ -71,7 +71,9 @@ void CarlaPluginThread::run()
     {
         m_process = new QProcess(nullptr);
         m_process->setProcessChannelMode(QProcess::ForwardedChannels);
+#ifndef BUILD_BRIDGE
         m_process->setProcessEnvironment(engine->getOptionsAsProcessEnvironment());
+#endif
     }
 
     QString name(plugin->name() ? plugin->name() : "(none)");

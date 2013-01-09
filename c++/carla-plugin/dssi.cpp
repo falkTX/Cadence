@@ -798,6 +798,7 @@ public:
             midiprog.data[i].name    = strdup(pdesc->Name ? pdesc->Name : "");
         }
 
+#ifndef BUILD_BRIDGE
         // Update OSC Names
         if (x_engine->isOscControlRegistered())
         {
@@ -806,6 +807,7 @@ public:
             for (i=0; i < midiprog.count; i++)
                 x_engine->osc_send_control_set_midi_program_data(m_id, i, midiprog.data[i].bank, midiprog.data[i].program, midiprog.data[i].name);
         }
+#endif
 
         if (init)
         {

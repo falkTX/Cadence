@@ -1,6 +1,6 @@
 /*
  * Carla common defines
- * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
+ * Copyright (C) 2011-2013 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,21 +15,10 @@
  * For a full copy of the GNU General Public License see the COPYING file
  */
 
-#ifndef CARLA_DEFINES_HPP
-#define CARLA_DEFINES_HPP
-
-//#ifdef __WINE__
-//# define Q_CORE_EXPORT
-//# define Q_GUI_EXPORT
-//# define QT_NO_STL
-//#endif
+#ifndef __CARLA_DEFINES_HPP__
+#define __CARLA_DEFINES_HPP__
 
 #include <QtCore/Qt>
-
-// TESTING - remove later (QtCreator doesn't fully support this yet)
-#ifdef QTCREATOR_TEST
-# undef Q_COMPILER_INITIALIZER_LISTS
-#endif
 
 // If the compiler can't do C++11 lambdas, it most likely doesn't know about nullptr either
 #ifndef Q_COMPILER_LAMBDA
@@ -84,7 +73,7 @@
 #  define BINARY_NATIVE BINARY_WIN32
 # endif
 #else
-# warning Unknown binary type
+# warning Unknown binary native
 # define BINARY_NATIVE BINARY_OTHER
 #endif
 
@@ -108,4 +97,4 @@
 # endif
 #endif
 
-#endif // CARLA_DEFINES_HPP
+#endif // __CARLA_DEFINES_HPP__
