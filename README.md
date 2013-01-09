@@ -7,8 +7,6 @@ The tools share the same base source code, so most of them look quite similar (w
 Also, lots of custom widgets were coded when needed (like pixmapdial, pixmapkeyboard, patchcanvas and systray). <br/>
 They can be re-used in other projects. Contact the author if you need help on that.
 
-Note that the main focus goes to JACK2 (or JACK1+DBus); JACK1 (raw) may not work properly at this point.
-
 
 ===== DESCRIPTIONS =====
 ------------------------
@@ -57,13 +55,3 @@ A multimedia application launcher with LADISH support. <br/>
 It searches for installed packages (not binaries), and displays the respective content as a launcher. <br/>
 The content is got through an hardcoded database, created and/or modified to suit the target distribution. <br/>
 Currently supports Debian and ArchLinux based distros.
-
-### [Carla](http://kxstudio.sourceforge.net/KXStudio:Applications:Carla)
-Multi-plugin host for JACK. <br/>
-It has some nice features like automation of parameters via MIDI CCs (and send control outputs back to MIDI too) and full OSC control. <br/>
-Currently supports LADSPA (including LRDF), DSSI, LV2, and VST plugin formats, with additional GIG, SF2 and SFZ file support via FluidSynth and LinuxSampler.
-
-### [Carla-Control](http://kxstudio.sourceforge.net/KXStudio:Applications:Carla-Control)
-An OSC Control GUI for Carla (you get the OSC address from the Carla's about dialog, and connect to it).<br/>
-Supports controlling main UI components (Dry/Wet, Volume and Balance), and all plugins parameters. <br/>
-Peak values and control outputs are displayed as well.

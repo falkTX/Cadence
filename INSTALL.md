@@ -19,41 +19,26 @@ Packagers can make use of the 'PREFIX' and 'DESTDIR' variable during install, li
 The required build dependencies are: <i>(devel packages of these)</i>
 
  - JACK
- - liblo
  - Qt4
- - PyQt4
+ - Python3
+ - PyQt4 (Py3 version)
 
-Optional but recommended:
-
- - FluidSynth
- - LinuxSampler
-
-Optional for extended LV2 UIs support:
-
- - Gtk2
- - Gtk3
- - Suil
-
-On Debian and Ubuntu, use these commands to install all dependencies: <br/>
-`$ sudo apt-get install libjack-dev liblo-dev libqt4-dev libfluidsynth-dev` <br/>
+On Debian and Ubuntu, use these commands to install all build dependencies: <br/>
+`$ sudo apt-get install libjack-dev libqt4-dev` <br/>
 `$ sudo apt-get install qt4-dev-tools python-qt4-dev python3-pyqt4 pyqt4-dev-tools`
-
-NOTE: linuxsampler is not packaged in either Debian or Ubuntu, but it's available in KXStudio. <br/>
-<br/>
 
 To run all the apps/tools, you'll additionally need:
 
  - python3-dbus
- - python3-liblo
+ - python3-dbus.mainloop.qt
 
 Optional but recommended:
 
  - a2jmidid
  - jack-capture
- - python3-rdflib
- - pulseaudio-module-jack
+ - pulseaudio[-module-jack]
 
-The 'Cadence' and 'Catia' apps rely on jackdbus to work properly (either JACK2 or JACK1+DBus patch). <br/>
+The 'Cadence' app relies on jackdbus to work properly (either JACK2 or JACK1+DBus patch). <br/>
 Claudia is a LADISH frontend, so it will obviously require LADISH to run.
 
 The python version used and tested is python3.2. <br/>
@@ -67,8 +52,28 @@ All tools require Python3 and Qt4, some of them work on Windows and Mac. <br/>
 Here's the required run-time dependencies of each of the main tools:
 
 ### Cadence
-Recommends a2jmidid (>= 8) and jackdbus <br/>
+Recommends a2jmidid (>= 7) and jackdbus <br/>
 Suggests pulseaudio[-module-jack] <br/>
+<br/>
+
+### Cadence-JackMeter
+Requires jack <br/>
+<br/>
+
+### Cadence-JackSettings
+Requires jackdbus <br/>
+<br/>
+
+### Cadence-Logs
+No special requirements <br/>
+<br/>
+
+### Cadence-Render
+Requires jack-capture <br/>
+<br/>
+
+### Cadence-XY Controller
+Requires jack <br/>
 <br/>
 
 ### Catarina
@@ -76,19 +81,10 @@ No special requirements <br/>
 <br/>
 
 ### Catia
-Recommends a2jmidid (>= 8) and jackdbus <br/>
+Recommends a2jmidid (>= 7) and jackdbus <br/>
 <br/>
 
 ### Claudia [Linux only] <br/>
 Requires jackdbus and ladish <br/>
 Recommends a2jmidid <br/>
-<br/>
-
-### Carla
-Requires liblo <br/>
-Recommends python3-rdflib (for LADSPA-RDF support) <br/>
-<br/>
-
-### Carla-Control
-Requires python3-liblo <br/>
 <br/>
