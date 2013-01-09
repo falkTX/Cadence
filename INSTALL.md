@@ -20,12 +20,11 @@ The required build dependencies are: <i>(devel packages of these)</i>
 
  - JACK
  - Qt4
- - Python3
  - PyQt4 (Py3 version)
 
 On Debian and Ubuntu, use these commands to install all build dependencies: <br/>
-`$ sudo apt-get install libjack-dev libqt4-dev` <br/>
-`$ sudo apt-get install qt4-dev-tools python-qt4-dev python3-pyqt4 pyqt4-dev-tools`
+`$ sudo apt-get install libjack-dev libqt4-dev qt4-dev-tools` <br/>
+`$ sudo apt-get install python-qt4-dev python3-pyqt4 pyqt4-dev-tools`
 
 To run all the apps/tools, you'll additionally need:
 
@@ -41,8 +40,8 @@ Optional but recommended:
 The 'Cadence' app relies on jackdbus to work properly (either JACK2 or JACK1+DBus patch). <br/>
 Claudia is a LADISH frontend, so it will obviously require LADISH to run.
 
-The python version used and tested is python3.2. <br/>
-After install, the app/tools will still work on distros with python2 as default, without any additional work.
+The python version used and tested is python3.2. Older versions won't work! <br/>
+After install, the app/tools will still work on distributions with python2 as default, without any additional work.
 
 <br/>
 
@@ -54,37 +53,30 @@ Here's the required run-time dependencies of each of the main tools:
 ### Cadence
 Recommends a2jmidid (>= 7) and jackdbus <br/>
 Suggests pulseaudio[-module-jack] <br/>
-<br/>
 
 ### Cadence-JackMeter
 Requires jack <br/>
-<br/>
 
 ### Cadence-JackSettings
 Requires jackdbus <br/>
-<br/>
 
 ### Cadence-Logs
 No special requirements <br/>
-<br/>
 
 ### Cadence-Render
 Requires jack-capture <br/>
-<br/>
 
 ### Cadence-XY Controller
 Requires jack <br/>
-<br/>
 
 ### Catarina
 No special requirements <br/>
-<br/>
 
 ### Catia
 Recommends a2jmidid (>= 7) and jackdbus <br/>
-<br/>
 
 ### Claudia [Linux only] <br/>
 Requires jackdbus and ladish <br/>
 Recommends a2jmidid <br/>
+
 <br/>
