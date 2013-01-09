@@ -51,6 +51,7 @@ All tools require Python3 and Qt4, some of them work on Windows and Mac. <br/>
 Here's the required run-time dependencies of each of the main tools:
 
 ### Cadence
+Requires jack <br/>
 Recommends a2jmidid (>= 7) and jackdbus <br/>
 Suggests pulseaudio[-module-jack] <br/>
 
