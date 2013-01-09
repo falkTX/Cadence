@@ -19,10 +19,11 @@ else
 	X11_RC_DIR = $(DESTDIR)/etc/X11/xinit/xinitrc.d/
 endif
 
+# -----------------------------------------------------------------------------------------------------------------------------------------
 
 all: UI RES CPP
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------------------------
 
 UI: cadence catarina catia claudia tools
 
@@ -48,129 +49,15 @@ tools: \
 
 src/ui_%.py: resources/ui/%.ui
 	$(PYUIC) $< -o $@
-# 
-# src/ui_cadence_tb_jack.py: resources/ui/cadence_tb_jack.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_cadence_tb_alsa.py: resources/ui/cadence_tb_alsa.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_cadence_tb_a2j.py: resources/ui/cadence_tb_a2j.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_cadence_tb_pa.py: resources/ui/cadence_tb_pa.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_cadence_rwait.py: resources/ui/cadence_rwait.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_catarina.py: resources/ui/catarina.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_catarina_addgroup.py: resources/ui/catarina_addgroup.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_catarina_removegroup.py: resources/ui/catarina_removegroup.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_catarina_renamegroup.py: resources/ui/catarina_renamegroup.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_catarina_addport.py: resources/ui/catarina_addport.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_catarina_removeport.py: resources/ui/catarina_removeport.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_catarina_renameport.py: resources/ui/catarina_renameport.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_catarina_connectports.py: resources/ui/catarina_connectports.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_catarina_disconnectports.py: resources/ui/catarina_disconnectports.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_catia.py: resources/ui/catia.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_claudia.py: resources/ui/claudia.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_claudia_studioname.py: resources/ui/claudia_studioname.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_claudia_studiolist.py: resources/ui/claudia_studiolist.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_claudia_createroom.py: resources/ui/claudia_createroom.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_claudia_projectname.py: resources/ui/claudia_projectname.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_claudia_projectproperties.py: resources/ui/claudia_projectproperties.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_claudia_runcustom.py: resources/ui/claudia_runcustom.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_claudia_launcher.py: resources/ui/claudia_launcher.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_claudia_launcher_app.py: resources/ui/claudia_launcher_app.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_caitlyn.py: resources/ui/caitlyn.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_carla.py: resources/ui/carla.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_carla_control.py: resources/ui/carla_control.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_carla_about.py: resources/ui/carla_about.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_carla_database.py: resources/ui/carla_database.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_carla_edit.py: resources/ui/carla_edit.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_carla_parameter.py: resources/ui/carla_parameter.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_carla_plugin.py: resources/ui/carla_plugin.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_carla_refresh.py: resources/ui/carla_refresh.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_logs.py: resources/ui/logs.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_render.py: resources/ui/render.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_settings_app.py: resources/ui/settings_app.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_settings_jack.py: resources/ui/settings_jack.ui
-# 	$(PYUIC) $< -o $@
-# 
-# src/ui_inputdialog_value.py: resources/ui/inputdialog_value.ui
-# 	$(PYUIC) $< -o $@
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------------------------
 
 RES: src/resources_rc.py
 
 src/resources_rc.py: resources/resources.qrc
 	$(PYRCC) $< -o $@
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------------------------
 
 CPP: jackmeter xycontroller
 
@@ -180,17 +67,19 @@ jackmeter:
 xycontroller:
 	$(MAKE) -C c++/xycontroller
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------------------------
 
 debug:
 	$(MAKE) DEBUG=true
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------------------------
 
 clean:
 	$(MAKE) clean -C c++/jackmeter
 	$(MAKE) clean -C c++/xycontroller
 	rm -f *~ src/*~ src/*.pyc src/ui_*.py src/resources_rc.py
+
+# -----------------------------------------------------------------------------------------------------------------------------------------
 
 install:
 	# Create directories
@@ -288,7 +177,6 @@ install:
 		$(DESTDIR)$(PREFIX)/bin/catia \
 		$(DESTDIR)$(PREFIX)/bin/claudia \
 		$(DESTDIR)$(PREFIX)/bin/claudia-launcher \
-		$(DESTDIR)$(PREFIX)/bin/caitlyn \
 		$(X11_RC_DIR)/70cadence-plugin-paths \
 		$(X11_RC_DIR)/99cadence-session-start
 

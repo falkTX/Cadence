@@ -9,16 +9,10 @@
 *.bak
 
 # Binary files
-*.a
-*.o
-*.dll
-*.dll.def
 *.exe
-*.so
+*.o
 
 # Project files
-*.carxp
-*.carxs
 *.pro.user
 
 # C++ files
@@ -35,38 +29,8 @@ src/resources_rc.py
 qrc_resources*.cpp
 
 # Binaries
-carla-bridge-qtcreator
-carla-bridge-native
-carla-bridge-posix32
-carla-bridge-posix64
-carla-bridge-lv2-cocoa
-carla-bridge-lv2-gtk2
-carla-bridge-lv2-gtk3
-carla-bridge-lv2-qt4
-carla-bridge-lv2-qt5
-carla-bridge-lv2-x11
-carla-bridge-vst-cocoa
-carla-bridge-vst-x11
-
-carla-discovery-qtcreator
-carla-discovery-native
-carla-discovery-posix32
-carla-discovery-posix64
-
 c++/jackmeter/cadence-jackmeter
 c++/xycontroller/cadence-xycontroller
-
-# VST SDK
-c++/carla-includes/vst/
-
-# Docs
-doc/caitlib/
-doc/carla-backend/
-doc/carla-bridge/
-doc/carla-engine/
-doc/carla-native/
-doc/carla-plugin/
-doc/distrho/
 
 # CX-Freeze builds
 src/dist/
@@ -75,73 +39,5 @@ src/dist/
 *-build-*Debug/
 *-build-*Release/
 
-# ZynAddSubFX UI
-c++/carla-native/zynaddsubfx/UI/ADnoteUI.cc
-c++/carla-native/zynaddsubfx/UI/ADnoteUI.h
-c++/carla-native/zynaddsubfx/UI/BankUI.cc
-c++/carla-native/zynaddsubfx/UI/BankUI.h
-c++/carla-native/zynaddsubfx/UI/ConfigUI.cc
-c++/carla-native/zynaddsubfx/UI/ConfigUI.h
-c++/carla-native/zynaddsubfx/UI/EffUI.cc
-c++/carla-native/zynaddsubfx/UI/EffUI.h
-c++/carla-native/zynaddsubfx/UI/EnvelopeUI.cc
-c++/carla-native/zynaddsubfx/UI/EnvelopeUI.h
-c++/carla-native/zynaddsubfx/UI/FilterUI.cc
-c++/carla-native/zynaddsubfx/UI/FilterUI.h
-c++/carla-native/zynaddsubfx/UI/LFOUI.cc
-c++/carla-native/zynaddsubfx/UI/LFOUI.h
-c++/carla-native/zynaddsubfx/UI/MasterUI.cc
-c++/carla-native/zynaddsubfx/UI/MasterUI.h
-c++/carla-native/zynaddsubfx/UI/MicrotonalUI.cc
-c++/carla-native/zynaddsubfx/UI/MicrotonalUI.h
-c++/carla-native/zynaddsubfx/UI/OscilGenUI.cc
-c++/carla-native/zynaddsubfx/UI/OscilGenUI.h
-c++/carla-native/zynaddsubfx/UI/PADnoteUI.cc
-c++/carla-native/zynaddsubfx/UI/PADnoteUI.h
-c++/carla-native/zynaddsubfx/UI/PartUI.cc
-c++/carla-native/zynaddsubfx/UI/PartUI.h
-c++/carla-native/zynaddsubfx/UI/PresetsUI.cc
-c++/carla-native/zynaddsubfx/UI/PresetsUI.h
-c++/carla-native/zynaddsubfx/UI/ResonanceUI.cc
-c++/carla-native/zynaddsubfx/UI/ResonanceUI.h
-c++/carla-native/zynaddsubfx/UI/SUBnoteUI.cc
-c++/carla-native/zynaddsubfx/UI/SUBnoteUI.h
-c++/carla-native/zynaddsubfx/UI/VirKeyboard.cc
-c++/carla-native/zynaddsubfx/UI/VirKeyboard.h
-
-# Incoming
-_/
-all-recheck
-c++/caitlyn/
-c++/carla-backend/carla-dynamic.lv2/
-c++/carla-backend/carla_backend_lv2.cpp
-c++/carla-backend/carla_backend_vst.cpp
-c++/carla-backend/old/
-c++/carla-bridge/qt-plugin/
-c++/carla-bridge/qtcreator/Makefile
-c++/carla-includes/lv2/dynmanifest.h
-c++/carla-includes/lv2/morph.h
-c++/carla-jackbridge/jack
-c++/flmixer/
-c++/widgets/ledbutton.*
-c++/widgets/paramspinbox.*
-data/templates/energyXT.xt
-src/old/
-src/ui/carla_driver.ui
-
 # Other
-c++/carla-backend/carla_backend.kdev4
-c++/carla-bridge/carla_bridge_plugin.cpp,bak
-c++/carla-bridge/carla_bridge_toolkit-plugin.cpp
-c++/carla/CarlaAbout.cpp
-c++/carla/CarlaAbout.hpp
-c++/carla/PluginParameter.cpp
-c++/carla/PluginParameter.hpp
-c++/carla/carla.cpp
-c++/carla/carla.h
-c++/carla/carla.pro
-c++/carla/carla_misc.h
-data/cadence-cpufreq
-data/cpufreq/
-src/cadence_cpufreq.py
-src/cpufreq.py
+data/templates/energyXT.xt

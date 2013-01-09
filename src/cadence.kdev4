@@ -3,7 +3,7 @@ Manager=KDevGenericManager
 Name=Cadence
 
 [Filters]
-Excludes=*/.*,*/*~,*/*.pyc,*/ui_*.py,*/__pycache__/,*/old/
+Excludes=*/.*,*/*~,*/*.pyc,*/ui_*.py,*/__pycache__/
 
 [Project]
 VersionControlSupport=kdevgit
