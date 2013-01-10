@@ -24,9 +24,10 @@ checkFile = "/tmp/.cadence-aloop-daemon.x"
 # --------------------------------------------------
 # Global JACK variables
 
-global bufferSize, sampleRate
+global bufferSize, sampleRate, channels
 bufferSize = 1024
 sampleRate = 44100
+channels   = 2
 
 # --------------------------------------------------
 # quit on SIGINT or SIGTERM
@@ -77,7 +78,7 @@ def shutdown_callback(arg):
 # --------------------------------------------------
 # run alsa_in and alsa_out
 def run_alsa_bridge():
-    global bufferSize, sampleRate
+    global bufferSize, sampleRate, channels
     global procIn, procOut
     global useZita
 
@@ -92,8 +93,8 @@ def run_alsa_bridge():
         procIn.start("env",  ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "zita-a2j", "-L", "-j", "alsa2jack", "-d", "hw:Loopback,1,0"])
         procOut.start("env", ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "zita-j2a", "-L", "-j", "jack2alsa", "-d", "hw:Loopback,1,1"])
     else:
-        procIn.start("env",  ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_in",  "-j", "alsa2jack", "-d", "cloop", "-q", "1"])
-        procOut.start("env", ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_out", "-j", "jack2alsa", "-d", "ploop", "-q", "1"])
+        procIn.start("env",  ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_in",  "-j", "alsa2jack", "-d", "cloop", "-q", "1", "-c", "%i" % channels])
+        procOut.start("env", ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_out", "-j", "jack2alsa", "-d", "ploop", "-q", "1", "-c", "%i" % channels])
 
     if procIn.waitForStarted():
         sleep(1)

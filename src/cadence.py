@@ -176,6 +176,7 @@ asoundrc_aloop = (""
 "  ipc_key_add_uid true\n"
 "  slave {\n"
 "    pcm \"hw:Loopback,1,0\"\n"
+"    channels 2\n"
 "    format S32_LE\n"
 "    rate {\n"
 "      @func igetenv\n"
@@ -197,6 +198,8 @@ asoundrc_aloop = (""
 "  type plug\n"
 "  slave.pcm \"hw:Loopback,1,1\"\n"
 "}")
+
+asoundrc_aloop_check = asoundrc_aloop.split("pcm.aloopPlayback", 1)[0]
 
 asoundrc_jack = (""
 "pcm.!default {\n"
@@ -1341,7 +1344,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         asoundrcRead = asoundrcFd.read().strip()
         asoundrcFd.close()
 
-        if asoundrcRead == asoundrc_aloop:
+        if asoundrcRead.startswith(asoundrc_aloop_check):
             if isAlsaAudioBridged():
                 self.b_alsa_start.setEnabled(False)
                 self.b_alsa_stop.setEnabled(True)
