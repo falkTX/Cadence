@@ -134,7 +134,7 @@ def asciiString(string):
     return normalize("NFKD", string).encode("ascii", "ignore").decode("utf-8")
 
 # ------------------------------------------------------------------------------------------------------------
-# Convert a ctypes c_char_p to a python string
+# Convert a ctypes c_char_p into a python string
 
 def cString(value):
     if not value:

@@ -9,6 +9,7 @@ DESTDIR =
 
 SED_PREFIX = $(shell echo $(PREFIX) | sed "s/\//\\\\\\\\\//g")
 
+LINK  = ln -s
 PYUIC = pyuic4
 PYRCC = pyrcc4 -py3
 
@@ -21,9 +22,29 @@ endif
 
 # -----------------------------------------------------------------------------------------------------------------------------------------
 
-all: UI RES CPP
+all: CPP RES UI
 
 # -----------------------------------------------------------------------------------------------------------------------------------------
+# C++ code
+
+CPP: jackmeter xycontroller
+
+jackmeter:
+	$(MAKE) -C c++/jackmeter
+
+xycontroller:
+	$(MAKE) -C c++/xycontroller
+
+# -----------------------------------------------------------------------------------------------------------------------------------------
+# Resources
+
+RES: src/resources_rc.py
+
+src/resources_rc.py: resources/resources.qrc
+	$(PYRCC) $< -o $@
+
+# -----------------------------------------------------------------------------------------------------------------------------------------
+# UI code
 
 UI: cadence catarina catia claudia tools
 
@@ -52,32 +73,15 @@ src/ui_%.py: resources/ui/%.ui
 
 # -----------------------------------------------------------------------------------------------------------------------------------------
 
-RES: src/resources_rc.py
-
-src/resources_rc.py: resources/resources.qrc
-	$(PYRCC) $< -o $@
-
-# -----------------------------------------------------------------------------------------------------------------------------------------
-
-CPP: jackmeter xycontroller
-
-jackmeter:
-	$(MAKE) -C c++/jackmeter
-
-xycontroller:
-	$(MAKE) -C c++/xycontroller
+clean:
+	$(MAKE) clean -C c++/jackmeter
+	$(MAKE) clean -C c++/xycontroller
+	rm -f *~ src/*~ src/*.pyc src/ui_*.py src/resources_rc.py
 
 # -----------------------------------------------------------------------------------------------------------------------------------------
 
 debug:
 	$(MAKE) DEBUG=true
-
-# -----------------------------------------------------------------------------------------------------------------------------------------
-
-clean:
-	$(MAKE) clean -C c++/jackmeter
-	$(MAKE) clean -C c++/xycontroller
-	rm -f *~ src/*~ src/*.pyc src/ui_*.py src/resources_rc.py
 
 # -----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -179,6 +183,8 @@ install:
 		$(DESTDIR)$(PREFIX)/bin/claudia-launcher \
 		$(X11_RC_DIR)/70cadence-plugin-paths \
 		$(X11_RC_DIR)/99cadence-session-start
+
+# -----------------------------------------------------------------------------------------------------------------------------------------
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/cadence*

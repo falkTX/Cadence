@@ -111,6 +111,8 @@ if __name__ == '__main__':
 
     useZita = bool(len(sys.argv) == 2 and sys.argv[1] in ("-zita", "--zita"))
 
+    # TODO - check consistency, and check channels value
+
     # Init JACK client
     client = jacklib.client_open("cadence-aloop-daemon", jacklib.JackUseExactName, None)
 
