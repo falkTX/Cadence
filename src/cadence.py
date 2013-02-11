@@ -1072,9 +1072,9 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.connect(self.b_pulse_stop, SIGNAL("clicked()"), SLOT("slot_PulseAudioBridgeStop()"))
         self.connect(self.tb_pulse_options, SIGNAL("clicked()"), SLOT("slot_PulseAudioBridgeOptions()"))
 
+        self.connect(self.pic_catarina, SIGNAL("clicked()"), lambda tool="catarina": self.func_start_tool(tool))
         self.connect(self.pic_catia, SIGNAL("clicked()"), lambda tool="catia": self.func_start_tool(tool))
         self.connect(self.pic_claudia, SIGNAL("clicked()"), lambda tool="claudia": self.func_start_tool(tool))
-        self.connect(self.pic_carla, SIGNAL("clicked()"), lambda tool="carla": self.func_start_tool(tool))
         self.connect(self.pic_logs, SIGNAL("clicked()"), lambda tool="cadence-logs": self.func_start_tool(tool))
         self.connect(self.pic_render, SIGNAL("clicked()"), lambda tool="cadence-render": self.func_start_tool(tool))
         self.connect(self.pic_xycontroller, SIGNAL("clicked()"), lambda tool="cadence-xycontroller": self.func_start_tool(tool))

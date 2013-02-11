@@ -556,7 +556,7 @@
                 </sizepolicy>
                </property>
                <property name="frameShape">
-                <enum>QFrame::Panel</enum>
+                <enum>QFrame::StyledPanel</enum>
                </property>
                <property name="frameShadow">
                 <enum>QFrame::Sunken</enum>
@@ -572,8 +572,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>364</width>
-                  <height>98</height>
+                  <width>362</width>
+                  <height>100</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -720,8 +720,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>364</width>
-                  <height>96</height>
+                  <width>362</width>
+                  <height>97</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -861,8 +861,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>364</width>
-                  <height>96</height>
+                  <width>362</width>
+                  <height>97</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -1053,6 +1053,41 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_3">
           <item>
+           <widget class="QGroupBox" name="groupBox_catarina">
+            <property name="title">
+             <string>Catarina</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_4">
+             <item>
+              <widget class="ClickableLabel" name="pic_catarina">
+               <property name="text">
+                <string/>
+               </property>
+               <property name="pixmap">
+                <pixmap resource="../resources.qrc">:/screens/catarina.png</pixmap>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_tools_catarina">
+               <property name="text">
+                <string>Patchbay test app</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="wordWrap">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
            <widget class="QGroupBox" name="groupBox_catia">
             <property name="title">
              <string>Catia</string>
@@ -1110,41 +1145,6 @@
               <widget class="QLabel" name="label_tools_claudia">
                <property name="text">
                 <string>Claudia is a Graphical User Interface to LADISH</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="wordWrap">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <widget class="QGroupBox" name="groupBox_carla">
-            <property name="title">
-             <string>Carla</string>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_4">
-             <item>
-              <widget class="ClickableLabel" name="pic_carla">
-               <property name="text">
-                <string/>
-               </property>
-               <property name="pixmap">
-                <pixmap resource="../resources.qrc">:/screens/carla.png</pixmap>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_tools_carla">
-               <property name="text">
-                <string>Carla is a multi-plugin host for JACK.</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -1580,7 +1580,7 @@
              <item row="0" column="0" rowspan="8">
               <widget class="QToolBox" name="tb_tweak_plugins">
                <property name="frameShape">
-                <enum>QFrame::Panel</enum>
+                <enum>QFrame::StyledPanel</enum>
                </property>
                <property name="frameShadow">
                 <enum>QFrame::Sunken</enum>
@@ -1599,8 +1599,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>409</width>
-                  <height>322</height>
+                  <width>89</width>
+                  <height>66</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -1629,8 +1629,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>409</width>
-                  <height>322</height>
+                  <width>89</width>
+                  <height>66</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -1659,8 +1659,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>409</width>
-                  <height>322</height>
+                  <width>89</width>
+                  <height>66</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -1689,8 +1689,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>409</width>
-                  <height>322</height>
+                  <width>415</width>
+                  <height>334</height>
                  </rect>
                 </property>
                 <attribute name="label">
