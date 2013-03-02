@@ -129,7 +129,6 @@ class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
             self.cb_canvas_use_opengl.setEnabled(False)
 
         self.lw_page.item(0, 0).setIcon(getIcon(appName, 48))
-        self.lw_page.item(3, 0).setIcon(getIcon("jack", 48))
         self.label_icon_main.setPixmap(getIcon(appName, 48).pixmap(48, 48))
 
         # -------------------------------------------------------------
