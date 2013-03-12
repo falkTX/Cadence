@@ -1,171 +1,181 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Custom Mini Canvas Preview, a custom Qt4 widget
-# Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2011-2013 Filipe Coelho <falktx@falktx.com>
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# any later version.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of
+# the License, or any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
+
 from PyQt4.QtCore import Qt, QRectF, QTimer, SIGNAL, SLOT
 from PyQt4.QtGui import QBrush, QColor, QCursor, QFrame, QPainter, QPen
+
+# ------------------------------------------------------------------------------------------------------------
+# Static Variables
 
 iX = 0
 iY = 1
 iWidth  = 2
 iHeight = 3
 
+# ------------------------------------------------------------------------------------------------------------
 # Widget Class
+
 class CanvasPreviewFrame(QFrame):
     def __init__(self, parent):
         QFrame.__init__(self, parent)
 
-        self.m_mouseDown = False
+        self.fMouseDown = False
 
-        self.m_viewbrush = QBrush(QColor(75, 75, 255, 30))
-        self.m_viewpen   = QPen(Qt.blue, 1)
+        self.fViewBg    = QColor(0, 0, 0)
+        self.fViewBrush = QBrush(QColor(75, 75, 255, 30))
+        self.fViewPen   = QPen(Qt.blue, 1)
 
-        self.scale = 1.0
-        self.scene = None
-        self.real_parent = None
-        self.fake_width  = 0
-        self.fake_height = 0
+        self.fScale = 1.0
+        self.fScene = None
+        self.fRealParent = None
+        self.fFakeWidth  = 0.0
+        self.fFakeHeight = 0.0
 
-        self.render_source = self.getRenderSource()
-        self.render_target = QRectF(0, 0, 0, 0)
+        self.fRenderSource = self.getRenderSource()
+        self.fRenderTarget = QRectF(0, 0, 0, 0)
 
-        self.view_pad_x = 0.0
-        self.view_pad_y = 0.0
-        self.view_rect  = [0.0, 0.0, 10.0, 10.0]
+        self.fViewPadX = 0.0
+        self.fViewPadY = 0.0
+        self.fViewRect = [0.0, 0.0, 10.0, 10.0]
 
-    def init(self, scene, real_width, real_height):
-        self.scene = scene
-        self.fake_width  = float(real_width) / 15
-        self.fake_height = float(real_height) / 15
+    def init(self, scene, realWidth, realHeight):
+        padding = 6
 
-        self.setMinimumSize(self.fake_width, self.fake_height)
-        self.setMaximumSize(self.fake_width * 4, self.fake_height)
+        self.fScene = scene
+        self.fFakeWidth  = float(realWidth) / 15
+        self.fFakeHeight = float(realHeight) / 15
 
-        self.render_target.setWidth(real_width)
-        self.render_target.setHeight(real_height)
+        self.setMinimumSize(self.fFakeWidth+padding,   self.fFakeHeight+padding)
+        self.setMaximumSize(self.fFakeWidth*4+padding, self.fFakeHeight+padding)
+
+        self.fRenderTarget.setWidth(realWidth)
+        self.fRenderTarget.setHeight(realHeight)
 
     def setRealParent(self, parent):
-        self.real_parent = parent
+        self.fRealParent = parent
 
     def getRenderSource(self):
-        x_pad = (self.width() - self.fake_width) / 2
-        y_pad = (self.height() - self.fake_height) / 2
-        return QRectF(x_pad, y_pad, self.fake_width, self.fake_height)
+        xPadding = (float(self.width())  - self.fFakeWidth) / 2.0
+        yPadding = (float(self.height()) - self.fFakeHeight) / 2.0
+        return QRectF(xPadding, yPadding, self.fFakeWidth, self.fFakeHeight)
 
     def setViewPosX(self, xp):
-        x = xp * self.fake_width
-        x_ratio = (x / self.fake_width) * self.view_rect[iWidth] / self.scale
-        self.view_rect[iX] = x - x_ratio + self.render_source.x()
+        x = self.fFakeWidth*xp
+        xRatio = (x / self.fFakeWidth) * self.fViewRect[iWidth] / self.fScale
+        self.fViewRect[iX] = x - xRatio + self.fRenderSource.x()
         self.update()
 
     def setViewPosY(self, yp):
-        y = yp * self.fake_height
-        y_ratio = (y / self.fake_height) * self.view_rect[iHeight] / self.scale
-        self.view_rect[iY] = y - y_ratio + self.render_source.y()
+        y = self.fFakeHeight*yp
+        yRatio = (y / self.fFakeHeight) * self.fViewRect[iHeight] / self.fScale
+        self.fViewRect[iY] = y - yRatio + self.fRenderSource.y()
         self.update()
 
     def setViewScale(self, scale):
-        self.scale = scale
-        QTimer.singleShot(0, self.real_parent, SLOT("slot_miniCanvasCheckAll()"))
+        self.fScale = scale
+        QTimer.singleShot(0, self.fRealParent, SLOT("slot_miniCanvasCheckAll()"))
 
-    def setViewSize(self, width_p, height_p):
-        width  = width_p * self.fake_width
-        height = height_p * self.fake_height
-        self.view_rect[iWidth] = width
-        self.view_rect[iHeight] = height
+    def setViewSize(self, width, height):
+        self.fViewRect[iWidth]  = width  * self.fFakeWidth
+        self.fViewRect[iHeight] = height * self.fFakeHeight
         self.update()
 
-    def setViewTheme(self, brushColor, penColor):
+    def setViewTheme(self, bgColor, brushColor, penColor):
         brushColor.setAlpha(40)
         penColor.setAlpha(100)
-        self.m_viewbrush = QBrush(brushColor)
-        self.m_viewpen   = QPen(penColor, 1)
+        self.fViewBg    = bgColor
+        self.fViewBrush = QBrush(brushColor)
+        self.fViewPen   = QPen(penColor, 1)
 
-    def handleMouseEvent(self, event_x, event_y):
-        x = float(event_x) - self.render_source.x() - (self.view_rect[iWidth] / self.scale / 2)
-        y = float(event_y) - self.render_source.y() - (self.view_rect[iHeight] / self.scale / 2)
+    def handleMouseEvent(self, eventX, eventY):
+        x = float(eventX) - self.fRenderSource.x() - (self.fViewRect[iWidth]  / self.fScale / 2)
+        y = float(eventY) - self.fRenderSource.y() - (self.fViewRect[iHeight] / self.fScale / 2)
 
-        max_width  = self.view_rect[iWidth] / self.scale
-        max_height = self.view_rect[iHeight] / self.scale
+        maxWidth  = self.fViewRect[iWidth] / self.fScale
+        maxHeight = self.fViewRect[iHeight] / self.fScale
 
-        if max_width > self.fake_width:
-            max_width = self.fake_width
-        if max_height > self.fake_height:
-            max_height = self.fake_height
+        if maxWidth > self.fFakeWidth:
+            maxWidth = self.fFakeWidth
+        if maxHeight > self.fFakeHeight:
+            maxHeight = self.fFakeHeight
 
         if x < 0.0:
             x = 0.0
-        elif x > self.fake_width - max_width:
-            x = self.fake_width - max_width
+        elif x > self.fFakeWidth - maxWidth:
+            x = self.fFakeWidth - maxWidth
 
         if y < 0.0:
             y = 0.0
-        elif y > self.fake_height - max_height:
-            y = self.fake_height - max_height
+        elif y > self.fFakeHeight - maxHeight:
+            y = self.fFakeHeight - maxHeight
 
-        self.view_rect[iX] = x + self.render_source.x()
-        self.view_rect[iY] = y + self.render_source.y()
+        self.fViewRect[iX] = x + self.fRenderSource.x()
+        self.fViewRect[iY] = y + self.fRenderSource.y()
         self.update()
 
-        self.emit(SIGNAL("miniCanvasMoved(double, double)"), x * self.scale / self.fake_width, y * self.scale / self.fake_height)
+        self.emit(SIGNAL("miniCanvasMoved(double, double)"), x * self.fScale / self.fFakeWidth, y * self.fScale / self.fFakeHeight)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.m_mouseDown = True
+            self.fMouseDown = True
             self.setCursor(QCursor(Qt.SizeAllCursor))
             self.handleMouseEvent(event.x(), event.y())
         event.accept()
 
     def mouseMoveEvent(self, event):
-        if self.m_mouseDown:
+        if self.fMouseDown:
             self.handleMouseEvent(event.x(), event.y())
         event.accept()
 
     def mouseReleaseEvent(self, event):
-        if self.m_mouseDown:
+        if self.fMouseDown:
             self.setCursor(QCursor(Qt.ArrowCursor))
-        self.m_mouseDown = False
+        self.fMouseDown = False
         QFrame.mouseReleaseEvent(self, event)
 
     def paintEvent(self, event):
         painter = QPainter(self)
 
-        painter.setBrush(QBrush(Qt.darkBlue, Qt.DiagCrossPattern))
-        painter.drawRect(0, 0, self.width(), self.height())
+        painter.setBrush(self.fViewBg)
+        painter.setPen(self.fViewBg)
+        painter.drawRoundRect(2, 2, self.width()-6, self.height()-6, 3, 3)
 
-        self.scene.render(painter, self.render_source, self.render_target, Qt.KeepAspectRatio)
+        self.fScene.render(painter, self.fRenderSource, self.fRenderTarget, Qt.KeepAspectRatio)
 
-        max_width  = self.view_rect[iWidth] / self.scale
-        max_height = self.view_rect[iHeight] / self.scale
+        maxWidth  = self.fViewRect[iWidth]  / self.fScale
+        maxHeight = self.fViewRect[iHeight] / self.fScale
 
-        if max_width > self.fake_width:
-            max_width = self.fake_width
-        if max_height > self.fake_height:
-            max_height = self.fake_height
+        if maxWidth > self.fFakeWidth:
+            maxWidth = self.fFakeWidth
+        if maxHeight > self.fFakeHeight:
+            maxHeight = self.fFakeHeight
 
-        painter.setBrush(self.m_viewbrush)
-        painter.setPen(self.m_viewpen)
-        painter.drawRect(self.view_rect[iX], self.view_rect[iY], max_width, max_height)
+        painter.setBrush(self.fViewBrush)
+        painter.setPen(self.fViewPen)
+        painter.drawRect(self.fViewRect[iX], self.fViewRect[iY], maxWidth, maxHeight)
 
         QFrame.paintEvent(self, event)
 
     def resizeEvent(self, event):
-        self.render_source = self.getRenderSource()
-        if self.real_parent:
-            QTimer.singleShot(0, self.real_parent, SLOT("slot_miniCanvasCheckAll()"))
+        self.fRenderSource = self.getRenderSource()
+        if self.fRealParent:
+            QTimer.singleShot(0, self.fRealParent, SLOT("slot_miniCanvasCheckAll()"))
         QFrame.resizeEvent(self, event)

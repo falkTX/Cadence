@@ -729,7 +729,7 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         # Set-up Canvas Preview
 
         self.miniCanvasPreview.setRealParent(self)
-        self.miniCanvasPreview.setViewTheme(patchcanvas.canvas.theme.rubberband_brush, patchcanvas.canvas.theme.rubberband_pen.color())
+        self.miniCanvasPreview.setViewTheme(patchcanvas.canvas.theme.canvas_bg, patchcanvas.canvas.theme.rubberband_brush, patchcanvas.canvas.theme.rubberband_pen.color())
         self.miniCanvasPreview.init(self.scene, DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT)
         QTimer.singleShot(100, self, SLOT("slot_miniCanvasInit()"))
 
@@ -2561,7 +2561,7 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
             patchcanvas.setFeatures(pFeatures)
             patchcanvas.init("Claudia", self.scene, self.canvasCallback, DEBUG)
 
-            self.miniCanvasPreview.setViewTheme(patchcanvas.canvas.theme.rubberband_brush, patchcanvas.canvas.theme.rubberband_pen.color())
+            self.miniCanvasPreview.setViewTheme(patchcanvas.canvas.theme.canvas_bg, patchcanvas.canvas.theme.rubberband_brush, patchcanvas.canvas.theme.rubberband_pen.color())
 
             if DBus.ladish_control.IsStudioLoaded() and DBus.ladish_studio and DBus.ladish_studio.IsStarted():
                 self.init_ports()
