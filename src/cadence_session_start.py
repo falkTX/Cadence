@@ -76,10 +76,13 @@ def startSession(systemStarted):
 
         for thisStudioName, thisStudioDict in ladishStudioListDump:
             if ladishStudioName == thisStudioName:
-                if ladish_conf and ladish_conf.get('/org/ladish/daemon/notify')[0] == "true":
-                    ladish_conf.set('/org/ladish/daemon/notify', "false")
-                    ladishNotifyHack = True
-                else:
+                try:
+                    if ladish_conf and ladish_conf.get('/org/ladish/daemon/notify')[0] == "true":
+                        ladish_conf.set('/org/ladish/daemon/notify', "false")
+                        ladishNotifyHack = True
+                    else:
+                      ladishNotifyHack = False
+                except:
                     ladishNotifyHack = False
 
                 ladish_control.LoadStudio(thisStudioName)
