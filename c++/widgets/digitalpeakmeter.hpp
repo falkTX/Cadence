@@ -1,22 +1,22 @@
 /*
  * Digital Peak Meter, a custom Qt4 widget
- * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
+ * Copyright (C) 2011-2013 Filipe Coelho <falktx@falktx.com>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * any later version.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
- * For a full copy of the GNU General Public License see the COPYING file
+ * For a full copy of the GNU General Public License see the GPL.txt file
  */
 
-#ifndef DIGITALPEAKMETER_HPP
-#define DIGITALPEAKMETER_HPP
+#ifndef __DIGITALPEAKMETER_HPP__
+#define __DIGITALPEAKMETER_HPP__
 
 #include <QtCore/QTimer>
 #include <QtGui/QWidget>
@@ -35,6 +35,7 @@ public:
     };
 
     DigitalPeakMeter(QWidget* parent);
+    ~DigitalPeakMeter();
 
     void displayMeter(int meter, float level);
     void setChannels(int channels);
@@ -53,21 +54,21 @@ protected:
     void resizeEvent(QResizeEvent* event);
 
 private:
-    int m_channels;
-    int m_smoothMultiplier;
-    int m_width, m_height, m_sizeMeter;
-    Orientation m_orientation;
+    int fChannels;
+    int fSmoothMultiplier;
+    int fWidth, fHeight, fSizeMeter;
+    Orientation fOrientation;
 
-    QColor m_colorBackground;
-    QLinearGradient m_gradientMeter;
+    QColor fColorBackground;
+    QLinearGradient fGradientMeter;
 
-    QColor m_colorBase;
-    QColor m_colorBaseT;
+    QColor fColorBase;
+    QColor fColorBaseAlt;
 
-    QList<float> m_channelsData;
-    QList<float> m_lastValueData;
+    float* fChannelsData;
+    float* fLastValueData;
 
-    QTimer m_paintTimer;
+    QTimer fPaintTimer;
 };
 
-#endif // DIGITALPEAKMETER_HPP
+#endif // __DIGITALPEAKMETER_HPP__
