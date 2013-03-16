@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # JACK-Capture frontend, with freewheel and transport support
-# Copyright (C) 2010-2012 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,75 +33,77 @@ from jacklib_helpers import *
 # ------------------------------------------------------------------------------------------------------------
 # Global variables
 
-global jackCapture, jackClient
-jackCapture = None
-jackClient  = None
+global gJackCapturePath, gJackClient
+gJackCapturePath = ""
+gJackClient      = None
 
 # ------------------------------------------------------------------------------------------------------------
 # Find 'jack_capture'
-
-def canRender():
-    global jackCapture
-    return bool(jackCapture is not None)
 
 # Check for cxfreeze
 if sys.path[0].rsplit(os.sep, 1)[-1] in ("catia", "claudia", "render"):
     name = sys.path[0].rsplit(os.sep, 1)[-1]
     cwd  = sys.path[0].rsplit(name, 1)[0]
     if os.path.exists(os.path.join(cwd, "jack_capture")):
-        jackCapture = os.path.join(cwd, "jack_capture")
+        gJackCapturePath = os.path.join(cwd, "jack_capture")
     del cwd, name
 
 # Check in PATH
-if jackCapture is None:
+if not gJackCapturePath:
     for iPATH in PATH:
         if os.path.exists(os.path.join(iPATH, "jack_capture")):
-            jackCapture = os.path.join(iPATH, "jack_capture")
+            gJackCapturePath = os.path.join(iPATH, "jack_capture")
             break
+
+def canRender():
+    global gJackCapturePath
+    return bool(gJackCapturePath)
 
 # ------------------------------------------------------------------------------------------------------------
 # Render Window
 
-class RenderW(QDialog, ui_render.Ui_RenderW):
+class RenderW(QDialog):
     def __init__(self, parent):
         QDialog.__init__(self, parent)
-        self.setupUi(self)
+        self.ui = ui_render.Ui_RenderW()
+        self.ui.setupUi(self)
 
-        self.m_freewheel = False
-        self.m_lastTime  = 0
-        self.m_maxTime   = 180
+        self.fFreewheel = False
+        self.fLastTime  = -1
+        self.fMaxTime   = 180
 
-        self.m_timer   = QTimer(self)
-        self.m_process = QProcess(self)
+        self.fTimer   = QTimer(self)
+        self.fProcess = QProcess(self)
 
         # -------------------------------------------------------------
         # Get JACK client and base information
 
-        global jackClient
-        if jackClient:
-            self.m_jackClient = jackClient
+        global gJackClient
+
+        if gJackClient:
+            self.fJackClient = gJackClient
         else:
-            self.m_jackClient = jacklib.client_open("Render-Dialog", jacklib.JackNoStartServer, None)
+            self.fJackClient = jacklib.client_open("Render-Dialog", jacklib.JackNoStartServer, None)
 
-        self.m_bufferSize = int(jacklib.get_buffer_size(self.m_jackClient))
-        self.m_sampleRate = int(jacklib.get_sample_rate(self.m_jackClient))
+        self.fBufferSize = int(jacklib.get_buffer_size(self.fJackClient))
+        self.fSampleRate = int(jacklib.get_sample_rate(self.fJackClient))
 
-        for i in range(self.cb_buffer_size.count()):
-            if int(self.cb_buffer_size.itemText(i)) == self.m_bufferSize:
-                self.cb_buffer_size.setCurrentIndex(i)
+        for i in range(self.ui.cb_buffer_size.count()):
+            if int(self.ui.cb_buffer_size.itemText(i)) == self.fBufferSize:
+                self.ui.cb_buffer_size.setCurrentIndex(i)
                 break
         else:
-            self.cb_buffer_size.addItem(str(self.m_bufferSize))
-            self.cb_buffer_size.setCurrentIndex(self.cb_buffer_size.count() - 1)
+            self.ui.cb_buffer_size.addItem(str(self.fBufferSize))
+            self.ui.cb_buffer_size.setCurrentIndex(self.ui.cb_buffer_size.count() - 1)
 
         # -------------------------------------------------------------
         # Set-up GUI stuff
 
         # Get List of formats
-        self.m_process.start(jackCapture, ["-pf"])
-        self.m_process.waitForFinished()
+        self.fProcess.start(gJackCapturePath, ["-pf"])
+        self.fProcess.waitForFinished()
 
-        formats     = str(self.m_process.readAllStandardOutput(), encoding="utf-8").split(" ")
+        formats     = str(self.fProcess.readAllStandardOutput(), encoding="utf-8").split(" ")
         formatsList = []
 
         for i in range(len(formats) - 1):
@@ -113,200 +115,219 @@ class RenderW(QDialog, ui_render.Ui_RenderW):
 
         # Put all formats in combo-box, select 'wav' option
         for i in range(len(formatsList)):
-            self.cb_format.addItem(formatsList[i])
+            self.ui.cb_format.addItem(formatsList[i])
             if formatsList[i] == "wav":
-                self.cb_format.setCurrentIndex(i)
+                self.ui.cb_format.setCurrentIndex(i)
 
-        self.cb_depth.setCurrentIndex(4) #Float
-        self.rb_stereo.setChecked(True)
+        self.ui.cb_depth.setCurrentIndex(4) #Float
+        self.ui.rb_stereo.setChecked(True)
 
-        self.te_end.setTime(QTime(0, 3, 0))
-        self.progressBar.setMinimum(0)
-        self.progressBar.setMaximum(0)
-        self.progressBar.setValue(0)
+        self.ui.te_end.setTime(QTime(0, 3, 0))
+        self.ui.progressBar.setFormat("")
+        self.ui.progressBar.setMinimum(0)
+        self.ui.progressBar.setMaximum(1)
+        self.ui.progressBar.setValue(0)
 
-        self.b_render.setIcon(getIcon("media-record"))
-        self.b_stop.setIcon(getIcon("media-playback-stop"))
-        self.b_close.setIcon(getIcon("window-close"))
-        self.b_open.setIcon(getIcon("document-open"))
-        self.b_stop.setVisible(False)
-        self.le_folder.setText(HOME)
+        self.ui.b_render.setIcon(getIcon("media-record"))
+        self.ui.b_stop.setIcon(getIcon("media-playback-stop"))
+        self.ui.b_close.setIcon(getIcon("window-close"))
+        self.ui.b_open.setIcon(getIcon("document-open"))
+        self.ui.b_stop.setVisible(False)
+        self.ui.le_folder.setText(HOME)
 
         # -------------------------------------------------------------
         # Set-up connections
 
-        self.connect(self.b_render, SIGNAL("clicked()"), SLOT("slot_renderStart()"))
-        self.connect(self.b_stop, SIGNAL("clicked()"), SLOT("slot_renderStop()"))
-        self.connect(self.b_open, SIGNAL("clicked()"), SLOT("slot_getAndSetPath()"))
-        self.connect(self.b_now_start, SIGNAL("clicked()"), SLOT("slot_setStartNow()"))
-        self.connect(self.b_now_end, SIGNAL("clicked()"), SLOT("slot_setEndNow()"))
-        self.connect(self.te_start, SIGNAL("timeChanged(const QTime)"), SLOT("slot_updateStartTime(const QTime)"))
-        self.connect(self.te_end, SIGNAL("timeChanged(const QTime)"), SLOT("slot_updateEndTime(const QTime)"))
-        self.connect(self.m_timer, SIGNAL("timeout()"), SLOT("slot_updateProgressbar()"))
+        self.connect(self.ui.b_render, SIGNAL("clicked()"), SLOT("slot_renderStart()"))
+        self.connect(self.ui.b_stop, SIGNAL("clicked()"), SLOT("slot_renderStop()"))
+        self.connect(self.ui.b_open, SIGNAL("clicked()"), SLOT("slot_getAndSetPath()"))
+        self.connect(self.ui.b_now_start, SIGNAL("clicked()"), SLOT("slot_setStartNow()"))
+        self.connect(self.ui.b_now_end, SIGNAL("clicked()"), SLOT("slot_setEndNow()"))
+        self.connect(self.ui.te_start, SIGNAL("timeChanged(const QTime)"), SLOT("slot_updateStartTime(const QTime)"))
+        self.connect(self.ui.te_end, SIGNAL("timeChanged(const QTime)"), SLOT("slot_updateEndTime(const QTime)"))
+        self.connect(self.fTimer, SIGNAL("timeout()"), SLOT("slot_updateProgressbar()"))
 
         # -------------------------------------------------------------
 
     @pyqtSlot()
     def slot_renderStart(self):
-        if not os.path.exists(self.le_folder.text()):
+        if not os.path.exists(self.ui.le_folder.text()):
             QMessageBox.warning(self, self.tr("Warning"), self.tr("The selected directory does not exist. Please choose a valid one."))
             return
 
-        self.group_render.setEnabled(False)
-        self.group_time.setEnabled(False)
-        self.group_encoding.setEnabled(False)
-        self.b_render.setVisible(False)
-        self.b_stop.setVisible(True)
-        self.b_close.setEnabled(False)
-
-        timeStart = self.te_start.time()
-        timeEnd   = self.te_end.time()
+        timeStart = self.ui.te_start.time()
+        timeEnd   = self.ui.te_end.time()
         minTime   = (timeStart.hour() * 3600) + (timeStart.minute() * 60) + (timeStart.second())
         maxTime   = (timeEnd.hour() * 3600) + (timeEnd.minute() * 60) + (timeEnd.second())
 
-        newBufferSize = int(self.cb_buffer_size.currentText())
+        newBufferSize = int(self.ui.cb_buffer_size.currentText())
+        useTransport  = self.ui.group_time.isChecked()
 
-        self.m_freewheel = bool(self.cb_render_mode.currentIndex() == 1)
-        self.m_maxTime   = maxTime
+        self.fFreewheel = bool(self.ui.cb_render_mode.currentIndex() == 1)
+        self.fLastTime  = -1
+        self.fMaxTime   = maxTime
 
-        self.progressBar.setMinimum(minTime)
-        self.progressBar.setMaximum(maxTime)
-        self.progressBar.setValue(minTime)
-        self.progressBar.update()
-
-        if self.m_freewheel:
-            self.m_timer.setInterval(100)
+        if self.fFreewheel:
+            self.fTimer.setInterval(100)
         else:
-            self.m_timer.setInterval(500)
+            self.fTimer.setInterval(500)
+
+        self.ui.group_render.setEnabled(False)
+        self.ui.group_time.setEnabled(False)
+        self.ui.group_encoding.setEnabled(False)
+        self.ui.b_render.setVisible(False)
+        self.ui.b_stop.setVisible(True)
+        self.ui.b_close.setEnabled(False)
+
+        if useTransport:
+            self.ui.progressBar.setFormat("%p%")
+            self.ui.progressBar.setMinimum(minTime)
+            self.ui.progressBar.setMaximum(maxTime)
+            self.ui.progressBar.setValue(minTime)
+        else:
+            self.ui.progressBar.setFormat("")
+            self.ui.progressBar.setMinimum(0)
+            self.ui.progressBar.setMaximum(0)
+            self.ui.progressBar.setValue(0)
+
+        self.ui.progressBar.update()
 
         arguments = []
 
         # Bit depth
         arguments.append("-b")
-        arguments.append(self.cb_depth.currentText())
+        arguments.append(self.ui.cb_depth.currentText())
 
         # Channels
         arguments.append("-c")
-        if self.rb_mono.isChecked():
+        if self.ui.rb_mono.isChecked():
             arguments.append("1")
-        elif self.rb_stereo.isChecked():
+        elif self.ui.rb_stereo.isChecked():
             arguments.append("2")
         else:
-            arguments.append(str(self.sb_channels.value()))
+            arguments.append(str(self.ui.sb_channels.value()))
 
         # Format
         arguments.append("-f")
-        arguments.append(self.cb_format.currentText())
+        arguments.append(self.ui.cb_format.currentText())
 
         # Controlled by transport
-        arguments.append("-jt")
+        if useTransport:
+            arguments.append("-jt")
 
         # Silent mode
         arguments.append("-dc")
         arguments.append("-s")
 
         # Change current directory
-        os.chdir(self.le_folder.text())
+        os.chdir(self.ui.le_folder.text())
 
-        if newBufferSize != int(jacklib.get_buffer_size(self.m_jackClient)):
+        if newBufferSize != int(jacklib.get_buffer_size(self.fJackClient)):
             print("NOTICE: buffer size changed before render")
-            jacklib.set_buffer_size(self.m_jackClient, newBufferSize)
+            jacklib.set_buffer_size(self.fJackClient, newBufferSize)
 
-        if jacklib.transport_query(self.m_jackClient, None) > jacklib.JackTransportStopped: # > JackTransportStopped is rolling|starting
-            jacklib.transport_stop(self.m_jackClient)
+        if useTransport:
+            if jacklib.transport_query(self.fJackClient, None) > jacklib.JackTransportStopped: # rolling or starting
+                jacklib.transport_stop(self.fJackClient)
 
-        jacklib.transport_locate(self.m_jackClient, minTime * self.m_sampleRate)
-        self.m_last_time = -1
+            jacklib.transport_locate(self.fJackClient, minTime * self.fSampleRate)
 
-        self.m_process.start(jackCapture, arguments)
-        self.m_process.waitForStarted()
+        self.fProcess.start(gJackCapturePath, arguments)
+        self.fProcess.waitForStarted()
 
-        if self.m_freewheel:
+        if self.fFreewheel:
             print("NOTICE: rendering in freewheel mode")
             sleep(1)
-            jacklib.set_freewheel(self.m_jackClient, 1)
+            jacklib.set_freewheel(self.fJackClient, 1)
 
-        self.m_timer.start()
-        jacklib.transport_start(self.m_jackClient)
+        if useTransport:
+            self.fTimer.start()
+            jacklib.transport_start(self.fJackClient)
 
     @pyqtSlot()
     def slot_renderStop(self):
-        jacklib.transport_stop(self.m_jackClient)
+        useTransport = self.ui.group_time.isChecked()
 
-        if self.m_freewheel:
-            jacklib.set_freewheel(self.m_jackClient, 0)
+        if useTransport:
+            jacklib.transport_stop(self.fJackClient)
 
-        sleep(1)
+        if self.fFreewheel:
+            jacklib.set_freewheel(self.fJackClient, 0)
+            sleep(1)
 
-        self.m_process.close()
-        self.m_timer.stop()
+        self.fProcess.close()
 
-        self.group_render.setEnabled(True)
-        self.group_time.setEnabled(True)
-        self.group_encoding.setEnabled(True)
-        self.b_render.setVisible(True)
-        self.b_stop.setVisible(False)
-        self.b_close.setEnabled(True)
+        if useTransport:
+            self.fTimer.stop()
 
-        self.progressBar.setMinimum(0)
-        self.progressBar.setMaximum(0)
-        self.progressBar.setValue(0)
-        self.progressBar.update()
+        self.ui.group_render.setEnabled(True)
+        self.ui.group_time.setEnabled(True)
+        self.ui.group_encoding.setEnabled(True)
+        self.ui.b_render.setVisible(True)
+        self.ui.b_stop.setVisible(False)
+        self.ui.b_close.setEnabled(True)
+
+        self.ui.progressBar.setFormat("")
+        self.ui.progressBar.setMinimum(0)
+        self.ui.progressBar.setMaximum(1)
+        self.ui.progressBar.setValue(0)
+        self.ui.progressBar.update()
 
         # Restore buffer size
-        newBufferSize = int(jacklib.get_buffer_size(self.m_jackClient))
-        if newBufferSize != self.m_bufferSize:
-            jacklib.set_buffer_size(self.m_jackClient, newBufferSize)
+        newBufferSize = int(jacklib.get_buffer_size(self.fJackClient))
+
+        if newBufferSize != self.fBufferSize:
+            jacklib.set_buffer_size(self.fJackClient, newBufferSize)
 
     @pyqtSlot()
     def slot_getAndSetPath(self):
-        getAndSetPath(self, self.le_folder.text(), self.le_folder)
+        getAndSetPath(self, self.ui.le_folder.text(), self.ui.le_folder)
 
     @pyqtSlot()
     def slot_setStartNow(self):
-        time = int(jacklib.get_current_transport_frame(self.m_jackClient) / self.m_sampleRate)
+        time = int(jacklib.get_current_transport_frame(self.fJackClient) / self.fSampleRate)
         secs = time % 60
         mins = int(time / 60) % 60
         hrs  = int(time / 3600) % 60
-        self.te_start.setTime(QTime(hrs, mins, secs))
+        self.ui.te_start.setTime(QTime(hrs, mins, secs))
 
     @pyqtSlot()
     def slot_setEndNow(self):
-        time = int(jacklib.get_current_transport_frame(self.m_jackClient) / self.m_sampleRate)
+        time = int(jacklib.get_current_transport_frame(self.fJackClient) / self.fSampleRate)
         secs = time % 60
         mins = int(time / 60) % 60
         hrs  = int(time / 3600) % 60
-        self.te_end.setTime(QTime(hrs, mins, secs))
+        self.ui.te_end.setTime(QTime(hrs, mins, secs))
 
     @pyqtSlot(QTime)
     def slot_updateStartTime(self, time):
-        if time >= self.te_end.time():
-            self.te_end.setTime(time)
-            self.b_render.setEnabled(False)
+        if time >= self.ui.te_end.time():
+            self.ui.te_end.setTime(time)
+            self.ui.b_render.setEnabled(False)
         else:
-            self.b_render.setEnabled(True)
+            self.ui.b_render.setEnabled(True)
 
     @pyqtSlot(QTime)
     def slot_updateEndTime(self, time):
-        if time <= self.te_start.time():
-            self.te_start.setTime(time)
-            self.b_render.setEnabled(False)
+        if time <= self.ui.te_start.time():
+            self.ui.te_start.setTime(time)
+            self.ui.b_render.setEnabled(False)
         else:
-            self.b_render.setEnabled(True)
+            self.ui.b_render.setEnabled(True)
 
     @pyqtSlot()
     def slot_updateProgressbar(self):
-        time = int(jacklib.get_current_transport_frame(self.m_jackClient)) / self.m_sampleRate
-        self.progressBar.setValue(time)
+        time = int(jacklib.get_current_transport_frame(self.fJackClient)) / self.fSampleRate
+        self.ui.progressBar.setValue(time)
 
-        if time > self.m_maxTime or (self.m_lastTime > time and not self.m_freewheel):
+        if time > self.fMaxTime or (self.fLastTime > time and not self.fFreewheel):
             self.slot_renderStop()
 
-        self.m_last_time = time
+        self.fLastTime = time
 
     def closeEvent(self, event):
-        if self.m_jackClient:
-            jacklib.client_close(self.m_jackClient)
+        if self.fJackClient:
+            jacklib.client_close(self.fJackClient)
         QDialog.closeEvent(self, event)
 
     def done(self, r):
@@ -332,16 +353,16 @@ if __name__ == '__main__':
             "JACK is not available in this system, cannot use this application."))
         sys.exit(1)
 
-    if jackCapture is None:
+    if not gJackCapturePath:
         QMessageBox.critical(None, app.translate("RenderW", "Error"), app.translate("RenderW",
             "The 'jack_capture' application is not available.\n"
             "Is not possible to render without it!"))
         sys.exit(2)
 
-    jackStatus = jacklib.jack_status_t(0)
-    jackClient = jacklib.client_open("Render", jacklib.JackNoStartServer, jacklib.pointer(jackStatus))
+    jackStatus  = jacklib.jack_status_t(0x0)
+    gJackClient = jacklib.client_open("Render", jacklib.JackNoStartServer, jacklib.pointer(jackStatus))
 
-    if not jackClient:
+    if not gJackClient:
         errorString = get_jack_status_error_string(jackStatus)
         QMessageBox.critical(None, app.translate("RenderW", "Error"), app.translate("RenderW",
             "Could not connect to JACK, possible reasons:\n"

@@ -18,8 +18,14 @@
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <widget class="QProgressBar" name="progressBar">
+       <property name="maximum">
+        <number>1</number>
+       </property>
        <property name="value">
-        <number>24</number>
+        <number>0</number>
+       </property>
+       <property name="format">
+        <string/>
        </property>
       </widget>
      </item>
@@ -29,7 +35,7 @@
         <string>&amp;Render</string>
        </property>
        <property name="icon">
-        <iconset resource="../../resources/resources.qrc">
+        <iconset resource="../resources.qrc">
          <normaloff>:/16x16/media-record.png</normaloff>:/16x16/media-record.png</iconset>
        </property>
       </widget>
@@ -40,7 +46,7 @@
         <string>&amp;Stop</string>
        </property>
        <property name="icon">
-        <iconset resource="../../resources/resources.qrc">
+        <iconset resource="../resources.qrc">
          <normaloff>:/16x16/media-playback-stop.png</normaloff>:/16x16/media-playback-stop.png</iconset>
        </property>
       </widget>
@@ -51,7 +57,7 @@
         <string>&amp;Close</string>
        </property>
        <property name="icon">
-        <iconset resource="../../resources/resources.qrc">
+        <iconset resource="../resources.qrc">
          <normaloff>:/16x16/window-close.png</normaloff>:/16x16/window-close.png</iconset>
        </property>
       </widget>
@@ -216,7 +222,7 @@
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="../../resources/resources.qrc">
+           <iconset resource="../resources.qrc">
             <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
           </property>
          </widget>
@@ -229,7 +235,10 @@
    <item row="1" column="0">
     <widget class="QGroupBox" name="group_time">
      <property name="title">
-      <string>Time</string>
+      <string>Use Transport</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
      </property>
      <layout class="QGridLayout" name="gridLayout_4">
       <item row="0" column="0">
@@ -400,7 +409,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../../resources/resources.qrc"/>
+  <include location="../resources.qrc"/>
  </resources>
  <connections>
   <connection>

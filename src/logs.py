@@ -21,7 +21,6 @@
 
 from PyQt4.QtCore import pyqtSlot, Qt, QFile, QIODevice, QMutex, QMutexLocker, QTextStream, QThread
 from PyQt4.QtGui import QDialog, QPalette, QSyntaxHighlighter
-from time import sleep
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
