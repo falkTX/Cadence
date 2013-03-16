@@ -1,21 +1,29 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
+
 from PyQt4.QtCore import pyqtSlot, Qt, QTimer, QSettings
 from PyQt4.QtGui import QMainWindow, QTableWidgetItem, QWidget
 from subprocess import getoutput
 from random import randint
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Custom)
+
 import claudia_database as database
 import ui_claudia_launcher
 from shared import *
 
+# ------------------------------------------------------------------------------------------------------------
 # Debug Mode
+
 SHOW_ALL = False
 
+# ------------------------------------------------------------------------------------------------------------
 # Tab Indexes
+
 iTabDAW        = 0
 iTabHost       = 1
 iTabInstrument = 2
@@ -30,7 +38,9 @@ EXTRA_ICON_PATHS = [
     "/usr/local/share/pixmaps"
 ]
 
+# ------------------------------------------------------------------------------------------------------------
 # XIcon class
+
 class XIcon(object):
     def __init__(self):
         object.__init__(self)
@@ -62,7 +72,9 @@ class XIcon(object):
 
         return icon
 
+# ------------------------------------------------------------------------------------------------------------
 # Launcher object
+
 class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
     def __init__(self, parent):
         QWidget.__init__(self, parent)

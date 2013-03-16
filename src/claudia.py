@@ -26,10 +26,14 @@ from PyQt4.QtGui import QAction, QApplication, QVBoxLayout, QTableWidgetItem, QT
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
 
-import claudia_launcher, systray
+import claudia_launcher
+import systray
 import ui_claudia
-import ui_claudia_studioname, ui_claudia_studiolist
-import ui_claudia_createroom, ui_claudia_projectname, ui_claudia_projectproperties
+import ui_claudia_studioname
+import ui_claudia_studiolist
+import ui_claudia_createroom
+import ui_claudia_projectname
+import ui_claudia_projectproperties
 import ui_claudia_runcustom
 from shared_canvasjack import *
 from shared_settings import *

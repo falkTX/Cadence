@@ -16,16 +16,25 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
+
 from PyQt4.QtCore import pyqtSlot, QSettings
 from PyQt4.QtGui import QApplication, QDialog, QDialogButtonBox, QTableWidgetItem
 from PyQt4.QtXml import QDomDocument
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
+
 import ui_catarina
-import ui_catarina_addgroup, ui_catarina_removegroup, ui_catarina_renamegroup
-import ui_catarina_addport, ui_catarina_removeport, ui_catarina_renameport
-import ui_catarina_connectports, ui_catarina_disconnectports
+import ui_catarina_addgroup
+import ui_catarina_removegroup
+import ui_catarina_renamegroup
+import ui_catarina_addport
+import ui_catarina_removeport
+import ui_catarina_renameport
+import ui_catarina_connectports
+import ui_catarina_disconnectports
 from shared_canvasjack import *
 from shared_settings import *
 
@@ -56,7 +65,9 @@ iConnId     = 0
 iConnOutput = 1
 iConnInput  = 2
 
+# ------------------------------------------------------------------------------------------------------------
 # Add Group Dialog
+
 class CatarinaAddGroupW(QDialog, ui_catarina_addgroup.Ui_CatarinaAddGroupW):
     def __init__(self, parent, group_list):
         QDialog.__init__(self, parent)
@@ -89,7 +100,9 @@ class CatarinaAddGroupW(QDialog, ui_catarina_addgroup.Ui_CatarinaAddGroupW):
         QDialog.done(self, r)
         self.close()
 
+# ------------------------------------------------------------------------------------------------------------
 # Remove Group Dialog
+
 class CatarinaRemoveGroupW(QDialog, ui_catarina_removegroup.Ui_CatarinaRemoveGroupW):
     def __init__(self, parent, group_list):
         QDialog.__init__(self, parent)
@@ -128,7 +141,9 @@ class CatarinaRemoveGroupW(QDialog, ui_catarina_removegroup.Ui_CatarinaRemoveGro
         QDialog.done(self, r)
         self.close()
 
+# ------------------------------------------------------------------------------------------------------------
 # Rename Group Dialog
+
 class CatarinaRenameGroupW(QDialog, ui_catarina_renamegroup.Ui_CatarinaRenameGroupW):
     def __init__(self, parent, group_list):
         QDialog.__init__(self, parent)
@@ -169,7 +184,9 @@ class CatarinaRenameGroupW(QDialog, ui_catarina_renamegroup.Ui_CatarinaRenameGro
         QDialog.done(self, r)
         self.close()
 
+# ------------------------------------------------------------------------------------------------------------
 # Add Port Dialog
+
 class CatarinaAddPortW(QDialog, ui_catarina_addport.Ui_CatarinaAddPortW):
     def __init__(self, parent, group_list, port_id):
         QDialog.__init__(self, parent)
@@ -206,7 +223,9 @@ class CatarinaAddPortW(QDialog, ui_catarina_addport.Ui_CatarinaAddPortW):
         QDialog.done(self, r)
         self.close()
 
+# ------------------------------------------------------------------------------------------------------------
 # Remove Port Dialog
+
 class CatarinaRemovePortW(QDialog, ui_catarina_removeport.Ui_CatarinaRemovePortW):
     def __init__(self, parent, group_list, port_list):
         QDialog.__init__(self, parent)
@@ -286,7 +305,9 @@ class CatarinaRemovePortW(QDialog, ui_catarina_removeport.Ui_CatarinaRemovePortW
         QDialog.done(self, r)
         self.close()
 
+# ------------------------------------------------------------------------------------------------------------
 # Rename Port Dialog
+
 class CatarinaRenamePortW(QDialog, ui_catarina_renameport.Ui_CatarinaRenamePortW):
     def __init__(self, parent, group_list, port_list):
         QDialog.__init__(self, parent)
@@ -375,7 +396,9 @@ class CatarinaRenamePortW(QDialog, ui_catarina_renameport.Ui_CatarinaRenamePortW
         QDialog.done(self, r)
         self.close()
 
+# ------------------------------------------------------------------------------------------------------------
 # Connect Ports Dialog
+
 class CatarinaConnectPortsW(QDialog, ui_catarina_connectports.Ui_CatarinaConnectPortsW):
     def __init__(self, parent, group_list, port_list):
         QDialog.__init__(self, parent)
@@ -466,7 +489,9 @@ class CatarinaConnectPortsW(QDialog, ui_catarina_connectports.Ui_CatarinaConnect
         QDialog.done(self, r)
         self.close()
 
+# ------------------------------------------------------------------------------------------------------------
 # Disconnect Ports Dialog
+
 class CatarinaDisconnectPortsW(QDialog, ui_catarina_disconnectports.Ui_CatarinaDisconnectPortsW):
     def __init__(self, parent, group_list, port_list, connection_list):
         QDialog.__init__(self, parent)
@@ -562,7 +587,9 @@ class CatarinaDisconnectPortsW(QDialog, ui_catarina_disconnectports.Ui_CatarinaD
         QDialog.done(self, r)
         self.close()
 
+# ------------------------------------------------------------------------------------------------------------
 # Main Window
+
 class CatarinaMainW(AbstractCanvasJackClass, ui_catarina.Ui_CatarinaMainW):
     def __init__(self, parent=None):
         AbstractCanvasJackClass.__init__(self, parent, "Catarina")

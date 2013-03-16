@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Clickable Label, a custom Qt4 widget
-# Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2011-2013 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,11 +16,15 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
+
 from PyQt4.QtCore import pyqtSlot, Qt, QTimer, SIGNAL, SLOT
 from PyQt4.QtGui import QLabel
 
+# ------------------------------------------------------------------------------------------------------------
 # Widget Class
+
 class ClickableLabel(QLabel):
     def __init__(self, parent):
         QLabel.__init__(self, parent)

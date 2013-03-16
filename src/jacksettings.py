@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # JACK Settings Dialog
-# Copyright (C) 2010-2012 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 
 from PyQt4.QtCore import pyqtSlot, Qt, QTimer, SIGNAL, SLOT
 from PyQt4.QtGui import QDialog, QDialogButtonBox, QFontMetrics, QMessageBox
-from sys import platform
+from sys import platform, version_info
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
@@ -39,9 +39,9 @@ except:
 # ------------------------------------------------------------------------------------------------------------
 # Global object
 
-global jackctl, resetNeeded
-jackctl     = None
-resetNeeded = False
+global gJackctl, gResetNeeded
+gJackctl     = None
+gResetNeeded = False
 
 # ------------------------------------------------------------------------------------------------------------
 # enum jack_timer_type_t
@@ -55,7 +55,11 @@ JACK_TIMER_HPET          = 2
 
 if "linux" in platform:
     LINUX = True
-    from subprocess import getoutput
+
+    if version_info >= (3, 0):
+        from subprocess import getoutput
+    else:
+        from commands import getoutput
 else:
     LINUX = False
 
@@ -63,26 +67,26 @@ else:
 # Init DBus
 
 def initBus(bus):
-    global jackctl
+    global gJackctl
 
     if not bus:
-        jackctl = None
+        gJackctl = None
         return 1
 
     try:
-        jackctl = dbus.Interface(bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller"), "org.jackaudio.Configure")
+        gJackctl = dbus.Interface(bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller"), "org.jackaudio.Configure")
         return 0
     except:
-        jackctl = None
+        gJackctl = None
         return 1
 
 def needsInit():
-    global jackctl
-    return bool(jackctl is None)
+    global gJackctl
+    return bool(gJackctl is None)
 
 def setResetNeeded(yesNo):
-  global resetNeeded
-  resetNeeded = yesNo
+  global gResetNeeded
+  gResetNeeded = yesNo
 
 # ------------------------------------------------------------------------------------------------------------
 # Helper functions
@@ -106,20 +110,20 @@ def setSampleRate(srate):
 # Helper functions (engine)
 
 def engineHasFeature(feature):
-    if jackctl is None:
+    if gJackctl is None:
         return False
     try:
-        featureList = jackctl.ReadContainer(["engine"])[1]
+        featureList = gJackctl.ReadContainer(["engine"])[1]
     except:
         featureList = ()
     return bool(dbus.String(feature) in featureList)
 
 def getEngineParameter(parameter, fallback):
-    if jackctl is None or not engineHasFeature(parameter):
+    if gJackctl is None or not engineHasFeature(parameter):
         return fallback
     else:
         try:
-            return jackctl.GetParameterValue(["engine", parameter])[2]
+            return gJackctl.GetParameterValue(["engine", parameter])[2]
         except:
             return fallback
 
@@ -127,31 +131,31 @@ def setEngineParameter(parameter, value, optional=True):
     if not engineHasFeature(parameter):
         return False
     elif optional:
-        if value != jackctl.GetParameterValue(["engine", parameter])[2]:
-            return bool(jackctl.SetParameterValue(["engine", parameter], value))
+        if value != gJackctl.GetParameterValue(["engine", parameter])[2]:
+            return bool(gJackctl.SetParameterValue(["engine", parameter], value))
         else:
             return False
     else:
-        return bool(jackctl.SetParameterValue(["engine", parameter], value))
+        return bool(gJackctl.SetParameterValue(["engine", parameter], value))
 
 # ------------------------------------------------------------------------------------------------------------
 # Helper functions (driver)
 
 def driverHasFeature(feature):
-    if jackctl is None:
+    if gJackctl is None:
         return False
     try:
-        featureList = jackctl.ReadContainer(["driver"])[1]
+        featureList = gJackctl.ReadContainer(["driver"])[1]
     except:
         featureList = ()
     return bool(dbus.String(feature) in featureList)
 
 def getDriverParameter(parameter, fallback):
-    if jackctl is None or not driverHasFeature(parameter):
+    if gJackctl is None or not driverHasFeature(parameter):
         return fallback
     else:
         try:
-            return jackctl.GetParameterValue(["driver", parameter])[2]
+            return gJackctl.GetParameterValue(["driver", parameter])[2]
         except:
             return fallback
 
@@ -159,65 +163,68 @@ def setDriverParameter(parameter, value, optional=True):
     if not driverHasFeature(parameter):
         return False
     elif optional:
-        if value != jackctl.GetParameterValue(["driver", parameter])[2]:
-            return bool(jackctl.SetParameterValue(["driver", parameter], value))
+        if value != gJackctl.GetParameterValue(["driver", parameter])[2]:
+            return bool(gJackctl.SetParameterValue(["driver", parameter], value))
         else:
             return False
     else:
-        return bool(jackctl.SetParameterValue(["driver", parameter], value))
+        return bool(gJackctl.SetParameterValue(["driver", parameter], value))
 
 # ------------------------------------------------------------------------------------------------------------
 # JACK Settings Dialog
 
-class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
+class JackSettingsW(QDialog):
     def __init__(self, parent):
         QDialog.__init__(self, parent)
-        self.setupUi(self)
+        self.ui = ui_settings_jack.Ui_JackSettingsW()
+        self.ui.setupUi(self)
 
         # -------------------------------------------------------------
         # Check if we've got valid control interface
 
-        if not jackctl:
+        global gJackctl
+
+        if gJackctl is None:
             QTimer.singleShot(0, self, SLOT("slot_closeWithError()"))
             return
 
         # -------------------------------------------------------------
         # Align driver text and hide non available ones
 
-        driverList = jackctl.ReadContainer(["drivers"])[1]
-        maxWidth   = 25
+        driverList = gJackctl.ReadContainer(["drivers"])[1]
+        maxWidth   = 75
 
-        for i in range(self.obj_server_driver.rowCount()):
-            self.obj_server_driver.item(0, i).setTextAlignment(Qt.AlignCenter)
+        for i in range(self.ui.obj_server_driver.rowCount()):
+            self.ui.obj_server_driver.item(0, i).setTextAlignment(Qt.AlignCenter)
 
-            itexText  = self.obj_server_driver.item(0, i).text()
-            itemWidth = QFontMetrics(self.obj_server_driver.font()).width(itexText)
+            itexText  = self.ui.obj_server_driver.item(0, i).text()
+            itemWidth = QFontMetrics(self.ui.obj_server_driver.font()).width(itexText)
 
             if itemWidth > maxWidth:
                 maxWidth = itemWidth
 
             if dbus.String(itexText.lower()) not in driverList:
-                self.obj_server_driver.hideRow(i)
+                self.ui.obj_server_driver.hideRow(i)
 
-        self.obj_server_driver.setMaximumWidth(maxWidth+50)
+        self.ui.obj_server_driver.setMaximumWidth(maxWidth)
 
         # -------------------------------------------------------------
         # Set-up connections
 
         self.connect(self, SIGNAL("accepted()"), SLOT("slot_saveJackSettings()"))
-        self.connect(self.buttonBox.button(QDialogButtonBox.Reset), SIGNAL("clicked()"), SLOT("slot_resetJackSettings()"))
+        self.connect(self.ui.buttonBox.button(QDialogButtonBox.Reset), SIGNAL("clicked()"), SLOT("slot_resetJackSettings()"))
 
-        self.connect(self.obj_driver_duplex, SIGNAL("clicked(bool)"), SLOT("slot_checkDuplexSelection(bool)"))
-        self.connect(self.obj_server_driver, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkDriverSelection(int)"))
+        self.connect(self.ui.obj_driver_duplex, SIGNAL("clicked(bool)"), SLOT("slot_checkDuplexSelection(bool)"))
+        self.connect(self.ui.obj_server_driver, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkDriverSelection(int)"))
 
-        self.connect(self.obj_driver_capture, SIGNAL("currentIndexChanged(int)"), SLOT("slot_checkALSASelection()"))
-        self.connect(self.obj_driver_playback, SIGNAL("currentIndexChanged(int)"), SLOT("slot_checkALSASelection()"))
+        self.connect(self.ui.obj_driver_capture, SIGNAL("currentIndexChanged(int)"), SLOT("slot_checkALSASelection()"))
+        self.connect(self.ui.obj_driver_playback, SIGNAL("currentIndexChanged(int)"), SLOT("slot_checkALSASelection()"))
 
         # -------------------------------------------------------------
         # Load initial settings
 
-        self.m_driver = ""
-        self.m_brokenServerClockSource = False
+        self.fDriverName = ""
+        self.fBrokenServerClockSource = False
 
         self.checkEngine()
         self.loadServerSettings()
@@ -226,10 +233,10 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
         # -------------------------------------------------------------
         # Load selected JACK driver
 
-        self.m_driver = str(jackctl.GetParameterValue(["engine", "driver"])[2])
-        for i in range(self.obj_server_driver.rowCount()):
-            if self.obj_server_driver.item(i, 0).text().lower() == self.m_driver:
-                self.obj_server_driver.setCurrentCell(i, 0)
+        self.fDriverName = str(gJackctl.GetParameterValue(["engine", "driver"])[2])
+        for i in range(self.ui.obj_server_driver.rowCount()):
+            if self.ui.obj_server_driver.item(i, 0).text().lower() == self.fDriverName:
+                self.ui.obj_server_driver.setCurrentCell(i, 0)
                 break
 
         # Special ALSA check
@@ -239,68 +246,68 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
     # Engine calls
 
     def checkEngine(self):
-        self.obj_server_name.setEnabled(engineHasFeature("name"))
-        self.obj_server_realtime.setEnabled(engineHasFeature("realtime"))
-        self.obj_server_realtime_priority.setEnabled(engineHasFeature("realtime-priority"))
-        self.obj_server_temporary.setEnabled(engineHasFeature("temporary"))
-        self.obj_server_verbose.setEnabled(engineHasFeature("verbose"))
-        self.obj_server_alias.setEnabled(engineHasFeature("alias"))
-        self.obj_server_client_timeout.setEnabled(engineHasFeature("client-timeout"))
-        self.obj_server_clock_source.setEnabled(engineHasFeature("clock-source"))
-        self.obj_server_port_max.setEnabled(engineHasFeature("port-max"))
-        self.obj_server_replace_registry.setEnabled(engineHasFeature("replace-registry"))
-        self.obj_server_sync.setEnabled(engineHasFeature("sync"))
-        self.obj_server_self_connect_mode.setEnabled(engineHasFeature("self-connect-mode"))
+        self.ui.obj_server_name.setEnabled(engineHasFeature("name"))
+        self.ui.obj_server_realtime.setEnabled(engineHasFeature("realtime"))
+        self.ui.obj_server_realtime_priority.setEnabled(engineHasFeature("realtime-priority"))
+        self.ui.obj_server_temporary.setEnabled(engineHasFeature("temporary"))
+        self.ui.obj_server_verbose.setEnabled(engineHasFeature("verbose"))
+        self.ui.obj_server_alias.setEnabled(engineHasFeature("alias"))
+        self.ui.obj_server_client_timeout.setEnabled(engineHasFeature("client-timeout"))
+        self.ui.obj_server_clock_source.setEnabled(engineHasFeature("clock-source"))
+        self.ui.obj_server_port_max.setEnabled(engineHasFeature("port-max"))
+        self.ui.obj_server_replace_registry.setEnabled(engineHasFeature("replace-registry"))
+        self.ui.obj_server_sync.setEnabled(engineHasFeature("sync"))
+        self.ui.obj_server_self_connect_mode.setEnabled(engineHasFeature("self-connect-mode"))
 
         # Disable clock-source if not on Linux
         if not LINUX:
-            self.obj_server_clock_source.setEnabled(False)
+            self.ui.obj_server_clock_source.setEnabled(False)
 
     # -----------------------------------------------------------------
     # Server calls
 
     def saveServerSettings(self):
-        if self.obj_server_name.isEnabled():
-            value = dbus.String(self.obj_server_name.text())
+        if self.ui.obj_server_name.isEnabled():
+            value = dbus.String(self.ui.obj_server_name.text())
             setEngineParameter("name", value, True)
 
-        if self.obj_server_realtime.isEnabled():
-            value = dbus.Boolean(self.obj_server_realtime.isChecked())
+        if self.ui.obj_server_realtime.isEnabled():
+            value = dbus.Boolean(self.ui.obj_server_realtime.isChecked())
             setEngineParameter("realtime", value, True)
 
-        if self.obj_server_realtime_priority.isEnabled():
-            value = dbus.Int32(self.obj_server_realtime_priority.value())
+        if self.ui.obj_server_realtime_priority.isEnabled():
+            value = dbus.Int32(self.ui.obj_server_realtime_priority.value())
             setEngineParameter("realtime-priority", value, True)
 
-        if self.obj_server_temporary.isEnabled():
-            value = dbus.Boolean(self.obj_server_temporary.isChecked())
+        if self.ui.obj_server_temporary.isEnabled():
+            value = dbus.Boolean(self.ui.obj_server_temporary.isChecked())
             setEngineParameter("temporary", value, True)
 
-        if self.obj_server_verbose.isEnabled():
-            value = dbus.Boolean(self.obj_server_verbose.isChecked())
+        if self.ui.obj_server_verbose.isEnabled():
+            value = dbus.Boolean(self.ui.obj_server_verbose.isChecked())
             setEngineParameter("verbose", value, True)
 
-        if self.obj_server_alias.isEnabled():
-            value = dbus.Boolean(self.obj_server_alias.isChecked())
+        if self.ui.obj_server_alias.isEnabled():
+            value = dbus.Boolean(self.ui.obj_server_alias.isChecked())
             setEngineParameter("alias", value, True)
 
-        if self.obj_server_client_timeout.isEnabled():
-            value = dbus.Int32(int(self.obj_server_client_timeout.currentText()))
+        if self.ui.obj_server_client_timeout.isEnabled():
+            value = dbus.Int32(int(self.ui.obj_server_client_timeout.currentText()))
             setEngineParameter("client-timeout", value, True)
 
-        if self.obj_server_clock_source.isEnabled():
-            if self.obj_server_clock_source_system.isChecked():
-                if self.m_brokenServerClockSource:
+        if self.ui.obj_server_clock_source.isEnabled():
+            if self.ui.obj_server_clock_source_system.isChecked():
+                if self.fBrokenServerClockSource:
                     value = dbus.UInt32(JACK_TIMER_SYSTEM_CLOCK)
                 else:
                     value = dbus.Byte("s".encode("utf-8"))
-            elif self.obj_server_clock_source_cycle.isChecked():
-                if self.m_brokenServerClockSource:
+            elif self.ui.obj_server_clock_source_cycle.isChecked():
+                if self.fBrokenServerClockSource:
                     value = dbus.UInt32(JACK_TIMER_CYCLE_COUNTER)
                 else:
                     value = dbus.Byte("c".encode("utf-8"))
-            elif self.obj_server_clock_source_hpet.isChecked():
-                if self.m_brokenServerClockSource:
+            elif self.ui.obj_server_clock_source_hpet.isChecked():
+                if self.fBrokenServerClockSource:
                     value = dbus.UInt32(JACK_TIMER_HPET)
                 else:
                     value = dbus.Byte("h".encode("utf-8"))
@@ -311,28 +318,28 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
             if value != None:
                 setEngineParameter("clock-source", value, True)
 
-        if self.obj_server_port_max.isEnabled():
-            value = dbus.UInt32(int(self.obj_server_port_max.currentText()))
+        if self.ui.obj_server_port_max.isEnabled():
+            value = dbus.UInt32(int(self.ui.obj_server_port_max.currentText()))
             setEngineParameter("port-max", value, True)
 
-        if self.obj_server_replace_registry.isEnabled():
-            value = dbus.Boolean(self.obj_server_replace_registry.isChecked())
+        if self.ui.obj_server_replace_registry.isEnabled():
+            value = dbus.Boolean(self.ui.obj_server_replace_registry.isChecked())
             setEngineParameter("replace-registry", value, True)
 
-        if self.obj_server_sync.isEnabled():
-            value = dbus.Boolean(self.obj_server_sync.isChecked())
+        if self.ui.obj_server_sync.isEnabled():
+            value = dbus.Boolean(self.ui.obj_server_sync.isChecked())
             setEngineParameter("sync", value, True)
 
-        if self.obj_server_self_connect_mode.isEnabled():
-            if self.obj_server_self_connect_mode_0.isChecked():
+        if self.ui.obj_server_self_connect_mode.isEnabled():
+            if self.ui.obj_server_self_connect_mode_0.isChecked():
                 value = dbus.Byte(" ".encode("utf-8"))
-            elif self.obj_server_self_connect_mode_1.isChecked():
+            elif self.ui.obj_server_self_connect_mode_1.isChecked():
                 value = dbus.Byte("E".encode("utf-8"))
-            elif self.obj_server_self_connect_mode_2.isChecked():
+            elif self.ui.obj_server_self_connect_mode_2.isChecked():
                 value = dbus.Byte("e".encode("utf-8"))
-            elif self.obj_server_self_connect_mode_3.isChecked():
+            elif self.ui.obj_server_self_connect_mode_3.isChecked():
                 value = dbus.Byte("A".encode("utf-8"))
-            elif self.obj_server_self_connect_mode_4.isChecked():
+            elif self.ui.obj_server_self_connect_mode_4.isChecked():
                 value = dbus.Byte("a".encode("utf-8"))
             else:
                 value = None
@@ -342,70 +349,72 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
                 setEngineParameter("self-connect-mode", value, True)
 
     def loadServerSettings(self, reset=False, forceReset=False):
-        settings = jackctl.ReadContainer(["engine"])
+        global gJackctl
+
+        settings = gJackctl.ReadContainer(["engine"])
 
         for i in range(len(settings[1])):
             attribute = str(settings[1][i])
             if reset:
-                value = jackctl.GetParameterValue(["engine", attribute])[1]
+                value = gJackctl.GetParameterValue(["engine", attribute])[1]
                 if forceReset and attribute != "driver":
-                    jackctl.ResetParameterValue(["engine", attribute])
+                    gJackctl.ResetParameterValue(["engine", attribute])
             else:
-                value = jackctl.GetParameterValue(["engine", attribute])[2]
+                value = gJackctl.GetParameterValue(["engine", attribute])[2]
 
             if attribute == "name":
-                self.obj_server_name.setText(str(value))
+                self.ui.obj_server_name.setText(str(value))
             elif attribute == "realtime":
-                self.obj_server_realtime.setChecked(bool(value))
+                self.ui.obj_server_realtime.setChecked(bool(value))
             elif attribute == "realtime-priority":
-                self.obj_server_realtime_priority.setValue(int(value))
+                self.ui.obj_server_realtime_priority.setValue(int(value))
             elif attribute == "temporary":
-                self.obj_server_temporary.setChecked(bool(value))
+                self.ui.obj_server_temporary.setChecked(bool(value))
             elif attribute == "verbose":
-                self.obj_server_verbose.setChecked(bool(value))
+                self.ui.obj_server_verbose.setChecked(bool(value))
             elif attribute == "alias":
-                self.obj_server_alias.setChecked(bool(value))
+                self.ui.obj_server_alias.setChecked(bool(value))
             elif attribute == "client-timeout":
-                self.setComboBoxValue(self.obj_server_client_timeout, str(value))
+                self.setComboBoxValue(self.ui.obj_server_client_timeout, str(value))
             elif attribute == "clock-source":
                 value = str(value)
                 if value == "c":
-                    self.obj_server_clock_source_cycle.setChecked(True)
+                    self.ui.obj_server_clock_source_cycle.setChecked(True)
                 elif value == "h":
-                    self.obj_server_clock_source_hpet.setChecked(True)
+                    self.ui.obj_server_clock_source_hpet.setChecked(True)
                 elif value == "s":
-                    self.obj_server_clock_source_system.setChecked(True)
+                    self.ui.obj_server_clock_source_system.setChecked(True)
                 else:
-                    self.m_brokenServerClockSource = True
+                    self.fBrokenServerClockSource = True
                     if value == str(JACK_TIMER_SYSTEM_CLOCK):
-                        self.obj_server_clock_source_system.setChecked(True)
+                        self.ui.obj_server_clock_source_system.setChecked(True)
                     elif value == str(JACK_TIMER_CYCLE_COUNTER):
-                        self.obj_server_clock_source_cycle.setChecked(True)
+                        self.ui.obj_server_clock_source_cycle.setChecked(True)
                     elif value == str(JACK_TIMER_HPET):
-                        self.obj_server_clock_source_hpet.setChecked(True)
+                        self.ui.obj_server_clock_source_hpet.setChecked(True)
                     else:
-                        self.obj_server_clock_source.setEnabled(False)
+                        self.ui.obj_server_clock_source.setEnabled(False)
                         print("JackSettingsW::saveServerSettings() - Invalid clock-source value '%s'" % value)
             elif attribute == "port-max":
-                self.setComboBoxValue(self.obj_server_port_max, str(value))
+                self.setComboBoxValue(self.ui.obj_server_port_max, str(value))
             elif attribute == "replace-registry":
-                self.obj_server_replace_registry.setChecked(bool(value))
+                self.ui.obj_server_replace_registry.setChecked(bool(value))
             elif attribute == "sync":
-                self.obj_server_sync.setChecked(bool(value))
+                self.ui.obj_server_sync.setChecked(bool(value))
             elif attribute == "self-connect-mode":
                 value = str(value)
                 if value == " ":
-                    self.obj_server_self_connect_mode_0.setChecked(True)
+                    self.ui.obj_server_self_connect_mode_0.setChecked(True)
                 elif value == "E":
-                    self.obj_server_self_connect_mode_1.setChecked(True)
+                    self.ui.obj_server_self_connect_mode_1.setChecked(True)
                 elif value == "e":
-                    self.obj_server_self_connect_mode_2.setChecked(True)
+                    self.ui.obj_server_self_connect_mode_2.setChecked(True)
                 elif value == "A":
-                    self.obj_server_self_connect_mode_3.setChecked(True)
+                    self.ui.obj_server_self_connect_mode_3.setChecked(True)
                 elif value == "a":
-                    self.obj_server_self_connect_mode_4.setChecked(True)
+                    self.ui.obj_server_self_connect_mode_4.setChecked(True)
                 else:
-                    self.obj_server_self_connect_mode.setEnabled(False)
+                    self.ui.obj_server_self_connect_mode.setEnabled(False)
                     print("JackSettingsW::loadServerSettings() - Invalid self-connect-mode value '%s'" % value)
             elif attribute in ("driver", "slave-drivers"):
                 pass
@@ -418,26 +427,26 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
     # resetIfNeeded: fix alsa parameter re-order bug in JACK 1.9.8 (reset/remove non-used values)
 
     def saveDriverSettings(self, resetIfNeeded):
-        global resetNeeded
+        global gJackctl, gResetNeeded
 
-        if resetIfNeeded and not resetNeeded:
+        if resetIfNeeded and not gResetNeeded:
             resetIfNeeded = False
 
-        if self.obj_driver_device.isEnabled():
-            value = dbus.String(self.obj_driver_device.currentText().split(" [")[0])
-            if value != jackctl.GetParameterValue(["driver", "device"])[2]:
-                jackctl.SetParameterValue(["driver", "device"], value)
+        if self.ui.obj_driver_device.isEnabled():
+            value = dbus.String(self.ui.obj_driver_device.currentText().split(" [")[0])
+            if value != gJackctl.GetParameterValue(["driver", "device"])[2]:
+                gJackctl.SetParameterValue(["driver", "device"], value)
 
         elif resetIfNeeded:
-            jackctl.ResetParameterValue(["driver", "device"])
+            gJackctl.ResetParameterValue(["driver", "device"])
 
-        if self.obj_driver_capture.isEnabled():
-            if self.m_driver == "alsa":
-                value = dbus.String(self.obj_driver_capture.currentText().split(" ")[0])
-            elif self.m_driver == "dummy":
-                value = dbus.UInt32(int(self.obj_driver_capture.currentText()))
-            elif self.m_driver == "firewire":
-                value = dbus.Boolean(self.obj_driver_capture.currentIndex() == 1)
+        if self.ui.obj_driver_capture.isEnabled():
+            if self.fDriverName == "alsa":
+                value = dbus.String(self.ui.obj_driver_capture.currentText().split(" ")[0])
+            elif self.fDriverName == "dummy":
+                value = dbus.UInt32(int(self.ui.obj_driver_capture.currentText()))
+            elif self.fDriverName == "firewire":
+                value = dbus.Boolean(self.ui.obj_driver_capture.currentIndex() == 1)
             else:
                 value = None
                 print("JackSettingsW::saveDriverSettings() - Cannot save capture value")
@@ -446,15 +455,15 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
                 setDriverParameter("capture", value, True)
 
         elif resetIfNeeded:
-            jackctl.ResetParameterValue(["driver", "capture"])
+            gJackctl.ResetParameterValue(["driver", "capture"])
 
-        if self.obj_driver_playback.isEnabled():
-            if self.m_driver == "alsa":
-                value = dbus.String(self.obj_driver_playback.currentText().split(" ")[0])
-            elif self.m_driver == "dummy":
-                value = dbus.UInt32(int(self.obj_driver_playback.currentText()))
-            elif self.m_driver == "firewire":
-                value = dbus.Boolean(self.obj_driver_playback.currentIndex() == 1)
+        if self.ui.obj_driver_playback.isEnabled():
+            if self.fDriverName == "alsa":
+                value = dbus.String(self.ui.obj_driver_playback.currentText().split(" ")[0])
+            elif self.fDriverName == "dummy":
+                value = dbus.UInt32(int(self.ui.obj_driver_playback.currentText()))
+            elif self.fDriverName == "firewire":
+                value = dbus.Boolean(self.ui.obj_driver_playback.currentIndex() == 1)
             else:
                 value = None
                 print("JackSettingsW::saveDriverSettings() - Cannot save playback value")
@@ -463,52 +472,52 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
                 setDriverParameter("playback", value, True)
 
         elif resetIfNeeded:
-            jackctl.ResetParameterValue(["driver", "playback"])
+            gJackctl.ResetParameterValue(["driver", "playback"])
 
-        if self.obj_driver_rate.isEnabled():
-            value = dbus.UInt32(int(self.obj_driver_rate.currentText()))
+        if self.ui.obj_driver_rate.isEnabled():
+            value = dbus.UInt32(int(self.ui.obj_driver_rate.currentText()))
             setDriverParameter("rate", value, True)
 
-        if self.obj_driver_period.isEnabled():
-            value = dbus.UInt32(int(self.obj_driver_period.currentText()))
+        if self.ui.obj_driver_period.isEnabled():
+            value = dbus.UInt32(int(self.ui.obj_driver_period.currentText()))
             setDriverParameter("period", value, True)
 
-        if self.obj_driver_nperiods.isEnabled():
-            value = dbus.UInt32(self.obj_driver_nperiods.value())
+        if self.ui.obj_driver_nperiods.isEnabled():
+            value = dbus.UInt32(self.ui.obj_driver_nperiods.value())
             setDriverParameter("nperiods", value, True)
 
-        if self.obj_driver_hwmon.isEnabled():
-            value = dbus.Boolean(self.obj_driver_hwmon.isChecked())
+        if self.ui.obj_driver_hwmon.isEnabled():
+            value = dbus.Boolean(self.ui.obj_driver_hwmon.isChecked())
             setDriverParameter("hwmon", value, True)
 
-        if self.obj_driver_hwmeter.isEnabled():
-            value = dbus.Boolean(self.obj_driver_hwmeter.isChecked())
+        if self.ui.obj_driver_hwmeter.isEnabled():
+            value = dbus.Boolean(self.ui.obj_driver_hwmeter.isChecked())
             setDriverParameter("hwmeter", value, True)
 
-        if self.obj_driver_duplex.isEnabled():
-            value = dbus.Boolean(self.obj_driver_duplex.isChecked())
+        if self.ui.obj_driver_duplex.isEnabled():
+            value = dbus.Boolean(self.ui.obj_driver_duplex.isChecked())
             setDriverParameter("duplex", value, True)
 
-        if self.obj_driver_hw_alias.isEnabled():
-            value = dbus.Boolean(self.obj_driver_hw_alias.isChecked())
+        if self.ui.obj_driver_hw_alias.isEnabled():
+            value = dbus.Boolean(self.ui.obj_driver_hw_alias.isChecked())
             setDriverParameter("hw-alias", value, True)
 
-        if self.obj_driver_softmode.isEnabled():
-            value = dbus.Boolean(self.obj_driver_softmode.isChecked())
+        if self.ui.obj_driver_softmode.isEnabled():
+            value = dbus.Boolean(self.ui.obj_driver_softmode.isChecked())
             setDriverParameter("softmode", value, True)
 
-        if self.obj_driver_monitor.isEnabled():
-            value = dbus.Boolean(self.obj_driver_monitor.isChecked())
+        if self.ui.obj_driver_monitor.isEnabled():
+            value = dbus.Boolean(self.ui.obj_driver_monitor.isChecked())
             setDriverParameter("monitor", value, True)
 
-        if self.obj_driver_dither.isEnabled():
-            if self.obj_driver_dither.currentIndex() == 0:
+        if self.ui.obj_driver_dither.isEnabled():
+            if self.ui.obj_driver_dither.currentIndex() == 0:
                 value = dbus.Byte("n".encode("utf-8"))
-            elif self.obj_driver_dither.currentIndex() == 1:
+            elif self.ui.obj_driver_dither.currentIndex() == 1:
                 value = dbus.Byte("r".encode("utf-8"))
-            elif self.obj_driver_dither.currentIndex() == 2:
+            elif self.ui.obj_driver_dither.currentIndex() == 2:
                 value = dbus.Byte("s".encode("utf-8"))
-            elif self.obj_driver_dither.currentIndex() == 3:
+            elif self.ui.obj_driver_dither.currentIndex() == 3:
                 value = dbus.Byte("t".encode("utf-8"))
             else:
                 value = None
@@ -517,32 +526,32 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
             if value != None:
                 setDriverParameter("dither", value, True)
 
-        if self.obj_driver_inchannels.isEnabled():
-            value = dbus.UInt32(self.obj_driver_inchannels.value())
+        if self.ui.obj_driver_inchannels.isEnabled():
+            value = dbus.UInt32(self.ui.obj_driver_inchannels.value())
             setDriverParameter("inchannels", value, True)
 
-        if self.obj_driver_outchannels.isEnabled():
-            value = dbus.UInt32(self.obj_driver_outchannels.value())
+        if self.ui.obj_driver_outchannels.isEnabled():
+            value = dbus.UInt32(self.ui.obj_driver_outchannels.value())
             setDriverParameter("outchannels", value, True)
 
-        if self.obj_driver_shorts.isEnabled():
-            value = dbus.Boolean(self.obj_driver_shorts.isChecked())
+        if self.ui.obj_driver_shorts.isEnabled():
+            value = dbus.Boolean(self.ui.obj_driver_shorts.isChecked())
             setDriverParameter("shorts", value, True)
 
-        if self.obj_driver_input_latency.isEnabled():
-            value = dbus.UInt32(self.obj_driver_input_latency.value())
+        if self.ui.obj_driver_input_latency.isEnabled():
+            value = dbus.UInt32(self.ui.obj_driver_input_latency.value())
             setDriverParameter("input-latency", value, True)
 
-        if self.obj_driver_output_latency.isEnabled():
-            value = dbus.UInt32(self.obj_driver_output_latency.value())
+        if self.ui.obj_driver_output_latency.isEnabled():
+            value = dbus.UInt32(self.ui.obj_driver_output_latency.value())
             setDriverParameter("output-latency", value, True)
 
-        if self.obj_driver_midi_driver.isEnabled():
-            if self.obj_driver_midi_driver.currentIndex() == 0:
+        if self.ui.obj_driver_midi_driver.isEnabled():
+            if self.ui.obj_driver_midi_driver.currentIndex() == 0:
                 value = dbus.String("none")
-            elif self.obj_driver_midi_driver.currentIndex() == 1:
+            elif self.ui.obj_driver_midi_driver.currentIndex() == 1:
                 value = dbus.String("seq")
-            elif self.obj_driver_midi_driver.currentIndex() == 2:
+            elif self.ui.obj_driver_midi_driver.currentIndex() == 2:
                 value = dbus.String("raw")
             else:
                 value = None
@@ -554,106 +563,108 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
                 else:
                     setDriverParameter("midi-driver", value, True)
 
-        if self.obj_driver_wait.isEnabled():
-            value = dbus.UInt32(self.obj_driver_wait.value())
+        if self.ui.obj_driver_wait.isEnabled():
+            value = dbus.UInt32(self.ui.obj_driver_wait.value())
             setDriverParameter("wait", value, True)
 
-        if self.obj_driver_verbose.isEnabled():
-            value = dbus.UInt32(self.obj_driver_verbose.value())
+        if self.ui.obj_driver_verbose.isEnabled():
+            value = dbus.UInt32(self.ui.obj_driver_verbose.value())
             setDriverParameter("verbose", value, True)
 
-        if self.obj_driver_snoop.isEnabled():
-            value = dbus.Boolean(self.obj_driver_snoop.isChecked())
+        if self.ui.obj_driver_snoop.isEnabled():
+            value = dbus.Boolean(self.ui.obj_driver_snoop.isChecked())
             setDriverParameter("snoop", value, True)
 
-        if self.obj_driver_channels.isEnabled():
-            value = dbus.Int32(self.obj_driver_channels.value())
+        if self.ui.obj_driver_channels.isEnabled():
+            value = dbus.Int32(self.ui.obj_driver_channels.value())
             setDriverParameter("channels", value, True)
 
     def loadDriverSettings(self, reset=False, forceReset=False):
-        settings = jackctl.ReadContainer(["driver"])
+        global gJackctl
+
+        settings = gJackctl.ReadContainer(["driver"])
 
         for i in range(len(settings[1])):
             attribute = str(settings[1][i])
             if reset:
-                value = jackctl.GetParameterValue(["driver", attribute])[1]
+                value = gJackctl.GetParameterValue(["driver", attribute])[1]
                 if forceReset:
-                    jackctl.ResetParameterValue(["driver", attribute])
+                    gJackctl.ResetParameterValue(["driver", attribute])
             else:
-                value = jackctl.GetParameterValue(["driver", attribute])[2]
+                value = gJackctl.GetParameterValue(["driver", attribute])[2]
 
             if attribute == "device":
-                self.setComboBoxValue(self.obj_driver_device, str(value), True)
+                self.setComboBoxValue(self.ui.obj_driver_device, str(value), True)
             elif attribute == "capture":
-                if self.m_driver == "firewire":
-                    self.obj_driver_capture.setCurrentIndex(1 if bool(value) else 0)
+                if self.fDriverName == "firewire":
+                    self.ui.obj_driver_capture.setCurrentIndex(1 if bool(value) else 0)
                 else:
-                    self.setComboBoxValue(self.obj_driver_capture, str(value), True)
+                    self.setComboBoxValue(self.ui.obj_driver_capture, str(value), True)
             elif attribute == "playback":
-                if self.m_driver == "firewire":
-                    self.obj_driver_playback.setCurrentIndex(1 if bool(value) else 0)
+                if self.fDriverName == "firewire":
+                    self.ui.obj_driver_playback.setCurrentIndex(1 if bool(value) else 0)
                 else:
-                    self.setComboBoxValue(self.obj_driver_playback, str(value), True)
+                    self.setComboBoxValue(self.ui.obj_driver_playback, str(value), True)
             elif attribute == "rate":
-                self.setComboBoxValue(self.obj_driver_rate, str(value))
+                self.setComboBoxValue(self.ui.obj_driver_rate, str(value))
             elif attribute == "period":
-                self.setComboBoxValue(self.obj_driver_period, str(value))
+                self.setComboBoxValue(self.ui.obj_driver_period, str(value))
             elif attribute == "nperiods":
-                self.obj_driver_nperiods.setValue(int(value))
+                self.ui.obj_driver_nperiods.setValue(int(value))
             elif attribute == "hwmon":
-                self.obj_driver_hwmon.setChecked(bool(value))
+                self.ui.obj_driver_hwmon.setChecked(bool(value))
             elif attribute == "hwmeter":
-                self.obj_driver_hwmeter.setChecked(bool(value))
+                self.ui.obj_driver_hwmeter.setChecked(bool(value))
             elif attribute == "duplex":
-                self.obj_driver_duplex.setChecked(bool(value))
+                self.ui.obj_driver_duplex.setChecked(bool(value))
             elif attribute == "hw-alias":
-                self.obj_driver_hw_alias.setChecked(bool(value))
+                self.ui.obj_driver_hw_alias.setChecked(bool(value))
             elif attribute == "softmode":
-                self.obj_driver_softmode.setChecked(bool(value))
+                self.ui.obj_driver_softmode.setChecked(bool(value))
             elif attribute == "monitor":
-                self.obj_driver_monitor.setChecked(bool(value))
+                self.ui.obj_driver_monitor.setChecked(bool(value))
             elif attribute == "dither":
                 value = str(value)
                 if value == "n":
-                    self.obj_driver_dither.setCurrentIndex(0)
+                    self.ui.obj_driver_dither.setCurrentIndex(0)
                 elif value == "r":
-                    self.obj_driver_dither.setCurrentIndex(1)
+                    self.ui.obj_driver_dither.setCurrentIndex(1)
                 elif value == "s":
-                    self.obj_driver_dither.setCurrentIndex(2)
+                    self.ui.obj_driver_dither.setCurrentIndex(2)
                 elif value == "t":
-                    self.obj_driver_dither.setCurrentIndex(3)
+                    self.ui.obj_driver_dither.setCurrentIndex(3)
                 else:
-                    self.obj_driver_dither.setEnabled(False)
+                    self.ui.obj_driver_dither.setEnabled(False)
                     print("JackSettingsW::loadDriverSettings() - Invalid dither value '%s'" % value)
             elif attribute == "inchannels":
-                self.obj_driver_inchannels.setValue(int(value))
+                self.ui.obj_driver_inchannels.setValue(int(value))
             elif attribute == "outchannels":
-                self.obj_driver_outchannels.setValue(int(value))
+                self.ui.obj_driver_outchannels.setValue(int(value))
             elif attribute == "shorts":
-                self.obj_driver_shorts.setChecked(bool(value))
+                self.ui.obj_driver_shorts.setChecked(bool(value))
             elif attribute == "input-latency":
-                self.obj_driver_input_latency.setValue(int(value))
+                self.ui.obj_driver_input_latency.setValue(int(value))
             elif attribute == "output-latency":
-                self.obj_driver_output_latency.setValue(int(value))
+                self.ui.obj_driver_output_latency.setValue(int(value))
             elif attribute in ("midi", "midi-driver"):
                 value = str(value)
                 if value == "none":
-                    self.obj_driver_midi_driver.setCurrentIndex(0)
+                    self.ui.obj_driver_midi_driver.setCurrentIndex(0)
                 elif value == "seq":
-                    self.obj_driver_midi_driver.setCurrentIndex(1)
+                    self.ui.obj_driver_midi_driver.setCurrentIndex(1)
                 elif value == "raw":
-                    self.obj_driver_midi_driver.setCurrentIndex(2)
+                    self.ui.obj_driver_midi_driver.setCurrentIndex(2)
                 else:
-                    self.obj_driver_midi_driver.setEnabled(False)
+                    self.ui.obj_driver_midi_driver.setEnabled(False)
                     print("JackSettingsW::loadDriverSettings() - Invalid midi-driver value '%s'" % value)
             elif attribute == "wait":
-                self.obj_driver_wait.setValue(int(value))
+                self.ui.obj_driver_wait.setValue(int(value))
             elif attribute == "verbose":
-                self.obj_driver_verbose.setValue(int(value))
+                self.ui.obj_driver_verbose.setValue(int(value))
             elif attribute == "snoop":
-                self.obj_driver_snoop.setChecked(bool(value))
+                self.ui.obj_driver_snoop.setChecked(bool(value))
             elif attribute == "channels":
-                self.obj_driver_channels.setValue(int(value))
+                self.ui.obj_driver_channels.setValue(int(value))
             else:
                 print("JackSettingsW::loadDriverSettings() - Unimplemented driver attribute '%s', value: '%s'" % (attribute, str(value)))
 
@@ -696,144 +707,146 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
 
     @pyqtSlot()
     def slot_checkALSASelection(self):
-        if self.m_driver == "alsa":
-            check = bool(self.obj_driver_duplex.isChecked() and (self.obj_driver_capture.currentIndex() > 0 or self.obj_driver_playback.currentIndex() > 0))
-            self.obj_driver_device.setEnabled(not check)
+        if self.fDriverName == "alsa":
+            check = bool(self.ui.obj_driver_duplex.isChecked() and (self.ui.obj_driver_capture.currentIndex() > 0 or self.ui.obj_driver_playback.currentIndex() > 0))
+            self.ui.obj_driver_device.setEnabled(not check)
 
     @pyqtSlot(bool)
     def slot_checkDuplexSelection(self, active):
         if driverHasFeature("duplex"):
-            self.obj_driver_capture.setEnabled(active)
-            self.obj_driver_capture_label.setEnabled(active)
-            self.obj_driver_playback.setEnabled(active)
-            self.obj_driver_playback_label.setEnabled(active)
-            #self.obj_driver_inchannels.setEnabled(active)
-            #self.obj_driver_inchannels_label.setEnabled(active)
-            #self.obj_driver_input_latency.setEnabled(active)
-            #self.obj_driver_input_latency_label.setEnabled(active)
+            self.ui.obj_driver_capture.setEnabled(active)
+            self.ui.obj_driver_capture_label.setEnabled(active)
+            self.ui.obj_driver_playback.setEnabled(active)
+            self.ui.obj_driver_playback_label.setEnabled(active)
+            #self.ui.obj_driver_inchannels.setEnabled(active)
+            #self.ui.obj_driver_inchannels_label.setEnabled(active)
+            #self.ui.obj_driver_input_latency.setEnabled(active)
+            #self.ui.obj_driver_input_latency_label.setEnabled(active)
 
         self.slot_checkALSASelection()
 
     @pyqtSlot(int)
     def slot_checkDriverSelection(self, row):
+        global gJackctl
+
         # Save previous settings
         self.saveDriverSettings(False)
 
         # Set new Jack driver
-        self.m_driver = dbus.String(self.obj_server_driver.item(row, 0).text().lower())
-        jackctl.SetParameterValue(["engine", "driver"], self.m_driver)
+        self.fDriverName = dbus.String(self.ui.obj_server_driver.item(row, 0).text().lower())
+        gJackctl.SetParameterValue(["engine", "driver"], self.fDriverName)
 
         # Add device list
-        self.obj_driver_device.clear()
+        self.ui.obj_driver_device.clear()
         if driverHasFeature("device"):
-            if LINUX and self.m_driver == "alsa":
+            if LINUX and self.fDriverName == "alsa":
                 dev_list = self.getAlsaDeviceList()
                 for dev in dev_list:
-                    self.obj_driver_device.addItem(dev)
+                    self.ui.obj_driver_device.addItem(dev)
             else:
-                dev_list = jackctl.GetParameterConstraint(["driver", "device"])[3]
+                dev_list = gJackctl.GetParameterConstraint(["driver", "device"])[3]
                 for i in range(len(dev_list)):
-                    self.obj_driver_device.addItem(dev_list[i][0] + " [%s]" % str(dev_list[i][1]))
+                    self.ui.obj_driver_device.addItem(dev_list[i][0] + " [%s]" % str(dev_list[i][1]))
 
         # Custom 'playback' and 'capture' values
-        self.obj_driver_capture.clear()
-        self.obj_driver_playback.clear()
+        self.ui.obj_driver_capture.clear()
+        self.ui.obj_driver_playback.clear()
 
-        if self.m_driver == "alsa":
-            self.obj_driver_capture.addItem("none")
-            self.obj_driver_playback.addItem("none")
+        if self.fDriverName == "alsa":
+            self.ui.obj_driver_capture.addItem("none")
+            self.ui.obj_driver_playback.addItem("none")
 
             if LINUX:
                 dev_list = self.getAlsaDeviceList()
                 for dev in dev_list:
-                    self.obj_driver_capture.addItem(dev)
-                    self.obj_driver_playback.addItem(dev)
+                    self.ui.obj_driver_capture.addItem(dev)
+                    self.ui.obj_driver_playback.addItem(dev)
             else:
-                dev_list = jackctl.GetParameterConstraint(["driver", "device"])[3]
+                dev_list = gJackctl.GetParameterConstraint(["driver", "device"])[3]
                 for i in range(len(dev_list)):
-                    self.obj_driver_capture.addItem(dev_list[i][0] + " [" + dev_list[i][1] + "]")
-                    self.obj_driver_playback.addItem(dev_list[i][0] + " [" + dev_list[i][1] + "]")
+                    self.ui.obj_driver_capture.addItem(dev_list[i][0] + " [" + dev_list[i][1] + "]")
+                    self.ui.obj_driver_playback.addItem(dev_list[i][0] + " [" + dev_list[i][1] + "]")
 
-        elif self.m_driver == "dummy":
+        elif self.fDriverName == "dummy":
             for i in range(16):
-                self.obj_driver_capture.addItem("%i" % int((i * 2) + 2))
-                self.obj_driver_playback.addItem("%i" % int((i * 2) + 2))
+                self.ui.obj_driver_capture.addItem("%i" % int((i * 2) + 2))
+                self.ui.obj_driver_playback.addItem("%i" % int((i * 2) + 2))
 
-        elif self.m_driver == "firewire":
-            self.obj_driver_capture.addItem("no")
-            self.obj_driver_capture.addItem("yes")
-            self.obj_driver_playback.addItem("no")
-            self.obj_driver_playback.addItem("yes")
+        elif self.fDriverName == "firewire":
+            self.ui.obj_driver_capture.addItem("no")
+            self.ui.obj_driver_capture.addItem("yes")
+            self.ui.obj_driver_playback.addItem("no")
+            self.ui.obj_driver_playback.addItem("yes")
 
         elif driverHasFeature("playback") or driverHasFeature("capture"):
-            print("JackSettingsW::slot_checkDriverSelection() - Custom playback/capture for driver '%s' not implemented yet" % self.m_driver)
+            print("JackSettingsW::slot_checkDriverSelection() - Custom playback/capture for driver '%s' not implemented yet" % self.fDriverName)
 
         # Load Driver Settings
         self.loadDriverSettings()
 
         # Enable widgets according to driver
-        self.obj_driver_capture.setEnabled(driverHasFeature("capture"))
-        self.obj_driver_capture_label.setEnabled(driverHasFeature("capture"))
-        self.obj_driver_playback.setEnabled(driverHasFeature("playback"))
-        self.obj_driver_playback_label.setEnabled(driverHasFeature("playback"))
-        self.obj_driver_device.setEnabled(driverHasFeature("device"))
-        self.obj_driver_device_label.setEnabled(driverHasFeature("device"))
-        self.obj_driver_rate.setEnabled(driverHasFeature("rate"))
-        self.obj_driver_rate_label.setEnabled(driverHasFeature("rate"))
-        self.obj_driver_period.setEnabled(driverHasFeature("period"))
-        self.obj_driver_period_label.setEnabled(driverHasFeature("period"))
-        self.obj_driver_nperiods.setEnabled(driverHasFeature("nperiods"))
-        self.obj_driver_nperiods_label.setEnabled(driverHasFeature("nperiods"))
-        self.obj_driver_hwmon.setEnabled(driverHasFeature("hwmon"))
-        self.obj_driver_hwmeter.setEnabled(driverHasFeature("hwmeter"))
-        self.obj_driver_duplex.setEnabled(driverHasFeature("duplex"))
-        self.obj_driver_hw_alias.setEnabled(driverHasFeature("hw-alias"))
-        self.obj_driver_softmode.setEnabled(driverHasFeature("softmode"))
-        self.obj_driver_monitor.setEnabled(driverHasFeature("monitor"))
-        self.obj_driver_dither.setEnabled(driverHasFeature("dither"))
-        self.obj_driver_dither_label.setEnabled(driverHasFeature("dither"))
-        self.obj_driver_inchannels.setEnabled(driverHasFeature("inchannels"))
-        self.obj_driver_inchannels_label.setEnabled(driverHasFeature("inchannels"))
-        self.obj_driver_outchannels.setEnabled(driverHasFeature("outchannels"))
-        self.obj_driver_outchannels_label.setEnabled(driverHasFeature("outchannels"))
-        self.obj_driver_shorts.setEnabled(driverHasFeature("shorts"))
-        self.obj_driver_input_latency.setEnabled(driverHasFeature("input-latency"))
-        self.obj_driver_input_latency_label.setEnabled(driverHasFeature("input-latency"))
-        self.obj_driver_output_latency.setEnabled(driverHasFeature("output-latency"))
-        self.obj_driver_output_latency_label.setEnabled(driverHasFeature("output-latency"))
-        self.obj_driver_midi_driver.setEnabled(driverHasFeature("midi") or driverHasFeature("midi-driver"))
-        self.obj_driver_midi_driver_label.setEnabled(driverHasFeature("midi") or driverHasFeature("midi-driver"))
-        self.obj_driver_wait.setEnabled(driverHasFeature("wait"))
-        self.obj_driver_wait_label.setEnabled(driverHasFeature("wait"))
-        self.obj_driver_verbose.setEnabled(driverHasFeature("verbose"))
-        self.obj_driver_verbose_label.setEnabled(driverHasFeature("verbose"))
-        self.obj_driver_snoop.setEnabled(driverHasFeature("snoop"))
-        self.obj_driver_channels.setEnabled(driverHasFeature("channels"))
-        self.obj_driver_channels_label.setEnabled(driverHasFeature("channels"))
+        self.ui.obj_driver_capture.setEnabled(driverHasFeature("capture"))
+        self.ui.obj_driver_capture_label.setEnabled(driverHasFeature("capture"))
+        self.ui.obj_driver_playback.setEnabled(driverHasFeature("playback"))
+        self.ui.obj_driver_playback_label.setEnabled(driverHasFeature("playback"))
+        self.ui.obj_driver_device.setEnabled(driverHasFeature("device"))
+        self.ui.obj_driver_device_label.setEnabled(driverHasFeature("device"))
+        self.ui.obj_driver_rate.setEnabled(driverHasFeature("rate"))
+        self.ui.obj_driver_rate_label.setEnabled(driverHasFeature("rate"))
+        self.ui.obj_driver_period.setEnabled(driverHasFeature("period"))
+        self.ui.obj_driver_period_label.setEnabled(driverHasFeature("period"))
+        self.ui.obj_driver_nperiods.setEnabled(driverHasFeature("nperiods"))
+        self.ui.obj_driver_nperiods_label.setEnabled(driverHasFeature("nperiods"))
+        self.ui.obj_driver_hwmon.setEnabled(driverHasFeature("hwmon"))
+        self.ui.obj_driver_hwmeter.setEnabled(driverHasFeature("hwmeter"))
+        self.ui.obj_driver_duplex.setEnabled(driverHasFeature("duplex"))
+        self.ui.obj_driver_hw_alias.setEnabled(driverHasFeature("hw-alias"))
+        self.ui.obj_driver_softmode.setEnabled(driverHasFeature("softmode"))
+        self.ui.obj_driver_monitor.setEnabled(driverHasFeature("monitor"))
+        self.ui.obj_driver_dither.setEnabled(driverHasFeature("dither"))
+        self.ui.obj_driver_dither_label.setEnabled(driverHasFeature("dither"))
+        self.ui.obj_driver_inchannels.setEnabled(driverHasFeature("inchannels"))
+        self.ui.obj_driver_inchannels_label.setEnabled(driverHasFeature("inchannels"))
+        self.ui.obj_driver_outchannels.setEnabled(driverHasFeature("outchannels"))
+        self.ui.obj_driver_outchannels_label.setEnabled(driverHasFeature("outchannels"))
+        self.ui.obj_driver_shorts.setEnabled(driverHasFeature("shorts"))
+        self.ui.obj_driver_input_latency.setEnabled(driverHasFeature("input-latency"))
+        self.ui.obj_driver_input_latency_label.setEnabled(driverHasFeature("input-latency"))
+        self.ui.obj_driver_output_latency.setEnabled(driverHasFeature("output-latency"))
+        self.ui.obj_driver_output_latency_label.setEnabled(driverHasFeature("output-latency"))
+        self.ui.obj_driver_midi_driver.setEnabled(driverHasFeature("midi") or driverHasFeature("midi-driver"))
+        self.ui.obj_driver_midi_driver_label.setEnabled(driverHasFeature("midi") or driverHasFeature("midi-driver"))
+        self.ui.obj_driver_wait.setEnabled(driverHasFeature("wait"))
+        self.ui.obj_driver_wait_label.setEnabled(driverHasFeature("wait"))
+        self.ui.obj_driver_verbose.setEnabled(driverHasFeature("verbose"))
+        self.ui.obj_driver_verbose_label.setEnabled(driverHasFeature("verbose"))
+        self.ui.obj_driver_snoop.setEnabled(driverHasFeature("snoop"))
+        self.ui.obj_driver_channels.setEnabled(driverHasFeature("channels"))
+        self.ui.obj_driver_channels_label.setEnabled(driverHasFeature("channels"))
 
         # Misc stuff
-        if self.obj_server_driver.item(0, row).text() == "ALSA":
-            self.toolbox_driver_misc.setCurrentIndex(1)
-            self.obj_driver_capture_label.setText(self.tr("Input Device:"))
-            self.obj_driver_playback_label.setText(self.tr("Output Device:"))
+        if self.ui.obj_server_driver.item(0, row).text() == "ALSA":
+            self.ui.toolbox_driver_misc.setCurrentIndex(1)
+            self.ui.obj_driver_capture_label.setText(self.tr("Input Device:"))
+            self.ui.obj_driver_playback_label.setText(self.tr("Output Device:"))
 
-        elif self.obj_server_driver.item(0, row).text() == "Dummy":
-            self.toolbox_driver_misc.setCurrentIndex(2)
-            self.obj_driver_capture_label.setText(self.tr("Input Ports:"))
-            self.obj_driver_playback_label.setText(self.tr("Output Ports:"))
+        elif self.ui.obj_server_driver.item(0, row).text() == "Dummy":
+            self.ui.toolbox_driver_misc.setCurrentIndex(2)
+            self.ui.obj_driver_capture_label.setText(self.tr("Input Ports:"))
+            self.ui.obj_driver_playback_label.setText(self.tr("Output Ports:"))
 
-        elif self.obj_server_driver.item(0, row).text() == "FireWire":
-            self.toolbox_driver_misc.setCurrentIndex(3)
-            self.obj_driver_capture_label.setText(self.tr("Capture Ports:"))
-            self.obj_driver_playback_label.setText(self.tr("Playback Ports:"))
+        elif self.ui.obj_server_driver.item(0, row).text() == "FireWire":
+            self.ui.toolbox_driver_misc.setCurrentIndex(3)
+            self.ui.obj_driver_capture_label.setText(self.tr("Capture Ports:"))
+            self.ui.obj_driver_playback_label.setText(self.tr("Playback Ports:"))
 
-        elif self.obj_server_driver.item(0, row).text() == "Loopback":
-            self.toolbox_driver_misc.setCurrentIndex(4)
+        elif self.ui.obj_server_driver.item(0, row).text() == "Loopback":
+            self.ui.toolbox_driver_misc.setCurrentIndex(4)
 
         else:
-            self.toolbox_driver_misc.setCurrentIndex(0)
+            self.ui.toolbox_driver_misc.setCurrentIndex(0)
 
-        self.slot_checkDuplexSelection(self.obj_driver_duplex.isChecked())
+        self.slot_checkDuplexSelection(self.ui.obj_driver_duplex.isChecked())
 
     @pyqtSlot()
     def slot_saveJackSettings(self):
@@ -842,9 +855,9 @@ class JackSettingsW(QDialog, ui_settings_jack.Ui_JackSettingsW):
 
     @pyqtSlot()
     def slot_resetJackSettings(self):
-        if self.tabWidget.currentIndex() == 0:
+        if self.ui.tabWidget.currentIndex() == 0:
             self.loadServerSettings(True, True)
-        elif self.tabWidget.currentIndex() == 1:
+        elif self.ui.tabWidget.currentIndex() == 1:
             self.loadDriverSettings(True, True)
 
     @pyqtSlot()
