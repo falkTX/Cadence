@@ -19,7 +19,7 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt4.QtCore import pyqtSlot, Qt, QTimer, SIGNAL, SLOT
+from PyQt4.QtCore import pyqtSlot, Qt, QSettings, QTimer, SIGNAL, SLOT
 from PyQt4.QtGui import QDialog, QDialogButtonBox, QFontMetrics, QMessageBox
 from sys import platform, version_info
 
@@ -241,6 +241,11 @@ class JackSettingsW(QDialog):
 
         # Special ALSA check
         self.slot_checkALSASelection()
+
+        # -------------------------------------------------------------
+        # Load last GUI settings
+
+        self.loadSettings()
 
     # -----------------------------------------------------------------
     # Engine calls
@@ -864,6 +869,20 @@ class JackSettingsW(QDialog):
     def slot_closeWithError(self):
         QMessageBox.critical(self, self.tr("Error"), self.tr("jackdbus is not available!\nIt's not possible to configure JACK at this point."))
         self.close()
+
+    def saveSettings(self):
+        settings = QSettings("Cadence", "JackSettings")
+        settings.setValue("Geometry", self.saveGeometry())
+        settings.setValue("CurrentTab", self.ui.tabWidget.currentIndex())
+
+    def loadSettings(self):
+        settings = QSettings("Cadence", "JackSettings")
+        self.restoreGeometry(settings.value("Geometry", ""))
+        self.ui.tabWidget.setCurrentIndex(settings.value("CurrentTab", 0, type=int))
+
+    def closeEvent(self, event):
+        self.saveSettings()
+        QDialog.closeEvent(self, event)
 
     def done(self, r):
         QDialog.done(self, r)
