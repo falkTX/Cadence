@@ -198,7 +198,7 @@ class JackSettingsW(QDialog):
             self.ui.obj_server_driver.item(0, i).setTextAlignment(Qt.AlignCenter)
 
             itexText  = self.ui.obj_server_driver.item(0, i).text()
-            itemWidth = QFontMetrics(self.ui.obj_server_driver.font()).width(itexText)
+            itemWidth = QFontMetrics(self.ui.obj_server_driver.font()).width(itexText)+25
 
             if itemWidth > maxWidth:
                 maxWidth = itemWidth
@@ -206,6 +206,7 @@ class JackSettingsW(QDialog):
             if dbus.String(itexText.lower()) not in driverList:
                 self.ui.obj_server_driver.hideRow(i)
 
+        self.ui.obj_server_driver.setMinimumWidth(maxWidth)
         self.ui.obj_server_driver.setMaximumWidth(maxWidth)
 
         # -------------------------------------------------------------

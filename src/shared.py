@@ -204,7 +204,9 @@ def CustomMessageBox(self_, icon, title, text, extraText="", buttons=QMessageBox
 
 def setUpSignals(self_):
     global gGui
-    gGui = self_
+
+    if gGui is None:
+        gGui = self_
 
     if not haveSignal:
         return
@@ -254,44 +256,44 @@ def showWindowHandler():
 # ------------------------------------------------------------------------------------------------------------
 # Shared Icons
 
-def setIcons(modes):
+def setIcons(self_, modes):
     global gGui
 
     if gGui is None:
-        return
+        gGui = self_
 
     # TODO - need to update Catia and Claudia code first
-    #if "canvas" in modes:
-        #gGui.ui.act_canvas_arrange.setIcon(getIcon("view-sort-ascending"))
-        #gGui.ui.act_canvas_refresh.setIcon(getIcon("view-refresh"))
-        #gGui.ui.act_canvas_zoom_fit.setIcon(getIcon("zoom-fit-best"))
-        #gGui.ui.act_canvas_zoom_in.setIcon(getIcon("zoom-in"))
-        #gGui.ui.act_canvas_zoom_out.setIcon(getIcon("zoom-out"))
-        #gGui.ui.act_canvas_zoom_100.setIcon(getIcon("zoom-original"))
-        #gGui.ui.act_canvas_print.setIcon(getIcon("document-print"))
-        #gGui.ui.b_canvas_zoom_fit.setIcon(getIcon("zoom-fit-best"))
-        #gGui.ui.b_canvas_zoom_in.setIcon(getIcon("zoom-in"))
-        #gGui.ui.b_canvas_zoom_out.setIcon(getIcon("zoom-out"))
-        #gGui.ui.b_canvas_zoom_100.setIcon(getIcon("zoom-original"))
+    if "canvas" in modes:
+        gGui.act_canvas_arrange.setIcon(getIcon("view-sort-ascending"))
+        gGui.act_canvas_refresh.setIcon(getIcon("view-refresh"))
+        gGui.act_canvas_zoom_fit.setIcon(getIcon("zoom-fit-best"))
+        gGui.act_canvas_zoom_in.setIcon(getIcon("zoom-in"))
+        gGui.act_canvas_zoom_out.setIcon(getIcon("zoom-out"))
+        gGui.act_canvas_zoom_100.setIcon(getIcon("zoom-original"))
+        gGui.act_canvas_print.setIcon(getIcon("document-print"))
+        gGui.b_canvas_zoom_fit.setIcon(getIcon("zoom-fit-best"))
+        gGui.b_canvas_zoom_in.setIcon(getIcon("zoom-in"))
+        gGui.b_canvas_zoom_out.setIcon(getIcon("zoom-out"))
+        gGui.b_canvas_zoom_100.setIcon(getIcon("zoom-original"))
 
-    #if "jack" in modes:
-        #gGui.ui.act_jack_clear_xruns.setIcon(getIcon("edit-clear"))
-        #gGui.ui.act_jack_configure.setIcon(getIcon("configure"))
-        #gGui.ui.act_jack_render.setIcon(getIcon("media-record"))
-        #gGui.ui.b_jack_clear_xruns.setIcon(getIcon("edit-clear"))
-        #gGui.ui.b_jack_configure.setIcon(getIcon("configure"))
-        #gGui.ui.b_jack_render.setIcon(getIcon("media-record"))
+    if "jack" in modes:
+        gGui.act_jack_clear_xruns.setIcon(getIcon("edit-clear"))
+        gGui.act_jack_configure.setIcon(getIcon("configure"))
+        gGui.act_jack_render.setIcon(getIcon("media-record"))
+        gGui.b_jack_clear_xruns.setIcon(getIcon("edit-clear"))
+        gGui.b_jack_configure.setIcon(getIcon("configure"))
+        gGui.b_jack_render.setIcon(getIcon("media-record"))
 
-    #if "transport" in modes:
-        #gGui.ui.act_transport_play.setIcon(getIcon("media-playback-start"))
-        #gGui.ui.act_transport_stop.setIcon(getIcon("media-playback-stop"))
-        #gGui.ui.act_transport_backwards.setIcon(getIcon("media-seek-backward"))
-        #gGui.ui.act_transport_forwards.setIcon(getIcon("media-seek-forward"))
-        #gGui.ui.b_transport_play.setIcon(getIcon("media-playback-start"))
-        #gGui.ui.b_transport_stop.setIcon(getIcon("media-playback-stop"))
-        #gGui.ui.b_transport_backwards.setIcon(getIcon("media-seek-backward"))
-        #gGui.ui.b_transport_forwards.setIcon(getIcon("media-seek-forward"))
+    if "transport" in modes:
+        gGui.act_transport_play.setIcon(getIcon("media-playback-start"))
+        gGui.act_transport_stop.setIcon(getIcon("media-playback-stop"))
+        gGui.act_transport_backwards.setIcon(getIcon("media-seek-backward"))
+        gGui.act_transport_forwards.setIcon(getIcon("media-seek-forward"))
+        gGui.b_transport_play.setIcon(getIcon("media-playback-start"))
+        gGui.b_transport_stop.setIcon(getIcon("media-playback-stop"))
+        gGui.b_transport_backwards.setIcon(getIcon("media-seek-backward"))
+        gGui.b_transport_forwards.setIcon(getIcon("media-seek-forward"))
 
-    #if "misc" in modes:
-        #gGui.ui.act_quit.setIcon(getIcon("application-exit"))
-        #gGui.ui.act_configure.setIcon(getIcon("configure"))
+    if "misc" in modes:
+        gGui.act_quit.setIcon(getIcon("application-exit"))
+        gGui.act_configure.setIcon(getIcon("configure"))
