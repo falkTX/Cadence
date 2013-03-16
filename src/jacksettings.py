@@ -677,25 +677,25 @@ class JackSettingsW(QDialog):
     # Helper functions
 
     def getAlsaDeviceList(self):
-        alsa_dev_list = []
+        alsaDeviceList = []
 
         aplay_out = getoutput("env LANG=C aplay -l").split("\n")
         for line in aplay_out:
             line = line.strip()
             if line.startswith("card "):
-                card_info  = line.split(", ", 1)[0].split(": ")
-                card_index = card_info[0].replace("card ", "")
-                card_name  = card_info[1].split(" [")[0]
+                cardInfo  = line.split(", ", 1)[0].split(": ")
+                cardIndex = cardInfo[0].replace("card ", "")
+                cardName  = cardInfo[1].split(" [")[0]
 
-                device_info  = line.split(", ", 1)[1].split(": ")
-                device_index = device_info[0].replace("device ", "")
-                device_name  = device_info[1].split(" [")[0]
+                deviceInfo  = line.split(", ", 1)[1].split(": ")
+                deviceIndex = deviceInfo[0].replace("device ", "")
+                deviceName  = deviceInfo[1].split(" [")[0]
 
-                if card_name != "Loopback":
-                    full_name = "hw:%s,%s [%s]" % (card_name, device_index, device_name)
-                    alsa_dev_list.append(full_name)
+                if cardName != "Loopback":
+                    fullName = "hw:%s,%s [%s]" % (cardName, deviceIndex, deviceName)
+                    alsaDeviceList.append(fullName)
 
-        return alsa_dev_list
+        return alsaDeviceList
 
     def setComboBoxValue(self, box, text, split=False):
         for i in range(box.count()):
