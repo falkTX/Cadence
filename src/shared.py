@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Common/Shared code
-# Copyright (C) 2010-2012 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,8 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-import os, sys
+import os
+import sys
 from unicodedata import normalize
 from PyQt4.QtCore import qWarning, SIGNAL, SLOT
 from PyQt4.QtGui import QApplication, QFileDialog, QIcon, QMessageBox
@@ -69,7 +70,7 @@ except:
 # ------------------------------------------------------------------------------------------------------------
 # Set Version
 
-VERSION = "0.5.0"
+VERSION = "1.0.0"
 
 # ------------------------------------------------------------------------------------------------------------
 # Set Debug mode
@@ -79,8 +80,8 @@ DEBUG = bool("-d" in sys.argv or "-debug" in sys.argv or "--debug" in sys.argv)
 # ------------------------------------------------------------------------------------------------------------
 # Global variables
 
-global x_gui
-x_gui = None
+global gGui
+gGui = None
 
 # ------------------------------------------------------------------------------------------------------------
 # Set TMP
@@ -202,8 +203,8 @@ def CustomMessageBox(self_, icon, title, text, extraText="", buttons=QMessageBox
 # Signal handler
 
 def setUpSignals(self_):
-    global x_gui
-    x_gui = self_
+    global gGui
+    gGui = self_
 
     if not haveSignal:
         return
@@ -213,66 +214,84 @@ def setUpSignals(self_):
     signal(SIGUSR1, signalHandler)
     signal(SIGUSR2, signalHandler)
 
-    x_gui.connect(x_gui, SIGNAL("SIGTERM()"), closeWindowHandler)
-    x_gui.connect(x_gui, SIGNAL("SIGUSR2()"), showWindowHandler)
+    gGui.connect(gGui, SIGNAL("SIGTERM()"), closeWindowHandler)
+    gGui.connect(gGui, SIGNAL("SIGUSR2()"), showWindowHandler)
 
 def signalHandler(sig, frame):
-    global x_gui
+    global gGui
+
+    if gGui is None:
+        return
+
     if sig in (SIGINT, SIGTERM):
-        x_gui.emit(SIGNAL("SIGTERM()"))
+        gGui.emit(SIGNAL("SIGTERM()"))
     elif sig == SIGUSR1:
-        x_gui.emit(SIGNAL("SIGUSR1()"))
+        gGui.emit(SIGNAL("SIGUSR1()"))
     elif sig == SIGUSR2:
-        x_gui.emit(SIGNAL("SIGUSR2()"))
+        gGui.emit(SIGNAL("SIGUSR2()"))
 
 def closeWindowHandler():
-    global x_gui
-    x_gui.hide()
-    x_gui.close()
+    global gGui
+
+    if gGui is None:
+        return
+
+    gGui.hide()
+    gGui.close()
     QApplication.instance().quit()
 
 def showWindowHandler():
-    global x_gui
-    if x_gui.isMaximized():
-        x_gui.showMaximized()
+    global gGui
+
+    if gGui is None:
+        return
+
+    if gGui.isMaximized():
+        gGui.showMaximized()
     else:
-        x_gui.showNormal()
+        gGui.showNormal()
 
 # ------------------------------------------------------------------------------------------------------------
 # Shared Icons
 
-def setIcons(self_, modes):
-    if "canvas" in modes:
-        self_.act_canvas_arrange.setIcon(getIcon("view-sort-ascending"))
-        self_.act_canvas_refresh.setIcon(getIcon("view-refresh"))
-        self_.act_canvas_zoom_fit.setIcon(getIcon("zoom-fit-best"))
-        self_.act_canvas_zoom_in.setIcon(getIcon("zoom-in"))
-        self_.act_canvas_zoom_out.setIcon(getIcon("zoom-out"))
-        self_.act_canvas_zoom_100.setIcon(getIcon("zoom-original"))
-        self_.act_canvas_print.setIcon(getIcon("document-print"))
-        self_.b_canvas_zoom_fit.setIcon(getIcon("zoom-fit-best"))
-        self_.b_canvas_zoom_in.setIcon(getIcon("zoom-in"))
-        self_.b_canvas_zoom_out.setIcon(getIcon("zoom-out"))
-        self_.b_canvas_zoom_100.setIcon(getIcon("zoom-original"))
+def setIcons(modes):
+    global gGui
 
-    if "jack" in modes:
-        self_.act_jack_clear_xruns.setIcon(getIcon("edit-clear"))
-        self_.act_jack_configure.setIcon(getIcon("configure"))
-        self_.act_jack_render.setIcon(getIcon("media-record"))
-        self_.b_jack_clear_xruns.setIcon(getIcon("edit-clear"))
-        self_.b_jack_configure.setIcon(getIcon("configure"))
-        self_.b_jack_render.setIcon(getIcon("media-record"))
+    if gGui is None:
+        return
 
-    if "transport" in modes:
-        self_.act_transport_play.setIcon(getIcon("media-playback-start"))
-        self_.act_transport_stop.setIcon(getIcon("media-playback-stop"))
-        self_.act_transport_backwards.setIcon(getIcon("media-seek-backward"))
-        self_.act_transport_forwards.setIcon(getIcon("media-seek-forward"))
-        self_.b_transport_play.setIcon(getIcon("media-playback-start"))
-        self_.b_transport_stop.setIcon(getIcon("media-playback-stop"))
-        self_.b_transport_backwards.setIcon(getIcon("media-seek-backward"))
-        self_.b_transport_forwards.setIcon(getIcon("media-seek-forward"))
+    # TODO - need to update Catia and Claudia code first
+    #if "canvas" in modes:
+        #gGui.ui.act_canvas_arrange.setIcon(getIcon("view-sort-ascending"))
+        #gGui.ui.act_canvas_refresh.setIcon(getIcon("view-refresh"))
+        #gGui.ui.act_canvas_zoom_fit.setIcon(getIcon("zoom-fit-best"))
+        #gGui.ui.act_canvas_zoom_in.setIcon(getIcon("zoom-in"))
+        #gGui.ui.act_canvas_zoom_out.setIcon(getIcon("zoom-out"))
+        #gGui.ui.act_canvas_zoom_100.setIcon(getIcon("zoom-original"))
+        #gGui.ui.act_canvas_print.setIcon(getIcon("document-print"))
+        #gGui.ui.b_canvas_zoom_fit.setIcon(getIcon("zoom-fit-best"))
+        #gGui.ui.b_canvas_zoom_in.setIcon(getIcon("zoom-in"))
+        #gGui.ui.b_canvas_zoom_out.setIcon(getIcon("zoom-out"))
+        #gGui.ui.b_canvas_zoom_100.setIcon(getIcon("zoom-original"))
 
-    if "misc" in modes:
-        self_.act_quit.setIcon(getIcon("application-exit"))
-        self_.act_configure.setIcon(getIcon("configure"))
+    #if "jack" in modes:
+        #gGui.ui.act_jack_clear_xruns.setIcon(getIcon("edit-clear"))
+        #gGui.ui.act_jack_configure.setIcon(getIcon("configure"))
+        #gGui.ui.act_jack_render.setIcon(getIcon("media-record"))
+        #gGui.ui.b_jack_clear_xruns.setIcon(getIcon("edit-clear"))
+        #gGui.ui.b_jack_configure.setIcon(getIcon("configure"))
+        #gGui.ui.b_jack_render.setIcon(getIcon("media-record"))
+
+    #if "transport" in modes:
+        #gGui.ui.act_transport_play.setIcon(getIcon("media-playback-start"))
+        #gGui.ui.act_transport_stop.setIcon(getIcon("media-playback-stop"))
+        #gGui.ui.act_transport_backwards.setIcon(getIcon("media-seek-backward"))
+        #gGui.ui.act_transport_forwards.setIcon(getIcon("media-seek-forward"))
+        #gGui.ui.b_transport_play.setIcon(getIcon("media-playback-start"))
+        #gGui.ui.b_transport_stop.setIcon(getIcon("media-playback-stop"))
+        #gGui.ui.b_transport_backwards.setIcon(getIcon("media-seek-backward"))
+        #gGui.ui.b_transport_forwards.setIcon(getIcon("media-seek-forward"))
+
+    #if "misc" in modes:
+        #gGui.ui.act_quit.setIcon(getIcon("application-exit"))
+        #gGui.ui.act_configure.setIcon(getIcon("configure"))
