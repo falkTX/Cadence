@@ -1,0 +1,10 @@
+prefix=../../data/windows
+exec_prefix=../../data/windows
+libdir=../../data/windows/lib
+includedir=../../data/windows/includes
+
+Name: jack
+Description: the Jack Audio Connection Kit: a low-latency synchronous callback-based media server
+Version: 1.9.9.5
+Libs: -L../../data/windows/lib -ljack
+Cflags: -I../../data/windows/includes
