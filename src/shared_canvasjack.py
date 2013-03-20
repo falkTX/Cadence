@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Common/Shared code related to Canvas and JACK
-# Copyright (C) 2010-2012 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,9 @@ from PyQt4.QtGui import QCursor, QFontMetrics, QImage, QMainWindow, QMenu, QPain
 # Imports (Custom Stuff)
 
 import patchcanvas
-import jacksettings, logs, render
+import jacksettings
+import logs
+import render
 from shared import *
 from jacklib_helpers import *
 

@@ -9,9 +9,9 @@ DESTDIR =
 
 SED_PREFIX = $(shell echo $(PREFIX) | sed "s/\//\\\\\\\\\//g")
 
-LINK  = ln -s
-PYUIC = pyuic4
-PYRCC = pyrcc4 -py3
+LINK   = ln -s
+PYUIC ?= pyuic4
+PYRCC ?= pyrcc4 -py3
 
 # Detect X11 rules dir
 ifeq "$(wildcard /etc/X11/xinit/xinitrc.d/ )" ""
