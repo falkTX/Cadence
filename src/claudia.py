@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # LADISH frontend
-# Copyright (C) 2010-2012 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -138,11 +138,11 @@ ITEM_TYPE_ROOM       = 3
 ITEM_TYPE_ROOM_APP   = 4
 
 # C defines
-JACKDBUS_PORT_FLAG_INPUT       = 0x00000001
-JACKDBUS_PORT_FLAG_OUTPUT      = 0x00000002
-JACKDBUS_PORT_FLAG_PHYSICAL    = 0x00000004
-JACKDBUS_PORT_FLAG_CAN_MONITOR = 0x00000008
-JACKDBUS_PORT_FLAG_TERMINAL    = 0x00000010
+JACKDBUS_PORT_FLAG_INPUT       = 0x01
+JACKDBUS_PORT_FLAG_OUTPUT      = 0x02
+JACKDBUS_PORT_FLAG_PHYSICAL    = 0x04
+JACKDBUS_PORT_FLAG_CAN_MONITOR = 0x08
+JACKDBUS_PORT_FLAG_TERMINAL    = 0x10
 
 JACKDBUS_PORT_TYPE_AUDIO = 0
 JACKDBUS_PORT_TYPE_MIDI  = 1
@@ -175,16 +175,17 @@ setDefaultProjectFolder(DEFAULT_PROJECT_FOLDER)
 # ------------------------------------------------------------------------------------------------------------
 # Studio Name Dialog
 
-class StudioNameW(QDialog, ui_claudia_studioname.Ui_StudioNameW):
+class StudioNameW(QDialog):
     NEW = 1
     RENAME = 2
     SAVE_AS = 3
 
     def __init__(self, parent, mode):
         QDialog.__init__(self, parent)
-        self.setupUi(self)
+        self.ui = ui_claudia_studioname.Ui_StudioNameW()
+        self.ui.setupUi(self)
 
-        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
+        self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
 
         if mode == self.NEW:
             self.setWindowTitle(self.tr("New studio"))
@@ -193,34 +194,35 @@ class StudioNameW(QDialog, ui_claudia_studioname.Ui_StudioNameW):
         elif mode == self.SAVE_AS:
             self.setWindowTitle(self.tr("Save studio as"))
 
-        self.m_mode = mode
-        self.m_studio_list = []
+        self.fMode = mode
+        self.fStudioList = []
 
-        if mode == self.RENAME and bool(DBus.ladish_control.IsStudioLoaded()):
-            current_name = str(DBus.ladish_studio.GetName())
-            self.m_studio_list.append(current_name)
-            self.le_name.setText(current_name)
+        if mode == self.RENAME and bool(gDBus.ladish_control.IsStudioLoaded()):
+            currentName = str(gDBus.ladish_studio.GetName())
+            self.fStudioList.append(currentName)
+            self.ui.le_name.setText(currentName)
 
-        studio_list = DBus.ladish_control.GetStudioList()
-        for studio in studio_list:
-            self.m_studio_list.append(str(studio[iStudioListName]))
+        studioList = gDBus.ladish_control.GetStudioList()
+        for studio in studioList:
+            self.fStudioList.append(str(studio[iStudioListName]))
 
         self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
-        self.connect(self.le_name, SIGNAL("textChanged(QString)"), SLOT("slot_checkText(QString)"))
+        self.connect(self.ui.le_name, SIGNAL("textChanged(QString)"), SLOT("slot_checkText(QString)"))
 
-        self.ret_studio_name = ""
+        self.fRetStudioName = ""
 
     @pyqtSlot(str)
     def slot_checkText(self, text):
-        if self.m_mode == self.SAVE_AS:
+        if self.fMode == self.SAVE_AS:
             check = bool(text)
         else:
-            check = bool(text and text not in self.m_studio_list)
-        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(check)
+            check = bool(text and text not in self.fStudioList)
+
+        self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(check)
 
     @pyqtSlot()
     def slot_setReturn(self):
-        self.ret_studio_name = self.le_name.text()
+        self.fRetStudioName = self.ui.le_name.text()
 
     def done(self, r):
         QDialog.done(self, r)
@@ -236,7 +238,7 @@ class StudioListW(QDialog, ui_claudia_studiolist.Ui_StudioListW):
         self.tableWidget.setColumnWidth(0, 125)
 
         index = 0
-        studio_list = DBus.ladish_control.GetStudioList()
+        studio_list = gDBus.ladish_control.GetStudioList()
         for studio in studio_list:
             name = str(studio[iStudioListName])
             date = ctime(float(studio[iStudioListDict]["Modification Time"]))
@@ -280,7 +282,7 @@ class CreateRoomW(QDialog, ui_claudia_createroom.Ui_CreateRoomW):
 
         self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
 
-        templates_list = DBus.ladish_control.GetRoomTemplateList()
+        templates_list = gDBus.ladish_control.GetRoomTemplateList()
         for template_name, template_dict in templates_list:
             self.lw_templates.addItem(template_name)
 
@@ -578,10 +580,11 @@ class ClaudiaLauncherW(QDialog):
 # ------------------------------------------------------------------------------------------------------------
 # Claudia Main Window
 
-class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
+class ClaudiaMainW(AbstractCanvasJackClass):
     def __init__(self, parent=None):
         AbstractCanvasJackClass.__init__(self, parent, "Claudia")
-        self.setupUi(self)
+        self.ui = ui_claudia.Ui_ClaudiaMainW()
+        self.ui.setupUi(self)
 
         self.m_lastItemType = None
         self.m_lastRoomPath = None
@@ -596,56 +599,56 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
 
         setIcons(self, ["canvas", "jack", "transport"])
 
-        self.act_studio_new.setIcon(getIcon("document-new"))
-        self.menu_studio_load.setIcon(getIcon("document-open"))
-        self.act_studio_start.setIcon(getIcon("media-playback-start"))
-        self.act_studio_stop.setIcon(getIcon("media-playback-stop"))
-        self.act_studio_rename.setIcon(getIcon("edit-rename"))
-        self.act_studio_save.setIcon(getIcon("document-save"))
-        self.act_studio_save_as.setIcon(getIcon("document-save-as"))
-        self.act_studio_unload.setIcon(getIcon("window-close"))
-        self.menu_studio_delete.setIcon(getIcon("edit-delete"))
-        self.b_studio_new.setIcon(getIcon("document-new"))
-        self.b_studio_load.setIcon(getIcon("document-open"))
-        self.b_studio_save.setIcon(getIcon("document-save"))
-        self.b_studio_save_as.setIcon(getIcon("document-save-as"))
-        self.b_studio_start.setIcon(getIcon("media-playback-start"))
-        self.b_studio_stop.setIcon(getIcon("media-playback-stop"))
+        self.ui.act_studio_new.setIcon(getIcon("document-new"))
+        self.ui.menu_studio_load.setIcon(getIcon("document-open"))
+        self.ui.act_studio_start.setIcon(getIcon("media-playback-start"))
+        self.ui.act_studio_stop.setIcon(getIcon("media-playback-stop"))
+        self.ui.act_studio_rename.setIcon(getIcon("edit-rename"))
+        self.ui.act_studio_save.setIcon(getIcon("document-save"))
+        self.ui.act_studio_save_as.setIcon(getIcon("document-save-as"))
+        self.ui.act_studio_unload.setIcon(getIcon("window-close"))
+        self.ui.menu_studio_delete.setIcon(getIcon("edit-delete"))
+        self.ui.b_studio_new.setIcon(getIcon("document-new"))
+        self.ui.b_studio_load.setIcon(getIcon("document-open"))
+        self.ui.b_studio_save.setIcon(getIcon("document-save"))
+        self.ui.b_studio_save_as.setIcon(getIcon("document-save-as"))
+        self.ui.b_studio_start.setIcon(getIcon("media-playback-start"))
+        self.ui.b_studio_stop.setIcon(getIcon("media-playback-stop"))
 
-        self.act_room_create.setIcon(getIcon("list-add"))
-        self.menu_room_delete.setIcon(getIcon("edit-delete"))
+        self.ui.act_room_create.setIcon(getIcon("list-add"))
+        self.ui.menu_room_delete.setIcon(getIcon("edit-delete"))
 
-        self.act_project_new.setIcon(getIcon("document-new"))
-        self.menu_project_load.setIcon(getIcon("document-open"))
-        self.act_project_save.setIcon(getIcon("document-save"))
-        self.act_project_save_as.setIcon(getIcon("document-save-as"))
-        self.act_project_unload.setIcon(getIcon("window-close"))
-        self.act_project_properties.setIcon(getIcon("edit-rename"))
-        self.b_project_new.setIcon(getIcon("document-new"))
-        self.b_project_load.setIcon(getIcon("document-open"))
-        self.b_project_save.setIcon(getIcon("document-save"))
-        self.b_project_save_as.setIcon(getIcon("document-save-as"))
+        self.ui.act_project_new.setIcon(getIcon("document-new"))
+        self.ui.menu_project_load.setIcon(getIcon("document-open"))
+        self.ui.act_project_save.setIcon(getIcon("document-save"))
+        self.ui.act_project_save_as.setIcon(getIcon("document-save-as"))
+        self.ui.act_project_unload.setIcon(getIcon("window-close"))
+        self.ui.act_project_properties.setIcon(getIcon("edit-rename"))
+        self.ui.b_project_new.setIcon(getIcon("document-new"))
+        self.ui.b_project_load.setIcon(getIcon("document-open"))
+        self.ui.b_project_save.setIcon(getIcon("document-save"))
+        self.ui.b_project_save_as.setIcon(getIcon("document-save-as"))
 
-        self.act_app_add_new.setIcon(getIcon("list-add"))
-        self.act_app_run_custom.setIcon(getIcon("system-run"))
+        self.ui.act_app_add_new.setIcon(getIcon("list-add"))
+        self.ui.act_app_run_custom.setIcon(getIcon("system-run"))
 
-        self.act_tools_reactivate_ladishd.setIcon(getIcon("view-refresh"))
-        self.act_quit.setIcon(getIcon("application-exit"))
-        self.act_settings_configure.setIcon(getIcon("configure"))
+        self.ui.act_tools_reactivate_ladishd.setIcon(getIcon("view-refresh"))
+        self.ui.act_quit.setIcon(getIcon("application-exit"))
+        self.ui.act_settings_configure.setIcon(getIcon("configure"))
 
-        self.cb_buffer_size.clear()
-        self.cb_sample_rate.clear()
+        self.ui.cb_buffer_size.clear()
+        self.ui.cb_sample_rate.clear()
 
-        for buffer_size in BUFFER_SIZE_LIST:
-            self.cb_buffer_size.addItem(str(buffer_size))
+        for bufferSize in BUFFER_SIZE_LIST:
+            self.ui.cb_buffer_size.addItem(str(bufferSize))
 
-        for sample_rate in SAMPLE_RATE_LIST:
-            self.cb_sample_rate.addItem(str(sample_rate))
+        for sampleRate in SAMPLE_RATE_LIST:
+            self.ui.cb_sample_rate.addItem(str(sampleRate))
 
         # -------------------------------------------------------------
         # Set-up Systray
 
-        if self.m_savedSettings["Main/UseSystemTray"]:
+        if self.fSavedSettings["Main/UseSystemTray"]:
             self.systray = systray.GlobalSysTray(self, "Claudia", "claudia")
 
             self.systray.addAction("studio_new", self.tr("New Studio..."))
@@ -700,19 +703,19 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         # -------------------------------------------------------------
         # Set-up Canvas
 
-        self.scene = patchcanvas.PatchScene(self, self.graphicsView)
-        self.graphicsView.setScene(self.scene)
-        self.graphicsView.setRenderHint(QPainter.Antialiasing, bool(self.m_savedSettings["Canvas/Antialiasing"] == patchcanvas.ANTIALIASING_FULL))
-        if self.m_savedSettings["Canvas/UseOpenGL"] and hasGL:
-            self.graphicsView.setViewport(QGLWidget(self.graphicsView))
-            self.graphicsView.setRenderHint(QPainter.HighQualityAntialiasing, self.m_savedSettings["Canvas/HighQualityAntialiasing"])
+        self.scene = patchcanvas.PatchScene(self, self.ui.graphicsView)
+        self.ui.graphicsView.setScene(self.scene)
+        self.ui.graphicsView.setRenderHint(QPainter.Antialiasing, bool(self.fSavedSettings["Canvas/Antialiasing"] == patchcanvas.ANTIALIASING_FULL))
+        if self.fSavedSettings["Canvas/UseOpenGL"] and hasGL:
+            self.ui.graphicsView.setViewport(QGLWidget(self.ui.graphicsView))
+            self.ui.graphicsView.setRenderHint(QPainter.HighQualityAntialiasing, self.fSavedSettings["Canvas/HighQualityAntialiasing"])
 
         pOptions = patchcanvas.options_t()
-        pOptions.theme_name       = self.m_savedSettings["Canvas/Theme"]
-        pOptions.auto_hide_groups = self.m_savedSettings["Canvas/AutoHideGroups"]
-        pOptions.use_bezier_lines = self.m_savedSettings["Canvas/UseBezierLines"]
-        pOptions.antialiasing     = self.m_savedSettings["Canvas/Antialiasing"]
-        pOptions.eyecandy         = self.m_savedSettings["Canvas/EyeCandy"]
+        pOptions.theme_name       = self.fSavedSettings["Canvas/Theme"]
+        pOptions.auto_hide_groups = self.fSavedSettings["Canvas/AutoHideGroups"]
+        pOptions.use_bezier_lines = self.fSavedSettings["Canvas/UseBezierLines"]
+        pOptions.antialiasing     = self.fSavedSettings["Canvas/Antialiasing"]
+        pOptions.eyecandy         = self.fSavedSettings["Canvas/EyeCandy"]
 
         pFeatures = patchcanvas.features_t()
         pFeatures.group_info   = False
@@ -727,38 +730,38 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
 
         patchcanvas.setCanvasSize(0, 0, DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT)
         patchcanvas.setInitialPos(DEFAULT_CANVAS_WIDTH / 2, DEFAULT_CANVAS_HEIGHT / 2)
-        self.graphicsView.setSceneRect(0, 0, DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT)
+        self.ui.graphicsView.setSceneRect(0, 0, DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT)
 
         # -------------------------------------------------------------
         # Set-up Canvas Preview
 
-        self.miniCanvasPreview.setRealParent(self)
-        self.miniCanvasPreview.setViewTheme(patchcanvas.canvas.theme.canvas_bg, patchcanvas.canvas.theme.rubberband_brush, patchcanvas.canvas.theme.rubberband_pen.color())
-        self.miniCanvasPreview.init(self.scene, DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT)
+        self.ui.miniCanvasPreview.setRealParent(self)
+        self.ui.miniCanvasPreview.setViewTheme(patchcanvas.canvas.theme.canvas_bg, patchcanvas.canvas.theme.rubberband_brush, patchcanvas.canvas.theme.rubberband_pen.color())
+        self.ui.miniCanvasPreview.init(self.scene, DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT)
         QTimer.singleShot(100, self, SLOT("slot_miniCanvasInit()"))
 
         # -------------------------------------------------------------
         # Check DBus
 
-        if DBus.jack.IsStarted():
+        if gDBus.jack.IsStarted():
             self.jackStarted()
         else:
             self.jackStopped()
 
-        if DBus.a2j:
-            if DBus.a2j.is_started():
+        if gDBus.a2j:
+            if gDBus.a2j.is_started():
                 self.a2jStarted()
             else:
                 self.a2jStopped()
         else:
-            self.act_tools_a2j_start.setEnabled(False)
-            self.act_tools_a2j_stop.setEnabled(False)
-            self.act_tools_a2j_export_hw.setEnabled(False)
-            self.menu_A2J_Bridge.setEnabled(False)
+            self.ui.act_tools_a2j_start.setEnabled(False)
+            self.ui.act_tools_a2j_stop.setEnabled(False)
+            self.ui.act_tools_a2j_export_hw.setEnabled(False)
+            self.ui.menu_A2J_Bridge.setEnabled(False)
 
-        if DBus.ladish_control.IsStudioLoaded():
+        if gDBus.ladish_control.IsStudioLoaded():
             self.studioLoaded()
-            if DBus.ladish_studio.IsStarted():
+            if gDBus.ladish_studio.IsStarted():
                 self.studioStarted()
                 self.init_ports()
             else:
@@ -769,8 +772,8 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         # -------------------------------------------------------------
         # Set-up Timers
 
-        self.m_timer120 = self.startTimer(self.m_savedSettings["Main/RefreshInterval"])
-        self.m_timer600 = self.startTimer(self.m_savedSettings["Main/RefreshInterval"] * 5)
+        self.m_timer120 = self.startTimer(self.fSavedSettings["Main/RefreshInterval"])
+        self.m_timer600 = self.startTimer(self.fSavedSettings["Main/RefreshInterval"] * 5)
 
         # -------------------------------------------------------------
         # Set-up Connections
@@ -778,59 +781,59 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         self.setCanvasConnections()
         self.setJackConnections(["jack", "transport", "misc"])
 
-        self.connect(self.act_studio_new, SIGNAL("triggered()"), SLOT("slot_studio_new()"))
-        self.connect(self.act_studio_start, SIGNAL("triggered()"), SLOT("slot_studio_start()"))
-        self.connect(self.act_studio_stop, SIGNAL("triggered()"), SLOT("slot_studio_stop()"))
-        self.connect(self.act_studio_save, SIGNAL("triggered()"), SLOT("slot_studio_save()"))
-        self.connect(self.act_studio_save_as, SIGNAL("triggered()"), SLOT("slot_studio_save_as()"))
-        self.connect(self.act_studio_rename, SIGNAL("triggered()"), SLOT("slot_studio_rename()"))
-        self.connect(self.act_studio_unload, SIGNAL("triggered()"), SLOT("slot_studio_unload()"))
-        self.connect(self.act_tools_a2j_start, SIGNAL("triggered()"), SLOT("slot_A2JBridgeStart()"))
-        self.connect(self.act_tools_a2j_stop, SIGNAL("triggered()"), SLOT("slot_A2JBridgeStop()"))
-        self.connect(self.act_tools_a2j_export_hw, SIGNAL("triggered()"), SLOT("slot_A2JBridgeExportHW()"))
-        self.connect(self.b_studio_new, SIGNAL("clicked()"), SLOT("slot_studio_new()"))
-        self.connect(self.b_studio_load, SIGNAL("clicked()"), SLOT("slot_studio_load_b()"))
-        self.connect(self.b_studio_save, SIGNAL("clicked()"), SLOT("slot_studio_save()"))
-        self.connect(self.b_studio_save_as, SIGNAL("clicked()"), SLOT("slot_studio_save_as()"))
-        self.connect(self.b_studio_start, SIGNAL("clicked()"), SLOT("slot_studio_start()"))
-        self.connect(self.b_studio_stop, SIGNAL("clicked()"), SLOT("slot_studio_stop()"))
-        self.connect(self.menu_studio_load, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuStudioList_Load()"))
-        self.connect(self.menu_studio_delete, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuStudioList_Delete()"))
+        self.connect(self.ui.act_studio_new, SIGNAL("triggered()"), SLOT("slot_studio_new()"))
+        self.connect(self.ui.act_studio_start, SIGNAL("triggered()"), SLOT("slot_studio_start()"))
+        self.connect(self.ui.act_studio_stop, SIGNAL("triggered()"), SLOT("slot_studio_stop()"))
+        self.connect(self.ui.act_studio_save, SIGNAL("triggered()"), SLOT("slot_studio_save()"))
+        self.connect(self.ui.act_studio_save_as, SIGNAL("triggered()"), SLOT("slot_studio_save_as()"))
+        self.connect(self.ui.act_studio_rename, SIGNAL("triggered()"), SLOT("slot_studio_rename()"))
+        self.connect(self.ui.act_studio_unload, SIGNAL("triggered()"), SLOT("slot_studio_unload()"))
+        self.connect(self.ui.act_tools_a2j_start, SIGNAL("triggered()"), SLOT("slot_A2JBridgeStart()"))
+        self.connect(self.ui.act_tools_a2j_stop, SIGNAL("triggered()"), SLOT("slot_A2JBridgeStop()"))
+        self.connect(self.ui.act_tools_a2j_export_hw, SIGNAL("triggered()"), SLOT("slot_A2JBridgeExportHW()"))
+        self.connect(self.ui.b_studio_new, SIGNAL("clicked()"), SLOT("slot_studio_new()"))
+        self.connect(self.ui.b_studio_load, SIGNAL("clicked()"), SLOT("slot_studio_load_b()"))
+        self.connect(self.ui.b_studio_save, SIGNAL("clicked()"), SLOT("slot_studio_save()"))
+        self.connect(self.ui.b_studio_save_as, SIGNAL("clicked()"), SLOT("slot_studio_save_as()"))
+        self.connect(self.ui.b_studio_start, SIGNAL("clicked()"), SLOT("slot_studio_start()"))
+        self.connect(self.ui.b_studio_stop, SIGNAL("clicked()"), SLOT("slot_studio_stop()"))
+        self.connect(self.ui.menu_studio_load, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuStudioList_Load()"))
+        self.connect(self.ui.menu_studio_delete, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuStudioList_Delete()"))
 
-        self.connect(self.act_room_create, SIGNAL("triggered()"), SLOT("slot_room_create()"))
-        self.connect(self.menu_room_delete, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuRoomList()"))
+        self.connect(self.ui.act_room_create, SIGNAL("triggered()"), SLOT("slot_room_create()"))
+        self.connect(self.ui.menu_room_delete, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuRoomList()"))
 
-        self.connect(self.act_project_new, SIGNAL("triggered()"), SLOT("slot_project_new()"))
-        self.connect(self.act_project_save, SIGNAL("triggered()"), SLOT("slot_project_save()"))
-        self.connect(self.act_project_save_as, SIGNAL("triggered()"), SLOT("slot_project_save_as()"))
-        self.connect(self.act_project_unload, SIGNAL("triggered()"), SLOT("slot_project_unload()"))
-        self.connect(self.act_project_properties, SIGNAL("triggered()"), SLOT("slot_project_properties()"))
-        self.connect(self.b_project_new, SIGNAL("clicked()"), SLOT("slot_project_new()"))
-        self.connect(self.b_project_load, SIGNAL("clicked()"), SLOT("slot_project_load()"))
-        self.connect(self.b_project_save, SIGNAL("clicked()"), SLOT("slot_project_save()"))
-        self.connect(self.b_project_save_as, SIGNAL("clicked()"), SLOT("slot_project_save_as()"))
-        self.connect(self.menu_project_load, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuProjectList()"))
+        self.connect(self.ui.act_project_new, SIGNAL("triggered()"), SLOT("slot_project_new()"))
+        self.connect(self.ui.act_project_save, SIGNAL("triggered()"), SLOT("slot_project_save()"))
+        self.connect(self.ui.act_project_save_as, SIGNAL("triggered()"), SLOT("slot_project_save_as()"))
+        self.connect(self.ui.act_project_unload, SIGNAL("triggered()"), SLOT("slot_project_unload()"))
+        self.connect(self.ui.act_project_properties, SIGNAL("triggered()"), SLOT("slot_project_properties()"))
+        self.connect(self.ui.b_project_new, SIGNAL("clicked()"), SLOT("slot_project_new()"))
+        self.connect(self.ui.b_project_load, SIGNAL("clicked()"), SLOT("slot_project_load()"))
+        self.connect(self.ui.b_project_save, SIGNAL("clicked()"), SLOT("slot_project_save()"))
+        self.connect(self.ui.b_project_save_as, SIGNAL("clicked()"), SLOT("slot_project_save_as()"))
+        self.connect(self.ui.menu_project_load, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuProjectList()"))
 
-        self.connect(self.act_app_add_new, SIGNAL("triggered()"), SLOT("slot_app_add_new()"))
-        self.connect(self.act_app_run_custom, SIGNAL("triggered()"), SLOT("slot_app_run_custom()"))
+        self.connect(self.ui.act_app_add_new, SIGNAL("triggered()"), SLOT("slot_app_add_new()"))
+        self.connect(self.ui.act_app_run_custom, SIGNAL("triggered()"), SLOT("slot_app_run_custom()"))
 
-        self.connect(self.treeWidget, SIGNAL("itemSelectionChanged()"), SLOT("slot_checkCurrentRoom()"))
-        #self.connect(self.treeWidget, SIGNAL("itemPressed(QTreeWidgetItem*, int)"), SLOT("slot_checkCurrentRoom()"))
-        self.connect(self.treeWidget, SIGNAL("itemDoubleClicked(QTreeWidgetItem*, int)"), SLOT("slot_doubleClickedAppList(QTreeWidgetItem*, int)"))
-        self.connect(self.treeWidget, SIGNAL("customContextMenuRequested(QPoint)"), SLOT("slot_showAppListCustomMenu()"))
+        self.connect(self.ui.treeWidget, SIGNAL("itemSelectionChanged()"), SLOT("slot_checkCurrentRoom()"))
+        #self.connect(self.ui.treeWidget, SIGNAL("itemPressed(QTreeWidgetItem*, int)"), SLOT("slot_checkCurrentRoom()"))
+        self.connect(self.ui.treeWidget, SIGNAL("itemDoubleClicked(QTreeWidgetItem*, int)"), SLOT("slot_doubleClickedAppList(QTreeWidgetItem*, int)"))
+        self.connect(self.ui.treeWidget, SIGNAL("customContextMenuRequested(QPoint)"), SLOT("slot_showAppListCustomMenu()"))
 
-        self.connect(self.miniCanvasPreview, SIGNAL("miniCanvasMoved(double, double)"), SLOT("slot_miniCanvasMoved(double, double)"))
+        self.connect(self.ui.miniCanvasPreview, SIGNAL("miniCanvasMoved(double, double)"), SLOT("slot_miniCanvasMoved(double, double)"))
 
-        self.connect(self.graphicsView.horizontalScrollBar(), SIGNAL("valueChanged(int)"), SLOT("slot_horizontalScrollBarChanged(int)"))
-        self.connect(self.graphicsView.verticalScrollBar(), SIGNAL("valueChanged(int)"), SLOT("slot_verticalScrollBarChanged(int)"))
+        self.connect(self.ui.graphicsView.horizontalScrollBar(), SIGNAL("valueChanged(int)"), SLOT("slot_horizontalScrollBarChanged(int)"))
+        self.connect(self.ui.graphicsView.verticalScrollBar(), SIGNAL("valueChanged(int)"), SLOT("slot_verticalScrollBarChanged(int)"))
 
         self.connect(self.scene, SIGNAL("sceneGroupMoved(int, int, QPointF)"), SLOT("slot_canvasItemMoved(int, int, QPointF)"))
         self.connect(self.scene, SIGNAL("scaleChanged(double)"), SLOT("slot_canvasScaleChanged(double)"))
 
-        self.connect(self.act_settings_configure, SIGNAL("triggered()"), SLOT("slot_configureClaudia()"))
+        self.connect(self.ui.act_settings_configure, SIGNAL("triggered()"), SLOT("slot_configureClaudia()"))
 
-        self.connect(self.act_help_about, SIGNAL("triggered()"), SLOT("slot_aboutClaudia()"))
-        self.connect(self.act_help_about_qt, SIGNAL("triggered()"), app, SLOT("aboutQt()"))
+        self.connect(self.ui.act_help_about, SIGNAL("triggered()"), SLOT("slot_aboutClaudia()"))
+        self.connect(self.ui.act_help_about_qt, SIGNAL("triggered()"), app, SLOT("aboutQt()"))
 
         # org.freedesktop.DBus
         self.connect(self, SIGNAL("DBusCrashCallback(QString)"), SLOT("slot_DBusCrashCallback(QString)"))
@@ -880,7 +883,7 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         # -------------------------------------------------------------
         # Set-up DBus
 
-        DBus.bus.add_signal_receiver(self.DBusSignalReceiver, destination_keyword="dest", path_keyword="path",
+        gDBus.bus.add_signal_receiver(self.DBusSignalReceiver, destination_keyword="dest", path_keyword="path",
             member_keyword="member", interface_keyword="interface", sender_keyword="sender")
 
         # -------------------------------------------------------------
@@ -892,21 +895,21 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         elif action == patchcanvas.ACTION_GROUP_RENAME:
             group_id = value1
             group_name = value_str
-            DBus.ladish_manager.RenameClient(group_id, group_name)
+            gDBus.ladish_manager.RenameClient(group_id, group_name)
 
         elif action == patchcanvas.ACTION_GROUP_SPLIT:
             group_id = value1
-            DBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_SPLIT, "true")
+            gDBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_SPLIT, "true")
 
             patchcanvas.splitGroup(group_id)
-            self.miniCanvasPreview.update()
+            self.ui.miniCanvasPreview.update()
 
         elif action == patchcanvas.ACTION_GROUP_JOIN:
             group_id = value1
-            DBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_SPLIT, "false")
+            gDBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_SPLIT, "false")
 
             patchcanvas.joinGroup(group_id)
-            self.miniCanvasPreview.update()
+            self.ui.miniCanvasPreview.update()
 
         elif action == patchcanvas.ACTION_PORT_INFO:
             this_port_id = value1
@@ -917,7 +920,7 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
             port_name  = ""
             port_type_jack = 0
 
-            version, groups, conns = DBus.patchbay.GetGraph(0)
+            version, groups, conns = gDBus.patchbay.GetGraph(0)
 
             for group in groups:
                 group_id, group_name, ports = group
@@ -980,31 +983,31 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         elif action == patchcanvas.ACTION_PORT_RENAME:
             port_id = value1
             port_name = value_str
-            DBus.ladish_manager.RenamePort(port_id, port_name)
+            gDBus.ladish_manager.RenamePort(port_id, port_name)
 
         elif action == patchcanvas.ACTION_PORTS_CONNECT:
             port_a = value1
             port_b = value2
-            DBus.patchbay.ConnectPortsByID(port_a, port_b)
+            gDBus.patchbay.ConnectPortsByID(port_a, port_b)
 
         elif action == patchcanvas.ACTION_PORTS_DISCONNECT:
             connection_id = value1
-            DBus.patchbay.DisconnectPortsByConnectionID(connection_id)
+            gDBus.patchbay.DisconnectPortsByConnectionID(connection_id)
 
     def init_jack(self):
-        self.m_xruns = -1
-        self.m_nextSampleRate = 0
+        self.fXruns = -1
+        self.fNextSampleRate = 0.0
 
-        self.m_lastBPM = None
-        self.m_lastTransportState = None
+        self.fLastBPM = None
+        self.fLastTransportState = None
 
-        bufferSize = int(jacklib.get_buffer_size(jack.client))
-        sampleRate = int(jacklib.get_sample_rate(jack.client))
-        realtime = bool(int(jacklib.is_realtime(jack.client)))
+        bufferSize = int(jacklib.get_buffer_size(gJack.client))
+        sampleRate = int(jacklib.get_sample_rate(gJack.client))
+        realtime = bool(int(jacklib.is_realtime(gJack.client)))
 
-        self.setBufferSize(bufferSize)
-        self.setSampleRate(sampleRate)
-        self.setRealTime(realtime)
+        self.ui_setBufferSize(bufferSize)
+        self.ui_setSampleRate(sampleRate)
+        self.ui_setRealTime(realtime)
 
         self.refreshDSPLoad()
         self.refreshTransport()
@@ -1012,20 +1015,20 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
 
         self.init_callbacks()
 
-        jacklib.activate(jack.client)
+        jacklib.activate(gJack.client)
 
     def init_callbacks(self):
-        jacklib.set_buffer_size_callback(jack.client, self.JackBufferSizeCallback, None)
-        jacklib.set_sample_rate_callback(jack.client, self.JackSampleRateCallback, None)
-        jacklib.on_shutdown(jack.client, self.JackShutdownCallback, None)
+        jacklib.set_buffer_size_callback(gJack.client, self.JackBufferSizeCallback, None)
+        jacklib.set_sample_rate_callback(gJack.client, self.JackSampleRateCallback, None)
+        jacklib.on_shutdown(gJack.client, self.JackShutdownCallback, None)
 
     def init_studio(self):
-        self.treeWidget.clear()
+        self.ui.treeWidget.clear()
 
         studio_item = QTreeWidgetItem(ITEM_TYPE_STUDIO)
-        studio_item.setText(0, str(DBus.ladish_studio.GetName()))
-        self.treeWidget.insertTopLevelItem(0, studio_item)
-        self.treeWidget.setCurrentItem(studio_item)
+        studio_item.setText(0, str(gDBus.ladish_studio.GetName()))
+        self.ui.treeWidget.insertTopLevelItem(0, studio_item)
+        self.ui.treeWidget.setCurrentItem(studio_item)
 
         self.m_lastItemType = ITEM_TYPE_STUDIO
         self.m_lastRoomPath = None
@@ -1033,8 +1036,8 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         self.init_apps()
 
     def init_apps(self):
-        studio_iface = dbus.Interface(DBus.ladish_studio, 'org.ladish.AppSupervisor')
-        studio_item = self.treeWidget.topLevelItem(0)
+        studio_iface = dbus.Interface(gDBus.ladish_studio, 'org.ladish.AppSupervisor')
+        studio_item = self.ui.treeWidget.topLevelItem(0)
 
         graph_version, app_list = studio_iface.GetAll2()
 
@@ -1065,11 +1068,11 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
             item.setText(0, text)
             studio_item.addChild(item)
 
-        room_list = DBus.ladish_studio.GetRoomList()
+        room_list = gDBus.ladish_studio.GetRoomList()
 
         for room in room_list:
             room_path, room_dict = room
-            ladish_room = DBus.bus.get_object("org.ladish", room_path)
+            ladish_room = gDBus.bus.get_object("org.ladish", room_path)
             room_name   = ladish_room.GetName()
 
             room_app_iface = dbus.Interface(ladish_room, 'org.ladish.AppSupervisor')
@@ -1104,13 +1107,13 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
                 item.setText(0, text)
                 room_item.addChild(item)
 
-        self.treeWidget.expandAll()
+        self.ui.treeWidget.expandAll()
 
     def init_ports(self):
-        if not (jack.client and DBus.patchbay):
+        if not (gJack.client and gDBus.patchbay):
             return
 
-        version, groups, conns = DBus.patchbay.GetGraph(0)
+        version, groups, conns = gDBus.patchbay.GetGraph(0)
 
         # Graph Ports
         for group in groups:
@@ -1130,7 +1133,7 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
                 if port_type_jack == JACKDBUS_PORT_TYPE_AUDIO:
                     port_type = patchcanvas.PORT_TYPE_AUDIO_JACK
                 elif port_type_jack == JACKDBUS_PORT_TYPE_MIDI:
-                    if DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_PORT, port_id, URI_A2J_PORT) == "yes":
+                    if gDBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_PORT, port_id, URI_A2J_PORT) == "yes":
                         port_type = patchcanvas.PORT_TYPE_MIDI_A2J
                     else:
                         port_type = patchcanvas.PORT_TYPE_MIDI_JACK
@@ -1144,23 +1147,23 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
             source_group_id, source_group_name, source_port_id, source_port_name, target_group_id, target_group_name, target_port_id, target_port_name, conn_id = conn
             self.canvas_connect_ports(int(conn_id), int(source_port_id), int(target_port_id))
 
-        QTimer.singleShot(1000 if (self.m_savedSettings['Canvas/EyeCandy']) else 0, self.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(1000 if (self.fSavedSettings['Canvas/EyeCandy']) else 0, self.ui.miniCanvasPreview, SLOT("update()"))
 
     def room_add(self, room_path, room_name):
         room_index  = int(room_path.replace("/org/ladish/Room", ""))
-        room_object = DBus.bus.get_object("org.ladish", room_path)
+        room_object = gDBus.bus.get_object("org.ladish", room_path)
         room_project_properties = room_object.GetProjectProperties()
 
         # Remove old unused item if needed
-        iItem = self.treeWidget.topLevelItem(room_index)
+        iItem = self.ui.treeWidget.topLevelItem(room_index)
         if iItem and not iItem.isVisible():
-            self.treeWidget.takeTopLevelItem(room_index)
+            self.ui.treeWidget.takeTopLevelItem(room_index)
 
         # Insert padding of items if needed
         for i in range(room_index):
-            if not self.treeWidget.topLevelItem(i):
+            if not self.ui.treeWidget.topLevelItem(i):
                 fake_item = QTreeWidgetItem(ITEM_TYPE_NULL)
-                self.treeWidget.insertTopLevelItem(i, fake_item)
+                self.ui.treeWidget.insertTopLevelItem(i, fake_item)
                 fake_item.setHidden(True)
 
         graph_version, project_properties = room_project_properties
@@ -1178,8 +1181,8 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         item.properties = prop_obj
         item.setText(0, "%s%s" % (room_name, item_string))
 
-        self.treeWidget.insertTopLevelItem(room_index, item)
-        self.treeWidget.expandItem(item)
+        self.ui.treeWidget.insertTopLevelItem(room_index, item)
+        self.ui.treeWidget.expandItem(item)
 
         return item
 
@@ -1195,7 +1198,7 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         #else:
         icon = patchcanvas.ICON_APPLICATION
 
-        split_try = DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_SPLIT)
+        split_try = gDBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_SPLIT)
         if split_try == "true":
             split = patchcanvas.SPLIT_YES
         elif split_try == "false":
@@ -1205,71 +1208,71 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
 
         patchcanvas.addGroup(group_id, group_name, split, icon)
 
-        x  = DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_X)
-        y  = DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_Y)
-        x2 = DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_X_SPLIT)
-        y2 = DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_Y_SPLIT)
+        x  = gDBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_X)
+        y  = gDBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_Y)
+        x2 = gDBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_X_SPLIT)
+        y2 = gDBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_Y_SPLIT)
 
         if x != None and y != None:
             if x2 is None: x2 = "%f" % (float(x) + 50)
             if y2 is None: y2 = "%f" % (float(y) + 50)
             patchcanvas.setGroupPosFull(group_id, float(x), float(y), float(x2), float(y2))
 
-        QTimer.singleShot(0, self.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(0, self.ui.miniCanvasPreview, SLOT("update()"))
 
     def canvas_remove_group(self, group_id):
         patchcanvas.removeGroup(group_id)
-        QTimer.singleShot(0, self.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(0, self.ui.miniCanvasPreview, SLOT("update()"))
 
     def canvas_rename_group(self, group_id, new_group_name):
         patchcanvas.renameGroup(group_id, new_group_name)
-        QTimer.singleShot(0, self.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(0, self.ui.miniCanvasPreview, SLOT("update()"))
 
     def canvas_add_port(self, group_id, port_id, port_name, port_mode, port_type):
         patchcanvas.addPort(group_id, port_id, port_name, port_mode, port_type)
-        QTimer.singleShot(0, self.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(0, self.ui.miniCanvasPreview, SLOT("update()"))
 
     def canvas_remove_port(self, port_id):
         patchcanvas.removePort(port_id)
-        QTimer.singleShot(0, self.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(0, self.ui.miniCanvasPreview, SLOT("update()"))
 
     def canvas_rename_port(self, port_id, new_port_name):
         patchcanvas.renamePort(port_id, new_port_name)
-        QTimer.singleShot(0, self.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(0, self.ui.miniCanvasPreview, SLOT("update()"))
 
     def canvas_connect_ports(self, connection_id, port_a, port_b):
         patchcanvas.connectPorts(connection_id, port_a, port_b)
-        QTimer.singleShot(0, self.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(0, self.ui.miniCanvasPreview, SLOT("update()"))
 
     def canvas_disconnect_ports(self, connection_id):
         patchcanvas.disconnectPorts(connection_id)
-        QTimer.singleShot(0, self.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(0, self.ui.miniCanvasPreview, SLOT("update()"))
 
     def jackStarted(self):
         if jacksettings.needsInit():
             self.DBusReconnect()
 
-        if not jack.client:
-            jack.client = jacklib.client_open("claudia", jacklib.JackNoStartServer, None)
-            if not jack.client:
+        if not gJack.client:
+            gJack.client = jacklib.client_open("claudia", jacklib.JackNoStartServer, None)
+            if not gJack.client:
                 return self.jackStopped()
 
         canRender = render.canRender()
 
-        self.act_jack_render.setEnabled(canRender)
-        self.b_jack_render.setEnabled(canRender)
+        self.ui.act_jack_render.setEnabled(canRender)
+        self.ui.b_jack_render.setEnabled(canRender)
         self.menuJackTransport(True)
         self.menuA2JBridge(False)
 
-        self.cb_buffer_size.setEnabled(True)
-        self.cb_sample_rate.setEnabled(True) # jacksettings.getSampleRate() != -1
+        self.ui.cb_buffer_size.setEnabled(True)
+        self.ui.cb_sample_rate.setEnabled(True) # jacksettings.getSampleRate() != -1
 
         if self.systray:
             self.systray.setActionEnabled("tools_render", canRender)
 
-        self.pb_dsp_load.setMaximum(100)
-        self.pb_dsp_load.setValue(0)
-        self.pb_dsp_load.update()
+        self.ui.pb_dsp_load.setMaximum(100)
+        self.ui.pb_dsp_load.setValue(0)
+        self.ui.pb_dsp_load.update()
 
         self.init_jack()
 
@@ -1279,10 +1282,10 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         #self.DBusReconnect()
 
         # client already closed
-        jack.client = None
+        gJack.client = None
 
-        if self.m_nextSampleRate:
-            self.jack_setSampleRate(self.m_nextSampleRate)
+        if self.fNextSampleRate:
+            self.jack_setSampleRate(self.fNextSampleRate)
 
         bufferSize = jacksettings.getBufferSize()
         sampleRate = jacksettings.getSampleRate()
@@ -1290,46 +1293,46 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         sampleRateTest = bool(sampleRate != -1)
 
         if bufferSizeTest:
-            self.setBufferSize(bufferSize)
+            self.ui_setBufferSize(bufferSize)
 
         if sampleRateTest:
-            self.setSampleRate(sampleRate)
+            self.ui_setSampleRate(sampleRate)
 
-        self.setRealTime(jacksettings.isRealtime())
-        self.setXruns(-1)
+        self.ui_setRealTime(jacksettings.isRealtime())
+        self.ui_setXruns(-1)
 
-        self.cb_buffer_size.setEnabled(bufferSizeTest)
-        self.cb_sample_rate.setEnabled(sampleRateTest)
+        self.ui.cb_buffer_size.setEnabled(bufferSizeTest)
+        self.ui.cb_sample_rate.setEnabled(sampleRateTest)
 
-        self.act_jack_render.setEnabled(False)
-        self.b_jack_render.setEnabled(False)
+        self.ui.act_jack_render.setEnabled(False)
+        self.ui.b_jack_render.setEnabled(False)
         self.menuJackTransport(False)
         self.menuA2JBridge(False)
 
         if self.systray:
             self.systray.setActionEnabled("tools_render", False)
 
-        if self.m_curTransportView == TRANSPORT_VIEW_HMS:
-            self.label_time.setText("00:00:00")
-        elif self.m_curTransportView == TRANSPORT_VIEW_BBT:
-            self.label_time.setText("000|0|0000")
-        elif self.m_curTransportView == TRANSPORT_VIEW_FRAMES:
-            self.label_time.setText("000'000'000")
+        if self.fCurTransportView == TRANSPORT_VIEW_HMS:
+            self.ui.label_time.setText("00:00:00")
+        elif self.fCurTransportView == TRANSPORT_VIEW_BBT:
+            self.ui.label_time.setText("000|0|0000")
+        elif self.fCurTransportView == TRANSPORT_VIEW_FRAMES:
+            self.ui.label_time.setText("000'000'000")
 
-        self.pb_dsp_load.setValue(0)
-        self.pb_dsp_load.setMaximum(0)
-        self.pb_dsp_load.update()
+        self.ui.pb_dsp_load.setValue(0)
+        self.ui.pb_dsp_load.setMaximum(0)
+        self.ui.pb_dsp_load.update()
 
     def studioStarted(self):
-        self.act_studio_start.setEnabled(False)
-        self.act_studio_stop.setEnabled(True)
-        self.act_studio_save.setEnabled(True)
-        self.act_studio_save_as.setEnabled(True)
+        self.ui.act_studio_start.setEnabled(False)
+        self.ui.act_studio_stop.setEnabled(True)
+        self.ui.act_studio_save.setEnabled(True)
+        self.ui.act_studio_save_as.setEnabled(True)
 
-        self.b_studio_save.setEnabled(True)
-        self.b_studio_save_as.setEnabled(True)
-        self.b_studio_start.setEnabled(False)
-        self.b_studio_stop.setEnabled(True)
+        self.ui.b_studio_save.setEnabled(True)
+        self.ui.b_studio_save_as.setEnabled(True)
+        self.ui.b_studio_start.setEnabled(False)
+        self.ui.b_studio_stop.setEnabled(True)
 
         if self.systray:
             self.systray.setActionEnabled("studio_start", False)
@@ -1338,15 +1341,15 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
             self.systray.setActionEnabled("studio_save_as", True)
 
     def studioStopped(self):
-        self.act_studio_start.setEnabled(True)
-        self.act_studio_stop.setEnabled(False)
-        self.act_studio_save.setEnabled(False)
-        self.act_studio_save_as.setEnabled(False)
+        self.ui.act_studio_start.setEnabled(True)
+        self.ui.act_studio_stop.setEnabled(False)
+        self.ui.act_studio_save.setEnabled(False)
+        self.ui.act_studio_save_as.setEnabled(False)
 
-        self.b_studio_save.setEnabled(False)
-        self.b_studio_save_as.setEnabled(False)
-        self.b_studio_start.setEnabled(True)
-        self.b_studio_stop.setEnabled(False)
+        self.ui.b_studio_save.setEnabled(False)
+        self.ui.b_studio_save_as.setEnabled(False)
+        self.ui.b_studio_start.setEnabled(True)
+        self.ui.b_studio_stop.setEnabled(False)
 
         if self.systray:
             self.systray.setActionEnabled("studio_start", True)
@@ -1355,25 +1358,25 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
             self.systray.setActionEnabled("studio_save_as", False)
 
     def studioLoaded(self):
-        DBus.ladish_studio  = DBus.bus.get_object("org.ladish", "/org/ladish/Studio")
-        DBus.ladish_graph   = dbus.Interface(DBus.ladish_studio, 'org.ladish.GraphDict')
-        DBus.ladish_manager = dbus.Interface(DBus.ladish_studio, 'org.ladish.GraphManager')
-        DBus.ladish_app_iface = dbus.Interface(DBus.ladish_studio, 'org.ladish.AppSupervisor')
-        DBus.patchbay = dbus.Interface(DBus.ladish_studio, 'org.jackaudio.JackPatchbay')
+        gDBus.ladish_studio  = gDBus.bus.get_object("org.ladish", "/org/ladish/Studio")
+        gDBus.ladish_graph   = dbus.Interface(gDBus.ladish_studio, 'org.ladish.GraphDict')
+        gDBus.ladish_manager = dbus.Interface(gDBus.ladish_studio, 'org.ladish.GraphManager')
+        gDBus.ladish_app_iface = dbus.Interface(gDBus.ladish_studio, 'org.ladish.AppSupervisor')
+        gDBus.patchbay = dbus.Interface(gDBus.ladish_studio, 'org.jackaudio.JackPatchbay')
 
-        self.label_first_time.setVisible(False)
-        self.graphicsView.setVisible(True)
-        self.miniCanvasPreview.setVisible(True)
-        #if (self.miniCanvasPreview.is_initiated):
+        self.ui.label_first_time.setVisible(False)
+        self.ui.graphicsView.setVisible(True)
+        self.ui.miniCanvasPreview.setVisible(True)
+        #if (self.ui.miniCanvasPreview.is_initiated):
             #self.checkMiniCanvasSize()
 
-        self.menu_Room.setEnabled(True)
-        self.menu_Project.setEnabled(False)
-        self.menu_Application.setEnabled(True)
-        self.group_project.setEnabled(False)
+        self.ui.menu_Room.setEnabled(True)
+        self.ui.menu_Project.setEnabled(False)
+        self.ui.menu_Application.setEnabled(True)
+        self.ui.group_project.setEnabled(False)
 
-        self.act_studio_rename.setEnabled(True)
-        self.act_studio_unload.setEnabled(True)
+        self.ui.act_studio_rename.setEnabled(True)
+        self.ui.act_studio_unload.setEnabled(True)
 
         if self.systray:
             self.systray.setActionEnabled("studio_rename", True)
@@ -1384,35 +1387,35 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         self.m_crashedLADISH = False
 
     def studioUnloaded(self):
-        DBus.ladish_studio  = None
-        DBus.ladish_graph   = None
-        DBus.ladish_manager = None
-        DBus.ladish_app_iface = None
-        DBus.patchbay = None
+        gDBus.ladish_studio  = None
+        gDBus.ladish_graph   = None
+        gDBus.ladish_manager = None
+        gDBus.ladish_app_iface = None
+        gDBus.patchbay = None
 
         self.m_lastItemType = None
         self.m_lastRoomPath = None
 
-        self.label_first_time.setVisible(True)
-        self.graphicsView.setVisible(False)
-        self.miniCanvasPreview.setVisible(False)
+        self.ui.label_first_time.setVisible(True)
+        self.ui.graphicsView.setVisible(False)
+        self.ui.miniCanvasPreview.setVisible(False)
 
-        self.menu_Room.setEnabled(False)
-        self.menu_Project.setEnabled(False)
-        self.menu_Application.setEnabled(False)
-        self.group_project.setEnabled(False)
+        self.ui.menu_Room.setEnabled(False)
+        self.ui.menu_Project.setEnabled(False)
+        self.ui.menu_Application.setEnabled(False)
+        self.ui.group_project.setEnabled(False)
 
-        self.act_studio_start.setEnabled(False)
-        self.act_studio_stop.setEnabled(False)
-        self.act_studio_rename.setEnabled(False)
-        self.act_studio_save.setEnabled(False)
-        self.act_studio_save_as.setEnabled(False)
-        self.act_studio_unload.setEnabled(False)
+        self.ui.act_studio_start.setEnabled(False)
+        self.ui.act_studio_stop.setEnabled(False)
+        self.ui.act_studio_rename.setEnabled(False)
+        self.ui.act_studio_save.setEnabled(False)
+        self.ui.act_studio_save_as.setEnabled(False)
+        self.ui.act_studio_unload.setEnabled(False)
 
-        self.b_studio_save.setEnabled(False)
-        self.b_studio_save_as.setEnabled(False)
-        self.b_studio_start.setEnabled(False)
-        self.b_studio_stop.setEnabled(False)
+        self.ui.b_studio_save.setEnabled(False)
+        self.ui.b_studio_save_as.setEnabled(False)
+        self.ui.b_studio_start.setEnabled(False)
+        self.ui.b_studio_stop.setEnabled(False)
 
         if self.systray:
             self.systray.setActionEnabled("studio_start", False)
@@ -1422,7 +1425,7 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
             self.systray.setActionEnabled("studio_save_as", False)
             self.systray.setActionEnabled("studio_unload", False)
 
-        self.treeWidget.clear()
+        self.ui.treeWidget.clear()
 
         patchcanvas.clear()
 
@@ -1433,22 +1436,22 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         self.menuA2JBridge(False)
 
     def menuJackTransport(self, enabled):
-        self.act_transport_play.setEnabled(enabled)
-        self.act_transport_stop.setEnabled(enabled)
-        self.act_transport_backwards.setEnabled(enabled)
-        self.act_transport_forwards.setEnabled(enabled)
-        self.menu_Transport.setEnabled(enabled)
-        self.group_transport.setEnabled(enabled)
+        self.ui.act_transport_play.setEnabled(enabled)
+        self.ui.act_transport_stop.setEnabled(enabled)
+        self.ui.act_transport_backwards.setEnabled(enabled)
+        self.ui.act_transport_forwards.setEnabled(enabled)
+        self.ui.menu_Transport.setEnabled(enabled)
+        self.ui.group_transport.setEnabled(enabled)
 
     def menuA2JBridge(self, started):
-        if not DBus.jack.IsStarted():
-            self.act_tools_a2j_start.setEnabled(False)
-            self.act_tools_a2j_stop.setEnabled(False)
-            self.act_tools_a2j_export_hw.setEnabled(DBus.a2j and not DBus.a2j.is_started())
+        if not gDBus.jack.IsStarted():
+            self.ui.act_tools_a2j_start.setEnabled(False)
+            self.ui.act_tools_a2j_stop.setEnabled(False)
+            self.ui.act_tools_a2j_export_hw.setEnabled(gDBus.a2j and not gDBus.a2j.is_started())
         else:
-            self.act_tools_a2j_start.setEnabled(not started)
-            self.act_tools_a2j_stop.setEnabled(started)
-            self.act_tools_a2j_export_hw.setEnabled(not started)
+            self.ui.act_tools_a2j_start.setEnabled(not started)
+            self.ui.act_tools_a2j_stop.setEnabled(started)
+            self.ui.act_tools_a2j_export_hw.setEnabled(not started)
 
     def DBusSignalReceiver(self, *args, **kwds):
         if kwds['interface'] == "org.freedesktop.DBus" and kwds['path'] == "/org/freedesktop/DBus" and kwds['member'] == "NameOwnerChanged":
@@ -1461,8 +1464,8 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
                     QTimer.singleShot(0, self, SLOT("slot_handleCrash_a2j()"))
                 elif appInterface in ("org.jackaudio.service", "org.ladish"):
                     # Prevent any more dbus calls
-                    DBus.jack = None
-                    jack.client = None
+                    gDBus.jack = None
+                    gJack.client = None
                     jacksettings.initBus(None)
                     self.emit(SIGNAL("DBusCrashCallback(QString)"), appInterface)
 
@@ -1474,7 +1477,7 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
                 self.emit(SIGNAL("DBusServerStoppedCallback()"))
 
         elif kwds['interface'] == "org.jackaudio.JackPatchbay":
-            if DBus.patchbay and kwds['path'] == DBus.patchbay.object_path:
+            if gDBus.patchbay and kwds['path'] == gDBus.patchbay.object_path:
                 if DEBUG: print("DBus signal @org.jackaudio.JackPatchbay,", kwds['member'])
                 if kwds['member'] == "ClientAppeared":
                     self.emit(SIGNAL("DBusClientAppearedCallback(int, QString)"), args[iJackClientId], args[iJackClientName])
@@ -1545,37 +1548,37 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
                 self.a2jStopped()
 
     def DBusReconnect(self):
-        DBus.jack = DBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
-        DBus.ladish_control = DBus.bus.get_object("org.ladish", "/org/ladish/Control")
-        DBus.ladish_studio = None
-        DBus.ladish_room = None
-        DBus.ladish_graph = None
-        DBus.ladish_manager = None
-        DBus.ladish_app_iface = None
-        DBus.patchbay = None
+        gDBus.jack = gDBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
+        gDBus.ladish_control = gDBus.bus.get_object("org.ladish", "/org/ladish/Control")
+        gDBus.ladish_studio = None
+        gDBus.ladish_room = None
+        gDBus.ladish_graph = None
+        gDBus.ladish_manager = None
+        gDBus.ladish_app_iface = None
+        gDBus.patchbay = None
 
         try:
-            DBus.ladish_app_daemon = DBus.bus.get_object("org.ladish.appdb", "/")
+            gDBus.ladish_app_daemon = gDBus.bus.get_object("org.ladish.appdb", "/")
         except:
-            DBus.ladish_app_daemon = None
+            gDBus.ladish_app_daemon = None
 
         try:
-            DBus.a2j = dbus.Interface(DBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
+            gDBus.a2j = dbus.Interface(gDBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
         except:
-            DBus.a2j = None
+            gDBus.a2j = None
 
-        jacksettings.initBus(DBus.bus)
+        jacksettings.initBus(gDBus.bus)
 
     def refreshXruns(self):
-        if not DBus.jack:
+        if not gDBus.jack:
             #if not self.m_crashedJACK:
                 #self.DBusReconnect()
             return
 
-        xruns = int(DBus.jack.GetXruns())
-        if self.m_xruns != xruns:
-            self.setXruns(xruns)
-            self.m_xruns = xruns
+        xruns = int(gDBus.jack.GetXruns())
+        if self.fXruns != xruns:
+            self.ui_setXruns(xruns)
+            self.fXruns = xruns
 
     def JackBufferSizeCallback(self, buffer_size, arg):
         if DEBUG: print("JackBufferSizeCallback(%i)" % buffer_size)
@@ -1596,82 +1599,82 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
     def slot_studio_new(self):
         dialog = StudioNameW(self, StudioNameW.NEW)
         if dialog.exec_():
-            DBus.ladish_control.NewStudio(dialog.ret_studio_name)
+            gDBus.ladish_control.NewStudio(dialog.fRetStudioName)
 
     @pyqtSlot()
     def slot_studio_load_b(self):
         dialog = StudioListW(self)
         if dialog.exec_():
-            DBus.ladish_control.LoadStudio(dialog.ret_studio_name)
+            gDBus.ladish_control.LoadStudio(dialog.ret_studio_name)
 
     @pyqtSlot()
     def slot_studio_load_m(self):
         studio_name = self.sender().text()
         if studio_name:
-            DBus.ladish_control.LoadStudio(studio_name)
+            gDBus.ladish_control.LoadStudio(studio_name)
 
     @pyqtSlot()
     def slot_studio_start(self):
-        DBus.ladish_studio.Start()
+        gDBus.ladish_studio.Start()
 
     @pyqtSlot()
     def slot_studio_stop(self):
-        DBus.ladish_studio.Stop()
+        gDBus.ladish_studio.Stop()
 
     @pyqtSlot()
     def slot_studio_rename(self):
         dialog = StudioNameW(self, StudioNameW.RENAME)
         if dialog.exec_():
-            DBus.ladish_studio.Rename(dialog.ret_studio_name)
+            gDBus.ladish_studio.Rename(dialog.fRetStudioName)
 
     @pyqtSlot()
     def slot_studio_save(self):
-        DBus.ladish_studio.Save()
+        gDBus.ladish_studio.Save()
 
     @pyqtSlot()
     def slot_studio_save_as(self):
         dialog = StudioNameW(self, StudioNameW.SAVE_AS)
         if dialog.exec_():
-            DBus.ladish_studio.SaveAs(dialog.ret_studio_name)
+            gDBus.ladish_studio.SaveAs(dialog.fRetStudioName)
 
     @pyqtSlot()
     def slot_studio_unload(self):
-        DBus.ladish_studio.Unload()
+        gDBus.ladish_studio.Unload()
 
     @pyqtSlot()
     def slot_studio_delete_m(self):
         studio_name = self.sender().text()
         if studio_name:
-            DBus.ladish_control.DeleteStudio(studio_name)
+            gDBus.ladish_control.DeleteStudio(studio_name)
 
     @pyqtSlot()
     def slot_room_create(self):
         dialog = CreateRoomW(self)
         if dialog.exec_():
-            DBus.ladish_studio.CreateRoom(dialog.ret_room_name, dialog.ret_room_template)
+            gDBus.ladish_studio.CreateRoom(dialog.ret_room_name, dialog.ret_room_template)
 
     @pyqtSlot()
     def slot_room_delete_m(self):
         room_name = self.sender().text()
         if room_name:
-            DBus.ladish_studio.DeleteRoom(room_name)
+            gDBus.ladish_studio.DeleteRoom(room_name)
 
     @pyqtSlot()
     def slot_project_new(self):
-        dialog = ProjectNameW(self, ProjectNameW.NEW, self.m_savedSettings["Main/DefaultProjectFolder"])
+        dialog = ProjectNameW(self, ProjectNameW.NEW, self.fSavedSettings["Main/DefaultProjectFolder"])
         if dialog.exec_():
             # Check if a project is already loaded, if yes unload it first
-            project_graph_version, project_properties = DBus.ladish_room.GetProjectProperties()
+            project_graph_version, project_properties = gDBus.ladish_room.GetProjectProperties()
             if len(project_properties) > 0:
-                DBus.ladish_room.UnloadProject()
-            DBus.ladish_room.SaveProject(dialog.ret_project_path, dialog.ret_project_name)
+                gDBus.ladish_room.UnloadProject()
+            gDBus.ladish_room.SaveProject(dialog.ret_project_path, dialog.ret_project_name)
 
     @pyqtSlot()
     def slot_project_load(self):
-        project_path = QFileDialog.getExistingDirectory(self, self.tr("Open Project"), self.m_savedSettings["Main/DefaultProjectFolder"])
+        project_path = QFileDialog.getExistingDirectory(self, self.tr("Open Project"), self.fSavedSettings["Main/DefaultProjectFolder"])
         if project_path:
             if os.path.exists(os.path.join(project_path, "ladish-project.xml")):
-                DBus.ladish_room.LoadProject(project_path)
+                gDBus.ladish_room.LoadProject(project_path)
             else:
                 QMessageBox.warning(self, self.tr("Warning"), self.tr("The selected folder does not contain a ladish project"))
 
@@ -1680,40 +1683,40 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         act_x_text = self.sender().text()
         if act_x_text:
             proj_path = "/" + act_x_text.rsplit("[/", 1)[-1].rsplit("]", 1)[0]
-            DBus.ladish_room.LoadProject(proj_path)
+            gDBus.ladish_room.LoadProject(proj_path)
 
     @pyqtSlot()
     def slot_project_save(self):
-        project_graph_version, project_properties = DBus.ladish_room.GetProjectProperties()
+        project_graph_version, project_properties = gDBus.ladish_room.GetProjectProperties()
         if len(project_properties) > 0:
             path = dbus.String(project_properties['dir'])
             name = dbus.String(project_properties['name'])
-            DBus.ladish_room.SaveProject(path, name)
+            gDBus.ladish_room.SaveProject(path, name)
         else:
             self.slot_project_new()
 
     @pyqtSlot()
     def slot_project_save_as(self):
-        project_graph_version, project_properties = DBus.ladish_room.GetProjectProperties()
+        project_graph_version, project_properties = gDBus.ladish_room.GetProjectProperties()
 
         if len(project_properties) > 0:
             path = str(project_properties['dir'])
             name = str(project_properties['name'])
-            dialog = ProjectNameW(self, ProjectNameW.SAVE_AS, self.m_savedSettings["Main/DefaultProjectFolder"], path, name)
+            dialog = ProjectNameW(self, ProjectNameW.SAVE_AS, self.fSavedSettings["Main/DefaultProjectFolder"], path, name)
 
             if dialog.exec_():
-                DBus.ladish_room.SaveProject(dialog.ret_project_path, dialog.ret_project_name)
+                gDBus.ladish_room.SaveProject(dialog.ret_project_path, dialog.ret_project_name)
 
         else:
             self.slot_project_new()
 
     @pyqtSlot()
     def slot_project_unload(self):
-        DBus.ladish_room.UnloadProject()
+        gDBus.ladish_room.UnloadProject()
 
     @pyqtSlot()
     def slot_project_properties(self):
-        project_graph_version, project_properties = DBus.ladish_room.GetProjectProperties()
+        project_graph_version, project_properties = gDBus.ladish_room.GetProjectProperties()
 
         path = str(project_properties['dir'])
         name = str(project_properties['name'])
@@ -1731,35 +1734,35 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         dialog = ProjectPropertiesW(self, name, description, notes)
 
         if dialog.exec_():
-            DBus.ladish_room.SetProjectDescription(dialog.ret_obj[iAppPropDescription])
-            DBus.ladish_room.SetProjectNotes(dialog.ret_obj[iAppPropNotes])
+            gDBus.ladish_room.SetProjectDescription(dialog.ret_obj[iAppPropDescription])
+            gDBus.ladish_room.SetProjectNotes(dialog.ret_obj[iAppPropNotes])
 
             if dialog.ret_obj[iAppPropSaveNow]:
-                DBus.ladish_room.SaveProject(path, dialog.ret_obj[iAppPropName])
+                gDBus.ladish_room.SaveProject(path, dialog.ret_obj[iAppPropName])
 
     @pyqtSlot()
     def slot_app_add_new(self):
         proj_folder = ""
 
         if self.m_lastItemType == ITEM_TYPE_STUDIO or self.m_lastItemType == ITEM_TYPE_STUDIO_APP:
-            proj_folder = self.m_savedSettings['Main/DefaultProjectFolder']
+            proj_folder = self.fSavedSettings['Main/DefaultProjectFolder']
             is_room = False
 
         elif self.m_lastItemType == ITEM_TYPE_ROOM or self.m_lastItemType == ITEM_TYPE_ROOM_APP:
-            project_graph_version, project_properties = DBus.ladish_room.GetProjectProperties()
+            project_graph_version, project_properties = gDBus.ladish_room.GetProjectProperties()
 
             if len(project_properties) > 0:
                 proj_folder = str(project_properties['dir'])
                 is_room = True
             else:
-                proj_folder = self.m_savedSettings['Main/DefaultProjectFolder']
+                proj_folder = self.fSavedSettings['Main/DefaultProjectFolder']
                 is_room = False
 
         else:
             print("Invalid m_last_item_type value")
             return
 
-        dialog = ClaudiaLauncherW(self, DBus.ladish_app_iface, proj_folder, is_room, self.m_lastBPM, self.m_sampleRate)
+        dialog = ClaudiaLauncherW(self, gDBus.ladish_app_iface, proj_folder, is_room, self.fLastBPM, self.fSampleRate)
         dialog.exec_()
 
     @pyqtSlot()
@@ -1767,28 +1770,28 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         dialog = RunCustomW(self, bool(self.m_lastItemType in (ITEM_TYPE_ROOM, ITEM_TYPE_ROOM_APP)))
         if dialog.exec_() and dialog.ret_app_obj:
             app_obj = dialog.ret_app_obj
-            DBus.ladish_app_iface.RunCustom2(app_obj[iAppTerminal], app_obj[iAppCommand], app_obj[iAppName], app_obj[iAppLevel])
+            gDBus.ladish_app_iface.RunCustom2(app_obj[iAppTerminal], app_obj[iAppCommand], app_obj[iAppName], app_obj[iAppLevel])
 
     @pyqtSlot()
     def slot_checkCurrentRoom(self):
-        item = self.treeWidget.currentItem()
+        item = self.ui.treeWidget.currentItem()
         room_path = None
 
         if not item:
             return
 
         if item.type() in (ITEM_TYPE_STUDIO, ITEM_TYPE_STUDIO_APP):
-            self.menu_Project.setEnabled(False)
-            self.group_project.setEnabled(False)
-            self.menu_Application.setEnabled(True)
+            self.ui.menu_Project.setEnabled(False)
+            self.ui.group_project.setEnabled(False)
+            self.ui.menu_Application.setEnabled(True)
 
-            DBus.ladish_room = None
-            DBus.ladish_app_iface = dbus.Interface(DBus.ladish_studio, "org.ladish.AppSupervisor")
+            gDBus.ladish_room = None
+            gDBus.ladish_app_iface = dbus.Interface(gDBus.ladish_studio, "org.ladish.AppSupervisor")
             ITEM_TYPE = ITEM_TYPE_STUDIO
 
         elif item.type() in (ITEM_TYPE_ROOM, ITEM_TYPE_ROOM_APP):
-            self.menu_Project.setEnabled(True)
-            self.group_project.setEnabled(True)
+            self.ui.menu_Project.setEnabled(True)
+            self.ui.group_project.setEnabled(True)
 
             if item.type() == ITEM_TYPE_ROOM:
                 room_path = item.properties[iItemPropRoomPath]
@@ -1797,36 +1800,36 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
             else:
                 return
 
-            DBus.ladish_room = DBus.bus.get_object("org.ladish", room_path)
-            DBus.ladish_app_iface = dbus.Interface(DBus.ladish_room, "org.ladish.AppSupervisor")
+            gDBus.ladish_room = gDBus.bus.get_object("org.ladish", room_path)
+            gDBus.ladish_app_iface = dbus.Interface(gDBus.ladish_room, "org.ladish.AppSupervisor")
             ITEM_TYPE = ITEM_TYPE_ROOM
 
-            project_graph_version, project_properties = DBus.ladish_room.GetProjectProperties()
+            project_graph_version, project_properties = gDBus.ladish_room.GetProjectProperties()
 
             has_project = bool(len(project_properties) > 0)
-            self.act_project_save.setEnabled(has_project)
-            self.act_project_save_as.setEnabled(has_project)
-            self.act_project_unload.setEnabled(has_project)
-            self.act_project_properties.setEnabled(has_project)
-            self.b_project_save.setEnabled(has_project)
-            self.b_project_save_as.setEnabled(has_project)
-            self.menu_Application.setEnabled(has_project)
+            self.ui.act_project_save.setEnabled(has_project)
+            self.ui.act_project_save_as.setEnabled(has_project)
+            self.ui.act_project_unload.setEnabled(has_project)
+            self.ui.act_project_properties.setEnabled(has_project)
+            self.ui.b_project_save.setEnabled(has_project)
+            self.ui.b_project_save_as.setEnabled(has_project)
+            self.ui.menu_Application.setEnabled(has_project)
 
         else:
             return
 
         if ITEM_TYPE != self.m_lastItemType or room_path != self.m_lastRoomPath:
             if ITEM_TYPE == ITEM_TYPE_STUDIO:
-                object_path = DBus.ladish_studio
+                object_path = gDBus.ladish_studio
             elif ITEM_TYPE == ITEM_TYPE_ROOM:
-                object_path = DBus.ladish_room
+                object_path = gDBus.ladish_room
             else:
                 return
 
             patchcanvas.clear()
-            DBus.patchbay = dbus.Interface(object_path, 'org.jackaudio.JackPatchbay')
-            DBus.ladish_graph = dbus.Interface(object_path, 'org.ladish.GraphDict')
-            DBus.ladish_manager = dbus.Interface(object_path, 'org.ladish.GraphManager')
+            gDBus.patchbay = dbus.Interface(object_path, 'org.jackaudio.JackPatchbay')
+            gDBus.ladish_graph = dbus.Interface(object_path, 'org.ladish.GraphDict')
+            gDBus.ladish_manager = dbus.Interface(object_path, 'org.ladish.GraphManager')
             self.init_ports()
 
         self.m_lastItemType = ITEM_TYPE
@@ -1836,76 +1839,76 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
     def slot_doubleClickedAppList(self, item, row):
         if item.type() in (ITEM_TYPE_STUDIO_APP, ITEM_TYPE_ROOM_APP):
             if item.properties[iItemPropActive]:
-                DBus.ladish_app_iface.StopApp(item.properties[iItemPropNumber])
+                gDBus.ladish_app_iface.StopApp(item.properties[iItemPropNumber])
             else:
-                DBus.ladish_app_iface.StartApp(item.properties[iItemPropNumber])
+                gDBus.ladish_app_iface.StartApp(item.properties[iItemPropNumber])
 
     @pyqtSlot()
     def slot_updateMenuStudioList_Load(self):
-        self.menu_studio_load.clear()
+        self.ui.menu_studio_load.clear()
 
-        studio_list = DBus.ladish_control.GetStudioList()
+        studio_list = gDBus.ladish_control.GetStudioList()
         if len(studio_list) == 0:
-            act_no_studio = QAction(self.tr("Empty studio list"), self.menu_studio_load)
+            act_no_studio = QAction(self.tr("Empty studio list"), self.ui.menu_studio_load)
             act_no_studio.setEnabled(False)
-            self.menu_studio_load.addAction(act_no_studio)
+            self.ui.menu_studio_load.addAction(act_no_studio)
         else:
             for studio in studio_list:
                 studio_name  = str(studio[iStudioListName])
-                act_x_studio = QAction(studio_name, self.menu_studio_load)
-                self.menu_studio_load.addAction(act_x_studio)
+                act_x_studio = QAction(studio_name, self.ui.menu_studio_load)
+                self.ui.menu_studio_load.addAction(act_x_studio)
                 self.connect(act_x_studio, SIGNAL("triggered()"), SLOT("slot_studio_load_m()"))
 
     @pyqtSlot()
     def slot_updateMenuStudioList_Delete(self):
-        self.menu_studio_delete.clear()
+        self.ui.menu_studio_delete.clear()
 
-        studio_list = DBus.ladish_control.GetStudioList()
+        studio_list = gDBus.ladish_control.GetStudioList()
         if len(studio_list) == 0:
-            act_no_studio = QAction(self.tr("Empty studio list"), self.menu_studio_delete)
+            act_no_studio = QAction(self.tr("Empty studio list"), self.ui.menu_studio_delete)
             act_no_studio.setEnabled(False)
-            self.menu_studio_delete.addAction(act_no_studio)
+            self.ui.menu_studio_delete.addAction(act_no_studio)
         else:
             for studio in studio_list:
                 studio_name = str(studio[iStudioListName])
-                act_x_studio = QAction(studio_name, self.menu_studio_delete)
-                self.menu_studio_delete.addAction(act_x_studio)
+                act_x_studio = QAction(studio_name, self.ui.menu_studio_delete)
+                self.ui.menu_studio_delete.addAction(act_x_studio)
                 self.connect(act_x_studio, SIGNAL("triggered()"), SLOT("slot_studio_delete_m()"))
 
     @pyqtSlot()
     def slot_updateMenuRoomList(self):
-        self.menu_room_delete.clear()
-        if DBus.ladish_control.IsStudioLoaded():
-            room_list = DBus.ladish_studio.GetRoomList()
+        self.ui.menu_room_delete.clear()
+        if gDBus.ladish_control.IsStudioLoaded():
+            room_list = gDBus.ladish_studio.GetRoomList()
             if len(room_list) == 0:
                 self.createEmptyMenuRoomActon()
             else:
                 for room_path, room_dict in room_list:
-                    ladish_room = DBus.bus.get_object("org.ladish", room_path)
+                    ladish_room = gDBus.bus.get_object("org.ladish", room_path)
                     room_name = ladish_room.GetName()
-                    act_x_room = QAction(room_name, self.menu_room_delete)
-                    self.menu_room_delete.addAction(act_x_room)
+                    act_x_room = QAction(room_name, self.ui.menu_room_delete)
+                    self.ui.menu_room_delete.addAction(act_x_room)
                     self.connect(act_x_room, SIGNAL("triggered()"), SLOT("slot_room_delete_m()"))
         else:
             self.createEmptyMenuRoomActon()
 
     def createEmptyMenuRoomActon(self):
-        act_no_room = QAction(self.tr("Empty room list"), self.menu_room_delete)
+        act_no_room = QAction(self.tr("Empty room list"), self.ui.menu_room_delete)
         act_no_room.setEnabled(False)
-        self.menu_room_delete.addAction(act_no_room)
+        self.ui.menu_room_delete.addAction(act_no_room)
 
     @pyqtSlot()
     def slot_updateMenuProjectList(self):
-        self.menu_project_load.clear()
-        act_project_load = QAction(self.tr("Load from folder..."), self.menu_project_load)
-        self.menu_project_load.addAction(act_project_load)
+        self.ui.menu_project_load.clear()
+        act_project_load = QAction(self.tr("Load from folder..."), self.ui.menu_project_load)
+        self.ui.menu_project_load.addAction(act_project_load)
         self.connect(act_project_load, SIGNAL("triggered()"), SLOT("slot_project_load()"))
 
-        ladish_recent_iface = dbus.Interface(DBus.ladish_room, "org.ladish.RecentItems")
+        ladish_recent_iface = dbus.Interface(gDBus.ladish_room, "org.ladish.RecentItems")
         proj_list = ladish_recent_iface.get(RECENT_PROJECTS_STORE_MAX_ITEMS)
 
         if len(proj_list) > 0:
-            self.menu_project_load.addSeparator()
+            self.ui.menu_project_load.addSeparator()
             for proj_path, proj_dict in proj_list:
                 if "name" in proj_dict.keys():
                     proj_name = proj_dict['name']
@@ -1913,13 +1916,13 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
                     continue
 
                 act_x_text = "%s [%s]" % (proj_name, proj_path)
-                act_x_proj = QAction(act_x_text, self.menu_project_load)
-                self.menu_project_load.addAction(act_x_proj)
+                act_x_proj = QAction(act_x_text, self.ui.menu_project_load)
+                self.ui.menu_project_load.addAction(act_x_proj)
                 self.connect(act_x_proj, SIGNAL("triggered()"), SLOT("slot_project_load_m()"))
 
     @pyqtSlot()
     def slot_showAppListCustomMenu(self):
-        item = self.treeWidget.currentItem()
+        item = self.ui.treeWidget.currentItem()
         if item:
             cMenu = QMenu()
             if item.type() == ITEM_TYPE_STUDIO:
@@ -1931,14 +1934,14 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
                 act_x_add_new.setIcon(QIcon.fromTheme("list-add", QIcon(":/16x16/list-add.png")))
                 act_x_run_custom.setIcon(QIcon.fromTheme("system-run", QIcon(":/16x16/system-run.png")))
                 act_x_create_room.setIcon(QIcon.fromTheme("list-add", QIcon(":/16x16/list-add.png")))
-                act_x_add_new.setEnabled(self.act_app_add_new.isEnabled())
+                act_x_add_new.setEnabled(self.ui.act_app_add_new.isEnabled())
 
             elif item.type() == ITEM_TYPE_ROOM:
                 act_x_add_new = cMenu.addAction(self.tr("Add New..."))
                 act_x_run_custom = cMenu.addAction(self.tr("Run Custom..."))
                 cMenu.addSeparator()
                 act_x_new = cMenu.addAction(self.tr("New Project..."))
-                cMenu.addMenu(self.menu_project_load)
+                cMenu.addMenu(self.ui.menu_project_load)
                 act_x_save = cMenu.addAction(self.tr("Save Project"))
                 act_x_save_as = cMenu.addAction(self.tr("Save Project As..."))
                 act_x_unload = cMenu.addAction(self.tr("Unload Project"))
@@ -1956,9 +1959,9 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
                 act_x_properties.setIcon(QIcon.fromTheme("edit-rename", QIcon(":/16x16/edit-rename.png")))
                 act_x_delete_room.setIcon(QIcon.fromTheme("edit-delete", QIcon(":/16x16/edit-delete.png")))
 
-                act_x_add_new.setEnabled(self.menu_Application.isEnabled() and self.act_app_add_new.isEnabled())
+                act_x_add_new.setEnabled(self.ui.menu_Application.isEnabled() and self.ui.act_app_add_new.isEnabled())
 
-                project_graph_version, project_properties = DBus.ladish_room.GetProjectProperties()
+                project_graph_version, project_properties = gDBus.ladish_room.GetProjectProperties()
 
                 if len(project_properties) == 0:
                     act_x_run_custom.setEnabled(False)
@@ -2015,20 +2018,20 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
                 elif act_x_sel == act_x_properties:
                     self.slot_project_properties()
                 elif act_x_sel == act_x_delete_room:
-                    room_name = DBus.ladish_room.GetName()
-                    DBus.ladish_studio.DeleteRoom(room_name)
+                    room_name = gDBus.ladish_room.GetName()
+                    gDBus.ladish_studio.DeleteRoom(room_name)
 
             elif item.type() in (ITEM_TYPE_STUDIO_APP, ITEM_TYPE_ROOM_APP):
                 number = item.properties[iItemPropNumber]
 
                 if act_x_sel == act_x_start:
-                    DBus.ladish_app_iface.StartApp(number)
+                    gDBus.ladish_app_iface.StartApp(number)
                 elif act_x_sel == act_x_stop:
-                    DBus.ladish_app_iface.StopApp(number)
+                    gDBus.ladish_app_iface.StopApp(number)
                 elif act_x_sel == act_x_kill:
-                    DBus.ladish_app_iface.KillApp(number)
+                    gDBus.ladish_app_iface.KillApp(number)
                 elif act_x_sel == act_x_properties:
-                    name, command, active, terminal, level = DBus.ladish_app_iface.GetAppProperties2(number)
+                    name, command, active, terminal, level = gDBus.ladish_app_iface.GetAppProperties2(number)
 
                     app_obj = [None, None, None, None, None]
                     app_obj[iAppCommand]  = str(command)
@@ -2041,14 +2044,14 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
                     dialog.setWindowTitle(self.tr("App properties"))
                     if dialog.exec_():
                         app_obj = dialog.ret_app_obj
-                        DBus.ladish_app_iface.SetAppProperties2(number, app_obj[iAppName], app_obj[iAppCommand], app_obj[iAppTerminal], app_obj[iAppLevel])
+                        gDBus.ladish_app_iface.SetAppProperties2(number, app_obj[iAppName], app_obj[iAppCommand], app_obj[iAppTerminal], app_obj[iAppLevel])
 
                 elif act_x_sel == act_x_remove:
-                    DBus.ladish_app_iface.RemoveApp(number)
+                    gDBus.ladish_app_iface.RemoveApp(number)
 
     @pyqtSlot(float)
     def slot_canvasScaleChanged(self, scale):
-        self.miniCanvasPreview.setViewScale(scale)
+        self.ui.miniCanvasPreview.setViewScale(scale)
 
     @pyqtSlot(int, int, QPointF)
     def slot_canvasItemMoved(self, group_id, split_mode, pos):
@@ -2059,48 +2062,49 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
             canvas_x = URI_CANVAS_X
             canvas_y = URI_CANVAS_Y
 
-        DBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, canvas_x, str(pos.x()))
-        DBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, canvas_y, str(pos.y()))
+        gDBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, canvas_x, str(pos.x()))
+        gDBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, canvas_y, str(pos.y()))
 
-        self.miniCanvasPreview.update()
+        self.ui.miniCanvasPreview.update()
 
     @pyqtSlot(int)
     def slot_horizontalScrollBarChanged(self, value):
-        maximum = self.graphicsView.horizontalScrollBar().maximum()
+        maximum = self.ui.graphicsView.horizontalScrollBar().maximum()
         if maximum == 0:
             xp = 0
         else:
             xp = float(value) / maximum
-        self.miniCanvasPreview.setViewPosX(xp)
+        self.ui.miniCanvasPreview.setViewPosX(xp)
 
     @pyqtSlot(int)
     def slot_verticalScrollBarChanged(self, value):
-        maximum = self.graphicsView.verticalScrollBar().maximum()
+        maximum = self.ui.graphicsView.verticalScrollBar().maximum()
         if maximum == 0:
             yp = 0
         else:
             yp = float(value) / maximum
-        self.miniCanvasPreview.setViewPosY(yp)
+        self.ui.miniCanvasPreview.setViewPosY(yp)
 
     @pyqtSlot()
     def slot_miniCanvasInit(self):
-        self.graphicsView.horizontalScrollBar().setValue(self.settings.value("HorizontalScrollBarValue", DEFAULT_CANVAS_WIDTH / 3, type=int))
-        self.graphicsView.verticalScrollBar().setValue(self.settings.value("VerticalScrollBarValue", DEFAULT_CANVAS_HEIGHT * 3 / 8, type=int))
+        settings = QSettings()
+        self.ui.graphicsView.horizontalScrollBar().setValue(settings.value("HorizontalScrollBarValue", DEFAULT_CANVAS_WIDTH / 3, type=int))
+        self.ui.graphicsView.verticalScrollBar().setValue(settings.value("VerticalScrollBarValue", DEFAULT_CANVAS_HEIGHT * 3 / 8, type=int))
 
     @pyqtSlot(float, float)
     def slot_miniCanvasMoved(self, xp, yp):
-        self.graphicsView.horizontalScrollBar().setValue(xp * DEFAULT_CANVAS_WIDTH)
-        self.graphicsView.verticalScrollBar().setValue(yp * DEFAULT_CANVAS_HEIGHT)
+        self.ui.graphicsView.horizontalScrollBar().setValue(xp * DEFAULT_CANVAS_WIDTH)
+        self.ui.graphicsView.verticalScrollBar().setValue(yp * DEFAULT_CANVAS_HEIGHT)
 
     @pyqtSlot()
     def slot_miniCanvasCheckAll(self):
         self.slot_miniCanvasCheckSize()
-        self.slot_horizontalScrollBarChanged(self.graphicsView.horizontalScrollBar().value())
-        self.slot_verticalScrollBarChanged(self.graphicsView.verticalScrollBar().value())
+        self.slot_horizontalScrollBarChanged(self.ui.graphicsView.horizontalScrollBar().value())
+        self.slot_verticalScrollBarChanged(self.ui.graphicsView.verticalScrollBar().value())
 
     @pyqtSlot()
     def slot_miniCanvasCheckSize(self):
-        self.miniCanvasPreview.setViewSize(float(self.graphicsView.width()) / DEFAULT_CANVAS_WIDTH, float(self.graphicsView.height()) / DEFAULT_CANVAS_HEIGHT)
+        self.ui.miniCanvasPreview.setViewSize(float(self.ui.graphicsView.width()) / DEFAULT_CANVAS_WIDTH, float(self.ui.graphicsView.height()) / DEFAULT_CANVAS_HEIGHT)
 
     @pyqtSlot()
     def slot_handleCrash_jack(self):
@@ -2108,20 +2112,20 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         self.DBusReconnect()
         self.studioUnloaded()
 
-        if DBus.a2j:
-            if DBus.a2j.is_started():
+        if gDBus.a2j:
+            if gDBus.a2j.is_started():
                 self.a2jStarted()
             else:
                 self.a2jStopped()
         else:
-            self.act_tools_a2j_start.setEnabled(False)
-            self.act_tools_a2j_stop.setEnabled(False)
-            self.act_tools_a2j_export_hw.setEnabled(False)
-            self.menu_A2J_Bridge.setEnabled(False)
+            self.ui.act_tools_a2j_start.setEnabled(False)
+            self.ui.act_tools_a2j_stop.setEnabled(False)
+            self.ui.act_tools_a2j_export_hw.setEnabled(False)
+            self.ui.menu_A2J_Bridge.setEnabled(False)
 
     @pyqtSlot()
     def slot_handleCrash_ladish(self):
-        self.treeWidget.clear()
+        self.ui.treeWidget.clear()
         patchcanvas.clear()
         self.DBusReconnect()
         QMessageBox.warning(self, self.tr("Error"), self.tr("ladish daemon has crashed"))
@@ -2133,20 +2137,20 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
     @pyqtSlot()
     def slot_handleCrash_a2j(self):
         try:
-            DBus.a2j = dbus.Interface(DBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
+            gDBus.a2j = dbus.Interface(gDBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
         except:
-            DBus.a2j = None
+            gDBus.a2j = None
 
-        if DBus.a2j:
-            if DBus.a2j.is_started():
+        if gDBus.a2j:
+            if gDBus.a2j.is_started():
                 self.a2jStarted()
             else:
                 self.a2jStopped()
         else:
-            self.act_tools_a2j_start.setEnabled(False)
-            self.act_tools_a2j_stop.setEnabled(False)
-            self.act_tools_a2j_export_hw.setEnabled(False)
-            self.menu_A2J_Bridge.setEnabled(False)
+            self.ui.act_tools_a2j_start.setEnabled(False)
+            self.ui.act_tools_a2j_stop.setEnabled(False)
+            self.ui.act_tools_a2j_export_hw.setEnabled(False)
+            self.ui.menu_A2J_Bridge.setEnabled(False)
 
     @pyqtSlot(str)
     def slot_DBusCrashCallback(self, appInterface):
@@ -2191,7 +2195,7 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         if port_type_jack == JACKDBUS_PORT_TYPE_AUDIO:
             port_type = patchcanvas.PORT_TYPE_AUDIO_JACK
         elif port_type_jack == JACKDBUS_PORT_TYPE_MIDI:
-            if DBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_PORT, port_id, URI_A2J_PORT) == "yes":
+            if gDBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_PORT, port_id, URI_A2J_PORT) == "yes":
                 port_type = patchcanvas.PORT_TYPE_MIDI_A2J
             else:
                 port_type = patchcanvas.PORT_TYPE_MIDI_JACK
@@ -2219,7 +2223,7 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
     @pyqtSlot()
     def slot_DBusStudioAppearedCallback(self):
         self.studioLoaded()
-        if DBus.ladish_studio.IsStarted():
+        if gDBus.ladish_studio.IsStarted():
             self.studioStarted()
         else:
             self.studioStopped()
@@ -2266,7 +2270,7 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
 
     @pyqtSlot(str)
     def slot_DBusStudioRenamedCallback(self, new_name):
-        self.treeWidget.topLevelItem(0).setText(0, new_name)
+        self.ui.treeWidget.topLevelItem(0).setText(0, new_name)
 
     @pyqtSlot()
     def slot_DBusStudioCrashedCallback(self):
@@ -2278,8 +2282,8 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
 
     @pyqtSlot(str)
     def slot_DBusRoomDisappearedCallback(self, room_path):
-        for i in range(self.treeWidget.topLevelItemCount()):
-            item = self.treeWidget.topLevelItem(i)
+        for i in range(self.ui.treeWidget.topLevelItemCount()):
+            item = self.ui.treeWidget.topLevelItem(i)
 
             if i == 0:
                 continue
@@ -2288,7 +2292,7 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
                 for j in range(item.childCount()):
                     item.takeChild(j)
 
-                self.treeWidget.takeTopLevelItem(i)
+                self.ui.treeWidget.takeTopLevelItem(i)
                 break
 
         else:
@@ -2308,23 +2312,23 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         else:
             item_string = ""
 
-        self.act_project_save.setEnabled(has_project)
-        self.act_project_save_as.setEnabled(has_project)
-        self.act_project_unload.setEnabled(has_project)
-        self.act_project_properties.setEnabled(has_project)
-        self.b_project_save.setEnabled(has_project)
-        self.b_project_save_as.setEnabled(has_project)
-        self.menu_Application.setEnabled(has_project)
+        self.ui.act_project_save.setEnabled(has_project)
+        self.ui.act_project_save_as.setEnabled(has_project)
+        self.ui.act_project_unload.setEnabled(has_project)
+        self.ui.act_project_properties.setEnabled(has_project)
+        self.ui.b_project_save.setEnabled(has_project)
+        self.ui.b_project_save_as.setEnabled(has_project)
+        self.ui.menu_Application.setEnabled(has_project)
 
         if path == "/org/ladish/Studio":
-            top_level_item = self.treeWidget.topLevelItem(0)
+            top_level_item = self.ui.treeWidget.topLevelItem(0)
             room_name = ""
 
         else:
-            for i in range(self.treeWidget.topLevelItemCount()):
+            for i in range(self.ui.treeWidget.topLevelItemCount()):
                 if i == 0:
                     continue
-                top_level_item = self.treeWidget.topLevelItem(i)
+                top_level_item = self.ui.treeWidget.topLevelItem(i)
                 if top_level_item and top_level_item.type() == ITEM_TYPE_ROOM and top_level_item.properties[iItemPropRoomPath] == path:
                     room_name = top_level_item.properties[iItemPropRoomName]
                     break
@@ -2337,13 +2341,13 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
     def slot_DBusAppAdded2Callback(self, path, number, name, active, terminal, level):
         if path == "/org/ladish/Studio":
             ITEM_TYPE = ITEM_TYPE_STUDIO_APP
-            top_level_item = self.treeWidget.topLevelItem(0)
+            top_level_item = self.ui.treeWidget.topLevelItem(0)
         else:
             ITEM_TYPE = ITEM_TYPE_ROOM_APP
-            for i in range(self.treeWidget.topLevelItemCount()):
+            for i in range(self.ui.treeWidget.topLevelItemCount()):
                 if i == 0:
                     continue
-                top_level_item = self.treeWidget.topLevelItem(i)
+                top_level_item = self.ui.treeWidget.topLevelItem(i)
                 if top_level_item and top_level_item.type() == ITEM_TYPE_ROOM and top_level_item.properties[iItemPropRoomPath] == path:
                     break
             else:
@@ -2381,12 +2385,12 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
     @pyqtSlot(str, int)
     def slot_DBusAppRemovedCallback(self, path, number):
         if path == "/org/ladish/Studio":
-            top_level_item = self.treeWidget.topLevelItem(0)
+            top_level_item = self.ui.treeWidget.topLevelItem(0)
         else:
-            for i in range(self.treeWidget.topLevelItemCount()):
+            for i in range(self.ui.treeWidget.topLevelItemCount()):
                 if i == 0:
                     continue
-                top_level_item = self.treeWidget.topLevelItem(i)
+                top_level_item = self.ui.treeWidget.topLevelItem(i)
                 if top_level_item and top_level_item.type() == ITEM_TYPE_ROOM and top_level_item.properties[iItemPropRoomPath] == path:
                     break
             else:
@@ -2400,12 +2404,12 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
     @pyqtSlot(str, int, str, bool, bool, str)
     def slot_DBusAppStateChanged2Callback(self, path, number, name, active, terminal, level):
         if path == "/org/ladish/Studio":
-            top_level_item = self.treeWidget.topLevelItem(0)
+            top_level_item = self.ui.treeWidget.topLevelItem(0)
         else:
-            for i in range(self.treeWidget.topLevelItemCount()):
+            for i in range(self.ui.treeWidget.topLevelItemCount()):
                 if i == 0:
                     continue
-                top_level_item = self.treeWidget.topLevelItem(i)
+                top_level_item = self.ui.treeWidget.topLevelItem(i)
                 if top_level_item and top_level_item.type() == ITEM_TYPE_ROOM and top_level_item.properties[iItemPropRoomPath] == path:
                     break
             else:
@@ -2439,16 +2443,16 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
 
     @pyqtSlot()
     def slot_JackClearXruns(self):
-        if jack.client:
-            DBus.jack.ResetXruns()
+        if gJack.client:
+            gDBus.jack.ResetXruns()
 
     @pyqtSlot(int)
     def slot_JackBufferSizeCallback(self, bufferSize):
-        self.setBufferSize(bufferSize)
+        self.ui_setBufferSize(bufferSize)
 
     @pyqtSlot(int)
     def slot_JackSampleRateCallback(self, sampleRate):
-        self.setSampleRate(sampleRate)
+        self.ui_setSampleRate(sampleRate)
 
     @pyqtSlot()
     def slot_JackShutdownCallback(self):
@@ -2457,31 +2461,31 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
     @pyqtSlot()
     def slot_A2JBridgeStart(self):
         ret = False
-        if DBus.a2j:
-            ret = bool(DBus.a2j.start())
+        if gDBus.a2j:
+            ret = bool(gDBus.a2j.start())
         return ret
 
     @pyqtSlot()
     def slot_A2JBridgeStop(self):
         ret = False
-        if DBus.a2j:
-            ret = bool(DBus.a2j.stop())
+        if gDBus.a2j:
+            ret = bool(gDBus.a2j.stop())
         return ret
 
     @pyqtSlot()
     def slot_A2JBridgeExportHW(self):
-        if DBus.a2j:
+        if gDBus.a2j:
             ask = QMessageBox.question(self, self.tr("A2J Hardware Export"), self.tr("Enable Hardware Export on the A2J Bridge?"), QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.No)
             if ask == QMessageBox.Yes:
-                DBus.a2j.set_hw_export(True)
+                gDBus.a2j.set_hw_export(True)
             elif ask == QMessageBox.No:
-                DBus.a2j.set_hw_export(False)
+                gDBus.a2j.set_hw_export(False)
 
     @pyqtSlot()
     def slot_configureClaudia(self):
         # Save groups position now
-        if DBus.patchbay:
-            version, groups, conns = DBus.patchbay.GetGraph(0)
+        if gDBus.patchbay:
+            version, groups, conns = gDBus.patchbay.GetGraph(0)
 
             for group in groups:
                 group_id, group_name, ports = group
@@ -2489,13 +2493,13 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
                 group_pos_i = patchcanvas.getGroupPos(group_id, patchcanvas.PORT_MODE_OUTPUT)
                 group_pos_o = patchcanvas.getGroupPos(group_id, patchcanvas.PORT_MODE_INPUT)
 
-                DBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_X, str(group_pos_o.x()))
-                DBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_Y, str(group_pos_o.y()))
-                DBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_X_SPLIT, str(group_pos_i.x()))
-                DBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_Y_SPLIT, str(group_pos_i.y()))
+                gDBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_X, str(group_pos_o.x()))
+                gDBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_Y, str(group_pos_o.y()))
+                gDBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_X_SPLIT, str(group_pos_i.x()))
+                gDBus.ladish_graph.Set(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_Y_SPLIT, str(group_pos_i.y()))
 
         try:
-            ladish_config = DBus.bus.get_object("org.ladish.conf", "/org/ladish/conf")
+            ladish_config = gDBus.bus.get_object("org.ladish.conf", "/org/ladish/conf")
         except:
             ladish_config = None
 
@@ -2525,34 +2529,38 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
             except:
                 key_js_save_delay = LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY_DEFAULT
 
-            self.settings.setValue(LADISH_CONF_KEY_DAEMON_NOTIFY, key_notify)
-            self.settings.setValue(LADISH_CONF_KEY_DAEMON_SHELL, key_shell)
-            self.settings.setValue(LADISH_CONF_KEY_DAEMON_TERMINAL, key_terminal)
-            self.settings.setValue(LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART, key_studio_autostart)
-            self.settings.setValue(LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY, key_js_save_delay)
+            settings = QSettings()
+            settings.setValue(LADISH_CONF_KEY_DAEMON_NOTIFY, key_notify)
+            settings.setValue(LADISH_CONF_KEY_DAEMON_SHELL, key_shell)
+            settings.setValue(LADISH_CONF_KEY_DAEMON_TERMINAL, key_terminal)
+            settings.setValue(LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART, key_studio_autostart)
+            settings.setValue(LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY, key_js_save_delay)
+            del settings
 
         dialog = SettingsW(self, "claudia", hasGL)
 
         if not ladish_config:
-            dialog.lw_page.hideRow(2)
+            dialog.ui.lw_page.hideRow(2)
 
         if dialog.exec_():
             if ladish_config:
-                ladish_config.set(LADISH_CONF_KEY_DAEMON_NOTIFY, "true" if (self.settings.value(LADISH_CONF_KEY_DAEMON_NOTIFY, LADISH_CONF_KEY_DAEMON_NOTIFY_DEFAULT, type=bool)) else "false")
-                ladish_config.set(LADISH_CONF_KEY_DAEMON_SHELL, self.settings.value(LADISH_CONF_KEY_DAEMON_SHELL, LADISH_CONF_KEY_DAEMON_SHELL_DEFAULT, type=str))
-                ladish_config.set(LADISH_CONF_KEY_DAEMON_TERMINAL, self.settings.value(LADISH_CONF_KEY_DAEMON_TERMINAL, LADISH_CONF_KEY_DAEMON_TERMINAL_DEFAULT, type=str))
-                ladish_config.set(LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART, "true" if (self.settings.value(LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART, LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART_DEFAULT, type=bool)) else "false")
-                ladish_config.set(LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY, str(self.settings.value(LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY, LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY_DEFAULT, type=int)))
+                settings = QSettings()
+                ladish_config.set(LADISH_CONF_KEY_DAEMON_NOTIFY, "true" if (settings.value(LADISH_CONF_KEY_DAEMON_NOTIFY, LADISH_CONF_KEY_DAEMON_NOTIFY_DEFAULT, type=bool)) else "false")
+                ladish_config.set(LADISH_CONF_KEY_DAEMON_SHELL, settings.value(LADISH_CONF_KEY_DAEMON_SHELL, LADISH_CONF_KEY_DAEMON_SHELL_DEFAULT, type=str))
+                ladish_config.set(LADISH_CONF_KEY_DAEMON_TERMINAL, settings.value(LADISH_CONF_KEY_DAEMON_TERMINAL, LADISH_CONF_KEY_DAEMON_TERMINAL_DEFAULT, type=str))
+                ladish_config.set(LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART, "true" if (settings.value(LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART, LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART_DEFAULT, type=bool)) else "false")
+                ladish_config.set(LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY, str(settings.value(LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY, LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY_DEFAULT, type=int)))
+                del settings
 
             self.loadSettings(False)
             patchcanvas.clear()
 
             pOptions = patchcanvas.options_t()
-            pOptions.theme_name       = self.m_savedSettings["Canvas/Theme"]
-            pOptions.auto_hide_groups = self.m_savedSettings["Canvas/AutoHideGroups"]
-            pOptions.use_bezier_lines = self.m_savedSettings["Canvas/UseBezierLines"]
-            pOptions.antialiasing     = self.m_savedSettings["Canvas/Antialiasing"]
-            pOptions.eyecandy         = self.m_savedSettings["Canvas/EyeCandy"]
+            pOptions.theme_name       = self.fSavedSettings["Canvas/Theme"]
+            pOptions.auto_hide_groups = self.fSavedSettings["Canvas/AutoHideGroups"]
+            pOptions.use_bezier_lines = self.fSavedSettings["Canvas/UseBezierLines"]
+            pOptions.antialiasing     = self.fSavedSettings["Canvas/Antialiasing"]
+            pOptions.eyecandy         = self.fSavedSettings["Canvas/EyeCandy"]
 
             pFeatures = patchcanvas.features_t()
             pFeatures.group_info   = False
@@ -2565,9 +2573,9 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
             patchcanvas.setFeatures(pFeatures)
             patchcanvas.init("Claudia", self.scene, self.canvasCallback, DEBUG)
 
-            self.miniCanvasPreview.setViewTheme(patchcanvas.canvas.theme.canvas_bg, patchcanvas.canvas.theme.rubberband_brush, patchcanvas.canvas.theme.rubberband_pen.color())
+            self.ui.miniCanvasPreview.setViewTheme(patchcanvas.canvas.theme.canvas_bg, patchcanvas.canvas.theme.rubberband_brush, patchcanvas.canvas.theme.rubberband_pen.color())
 
-            if DBus.ladish_control.IsStudioLoaded() and DBus.ladish_studio and DBus.ladish_studio.IsStarted():
+            if gDBus.ladish_control.IsStudioLoaded() and gDBus.ladish_studio and gDBus.ladish_studio.IsStarted():
                 self.init_ports()
 
     @pyqtSlot()
@@ -2575,52 +2583,56 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
         QMessageBox.about(self, self.tr("About Claudia"), self.tr("<h3>Claudia</h3>"
                                                                   "<br>Version %s"
                                                                   "<br>Claudia is a Graphical User Interface to LADISH.<br>"
-                                                                  "<br>Copyright (C) 2010-2012 falkTX" % VERSION))
+                                                                  "<br>Copyright (C) 2010-2013 falkTX" % VERSION))
 
     def saveSettings(self):
-        self.settings.setValue("Geometry", self.saveGeometry())
-        self.settings.setValue("SplitterSizes", self.splitter.saveState())
-        self.settings.setValue("ShowToolbar", self.frame_toolbar.isEnabled())
-        self.settings.setValue("ShowStatusbar", self.frame_statusbar.isEnabled())
-        self.settings.setValue("TransportView", self.m_curTransportView)
-        self.settings.setValue("HorizontalScrollBarValue", self.graphicsView.horizontalScrollBar().value())
-        self.settings.setValue("VerticalScrollBarValue", self.graphicsView.verticalScrollBar().value())
+        settings = QSettings()
+
+        settings.setValue("Geometry", self.saveGeometry())
+        settings.setValue("SplitterSizes", self.ui.splitter.saveState())
+        settings.setValue("ShowToolbar", self.ui.frame_toolbar.isEnabled())
+        settings.setValue("ShowStatusbar", self.ui.frame_statusbar.isEnabled())
+        settings.setValue("TransportView", self.fCurTransportView)
+        settings.setValue("HorizontalScrollBarValue", self.ui.graphicsView.horizontalScrollBar().value())
+        settings.setValue("VerticalScrollBarValue", self.ui.graphicsView.verticalScrollBar().value())
 
     def loadSettings(self, geometry):
+        settings = QSettings()
+
         if geometry:
-            self.restoreGeometry(self.settings.value("Geometry", ""))
+            self.restoreGeometry(settings.value("Geometry", ""))
 
-            splitter_sizes = self.settings.value("SplitterSizes", "")
-            if splitter_sizes:
-                self.splitter.restoreState(splitter_sizes)
+            splitterSizes = settings.value("SplitterSizes", "")
+            if splitterSizes:
+                self.ui.splitter.restoreState(splitterSizes)
             else:
-                self.splitter.setSizes((100, 400))
+                self.ui.splitter.setSizes((100, 400))
 
-            show_toolbar = self.settings.value("ShowToolbar", True, type=bool)
-            self.act_settings_show_toolbar.setChecked(show_toolbar)
-            self.frame_toolbar.setVisible(show_toolbar)
+            showToolbar = settings.value("ShowToolbar", True, type=bool)
+            self.ui.act_settings_show_toolbar.setChecked(showToolbar)
+            self.ui.frame_toolbar.setVisible(showToolbar)
 
-            show_statusbar = self.settings.value("ShowStatusbar", True, type=bool)
-            self.act_settings_show_statusbar.setChecked(show_statusbar)
-            self.frame_statusbar.setVisible(show_statusbar)
+            showStatusbar = settings.value("ShowStatusbar", True, type=bool)
+            self.ui.act_settings_show_statusbar.setChecked(showStatusbar)
+            self.ui.frame_statusbar.setVisible(showStatusbar)
 
-            self.setTransportView(self.settings.value("TransportView", TRANSPORT_VIEW_HMS, type=int))
+            self.setTransportView(settings.value("TransportView", TRANSPORT_VIEW_HMS, type=int))
 
-        self.m_savedSettings = {
-            "Main/DefaultProjectFolder": self.settings.value("Main/DefaultProjectFolder", DEFAULT_PROJECT_FOLDER, type=str),
-            "Main/UseSystemTray": self.settings.value("Main/UseSystemTray", True, type=bool),
-            "Main/CloseToTray": self.settings.value("Main/CloseToTray", False, type=bool),
-            "Main/RefreshInterval": self.settings.value("Main/RefreshInterval", 120, type=int),
-            "Canvas/Theme": self.settings.value("Canvas/Theme", patchcanvas.getDefaultThemeName(), type=str),
-            "Canvas/AutoHideGroups": self.settings.value("Canvas/AutoHideGroups", False, type=bool),
-            "Canvas/UseBezierLines": self.settings.value("Canvas/UseBezierLines", True, type=bool),
-            "Canvas/EyeCandy": self.settings.value("Canvas/EyeCandy", patchcanvas.EYECANDY_SMALL, type=int),
-            "Canvas/UseOpenGL": self.settings.value("Canvas/UseOpenGL", False, type=bool),
-            "Canvas/Antialiasing": self.settings.value("Canvas/Antialiasing", patchcanvas.ANTIALIASING_SMALL, type=int),
-            "Canvas/HighQualityAntialiasing": self.settings.value("Canvas/HighQualityAntialiasing", False, type=bool)
+        self.fSavedSettings = {
+            "Main/DefaultProjectFolder": settings.value("Main/DefaultProjectFolder", DEFAULT_PROJECT_FOLDER, type=str),
+            "Main/UseSystemTray": settings.value("Main/UseSystemTray", True, type=bool),
+            "Main/CloseToTray": settings.value("Main/CloseToTray", False, type=bool),
+            "Main/RefreshInterval": settings.value("Main/RefreshInterval", 120, type=int),
+            "Canvas/Theme": settings.value("Canvas/Theme", patchcanvas.getDefaultThemeName(), type=str),
+            "Canvas/AutoHideGroups": settings.value("Canvas/AutoHideGroups", False, type=bool),
+            "Canvas/UseBezierLines": settings.value("Canvas/UseBezierLines", True, type=bool),
+            "Canvas/EyeCandy": settings.value("Canvas/EyeCandy", patchcanvas.EYECANDY_SMALL, type=int),
+            "Canvas/UseOpenGL": settings.value("Canvas/UseOpenGL", False, type=bool),
+            "Canvas/Antialiasing": settings.value("Canvas/Antialiasing", patchcanvas.ANTIALIASING_SMALL, type=int),
+            "Canvas/HighQualityAntialiasing": settings.value("Canvas/HighQualityAntialiasing", False, type=bool)
         }
 
-        self.act_app_add_new.setEnabled(USE_CLAUDIA_ADD_NEW)
+        self.ui.act_app_add_new.setEnabled(USE_CLAUDIA_ADD_NEW)
 
     def resizeEvent(self, event):
         QTimer.singleShot(0, self, SLOT("slot_miniCanvasCheckSize()"))
@@ -2628,11 +2640,11 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
 
     def timerEvent(self, event):
         if event.timerId() == self.m_timer120:
-            if jack.client:
+            if gJack.client:
                 self.refreshTransport()
                 self.refreshXruns()
         elif event.timerId() == self.m_timer600:
-            if jack.client:
+            if gJack.client:
                 self.refreshDSPLoad()
             else:
                 self.update()
@@ -2641,7 +2653,7 @@ class ClaudiaMainW(AbstractCanvasJackClass, ui_claudia.Ui_ClaudiaMainW):
     def closeEvent(self, event):
         self.saveSettings()
         if self.systray:
-            if self.m_savedSettings["Main/CloseToTray"]:
+            if self.fSavedSettings["Main/CloseToTray"]:
                 if self.systray.handleQtCloseEvent(event):
                     patchcanvas.clear()
                 return
@@ -2663,22 +2675,22 @@ if __name__ == '__main__':
             "DBus is not available, Claudia cannot start without it!"))
         sys.exit(1)
 
-    DBus.loop = DBusQtMainLoop(set_as_default=True)
-    DBus.bus  = dbus.SessionBus(mainloop=DBus.loop)
-    DBus.jack = DBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
-    DBus.ladish_control = DBus.bus.get_object("org.ladish", "/org/ladish/Control")
+    gDBus.loop = DBusQtMainLoop(set_as_default=True)
+    gDBus.bus  = dbus.SessionBus(mainloop=gDBus.loop)
+    gDBus.jack = gDBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
+    gDBus.ladish_control = gDBus.bus.get_object("org.ladish", "/org/ladish/Control")
 
     try:
-        DBus.ladish_app_daemon = DBus.bus.get_object("org.ladish.appdb", "/")
+        gDBus.ladish_app_daemon = gDBus.bus.get_object("org.ladish.appdb", "/")
     except:
-        DBus.ladish_app_daemon = None
+        gDBus.ladish_app_daemon = None
 
     try:
-        DBus.a2j = dbus.Interface(DBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
+        gDBus.a2j = dbus.Interface(gDBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
     except:
-        DBus.a2j = None
+        gDBus.a2j = None
 
-    jacksettings.initBus(DBus.bus)
+    jacksettings.initBus(gDBus.bus)
 
     # Show GUI
     gui = ClaudiaMainW()
@@ -2699,9 +2711,9 @@ if __name__ == '__main__':
         ret = app.exec_()
 
     # Close Jack
-    if jack.client:
-        jacklib.deactivate(jack.client)
-        jacklib.client_close(jack.client)
+    if gJack.client:
+        jacklib.deactivate(gJack.client)
+        jacklib.client_close(gJack.client)
 
     # Exit properly
     sys.exit(ret)

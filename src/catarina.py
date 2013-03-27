@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # PatchCanvas test application
-# Copyright (C) 2010-2012 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,11 +38,17 @@ import ui_catarina_disconnectports
 from shared_canvasjack import *
 from shared_settings import *
 
+# ------------------------------------------------------------------------------------------------------------
+# Try Import OpenGL
+
 try:
     from PyQt4.QtOpenGL import QGLWidget
     hasGL = True
 except:
     hasGL = False
+
+# ------------------------------------------------------------------------------------------------------------
+# Static Variables
 
 iGroupId    = 0
 iGroupName  = 1
@@ -590,56 +596,59 @@ class CatarinaDisconnectPortsW(QDialog, ui_catarina_disconnectports.Ui_CatarinaD
 # ------------------------------------------------------------------------------------------------------------
 # Main Window
 
-class CatarinaMainW(AbstractCanvasJackClass, ui_catarina.Ui_CatarinaMainW):
+class CatarinaMainW(AbstractCanvasJackClass):
     def __init__(self, parent=None):
         AbstractCanvasJackClass.__init__(self, parent, "Catarina")
-        self.setupUi(self)
+        self.ui = ui_catarina.Ui_CatarinaMainW()
+        self.ui.setupUi(self)
 
-        self.settings = QSettings("Cadence", "Catarina")
         self.loadSettings(True)
 
-        self.act_project_new.setIcon(getIcon("document-new"))
-        self.act_project_open.setIcon(getIcon("document-open"))
-        self.act_project_save.setIcon(getIcon("document-save"))
-        self.act_project_save_as.setIcon(getIcon("document-save-as"))
-        self.b_project_new.setIcon(getIcon("document-new"))
-        self.b_project_open.setIcon(getIcon("document-open"))
-        self.b_project_save.setIcon(getIcon("document-save"))
-        self.b_project_save_as.setIcon(getIcon("document-save-as"))
-
-        self.act_patchbay_add_group.setIcon(getIcon("list-add"))
-        self.act_patchbay_remove_group.setIcon(getIcon("edit-delete"))
-        self.act_patchbay_rename_group.setIcon(getIcon("edit-rename"))
-        self.act_patchbay_add_port.setIcon(getIcon("list-add"))
-        self.act_patchbay_remove_port.setIcon(getIcon("list-remove"))
-        self.act_patchbay_rename_port.setIcon(getIcon("edit-rename"))
-        self.act_patchbay_connect_ports.setIcon(getIcon("network-connect"))
-        self.act_patchbay_disconnect_ports.setIcon(getIcon("network-disconnect"))
-        self.b_group_add.setIcon(getIcon("list-add"))
-        self.b_group_remove.setIcon(getIcon("edit-delete"))
-        self.b_group_rename.setIcon(getIcon("edit-rename"))
-        self.b_port_add.setIcon(getIcon("list-add"))
-        self.b_port_remove.setIcon(getIcon("list-remove"))
-        self.b_port_rename.setIcon(getIcon("edit-rename"))
-        self.b_ports_connect.setIcon(getIcon("network-connect"))
-        self.b_ports_disconnect.setIcon(getIcon("network-disconnect"))
+        # -------------------------------------------------------------
+        # Set-up GUI
 
         setIcons(self, ("canvas",))
 
-        self.scene = patchcanvas.PatchScene(self, self.graphicsView)
-        self.graphicsView.setScene(self.scene)
-        self.graphicsView.setRenderHint(QPainter.Antialiasing, bool(self.m_savedSettings["Canvas/Antialiasing"] == patchcanvas.ANTIALIASING_FULL))
-        self.graphicsView.setRenderHint(QPainter.TextAntialiasing, self.m_savedSettings["Canvas/TextAntialiasing"])
-        if self.m_savedSettings["Canvas/UseOpenGL"] and hasGL:
-            self.graphicsView.setViewport(QGLWidget(self.graphicsView))
-            self.graphicsView.setRenderHint(QPainter.HighQualityAntialiasing, self.m_savedSettings["Canvas/HighQualityAntialiasing"])
+        self.ui.act_project_new.setIcon(getIcon("document-new"))
+        self.ui.act_project_open.setIcon(getIcon("document-open"))
+        self.ui.act_project_save.setIcon(getIcon("document-save"))
+        self.ui.act_project_save_as.setIcon(getIcon("document-save-as"))
+        self.ui.b_project_new.setIcon(getIcon("document-new"))
+        self.ui.b_project_open.setIcon(getIcon("document-open"))
+        self.ui.b_project_save.setIcon(getIcon("document-save"))
+        self.ui.b_project_save_as.setIcon(getIcon("document-save-as"))
+
+        self.ui.act_patchbay_add_group.setIcon(getIcon("list-add"))
+        self.ui.act_patchbay_remove_group.setIcon(getIcon("edit-delete"))
+        self.ui.act_patchbay_rename_group.setIcon(getIcon("edit-rename"))
+        self.ui.act_patchbay_add_port.setIcon(getIcon("list-add"))
+        self.ui.act_patchbay_remove_port.setIcon(getIcon("list-remove"))
+        self.ui.act_patchbay_rename_port.setIcon(getIcon("edit-rename"))
+        self.ui.act_patchbay_connect_ports.setIcon(getIcon("network-connect"))
+        self.ui.act_patchbay_disconnect_ports.setIcon(getIcon("network-disconnect"))
+        self.ui.b_group_add.setIcon(getIcon("list-add"))
+        self.ui.b_group_remove.setIcon(getIcon("edit-delete"))
+        self.ui.b_group_rename.setIcon(getIcon("edit-rename"))
+        self.ui.b_port_add.setIcon(getIcon("list-add"))
+        self.ui.b_port_remove.setIcon(getIcon("list-remove"))
+        self.ui.b_port_rename.setIcon(getIcon("edit-rename"))
+        self.ui.b_ports_connect.setIcon(getIcon("network-connect"))
+        self.ui.b_ports_disconnect.setIcon(getIcon("network-disconnect"))
+
+        self.scene = patchcanvas.PatchScene(self, self.ui.graphicsView)
+        self.ui.graphicsView.setScene(self.scene)
+        self.ui.graphicsView.setRenderHint(QPainter.Antialiasing, bool(self.fSavedSettings["Canvas/Antialiasing"] == patchcanvas.ANTIALIASING_FULL))
+        self.ui.graphicsView.setRenderHint(QPainter.TextAntialiasing, self.fSavedSettings["Canvas/TextAntialiasing"])
+        if self.fSavedSettings["Canvas/UseOpenGL"] and hasGL:
+            self.ui.graphicsView.setViewport(QGLWidget(self.ui.graphicsView))
+            self.ui.graphicsView.setRenderHint(QPainter.HighQualityAntialiasing, self.fSavedSettings["Canvas/HighQualityAntialiasing"])
 
         p_options = patchcanvas.options_t()
-        p_options.theme_name       = self.m_savedSettings["Canvas/Theme"]
-        p_options.auto_hide_groups = self.m_savedSettings["Canvas/AutoHideGroups"]
-        p_options.use_bezier_lines = self.m_savedSettings["Canvas/UseBezierLines"]
-        p_options.antialiasing     = self.m_savedSettings["Canvas/Antialiasing"]
-        p_options.eyecandy         = self.m_savedSettings["Canvas/EyeCandy"]
+        p_options.theme_name       = self.fSavedSettings["Canvas/Theme"]
+        p_options.auto_hide_groups = self.fSavedSettings["Canvas/AutoHideGroups"]
+        p_options.use_bezier_lines = self.fSavedSettings["Canvas/UseBezierLines"]
+        p_options.antialiasing     = self.fSavedSettings["Canvas/Antialiasing"]
+        p_options.eyecandy         = self.fSavedSettings["Canvas/EyeCandy"]
 
         p_features = patchcanvas.features_t()
         p_features.group_info   = False
@@ -652,42 +661,42 @@ class CatarinaMainW(AbstractCanvasJackClass, ui_catarina.Ui_CatarinaMainW):
         patchcanvas.setFeatures(p_features)
         patchcanvas.init("Catarina", self.scene, self.canvasCallback, DEBUG)
 
-        self.connect(self.act_project_new, SIGNAL("triggered()"), SLOT("slot_projectNew()"))
-        self.connect(self.act_project_open, SIGNAL("triggered()"), SLOT("slot_projectOpen()"))
-        self.connect(self.act_project_save, SIGNAL("triggered()"), SLOT("slot_projectSave()"))
-        self.connect(self.act_project_save_as, SIGNAL("triggered()"), SLOT("slot_projectSaveAs()"))
-        self.connect(self.b_project_new, SIGNAL("clicked()"), SLOT("slot_projectNew()"))
-        self.connect(self.b_project_open, SIGNAL("clicked()"), SLOT("slot_projectOpen()"))
-        self.connect(self.b_project_save, SIGNAL("clicked()"), SLOT("slot_projectSave()"))
-        self.connect(self.b_project_save_as, SIGNAL("clicked()"), SLOT("slot_projectSaveAs()"))
-        self.connect(self.act_patchbay_add_group, SIGNAL("triggered()"), SLOT("slot_groupAdd()"))
-        self.connect(self.act_patchbay_remove_group, SIGNAL("triggered()"), SLOT("slot_groupRemove()"))
-        self.connect(self.act_patchbay_rename_group, SIGNAL("triggered()"), SLOT("slot_groupRename()"))
-        self.connect(self.act_patchbay_add_port, SIGNAL("triggered()"), SLOT("slot_portAdd()"))
-        self.connect(self.act_patchbay_remove_port, SIGNAL("triggered()"), SLOT("slot_portRemove()"))
-        self.connect(self.act_patchbay_rename_port, SIGNAL("triggered()"), SLOT("slot_portRename()"))
-        self.connect(self.act_patchbay_connect_ports, SIGNAL("triggered()"), SLOT("slot_connectPorts()"))
-        self.connect(self.act_patchbay_disconnect_ports, SIGNAL("triggered()"), SLOT("slot_disconnectPorts()"))
-        self.connect(self.b_group_add, SIGNAL("clicked()"), SLOT("slot_groupAdd()"))
-        self.connect(self.b_group_remove, SIGNAL("clicked()"), SLOT("slot_groupRemove()"))
-        self.connect(self.b_group_rename, SIGNAL("clicked()"), SLOT("slot_groupRename()"))
-        self.connect(self.b_port_add, SIGNAL("clicked()"), SLOT("slot_portAdd()"))
-        self.connect(self.b_port_remove, SIGNAL("clicked()"), SLOT("slot_portRemove()"))
-        self.connect(self.b_port_rename, SIGNAL("clicked()"), SLOT("slot_portRename()"))
-        self.connect(self.b_ports_connect, SIGNAL("clicked()"), SLOT("slot_connectPorts()"))
-        self.connect(self.b_ports_disconnect, SIGNAL("clicked()"), SLOT("slot_disconnectPorts()"))
+        self.connect(self.ui.act_project_new, SIGNAL("triggered()"), SLOT("slot_projectNew()"))
+        self.connect(self.ui.act_project_open, SIGNAL("triggered()"), SLOT("slot_projectOpen()"))
+        self.connect(self.ui.act_project_save, SIGNAL("triggered()"), SLOT("slot_projectSave()"))
+        self.connect(self.ui.act_project_save_as, SIGNAL("triggered()"), SLOT("slot_projectSaveAs()"))
+        self.connect(self.ui.b_project_new, SIGNAL("clicked()"), SLOT("slot_projectNew()"))
+        self.connect(self.ui.b_project_open, SIGNAL("clicked()"), SLOT("slot_projectOpen()"))
+        self.connect(self.ui.b_project_save, SIGNAL("clicked()"), SLOT("slot_projectSave()"))
+        self.connect(self.ui.b_project_save_as, SIGNAL("clicked()"), SLOT("slot_projectSaveAs()"))
+        self.connect(self.ui.act_patchbay_add_group, SIGNAL("triggered()"), SLOT("slot_groupAdd()"))
+        self.connect(self.ui.act_patchbay_remove_group, SIGNAL("triggered()"), SLOT("slot_groupRemove()"))
+        self.connect(self.ui.act_patchbay_rename_group, SIGNAL("triggered()"), SLOT("slot_groupRename()"))
+        self.connect(self.ui.act_patchbay_add_port, SIGNAL("triggered()"), SLOT("slot_portAdd()"))
+        self.connect(self.ui.act_patchbay_remove_port, SIGNAL("triggered()"), SLOT("slot_portRemove()"))
+        self.connect(self.ui.act_patchbay_rename_port, SIGNAL("triggered()"), SLOT("slot_portRename()"))
+        self.connect(self.ui.act_patchbay_connect_ports, SIGNAL("triggered()"), SLOT("slot_connectPorts()"))
+        self.connect(self.ui.act_patchbay_disconnect_ports, SIGNAL("triggered()"), SLOT("slot_disconnectPorts()"))
+        self.connect(self.ui.b_group_add, SIGNAL("clicked()"), SLOT("slot_groupAdd()"))
+        self.connect(self.ui.b_group_remove, SIGNAL("clicked()"), SLOT("slot_groupRemove()"))
+        self.connect(self.ui.b_group_rename, SIGNAL("clicked()"), SLOT("slot_groupRename()"))
+        self.connect(self.ui.b_port_add, SIGNAL("clicked()"), SLOT("slot_portAdd()"))
+        self.connect(self.ui.b_port_remove, SIGNAL("clicked()"), SLOT("slot_portRemove()"))
+        self.connect(self.ui.b_port_rename, SIGNAL("clicked()"), SLOT("slot_portRename()"))
+        self.connect(self.ui.b_ports_connect, SIGNAL("clicked()"), SLOT("slot_connectPorts()"))
+        self.connect(self.ui.b_ports_disconnect, SIGNAL("clicked()"), SLOT("slot_disconnectPorts()"))
 
         self.setCanvasConnections()
 
-        self.connect(self.act_settings_configure, SIGNAL("triggered()"), SLOT("slot_configureCatarina()"))
+        self.connect(self.ui.act_settings_configure, SIGNAL("triggered()"), SLOT("slot_configureCatarina()"))
 
-        self.connect(self.act_help_about, SIGNAL("triggered()"), SLOT("slot_aboutCatarina()"))
-        self.connect(self.act_help_about_qt, SIGNAL("triggered()"), app, SLOT("aboutQt()"))
+        self.connect(self.ui.act_help_about, SIGNAL("triggered()"), SLOT("slot_aboutCatarina()"))
+        self.connect(self.ui.act_help_about_qt, SIGNAL("triggered()"), app, SLOT("aboutQt()"))
 
         self.connect(self, SIGNAL("SIGUSR1()"), SLOT("slot_projectSave()"))
 
         # Dummy timer to keep events active
-        self.m_updateTimer = self.startTimer(500)
+        self.fUpdateTimer = self.startTimer(1000)
 
         # Start Empty Project
         self.slot_projectNew()
@@ -1232,11 +1241,11 @@ class CatarinaMainW(AbstractCanvasJackClass, ui_catarina.Ui_CatarinaMainW):
             patchcanvas.clear()
 
             p_options = patchcanvas.options_t()
-            p_options.theme_name       = self.m_savedSettings["Canvas/Theme"]
-            p_options.auto_hide_groups = self.m_savedSettings["Canvas/AutoHideGroups"]
-            p_options.use_bezier_lines = self.m_savedSettings["Canvas/UseBezierLines"]
-            p_options.antialiasing     = self.m_savedSettings["Canvas/Antialiasing"]
-            p_options.eyecandy         = self.m_savedSettings["Canvas/EyeCandy"]
+            p_options.theme_name       = self.fSavedSettings["Canvas/Theme"]
+            p_options.auto_hide_groups = self.fSavedSettings["Canvas/AutoHideGroups"]
+            p_options.use_bezier_lines = self.fSavedSettings["Canvas/UseBezierLines"]
+            p_options.antialiasing     = self.fSavedSettings["Canvas/Antialiasing"]
+            p_options.eyecandy         = self.fSavedSettings["Canvas/EyeCandy"]
 
             patchcanvas.setOptions(p_options)
             patchcanvas.init("Catarina", self.scene, self.canvasCallback, DEBUG)
@@ -1248,33 +1257,37 @@ class CatarinaMainW(AbstractCanvasJackClass, ui_catarina.Ui_CatarinaMainW):
         QMessageBox.about(self, self.tr("About Catarina"), self.tr("<h3>Catarina</h3>"
                                                                    "<br>Version %s"
                                                                    "<br>Catarina is a testing ground for the 'PatchCanvas' module.<br>"
-                                                                   "<br>Copyright (C) 2010-2012 falkTX") % VERSION)
+                                                                   "<br>Copyright (C) 2010-2013 falkTX") % VERSION)
 
     def saveSettings(self):
-        self.settings.setValue("Geometry", self.saveGeometry())
-        self.settings.setValue("ShowToolbar", self.frame_toolbar.isVisible())
+        settings = QSettings()
+
+        settings.setValue("Geometry", self.saveGeometry())
+        settings.setValue("ShowToolbar", self.ui.frame_toolbar.isVisible())
 
     def loadSettings(self, geometry):
+        settings = QSettings()
+
         if geometry:
-            self.restoreGeometry(self.settings.value("Geometry", ""))
+            self.restoreGeometry(settings.value("Geometry", ""))
 
-            show_toolbar = self.settings.value("ShowToolbar", True, type=bool)
-            self.act_settings_show_toolbar.setChecked(show_toolbar)
-            self.frame_toolbar.setVisible(show_toolbar)
+            showToolbar = settings.value("ShowToolbar", True, type=bool)
+            self.ui.act_settings_show_toolbar.setChecked(showToolbar)
+            self.ui.frame_toolbar.setVisible(showToolbar)
 
-        self.m_savedSettings = {
-            "Canvas/Theme": self.settings.value("Canvas/Theme", patchcanvas.getDefaultThemeName(), type=str),
-            "Canvas/AutoHideGroups": self.settings.value("Canvas/AutoHideGroups", False, type=bool),
-            "Canvas/UseBezierLines": self.settings.value("Canvas/UseBezierLines", True, type=bool),
-            "Canvas/EyeCandy": self.settings.value("Canvas/EyeCandy", patchcanvas.EYECANDY_SMALL, type=int),
-            "Canvas/UseOpenGL": self.settings.value("Canvas/UseOpenGL", False, type=bool),
-            "Canvas/Antialiasing": self.settings.value("Canvas/Antialiasing", patchcanvas.ANTIALIASING_SMALL, type=int),
-            "Canvas/TextAntialiasing": self.settings.value("Canvas/TextAntialiasing", True, type=bool),
-            "Canvas/HighQualityAntialiasing": self.settings.value("Canvas/HighQualityAntialiasing", False, type=bool)
+        self.fSavedSettings = {
+            "Canvas/Theme": settings.value("Canvas/Theme", patchcanvas.getDefaultThemeName(), type=str),
+            "Canvas/AutoHideGroups": settings.value("Canvas/AutoHideGroups", False, type=bool),
+            "Canvas/UseBezierLines": settings.value("Canvas/UseBezierLines", True, type=bool),
+            "Canvas/EyeCandy": settings.value("Canvas/EyeCandy", patchcanvas.EYECANDY_SMALL, type=int),
+            "Canvas/UseOpenGL": settings.value("Canvas/UseOpenGL", False, type=bool),
+            "Canvas/Antialiasing": settings.value("Canvas/Antialiasing", patchcanvas.ANTIALIASING_SMALL, type=int),
+            "Canvas/TextAntialiasing": settings.value("Canvas/TextAntialiasing", True, type=bool),
+            "Canvas/HighQualityAntialiasing": settings.value("Canvas/HighQualityAntialiasing", False, type=bool)
         }
 
     def timerEvent(self, event):
-        if event.timerId() == self.m_updateTimer:
+        if event.timerId() == self.fUpdateTimer:
             self.update()
         QMainWindow.timerEvent(self, event)
 

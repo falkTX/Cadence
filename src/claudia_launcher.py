@@ -1,12 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# ... TODO
+# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# For a full copy of the GNU General Public License see the COPYING file
+
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
 from PyQt4.QtCore import pyqtSlot, Qt, QTimer, QSettings
 from PyQt4.QtGui import QMainWindow, QTableWidgetItem, QWidget
-from subprocess import getoutput
 from random import randint
 
 # ------------------------------------------------------------------------------------------------------------
@@ -15,6 +29,14 @@ from random import randint
 import claudia_database as database
 import ui_claudia_launcher
 from shared import *
+
+# ------------------------------------------------------------------------------------------------------------
+# Safe Imports getoutput
+
+if sys.version_info >= (3, 0):
+    from subprocess import getoutput
+else:
+    from commands import getoutput
 
 # ------------------------------------------------------------------------------------------------------------
 # Debug Mode
