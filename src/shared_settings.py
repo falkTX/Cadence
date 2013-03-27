@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Common/Shared code related to Settings dialog
-# Copyright (C) 2010-2012 Filipe Coelho <falktx@falktx.com>
+# Common/Shared code related to the Settings dialog
+# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt4.QtCore import pyqtSlot
+from PyQt4.QtCore import pyqtSlot, QSettings
 from PyQt4.QtGui import QDialog, QDialogButtonBox
 
 # ------------------------------------------------------------------------------------------------------------
@@ -33,10 +33,10 @@ from patchcanvas_theme import *
 # Global variables
 
 # Tab indexes
-TAB_INDEX_MAIN         = 0
-TAB_INDEX_CANVAS       = 1
-TAB_INDEX_LADISH       = 2
-TAB_INDEX_NONE         = 3
+TAB_INDEX_MAIN   = 0
+TAB_INDEX_CANVAS = 1
+TAB_INDEX_LADISH = 2
+TAB_INDEX_NONE   = 3
 
 # PatchCanvas defines
 CANVAS_ANTIALIASING_SMALL = 1
@@ -56,12 +56,12 @@ LADISH_CONF_KEY_DAEMON_TERMINAL_DEFAULT         = "x-terminal-emulator"
 LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART_DEFAULT = True
 LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY_DEFAULT    = 0
 
-# Internal defines and defaults
+# Internal defaults
 global SETTINGS_DEFAULT_PROJECT_FOLDER
-SETTINGS_DEFAULT_PROJECT_FOLDER   = HOME
+SETTINGS_DEFAULT_PROJECT_FOLDER = HOME
 
 # ------------------------------------------------------------------------------------------------------------
-# Change internal defines and defaults
+# Change internal defaults
 
 def setDefaultProjectFolder(folder):
     global SETTINGS_DEFAULT_PROJECT_FOLDER
@@ -70,174 +70,177 @@ def setDefaultProjectFolder(folder):
 # ------------------------------------------------------------------------------------------------------------
 # Settings Dialog
 
-class SettingsW(QDialog, ui_settings_app.Ui_SettingsW):
+class SettingsW(QDialog):
     def __init__(self, parent, appName, hasOpenGL=False):
         QDialog.__init__(self, parent)
-        self.setupUi(self)
+        self.ui = ui_settings_app.Ui_SettingsW()
+        self.ui.setupUi(self)
 
         # -------------------------------------------------------------
         # Set default settings
 
-        self.m_refreshInterval = 120
-        self.m_autoHideGroups  = True
-        self.m_useSystemTray   = True
-        self.m_closeToTray     = False
+        self.fRefreshInterval = 120
+        self.fAutoHideGroups  = True
+        self.fUseSystemTray   = True
+        self.fCloseToTray     = False
 
         # -------------------------------------------------------------
         # Set app-specific settings
 
         if appName == "catarina":
-            self.m_autoHideGroups = False
-            self.lw_page.hideRow(TAB_INDEX_MAIN)
-            self.lw_page.hideRow(TAB_INDEX_LADISH)
-            self.lw_page.setCurrentCell(TAB_INDEX_CANVAS, 0)
+            self.fAutoHideGroups = False
+            self.ui.lw_page.hideRow(TAB_INDEX_MAIN)
+            self.ui.lw_page.hideRow(TAB_INDEX_LADISH)
+            self.ui.lw_page.setCurrentCell(TAB_INDEX_CANVAS, 0)
 
         elif appName == "catia":
-            self.m_useSystemTray = False
-            self.group_main_paths.setEnabled(False)
-            self.group_main_paths.setVisible(False)
-            self.group_tray.setEnabled(False)
-            self.group_tray.setVisible(False)
-            self.lw_page.hideRow(TAB_INDEX_LADISH)
-            self.lw_page.setCurrentCell(TAB_INDEX_MAIN, 0)
+            self.fUseSystemTray = False
+            self.ui.group_main_paths.setEnabled(False)
+            self.ui.group_main_paths.setVisible(False)
+            self.ui.group_tray.setEnabled(False)
+            self.ui.group_tray.setVisible(False)
+            self.ui.lw_page.hideRow(TAB_INDEX_LADISH)
+            self.ui.lw_page.setCurrentCell(TAB_INDEX_MAIN, 0)
 
         elif appName == "claudia":
-            self.cb_jack_port_alias.setEnabled(False)
-            self.cb_jack_port_alias.setVisible(False)
-            self.label_jack_port_alias.setEnabled(False)
-            self.label_jack_port_alias.setVisible(False)
-            self.lw_page.setCurrentCell(TAB_INDEX_MAIN, 0)
+            self.ui.cb_jack_port_alias.setEnabled(False)
+            self.ui.cb_jack_port_alias.setVisible(False)
+            self.ui.label_jack_port_alias.setEnabled(False)
+            self.ui.label_jack_port_alias.setVisible(False)
+            self.ui.lw_page.setCurrentCell(TAB_INDEX_MAIN, 0)
 
         else:
-            self.lw_page.hideRow(TAB_INDEX_MAIN)
-            self.lw_page.hideRow(TAB_INDEX_CANVAS)
-            self.lw_page.hideRow(TAB_INDEX_LADISH)
-            self.stackedWidget.setCurrentIndex(TAB_INDEX_NONE)
+            self.ui.lw_page.hideRow(TAB_INDEX_MAIN)
+            self.ui.lw_page.hideRow(TAB_INDEX_CANVAS)
+            self.ui.lw_page.hideRow(TAB_INDEX_LADISH)
+            self.ui.stackedWidget.setCurrentIndex(TAB_INDEX_NONE)
             return
 
         # -------------------------------------------------------------
         # Load settings
 
-        self.settings = parent.settings
         self.loadSettings()
 
         # -------------------------------------------------------------
         # Set-up GUI
 
         if not hasOpenGL:
-            self.cb_canvas_use_opengl.setChecked(False)
-            self.cb_canvas_use_opengl.setEnabled(False)
+            self.ui.cb_canvas_use_opengl.setChecked(False)
+            self.ui.cb_canvas_use_opengl.setEnabled(False)
 
-        self.lw_page.item(0, 0).setIcon(getIcon(appName, 48))
-        self.label_icon_main.setPixmap(getIcon(appName, 48).pixmap(48, 48))
+        self.ui.lw_page.item(0, 0).setIcon(getIcon(appName, 48))
+        self.ui.label_icon_main.setPixmap(getIcon(appName, 48).pixmap(48, 48))
 
         # -------------------------------------------------------------
         # Set-up connections
 
         self.connect(self, SIGNAL("accepted()"), SLOT("slot_saveSettings()"))
-        self.connect(self.buttonBox.button(QDialogButtonBox.Reset), SIGNAL("clicked()"), SLOT("slot_resetSettings()"))
-
-        self.connect(self.b_main_def_folder_open, SIGNAL("clicked()"), SLOT("slot_getAndSetProjectPath()"))
+        self.connect(self.ui.buttonBox.button(QDialogButtonBox.Reset), SIGNAL("clicked()"), SLOT("slot_resetSettings()"))
+        self.connect(self.ui.b_main_def_folder_open, SIGNAL("clicked()"), SLOT("slot_getAndSetProjectPath()"))
 
     def loadSettings(self):
-        if not self.lw_page.isRowHidden(TAB_INDEX_MAIN):
-            self.le_main_def_folder.setText(self.settings.value("Main/DefaultProjectFolder", SETTINGS_DEFAULT_PROJECT_FOLDER, type=str))
-            self.cb_tray_enable.setChecked(self.settings.value("Main/UseSystemTray", self.m_useSystemTray, type=bool))
-            self.cb_tray_close_to.setChecked(self.settings.value("Main/CloseToTray", self.m_closeToTray, type=bool))
-            self.sb_gui_refresh.setValue(self.settings.value("Main/RefreshInterval", self.m_refreshInterval, type=int))
-            self.cb_jack_port_alias.setCurrentIndex(self.settings.value("Main/JackPortAlias", 2, type=int))
+        settings = QSettings()
+
+        if not self.ui.lw_page.isRowHidden(TAB_INDEX_MAIN):
+            self.ui.le_main_def_folder.setText(settings.value("Main/DefaultProjectFolder", SETTINGS_DEFAULT_PROJECT_FOLDER, type=str))
+            self.ui.cb_tray_enable.setChecked(settings.value("Main/UseSystemTray", self.fUseSystemTray, type=bool))
+            self.ui.cb_tray_close_to.setChecked(settings.value("Main/CloseToTray", self.fCloseToTray, type=bool))
+            self.ui.sb_gui_refresh.setValue(settings.value("Main/RefreshInterval", self.fRefreshInterval, type=int))
+            self.ui.cb_jack_port_alias.setCurrentIndex(settings.value("Main/JackPortAlias", 2, type=int))
 
         # ---------------------------------------
 
-        if not self.lw_page.isRowHidden(TAB_INDEX_CANVAS):
-            self.cb_canvas_hide_groups.setChecked(self.settings.value("Canvas/AutoHideGroups", self.m_autoHideGroups, type=bool))
-            self.cb_canvas_bezier_lines.setChecked(self.settings.value("Canvas/UseBezierLines", True, type=bool))
-            self.cb_canvas_eyecandy.setCheckState(self.settings.value("Canvas/EyeCandy", CANVAS_EYECANDY_SMALL, type=int))
-            self.cb_canvas_use_opengl.setChecked(self.settings.value("Canvas/UseOpenGL", False, type=bool))
-            self.cb_canvas_render_aa.setCheckState(self.settings.value("Canvas/Antialiasing", CANVAS_ANTIALIASING_SMALL, type=int))
-            self.cb_canvas_render_hq_aa.setChecked(self.settings.value("Canvas/HighQualityAntialiasing", False, type=bool))
+        if not self.ui.lw_page.isRowHidden(TAB_INDEX_CANVAS):
+            self.ui.cb_canvas_hide_groups.setChecked(settings.value("Canvas/AutoHideGroups", self.fAutoHideGroups, type=bool))
+            self.ui.cb_canvas_bezier_lines.setChecked(settings.value("Canvas/UseBezierLines", True, type=bool))
+            self.ui.cb_canvas_eyecandy.setCheckState(settings.value("Canvas/EyeCandy", CANVAS_EYECANDY_SMALL, type=int))
+            self.ui.cb_canvas_use_opengl.setChecked(settings.value("Canvas/UseOpenGL", False, type=bool))
+            self.ui.cb_canvas_render_aa.setCheckState(settings.value("Canvas/Antialiasing", CANVAS_ANTIALIASING_SMALL, type=int))
+            self.ui.cb_canvas_render_hq_aa.setChecked(settings.value("Canvas/HighQualityAntialiasing", False, type=bool))
 
-            themeName = self.settings.value("Canvas/Theme", getDefaultThemeName(), type=str)
+            themeName = settings.value("Canvas/Theme", getDefaultThemeName(), type=str)
 
             for i in range(Theme.THEME_MAX):
                 thisThemeName = getThemeName(i)
-                self.cb_canvas_theme.addItem(thisThemeName)
+                self.ui.cb_canvas_theme.addItem(thisThemeName)
                 if thisThemeName == themeName:
-                    self.cb_canvas_theme.setCurrentIndex(i)
+                    self.ui.cb_canvas_theme.setCurrentIndex(i)
 
         # ---------------------------------------
 
-        if not self.lw_page.isRowHidden(TAB_INDEX_LADISH):
-            self.cb_ladish_notify.setChecked(self.settings.value(LADISH_CONF_KEY_DAEMON_NOTIFY, LADISH_CONF_KEY_DAEMON_NOTIFY_DEFAULT, type=bool))
-            self.le_ladish_shell.setText(self.settings.value(LADISH_CONF_KEY_DAEMON_SHELL, LADISH_CONF_KEY_DAEMON_SHELL_DEFAULT, type=str))
-            self.le_ladish_terminal.setText(self.settings.value(LADISH_CONF_KEY_DAEMON_TERMINAL, LADISH_CONF_KEY_DAEMON_TERMINAL_DEFAULT, type=str))
-            self.cb_ladish_studio_autostart.setChecked(self.settings.value(LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART, LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART_DEFAULT, type=bool))
-            self.sb_ladish_jsdelay.setValue(self.settings.value(LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY, LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY_DEFAULT, type=int))
+        if not self.ui.lw_page.isRowHidden(TAB_INDEX_LADISH):
+            self.ui.cb_ladish_notify.setChecked(settings.value(LADISH_CONF_KEY_DAEMON_NOTIFY, LADISH_CONF_KEY_DAEMON_NOTIFY_DEFAULT, type=bool))
+            self.ui.le_ladish_shell.setText(settings.value(LADISH_CONF_KEY_DAEMON_SHELL, LADISH_CONF_KEY_DAEMON_SHELL_DEFAULT, type=str))
+            self.ui.le_ladish_terminal.setText(settings.value(LADISH_CONF_KEY_DAEMON_TERMINAL, LADISH_CONF_KEY_DAEMON_TERMINAL_DEFAULT, type=str))
+            self.ui.cb_ladish_studio_autostart.setChecked(settings.value(LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART, LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART_DEFAULT, type=bool))
+            self.ui.sb_ladish_jsdelay.setValue(settings.value(LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY, LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY_DEFAULT, type=int))
 
     @pyqtSlot()
     def slot_saveSettings(self):
-        if not self.lw_page.isRowHidden(TAB_INDEX_MAIN):
-            self.settings.setValue("Main/RefreshInterval", self.sb_gui_refresh.value())
+        settings = QSettings()
 
-            if self.group_tray.isEnabled():
-                self.settings.setValue("Main/UseSystemTray", self.cb_tray_enable.isChecked())
-                self.settings.setValue("Main/CloseToTray", self.cb_tray_close_to.isChecked())
+        if not self.ui.lw_page.isRowHidden(TAB_INDEX_MAIN):
+            settings.setValue("Main/RefreshInterval", self.ui.sb_gui_refresh.value())
 
-            if self.group_main_paths.isEnabled():
-                self.settings.setValue("Main/DefaultProjectFolder", self.le_main_def_folder.text())
+            if self.ui.group_tray.isEnabled():
+                settings.setValue("Main/UseSystemTray", self.ui.cb_tray_enable.isChecked())
+                settings.setValue("Main/CloseToTray", self.ui.cb_tray_close_to.isChecked())
 
-            if self.cb_jack_port_alias.isEnabled():
-                self.settings.setValue("Main/JackPortAlias", self.cb_jack_port_alias.currentIndex())
+            if self.ui.group_main_paths.isEnabled():
+                settings.setValue("Main/DefaultProjectFolder", self.ui.le_main_def_folder.text())
+
+            if self.ui.cb_jack_port_alias.isEnabled():
+                settings.setValue("Main/JackPortAlias", self.ui.cb_jack_port_alias.currentIndex())
 
         # ---------------------------------------
 
-        if not self.lw_page.isRowHidden(TAB_INDEX_CANVAS):
-            self.settings.setValue("Canvas/Theme", self.cb_canvas_theme.currentText())
-            self.settings.setValue("Canvas/AutoHideGroups", self.cb_canvas_hide_groups.isChecked())
-            self.settings.setValue("Canvas/UseBezierLines", self.cb_canvas_bezier_lines.isChecked())
-            self.settings.setValue("Canvas/UseOpenGL", self.cb_canvas_use_opengl.isChecked())
-            self.settings.setValue("Canvas/HighQualityAntialiasing", self.cb_canvas_render_hq_aa.isChecked())
+        if not self.ui.lw_page.isRowHidden(TAB_INDEX_CANVAS):
+            settings.setValue("Canvas/Theme", self.ui.cb_canvas_theme.currentText())
+            settings.setValue("Canvas/AutoHideGroups", self.ui.cb_canvas_hide_groups.isChecked())
+            settings.setValue("Canvas/UseBezierLines", self.ui.cb_canvas_bezier_lines.isChecked())
+            settings.setValue("Canvas/UseOpenGL", self.ui.cb_canvas_use_opengl.isChecked())
+            settings.setValue("Canvas/HighQualityAntialiasing", self.ui.cb_canvas_render_hq_aa.isChecked())
 
             # 0, 1, 2 match their enum variants
-            self.settings.setValue("Canvas/EyeCandy", self.cb_canvas_eyecandy.checkState())
-            self.settings.setValue("Canvas/Antialiasing", self.cb_canvas_render_aa.checkState())
+            settings.setValue("Canvas/EyeCandy", self.ui.cb_canvas_eyecandy.checkState())
+            settings.setValue("Canvas/Antialiasing", self.ui.cb_canvas_render_aa.checkState())
 
         # ---------------------------------------
 
-        if not self.lw_page.isRowHidden(TAB_INDEX_LADISH):
-            self.settings.setValue(LADISH_CONF_KEY_DAEMON_NOTIFY, self.cb_ladish_notify.isChecked())
-            self.settings.setValue(LADISH_CONF_KEY_DAEMON_SHELL, self.le_ladish_shell.text())
-            self.settings.setValue(LADISH_CONF_KEY_DAEMON_TERMINAL, self.le_ladish_terminal.text())
-            self.settings.setValue(LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART, self.cb_ladish_studio_autostart.isChecked())
-            self.settings.setValue(LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY, self.sb_ladish_jsdelay.value())
+        if not self.ui.lw_page.isRowHidden(TAB_INDEX_LADISH):
+            settings.setValue(LADISH_CONF_KEY_DAEMON_NOTIFY, self.ui.cb_ladish_notify.isChecked())
+            settings.setValue(LADISH_CONF_KEY_DAEMON_SHELL, self.ui.le_ladish_shell.text())
+            settings.setValue(LADISH_CONF_KEY_DAEMON_TERMINAL, self.ui.le_ladish_terminal.text())
+            settings.setValue(LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART, self.ui.cb_ladish_studio_autostart.isChecked())
+            settings.setValue(LADISH_CONF_KEY_DAEMON_JS_SAVE_DELAY, self.ui.sb_ladish_jsdelay.value())
 
     @pyqtSlot()
     def slot_resetSettings(self):
-        if self.lw_page.currentRow() == TAB_INDEX_MAIN:
-            self.le_main_def_folder.setText(SETTINGS_DEFAULT_PROJECT_FOLDER)
-            self.cb_tray_enable.setChecked(self.m_useSystemTray)
-            self.cb_tray_close_to.setChecked(self.m_closeToTray)
-            self.sb_gui_refresh.setValue(self.m_refreshInterval)
-            self.cb_jack_port_alias.setCurrentIndex(2)
+        if self.ui.lw_page.currentRow() == TAB_INDEX_MAIN:
+            self.ui.le_main_def_folder.setText(SETTINGS_DEFAULT_PROJECT_FOLDER)
+            self.ui.cb_tray_enable.setChecked(self.fUseSystemTray)
+            self.ui.cb_tray_close_to.setChecked(self.fCloseToTray)
+            self.ui.sb_gui_refresh.setValue(self.fRefreshInterval)
+            self.ui.cb_jack_port_alias.setCurrentIndex(2)
 
-        elif self.lw_page.currentRow() == TAB_INDEX_CANVAS:
-            self.cb_canvas_theme.setCurrentIndex(0)
-            self.cb_canvas_hide_groups.setChecked(self.m_autoHideGroups)
-            self.cb_canvas_bezier_lines.setChecked(True)
-            self.cb_canvas_eyecandy.setCheckState(Qt.PartiallyChecked)
-            self.cb_canvas_use_opengl.setChecked(False)
-            self.cb_canvas_render_aa.setCheckState(Qt.PartiallyChecked)
-            self.cb_canvas_render_hq_aa.setChecked(False)
+        elif self.ui.lw_page.currentRow() == TAB_INDEX_CANVAS:
+            self.ui.cb_canvas_theme.setCurrentIndex(0)
+            self.ui.cb_canvas_hide_groups.setChecked(self.fAutoHideGroups)
+            self.ui.cb_canvas_bezier_lines.setChecked(True)
+            self.ui.cb_canvas_eyecandy.setCheckState(Qt.PartiallyChecked)
+            self.ui.cb_canvas_use_opengl.setChecked(False)
+            self.ui.cb_canvas_render_aa.setCheckState(Qt.PartiallyChecked)
+            self.ui.cb_canvas_render_hq_aa.setChecked(False)
 
-        elif self.lw_page.currentRow() == TAB_INDEX_LADISH:
-            self.cb_ladish_notify.setChecked(LADISH_CONF_KEY_DAEMON_NOTIFY_DEFAULT)
-            self.cb_ladish_studio_autostart.setChecked(LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART_DEFAULT)
-            self.le_ladish_shell.setText(LADISH_CONF_KEY_DAEMON_SHELL_DEFAULT)
-            self.le_ladish_terminal.setText(LADISH_CONF_KEY_DAEMON_TERMINAL_DEFAULT)
+        elif self.ui.lw_page.currentRow() == TAB_INDEX_LADISH:
+            self.ui.cb_ladish_notify.setChecked(LADISH_CONF_KEY_DAEMON_NOTIFY_DEFAULT)
+            self.ui.cb_ladish_studio_autostart.setChecked(LADISH_CONF_KEY_DAEMON_STUDIO_AUTOSTART_DEFAULT)
+            self.ui.le_ladish_shell.setText(LADISH_CONF_KEY_DAEMON_SHELL_DEFAULT)
+            self.ui.le_ladish_terminal.setText(LADISH_CONF_KEY_DAEMON_TERMINAL_DEFAULT)
 
     @pyqtSlot()
     def slot_getAndSetProjectPath(self):
-        getAndSetPath(self, self.le_main_def_folder.text(), self.le_main_def_folder)
+        getAndSetPath(self, self.ui.le_main_def_folder.text(), self.ui.le_main_def_folder)
 
     def done(self, r):
         QDialog.done(self, r)

@@ -21,10 +21,10 @@
 
 import os
 import sys
+from codecs import open as codecopen
 from unicodedata import normalize
 from PyQt4.QtCore import qWarning, SIGNAL, SLOT
 from PyQt4.QtGui import QApplication, QFileDialog, QIcon, QMessageBox
-from codecs import open as codecopen
 
 # ------------------------------------------------------------------------------------------------------------
 # Set Platform
@@ -70,7 +70,7 @@ except:
 # ------------------------------------------------------------------------------------------------------------
 # Set Version
 
-VERSION = "1.0.0"
+VERSION = "1.0"
 
 # ------------------------------------------------------------------------------------------------------------
 # Set Debug mode
@@ -103,7 +103,7 @@ HOME = os.getenv("HOME")
 if HOME is None:
     HOME = os.path.expanduser("~")
 
-    if LINUX or MACOS:
+    if not WINDOWS:
         qWarning("HOME variable not set")
 
 if not os.path.exists(HOME):
