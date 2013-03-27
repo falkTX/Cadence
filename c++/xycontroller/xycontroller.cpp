@@ -21,7 +21,7 @@
 # define nullptr (0)
 #endif
 
-#define VERSION "0.5.0"
+#define VERSION "1.0"
 
 #include "../jack_utils.hpp"
 #include "../midi_queue.hpp"
@@ -685,7 +685,7 @@ protected slots:
         QMessageBox::about(this, tr("About XY Controller"), tr("<h3>XY Controller</h3>"
                                                                "<br>Version %1"
                                                                "<br>XY Controller is a simple XY widget that sends and receives data from Jack MIDI.<br>"
-                                                               "<br>Copyright (C) 2012 falkTX").arg(VERSION));
+                                                               "<br>Copyright (C) 2012-2013 falkTX").arg(VERSION));
     }
 
     void slot_updateScreen()

@@ -21,7 +21,7 @@
 # define nullptr (0)
 #endif
 
-#define VERSION "0.5.0"
+#define VERSION "1.0"
 
 #include "../jack_utils.hpp"
 #include "../widgets/digitalpeakmeter.hpp"
