@@ -85,8 +85,8 @@ def needsInit():
     return bool(gJackctl is None)
 
 def setResetNeeded(yesNo):
-  global gResetNeeded
-  gResetNeeded = yesNo
+    global gResetNeeded
+    gResetNeeded = yesNo
 
 # ------------------------------------------------------------------------------------------------------------
 # Helper functions
