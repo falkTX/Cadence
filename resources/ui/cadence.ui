@@ -720,8 +720,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>290</width>
-                  <height>77</height>
+                  <width>360</width>
+                  <height>97</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -861,8 +861,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>204</width>
-                  <height>77</height>
+                  <width>360</width>
+                  <height>97</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -1664,15 +1664,15 @@
                 <number>1</number>
                </property>
                <property name="currentIndex">
-                <number>3</number>
+                <number>0</number>
                </property>
                <widget class="QWidget" name="page_ladspa">
                 <property name="geometry">
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>89</width>
-                  <height>66</height>
+                  <width>416</width>
+                  <height>334</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -1761,7 +1761,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>359</width>
+                  <width>416</width>
                   <height>334</height>
                  </rect>
                 </property>
