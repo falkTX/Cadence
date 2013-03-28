@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>739</width>
+    <width>740</width>
     <height>564</height>
    </rect>
   </property>
@@ -493,7 +493,7 @@
                <item row="1" column="0">
                 <widget class="QPushButton" name="b_jack_switchmaster">
                  <property name="text">
-                  <string>Switch Master!</string>
+                  <string>Switch Master</string>
                  </property>
                 </widget>
                </item>
@@ -572,7 +572,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>362</width>
+                  <width>360</width>
                   <height>100</height>
                  </rect>
                 </property>
@@ -720,8 +720,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>362</width>
-                  <height>97</height>
+                  <width>290</width>
+                  <height>77</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -861,8 +861,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>362</width>
-                  <height>97</height>
+                  <width>204</width>
+                  <height>77</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -1053,41 +1053,6 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_3">
           <item>
-           <widget class="QGroupBox" name="groupBox_catarina">
-            <property name="title">
-             <string>Catarina</string>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_4">
-             <item>
-              <widget class="ClickableLabel" name="pic_catarina">
-               <property name="text">
-                <string/>
-               </property>
-               <property name="pixmap">
-                <pixmap resource="../resources.qrc">:/screens/catarina.png</pixmap>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_tools_catarina">
-               <property name="text">
-                <string>Patchbay test app</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="wordWrap">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
            <widget class="QGroupBox" name="groupBox_catia">
             <property name="title">
              <string>Catia</string>
@@ -1095,6 +1060,18 @@
             <layout class="QVBoxLayout" name="verticalLayout_2">
              <item>
               <widget class="ClickableLabel" name="pic_catia">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>117</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>117</height>
+                </size>
+               </property>
                <property name="text">
                 <string/>
                </property>
@@ -1102,14 +1079,14 @@
                 <pixmap resource="../resources.qrc">:/screens/catia.png</pixmap>
                </property>
                <property name="alignment">
-                <set>Qt::AlignCenter</set>
+                <set>Qt::AlignHCenter|Qt::AlignTop</set>
                </property>
               </widget>
              </item>
              <item>
               <widget class="QLabel" name="label_tools_catia">
                <property name="text">
-                <string>Catia is a nice JACK Patchbay with A2J Bridge integration</string>
+                <string>JACK Patchbay with A2J Bridge support and JACK Transport</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -1130,6 +1107,18 @@
             <layout class="QVBoxLayout" name="verticalLayout_3">
              <item>
               <widget class="ClickableLabel" name="pic_claudia">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>117</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>117</height>
+                </size>
+               </property>
                <property name="text">
                 <string/>
                </property>
@@ -1137,14 +1126,61 @@
                 <pixmap resource="../resources.qrc">:/screens/claudia.png</pixmap>
                </property>
                <property name="alignment">
-                <set>Qt::AlignCenter</set>
+                <set>Qt::AlignHCenter|Qt::AlignTop</set>
                </property>
               </widget>
              </item>
              <item>
               <widget class="QLabel" name="label_tools_claudia">
                <property name="text">
-                <string>Claudia is a Graphical User Interface to LADISH</string>
+                <string>LADISH frontend; like Catia, but focused at session management</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="wordWrap">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="groupBox_meter">
+            <property name="title">
+             <string>Meter</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_4">
+             <item>
+              <widget class="ClickableLabel" name="pic_meter">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>117</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>117</height>
+                </size>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="pixmap">
+                <pixmap resource="../resources.qrc">:/screens/cadence-jackmeter.png</pixmap>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignHCenter|Qt::AlignTop</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_tools_meter">
+               <property name="text">
+                <string>Digital peak meter, auto-connected to all system outputs</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -1215,6 +1251,18 @@
             <layout class="QVBoxLayout" name="verticalLayout_7">
              <item>
               <widget class="ClickableLabel" name="pic_logs">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>128</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>128</height>
+                </size>
+               </property>
                <property name="text">
                 <string/>
                </property>
@@ -1222,7 +1270,7 @@
                 <pixmap resource="../resources.qrc">:/screens/cadence-logs.png</pixmap>
                </property>
                <property name="alignment">
-                <set>Qt::AlignCenter</set>
+                <set>Qt::AlignHCenter|Qt::AlignTop</set>
                </property>
               </widget>
              </item>
@@ -1250,6 +1298,18 @@
             <layout class="QVBoxLayout" name="verticalLayout_6">
              <item>
               <widget class="ClickableLabel" name="pic_render">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>128</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>128</height>
+                </size>
+               </property>
                <property name="text">
                 <string/>
                </property>
@@ -1257,7 +1317,7 @@
                 <pixmap resource="../resources.qrc">:/screens/cadence-render.png</pixmap>
                </property>
                <property name="alignment">
-                <set>Qt::AlignCenter</set>
+                <set>Qt::AlignHCenter|Qt::AlignTop</set>
                </property>
               </widget>
              </item>
@@ -1285,6 +1345,18 @@
             <layout class="QVBoxLayout" name="verticalLayout_5">
              <item>
               <widget class="ClickableLabel" name="pic_xycontroller">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>128</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>128</height>
+                </size>
+               </property>
                <property name="text">
                 <string/>
                </property>
@@ -1292,7 +1364,7 @@
                 <pixmap resource="../resources.qrc">:/screens/cadence-xycontroller.png</pixmap>
                </property>
                <property name="alignment">
-                <set>Qt::AlignCenter</set>
+                <set>Qt::AlignHCenter|Qt::AlignTop</set>
                </property>
               </widget>
              </item>
@@ -1689,7 +1761,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>415</width>
+                  <width>359</width>
                   <height>334</height>
                  </rect>
                 </property>
