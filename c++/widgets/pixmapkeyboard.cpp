@@ -81,7 +81,20 @@ static const std::map<int, int> kMidiKeyboard2KeyMap = {
     {Qt::Key_U, 71}
 };
 
+#ifndef Q_COMPILER_LAMBDA
+static QVector<int> kBlackNotes;
+static struct BlackNotesInit {
+    BlackNotesInit() {
+        kBlackNotes << 1;
+        kBlackNotes << 3;
+        kBlackNotes << 6;
+        kBlackNotes << 8;
+        kBlackNotes << 10;
+    }
+} _blackNotesInit ;
+#else
 static const QVector<int> kBlackNotes = {1, 3, 6, 8, 10};
+#endif
 
 PixmapKeyboard::PixmapKeyboard(QWidget* parent)
     : QWidget(parent),
