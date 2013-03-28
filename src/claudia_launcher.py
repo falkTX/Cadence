@@ -31,7 +31,7 @@ import ui_claudia_launcher
 from shared import *
 
 # ------------------------------------------------------------------------------------------------------------
-# Safe Imports getoutput
+# Safe import getoutput
 
 if sys.version_info >= (3, 0):
     from subprocess import getoutput

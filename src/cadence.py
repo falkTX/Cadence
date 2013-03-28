@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Cadence, JACK utilities
-# Copyright (C) 2010-2012 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,19 +16,37 @@
 #
 # For a full copy of the GNU General Public License see the COPYING file
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
+
 from platform import architecture
 from PyQt4.QtCore import QFileSystemWatcher, QThread
 from PyQt4.QtGui import QApplication, QLabel, QMainWindow, QSizePolicy
-from subprocess import getoutput
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
-import ui_cadence
-import ui_cadence_tb_jack, ui_cadence_tb_alsa, ui_cadence_tb_a2j, ui_cadence_tb_pa, ui_cadence_rwait
+
 import systray
+import ui_cadence
+import ui_cadence_tb_jack
+import ui_cadence_tb_alsa
+import ui_cadence_tb_a2j
+import ui_cadence_tb_pa
+import ui_cadence_rwait
 from shared_cadence import *
 from shared_canvasjack import *
 from shared_settings import *
+
+# ------------------------------------------------------------------------------------------------------------
+# Safe import getoutput
+
+if sys.version_info >= (3, 0):
+    from subprocess import getoutput
+else:
+    from commands import getoutput
+
+# ------------------------------------------------------------------------------------------------------------
+# Try Import DBus
 
 try:
     import dbus
@@ -36,6 +54,9 @@ try:
     haveDBus = True
 except:
     haveDBus = False
+
+# ------------------------------------------------------------------------------------------------------------
+# Check for PulseAudio and Wine
 
 havePulseAudio = os.path.exists("/usr/bin/pulseaudio")
 haveWine       = os.path.exists("/usr/bin/regedit")
@@ -503,7 +524,7 @@ class ForceRestartThread(QThread):
         # Connect to jackdbus
         self.parent().DBusReconnect()
 
-        if not DBus.jack:
+        if not gDBus.jack:
             return
 
         for x in range(30):
@@ -517,7 +538,7 @@ class ForceRestartThread(QThread):
         self.emit(SIGNAL("progressChanged(int)"), 90)
 
         # Start it
-        DBus.jack.StartServer()
+        gDBus.jack.StartServer()
         self.emit(SIGNAL("progressChanged(int)"), 93)
 
         # If we made it this far, then JACK is started
@@ -533,10 +554,10 @@ class ForceRestartThread(QThread):
         self.emit(SIGNAL("progressChanged(int)"), 94)
 
         # ALSA-MIDI
-        if GlobalSettings.value("A2J/AutoStart", True, type=bool) and DBus.a2j and not bool(DBus.a2j.is_started()):
+        if GlobalSettings.value("A2J/AutoStart", True, type=bool) and gDBus.a2j and not bool(gDBus.a2j.is_started()):
             a2jExportHW = GlobalSettings.value("A2J/ExportHW", True, type=bool)
-            DBus.a2j.set_hw_export(a2jExportHW)
-            DBus.a2j.start()
+            gDBus.a2j.set_hw_export(a2jExportHW)
+            gDBus.a2j.start()
 
         self.emit(SIGNAL("progressChanged(int)"), 96)
 
@@ -590,7 +611,7 @@ class ToolBarJackDialog(QDialog, ui_cadence_tb_jack.Ui_Dialog):
             if GlobalSettings.value("JACK/AutoLoadLadishStudio", False, type=bool):
                 self.rb_ladish.setChecked(True)
                 self.m_ladishLoaded = True
-            elif "org.ladish" in DBus.bus.list_names():
+            elif "org.ladish" in gDBus.bus.list_names():
                 self.m_ladishLoaded = True
         else:
             self.rb_ladish.setEnabled(False)
@@ -603,10 +624,10 @@ class ToolBarJackDialog(QDialog, ui_cadence_tb_jack.Ui_Dialog):
         self.connect(self.rb_ladish, SIGNAL("clicked()"), SLOT("slot_maybeFillStudioNames()"))
 
     def fillStudioNames(self):
-        DBus.ladish_control = DBus.bus.get_object("org.ladish", "/org/ladish/Control")
+        gDBus.ladish_control = gDBus.bus.get_object("org.ladish", "/org/ladish/Control")
 
         ladishStudioName = dbus.String(GlobalSettings.value("JACK/LadishStudioName", "", type=str))
-        ladishStudioListDump = DBus.ladish_control.GetStudioList()
+        ladishStudioListDump = gDBus.ladish_control.GetStudioList()
 
         if len(ladishStudioListDump) == 0:
             self.rb_ladish.setEnabled(False)
@@ -733,7 +754,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.m_curGovCPUs   = []
 
         try:
-            fBus   = dbus.SystemBus(mainloop=DBus.loop)
+            fBus   = dbus.SystemBus(mainloop=gDBus.loop)
             fProxy = fBus.get_object("com.ubuntu.IndicatorCpufreqSelector", "/Selector", introspect=False)
             haveFreqSelector = True
         except:
@@ -1138,28 +1159,28 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.DBusReconnect()
 
         if haveDBus:
-            DBus.bus.add_signal_receiver(self.DBusSignalReceiver, destination_keyword='dest', path_keyword='path',
+            gDBus.bus.add_signal_receiver(self.DBusSignalReceiver, destination_keyword='dest', path_keyword='path',
                 member_keyword='member', interface_keyword='interface', sender_keyword='sender', )
 
     def DBusReconnect(self):
         if haveDBus:
             try:
-                DBus.jack     = DBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
-                DBus.patchbay = dbus.Interface(DBus.jack, "org.jackaudio.JackPatchbay")
-                jacksettings.initBus(DBus.bus)
+                gDBus.jack     = gDBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
+                gDBus.patchbay = dbus.Interface(gDBus.jack, "org.jackaudio.JackPatchbay")
+                jacksettings.initBus(gDBus.bus)
             except:
-                DBus.jack     = None
-                DBus.patchbay = None
+                gDBus.jack     = None
+                gDBus.patchbay = None
 
             try:
-                DBus.a2j = dbus.Interface(DBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
+                gDBus.a2j = dbus.Interface(gDBus.bus.get_object("org.gna.home.a2jmidid", "/"), "org.gna.home.a2jmidid.control")
             except:
-                DBus.a2j = None
+                gDBus.a2j = None
 
-        if DBus.jack:
-            if DBus.jack.IsStarted():
+        if gDBus.jack:
+            if gDBus.jack.IsStarted():
                 # Check for pulseaudio in jack graph
-                version, groups, conns = DBus.patchbay.GetGraph(0)
+                version, groups, conns = gDBus.patchbay.GetGraph(0)
 
                 for group_id, group_name, ports in groups:
                     if group_name == "alsa2jack":
@@ -1189,8 +1210,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             self.b_jack_switchmaster.setEnabled(False)
             self.groupBox_bridges.setEnabled(False)
 
-        if DBus.a2j:
-            if DBus.a2j.is_started():
+        if gDBus.a2j:
+            if gDBus.a2j.is_started():
                 self.a2jStarted()
             else:
                 self.a2jStopped()
@@ -1221,7 +1242,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
                 self.emit(SIGNAL("DBusJackServerStoppedCallback()"))
 
         elif kwds['interface'] == "org.jackaudio.JackPatchbay":
-            if DBus.patchbay and kwds['path'] == DBus.patchbay.object_path:
+            if gDBus.patchbay and kwds['path'] == gDBus.patchbay.object_path:
                 if DEBUG: print("org.jackaudio.JackPatchbay,", kwds['member'])
                 if kwds['member'] == "ClientAppeared":
                     self.emit(SIGNAL("DBusJackClientAppearedCallback(int, QString)"), args[iJackClientId], args[iJackClientName])
@@ -1236,9 +1257,9 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
                 self.emit(SIGNAL("DBusA2JBridgeStoppedCallback()"))
 
     def jackStarted(self):
-        self.m_last_dsp_load = DBus.jack.GetLoad()
-        self.m_last_xruns    = DBus.jack.GetXruns()
-        self.m_last_buffer_size = DBus.jack.GetBufferSize()
+        self.m_last_dsp_load = gDBus.jack.GetLoad()
+        self.m_last_xruns    = gDBus.jack.GetXruns()
+        self.m_last_buffer_size = gDBus.jack.GetBufferSize()
 
         self.b_jack_start.setEnabled(False)
         self.b_jack_stop.setEnabled(True)
@@ -1249,7 +1270,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.label_jack_status.setText("Started")
         self.label_jack_status_ico.setPixmap(self.pix_apply)
 
-        if DBus.jack.IsRealtime():
+        if gDBus.jack.IsRealtime():
             self.label_jack_realtime.setText("Yes")
             self.label_jack_realtime_ico.setPixmap(self.pix_apply)
         else:
@@ -1259,12 +1280,12 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.label_jack_dsp.setText("%.2f%%" % self.m_last_dsp_load)
         self.label_jack_xruns.setText(str(self.m_last_xruns))
         self.label_jack_bfsize.setText("%i samples" % self.m_last_buffer_size)
-        self.label_jack_srate.setText("%i Hz" % DBus.jack.GetSampleRate())
-        self.label_jack_latency.setText("%.1f ms" % DBus.jack.GetLatency())
+        self.label_jack_srate.setText("%i Hz" % gDBus.jack.GetSampleRate())
+        self.label_jack_latency.setText("%.1f ms" % gDBus.jack.GetLatency())
 
         self.m_timer500 = self.startTimer(500)
 
-        if DBus.a2j and not DBus.a2j.is_started():
+        if gDBus.a2j and not gDBus.a2j.is_started():
             self.b_a2j_start.setEnabled(True)
             self.systray.setActionEnabled("a2j_start", True)
 
@@ -1297,7 +1318,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.label_jack_srate.setText("---")
         self.label_jack_latency.setText("---")
 
-        if DBus.a2j:
+        if gDBus.a2j:
             self.b_a2j_start.setEnabled(False)
             self.systray.setActionEnabled("a2j_start", False)
 
@@ -1319,7 +1340,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.label_bridge_a2j.setText(self.tr("ALSA MIDI Bridge is running"))
 
     def a2jStopped(self):
-        jackRunning = bool(DBus.jack and DBus.jack.IsStarted())
+        jackRunning = bool(gDBus.jack and gDBus.jack.IsStarted())
         self.b_a2j_start.setEnabled(jackRunning)
         self.b_a2j_stop.setEnabled(False)
         self.b_a2j_export_hw.setEnabled(True)
@@ -1352,7 +1373,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
                 self.systray.setActionEnabled("alsa_stop", True)
                 self.label_bridge_alsa.setText(self.tr("Using Cadence snd-aloop daemon, started"))
             else:
-                jackRunning = bool(DBus.jack and DBus.jack.IsStarted())
+                jackRunning = bool(gDBus.jack and gDBus.jack.IsStarted())
                 self.b_alsa_start.setEnabled(jackRunning)
                 self.b_alsa_stop.setEnabled(False)
                 self.systray.setActionEnabled("alsa_start", jackRunning)
@@ -1406,14 +1427,14 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
                 self.systray.setActionEnabled("pulse_stop", True)
                 self.label_bridge_pulse.setText(self.tr("PulseAudio is started and bridged to JACK"))
             else:
-                jackRunning = bool(DBus.jack and DBus.jack.IsStarted())
+                jackRunning = bool(gDBus.jack and gDBus.jack.IsStarted())
                 self.b_pulse_start.setEnabled(jackRunning)
                 self.b_pulse_stop.setEnabled(False)
                 self.systray.setActionEnabled("pulse_start", jackRunning)
                 self.systray.setActionEnabled("pulse_stop", False)
                 self.label_bridge_pulse.setText(self.tr("PulseAudio is started but not bridged"))
         else:
-            jackRunning = bool(DBus.jack and DBus.jack.IsStarted())
+            jackRunning = bool(gDBus.jack and gDBus.jack.IsStarted())
             self.b_pulse_start.setEnabled(jackRunning)
             self.b_pulse_stop.setEnabled(False)
             self.systray.setActionEnabled("pulse_start", jackRunning)
@@ -1501,20 +1522,20 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
     def slot_JackServerStart(self):
         self.saveSettings()
         try:
-            DBus.jack.StartServer()
+            gDBus.jack.StartServer()
         except:
             QMessageBox.warning(self, self.tr("Warning"), self.tr("Failed to start JACK, please check the logs for more information."))
 
     @pyqtSlot()
     def slot_JackServerStop(self):
         try:
-            DBus.jack.StopServer()
+            gDBus.jack.StopServer()
         except:
             QMessageBox.warning(self, self.tr("Warning"), self.tr("Failed to stop JACK, please check the logs for more information."))
 
     @pyqtSlot()
     def slot_JackServerForceRestart(self):
-        if DBus.jack.IsStarted():
+        if gDBus.jack.IsStarted():
             ask = CustomMessageBox(self, QMessageBox.Warning, self.tr("Warning"),
                                    self.tr("This will force kill all JACK applications!<br>Make sure to save your projects before continue."),
                                    self.tr("Are you sure you want to force the restart of JACK?"))
@@ -1538,7 +1559,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
     @pyqtSlot()
     def slot_JackServerSwitchMaster(self):
         try:
-            DBus.jack.SwitchMaster()
+            gDBus.jack.SwitchMaster()
         except:
             QMessageBox.warning(self, self.tr("Warning"), self.tr("Failed to switch JACK master, please check the logs for more information."))
             return
@@ -1551,8 +1572,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_JackClearXruns(self):
-        if DBus.jack:
-            DBus.jack.ResetXruns()
+        if gDBus.jack:
+            gDBus.jack.ResetXruns()
 
     @pyqtSlot()
     def slot_AlsaBridgeStart(self):
@@ -1620,20 +1641,20 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_A2JBridgeStart(self):
-        DBus.a2j.start()
+        gDBus.a2j.start()
 
     @pyqtSlot()
     def slot_A2JBridgeStop(self):
-        DBus.a2j.stop()
+        gDBus.a2j.stop()
 
     @pyqtSlot()
     def slot_A2JBridgeExportHW(self):
         ask = QMessageBox.question(self, self.tr("ALSA MIDI Hardware Export"), self.tr("Enable Hardware Export on the ALSA MIDI Bridge?"), QMessageBox.Yes|QMessageBox.No|QMessageBox.Cancel, QMessageBox.Yes)
 
         if ask == QMessageBox.Yes:
-            DBus.a2j.set_hw_export(True)
+            gDBus.a2j.set_hw_export(True)
         elif ask == QMessageBox.No:
-            DBus.a2j.set_hw_export(False)
+            gDBus.a2j.set_hw_export(False)
 
     @pyqtSlot()
     def slot_A2JBridgeOptions(self):
@@ -1664,7 +1685,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot(str)
     def slot_changeGovernorMode(self, newMode):
-        bus   = dbus.SystemBus(mainloop=DBus.loop)
+        bus   = dbus.SystemBus(mainloop=gDBus.loop)
         #proxy = bus.get_object("org.cadence.CpufreqSelector", "/Selector", introspect=False)
         #print(proxy.hello())
         proxy = bus.get_object("com.ubuntu.IndicatorCpufreqSelector", "/Selector", introspect=False)
@@ -2156,9 +2177,9 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     def timerEvent(self, event):
         if event.timerId() == self.m_timer500:
-            if DBus.jack and self.m_last_dsp_load != None:
-                next_dsp_load = DBus.jack.GetLoad()
-                next_xruns    = DBus.jack.GetXruns()
+            if gDBus.jack and self.m_last_dsp_load != None:
+                next_dsp_load = gDBus.jack.GetLoad()
+                next_xruns    = gDBus.jack.GetXruns()
                 needUpdateTip = False
 
                 if self.m_last_dsp_load != next_dsp_load:
@@ -2175,13 +2196,13 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
                     self.updateSystrayTooltip()
 
         elif event.timerId() == self.m_timer2000:
-            if DBus.jack and self.m_last_buffer_size != None:
-                next_buffer_size = DBus.jack.GetBufferSize()
+            if gDBus.jack and self.m_last_buffer_size != None:
+                next_buffer_size = gDBus.jack.GetBufferSize()
 
                 if self.m_last_buffer_size != next_buffer_size:
                     self.m_last_buffer_size = next_buffer_size
                     self.label_jack_bfsize.setText("%i samples" % self.m_last_buffer_size)
-                    self.label_jack_latency.setText("%.1f ms" % DBus.jack.GetLatency())
+                    self.label_jack_latency.setText("%.1f ms" % gDBus.jack.GetLatency())
 
             else:
                 self.update()
@@ -2202,8 +2223,8 @@ if __name__ == '__main__':
     app.setWindowIcon(QIcon(":/scalable/cadence.svg"))
 
     if haveDBus:
-        DBus.loop = DBusQtMainLoop(set_as_default=True)
-        DBus.bus  = dbus.SessionBus(mainloop=DBus.loop)
+        gDBus.loop = DBusQtMainLoop(set_as_default=True)
+        gDBus.bus  = dbus.SessionBus(mainloop=gDBus.loop)
 
     initSystemChecks()
 
