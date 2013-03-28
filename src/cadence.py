@@ -1473,8 +1473,42 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.systray.setToolTip(systrayText)
 
     def func_start_tool(self, tool):
-        # TODO - multiplatform
-        os.system("%s &" % tool)
+        if sys.argv[0].endswith(".py"):
+            if tool == "cadence-jacksettings":
+                tool = "jacksettings"
+            elif tool == "cadence-logs":
+                tool = "logs"
+            elif tool == "cadence-render":
+                tool = "render"
+
+            if tool in ("cadence-jackmeter", "cadence-xycontroller"):
+                python    = ""
+                localPath = os.path.join(sys.path[0], "..", "c++", tool.replace("cadence-", ""))
+
+                if os.path.exists(os.path.join(localPath, tool)):
+                    base = localPath + os.sep
+                else:
+                    base = ""
+
+            else:
+                python = sys.executable
+                tool  += ".py"
+                base   = sys.argv[0].rsplit("cadence.py", 1)[0]
+
+                if python:
+                    python += " "
+
+            cmd = "%s%s%s &" % (python, base, tool)
+
+            print(cmd)
+            os.system(cmd)
+
+        elif sys.argv[0].endswith("/cadence"):
+            base = sys.argv[0].rsplit("/cadence", 1)[0]
+            os.system("%s/%s &" % (base, tool))
+
+        else:
+            os.system("%s &" % tool)
 
     def func_settings_changed(self, stype):
         if stype not in self.settings_changed_types:
