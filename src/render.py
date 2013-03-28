@@ -41,7 +41,7 @@ gJackClient      = None
 # Find 'jack_capture'
 
 # Check for cxfreeze
-if sys.path[0].rsplit(os.sep, 1)[-1] in ("catia", "claudia", "render"):
+if sys.path[0].rsplit(os.sep, 1)[-1] in ("catia", "claudia", "cadence-render", "render"):
     name = sys.path[0].rsplit(os.sep, 1)[-1]
     cwd  = sys.path[0].rsplit(name, 1)[0]
     if os.path.exists(os.path.join(cwd, "jack_capture")):
