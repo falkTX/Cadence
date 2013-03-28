@@ -110,7 +110,7 @@ def startSession(systemStarted):
 
     # ALSA-Audio
     if GlobalSettings.value("ALSA-Audio/BridgeIndexType", iAlsaFileNone, type=int) == iAlsaFileLoop:
-        os.system("cadence-aloop-daemon &")
+        startAlsaAudioLoopBridge()
         sleep(0.5)
 
     # ALSA-MIDI

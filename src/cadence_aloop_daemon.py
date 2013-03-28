@@ -1,13 +1,33 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# Cadence ALSA-Loop daemon
+# Copyright (C) 2012-2013 Filipe Coelho <falktx@falktx.com>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# For a full copy of the GNU General Public License see the COPYING file
+
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
-import os, sys
+
+import os
+import sys
 from signal import signal, SIGINT, SIGTERM
 from time import sleep
 from PyQt4.QtCore import QProcess
 
+# ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
+
 import jacklib
 
 # --------------------------------------------------
@@ -90,8 +110,8 @@ def run_alsa_bridge():
         procOut.waitForFinished(1000)
 
     if useZita:
-        procIn.start("env",  ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "zita-a2j", "-L", "-j", "alsa2jack", "-d", "hw:Loopback,1,0"])
-        procOut.start("env", ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "zita-j2a", "-L", "-j", "jack2alsa", "-d", "hw:Loopback,1,1"])
+        procIn.start("env",  ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "zita-a2j", "-j", "alsa2jack", "-d", "hw:Loopback,1,0", "-c", "%i" % channels])
+        procOut.start("env", ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "zita-j2a", "-j", "jack2alsa", "-d", "hw:Loopback,1,1", "-c", "%i" % channels])
     else:
         procIn.start("env",  ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_in",  "-j", "alsa2jack", "-d", "cloop", "-q", "1", "-c", "%i" % channels])
         procOut.start("env", ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_out", "-j", "jack2alsa", "-d", "ploop", "-q", "1", "-c", "%i" % channels])
@@ -109,9 +129,18 @@ def run_alsa_bridge():
 #--------------- main ------------------
 if __name__ == '__main__':
 
-    useZita = bool(len(sys.argv) == 2 and sys.argv[1] in ("-zita", "--zita"))
+    for i in range(len(sys.argv)):
+        if i == 0: continue
 
-    # TODO - check consistency, and check channels value
+        argv = sys.argv[i]
+
+        if argv == "--zita":
+            useZita = True
+        elif argv.startswith("--channels="):
+            chStr = argv.replace("--channels=", "")
+
+            if chStr.isdigit():
+                channels = int(chStr)
 
     # Init JACK client
     client = jacklib.client_open("cadence-aloop-daemon", jacklib.JackUseExactName, None)
@@ -149,7 +178,7 @@ if __name__ == '__main__':
 
             if firstStart:
                 firstStart = False
-                print("cadence-aloop-daemon started, using %s" % ("zita-a2j/j2a" if useZita else "alsa_in/out"))
+                print("cadence-aloop-daemon started, using %s and %i channels" % ("zita-a2j/j2a" if useZita else "alsa_in/out", channels))
 
         sleep(1)
 

@@ -21,7 +21,7 @@
 
 from platform import architecture
 from PyQt4.QtCore import QFileSystemWatcher, QThread
-from PyQt4.QtGui import QApplication, QLabel, QMainWindow, QSizePolicy
+from PyQt4.QtGui import QApplication, QDialogButtonBox, QLabel, QMainWindow, QSizePolicy
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
@@ -96,6 +96,7 @@ DESKTOP_X_TEXT = [
 DESKTOP_X_BROWSER = [
     "chrome.desktop",
     "firefox.desktop",
+    "iceweasel.desktop",
     "kde4/konqbrowser.desktop"
 ]
 
@@ -548,7 +549,7 @@ class ForceRestartThread(QThread):
 
         # ALSA-Audio
         if GlobalSettings.value("ALSA-Audio/BridgeIndexType", iAlsaFileNone, type=int) == iAlsaFileLoop:
-            os.system("cadence-aloop-daemon &")
+            startAlsaAudioLoopBridge()
             sleep(0.5)
 
         self.emit(SIGNAL("progressChanged(int)"), 94)
@@ -657,16 +658,43 @@ class ToolBarJackDialog(QDialog, ui_cadence_tb_jack.Ui_Dialog):
 
 # Additional ALSA Audio options
 class ToolBarAlsaAudioDialog(QDialog, ui_cadence_tb_alsa.Ui_Dialog):
-    def __init__(self, parent):
+    def __init__(self, parent, customMode):
         QDialog.__init__(self, parent)
         self.setupUi(self)
 
-        asoundrcFile = os.path.join(HOME, ".asoundrc")
-        asoundrcFd   = open(asoundrcFile, "r")
-        asoundrcRead = asoundrcFd.read().strip()
-        asoundrcFd.close()
+        self.asoundrcFile = os.path.join(HOME, ".asoundrc")
+        self.fCustomMode  = customMode
 
-        self.textBrowser.setPlainText(asoundrcRead)
+        if customMode:
+            asoundrcFd   = open(self.asoundrcFile, "r")
+            asoundrcRead = asoundrcFd.read().strip()
+            asoundrcFd.close()
+            self.textBrowser.setPlainText(asoundrcRead)
+            self.stackedWidget.setCurrentIndex(0)
+            self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel)
+        else:
+            self.textBrowser.hide()
+            self.stackedWidget.setCurrentIndex(1)
+            self.adjustSize()
+
+            self.spinBox.setValue(GlobalSettings.value("ALSA-Audio/BridgeChannels", 2, type=int))
+
+            if GlobalSettings.value("ALSA-Audio/BridgeTool", "alsa_in", type=str) == "zita":
+                self.comboBox.setCurrentIndex(1)
+            else:
+                self.comboBox.setCurrentIndex(0)
+
+            self.connect(self, SIGNAL("accepted()"), SLOT("slot_setOptions()"))
+
+    @pyqtSlot()
+    def slot_setOptions(self):
+        channels = self.spinBox.value()
+        GlobalSettings.setValue("ALSA-Audio/BridgeChannels", channels)
+        GlobalSettings.setValue("ALSA-Audio/BridgeTool", "zita" if (self.comboBox.currentIndex() == 1) else "alsa_in")
+
+        asoundrcFd = open(self.asoundrcFile, "w")
+        asoundrcFd.write(asoundrc_aloop.replace("channels 2\n", "channels %i\n" % channels) + "\n")
+        asoundrcFd.close()
 
     def done(self, r):
         QDialog.done(self, r)
@@ -839,6 +867,10 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         if not havePulseAudio:
             self.toolBox_pulseaudio.setEnabled(False)
             self.label_bridge_pulse.setText(self.tr("PulseAudio is not installed"))
+
+        # Not available in cxfreeze builds
+        if sys.argv[0].endswith("/cadence"):
+            self.groupBox_bridges.setEnabled(False)
 
         # -------------------------------------------------------------
         # Set-up GUI (Tweaks)
@@ -1379,7 +1411,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
                 self.label_bridge_alsa.setText(self.tr("Using Cadence snd-aloop daemon, stopped"))
 
             self.cb_alsa_type.setCurrentIndex(iAlsaFileLoop)
-            self.tb_alsa_options.setEnabled(False)
+            self.tb_alsa_options.setEnabled(True)
 
         elif asoundrcRead == asoundrc_jack:
             self.b_alsa_start.setEnabled(False)
@@ -1388,7 +1420,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             self.systray.setActionEnabled("alsa_stop", False)
             self.cb_alsa_type.setCurrentIndex(iAlsaFileJACK)
             self.tb_alsa_options.setEnabled(False)
-            self.label_bridge_alsa.setText(self.tr("Using JACK plugin bridge"))
+            self.label_bridge_alsa.setText(self.tr("Using JACK plugin bridge (Always on)"))
 
         elif asoundrcRead == asoundrc_pulse:
             self.b_alsa_start.setEnabled(False)
@@ -1397,7 +1429,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             self.systray.setActionEnabled("alsa_stop", False)
             self.cb_alsa_type.setCurrentIndex(iAlsaFilePulse)
             self.tb_alsa_options.setEnabled(False)
-            self.label_bridge_alsa.setText(self.tr("Using PulseAudio plugin bridge"))
+            self.label_bridge_alsa.setText(self.tr("Using PulseAudio plugin bridge (Always on)"))
 
         else:
             self.b_alsa_start.setEnabled(False)
@@ -1610,7 +1642,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
     @pyqtSlot()
     def slot_AlsaBridgeStart(self):
         self.slot_AlsaBridgeStop()
-        self.func_start_tool("cadence-aloop-daemon")
+        startAlsaAudioLoopBridge()
 
     @pyqtSlot()
     def slot_AlsaBridgeStop(self):
@@ -1669,7 +1701,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_AlsaAudioBridgeOptions(self):
-        ToolBarAlsaAudioDialog(self).exec_()
+        ToolBarAlsaAudioDialog(self, (self.cb_alsa_type.currentIndex() != iAlsaFileLoop)).exec_()
 
     @pyqtSlot()
     def slot_A2JBridgeStart(self):
