@@ -110,11 +110,11 @@ def run_alsa_bridge():
         procOut.waitForFinished(1000)
 
     if useZita:
-        procIn.start("env",  ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "zita-a2j", "-j", "alsa2jack", "-d", "hw:Loopback,1,0", "-c", "%i" % channels])
-        procOut.start("env", ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "zita-j2a", "-j", "jack2alsa", "-d", "hw:Loopback,1,1", "-c", "%i" % channels])
+        procIn.start("env",  ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "zita-a2j", "-d", "hw:Loopback,1,0", "-r", "%i" % sampleRate, "-p", "%i" % bufferSize, "-j", "alsa2jack", "-c", "%i" % channels])
+        procOut.start("env", ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "zita-j2a", "-d", "hw:Loopback,1,1", "-r", "%i" % sampleRate, "-p", "%i" % bufferSize, "-j", "jack2alsa", "-c", "%i" % channels])
     else:
-        procIn.start("env",  ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_in",  "-j", "alsa2jack", "-d", "cloop", "-q", "1", "-c", "%i" % channels])
-        procOut.start("env", ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_out", "-j", "jack2alsa", "-d", "ploop", "-q", "1", "-c", "%i" % channels])
+        procIn.start("env",  ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_in",  "-d", "cloop", "%i" % sampleRate, "-p", "%i" % bufferSize, "-j", "alsa2jack", "-q", "1", "-c", "%i" % channels])
+        procOut.start("env", ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "alsa_out", "-d", "ploop", "%i" % sampleRate, "-p", "%i" % bufferSize, "-j", "jack2alsa", "-q", "1", "-c", "%i" % channels])
 
     if procIn.waitForStarted():
         sleep(1)
