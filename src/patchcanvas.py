@@ -185,7 +185,6 @@ class CanvasObject(QObject):
 
     @pyqtSlot()
     def AnimationDestroy(self):
-        print("AnimationDestroy")
         animation = self.sender()
         if animation:
             item = animation.item()
