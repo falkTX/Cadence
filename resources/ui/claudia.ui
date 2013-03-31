@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>982</width>
+    <width>877</width>
     <height>566</height>
    </rect>
   </property>
@@ -789,8 +789,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>982</width>
-     <height>25</height>
+     <width>877</width>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_Studio">
@@ -844,6 +844,28 @@
     </widget>
     <addaction name="act_room_create"/>
     <addaction name="menu_room_delete"/>
+   </widget>
+   <widget class="QMenu" name="menu_Project">
+    <property name="title">
+     <string>&amp;Project</string>
+    </property>
+    <widget class="QMenu" name="menu_project_load">
+     <property name="title">
+      <string>Load Project</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../resources.qrc">
+       <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
+     </property>
+    </widget>
+    <addaction name="act_project_new"/>
+    <addaction name="menu_project_load"/>
+    <addaction name="act_project_save"/>
+    <addaction name="act_project_save_as"/>
+    <addaction name="act_project_clone"/>
+    <addaction name="act_project_unload"/>
+    <addaction name="separator"/>
+    <addaction name="act_project_properties"/>
    </widget>
    <widget class="QMenu" name="menu_Application">
     <property name="title">
@@ -917,28 +939,6 @@
     <addaction name="separator"/>
     <addaction name="act_canvas_print"/>
     <addaction name="act_canvas_save_image"/>
-   </widget>
-   <widget class="QMenu" name="menu_Project">
-    <property name="title">
-     <string>&amp;Project</string>
-    </property>
-    <widget class="QMenu" name="menu_project_load">
-     <property name="title">
-      <string>Load Project</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../resources.qrc">
-       <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
-     </property>
-    </widget>
-    <addaction name="act_project_new"/>
-    <addaction name="menu_project_load"/>
-    <addaction name="act_project_save"/>
-    <addaction name="act_project_save_as"/>
-    <addaction name="act_project_clone"/>
-    <addaction name="act_project_unload"/>
-    <addaction name="separator"/>
-    <addaction name="act_project_properties"/>
    </widget>
    <addaction name="menu_Studio"/>
    <addaction name="menu_Room"/>
