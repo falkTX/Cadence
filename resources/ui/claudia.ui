@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>877</width>
+    <width>982</width>
     <height>566</height>
    </rect>
   </property>
@@ -167,8 +167,8 @@
          <property name="title">
           <string>Project</string>
          </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_6">
-          <item>
+         <layout class="QGridLayout" name="gridLayout">
+          <item row="0" column="0">
            <widget class="QPushButton" name="b_project_new">
             <property name="maximumSize">
              <size>
@@ -188,7 +188,7 @@
             </property>
            </widget>
           </item>
-          <item>
+          <item row="0" column="1">
            <widget class="QPushButton" name="b_project_load">
             <property name="maximumSize">
              <size>
@@ -208,7 +208,7 @@
             </property>
            </widget>
           </item>
-          <item>
+          <item row="0" column="2">
            <widget class="QPushButton" name="b_project_save">
             <property name="maximumSize">
              <size>
@@ -228,7 +228,7 @@
             </property>
            </widget>
           </item>
-          <item>
+          <item row="0" column="3">
            <widget class="QPushButton" name="b_project_save_as">
             <property name="maximumSize">
              <size>
@@ -245,6 +245,26 @@
             <property name="icon">
              <iconset resource="../resources.qrc">
               <normaloff>:/16x16/document-save-as.png</normaloff>:/16x16/document-save-as.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4">
+           <widget class="QPushButton" name="b_project_clone">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Clone Project</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../resources.qrc">
+              <normaloff>:/16x16/edit-copy.png</normaloff>:/16x16/edit-copy.png</iconset>
             </property>
            </widget>
           </item>
@@ -769,8 +789,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>877</width>
-     <height>19</height>
+     <width>982</width>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_Studio">
@@ -824,27 +844,6 @@
     </widget>
     <addaction name="act_room_create"/>
     <addaction name="menu_room_delete"/>
-   </widget>
-   <widget class="QMenu" name="menu_Project">
-    <property name="title">
-     <string>&amp;Project</string>
-    </property>
-    <widget class="QMenu" name="menu_project_load">
-     <property name="title">
-      <string>Load Project</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../resources.qrc">
-       <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
-     </property>
-    </widget>
-    <addaction name="act_project_new"/>
-    <addaction name="menu_project_load"/>
-    <addaction name="act_project_save"/>
-    <addaction name="act_project_save_as"/>
-    <addaction name="act_project_unload"/>
-    <addaction name="separator"/>
-    <addaction name="act_project_properties"/>
    </widget>
    <widget class="QMenu" name="menu_Application">
     <property name="title">
@@ -918,6 +917,28 @@
     <addaction name="separator"/>
     <addaction name="act_canvas_print"/>
     <addaction name="act_canvas_save_image"/>
+   </widget>
+   <widget class="QMenu" name="menu_Project">
+    <property name="title">
+     <string>&amp;Project</string>
+    </property>
+    <widget class="QMenu" name="menu_project_load">
+     <property name="title">
+      <string>Load Project</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../resources.qrc">
+       <normaloff>:/16x16/document-open.png</normaloff>:/16x16/document-open.png</iconset>
+     </property>
+    </widget>
+    <addaction name="act_project_new"/>
+    <addaction name="menu_project_load"/>
+    <addaction name="act_project_save"/>
+    <addaction name="act_project_save_as"/>
+    <addaction name="act_project_clone"/>
+    <addaction name="act_project_unload"/>
+    <addaction name="separator"/>
+    <addaction name="act_project_properties"/>
    </widget>
    <addaction name="menu_Studio"/>
    <addaction name="menu_Room"/>
@@ -1429,6 +1450,15 @@
   <action name="act_tools_a2j_export_hw">
    <property name="text">
     <string>Export Hardware Ports...</string>
+   </property>
+  </action>
+  <action name="act_project_clone">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/16x16/edit-copy.png</normaloff>:/16x16/edit-copy.png</iconset>
+   </property>
+   <property name="text">
+    <string>Clone Project</string>
    </property>
   </action>
  </widget>
