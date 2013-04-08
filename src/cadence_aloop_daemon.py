@@ -112,6 +112,7 @@ def shutdown_callback(arg):
 # --------------------------------------------------
 # run alsa_in and alsa_out
 def run_alsa_bridge():
+    global reactivateCounter
     global bufferSize, sampleRate, channels
     global procIn, procOut
     global useZita
@@ -122,6 +123,8 @@ def run_alsa_bridge():
     if procOut.state() != QProcess.NotRunning:
         procOut.terminate()
         procOut.waitForFinished(1000)
+
+    reactivateCounter = -1
 
     if useZita:
         procIn.start("env",  ["JACK_SAMPLE_RATE=%i" % sampleRate, "JACK_PERIOD_SIZE=%i" % bufferSize, "zita-a2j", "-d", "hw:Loopback,1,0", "-r", "%i" % sampleRate, "-p", "%i" % bufferSize, "-j", "alsa2jack", "-c", "%i" % channels])
