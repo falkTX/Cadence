@@ -31,6 +31,13 @@ from PyQt4.QtCore import QProcess
 import jacklib
 
 # --------------------------------------------------
+# Auto re-activate if on good kernel
+
+global reactivateCounter
+reactivateCounter = -1
+isKernelGood      = os.uname()[2] >= "3.8"
+
+# --------------------------------------------------
 # Global loop check
 
 global doLoop, doRunNow, useZita, procIn, procOut
@@ -75,18 +82,26 @@ def sample_rate_callback(newSampleRate, arg):
 # listen to jack2 master switch
 
 def client_registration_callback(clientName, register, arg):
-    global doRunNow
     if clientName == b"system" and register:
         print("NOTICE: Possible JACK2 master switch")
-        global bufferSize, sampleRate
-        doRunNow   = True
-        sampleRate = jacklib.get_sample_rate(client)
+        global bufferSize, sampleRate, doRunNow
         bufferSize = jacklib.get_buffer_size(client)
+        sampleRate = jacklib.get_sample_rate(client)
+        doRunNow   = True
+
     elif clientName in (b"alsa2jack", b"jack2alsa") and not register:
-        global doLoop, useZita
-        if doLoop and not doRunNow:
-            doLoop = False
-            print("NOTICE: %s have been stopped, quitting now..." % ("zita-a2j/j2a" if useZita else "alsa_in/out"))
+        global doLoop, reactivateCounter, useZita
+        if not doLoop:
+            return
+
+        if isKernelGood:
+            if reactivateCounter == -1:
+                reactivateCounter = 0
+                print("NOTICE: %s has been stopped, waiting 5 secs to reactivate" % ("zita-a2j/j2a" if useZita else "alsa_in/out"))
+        else:
+            if doLoop:
+                doLoop = False
+                print("NOTICE: %s has been stopped, quitting now..." % ("zita-a2j/j2a" if useZita else "alsa_in/out"))
 
 # --------------------------------------------------
 # listen to jack shutdown
@@ -173,12 +188,19 @@ if __name__ == '__main__':
     firstStart = True
     while doLoop and os.path.exists(checkFile):
         if doRunNow:
-            run_alsa_bridge()
-            doRunNow = False
-
             if firstStart:
                 firstStart = False
                 print("cadence-aloop-daemon started, using %s and %i channels" % ("zita-a2j/j2a" if useZita else "alsa_in/out", channels))
+
+            run_alsa_bridge()
+            doRunNow = False
+
+        elif isKernelGood and reactivateCounter >= 0:
+            if reactivateCounter == 5:
+                reactivateCounter = -1
+                doRunNow = True
+            else:
+                reactivateCounter += 1
 
         sleep(1)
 
