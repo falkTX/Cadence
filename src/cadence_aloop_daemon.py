@@ -91,17 +91,16 @@ def client_registration_callback(clientName, register, arg):
 
     elif clientName in (b"alsa2jack", b"jack2alsa") and not register:
         global doLoop, reactivateCounter, useZita
-        if not doLoop:
+        if doRunNow or not doLoop:
             return
 
         if isKernelGood:
             if reactivateCounter == -1:
                 reactivateCounter = 0
                 print("NOTICE: %s has been stopped, waiting 5 secs to reactivate" % ("zita-a2j/j2a" if useZita else "alsa_in/out"))
-        else:
-            if doLoop:
-                doLoop = False
-                print("NOTICE: %s has been stopped, quitting now..." % ("zita-a2j/j2a" if useZita else "alsa_in/out"))
+        elif doLoop:
+            doLoop = False
+            print("NOTICE: %s has been stopped, quitting now..." % ("zita-a2j/j2a" if useZita else "alsa_in/out"))
 
 # --------------------------------------------------
 # listen to jack shutdown
