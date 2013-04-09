@@ -21,7 +21,7 @@
 
 from time import ctime
 from PyQt4.QtCore import QPointF
-from PyQt4.QtGui import QAction, QApplication, QVBoxLayout, QTableWidgetItem, QTreeWidgetItem
+from PyQt4.QtGui import QAction, QApplication, QCheckBox, QHBoxLayout, QVBoxLayout, QTableWidgetItem, QTreeWidgetItem
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
@@ -498,10 +498,18 @@ class ClaudiaLauncherW(QDialog):
 
         self.launcher  = claudia_launcher.ClaudiaLauncher(self)
         self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Close, Qt.Horizontal, self)
+        self.checkBox  = QCheckBox(self)
+        self.checkBox.setText(self.tr("Auto-close"))
+        self.checkBox.setChecked(True)
 
-        self.layoutR = QVBoxLayout(self)
-        self.layoutR.addWidget(self.launcher)
-        self.layoutR.addWidget(self.buttonBox)
+        self.layoutV = QVBoxLayout(self)
+        self.layoutH = QHBoxLayout()
+
+        self.layoutH.addWidget(self.checkBox)
+        self.layoutH.addWidget(self.buttonBox)
+
+        self.layoutV.addWidget(self.launcher)
+        self.layoutV.addLayout(self.layoutH)
 
         self.settings = QSettings("Cadence", "Claudia-Launcher")
         self.launcher.setCallbackApp(self, self.settings, True)
@@ -557,6 +565,9 @@ class ClaudiaLauncherW(QDialog):
     @pyqtSlot()
     def slot_addAppToLADISH(self):
         self.launcher.addAppToLADISH()
+
+        if self.checkBox.isChecked():
+            self.accept()
 
     def saveSettings(self):
         self.settings.setValue("Geometry", self.saveGeometry())
