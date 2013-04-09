@@ -505,8 +505,12 @@ class ClaudiaLauncherW(QDialog):
         self.layoutV = QVBoxLayout(self)
         self.layoutH = QHBoxLayout()
 
+        #if QDialogButtonBox.ButtonLayout:
         self.layoutH.addWidget(self.checkBox)
         self.layoutH.addWidget(self.buttonBox)
+        #else:
+            #self.layoutH.addWidget(self.buttonBox)
+            #self.layoutH.addWidget(self.checkBox)
 
         self.layoutV.addWidget(self.launcher)
         self.layoutV.addLayout(self.layoutH)

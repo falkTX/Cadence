@@ -19,7 +19,7 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt4.QtCore import pyqtSlot, QProcess, QTime, QTimer
+from PyQt4.QtCore import pyqtSlot, QProcess, QTime, QTimer, QSettings
 from PyQt4.QtGui import QDialog
 from time import sleep
 
@@ -148,6 +148,8 @@ class RenderW(QDialog):
         self.connect(self.fTimer, SIGNAL("timeout()"), SLOT("slot_updateProgressbar()"))
 
         # -------------------------------------------------------------
+
+        self.loadSettings()
 
     @pyqtSlot()
     def slot_renderStart(self):
@@ -325,9 +327,67 @@ class RenderW(QDialog):
 
         self.fLastTime = time
 
+    def saveSettings(self):
+        settings = QSettings("Cadence", "Cadence-Render")
+
+        if self.ui.rb_mono.isChecked():
+            channels = 1
+        elif self.ui.rb_stereo.isChecked():
+            channels = 2
+        else:
+            channels = self.ui.sb_channels.value()
+
+        settings.setValue("Geometry", self.saveGeometry())
+        settings.setValue("OutputFolder", self.ui.le_folder.text())
+        settings.setValue("EncodingFormat", self.ui.cb_format.currentText())
+        settings.setValue("EncodingDepth", self.ui.cb_depth.currentText())
+        settings.setValue("EncodingChannels", channels)
+        settings.setValue("UseTransport", self.ui.group_time.isChecked())
+        settings.setValue("StartTime", self.ui.te_start.time())
+        settings.setValue("EndTime", self.ui.te_end.time())
+
+    def loadSettings(self):
+        settings = QSettings("Cadence", "Cadence-Render")
+
+        self.restoreGeometry(settings.value("Geometry", ""))
+
+        outputFolder = settings.value("OutputFolder", HOME)
+
+        if os.path.exists(outputFolder):
+            self.ui.le_folder.setText(outputFolder)
+
+        encFormat = settings.value("EncodingFormat", "Wav", type=str)
+
+        for i in range(self.ui.cb_format.count()):
+            if self.ui.cb_format.itemText(i) == encFormat:
+                self.ui.cb_format.setCurrentIndex(i)
+                break
+
+        encDepth = settings.value("EncodingDepth", "Float", type=str)
+
+        for i in range(self.ui.cb_depth.count()):
+            if self.ui.cb_depth.itemText(i) == encDepth:
+                self.ui.cb_depth.setCurrentIndex(i)
+                break
+
+        encChannels = settings.value("EncodingChannels", 2, type=int)
+
+        if encChannels == 1:
+            self.ui.rb_mono.setChecked(True)
+        elif encChannels == 2:
+            self.ui.rb_stereo.setChecked(True)
+        else:
+            self.ui.rb_outro.setChecked(True)
+            self.ui.sb_channels.setValue(encChannels)
+
+        self.ui.group_time.setChecked(settings.value("UseTransport", False, type=bool))
+        self.ui.te_start.setTime(settings.value("StartTime", self.ui.te_start.time(), type=QTime))
+        self.ui.te_end.setTime(settings.value("EndTime", self.ui.te_end.time(), type=QTime))
+
     def closeEvent(self, event):
         if self.fJackClient:
             jacklib.client_close(self.fJackClient)
+        self.saveSettings()
         QDialog.closeEvent(self, event)
 
     def done(self, r):
