@@ -22,7 +22,7 @@ from PyQt4.QtCore import QTimer, SIGNAL
 from PyQt4.QtGui import QAction, QIcon, QMainWindow, QMenu, QSystemTrayIcon
 
 try:
-    if os.getenv("DESKTOP_SESSION") in ("ubuntu", "ubuntu-2d") and not os.path.exists("/var/cadence/no_app_indicators"):
+    if False and os.getenv("DESKTOP_SESSION") in ("ubuntu", "ubuntu-2d") and not os.path.exists("/var/cadence/no_app_indicators"):
         # Check current Qt theme. If Gtk+, use Gtk2 AppIndicator
         style = None
         if len(sys.argv) > 2 and "-style" in sys.argv:
