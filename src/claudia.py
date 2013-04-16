@@ -2011,7 +2011,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
         if act_x_sel:
             if item.type() == ITEM_TYPE_STUDIO:
                 if act_x_sel == act_x_add_new:
-                    pass #self.slot_app_add_new()
+                    self.slot_app_add_new()
                 elif act_x_sel == act_x_run_custom:
                     self.slot_app_run_custom()
                 elif act_x_sel == act_x_create_room:
@@ -2019,7 +2019,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
 
             elif item.type() == ITEM_TYPE_ROOM:
                 if act_x_sel == act_x_add_new:
-                    pass # self.slot_app_add_new
+                    self.slot_app_add_new()
                 elif act_x_sel == act_x_run_custom:
                     self.slot_app_run_custom()
                 elif act_x_sel == act_x_new:
