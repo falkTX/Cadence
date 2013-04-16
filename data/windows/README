@@ -1,0 +1,10 @@
+# ---  README for Cadence - Windows build ---
+
+Cadence is a set of tools useful for audio production.
+It's being developed by falkTX, using Python3 and Qt4 (and some C++ where needed).
+
+This is the Windows build of Cadence.
+Not all tools can be compiled or are useful under Windows, so not all of them can be used.
+
+For a complete and updated description of these tools, please check:
+http://kxstudio.sourceforge.net/KXStudio:Applications
