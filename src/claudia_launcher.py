@@ -220,7 +220,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
         for Package, Name, Spec, Type, Filename, Label, Icon, License, Features, Docs in database.list_Plugin:
             if appname == Name:
-                return "carla-standalone native %s \"%s\" \"%s\"" % (Spec.lower(), Filename, Label)
+                return "carla-single native %s \"%s\" \"%s\"" % (Spec.lower(), Filename, Label)
 
         for Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs in database.list_Effect:
             if appname == AppName:
@@ -250,8 +250,8 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         if binary.startswith("startBristol"):
             self.createAppTemplate("bristol", app, binary)
 
-        elif binary.startswith("carla-standalone"):
-            self.createAppTemplate("carla-standalone", app, binary)
+        elif binary.startswith("carla-single"):
+            self.createAppTemplate("carla-single", app, binary)
 
         elif app == "Ardour 2.8":
             self.createAppTemplate("ardour2", app, binary)
@@ -356,7 +356,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             tmplte_cmd += " -exec"
             tmplte_lvl  = "1"
 
-        elif app == "carla-standalone":
+        elif app == "carla-single":
             tmplte_cmd = binary
             tmplte_lvl = "1"
 
@@ -781,7 +781,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             if not "bristol" in pkglist:
                 self.tabWidget.setTabEnabled(iTabBristol, False)
 
-            if not ("carla" in pkglist or "cadence-git" in pkglist):
+            if True or not "carla" in pkglist in pkglist:
                 self.tabWidget.setTabEnabled(iTabPlugin, False)
 
         last_pos = 0
