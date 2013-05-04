@@ -242,7 +242,6 @@ list_Plugin = [
   [ "xsynth-dssi",          "Xsynth DSSI",            "DSSI", "Synth",      "/usr/lib/dssi/xsynth-dssi.so",        "Xsynth",          generic_audio_icon, "OpenSource", (0, 1, 1), ("", "") ],
 
   # LV2
-  [ "calf-plugins",         "Calf Analyzer",          "LV2",  "Analyzer",   "/usr/lib/lv2/calf.lv2/",              "http://calf.sourceforge.net/plugins/Analyzer",   "calf", "OpenSource", (1, 0, 0), ("file:///usr/share/doc/calf/Analyzer.html",   "http://calf.sourceforge.net/") ],
   [ "calf-plugins",         "Calf Compressor",        "LV2",  "Compressor", "/usr/lib/lv2/calf.lv2/",              "http://calf.sourceforge.net/plugins/Compressor", "calf", "OpenSource", (1, 0, 0), ("file:///usr/share/doc/calf/Compressor.html", "http://calf.sourceforge.net/") ],
 
   # VST
@@ -253,8 +252,6 @@ list_Plugin = [
   [ "distrho-plugins-vst",      "3 Band Splitter [VST]",             "VST", "EQ",         "/usr/lib/vst/3BandSplitter.so",              "3BandSplitter",              "distrho_plugins",  "OpenSource", (0, 0, 0), ("", "") ],
   [ "distrho-plugins-vst",      "Ping Pong Pan [VST]",               "VST", "Pan",        "/usr/lib/vst/PingPongPan.so",                "Ping Pong Pan",              "distrho_plugins",  "OpenSource", (1, 0, 0), ("", "") ],
 
-  [ "distrho-plugin-ports-vst", "Argotlunar [VST]",                  "VST", "Granulator", "/usr/lib/vst/argotlunar.so",                 "Argotlunar",                 generic_audio_icon, "OpenSource", (1, 0, 1), ("", "http://argotlunar.info/") ],
-  [ "distrho-plugin-ports-vst", "BitMangler [VST]",                  "VST", "Misc",       "/usr/lib/vst/bitmangler.so",                 "BitMangler",                 generic_audio_icon, "OpenSource", (1, 1, 0), ("", "") ],
   [ "distrho-plugin-ports-vst", "Vex [VST]",                         "VST", "Synth",      "/usr/lib/vst/vex.so",                        "Vex",                        generic_audio_icon, "OpenSource", (1, 1, 1), ("", "") ],
 
   [ "drowaudio-plugins-vst",    "dRowAudio Distortion-Shaper [VST]", "VST", "Distortion", "/usr/lib/vst/drowaudio-distortionshaper.so", "dRowAudio DistortionShaper", generic_audio_icon, "OpenSource", (1, 0, 0), ("", "") ],
@@ -262,10 +259,6 @@ list_Plugin = [
   [ "drowaudio-plugins-vst",    "dRowAudio Flanger [VST]",           "VST", "Flanger",    "/usr/lib/vst/drowaudio-flanger.so",          "dRowAudio Flanger",          generic_audio_icon, "OpenSource", (1, 0, 0), ("", "") ],
   [ "drowaudio-plugins-vst",    "dRowAudio Reverb [VST]",            "VST", "Reverb",     "/usr/lib/vst/drowaudio-reverb.so",           "dRowAudio Reverb",           generic_audio_icon, "OpenSource", (1, 1, 0), ("", "") ],
   [ "drowaudio-plugins-vst",    "dRowAudio Tremolo [VST]",           "VST", "Tremolo",    "/usr/lib/vst/drowaudio-tremolo.so",          "dRowAudio Tremolo",          generic_audio_icon, "OpenSource", (1, 0, 0), ("", "") ],
-
-  [ "highlife-vst",             "Highlife [VST]",                    "VST", "Sampler",    "/usr/lib/vst/highlife.so",                   "Highlife",                   generic_audio_icon, "OpenSource", (1, 1, 1), ("", "http://www.discodsp.com/highlife/") ],
-
-  [ "hybridreverb2-vst",        "HybridReverb2 [VST]",               "VST", "Reverb",     "/usr/lib/vst/HybridReverb2.so",              "HybridReverb2",              generic_audio_icon, "OpenSource", (1, 0, 0), ("", "http://www2.ika.rub.de/HybridReverb2/") ],
 
   [ "linuxdsp-plugins-vst",     "linuxDSP Black Equalizer [VST, Mono]",      "VST", "EQ",         "/usr/lib/vst/black-eq1.so", "BLACK-EQ1", "linuxdsp", "Demo", (0, 0, 1), ("file:///usr/share/doc/linuxdsp-plugins/BLACK-EQ/manual.pdf.gz",      "http://www.linuxdsp.co.uk/download/lv2/download_black_eq/index.html") ],
   [ "linuxdsp-plugins-vst",     "linuxDSP Multiband Compressor [VST]",       "VST", "Compressor", "/usr/lib/vst/mbc2b.so",     "MBC2B",     "linuxdsp", "Demo", (1, 0, 1), ("file:///usr/share/doc/linuxdsp-plugins/MBC2B/manual.pdf.gz",         "http://www.linuxdsp.co.uk/download/lv2/download_mbc2/index.html") ],

@@ -781,7 +781,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             if not "bristol" in pkglist:
                 self.tabWidget.setTabEnabled(iTabBristol, False)
 
-            if True or not "carla" in pkglist in pkglist:
+            if not "carla" in pkglist:
                 self.tabWidget.setTabEnabled(iTabPlugin, False)
 
         last_pos = 0
