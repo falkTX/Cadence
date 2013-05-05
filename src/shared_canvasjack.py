@@ -447,9 +447,11 @@ class AbstractCanvasJackClass(QMainWindow):
 
         if dialog.exec_():
             painter = QPainter(self.fExportPrinter)
+            painter.save()
             painter.setRenderHint(QPainter.Antialiasing)
             painter.setRenderHint(QPainter.TextAntialiasing)
             self.scene.render(painter)
+            painter.restore()
 
     @pyqtSlot()
     def slot_canvasSaveImage(self):
@@ -470,10 +472,12 @@ class AbstractCanvasJackClass(QMainWindow):
 
             self.fExportImage = QImage(self.scene.sceneRect().width(), self.scene.sceneRect().height(), QImage.Format_RGB32)
             painter = QPainter(self.fExportImage)
+            painter.save()
             painter.setRenderHint(QPainter.Antialiasing) # TODO - set true, cleanup this
             painter.setRenderHint(QPainter.TextAntialiasing)
             self.scene.render(painter)
             self.fExportImage.save(newPath, imgFormat, 100)
+            painter.restore()
 
     # -----------------------------------------------------------------
     # Shared Connections
