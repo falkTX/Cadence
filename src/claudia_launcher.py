@@ -382,8 +382,9 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
                 tmplte_lvl = "1"
 
         elif app == "ardour3":
-            tmplte_folder = os.path.join(proj_folder, "Ardour3_%i" % rand_check)
-            tmplte_file   = os.path.join(tmplte_folder, "Ardour3_%i.ardour" % rand_check)
+            projName = "Ardour3_%i" % rand_check
+            tmplte_folder = os.path.join(proj_folder, projName)
+            tmplte_file   = os.path.join(tmplte_folder, "%s.ardour" % projName)
             os.mkdir(tmplte_folder)
 
             os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Ardour3", "Ardour3.ardour"), tmplte_file))
@@ -393,9 +394,9 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             os.mkdir(os.path.join(tmplte_folder, "export"))
             os.mkdir(os.path.join(tmplte_folder, "externals"))
             os.mkdir(os.path.join(tmplte_folder, "interchange"))
-            os.mkdir(os.path.join(tmplte_folder, "interchange", "Ardour3"))
-            os.mkdir(os.path.join(tmplte_folder, "interchange", "Ardour3", "audiofiles"))
-            os.mkdir(os.path.join(tmplte_folder, "interchange", "Ardour3", "midifiles"))
+            os.mkdir(os.path.join(tmplte_folder, "interchange", projName))
+            os.mkdir(os.path.join(tmplte_folder, "interchange", projName, "audiofiles"))
+            os.mkdir(os.path.join(tmplte_folder, "interchange", projName, "midifiles"))
             os.mkdir(os.path.join(tmplte_folder, "peaks"))
             os.mkdir(os.path.join(tmplte_folder, "plugins"))
 
