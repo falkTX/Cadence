@@ -403,9 +403,8 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             tmplte_cmd  = binary
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder)
 
-            # FIXME - broken upstream
-            #if self.callback_isLadishRoom():
-                #tmplte_lvl = "jacksession"
+            if self.callback_isLadishRoom():
+                tmplte_lvl = "jacksession"
 
         elif app == "composite":
             tmplte_file = os.path.join(proj_folder, "Composite_%i.h2song" % rand_check)
