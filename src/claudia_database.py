@@ -71,6 +71,8 @@ list_DAW = [
 
   [ "seq24",         "Seq24",           "MIDI Sequencer", "seq24",            "seq24",            TEMPLATE_YES, LEVEL_1,   "OpenSource", (0, 0, 0, 0, "",        1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/SEQ24",                          "http://www.filter24.org/seq24/") ],
 
+  [ "sunvox",        "SunVox",          "Tracker",        "sunvox",           "sunvox",           TEMPLATE_NO,  LEVEL_0,   "FreeWare",   (0, 0, 0, 0, "",        0, 1, "ALSA | JACK"), ("file:///usr/share/sunvox/docs/manual/manual.html",               "http://www.warmplace.ru/soft/sunvox/") ],
+
   [ "traverso",      "Traverso",        "DAW",            "traverso",         "traverso",         TEMPLATE_NO,  LEVEL_0,   "OpenSource", (1, 0, 1, 0, "",        1, 0, ""),            ("file:///usr/share/kxstudio/docs/traverso-manual-0.49.0.pdf",     "http://traverso-daw.org/") ]
 ]
 
