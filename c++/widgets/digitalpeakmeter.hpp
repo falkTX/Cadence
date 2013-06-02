@@ -12,7 +12,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
- * For a full copy of the GNU General Public License see the GPL.txt file
+ * For a full copy of the GNU General Public License see the COPYING file
  */
 
 #ifndef __DIGITALPEAKMETER_HPP__
@@ -41,7 +41,6 @@ public:
     void setChannels(int channels);
     void setColor(Color color);
     void setOrientation(Orientation orientation);
-    void setRefreshRate(int rate);
     void setSmoothRelease(int value);
 
     QSize minimumSizeHint() const;
@@ -67,8 +66,6 @@ private:
 
     float* fChannelsData;
     float* fLastValueData;
-
-    QTimer fPaintTimer;
 };
 
 #endif // __DIGITALPEAKMETER_HPP__

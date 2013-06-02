@@ -33,15 +33,10 @@ DigitalPeakMeter::DigitalPeakMeter(QWidget* parent)
       fColorBase(93, 231, 61),
       fColorBaseAlt(15, 110, 15, 100),
       fChannelsData(nullptr),
-      fLastValueData(nullptr),
-      fPaintTimer(this)
+      fLastValueData(nullptr)
 {
     setChannels(0);
     setColor(GREEN);
-
-    fPaintTimer.setInterval(60);
-    connect(&fPaintTimer, SIGNAL(timeout()), this, SLOT(update()));
-    fPaintTimer.start();
 }
 
 DigitalPeakMeter::~DigitalPeakMeter()
@@ -60,12 +55,23 @@ void DigitalPeakMeter::displayMeter(int meter, float level)
     if (meter <= 0 || meter > fChannels || fChannelsData == nullptr)
         return qCritical("DigitalPeakMeter::displayMeter(%i, %f) - invalid meter number", meter, level);
 
-    if (level < 0.0f)
-        level = -level;
-    else if (level > 1.0f)
+    int i = meter - 1;
+
+    if (fSmoothMultiplier > 0)
+        level = (fLastValueData[i] * fSmoothMultiplier + level) / float(fSmoothMultiplier + 1);
+
+    if (level < 0.001f)
+        level = 0.0f;
+    else if (level > 0.999f)
         level = 1.0f;
 
-    fChannelsData[meter-1] = level;
+    if (fChannelsData[i] != level)
+    {
+        fChannelsData[i] = level;
+        update();
+    }
+
+    fLastValueData[i] = level;
 }
 
 void DigitalPeakMeter::setChannels(int channels)
@@ -87,7 +93,7 @@ void DigitalPeakMeter::setChannels(int channels)
         fChannelsData  = new float[channels];
         fLastValueData = new float[channels];
 
-        for (int i=0; i < channels; i++)
+        for (int i=0; i < channels; ++i)
         {
             fChannelsData[i]  = 0.0f;
             fLastValueData[i] = 0.0f;
@@ -146,15 +152,6 @@ void DigitalPeakMeter::setOrientation(Orientation orientation)
     updateSizes();
 }
 
-void DigitalPeakMeter::setRefreshRate(int rate)
-{
-    Q_ASSERT(rate > 0);
-
-    fPaintTimer.stop();
-    fPaintTimer.setInterval(rate);
-    fPaintTimer.start();
-}
-
 void DigitalPeakMeter::setSmoothRelease(int value)
 {
     Q_ASSERT(value >= 0 && value <= 5);
@@ -169,7 +166,7 @@ void DigitalPeakMeter::setSmoothRelease(int value)
 
 QSize DigitalPeakMeter::minimumSizeHint() const
 {
-    return QSize(30, 30);
+    return QSize(10, 10);
 }
 
 QSize DigitalPeakMeter::sizeHint() const
@@ -212,12 +209,9 @@ void DigitalPeakMeter::paintEvent(QPaintEvent* event)
     painter.setPen(fColorBackground);
     painter.setBrush(fGradientMeter);
 
-    for (int i=0; i < fChannels; i++)
+    for (int i=0; i < fChannels; ++i)
     {
         float value, level = fChannelsData[i];
-
-        if (level == fLastValueData[i])
-            continue;
 
         if (fOrientation == HORIZONTAL)
             value = level * float(fWidth);
@@ -226,18 +220,12 @@ void DigitalPeakMeter::paintEvent(QPaintEvent* event)
         else
             value = 0.0f;
 
-        if (value < 0.0f)
-            value = 0.0f;
-        else if (fSmoothMultiplier > 0)
-            value = (fLastValueData[i] * float(fSmoothMultiplier) + value) / float(fSmoothMultiplier + 1);
-
         if (fOrientation == HORIZONTAL)
             painter.drawRect(0, meterX, int(value), fSizeMeter);
         else if (fOrientation == VERTICAL)
             painter.drawRect(meterX, int(value), fSizeMeter, fHeight);
 
         meterX += fSizeMeter;
-        fLastValueData[i] = value;
     }
 
     painter.setBrush(Qt::black);

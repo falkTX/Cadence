@@ -143,7 +143,6 @@ public:
         displayMeter(2, 0.0);
 
         int refresh = float(jack_get_buffer_size(jClient)) / jack_get_sample_rate(jClient) * 1000;
-        setRefreshRate(refresh > 25 ? refresh : 25);
 
         m_peakTimerId = startTimer(refresh > 50 ? refresh : 50);
     }
