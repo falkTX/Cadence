@@ -458,7 +458,7 @@ public:
         ui->dial_y->setPixmap(2);
         ui->dial_x->setLabel("X");
         ui->dial_y->setLabel("Y");
-        ui->keyboard->setOctaves(6);
+        ui->keyboard->setOctaves(10);
 
         ui->graphicsView->setScene(&scene);
         ui->graphicsView->setRenderHints(QPainter::Antialiasing);
