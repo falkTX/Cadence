@@ -95,6 +95,8 @@ iConnId     = 0
 iConnOutput = 1
 iConnInput  = 2
 
+URI_CANVAS_ICON = "http://kxstudio.sf.net/ns/canvas/icon"
+
 # ------------------------------------------------------------------------------------------------------------
 # Catia Main Window
 
@@ -235,7 +237,7 @@ class CatiaMainW(AbstractCanvasJackClass):
         self.connect(self, SIGNAL("XRunCallback()"), SLOT("slot_XRunCallback()"))
         self.connect(self, SIGNAL("BufferSizeCallback(int)"), SLOT("slot_BufferSizeCallback(int)"))
         self.connect(self, SIGNAL("SampleRateCallback(int)"), SLOT("slot_SampleRateCallback(int)"))
-        self.connect(self, SIGNAL("ClientRegistrationCallback(QString, bool)"), SLOT("slot_ClientRegistrationCallback(QString, bool)"))
+        self.connect(self, SIGNAL("ClientRenameCallback(QString, QString)"), SLOT("slot_ClientRenameCallback(QString, QString)"))
         self.connect(self, SIGNAL("PortRegistrationCallback(int, bool)"), SLOT("slot_PortRegistrationCallback(int, bool)"))
         self.connect(self, SIGNAL("PortConnectCallback(int, int, bool)"), SLOT("slot_PortConnectCallback(int, int, bool)"))
         self.connect(self, SIGNAL("PortRenameCallback(int, QString, QString)"), SLOT("slot_PortRenameCallback(int, QString, QString)"))
@@ -505,9 +507,8 @@ class CatiaMainW(AbstractCanvasJackClass):
         jacklib.set_session_callback(gJack.client, self.JackSessionCallback, None)
         jacklib.on_shutdown(gJack.client, self.JackShutdownCallback, None)
 
-        if jacklib.JACK2:
-            jacklib.set_client_registration_callback(gJack.client, self.JackClientRegistrationCallback, None)
-            jacklib.set_port_rename_callback(gJack.client, self.JackPortRenameCallback, None)
+        jacklib.set_client_rename_callback(gJack.client, self.JackClientRenameCallback, None)
+        jacklib.set_port_rename_callback(gJack.client, self.JackPortRenameCallback, None)
 
     def init_jackPorts(self):
         if not gJack.client:
@@ -701,8 +702,29 @@ class CatiaMainW(AbstractCanvasJackClass):
         return groupId
 
     def canvas_addJackGroup(self, groupName):
-        groupId = self.fLastGroupId
-        patchcanvas.addGroup(groupId, groupName)
+        ret, data, dataSize = jacklib.custom_get_data(gJack.client, groupName, URI_CANVAS_ICON)
+
+        groupId    = self.fLastGroupId
+        groupSplit = patchcanvas.SPLIT_UNDEF
+        groupIcon  = patchcanvas.ICON_APPLICATION
+
+        if ret == 0:
+            iconName = voidptr2str(data)
+            jacklib.free(data)
+
+            if iconName == "hardware":
+                groupSplit = patchcanvas.SPLIT_YES
+                groupIcon  = patchcanvas.ICON_HARDWARE
+            #elif iconName =="carla":
+                #groupIcon = patchcanvas.ICON_CARLA
+            elif iconName =="distrho":
+                groupIcon = patchcanvas.ICON_DISTRHO
+            elif iconName =="file":
+                groupIcon = patchcanvas.ICON_FILE
+            elif iconName =="plugin":
+                groupIcon = patchcanvas.ICON_PLUGIN
+
+        patchcanvas.addGroup(groupId, groupName, groupSplit, groupIcon)
 
         groupObj = [None, None, None]
         groupObj[iGroupId]   = groupId
@@ -1053,9 +1075,9 @@ class CatiaMainW(AbstractCanvasJackClass):
         self.emit(SIGNAL("SampleRateCallback(int)"), sampleRate)
         return 0
 
-    def JackClientRegistrationCallback(self, clientName, registerYesNo, arg):
-        if DEBUG: print("JackClientRegistrationCallback(\"%s\", %i)" % (clientName, registerYesNo))
-        self.emit(SIGNAL("ClientRegistrationCallback(QString, bool)"), str(clientName, encoding="utf-8"), bool(registerYesNo))
+    def JackClientRenameCallback(self, oldName, newName, arg):
+        if DEBUG: print("JackClientRenameCallback(\"%s\", \"%s\")" % (oldName, newName))
+        self.emit(SIGNAL("ClientRenameCallback(QString, QString)"), str(oldName, encoding="utf-8"), str(newName, encoding="utf-8"))
         return 0
 
     def JackPortRegistrationCallback(self, portId, registerYesNo, arg):
@@ -1161,17 +1183,12 @@ class CatiaMainW(AbstractCanvasJackClass):
     def slot_SampleRateCallback(self, sampleRate):
         self.ui_setSampleRate(sampleRate)
 
-    @pyqtSlot(str, bool)
-    def slot_ClientRegistrationCallback(self, clientName, registerYesNo):
-        if registerYesNo and clientName == "system" and gJack.client:
-            bufferSize = int(jacklib.get_buffer_size(gJack.client))
-            sampleRate = int(jacklib.get_sample_rate(gJack.client))
-            realtime   = bool(int(jacklib.is_realtime(gJack.client)))
+        self.ui_setRealTime(bool(int(jacklib.is_realtime(gJack.client))))
+        self.ui_setXruns(0)
 
-            self.ui_setBufferSize(bufferSize)
-            self.ui_setSampleRate(sampleRate)
-            self.ui_setRealTime(realtime)
-            self.ui_setXruns(0)
+    @pyqtSlot(str, str)
+    def slot_ClientRenameCallback(self, oldName, newName):
+        pass # TODO
 
     @pyqtSlot(int, bool)
     def slot_PortRegistrationCallback(self, portIdJack, registerYesNo):

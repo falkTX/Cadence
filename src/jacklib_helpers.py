@@ -85,6 +85,14 @@ def c_char_p_p_to_list(c_char_p_p):
     return retList
 
 # ------------------------------------------------------------------------------------------------------------
+# Convert C void* -> string
+
+def voidptr2str(void_p):
+    char_p = jacklib.cast(void_p, jacklib.c_char_p)
+    string = str(char_p.value, encoding="utf-8")
+    return string
+
+# ------------------------------------------------------------------------------------------------------------
 # Convert C void* -> jack_default_audio_sample_t*
 
 def translate_audio_port_buffer(void_p):

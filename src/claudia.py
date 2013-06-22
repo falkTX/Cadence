@@ -1202,7 +1202,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
 
         return item
 
-    def canvas_add_group(self, group_id, group_name):
+    def canvas_add_group(self, groupId, groupName):
         # TODO - request ladish client type
 
         #if (False):
@@ -1212,27 +1212,49 @@ class ClaudiaMainW(AbstractCanvasJackClass):
             #icon  = patchcanvas.ICON_LADISH_ROOM
             #split = patchcanvas.SPLIT_NO
         #else:
-        icon = patchcanvas.ICON_APPLICATION
 
-        split_try = gDBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_SPLIT)
-        if split_try == "true":
-            split = patchcanvas.SPLIT_YES
-        elif split_try == "false":
-            split = patchcanvas.SPLIT_NO
+        splitTry = gDBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, groupId, URI_CANVAS_SPLIT)
+
+        if splitTry == "true":
+            groupSplit = patchcanvas.SPLIT_YES
+        elif splitTry == "false":
+            groupSplit = patchcanvas.SPLIT_NO
         else:
-            split = patchcanvas.SPLIT_UNDEF
+            groupSplit = patchcanvas.SPLIT_UNDEF
 
-        patchcanvas.addGroup(group_id, group_name, split, icon)
+        groupIcon = patchcanvas.ICON_APPLICATION
 
-        x  = gDBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_X)
-        y  = gDBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_Y)
-        x2 = gDBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_X_SPLIT)
-        y2 = gDBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, group_id, URI_CANVAS_Y_SPLIT)
+        if gJack.client:
+            ret, data, dataSize = jacklib.custom_get_data(gJack.client, groupName, URI_CANVAS_ICON)
+
+            if ret == 0:
+                iconName = voidptr2str(data)
+                jacklib.free(data)
+
+                if iconName == "hardware":
+                    groupIcon = patchcanvas.ICON_HARDWARE
+                    if groupSplit == patchcanvas.SPLIT_UNDEF:
+                        groupSplit = patchcanvas.SPLIT_YES
+                #elif iconName =="carla":
+                    #groupIcon = patchcanvas.ICON_CARLA
+                elif iconName =="distrho":
+                    groupIcon = patchcanvas.ICON_DISTRHO
+                elif iconName =="file":
+                    groupIcon = patchcanvas.ICON_FILE
+                elif iconName =="plugin":
+                    groupIcon = patchcanvas.ICON_PLUGIN
+
+        patchcanvas.addGroup(groupId, groupName, groupSplit, groupIcon)
+
+        x  = gDBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, groupId, URI_CANVAS_X)
+        y  = gDBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, groupId, URI_CANVAS_Y)
+        x2 = gDBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, groupId, URI_CANVAS_X_SPLIT)
+        y2 = gDBus.ladish_graph.Get(GRAPH_DICT_OBJECT_TYPE_CLIENT, groupId, URI_CANVAS_Y_SPLIT)
 
         if x != None and y != None:
             if x2 is None: x2 = "%f" % (float(x) + 50)
             if y2 is None: y2 = "%f" % (float(y) + 50)
-            patchcanvas.setGroupPosFull(group_id, float(x), float(y), float(x2), float(y2))
+            patchcanvas.setGroupPosFull(groupId, float(x), float(y), float(x2), float(y2))
 
         QTimer.singleShot(0, self.ui.miniCanvasPreview, SLOT("update()"))
 
