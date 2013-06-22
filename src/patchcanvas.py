@@ -56,9 +56,12 @@ ACTION_PORTS_CONNECT    = 6 # out_id, in_id, N
 ACTION_PORTS_DISCONNECT = 7 # conn_id, N, N
 
 # Icon
-ICON_HARDWARE    = 0
-ICON_APPLICATION = 1
-ICON_LADISH_ROOM = 2
+ICON_APPLICATION = 0
+ICON_HARDWARE    = 1
+ICON_DISTRHO     = 2
+ICON_FILE        = 3
+ICON_PLUGIN      = 4
+ICON_LADISH_ROOM = 5
 
 # Split Option
 SPLIT_UNDEF = 0
@@ -2518,6 +2521,9 @@ class CanvasIcon(QGraphicsSvgItem):
             elif "clementine" in name:
                 icon_path = ":/scalable/pb_clementine.svg"
                 self.p_size = QRectF(5, 4, 16, 16)
+            elif "distrho" in name:
+                icon_path = ":/scalable/pb_distrho.svg"
+                self.p_size = QRectF(5, 4, 14, 14)
             elif "jamin" in name:
                 icon_path = ":/scalable/pb_jamin.svg"
                 self.p_size = QRectF(5, 3, 16, 16)
@@ -2530,11 +2536,23 @@ class CanvasIcon(QGraphicsSvgItem):
 
             else:
                 icon_path = ":/scalable/pb_generic.svg"
-                self.p_size = QRectF(5, 3, 16, 16)
+                self.p_size = QRectF(4, 3, 16, 16)
 
         elif icon == ICON_HARDWARE:
             icon_path = ":/scalable/pb_hardware.svg"
             self.p_size = QRectF(5, 2, 16, 16)
+
+        elif icon == ICON_DISTRHO:
+            icon_path = ":/scalable/pb_distrho.svg"
+            self.p_size = QRectF(5, 4, 14, 14)
+
+        elif icon == ICON_FILE:
+            icon_path = ":/scalable/pb_file.svg"
+            self.p_size = QRectF(5, 4, 12, 14)
+
+        elif icon == ICON_PLUGIN:
+            icon_path = ":/scalable/pb_plugin.svg"
+            self.p_size = QRectF(5, 4, 14, 14)
 
         elif icon == ICON_LADISH_ROOM:
             # TODO - make a unique ladish-room icon

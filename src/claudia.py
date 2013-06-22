@@ -160,6 +160,7 @@ URI_CANVAS_Y       = "http://ladish.org/ns/canvas/y"
 URI_CANVAS_SPLIT   = "http://kxstudio.sf.net/ns/canvas/split"
 URI_CANVAS_X_SPLIT = "http://kxstudio.sf.net/ns/canvas/x_split"
 URI_CANVAS_Y_SPLIT = "http://kxstudio.sf.net/ns/canvas/y_split"
+URI_CANVAS_ICON    = "http://kxstudio.sf.net/ns/canvas/icon"
 
 DEFAULT_CANVAS_WIDTH  = 3100
 DEFAULT_CANVAS_HEIGHT = 2400
