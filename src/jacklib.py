@@ -1260,10 +1260,10 @@ def custom_get_data(client, client_name, key):
     if jacklib.jack_custom_get_data:
         data = c_void_p(0)
         size = c_size_t(0)
-        ret = jacklib.jack_custom_get_data(client, client_name.encode("utf-8"), key.encode("utf-8"), pointer(data), pointer(size))
+        ret  = jacklib.jack_custom_get_data(client, client_name.encode("utf-8"), key.encode("utf-8"), pointer(data), pointer(size))
         return (ret, data, size)
 
-    return (ret, None, 0)
+    return (-1, None, 0)
 
 def custom_unpublish_data(client, key):
     if jacklib.jack_custom_unpublish_data:
