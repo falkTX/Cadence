@@ -124,7 +124,7 @@ def stopAllAudioProcesses():
 
     for x in range(tries):
         procsList = getProcList()
-        for term in range(len(procsTerm)):
+        for term in procsTerm:
             if term in procsList:
                 break
             else:
@@ -137,7 +137,7 @@ def stopAllAudioProcesses():
 
     for x in range(tries):
         procsList = getProcList()
-        for kill in range(len(procsKill)):
+        for kill in procsKill:
             if kill in procsList:
                 break
             else:
