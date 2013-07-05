@@ -76,7 +76,7 @@ def getProcList():
 
     if HAIKU or LINUX or MACOS:
         process = QProcess()
-        process.start("ps", ["-e"])
+        process.start("ps", ["-u", str(os.getuid())])
         process.waitForFinished()
 
         processDump = process.readAllStandardOutput().split("\n")

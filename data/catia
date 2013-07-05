@@ -2,7 +2,7 @@
 
 # Check if already running
 
-PROCS=`ps -ea -f | grep /share/cadence/src/catia.py | grep python`
+PROCS=`ps -f -u $USER | grep /share/cadence/src/catia.py | grep python`
 
 if [ x"$PROCS" != x"" ]; then
 

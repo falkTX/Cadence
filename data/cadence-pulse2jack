@@ -80,7 +80,7 @@ esac
 
 IsPulseAudioRunning()
 {
-    PROCESS=`ps -e | grep pulseaudio`
+    PROCESS=`ps -u $USER | grep pulseaudio`
     if [ "$PROCESS" == "" ]; then
         false
     else
