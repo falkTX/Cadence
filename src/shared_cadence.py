@@ -104,6 +104,20 @@ def startAlsaAudioLoopBridge():
 # ------------------------------------------------------------------------------------------------------------
 # Stop all audio processes, used for force-restart
 
+def waitProcsEnd(procs, tries):
+    for x in range(tries):
+        procsList = getProcList()
+        for proc in procs:
+            if proc in procsList:
+                break
+            else:
+                sleep(0.1)
+        else:
+            break
+
+# ------------------------------------------------------------------------------------------------------------
+# Stop all audio processes, used for force-restart
+
 def stopAllAudioProcesses():
     if not (HAIKU or LINUX or MACOS):
         print("stopAllAudioProcesses() - Not supported in this system")
@@ -122,25 +136,8 @@ def stopAllAudioProcesses():
     process.start("killall", procsTerm)
     process.waitForFinished()
 
-    for x in range(tries):
-        procsList = getProcList()
-        for term in procsTerm:
-            if term in procsList:
-                break
-            else:
-                sleep(0.1)
-        else:
-            break
-
     process.start("killall", ["-KILL"] + procsKill)
     process.waitForFinished()
 
-    for x in range(tries):
-        procsList = getProcList()
-        for kill in procsKill:
-            if kill in procsList:
-                break
-            else:
-                sleep(0.1)
-        else:
-            break
+    waitProcsEnd(procsTerm, tries)
+    waitProcsEnd(procsKill, tries)
