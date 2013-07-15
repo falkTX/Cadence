@@ -95,8 +95,11 @@ gJack.client = None
 # Abstract Canvas and JACK Class
 
 class AbstractCanvasJackClass(QMainWindow):
-    def __init__(self, parent, appName):
+    def __init__(self, appName, UiClass, parent):
         QMainWindow.__init__(self, parent)
+
+        self.ui = UiClass()
+        self.ui.setupUi(self)
 
         self.fAppName          = appName
         self.fCurTransportView = TRANSPORT_VIEW_HMS

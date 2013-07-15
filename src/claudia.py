@@ -598,9 +598,7 @@ class ClaudiaLauncherW(QDialog):
 
 class ClaudiaMainW(AbstractCanvasJackClass):
     def __init__(self, parent=None):
-        AbstractCanvasJackClass.__init__(self, parent, "Claudia")
-        self.ui = ui_claudia.Ui_ClaudiaMainW()
-        self.ui.setupUi(self)
+        AbstractCanvasJackClass.__init__(self, "Claudia", ui_claudia.Ui_ClaudiaMainW, parent)
 
         self.m_lastItemType = None
         self.m_lastRoomPath = None

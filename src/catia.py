@@ -102,9 +102,7 @@ URI_CANVAS_ICON = "http://kxstudio.sf.net/ns/canvas/icon"
 
 class CatiaMainW(AbstractCanvasJackClass):
     def __init__(self, parent=None):
-        AbstractCanvasJackClass.__init__(self, parent, "Catia")
-        self.ui = ui_catia.Ui_CatiaMainW()
-        self.ui.setupUi(self)
+        AbstractCanvasJackClass.__init__(self, "Catia", ui_catia.Ui_CatiaMainW, parent)
 
         self.fGroupList      = []
         self.fGroupSplitList = []

@@ -19,7 +19,7 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt4.QtCore import pyqtSlot, Qt, QFile, QIODevice, QMutex, QMutexLocker, QTextStream, QThread
+from PyQt4.QtCore import pyqtSlot, Qt, QFile, QIODevice, QMutex, QMutexLocker, QTextStream, QThread, QSettings
 from PyQt4.QtGui import QDialog, QPalette, QSyntaxHighlighter
 
 # ------------------------------------------------------------------------------------------------------------
@@ -121,8 +121,9 @@ class LogsReadThread(QThread):
     def __init__(self, parent):
         QThread.__init__(self, parent)
 
-        self.fCloseNow  = False
-        self.fPurgeLogs = False
+        self.fCloseNow   = False
+        self.fPurgeLogs  = False
+        self.fRealParent = parent
 
         # -------------------------------------------------------------
         # Take some values from Logs Window
@@ -234,7 +235,7 @@ class LogsReadThread(QThread):
                 else:
                     textLADISH = ""
 
-                self.parent().setLogsText(textJACK, textA2J, textLASH, textLADISH)
+                self.fRealParent.setLogsText(textJACK, textA2J, textLASH, textLADISH)
                 self.emit(SIGNAL("updateLogs()"))
 
             if not self.fCloseNow:
@@ -282,6 +283,8 @@ class LogsW(QDialog):
         QDialog.__init__(self, parent)
         self.ui = ui_logs.Ui_LogsW()
         self.ui.setupUi(self)
+
+        self.loadSettings()
 
         self.fFirstRun = True
         self.fTextLock = QMutex()
@@ -400,7 +403,17 @@ class LogsW(QDialog):
         self.ui.pte_lash.clear()
         self.ui.pte_ladish.clear()
 
+    def loadSettings(self):
+        settings = QSettings("Cadence", "Cadence-Logs")
+        self.restoreGeometry(settings.value("Geometry", ""))
+
+    def saveSettings(self):
+        settings = QSettings("Cadence", "Cadence-Logs")
+        settings.setValue("Geometry", self.saveGeometry())
+
     def closeEvent(self, event):
+        self.saveSettings()
+
         if self.fReadThread.isRunning():
             self.fReadThread.closeNow()
 

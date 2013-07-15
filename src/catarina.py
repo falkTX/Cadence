@@ -598,9 +598,7 @@ class CatarinaDisconnectPortsW(QDialog, ui_catarina_disconnectports.Ui_CatarinaD
 
 class CatarinaMainW(AbstractCanvasJackClass):
     def __init__(self, parent=None):
-        AbstractCanvasJackClass.__init__(self, parent, "Catarina")
-        self.ui = ui_catarina.Ui_CatarinaMainW()
-        self.ui.setupUi(self)
+        AbstractCanvasJackClass.__init__(self, "Catarina", ui_catarina.Ui_CatarinaMainW, parent)
 
         self.loadSettings(True)
 

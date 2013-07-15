@@ -242,6 +242,8 @@ def closeWindowHandler():
     gGui.close()
     QApplication.instance().quit()
 
+    gGui = None
+
 def showWindowHandler():
     global gGui
 
