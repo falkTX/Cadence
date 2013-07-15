@@ -145,6 +145,7 @@ class RenderW(QDialog):
         self.connect(self.ui.b_now_end, SIGNAL("clicked()"), SLOT("slot_setEndNow()"))
         self.connect(self.ui.te_start, SIGNAL("timeChanged(const QTime)"), SLOT("slot_updateStartTime(const QTime)"))
         self.connect(self.ui.te_end, SIGNAL("timeChanged(const QTime)"), SLOT("slot_updateEndTime(const QTime)"))
+        self.connect(self.ui.group_time, SIGNAL("clicked(bool)"), SLOT("slot_transportChecked(bool)"))
         self.connect(self.fTimer, SIGNAL("timeout()"), SLOT("slot_updateProgressbar()"))
 
         # -------------------------------------------------------------
@@ -309,17 +310,32 @@ class RenderW(QDialog):
     def slot_updateStartTime(self, time):
         if time >= self.ui.te_end.time():
             self.ui.te_end.setTime(time)
-            self.ui.b_render.setEnabled(False)
+            renderEnabled = False
         else:
-            self.ui.b_render.setEnabled(True)
+            renderEnabled = True
+
+        if self.ui.group_time.isChecked():
+            self.ui.b_render.setEnabled(renderEnabled)
 
     @pyqtSlot(QTime)
     def slot_updateEndTime(self, time):
         if time <= self.ui.te_start.time():
             self.ui.te_start.setTime(time)
-            self.ui.b_render.setEnabled(False)
+            renderEnabled = False
         else:
-            self.ui.b_render.setEnabled(True)
+            renderEnabled = True
+
+        if self.ui.group_time.isChecked():
+            self.ui.b_render.setEnabled(renderEnabled)
+
+    @pyqtSlot(bool)
+    def slot_transportChecked(self, yesNo):
+        if yesNo:
+            renderEnabled = bool(self.ui.te_end.time() > self.ui.te_start.time())
+        else:
+            renderEnabled = True
+
+        self.ui.b_render.setEnabled(renderEnabled)
 
     @pyqtSlot()
     def slot_updateProgressbar(self):
