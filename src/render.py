@@ -222,6 +222,10 @@ class RenderW(QDialog):
         if useTransport:
             arguments.append("-jt")
 
+        # Controlled by freewheel
+        if self.fFreewheel:
+            arguments.append("-jf")
+
         # Silent mode
         arguments.append("-dc")
         arguments.append("-s")
