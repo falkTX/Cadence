@@ -192,10 +192,15 @@ class AbstractCanvasJackClass(QMainWindow):
 
     @pyqtSlot()
     def slot_transportBackwards(self):
-        if not gJack.client:
+        if self.fSampleRate == 0.0 or not gJack.client:
             return
 
-        newFrame = jacklib.get_current_transport_frame(gJack.client) - 100000
+        curFrame = jacklib.get_current_transport_frame(gJack.client)
+
+        if curFrame == 0:
+            return
+
+        newFrame = curFrame - int(self.fSampleRate*2.5)
 
         if newFrame < 0:
             newFrame = 0
@@ -204,10 +209,10 @@ class AbstractCanvasJackClass(QMainWindow):
 
     @pyqtSlot()
     def slot_transportForwards(self):
-        if not gJack.client:
+        if self.fSampleRate == 0.0 or not gJack.client:
             return
 
-        newFrame = jacklib.get_current_transport_frame(gJack.client) + 100000
+        newFrame = jacklib.get_current_transport_frame(gJack.client) + int(self.fSampleRate*2.5)
         jacklib.transport_locate(gJack.client, newFrame)
 
     @pyqtSlot()
