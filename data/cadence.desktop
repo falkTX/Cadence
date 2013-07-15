@@ -7,7 +7,7 @@ Icon=cadence
 Terminal=false
 Type=Application
 Categories=AudioVideo;AudioEditing;Qt;
-X-Ayatana-Desktop-Shortcuts=Catia;Claudia;ClaudiaLauncher;Carla;CarlaControl;JackMeter;JackSettings;Logs;Render;XYController;
+X-Ayatana-Desktop-Shortcuts=Catia;Claudia;ClaudiaLauncher;Carla;CarlaControl;JackMeterIn;JackMeterOut;JackSettings;Logs;Render;XYController;
 
 [Catia Shortcut Group]
 Name=Catia
@@ -34,8 +34,13 @@ Name=Carla Control
 Exec=carla-control
 TargetEnvironment=Unity
 
-[JackMeter Shortcut Group]
-Name=JACK Meter
+[JackMeterIn Shortcut Group]
+Name=JACK Meter (Inputs)
+Exec=cadence-jackmeter -in
+TargetEnvironment=Unity
+
+[JackMeterOut Shortcut Group]
+Name=JACK Meter (Outputs)
 Exec=cadence-jackmeter
 TargetEnvironment=Unity
 
