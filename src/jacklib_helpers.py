@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Helper functions for extra jacklib functionality
-# Copyright (C) 2012 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2012-2013 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,8 +28,12 @@ except ImportError:
 # Get JACK error status as string
 
 def get_jack_status_error_string(cStatus):
+    status = cStatus.value
+
+    if status == 0x0:
+        return ""
+
     errorString = ""
-    status      = cStatus.value
 
     if status & jacklib.JackFailure:
         errorString += "Overall operation failed;\n"
@@ -58,10 +62,7 @@ def get_jack_status_error_string(cStatus):
     if status & jacklib.JackClientZombie:
         errorString += "Client is being shutdown against its will;\n"
 
-    if errorString:
-        errorString = errorString.strip().rsplit(";", 1)[0] + "."
-
-    return errorString
+    return errorString.strip().rsplit(";", 1)[0] + "."
 
 # ------------------------------------------------------------------------------------------------------------
 # Convert C char** -> Python list

@@ -196,6 +196,14 @@ class RenderW(QDialog):
 
         arguments = []
 
+        # Filename prefix
+        arguments.append("-fp")
+        arguments.append(self.ui.le_prefix.text())
+
+        # Format
+        arguments.append("-f")
+        arguments.append(self.ui.cb_format.currentText())
+
         # Bit depth
         arguments.append("-b")
         arguments.append(self.ui.cb_depth.currentText())
@@ -208,10 +216,6 @@ class RenderW(QDialog):
             arguments.append("2")
         else:
             arguments.append(str(self.ui.sb_channels.value()))
-
-        # Format
-        arguments.append("-f")
-        arguments.append(self.ui.cb_format.currentText())
 
         # Controlled by transport
         if useTransport:
@@ -339,6 +343,7 @@ class RenderW(QDialog):
 
         settings.setValue("Geometry", self.saveGeometry())
         settings.setValue("OutputFolder", self.ui.le_folder.text())
+        settings.setValue("FilenamePrefix", self.ui.le_prefix.text())
         settings.setValue("EncodingFormat", self.ui.cb_format.currentText())
         settings.setValue("EncodingDepth", self.ui.cb_depth.currentText())
         settings.setValue("EncodingChannels", channels)
@@ -355,6 +360,8 @@ class RenderW(QDialog):
 
         if os.path.exists(outputFolder):
             self.ui.le_folder.setText(outputFolder)
+
+        self.ui.le_prefix.setText(settings.value("FilenamePrefix", "jack_capture_"))
 
         encFormat = settings.value("EncodingFormat", "Wav", type=str)
 
@@ -385,9 +392,11 @@ class RenderW(QDialog):
         self.ui.te_end.setTime(settings.value("EndTime", self.ui.te_end.time(), type=QTime))
 
     def closeEvent(self, event):
+        self.saveSettings()
+
         if self.fJackClient:
             jacklib.client_close(self.fJackClient)
-        self.saveSettings()
+
         QDialog.closeEvent(self, event)
 
     def done(self, r):

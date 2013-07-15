@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # JACK ctypes definitions for usage in python applications
-# Copyright (C) 2010-2012 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,16 +50,13 @@ except:
 # ------------------------------------------------------------------------------------------------------------
 # Pre-Types
 
-c_enum = c_int
+c_enum  = c_int
 c_uchar = c_uint8
 
 class _jack_port(Structure):
     _fields_ = []
 
 class _jack_client(Structure):
-    _fields_ = []
-
-class pthread_t(Structure):
     _fields_ = []
 
 # ------------------------------------------------------------------------------------------------------------
@@ -91,7 +88,7 @@ jack_latency_callback_mode_t = c_enum # JackLatencyCallbackMode
 
 jack_port_t   = _jack_port
 jack_client_t = _jack_client
-jack_port_type_id_t  = c_uint32 # JACK2 only
+jack_port_type_id_t = c_uint32 # JACK2 only
 
 # enum JackOptions
 JackNullOption    = 0x00
