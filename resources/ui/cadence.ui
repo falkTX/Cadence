@@ -572,7 +572,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>360</width>
+                  <width>359</width>
                   <height>100</height>
                  </rect>
                 </property>
@@ -720,8 +720,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>290</width>
-                  <height>77</height>
+                  <width>359</width>
+                  <height>97</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -861,8 +861,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>204</width>
-                  <height>77</height>
+                  <width>359</width>
+                  <height>97</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -1149,33 +1149,50 @@
           <item>
            <widget class="QGroupBox" name="groupBox_meter">
             <property name="title">
-             <string>Meter</string>
+             <string>Meter In / Out</string>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_4">
              <item>
-              <widget class="ClickableLabel" name="pic_meter">
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>117</height>
-                </size>
+              <layout class="QHBoxLayout" name="horizontalLayout_5">
+               <property name="spacing">
+                <number>0</number>
                </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>117</height>
-                </size>
-               </property>
-               <property name="text">
-                <string/>
-               </property>
-               <property name="pixmap">
-                <pixmap resource="../resources.qrc">:/screens/cadence-jackmeter.png</pixmap>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
+               <item>
+                <widget class="ClickableLabel" name="pic_meter_in">
+                 <property name="text">
+                  <string/>
+                 </property>
+                 <property name="pixmap">
+                  <pixmap resource="../resources.qrc">:/screens/cadence-jackmeter-in.png</pixmap>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="ClickableLabel" name="pic_meter_out">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>117</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>117</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                 <property name="pixmap">
+                  <pixmap resource="../resources.qrc">:/screens/cadence-jackmeter-out.png</pixmap>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </item>
              <item>
               <widget class="QLabel" name="label_tools_meter">
@@ -1671,8 +1688,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>94</width>
-                  <height>66</height>
+                  <width>416</width>
+                  <height>334</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -1701,7 +1718,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>94</width>
+                  <width>89</width>
                   <height>66</height>
                  </rect>
                 </property>
@@ -1731,7 +1748,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>94</width>
+                  <width>89</width>
                   <height>66</height>
                  </rect>
                 </property>
@@ -1761,7 +1778,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>94</width>
+                  <width>89</width>
                   <height>66</height>
                  </rect>
                 </property>

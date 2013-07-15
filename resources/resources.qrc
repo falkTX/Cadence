@@ -85,7 +85,8 @@
         <file>bitmaps/canvas/frame_node_header.png</file>
         <file>bitmaps/canvas/frame_port_bg.png</file>
 
-        <file>screens/cadence-jackmeter.png</file>
+        <file>screens/cadence-jackmeter-in.png</file>
+        <file>screens/cadence-jackmeter-out.png</file>
         <file>screens/cadence-logs.png</file>
         <file>screens/cadence-render.png</file>
         <file>screens/cadence-xycontroller.png</file>

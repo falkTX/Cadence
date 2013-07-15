@@ -1083,7 +1083,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.systray.addMenuAction("tools", "app_claudia", "Claudia")
         self.systray.addMenuSeparator("tools", "tools_sep")
         self.systray.addMenuAction("tools", "app_logs", "Logs")
-        self.systray.addMenuAction("tools", "app_meter", "Meter")
+        self.systray.addMenuAction("tools", "app_meter_in", "Meter (Inputs)")
+        self.systray.addMenuAction("tools", "app_meter_out", "Meter (Output)")
         self.systray.addMenuAction("tools", "app_render", "Render")
         self.systray.addMenuAction("tools", "app_xy-controller", "XY-Controller")
         self.systray.addSeparator("sep2")
@@ -1092,7 +1093,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.systray.connect("app_catia", lambda tool="catia": self.func_start_tool(tool))
         self.systray.connect("app_claudia", lambda tool="claudia": self.func_start_tool(tool))
         self.systray.connect("app_logs", lambda tool="cadence-logs": self.func_start_tool(tool))
-        self.systray.connect("app_meter", lambda tool="cadence-jackmeter": self.func_start_tool(tool))
+        self.systray.connect("app_meter_in", lambda tool="cadence-jackmeter -in": self.func_start_tool(tool))
+        self.systray.connect("app_meter_out", lambda tool="cadence-jackmeter": self.func_start_tool(tool))
         self.systray.connect("app_render", lambda tool="cadence-render": self.func_start_tool(tool))
         self.systray.connect("app_xy-controller", lambda tool="cadence-xycontroller": self.func_start_tool(tool))
 
@@ -1125,7 +1127,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         self.connect(self.pic_catia, SIGNAL("clicked()"), lambda tool="catia": self.func_start_tool(tool))
         self.connect(self.pic_claudia, SIGNAL("clicked()"), lambda tool="claudia": self.func_start_tool(tool))
-        self.connect(self.pic_meter, SIGNAL("clicked()"), lambda tool="cadence-jackmeter": self.func_start_tool(tool))
+        self.connect(self.pic_meter_in, SIGNAL("clicked()"), lambda tool="cadence-jackmeter -in": self.func_start_tool(tool))
+        self.connect(self.pic_meter_out, SIGNAL("clicked()"), lambda tool="cadence-jackmeter": self.func_start_tool(tool))
         self.connect(self.pic_logs, SIGNAL("clicked()"), lambda tool="cadence-logs": self.func_start_tool(tool))
         self.connect(self.pic_render, SIGNAL("clicked()"), lambda tool="cadence-render": self.func_start_tool(tool))
         self.connect(self.pic_xycontroller, SIGNAL("clicked()"), lambda tool="cadence-xycontroller": self.func_start_tool(tool))
@@ -1511,11 +1514,13 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             elif tool == "cadence-render":
                 tool = "render"
 
-            if tool in ("cadence-jackmeter", "cadence-xycontroller"):
-                python    = ""
-                localPath = os.path.join(sys.path[0], "..", "c++", tool.replace("cadence-", ""))
+            stool = tool.split(" ", 1)[0]
 
-                if os.path.exists(os.path.join(localPath, tool)):
+            if stool in ("cadence-jackmeter", "cadence-xycontroller"):
+                python    = ""
+                localPath = os.path.join(sys.path[0], "..", "c++", stool.replace("cadence-", ""))
+
+                if os.path.exists(os.path.join(localPath, stool)):
                     base = localPath + os.sep
                 else:
                     base = ""

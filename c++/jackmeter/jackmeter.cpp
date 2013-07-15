@@ -145,7 +145,7 @@ public:
     MeterW() : DigitalPeakMeter(nullptr)
     {
         setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
-        setWindowTitle("M");
+        setWindowTitle(gIsOutput ? "M" : "Mi");
 
         if (gIsOutput)
             setColor(Color::GREEN);
