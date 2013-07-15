@@ -42,6 +42,8 @@ jack_client_t* jClient = nullptr;
 jack_port_t* jPort1 = nullptr;
 jack_port_t* jPort2 = nullptr;
 
+bool gIsOutput = true;
+
 // -------------------------------
 // JACK callbacks
 
@@ -91,12 +93,12 @@ void session_callback(jack_session_event_t* const event, void* const arg)
 // -------------------------------
 // helpers
 
-void reconnect_inputs()
+void reconnect_ports()
 {
     x_needReconnect = false;
 
-    jack_port_t* const jPlayPort1 = jack_port_by_name(jClient, "system:playback_1");
-    jack_port_t* const jPlayPort2 = jack_port_by_name(jClient, "system:playback_2");
+    jack_port_t* const jPlayPort1 = jack_port_by_name(jClient, gIsOutput ? "system:playback_1" : "system:capture_1");
+    jack_port_t* const jPlayPort2 = jack_port_by_name(jClient, gIsOutput ? "system:playback_2" : "system:capture_2");
     std::vector<char*> jPortList1(jack_port_get_all_connections_as_vector(jClient, jPlayPort1));
     std::vector<char*> jPortList2(jack_port_get_all_connections_as_vector(jClient, jPlayPort2));
 
@@ -105,7 +107,12 @@ void reconnect_inputs()
         jack_port_t* const thisPort = jack_port_by_name(jClient, thisPortName);
 
         if (! (jack_port_is_mine(jClient, thisPort) || jack_port_connected_to(jPort1, thisPortName)))
-            jack_connect(jClient, thisPortName, "M:in1");
+        {
+            if (gIsOutput)
+                jack_connect(jClient, thisPortName, "M:in1");
+            else
+                jack_connect(jClient, "Mi:in1", thisPortName);
+        }
 
         free(thisPortName);
     }
@@ -115,7 +122,12 @@ void reconnect_inputs()
         jack_port_t* const thisPort = jack_port_by_name(jClient, thisPortName);
 
         if (! (jack_port_is_mine(jClient, thisPort) || jack_port_connected_to(jPort2, thisPortName)))
-            jack_connect(jClient, thisPortName, "M:in2");
+        {
+            if (gIsOutput)
+                jack_connect(jClient, thisPortName, "M:in2");
+            else
+                jack_connect(jClient, "Mi:in2", thisPortName);
+        }
 
         free(thisPortName);
     }
@@ -135,12 +147,17 @@ public:
         setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
         setWindowTitle("M");
 
+        if (gIsOutput)
+            setColor(Color::GREEN);
+        else
+            setColor(Color::BLUE);
+
         setChannels(2);
         setOrientation(VERTICAL);
         setSmoothRelease(1);
 
-        displayMeter(1, 0.0);
-        displayMeter(2, 0.0);
+        displayMeter(1, 0.0f);
+        displayMeter(2, 0.0f);
 
         int refresh = float(jack_get_buffer_size(jClient)) / jack_get_sample_rate(jClient) * 1000;
 
@@ -165,7 +182,7 @@ protected:
             x_portValue2 = 0.0;
 
             if (x_needReconnect)
-                reconnect_inputs();
+                reconnect_ports();
         }
 
         QWidget::timerEvent(event);
@@ -185,6 +202,9 @@ int main(int argc, char* argv[])
     app.setOrganizationName("Cadence");
     app.setWindowIcon(QIcon(":/scalable/cadence.svg"));
 
+    if (app.arguments().contains("-in"))
+        gIsOutput = false;
+
     // JACK initialization
     jack_status_t jStatus;
 #ifdef HAVE_JACKSESSION
@@ -192,7 +212,7 @@ int main(int argc, char* argv[])
 #else
     jack_options_t jOptions = static_cast<jack_options_t>(JackNoStartServer|JackUseExactName);
 #endif
-    jClient = jack_client_open("M", jOptions, &jStatus);
+    jClient = jack_client_open(gIsOutput ? "M" : "Mi", jOptions, &jStatus);
 
     if (! jClient)
     {
@@ -203,8 +223,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    jPort1 = jack_port_register(jClient, "in1", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
-    jPort2 = jack_port_register(jClient, "in2", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+    jPort1 = jack_port_register(jClient, "in1", JACK_DEFAULT_AUDIO_TYPE, gIsOutput ? JackPortIsInput : JackPortIsOutput, 0);
+    jPort2 = jack_port_register(jClient, "in2", JACK_DEFAULT_AUDIO_TYPE, gIsOutput ? JackPortIsInput : JackPortIsOutput, 0);
 
     jack_set_process_callback(jClient, process_callback, nullptr);
     jack_set_port_connect_callback(jClient, port_callback, nullptr);
@@ -213,7 +233,7 @@ int main(int argc, char* argv[])
 #endif
     jack_activate(jClient);
 
-    reconnect_inputs();
+    reconnect_ports();
 
     // Show GUI
     MeterW gui;
