@@ -35,7 +35,7 @@ OBJS  = xycontroller.o \
 all: cadence-xycontroller
 
 cadence-xycontroller: $(FILES) $(OBJS)
-	$(CXX) $(OBJS) $(LINK_FLAGS) -o $@ && $(STRIP) $@
+	$(CXX) $(OBJS) $(LINK_FLAGS) -ldl -o $@ && $(STRIP) $@
 
 cadence-xycontroller.exe: $(FILES) $(OBJS) icon.o
 	$(CXX) $(OBJS) icon.o $(LINK_FLAGS) -limm32 -lole32 -luuid -lwinspool -lws2_32 -mwindows -o $@ && $(STRIP) $@

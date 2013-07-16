@@ -36,7 +36,5 @@ endif
 
 # --------------------------------------------------------------
 
-HAVE_QT5         = $(shell pkg-config --atleast-version 5 QtCore && echo true)
-
 # Currently broken
 # HAVE_JACKSESSION = $(shell pkg-config --atleast-version=0.121.0 jack && echo true)

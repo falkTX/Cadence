@@ -18,37 +18,31 @@
 #ifndef __JACK_UTILS_HPP__
 #define __JACK_UTILS_HPP__
 
-#include <jack/jack.h>
-#include <jack/midiport.h>
-#include <jack/transport.h>
-
-#ifdef HAVE_JACKSESSION
-# include <jack/session.h>
-#endif
+#include "jackbridge/JackBridge.cpp"
 
 #include <cstring>
 #include <string>
 #include <vector>
 
 static inline
-std::vector<char*> jack_port_get_all_connections_as_vector(jack_client_t* const client, jack_port_t* const port)
+std::vector<char*> jackbridge_port_get_all_connections_as_vector(jack_client_t* const client, jack_port_t* const port)
 {
     std::vector<char*> connectionsVector;
-    const char** connections = jack_port_get_all_connections(client, port);
+    const char** connections = jackbridge_port_get_all_connections(client, port);
 
     if (connections)
     {
         for (int i=0; connections[i]; i++)
             connectionsVector.push_back(strdup(connections[i]));
 
-        jack_free(connections);
+        jackbridge_free(connections);
     }
 
     return connectionsVector;
 }
 
 static inline
-std::string jack_status_get_error_string(const jack_status_t& status)
+std::string jackbridge_status_get_error_string(const jack_status_t& status)
 {
     std::string errorString;
 

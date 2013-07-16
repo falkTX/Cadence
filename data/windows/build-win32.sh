@@ -21,8 +21,6 @@ export UIC=$MINGW-uic
 export STRIP=$MINGW-strip
 export WINDRES=$MINGW-windres
 
-export PKG_CONFIG_PATH="`pwd`/data/windows:$MINGW_PATH/lib/pkgconfig"
-
 export WINEPREFIX=~/.winepy3
 
 export PYTHON_EXE="C:\\\\Python33\\\\python.exe"
@@ -33,11 +31,6 @@ export PYRCC="wine C:\\\\Python33\\\\Lib\\\\site-packages\\\\PyQt4\\\\pyrcc4.exe
 
 export CFLAGS="-DPTW32_STATIC_LIB -I$MINGW_PATH/include"
 export CXXFLAGS="-DPTW32_STATIC_LIB -DWIN32 -I$MINGW_PATH/include"
-
-# win32 jack libs
-cp -r "$WINEPREFIX/drive_c/Program Files (x86)/Jack/includes/" ./data/windows/
-cp -r "$WINEPREFIX/drive_c/Program Files (x86)/Jack/lib/"      ./data/windows/
-cp "$WINEPREFIX/drive_c/windows/syswow64/libjack.dll"          ./data/windows/lib/
 
 # Clean build
 make clean

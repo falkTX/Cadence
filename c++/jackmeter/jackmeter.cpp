@@ -49,8 +49,8 @@ bool gIsOutput = true;
 
 int process_callback(const jack_nframes_t nframes, void*)
 {
-    float* const jOut1 = (float*)jack_port_get_buffer(jPort1, nframes);
-    float* const jOut2 = (float*)jack_port_get_buffer(jPort2, nframes);
+    float* const jOut1 = (float*)jackbridge_port_get_buffer(jPort1, nframes);
+    float* const jOut2 = (float*)jackbridge_port_get_buffer(jPort2, nframes);
 
     for (jack_nframes_t i = 0; i < nframes; i++)
     {
@@ -81,12 +81,12 @@ void session_callback(jack_session_event_t* const event, void* const arg)
 
     event->command_line = strdup(filepath.toUtf8().constData());
 
-    jack_session_reply(jClient, event);
+    jackbridge_session_reply(jClient, event);
 
     if (event->type == JackSessionSaveAndQuit)
         x_quitNow = true;
 
-    jack_session_event_free(event);
+    jackbridge_session_event_free(event);
 }
 #endif
 
@@ -97,21 +97,21 @@ void reconnect_ports()
 {
     x_needReconnect = false;
 
-    jack_port_t* const jPlayPort1 = jack_port_by_name(jClient, gIsOutput ? "system:playback_1" : "system:capture_1");
-    jack_port_t* const jPlayPort2 = jack_port_by_name(jClient, gIsOutput ? "system:playback_2" : "system:capture_2");
-    std::vector<char*> jPortList1(jack_port_get_all_connections_as_vector(jClient, jPlayPort1));
-    std::vector<char*> jPortList2(jack_port_get_all_connections_as_vector(jClient, jPlayPort2));
+    jack_port_t* const jPlayPort1 = jackbridge_port_by_name(jClient, gIsOutput ? "system:playback_1" : "system:capture_1");
+    jack_port_t* const jPlayPort2 = jackbridge_port_by_name(jClient, gIsOutput ? "system:playback_2" : "system:capture_2");
+    std::vector<char*> jPortList1(jackbridge_port_get_all_connections_as_vector(jClient, jPlayPort1));
+    std::vector<char*> jPortList2(jackbridge_port_get_all_connections_as_vector(jClient, jPlayPort2));
 
     foreach (char* const& thisPortName, jPortList1)
     {
-        jack_port_t* const thisPort = jack_port_by_name(jClient, thisPortName);
+        jack_port_t* const thisPort = jackbridge_port_by_name(jClient, thisPortName);
 
-        if (! (jack_port_is_mine(jClient, thisPort) || jack_port_connected_to(jPort1, thisPortName)))
+        if (! (jackbridge_port_is_mine(jClient, thisPort) || jackbridge_port_connected_to(jPort1, thisPortName)))
         {
             if (gIsOutput)
-                jack_connect(jClient, thisPortName, "M:in1");
+                jackbridge_connect(jClient, thisPortName, "M:in1");
             else
-                jack_connect(jClient, "Mi:in1", thisPortName);
+                jackbridge_connect(jClient, "Mi:in1", thisPortName);
         }
 
         free(thisPortName);
@@ -119,14 +119,14 @@ void reconnect_ports()
 
     foreach (char* const& thisPortName, jPortList2)
     {
-        jack_port_t* const thisPort = jack_port_by_name(jClient, thisPortName);
+        jack_port_t* const thisPort = jackbridge_port_by_name(jClient, thisPortName);
 
-        if (! (jack_port_is_mine(jClient, thisPort) || jack_port_connected_to(jPort2, thisPortName)))
+        if (! (jackbridge_port_is_mine(jClient, thisPort) || jackbridge_port_connected_to(jPort2, thisPortName)))
         {
             if (gIsOutput)
-                jack_connect(jClient, thisPortName, "M:in2");
+                jackbridge_connect(jClient, thisPortName, "M:in2");
             else
-                jack_connect(jClient, "Mi:in2", thisPortName);
+                jackbridge_connect(jClient, "Mi:in2", thisPortName);
         }
 
         free(thisPortName);
@@ -159,7 +159,7 @@ public:
         displayMeter(1, 0.0f);
         displayMeter(2, 0.0f);
 
-        int refresh = float(jack_get_buffer_size(jClient)) / jack_get_sample_rate(jClient) * 1000;
+        int refresh = float(jackbridge_get_buffer_size(jClient)) / jackbridge_get_sample_rate(jClient) * 1000;
 
         m_peakTimerId = startTimer(refresh > 50 ? refresh : 50);
     }
@@ -212,26 +212,26 @@ int main(int argc, char* argv[])
 #else
     jack_options_t jOptions = static_cast<jack_options_t>(JackNoStartServer|JackUseExactName);
 #endif
-    jClient = jack_client_open(gIsOutput ? "M" : "Mi", jOptions, &jStatus);
+    jClient = jackbridge_client_open(gIsOutput ? "M" : "Mi", jOptions, &jStatus);
 
     if (! jClient)
     {
-        std::string errorString(jack_status_get_error_string(jStatus));
+        std::string errorString(jackbridge_status_get_error_string(jStatus));
         QMessageBox::critical(nullptr, app.translate("MeterW", "Error"), app.translate("MeterW",
                                                                                        "Could not connect to JACK, possible reasons:\n"
                                                                                        "%1").arg(QString::fromStdString(errorString)));
         return 1;
     }
 
-    jPort1 = jack_port_register(jClient, "in1", JACK_DEFAULT_AUDIO_TYPE, gIsOutput ? JackPortIsInput : JackPortIsOutput, 0);
-    jPort2 = jack_port_register(jClient, "in2", JACK_DEFAULT_AUDIO_TYPE, gIsOutput ? JackPortIsInput : JackPortIsOutput, 0);
+    jPort1 = jackbridge_port_register(jClient, "in1", JACK_DEFAULT_AUDIO_TYPE, gIsOutput ? JackPortIsInput : JackPortIsOutput, 0);
+    jPort2 = jackbridge_port_register(jClient, "in2", JACK_DEFAULT_AUDIO_TYPE, gIsOutput ? JackPortIsInput : JackPortIsOutput, 0);
 
-    jack_set_process_callback(jClient, process_callback, nullptr);
-    jack_set_port_connect_callback(jClient, port_callback, nullptr);
+    jackbridge_set_process_callback(jClient, process_callback, nullptr);
+    jackbridge_set_port_connect_callback(jClient, port_callback, nullptr);
 #ifdef HAVE_JACKSESSION
-    jack_set_session_callback(jClient, session_callback, argv[0]);
+    jackbridge_set_session_callback(jClient, session_callback, argv[0]);
 #endif
-    jack_activate(jClient);
+    jackbridge_activate(jClient);
 
     reconnect_ports();
 
@@ -244,8 +244,8 @@ int main(int argc, char* argv[])
     // App-Loop
     int ret = app.exec();
 
-    jack_deactivate(jClient);
-    jack_client_close(jClient);
+    jackbridge_deactivate(jClient);
+    jackbridge_client_close(jClient);
 
     return ret;
 }

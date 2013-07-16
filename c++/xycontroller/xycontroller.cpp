@@ -868,21 +868,21 @@ private:
 
 int process_callback(const jack_nframes_t nframes, void*)
 {
-    void* const midiInBuffer  = jack_port_get_buffer(jMidiInPort, nframes);
-    void* const midiOutBuffer = jack_port_get_buffer(jMidiOutPort, nframes);
+    void* const midiInBuffer  = jackbridge_port_get_buffer(jMidiInPort, nframes);
+    void* const midiOutBuffer = jackbridge_port_get_buffer(jMidiOutPort, nframes);
 
     if (! (midiInBuffer && midiOutBuffer))
         return 1;
 
     // MIDI In
     jack_midi_event_t midiEvent;
-    uint32_t midiEventCount = jack_midi_get_event_count(midiInBuffer);
+    uint32_t midiEventCount = jackbridge_midi_get_event_count(midiInBuffer);
 
     qMidiInData.lock();
 
     for (uint32_t i=0; i < midiEventCount; i++)
     {
-        if (jack_midi_event_get(&midiEvent, midiInBuffer, i) != 0)
+        if (! jackbridge_midi_event_get(&midiEvent, midiInBuffer, i))
             break;
 
         if (midiEvent.size == 1)
@@ -898,7 +898,7 @@ int process_callback(const jack_nframes_t nframes, void*)
     qMidiInData.unlock();
 
     // MIDI Out
-    jack_midi_clear_buffer(midiOutBuffer);
+    jackbridge_midi_clear_buffer(midiOutBuffer);
     qMidiOutData.lock();
 
     if (! qMidiOutData.isEmpty())
@@ -910,7 +910,7 @@ int process_callback(const jack_nframes_t nframes, void*)
             data[0] = d1;
             data[1] = d2;
             data[2] = d3;
-            jack_midi_event_write(midiOutBuffer, 0, data, 3);
+            jackbridge_midi_event_write(midiOutBuffer, 0, data, 3);
         }
     }
     qMidiOutData.unlock();
@@ -930,12 +930,12 @@ void session_callback(jack_session_event_t* const event, void* const arg)
 
     event->command_line = strdup(filepath.toUtf8().constData());
 
-    jack_session_reply(jClient, event);
+    jackbridge_session_reply(jClient, event);
 
     if (event->type == JackSessionSaveAndQuit)
         QApplication::instance()->quit();
 
-    jack_session_event_free(event);
+    jackbridge_session_event_free(event);
 }
 #endif
 
@@ -962,25 +962,25 @@ int main(int argc, char* argv[])
 #else
     jack_options_t jOptions = static_cast<jack_options_t>(JackNoStartServer);
 #endif
-    jClient = jack_client_open("XY-Controller", jOptions, &jStatus);
+    jClient = jackbridge_client_open("XY-Controller", jOptions, &jStatus);
 
     if (! jClient)
     {
-        std::string errorString(jack_status_get_error_string(jStatus));
+        std::string errorString(jackbridge_status_get_error_string(jStatus));
         QMessageBox::critical(nullptr, app.translate("XY-Controller", "Error"), app.translate("XY-Controller",
                                                                                               "Could not connect to JACK, possible reasons:\n"
                                                                                               "%1").arg(QString::fromStdString(errorString)));
         return 1;
     }
 
-    jMidiInPort  = jack_port_register(jClient, "midi_in", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
-    jMidiOutPort = jack_port_register(jClient, "midi_out", JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
+    jMidiInPort  = jackbridge_port_register(jClient, "midi_in", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+    jMidiOutPort = jackbridge_port_register(jClient, "midi_out", JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
 
-    jack_set_process_callback(jClient, process_callback, nullptr);
+    jackbridge_set_process_callback(jClient, process_callback, nullptr);
 #ifdef HAVE_JACKSESSION
-    jack_set_session_callback(jClient, session_callback, argv[0]);
+    jackbridge_set_session_callback(jClient, session_callback, argv[0]);
 #endif
-    jack_activate(jClient);
+    jackbridge_activate(jClient);
 
     // Show GUI
     XYControllerW gui;
@@ -989,8 +989,8 @@ int main(int argc, char* argv[])
     // App-Loop
     int ret = app.exec();
 
-    jack_deactivate(jClient);
-    jack_client_close(jClient);
+    jackbridge_deactivate(jClient);
+    jackbridge_client_close(jClient);
 
     return ret;
 }
