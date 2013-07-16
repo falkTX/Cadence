@@ -339,14 +339,17 @@ const char* jackbridge_get_version_string()
 jack_client_t* jackbridge_client_open(const char* client_name, jack_options_t options, jack_status_t* status, ...)
 {
 #if JACKBRIDGE_DUMMY
-    return nullptr;
 #elif JACKBRIDGE_DIRECT
     return jack_client_open(client_name, options, status);
 #else
     if (bridge.client_open_ptr != nullptr)
         return bridge.client_open_ptr(client_name, options, status);
-    return nullptr;
 #endif
+
+    if (status != nullptr)
+        *status = JackServerError;
+
+    return nullptr;
 }
 
 const char* jackbridge_client_rename(jack_client_t* client, const char* new_name)

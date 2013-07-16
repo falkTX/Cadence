@@ -2,7 +2,7 @@
 #ifndef __APP_DETAILS_H__
 #define __APP_DETAILS_H__
 
-#define SFX_APP_VERSION "0.8.0"
+#define SFX_APP_VERSION "0.8.1"
 #define SFX_APP_BANNER  "Catia self-contained executable " SFX_APP_VERSION ", based on UnZipSFX."
 
 #ifndef SFX_APP_MININAME
