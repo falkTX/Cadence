@@ -827,7 +827,7 @@ class CatarinaMainW(AbstractCanvasJackClass):
                     self.m_connection_list.remove(connection)
                     break
 
-    def init_ports(self):
+    def initPorts(self):
         for group in self.m_group_list:
             patchcanvas.addGroup(group[iGroupId], group[iGroupName], patchcanvas.SPLIT_YES if (group[iGroupSplit]) else patchcanvas.SPLIT_NO, group[iGroupIcon])
 
@@ -1002,7 +1002,7 @@ class CatarinaMainW(AbstractCanvasJackClass):
         self.m_last_connection_id += 1
 
         patchcanvas.clear()
-        self.init_ports()
+        self.initPorts()
 
         self.scene.zoom_fit()
         self.scene.zoom_reset()
@@ -1248,7 +1248,7 @@ class CatarinaMainW(AbstractCanvasJackClass):
             patchcanvas.setOptions(p_options)
             patchcanvas.init("Catarina", self.scene, self.canvasCallback, DEBUG)
 
-            self.init_ports()
+            self.initPorts()
 
     @pyqtSlot()
     def slot_aboutCatarina(self):

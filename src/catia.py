@@ -17,11 +17,6 @@
 # For a full copy of the GNU General Public License see the COPYING file
 
 # ------------------------------------------------------------------------------------------------------------
-# Imports (Global)
-
-from PyQt4.QtGui import QApplication
-
-# ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
 
 import ui_catia
@@ -172,7 +167,7 @@ class CatiaMainW(AbstractCanvasJackClass):
         # Try to connect to jack
 
         if self.jackStarted():
-            self.init_alsaPorts()
+            self.initAlsaPorts()
 
         # -------------------------------------------------------------
         # Check DBus
@@ -456,7 +451,7 @@ class CatiaMainW(AbstractCanvasJackClass):
             elif portRealNameA and portRealNameB:
                 jacklib.disconnect(gJack.client, portRealNameA, portRealNameB)
 
-    def init_ports(self):
+    def initPorts(self):
         self.fGroupList      = []
         self.fGroupSplitList = []
         self.fPortList       = []
@@ -466,10 +461,10 @@ class CatiaMainW(AbstractCanvasJackClass):
         self.fLastPortId  = 1
         self.fLastConnectionId = 1
 
-        self.init_jackPorts()
-        self.init_alsaPorts()
+        self.initJackPorts()
+        self.initAlsaPorts()
 
-    def init_jack(self):
+    def initJack(self):
         self.fXruns = 0
         self.fNextSampleRate = 0.0
 
@@ -488,15 +483,15 @@ class CatiaMainW(AbstractCanvasJackClass):
         self.refreshDSPLoad()
         self.refreshTransport()
 
-        self.init_jackCallbacks()
-        self.init_jackPorts()
+        self.initJackCallbacks()
+        self.initJackPorts()
 
         self.scene.zoom_fit()
         self.scene.zoom_reset()
 
         jacklib.activate(gJack.client)
 
-    def init_jackCallbacks(self):
+    def initJackCallbacks(self):
         jacklib.set_buffer_size_callback(gJack.client, self.JackBufferSizeCallback, None)
         jacklib.set_sample_rate_callback(gJack.client, self.JackSampleRateCallback, None)
         jacklib.set_xrun_callback(gJack.client, self.JackXRunCallback, None)
@@ -508,7 +503,7 @@ class CatiaMainW(AbstractCanvasJackClass):
         jacklib.set_client_rename_callback(gJack.client, self.JackClientRenameCallback, None)
         jacklib.set_port_rename_callback(gJack.client, self.JackPortRenameCallback, None)
 
-    def init_jackPorts(self):
+    def initJackPorts(self):
         if not gJack.client:
             return
 
@@ -548,7 +543,7 @@ class CatiaMainW(AbstractCanvasJackClass):
             for portConName in portConnectionNames:
                 self.canvas_connectPortsByName(portName, portConName)
 
-    def init_alsaPorts(self):
+    def initAlsaPorts(self):
         if not (haveALSA and self.ui.act_settings_show_alsa.isChecked()):
             return
 
@@ -932,7 +927,7 @@ class CatiaMainW(AbstractCanvasJackClass):
         self.ui.pb_dsp_load.setValue(0)
         self.ui.pb_dsp_load.update()
 
-        self.init_jack()
+        self.initJack()
 
         return True
 
@@ -945,7 +940,7 @@ class CatiaMainW(AbstractCanvasJackClass):
 
         # refresh canvas (remove jack ports)
         patchcanvas.clear()
-        self.init_ports()
+        self.initPorts()
 
         if self.fNextSampleRate:
             self.jack_setSampleRate(self.fNextSampleRate)
@@ -1119,7 +1114,7 @@ class CatiaMainW(AbstractCanvasJackClass):
     def slot_showAlsaMIDI(self, yesNo):
         # refresh canvas (remove jack ports)
         patchcanvas.clear()
-        self.init_ports()
+        self.initPorts()
 
     @pyqtSlot()
     def slot_JackServerStart(self):
@@ -1316,7 +1311,7 @@ class CatiaMainW(AbstractCanvasJackClass):
             patchcanvas.setFeatures(pFeatures)
             patchcanvas.init("Catia", self.scene, self.canvasCallback, DEBUG)
 
-            self.init_ports()
+            self.initPorts()
 
     @pyqtSlot()
     def slot_aboutCatia(self):
@@ -1330,7 +1325,7 @@ class CatiaMainW(AbstractCanvasJackClass):
 
         settings.setValue("Geometry", self.saveGeometry())
         settings.setValue("ShowAlsaMIDI", self.ui.act_settings_show_alsa.isChecked())
-        settings.setValue("ShowToolbar", self.ui.frame_toolbar.isVisible())
+        settings.setValue("ShowToolbar",  self.ui.frame_toolbar.isVisible())
         settings.setValue("ShowStatusbar", self.ui.frame_statusbar.isVisible())
         settings.setValue("TransportView", self.fCurTransportView)
 

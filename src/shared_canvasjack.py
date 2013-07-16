@@ -41,8 +41,8 @@ if DEBUG and jacklib and jacklib.JACK2:
 # ------------------------------------------------------------------------------------------------------------
 # Static Variables
 
-TRANSPORT_VIEW_HMS = 0
-TRANSPORT_VIEW_BBT = 1
+TRANSPORT_VIEW_HMS    = 0
+TRANSPORT_VIEW_BBT    = 1
 TRANSPORT_VIEW_FRAMES = 2
 
 BUFFER_SIZE_LIST = (16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192)
@@ -113,6 +113,16 @@ class AbstractCanvasJackClass(QMainWindow):
         self.fNextSampleRate = 0.0
 
         self.fLogsW = None
+        self.scene  = None
+
+    # -----------------------------------------------------------------
+    # Abstract calls
+
+    def initPorts(self):
+        pass
+
+    def jackStopped(self):
+        pass
 
     # -----------------------------------------------------------------
     # JACK Property change calls
@@ -139,9 +149,18 @@ class AbstractCanvasJackClass(QMainWindow):
             if jacksettings.setSampleRate(sampleRate):
                 self.ui_setSampleRate(sampleRate)
 
-    @pyqtSlot()
-    def slot_jackBufferSize_Menu(self):
-        text = self.sender().text()
+    @pyqtSlot(bool)
+    def slot_jackBufferSize_Menu(self, clicked):
+        sender = self.sender()
+
+        # ignore non-clicks
+        if not clicked:
+            sender.blockSignals(True)
+            sender.setChecked(True)
+            sender.blockSignals(False)
+            return
+
+        text = sender.text()
         if text and text.isdigit():
             self.jack_setBufferSize(int(text))
 
@@ -275,12 +294,15 @@ class AbstractCanvasJackClass(QMainWindow):
                 bar  = pos.bar
                 beat = pos.beat if bar != 0 else 0
                 tick = pos.tick if bar != 0 else 0
-                self.ui.label_time.setText("%03i|%02i|%04i" % (bar, beat, tick))
             else:
-                self.ui.label_time.setText("%03i|%02i|%04i" % (0, 0, 0))
+                bar  = 0
+                beat = 0
+                tick = 0
+
+            self.ui.label_time.setText("%03i|%02i|%04i" % (bar, beat, tick))
 
         elif self.fCurTransportView == TRANSPORT_VIEW_FRAMES:
-            frame1 = pos.frame % 1000
+            frame1 =  pos.frame % 1000
             frame2 = (pos.frame / 1000) % 1000
             frame3 = (pos.frame / 1000000) % 1000
             self.ui.label_time.setText("%03i'%03i'%03i" % (frame3, frame2, frame1))
@@ -290,7 +312,7 @@ class AbstractCanvasJackClass(QMainWindow):
                 self.ui.sb_bpm.setValue(pos.beats_per_minute)
                 self.ui.sb_bpm.setStyleSheet("")
         else:
-            pos.beats_per_minute = -1
+            pos.beats_per_minute = -1.0
             if self.fLastBPM != pos.beats_per_minute:
                 self.ui.sb_bpm.setStyleSheet("QDoubleSpinBox { color: palette(mid); }")
 
@@ -302,17 +324,16 @@ class AbstractCanvasJackClass(QMainWindow):
             if state == jacklib.JackTransportStopped:
                 icon = getIcon("media-playback-start")
                 self.ui.act_transport_play.setChecked(False)
-                self.ui.act_transport_play.setIcon(icon)
                 self.ui.act_transport_play.setText(self.tr("&Play"))
                 self.ui.b_transport_play.setChecked(False)
-                self.ui.b_transport_play.setIcon(icon)
             else:
                 icon = getIcon("media-playback-pause")
                 self.ui.act_transport_play.setChecked(True)
-                self.ui.act_transport_play.setIcon(icon)
                 self.ui.act_transport_play.setText(self.tr("&Pause"))
                 self.ui.b_transport_play.setChecked(True)
-                self.ui.b_transport_play.setIcon(icon)
+
+            self.ui.act_transport_play.setIcon(icon)
+            self.ui.b_transport_play.setIcon(icon)
 
     # -----------------------------------------------------------------
     # Set JACK stuff
@@ -324,6 +345,8 @@ class AbstractCanvasJackClass(QMainWindow):
         self.fBufferSize = bufferSize
 
         if bufferSize:
+            self.ui.cb_buffer_size.blockSignals(True)
+
             if bufferSize == 16:
                 self.ui.cb_buffer_size.setCurrentIndex(0)
             elif bufferSize == 32:
@@ -347,15 +370,19 @@ class AbstractCanvasJackClass(QMainWindow):
             else:
                 self.ui.cb_buffer_size.setCurrentIndex(-1)
 
+            self.ui.cb_buffer_size.blockSignals(False)
+
         if self.fAppName == "Catia" and bufferSize:
             for actBufSize in self.ui.act_jack_bf_list:
+                actBufSize.blockSignals(True)
                 actBufSize.setEnabled(True)
 
                 if actBufSize.text().replace("&", "") == str(bufferSize):
-                    if not actBufSize.isChecked():
-                        actBufSize.setChecked(True)
-                elif actBufSize.isChecked():
+                    actBufSize.setChecked(True)
+                else:
                     actBufSize.setChecked(False)
+
+                actBufSize.blockSignals(False)
 
     def ui_setSampleRate(self, sampleRate, future=False):
         if self.fSampleRate == sampleRate:
@@ -377,10 +404,13 @@ class AbstractCanvasJackClass(QMainWindow):
             self.fNextSampleRate = 0.0
 
         for i in range(len(SAMPLE_RATE_LIST)):
-            sampleRate = SAMPLE_RATE_LIST[i]
+            sampleRateI = SAMPLE_RATE_LIST[i]
 
-            if self.fSampleRate == sampleRate:
+            if self.fSampleRate == sampleRateI:
+                self.ui.cb_sample_rate.blockSignals(True)
                 self.ui.cb_sample_rate.setCurrentIndex(i)
+                self.ui.cb_sample_rate.blockSignals(False)
+                break
 
     def ui_setRealTime(self, isRealtime):
         self.ui.label_realtime.setText(" RT " if isRealtime else " <s>RT</s> ")
@@ -429,7 +459,7 @@ class AbstractCanvasJackClass(QMainWindow):
     @pyqtSlot()
     def slot_canvasRefresh(self):
         patchcanvas.clear()
-        self.init_ports()
+        self.initPorts()
 
     @pyqtSlot()
     def slot_canvasZoomFit(self):
@@ -456,8 +486,8 @@ class AbstractCanvasJackClass(QMainWindow):
         if dialog.exec_():
             painter = QPainter(self.fExportPrinter)
             painter.save()
-            painter.setRenderHint(QPainter.Antialiasing)
-            painter.setRenderHint(QPainter.TextAntialiasing)
+            painter.setRenderHint(QPainter.Antialiasing, True)
+            painter.setRenderHint(QPainter.TextAntialiasing, True)
             self.scene.render(painter)
             painter.restore()
 
@@ -465,27 +495,28 @@ class AbstractCanvasJackClass(QMainWindow):
     def slot_canvasSaveImage(self):
         newPath = QFileDialog.getSaveFileName(self, self.tr("Save Image"), filter=self.tr("PNG Image (*.png);;JPEG Image (*.jpg)"))
 
-        if newPath:
-            self.scene.clearSelection()
+        if not newPath:
+            return
 
-            # FIXME - must be a better way...
-            if newPath.endswith((".jpg", ".jpG", ".jPG", ".JPG", ".JPg", ".Jpg")):
-                imgFormat = "JPG"
-            elif newPath.endswith((".png", ".pnG", ".pNG", ".PNG", ".PNg", ".Png")):
-                imgFormat = "PNG"
-            else:
-                # File-dialog may not auto-add the extension
-                imgFormat = "PNG"
-                newPath  += ".png"
+        self.scene.clearSelection()
 
-            self.fExportImage = QImage(self.scene.sceneRect().width(), self.scene.sceneRect().height(), QImage.Format_RGB32)
-            painter = QPainter(self.fExportImage)
-            painter.save()
-            painter.setRenderHint(QPainter.Antialiasing) # TODO - set true, cleanup this
-            painter.setRenderHint(QPainter.TextAntialiasing)
-            self.scene.render(painter)
-            self.fExportImage.save(newPath, imgFormat, 100)
-            painter.restore()
+        if newPath.lower().endswith(".jpg"):
+            imgFormat = "JPG"
+        elif newPath.lower().endswith(".png"):
+            imgFormat = "PNG"
+        else:
+            # File-dialog may not auto-add the extension
+            imgFormat = "PNG"
+            newPath  += ".png"
+
+        self.fExportImage = QImage(self.scene.sceneRect().width(), self.scene.sceneRect().height(), QImage.Format_RGB32)
+        painter = QPainter(self.fExportImage)
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setRenderHint(QPainter.TextAntialiasing, True)
+        self.scene.render(painter)
+        self.fExportImage.save(newPath, imgFormat, 100)
+        painter.restore()
 
     # -----------------------------------------------------------------
     # Shared Connections
@@ -518,16 +549,16 @@ class AbstractCanvasJackClass(QMainWindow):
             self.connect(self.ui.b_xruns, SIGNAL("clicked()"), SLOT("slot_JackClearXruns()"))
 
         if "buffer-size" in modes:
-            self.connect(self.ui.act_jack_bf_16, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
-            self.connect(self.ui.act_jack_bf_32, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
-            self.connect(self.ui.act_jack_bf_64, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
-            self.connect(self.ui.act_jack_bf_128, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
-            self.connect(self.ui.act_jack_bf_256, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
-            self.connect(self.ui.act_jack_bf_512, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
-            self.connect(self.ui.act_jack_bf_1024, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
-            self.connect(self.ui.act_jack_bf_2048, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
-            self.connect(self.ui.act_jack_bf_4096, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
-            self.connect(self.ui.act_jack_bf_8192, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu()"))
+            self.connect(self.ui.act_jack_bf_16, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
+            self.connect(self.ui.act_jack_bf_32, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
+            self.connect(self.ui.act_jack_bf_64, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
+            self.connect(self.ui.act_jack_bf_128, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
+            self.connect(self.ui.act_jack_bf_256, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
+            self.connect(self.ui.act_jack_bf_512, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
+            self.connect(self.ui.act_jack_bf_1024, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
+            self.connect(self.ui.act_jack_bf_2048, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
+            self.connect(self.ui.act_jack_bf_4096, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
+            self.connect(self.ui.act_jack_bf_8192, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
 
         if "transport" in modes:
             self.connect(self.ui.act_transport_play, SIGNAL("triggered(bool)"), SLOT("slot_transportPlayPause(bool)"))

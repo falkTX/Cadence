@@ -777,7 +777,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
             self.studioLoaded()
             if gDBus.ladish_studio.IsStarted():
                 self.studioStarted()
-                self.init_ports()
+                self.initPorts()
             else:
                 self.studioStopped()
         else:
@@ -1123,7 +1123,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
 
         self.ui.treeWidget.expandAll()
 
-    def init_ports(self):
+    def initPorts(self):
         if not (gJack.client and gDBus.patchbay):
             return
 
@@ -1866,7 +1866,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
             gDBus.patchbay = dbus.Interface(object_path, 'org.jackaudio.JackPatchbay')
             gDBus.ladish_graph = dbus.Interface(object_path, 'org.ladish.GraphDict')
             gDBus.ladish_manager = dbus.Interface(object_path, 'org.ladish.GraphManager')
-            self.init_ports()
+            self.initPorts()
 
         self.m_lastItemType = ITEM_TYPE
         self.m_lastRoomPath = room_path
@@ -2612,7 +2612,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
             self.ui.miniCanvasPreview.setViewTheme(patchcanvas.canvas.theme.canvas_bg, patchcanvas.canvas.theme.rubberband_brush, patchcanvas.canvas.theme.rubberband_pen.color())
 
             if gDBus.ladish_control.IsStudioLoaded() and gDBus.ladish_studio and gDBus.ladish_studio.IsStarted():
-                self.init_ports()
+                self.initPorts()
 
     @pyqtSlot()
     def slot_aboutClaudia(self):
