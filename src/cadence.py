@@ -871,6 +871,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         # Not available in cxfreeze builds
         if sys.argv[0].endswith("/cadence"):
             self.groupBox_bridges.setEnabled(False)
+            self.cb_jack_autostart.setEnabled(False)
+            self.tb_jack_options.setEnabled(False)
 
         # -------------------------------------------------------------
         # Set-up GUI (Tweaks)
