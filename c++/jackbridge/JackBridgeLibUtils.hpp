@@ -1,26 +1,27 @@
 /*
- * Carla library utils
- * Copyright (C) 2011-2013 Filipe Coelho <falktx@falktx.com>
+ * JackBridge library utils
+ * Copyright (C) 2013 Filipe Coelho <falktx@falktx.com>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * any later version.
+ * Permission to use, copy, modify, and/or distribute this software for any purpose with
+ * or without fee is hereby granted, provided that the above copyright notice and this
+ * permission notice appear in all copies.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * For a full copy of the GNU General Public License see the COPYING file
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD
+ * TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN
+ * NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+ * IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+ * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __CARLA_LIB_UTILS_HPP__
-#define __CARLA_LIB_UTILS_HPP__
+#ifndef JACKBRIDGE_LIB_UTILS_HPP_INCLUDED
+#define JACKBRIDGE_LIB_UTILS_HPP_INCLUDED
 
-#include "CarlaUtils.hpp"
+#include "JackBridgeDefines.hpp"
 
-#ifndef CARLA_OS_WIN
+#include <cstdio>
+
+#ifndef JACKBRIDGE_OS_WIN
 # include <dlfcn.h>
 #endif
 
@@ -30,9 +31,7 @@
 static inline
 void* lib_open(const char* const filename)
 {
-    CARLA_ASSERT(filename != nullptr);
-
-#ifdef CARLA_OS_WIN
+#ifdef JACKBRIDGE_OS_WIN
     return (void*)LoadLibraryA(filename);
 #else
     return dlopen(filename, RTLD_NOW|RTLD_LOCAL);
@@ -42,12 +41,10 @@ void* lib_open(const char* const filename)
 static inline
 bool lib_close(void* const lib)
 {
-    CARLA_ASSERT(lib != nullptr);
-
     if (lib == nullptr)
         return false;
 
-#ifdef CARLA_OS_WIN
+#ifdef JACKBRIDGE_OS_WIN
     return FreeLibrary((HMODULE)lib);
 #else
     return (dlclose(lib) == 0);
@@ -57,13 +54,10 @@ bool lib_close(void* const lib)
 static inline
 void* lib_symbol(void* const lib, const char* const symbol)
 {
-    CARLA_ASSERT(lib != nullptr);
-    CARLA_ASSERT(symbol != nullptr);
-
     if (lib == nullptr && symbol == nullptr)
         return nullptr;
 
-#ifdef CARLA_OS_WIN
+#ifdef JACKBRIDGE_OS_WIN
     return (void*)GetProcAddress((HMODULE)lib, symbol);
 #else
     return dlsym(lib, symbol);
@@ -73,11 +67,8 @@ void* lib_symbol(void* const lib, const char* const symbol)
 static inline
 const char* lib_error(const char* const filename)
 {
-    CARLA_ASSERT(filename != nullptr);
-
-#ifdef CARLA_OS_WIN
+#ifdef JACKBRIDGE_OS_WIN
     static char libError[2048];
-    //carla_fill<char>(libError, 2048, '\0');
 
     LPVOID winErrorString;
     DWORD  winErrorCode = GetLastError();
@@ -97,4 +88,4 @@ const char* lib_error(const char* const filename)
 
 // -------------------------------------------------
 
-#endif // __CARLA_LIB_UTILS_HPP__
+#endif // JACKBRIDGE_LIB_UTILS_HPP_INCLUDED
