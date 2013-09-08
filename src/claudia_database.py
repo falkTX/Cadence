@@ -29,7 +29,7 @@ USING_KXSTUDIO = False
 list_DAW = [
   # Package          AppName            Type              Binary              Icon                Template?     Level      Rel.-Model    (L, D, L, V, VST-Mode,  T, M, MIDI-Mode)      (doc-file,                                                         website)
   [ "ardour",        "Ardour 2.8",      "DAW",            "ardour2",          "ardour",           TEMPLATE_YES, LEVEL_0,   "OpenSource", (1, 0, 1, 0, "",        1, 0, "ALSA"),        ("file:///usr/share/kxstudio/docs/ardour.pdf",                     "http://www.ardour.org/") ],
-  [ "ardour3",       "Ardour 3.1",      "DAW",            "ardour3",          "ardour",           TEMPLATE_YES, LEVEL_JS,  "OpenSource", (1, 0, 1, 1, "Native",  1, 1, "JACK"),        ("file:///usr/share/kxstudio/docs/ardour.pdf",                     "http://www.ardour.org/") ],
+  [ "ardour3",       "Ardour 3",        "DAW",            "ardour3",          "ardour",           TEMPLATE_YES, LEVEL_JS,  "OpenSource", (1, 0, 1, 1, "Native",  1, 1, "JACK"),        ("file:///usr/share/kxstudio/docs/ardour.pdf",                     "http://www.ardour.org/") ],
 
   [ "ariamaestosa",  "Aria Maestosa",   "MIDI Sequencer", "Aria",             "aria",             TEMPLATE_NO,  LEVEL_0,   "OpenSource", (0, 0, 0, 0, "",        0, 1, "ALSA | JACK"), ("",                                                               "http://ariamaestosa.sourceforge.net/") ],
 
