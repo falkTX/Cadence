@@ -20,6 +20,8 @@
 
 #include "JackBridgeLibUtils.hpp"
 
+#include <cstdlib>
+
 // -----------------------------------------------------------------------------
 
 typedef void        (*jacksym_get_version)(int*, int*, int*, int*);

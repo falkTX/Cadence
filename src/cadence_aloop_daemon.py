@@ -97,25 +97,6 @@ def client_registration_callback(clientName, register, arg):
             print("NOTICE: %s has been stopped, quitting now..." % ("zita-a2j/j2a" if useZita else "alsa_in/out"))
 
 # --------------------------------------------------
-# listen to jack freewheel
-
-def freewheel_callback(isFreewheel, arg):
-    global doRunNow, procIn, procOut
-
-    if not isFreewheel:
-        # resume normal operation
-        doRunNow = True
-        return
-
-    # stop daemon for freewheel access
-    if procIn.state() != QProcess.NotRunning:
-        procIn.terminate()
-        procIn.waitForFinished(1000)
-    if procOut.state() != QProcess.NotRunning:
-        procOut.terminate()
-        procOut.waitForFinished(1000)
-
-# --------------------------------------------------
 # listen to jack shutdown
 
 def shutdown_callback(arg):
@@ -184,7 +165,6 @@ if __name__ == '__main__':
 
     jacklib.set_buffer_size_callback(client, buffer_size_callback, None)
     jacklib.set_sample_rate_callback(client, sample_rate_callback, None)
-    jacklib.set_freewheel_callback(client, freewheel_callback, None)
     jacklib.on_shutdown(client, shutdown_callback, None)
     jacklib.activate(client)
 
