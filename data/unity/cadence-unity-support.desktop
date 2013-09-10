@@ -6,4 +6,4 @@ Icon=cadence
 Terminal=false
 Type=Application
 Categories=Utility;Qt;
-OnlyShowIn=Unity;
+OnlyShowIn=Unity;KDE;
