@@ -218,13 +218,13 @@ class RenderW(QDialog):
         else:
             arguments.append(str(self.ui.sb_channels.value()))
 
-        # Controlled by transport
-        if useTransport:
-            arguments.append("-jt")
-
-        # Controlled by freewheel
+        # Controlled only by freewheel
         if self.fFreewheel:
             arguments.append("-jf")
+
+        # Controlled by transport
+        elif useTransport:
+            arguments.append("-jt")
 
         # Silent mode
         arguments.append("-dc")
