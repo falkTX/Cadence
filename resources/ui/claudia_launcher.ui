@@ -1064,7 +1064,7 @@
           </size>
          </property>
          <property name="text">
-          <string>Bristol Vintage Synths - &lt;i&gt;(*) means not working yet&lt;/i&gt;</string>
+          <string>Bristol Vintage Synths</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
