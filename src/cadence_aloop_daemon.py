@@ -35,7 +35,7 @@ import jacklib
 
 global reactivateCounter
 reactivateCounter = -1
-isKernelGood      = [int(i) for i in os.uname()[2].split(".", 2)[:2]] >= [3,8]
+isKernelGood      = [int(i) for i in os.uname()[2].split("-", 1)[0].split(".", 2)[:2]] >= [3,8]
 
 # --------------------------------------------------
 # Global loop check
