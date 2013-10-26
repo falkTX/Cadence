@@ -2305,13 +2305,6 @@ if __name__ == '__main__':
     # Set-up custom signal handling
     setUpSignals(gui)
 
-    if "--gnome-settings" in app.arguments():
-        gui.tabWidget.removeTab(0)
-        gui.tabWidget.removeTab(0)
-        gui.tabWidget.tabBar().hide()
-        gui.label_tweaks.setText(gui.tr("Cadence Tweaks"))
-        gui.systray.hide()
-
     if "--minimized" in app.arguments():
         gui.hide()
         gui.systray.setActionText("show", gui.tr("Restore"))
