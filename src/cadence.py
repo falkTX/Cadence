@@ -1502,7 +1502,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Xruns"), self.label_jack_xruns.text())
         systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Buffer Size"), self.label_jack_bfsize.text())
         systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Sample Rate"), self.label_jack_srate.text())
-        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Latency"), self.label_jack_latency.text())
+        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Block Latency"), self.label_jack_latency.text())
         systrayText += "</table>"
 
         self.systray.setToolTip(systrayText)

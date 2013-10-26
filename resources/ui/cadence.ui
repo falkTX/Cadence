@@ -409,7 +409,7 @@
                    </sizepolicy>
                   </property>
                   <property name="text">
-                   <string>Latency:</string>
+                   <string>Block Latency:</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -572,7 +572,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>359</width>
+                  <width>360</width>
                   <height>100</height>
                  </rect>
                 </property>
@@ -720,7 +720,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>359</width>
+                  <width>360</width>
                   <height>97</height>
                  </rect>
                 </property>
@@ -861,7 +861,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>359</width>
+                  <width>360</width>
                   <height>97</height>
                  </rect>
                 </property>
@@ -1197,7 +1197,7 @@
              <item>
               <widget class="QLabel" name="label_tools_meter">
                <property name="text">
-                <string>Digital peak meter, auto-connected to all system outputs</string>
+                <string>Digital peak meter, auto-connected to all system inputs or outputs</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -1718,7 +1718,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>89</width>
+                  <width>94</width>
                   <height>66</height>
                  </rect>
                 </property>
@@ -1748,7 +1748,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>89</width>
+                  <width>94</width>
                   <height>66</height>
                  </rect>
                 </property>
@@ -1778,7 +1778,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>89</width>
+                  <width>94</width>
                   <height>66</height>
                  </rect>
                 </property>
