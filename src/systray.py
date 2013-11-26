@@ -48,7 +48,7 @@ try:
 
         TrayEngine = "AppIndicator"
 
-    elif os.getenv("KDE_FULL_SESSION") or os.getenv("DESKTOP_SESSION") == "kde-plasma":
+    elif (os.getenv("KDE_FULL_SESSION") or os.getenv("DESKTOP_SESSION") == "kde-plasma") and not os.path.exists("/etc/debian_version"):
         from PyKDE4.kdeui import KAction, KIcon, KMenu, KStatusNotifierItem
         TrayEngine = "KDE"
 
