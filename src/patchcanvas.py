@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # PatchBay Canvas engine using QGraphicsView/Scene
-# Copyright (C) 2010-2012 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,17 +14,16 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# For a full copy of the GNU General Public License see the COPYING file
-
-# TODO - apply last changes to c++ (2 commits + theme changes)
+# For a full copy of the GNU General Public License see the GPL.txt file
 
 # Imports (Global)
-from PyQt4.QtCore import pyqtSlot, qDebug, qCritical, qFatal, qWarning, Qt, QObject, SIGNAL, SLOT
+from PyQt4.QtCore import pyqtSignal, pyqtSlot, qDebug, qCritical, qFatal, qWarning, Qt, QObject
 from PyQt4.QtCore import QAbstractAnimation, QLineF, QPointF, QRectF, QSizeF, QSettings, QTimer
 from PyQt4.QtGui import QColor, QLinearGradient, QPen, QPolygonF, QPainter, QPainterPath
-from PyQt4.QtGui import QCursor, QFont, QFontMetrics, QInputDialog, QLineEdit, QMenu
+from PyQt4.QtGui import QCursor, QFont, QFontMetrics
 from PyQt4.QtGui import QGraphicsScene, QGraphicsItem, QGraphicsLineItem, QGraphicsPathItem
 from PyQt4.QtGui import QGraphicsColorizeEffect, QGraphicsDropShadowEffect
+from PyQt4.QtGui import QInputDialog, QLineEdit, QMenu
 from PyQt4.QtSvg import QGraphicsSvgItem, QSvgRenderer
 
 # Imports (Theme)
@@ -196,10 +195,6 @@ class CanvasObject(QObject):
             CanvasRemoveAnimation(animation)
 
     @pyqtSlot()
-    def CanvasPostponedGroups(self):
-        CanvasPostponedGroups()
-
-    @pyqtSlot()
     def PortContextMenuDisconnect(self):
         try:
             connectionId = int(self.sender().data())
@@ -320,7 +315,7 @@ def init(appName, scene, callback, debug=False):
     canvas.size_rect = QRectF()
 
     if not canvas.qobject:  canvas.qobject = CanvasObject()
-    if not canvas.settings: canvas.settings = QSettings("Cadence", appName)
+    if not canvas.settings: canvas.settings = QSettings("falkTX", appName)
 
     if canvas.theme:
         del canvas.theme
@@ -437,6 +432,8 @@ def addGroup(group_id, group_name, split=SPLIT_UNDEF, icon=ICON_APPLICATION):
         if options.eyecandy == EYECANDY_FULL and not options.auto_hide_groups:
             CanvasItemFX(group_sbox, True)
 
+        group_sbox.checkItemPos()
+
     else:
         group_box.setSplit(False)
 
@@ -457,7 +454,7 @@ def addGroup(group_id, group_name, split=SPLIT_UNDEF, icon=ICON_APPLICATION):
     if options.eyecandy == EYECANDY_FULL and not options.auto_hide_groups:
         CanvasItemFX(group_box, True)
 
-    QTimer.singleShot(0, canvas.scene, SLOT("update()"))
+    QTimer.singleShot(0, canvas.scene.update)
 
 def removeGroup(group_id):
     if canvas.debug:
@@ -497,7 +494,7 @@ def removeGroup(group_id):
 
             canvas.group_list.remove(group)
 
-            QTimer.singleShot(0, canvas.scene, SLOT("update()"))
+            QTimer.singleShot(0, canvas.scene.update)
             return
 
     qCritical("PatchCanvas::removeGroup(%i) - unable to find group to remove" % group_id)
@@ -514,7 +511,7 @@ def renameGroup(group_id, new_group_name):
             if group.split and group.widgets[1]:
                 group.widgets[1].setGroupName(new_group_name)
 
-            QTimer.singleShot(0, canvas.scene, SLOT("update()"))
+            QTimer.singleShot(0, canvas.scene.update)
             return
 
     qCritical("PatchCanvas::renameGroup(%i, %s) - unable to find group to rename" % (group_id, new_group_name.encode()))
@@ -585,7 +582,7 @@ def splitGroup(group_id):
     for conn in conns_data:
         connectPorts(conn.connection_id, conn.port_out_id, conn.port_in_id)
 
-    QTimer.singleShot(0, canvas.scene, SLOT("update()"))
+    QTimer.singleShot(0, canvas.scene.update)
 
 def joinGroup(group_id):
     if canvas.debug:
@@ -661,7 +658,7 @@ def joinGroup(group_id):
     for conn in conns_data:
         connectPorts(conn.connection_id, conn.port_out_id, conn.port_in_id)
 
-    QTimer.singleShot(0, canvas.scene, SLOT("update()"))
+    QTimer.singleShot(0, canvas.scene.update)
 
 def getGroupPos(group_id, port_mode=PORT_MODE_OUTPUT):
     if canvas.debug:
@@ -696,7 +693,7 @@ def setGroupPosFull(group_id, group_pos_x_o, group_pos_y_o, group_pos_x_i, group
             if group.split and group.widgets[1]:
                 group.widgets[1].setPos(group_pos_x_i, group_pos_y_i)
 
-            QTimer.singleShot(0, canvas.scene, SLOT("update()"))
+            QTimer.singleShot(0, canvas.scene.update)
             return
 
     qCritical("PatchCanvas::setGroupPos(%i, %i, %i, %i, %i) - unable to find group to reposition" % (group_id, group_pos_x_o, group_pos_y_o, group_pos_x_i, group_pos_y_i))
@@ -713,7 +710,7 @@ def setGroupIcon(group_id, icon):
             if group.split and group.widgets[1]:
                 group.widgets[1].setIcon(icon)
 
-            QTimer.singleShot(0, canvas.scene, SLOT("update()"))
+            QTimer.singleShot(0, canvas.scene.update)
             return
 
     qCritical("PatchCanvas::setGroupIcon(%i, %s) - unable to find group to change icon" % (group_id, icon2str(icon)))
@@ -758,7 +755,7 @@ def addPort(group_id, port_id, port_name, port_mode, port_type):
 
     box_widget.updatePositions()
 
-    QTimer.singleShot(0, canvas.scene, SLOT("update()"))
+    QTimer.singleShot(0, canvas.scene.update)
 
 def removePort(port_id):
     if canvas.debug:
@@ -773,7 +770,7 @@ def removePort(port_id):
 
             canvas.port_list.remove(port)
 
-            QTimer.singleShot(0, canvas.scene, SLOT("update()"))
+            QTimer.singleShot(0, canvas.scene.update)
             return
 
     qCritical("PatchCanvas::removePort(%i) - Unable to find port to remove" % port_id)
@@ -788,7 +785,7 @@ def renamePort(port_id, new_port_name):
             port.widget.setPortName(new_port_name)
             port.widget.parentItem().updatePositions()
 
-            QTimer.singleShot(0, canvas.scene, SLOT("update()"))
+            QTimer.singleShot(0, canvas.scene.update)
             return
 
     qCritical("PatchCanvas::renamePort(%i, %s) - Unable to find port to rename" % (port_id, new_port_name.encode()))
@@ -825,6 +822,8 @@ def connectPorts(connection_id, port_out_id, port_in_id):
     else:
         connection_dict.widget = CanvasLine(port_out, port_in, None)
 
+    canvas.scene.addItem(connection_dict.widget)
+
     port_out_parent.addLineFromGroup(connection_dict.widget, connection_id)
     port_in_parent.addLineFromGroup(connection_dict.widget, connection_id)
 
@@ -841,7 +840,7 @@ def connectPorts(connection_id, port_out_id, port_in_id):
         item = connection_dict.widget
         CanvasItemFX(item, True)
 
-    QTimer.singleShot(0, canvas.scene, SLOT("update()"))
+    QTimer.singleShot(0, canvas.scene.update)
 
 def disconnectPorts(connection_id):
     if canvas.debug:
@@ -890,7 +889,7 @@ def disconnectPorts(connection_id):
     else:
         line.deleteFromScene()
 
-    QTimer.singleShot(0, canvas.scene, SLOT("update()"))
+    QTimer.singleShot(0, canvas.scene.update)
 
 def arrange():
     if canvas.debug:
@@ -1007,10 +1006,6 @@ def CanvasRemoveAnimation(f_animation):
             del animation.animation
             break
 
-def CanvasPostponedGroups():
-    if canvas.debug:
-        qDebug("PatchCanvas::CanvasPostponedGroups()")
-
 def CanvasCallback(action, value1, value2, value_str):
     if canvas.debug:
         qDebug("PatchCanvas::CanvasCallback(%i, %i, %i, %s)" % (action, value1, value2, value_str.encode()))
@@ -1038,12 +1033,12 @@ def CanvasItemFX(item, show, destroy=False):
     canvas.animation_list.append(animation_dict)
 
     if show:
-        canvas.qobject.connect(animation, SIGNAL("finished()"), SLOT("AnimationIdle()"))
+        animation.finished.connect(canvas.qobject.AnimationIdle)
     else:
         if destroy:
-            canvas.qobject.connect(animation, SIGNAL("finished()"), SLOT("AnimationDestroy()"))
+            animation.finished.connect(canvas.qobject.AnimationDestroy)
         else:
-            canvas.qobject.connect(animation, SIGNAL("finished()"), SLOT("AnimationHide()"))
+            animation.finished.connect(canvas.qobject.AnimationHide)
 
     animation.start()
 
@@ -1069,6 +1064,9 @@ def CanvasRemoveItemFX(item):
 # patchscene.cpp
 
 class PatchScene(QGraphicsScene):
+    scaleChanged    = pyqtSignal(float)
+    sceneGroupMoved = pyqtSignal(int, int, QPointF)
+
     def __init__(self, parent, view):
         QGraphicsScene.__init__(self, parent)
 
@@ -1103,7 +1101,7 @@ class PatchScene(QGraphicsScene):
         elif scale < 0.2:
             self.m_view.resetTransform()
             self.m_view.scale(0.2, 0.2)
-        self.emit(SIGNAL("scaleChanged(double)"), self.m_view.transform().m11())
+        self.scaleChanged.emit(self.m_view.transform().m11())
 
     def updateTheme(self):
         self.setBackgroundBrush(canvas.theme.canvas_bg)
@@ -1151,16 +1149,16 @@ class PatchScene(QGraphicsScene):
     def zoom_in(self):
         if self.m_view.transform().m11() < 3.0:
             self.m_view.scale(1.2, 1.2)
-        self.emit(SIGNAL("scaleChanged(double)"), self.m_view.transform().m11())
+        self.scaleChanged.emit(self.m_view.transform().m11())
 
     def zoom_out(self):
         if self.m_view.transform().m11() > 0.2:
             self.m_view.scale(0.8, 0.8)
-        self.emit(SIGNAL("scaleChanged(double)"), self.m_view.transform().m11())
+        self.scaleChanged.emit(self.m_view.transform().m11())
 
     def zoom_reset(self):
         self.m_view.resetTransform()
-        self.emit(SIGNAL("scaleChanged(double)"), 1.0)
+        self.scaleChanged.emit(1.0)
 
     def keyPressEvent(self, event):
         if not self.m_view:
@@ -1246,7 +1244,7 @@ class PatchScene(QGraphicsScene):
             for item in items_list:
                 if item and item.isVisible() and item.type() == CanvasBoxType:
                     item.checkItemPos()
-                    self.emit(SIGNAL("sceneGroupMoved(int, int, QPointF)"), item.getGroupId(), item.getSplittedMode(), item.scenePos())
+                    self.sceneGroupMoved.emit(item.getGroupId(), item.getSplittedMode(), item.scenePos())
 
             if len(items_list) > 1:
                 canvas.scene.update()
@@ -1317,7 +1315,7 @@ class CanvasFadeAnimation(QAbstractAnimation):
 
 class CanvasLine(QGraphicsLineItem):
     def __init__(self, item1, item2, parent):
-        QGraphicsLineItem.__init__(self, parent, canvas.scene)
+        QGraphicsLineItem.__init__(self, parent)
 
         self.item1 = item1
         self.item2 = item2
@@ -1413,7 +1411,7 @@ class CanvasLine(QGraphicsLineItem):
 
 class CanvasBezierLine(QGraphicsPathItem):
     def __init__(self, item1, item2, parent):
-        QGraphicsPathItem.__init__(self, parent, canvas.scene)
+        QGraphicsPathItem.__init__(self, parent)
 
         self.item1 = item1
         self.item2 = item2
@@ -1520,7 +1518,7 @@ class CanvasBezierLine(QGraphicsPathItem):
 
 class CanvasLineMov(QGraphicsLineItem):
     def __init__(self, port_mode, port_type, parent):
-        QGraphicsLineItem.__init__(self, parent, canvas.scene)
+        QGraphicsLineItem.__init__(self, parent)
 
         self.m_port_mode = port_mode
         self.m_port_type = port_type
@@ -1577,7 +1575,7 @@ class CanvasLineMov(QGraphicsLineItem):
 
 class CanvasBezierLineMov(QGraphicsPathItem):
     def __init__(self, port_mode, port_type, parent):
-        QGraphicsPathItem.__init__(self, parent, canvas.scene)
+        QGraphicsPathItem.__init__(self, parent)
 
         self.m_port_mode = port_mode
         self.m_port_type = port_type
@@ -1641,7 +1639,7 @@ class CanvasBezierLineMov(QGraphicsPathItem):
 
 class CanvasPort(QGraphicsItem):
     def __init__(self, port_id, port_name, port_mode, port_type, parent):
-        QGraphicsItem.__init__(self, parent, canvas.scene)
+        QGraphicsItem.__init__(self, parent)
 
         # Save Variables, useful for later
         self.m_port_id = port_id
@@ -1694,14 +1692,14 @@ class CanvasPort(QGraphicsItem):
 
     def setPortName(self, port_name):
         if QFontMetrics(self.m_port_font).width(port_name) < QFontMetrics(self.m_port_font).width(self.m_port_name):
-            QTimer.singleShot(0, canvas.scene, SLOT("update()"))
+            QTimer.singleShot(0, canvas.scene.update)
 
         self.m_port_name = port_name
         self.update()
 
     def setPortWidth(self, port_width):
         if port_width < self.m_port_width:
-            QTimer.singleShot(0, canvas.scene, SLOT("update()"))
+            QTimer.singleShot(0, canvas.scene.update)
 
         self.m_port_width = port_width
         self.update()
@@ -1814,7 +1812,7 @@ class CanvasPort(QGraphicsItem):
                 port_con_id = CanvasGetConnectedPort(port_id, self.m_port_id)
                 act_x_disc = discMenu.addAction(CanvasGetFullPortName(port_con_id))
                 act_x_disc.setData(port_id)
-                QObject.connect(act_x_disc, SIGNAL("triggered()"), canvas.qobject, SLOT("PortContextMenuDisconnect()"))
+                act_x_disc.triggered.connect(canvas.qobject.PortContextMenuDisconnect)
         else:
             act_x_disc = discMenu.addAction("No connections")
             act_x_disc.setEnabled(False)
@@ -1977,7 +1975,7 @@ class cb_line_t(object):
 
 class CanvasBox(QGraphicsItem):
     def __init__(self, group_id, group_name, icon, parent=None):
-        QGraphicsItem.__init__(self, parent, canvas.scene)
+        QGraphicsItem.__init__(self, parent)
 
         # Save Variables, useful for later
         self.m_group_id   = group_id
@@ -2024,6 +2022,8 @@ class CanvasBox(QGraphicsItem):
             self.setVisible(False)
 
         self.updatePositions()
+
+        canvas.scene.addItem(self)
 
     def getGroupId(self):
         return self.m_group_id
@@ -2353,7 +2353,7 @@ class CanvasBox(QGraphicsItem):
                 port_con_id = CanvasGetConnectedPort(port_con_list[i], port_con_list_ids[i])
                 act_x_disc = discMenu.addAction(CanvasGetFullPortName(port_con_id))
                 act_x_disc.setData(port_con_list[i])
-                QObject.connect(act_x_disc, SIGNAL("triggered()"), canvas.qobject, SLOT("PortContextMenuDisconnect()"))
+                act_x_disc.triggered.connect(canvas.qobject.PortContextMenuDisconnect)
         else:
             act_x_disc = discMenu.addAction("No connections")
             act_x_disc.setEnabled(False)
