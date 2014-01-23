@@ -131,7 +131,11 @@ def setEngineParameter(parameter, value, optional=True):
     if not engineHasFeature(parameter):
         return False
     elif optional:
-        if value != gJackctl.GetParameterValue(["engine", parameter])[2]:
+        paramValueTry = gJackctl.GetParameterValue(["engine", parameter])
+        if paramValueTry is None:
+            return False
+        paramValue = paramValueTry[2]
+        if value != paramValue:
             return bool(gJackctl.SetParameterValue(["engine", parameter], value))
         else:
             return False
@@ -362,11 +366,22 @@ class JackSettingsW(QDialog):
         for i in range(len(settings[1])):
             attribute = str(settings[1][i])
             if reset:
-                value = gJackctl.GetParameterValue(["engine", attribute])[1]
+                valueTry = gJackctl.GetParameterValue(["engine", attribute])
+
+                if valueTry is None:
+                    continue
+                else:
+                    value = valueTry[1]
+
                 if forceReset and attribute != "driver":
                     gJackctl.ResetParameterValue(["engine", attribute])
             else:
-                value = gJackctl.GetParameterValue(["engine", attribute])[2]
+                valueTry = gJackctl.GetParameterValue(["engine", attribute])
+
+                if valueTry is None:
+                    continue
+                else:
+                    value = valueTry[2]
 
             if attribute == "name":
                 self.ui.obj_server_name.setText(str(value))
