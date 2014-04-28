@@ -572,7 +572,7 @@ class CatiaMainW(AbstractCanvasJackClass):
 
                 lastGroupName = groupName
 
-            elif line.startswith("    ") and lastGroupId >= 0 and lastGroupName:
+            elif line.startswith("   ") and lastGroupId >= 0 and lastGroupName:
                 lineSplit = line.split(" '", 1)
                 portId    = int(lineSplit[0].strip())
                 portName  = lineSplit[1].rsplit("'", 1)[0].strip()
@@ -608,7 +608,7 @@ class CatiaMainW(AbstractCanvasJackClass):
 
                 lastGroupName = groupName
 
-            elif line.startswith("    ") and lastGroupId >= 0 and lastGroupName:
+            elif line.startswith("   ") and lastGroupId >= 0 and lastGroupName:
                 lineSplit = line.split(" '", 1)
                 portId    = int(lineSplit[0].strip())
                 portName  = lineSplit[1].rsplit("'", 1)[0].strip()
