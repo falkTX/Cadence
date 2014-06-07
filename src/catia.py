@@ -656,8 +656,8 @@ class CatiaMainW(AbstractCanvasJackClass):
 
                     for lineConn in lineConns:
                         lineConnSplit = lineConn.replace("'","").split(":", 1)
-                        alsaGroupId   = int(lineConnSplit[0])
-                        alsaPortId    = int(lineConnSplit[1])
+                        alsaGroupId   = int(lineConnSplit[0].split("[real:",1)[0])
+                        alsaPortId    = int(lineConnSplit[1].split("[real:",1)[0])
 
                         portNameRtest = "[ALSA-Output] %i:%i " % (alsaGroupId, alsaPortId)
 
