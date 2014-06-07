@@ -1215,7 +1215,10 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         if gDBus.jack:
             if gDBus.jack.IsStarted():
                 # Check for pulseaudio in jack graph
-                version, groups, conns = gDBus.patchbay.GetGraph(0)
+                try:
+                    version, groups, conns = gDBus.patchbay.GetGraph(0)
+                except:
+                    version, groups, conns = (list(), list(), list())
 
                 for group_id, group_name, ports in groups:
                     if group_name == "alsa2jack":
