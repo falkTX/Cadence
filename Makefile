@@ -7,8 +7,6 @@
 PREFIX  = /usr/local
 DESTDIR =
 
-SED_PREFIX = $(shell echo $(PREFIX) | sed "s/\//\\\\\\\\\//g")
-
 LINK   = ln -s
 PYUIC ?= pyuic4
 PYRCC ?= pyrcc4 -py3
@@ -171,7 +169,7 @@ install:
 	cp -r data/templates/* $(DESTDIR)$(PREFIX)/share/cadence/templates/
 
 	# Adjust PREFIX value in script files
-	sed -i "s/X-PREFIX-X/$(SED_PREFIX)/" \
+	sed -i "s?X-PREFIX-X?$(PREFIX)?" \
 		$(DESTDIR)$(PREFIX)/bin/cadence \
 		$(DESTDIR)$(PREFIX)/bin/cadence-aloop-daemon \
 		$(DESTDIR)$(PREFIX)/bin/cadence-jacksettings \
