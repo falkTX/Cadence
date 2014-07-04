@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Service
+Icon=cadence
+Exec=cadence-session-start --system-start
+X-KDE-StartupNotify=false
+OnlyShowIn=KDE;
+Name=Cadence session startup
+Hidden=false
+NoDisplay=true
