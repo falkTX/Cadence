@@ -1,14 +1,9 @@
 # Cadence Session Startup
 # Part 2 - Start JACK (or not), according to user settings
 
-# Do not use this for KDE
-if [ ! -z "$KDEDIRS" ]; then
-
 INSTALL_PREFIX="X-PREFIX-X"
 
 CADENCE_SESSION="$INSTALL_PREFIX/bin/cadence-session-start --system-start"
 exec $CADENCE_SESSION &
 
 unset INSTALL_PREFIX
-
-fi
