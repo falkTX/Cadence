@@ -494,14 +494,12 @@ class GlobalSysTray(object):
 
     def handleQtCloseEvent(self, event):
         if self.isTrayAvailable() and self._parent.isVisible():
-            event.ignore()
+            event.accept()
             self.__hideShowCall()
-            return False
-        else:
-            self.close()
+            return
 
+        self.close()
         QMainWindow.closeEvent(self._parent, event)
-        return True
 
     # -------------------------------------------------------------------------------------------
 
