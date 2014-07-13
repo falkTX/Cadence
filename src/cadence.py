@@ -1249,7 +1249,12 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             self.groupBox_bridges.setEnabled(False)
 
         if gDBus.a2j:
-            if gDBus.a2j.is_started():
+            try:
+                started = gDBus.a2j.is_started()
+            except:
+                started = False
+
+            if started:
                 self.a2jStarted()
             else:
                 self.a2jStopped()
@@ -1411,7 +1416,10 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
                 self.systray.setActionEnabled("alsa_stop", True)
                 self.label_bridge_alsa.setText(self.tr("Using Cadence snd-aloop daemon, started"))
             else:
-                jackRunning = bool(gDBus.jack and gDBus.jack.IsStarted())
+                try:
+                    jackRunning = bool(gDBus.jack and gDBus.jack.IsStarted())
+                except:
+                    jackRunning = False
                 self.b_alsa_start.setEnabled(jackRunning)
                 self.b_alsa_stop.setEnabled(False)
                 self.systray.setActionEnabled("alsa_start", jackRunning)

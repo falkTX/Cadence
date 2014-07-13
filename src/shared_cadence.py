@@ -116,9 +116,23 @@ def waitProcsEnd(procs, tries):
             break
 
 # ------------------------------------------------------------------------------------------------------------
+# Cleanly close the jack dbus service
+
+def tryCloseJackDBus():
+    try:
+        import dbus
+        bus  = dbus.SessionBus()
+        jack = bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
+        jack.Exit()
+    except:
+        print("tryCloseJackDBus() failed")
+
+# ------------------------------------------------------------------------------------------------------------
 # Stop all audio processes, used for force-restart
 
 def stopAllAudioProcesses():
+    tryCloseJackDBus()
+
     if not (HAIKU or LINUX or MACOS):
         print("stopAllAudioProcesses() - Not supported in this system")
         return
@@ -131,13 +145,12 @@ def stopAllAudioProcesses():
 
     procsTerm = ["a2j", "a2jmidid", "artsd", "jackd", "jackdmp", "knotify4", "lash", "ladishd", "ladiappd", "ladiconfd", "jmcore"]
     procsKill = ["jackdbus", "pulseaudio"]
-    tries = 20
+    tries     = 20
 
     process.start("killall", procsTerm)
     process.waitForFinished()
+    waitProcsEnd(procsTerm, tries)
 
     process.start("killall", ["-KILL"] + procsKill)
     process.waitForFinished()
-
-    waitProcsEnd(procsTerm, tries)
     waitProcsEnd(procsKill, tries)
