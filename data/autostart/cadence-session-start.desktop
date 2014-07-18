@@ -8,3 +8,4 @@ Exec=cadence-session-start --system-start
 Icon=cadence
 Terminal=false
 GenericName=
+NoDisplay=true
