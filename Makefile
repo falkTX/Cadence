@@ -96,6 +96,7 @@ install:
 	install -d $(DESTDIR)$(PREFIX)/share/cadence/
 	install -d $(DESTDIR)$(PREFIX)/share/cadence/src/
 	install -d $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
+	install -d $(DESTDIR)$(PREFIX)/share/cadence/pulse2loopback/
 	install -d $(DESTDIR)$(PREFIX)/share/cadence/icons/
 	install -d $(DESTDIR)$(PREFIX)/share/cadence/templates/
 	install -d $(X11_RC_DIR)
@@ -107,6 +108,7 @@ install:
 		data/cadence-jacksettings \
 		data/cadence-logs \
 		data/cadence-pulse2jack \
+		data/cadence-pulse2loopback \
 		data/cadence-render \
 		data/cadence-session-start \
 		data/catarina \
@@ -160,7 +162,8 @@ install:
 	install -m 755 src/*.py $(DESTDIR)$(PREFIX)/share/cadence/src/
 
 	# Install addtional stuff for Cadence
-	install -m 644 data/pulse2jack/* $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
+	install -m 644 data/pulse2jack/*     $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
+	install -m 644 data/pulse2loopback/* $(DESTDIR)$(PREFIX)/share/cadence/pulse2loopback/
 	install -m 644 data/70cadence-plugin-paths  $(X11_RC_DIR)
 	install -m 644 data/99cadence-session-start $(X11_RC_DIR)
 
@@ -175,6 +178,7 @@ install:
 		$(DESTDIR)$(PREFIX)/bin/cadence-jacksettings \
 		$(DESTDIR)$(PREFIX)/bin/cadence-logs \
 		$(DESTDIR)$(PREFIX)/bin/cadence-pulse2jack \
+		$(DESTDIR)$(PREFIX)/bin/cadence-pulse2loopback \
 		$(DESTDIR)$(PREFIX)/bin/cadence-render \
 		$(DESTDIR)$(PREFIX)/bin/cadence-session-start \
 		$(DESTDIR)$(PREFIX)/bin/catarina \
