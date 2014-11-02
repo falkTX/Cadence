@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>680</width>
-    <height>464</height>
+    <height>446</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,62 +25,6 @@
       </attribute>
       <layout class="QGridLayout" name="gridLayout_4">
        <item row="0" column="0" colspan="2">
-        <layout class="QHBoxLayout" name="horizontalLayout">
-         <item>
-          <spacer name="horizontalSpacer_6">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType">
-            <enum>QSizePolicy::Fixed</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>80</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="QLabel" name="obj_server_name_label">
-           <property name="toolTip">
-            <string>Server name to use</string>
-           </property>
-           <property name="text">
-            <string>Server name:</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="obj_server_name">
-           <property name="toolTip">
-            <string>Server name to use</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer_7">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType">
-            <enum>QSizePolicy::Fixed</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>80</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-        </layout>
-       </item>
-       <item row="1" column="0" colspan="2">
         <widget class="QGroupBox" name="group_server_properties">
          <property name="title">
           <string>Properties</string>
@@ -295,53 +239,7 @@
          </layout>
         </widget>
        </item>
-       <item row="2" column="0">
-        <widget class="QGroupBox" name="obj_server_clock_source">
-         <property name="title">
-          <string>Clock Source</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_13">
-          <item row="3" column="1">
-           <widget class="QRadioButton" name="obj_server_clock_source_hpet">
-            <property name="text">
-             <string>hpet</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QRadioButton" name="obj_server_clock_source_system">
-            <property name="text">
-             <string>system</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QRadioButton" name="obj_server_clock_source_cycle">
-            <property name="text">
-             <string>cycle</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <spacer name="horizontalSpacer_8">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeType">
-             <enum>QSizePolicy::Fixed</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>30</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item row="2" column="1">
+       <item row="1" column="1">
         <widget class="QGroupBox" name="group_server_advanced">
          <property name="title">
           <string>Advanced</string>
@@ -380,7 +278,7 @@
          </layout>
         </widget>
        </item>
-       <item row="3" column="0" colspan="2">
+       <item row="2" column="0" colspan="2">
         <widget class="QGroupBox" name="obj_server_self_connect_mode">
          <property name="title">
           <string>Self Connect Mode</string>
@@ -423,6 +321,52 @@
           </item>
           <item row="0" column="0">
            <spacer name="horizontalSpacer_5">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Fixed</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>30</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QGroupBox" name="obj_server_clock_source">
+         <property name="title">
+          <string>Clock Source</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_13">
+          <item row="3" column="1">
+           <widget class="QRadioButton" name="obj_server_clock_source_hpet">
+            <property name="text">
+             <string>hpet</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QRadioButton" name="obj_server_clock_source_system">
+            <property name="text">
+             <string>system</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QRadioButton" name="obj_server_clock_source_cycle">
+            <property name="text">
+             <string>cycle</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <spacer name="horizontalSpacer_8">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>

@@ -256,7 +256,6 @@ class JackSettingsW(QDialog):
     # Engine calls
 
     def checkEngine(self):
-        self.ui.obj_server_name.setEnabled(engineHasFeature("name"))
         self.ui.obj_server_realtime.setEnabled(engineHasFeature("realtime"))
         self.ui.obj_server_realtime_priority.setEnabled(engineHasFeature("realtime-priority"))
         self.ui.obj_server_temporary.setEnabled(engineHasFeature("temporary"))
@@ -277,9 +276,9 @@ class JackSettingsW(QDialog):
     # Server calls
 
     def saveServerSettings(self):
-        if self.ui.obj_server_name.isEnabled():
-            value = dbus.String(self.ui.obj_server_name.text())
-            setEngineParameter("name", value, True)
+        # always reset server name
+        if engineHasFeature("name"):
+            setEngineParameter("name", "default", True)
 
         if self.ui.obj_server_realtime.isEnabled():
             value = dbus.Boolean(self.ui.obj_server_realtime.isChecked())
@@ -384,7 +383,7 @@ class JackSettingsW(QDialog):
                     value = valueTry[2]
 
             if attribute == "name":
-                self.ui.obj_server_name.setText(str(value))
+                pass # Don't allow to change this
             elif attribute == "realtime":
                 self.ui.obj_server_realtime.setChecked(bool(value))
             elif attribute == "realtime-priority":
