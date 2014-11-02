@@ -1,0 +1,107 @@
+#!/bin/bash
+# Script to bridge/start pulseaudio into loopback mode
+
+INSTALL_PREFIX="X-PREFIX-X"
+
+# ----------------------------------------------
+
+if [ ! -d ~/.pulse ]; then
+    mkdir -p ~/.pulse
+fi
+
+if [ ! -f ~/.pulse/client.conf ]; then
+    echo "autospawn = no" > ~/.pulse/client.conf
+else
+    if (! cat ~/.pulse/client.conf | grep "autospawn = no" > /dev/null); then
+        sed -i '/autospawn =/d' ~/.pulse/client.conf
+        echo "autospawn = no" >> ~/.pulse/client.conf
+    fi
+fi
+
+if [ ! -f ~/.pulse/daemon.conf ]; then
+    echo "default-sample-format = float32le" > ~/.pulse/daemon.conf
+    echo "realtime-scheduling = yes" >> ~/.pulse/daemon.conf
+    echo "rlimit-rttime = -1" >> ~/.pulse/daemon.conf
+    echo "exit-idle-time = -1" >> ~/.pulse/daemon.conf
+else
+    if (! cat ~/.pulse/daemon.conf | grep "default-sample-format = float32le" > /dev/null); then
+        sed -i '/default-sample-format = /d' ~/.pulse/daemon.conf
+        echo "default-sample-format = float32le" >> ~/.pulse/daemon.conf
+    fi
+    if (! cat ~/.pulse/daemon.conf | grep "realtime-scheduling = yes" > /dev/null); then
+        sed -i '/realtime-scheduling = /d' ~/.pulse/daemon.conf
+        echo "realtime-scheduling = yes" >> ~/.pulse/daemon.conf
+    fi
+    if (! cat ~/.pulse/daemon.conf | grep "rlimit-rttime = -1" > /dev/null); then
+        sed -i '/rlimit-rttime =/d' ~/.pulse/daemon.conf
+        echo "rlimit-rttime = -1" >> ~/.pulse/daemon.conf
+    fi
+    if (! cat ~/.pulse/daemon.conf | grep "exit-idle-time = -1" > /dev/null); then
+        sed -i '/exit-idle-time =/d' ~/.pulse/daemon.conf
+        echo "exit-idle-time = -1" >> ~/.pulse/daemon.conf
+    fi
+fi
+
+# ----------------------------------------------
+
+case $1 in
+    -h|--h|--help)
+echo "usage: $0 [command]
+
+  -p, --play    Playback mode only
+
+  -h, --help    Show this help menu
+      --dummy   Don't do anything, just create the needed files
+
+NOTE:
+ When runned with no arguments, pulse2jack will
+ activate PulseAudio with both playback and record modes.
+"
+exit
+    ;;
+
+    --dummy)
+exit
+    ;;
+
+    -p|--p|--play)
+FILE=$INSTALL_PREFIX/share/cadence/pulse2loopback/play.pa
+    ;;
+
+    *)
+FILE=$INSTALL_PREFIX/share/cadence/pulse2loopback/play+rec.pa
+    ;;
+esac
+
+# ----------------------------------------------
+
+IsPulseAudioRunning()
+{
+    PROCESS=`ps -u $USER | grep pulseaudio`
+    if [ "$PROCESS" == "" ]; then
+        false
+    else
+        true
+    fi
+}
+
+if (IsPulseAudioRunning); then
+{
+    echo "PulseAudio is already running, make sure it outputs to Loopback"
+
+    pactl load-module module-alsa-source source_name=input_loopback device=hw:Loopback > /dev/null
+    pactl load-module module-alsa-sink sink_name=output_loopback device=hw:Loopback > /dev/null
+    pacmd set-default-source input_loopback > /dev/null
+    pacmd set-default-sink output_loopback > /dev/null
+
+    echo "Done"
+}
+else
+{
+    if (`pulseaudio --daemonize --high-priority --realtime --disallow-module-loading --exit-idle-time=-1 --file=$FILE -n`); then
+        echo "Initiated PulseAudio successfully!"
+    else
+        echo "Failed to initialize PulseAudio!"
+    fi
+}
+fi
