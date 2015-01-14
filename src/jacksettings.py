@@ -56,10 +56,7 @@ JACK_TIMER_HPET          = 2
 if "linux" in platform:
     LINUX = True
 
-    if version_info >= (3, 0):
-        from subprocess import getoutput
-    else:
-        from commands import getoutput
+    import glob
 else:
     LINUX = False
 
@@ -691,26 +688,48 @@ class JackSettingsW(QDialog):
     # -----------------------------------------------------------------
     # Helper functions
 
-    def getAlsaDeviceList(self):
-        alsaDeviceList = []
+    def getAlsaDeviceList(self, mode = 'DUPLEX'):
 
-        aplay_out = getoutput("env LANG=C aplay -l").split("\n")
-        for line in aplay_out:
-            line = line.strip()
-            if line.startswith("card "):
-                cardInfo  = line.split(", ", 1)[0].split(": ")
-                cardIndex = cardInfo[0].replace("card ", "")
-                cardName  = cardInfo[1].split(" [")[0]
+        class AlsaDevice:
+            @property
+            def key(self):
+                return '%s,%s' % (self.card, self.device)
 
-                deviceInfo  = line.split(", ", 1)[1].split(": ")
-                deviceIndex = deviceInfo[0].replace("device ", "")
-                deviceName  = deviceInfo[1].split(" [")[0]
+            def has(self, mode):
+                if mode in self.mode: return True
+                if mode == 'DUPLEX':
+                    if ('CAPTURE' in self.mode) and ('PLAYBACK' in self.mode):
+                        return True
+                return False
 
-                if cardName != "Loopback":
-                    fullName = "hw:%s,%s [%s]" % (cardName, deviceIndex, deviceName)
-                    alsaDeviceList.append(fullName)
+            def __repr__(self):
+                return 'AlsaDevice<id="%s,%s" mode=%s>' % (self.card, self.device, self.mode)
 
-        return alsaDeviceList
+        alsaDeviceList = {}
+
+        for filename in glob.glob('/proc/asound/card*/*/info'):
+
+            info = open(filename)
+
+            device = AlsaDevice()
+
+            for line in info:
+                key, value = line.split(':', 2)
+                setattr(device, key, value.strip())
+
+            # Skip loopback device
+            if device.name == 'Loopback': continue
+
+            device_old = alsaDeviceList.get(device.key, None)
+            if device_old:
+                if device.stream not in device_old.mode:
+                    device_old.mode.append(device.stream)
+            else:
+                device.mode = [ device.stream ]
+                alsaDeviceList[device.key] = device
+
+        return [('hw:%s,%s [%s]' % (device.card, device.device, device.name)) for device in alsaDeviceList.values() if device.has(mode)]
+
 
     def setComboBoxValue(self, box, text, split=False):
         for i in range(box.count()):
@@ -777,9 +796,12 @@ class JackSettingsW(QDialog):
             self.ui.obj_driver_playback.addItem("none")
 
             if LINUX:
-                dev_list = self.getAlsaDeviceList()
+                dev_list = self.getAlsaDeviceList('CAPTURE')
                 for dev in dev_list:
                     self.ui.obj_driver_capture.addItem(dev)
+
+                dev_list = self.getAlsaDeviceList('PLAYBACK')
+                for dev in dev_list:
                     self.ui.obj_driver_playback.addItem(dev)
             else:
                 dev_list = gJackctl.GetParameterConstraint(["driver", "device"])[3]
