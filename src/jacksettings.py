@@ -688,32 +688,48 @@ class JackSettingsW(QDialog):
     # -----------------------------------------------------------------
     # Helper functions
 
-    def getAlsaDeviceList(self, stream_type = '*'):
-        alsaDeviceList = []
+    def getAlsaDeviceList(self, mode = 'DUPLEX'):
+
+        class AlsaDevice:
+            @property
+            def key(self):
+                return '%s,%s' % (self.card, self.device)
+
+            def has(self, mode):
+                if mode in self.mode: return True
+                if mode == 'DUPLEX':
+                    if ('CAPTURE' in self.mode) and ('PLAYBACK' in self.mode):
+                        return True
+                return False
+
+            def __repr__(self):
+                return 'AlsaDevice<id="%s,%s" mode=%s>' % (self.card, self.device, self.mode)
+
+        alsaDeviceList = {}
+
         for filename in glob.glob('/proc/asound/card*/*/info'):
+
             info = open(filename)
-            card = 0
-            device = 0
-            name = ''
-            stream = stream_type
+
+            device = AlsaDevice()
+
             for line in info:
                 key, value = line.split(':', 2)
-                value = value.strip()
+                setattr(device, key, value.strip())
 
-                if key == 'card':
-                    card = int(value)
-                elif key == 'device':
-                    device = int(value)
-                elif key == 'name':
-                    name = value
-                elif key == 'stream':
-                    if stream_type != '*':
-                        stream = value
+            # Skip loopback device
+            if device.name == 'Loopback': continue
 
-            if (stream_type == stream) and (name != 'Loopback'):
-                alsaDeviceList.append( "hw:%s,%s [%s]" % (card, device, name) )
+            device_old = alsaDeviceList.get(device.key, None)
+            if device_old:
+                if device.stream not in device_old.mode:
+                    device_old.mode.append(device.stream)
+            else:
+                device.mode = [ device.stream ]
+                alsaDeviceList[device.key] = device
 
-        return alsaDeviceList
+        return [('hw:%s,%s [%s]' % (device.card, device.device, device.name)) for device in alsaDeviceList.values() if device.has(mode)]
+
 
     def setComboBoxValue(self, box, text, split=False):
         for i in range(box.count()):
