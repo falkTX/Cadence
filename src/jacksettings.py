@@ -710,7 +710,7 @@ class JackSettingsW(QDialog):
                     if stream_type != '*':
                         stream = value
 
-            if stream_type == stream:
+            if (stream_type == stream) and (name != 'Loopback'):
                 alsaDeviceList.append( "hw:%s,%s [%s]" % (card, device, name) )
 
         return alsaDeviceList
