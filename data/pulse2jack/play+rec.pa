@@ -28,11 +28,17 @@ load-module module-stream-restore
 load-module module-card-restore
 
 ### Load Jack modules
-load-module module-jack-sink
 load-module module-jack-source
+load-module module-jack-sink
 
 ### Load unix protocol
 load-module module-native-protocol-unix
+
+### Automatically restore the default sink/source when changed by the user
+### during runtime
+### NOTE: This should be loaded as early as possible so that subsequent modules
+### that look up the default sink/source get the right value
+load-module module-default-device-restore
 
 ### Automatically move streams to the default sink if the sink they are
 ### connected to dies, similar for sources
@@ -42,5 +48,5 @@ load-module module-rescue-streams
 load-module module-always-sink
 
 ### Make Jack default
-set-default-sink jack_out
 set-default-source jack_in
+set-default-sink jack_out
