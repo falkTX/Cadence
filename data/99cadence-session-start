@@ -1,5 +1,2 @@
 # Cadence Session Startup
-# Part 2 - Start JACK (or not), according to user settings
-
 # Not used anymore
-# see /etc/xdg/autostart/cadence-session-start.desktop

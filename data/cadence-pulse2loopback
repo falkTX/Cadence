@@ -98,7 +98,7 @@ if (IsPulseAudioRunning); then
 }
 else
 {
-    if (`pulseaudio --daemonize --high-priority --realtime --disallow-module-loading --exit-idle-time=-1 --file=$FILE -n`); then
+    if (`pulseaudio --daemonize --high-priority --realtime --exit-idle-time=-1 --file=$FILE -n`); then
         echo "Initiated PulseAudio successfully!"
     else
         echo "Failed to initialize PulseAudio!"
