@@ -11,7 +11,11 @@ INSTALL_PREFIX="X-PREFIX-X"
 if [ "$1"x == "--system-start-by-x11-startup"x ]; then
   $PYTHON $INSTALL_PREFIX/share/cadence/src/cadence_session_start.py --system-start &
   shift
-  exec "$@"
+  if [ "$1"x != ""x ]; then
+    exec "$@"
+  else
+    exec x-session-manager
+  fi
 else
   exec $PYTHON $INSTALL_PREFIX/share/cadence/src/cadence_session_start.py "$@"
 fi
