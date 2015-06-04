@@ -762,17 +762,17 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
         if not SHOW_ALL:
             if os.path.exists("/usr/bin/yaourt"):
-                pkg_out = getoutput("env LANG=C /usr/bin/yaourt -Qsq").split("\n")
+                pkg_out = getoutput("env LANG=C /usr/bin/yaourt -Qsq 2>/dev/null").split("\n")
                 for package in pkg_out:
                     pkglist.append(package)
 
             elif os.path.exists("/usr/bin/pacman"):
-                pkg_out = getoutput("env LANG=C /usr/bin/pacman -Qsq").split("\n")
+                pkg_out = getoutput("env LANG=C /usr/bin/pacman -Qsq 2>/dev/null").split("\n")
                 for package in pkg_out:
                     pkglist.append(package)
 
             elif os.path.exists("/usr/bin/dpkg"):
-                pkg_out = getoutput("env LANG=C /usr/bin/dpkg --get-selections").split("\n")
+                pkg_out = getoutput("env LANG=C /usr/bin/dpkg --get-selections 2>/dev/null").split("\n")
                 for pkg_info in pkg_out:
                     package, installed = pkg_info.rsplit("\t", 1)
                     if installed == "install":
@@ -781,7 +781,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             if not "bristol" in pkglist:
                 self.tabWidget.setTabEnabled(iTabBristol, False)
 
-            if not "carla" in pkglist:
+            if not "carla-git" in pkglist:
                 self.tabWidget.setTabEnabled(iTabPlugin, False)
 
         last_pos = 0
