@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>680</width>
-    <height>446</height>
+    <height>449</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -109,6 +109,9 @@
              <widget class="QSpinBox" name="obj_server_realtime_priority">
               <property name="toolTip">
                <string>Scheduler priority when running in realtime mode</string>
+              </property>
+              <property name="minimum">
+               <number>6</number>
               </property>
              </widget>
             </item>
