@@ -107,7 +107,7 @@ list_Instrument = [
 
   [ "phasex",               "Phasex",            "Synth",            "phasex",                 "phasex",           TEMPLATE_NO,  LEVEL_0,   (1, 1, "ALSA"),        ("file:///usr/share/phasex/help/parameters.help",                     "") ],
 
-  [ "qsampler",             "Qsampler",          "Sampler",          "qsampler",               "qsampler",         TEMPLATE_NO,  LEVEL_1,   (0, 0, "ALSA + JACK"), ("",                                                                  "http://qsampler.sf.net/") ],
+  [ "qsampler",             "Qsampler",          "Sampler",          "qsampler",               "qsampler",         TEMPLATE_YES, LEVEL_0,   (0, 0, "ALSA + JACK"), ("",                                                                  "http://qsampler.sf.net/") ],
 
   [ "qsynth",               "Qsynth",            "SoundFont Player", "qsynth -a jack -m jack", "qsynth",           TEMPLATE_NO,  LEVEL_0,   (1, 0, "ALSA | JACK"), ("",                                                                  "http://qsynth.sf.net/") ],
 
@@ -207,7 +207,6 @@ list_Tool = [
   [ "cadence",           "Cadence",                      "JACK Toolbox",        "cadence",                "cadence",          TEMPLATE_NO,  LEVEL_0, ("---",         0), ("",                                                              "") ],
   [ "cadence-tools",     "Cadence XY-Controller",        "XY Controller",       "cadence-xycontroller",   "cadence",          TEMPLATE_NO,  LEVEL_0, ("JACK",        0), ("",                                                              "") ],
   [ "catia",             "Catia",                        "Patch Bay",           "catia",                  "catia",            TEMPLATE_NO,  LEVEL_0, ("JACK",        1), ("",                                                              "") ],
-  [ "claudia",           "Claudia",                      "Session Handler",     "claudia",                "claudia",          TEMPLATE_NO,  LEVEL_0, ("JACK",        1), ("",                                                              "") ],
   [ "carla-control",     "Carla OSC Control",            "OSC Control",         "carla-control",          "carla-control",    TEMPLATE_NO,  LEVEL_0, ("JACK",        1), ("",                                                              "") ],
 
   [ "drumstick-tools",   "Drumstick Virtual Piano",      "Virtual Keyboard",    "drumstick-vpiano",       "drumstick",        TEMPLATE_NO,  LEVEL_0, ("ALSA",        0), ("",                                                              "http://drumstick.sf.net/") ],
@@ -218,8 +217,6 @@ list_Tool = [
 
   [ "gjacktransport",    "GJackClock",                   "Transport Tool",      "gjackclock",             "gjackclock",       TEMPLATE_NO,  LEVEL_0, ("---",         1), ("",                                                              "") ],
   [ "gjacktransport",    "GJackTransport",               "Transport Tool",      "gjacktransport",         "gjacktransport",   TEMPLATE_NO,  LEVEL_0, ("---",         1), ("",                                                              "") ],
-
-  [ "gladish",           "LADI Session Handler",         "Session Handler",     "gladish",                "gladish",          TEMPLATE_NO,  LEVEL_0, ("JACK",        0), ("",                                                              "http://www.ladish.org") ],
 
   [ "gninjam",           "Gtk NINJAM client",            "Music Collaboration", "gninjam",                generic_audio_icon, TEMPLATE_NO,  LEVEL_0, ("---",         1), ("",                                                              "") ],
 
