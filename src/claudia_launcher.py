@@ -243,8 +243,8 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
                         "jacker",
                         "lmms",
                         "muse",
-                        "non-daw",
                         "non-sequencer",
+                        "non-timeline",
                         "qtractor",
                         "rosegarden",
                         "seq24",
@@ -391,20 +391,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             tmplte_cmd  = binary
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file) if self.callback_isLadishRoom() else tmplte_file)
 
-        elif binary == "non-daw":
-            tmplte_folder = os.path.join(proj_folder, "Non-DAW_%i" % rand_check)
-            os.mkdir(tmplte_folder)
-
-            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Non-DAW", "history"), tmplte_folder))
-            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Non-DAW", "info"), tmplte_folder))
-            os.mkdir(os.path.join(tmplte_folder, "sources"))
-
-            os.system('sed -i "s/X_SR_X-CLAUDIA-X_SR_X/%s/" "%s"' % (proj_srate, os.path.join(tmplte_folder, "info")))
-            os.system('sed -i "s/X_BPM_X-CLAUDIA-X_BPM_X/%s/" "%s"' % (proj_bpm, os.path.join(tmplte_folder, "history")))
-
-            tmplte_cmd  = binary
-            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder)
-
         elif binary == "non-sequencer":
             tmplte_file_r = os.path.join(proj_folder, "Non-Sequencer_%i.non" % rand_check)
 
@@ -412,6 +398,20 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             tmplte_cmd  = binary
             tmplte_cmd += " '%s'" % (os.path.basename(tmplte_file_r) if self.callback_isLadishRoom() else tmplte_file_r)
+
+        elif binary == "non-timeline":
+            tmplte_folder = os.path.join(proj_folder, "Non-Timeline_%i" % rand_check)
+            os.mkdir(tmplte_folder)
+
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Non-Timeline", "history"), tmplte_folder))
+            os.system("cp '%s' '%s'" % (os.path.join(tmplte_dir, "Non-Timeline", "info"), tmplte_folder))
+            os.mkdir(os.path.join(tmplte_folder, "sources"))
+
+            os.system('sed -i "s/X_SR_X-CLAUDIA-X_SR_X/%s/" "%s"' % (proj_srate, os.path.join(tmplte_folder, "info")))
+            os.system('sed -i "s/X_BPM_X-CLAUDIA-X_BPM_X/%s/" "%s"' % (proj_bpm, os.path.join(tmplte_folder, "history")))
+
+            tmplte_cmd  = binary
+            tmplte_cmd += " '%s'" % (os.path.basename(tmplte_folder) if self.callback_isLadishRoom() else tmplte_folder)
 
         elif binary == "qtractor":
             tmplte_file = os.path.join(proj_folder, "Qtractor_%i.qtr" % rand_check)

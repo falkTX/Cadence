@@ -22,15 +22,19 @@ USING_KXSTUDIO = False
 
 # (L, D, L, V, VST-Mode, T, M, MIDI-Mode) -> (LADSPA, DSSI, LV2, VST, VST-Mode, Transport, MIDI, MIDI-Mode)
 
+# TODO:
+# luppp
+# protrekkr
+
 list_DAW = [
   # Package          AppName            Type              Binary              Icon                Template?     Level      (L, D, L, V, VST-Mode,  T, M, MIDI-Mode)      (doc-file,                                                         website)
   [ "ardour",        "Ardour 2.8",      "DAW",            "ardour2",          "ardour",           TEMPLATE_YES, LEVEL_0,   (1, 0, 1, 0, "",        1, 0, "ALSA"),        ("file:///usr/share/kxstudio/docs/ardour.pdf",                     "http://www.ardour.org/") ],
   [ "ardour3",       "Ardour 3",        "DAW",            "ardour3",          "ardour",           TEMPLATE_YES, LEVEL_JS,  (1, 0, 1, 1, "Native",  1, 1, "JACK"),        ("file:///usr/share/kxstudio/docs/ardour.pdf",                     "http://www.ardour.org/") ],
-  [ "ardour4",       "Ardour 4",        "DAW",            "ardour4",          "ardour",           TEMPLATE_YES, LEVEL_JS,  (1, 0, 1, 1, "Native",  1, 1, "JACK"),        ("file:///usr/share/kxstudio/docs/ardour.pdf",                     "http://www.ardour.org/") ],
+  [ "ardour4",       "Ardour 4",        "DAW",            "ardour4",          "ardour",           TEMPLATE_NO,  LEVEL_JS,  (1, 0, 1, 1, "Native",  1, 1, "JACK"),        ("file:///usr/share/kxstudio/docs/ardour.pdf",                     "http://www.ardour.org/") ],
 
   [ "ariamaestosa",  "Aria Maestosa",   "MIDI Sequencer", "Aria",             "aria",             TEMPLATE_NO,  LEVEL_0,   (0, 0, 0, 0, "",        0, 1, "ALSA | JACK"), ("",                                                               "http://ariamaestosa.sf.net/") ],
 
-  [ "giada",         "Giada",           "Audio Looper",   "giada",            generic_audio_icon, TEMPLATE_YES, LEVEL_0,   (0, 0, 0, 1, "Native",  0, 0, ""),            ("",                                                               "http://www.monocasual.com/giada/") ],
+  [ "giada",         "Giada",           "Audio Looper",   "giada",            generic_audio_icon, TEMPLATE_NO,  LEVEL_0,   (0, 0, 0, 1, "Native",  0, 0, ""),            ("",                                                               "http://www.monocasual.com/giada/") ],
 
   [ "hydrogen",      "Hydrogen",        "Drum Sequencer", "hydrogen -d jack", "h2-icon",          TEMPLATE_YES, LEVEL_JS,  (1, 0, 0, 0, "",        1, 1, "ALSA | JACK"), ("file:///usr/share/hydrogen/data/doc/manual_en.html.upstream",    "http://www.hydrogen-music.org/") ],
   [ "hydrogen-git",  "Hydrogen (GIT)",  "Drum Sequencer", "hydrogen -d jack", "h2-icon",          TEMPLATE_YES, LEVEL_JS,  (1, 0, 0, 0, "",        1, 1, "ALSA | JACK"), ("file:///usr/share/hydrogen/data/doc/manual_en.html.upstream",    "http://www.hydrogen-music.org/") ],
@@ -44,8 +48,8 @@ list_DAW = [
 
   [ "musescore",     "MuseScore",       "MIDI Composer",  "mscore",           "mscore",           TEMPLATE_NO,  LEVEL_0,   (0, 0, 0, 0, "",        0, 1, "ALSA | JACK"), ("file:///usr/share/kxstudio/docs/MuseScore-en.pdf",               "http://www.musescore.org/") ],
 
-  [ "non-daw",       "Non-DAW",         "DAW",            "non-daw",          "non-daw",          TEMPLATE_YES, LEVEL_NSM, (0, 0, 0, 0, "",        1, 0, "CV + OSC"),    ("file:///usr/share/doc/non-daw/MANUAL.html",                      "http://non-daw.tuxfamily.org/") ],
-  [ "non-sequencer", "Non-Sequencer",   "MIDI Sequencer", "non-sequencer",    "non-sequencer",    TEMPLATE_YES, LEVEL_NSM, (0, 0, 0, 0, "",        1, 1, "JACK"),        ("file:///usr/share/doc/non-sequencer/MANUAL.html",                "http://non-sequencer.tuxfamily.org/") ],
+  [ "non-sequencer", "Non-Sequencer",   "MIDI Sequencer", "non-sequencer",    "non-sequencer",    TEMPLATE_YES, LEVEL_NSM, (0, 0, 0, 0, "",        1, 1, "JACK"),        ("file:///usr/share/doc/non-sequencer/MANUAL.html",                "http://non.tuxfamily.org/wiki/Non%20Sequencer") ],
+  [ "non-timeline",  "Non-Timeline",    "DAW",            "non-timeline",     "non-timeline",     TEMPLATE_YES, LEVEL_NSM, (0, 0, 0, 0, "",        1, 0, "CV + OSC"),    ("file:///usr/share/doc/non-timeline/MANUAL.html",                 "http://non.tuxfamily.org/wiki/Non%20Timeline") ],
 
   [ "qtractor",      "Qtractor",        "DAW",            "qtractor",         "qtractor",         TEMPLATE_YES, LEVEL_1,   (1, 1, 1, 1, "Native",  1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/qtractor-0.5.x-user-manual.pdf", "http://qtractor.sf.net/") ],
   [ "qtractor-svn",  "Qtractor (SVN)",  "DAW",            "qtractor",         "qtractor",         TEMPLATE_YES, LEVEL_1,   (1, 1, 1, 1, "Native",  1, 1, "ALSA"),        ("file:///usr/share/kxstudio/docs/qtractor-0.5.x-user-manual.pdf", "http://qtractor.sf.net/") ],
@@ -67,6 +71,11 @@ if USING_KXSTUDIO:
 # Host
 
 # (I, L, D, L, V, VST-Mode, MIDI-Mode) -> (Internal, LADSPA, DSSI, LV2, VST, VST-Mode, MIDI-Mode)
+
+# TODO:
+# ams
+# mod-app
+# spiralsynthmodular
 
 list_Host = [
   # Package             AppName                 Ins?   FX?    Binary           Icon         Template?     Level      (I, L, D, L, V, VST-Mode,  MIDI-Mode)      (doc-file,                                website)
@@ -90,6 +99,10 @@ iHost_Package, iHost_AppName, iHost_Ins, iHost_FX, iHost_Binary, iHost_Icon, iHo
 # Instrument
 
 # (F, I, MIDI-Mode) -> (Built-in FX, Audio Input, MIDI-Mode)
+
+# TODO:
+# add64
+# cursynth
 
 list_Instrument = [
   # Package                 AppName              Type                Binary                    Icon                Template?     Level      (F, I, MIDI-Mode)      (doc-file,                                                            website)
@@ -197,6 +210,9 @@ iEffect_Package, iEffect_AppName, iEffect_Type, iEffect_Binary, iEffect_Icon, iE
 
 # (MIDI-Mode, T) -> (MIDI-Mode, Transport)
 
+# TODO:
+# paulstretch
+
 list_Tool = [
   # Package              AppName                         Type                   Binary                    Icon                Template?     Level    (MIDI-Mode, T)      (doc,                                                             website)
   [ "arpage",            "Arpage",                       "MIDI Arpeggiator",    "arpage",                 "arpage",           TEMPLATE_NO,  LEVEL_0, ("JACK",        1), ("",                                                              "") ],
@@ -242,7 +258,7 @@ list_Tool = [
 
   [ "mixxx",             "Mixxx",                        "DJ",                  "mixxx",                  "mixxx",            TEMPLATE_NO,  LEVEL_0, ("ALSA",        0), ("file:///usr/share/kxstudio/docs/Mixxx-Manual.pdf",              "http://mixxx.sf.net/") ],
 
-  [ "non-mixer",         "Non-Mixer",                    "Mixer",               "non-mixer",              "non-mixer",        TEMPLATE_NO,  LEVEL_0, ("CV",          0), ("file:///usr/share/doc/non-mixer/MANUAL.html",                   "http://non-daw.tuxfamily.org/") ],
+  [ "non-mixer",         "Non-Mixer",                    "Mixer",               "non-mixer",              "non-mixer",        TEMPLATE_NO,  LEVEL_0, ("CV",          0), ("file:///usr/share/doc/non-mixer/MANUAL.html",                   "http://non.tuxfamily.org/wiki/Non%20Mixer") ],
 
   [ "patchage",          "Patchage",                     "Patch Bay",           "patchage",               "patchage",         TEMPLATE_NO,  LEVEL_0, ("ALSA + JACK", 0), ("",                                                              "http://drobilla.net/blog/software/patchage/") ],
   [ "patchage",          "Patchage (ALSA Only)",         "Patch Bay",           "patchage -J",            "patchage",         TEMPLATE_NO,  LEVEL_0, ("ALSA",        0), ("",                                                              "http://drobilla.net/blog/software/patchage/") ],
