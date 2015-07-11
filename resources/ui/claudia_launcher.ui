@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>928</width>
-    <height>469</height>
+    <height>518</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -98,11 +98,6 @@
           <column>
            <property name="text">
             <string>Template?</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Release Model</string>
            </property>
           </column>
          </widget>
@@ -481,11 +476,6 @@
             <string>Template?</string>
            </property>
           </column>
-          <column>
-           <property name="text">
-            <string>Release Model</string>
-           </property>
-          </column>
          </widget>
          <widget class="QFrame" name="frame_Host">
           <property name="minimumSize">
@@ -842,11 +832,6 @@
           <column>
            <property name="text">
             <string>Template?</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Release Model</string>
            </property>
           </column>
          </widget>
@@ -1379,6 +1364,9 @@
           <property name="sortingEnabled">
            <bool>true</bool>
           </property>
+          <property name="columnCount">
+           <number>3</number>
+          </property>
           <attribute name="horizontalHeaderStretchLastSection">
            <bool>true</bool>
           </attribute>
@@ -1390,27 +1378,17 @@
           </attribute>
           <column>
            <property name="text">
-            <string/>
-           </property>
-          </column>
-          <column>
-           <property name="text">
             <string>Name</string>
            </property>
           </column>
           <column>
            <property name="text">
-            <string>Spec</string>
+            <string>Author</string>
            </property>
           </column>
           <column>
            <property name="text">
-            <string>Type</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Release Model</string>
+            <string>Category</string>
            </property>
           </column>
          </widget>
@@ -1470,33 +1448,53 @@
            <item>
             <widget class="QGroupBox" name="group_features_plugin">
              <property name="title">
-              <string>Features</string>
+              <string>Information</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
              </property>
              <layout class="QGridLayout" name="gridLayout_11">
-              <item row="3" column="0">
+              <item row="2" column="1">
+               <widget class="QLabel" name="label_plugin_audio_ins">
+                <property name="text">
+                 <string>#</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
                <widget class="QLabel" name="label_25">
                 <property name="text">
-                 <string>Stereo:</string>
+                 <string>Audio Inputs:</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                 </property>
                </widget>
               </item>
-              <item row="3" column="1">
-               <widget class="QLabel" name="ico_stereo_plugin">
+              <item row="3" column="0">
+               <widget class="QLabel" name="label_42">
                 <property name="text">
-                 <string>ico</string>
+                 <string>Audio Outputs:</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                 </property>
                </widget>
               </item>
               <item row="4" column="0">
-               <widget class="QLabel" name="label_42">
+               <widget class="QLabel" name="label">
                 <property name="text">
-                 <string>MIDI Input:</string>
+                 <string>MIDI Inputs:</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QLabel" name="label_4">
+                <property name="text">
+                 <string>MIDI Outputs:</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1504,26 +1502,57 @@
                </widget>
               </item>
               <item row="4" column="1">
-               <widget class="QLabel" name="ico_midi_input_plugin">
+               <widget class="QLabel" name="label_plugin_midi_ins">
                 <property name="text">
-                 <string>ico</string>
+                 <string>#</string>
                 </property>
                </widget>
               </item>
-              <item row="5" column="0">
-               <widget class="QLabel" name="label">
+              <item row="5" column="1">
+               <widget class="QLabel" name="label_plugin_midi_outs">
                 <property name="text">
-                 <string>Has Factory Presets:</string>
+                 <string>#</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QLabel" name="label_plugin_audio_outs">
+                <property name="text">
+                 <string>#</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="0">
+               <widget class="QLabel" name="label_5">
+                <property name="text">
+                 <string>Parameter Inputs:</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                 </property>
                </widget>
               </item>
-              <item row="5" column="1">
-               <widget class="QLabel" name="ico_presets_plugin">
+              <item row="7" column="0">
+               <widget class="QLabel" name="label_10">
                 <property name="text">
-                 <string>ico</string>
+                 <string>Parameter Outputs:</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="1">
+               <widget class="QLabel" name="label_plugin_parameter_ins">
+                <property name="text">
+                 <string>#</string>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="1">
+               <widget class="QLabel" name="label_plugin_parameter_outs">
+                <property name="text">
+                 <string>#</string>
                 </property>
                </widget>
               </item>
@@ -1676,11 +1705,6 @@
           <column>
            <property name="text">
             <string>Template?</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Release Model</string>
            </property>
           </column>
          </widget>
@@ -1946,11 +1970,6 @@
           <column>
            <property name="text">
             <string>Template?</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string>Release Model</string>
            </property>
           </column>
          </widget>

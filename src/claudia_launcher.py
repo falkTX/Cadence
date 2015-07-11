@@ -31,6 +31,15 @@ import ui_claudia_launcher
 from shared import *
 
 # ------------------------------------------------------------------------------------------------------------
+# Imports (Carla)
+
+try:
+    from carla_utils import *
+    haveCarla = True
+except:
+    haveCarla = False
+
+# ------------------------------------------------------------------------------------------------------------
 # Safe import getoutput
 
 if sys.version_info >= (3, 0):
@@ -107,25 +116,25 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         self.m_ladish_only = False
 
         self.listDAW.setColumnWidth(0, 22)
-        self.listDAW.setColumnWidth(1, 150)
-        self.listDAW.setColumnWidth(2, 125)
+        self.listDAW.setColumnWidth(1, 225)
+        self.listDAW.setColumnWidth(2, 150)
         self.listHost.setColumnWidth(0, 22)
-        self.listHost.setColumnWidth(1, 150)
+        self.listHost.setColumnWidth(1, 225)
+        self.listHost.setColumnWidth(2, 100)
+        self.listHost.setColumnWidth(3, 100)
         self.listInstrument.setColumnWidth(0, 22)
-        self.listInstrument.setColumnWidth(1, 150)
-        self.listInstrument.setColumnWidth(2, 125)
+        self.listInstrument.setColumnWidth(1, 225)
+        self.listInstrument.setColumnWidth(2, 150)
         self.listBristol.setColumnWidth(0, 22)
-        self.listBristol.setColumnWidth(1, 100)
-        self.listPlugin.setColumnWidth(0, 22)
-        self.listPlugin.setColumnWidth(1, 225)
-        self.listPlugin.setColumnWidth(2, 75)
-        self.listPlugin.setColumnWidth(3, 125)
+        self.listBristol.setColumnWidth(1, 150)
+        self.listPlugin.setColumnWidth(0, 225)
+        self.listPlugin.setColumnWidth(1, 175)
         self.listEffect.setColumnWidth(0, 22)
         self.listEffect.setColumnWidth(1, 225)
-        self.listEffect.setColumnWidth(2, 125)
+        self.listEffect.setColumnWidth(2, 150)
         self.listTool.setColumnWidth(0, 22)
         self.listTool.setColumnWidth(1, 225)
-        self.listTool.setColumnWidth(2, 125)
+        self.listTool.setColumnWidth(2, 150)
 
         # For the custom icons
         self.ClaudiaIcons = XIcon()
@@ -170,82 +179,55 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         self.connect(self.listPlugin, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedPlugin(int)"))
         self.connect(self.listEffect, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedEffect(int)"))
         self.connect(self.listTool, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedTool(int)"))
-        self.connect(self.listDAW, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedListDAW(int)"))
-        self.connect(self.listHost, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedListHost(int)"))
-        self.connect(self.listInstrument, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedListInstrument(int)"))
-        self.connect(self.listBristol, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedListBristol(int)"))
-        self.connect(self.listPlugin, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedListPlugin(int)"))
-        self.connect(self.listEffect, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedListEffect(int)"))
-        self.connect(self.listTool, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedListTool(int)"))
+        self.connect(self.listDAW, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
+        self.connect(self.listHost, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
+        self.connect(self.listInstrument, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
+        self.connect(self.listBristol, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
+        self.connect(self.listPlugin, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
+        self.connect(self.listEffect, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
+        self.connect(self.listTool, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
 
-    def getSelectedApp(self):
-        tab_index   = self.tabWidget.currentIndex()
-        column_name = 2 if (tab_index == iTabBristol) else 1
+    def getSelectedAppAndBinary(self):
+        tabIndex = self.tabWidget.currentIndex()
 
-        if tab_index == iTabDAW:
-            listSel = self.listDAW
-        elif tab_index == iTabHost:
-            listSel = self.listHost
-        elif tab_index == iTabInstrument:
-            listSel = self.listInstrument
-        elif tab_index == iTabBristol:
-            listSel = self.listBristol
-        elif tab_index == iTabPlugin:
-            listSel = self.listPlugin
-        elif tab_index == iTabEffect:
-            listSel = self.listEffect
-        elif tab_index == iTabTool:
-            listSel = self.listTool
-        else:
-            return ""
+        if tabIndex == iTabDAW:
+            item = self.listDAW.item(self.listDAW.currentRow(), 0).data(Qt.UserRole)
+            return (item[database.iDAW_AppName], item[database.iDAW_Binary])
 
-        return listSel.item(listSel.currentRow(), column_name).text()
+        if tabIndex == iTabHost:
+            item = self.listHost.item(self.listHost.currentRow(), 0).data(Qt.UserRole)
+            return (item[database.iHost_AppName], item[database.iHost_Binary])
 
-    def getBinaryFromAppName(self, appname):
-        for Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs in database.list_DAW:
-            if appname == AppName:
-                return Binary
+        if tabIndex == iTabInstrument:
+            item = self.listInstrument.item(self.listInstrument.currentRow(), 0).data(Qt.UserRole)
+            return (item[database.iInstrument_AppName], item[database.iInstrument_Binary])
 
-        for Package, AppName, Instruments, Effects, Binary, Icon, Save, Level, License, Features, Docs in database.list_Host:
-            if appname == AppName:
-                return Binary
+        if tabIndex == iTabBristol:
+            item = self.listBristol.item(self.listBristol.currentRow(), 0).data(Qt.UserRole)
+            return (item[database.iBristol_AppName], "startBristol -audio jack -midi jack -%s" % item[database.iBristol_ShortName])
 
-        for Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs in database.list_Instrument:
-            if appname == AppName:
-                return Binary
+        if tabIndex == iTabPlugin:
+            plugin = self.listPlugin.item(self.listPlugin.currentRow(), 0).data(Qt.UserRole)
+            return (plugin["name"], "carla-single %s" % plugin["label"])
 
-        for Package, AppName, Type, ShortName, Icon, Save, Level, License, Features, Docs in database.list_Bristol:
-            if appname == AppName:
-                return "startBristol -audio jack -midi jack -%s" % ShortName
+        if tabIndex == iTabEffect:
+            item = self.listEffect.item(self.listEffect.currentRow(), 0).data(Qt.UserRole)
+            return (item[database.iEffect_AppName], item[database.iEffect_Binary])
 
-        for Package, Name, Spec, Type, Filename, Label, Icon, License, Features, Docs in database.list_Plugin:
-            if appname == Name:
-                return "carla-single native %s \"%s\" \"%s\"" % (Spec.lower(), Filename, Label)
+        if tabIndex == iTabTool:
+            item = self.listTool.item(self.listTool.currentRow(), 0).data(Qt.UserRole)
+            return (item[database.iTool_AppName], item[database.iTool_Binary])
 
-        for Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs in database.list_Effect:
-            if appname == AppName:
-                return Binary
+        return ("", "")
 
-        for Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs in database.list_Tool:
-            if appname == AppName:
-                return Binary
-
-        print("ClaudiaLauncher::getBinaryFromAppName(%s) - Failed to find binary from App name" % appname)
-        return ""
-
-    def startApp(self, app=None):
-        if not app:
-            app = self.getSelectedApp()
-        binary = self.getBinaryFromAppName(app)
+    def startApp(self):
+        app, binary = self.getSelectedAppAndBinary()
 
         if app and binary:
             os.system("cd '%s' && %s &" % (self.callback_getProjectFolder(), binary))
 
-    def addAppToLADISH(self, app=None):
-        if not app:
-            app = self.getSelectedApp()
-
-        binary = self.getBinaryFromAppName(app)
+    def addAppToLADISH(self):
+        app, binary = self.getSelectedAppAndBinary()
 
         if binary.startswith("startBristol"):
             self.createAppTemplate("bristol", app, binary)
@@ -301,7 +283,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         elif app == "Calf Jack Host":
             self.createAppTemplate("calfjackhost", app, binary)
 
-        elif app == "Carla":
+        elif app in ("Carla", "Carla (GIT)"):
             self.createAppTemplate("carla", app, binary)
 
         elif app == "Jack Rack":
@@ -646,11 +628,14 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         self.showDoc_Bristol("", "")
 
     def clearInfo_Plugin(self):
-        self.ico_app_plugin.setPixmap(self.getIcon("start-here").pixmap(48, 48))
+        self.ico_app_plugin.setPixmap(self.getIcon("lv2").pixmap(48, 48))
         self.label_name_plugin.setText("Plugin Name")
-        self.ico_stereo_plugin.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
-        self.ico_midi_input_plugin.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
-        self.ico_presets_plugin.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
+        self.label_plugin_audio_ins.setText("0")
+        self.label_plugin_audio_outs.setText("0")
+        self.label_plugin_midi_ins.setText("0")
+        self.label_plugin_midi_outs.setText("0")
+        self.label_plugin_parameter_ins.setText("0")
+        self.label_plugin_parameter_outs.setText("0")
         self.frame_Plugin.setEnabled(False)
         self.showDoc_Plugin("", "")
 
@@ -785,34 +770,35 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
                 self.tabWidget.setTabEnabled(iTabPlugin, False)
 
         last_pos = 0
-        for Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs in database.list_DAW:
+        for item in database.list_DAW:
+            Package, AppName, Type, Binary, Icon, Save, Level, Features, Docs = item
             if SHOW_ALL or Package in pkglist:
                 w_icon = QTableWidgetItem("")
+                w_icon.setData(Qt.UserRole, item)
                 w_icon.setIcon(QIcon(self.getIcon(Icon)))
                 w_name = QTableWidgetItem(AppName)
                 w_type = QTableWidgetItem(Type)
                 w_save = QTableWidgetItem(Save)
-                w_licc = QTableWidgetItem(License)
 
                 self.listDAW.insertRow(last_pos)
                 self.listDAW.setItem(last_pos, 0, w_icon)
                 self.listDAW.setItem(last_pos, 1, w_name)
                 self.listDAW.setItem(last_pos, 2, w_type)
                 self.listDAW.setItem(last_pos, 3, w_save)
-                self.listDAW.setItem(last_pos, 4, w_licc)
 
                 last_pos += 1
 
         last_pos = 0
-        for Package, AppName, Instruments, Effects, Binary, Icon, Save, Level, License, Features, Docs in database.list_Host:
+        for item in database.list_Host:
+            Package, AppName, Instruments, Effects, Binary, Icon, Save, Level, Features, Docs = item
             if SHOW_ALL or Package in pkglist:
                 w_icon = QTableWidgetItem("")
+                w_icon.setData(Qt.UserRole, item)
                 w_icon.setIcon(QIcon(self.getIcon(Icon)))
                 w_name = QTableWidgetItem(AppName)
                 w_h_in = QTableWidgetItem(Instruments)
                 w_h_ef = QTableWidgetItem(Effects)
                 w_save = QTableWidgetItem(Save)
-                w_licc = QTableWidgetItem(License)
 
                 self.listHost.insertRow(last_pos)
                 self.listHost.setItem(last_pos, 0, w_icon)
@@ -820,33 +806,34 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
                 self.listHost.setItem(last_pos, 2, w_h_in)
                 self.listHost.setItem(last_pos, 3, w_h_ef)
                 self.listHost.setItem(last_pos, 4, w_save)
-                self.listHost.setItem(last_pos, 5, w_licc)
 
                 last_pos += 1
 
         last_pos = 0
-        for Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs in database.list_Instrument:
+        for item in database.list_Instrument:
+            Package, AppName, Type, Binary, Icon, Save, Level, Features, Docs = item
             if SHOW_ALL or Package in pkglist:
                 w_icon = QTableWidgetItem("")
+                w_icon.setData(Qt.UserRole, item)
                 w_icon.setIcon(QIcon(self.getIcon(Icon)))
                 w_name = QTableWidgetItem(AppName)
                 w_type = QTableWidgetItem(Type)
                 w_save = QTableWidgetItem(Save)
-                w_licc = QTableWidgetItem(License)
 
                 self.listInstrument.insertRow(last_pos)
                 self.listInstrument.setItem(last_pos, 0, w_icon)
                 self.listInstrument.setItem(last_pos, 1, w_name)
                 self.listInstrument.setItem(last_pos, 2, w_type)
                 self.listInstrument.setItem(last_pos, 3, w_save)
-                self.listInstrument.setItem(last_pos, 4, w_licc)
 
                 last_pos += 1
 
         last_pos = 0
-        for Package, FullName, Type, ShortName, Icon, Save, Level, License, Features, Docs in database.list_Bristol:
+        for item in database.list_Bristol:
+            Package, FullName, Type, ShortName, Icon, Save, Level, Features, Docs = item
             if SHOW_ALL or Package in pkglist:
                 w_icon = QTableWidgetItem("")
+                w_icon.setData(Qt.UserRole, item)
                 w_icon.setIcon(QIcon(self.getIcon(Icon)))
                 w_fullname = QTableWidgetItem(FullName)
                 w_shortname = QTableWidgetItem(ShortName)
@@ -859,59 +846,89 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
                 last_pos += 1
 
         last_pos = 0
-        for Package, Name, Spec, Type, Filename, Label, Icon, License, Features, Docs in database.list_Plugin:
+        for item in database.list_Effect:
+            Package, AppName, Type, Binary, Icon, Save, Level, Features, Docs = item
             if SHOW_ALL or Package in pkglist:
                 w_icon = QTableWidgetItem("")
-                w_icon.setIcon(QIcon(self.getIcon(Icon)))
-                w_name = QTableWidgetItem(Name)
-                w_spec = QTableWidgetItem(Spec)
-                w_type = QTableWidgetItem(Type)
-                w_licc = QTableWidgetItem(License)
-
-                self.listPlugin.insertRow(last_pos)
-                self.listPlugin.setItem(last_pos, 0, w_icon)
-                self.listPlugin.setItem(last_pos, 1, w_name)
-                self.listPlugin.setItem(last_pos, 2, w_spec)
-                self.listPlugin.setItem(last_pos, 3, w_type)
-                self.listPlugin.setItem(last_pos, 4, w_licc)
-
-                last_pos += 1
-
-        last_pos = 0
-        for Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs in database.list_Effect:
-            if SHOW_ALL or Package in pkglist:
-                w_icon = QTableWidgetItem("")
+                w_icon.setData(Qt.UserRole, item)
                 w_icon.setIcon(QIcon(self.getIcon(Icon)))
                 w_name = QTableWidgetItem(AppName)
                 w_type = QTableWidgetItem(Type)
                 w_save = QTableWidgetItem(Save)
-                w_licc = QTableWidgetItem(License)
 
                 self.listEffect.insertRow(last_pos)
                 self.listEffect.setItem(last_pos, 0, w_icon)
                 self.listEffect.setItem(last_pos, 1, w_name)
                 self.listEffect.setItem(last_pos, 2, w_type)
                 self.listEffect.setItem(last_pos, 3, w_save)
-                self.listEffect.setItem(last_pos, 4, w_licc)
 
                 last_pos += 1
 
         last_pos = 0
-        for Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs in database.list_Tool:
+        for item in database.list_Tool:
+            Package, AppName, Type, Binary, Icon, Save, Level, Features, Docs = item
             if SHOW_ALL or Package in pkglist:
                 w_icon = QTableWidgetItem("")
+                w_icon.setData(Qt.UserRole, item)
                 w_icon.setIcon(QIcon(self.getIcon(Icon)))
                 w_name = QTableWidgetItem(AppName)
                 w_type = QTableWidgetItem(Type)
                 w_save = QTableWidgetItem(Save)
-                w_licc = QTableWidgetItem(License)
 
                 self.listTool.insertRow(last_pos)
                 self.listTool.setItem(last_pos, 0, w_icon)
                 self.listTool.setItem(last_pos, 1, w_name)
                 self.listTool.setItem(last_pos, 2, w_type)
                 self.listTool.setItem(last_pos, 3, w_save)
-                self.listTool.setItem(last_pos, 4, w_licc)
+
+                last_pos += 1
+
+        if haveCarla and os.path.exists("/usr/lib/carla/libcarla_utils.so"):
+            utils = CarlaUtils("/usr/lib/carla/libcarla_utils.so")
+            last_pos = 0
+            for i in range(utils.get_cached_plugin_count(PLUGIN_LV2, os.getenv("LV2_PATH", "~/.lv2:/usr/lib/lv2:/usr/local/lib/lv2"))):
+                plugin = utils.get_cached_plugin_info(PLUGIN_LV2, i)
+
+                if (plugin["hints"] & PLUGIN_HAS_CUSTOM_UI) == 0:
+                    continue
+
+                catgtext = ""
+
+                if plugin["category"] == PLUGIN_CATEGORY_SYNTH:
+                    catgtext = "Synth"
+                elif plugin["category"] == PLUGIN_CATEGORY_DELAY:
+                    catgtext = "Delay"
+                elif plugin["category"] == PLUGIN_CATEGORY_EQ:
+                    catgtext = "Equalizer"
+                elif plugin["category"] == PLUGIN_CATEGORY_FILTER:
+                    catgtext = "Filter"
+                elif plugin["category"] == PLUGIN_CATEGORY_DISTORTION:
+                    catgtext = "Distortion"
+                elif plugin["category"] == PLUGIN_CATEGORY_DYNAMICS:
+                    catgtext = "Dynamics"
+                elif plugin["category"] == PLUGIN_CATEGORY_MODULATOR:
+                    catgtext = "Modulator"
+                elif plugin["category"] == PLUGIN_CATEGORY_UTILITY:
+                    catgtext = "Utility"
+                elif plugin["category"] == PLUGIN_CATEGORY_OTHER:
+                    catgtext = "Other"
+
+                if not plugin["category"]:
+                    if plugin["hints"] & PLUGIN_IS_SYNTH:
+                        catgtext = "Synth"
+                    else:
+                        catgtext = "FX"
+
+                w_name = QTableWidgetItem(plugin["name"])
+                w_auth = QTableWidgetItem(plugin["maker"])
+                w_catg = QTableWidgetItem(catgtext)
+
+                w_name.setData(Qt.UserRole, plugin)
+
+                self.listPlugin.insertRow(last_pos)
+                self.listPlugin.setItem(last_pos, 0, w_name)
+                self.listPlugin.setItem(last_pos, 1, w_auth)
+                self.listPlugin.setItem(last_pos, 2, w_catg)
 
                 last_pos += 1
 
@@ -927,25 +944,25 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         self.listHost.sortByColumn(1, Qt.AscendingOrder)
         self.listInstrument.sortByColumn(1, Qt.AscendingOrder)
         self.listBristol.sortByColumn(2, Qt.AscendingOrder)
-        self.listPlugin.sortByColumn(1, Qt.AscendingOrder)
+        self.listPlugin.sortByColumn(0, Qt.AscendingOrder)
         self.listEffect.sortByColumn(1, Qt.AscendingOrder)
         self.listTool.sortByColumn(1, Qt.AscendingOrder)
 
     @pyqtSlot(int)
-    def slot_checkSelectedTab(self, tab_index):
-        if tab_index == iTabDAW:
+    def slot_checkSelectedTab(self, tabIndex):
+        if tabIndex == iTabDAW:
             test_selected = (len(self.listDAW.selectedItems()) > 0)
-        elif tab_index == iTabHost:
+        elif tabIndex == iTabHost:
             test_selected = (len(self.listHost.selectedItems()) > 0)
-        elif tab_index == iTabInstrument:
+        elif tabIndex == iTabInstrument:
             test_selected = (len(self.listInstrument.selectedItems()) > 0)
-        elif tab_index == iTabBristol:
+        elif tabIndex == iTabBristol:
             test_selected = (len(self.listBristol.selectedItems()) > 0)
-        elif tab_index == iTabPlugin:
+        elif tabIndex == iTabPlugin:
             test_selected = (len(self.listPlugin.selectedItems()) > 0)
-        elif tab_index == iTabEffect:
+        elif tabIndex == iTabEffect:
             test_selected = (len(self.listEffect.selectedItems()) > 0)
-        elif tab_index == iTabTool:
+        elif tabIndex == iTabTool:
             test_selected = (len(self.listTool.selectedItems()) > 0)
         else:
             test_selected = False
@@ -955,19 +972,8 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
     @pyqtSlot(int)
     def slot_checkSelectedDAW(self, row):
         if row >= 0:
-            selected = True
-
-            app_name = self.listDAW.item(row, 1).text()
-
-            for DAW in database.list_DAW:
-                if DAW[1] == app_name:
-                    app_info = DAW
-                    break
-            else:
-                print("ERROR: Failed to retrieve app info from database")
-                return
-
-            Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs = app_info
+            item = self.listDAW.item(row, 0).data(Qt.UserRole)
+            Package, AppName, Type, Binary, Icon, Save, Level, Features, Docs = item
 
             self.frame_DAW.setEnabled(True)
             self.ico_app_daw.setPixmap(QIcon(self.getIcon(Icon)).pixmap(48, 48))
@@ -984,29 +990,16 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             Docs0 = Docs[0] if (os.path.exists(Docs[0].replace("file://", ""))) else ""
             self.showDoc_DAW(Docs0, Docs[1])
-
         else:
-            selected = False
             self.clearInfo_DAW()
 
-        self.callback_checkGUI(selected)
+        self.callback_checkGUI(row >= 0)
 
     @pyqtSlot(int)
     def slot_checkSelectedHost(self, row):
         if row >= 0:
-            selected = True
-
-            app_name = self.listHost.item(row, 1).text()
-
-            for Host in database.list_Host:
-                if Host[1] == app_name:
-                    app_info = Host
-                    break
-            else:
-                print("ERROR: Failed to retrieve app info from database")
-                return
-
-            Package, AppName, Instruments, Effects, Binary, Icon, Save, Level, License, Features, Docs = app_info
+            item = self.listHost.item(row, 0).data(Qt.UserRole)
+            Package, AppName, Instruments, Effects, Binary, Icon, Save, Level, Features, Docs = item
 
             self.frame_Host.setEnabled(True)
             self.ico_app_host.setPixmap(self.getIcon(Icon).pixmap(48, 48))
@@ -1022,29 +1015,16 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             Docs0 = Docs[0] if (os.path.exists(Docs[0].replace("file://", ""))) else ""
             self.showDoc_Host(Docs0, Docs[1])
-
         else:
-            selected = False
             self.clearInfo_DAW()
 
-        self.callback_checkGUI(selected)
+        self.callback_checkGUI(row >= 0)
 
     @pyqtSlot(int)
     def slot_checkSelectedInstrument(self, row):
         if row >= 0:
-            selected = True
-
-            app_name = self.listInstrument.item(row, 1).text()
-
-            for Instrument in database.list_Instrument:
-                if Instrument[1] == app_name:
-                    app_info = Instrument
-                    break
-            else:
-                print("ERROR: Failed to retrieve app info from database")
-                return
-
-            Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs = app_info
+            item = self.listInstrument.item(row, 0).data(Qt.UserRole)
+            Package, AppName, Type, Binary, Icon, Save, Level, Features, Docs = item
 
             self.frame_Instrument.setEnabled(True)
             self.ico_app_ins.setPixmap(self.getIcon(Icon).pixmap(48, 48))
@@ -1056,29 +1036,16 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             Docs0 = Docs[0] if (os.path.exists(Docs[0].replace("file://", ""))) else ""
             self.showDoc_Instrument(Docs0, Docs[1])
-
         else:
-            selected = False
             self.clearInfo_Intrument()
 
-        self.callback_checkGUI(selected)
+        self.callback_checkGUI(row >= 0)
 
     @pyqtSlot(int)
     def slot_checkSelectedBristol(self, row):
         if row >= 0:
-            selected = True
-
-            app_name = self.listBristol.item(row, 2).text()
-
-            for Bristol in database.list_Bristol:
-                if Bristol[1] == app_name:
-                    app_info = Bristol
-                    break
-            else:
-                print("ERROR: Failed to retrieve app info from database")
-                return
-
-            Package, AppName, Type, ShortName, Icon, Save, Level, License, Features, Docs = app_info
+            item = self.listBristol.item(row, 0).data(Qt.UserRole)
+            Package, AppName, Type, ShortName, Icon, Save, Level, Features, Docs = item
 
             self.frame_Bristol.setEnabled(True)
             self.ico_app_bristol.setPixmap(self.getIcon(Icon).pixmap(48, 48))
@@ -1090,62 +1057,38 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             Docs0 = Docs[0] if (os.path.exists(Docs[0].replace("file://", ""))) else ""
             self.showDoc_Bristol(Docs0, Docs[1])
-
         else:
-            selected = False
             self.clearInfo_Bristol()
 
-        self.callback_checkGUI(selected)
+        self.callback_checkGUI(row >= 0)
 
     @pyqtSlot(int)
     def slot_checkSelectedPlugin(self, row):
         if row >= 0:
-            selected = True
-
-            pluginName = self.listPlugin.item(row, 1).text()
-
-            for plugin in database.list_Plugin:
-                if plugin[1] == pluginName:
-                    appInfo = plugin
-                    break
-            else:
-                print("ERROR: Failed to retrieve plugin info from database")
-                return
-
-            Package, Name, Spec, Type, Filename, Label, Icon, License, Features, Docs = appInfo
+            plugin = self.listPlugin.item(row, 0).data(Qt.UserRole)
 
             self.frame_Plugin.setEnabled(True)
-            self.ico_app_plugin.setPixmap(self.getIcon(Icon).pixmap(48, 48))
-            self.ico_stereo_plugin.setPixmap(self.getIconForYesNo(Features[0]).pixmap(16, 16))
-            self.ico_midi_input_plugin.setPixmap(self.getIconForYesNo(Features[1]).pixmap(16, 16))
-            self.ico_presets_plugin.setPixmap(self.getIconForYesNo(Features[2]).pixmap(16, 16))
-            self.label_name_plugin.setText(Name)
+            self.ico_app_bristol.setPixmap(self.getIcon("lv2").pixmap(48, 48))
+            self.label_name_plugin.setText(plugin["name"])
+            self.label_plugin_audio_ins.setText(str(plugin["audioIns"]))
+            self.label_plugin_audio_outs.setText(str(plugin["audioOuts"]))
+            self.label_plugin_midi_ins.setText(str(plugin["midiIns"]))
+            self.label_plugin_midi_outs.setText(str(plugin["midiOuts"]))
+            self.label_plugin_parameter_ins.setText(str(plugin["parameterIns"]))
+            self.label_plugin_parameter_outs.setText(str(plugin["parameterOuts"]))
 
-            Docs0 = Docs[0] if (os.path.exists(Docs[0].replace("file://", ""))) else ""
-            self.showDoc_Plugin(Docs0, Docs[1])
-
+            #Docs0 = Docs[0] if (os.path.exists(Docs[0].replace("file://", ""))) else ""
+            #self.showDoc_Plugin(Docs0, Docs[1])
         else:
-            selected = False
             self.clearInfo_Plugin()
 
-        self.callback_checkGUI(selected)
+        self.callback_checkGUI(row >= 0)
 
     @pyqtSlot(int)
     def slot_checkSelectedEffect(self, row):
         if row >= 0:
-            selected = True
-
-            app_name = self.listEffect.item(row, 1).text()
-
-            for Effect in database.list_Effect:
-                if Effect[1] == app_name:
-                    app_info = Effect
-                    break
-            else:
-                print("ERROR: Failed to retrieve app info from database")
-                return
-
-            Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs = app_info
+            item = self.listEffect.item(row, 0).data(Qt.UserRole)
+            Package, AppName, Type, Binary, Icon, Save, Level, Features, Docs = item
 
             self.frame_Effect.setEnabled(True)
             self.ico_app_effect.setPixmap(self.getIcon(Icon).pixmap(48, 48))
@@ -1156,29 +1099,16 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             Docs0 = Docs[0] if (os.path.exists(Docs[0].replace("file://", ""))) else ""
             self.showDoc_Effect(Docs0, Docs[1])
-
         else:
-            selected = False
             self.clearInfo_Effect()
 
-        self.callback_checkGUI(selected)
+        self.callback_checkGUI(row >= 0)
 
     @pyqtSlot(int)
     def slot_checkSelectedTool(self, row):
         if row >= 0:
-            selected = True
-
-            app_name = self.listTool.item(row, 1).text()
-
-            for Tool in database.list_Tool:
-                if Tool[1] == app_name:
-                    app_info = Tool
-                    break
-            else:
-                print("ERROR: Failed to retrieve app info from database")
-                return
-
-            Package, AppName, Type, Binary, Icon, Save, Level, License, Features, Docs = app_info
+            item = self.listTool.item(row, 0).data(Qt.UserRole)
+            Package, AppName, Type, Binary, Icon, Save, Level, Features, Docs = item
 
             self.frame_Tool.setEnabled(True)
             self.ico_app_tool.setPixmap(self.getIcon(Icon).pixmap(48, 48))
@@ -1189,68 +1119,17 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
             Docs0 = Docs[0] if (os.path.exists(Docs[0].replace("file://", ""))) else ""
             self.showDoc_Tool(Docs0, Docs[1])
-
         else:
-            selected = False
             self.clearInfo_Tool()
 
-        self.callback_checkGUI(selected)
+        self.callback_checkGUI(row >= 0)
 
-    @pyqtSlot(int)
-    def slot_doubleClickedListDAW(self, row):
-        app = self.listDAW.item(row, 1).text()
+    @pyqtSlot()
+    def slot_doubleClickedList(self):
         if self.m_ladish_only:
-            self.addAppToLADISH(app)
+            self.addAppToLADISH()
         else:
-            self.startApp(app)
-
-    @pyqtSlot(int)
-    def slot_doubleClickedListHost(self, row):
-        app = self.listHost.item(row, 1).text()
-        if self.m_ladish_only:
-            self.addAppToLADISH(app)
-        else:
-            self.startApp(app)
-
-    @pyqtSlot(int)
-    def slot_doubleClickedListInstrument(self, row):
-        app = self.listInstrument.item(row, 1).text()
-        if self.m_ladish_only:
-            self.addAppToLADISH(app)
-        else:
-            self.startApp(app)
-
-    @pyqtSlot(int)
-    def slot_doubleClickedListBristol(self, row):
-        app = self.listBristol.item(row, 2).text()
-        if self.m_ladish_only:
-            self.addAppToLADISH(app)
-        else:
-            self.startApp(app)
-
-    @pyqtSlot(int)
-    def slot_doubleClickedListPlugin(self, row):
-        app = self.listPlugin.item(row, 1).text()
-        if self.m_ladish_only:
-            self.addAppToLADISH(app)
-        else:
-            self.startApp(app)
-
-    @pyqtSlot(int)
-    def slot_doubleClickedListEffect(self, row):
-        app = self.listEffect.item(row, 1).text()
-        if self.m_ladish_only:
-            self.addAppToLADISH(app)
-        else:
-            self.startApp(app)
-
-    @pyqtSlot(int)
-    def slot_doubleClickedListTool(self, row):
-        app = self.listTool.item(row, 1).text()
-        if self.m_ladish_only:
-            self.addAppToLADISH(app)
-        else:
-            self.startApp(app)
+            self.startApp()
 
     def saveSettings(self):
         if self.settings():
