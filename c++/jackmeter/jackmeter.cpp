@@ -1,6 +1,6 @@
 /*
  * Simple JACK Audio Meter
- * Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
+ * Copyright (C) 2011-2015 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@
 
 volatile double x_portValue1 = 0.0;
 volatile double x_portValue2 = 0.0;
+volatile bool x_isOutput = true;
 volatile bool x_needReconnect = false;
 volatile bool x_quitNow = false;
 
@@ -42,7 +43,7 @@ jack_client_t* jClient = nullptr;
 jack_port_t* jPort1 = nullptr;
 jack_port_t* jPort2 = nullptr;
 
-bool gIsOutput = true;
+QString gClientName;
 
 // -------------------------------
 // JACK callbacks
@@ -66,7 +67,8 @@ int process_callback(const jack_nframes_t nframes, void*)
 
 void port_callback(jack_port_id_t, jack_port_id_t, int, void*)
 {
-    x_needReconnect = true;
+    if (x_isOutput)
+        x_needReconnect = true;
 }
 
 #ifdef HAVE_JACKSESSION
@@ -97,43 +99,53 @@ void reconnect_ports()
 {
     x_needReconnect = false;
 
-    jack_port_t* const jPlayPort1 = jackbridge_port_by_name(jClient, gIsOutput ? "system:playback_1" : "system:capture_1");
-    jack_port_t* const jPlayPort2 = jackbridge_port_by_name(jClient, gIsOutput ? "system:playback_2" : "system:capture_2");
-    std::vector<char*> jPortList1(jackbridge_port_get_all_connections_as_vector(jClient, jPlayPort1));
-    std::vector<char*> jPortList2(jackbridge_port_get_all_connections_as_vector(jClient, jPlayPort2));
+    const QString nameIn1(gClientName+":in1");
+    const QString nameIn2(gClientName+":in2");
 
-    foreach (char* const& thisPortName, jPortList1)
+    if (x_isOutput)
     {
-        jack_port_t* const thisPort = jackbridge_port_by_name(jClient, thisPortName);
+        jack_port_t* const jPlayPort1 = jackbridge_port_by_name(jClient, x_isOutput ? "system:playback_1" : "system:capture_1");
+        jack_port_t* const jPlayPort2 = jackbridge_port_by_name(jClient, x_isOutput ? "system:playback_2" : "system:capture_2");
+        std::vector<char*> jPortList1(jackbridge_port_get_all_connections_as_vector(jClient, jPlayPort1));
+        std::vector<char*> jPortList2(jackbridge_port_get_all_connections_as_vector(jClient, jPlayPort2));
 
-        if (! (jackbridge_port_is_mine(jClient, thisPort) || jackbridge_port_connected_to(jPort1, thisPortName)))
+        foreach (char* const& thisPortName, jPortList1)
         {
-            if (gIsOutput)
-                jackbridge_connect(jClient, thisPortName, "M:in1");
-            else
-                jackbridge_connect(jClient, "Mi:in1", thisPortName);
+            jack_port_t* const thisPort = jackbridge_port_by_name(jClient, thisPortName);
+
+            if (! (jackbridge_port_is_mine(jClient, thisPort) || jackbridge_port_connected_to(jPort1, thisPortName)))
+                jackbridge_connect(jClient, thisPortName, nameIn1.toUtf8().constData());
+
+            free(thisPortName);
         }
 
-        free(thisPortName);
-    }
-
-    foreach (char* const& thisPortName, jPortList2)
-    {
-        jack_port_t* const thisPort = jackbridge_port_by_name(jClient, thisPortName);
-
-        if (! (jackbridge_port_is_mine(jClient, thisPort) || jackbridge_port_connected_to(jPort2, thisPortName)))
+        foreach (char* const& thisPortName, jPortList2)
         {
-            if (gIsOutput)
-                jackbridge_connect(jClient, thisPortName, "M:in2");
-            else
-                jackbridge_connect(jClient, "Mi:in2", thisPortName);
+            jack_port_t* const thisPort = jackbridge_port_by_name(jClient, thisPortName);
+
+            if (! (jackbridge_port_is_mine(jClient, thisPort) || jackbridge_port_connected_to(jPort2, thisPortName)))
+                jackbridge_connect(jClient, thisPortName, nameIn2.toUtf8().constData());
+
+            free(thisPortName);
         }
 
-        free(thisPortName);
+        jPortList1.clear();
+        jPortList2.clear();
     }
+    else
+    {
+        if (jack_port_t* const jRecPort1 = jackbridge_port_by_name(jClient, "system:capture_1"))
+        {
+            if (! jackbridge_port_connected_to(jPort1, "system:capture_1"))
+                jackbridge_connect(jClient, "system:capture_1", nameIn1.toUtf8().constData());
+        }
 
-    jPortList1.clear();
-    jPortList2.clear();
+        if (jack_port_t* const jRecPort2 = jackbridge_port_by_name(jClient, "system:capture_2"))
+        {
+            if (! jackbridge_port_connected_to(jPort2, "system:capture_2"))
+                jackbridge_connect(jClient, "system:capture_2", nameIn2.toUtf8().constData());
+        }
+    }
 }
 
 // -------------------------------
@@ -145,9 +157,9 @@ public:
     MeterW() : DigitalPeakMeter(nullptr)
     {
         setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
-        setWindowTitle(gIsOutput ? "M" : "Mi");
+        setWindowTitle(gClientName);
 
-        if (gIsOutput)
+        if (x_isOutput)
             setColor(Color::GREEN);
         else
             setColor(Color::BLUE);
@@ -203,7 +215,7 @@ int main(int argc, char* argv[])
     app.setWindowIcon(QIcon(":/scalable/cadence.svg"));
 
     if (app.arguments().contains("-in"))
-        gIsOutput = false;
+        x_isOutput = false;
 
     // JACK initialization
     jack_status_t jStatus;
@@ -212,7 +224,7 @@ int main(int argc, char* argv[])
 #else
     jack_options_t jOptions = static_cast<jack_options_t>(JackNoStartServer|JackUseExactName);
 #endif
-    jClient = jackbridge_client_open(gIsOutput ? "M" : "Mi", jOptions, &jStatus);
+    jClient = jackbridge_client_open(x_isOutput ? "M" : "Mi", jOptions, &jStatus);
 
     if (! jClient)
     {
@@ -223,8 +235,10 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    jPort1 = jackbridge_port_register(jClient, "in1", JACK_DEFAULT_AUDIO_TYPE, gIsOutput ? JackPortIsInput : JackPortIsOutput, 0);
-    jPort2 = jackbridge_port_register(jClient, "in2", JACK_DEFAULT_AUDIO_TYPE, gIsOutput ? JackPortIsInput : JackPortIsOutput, 0);
+    gClientName = jackbridge_get_client_name(jClient);
+
+    jPort1 = jackbridge_port_register(jClient, "in1", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+    jPort2 = jackbridge_port_register(jClient, "in2", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
 
     jackbridge_set_process_callback(jClient, process_callback, nullptr);
     jackbridge_set_port_connect_callback(jClient, port_callback, nullptr);

@@ -1,6 +1,6 @@
 /*
  * Common JACK code
- * Copyright (C) 2012 Filipe Coelho <falktx@falktx.com>
+ * Copyright (C) 2012-2015 Filipe Coelho <falktx@falktx.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,9 +28,8 @@ static inline
 std::vector<char*> jackbridge_port_get_all_connections_as_vector(jack_client_t* const client, jack_port_t* const port)
 {
     std::vector<char*> connectionsVector;
-    const char** connections = jackbridge_port_get_all_connections(client, port);
 
-    if (connections)
+    if (const char** const connections = jackbridge_port_get_all_connections(client, port))
     {
         for (int i=0; connections[i]; i++)
             connectionsVector.push_back(strdup(connections[i]));
