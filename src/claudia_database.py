@@ -91,19 +91,15 @@ iHost_Package, iHost_AppName, iHost_Ins, iHost_FX, iHost_Binary, iHost_Icon, iHo
 
 # (F, I, MIDI-Mode) -> (Built-in FX, Audio Input, MIDI-Mode)
 
-# TODO:
-# add64
-# cursynth
-
 list_Instrument = [
   # Package                 AppName              Type                Binary                    Icon                Template?     Level      (F, I, MIDI-Mode)      (doc-file,                                                            website)
-  [ "aeolus",               "Aeolus",            "Synth",            "aeolus -J",              generic_audio_icon, TEMPLATE_NO,  LEVEL_0,   (0, 0, "ALSA | JACK"), ("",                                                                  "http://www.kokkinizita.net/linuxaudio/aeolus/index.html") ],
+  [ "add64",                "Add64",             "Synth",            "Add64",                  generic_audio_icon, TEMPLATE_NO,  LEVEL_0,   (0, 0, "JACK"),        ("",                                                                  "https://sourceforge.net/projects/add64/") ],
 
-  [ "amsynth",              "amSynth",           "Synth",            "amsynth",                "amsynth",          TEMPLATE_NO,  LEVEL_0,   (1, 0, "ALSA + JACK"), ("",                                                                  "") ],
+  [ "aeolus",               "Aeolus",            "Synth",            "aeolus -J",              generic_audio_icon, TEMPLATE_NO,  LEVEL_0,   (0, 0, "ALSA | JACK"), ("",                                                                  "http://www.kokkinizita.net/linuxaudio/aeolus/index.html") ],
 
   [ "azr3-jack",            "AZR3",              "Synth",            "azr3",                   "azr3",             TEMPLATE_NO,  LEVEL_0,   (1, 0, "JACK"),        ("",                                                                  "http://ll-plugins.nongnu.org/azr3/") ],
 
-  [ "foo-yc20",             "Foo YC20",          "Synth",            "foo-yc20",               "foo-yc20",         TEMPLATE_NO,  LEVEL_0,   (0, 0, "JACK"),        ("",                                                                  "http://code.google.com/p/foo-yc20/") ],
+  [ "cursynth",             "cursynth",          "Synth",   "x-terminal-emulator -e cursynth", generic_audio_icon, TEMPLATE_NO,  LEVEL_0,   (0, 0, "ALSA"),        ("",                                                                  "http://www.gnu.org/software/cursynth/") ],
 
   [ "jsampler",             "JSampler Fantasia", "Sampler",          "jsampler-bin",           "jsampler",         TEMPLATE_NO,  LEVEL_0,   (0, 0, "ALSA + JACK"), ("file:///usr/share/kxstudio/docs/jsampler/jsampler.html",            "http://www.linuxsampler.org/") ],
 
@@ -115,12 +111,10 @@ list_Instrument = [
 
   [ "qsynth",               "Qsynth",            "SoundFont Player", "qsynth -a jack -m jack", "qsynth",           TEMPLATE_NO,  LEVEL_0,   (1, 0, "ALSA | JACK"), ("",                                                                  "http://qsynth.sf.net/") ],
 
-  [ "setbfree",             "setBfree",          "Synth",            "setBfree-start",         "setBfree",         TEMPLATE_NO,  LEVEL_0,   (1, 0, "JACK"),        ("",                                                                  "http://setbfree.org/") ],
-
   [ "yoshimi",              "Yoshimi",           "Synth",            "yoshimi -j -J",          "yoshimi",          TEMPLATE_NO,  LEVEL_1,   (1, 0, "ALSA | JACK"), ("",                                                                  "http://yoshimi.sf.net/") ],
 
-  [ "zynaddsubfx",          "ZynAddSubFX",       "Synth",            "zynaddsubfx",            "zynaddsubfx",      TEMPLATE_NO,  LEVEL_NSM, (1, 0, "ALSA + JACK"), ("",                                                                  "http://zynaddsubfx.sf.net/") ],
-  [ "zynaddsubfx-git",      "ZynAddSubFX (GIT)", "Synth",            "zynaddsubfx",            "zynaddsubfx",      TEMPLATE_NO,  LEVEL_NSM, (1, 0, "ALSA + JACK"), ("",                                                                  "http://zynaddsubfx.sf.net/") ],
+  [ "zynaddsubfx",          "ZynAddSubFX",       "Synth",            "zynaddsubfx",            "zynaddsubfx",      TEMPLATE_NO,  LEVEL_NSM, (1, 0, "ALSA | JACK"), ("",                                                                  "http://zynaddsubfx.sf.net/") ],
+  [ "zynaddsubfx-git",      "ZynAddSubFX (GIT)", "Synth",            "zynaddsubfx",            "zynaddsubfx",      TEMPLATE_NO,  LEVEL_NSM, (1, 0, "ALSA | JACK"), ("",                                                                  "http://zynaddsubfx.sf.net/") ],
 ]
 
 iInstrument_Package, iInstrument_AppName, iInstrument_Type, iInstrument_Binary, iInstrument_Icon, iInstrument_Template, iInstrument_Level, iInstrument_Features, iInstrument_Docs = range(0, len(list_Instrument[0]))
@@ -201,11 +195,8 @@ iEffect_Package, iEffect_AppName, iEffect_Type, iEffect_Binary, iEffect_Icon, iE
 
 # (MIDI-M, T) -> (MIDI-Mode, Transport)
 
-# TODO:
-# paulstretch
-
 list_Tool = [
-  # Package              AppName                         Type                   Binary                    Icon                Template?     Level    (MIDI-M, T)      (doc,                                                         website)
+  # Package              AppName                         Type                   Binary                    Icon                Template?     Level    (MIDI-M, T)  (doc,                                                         website)
   [ "arpage",            "Arpage",                       "MIDI Arpeggiator",    "arpage",                 "arpage",           TEMPLATE_NO,  LEVEL_0, ("JACK", 1), ("",                                                          "") ],
   [ "arpage",            "Zonage",                       "MIDI Mapper",         "zonage",                 "zonage",           TEMPLATE_NO,  LEVEL_0, ("JACK", 0), ("",                                                          "") ],
 
@@ -220,7 +211,7 @@ list_Tool = [
 
   [ "fmit",              "Music Instrument Tuner",       "Instrument Tuner",    "fmit",                   generic_audio_icon, TEMPLATE_NO,  LEVEL_0, ("---",  0), ("",                                                          "") ],
 
-  [ "gigedit",           "Gigedit",                      "Instrument Editor",   "gigedit",                generic_audio_icon, TEMPLATE_NO,  LEVEL_0, ("---",  0), ("/usr/share/doc/gigedit/gigedit_quickstart.html",            "") ],
+  [ "gigedit",           "Gigedit",                      "Instrument Editor",   "gigedit",                generic_audio_icon, TEMPLATE_NO,  LEVEL_0, ("---",  0), ("file:///usr/share/doc/gigedit/gigedit_quickstart.html",     "") ],
 
   [ "gjacktransport",    "GJackClock",                   "Transport Tool",      "gjackclock",             "gjackclock",       TEMPLATE_NO,  LEVEL_0, ("---",  1), ("",                                                          "") ],
   [ "gjacktransport",    "GJackTransport",               "Transport Tool",      "gjacktransport",         "gjacktransport",   TEMPLATE_NO,  LEVEL_0, ("---",  1), ("",                                                          "") ],
@@ -241,11 +232,11 @@ list_Tool = [
 
   [ "luppp",             "Luppp",                        "Audio Looper",        "luppp",                  generic_audio_icon, TEMPLATE_NO,  LEVEL_0, ("---",  0), ("",                                                          "http://openavproductions.com/luppp/") ],
 
-  [ "meterbridge",       "MeterBridge Classic VU",              "VU / Peak Analyzer", "meterbridge -t vu :",         "meterbridge32x32", TEMPLATE_NO, LEVEL_0, ("---", 0), ("",                                                        "http://plugin.org.uk/meterbridge/") ],
-  [ "meterbridge",       "MeterBridge PPM Meter",               "VU / Peak Analyzer", "meterbridge -t ppm :",        "meterbridge32x32", TEMPLATE_NO, LEVEL_0, ("---", 0), ("",                                                        "http://plugin.org.uk/meterbridge/") ],
-  [ "meterbridge",       "MeterBridge Digital Peak Meter",      "VU / Peak Analyzer", "meterbridge -t dpm -c 2 : :", "meterbridge32x32", TEMPLATE_NO, LEVEL_0, ("---", 0), ("",                                                        "http://plugin.org.uk/meterbridge/") ],
-  [ "meterbridge",       "MeterBridge 'Jellyfish' Phase Meter", "VU / Peak Analyzer", "meterbridge -t jf -c 2 : :",  "meterbridge32x32", TEMPLATE_NO, LEVEL_0, ("---", 0), ("",                                                        "http://plugin.org.uk/meterbridge/") ],
-  [ "meterbridge",       "MeterBridge Oscilloscope Meter",      "VU / Peak Analyzer", "meterbridge -t sco :",        "meterbridge32x32", TEMPLATE_NO, LEVEL_0, ("---", 0), ("",                                                        "http://plugin.org.uk/meterbridge/") ],
+  [ "meterbridge",       "MeterBridge Classic VU",              "VU / Peak Analyzer", "meterbridge -t vu :",         "meterbridge32x32", TEMPLATE_NO, LEVEL_0, ("---", 0), ("",                                                 "http://plugin.org.uk/meterbridge/") ],
+  [ "meterbridge",       "MeterBridge PPM Meter",               "VU / Peak Analyzer", "meterbridge -t ppm :",        "meterbridge32x32", TEMPLATE_NO, LEVEL_0, ("---", 0), ("",                                                 "http://plugin.org.uk/meterbridge/") ],
+  [ "meterbridge",       "MeterBridge Digital Peak Meter",      "VU / Peak Analyzer", "meterbridge -t dpm -c 2 : :", "meterbridge32x32", TEMPLATE_NO, LEVEL_0, ("---", 0), ("",                                                 "http://plugin.org.uk/meterbridge/") ],
+  [ "meterbridge",       "MeterBridge 'Jellyfish' Phase Meter", "VU / Peak Analyzer", "meterbridge -t jf -c 2 : :",  "meterbridge32x32", TEMPLATE_NO, LEVEL_0, ("---", 0), ("",                                                 "http://plugin.org.uk/meterbridge/") ],
+  [ "meterbridge",       "MeterBridge Oscilloscope Meter",      "VU / Peak Analyzer", "meterbridge -t sco :",        "meterbridge32x32", TEMPLATE_NO, LEVEL_0, ("---", 0), ("",                                                 "http://plugin.org.uk/meterbridge/") ],
 
   [ "mhwaveedit",        "MhWaveEdit",                   "Audio Editor",        "mhwaveedit",             "mhwaveedit",       TEMPLATE_NO,  LEVEL_0, ("---",  0), ("",                                                          "http://gna.org/projects/mhwaveedit/") ],
 
@@ -253,16 +244,17 @@ list_Tool = [
 
   [ "non-mixer",         "Non-Mixer",                    "Mixer",               "non-mixer",              "non-mixer",        TEMPLATE_NO,  LEVEL_0, ("CV",   0), ("file:///usr/share/doc/non-mixer/MANUAL.html",               "http://non.tuxfamily.org/wiki/Non%20Mixer") ],
 
-  [ "patchage",          "Patchage",                     "Patch Bay",           "patchage",               "patchage",         TEMPLATE_NO,  LEVEL_0, ("ALSA + JACK", 0), ("",                                                          "http://drobilla.net/blog/software/patchage/") ],
-  [ "patchage",          "Patchage (ALSA Only)",         "Patch Bay",           "patchage -J",            "patchage",         TEMPLATE_NO,  LEVEL_0, ("ALSA",        0), ("",                                                          "http://drobilla.net/blog/software/patchage/") ],
+  [ "patchage",          "Patchage",                     "Patch Bay",           "patchage",               "patchage",         TEMPLATE_NO,  LEVEL_0, ("ALSA + JACK", 0), ("",                                                   "http://drobilla.net/blog/software/patchage/") ],
 
-  [ "qjackctl",          "QJackControl",                 "JACK Control",        "qjackctl",               "qjackctl",         TEMPLATE_NO,  LEVEL_0, ("ALSA + JACK", 1), ("",                                                          "") ],
+  [ "paulstretch",       "PaulStretch",                  "Extreme Stretch",     "paulstretch",            generic_audio_icon, TEMPLATE_NO,  LEVEL_0, ("---",  0), ("",                                                          "") ],
+
+  [ "qjackctl",          "QJackControl",                 "JACK Control",        "qjackctl",               "qjackctl",         TEMPLATE_NO,  LEVEL_0, ("ALSA + JACK", 1), ("",                                                   "") ],
 
   [ "qamix",             "QAMix",                        "Mixer",               "qamix",                  "qamix",            TEMPLATE_NO,  LEVEL_0, ("ALSA", 0), ("",                                                          "") ],
   [ "qarecord",          "QARecord",                     "Recorder",            "qarecord --jack",        "qarecord_48",      TEMPLATE_NO,  LEVEL_0, ("ALSA", 0), ("",                                                          "") ],
   [ "qmidiarp",          "QMidiArp",                     "MIDI Arpeggiator",    "qmidiarp",               generic_midi_icon,  TEMPLATE_NO,  LEVEL_0, ("ALSA", 0), ("",                                                          "") ],
 
-  [ "timemachine",       "TimeMachine",                  "Recorder",            "timemachine",            "/usr/share/timemachine/pixmaps/timemachine-icon.png", TEMPLATE_NO, LEVEL_0, ("---", 0), ("",                                "http://plugin.org.uk/timemachine/") ],
+  [ "timemachine",       "TimeMachine",                  "Recorder",            "timemachine",            "/usr/share/timemachine/pixmaps/timemachine-icon.png", TEMPLATE_NO, LEVEL_0, ("---", 0), ("",                         "http://plugin.org.uk/timemachine/") ],
 
   [ "vmpk",              "Virtual MIDI Piano Keyboard (ALSA)","Virtual Keyboard","vmpk",                  "vmpk",             TEMPLATE_NO,  LEVEL_0, ("ALSA", 0), ("file:///usr/share/vmpk/help.html",                          "http://vmpk.sf.net/") ],
   [ "vmpk-jack",         "Virtual MIDI Piano Keyboard (JACK)","Virtual Keyboard","vmpk-jack",             "vmpk",             TEMPLATE_NO,  LEVEL_0, ("JACK", 0), ("file:///usr/share/vmpk/help.html",                          "http://vmpk.sf.net/") ],
