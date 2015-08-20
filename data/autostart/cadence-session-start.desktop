@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=1.0
+Type=Application
+Name=Cadence session startup
+Comment=Cadence session startup
+Exec=cadence-session-start --maybe-system-start
+Icon=cadence
+Terminal=false
+GenericName=
+NoDisplay=true

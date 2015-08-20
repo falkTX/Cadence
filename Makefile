@@ -85,6 +85,7 @@ debug:
 
 install:
 	# Create directories
+	install -d $(DESTDIR)/etc/xdg/autostart/
 	install -d $(DESTDIR)$(PREFIX)/bin/
 	install -d $(DESTDIR)$(PREFIX)/share/applications/
 	install -d $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
@@ -119,7 +120,8 @@ install:
 		$(DESTDIR)$(PREFIX)/bin/
 
 	# Install desktop files
-	install -m 644 data/*.desktop $(DESTDIR)$(PREFIX)/share/applications/
+	install -m 644 data/autostart/*.desktop $(DESTDIR)/etc/xdg/autostart/
+	install -m 644 data/*.desktop           $(DESTDIR)$(PREFIX)/share/applications/
 
 	# Install icons, 16x16
 	install -m 644 resources/16x16/cadence.png             $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
@@ -187,9 +189,6 @@ install:
 		$(X11_RC_DIR)/21cadence-session-inject \
 		$(X11_RC_DIR)/70cadence-plugin-paths \
 		$(X11_RC_DIR)/99cadence-session-start
-
-	# get rid of some old files
-	rm -f $(DESTDIR)/etc/xdg/autostart/cadence-session-start.desktop
 
 # -----------------------------------------------------------------------------------------------------------------------------------------
 
