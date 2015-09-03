@@ -41,11 +41,24 @@ def forceReset():
             os.remove(config)
 
 # Start JACK, A2J and Pulse, according to user settings
-def startSession(systemStarted):
+def startSession(systemStarted, secondSystemStartAttempt):
     # Check if JACK is set to auto-start
     if systemStarted and not GlobalSettings.value("JACK/AutoStart", False, type=bool):
         print("JACK is set to NOT auto-start on login")
         return True
+
+    # Called via autostart desktop file
+    if systemStarted and secondSystemStartAttempt:
+        tmp_bus  = dbus.SessionBus()
+        tmp_jack = tmp_bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
+        started  = bool(tmp_jack.IsStarted())
+
+        # Cleanup
+        del tmp_bus, tmp_jack
+
+        # If already started, do nothing
+        if started:
+            return True
 
     # Kill all audio processes first
     stopAllAudioProcesses()
@@ -217,13 +230,13 @@ if __name__ == '__main__':
             printVST_PATH()
         elif arg == "--reset":
             forceReset()
-        elif arg == "--system-start":
-            sys.exit(startSession(True))
-        elif arg in ["-s", "--s", "-start", "--start"]:
-            sys.exit(startSession(False))
-        elif arg in ["-h", "--h", "-help", "--help"]:
+        elif arg in ("--system-start", "--system-start-desktop"):
+            sys.exit(startSession(True, arg == "--system-start-desktop"))
+        elif arg in ("-s", "--s", "-start", "--start"):
+            sys.exit(startSession(False, False))
+        elif arg in ("-h", "--h", "-help", "--help"):
             printHelp(cmd)
-        elif arg in ["-v", "--v", "-version", "--version"]:
+        elif arg in ("-v", "--v", "-version", "--version"):
             printVersion()
         else:
             printError(cmd)

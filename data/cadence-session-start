@@ -19,10 +19,8 @@ if [ "$1"x == "--system-start-by-x11-startup"x ]; then
   fi
 elif [ "$1"x == "--maybe-system-start"x ]; then
   # called via autostart cadence-session-start.desktop
-  # only do something if 21cadence-session-inject was ignored
-  if [ "$CADENCE_AUTO_STARTED"x == ""x ]; then
-    exec $PYTHON $INSTALL_PREFIX/share/cadence/src/cadence_session_start.py --system-start
-  fi
+  # this will check if jack is already running before trying to restart things
+  exec $PYTHON $INSTALL_PREFIX/share/cadence/src/cadence_session_start.py --system-start-desktop
 else
   # called by user
   exec $PYTHON $INSTALL_PREFIX/share/cadence/src/cadence_session_start.py "$@"
