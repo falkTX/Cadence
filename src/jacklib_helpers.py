@@ -33,36 +33,28 @@ def get_jack_status_error_string(cStatus):
     if status == 0x0:
         return ""
 
-    errorString = ""
+    errors_map = [
+        (jacklib.JackFailure, "Overall operation failed"),
+        (jacklib.JackInvalidOption, "The operation contained an invalid or unsupported option"),
+        (jacklib.JackNameNotUnique, "The desired client name was not unique"),
+        (jacklib.JackServerStarted, "The JACK server was started as a result of this operation"),
+        (jacklib.JackServerFailed, "Unable to connect to the JACK server"),
+        (jacklib.JackServerError, "Communication error with the JACK server"),
+        (jacklib.JackNoSuchClient, "Requested client does not exist"),
+        (jacklib.JackLoadFailure, "Unable to load internal client"),
+        (jacklib.JackInitFailure, "Unable to initialize client"),
+        (jacklib.JackShmFailure, "Unable to access shared memory"),
+        (jacklib.JackVersionError, "Client's protocol version does not match"),
+        (jacklib.JackBackendError, "Backend Error"),
+        (jacklib.JackClientZombie, "Client is being shutdown against its will"),
+    ]
 
-    if status & jacklib.JackFailure:
-        errorString += "Overall operation failed;\n"
-    if status & jacklib.JackInvalidOption:
-        errorString += "The operation contained an invalid or unsupported option;\n"
-    if status & jacklib.JackNameNotUnique:
-        errorString += "The desired client name was not unique;\n"
-    if status & jacklib.JackServerStarted:
-        errorString += "The JACK server was started as a result of this operation;\n"
-    if status & jacklib.JackServerFailed:
-        errorString += "Unable to connect to the JACK server;\n"
-    if status & jacklib.JackServerError:
-        errorString += "Communication error with the JACK server;\n"
-    if status & jacklib.JackNoSuchClient:
-        errorString += "Requested client does not exist;\n"
-    if status & jacklib.JackLoadFailure:
-        errorString += "Unable to load internal client;\n"
-    if status & jacklib.JackInitFailure:
-        errorString += "Unable to initialize client;\n"
-    if status & jacklib.JackShmFailure:
-        errorString += "Unable to access shared memory;\n"
-    if status & jacklib.JackVersionError:
-        errorString += "Client's protocol version does not match;\n"
-    if status & jacklib.JackBackendError:
-        errorString += "Backend Error;\n"
-    if status & jacklib.JackClientZombie:
-        errorString += "Client is being shutdown against its will;\n"
+    errors_list = [
+        error_line for error, error_line in errors_map
+        if status & error
+    ]
 
-    return errorString.strip().rsplit(";", 1)[0] + "."
+    return ';\n'.join(errors_list) + '.'
 
 # ------------------------------------------------------------------------------------------------------------
 # Convert C char** -> Python list
