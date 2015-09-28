@@ -71,7 +71,9 @@ if haveWine:
 DESKTOP_X_IMAGE = [
     "eog.desktop",
     "kde4/digikam.desktop",
-    "kde4/gwenview.desktop"
+    "kde4/gwenview.desktop",
+    "org.kde.digikam.desktop",
+    "org.kde.gwenview.desktop",
 ]
 
 DESKTOP_X_MUSIC = [
@@ -79,25 +81,29 @@ DESKTOP_X_MUSIC = [
     "clementine.desktop",
     "smplayer.desktop",
     "vlc.desktop",
-    "kde4/amarok.desktop"
+    "kde4/amarok.desktop",
+    "org.kde.amarok.desktop",
 ]
 
 DESKTOP_X_VIDEO = [
     "smplayer.desktop",
-    "vlc.desktop"
+    "vlc.desktop",
 ]
 
 DESKTOP_X_TEXT = [
     "gedit.desktop",
     "kde4/kate.desktop",
-    "kde4/kwrite.desktop"
+    "kde4/kwrite.desktop",
+    "org.kde.kate.desktop",
+    "org.kde.kwrite.desktop",
 ]
 
 DESKTOP_X_BROWSER = [
     "chrome.desktop",
     "firefox.desktop",
     "iceweasel.desktop",
-    "kde4/konqbrowser.desktop"
+    "kde4/konqbrowser.desktop",
+    "org.kde.konqbrowser.desktop",
 ]
 
 XDG_APPLICATIONS_PATH = [
