@@ -184,9 +184,7 @@ install:
 		$(DESTDIR)$(PREFIX)/bin/catia \
 		$(DESTDIR)$(PREFIX)/bin/claudia \
 		$(DESTDIR)$(PREFIX)/bin/claudia-launcher \
-		$(X11_RC_DIR)/21cadence-session-inject \
-		$(X11_RC_DIR)/70cadence-plugin-paths \
-		$(X11_RC_DIR)/99cadence-session-start
+		$(X11_RC_DIR)/61cadence-session-inject
 
 	# Delete old files
 	rm -f $(X11_RC_DIR)/21cadence-session-inject
