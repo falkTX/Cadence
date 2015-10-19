@@ -22,6 +22,7 @@
 from PyQt4.QtCore import pyqtSlot, Qt, QSettings, QTimer, SIGNAL, SLOT
 from PyQt4.QtGui import QDialog, QDialogButtonBox, QFontMetrics, QMessageBox
 from sys import platform, version_info
+from pprint import pprint
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
@@ -691,26 +692,47 @@ class JackSettingsW(QDialog):
     # -----------------------------------------------------------------
     # Helper functions
 
-    def getAlsaDeviceList(self):
+    def getAlsaDeviceListHelper(self, mode):
+        '''mode can be set to "aplay" or "arecord"'''
+        output = getoutput("env LANG=C %s -L | grep -A1 ^dmix" % mode).split("\n")
+
+        info = {}
+        for line in output:
+            line = line.strip()
+            if line == '--': continue
+            if line.startswith("dmix:"):
+                info  = dict([n.split('=') for n in line.split(':')[1].split(',')])
+                continue
+            info['NAME'] = line
+
+            if info['CARD'] == 'Loopback': continue
+
+            desc = "hw:%(CARD)s,%(DEV)s [%(NAME)s]" % info
+            yield desc
+
+    def getAlsaDeviceList(self, control = None, mode = 'Duplex'):
         alsaDeviceList = []
 
-        aplay_out = getoutput("env LANG=C aplay -l").split("\n")
-        for line in aplay_out:
-            line = line.strip()
-            if line.startswith("card "):
-                cardInfo  = line.split(", ", 1)[0].split(": ")
-                cardIndex = cardInfo[0].replace("card ", "")
-                cardName  = cardInfo[1].split(" [")[0]
+        playback = []
+        capture  = []
 
-                deviceInfo  = line.split(", ", 1)[1].split(": ")
-                deviceIndex = deviceInfo[0].replace("device ", "")
-                deviceName  = deviceInfo[1].split(" [")[0]
+        if mode in ['Duplex', 'Playback']:
+            playback = self.getAlsaDeviceListHelper('aplay')
 
-                if cardName != "Loopback":
-                    fullName = "hw:%s,%s [%s]" % (cardName, deviceIndex, deviceName)
-                    alsaDeviceList.append(fullName)
+        if mode in ['Duplex', 'Capture']:
+            capture = self.getAlsaDeviceListHelper('arecord')
 
-        return alsaDeviceList
+        result = []
+        if mode == 'Playback':
+            result = set(playback)
+        elif mode == 'Capture':
+            result = set(capture)
+        else:
+            result = set(playback).intersection(capture)
+
+        for line in list(result):
+            if control:
+                control(line)
 
     def setComboBoxValue(self, box, text, split=False):
         for i in range(box.count()):
@@ -760,9 +782,7 @@ class JackSettingsW(QDialog):
         self.ui.obj_driver_device.clear()
         if driverHasFeature("device"):
             if LINUX and self.fDriverName == "alsa":
-                dev_list = self.getAlsaDeviceList()
-                for dev in dev_list:
-                    self.ui.obj_driver_device.addItem(dev)
+                self.getAlsaDeviceList(self.ui.obj_driver_device.addItem)
             else:
                 dev_list = gJackctl.GetParameterConstraint(["driver", "device"])[3]
                 for i in range(len(dev_list)):
@@ -777,10 +797,8 @@ class JackSettingsW(QDialog):
             self.ui.obj_driver_playback.addItem("none")
 
             if LINUX:
-                dev_list = self.getAlsaDeviceList()
-                for dev in dev_list:
-                    self.ui.obj_driver_capture.addItem(dev)
-                    self.ui.obj_driver_playback.addItem(dev)
+                self.getAlsaDeviceList(self.ui.obj_driver_capture.addItem, 'Capture')
+                self.getAlsaDeviceList(self.ui.obj_driver_playback.addItem, 'Playback')
             else:
                 dev_list = gJackctl.GetParameterConstraint(["driver", "device"])[3]
                 for i in range(len(dev_list)):
