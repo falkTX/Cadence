@@ -33,6 +33,7 @@ else:
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
 
+import alsainfo
 import ui_settings_jack
 
 # ------------------------------------------------------------------------------------------------------------
@@ -700,26 +701,9 @@ class JackSettingsW(QDialog):
     # -----------------------------------------------------------------
     # Helper functions
 
-    def getAlsaDeviceList(self):
-        alsaDeviceList = []
-
-        aplay_out = getoutput("env LANG=C LC_ALL=C aplay -l").split("\n")
-        for line in aplay_out:
-            line = line.strip()
-            if line.startswith("card "):
-                cardInfo  = line.split(", ", 1)[0].split(": ")
-                cardIndex = cardInfo[0].replace("card ", "")
-                cardName  = cardInfo[1].split(" [")[0]
-
-                deviceInfo  = line.split(", ", 1)[1].split(": ")
-                deviceIndex = deviceInfo[0].replace("device ", "")
-                deviceName  = deviceInfo[1].split(" [")[0]
-
-                if cardName != "Loopback":
-                    fullName = "hw:%s,%s [%s]" % (cardName, deviceIndex, deviceName)
-                    alsaDeviceList.append(fullName)
-
-        return alsaDeviceList
+    def getAlsaDeviceList(self, **kwargs):
+        return ["%s [%s - %s]" % dev
+                for dev in alsainfo.get_devices(**kwargs)]
 
     def setComboBoxValue(self, box, text, split=False):
         for i in range(box.count()):
@@ -786,10 +770,10 @@ class JackSettingsW(QDialog):
             self.ui.obj_driver_playback.addItem("none")
 
             if LINUX:
-                dev_list = self.getAlsaDeviceList()
-                for dev in dev_list:
-                    self.ui.obj_driver_capture.addItem(dev)
+                for dev in self.getAlsaDeviceList(capture=False):
                     self.ui.obj_driver_playback.addItem(dev)
+                for dev in self.getAlsaDeviceList(playback=False):
+                    self.ui.obj_driver_capture.addItem(dev)
             else:
                 dev_list = gJackctl.GetParameterConstraint(["driver", "device"])[3]
                 for i in range(len(dev_list)):
