@@ -548,7 +548,7 @@ class CatiaMainW(AbstractCanvasJackClass):
             return
 
         # Get ALSA MIDI ports (outputs)
-        output = getoutput("env LANG=C aconnect -i").split("\n")
+        output = getoutput("env LANG=C LC_ALL=C aconnect -i").split("\n")
         lastGroupId   = -1
         lastGroupName = ""
 
@@ -584,7 +584,7 @@ class CatiaMainW(AbstractCanvasJackClass):
                 lastGroupName = ""
 
         # Get ALSA MIDI ports (inputs)
-        output = getoutput("env LANG=C aconnect -o").split("\n")
+        output = getoutput("env LANG=C LC_ALL=C aconnect -o").split("\n")
         lastGroupId   = -1
         lastGroupName = ""
 
@@ -620,7 +620,7 @@ class CatiaMainW(AbstractCanvasJackClass):
                 lastGroupName = ""
 
         # Get ALSA MIDI connections
-        output = getoutput("env LANG=C aconnect -ol").split("\n")
+        output = getoutput("env LANG=C LC_ALL=C aconnect -ol").split("\n")
         lastGroupId = -1
         lastPortId  = -1
 
