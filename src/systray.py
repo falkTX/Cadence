@@ -47,6 +47,9 @@ try:
             from gi.repository import Gtk, AppIndicator3 as AppIndicator
 
         TrayEngine = "AppIndicator"
+    
+    elif os.getenv("KDE_SESSION_VERSION") >= 5:
+        TrayEngine = "Qt"
 
     elif (os.getenv("KDE_FULL_SESSION") or os.getenv("DESKTOP_SESSION") == "kde-plasma") and not os.path.exists("/etc/debian_version"):
         from PyKDE4.kdeui import KAction, KIcon, KMenu, KStatusNotifierItem
