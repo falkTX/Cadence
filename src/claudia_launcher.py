@@ -703,6 +703,11 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
                     if installed == "install":
                         pkglist.append(package.strip())
 
+            elif os.path.exists("/bin/rpm"):
+                pkg_out = getoutput("env LANG=C /bin/rpm -qa --qf \"%{NAME}\n\" 2>/dev/null").split("\n")
+                for package in pkg_out:
+                    pkglist.append(package)
+
             if not "bristol" in pkglist:
                 self.tabWidget.setTabEnabled(iTabBristol, False)
 
