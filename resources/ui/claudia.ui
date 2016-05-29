@@ -501,7 +501,7 @@
              </size>
             </property>
             <property name="toolTip">
-             <string>CLear Xruns</string>
+             <string>Clear Xruns</string>
             </property>
             <property name="text">
              <string/>
