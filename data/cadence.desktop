@@ -2,6 +2,7 @@
 Name=Cadence
 GenericName=Cadence
 Comment=JACK Toolbox
+Comment[fr]=Boîte à outils JACK
 Exec=cadence
 Icon=cadence
 Terminal=false

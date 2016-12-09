@@ -1,7 +1,9 @@
 [Desktop Entry]
 Name=Claudia Launcher
 GenericName=Claudia Launcher
+GenericName[fr]=Lanceur Claudia
 Comment=Multimedia Applications Launcher
+Comment[fr]=Lanceur d'applications multimédia
 Exec=claudia-launcher
 Icon=claudia-launcher
 Terminal=false

@@ -2,6 +2,7 @@
 Name=Claudia
 GenericName=Claudia
 Comment=LADISH Frontend
+Comment[fr]=Interface graphique utilisateur pour LADISH
 Exec=claudia
 Icon=claudia
 Terminal=false

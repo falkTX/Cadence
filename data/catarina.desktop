@@ -2,6 +2,7 @@
 Name=Catarina
 GenericName=Catarina
 Comment=PatchCanvas Test Application
+Comment[fr]=Application de test du canevas de patch
 Exec=catarina
 Icon=catarina
 Terminal=false
