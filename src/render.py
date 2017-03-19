@@ -266,7 +266,8 @@ class RenderW(QDialog):
             jacklib.set_freewheel(self.fJackClient, 0)
             sleep(1)
 
-        self.fProcess.close()
+        self.fProcess.terminate()
+        #self.fProcess.waitForFinished(5000)
 
         if useTransport:
             self.fTimer.stop()
