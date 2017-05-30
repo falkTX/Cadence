@@ -2325,6 +2325,7 @@ if __name__ == '__main__':
     if "--minimized" in app.arguments():
         gui.hide()
         gui.systray.setActionText("show", gui.tr("Restore"))
+        app.setQuitOnLastWindowClosed(False)
     else:
         gui.show()
 
