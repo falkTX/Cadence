@@ -20,6 +20,7 @@
 # Imports (Global)
 
 from random import randint
+import os
 
 if True:
     from PyQt5.QtCore import pyqtSlot, Qt, QTimer, QSettings
@@ -119,7 +120,10 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         self._parent   = None
         self._settings = None
         self.m_ladish_only = False
-
+        if os.path.isdir("/usr/lib64"):
+            self.lib_path = "lib64"
+        else:
+            self.lib_path = "lib"
         self.listDAW.setColumnWidth(0, 22)
         self.listDAW.setColumnWidth(1, 225)
         self.listDAW.setColumnWidth(2, 150)
@@ -696,6 +700,18 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
                 for package in pkg_out:
                     pkglist.append(package)
 
+            elif os.path.exists("/usr/bin/dnf"):
+                pkg_out = getoutput("env LANG=C LC_ALL=C /usr/bin/dnf list installed 2>/dev/null").split("\n")
+                for pkg_info in pkg_out[2:]:
+                    package = pkg_info.split(" ")[0].split(".")[0]
+                    pkglist.append(package.strip())
+
+            elif os.path.exists("/usr/bin/yum"):
+                pkg_out = getoutput("env LANG=C LC_ALL=C /usr/bin/yum list installed 2>/dev/null").split("\n")
+                for package in pkg_out[2:]:
+                    package = pkg_info.split(" ")[0].split(".")[0]
+                    pkglist.append(package.strip())
+ 
             elif os.path.exists("/usr/bin/dpkg"):
                 pkg_out = getoutput("env LANG=C LC_ALL=C /usr/bin/dpkg --get-selections 2>/dev/null").split("\n")
                 for pkg_info in pkg_out:
@@ -823,11 +839,10 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
                 last_pos += 1
 
-        if haveCarla and os.path.exists("/usr/lib/carla/libcarla_utils.so"):
-            utils = CarlaUtils("/usr/lib/carla/libcarla_utils.so")
+        if haveCarla and os.path.exists("/usr/" + self.lib_path + "/carla/libcarla_utils.so"):
+            utils = CarlaUtils("/usr/" + self.lib_path + "/carla/libcarla_utils.so")
             last_pos = 0
-            lv2path = os.getenv("LV2_PATH", "~/.lv2:/usr/lib/lv2:/usr/local/lib/lv2")
-            for i in range(utils.get_cached_plugin_count(PLUGIN_LV2, lv2path)):
+            for i in range(utils.get_cached_plugin_count(PLUGIN_LV2, os.getenv("LV2_PATH", "~/.lv2:/usr/" + self.lib_path + "/lv2:/usr/local/" + self.lib_path + "/lv2"))):
                 plugin = utils.get_cached_plugin_info(PLUGIN_LV2, i)
 
                 if (plugin["hints"] & PLUGIN_HAS_CUSTOM_UI) == 0:
