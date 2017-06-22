@@ -690,18 +690,6 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
                 for package in pkg_out:
                     pkglist.append(package)
 
-            elif os.path.exists("/usr/bin/dnf"):
-                pkg_out = getoutput("env LANG=C LC_ALL=C /usr/bin/dnf list installed 2>/dev/null").split("\n")
-                for pkg_info in pkg_out[2:]:
-                    package = pkg_info.split(" ")[0].split(".")[0]
-                    pkglist.append(package.strip())
-
-            elif os.path.exists("/usr/bin/yum"):
-                pkg_out = getoutput("env LANG=C LC_ALL=C /usr/bin/yum list installed 2>/dev/null").split("\n")
-                for package in pkg_out[2:]:
-                    package = pkg_info.split(" ")[0].split(".")[0]
-                    pkglist.append(package.strip())
- 
             elif os.path.exists("/usr/bin/dpkg"):
                 pkg_out = getoutput("env LANG=C LC_ALL=C /usr/bin/dpkg --get-selections 2>/dev/null").split("\n")
                 for pkg_info in pkg_out:
@@ -709,6 +697,11 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
                     if installed == "install":
                         pkglist.append(package.strip())
 
+            elif os.path.exists("/bin/rpm"):
+                pkg_out = getoutput("env LANG=C /bin/rpm -qa --qf \"%{NAME}\n\" 2>/dev/null").split("\n")
+                for package in pkg_out:
+                    pkglist.append(package)
+            
             if not "bristol" in pkglist:
                 self.tabWidget.setTabEnabled(iTabBristol, False)
 
