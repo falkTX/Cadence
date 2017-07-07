@@ -164,7 +164,7 @@ install:
 	# Install addtional stuff for Cadence
 	install -m 644 data/pulse2jack/*     $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
 	install -m 644 data/pulse2loopback/* $(DESTDIR)$(PREFIX)/share/cadence/pulse2loopback/
-	install -m 644 data/61cadence-session-inject $(X11_RC_DIR)
+	install -m 755 data/61cadence-session-inject $(X11_RC_DIR)
 
 	# Install addtional stuff for Claudia
 	cp -r data/icons/*     $(DESTDIR)$(PREFIX)/share/cadence/icons/
