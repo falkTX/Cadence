@@ -20,6 +20,7 @@
 # Imports (Global)
 
 from time import ctime
+import shutil
 from PyQt4.QtCore import QPointF
 from PyQt4.QtGui import QAction, QApplication, QCheckBox, QHBoxLayout, QVBoxLayout, QTableWidgetItem, QTreeWidgetItem
 
@@ -315,6 +316,7 @@ class CreateRoomW(QDialog, ui_claudia_createroom.Ui_CreateRoomW):
 class ProjectNameW(QDialog, ui_claudia_projectname.Ui_ProjectNameW):
     NEW = 1
     SAVE_AS = 2
+    CLONE = 3
 
     def __init__(self, parent, mode, proj_folder, path="", name=""):
         QDialog.__init__(self, parent)
@@ -326,6 +328,11 @@ class ProjectNameW(QDialog, ui_claudia_projectname.Ui_ProjectNameW):
             self.setWindowTitle(self.tr("New project"))
         elif mode == self.SAVE_AS:
             self.setWindowTitle(self.tr("Save project as"))
+            self.le_path.setText(path)
+            self.le_name.setText(name)
+            self.checkText(path, name)
+        elif mode == self.CLONE:
+            self.setWindowTitle(self.tr("Clone project"))
             self.le_path.setText(path)
             self.le_name.setText(name)
             self.checkText(path, name)
@@ -636,12 +643,14 @@ class ClaudiaMainW(AbstractCanvasJackClass):
         self.ui.menu_project_load.setIcon(getIcon("document-open"))
         self.ui.act_project_save.setIcon(getIcon("document-save"))
         self.ui.act_project_save_as.setIcon(getIcon("document-save-as"))
+        self.ui.act_project_clone.setIcon(getIcon("edit-copy"))
         self.ui.act_project_unload.setIcon(getIcon("window-close"))
         self.ui.act_project_properties.setIcon(getIcon("edit-rename"))
         self.ui.b_project_new.setIcon(getIcon("document-new"))
         self.ui.b_project_load.setIcon(getIcon("document-open"))
         self.ui.b_project_save.setIcon(getIcon("document-save"))
         self.ui.b_project_save_as.setIcon(getIcon("document-save-as"))
+        self.ui.b_project_clone.setIcon(getIcon("edit-copy"))
 
         self.ui.act_app_add_new.setIcon(getIcon("list-add"))
         self.ui.act_app_run_custom.setIcon(getIcon("system-run"))
@@ -820,12 +829,14 @@ class ClaudiaMainW(AbstractCanvasJackClass):
         self.connect(self.ui.act_project_new, SIGNAL("triggered()"), SLOT("slot_project_new()"))
         self.connect(self.ui.act_project_save, SIGNAL("triggered()"), SLOT("slot_project_save()"))
         self.connect(self.ui.act_project_save_as, SIGNAL("triggered()"), SLOT("slot_project_save_as()"))
+        self.connect(self.ui.act_project_clone, SIGNAL("triggered()"), SLOT("slot_project_clone()"))
         self.connect(self.ui.act_project_unload, SIGNAL("triggered()"), SLOT("slot_project_unload()"))
         self.connect(self.ui.act_project_properties, SIGNAL("triggered()"), SLOT("slot_project_properties()"))
         self.connect(self.ui.b_project_new, SIGNAL("clicked()"), SLOT("slot_project_new()"))
         self.connect(self.ui.b_project_load, SIGNAL("clicked()"), SLOT("slot_project_load()"))
         self.connect(self.ui.b_project_save, SIGNAL("clicked()"), SLOT("slot_project_save()"))
         self.connect(self.ui.b_project_save_as, SIGNAL("clicked()"), SLOT("slot_project_save_as()"))
+        self.connect(self.ui.b_project_clone, SIGNAL("clicked()"), SLOT("slot_project_clone()"))
         self.connect(self.ui.menu_project_load, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuProjectList()"))
 
         self.connect(self.ui.act_app_add_new, SIGNAL("triggered()"), SLOT("slot_app_add_new()"))
@@ -1747,6 +1758,27 @@ class ClaudiaMainW(AbstractCanvasJackClass):
             self.slot_project_new()
 
     @pyqtSlot()
+    def slot_project_clone(self):
+        project_graph_version, project_properties = gDBus.ladish_room.GetProjectProperties()
+
+        if len(project_properties) > 0:
+            path = str(project_properties['dir'])
+            name = str(project_properties['name'])
+            dialog = ProjectNameW(self, ProjectNameW.CLONE, self.fSavedSettings["Main/DefaultProjectFolder"], path, name)
+
+            if dialog.exec_():
+                if os.listdir(dialog.ret_project_path):
+                    shutil.move(dialog.ret_project_path, dialog.ret_project_path+"_old")
+                else:
+                    os.rmdir(dialog.ret_project_path)
+                shutil.copytree(path, dialog.ret_project_path)
+                gDBus.ladish_room.SaveProject(dialog.ret_project_path, dialog.ret_project_name)
+
+        else:
+            self.slot_project_new()
+        
+
+    @pyqtSlot()
     def slot_project_unload(self):
         gDBus.ladish_room.UnloadProject()
 
@@ -1845,10 +1877,12 @@ class ClaudiaMainW(AbstractCanvasJackClass):
             has_project = bool(len(project_properties) > 0)
             self.ui.act_project_save.setEnabled(has_project)
             self.ui.act_project_save_as.setEnabled(has_project)
+            self.ui.act_project_clone.setEnabled(has_project)
             self.ui.act_project_unload.setEnabled(has_project)
             self.ui.act_project_properties.setEnabled(has_project)
             self.ui.b_project_save.setEnabled(has_project)
             self.ui.b_project_save_as.setEnabled(has_project)
+            self.ui.b_project_clone.setEnabled(has_project)
             self.ui.menu_Application.setEnabled(has_project)
 
         else:
@@ -1980,6 +2014,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
                 cMenu.addMenu(self.ui.menu_project_load)
                 act_x_save = cMenu.addAction(self.tr("Save Project"))
                 act_x_save_as = cMenu.addAction(self.tr("Save Project As..."))
+                act_x_clone = cMenu.addAction(self.tr("Clone Project"))
                 act_x_unload = cMenu.addAction(self.tr("Unload Project"))
                 cMenu.addSeparator()
                 act_x_properties = cMenu.addAction(self.tr("Project Properties..."))
@@ -1991,6 +2026,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
                 act_x_new.setIcon(QIcon.fromTheme("document-new", QIcon(":/16x16/document-new.png")))
                 act_x_save.setIcon(QIcon.fromTheme("document-save", QIcon(":/16x16/document-save.png")))
                 act_x_save_as.setIcon(QIcon.fromTheme("document-save-as", QIcon(":/16x16/document-save-as.png")))
+                act_x_clone.setIcon(QIcon.fromTheme("edit-copy", QIcon(":/16x16/edit-copy.png")))
                 act_x_unload.setIcon(QIcon.fromTheme("window-close", QIcon(":/16x16/dialog-close.png")))
                 act_x_properties.setIcon(QIcon.fromTheme("edit-rename", QIcon(":/16x16/edit-rename.png")))
                 act_x_delete_room.setIcon(QIcon.fromTheme("edit-delete", QIcon(":/16x16/edit-delete.png")))
@@ -2003,6 +2039,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
                     act_x_run_custom.setEnabled(False)
                     act_x_save.setEnabled(False)
                     act_x_save_as.setEnabled(False)
+                    act_x_clone.setEnabled(False)
                     act_x_unload.setEnabled(False)
                     act_x_properties.setEnabled(False)
 
@@ -2049,6 +2086,8 @@ class ClaudiaMainW(AbstractCanvasJackClass):
                     self.slot_project_save()
                 elif act_x_sel == act_x_save_as:
                     self.slot_project_save_as()
+                elif act_x_sel == act_x_clone:
+                    self.slot_project_clone()
                 elif act_x_sel == act_x_unload:
                     self.slot_project_unload()
                 elif act_x_sel == act_x_properties:
@@ -2350,10 +2389,12 @@ class ClaudiaMainW(AbstractCanvasJackClass):
 
         self.ui.act_project_save.setEnabled(has_project)
         self.ui.act_project_save_as.setEnabled(has_project)
+        self.ui.act_project_clone.setEnabled(has_project)
         self.ui.act_project_unload.setEnabled(has_project)
         self.ui.act_project_properties.setEnabled(has_project)
         self.ui.b_project_save.setEnabled(has_project)
         self.ui.b_project_save_as.setEnabled(has_project)
+        self.ui.b_project_clone.setEnabled(has_project)
         self.ui.menu_Application.setEnabled(has_project)
 
         if path == "/org/ladish/Studio":

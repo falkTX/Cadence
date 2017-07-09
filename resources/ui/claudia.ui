@@ -248,6 +248,26 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QPushButton" name="b_project_clone">
+            <property name="maximumSize">
+             <size>
+              <width>23</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Clone Project</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../resources.qrc">
+              <normaloff>:/16x16/edit-copy.png</normaloff>:/16x16/edit-copy.png</iconset>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>
@@ -842,6 +862,7 @@
     <addaction name="menu_project_load"/>
     <addaction name="act_project_save"/>
     <addaction name="act_project_save_as"/>
+    <addaction name="act_project_clone"/>
     <addaction name="act_project_unload"/>
     <addaction name="separator"/>
     <addaction name="act_project_properties"/>
@@ -1429,6 +1450,15 @@
   <action name="act_tools_a2j_export_hw">
    <property name="text">
     <string>Export Hardware Ports...</string>
+   </property>
+  </action>
+  <action name="act_project_clone">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/16x16/edit-copy.png</normaloff>:/16x16/edit-copy.png</iconset>
+   </property>
+   <property name="text">
+    <string>Clone Project</string>
    </property>
   </action>
  </widget>
