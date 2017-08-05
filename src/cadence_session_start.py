@@ -146,6 +146,13 @@ def startJack():
     if not bool(DBus.jack.IsStarted()):
         DBus.jack.StartServer()
 
+def plainStartJack():
+    DBus.bus  = dbus.SessionBus()
+    DBus.jack = DBus.bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
+    if not bool(DBus.jack.IsStarted()):
+        startJack()
+
+
 def printLADSPA_PATH():
     EXTRA_LADSPA_DIRS = GlobalSettings.value("AudioPlugins/EXTRA_LADSPA_PATH", "", type=str).split(":")
     LADSPA_PATH_str   = ":".join(DEFAULT_LADSPA_PATH)
@@ -187,11 +194,12 @@ def printVST_PATH():
     print(VST_PATH_str)
 
 def printArguments():
-    print("\t-s|--start  \tStart session")
-    print("\t   --reset  \tForce-reset all JACK daemons and settings (disables auto-start at login)")
+    print("\t-s |--start       \tStart session (used for autostart purposes, try -ps or --plainstart instead)")
+    print("\t-ps|--plainstart  \tStart session (as if you pressed start in gui)")
+    print("\t    --reset       \tForce-reset all JACK daemons and settings (disables auto-start at login)")
     print("")
-    print("\t-h|--help   \tShow this help message")
-    print("\t-v|--version\tShow version")
+    print("\t-h |--help        \tShow this help message")
+    print("\t-v |--version     \tShow version")
 
 def printError(cmd):
     print("Invalid arguments")
@@ -234,6 +242,8 @@ if __name__ == '__main__':
             sys.exit(startSession(True, arg == "--system-start-desktop"))
         elif arg in ("-s", "--s", "-start", "--start"):
             sys.exit(startSession(False, False))
+        elif arg in ("-ps", "--ps", "-plainstart", "--plainstart"):
+            plainStartJack()
         elif arg in ("-h", "--h", "-help", "--help"):
             printHelp(cmd)
         elif arg in ("-v", "--v", "-version", "--version"):
