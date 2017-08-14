@@ -1984,6 +1984,7 @@ class CanvasBox(QGraphicsItem):
         # Base Variables
         self.p_width  = 50
         self.p_height = canvas.theme.box_header_height + canvas.theme.box_header_spacing + 1
+        self.p_rounding = 3.0
 
         self.m_last_pos = QPointF()
         self.m_splitted = False
@@ -2469,13 +2470,13 @@ class CanvasBox(QGraphicsItem):
         else:
             painter.setBrush(canvas.theme.box_bg_1)
 
-        painter.drawRect(QRectF(0.5, 0.5, self.p_width-1, self.p_height-1))
+        painter.drawRoundedRect(QRectF(0.5, 0.5, self.p_width-1, self.p_height-1), self.p_rounding, self.p_rounding)
 
         # Draw pixmap header
         if canvas.theme.box_header_pixmap:
             painter.setPen(Qt.NoPen)
             painter.setBrush(canvas.theme.box_bg_2)
-            painter.drawRect(1, 1, self.p_width-2, canvas.theme.box_header_height)
+            painter.drawRoundedRect(QRectF(1, 1, self.p_width-2, canvas.theme.box_header_height), self.p_rounding-0.5, self.p_rounding-0.5)
 
             headerPos  = QPointF(1, 1)
             headerRect = QRectF(2, 2, self.p_width-4, canvas.theme.box_header_height-3)
