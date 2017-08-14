@@ -1984,7 +1984,6 @@ class CanvasBox(QGraphicsItem):
         # Base Variables
         self.p_width  = 50
         self.p_height = canvas.theme.box_header_height + canvas.theme.box_header_spacing + 1
-        self.p_rounding = 3.0
 
         self.m_last_pos = QPointF()
         self.m_splitted = False
@@ -2470,17 +2469,17 @@ class CanvasBox(QGraphicsItem):
         else:
             painter.setBrush(canvas.theme.box_bg_1)
 
-        painter.drawRoundedRect(QRectF(0.5, 0.5, self.p_width-1, self.p_height-1), self.p_rounding, self.p_rounding)
+        painter.drawRoundedRect(QRectF(0.5, 0.5, self.p_width-1, self.p_height-1), canvas.theme.box_rounding, canvas.theme.box_rounding)
 
         # Draw pixmap header
         if canvas.theme.box_header_pixmap:
             painter.setPen(Qt.NoPen)
             painter.setBrush(canvas.theme.box_bg_2)
-            painter.drawRoundedRect(QRectF(1, 1, self.p_width-2, canvas.theme.box_header_height), self.p_rounding-0.5, self.p_rounding-0.5)
+            painter.drawRoundedRect(QRectF(1, 1, self.p_width-2, canvas.theme.box_header_height), canvas.theme.box_rounding-0.5, canvas.theme.box_rounding-0.5)
 
             # Including pixmap clip path
             clipPath = QPainterPath()
-            clipPath.addRoundedRect(QRectF(1+1, 1+1, self.p_width-2-2, canvas.theme.box_header_height-2), self.p_rounding-1.5, self.p_rounding-1.5)
+            clipPath.addRoundedRect(QRectF(1+1, 1+1, self.p_width-2-2, canvas.theme.box_header_height-2), canvas.theme.box_rounding-1.5, canvas.theme.box_rounding-1.5)
             painter.setClipPath(clipPath)
             painter.setClipping(True)
 

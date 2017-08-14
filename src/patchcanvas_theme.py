@@ -60,6 +60,7 @@ class Theme(object):
             self.box_header_pixmap  = None
             self.box_header_height  = 24
             self.box_header_spacing = 0
+            self.box_rounding = 3.0
 
             self.box_text = QPen(QColor(240, 240, 240), 0)
             self.box_text_sel  = self.box_text
@@ -142,6 +143,7 @@ class Theme(object):
             self.box_header_pixmap  = None
             self.box_header_height  = 14
             self.box_header_spacing = 0
+            self.box_rounding = 2.0
 
             self.box_text = QPen(QColor(240, 240, 240), 0)
             self.box_text_sel  = self.box_text
@@ -224,6 +226,7 @@ class Theme(object):
             self.box_header_pixmap  = None
             self.box_header_height  = 24
             self.box_header_spacing = 0
+            self.box_rounding = 3.0
 
             self.box_text = QPen(QColor(1, 1, 1), 0)
             self.box_text_sel  = self.box_text
@@ -306,6 +309,7 @@ class Theme(object):
             self.box_header_pixmap  = None
             self.box_header_height  = 19
             self.box_header_spacing = 0
+            self.box_rounding = 3.0
 
             self.box_text = QPen(QColor(255, 255, 255), 0)
             self.box_text_sel  = self.box_text
@@ -388,6 +392,7 @@ class Theme(object):
             self.box_header_pixmap  = QPixmap(":/bitmaps/canvas/frame_node_header.png")
             self.box_header_height  = 22
             self.box_header_spacing = 6
+            self.box_rounding = 3.0
 
             self.box_text = QPen(QColor(144, 144, 144), 0)
             self.box_text_sel  = QPen(QColor(189, 122, 214), 0)
