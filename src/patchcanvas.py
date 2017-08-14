@@ -2478,9 +2478,17 @@ class CanvasBox(QGraphicsItem):
             painter.setBrush(canvas.theme.box_bg_2)
             painter.drawRoundedRect(QRectF(1, 1, self.p_width-2, canvas.theme.box_header_height), self.p_rounding-0.5, self.p_rounding-0.5)
 
+            # Including pixmap clip path
+            clipPath = QPainterPath()
+            clipPath.addRoundedRect(QRectF(1+1, 1+1, self.p_width-2-2, canvas.theme.box_header_height-2), self.p_rounding-1.5, self.p_rounding-1.5)
+            painter.setClipPath(clipPath)
+            painter.setClipping(True)
+
             headerPos  = QPointF(1, 1)
             headerRect = QRectF(2, 2, self.p_width-4, canvas.theme.box_header_height-3)
             painter.drawTiledPixmap(headerRect, canvas.theme.box_header_pixmap, headerPos)
+
+            painter.setClipping(False)
 
         # Draw text
         painter.setFont(self.m_font_name)
