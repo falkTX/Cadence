@@ -2454,7 +2454,6 @@ class CanvasBox(QGraphicsItem):
 
     def paint(self, painter, option, widget):
         painter.save()
-        painter.setRenderHint(QPainter.Antialiasing, False)
 
         # Draw rectangle
         if self.isSelected():
@@ -2470,7 +2469,7 @@ class CanvasBox(QGraphicsItem):
         else:
             painter.setBrush(canvas.theme.box_bg_1)
 
-        painter.drawRect(0, 0, self.p_width, self.p_height)
+        painter.drawRect(QRectF(0.5, 0.5, self.p_width-1, self.p_height-1))
 
         # Draw pixmap header
         if canvas.theme.box_header_pixmap:
