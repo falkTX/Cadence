@@ -4,7 +4,7 @@
 # Created by falkTX
 #
 
-PREFIX  = /usr/local
+PREFIX  ?= /usr/local
 DESTDIR =
 
 LINK   = ln -s
