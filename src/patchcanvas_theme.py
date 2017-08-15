@@ -301,15 +301,15 @@ class Theme(object):
             self.canvas_bg = QColor(0, 0, 0)
 
             # Boxes
-            self.box_pen = QPen(QColor(147 - 70, 151 - 70, 143 - 70), 2, Qt.SolidLine)
-            self.box_pen_sel = QPen(QColor(147, 151, 143), 2, Qt.DashLine)
+            self.box_pen = QPen(QColor(143 - 70, 143 - 70, 143 - 70), 2, Qt.SolidLine)
+            self.box_pen_sel = QPen(QColor(143, 143, 143), 2, Qt.DashLine)
             self.box_bg_1 = QColor(30, 34, 36)
             self.box_bg_2 = QColor(30, 34, 36)
             self.box_shadow = QColor(89, 89, 89, 180)
             self.box_header_pixmap  = None
             self.box_header_height  = 19
             self.box_header_spacing = 0
-            self.box_rounding = 3.0
+            self.box_rounding = 4.0
 
             self.box_text = QPen(QColor(255, 255, 255), 0)
             self.box_text_sel  = self.box_text
@@ -330,14 +330,15 @@ class Theme(object):
             self.port_font_state = QFont.Normal
             self.port_mode = self.THEME_PORT_SQUARE
 
-            self.port_audio_jack_pen = QPen(QColor(35, 61, 99), 0)
-            self.port_audio_jack_pen_sel = QPen(QColor(255, 0, 0), 0)
-            self.port_midi_jack_pen = QPen(QColor(120, 15, 16), 0)
-            self.port_midi_jack_pen_sel = QPen(QColor(255, 0, 0), 0)
-            self.port_midi_a2j_pen = QPen(QColor(101, 47, 17), 0)
-            self.port_midi_a2j_pen_sel = QPen(QColor(255, 0, 0), 0)
-            self.port_midi_alsa_pen = QPen(QColor(63, 112, 19), 0)
-            self.port_midi_alsa_pen_sel = QPen(QColor(255, 0, 0), 0)
+            noPen = QPen(Qt.NoPen)
+            self.port_audio_jack_pen = noPen
+            self.port_audio_jack_pen_sel = noPen
+            self.port_midi_jack_pen = noPen
+            self.port_midi_jack_pen_sel = noPen
+            self.port_midi_a2j_pen = noPen
+            self.port_midi_a2j_pen_sel = noPen
+            self.port_midi_alsa_pen = noPen
+            self.port_midi_alsa_pen_sel = noPen
 
             self.port_audio_jack_bg = QColor(35, 61, 99)
             self.port_audio_jack_bg_sel = QColor(255, 0, 0)
