@@ -2198,7 +2198,7 @@ class CanvasBox(QGraphicsItem):
                     have_midi_alsa_out = True
                     max_out_height += canvas.theme.port_spacingT
 
-        if canvas.theme.port_spacingT == 0:
+        if (canvas.theme.port_spacingT == 0 and canvas.theme.box_rounding == 0):
             max_in_height  += 2
             max_out_height += 2
 
