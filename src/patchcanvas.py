@@ -1932,6 +1932,7 @@ class CanvasPort(QGraphicsItem):
             polygon += QPointF(poly_locx[2], float(canvas.theme.port_height)/2)
             polygon += QPointF(poly_locx[3], canvas.theme.port_height - line_width / 2)
             polygon += QPointF(poly_locx[4], canvas.theme.port_height - line_width / 2)
+            polygon += QPointF(poly_locx[0], line_width / 2)
             path.addPolygon(polygon)
         else:
             rounding = canvas.theme.port_rounding
