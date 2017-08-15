@@ -35,8 +35,9 @@ class Theme(object):
     THEME_MODERN_DARK_TINY = 1
     THEME_MODERN_LIGHT     = 2
     THEME_CLASSIC_DARK     = 3
-    THEME_OOSTUDIO         = 4
-    THEME_MAX              = 5
+    THEME_NEOCLASSIC_DARK  = 4
+    THEME_OOSTUDIO         = 5
+    THEME_MAX              = 6
 
     # enum BackgroundType
     THEME_BG_SOLID    = 0
@@ -112,6 +113,7 @@ class Theme(object):
             self.port_offset   = 0
             self.port_spacing  = 3
             self.port_spacingT = 2
+            self.port_rounding = 0.0
 
             # To not scale some line widths
             self.box_pen.setCosmetic(True)
@@ -207,6 +209,7 @@ class Theme(object):
             self.port_offset   = 0
             self.port_spacing  = 2
             self.port_spacingT = 1
+            self.port_rounding = 0.0
 
             # To not scale some line widths
             self.box_pen.setCosmetic(True)
@@ -302,6 +305,7 @@ class Theme(object):
             self.port_offset   = 0
             self.port_spacing  = 3
             self.port_spacingT = 2
+            self.port_rounding = 0.0
 
             # To not scale some line widths
             self.box_pen.setCosmetic(True)
@@ -345,7 +349,7 @@ class Theme(object):
             self.box_header_pixmap  = None
             self.box_header_height  = 19
             self.box_header_spacing = 0
-            self.box_rounding = 4.0
+            self.box_rounding = 0.0
 
             self.box_text = QPen(QColor(255, 255, 255), 0)
             self.box_text_sel  = self.box_text
@@ -398,6 +402,91 @@ class Theme(object):
             self.port_offset   = 0
             self.port_spacing  = 1
             self.port_spacingT = 0
+            self.port_rounding = 0.0
+
+            # Lines
+            self.line_audio_jack = QColor(53, 78, 116)
+            self.line_audio_jack_sel = QColor(255, 0, 0)
+            self.line_audio_jack_glow = QColor(255, 0, 0)
+            self.line_midi_jack = QColor(139, 32, 32)
+            self.line_midi_jack_sel = QColor(255, 0, 0)
+            self.line_midi_jack_glow = QColor(255, 0, 0)
+            self.line_midi_a2j = QColor(120, 65, 33)
+            self.line_midi_a2j_sel = QColor(255, 0, 0)
+            self.line_midi_a2j_glow = QColor(255, 0, 0)
+            self.line_midi_alsa = QColor(81, 130, 36)
+            self.line_midi_alsa_sel = QColor(255, 0, 0)
+            self.line_midi_alsa_glow = QColor(255, 0, 0)
+
+            self.rubberband_pen = QPen(QColor(147, 151, 143), 2, Qt.SolidLine)
+            self.rubberband_brush = QColor(35, 61, 99, 100)
+
+        elif idx == self.THEME_NEOCLASSIC_DARK:
+            # Canvas
+            self.canvas_bg = QColor(0, 0, 0)
+
+            # Boxes
+            self.box_pen = QPen(QColor(143 - 70, 143 - 70, 143 - 70), 2, Qt.SolidLine)
+            self.box_pen_sel = QPen(QColor(143, 143, 143), 2, Qt.DashLine)
+            self.box_bg_1 = QColor(30, 34, 36)
+            self.box_bg_2 = QColor(30, 34, 36)
+            self.box_shadow = QColor(89, 89, 89, 180)
+            self.box_header_pixmap  = None
+            self.box_header_height  = 19
+            self.box_header_spacing = 0
+            self.box_rounding = 4.0
+
+            self.box_text = QPen(QColor(255, 255, 255), 0)
+            self.box_text_sel  = self.box_text
+            self.box_text_ypos = 12
+            self.box_font_name = "Sans"
+            self.box_font_size = 9
+            self.box_font_state = QFont.Normal
+
+            self.box_bg_type  = self.THEME_BG_GRADIENT
+            self.box_use_icon = False
+
+            # Ports
+            self.port_text = QPen(QColor(250, 250, 250), 0)
+            self.port_text_ypos = 11
+            self.port_bg_pixmap = None
+            self.port_font_name = "Sans"
+            self.port_font_size = 8
+            self.port_font_state = QFont.Normal
+            self.port_mode = self.THEME_PORT_SQUARE
+
+            self.port_audio_jack_pen = QPen(QColor(55, 91, 149), 1)
+            self.port_audio_jack_pen_sel = QPen(QColor(55, 91, 149), 1)
+            self.port_midi_jack_pen = QPen(QColor(150, 25, 26), 1)
+            self.port_midi_jack_pen_sel = QPen(QColor(150, 25, 26), 1)
+            self.port_midi_a2j_pen = QPen(QColor(141, 67, 27), 1)
+            self.port_midi_a2j_pen_sel = QPen(QColor(141, 67, 27), 1)
+            self.port_midi_alsa_pen = QPen(QColor(83, 152, 29), 1)
+            self.port_midi_alsa_pen_sel = QPen(QColor(83, 152, 29), 1)
+
+            self.port_audio_jack_bg = QColor(35, 61, 99)
+            self.port_audio_jack_bg_sel = QColor(255, 0, 0)
+            self.port_midi_jack_bg = QColor(120, 15, 16)
+            self.port_midi_jack_bg_sel = QColor(255, 0, 0)
+            self.port_midi_a2j_bg = QColor(101, 47, 17)
+            self.port_midi_a2j_bg_sel = QColor(255, 0, 0)
+            self.port_midi_alsa_bg = QColor(63, 112, 19)
+            self.port_midi_alsa_bg_sel = QColor(255, 0, 0)
+
+            self.port_audio_jack_text = self.port_text
+            self.port_audio_jack_text_sel = self.port_text
+            self.port_midi_jack_text = self.port_text
+            self.port_midi_jack_text_sel = self.port_text
+            self.port_midi_a2j_text = self.port_text
+            self.port_midi_a2j_text_sel = self.port_text
+            self.port_midi_alsa_text = self.port_text
+            self.port_midi_alsa_text_sel = self.port_text
+
+            self.port_height   = 14
+            self.port_offset   = 0
+            self.port_spacing  = 1
+            self.port_spacingT = 0
+            self.port_rounding = 4.0
 
             # Lines
             self.line_audio_jack = QColor(53, 78, 116)
@@ -482,9 +571,10 @@ class Theme(object):
 
             # missing, ports 2
             self.port_height   = 19
-            self.port_offset   = 0
+            self.port_offset   = -1
             self.port_spacing  = 5
             self.port_spacingT = 0
+            self.port_rounding = 0.0
 
             # Lines
             self.line_audio_jack = QColor(64, 64, 64)
@@ -515,6 +605,8 @@ def getThemeName(idx):
         return "Modern Light"
     elif idx == Theme.THEME_CLASSIC_DARK:
         return "Classic Dark"
+    elif idx == Theme.THEME_NEOCLASSIC_DARK:
+        return "Neoclassic Dark"
     elif idx == Theme.THEME_OOSTUDIO:
         return "OpenOctave Studio"
     else:
