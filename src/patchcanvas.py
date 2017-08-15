@@ -1952,7 +1952,6 @@ class CanvasPort(QGraphicsItem):
             path.lineTo(poly_locx[4], canvas.theme.port_height - line_width / 2)
             path.closeSubpath()
 
-            painter.setClipping(True)
             painter.setClipRect(clipRect)
 
         if canvas.theme.port_bg_pixmap:
@@ -2513,9 +2512,8 @@ class CanvasBox(QGraphicsItem):
             # Don't forget to clip pixmap
             clipPath = QPainterPath()
             clipPath.addRoundedRect(rect, rounding, rounding)
-            painter.setClipPath(clipPath)
 
-            painter.setClipping(True)
+            painter.setClipPath(clipPath)
             painter.drawTiledPixmap(rect, canvas.theme.box_header_pixmap, headerPos)
             painter.setClipping(False)
 
