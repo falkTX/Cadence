@@ -73,7 +73,7 @@ class Theme(object):
             self.box_use_icon = True
 
             # Ports
-            self.port_text = QPen(QColor(250, 250, 250), 0)
+            self.port_text = QPen(QColor(250, 250, 250, 180), 0)
             self.port_text_ypos = 12
             self.port_bg_pixmap = None
             self.port_font_name = "Deja Vu Sans"
@@ -156,7 +156,7 @@ class Theme(object):
             self.box_use_icon = False
 
             # Ports
-            self.port_text = QPen(QColor(250, 250, 250), 0)
+            self.port_text = QPen(QColor(250, 250, 250, 180), 0)
             self.port_text_ypos = 9
             self.port_bg_pixmap = None
             self.port_font_name = "Deja Vu Sans"
