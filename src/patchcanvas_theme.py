@@ -239,7 +239,7 @@ class Theme(object):
             self.box_use_icon = True
 
             # Ports
-            self.port_text = QPen(QColor(255, 255, 255), 1)
+            self.port_text = QPen(QColor(30, 30, 30, 180), 1)
             self.port_text_ypos = 12
             self.port_bg_pixmap = None
             self.port_font_name = "Ubuntu"
@@ -247,22 +247,22 @@ class Theme(object):
             self.port_font_state = QFont.Bold
             self.port_mode = self.THEME_PORT_POLYGON
 
-            self.port_audio_jack_pen = QPen(QColor(103, 130, 166), 2)
+            self.port_audio_jack_pen = QPen(QColor(50, 50, 150), 1)
             self.port_audio_jack_pen_sel = QPen(QColor(103 + 136, 190 + 130, 226 + 130), 1)
-            self.port_midi_jack_pen = QPen(QColor(159, 44, 42), 1)
+            self.port_midi_jack_pen = QPen(QColor(150, 50, 50), 1)
             self.port_midi_jack_pen_sel = QPen(QColor(90 + 30, 44 + 30, 42 + 30), 1)
-            self.port_midi_a2j_pen = QPen(QColor(137, 76, 43), 1)
+            self.port_midi_a2j_pen = QPen(QColor(100, 50, 30), 1)
             self.port_midi_a2j_pen_sel = QPen(QColor(137 + 30, 76 + 30, 43 + 30), 1)
-            self.port_midi_alsa_pen = QPen(QColor(93, 141, 46), 1)
+            self.port_midi_alsa_pen = QPen(QColor(45, 150, 50), 1)
             self.port_midi_alsa_pen_sel = QPen(QColor(93 + 30, 141 + 30, 46 + 30), 1)
 
-            self.port_audio_jack_bg = QColor(0, 0, 180)
+            self.port_audio_jack_bg = QColor(150, 150, 255)
             self.port_audio_jack_bg_sel = QColor(135 + 150, 161 + 150, 199 + 150)
-            self.port_midi_jack_bg = QColor(130, 15, 16)
+            self.port_midi_jack_bg = QColor(255, 150, 160)
             self.port_midi_jack_bg_sel = QColor(90 + 30, 15 + 50, 16 + 50)
-            self.port_midi_a2j_bg = QColor(101, 47, 16)
+            self.port_midi_a2j_bg = QColor(200, 135, 100)
             self.port_midi_a2j_bg_sel = QColor(101 + 50, 47 + 50, 16 + 50)
-            self.port_midi_alsa_bg = QColor(64, 112, 18)
+            self.port_midi_alsa_bg = QColor(160, 255, 150)
             self.port_midi_alsa_bg_sel = QColor(64 + 50, 112 + 50, 18 + 50)
 
             self.port_audio_jack_text = self.port_text
