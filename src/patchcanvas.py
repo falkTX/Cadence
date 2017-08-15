@@ -1925,6 +1925,7 @@ class CanvasPort(QGraphicsItem):
             return
 
         path = QPainterPath()
+        rounding = canvas.theme.port_rounding
         if canvas.theme.port_mode == Theme.THEME_PORT_POLYGON:
             polygon  = QPolygonF()
             polygon += QPointF(poly_locx[0], line_width / 2)
@@ -1934,28 +1935,26 @@ class CanvasPort(QGraphicsItem):
             polygon += QPointF(poly_locx[4], canvas.theme.port_height - line_width / 2)
             polygon += QPointF(poly_locx[0], line_width / 2)
             path.addPolygon(polygon)
+
+            # portRect is used later if OOStudio style is active
+            portRect = path.boundingRect()
         else:
-            rounding = canvas.theme.port_rounding
-            clipRect = QRectF()
-            clipRect.setCoords(poly_locx[0], 0, poly_locx[1], canvas.theme.port_height)
-            clipRect = clipRect.normalized()
-            clipRect.adjust(-line_width / 2, 0, line_width / 2, 0)
+            # same
+            portRect = QRectF()
+            portRect.setCoords(poly_locx[0], line_width / 2, poly_locx[1], canvas.theme.port_height - line_width / 2)
+            portRect = portRect.normalized()
 
-            rect = QRectF(clipRect)
-            rect.adjust(line_width / 2, line_width / 2, -line_width / 2, -line_width / 2)
+            rect = QRectF(portRect)
             if self.m_port_mode == PORT_MODE_INPUT:
-                rect.adjust(-rounding, 0, 0, 0)
+                rect.adjust(-rounding, 0, 0.001, 0)
             else:
-                rect.adjust(0, 0, rounding, 0)
+                rect.adjust(-0.001, 0, rounding, 0)
+            clipPath = QPainterPath()
+            clipPath.addRect(portRect)
             path.addRoundedRect(rect, rounding, rounding)
-            path.moveTo(poly_locx[0], line_width / 2)
-            path.lineTo(poly_locx[4], canvas.theme.port_height - line_width / 2)
-            path.closeSubpath()
-
-            painter.setClipRect(clipRect)
+            path = path.intersected(clipPath)
 
         if canvas.theme.port_bg_pixmap:
-            portRect = path.boundingRect()
             portPos  = portRect.topLeft()
             painter.drawTiledPixmap(portRect, canvas.theme.port_bg_pixmap, portPos)
         else:
