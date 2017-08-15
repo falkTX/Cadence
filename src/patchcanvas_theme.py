@@ -359,7 +359,7 @@ class Theme(object):
             self.port_midi_alsa_text_sel = self.port_text
 
             self.port_height   = 14
-            self.port_offset   = -1
+            self.port_offset   = 0
             self.port_spacing  = 1
             self.port_spacingT = 0
 
@@ -446,7 +446,7 @@ class Theme(object):
 
             # missing, ports 2
             self.port_height   = 19
-            self.port_offset   = -1
+            self.port_offset   = 0
             self.port_spacing  = 5
             self.port_spacingT = 0
 

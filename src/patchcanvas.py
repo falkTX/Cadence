@@ -2226,14 +2226,14 @@ class CanvasBox(QGraphicsItem):
         for port in port_list:
             if port.port_type == PORT_TYPE_AUDIO_JACK:
                 if port.port_mode == PORT_MODE_INPUT:
-                    port.widget.setPos(QPointF(1 + canvas.theme.port_offset, last_in_pos))
+                    port.widget.setPos(QPointF(canvas.theme.port_offset, last_in_pos))
                     port.widget.setPortWidth(max_in_width)
 
                     last_in_pos += port_spacing
                     last_in_type = port.port_type
 
                 elif port.port_mode == PORT_MODE_OUTPUT:
-                    port.widget.setPos(QPointF(self.p_width - max_out_width - canvas.theme.port_offset - 13, last_out_pos))
+                    port.widget.setPos(QPointF(self.p_width - max_out_width - canvas.theme.port_offset - 12, last_out_pos))
                     port.widget.setPortWidth(max_out_width)
 
                     last_out_pos += port_spacing
@@ -2246,7 +2246,7 @@ class CanvasBox(QGraphicsItem):
                     if last_in_type != PORT_TYPE_NULL and port.port_type != last_in_type:
                         last_in_pos += canvas.theme.port_spacingT
 
-                    port.widget.setPos(QPointF(1 + canvas.theme.port_offset, last_in_pos))
+                    port.widget.setPos(QPointF(canvas.theme.port_offset, last_in_pos))
                     port.widget.setPortWidth(max_in_width)
 
                     last_in_pos += port_spacing
@@ -2256,7 +2256,7 @@ class CanvasBox(QGraphicsItem):
                     if last_out_type != PORT_TYPE_NULL and port.port_type != last_out_type:
                         last_out_pos += canvas.theme.port_spacingT
 
-                    port.widget.setPos(QPointF(self.p_width - max_out_width - canvas.theme.port_offset - 13, last_out_pos))
+                    port.widget.setPos(QPointF(self.p_width - max_out_width - canvas.theme.port_offset - 12, last_out_pos))
                     port.widget.setPortWidth(max_out_width)
 
                     last_out_pos += port_spacing
@@ -2269,7 +2269,7 @@ class CanvasBox(QGraphicsItem):
                     if last_in_type != PORT_TYPE_NULL and port.port_type != last_in_type:
                         last_in_pos += canvas.theme.port_spacingT
 
-                    port.widget.setPos(QPointF(1 + canvas.theme.port_offset, last_in_pos))
+                    port.widget.setPos(QPointF(canvas.theme.port_offset, last_in_pos))
                     port.widget.setPortWidth(max_in_width)
 
                     last_in_pos += port_spacing
@@ -2279,7 +2279,7 @@ class CanvasBox(QGraphicsItem):
                     if last_out_type != PORT_TYPE_NULL and port.port_type != last_out_type:
                         last_out_pos += canvas.theme.port_spacingT
 
-                    port.widget.setPos(QPointF(self.p_width - max_out_width - canvas.theme.port_offset - 13, last_out_pos))
+                    port.widget.setPos(QPointF(self.p_width - max_out_width - canvas.theme.port_offset - 12, last_out_pos))
                     port.widget.setPortWidth(max_out_width)
 
                     last_out_pos += port_spacing
@@ -2292,7 +2292,7 @@ class CanvasBox(QGraphicsItem):
                     if last_in_type != PORT_TYPE_NULL and port.port_type != last_in_type:
                         last_in_pos += canvas.theme.port_spacingT
 
-                    port.widget.setPos(QPointF(1 + canvas.theme.port_offset, last_in_pos))
+                    port.widget.setPos(QPointF(canvas.theme.port_offset, last_in_pos))
                     port.widget.setPortWidth(max_in_width)
 
                     last_in_pos += port_spacing
@@ -2302,7 +2302,7 @@ class CanvasBox(QGraphicsItem):
                     if last_out_type != PORT_TYPE_NULL and port.port_type != last_out_type:
                         last_out_pos += canvas.theme.port_spacingT
 
-                    port.widget.setPos(QPointF(self.p_width - max_out_width - canvas.theme.port_offset - 13, last_out_pos))
+                    port.widget.setPos(QPointF(self.p_width - max_out_width - canvas.theme.port_offset - 12, last_out_pos))
                     port.widget.setPortWidth(max_out_width)
 
                     last_out_pos += port_spacing
