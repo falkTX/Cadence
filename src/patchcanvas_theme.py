@@ -113,6 +113,18 @@ class Theme(object):
             self.port_spacing  = 3
             self.port_spacingT = 2
 
+            # To not scale some line widths
+            self.box_pen.setCosmetic(True)
+            self.box_pen_sel.setCosmetic(True)
+            self.port_audio_jack_pen.setCosmetic(True)
+            self.port_audio_jack_pen_sel.setCosmetic(True)
+            self.port_midi_jack_pen.setCosmetic(True)
+            self.port_midi_jack_pen_sel.setCosmetic(True)
+            self.port_midi_a2j_pen.setCosmetic(True)
+            self.port_midi_a2j_pen_sel.setCosmetic(True)
+            self.port_midi_alsa_pen.setCosmetic(True)
+            self.port_midi_alsa_pen_sel.setCosmetic(True)
+
             # Lines
             self.line_audio_jack = QColor(63, 90, 126)
             self.line_audio_jack_sel = QColor(63 + 90, 90 + 90, 126 + 90)
@@ -196,6 +208,18 @@ class Theme(object):
             self.port_spacing  = 2
             self.port_spacingT = 1
 
+            # To not scale some line widths
+            self.box_pen.setCosmetic(True)
+            self.box_pen_sel.setCosmetic(True)
+            self.port_audio_jack_pen.setCosmetic(True)
+            self.port_audio_jack_pen_sel.setCosmetic(True)
+            self.port_midi_jack_pen.setCosmetic(True)
+            self.port_midi_jack_pen_sel.setCosmetic(True)
+            self.port_midi_a2j_pen.setCosmetic(True)
+            self.port_midi_a2j_pen_sel.setCosmetic(True)
+            self.port_midi_alsa_pen.setCosmetic(True)
+            self.port_midi_alsa_pen_sel.setCosmetic(True)
+
             # Lines
             self.line_audio_jack = QColor(63, 90, 126)
             self.line_audio_jack_sel = QColor(63 + 90, 90 + 90, 126 + 90)
@@ -278,6 +302,18 @@ class Theme(object):
             self.port_offset   = 0
             self.port_spacing  = 3
             self.port_spacingT = 2
+
+            # To not scale some line widths
+            self.box_pen.setCosmetic(True)
+            self.box_pen_sel.setCosmetic(True)
+            self.port_audio_jack_pen.setCosmetic(True)
+            self.port_audio_jack_pen_sel.setCosmetic(True)
+            self.port_midi_jack_pen.setCosmetic(True)
+            self.port_midi_jack_pen_sel.setCosmetic(True)
+            self.port_midi_a2j_pen.setCosmetic(True)
+            self.port_midi_a2j_pen_sel.setCosmetic(True)
+            self.port_midi_alsa_pen.setCosmetic(True)
+            self.port_midi_alsa_pen_sel.setCosmetic(True)
 
             # Lines
             self.line_audio_jack = QColor(63, 90, 126)
