@@ -446,7 +446,7 @@ class Theme(object):
 
             # missing, ports 2
             self.port_height   = 19
-            self.port_offset   = 1
+            self.port_offset   = -1
             self.port_spacing  = 5
             self.port_spacingT = 0
 
