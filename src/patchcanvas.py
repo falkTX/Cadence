@@ -1924,22 +1924,46 @@ class CanvasPort(QGraphicsItem):
             qCritical("PatchCanvas::CanvasPort.paint() - invalid port type '%s'" % port_type2str(self.m_port_type))
             return
 
-        polygon  = QPolygonF()
-        polygon += QPointF(poly_locx[0], line_width / 2)
-        polygon += QPointF(poly_locx[1], line_width / 2)
-        polygon += QPointF(poly_locx[2], float(canvas.theme.port_height)/2)
-        polygon += QPointF(poly_locx[3], canvas.theme.port_height - line_width / 2)
-        polygon += QPointF(poly_locx[4], canvas.theme.port_height - line_width / 2)
+        path = QPainterPath()
+        if canvas.theme.port_mode == Theme.THEME_PORT_POLYGON:
+            polygon  = QPolygonF()
+            polygon += QPointF(poly_locx[0], line_width / 2)
+            polygon += QPointF(poly_locx[1], line_width / 2)
+            polygon += QPointF(poly_locx[2], float(canvas.theme.port_height)/2)
+            polygon += QPointF(poly_locx[3], canvas.theme.port_height - line_width / 2)
+            polygon += QPointF(poly_locx[4], canvas.theme.port_height - line_width / 2)
+            path.addPolygon(polygon)
+        else:
+            rounding = canvas.theme.port_rounding
+            clipRect = QRectF()
+            clipRect.setCoords(poly_locx[0], 0, poly_locx[1], canvas.theme.port_height)
+            clipRect = clipRect.normalized()
+            clipRect.adjust(-line_width / 2, 0, line_width / 2, 0)
+
+            rect = QRectF(clipRect)
+            rect.adjust(line_width / 2, line_width / 2, -line_width / 2, -line_width / 2)
+            if self.m_port_mode == PORT_MODE_INPUT:
+                rect.adjust(-rounding, 0, 0, 0)
+            else:
+                rect.adjust(0, 0, rounding, 0)
+            path.addRoundedRect(rect, rounding, rounding)
+            path.moveTo(poly_locx[0], line_width / 2)
+            path.lineTo(poly_locx[4], canvas.theme.port_height - line_width / 2)
+            path.closeSubpath()
+
+            painter.setClipping(True)
+            painter.setClipRect(clipRect)
 
         if canvas.theme.port_bg_pixmap:
-            portRect = polygon.boundingRect()
+            portRect = path.boundingRect()
             portPos  = portRect.topLeft()
             painter.drawTiledPixmap(portRect, canvas.theme.port_bg_pixmap, portPos)
         else:
             painter.setBrush(poly_color)
 
         painter.setPen(poly_pen)
-        painter.drawPolygon(polygon)
+        painter.drawPath(path)
+        painter.setClipping(False) # For square port
 
         painter.setPen(text_pen)
         painter.setFont(self.m_port_font)
