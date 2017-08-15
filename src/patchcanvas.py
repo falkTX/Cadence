@@ -1962,11 +1962,17 @@ class CanvasPort(QGraphicsItem):
 
         painter.setPen(poly_pen)
         painter.drawPath(path)
-        painter.setClipping(False) # For square port
 
         painter.setPen(text_pen)
         painter.setFont(self.m_port_font)
-        painter.drawText(text_pos, self.m_port_name)
+        textRect = QRectF(portRect)
+        if self.m_port_mode == PORT_MODE_INPUT:
+            textRect.setRight(poly_locx[1] - rounding)
+            textRect.adjust(3, 0, 0, 0)
+        else:
+            textRect.setLeft(poly_locx[1] + rounding)
+            textRect.adjust(0, 0, -3, 0)
+        painter.drawText(textRect, Qt.AlignCenter|Qt.TextDontClip, self.m_port_name)
 
         if self.isSelected() != self.m_last_selected_state:
             for connection in canvas.connection_list:
@@ -2525,13 +2531,9 @@ class CanvasBox(QGraphicsItem):
             painter.setPen(canvas.theme.box_text)
 
         if canvas.theme.box_use_icon:
-            textPos = QPointF(25, canvas.theme.box_text_ypos)
-        else:
-            appNameSize = QFontMetrics(self.m_font_name).width(self.m_group_name)
-            rem = self.p_width - appNameSize
-            textPos = QPointF(rem/2, canvas.theme.box_text_ypos)
-
-        painter.drawText(textPos, self.m_group_name)
+            rect.setCoords(self.icon_svg.p_size.right(), self.icon_svg.p_size.top(),
+                           self.p_width-rounding/2, self.icon_svg.p_size.bottom())
+        painter.drawText(rect, Qt.AlignCenter|Qt.TextDontClip, self.m_group_name)
 
         self.repaintLines()
 
