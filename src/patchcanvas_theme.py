@@ -109,7 +109,7 @@ class Theme(object):
             self.port_midi_alsa_text = self.port_text
             self.port_midi_alsa_text_sel = self.port_text
 
-            self.port_height   = 15
+            self.port_height   = 17
             self.port_offset   = 0
             self.port_spacing  = 3
             self.port_spacingT = 2
@@ -205,7 +205,7 @@ class Theme(object):
             self.port_midi_alsa_text = self.port_text
             self.port_midi_alsa_text_sel = self.port_text
 
-            self.port_height   = 11
+            self.port_height   = 13
             self.port_offset   = 0
             self.port_spacing  = 2
             self.port_spacingT = 1
@@ -301,7 +301,7 @@ class Theme(object):
             self.port_midi_alsa_text = self.port_text
             self.port_midi_alsa_text_sel = self.port_text
 
-            self.port_height   = 15
+            self.port_height   = 17
             self.port_offset   = 0
             self.port_spacing  = 3
             self.port_spacingT = 2
@@ -482,7 +482,7 @@ class Theme(object):
             self.port_midi_alsa_text = self.port_text
             self.port_midi_alsa_text_sel = self.port_text
 
-            self.port_height   = 14
+            self.port_height   = 16
             self.port_offset   = 0
             self.port_spacing  = 1
             self.port_spacingT = 0
