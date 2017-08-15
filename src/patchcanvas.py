@@ -2132,10 +2132,8 @@ class CanvasBox(QGraphicsItem):
     def updatePositions(self):
         self.prepareGeometryChange()
 
-        max_in_width  = 0
-        max_in_height = canvas.theme.box_header_height + canvas.theme.box_header_spacing
-        max_out_width  = 0
-        max_out_height = canvas.theme.box_header_height + canvas.theme.box_header_spacing
+        max_in_width  = max_out_width = 0
+        max_in_height = max_out_height = canvas.theme.box_header_height + canvas.theme.box_header_spacing + canvas.theme.box_rounding
         port_spacing   = canvas.theme.port_height + canvas.theme.port_spacing
 
         have_audio_jack_in = have_midi_jack_in = have_midi_a2j_in = have_midi_alsa_in = False
@@ -2221,10 +2219,8 @@ class CanvasBox(QGraphicsItem):
             else:
                 self.p_height -= canvas.theme.box_header_spacing/2
 
-        last_in_pos  = canvas.theme.box_header_height + canvas.theme.box_header_spacing
-        last_out_pos = canvas.theme.box_header_height + canvas.theme.box_header_spacing
-        last_in_type  = PORT_TYPE_NULL
-        last_out_type = PORT_TYPE_NULL
+        last_in_pos  = last_out_pos = canvas.theme.box_header_height + canvas.theme.box_header_spacing
+        last_in_type = last_out_type = PORT_TYPE_NULL
 
         # Re-position ports, AUDIO_JACK
         for port in port_list:
