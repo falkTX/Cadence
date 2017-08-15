@@ -1862,17 +1862,17 @@ class CanvasPort(QGraphicsItem):
             text_pos = QPointF(3, canvas.theme.port_text_ypos)
 
             if canvas.theme.port_mode == Theme.THEME_PORT_POLYGON:
-                poly_locx[0] = -line_width / 2
-                poly_locx[1] = self.m_port_width + 5 + line_width / 2
-                poly_locx[2] = self.m_port_width + 12 + line_width / 2
-                poly_locx[3] = self.m_port_width + 5 + line_width / 2
-                poly_locx[4] = -line_width / 2
+                poly_locx[0] = line_width / 2
+                poly_locx[1] = self.m_port_width + 5 - line_width / 2
+                poly_locx[2] = self.m_port_width + 12 - line_width / 2
+                poly_locx[3] = self.m_port_width + 5 - line_width / 2
+                poly_locx[4] = line_width / 2
             elif canvas.theme.port_mode == Theme.THEME_PORT_SQUARE:
-                poly_locx[0] = -line_width / 2
-                poly_locx[1] = self.m_port_width + 5 + line_width / 2
-                poly_locx[2] = self.m_port_width + 5 + line_width / 2
-                poly_locx[3] = self.m_port_width + 5 + line_width / 2
-                poly_locx[4] = -line_width / 2
+                poly_locx[0] = line_width / 2
+                poly_locx[1] = self.m_port_width + 5 - line_width / 2
+                poly_locx[2] = self.m_port_width + 5 - line_width / 2
+                poly_locx[3] = self.m_port_width + 5 - line_width / 2
+                poly_locx[4] = line_width / 2
             else:
                 qCritical("PatchCanvas::CanvasPort.paint() - invalid theme port mode '%s'" % canvas.theme.port_mode)
                 return
@@ -1881,17 +1881,17 @@ class CanvasPort(QGraphicsItem):
             text_pos = QPointF(9, canvas.theme.port_text_ypos)
 
             if canvas.theme.port_mode == Theme.THEME_PORT_POLYGON:
-                poly_locx[0] = self.m_port_width + 12 + line_width / 2
-                poly_locx[1] = 7 - line_width / 2
-                poly_locx[2] = 0 - line_width / 2
-                poly_locx[3] = 7 - line_width / 2
-                poly_locx[4] = self.m_port_width + 12 + line_width / 2
+                poly_locx[0] = self.m_port_width + 12 - line_width / 2
+                poly_locx[1] = 7 + line_width / 2
+                poly_locx[2] = 0 + line_width / 2
+                poly_locx[3] = 7 + line_width / 2
+                poly_locx[4] = self.m_port_width + 12 - line_width / 2
             elif canvas.theme.port_mode == Theme.THEME_PORT_SQUARE:
-                poly_locx[0] = self.m_port_width + 12 + line_width / 2
-                poly_locx[1] = 5 - line_width / 2
-                poly_locx[2] = 5 - line_width / 2
-                poly_locx[3] = 5 - line_width / 2
-                poly_locx[4] = self.m_port_width + 12 + line_width / 2
+                poly_locx[0] = self.m_port_width + 12 - line_width / 2
+                poly_locx[1] = 5 + line_width / 2
+                poly_locx[2] = 5 + line_width / 2
+                poly_locx[3] = 5 + line_width / 2
+                poly_locx[4] = self.m_port_width + 12 - line_width / 2
             else:
                 qCritical("PatchCanvas::CanvasPort.paint() - invalid theme port mode '%s'" % canvas.theme.port_mode)
                 return
@@ -1925,11 +1925,11 @@ class CanvasPort(QGraphicsItem):
             return
 
         polygon  = QPolygonF()
-        polygon += QPointF(poly_locx[0], -line_width / 2)
-        polygon += QPointF(poly_locx[1], -line_width / 2)
+        polygon += QPointF(poly_locx[0], line_width / 2)
+        polygon += QPointF(poly_locx[1], line_width / 2)
         polygon += QPointF(poly_locx[2], float(canvas.theme.port_height)/2)
-        polygon += QPointF(poly_locx[3], canvas.theme.port_height + line_width / 2)
-        polygon += QPointF(poly_locx[4], canvas.theme.port_height + line_width / 2)
+        polygon += QPointF(poly_locx[3], canvas.theme.port_height - line_width / 2)
+        polygon += QPointF(poly_locx[4], canvas.theme.port_height - line_width / 2)
 
         if canvas.theme.port_bg_pixmap:
             portRect = polygon.boundingRect()
