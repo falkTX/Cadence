@@ -20,7 +20,7 @@
 # Imports (Global)
 
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QColor, QFont, QPen, QPixmap
+from PyQt4.QtGui import QColor, QFont, QFontMetrics, QPen, QPixmap
 
 # ------------------------------------------------------------------------------------------------------------
 # patchcanvas-theme.cpp
@@ -109,7 +109,7 @@ class Theme(object):
             self.port_midi_alsa_text = self.port_text
             self.port_midi_alsa_text_sel = self.port_text
 
-            self.port_height   = 17
+            self.port_text_padding = 1
             self.port_offset   = 0
             self.port_spacing  = 3
             self.port_spacingT = 2
@@ -205,7 +205,7 @@ class Theme(object):
             self.port_midi_alsa_text = self.port_text
             self.port_midi_alsa_text_sel = self.port_text
 
-            self.port_height   = 13
+            self.port_text_padding = 1
             self.port_offset   = 0
             self.port_spacing  = 2
             self.port_spacingT = 1
@@ -301,7 +301,7 @@ class Theme(object):
             self.port_midi_alsa_text = self.port_text
             self.port_midi_alsa_text_sel = self.port_text
 
-            self.port_height   = 17
+            self.port_text_padding = 0
             self.port_offset   = 0
             self.port_spacing  = 3
             self.port_spacingT = 2
@@ -398,7 +398,7 @@ class Theme(object):
             self.port_midi_alsa_text = self.port_text
             self.port_midi_alsa_text_sel = self.port_text
 
-            self.port_height   = 14
+            self.port_text_padding = 0
             self.port_offset   = 0
             self.port_spacing  = 1
             self.port_spacingT = 0
@@ -482,7 +482,7 @@ class Theme(object):
             self.port_midi_alsa_text = self.port_text
             self.port_midi_alsa_text_sel = self.port_text
 
-            self.port_height   = 16
+            self.port_text_padding = 1
             self.port_offset   = 0
             self.port_spacing  = 1
             self.port_spacingT = 0
@@ -570,7 +570,7 @@ class Theme(object):
             self.port_midi_alsa_text_sel = self.port_midi_alsa_pen_sel
 
             # missing, ports 2
-            self.port_height   = 19
+            self.port_text_padding = 2
             self.port_offset   = -1
             self.port_spacing  = 5
             self.port_spacingT = 0
@@ -592,6 +592,10 @@ class Theme(object):
 
             self.rubberband_pen = QPen(QColor(1, 230, 238), 2, Qt.SolidLine)
             self.rubberband_brush = QColor(90, 90, 90, 100)
+
+        port_font = QFont(self.port_font_name, self.port_font_size, self.port_font_state)
+        self.port_height = QFontMetrics(port_font).height() + 2 * self.port_text_padding
+
 
 def getDefaultTheme():
     return Theme.THEME_MODERN_DARK
