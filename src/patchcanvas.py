@@ -2469,6 +2469,11 @@ class CanvasBox(QGraphicsItem):
     def mouseReleaseEvent(self, event):
         if self.m_cursor_moving:
             self.setCursor(QCursor(Qt.ArrowCursor))
+
+            # Box with fractional coordinates has weird look, since graphics is drawen between pixels
+            # possible situation, when moved with scaled viewport.
+            self.setX(round(self.x()))
+            self.setY(round(self.y()))
         self.m_mouse_down = False
         self.m_cursor_moving = False
         QGraphicsItem.mouseReleaseEvent(self, event)
