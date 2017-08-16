@@ -574,7 +574,7 @@ class Theme(object):
             self.port_offset   = -1
             self.port_spacing  = 5
             self.port_spacingT = 0
-            self.port_rounding = 0.0
+            self.port_rounding = 3.0
 
             # Lines
             self.line_audio_jack = QColor(64, 64, 64)
