@@ -1981,7 +1981,6 @@ class CanvasPort(QGraphicsItem):
 
         if canvas.theme.idx == Theme.THEME_OOSTUDIO and canvas.theme.port_bg_pixmap:
             painter.setPen(QPen(conn_pen.brush(), 2))
-
             if self.m_port_mode == PORT_MODE_INPUT:
                 painter.drawLine(portRect.left(), portRect.top()+line_width/2,
                                  portRect.left(), portRect.bottom()-line_width/2)
@@ -2501,25 +2500,21 @@ class CanvasBox(QGraphicsItem):
         painter.drawRoundedRect(rect, rounding, rounding)
 
         # Draw pixmap header
+        rect.setHeight(canvas.theme.box_header_height)
         if canvas.theme.box_header_pixmap:
             painter.setPen(Qt.NoPen)
             painter.setBrush(canvas.theme.box_bg_2)
 
-            rect.adjust(line_width / 2, line_width / 2, -line_width / 2, 0)
-            rect.setHeight(canvas.theme.box_header_height)
-            rounding = rounding - line_width / 2
+            rect.adjust(line_width / 2, line_width / 2, -line_width / 2, line_width / 2)
+            rounding -= line_width / 2
             painter.drawRoundedRect(rect, rounding, rounding)
 
-            headerPos  = QPointF(1, 1)
             rect.adjust(1, 1, -1, 0)
-            rounding = rounding - 1
-
-            # Don't forget to clip pixmap
+            rounding -= 1
             clipPath = QPainterPath()
             clipPath.addRoundedRect(rect, rounding, rounding)
-
             painter.setClipPath(clipPath)
-            painter.drawTiledPixmap(rect, canvas.theme.box_header_pixmap, headerPos)
+            painter.drawTiledPixmap(rect, canvas.theme.box_header_pixmap, QPointF(1, 1))
             painter.setClipping(False)
 
         # Draw text
