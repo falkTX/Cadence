@@ -65,7 +65,6 @@ class Theme(object):
 
             self.box_text = QPen(QColor(240, 240, 240), 0)
             self.box_text_sel  = self.box_text
-            self.box_text_ypos = 16
             self.box_font_name = "Deja Vu Sans"
             self.box_font_size = 8
             self.box_font_state = QFont.Bold
@@ -75,7 +74,6 @@ class Theme(object):
 
             # Ports
             self.port_text = QPen(QColor(250, 250, 250, 180), 0)
-            self.port_text_ypos = 12
             self.port_bg_pixmap = None
             self.port_font_name = "Deja Vu Sans"
             self.port_font_size = 8
@@ -161,7 +159,6 @@ class Theme(object):
 
             self.box_text = QPen(QColor(240, 240, 240), 0)
             self.box_text_sel  = self.box_text
-            self.box_text_ypos = 10
             self.box_font_name = "Deja Vu Sans"
             self.box_font_size = 7
             self.box_font_state = QFont.Bold
@@ -171,7 +168,6 @@ class Theme(object):
 
             # Ports
             self.port_text = QPen(QColor(250, 250, 250, 180), 0)
-            self.port_text_ypos = 9
             self.port_bg_pixmap = None
             self.port_font_name = "Deja Vu Sans"
             self.port_font_size = 6
@@ -257,7 +253,6 @@ class Theme(object):
 
             self.box_text = QPen(QColor(1, 1, 1), 0)
             self.box_text_sel  = self.box_text
-            self.box_text_ypos = 16
             self.box_font_name = "Ubuntu"
             self.box_font_size = 11
             self.box_font_state = QFont.Bold
@@ -267,7 +262,6 @@ class Theme(object):
 
             # Ports
             self.port_text = QPen(QColor(30, 30, 30, 180), 1)
-            self.port_text_ypos = 12
             self.port_bg_pixmap = None
             self.port_font_name = "Ubuntu"
             self.port_font_size = 10
@@ -353,7 +347,6 @@ class Theme(object):
 
             self.box_text = QPen(QColor(255, 255, 255), 0)
             self.box_text_sel  = self.box_text
-            self.box_text_ypos = 12
             self.box_font_name = "Sans"
             self.box_font_size = 9
             self.box_font_state = QFont.Normal
@@ -363,7 +356,6 @@ class Theme(object):
 
             # Ports
             self.port_text = QPen(QColor(250, 250, 250), 0)
-            self.port_text_ypos = 11
             self.port_bg_pixmap = None
             self.port_font_name = "Sans"
             self.port_font_size = 8
@@ -438,7 +430,6 @@ class Theme(object):
 
             self.box_text = QPen(QColor(255, 255, 255), 0)
             self.box_text_sel  = self.box_text
-            self.box_text_ypos = 12
             self.box_font_name = "Sans"
             self.box_font_size = 9
             self.box_font_state = QFont.Normal
@@ -448,7 +439,6 @@ class Theme(object):
 
             # Ports
             self.port_text = QPen(QColor(250, 250, 250), 0)
-            self.port_text_ypos = 11
             self.port_bg_pixmap = None
             self.port_font_name = "Sans"
             self.port_font_size = 8
@@ -522,7 +512,6 @@ class Theme(object):
 
             self.box_text = QPen(QColor(144, 144, 144), 0)
             self.box_text_sel  = QPen(QColor(189, 122, 214), 0)
-            self.box_text_ypos = 16
             self.box_font_name = "Deja Vu Sans"
             self.box_font_size = 8
             self.box_font_state = QFont.Bold
@@ -535,7 +524,6 @@ class Theme(object):
             selPortBG = QColor(23, 23, 23)
 
             self.port_text = QPen(QColor(155, 155, 155), 0)
-            self.port_text_ypos = 14
             self.port_bg_pixmap = QPixmap(":/bitmaps/canvas/frame_port_bg.png")
             self.port_font_name = "Deja Vu Sans"
             self.port_font_size = 8

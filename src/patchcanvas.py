@@ -1859,8 +1859,6 @@ class CanvasPort(QGraphicsItem):
         poly_locx = [0, 0, 0, 0, 0]
 
         if self.m_port_mode == PORT_MODE_INPUT:
-            text_pos = QPointF(3, canvas.theme.port_text_ypos)
-
             if canvas.theme.port_mode == Theme.THEME_PORT_POLYGON:
                 poly_locx[0] = line_width / 2
                 poly_locx[1] = self.m_port_width + 5 - line_width / 2
@@ -1878,8 +1876,6 @@ class CanvasPort(QGraphicsItem):
                 return
 
         elif self.m_port_mode == PORT_MODE_OUTPUT:
-            text_pos = QPointF(9, canvas.theme.port_text_ypos)
-
             if canvas.theme.port_mode == Theme.THEME_PORT_POLYGON:
                 poly_locx[0] = self.m_port_width + 12 - line_width / 2
                 poly_locx[1] = 7 + line_width / 2
