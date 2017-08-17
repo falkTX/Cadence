@@ -167,7 +167,7 @@ class Theme(object):
             self.box_use_icon = False
 
             # Ports
-            self.port_text = QPen(QColor(250, 250, 250, 180), 0)
+            self.port_text = QPen(QColor(250, 250, 250, 220), 0)
             self.port_bg_pixmap = None
             self.port_font_name = "Deja Vu Sans"
             self.port_font_size = 6
@@ -203,8 +203,8 @@ class Theme(object):
 
             self.port_text_padding = 1
             self.port_offset   = 0
-            self.port_spacing  = 2
-            self.port_spacingT = 1
+            self.port_spacing  = -1
+            self.port_spacingT = 2
             self.port_rounding = 0.0
 
             # To not scale some line widths
