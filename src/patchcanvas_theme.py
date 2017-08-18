@@ -25,6 +25,23 @@ from PyQt4.QtGui import QColor, QFont, QFontMetrics, QPen, QPixmap
 # ------------------------------------------------------------------------------------------------------------
 # patchcanvas-theme.cpp
 
+# Utilities
+## hsvAdjusted() - returns color with selectively rewrote HSV parameters
+def hsvAdjusted(color, hue = -1, saturation = -1, value = -1, alpha = -1):
+    if hue == -1:        hue = color.hue()
+    if saturation == -1: saturation = color.saturation()
+    if value == -1:      value = color.value()
+    if alpha == -1:      alpha = color.alpha()
+    return QColor.fromHsv(hue, saturation, value, alpha)
+
+## hsvAdjusted() variant for relative changes
+def hsvAdjustedRel(color, hue = 0, saturation = 0, value = 0, alpha = 0):
+    return QColor.fromHsv(
+      color.hue()+hue,
+      color.saturation()+saturation,
+      color.value()+value,
+      color.alpha()+alpha)
+
 class Theme(object):
     # enum PortType
     THEME_PORT_SQUARE  = 0
@@ -243,8 +260,8 @@ class Theme(object):
             # Boxes
             self.box_pen = QPen(QColor(176, 177, 178), 1, Qt.SolidLine)
             self.box_pen_sel = QPen(QColor(1, 2, 3), 2, Qt.DashLine)
-            self.box_bg_1 = QColor(250, 250, 250)
-            self.box_bg_2 = QColor(200, 200, 200)
+            self.box_bg_1 = QColor(220, 220, 220)
+            self.box_bg_2 = self.box_bg_1.darker(120)
             self.box_shadow = QColor(1, 1, 1, 100)
             self.box_header_pixmap  = None
             self.box_header_height  = 24
@@ -254,51 +271,61 @@ class Theme(object):
             self.box_text = QPen(QColor(1, 1, 1), 0)
             self.box_text_sel  = self.box_text
             self.box_font_name = "Ubuntu"
-            self.box_font_size = 11
+            self.box_font_size = 10
             self.box_font_state = QFont.Bold
 
             self.box_bg_type  = self.THEME_BG_GRADIENT
             self.box_use_icon = True
 
             # Ports
-            self.port_text = QPen(QColor(30, 30, 30, 180), 1)
+            self.port_text = QPen(QColor(255, 255, 255, 220), 1)
             self.port_bg_pixmap = None
             self.port_font_name = "Ubuntu"
-            self.port_font_size = 10
+            self.port_font_size = 9
             self.port_font_state = QFont.Bold
             self.port_mode = self.THEME_PORT_POLYGON
 
-            self.port_audio_jack_pen = QPen(QColor(50, 50, 150), 1)
-            self.port_audio_jack_pen_sel = QPen(QColor(103 + 136, 190 + 130, 226 + 130), 1)
-            self.port_midi_jack_pen = QPen(QColor(150, 50, 50), 1)
-            self.port_midi_jack_pen_sel = QPen(QColor(90 + 30, 44 + 30, 42 + 30), 1)
-            self.port_midi_a2j_pen = QPen(QColor(100, 50, 30), 1)
-            self.port_midi_a2j_pen_sel = QPen(QColor(137 + 30, 76 + 30, 43 + 30), 1)
-            self.port_midi_alsa_pen = QPen(QColor(45, 150, 50), 1)
-            self.port_midi_alsa_pen_sel = QPen(QColor(93 + 30, 141 + 30, 46 + 30), 1)
+            # Port colors
+            port_audio_jack_color = QColor.fromHsv(240, 214, 181)
+            port_midi_jack_color = QColor.fromHsv(0, 214, 130)
+            port_midi_a2j_color = QColor.fromHsv(22, 214, 102)
+            port_midi_alsa_color = QColor.fromHsv(91, 214, 112)
 
-            self.port_audio_jack_bg = QColor(150, 150, 255)
-            self.port_audio_jack_bg_sel = QColor(135 + 150, 161 + 150, 199 + 150)
-            self.port_midi_jack_bg = QColor(255, 150, 160)
-            self.port_midi_jack_bg_sel = QColor(90 + 30, 15 + 50, 16 + 50)
-            self.port_midi_a2j_bg = QColor(200, 135, 100)
-            self.port_midi_a2j_bg_sel = QColor(101 + 50, 47 + 50, 16 + 50)
-            self.port_midi_alsa_bg = QColor(160, 255, 150)
-            self.port_midi_alsa_bg_sel = QColor(64 + 50, 112 + 50, 18 + 50)
+            port_lineW = 1
+            port_pen_shade = 130
+            self.port_audio_jack_pen = QPen(port_audio_jack_color.darker(port_pen_shade), port_lineW)
+            self.port_midi_jack_pen = QPen(port_midi_jack_color.darker(port_pen_shade), port_lineW)
+            self.port_midi_a2j_pen = QPen(port_midi_a2j_color.darker(port_pen_shade), port_lineW)
+            self.port_midi_alsa_pen = QPen(port_midi_alsa_color.darker(port_pen_shade), port_lineW)
+            port_selW = 1.5
+            self.port_audio_jack_pen_sel = QPen(port_audio_jack_color.lighter(port_pen_shade), port_selW)
+            self.port_midi_jack_pen_sel = QPen(port_midi_jack_color.lighter(port_pen_shade), port_selW)
+            self.port_midi_a2j_pen_sel = QPen(port_midi_a2j_color.lighter(port_pen_shade), port_selW)
+            self.port_midi_alsa_pen_sel = QPen(port_midi_alsa_color.lighter(port_pen_shade), port_selW)
 
-            self.port_audio_jack_text = self.port_text
+            port_bg_shade = 170
+            self.port_audio_jack_bg = port_audio_jack_color
+            self.port_midi_jack_bg = port_midi_jack_color
+            self.port_midi_a2j_bg = port_midi_a2j_color
+            self.port_midi_alsa_bg = port_midi_alsa_color
+            self.port_audio_jack_bg_sel = hsvAdjustedRel(self.port_audio_jack_bg, saturation = -80).lighter(130)
+            self.port_midi_jack_bg_sel = hsvAdjustedRel(self.port_midi_jack_bg, saturation = -80).lighter(130)
+            self.port_midi_a2j_bg_sel = hsvAdjustedRel(self.port_midi_a2j_bg, saturation = -80).lighter(130)
+            self.port_midi_alsa_bg_sel = hsvAdjustedRel(self.port_midi_alsa_bg, saturation = -80).lighter(130)
+
+            self.port_audio_jack_text = QPen(hsvAdjustedRel(port_audio_jack_color, hue = -30, saturation = -70, value = 70), 1)
+            self.port_midi_jack_text = QPen(hsvAdjustedRel(port_midi_jack_color, hue = 10, saturation = -70, value = 70), 1)
+            self.port_midi_a2j_text = QPen(hsvAdjustedRel(port_midi_a2j_color, hue = 8, saturation = -70, value = 70), 1)
+            self.port_midi_alsa_text = QPen(hsvAdjustedRel(port_midi_alsa_color, hue = -8, saturation = -70, value = 70), 1)
             self.port_audio_jack_text_sel = self.port_text
-            self.port_midi_jack_text = self.port_text
             self.port_midi_jack_text_sel = self.port_text
-            self.port_midi_a2j_text = self.port_text
             self.port_midi_a2j_text_sel = self.port_text
-            self.port_midi_alsa_text = self.port_text
             self.port_midi_alsa_text_sel = self.port_text
 
-            self.port_text_padding = 0
+            self.port_text_padding = 0.5
             self.port_offset   = 0
-            self.port_spacing  = 3
-            self.port_spacingT = 2
+            self.port_spacing  = 2
+            self.port_spacingT = 1
             self.port_rounding = 0.0
 
             # To not scale some line widths
