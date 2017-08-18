@@ -336,7 +336,8 @@ class Theme(object):
 
             # Boxes
             self.box_pen = QPen(QColor(143 - 70, 143 - 70, 143 - 70), 2, Qt.SolidLine)
-            self.box_pen_sel = QPen(QColor(143, 143, 143), 2, Qt.DashLine)
+            self.box_pen_sel = QPen(QColor(143, 143, 143), 2, Qt.CustomDashLine, Qt.RoundCap)
+            self.box_pen_sel.setDashPattern([1.5, 3])
             self.box_bg_1 = QColor(30, 34, 36)
             self.box_bg_2 = QColor(30, 34, 36)
             self.box_shadow = QColor(89, 89, 89, 180)
@@ -419,7 +420,8 @@ class Theme(object):
 
             # Boxes
             self.box_pen = QPen(QColor(143 - 70, 143 - 70, 143 - 70), 2, Qt.SolidLine)
-            self.box_pen_sel = QPen(QColor(143, 143, 143), 2, Qt.DashLine)
+            self.box_pen_sel = QPen(QColor(143, 143, 143), 2, Qt.CustomDashLine, Qt.RoundCap)
+            self.box_pen_sel.setDashPattern([1.5, 3])
             self.box_bg_1 = QColor(30, 34, 36)
             self.box_bg_2 = QColor(30, 34, 36)
             self.box_shadow = QColor(89, 89, 89, 180)
@@ -445,23 +447,28 @@ class Theme(object):
             self.port_font_state = QFont.Normal
             self.port_mode = self.THEME_PORT_SQUARE
 
+            port_dash = [4, 3]
             self.port_audio_jack_pen = QPen(QColor(55, 91, 149), 1)
-            self.port_audio_jack_pen_sel = QPen(QColor(55, 91, 149), 1)
             self.port_midi_jack_pen = QPen(QColor(150, 25, 26), 1)
-            self.port_midi_jack_pen_sel = QPen(QColor(150, 25, 26), 1)
             self.port_midi_a2j_pen = QPen(QColor(141, 67, 27), 1)
-            self.port_midi_a2j_pen_sel = QPen(QColor(141, 67, 27), 1)
             self.port_midi_alsa_pen = QPen(QColor(83, 152, 29), 1)
-            self.port_midi_alsa_pen_sel = QPen(QColor(83, 152, 29), 1)
+            self.port_audio_jack_pen_sel = QPen(QColor(55, 91, 149), 1, Qt.CustomDashLine, Qt.RoundCap)
+            self.port_midi_jack_pen_sel = QPen(QColor(150, 25, 26), 1, Qt.CustomDashLine, Qt.RoundCap)
+            self.port_midi_a2j_pen_sel = QPen(QColor(141, 67, 27), 1, Qt.CustomDashLine, Qt.RoundCap)
+            self.port_midi_alsa_pen_sel = QPen(QColor(83, 152, 29), 1, Qt.CustomDashLine, Qt.RoundCap)
+            self.port_audio_jack_pen_sel.setDashPattern(port_dash);
+            self.port_midi_jack_pen_sel.setDashPattern(port_dash);
+            self.port_midi_a2j_pen_sel.setDashPattern(port_dash);
+            self.port_midi_alsa_pen_sel.setDashPattern(port_dash);
 
             self.port_audio_jack_bg = QColor(35, 61, 99)
-            self.port_audio_jack_bg_sel = QColor(255, 0, 0)
             self.port_midi_jack_bg = QColor(120, 15, 16)
-            self.port_midi_jack_bg_sel = QColor(255, 0, 0)
             self.port_midi_a2j_bg = QColor(101, 47, 17)
-            self.port_midi_a2j_bg_sel = QColor(255, 0, 0)
             self.port_midi_alsa_bg = QColor(63, 112, 19)
-            self.port_midi_alsa_bg_sel = QColor(255, 0, 0)
+            self.port_audio_jack_bg_sel = self.port_audio_jack_bg.darker(150)
+            self.port_midi_jack_bg_sel = self.port_midi_jack_bg.darker(150)
+            self.port_midi_a2j_bg_sel = self.port_midi_a2j_bg.darker(150)
+            self.port_midi_alsa_bg_sel = self.port_midi_alsa_bg.darker(150)
 
             self.port_audio_jack_text = self.port_text
             self.port_audio_jack_text_sel = self.port_text
@@ -492,8 +499,8 @@ class Theme(object):
             self.line_midi_alsa_sel = QColor(255, 0, 0)
             self.line_midi_alsa_glow = QColor(255, 0, 0)
 
-            self.rubberband_pen = QPen(QColor(147, 151, 143), 2, Qt.SolidLine)
-            self.rubberband_brush = QColor(35, 61, 99, 100)
+            self.rubberband_pen = QPen(QColor.fromHsv(191, 100, 120, 170), 2, Qt.SolidLine)
+            self.rubberband_brush = QColor.fromHsv(191, 100, 99, 100)
 
         elif idx == self.THEME_OOSTUDIO:
             # Canvas
