@@ -1400,7 +1400,9 @@ class CanvasLine(QGraphicsLineItem):
         elif port_type2 == PORT_TYPE_MIDI_ALSA:
             port_gradient.setColorAt(pos2, canvas.theme.line_midi_alsa_sel if self.m_lineSelected else canvas.theme.line_midi_alsa)
 
-        self.setPen(QPen(port_gradient, 2))
+        pen = QPen(port_gradient, 2)
+        pen.setCapStyle(Qt.RoundCap)
+        self.setPen(pen)
 
     def paint(self, painter, option, widget):
         painter.save()
@@ -1505,7 +1507,9 @@ class CanvasBezierLine(QGraphicsPathItem):
         elif port_type2 == PORT_TYPE_MIDI_ALSA:
             port_gradient.setColorAt(pos2, canvas.theme.line_midi_alsa_sel if self.m_lineSelected else canvas.theme.line_midi_alsa)
 
-        self.setPen(QPen(port_gradient, 2))
+        pen = QPen(port_gradient, 2)
+        pen.setCapStyle(Qt.FlatCap)
+        self.setPen(pen)
 
     def paint(self, painter, option, widget):
         painter.save()
@@ -1539,6 +1543,7 @@ class CanvasLineMov(QGraphicsLineItem):
         else:
             qWarning("PatchCanvas::CanvasLineMov(%s, %s, %s) - invalid port type" % (port_mode2str(port_mode), port_type2str(port_type), parent))
             pen = QPen(Qt.black)
+        pen.setCapStyle(Qt.RoundCap)
 
         self.setPen(pen)
 
@@ -1596,6 +1601,7 @@ class CanvasBezierLineMov(QGraphicsPathItem):
         else:
             qWarning("PatchCanvas::CanvasBezierLineMov(%s, %s, %s) - invalid port type" % (port_mode2str(port_mode), port_type2str(port_type), parent))
             pen = QPen(Qt.black)
+        pen.setCapStyle(Qt.FlatCap)
 
         self.setBrush(QColor(0, 0, 0, 0))
         self.setPen(pen)
