@@ -75,6 +75,7 @@ class Theme(object):
             self.box_bg_1 = QColor(32, 34, 35)
             self.box_bg_2 = QColor(43, 47, 48)
             self.box_shadow = QColor(89, 89, 89, 180)
+            self.box_hover = QColor(255, 255, 255, 60)
             self.box_header_pixmap  = None
             self.box_header_height  = 24
             self.box_header_spacing = 0
@@ -91,6 +92,7 @@ class Theme(object):
 
             # Ports
             self.port_text = QPen(QColor(250, 250, 250, 180), 0)
+            self.port_hover = QColor(255, 255, 255, 80)
             self.port_bg_pixmap = None
             self.port_font_name = "Deja Vu Sans"
             self.port_font_size = 8
@@ -169,6 +171,7 @@ class Theme(object):
             self.box_bg_1 = QColor(32, 34, 35)
             self.box_bg_2 = QColor(43, 47, 48)
             self.box_shadow = QColor(89, 89, 89, 180)
+            self.box_hover = QColor(255, 255, 255, 60)
             self.box_header_pixmap  = None
             self.box_header_height  = 14
             self.box_header_spacing = 0
@@ -185,6 +188,7 @@ class Theme(object):
 
             # Ports
             self.port_text = QPen(QColor(250, 250, 250, 220), 0)
+            self.port_hover = QColor(255, 255, 255, 80)
             self.port_bg_pixmap = None
             self.port_font_name = "Deja Vu Sans"
             self.port_font_size = 6
@@ -263,6 +267,7 @@ class Theme(object):
             self.box_bg_1 = QColor(220, 220, 220)
             self.box_bg_2 = self.box_bg_1.darker(120)
             self.box_shadow = QColor(1, 1, 1, 100)
+            self.box_hover = QColor(0, 0, 0, 60)
             self.box_header_pixmap  = None
             self.box_header_height  = 24
             self.box_header_spacing = 0
@@ -279,6 +284,7 @@ class Theme(object):
 
             # Ports
             self.port_text = QPen(QColor(255, 255, 255, 220), 1)
+            self.port_hover = QColor(0, 0, 0, 255)
             self.port_bg_pixmap = None
             self.port_font_name = "Ubuntu"
             self.port_font_size = 9
@@ -368,6 +374,7 @@ class Theme(object):
             self.box_bg_1 = QColor(30, 34, 36)
             self.box_bg_2 = QColor(30, 34, 36)
             self.box_shadow = QColor(89, 89, 89, 180)
+            self.box_hover = QColor(255, 255, 255, 60)
             self.box_header_pixmap  = None
             self.box_header_height  = 19
             self.box_header_spacing = 0
@@ -384,6 +391,7 @@ class Theme(object):
 
             # Ports
             self.port_text = QPen(QColor(250, 250, 250), 0)
+            self.port_hover = QColor(255, 255, 255, 40)
             self.port_bg_pixmap = None
             self.port_font_name = "Sans"
             self.port_font_size = 8
@@ -452,6 +460,7 @@ class Theme(object):
             self.box_bg_1 = QColor(30, 34, 36)
             self.box_bg_2 = QColor(30, 34, 36)
             self.box_shadow = QColor(89, 89, 89, 180)
+            self.box_hover = QColor(255, 255, 255, 60)
             self.box_header_pixmap  = None
             self.box_header_height  = 19
             self.box_header_spacing = 0
@@ -468,6 +477,7 @@ class Theme(object):
 
             # Ports
             self.port_text = QPen(QColor(250, 250, 250), 0)
+            self.port_hover = QColor(255, 255, 255, 80)
             self.port_bg_pixmap = None
             self.port_font_name = "Sans"
             self.port_font_size = 8
@@ -539,6 +549,7 @@ class Theme(object):
             self.box_bg_1 = QColor(46, 46, 46)
             self.box_bg_2 = QColor(23, 23, 23)
             self.box_shadow = QColor(89, 89, 89, 180)
+            self.box_hover = QColor(255, 255, 255, 60)
             self.box_header_pixmap  = QPixmap(":/bitmaps/canvas/frame_node_header.png")
             self.box_header_height  = 22
             self.box_header_spacing = 6
@@ -558,6 +569,7 @@ class Theme(object):
             selPortBG = QColor(23, 23, 23)
 
             self.port_text = QPen(QColor(155, 155, 155), 0)
+            self.port_hover = QColor(255, 255, 255, 80)
             self.port_bg_pixmap = QPixmap(":/bitmaps/canvas/frame_port_bg.png")
             self.port_font_name = "Deja Vu Sans"
             self.port_font_size = 8
@@ -615,6 +627,7 @@ class Theme(object):
             self.rubberband_pen = QPen(QColor(1, 230, 238), 2, Qt.SolidLine)
             self.rubberband_brush = QColor(90, 90, 90, 100)
 
+        # Font-dependant port height
         port_font = QFont(self.port_font_name, self.port_font_size, self.port_font_state)
         self.port_height = QFontMetrics(port_font).height() + 2 * self.port_text_padding
 

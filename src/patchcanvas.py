@@ -1663,9 +1663,11 @@ class CanvasPort(QGraphicsItem):
         self.m_last_selected_state = False
 
         self.m_mouse_down = False
+        self.m_mouse_over = False
         self.m_cursor_moving = False
 
         self.setFlags(QGraphicsItem.ItemIsSelectable)
+        self.setAcceptHoverEvents(True)
 
     def getPortId(self):
         return self.m_port_id
@@ -1712,6 +1714,14 @@ class CanvasPort(QGraphicsItem):
 
     def type(self):
         return CanvasPortType
+
+    def hoverEnterEvent(self, event):
+        self.m_mouse_over = True
+        QGraphicsItem.hoverEnterEvent(self, event)
+
+    def hoverLeaveEvent(self, event):
+        self.m_mouse_over = False
+        QGraphicsItem.hoverLeaveEvent(self, event)
 
     def mousePressEvent(self, event):
         self.m_hover_item = None
@@ -1964,6 +1974,15 @@ class CanvasPort(QGraphicsItem):
 
         painter.setPen(poly_pen)
         painter.drawPath(path)
+        if self.m_mouse_over and canvas.theme.port_hover:
+            if poly_pen.style() == Qt.NoPen:
+                painter.setBrush(canvas.theme.port_hover)
+            else:
+                pen = QPen(poly_pen)
+                pen.setColor(canvas.theme.port_hover)
+                painter.setPen(pen)
+                painter.setBrush(Qt.NoBrush)
+            painter.drawPath(path)
 
         painter.setPen(text_pen)
         painter.setFont(self.m_port_font)
@@ -2022,6 +2041,7 @@ class CanvasBox(QGraphicsItem):
         self.m_cursor_moving = False
         self.m_forced_split = False
         self.m_mouse_down = False
+        self.m_mouse_over = False
 
         self.m_port_list_ids = []
         self.m_connection_lines = []
@@ -2046,6 +2066,7 @@ class CanvasBox(QGraphicsItem):
 
         # Final touches
         self.setFlags(QGraphicsItem.ItemIsMovable | QGraphicsItem.ItemIsSelectable)
+        self.setAcceptHoverEvents(True)
 
         # Wait for at least 1 port
         if options.auto_hide_groups:
@@ -2435,6 +2456,14 @@ class CanvasBox(QGraphicsItem):
 
         event.accept()
 
+    def hoverEnterEvent(self, event):
+        self.m_mouse_over = True
+        QGraphicsItem.hoverEnterEvent(self, event)
+
+    def hoverLeaveEvent(self, event):
+        self.m_mouse_over = False
+        QGraphicsItem.hoverLeaveEvent(self, event)
+
     def mousePressEvent(self, event):
         canvas.last_z_value += 1
         self.setZValue(canvas.last_z_value)
@@ -2504,7 +2533,16 @@ class CanvasBox(QGraphicsItem):
             painter.setBrush(canvas.theme.box_bg_1)
 
         rect.adjust(line_width / 2, line_width / 2, -line_width / 2, -line_width / 2)
-        painter.drawRoundedRect(rect, rounding, rounding)
+        path = QPainterPath()
+        path.addRoundedRect(rect, rounding, rounding)
+
+        painter.drawPath(path)
+        if self.m_mouse_over and canvas.theme.box_hover:
+            pen = QPen(canvas.theme.box_pen)
+            pen.setColor(canvas.theme.box_hover)
+            painter.setPen(pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(path)
 
         # Draw pixmap header
         rect.setHeight(canvas.theme.box_header_height)
