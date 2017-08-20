@@ -19,7 +19,7 @@
 # Imports (Global)
 from PyQt4.QtCore import pyqtSignal, pyqtSlot, qDebug, qCritical, qFatal, qWarning, Qt, QObject
 from PyQt4.QtCore import QAbstractAnimation, QLineF, QPointF, QRectF, QSizeF, QSettings, QTimer
-from PyQt4.QtGui import QColor, QLinearGradient, QPen, QPolygonF, QPainter, QPainterPath
+from PyQt4.QtGui import QColor, QLinearGradient, QPen, QBrush, QPolygonF, QPainter, QPainterPath, QPainterPathStroker
 from PyQt4.QtGui import QCursor, QFont, QFontMetrics
 from PyQt4.QtGui import QGraphicsScene, QGraphicsItem, QGraphicsLineItem, QGraphicsPathItem
 from PyQt4.QtGui import QGraphicsColorizeEffect, QGraphicsDropShadowEffect
@@ -1322,7 +1322,9 @@ class CanvasLine(QGraphicsLineItem):
 
         self.m_locked = False
         self.m_lineSelected = False
+        self.m_mouse_over = False
 
+        self.setAcceptHoverEvents(True)
         self.setGraphicsEffect(None)
         self.updateLinePos()
 
@@ -1351,6 +1353,21 @@ class CanvasLine(QGraphicsLineItem):
 
         self.m_lineSelected = yesno
         self.updateLineGradient()
+
+    def hoverEnterEvent(self, event):
+        self.m_mouse_over = True
+        self.setLineSelected(True)
+
+    def hoverLeaveEvent(self, event):
+        self.m_mouse_over = False
+        self.setLineSelected(False)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MidButton:
+            for connection in canvas.connection_list:
+                if (connection.port_out_id == self.item1.getPortId() and connection.port_in_id == self.item2.getPortId()):
+                    canvas.callback(ACTION_PORTS_DISCONNECT, connection.connection_id, 0, "")
+                    break
 
     def updateLinePos(self):
         if self.item1.getPortMode() == PORT_MODE_OUTPUT:
@@ -1422,7 +1439,9 @@ class CanvasBezierLine(QGraphicsPathItem):
 
         self.m_locked = False
         self.m_lineSelected = False
+        self.m_mouse_over = False
 
+        self.setAcceptHoverEvents(True)
         self.setBrush(QColor(0, 0, 0, 0))
         self.setGraphicsEffect(None)
         self.updateLinePos()
@@ -1453,6 +1472,21 @@ class CanvasBezierLine(QGraphicsPathItem):
         self.m_lineSelected = yesno
         self.updateLineGradient()
 
+    def hoverEnterEvent(self, event):
+        self.m_mouse_over = True
+        self.setLineSelected(True)
+
+    def hoverLeaveEvent(self, event):
+        self.m_mouse_over = False
+        self.setLineSelected(False)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MidButton:
+            for connection in canvas.connection_list:
+                if (connection.port_out_id == self.item1.getPortId() and connection.port_in_id == self.item2.getPortId()):
+                    canvas.callback(ACTION_PORTS_DISCONNECT, connection.connection_id, 0, "")
+                    break
+
     def updateLinePos(self):
         if self.item1.getPortMode() == PORT_MODE_OUTPUT:
             rect1 = self.item1.sceneBoundingRect()
@@ -1467,7 +1501,11 @@ class CanvasBezierLine(QGraphicsPathItem):
 
             path = QPainterPath(QPointF(item1_x, item1_y))
             path.cubicTo(item1_new_x, item1_y, item2_new_x, item2_y, item2_x, item2_y)
-            self.setPath(path)
+
+            stroker = QPainterPathStroker()
+            stroker.setCapStyle(Qt.FlatCap)
+            stroker.setWidth(2)
+            self.setPath(stroker.createStroke(path))
 
             self.m_lineSelected = False
             self.updateLineGradient()
@@ -1507,9 +1545,8 @@ class CanvasBezierLine(QGraphicsPathItem):
         elif port_type2 == PORT_TYPE_MIDI_ALSA:
             port_gradient.setColorAt(pos2, canvas.theme.line_midi_alsa_sel if self.m_lineSelected else canvas.theme.line_midi_alsa)
 
-        pen = QPen(port_gradient, 2)
-        pen.setCapStyle(Qt.FlatCap)
-        self.setPen(pen)
+        self.setBrush(QBrush(port_gradient))
+        self.setPen(QPen(Qt.NoPen))
 
     def paint(self, painter, option, widget):
         painter.save()
