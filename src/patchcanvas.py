@@ -1217,7 +1217,8 @@ class PatchScene(QGraphicsScene):
             else:
                 y = pos.y()
 
-            self.m_rubberband.setRect(x, y, abs(pos.x() - self.m_rubberband_orig_point.x()), abs(pos.y() - self.m_rubberband_orig_point.y()))
+            lineDiff = canvas.theme.rubberband_pen.widthF() / 2
+            self.m_rubberband.setRect(x+lineDiff, y+lineDiff, abs(pos.x() - self.m_rubberband_orig_point.x()), abs(pos.y() - self.m_rubberband_orig_point.y()))
             return event.accept()
 
         QGraphicsScene.mouseMoveEvent(self, event)
