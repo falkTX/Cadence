@@ -2222,15 +2222,13 @@ class CanvasBox(QGraphicsItem):
         self.prepareGeometryChange()
 
         max_in_width  = max_out_width = 0
-        max_in_height = max_out_height = canvas.theme.box_header_height + canvas.theme.box_header_spacing + canvas.theme.box_rounding
-        port_spacing   = canvas.theme.port_height + canvas.theme.port_spacing
-
-        have_audio_jack_in = have_midi_jack_in = have_midi_a2j_in = have_midi_alsa_in = False
-        have_audio_jack_out = have_midi_jack_out = have_midi_a2j_out = have_midi_alsa_out = False
+        max_in_height = max_out_height = 0
+        port_spacing  = canvas.theme.port_height + canvas.theme.port_spacing
+        line_diff = canvas.theme.box_pen.widthF()
 
         # reset box size
         self.p_width  = 50
-        self.p_height = canvas.theme.box_header_height + canvas.theme.box_header_spacing + 1
+        self.p_height = canvas.theme.box_header_height + line_diff
 
         # Check Text Name size
         app_name_size = QFontMetrics(self.m_font_name).width(self.m_group_name) + 30
@@ -2244,6 +2242,8 @@ class CanvasBox(QGraphicsItem):
                 port_list.append(port)
 
         # Get Max Box Width/Height
+        port_in_types = [PORT_TYPE_AUDIO_JACK, PORT_TYPE_MIDI_JACK, PORT_TYPE_MIDI_A2J, PORT_TYPE_MIDI_ALSA]
+        port_out_types = [PORT_TYPE_AUDIO_JACK, PORT_TYPE_MIDI_JACK, PORT_TYPE_MIDI_A2J, PORT_TYPE_MIDI_ALSA]
         for port in port_list:
             if port.port_mode == PORT_MODE_INPUT:
                 max_in_height += port_spacing
@@ -2252,18 +2252,9 @@ class CanvasBox(QGraphicsItem):
                 if size > max_in_width:
                     max_in_width = size
 
-                if port.port_type == PORT_TYPE_AUDIO_JACK and not have_audio_jack_in:
-                    have_audio_jack_in = True
+                if port.port_type in port_in_types:
                     max_in_height += canvas.theme.port_spacingT
-                elif port.port_type == PORT_TYPE_MIDI_JACK and not have_midi_jack_in:
-                    have_midi_jack_in = True
-                    max_in_height += canvas.theme.port_spacingT
-                elif port.port_type == PORT_TYPE_MIDI_A2J and not have_midi_a2j_in:
-                    have_midi_a2j_in = True
-                    max_in_height += canvas.theme.port_spacingT
-                elif port.port_type == PORT_TYPE_MIDI_ALSA and not have_midi_alsa_in:
-                    have_midi_alsa_in = True
-                    max_in_height += canvas.theme.port_spacingT
+                    port_in_types.remove(port.port_type)
 
             elif port.port_mode == PORT_MODE_OUTPUT:
                 max_out_height += port_spacing
@@ -2272,43 +2263,27 @@ class CanvasBox(QGraphicsItem):
                 if size > max_out_width:
                     max_out_width = size
 
-                if port.port_type == PORT_TYPE_AUDIO_JACK and not have_audio_jack_out:
-                    have_audio_jack_out = True
+                if port.port_type in port_out_types:
                     max_out_height += canvas.theme.port_spacingT
-                elif port.port_type == PORT_TYPE_MIDI_JACK and not have_midi_jack_out:
-                    have_midi_jack_out = True
-                    max_out_height += canvas.theme.port_spacingT
-                elif port.port_type == PORT_TYPE_MIDI_A2J and not have_midi_a2j_out:
-                    have_midi_a2j_out = True
-                    max_out_height += canvas.theme.port_spacingT
-                elif port.port_type == PORT_TYPE_MIDI_ALSA and not have_midi_alsa_out:
-                    have_midi_alsa_out = True
-                    max_out_height += canvas.theme.port_spacingT
+                    port_out_types.remove(port.port_type)
 
-        if (canvas.theme.port_spacingT == 0 and canvas.theme.box_rounding == 0):
-            max_in_height  += 2
-            max_out_height += 2
+        self.p_height += max_in_height if (max_in_height > self.p_height) else max_out_height
+
+        if len(port_list) > 0:
+            # Correct bottom space
+            bottom_space = canvas.theme.port_spacingT + canvas.theme.port_spacing
+            self.p_height -= canvas.theme.port_spacingT + canvas.theme.port_spacing
+            if bottom_space < canvas.theme.box_rounding:
+                bottom_space = canvas.theme.box_rounding
+            if bottom_space < 2:
+                bottom_space = 2
+            self.p_height += canvas.theme.box_header_spacing + bottom_space
 
         final_width = 30 + max_in_width + max_out_width
         if final_width > self.p_width:
             self.p_width = final_width
 
-        if max_in_height > self.p_height:
-            self.p_height = max_in_height
-
-        if max_out_height > self.p_height:
-            self.p_height = max_out_height
-
-        # Remove bottom space
-        self.p_height -= canvas.theme.port_spacingT
-
-        if canvas.theme.box_header_spacing > 0:
-            if len(port_list) == 0:
-                self.p_height -= canvas.theme.box_header_spacing
-            else:
-                self.p_height -= canvas.theme.box_header_spacing/2
-
-        last_in_pos  = last_out_pos = canvas.theme.box_header_height + canvas.theme.box_header_spacing
+        last_in_pos  = last_out_pos = canvas.theme.box_header_height + canvas.theme.box_header_spacing + line_diff
         last_in_type = last_out_type = PORT_TYPE_NULL
 
         # Re-position ports, AUDIO_JACK
