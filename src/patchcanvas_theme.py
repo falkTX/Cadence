@@ -262,7 +262,7 @@ class Theme(object):
             self.canvas_bg = QColor(248, 249, 250)
 
             # Boxes
-            self.box_pen = QPen(QColor(176, 177, 178), 1, Qt.SolidLine)
+            self.box_pen = QPen(QColor(0, 0, 0, 60), 1, Qt.SolidLine)
             self.box_pen_sel = QPen(QColor(1, 2, 3), 2, Qt.DashLine)
             self.box_bg_1 = QColor(220, 220, 220)
             self.box_bg_2 = self.box_bg_1.darker(120)
@@ -360,7 +360,7 @@ class Theme(object):
             self.line_midi_alsa_sel = QColor(93 + 90, 141 + 90, 46 + 90)
             self.line_midi_alsa_glow = QColor(100, 200, 100)
 
-            self.rubberband_pen = QPen(QColor(206, 207, 208), 1, Qt.SolidLine)
+            self.rubberband_pen = QPen(QColor(76, 77, 78, 130), 1, Qt.SolidLine)
             self.rubberband_brush = QColor(76, 77, 78, 100)
 
         elif idx == self.THEME_CLASSIC_DARK:
