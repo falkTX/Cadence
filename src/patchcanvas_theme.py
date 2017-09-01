@@ -398,20 +398,20 @@ class Theme(object):
             self.port_font_state = QFont.Normal
             self.port_mode = self.THEME_PORT_SQUARE
 
-            self.port_audio_jack_bg = hsvAdjustedRel(QColor(41, 61, 99), saturation=-40)
+            self.port_audio_jack_bg = hsvAdjusted(QColor(41, 61, 99), saturation=120)
             self.port_audio_jack_bg_sel = QColor(255, 0, 0)
-            self.port_midi_jack_bg = hsvAdjustedRel(QColor(120, 15, 16), saturation=-40)
+            self.port_midi_jack_bg = hsvAdjusted(QColor(120, 15, 16), saturation=150)
             self.port_midi_jack_bg_sel = QColor(255, 0, 0)
-            self.port_midi_a2j_bg = hsvAdjustedRel(QColor(101, 47, 17), saturation=-40)
+            self.port_midi_a2j_bg = hsvAdjusted(QColor(101, 47, 17), saturation=150)
             self.port_midi_a2j_bg_sel = QColor(255, 0, 0)
-            self.port_midi_alsa_bg = hsvAdjustedRel(QColor(63, 112, 19), saturation=-40)
+            self.port_midi_alsa_bg = hsvAdjusted(QColor(63, 112, 19), saturation=120)
             self.port_midi_alsa_bg_sel = QColor(255, 0, 0)
 
             port_pen = QPen(QColor(255, 255, 255, 50), 1)
-            self.port_audio_jack_pen_sel = self.port_audio_jack_pen = QPen(self.port_audio_jack_bg.lighter(250), 1)
-            self.port_midi_jack_pen_sel = self.port_midi_jack_pen = QPen(self.port_midi_jack_bg.lighter(250), 1)
-            self.port_midi_a2j_pen_sel = self.port_midi_a2j_pen = QPen(self.port_midi_a2j_bg.lighter(250), 1)
-            self.port_midi_alsa_pen_sel = self.port_midi_alsa_pen = QPen(self.port_midi_alsa_bg.lighter(250), 1)
+            self.port_audio_jack_pen_sel = self.port_audio_jack_pen = QPen(hsvAdjustedRel(self.port_audio_jack_bg.lighter(180), saturation=-60), 1)
+            self.port_midi_jack_pen_sel = self.port_midi_jack_pen = QPen(hsvAdjustedRel(self.port_midi_jack_bg.lighter(180), saturation=-60), 1)
+            self.port_midi_a2j_pen_sel = self.port_midi_a2j_pen = QPen(hsvAdjustedRel(self.port_midi_a2j_bg.lighter(180), saturation=-60), 1)
+            self.port_midi_alsa_pen_sel = self.port_midi_alsa_pen = QPen(hsvAdjustedRel(self.port_midi_alsa_bg.lighter(180), saturation=-60), 1)
 
             self.port_audio_jack_text = self.port_audio_jack_pen_sel
             self.port_audio_jack_text_sel = self.port_audio_jack_pen_sel
