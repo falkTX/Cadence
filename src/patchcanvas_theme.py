@@ -465,7 +465,7 @@ class Theme(object):
             self.box_text = QPen(QColor(255, 255, 255), 0)
             self.box_text_sel  = self.box_text
             self.box_font_name = "Sans"
-            self.box_font_size = 9
+            self.box_font_size = 8
             self.box_font_state = QFont.Normal
 
             self.box_bg_type  = self.THEME_BG_GRADIENT
