@@ -2242,8 +2242,7 @@ class CanvasBox(QGraphicsItem):
                 port_list.append(port)
 
         # Get Max Box Width/Height
-        port_in_types = [PORT_TYPE_AUDIO_JACK, PORT_TYPE_MIDI_JACK, PORT_TYPE_MIDI_A2J, PORT_TYPE_MIDI_ALSA]
-        port_out_types = [PORT_TYPE_AUDIO_JACK, PORT_TYPE_MIDI_JACK, PORT_TYPE_MIDI_A2J, PORT_TYPE_MIDI_ALSA]
+        port_in_types = port_out_types = [PORT_TYPE_AUDIO_JACK, PORT_TYPE_MIDI_JACK, PORT_TYPE_MIDI_A2J, PORT_TYPE_MIDI_ALSA]
         for port in port_list:
             if port.port_mode == PORT_MODE_INPUT:
                 max_in_height += port_spacing
@@ -2267,7 +2266,7 @@ class CanvasBox(QGraphicsItem):
                     max_out_height += canvas.theme.port_spacingT
                     port_out_types.remove(port.port_type)
 
-        self.p_height += max_in_height if (max_in_height > self.p_height) else max_out_height
+        self.p_height += max_in_height if (max_in_height > max_out_height) else max_out_height
 
         if len(port_list) > 0:
             # Correct bottom space
