@@ -65,6 +65,7 @@ class Theme(object):
 
         self.idx = idx
 
+        self.port_side_min_space = 3
         if idx == self.THEME_MODERN_DARK:
             # Canvas
             self.canvas_bg = QColor(0, 0, 0)
