@@ -1118,23 +1118,14 @@ class PatchScene(QGraphicsScene):
 
                     if first_value:
                         min_x = pos.x()
-                    elif pos.x() < min_x:
-                        min_x = pos.x()
-
-                    if first_value:
                         min_y = pos.y()
-                    elif pos.y() < min_y:
-                        min_y = pos.y()
-
-                    if first_value:
                         max_x = pos.x() + rect.width()
-                    elif pos.x() + rect.width() > max_x:
-                        max_x = pos.x() + rect.width()
-
-                    if first_value:
                         max_y = pos.y() + rect.height()
-                    elif pos.y() + rect.height() > max_y:
-                        max_y = pos.y() + rect.height()
+                    else:
+                        min_x = min([ min_x, pos.x() ])
+                        min_y = min([ min_y, pos.y() ])
+                        max_x = max([ max_x, pos.x() + rect.width() ])
+                        max_y = max([ max_y, pos.y() + rect.height() ])
 
                     first_value = False
 
@@ -1203,15 +1194,8 @@ class PatchScene(QGraphicsScene):
 
             pos = event.scenePos()
 
-            if pos.x() > self.m_rubberband_orig_point.x():
-                x = self.m_rubberband_orig_point.x()
-            else:
-                x = pos.x()
-
-            if pos.y() > self.m_rubberband_orig_point.y():
-                y = self.m_rubberband_orig_point.y()
-            else:
-                y = pos.y()
+            x = min([ pos.x(), self.m_rubberband_orig_point.x() ])
+            y = min([ pos.y(), self.m_rubberband_orig_point.y() ])
 
             lineDiff = canvas.theme.rubberband_pen.widthF() / 2
             self.m_rubberband.setRect(x+lineDiff, y+lineDiff, abs(pos.x() - self.m_rubberband_orig_point.x()), abs(pos.y() - self.m_rubberband_orig_point.y()))
@@ -2206,14 +2190,9 @@ class CanvasBox(QGraphicsItem):
     def updatePositions(self):
         self.prepareGeometryChange()
 
-        max_in_width  = max_out_width = 0
-        max_in_height = max_out_height = 0
-        port_spacing  = canvas.theme.port_height + canvas.theme.port_spacing
+        max_in_width = max_out_width = max_in_height = max_out_height = 0
+        port_spacing = canvas.theme.port_height + canvas.theme.port_spacing
         line_diff = canvas.theme.box_pen.widthF()
-
-        # reset box size
-        self.p_width  = 50
-        self.p_height = canvas.theme.box_header_height + line_diff
 
         # Check Text Name size
         self.p_width = QFontMetrics(self.m_font_name).width(self.m_group_name) + max([line_diff + 1, canvas.theme.box_rounding / 2])
@@ -2228,79 +2207,61 @@ class CanvasBox(QGraphicsItem):
             if port.port_id in self.m_port_list_ids:
                 port_list.append(port)
 
-        # Get Max Box Width/Height
-        port_in_types = port_out_types = [PORT_TYPE_AUDIO_JACK, PORT_TYPE_MIDI_JACK, PORT_TYPE_MIDI_A2J, PORT_TYPE_MIDI_ALSA]
-        for port in port_list:
-            if port.port_mode == PORT_MODE_INPUT:
-                max_in_height += port_spacing
+        # Get Max Box Width/Height, vertical ports re-position
+        port_types = [PORT_TYPE_AUDIO_JACK, PORT_TYPE_MIDI_JACK, PORT_TYPE_MIDI_A2J, PORT_TYPE_MIDI_ALSA]
+        last_in_type = last_out_type = PORT_TYPE_NULL
+        last_in_pos  = last_out_pos = canvas.theme.box_header_height + canvas.theme.box_header_spacing + line_diff
+        for port_type in port_types:
+            for port in port_list:
+                if port.port_type == port_type:
+                    size = QFontMetrics(self.m_font_port).width(port.port_name)
 
-                size = QFontMetrics(self.m_font_port).width(port.port_name)
-                if size > max_in_width:
-                    max_in_width = size
+                    if port.port_mode == PORT_MODE_INPUT:
+                        max_in_width = max([ max_in_width, size ])
 
-                if port.port_type in port_in_types:
-                    max_in_height += canvas.theme.port_spacingT
-                    port_in_types.remove(port.port_type)
+                        if port.port_type != last_in_type:
+                            if last_in_type != PORT_TYPE_NULL:
+                                last_in_pos += canvas.theme.port_spacingT
+                            last_in_type = port_type
 
-            elif port.port_mode == PORT_MODE_OUTPUT:
-                max_out_height += port_spacing
+                        port.widget.setY(last_in_pos)
+                        last_in_pos += port_spacing
 
-                size = QFontMetrics(self.m_font_port).width(port.port_name)
-                if size > max_out_width:
-                    max_out_width = size
+                    elif port.port_mode == PORT_MODE_OUTPUT:
+                        max_out_width = max([ max_out_width, size ])
 
-                if port.port_type in port_out_types:
-                    max_out_height += canvas.theme.port_spacingT
-                    port_out_types.remove(port.port_type)
+                        if port.port_type != last_out_type:
+                            if last_out_type != PORT_TYPE_NULL:
+                                last_out_pos += canvas.theme.port_spacingT
+                            last_out_type = port_type
 
-        self.p_height += max_in_height if (max_in_height > max_out_height) else max_out_height
+                        port.widget.setY(last_out_pos)
+                        last_out_pos += port_spacing
 
+        self.p_height = max([ last_in_pos, last_out_pos ])
+
+        # Adjust bottom space
         if len(port_list) > 0:
-            # Adjust bottom space
-            bottom_space = canvas.theme.port_spacingT + canvas.theme.port_spacing
-            self.p_height -= canvas.theme.port_spacingT + canvas.theme.port_spacing
-            if bottom_space < canvas.theme.box_rounding:
-                bottom_space = canvas.theme.box_rounding
-            if bottom_space < 2:
-                bottom_space = 2
-            self.p_height += canvas.theme.box_header_spacing + bottom_space
+            self.p_height += max([ 2, canvas.theme.box_rounding, canvas.theme.port_spacing ]) - canvas.theme.port_spacing
+        else:
+            self.p_height -= canvas.theme.box_header_spacing
 
         max_in_width += ceil(canvas.theme.port_rounding / 2 + 4)
         max_out_width += ceil(canvas.theme.port_rounding / 2 + 4)
         if canvas.theme.port_mode == Theme.THEME_PORT_POLYGON:
             max_in_width += 7
             max_out_width += 7
-        final_width = max_in_width + max_out_width + canvas.theme.port_offset * 2 + canvas.theme.port_side_min_space
-        if final_width > self.p_width:
-            self.p_width = final_width
+        self.p_width = ceil(max([self.p_width, max_in_width + max_out_width + canvas.theme.port_offset * 2 + canvas.theme.port_side_min_space]))
 
-        last_in_pos  = last_out_pos = canvas.theme.box_header_height + canvas.theme.box_header_spacing + line_diff
-        last_in_type = last_out_type = PORT_TYPE_NULL
+        # Horizontal ports re-position
+        for port in port_list:
+            if port.port_mode == PORT_MODE_INPUT:
+                port.widget.setX(canvas.theme.port_offset)
+                port.widget.setPortWidth(max_in_width)
 
-        # Re-position ports, AUDIO_JACK
-        port_types = [PORT_TYPE_AUDIO_JACK, PORT_TYPE_MIDI_JACK, PORT_TYPE_MIDI_A2J, PORT_TYPE_MIDI_ALSA]
-        for port_type in port_types:
-            for port in port_list:
-                if port.port_type == port_type:
-                    if port.port_mode == PORT_MODE_INPUT:
-                        if last_in_type != PORT_TYPE_NULL and port.port_type != last_in_type:
-                            last_in_pos += canvas.theme.port_spacingT
-
-                        port.widget.setPos(QPointF(canvas.theme.port_offset, last_in_pos))
-                        port.widget.setPortWidth(max_in_width)
-
-                        last_in_pos += port_spacing
-                        last_in_type = port.port_type
-
-                    elif port.port_mode == PORT_MODE_OUTPUT:
-                        if last_out_type != PORT_TYPE_NULL and port.port_type != last_out_type:
-                            last_out_pos += canvas.theme.port_spacingT
-
-                        port.widget.setPos(QPointF(self.p_width - canvas.theme.port_offset - max_out_width, last_out_pos))
-                        port.widget.setPortWidth(max_out_width)
-
-                        last_out_pos += port_spacing
-                        last_out_type = port.port_type
+            elif port.port_mode == PORT_MODE_OUTPUT:
+                port.widget.setX(self.p_width - canvas.theme.port_offset - max_out_width)
+                port.widget.setPortWidth(max_out_width)
 
         self.repaintLines(True)
         self.update()
@@ -2458,7 +2419,7 @@ class CanvasBox(QGraphicsItem):
     def paint(self, painter, option, widget):
         painter.save()
         rect = QRectF(0, 0, self.p_width, self.p_height)
-        line_width = canvas.theme.box_pen.widthF()
+        line_diff = canvas.theme.box_pen.widthF() / 2
         rounding = canvas.theme.box_rounding
 
         # Draw rectangle
@@ -2475,7 +2436,7 @@ class CanvasBox(QGraphicsItem):
         else:
             painter.setBrush(canvas.theme.box_bg_1)
 
-        rect.adjust(line_width / 2, line_width / 2, -line_width / 2, -line_width / 2)
+        rect.adjust(line_diff, line_diff, -line_diff, -line_diff)
         path = QPainterPath()
         path.addRoundedRect(rect, rounding, rounding)
 
@@ -2493,10 +2454,12 @@ class CanvasBox(QGraphicsItem):
             painter.setPen(Qt.NoPen)
             painter.setBrush(canvas.theme.box_bg_2)
 
-            rect.adjust(line_width / 2, line_width / 2, -line_width / 2, line_width / 2)
-            rounding -= line_width / 2
+            # outline
+            rect.adjust(line_diff, line_diff, -line_diff, -line_diff)
+            rounding -= line_diff
             painter.drawRoundedRect(rect, rounding, rounding)
 
+            # background
             rect.adjust(1, 1, -1, 0)
             rounding -= 1
             clipPath = QPainterPath()
