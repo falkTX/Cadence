@@ -2216,9 +2216,11 @@ class CanvasBox(QGraphicsItem):
         self.p_height = canvas.theme.box_header_height + line_diff
 
         # Check Text Name size
-        app_name_size = QFontMetrics(self.m_font_name).width(self.m_group_name) + 30
-        if app_name_size > self.p_width:
-            self.p_width = app_name_size
+        self.p_width = QFontMetrics(self.m_font_name).width(self.m_group_name) + max([line_diff + 1, canvas.theme.box_rounding / 2])
+        if canvas.theme.box_use_icon:
+            self.p_width += line_diff + self.icon_svg.p_size.right() + self.icon_svg.p_size.left()
+        else:
+            self.p_width += max([ line_diff + 1, canvas.theme.box_rounding / 2 ])
 
         # Get Port List
         port_list = []
@@ -2512,8 +2514,8 @@ class CanvasBox(QGraphicsItem):
             painter.setPen(canvas.theme.box_text)
 
         if canvas.theme.box_use_icon:
-            rect.setCoords(self.icon_svg.p_size.right(), self.icon_svg.p_size.top(),
-                           self.p_width-rounding/2, self.icon_svg.p_size.bottom())
+            rect.setCoords(self.icon_svg.p_size.right() + 1, self.icon_svg.p_size.top(),
+                           self.p_width-max([2 * line_diff + 1, rounding/2]), self.icon_svg.p_size.bottom())
         painter.drawText(rect, Qt.AlignCenter|Qt.TextDontClip, self.m_group_name)
 
         self.repaintLines()
