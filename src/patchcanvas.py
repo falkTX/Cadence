@@ -1122,10 +1122,10 @@ class PatchScene(QGraphicsScene):
                         max_x = pos.x() + rect.width()
                         max_y = pos.y() + rect.height()
                     else:
-                        min_x = min([ min_x, pos.x() ])
-                        min_y = min([ min_y, pos.y() ])
-                        max_x = max([ max_x, pos.x() + rect.width() ])
-                        max_y = max([ max_y, pos.y() + rect.height() ])
+                        min_x = min(min_x, pos.x())
+                        min_y = min(min_y, pos.y())
+                        max_x = max(max_x, pos.x() + rect.width())
+                        max_y = max(max_y, pos.y() + rect.height())
 
                     first_value = False
 
@@ -1194,8 +1194,8 @@ class PatchScene(QGraphicsScene):
 
             pos = event.scenePos()
 
-            x = min([ pos.x(), self.m_rubberband_orig_point.x() ])
-            y = min([ pos.y(), self.m_rubberband_orig_point.y() ])
+            x = min(pos.x(), self.m_rubberband_orig_point.x())
+            y = min(pos.y(), self.m_rubberband_orig_point.y())
 
             lineDiff = canvas.theme.rubberband_pen.widthF() / 2
             self.m_rubberband.setRect(x+lineDiff, y+lineDiff, abs(pos.x() - self.m_rubberband_orig_point.x()), abs(pos.y() - self.m_rubberband_orig_point.y()))
@@ -2195,11 +2195,11 @@ class CanvasBox(QGraphicsItem):
         line_diff = canvas.theme.box_pen.widthF()
 
         # Check Text Name size
-        self.p_width = QFontMetrics(self.m_font_name).width(self.m_group_name) + max([line_diff + 1, canvas.theme.box_rounding / 2])
+        self.p_width = QFontMetrics(self.m_font_name).width(self.m_group_name) + max(line_diff + 1, canvas.theme.box_rounding / 2)
         if canvas.theme.box_use_icon:
             self.p_width += line_diff + self.icon_svg.p_size.right() + self.icon_svg.p_size.left()
         else:
-            self.p_width += max([ line_diff + 1, canvas.theme.box_rounding / 2 ])
+            self.p_width += max(line_diff + 1, canvas.theme.box_rounding / 2)
 
         # Get Port List
         port_list = []
@@ -2217,7 +2217,7 @@ class CanvasBox(QGraphicsItem):
                     size = QFontMetrics(self.m_font_port).width(port.port_name)
 
                     if port.port_mode == PORT_MODE_INPUT:
-                        max_in_width = max([ max_in_width, size ])
+                        max_in_width = max(max_in_width, size)
 
                         if port.port_type != last_in_type:
                             if last_in_type != PORT_TYPE_NULL:
@@ -2228,7 +2228,7 @@ class CanvasBox(QGraphicsItem):
                         last_in_pos += port_spacing
 
                     elif port.port_mode == PORT_MODE_OUTPUT:
-                        max_out_width = max([ max_out_width, size ])
+                        max_out_width = max(max_out_width, size)
 
                         if port.port_type != last_out_type:
                             if last_out_type != PORT_TYPE_NULL:
@@ -2238,11 +2238,11 @@ class CanvasBox(QGraphicsItem):
                         port.widget.setY(last_out_pos)
                         last_out_pos += port_spacing
 
-        self.p_height = max([ last_in_pos, last_out_pos ])
+        self.p_height = max(last_in_pos, last_out_pos)
 
         # Adjust bottom space
         if len(port_list) > 0:
-            self.p_height += max([ 2, canvas.theme.box_rounding, canvas.theme.port_spacing ]) - canvas.theme.port_spacing
+            self.p_height += max(2, canvas.theme.box_rounding, canvas.theme.port_spacing) - canvas.theme.port_spacing
         else:
             self.p_height -= canvas.theme.box_header_spacing
 
@@ -2251,7 +2251,7 @@ class CanvasBox(QGraphicsItem):
         if canvas.theme.port_mode == Theme.THEME_PORT_POLYGON:
             max_in_width += 7
             max_out_width += 7
-        self.p_width = ceil(max([self.p_width, max_in_width + max_out_width + canvas.theme.port_offset * 2 + canvas.theme.port_side_min_space]))
+        self.p_width = ceil(max(self.p_width, max_in_width + max_out_width + canvas.theme.port_offset * 2 + canvas.theme.port_side_min_space))
 
         # Horizontal ports re-position
         for port in port_list:
@@ -2478,7 +2478,7 @@ class CanvasBox(QGraphicsItem):
 
         if canvas.theme.box_use_icon:
             rect.setCoords(self.icon_svg.p_size.right() + 1, self.icon_svg.p_size.top(),
-                           self.p_width-max([2 * line_diff + 1, rounding/2]), self.icon_svg.p_size.bottom())
+                           self.p_width-max(2 * line_diff + 1, rounding/2), self.icon_svg.p_size.bottom())
         painter.drawText(rect, Qt.AlignCenter|Qt.TextDontClip, self.m_group_name)
 
         self.repaintLines()
