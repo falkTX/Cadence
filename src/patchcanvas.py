@@ -1069,6 +1069,7 @@ class PatchScene(QGraphicsScene):
         self.m_ctrl_down = False
         self.m_mouse_down_init = False
         self.m_mouse_rubberband = False
+        self.m_mouse2_down = False
 
         self.addRubberBand()
 
@@ -1179,6 +1180,8 @@ class PatchScene(QGraphicsScene):
     def mousePressEvent(self, event):
         self.m_mouse_down_init  = bool(event.button() == Qt.LeftButton)
         self.m_mouse_rubberband = False
+        if event.button() == Qt.MidButton:
+            self.m_mouse2_down = True
         QGraphicsScene.mousePressEvent(self, event)
 
     def mouseMoveEvent(self, event):
@@ -1201,9 +1204,21 @@ class PatchScene(QGraphicsScene):
             self.m_rubberband.setRect(x+lineDiff, y+lineDiff, abs(pos.x() - self.m_rubberband_orig_point.x()), abs(pos.y() - self.m_rubberband_orig_point.y()))
             return event.accept()
 
+        if self.m_mouse2_down:
+            item = self.itemAt(event.scenePos())
+            if item:
+                for connection in canvas.connection_list:
+                    if (connection.widget == item):
+                        canvas.callback(ACTION_PORTS_DISCONNECT, connection.connection_id, 0, "")
+                        break
+
         QGraphicsScene.mouseMoveEvent(self, event)
 
     def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MidButton:
+            self.m_mouse2_down = False
+            return event.accept()
+
         if self.m_rubberband_selection:
             items_list = self.items()
             if len(items_list) > 0:
@@ -1306,6 +1321,7 @@ class CanvasLine(QGraphicsLineItem):
         self.m_mouse_over = False
 
         self.setAcceptHoverEvents(True)
+        self.setAcceptedMouseButtons(Qt.MiddleButton)
         self.setGraphicsEffect(None)
         self.updateLinePos()
 
@@ -1423,6 +1439,7 @@ class CanvasBezierLine(QGraphicsPathItem):
         self.m_mouse_over = False
 
         self.setAcceptHoverEvents(True)
+        self.setAcceptedMouseButtons(Qt.MiddleButton)
         self.setBrush(QColor(0, 0, 0, 0))
         self.setGraphicsEffect(None)
         self.updateLinePos()
