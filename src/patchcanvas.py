@@ -1576,7 +1576,7 @@ class CanvasLineMov(QGraphicsLineItem):
             item_pos[0] = 0
             item_pos[1] = float(canvas.theme.port_height)/2
         elif self.m_port_mode == PORT_MODE_OUTPUT:
-            item_pos[0] = self.p_width + 12
+            item_pos[0] = self.p_width
             item_pos[1] = float(canvas.theme.port_height)/2
         else:
             return
@@ -1635,7 +1635,7 @@ class CanvasBezierLineMov(QGraphicsPathItem):
             mid_x = abs(scenePos.x() - self.p_itemX) / 2
             new_x = old_x - mid_x
         elif self.m_port_mode == PORT_MODE_OUTPUT:
-            old_x = self.p_width + 12
+            old_x = self.p_width
             old_y = float(canvas.theme.port_height)/2
             mid_x = abs(scenePos.x() - (self.p_itemX + old_x)) / 2
             new_x = old_x + mid_x
