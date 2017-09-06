@@ -692,7 +692,7 @@ def setGroupPosFull(group_id, group_pos_x_o, group_pos_y_o, group_pos_x_i, group
             QTimer.singleShot(0, canvas.scene.update)
             return
 
-    qCritical("PatchCanvas::setGroupPos(%i, %i, %i, %i, %i) - unable to find group to reposition" % (group_id, group_pos_x_o, group_pos_y_o, group_pos_x_i, group_pos_y_i))
+    qCritical("PatchCanvas::setGroupPos(%i, %i, %i, %i, %i) - unable to find group for reposition" % (group_id, group_pos_x_o, group_pos_y_o, group_pos_x_i, group_pos_y_i))
 
 def setGroupIcon(group_id, icon):
     if canvas.debug:
