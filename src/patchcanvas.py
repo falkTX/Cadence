@@ -666,16 +666,11 @@ def getGroupPos(group_id, port_mode=PORT_MODE_OUTPUT):
         qDebug("PatchCanvas::getGroupPos(%i, %s)" % (group_id, port_mode2str(port_mode)))
 
     for group in canvas.group_list:
+        if not port_mode in [PORT_MODE_INPUT, PORT_MODE_OUTPUT]:
+            qCritical("PatchCanvas::getGroupPos(%i, %s) - invalid port mode" % (group_id, port_mode2str(port_mode)))
+            return QPointF(0, 0)
         if group.group_id == group_id:
-            if group.split:
-                if port_mode == PORT_MODE_OUTPUT:
-                    return group.widgets[0].pos()
-                elif port_mode == PORT_MODE_INPUT:
-                    return group.widgets[1].pos()
-                else:
-                    return QPointF(0, 0)
-            else:
-                return group.widgets[0].pos()
+            return group.widgets[1 if (group.split and port_mode == PORT_MODE_INPUT) else 0].pos()
 
     qCritical("PatchCanvas::getGroupPos(%i, %s) - unable to find group" % (group_id, port_mode2str(port_mode)))
     return QPointF(0, 0)
