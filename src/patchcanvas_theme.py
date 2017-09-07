@@ -48,13 +48,15 @@ class Theme(object):
     THEME_PORT_POLYGON = 1
 
     # enum List
-    THEME_MODERN_DARK      = 0
-    THEME_MODERN_DARK_TINY = 1
-    THEME_MODERN_LIGHT     = 2
-    THEME_CLASSIC_DARK     = 3
-    THEME_NEOCLASSIC_DARK  = 4
-    THEME_OOSTUDIO         = 5
-    THEME_MAX              = 6
+    THEME_MODERN_DARK       = 0
+    THEME_MODERN_DARK_TINY  = 1
+    THEME_MODERN_DARK_TEXT  = 2
+    THEME_MODERN_LIGHT      = 3
+    THEME_CLASSIC_DARK      = 4
+    THEME_PROTOCLASSIC_DARK = 5
+    THEME_NEOCLASSIC_DARK   = 6
+    THEME_OOSTUDIO          = 7
+    THEME_MAX               = 8
 
     # enum BackgroundType
     THEME_BG_SOLID    = 0
@@ -65,7 +67,92 @@ class Theme(object):
 
         self.idx = idx
 
+        # Default theme settings
+
+        # Canvas
+        self.canvas_bg = QColor(0, 0, 0)
+
+        # Boxes
+        self.box_pen = QPen(QColor(143 - 70, 143 - 70, 143 - 70), 1, Qt.SolidLine)
+        self.box_pen_sel = QPen(QColor(143, 143, 143), 1, Qt.CustomDashLine, Qt.RoundCap)
+        self.box_pen_sel.setDashPattern([3, 4])
+        self.box_bg_1 = QColor(30, 34, 36)
+        self.box_bg_2 = QColor(30, 34, 36)
+        self.box_shadow = QColor(89, 89, 89, 180)
+        self.box_hover = QColor(255, 255, 255, 60)
+        self.box_header_pixmap  = None
+        self.box_header_height  = 19
+        self.box_header_spacing = 0
+        self.box_rounding = 0.0
+
+        self.box_text = QPen(QColor(255, 255, 255), 0)
+        self.box_text_sel  = self.box_text
+        self.box_font_name = "Sans"
+        self.box_font_size = 9
+        self.box_font_state = QFont.Normal
+
+        self.box_bg_type  = self.THEME_BG_GRADIENT
+        self.box_use_icon = False
+
+        # Ports
+        self.port_text = QPen(QColor(250, 250, 250, 150), 0)
+        self.port_hover = QColor(255, 255, 255, 150)
+        self.port_bg_pixmap = None
+        self.port_font_name = "Sans"
+        self.port_font_size = 8
+        self.port_font_state = QFont.Normal
+        self.port_mode = self.THEME_PORT_SQUARE
+
+        self.port_audio_jack_bg = hsvAdjusted(QColor(41, 61, 99), saturation=120)
+        self.port_audio_jack_bg_sel = QColor(255, 0, 0)
+        self.port_midi_jack_bg = hsvAdjusted(QColor(120, 15, 16), saturation=150)
+        self.port_midi_jack_bg_sel = QColor(255, 0, 0)
+        self.port_midi_a2j_bg = hsvAdjusted(QColor(101, 47, 17), saturation=150)
+        self.port_midi_a2j_bg_sel = QColor(255, 0, 0)
+        self.port_midi_alsa_bg = hsvAdjusted(QColor(63, 112, 19), saturation=120)
+        self.port_midi_alsa_bg_sel = QColor(255, 0, 0)
+
+        port_pen = QPen(QColor(255, 255, 255, 50), 1)
+        self.port_audio_jack_pen_sel = self.port_audio_jack_pen = QPen(hsvAdjustedRel(self.port_audio_jack_bg.lighter(180), saturation=-60), 1)
+        self.port_midi_jack_pen_sel = self.port_midi_jack_pen = QPen(hsvAdjustedRel(self.port_midi_jack_bg.lighter(180), saturation=-60), 1)
+        self.port_midi_a2j_pen_sel = self.port_midi_a2j_pen = QPen(hsvAdjustedRel(self.port_midi_a2j_bg.lighter(180), saturation=-60), 1)
+        self.port_midi_alsa_pen_sel = self.port_midi_alsa_pen = QPen(hsvAdjustedRel(self.port_midi_alsa_bg.lighter(180), saturation=-60), 1)
+
+        self.port_audio_jack_text = self.port_audio_jack_pen_sel
+        self.port_audio_jack_text_sel = self.port_audio_jack_pen_sel
+        self.port_midi_jack_text = self.port_midi_jack_pen_sel
+        self.port_midi_jack_text_sel = self.port_midi_jack_pen_sel
+        self.port_midi_a2j_text = self.port_midi_a2j_pen_sel
+        self.port_midi_a2j_text_sel = self.port_midi_a2j_pen_sel
+        self.port_midi_alsa_text = self.port_midi_alsa_pen_sel
+        self.port_midi_alsa_text_sel = self.port_midi_alsa_pen_sel
+
+        self.port_text_padding = 0
+        self.port_offset   = 0
+        self.port_spacing  = 1
+        self.port_spacingT = 0
+        self.port_rounding = 0.0
+        self.port_inglow_alpha = 0
+        self.port_inglow_size = 0
         self.port_side_min_space = 3
+
+        # Lines
+        self.line_audio_jack = QColor(53, 78, 116)
+        self.line_audio_jack_sel = QColor(255, 0, 0)
+        self.line_audio_jack_glow = QColor(255, 0, 0)
+        self.line_midi_jack = QColor(139, 32, 32)
+        self.line_midi_jack_sel = QColor(255, 0, 0)
+        self.line_midi_jack_glow = QColor(255, 0, 0)
+        self.line_midi_a2j = QColor(120, 65, 33)
+        self.line_midi_a2j_sel = QColor(255, 0, 0)
+        self.line_midi_a2j_glow = QColor(255, 0, 0)
+        self.line_midi_alsa = QColor(81, 130, 36)
+        self.line_midi_alsa_sel = QColor(255, 0, 0)
+        self.line_midi_alsa_glow = QColor(255, 0, 0)
+
+        self.rubberband_pen = QPen(QColor(147, 151, 143), 1, Qt.SolidLine)
+        self.rubberband_brush = QColor(35, 61, 99, 100)
+
         if idx == self.THEME_MODERN_DARK:
             # Canvas
             self.canvas_bg = QColor(0, 0, 0)
@@ -258,6 +345,90 @@ class Theme(object):
             self.rubberband_pen = QPen(QColor(206, 207, 208), 1, Qt.SolidLine)
             self.rubberband_brush = QColor(76, 77, 78, 100)
 
+        if idx == self.THEME_MODERN_DARK_TEXT:
+            # Canvas
+            self.canvas_bg = QColor(0, 0, 0)
+
+            # Boxes
+            self.box_pen = QPen(QColor(76, 77, 78), 1, Qt.SolidLine)
+            self.box_pen_sel = QPen(QColor(206, 207, 208), 1, Qt.DashLine)
+            self.box_bg_1 = QColor(15, 15, 15)
+            self.box_bg_2 = self.box_bg_1
+            self.box_shadow = QColor(89, 89, 89, 180)
+            self.box_hover = QColor(255, 255, 255, 60)
+            self.box_header_pixmap  = None
+            self.box_header_height  = 14
+            self.box_header_spacing = 0
+            self.box_rounding = 3.0
+
+            self.box_text = QPen(QColor(240, 240, 240), 0)
+            self.box_text_sel  = self.box_text
+            self.box_font_name = "Deja Vu Sans"
+            self.box_font_size = 7
+            self.box_font_state = QFont.Bold
+
+            self.box_bg_type  = self.THEME_BG_SOLID
+            self.box_use_icon = False
+
+            # Ports
+            self.port_text = QPen(QColor(250, 250, 250, 180), 1)
+            self.port_hover = QColor(255, 255, 255, 40)
+            self.port_bg_pixmap = None
+            self.port_font_name = "Deja Vu Sans"
+            self.port_font_size = 6
+            self.port_font_state = QFont.Normal
+            self.port_mode = self.THEME_PORT_SQUARE
+
+            self.port_audio_jack_pen = Qt.NoPen
+            self.port_audio_jack_pen_sel = Qt.NoPen
+            self.port_midi_jack_pen = Qt.NoPen
+            self.port_midi_jack_pen_sel = Qt.NoPen
+            self.port_midi_a2j_pen = Qt.NoPen
+            self.port_midi_a2j_pen_sel = Qt.NoPen
+            self.port_midi_alsa_pen = Qt.NoPen
+            self.port_midi_alsa_pen_sel = Qt.NoPen
+
+            self.port_audio_jack_bg = QColor(0, 0, 0, 0)
+            self.port_midi_jack_bg = QColor(0, 0, 0, 0)
+            self.port_midi_a2j_bg = QColor(0, 0, 0, 0)
+            self.port_midi_alsa_bg = QColor(0, 0, 0, 0)
+            self.port_audio_jack_bg_sel = QColor(60, 71, 99)
+            self.port_midi_jack_bg_sel = QColor(120, 70, 70)
+            self.port_midi_a2j_bg_sel = QColor(120, 80, 60)
+            self.port_midi_alsa_bg_sel = QColor(64, 112, 48)
+
+            self.port_audio_jack_text = QPen(hsvAdjusted(QColor(63, 90, 126), value = 255), 1)
+            self.port_midi_jack_text = QPen(hsvAdjusted(QColor(159, 44, 42), value = 255), 1)
+            self.port_midi_a2j_text = QPen(hsvAdjusted(QColor(137, 76, 43), value = 255), 1)
+            self.port_midi_alsa_text = QPen(hsvAdjusted(QColor(93, 141, 46), value = 255), 1)
+            self.port_audio_jack_text_sel = QPen(self.port_audio_jack_text.color().lighter(130), 1)
+            self.port_midi_jack_text_sel = QPen(self.port_midi_jack_text.color().lighter(150), 1)
+            self.port_midi_a2j_text_sel = QPen(self.port_midi_a2j_text.color().lighter(150), 1)
+            self.port_midi_alsa_text_sel = QPen(self.port_midi_alsa_text.color().lighter(150), 1)
+
+            self.port_text_padding = 0
+            self.port_offset   = 0
+            self.port_spacing  = 0
+            self.port_spacingT = 2
+            self.port_rounding = 6.0
+
+            # Lines
+            self.line_audio_jack = QColor(63, 90, 126)
+            self.line_audio_jack_sel = QColor(63 + 90, 90 + 90, 126 + 90)
+            self.line_audio_jack_glow = QColor(100, 100, 200)
+            self.line_midi_jack = QColor(159, 44, 42)
+            self.line_midi_jack_sel = QColor(159 + 90, 44 + 90, 42 + 90)
+            self.line_midi_jack_glow = QColor(200, 100, 100)
+            self.line_midi_a2j = QColor(137, 76, 43)
+            self.line_midi_a2j_sel = QColor(137 + 90, 76 + 90, 43 + 90)
+            self.line_midi_a2j_glow = QColor(166, 133, 133)
+            self.line_midi_alsa = QColor(93, 141, 46)
+            self.line_midi_alsa_sel = QColor(93 + 90, 141 + 90, 46 + 90)
+            self.line_midi_alsa_glow = QColor(100, 200, 100)
+
+            self.rubberband_pen = QPen(QColor(206, 207, 208), 1, Qt.SolidLine)
+            self.rubberband_brush = QColor(76, 77, 78, 100)
+
         elif idx == self.THEME_MODERN_LIGHT:
             # Canvas
             self.canvas_bg = QColor(248, 249, 250)
@@ -369,9 +540,9 @@ class Theme(object):
             self.canvas_bg = QColor(0, 0, 0)
 
             # Boxes
-            self.box_pen = QPen(QColor(143 - 70, 143 - 70, 143 - 70), 1, Qt.SolidLine)
-            self.box_pen_sel = QPen(QColor(143, 143, 143), 1, Qt.CustomDashLine, Qt.RoundCap)
-            self.box_pen_sel.setDashPattern([3, 4])
+            self.box_pen = QPen(QColor(143 - 70, 143 - 70, 143 - 70), 2, Qt.SolidLine)
+            self.box_pen_sel = QPen(QColor(143, 143, 143), 2, Qt.CustomDashLine, Qt.RoundCap)
+            self.box_pen_sel.setDashPattern([1.5, 3])
             self.box_bg_1 = QColor(30, 34, 36)
             self.box_bg_2 = QColor(30, 34, 36)
             self.box_shadow = QColor(89, 89, 89, 180)
@@ -379,7 +550,7 @@ class Theme(object):
             self.box_header_pixmap  = None
             self.box_header_height  = 19
             self.box_header_spacing = 0
-            self.box_rounding = 0.0
+            self.box_rounding = 0
 
             self.box_text = QPen(QColor(255, 255, 255), 0)
             self.box_text_sel  = self.box_text
@@ -391,60 +562,149 @@ class Theme(object):
             self.box_use_icon = False
 
             # Ports
-            self.port_text = QPen(QColor(250, 250, 250, 150), 0)
-            self.port_hover = QColor(255, 255, 255, 150)
+            self.port_text = QPen(QColor(250, 250, 250), 0)
+            self.port_hover = QColor(255, 255, 255, 80)
             self.port_bg_pixmap = None
             self.port_font_name = "Sans"
             self.port_font_size = 8
             self.port_font_state = QFont.Normal
             self.port_mode = self.THEME_PORT_SQUARE
 
-            self.port_audio_jack_bg = hsvAdjusted(QColor(41, 61, 99), saturation=120)
-            self.port_audio_jack_bg_sel = QColor(255, 0, 0)
-            self.port_midi_jack_bg = hsvAdjusted(QColor(120, 15, 16), saturation=150)
-            self.port_midi_jack_bg_sel = QColor(255, 0, 0)
-            self.port_midi_a2j_bg = hsvAdjusted(QColor(101, 47, 17), saturation=150)
-            self.port_midi_a2j_bg_sel = QColor(255, 0, 0)
-            self.port_midi_alsa_bg = hsvAdjusted(QColor(63, 112, 19), saturation=120)
-            self.port_midi_alsa_bg_sel = QColor(255, 0, 0)
+            port_pen = Qt.NoPen
+            self.port_audio_jack_pen = port_pen
+            self.port_midi_jack_pen = port_pen
+            self.port_midi_a2j_pen = port_pen
+            self.port_midi_alsa_pen = port_pen
+            self.port_audio_jack_pen_sel = port_pen
+            self.port_midi_jack_pen_sel = port_pen
+            self.port_midi_a2j_pen_sel = port_pen
+            self.port_midi_alsa_pen_sel = port_pen
 
-            port_pen = QPen(QColor(255, 255, 255, 50), 1)
-            self.port_audio_jack_pen_sel = self.port_audio_jack_pen = QPen(hsvAdjustedRel(self.port_audio_jack_bg.lighter(180), saturation=-60), 1)
-            self.port_midi_jack_pen_sel = self.port_midi_jack_pen = QPen(hsvAdjustedRel(self.port_midi_jack_bg.lighter(180), saturation=-60), 1)
-            self.port_midi_a2j_pen_sel = self.port_midi_a2j_pen = QPen(hsvAdjustedRel(self.port_midi_a2j_bg.lighter(180), saturation=-60), 1)
-            self.port_midi_alsa_pen_sel = self.port_midi_alsa_pen = QPen(hsvAdjustedRel(self.port_midi_alsa_bg.lighter(180), saturation=-60), 1)
+            self.port_audio_jack_bg = QColor(35, 61, 99)
+            self.port_midi_jack_bg = QColor(120, 15, 16)
+            self.port_midi_a2j_bg = QColor(101, 47, 17)
+            self.port_midi_alsa_bg = QColor(63, 112, 19)
+            self.port_audio_jack_bg_sel = hsvAdjustedRel(self.port_audio_jack_bg.lighter(150), saturation=-60)
+            self.port_midi_jack_bg_sel = hsvAdjustedRel(self.port_midi_jack_bg.lighter(150), saturation=-60)
+            self.port_midi_a2j_bg_sel = hsvAdjustedRel(self.port_midi_a2j_bg.lighter(150), saturation=-60)
+            self.port_midi_alsa_bg_sel = hsvAdjustedRel(self.port_midi_alsa_bg.lighter(150), saturation=-60)
 
-            self.port_audio_jack_text = self.port_audio_jack_pen_sel
-            self.port_audio_jack_text_sel = self.port_audio_jack_pen_sel
-            self.port_midi_jack_text = self.port_midi_jack_pen_sel
-            self.port_midi_jack_text_sel = self.port_midi_jack_pen_sel
-            self.port_midi_a2j_text = self.port_midi_a2j_pen_sel
-            self.port_midi_a2j_text_sel = self.port_midi_a2j_pen_sel
-            self.port_midi_alsa_text = self.port_midi_alsa_pen_sel
-            self.port_midi_alsa_text_sel = self.port_midi_alsa_pen_sel
+            self.port_audio_jack_text = self.port_text
+            self.port_audio_jack_text_sel = self.port_text
+            self.port_midi_jack_text = self.port_text
+            self.port_midi_jack_text_sel = self.port_text
+            self.port_midi_a2j_text = self.port_text
+            self.port_midi_a2j_text_sel = self.port_text
+            self.port_midi_alsa_text = self.port_text
+            self.port_midi_alsa_text_sel = self.port_text
 
             self.port_text_padding = 0
             self.port_offset   = 0
             self.port_spacing  = 1
             self.port_spacingT = 0
-            self.port_rounding = 0.0
+            self.port_rounding = 0
 
             # Lines
             self.line_audio_jack = QColor(53, 78, 116)
-            self.line_audio_jack_sel = QColor(255, 0, 0)
-            self.line_audio_jack_glow = QColor(255, 0, 0)
+            self.line_audio_jack_sel = self.line_audio_jack.lighter(200)
+            self.line_audio_jack_glow = self.line_audio_jack.lighter(180)
             self.line_midi_jack = QColor(139, 32, 32)
-            self.line_midi_jack_sel = QColor(255, 0, 0)
-            self.line_midi_jack_glow = QColor(255, 0, 0)
+            self.line_midi_jack_sel = self.line_midi_jack.lighter(200)
+            self.line_midi_jack_glow = self.line_midi_jack.lighter(180)
             self.line_midi_a2j = QColor(120, 65, 33)
-            self.line_midi_a2j_sel = QColor(255, 0, 0)
-            self.line_midi_a2j_glow = QColor(255, 0, 0)
+            self.line_midi_a2j_sel = self.line_midi_a2j.lighter(200)
+            self.line_midi_a2j_glow = self.line_midi_a2j.lighter(180)
             self.line_midi_alsa = QColor(81, 130, 36)
-            self.line_midi_alsa_sel = QColor(255, 0, 0)
-            self.line_midi_alsa_glow = QColor(255, 0, 0)
+            self.line_midi_alsa_sel = self.line_midi_alsa.lighter(200)
+            self.line_midi_alsa_glow = self.line_midi_alsa.lighter(180)
 
-            self.rubberband_pen = QPen(QColor(147, 151, 143), 1, Qt.SolidLine)
-            self.rubberband_brush = QColor(35, 61, 99, 100)
+            self.rubberband_pen = QPen(QColor.fromHsv(191, 100, 120, 170), 2, Qt.SolidLine)
+            self.rubberband_brush = QColor.fromHsv(191, 100, 99, 100)
+
+        elif idx == self.THEME_PROTOCLASSIC_DARK:
+            # Canvas
+            self.canvas_bg = QColor(0, 0, 0)
+
+            # Boxes
+            self.box_bg_1 = QColor(30, 41, 58)
+            self.box_bg_2 = QColor(30, 41, 58)
+            self.box_shadow = QColor(89, 89, 89, 180)
+            self.box_hover = hsvAdjusted(self.box_bg_1, value=255, saturation=80)
+            self.box_pen = QPen(hsvAdjusted(self.box_bg_1, value=180, saturation=60), 1, Qt.SolidLine)
+            self.box_pen_sel = QPen(self.box_pen)
+            self.box_pen_sel.setDashPattern([3, 4])
+            self.box_header_pixmap  = None
+            self.box_header_height  = 19
+            self.box_header_spacing = 0
+            self.box_rounding = 0.0
+
+            self.box_text = QPen(hsvAdjusted(self.box_bg_1, value=255, saturation=60), 1, Qt.SolidLine)
+            self.box_text_sel  = QPen(hsvAdjusted(self.box_bg_1, value=255, saturation=30), 1)
+            self.box_font_name = "Dejavu Sans"
+            self.box_font_size = 8
+            self.box_font_state = QFont.Normal
+
+            self.box_bg_type  = self.THEME_BG_GRADIENT
+            self.box_use_icon = False
+
+            # Ports
+            self.port_text = QPen(QColor(255, 255, 255), 1)
+            self.port_hover = QColor(255, 255, 255, 150)
+            self.port_bg_pixmap = None
+            self.port_font_name = "Dejavu Sans"
+            self.port_font_size = 6
+            self.port_font_state = QFont.Normal
+            self.port_mode = self.THEME_PORT_SQUARE
+
+            self.port_audio_jack_bg = QColor(63, 88, 133)
+            self.port_midi_jack_bg = hsvAdjusted(QColor(120, 15, 16), saturation=150)
+            self.port_midi_a2j_bg = hsvAdjusted(QColor(101, 47, 17), saturation=150)
+            self.port_midi_alsa_bg = hsvAdjusted(QColor(44, 141, 92), saturation=150, value=120)
+            self.port_audio_jack_bg_sel = hsvAdjusted(self.port_audio_jack_bg.lighter(140), saturation=80)
+            self.port_midi_jack_bg_sel = hsvAdjusted(self.port_midi_jack_bg.lighter(140), saturation=80)
+            self.port_midi_a2j_bg_sel = hsvAdjusted(self.port_midi_a2j_bg.lighter(140), saturation=80)
+            self.port_midi_alsa_bg_sel = hsvAdjusted(self.port_midi_alsa_bg.lighter(140), saturation=80)
+
+            port_pen = QPen(QColor(255, 255, 255, 50), 1)
+            self.port_audio_jack_pen_sel = self.port_audio_jack_pen = QPen(hsvAdjusted(self.port_audio_jack_bg.lighter(140), saturation=80), 1)
+            self.port_midi_jack_pen_sel = self.port_midi_jack_pen = QPen(hsvAdjusted(self.port_midi_jack_bg.lighter(140), saturation=80), 1)
+            self.port_midi_a2j_pen_sel = self.port_midi_a2j_pen = QPen(hsvAdjusted(self.port_midi_a2j_bg.lighter(140), saturation=80), 1)
+            self.port_midi_alsa_pen_sel = self.port_midi_alsa_pen = QPen(hsvAdjusted(self.port_midi_alsa_bg.lighter(140), saturation=80), 1)
+
+            self.port_audio_jack_text = QPen(hsvAdjusted(self.port_audio_jack_bg, saturation=40, value=255), 1)
+            self.port_midi_jack_text = QPen(hsvAdjusted(self.port_midi_jack_bg, saturation=40, value=255), 1)
+            self.port_midi_a2j_text = QPen(hsvAdjusted(self.port_midi_a2j_bg, saturation=40, value=255), 1)
+            self.port_midi_alsa_text = QPen(hsvAdjusted(self.port_midi_alsa_bg, saturation=40, value=255), 1)
+            self.port_audio_jack_text_sel = self.port_text
+            self.port_midi_jack_text_sel = self.port_text
+            self.port_midi_a2j_text_sel = self.port_text
+            self.port_midi_alsa_text_sel = self.port_text
+
+            self.port_text_padding = 1.5
+            self.port_offset   = 0
+            self.port_spacing  = 1
+            self.port_spacingT = 0
+            self.port_rounding = 0.0
+            self.port_inglow_alpha = 0
+            self.port_inglow_size = 0
+
+            # Lines
+            self.line_audio_jack = self.port_audio_jack_bg
+            self.line_audio_jack_sel = self.port_audio_jack_bg_sel
+            self.line_audio_jack_glow = self.port_audio_jack_bg_sel
+            self.line_midi_jack = self.port_midi_jack_bg
+            self.line_midi_jack_sel = self.port_midi_jack_bg_sel
+            self.line_midi_jack_glow = self.port_midi_jack_bg_sel
+            self.line_midi_a2j = self.port_midi_a2j_bg
+            self.line_midi_a2j_sel = self.port_midi_a2j_bg_sel
+            self.line_midi_a2j_glow = self.port_midi_a2j_bg_sel
+            self.line_midi_alsa = self.port_midi_alsa_bg
+            self.line_midi_alsa_sel = self.port_midi_alsa_bg_sel
+            self.line_midi_alsa_glow = self.port_midi_alsa_bg_sel
+
+            self.rubberband_pen = QPen(self.box_pen)
+            self.rubberband_pen.setDashPattern([3, 4])
+            self.rubberband_brush = QColor(0, 0, 0, 0)
 
         elif idx == self.THEME_NEOCLASSIC_DARK:
             # Canvas
@@ -637,10 +897,14 @@ def getThemeName(idx):
         return "Modern Dark"
     elif idx == Theme.THEME_MODERN_DARK_TINY:
         return "Modern Dark (Tiny)"
+    elif idx == Theme.THEME_MODERN_DARK_TEXT:
+        return "Modern Dark (Text)"
     elif idx == Theme.THEME_MODERN_LIGHT:
         return "Modern Light"
     elif idx == Theme.THEME_CLASSIC_DARK:
         return "Classic Dark"
+    elif idx == Theme.THEME_PROTOCLASSIC_DARK:
+        return "Proto Classic Dark"
     elif idx == Theme.THEME_NEOCLASSIC_DARK:
         return "Neoclassic Dark"
     elif idx == Theme.THEME_OOSTUDIO:
