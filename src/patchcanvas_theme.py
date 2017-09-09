@@ -861,9 +861,9 @@ class Theme(object):
             self.port_midi_alsa_text_sel = self.port_midi_alsa_pen_sel
 
             # missing, ports 2
-            self.port_text_padding = 2
+            self.port_text_padding = 3
             self.port_offset   = -1
-            self.port_spacing  = 5
+            self.port_spacing  = 3
             self.port_spacingT = 0
             self.port_rounding = 3.0
 
