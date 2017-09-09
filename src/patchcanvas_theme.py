@@ -84,6 +84,7 @@ class Theme(object):
         self.box_header_height  = 19
         self.box_header_spacing = 0
         self.box_rounding = 0.0
+        self.box_bottom_space = 3
 
         self.box_text = QPen(QColor(255, 255, 255), 0)
         self.box_text_sel  = self.box_text
@@ -168,6 +169,7 @@ class Theme(object):
             self.box_header_height  = 24
             self.box_header_spacing = 0
             self.box_rounding = 3.0
+            self.box_bottom_space = 3
 
             self.box_text = QPen(QColor(240, 240, 240), 0)
             self.box_text_sel  = self.box_text
@@ -264,6 +266,7 @@ class Theme(object):
             self.box_header_height  = 14
             self.box_header_spacing = 0
             self.box_rounding = 2.0
+            self.box_bottom_space = 2
 
             self.box_text = QPen(QColor(240, 240, 240), 0)
             self.box_text_sel  = self.box_text
@@ -360,6 +363,7 @@ class Theme(object):
             self.box_header_height  = 14
             self.box_header_spacing = 0
             self.box_rounding = 3.0
+            self.box_bottom_space = 3
 
             self.box_text = QPen(QColor(240, 240, 240), 0)
             self.box_text_sel  = self.box_text
@@ -444,6 +448,7 @@ class Theme(object):
             self.box_header_height  = 24
             self.box_header_spacing = 0
             self.box_rounding = 3.0
+            self.box_bottom_space = 3
 
             self.box_text = QPen(QColor(1, 1, 1), 0)
             self.box_text_sel  = self.box_text
@@ -551,6 +556,7 @@ class Theme(object):
             self.box_header_height  = 19
             self.box_header_spacing = 0
             self.box_rounding = 0
+            self.box_bottom_space = 3
 
             self.box_text = QPen(QColor(255, 255, 255), 0)
             self.box_text_sel  = self.box_text
@@ -637,6 +643,7 @@ class Theme(object):
             self.box_header_height  = 19
             self.box_header_spacing = 0
             self.box_rounding = 0.0
+            self.box_bottom_space = 2
 
             self.box_text = QPen(hsvAdjusted(self.box_bg_1, value=255, saturation=60), 1, Qt.SolidLine)
             self.box_text_sel  = QPen(hsvAdjusted(self.box_bg_1, value=255, saturation=30), 1)
@@ -722,6 +729,7 @@ class Theme(object):
             self.box_header_height  = 19
             self.box_header_spacing = 0
             self.box_rounding = 4.0
+            self.box_bottom_space = 6
 
             self.box_text = QPen(QColor(255, 255, 255), 0)
             self.box_text_sel  = self.box_text
@@ -811,6 +819,7 @@ class Theme(object):
             self.box_header_height  = 22
             self.box_header_spacing = 6
             self.box_rounding = 3.0
+            self.box_bottom_space = 4
 
             self.box_text = QPen(QColor(144, 144, 144), 0)
             self.box_text_sel  = QPen(QColor(189, 122, 214), 0)

@@ -2259,7 +2259,7 @@ class CanvasBox(QGraphicsItem):
 
         # Adjust bottom space
         if len(port_list) > 0:
-            self.p_height += max(2, canvas.theme.box_rounding, canvas.theme.port_spacing) - canvas.theme.port_spacing
+            self.p_height += canvas.theme.box_bottom_space - canvas.theme.port_spacing
         else:
             self.p_height -= canvas.theme.box_header_spacing
 
