@@ -746,10 +746,10 @@ class Theme(object):
             self.port_midi_jack_pen = QPen(QColor(150, 25, 26), 1)
             self.port_midi_a2j_pen = QPen(QColor(141, 67, 27), 1)
             self.port_midi_alsa_pen = QPen(QColor(83, 152, 29), 1)
-            self.port_audio_jack_pen_sel = QPen(QColor(55, 91, 149), 1, Qt.CustomDashLine, Qt.RoundCap)
-            self.port_midi_jack_pen_sel = QPen(QColor(150, 25, 26), 1, Qt.CustomDashLine, Qt.RoundCap)
-            self.port_midi_a2j_pen_sel = QPen(QColor(141, 67, 27), 1, Qt.CustomDashLine, Qt.RoundCap)
-            self.port_midi_alsa_pen_sel = QPen(QColor(83, 152, 29), 1, Qt.CustomDashLine, Qt.RoundCap)
+            self.port_audio_jack_pen_sel = QPen(hsvAdjustedRel(QColor(55, 91, 149), saturation=-80, value=80), 1)
+            self.port_midi_jack_pen_sel = QPen(hsvAdjustedRel(QColor(150, 25, 26), saturation=-80, value=80), 1)
+            self.port_midi_a2j_pen_sel = QPen(hsvAdjustedRel(QColor(141, 67, 27), saturation=-80, value=80), 1)
+            self.port_midi_alsa_pen_sel = QPen(hsvAdjustedRel(QColor(83, 152, 29), saturation=-80, value=80), 1)
             self.port_audio_jack_pen_sel.setDashPattern(port_dash);
             self.port_midi_jack_pen_sel.setDashPattern(port_dash);
             self.port_midi_a2j_pen_sel.setDashPattern(port_dash);
@@ -759,10 +759,10 @@ class Theme(object):
             self.port_midi_jack_bg = QColor(120, 15, 16)
             self.port_midi_a2j_bg = QColor(101, 47, 17)
             self.port_midi_alsa_bg = QColor(63, 112, 19)
-            self.port_audio_jack_bg_sel = self.port_audio_jack_bg.darker(150)
-            self.port_midi_jack_bg_sel = self.port_midi_jack_bg.darker(150)
-            self.port_midi_a2j_bg_sel = self.port_midi_a2j_bg.darker(150)
-            self.port_midi_alsa_bg_sel = self.port_midi_alsa_bg.darker(150)
+            self.port_audio_jack_bg_sel = self.port_audio_jack_bg.darker(130)
+            self.port_midi_jack_bg_sel = self.port_midi_jack_bg.darker(130)
+            self.port_midi_a2j_bg_sel = self.port_midi_a2j_bg.darker(130)
+            self.port_midi_alsa_bg_sel = self.port_midi_alsa_bg.darker(130)
 
             self.port_audio_jack_text = self.port_text
             self.port_audio_jack_text_sel = self.port_text
