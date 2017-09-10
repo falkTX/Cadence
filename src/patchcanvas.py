@@ -1205,12 +1205,11 @@ class PatchScene(QGraphicsScene):
             return event.accept()
 
         if self.m_mouse2_down:
-            item = self.itemAt(event.scenePos())
-            if item:
-                for connection in canvas.connection_list:
-                    if (connection.widget == item):
-                        canvas.callback(ACTION_PORTS_DISCONNECT, connection.connection_id, 0, "")
-                        break
+            trail = QPolygonF([event.scenePos(), event.lastScenePos(), event.scenePos()])
+            items = self.items(trail)
+            for item in items:
+                if item and item.type() in [CanvasLineType, CanvasBezierLineType]:
+                    item.delete()
 
         QGraphicsScene.mouseMoveEvent(self, event)
 
@@ -1351,6 +1350,12 @@ class CanvasLine(QGraphicsLineItem):
         self.m_lineSelected = yesno
         self.updateLineGradient()
 
+    def delete(self):
+        for connection in canvas.connection_list:
+            if (connection.port_out_id == self.item1.getPortId() and connection.port_in_id == self.item2.getPortId()):
+                canvas.callback(ACTION_PORTS_DISCONNECT, connection.connection_id, 0, "")
+                break
+
     def hoverEnterEvent(self, event):
         self.m_mouse_over = True
         self.setLineSelected(True)
@@ -1361,10 +1366,7 @@ class CanvasLine(QGraphicsLineItem):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MidButton:
-            for connection in canvas.connection_list:
-                if (connection.port_out_id == self.item1.getPortId() and connection.port_in_id == self.item2.getPortId()):
-                    canvas.callback(ACTION_PORTS_DISCONNECT, connection.connection_id, 0, "")
-                    break
+            self.delete()
 
     def updateLinePos(self):
         if self.item1.getPortMode() == PORT_MODE_OUTPUT:
@@ -1470,6 +1472,12 @@ class CanvasBezierLine(QGraphicsPathItem):
         self.m_lineSelected = yesno
         self.updateLineGradient()
 
+    def delete(self):
+        for connection in canvas.connection_list:
+            if (connection.port_out_id == self.item1.getPortId() and connection.port_in_id == self.item2.getPortId()):
+                canvas.callback(ACTION_PORTS_DISCONNECT, connection.connection_id, 0, "")
+                break
+
     def hoverEnterEvent(self, event):
         self.m_mouse_over = True
         self.setLineSelected(True)
@@ -1480,10 +1488,7 @@ class CanvasBezierLine(QGraphicsPathItem):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MidButton:
-            for connection in canvas.connection_list:
-                if (connection.port_out_id == self.item1.getPortId() and connection.port_in_id == self.item2.getPortId()):
-                    canvas.callback(ACTION_PORTS_DISCONNECT, connection.connection_id, 0, "")
-                    break
+            self.delete()
 
     def updateLinePos(self):
         if self.item1.getPortMode() == PORT_MODE_OUTPUT:
