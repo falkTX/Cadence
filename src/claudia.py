@@ -723,6 +723,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
         if self.fSavedSettings["Canvas/UseOpenGL"] and hasGL:
             self.ui.graphicsView.setViewport(QGLWidget(self.ui.graphicsView))
             self.ui.graphicsView.setRenderHint(QPainter.HighQualityAntialiasing, self.fSavedSettings["Canvas/HighQualityAntialiasing"])
+        self.ui.graphicsView.setFocus(Qt.OtherFocusReason)
 
         pOptions = patchcanvas.options_t()
         pOptions.theme_name       = self.fSavedSettings["Canvas/Theme"]
