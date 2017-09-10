@@ -1204,7 +1204,7 @@ class PatchScene(QGraphicsScene):
             self.m_rubberband.setRect(x+lineDiff, y+lineDiff, abs(pos.x() - self.m_rubberband_orig_point.x()), abs(pos.y() - self.m_rubberband_orig_point.y()))
             return event.accept()
 
-        if self.m_mouse2_down:
+        if self.m_mouse2_down and self.m_ctrl_down:
             trail = QPolygonF([event.scenePos(), event.lastScenePos(), event.scenePos()])
             items = self.items(trail)
             for item in items:
