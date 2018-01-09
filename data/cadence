@@ -1,16 +1,16 @@
-#!/bin/bash
+#!/bin/sh
 
 # Check if already running
 
-PROCS=`ps -f -u $USER | grep /share/cadence/src/cadence.py | grep python`
+PROCS=$(ps -f -u $USER | grep /share/cadence/src/cadence.py | grep python)
 
 if [ x"$PROCS" != x"" ]; then
 
   # One instance only
-  PROC=`echo "$PROCS" | head -n 1`
+  PROC=$(echo "$PROCS" | head -n 1)
 
   # Get PID
-  PID=`echo "$PROC" | awk '{printf$2}'`
+  PID=$(echo "$PROC" | awk '{printf$2}')
 
   # Last check, just to make sure
   if [ x"$PID" != x"" ]; then
