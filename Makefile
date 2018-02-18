@@ -8,8 +8,8 @@ PREFIX  = /usr/local
 DESTDIR =
 
 LINK   = ln -s
-PYUIC ?= pyuic4
-PYRCC ?= pyrcc4 -py3
+PYUIC ?= pyuic5
+PYRCC ?= pyrcc5
 
 # Detect X11 rules dir
 ifeq "$(wildcard /etc/X11/xinit/xinitrc.d/ )" ""

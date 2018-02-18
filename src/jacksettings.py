@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # JACK Settings Dialog
-# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,9 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt4.QtCore import pyqtSlot, Qt, QSettings, QTimer, SIGNAL, SLOT
-from PyQt4.QtGui import QDialog, QDialogButtonBox, QFontMetrics, QMessageBox
+from PyQt5.QtCore import pyqtSlot, Qt, QSettings, QTimer
+from PyQt5.QtGui import QFontMetrics
+from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QMessageBox
 from sys import platform, version_info
 
 # ------------------------------------------------------------------------------------------------------------
@@ -198,17 +199,18 @@ class JackSettingsW(QDialog):
         driverList = gJackctl.ReadContainer(["drivers"])[1]
         maxWidth   = 75
 
-        for i in range(self.ui.obj_server_driver.rowCount()):
-            self.ui.obj_server_driver.item(0, i).setTextAlignment(Qt.AlignCenter)
+        # FIXME QT4
+        #for i in range(self.ui.obj_server_driver.rowCount()):
+            #self.ui.obj_server_driver.item(0, i).setTextAlignment(Qt.AlignCenter)
 
-            itexText  = self.ui.obj_server_driver.item(0, i).text()
-            itemWidth = QFontMetrics(self.ui.obj_server_driver.font()).width(itexText)+25
+            #itexText  = self.ui.obj_server_driver.item(0, i).text()
+            #itemWidth = QFontMetrics(self.ui.obj_server_driver.font()).width(itexText)+25
 
-            if itemWidth > maxWidth:
-                maxWidth = itemWidth
+            #if itemWidth > maxWidth:
+                #maxWidth = itemWidth
 
-            if dbus.String(itexText.lower()) not in driverList:
-                self.ui.obj_server_driver.hideRow(i)
+            #if dbus.String(itexText.lower()) not in driverList:
+                #self.ui.obj_server_driver.hideRow(i)
 
         self.ui.obj_server_driver.setMinimumWidth(maxWidth)
         self.ui.obj_server_driver.setMaximumWidth(maxWidth)
@@ -216,14 +218,14 @@ class JackSettingsW(QDialog):
         # -------------------------------------------------------------
         # Set-up connections
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_saveJackSettings()"))
-        self.connect(self.ui.buttonBox.button(QDialogButtonBox.Reset), SIGNAL("clicked()"), SLOT("slot_resetJackSettings()"))
+        self.accepted.connect(self.slot_saveJackSettings)
+        self.ui.buttonBox.button(QDialogButtonBox.Reset).clicked.connect(self.slot_resetJackSettings)
 
-        self.connect(self.ui.obj_driver_duplex, SIGNAL("clicked(bool)"), SLOT("slot_checkDuplexSelection(bool)"))
-        self.connect(self.ui.obj_server_driver, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkDriverSelection(int)"))
+        self.ui.obj_driver_duplex.clicked.connect(self.slot_checkDuplexSelection)
+        self.ui.obj_server_driver.currentCellChanged.connect(self.slot_checkDriverSelection)
 
-        self.connect(self.ui.obj_driver_capture, SIGNAL("currentIndexChanged(int)"), SLOT("slot_checkALSASelection()"))
-        self.connect(self.ui.obj_driver_playback, SIGNAL("currentIndexChanged(int)"), SLOT("slot_checkALSASelection()"))
+        self.ui.obj_driver_capture.currentIndexChanged.connect(self.slot_checkALSASelection)
+        self.ui.obj_driver_playback.currentIndexChanged.connect(self.slot_checkALSASelection)
 
         # -------------------------------------------------------------
         # Load initial settings
@@ -910,7 +912,8 @@ if __name__ == '__main__':
     # Additional imports
     import resources_rc
     from sys import argv as sys_argv, exit as sys_exit
-    from PyQt4.QtGui import QApplication, QIcon
+    from PyQt5.QtGui import QIcon
+    from PyQt5.QtWidgets import QApplication
 
     # App initialization
     app = QApplication(sys_argv)

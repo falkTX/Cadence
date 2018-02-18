@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Common/Shared code related to the Settings dialog
-# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt4.QtCore import pyqtSlot, QSettings
-from PyQt4.QtGui import QDialog, QDialogButtonBox
+from PyQt5.QtCore import pyqtSlot, QSettings
+from PyQt5.QtWidgets import QDialog, QDialogButtonBox
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
@@ -134,9 +134,10 @@ class SettingsW(QDialog):
         # -------------------------------------------------------------
         # Set-up connections
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_saveSettings()"))
-        self.connect(self.ui.buttonBox.button(QDialogButtonBox.Reset), SIGNAL("clicked()"), SLOT("slot_resetSettings()"))
-        self.connect(self.ui.b_main_def_folder_open, SIGNAL("clicked()"), SLOT("slot_getAndSetProjectPath()"))
+        # FIXME QT4
+        #self.accepted.connect(self.slot_saveSettings)
+        self.ui.buttonBox.button(QDialogButtonBox.Reset).clicked.connect(self.slot_resetSettings)
+        self.ui.b_main_def_folder_open.clicked.connect(self.slot_getAndSetProjectPath)
 
     def loadSettings(self):
         settings = QSettings()

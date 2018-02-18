@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Common/Shared code
-# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,8 +23,9 @@ import os
 import sys
 from codecs import open as codecopen
 from unicodedata import normalize
-from PyQt4.QtCore import qWarning, SIGNAL, SLOT
-from PyQt4.QtGui import QApplication, QFileDialog, QIcon, QMessageBox
+from PyQt5.QtCore import pyqtSignal, qWarning
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox
 
 # ------------------------------------------------------------------------------------------------------------
 # Set Platform
@@ -216,8 +217,8 @@ def setUpSignals(self_):
     signal(SIGUSR1, signalHandler)
     signal(SIGUSR2, signalHandler)
 
-    gGui.connect(gGui, SIGNAL("SIGTERM()"), closeWindowHandler)
-    gGui.connect(gGui, SIGNAL("SIGUSR2()"), showWindowHandler)
+    gGui.SIGTERM.connect(closeWindowHandler)
+    gGui.SIGUSR2.connect(showWindowHandler)
 
 def signalHandler(sig, frame):
     global gGui
@@ -226,11 +227,11 @@ def signalHandler(sig, frame):
         return
 
     if sig in (SIGINT, SIGTERM):
-        gGui.emit(SIGNAL("SIGTERM()"))
+        gGui.SIGTERM.emit()
     elif sig == SIGUSR1:
-        gGui.emit(SIGNAL("SIGUSR1()"))
+        gGui.SIGUSR1.emit()
     elif sig == SIGUSR2:
-        gGui.emit(SIGNAL("SIGUSR2()"))
+        gGui.SIGUSR2.emit()
 
 def closeWindowHandler():
     global gGui

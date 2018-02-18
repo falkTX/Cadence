@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # JACK-Capture frontend, with freewheel and transport support
-# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt4.QtCore import pyqtSlot, QProcess, QTime, QTimer, QSettings
-from PyQt4.QtGui import QDialog
+from PyQt5.QtCore import pyqtSlot, QProcess, QTime, QTimer, QSettings
+from PyQt5.QtWidgets import QDialog
 from time import sleep
 
 # ------------------------------------------------------------------------------------------------------------
@@ -138,15 +138,15 @@ class RenderW(QDialog):
         # -------------------------------------------------------------
         # Set-up connections
 
-        self.connect(self.ui.b_render, SIGNAL("clicked()"), SLOT("slot_renderStart()"))
-        self.connect(self.ui.b_stop, SIGNAL("clicked()"), SLOT("slot_renderStop()"))
-        self.connect(self.ui.b_open, SIGNAL("clicked()"), SLOT("slot_getAndSetPath()"))
-        self.connect(self.ui.b_now_start, SIGNAL("clicked()"), SLOT("slot_setStartNow()"))
-        self.connect(self.ui.b_now_end, SIGNAL("clicked()"), SLOT("slot_setEndNow()"))
-        self.connect(self.ui.te_start, SIGNAL("timeChanged(const QTime)"), SLOT("slot_updateStartTime(const QTime)"))
-        self.connect(self.ui.te_end, SIGNAL("timeChanged(const QTime)"), SLOT("slot_updateEndTime(const QTime)"))
-        self.connect(self.ui.group_time, SIGNAL("clicked(bool)"), SLOT("slot_transportChecked(bool)"))
-        self.connect(self.fTimer, SIGNAL("timeout()"), SLOT("slot_updateProgressbar()"))
+        self.ui.b_render.clicked.connect(self.slot_renderStart)
+        self.ui.b_stop.clicked.connect(self.slot_renderStop)
+        self.ui.b_open.clicked.connect(self.slot_getAndSetPath)
+        self.ui.b_now_start.clicked.connect(self.slot_setStartNow)
+        self.ui.b_now_end.clicked.connect(self.slot_setEndNow)
+        self.ui.te_start.timeChanged.connect(self.slot_updateStartTime)
+        self.ui.te_end.timeChanged.connect(self.slot_updateEndTime)
+        self.ui.group_time.clicked.connect(self.slot_transportChecked)
+        self.fTimer.timeout.connect(self.slot_updateProgressbar)
 
         # -------------------------------------------------------------
 
@@ -429,7 +429,7 @@ class RenderW(QDialog):
 
 if __name__ == '__main__':
     # Additional imports
-    from PyQt4.QtGui import QApplication
+    from PyQt5.QtWidgets import QApplication
 
     # App initialization
     app = QApplication(sys.argv)

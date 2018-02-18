@@ -7,11 +7,13 @@
 AR  ?= ar
 CC  ?= gcc
 CXX ?= g++
-MOC ?= $(shell pkg-config --variable=moc_location QtCore)
-RCC ?= $(shell pkg-config --variable=rcc_location QtCore)
-UIC ?= $(shell pkg-config --variable=uic_location QtCore)
 STRIP ?= strip
 WINDRES ?= windres
+
+HOSTBINS = $(shell pkg-config --variable=host_bins Qt5Core)
+MOC ?= $(HOSTBINS)/moc
+RCC ?= $(HOSTBINS)/rcc
+UIC ?= $(HOSTBINS)/uic
 
 # --------------------------------------------------------------
 
@@ -22,9 +24,11 @@ BASE_FLAGS  = -O0 -g -Wall -Wextra
 BASE_FLAGS += -DDEBUG
 STRIP       = true # FIXME
 else
-BASE_FLAGS  = -O2 -ffast-math -mtune=generic -msse -mfpmath=sse -Wall -Wextra
+BASE_FLAGS  = -O3 -ffast-math -mtune=generic -msse -mfpmath=sse -Wall -Wextra
 BASE_FLAGS += -DNDEBUG
 endif
+
+BASE_FLAGS += -fPIC
 
 BUILD_C_FLAGS   = $(BASE_FLAGS) -std=c99 $(CFLAGS)
 BUILD_CXX_FLAGS = $(BASE_FLAGS) -std=c++0x $(CXXFLAGS)

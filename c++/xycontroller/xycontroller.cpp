@@ -29,13 +29,13 @@
 
 #include <QtCore/QSettings>
 #include <QtCore/QTimer>
-#include <QtGui/QApplication>
-#include <QtGui/QGraphicsItem>
-#include <QtGui/QGraphicsScene>
-#include <QtGui/QGraphicsSceneEvent>
 #include <QtGui/QKeyEvent>
-#include <QtGui/QMainWindow>
-#include <QtGui/QMessageBox>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QGraphicsItem>
+#include <QtWidgets/QGraphicsScene>
+#include <QtWidgets/QGraphicsSceneEvent>
+#include <QtWidgets/QMainWindow>
+#include <QtWidgets/QMessageBox>
 
 // -------------------------------
 

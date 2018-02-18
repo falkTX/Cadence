@@ -27,9 +27,9 @@
 #include "../widgets/digitalpeakmeter.hpp"
 
 #include <cmath>
-#include <QtGui/QApplication>
 #include <QtGui/QIcon>
-#include <QtGui/QMessageBox>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QMessageBox>
 
 // -------------------------------
 
