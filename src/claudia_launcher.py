@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # ... TODO
-# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt4.QtCore import pyqtSlot, Qt, QTimer, QSettings
-from PyQt4.QtGui import QMainWindow, QTableWidgetItem, QWidget
+from PyQt5.QtCore import pyqtSlot, Qt, QTimer, QSettings
+from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem, QWidget
 from random import randint
 
 # ------------------------------------------------------------------------------------------------------------
@@ -170,22 +170,22 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
         self.refreshAll()
 
-        self.connect(self.tabWidget, SIGNAL("currentChanged(int)"), SLOT("slot_checkSelectedTab(int)"))
+        self.tabWidget.currentChanged.connect(self.slot_checkSelectedTab)
 
-        self.connect(self.listDAW, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedDAW(int)"))
-        self.connect(self.listHost, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedHost(int)"))
-        self.connect(self.listInstrument, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedInstrument(int)"))
-        self.connect(self.listBristol, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedBristol(int)"))
-        self.connect(self.listPlugin, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedPlugin(int)"))
-        self.connect(self.listEffect, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedEffect(int)"))
-        self.connect(self.listTool, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedTool(int)"))
-        self.connect(self.listDAW, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
-        self.connect(self.listHost, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
-        self.connect(self.listInstrument, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
-        self.connect(self.listBristol, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
-        self.connect(self.listPlugin, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
-        self.connect(self.listEffect, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
-        self.connect(self.listTool, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
+        self.listDAW.currentCellChanged.connect(self.slot_checkSelectedDAW)
+        self.listHost.currentCellChanged.connect(self.slot_checkSelectedHost)
+        self.listInstrument.currentCellChanged.connect(self.slot_checkSelectedInstrument)
+        self.listBristol.currentCellChanged.connect(self.slot_checkSelectedBristol)
+        self.listPlugin.currentCellChanged.connect(self.slot_checkSelectedPlugin)
+        self.listEffect.currentCellChanged.connect(self.slot_checkSelectedEffect)
+        self.listTool.currentCellChanged.connect(self.slot_checkSelectedTool)
+        self.listDAW.cellDoubleClicked.connect(self.slot_doubleClickedList)
+        self.listHost.cellDoubleClicked.connect(self.slot_doubleClickedList)
+        self.listInstrument.cellDoubleClicked.connect(self.slot_doubleClickedList)
+        self.listBristol.cellDoubleClicked.connect(self.slot_doubleClickedList)
+        self.listPlugin.cellDoubleClicked.connect(self.slot_doubleClickedList)
+        self.listEffect.cellDoubleClicked.connect(self.slot_doubleClickedList)
+        self.listTool.cellDoubleClicked.connect(self.slot_doubleClickedList)
 
     def getSelectedAppAndBinary(self):
         tabIndex = self.tabWidget.currentIndex()
@@ -1119,7 +1119,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 if __name__ == '__main__':
     import dbus
     from signal import signal, SIG_IGN, SIGUSR1
-    from PyQt4.QtGui import QApplication
+    from PyQt5.QtWidgets import QApplication
     import jacklib, ui_claudia_launcher_app
 
     # DBus connections
@@ -1149,7 +1149,7 @@ if __name__ == '__main__':
             # Check for JACK
             self.jack_client = jacklib.client_open("klaudia", jacklib.JackNoStartServer, None)
             if not self.jack_client:
-                QTimer.singleShot(0, self, SLOT("slot_showJackError()"))
+                QTimer.singleShot(0, self.slot_showJackError)
                 return
 
             # Set-up GUI
@@ -1175,15 +1175,15 @@ if __name__ == '__main__':
                 else:
                     self.slot_enableLADISH(False)
 
-            self.connect(self.b_start, SIGNAL("clicked()"), SLOT("slot_startApp()"))
-            self.connect(self.b_add, SIGNAL("clicked()"), SLOT("slot_addAppToLADISH()"))
-            self.connect(self.b_refresh, SIGNAL("clicked()"), SLOT("slot_refreshStudioList()"))
+            self.b_start.clicked.connect(self.slot_startApp)
+            self.b_add.clicked.connect(self.slot_addAppToLADISH)
+            self.b_refresh.clicked.connect(self.slot_refreshStudioList)
 
-            self.connect(self.co_ladi_room, SIGNAL("currentIndexChanged(int)"), SLOT("slot_checkSelectedRoom(int)"))
-            self.connect(self.groupLADISH, SIGNAL("toggled(bool)"), SLOT("slot_enableLADISH(bool)"))
+            self.co_ladi_room.currentIndexChanged.connect(self.slot_checkSelectedRoom)
+            self.groupLADISH.toggled.connect(self.slot_enableLADISH)
 
-            self.connect(self.le_url, SIGNAL("textChanged(QString)"), SLOT("slot_checkFolderUrl(QString)"))
-            self.connect(self.b_open, SIGNAL("clicked()"), SLOT("slot_getAndSetPath()"))
+            self.le_url.textChanged.connect(self.slot_checkFolderUrl)
+            self.b_open.clicked.connect(self.slot_getAndSetPath)
 
         def getIcon(self, icon):
             return self.launcher.getIcon(icon)

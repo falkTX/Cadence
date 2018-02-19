@@ -96,6 +96,15 @@ gJack.client = None
 # Abstract Canvas and JACK Class
 
 class AbstractCanvasJackClass(QMainWindow):
+    XRunCallback = pyqtSignal()
+    BufferSizeCallback = pyqtSignal(int)
+    SampleRateCallback = pyqtSignal(int)
+    ClientRenameCallback = pyqtSignal(str, str)
+    PortRegistrationCallback = pyqtSignal(int, bool)
+    PortConnectCallback = pyqtSignal(int, int, bool)
+    PortRenameCallback = pyqtSignal(int, str, str)
+    ShutdownCallback = pyqtSignal()
+
     SIGTERM = pyqtSignal()
     SIGUSR1 = pyqtSignal()
     SIGUSR2 = pyqtSignal()

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # LADISH frontend
-# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@
 # Imports (Global)
 
 from time import ctime
-from PyQt4.QtCore import QPointF
-from PyQt4.QtGui import QAction, QApplication, QCheckBox, QHBoxLayout, QVBoxLayout, QTableWidgetItem, QTreeWidgetItem
+from PyQt5.QtCore import QPointF
+from PyQt5.QtWidgets import QAction, QApplication, QCheckBox, QHBoxLayout, QVBoxLayout, QTableWidgetItem, QTreeWidgetItem
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
@@ -207,8 +207,8 @@ class StudioNameW(QDialog):
         for studio in studioList:
             self.fStudioList.append(str(studio[iStudioListName]))
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
-        self.connect(self.ui.le_name, SIGNAL("textChanged(QString)"), SLOT("slot_checkText(QString)"))
+        self.accepted.connect(self.slot_setReturn)
+        self.ui.le_name.textChanged.connect(self.slot_checkText)
 
         self.fRetStudioName = ""
 
@@ -252,9 +252,9 @@ class StudioListW(QDialog, ui_claudia_studiolist.Ui_StudioListW):
 
             index += 1
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
-        self.connect(self.tableWidget, SIGNAL("cellDoubleClicked(int, int)"), SLOT("accept()"))
-        self.connect(self.tableWidget, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelection(int)"))
+        self.accepted.connect(self.slot_setReturn)
+        self.tableWidget.cellDoubleClicked.connect(self.accept)
+        self.tableWidget.currentCellChanged.connect(self.slot_checkSelection)
 
         if self.tableWidget.rowCount() > 0:
             self.tableWidget.setCurrentCell(0, 0)
@@ -287,8 +287,8 @@ class CreateRoomW(QDialog, ui_claudia_createroom.Ui_CreateRoomW):
         for template_name, template_dict in templates_list:
             self.lw_templates.addItem(template_name)
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
-        self.connect(self.le_name, SIGNAL("textChanged(QString)"), SLOT("slot_checkText(QString)"))
+        self.accepted.connect(self.slot_setReturn)
+        self.le_name.textChanged.connect(self.slot_checkText)
 
         if self.lw_templates.count() > 0:
             self.lw_templates.setCurrentRow(0)
@@ -332,10 +332,10 @@ class ProjectNameW(QDialog, ui_claudia_projectname.Ui_ProjectNameW):
 
         self.m_proj_folder = proj_folder
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
-        self.connect(self.b_open, SIGNAL("clicked()"), SLOT("slot_checkFolder()"))
-        self.connect(self.le_path, SIGNAL("textChanged(QString)"), SLOT("slot_checkText_path(QString)"))
-        self.connect(self.le_name, SIGNAL("textChanged(QString)"), SLOT("slot_checkText_name(QString)"))
+        self.accepted.connect(self.slot_setReturn)
+        self.b_open.clicked.connect(self.slot_checkFolder)
+        self.le_path.textChanged.connect(self.slot_checkText_path)
+        self.le_name.textChanged.connect(self.slot_checkText_name)
 
         self.ret_project_name = ""
         self.ret_project_path = ""
@@ -384,9 +384,9 @@ class ProjectPropertiesW(QDialog, ui_claudia_projectproperties.Ui_ProjectPropert
         self.m_default_name = name
         self.m_last_name = name
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
-        self.connect(self.le_name, SIGNAL("textChanged(QString)"), SLOT("slot_checkText_name(QString)"))
-        self.connect(self.cb_save_now, SIGNAL("clicked(bool)"), SLOT("slot_checkSaveNow(bool)"))
+        self.accepted.connect(self.slot_setReturn)
+        self.le_name.textChanged.connect(self.slot_checkText_name)
+        self.cb_save_now.clicked.connect(self.slot_checkSaveNow)
 
         self.le_name.setText(name)
         self.le_description.setText(description)
@@ -458,8 +458,8 @@ class RunCustomW(QDialog, ui_claudia_runcustom.Ui_RunCustomW):
             self.rb_level_lash.setEnabled(False)
             self.rb_level_js.setEnabled(False)
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
-        self.connect(self.le_command, SIGNAL("textChanged(QString)"), SLOT("slot_checkText(QString)"))
+        self.accepted.connect(self.slot_setReturn)
+        self.le_command.textChanged.connect(self.slot_checkText)
 
         self.ret_app_obj = None
 
@@ -532,8 +532,8 @@ class ClaudiaLauncherW(QDialog):
 
         self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
 
-        self.connect(self.buttonBox.button(QDialogButtonBox.Ok), SIGNAL("clicked()"), SLOT("slot_addAppToLADISH()"))
-        self.connect(self.buttonBox.button(QDialogButtonBox.Close), SIGNAL("clicked()"), self, SLOT("reject()"))
+        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.slot_addAppToLADISH)
+        self.buttonBox.button(QDialogButtonBox.Close).clicked.connect(self.reject)
 
     # ----------------------------------------
     # Callbacks
@@ -752,7 +752,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
         self.ui.miniCanvasPreview.setRealParent(self)
         self.ui.miniCanvasPreview.setViewTheme(patchcanvas.canvas.theme.canvas_bg, patchcanvas.canvas.theme.rubberband_brush, patchcanvas.canvas.theme.rubberband_pen.color())
         self.ui.miniCanvasPreview.init(self.scene, DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT)
-        QTimer.singleShot(100, self, SLOT("slot_miniCanvasInit()"))
+        QTimer.singleShot(100, self.slot_miniCanvasInit)
 
         # -------------------------------------------------------------
         # Check DBus
@@ -795,104 +795,105 @@ class ClaudiaMainW(AbstractCanvasJackClass):
         self.setCanvasConnections()
         self.setJackConnections(["jack", "transport", "misc"])
 
-        self.connect(self.ui.act_studio_new, SIGNAL("triggered()"), SLOT("slot_studio_new()"))
-        self.connect(self.ui.act_studio_start, SIGNAL("triggered()"), SLOT("slot_studio_start()"))
-        self.connect(self.ui.act_studio_stop, SIGNAL("triggered()"), SLOT("slot_studio_stop()"))
-        self.connect(self.ui.act_studio_save, SIGNAL("triggered()"), SLOT("slot_studio_save()"))
-        self.connect(self.ui.act_studio_save_as, SIGNAL("triggered()"), SLOT("slot_studio_save_as()"))
-        self.connect(self.ui.act_studio_rename, SIGNAL("triggered()"), SLOT("slot_studio_rename()"))
-        self.connect(self.ui.act_studio_unload, SIGNAL("triggered()"), SLOT("slot_studio_unload()"))
-        self.connect(self.ui.act_tools_a2j_start, SIGNAL("triggered()"), SLOT("slot_A2JBridgeStart()"))
-        self.connect(self.ui.act_tools_a2j_stop, SIGNAL("triggered()"), SLOT("slot_A2JBridgeStop()"))
-        self.connect(self.ui.act_tools_a2j_export_hw, SIGNAL("triggered()"), SLOT("slot_A2JBridgeExportHW()"))
-        self.connect(self.ui.b_studio_new, SIGNAL("clicked()"), SLOT("slot_studio_new()"))
-        self.connect(self.ui.b_studio_load, SIGNAL("clicked()"), SLOT("slot_studio_load_b()"))
-        self.connect(self.ui.b_studio_save, SIGNAL("clicked()"), SLOT("slot_studio_save()"))
-        self.connect(self.ui.b_studio_save_as, SIGNAL("clicked()"), SLOT("slot_studio_save_as()"))
-        self.connect(self.ui.b_studio_start, SIGNAL("clicked()"), SLOT("slot_studio_start()"))
-        self.connect(self.ui.b_studio_stop, SIGNAL("clicked()"), SLOT("slot_studio_stop()"))
-        self.connect(self.ui.menu_studio_load, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuStudioList_Load()"))
-        self.connect(self.ui.menu_studio_delete, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuStudioList_Delete()"))
+        self.ui.act_studio_new.triggered.connect(self.slot_studio_new)
+        self.ui.act_studio_start.triggered.connect(self.slot_studio_start)
+        self.ui.act_studio_stop.triggered.connect(self.slot_studio_stop)
+        self.ui.act_studio_save.triggered.connect(self.slot_studio_save)
+        self.ui.act_studio_save_as.triggered.connect(self.slot_studio_save_as)
+        self.ui.act_studio_rename.triggered.connect(self.slot_studio_rename)
+        self.ui.act_studio_unload.triggered.connect(self.slot_studio_unload)
+        self.ui.act_tools_a2j_start.triggered.connect(self.slot_A2JBridgeStart)
+        self.ui.act_tools_a2j_stop.triggered.connect(self.slot_A2JBridgeStop)
+        self.ui.act_tools_a2j_export_hw.triggered.connect(self.slot_A2JBridgeExportHW)
+        self.ui.b_studio_new.clicked.connect(self.slot_studio_new)
+        self.ui.b_studio_load.clicked.connect(self.slot_studio_load_b)
+        self.ui.b_studio_save.clicked.connect(self.slot_studio_save)
+        self.ui.b_studio_save_as.clicked.connect(self.slot_studio_save_as)
+        self.ui.b_studio_start.clicked.connect(self.slot_studio_start)
+        self.ui.b_studio_stop.clicked.connect(self.slot_studio_stop)
+        self.ui.menu_studio_load.aboutToShow.connect(self.slot_updateMenuStudioList_Load)
+        self.ui.menu_studio_delete.aboutToShow.connect(self.slot_updateMenuStudioList_Delete)
 
-        self.connect(self.ui.act_room_create, SIGNAL("triggered()"), SLOT("slot_room_create()"))
-        self.connect(self.ui.menu_room_delete, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuRoomList()"))
+        self.ui.act_room_create.triggered.connect(self.slot_room_create)
+        self.ui.menu_room_delete.aboutToShow.connect(self.slot_updateMenuRoomList)
 
-        self.connect(self.ui.act_project_new, SIGNAL("triggered()"), SLOT("slot_project_new()"))
-        self.connect(self.ui.act_project_save, SIGNAL("triggered()"), SLOT("slot_project_save()"))
-        self.connect(self.ui.act_project_save_as, SIGNAL("triggered()"), SLOT("slot_project_save_as()"))
-        self.connect(self.ui.act_project_unload, SIGNAL("triggered()"), SLOT("slot_project_unload()"))
-        self.connect(self.ui.act_project_properties, SIGNAL("triggered()"), SLOT("slot_project_properties()"))
-        self.connect(self.ui.b_project_new, SIGNAL("clicked()"), SLOT("slot_project_new()"))
-        self.connect(self.ui.b_project_load, SIGNAL("clicked()"), SLOT("slot_project_load()"))
-        self.connect(self.ui.b_project_save, SIGNAL("clicked()"), SLOT("slot_project_save()"))
-        self.connect(self.ui.b_project_save_as, SIGNAL("clicked()"), SLOT("slot_project_save_as()"))
-        self.connect(self.ui.menu_project_load, SIGNAL("aboutToShow()"), SLOT("slot_updateMenuProjectList()"))
+        self.ui.act_project_new.triggered.connect(self.slot_project_new)
+        self.ui.act_project_save.triggered.connect(self.slot_project_save)
+        self.ui.act_project_save_as.triggered.connect(self.slot_project_save_as)
+        self.ui.act_project_unload.triggered.connect(self.slot_project_unload)
+        self.ui.act_project_properties.triggered.connect(self.slot_project_properties)
+        self.ui.b_project_new.clicked.connect(self.slot_project_new)
+        self.ui.b_project_load.clicked.connect(self.slot_project_load)
+        self.ui.b_project_save.clicked.connect(self.slot_project_save)
+        self.ui.b_project_save_as.clicked.connect(self.slot_project_save_as)
+        self.ui.menu_project_load.aboutToShow.connect(self.slot_updateMenuProjectList)
 
-        self.connect(self.ui.act_app_add_new, SIGNAL("triggered()"), SLOT("slot_app_add_new()"))
-        self.connect(self.ui.act_app_run_custom, SIGNAL("triggered()"), SLOT("slot_app_run_custom()"))
+        self.ui.act_app_add_new.triggered.connect(self.slot_app_add_new)
+        self.ui.act_app_run_custom.triggered.connect(self.slot_app_run_custom)
 
-        self.connect(self.ui.treeWidget, SIGNAL("itemSelectionChanged()"), SLOT("slot_checkCurrentRoom()"))
-        #self.connect(self.ui.treeWidget, SIGNAL("itemPressed(QTreeWidgetItem*, int)"), SLOT("slot_checkCurrentRoom()"))
-        self.connect(self.ui.treeWidget, SIGNAL("itemDoubleClicked(QTreeWidgetItem*, int)"), SLOT("slot_doubleClickedAppList(QTreeWidgetItem*, int)"))
-        self.connect(self.ui.treeWidget, SIGNAL("customContextMenuRequested(QPoint)"), SLOT("slot_showAppListCustomMenu()"))
+        self.ui.treeWidget.itemSelectionChanged.connect(self.slot_checkCurrentRoom)
+        #self.ui.treeWidget.itemPressed.connect(self.slot_checkCurrentRoom)
+        self.ui.treeWidget.itemDoubleClicked.connect(self.slot_doubleClickedAppList)
+        self.ui.treeWidget.customContextMenuRequested.connect(self.slot_showAppListCustomMenu)
 
-        self.connect(self.ui.miniCanvasPreview, SIGNAL("miniCanvasMoved(double, double)"), SLOT("slot_miniCanvasMoved(double, double)"))
+        self.ui.miniCanvasPreview.miniCanvasMoved.connect(self.slot_miniCanvasMoved)
 
-        self.connect(self.ui.graphicsView.horizontalScrollBar(), SIGNAL("valueChanged(int)"), SLOT("slot_horizontalScrollBarChanged(int)"))
-        self.connect(self.ui.graphicsView.verticalScrollBar(), SIGNAL("valueChanged(int)"), SLOT("slot_verticalScrollBarChanged(int)"))
+        self.ui.graphicsView.horizontalScrollBar().valueChanged.connect(self.slot_horizontalScrollBarChanged)
+        self.ui.graphicsView.verticalScrollBar().valueChanged.connect(self.slot_verticalScrollBarChanged)
 
-        self.connect(self.scene, SIGNAL("sceneGroupMoved(int, int, QPointF)"), SLOT("slot_canvasItemMoved(int, int, QPointF)"))
-        self.connect(self.scene, SIGNAL("scaleChanged(double)"), SLOT("slot_canvasScaleChanged(double)"))
+        self.scene.sceneGroupMoved.connect(self.slot_canvasItemMoved)
+        self.scene.scaleChanged.connect(self.slot_canvasScaleChanged)
 
-        self.connect(self.ui.act_settings_configure, SIGNAL("triggered()"), SLOT("slot_configureClaudia()"))
+        self.ui.act_settings_configure.triggered.connect(self.slot_configureClaudia)
 
-        self.connect(self.ui.act_help_about, SIGNAL("triggered()"), SLOT("slot_aboutClaudia()"))
-        self.connect(self.ui.act_help_about_qt, SIGNAL("triggered()"), app, SLOT("aboutQt()"))
+        self.ui.act_help_about.triggered.connect(self.slot_aboutClaudia)
+        self.ui.act_help_about_qt.triggered.connect(app.aboutQt)
 
-        # org.freedesktop.DBus
-        self.connect(self, SIGNAL("DBusCrashCallback(QString)"), SLOT("slot_DBusCrashCallback(QString)"))
+        # FIXME QT4
+        ## org.freedesktop.DBus
+        #self.DBusCrashCallback.connect(self.slot_DBusCrashCallback)
 
-        # org.jackaudio.JackControl
-        self.connect(self, SIGNAL("DBusServerStartedCallback()"), SLOT("slot_DBusServerStartedCallback()"))
-        self.connect(self, SIGNAL("DBusServerStoppedCallback()"), SLOT("slot_DBusServerStoppedCallback()"))
+        ## org.jackaudio.JackControl
+        #self.DBusServerStartedCallback.connect(self.slot_DBusServerStartedCallback)
+        #self.DBusServerStoppedCallback.connect(self.slot_DBusServerStoppedCallback)
 
-        # org.jackaudio.JackPatchbay
-        self.connect(self, SIGNAL("DBusClientAppearedCallback(int, QString)"), SLOT("slot_DBusClientAppearedCallback(int, QString)"))
-        self.connect(self, SIGNAL("DBusClientDisappearedCallback(int)"), SLOT("slot_DBusClientDisappearedCallback(int)"))
-        self.connect(self, SIGNAL("DBusClientRenamedCallback(int, QString)"), SLOT("slot_DBusClientRenamedCallback(int, QString)"))
-        self.connect(self, SIGNAL("DBusPortAppearedCallback(int, int, QString, int, int)"), SLOT("slot_DBusPortAppearedCallback(int, int, QString, int, int)"))
-        self.connect(self, SIGNAL("DBusPortDisppearedCallback(int)"), SLOT("slot_DBusPortDisppearedCallback(int)"))
-        self.connect(self, SIGNAL("DBusPortRenamedCallback(int, QString)"), SLOT("slot_DBusPortRenamedCallback(int, QString)"))
-        self.connect(self, SIGNAL("DBusPortsConnectedCallback(int, int, int)"), SLOT("slot_DBusPortsConnectedCallback(int, int, int)"))
-        self.connect(self, SIGNAL("DBusPortsDisconnectedCallback(int)"), SLOT("slot_DBusPortsDisconnectedCallback(int)"))
+        ## org.jackaudio.JackPatchbay
+        #self.DBusClientAppearedCallback.connect(self.slot_DBusClientAppearedCallback)
+        #self.DBusClientDisappearedCallback.connect(self.slot_DBusClientDisappearedCallback)
+        #self.DBusClientRenamedCallback.connect(self.slot_DBusClientRenamedCallback)
+        #self.DBusPortAppearedCallback.connect(self.slot_DBusPortAppearedCallback)
+        #self.DBusPortDisppearedCallback.connect(self.slot_DBusPortDisppearedCallback)
+        #self.DBusPortRenamedCallback.connect(self.slot_DBusPortRenamedCallback)
+        #self.DBusPortsConnectedCallback.connect(self.slot_DBusPortsConnectedCallback)
+        #self.DBusPortsDisconnectedCallback.connect(self.slot_DBusPortsDisconnectedCallback)
 
-        # org.ladish.Control
-        self.connect(self, SIGNAL("DBusStudioAppearedCallback()"), SLOT("slot_DBusStudioAppearedCallback()"))
-        self.connect(self, SIGNAL("DBusStudioDisappearedCallback()"), SLOT("slot_DBusStudioDisappearedCallback()"))
-        self.connect(self, SIGNAL("DBusQueueExecutionHaltedCallback()"), SLOT("slot_DBusQueueExecutionHaltedCallback()"))
-        self.connect(self, SIGNAL("DBusCleanExitCallback()"), SLOT("slot_DBusCleanExitCallback()"))
+        ## org.ladish.Control
+        #self.DBusStudioAppearedCallback.connect(self.slot_DBusStudioAppearedCallback)
+        #self.DBusStudioDisappearedCallback.connect(self.slot_DBusStudioDisappearedCallback)
+        #self.DBusQueueExecutionHaltedCallback.connect(self.slot_DBusQueueExecutionHaltedCallback)
+        #self.DBusCleanExitCallback.connect(self.slot_DBusCleanExitCallback)
 
-        # org.ladish.Studio
-        self.connect(self, SIGNAL("DBusStudioStartedCallback()"), SLOT("slot_DBusStudioStartedCallback()"))
-        self.connect(self, SIGNAL("DBusStudioStoppedCallback()"), SLOT("slot_DBusStudioStoppedCallback()"))
-        self.connect(self, SIGNAL("DBusStudioRenamedCallback(QString)"), SLOT("slot_DBusStudioRenamedCallback(QString)"))
-        self.connect(self, SIGNAL("DBusStudioCrashedCallback()"), SLOT("slot_DBusStudioCrashedCallback()"))
-        self.connect(self, SIGNAL("DBusRoomAppearedCallback(QString, QString)"), SLOT("slot_DBusRoomAppearedCallback(QString, QString)"))
-        self.connect(self, SIGNAL("DBusRoomDisappearedCallback(QString)"), SLOT("slot_DBusRoomDisappearedCallback(QString)"))
-        #self.connect(self, SIGNAL("DBusRoomChangedCallback()"), SLOT("slot_DBusRoomChangedCallback()"))
+        ## org.ladish.Studio
+        #self.DBusStudioStartedCallback.connect(self.slot_DBusStudioStartedCallback)
+        #self.DBusStudioStoppedCallback.connect(self.slot_DBusStudioStoppedCallback)
+        #self.DBusStudioRenamedCallback.connect(self.slot_DBusStudioRenamedCallback)
+        #self.DBusStudioCrashedCallback.connect(self.slot_DBusStudioCrashedCallback)
+        #self.DBusRoomAppearedCallback.connect(self.slot_DBusRoomAppearedCallback)
+        #self.DBusRoomDisappearedCallback.connect(self.slot_DBusRoomDisappearedCallback)
+        ##self.DBusRoomChangedCallback.connect(self.slot_DBusRoomChangedCallback)
 
-        # org.ladish.Room
-        self.connect(self, SIGNAL("DBusProjectPropertiesChanged(QString, QString)"), SLOT("slot_DBusProjectPropertiesChanged(QString, QString)"))
+        ## org.ladish.Room
+        #self.DBusProjectPropertiesChanged.connect(self.slot_DBusProjectPropertiesChanged)
 
-        # org.ladish.AppSupervisor
-        self.connect(self, SIGNAL("DBusAppAdded2Callback(QString, int, QString, bool, bool, QString)"), SLOT("slot_DBusAppAdded2Callback(QString, int, QString, bool, bool, QString)"))
-        self.connect(self, SIGNAL("DBusAppRemovedCallback(QString, int)"), SLOT("slot_DBusAppRemovedCallback(QString, int)"))
-        self.connect(self, SIGNAL("DBusAppStateChanged2Callback(QString, int, QString, bool, bool, QString)"), SLOT("slot_DBusAppStateChanged2Callback(QString, int, QString, bool, bool, QString)"))
+        ## org.ladish.AppSupervisor
+        #self.DBusAppAdded2Callback.connect(self.slot_DBusAppAdded2Callback)
+        #self.DBusAppRemovedCallback.connect(self.slot_DBusAppRemovedCallback)
+        #self.DBusAppStateChanged2Callback.connect(self.slot_DBusAppStateChanged2Callback)
 
         # JACK
-        self.connect(self, SIGNAL("JackBufferSizeCallback(int)"), SLOT("slot_JackBufferSizeCallback(int)"))
-        self.connect(self, SIGNAL("JackSampleRateCallback(int)"), SLOT("slot_JackSampleRateCallback(int)"))
-        self.connect(self, SIGNAL("JackShutdownCallback()"), SLOT("slot_JackShutdownCallback()"))
+        self.BufferSizeCallback.connect(self.slot_JackBufferSizeCallback)
+        self.SampleRateCallback.connect(self.slot_JackSampleRateCallback)
+        self.ShutdownCallback.connect(self.slot_JackShutdownCallback)
 
         # -------------------------------------------------------------
         # Set-up DBus
@@ -1161,7 +1162,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
             source_group_id, source_group_name, source_port_id, source_port_name, target_group_id, target_group_name, target_port_id, target_port_name, conn_id = conn
             self.canvas_connect_ports(int(conn_id), int(source_port_id), int(target_port_id))
 
-        QTimer.singleShot(1000 if (self.fSavedSettings['Canvas/EyeCandy']) else 0, self.ui.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(1000 if (self.fSavedSettings['Canvas/EyeCandy']) else 0, self.ui.miniCanvasPreview.update)
 
     def room_add(self, room_path, room_name):
         room_index  = int(room_path.replace("/org/ladish/Room", ""))
@@ -1254,35 +1255,35 @@ class ClaudiaMainW(AbstractCanvasJackClass):
             if y2 is None: y2 = "%f" % (float(y) + 50)
             patchcanvas.setGroupPosFull(groupId, float(x), float(y), float(x2), float(y2))
 
-        QTimer.singleShot(0, self.ui.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(0, self.ui.miniCanvasPreview.update)
 
     def canvas_remove_group(self, group_id):
         patchcanvas.removeGroup(group_id)
-        QTimer.singleShot(0, self.ui.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(0, self.ui.miniCanvasPreview.update)
 
     def canvas_rename_group(self, group_id, new_group_name):
         patchcanvas.renameGroup(group_id, new_group_name)
-        QTimer.singleShot(0, self.ui.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(0, self.ui.miniCanvasPreview.update)
 
     def canvas_add_port(self, group_id, port_id, port_name, port_mode, port_type):
         patchcanvas.addPort(group_id, port_id, port_name, port_mode, port_type)
-        QTimer.singleShot(0, self.ui.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(0, self.ui.miniCanvasPreview.update)
 
     def canvas_remove_port(self, port_id):
         patchcanvas.removePort(port_id)
-        QTimer.singleShot(0, self.ui.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(0, self.ui.miniCanvasPreview.update)
 
     def canvas_rename_port(self, port_id, new_port_name):
         patchcanvas.renamePort(port_id, new_port_name)
-        QTimer.singleShot(0, self.ui.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(0, self.ui.miniCanvasPreview.update)
 
     def canvas_connect_ports(self, connection_id, port_a, port_b):
         patchcanvas.connectPorts(connection_id, port_a, port_b)
-        QTimer.singleShot(0, self.ui.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(0, self.ui.miniCanvasPreview.update)
 
     def canvas_disconnect_ports(self, connection_id):
         patchcanvas.disconnectPorts(connection_id)
-        QTimer.singleShot(0, self.ui.miniCanvasPreview, SLOT("update()"))
+        QTimer.singleShot(0, self.ui.miniCanvasPreview.update)
 
     def jackStarted(self):
         if jacksettings.needsInit():
@@ -1497,85 +1498,85 @@ class ClaudiaMainW(AbstractCanvasJackClass):
             if not newId:
                 # Something crashed
                 if appInterface == "org.gna.home.a2jmidid":
-                    QTimer.singleShot(0, self, SLOT("slot_handleCrash_a2j()"))
+                    QTimer.singleShot(0, self.slot_handleCrash_a2j)
                 elif appInterface in ("org.jackaudio.service", "org.ladish"):
                     # Prevent any more dbus calls
                     gDBus.jack = None
                     gJack.client = None
                     jacksettings.initBus(None)
-                    self.emit(SIGNAL("DBusCrashCallback(QString)"), appInterface)
+                    self.DBusCrashCallback.emit(appInterface)
 
         elif kwds['interface'] == "org.jackaudio.JackControl":
             if DEBUG: print("DBus signal @org.jackaudio.JackControl,", kwds['member'])
             if kwds['member'] == "ServerStarted":
-                self.emit(SIGNAL("DBusServerStartedCallback()"))
+                self.DBusServerStartedCallback.emit()
             elif kwds['member'] == "ServerStopped":
-                self.emit(SIGNAL("DBusServerStoppedCallback()"))
+                self.DBusServerStoppedCallback.emit()
 
         elif kwds['interface'] == "org.jackaudio.JackPatchbay":
             if gDBus.patchbay and kwds['path'] == gDBus.patchbay.object_path:
                 if DEBUG: print("DBus signal @org.jackaudio.JackPatchbay,", kwds['member'])
                 if kwds['member'] == "ClientAppeared":
-                    self.emit(SIGNAL("DBusClientAppearedCallback(int, QString)"), args[iJackClientId], args[iJackClientName])
+                    self.DBusClientAppearedCallback.emit(args[iJackClientId], args[iJackClientName])
                 elif kwds['member'] == "ClientDisappeared":
-                    self.emit(SIGNAL("DBusClientDisappearedCallback(int)"), args[iJackClientId])
+                    self.DBusClientDisappearedCallback.emit(args[iJackClientId])
                 elif kwds['member'] == "ClientRenamed":
-                    self.emit(SIGNAL("DBusClientRenamedCallback(int, QString)"), args[iRenamedId], args[iRenamedNewName])
+                    self.DBusClientRenamedCallback.emit(args[iRenamedId], args[iRenamedNewName])
                 elif kwds['member'] == "PortAppeared":
-                    self.emit(SIGNAL("DBusPortAppearedCallback(int, int, QString, int, int)"), args[iJackClientId], args[iJackPortId], args[iJackPortName], args[iJackPortFlags], args[iJackPortType])
+                    self.DBusPortAppearedCallback.emit(args[iJackClientId], args[iJackPortId], args[iJackPortName], args[iJackPortFlags], args[iJackPortType])
                 elif kwds['member'] == "PortDisappeared":
-                    self.emit(SIGNAL("DBusPortDisppearedCallback(int)"), args[iJackPortId])
+                    self.DBusPortDisppearedCallback.emit(args[iJackPortId])
                 elif kwds['member'] == "PortRenamed":
-                    self.emit(SIGNAL("DBusPortRenamedCallback(int, QString)"), args[iJackPortId], args[iJackPortNewName])
+                    self.DBusPortRenamedCallback.emit(args[iJackPortId], args[iJackPortNewName])
                 elif kwds['member'] == "PortsConnected":
-                    self.emit(SIGNAL("DBusPortsConnectedCallback(int, int, int)"), args[iJackConnId], args[iSourcePortId], args[iTargetPortId])
+                    self.DBusPortsConnectedCallback.emit(args[iJackConnId], args[iSourcePortId], args[iTargetPortId])
                 elif kwds['member'] == "PortsDisconnected":
-                    self.emit(SIGNAL("DBusPortsDisconnectedCallback(int)"), args[iJackConnId])
+                    self.DBusPortsDisconnectedCallback.emit(args[iJackConnId])
 
         elif kwds['interface'] == "org.ladish.Control":
             if DEBUG: print("DBus signal @org.ladish.Control,", kwds['member'])
             if kwds['member'] == "StudioAppeared":
-                self.emit(SIGNAL("DBusStudioAppearedCallback()"))
+                self.DBusStudioAppearedCallback.emit()
             elif kwds['member'] == "StudioDisappeared":
-                self.emit(SIGNAL("DBusStudioDisappearedCallback()"))
+                self.DBusStudioDisappearedCallback.emit()
             elif kwds['member'] == "QueueExecutionHalted":
-                self.emit(SIGNAL("DBusQueueExecutionHaltedCallback()"))
+                self.DBusQueueExecutionHaltedCallback.emit()
             elif kwds['member'] == "CleanExit":
-                self.emit(SIGNAL("DBusCleanExitCallback()"))
+                self.DBusCleanExitCallback.emit()
 
         elif kwds['interface'] == "org.ladish.Studio":
             if DEBUG: print("DBus signal @org.ladish.Studio,", kwds['member'])
             if kwds['member'] == "StudioStarted":
-                self.emit(SIGNAL("DBusStudioStartedCallback()"))
+                self.DBusStudioStartedCallback.emit()
             elif kwds['member'] == "StudioStopped":
-                self.emit(SIGNAL("DBusStudioStoppedCallback()"))
+                self.DBusStudioStoppedCallback.emit()
             elif kwds['member'] == "StudioRenamed":
-                self.emit(SIGNAL("DBusStudioRenamedCallback(QString)"), args[iStudioRenamedName])
+                self.DBusStudioRenamedCallback.emit(args[iStudioRenamedName])
             elif kwds['member'] == "StudioCrashed":
-                self.emit(SIGNAL("DBusStudioCrashedCallback()"))
+                self.DBusStudioCrashedCallback.emit()
             elif kwds['member'] == "RoomAppeared":
-                self.emit(SIGNAL("DBusRoomAppearedCallback(QString, QString)"), args[iRoomAppearedPath], args[iRoomAppearedDict]['name'])
+                self.DBusRoomAppearedCallback.emit(args[iRoomAppearedPath], args[iRoomAppearedDict]['name'])
             elif kwds['member'] == "RoomDisappeared":
-                self.emit(SIGNAL("DBusRoomDisappearedCallback(QString)"), args[iRoomAppearedPath])
+                self.DBusRoomDisappearedCallback.emit(args[iRoomAppearedPath])
             #elif kwds['member'] == "RoomChanged":
-                #self.emit(SIGNAL("DBusRoomChangedCallback()"))
+                #self.DBusRoomChangedCallback.emit()
 
         elif kwds['interface'] == "org.ladish.Room":
             if DEBUG: print("DBus signal @org.ladish.Room,", kwds['member'])
             if kwds['member'] == "ProjectPropertiesChanged":
                 if "name" in args[iProjChangedDict].keys():
-                    self.emit(SIGNAL("DBusProjectPropertiesChanged(QString, QString)"), kwds['path'], args[iProjChangedDict]['name'])
+                    self.DBusProjectPropertiesChanged.emit(kwds['path'], args[iProjChangedDict]['name'])
                 else:
-                    self.emit(SIGNAL("DBusProjectPropertiesChanged(QString, QString)"), kwds['path'], "")
+                    self.DBusProjectPropertiesChanged.emit(kwds['path'], "")
 
         elif kwds['interface'] == "org.ladish.AppSupervisor":
             if DEBUG: print("DBus signal @org.ladish.AppSupervisor,", kwds['member'])
             if kwds['member'] == "AppAdded2":
-                self.emit(SIGNAL("DBusAppAdded2Callback(QString, int, QString, bool, bool, QString)"), kwds['path'], args[iAppChangedNumber], args[iAppChangedName], args[iAppChangedActive], args[iAppChangedTerminal], args[iAppChangedLevel])
+                self.DBusAppAdded2Callback.emit(kwds['path'], args[iAppChangedNumber], args[iAppChangedName], args[iAppChangedActive], args[iAppChangedTerminal], args[iAppChangedLevel])
             elif kwds['member'] == "AppRemoved":
-                self.emit(SIGNAL("DBusAppRemovedCallback(QString, int)"), kwds['path'], args[iAppChangedNumber])
+                self.DBusAppRemovedCallback.emit(kwds['path'], args[iAppChangedNumber])
             elif kwds['member'] == "AppStateChanged2":
-                self.emit(SIGNAL("DBusAppStateChanged2Callback(QString, int, QString, bool, bool, QString)"), kwds['path'], args[iAppChangedNumber], args[iAppChangedName], args[iAppChangedActive], args[iAppChangedTerminal], args[iAppChangedLevel])
+                self.DBusAppStateChanged2Callback.emit(kwds['path'], args[iAppChangedNumber], args[iAppChangedName], args[iAppChangedActive], args[iAppChangedTerminal], args[iAppChangedLevel])
 
         elif kwds['interface'] == "org.gna.home.a2jmidid.control":
             if kwds['member'] == "bridge_started":
@@ -1618,17 +1619,17 @@ class ClaudiaMainW(AbstractCanvasJackClass):
 
     def JackBufferSizeCallback(self, buffer_size, arg):
         if DEBUG: print("JackBufferSizeCallback(%i)" % buffer_size)
-        self.emit(SIGNAL("JackBufferSizeCallback(int)"), buffer_size)
+        self.BufferSizeCallback.emit(buffer_size)
         return 0
 
     def JackSampleRateCallback(self, sample_rate, arg):
         if DEBUG: print("JackSampleRateCallback(%i)" % sample_rate)
-        self.emit(SIGNAL("JackSampleRateCallback(int)"), sample_rate)
+        self.SampleRateCallback.emit(sample_rate)
         return 0
 
     def JackShutdownCallback(self, arg):
-        if DEBUG: print("JackShutdownCallback()")
-        self.emit(SIGNAL("JackShutdownCallback()"))
+        if DEBUG: print("JackShutdownCallback")
+        self.ShutdownCallback.emit()
         return 0
 
     @pyqtSlot()
@@ -1893,7 +1894,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
                 studio_name  = str(studio[iStudioListName])
                 act_x_studio = QAction(studio_name, self.ui.menu_studio_load)
                 self.ui.menu_studio_load.addAction(act_x_studio)
-                self.connect(act_x_studio, SIGNAL("triggered()"), SLOT("slot_studio_load_m()"))
+                act_x_studio.triggered.connect(self.slot_studio_load_m)
 
     @pyqtSlot()
     def slot_updateMenuStudioList_Delete(self):
@@ -1909,7 +1910,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
                 studio_name = str(studio[iStudioListName])
                 act_x_studio = QAction(studio_name, self.ui.menu_studio_delete)
                 self.ui.menu_studio_delete.addAction(act_x_studio)
-                self.connect(act_x_studio, SIGNAL("triggered()"), SLOT("slot_studio_delete_m()"))
+                act_x_studio.triggered.connect(self.slot_studio_delete_m)
 
     @pyqtSlot()
     def slot_updateMenuRoomList(self):
@@ -1924,7 +1925,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
                     room_name = ladish_room.GetName()
                     act_x_room = QAction(room_name, self.ui.menu_room_delete)
                     self.ui.menu_room_delete.addAction(act_x_room)
-                    self.connect(act_x_room, SIGNAL("triggered()"), SLOT("slot_room_delete_m()"))
+                    act_x_room.triggered.connect(self.slot_room_delete_m)
         else:
             self.createEmptyMenuRoomActon()
 
@@ -1938,7 +1939,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
         self.ui.menu_project_load.clear()
         act_project_load = QAction(self.tr("Load from folder..."), self.ui.menu_project_load)
         self.ui.menu_project_load.addAction(act_project_load)
-        self.connect(act_project_load, SIGNAL("triggered()"), SLOT("slot_project_load()"))
+        act_project_load.triggered.connect(self.slot_project_load)
 
         ladish_recent_iface = dbus.Interface(gDBus.ladish_room, "org.ladish.RecentItems")
         proj_list = ladish_recent_iface.get(RECENT_PROJECTS_STORE_MAX_ITEMS)
@@ -1954,7 +1955,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
                 act_x_text = "%s [%s]" % (proj_name, proj_path)
                 act_x_proj = QAction(act_x_text, self.ui.menu_project_load)
                 self.ui.menu_project_load.addAction(act_x_proj)
-                self.connect(act_x_proj, SIGNAL("triggered()"), SLOT("slot_project_load_m()"))
+                act_x_proj.triggered.connect(self.slot_project_load_m)
 
     @pyqtSlot()
     def slot_showAppListCustomMenu(self):
@@ -2193,11 +2194,11 @@ class ClaudiaMainW(AbstractCanvasJackClass):
         if appInterface == "org.jackaudio.service":
             if not (self.m_crashedJACK or self.m_crashedLADISH):
                 self.m_crashedJACK = True
-                QTimer.singleShot(1000, self, SLOT("slot_handleCrash_jack()"))
+                QTimer.singleShot(1000, self.slot_handleCrash_jack)
         elif appInterface == "org.ladish":
             if not (self.m_crashedJACK or self.m_crashedLADISH):
                 self.m_crashedLADISH = True
-                QTimer.singleShot(1000, self, SLOT("slot_handleCrash_ladish()"))
+                QTimer.singleShot(1000, self.slot_handleCrash_ladish)
 
     @pyqtSlot()
     def slot_DBusServerStartedCallback(self):
@@ -2310,7 +2311,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
 
     @pyqtSlot()
     def slot_DBusStudioCrashedCallback(self):
-        QTimer.singleShot(0, self, SLOT("slot_handleCrash_studio()"))
+        QTimer.singleShot(0, self.slot_handleCrash_studio)
 
     @pyqtSlot(str, str)
     def slot_DBusRoomAppearedCallback(self, room_path, room_name):
@@ -2671,7 +2672,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
         self.ui.act_app_add_new.setEnabled(USE_CLAUDIA_ADD_NEW)
 
     def resizeEvent(self, event):
-        QTimer.singleShot(0, self, SLOT("slot_miniCanvasCheckSize()"))
+        QTimer.singleShot(0, self.slot_miniCanvasCheckSize)
         QMainWindow.resizeEvent(self, event)
 
     def timerEvent(self, event):

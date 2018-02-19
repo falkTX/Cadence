@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # KDE, App-Indicator or Qt Systray
-# Copyright (C) 2011-2012 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2011-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,41 +18,20 @@
 
 # Imports (Global)
 import os, sys
-from PyQt4.QtCore import QTimer, SIGNAL
-from PyQt4.QtGui import QAction, QIcon, QMainWindow, QMenu, QSystemTrayIcon
+from PyQt5.QtCore import QTimer
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QAction, QMainWindow, QMenu, QSystemTrayIcon
 
 try:
-    if False and os.getenv("DESKTOP_SESSION") in ("ubuntu", "ubuntu-2d") and not os.path.exists("/var/cadence/no_app_indicators"):
-        # Check current Qt theme. If Gtk+, use Gtk2 AppIndicator
-        style = None
-        if len(sys.argv) > 2 and "-style" in sys.argv:
-            i = sys.argv.index("-style")
-            if i < len(sys.argv):
-                style = sys.argv[i+1]
-
-        check_cmd = "python3 -c 'import sys; from PyQt4.QtGui import QApplication; app = QApplication(sys.argv); print(app.style().objectName())'"
-
-        if style:
-            check_cmd += " -style %s" % style
-
-        from subprocess import getoutput
-        needsGtk2 = bool(getoutput(check_cmd).strip().lower() in ("gtk", "gtk+"))
-
-        if needsGtk2:
-            from gi import pygtkcompat
-            pygtkcompat.enable()
-            pygtkcompat.enable_gtk(version="2.0")
-            from gi.repository import Gtk, AppIndicator
-        else:
-            from gi.repository import Gtk, AppIndicator3 as AppIndicator
-
+    if os.getenv("DESKTOP_SESSION") in ("ubuntu", "ubuntu-2d") and not os.path.exists("/var/cadence/no_app_indicators"):
+        from gi.repository import Gtk, AppIndicator3 as AppIndicator
         TrayEngine = "AppIndicator"
-    
+
     elif os.getenv("KDE_SESSION_VERSION") >= 5:
         TrayEngine = "Qt"
 
-    elif (os.getenv("KDE_FULL_SESSION") or os.getenv("DESKTOP_SESSION") == "kde-plasma") and not os.path.exists("/etc/debian_version"):
-        from PyKDE4.kdeui import KAction, KIcon, KMenu, KStatusNotifierItem
+    elif os.getenv("KDE_FULL_SESSION") or os.getenv("DESKTOP_SESSION") == "kde-plasma":
+        from PyKDE5.kdeui import KAction, KIcon, KMenu, KStatusNotifierItem
         TrayEngine = "KDE"
 
     else:
@@ -117,7 +96,7 @@ class GlobalSysTray(object):
             self.tray = QSystemTrayIcon(getIcon(icon))
             self.tray.setContextMenu(self.menu)
             self.tray.setParent(parent)
-            self.tray.connect(self.tray, SIGNAL("activated(QSystemTrayIcon::ActivationReason)"), self.qt_systray_clicked)
+            self.tray.activated.connect(self.qt_systray_clicked)
 
     # -------------------------------------------------------------------------------------------
 
@@ -289,14 +268,11 @@ class GlobalSysTray(object):
 
         act_widget = self.act_indexes[i][iActWidget]
 
-        if TrayEngine == "KDE":
-            self.tray.connect(act_widget, SIGNAL("triggered()"), act_func)
-
-        elif TrayEngine == "AppIndicator":
+        if TrayEngine == "AppIndicator":
             act_widget.connect("activate", self.gtk_call_func, act_name_id)
 
-        elif TrayEngine == "Qt":
-            self.tray.connect(act_widget, SIGNAL("triggered()"), act_func)
+        elif TrayEngine in ("KDE", "Qt"):
+            act_widget.triggered.connect(act_func)
 
         self.act_indexes[i][iActFunc] = act_func
 
@@ -488,12 +464,14 @@ class GlobalSysTray(object):
 
     def isTrayAvailable(self):
         if TrayEngine in ("KDE", "Qt"):
+            # Ask Qt
             return QSystemTrayIcon.isSystemTrayAvailable()
-        elif TrayEngine == "AppIndicator":
+
+        if TrayEngine == "AppIndicator":
             # Ubuntu/Unity always has a systray
             return True
-        else:
-            return False
+
+        return False
 
     def handleQtCloseEvent(self, event):
         if self.isTrayAvailable() and self._parent.isVisible():
@@ -660,7 +638,7 @@ class GlobalSysTray(object):
 
 #--------------- main ------------------
 if __name__ == '__main__':
-    from PyQt4.QtGui import QApplication, QDialog, QMessageBox
+    from PyQt5.QtWidgets import QApplication, QDialog, QMessageBox
 
     class ExampleGUI(QDialog):
         def __init__(self, parent=None):

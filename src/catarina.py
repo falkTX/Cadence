@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # PatchCanvas test application
-# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,11 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt4.QtCore import pyqtSlot, QSettings
-from PyQt4.QtGui import QApplication, QDialog, QDialogButtonBox, QTableWidgetItem
-from PyQt4.QtXml import QDomDocument
+from PyQt5.QtCore import pyqtSlot, QSettings
+from PyQt5.QtWidgets import QApplication, QDialog, QDialogButtonBox, QTableWidgetItem
+
+# FIXME QT4
+#from PyQt5.QtXml import QDomDocument
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
@@ -42,7 +44,7 @@ from shared_settings import *
 # Try Import OpenGL
 
 try:
-    from PyQt4.QtOpenGL import QGLWidget
+    from PyQt5.QtOpenGL import QGLWidget
     hasGL = True
 except:
     hasGL = False
@@ -86,8 +88,8 @@ class CatarinaAddGroupW(QDialog, ui_catarina_addgroup.Ui_CatarinaAddGroupW):
         for group in group_list:
             self.m_group_list_names.append(group[iGroupName])
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
-        self.connect(self.le_group_name, SIGNAL("textChanged(QString)"), SLOT("slot_checkText(QString)"))
+        self.accepted.connect(self.slot_setReturn)
+        self.le_group_name.textChanged.connect(self.slot_checkText)
 
         self.ret_group_name = ""
         self.ret_group_split = False

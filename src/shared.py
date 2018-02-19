@@ -31,7 +31,7 @@ from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox
 # Set Platform
 
 if sys.platform == "darwin":
-    from PyQt4.QtGui import qt_mac_set_menubar_icons
+    from PyQt5.QtGui import qt_mac_set_menubar_icons
     qt_mac_set_menubar_icons(False)
     HAIKU   = False
     LINUX   = False

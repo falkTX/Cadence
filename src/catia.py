@@ -96,15 +96,6 @@ URI_CANVAS_ICON = "http://kxstudio.sf.net/ns/canvas/icon"
 # Catia Main Window
 
 class CatiaMainW(AbstractCanvasJackClass):
-    XRunCallback = pyqtSignal()
-    BufferSizeCallback = pyqtSignal(int)
-    SampleRateCallback = pyqtSignal(int)
-    ClientRenameCallback = pyqtSignal(str, str)
-    PortRegistrationCallback = pyqtSignal(int, bool)
-    PortConnectCallback = pyqtSignal(int, int, bool)
-    PortRenameCallback = pyqtSignal(int, str, str)
-    ShutdownCallback = pyqtSignal()
-
     def __init__(self, parent=None):
         AbstractCanvasJackClass.__init__(self, "Catia", ui_catia.Ui_CatiaMainW, parent)
 

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Cadence ALSA-Loop daemon
-# Copyright (C) 2012-2013 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2012-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import os
 import sys
 from signal import signal, SIGINT, SIGTERM
 from time import sleep
-from PyQt4.QtCore import QProcess
+from PyQt5.QtCore import QProcess
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
