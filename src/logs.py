@@ -19,9 +19,14 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt5.QtCore import pyqtSlot, Qt, QFile, QIODevice, QMutex, QMutexLocker, QTextStream, QThread, QSettings
-from PyQt5.QtGui import QPalette, QSyntaxHighlighter
-from PyQt5.QtWidgets import QDialog
+if True:
+    from PyQt5.QtCore import pyqtSlot, Qt, QFile, QIODevice, QMutex, QMutexLocker, QTextStream, QThread, QSettings
+    from PyQt5.QtGui import QPalette, QSyntaxHighlighter
+    from PyQt5.QtWidgets import QDialog
+else:
+    from PyQt4.QtCore import pyqtSlot, Qt, QFile, QIODevice, QMutex, QMutexLocker, QTextStream, QThread, QSettings
+    from PyQt4.QtGui import QPalette, QSyntaxHighlighter
+    from PyQt4.QtGui import QDialog
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)

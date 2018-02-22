@@ -23,7 +23,11 @@ import os
 import sys
 from signal import signal, SIGINT, SIGTERM
 from time import sleep
-from PyQt5.QtCore import QProcess
+
+if True:
+    from PyQt5.QtCore import QProcess
+else:
+    from PyQt4.QtCore import QProcess
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)

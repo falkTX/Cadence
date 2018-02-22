@@ -19,8 +19,12 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt5.QtCore import QProcess, QSettings
 from time import sleep
+
+if True:
+    from PyQt5.QtCore import QProcess, QSettings
+else:
+    from PyQt4.QtCore import QProcess, QSettings
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)

@@ -19,9 +19,14 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt5.QtCore import pyqtSlot, Qt, QTimer, QSettings
-from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem, QWidget
 from random import randint
+
+if True:
+    from PyQt5.QtCore import pyqtSlot, Qt, QTimer, QSettings
+    from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem, QWidget
+else:
+    from PyQt4.QtCore import pyqtSlot, Qt, QTimer, QSettings
+    from PyQt4.QtGui import QMainWindow, QTableWidgetItem, QWidget
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom)

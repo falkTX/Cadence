@@ -23,9 +23,15 @@ import os
 import sys
 from codecs import open as codecopen
 from unicodedata import normalize
-from PyQt5.QtCore import pyqtSignal, qWarning
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox
+
+if True:
+    from PyQt5.QtCore import pyqtSignal, qWarning
+    from PyQt5.QtGui import QIcon
+    from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox
+else:
+    from PyQt4.QtCore import pyqtSignal, qWarning
+    from PyQt4.QtGui import QIcon
+    from PyQt4.QtGui import QApplication, QFileDialog, QMessageBox
 
 # ------------------------------------------------------------------------------------------------------------
 # Set Platform

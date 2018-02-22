@@ -20,8 +20,13 @@
 # Imports (Global)
 
 from time import ctime
-from PyQt5.QtCore import QPointF
-from PyQt5.QtWidgets import QAction, QApplication, QCheckBox, QHBoxLayout, QVBoxLayout, QTableWidgetItem, QTreeWidgetItem
+
+if True:
+    from PyQt5.QtCore import QPointF
+    from PyQt5.QtWidgets import QAction, QApplication, QCheckBox, QHBoxLayout, QVBoxLayout, QTableWidgetItem, QTreeWidgetItem
+else:
+    from PyQt4.QtCore import QPointF
+    from PyQt4.QtGui import QAction, QApplication, QCheckBox, QHBoxLayout, QVBoxLayout, QTableWidgetItem, QTreeWidgetItem
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)

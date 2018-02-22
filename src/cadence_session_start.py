@@ -3,7 +3,10 @@
 
 # Imports (Global)
 import dbus, sys
-from PyQt4.QtCore import QCoreApplication
+if True:
+    from PyQt5.QtCore import QCoreApplication
+else:
+    from PyQt4.QtCore import QCoreApplication
 
 # Imports (Custom Stuff)
 from shared_cadence import *

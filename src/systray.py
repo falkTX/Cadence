@@ -18,9 +18,15 @@
 
 # Imports (Global)
 import os, sys
-from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QAction, QMainWindow, QMenu, QSystemTrayIcon
+
+if True:
+    from PyQt5.QtCore import QTimer
+    from PyQt5.QtGui import QIcon
+    from PyQt5.QtWidgets import QAction, QMainWindow, QMenu, QSystemTrayIcon
+else:
+    from PyQt4.QtCore import QTimer
+    from PyQt4.QtGui import QIcon
+    from PyQt4.QtGui import QAction, QMainWindow, QMenu, QSystemTrayIcon
 
 try:
     if os.getenv("DESKTOP_SESSION") in ("ubuntu", "ubuntu-2d") and not os.path.exists("/var/cadence/no_app_indicators"):

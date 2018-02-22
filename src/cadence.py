@@ -20,8 +20,13 @@
 # Imports (Global)
 
 from platform import architecture
-from PyQt5.QtCore import QFileSystemWatcher, QThread
-from PyQt5.QtWidgets import QApplication, QDialogButtonBox, QLabel, QMainWindow, QSizePolicy
+
+if True:
+    from PyQt5.QtCore import QFileSystemWatcher, QThread
+    from PyQt5.QtWidgets import QApplication, QDialogButtonBox, QLabel, QMainWindow, QSizePolicy
+else:
+    from PyQt4.QtCore import QFileSystemWatcher, QThread
+    from PyQt4.QtGui import QApplication, QDialogButtonBox, QLabel, QMainWindow, QSizePolicy
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)

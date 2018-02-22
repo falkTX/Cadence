@@ -19,11 +19,15 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt5.QtCore import pyqtSlot, QSettings
-from PyQt5.QtWidgets import QApplication, QDialog, QDialogButtonBox, QTableWidgetItem
-
-# FIXME QT4
-#from PyQt5.QtXml import QDomDocument
+if True:
+    from PyQt5.QtCore import pyqtSlot, QSettings
+    from PyQt5.QtWidgets import QApplication, QDialog, QDialogButtonBox, QTableWidgetItem
+    # FIXME QT4
+    #from PyQt5.QtXml import QDomDocument
+else:
+    from PyQt4.QtCore import pyqtSlot, QSettings
+    from PyQt4.QtGui import QApplication, QDialog, QDialogButtonBox, QTableWidgetItem
+    from PyQt4.QtXml import QDomDocument
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)

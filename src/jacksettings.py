@@ -19,10 +19,16 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt5.QtCore import pyqtSlot, Qt, QSettings, QTimer
-from PyQt5.QtGui import QFontMetrics
-from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QMessageBox
 from sys import platform, version_info
+
+if True:
+    from PyQt5.QtCore import pyqtSlot, Qt, QSettings, QTimer
+    from PyQt5.QtGui import QFontMetrics
+    from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QMessageBox
+else:
+    from PyQt4.QtCore import pyqtSlot, Qt, QSettings, QTimer
+    from PyQt4.QtGui import QFontMetrics
+    from PyQt4.QtGui import QDialog, QDialogButtonBox, QMessageBox
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
