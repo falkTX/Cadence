@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Custom Mini Canvas Preview, a custom Qt4 widget
+# Custom Mini Canvas Preview, a custom Qt widget
 # Copyright (C) 2011-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or

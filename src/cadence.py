@@ -52,7 +52,7 @@ from subprocess import getoutput
 
 try:
     import dbus
-    from dbus.mainloop.qt import DBusQtMainLoop
+    from dbus.mainloop.pyqt5 import DBusQtMainLoop
     haveDBus = True
 except:
     haveDBus = False
@@ -746,6 +746,13 @@ class ToolBarPADialog(QDialog, ui_cadence_tb_pa.Ui_Dialog):
 
 # Main Window
 class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
+    DBusJackServerStartedCallback = pyqtSignal()
+    DBusJackServerStoppedCallback = pyqtSignal()
+    DBusJackClientAppearedCallback = pyqtSignal(int, str)
+    DBusJackClientDisappearedCallback = pyqtSignal(int)
+    DBusA2JBridgeStartedCallback = pyqtSignal()
+    DBusA2JBridgeStoppedCallback = pyqtSignal()
+
     SIGTERM = pyqtSignal()
     SIGUSR1 = pyqtSignal()
     SIGUSR2 = pyqtSignal()
@@ -892,9 +899,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.settings_changed_types = []
         self.frame_tweaks_settings.setVisible(False)
 
-        # FIXME QT4
-        #for i in range(self.tw_tweaks.rowCount()):
-            #self.tw_tweaks.item(0, i).setTextAlignment(Qt.AlignCenter)
+        for i in range(self.tw_tweaks.rowCount()):
+            self.tw_tweaks.item(i, 0).setTextAlignment(Qt.AlignCenter)
 
         self.tw_tweaks.setCurrentCell(0, 0)
 
@@ -1183,18 +1189,17 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.cb_wineasio_fixed_bsize.clicked.connect(self.slot_tweaksSettingsChanged_wineasio)
         self.cb_wineasio_bsizes.currentIndexChanged.connect(self.slot_tweaksSettingsChanged_wineasio)
 
-        # FIXME QT4
-        ## org.jackaudio.JackControl
-        #self.DBusJackServerStartedCallback.connect(self.slot_DBusJackServerStartedCallback)
-        #self.DBusJackServerStoppedCallback.connect(self.slot_DBusJackServerStoppedCallback)
+        # org.jackaudio.JackControl
+        self.DBusJackServerStartedCallback.connect(self.slot_DBusJackServerStartedCallback)
+        self.DBusJackServerStoppedCallback.connect(self.slot_DBusJackServerStoppedCallback)
 
-        ## org.jackaudio.JackPatchbay
-        #self.DBusJackClientAppearedCallback.connect(self.slot_DBusJackClientAppearedCallback)
-        #self.DBusJackClientDisappearedCallback.connect(self.slot_DBusJackClientDisappearedCallback)
+        # org.jackaudio.JackPatchbay
+        self.DBusJackClientAppearedCallback.connect(self.slot_DBusJackClientAppearedCallback)
+        self.DBusJackClientDisappearedCallback.connect(self.slot_DBusJackClientDisappearedCallback)
 
-        ## org.gna.home.a2jmidid.control
-        #self.DBusA2JBridgeStartedCallback.connect(self.slot_DBusA2JBridgeStartedCallback)
-        #self.DBusA2JBridgeStoppedCallback.connect(self.slot_DBusA2JBridgeStoppedCallback)
+        # org.gna.home.a2jmidid.control
+        self.DBusA2JBridgeStartedCallback.connect(self.slot_DBusA2JBridgeStartedCallback)
+        self.DBusA2JBridgeStoppedCallback.connect(self.slot_DBusA2JBridgeStoppedCallback)
 
         # -------------------------------------------------------------
 

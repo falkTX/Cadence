@@ -28,7 +28,7 @@ from shared_settings import *
 
 try:
     import dbus
-    from dbus.mainloop.qt import DBusQtMainLoop
+    from dbus.mainloop.pyqt5 import DBusQtMainLoop
     haveDBus = True
 except:
     haveDBus = False
@@ -1022,9 +1022,9 @@ class CatiaMainW(AbstractCanvasJackClass):
             if not newId:
                 # Something crashed
                 if appInterface == "org.gna.home.a2jmidid":
-                    QTimer.singleShot(0, self, SLOT("slot_handleCrash_a2j()"))
+                    QTimer.singleShot(0, self.slot_handleCrash_a2j)
                 elif appInterface == "org.jackaudio.service":
-                    QTimer.singleShot(0, self, SLOT("slot_handleCrash_jack()"))
+                    QTimer.singleShot(0, self.slot_handleCrash_jack)
 
         elif kwds['interface'] == "org.jackaudio.JackControl":
             if kwds['member'] == "ServerStarted":

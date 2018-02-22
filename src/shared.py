@@ -278,7 +278,6 @@ def setIcons(self_, modes):
         gGui.ui.act_canvas_zoom_in.setIcon(getIcon("zoom-in"))
         gGui.ui.act_canvas_zoom_out.setIcon(getIcon("zoom-out"))
         gGui.ui.act_canvas_zoom_100.setIcon(getIcon("zoom-original"))
-        gGui.ui.act_canvas_print.setIcon(getIcon("document-print"))
         gGui.ui.b_canvas_zoom_fit.setIcon(getIcon("zoom-fit-best"))
         gGui.ui.b_canvas_zoom_in.setIcon(getIcon("zoom-in"))
         gGui.ui.b_canvas_zoom_out.setIcon(getIcon("zoom-out"))

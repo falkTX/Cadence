@@ -48,7 +48,7 @@ from shared_settings import *
 
 try:
     import dbus
-    from dbus.mainloop.qt import DBusQtMainLoop
+    from dbus.mainloop.pyqt5 import DBusQtMainLoop
     haveDBus = True
 except:
     haveDBus = False
@@ -57,7 +57,7 @@ except:
 # Try Import OpenGL
 
 try:
-    from PyQt4.QtOpenGL import QGLWidget
+    from PyQt5.QtOpenGL import QGLWidget
     hasGL = True
 except:
     hasGL = False
@@ -602,6 +602,33 @@ class ClaudiaLauncherW(QDialog):
 # Claudia Main Window
 
 class ClaudiaMainW(AbstractCanvasJackClass):
+    DBusCrashCallback = pyqtSignal(str)
+    DBusServerStartedCallback = pyqtSignal()
+    DBusServerStoppedCallback = pyqtSignal()
+    DBusClientAppearedCallback = pyqtSignal(int, str)
+    DBusClientDisappearedCallback = pyqtSignal(int)
+    DBusClientRenamedCallback = pyqtSignal(int, str)
+    DBusPortAppearedCallback = pyqtSignal(int, int, str, int, int)
+    DBusPortDisppearedCallback = pyqtSignal(int)
+    DBusPortRenamedCallback = pyqtSignal(int, str)
+    DBusPortsConnectedCallback = pyqtSignal(int, int, int)
+    DBusPortsDisconnectedCallback = pyqtSignal(int)
+    DBusStudioAppearedCallback = pyqtSignal()
+    DBusStudioDisappearedCallback = pyqtSignal()
+    DBusQueueExecutionHaltedCallback = pyqtSignal()
+    DBusCleanExitCallback = pyqtSignal()
+    DBusStudioStartedCallback = pyqtSignal()
+    DBusStudioStoppedCallback = pyqtSignal()
+    DBusStudioRenamedCallback = pyqtSignal(str)
+    DBusStudioCrashedCallback = pyqtSignal()
+    DBusRoomAppearedCallback = pyqtSignal(str, str)
+    DBusRoomDisappearedCallback = pyqtSignal(str)
+    DBusRoomChangedCallback = pyqtSignal()
+    DBusProjectPropertiesChanged = pyqtSignal(str, str)
+    DBusAppAdded2Callback = pyqtSignal(str, int, str, bool, bool, str)
+    DBusAppRemovedCallback = pyqtSignal(str, int)
+    DBusAppStateChanged2Callback = pyqtSignal(str, int, str, bool, bool, str)
+
     def __init__(self, parent=None):
         AbstractCanvasJackClass.__init__(self, "Claudia", ui_claudia.Ui_ClaudiaMainW, parent)
 
@@ -854,46 +881,45 @@ class ClaudiaMainW(AbstractCanvasJackClass):
         self.ui.act_help_about.triggered.connect(self.slot_aboutClaudia)
         self.ui.act_help_about_qt.triggered.connect(app.aboutQt)
 
-        # FIXME QT4
-        ## org.freedesktop.DBus
-        #self.DBusCrashCallback.connect(self.slot_DBusCrashCallback)
+        # org.freedesktop.DBus
+        self.DBusCrashCallback.connect(self.slot_DBusCrashCallback)
 
-        ## org.jackaudio.JackControl
-        #self.DBusServerStartedCallback.connect(self.slot_DBusServerStartedCallback)
-        #self.DBusServerStoppedCallback.connect(self.slot_DBusServerStoppedCallback)
+        # org.jackaudio.JackControl
+        self.DBusServerStartedCallback.connect(self.slot_DBusServerStartedCallback)
+        self.DBusServerStoppedCallback.connect(self.slot_DBusServerStoppedCallback)
 
-        ## org.jackaudio.JackPatchbay
-        #self.DBusClientAppearedCallback.connect(self.slot_DBusClientAppearedCallback)
-        #self.DBusClientDisappearedCallback.connect(self.slot_DBusClientDisappearedCallback)
-        #self.DBusClientRenamedCallback.connect(self.slot_DBusClientRenamedCallback)
-        #self.DBusPortAppearedCallback.connect(self.slot_DBusPortAppearedCallback)
-        #self.DBusPortDisppearedCallback.connect(self.slot_DBusPortDisppearedCallback)
-        #self.DBusPortRenamedCallback.connect(self.slot_DBusPortRenamedCallback)
-        #self.DBusPortsConnectedCallback.connect(self.slot_DBusPortsConnectedCallback)
-        #self.DBusPortsDisconnectedCallback.connect(self.slot_DBusPortsDisconnectedCallback)
+        # org.jackaudio.JackPatchbay
+        self.DBusClientAppearedCallback.connect(self.slot_DBusClientAppearedCallback)
+        self.DBusClientDisappearedCallback.connect(self.slot_DBusClientDisappearedCallback)
+        self.DBusClientRenamedCallback.connect(self.slot_DBusClientRenamedCallback)
+        self.DBusPortAppearedCallback.connect(self.slot_DBusPortAppearedCallback)
+        self.DBusPortDisppearedCallback.connect(self.slot_DBusPortDisppearedCallback)
+        self.DBusPortRenamedCallback.connect(self.slot_DBusPortRenamedCallback)
+        self.DBusPortsConnectedCallback.connect(self.slot_DBusPortsConnectedCallback)
+        self.DBusPortsDisconnectedCallback.connect(self.slot_DBusPortsDisconnectedCallback)
 
-        ## org.ladish.Control
-        #self.DBusStudioAppearedCallback.connect(self.slot_DBusStudioAppearedCallback)
-        #self.DBusStudioDisappearedCallback.connect(self.slot_DBusStudioDisappearedCallback)
-        #self.DBusQueueExecutionHaltedCallback.connect(self.slot_DBusQueueExecutionHaltedCallback)
-        #self.DBusCleanExitCallback.connect(self.slot_DBusCleanExitCallback)
+        # org.ladish.Control
+        self.DBusStudioAppearedCallback.connect(self.slot_DBusStudioAppearedCallback)
+        self.DBusStudioDisappearedCallback.connect(self.slot_DBusStudioDisappearedCallback)
+        self.DBusQueueExecutionHaltedCallback.connect(self.slot_DBusQueueExecutionHaltedCallback)
+        self.DBusCleanExitCallback.connect(self.slot_DBusCleanExitCallback)
 
-        ## org.ladish.Studio
-        #self.DBusStudioStartedCallback.connect(self.slot_DBusStudioStartedCallback)
-        #self.DBusStudioStoppedCallback.connect(self.slot_DBusStudioStoppedCallback)
-        #self.DBusStudioRenamedCallback.connect(self.slot_DBusStudioRenamedCallback)
-        #self.DBusStudioCrashedCallback.connect(self.slot_DBusStudioCrashedCallback)
-        #self.DBusRoomAppearedCallback.connect(self.slot_DBusRoomAppearedCallback)
-        #self.DBusRoomDisappearedCallback.connect(self.slot_DBusRoomDisappearedCallback)
-        ##self.DBusRoomChangedCallback.connect(self.slot_DBusRoomChangedCallback)
+        # org.ladish.Studio
+        self.DBusStudioStartedCallback.connect(self.slot_DBusStudioStartedCallback)
+        self.DBusStudioStoppedCallback.connect(self.slot_DBusStudioStoppedCallback)
+        self.DBusStudioRenamedCallback.connect(self.slot_DBusStudioRenamedCallback)
+        self.DBusStudioCrashedCallback.connect(self.slot_DBusStudioCrashedCallback)
+        self.DBusRoomAppearedCallback.connect(self.slot_DBusRoomAppearedCallback)
+        self.DBusRoomDisappearedCallback.connect(self.slot_DBusRoomDisappearedCallback)
+        #self.DBusRoomChangedCallback.connect(self.slot_DBusRoomChangedCallback)
 
-        ## org.ladish.Room
-        #self.DBusProjectPropertiesChanged.connect(self.slot_DBusProjectPropertiesChanged)
+        # org.ladish.Room
+        self.DBusProjectPropertiesChanged.connect(self.slot_DBusProjectPropertiesChanged)
 
-        ## org.ladish.AppSupervisor
-        #self.DBusAppAdded2Callback.connect(self.slot_DBusAppAdded2Callback)
-        #self.DBusAppRemovedCallback.connect(self.slot_DBusAppRemovedCallback)
-        #self.DBusAppStateChanged2Callback.connect(self.slot_DBusAppStateChanged2Callback)
+        # org.ladish.AppSupervisor
+        self.DBusAppAdded2Callback.connect(self.slot_DBusAppAdded2Callback)
+        self.DBusAppRemovedCallback.connect(self.slot_DBusAppRemovedCallback)
+        self.DBusAppStateChanged2Callback.connect(self.slot_DBusAppStateChanged2Callback)
 
         # JACK
         self.BufferSizeCallback.connect(self.slot_JackBufferSizeCallback)

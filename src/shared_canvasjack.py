@@ -497,20 +497,6 @@ class AbstractCanvasJackClass(QMainWindow):
         self.scene.zoom_reset()
 
     @pyqtSlot()
-    def slot_canvasPrint(self):
-        self.scene.clearSelection()
-        self.fExportPrinter = QPrinter()
-        dialog = QPrintDialog(self.fExportPrinter, self)
-
-        if dialog.exec_():
-            painter = QPainter(self.fExportPrinter)
-            painter.save()
-            painter.setRenderHint(QPainter.Antialiasing, True)
-            painter.setRenderHint(QPainter.TextAntialiasing, True)
-            self.scene.render(painter)
-            painter.restore()
-
-    @pyqtSlot()
     def slot_canvasSaveImage(self):
         newPath = QFileDialog.getSaveFileName(self, self.tr("Save Image"), filter=self.tr("PNG Image (*.png);;JPEG Image (*.jpg)"))
 
@@ -548,7 +534,6 @@ class AbstractCanvasJackClass(QMainWindow):
         self.ui.act_canvas_zoom_in.triggered.connect(self.slot_canvasZoomIn)
         self.ui.act_canvas_zoom_out.triggered.connect(self.slot_canvasZoomOut)
         self.ui.act_canvas_zoom_100.triggered.connect(self.slot_canvasZoomReset)
-        self.ui.act_canvas_print.triggered.connect(self.slot_canvasPrint)
         self.ui.act_canvas_save_image.triggered.connect(self.slot_canvasSaveImage)
         self.ui.b_canvas_zoom_fit.clicked.connect(self.slot_canvasZoomFit)
         self.ui.b_canvas_zoom_in.clicked.connect(self.slot_canvasZoomIn)

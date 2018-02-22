@@ -138,8 +138,7 @@ class SettingsW(QDialog):
         # -------------------------------------------------------------
         # Set-up connections
 
-        # FIXME QT4
-        #self.accepted.connect(self.slot_saveSettings)
+        self.accepted.connect(self.slot_saveSettings)
         self.ui.buttonBox.button(QDialogButtonBox.Reset).clicked.connect(self.slot_resetSettings)
         self.ui.b_main_def_folder_open.clicked.connect(self.slot_getAndSetProjectPath)
 

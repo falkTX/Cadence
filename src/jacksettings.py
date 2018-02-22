@@ -203,20 +203,21 @@ class JackSettingsW(QDialog):
         # Align driver text and hide non available ones
 
         driverList = gJackctl.ReadContainer(["drivers"])[1]
+        fontMetris = QFontMetrics(self.ui.obj_server_driver.font())
         maxWidth   = 75
 
-        # FIXME QT4
-        #for i in range(self.ui.obj_server_driver.rowCount()):
-            #self.ui.obj_server_driver.item(0, i).setTextAlignment(Qt.AlignCenter)
+        for i in range(self.ui.obj_server_driver.rowCount()):
+            item = self.ui.obj_server_driver.item(i, 0)
+            item.setTextAlignment(Qt.AlignCenter)
 
-            #itexText  = self.ui.obj_server_driver.item(0, i).text()
-            #itemWidth = QFontMetrics(self.ui.obj_server_driver.font()).width(itexText)+25
+            itexText  = item.text()
+            itemWidth = fontMetris.width(itexText)+25
 
-            #if itemWidth > maxWidth:
-                #maxWidth = itemWidth
+            if itemWidth > maxWidth:
+                maxWidth = itemWidth
 
-            #if dbus.String(itexText.lower()) not in driverList:
-                #self.ui.obj_server_driver.hideRow(i)
+            if dbus.String(itexText.lower()) not in driverList:
+                self.ui.obj_server_driver.hideRow(i)
 
         self.ui.obj_server_driver.setMinimumWidth(maxWidth)
         self.ui.obj_server_driver.setMaximumWidth(maxWidth)
@@ -853,22 +854,22 @@ class JackSettingsW(QDialog):
         self.ui.obj_driver_channels_label.setEnabled(driverHasFeature("channels"))
 
         # Misc stuff
-        if self.ui.obj_server_driver.item(0, row).text() == "ALSA":
+        if self.ui.obj_server_driver.item(row, 0).text() == "ALSA":
             self.ui.toolbox_driver_misc.setCurrentIndex(1)
             self.ui.obj_driver_capture_label.setText(self.tr("Input Device:"))
             self.ui.obj_driver_playback_label.setText(self.tr("Output Device:"))
 
-        elif self.ui.obj_server_driver.item(0, row).text() == "Dummy":
+        elif self.ui.obj_server_driver.item(row, 0).text() == "Dummy":
             self.ui.toolbox_driver_misc.setCurrentIndex(2)
             self.ui.obj_driver_capture_label.setText(self.tr("Input Ports:"))
             self.ui.obj_driver_playback_label.setText(self.tr("Output Ports:"))
 
-        elif self.ui.obj_server_driver.item(0, row).text() == "FireWire":
+        elif self.ui.obj_server_driver.item(row, 0).text() == "FireWire":
             self.ui.toolbox_driver_misc.setCurrentIndex(3)
             self.ui.obj_driver_capture_label.setText(self.tr("Capture Ports:"))
             self.ui.obj_driver_playback_label.setText(self.tr("Playback Ports:"))
 
-        elif self.ui.obj_server_driver.item(0, row).text() == "Loopback":
+        elif self.ui.obj_server_driver.item(row, 0).text() == "Loopback":
             self.ui.toolbox_driver_misc.setCurrentIndex(4)
 
         else:

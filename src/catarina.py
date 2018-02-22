@@ -22,8 +22,7 @@
 if True:
     from PyQt5.QtCore import pyqtSlot, QSettings
     from PyQt5.QtWidgets import QApplication, QDialog, QDialogButtonBox, QTableWidgetItem
-    # FIXME QT4
-    #from PyQt5.QtXml import QDomDocument
+    from PyQt5.QtXml import QDomDocument
 else:
     from PyQt4.QtCore import pyqtSlot, QSettings
     from PyQt4.QtGui import QApplication, QDialog, QDialogButtonBox, QTableWidgetItem
@@ -133,9 +132,9 @@ class CatarinaRemoveGroupW(QDialog, ui_catarina_removegroup.Ui_CatarinaRemoveGro
             self.tw_group_list.setItem(index, 2, twi_group_split)
             index += 1
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
-        self.connect(self.tw_group_list, SIGNAL("cellDoubleClicked(int, int)"), SLOT("accept()"))
-        self.connect(self.tw_group_list, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkCell(int)"))
+        self.accepted.connect(self.slot_setReturn)
+        self.tw_group_list.cellDoubleClicked.connect(self.accept)
+        self.tw_group_list.currentCellChanged.connect(self.slot_checkCell)
 
         self.ret_group_id = -1
 
@@ -169,9 +168,9 @@ class CatarinaRenameGroupW(QDialog, ui_catarina_renamegroup.Ui_CatarinaRenameGro
             self.cb_group_to_rename.addItem("%i - %s" % (group[iGroupId], group[iGroupName]))
             self.m_group_list_names.append(group[iGroupName])
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
-        self.connect(self.cb_group_to_rename, SIGNAL("currentIndexChanged(int)"), SLOT("slot_checkItem()"))
-        self.connect(self.le_new_group_name, SIGNAL("textChanged(QString)"), SLOT("slot_checkText(QString)"))
+        self.accepted.connect(self.slot_setReturn)
+        self.cb_group_to_rename.currentIndexChanged.connect(self.slot_checkItem)
+        self.le_new_group_name.textChanged.connect(self.slot_checkText)
 
         self.ret_group_id = -1
         self.ret_new_group_name = ""
@@ -210,8 +209,8 @@ class CatarinaAddPortW(QDialog, ui_catarina_addport.Ui_CatarinaAddPortW):
         for group in group_list:
             self.cb_group.addItem("%i - %s" % (group[iGroupId], group[iGroupName]))
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
-        self.connect(self.le_port_name, SIGNAL("textChanged(QString)"), SLOT("slot_checkText(QString)"))
+        self.accepted.connect(self.slot_setReturn)
+        self.le_port_name.textChanged.connect(self.slot_checkText)
 
         self.ret_group_id  = -1
         self.ret_port_name = ""
@@ -249,15 +248,15 @@ class CatarinaRemovePortW(QDialog, ui_catarina_removeport.Ui_CatarinaRemovePortW
         self.m_group_list = group_list
         self.m_port_list  = port_list
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
-        self.connect(self.tw_port_list, SIGNAL("cellDoubleClicked(int, int)"), SLOT("accept()"))
-        self.connect(self.tw_port_list, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkCell(int)"))
-        self.connect(self.rb_input, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
-        self.connect(self.rb_output, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
-        self.connect(self.rb_audio_jack, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
-        self.connect(self.rb_midi_jack, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
-        self.connect(self.rb_midi_a2j, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
-        self.connect(self.rb_midi_alsa, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
+        self.accepted.connect(self.slot_setReturn)
+        self.tw_port_list.cellDoubleClicked.connect(self.accept)
+        self.tw_port_list.currentCellChanged.connect(self.slot_checkCell)
+        self.rb_input.clicked.connect(self.slot_reAddPorts)
+        self.rb_output.clicked.connect(self.slot_reAddPorts)
+        self.rb_audio_jack.clicked.connect(self.slot_reAddPorts)
+        self.rb_midi_jack.clicked.connect(self.slot_reAddPorts)
+        self.rb_midi_a2j.clicked.connect(self.slot_reAddPorts)
+        self.rb_midi_alsa.clicked.connect(self.slot_reAddPorts)
 
         self.ret_port_id = -1
         self.reAddPorts()
@@ -331,16 +330,16 @@ class CatarinaRenamePortW(QDialog, ui_catarina_renameport.Ui_CatarinaRenamePortW
         self.m_group_list = group_list
         self.m_port_list  = port_list
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
-        self.connect(self.tw_port_list, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkCell()"))
-        self.connect(self.le_new_name, SIGNAL("textChanged(QString)"), SLOT("slot_checkText(QString)"))
+        self.accepted.connect(self.slot_setReturn)
+        self.tw_port_list.currentCellChanged.connect(self.slot_checkCell)
+        self.le_new_name.textChanged.connect(self.slot_checkText)
 
-        self.connect(self.rb_input, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
-        self.connect(self.rb_output, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
-        self.connect(self.rb_audio_jack, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
-        self.connect(self.rb_midi_jack, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
-        self.connect(self.rb_midi_a2j, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
-        self.connect(self.rb_midi_alsa, SIGNAL("clicked()"), SLOT("slot_reAddPorts()"))
+        self.rb_input.clicked.connect(self.slot_reAddPorts)
+        self.rb_output.clicked.connect(self.slot_reAddPorts)
+        self.rb_audio_jack.clicked.connect(self.slot_reAddPorts)
+        self.rb_midi_jack.clicked.connect(self.slot_reAddPorts)
+        self.rb_midi_a2j.clicked.connect(self.slot_reAddPorts)
+        self.rb_midi_alsa.clicked.connect(self.slot_reAddPorts)
 
         self.ret_port_id = -1
         self.ret_new_port_name = ""
@@ -435,13 +434,13 @@ class CatarinaConnectPortsW(QDialog, ui_catarina_connectports.Ui_CatarinaConnect
             elif port[iPortType] == patchcanvas.PORT_TYPE_MIDI_ALSA:
                 self.m_ports_midi_alsa.append(port)
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
-        self.connect(self.rb_audio_jack, SIGNAL("clicked()"), SLOT("slot_portTypeChanged()"))
-        self.connect(self.rb_midi_jack, SIGNAL("clicked()"), SLOT("slot_portTypeChanged()"))
-        self.connect(self.rb_midi_a2j, SIGNAL("clicked()"), SLOT("slot_portTypeChanged()"))
-        self.connect(self.rb_midi_alsa, SIGNAL("clicked()"), SLOT("slot_portTypeChanged()"))
-        self.connect(self.lw_outputs, SIGNAL("currentRowChanged(int)"), SLOT("slot_checkOutSelection(int)"))
-        self.connect(self.lw_inputs, SIGNAL("currentRowChanged(int)"), SLOT("slot_checkInSelection(int)"))
+        self.accepted.connect(self.slot_setReturn)
+        self.rb_audio_jack.clicked.connect(self.slot_portTypeChanged)
+        self.rb_midi_jack.clicked.connect(self.slot_portTypeChanged)
+        self.rb_midi_a2j.clicked.connect(self.slot_portTypeChanged)
+        self.rb_midi_alsa.clicked.connect(self.slot_portTypeChanged)
+        self.lw_outputs.currentRowChanged.connect(self.slot_checkOutSelection)
+        self.lw_inputs.currentRowChanged.connect(self.slot_checkInSelection)
 
         self.ret_port_out_id = -1
         self.ret_port_in_id = -1
@@ -516,13 +515,13 @@ class CatarinaDisconnectPortsW(QDialog, ui_catarina_disconnectports.Ui_CatarinaD
         self.m_port_list  = port_list
         self.m_connection_list = connection_list
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setReturn()"))
-        self.connect(self.tw_connections, SIGNAL("cellDoubleClicked(int, int)"), SLOT("accept()"))
-        self.connect(self.tw_connections, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelection(int)"))
-        self.connect(self.rb_audio_jack, SIGNAL("clicked()"), SLOT("slot_portTypeChanged()"))
-        self.connect(self.rb_midi_jack, SIGNAL("clicked()"), SLOT("slot_portTypeChanged()"))
-        self.connect(self.rb_midi_a2j, SIGNAL("clicked()"), SLOT("slot_portTypeChanged()"))
-        self.connect(self.rb_midi_alsa, SIGNAL("clicked()"), SLOT("slot_portTypeChanged()"))
+        self.accepted.connect(self.slot_setReturn)
+        self.tw_connections.cellDoubleClicked.connect(self.accept)
+        self.tw_connections.currentCellChanged.connect(self.slot_checkSelection)
+        self.rb_audio_jack.clicked.connect(self.slot_portTypeChanged)
+        self.rb_midi_jack.clicked.connect(self.slot_portTypeChanged)
+        self.rb_midi_a2j.clicked.connect(self.slot_portTypeChanged)
+        self.rb_midi_alsa.clicked.connect(self.slot_portTypeChanged)
 
         self.ret_port_out_id = -1
         self.ret_port_in_id = -1
@@ -665,39 +664,39 @@ class CatarinaMainW(AbstractCanvasJackClass):
         patchcanvas.setFeatures(p_features)
         patchcanvas.init("Catarina", self.scene, self.canvasCallback, DEBUG)
 
-        self.connect(self.ui.act_project_new, SIGNAL("triggered()"), SLOT("slot_projectNew()"))
-        self.connect(self.ui.act_project_open, SIGNAL("triggered()"), SLOT("slot_projectOpen()"))
-        self.connect(self.ui.act_project_save, SIGNAL("triggered()"), SLOT("slot_projectSave()"))
-        self.connect(self.ui.act_project_save_as, SIGNAL("triggered()"), SLOT("slot_projectSaveAs()"))
-        self.connect(self.ui.b_project_new, SIGNAL("clicked()"), SLOT("slot_projectNew()"))
-        self.connect(self.ui.b_project_open, SIGNAL("clicked()"), SLOT("slot_projectOpen()"))
-        self.connect(self.ui.b_project_save, SIGNAL("clicked()"), SLOT("slot_projectSave()"))
-        self.connect(self.ui.b_project_save_as, SIGNAL("clicked()"), SLOT("slot_projectSaveAs()"))
-        self.connect(self.ui.act_patchbay_add_group, SIGNAL("triggered()"), SLOT("slot_groupAdd()"))
-        self.connect(self.ui.act_patchbay_remove_group, SIGNAL("triggered()"), SLOT("slot_groupRemove()"))
-        self.connect(self.ui.act_patchbay_rename_group, SIGNAL("triggered()"), SLOT("slot_groupRename()"))
-        self.connect(self.ui.act_patchbay_add_port, SIGNAL("triggered()"), SLOT("slot_portAdd()"))
-        self.connect(self.ui.act_patchbay_remove_port, SIGNAL("triggered()"), SLOT("slot_portRemove()"))
-        self.connect(self.ui.act_patchbay_rename_port, SIGNAL("triggered()"), SLOT("slot_portRename()"))
-        self.connect(self.ui.act_patchbay_connect_ports, SIGNAL("triggered()"), SLOT("slot_connectPorts()"))
-        self.connect(self.ui.act_patchbay_disconnect_ports, SIGNAL("triggered()"), SLOT("slot_disconnectPorts()"))
-        self.connect(self.ui.b_group_add, SIGNAL("clicked()"), SLOT("slot_groupAdd()"))
-        self.connect(self.ui.b_group_remove, SIGNAL("clicked()"), SLOT("slot_groupRemove()"))
-        self.connect(self.ui.b_group_rename, SIGNAL("clicked()"), SLOT("slot_groupRename()"))
-        self.connect(self.ui.b_port_add, SIGNAL("clicked()"), SLOT("slot_portAdd()"))
-        self.connect(self.ui.b_port_remove, SIGNAL("clicked()"), SLOT("slot_portRemove()"))
-        self.connect(self.ui.b_port_rename, SIGNAL("clicked()"), SLOT("slot_portRename()"))
-        self.connect(self.ui.b_ports_connect, SIGNAL("clicked()"), SLOT("slot_connectPorts()"))
-        self.connect(self.ui.b_ports_disconnect, SIGNAL("clicked()"), SLOT("slot_disconnectPorts()"))
+        self.ui.act_project_new.triggered.connect(self.slot_projectNew)
+        self.ui.act_project_open.triggered.connect(self.slot_projectOpen)
+        self.ui.act_project_save.triggered.connect(self.slot_projectSave)
+        self.ui.act_project_save_as.triggered.connect(self.slot_projectSaveAs)
+        self.ui.b_project_new.clicked.connect(self.slot_projectNew)
+        self.ui.b_project_open.clicked.connect(self.slot_projectOpen)
+        self.ui.b_project_save.clicked.connect(self.slot_projectSave)
+        self.ui.b_project_save_as.clicked.connect(self.slot_projectSaveAs)
+        self.ui.act_patchbay_add_group.triggered.connect(self.slot_groupAdd)
+        self.ui.act_patchbay_remove_group.triggered.connect(self.slot_groupRemove)
+        self.ui.act_patchbay_rename_group.triggered.connect(self.slot_groupRename)
+        self.ui.act_patchbay_add_port.triggered.connect(self.slot_portAdd)
+        self.ui.act_patchbay_remove_port.triggered.connect(self.slot_portRemove)
+        self.ui.act_patchbay_rename_port.triggered.connect(self.slot_portRename)
+        self.ui.act_patchbay_connect_ports.triggered.connect(self.slot_connectPorts)
+        self.ui.act_patchbay_disconnect_ports.triggered.connect(self.slot_disconnectPorts)
+        self.ui.b_group_add.clicked.connect(self.slot_groupAdd)
+        self.ui.b_group_remove.clicked.connect(self.slot_groupRemove)
+        self.ui.b_group_rename.clicked.connect(self.slot_groupRename)
+        self.ui.b_port_add.clicked.connect(self.slot_portAdd)
+        self.ui.b_port_remove.clicked.connect(self.slot_portRemove)
+        self.ui.b_port_rename.clicked.connect(self.slot_portRename)
+        self.ui.b_ports_connect.clicked.connect(self.slot_connectPorts)
+        self.ui.b_ports_disconnect.clicked.connect(self.slot_disconnectPorts)
 
         self.setCanvasConnections()
 
-        self.connect(self.ui.act_settings_configure, SIGNAL("triggered()"), SLOT("slot_configureCatarina()"))
+        self.ui.act_settings_configure.triggered.connect(self.slot_configureCatarina)
 
-        self.connect(self.ui.act_help_about, SIGNAL("triggered()"), SLOT("slot_aboutCatarina()"))
-        self.connect(self.ui.act_help_about_qt, SIGNAL("triggered()"), app, SLOT("aboutQt()"))
+        self.ui.act_help_about.triggered.connect(self.slot_aboutCatarina)
+        self.ui.act_help_about_qt.triggered.connect(app.aboutQt)
 
-        self.connect(self, SIGNAL("SIGUSR1()"), SLOT("slot_projectSave()"))
+        self.SIGUSR1.connect(self.slot_projectSave)
 
         # Dummy timer to keep events active
         self.fUpdateTimer = self.startTimer(1000)

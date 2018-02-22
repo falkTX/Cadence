@@ -25,6 +25,7 @@ if True:
     from PyQt5.QtWidgets import QGraphicsScene, QGraphicsItem, QGraphicsLineItem, QGraphicsPathItem
     from PyQt5.QtWidgets import QGraphicsColorizeEffect, QGraphicsDropShadowEffect
     from PyQt5.QtWidgets import QInputDialog, QLineEdit, QMenu
+    from PyQt5.QtSvg import QGraphicsSvgItem, QSvgRenderer
 else:
     from PyQt4.QtCore import pyqtSignal, pyqtSlot, qDebug, qCritical, qFatal, qWarning, Qt, QObject
     from PyQt4.QtCore import QAbstractAnimation, QLineF, QPointF, QRectF, QSizeF, QSettings, QTimer
@@ -33,8 +34,7 @@ else:
     from PyQt4.QtGui import QGraphicsScene, QGraphicsItem, QGraphicsLineItem, QGraphicsPathItem
     from PyQt4.QtGui import QGraphicsColorizeEffect, QGraphicsDropShadowEffect
     from PyQt4.QtGui import QInputDialog, QLineEdit, QMenu
-
-from PyQt5.QtSvg import QGraphicsSvgItem, QSvgRenderer
+    from PyQt4.QtSvg import QGraphicsSvgItem, QSvgRenderer
 
 # Imports (Theme)
 from patchcanvas_theme import *
