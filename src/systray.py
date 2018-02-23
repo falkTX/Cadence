@@ -29,16 +29,20 @@ else:
     from PyQt4.QtGui import QAction, QMainWindow, QMenu, QSystemTrayIcon
 
 try:
-    if os.getenv("DESKTOP_SESSION") in ("ubuntu", "ubuntu-2d") and not os.path.exists("/var/cadence/no_app_indicators"):
-        from gi.repository import Gtk, AppIndicator3 as AppIndicator
+    if False and os.getenv("DESKTOP_SESSION") in ("ubuntu", "ubuntu-2d") and not os.path.exists("/var/cadence/no_app_indicators"):
+        from gi import require_version
+        require_version('Gtk', '3.0')
+        from gi.repository import Gtk
+        require_version('AppIndicator3', '0.1')
+        from gi.repository import AppIndicator3 as AppIndicator
         TrayEngine = "AppIndicator"
 
-    elif os.getenv("KDE_SESSION_VERSION") >= 5:
-        TrayEngine = "Qt"
+    #elif os.getenv("KDE_SESSION_VERSION") >= 5:
+        #TrayEngine = "Qt"
 
-    elif os.getenv("KDE_FULL_SESSION") or os.getenv("DESKTOP_SESSION") == "kde-plasma":
-        from PyKDE5.kdeui import KAction, KIcon, KMenu, KStatusNotifierItem
-        TrayEngine = "KDE"
+    #elif os.getenv("KDE_FULL_SESSION") or os.getenv("DESKTOP_SESSION") == "kde-plasma":
+        #from PyKDE5.kdeui import KAction, KIcon, KMenu, KStatusNotifierItem
+        #TrayEngine = "KDE"
 
     else:
         TrayEngine = "Qt"
