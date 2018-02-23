@@ -1134,7 +1134,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         self.b_alsa_start.clicked.connect(self.slot_AlsaBridgeStart)
         self.b_alsa_stop.clicked.connect(self.slot_AlsaBridgeStop)
-        self.cb_alsa_type.currentIndexChanged.connect(self.slot_AlsaBridgeChanged)
+        self.cb_alsa_type.currentIndexChanged[int].connect(self.slot_AlsaBridgeChanged)
         self.tb_alsa_options.clicked.connect(self.slot_AlsaAudioBridgeOptions)
 
         self.b_a2j_start.clicked.connect(self.slot_A2JBridgeStart)
@@ -1168,26 +1168,26 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         self.ch_app_image.clicked.connect(self.slot_tweaksSettingsChanged_apps)
         self.cb_app_image.highlighted.connect(self.slot_tweakAppImageHighlighted)
-        self.cb_app_image.currentIndexChanged.connect(self.slot_tweakAppImageChanged)
+        self.cb_app_image.currentIndexChanged[int].connect(self.slot_tweakAppImageChanged)
         self.ch_app_music.clicked.connect(self.slot_tweaksSettingsChanged_apps)
         self.cb_app_music.highlighted.connect(self.slot_tweakAppMusicHighlighted)
-        self.cb_app_music.currentIndexChanged.connect(self.slot_tweakAppMusicChanged)
+        self.cb_app_music.currentIndexChanged[int].connect(self.slot_tweakAppMusicChanged)
         self.ch_app_video.clicked.connect(self.slot_tweaksSettingsChanged_apps)
         self.cb_app_video.highlighted.connect(self.slot_tweakAppVideoHighlighted)
-        self.cb_app_video.currentIndexChanged.connect(self.slot_tweakAppVideoChanged)
+        self.cb_app_video.currentIndexChanged[int].connect(self.slot_tweakAppVideoChanged)
         self.ch_app_text.clicked.connect(self.slot_tweaksSettingsChanged_apps)
         self.cb_app_text.highlighted.connect(self.slot_tweakAppTextHighlighted)
-        self.cb_app_text.currentIndexChanged.connect(self.slot_tweakAppTextChanged)
+        self.cb_app_text.currentIndexChanged[int].connect(self.slot_tweakAppTextChanged)
         self.ch_app_browser.clicked.connect(self.slot_tweaksSettingsChanged_apps)
         self.cb_app_browser.highlighted.connect(self.slot_tweakAppBrowserHighlighted)
-        self.cb_app_browser.currentIndexChanged.connect(self.slot_tweakAppBrowserChanged)
+        self.cb_app_browser.currentIndexChanged[int].connect(self.slot_tweakAppBrowserChanged)
 
         self.sb_wineasio_ins.valueChanged.connect(self.slot_tweaksSettingsChanged_wineasio)
         self.sb_wineasio_outs.valueChanged.connect(self.slot_tweaksSettingsChanged_wineasio)
         self.cb_wineasio_hw.clicked.connect(self.slot_tweaksSettingsChanged_wineasio)
         self.cb_wineasio_autostart.clicked.connect(self.slot_tweaksSettingsChanged_wineasio)
         self.cb_wineasio_fixed_bsize.clicked.connect(self.slot_tweaksSettingsChanged_wineasio)
-        self.cb_wineasio_bsizes.currentIndexChanged.connect(self.slot_tweaksSettingsChanged_wineasio)
+        self.cb_wineasio_bsizes.currentIndexChanged[int].connect(self.slot_tweaksSettingsChanged_wineasio)
 
         # org.jackaudio.JackControl
         self.DBusJackServerStartedCallback.connect(self.slot_DBusJackServerStartedCallback)
@@ -1802,7 +1802,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         if self.cb_cpufreq.currentIndex() == -1:
             # First init
-            self.cb_cpufreq.currentIndexChanged.connect(self.slot_changeGovernorMode)
+            self.cb_cpufreq.currentIndexChanged[str].connect(self.slot_changeGovernorMode)
 
         self.cb_cpufreq.blockSignals(True)
 
@@ -2090,7 +2090,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.setAppDetails(self.cb_app_image.itemText(index))
 
     @pyqtSlot(int)
-    def slot_tweakAppImageChanged(self):
+    def slot_tweakAppImageChanged(self, ignored):
         self.setAppDetails(self.cb_app_image.currentText())
         self.func_settings_changed("apps")
 
@@ -2099,7 +2099,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.setAppDetails(self.cb_app_music.itemText(index))
 
     @pyqtSlot(int)
-    def slot_tweakAppMusicChanged(self):
+    def slot_tweakAppMusicChanged(self, ignored):
         self.setAppDetails(self.cb_app_music.currentText())
         self.func_settings_changed("apps")
 
@@ -2108,7 +2108,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.setAppDetails(self.cb_app_video.itemText(index))
 
     @pyqtSlot(int)
-    def slot_tweakAppVideoChanged(self):
+    def slot_tweakAppVideoChanged(self, ignored):
         self.setAppDetails(self.cb_app_video.currentText())
         self.func_settings_changed("apps")
 
@@ -2117,7 +2117,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.setAppDetails(self.cb_app_text.itemText(index))
 
     @pyqtSlot(int)
-    def slot_tweakAppTextChanged(self):
+    def slot_tweakAppTextChanged(self, ignored):
         self.setAppDetails(self.cb_app_text.currentText())
         self.func_settings_changed("apps")
 
@@ -2126,7 +2126,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.setAppDetails(self.cb_app_browser.itemText(index))
 
     @pyqtSlot(int)
-    def slot_tweakAppBrowserChanged(self):
+    def slot_tweakAppBrowserChanged(self, ignored):
         self.setAppDetails(self.cb_app_browser.currentText())
         self.func_settings_changed("apps")
 
@@ -2268,7 +2268,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     def loadSettings(self, geometry):
         if geometry:
-            self.restoreGeometry(self.settings.value("Geometry", ""))
+            self.restoreGeometry(self.settings.value("Geometry", b""))
 
         usingAlsaLoop = bool(GlobalSettings.value("ALSA-Audio/BridgeIndexType", iAlsaFileNone, type=int) == iAlsaFileLoop)
 

@@ -231,8 +231,8 @@ class JackSettingsW(QDialog):
         self.ui.obj_driver_duplex.clicked.connect(self.slot_checkDuplexSelection)
         self.ui.obj_server_driver.currentCellChanged.connect(self.slot_checkDriverSelection)
 
-        self.ui.obj_driver_capture.currentIndexChanged.connect(self.slot_checkALSASelection)
-        self.ui.obj_driver_playback.currentIndexChanged.connect(self.slot_checkALSASelection)
+        self.ui.obj_driver_capture.currentIndexChanged[int].connect(self.slot_checkALSASelection)
+        self.ui.obj_driver_playback.currentIndexChanged[int].connect(self.slot_checkALSASelection)
 
         # -------------------------------------------------------------
         # Load initial settings
@@ -734,8 +734,8 @@ class JackSettingsW(QDialog):
     # -----------------------------------------------------------------
     # Qt SLOT calls
 
-    @pyqtSlot()
-    def slot_checkALSASelection(self):
+    @pyqtSlot(int)
+    def slot_checkALSASelection(self, ignored=0):
         if self.fDriverName == "alsa":
             check = bool(self.ui.obj_driver_duplex.isChecked() and (self.ui.obj_driver_capture.currentIndex() > 0 or self.ui.obj_driver_playback.currentIndex() > 0))
             self.ui.obj_driver_device.setEnabled(not check)
@@ -901,7 +901,7 @@ class JackSettingsW(QDialog):
 
     def loadSettings(self):
         settings = QSettings("Cadence", "JackSettings")
-        self.restoreGeometry(settings.value("Geometry", ""))
+        self.restoreGeometry(settings.value("Geometry", b""))
         self.ui.tabWidget.setCurrentIndex(settings.value("CurrentTab", 0, type=int))
 
     def closeEvent(self, event):

@@ -417,7 +417,7 @@ class LogsW(QDialog):
 
     def loadSettings(self):
         settings = QSettings("Cadence", "Cadence-Logs")
-        self.restoreGeometry(settings.value("Geometry", ""))
+        self.restoreGeometry(settings.value("Geometry", b""))
 
     def saveSettings(self):
         settings = QSettings("Cadence", "Cadence-Logs")

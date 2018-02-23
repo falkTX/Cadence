@@ -548,8 +548,8 @@ class AbstractCanvasJackClass(QMainWindow):
             self.ui.b_jack_clear_xruns.clicked.connect(self.slot_JackClearXruns)
             self.ui.b_jack_configure.clicked.connect(self.slot_showJackSettings)
             self.ui.b_jack_render.clicked.connect(self.slot_showRender)
-            self.ui.cb_buffer_size.currentIndexChanged.connect(self.slot_jackBufferSize_ComboBox)
-            self.ui.cb_sample_rate.currentIndexChanged.connect(self.slot_jackSampleRate_ComboBox)
+            self.ui.cb_buffer_size.currentIndexChanged[str].connect(self.slot_jackBufferSize_ComboBox)
+            self.ui.cb_sample_rate.currentIndexChanged[str].connect(self.slot_jackSampleRate_ComboBox)
             self.ui.b_xruns.clicked.connect(self.slot_JackClearXruns)
 
         if "buffer-size" in modes:

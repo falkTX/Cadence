@@ -1333,7 +1333,7 @@ class CatiaMainW(AbstractCanvasJackClass):
         settings = QSettings()
 
         if geometry:
-            self.restoreGeometry(settings.value("Geometry", ""))
+            self.restoreGeometry(settings.value("Geometry", b""))
 
             showAlsaMidi = settings.value("ShowAlsaMIDI", False, type=bool)
             self.ui.act_settings_show_alsa.setChecked(showAlsaMidi)

@@ -380,7 +380,7 @@ class RenderW(QDialog):
     def loadSettings(self):
         settings = QSettings("Cadence", "Cadence-Render")
 
-        self.restoreGeometry(settings.value("Geometry", ""))
+        self.restoreGeometry(settings.value("Geometry", b""))
 
         outputFolder = settings.value("OutputFolder", HOME)
 

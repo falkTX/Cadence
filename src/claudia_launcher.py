@@ -1184,7 +1184,7 @@ if __name__ == '__main__':
             self.b_add.clicked.connect(self.slot_addAppToLADISH)
             self.b_refresh.clicked.connect(self.slot_refreshStudioList)
 
-            self.co_ladi_room.currentIndexChanged.connect(self.slot_checkSelectedRoom)
+            self.co_ladi_room.currentIndexChanged[int].connect(self.slot_checkSelectedRoom)
             self.groupLADISH.toggled.connect(self.slot_enableLADISH)
 
             self.le_url.textChanged.connect(self.slot_checkFolderUrl)
@@ -1331,7 +1331,7 @@ if __name__ == '__main__':
             self.launcher.saveSettings()
 
         def loadSettings(self):
-            self.restoreGeometry(self.settings.value("Geometry", ""))
+            self.restoreGeometry(self.settings.value("Geometry", b""))
             self.launcher.loadSettings()
 
         def closeEvent(self, event):

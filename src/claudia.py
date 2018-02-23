@@ -585,7 +585,7 @@ class ClaudiaLauncherW(QDialog):
 
     def loadSettings(self):
         if self.settings.contains("Geometry"):
-            self.restoreGeometry(self.settings.value("Geometry", ""))
+            self.restoreGeometry(self.settings.value("Geometry", b""))
         else:
             self.resize(850, 500)
         self.launcher.loadSettings()
@@ -2668,7 +2668,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
         settings = QSettings()
 
         if geometry:
-            self.restoreGeometry(settings.value("Geometry", ""))
+            self.restoreGeometry(settings.value("Geometry", b""))
 
             splitterSizes = settings.value("SplitterSizes", "")
             if splitterSizes:

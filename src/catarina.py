@@ -169,14 +169,14 @@ class CatarinaRenameGroupW(QDialog, ui_catarina_renamegroup.Ui_CatarinaRenameGro
             self.m_group_list_names.append(group[iGroupName])
 
         self.accepted.connect(self.slot_setReturn)
-        self.cb_group_to_rename.currentIndexChanged.connect(self.slot_checkItem)
+        self.cb_group_to_rename.currentIndexChanged[int].connect(self.slot_checkItem)
         self.le_new_group_name.textChanged.connect(self.slot_checkText)
 
         self.ret_group_id = -1
         self.ret_new_group_name = ""
 
-    @pyqtSlot()
-    def slot_checkItem(self):
+    @pyqtSlot(int)
+    def slot_checkItem(self, ignored):
         self.slot_checkText(self.le_new_group_name.text())
 
     @pyqtSlot(str)
@@ -1272,7 +1272,7 @@ class CatarinaMainW(AbstractCanvasJackClass):
         settings = QSettings()
 
         if geometry:
-            self.restoreGeometry(settings.value("Geometry", ""))
+            self.restoreGeometry(settings.value("Geometry", b""))
 
             showToolbar = settings.value("ShowToolbar", True, type=bool)
             self.ui.act_settings_show_toolbar.setChecked(showToolbar)
