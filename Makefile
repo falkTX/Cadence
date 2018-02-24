@@ -12,10 +12,10 @@ PYUIC ?= pyuic5
 PYRCC ?= pyrcc5
 
 # Detect X11 rules dir
-ifeq "$(wildcard /etc/X11/xinit/xinitrc.d/ )" ""
-	X11_RC_DIR = $(DESTDIR)/etc/X11/Xsession.d/
-else
+ifeq "$(wildcard /etc/X11/Xsession.d/ )" ""
 	X11_RC_DIR = $(DESTDIR)/etc/X11/xinit/xinitrc.d/
+else
+	X11_RC_DIR = $(DESTDIR)/etc/X11/Xsession.d/
 endif
 
 # -----------------------------------------------------------------------------------------------------------------------------------------
