@@ -134,17 +134,13 @@ void reconnect_ports()
     }
     else
     {
-        if (jack_port_t* const jRecPort1 = jackbridge_port_by_name(jClient, "system:capture_1"))
-        {
+        if (jackbridge_port_by_name(jClient, "system:capture_1") != nullptr)
             if (! jackbridge_port_connected_to(jPort1, "system:capture_1"))
                 jackbridge_connect(jClient, "system:capture_1", nameIn1.toUtf8().constData());
-        }
 
-        if (jack_port_t* const jRecPort2 = jackbridge_port_by_name(jClient, "system:capture_2"))
-        {
+        if (jackbridge_port_by_name(jClient, "system:capture_2") != nullptr)
             if (! jackbridge_port_connected_to(jPort2, "system:capture_2"))
                 jackbridge_connect(jClient, "system:capture_2", nameIn2.toUtf8().constData());
-        }
     }
 }
 
