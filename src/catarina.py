@@ -1040,6 +1040,7 @@ class CatarinaMainW(AbstractCanvasJackClass):
     @pyqtSlot()
     def slot_projectSaveAs(self):
         path = QFileDialog.getSaveFileName(self, self.tr("Save State"), filter=self.tr("Catarina XML Document (*.xml)"))
+        path = path[0]
         if path:
             self.m_save_path = path
             self.saveFile(path)

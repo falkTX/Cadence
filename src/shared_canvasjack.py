@@ -499,6 +499,7 @@ class AbstractCanvasJackClass(QMainWindow):
     @pyqtSlot()
     def slot_canvasSaveImage(self):
         newPath = QFileDialog.getSaveFileName(self, self.tr("Save Image"), filter=self.tr("PNG Image (*.png);;JPEG Image (*.jpg)"))
+        newPath = newPath[0]
 
         if not newPath:
             return
