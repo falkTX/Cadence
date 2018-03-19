@@ -75,6 +75,14 @@ except:
     haveSignal = False
 
 # ------------------------------------------------------------------------------------------------------------
+# Safe exception hook, needed for PyQt5
+
+def sys_excepthook(typ, value, tback):
+    return sys.__excepthook__(typ, value, tback)
+
+sys.excepthook = sys_excepthook
+
+# ------------------------------------------------------------------------------------------------------------
 # Set Version
 
 VERSION = "0.9.0"
