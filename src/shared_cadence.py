@@ -139,8 +139,9 @@ def tryCloseJackDBus():
 # ------------------------------------------------------------------------------------------------------------
 # Stop all audio processes, used for force-restart
 
-def stopAllAudioProcesses():
-    tryCloseJackDBus()
+def stopAllAudioProcesses(tryCloseJack = True):
+    if tryCloseJack:
+        tryCloseJackDBus()
 
     if not (HAIKU or LINUX or MACOS):
         print("stopAllAudioProcesses() - Not supported in this system")

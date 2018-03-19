@@ -22,10 +22,10 @@
 from platform import architecture
 
 if True:
-    from PyQt5.QtCore import QFileSystemWatcher, QThread
+    from PyQt5.QtCore import QFileSystemWatcher, QThread, QSemaphore
     from PyQt5.QtWidgets import QApplication, QDialogButtonBox, QLabel, QMainWindow, QSizePolicy
 else:
-    from PyQt4.QtCore import QFileSystemWatcher, QThread
+    from PyQt4.QtCore import QFileSystemWatcher, QThread, QSemaphore
     from PyQt4.QtGui import QApplication, QDialogButtonBox, QLabel, QMainWindow, QSizePolicy
 
 # ------------------------------------------------------------------------------------------------------------
@@ -528,21 +528,30 @@ class ForceRestartThread(QThread):
         QThread.__init__(self, parent)
 
         self.m_wasStarted = False
+        self.m_a2jExportHW = False
 
     def wasJackStarted(self):
         return self.m_wasStarted
+
+    def startA2J(self):
+        gDBus.a2j.set_hw_export(self.m_a2jExportHW)
+        gDBus.a2j.start()
 
     def run(self):
         # Not started yet
         self.m_wasStarted = False
         self.progressChanged.emit(0)
 
+        # Stop JACK safely first, if possible
+        runFunctionInMainThread(tryCloseJackDBus)
+        self.progressChanged.emit(20)
+
         # Kill All
-        stopAllAudioProcesses()
+        stopAllAudioProcesses(False)
         self.progressChanged.emit(30)
 
         # Connect to jackdbus
-        self.parent().DBusReconnect()
+        runFunctionInMainThread(self.parent().DBusReconnect)
 
         if not gDBus.jack:
             return
@@ -558,7 +567,7 @@ class ForceRestartThread(QThread):
         self.progressChanged.emit(90)
 
         # Start it
-        gDBus.jack.StartServer()
+        runFunctionInMainThread(gDBus.jack.StartServer)
         self.progressChanged.emit(93)
 
         # If we made it this far, then JACK is started
@@ -575,9 +584,8 @@ class ForceRestartThread(QThread):
 
         # ALSA-MIDI
         if GlobalSettings.value("A2J/AutoStart", True, type=bool) and gDBus.a2j and not bool(gDBus.a2j.is_started()):
-            a2jExportHW = GlobalSettings.value("A2J/ExportHW", True, type=bool)
-            gDBus.a2j.set_hw_export(a2jExportHW)
-            gDBus.a2j.start()
+            self.m_a2jExportHW = GlobalSettings.value("A2J/ExportHW", True, type=bool)
+            runFunctionInMainThread(self.startA2J)
 
         self.progressChanged.emit(96)
 
@@ -2324,6 +2332,18 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
     def closeEvent(self, event):
         self.saveSettings()
         self.systray.handleQtCloseEvent(event)
+
+# ------------------------------------------------------------------------------------------------------------
+
+def runFunctionInMainThread(task):
+    waiter = QSemaphore(1)
+
+    def taskInMainThread():
+        task()
+        waiter.release()
+
+    QTimer.singleShot(0, taskInMainThread)
+    waiter.tryAcquire()
 
 #--------------- main ------------------
 if __name__ == '__main__':
