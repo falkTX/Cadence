@@ -149,7 +149,7 @@ def stopAllAudioProcesses():
     process = QProcess()
 
     # Tell pulse2jack script to create files, prevents pulseaudio respawn
-    process.start("cadence-pulse2jack", "--dummy")
+    process.start("cadence-pulse2jack", ["--dummy"])
     process.waitForFinished()
 
     procsTerm = ["a2j", "a2jmidid", "artsd", "jackd", "jackdmp", "knotify4", "lash", "ladishd", "ladiappd", "ladiconfd", "jmcore"]

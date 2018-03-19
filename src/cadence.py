@@ -522,6 +522,8 @@ def initSystemChecks():
 
 # Wait while JACK restarts
 class ForceRestartThread(QThread):
+    progressChanged = pyqtSignal(int)
+
     def __init__(self, parent):
         QThread.__init__(self, parent)
 
