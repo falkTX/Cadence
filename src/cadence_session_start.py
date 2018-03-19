@@ -46,7 +46,7 @@ def forceReset():
 # Start JACK, A2J and Pulse, according to user settings
 def startSession(systemStarted, secondSystemStartAttempt):
     # Check if JACK is set to auto-start
-    if systemStarted and not GlobalSettings.value("JACK/AutoStart", False, type=bool):
+    if systemStarted and not GlobalSettings.value("JACK/AutoStart", wantJackStart, type=bool):
         print("JACK is set to NOT auto-start on login")
         return True
 

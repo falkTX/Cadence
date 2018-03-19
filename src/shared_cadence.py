@@ -73,6 +73,11 @@ iAlsaFileMax   = 4
 GlobalSettings = QSettings("Cadence", "GlobalSettings")
 
 # ------------------------------------------------------------------------------------------------------------
+# KXStudio Check
+
+wantJackStart = os.path.exists("/usr/share/kxstudio/config/config/Cadence/GlobalSettings.conf")
+
+# ------------------------------------------------------------------------------------------------------------
 # Get Process list
 
 def getProcList():

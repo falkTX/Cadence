@@ -55,7 +55,16 @@ try:
     from dbus.mainloop.pyqt5 import DBusQtMainLoop
     haveDBus = True
 except:
-    haveDBus = False
+    kxstudioWorkaround = "/opt/kxstudio/python3/dist-packages/dbus/mainloop"
+    if os.path.exists(kxstudioWorkaround):
+        try:
+            sys.path.insert(0, kxstudioWorkaround)
+            from pyqt5 import DBusQtMainLoop
+            haveDBus = True
+        except:
+            haveDBus = False
+    else:
+        haveDBus = False
 
 # ------------------------------------------------------------------------------------------------------------
 # Check for PulseAudio and Wine
@@ -2272,7 +2281,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         usingAlsaLoop = bool(GlobalSettings.value("ALSA-Audio/BridgeIndexType", iAlsaFileNone, type=int) == iAlsaFileLoop)
 
-        self.cb_jack_autostart.setChecked(GlobalSettings.value("JACK/AutoStart", False, type=bool))
+        self.cb_jack_autostart.setChecked(GlobalSettings.value("JACK/AutoStart", wantJackStart, type=bool))
         self.cb_a2j_autostart.setChecked(GlobalSettings.value("A2J/AutoStart", True, type=bool))
         self.cb_pulse_autostart.setChecked(GlobalSettings.value("Pulse2JACK/AutoStart", havePulseAudio and not usingAlsaLoop, type=bool))
 
