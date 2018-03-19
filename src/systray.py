@@ -642,6 +642,9 @@ class GlobalSysTray(object):
         self._parent.hide()
         self._parent.close()
 
+        if self._app:
+            self._app.quit()
+
     def __raiseWindow(self):
         self._parent.activateWindow()
         self._parent.raise_()
