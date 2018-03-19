@@ -3,7 +3,7 @@
 
 # Imports (Global)
 import dbus, signal, sys
-from PyQt4.QtCore import QCoreApplication, QObject
+from PyQt5.QtCore import QCoreApplication, QObject
 
 # DBus
 class DBus(object):
@@ -98,6 +98,8 @@ class CadenceUnityApp(QObject):
 if __name__ == '__main__':
 
     # Imports (Unity)
+    from gi import require_version as gi_require_version
+    gi_require_version('Unity', '7.0')
     from gi.repository import Unity
 
     # App initialization
