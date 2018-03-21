@@ -1129,14 +1129,14 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.systray.addMenuAction("tools", "app_xy-controller", "XY-Controller")
         self.systray.addSeparator("sep2")
 
-        self.systray.connect("app_catarina", lambda tool="catarina": self.func_start_tool(tool))
-        self.systray.connect("app_catia", lambda tool="catia": self.func_start_tool(tool))
-        self.systray.connect("app_claudia", lambda tool="claudia": self.func_start_tool(tool))
-        self.systray.connect("app_logs", lambda tool="cadence-logs": self.func_start_tool(tool))
-        self.systray.connect("app_meter_in", lambda tool="cadence-jackmeter -in": self.func_start_tool(tool))
-        self.systray.connect("app_meter_out", lambda tool="cadence-jackmeter": self.func_start_tool(tool))
-        self.systray.connect("app_render", lambda tool="cadence-render": self.func_start_tool(tool))
-        self.systray.connect("app_xy-controller", lambda tool="cadence-xycontroller": self.func_start_tool(tool))
+        self.systray.connect("app_catarina", self.func_start_catarina)
+        self.systray.connect("app_catia", self.func_start_catia)
+        self.systray.connect("app_claudia", self.func_start_claudia)
+        self.systray.connect("app_logs", self.func_start_logs)
+        self.systray.connect("app_meter_in", self.func_start_jackmeter_in)
+        self.systray.connect("app_meter_out", self.func_start_jackmeter)
+        self.systray.connect("app_render",  self.func_start_render)
+        self.systray.connect("app_xy-controller", self.func_start_xycontroller)
 
         self.systray.setToolTip("Cadence")
         self.systray.show()
@@ -1165,13 +1165,13 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.b_pulse_stop.clicked.connect(self.slot_PulseAudioBridgeStop)
         self.tb_pulse_options.clicked.connect(self.slot_PulseAudioBridgeOptions)
 
-        self.pic_catia.clicked.connect(lambda tool="catia": self.func_start_tool(tool))
-        self.pic_claudia.clicked.connect(lambda tool="claudia": self.func_start_tool(tool))
-        self.pic_meter_in.clicked.connect(lambda tool="cadence-jackmeter -in": self.func_start_tool(tool))
-        self.pic_meter_out.clicked.connect(lambda tool="cadence-jackmeter": self.func_start_tool(tool))
-        self.pic_logs.clicked.connect(lambda tool="cadence-logs": self.func_start_tool(tool))
-        self.pic_render.clicked.connect(lambda tool="cadence-render": self.func_start_tool(tool))
-        self.pic_xycontroller.clicked.connect(lambda tool="cadence-xycontroller": self.func_start_tool(tool))
+        self.pic_catia.clicked.connect(self.func_start_catia)
+        self.pic_claudia.clicked.connect(self.func_start_claudia)
+        self.pic_meter_in.clicked.connect(self.func_start_jackmeter_in)
+        self.pic_meter_out.clicked.connect(self.func_start_jackmeter)
+        self.pic_logs.clicked.connect(self.func_start_logs)
+        self.pic_render.clicked.connect(self.func_start_render)
+        self.pic_xycontroller.clicked.connect(self.func_start_xycontroller)
 
         self.b_tweaks_apply_now.clicked.connect(self.slot_tweaksApply)
 
@@ -1543,24 +1543,54 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.label_app_comment.setText(comment)
 
     def updateSystrayTooltip(self):
-        systrayText  = "<table>"
-        #systrayText += "<tr><td align='center' colspan='2'><h4>Cadence</h4></td></tr>"
-        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("JACK Status"), self.label_jack_status.text())
-        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Realtime"), self.label_jack_realtime.text())
-        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("DSP Load"), self.label_jack_dsp.text())
-        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Xruns"), self.label_jack_xruns.text())
-        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Buffer Size"), self.label_jack_bfsize.text())
-        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Sample Rate"), self.label_jack_srate.text())
-        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Block Latency"), self.label_jack_latency.text())
-        systrayText += "</table>"
+        systrayText  = "Cadence<br/>"
+        systrayText += "<font size=\"-1\">"
+        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("JACK Status"), self.label_jack_status.text())
+        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("Realtime"), self.label_jack_realtime.text())
+        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("DSP Load"), self.label_jack_dsp.text())
+        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("Xruns"), self.label_jack_xruns.text())
+        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("Buffer Size"), self.label_jack_bfsize.text())
+        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("Sample Rate"), self.label_jack_srate.text())
+        systrayText += "<b>%s:</b>&nbsp;%s" % (self.tr("Block Latency"), self.label_jack_latency.text())
+        systrayText += "</font><font size=\"-2\"><br/></font>"
 
         self.systray.setToolTip(systrayText)
 
+    @pyqtSlot()
+    def func_start_catarina(self):
+        self.func_start_tool("catarina")
+
+    @pyqtSlot()
+    def func_start_catia(self):
+        self.func_start_tool("catia")
+
+    @pyqtSlot()
+    def func_start_claudia(self):
+        self.func_start_tool("claudia")
+
+    @pyqtSlot()
+    def func_start_logs(self):
+        self.func_start_tool("cadence-logs")
+
+    @pyqtSlot()
+    def func_start_jackmeter(self):
+        self.func_start_tool("cadence-jackmeter")
+
+    @pyqtSlot()
+    def func_start_jackmeter_in(self):
+        self.func_start_tool("cadence-jackmeter -in")
+
+    @pyqtSlot()
+    def func_start_render(self):
+        self.func_start_tool("cadence-render")
+
+    @pyqtSlot()
+    def func_start_xycontroller(self):
+        self.func_start_tool("cadence-xycontroller")
+
     def func_start_tool(self, tool):
         if sys.argv[0].endswith(".py"):
-            if tool == "cadence-jacksettings":
-                tool = "jacksettings"
-            elif tool == "cadence-logs":
+            if tool == "cadence-logs":
                 tool = "logs"
             elif tool == "cadence-render":
                 tool = "render"
