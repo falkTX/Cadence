@@ -20,6 +20,7 @@
 # Imports (Global)
 
 from time import sleep
+import os
 
 if True:
     from PyQt5.QtCore import QProcess, QSettings
@@ -33,29 +34,33 @@ from shared import *
 
 # ------------------------------------------------------------------------------------------------------------
 # Default Plugin PATHs
+if os.path.isdir("/usr/lib64"):
+    LIB_PATH = "lib64"
+else:
+    LIB_PATH = "lib"
 
 DEFAULT_LADSPA_PATH = [
     os.path.join(HOME, ".ladspa"),
-    os.path.join("/", "usr", "lib", "ladspa"),
-    os.path.join("/", "usr", "local", "lib", "ladspa")
+    os.path.join("/", "usr", LIB_PATH, "ladspa"),
+    os.path.join("/", "usr", "local", LIB_PATH, "ladspa")
 ]
 
 DEFAULT_DSSI_PATH = [
     os.path.join(HOME, ".dssi"),
-    os.path.join("/", "usr", "lib", "dssi"),
-    os.path.join("/", "usr", "local", "lib", "dssi")
+    os.path.join("/", "usr", LIB_PATH, "dssi"),
+    os.path.join("/", "usr", "local", LIB_PATH, "dssi")
 ]
 
 DEFAULT_LV2_PATH = [
     os.path.join(HOME, ".lv2"),
-    os.path.join("/", "usr", "lib", "lv2"),
-    os.path.join("/", "usr", "local", "lib", "lv2")
+    os.path.join("/", "usr", LIB_PATH, "lv2"),
+    os.path.join("/", "usr", "local", LIB_PATH, "lv2")
 ]
 
 DEFAULT_VST_PATH = [
     os.path.join(HOME, ".vst"),
-    os.path.join("/", "usr", "lib", "vst"),
-    os.path.join("/", "usr", "local", "lib", "vst")
+    os.path.join("/", "usr", LIB_PATH, "vst"),
+    os.path.join("/", "usr", "local", LIB_PATH, "vst")
 ]
 
 # ------------------------------------------------------------------------------------------------------------
