@@ -155,10 +155,11 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         if not os.path.exists(iconPath):
             os.mkdir(iconPath)
 
-        if os.path.exists(os.path.join(sys.path[0], "..", "icons")):
-            os.system("cp -r '%s' '%s'" % (os.path.join(sys.path[0], "..", "icons", "claudia-hicolor"), iconPath))
-        elif os.path.exists(os.path.join(sys.path[0], "..", "data", "icons")):
-            os.system("cp -r '%s' '%s'" % (os.path.join(sys.path[0], "..", "data", "icons", "claudia-hicolor"), iconPath))
+        syspath = sys.path[0]
+        if os.path.exists(os.path.join(syspath, "..", "icons")):
+            os.system("cp -r '%s' '%s'" % (os.path.join(syspath, "..", "icons", "claudia-hicolor"), iconPath))
+        elif os.path.exists(os.path.join(syspath, "..", "data", "icons")):
+            os.system("cp -r '%s' '%s'" % (os.path.join(syspath, "..", "data", "icons", "claudia-hicolor"), iconPath))
 
         os.system("sed -i 's/X-CURRENT-THEME-X/%s/' '%s'" % (self.m_lastThemeName, os.path.join(iconPath, "claudia-hicolor", "index.theme")))
 
@@ -275,11 +276,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         tmplte_cmd  = ""
         tmplte_lvl  = "0"
 
-        # Fix for KXStudio PyQt5 mainloop workaround
         syspath = sys.path[0]
-        if syspath == "/opt/kxstudio/python3/dist-packages/dbus/mainloop" and len(sys.path) >= 2:
-            syspath = sys.path[1]
-
         if os.path.exists(os.path.join(syspath, "..", "templates")):
             tmplte_dir = os.path.join(syspath, "..", "templates")
         elif os.path.exists(os.path.join(syspath, "..", "data", "templates")):
