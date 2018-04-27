@@ -214,7 +214,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
         if tabIndex == iTabPlugin:
             plugin = self.listPlugin.item(self.listPlugin.currentRow(), 0).data(Qt.UserRole)
-            return (plugin["name"], "carla-single %s" % plugin["label"])
+            return (plugin["name"], "carla-single lv2 %s" % plugin["label"])
 
         if tabIndex == iTabEffect:
             item = self.listEffect.item(self.listEffect.currentRow(), 0).data(Qt.UserRole)
@@ -307,7 +307,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             tmplte_lvl  = "1"
 
         elif binary.startswith("carla-single"):
-            tmplte_cmd = binary
+            tmplte_cmd = binary + " " + proj_folder
             tmplte_lvl = "1"
 
         elif binary == "ardour":
@@ -826,7 +826,8 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         if haveCarla and os.path.exists("/usr/lib/carla/libcarla_utils.so"):
             utils = CarlaUtils("/usr/lib/carla/libcarla_utils.so")
             last_pos = 0
-            for i in range(utils.get_cached_plugin_count(PLUGIN_LV2, os.getenv("LV2_PATH", "~/.lv2:/usr/lib/lv2:/usr/local/lib/lv2"))):
+            lv2path = os.getenv("LV2_PATH", "~/.lv2:/usr/lib/lv2:/usr/local/lib/lv2")
+            for i in range(utils.get_cached_plugin_count(PLUGIN_LV2, lv2path)):
                 plugin = utils.get_cached_plugin_info(PLUGIN_LV2, i)
 
                 if (plugin["hints"] & PLUGIN_HAS_CUSTOM_UI) == 0:
