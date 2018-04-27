@@ -275,14 +275,20 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         tmplte_cmd  = ""
         tmplte_lvl  = "0"
 
-        if os.path.exists(os.path.join(sys.path[0], "..", "templates")):
-            tmplte_dir = os.path.join(sys.path[0], "..", "templates")
-        elif os.path.exists(os.path.join(sys.path[0], "..", "data", "templates")):
-            tmplte_dir = os.path.join(sys.path[0], "..", "data", "templates")
+        # Fix for KXStudio PyQt5 mainloop workaround
+        syspath = sys.path[0]
+        if syspath == "/opt/kxstudio/python3/dist-packages/dbus/mainloop" and len(sys.path) >= 2:
+            syspath = sys.path[1]
+
+        if os.path.exists(os.path.join(syspath, "..", "templates")):
+            tmplte_dir = os.path.join(syspath, "..", "templates")
+        elif os.path.exists(os.path.join(syspath, "..", "data", "templates")):
+            tmplte_dir = os.path.join(syspath, "..", "data", "templates")
         else:
             app = None
             tmplte_cmd = binary
             print("ClaudiaLauncher::createAppTemplate() - Failed to find template dir")
+            return False
 
         if not os.path.exists(proj_folder):
             os.mkdir(proj_folder)
@@ -489,6 +495,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
         else:
             print("ClaudiaLauncher::createAppTemplate(%s) - Failed to parse app name" % app)
+            return False
 
         if tmplte_file is not None:
             os.system('sed -i "s|X_SR_X-CLAUDIA-X_SR_X|%s|" "%s"' % (proj_srate, tmplte_file))
@@ -497,6 +504,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
         appBus = self.callback_getAppBus()
         appBus.RunCustom2(False, tmplte_cmd, app, tmplte_lvl)
+        return True
 
     def parentR(self):
         return self._parent
