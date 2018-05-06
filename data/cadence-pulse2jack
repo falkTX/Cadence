@@ -71,30 +71,26 @@ for arg in "$@";do
 
         -p|--p|--play)
     PLAY_ONLY=true
-#     FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/play.pa
         ;;
         
         -s|--s|--stereo)
     STEREO_ONLY=true
         ;;
-
-# 
-#         *)
-#     FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/play+rec.pa
-#         ;;
+        
     esac
 done
 
 FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/play+rec.pa
 
-if [ "$PLAY_ONLY" && "$STEREO_ONLY" ];then
+if ( $PLAY_ONLY && $STEREO_ONLY );then
     FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/play_stereo.pa
-elif [ "$PLAY_ONLY" ];then
+    
+elif ( $PLAY_ONLY );then
     FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/play.pa
-elif [ "$STEREO_ONLY" ];then
+    
+elif ( $STEREO_ONLY );then
     FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/play+rec_stereo.pa
-else
-    FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/play+rec.pa
+    
 fi
 
 # ----------------------------------------------
@@ -119,9 +115,9 @@ if (IsPulseAudioRunning); then
     {
         echo "PulseAudio is already running, bridge it..."
 
-        if [ "$PLAY_ONLY" ]; then
+        if ( $PLAY_ONLY ); then
         {
-            if [ "$STEREO_ONLY" ];then
+            if ( $STEREO_ONLY );then
                 pactl load-module module-jack-sink channels=2 > /dev/null
             else
                 pactl load-module module-jack-sink > /dev/null
@@ -131,7 +127,7 @@ if (IsPulseAudioRunning); then
         }
         else
         {
-            if [ "$STEREO_ONLY" ];then
+            if ( $STEREO_ONLY );then
                 pactl load-module module-jack-sink channels=2   > /dev/null
                 pactl load-module module-jack-source channels=2 > /dev/null
             else
