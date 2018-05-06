@@ -591,10 +591,15 @@ class ForceRestartThread(QThread):
 
         # PulseAudio
         if GlobalSettings.value("Pulse2JACK/AutoStart", True, type=bool) and not isPulseAudioBridged():
+            p2jack_command = "cadence-pulse2jack"
+            
             if GlobalSettings.value("Pulse2JACK/PlaybackModeOnly", False, type=bool):
-                os.system("cadence-pulse2jack -p")
-            else:
-                os.system("cadence-pulse2jack")
+                p2jack_command+= " -p"
+                
+            if GlobalSettings.value("Pulse2JACK/StereoOnly", False, type=bool):
+                p2jack_command+= " -s"
+                
+            os.system(p2jack_command)
 
         self.progressChanged.emit(100)
 
@@ -752,12 +757,14 @@ class ToolBarPADialog(QDialog, ui_cadence_tb_pa.Ui_Dialog):
         self.setupUi(self)
 
         self.cb_playback_only.setChecked(GlobalSettings.value("Pulse2JACK/PlaybackModeOnly", False, type=bool))
+        self.cb_stereo_only.setChecked(GlobalSettings.value("Pulse2JACK/StereoOnly", False, type=bool))
 
         self.accepted.connect(self.slot_setOptions)
 
     @pyqtSlot()
     def slot_setOptions(self):
         GlobalSettings.setValue("Pulse2JACK/PlaybackModeOnly", self.cb_playback_only.isChecked())
+        GlobalSettings.setValue("Pulse2JACK/StereoOnly", self.cb_stereo_only.isChecked())
 
     def done(self, r):
         QDialog.done(self, r)
@@ -1812,10 +1819,15 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_PulseAudioBridgeStart(self):
+        p2jack_command = "cadence-pulse2jack"
+        
         if GlobalSettings.value("Pulse2JACK/PlaybackModeOnly", False, type=bool):
-            os.system("cadence-pulse2jack -p")
-        else:
-            os.system("cadence-pulse2jack")
+            p2jack_command += " -p"
+            
+        if GlobalSettings.value("Pulse2JACK/StereoOnly", False, type=bool):
+            p2jack_command += " -s"
+            
+        os.system(p2jack_command)
 
     @pyqtSlot()
     def slot_PulseAudioBridgeStop(self):
