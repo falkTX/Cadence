@@ -17,15 +17,20 @@ UIC ?= $(HOSTBINS)/uic
 
 # --------------------------------------------------------------
 
+
 DEBUG ?= false
+
+mkfile_path := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+CPU_FLAGS = $(shell $(mkfile_path)../arm.py)
 
 ifeq ($(DEBUG),true)
 BASE_FLAGS  = -O0 -g -Wall -Wextra
 BASE_FLAGS += -DDEBUG
 STRIP       = true # FIXME
 else
-BASE_FLAGS  = -O3 -ffast-math -mtune=generic -msse -mfpmath=sse -Wall -Wextra
+BASE_FLAGS  = -O3 -ffast-math -Wall -Wextra
 BASE_FLAGS += -DNDEBUG
+BASE_FLAGS += $(CPU_FLAGS)
 endif
 
 BASE_FLAGS += -fPIC
