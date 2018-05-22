@@ -729,8 +729,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>310</width>
-                  <height>110</height>
+                  <width>435</width>
+                  <height>130</height>
                  </rect>
                 </property>
                 <attribute name="label">
@@ -919,13 +919,6 @@
                     </spacer>
                    </item>
                    <item>
-                    <widget class="QPushButton" name="b_pulse_update">
-                     <property name="text">
-                      <string>Update Channels</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
                     <widget class="QPushButton" name="b_pulse_start">
                      <property name="text">
                       <string>Start</string>
@@ -936,6 +929,13 @@
                     <widget class="QPushButton" name="b_pulse_stop">
                      <property name="text">
                       <string>Stop</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="b_pulse_channels">
+                     <property name="text">
+                      <string>Channels</string>
                      </property>
                     </widget>
                    </item>
@@ -976,13 +976,6 @@
                     <widget class="QCheckBox" name="cb_pulse_autostart">
                      <property name="text">
                       <string>Auto-start at login</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QToolButton" name="tb_pulse_options">
-                     <property name="text">
-                      <string>...</string>
                      </property>
                     </widget>
                    </item>
@@ -1713,8 +1706,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>96</width>
-                  <height>86</height>
+                  <width>413</width>
+                  <height>401</height>
                  </rect>
                 </property>
                 <attribute name="label">
