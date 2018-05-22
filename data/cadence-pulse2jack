@@ -62,7 +62,7 @@ for arg in "$@";do
         --dummy  Don't do anything, just create the needed files
 
     NOTE:
-    When runned with no arguments, pulse2jack will
+    When runned with no arguments, $(basename "$0") will
     activate PulseAudio with both playback and record modes with default number of channels.
     "
     exit
