@@ -706,10 +706,12 @@ class JackSettingsW(QDialog):
     # -----------------------------------------------------------------
     # Helper functions
 
-    def getAlsaDeviceList(self):
+    def getAlsaDeviceList(self, playback=True):
         alsaDeviceList = []
 
-        aplay_out = getoutput("env LANG=C LC_ALL=C aplay -l").split("\n")
+        executable = 'aplay' if playback else 'arecord'
+
+        aplay_out = getoutput("env LANG=C LC_ALL=C {} -l".format(executable)).split("\n")
         for line in aplay_out:
             line = line.strip()
             if line.startswith("card "):
@@ -792,10 +794,12 @@ class JackSettingsW(QDialog):
             self.ui.obj_driver_playback.addItem("none")
 
             if LINUX:
-                dev_list = self.getAlsaDeviceList()
-                for dev in dev_list:
-                    self.ui.obj_driver_capture.addItem(dev)
+                dev_list_playback = self.getAlsaDeviceList(playback=True)
+                dev_list_record = self.getAlsaDeviceList(playback=False)
+                for dev in dev_list_playback:
                     self.ui.obj_driver_playback.addItem(dev)
+                for dev in dev_list_record:
+                    self.ui.obj_driver_capture.addItem(dev)
             else:
                 dev_list = gJackctl.GetParameterConstraint(["driver", "device"])[3]
                 for i in range(len(dev_list)):
