@@ -608,6 +608,10 @@ class JackSettingsW(QDialog):
             value = dbus.Int32(self.ui.obj_driver_channels.value())
             setDriverParameter("channels", value, True)
 
+        if self.ui.obj_driver_client_name.isEnabled():
+            value = dbus.String(self.ui.obj_driver_client_name.text())
+            setDriverParameter("client-name", value, True)
+
     def loadDriverSettings(self, reset=False, forceReset=False):
         global gJackctl
 
@@ -694,6 +698,8 @@ class JackSettingsW(QDialog):
                 self.ui.obj_driver_snoop.setChecked(bool(value))
             elif attribute == "channels":
                 self.ui.obj_driver_channels.setValue(int(value))
+            elif attribute == 'client-name':
+                self.ui.obj_driver_client_name.setText(value)
             else:
                 print("JackSettingsW::loadDriverSettings() - Unimplemented driver attribute '%s', value: '%s'" % (attribute, str(value)))
 
@@ -852,6 +858,7 @@ class JackSettingsW(QDialog):
         self.ui.obj_driver_snoop.setEnabled(driverHasFeature("snoop"))
         self.ui.obj_driver_channels.setEnabled(driverHasFeature("channels"))
         self.ui.obj_driver_channels_label.setEnabled(driverHasFeature("channels"))
+        self.ui.obj_driver_client_name.setEnabled(driverHasFeature("client-name"))
 
         # Misc stuff
         if self.ui.obj_server_driver.item(row, 0).text() == "ALSA":
@@ -871,6 +878,9 @@ class JackSettingsW(QDialog):
 
         elif self.ui.obj_server_driver.item(row, 0).text() == "Loopback":
             self.ui.toolbox_driver_misc.setCurrentIndex(4)
+
+        elif self.ui.obj_server_driver.item(row, 0).text() == "Net":
+            self.ui.toolbox_driver_misc.setCurrentIndex(5)
 
         else:
             self.ui.toolbox_driver_misc.setCurrentIndex(0)
