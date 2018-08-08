@@ -557,11 +557,20 @@ class JackSettingsW(QDialog):
 
         if self.ui.obj_driver_inchannels.isEnabled():
             value = dbus.UInt32(self.ui.obj_driver_inchannels.value())
-            setDriverParameter("inchannels", value, True)
+            if self.fDriverName == 'net':
+                value = dbus.Int32(self.ui.obj_driver_outchannels.value())
+                setDriverParameter("input-ports", value, True)
+            else:
+                value = dbus.UInt32(self.ui.obj_driver_outchannels.value())
+                setDriverParameter("inchannels", value, True)
 
         if self.ui.obj_driver_outchannels.isEnabled():
-            value = dbus.UInt32(self.ui.obj_driver_outchannels.value())
-            setDriverParameter("outchannels", value, True)
+            if self.fDriverName == 'net':
+                value = dbus.Int32(self.ui.obj_driver_outchannels.value())
+                setDriverParameter("output-ports", value, True)
+            else:
+                value = dbus.UInt32(self.ui.obj_driver_outchannels.value())
+                setDriverParameter("outchannels", value, True)
 
         if self.ui.obj_driver_shorts.isEnabled():
             value = dbus.Boolean(self.ui.obj_driver_shorts.isChecked())
@@ -700,6 +709,10 @@ class JackSettingsW(QDialog):
                 self.ui.obj_driver_channels.setValue(int(value))
             elif attribute == 'client-name':
                 self.ui.obj_driver_client_name.setText(value)
+            elif attribute == 'input-ports':
+                self.ui.obj_driver_inchannels.setValue(int(value))
+            elif attribute == 'output-ports':
+                self.ui.obj_driver_outchannels.setValue(int(value))
             else:
                 print("JackSettingsW::loadDriverSettings() - Unimplemented driver attribute '%s', value: '%s'" % (attribute, str(value)))
 
@@ -840,10 +853,10 @@ class JackSettingsW(QDialog):
         self.ui.obj_driver_monitor.setEnabled(driverHasFeature("monitor"))
         self.ui.obj_driver_dither.setEnabled(driverHasFeature("dither"))
         self.ui.obj_driver_dither_label.setEnabled(driverHasFeature("dither"))
-        self.ui.obj_driver_inchannels.setEnabled(driverHasFeature("inchannels"))
-        self.ui.obj_driver_inchannels_label.setEnabled(driverHasFeature("inchannels"))
-        self.ui.obj_driver_outchannels.setEnabled(driverHasFeature("outchannels"))
-        self.ui.obj_driver_outchannels_label.setEnabled(driverHasFeature("outchannels"))
+        self.ui.obj_driver_inchannels.setEnabled(driverHasFeature("inchannels") or driverHasFeature("input-ports"))
+        self.ui.obj_driver_inchannels_label.setEnabled(driverHasFeature("inchannels") or driverHasFeature("input-ports"))
+        self.ui.obj_driver_outchannels.setEnabled(driverHasFeature("outchannels") or driverHasFeature("output-ports"))
+        self.ui.obj_driver_outchannels_label.setEnabled(driverHasFeature("outchannels") or driverHasFeature("output-ports"))
         self.ui.obj_driver_shorts.setEnabled(driverHasFeature("shorts"))
         self.ui.obj_driver_input_latency.setEnabled(driverHasFeature("input-latency"))
         self.ui.obj_driver_input_latency_label.setEnabled(driverHasFeature("input-latency"))
