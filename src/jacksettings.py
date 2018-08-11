@@ -30,6 +30,7 @@ else:
     from PyQt4.QtGui import QFontMetrics
     from PyQt4.QtGui import QDialog, QDialogButtonBox, QMessageBox
 
+from shared_cadence import *
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
 
@@ -75,13 +76,17 @@ else:
 
 def initBus(bus):
     global gJackctl
+    global jack_control_iface
 
     if not bus:
         gJackctl = None
         return 1
 
     try:
-        gJackctl = dbus.Interface(bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller"), "org.jackaudio.Configure")
+        controller = bus.get_object("org.jackaudio.service", "/org/jackaudio/Controller")
+        gJackctl = dbus.Interface(controller, "org.jackaudio.Configure")
+        jack_control_iface = dbus.Interface(
+            controller, "org.jackaudio.JackControl")
         return 0
     except:
         gJackctl = None
@@ -234,6 +239,10 @@ class JackSettingsW(QDialog):
         self.ui.obj_driver_capture.currentIndexChanged[int].connect(self.slot_checkALSASelection)
         self.ui.obj_driver_playback.currentIndexChanged[int].connect(self.slot_checkALSASelection)
 
+        self.ui.obj_net_manager_start.clicked.connect(self.net_manager_start)
+        self.ui.obj_net_manager_stop.clicked.connect(self.net_manager_stop)
+        self.ui.obj_net_reset.clicked.connect(self.net_manager_reset)
+
         # -------------------------------------------------------------
         # Load initial settings
 
@@ -243,6 +252,7 @@ class JackSettingsW(QDialog):
         self.checkEngine()
         self.loadServerSettings()
         self.loadDriverSettings(True) # reset because we'll change it below
+        self.loadNetSettings()
 
         # -------------------------------------------------------------
         # Load selected JACK driver
@@ -716,6 +726,83 @@ class JackSettingsW(QDialog):
             else:
                 print("JackSettingsW::loadDriverSettings() - Unimplemented driver attribute '%s', value: '%s'" % (attribute, str(value)))
 
+    def saveNetSettings(self):
+        path = ['internals', 'netmanager']
+
+        isset, default, value = map(
+            dbus_type_to_python_type,
+            gJackctl.GetParameterValue(path + ['multicast-ip']))
+
+        curvalue = self.ui.obj_net_multicast_ip.text()
+
+        if curvalue != value:
+            gJackctl.SetParameterValue(
+                path + ['multicast-ip'],
+                python_type_to_jackdbus_type(curvalue, 's'))
+
+        isset, default, value = map(
+            dbus_type_to_python_type,
+            gJackctl.GetParameterValue(path + ['udp-net-port']))
+
+        curvalue = self.ui.obj_net_multicast_port.value()
+
+        if curvalue != value:
+            gJackctl.SetParameterValue(
+                path + ['udp-net-port'],
+                python_type_to_jackdbus_type(curvalue, 'u'))
+
+        isset, default, value = map(
+            dbus_type_to_python_type,
+            gJackctl.GetParameterValue(path + ['auto-connect']))
+
+        curvalue = self.ui.obj_net_auto_connect.isChecked()
+
+        if curvalue != value:
+            gJackctl.SetParameterValue(path + ['auto-connect'], curvalue)
+
+        isset, default, value = map(
+            dbus_type_to_python_type,
+            gJackctl.GetParameterValue(path + ['auto-save']))
+
+        curvalue = self.ui.obj_net_auto_save.isChecked()
+
+        if curvalue != value:
+            gJackctl.SetParameterValue(path + ['auto-save'], curvalue)
+
+        GlobalSettings = QSettings("Cadence", "GlobalSettings")
+        GlobalSettings.setValue('JACKNETMANAGER/AutoStart',
+                                self.ui.obj_net_manager_at_boot.isChecked())
+
+    def loadNetSettings(self):
+        path = ['internals', 'netmanager']
+
+        _, _, value = map(
+            dbus_type_to_python_type,
+            gJackctl.GetParameterValue(path + ['multicast-ip']))
+
+        self.ui.obj_net_multicast_ip.setText(value)
+
+        _, _, value = map(
+            dbus_type_to_python_type,
+            gJackctl.GetParameterValue(path + ['udp-net-port']))
+
+        self.ui.obj_net_multicast_port.setValue(value)
+
+        _, _, value = map(
+            dbus_type_to_python_type,
+            gJackctl.GetParameterValue(path + ['auto-connect']))
+
+        self.ui.obj_net_auto_connect.setChecked(value)
+
+        _, _, value = map(
+            dbus_type_to_python_type,
+            gJackctl.GetParameterValue(path + ['auto-save']))
+
+        self.ui.obj_net_auto_save.setChecked(value)
+
+        GlobalSettings = QSettings("Cadence", "GlobalSettings")
+        self.ui.obj_net_manager_at_boot.setChecked(
+            GlobalSettings.value('JACKNETMANAGER/AutoStart') == "true")
     # -----------------------------------------------------------------
     # Helper functions
 
@@ -779,6 +866,7 @@ class JackSettingsW(QDialog):
 
         # Save previous settings
         self.saveDriverSettings(False)
+        self.saveNetSettings()
 
         # Set new Jack driver
         self.fDriverName = dbus.String(self.ui.obj_server_driver.item(row, 0).text().lower())
@@ -900,10 +988,27 @@ class JackSettingsW(QDialog):
 
         self.slot_checkDuplexSelection(self.ui.obj_driver_duplex.isChecked())
 
+    def net_manager_start(self):
+        jack_control_iface.LoadInternal("netmanager")
+
+    def net_manager_stop(self):
+        jack_control_iface.UnloadInternal("netmanager")
+
+    def net_manager_reset(self):
+        path = ['internals', 'netmanager']
+        for _, name, _, _ in gJackctl.GetParametersInfo(path):
+            gJackctl.ResetParameterValue(path + [name])
+
+        GlobalSettings = QSettings("Cadence", "GlobalSettings")
+        GlobalSettings.setValue('JACKNETMANAGER/AutoStart', False)
+
+        self.loadNetSettings()
+
     @pyqtSlot()
     def slot_saveJackSettings(self):
         self.saveServerSettings()
         self.saveDriverSettings(True)
+        self.saveNetSettings()
 
     @pyqtSlot()
     def slot_resetJackSettings(self):
