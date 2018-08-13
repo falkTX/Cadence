@@ -1678,7 +1678,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         try:
             gDBus.jack.StartServer()
         except:
-            QMessageBox.warning(self, self.tr("Warning"), self.tr("Failed to start JACK, please check the logs for more information."))
+            pass
+            #QMessageBox.warning(self, self.tr("Warning"), self.tr("Failed to start JACK, please check the logs for more information."))
 
     @pyqtSlot()
     def slot_JackServerStop(self):

@@ -1132,7 +1132,8 @@ class CatiaMainW(AbstractCanvasJackClass):
             try:
                 ret = bool(gDBus.jack.StartServer())
             except:
-                QMessageBox.warning(self, self.tr("Warning"), self.tr("Failed to start JACK, please check the logs for more information."))
+                pass
+                #QMessageBox.warning(self, self.tr("Warning"), self.tr("Failed to start JACK, please check the logs for more information."))
                 #self.jackStopped()
         return ret
 
