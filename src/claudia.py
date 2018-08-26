@@ -1732,7 +1732,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
 
     @pyqtSlot()
     def slot_room_delete_m(self):
-        room_name = self.sender().proeprty("data")
+        room_name = self.sender().property("data")
         if room_name:
             gDBus.ladish_studio.DeleteRoom(room_name)
 
@@ -1966,7 +1966,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
                     ladish_room = gDBus.bus.get_object("org.ladish", room_path)
                     room_name = ladish_room.GetName()
                     act_x_room = QAction(room_name, self.ui.menu_room_delete)
-                    act_x_room.setProperty("data", studio_name);
+                    act_x_room.setProperty("data", room_name);
                     self.ui.menu_room_delete.addAction(act_x_room)
                     act_x_room.triggered.connect(self.slot_room_delete_m)
         else:
