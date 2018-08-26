@@ -1686,7 +1686,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
 
     @pyqtSlot()
     def slot_studio_load_m(self):
-        studio_name = self.sender().text()
+        studio_name = self.sender().property("data")
         if studio_name:
             gDBus.ladish_control.LoadStudio(studio_name)
 
@@ -1720,7 +1720,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
 
     @pyqtSlot()
     def slot_studio_delete_m(self):
-        studio_name = self.sender().text()
+        studio_name = self.sender().property("data")
         if studio_name:
             gDBus.ladish_control.DeleteStudio(studio_name)
 
@@ -1732,7 +1732,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
 
     @pyqtSlot()
     def slot_room_delete_m(self):
-        room_name = self.sender().text()
+        room_name = self.sender().proeprty("data")
         if room_name:
             gDBus.ladish_studio.DeleteRoom(room_name)
 
@@ -1757,7 +1757,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
 
     @pyqtSlot()
     def slot_project_load_m(self):
-        act_x_text = self.sender().text()
+        act_x_text = self.sender().property("data")
         if act_x_text:
             proj_path = "/" + act_x_text.rsplit("[/", 1)[-1].rsplit("]", 1)[0]
             gDBus.ladish_room.LoadProject(proj_path)
@@ -1933,6 +1933,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
             for studio in studio_list:
                 studio_name  = str(studio[iStudioListName])
                 act_x_studio = QAction(studio_name, self.ui.menu_studio_load)
+                act_x_studio.setProperty("data", studio_name);
                 self.ui.menu_studio_load.addAction(act_x_studio)
                 act_x_studio.triggered.connect(self.slot_studio_load_m)
 
@@ -1949,6 +1950,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
             for studio in studio_list:
                 studio_name = str(studio[iStudioListName])
                 act_x_studio = QAction(studio_name, self.ui.menu_studio_delete)
+                act_x_studio.setProperty("data", studio_name);
                 self.ui.menu_studio_delete.addAction(act_x_studio)
                 act_x_studio.triggered.connect(self.slot_studio_delete_m)
 
@@ -1964,6 +1966,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
                     ladish_room = gDBus.bus.get_object("org.ladish", room_path)
                     room_name = ladish_room.GetName()
                     act_x_room = QAction(room_name, self.ui.menu_room_delete)
+                    act_x_room.setProperty("data", studio_name);
                     self.ui.menu_room_delete.addAction(act_x_room)
                     act_x_room.triggered.connect(self.slot_room_delete_m)
         else:
@@ -1994,6 +1997,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
 
                 act_x_text = "%s [%s]" % (proj_name, proj_path)
                 act_x_proj = QAction(act_x_text, self.ui.menu_project_load)
+                act_x_proj.setProperty("data", act_x_text);
                 self.ui.menu_project_load.addAction(act_x_proj)
                 act_x_proj.triggered.connect(self.slot_project_load_m)
 
