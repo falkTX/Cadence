@@ -568,10 +568,10 @@ class JackSettingsW(QDialog):
         if self.ui.obj_driver_inchannels.isEnabled():
             value = dbus.UInt32(self.ui.obj_driver_inchannels.value())
             if self.fDriverName == 'net':
-                value = dbus.Int32(self.ui.obj_driver_outchannels.value())
+                value = dbus.Int32(self.ui.obj_driver_inchannels.value())
                 setDriverParameter("input-ports", value, True)
             else:
-                value = dbus.UInt32(self.ui.obj_driver_outchannels.value())
+                value = dbus.UInt32(self.ui.obj_driver_inchannels.value())
                 setDriverParameter("inchannels", value, True)
 
         if self.ui.obj_driver_outchannels.isEnabled():
