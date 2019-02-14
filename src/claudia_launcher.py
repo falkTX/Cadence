@@ -832,10 +832,14 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
                 last_pos += 1
 
-        if haveCarla and os.path.exists("/usr/" + self.lib_path + "/carla/libcarla_utils.so"):
-            utils = CarlaUtils("/usr/" + self.lib_path + "/carla/libcarla_utils.so")
+        if haveCarla and os.path.exists("/usr/{}/carla/libcarla_utils.so".format(self.lib_path)):
+            utils = CarlaUtils("/usr/{}/carla/libcarla_utils.so".format(self.lib_path))
             last_pos = 0
-            for i in range(utils.get_cached_plugin_count(PLUGIN_LV2, os.getenv("LV2_PATH", "~/.lv2:/usr/" + self.lib_path + "/lv2:/usr/local/" + self.lib_path + "/lv2"))):
+            for i in range(utils.get_cached_plugin_count(PLUGIN_LV2, 
+                os.getenv("LV2_PATH", 
+                    "~/.lv2:"\
+                    "/usr/{lib_path}/lv2:"\
+                    "/usr/local/{lib_path}/lv2".format(lib_path=self.lib_path)))):
                 plugin = utils.get_cached_plugin_info(PLUGIN_LV2, i)
 
                 if (plugin["hints"] & PLUGIN_HAS_CUSTOM_UI) == 0:
