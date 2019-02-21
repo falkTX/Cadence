@@ -120,11 +120,8 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         self._parent   = None
         self._settings = None
         self.m_ladish_only = False
-        if os.path.isdir("/usr/lib64"):
-            self.lib_path = "lib64"
-        else:
-            self.lib_path = "lib"
-        self.listDAW.setColumnWidth(0, 22)
+        self.lib_path = LIB_PATH
+        fself.listDAW.setColumnWidth(0, 22)
         self.listDAW.setColumnWidth(1, 225)
         self.listDAW.setColumnWidth(2, 150)
         self.listHost.setColumnWidth(0, 22)
