@@ -121,7 +121,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         self._settings = None
         self.m_ladish_only = False
         self.lib_path = LIB_PATH
-        fself.listDAW.setColumnWidth(0, 22)
+        self.listDAW.setColumnWidth(0, 22)
         self.listDAW.setColumnWidth(1, 225)
         self.listDAW.setColumnWidth(2, 150)
         self.listHost.setColumnWidth(0, 22)
