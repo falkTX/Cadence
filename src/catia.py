@@ -22,6 +22,7 @@
 import ui_catia
 from shared_canvasjack import *
 from shared_settings import *
+from shared_i18n import *
 
 # ------------------------------------------------------------------------------------------------------------
 # Try Import DBus
@@ -1393,6 +1394,7 @@ if __name__ == '__main__':
     app.setApplicationVersion(VERSION)
     app.setOrganizationName("Cadence")
     app.setWindowIcon(QIcon(":/scalable/catia.svg"))
+    setup_i18n()
 
     if jacklib is None:
         QMessageBox.critical(None, app.translate("CatiaMainW", "Error"), app.translate("CatiaMainW",

@@ -33,6 +33,7 @@ else:
 
 import ui_render
 from shared import *
+from shared_i18n import *
 from jacklib_helpers import *
 
 # ------------------------------------------------------------------------------------------------------------
@@ -442,6 +443,7 @@ if __name__ == '__main__':
     app.setApplicationVersion(VERSION)
     app.setOrganizationName("Cadence")
     app.setWindowIcon(QIcon(":/scalable/cadence.svg"))
+    setup_i18n()
 
     if jacklib is None:
         QMessageBox.critical(None, app.translate("RenderW", "Error"), app.translate("RenderW",
