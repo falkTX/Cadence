@@ -19,12 +19,12 @@ Packagers can make use of the 'PREFIX' and 'DESTDIR' variable during install, li
 The required build dependencies are: <i>(devel packages of these)</i>
 
  - JACK
- - Qt4
- - PyQt4 (Py3 version)
+ - Qt5
+ - PyQt5 (Py3 version)
 
 On Debian and Ubuntu, use these commands to install all build dependencies: <br/>
-`$ sudo apt-get install libjack-dev libqt4-dev qt4-dev-tools` <br/>
-`$ sudo apt-get install python-qt4-dev python3-pyqt4 pyqt4-dev-tools`
+`$ sudo apt-get install libjack-jackd2-dev libqt4-dev qt4-dev-tools` <br/>
+`$ sudo apt-get install python-qt5-dev python3-pyqt5 pyqt5-dev-tools python3-pyqt5.qtsvg`
 
 To run all the apps/tools, you'll additionally need:
 
