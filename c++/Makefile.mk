@@ -24,7 +24,7 @@ BASE_FLAGS  = -O0 -g -Wall -Wextra
 BASE_FLAGS += -DDEBUG
 STRIP       = true # FIXME
 else
-BASE_FLAGS  = -O3 -ffast-math -mtune=generic -Wall -Wextra
+BASE_FLAGS  = -O3 -ffast-math -Wall -Wextra
 BASE_FLAGS += -DNDEBUG
 endif
 
