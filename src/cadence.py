@@ -55,16 +55,7 @@ try:
     from dbus.mainloop.pyqt5 import DBusQtMainLoop
     haveDBus = True
 except:
-    kxstudioWorkaround = "/opt/kxstudio/python3/dist-packages/dbus/mainloop"
-    if os.path.exists(kxstudioWorkaround):
-        try:
-            sys.path.insert(1, kxstudioWorkaround)
-            from pyqt5 import DBusQtMainLoop
-            haveDBus = True
-        except:
-            haveDBus = False
-    else:
-        haveDBus = False
+    haveDBus = False
 
 # ------------------------------------------------------------------------------------------------------------
 # Check for PulseAudio and Wine
