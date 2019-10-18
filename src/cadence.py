@@ -519,13 +519,13 @@ class ForceRestartThread(QThread):
         QThread.__init__(self, parent)
 
         self.m_wasStarted = False
-        self.m_a2jExportHW = False
 
     def wasJackStarted(self):
         return self.m_wasStarted
 
     def startA2J(self):
-        gDBus.a2j.set_hw_export(self.m_a2jExportHW)
+        if not gDBus.a2j.get_hw_export() and GlobalSettings.value("A2J/AutoExport", True, type=bool):
+            gDBus.a2j.set_hw_export(True)
         gDBus.a2j.start()
 
     def run(self):
@@ -574,8 +574,7 @@ class ForceRestartThread(QThread):
         self.progressChanged.emit(94)
 
         # ALSA-MIDI
-        if GlobalSettings.value("A2J/AutoStart", True, type=bool) and gDBus.a2j and not bool(gDBus.a2j.is_started()):
-            self.m_a2jExportHW = GlobalSettings.value("A2J/ExportHW", True, type=bool)
+        if GlobalSettings.value("A2J/AutoStart", True, type=bool) and not bool(gDBus.a2j.is_started()):
             runFunctionInMainThread(self.startA2J)
 
         self.progressChanged.emit(96)
@@ -713,24 +712,6 @@ class ToolBarAlsaAudioDialog(QDialog, ui_cadence_tb_alsa.Ui_Dialog):
         asoundrcFd = open(self.asoundrcFile, "w")
         asoundrcFd.write(asoundrc_aloop.replace("channels 2\n", "channels %i\n" % channels) + "\n")
         asoundrcFd.close()
-
-    def done(self, r):
-        QDialog.done(self, r)
-        self.close()
-
-# Additional ALSA MIDI options
-class ToolBarA2JDialog(QDialog, ui_cadence_tb_a2j.Ui_Dialog):
-    def __init__(self, parent):
-        QDialog.__init__(self, parent)
-        self.setupUi(self)
-
-        self.cb_export_hw.setChecked(GlobalSettings.value("A2J/ExportHW", True, type=bool))
-
-        self.accepted.connect(self.slot_setOptions)
-
-    @pyqtSlot()
-    def slot_setOptions(self):
-        GlobalSettings.setValue("A2J/ExportHW", self.cb_export_hw.isChecked())
 
     def done(self, r):
         QDialog.done(self, r)
@@ -1104,7 +1085,6 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             self.systray.connect("alsa_stop", self.slot_AlsaBridgeStop)
             self.systray.connect("a2j_start", self.slot_A2JBridgeStart)
             self.systray.connect("a2j_stop", self.slot_A2JBridgeStop)
-            self.systray.connect("a2j_export_hw", self.slot_A2JBridgeExportHW)
             self.systray.connect("pulse_start", self.slot_PulseAudioBridgeStart)
             self.systray.connect("pulse_stop", self.slot_PulseAudioBridgeStop)
 
@@ -1150,8 +1130,6 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.b_a2j_start.clicked.connect(self.slot_A2JBridgeStart)
         self.b_a2j_stop.clicked.connect(self.slot_A2JBridgeStop)
         self.b_a2j_export_hw.clicked.connect(self.slot_A2JBridgeExportHW)
-        self.tb_a2j_options.clicked.connect(self.slot_A2JBridgeOptions)
-
         self.b_pulse_start.clicked.connect(self.slot_PulseAudioBridgeStart)
         self.b_pulse_stop.clicked.connect(self.slot_PulseAudioBridgeStop)
         self.tb_pulse_options.clicked.connect(self.slot_PulseAudioBridgeOptions)
@@ -1290,6 +1268,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         else:
             self.toolBox_alsamidi.setEnabled(False)
             self.cb_a2j_autostart.setChecked(False)
+            self.cb_a2j_autoexport.setChecked(False)
             self.label_bridge_a2j.setText("ALSA MIDI Bridge is not installed")
             self.settings.setValue("A2J/AutoStart", False)
 
@@ -1358,8 +1337,13 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.m_timer500 = self.startTimer(500)
 
         if gDBus.a2j and not gDBus.a2j.is_started():
-            self.b_a2j_start.setEnabled(True)
-            self.systray.setActionEnabled("a2j_start", True)
+            if GlobalSettings.value("A2J/AutoStart", True, type=bool):
+                if not gDBus.a2j.get_hw_export() and GlobalSettings.value("A2J/AutoExport", True, type=bool):
+                    gDBus.a2j.set_hw_export(True)
+                gDBus.a2j.start()
+            else:
+                self.b_a2j_start.setEnabled(True)
+                self.systray.setActionEnabled("a2j_start", True)
 
         self.checkAlsaAudio()
         self.checkPulseAudio()
@@ -1405,7 +1389,6 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
     def a2jStarted(self):
         self.b_a2j_start.setEnabled(False)
         self.b_a2j_stop.setEnabled(True)
-        self.b_a2j_export_hw.setEnabled(False)
         self.systray.setActionEnabled("a2j_start", False)
         self.systray.setActionEnabled("a2j_stop", True)
         self.systray.setActionEnabled("a2j_export_hw", False)
@@ -1415,7 +1398,6 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         jackRunning = bool(gDBus.jack and gDBus.jack.IsStarted())
         self.b_a2j_start.setEnabled(jackRunning)
         self.b_a2j_stop.setEnabled(False)
-        self.b_a2j_export_hw.setEnabled(True)
         self.systray.setActionEnabled("a2j_start", jackRunning)
         self.systray.setActionEnabled("a2j_stop", False)
         self.systray.setActionEnabled("a2j_export_hw", True)
@@ -1790,16 +1772,10 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_A2JBridgeExportHW(self):
-        ask = QMessageBox.question(self, self.tr("ALSA MIDI Hardware Export"), self.tr("Enable Hardware Export on the ALSA MIDI Bridge?"), QMessageBox.Yes|QMessageBox.No|QMessageBox.Cancel, QMessageBox.Yes)
-
-        if ask == QMessageBox.Yes:
-            gDBus.a2j.set_hw_export(True)
-        elif ask == QMessageBox.No:
-            gDBus.a2j.set_hw_export(False)
-
-    @pyqtSlot()
-    def slot_A2JBridgeOptions(self):
-        ToolBarA2JDialog(self).exec_()
+        if bool(gDBus.a2j.is_started()):
+            gDBus.a2j.stop()
+        gDBus.a2j.set_hw_export(True)
+        gDBus.a2j.start()
 
     @pyqtSlot()
     def slot_PulseAudioBridgeStart(self):
@@ -2304,6 +2280,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         GlobalSettings.setValue("JACK/AutoStart", self.cb_jack_autostart.isChecked())
         GlobalSettings.setValue("ALSA-Audio/BridgeIndexType", self.cb_alsa_type.currentIndex())
         GlobalSettings.setValue("A2J/AutoStart", self.cb_a2j_autostart.isChecked())
+        GlobalSettings.setValue("A2J/AutoExport", self.cb_a2j_autoexport.isChecked())
         GlobalSettings.setValue("Pulse2JACK/AutoStart", (havePulseAudio and self.cb_pulse_autostart.isChecked()))
 
     def loadSettings(self, geometry):
@@ -2314,6 +2291,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         self.cb_jack_autostart.setChecked(GlobalSettings.value("JACK/AutoStart", wantJackStart, type=bool))
         self.cb_a2j_autostart.setChecked(GlobalSettings.value("A2J/AutoStart", True, type=bool))
+        self.cb_a2j_autoexport.setChecked(GlobalSettings.value("A2J/AutoExport", True, type=bool))
         self.cb_pulse_autostart.setChecked(GlobalSettings.value("Pulse2JACK/AutoStart", havePulseAudio and not usingAlsaLoop, type=bool))
 
     def timerEvent(self, event):

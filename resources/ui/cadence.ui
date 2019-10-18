@@ -785,7 +785,7 @@
                    <item>
                     <widget class="QPushButton" name="b_a2j_export_hw">
                      <property name="text">
-                      <string>Export HW...</string>
+                      <string>Export HW ports and (re)start</string>
                      </property>
                     </widget>
                    </item>
@@ -823,16 +823,16 @@
                     </spacer>
                    </item>
                    <item>
-                    <widget class="QCheckBox" name="cb_a2j_autostart">
+                    <widget class="QCheckBox" name="cb_a2j_autoexport">
                      <property name="text">
-                      <string>Auto-start at login</string>
+                      <string>Export ports on startup</string>
                      </property>
                     </widget>
                    </item>
                    <item>
-                    <widget class="QToolButton" name="tb_a2j_options">
+                    <widget class="QCheckBox" name="cb_a2j_autostart">
                      <property name="text">
-                      <string>...</string>
+                      <string>Start with Jack</string>
                      </property>
                     </widget>
                    </item>
