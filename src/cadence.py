@@ -1085,6 +1085,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             self.systray.connect("alsa_stop", self.slot_AlsaBridgeStop)
             self.systray.connect("a2j_start", self.slot_A2JBridgeStart)
             self.systray.connect("a2j_stop", self.slot_A2JBridgeStop)
+            self.systray.connect("a2j_export_hw", self.slot_A2JBridgeExportHW)
             self.systray.connect("pulse_start", self.slot_PulseAudioBridgeStart)
             self.systray.connect("pulse_stop", self.slot_PulseAudioBridgeStop)
 
@@ -1337,13 +1338,24 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.m_timer500 = self.startTimer(500)
 
         if gDBus.a2j and not gDBus.a2j.is_started():
+            portsExported = bool(gDBus.a2j.get_hw_export())
             if GlobalSettings.value("A2J/AutoStart", True, type=bool):
-                if not gDBus.a2j.get_hw_export() and GlobalSettings.value("A2J/AutoExport", True, type=bool):
+                if not portsExported and GlobalSettings.value("A2J/AutoExport", True, type=bool):
                     gDBus.a2j.set_hw_export(True)
+                    self.systray.setActionEnabled("a2j_start", False)
+                    portsExported = True
                 gDBus.a2j.start()
             else:
                 self.b_a2j_start.setEnabled(True)
+                self.b_a2j_export_hw.setEnabled(True)
                 self.systray.setActionEnabled("a2j_start", True)
+
+            if portsExported:
+                self.b_a2j_export_hw.setText('Ports exported!')
+
+            # It is only needed to export the ports initially, new ones will appear automatically
+            self.b_a2j_export_hw.setEnabled(not portsExported)
+            self.systray.setActionEnabled("a2j_export_hw", not portsExported)
 
         self.checkAlsaAudio()
         self.checkPulseAudio()
@@ -1376,7 +1388,10 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         if gDBus.a2j:
             self.b_a2j_start.setEnabled(False)
+            self.b_a2j_export_hw.setEnabled(False)
             self.systray.setActionEnabled("a2j_start", False)
+            if bool(gDBus.a2j.get_hw_export()):
+                self.b_a2j_export_hw.setText('Ports exported!')
 
         global jackClientIdALSA, jackClientIdPulse
         jackClientIdALSA  = -1
@@ -1391,16 +1406,17 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.b_a2j_stop.setEnabled(True)
         self.systray.setActionEnabled("a2j_start", False)
         self.systray.setActionEnabled("a2j_stop", True)
-        self.systray.setActionEnabled("a2j_export_hw", False)
         self.label_bridge_a2j.setText(self.tr("ALSA MIDI Bridge is running"))
 
     def a2jStopped(self):
         jackRunning = bool(gDBus.jack and gDBus.jack.IsStarted())
+        needExport = bool(not gDBus.a2j.get_hw_export() and jackRunning)
         self.b_a2j_start.setEnabled(jackRunning)
         self.b_a2j_stop.setEnabled(False)
         self.systray.setActionEnabled("a2j_start", jackRunning)
         self.systray.setActionEnabled("a2j_stop", False)
-        self.systray.setActionEnabled("a2j_export_hw", True)
+        self.systray.setActionEnabled("a2j_export_hw", needExport)
+        self.b_a2j_export_hw.setEnabled(needExport)
         self.label_bridge_a2j.setText(self.tr("ALSA MIDI Bridge is stopped"))
 
     def checkAlsaAudio(self):
@@ -1651,6 +1667,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_JackServerStop(self):
+        if gDBus.a2j:
+            gDBus.a2j.stop()
         try:
             gDBus.jack.StopServer()
         except:
@@ -1772,10 +1790,18 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_A2JBridgeExportHW(self):
-        if bool(gDBus.a2j.is_started()):
+        a2jWasStarted = bool(gDBus.a2j.is_started())
+
+        if a2jWasStarted:
             gDBus.a2j.stop()
+
         gDBus.a2j.set_hw_export(True)
-        gDBus.a2j.start()
+        self.b_a2j_export_hw.setText('Ports exported!')
+        self.b_a2j_export_hw.setEnabled(False)
+        self.systray.setActionEnabled("a2j_export_hw", False)
+
+        if a2jWasStarted:
+            gDBus.a2j.start()
 
     @pyqtSlot()
     def slot_PulseAudioBridgeStart(self):
