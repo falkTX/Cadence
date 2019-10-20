@@ -785,7 +785,7 @@
                    <item>
                     <widget class="QPushButton" name="b_a2j_export_hw">
                      <property name="text">
-                      <string>Export HW ports and (re)start</string>
+                      <string>Export HW ports</string>
                      </property>
                     </widget>
                    </item>
