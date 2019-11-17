@@ -783,13 +783,6 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QPushButton" name="b_a2j_export_hw">
-                     <property name="text">
-                      <string>Export HW ports</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
                     <spacer name="horizontalSpacer_8">
                      <property name="orientation">
                       <enum>Qt::Horizontal</enum>
@@ -825,7 +818,7 @@
                    <item>
                     <widget class="QCheckBox" name="cb_a2j_autoexport">
                      <property name="text">
-                      <string>Export ports on startup</string>
+                      <string>Export hardware ports</string>
                      </property>
                     </widget>
                    </item>
