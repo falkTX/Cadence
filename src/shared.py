@@ -144,6 +144,13 @@ else:
     PATH = PATH.split(os.pathsep)
 
 # ------------------------------------------------------------------------------------------------------------
+# Set PATH
+
+LIB_PATH = "lib"
+if os.path.isdir("/usr/lib64"):
+    LIB_PATH = "lib64"
+
+# ------------------------------------------------------------------------------------------------------------
 # Remove/convert non-ascii chars from a string
 
 def asciiString(string):

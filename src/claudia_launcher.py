@@ -20,6 +20,7 @@
 # Imports (Global)
 
 from random import randint
+import os
 
 if True:
     from PyQt5.QtCore import pyqtSlot, Qt, QTimer, QSettings
@@ -119,7 +120,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         self._parent   = None
         self._settings = None
         self.m_ladish_only = False
-
+        self.lib_path = LIB_PATH
         self.listDAW.setColumnWidth(0, 22)
         self.listDAW.setColumnWidth(1, 225)
         self.listDAW.setColumnWidth(2, 150)
@@ -703,6 +704,11 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
                     if installed == "install":
                         pkglist.append(package.strip())
 
+            elif os.path.exists("/bin/rpm"):
+                pkg_out = getoutput("env LANG=C /bin/rpm -qa --qf \"%{NAME}\n\" 2>/dev/null").split("\n")
+                for package in pkg_out:
+                    pkglist.append(package)
+            
             if not "bristol" in pkglist:
                 self.tabWidget.setTabEnabled(iTabBristol, False)
 
@@ -823,11 +829,14 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
                 last_pos += 1
 
-        if haveCarla and os.path.exists("/usr/lib/carla/libcarla_utils.so"):
-            utils = CarlaUtils("/usr/lib/carla/libcarla_utils.so")
+        if haveCarla and os.path.exists("/usr/{}/carla/libcarla_utils.so".format(self.lib_path)):
+            utils = CarlaUtils("/usr/{}/carla/libcarla_utils.so".format(self.lib_path))
             last_pos = 0
-            lv2path = os.getenv("LV2_PATH", "~/.lv2:/usr/lib/lv2:/usr/local/lib/lv2")
-            for i in range(utils.get_cached_plugin_count(PLUGIN_LV2, lv2path)):
+            for i in range(utils.get_cached_plugin_count(PLUGIN_LV2, 
+                os.getenv("LV2_PATH", 
+                    "~/.lv2:"\
+                    "/usr/{lib_path}/lv2:"\
+                    "/usr/local/{lib_path}/lv2".format(lib_path=self.lib_path)))):
                 plugin = utils.get_cached_plugin_info(PLUGIN_LV2, i)
 
                 if (plugin["hints"] & PLUGIN_HAS_CUSTOM_UI) == 0:

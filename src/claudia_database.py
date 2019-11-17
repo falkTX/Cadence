@@ -24,6 +24,8 @@ USING_KXSTUDIO = False
 
 list_DAW = [
   # Package          AppName            Type              Binary              Icon                Template?     Level      (L, D, L, V, VST-Mode,  T, M, MIDI-Mode)      (doc-file,                                                         website)
+  [ "ardour5",       "Ardour 5",        "DAW",            "ardour5",          "ardour",           TEMPLATE_NO,  LEVEL_JS,  (1, 0, 1, 1, "Native",  1, 1, "JACK"),        ("",                                                               "http://www.ardour.org/") ],
+
   [ "ardour4",       "Ardour 4",        "DAW",            "ardour4",          "ardour",           TEMPLATE_NO,  LEVEL_JS,  (1, 0, 1, 1, "Native",  1, 1, "JACK"),        ("",                                                               "http://www.ardour.org/") ],
 
   [ "ariamaestosa",  "Aria Maestosa",   "MIDI Sequencer", "Aria",             "aria",             TEMPLATE_NO,  LEVEL_0,   (0, 0, 0, 0, "",        0, 1, "ALSA | JACK"), ("",                                                               "http://ariamaestosa.sf.net/") ],
