@@ -1667,7 +1667,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_JackServerStop(self):
-        if gDBus.a2j:
+        if gDBus.a2j and bool(gDBus.a2j.is_started()):
             gDBus.a2j.stop()
         try:
             gDBus.jack.StopServer()
