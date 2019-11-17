@@ -31,10 +31,10 @@ OBJS = \
 all: cadence-jackmeter
 
 cadence-jackmeter: $(FILES) $(OBJS)
-	$(CXX) $(OBJS) $(LINK_FLAGS) -ldl -o $@ && $(STRIP) $@
+	$(CXX) $(OBJS) $(LINK_FLAGS) -ldl -o $@
 
 cadence-jackmeter.exe: $(FILES) $(OBJS) icon.o
-	$(CXX) $(OBJS) icon.o $(LINK_FLAGS) -limm32 -lole32 -luuid -lwinspool -lws2_32 -mwindows -o $@ && $(STRIP) $@
+	$(CXX) $(OBJS) icon.o $(LINK_FLAGS) -limm32 -lole32 -luuid -lwinspool -lws2_32 -mwindows -o $@
 
 # --------------------------------------------------------------
 
