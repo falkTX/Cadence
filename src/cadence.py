@@ -1330,7 +1330,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             self.label_jack_realtime_ico.setPixmap(self.pix_cancel)
 
         self.label_jack_dsp.setText("%.2f%%" % self.m_last_dsp_load)
-        self.label_jack_xruns.setText(str(self.m_last_xruns))
+        self.label_jack_xruns.setText(str(int(self.m_last_xruns)))
         self.label_jack_bfsize.setText("%i samples" % self.m_last_buffer_size)
         self.label_jack_srate.setText("%i Hz" % gDBus.jack.GetSampleRate())
         self.label_jack_latency.setText("%.1f ms" % gDBus.jack.GetLatency())
