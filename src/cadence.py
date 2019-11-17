@@ -1310,7 +1310,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     def jackStarted(self):
         self.m_last_dsp_load = gDBus.jack.GetLoad()
-        self.m_last_xruns    = gDBus.jack.GetXruns()
+        self.m_last_xruns    = int(gDBus.jack.GetXruns())
         self.m_last_buffer_size = gDBus.jack.GetBufferSize()
 
         self.b_jack_start.setEnabled(False)
@@ -2324,7 +2324,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         if event.timerId() == self.m_timer500:
             if gDBus.jack and self.m_last_dsp_load != None:
                 next_dsp_load = gDBus.jack.GetLoad()
-                next_xruns    = gDBus.jack.GetXruns()
+                next_xruns    = int(gDBus.jack.GetXruns())
                 needUpdateTip = False
 
                 if self.m_last_dsp_load != next_dsp_load:
