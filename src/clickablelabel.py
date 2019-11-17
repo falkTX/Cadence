@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Clickable Label, a custom Qt4 widget
-# Copyright (C) 2011-2013 Filipe Coelho <falktx@falktx.com>
+# Clickable Label, a custom Qt widget
+# Copyright (C) 2011-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,23 +19,31 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt4.QtCore import pyqtSlot, Qt, QTimer, SIGNAL, SLOT
-from PyQt4.QtGui import QLabel
+if True:
+    from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QTimer
+    from PyQt5.QtWidgets import QLabel
+else:
+    from PyQt4.QtCore import pyqtSignal, pyqtSlot, Qt, QTimer
+    from PyQt4.QtGui import QLabel
 
 # ------------------------------------------------------------------------------------------------------------
 # Widget Class
 
 class ClickableLabel(QLabel):
+    clicked = pyqtSignal()
+
     def __init__(self, parent):
         QLabel.__init__(self, parent)
 
         self.setCursor(Qt.PointingHandCursor)
 
     def mousePressEvent(self, event):
-        self.emit(SIGNAL("clicked()"))
+        self.clicked.emit()
+
         # Use busy cursor for 2 secs
         self.setCursor(Qt.WaitCursor)
-        QTimer.singleShot(2000, self, SLOT("slot_setNormalCursor()"))
+        QTimer.singleShot(2000, self.slot_setNormalCursor)
+
         QLabel.mousePressEvent(self, event)
 
     @pyqtSlot()

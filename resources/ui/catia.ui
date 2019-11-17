@@ -458,7 +458,7 @@
      <x>0</x>
      <y>0</y>
      <width>702</width>
-     <height>19</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -501,7 +501,6 @@
     <addaction name="act_canvas_refresh"/>
     <addaction name="menu_Canvas_Zoom"/>
     <addaction name="separator"/>
-    <addaction name="act_canvas_print"/>
     <addaction name="act_canvas_save_image"/>
    </widget>
    <widget class="QMenu" name="menu_Tools">
@@ -938,15 +937,6 @@
   <action name="act_session_save_as_template">
    <property name="text">
     <string>Save As &amp;Template...</string>
-   </property>
-  </action>
-  <action name="act_canvas_print">
-   <property name="icon">
-    <iconset resource="../resources.qrc">
-     <normaloff>:/16x16/document-print.png</normaloff>:/16x16/document-print.png</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Print...</string>
    </property>
   </action>
   <action name="act_canvas_save_image">

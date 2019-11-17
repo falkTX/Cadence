@@ -8,14 +8,14 @@ PREFIX  = /usr/local
 DESTDIR =
 
 LINK   = ln -s
-PYUIC ?= pyuic4
-PYRCC ?= pyrcc4 -py3
+PYUIC ?= pyuic5
+PYRCC ?= pyrcc5
 
 # Detect X11 rules dir
-ifeq "$(wildcard /etc/X11/xinit/xinitrc.d/ )" ""
-	X11_RC_DIR = $(DESTDIR)/etc/X11/Xsession.d/
-else
+ifeq "$(wildcard /etc/X11/Xsession.d/ )" ""
 	X11_RC_DIR = $(DESTDIR)/etc/X11/xinit/xinitrc.d/
+else
+	X11_RC_DIR = $(DESTDIR)/etc/X11/Xsession.d/
 endif
 
 # -----------------------------------------------------------------------------------------------------------------------------------------
@@ -164,7 +164,7 @@ install:
 	# Install addtional stuff for Cadence
 	install -m 644 data/pulse2jack/*     $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
 	install -m 644 data/pulse2loopback/* $(DESTDIR)$(PREFIX)/share/cadence/pulse2loopback/
-	install -m 644 data/61cadence-session-inject $(X11_RC_DIR)
+	install -m 755 data/61cadence-session-inject $(X11_RC_DIR)
 
 	# Install addtional stuff for Claudia
 	cp -r data/icons/*     $(DESTDIR)$(PREFIX)/share/cadence/icons/

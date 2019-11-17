@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # JACK Settings Dialog
-# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,16 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt4.QtCore import pyqtSlot, Qt, QSettings, QTimer, SIGNAL, SLOT
-from PyQt4.QtGui import QDialog, QDialogButtonBox, QFontMetrics, QMessageBox
 from sys import platform, version_info
+
+if True:
+    from PyQt5.QtCore import pyqtSlot, Qt, QSettings, QTimer
+    from PyQt5.QtGui import QFontMetrics
+    from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QMessageBox
+else:
+    from PyQt4.QtCore import pyqtSlot, Qt, QSettings, QTimer
+    from PyQt4.QtGui import QFontMetrics
+    from PyQt4.QtGui import QDialog, QDialogButtonBox, QMessageBox
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
@@ -196,13 +203,15 @@ class JackSettingsW(QDialog):
         # Align driver text and hide non available ones
 
         driverList = gJackctl.ReadContainer(["drivers"])[1]
+        fontMetris = QFontMetrics(self.ui.obj_server_driver.font())
         maxWidth   = 75
 
         for i in range(self.ui.obj_server_driver.rowCount()):
-            self.ui.obj_server_driver.item(0, i).setTextAlignment(Qt.AlignCenter)
+            item = self.ui.obj_server_driver.item(i, 0)
+            item.setTextAlignment(Qt.AlignCenter)
 
-            itexText  = self.ui.obj_server_driver.item(0, i).text()
-            itemWidth = QFontMetrics(self.ui.obj_server_driver.font()).width(itexText)+25
+            itexText  = item.text()
+            itemWidth = fontMetris.width(itexText)+25
 
             if itemWidth > maxWidth:
                 maxWidth = itemWidth
@@ -216,14 +225,14 @@ class JackSettingsW(QDialog):
         # -------------------------------------------------------------
         # Set-up connections
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_saveJackSettings()"))
-        self.connect(self.ui.buttonBox.button(QDialogButtonBox.Reset), SIGNAL("clicked()"), SLOT("slot_resetJackSettings()"))
+        self.accepted.connect(self.slot_saveJackSettings)
+        self.ui.buttonBox.button(QDialogButtonBox.Reset).clicked.connect(self.slot_resetJackSettings)
 
-        self.connect(self.ui.obj_driver_duplex, SIGNAL("clicked(bool)"), SLOT("slot_checkDuplexSelection(bool)"))
-        self.connect(self.ui.obj_server_driver, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkDriverSelection(int)"))
+        self.ui.obj_driver_duplex.clicked.connect(self.slot_checkDuplexSelection)
+        self.ui.obj_server_driver.currentCellChanged.connect(self.slot_checkDriverSelection)
 
-        self.connect(self.ui.obj_driver_capture, SIGNAL("currentIndexChanged(int)"), SLOT("slot_checkALSASelection()"))
-        self.connect(self.ui.obj_driver_playback, SIGNAL("currentIndexChanged(int)"), SLOT("slot_checkALSASelection()"))
+        self.ui.obj_driver_capture.currentIndexChanged[int].connect(self.slot_checkALSASelection)
+        self.ui.obj_driver_playback.currentIndexChanged[int].connect(self.slot_checkALSASelection)
 
         # -------------------------------------------------------------
         # Load initial settings
@@ -395,28 +404,30 @@ class JackSettingsW(QDialog):
             elif attribute == "alias":
                 self.ui.obj_server_alias.setChecked(bool(value))
             elif attribute == "client-timeout":
-                self.setComboBoxValue(self.ui.obj_server_client_timeout, str(value))
+                self.setComboBoxValue(self.ui.obj_server_client_timeout, str(int(value)))
             elif attribute == "clock-source":
-                value = str(value)
-                if value == "c":
-                    self.ui.obj_server_clock_source_cycle.setChecked(True)
-                elif value == "h":
-                    self.ui.obj_server_clock_source_hpet.setChecked(True)
-                elif value == "s":
-                    self.ui.obj_server_clock_source_system.setChecked(True)
-                else:
-                    self.fBrokenServerClockSource = True
-                    if value == str(JACK_TIMER_SYSTEM_CLOCK):
-                        self.ui.obj_server_clock_source_system.setChecked(True)
-                    elif value == str(JACK_TIMER_CYCLE_COUNTER):
+                if len(str(value)) == 1 :
+                    value = str(value)
+                    if value == "c":
                         self.ui.obj_server_clock_source_cycle.setChecked(True)
-                    elif value == str(JACK_TIMER_HPET):
+                    elif value == "h":
+                        self.ui.obj_server_clock_source_hpet.setChecked(True)
+                    elif value == "s":
+                        self.ui.obj_server_clock_source_system.setChecked(True)
+                else:
+                    value = int(value)
+                    self.fBrokenServerClockSource = True
+                    if value == JACK_TIMER_SYSTEM_CLOCK:
+                        self.ui.obj_server_clock_source_system.setChecked(True)
+                    elif value == JACK_TIMER_CYCLE_COUNTER:
+                        self.ui.obj_server_clock_source_cycle.setChecked(True)
+                    elif value == JACK_TIMER_HPET:
                         self.ui.obj_server_clock_source_hpet.setChecked(True)
                     else:
                         self.ui.obj_server_clock_source.setEnabled(False)
                         print("JackSettingsW::saveServerSettings() - Invalid clock-source value '%s'" % value)
             elif attribute == "port-max":
-                self.setComboBoxValue(self.ui.obj_server_port_max, str(value))
+                self.setComboBoxValue(self.ui.obj_server_port_max, str(int(value)))
             elif attribute == "replace-registry":
                 self.ui.obj_server_replace_registry.setChecked(bool(value))
             elif attribute == "sync":
@@ -618,17 +629,21 @@ class JackSettingsW(QDialog):
             elif attribute == "capture":
                 if self.fDriverName == "firewire":
                     self.ui.obj_driver_capture.setCurrentIndex(1 if bool(value) else 0)
+                elif self.fDriverName == "dummy":
+                    self.setComboBoxValue(self.ui.obj_driver_capture, str(int(value)), True)
                 else:
                     self.setComboBoxValue(self.ui.obj_driver_capture, str(value), True)
             elif attribute == "playback":
                 if self.fDriverName == "firewire":
                     self.ui.obj_driver_playback.setCurrentIndex(1 if bool(value) else 0)
+                elif self.fDriverName == "dummy":
+                    self.setComboBoxValue(self.ui.obj_driver_playback, str(int(value)), True)
                 else:
                     self.setComboBoxValue(self.ui.obj_driver_playback, str(value), True)
             elif attribute == "rate":
-                self.setComboBoxValue(self.ui.obj_driver_rate, str(value))
+                self.setComboBoxValue(self.ui.obj_driver_rate, str(int(value)))
             elif attribute == "period":
-                self.setComboBoxValue(self.ui.obj_driver_period, str(value))
+                self.setComboBoxValue(self.ui.obj_driver_period, str(int(value)))
             elif attribute == "nperiods":
                 self.ui.obj_driver_nperiods.setValue(int(value))
             elif attribute == "hwmon":
@@ -725,8 +740,8 @@ class JackSettingsW(QDialog):
     # -----------------------------------------------------------------
     # Qt SLOT calls
 
-    @pyqtSlot()
-    def slot_checkALSASelection(self):
+    @pyqtSlot(int)
+    def slot_checkALSASelection(self, ignored=0):
         if self.fDriverName == "alsa":
             check = bool(self.ui.obj_driver_duplex.isChecked() and (self.ui.obj_driver_capture.currentIndex() > 0 or self.ui.obj_driver_playback.currentIndex() > 0))
             self.ui.obj_driver_device.setEnabled(not check)
@@ -845,22 +860,22 @@ class JackSettingsW(QDialog):
         self.ui.obj_driver_channels_label.setEnabled(driverHasFeature("channels"))
 
         # Misc stuff
-        if self.ui.obj_server_driver.item(0, row).text() == "ALSA":
+        if self.ui.obj_server_driver.item(row, 0).text() == "ALSA":
             self.ui.toolbox_driver_misc.setCurrentIndex(1)
             self.ui.obj_driver_capture_label.setText(self.tr("Input Device:"))
             self.ui.obj_driver_playback_label.setText(self.tr("Output Device:"))
 
-        elif self.ui.obj_server_driver.item(0, row).text() == "Dummy":
+        elif self.ui.obj_server_driver.item(row, 0).text() == "Dummy":
             self.ui.toolbox_driver_misc.setCurrentIndex(2)
             self.ui.obj_driver_capture_label.setText(self.tr("Input Ports:"))
             self.ui.obj_driver_playback_label.setText(self.tr("Output Ports:"))
 
-        elif self.ui.obj_server_driver.item(0, row).text() == "FireWire":
+        elif self.ui.obj_server_driver.item(row, 0).text() == "FireWire":
             self.ui.toolbox_driver_misc.setCurrentIndex(3)
             self.ui.obj_driver_capture_label.setText(self.tr("Capture Ports:"))
             self.ui.obj_driver_playback_label.setText(self.tr("Playback Ports:"))
 
-        elif self.ui.obj_server_driver.item(0, row).text() == "Loopback":
+        elif self.ui.obj_server_driver.item(row, 0).text() == "Loopback":
             self.ui.toolbox_driver_misc.setCurrentIndex(4)
 
         else:
@@ -892,7 +907,7 @@ class JackSettingsW(QDialog):
 
     def loadSettings(self):
         settings = QSettings("Cadence", "JackSettings")
-        self.restoreGeometry(settings.value("Geometry", ""))
+        self.restoreGeometry(settings.value("Geometry", b""))
         self.ui.tabWidget.setCurrentIndex(settings.value("CurrentTab", 0, type=int))
 
     def closeEvent(self, event):
@@ -910,7 +925,8 @@ if __name__ == '__main__':
     # Additional imports
     import resources_rc
     from sys import argv as sys_argv, exit as sys_exit
-    from PyQt4.QtGui import QApplication, QIcon
+    from PyQt5.QtGui import QIcon
+    from PyQt5.QtWidgets import QApplication
 
     # App initialization
     app = QApplication(sys_argv)

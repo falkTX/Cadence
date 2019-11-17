@@ -38,7 +38,7 @@ list_DAW = [
 
   [ "muse",          "MusE",            "DAW",            "muse",             "muse",             TEMPLATE_YES, LEVEL_0,   (1, 1, 0, 1, "Native",  1, 1, "ALSA + JACK"), ("file:///usr/share/doc/muse/html/window_ref.html",                "http://www.muse-sequencer.org/") ],
 
-  [ "musescore",     "MuseScore",       "MIDI Composer",  "mscore",           "mscore",           TEMPLATE_NO,  LEVEL_0,   (0, 0, 0, 0, "",        0, 1, "ALSA | JACK"), ("file:///usr/share/kxstudio/docs/MuseScore-en.pdf",               "http://www.musescore.org/") ],
+  [ "musescore",     "MuseScore",       "MIDI Composer",  "mscore",           "mscore",           TEMPLATE_NO,  LEVEL_0,   (0, 0, 0, 0, "",        1, 1, "ALSA | JACK"), ("file:///usr/share/kxstudio/docs/MuseScore-en.pdf",               "http://www.musescore.org/") ],
 
   [ "non-sequencer", "Non-Sequencer",   "MIDI Sequencer", "non-sequencer",    "non-sequencer",    TEMPLATE_YES, LEVEL_NSM, (0, 0, 0, 0, "",        1, 1, "JACK"),        ("file:///usr/share/doc/non-sequencer/MANUAL.html",                "http://non.tuxfamily.org/wiki/Non%20Sequencer") ],
   [ "non-timeline",  "Non-Timeline",    "DAW",            "non-timeline",     "non-timeline",     TEMPLATE_YES, LEVEL_NSM, (0, 0, 0, 0, "",        1, 0, "CV + OSC"),    ("file:///usr/share/doc/non-timeline/MANUAL.html",                 "http://non.tuxfamily.org/wiki/Non%20Timeline") ],

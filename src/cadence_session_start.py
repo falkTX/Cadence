@@ -3,7 +3,10 @@
 
 # Imports (Global)
 import dbus, sys
-from PyQt4.QtCore import QCoreApplication
+if True:
+    from PyQt5.QtCore import QCoreApplication
+else:
+    from PyQt4.QtCore import QCoreApplication
 
 # Imports (Custom Stuff)
 from shared_cadence import *
@@ -43,7 +46,7 @@ def forceReset():
 # Start JACK, A2J and Pulse, according to user settings
 def startSession(systemStarted, secondSystemStartAttempt):
     # Check if JACK is set to auto-start
-    if systemStarted and not GlobalSettings.value("JACK/AutoStart", False, type=bool):
+    if systemStarted and not GlobalSettings.value("JACK/AutoStart", wantJackStart, type=bool):
         print("JACK is set to NOT auto-start on login")
         return True
 

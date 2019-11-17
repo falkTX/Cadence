@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Common/Shared code
-# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,14 +23,21 @@ import os
 import sys
 from codecs import open as codecopen
 from unicodedata import normalize
-from PyQt4.QtCore import qWarning, SIGNAL, SLOT
-from PyQt4.QtGui import QApplication, QFileDialog, QIcon, QMessageBox
+
+if True:
+    from PyQt5.QtCore import pyqtSignal, qWarning
+    from PyQt5.QtGui import QIcon
+    from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox
+else:
+    from PyQt4.QtCore import pyqtSignal, qWarning
+    from PyQt4.QtGui import QIcon
+    from PyQt4.QtGui import QApplication, QFileDialog, QMessageBox
 
 # ------------------------------------------------------------------------------------------------------------
 # Set Platform
 
 if sys.platform == "darwin":
-    from PyQt4.QtGui import qt_mac_set_menubar_icons
+    from PyQt5.QtGui import qt_mac_set_menubar_icons
     qt_mac_set_menubar_icons(False)
     HAIKU   = False
     LINUX   = False
@@ -68,9 +75,17 @@ except:
     haveSignal = False
 
 # ------------------------------------------------------------------------------------------------------------
+# Safe exception hook, needed for PyQt5
+
+def sys_excepthook(typ, value, tback):
+    return sys.__excepthook__(typ, value, tback)
+
+sys.excepthook = sys_excepthook
+
+# ------------------------------------------------------------------------------------------------------------
 # Set Version
 
-VERSION = "0.8.1"
+VERSION = "0.9.0"
 
 # ------------------------------------------------------------------------------------------------------------
 # Set Debug mode
@@ -216,8 +231,8 @@ def setUpSignals(self_):
     signal(SIGUSR1, signalHandler)
     signal(SIGUSR2, signalHandler)
 
-    gGui.connect(gGui, SIGNAL("SIGTERM()"), closeWindowHandler)
-    gGui.connect(gGui, SIGNAL("SIGUSR2()"), showWindowHandler)
+    gGui.SIGTERM.connect(closeWindowHandler)
+    gGui.SIGUSR2.connect(showWindowHandler)
 
 def signalHandler(sig, frame):
     global gGui
@@ -226,11 +241,11 @@ def signalHandler(sig, frame):
         return
 
     if sig in (SIGINT, SIGTERM):
-        gGui.emit(SIGNAL("SIGTERM()"))
+        gGui.SIGTERM.emit()
     elif sig == SIGUSR1:
-        gGui.emit(SIGNAL("SIGUSR1()"))
+        gGui.SIGUSR1.emit()
     elif sig == SIGUSR2:
-        gGui.emit(SIGNAL("SIGUSR2()"))
+        gGui.SIGUSR2.emit()
 
 def closeWindowHandler():
     global gGui
@@ -271,7 +286,6 @@ def setIcons(self_, modes):
         gGui.ui.act_canvas_zoom_in.setIcon(getIcon("zoom-in"))
         gGui.ui.act_canvas_zoom_out.setIcon(getIcon("zoom-out"))
         gGui.ui.act_canvas_zoom_100.setIcon(getIcon("zoom-original"))
-        gGui.ui.act_canvas_print.setIcon(getIcon("document-print"))
         gGui.ui.b_canvas_zoom_fit.setIcon(getIcon("zoom-fit-best"))
         gGui.ui.b_canvas_zoom_in.setIcon(getIcon("zoom-in"))
         gGui.ui.b_canvas_zoom_out.setIcon(getIcon("zoom-out"))

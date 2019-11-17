@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Common/Shared code for Cadence
-# Copyright (C) 2012 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2012-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,12 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt4.QtCore import QProcess, QSettings
 from time import sleep
+
+if True:
+    from PyQt5.QtCore import QProcess, QSettings
+else:
+    from PyQt4.QtCore import QProcess, QSettings
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
@@ -67,6 +71,11 @@ iAlsaFileMax   = 4
 # Global Settings
 
 GlobalSettings = QSettings("Cadence", "GlobalSettings")
+
+# ------------------------------------------------------------------------------------------------------------
+# KXStudio Check
+
+wantJackStart = os.path.exists("/usr/share/kxstudio/config/config/Cadence/GlobalSettings.conf")
 
 # ------------------------------------------------------------------------------------------------------------
 # Get Process list
@@ -130,8 +139,9 @@ def tryCloseJackDBus():
 # ------------------------------------------------------------------------------------------------------------
 # Stop all audio processes, used for force-restart
 
-def stopAllAudioProcesses():
-    tryCloseJackDBus()
+def stopAllAudioProcesses(tryCloseJack = True):
+    if tryCloseJack:
+        tryCloseJackDBus()
 
     if not (HAIKU or LINUX or MACOS):
         print("stopAllAudioProcesses() - Not supported in this system")
@@ -140,7 +150,7 @@ def stopAllAudioProcesses():
     process = QProcess()
 
     # Tell pulse2jack script to create files, prevents pulseaudio respawn
-    process.start("cadence-pulse2jack", "--dummy")
+    process.start("cadence-pulse2jack", ["--dummy"])
     process.waitForFinished()
 
     procsTerm = ["a2j", "a2jmidid", "artsd", "jackd", "jackdmp", "knotify4", "lash", "ladishd", "ladiappd", "ladiconfd", "jmcore"]

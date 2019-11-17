@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Common/Shared code related to Canvas and JACK
-# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,14 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt4.QtCore import pyqtSlot, QTimer
-from PyQt4.QtGui import QCursor, QFontMetrics, QImage, QMainWindow, QMenu, QPainter, QPrinter, QPrintDialog
+if True:
+    from PyQt5.QtCore import pyqtSlot, QTimer
+    from PyQt5.QtGui import QCursor, QFontMetrics, QImage, QPainter
+    from PyQt5.QtWidgets import QMainWindow, QMenu
+else:
+    from PyQt4.QtCore import pyqtSlot, QTimer
+    from PyQt4.QtGui import QCursor, QFontMetrics, QImage, QPainter
+    from PyQt4.QtGui import QMainWindow, QMenu
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
@@ -95,6 +101,19 @@ gJack.client = None
 # Abstract Canvas and JACK Class
 
 class AbstractCanvasJackClass(QMainWindow):
+    XRunCallback = pyqtSignal()
+    BufferSizeCallback = pyqtSignal(int)
+    SampleRateCallback = pyqtSignal(int)
+    ClientRenameCallback = pyqtSignal(str, str)
+    PortRegistrationCallback = pyqtSignal(int, bool)
+    PortConnectCallback = pyqtSignal(int, int, bool)
+    PortRenameCallback = pyqtSignal(int, str, str)
+    ShutdownCallback = pyqtSignal()
+
+    SIGTERM = pyqtSignal()
+    SIGUSR1 = pyqtSignal()
+    SIGUSR2 = pyqtSignal()
+
     def __init__(self, appName, UiClass, parent):
         QMainWindow.__init__(self, parent)
 
@@ -478,22 +497,9 @@ class AbstractCanvasJackClass(QMainWindow):
         self.scene.zoom_reset()
 
     @pyqtSlot()
-    def slot_canvasPrint(self):
-        self.scene.clearSelection()
-        self.fExportPrinter = QPrinter()
-        dialog = QPrintDialog(self.fExportPrinter, self)
-
-        if dialog.exec_():
-            painter = QPainter(self.fExportPrinter)
-            painter.save()
-            painter.setRenderHint(QPainter.Antialiasing, True)
-            painter.setRenderHint(QPainter.TextAntialiasing, True)
-            self.scene.render(painter)
-            painter.restore()
-
-    @pyqtSlot()
     def slot_canvasSaveImage(self):
         newPath = QFileDialog.getSaveFileName(self, self.tr("Save Image"), filter=self.tr("PNG Image (*.png);;JPEG Image (*.jpg)"))
+        newPath = newPath[0]
 
         if not newPath:
             return
@@ -523,56 +529,55 @@ class AbstractCanvasJackClass(QMainWindow):
 
     def setCanvasConnections(self):
         self.ui.act_canvas_arrange.setEnabled(False) # TODO, later
-        self.connect(self.ui.act_canvas_arrange, SIGNAL("triggered()"), SLOT("slot_canvasArrange()"))
-        self.connect(self.ui.act_canvas_refresh, SIGNAL("triggered()"), SLOT("slot_canvasRefresh()"))
-        self.connect(self.ui.act_canvas_zoom_fit, SIGNAL("triggered()"), SLOT("slot_canvasZoomFit()"))
-        self.connect(self.ui.act_canvas_zoom_in, SIGNAL("triggered()"), SLOT("slot_canvasZoomIn()"))
-        self.connect(self.ui.act_canvas_zoom_out, SIGNAL("triggered()"), SLOT("slot_canvasZoomOut()"))
-        self.connect(self.ui.act_canvas_zoom_100, SIGNAL("triggered()"), SLOT("slot_canvasZoomReset()"))
-        self.connect(self.ui.act_canvas_print, SIGNAL("triggered()"), SLOT("slot_canvasPrint()"))
-        self.connect(self.ui.act_canvas_save_image, SIGNAL("triggered()"), SLOT("slot_canvasSaveImage()"))
-        self.connect(self.ui.b_canvas_zoom_fit, SIGNAL("clicked()"), SLOT("slot_canvasZoomFit()"))
-        self.connect(self.ui.b_canvas_zoom_in, SIGNAL("clicked()"), SLOT("slot_canvasZoomIn()"))
-        self.connect(self.ui.b_canvas_zoom_out, SIGNAL("clicked()"), SLOT("slot_canvasZoomOut()"))
-        self.connect(self.ui.b_canvas_zoom_100, SIGNAL("clicked()"), SLOT("slot_canvasZoomReset()"))
+        self.ui.act_canvas_arrange.triggered.connect(self.slot_canvasArrange)
+        self.ui.act_canvas_refresh.triggered.connect(self.slot_canvasRefresh)
+        self.ui.act_canvas_zoom_fit.triggered.connect(self.slot_canvasZoomFit)
+        self.ui.act_canvas_zoom_in.triggered.connect(self.slot_canvasZoomIn)
+        self.ui.act_canvas_zoom_out.triggered.connect(self.slot_canvasZoomOut)
+        self.ui.act_canvas_zoom_100.triggered.connect(self.slot_canvasZoomReset)
+        self.ui.act_canvas_save_image.triggered.connect(self.slot_canvasSaveImage)
+        self.ui.b_canvas_zoom_fit.clicked.connect(self.slot_canvasZoomFit)
+        self.ui.b_canvas_zoom_in.clicked.connect(self.slot_canvasZoomIn)
+        self.ui.b_canvas_zoom_out.clicked.connect(self.slot_canvasZoomOut)
+        self.ui.b_canvas_zoom_100.clicked.connect(self.slot_canvasZoomReset)
 
     def setJackConnections(self, modes):
         if "jack" in modes:
-            self.connect(self.ui.act_jack_clear_xruns, SIGNAL("triggered()"), SLOT("slot_JackClearXruns()"))
-            self.connect(self.ui.act_jack_render, SIGNAL("triggered()"), SLOT("slot_showRender()"))
-            self.connect(self.ui.act_jack_configure, SIGNAL("triggered()"), SLOT("slot_showJackSettings()"))
-            self.connect(self.ui.b_jack_clear_xruns, SIGNAL("clicked()"), SLOT("slot_JackClearXruns()"))
-            self.connect(self.ui.b_jack_configure, SIGNAL("clicked()"), SLOT("slot_showJackSettings()"))
-            self.connect(self.ui.b_jack_render, SIGNAL("clicked()"), SLOT("slot_showRender()"))
-            self.connect(self.ui.cb_buffer_size, SIGNAL("currentIndexChanged(QString)"), SLOT("slot_jackBufferSize_ComboBox(QString)"))
-            self.connect(self.ui.cb_sample_rate, SIGNAL("currentIndexChanged(QString)"), SLOT("slot_jackSampleRate_ComboBox(QString)"))
-            self.connect(self.ui.b_xruns, SIGNAL("clicked()"), SLOT("slot_JackClearXruns()"))
+            self.ui.act_jack_clear_xruns.triggered.connect(self.slot_JackClearXruns)
+            self.ui.act_jack_render.triggered.connect(self.slot_showRender)
+            self.ui.act_jack_configure.triggered.connect(self.slot_showJackSettings)
+            self.ui.b_jack_clear_xruns.clicked.connect(self.slot_JackClearXruns)
+            self.ui.b_jack_configure.clicked.connect(self.slot_showJackSettings)
+            self.ui.b_jack_render.clicked.connect(self.slot_showRender)
+            self.ui.cb_buffer_size.currentIndexChanged[str].connect(self.slot_jackBufferSize_ComboBox)
+            self.ui.cb_sample_rate.currentIndexChanged[str].connect(self.slot_jackSampleRate_ComboBox)
+            self.ui.b_xruns.clicked.connect(self.slot_JackClearXruns)
 
         if "buffer-size" in modes:
-            self.connect(self.ui.act_jack_bf_16, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
-            self.connect(self.ui.act_jack_bf_32, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
-            self.connect(self.ui.act_jack_bf_64, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
-            self.connect(self.ui.act_jack_bf_128, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
-            self.connect(self.ui.act_jack_bf_256, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
-            self.connect(self.ui.act_jack_bf_512, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
-            self.connect(self.ui.act_jack_bf_1024, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
-            self.connect(self.ui.act_jack_bf_2048, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
-            self.connect(self.ui.act_jack_bf_4096, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
-            self.connect(self.ui.act_jack_bf_8192, SIGNAL("triggered(bool)"), SLOT("slot_jackBufferSize_Menu(bool)"))
+            self.ui.act_jack_bf_16.triggered.connect(self.slot_jackBufferSize_Menu)
+            self.ui.act_jack_bf_32.triggered.connect(self.slot_jackBufferSize_Menu)
+            self.ui.act_jack_bf_64.triggered.connect(self.slot_jackBufferSize_Menu)
+            self.ui.act_jack_bf_128.triggered.connect(self.slot_jackBufferSize_Menu)
+            self.ui.act_jack_bf_256.triggered.connect(self.slot_jackBufferSize_Menu)
+            self.ui.act_jack_bf_512.triggered.connect(self.slot_jackBufferSize_Menu)
+            self.ui.act_jack_bf_1024.triggered.connect(self.slot_jackBufferSize_Menu)
+            self.ui.act_jack_bf_2048.triggered.connect(self.slot_jackBufferSize_Menu)
+            self.ui.act_jack_bf_4096.triggered.connect(self.slot_jackBufferSize_Menu)
+            self.ui.act_jack_bf_8192.triggered.connect(self.slot_jackBufferSize_Menu)
 
         if "transport" in modes:
-            self.connect(self.ui.act_transport_play, SIGNAL("triggered(bool)"), SLOT("slot_transportPlayPause(bool)"))
-            self.connect(self.ui.act_transport_stop, SIGNAL("triggered()"), SLOT("slot_transportStop()"))
-            self.connect(self.ui.act_transport_backwards, SIGNAL("triggered()"), SLOT("slot_transportBackwards()"))
-            self.connect(self.ui.act_transport_forwards, SIGNAL("triggered()"), SLOT("slot_transportForwards()"))
-            self.connect(self.ui.b_transport_play, SIGNAL("clicked(bool)"), SLOT("slot_transportPlayPause(bool)"))
-            self.connect(self.ui.b_transport_stop, SIGNAL("clicked()"), SLOT("slot_transportStop()"))
-            self.connect(self.ui.b_transport_backwards, SIGNAL("clicked()"), SLOT("slot_transportBackwards()"))
-            self.connect(self.ui.b_transport_forwards, SIGNAL("clicked()"), SLOT("slot_transportForwards()"))
-            self.connect(self.ui.label_time, SIGNAL("customContextMenuRequested(QPoint)"), SLOT("slot_transportViewMenu()"))
+            self.ui.act_transport_play.triggered.connect(self.slot_transportPlayPause)
+            self.ui.act_transport_stop.triggered.connect(self.slot_transportStop)
+            self.ui.act_transport_backwards.triggered.connect(self.slot_transportBackwards)
+            self.ui.act_transport_forwards.triggered.connect(self.slot_transportForwards)
+            self.ui.b_transport_play.clicked.connect(self.slot_transportPlayPause)
+            self.ui.b_transport_stop.clicked.connect(self.slot_transportStop)
+            self.ui.b_transport_backwards.clicked.connect(self.slot_transportBackwards)
+            self.ui.b_transport_forwards.clicked.connect(self.slot_transportForwards)
+            self.ui.label_time.customContextMenuRequested.connect(self.slot_transportViewMenu)
 
         if "misc" in modes:
             if LINUX:
-                self.connect(self.ui.act_show_logs, SIGNAL("triggered()"), SLOT("slot_showLogs()"))
+                self.ui.act_show_logs.triggered.connect(self.slot_showLogs)
             else:
                 self.ui.act_show_logs.setEnabled(False)

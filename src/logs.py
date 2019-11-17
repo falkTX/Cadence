@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # JACK, A2J, LASH and LADISH Logs Viewer
-# Copyright (C) 2011-2013 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2011-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,14 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt4.QtCore import pyqtSlot, Qt, QFile, QIODevice, QMutex, QMutexLocker, QTextStream, QThread, QSettings
-from PyQt4.QtGui import QDialog, QPalette, QSyntaxHighlighter
+if True:
+    from PyQt5.QtCore import pyqtSlot, Qt, QFile, QIODevice, QMutex, QMutexLocker, QTextStream, QThread, QSettings
+    from PyQt5.QtGui import QPalette, QSyntaxHighlighter
+    from PyQt5.QtWidgets import QDialog
+else:
+    from PyQt4.QtCore import pyqtSlot, Qt, QFile, QIODevice, QMutex, QMutexLocker, QTextStream, QThread, QSettings
+    from PyQt4.QtGui import QPalette, QSyntaxHighlighter
+    from PyQt4.QtGui import QDialog
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
@@ -117,6 +123,8 @@ class SyntaxHighlighter_LADISH(QSyntaxHighlighter):
 
 class LogsReadThread(QThread):
     MAX_INITIAL_SIZE = 2*1024*1024 # 2Mb
+
+    updateLogs = pyqtSignal()
 
     def __init__(self, parent):
         QThread.__init__(self, parent)
@@ -236,7 +244,7 @@ class LogsReadThread(QThread):
                     textLADISH = ""
 
                 self.fRealParent.setLogsText(textJACK, textA2J, textLASH, textLADISH)
-                self.emit(SIGNAL("updateLogs()"))
+                self.updateLogs.emit()
 
             if not self.fCloseNow:
                 self.sleep(1)
@@ -278,6 +286,10 @@ class LogsW(QDialog):
 
     if not os.path.exists(LOG_FILE_LADISH):
         LOG_FILE_LADISH = None
+
+    SIGTERM = pyqtSignal()
+    SIGUSR1 = pyqtSignal()
+    SIGUSR2 = pyqtSignal()
 
     def __init__(self, parent):
         QDialog.__init__(self, parent)
@@ -349,8 +361,8 @@ class LogsW(QDialog):
         # -------------------------------------------------------------
         # Set-up connections
 
-        self.connect(self.ui.b_purge, SIGNAL("clicked()"), SLOT("slot_purgeLogs()"))
-        self.connect(self.fReadThread, SIGNAL("updateLogs()"), SLOT("slot_updateLogs()"))
+        self.ui.b_purge.clicked.connect(self.slot_purgeLogs)
+        self.fReadThread.updateLogs.connect(self.slot_updateLogs)
 
         # -------------------------------------------------------------
 
@@ -405,7 +417,7 @@ class LogsW(QDialog):
 
     def loadSettings(self):
         settings = QSettings("Cadence", "Cadence-Logs")
-        self.restoreGeometry(settings.value("Geometry", ""))
+        self.restoreGeometry(settings.value("Geometry", b""))
 
     def saveSettings(self):
         settings = QSettings("Cadence", "Cadence-Logs")
@@ -431,7 +443,7 @@ class LogsW(QDialog):
 
 if __name__ == '__main__':
     # Additional imports
-    from PyQt4.QtGui import QApplication
+    from PyQt5.QtWidgets import QApplication
 
     # App initialization
     app = QApplication(sys.argv)

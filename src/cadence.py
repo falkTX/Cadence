@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Cadence, JACK utilities
-# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,8 +20,13 @@
 # Imports (Global)
 
 from platform import architecture
-from PyQt4.QtCore import QFileSystemWatcher, QThread
-from PyQt4.QtGui import QApplication, QDialogButtonBox, QLabel, QMainWindow, QSizePolicy
+
+if True:
+    from PyQt5.QtCore import QFileSystemWatcher, QThread, QSemaphore
+    from PyQt5.QtWidgets import QApplication, QDialogButtonBox, QLabel, QMainWindow, QSizePolicy
+else:
+    from PyQt4.QtCore import QFileSystemWatcher, QThread, QSemaphore
+    from PyQt4.QtGui import QApplication, QDialogButtonBox, QLabel, QMainWindow, QSizePolicy
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
@@ -38,19 +43,16 @@ from shared_canvasjack import *
 from shared_settings import *
 
 # ------------------------------------------------------------------------------------------------------------
-# Safe import getoutput
+# Import getoutput
 
-if sys.version_info >= (3, 0):
-    from subprocess import getoutput
-else:
-    from commands import getoutput
+from subprocess import getoutput
 
 # ------------------------------------------------------------------------------------------------------------
 # Try Import DBus
 
 try:
     import dbus
-    from dbus.mainloop.qt import DBusQtMainLoop
+    from dbus.mainloop.pyqt5 import DBusQtMainLoop
     haveDBus = True
 except:
     haveDBus = False
@@ -511,6 +513,8 @@ def initSystemChecks():
 
 # Wait while JACK restarts
 class ForceRestartThread(QThread):
+    progressChanged = pyqtSignal(int)
+
     def __init__(self, parent):
         QThread.__init__(self, parent)
 
@@ -519,34 +523,43 @@ class ForceRestartThread(QThread):
     def wasJackStarted(self):
         return self.m_wasStarted
 
+    def startA2J(self):
+        if not gDBus.a2j.get_hw_export() and GlobalSettings.value("A2J/AutoExport", True, type=bool):
+            gDBus.a2j.set_hw_export(True)
+        gDBus.a2j.start()
+
     def run(self):
         # Not started yet
         self.m_wasStarted = False
-        self.emit(SIGNAL("progressChanged(int)"), 0)
+        self.progressChanged.emit(0)
+
+        # Stop JACK safely first, if possible
+        runFunctionInMainThread(tryCloseJackDBus)
+        self.progressChanged.emit(20)
 
         # Kill All
-        stopAllAudioProcesses()
-        self.emit(SIGNAL("progressChanged(int)"), 30)
+        stopAllAudioProcesses(False)
+        self.progressChanged.emit(30)
 
         # Connect to jackdbus
-        self.parent().DBusReconnect()
+        runFunctionInMainThread(self.parent().DBusReconnect)
 
         if not gDBus.jack:
             return
 
         for x in range(30):
-            self.emit(SIGNAL("progressChanged(int)"), 30+x*2)
+            self.progressChanged.emit(30+x*2)
             procsList = getProcList()
             if "jackdbus" in procsList:
                 break
             else:
                 sleep(0.1)
 
-        self.emit(SIGNAL("progressChanged(int)"), 90)
+        self.progressChanged.emit(90)
 
         # Start it
-        gDBus.jack.StartServer()
-        self.emit(SIGNAL("progressChanged(int)"), 93)
+        runFunctionInMainThread(gDBus.jack.StartServer)
+        self.progressChanged.emit(93)
 
         # If we made it this far, then JACK is started
         self.m_wasStarted = True
@@ -558,15 +571,13 @@ class ForceRestartThread(QThread):
             startAlsaAudioLoopBridge()
             sleep(0.5)
 
-        self.emit(SIGNAL("progressChanged(int)"), 94)
+        self.progressChanged.emit(94)
 
         # ALSA-MIDI
-        if GlobalSettings.value("A2J/AutoStart", True, type=bool) and gDBus.a2j and not bool(gDBus.a2j.is_started()):
-            a2jExportHW = GlobalSettings.value("A2J/ExportHW", True, type=bool)
-            gDBus.a2j.set_hw_export(a2jExportHW)
-            gDBus.a2j.start()
+        if GlobalSettings.value("A2J/AutoStart", True, type=bool) and not bool(gDBus.a2j.is_started()):
+            runFunctionInMainThread(self.startA2J)
 
-        self.emit(SIGNAL("progressChanged(int)"), 96)
+        self.progressChanged.emit(96)
 
         # PulseAudio
         if GlobalSettings.value("Pulse2JACK/AutoStart", True, type=bool) and not isPulseAudioBridged():
@@ -575,7 +586,7 @@ class ForceRestartThread(QThread):
             else:
                 os.system("cadence-pulse2jack")
 
-        self.emit(SIGNAL("progressChanged(int)"), 100)
+        self.progressChanged.emit(100)
 
 # Force Restart Dialog
 class ForceWaitDialog(QDialog, ui_cadence_rwait.Ui_Dialog):
@@ -587,8 +598,8 @@ class ForceWaitDialog(QDialog, ui_cadence_rwait.Ui_Dialog):
         self.rThread = ForceRestartThread(self)
         self.rThread.start()
 
-        self.connect(self.rThread, SIGNAL("progressChanged(int)"), self.progressBar, SLOT("setValue(int)"))
-        self.connect(self.rThread, SIGNAL("finished()"), SLOT("slot_rThreadFinished()"))
+        self.rThread.progressChanged.connect(self.progressBar.setValue)
+        self.rThread.finished.connect(self.slot_rThreadFinished)
 
     def DBusReconnect(self):
         self.parent().DBusReconnect()
@@ -627,8 +638,8 @@ class ToolBarJackDialog(QDialog, ui_cadence_tb_jack.Ui_Dialog):
         if self.m_ladishLoaded:
             self.fillStudioNames()
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setOptions()"))
-        self.connect(self.rb_ladish, SIGNAL("clicked()"), SLOT("slot_maybeFillStudioNames()"))
+        self.accepted.connect(self.slot_setOptions)
+        self.rb_ladish.clicked.connect(self.slot_maybeFillStudioNames)
 
     def fillStudioNames(self):
         gDBus.ladish_control = gDBus.bus.get_object("org.ladish", "/org/ladish/Control")
@@ -690,7 +701,7 @@ class ToolBarAlsaAudioDialog(QDialog, ui_cadence_tb_alsa.Ui_Dialog):
             else:
                 self.comboBox.setCurrentIndex(0)
 
-            self.connect(self, SIGNAL("accepted()"), SLOT("slot_setOptions()"))
+            self.accepted.connect(self.slot_setOptions)
 
     @pyqtSlot()
     def slot_setOptions(self):
@@ -706,24 +717,6 @@ class ToolBarAlsaAudioDialog(QDialog, ui_cadence_tb_alsa.Ui_Dialog):
         QDialog.done(self, r)
         self.close()
 
-# Additional ALSA MIDI options
-class ToolBarA2JDialog(QDialog, ui_cadence_tb_a2j.Ui_Dialog):
-    def __init__(self, parent):
-        QDialog.__init__(self, parent)
-        self.setupUi(self)
-
-        self.cb_export_hw.setChecked(GlobalSettings.value("A2J/ExportHW", True, type=bool))
-
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setOptions()"))
-
-    @pyqtSlot()
-    def slot_setOptions(self):
-        GlobalSettings.setValue("A2J/ExportHW", self.cb_export_hw.isChecked())
-
-    def done(self, r):
-        QDialog.done(self, r)
-        self.close()
-
 # Additional PulseAudio options
 class ToolBarPADialog(QDialog, ui_cadence_tb_pa.Ui_Dialog):
     def __init__(self, parent):
@@ -732,7 +725,7 @@ class ToolBarPADialog(QDialog, ui_cadence_tb_pa.Ui_Dialog):
 
         self.cb_playback_only.setChecked(GlobalSettings.value("Pulse2JACK/PlaybackModeOnly", False, type=bool))
 
-        self.connect(self, SIGNAL("accepted()"), SLOT("slot_setOptions()"))
+        self.accepted.connect(self.slot_setOptions)
 
     @pyqtSlot()
     def slot_setOptions(self):
@@ -744,6 +737,17 @@ class ToolBarPADialog(QDialog, ui_cadence_tb_pa.Ui_Dialog):
 
 # Main Window
 class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
+    DBusJackServerStartedCallback = pyqtSignal()
+    DBusJackServerStoppedCallback = pyqtSignal()
+    DBusJackClientAppearedCallback = pyqtSignal(int, str)
+    DBusJackClientDisappearedCallback = pyqtSignal(int)
+    DBusA2JBridgeStartedCallback = pyqtSignal()
+    DBusA2JBridgeStoppedCallback = pyqtSignal()
+
+    SIGTERM = pyqtSignal()
+    SIGUSR1 = pyqtSignal()
+    SIGUSR2 = pyqtSignal()
+
     def __init__(self, parent=None):
         QMainWindow.__init__(self, parent)
         self.setupUi(self)
@@ -797,8 +801,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         if haveFreqSelector and os.path.exists(self.m_availGovPath) and os.path.exists(self.m_curGovPath):
             self.m_govWatcher = QFileSystemWatcher(self)
             self.m_govWatcher.addPath(self.m_curGovPath)
-            self.connect(self.m_govWatcher, SIGNAL("fileChanged(const QString&)"), SLOT("slot_governorFileChanged()"))
-            QTimer.singleShot(0, self, SLOT("slot_governorFileChanged()"))
+            self.m_govWatcher.fileChanged.connect(self.slot_governorFileChanged)
+            QTimer.singleShot(0, self.slot_governorFileChanged)
 
             availGovFd   = open(self.m_availGovPath, "r")
             availGovRead = availGovFd.read().strip()
@@ -887,7 +891,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.frame_tweaks_settings.setVisible(False)
 
         for i in range(self.tw_tweaks.rowCount()):
-            self.tw_tweaks.item(0, i).setTextAlignment(Qt.AlignCenter)
+            self.tw_tweaks.item(i, 0).setTextAlignment(Qt.AlignCenter)
 
         self.tw_tweaks.setCurrentCell(0, 0)
 
@@ -1059,7 +1063,6 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             self.systray.addMenu("a2j", self.tr("ALSA MIDI Bridge"))
             self.systray.addMenuAction("a2j", "a2j_start", self.tr("Start"))
             self.systray.addMenuAction("a2j", "a2j_stop", self.tr("Stop"))
-            self.systray.addMenuAction("a2j", "a2j_export_hw", self.tr("Export Hardware Ports..."))
             self.systray.addMenu("pulse", self.tr("PulseAudio Bridge"))
             self.systray.addMenuAction("pulse", "pulse_start", self.tr("Start"))
             self.systray.addMenuAction("pulse", "pulse_stop", self.tr("Stop"))
@@ -1081,7 +1084,6 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             self.systray.connect("alsa_stop", self.slot_AlsaBridgeStop)
             self.systray.connect("a2j_start", self.slot_A2JBridgeStart)
             self.systray.connect("a2j_stop", self.slot_A2JBridgeStop)
-            self.systray.connect("a2j_export_hw", self.slot_A2JBridgeExportHW)
             self.systray.connect("pulse_start", self.slot_PulseAudioBridgeStart)
             self.systray.connect("pulse_stop", self.slot_PulseAudioBridgeStop)
 
@@ -1097,14 +1099,14 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.systray.addMenuAction("tools", "app_xy-controller", "XY-Controller")
         self.systray.addSeparator("sep2")
 
-        self.systray.connect("app_catarina", lambda tool="catarina": self.func_start_tool(tool))
-        self.systray.connect("app_catia", lambda tool="catia": self.func_start_tool(tool))
-        self.systray.connect("app_claudia", lambda tool="claudia": self.func_start_tool(tool))
-        self.systray.connect("app_logs", lambda tool="cadence-logs": self.func_start_tool(tool))
-        self.systray.connect("app_meter_in", lambda tool="cadence-jackmeter -in": self.func_start_tool(tool))
-        self.systray.connect("app_meter_out", lambda tool="cadence-jackmeter": self.func_start_tool(tool))
-        self.systray.connect("app_render", lambda tool="cadence-render": self.func_start_tool(tool))
-        self.systray.connect("app_xy-controller", lambda tool="cadence-xycontroller": self.func_start_tool(tool))
+        self.systray.connect("app_catarina", self.func_start_catarina)
+        self.systray.connect("app_catia", self.func_start_catia)
+        self.systray.connect("app_claudia", self.func_start_claudia)
+        self.systray.connect("app_logs", self.func_start_logs)
+        self.systray.connect("app_meter_in", self.func_start_jackmeter_in)
+        self.systray.connect("app_meter_out", self.func_start_jackmeter)
+        self.systray.connect("app_render",  self.func_start_render)
+        self.systray.connect("app_xy-controller", self.func_start_xycontroller)
 
         self.systray.setToolTip("Cadence")
         self.systray.show()
@@ -1112,81 +1114,79 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         # -------------------------------------------------------------
         # Set-up connections
 
-        self.connect(self.b_jack_start, SIGNAL("clicked()"), SLOT("slot_JackServerStart()"))
-        self.connect(self.b_jack_stop, SIGNAL("clicked()"), SLOT("slot_JackServerStop()"))
-        self.connect(self.b_jack_restart, SIGNAL("clicked()"), SLOT("slot_JackServerForceRestart()"))
-        self.connect(self.b_jack_configure, SIGNAL("clicked()"), SLOT("slot_JackServerConfigure()"))
-        self.connect(self.b_jack_switchmaster, SIGNAL("clicked()"), SLOT("slot_JackServerSwitchMaster()"))
-        self.connect(self.tb_jack_options, SIGNAL("clicked()"), SLOT("slot_JackOptions()"))
+        self.b_jack_start.clicked.connect(self.slot_JackServerStart)
+        self.b_jack_stop.clicked.connect(self.slot_JackServerStop)
+        self.b_jack_restart.clicked.connect(self.slot_JackServerForceRestart)
+        self.b_jack_configure.clicked.connect(self.slot_JackServerConfigure)
+        self.b_jack_switchmaster.clicked.connect(self.slot_JackServerSwitchMaster)
+        self.tb_jack_options.clicked.connect(self.slot_JackOptions)
 
-        self.connect(self.b_alsa_start, SIGNAL("clicked()"), SLOT("slot_AlsaBridgeStart()"))
-        self.connect(self.b_alsa_stop, SIGNAL("clicked()"), SLOT("slot_AlsaBridgeStop()"))
-        self.connect(self.cb_alsa_type, SIGNAL("currentIndexChanged(int)"), SLOT("slot_AlsaBridgeChanged(int)"))
-        self.connect(self.tb_alsa_options, SIGNAL("clicked()"), SLOT("slot_AlsaAudioBridgeOptions()"))
+        self.b_alsa_start.clicked.connect(self.slot_AlsaBridgeStart)
+        self.b_alsa_stop.clicked.connect(self.slot_AlsaBridgeStop)
+        self.cb_alsa_type.currentIndexChanged[int].connect(self.slot_AlsaBridgeChanged)
+        self.tb_alsa_options.clicked.connect(self.slot_AlsaAudioBridgeOptions)
 
-        self.connect(self.b_a2j_start, SIGNAL("clicked()"), SLOT("slot_A2JBridgeStart()"))
-        self.connect(self.b_a2j_stop, SIGNAL("clicked()"), SLOT("slot_A2JBridgeStop()"))
-        self.connect(self.b_a2j_export_hw, SIGNAL("clicked()"), SLOT("slot_A2JBridgeExportHW()"))
-        self.connect(self.tb_a2j_options, SIGNAL("clicked()"), SLOT("slot_A2JBridgeOptions()"))
+        self.b_a2j_start.clicked.connect(self.slot_A2JBridgeStart)
+        self.b_a2j_stop.clicked.connect(self.slot_A2JBridgeStop)
+        self.b_pulse_start.clicked.connect(self.slot_PulseAudioBridgeStart)
+        self.b_pulse_stop.clicked.connect(self.slot_PulseAudioBridgeStop)
+        self.tb_pulse_options.clicked.connect(self.slot_PulseAudioBridgeOptions)
 
-        self.connect(self.b_pulse_start, SIGNAL("clicked()"), SLOT("slot_PulseAudioBridgeStart()"))
-        self.connect(self.b_pulse_stop, SIGNAL("clicked()"), SLOT("slot_PulseAudioBridgeStop()"))
-        self.connect(self.tb_pulse_options, SIGNAL("clicked()"), SLOT("slot_PulseAudioBridgeOptions()"))
+        self.pic_catia.clicked.connect(self.func_start_catia)
+        self.pic_claudia.clicked.connect(self.func_start_claudia)
+        self.pic_meter_in.clicked.connect(self.func_start_jackmeter_in)
+        self.pic_meter_out.clicked.connect(self.func_start_jackmeter)
+        self.pic_logs.clicked.connect(self.func_start_logs)
+        self.pic_render.clicked.connect(self.func_start_render)
+        self.pic_xycontroller.clicked.connect(self.func_start_xycontroller)
 
-        self.connect(self.pic_catia, SIGNAL("clicked()"), lambda tool="catia": self.func_start_tool(tool))
-        self.connect(self.pic_claudia, SIGNAL("clicked()"), lambda tool="claudia": self.func_start_tool(tool))
-        self.connect(self.pic_meter_in, SIGNAL("clicked()"), lambda tool="cadence-jackmeter -in": self.func_start_tool(tool))
-        self.connect(self.pic_meter_out, SIGNAL("clicked()"), lambda tool="cadence-jackmeter": self.func_start_tool(tool))
-        self.connect(self.pic_logs, SIGNAL("clicked()"), lambda tool="cadence-logs": self.func_start_tool(tool))
-        self.connect(self.pic_render, SIGNAL("clicked()"), lambda tool="cadence-render": self.func_start_tool(tool))
-        self.connect(self.pic_xycontroller, SIGNAL("clicked()"), lambda tool="cadence-xycontroller": self.func_start_tool(tool))
+        self.b_tweaks_apply_now.clicked.connect(self.slot_tweaksApply)
 
-        self.connect(self.b_tweaks_apply_now, SIGNAL("clicked()"), SLOT("slot_tweaksApply()"))
+        self.b_tweak_plugins_add.clicked.connect(self.slot_tweakPluginAdd)
+        self.b_tweak_plugins_change.clicked.connect(self.slot_tweakPluginChange)
+        self.b_tweak_plugins_remove.clicked.connect(self.slot_tweakPluginRemove)
+        self.b_tweak_plugins_reset.clicked.connect(self.slot_tweakPluginReset)
+        self.tb_tweak_plugins.currentChanged.connect(self.slot_tweakPluginTypeChanged)
+        self.list_LADSPA.currentRowChanged.connect(self.slot_tweakPluginsLadspaRowChanged)
+        self.list_DSSI.currentRowChanged.connect(self.slot_tweakPluginsDssiRowChanged)
+        self.list_LV2.currentRowChanged.connect(self.slot_tweakPluginsLv2RowChanged)
+        self.list_VST.currentRowChanged.connect(self.slot_tweakPluginsVstRowChanged)
 
-        self.connect(self.b_tweak_plugins_add, SIGNAL("clicked()"), SLOT("slot_tweakPluginAdd()"))
-        self.connect(self.b_tweak_plugins_change, SIGNAL("clicked()"), SLOT("slot_tweakPluginChange()"))
-        self.connect(self.b_tweak_plugins_remove, SIGNAL("clicked()"), SLOT("slot_tweakPluginRemove()"))
-        self.connect(self.b_tweak_plugins_reset, SIGNAL("clicked()"), SLOT("slot_tweakPluginReset()"))
-        self.connect(self.tb_tweak_plugins, SIGNAL("currentChanged(int)"), SLOT("slot_tweakPluginTypeChanged(int)"))
-        self.connect(self.list_LADSPA, SIGNAL("currentRowChanged(int)"), SLOT("slot_tweakPluginsLadspaRowChanged(int)"))
-        self.connect(self.list_DSSI, SIGNAL("currentRowChanged(int)"), SLOT("slot_tweakPluginsDssiRowChanged(int)"))
-        self.connect(self.list_LV2, SIGNAL("currentRowChanged(int)"), SLOT("slot_tweakPluginsLv2RowChanged(int)"))
-        self.connect(self.list_VST, SIGNAL("currentRowChanged(int)"), SLOT("slot_tweakPluginsVstRowChanged(int)"))
+        self.ch_app_image.clicked.connect(self.slot_tweaksSettingsChanged_apps)
+        self.cb_app_image.highlighted.connect(self.slot_tweakAppImageHighlighted)
+        self.cb_app_image.currentIndexChanged[int].connect(self.slot_tweakAppImageChanged)
+        self.ch_app_music.clicked.connect(self.slot_tweaksSettingsChanged_apps)
+        self.cb_app_music.highlighted.connect(self.slot_tweakAppMusicHighlighted)
+        self.cb_app_music.currentIndexChanged[int].connect(self.slot_tweakAppMusicChanged)
+        self.ch_app_video.clicked.connect(self.slot_tweaksSettingsChanged_apps)
+        self.cb_app_video.highlighted.connect(self.slot_tweakAppVideoHighlighted)
+        self.cb_app_video.currentIndexChanged[int].connect(self.slot_tweakAppVideoChanged)
+        self.ch_app_text.clicked.connect(self.slot_tweaksSettingsChanged_apps)
+        self.cb_app_text.highlighted.connect(self.slot_tweakAppTextHighlighted)
+        self.cb_app_text.currentIndexChanged[int].connect(self.slot_tweakAppTextChanged)
+        self.ch_app_browser.clicked.connect(self.slot_tweaksSettingsChanged_apps)
+        self.cb_app_browser.highlighted.connect(self.slot_tweakAppBrowserHighlighted)
+        self.cb_app_browser.currentIndexChanged[int].connect(self.slot_tweakAppBrowserChanged)
 
-        self.connect(self.ch_app_image, SIGNAL("clicked()"), SLOT("slot_tweaksSettingsChanged_apps()"))
-        self.connect(self.cb_app_image, SIGNAL("highlighted(int)"), SLOT("slot_tweakAppImageHighlighted(int)"))
-        self.connect(self.cb_app_image, SIGNAL("currentIndexChanged(int)"), SLOT("slot_tweakAppImageChanged(int)"))
-        self.connect(self.ch_app_music, SIGNAL("clicked()"), SLOT("slot_tweaksSettingsChanged_apps()"))
-        self.connect(self.cb_app_music, SIGNAL("highlighted(int)"), SLOT("slot_tweakAppMusicHighlighted(int)"))
-        self.connect(self.cb_app_music, SIGNAL("currentIndexChanged(int)"), SLOT("slot_tweakAppMusicChanged(int)"))
-        self.connect(self.ch_app_video, SIGNAL("clicked()"), SLOT("slot_tweaksSettingsChanged_apps()"))
-        self.connect(self.cb_app_video, SIGNAL("highlighted(int)"), SLOT("slot_tweakAppVideoHighlighted(int)"))
-        self.connect(self.cb_app_video, SIGNAL("currentIndexChanged(int)"), SLOT("slot_tweakAppVideoChanged(int)"))
-        self.connect(self.ch_app_text, SIGNAL("clicked()"), SLOT("slot_tweaksSettingsChanged_apps()"))
-        self.connect(self.cb_app_text, SIGNAL("highlighted(int)"), SLOT("slot_tweakAppTextHighlighted(int)"))
-        self.connect(self.cb_app_text, SIGNAL("currentIndexChanged(int)"), SLOT("slot_tweakAppTextChanged(int)"))
-        self.connect(self.ch_app_browser, SIGNAL("clicked()"), SLOT("slot_tweaksSettingsChanged_apps()"))
-        self.connect(self.cb_app_browser, SIGNAL("highlighted(int)"), SLOT("slot_tweakAppBrowserHighlighted(int)"))
-        self.connect(self.cb_app_browser, SIGNAL("currentIndexChanged(int)"),SLOT("slot_tweakAppBrowserChanged(int)"))
-
-        self.connect(self.sb_wineasio_ins, SIGNAL("valueChanged(int)"), SLOT("slot_tweaksSettingsChanged_wineasio()"))
-        self.connect(self.sb_wineasio_outs, SIGNAL("valueChanged(int)"), SLOT("slot_tweaksSettingsChanged_wineasio()"))
-        self.connect(self.cb_wineasio_hw, SIGNAL("clicked()"), SLOT("slot_tweaksSettingsChanged_wineasio()"))
-        self.connect(self.cb_wineasio_autostart, SIGNAL("clicked()"), SLOT("slot_tweaksSettingsChanged_wineasio()"))
-        self.connect(self.cb_wineasio_fixed_bsize, SIGNAL("clicked()"), SLOT("slot_tweaksSettingsChanged_wineasio()"))
-        self.connect(self.cb_wineasio_bsizes, SIGNAL("currentIndexChanged(int)"), SLOT("slot_tweaksSettingsChanged_wineasio()"))
+        self.sb_wineasio_ins.valueChanged.connect(self.slot_tweaksSettingsChanged_wineasio)
+        self.sb_wineasio_outs.valueChanged.connect(self.slot_tweaksSettingsChanged_wineasio)
+        self.cb_wineasio_hw.clicked.connect(self.slot_tweaksSettingsChanged_wineasio)
+        self.cb_wineasio_autostart.clicked.connect(self.slot_tweaksSettingsChanged_wineasio)
+        self.cb_wineasio_fixed_bsize.clicked.connect(self.slot_tweaksSettingsChanged_wineasio)
+        self.cb_wineasio_bsizes.currentIndexChanged[int].connect(self.slot_tweaksSettingsChanged_wineasio)
 
         # org.jackaudio.JackControl
-        self.connect(self, SIGNAL("DBusJackServerStartedCallback()"), SLOT("slot_DBusJackServerStartedCallback()"))
-        self.connect(self, SIGNAL("DBusJackServerStoppedCallback()"), SLOT("slot_DBusJackServerStoppedCallback()"))
+        self.DBusJackServerStartedCallback.connect(self.slot_DBusJackServerStartedCallback)
+        self.DBusJackServerStoppedCallback.connect(self.slot_DBusJackServerStoppedCallback)
 
         # org.jackaudio.JackPatchbay
-        self.connect(self, SIGNAL("DBusJackClientAppearedCallback(int, QString)"), SLOT("slot_DBusJackClientAppearedCallback(int, QString)"))
-        self.connect(self, SIGNAL("DBusJackClientDisappearedCallback(int)"), SLOT("slot_DBusJackClientDisappearedCallback(int)"))
+        self.DBusJackClientAppearedCallback.connect(self.slot_DBusJackClientAppearedCallback)
+        self.DBusJackClientDisappearedCallback.connect(self.slot_DBusJackClientDisappearedCallback)
 
         # org.gna.home.a2jmidid.control
-        self.connect(self, SIGNAL("DBusA2JBridgeStartedCallback()"), SLOT("slot_DBusA2JBridgeStartedCallback()"))
-        self.connect(self, SIGNAL("DBusA2JBridgeStoppedCallback()"), SLOT("slot_DBusA2JBridgeStoppedCallback()"))
+        self.DBusA2JBridgeStartedCallback.connect(self.slot_DBusA2JBridgeStartedCallback)
+        self.DBusA2JBridgeStoppedCallback.connect(self.slot_DBusA2JBridgeStoppedCallback)
+        self.cb_a2j_autoexport.stateChanged[int].connect(self.slot_A2JBridgeExportHW)
 
         # -------------------------------------------------------------
 
@@ -1267,6 +1267,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         else:
             self.toolBox_alsamidi.setEnabled(False)
             self.cb_a2j_autostart.setChecked(False)
+            self.cb_a2j_autoexport.setChecked(False)
             self.label_bridge_a2j.setText("ALSA MIDI Bridge is not installed")
             self.settings.setValue("A2J/AutoStart", False)
 
@@ -1279,35 +1280,35 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
             if not newId:
                 # Something crashed
                 if appInterface == "org.jackaudio.service":
-                    QTimer.singleShot(0, self, SLOT("slot_handleCrash_jack()"))
+                    QTimer.singleShot(0, self.slot_handleCrash_jack)
                 elif appInterface == "org.gna.home.a2jmidid":
-                    QTimer.singleShot(0, self, SLOT("slot_handleCrash_a2j()"))
+                    QTimer.singleShot(0, self.slot_handleCrash_a2j)
 
         elif kwds['interface'] == "org.jackaudio.JackControl":
             if DEBUG: print("org.jackaudio.JackControl", kwds['member'])
             if kwds['member'] == "ServerStarted":
-                self.emit(SIGNAL("DBusJackServerStartedCallback()"))
+                self.DBusJackServerStartedCallback.emit()
             elif kwds['member'] == "ServerStopped":
-                self.emit(SIGNAL("DBusJackServerStoppedCallback()"))
+                self.DBusJackServerStoppedCallback.emit()
 
         elif kwds['interface'] == "org.jackaudio.JackPatchbay":
             if gDBus.patchbay and kwds['path'] == gDBus.patchbay.object_path:
                 if DEBUG: print("org.jackaudio.JackPatchbay,", kwds['member'])
                 if kwds['member'] == "ClientAppeared":
-                    self.emit(SIGNAL("DBusJackClientAppearedCallback(int, QString)"), args[iJackClientId], args[iJackClientName])
+                    self.DBusJackClientAppearedCallback.emit(args[iJackClientId], args[iJackClientName])
                 elif kwds['member'] == "ClientDisappeared":
-                    self.emit(SIGNAL("DBusJackClientDisappearedCallback(int)"), args[iJackClientId])
+                    self.DBusJackClientDisappearedCallback.emit(args[iJackClientId])
 
         elif kwds['interface'] == "org.gna.home.a2jmidid.control":
             if DEBUG: print("org.gna.home.a2jmidid.control", kwds['member'])
             if kwds['member'] == "bridge_started":
-                self.emit(SIGNAL("DBusA2JBridgeStartedCallback()"))
+                self.DBusA2JBridgeStartedCallback.emit()
             elif kwds['member'] == "bridge_stopped":
-                self.emit(SIGNAL("DBusA2JBridgeStoppedCallback()"))
+                self.DBusA2JBridgeStoppedCallback.emit()
 
     def jackStarted(self):
         self.m_last_dsp_load = gDBus.jack.GetLoad()
-        self.m_last_xruns    = gDBus.jack.GetXruns()
+        self.m_last_xruns    = int(gDBus.jack.GetXruns())
         self.m_last_buffer_size = gDBus.jack.GetBufferSize()
 
         self.b_jack_start.setEnabled(False)
@@ -1335,8 +1336,15 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.m_timer500 = self.startTimer(500)
 
         if gDBus.a2j and not gDBus.a2j.is_started():
-            self.b_a2j_start.setEnabled(True)
-            self.systray.setActionEnabled("a2j_start", True)
+            portsExported = bool(gDBus.a2j.get_hw_export())
+            if GlobalSettings.value("A2J/AutoStart", True, type=bool):
+                if not portsExported and GlobalSettings.value("A2J/AutoExport", True, type=bool):
+                    gDBus.a2j.set_hw_export(True)
+                    portsExported = True
+                gDBus.a2j.start()
+            else:
+                self.b_a2j_start.setEnabled(True)
+                self.systray.setActionEnabled("a2j_start", True)
 
         self.checkAlsaAudio()
         self.checkPulseAudio()
@@ -1382,20 +1390,19 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
     def a2jStarted(self):
         self.b_a2j_start.setEnabled(False)
         self.b_a2j_stop.setEnabled(True)
-        self.b_a2j_export_hw.setEnabled(False)
         self.systray.setActionEnabled("a2j_start", False)
         self.systray.setActionEnabled("a2j_stop", True)
-        self.systray.setActionEnabled("a2j_export_hw", False)
-        self.label_bridge_a2j.setText(self.tr("ALSA MIDI Bridge is running"))
+        if bool(gDBus.a2j.get_hw_export()):
+            self.label_bridge_a2j.setText(self.tr("ALSA MIDI Bridge is running, ports are exported"))
+        else :
+            self.label_bridge_a2j.setText(self.tr("ALSA MIDI Bridge is running"))
 
     def a2jStopped(self):
         jackRunning = bool(gDBus.jack and gDBus.jack.IsStarted())
         self.b_a2j_start.setEnabled(jackRunning)
         self.b_a2j_stop.setEnabled(False)
-        self.b_a2j_export_hw.setEnabled(True)
         self.systray.setActionEnabled("a2j_start", jackRunning)
         self.systray.setActionEnabled("a2j_stop", False)
-        self.systray.setActionEnabled("a2j_export_hw", True)
         self.label_bridge_a2j.setText(self.tr("ALSA MIDI Bridge is stopped"))
 
     def checkAlsaAudio(self):
@@ -1511,24 +1518,54 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.label_app_comment.setText(comment)
 
     def updateSystrayTooltip(self):
-        systrayText  = "<table>"
-        #systrayText += "<tr><td align='center' colspan='2'><h4>Cadence</h4></td></tr>"
-        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("JACK Status"), self.label_jack_status.text())
-        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Realtime"), self.label_jack_realtime.text())
-        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("DSP Load"), self.label_jack_dsp.text())
-        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Xruns"), self.label_jack_xruns.text())
-        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Buffer Size"), self.label_jack_bfsize.text())
-        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Sample Rate"), self.label_jack_srate.text())
-        systrayText += "<tr><td align='right'>%s:</td><td>%s</td></tr>" % (self.tr("Block Latency"), self.label_jack_latency.text())
-        systrayText += "</table>"
+        systrayText  = "Cadence<br/>"
+        systrayText += "<font size=\"-1\">"
+        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("JACK Status"), self.label_jack_status.text())
+        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("Realtime"), self.label_jack_realtime.text())
+        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("DSP Load"), self.label_jack_dsp.text())
+        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("Xruns"), self.label_jack_xruns.text())
+        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("Buffer Size"), self.label_jack_bfsize.text())
+        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("Sample Rate"), self.label_jack_srate.text())
+        systrayText += "<b>%s:</b>&nbsp;%s" % (self.tr("Block Latency"), self.label_jack_latency.text())
+        systrayText += "</font><font size=\"-2\"><br/></font>"
 
         self.systray.setToolTip(systrayText)
 
+    @pyqtSlot()
+    def func_start_catarina(self):
+        self.func_start_tool("catarina")
+
+    @pyqtSlot()
+    def func_start_catia(self):
+        self.func_start_tool("catia")
+
+    @pyqtSlot()
+    def func_start_claudia(self):
+        self.func_start_tool("claudia")
+
+    @pyqtSlot()
+    def func_start_logs(self):
+        self.func_start_tool("cadence-logs")
+
+    @pyqtSlot()
+    def func_start_jackmeter(self):
+        self.func_start_tool("cadence-jackmeter")
+
+    @pyqtSlot()
+    def func_start_jackmeter_in(self):
+        self.func_start_tool("cadence-jackmeter -in")
+
+    @pyqtSlot()
+    def func_start_render(self):
+        self.func_start_tool("cadence-render")
+
+    @pyqtSlot()
+    def func_start_xycontroller(self):
+        self.func_start_tool("cadence-xycontroller")
+
     def func_start_tool(self, tool):
         if sys.argv[0].endswith(".py"):
-            if tool == "cadence-jacksettings":
-                tool = "jacksettings"
-            elif tool == "cadence-logs":
+            if tool == "cadence-logs":
                 tool = "logs"
             elif tool == "cadence-render":
                 tool = "render"
@@ -1616,6 +1653,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_JackServerStop(self):
+        if gDBus.a2j and bool(gDBus.a2j.is_started()):
+            gDBus.a2j.stop()
         try:
             gDBus.jack.StopServer()
         except:
@@ -1735,18 +1774,17 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
     def slot_A2JBridgeStop(self):
         gDBus.a2j.stop()
 
-    @pyqtSlot()
-    def slot_A2JBridgeExportHW(self):
-        ask = QMessageBox.question(self, self.tr("ALSA MIDI Hardware Export"), self.tr("Enable Hardware Export on the ALSA MIDI Bridge?"), QMessageBox.Yes|QMessageBox.No|QMessageBox.Cancel, QMessageBox.Yes)
+    @pyqtSlot(int)
+    def slot_A2JBridgeExportHW(self, state):
+        a2jWasStarted = bool(gDBus.a2j.is_started())
 
-        if ask == QMessageBox.Yes:
-            gDBus.a2j.set_hw_export(True)
-        elif ask == QMessageBox.No:
-            gDBus.a2j.set_hw_export(False)
+        if a2jWasStarted:
+            gDBus.a2j.stop()
 
-    @pyqtSlot()
-    def slot_A2JBridgeOptions(self):
-        ToolBarA2JDialog(self).exec_()
+        gDBus.a2j.set_hw_export(bool(state))
+
+        if a2jWasStarted:
+            gDBus.a2j.start()
 
     @pyqtSlot()
     def slot_PulseAudioBridgeStart(self):
@@ -1789,7 +1827,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
         if self.cb_cpufreq.currentIndex() == -1:
             # First init
-            self.connect(self.cb_cpufreq, SIGNAL("currentIndexChanged(QString)"), SLOT("slot_changeGovernorMode(QString)"))
+            self.cb_cpufreq.currentIndexChanged[str].connect(self.slot_changeGovernorMode)
 
         self.cb_cpufreq.blockSignals(True)
 
@@ -2077,7 +2115,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.setAppDetails(self.cb_app_image.itemText(index))
 
     @pyqtSlot(int)
-    def slot_tweakAppImageChanged(self):
+    def slot_tweakAppImageChanged(self, ignored):
         self.setAppDetails(self.cb_app_image.currentText())
         self.func_settings_changed("apps")
 
@@ -2086,7 +2124,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.setAppDetails(self.cb_app_music.itemText(index))
 
     @pyqtSlot(int)
-    def slot_tweakAppMusicChanged(self):
+    def slot_tweakAppMusicChanged(self, ignored):
         self.setAppDetails(self.cb_app_music.currentText())
         self.func_settings_changed("apps")
 
@@ -2095,7 +2133,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.setAppDetails(self.cb_app_video.itemText(index))
 
     @pyqtSlot(int)
-    def slot_tweakAppVideoChanged(self):
+    def slot_tweakAppVideoChanged(self, ignored):
         self.setAppDetails(self.cb_app_video.currentText())
         self.func_settings_changed("apps")
 
@@ -2104,7 +2142,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.setAppDetails(self.cb_app_text.itemText(index))
 
     @pyqtSlot(int)
-    def slot_tweakAppTextChanged(self):
+    def slot_tweakAppTextChanged(self, ignored):
         self.setAppDetails(self.cb_app_text.currentText())
         self.func_settings_changed("apps")
 
@@ -2113,7 +2151,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.setAppDetails(self.cb_app_browser.itemText(index))
 
     @pyqtSlot(int)
-    def slot_tweakAppBrowserChanged(self):
+    def slot_tweakAppBrowserChanged(self, ignored):
         self.setAppDetails(self.cb_app_browser.currentText())
         self.func_settings_changed("apps")
 
@@ -2251,23 +2289,25 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         GlobalSettings.setValue("JACK/AutoStart", self.cb_jack_autostart.isChecked())
         GlobalSettings.setValue("ALSA-Audio/BridgeIndexType", self.cb_alsa_type.currentIndex())
         GlobalSettings.setValue("A2J/AutoStart", self.cb_a2j_autostart.isChecked())
+        GlobalSettings.setValue("A2J/AutoExport", self.cb_a2j_autoexport.isChecked())
         GlobalSettings.setValue("Pulse2JACK/AutoStart", (havePulseAudio and self.cb_pulse_autostart.isChecked()))
 
     def loadSettings(self, geometry):
         if geometry:
-            self.restoreGeometry(self.settings.value("Geometry", ""))
+            self.restoreGeometry(self.settings.value("Geometry", b""))
 
         usingAlsaLoop = bool(GlobalSettings.value("ALSA-Audio/BridgeIndexType", iAlsaFileNone, type=int) == iAlsaFileLoop)
 
-        self.cb_jack_autostart.setChecked(GlobalSettings.value("JACK/AutoStart", False, type=bool))
+        self.cb_jack_autostart.setChecked(GlobalSettings.value("JACK/AutoStart", wantJackStart, type=bool))
         self.cb_a2j_autostart.setChecked(GlobalSettings.value("A2J/AutoStart", True, type=bool))
+        self.cb_a2j_autoexport.setChecked(GlobalSettings.value("A2J/AutoExport", True, type=bool))
         self.cb_pulse_autostart.setChecked(GlobalSettings.value("Pulse2JACK/AutoStart", havePulseAudio and not usingAlsaLoop, type=bool))
 
     def timerEvent(self, event):
         if event.timerId() == self.m_timer500:
             if gDBus.jack and self.m_last_dsp_load != None:
                 next_dsp_load = gDBus.jack.GetLoad()
-                next_xruns    = gDBus.jack.GetXruns()
+                next_xruns    = int(gDBus.jack.GetXruns())
                 needUpdateTip = False
 
                 if self.m_last_dsp_load != next_dsp_load:
@@ -2300,6 +2340,18 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
     def closeEvent(self, event):
         self.saveSettings()
         self.systray.handleQtCloseEvent(event)
+
+# ------------------------------------------------------------------------------------------------------------
+
+def runFunctionInMainThread(task):
+    waiter = QSemaphore(1)
+
+    def taskInMainThread():
+        task()
+        waiter.release()
+
+    QTimer.singleShot(0, taskInMainThread)
+    waiter.tryAcquire()
 
 #--------------- main ------------------
 if __name__ == '__main__':

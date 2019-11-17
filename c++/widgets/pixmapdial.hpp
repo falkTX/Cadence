@@ -19,7 +19,7 @@
 #define __PIXMAPDIAL_HPP__
 
 #include <QtGui/QPixmap>
-#include <QtGui/QDial>
+#include <QtWidgets/QDial>
 
 class PixmapDial : public QDial
 {

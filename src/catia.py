@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # JACK Patchbay
-# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ from shared_settings import *
 
 try:
     import dbus
-    from dbus.mainloop.qt import DBusQtMainLoop
+    from dbus.mainloop.pyqt5 import DBusQtMainLoop
     haveDBus = True
 except:
     haveDBus = False
@@ -37,7 +37,7 @@ except:
 # Try Import OpenGL
 
 try:
-    from PyQt4.QtOpenGL import QGLWidget
+    from PyQt5.QtOpenGL import QGLWidget
     hasGL = True
 except:
     hasGL = False
@@ -215,26 +215,26 @@ class CatiaMainW(AbstractCanvasJackClass):
         self.setCanvasConnections()
         self.setJackConnections(["jack", "buffer-size", "transport", "misc"])
 
-        self.connect(self.ui.act_tools_jack_start, SIGNAL("triggered()"), SLOT("slot_JackServerStart()"))
-        self.connect(self.ui.act_tools_jack_stop, SIGNAL("triggered()"), SLOT("slot_JackServerStop()"))
-        self.connect(self.ui.act_tools_a2j_start, SIGNAL("triggered()"), SLOT("slot_A2JBridgeStart()"))
-        self.connect(self.ui.act_tools_a2j_stop, SIGNAL("triggered()"), SLOT("slot_A2JBridgeStop()"))
-        self.connect(self.ui.act_tools_a2j_export_hw, SIGNAL("triggered()"), SLOT("slot_A2JBridgeExportHW()"))
+        self.ui.act_tools_jack_start.triggered.connect(self.slot_JackServerStart)
+        self.ui.act_tools_jack_stop.triggered.connect(self.slot_JackServerStop)
+        self.ui.act_tools_a2j_start.triggered.connect(self.slot_A2JBridgeStart)
+        self.ui.act_tools_a2j_stop.triggered.connect(self.slot_A2JBridgeStop)
+        self.ui.act_tools_a2j_export_hw.triggered.connect(self.slot_A2JBridgeExportHW)
 
-        self.connect(self.ui.act_settings_show_alsa, SIGNAL("triggered(bool)"), SLOT("slot_showAlsaMIDI(bool)"))
-        self.connect(self.ui.act_configure, SIGNAL("triggered()"), SLOT("slot_configureCatia()"))
+        self.ui.act_settings_show_alsa.triggered.connect(self.slot_showAlsaMIDI)
+        self.ui.act_configure.triggered.connect(self.slot_configureCatia)
 
-        self.connect(self.ui.act_help_about, SIGNAL("triggered()"), SLOT("slot_aboutCatia()"))
-        self.connect(self.ui.act_help_about_qt, SIGNAL("triggered()"), app, SLOT("aboutQt()"))
+        self.ui.act_help_about.triggered.connect(self.slot_aboutCatia)
+        self.ui.act_help_about_qt.triggered.connect(app.aboutQt)
 
-        self.connect(self, SIGNAL("XRunCallback()"), SLOT("slot_XRunCallback()"))
-        self.connect(self, SIGNAL("BufferSizeCallback(int)"), SLOT("slot_BufferSizeCallback(int)"))
-        self.connect(self, SIGNAL("SampleRateCallback(int)"), SLOT("slot_SampleRateCallback(int)"))
-        self.connect(self, SIGNAL("ClientRenameCallback(QString, QString)"), SLOT("slot_ClientRenameCallback(QString, QString)"))
-        self.connect(self, SIGNAL("PortRegistrationCallback(int, bool)"), SLOT("slot_PortRegistrationCallback(int, bool)"))
-        self.connect(self, SIGNAL("PortConnectCallback(int, int, bool)"), SLOT("slot_PortConnectCallback(int, int, bool)"))
-        self.connect(self, SIGNAL("PortRenameCallback(int, QString, QString)"), SLOT("slot_PortRenameCallback(int, QString, QString)"))
-        self.connect(self, SIGNAL("ShutdownCallback()"), SLOT("slot_ShutdownCallback()"))
+        self.XRunCallback.connect(self.slot_XRunCallback)
+        self.BufferSizeCallback.connect(self.slot_BufferSizeCallback)
+        self.SampleRateCallback.connect(self.slot_SampleRateCallback)
+        self.ClientRenameCallback.connect(self.slot_ClientRenameCallback)
+        self.PortRegistrationCallback.connect(self.slot_PortRegistrationCallback)
+        self.PortConnectCallback.connect(self.slot_PortConnectCallback)
+        self.PortRenameCallback.connect(self.slot_PortRenameCallback)
+        self.ShutdownCallback.connect(self.slot_ShutdownCallback)
 
         # -------------------------------------------------------------
         # Set-up DBus
@@ -1022,9 +1022,9 @@ class CatiaMainW(AbstractCanvasJackClass):
             if not newId:
                 # Something crashed
                 if appInterface == "org.gna.home.a2jmidid":
-                    QTimer.singleShot(0, self, SLOT("slot_handleCrash_a2j()"))
+                    QTimer.singleShot(0, self.slot_handleCrash_a2j)
                 elif appInterface == "org.jackaudio.service":
-                    QTimer.singleShot(0, self, SLOT("slot_handleCrash_jack()"))
+                    QTimer.singleShot(0, self.slot_handleCrash_jack)
 
         elif kwds['interface'] == "org.jackaudio.JackControl":
             if kwds['member'] == "ServerStarted":
@@ -1055,37 +1055,37 @@ class CatiaMainW(AbstractCanvasJackClass):
 
     def JackXRunCallback(self, arg):
         if DEBUG: print("JackXRunCallback()")
-        self.emit(SIGNAL("XRunCallback()"))
+        self.XRunCallback.emit()
         return 0
 
     def JackBufferSizeCallback(self, bufferSize, arg):
         if DEBUG: print("JackBufferSizeCallback(%i)" % bufferSize)
-        self.emit(SIGNAL("BufferSizeCallback(int)"), bufferSize)
+        self.BufferSizeCallback.emit(bufferSize)
         return 0
 
     def JackSampleRateCallback(self, sampleRate, arg):
         if DEBUG: print("JackSampleRateCallback(%i)" % sampleRate)
-        self.emit(SIGNAL("SampleRateCallback(int)"), sampleRate)
+        self.SampleRateCallback.emit(sampleRate)
         return 0
 
     def JackClientRenameCallback(self, oldName, newName, arg):
         if DEBUG: print("JackClientRenameCallback(\"%s\", \"%s\")" % (oldName, newName))
-        self.emit(SIGNAL("ClientRenameCallback(QString, QString)"), str(oldName, encoding="utf-8"), str(newName, encoding="utf-8"))
+        self.ClientRenameCallback.emit(str(oldName, encoding="utf-8"), str(newName, encoding="utf-8"))
         return 0
 
     def JackPortRegistrationCallback(self, portId, registerYesNo, arg):
         if DEBUG: print("JackPortRegistrationCallback(%i, %i)" % (portId, registerYesNo))
-        self.emit(SIGNAL("PortRegistrationCallback(int, bool)"), portId, bool(registerYesNo))
+        self.PortRegistrationCallback.emit(portId, bool(registerYesNo))
         return 0
 
     def JackPortConnectCallback(self, portA, portB, connectYesNo, arg):
         if DEBUG: print("JackPortConnectCallback(%i, %i, %i)" % (portA, portB, connectYesNo))
-        self.emit(SIGNAL("PortConnectCallback(int, int, bool)"), portA, portB, bool(connectYesNo))
+        self.PortConnectCallback.emit(portA, portB, bool(connectYesNo))
         return 0
 
     def JackPortRenameCallback(self, portId, oldName, newName, arg):
         if DEBUG: print("JackPortRenameCallback(%i, \"%s\", \"%s\")" % (portId, oldName, newName))
-        self.emit(SIGNAL("PortRenameCallback(int, QString, QString)"), portId, str(oldName, encoding="utf-8"), str(newName, encoding="utf-8"))
+        self.PortRenameCallback.emit(portId, str(oldName, encoding="utf-8"), str(newName, encoding="utf-8"))
         return 0
 
     def JackSessionCallback(self, event, arg):
@@ -1107,7 +1107,7 @@ class CatiaMainW(AbstractCanvasJackClass):
 
     def JackShutdownCallback(self, arg):
         if DEBUG: print("JackShutdownCallback()")
-        self.emit(SIGNAL("ShutdownCallback()"))
+        self.ShutdownCallback.emit()
         return 0
 
     @pyqtSlot(bool)
@@ -1318,7 +1318,7 @@ class CatiaMainW(AbstractCanvasJackClass):
         QMessageBox.about(self, self.tr("About Catia"), self.tr("<h3>Catia</h3>"
                                                                 "<br>Version %s"
                                                                 "<br>Catia is a nice JACK Patchbay with A2J Bridge integration.<br>"
-                                                                "<br>Copyright (C) 2010-2013 falkTX" % VERSION))
+                                                                "<br>Copyright (C) 2010-2018 falkTX" % VERSION))
 
     def saveSettings(self):
         settings = QSettings()
@@ -1333,7 +1333,7 @@ class CatiaMainW(AbstractCanvasJackClass):
         settings = QSettings()
 
         if geometry:
-            self.restoreGeometry(settings.value("Geometry", ""))
+            self.restoreGeometry(settings.value("Geometry", b""))
 
             showAlsaMidi = settings.value("ShowAlsaMIDI", False, type=bool)
             self.ui.act_settings_show_alsa.setChecked(showAlsaMidi)

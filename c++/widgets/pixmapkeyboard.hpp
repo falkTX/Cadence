@@ -20,7 +20,7 @@
 
 #include <map>
 #include <QtGui/QPixmap>
-#include <QtGui/QWidget>
+#include <QtWidgets/QWidget>
 
 class PixmapKeyboard : public QWidget
 {

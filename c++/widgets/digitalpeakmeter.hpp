@@ -19,7 +19,7 @@
 #define __DIGITALPEAKMETER_HPP__
 
 #include <QtCore/QTimer>
-#include <QtGui/QWidget>
+#include <QtWidgets/QWidget>
 
 class DigitalPeakMeter : public QWidget
 {

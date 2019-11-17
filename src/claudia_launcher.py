@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # ... TODO
-# Copyright (C) 2010-2013 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,14 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt4.QtCore import pyqtSlot, Qt, QTimer, QSettings
-from PyQt4.QtGui import QMainWindow, QTableWidgetItem, QWidget
 from random import randint
+
+if True:
+    from PyQt5.QtCore import pyqtSlot, Qt, QTimer, QSettings
+    from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem, QWidget
+else:
+    from PyQt4.QtCore import pyqtSlot, Qt, QTimer, QSettings
+    from PyQt4.QtGui import QMainWindow, QTableWidgetItem, QWidget
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom)
@@ -150,10 +155,11 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         if not os.path.exists(iconPath):
             os.mkdir(iconPath)
 
-        if os.path.exists(os.path.join(sys.path[0], "..", "icons")):
-            os.system("cp -r '%s' '%s'" % (os.path.join(sys.path[0], "..", "icons", "claudia-hicolor"), iconPath))
-        elif os.path.exists(os.path.join(sys.path[0], "..", "data", "icons")):
-            os.system("cp -r '%s' '%s'" % (os.path.join(sys.path[0], "..", "data", "icons", "claudia-hicolor"), iconPath))
+        syspath = sys.path[0]
+        if os.path.exists(os.path.join(syspath, "..", "icons")):
+            os.system("cp -r '%s' '%s'" % (os.path.join(syspath, "..", "icons", "claudia-hicolor"), iconPath))
+        elif os.path.exists(os.path.join(syspath, "..", "data", "icons")):
+            os.system("cp -r '%s' '%s'" % (os.path.join(syspath, "..", "data", "icons", "claudia-hicolor"), iconPath))
 
         os.system("sed -i 's/X-CURRENT-THEME-X/%s/' '%s'" % (self.m_lastThemeName, os.path.join(iconPath, "claudia-hicolor", "index.theme")))
 
@@ -170,22 +176,22 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
         self.refreshAll()
 
-        self.connect(self.tabWidget, SIGNAL("currentChanged(int)"), SLOT("slot_checkSelectedTab(int)"))
+        self.tabWidget.currentChanged.connect(self.slot_checkSelectedTab)
 
-        self.connect(self.listDAW, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedDAW(int)"))
-        self.connect(self.listHost, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedHost(int)"))
-        self.connect(self.listInstrument, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedInstrument(int)"))
-        self.connect(self.listBristol, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedBristol(int)"))
-        self.connect(self.listPlugin, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedPlugin(int)"))
-        self.connect(self.listEffect, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedEffect(int)"))
-        self.connect(self.listTool, SIGNAL("currentCellChanged(int, int, int, int)"), SLOT("slot_checkSelectedTool(int)"))
-        self.connect(self.listDAW, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
-        self.connect(self.listHost, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
-        self.connect(self.listInstrument, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
-        self.connect(self.listBristol, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
-        self.connect(self.listPlugin, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
-        self.connect(self.listEffect, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
-        self.connect(self.listTool, SIGNAL("cellDoubleClicked(int, int)"), SLOT("slot_doubleClickedList()"))
+        self.listDAW.currentCellChanged.connect(self.slot_checkSelectedDAW)
+        self.listHost.currentCellChanged.connect(self.slot_checkSelectedHost)
+        self.listInstrument.currentCellChanged.connect(self.slot_checkSelectedInstrument)
+        self.listBristol.currentCellChanged.connect(self.slot_checkSelectedBristol)
+        self.listPlugin.currentCellChanged.connect(self.slot_checkSelectedPlugin)
+        self.listEffect.currentCellChanged.connect(self.slot_checkSelectedEffect)
+        self.listTool.currentCellChanged.connect(self.slot_checkSelectedTool)
+        self.listDAW.cellDoubleClicked.connect(self.slot_doubleClickedList)
+        self.listHost.cellDoubleClicked.connect(self.slot_doubleClickedList)
+        self.listInstrument.cellDoubleClicked.connect(self.slot_doubleClickedList)
+        self.listBristol.cellDoubleClicked.connect(self.slot_doubleClickedList)
+        self.listPlugin.cellDoubleClicked.connect(self.slot_doubleClickedList)
+        self.listEffect.cellDoubleClicked.connect(self.slot_doubleClickedList)
+        self.listTool.cellDoubleClicked.connect(self.slot_doubleClickedList)
 
     def getSelectedAppAndBinary(self):
         tabIndex = self.tabWidget.currentIndex()
@@ -208,7 +214,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
         if tabIndex == iTabPlugin:
             plugin = self.listPlugin.item(self.listPlugin.currentRow(), 0).data(Qt.UserRole)
-            return (plugin["name"], "carla-single %s" % plugin["label"])
+            return (plugin["name"], "carla-single lv2 %s" % plugin["label"])
 
         if tabIndex == iTabEffect:
             item = self.listEffect.item(self.listEffect.currentRow(), 0).data(Qt.UserRole)
@@ -270,14 +276,16 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         tmplte_cmd  = ""
         tmplte_lvl  = "0"
 
-        if os.path.exists(os.path.join(sys.path[0], "..", "templates")):
-            tmplte_dir = os.path.join(sys.path[0], "..", "templates")
-        elif os.path.exists(os.path.join(sys.path[0], "..", "data", "templates")):
-            tmplte_dir = os.path.join(sys.path[0], "..", "data", "templates")
+        syspath = sys.path[0]
+        if os.path.exists(os.path.join(syspath, "..", "templates")):
+            tmplte_dir = os.path.join(syspath, "..", "templates")
+        elif os.path.exists(os.path.join(syspath, "..", "data", "templates")):
+            tmplte_dir = os.path.join(syspath, "..", "data", "templates")
         else:
             app = None
             tmplte_cmd = binary
             print("ClaudiaLauncher::createAppTemplate() - Failed to find template dir")
+            return False
 
         if not os.path.exists(proj_folder):
             os.mkdir(proj_folder)
@@ -299,7 +307,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             tmplte_lvl  = "1"
 
         elif binary.startswith("carla-single"):
-            tmplte_cmd = binary
+            tmplte_cmd = binary + " " + proj_folder
             tmplte_lvl = "1"
 
         elif binary == "ardour":
@@ -484,6 +492,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
         else:
             print("ClaudiaLauncher::createAppTemplate(%s) - Failed to parse app name" % app)
+            return False
 
         if tmplte_file is not None:
             os.system('sed -i "s|X_SR_X-CLAUDIA-X_SR_X|%s|" "%s"' % (proj_srate, tmplte_file))
@@ -492,6 +501,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
         appBus = self.callback_getAppBus()
         appBus.RunCustom2(False, tmplte_cmd, app, tmplte_lvl)
+        return True
 
     def parentR(self):
         return self._parent
@@ -816,7 +826,8 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         if haveCarla and os.path.exists("/usr/lib/carla/libcarla_utils.so"):
             utils = CarlaUtils("/usr/lib/carla/libcarla_utils.so")
             last_pos = 0
-            for i in range(utils.get_cached_plugin_count(PLUGIN_LV2, os.getenv("LV2_PATH", "~/.lv2:/usr/lib/lv2:/usr/local/lib/lv2"))):
+            lv2path = os.getenv("LV2_PATH", "~/.lv2:/usr/lib/lv2:/usr/local/lib/lv2")
+            for i in range(utils.get_cached_plugin_count(PLUGIN_LV2, lv2path)):
                 plugin = utils.get_cached_plugin_info(PLUGIN_LV2, i)
 
                 if (plugin["hints"] & PLUGIN_HAS_CUSTOM_UI) == 0:
@@ -1119,7 +1130,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 if __name__ == '__main__':
     import dbus
     from signal import signal, SIG_IGN, SIGUSR1
-    from PyQt4.QtGui import QApplication
+    from PyQt5.QtWidgets import QApplication
     import jacklib, ui_claudia_launcher_app
 
     # DBus connections
@@ -1149,7 +1160,7 @@ if __name__ == '__main__':
             # Check for JACK
             self.jack_client = jacklib.client_open("klaudia", jacklib.JackNoStartServer, None)
             if not self.jack_client:
-                QTimer.singleShot(0, self, SLOT("slot_showJackError()"))
+                QTimer.singleShot(0, self.slot_showJackError)
                 return
 
             # Set-up GUI
@@ -1175,15 +1186,15 @@ if __name__ == '__main__':
                 else:
                     self.slot_enableLADISH(False)
 
-            self.connect(self.b_start, SIGNAL("clicked()"), SLOT("slot_startApp()"))
-            self.connect(self.b_add, SIGNAL("clicked()"), SLOT("slot_addAppToLADISH()"))
-            self.connect(self.b_refresh, SIGNAL("clicked()"), SLOT("slot_refreshStudioList()"))
+            self.b_start.clicked.connect(self.slot_startApp)
+            self.b_add.clicked.connect(self.slot_addAppToLADISH)
+            self.b_refresh.clicked.connect(self.slot_refreshStudioList)
 
-            self.connect(self.co_ladi_room, SIGNAL("currentIndexChanged(int)"), SLOT("slot_checkSelectedRoom(int)"))
-            self.connect(self.groupLADISH, SIGNAL("toggled(bool)"), SLOT("slot_enableLADISH(bool)"))
+            self.co_ladi_room.currentIndexChanged[int].connect(self.slot_checkSelectedRoom)
+            self.groupLADISH.toggled.connect(self.slot_enableLADISH)
 
-            self.connect(self.le_url, SIGNAL("textChanged(QString)"), SLOT("slot_checkFolderUrl(QString)"))
-            self.connect(self.b_open, SIGNAL("clicked()"), SLOT("slot_getAndSetPath()"))
+            self.le_url.textChanged.connect(self.slot_checkFolderUrl)
+            self.b_open.clicked.connect(self.slot_getAndSetPath)
 
         def getIcon(self, icon):
             return self.launcher.getIcon(icon)
@@ -1326,7 +1337,7 @@ if __name__ == '__main__':
             self.launcher.saveSettings()
 
         def loadSettings(self):
-            self.restoreGeometry(self.settings.value("Geometry", ""))
+            self.restoreGeometry(self.settings.value("Geometry", b""))
             self.launcher.loadSettings()
 
         def closeEvent(self, event):

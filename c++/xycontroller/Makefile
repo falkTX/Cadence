@@ -9,8 +9,8 @@ include ../Makefile.mk
 # --------------------------------------------------------------
 
 BUILD_CXX_FLAGS += -I../widgets
-BUILD_CXX_FLAGS += $(shell pkg-config --cflags QtCore QtGui)
-LINK_FLAGS      += $(shell pkg-config --libs QtCore QtGui)
+BUILD_CXX_FLAGS += $(shell pkg-config --cflags Qt5Core Qt5Gui Qt5Widgets)
+LINK_FLAGS      += $(shell pkg-config --libs Qt5Core Qt5Gui Qt5Widgets)
 
 ifeq ($(HAVE_JACKSESSION),true)
 BUILD_CXX_FLAGS += -DHAVE_JACKSESSION

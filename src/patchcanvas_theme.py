@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # PatchBay Canvas Themes
-# Copyright (C) 2010-2012 Filipe Coelho <falktx@falktx.com>
+# Copyright (C) 2010-2018 Filipe Coelho <falktx@falktx.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,12 @@
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Global)
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QColor, QFont, QPen, QPixmap
+if True:
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtGui import QColor, QFont, QPen, QPixmap
+else:
+    from PyQt4.QtCore import Qt
+    from PyQt4.QtGui import QColor, QFont, QPen, QPixmap
 
 # ------------------------------------------------------------------------------------------------------------
 # patchcanvas-theme.cpp
