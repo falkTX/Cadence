@@ -917,6 +917,13 @@
                     </widget>
                    </item>
                    <item>
+                    <widget class="QPushButton" name="b_pulse_channels">
+                     <property name="text">
+                      <string>Channels</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
                     <spacer name="horizontalSpacer_13">
                      <property name="orientation">
                       <enum>Qt::Horizontal</enum>
@@ -953,13 +960,6 @@
                     <widget class="QCheckBox" name="cb_pulse_autostart">
                      <property name="text">
                       <string>Auto-start at login</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QToolButton" name="tb_pulse_options">
-                     <property name="text">
-                      <string>...</string>
                      </property>
                     </widget>
                    </item>
