@@ -48,7 +48,7 @@ def startSession(systemStarted, secondSystemStartAttempt):
     # Check if JACK is set to auto-start
     if systemStarted and not GlobalSettings.value("JACK/AutoStart", wantJackStart, type=bool):
         print("JACK is set to NOT auto-start on login")
-        return True
+        return 0
 
     # Called via autostart desktop file
     if systemStarted and secondSystemStartAttempt:
@@ -61,7 +61,7 @@ def startSession(systemStarted, secondSystemStartAttempt):
 
         # If already started, do nothing
         if started:
-            return True
+            return 0
 
     # Kill all audio processes first
     stopAllAudioProcesses()
@@ -80,7 +80,7 @@ def startSession(systemStarted, secondSystemStartAttempt):
             ladish_control = DBus.bus.get_object("org.ladish", "/org/ladish/Control")
         except:
             startJack()
-            return False
+            return 1
 
         try:
             ladish_conf = DBus.bus.get_object("org.ladish.conf", "/org/ladish/conf")
@@ -120,7 +120,7 @@ def startSession(systemStarted, secondSystemStartAttempt):
 
     if not bool(DBus.jack.IsStarted()):
         print("JACK Failed to Start")
-        return False
+        return 1
 
     # Start bridges according to user settings
 
@@ -143,7 +143,7 @@ def startSession(systemStarted, secondSystemStartAttempt):
             os.system("cadence-pulse2jack")
 
     print("JACK Started Successfully")
-    return True
+    return 0
 
 def startJack():
     if not bool(DBus.jack.IsStarted()):
