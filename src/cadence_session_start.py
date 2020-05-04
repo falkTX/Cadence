@@ -234,9 +234,9 @@ if __name__ == '__main__':
         elif arg == "--reset":
             forceReset()
         elif arg in ("--system-start", "--system-start-desktop"):
-            sys.exit(startSession(True, arg == "--system-start-desktop"))
+            sys.exit(0 if startSession(True, arg == "--system-start-desktop") else 1)
         elif arg in ("-s", "--s", "-start", "--start"):
-            sys.exit(startSession(False, False))
+            sys.exit(0 if startSession(False, False) else 1)
         elif arg in ("-h", "--h", "-help", "--help"):
             printHelp(cmd)
         elif arg in ("-v", "--v", "-version", "--version"):
