@@ -168,7 +168,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
 
         self.clearInfo_DAW()
         self.clearInfo_Host()
-        self.clearInfo_Intrument()
+        self.clearInfo_Instrument()
         self.clearInfo_Bristol()
         self.clearInfo_Plugin()
         self.clearInfo_Effect()
@@ -547,7 +547,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
         self.frame_Host.setEnabled(False)
         self.showDoc_Host("", "")
 
-    def clearInfo_Intrument(self):
+    def clearInfo_Instrument(self):
         self.ico_app_ins.setPixmap(self.getIcon("start-here").pixmap(48, 48))
         self.label_name_ins.setText("App Name")
         self.ico_builtin_fx_ins.setPixmap(self.getIconForYesNo(False).pixmap(16, 16))
@@ -983,7 +983,7 @@ class ClaudiaLauncher(QWidget, ui_claudia_launcher.Ui_ClaudiaLauncherW):
             Docs0 = Docs[0] if (os.path.exists(Docs[0].replace("file://", ""))) else ""
             self.showDoc_Instrument(Docs0, Docs[1])
         else:
-            self.clearInfo_Intrument()
+            self.clearInfo_Instrument()
 
         self.callback_checkGUI(row >= 0)
 

@@ -23,10 +23,10 @@ from platform import architecture
 
 if True:
     from PyQt5.QtCore import QFileSystemWatcher, QThread, QSemaphore
-    from PyQt5.QtWidgets import QApplication, QDialogButtonBox, QLabel, QMainWindow, QSizePolicy
+    from PyQt5.QtWidgets import QApplication, QDialogButtonBox, QLabel, QMainWindow #, QSizePolicy, QTableWidget, QTableWidgetItem, QHeaderView
 else:
     from PyQt4.QtCore import QFileSystemWatcher, QThread, QSemaphore
-    from PyQt4.QtGui import QApplication, QDialogButtonBox, QLabel, QMainWindow, QSizePolicy
+    from PyQt4.QtGui import QApplication, QDialogButtonBox, QLabel, QMainWindow # , QSizePolicy, QTableWidget, QTableWidgetItem, QHeaderView
 
 # ------------------------------------------------------------------------------------------------------------
 # Imports (Custom Stuff)
@@ -982,6 +982,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         if self.cb_app_browser.count() == 0:
             self.ch_app_browser.setEnabled(False)
 
+        self.tableSinkSourceData.load_data_into_cells()
+
         mimeappsPath = os.path.join(HOME, ".local", "share", "applications", "mimeapps.list")
 
         if os.path.exists(mimeappsPath):
@@ -1131,6 +1133,14 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.b_pulse_start.clicked.connect(self.slot_PulseAudioBridgeStart)
         self.b_pulse_stop.clicked.connect(self.slot_PulseAudioBridgeStop)
         self.tb_pulse_options.clicked.connect(self.slot_PulseAudioBridgeOptions)
+
+        self.b_bridge_add.clicked.connect(self.slot_PulseAudioBridgeAdd)
+        self.b_bridge_remove.clicked.connect(self.slot_PulseAudioBridgeRemove)
+        self.b_bridge_undo.clicked.connect(self.slot_PulseAudioBridgeUndo)
+        self.b_bridge_save.clicked.connect(self.slot_PulseAudioBridgeSave)
+        self.b_bridge_defaults.clicked.connect(self.slot_PulseAudioBridgeDefaults)
+        self.tableSinkSourceData.itemChanged.connect(self.slot_PulseAudioBridgeTableChanged)
+        self.tableSinkSourceData.doubleClicked.connect(self.slot_PulseAudioBridgeTableChanged)
 
         self.pic_catia.clicked.connect(self.func_start_catia)
         self.pic_claudia.clicked.connect(self.func_start_claudia)
@@ -1796,6 +1806,41 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
     @pyqtSlot()
     def slot_PulseAudioBridgeStop(self):
         os.system("pulseaudio -k")
+
+    @pyqtSlot()
+    def slot_PulseAudioBridgeTableChanged(self):
+        self.b_bridge_save.setEnabled(True)
+        self.b_bridge_undo.setEnabled(True)
+
+    @pyqtSlot()
+    def slot_PulseAudioBridgeAdd(self):
+        self.tableSinkSourceData.add_row()
+        self.b_bridge_save.setEnabled(True)
+        self.b_bridge_undo.setEnabled(True)
+
+    @pyqtSlot()
+    def slot_PulseAudioBridgeRemove(self):
+        self.tableSinkSourceData.remove_row()
+        self.b_bridge_save.setEnabled(True)
+        self.b_bridge_undo.setEnabled(True)
+
+    @pyqtSlot()
+    def slot_PulseAudioBridgeUndo(self):
+        self.tableSinkSourceData.undo()
+        self.b_bridge_save.setEnabled(False)
+        self.b_bridge_undo.setEnabled(False)
+
+    @pyqtSlot()
+    def slot_PulseAudioBridgeSave(self):
+        self.tableSinkSourceData.save_bridges()
+        self.b_bridge_save.setEnabled(False)
+        self.b_bridge_undo.setEnabled(False)
+
+    @pyqtSlot()
+    def slot_PulseAudioBridgeDefaults(self):
+        self.tableSinkSourceData.defaults()
+        self.b_bridge_save.setEnabled(True)
+        self.b_bridge_undo.setEnabled(True)
 
     @pyqtSlot()
     def slot_PulseAudioBridgeOptions(self):
