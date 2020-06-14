@@ -5,6 +5,7 @@
 #
 
 PREFIX  = /usr/local
+SYSCONFDIR = /etc
 DESTDIR =
 
 LINK   = ln -s
@@ -12,10 +13,10 @@ PYUIC ?= pyuic5
 PYRCC ?= pyrcc5
 
 # Detect X11 rules dir
-ifeq "$(wildcard /etc/X11/Xsession.d/ )" ""
-	X11_RC_DIR = $(DESTDIR)/etc/X11/xinit/xinitrc.d/
+ifeq "$(wildcard $(SYSCONFDIR)/X11/Xsession.d/ )" ""
+	X11_RC_DIR = $(DESTDIR)$(SYSCONFDIR)/X11/xinit/xinitrc.d/
 else
-	X11_RC_DIR = $(DESTDIR)/etc/X11/Xsession.d/
+	X11_RC_DIR = $(DESTDIR)$(SYSCONFDIR)/X11/Xsession.d/
 endif
 
 # -----------------------------------------------------------------------------------------------------------------------------------------
@@ -85,7 +86,7 @@ debug:
 
 install:
 	# Create directories
-	install -d $(DESTDIR)/etc/xdg/autostart/
+	install -d $(DESTDIR)$(SYSCONFDIR)/xdg/autostart/
 	install -d $(DESTDIR)$(PREFIX)/bin/
 	install -d $(DESTDIR)$(PREFIX)/share/applications/
 	install -d $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
@@ -120,7 +121,7 @@ install:
 		$(DESTDIR)$(PREFIX)/bin/
 
 	# Install desktop files
-	install -m 644 data/autostart/*.desktop $(DESTDIR)/etc/xdg/autostart/
+	install -m 644 data/autostart/*.desktop $(DESTDIR)$(SYSCONFDIR)/xdg/autostart/
 	install -m 644 data/*.desktop           $(DESTDIR)$(PREFIX)/share/applications/
 
 	# Install icons, 16x16
@@ -213,7 +214,7 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/catia.svg
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/claudia.svg
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/claudia-launcher.svg
-	rm -f $(DESTDIR)/etc/xdg/autostart/cadence-session-start.desktop
+	rm -f $(DESTDIR)$(SYSCONFDIR)/xdg/autostart/cadence-session-start.desktop
 	rm -f $(X11_RC_DIR)/61cadence-session-inject
 	rm -rf $(DESTDIR)$(PREFIX)/share/cadence/
 
