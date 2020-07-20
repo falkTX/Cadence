@@ -121,8 +121,7 @@ fi
 addDefaultSource $PA_CTLFILE
 addDefaultSink $PA_CTLFILE
 
-IsPulseAudioRunning()
-{
+IsPulseAudioRunning() {
     PROCESS=`ps -u $USER | grep pulseaudio`
     if [ "$PROCESS" == "" ]; then
         false
@@ -132,40 +131,29 @@ IsPulseAudioRunning()
 }
 
 if (IsPulseAudioRunning); then
-{
-
-    if (`jack_lsp | grep "PulseAudio JACK Sink:" > /dev/null`); then
-    {
+    # get the first sink name from the table
+    FIRST_SINK_NAME=$(grep '|sink|' $JACK_CONNFILE | head -1 | cut -d\| -f1)
+    if ($(jack_lsp 2>/dev/null | grep "$FIRST_SINK_NAME" > /dev/null)); then
         echo "PulseAudio is already running and bridged to JACK"
-    }
     else
-    {
         echo "PulseAudio is already running, bridge it..."
 
         if [ "$PLAY_ONLY" == "yes" ]; then
-        {
             loadConnectionsIntoPA "sink"
             pacmd set-default-source jack_in > /dev/null
-        }
         else
-        {
             loadConnectionsIntoPA "source"
             loadConnectionsIntoPA "sink"
             pacmd set-default-sink jack_out > /dev/null
             pacmd set-default-source jack_in > /dev/null
-        }
         fi
 
         echo "Done"
-    }
     fi
-}
 else
-{
-    if (`pulseaudio --daemonize --high-priority --realtime --exit-idle-time=-1 --file=$PA_CTLFILE -n`); then
+    if ($(pulseaudio --daemonize --high-priority --realtime --exit-idle-time=-1 --file=$PA_CTLFILE -n)); then
         echo "Initiated PulseAudio successfully!"
     else
         echo "Failed to initialize PulseAudio!"
     fi
-}
 fi
