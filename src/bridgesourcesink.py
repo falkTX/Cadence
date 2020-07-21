@@ -87,7 +87,18 @@ class BridgeSourceSink(QTableWidget):
 
             # Type
             combo_box = QComboBox()
-            combo_box.addItems(["source", "sink"])
+            
+            microphone_icon = QIcon.fromTheme('audio-input-microphone')
+            if microphone_icon.isNull():
+                microphone_icon = QIcon.fromTheme('microphone')
+                
+            loudspeaker_icon = QIcon.fromTheme('audio-volume-high')
+            if loudspeaker_icon.isNull():
+                loudspeaker_icon = QIcon.fromTheme('player-volume')
+            
+            combo_box.addItem(microphone_icon, "source")
+            combo_box.addItem(loudspeaker_icon, "sink")
+            
             combo_box.setCurrentIndex(0 if data.s_type == "source" else 1)
             combo_box.currentTextChanged.connect(self.enable_buttons)
             self.setCellWidget(row, 1, combo_box)
