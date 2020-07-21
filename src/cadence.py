@@ -1139,7 +1139,7 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.b_bridge_undo.clicked.connect(self.slot_PulseAudioBridgeUndo)
         self.b_bridge_save.clicked.connect(self.slot_PulseAudioBridgeSave)
         self.b_bridge_defaults.clicked.connect(self.slot_PulseAudioBridgeDefaults)
-        self.tableSinkSourceData.itemChanged.connect(self.slot_PulseAudioBridgeTableChanged)
+        self.tableSinkSourceData.customChanged.connect(self.slot_PulseAudioBridgeTableChanged)
         self.tableSinkSourceData.doubleClicked.connect(self.slot_PulseAudioBridgeTableChanged)
 
         self.pic_catia.clicked.connect(self.func_start_catia)
@@ -1236,11 +1236,13 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
                 except:
                     version, groups, conns = (list(), list(), list())
 
+                pa_first_group_name = self.getFirstPulseAudioGroupName()
+
                 for group_id, group_name, ports in groups:
                     if group_name == "alsa2jack":
                         global jackClientIdALSA
                         jackClientIdALSA = group_id
-                    elif group_name == "PulseAudio JACK Sink":
+                    elif group_name in (pa_first_group_name, "PulseAudio JACK Sink"):
                         global jackClientIdPulse
                         jackClientIdPulse = group_id
 
@@ -1414,6 +1416,14 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.systray.setActionEnabled("a2j_start", jackRunning)
         self.systray.setActionEnabled("a2j_stop", False)
         self.label_bridge_a2j.setText(self.tr("ALSA MIDI Bridge is stopped"))
+
+    def getFirstPulseAudioGroupName(self)->str:
+        # search PulseAudio JACK first group in settings
+        pa_bridges_settings = GlobalSettings.value("Pulse2JACK/PABridges", type=list)
+        if pa_bridges_settings:
+            return pa_bridges_settings[0].partition('|')[0]
+
+        return "PulseAudio JACK Sink"
 
     def checkAlsaAudio(self):
         asoundrcFile = os.path.join(HOME, ".asoundrc")
@@ -1626,11 +1636,13 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot(int, str)
     def slot_DBusJackClientAppearedCallback(self, group_id, group_name):
+        pa_first_group_name = self.getFirstPulseAudioGroupName()
+
         if group_name == "alsa2jack":
             global jackClientIdALSA
             jackClientIdALSA = group_id
             self.checkAlsaAudio()
-        elif group_name == "PulseAudio JACK Sink":
+        elif group_name in ("PulseAudio JACK Sink", pa_first_group_name):
             global jackClientIdPulse
             jackClientIdPulse = group_id
             self.checkPulseAudio()
@@ -1809,38 +1821,30 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
 
     @pyqtSlot()
     def slot_PulseAudioBridgeTableChanged(self):
-        self.b_bridge_save.setEnabled(True)
-        self.b_bridge_undo.setEnabled(True)
+        has_changes = self.tableSinkSourceData.hasChanges()
+        has_valid_values = self.tableSinkSourceData.hasValidValues()
+        self.b_bridge_save.setEnabled(has_changes and has_valid_values)
+        self.b_bridge_undo.setEnabled(has_changes)
 
     @pyqtSlot()
     def slot_PulseAudioBridgeAdd(self):
         self.tableSinkSourceData.add_row()
-        self.b_bridge_save.setEnabled(True)
-        self.b_bridge_undo.setEnabled(True)
 
     @pyqtSlot()
     def slot_PulseAudioBridgeRemove(self):
         self.tableSinkSourceData.remove_row()
-        self.b_bridge_save.setEnabled(True)
-        self.b_bridge_undo.setEnabled(True)
 
     @pyqtSlot()
     def slot_PulseAudioBridgeUndo(self):
         self.tableSinkSourceData.undo()
-        self.b_bridge_save.setEnabled(False)
-        self.b_bridge_undo.setEnabled(False)
 
     @pyqtSlot()
     def slot_PulseAudioBridgeSave(self):
         self.tableSinkSourceData.save_bridges()
-        self.b_bridge_save.setEnabled(False)
-        self.b_bridge_undo.setEnabled(False)
 
     @pyqtSlot()
     def slot_PulseAudioBridgeDefaults(self):
         self.tableSinkSourceData.defaults()
-        self.b_bridge_save.setEnabled(True)
-        self.b_bridge_undo.setEnabled(True)
 
     @pyqtSlot()
     def slot_PulseAudioBridgeOptions(self):
