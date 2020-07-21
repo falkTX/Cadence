@@ -23,7 +23,7 @@ from collections import namedtuple
 
 from PyQt5.QtCore import Qt, QRegExp
 from PyQt5.QtGui import QRegExpValidator
-from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QHeaderView, QComboBox, QLineEdit, QSpinBox, QPushButton
+from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QHeaderView, QComboBox, QLineEdit, QSpinBox, QPushButton, QCheckBox, QHBoxLayout, QWidget
 from shared import *
 from shared_cadence import GlobalSettings
 
@@ -100,10 +100,17 @@ class BridgeSourceSink(QTableWidget):
             self.setCellWidget(row, 2, chan_col)
 
             # Auto connect?
-            cb = QTableWidgetItem()
-            cb.setFlags(cb.flags() | Qt.ItemIsUserCheckable)
-            cb.setCheckState(Qt.Checked if data.connected in ['true', 'True', 'TRUE'] else Qt.Unchecked)
-            self.setItem(row, 3, cb)
+            auto_cb = QCheckBox()
+            auto_cb.setObjectName("auto_cb")
+            auto_cb.setCheckState(Qt.Checked if data.connected in ['true', 'True', 'TRUE'] else Qt.Unchecked)
+            auto_cb.stateChanged.connect(self.enable_buttons)
+            widget = QWidget()
+            h_layout = QHBoxLayout(widget)
+            h_layout.addWidget(auto_cb)
+            h_layout.setAlignment(Qt.AlignCenter)
+            h_layout.setContentsMargins(0, 0, 0, 0)
+            widget.setLayout(h_layout)
+            self.setCellWidget(row, 3, widget)
         self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
 
     def enable_buttons(self):
@@ -144,7 +151,8 @@ class BridgeSourceSink(QTableWidget):
             new_name = self.cellWidget(row, 0).property("text")
             new_type = self.cellWidget(row, 1).currentText()
             new_channels = self.cellWidget(row, 2).value()
-            new_conn = self.item(row, 3).checkState() == Qt.Checked
+            auto_cb = self.cellWidget(row, 3).findChild(QCheckBox, "auto_cb")
+            new_conn = auto_cb.checkState() == Qt.Checked
 
             self.bridgeData.append(
                 SSData(name=new_name,
@@ -169,7 +177,7 @@ class BridgeSourceSink(QTableWidget):
         return list(map(lambda d: SSData._make(d.split("|")), data))
 
     def resizeEvent(self, event):
-        self.setColumnWidth(0, int(self.width() * 0.5))
-        self.setColumnWidth(1, int(self.width() * 0.19))
-        self.setColumnWidth(2, int(self.width() * 0.19))
-        self.setColumnWidth(3, int(self.width() * 0.12))
+        self.setColumnWidth(0, int(self.width() * 0.49))
+        self.setColumnWidth(1, int(self.width() * 0.17))
+        self.setColumnWidth(2, int(self.width() * 0.17))
+        self.setColumnWidth(3, int(self.width() * 0.17))
