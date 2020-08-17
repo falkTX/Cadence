@@ -1349,6 +1349,10 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.checkAlsaAudio()
         self.checkPulseAudio()
 
+        if GlobalSettings.value("JACKNETMANAGER/AutoStart"):
+            print("loadinternal")
+            gDBus.jack.LoadInternal("netmanager")
+
     def jackStopped(self):
         if self.m_timer500:
             self.killTimer(self.m_timer500)
@@ -1649,7 +1653,8 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         try:
             gDBus.jack.StartServer()
         except:
-            QMessageBox.warning(self, self.tr("Warning"), self.tr("Failed to start JACK, please check the logs for more information."))
+            pass
+            #QMessageBox.warning(self, self.tr("Warning"), self.tr("Failed to start JACK, please check the logs for more information."))
 
     @pyqtSlot()
     def slot_JackServerStop(self):
@@ -2364,7 +2369,7 @@ if __name__ == '__main__':
 
     if haveDBus:
         gDBus.loop = DBusQtMainLoop(set_as_default=True)
-        gDBus.bus  = dbus.SessionBus(mainloop=gDBus.loop)
+        gDBus.bus = dbus.SessionBus(mainloop=gDBus.loop)
 
     initSystemChecks()
 

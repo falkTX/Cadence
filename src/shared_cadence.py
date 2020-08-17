@@ -20,6 +20,7 @@
 # Imports (Global)
 
 from time import sleep
+import dbus
 
 if True:
     from PyQt5.QtCore import QProcess, QSettings
@@ -164,3 +165,47 @@ def stopAllAudioProcesses(tryCloseJack = True):
     process.start("killall", ["-KILL"] + procsKill)
     process.waitForFinished()
     waitProcsEnd(procsKill, tries)
+
+
+def bool_convert(str_value):
+    if str_value.lower() == "false":
+        return False
+
+    if str_value.lower() == "off":
+        return False
+
+    if str_value.lower() == "no":
+        return False
+
+    if str_value == "0":
+        return False
+
+    if str_value.lower() == "(null)":
+        return False
+
+    return bool(str_value)
+
+
+def dbus_type_to_python_type(dbus_value):
+    if type(dbus_value) == dbus.Boolean:
+        return bool(dbus_value)
+    if type(dbus_value) == dbus.Int32 or type(dbus_value) == dbus.UInt32:
+        return int(dbus_value)
+    return dbus_value
+
+
+def python_type_to_jackdbus_type(value, type_char):
+    type_char = str(type_char)
+
+    if type_char == "b":
+        return bool_convert(value)
+    elif type_char == "y":
+        return dbus.Byte(value)
+    elif type_char == "i":
+        return dbus.Int32(value)
+    elif type_char == "u":
+        return dbus.UInt32(value)
+    elif type_char == "s":
+        return dbus.String(value)
+
+    return value
