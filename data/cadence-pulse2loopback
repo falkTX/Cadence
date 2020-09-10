@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Script to bridge/start pulseaudio into loopback mode
 
 INSTALL_PREFIX="X-PREFIX-X"
@@ -12,7 +12,7 @@ fi
 if [ ! -f ~/.pulse/client.conf ]; then
     echo "autospawn = no" > ~/.pulse/client.conf
 else
-    if (! cat ~/.pulse/client.conf | grep "autospawn = no" > /dev/null); then
+    if ! grep "autospawn = no" < ~/.pulse/client.conf > /dev/null; then
         sed -i '/autospawn =/d' ~/.pulse/client.conf
         echo "autospawn = no" >> ~/.pulse/client.conf
     fi
@@ -24,19 +24,19 @@ if [ ! -f ~/.pulse/daemon.conf ]; then
     echo "rlimit-rttime = -1" >> ~/.pulse/daemon.conf
     echo "exit-idle-time = -1" >> ~/.pulse/daemon.conf
 else
-    if (! cat ~/.pulse/daemon.conf | grep "default-sample-format = float32le" > /dev/null); then
+    if ! grep "default-sample-format = float32le" < ~/.pulse/daemon.conf > /dev/null; then
         sed -i '/default-sample-format = /d' ~/.pulse/daemon.conf
         echo "default-sample-format = float32le" >> ~/.pulse/daemon.conf
     fi
-    if (! cat ~/.pulse/daemon.conf | grep "realtime-scheduling = yes" > /dev/null); then
+    if ! grep "realtime-scheduling = yes" < ~/.pulse/daemon.conf > /dev/null; then
         sed -i '/realtime-scheduling = /d' ~/.pulse/daemon.conf
         echo "realtime-scheduling = yes" >> ~/.pulse/daemon.conf
     fi
-    if (! cat ~/.pulse/daemon.conf | grep "rlimit-rttime = -1" > /dev/null); then
+    if ! grep "rlimit-rttime = -1" < ~/.pulse/daemon.conf > /dev/null; then
         sed -i '/rlimit-rttime =/d' ~/.pulse/daemon.conf
         echo "rlimit-rttime = -1" >> ~/.pulse/daemon.conf
     fi
-    if (! cat ~/.pulse/daemon.conf | grep "exit-idle-time = -1" > /dev/null); then
+    if ! grep "exit-idle-time = -1" < ~/.pulse/daemon.conf > /dev/null; then
         sed -i '/exit-idle-time =/d' ~/.pulse/daemon.conf
         echo "exit-idle-time = -1" >> ~/.pulse/daemon.conf
     fi
@@ -77,8 +77,8 @@ esac
 
 IsPulseAudioRunning()
 {
-    PROCESS=`ps -u $USER | grep pulseaudio`
-    if [ "$PROCESS" == "" ]; then
+    PROCESS=$(ps -u $USER | grep pulseaudio)
+    if [ "$PROCESS" = "" ]; then
         false
     else
         true
@@ -98,7 +98,7 @@ if (IsPulseAudioRunning); then
 }
 else
 {
-    if (`pulseaudio --daemonize --high-priority --realtime --exit-idle-time=-1 --file=$FILE -n`); then
+    if pulseaudio --daemonize --high-priority --realtime --exit-idle-time=-1 --file=$FILE -n > /dev/null 2>&1; then
         echo "Initiated PulseAudio successfully!"
     else
         echo "Failed to initialize PulseAudio!"
