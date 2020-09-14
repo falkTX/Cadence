@@ -23,7 +23,7 @@ The required build dependencies are: <i>(devel packages of these)</i>
  - PyQt5 (Py3 version)
 
 On Debian and Ubuntu, use these commands to install all build dependencies: <br/>
-`$ sudo apt-get install libjack-jackd2-dev qtbase5-dev, qtbase5-dev-tools` <br/>
+`$ sudo apt-get install libjack-jackd2-dev qtbase5-dev qtbase5-dev-tools` <br/>
 `$ sudo apt-get install python3-pyqt5 python3-pyqt5.qtsvg pyqt5-dev-tools`
 
 To run all the apps/tools, you'll additionally need:
@@ -47,7 +47,7 @@ After install, the app/tools will still work on distributions with python2 as de
 
 ===== RUNTIME DEPENDENCIES =====
 ----------------------------------
-All tools require Python3 and Qt4, some of them work on Windows and Mac. <br/>
+All tools require Python3 and Qt5 (PyQt5), some of them work on Windows and Mac. <br/>
 Here's the required run-time dependencies of each of the main tools:
 
 ### Cadence

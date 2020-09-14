@@ -22,6 +22,7 @@
 #include <QtCore/QTimer>
 #include <QtGui/QPainter>
 #include <QtGui/QPaintEvent>
+#include <QtGui/QPainterPath>
 
 PixmapDial::PixmapDial(QWidget* parent)
     : QDial(parent),
