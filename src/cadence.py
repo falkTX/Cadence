@@ -113,8 +113,6 @@ XDG_APPLICATIONS_PATH = [
     "/usr/local/share/applications"
 ]
 
-WINEASIO_PREFIX = "HKEY_CURRENT_USER\Software\Wine\WineASIO"
-
 # ---------------------------------------------------------------------
 
 global jackClientIdALSA, jackClientIdPulse
