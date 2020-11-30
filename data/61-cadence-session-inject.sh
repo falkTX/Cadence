@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Cadence Session Startup Injection
 # Set plugin paths and start JACK (or not) according to user settings
 
