@@ -164,7 +164,7 @@ install:
 	# Install addtional stuff for Cadence
 	install -m 644 data/pulse2jack/*     $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
 	install -m 644 data/pulse2loopback/* $(DESTDIR)$(PREFIX)/share/cadence/pulse2loopback/
-	install -m 755 data/61cadence-session-inject $(X11_RC_DIR)
+	install -m 755 data/61-cadence-session-inject.sh $(X11_RC_DIR)
 
 	# Install addtional stuff for Claudia
 	cp -r data/icons/*     $(DESTDIR)$(PREFIX)/share/cadence/icons/
@@ -184,10 +184,11 @@ install:
 		$(DESTDIR)$(PREFIX)/bin/catia \
 		$(DESTDIR)$(PREFIX)/bin/claudia \
 		$(DESTDIR)$(PREFIX)/bin/claudia-launcher \
-		$(X11_RC_DIR)/61cadence-session-inject
+		$(X11_RC_DIR)/61-cadence-session-inject.sh
 
-	# Delete old files
+	# Delete old scripts
 	rm -f $(X11_RC_DIR)/21cadence-session-inject
+	rm -f $(X11_RC_DIR)/61cadence-session-inject
 	rm -f $(X11_RC_DIR)/70cadence-plugin-paths
 	rm -f $(X11_RC_DIR)/99cadence-session-start
 
@@ -214,10 +215,11 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/claudia.svg
 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/claudia-launcher.svg
 	rm -f $(DESTDIR)/etc/xdg/autostart/cadence-session-start.desktop
-	rm -f $(X11_RC_DIR)/61cadence-session-inject
+	rm -f $(X11_RC_DIR)/61-cadence-session-inject.sh
 	rm -rf $(DESTDIR)$(PREFIX)/share/cadence/
 
-	# Old stuff
+	# Delete old scripts
 	rm -f $(X11_RC_DIR)/21cadence-session-inject
+	rm -f $(X11_RC_DIR)/61cadence-session-inject
 	rm -f $(X11_RC_DIR)/70cadence-plugin-paths
 	rm -f $(X11_RC_DIR)/99cadence-session-start
