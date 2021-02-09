@@ -159,7 +159,7 @@ install:
 	install -m 644 resources/scalable/claudia-launcher.svg $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
 
 	# Install main code
-	install -m 755 src/*.py $(DESTDIR)$(PREFIX)/share/cadence/src/
+	install -m 644 src/*.py $(DESTDIR)$(PREFIX)/share/cadence/src/
 
 	# Install addtional stuff for Cadence
 	install -m 644 data/pulse2jack/*     $(DESTDIR)$(PREFIX)/share/cadence/pulse2jack/
