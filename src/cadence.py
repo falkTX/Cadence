@@ -52,10 +52,15 @@ from subprocess import getoutput
 
 try:
     import dbus
-    from dbus.mainloop.pyqt5 import DBusQtMainLoop
+    from dbus.mainloop.pyqt5 import DBusQtMainLoop as DBusMainLoop
     haveDBus = True
 except:
-    haveDBus = False
+    try:
+        # Try falling back to GMainLoop
+        from dbus.mainloop.glib import DBusGMainLoop as DBusMainLoop
+        haveDBus = True
+    except:
+        haveDBus = False
 
 # ------------------------------------------------------------------------------------------------------------
 # Check for PulseAudio and Wine
@@ -2359,7 +2364,7 @@ if __name__ == '__main__':
     app.setWindowIcon(QIcon(":/scalable/cadence.svg"))
 
     if haveDBus:
-        gDBus.loop = DBusQtMainLoop(set_as_default=True)
+        gDBus.loop = DBusMainLoop(set_as_default=True)
         gDBus.bus  = dbus.SessionBus(mainloop=gDBus.loop)
 
     initSystemChecks()
