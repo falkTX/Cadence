@@ -39,6 +39,7 @@ from shared import *
 # Imports (Carla)
 
 try:
+    from carla_backend import *
     from carla_utils import *
     haveCarla = True
 except:
