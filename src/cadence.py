@@ -470,6 +470,7 @@ class CadenceSystemCheck_kernel(CadenceSystemCheck):
         self.name = self.tr("Current kernel")
 
         uname3 = os.uname()[2]
+        uname4 = getoutput("uname -a").strip().split()
 
         versionInt   = []
         versionStr   = uname3.split("-",1)[0]
@@ -484,28 +485,36 @@ class CadenceSystemCheck_kernel(CadenceSystemCheck):
 
         self.result = versionStr + " "
 
-        if "-" not in uname3:
-            self.icon     = self.ICON_WARN
-            self.result  += self.tr("Vanilla")
-            self.moreInfo = None
+        if "PREEMPT" in uname4 or "PREEMPT_RT" in uname4:
+            self.icon     = self.ICON_OK
+
+            if "PREEMPT" in uname4:
+                self.moreInfo = self.tr("Be sure to properly configure your kernel.")
+                self.result  += self.tr("PREEMPT")
+            else:
+                self.moreInfo = None
+                self.result  += self.tr("PREEMPT_RT")
 
         else:
-            if uname3.endswith("-pae"):
-                kernelType   = uname3.split("-")[-2].lower()
-                self.result += kernelType.title() + " (PAE)"
-            else:
-                kernelType   = uname3.split("-")[-1].lower()
-                self.result += kernelType.title()
-
-            if kernelType in ("rt", "realtime") or (kernelType == "lowlatency" and versionInt >= [2, 6, 39]):
-                self.icon     = self.ICON_OK
-                self.moreInfo = None
-            elif versionInt >= [2, 6, 39]:
+            if versionInt >= [2, 6, 11]:
+                #Linux kernel versions 2.6.11 and up can be patched for PREEMPT_RT and
+                #versions 2.6.13 and up can be configured for CONFIG_PREEMPT
+                # sources
+                # https://wiki.linuxfoundation.org/realtime/preempt_rt_versions
+                # https://cateee.net/lkddb/web-lkddb/PREEMPT.html
                 self.icon     = self.ICON_WARN
-                self.moreInfo = None
+                self.moreInfo = self.tr("RT may be available if compiling this version w/CONFIG_PREEMPT or patching this kernel w/CONFIG_PREEMPT_RT.")
+
+                if "-" not in uname3:
+                    if uname3.endswith("-pae"):
+                        kernelType   = uname3.split("-")[-2].lower()
+                        self.result += kernelType.title() + self.tr(" Vanilla (PAE)")
+                    else:
+                        kernelType   = uname3.split("-")[-1].lower()
+                        self.result += kernelType.title() + self.tr(" Vanilla")
             else:
                 self.icon     = self.ICON_ERROR
-                self.moreInfo = None
+                self.moreInfo = self.tr("No realtime options for this version of kernel.")
 
 def initSystemChecks():
     if LINUX:
