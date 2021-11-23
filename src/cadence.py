@@ -52,10 +52,15 @@ from subprocess import getoutput
 
 try:
     import dbus
-    from dbus.mainloop.pyqt5 import DBusQtMainLoop
+    from dbus.mainloop.pyqt5 import DBusQtMainLoop as DBusMainLoop
     haveDBus = True
 except:
-    haveDBus = False
+    try:
+        # Try falling back to GMainLoop
+        from dbus.mainloop.glib import DBusGMainLoop as DBusMainLoop
+        haveDBus = True
+    except:
+        haveDBus = False
 
 # ------------------------------------------------------------------------------------------------------------
 # Check for PulseAudio and Wine
@@ -112,8 +117,6 @@ XDG_APPLICATIONS_PATH = [
     "/usr/share/applications",
     "/usr/local/share/applications"
 ]
-
-WINEASIO_PREFIX = "HKEY_CURRENT_USER\Software\Wine\WineASIO"
 
 # ---------------------------------------------------------------------
 class PulseAudioJackBridgeValues(object):
@@ -1550,16 +1553,14 @@ class CadenceMainW(QMainWindow, ui_cadence.Ui_CadenceMainW):
         self.label_app_comment.setText(comment)
 
     def updateSystrayTooltip(self):
-        systrayText  = "Cadence<br/>"
-        systrayText += "<font size=\"-1\">"
-        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("JACK Status"), self.label_jack_status.text())
-        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("Realtime"), self.label_jack_realtime.text())
-        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("DSP Load"), self.label_jack_dsp.text())
-        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("Xruns"), self.label_jack_xruns.text())
-        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("Buffer Size"), self.label_jack_bfsize.text())
-        systrayText += "<b>%s:</b>&nbsp;%s<br/>" % (self.tr("Sample Rate"), self.label_jack_srate.text())
-        systrayText += "<b>%s:</b>&nbsp;%s" % (self.tr("Block Latency"), self.label_jack_latency.text())
-        systrayText += "</font><font size=\"-2\"><br/></font>"
+        systrayText  = "Cadence\n"
+        systrayText += "%s: %s\n" % (self.tr("JACK Status"), self.label_jack_status.text())
+        systrayText += "%s: %s\n" % (self.tr("Realtime"), self.label_jack_realtime.text())
+        systrayText += "%s: %s\n" % (self.tr("DSP Load"), self.label_jack_dsp.text())
+        systrayText += "%s: %s\n" % (self.tr("Xruns"), self.label_jack_xruns.text())
+        systrayText += "%s: %s\n" % (self.tr("Buffer Size"), self.label_jack_bfsize.text())
+        systrayText += "%s: %s\n" % (self.tr("Sample Rate"), self.label_jack_srate.text())
+        systrayText += "%s: %s" % (self.tr("Block Latency"), self.label_jack_latency.text())
 
         self.systray.setToolTip(systrayText)
 
@@ -2420,7 +2421,7 @@ if __name__ == '__main__':
     app.setWindowIcon(QIcon(":/scalable/cadence.svg"))
 
     if haveDBus:
-        gDBus.loop = DBusQtMainLoop(set_as_default=True)
+        gDBus.loop = DBusMainLoop(set_as_default=True)
         gDBus.bus  = dbus.SessionBus(mainloop=gDBus.loop)
 
     initSystemChecks()
