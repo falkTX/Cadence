@@ -73,8 +73,8 @@ class CanvasPreviewFrame(QFrame):
         self.fFakeWidth  = float(realWidth) / 15
         self.fFakeHeight = float(realHeight) / 15
 
-        self.setMinimumSize(self.fFakeWidth+padding,   self.fFakeHeight+padding)
-        self.setMaximumSize(self.fFakeWidth*4+padding, self.fFakeHeight+padding)
+        self.setMinimumSize(int(self.fFakeWidth+padding),   int(self.fFakeHeight+padding))
+        self.setMaximumSize(int(self.fFakeWidth*4+padding), int(self.fFakeHeight+padding))
 
         self.fRenderTarget.setWidth(realWidth)
         self.fRenderTarget.setHeight(realHeight)
@@ -198,7 +198,7 @@ class CanvasPreviewFrame(QFrame):
 
         painter.setBrush(self.fViewBrush)
         painter.setPen(self.fViewPen)
-        painter.drawRect(self.fViewRect[iX], self.fViewRect[iY], maxWidth, maxHeight)
+        painter.drawRect(QRectF(self.fViewRect[iX], self.fViewRect[iY], maxWidth, maxHeight))
 
         if self.fUseCustomPaint:
             event.accept()
