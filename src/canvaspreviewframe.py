@@ -56,8 +56,8 @@ class CanvasPreviewFrame(QFrame):
         self.fScale = 1.0
         self.fScene = None
         self.fRealParent = None
-        self.fFakeWidth  = 0.0
-        self.fFakeHeight = 0.0
+        self.fFakeWidth  = 0
+        self.fFakeHeight = 0
 
         self.fRenderSource = self.getRenderSource()
         self.fRenderTarget = QRectF(0, 0, 0, 0)
@@ -70,11 +70,11 @@ class CanvasPreviewFrame(QFrame):
         padding = 6
 
         self.fScene = scene
-        self.fFakeWidth  = float(realWidth) / 15
-        self.fFakeHeight = float(realHeight) / 15
+        self.fFakeWidth  = int(realWidth / 15)
+        self.fFakeHeight = int(realHeight / 15)
 
-        self.setMinimumSize(int(self.fFakeWidth+padding),   int(self.fFakeHeight+padding))
-        self.setMaximumSize(int(self.fFakeWidth*4+padding), int(self.fFakeHeight+padding))
+        self.setMinimumSize(self.fFakeWidth+padding,   self.fFakeHeight+padding)
+        self.setMaximumSize(self.fFakeWidth*4+padding, self.fFakeHeight+padding)
 
         self.fRenderTarget.setWidth(realWidth)
         self.fRenderTarget.setHeight(realHeight)
