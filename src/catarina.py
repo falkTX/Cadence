@@ -1026,7 +1026,7 @@ class CatarinaMainW(AbstractCanvasJackClass):
 
     @pyqtSlot()
     def slot_projectOpen(self):
-        path = QFileDialog.getOpenFileName(self, self.tr("Load State"), filter=self.tr("Catarina XML Document (*.xml)"))
+        path, _ = QFileDialog.getOpenFileName(self, self.tr("Load State"), filter=self.tr("Catarina XML Document (*.xml)"))
         if path:
             self.loadFile(path)
 
@@ -1039,8 +1039,7 @@ class CatarinaMainW(AbstractCanvasJackClass):
 
     @pyqtSlot()
     def slot_projectSaveAs(self):
-        path = QFileDialog.getSaveFileName(self, self.tr("Save State"), filter=self.tr("Catarina XML Document (*.xml)"))
-        path = path[0]
+        path, _ = QFileDialog.getSaveFileName(self, self.tr("Save State"), filter=self.tr("Catarina XML Document (*.xml)"))
         if path:
             self.m_save_path = path
             self.saveFile(path)
