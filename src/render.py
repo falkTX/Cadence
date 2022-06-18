@@ -349,7 +349,7 @@ class RenderW(QDialog):
 
     @pyqtSlot()
     def slot_updateProgressbar(self):
-        time = int(jacklib.get_current_transport_frame(self.fJackClient)) / self.fSampleRate
+        time = int(int(jacklib.get_current_transport_frame(self.fJackClient)) / self.fSampleRate)
         self.ui.progressBar.setValue(time)
 
         if time > self.fMaxTime or (self.fLastTime > time and not self.fFreewheel):

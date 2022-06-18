@@ -2160,13 +2160,13 @@ class ClaudiaMainW(AbstractCanvasJackClass):
     @pyqtSlot()
     def slot_miniCanvasInit(self):
         settings = QSettings()
-        self.ui.graphicsView.horizontalScrollBar().setValue(settings.value("HorizontalScrollBarValue", DEFAULT_CANVAS_WIDTH / 3, type=int))
-        self.ui.graphicsView.verticalScrollBar().setValue(settings.value("VerticalScrollBarValue", DEFAULT_CANVAS_HEIGHT * 3 / 8, type=int))
+        self.ui.graphicsView.horizontalScrollBar().setValue(settings.value("HorizontalScrollBarValue", int(DEFAULT_CANVAS_WIDTH / 3), type=int))
+        self.ui.graphicsView.verticalScrollBar().setValue(settings.value("VerticalScrollBarValue", int(DEFAULT_CANVAS_HEIGHT * 3 / 8), type=int))
 
     @pyqtSlot(float, float)
     def slot_miniCanvasMoved(self, xp, yp):
-        self.ui.graphicsView.horizontalScrollBar().setValue(xp * DEFAULT_CANVAS_WIDTH)
-        self.ui.graphicsView.verticalScrollBar().setValue(yp * DEFAULT_CANVAS_HEIGHT)
+        self.ui.graphicsView.horizontalScrollBar().setValue(int(xp * DEFAULT_CANVAS_WIDTH))
+        self.ui.graphicsView.verticalScrollBar().setValue(int(yp * DEFAULT_CANVAS_HEIGHT))
 
     @pyqtSlot()
     def slot_miniCanvasCheckAll(self):
@@ -2176,7 +2176,8 @@ class ClaudiaMainW(AbstractCanvasJackClass):
 
     @pyqtSlot()
     def slot_miniCanvasCheckSize(self):
-        self.ui.miniCanvasPreview.setViewSize(float(self.ui.graphicsView.width()) / DEFAULT_CANVAS_WIDTH, float(self.ui.graphicsView.height()) / DEFAULT_CANVAS_HEIGHT)
+        self.ui.miniCanvasPreview.setViewSize(float(self.ui.graphicsView.width()) / DEFAULT_CANVAS_WIDTH,
+                                              float(self.ui.graphicsView.height()) / DEFAULT_CANVAS_HEIGHT)
 
     @pyqtSlot()
     def slot_handleCrash_jack(self):

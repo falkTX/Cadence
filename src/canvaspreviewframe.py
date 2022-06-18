@@ -166,6 +166,9 @@ class CanvasPreviewFrame(QFrame):
         QFrame.mouseReleaseEvent(self, event)
 
     def paintEvent(self, event):
+        if not self.fUseCustomPaint:
+            QFrame.paintEvent(self, event)
+
         painter = QPainter(self)
 
         if self.fUseCustomPaint:
@@ -199,11 +202,6 @@ class CanvasPreviewFrame(QFrame):
         painter.setBrush(self.fViewBrush)
         painter.setPen(self.fViewPen)
         painter.drawRect(QRectF(self.fViewRect[iX], self.fViewRect[iY], maxWidth, maxHeight))
-
-        if self.fUseCustomPaint:
-            event.accept()
-        else:
-            QFrame.paintEvent(self, event)
 
     def resizeEvent(self, event):
         self.fRenderSource = self.getRenderSource()

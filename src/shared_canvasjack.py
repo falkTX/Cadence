@@ -515,7 +515,7 @@ class AbstractCanvasJackClass(QMainWindow):
             imgFormat = "PNG"
             newPath  += ".png"
 
-        self.fExportImage = QImage(self.scene.sceneRect().width(), self.scene.sceneRect().height(), QImage.Format_RGB32)
+        self.fExportImage = QImage(int(self.scene.sceneRect().width()), int(self.scene.sceneRect().height()), QImage.Format_RGB32)
         painter = QPainter(self.fExportImage)
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing, True)

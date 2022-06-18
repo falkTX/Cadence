@@ -406,7 +406,7 @@ class JackSettingsW(QDialog):
             elif attribute == "client-timeout":
                 self.setComboBoxValue(self.ui.obj_server_client_timeout, str(int(value)))
             elif attribute == "clock-source":
-                if len(str(value)) == 1 :
+                if len(str(value)) == 1 and not isinstance(value, dbus.UInt32):
                     value = str(value)
                     if value == "c":
                         self.ui.obj_server_clock_source_cycle.setChecked(True)
