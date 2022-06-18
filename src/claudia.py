@@ -2656,7 +2656,7 @@ class ClaudiaMainW(AbstractCanvasJackClass):
         QMessageBox.about(self, self.tr("About Claudia"), self.tr("<h3>Claudia</h3>"
                                                                   "<br>Version %s"
                                                                   "<br>Claudia is a Graphical User Interface to LADISH.<br>"
-                                                                  "<br>Copyright (C) 2010-2018 falkTX" % VERSION))
+                                                                  "<br>Copyright (C) 2010-2022 falkTX" % VERSION))
 
     def saveSettings(self):
         settings = QSettings()

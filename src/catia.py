@@ -1318,7 +1318,7 @@ class CatiaMainW(AbstractCanvasJackClass):
         QMessageBox.about(self, self.tr("About Catia"), self.tr("<h3>Catia</h3>"
                                                                 "<br>Version %s"
                                                                 "<br>Catia is a nice JACK Patchbay with A2J Bridge integration.<br>"
-                                                                "<br>Copyright (C) 2010-2018 falkTX" % VERSION))
+                                                                "<br>Copyright (C) 2010-2022 falkTX" % VERSION))
 
     def saveSettings(self):
         settings = QSettings()

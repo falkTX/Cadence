@@ -1260,7 +1260,7 @@ class CatarinaMainW(AbstractCanvasJackClass):
         QMessageBox.about(self, self.tr("About Catarina"), self.tr("<h3>Catarina</h3>"
                                                                    "<br>Version %s"
                                                                    "<br>Catarina is a testing ground for the 'PatchCanvas' module.<br>"
-                                                                   "<br>Copyright (C) 2010-2018 falkTX") % VERSION)
+                                                                   "<br>Copyright (C) 2010-2022 falkTX") % VERSION)
 
     def saveSettings(self):
         settings = QSettings()
