@@ -28,7 +28,6 @@ load-module module-stream-restore
 load-module module-card-restore
 
 ### Load Jack modules
-load-module module-jack-sink
 
 ### Load unix protocol
 load-module module-native-protocol-unix
@@ -47,4 +46,4 @@ load-module module-rescue-streams
 load-module module-always-sink
 
 ### Make Jack default
-set-default-sink jack_out
+

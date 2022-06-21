@@ -1,44 +1,48 @@
-#!/bin/bash
+#! /usr/bin/env bash
 # Script to bridge/start pulseaudio into JACK mode
 
 INSTALL_PREFIX="X-PREFIX-X"
 
+PULSE_CONFIG_DIR=${PULSE_CONFIG_DIR:-"$HOME/.pulse"}
+JACK_CONNFILE="$PULSE_CONFIG_DIR/jack-connections"
+PA_CTLFILE="$PULSE_CONFIG_DIR/ctl.pa"
+
 # ----------------------------------------------
 
-if [ ! -d ~/.pulse ]; then
-    mkdir -p ~/.pulse
+if [ ! -d $PULSE_CONFIG_DIR ]; then
+    mkdir -p $PULSE_CONFIG_DIR
 fi
 
-if [ ! -f ~/.pulse/client.conf ]; then
-    echo "autospawn = no" > ~/.pulse/client.conf
+if [ ! -f $PULSE_CONFIG_DIR/client.conf ]; then
+    echo "autospawn = no" > $PULSE_CONFIG_DIR/client.conf
 else
-    if (! cat ~/.pulse/client.conf | grep "autospawn = no" > /dev/null); then
-        sed -i '/autospawn =/d' ~/.pulse/client.conf
-        echo "autospawn = no" >> ~/.pulse/client.conf
+    if (! cat $PULSE_CONFIG_DIR/client.conf | grep "autospawn = no" > /dev/null); then
+        sed -i '/autospawn =/d' $PULSE_CONFIG_DIR/client.conf
+        echo "autospawn = no" >> $PULSE_CONFIG_DIR/client.conf
     fi
 fi
 
-if [ ! -f ~/.pulse/daemon.conf ]; then
-    echo "default-sample-format = float32le" > ~/.pulse/daemon.conf
-    echo "realtime-scheduling = yes" >> ~/.pulse/daemon.conf
-    echo "rlimit-rttime = -1" >> ~/.pulse/daemon.conf
-    echo "exit-idle-time = -1" >> ~/.pulse/daemon.conf
+if [ ! -f $PULSE_CONFIG_DIR/daemon.conf ]; then
+    echo "default-sample-format = float32le" > $PULSE_CONFIG_DIR/daemon.conf
+    echo "realtime-scheduling = yes" >> $PULSE_CONFIG_DIR/daemon.conf
+    echo "rlimit-rttime = -1" >> $PULSE_CONFIG_DIR/daemon.conf
+    echo "exit-idle-time = -1" >> $PULSE_CONFIG_DIR/daemon.conf
 else
-    if (! cat ~/.pulse/daemon.conf | grep "default-sample-format = float32le" > /dev/null); then
-        sed -i '/default-sample-format = /d' ~/.pulse/daemon.conf
-        echo "default-sample-format = float32le" >> ~/.pulse/daemon.conf
+    if (! cat $PULSE_CONFIG_DIR/daemon.conf | grep "default-sample-format = float32le" > /dev/null); then
+        sed -i '/default-sample-format = /d' $PULSE_CONFIG_DIR/daemon.conf
+        echo "default-sample-format = float32le" >> $PULSE_CONFIG_DIR/daemon.conf
     fi
-    if (! cat ~/.pulse/daemon.conf | grep "realtime-scheduling = yes" > /dev/null); then
-        sed -i '/realtime-scheduling = /d' ~/.pulse/daemon.conf
-        echo "realtime-scheduling = yes" >> ~/.pulse/daemon.conf
+    if (! cat $PULSE_CONFIG_DIR/daemon.conf | grep "realtime-scheduling = yes" > /dev/null); then
+        sed -i '/realtime-scheduling = /d' $PULSE_CONFIG_DIR/daemon.conf
+        echo "realtime-scheduling = yes" >> $PULSE_CONFIG_DIR/daemon.conf
     fi
-    if (! cat ~/.pulse/daemon.conf | grep "rlimit-rttime = -1" > /dev/null); then
-        sed -i '/rlimit-rttime =/d' ~/.pulse/daemon.conf
-        echo "rlimit-rttime = -1" >> ~/.pulse/daemon.conf
+    if (! cat $PULSE_CONFIG_DIR/daemon.conf | grep "rlimit-rttime = -1" > /dev/null); then
+        sed -i '/rlimit-rttime =/d' $PULSE_CONFIG_DIR/daemon.conf
+        echo "rlimit-rttime = -1" >> $PULSE_CONFIG_DIR/daemon.conf
     fi
-    if (! cat ~/.pulse/daemon.conf | grep "exit-idle-time = -1" > /dev/null); then
-        sed -i '/exit-idle-time =/d' ~/.pulse/daemon.conf
-        echo "exit-idle-time = -1" >> ~/.pulse/daemon.conf
+    if (! cat $PULSE_CONFIG_DIR/daemon.conf | grep "exit-idle-time = -1" > /dev/null); then
+        sed -i '/exit-idle-time =/d' $PULSE_CONFIG_DIR/daemon.conf
+        echo "exit-idle-time = -1" >> $PULSE_CONFIG_DIR/daemon.conf
     fi
 fi
 
@@ -56,7 +60,7 @@ echo "usage: $0 [command]
       --dummy   Don't do anything, just create the needed files
 
 NOTE:
- When runned with no arguments, pulse2jack will
+ When ran with no arguments, pulse2jack will
  activate PulseAudio with both playback and record modes.
 "
 exit
@@ -68,18 +72,56 @@ exit
 
     -p|--p|--play)
 PLAY_ONLY="yes"
-FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/play.pa
     ;;
 
     *)
-FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/play+rec.pa
     ;;
 esac
 
+TEMPLATE_PA_FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/template.pa
+
 # ----------------------------------------------
 
-IsPulseAudioRunning()
-{
+addJackConnectionsToPAFile() {
+    PAFILE=$1
+    OUTFILE=$2
+    cp $PAFILE $OUTFILE
+    tac $JACK_CONNFILE | while IFS=\| read name type channels connect; do
+        sed -i "/### Load Jack modules/a load-module module-jack-$type channels=$channels connect=$connect client_name=\"$name\"" $OUTFILE
+    done
+}
+
+loadConnectionsIntoPA() {
+    CONNTYPE=$1
+    while IFS=\| read name type channels connect; do
+        if [ $CONNTYPE == "$type" ] ; then
+            pactl load-module module-jack-$type channels=$channels connect=$connect client_name="$name" > /dev/null
+        fi
+    done < $JACK_CONNFILE
+}
+
+addDefaultSink() {
+    INFILE=$1
+    sed -i "/### Make Jack default/a set-default-sink jack_out" $INFILE
+}
+
+addDefaultSource() {
+    INFILE=$1
+    sed -i "/### Make Jack default/a set-default-source jack_in" $INFILE
+}
+
+if [ ! -f $PULSE_CONFIG_DIR/jack-connections ] ; then
+    # safety in case there's no config generated yet from GUI
+    sed "/### Load Jack modules/a load-module module-jack-sink
+       /### Load Jack modules/a load-module module-jack-source" $TEMPLATE_PA_FILE > $PA_CTLFILE
+else
+    addJackConnectionsToPAFile $TEMPLATE_PA_FILE $PA_CTLFILE
+fi
+
+addDefaultSource $PA_CTLFILE
+addDefaultSink $PA_CTLFILE
+
+IsPulseAudioRunning() {
     PROCESS=`ps -u $USER | grep pulseaudio`
     if [ "$PROCESS" == "" ]; then
         false
@@ -89,39 +131,29 @@ IsPulseAudioRunning()
 }
 
 if (IsPulseAudioRunning); then
-{
-    if (`jack_lsp | grep "PulseAudio JACK Sink:" > /dev/null`); then
-    {
+    # get the first sink name from the table
+    FIRST_SINK_NAME=$(grep '|sink|' $JACK_CONNFILE | head -1 | cut -d\| -f1)
+    if ($(jack_lsp 2>/dev/null | grep "$FIRST_SINK_NAME" > /dev/null)); then
         echo "PulseAudio is already running and bridged to JACK"
-    }
     else
-    {
         echo "PulseAudio is already running, bridge it..."
 
         if [ "$PLAY_ONLY" == "yes" ]; then
-        {
-            pactl load-module module-jack-sink > /dev/null
+            loadConnectionsIntoPA "sink"
             pacmd set-default-source jack_in > /dev/null
-        }
         else
-        {
-            pactl load-module module-jack-sink > /dev/null
-            pactl load-module module-jack-source > /dev/null
+            loadConnectionsIntoPA "source"
+            loadConnectionsIntoPA "sink"
             pacmd set-default-sink jack_out > /dev/null
             pacmd set-default-source jack_in > /dev/null
-        }
         fi
 
         echo "Done"
-    }
     fi
-}
 else
-{
-    if (`pulseaudio --daemonize --high-priority --realtime --exit-idle-time=-1 --file=$FILE -n`); then
+    if ($(pulseaudio --daemonize --high-priority --realtime --exit-idle-time=-1 --file=$PA_CTLFILE -n)); then
         echo "Initiated PulseAudio successfully!"
     else
         echo "Failed to initialize PulseAudio!"
     fi
-}
 fi

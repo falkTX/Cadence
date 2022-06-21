@@ -42,3 +42,6 @@ src/dist/
 
 # Other
 data/templates/energyXT.xt
+
+# IDEs
+.idea/
