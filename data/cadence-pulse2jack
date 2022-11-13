@@ -68,11 +68,23 @@ exit
 
     -p|--p|--play)
 PLAY_ONLY="yes"
-FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/play.pa
+if test -n "${CADENCE_PULSE2JACK_PLAY}"; then
+	FILE="$CADENCE_PULSE2JACK_PLAY"
+elif test -f ~/.config/Cadence/pulse2jack/play.pa; then
+	FILE=~/.config/Cadence/pulse2jack/play.pa
+else
+	FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/play.pa
+fi
     ;;
 
     *)
-FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/play+rec.pa
+if test -n "${CADENCE_PULSE2JACK_PLAYREC}"; then
+	FILE="$CADENCE_PULSE2JACK_PLAYREC"
+elif test -f ~/.config/Cadence/pulse2jack/play+rec.pa; then
+	FILE=~/.config/Cadence/pulse2jack/play+rec.pa
+else
+	FILE=$INSTALL_PREFIX/share/cadence/pulse2jack/play+rec.pa
+fi
     ;;
 esac
 
