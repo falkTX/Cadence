@@ -2356,6 +2356,20 @@ def runFunctionInMainThread(task):
 
 #--------------- main ------------------
 if __name__ == '__main__':
+    # Show help
+    if "--help" in sys.argv or "-h" in sys.argv:
+        print(f"""cadence {VERSION}
+
+USAGE:
+    cadence [FLAGS]
+
+FLAGS:
+    --help, -h
+        show this help
+    --minimized
+        start minimized in the tray""")
+        sys.exit()
+
     # App initialization
     app = QApplication(sys.argv)
     app.setApplicationName("Cadence")
