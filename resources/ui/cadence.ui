@@ -465,28 +465,28 @@
                <item row="0" column="0">
                 <widget class="QPushButton" name="b_jack_start">
                  <property name="text">
-                  <string>Start</string>
+                  <string>&amp;Start</string>
                  </property>
                 </widget>
                </item>
                <item row="0" column="1" colspan="2">
                 <widget class="QPushButton" name="b_jack_stop">
                  <property name="text">
-                  <string>Stop</string>
+                  <string>S&amp;top</string>
                  </property>
                 </widget>
                </item>
                <item row="0" column="3">
                 <widget class="QPushButton" name="b_jack_restart">
                  <property name="text">
-                  <string>Force Restart</string>
+                  <string>Force &amp;Restart</string>
                  </property>
                 </widget>
                </item>
                <item row="0" column="4" colspan="2">
                 <widget class="QPushButton" name="b_jack_configure">
                  <property name="text">
-                  <string>Configure</string>
+                  <string>&amp;Configure</string>
                  </property>
                 </widget>
                </item>
